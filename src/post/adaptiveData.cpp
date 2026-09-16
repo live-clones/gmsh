@@ -1408,11 +1408,13 @@ bool adaptPolytope(int level, int numComp, MElement *e, int &numNodes,
           auto it = mids.find(edge);
           if(it == mids.end()) {
             it = mids.insert({edge, coords.size()}).first;
-            mids[{std::min(i0, i1), std::max(i0, i1)}] = coords.size();
             double x = .5 * (coords[i0].c[0] + coords[i1].c[0]);
             double y = .5 * (coords[i0].c[1] + coords[i1].c[1]);
             double z = .5 * (coords[i0].c[2] + coords[i1].c[2]);
             coords.push_back(PCoords(x, y, z));
+            values.push_back(PValues(numComp));
+            for(int c = 0; c < numComp; c++)
+              values.back().v[c] = .5 * (values[i0].v[c] + values[i1].v[c]);
           }
           mid[k] = it->second;
         }
@@ -1446,11 +1448,13 @@ bool adaptPolytope(int level, int numComp, MElement *e, int &numNodes,
             auto it = mids.find(edge);
             if(it == mids.end()) {
               it = mids.insert({edge, coords.size()}).first;
-              mids[{std::min(i0, i1), std::max(i0, i1)}] = coords.size();
               double x = .5 * (coords[i0].c[0] + coords[i1].c[0]);
               double y = .5 * (coords[i0].c[1] + coords[i1].c[1]);
               double z = .5 * (coords[i0].c[2] + coords[i1].c[2]);
               coords.push_back(PCoords(x, y, z));
+              values.push_back(PValues(numComp));
+              for(int c = 0; c < numComp; c++)
+                values.back().v[c] = .5 * (values[i0].v[c] + values[i1].v[c]);
             }
             mid[count++] = it->second;
           }
@@ -1490,35 +1494,6 @@ bool adaptPolytope(int level, int numComp, MElement *e, int &numNodes,
         newSimplices[8 * j + 31] = mid[5];
       }
       simplices = std::move(newSimplices);
-    }
-  }
-
-  // Compute values using mean value coordinates
-  if(type == TYPE_POLYH)
-    Msg::Error("Mean Value Coordinates not implemented for polyhedra !");
-  for(size_t i = values.size(); i < coords.size(); ++i) {
-    if(type == TYPE_POLYG) {
-      MPolygon *polygon = static_cast<MPolygon *>(e);
-      std::vector<double> MVCoord;
-      polygon->meanValueCoord(coords[i].c, MVCoord);
-      values.push_back(PValues(numComp));
-      for(int j = 0; j < numNodes; ++j) {
-        for(int k = 0; k < numComp; ++k) {
-          values.back().v[k] += MVCoord[j] * values[j].v[k];
-        }
-      }
-    }
-    else if(type == TYPE_POLYH) {
-      MPolyhedron *polyhedron = static_cast<MPolyhedron *>(e);
-      std::vector<double> MVCoord(polyhedron->getNumVertices(), 0.0);
-      // std::vector<double> MVCoord;
-      // polygon->meanValueCoord(coords[i].c, MVCoord);
-      values.push_back(PValues(numComp));
-      for(int j = 0; j < numNodes; ++j) {
-        for(int k = 0; k < numComp; ++k) {
-          values.back().v[k] += MVCoord[j] * values[j].v[k];
-        }
-      }
     }
   }
 
