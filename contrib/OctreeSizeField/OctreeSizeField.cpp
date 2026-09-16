@@ -807,6 +807,14 @@ HXTStatus OctreeSizeField::updateHXT()
   std::vector<GFace *> faces;
   HXT_CHECK(getAllFacesOfAllRegions(regions, nullptr, faces));
 
+  if(getenv("GMSH_DEBUG_BGMESH")) {
+    std::size_t total = 0;
+    for(GFace *gf : faces) total += gf->getNumMeshElements();
+    Msg::Info("- debug: updateHXT sees %zu faces, %zu total mesh elements "
+              "on them (gm=%p vs GModel::current()=%p)",
+              faces.size(), total, (void *)gm, (void *)GModel::current());
+  }
+
   // Create global HXT mesh structure (surface mesh only, at this point)
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));

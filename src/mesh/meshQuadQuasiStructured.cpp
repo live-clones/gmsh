@@ -502,6 +502,14 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         if(qqsSizemapMethod == SizeMapDefault) {
           Msg::Info("scalar background field exists, using it as size map");
           externalSizemap = true;
+          // Some scalar fields (e.g. AutomaticMeshSizeField) lazily build
+          // themselves from the GModel's current surface mesh on first
+          // query. That mesh gets imported into a separate background
+          // mesh structure and then deleted from gm a few lines below
+          // (deleteGModelMeshAfter), so force the field to update now,
+          // while gm's mesh is still there, instead of leaving it to the
+          // first later query -- which would see an empty surface mesh.
+          field->update();
         }
         else {
           Msg::Warning("scalar background field exists, but ignored because "

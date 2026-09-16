@@ -1587,6 +1587,15 @@ void GenerateMesh(GModel *m, int ask)
     }
     if(old == 2 && ask == 1 && exists) doIt = true;
     if(old == 2 && ask == 2 && exists) doIt = true;
+    if(getenv("GMSH_DEBUG_BGMESH")) {
+      std::size_t nTri = 0;
+      for(GFace *gf : m->getFaces()) nTri += gf->getNumMeshElements();
+      Msg::Info("- debug: before BuildBackgroundMeshAndGuidingField: old=%d "
+                "ask=%d exists=%d overwriteGModelMesh=%d doIt=%d "
+                "faceTriangles=%zu",
+                old, ask, (int)exists, (int)overwriteGModelMesh, (int)doIt,
+                nTri);
+    }
     if(doIt) {
       bool deleteGModelMeshAfter =
         true; // mesh saved in background, no longer needed
