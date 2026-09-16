@@ -1,6 +1,8 @@
 (Work-in-progress): new $Polytopes section in the MSH4 format for polygons and
 polyhedra, which replaces the old polygon/polyhedron elements, levelset
-commands and Plugin(CutMesh); improved performance of default 2D and 3D meshing
+commands and Plugin(CutMesh); API: getElementFaceNodes, getFaces, getAllFaces and
+addFaces take or return the number of nodes of each face (faceSizes) instead
+of a face type, so all the faces of an element come in a single call; improved performance of default 2D and 3D meshing
 algorithms; improved graphics performance; new shader rendering pipeline with
 order-independent transparency and studio shading; new capping visualization
 mode in clipping tool; improved colorbars and 2D plots; new faster homology

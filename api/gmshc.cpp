@@ -1782,14 +1782,15 @@ GMSH_API void gmshModelMeshGetEdges(const size_t * nodeTags, const size_t nodeTa
   }
 }
 
-GMSH_API void gmshModelMeshGetFaces(const int faceType, const size_t * nodeTags, const size_t nodeTags_n, size_t ** faceTags, size_t * faceTags_n, int ** faceOrientations, size_t * faceOrientations_n, int * ierr)
+GMSH_API void gmshModelMeshGetFaces(const size_t * nodeTags, const size_t nodeTags_n, const int * faceSizes, const size_t faceSizes_n, size_t ** faceTags, size_t * faceTags_n, int ** faceOrientations, size_t * faceOrientations_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<int> api_faceSizes_(faceSizes, faceSizes + faceSizes_n);
     std::vector<std::size_t> api_faceTags_;
     std::vector<int> api_faceOrientations_;
-    gmsh::model::mesh::getFaces(faceType, api_nodeTags_, api_faceTags_, api_faceOrientations_);
+    gmsh::model::mesh::getFaces(api_nodeTags_, api_faceSizes_, api_faceTags_, api_faceOrientations_);
     vector2ptr(api_faceTags_, faceTags, faceTags_n);
     vector2ptr(api_faceOrientations_, faceOrientations, faceOrientations_n);
   }
@@ -1845,15 +1846,17 @@ GMSH_API void gmshModelMeshGetAllEdges(size_t ** edgeTags, size_t * edgeTags_n, 
   }
 }
 
-GMSH_API void gmshModelMeshGetAllFaces(const int faceType, size_t ** faceTags, size_t * faceTags_n, size_t ** faceNodes, size_t * faceNodes_n, int * ierr)
+GMSH_API void gmshModelMeshGetAllFaces(size_t ** faceTags, size_t * faceTags_n, size_t ** faceNodes, size_t * faceNodes_n, int ** faceSizes, size_t * faceSizes_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_faceTags_;
     std::vector<std::size_t> api_faceNodes_;
-    gmsh::model::mesh::getAllFaces(faceType, api_faceTags_, api_faceNodes_);
+    std::vector<int> api_faceSizes_;
+    gmsh::model::mesh::getAllFaces(api_faceTags_, api_faceNodes_, api_faceSizes_);
     vector2ptr(api_faceTags_, faceTags, faceTags_n);
     vector2ptr(api_faceNodes_, faceNodes, faceNodes_n);
+    vector2ptr(api_faceSizes_, faceSizes, faceSizes_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1873,13 +1876,14 @@ GMSH_API void gmshModelMeshAddEdges(const size_t * edgeTags, const size_t edgeTa
   }
 }
 
-GMSH_API void gmshModelMeshAddFaces(const int faceType, const size_t * faceTags, const size_t faceTags_n, const size_t * faceNodes, const size_t faceNodes_n, int * ierr)
+GMSH_API void gmshModelMeshAddFaces(const size_t * faceTags, const size_t faceTags_n, const size_t * faceNodes, const size_t faceNodes_n, const int * faceSizes, const size_t faceSizes_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_faceTags_(faceTags, faceTags + faceTags_n);
     std::vector<std::size_t> api_faceNodes_(faceNodes, faceNodes + faceNodes_n);
-    gmsh::model::mesh::addFaces(faceType, api_faceTags_, api_faceNodes_);
+    std::vector<int> api_faceSizes_(faceSizes, faceSizes + faceSizes_n);
+    gmsh::model::mesh::addFaces(api_faceTags_, api_faceNodes_, api_faceSizes_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1987,13 +1991,15 @@ GMSH_API void gmshModelMeshGetElementEdgeNodes(const int elementType, size_t ** 
   }
 }
 
-GMSH_API void gmshModelMeshGetElementFaceNodes(const int elementType, const int faceType, size_t ** nodeTags, size_t * nodeTags_n, const int tag, const int primary, const size_t task, const size_t numTasks, int * ierr)
+GMSH_API void gmshModelMeshGetElementFaceNodes(const int elementType, size_t ** nodeTags, size_t * nodeTags_n, int ** faceSizes, size_t * faceSizes_n, const int tag, const int primary, const size_t task, const size_t numTasks, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_nodeTags_;
-    gmsh::model::mesh::getElementFaceNodes(elementType, faceType, api_nodeTags_, tag, primary, task, numTasks);
+    std::vector<int> api_faceSizes_;
+    gmsh::model::mesh::getElementFaceNodes(elementType, api_nodeTags_, api_faceSizes_, tag, primary, task, numTasks);
     vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+    vector2ptr(api_faceSizes_, faceSizes, faceSizes_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

@@ -4152,36 +4152,36 @@ gmsh::model::mesh::getEdges(const std::vector<std::size_t> &nodeTags,
 }
 
 GMSH_API void gmsh::model::mesh::getFaces(
-  const int faceType, const std::vector<std::size_t> &nodeTags,
+  const std::vector<std::size_t> &nodeTags, const std::vector<int> &faceSizes,
   std::vector<std::size_t> &faceTags, std::vector<int> &orientations)
 {
   faceTags.clear();
   orientations.clear();
-  if(faceType != 3 && faceType != 4) {
-    Msg::Error("Unknown face type (should be 3 or 4)");
+  std::size_t numFaces = faceSizes.size(), numNodes = 0;
+  for(auto n : faceSizes) numNodes += n;
+  if(numNodes != nodeTags.size()) {
+    Msg::Error("Face sizes do not match the number of face nodes");
     return;
   }
-  std::size_t numFaces = nodeTags.size() / faceType;
   if(!numFaces) return;
   faceTags.resize(numFaces);
   orientations.resize(numFaces, 0); // TODO
+  GModel *m = GModel::current();
+  std::vector<MVertex *> v;
+  std::size_t idx = 0;
   for(std::size_t i = 0; i < numFaces; i++) {
-    std::size_t n0 = nodeTags[faceType * i];
-    std::size_t n1 = nodeTags[faceType * i + 1];
-    std::size_t n2 = nodeTags[faceType * i + 2];
-    std::size_t n3 = (faceType == 4) ? nodeTags[faceType * i + 3] : 0;
-    MVertex *v0 = GModel::current()->getMeshVertexByTag(n0);
-    MVertex *v1 = GModel::current()->getMeshVertexByTag(n1);
-    MVertex *v2 = GModel::current()->getMeshVertexByTag(n2);
-    MVertex *v3 =
-      (faceType == 4) ? GModel::current()->getMeshVertexByTag(n3) : nullptr;
-    if(v0 && v1 && v2) {
-      MFace face;
-      faceTags[i] = GModel::current()->getMFace(v0, v1, v2, v3, face);
+    v.resize(faceSizes[i]);
+    for(int j = 0; j < faceSizes[i]; j++) {
+      v[j] = m->getMeshVertexByTag(nodeTags[idx + j]);
+      if(!v[j]) {
+        Msg::Error("Unknown node %zu", nodeTags[idx + j]);
+        return;
+      }
     }
-    else {
-      Msg::Error("Unknown node %d, %d or %d", n0, n1, n2);
-    }
+    idx += faceSizes[i];
+    MFace f(v);
+    auto it = m->getMFaces().find(f);
+    faceTags[i] = (it == m->getMFaces().end()) ? 0 : it->second;
   }
 }
 
@@ -4215,24 +4215,20 @@ gmsh::model::mesh::getAllEdges(std::vector<std::size_t> &edgeTags,
 }
 
 GMSH_API void
-gmsh::model::mesh::getAllFaces(const int faceType,
-                               std::vector<std::size_t> &faceTags,
-                               std::vector<std::size_t> &faceNodes)
+gmsh::model::mesh::getAllFaces(std::vector<std::size_t> &faceTags,
+                               std::vector<std::size_t> &faceNodes,
+                               std::vector<int> &faceSizes)
 {
   if(!_checkInit()) return;
-  if(faceType != 3 && faceType != 4) {
-    Msg::Error("Unknown face type (should be 3 or 4)");
-    return;
-  }
   faceTags.clear();
   faceNodes.clear();
+  faceSizes.clear();
   GModel *m = GModel::current();
   for(auto it = m->firstMFace(); it != m->lastMFace(); ++it) {
-    if(faceType == (int)it->first.getNumVertices()) {
-      faceTags.push_back(it->second);
-      for(int j = 0; j < faceType; j++)
-        faceNodes.push_back(it->first.getVertex(j)->getNum());
-    }
+    faceTags.push_back(it->second);
+    faceSizes.push_back((int)it->first.getNumVertices());
+    for(std::size_t j = 0; j < it->first.getNumVertices(); j++)
+      faceNodes.push_back(it->first.getVertex(j)->getNum());
   }
 }
 
@@ -4261,30 +4257,31 @@ gmsh::model::mesh::addEdges(const std::vector<std::size_t> &edgeTags,
 }
 
 GMSH_API void
-gmsh::model::mesh::addFaces(const int faceType,
-                            const std::vector<std::size_t> &faceTags,
-                            const std::vector<std::size_t> &faceNodes)
+gmsh::model::mesh::addFaces(const std::vector<std::size_t> &faceTags,
+                            const std::vector<std::size_t> &faceNodes,
+                            const std::vector<int> &faceSizes)
 {
   if(!_checkInit()) return;
-  if(faceType != 3 && faceType != 4) {
-    Msg::Error("Unknown face type (should be 3 or 4)");
-    return;
-  }
-  if(faceTags.size() * faceType != faceNodes.size()) {
-    Msg::Error("Wrong number of face nodes");
+  std::size_t numNodes = 0;
+  for(auto n : faceSizes) numNodes += n;
+  if(faceTags.size() != faceSizes.size() || numNodes != faceNodes.size()) {
+    Msg::Error("Wrong number of face sizes or face nodes");
     return;
   }
   GModel *m = GModel::current();
+  std::vector<MVertex *> v;
+  std::size_t idx = 0;
   for(std::size_t i = 0; i < faceTags.size(); i++) {
-    MVertex *v[4] = {nullptr, nullptr, nullptr, nullptr};
-    for(int j = 0; j < faceType; j++) {
-      v[j] = m->getMeshVertexByTag(faceNodes[faceType * i + j]);
+    v.resize(faceSizes[i]);
+    for(int j = 0; j < faceSizes[i]; j++) {
+      v[j] = m->getMeshVertexByTag(faceNodes[idx + j]);
       if(!v[j]) {
-        Msg::Error("Unknown node %zu", faceNodes[faceType * i + j]);
+        Msg::Error("Unknown node %zu", faceNodes[idx + j]);
         return;
       }
     }
-    MFace f(v[0], v[1], v[2], v[3]);
+    idx += faceSizes[i];
+    MFace f(v);
     m->addMFace(std::move(f), faceTags[i]);
   }
 }
@@ -5224,9 +5221,9 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
 }
 
 GMSH_API void gmsh::model::mesh::getElementFaceNodes(
-  const int elementType, const int faceType, std::vector<std::size_t> &nodeTags,
-  const int tag, const bool primary, const std::size_t task,
-  const std::size_t numTasks)
+  const int elementType, std::vector<std::size_t> &nodeTags,
+  std::vector<int> &faceSizes, const int tag, const bool primary,
+  const std::size_t task, const std::size_t numTasks)
 {
   if(!_checkInit()) return;
   int dim = ElementType::getDimension(elementType);
@@ -5234,49 +5231,83 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
-  std::size_t numElements = 0;
-  int numFacesPerEle = 0, numNodesPerFace = 0;
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    int n = ge->getNumMeshElementsByType(familyType);
-    if(n && !numNodesPerFace) {
-      MElement *e = ge->getMeshElementByType(familyType, 0);
-      int nf = e->getNumFaces();
-      numFacesPerEle = 0;
-      for(int k = 0; k < nf; k++) {
-        MFace f = e->getFace(k);
-        if(faceType == (int)f.getNumVertices()) {
-          numFacesPerEle++;
-          if(!numNodesPerFace) {
-            if(primary) { numNodesPerFace = faceType; }
-            else {
-              std::vector<MVertex *> v;
-              // we could use e->getHighOrderFace() here if we decide to remove
-              // getFaceVertices
-              e->getFaceVertices(k, v);
-              numNodesPerFace = v.size();
-            }
-          }
-        }
-      }
-    }
-    numElements += n;
-  }
 
+  // the nodes of face k of e: the high-order ones unless only the primary
+  // nodes are asked for, or the element has no high-order faces (polyhedra)
+  auto getFaceNodes = [&](MElement *e, int k, std::vector<MVertex *> &v) {
+    v.clear();
+    if(!primary) e->getFaceVertices(k, v);
+    if(v.empty()) {
+      MFace f = e->getFace(k);
+      for(std::size_t l = 0; l < f.getNumVertices(); l++)
+        v.push_back(f.getVertex(l));
+    }
+  };
+  // faces and face nodes of e
+  auto count = [&](MElement *e, std::size_t &nf, std::size_t &nn) {
+    nf = e->getNumFaces();
+    nn = 0;
+    std::vector<MVertex *> v;
+    for(std::size_t k = 0; k < nf; k++) {
+      getFaceNodes(e, k, v);
+      nn += v.size();
+    }
+  };
+
+  // the numbers of faces and of face nodes are fixed for a given element type,
+  // except for polyhedra, for which they are counted element by element
+  std::size_t numElements = 0;
+  for(std::size_t i = 0; i < entities.size(); i++)
+    numElements += entities[i]->getNumMeshElementsByType(familyType);
   if(!numTasks) {
     Msg::Error("Number of tasks should be > 0");
     return;
   }
-  if(!numElements || !numFacesPerEle || !numNodesPerFace) return;
-  if(numFacesPerEle * numNodesPerFace * numElements > nodeTags.size()) {
+  if(!numElements) return;
+  bool variable = (familyType == TYPE_POLYH);
+  std::size_t nfConst = 0, nnConst = 0;
+  std::vector<std::size_t> nfPrefix, nnPrefix;
+  if(variable) {
+    nfPrefix.reserve(numElements + 1);
+    nnPrefix.reserve(numElements + 1);
+    nfPrefix.push_back(0);
+    nnPrefix.push_back(0);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
+          j++) {
+        std::size_t nf, nn;
+        count(ge->getMeshElementByType(familyType, j), nf, nn);
+        nfPrefix.push_back(nfPrefix.back() + nf);
+        nnPrefix.push_back(nnPrefix.back() + nn);
+      }
+    }
+  }
+  else {
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      if(ge->getNumMeshElementsByType(familyType)) {
+        count(ge->getMeshElementByType(familyType, 0), nfConst, nnConst);
+        break;
+      }
+    }
+  }
+  std::size_t numFaces = variable ? nfPrefix.back() : nfConst * numElements;
+  std::size_t numNodes = variable ? nnPrefix.back() : nnConst * numElements;
+  if(!numFaces) return;
+  if(numNodes > nodeTags.size() || numFaces > faceSizes.size()) {
     if(numTasks > 1)
-      Msg::Warning("Nodes should be preallocated if numTasks > 1");
-    nodeTags.resize(numFacesPerEle * numNodesPerFace * numElements);
+      Msg::Warning("Nodes and face sizes should be preallocated if numTasks > "
+                   "1");
+    nodeTags.resize(numNodes);
+    faceSizes.resize(numFaces);
   }
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   size_t o = 0;
-  size_t idx = numFacesPerEle * numNodesPerFace * begin;
+  size_t idxN = variable ? nnPrefix[begin] : nnConst * begin;
+  size_t idxF = variable ? nfPrefix[begin] : nfConst * begin;
+  std::vector<MVertex *> v;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
@@ -5284,16 +5315,10 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
         MElement *e = ge->getMeshElementByType(familyType, j);
         int nf = e->getNumFaces();
         for(int k = 0; k < nf; k++) {
-          MFace f = e->getFace(k);
-          if(faceType != (int)f.getNumVertices()) continue;
-          std::vector<MVertex *> v;
-          // we could use e->getHighOrderFace() here if we decide to remove
-          // getFaceVertices
-          e->getFaceVertices(k, v);
-          std::size_t N = primary ? faceType : v.size();
-          for(std::size_t l = 0; l < N; l++) {
-            nodeTags[idx++] = v[l]->getNum();
-          }
+          getFaceNodes(e, k, v);
+          faceSizes[idxF++] = (int)v.size();
+          for(std::size_t l = 0; l < v.size(); l++)
+            nodeTags[idxN++] = v[l]->getNum();
         }
       }
       o++;

@@ -1418,12 +1418,12 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::getFaces
       //
       // Get the global unique mesh face identifiers `faceTags' and orientations
-      // `faceOrientations' for an input list of a multiple of three (if `faceType'
-      // == 3) or four (if `faceType' == 4) node tags defining these faces,
-      // concatenated in the vector `nodeTags'. Mesh faces are created e.g. by
-      // `createFaces()', `getKeys()' or `addFaces()'.
-      GMSH_API void getFaces(const int faceType,
-                             const std::vector<std::size_t> & nodeTags,
+      // `faceOrientations' for an input list of faces defined by their node tags
+      // concatenated in the vector `nodeTags', with `faceSizes' the number of
+      // nodes of each face. Mesh faces are created e.g. by `createFaces()',
+      // `getKeys()' or `addFaces()'.
+      GMSH_API void getFaces(const std::vector<std::size_t> & nodeTags,
+                             const std::vector<int> & faceSizes,
                              std::vector<std::size_t> & faceTags,
                              std::vector<int> & faceOrientations);
 
@@ -1450,11 +1450,12 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::getAllFaces
       //
       // Get the global unique identifiers `faceTags' and the nodes `faceNodes' of
-      // the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
-      // `createFaces()', `getKeys()' or addFaces().
-      GMSH_API void getAllFaces(const int faceType,
-                                std::vector<std::size_t> & faceTags,
-                                std::vector<std::size_t> & faceNodes);
+      // all the faces in the mesh, with `faceSizes' the number of nodes of each
+      // face. Mesh faces are created e.g. by `createFaces()', `getKeys()' or
+      // addFaces().
+      GMSH_API void getAllFaces(std::vector<std::size_t> & faceTags,
+                                std::vector<std::size_t> & faceNodes,
+                                std::vector<int> & faceSizes);
 
       // gmsh::model::mesh::addEdges
       //
@@ -1465,11 +1466,12 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::addFaces
       //
-      // Add mesh faces of type `faceType' defined by their global unique
-      // identifiers `faceTags' and their nodes `faceNodes'.
-      GMSH_API void addFaces(const int faceType,
-                             const std::vector<std::size_t> & faceTags,
-                             const std::vector<std::size_t> & faceNodes);
+      // Add mesh faces defined by their global unique identifiers `faceTags',
+      // their nodes `faceNodes' concatenated in a single vector, and `faceSizes'
+      // the number of nodes of each face.
+      GMSH_API void addFaces(const std::vector<std::size_t> & faceTags,
+                             const std::vector<std::size_t> & faceNodes,
+                             const std::vector<int> & faceSizes);
 
       // gmsh::model::mesh::getKeys
       //
@@ -1565,18 +1567,19 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getElementFaceNodes
       //
-      // Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
-      // for quadrangular faces) of all elements of type `elementType' classified
-      // on the entity of tag `tag'. `nodeTags' contains the node tags of the faces
-      // for all elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is
-      // returned by element, with elements in the same order as in `getElements'
-      // and `getElementsByType'. If `primary' is set, only the primary (corner)
-      // nodes of the faces are returned. If `tag' < 0, get the face nodes for all
-      // entities. If `numTasks' > 1, only compute and return the part of the data
-      // indexed by `task' (for C++ only; output vector must be preallocated).
+      // Get the nodes on the faces of all elements of type `elementType'
+      // classified on the entity of tag `tag'. `nodeTags' contains the node tags
+      // of the faces for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], and
+      // `faceSizes' the number of nodes of each face: [e1f1N, e1f2N, ...]. Faces
+      // are returned for each element in their canonical order, with elements in
+      // the same order as in `getElements' and `getElementsByType'. If `primary'
+      // is set, only the primary (corner) nodes of the faces are returned. If
+      // `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only
+      // compute and return the part of the data indexed by `task' (for C++ only;
+      // output vectors must be preallocated).
       GMSH_API void getElementFaceNodes(const int elementType,
-                                        const int faceType,
                                         std::vector<std::size_t> & nodeTags,
+                                        std::vector<int> & faceSizes,
                                         const int tag = -1,
                                         const bool primary = false,
                                         const std::size_t task = 0,

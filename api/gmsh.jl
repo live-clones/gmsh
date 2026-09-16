@@ -3389,31 +3389,31 @@ end
 const get_edges = getEdges
 
 """
-    gmsh.model.mesh.getFaces(faceType, nodeTags)
+    gmsh.model.mesh.getFaces(nodeTags, faceSizes)
 
 Get the global unique mesh face identifiers `faceTags` and orientations
-`faceOrientations` for an input list of a multiple of three (if `faceType` == 3)
-or four (if `faceType` == 4) node tags defining these faces, concatenated in the
-vector `nodeTags`. Mesh faces are created e.g. by `createFaces()`, `getKeys()`
-or `addFaces()`.
+`faceOrientations` for an input list of faces defined by their node tags
+concatenated in the vector `nodeTags`, with `faceSizes` the number of nodes of
+each face. Mesh faces are created e.g. by `createFaces()`, `getKeys()` or
+`addFaces()`.
 
 Return `faceTags`, `faceOrientations`.
 
 Types:
- - `faceType`: integer
  - `nodeTags`: vector of sizes
+ - `faceSizes`: vector of integers
  - `faceTags`: vector of sizes
  - `faceOrientations`: vector of integers
 """
-function getFaces(faceType, nodeTags)
+function getFaces(nodeTags, faceSizes)
     api_faceTags_ = Ref{Ptr{Csize_t}}()
     api_faceTags_n_ = Ref{Csize_t}()
     api_faceOrientations_ = Ref{Ptr{Cint}}()
     api_faceOrientations_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetFaces, gmsh.lib), Cvoid,
-          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          faceType, convert(Vector{Csize_t}, nodeTags), length(nodeTags), api_faceTags_, api_faceTags_n_, api_faceOrientations_, api_faceOrientations_n_, ierr)
+          (Ptr{Csize_t}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cint}, faceSizes), length(faceSizes), api_faceTags_, api_faceTags_n_, api_faceOrientations_, api_faceOrientations_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     faceTags = unsafe_wrap(Array, api_faceTags_[], api_faceTags_n_[], own = true)
     faceOrientations = unsafe_wrap(Array, api_faceOrientations_[], api_faceOrientations_n_[], own = true)
@@ -3493,32 +3493,35 @@ end
 const get_all_edges = getAllEdges
 
 """
-    gmsh.model.mesh.getAllFaces(faceType)
+    gmsh.model.mesh.getAllFaces()
 
-Get the global unique identifiers `faceTags` and the nodes `faceNodes` of the
-faces of type `faceType` in the mesh. Mesh faces are created e.g. by
-`createFaces()`, `getKeys()` or addFaces().
+Get the global unique identifiers `faceTags` and the nodes `faceNodes` of all
+the faces in the mesh, with `faceSizes` the number of nodes of each face. Mesh
+faces are created e.g. by `createFaces()`, `getKeys()` or addFaces().
 
-Return `faceTags`, `faceNodes`.
+Return `faceTags`, `faceNodes`, `faceSizes`.
 
 Types:
- - `faceType`: integer
  - `faceTags`: vector of sizes
  - `faceNodes`: vector of sizes
+ - `faceSizes`: vector of integers
 """
-function getAllFaces(faceType)
+function getAllFaces()
     api_faceTags_ = Ref{Ptr{Csize_t}}()
     api_faceTags_n_ = Ref{Csize_t}()
     api_faceNodes_ = Ref{Ptr{Csize_t}}()
     api_faceNodes_n_ = Ref{Csize_t}()
+    api_faceSizes_ = Ref{Ptr{Cint}}()
+    api_faceSizes_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetAllFaces, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          faceType, api_faceTags_, api_faceTags_n_, api_faceNodes_, api_faceNodes_n_, ierr)
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_faceTags_, api_faceTags_n_, api_faceNodes_, api_faceNodes_n_, api_faceSizes_, api_faceSizes_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     faceTags = unsafe_wrap(Array, api_faceTags_[], api_faceTags_n_[], own = true)
     faceNodes = unsafe_wrap(Array, api_faceNodes_[], api_faceNodes_n_[], own = true)
-    return faceTags, faceNodes
+    faceSizes = unsafe_wrap(Array, api_faceSizes_[], api_faceSizes_n_[], own = true)
+    return faceTags, faceNodes, faceSizes
 end
 const get_all_faces = getAllFaces
 
@@ -3543,21 +3546,22 @@ end
 const add_edges = addEdges
 
 """
-    gmsh.model.mesh.addFaces(faceType, faceTags, faceNodes)
+    gmsh.model.mesh.addFaces(faceTags, faceNodes, faceSizes)
 
-Add mesh faces of type `faceType` defined by their global unique identifiers
-`faceTags` and their nodes `faceNodes`.
+Add mesh faces defined by their global unique identifiers `faceTags`, their
+nodes `faceNodes` concatenated in a single vector, and `faceSizes` the number of
+nodes of each face.
 
 Types:
- - `faceType`: integer
  - `faceTags`: vector of sizes
  - `faceNodes`: vector of sizes
+ - `faceSizes`: vector of integers
 """
-function addFaces(faceType, faceTags, faceNodes)
+function addFaces(faceTags, faceNodes, faceSizes)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAddFaces, gmsh.lib), Cvoid,
-          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
-          faceType, convert(Vector{Csize_t}, faceTags), length(faceTags), convert(Vector{Csize_t}, faceNodes), length(faceNodes), ierr)
+          (Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Csize_t}, faceTags), length(faceTags), convert(Vector{Csize_t}, faceNodes), length(faceNodes), convert(Vector{Cint}, faceSizes), length(faceSizes), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -3764,39 +3768,42 @@ end
 const get_element_edge_nodes = getElementEdgeNodes
 
 """
-    gmsh.model.mesh.getElementFaceNodes(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
+    gmsh.model.mesh.getElementFaceNodes(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
 
-Get the nodes on the faces of type `faceType` (3 for triangular faces, 4 for
-quadrangular faces) of all elements of type `elementType` classified on the
-entity of tag `tag`. `nodeTags` contains the node tags of the faces for all
-elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is returned by
-element, with elements in the same order as in `getElements` and
+Get the nodes on the faces of all elements of type `elementType` classified on
+the entity of tag `tag`. `nodeTags` contains the node tags of the faces for all
+elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], and `faceSizes` the number of
+nodes of each face: [e1f1N, e1f2N, ...]. Faces are returned for each element in
+their canonical order, with elements in the same order as in `getElements` and
 `getElementsByType`. If `primary` is set, only the primary (corner) nodes of the
 faces are returned. If `tag` < 0, get the face nodes for all entities. If
 `numTasks` > 1, only compute and return the part of the data indexed by `task`
-(for C++ only; output vector must be preallocated).
+(for C++ only; output vectors must be preallocated).
 
-Return `nodeTags`.
+Return `nodeTags`, `faceSizes`.
 
 Types:
  - `elementType`: integer
- - `faceType`: integer
  - `nodeTags`: vector of sizes
+ - `faceSizes`: vector of integers
  - `tag`: integer
  - `primary`: boolean
  - `task`: size
  - `numTasks`: size
 """
-function getElementFaceNodes(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
+function getElementFaceNodes(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
+    api_faceSizes_ = Ref{Ptr{Cint}}()
+    api_faceSizes_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementFaceNodes, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, faceType, api_nodeTags_, api_nodeTags_n_, tag, primary, task, numTasks, ierr)
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, api_nodeTags_, api_nodeTags_n_, api_faceSizes_, api_faceSizes_n_, tag, primary, task, numTasks, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
-    return nodeTags
+    faceSizes = unsafe_wrap(Array, api_faceSizes_[], api_faceSizes_n_[], own = true)
+    return nodeTags, faceSizes
 end
 const get_element_face_nodes = getElementFaceNodes
 

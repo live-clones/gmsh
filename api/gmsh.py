@@ -3912,31 +3912,32 @@ class model:
         get_edges = getEdges
 
         @staticmethod
-        def getFaces(faceType, nodeTags):
+        def getFaces(nodeTags, faceSizes):
             """
-            gmsh.model.mesh.getFaces(faceType, nodeTags)
+            gmsh.model.mesh.getFaces(nodeTags, faceSizes)
 
             Get the global unique mesh face identifiers `faceTags' and orientations
-            `faceOrientations' for an input list of a multiple of three (if `faceType'
-            == 3) or four (if `faceType' == 4) node tags defining these faces,
-            concatenated in the vector `nodeTags'. Mesh faces are created e.g. by
-            `createFaces()', `getKeys()' or `addFaces()'.
+            `faceOrientations' for an input list of faces defined by their node tags
+            concatenated in the vector `nodeTags', with `faceSizes' the number of nodes
+            of each face. Mesh faces are created e.g. by `createFaces()', `getKeys()'
+            or `addFaces()'.
 
             Return `faceTags', `faceOrientations'.
 
             Types:
-            - `faceType': integer
             - `nodeTags': vector of sizes
+            - `faceSizes': vector of integers
             - `faceTags': vector of sizes
             - `faceOrientations': vector of integers
             """
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
+            api_faceSizes_, api_faceSizes_n_ = _ivectorint(faceSizes)
             api_faceTags_, api_faceTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_faceOrientations_, api_faceOrientations_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetFaces(
-                c_int(faceType),
                 api_nodeTags_, api_nodeTags_n_,
+                api_faceSizes_, api_faceSizes_n_,
                 byref(api_faceTags_), byref(api_faceTags_n_),
                 byref(api_faceOrientations_), byref(api_faceOrientations_n_),
                 byref(ierr))
@@ -4017,34 +4018,37 @@ class model:
         get_all_edges = getAllEdges
 
         @staticmethod
-        def getAllFaces(faceType):
+        def getAllFaces():
             """
-            gmsh.model.mesh.getAllFaces(faceType)
+            gmsh.model.mesh.getAllFaces()
 
             Get the global unique identifiers `faceTags' and the nodes `faceNodes' of
-            the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
-            `createFaces()', `getKeys()' or addFaces().
+            all the faces in the mesh, with `faceSizes' the number of nodes of each
+            face. Mesh faces are created e.g. by `createFaces()', `getKeys()' or
+            addFaces().
 
-            Return `faceTags', `faceNodes'.
+            Return `faceTags', `faceNodes', `faceSizes'.
 
             Types:
-            - `faceType': integer
             - `faceTags': vector of sizes
             - `faceNodes': vector of sizes
+            - `faceSizes': vector of integers
             """
             api_faceTags_, api_faceTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_faceNodes_, api_faceNodes_n_ = POINTER(c_size_t)(), c_size_t()
+            api_faceSizes_, api_faceSizes_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetAllFaces(
-                c_int(faceType),
                 byref(api_faceTags_), byref(api_faceTags_n_),
                 byref(api_faceNodes_), byref(api_faceNodes_n_),
+                byref(api_faceSizes_), byref(api_faceSizes_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
                 _ovectorsize(api_faceTags_, api_faceTags_n_.value),
-                _ovectorsize(api_faceNodes_, api_faceNodes_n_.value))
+                _ovectorsize(api_faceNodes_, api_faceNodes_n_.value),
+                _ovectorint(api_faceSizes_, api_faceSizes_n_.value))
         get_all_faces = getAllFaces
 
         @staticmethod
@@ -4071,25 +4075,27 @@ class model:
         add_edges = addEdges
 
         @staticmethod
-        def addFaces(faceType, faceTags, faceNodes):
+        def addFaces(faceTags, faceNodes, faceSizes):
             """
-            gmsh.model.mesh.addFaces(faceType, faceTags, faceNodes)
+            gmsh.model.mesh.addFaces(faceTags, faceNodes, faceSizes)
 
-            Add mesh faces of type `faceType' defined by their global unique
-            identifiers `faceTags' and their nodes `faceNodes'.
+            Add mesh faces defined by their global unique identifiers `faceTags', their
+            nodes `faceNodes' concatenated in a single vector, and `faceSizes' the
+            number of nodes of each face.
 
             Types:
-            - `faceType': integer
             - `faceTags': vector of sizes
             - `faceNodes': vector of sizes
+            - `faceSizes': vector of integers
             """
             api_faceTags_, api_faceTags_n_ = _ivectorsize(faceTags)
             api_faceNodes_, api_faceNodes_n_ = _ivectorsize(faceNodes)
+            api_faceSizes_, api_faceSizes_n_ = _ivectorint(faceSizes)
             ierr = c_int()
             lib.gmshModelMeshAddFaces(
-                c_int(faceType),
                 api_faceTags_, api_faceTags_n_,
                 api_faceNodes_, api_faceNodes_n_,
+                api_faceSizes_, api_faceSizes_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -4320,37 +4326,39 @@ class model:
         get_element_edge_nodes = getElementEdgeNodes
 
         @staticmethod
-        def getElementFaceNodes(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1):
+        def getElementFaceNodes(elementType, tag=-1, primary=False, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getElementFaceNodes(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1)
+            gmsh.model.mesh.getElementFaceNodes(elementType, tag=-1, primary=False, task=0, numTasks=1)
 
-            Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
-            for quadrangular faces) of all elements of type `elementType' classified on
-            the entity of tag `tag'. `nodeTags' contains the node tags of the faces for
-            all elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is returned
-            by element, with elements in the same order as in `getElements' and
-            `getElementsByType'. If `primary' is set, only the primary (corner) nodes
-            of the faces are returned. If `tag' < 0, get the face nodes for all
-            entities. If `numTasks' > 1, only compute and return the part of the data
-            indexed by `task' (for C++ only; output vector must be preallocated).
+            Get the nodes on the faces of all elements of type `elementType' classified
+            on the entity of tag `tag'. `nodeTags' contains the node tags of the faces
+            for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], and `faceSizes' the
+            number of nodes of each face: [e1f1N, e1f2N, ...]. Faces are returned for
+            each element in their canonical order, with elements in the same order as
+            in `getElements' and `getElementsByType'. If `primary' is set, only the
+            primary (corner) nodes of the faces are returned. If `tag' < 0, get the
+            face nodes for all entities. If `numTasks' > 1, only compute and return the
+            part of the data indexed by `task' (for C++ only; output vectors must be
+            preallocated).
 
-            Return `nodeTags'.
+            Return `nodeTags', `faceSizes'.
 
             Types:
             - `elementType': integer
-            - `faceType': integer
             - `nodeTags': vector of sizes
+            - `faceSizes': vector of integers
             - `tag': integer
             - `primary': boolean
             - `task': size
             - `numTasks': size
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_faceSizes_, api_faceSizes_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElementFaceNodes(
                 c_int(elementType),
-                c_int(faceType),
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_faceSizes_), byref(api_faceSizes_n_),
                 c_int(tag),
                 c_int(bool(primary)),
                 c_size_t(task),
@@ -4358,7 +4366,9 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
+            return (
+                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
+                _ovectorint(api_faceSizes_, api_faceSizes_n_.value))
         get_element_face_nodes = getElementFaceNodes
 
         @staticmethod
