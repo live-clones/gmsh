@@ -23,13 +23,10 @@
 class MPolygon : public MElement {
 private:
   std::vector<MVertex *> _vertices;
-  std::size_t _numBoundary;
   mutable std::vector<int> _triangles; // 3 indices in _vertices per triangle
+  int _numBoundary;
   mutable bool _givenTriangles;
-  SVector3 _normal;
-  std::vector<IntPt> _intpt;
 
-  void _computeNormal();
   void _ensureTriangles() const;
   // the sub-triangle containing the point, or the closest one, with the
   // barycentric coordinates of the point in it and its distance to its plane
@@ -44,12 +41,12 @@ public:
   virtual std::size_t getNumVertices() const { return _vertices.size(); }
   virtual int getNumFaceVertices() const
   {
-    return (int)(_vertices.size() - _numBoundary);
+    return (int)_vertices.size() - _numBoundary;
   }
   virtual MVertex *getVertex(int num) { return _vertices[num]; }
   virtual const MVertex *getVertex(int num) const { return _vertices[num]; }
 
-  virtual int getNumEdges() const { return (int)_numBoundary; }
+  virtual int getNumEdges() const { return _numBoundary; }
   std::array<int, 2> getEdgeIndices(int num) const
   {
     return {num, (num + 1) % getNumEdges()};
@@ -123,7 +120,9 @@ public:
     std::array<int, 3> is = getTriangleIndices(num);
     return MTriangle(_vertices[is[0]], _vertices[is[1]], _vertices[is[2]]);
   }
-  const SVector3 &getNormal() const { return _normal; }
+  // unit normal of the boundary (Newell's method: exact for planar polygons,
+  // and an average for the others)
+  SVector3 getNormal() const;
 
   // geometry: reference coordinates are the physical coordinates
   virtual double getVolume();

@@ -8,25 +8,22 @@
 #include "GmshMessage.h"
 
 MPolygon::MPolygon(const std::vector<MVertex *> &vertices, int num, int part)
-  : MElement(num, part), _vertices(vertices), _numBoundary(vertices.size()),
-    _givenTriangles(false)
+  : MElement(num, part), _vertices(vertices),
+    _numBoundary((int)vertices.size()), _givenTriangles(false)
 {
-  _computeNormal();
 }
 
-void MPolygon::_computeNormal()
+SVector3 MPolygon::getNormal() const
 {
-  // Newell's method: exact for planar polygons, and a reasonable average for
-  // the others
-  _normal = SVector3(0., 0., 0.);
-  int N = (int)_numBoundary;
-  for(int i = 0; i < N; i++) {
-    MVertex *a = _vertices[i], *b = _vertices[(i + 1) % N];
-    _normal[0] += (a->y() - b->y()) * (a->z() + b->z());
-    _normal[1] += (a->z() - b->z()) * (a->x() + b->x());
-    _normal[2] += (a->x() - b->x()) * (a->y() + b->y());
+  SVector3 n(0., 0., 0.);
+  for(int i = 0; i < _numBoundary; i++) {
+    MVertex *a = _vertices[i], *b = _vertices[(i + 1) % _numBoundary];
+    n[0] += (a->y() - b->y()) * (a->z() + b->z());
+    n[1] += (a->z() - b->z()) * (a->x() + b->x());
+    n[2] += (a->x() - b->x()) * (a->y() + b->y());
   }
-  if(_normal.norm() > 0.) _normal.normalize();
+  if(n.norm() > 0.) n.normalize();
+  return n;
 }
 
 void MPolygon::setTriangles(const std::vector<MVertex *> &simplices)
@@ -48,13 +45,14 @@ void MPolygon::setTriangles(const std::vector<MVertex *> &simplices)
     _triangles[i] = it->second;
   }
   // orient the triangles like the polygon
+  SVector3 normal = getNormal();
   for(std::size_t i = 0; i < _triangles.size(); i += 3) {
     MVertex *v0 = _vertices[_triangles[i]], *v1 = _vertices[_triangles[i + 1]],
             *v2 = _vertices[_triangles[i + 2]];
     SVector3 n = crossprod(
       SVector3(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z()),
       SVector3(v2->x() - v0->x(), v2->y() - v0->y(), v2->z() - v0->z()));
-    if(dot(n, _normal) < 0.) std::swap(_triangles[i + 1], _triangles[i + 2]);
+    if(dot(n, normal) < 0.) std::swap(_triangles[i + 1], _triangles[i + 2]);
   }
 }
 
@@ -63,12 +61,13 @@ void MPolygon::_ensureTriangles() const
   if(!_triangles.empty() || _numBoundary < 3) return;
 
   // ear clipping in the plane of the polygon
-  SVector3 e1 = _normal;
-  e1 = (fabs(_normal[0]) < 0.9) ? crossprod(_normal, SVector3(1., 0., 0.)) :
-                                  crossprod(_normal, SVector3(0., 1., 0.));
+  SVector3 normal = getNormal();
+  SVector3 e1 = (fabs(normal[0]) < 0.9) ?
+                  crossprod(normal, SVector3(1., 0., 0.)) :
+                  crossprod(normal, SVector3(0., 1., 0.));
   e1.normalize();
-  SVector3 e2 = crossprod(_normal, e1);
-  int N = (int)_numBoundary;
+  SVector3 e2 = crossprod(normal, e1);
+  int N = _numBoundary;
   std::vector<double> x(N), y(N);
   double scale = 0.;
   for(int i = 0; i < N; i++) {
@@ -142,11 +141,12 @@ void MPolygon::getEdgeRep(bool curved, int num, double *x, double *y,
                           double *z, SVector3 *n)
 {
   MEdge e = getEdge(num);
+  SVector3 normal = getNormal();
   for(int i = 0; i < 2; i++) {
     x[i] = e.getVertex(i)->x();
     y[i] = e.getVertex(i)->y();
     z[i] = e.getVertex(i)->z();
-    n[i] = _normal;
+    n[i] = normal;
   }
 }
 
@@ -163,10 +163,9 @@ void MPolygon::reverse()
   std::reverse(_vertices.begin(), _vertices.begin() + _numBoundary);
   // the boundary indices changed: i -> numBoundary - 1 - i
   for(auto &t : _triangles)
-    if(t < (int)_numBoundary) t = (int)_numBoundary - 1 - t;
+    if(t < _numBoundary) t = _numBoundary - 1 - t;
   for(std::size_t i = 0; i < _triangles.size(); i += 3)
     std::swap(_triangles[i + 1], _triangles[i + 2]);
-  _normal = -_normal;
 }
 
 double MPolygon::getVolume()
@@ -230,9 +229,12 @@ bool MPolygon::isInside(double u, double v, double w) const
 
 void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
+  // the points are consumed right away by the caller (as those of the simplex
+  // rules, which are static tables): no need to keep them per element
+  static thread_local std::vector<IntPt> intpt;
   int n = getNGQTPts(pOrder);
   IntPt *p = getGQTPts(pOrder);
-  _intpt.clear();
+  intpt.clear();
   for(int i = 0; i < getNumTriangles(); i++) {
     MTriangle t = getTriangle(i);
     for(int j = 0; j < n; j++) {
@@ -240,11 +242,11 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
       t.pnt(p[j].pt[0], p[j].pt[1], p[j].pt[2], ip.pt);
       ip.weight = p[j].weight * t.getJacobianDeterminant(p[j].pt[0],
                                                          p[j].pt[1], 0.);
-      _intpt.push_back(ip);
+      intpt.push_back(ip);
     }
   }
-  *npts = (int)_intpt.size();
-  *pts = _intpt.empty() ? nullptr : &_intpt[0];
+  *npts = (int)intpt.size();
+  *pts = intpt.empty() ? nullptr : &intpt[0];
 }
 
 void MPolygon::getShapeFunctions(double u, double v, double w, double s[],

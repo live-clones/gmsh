@@ -21,19 +21,21 @@
 // star-shaped with respect to it). The reference coordinates of the polyhedron
 // are its physical coordinates, and the shape functions are P1 on each
 // sub-tetrahedron.
+//
+// The faces and the tetrahedra live in a single array: the offsets of the
+// faces (numFaces + 1 entries), the indices of their nodes, then 4 indices per
+// tetrahedron from _tetOffset on. Everything else (edges, the triangles drawn
+// for the faces, integration points) is derived when needed.
 class MPolyhedron : public MElement {
 private:
   std::vector<MVertex *> _vertices;
-  std::size_t _numBoundary;
-  std::vector<int> _polygons, _polygonStarts; // faces, as indices in _vertices
-  std::vector<int> _lines, _lineFaces; // edges, and a face holding each
-  mutable std::vector<int> _tetrahedra; // 4 indices in _vertices per tet
-  mutable std::vector<int> _triangles; // the boundary of the tetrahedra
+  mutable std::vector<int> _data;
+  mutable std::vector<int> _edges; // 2 indices per edge, built when needed
+  int _numBoundary, _numFaces, _tetOffset;
   mutable bool _givenTetrahedra;
-  std::vector<IntPt> _intpt;
 
-  void _computeEdges();
-  void _computeTriangles() const;
+  const int *_faceIndices() const { return &_data[_numFaces + 1]; }
+  void _ensureEdges() const;
   void _ensureTetrahedra() const;
   int _findTetrahedron(double x, double y, double z, double bary[4]) const;
 
@@ -46,15 +48,20 @@ public:
   virtual std::size_t getNumVertices() const { return _vertices.size(); }
   virtual int getNumVolumeVertices() const
   {
-    return (int)(_vertices.size() - _numBoundary);
+    return (int)_vertices.size() - _numBoundary;
   }
   virtual MVertex *getVertex(int num) { return _vertices[num]; }
   virtual const MVertex *getVertex(int num) const { return _vertices[num]; }
 
-  virtual int getNumEdges() const { return (int)_lines.size() / 2; }
+  virtual int getNumEdges() const
+  {
+    _ensureEdges();
+    return (int)_edges.size() / 2;
+  }
   std::array<int, 2> getEdgeIndices(int num) const
   {
-    return {_lines[2 * num], _lines[2 * num + 1]};
+    _ensureEdges();
+    return {_edges[2 * num], _edges[2 * num + 1]};
   }
   virtual MEdge getEdge(int num) const
   {
@@ -74,7 +81,7 @@ public:
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
 
-  virtual int getNumFaces() { return getNumPolygons(); }
+  virtual int getNumFaces() { return _numFaces; }
   virtual MFace getFace(int num) const
   {
     std::vector<MVertex *> v;
@@ -84,19 +91,13 @@ public:
   virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.clear();
-    for(int i = _polygonStarts[num]; i < _polygonStarts[num + 1]; i++)
-      v.push_back(_vertices[_polygons[i]]);
+    const int *f = _faceIndices();
+    for(int i = _data[num]; i < _data[num + 1]; i++)
+      v.push_back(_vertices[f[i]]);
   }
-  virtual int getNumFacesRep(bool curved)
-  {
-    _ensureTetrahedra();
-    return (int)_triangles.size() / 3;
-  }
-  std::array<int, 3> getFaceRepIndices(bool curved, int num) const
-  {
-    return {_triangles[3 * num], _triangles[3 * num + 1],
-            _triangles[3 * num + 2]};
-  }
+  // the faces are drawn as fans of triangles from their first node
+  virtual int getNumFacesRep(bool curved);
+  std::array<int, 3> getFaceRepIndices(bool curved, int num) const;
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
 
@@ -127,21 +128,21 @@ public:
     _ensureTetrahedra();
     _givenTetrahedra = true;
   }
-  int getNumPolygons() const
+  int getNumPolygons() const { return _numFaces; }
+  int getPolygonStart(int i) const { return _data[i]; }
+  MVertex *getPolygonVertex(int i) const
   {
-    return _polygonStarts.empty() ? 0 : (int)_polygonStarts.size() - 1;
+    return _vertices[_faceIndices()[i]];
   }
-  int getPolygonStart(int i) const { return _polygonStarts[i]; }
-  MVertex *getPolygonVertex(int i) const { return _vertices[_polygons[i]]; }
   int getNumTetrahedra() const
   {
     _ensureTetrahedra();
-    return (int)_tetrahedra.size() / 4;
+    return ((int)_data.size() - _tetOffset) / 4;
   }
   std::array<int, 4> getTetrahedronIndices(int num) const
   {
-    return {_tetrahedra[4 * num], _tetrahedra[4 * num + 1],
-            _tetrahedra[4 * num + 2], _tetrahedra[4 * num + 3]};
+    const int *t = &_data[_tetOffset + 4 * num];
+    return {t[0], t[1], t[2], t[3]};
   }
   MTetrahedron getTetrahedron(int num) const
   {
