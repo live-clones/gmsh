@@ -573,7 +573,8 @@ int ElementType::getNumVertices(int mshtype)
   case MSH_PYR_61: return 61;
   case MSH_PYR_69: return 69;
   case MSH_TRIH_4: return 4;
-  // case MSH_POLYH_ : return 0;
+  case MSH_POLYG_:
+  case MSH_POLYH_: return 0; // varies from one element to the other
   default: Msg::Warning("Unknown element MSH type %d", mshtype); return 0;
   }
 
@@ -855,6 +856,8 @@ int ElementType::getType(int parentType, int order, bool serendip)
     }
     break;
   case TYPE_TRIH: return MSH_TRIH_4;
+  case TYPE_POLYG: return MSH_POLYG_;
+  case TYPE_POLYH: return MSH_POLYH_;
   default:
     Msg::Warning("Unknown element parent type %i, returning 0", parentType);
     return 0;

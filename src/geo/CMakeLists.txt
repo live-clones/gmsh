@@ -41,6 +41,7 @@ set(SRC
   MElement.cpp MElementOctree.cpp
     MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp
     MHexahedron.cpp MPrism.cpp MPyramid.cpp MTrihedron.cpp MSubElement.cpp
+    MPolygon.cpp MPolyhedron.cpp
   Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp Chain.cpp
   MVertexBoundaryLayerData.cpp
   CGNSCommon.cpp

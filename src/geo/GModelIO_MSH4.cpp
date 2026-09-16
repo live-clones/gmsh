@@ -3419,13 +3419,14 @@ static void writeMSH4Polytopes(
           tags.push_back(e->getNum());
           if(e->getTypeForMSH() == MSH_POLYG_) {
             MPolygon *polygon = static_cast<MPolygon *>(e);
-            size_t polygonSize = polygon->getNumVertices();
+            size_t polygonSize = polygon->getNumPrimaryVertices();
             tags.push_back(polygonSize);
             for(std::size_t j = 0; j < polygonSize; j++) {
               tags.push_back(polygon->getVertex(j)->getNum());
             }
 
-            const int numTriangles = polygon->getNumTriangles();
+            const int numTriangles =
+              polygon->hasGivenTriangles() ? polygon->getNumTriangles() : 0;
             tags.push_back(numTriangles);
             for(int j = 0; j < numTriangles; j++) {
               MTriangle tri = polygon->getTriangle(j);
@@ -3447,7 +3448,9 @@ static void writeMSH4Polytopes(
               }
             }
 
-            const int numTetrahedra = polyhedron->getNumTetrahedra();
+            const int numTetrahedra = polyhedron->hasGivenTetrahedra() ?
+                                        polyhedron->getNumTetrahedra() :
+                                        0;
             tags.push_back(numTetrahedra);
             for(int j = 0; j < numTetrahedra; j++) {
               MTetrahedron tetra = polyhedron->getTetrahedron(j);
@@ -3465,13 +3468,14 @@ static void writeMSH4Polytopes(
           fprintf(fp, "%zu ", e->getNum());
           if(e->getTypeForMSH() == MSH_POLYG_) {
             MPolygon *polygon = static_cast<MPolygon *>(e);
-            int polygonSize = polygon->getNumVertices();
+            int polygonSize = polygon->getNumPrimaryVertices();
             fprintf(fp, "%d ", polygonSize);
             for(int j = 0; j < polygonSize; j++) {
               fprintf(fp, "%zu ", polygon->getVertex(j)->getNum());
             }
 
-            const int numTriangles = polygon->getNumTriangles();
+            const int numTriangles =
+              polygon->hasGivenTriangles() ? polygon->getNumTriangles() : 0;
             fprintf(fp, "\n%d ", numTriangles);
             for(int j = 0; j < numTriangles; j++) {
               MTriangle tri = polygon->getTriangle(j);
@@ -3494,7 +3498,9 @@ static void writeMSH4Polytopes(
               }
             }
 
-            const int numTetrahedra = polyhedron->getNumTetrahedra();
+            const int numTetrahedra = polyhedron->hasGivenTetrahedra() ?
+                                        polyhedron->getNumTetrahedra() :
+                                        0;
             fprintf(fp, "\n%d ", numTetrahedra);
             for(int j = 0; j < numTetrahedra; j++) {
               MTetrahedron tera = polyhedron->getTetrahedron(j);
