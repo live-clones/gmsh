@@ -376,6 +376,16 @@ Display post-processing trihedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.DrawPolygons
+Display post-processing polygons?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawPolyhedra
+Display post-processing polyhedra?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.DrawQuadrangles
 Display post-processing quadrangles?@*
 Default value: @code{1}@*

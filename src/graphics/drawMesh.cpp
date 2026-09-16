@@ -669,7 +669,8 @@ public:
         drawElementLabels(_ctx, f, f->quadrangles,
                           CTX::instance()->mesh.surfaceFaces,
                           CTX::instance()->color.mesh.line);
-      drawElementLabels(_ctx, f, f->polygons,
+      if(CTX::instance()->mesh.polygons)
+        drawElementLabels(_ctx, f, f->polygons,
                         CTX::instance()->mesh.surfaceFaces,
                         CTX::instance()->color.mesh.line);
     }
@@ -683,20 +684,21 @@ public:
           drawVerticesPerElement(_ctx, f, f->triangles, g, what);
         if(CTX::instance()->mesh.quadrangles)
           drawVerticesPerElement(_ctx, f, f->quadrangles, g, what);
-        drawVerticesPerElement(_ctx, f, f->polygons, g, what);
+        if(CTX::instance()->mesh.polygons)
+          drawVerticesPerElement(_ctx, f, f->polygons, g, what);
       }
     });
 
     if(CTX::instance()->mesh.normals) {
       if(CTX::instance()->mesh.triangles) drawNormals(_ctx, f->triangles);
       if(CTX::instance()->mesh.quadrangles) drawNormals(_ctx, f->quadrangles);
-      drawNormals(_ctx, f->polygons);
+      if(CTX::instance()->mesh.polygons) drawNormals(_ctx, f->polygons);
     }
 
     if(CTX::instance()->mesh.dual) {
       if(CTX::instance()->mesh.triangles) drawBarycentricDual(f->triangles);
       if(CTX::instance()->mesh.quadrangles) drawBarycentricDual(f->quadrangles);
-      drawBarycentricDual(f->polygons);
+      if(CTX::instance()->mesh.polygons) drawBarycentricDual(f->polygons);
     }
     else if(CTX::instance()->mesh.voronoi) {
       if(CTX::instance()->mesh.triangles) drawVoronoiDual(f->triangles);
@@ -764,7 +766,8 @@ public:
                           CTX::instance()->mesh.volumeFaces ||
                             CTX::instance()->mesh.surfaceFaces,
                           CTX::instance()->color.mesh.line);
-      drawElementLabels(_ctx, r, r->polyhedra,
+      if(CTX::instance()->mesh.polyhedra)
+        drawElementLabels(_ctx, r, r->polyhedra,
                         CTX::instance()->mesh.volumeFaces ||
                           CTX::instance()->mesh.surfaceFaces,
                         CTX::instance()->color.mesh.line);
@@ -785,7 +788,8 @@ public:
           drawVerticesPerElement(_ctx, r, r->pyramids, g, what);
         if(CTX::instance()->mesh.trihedra)
           drawVerticesPerElement(_ctx, r, r->trihedra, g, what);
-        drawVerticesPerElement(_ctx, r, r->polyhedra, g, what);
+        if(CTX::instance()->mesh.polyhedra)
+          drawVerticesPerElement(_ctx, r, r->polyhedra, g, what);
       }
     });
 
@@ -795,7 +799,7 @@ public:
       if(CTX::instance()->mesh.prisms) drawBarycentricDual(r->prisms);
       if(CTX::instance()->mesh.pyramids) drawBarycentricDual(r->pyramids);
       if(CTX::instance()->mesh.trihedra) drawBarycentricDual(r->trihedra);
-      drawBarycentricDual(r->polyhedra);
+      if(CTX::instance()->mesh.polyhedra) drawBarycentricDual(r->polyhedra);
     }
 
     if(CTX::instance()->mesh.voronoi) {
