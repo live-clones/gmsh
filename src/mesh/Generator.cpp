@@ -234,6 +234,7 @@ void GetStatistics(double stat[50], double quality[3][101], bool visibleOnly)
     stat[4] += (*it)->mesh_vertices.size();
     stat[7] += (*it)->triangles.size();
     stat[8] += (*it)->quadrangles.size();
+    stat[46] += (*it)->polygons.size();
   }
 
   for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
@@ -244,6 +245,7 @@ void GetStatistics(double stat[50], double quality[3][101], bool visibleOnly)
     stat[11] += (*it)->prisms.size();
     stat[12] += (*it)->pyramids.size();
     stat[13] += (*it)->trihedra.size();
+    stat[47] += (*it)->polyhedra.size();
   }
 
   stat[14] = CTX::instance()->mesh.timer[0];

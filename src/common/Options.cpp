@@ -7013,6 +7013,20 @@ double opt_mesh_nb_trihedra(OPT_ARGS_NUM)
   return s[13];
 }
 
+double opt_mesh_nb_polygons(OPT_ARGS_NUM)
+{
+  double s[50];
+  GetStatistics(s);
+  return s[46];
+}
+
+double opt_mesh_nb_polyhedra(OPT_ARGS_NUM)
+{
+  double s[50];
+  GetStatistics(s);
+  return s[47];
+}
+
 double opt_mesh_cpu_time(OPT_ARGS_NUM)
 {
   return CTX::instance()->mesh.timer[0] + CTX::instance()->mesh.timer[1] +

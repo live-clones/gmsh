@@ -511,6 +511,16 @@ Number of prisms in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Mesh.NbPolygons
+Number of polygons in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbPolyhedra
+Number of polyhedra in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item Mesh.NbPyramids
 Number of pyramids in the current mesh (read-only)@*
 Default value: @code{0}@*

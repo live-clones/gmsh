@@ -653,6 +653,8 @@ double opt_mesh_nb_hexahedra(OPT_ARGS_NUM);
 double opt_mesh_nb_prisms(OPT_ARGS_NUM);
 double opt_mesh_nb_pyramids(OPT_ARGS_NUM);
 double opt_mesh_nb_trihedra(OPT_ARGS_NUM);
+double opt_mesh_nb_polygons(OPT_ARGS_NUM);
+double opt_mesh_nb_polyhedra(OPT_ARGS_NUM);
 double opt_mesh_cpu_time(OPT_ARGS_NUM);
 double opt_mesh_min_quality(OPT_ARGS_NUM);
 double opt_mesh_avg_quality(OPT_ARGS_NUM);
