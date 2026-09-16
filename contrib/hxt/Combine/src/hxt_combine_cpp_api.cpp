@@ -60,7 +60,8 @@ namespace {
 
     CellGreedySelection(const TetMeshWrapper& tets)
       :tetOwner_(tets.nbTets(), NO_CELL),
-      vertexRefCount_(tets.nbVertices(), 0)
+      vertexRefCount_(tets.nbVertices(), 0),
+      vertexToSelectedHex_(tets.nbVertices())
     {}
 
     /**
@@ -171,7 +172,7 @@ namespace {
         resolved[c] = true;
 
         if (!cells[c].isHex()) continue; // let the trailing scan handle it
-        if (isCellCompatible(cells[c])) {
+        if (isCellCompatible(cells[c], cells)) {
           selected[c] = true;
           addCellCompatibilityConstraints(cells[c], c);
           pushNeighbors(c);
@@ -183,7 +184,7 @@ namespace {
       for (unsigned int i = 0; i < globalOrder.size(); ++i) {
         CellIndex cellId = globalOrder[i];
         if (selected[cellId] || cells[cellId].isHex()) continue;
-        if (isCellCompatible(cells[cellId])) {
+        if (isCellCompatible(cells[cellId], cells)) {
           selected[cellId] = true;
           addCellCompatibilityConstraints(cells[cellId], cellId);
         }
@@ -248,7 +249,7 @@ namespace {
         added.clear();
         for (CellIndex c : poolSorted) {
           if (selected[c]) continue;
-          if (isCellCompatible(cells[c])) {
+          if (isCellCompatible(cells[c], cells)) {
             selected[c] = true;
             addCellCompatibilityConstraints(cells[c], c);
             added.push_back(c);
@@ -308,7 +309,7 @@ namespace {
       for (CellIndex c : order) {
         if (selected[c] || !cells[c].isHex()) continue;
         if (oneInteriorTetSelected(cells[c])) continue;
-        if (isCellCompatible(cells[c])) continue; // would have been picked already
+        if (isCellCompatible(cells[c], cells)) continue; // would have been picked already
 
         blockers.clear();
         for (unsigned int i = 0; i < cells[c].nbVertices(); ++i)
@@ -334,7 +335,7 @@ namespace {
         pool.erase(c);
 
         added.clear();
-        if (isCellCompatible(cells[c])) {
+        if (isCellCompatible(cells[c], cells)) {
           selected[c] = true;
           addCellCompatibilityConstraints(cells[c], c);
           added.push_back(c);
@@ -346,7 +347,7 @@ namespace {
           });
         for (CellIndex p : poolSorted) {
           if (selected[p]) continue;
-          if (isCellCompatible(cells[p])) {
+          if (isCellCompatible(cells[p], cells)) {
             selected[p] = true;
             addCellCompatibilityConstraints(cells[p], p);
             added.push_back(p);
@@ -379,8 +380,18 @@ namespace {
     * No need to check triangular facets againt quad facets, because the
     * check of their edges against the diagonals is sufficient.
     */
-    bool isCellCompatible(const HXTCombineCell& cell) const
+    bool isCellCompatible(const HXTCombineCell& cell, const vector<HXTCombineCell>& cells) const
     {
+      // EXPERIMENTAL, opt-in only (GMSH_PAPER_COMPAT): the simpler
+      // pairwise test from Pellerin, Johnen, Remacle (IMR26 2017)
+      // "Identifying combinations of tetrahedra into hexahedra: a
+      // vertex based strategy" -- see isCellCompatiblePaper2017 below.
+      // Default behaviour (flag unset) falls straight through to the
+      // original code beneath, completely unchanged.
+      static bool paperCompat = getenv("GMSH_PAPER_COMPAT") != nullptr;
+      if (paperCompat && cell.isHex())
+        return isCellCompatiblePaper2017(cell, cells);
+
       if (oneInteriorTetSelected(cell)) return false;
 
       unsigned int nbCommonVertices = numberSelectedVertices(cell);
@@ -390,7 +401,7 @@ namespace {
         if (!checkDiagonalsAgainstEdges(cell)) return false;
         if (!checkDiagonalsAgainstDiagonals(cell)) return false;
         if (nbCommonVertices > 2) {
-          // Does this test really discard things ? 
+          // Does this test really discard things ?
           // REdundant ewith diagonal test ?
           // seems that it is most of the time.. not with pyramids ? non convex positions ?
 
@@ -399,6 +410,82 @@ namespace {
         }
         else return true;
       }
+    }
+
+    /**
+    * EXPERIMENTAL: pairwise compatibility test exactly as described in
+    * Pellerin, Johnen, Remacle, "Identifying combinations of tetrahedra
+    * into hexahedra: a vertex based strategy", IMR26 2017, section on
+    * hex-dominant mesh generation: "Two hexahedra of H are compatible
+    * if their intersection is either empty or an element of their
+    * boundary: a shared vertex, a shared edge, or a shared quadrilateral
+    * face. [...] If the two hexahedra share one, two, or four vertices,
+    * then we check that the corresponding vertex, edge, or face is
+    * indeed on the boundary of both hexahedra. If the two hexahedra
+    * share three vertices, they cannot be compatible." Unlike the
+    * E/D_Q/D_H bookkeeping above (built for the more general hex +
+    * prism + pyramid combinatorial search), this never looks at face
+    * diagonals at all -- only at whether the shared vertex set is a
+    * genuine edge/face of *both* hexes.
+    */
+    bool isCellCompatiblePaper2017(const HXTCombineCell& cell, const vector<HXTCombineCell>& cells) const
+    {
+      if (oneInteriorTetSelected(cell)) return false;
+
+      std::set<CellIndex> neighbors;
+      for (unsigned int i = 0; i < cell.nbVertices(); ++i)
+        for (CellIndex nb : vertexToSelectedHex_[cell.vertexes[i]])
+          neighbors.insert(nb);
+
+      std::vector<VertexIndex> shared;
+      for (CellIndex nbId : neighbors) {
+        const HXTCombineCell& other = cells[nbId];
+        shared.clear();
+        for (unsigned int i = 0; i < cell.nbVertices(); ++i)
+          if (other.hasVertex(cell.vertexes[i])) shared.push_back(cell.vertexes[i]);
+
+        if (shared.size() <= 1) continue;
+        if (shared.size() == 2) {
+          if (!isEdgeOfHex(cell, shared[0], shared[1]) ||
+              !isEdgeOfHex(other, shared[0], shared[1]))
+            return false;
+        }
+        else if (shared.size() == 4) {
+          if (!isFaceOfHex(cell, shared) || !isFaceOfHex(other, shared))
+            return false;
+        }
+        else {
+          // 3 shared vertices (explicitly ruled out by the paper), or
+          // more than 4 (not covered -- treated conservatively).
+          return false;
+        }
+      }
+      return true;
+    }
+
+    static bool isEdgeOfHex(const HXTCombineCell& h, VertexIndex a, VertexIndex b)
+    {
+      for (unsigned int e = 0; e < Hex::nbEdges; ++e) {
+        VertexIndex v0 = h.vertex(Hex::edgeVertex[e][0]);
+        VertexIndex v1 = h.vertex(Hex::edgeVertex[e][1]);
+        if ((v0 == a && v1 == b) || (v0 == b && v1 == a)) return true;
+      }
+      return false;
+    }
+
+    static bool isFaceOfHex(const HXTCombineCell& h, const std::vector<VertexIndex>& verts4)
+    {
+      std::array<VertexIndex, 4> sortedIn;
+      std::copy(verts4.begin(), verts4.end(), sortedIn.begin());
+      std::sort(sortedIn.begin(), sortedIn.end());
+      for (unsigned int f = 0; f < Hex::nbQuadFacets; ++f) {
+        std::array<VertexIndex, 4> fv = {
+          h.vertex(Hex::facetVertex[f][0]), h.vertex(Hex::facetVertex[f][1]),
+          h.vertex(Hex::facetVertex[f][2]), h.vertex(Hex::facetVertex[f][3]) };
+        std::sort(fv.begin(), fv.end());
+        if (fv == sortedIn) return true;
+      }
+      return false;
     }
 
     bool oneInteriorTetSelected(const HXTCombineCell& cell) const {
@@ -517,8 +604,10 @@ namespace {
     */
     void addCellCompatibilityConstraints(const HXTCombineCell& cell, CellIndex id)
     {
-      for (CellVertexIndex i = 0; i < cell.nbVertices(); ++i)
+      for (CellVertexIndex i = 0; i < cell.nbVertices(); ++i) {
         vertexRefCount_[cell.vertexes[i]]++;
+        vertexToSelectedHex_[cell.vertexes[i]].push_back(id);
+      }
 
       for (CellTetIndex i = 0; i < cell.nbInteriorTets(); ++i)
         tetOwner_[cell.interiorTets()[i]] = id;
@@ -537,8 +626,12 @@ namespace {
     */
     void removeCellCompatibilityConstraints(const HXTCombineCell& cell, CellIndex id)
     {
-      for (CellVertexIndex i = 0; i < cell.nbVertices(); ++i)
+      for (CellVertexIndex i = 0; i < cell.nbVertices(); ++i) {
         vertexRefCount_[cell.vertexes[i]]--;
+        std::vector<CellIndex>& atV = vertexToSelectedHex_[cell.vertexes[i]];
+        auto it = std::find(atV.begin(), atV.end(), id);
+        if (it != atV.end()) atV.erase(it);
+      }
 
       for (CellTetIndex i = 0; i < cell.nbInteriorTets(); ++i) {
         TetIndex t = cell.interiorTets()[i];
@@ -654,6 +747,15 @@ namespace {
   private:
     std::vector<CellIndex> tetOwner_;
     std::vector<int> vertexRefCount_;
+    // EXPERIMENTAL, additive only: for the simpler pairwise compatibility
+    // test described in Pellerin, Johnen, Remacle (IMR26 2017)
+    // "Identifying combinations of tetrahedra into hexahedra: a vertex
+    // based strategy" -- which vertex belongs to which already-selected
+    // hexes (a vertex can be shared by several). Kept in sync alongside
+    // vertexRefCount_ but never consulted unless GMSH_PAPER_COMPAT is
+    // set, so the existing E/D_Q/D_H-based isCellCompatible path is
+    // completely unaffected.
+    std::vector<std::vector<CellIndex> > vertexToSelectedHex_;
 
     /**
     * \todo For very large meshes these sets are a bottleneck
@@ -734,7 +836,7 @@ namespace HXTCombine {
   }
 
 
-  unsigned int HXTCombineCellStore::nbSelectedHexes() const 
+  unsigned int HXTCombineCellStore::nbSelectedHexes() const
   {
     return std::count(selectedCells_[HEX].begin(), selectedCells_[HEX].end(), true);
   }

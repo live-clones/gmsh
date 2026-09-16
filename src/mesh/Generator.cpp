@@ -716,7 +716,12 @@ static void Mesh2D(GModel *m)
   }
 
 #if defined(HAVE_QUADOPTIMIZER)
-  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS)
+  // Skip the pattern-based/cleanup quad finalization pass when a 3D
+  // hex-combine (RTREE) is requested: it re-touches surface mesh sizes
+  // and point positions that Pack3D placed in 3D specifically for the
+  // combine step, breaking them.
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_RTREE)
     QuadOptimizer::finishPackMesh(m);
 #else
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) {
