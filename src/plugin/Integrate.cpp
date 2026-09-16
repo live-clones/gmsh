@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "Integrate.h"
+#include "MElement.h"
 #include "shapeFunctions.h"
 #include "PViewOptions.h"
 
@@ -81,6 +82,21 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
           int numNodes = data1->getNumNodes(step, ent, ele);
           int dim = data1->getDimension(step, ent, ele);
           if((dimension > 0) && (dim != dimension)) continue;
+          int type = data1->getType(step, ent, ele);
+          if(type == TYPE_POLYG || type == TYPE_POLYH) {
+            // integrate on the element itself (P1 on its sub-simplices)
+            MElement *e = data1->getElement(step, ent, ele);
+            if(!e) continue;
+            if(!scalar) {
+              Msg::Warning("Only scalar views are integrated on polytopes");
+              continue;
+            }
+            std::vector<double> v(numNodes);
+            for(int nod = 0; nod < numNodes; nod++)
+              data1->getValue(step, ent, ele, nod, 0, v[nod]);
+            res += e->integrate(&v[0], 1);
+            continue;
+          }
           double x[8], y[8], z[8], val[8 * 3] = {0.};
           for(int nod = 0; nod < numNodes; nod++) {
             data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
