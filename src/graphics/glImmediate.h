@@ -193,6 +193,10 @@ bool gmshLightTwoSideEnabled();
 
 // the line width; a core profile draws every line one pixel wide, so the
 // shader pipeline makes wider lines out of triangles
+// the scale applied to what is given in pixels of the window (line widths,
+// point sizes): 1 on the window, more in a picture drawn at another size
+void gmshPixelScale(double scale);
+double gmshPixelScale();
 void gmshLineWidth(double w);
 double gmshCurrentLineWidth();
 void gmshPointSize(double s);
@@ -228,6 +232,26 @@ inline void gmshPolygonFill(bool fill)
   if(gmshUseShaders()) gmshFlushImmediate();
   glPolygonMode(GL_FRONT_AND_BACK, fill ? GL_FILL : GL_LINE);
 }
+
+// The depth test, and whether it writes. What is waiting was collected to be
+// drawn the way it was when it was collected: turning the test off with
+// glDisable() alone leaves the queue for later, under whatever state is in
+// force then, which is how the background gradient came to write its depth
+// over the whole window, where a pass reading the depth afterwards took it
+// for the model.
+inline void gmshDepthTest(bool on)
+{
+  if(gmshUseShaders()) gmshFlushImmediate();
+  if(on)
+    glEnable(GL_DEPTH_TEST);
+  else
+    glDisable(GL_DEPTH_TEST);
+}
+inline void gmshDepthMask(bool on)
+{
+  if(gmshUseShaders()) gmshFlushImmediate();
+  glDepthMask(on ? GL_TRUE : GL_FALSE);
+}
 inline bool gmshPolygonFilled()
 {
   // a compatibility profile answers with two values (front and back), a
@@ -261,6 +285,10 @@ const double *gmshMatrix(int kind);
 void gmshClipPlane(int i, const double plane[4]);
 void gmshClipPlaneOn(int i, bool on);
 bool gmshClipPlaneEnabled(int i);
+// keep only what the enabled planes cut off (shader pipeline only: the fixed
+// function planes have no such mode)
+void gmshClipOutside(bool outside);
+bool gmshClipOutside();
 // the plane in eye coordinates, which is what a shader is handed
 const double *gmshClipPlaneEye(int i);
 

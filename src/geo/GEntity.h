@@ -67,6 +67,10 @@ public: // these will become protected at some point
 
   // the vertex arrays to draw the mesh of the entity efficiently
   VertexArray *va_lines, *va_triangles;
+  // the faces of the mesh of a surface for a picking pass when they are not
+  // shown (built on the first pick, dropped with the others), so that the
+  // surface is picked anywhere on its mesh and not only on the edges
+  VertexArray *va_pick_triangles;
   // what the clipping planes add, kept apart so that moving a plane does not
   // rebuild the arrays above: the section they cut (capping), or the cut
   // elements drawn whole (whole element mode)
@@ -332,6 +336,17 @@ public:
   {
     _visible = val;
   }
+
+  // What the selection flag holds: nothing, an entity the user has chosen,
+  // one chosen and drawn with its marker and label, or one the cursor is
+  // merely resting on, which is drawn in the highlight colour and undone by
+  // a move of the mouse (General.MouseHoverHighlight).
+  enum SelectionState {
+    SelectNone = 0,
+    SelectOn = 1,
+    SelectShow = 2,
+    SelectHover = 3
+  };
 
   // get/set the selection flag
   virtual char getSelection() { return _selection; }

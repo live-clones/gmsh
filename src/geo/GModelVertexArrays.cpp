@@ -29,10 +29,20 @@ enum { MAX_BATCHED_EDGES = 32, MAX_BATCHED_FACES = 8 };
 
 static const double curvedRepTol = 1.e-5;
 
+// The colour of a selected entity: the cursor merely resting on one is not
+// the same as having chosen it, so what is hovered is drawn in the highlight
+// colour instead (Geometry.Color.HighlightTwo, which nothing else uses).
+unsigned int getSelectionColor(GEntity *e)
+{
+  return (e && e->getSelection() == GEntity::SelectHover) ?
+           CTX::instance()->color.geom.highlight[2] :
+           CTX::instance()->color.geom.selection;
+}
+
 unsigned int getColorByEntity(GEntity *e)
 {
   if(e->getSelection()) { // selection
-    return CTX::instance()->color.geom.selection;
+    return getSelectionColor(e);
   }
   else if(e->useColor()) { // forced from a script
     return e->getColor();
@@ -672,6 +682,25 @@ public:
   }
 };
 
+void GModel::fillPickVertexArray(GFace *f)
+{
+  if(f->va_pick_triangles) return;
+  int num = (int)(f->triangles.size() + 2 * f->quadrangles.size() +
+                  2 * f->polygons.size());
+  f->va_pick_triangles = new VertexArray(3, num + 100);
+  // the edges are not wanted: nothing goes in this one
+  VertexArray lines(2, 100);
+  if(CTX::instance()->mesh.triangles)
+    addElementsInArrays(f, &lines, f->va_pick_triangles, f->triangles, false,
+                        true);
+  if(CTX::instance()->mesh.quadrangles)
+    addElementsInArrays(f, &lines, f->va_pick_triangles, f->quadrangles,
+                        false, true);
+  addElementsInArrays(f, &lines, f->va_pick_triangles, f->polygons, false,
+                      true);
+  f->va_pick_triangles->finalize();
+}
+
 class initMeshGRegion {
 private:
   bool _curved;
@@ -790,6 +819,9 @@ static std::vector<double> clipToken()
   CTX *ctx = CTX::instance();
   std::vector<double> t;
   t.push_back(ctx->mesh.clip);
+  // the clipping window sets these directly, without going through the
+  // options (which mark the mesh as changed)
+  t.push_back(ctx->clipCapping);
   t.push_back(ctx->clipWholeElements);
   t.push_back(ctx->clipOnlyVolume);
   t.push_back(ctx->clipOnlyDrawIntersectingVolume);

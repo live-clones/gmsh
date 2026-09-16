@@ -43,7 +43,11 @@ namespace {
   struct BatchState {
     double modelview[16], projection[16];
     double clip[6][4];
-    bool clipOn[6];
+    bool clipOn[6], clipOutside;
+    // the blending, which the callers switch with plain OpenGL calls around
+    // the primitives they hand over: it is read back rather than set here
+    bool blend;
+    GLint blendSrc[2], blendDst[2]; // colour, then alpha
     bool lighting, twoSide;
     double pointSize;
     double alphaScale;
@@ -58,7 +62,13 @@ namespace {
     unsigned short stipplePattern;
     bool operator!=(const BatchState &o) const
     {
+      if(blend != o.blend) return true;
+      if(blend)
+        for(int i = 0; i < 2; i++)
+          if(blendSrc[i] != o.blendSrc[i] || blendDst[i] != o.blendDst[i])
+            return true;
       if(lighting != o.lighting || twoSide != o.twoSide ||
+         clipOutside != o.clipOutside ||
          pointSize != o.pointSize || texture != o.texture ||
          alphaScale != o.alphaScale ||
          alphaScaleFilledOnly != o.alphaScaleFilledOnly ||
@@ -92,11 +102,13 @@ namespace {
   bool _alphaScaleFilledOnly = false;
   int _textureMode = GMSH_TEXTURE_NONE;
   double _lineWidth = 1.;
+  double _pixelScale = 1.;
   bool _stipple = false;
   int _stippleFactor = 1;
   unsigned short _stipplePattern = 0xffff;
   double _clipPlane[6][4] = {{0.}}, _clipEye[6][4] = {{0.}};
   bool _clipOn[6] = {false, false, false, false, false, false};
+  bool _clipOutside = false;
 } // namespace
 
 void gmshColor4ub(unsigned char r, unsigned char g, unsigned char b,
@@ -121,6 +133,11 @@ void gmshColor4ubv(const void *col)
 
 void gmshLighting(bool on)
 {
+  // A picking pass writes identifiers as colours: shading one would spread
+  // it over the identifiers around it, so a lit glyph came back as a
+  // handful of other entities, or as the background. Colours are ignored
+  // there for the same reason (see gmshColor4ubv).
+  if(on && drawContext::pickColorActive()) on = false;
   _lighting = on;
   if(gmshUseShaders()) return;
   if(on)
@@ -140,8 +157,13 @@ void gmshLightTwoSide(bool on)
 
 bool gmshLightTwoSideEnabled() { return _twoSide; }
 
+void gmshPixelScale(double scale) { _pixelScale = (scale > 0.) ? scale : 1.; }
+
+double gmshPixelScale() { return _pixelScale; }
+
 void gmshPointSize(double s)
 {
+  s *= _pixelScale;
   _pointSize = s;
   // the shader writes gl_PointSize instead
   if(!gmshUseShaders()) glPointSize((float)s);
@@ -184,6 +206,13 @@ bool gmshClipPlaneEnabled(int i)
 {
   return (i >= 0 && i <= 5) ? _clipOn[i] : false;
 }
+
+void gmshClipOutside(bool outside)
+{
+  _clipOutside = outside;
+}
+
+bool gmshClipOutside() { return _clipOutside; }
 
 const double *gmshClipPlaneEye(int i)
 {
@@ -305,6 +334,7 @@ void gmshResetMatrices()
     _clipOn[i] = false;
     for(int j = 0; j < 4; j++) _clipPlane[i][j] = _clipEye[i][j] = 0.;
   }
+  _clipOutside = false;
 
   for(int i = 0; i < 2; i++) {
     _stack[i].m.resize(16);
@@ -333,16 +363,22 @@ void gmshPushShaderState()
   glShader::setAlphaScale(_alphaScale);
   glShader::setMaterial(CTX::instance()->shine,
                         CTX::instance()->shineExponent);
-  glShader::setShading(gmshShadingModel());
+  glShader::setShading(gmshShadingModel(), CTX::instance()->brightness);
   // everything but the collected lines draws undashed: the vertex arrays
   // carry no distance along the line, and a glyph is not a line
   glShader::setStipple(false, 1, 0xffff);
+  bool anyPlane = false;
   for(int i = 0; i < 6; i++) {
-    if(gmshClipPlaneEnabled(i))
+    if(gmshClipPlaneEnabled(i)) {
       glShader::setClipPlane(i, gmshClipPlaneEye(i));
+      anyPlane = true;
+    }
     else
       glShader::setClipPlaneOff(i);
   }
+  // nothing is cut off when no plane is on: drawn as is then (the glyphs of
+  // the cut elements are drawn whole, with the planes off)
+  glShader::setClipOutside(_clipOutside && anyPlane);
 }
 
 bool gmshImBegin(GLenum mode)
@@ -372,6 +408,7 @@ void gmshImVertex(float x, float y, float z)
 
 void gmshLineWidth(double w)
 {
+  w *= _pixelScale;
   if(gmshUseShaders()) {
     if(_lineWidth == w) return;
     // what is waiting was collected to be drawn at the old width
@@ -513,12 +550,55 @@ namespace {
   }
 } // namespace
 
+namespace {
+  // switch the blending, colour and alpha factors together
+  // the blend function in force; the colour's and the alpha's are the same
+  // one when the driver has no separate blending (OpenGL 1.4), whose enums
+  // it would reject
+  void _getBlend(GLint src[2], GLint dst[2])
+  {
+    src[0] = src[1] = GL_ONE;
+    dst[0] = dst[1] = GL_ZERO;
+    if(glApi::BlendFuncSeparate) {
+      glGetIntegerv(GL_BLEND_SRC_RGB, &src[0]);
+      glGetIntegerv(GL_BLEND_DST_RGB, &dst[0]);
+      glGetIntegerv(GL_BLEND_SRC_ALPHA, &src[1]);
+      glGetIntegerv(GL_BLEND_DST_ALPHA, &dst[1]);
+    }
+    else {
+      glGetIntegerv(GL_BLEND_SRC, &src[0]);
+      glGetIntegerv(GL_BLEND_DST, &dst[0]);
+      src[1] = src[0];
+      dst[1] = dst[0];
+    }
+  }
+
+  void _setBlend(bool on, const GLint src[2], const GLint dst[2])
+  {
+    if(!on) {
+      glDisable(GL_BLEND);
+      return;
+    }
+    glEnable(GL_BLEND);
+    if(glApi::BlendFuncSeparate)
+      glApi::BlendFuncSeparate(src[0], dst[0], src[1], dst[1]);
+    else
+      glBlendFunc(src[0], dst[0]);
+  }
+} // namespace
+
 void gmshFlushImmediate()
 {
   if(_batchPos.empty()) return;
   int count = (int)(_batchPos.size() / 3);
   if(glShader::use()) {
-    // the state the primitives were collected under, not the current one
+    // the state the primitives were collected under, not the current one:
+    // the blending is OpenGL's own, so it is set here and the caller's put
+    // back afterwards
+    GLboolean wasBlend = glIsEnabled(GL_BLEND);
+    GLint wasSrc[2], wasDst[2];
+    _getBlend(wasSrc, wasDst);
+    _setBlend(_batchState.blend, _batchState.blendSrc, _batchState.blendDst);
     glShader::setMatrices(_batchState.modelview, _batchState.projection);
     glShader::setLighting(_batchState.lighting, _batchState.twoSide);
     glShader::setPointSize(_batchState.pointSize);
@@ -527,13 +607,17 @@ void gmshFlushImmediate()
         1. : _batchState.alphaScale);
     glShader::setMaterial(CTX::instance()->shine,
                           CTX::instance()->shineExponent);
-    glShader::setShading(gmshShadingModel());
+    glShader::setShading(gmshShadingModel(), CTX::instance()->brightness);
+    bool anyPlane = false;
     for(int i = 0; i < 6; i++) {
-      if(_batchState.clipOn[i])
+      if(_batchState.clipOn[i]) {
         glShader::setClipPlane(i, _batchState.clip[i]);
+        anyPlane = true;
+      }
       else
         glShader::setClipPlaneOff(i);
     }
+    glShader::setClipOutside(_batchState.clipOutside && anyPlane);
     // the pattern only applies to lines
     glShader::setStipple(_batchState.stipple && _batchMode == GL_LINES,
                          _batchState.stippleFactor,
@@ -548,6 +632,7 @@ void gmshFlushImmediate()
                               &_batchCol[0], &_batchTex[0], &_batchDash[0],
                               _batchState.texture, _batchState.textureMode,
                               count);
+    _setBlend(wasBlend ? true : false, wasSrc, wasDst);
   }
   _batchPos.clear();
   _batchNrm.clear();
@@ -571,6 +656,11 @@ namespace {
       b.clipOn[i] = _clipOn[i];
       for(int j = 0; j < 4; j++) b.clip[i][j] = _clipEye[i][j];
     }
+    b.clipOutside = _clipOutside;
+    b.blend = glIsEnabled(GL_BLEND) ? true : false;
+    b.blendSrc[0] = b.blendSrc[1] = GL_ONE;
+    b.blendDst[0] = b.blendDst[1] = GL_ZERO;
+    if(b.blend) _getBlend(b.blendSrc, b.blendDst);
     b.lighting = _lighting;
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;

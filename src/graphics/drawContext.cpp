@@ -385,6 +385,11 @@ void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
   _boundColors = colors;
 
   if(useShaders()) {
+    // the attributes are recorded in the program's vertex array object,
+    // which must be bound first: on the first frame of a context nothing has
+    // bound it yet, and a core profile drops attributes set with none bound,
+    // so the first array drawn came out with neither colours nor normals
+    if(!glShader::use()) return;
     glApi::EnableVertexAttribArray(glShader::ATTRIB_VERTEX);
     glApi::VertexAttribPointer(glShader::ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE,
                                0, vaVertexPointer(va));
@@ -777,7 +782,7 @@ void drawContext::draw3d()
 #endif
 
   glDepthFunc(GL_LESS);
-  glEnable(GL_DEPTH_TEST);
+  gmshDepthTest(true);
   initProjection();
   initRenderModel();
 
@@ -839,7 +844,7 @@ void drawContext::draw3d()
       // front would hide what is behind it.
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glDepthMask(GL_FALSE);
+      gmshDepthMask(false);
     }
     gmshAlphaScale(geomScale, geomFilled);
     drawGeom();
@@ -847,7 +852,7 @@ void drawContext::draw3d()
     drawMesh();
     gmshAlphaScale(1., false);
     // the views sort back to front and write depth, as they always did
-    if(!summed) glDepthMask(GL_TRUE);
+    if(!summed) gmshDepthMask(true);
     drawPost();
     if(summed)
       glShader::endTransparent();
@@ -1188,20 +1193,20 @@ void drawContext::drawStudioFloor()
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   // hidden by the model, but hiding nothing itself: whatever hangs below
   // it (glyphs, a view raised further than its data) stays visible
-  glDepthMask(GL_FALSE);
+  gmshDepthMask(false);
   gmshColor4ub(0, 0, 0, 150);
   gmshNormal3d(n[0], n[1], n[2]);
   gmshBegin(GL_QUADS);
   for(int k = 0; k < 4; k++) gmshVertex3d(p[k][0], p[k][1], p[k][2]);
   gmshEnd();
   gmshShadingModel(1);
-  glDepthMask(GL_TRUE);
+  gmshDepthMask(true);
   glDisable(GL_BLEND);
 }
 
 void drawContext::draw2d()
 {
-  glDisable(GL_DEPTH_TEST);
+  gmshDepthTest(false);
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
 
   gmshMatrixMode(GMSH_PROJECTION);
@@ -1478,7 +1483,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
 
   if(CTX::instance()->camera) { // if we use the camera mode
-    glDisable(GL_DEPTH_TEST);
+    gmshDepthTest(false);
     gmshPushMatrix();
     gmshLoadIdentity();
     double w = (double)viewport[2];
@@ -1496,7 +1501,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     gmshVertex3i((int)-dx, (int)dy, (int)dz);
     gmshEnd();
     gmshPopMatrix();
-    glEnable(GL_DEPTH_TEST);
+    gmshDepthTest(true);
   }
   else if(!CTX::instance()->camera) { // if not in camera mode
 
@@ -1524,7 +1529,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
        (CTX::instance()->bgGradient ||
         CTX::instance()->bgImageFileName.size()) &&
        (!CTX::instance()->printing || CTX::instance()->print.background)) {
-      glDisable(GL_DEPTH_TEST);
+      gmshDepthTest(false);
       gmshPushMatrix();
       // the z values and the translation are only needed for GL2PS, which does
       // not understand "no depth test" (hence we must make sure that we draw
@@ -1543,7 +1548,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       gmshLoadMatrix(m);
       drawBackgroundImage(false);
       gmshPopMatrix();
-      glEnable(GL_DEPTH_TEST);
+      gmshDepthTest(true);
     }
 
     double projection[16];
@@ -1582,6 +1587,26 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   }
 }
 
+void drawContext::initCameraMatrices(double view[16])
+{
+  if(!camera.on) camera.init();
+  camera.giveViewportDimension(viewport[2], viewport[3]);
+  double frustum[16], jitter[16], proj[16];
+  glMatrix::frustum(camera.glFleft, camera.glFright, camera.glFbottom,
+                    camera.glFtop, camera.glFnear, camera.glFfar * camera.Lc,
+                    frustum);
+  studioJitter(jitter);
+  glMatrix::multiply(jitter, frustum, proj);
+  gmshMatrixMode(GMSH_PROJECTION);
+  gmshLoadMatrix(proj);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  double eye[3] = {camera.position.x, camera.position.y, camera.position.z};
+  double target[3] = {camera.target.x, camera.target.y, camera.target.z};
+  double up[3] = {camera.up.x, camera.up.y, camera.up.z};
+  glMatrix::lookAt(eye, target, up, view);
+  gmshLoadMatrix(view);
+}
+
 void drawContext::studioJitter(double m[16])
 {
   glMatrix::identity(m);
@@ -1603,6 +1628,10 @@ void drawContext::initRenderModel()
   // a core profile has no fixed function lighting: the shader gets the lights
   // as uniforms instead
   bool fixed = !gmshUseShaders();
+  // General.Brightness: the shader applies it itself, the fixed function
+  // pipeline to the colours of its lights and of the global ambient (raised
+  // to 1/2.2 like the shader's classic shading)
+  GLfloat k = (GLfloat)pow(CTX::instance()->brightness, 1. / 2.2);
 
   for(int i = 0; i < 6; i++) {
     if(CTX::instance()->light[i]) {
@@ -1628,7 +1657,10 @@ void drawContext::initRenderModel()
         CTX::instance()->unpackBlue(CTX::instance()->color.ambientLight[i]) /
         255.);
       GLfloat ambient[4] = {r, g, b, 1.0F};
-      if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
+      if(fixed) {
+        GLfloat a[4] = {k * r, k * g, k * b, 1.0F};
+        glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, a);
+      }
 
       r = (GLfloat)(
         CTX::instance()->unpackRed(CTX::instance()->color.diffuseLight[i]) /
@@ -1640,7 +1672,10 @@ void drawContext::initRenderModel()
         CTX::instance()->unpackBlue(CTX::instance()->color.diffuseLight[i]) /
         255.);
       GLfloat diffuse[4] = {r, g, b, 1.0F};
-      if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
+      if(fixed) {
+        GLfloat d[4] = {k * r, k * g, k * b, 1.0F};
+        glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, d);
+      }
 
       r = (GLfloat)(
         CTX::instance()->unpackRed(CTX::instance()->color.specularLight[i]) /
@@ -1653,7 +1688,8 @@ void drawContext::initRenderModel()
         255.);
       GLfloat specular[4] = {r, g, b, 1.0F};
       if(fixed) {
-        glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
+        GLfloat sp[4] = {k * r, k * g, k * b, 1.0F};
+        glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, sp);
         glEnable((GLenum)(GL_LIGHT0 + i));
       }
       glShader::setLight(i, eye, ambient, diffuse, specular);
@@ -1671,6 +1707,9 @@ void drawContext::initRenderModel()
     // automatically
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
+    // the global ambient, OpenGL's 0.2 times the brightness
+    GLfloat global[4] = {0.2F * k, 0.2F * k, 0.2F * k, 1.0F};
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global);
     // "white"-only specular material reflection color
     GLfloat spec[4] = {(GLfloat)CTX::instance()->shine,
                        (GLfloat)CTX::instance()->shine,
@@ -1813,10 +1852,41 @@ static MElement *getElement(GEntity *e, int va_type, int index)
   return nullptr;
 }
 
-void drawContext::setPickColor(int type, int ient, int type2, int ient2)
+// what names an object of a picking pass from one pass to the next: the
+// identifiers are indices into a list rebuilt every time, the tags are not
+std::size_t drawContext::_pickKey(int type, int ient, int type2, int ient2)
+{
+  return ((std::size_t)(type & 0xff) << 56) |
+         ((std::size_t)(type2 & 0xff) << 48) |
+         ((std::size_t)(unsigned int)ient << 16) |
+         ((std::size_t)(unsigned int)ient2 & 0xffff);
+}
+
+void drawContext::stepPick(int direction)
+{
+  if(direction > 0) {
+    if(!_pickLastValid) return;
+    _pickSkip.push_back(_pickLast);
+  }
+  else {
+    if(_pickSkip.empty()) return;
+    _pickSkip.pop_back();
+  }
+  _pickCacheValid = false;
+}
+
+void drawContext::resetPick()
+{
+  if(_pickSkip.empty()) return;
+  _pickSkip.clear();
+  _pickCacheValid = false;
+}
+
+void drawContext::setPickColor(int type, int ient, int type2, int ient2,
+                               bool front)
 {
   if(!_pickColor) return;
-  _pickObjects.push_back(pickObject(type, ient, type2, ient2));
+  _pickObjects.push_back(pickObject(type, ient, type2, ient2, front));
   // 0 is the background: 24 bits give 16 million pickable objects per pass
   std::size_t id = _pickObjects.size() - 1;
   GLubyte c[4] = {(GLubyte)(id & 0xff), (GLubyte)((id >> 8) & 0xff),
@@ -1824,19 +1894,46 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
   if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
   gmshPickColor4ubv(c);
 
-  // give each dimension its own depth range, lower dimensions in front, so
-  // that a point or a curve can be picked through a surface, as with the
-  // selection buffer
-  int d = (type < 0) ? 4 : (type > 4 ? 4 : type);
-  // pending immediate mode primitives belong to the previous object and its
-  // depth range
+  // an entity stepped past with the wheel is drawn into neither the colours
+  // nor the depth, so that the pass finds what stands behind it
+  bool skip = false;
+  std::size_t key = _pickKey(type, ient, type2, ient2);
+  for(std::size_t i = 0; i < _pickSkip.size(); i++)
+    if(_pickSkip[i] == key) {
+      skip = true;
+      break;
+    }
+
+  // pending immediate mode primitives belong to the previous object, its
+  // depth range and its masks
   gmshFlushImmediate();
-  glDepthRange(0.2 * d, 0.2 * d + 0.2);
+  GLboolean on = skip ? GL_FALSE : GL_TRUE;
+  glColorMask(on, on, on, on);
+  glDepthMask(on);
+  // What is closest to the viewer is picked, and among what lies at the same
+  // depth the lowest dimension: a point or a curve, a pixel or two wide, is
+  // drawn a little closer than the surface it lies on (the depth range
+  // scaled by a step per dimension, see _fillPickCache() for the step), so
+  // that it wins over that surface as with the selection buffer, but not
+  // over a surface in front of it, which the selection buffer's rule - the
+  // lowest dimension under the cursor, wherever it is - let it do. A marker
+  // standing for an entity (a volume's) goes in front of everything, as it
+  // sits inside what it stands for.
+  if(front)
+    glDepthRange(0., 0.2);
+  else if(type >= 0 && type <= 3)
+    glDepthRange(0., 1. - (3 - type) * _pickDepthStep);
+  else
+    glDepthRange(0., 1.);
 }
 
 void drawContext::unsetPickColor()
 {
   if(!_pickColor) return;
+  // what was set aside for the wheel is drawn again from here on
+  gmshFlushImmediate();
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
   // 0 is the background: no pickable object
   GLubyte c[4] = {0, 0, 0, 255};
   if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
@@ -1873,7 +1970,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
                              (int)((viewport[3] - viewport[1]) * hr));
   if(!intoPickBuffer) glDrawBuffer(GL_BACK);
   glDepthFunc(GL_LESS);
-  glEnable(GL_DEPTH_TEST);
+  gmshDepthTest(true);
   gmshLighting(false);
   glDisable(GL_BLEND);
   // the identifier colour must not be interpolated (the shader gives every
@@ -1887,7 +1984,39 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
 
   gmshPushMatrix();
   initProjection();
-  initPosition(false);
+  // in camera mode the projection and the modelview are the camera's, which
+  // initProjection() and initPosition() know nothing of: the pass used to
+  // draw with the rotation of the ordinary mode under whatever projection
+  // the last frame had left, and found nothing
+  if(CTX::instance()->camera) {
+    double view[16];
+    initCameraMatrices(view);
+  }
+  else
+    initPosition(false);
+  // the step between the dimensions of setPickColor(): a hundredth of the
+  // depth the model spans in the window per dimension, a few units of the
+  // depth buffer at least, as a scale of the range (which cannot be shifted)
+  // at the middle of that span
+  {
+    CTX *c = CTX::instance();
+    double zmin = 1., zmax = 0.;
+    for(int i = 0; i < 8; i++) {
+      double p[4] = {(i & 1) ? c->max[0] : c->min[0],
+                     (i & 2) ? c->max[1] : c->min[1],
+                     (i & 4) ? c->max[2] : c->min[2], 1.};
+      double e[4], q[4];
+      glMatrix::transform(gmshMatrix(GMSH_MODELVIEW), p, e);
+      glMatrix::transform(gmshMatrix(GMSH_PROJECTION), e, q);
+      if(q[3] == 0.) continue;
+      double z = 0.5 * (q[2] / q[3] + 1.);
+      zmin = std::min(zmin, z);
+      zmax = std::max(zmax, z);
+    }
+    double extent = std::max(zmax - zmin, 0.);
+    double zmid = std::max(0.05, 0.5 * (zmin + zmax));
+    _pickDepthStep = std::max(0.01 * extent, 4. / 16777215.) / zmid;
+  }
   drawGeom();
   if(mesh) drawMesh();
   if(post) drawPost();
@@ -1895,7 +2024,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
 
   // 2D overlay, painted on top in drawing order as in draw2d(): without the
   // depth test off, the graph frame and axes would hide the data points
-  glDisable(GL_DEPTH_TEST);
+  gmshDepthTest(false);
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
   gmshMatrixMode(GMSH_PROJECTION);
   double px2d[16];
@@ -1925,6 +2054,8 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
 
   glDisable(GL_SCISSOR_TEST);
   gmshFlushImmediate();
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
   glDepthRange(0., 1.);
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
   if(oldLighting) gmshLighting(true);
@@ -2008,7 +2139,16 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
 
   // gather the objects, keeping the smallest depth of each; the 2D overlay
   // wrote no depth (it is painted on top without depth test), so rank it in
-  // front
+  // front. What lies under the middle of the rectangle is remembered: the
+  // rest are only near the cursor.
+  std::size_t under = 0;
+  {
+    std::size_t i = (std::size_t)(fy0 + fh / 2) * stride + (fx0 + fw / 2);
+    under = (std::size_t)pixels[4 * i] |
+            ((std::size_t)pixels[4 * i + 1] << 8) |
+            ((std::size_t)pixels[4 * i + 2] << 16);
+    if(under >= _pickObjects.size()) under = 0;
+  }
   std::map<std::size_t, float> found;
   for(int r = 0; r < fh; r++) {
     for(int c = 0; c < fw; c++) {
@@ -2035,7 +2175,10 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   int typmin = 10;
   for(auto &p : sorted) typmin = std::min(typmin, _pickObjects[p.second].type);
 
-  GModel *m = GModel::current();
+  // what the caller asked for, in the order they would be picked: all of
+  // them when several are wanted, otherwise the first, which the wheel can
+  // set aside to reach the next (stepPick())
+  std::vector<std::size_t> candidates;
   for(auto &p : sorted) {
     const pickObject &o = _pickObjects[p.second];
     if(o.type < 4 &&
@@ -2045,6 +2188,31 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
          (type == ENT_SURFACE && o.type == 2) ||
          (type == ENT_VOLUME && o.type == 3)))
       continue;
+    candidates.push_back(p.second);
+  }
+  // A marker the cursor is exactly on comes first: it stands for an entity
+  // that has nothing else to be picked by (the sphere of a volume), and the
+  // rule that a lower dimension wins would otherwise give away half of it to
+  // a point or a curve that merely passes within a few pixels.
+  if(under && _pickObjects[under].front) {
+    for(std::size_t i = 1; i < candidates.size(); i++)
+      if(candidates[i] == under) {
+        candidates.erase(candidates.begin() + i);
+        candidates.insert(candidates.begin(), under);
+        break;
+      }
+  }
+  _pickCandidates = (int)candidates.size();
+  if(candidates.empty()) return false;
+
+  GModel *m = GModel::current();
+  for(auto &id : candidates) {
+    const pickObject &o = _pickObjects[id];
+    // what the wheel would step past, if this is the one that is returned
+    if(!multiple) {
+      _pickLast = _pickKey(o.type, o.ient, o.type2, o.ient2);
+      _pickLastValid = true;
+    }
     switch(o.type) {
     case 0: {
       GVertex *v = m->getVertexByTag(o.ient);
@@ -2122,8 +2290,22 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
   points.clear();
   views.clear();
 
-  return _selectColor(type, multiple, mesh, post, x, y, w, h, vertices, edges,
-                      faces, regions, elements, points, views);
+  _pickLastValid = false;
+  if(_selectColor(type, multiple, mesh, post, x, y, w, h, vertices, edges,
+                  faces, regions, elements, points, views))
+    return true;
+  // Nothing stands behind the last one: stay on it rather than coming round
+  // to the front, so that stepping the other way is what goes back. The
+  // steps that found nothing are undone one by one, as the scene may have
+  // changed under a cursor that has not moved.
+  while(!_pickSkip.empty()) {
+    _pickSkip.pop_back();
+    _pickCacheValid = false;
+    if(_selectColor(type, multiple, mesh, post, x, y, w, h, vertices, edges,
+                    faces, regions, elements, points, views))
+      return true;
+  }
+  return false;
 }
 
 void drawContext::recenterForRotationCenterChange(SPoint3 newRotationCenter)

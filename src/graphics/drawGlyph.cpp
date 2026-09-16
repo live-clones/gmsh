@@ -228,6 +228,22 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   if(s.empty() || shadowPass) return;
   if(CTX::instance()->printing && !CTX::instance()->print.text) return;
 
+  // A pick pass draws no text at all, so that a label never hides what is
+  // behind it from a click. It would not be read reliably anyway: an engine
+  // that collects the strings of a frame to draw them at its end left them
+  // for the *next* frame, which then painted what the pass saw over the
+  // picture, the labels of a view hidden in between among them.
+  if(render_mode == GMSH_SELECT) return;
+
+  // a string anchored beyond one of the clipping planes in force goes with
+  // what it names: the quads a string is drawn as live in window
+  // coordinates, where the planes mean nothing, so they are not clipped
+  for(int i = 0; i < 6; i++) {
+    if(!gmshClipPlaneEnabled(i)) continue;
+    const double *p = CTX::instance()->clipPlane[i];
+    if(p[0] * x + p[1] * y + p[2] * z + p[3] < 0.) return;
+  }
+
   if(s.size() > 8 && s.substr(0, 7) == "file://") {
     drawImage(s.substr(7), x, y, z, align);
     return;
@@ -349,7 +365,11 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
         opt = GL2PS_TEXT_BL;
         break; // bottom left
       }
-      gl2psTextOpt(tmp.c_str(), font_name.c_str(), font_size, opt, 0.);
+      // the vector picture is the viewport in pixels: the font follows the
+      // pixel factor like everything else sized in the window's units
+      gl2psTextOpt(tmp.c_str(), font_name.c_str(),
+                   (int)(font_size * highResolutionPixelFactor() + 0.5), opt,
+                   0.);
     }
     else if(CTX::instance()->print.epsQuality &&
             (CTX::instance()->print.fileFormat == FORMAT_PS ||
@@ -357,7 +377,8 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
              CTX::instance()->print.fileFormat == FORMAT_PDF ||
              CTX::instance()->print.fileFormat == FORMAT_SVG ||
              CTX::instance()->print.fileFormat == FORMAT_TIKZ)) {
-      gl2psText(s.c_str(), font_name.c_str(), font_size);
+      gl2psText(s.c_str(), font_name.c_str(),
+                (int)(font_size * highResolutionPixelFactor() + 0.5));
     }
     else {
       drawContext::global()->setFont(font_enum, font_size);

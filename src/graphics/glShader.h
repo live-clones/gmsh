@@ -49,6 +49,9 @@ namespace glShader {
   // forget the program and the vertex array object (e.g. after the OpenGL
   // context was recreated)
   void reset();
+  // the OpenGL context about to be drawn with, when a window has one of its
+  // own: the objects a context does not share get kept apart per context
+  void setContext(const void *id);
   // is there a working program? Compiles it if necessary and says why not
   bool available();
 
@@ -62,8 +65,9 @@ namespace glShader {
   // the specular colour and exponent of the material
   void setMaterial(double shine, double shineExponent);
   // the lighting model: 0 the fixed function one, 1 studio, 2 the shadow
-  // catcher of the studio model (only the shadow is drawn)
-  void setShading(int model);
+  // catcher of the studio model (only the shadow is drawn), and the factor
+  // on the light of the lit surfaces
+  void setShading(int model, double brightness = 1.);
   // the studio light: the key direction and the model's up axis, in eye
   // coordinates, the size of a texel of the shadow maps in eye coordinates,
   // and the dome direction of the current sample (or none), for the ambient
@@ -93,11 +97,21 @@ namespace glShader {
   // height pixels) to a sum, cleared when first, and put the average of
   // count frames back on the window. False if it cannot be done.
   bool accumulate(int width, int height, bool first, int count);
+  // put the average of what accumulate() summed (count frames) back on the
+  // window, as it left it; false if there is no such sum at that size
+  bool showAccumulation(int width, int height, int count);
+  // Flames over what is drawn, licking up from every pixel of it, at a
+  // level from 0 to 1 (and taller beyond) and flickering with the time (in
+  // seconds). False if it cannot be done.
+  bool fire(int width, int height, double level, double time);
   // is what is drawn next lit, and are its back faces lit as well?
   void setLighting(bool on, bool twoSide);
   // clip plane i, in eye coordinates; setClipPlaneOff() stops clipping with it
   void setClipPlane(int i, const double plane[4]);
   void setClipPlaneOff(int i);
+  // keep only what the planes cut off (the cut elements of whole element
+  // mode are drawn that way, next to the clipped rest, without overlap)
+  void setClipOutside(bool outside);
   // does the colour come from the array, or is it the one colour given here?
   void setColorArray(bool on);
   void setColor(const unsigned char color[4]);

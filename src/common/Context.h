@@ -297,7 +297,7 @@ public:
   int smallAxes, smallAxesSize, smallAxesPos[2];
   // large axes options
   int axes, axesAutoPosition, axesMikado, axesForceValue;
-  double axesPosition[6], axesValue[6], axesTics[3];
+  double axesPosition[6], axesValue[6], axesTicks[3];
   std::string axesLabel[3], axesFormat[3];
   // simple dynamic lock (should be a mutex)
   int lock;
@@ -338,12 +338,15 @@ public:
   // studio (linear light, hemisphere ambient, soft key light, no specular,
   // shadows) with the floor normal to x, y or z
   int shading;
+  // a factor on the light of the lit surfaces, in either shading
+  double brightness;
   // angular radius (degrees) of the studio light, which sets the softness of
   // its shadow, the offset of the floor from the bottom of the model along
   // its normal (relative to the size of the bounds), and the number of
   // frames accumulated while the view is still
   double studioLightSpread, studioFloorOffset;
   int studioSamples;
+  int phlogiston;
   // order independent (weighted blended) transparency instead of back to
   // front sorting
   int orderIndependentTransparency;
@@ -363,7 +366,7 @@ public:
   // dynamic variable tracking if the bbox is currently imposed
   int forcedBBox;
   // enable selection/hover/picking using the mouse
-  int mouseSelection, mouseHoverMeshes, pickElements;
+  int mouseSelection, mouseHoverMeshes, mouseHoverHighlight, pickElements;
   // invert sense of mouse wheel zoom
   int mouseInvertZoom;
   // disable some warnings for expert users?
@@ -415,7 +418,7 @@ public:
     int gifDither, gifSort, gifInterlace, gifTransparent;
     int posElementary, posElement, posGamma, posEta, posSICN, posSIGE, posDisto;
     int compositeWindows, deleteTmpFiles, background;
-    int width, height, supersampling;
+    int width, height, supersampling, scalePixelSizes;
     double parameter, parameterFirst, parameterLast, parameterSteps;
     int pgfTwoDim, pgfExportAxis, pgfHorizBar;
     std::string parameterCommand;

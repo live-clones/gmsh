@@ -27,6 +27,10 @@ public:
     cairo_font_face_t *fontFace;
     int width, height;
     double xBearing, yBearing;
+    bool halo;
+    // was the depth test on when this string was queued? It then belongs to
+    // the scene and is drawn depth tested; the 2D overlay is not
+    bool depth;
   } element;
 
 private:
@@ -61,12 +65,7 @@ public:
 
     // everything below is in true pixels, and the strings are drawn at that
     // scale so that they are sharp on a high resolution screen
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
-    double f = 1.;
-    if(Fl_Window::current() && Fl_Window::current()->w() > 0)
-      f = vp[2] / (double)Fl_Window::current()->w();
-    if(f <= 0.) f = 1.;
+    double f = drawContext::global()->pixelFactor();
 
     cairo_surface_t *surface = cairo_image_surface_create(
       CAIRO_FORMAT_A8, (int)(_totalWidth * f) + 1, (int)(_maxHeight * f) + 1);
@@ -104,6 +103,8 @@ public:
     gmshPushMatrix();
     gmshLoadIdentity();
     // the whole window, in the true pixels the positions are given in
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
     gmshScale(2. / vp[2], 2. / vp[3], 1.);
     gmshTranslate(-vp[2] / 2., -vp[3] / 2., 0.);
 
@@ -123,6 +124,17 @@ public:
     if(!shaders) {
       // glPopAttrib() does not restore the lighting we remember ourselves
       glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
+    }
+    GLboolean wasMask = GL_TRUE;
+    GLint wasFunc = GL_LESS;
+    glGetBooleanv(GL_DEPTH_WRITEMASK, &wasMask);
+    glGetIntegerv(GL_DEPTH_FUNC, &wasFunc);
+    // the quads below are in window coordinates: the clipping planes, which
+    // are in the coordinates of the scene, would cut them at random
+    bool wasClip[6];
+    for(int i = 0; i < 6; i++) {
+      wasClip[i] = gmshClipPlaneEnabled(i);
+      if(wasClip[i]) gmshClipPlaneOn(i, false);
     }
     gmshLighting(false);
     glDisable(GL_DEPTH_TEST);
@@ -150,29 +162,77 @@ public:
     gmshTexture(textureId);
 
     pos = 0.;
-    for(auto it = _elements.begin(); it != _elements.end(); ++it) {
-      gmshTranslate(it->x, it->y, it->z);
-      gmshColor4f(it->r, it->g, it->b, it->alpha);
-      float Lx = (float)(it->width * f);
-      float Ly = (float)(it->height * f);
-      // the coordinates are in [0, 1] across the picture, not in its pixels
-      float s0 = (float)(pos / tw), s1 = (float)((pos + Lx) / tw);
-      float t0 = 0.f, t1 = Ly / (float)th;
-      gmshBegin(GL_QUADS);
-      gmshTexCoord2f(s0, t0);
-      gmshVertex2f(0.0f, Ly);
-      gmshTexCoord2f(s1, t0);
-      gmshVertex2f(Lx, Ly);
-      gmshTexCoord2f(s1, t1);
-      gmshVertex2f(Lx, 0.0f);
-      gmshTexCoord2f(s0, t1);
-      gmshVertex2f(0.0f, 0.0f);
-      gmshEnd();
-      pos += Lx;
-      gmshTranslate(-it->x, -it->y, -it->z);
+    const unsigned char *cc = gmshCurrentColor();
+    unsigned char savedColor[4] = {cc[0], cc[1], cc[2], cc[3]};
+    unsigned int bg = CTX::instance()->color.bg;
+    float bgf[3] = {CTX::instance()->unpackRed(bg) / 255.f,
+                    CTX::instance()->unpackGreen(bg) / 255.f,
+                    CTX::instance()->unpackBlue(bg) / 255.f};
+    // The strings of the scene first, depth tested, then the 2D overlay on
+    // top of everything. The collector is flushed between the two, as it
+    // does not follow the depth state.
+    for(int pass = 0; pass < 2; pass++) {
+      bool depth = (pass == 0);
+      bool any = false;
+      for(auto it = _elements.begin(); it != _elements.end(); ++it)
+        if(it->depth == depth) any = true;
+      if(!any) continue;
+      if(depth) {
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        // a string does not hide the strings drawn after it
+        glDepthMask(GL_FALSE);
+      }
+      else
+        glDisable(GL_DEPTH_TEST);
+      pos = 0.;
+      for(auto it = _elements.begin(); it != _elements.end(); ++it) {
+        float Lx = (float)(it->width * f);
+        float Ly = (float)(it->height * f);
+        if(it->depth != depth) {
+          pos += Lx;
+          continue;
+        }
+        // the coordinates are in [0, 1] across the picture, not in its pixels
+        float s0 = (float)(pos / tw), s1 = (float)((pos + Lx) / tw);
+        float t0 = 0.f, t1 = Ly / (float)th;
+        // the depth of the point the string is anchored to, in the [-1, 1]
+        // the identity projection expects, a little towards the eye so that
+        // a label is not eaten by the surface it names
+        float z = 2.f * it->z - 1.f - 2.e-3f;
+        // the string, and before it, if it has a halo, copies of it around it
+        // in the background colour
+        float halo[12][2];
+        int nh = it->halo ? drawContextGlobal::stringHaloOffsets(halo) : 0;
+        for(int k = 0; k <= nh; k++) {
+          float dx = 0.f, dy = 0.f;
+          if(k < nh) {
+            dx = halo[k][0];
+            dy = halo[k][1];
+            gmshColor4f(bgf[0], bgf[1], bgf[2], it->alpha);
+          }
+          else
+            gmshColor4f(it->r, it->g, it->b, it->alpha);
+          gmshTranslate(it->x + dx, it->y + dy, z);
+          gmshBegin(GL_QUADS);
+          gmshTexCoord2f(s0, t0);
+          gmshVertex2f(0.0f, Ly);
+          gmshTexCoord2f(s1, t0);
+          gmshVertex2f(Lx, Ly);
+          gmshTexCoord2f(s1, t1);
+          gmshVertex2f(Lx, 0.0f);
+          gmshTexCoord2f(s0, t1);
+          gmshVertex2f(0.0f, 0.0f);
+          gmshEnd();
+          gmshTranslate(-it->x - dx, -it->y - dy, -z);
+        }
+        pos += Lx;
+      }
+      // whatever is waiting was collected to be drawn through this texture
+      gmshFlushImmediate();
     }
-    // whatever is waiting was collected to be drawn through this texture
-    gmshFlushImmediate();
+    glDepthMask(wasMask);
+    glDepthFunc(wasFunc);
     gmshTexture(0);
     glDeleteTextures(1, &textureId);
 
@@ -183,6 +243,9 @@ public:
       if(ownBlend && !wasBlend) glDisable(GL_BLEND);
     }
     gmshLighting(wasLit);
+    for(int i = 0; i < 6; i++)
+      if(wasClip[i]) gmshClipPlaneOn(i, true);
+    gmshColor4ubv(savedColor);
 
     // reset original matrices
     gmshPopMatrix(); // GL_MODELVIEW
@@ -235,7 +298,9 @@ void drawContextFltkCairo::drawString(const char *str, const double win[3])
                                (int)ceil(extent.width) + 2,
                                (int)ceil(extent.height) + 2,
                                extent.x_bearing - 1,
-                               extent.y_bearing - 1};
+                               extent.y_bearing - 1,
+                               stringHalo(),
+                               glIsEnabled(GL_DEPTH_TEST) ? true : false};
   cairo_font_face_reference(elem.fontFace);
   _queue->append(elem);
 }

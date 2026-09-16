@@ -33,6 +33,18 @@ static void setViewClipPlanes(PViewOptions *opt, bool on)
     gmshClipPlaneOn(i, on && (opt->clip & (1 << i)));
 }
 
+// The cut elements of whole element mode, with the shader pipeline, are
+// clipped to what the planes cut off, so that they sit next to the clipped
+// rest of the view without overlapping it (a transparent view would show the
+// overlap); the fixed function pipeline draws them whole with the planes off.
+static void setViewClipOutside(PViewOptions *opt, bool on)
+{
+  if(gmshUseShaders())
+    gmshClipOutside(on);
+  else
+    setViewClipPlanes(opt, !on);
+}
+
 // Are the glyphs tested against the planes one at a time? In whole element
 // mode a glyph is drawn whole or not at all, so the test is made on the
 // point or segment it is placed by, with the planes off while drawing. Not
@@ -445,10 +457,13 @@ static void addArrowFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
   double lmax = opt->tmpMax;
   if(!l || !lmax) return;
   double scale = (opt->arrowSizeMax - opt->arrowSizeMin) / lmax;
-  if(opt->scaleType == PViewOptions::Logarithmic && opt->tmpMin > 0 &&
+  if(opt->getScaleType(opt->tmpMin, opt->tmpMax) != PViewOptions::Linear &&
      opt->tmpMax > opt->tmpMin && l != opt->tmpMin) {
+    // as long as the arrow, on the scale of the view
+    double a = opt->scaleForward(opt->tmpMin, opt->tmpMin, opt->tmpMax);
+    double b = opt->scaleForward(opt->tmpMax, opt->tmpMin, opt->tmpMax);
     scale = (opt->arrowSizeMax - opt->arrowSizeMin) / l *
-            log10(l / opt->tmpMin) / log10(opt->tmpMax / opt->tmpMin);
+            (opt->scaleForward(l, opt->tmpMin, opt->tmpMax) - a) / (b - a);
   }
   if(opt->arrowSizeMin && l) scale += opt->arrowSizeMin / l;
   double px = scale * v[0], py = scale * v[1], pz = scale * v[2];
@@ -492,6 +507,7 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
     tok.add(opt->tmpMin);
     tok.add(opt->tmpMax);
     tok.add(opt->scaleType);
+    tok.add(opt->scaleThreshold);
     tok.add(opt->centerGlyphs);
     addClipToken(tok, opt);
     glyphList *g;
@@ -521,10 +537,12 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
     if((l || opt->vectorType == 6) && lmax) {
       double scale = (opt->arrowSizeMax - opt->arrowSizeMin) / lmax;
       // log scaling
-      if(opt->scaleType == PViewOptions::Logarithmic && opt->tmpMin > 0 &&
+      if(opt->getScaleType(opt->tmpMin, opt->tmpMax) != PViewOptions::Linear &&
          opt->tmpMax > opt->tmpMin && l != opt->tmpMin) {
+        double a = opt->scaleForward(opt->tmpMin, opt->tmpMin, opt->tmpMax);
+        double b = opt->scaleForward(opt->tmpMax, opt->tmpMin, opt->tmpMax);
         scale = (opt->arrowSizeMax - opt->arrowSizeMin) / l *
-                log10(l / opt->tmpMin) / log10(opt->tmpMax / opt->tmpMin);
+                (opt->scaleForward(l, opt->tmpMin, opt->tmpMax) - a) / (b - a);
       }
       if(opt->arrowSizeMin && l) scale += opt->arrowSizeMin / l;
       double px = scale * v[0];
@@ -595,13 +613,13 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
       unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
       gmshColor4ubv((const void *)&col);
       if(opt->centerGlyphs == 2)
-        ctx->drawStringRight(stringValue(numComp, d, v, opt->format.c_str()),
+        ctx->drawStringRight(stringValue(numComp, d, v, opt->getFormat().c_str()),
                              pc.x(), pc.y(), pc.z());
       else if(opt->centerGlyphs == 1)
-        ctx->drawStringCenter(stringValue(numComp, d, v, opt->format.c_str()),
+        ctx->drawStringCenter(stringValue(numComp, d, v, opt->getFormat().c_str()),
                               pc.x(), pc.y(), pc.z());
       else
-        ctx->drawString(stringValue(numComp, d, v, opt->format.c_str()), pc.x(),
+        ctx->drawString(stringValue(numComp, d, v, opt->getFormat().c_str()), pc.x(),
                         pc.y(), pc.z());
     }
   }
@@ -613,14 +631,14 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
         gmshColor4ubv((const void *)&col);
         if(opt->centerGlyphs == 2)
           ctx->drawStringRight(
-            stringValue(numComp, val[i], v, opt->format.c_str()), xyz[i][0],
+            stringValue(numComp, val[i], v, opt->getFormat().c_str()), xyz[i][0],
             xyz[i][1], xyz[i][2]);
         else if(opt->centerGlyphs == 1)
           ctx->drawStringCenter(
-            stringValue(numComp, val[i], v, opt->format.c_str()), xyz[i][0],
+            stringValue(numComp, val[i], v, opt->getFormat().c_str()), xyz[i][0],
             xyz[i][1], xyz[i][2]);
         else
-          ctx->drawString(stringValue(numComp, val[i], v, opt->format.c_str()),
+          ctx->drawString(stringValue(numComp, val[i], v, opt->getFormat().c_str()),
                           xyz[i][0], xyz[i][1], xyz[i][2]);
       }
     }
@@ -845,11 +863,11 @@ public:
       gl2psLineWidth((float)(CTX::instance()->lineWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       if(!opt->axesAutoPosition)
-        _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat,
+        _ctx->drawAxes(opt->axes, opt->axesTicks, opt->axesFormat,
                        opt->axesLabel, opt->axesPosition, opt->axesMikado,
                        opt->axesPosition);
       else if(!opt->tmpBBox.empty())
-        _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat,
+        _ctx->drawAxes(opt->axes, opt->axesTicks, opt->axesFormat,
                        opt->axesLabel, opt->tmpBBox, opt->axesMikado,
                        opt->tmpBBox);
     }
@@ -904,12 +922,12 @@ public:
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
 
-    // the outlines of the cut elements, drawn whole with the planes off
+    // the outlines of the cut elements, on the side the planes cut off
     if(whole) {
-      setViewClipPlanes(opt, false);
+      setViewClipOutside(opt, true);
       drawArrays(_ctx, p, p->va_clip_lines, GL_LINES,
                  opt->light && opt->lightLines, true);
-      setViewClipPlanes(opt, true);
+      setViewClipOutside(opt, false);
     }
 
     if(opt->lightTwoSide) gmshLightTwoSide(true);
@@ -918,10 +936,10 @@ public:
 
     // what the clipping planes add: in capping mode the section they cut,
     // clipped like everything else; in whole element mode the cut elements,
-    // drawn whole with the planes off
-    if(whole) setViewClipPlanes(opt, false);
+    // on the side the planes cut off
+    if(whole) setViewClipOutside(opt, true);
     drawArrays(_ctx, p, p->va_clip_triangles, GL_TRIANGLES, opt->light, true);
-    if(whole) setViewClipPlanes(opt, true);
+    if(whole) setViewClipOutside(opt, false);
 
     // draw the "pseudo" vertex arrays for vectors
     drawVectorArray(_ctx, p, p->va_vectors);
@@ -945,7 +963,7 @@ public:
 
     if(CTX::instance()->alpha && !glShader::transparentPass()) {
       glDisable(GL_BLEND);
-      glEnable(GL_DEPTH_TEST);
+      gmshDepthTest(true);
     }
 
     gmshAlphaScale(1., false);

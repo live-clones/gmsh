@@ -328,12 +328,12 @@ StringXString ViewOptions_String[] = {
   { F|O, "Attributes" , opt_view_attributes , "" ,
     "Optional string attached to the view. If the string contains 'AlwaysVisible', "
     "the view will not be hidden when new ones are merged."},
-  { F|O, "AxesFormatX" , opt_view_axes_format0 , "%.3g" ,
-    "Number format for X-axis (in standard C form)" },
-  { F|O, "AxesFormatY" , opt_view_axes_format1 , "%.3g" ,
-    "Number format for Y-axis (in standard C form)" },
-  { F|O, "AxesFormatZ" , opt_view_axes_format2 , "%.3g" ,
-    "Number format for Z-axis (in standard C form)" },
+  { F|O, "AxesFormatX" , opt_view_axes_format0 , "" ,
+    "Number format for X-axis (in standard C form); use adaptive automatic default if empty" },
+  { F|O, "AxesFormatY" , opt_view_axes_format1 , "" ,
+    "Number format for Y-axis (in standard C form); use adaptive automatic default if empty" },
+  { F|O, "AxesFormatZ" , opt_view_axes_format2 , "" ,
+    "Number format for Z-axis (in standard C form); use adaptive automatic default if empty" },
   { F|O, "AxesLabelX" , opt_view_axes_label0 , "" ,
     "X-axis label" },
   { F|O, "AxesLabelY" , opt_view_axes_label1 , "" ,
@@ -363,8 +363,8 @@ StringXString ViewOptions_String[] = {
 
   { F,   "Name" , opt_view_name , "" ,
     "Default post-processing view name" },
-  { F|O, "NumberFormat" , opt_view_number_format , "%.3g" ,
-    "Number format (in standard C form)" },
+  { F|O, "NumberFormat" , opt_view_number_format , "" ,
+    "Number format (in standard C form); use adaptive automatic default if empty" },
 
   { F|O, "Stipple0" , opt_view_stipple0 , "1*0x1F1F" ,
     "First stippling pattern" },
@@ -435,12 +435,21 @@ StringXNumber GeneralOptions_Number[] = {
     "Minimum Y-axis coordinate" },
   { F|O, "AxesMinZ" , opt_general_axes_zmin , 0. ,
     "Minimum Z-axis coordinate" },
-  { F|O, "AxesTicsX" , opt_general_axes_tics0 , 5. ,
-    "Number of tics on the X-axis" },
-  { F|O, "AxesTicsY" , opt_general_axes_tics1 , 5. ,
-    "Number of tics on the Y-axis" },
-  { F|O, "AxesTicsZ" , opt_general_axes_tics2 , 5. ,
-    "Number of tics on the Z-axis" },
+  { F|O, "AxesTicksX" , opt_general_axes_ticks0 , 5. ,
+    "Number of ticks on the X-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O, "AxesTicksY" , opt_general_axes_ticks1 , 5. ,
+    "Number of ticks on the Y-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O, "AxesTicksZ" , opt_general_axes_ticks2 , 5. ,
+    "Number of ticks on the Z-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O|D, "AxesTicsX" , opt_general_axes_ticks0 , 5. ,
+    "[Deprecated]" },
+  { F|O|D, "AxesTicsY" , opt_general_axes_ticks1 , 5. ,
+    "[Deprecated]" },
+  { F|O|D, "AxesTicsZ" , opt_general_axes_ticks2 , 5. ,
+    "[Deprecated]" },
   { F|O, "AxesValueMaxX" , opt_general_axes_value_xmax , 1. ,
     "Maximum X-axis forced value" },
   { F|O, "AxesValueMaxY" , opt_general_axes_value_ymax , 1. ,
@@ -476,6 +485,10 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "BoundingBoxSize" , opt_general_lc, 1. ,
     "Overall bounding box size (read-only)" },
 
+  { F|O, "Brightness" , opt_general_brightness , 1. ,
+    "Brightness of the lit surfaces, a factor on the light (applied in linear "
+    "light in studio shading, and so that a factor looks the same in classic "
+    "shading)" },
   { F|O, "Camera" , opt_general_camera_mode, 0. ,
     "Enable camera view mode" },
   { F|O, "CameraAperture" , opt_general_camera_aperture, 40. ,
@@ -648,8 +661,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light0Z" , opt_general_light02 , 1.0 ,
     "Z position of light source 0" },
   { F|O, "Light0W" , opt_general_light03 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 0 (W=0 means "
-    "infinitely far source)" },
+    "Proximity of light source 0, its W coordinate: 0 for a directional light "
+    "(infinitely far), 1 for a point light at (X, Y, Z), in between for a "
+    "point light at (X, Y, Z) / W (not used by studio shading)" },
   { F|O, "Light1" , opt_general_light1 , 0.,
     "Enable light source 1" },
   { F|O, "Light1X" , opt_general_light10 , 0.5 ,
@@ -659,8 +673,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light1Z" , opt_general_light12 , 1.0 ,
     "Z position of light source 1" },
   { F|O, "Light1W" , opt_general_light13 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 1 (W=0 means infinitely "
-    "far source)" },
+    "W coordinate of light source 1: 0 for a directional light, 1 for a point "
+    "light at (X, Y, Z), in between for a point light at (X, Y, Z) / W" },
   { F|O, "Light2" , opt_general_light2 , 0.,
     "Enable light source 2" },
   { F|O, "Light2X" , opt_general_light20 , 0.5 ,
@@ -670,8 +684,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light2Z" , opt_general_light22 , 1.0 ,
     "Z position of light source 2" },
   { F|O, "Light2W" , opt_general_light23 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 2 (W=0 means infinitely "
-    "far source)" },
+    "W coordinate of light source 2: 0 for a directional light, 1 for a point "
+    "light at (X, Y, Z), in between for a point light at (X, Y, Z) / W" },
   { F|O, "Light3" , opt_general_light3 , 0.,
     "Enable light source 3" },
   { F|O, "Light3X" , opt_general_light30 , 0.5 ,
@@ -681,8 +695,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light3Z" , opt_general_light32 , 1.0 ,
     "Z position of light source 3" },
   { F|O, "Light3W" , opt_general_light33 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 3 (W=0 means infinitely "
-    "far source)" },
+    "W coordinate of light source 3: 0 for a directional light, 1 for a point "
+    "light at (X, Y, Z), in between for a point light at (X, Y, Z) / W" },
   { F|O, "Light4" , opt_general_light4 , 0.,
     "Enable light source 4" },
   { F|O, "Light4X" , opt_general_light40 , 0.5 ,
@@ -692,8 +706,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light4Z" , opt_general_light42 , 1.0 ,
     "Z position of light source 4" },
   { F|O, "Light4W" , opt_general_light43 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 4 (W=0 means infinitely "
-    "far source)" },
+    "W coordinate of light source 4: 0 for a directional light, 1 for a point "
+    "light at (X, Y, Z), in between for a point light at (X, Y, Z) / W" },
   { F|O, "Light5" , opt_general_light5 , 0.,
     "Enable light source 5" },
   { F|O, "Light5X" , opt_general_light50 , 0.5 ,
@@ -703,8 +717,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light5Z" , opt_general_light52 , 1.0 ,
     "Z position of light source 5" },
   { F|O, "Light5W" , opt_general_light53 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 5 (W=0 means infinitely "
-    "far source)" },
+    "W coordinate of light source 5: 0 for a directional light, 1 for a point "
+    "light at (X, Y, Z), in between for a point light at (X, Y, Z) / W" },
   { F|O, "LineWidth" , opt_general_line_width , 1.0 ,
     "Display width of lines (in pixels)" },
 
@@ -738,6 +752,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Minimum model coordinate along the Y-axis (read-only)" },
   { F,   "MinZ" , opt_general_zmin , 0. ,
     "Minimum model coordinate along the Z-axis (read-only)" },
+  { F|O, "MouseHoverHighlight" , opt_general_mouse_hover_highlight , 1. ,
+    "Highlight the entity the mouse is over" },
   { F|O, "MouseHoverMeshes" , opt_general_mouse_hover_meshes , 0. ,
     "Enable mouse hover on meshes" },
   { F|O, "MouseSelection" , opt_general_mouse_selection , 1. ,
@@ -774,6 +790,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Orthographic" , opt_general_orthographic , 1. ,
     "Orthographic projection mode (0: perspective projection)" },
 
+  { F|O, "Phlogiston" , opt_general_phlogiston , 1. ,
+    "Phlogiston (0: none)" },
   { F|S, "PluginPositionX" , opt_general_plugin_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the plugin "
     "window" },
@@ -1936,12 +1954,21 @@ StringXNumber ViewOptions_Number[] = {
     "Minimum Y-axis coordinate" },
   { F|O, "AxesMinZ" , opt_view_axes_zmin , 0. ,
     "Minimum Z-axis coordinate" },
-  { F|O, "AxesTicsX" , opt_view_axes_tics0 , 5. ,
-    "Number of tics on the X-axis" },
-  { F|O, "AxesTicsY" , opt_view_axes_tics1 , 5. ,
-    "Number of tics on the Y-axis" },
-  { F|O, "AxesTicsZ" , opt_view_axes_tics2 , 5. ,
-    "Number of tics on the Z-axis" },
+  { F|O, "AxesTicksX" , opt_view_axes_ticks0 , 5. ,
+    "Number of ticks on the X-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O, "AxesTicksY" , opt_view_axes_ticks1 , 5. ,
+    "Number of ticks on the Y-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O, "AxesTicksZ" , opt_view_axes_ticks2 , 5. ,
+    "Number of ticks on the Z-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O|D, "AxesTicsX" , opt_view_axes_ticks0 , 5. ,
+    "[Deprecated]" },
+  { F|O|D, "AxesTicsY" , opt_view_axes_ticks1 , 5. ,
+    "[Deprecated]" },
+  { F|O|D, "AxesTicsZ" , opt_view_axes_ticks2 , 5. ,
+    "[Deprecated]" },
 
   { F|O, "Boundary" , opt_view_boundary , 0. ,
     "Draw the `N minus b'-dimensional boundary of the element (N: element "
@@ -1970,7 +1997,7 @@ StringXNumber ViewOptions_Number[] = {
     "5: emc2000, 6: incadescent, 7: hot, 8: pink, 9: grayscale, 10: french, "
     "11: hsv, 12: spectrum, 13: bone, 14: spring, 15: summer, 16: autumm, "
     "17: winter, 18: cool, 19: copper, 20: magma, 21: inferno, 22: plasma, "
-    "23: viridis, 24: turbo)"},
+    "23: viridis, 24: turbo, 25: cool to warm, 26: fast)"},
   { F|O, "ColormapRotation" , opt_view_colormap_rotation , 0. ,
     "Incremental colormap rotation" },
   { F|O, "ColormapSwap" , opt_view_colormap_swap , 0. ,
@@ -2132,8 +2159,12 @@ StringXNumber ViewOptions_Number[] = {
     "Element sampling rate (draw one out every `Sampling' elements)" },
   { F|O, "SaturateValues" , opt_view_saturate_values , 0. ,
     "Saturate the view values to custom min and max (1: true, 0: false)" },
+  { F|O, "ScaleThreshold" , opt_view_scale_threshold , 0. ,
+    "Value below which a symmetric logarithmic scale is linear (0: automatic, "
+    "four decades below the largest value)" },
   { F|O, "ScaleType" , opt_view_scale_type , 1 ,
-    "Value scale type (1: linear, 2: logarithmic, 3: double logarithmic)" },
+    "Value scale type (1: linear, 2: logarithmic, 3: symmetric logarithmic, "
+    "logarithmic on both sides of zero and linear in between)" },
   { F|O, "ShowElement" , opt_view_show_element , 0. ,
     "Show element boundaries?" },
   { F|O, "ShowScale" , opt_view_show_scale , 1. ,
@@ -2284,6 +2315,10 @@ StringXNumber PrintOptions_Number[] = {
     "Save Disto quality measure in mesh statistics exported as "
     "post-processing views" },
 
+  { F|O, "ScalePixelSizes" , opt_print_scale_pixel_sizes , 1. ,
+    "Scale what is sized in pixels (fonts, line widths, point and glyph "
+    "sizes, value scales) with the size of the picture, so that a large "
+    "picture looks like the window (0: keep their screen size)" },
   { F|O, "Supersampling" , opt_print_supersampling , 1. ,
     "Render pictures at this multiple of their size and average them down" },
 
@@ -2390,8 +2425,8 @@ StringXColor GeometryOptions_Color[] = {
     {255, 150, 0, 255}, {255, 150, 0, 255}, {255, 150, 0, 255}, {255, 150, 0, 255},
     "Highlight 1 color" },
   { F|O, "HighlightTwo" , opt_geometry_color_highlight2 ,
-    {255, 255, 0, 255}, {255, 255, 0, 255}, {255, 255, 0, 255}, {255, 255, 0, 255},
-    "Highlight 2 color" },
+    {255, 150, 0, 255}, {255, 150, 0, 255}, {255, 150, 0, 255}, {255, 150, 0, 255},
+    "Highlight 2 color, which the entity under the mouse is drawn in" },
   { F|O, "Tangents" , opt_geometry_color_tangents ,
     {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255}, {255, 255, 0, 255},
     "Tangent geometry vectors color" },

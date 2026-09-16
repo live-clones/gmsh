@@ -736,6 +736,9 @@ public:
 
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();
+  // the faces of the mesh of a surface, for a picking pass when they are not
+  // drawn (Mesh.SurfaceFaces off): see GEntity::va_pick_triangles
+  void fillPickVertexArray(GFace *f);
 
   // build what the clipping planes add (see GEntity::va_clip_*); false if
   // nothing had to change

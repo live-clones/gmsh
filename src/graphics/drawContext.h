@@ -134,7 +134,11 @@ public:
   drawContextGlobal() {}
   virtual ~drawContextGlobal() {}
   virtual void draw(bool rateLimited = true) {}
-  virtual void drawCurrentOpenglWindow(bool make_current) {}
+  // again: the same picture as the draw just before it (the second of the
+  // two a print makes), whose studio frames need not be drawn a second time
+  virtual void drawCurrentOpenglWindow(bool make_current, bool again = false)
+  {
+  }
   virtual int getFontIndex(const char *fontname) { return 0; }
   virtual int getFontEnum(int index) { return 0; }
   virtual const char *getFontName(int index) { return "Helvetica"; }
@@ -159,6 +163,40 @@ public:
   // strings are recomputed one by one, which is slow on macOS
   virtual void reserveStringTextures(std::size_t n) {}
   virtual void flushString() {}
+  // draw the strings with a one pixel halo in the background colour, so
+  // that they read over the data
+  void setStringHalo(bool halo) { _stringHalo = halo; }
+  bool stringHalo() { return _stringHalo; }
+  // Where the copies of a string drawn behind it for its halo go, in the
+  // pixels the strings are drawn in: twelve directions around a circle one
+  // pixel of the window across (in a print, that pixel scaled as the line
+  // widths are). This is the outline the native engine draws with its eight
+  // copies one pixel apart, thin and even; eight copies a whole pixel factor
+  // apart (two pixels on a high resolution screen) gave a thick corona.
+  static int stringHaloOffsets(float offsets[12][2])
+  {
+    static const float dir[12][2] = {
+      {1.f, 0.f},         {0.8660254f, 0.5f},   {0.5f, 0.8660254f},
+      {0.f, 1.f},         {-0.5f, 0.8660254f},  {-0.8660254f, 0.5f},
+      {-1.f, 0.f},        {-0.8660254f, -0.5f}, {-0.5f, -0.8660254f},
+      {0.f, -1.f},        {0.5f, -0.8660254f},  {0.8660254f, -0.5f}};
+    float r = (float)gmshPixelScale();
+    for(int k = 0; k < 12; k++) {
+      offsets[k][0] = r * dir[k][0];
+      offsets[k][1] = r * dir[k][1];
+    }
+    return 12;
+  }
+  // the pixels per unit of the drawing of what is being drawn (a window, or
+  // a picture being printed), which the strings are rasterised at: said by
+  // the window at the beginning of its draw, as a window that has not drawn
+  // yet (a tile just split off) knows nothing of its own
+  void setPixelFactor(double f) { _pixelFactor = (f > 0.) ? f : 1.; }
+  double pixelFactor() { return _pixelFactor; }
+protected:
+  bool _stringHalo = false;
+  double _pixelFactor = 1.;
+public:
   // is a mouse button held down? The vertex arrays are left alone while
   // dragging.
   virtual bool mouseIsPressed() { return false; }
@@ -217,13 +255,18 @@ private:
   // back. This replaces GL_SELECT, which drivers implement on the CPU.
   struct pickObject {
     int type, ient, type2, ient2;
-    pickObject(int t = -1, int i = -1, int t2 = -1, int i2 = -1)
-      : type(t), ient(i), type2(t2), ient2(i2)
+    // a marker standing for an entity rather than showing its shape, drawn
+    // in front of everything (the sphere of a volume)
+    bool front;
+    pickObject(int t = -1, int i = -1, int t2 = -1, int i2 = -1, bool f = false)
+      : type(t), ient(i), type2(t2), ient2(i2), front(f)
     {
     }
   };
   std::vector<pickObject> _pickObjects;
   bool _pickColor;
+  // the scale of the depth range per dimension in a picking pass
+  double _pickDepthStep = 0.;
   // The last identifier image and depths read back from a picking pass, so
   // that hovering costs a lookup instead of a redraw per mouse move. Dropped
   // by openglWindow::draw() on every redraw; the flags record what it was
@@ -231,6 +274,12 @@ private:
   std::vector<unsigned char> _pickCache;
   std::vector<float> _pickCacheDepth;
   bool _pickCacheValid, _pickCacheMesh, _pickCachePost, _pickCacheElements;
+  // the entities stepped past, and the last one a pick chose
+  std::vector<std::size_t> _pickSkip;
+  std::size_t _pickLast = 0;
+  bool _pickLastValid = false;
+  int _pickCandidates = 0;
+  static std::size_t _pickKey(int type, int ient, int type2, int ient2);
   // the region of the window the image covers, in real pixels (a region
   // around the pointer is much cheaper to draw than the whole window)
   int _pickCacheX, _pickCacheY, _pickCacheWidth, _pickCacheHeight;
@@ -252,11 +301,28 @@ public:
   // true during a colour buffer picking pass, where the drawing code must
   // use the colour set by setPickColor() instead of its own
   bool inPickColorMode() const { return _pickColor; }
-  // register a pickable object and set the colour that encodes it
-  void setPickColor(int type, int ient, int type2 = -1, int ient2 = -1);
+  // Register a pickable object and set the colour that encodes it. Each
+  // dimension is drawn into a depth range of its own, lower dimensions in
+  // front, so that a point or a curve can be picked through a surface;
+  // `front' puts what follows in the front-most range whatever its
+  // dimension, for a marker that stands for an entity rather than showing
+  // its shape (the sphere of a volume, which floats inside it).
+  void setPickColor(int type, int ient, int type2 = -1, int ient2 = -1,
+                    bool front = false);
   // forget the identifier image: anything that changes what a redraw would
   // show must call this
   void invalidatePickCache() { _pickCacheValid = false; }
+  // Step through the entities under the cursor instead of the drawing order
+  // deciding which one wins: what a pick returned is set aside, a pass draws
+  // nothing at all for it (setPickColor()), and the next pick finds what was
+  // behind it. stepPick() goes one deeper (or back) and stops at the furthest
+  // and the nearest rather than coming round, resetPick() returns to the
+  // entity in front, pickDepth() says how deep the last pick went and
+  // pickCandidates() how many entities its image held around the cursor.
+  void stepPick(int direction);
+  void resetPick();
+  int pickDepth() const { return (int)_pickSkip.size(); }
+  int pickCandidates() const { return _pickCandidates; }
   // stop attributing what is drawn next to the last registered object, so
   // that decorations (frames, axes, labels) are not picked as it
   void unsetPickColor();
@@ -342,6 +408,10 @@ public:
   void setEulerAnglesFromRotationMatrix();
   void initProjection(int xpick = 0, int ypick = 0, int wpick = 0,
                       int hpick = 0);
+  // the matrices of camera mode: the projection (the camera's frustum,
+  // shifted for a studio frame) and the modelview (the camera looking at
+  // its target), which `view' comes back with
+  void initCameraMatrices(double view[16]);
   void initRenderModel();
   void initPosition(bool saveMatrices);
   void unproject(double winx, double winy, double p[3], double d[3]);
@@ -370,10 +440,10 @@ public:
   void drawGraph2d(bool inModelCoordinates);
   void drawAxis(double xmin, double ymin, double zmin, double xmax, double ymax,
                 double zmax, int nticks, int mikado);
-  void drawAxes(int mode, double tics[3], std::string format[3],
+  void drawAxes(int mode, double ticks[3], std::string format[3],
                 std::string label[3], double bb[6], int mikado,
                 double value_bb[6]);
-  void drawAxes(int mode, double tics[3], std::string format[3],
+  void drawAxes(int mode, double ticks[3], std::string format[3],
                 std::string label[3], SBoundingBox3d &bb, int mikado,
                 SBoundingBox3d &value_bb);
   void drawAxes();

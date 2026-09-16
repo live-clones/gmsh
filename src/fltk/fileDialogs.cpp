@@ -240,7 +240,7 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
   struct _genericBitmapFileDialog {
     Fl_Window *window;
     Fl_Value_Slider *s[2];
-    Fl_Check_Button *b[3];
+    Fl_Check_Button *b[4];
     Fl_Value_Input *v[3];
     Fl_Button *ok, *cancel;
   };
@@ -248,7 +248,7 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
 
   if(!dialog) {
     dialog = new _genericBitmapFileDialog;
-    int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 9 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -267,6 +267,11 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
     dialog->b[2]->tooltip("Print.CompositeWindows");
     y += BH;
     dialog->b[2]->type(FL_TOGGLE_BUTTON);
+    dialog->b[3] =
+      new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Scale sizes with the picture");
+    dialog->b[3]->tooltip("Print.ScalePixelSizes");
+    y += BH;
+    dialog->b[3]->type(FL_TOGGLE_BUTTON);
     dialog->v[0] = new Fl_Value_Input(WB, y, BB / 2, BH);
     dialog->v[0]->tooltip("Print.Width");
     dialog->v[0]->minimum(-1);
@@ -324,6 +329,7 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
   dialog->b[0]->value(opt_print_text(0, GMSH_GET, 0));
   dialog->b[1]->value(opt_print_background(0, GMSH_GET, 0));
   dialog->b[2]->value(opt_print_composite_windows(0, GMSH_GET, 0));
+  dialog->b[3]->value(opt_print_scale_pixel_sizes(0, GMSH_GET, 0));
   dialog->v[0]->value(opt_print_width(0, GMSH_GET, 0));
   dialog->v[1]->value(opt_print_height(0, GMSH_GET, 0));
   dialog->v[2]->value(opt_print_supersampling(0, GMSH_GET, 0));
@@ -344,6 +350,8 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
                              (int)dialog->b[1]->value());
         opt_print_composite_windows(0, GMSH_SET | GMSH_GUI,
                                     (int)dialog->b[2]->value());
+        opt_print_scale_pixel_sizes(0, GMSH_SET | GMSH_GUI,
+                                    (int)dialog->b[3]->value());
         opt_print_width(0, GMSH_SET | GMSH_GUI, (int)dialog->v[0]->value());
         opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
         opt_print_supersampling(0, GMSH_SET | GMSH_GUI,
