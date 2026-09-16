@@ -31,8 +31,6 @@ public:
   std::vector<double> ST, VT, TT; // triangles
   int NbSQ, NbVQ, NbTQ;
   std::vector<double> SQ, VQ, TQ; // quadrangles
-  int NbSG, NbVG, NbTG;
-  std::vector<double> SG, VG, TG; // polygons
   int NbSS, NbVS, NbTS;
   std::vector<double> SS, VS, TS; // tetrahedra
   int NbSH, NbVH, NbTH;
@@ -43,17 +41,12 @@ public:
   std::vector<double> SY, VY, TY; // pyramids
   int NbSR, NbVR, NbTR;
   std::vector<double> SR, VR, TR; // trihedra
-  int NbSD, NbVD, NbTD;
-  std::vector<double> SD, VD, TD; // polyhedra
   int NbT2, NbT3;
   std::vector<double> T2D, T3D; // 2D and 3D text strings
   std::vector<char> T2C, T3C;
-  std::vector<int> polyNumNodes[2];
-  std::vector<int> polyAgNumNodes[2];
-  int polyTotNumNodes[2];
 
 private:
-  int _index[33];
+  int _index[27];
   // list-based data has no topology: node identifiers are recreated once, by
   // merging the nodes that have the same coordinates, and cached here. _nodeId
   // is indexed by _nodeOffset[element] + node
@@ -100,13 +93,11 @@ public:
   int getNumLines(int step = -1) { return NbSL + NbVL + NbTL; }
   int getNumTriangles(int step = -1) { return NbST + NbVT + NbTT; }
   int getNumQuadrangles(int step = -1) { return NbSQ + NbVQ + NbTQ; }
-  int getNumPolygons(int step = -1) { return NbSG + NbVG + NbTG; }
   int getNumTetrahedra(int step = -1) { return NbSS + NbVS + NbTS; }
   int getNumHexahedra(int step = -1) { return NbSH + NbVH + NbTH; }
   int getNumPrisms(int step = -1) { return NbSI + NbVI + NbTI; }
   int getNumPyramids(int step = -1) { return NbSY + NbVY + NbTY; }
   int getNumTrihedra(int step = -1) { return NbSR + NbVR + NbTR; }
-  int getNumPolyhedra(int step = -1) { return NbSD + NbVD + NbTD; }
   int getNumEntities(int step = -1) { return 1; }
   int getNumElements(int step = -1, int ent = -1);
   int getDimension(int step, int ent, int ele);
