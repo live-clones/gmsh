@@ -1032,6 +1032,9 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
     opt_mesh_recombine3d_all(0,GMSH_SET, 1);
     opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_RTREE);
     opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_PACK_PRLGRMS);
+    // RTREE consumes points that PACK_PRLGRMS placed in real 3D space;
+    // without this it stays in UV parameter space instead.
+    opt_mesh_pack_3d(0, GMSH_SET, 1);
     i++;
   }
   else if(argv[i] == "-format" || argv[i] == "-f") {

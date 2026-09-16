@@ -121,6 +121,9 @@ int meshCombine3D(GRegion *gr)
   // consider them alongside hexes. Different vertex-sharing arithmetic
   // (a hex+prism sharing a quad face: 8+6-4=10 boundary vertices) may
   // fit shapes a pure-hex assembly structurally cannot reach.
+  if(CTX::instance()->mesh.recombine3DLevel >= 2)
+    Msg::Warning("Mesh.Recombine3DLevel=2 (pyramids) is not implemented "
+                 "yet; falling back to hex+prisms");
   bool enablePrisms = CTX::instance()->mesh.recombine3DLevel >= 1;
   if(enablePrisms) {
     ccs.computePrisms(minQuality);
