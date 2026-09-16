@@ -896,6 +896,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "StudioSamples" , opt_general_studio_samples , 128. ,
     "Number of frames accumulated in studio shading while the view is still, "
     "for soft shadows, ambient occlusion and antialiasing" },
+  { F|O, "StudioShadowStrength" , opt_general_studio_shadow_strength , 1. ,
+    "Darkness of the shadows in studio shading, on the floor and on the model "
+    "(0: no shadow; 1: default; 2: twice as dark)" },
   { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. ,
     "Use the system menu bar on macOS?" },
 

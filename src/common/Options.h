@@ -254,6 +254,7 @@ double opt_general_studio_light_spread(OPT_ARGS_NUM);
 double opt_general_brightness(OPT_ARGS_NUM);
 double opt_general_studio_floor_offset(OPT_ARGS_NUM);
 double opt_general_studio_samples(OPT_ARGS_NUM);
+double opt_general_studio_shadow_strength(OPT_ARGS_NUM);
 double opt_general_order_independent_transparency(OPT_ARGS_NUM);
 double opt_geometry_transparency(OPT_ARGS_NUM);
 double opt_geometry_transparency_mode(OPT_ARGS_NUM);

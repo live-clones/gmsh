@@ -165,6 +165,9 @@ uniform float uShininess;
 uniform int uShading;
 // a factor on the light of the lit surfaces
 uniform float uBrightness;
+// how dark the shadows are: the shade of the floor and of the model is
+// scaled by it (0: none, 1: as designed)
+uniform float uShadowStrength;
 // the studio light: the key direction and the model's up axis in eye
 // coordinates, the key's shadow map with the matrix from eye coordinates to
 // it, and the same for the dome direction of the current sample
@@ -317,7 +320,7 @@ void main()
     float lit = uShadowOn ? keyLit(nf) : 1.0;
     float shade = 1.0 - lit;
     if(uDomeOn) shade = 1.0 - 0.6 * lit - 0.4 * domeLit(nf);
-    emit(vec4(vColor.rgb, alpha * shade));
+    emit(vec4(vColor.rgb, min(alpha * shade * uShadowStrength, 1.0)));
     return;
   }
 
@@ -340,6 +343,7 @@ void main()
     vec3 key = uLightOn[0] ? uLightDiffuse[0] : vec3(1.0);
     float nl = dot(n, uStudioLight);
     float lit = uShadowOn ? keyLit(n) : 1.0;
+    lit = 1.0 - min((1.0 - lit) * uShadowStrength, 1.0);
     // the ground below, and the sky above: analytic on the first frame, and
     // from a dome direction of each frame afterwards (cosine weighted about
     // the up axis, so that a surface facing up gets 1 on average and a tilted
@@ -752,7 +756,7 @@ void main()
       // one location per array element, looked up at link time: asking by
       // name at every draw is costly on scenes of many small draws
       GLint clipPlane[6], clipOn[6], clipOutside;
-      GLint studioLight, studioUp, brightness;
+      GLint studioLight, studioUp, brightness, shadowStrength;
       GLint shadowTexel, shadowOn, shadowFromEye, shadow;
       GLint domeOn, domeDir, domeFromEye, dome, shadowPass, seed;
       GLint lightPosition[6], lightAmbient[6], lightDiffuse[6];
@@ -901,6 +905,7 @@ void main()
       _u.shininess = glApi::GetUniformLocation(p, "uShininess");
       _u.shading = glApi::GetUniformLocation(p, "uShading");
       _u.brightness = glApi::GetUniformLocation(p, "uBrightness");
+      _u.shadowStrength = glApi::GetUniformLocation(p, "uShadowStrength");
       _u.studioLight = glApi::GetUniformLocation(p, "uStudioLight");
       _u.studioUp = glApi::GetUniformLocation(p, "uStudioUp");
       _u.shadowTexel = glApi::GetUniformLocation(p, "uShadowTexel");
@@ -1080,11 +1085,12 @@ void main()
     glApi::Uniform1f(_u.shininess, (float)shineExponent);
   }
 
-  void setShading(int model, double brightness)
+  void setShading(int model, double brightness, double shadow)
   {
     if(!ensure()) return;
     glApi::Uniform1i(_u.shading, model);
     glApi::Uniform1f(_u.brightness, (float)brightness);
+    glApi::Uniform1f(_u.shadowStrength, (float)shadow);
   }
 
   void setStudioLight(const double dir[3], const double up[3], double texel)

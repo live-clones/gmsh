@@ -3066,6 +3066,13 @@ double opt_general_studio_samples(OPT_ARGS_NUM)
   return CTX::instance()->studioSamples;
 }
 
+double opt_general_studio_shadow_strength(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->studioShadowStrength = std::max(0., std::min(10., val));
+  return CTX::instance()->studioShadowStrength;
+}
+
 double opt_general_order_independent_transparency(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

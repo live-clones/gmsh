@@ -363,7 +363,8 @@ void gmshPushShaderState()
   glShader::setAlphaScale(_alphaScale);
   glShader::setMaterial(CTX::instance()->shine,
                         CTX::instance()->shineExponent);
-  glShader::setShading(gmshShadingModel(), CTX::instance()->brightness);
+  glShader::setShading(gmshShadingModel(), CTX::instance()->brightness,
+                       CTX::instance()->studioShadowStrength);
   // everything but the collected lines draws undashed: the vertex arrays
   // carry no distance along the line, and a glyph is not a line
   glShader::setStipple(false, 1, 0xffff);
@@ -607,7 +608,8 @@ void gmshFlushImmediate()
         1. : _batchState.alphaScale);
     glShader::setMaterial(CTX::instance()->shine,
                           CTX::instance()->shineExponent);
-    glShader::setShading(gmshShadingModel(), CTX::instance()->brightness);
+    glShader::setShading(gmshShadingModel(), CTX::instance()->brightness,
+                         CTX::instance()->studioShadowStrength);
     bool anyPlane = false;
     for(int i = 0; i < 6; i++) {
       if(_batchState.clipOn[i]) {
