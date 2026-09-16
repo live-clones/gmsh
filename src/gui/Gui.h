@@ -7,6 +7,7 @@
 #define GMSH_GUI_H
 
 #include <functional>
+#include <set>
 #include <string>
 #include <vector>
 #include "GmshConfig.h"
@@ -251,6 +252,13 @@ public:
   std::string formPane(const Ui::Form &form);
   void setFormPane(const Ui::Form &form, const std::string &pane);
   void reloadForm(const Ui::Form &form);
+  // an option has a new value: the interfaces that keep widgets put it in
+  // the ones that show it. The name as the option system writes it, with its
+  // index: "View[2].Visible".
+  static std::string optionName(const std::string &category,
+                                const std::string &name, int index);
+  void optionChanged(const std::string &category, const std::string &name,
+                     int index);
   void rebuildForm(const Ui::Form &form);
   void dropForm(const Ui::Form &form);
   // run one of the actions of the onelab tree: "check", "check_always",
@@ -448,6 +456,9 @@ private:
   Gui &operator=(const Gui &) = delete;
 
   Ui::Backend *_backend = nullptr;
+  // options changed from a thread that may not touch the interface
+  std::set<std::string> _changedOptions;
+
   // the one that was taken down, kept until the next is made: destroy() is
   // reached from inside the backend's own loop, which has to unwind through
   // the object before it may go

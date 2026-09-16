@@ -20,6 +20,7 @@ void GuiDialog::refill()
   _retired = std::move(_form);
   _form = build();
   _form.tabbed = _tabbed;
+  Ui::lower(_form);
 }
 
 void GuiDialog::show()

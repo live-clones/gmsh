@@ -362,9 +362,9 @@ namespace {
       }
       // a heading: Dear ImGui has the one font, so it says it by where it
       // stands
-      if(f.heading) {
+      if(f.heading || f.centred) {
         std::string text = f.getText();
-        float room = ImGui::GetContentRegionAvail().x;
+        float room = width > 0.f ? width : ImGui::GetContentRegionAvail().x;
         float need = ImGui::CalcTextSize(text.c_str()).x;
         if(need < room)
           ImGui::SetCursorPosX(ImGui::GetCursorPosX() + .5f * (room - need));

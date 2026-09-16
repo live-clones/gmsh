@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Menu.h"
@@ -214,6 +215,9 @@ namespace Ui {
     // Direction: the three components, read and written together
     std::function<void(double &x, double &y, double &z)> readVector;
     std::function<void(double x, double y, double z)> writeVector;
+    // the option of the host it edits, by the name the host is told when one
+    // changes; empty for a field bound to anything else
+    std::string option;
     // ColorMap: what it edits. Empty when there is nothing to show.
     ColourMap map;
     // Choice: the fixed list, and what each choice stands for when the field
@@ -255,6 +259,8 @@ namespace Ui {
     bool alert = false;
     // a line that names what is under it, drawn as a heading
     bool heading = false;
+    // Label: written in the middle of its cell rather than from its left
+    bool centred = false;
     // the text runs on over `rows` lines rather than being cut off
     bool wraps = false;
     // a rule across the pane at the top of this line, the field under it
@@ -275,6 +281,8 @@ namespace Ui {
     // Packed fields follow one another; a Spacer between two runs of them
     // pushes the second to the right.
     bool packed = false;
+    // nothing between it and the field after it
+    bool flush = false;
     // how wide the field itself should be, in multiples of the font size
     double widthEm = 0.;
     // The value is taken when the user has finished with the field -- left
@@ -301,6 +309,53 @@ namespace Ui {
     void getVector(double &x, double &y, double &z) const;
     void setVector(double x, double y, double z);
   };
+
+  // What a form is made of: a tree. A box stacks its items down, or lays
+  // them across as the cells of one line; tabs show one item at a time under
+  // its name. A cell is a field or a gap; it is as wide as the field says
+  // (widthEm, packed), an equal part of the line otherwise.
+  struct Box;
+  struct Tabs;
+  struct Item {
+    enum Kind { Nothing, AField, ABox, ATabs, AButton, ARule, AHeading };
+    Kind kind = Nothing;
+    Field field;
+    Button button;
+    std::shared_ptr<Box> box;
+    std::shared_ptr<Tabs> tabs;
+    std::string text; // Heading
+    Item() {}
+    Item(const Field &f) : kind(AField), field(f) {}
+    Item(const Button &b) : kind(AButton), button(b) {}
+    Item(const Box &b);
+    Item(const Tabs &t);
+  };
+
+  struct Box {
+    std::vector<Item> items;
+    enum Direction { Down, Across };
+    Direction direction = Down;
+    // Across: what lies between two cells, in em; below zero for the
+    // ordinary gap of the interface, zero for none
+    double padding = -1.;
+    // Down: the lines are the rows of a table, each column as wide as its
+    // widest cell and the same down every row
+    bool grid = false;
+    // false leaves the whole box out
+    std::function<bool()> visible;
+    bool scrolling = false;
+  };
+
+  struct Tabs {
+    std::vector<std::pair<std::string, Item>> tabs;
+    // what to do when the user picks one, by its name
+    std::function<void(const std::string &)> chosen;
+  };
+
+  inline Item::Item(const Box &b) : kind(ABox), box(std::make_shared<Box>(b)) {}
+  inline Item::Item(const Tabs &t) : kind(ATabs), tabs(std::make_shared<Tabs>(t))
+  {
+  }
 
   struct Pane {
     std::string label;
@@ -342,6 +397,7 @@ namespace Ui {
     // the next; unique among the forms of the application
     std::string id;
     std::string title;
+    Item content;
     // one pane at a time under tabs, or all of them one under another as
     // titled sections
     bool tabbed = true;
@@ -372,6 +428,8 @@ namespace Ui {
     // whichever pane is showing; zero lets the panes decide
     int leastRows = 0;
   };
+  // fill the panes and buttons of a form from its content
+  void lower(Form &f);
 
 } // namespace Ui
 

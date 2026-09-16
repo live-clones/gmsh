@@ -11,6 +11,7 @@
 
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Form.h"
@@ -44,9 +45,14 @@ namespace Declare {
     f.writeNumber = [v](double x) { *v = (x != 0.); };
     return f;
   }
-  // a field bound to a Gmsh option, the pairs that go with its kind
+  // A field bound to a Gmsh option, the pairs that go with its kind: by its
+  // full name, "Mesh.Algorithm", "View[2].Visible", "General.Color.Text", or
+  // by its parts.
+  Field &bindOption(Field &f, const std::string &name);
   Field &bindOption(Field &f, const std::string &category,
-                    const std::string &name, int index = 0);
+                    const std::string &name, int index);
+  // the same, with the kind the option table gives: text, number or colour
+  Field option(const std::string &label, const std::string &name);
 
   inline Field text(const std::string &label, std::string *value,
                     const std::string &tooltip = "")
@@ -57,6 +63,12 @@ namespace Declare {
     f.tooltip = tooltip;
     return bind(f, value);
   }
+  inline Field text(const std::string &name)
+  {
+    Field f;
+    f.kind = Text;
+    return bindOption(f, name);
+  }
 
   inline Field check(const std::string &label, bool *value)
   {
@@ -65,6 +77,12 @@ namespace Declare {
     f.label = label;
     return bind(f, value);
   }
+  inline Field check(const std::string &name)
+  {
+    Field f;
+    f.kind = Check;
+    return bindOption(f, name);
+  }
 
   inline Field integer(const std::string &label, int *value)
   {
@@ -72,6 +90,12 @@ namespace Declare {
     f.kind = Integer;
     f.label = label;
     return bind(f, value);
+  }
+  inline Field integer(const std::string &name)
+  {
+    Field f;
+    f.kind = Integer;
+    return bindOption(f, name);
   }
 
   inline Field choice(const std::string &label, std::string *value,
@@ -106,16 +130,44 @@ namespace Declare {
     f.tooltip = tooltip;
     return bind(f, value);
   }
-
-  // a field that edits a Gmsh option rather than a variable of ours
-  inline Field option(FieldKind kind, const std::string &label,
-                      const std::string &category, const std::string &name,
-                      int index = 0)
+  inline Field number(const std::string &name)
   {
     Field f;
-    f.kind = kind;
-    f.label = label;
-    return bindOption(f, category, name, index);
+    f.kind = Number;
+    return bindOption(f, name);
+  }
+  inline Field colour(const std::string &name)
+  {
+    Field f;
+    f.kind = Color;
+    return bindOption(f, name);
+  }
+
+  // what a field is called, written after it or before it
+  inline Field labeled(Field f, const std::string &text)
+  {
+    f.label = text;
+    return f;
+  }
+  inline Field labeled(const std::string &text, Field f)
+  {
+    f.label = text;
+    f.labelBefore = true;
+    return f;
+  }
+
+  // an option chosen among words, each standing for one of its numbers
+  inline Field
+  option(const std::string &name,
+         const std::vector<std::pair<std::string, int>> &choices)
+  {
+    Field f;
+    f.kind = Choice;
+    for(const auto &c : choices) {
+      f.choices.push_back(c.first);
+      f.values.push_back(c.second);
+    }
+    return bindOption(f, name);
   }
 
   // the same field, bounded
@@ -234,6 +286,13 @@ namespace Declare {
     Field f;
     f.kind = Label;
     f.readText = what;
+    return f;
+  }
+
+  // the same line, written in the middle of its cell
+  inline Field centred(Field f)
+  {
+    f.centred = true;
     return f;
   }
 
@@ -372,13 +431,122 @@ namespace Declare {
     return f;
   }
 
-  inline Pane pane(const std::string &label, const std::vector<Field> &fields)
+  inline Pane pane(const std::vector<Field> &fields,
+                   const std::string &label = "")
   {
     Pane p;
     p.label = label;
     p.fields = fields;
     return p;
   }
+
+  // --- what a form is made of
+
+  // items one under another
+  inline Box vbox(std::initializer_list<Item> items)
+  {
+    Box b;
+    b.items = items;
+    return b;
+  }
+
+  // lines whose cells line up in columns, each as wide as its widest cell
+  inline Box grid(std::initializer_list<Item> items)
+  {
+    Box b = vbox(items);
+    b.grid = true;
+    return b;
+  }
+
+  // items across one line, `padding` em apart: the interface's usual gap
+  // when it is not said, none when it is zero
+  inline Box hbox(std::initializer_list<Item> items, double padding = -1.)
+  {
+    Box b = vbox(items);
+    b.direction = Box::Across;
+    b.padding = padding;
+    return b;
+  }
+
+  // the same box, shown only when; a flag is read where it lives, so it
+  // has to outlive the form
+  inline Box visibleWhen(std::function<bool()> when, Box b)
+  {
+    b.visible = when;
+    return b;
+  }
+  inline Box visibleWhen(const bool &flag, Box b)
+  {
+    b.visible = [&flag]() { return flag; };
+    return b;
+  }
+  Box visibleWhen(bool &&flag, Box b) = delete;
+
+  inline Box scrolling(Box b)
+  {
+    b.scrolling = true;
+    return b;
+  }
+
+  inline Tabs tabs(std::initializer_list<std::pair<std::string, Item>> tabs,
+                   std::function<void(const std::string &)> chosen = nullptr)
+  {
+    Tabs t;
+    t.tabs = tabs;
+    t.chosen = chosen;
+    return t;
+  }
+
+  inline Item rule()
+  {
+    Item it;
+    it.kind = Item::ARule;
+    return it;
+  }
+
+  inline Item heading(const std::string &text)
+  {
+    Item it;
+    it.kind = Item::AHeading;
+    it.text = text;
+    return it;
+  }
+
+  // what is left of the line, and never less than `least` em; in a split,
+  // an empty cell
+  inline Field gap(double least = 2.)
+  {
+    Field f;
+    f.kind = Spacer;
+    f.widthEm = least;
+    return f;
+  }
+
+  // a button at the bottom of the form
+  inline Button button(const std::string &label, std::function<void()> action)
+  {
+    Button b;
+    b.label = label;
+    b.action = action;
+    return b;
+  }
+  // the one Return presses
+  inline Button byDefault(Button b)
+  {
+    b.isDefault = true;
+    return b;
+  }
+  inline Button enabledWhen(std::function<bool()> when, Button b)
+  {
+    b.enabled = when;
+    return b;
+  }
+  inline Button enabledWhen(const bool &flag, Button b)
+  {
+    b.enabled = [&flag]() { return flag; };
+    return b;
+  }
+  Button enabledWhen(bool &&flag, Button b) = delete;
 
 } // namespace Declare
 

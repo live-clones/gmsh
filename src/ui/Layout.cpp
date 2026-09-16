@@ -270,12 +270,23 @@ namespace Ui {
            fields[k + 1].widthShare > 0.;
   }
 
+  // whether a field is a cell of a line with nothing between its cells
+  static bool _cell(const Field &f)
+  {
+    return f.widthShare > 0. || f.flush;
+  }
+
   double packedWidth(const Field &f, const Metrics &m)
   {
-    if(f.kind == Spacer) return f.widthEm > 0. ? f.widthEm : 2.;
+    // a spacer with a share is an empty cell of that width
+    if(f.kind == Spacer)
+      return f.widthShare > 0. ? f.widthShare * m.field :
+             f.widthEm > 0.    ? f.widthEm :
+                                 2.;
     // a label that says how wide it is takes that; one that wraps takes the
     // width of an ordinary field, whatever it says
     if(f.kind == Label) {
+      if(f.widthShare > 0.) return f.widthShare * m.field;
       if(f.widthEm > 0.) return f.widthEm;
       if(f.wraps) return m.field;
     }
@@ -289,8 +300,11 @@ namespace Ui {
       w = f.widthShare > 0. ? f.widthShare * m.field :
           f.widthEm > 0.    ? f.widthEm :
                               m.field;
-    // and what it is called, unless the widget writes that itself
-    if(!_labelInside(f)) w += m.labelGap + _text(m, f.label);
+    // and what it is called, unless the widget writes that itself; a cell
+    // with nothing between it and the next has no room for a name it has
+    // not got
+    if(!_labelInside(f) && !(f.flush && f.label.empty()))
+      w += m.labelGap + _text(m, f.label);
     return w;
   }
 
@@ -298,6 +312,7 @@ namespace Ui {
                     std::size_t to, const Metrics &m)
   {
     if(sharesCell(fields, k, to)) return fields[k].widthShare * m.field;
+    if(fields[k].flush) return packedWidth(fields[k], m);
     return packedWidth(fields[k], m) + m.gap;
   }
 
@@ -385,8 +400,9 @@ namespace Ui {
       // what is left; with no spacer, the columns share the slack
       int columns = 0, spacers = 0;
       double columnW = _columnWidth(fields, i, last, m, columns);
+      // a spacer with a share is an empty cell, not a spring
       for(std::size_t k = i; k < last; k++)
-        if(fields[k].kind == Spacer) spacers++;
+        if(fields[k].kind == Spacer && !_cell(fields[k])) spacers++;
       double packed = _packedTotal(fields, i, last, m);
       double slack = room.width - packed - columns * columnW;
       if(slack < 0.) slack = 0.;
@@ -398,7 +414,9 @@ namespace Ui {
         const Field &f = fields[k];
         if(_hidden(f)) continue;
         if(f.kind == Spacer) {
-          if(grid > 0) {
+          if(_cell(f))
+            at += packedStep(fields, k, last, m);
+          else if(grid > 0) {
             // what a spacer pushes to the right end of a line is not in a column: it
             // is against the right edge, and the columns are for what comes before it
             double tail = -m.gap;
@@ -441,7 +459,7 @@ namespace Ui {
           labelBefore = before[(std::size_t)(grid > 0 ? gridColumn : 0)];
           fx += labelBefore;
         }
-        if(room.wide && f.widthEm <= 0.) fieldW = room.width - fx;
+        if(room.wide && f.widthEm <= 0. && !_cell(f)) fieldW = room.width - fx;
         if(grid > 0)
           at = fx + (f.packed ? packedStep(fields, k, last, m) :
                                 packedWidth(f, m) + m.gap);
@@ -456,7 +474,7 @@ namespace Ui {
         // the little buttons hung after it take their room out of the field
         for(const auto &t : f.trailing) {
           double wide = m.trailingWidth ? m.trailingWidth(t) : 0.;
-          p.trailing.push_back(Box(0., y, wide, m.row));
+          p.trailing.push_back(Rect(0., y, wide, m.row));
           fieldW -= wide;
         }
         // nothing runs into the edge, and nothing is narrower than an em
@@ -473,16 +491,20 @@ namespace Ui {
           fieldW -= give;
         }
 
-        Box b(fx, y, fieldW, m.row);
+        Rect b(fx, y, fieldW, m.row);
         switch(f.kind) {
         case Check:
           if(!f.disclosure)
             b.w = f.packed ? packedWidth(f, m) : columnW - m.gap;
           break;
         case Label:
-          // on a grid where a column follows it, no wider than it says; on its own
-          // line it runs to the edge; one that wraps is worth the lines it says
-          b.w = (grid > 0 && !f.wraps) ? fieldW : room.width - fx;
+          // On a grid, or when it says how wide it is, no wider than that;
+          // on its own line it runs to the edge; one that wraps is worth the
+          // lines it says.
+          b.w = ((grid > 0 || f.packed || f.widthEm > 0. || _cell(f)) &&
+                 !f.wraps) ?
+                  fieldW :
+                  room.width - fx;
           b.h = (f.wraps && f.rows > 1) ? f.rows * m.row : m.row;
           break;
         case Prose: {
@@ -523,9 +545,9 @@ namespace Ui {
         // a field that carries buttons has its label written after them, on a box
         // of its own; one that says its label comes first has it written before
         if(f.trailing.size() && f.label.size() && !f.labelBefore)
-          p.label = Box(tx, y, _text(m, f.label) + m.gap, m.row);
+          p.label = Rect(tx, y, _text(m, f.label) + m.gap, m.row);
         else if(labelBefore > 0.)
-          p.label = Box(fx - labelBefore, y, labelBefore, m.row);
+          p.label = Rect(fx - labelBefore, y, labelBefore, m.row);
         out.fields.push_back(p);
       }
       int tall = 1;

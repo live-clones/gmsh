@@ -798,6 +798,7 @@ function cell(f) {
     // value that is said, and the label only when there is no value.
     const say = document.createElement('div');
     say.textContent = f.value || f.label;
+    if(f.centred) say.style.textAlign = 'center';
     box.appendChild(say);
     return box;
   }

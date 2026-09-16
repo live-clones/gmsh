@@ -227,6 +227,10 @@ namespace Ui {
     // its shape changed: what was built for it is no longer right
     virtual void rebuildForm(const Form &form) { reloadForm(form); }
     virtual void dropForm(const Form &form) = 0;
+    // the option of that name has a new value: an interface that keeps
+    // widgets puts it into whichever shows it (Field::option); one that
+    // draws afresh only has to draw
+    virtual void optionChanged(const std::string &name) {}
 
     // the menu bar would come out different: read it again
     virtual void refreshMenus() {}

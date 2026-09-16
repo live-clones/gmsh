@@ -142,6 +142,10 @@ namespace {
       // all there is to do is ask for a frame
       if(appWindow::available()) appWindow::instance()->requestRedraw();
     }
+    void optionChanged(const std::string &) override
+    {
+      if(appWindow::available()) appWindow::instance()->requestRedraw();
+    }
 
     int numWindows() override { return appWindow::available() ? 1 : 0; }
 

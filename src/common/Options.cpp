@@ -128,6 +128,10 @@ bool StringOption(int action, const char *category, int num, const char *name,
     val = s[i].function(num, action | GMSH_SET, s[i].def);
   else
     val = s[i].function(num, action, val);
+#if defined(HAVE_GUI)
+  if((action & GMSH_GUI) && Gui::instance().available())
+    Gui::instance().optionChanged(category, name, num);
+#endif
   return true;
 }
 
@@ -237,7 +241,10 @@ bool NumberOption(int action, const char *category, int num, const char *name,
     val = s[i].function(num, action | GMSH_SET, s[i].def);
   else
     val = s[i].function(num, action, val);
-
+#if defined(HAVE_GUI)
+  if((action & GMSH_GUI) && Gui::instance().available())
+    Gui::instance().optionChanged(category, name, num);
+#endif
   return true;
 }
 
@@ -329,6 +336,10 @@ bool ColorOption(int action, const char *category, int num, const char *name,
                                                    s[i].def1[2], s[i].def1[3]));
   else
     val = s[i].function(num, action, val);
+#if defined(HAVE_GUI)
+  if((action & GMSH_GUI) && Gui::instance().available())
+    Gui::instance().optionChanged(category, name, num);
+#endif
   return true;
 }
 

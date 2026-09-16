@@ -78,10 +78,10 @@ namespace Ui {
   };
 
   // a rectangle in em, from the top left of the list being placed
-  struct Box {
+  struct Rect {
     double x, y, w, h;
-    Box() : x(0.), y(0.), w(0.), h(0.) {}
-    Box(double px, double py, double pw, double ph)
+    Rect() : x(0.), y(0.), w(0.), h(0.) {}
+    Rect(double px, double py, double pw, double ph)
       : x(px), y(py), w(pw), h(ph)
     {
     }
@@ -95,13 +95,13 @@ namespace Ui {
     // room left above a line that acts is not a line
     std::size_t row;
     // the widget itself, without the buttons hung after it
-    Box widget;
+    Rect widget;
     // those buttons, in order
-    std::vector<Box> trailing;
+    std::vector<Rect> trailing;
     // Where the label is written when it is not the widget's to write: after
     // the buttons, for a field that carries some, or before the field, for
     // one that says so. w == 0 when the widget carries its own label.
-    Box label;
+    Rect label;
     PlacedField() : index(0), row(0) {}
   };
 

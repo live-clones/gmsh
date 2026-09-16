@@ -301,6 +301,12 @@ namespace {
       dialogFltk *d = fltkDialog(form, false);
       if(d && d->shown()) d->refresh();
     }
+    void optionChanged(const std::string &name) override
+    {
+      fltkEachDialog([&name](dialogFltk *d) {
+        if(d->shown()) d->optionChanged(name);
+      });
+    }
 
     void rebuildForm(const Ui::Form &form) override
     {

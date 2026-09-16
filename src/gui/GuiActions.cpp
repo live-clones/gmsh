@@ -328,17 +328,6 @@ void meshClassifySurfaces(double angleInDegrees, bool ensureParametrizable,
 #endif
 }
 
-void meshPartition()
-{
-  if(GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions))
-    return;
-  opt_mesh_zone_definition(0, GMSH_SET, 2.); // define the zones by partition
-  opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
-  CTX::instance()->mesh.changed = ENT_ALL;
-  Gui::instance().resetVisibility();
-  drawContext::global()->draw();
-}
-
 // --- high order meshes
 
 // --- clipping

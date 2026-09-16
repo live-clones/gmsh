@@ -7,6 +7,7 @@
 #define DIALOG_FLTK_H
 
 #include <functional>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -35,6 +36,8 @@ public:
   Fl_Window *window() { return _win; }
   // push the values and the enabling into the widgets
   void refresh();
+  // the same for the fields that edit that option
+  void optionChanged(const std::string &name);
   // the same, but building the window again first when what it offers has
   // changed shape rather than only value
   void reshape();
@@ -87,6 +90,9 @@ private:
     std::string was;
   };
   std::vector<bound> _fields;
+  // which of them edit an option, by its name
+  std::multimap<std::string, std::size_t> _byOption;
+  void _refreshField(bound &b);
   // the title of each section of a form that is not tabbed
   std::vector<Fl_Widget *> _sections;
   // the rule under each section, when the description asks for one

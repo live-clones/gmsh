@@ -297,8 +297,6 @@ void highOrderSetOrder(const highOrderParameters &p);
 // run the chosen high order optimizer
 void highOrderOptimize(const highOrderParameters &p);
 
-// partition the mesh into Mesh.NbPartitions parts, and colour it by partition
-void meshPartition();
 
 // Let the user pick parts of the mesh in the 3D view and act on them until the
 // selection is aborted. what is "elements", "curves", "surfaces" or "volumes",

@@ -39,13 +39,41 @@
 
 namespace Declare {
 
-  Ui::Field &bindOption(Ui::Field &f, const std::string &category,
-                        const std::string &name, int index)
+  Ui::Field &bindOption(Ui::Field &f, const std::string &name)
   {
+    std::string category, short_;
+    int index = 0;
+    SplitOptionName(name, category, short_, index);
+    return bindOption(f, category, short_, index);
+  }
+
+  Ui::Field option(const std::string &label, const std::string &name)
+  {
+    std::string category, short_;
+    int index = 0;
+    SplitOptionName(name, category, short_, index);
+    Ui::Field f;
+    f.label = label;
+    f.kind = Ui::Number;
+    if(short_.compare(0, 6, "Color.") == 0)
+      f.kind = Ui::Color;
+    else if(StringXString *s = GetStringOptionCategory(category.c_str()))
+      for(; s->str; s++)
+        if(short_ == s->str) f.kind = Ui::Text;
+    return bindOption(f, category, short_, index);
+  }
+
+  Ui::Field &bindOption(Ui::Field &f, const std::string &category,
+                        const std::string &name_, int index)
+  {
+    // written "General.Color.Background" wherever an option is named in full
+    std::string name = name_;
+    if(f.kind == Ui::Color && name.compare(0, 6, "Color.") == 0)
+      name = name.substr(6);
+    f.option = Gui::optionName(category, name, index);
     if(f.kind == Ui::Color) {
       f.readColour = [=]() {
-        unsigned int v = 0;
-        ColorOption(GMSH_GET, category.c_str(), index, name.c_str(), v, false);
+        unsigned int v = GmshGetColorOption(category, name, index);
         CTX *c = CTX::instance();
         return Ui::Colour((unsigned char)c->unpackRed(v),
                           (unsigned char)c->unpackGreen(v),
@@ -53,36 +81,21 @@ namespace Declare {
                           (unsigned char)c->unpackAlpha(v));
       };
       f.writeColour = [=](Ui::Colour c) {
-        unsigned int v = CTX::instance()->packColor(c.r, c.g, c.b, c.a);
-        ColorOption(GMSH_SET | GMSH_GUI, category.c_str(), index, name.c_str(),
-                    v, false);
+        GmshSetOption(category, name,
+                      CTX::instance()->packColor(c.r, c.g, c.b, c.a), index);
       };
       return f;
     }
     // a Choice writes its text or one of its values, as the interface says
     if(f.kind == Ui::Text || f.kind == Ui::Output || f.kind == Ui::Choice) {
-      f.readText = [=]() {
-        std::string v;
-        StringOption(GMSH_GET, category.c_str(), index, name.c_str(), v,
-                     false);
-        return v;
-      };
+      f.readText = [=]() { return GmshGetStringOption(category, name, index); };
       f.writeText = [=](const std::string &v) {
-        std::string s(v);
-        StringOption(GMSH_SET | GMSH_GUI, category.c_str(), index,
-                     name.c_str(), s, false);
+        GmshSetOption(category, name, v, index);
       };
       if(f.kind != Ui::Choice) return f;
     }
-    f.readNumber = [=]() {
-      double v = 0.;
-      NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), v, false);
-      return v;
-    };
-    f.writeNumber = [=](double v) {
-      NumberOption(GMSH_SET | GMSH_GUI, category.c_str(), index, name.c_str(),
-                   v, false);
-    };
+    f.readNumber = [=]() { return GmshGetNumberOption(category, name, index); };
+    f.writeNumber = [=](double v) { GmshSetOption(category, name, v, index); };
     return f;
   }
 
@@ -287,6 +300,8 @@ namespace Declare {
     // only the thread that draws may pump: the mesher reports from its
     // OpenMP threads
     if(!_backend || Msg::GetThreadNum() > 0) return;
+    for(const std::string &name : _changedOptions) _backend->optionChanged(name);
+    _changedOptions.clear();
     _backend->check(rateLimited);
     // a scene in a window of its own is pumped from here
     pumpScene(rateLimited);
@@ -507,6 +522,26 @@ namespace Declare {
   void Gui::reloadForm(const Ui::Form &form)
   {
     if(_backend) _backend->reloadForm(form);
+  }
+
+  std::string Gui::optionName(const std::string &category,
+                              const std::string &name, int index)
+  {
+    return category + (index ? "[" + std::to_string(index) + "]" : "") + "." +
+           name;
+  }
+
+  void Gui::optionChanged(const std::string &category, const std::string &name,
+                          int index)
+  {
+    if(!_backend) return;
+    std::string full = optionName(category, name, index);
+    // told from a thread that may not touch the interface: kept for check()
+    if(Msg::GetThreadNum() > 0) {
+      _changedOptions.insert(full);
+      return;
+    }
+    _backend->optionChanged(full);
   }
 
   void Gui::rebuildForm(const Ui::Form &form)

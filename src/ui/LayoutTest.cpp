@@ -80,9 +80,9 @@ namespace {
   }
 
   // the box of the field at k
-  const Box &boxOf(const Placed &p, std::size_t k)
+  const Rect &boxOf(const Placed &p, std::size_t k)
   {
-    static Box none;
+    static Rect none;
     for(const auto &f : p.fields)
       if(f.index == k) return f.widget;
     return none;

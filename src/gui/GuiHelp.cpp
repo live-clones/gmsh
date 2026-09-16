@@ -343,8 +343,7 @@ namespace {
         value.label = category + (index ? "[" + std::to_string(index) + "]" : "") +
                       "." + (type == "color" ? "Color." : "") + name;
         value.labelBefore = true;
-        bindOption(value, category, type == "color" ? "Color." + name : name,
-                   index);
+        bindOption(value, category, name, index);
         value.changed = []() {
           drawContext::global()->draw();
           _wanted();

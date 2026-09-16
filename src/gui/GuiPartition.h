@@ -11,10 +11,7 @@
 // the mesh partitioner: the Mesh.Partition* and Mesh.Metis* options, and
 // the button that runs it
 class GuiPartition : public GuiDialog {
-public:
   bool advanced = false;
-
-protected:
   Ui::Form build() override;
 };
 

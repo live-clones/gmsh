@@ -742,7 +742,7 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &given, int x,
       int inset = (f.wraps && f.rows > 1) ? WB / 2 : 0;
       Fl_Box *b = new Fl_Box(fx, fy + (f.rule ? 1 : 0) + inset, fieldW,
                              fieldH - inset);
-      b->align((f.heading ? FL_ALIGN_CENTER : FL_ALIGN_LEFT) |
+      b->align(((f.heading || f.centred) ? FL_ALIGN_CENTER : FL_ALIGN_LEFT) |
                FL_ALIGN_INSIDE | (f.wraps ? FL_ALIGN_WRAP | FL_ALIGN_TOP : 0));
       if(f.heading) b->labelfont(FL_HELVETICA_BOLD);
       widget = b;
@@ -1113,7 +1113,7 @@ void dialogFltk::build(const Ui::Form &form)
       const Ui::Pane &q = _panel.panes[i];
       Fl_Box *b = nullptr;
       if(q.label.size()) {
-        b = new Fl_Box(2 * WB, y, width - 4 * WB, BH);
+        b = new Fl_Box(WB, y, width - 2 * WB, BH);
         b->copy_label(_plain(q.label).c_str());
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         b->labelfont(FL_HELVETICA_BOLD);
@@ -1122,15 +1122,15 @@ void dialogFltk::build(const Ui::Form &form)
       _sections.push_back(b);
       // a form that scrolls ends before its scrollbar, or what it puts at its
       // right edge is drawn under it
-      _addFields(q.fields, 2 * WB, y,
-                 width - (form ? Fl::scrollbar_size() : 0), (int)i, q.columns,
-                 true);
-      _paneRooms.push_back({2 * WB, width - (form ? Fl::scrollbar_size() : 0),
-                            q.columns});
+      // from WB in, to WB short of the edge: what the window was sized for
+      _addFields(q.fields, WB, y, width - (form ? Fl::scrollbar_size() : 0),
+                 (int)i, q.columns, true);
+      _paneRooms.push_back(
+        {WB, width - (form ? Fl::scrollbar_size() : 0), q.columns});
       int placed = _placedHeight;
       if(q.buttonLabel.size()) {
         // at the right of the line, or at its far left when it stands apart
-        int bx = q.buttonApart ? 2 * WB : width - BB - 2 * WB;
+        int bx = q.buttonApart ? WB : width - BB - WB;
         Fl_Button *pb = new Fl_Button(bx, y, BB, BH);
         pb->copy_label(_escaped(q.buttonLabel).c_str());
         pb->callback(_buttonCallback, new buttonAction{this, q.button});
@@ -1332,6 +1332,11 @@ void dialogFltk::build(const Ui::Form &form)
   _win->end();
   Fl_Group::current(previous);
 
+  _byOption.clear();
+  for(std::size_t i = 0; i < _fields.size(); i++)
+    if(_fields[i].field.option.size())
+      _byOption.emplace(_fields[i].field.option, i);
+
   refresh();
   _win->redraw();
 }
@@ -1370,6 +1375,191 @@ namespace {
   }
 
 } // namespace
+
+void dialogFltk::_refreshField(bound &b)
+{
+  const Ui::Field &f = b.field;
+  switch(f.kind) {
+  case Ui::Label: {
+    std::string value = f.getText();
+    if(!b.widget->label() || value != b.widget->label())
+      b.widget->copy_label(_plain(value).c_str());
+  } break;
+  case Ui::Output: {
+    std::string value = f.getText();
+    Fl_Output *o = (Fl_Output *)b.widget;
+    if(!o->value() || value != o->value()) o->value(value.c_str());
+  } break;
+  case Ui::Prose: {
+    // written again only when it really changed: writing it is drawing it
+    proseView *v = (proseView *)b.widget;
+    std::vector<Ui::Line> page =
+      f.prose ? f.prose() : std::vector<Ui::Line>();
+    std::string said;
+    for(const Ui::Line &l : page)
+      for(const Ui::Words &word : l.words) said += word.text + "\n";
+    if(said != b.was) {
+      b.was = said;
+      v->page = page;
+      v->redraw();
+    }
+  } break;
+  case Ui::List: {
+    Fl_Browser *br = (Fl_Browser *)b.widget;
+    int keep = br->value();
+    br->clear();
+    if(f.dynamicChoices) {
+      std::vector<std::string> labels;
+      std::vector<int> values;
+      f.dynamicChoices(labels, values);
+      for(auto &l : labels) br->add(l.c_str());
+      for(int k = 0; f.chosen && k < (int)labels.size(); k++)
+        if(f.chosen(k)) br->select(k + 1);
+    }
+    else if(f.list) {
+      for(std::size_t k = 0; k < f.list->size(); k++)
+        br->add(f.itemLabel ? f.itemLabel((int)k).c_str()
+                            : std::to_string((*f.list)[k]).c_str());
+      if(keep > 0 && keep <= br->size()) br->select(keep);
+    }
+  } break;
+  case Ui::Color: {
+    Ui::Colour c = f.getColour();
+    Fl_Color shown = fl_rgb_color(c.r, c.g, c.b);
+    if(b.widget->color() != shown) {
+      b.widget->color(shown);
+      b.widget->redraw();
+    }
+  } break;
+  case Ui::Direction: {
+    double x = 0., y = 0., z = 0.;
+    f.getVector(x, y, z);
+    ((spherePositionWidget *)b.widget)->setValue(x, y, z);
+  } break;
+  case Ui::Hierarchy: {
+    Fl_Tree *tree = (Fl_Tree *)b.widget;
+    if(!f.hierarchy) break;
+    const Ui::Tree &said = *f.hierarchy;
+    // rebuilt only when the shape has changed: an Fl_Tree that is built again
+    // forgets what was open
+    std::string signature = std::to_string(said.generation ?
+                                             said.generation() : 0);
+    if(signature != b.was) {
+      b.was = signature;
+      // clear() takes the root with it, and everything hangs from the root
+      tree->clear();
+      Fl_Tree_Item *root = new Fl_Tree_Item(tree);
+      root->label(_plain(f.label.size() ? f.label : "Gmsh").c_str());
+      tree->root(root);
+      _addBranch(tree, root, said, "");
+    }
+    // and what of it is picked, which changes without the shape changing
+    for(Fl_Tree_Item *item = tree->first(); item; item = tree->next(item)) {
+      const std::string *path = (const std::string *)item->user_data();
+      if(!path) continue;
+      Ui::Node node = said.node(*path);
+      bool on = node.picked ? node.picked() : false;
+      if(on != (item->is_selected() ? true : false))
+        item->select(on ? 1 : 0);
+    }
+    tree->redraw();
+  } break;
+  case Ui::ColorMap: {
+    std::string name;
+    double least = 0., most = 0.;
+    if(f.map.empty()) break;
+    f.map.about(name, least, most);
+    ((colorbarWindow *)b.widget)
+      ->update(name.c_str(), least, most, f.map, &b.changed);
+  } break;
+  case Ui::Menu: {
+    Fl_Menu_Button *m = (Fl_Menu_Button *)b.widget;
+    std::vector<std::string> labels;
+    std::vector<int> values;
+    if(f.dynamicChoices) f.dynamicChoices(labels, values);
+    m->clear();
+    for(auto &l : labels) m->add(_escapedMenu(l).c_str());
+    if(!m->label() || f.label != m->label())
+      m->copy_label(_escaped(f.label).c_str());
+  } break;
+  case Ui::Action:
+  case Ui::Spacer: break;
+  case Ui::Text: {
+    std::string value = f.getText();
+    if(Fl_Input_Choice *c = dynamic_cast<Fl_Input_Choice *>(b.widget)) {
+      std::vector<std::string> labels;
+      std::vector<int> values;
+      f.dynamicChoices(labels, values);
+      c->menubutton()->clear();
+      for(auto &l : labels) c->menubutton()->add(_escapedMenu(l).c_str());
+      if(!c->value() || value != c->value()) c->value(value.c_str());
+    }
+    else {
+      Fl_Input *in = (Fl_Input *)b.widget;
+      if(value != in->value()) in->value(value.c_str());
+    }
+  } break;
+  case Ui::Integer:
+  case Ui::Number:
+    ((Fl_Valuator *)b.widget)->value(f.getNumber());
+    break;
+  case Ui::Check: {
+    bool on = f.getFlag();
+    ((Fl_Button *)b.widget)->value(on ? 1 : 0);
+    // the arrow of a disclosure points at what clicking it would do
+    if(f.disclosure) {
+      std::string label = _escaped(f.label) + (on ? " @-28->" : " @-22->");
+      if(!b.widget->label() || label != b.widget->label())
+        b.widget->copy_label(label.c_str());
+    }
+  } break;
+  case Ui::Choice: {
+    if(f.multiple) {
+      // a menu of switches, each showing whether it is on
+      Fl_Menu_Button *m = (Fl_Menu_Button *)b.widget;
+      std::vector<std::string> labels;
+      std::vector<int> values;
+      if(f.dynamicChoices) f.dynamicChoices(labels, values);
+      m->clear();
+      for(std::size_t k = 0; k < labels.size(); k++) {
+        int index = m->add(_escapedMenu(labels[k]).c_str(), 0, nullptr,
+                           nullptr, FL_MENU_TOGGLE);
+        if(f.chosen && f.chosen((int)k))
+          ((Fl_Menu_Item *)&m->menu()[index])->set();
+      }
+      break;
+    }
+    Fl_Choice *c = (Fl_Choice *)b.widget;
+    std::vector<std::string> labels;
+    std::vector<int> values;
+    if(f.dynamicChoices)
+      f.dynamicChoices(labels, values);
+    else {
+      labels = f.choices;
+      values = f.values;
+    }
+    c->clear();
+    for(auto &l : labels) c->add(_escapedMenu(l).c_str());
+    int which = 0;
+    bool byText = values.empty();
+    std::string current = byText ? f.getText() : "";
+    for(std::size_t k = 0; k < labels.size(); k++) {
+      if(byText) {
+        if(labels[k] == current) which = (int)k;
+      }
+      else if(k < values.size() && values[k] == (int)f.getNumber())
+        which = (int)k;
+    }
+    if(labels.size()) c->value(which);
+  } break;
+  }
+  if(f.enabled) {
+    if(f.enabled())
+      b.widget->activate();
+    else
+      b.widget->deactivate();
+  }
+}
 
 void dialogFltk::refresh()
 {
@@ -1410,190 +1600,16 @@ void dialogFltk::refresh()
     }
   }
 
-  for(auto &b : _fields) {
-    const Ui::Field &f = b.field;
-    switch(f.kind) {
-    case Ui::Label: {
-      std::string value = f.getText();
-      if(!b.widget->label() || value != b.widget->label())
-        b.widget->copy_label(_plain(value).c_str());
-    } break;
-    case Ui::Output: {
-      std::string value = f.getText();
-      Fl_Output *o = (Fl_Output *)b.widget;
-      if(!o->value() || value != o->value()) o->value(value.c_str());
-    } break;
-    case Ui::Prose: {
-      // written again only when it really changed: writing it is drawing it
-      proseView *v = (proseView *)b.widget;
-      std::vector<Ui::Line> page =
-        f.prose ? f.prose() : std::vector<Ui::Line>();
-      std::string said;
-      for(const Ui::Line &l : page)
-        for(const Ui::Words &word : l.words) said += word.text + "\n";
-      if(said != b.was) {
-        b.was = said;
-        v->page = page;
-        v->redraw();
-      }
-    } break;
-    case Ui::List: {
-      Fl_Browser *br = (Fl_Browser *)b.widget;
-      int keep = br->value();
-      br->clear();
-      if(f.dynamicChoices) {
-        std::vector<std::string> labels;
-        std::vector<int> values;
-        f.dynamicChoices(labels, values);
-        for(auto &l : labels) br->add(l.c_str());
-        for(int k = 0; f.chosen && k < (int)labels.size(); k++)
-          if(f.chosen(k)) br->select(k + 1);
-      }
-      else if(f.list) {
-        for(std::size_t k = 0; k < f.list->size(); k++)
-          br->add(f.itemLabel ? f.itemLabel((int)k).c_str()
-                              : std::to_string((*f.list)[k]).c_str());
-        if(keep > 0 && keep <= br->size()) br->select(keep);
-      }
-    } break;
-    case Ui::Color: {
-      Ui::Colour c = f.getColour();
-      Fl_Color shown = fl_rgb_color(c.r, c.g, c.b);
-      if(b.widget->color() != shown) {
-        b.widget->color(shown);
-        b.widget->redraw();
-      }
-    } break;
-    case Ui::Direction: {
-      double x = 0., y = 0., z = 0.;
-      f.getVector(x, y, z);
-      ((spherePositionWidget *)b.widget)->setValue(x, y, z);
-    } break;
-    case Ui::Hierarchy: {
-      Fl_Tree *tree = (Fl_Tree *)b.widget;
-      if(!f.hierarchy) break;
-      const Ui::Tree &said = *f.hierarchy;
-      // rebuilt only when the shape has changed: an Fl_Tree that is built again
-      // forgets what was open
-      std::string signature = std::to_string(said.generation ?
-                                               said.generation() : 0);
-      if(signature != b.was) {
-        b.was = signature;
-        // clear() takes the root with it, and everything hangs from the root
-        tree->clear();
-        Fl_Tree_Item *root = new Fl_Tree_Item(tree);
-        root->label(_plain(f.label.size() ? f.label : "Gmsh").c_str());
-        tree->root(root);
-        _addBranch(tree, root, said, "");
-      }
-      // and what of it is picked, which changes without the shape changing
-      for(Fl_Tree_Item *item = tree->first(); item; item = tree->next(item)) {
-        const std::string *path = (const std::string *)item->user_data();
-        if(!path) continue;
-        Ui::Node node = said.node(*path);
-        bool on = node.picked ? node.picked() : false;
-        if(on != (item->is_selected() ? true : false))
-          item->select(on ? 1 : 0);
-      }
-      tree->redraw();
-    } break;
-    case Ui::ColorMap: {
-      std::string name;
-      double least = 0., most = 0.;
-      if(f.map.empty()) break;
-      f.map.about(name, least, most);
-      ((colorbarWindow *)b.widget)
-        ->update(name.c_str(), least, most, f.map, &b.changed);
-    } break;
-    case Ui::Menu: {
-      Fl_Menu_Button *m = (Fl_Menu_Button *)b.widget;
-      std::vector<std::string> labels;
-      std::vector<int> values;
-      if(f.dynamicChoices) f.dynamicChoices(labels, values);
-      m->clear();
-      for(auto &l : labels) m->add(_escapedMenu(l).c_str());
-      if(!m->label() || f.label != m->label())
-        m->copy_label(_escaped(f.label).c_str());
-    } break;
-    case Ui::Action:
-    case Ui::Spacer: break;
-    case Ui::Text: {
-      std::string value = f.getText();
-      if(Fl_Input_Choice *c = dynamic_cast<Fl_Input_Choice *>(b.widget)) {
-        std::vector<std::string> labels;
-        std::vector<int> values;
-        f.dynamicChoices(labels, values);
-        c->menubutton()->clear();
-        for(auto &l : labels) c->menubutton()->add(_escapedMenu(l).c_str());
-        if(!c->value() || value != c->value()) c->value(value.c_str());
-      }
-      else {
-        Fl_Input *in = (Fl_Input *)b.widget;
-        if(value != in->value()) in->value(value.c_str());
-      }
-    } break;
-    case Ui::Integer:
-    case Ui::Number:
-      ((Fl_Valuator *)b.widget)->value(f.getNumber());
-      break;
-    case Ui::Check: {
-      bool on = f.getFlag();
-      ((Fl_Button *)b.widget)->value(on ? 1 : 0);
-      // the arrow of a disclosure points at what clicking it would do
-      if(f.disclosure) {
-        std::string label = _escaped(f.label) + (on ? " @-28->" : " @-22->");
-        if(!b.widget->label() || label != b.widget->label())
-          b.widget->copy_label(label.c_str());
-      }
-    } break;
-    case Ui::Choice: {
-      if(f.multiple) {
-        // a menu of switches, each showing whether it is on
-        Fl_Menu_Button *m = (Fl_Menu_Button *)b.widget;
-        std::vector<std::string> labels;
-        std::vector<int> values;
-        if(f.dynamicChoices) f.dynamicChoices(labels, values);
-        m->clear();
-        for(std::size_t k = 0; k < labels.size(); k++) {
-          int index = m->add(_escapedMenu(labels[k]).c_str(), 0, nullptr,
-                             nullptr, FL_MENU_TOGGLE);
-          if(f.chosen && f.chosen((int)k))
-            ((Fl_Menu_Item *)&m->menu()[index])->set();
-        }
-        break;
-      }
-      Fl_Choice *c = (Fl_Choice *)b.widget;
-      std::vector<std::string> labels;
-      std::vector<int> values;
-      if(f.dynamicChoices)
-        f.dynamicChoices(labels, values);
-      else {
-        labels = f.choices;
-        values = f.values;
-      }
-      c->clear();
-      for(auto &l : labels) c->add(_escapedMenu(l).c_str());
-      int which = 0;
-      bool byText = values.empty();
-      std::string current = byText ? f.getText() : "";
-      for(std::size_t k = 0; k < labels.size(); k++) {
-        if(byText) {
-          if(labels[k] == current) which = (int)k;
-        }
-        else if(k < values.size() && values[k] == (int)f.getNumber())
-          which = (int)k;
-      }
-      if(labels.size()) c->value(which);
-    } break;
-    }
-    if(f.enabled) {
-      if(f.enabled())
-        b.widget->activate();
-      else
-        b.widget->deactivate();
-    }
-  }
+  for(auto &b : _fields) _refreshField(b);
   if(_win) _win->redraw();
+}
+
+void dialogFltk::optionChanged(const std::string &name)
+{
+  auto range = _byOption.equal_range(name);
+  for(auto it = range.first; it != range.second; ++it)
+    _refreshField(_fields[it->second]);
+  if(range.first != range.second && _win) _win->redraw();
 }
 
 void dialogFltk::_relayout()
@@ -1709,7 +1725,6 @@ void dialogFltk::_relayout()
     for(auto *w : _buttons) w->position(w->x(), buttonTop);
     if(!_mergedButtons) y += BH + WB;
   }
-  y += WB;
 
   if(_win->h() != y) _win->size(_win->w(), y);
   _win->redraw();

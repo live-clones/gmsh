@@ -20,6 +20,7 @@
 #include "httpServer.h"
 #include "page.h"
 #include "OS.h"
+#include "GmshMessage.h"
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 #include <windows.h>
@@ -214,6 +215,7 @@ namespace {
 
     void addMessage(const std::string &text, int level) override
     {
+      _dirty = true;
       _messages.push_back(text);
       if(_messages.size() > 500) _messages.erase(_messages.begin());
     }
@@ -223,12 +225,17 @@ namespace {
       lines = _messages;
     }
 
-    void refreshBar() override {}
+    void refreshBar() override { _dirty = true; }
+    void refreshMenus() override { _dirty = true; }
+    void reloadForm(const Ui::Form &) override { _dirty = true; }
+    void rebuildForm(const Ui::Form &) override { _dirty = true; }
+    void optionChanged(const std::string &) override { _dirty = true; }
 
     // --- the forms, by the name of their dialog
 
     void showForm(const Ui::Form &which, bool show) override
     {
+      _dirty = true;
       formState &state = _state(which);
       state.shown = show;
       if(state.wantedLabel.size()) {
@@ -253,6 +260,7 @@ namespace {
     }
     void setFormPane(const Ui::Form &which, const std::string &pane) override
     {
+      _dirty = true;
       const Ui::Form &form = which;
       formState &state = _state(which);
       for(std::size_t i = 0; i < form.panes.size(); i++)
@@ -262,17 +270,27 @@ namespace {
     }
     void dropForm(const Ui::Form &which) override
     {
+      _dirty = true;
       _forms.erase(&which);
     }
-    void drawTooltip(const std::string &text) override { _tip = text; }
-    void showConsole(bool show) override { _console = show; }
+    void drawTooltip(const std::string &text) override
+    {
+      _dirty = _dirty || text != _tip;
+      _tip = text;
+    }
+    void showConsole(bool show) override
+    {
+      _dirty = true;
+      _console = show;
+    }
     bool consoleVisible() override { return _console; }
-    void refreshTree(bool rebuild) override {}
+    void refreshTree(bool rebuild) override { _dirty = true; }
     // which branches of the tree are unfolded is the page's own business --
     // nothing else knows what it has drawn -- so this is where it is kept,
     // and Gmsh asking for one is the same as the page asking
     void openTreeItem(const std::string &name, bool open) override
     {
+      _dirty = true;
       _open[name] = open;
     }
     bool treeItemOpen(const std::string &name) override
@@ -312,9 +330,10 @@ namespace {
     // what was last said down the event stream, and when; and when the page
     // last asked for something
     std::string _told;
+    // something the page shows has changed since it was last told
+    bool _dirty = true;
     bool _toldScene = false;
     double _lastTold = 0.;
-    double _lastAsked = 0.;
     // the dialog each form is of, whether it is up, and which pane it is on
     struct formState {
       const Ui::Form *form = nullptr;
@@ -392,7 +411,7 @@ namespace {
         Browser::serve([this](const Browser::Ask &ask, std::string &type) {
           return _answer(ask, type);
         });
-        _lastTold = 0.;
+        _dirty = true;
         _tell();
         // Nobody is listening and nobody is coming: a page that was never
         // opened, or one that has been closed while the window was up, must
@@ -521,26 +540,24 @@ namespace {
       if(_host.tick) _host.tick();
     }
 
-    // What the page is told, and when.
-    //
-    // Nothing is worked out while nobody is listening. Whether anything has
-    // changed can only be found out by writing the state down and looking at
-    // it -- a description is asked, it does not announce itself -- so that is
-    // done ten times a second while something is going on and twice when
-    // nothing is, rather than every turn of the loop. What it costs is a
-    // fortieth of what asking the page to ask cost, and the page itself is
-    // left alone entirely.
+    // What the page is told, and when: nothing is worked out while nobody is
+    // listening, or while nothing was said to have changed. Until every
+    // change is known to be said, a slow look every few seconds catches one
+    // that was not, and names it.
     void _tell()
     {
       if(!Browser::listeners()) return;
       double now = TimeOfDay();
-      double every = (now - _lastAsked < 2.) ? 0.1 : 0.5;
-      if(now - _lastTold < every) return;
-      _lastTold = now;
-      std::string said = _state();
-      if(said != _told) {
-        _told = said;
-        Browser::push("state", said);
+      bool look = now - _lastTold > 5.;
+      if(_dirty || look) {
+        _lastTold = now;
+        std::string said = _state();
+        if(said != _told) {
+          if(!_dirty) Msg::Debug("The page changed without being told");
+          _told = said;
+          Browser::push("state", said);
+        }
+        _dirty = false;
       }
       // and whether the picture is worth coming for. It stays worth it until
       // the page has been to fetch it, so it is only said once.
@@ -702,8 +719,10 @@ namespace {
         return "no";
       }
       if(ask.path != "/scene" && ask.path.compare(0, 6, "/scene") != 0 &&
-         ask.path.compare(0, 7, "/events") != 0)
-        _lastAsked = TimeOfDay();
+         ask.path.compare(0, 7, "/events") != 0) {
+        // whatever the page asked for may have changed what it shows
+        _dirty = true;
+      }
       // what comes before the question mark: the page and the pictures are
       // asked for with the word in the address, so the path carries a query
       std::string path = ask.path.substr(0, ask.path.find('?'));
@@ -1248,6 +1267,7 @@ namespace {
       if(f.labelBefore) out += ",\"before\":true";
       if(f.rule) out += ",\"rule\":true";
       if(f.wraps) out += ",\"wraps\":true";
+      if(f.centred) out += ",\"centred\":true";
       if(f.disclosure) out += ",\"fold\":true";
       if(f.packed) out += ",\"packed\":true";
       if(f.widthEm > 0.) out += ",\"em\":" + std::to_string(f.widthEm);

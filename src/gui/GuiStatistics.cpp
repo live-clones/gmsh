@@ -58,9 +58,10 @@ namespace {
     Form p;
     p.title = "Statistics";
 
-    p.panes.push_back(pane("Geometry", {stat("Points", 0), stat("Curves", 1),
-                                        stat("Surfaces", 2), stat("Volumes", 3),
-                                        stat("Physical groups", 45)}));
+    p.panes.push_back(
+      pane({stat("Points", 0), stat("Curves", 1), stat("Surfaces", 2),
+            stat("Volumes", 3), stat("Physical groups", 45)},
+           "Geometry"));
     {
       Pane mesh;
       mesh.label = "Mesh";
@@ -69,10 +70,9 @@ namespace {
       // and "Gamma" on the next, and packing them against it would stagger
       // them by the difference.
       mesh.columns = 4;
-      const char *counts[] = {"Nodes",      "Points",   "Lines",
-                              "Triangles",  "Quadrangles", "Tetrahedra",
-                              "Hexahedra",  "Prisms",   "Pyramids",
-                              "Trihedra"};
+      const char *counts[] = {
+        "Nodes",      "Points",    "Lines",  "Triangles", "Quadrangles",
+        "Tetrahedra", "Hexahedra", "Prisms", "Pyramids",  "Trihedra"};
       for(int i = 0; i < 10; i++) mesh.fields.push_back(stat(counts[i], 4 + i));
       mesh.fields.push_back(stat("Time for 1D mesh", 14));
       mesh.fields.push_back(stat("Time for 2D mesh", 15));
@@ -100,18 +100,20 @@ namespace {
         mesh.fields.push_back(sized(
           beside(does("3D", [i]() { statisticsHistogram(i, true); })), 3.));
       }
-      mesh.fields.push_back(check("Compute statistics for visible entities only",
-                                  &statisticsVisibleOnly()));
+      mesh.fields.push_back(
+        check("Compute statistics for visible entities only",
+              &statisticsVisibleOnly()));
       p.panes.push_back(mesh);
     }
     {
-      const char *counts[] = {"Views",      "Points",      "Lines",
-                              "Triangles",  "Quadrangles", "Tetrahedra",
-                              "Hexahedra",  "Prisms",      "Pyramids",
-                              "Trihedra",   "Strings"};
+      const char *counts[] = {"Views",     "Points",      "Lines",
+                              "Triangles", "Quadrangles", "Tetrahedra",
+                              "Hexahedra", "Prisms",      "Pyramids",
+                              "Trihedra",  "Strings"};
       Pane post;
       post.label = "Post-processing";
-      for(int i = 0; i < 11; i++) post.fields.push_back(stat(counts[i], 27 + i));
+      for(int i = 0; i < 11; i++)
+        post.fields.push_back(stat(counts[i], 27 + i));
       p.panes.push_back(post);
     }
 
@@ -146,7 +148,6 @@ Ui::Form GuiStatistics::build()
   f.id = "statistics";
   return f;
 }
-
 
 void GuiStatistics::show(const std::string &pane)
 {

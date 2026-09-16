@@ -26,18 +26,18 @@ namespace {
     geometryParameters &g = geometryStore();
     Form p;
     p.title = "Mesh Context";
-    p.panes.push_back(pane("Element size", {text("Value", &g.meshSize)}));
+    p.panes.push_back(pane({text("Value", &g.meshSize)}, "Element size"));
     p.panes.push_back(
-      pane("Transfinite curve",
-           {text("Number of points", &g.transfinitePoints),
+      pane({text("Number of points", &g.transfinitePoints),
             choice("Type", &g.transfiniteType,
                    {"Progression", "Bump", "Beta", "Progression_HWall",
                     "Bump_HWall", "Beta_HWall"}),
-            text("Parameter", &g.transfiniteParameter)}));
-    p.panes.push_back(pane("Transfinite Surface",
-                           {choice("Transfinite Arrangement",
-                                   &g.transfiniteArrangement,
-                                   {"Left", "Right", "Alternated"})}));
+            text("Parameter", &g.transfiniteParameter)},
+           "Transfinite curve"));
+    p.panes.push_back(
+      pane({choice("Transfinite Arrangement", &g.transfiniteArrangement,
+                   {"Left", "Right", "Alternated"})},
+           "Transfinite Surface"));
     return p;
   }
 
@@ -49,6 +49,5 @@ Ui::Form GuiMeshContext::build()
   f.id = "mesh";
   return f;
 }
-
 
 #endif

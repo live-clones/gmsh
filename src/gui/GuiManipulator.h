@@ -10,7 +10,6 @@
 
 // the rotation, translation and scale of the view
 class GuiManipulator : public GuiDialog {
-protected:
   Ui::Form build() override;
 };
 

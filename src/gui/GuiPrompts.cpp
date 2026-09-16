@@ -251,7 +251,9 @@ namespace {
     p.title = s.title.size() ? s.title : "Number Chooser";
 
     Pane q;
-    Field value = option(Number, "", s.category, s.name, s.index);
+    Field value;
+    value.kind = Number;
+    bindOption(value, s.category, s.name, s.index);
     if(s.maximum > s.minimum) {
       value.minimum = s.minimum;
       value.maximum = s.maximum;
