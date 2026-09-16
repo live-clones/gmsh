@@ -1108,6 +1108,94 @@ GMSH_API void gmshModelMeshAddElementsByType(const int tag,
                                              const size_t * nodeTags, const size_t nodeTags_n,
                                              int * ierr);
 
+/* Add polygons classified on the surface `tag'. `elementTags' contains the
+ * tags (unique, strictly positive identifiers) of the polygons; if empty, new
+ * tags are assigned automatically. `nodeTags' contains the tags of the
+ * boundary nodes of all the polygons, concatenated, and `numNodes' the number
+ * of boundary nodes of each polygon. The nodes of a polygon must be ordered
+ * along its boundary; hanging nodes are boundary nodes. A sub-triangulation
+ * can be given with `setPolytopeSimplices'. */
+GMSH_API void gmshModelMeshAddPolygons(const int tag,
+                                       const size_t * elementTags, const size_t elementTags_n,
+                                       const size_t * nodeTags, const size_t nodeTags_n,
+                                       const int * numNodes, const size_t numNodes_n,
+                                       int * ierr);
+
+/* Get the polygons classified on the surface `tag': their tags `elementTags',
+ * the tags of their boundary nodes concatenated in `nodeTags', and the number
+ * of boundary nodes `numNodes' of each polygon. If `tag' < 0, get the
+ * polygons of all the surfaces. */
+GMSH_API void gmshModelMeshGetPolygons(size_t ** elementTags, size_t * elementTags_n,
+                                       size_t ** nodeTags, size_t * nodeTags_n,
+                                       int ** numNodes, size_t * numNodes_n,
+                                       const int tag,
+                                       int * ierr);
+
+/* Add polyhedra classified on the volume `tag'. `elementTags' contains the
+ * tags (unique, strictly positive identifiers) of the polyhedra; if empty,
+ * new tags are assigned automatically. `numFaces' contains the number of
+ * faces of each polyhedron, `faceSizes' the number of nodes of each face, and
+ * `nodeTags' the tags of the nodes of all the faces, concatenated. A sub-
+ * tetrahedralization can be given with `setPolytopeSimplices'. */
+GMSH_API void gmshModelMeshAddPolyhedra(const int tag,
+                                        const size_t * elementTags, const size_t elementTags_n,
+                                        const int * numFaces, const size_t numFaces_n,
+                                        const int * faceSizes, const size_t faceSizes_n,
+                                        const size_t * nodeTags, const size_t nodeTags_n,
+                                        int * ierr);
+
+/* Get the polyhedra classified on the volume `tag': their tags `elementTags',
+ * the number of faces `numFaces' of each polyhedron, the number of nodes
+ * `faceSizes' of each face, and the tags of the nodes of all the faces
+ * concatenated in `nodeTags'. If `tag' < 0, get the polyhedra of all the
+ * volumes. */
+GMSH_API void gmshModelMeshGetPolyhedra(size_t ** elementTags, size_t * elementTags_n,
+                                        int ** numFaces, size_t * numFaces_n,
+                                        int ** faceSizes, size_t * faceSizes_n,
+                                        size_t ** nodeTags, size_t * nodeTags_n,
+                                        const int tag,
+                                        int * ierr);
+
+/* Get the simplices (triangles for polygons, tetrahedra for polyhedra)
+ * subdividing the polytopes of type `elementType' (34 for polygons, 35 for
+ * polyhedra) classified on the entity of tag `tag': the tags of the polytopes
+ * `elementTags', the number of simplices `numSimplices' of each polytope, and
+ * the tags of the nodes of all the simplices concatenated in `nodeTags'. The
+ * nodes of the simplices that are not boundary nodes of a polytope are its
+ * hanging or interior nodes. If the simplices of a polytope were neither
+ * given (in the mesh file or with `setPolytopeSimplices') nor created (with
+ * `createPolytopeSimplices'), they are computed on the fly and not saved with
+ * the mesh; `given' tells for each polytope if its simplices are saved with
+ * the mesh. If `tag' < 0, get the simplices of the polytopes of all the
+ * entities. */
+GMSH_API void gmshModelMeshGetPolytopeSimplices(const int elementType,
+                                                size_t ** elementTags, size_t * elementTags_n,
+                                                int ** numSimplices, size_t * numSimplices_n,
+                                                size_t ** nodeTags, size_t * nodeTags_n,
+                                                int ** given, size_t * given_n,
+                                                const int tag,
+                                                int * ierr);
+
+/* Set the simplices (triangles for polygons, tetrahedra for polyhedra)
+ * subdividing the polytopes `elementTags': `numSimplices' contains the number
+ * of simplices of each polytope, and `nodeTags' the tags of the nodes of all
+ * the simplices, concatenated. The nodes of the simplices that are not
+ * boundary nodes of a polytope become its hanging or interior nodes. The
+ * simplices are saved with the mesh. */
+GMSH_API void gmshModelMeshSetPolytopeSimplices(const size_t * elementTags, const size_t elementTags_n,
+                                                const int * numSimplices, const size_t numSimplices_n,
+                                                const size_t * nodeTags, const size_t nodeTags_n,
+                                                int * ierr);
+
+/* Create the simplices subdividing the polytopes classified on the entities
+ * `dimTags' (given as a vector of (dim, tag) pairs), or on all the entities
+ * if `dimTags' is empty, when none were given: polygons are triangulated by
+ * ear clipping, and polyhedra are tetrahedralized as a fan from their first
+ * node (which is only correct if the polyhedron is star-shaped with respect
+ * to it). The simplices are then saved with the mesh. */
+GMSH_API void gmshModelMeshCreatePolytopeSimplices(const int * dimTags, const size_t dimTags_n,
+                                                   int * ierr);
+
 /* Get the numerical quadrature information for the given element type
  * `elementType' and integration rule `integrationType', where
  * `integrationType' concatenates the integration rule family name with the

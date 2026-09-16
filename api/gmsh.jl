@@ -3100,6 +3100,231 @@ end
 const add_elements_by_type = addElementsByType
 
 """
+    gmsh.model.mesh.addPolygons(tag, elementTags, nodeTags, numNodes)
+
+Add polygons classified on the surface `tag`. `elementTags` contains the tags
+(unique, strictly positive identifiers) of the polygons; if empty, new tags are
+assigned automatically. `nodeTags` contains the tags of the boundary nodes of
+all the polygons, concatenated, and `numNodes` the number of boundary nodes of
+each polygon. The nodes of a polygon must be ordered along its boundary; hanging
+nodes are boundary nodes. A sub-triangulation can be given with
+`setPolytopeSimplices`.
+
+Types:
+ - `tag`: integer
+ - `elementTags`: vector of sizes
+ - `nodeTags`: vector of sizes
+ - `numNodes`: vector of integers
+"""
+function addPolygons(tag, elementTags, nodeTags, numNodes)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAddPolygons, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          tag, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cint}, numNodes), length(numNodes), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const add_polygons = addPolygons
+
+"""
+    gmsh.model.mesh.getPolygons(tag = -1)
+
+Get the polygons classified on the surface `tag`: their tags `elementTags`, the
+tags of their boundary nodes concatenated in `nodeTags`, and the number of
+boundary nodes `numNodes` of each polygon. If `tag` < 0, get the polygons of all
+the surfaces.
+
+Return `elementTags`, `nodeTags`, `numNodes`.
+
+Types:
+ - `elementTags`: vector of sizes
+ - `nodeTags`: vector of sizes
+ - `numNodes`: vector of integers
+ - `tag`: integer
+"""
+function getPolygons(tag = -1)
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_numNodes_ = Ref{Ptr{Cint}}()
+    api_numNodes_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPolygons, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, api_numNodes_, api_numNodes_n_, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    numNodes = unsafe_wrap(Array, api_numNodes_[], api_numNodes_n_[], own = true)
+    return elementTags, nodeTags, numNodes
+end
+const get_polygons = getPolygons
+
+"""
+    gmsh.model.mesh.addPolyhedra(tag, elementTags, numFaces, faceSizes, nodeTags)
+
+Add polyhedra classified on the volume `tag`. `elementTags` contains the tags
+(unique, strictly positive identifiers) of the polyhedra; if empty, new tags are
+assigned automatically. `numFaces` contains the number of faces of each
+polyhedron, `faceSizes` the number of nodes of each face, and `nodeTags` the
+tags of the nodes of all the faces, concatenated. A sub-tetrahedralization can
+be given with `setPolytopeSimplices`.
+
+Types:
+ - `tag`: integer
+ - `elementTags`: vector of sizes
+ - `numFaces`: vector of integers
+ - `faceSizes`: vector of integers
+ - `nodeTags`: vector of sizes
+"""
+function addPolyhedra(tag, elementTags, numFaces, faceSizes, nodeTags)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAddPolyhedra, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          tag, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Cint}, numFaces), length(numFaces), convert(Vector{Cint}, faceSizes), length(faceSizes), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const add_polyhedra = addPolyhedra
+
+"""
+    gmsh.model.mesh.getPolyhedra(tag = -1)
+
+Get the polyhedra classified on the volume `tag`: their tags `elementTags`, the
+number of faces `numFaces` of each polyhedron, the number of nodes `faceSizes`
+of each face, and the tags of the nodes of all the faces concatenated in
+`nodeTags`. If `tag` < 0, get the polyhedra of all the volumes.
+
+Return `elementTags`, `numFaces`, `faceSizes`, `nodeTags`.
+
+Types:
+ - `elementTags`: vector of sizes
+ - `numFaces`: vector of integers
+ - `faceSizes`: vector of integers
+ - `nodeTags`: vector of sizes
+ - `tag`: integer
+"""
+function getPolyhedra(tag = -1)
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_numFaces_ = Ref{Ptr{Cint}}()
+    api_numFaces_n_ = Ref{Csize_t}()
+    api_faceSizes_ = Ref{Ptr{Cint}}()
+    api_faceSizes_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPolyhedra, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          api_elementTags_, api_elementTags_n_, api_numFaces_, api_numFaces_n_, api_faceSizes_, api_faceSizes_n_, api_nodeTags_, api_nodeTags_n_, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
+    numFaces = unsafe_wrap(Array, api_numFaces_[], api_numFaces_n_[], own = true)
+    faceSizes = unsafe_wrap(Array, api_faceSizes_[], api_faceSizes_n_[], own = true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    return elementTags, numFaces, faceSizes, nodeTags
+end
+const get_polyhedra = getPolyhedra
+
+"""
+    gmsh.model.mesh.getPolytopeSimplices(elementType, tag = -1)
+
+Get the simplices (triangles for polygons, tetrahedra for polyhedra) subdividing
+the polytopes of type `elementType` (34 for polygons, 35 for polyhedra)
+classified on the entity of tag `tag`: the tags of the polytopes `elementTags`,
+the number of simplices `numSimplices` of each polytope, and the tags of the
+nodes of all the simplices concatenated in `nodeTags`. The nodes of the
+simplices that are not boundary nodes of a polytope are its hanging or interior
+nodes. If the simplices of a polytope were neither given (in the mesh file or
+with `setPolytopeSimplices`) nor created (with `createPolytopeSimplices`), they
+are computed on the fly and not saved with the mesh; `given` tells for each
+polytope if its simplices are saved with the mesh. If `tag` < 0, get the
+simplices of the polytopes of all the entities.
+
+Return `elementTags`, `numSimplices`, `nodeTags`, `given`.
+
+Types:
+ - `elementType`: integer
+ - `elementTags`: vector of sizes
+ - `numSimplices`: vector of integers
+ - `nodeTags`: vector of sizes
+ - `given`: vector of integers
+ - `tag`: integer
+"""
+function getPolytopeSimplices(elementType, tag = -1)
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_numSimplices_ = Ref{Ptr{Cint}}()
+    api_numSimplices_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_given_ = Ref{Ptr{Cint}}()
+    api_given_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPolytopeSimplices, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, api_elementTags_, api_elementTags_n_, api_numSimplices_, api_numSimplices_n_, api_nodeTags_, api_nodeTags_n_, api_given_, api_given_n_, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
+    numSimplices = unsafe_wrap(Array, api_numSimplices_[], api_numSimplices_n_[], own = true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    given = unsafe_wrap(Array, api_given_[], api_given_n_[], own = true)
+    return elementTags, numSimplices, nodeTags, given
+end
+const get_polytope_simplices = getPolytopeSimplices
+
+"""
+    gmsh.model.mesh.setPolytopeSimplices(elementTags, numSimplices, nodeTags)
+
+Set the simplices (triangles for polygons, tetrahedra for polyhedra) subdividing
+the polytopes `elementTags`: `numSimplices` contains the number of simplices of
+each polytope, and `nodeTags` the tags of the nodes of all the simplices,
+concatenated. The nodes of the simplices that are not boundary nodes of a
+polytope become its hanging or interior nodes. The simplices are saved with the
+mesh.
+
+Types:
+ - `elementTags`: vector of sizes
+ - `numSimplices`: vector of integers
+ - `nodeTags`: vector of sizes
+"""
+function setPolytopeSimplices(elementTags, numSimplices, nodeTags)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetPolytopeSimplices, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Cint}, numSimplices), length(numSimplices), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_polytope_simplices = setPolytopeSimplices
+
+"""
+    gmsh.model.mesh.createPolytopeSimplices(dimTags = Tuple{Cint,Cint}[])
+
+Create the simplices subdividing the polytopes classified on the entities
+`dimTags` (given as a vector of (dim, tag) pairs), or on all the entities if
+`dimTags` is empty, when none were given: polygons are triangulated by ear
+clipping, and polyhedra are tetrahedralized as a fan from their first node
+(which is only correct if the polyhedron is star-shaped with respect to it). The
+simplices are then saved with the mesh.
+
+Types:
+ - `dimTags`: vector of pairs of integers
+"""
+function createPolytopeSimplices(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreatePolytopeSimplices, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const create_polytope_simplices = createPolytopeSimplices
+
+"""
     gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
 
 Get the numerical quadrature information for the given element type

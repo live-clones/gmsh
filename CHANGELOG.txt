@@ -1,7 +1,9 @@
 (Work-in-progress): new $Polytopes section in the MSH4 format for polygons and
 polyhedra, which replaces the old polygon/polyhedron elements, levelset commands
-and Plugin(CutMesh); mesh/getElementFaceNodes, mesh/getFaces, mesh/getAllFaces
-and mesh/addFaces take or return the number of nodes of each face (faceSizes)
+and Plugin(CutMesh); new mesh/addPolygons, mesh/getPolygons, mesh/addPolyhedra,
+mesh/getPolyhedra, mesh/getPolytopeSimplices, mesh/setPolytopeSimplices and
+mesh/createPolytopeSimplices functions; mesh/getElementFaceNodes,
+mesh/getFaces, mesh/getAllFaces and mesh/addFaces take or return the number of nodes of each face (faceSizes)
 instead of a face type, so all the faces of an element come in a single call;
 improved performance of default 2D and 3D meshing algorithms; improved graphics
 performance; new shader rendering pipeline with order-independent transparency

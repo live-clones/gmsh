@@ -1257,6 +1257,101 @@ namespace gmsh { // Top-level functions
                                       const std::vector<std::size_t> & elementTags,
                                       const std::vector<std::size_t> & nodeTags);
 
+      // gmsh::model::mesh::addPolygons
+      //
+      // Add polygons classified on the surface `tag'. `elementTags' contains the
+      // tags (unique, strictly positive identifiers) of the polygons; if empty,
+      // new tags are assigned automatically. `nodeTags' contains the tags of the
+      // boundary nodes of all the polygons, concatenated, and `numNodes' the
+      // number of boundary nodes of each polygon. The nodes of a polygon must be
+      // ordered along its boundary; hanging nodes are boundary nodes. A sub-
+      // triangulation can be given with `setPolytopeSimplices'.
+      GMSH_API void addPolygons(const int tag,
+                                const std::vector<std::size_t> & elementTags,
+                                const std::vector<std::size_t> & nodeTags,
+                                const std::vector<int> & numNodes);
+
+      // gmsh::model::mesh::getPolygons
+      //
+      // Get the polygons classified on the surface `tag': their tags
+      // `elementTags', the tags of their boundary nodes concatenated in
+      // `nodeTags', and the number of boundary nodes `numNodes' of each polygon.
+      // If `tag' < 0, get the polygons of all the surfaces.
+      GMSH_API void getPolygons(std::vector<std::size_t> & elementTags,
+                                std::vector<std::size_t> & nodeTags,
+                                std::vector<int> & numNodes,
+                                const int tag = -1);
+
+      // gmsh::model::mesh::addPolyhedra
+      //
+      // Add polyhedra classified on the volume `tag'. `elementTags' contains the
+      // tags (unique, strictly positive identifiers) of the polyhedra; if empty,
+      // new tags are assigned automatically. `numFaces' contains the number of
+      // faces of each polyhedron, `faceSizes' the number of nodes of each face,
+      // and `nodeTags' the tags of the nodes of all the faces, concatenated. A
+      // sub-tetrahedralization can be given with `setPolytopeSimplices'.
+      GMSH_API void addPolyhedra(const int tag,
+                                 const std::vector<std::size_t> & elementTags,
+                                 const std::vector<int> & numFaces,
+                                 const std::vector<int> & faceSizes,
+                                 const std::vector<std::size_t> & nodeTags);
+
+      // gmsh::model::mesh::getPolyhedra
+      //
+      // Get the polyhedra classified on the volume `tag': their tags
+      // `elementTags', the number of faces `numFaces' of each polyhedron, the
+      // number of nodes `faceSizes' of each face, and the tags of the nodes of all
+      // the faces concatenated in `nodeTags'. If `tag' < 0, get the polyhedra of
+      // all the volumes.
+      GMSH_API void getPolyhedra(std::vector<std::size_t> & elementTags,
+                                 std::vector<int> & numFaces,
+                                 std::vector<int> & faceSizes,
+                                 std::vector<std::size_t> & nodeTags,
+                                 const int tag = -1);
+
+      // gmsh::model::mesh::getPolytopeSimplices
+      //
+      // Get the simplices (triangles for polygons, tetrahedra for polyhedra)
+      // subdividing the polytopes of type `elementType' (34 for polygons, 35 for
+      // polyhedra) classified on the entity of tag `tag': the tags of the
+      // polytopes `elementTags', the number of simplices `numSimplices' of each
+      // polytope, and the tags of the nodes of all the simplices concatenated in
+      // `nodeTags'. The nodes of the simplices that are not boundary nodes of a
+      // polytope are its hanging or interior nodes. If the simplices of a polytope
+      // were neither given (in the mesh file or with `setPolytopeSimplices') nor
+      // created (with `createPolytopeSimplices'), they are computed on the fly and
+      // not saved with the mesh; `given' tells for each polytope if its simplices
+      // are saved with the mesh. If `tag' < 0, get the simplices of the polytopes
+      // of all the entities.
+      GMSH_API void getPolytopeSimplices(const int elementType,
+                                         std::vector<std::size_t> & elementTags,
+                                         std::vector<int> & numSimplices,
+                                         std::vector<std::size_t> & nodeTags,
+                                         std::vector<int> & given,
+                                         const int tag = -1);
+
+      // gmsh::model::mesh::setPolytopeSimplices
+      //
+      // Set the simplices (triangles for polygons, tetrahedra for polyhedra)
+      // subdividing the polytopes `elementTags': `numSimplices' contains the
+      // number of simplices of each polytope, and `nodeTags' the tags of the nodes
+      // of all the simplices, concatenated. The nodes of the simplices that are
+      // not boundary nodes of a polytope become its hanging or interior nodes. The
+      // simplices are saved with the mesh.
+      GMSH_API void setPolytopeSimplices(const std::vector<std::size_t> & elementTags,
+                                         const std::vector<int> & numSimplices,
+                                         const std::vector<std::size_t> & nodeTags);
+
+      // gmsh::model::mesh::createPolytopeSimplices
+      //
+      // Create the simplices subdividing the polytopes classified on the entities
+      // `dimTags' (given as a vector of (dim, tag) pairs), or on all the entities
+      // if `dimTags' is empty, when none were given: polygons are triangulated by
+      // ear clipping, and polyhedra are tetrahedralized as a fan from their first
+      // node (which is only correct if the polyhedron is star-shaped with respect
+      // to it). The simplices are then saved with the mesh.
+      GMSH_API void createPolytopeSimplices(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+
       // gmsh::model::mesh::getIntegrationPoints
       //
       // Get the numerical quadrature information for the given element type

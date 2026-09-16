@@ -2649,6 +2649,10 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
                          const std::vector<std::size_t> &nodeTags)
 {
   unsigned int numNodesPerEle = MElement::getInfoMSH(type);
+  if(type == MSH_POLYG_ || type == MSH_POLYH_) {
+    Msg::Error("Use addPolygons() or addPolyhedra() to add polytopes");
+    return;
+  }
   if(!numNodesPerEle) return;
   std::size_t numEleTags = elementTags.size();
   std::size_t numEle = numEleTags;
@@ -2763,6 +2767,265 @@ GMSH_API void gmsh::model::mesh::addElementsByType(
   GModel::current()->destroyMeshCaches();
 }
 
+// the polytopes of the given type (34 or 35) classified on the entity of tag
+// `tag', or on all the entities if tag < 0
+static void _getPolytopes(int elementType, int tag,
+                          std::vector<MElement *> &elements)
+{
+  elements.clear();
+  int dim = ElementType::getDimension(elementType);
+  int familyType = ElementType::getParentType(elementType);
+  std::map<int, std::vector<GEntity *>> typeEnt;
+  _getEntitiesForElementTypes(dim, tag, typeEnt);
+  for(auto ge : typeEnt[elementType])
+    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++)
+      elements.push_back(ge->getMeshElementByType(familyType, j));
+}
+
+static bool _getNodes(const std::vector<std::size_t> &nodeTags,
+                      std::size_t begin, std::size_t n,
+                      std::vector<MVertex *> &nodes)
+{
+  nodes.resize(n);
+  for(std::size_t k = 0; k < n; k++) {
+    nodes[k] = GModel::current()->getMeshVertexByTag(nodeTags[begin + k]);
+    if(!nodes[k]) {
+      Msg::Error("Unknown node %zu", nodeTags[begin + k]);
+      return false;
+    }
+  }
+  return true;
+}
+
+GMSH_API void gmsh::model::mesh::addPolygons(
+  const int tag, const std::vector<std::size_t> &elementTags,
+  const std::vector<std::size_t> &nodeTags, const std::vector<int> &numNodes)
+{
+  if(!_checkInit()) return;
+  GEntity *ge = GModel::current()->getEntityByTag(2, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
+    return;
+  }
+  std::size_t n = 0;
+  for(auto m : numNodes) n += m;
+  if(n != nodeTags.size() ||
+     (!elementTags.empty() && elementTags.size() != numNodes.size())) {
+    Msg::Error("Wrong number of node tags or element tags for polygons");
+    return;
+  }
+  std::vector<MElement *> elements;
+  std::vector<MVertex *> nodes;
+  std::size_t idx = 0;
+  for(std::size_t i = 0; i < numNodes.size(); i++) {
+    if(numNodes[i] < 3) {
+      Msg::Error("A polygon needs at least 3 nodes");
+      return;
+    }
+    if(!_getNodes(nodeTags, idx, numNodes[i], nodes)) return;
+    idx += numNodes[i];
+    elements.push_back(
+      new MPolygon(nodes, elementTags.empty() ? 0 : elementTags[i]));
+  }
+  _addElements(2, tag, elements, static_cast<GFace *>(ge)->polygons);
+  GModel::current()->destroyMeshCaches();
+}
+
+GMSH_API void gmsh::model::mesh::getPolygons(
+  std::vector<std::size_t> &elementTags, std::vector<std::size_t> &nodeTags,
+  std::vector<int> &numNodes, const int tag)
+{
+  if(!_checkInit()) return;
+  elementTags.clear();
+  nodeTags.clear();
+  numNodes.clear();
+  std::vector<MElement *> elements;
+  _getPolytopes(MSH_POLYG_, tag, elements);
+  for(auto e : elements) {
+    elementTags.push_back(e->getNum());
+    numNodes.push_back((int)e->getNumPrimaryVertices());
+    for(std::size_t k = 0; k < e->getNumPrimaryVertices(); k++)
+      nodeTags.push_back(e->getVertex(k)->getNum());
+  }
+}
+
+GMSH_API void gmsh::model::mesh::addPolyhedra(
+  const int tag, const std::vector<std::size_t> &elementTags,
+  const std::vector<int> &numFaces, const std::vector<int> &faceSizes,
+  const std::vector<std::size_t> &nodeTags)
+{
+  if(!_checkInit()) return;
+  GEntity *ge = GModel::current()->getEntityByTag(3, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
+    return;
+  }
+  std::size_t nf = 0, nn = 0;
+  for(auto m : numFaces) nf += m;
+  for(auto m : faceSizes) nn += m;
+  if(nf != faceSizes.size() || nn != nodeTags.size() ||
+     (!elementTags.empty() && elementTags.size() != numFaces.size())) {
+    Msg::Error("Wrong number of face sizes, node tags or element tags for "
+               "polyhedra");
+    return;
+  }
+  std::vector<MElement *> elements;
+  std::vector<MVertex *> nodes;
+  std::size_t face = 0, idx = 0;
+  for(std::size_t i = 0; i < numFaces.size(); i++) {
+    if(numFaces[i] < 4) {
+      Msg::Error("A polyhedron needs at least 4 faces");
+      return;
+    }
+    std::vector<int> offsets = {0};
+    std::size_t n = 0;
+    for(int j = 0; j < numFaces[i]; j++) {
+      n += faceSizes[face + j];
+      offsets.push_back((int)n);
+    }
+    face += numFaces[i];
+    if(!_getNodes(nodeTags, idx, n, nodes)) return;
+    idx += n;
+    MPolyhedron *p =
+      new MPolyhedron(nodes, elementTags.empty() ? 0 : elementTags[i]);
+    p->setPolygons(nodes, offsets);
+    elements.push_back(p);
+  }
+  _addElements(3, tag, elements, static_cast<GRegion *>(ge)->polyhedra);
+  GModel::current()->destroyMeshCaches();
+}
+
+GMSH_API void gmsh::model::mesh::getPolyhedra(
+  std::vector<std::size_t> &elementTags, std::vector<int> &numFaces,
+  std::vector<int> &faceSizes, std::vector<std::size_t> &nodeTags,
+  const int tag)
+{
+  if(!_checkInit()) return;
+  elementTags.clear();
+  numFaces.clear();
+  faceSizes.clear();
+  nodeTags.clear();
+  std::vector<MElement *> elements;
+  _getPolytopes(MSH_POLYH_, tag, elements);
+  for(auto e : elements) {
+    MPolyhedron *p = static_cast<MPolyhedron *>(e);
+    elementTags.push_back(p->getNum());
+    numFaces.push_back(p->getNumPolygons());
+    for(int j = 0; j < p->getNumPolygons(); j++) {
+      faceSizes.push_back(p->getPolygonStart(j + 1) - p->getPolygonStart(j));
+      for(int k = p->getPolygonStart(j); k < p->getPolygonStart(j + 1); k++)
+        nodeTags.push_back(p->getPolygonVertex(k)->getNum());
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getPolytopeSimplices(
+  const int elementType, std::vector<std::size_t> &elementTags,
+  std::vector<int> &numSimplices, std::vector<std::size_t> &nodeTags,
+  std::vector<int> &given, const int tag)
+{
+  if(!_checkInit()) return;
+  elementTags.clear();
+  numSimplices.clear();
+  nodeTags.clear();
+  given.clear();
+  if(elementType != MSH_POLYG_ && elementType != MSH_POLYH_) {
+    Msg::Error("Element type %d is not a polytope", elementType);
+    return;
+  }
+  std::vector<MElement *> elements;
+  _getPolytopes(elementType, tag, elements);
+  for(auto e : elements) {
+    elementTags.push_back(e->getNum());
+    if(elementType == MSH_POLYG_) {
+      MPolygon *p = static_cast<MPolygon *>(e);
+      numSimplices.push_back(p->getNumTriangles());
+      given.push_back(p->hasGivenTriangles() ? 1 : 0);
+      for(int i = 0; i < p->getNumTriangles(); i++) {
+        MTriangle t = p->getTriangle(i);
+        for(int k = 0; k < 3; k++) nodeTags.push_back(t.getVertex(k)->getNum());
+      }
+    }
+    else {
+      MPolyhedron *p = static_cast<MPolyhedron *>(e);
+      numSimplices.push_back(p->getNumTetrahedra());
+      given.push_back(p->hasGivenTetrahedra() ? 1 : 0);
+      for(int i = 0; i < p->getNumTetrahedra(); i++) {
+        MTetrahedron t = p->getTetrahedron(i);
+        for(int k = 0; k < 4; k++) nodeTags.push_back(t.getVertex(k)->getNum());
+      }
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::setPolytopeSimplices(
+  const std::vector<std::size_t> &elementTags,
+  const std::vector<int> &numSimplices,
+  const std::vector<std::size_t> &nodeTags)
+{
+  if(!_checkInit()) return;
+  if(elementTags.size() != numSimplices.size()) {
+    Msg::Error("Wrong number of simplex counts for polytopes");
+    return;
+  }
+  std::vector<MVertex *> nodes;
+  std::size_t idx = 0;
+  for(std::size_t i = 0; i < elementTags.size(); i++) {
+    MElement *e = GModel::current()->getMeshElementByTag(elementTags[i]);
+    if(!e) {
+      Msg::Error("Unknown element %zu", elementTags[i]);
+      return;
+    }
+    int k = (e->getType() == TYPE_POLYG) ? 3 :
+            (e->getType() == TYPE_POLYH) ? 4 :
+                                           0;
+    if(!k) {
+      Msg::Error("Element %zu is not a polytope", elementTags[i]);
+      return;
+    }
+    std::size_t n = numSimplices[i] * k;
+    if(idx + n > nodeTags.size()) {
+      Msg::Error("Not enough node tags for the simplices of the polytopes");
+      return;
+    }
+    if(!_getNodes(nodeTags, idx, n, nodes)) return;
+    idx += n;
+    if(e->getType() == TYPE_POLYG)
+      static_cast<MPolygon *>(e)->setTriangles(nodes);
+    else
+      static_cast<MPolyhedron *>(e)->setTetrahedra(nodes);
+  }
+  if(idx != nodeTags.size())
+    Msg::Warning("Too many node tags for the simplices of the polytopes");
+  GModel::current()->destroyMeshCaches();
+}
+
+GMSH_API void gmsh::model::mesh::createPolytopeSimplices(
+  const gmsh::vectorpair &dimTags)
+{
+  if(!_checkInit()) return;
+  std::vector<GEntity *> entities;
+  if(dimTags.empty()) { GModel::current()->getEntities(entities); }
+  else {
+    for(auto dt : dimTags) {
+      GEntity *ge = GModel::current()->getEntityByTag(dt.first, dt.second);
+      if(!ge) {
+        Msg::Error("%s does not exist",
+                   _getEntityName(dt.first, dt.second).c_str());
+        return;
+      }
+      entities.push_back(ge);
+    }
+  }
+  for(auto ge : entities) {
+    if(ge->dim() == 2)
+      for(auto p : static_cast<GFace *>(ge)->polygons) p->createTriangles();
+    else if(ge->dim() == 3)
+      for(auto p : static_cast<GRegion *>(ge)->polyhedra)
+        p->createTetrahedra();
+  }
+}
+
 GMSH_API void gmsh::model::mesh::getElementTypes(std::vector<int> &elementTypes,
                                                  const int dim, const int tag)
 {
@@ -2872,8 +3135,8 @@ GMSH_API void gmsh::model::mesh::getElementsByType(
     numElements += entities[i]->getNumMeshElementsByType(familyType);
   const int numNodes = ElementType::getNumVertices(elementType);
   std::vector<std::size_t> nodeOffsets;
-  std::size_t numNodesTotal =
-    _numNodesByType(elementType, familyType, entities, numElements, nodeOffsets);
+  std::size_t numNodesTotal = _numNodesByType(elementType, familyType, entities,
+                                              numElements, nodeOffsets);
   if(!numTasks) {
     Msg::Error("Number of tasks should be > 0");
     return;
@@ -2927,8 +3190,8 @@ GMSH_API void gmsh::model::mesh::preallocateElementsByType(
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
   std::vector<std::size_t> nodeOffsets;
-  std::size_t numNodesTotal =
-    _numNodesByType(elementType, familyType, entities, numElements, nodeOffsets);
+  std::size_t numNodesTotal = _numNodesByType(elementType, familyType, entities,
+                                              numElements, nodeOffsets);
   if(!numElements) return;
   if(elementTag) {
     elementTags.clear();
