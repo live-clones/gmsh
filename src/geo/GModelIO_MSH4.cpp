@@ -835,7 +835,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
         MElementFactory elementFactory;
         MElement *element = elementFactory.create(
-          elmType, vertices, data[j], 0, false, 0, nullptr, nullptr, nullptr);
+          elmType, vertices, data[j], 0, false, 0, nullptr);
         if(!element) {
           Msg::Error("Could not create element %zu of type %d", data[j],
                      elmType);
@@ -909,7 +909,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
         MElementFactory elementFactory;
         MElement *element = elementFactory.create(
-          elmType, vertices, elmTag, 0, false, 0, nullptr, nullptr, nullptr);
+          elmType, vertices, elmTag, 0, false, 0, nullptr);
         if(!element) {
           Msg::Error("Could not create element %zu of type %d", elmTag,
                      elmType);
@@ -1111,7 +1111,7 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
 
       MElementFactory elementFactory;
       MElement *element = elementFactory.create(
-        elmType, polygons, elmTag, 0, false, 0, nullptr, nullptr, nullptr);
+        elmType, polygons, elmTag, 0, false, 0, nullptr);
       if(!element) {
         Msg::Error("Could not create element %zu of type %d", elmTag, elmType);
         return fail();

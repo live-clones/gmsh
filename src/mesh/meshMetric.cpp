@@ -20,13 +20,12 @@ meshMetric::meshMetric(GModel *gm)
   hasAnalyticalMetric = false;
   _dim = gm->getDim();
   std::map<MElement *, MElement *> newP;
-  std::map<MElement *, MElement *> newD;
 
   if(_dim == 2) {
     for(auto fit = gm->firstFace(); fit != gm->lastFace(); ++fit) {
       for(std::size_t i = 0; i < (*fit)->getNumMeshElements(); i++) {
         MElement *e = (*fit)->getMeshElement(i);
-        MElement *copy = e->copy(_vertexMap, newP, newD);
+        MElement *copy = e->copy(_vertexMap, newP);
         _elements.push_back(copy);
       }
     }
@@ -35,7 +34,7 @@ meshMetric::meshMetric(GModel *gm)
     for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
       for(std::size_t i = 0; i < (*rit)->getNumMeshElements(); i++) {
         MElement *e = (*rit)->getMeshElement(i);
-        MElement *copy = e->copy(_vertexMap, newP, newD);
+        MElement *copy = e->copy(_vertexMap, newP);
         _elements.push_back(copy);
       }
     }
@@ -50,11 +49,10 @@ meshMetric::meshMetric(std::vector<MElement *> elements)
 
   _dim = elements[0]->getDim();
   std::map<MElement *, MElement *> newP;
-  std::map<MElement *, MElement *> newD;
 
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *e = elements[i];
-    MElement *copy = e->copy(_vertexMap, newP, newD);
+    MElement *copy = e->copy(_vertexMap, newP);
     _elements.push_back(copy);
   }
 

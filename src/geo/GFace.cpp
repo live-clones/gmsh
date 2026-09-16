@@ -179,14 +179,6 @@ std::size_t GFace::getNumMeshElementsByType(const int familyType) const
   return 0;
 }
 
-std::size_t GFace::getNumMeshParentElements()
-{
-  std::size_t n = 0;
-  for(std::size_t i = 0; i < polygons.size(); i++)
-    if(polygons[i]->ownsParent()) n++;
-  return n;
-}
-
 void GFace::getNumMeshElements(unsigned *const c) const
 {
   c[0] += triangles.size();

@@ -1399,7 +1399,7 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
 
 void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
                          int elementary, int physical, int parentNum,
-                         int dom1Num, int dom2Num, std::vector<short> *ghosts)
+                         std::vector<short> *ghosts)
 {
   int type = getTypeForMSH();
 
@@ -1407,7 +1407,6 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
 
   int n = getNumVerticesForMSH();
   int par = (parentNum) ? 1 : 0;
-  int dom = (dom1Num) ? 2 : 0;
 
   if(CTX::instance()->mesh.preserveNumberingMsh2) num = (int)_num;
 
@@ -1417,20 +1416,19 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
       fprintf(fp, " %d %d %d", abs(physical), elementary, n);
     else if(version < 2.2)
       fprintf(fp, " %d %d %d", abs(physical), elementary, _partition);
-    else if(!_partition && !par && !dom)
-      fprintf(fp, " %d %d %d", 2 + par + dom, abs(physical), elementary);
+    else if(!_partition && !par)
+      fprintf(fp, " %d %d %d", 2 + par, abs(physical), elementary);
     else if(!ghosts)
-      fprintf(fp, " %d %d %d 1 %d", 4 + par + dom, abs(physical), elementary,
+      fprintf(fp, " %d %d %d 1 %d", 4 + par, abs(physical), elementary,
               _partition);
     else {
       int numGhosts = ghosts->size();
-      fprintf(fp, " %d %d %d %d %d", 4 + numGhosts + par + dom, abs(physical),
+      fprintf(fp, " %d %d %d %d %d", 4 + numGhosts + par, abs(physical),
               elementary, 1 + numGhosts, _partition);
       for(std::size_t i = 0; i < ghosts->size(); i++)
         fprintf(fp, " %d", -(*ghosts)[i]);
     }
     if(version >= 2.0 && par) fprintf(fp, " %d", parentNum);
-    if(version >= 2.0 && dom) fprintf(fp, " %d %d", dom1Num, dom2Num);
   }
   else {
     int numTags, numGhosts = 0;
@@ -2475,10 +2473,8 @@ void MElement::getVerticesIdForMSH(std::vector<int> &verts)
 }
 
 MElement *MElement::copy(std::map<std::size_t, MVertex *> &vertexMap,
-                         std::map<MElement *, MElement *> &newParents,
-                         std::map<MElement *, MElement *> &newDomains)
+                         std::map<MElement *, MElement *> &newParents)
 {
-  if(newDomains.count(this)) return newDomains.find(this)->second;
   std::vector<MVertex *> vmv;
   int eType = getTypeForMSH();
   MElement *eParent = getParent();
@@ -2512,11 +2508,11 @@ MElement *MElement::copy(std::map<std::size_t, MVertex *> &vertexMap,
   }
 
   MElement *parent = nullptr;
-  if(eParent && !getDomain(0) && !getDomain(1)) {
+  if(eParent) {
     auto it = newParents.find(eParent);
     MElement *newParent;
     if(it == newParents.end()) {
-      newParent = eParent->copy(vertexMap, newParents, newDomains);
+      newParent = eParent->copy(vertexMap, newParents);
       newParents[eParent] = newParent;
     }
     else
@@ -2525,29 +2521,12 @@ MElement *MElement::copy(std::map<std::size_t, MVertex *> &vertexMap,
   }
 
   MElementFactory f;
-  MElement *newEl =
-    f.create(eType, vmv, getNum(), _partition, ownsParent(), 0, parent);
-
-  for(int i = 0; i < 2; i++) {
-    MElement *dom = getDomain(i);
-    if(!dom) continue;
-    auto it = newDomains.find(dom);
-    MElement *newDom;
-    if(it == newDomains.end()) {
-      newDom = dom->copy(vertexMap, newParents, newDomains);
-      newDomains[dom] = newDom;
-    }
-    else
-      newDom = newDomains.find(dom)->second;
-    newEl->setDomain(newDom, i);
-  }
-  return newEl;
+  return f.create(eType, vmv, getNum(), _partition, ownsParent(), 0, parent);
 }
 
 MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
                                   std::size_t num, int part, bool owner,
-                                  int parent, MElement *parent_ptr,
-                                  MElement *d1, MElement *d2)
+                                  int parent, MElement *parent_ptr)
 {
   switch(type) {
   case MSH_PNT: return new MPoint(v, num, part);

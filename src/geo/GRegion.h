@@ -125,7 +125,6 @@ public:
   // get total/by-type number of elements in the mesh
   std::size_t getNumMeshElements() const;
   std::size_t getNumMeshElementsByType(const int familyType) const;
-  std::size_t getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
   // get the start of the array of a type of element
