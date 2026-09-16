@@ -158,7 +158,7 @@ if(ENABLE_PRIVATE_API)
           "on the stable public API (gmsh/api) instead.")
   file(GLOB_RECURSE HEADERS src/common/*.h src/numeric/*.h src/numeric/*.hpp
        src/geo/*.h src/mesh/*.h src/solver/*.h src/post/*.h src/plugin/*.h
-       src/graphics/*.h contrib/DiscreteIntegration/*.h
+       src/graphics/*.h
        contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
        contrib/MeshQualityOptimizer/*.h)
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h
