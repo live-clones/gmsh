@@ -265,6 +265,8 @@ private:
   };
   std::vector<pickObject> _pickObjects;
   bool _pickColor;
+  // the scale of the depth range per dimension in a picking pass
+  double _pickDepthStep = 0.;
   // The last identifier image and depths read back from a picking pass, so
   // that hovering costs a lookup instead of a redraw per mouse move. Dropped
   // by openglWindow::draw() on every redraw; the flags record what it was
@@ -406,6 +408,10 @@ public:
   void setEulerAnglesFromRotationMatrix();
   void initProjection(int xpick = 0, int ypick = 0, int wpick = 0,
                       int hpick = 0);
+  // the matrices of camera mode: the projection (the camera's frustum,
+  // shifted for a studio frame) and the modelview (the camera looking at
+  // its target), which `view' comes back with
+  void initCameraMatrices(double view[16]);
   void initRenderModel();
   void initPosition(bool saveMatrices);
   void unproject(double winx, double winy, double p[3], double d[3]);

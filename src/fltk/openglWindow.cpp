@@ -138,7 +138,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
     _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
 {
-  _studioTimer = false;
+  _studioAsked = _studioTimer = false;
   _spin = _spinFrom = _spinPath = _spinHot = 0.;
   _fire = _fireTime = _pickStepTime = 0.;
   _stepping = false;
@@ -250,7 +250,8 @@ void openglWindow::draw()
 {
   // a draw the studio timer did not ask for, or that anyone else asked for
   // as well, starts the accumulation over
-  _studioTimer = (damage() & FL_DAMAGE_USER1) && !(damage() & FL_DAMAGE_ALL);
+  _studioTimer = _studioAsked;
+  _studioAsked = false;
   if(!_studioTimer) _ctx->studioSample = 0;
   // some drawing routines can create data (STL triangulations, etc.): make sure
   // that we don't fire draw() while we are already drawing, e.g. due to an
@@ -505,22 +506,7 @@ void openglWindow::draw()
 
 }
 
-void openglWindow::_cameraMatrices()
-{
-  Camera *cam = &(_ctx->camera);
-  if(!cam->on) cam->init();
-  cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
-  double frustum[16], jitter[16], proj[16];
-  glMatrix::frustum(cam->glFleft, cam->glFright, cam->glFbottom, cam->glFtop,
-                    cam->glFnear, cam->glFfar * cam->Lc, frustum);
-  _ctx->studioJitter(jitter);
-  glMatrix::multiply(jitter, frustum, proj);
-  gmshMatrixMode(GMSH_PROJECTION);
-  gmshLoadMatrix(proj);
-  gmshMatrixMode(GMSH_MODELVIEW);
-  cameraView(cam, 0., 0., 0., _frameView);
-  gmshLoadMatrix(_frameView);
-}
+void openglWindow::_cameraMatrices() { _ctx->initCameraMatrices(_frameView); }
 
 // The accumulation of the studio shading: after a frame, while the view is
 // still, the timer asks for more frames with the light, the dome and the
@@ -662,11 +648,13 @@ void openglWindow::_studioSampleCb(void *data)
     Fl::repeat_timeout(0.05, _studioSampleCb, data);
     return;
   }
-  // asked for with a damage bit of its own: a redraw() asked for by anyone
-  // else before the frame is drawn (an option changed, say) marks the
-  // window fully damaged, and draw() knows the frame is a plain one then
+  // a redraw already asked for by anyone else (an option changed, say) is a
+  // plain frame, which starts the timer again itself; and one asked for
+  // between now and the draw clears the flag set here
+  if(w->damage()) return;
   w->_ctx->studioSample++;
-  w->damage(FL_DAMAGE_USER1);
+  w->_studioAsked = true;
+  w->Fl_Gl_Window::redraw();
 }
 
 // The fire lit by spinning the model: drawn over the scene at its current
