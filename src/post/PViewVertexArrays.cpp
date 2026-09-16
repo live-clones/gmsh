@@ -822,9 +822,11 @@ static void addOutlinePolygon(drawTarget *p, int ient, int iele, int numNodes,
   PViewData *data = p->view->getData();
   MPolygon *polygon =
     static_cast<MPolygon *>(data->getElement(opt->timeStep, ient, iele));
-  SVector3 nfac = polygon->getNormal();
-  for(int i = 0; i < polygon->getNumEdgesRep(false); i++) {
-    std::array<int, 2> is = polygon->getEdgeRepIndices(false, i);
+  int numEdges = polygon ? polygon->getNumEdgesRep(false) : numNodes;
+  SVector3 nfac = polygon ? polygon->getNormal() : SVector3(0., 0., 1.);
+  for(int i = 0; i < numEdges; i++) {
+    std::array<int, 2> is = polygon ? polygon->getEdgeRepIndices(false, i) :
+                                      std::array<int, 2>{i, (i + 1) % numNodes};
     double x[2] = {xyz[is[0]][0], xyz[is[1]][0]};
     double y[2] = {xyz[is[0]][1], xyz[is[1]][1]};
     double z[2] = {xyz[is[0]][2], xyz[is[1]][2]};
@@ -854,14 +856,22 @@ static void addScalarPolygon(drawTarget *p, int ient, int iele, int numNodes,
 
   if(opt->boundary > 0) {
     opt->boundary--;
-    for(int i = 0; i < polygon->getNumEdgesRep(false); i++) {
-      std::array<int, 2> is = polygon->getEdgeRepIndices(false, i);
+    int numEdges = polygon ? polygon->getNumEdgesRep(false) : numNodes;
+    for(int i = 0; i < numEdges; i++) {
+      std::array<int, 2> is = polygon ?
+                                polygon->getEdgeRepIndices(false, i) :
+                                std::array<int, 2>{i, (i + 1) % numNodes};
       addScalarLine(p, xyz, val, pre, is[0], is[1], true);
     }
     opt->boundary++;
     return;
   }
 
+  if(!polygon) { // list data: a fan
+    for(int i = 1; i < numNodes - 1; i++)
+      addScalarTriangle(p, xyz, val, pre, 0, i, i + 1, unique);
+    return;
+  }
   for(int i = 0; i < polygon->getNumTriangles(); i++) {
     std::array<int, 3> is = polygon->getTriangleIndices(i);
     addScalarTriangle(p, xyz, val, pre, is[0], is[1], is[2], unique);
@@ -1181,6 +1191,7 @@ static void addOutlinePolyhedron(drawTarget *p, int ient, int iele,
   PViewData *data = p->view->getData();
   MPolyhedron *polyhedron =
     static_cast<MPolyhedron *>(data->getElement(opt->timeStep, ient, iele));
+  if(!polyhedron) return; // list data: the faces are unknown
   for(int i = 0; i < polyhedron->getNumEdgesRep(false); i++) {
     std::array<int, 2> is = polyhedron->getEdgeRepIndices(false, i);
     double x[2] = {xyz[is[0]][0], xyz[is[1]][0]};
@@ -1201,6 +1212,7 @@ static void addScalarPolyhedron(drawTarget *p, int ient, int iele,
   PViewData *data = p->view->getData();
   MPolyhedron *polyhedron =
     static_cast<MPolyhedron *>(data->getElement(opt->timeStep, ient, iele));
+  if(!polyhedron) return; // list data: the faces are unknown
 
   if(opt->boundary > 0) {
     opt->boundary--;

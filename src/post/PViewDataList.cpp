@@ -1342,6 +1342,15 @@ void PViewDataList::setOrder2(int type)
 std::vector<double> *PViewDataList::incrementList(int numComp, int type,
                                                   int numNodes)
 {
+  if(type == TYPE_POLYG || type == TYPE_POLYH) {
+    // the lists cannot hold the faces of polyhedra nor a variable number of
+    // nodes: polytopes only exist in model-based views
+    static bool warned = false;
+    if(!warned)
+      Msg::Warning("Polygons and polyhedra are skipped in list-based views");
+    warned = true;
+    return nullptr;
+  }
   int nb;
   switch(type) {
   case TYPE_PNT:

@@ -9,6 +9,8 @@
 #include "GmshDefines.h"
 #include "Numeric.h"
 #include "PViewData.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "adaptiveData.h"
 #include "OS.h"
 
@@ -161,13 +163,45 @@ bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
       case TYPE_PYR:
         s = (numComp == 9) ? "TY" : (numComp == 3) ? "VY" : "SY";
         break;
+      case TYPE_POLYG:
+        s = (numComp == 9) ? "TT" : (numComp == 3) ? "VT" : "ST";
+        break;
+      case TYPE_POLYH:
+        s = (numComp == 9) ? "TS" : (numComp == 3) ? "VS" : "SS";
+        break;
       }
-      if(s) {
+      if(!s) continue;
+      // polytopes are written as their sub-simplices, on which the data is P1
+      std::vector<std::vector<int>> simplices;
+      if(type == TYPE_POLYG || type == TYPE_POLYH) {
+        MElement *e = getElement(firstNonEmptyStep, ent, ele);
+        if(!e) continue;
+        if(type == TYPE_POLYG) {
+          MPolygon *p = static_cast<MPolygon *>(e);
+          for(int i = 0; i < p->getNumTriangles(); i++) {
+            std::array<int, 3> is = p->getTriangleIndices(i);
+            simplices.push_back({is[0], is[1], is[2]});
+          }
+        }
+        else {
+          MPolyhedron *p = static_cast<MPolyhedron *>(e);
+          for(int i = 0; i < p->getNumTetrahedra(); i++) {
+            std::array<int, 4> is = p->getTetrahedronIndices(i);
+            simplices.push_back({is[0], is[1], is[2], is[3]});
+          }
+        }
+      }
+      else {
+        simplices.push_back({});
+        for(int nod = 0; nod < getNumNodes(firstNonEmptyStep, ent, ele); nod++)
+          simplices.back().push_back(nod);
+      }
+      for(auto &nodes : simplices) {
         fprintf(fp, "%s(", s);
-        int numNod = getNumNodes(firstNonEmptyStep, ent, ele);
+        int numNod = (int)nodes.size();
         for(int nod = 0; nod < numNod; nod++) {
           double x, y, z;
-          getNode(firstNonEmptyStep, ent, ele, nod, x, y, z);
+          getNode(firstNonEmptyStep, ent, ele, nodes[nod], x, y, z);
           fprintf(fp, "%.16g,%.16g,%.16g", x, y, z);
           if(nod != numNod - 1) fprintf(fp, ",");
         }
@@ -177,7 +211,7 @@ bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
             for(int nod = 0; nod < numNod; nod++) {
               for(int comp = 0; comp < numComp; comp++) {
                 double val = 0.0;
-                getValue(step, ent, ele, nod, comp, val);
+                getValue(step, ent, ele, nodes[nod], comp, val);
                 if(first) {
                   fprintf(fp, "){%.16g", val);
                   first = false;
