@@ -14,19 +14,35 @@
 #include <array>
 #include <vector>
 
-// A polygon: its boundary nodes in order, followed by the nodes of its
-// sub-triangulation that are not boundary nodes (hanging or interior nodes).
-// The sub-triangulation is the geometry of the polygon: it is either given, or
-// computed by ear clipping when needed. The reference coordinates of the
-// polygon are its physical coordinates, and the shape functions are P1 on each
-// sub-triangle.
+// A polygon, with an optional sub-triangulation.
+//
+// What is stored:
+//
+// - the nodes: the boundary nodes in order (the primary vertices, _numBoundary
+//   of them), followed by the nodes of the sub-triangulation that are not
+//   boundary nodes (hanging or interior nodes), which are counted as face
+//   vertices;
+//
+// - the sub-triangulation, as 3 indices in the nodes per triangle. It is the
+//   geometry of the polygon: the reference coordinates are the physical
+//   coordinates, the shape functions are P1 on each triangle, and point
+//   location, integration, interpolation and the quality measures all go
+//   through the triangles. It is either given (read from the file or set
+//   through the API, in which case it is written back with the polygon), or
+//   computed by ear clipping the first time it is needed (drawing, volume...)
+//   and never written back: _givenTriangles tells which.
+//
+// What is recomputed when needed rather than stored: the normal (Newell's
+// method over the boundary), the edges (consecutive boundary nodes), and the
+// integration points (the rules of the triangles, in a shared buffer).
 class MPolygon : public MElement {
 private:
   std::vector<MVertex *> _vertices;
-  mutable std::vector<int> _triangles; // 3 indices in _vertices per triangle
+  mutable std::vector<int> _triangles;
   int _numBoundary;
   mutable bool _givenTriangles;
 
+  // ear clipping, if no triangles are stored yet
   void _ensureTriangles() const;
   // the sub-triangle containing the point, or the closest one, with the
   // barycentric coordinates of the point in it and its distance to its plane
@@ -95,11 +111,13 @@ public:
     return 1;
   }
 
-  // sub-triangulation, as vertices of the triangles; if given empty, it is
-  // computed when needed
+  // set the given sub-triangulation, as vertices of the triangles (the ones
+  // that are not boundary nodes are appended to the nodes); if empty, the
+  // polygon has no given sub-triangulation and one is computed when needed
   void setTriangles(const std::vector<MVertex *> &simplices);
   bool hasGivenTriangles() const { return _givenTriangles; }
-  // keep the computed sub-triangulation as if it had been given
+  // keep the computed sub-triangulation as if it had been given, so that it is
+  // written with the polygon
   void createTriangles()
   {
     _ensureTriangles();
@@ -124,7 +142,9 @@ public:
   // and an average for the others)
   SVector3 getNormal() const;
 
-  // geometry: reference coordinates are the physical coordinates
+  // geometry: the reference coordinates are the physical coordinates, and the
+  // Jacobian of the mapping is the identity (the integration weights carry the
+  // areas of the triangles)
   virtual double getVolume();
   virtual void pnt(double u, double v, double w, SPoint3 &p) const
   {
@@ -145,7 +165,8 @@ public:
   virtual bool isInside(double u, double v, double w) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 
-  // P1 on the sub-triangles
+  // no nodal basis: the shape functions are P1 on the triangle holding the
+  // point (or the closest one), and zero on the other nodes
   virtual const nodalBasis *getFunctionSpace(int order = -1,
                                              bool serendip = false) const
   {

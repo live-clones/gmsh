@@ -13,28 +13,48 @@
 #include <array>
 #include <vector>
 
-// A polyhedron: the nodes of its faces, followed by the nodes of its
-// sub-tetrahedralization that are not on the faces (interior nodes). The faces
-// are lists of indices in the vertices. The sub-tetrahedralization is the
-// geometry of the polyhedron: it is either given, or computed as a fan from
-// the first vertex when needed (which is only correct if the polyhedron is
-// star-shaped with respect to it). The reference coordinates of the polyhedron
-// are its physical coordinates, and the shape functions are P1 on each
-// sub-tetrahedron.
+// A polyhedron, given by its faces, with an optional sub-tetrahedralization.
 //
-// The faces and the tetrahedra live in a single array: the offsets of the
-// faces (numFaces + 1 entries), the indices of their nodes, then 4 indices per
-// tetrahedron from _tetOffset on. Everything else (edges, the triangles drawn
-// for the faces, integration points) is derived when needed.
+// What is stored:
+//
+// - the nodes: the nodes of the faces, each once (the primary vertices,
+//   _numBoundary of them), followed by the nodes of the sub-tetrahedralization
+//   that are not on the faces (interior nodes), which are counted as volume
+//   vertices;
+//
+// - the faces and the tetrahedra, as indices in the nodes, in the single
+//   array _data laid out as
+//
+//     [offset of each face in the face nodes, _numFaces + 1 entries]
+//     [nodes of the faces, face after face]              <- _faceIndices()
+//     [4 nodes per tetrahedron]                           <- from _tetOffset
+//
+//   The tetrahedra are the geometry of the polyhedron: the reference
+//   coordinates are the physical coordinates, the shape functions are P1 on
+//   each tetrahedron, and point location, integration, interpolation and the
+//   quality measures all go through them. They are either given (read from
+//   the file or set through the API, in which case they are written back with
+//   the polyhedron), or computed the first time they are needed as a fan from
+//   the first node (correct only if the polyhedron is star-shaped with respect
+//   to it) and never written back: _givenTetrahedra tells which. The faces are
+//   pure topology once tetrahedra exist (they need not be planar).
+//
+// What is recomputed rather than stored: the triangles that draw the faces
+// (fans from the first node of each face), the normal of an edge (that of the
+// first face holding it), the integration points (the rules of the
+// tetrahedra, in a shared buffer), and the edges, which are cached in _edges
+// the first time they are asked for (drawing, the API, plugins), as pairs of
+// node indices with each edge once whatever the orientation of the faces.
 class MPolyhedron : public MElement {
 private:
   std::vector<MVertex *> _vertices;
-  mutable std::vector<int> _data;
-  mutable std::vector<int> _edges; // 2 indices per edge, built when needed
+  mutable std::vector<int> _data; // mutable: the computed tetrahedra
+  mutable std::vector<int> _edges;
   int _numBoundary, _numFaces, _tetOffset;
   mutable bool _givenTetrahedra;
 
   const int *_faceIndices() const { return &_data[_numFaces + 1]; }
+  // build the edge cache, or the fan tetrahedra, if not there yet
   void _ensureEdges() const;
   void _ensureTetrahedra() const;
   int _findTetrahedron(double x, double y, double z, double bary[4]) const;
@@ -109,8 +129,11 @@ public:
     return 1;
   }
 
-  // faces as a flat list of vertices plus offsets, and sub-tetrahedralization
-  // as vertices of the tetrahedra (computed when needed if given empty)
+  // set the faces, as a flat list of vertices plus the offset of each face in
+  // it (numFaces + 1 entries), and the given sub-tetrahedralization, as
+  // vertices of the tetrahedra (the ones that are not on the faces are
+  // appended to the nodes); if the tetrahedra are empty, the polyhedron has
+  // no given sub-tetrahedralization and one is computed when needed
   void setPolygonsAndTetrahedra(const std::vector<MVertex *> &borderVertices,
                                 const std::vector<int> &borderOffset,
                                 const std::vector<MVertex *> &simplicesVertices)
@@ -122,7 +145,8 @@ public:
                    const std::vector<int> &borderOffset);
   void setTetrahedra(const std::vector<MVertex *> &simplicesVertices);
   bool hasGivenTetrahedra() const { return _givenTetrahedra; }
-  // keep the computed sub-tetrahedralization as if it had been given
+  // keep the computed sub-tetrahedralization as if it had been given, so that
+  // it is written with the polyhedron
   void createTetrahedra()
   {
     _ensureTetrahedra();
@@ -151,7 +175,9 @@ public:
                         _vertices[is[3]]);
   }
 
-  // geometry: reference coordinates are the physical coordinates
+  // geometry: the reference coordinates are the physical coordinates, and the
+  // Jacobian of the mapping is the identity (the integration weights carry the
+  // volumes of the tetrahedra)
   virtual double getVolume();
   virtual void pnt(double u, double v, double w, SPoint3 &p) const
   {
@@ -172,7 +198,8 @@ public:
   virtual bool isInside(double u, double v, double w) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 
-  // P1 on the sub-tetrahedra
+  // no nodal basis: the shape functions are P1 on the tetrahedron holding the
+  // point (or the closest one), and zero on the other nodes
   virtual const nodalBasis *getFunctionSpace(int order = -1,
                                              bool serendip = false) const
   {
