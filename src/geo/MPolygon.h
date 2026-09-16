@@ -138,6 +138,34 @@ public:
   }
   double *getNormal() const { return (double *)_normal; }
 
+  // Volume from the sub-simplices (0 without them)
+  virtual double getVolume()
+  {
+    double v = 0.;
+    for(int i = 0; i < getNumTriangles(); i++) v += getTriangle(i).getVolume();
+    return v;
+  }
+
+  // No Jacobian basis for polytopes yet: neutral quality
+  virtual void scaledJacRange(double &jmin, double &jmax,
+                              GEntity *ge = nullptr) const
+  {
+    jmin = jmax = 1.;
+  }
+  virtual void idealJacRange(double &jmin, double &jmax, GEntity *ge = nullptr)
+  {
+    jmin = jmax = 1.;
+  }
+  virtual void signedInvCondNumRange(double &iCNMin, double &iCNMax,
+                                     GEntity *ge = nullptr)
+  {
+    iCNMin = iCNMax = 1.;
+  }
+  virtual void signedInvGradErrorRange(double &minSIGE, double &maxSIGE)
+  {
+    minSIGE = maxSIGE = 1.;
+  }
+
   void meanValueCoord(double *v, std::vector<double> &coord)
   {
     int N = getNumVertices();

@@ -218,6 +218,34 @@ public:
     return MTetrahedron(_vertices[is[0]], _vertices[is[1]], _vertices[is[2]],
                         _vertices[is[3]]);
   }
+
+  // Volume from the sub-simplices (0 without them)
+  virtual double getVolume()
+  {
+    double v = 0.;
+    for(int i = 0; i < getNumTetrahedra(); i++) v += getTetrahedron(i).getVolume();
+    return v;
+  }
+
+  // No Jacobian basis for polytopes yet: neutral quality
+  virtual void scaledJacRange(double &jmin, double &jmax,
+                              GEntity *ge = nullptr) const
+  {
+    jmin = jmax = 1.;
+  }
+  virtual void idealJacRange(double &jmin, double &jmax, GEntity *ge = nullptr)
+  {
+    jmin = jmax = 1.;
+  }
+  virtual void signedInvCondNumRange(double &iCNMin, double &iCNMax,
+                                     GEntity *ge = nullptr)
+  {
+    iCNMin = iCNMax = 1.;
+  }
+  virtual void signedInvGradErrorRange(double &minSIGE, double &maxSIGE)
+  {
+    minSIGE = maxSIGE = 1.;
+  }
 };
 
 #endif
