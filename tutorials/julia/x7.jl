@@ -32,7 +32,9 @@ faceNodes, faceSizes = gmsh.model.mesh.getElementFaceNodes(elementType)
 # Edges and faces are returned for each element as a list of nodes corresponding
 # to the canonical orientation of the edges and faces for a given element type.
 # As faces can have a different number of nodes (e.g. in prisms, or in
-# polyhedra), the number of nodes of each face is returned as well.
+# polyhedra), the number of nodes of each face is returned as well. To get only
+# the faces with a given number of nodes, as a flat list, use e.g.
+# gmsh.model.mesh.getElementFaceNodesByType(elementType, 3) for the triangles.
 
 # Gmsh can also identify unique edges and faces (a single edge or face whatever
 # the ordering of their nodes) and assign them a unique tag. This identification

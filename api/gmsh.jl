@@ -3422,6 +3422,39 @@ end
 const get_faces = getFaces
 
 """
+    gmsh.model.mesh.getFacesByType(faceType, nodeTags)
+
+Get the global unique mesh face identifiers `faceTags` and orientations
+`faceOrientations` for an input list of faces with `faceType` nodes each (3 for
+triangular faces, 4 for quadrangular faces, etc.), defined by their node tags
+concatenated in the vector `nodeTags`. Mesh faces are created e.g. by
+`createFaces()`, `getKeys()` or `addFaces()`.
+
+Return `faceTags`, `faceOrientations`.
+
+Types:
+ - `faceType`: integer
+ - `nodeTags`: vector of sizes
+ - `faceTags`: vector of sizes
+ - `faceOrientations`: vector of integers
+"""
+function getFacesByType(faceType, nodeTags)
+    api_faceTags_ = Ref{Ptr{Csize_t}}()
+    api_faceTags_n_ = Ref{Csize_t}()
+    api_faceOrientations_ = Ref{Ptr{Cint}}()
+    api_faceOrientations_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetFacesByType, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          faceType, convert(Vector{Csize_t}, nodeTags), length(nodeTags), api_faceTags_, api_faceTags_n_, api_faceOrientations_, api_faceOrientations_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    faceTags = unsafe_wrap(Array, api_faceTags_[], api_faceTags_n_[], own = true)
+    faceOrientations = unsafe_wrap(Array, api_faceOrientations_[], api_faceOrientations_n_[], own = true)
+    return faceTags, faceOrientations
+end
+const get_faces_by_type = getFacesByType
+
+"""
     gmsh.model.mesh.createEdges(dimTags = Tuple{Cint,Cint}[])
 
 Create unique mesh edges for the entities `dimTags`, given as a vector of (dim,
@@ -3806,6 +3839,44 @@ function getElementFaceNodes(elementType, tag = -1, primary = false, task = 0, n
     return nodeTags, faceSizes
 end
 const get_element_face_nodes = getElementFaceNodes
+
+"""
+    gmsh.model.mesh.getElementFaceNodesByType(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
+
+Get the nodes on the faces with `faceType` primary nodes (3 for triangular
+faces, 4 for quadrangular faces, etc.) of all elements of type `elementType`
+classified on the entity of tag `tag`. `nodeTags` contains the node tags of
+these faces for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], with the same
+number of nodes N for each face. Faces are returned for each element in their
+canonical order, with elements in the same order as in `getElements` and
+`getElementsByType`. If `primary` is set, only the primary (corner) nodes of the
+faces are returned. If `tag` < 0, get the face nodes for all entities. If
+`numTasks` > 1, only compute and return the part of the data indexed by `task`
+(for C++ only; output vector must be preallocated).
+
+Return `nodeTags`.
+
+Types:
+ - `elementType`: integer
+ - `faceType`: integer
+ - `nodeTags`: vector of sizes
+ - `tag`: integer
+ - `primary`: boolean
+ - `task`: size
+ - `numTasks`: size
+"""
+function getElementFaceNodesByType(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementFaceNodesByType, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, faceType, api_nodeTags_, api_nodeTags_n_, tag, primary, task, numTasks, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    return nodeTags
+end
+const get_element_face_nodes_by_type = getElementFaceNodesByType
 
 """
     gmsh.model.mesh.getGhostElements(dim, tag)

@@ -443,6 +443,9 @@ mesh.add('getEdges', doc, None, ivectorsize('nodeTags'), ovectorsize('edgeTags')
 doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of faces defined by their node tags concatenated in the vector `nodeTags', with `faceSizes' the number of nodes of each face. Mesh faces are created e.g. by `createFaces()', `getKeys()' or `addFaces()'.'''
 mesh.add('getFaces', doc, None, ivectorsize('nodeTags'), ivectorint('faceSizes'), ovectorsize('faceTags'), ovectorint('faceOrientations'))
 
+doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of faces with `faceType' nodes each (3 for triangular faces, 4 for quadrangular faces, etc.), defined by their node tags concatenated in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()', `getKeys()' or `addFaces()'.'''
+mesh.add('getFacesByType', doc, None, iint('faceType'), ivectorsize('nodeTags'), ovectorsize('faceTags'), ovectorint('faceOrientations'))
+
 doc = '''Create unique mesh edges for the entities `dimTags', given as a vector of (dim, tag) pairs.'''
 mesh.add('createEdges', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'))
 
@@ -484,6 +487,9 @@ mesh.add('getElementEdgeNodes', doc, None, iint('elementType'), ovectorsize('nod
 
 doc = '''Get the nodes on the faces of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags of the faces for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], and `faceSizes' the number of nodes of each face: [e1f1N, e1f2N, ...]. Faces are returned for each element in their canonical order, with elements in the same order as in `getElements' and `getElementsByType'. If `primary' is set, only the primary (corner) nodes of the faces are returned. If `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task' (for C++ only; output vectors must be preallocated).'''
 mesh.add('getElementFaceNodes', doc, None, iint('elementType'), ovectorsize('nodeTags'), ovectorint('faceSizes'), iint('tag', '-1'), ibool('primary', 'false', 'False'), isize('task', '0'), isize('numTasks', '1'))
+
+doc = '''Get the nodes on the faces with `faceType' primary nodes (3 for triangular faces, 4 for quadrangular faces, etc.) of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags of these faces for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], with the same number of nodes N for each face. Faces are returned for each element in their canonical order, with elements in the same order as in `getElements' and `getElementsByType'. If `primary' is set, only the primary (corner) nodes of the faces are returned. If `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task' (for C++ only; output vector must be preallocated).'''
+mesh.add('getElementFaceNodesByType', doc, None, iint('elementType'), iint('faceType'), ovectorsize('nodeTags'), iint('tag', '-1'), ibool('primary', 'false', 'False'), isize('task', '0'), isize('numTasks', '1'))
 
 doc = '''Get the ghost elements `elementTags' and their associated `partitions' stored in the ghost entity of dimension `dim' and tag `tag'.'''
 mesh.add('getGhostElements', doc, None, iint('dim'), iint('tag'), ovectorsize('elementTags'), ovectorint('partitions'))
