@@ -3364,7 +3364,9 @@ class model:
             (`elementName'), dimension (`dim'), order (`order'), number of nodes
             (`numNodes'), local coordinates of the nodes in the reference element
             (`localNodeCoord' vector, of length `dim' times `numNodes') and number of
-            primary (first order) nodes (`numPrimaryNodes').
+            primary (first order) nodes (`numPrimaryNodes'). Polygons and polyhedra
+            have no reference element and a variable number of nodes: `numNodes' and
+            `numPrimaryNodes' are -1 and `localNodeCoord' is empty.
 
             Return `elementName', `dim', `order', `numNodes', `localNodeCoord', `numPrimaryNodes'.
 

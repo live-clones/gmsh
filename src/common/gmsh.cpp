@@ -2806,6 +2806,14 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
   MElement::getInfoMSH(elementType, &n);
   name = n;
   int parentType = ElementType::getParentType(elementType);
+  if(parentType == TYPE_POLYG || parentType == TYPE_POLYH) {
+    // no reference element: the number of nodes varies from one element to
+    // the other
+    dim = ElementType::getDimension(elementType);
+    order = 1;
+    numNodes = numPrimaryNodes = -1;
+    return;
+  }
   nodalBasis *basis = nullptr;
   if(parentType == TYPE_PYR)
     basis = new pyramidalBasis(elementType);
@@ -2826,6 +2834,28 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
   delete basis;
 }
 
+// the number of nodes of all the elements of type elementType in entities: for
+// polytopes, whose number of nodes varies, nodeOffsets holds the prefix sums
+static std::size_t _numNodesByType(int elementType, int familyType,
+                                   const std::vector<GEntity *> &entities,
+                                   std::size_t numElements,
+                                   std::vector<std::size_t> &nodeOffsets)
+{
+  nodeOffsets.clear();
+  if(familyType != TYPE_POLYG && familyType != TYPE_POLYH)
+    return numElements * ElementType::getNumVertices(elementType);
+  nodeOffsets.reserve(numElements + 1);
+  nodeOffsets.push_back(0);
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++)
+      nodeOffsets.push_back(
+        nodeOffsets.back() +
+        ge->getMeshElementByType(familyType, j)->getNumVertices());
+  }
+  return nodeOffsets.back();
+}
+
 GMSH_API void gmsh::model::mesh::getElementsByType(
   const int elementType, std::vector<std::size_t> &elementTags,
   std::vector<std::size_t> &nodeTags, const int tag, const std::size_t task,
@@ -2841,6 +2871,9 @@ GMSH_API void gmsh::model::mesh::getElementsByType(
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
   const int numNodes = ElementType::getNumVertices(elementType);
+  std::vector<std::size_t> nodeOffsets;
+  std::size_t numNodesTotal =
+    _numNodesByType(elementType, familyType, entities, numElements, nodeOffsets);
   if(!numTasks) {
     Msg::Error("Number of tasks should be > 0");
     return;
@@ -2850,7 +2883,7 @@ GMSH_API void gmsh::model::mesh::getElementsByType(
   bool haveNodeTags = !nodeTags.empty();
   if((!haveElementTags && !haveNodeTags) ||
      (haveElementTags && (elementTags.size() != numElements)) ||
-     (haveNodeTags && (nodeTags.size() != numElements * numNodes))) {
+     (haveNodeTags && (nodeTags.size() != numNodesTotal))) {
     if(numTasks > 1)
       Msg::Warning("ElementTags and nodeTags should be preallocated "
                    "if numTasks > 1");
@@ -2861,7 +2894,7 @@ GMSH_API void gmsh::model::mesh::getElementsByType(
   const std::size_t begin = (task * numElements) / numTasks;
   const std::size_t end = ((task + 1) * numElements) / numTasks;
   size_t o = 0;
-  size_t idx = begin * numNodes;
+  size_t idx = nodeOffsets.empty() ? begin * numNodes : nodeOffsets[begin];
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
@@ -2893,7 +2926,9 @@ GMSH_API void gmsh::model::mesh::preallocateElementsByType(
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
-  const int numNodesPerEle = ElementType::getNumVertices(elementType);
+  std::vector<std::size_t> nodeOffsets;
+  std::size_t numNodesTotal =
+    _numNodesByType(elementType, familyType, entities, numElements, nodeOffsets);
   if(!numElements) return;
   if(elementTag) {
     elementTags.clear();
@@ -2901,7 +2936,7 @@ GMSH_API void gmsh::model::mesh::preallocateElementsByType(
   }
   if(nodeTag) {
     nodeTags.clear();
-    nodeTags.resize(numElements * numNodesPerEle, 0);
+    nodeTags.resize(numNodesTotal, 0);
   }
 }
 
