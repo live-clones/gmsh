@@ -951,6 +951,18 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
     indexMeshVertices(saveAll, saveSinglePartition, renumberVertices);
 
   // get the number of elements we need to save
+  std::size_t numPolytopes = 0;
+  for(auto it = firstFace(); it != lastFace(); ++it)
+    numPolytopes += (*it)->polygons.size();
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
+    numPolytopes += (*it)->polyhedra.size();
+  if(numPolytopes) {
+    Msg::Error("Polygons and polyhedra cannot be saved in MSH2 format: use "
+               "MSH4");
+    fclose(fp);
+    return 0;
+  }
+
   int numElements = getNumElementsMSH(this, saveAll, saveSinglePartition);
 
   if(version >= 2.0) {
@@ -1098,12 +1110,6 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
                      saveSinglePartition, version, binary, num,
                      _getElementary(*it), (*it)->physicals);
   }
-  // polygons
-  for(auto it = firstFace(); it != lastFace(); it++) {
-    writeElementsMSH(fp, this, *it, (*it)->polygons, saveAll,
-                     saveSinglePartition, version, binary, num,
-                     _getElementary(*it), (*it)->physicals);
-  }
   // tets
   for(auto it = firstRegion(); it != lastRegion(); ++it) {
     writeElementsMSH(fp, this, *it, (*it)->tetrahedra, saveAll,
@@ -1125,12 +1131,6 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
   // pyramids
   for(auto it = firstRegion(); it != lastRegion(); ++it) {
     writeElementsMSH(fp, this, *it, (*it)->pyramids, saveAll,
-                     saveSinglePartition, version, binary, num,
-                     _getElementary(*it), (*it)->physicals);
-  }
-  // polyhedra
-  for(auto it = firstRegion(); it != lastRegion(); ++it) {
-    writeElementsMSH(fp, this, *it, (*it)->polyhedra, saveAll,
                      saveSinglePartition, version, binary, num,
                      _getElementary(*it), (*it)->physicals);
   }
