@@ -2438,6 +2438,9 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_TRIH_4:
     if(name) *name = "Trihedron 4";
     return 4;
+  case MSH_POLYH_:
+    if(name) *name = "Polyhedron";
+    return 0;
   case MSH_PNT_SUB:
     if(name) *name = "Point Xfem";
     return 1;

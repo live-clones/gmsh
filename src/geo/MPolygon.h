@@ -41,8 +41,9 @@ public:
       prodve(a, b, c);
       for(int j = 0; j < 3; ++j) _normal[j] += c[j];
     }
-    double den = 1. / sqrt(prosca(_normal, _normal));
-    for(int j = 0; j < 3; ++j) _normal[j] *= den;
+    double nrm = sqrt(prosca(_normal, _normal));
+    if(nrm > 0.)
+      for(int j = 0; j < 3; ++j) _normal[j] /= nrm;
   }
   ~MPolygon() {}
 
@@ -107,16 +108,19 @@ public:
     return 1;
   }
 
-  void setTriangles(std::vector<MVertex *> &simplices)
+  // Sub-triangulation, as vertices of the triangles. Vertices that are not
+  // nodes of the polygon (hanging or interior nodes) are appended after them.
+  void setTriangles(const std::vector<MVertex *> &simplices)
   {
     std::unordered_map<MVertex *, int> indices;
-    for(int i = 0; i < (int)_vertices.size(); ++i) indices[_vertices[i]] = i;
+    for(std::size_t i = 0; i < _vertices.size(); ++i)
+      indices[_vertices[i]] = (int)i;
     _triangles.resize(simplices.size());
-    for(int i = 0; i < (int)simplices.size(); ++i) {
+    for(std::size_t i = 0; i < simplices.size(); ++i) {
       auto it = indices.find(simplices[i]);
       if(it == indices.end()) {
+        it = indices.insert({simplices[i], (int)_vertices.size()}).first;
         _vertices.push_back(simplices[i]);
-        it = indices.insert({simplices[i], i}).first;
       }
       _triangles[i] = it->second;
     }

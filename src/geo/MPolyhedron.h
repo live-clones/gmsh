@@ -12,6 +12,7 @@
 #include <array>
 #include <unordered_map>
 #include <unordered_set>
+#include <set>
 
 class MPolyhedron : public MElement {
 private:
@@ -67,13 +68,13 @@ public:
       n[i] = SVector3(0., 0., 1.); // TODO
     }
   }
-  virtual int getNumFaces() { return _polygonStarts.size() - 1; }
+  virtual int getNumFaces() { return getNumPolygons(); }
   virtual MFace getFace(int num) const
   {
-    std::vector<MVertex *> polygonVertices(
-      _vertices.begin() + _polygonStarts[num],
-      _vertices.begin() + _polygonStarts[num + 1]);
-    return MFace(polygonVertices);
+    std::vector<MVertex *> v;
+    for(int i = _polygonStarts[num]; i < _polygonStarts[num + 1]; i++)
+      v.push_back(_vertices[_polygons[i]]);
+    return MFace(v);
   }
   virtual int getNumFacesRep(bool curved) { return _triangles.size() / 3; }
   std::array<int, 3> getFaceRepIndices(bool curved, int num) const
@@ -111,37 +112,53 @@ public:
     return 1;
   }
 
-  void setPolygonsAndTetrahedra(std::vector<MVertex *> &borderVertices,
-                                std::vector<int> &borderOffset,
-                                std::vector<MVertex *> &simplicesVertices)
+  // Faces as flat list of vertices plus offsets, and sub-tetrahedralization as
+  // vertices of the tetrahedra. Vertices of the tetrahedra that are not on
+  // the faces (interior nodes) are appended after the vertices of the faces.
+  void setPolygonsAndTetrahedra(const std::vector<MVertex *> &borderVertices,
+                                const std::vector<int> &borderOffset,
+                                const std::vector<MVertex *> &simplicesVertices)
   {
     std::unordered_map<MVertex *, int> indices;
-    for(size_t i = 0; i < _vertices.size(); ++i) indices[_vertices[i]] = i;
+    for(std::size_t i = 0; i < _vertices.size(); ++i)
+      indices[_vertices[i]] = (int)i;
+    auto index = [&](MVertex *v) {
+      auto it = indices.find(v);
+      if(it == indices.end()) {
+        it = indices.insert({v, (int)_vertices.size()}).first;
+        _vertices.push_back(v);
+      }
+      return it->second;
+    };
 
     // Polygons
     _polygons.resize(borderVertices.size());
-    for(size_t i = 0; i < borderVertices.size(); ++i)
-      _polygons[i] = indices[borderVertices[i]];
+    for(std::size_t i = 0; i < borderVertices.size(); ++i)
+      _polygons[i] = index(borderVertices[i]);
     _polygonStarts = borderOffset;
 
-    // Lines
-    for(size_t i = 0; i < _polygonStarts.size(); ++i) {
+    // Lines: each edge once, whatever the orientation of the faces
+    std::set<std::pair<int, int>> edges;
+    for(int i = 0; i < getNumPolygons(); ++i) {
       int N = _polygonStarts[i + 1] - _polygonStarts[i];
       for(int j = 0; j < N; ++j) {
-        int index0 = _polygonStarts[i] + j;
-        int index1 = _polygonStarts[i] + (j + 1) % N;
-        if(_polygons[index0] > _polygons[index1]) continue;
-        _lines.push_back(_polygons[index0]);
-        _lines.push_back(_polygons[index1]);
+        int i0 = _polygons[_polygonStarts[i] + j];
+        int i1 = _polygons[_polygonStarts[i] + (j + 1) % N];
+        edges.insert({std::min(i0, i1), std::max(i0, i1)});
       }
+    }
+    _lines.clear();
+    for(auto &e : edges) {
+      _lines.push_back(e.first);
+      _lines.push_back(e.second);
     }
 
     // Tetrahedra
     _tetrahedra.resize(simplicesVertices.size());
-    for(size_t i = 0; i < simplicesVertices.size(); ++i)
-      _tetrahedra[i] = indices[simplicesVertices[i]];
+    for(std::size_t i = 0; i < simplicesVertices.size(); ++i)
+      _tetrahedra[i] = index(simplicesVertices[i]);
 
-    // Triangles
+    // Triangles: the faces of the tetrahedra that belong to a single one
     auto hasher = [](const std::array<int, 3> &t) -> std::size_t {
       auto [a, b, c] = t;
       return (uint64_t)a << 42 | (uint64_t)b << 21 | (uint64_t)c;
@@ -158,6 +175,7 @@ public:
         ++faces[t];
       }
     }
+    _triangles.clear();
     for(size_t i = 0; i < _tetrahedra.size(); i += 4) {
       for(int j = 0; j < 4; ++j) {
         int i0 = _tetrahedra[i + MTetrahedron::faces_tetra(j, 0)];
@@ -172,7 +190,7 @@ public:
           _triangles.push_back(i2);
         }
         else if(n != 2) {
-          Msg::Error("Face %d %d %d has more than 2 adjacent _tetrahedra in "
+          Msg::Error("Face %d %d %d has more than 2 adjacent tetrahedra in "
                      "polyhedron %d",
                      _vertices[i0]->getNum(), _vertices[i1]->getNum(),
                      _vertices[i2]->getNum(), getNum());
@@ -181,7 +199,10 @@ public:
     }
   }
 
-  int getNumPolygons() { return _polygonStarts.size() - 1; }
+  int getNumPolygons() const
+  {
+    return _polygonStarts.empty() ? 0 : (int)_polygonStarts.size() - 1;
+  }
   int getPolygonStart(int i) { return _polygonStarts[i]; }
   MVertex *getPolygonVertex(int i) { return _vertices[_polygons[i]]; }
 
