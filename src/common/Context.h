@@ -339,6 +339,8 @@ public:
   // frames accumulated while the view is still, and how dark the shadows
   // are (1: as designed)
   double studioLightSpread, studioFloorOffset, studioShadowStrength;
+  // the largest half-size of the floor, relative to the model
+  double studioFloorSize;
   int studioSamples;
   int phlogiston;
   // order independent (weighted blended) transparency instead of back to

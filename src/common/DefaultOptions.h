@@ -890,6 +890,10 @@ StringXNumber GeneralOptions_Number[] = {
     "Offset of the floor in studio shading from the bottom of the model, "
     "along the floor's normal, relative to the largest dimension of the "
     "bounding box" },
+  { F|O, "StudioFloorSize" , opt_general_studio_floor_size , 6. ,
+    "Largest half-size of the floor in studio shading, relative to the largest "
+    "dimension of the bounding box: the floor grows to catch the shadow of a "
+    "low light up to this" },
   { F|O, "StudioLightSpread" , opt_general_studio_light_spread , 12. ,
     "Angular radius (in degrees) of the light in studio shading, which sets "
     "the softness of its shadow" },

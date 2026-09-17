@@ -3049,6 +3049,13 @@ double opt_general_studio_floor_offset(OPT_ARGS_NUM)
   return CTX::instance()->studioFloorOffset;
 }
 
+double opt_general_studio_floor_size(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->studioFloorSize = std::max(0., val);
+  return CTX::instance()->studioFloorSize;
+}
+
 double opt_general_phlogiston(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->phlogiston = (int)val;

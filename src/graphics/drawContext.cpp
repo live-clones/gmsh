@@ -923,8 +923,8 @@ static double studioFloorLevel(const double min[3], const double max[3],
 // Half the side of the floor, around the middle of the bounds: one and a
 // half times the model, or as far as the key light, tilted by its spread,
 // throws the corners of the bounds onto it when that is further - a light
-// oblique to the floor throws the shadow a long way - within six times the
-// model.
+// oblique to the floor throws the shadow a long way - within
+// General.StudioFloorSize times the model.
 static double studioFloorHalfSize(const double min[3], const double max[3],
                                   int up, double z0)
 {
@@ -951,7 +951,7 @@ static double studioFloorHalfSize(const double min[3], const double max[3],
       h = std::max(h, 1.1 * (fabs(p[v] - mid[v]) + t));
     }
   }
-  return std::min(h, 6. * size);
+  return std::min(h, CTX::instance()->studioFloorSize * size);
 }
 
 // The bounding sphere a shadow map from the direction dir has to cover: the
