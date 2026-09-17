@@ -27,7 +27,7 @@ call gmsh%initialize(argv)
 ! colors:
 call gmsh%option%setNumber("Geometry.PointNumbers", 1d0)
 call gmsh%option%setColor("Geometry.Color.Points", 255, 165, 0)
-call gmsh%option%setColor("General.Color.Text", 255, 255, 255)
+call gmsh%option%setColor("General.Color.Text", 0, 0, 255)
 call gmsh%option%setColor("Mesh.Color.Points", 255, 0, 0)
 
 ! Note that for conciseness "Color." can be omitted in color options:

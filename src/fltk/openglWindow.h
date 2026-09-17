@@ -102,6 +102,8 @@ private:
                std::vector<GRegion *> &regions,
                std::vector<MElement *> &elements, std::vector<SPoint2> &points,
                std::vector<PView *> &views);
+  // should a double click be processed?
+  bool _processDoubleClick(std::size_t num, const std::string &what);
 protected:
   void draw();
   int handle(int);

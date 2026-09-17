@@ -31,6 +31,7 @@ private:
   std::set<std::string> _manuallyClosed;
   bool _enableTreeWidgetResize;
   bool _firstBuild;
+  bool _hasContext;
   void _computeWidths();
   template <class T> void _addParameter(T &p);
   void _addMenu(const std::string &path, Fl_Callback *callback, void *data);
@@ -75,6 +76,8 @@ public:
   void checkForErrors(const std::string &client);
   bool stop() { return _stop; }
   void stop(bool val) { _stop = val; }
+  void setContext(bool val){ _hasContext = val; }
+  bool hasContext(){ return _hasContext; }
 };
 
 bool getParameterColor(const std::string &str, Fl_Color &c);

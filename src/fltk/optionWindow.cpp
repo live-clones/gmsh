@@ -1437,7 +1437,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.butt[13] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW,
                                              BH,
-                                             "Show tooltips and hover information in a box");
+                                             "Show tooltips and hover information box");
       general.butt[13]->tooltip("General.Tooltips");
       general.butt[13]->type(FL_TOGGLE_BUTTON);
       general.butt[13]->callback(general_options_ok_cb);

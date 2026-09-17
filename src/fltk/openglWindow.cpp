@@ -19,6 +19,7 @@
 #include "PViewOptions.h"
 #include "Numeric.h"
 #include "FlGui.h"
+#include "onelabGroup.h"
 #include "onelabContextWindow.h"
 #include "OpenFile.h"
 #include "drawContext.h"
@@ -776,7 +777,12 @@ void openglWindow::_hover()
   // as few words as will do: the box is read at a glance
   std::vector<std::string> hints;
   if(cmd.size()) {
-    if(cmd == "ONELAB") { hints.push_back("Double-click to edit parameters"); }
+    if(cmd == "ONELAB") {
+      // add hint if there are ONELAB context parameters
+      if(FlGui::instance()->onelab->hasContext()) {
+        hints.push_back("Double-click to edit parameters");
+      }
+    }
     else {
       std::replace(cmd.begin(), cmd.end(), '\r', ' ');
       hints.push_back("Double-click to execute: " + cmd);
@@ -879,32 +885,32 @@ int openglWindow::handle(int event)
       _select(ENT_ALL, false, CTX::instance()->mouseHoverMeshes, true,
               Fl::event_x(), Fl::event_y(), 5, 5, vertices, edges, faces,
               regions, elements, points, views);
-      if(vertices.size() &&
-         CTX::instance()->geom.doubleClickedPointCommand.size()) {
+      if(_processDoubleClick(vertices.size(),
+                             CTX::instance()->geom.doubleClickedPointCommand)) {
         CTX::instance()->geom.doubleClickedEntityTag = vertices[0]->tag();
         if(CTX::instance()->geom.doubleClickedPointCommand == "ONELAB")
           FlGui::instance()->onelabContext->show(0, vertices[0]->tag());
         else
           ParseString(CTX::instance()->geom.doubleClickedPointCommand, true);
       }
-      else if(edges.size() &&
-              CTX::instance()->geom.doubleClickedCurveCommand.size()) {
+      else if(_processDoubleClick(edges.size(),
+                                  CTX::instance()->geom.doubleClickedCurveCommand)) {
         CTX::instance()->geom.doubleClickedEntityTag = edges[0]->tag();
         if(CTX::instance()->geom.doubleClickedCurveCommand == "ONELAB")
           FlGui::instance()->onelabContext->show(1, edges[0]->tag());
         else
           ParseString(CTX::instance()->geom.doubleClickedCurveCommand, true);
       }
-      else if(faces.size() &&
-              CTX::instance()->geom.doubleClickedSurfaceCommand.size()) {
+      else if(_processDoubleClick(faces.size(),
+                                  CTX::instance()->geom.doubleClickedSurfaceCommand)) {
         CTX::instance()->geom.doubleClickedEntityTag = faces[0]->tag();
         if(CTX::instance()->geom.doubleClickedSurfaceCommand == "ONELAB")
           FlGui::instance()->onelabContext->show(2, faces[0]->tag());
         else
           ParseString(CTX::instance()->geom.doubleClickedSurfaceCommand, true);
       }
-      else if(regions.size() &&
-              CTX::instance()->geom.doubleClickedVolumeCommand.size()) {
+      else if(_processDoubleClick
+              (regions.size(), CTX::instance()->geom.doubleClickedVolumeCommand)) {
         CTX::instance()->geom.doubleClickedEntityTag = regions[0]->tag();
         if(CTX::instance()->geom.doubleClickedVolumeCommand == "ONELAB")
           FlGui::instance()->onelabContext->show(3, regions[0]->tag());
@@ -1293,6 +1299,13 @@ bool openglWindow::_select(
                           edges, faces, regions, elements, points, views);
   _lock = false;
   return ret;
+}
+
+bool openglWindow::_processDoubleClick(std::size_t num, const std::string &what)
+{
+  if(!num || what.empty()) return false;
+  if(what == "ONELAB" && !FlGui::instance()->onelab->hasContext()) return false;
+  return true;
 }
 
 char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,

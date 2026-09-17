@@ -481,7 +481,7 @@ static unsigned char gear_bits[] = {
 
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   : Fl_Group(x, y, w, h, l), _stop(false), _enableTreeWidgetResize(false),
-    _firstBuild(true)
+    _firstBuild(true), _hasContext(false)
 {
   int col = FL_BACKGROUND2_COLOR;
   color(col);
@@ -1491,6 +1491,13 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
       continue;
     _addParameter(strings[i]);
   }
+
+  // check if there are some "ONELAB Context" variables, in which case
+  // double-clicking on an entity opens the ONELAB context window to edit the
+  // parameters linked to the entity
+  std::vector<std::string> names;
+  onelab::server::instance()->getParameterNames(names, "ONELAB Context");
+  setContext(!names.empty());
 
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()) {
     if(n->has_children()) {
