@@ -63,10 +63,15 @@ public:
     fl_color(0, 0, 0);
     fl_rectf(0, 0, w, h);
     fl_color(255, 255, 255);
-    int pos = 0;
-    for(auto it = _elements.begin(); it != _elements.end(); ++it) {
+    // the baseline of each string sits its descent above the bottom of the
+    // image: the quad is lowered by as much below, so that the anchor is on
+    // the baseline as it is with the other engines
+    std::vector<int> descent(_elements.size());
+    int pos = 0, k = 0;
+    for(auto it = _elements.begin(); it != _elements.end(); ++it, ++k) {
       fl_font(it->fontId, (int)(it->fontSize * f));
-      fl_draw(it->text.c_str(), pos, (int)(it->height * f) - fl_descent());
+      descent[k] = fl_descent();
+      fl_draw(it->text.c_str(), pos, (int)(it->height * f) - descent[k]);
       pos += (int)(it->width * f);
     }
     uchar *data = fl_read_image(nullptr, 0, 0, w, h);
@@ -162,13 +167,15 @@ public:
       else
         glDisable(GL_DEPTH_TEST);
       pos = 0;
-      for(auto it = _elements.begin(); it != _elements.end(); ++it) {
+      k = 0;
+      for(auto it = _elements.begin(); it != _elements.end(); ++it, ++k) {
         int Lx = (int)(it->width * f);
         int Ly = (int)(it->height * f);
         if(it->depth != depth) {
           pos += Lx;
           continue;
         }
+        float y = it->y - descent[k];
         // the coordinates are in [0, 1] across the picture, not in its pixels
         float s0 = pos / (float)w, s1 = (pos + Lx) / (float)w;
         float t0 = 0.f, t1 = Ly / (float)h;
@@ -189,7 +196,7 @@ public:
           }
           else
             gmshColor4f(it->r, it->g, it->b, it->alpha);
-          gmshTranslate(it->x + dx, it->y + dy, z);
+          gmshTranslate(it->x + dx, y + dy, z);
           gmshBegin(GL_QUADS);
           gmshTexCoord2f(s0, t0);
           gmshVertex2f(0.0f, Ly);
@@ -200,7 +207,7 @@ public:
           gmshTexCoord2f(s0, t1);
           gmshVertex2f(0.0f, 0.0f);
           gmshEnd();
-          gmshTranslate(-it->x - dx, -it->y - dy, -z);
+          gmshTranslate(-it->x - dx, -y - dy, -z);
         }
         pos += Lx;
       }
