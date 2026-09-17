@@ -1217,6 +1217,126 @@ void drawContext::draw2d()
   if(CTX::instance()->smallAxes) drawSmallAxes();
 }
 
+// the lines of a text: split on newlines, and wrapped at width pixels on the
+// spaces (a word wider than that gets a line of its own)
+static void textBoxLines(const std::string &text, double width,
+                         std::vector<std::string> &lines)
+{
+  std::size_t from = 0;
+  while(from <= text.size()) {
+    std::size_t to = text.find('\n', from);
+    if(to == std::string::npos) to = text.size();
+    std::string raw = text.substr(from, to - from), line;
+    from = to + 1;
+    std::size_t at = 0;
+    while(at < raw.size()) {
+      std::size_t sp = raw.find(' ', at);
+      if(sp == std::string::npos) sp = raw.size();
+      std::string word = raw.substr(at, sp - at);
+      at = sp + 1;
+      std::string next = line.empty() ? word : line + " " + word;
+      if(!line.empty() &&
+         drawContext::global()->getStringWidth(next.c_str()) > width) {
+        lines.push_back(line);
+        line = word;
+      }
+      else
+        line = next;
+    }
+    lines.push_back(line);
+  }
+}
+
+void drawContext::drawTextBox(const std::string &text, double x, double y,
+                              int align, double box[4])
+{
+  if(text.empty()) return;
+  // in the font of the graphics at the size of the user interface: the box
+  // is read like a widget, not like a label of the picture
+  CTX *ctx = CTX::instance();
+  int size = drawContext::global()->getFontSize();
+  drawContext::global()->setFont(ctx->glFontEnum, size);
+  double h = drawContext::global()->getStringHeight();
+  // the lines close together, and an empty one half as tall as the others
+  double pad = 0.5 * h, step = 1.15 * h, gap = 0.5 * h;
+  // wrapped at about forty characters, or at the window
+  std::vector<std::string> lines;
+  textBoxLines(text,
+               std::min(28. * h, viewport[2] - viewport[0] - 2. * pad - 4.),
+               lines);
+  double w = 0.;
+  for(auto &l : lines)
+    w = std::max(w, drawContext::global()->getStringWidth(l.c_str()));
+  std::vector<double> at(lines.size());
+  double y0 = 0.;
+  for(std::size_t i = 0; i < lines.size(); i++) {
+    at[i] = y0;
+    y0 += lines[i].empty() ? gap : step;
+  }
+  double bw = w + 2. * pad;
+  double bh = y0 - (lines.back().empty() ? gap : step) + h + 2. * pad;
+  if(align == 1) x -= bw / 2.;
+  if(align == 2) {
+    // clear of the cursor, which points at the top left of its own image
+    double cx = x, cy = y;
+    x = cx + 0.8 * h;
+    y = cy - 1.3 * h;
+    if(y - bh < viewport[1] + 2.) y = cy + 0.5 * h + bh;
+    if(x + bw > viewport[2] - 2.) x = cx - 0.5 * h - bw;
+  }
+  // inside the window, a couple of pixels from its edges
+  x = std::max(viewport[0] + 2., std::min(x, viewport[2] - bw - 2.));
+  y = std::max(viewport[1] + bh + 2., std::min(y, viewport[3] - 2.));
+  double yb = y - bh;
+
+  // the box: the background colour, letting a little of the picture through,
+  // edged in the text colour
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshColor4ub(ctx->unpackRed(ctx->color.bg), ctx->unpackGreen(ctx->color.bg),
+               ctx->unpackBlue(ctx->color.bg), 200);
+  gmshBegin(GL_QUADS);
+  gmshVertex2d(x, yb);
+  gmshVertex2d(x + bw, yb);
+  gmshVertex2d(x + bw, y);
+  gmshVertex2d(x, y);
+  gmshEnd();
+  gmshColor4ub(ctx->unpackRed(ctx->color.text),
+               ctx->unpackGreen(ctx->color.text),
+               ctx->unpackBlue(ctx->color.text), 110);
+  gmshLineWidth(1.);
+  gmshBegin(GL_LINES);
+  gmshVertex2d(x, yb);
+  gmshVertex2d(x + bw, yb);
+  gmshVertex2d(x + bw, yb);
+  gmshVertex2d(x + bw, y);
+  gmshVertex2d(x + bw, y);
+  gmshVertex2d(x, y);
+  gmshVertex2d(x, y);
+  gmshVertex2d(x, yb);
+  gmshEnd();
+  gmshFlushImmediate();
+  glDisable(GL_BLEND);
+
+  // the text, a line at a time from the top, with no halo: the box is its
+  // contrast
+  bool halo = drawContext::global()->stringHalo();
+  drawContext::global()->setStringHalo(false);
+  gmshColor4ubv((GLubyte *)&ctx->color.text);
+  for(std::size_t i = 0; i < lines.size(); i++)
+    if(lines[i].size())
+      drawString(lines[i], x + pad, y - pad - 0.78 * h - at[i], 0.,
+                 ctx->glFont, ctx->glFontEnum, size, 0);
+  drawContext::global()->setStringHalo(halo);
+
+  if(box) {
+    box[0] = x;
+    box[1] = yb;
+    box[2] = bw;
+    box[3] = bh;
+  }
+}
+
 void drawContext::drawBackgroundGradient()
 {
   if(CTX::instance()->bgGradient == 1) { // vertical
@@ -2147,8 +2267,10 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
       if(it == found.end() || z < it->second) found[id] = z;
     }
   }
-  Msg::Debug("Colour picking: %d found in a %dx%d rectangle",
-             (int)found.size(), fw, fh);
+  Msg::Debug("Colour picking: %d found in a %dx%d rectangle at (%d,%d) of "
+             "the %dx%d image kept at (%d,%d)",
+             (int)found.size(), fw, fh, fx0, fy0, _pickCacheWidth,
+             _pickCacheHeight, _pickCacheX, _pickCacheY);
   if(found.empty()) return false;
 
   // order by depth, and prefer the entities of lowest dimension, as the
@@ -2256,6 +2378,31 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
 
   return (vertices.size() || edges.size() || faces.size() || regions.size() ||
           elements.size() || points.size() || views.size());
+}
+
+bool drawContext::pickBehind(int type, bool mesh, bool post, int x, int y,
+                             int w, int h)
+{
+  if(!_pickLastValid) return false;
+  std::size_t last = _pickLast;
+  int candidates = _pickCandidates;
+  _pickSkip.push_back(last);
+  _pickCacheValid = false;
+  std::vector<GVertex *> vertices;
+  std::vector<GEdge *> edges;
+  std::vector<GFace *> faces;
+  std::vector<GRegion *> regions;
+  std::vector<MElement *> elements;
+  std::vector<SPoint2> points;
+  std::vector<PView *> views;
+  bool found = _selectColor(type, false, mesh, post, x, y, w, h, vertices,
+                            edges, faces, regions, elements, points, views);
+  _pickSkip.pop_back();
+  _pickCacheValid = false;
+  _pickLast = last;
+  _pickLastValid = true;
+  _pickCandidates = candidates;
+  return found;
 }
 
 bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,

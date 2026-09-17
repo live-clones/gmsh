@@ -905,7 +905,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Terminal" , opt_general_terminal , 0. ,
     "Should information be printed on the terminal (if available)?" },
   { F|O, "Tooltips" , opt_general_tooltips , 1. ,
-    "Show tooltips in the user interface" },
+    "Show tooltips in the user interface, and what the cursor is over in a "
+    "box in the graphic window rather than in the status bar" },
   { F|O, "Trackball" , opt_general_trackball , 1. ,
     "Use trackball rotation mode" },
   { F|O, "TrackballHyperbolicSheet" , opt_general_trackball_hyperbolic_sheet , 1. ,

@@ -5,9 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <FL/Fl_Tooltip.H>
 #include "openglWindow.h"
-#include <FL/fl_draw.H>
 #include "drawContextFltkStringTexture.h"
 #include "graphicWindow.h"
 #include "manipWindow.h"
@@ -90,36 +88,6 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1,
 }
 
 
-#if defined(NEW_TOOLTIPS)
-
-void tooltipWindow::draw()
-{
-  draw_box(FL_BORDER_BOX, 0, 0, w(), h(), Fl_Tooltip::color());
-  fl_color(Fl_Tooltip::textcolor());
-  fl_font(Fl_Tooltip::font(), Fl_Tooltip::size());
-  int X = Fl_Tooltip::margin_width();
-  int Y = Fl_Tooltip::margin_height();
-  int W = w() - (Fl_Tooltip::margin_width() * 2);
-  int H = h() - (Fl_Tooltip::margin_height() * 2);
-  fl_draw(_text, X, Y, W, H, Fl_Align(FL_ALIGN_LEFT | FL_ALIGN_WRAP), 0, 1);
-}
-
-void tooltipWindow::value(const std::string &s)
-{
-  strncpy(_text, s.c_str(), 1023);
-  _text[1023] = '\0';
-  fl_font(Fl_Tooltip::font(), Fl_Tooltip::size());
-  int ww = Fl_Tooltip::wrap_width();
-  int hh = 0;
-  fl_measure(_text, ww, hh, 1);
-  ww += (Fl_Tooltip::margin_width() * 2);
-  hh += (Fl_Tooltip::margin_height() * 2);
-  size(ww, hh);
-  redraw();
-}
-
-#endif
-
 int openglWindowMode()
 {
   int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
@@ -161,10 +129,8 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   if(CTX::instance()->gamepad)
     Fl::add_timeout(.5, navigator_handler, (void *)this);
 
-#if defined(NEW_TOOLTIPS)
-  _tooltip = new tooltipWindow(this);
-  _tooltip->hide();
-#endif
+  _hoverAnchor[0] = _hoverAnchor[1] = 0.;
+  for(int i = 0; i < 4; i++) _hoverBox[i] = 0.;
 }
 
 openglWindow::~openglWindow()
@@ -172,9 +138,6 @@ openglWindow::~openglWindow()
   Fl::remove_timeout(_studioSampleCb, this);
   Fl::remove_timeout(_fireCb, this);
   delete _ctx;
-#if defined(NEW_TOOLTIPS)
-  delete _tooltip;
-#endif
   if(Nautilus) delete Nautilus;
 }
 
@@ -193,27 +156,24 @@ void openglWindow::show()
   */
 }
 
+// the messages of a selection (Msg::StatusGl) at the top of the window, and
+// what the cursor is over by the cursor, both in boxes over the picture and
+// neither in a print
 void openglWindow::_drawScreenMessage()
 {
-  if(screenMessage[0].empty() && screenMessage[1].empty()) return;
-
-  gmshColor4ubv((GLubyte *)&CTX::instance()->color.text);
-  drawContext::global()->setFont(CTX::instance()->glFontEnum,
-                                 CTX::instance()->glFontSize);
-  double h = drawContext::global()->getStringHeight();
-
-  if(screenMessage[0].size()) {
-    const char *txt = screenMessage[0].c_str();
-    double w = drawContext::global()->getStringWidth(txt);
-    glRasterPos2d(_ctx->viewport[2] / 2. - w / 2., _ctx->viewport[3] - 1.2 * h);
-    drawContext::global()->drawString(txt);
+  if(CTX::instance()->printing) return;
+  std::string msg = screenMessage[0];
+  if(screenMessage[1].size()) msg += "\n" + screenMessage[1];
+  if(msg.size()) {
+    drawContext::global()->setFont(CTX::instance()->glFontEnum,
+                                   drawContext::global()->getFontSize());
+    double h = drawContext::global()->getStringHeight();
+    _ctx->drawTextBox(msg, _ctx->viewport[2] / 2., _ctx->viewport[3] - 0.5 * h,
+                      1);
   }
-  if(screenMessage[1].size()) {
-    const char *txt = screenMessage[1].c_str();
-    double w = drawContext::global()->getStringWidth(txt);
-    glRasterPos2d(_ctx->viewport[2] / 2. - w / 2., _ctx->viewport[3] - 2.4 * h);
-    drawContext::global()->drawString(txt);
-  }
+  if(_hoverText.size())
+    _ctx->drawTextBox(_hoverText, _hoverAnchor[0],
+                      _ctx->viewport[3] - _hoverAnchor[1], 2, _hoverBox);
 }
 
 void openglWindow::_drawBorder()
@@ -702,8 +662,7 @@ void openglWindow::_setLastHandled(openglWindow *w)
 // rate limited too, and against being stepped again from inside this call,
 // because one press of it can reach this window more than once: macOS sends
 // an FL_KEYBOARD for the command an arrow key stands for and another for the
-// text it carries (Fl_cocoa.mm, doCommandBySelector: and insertText:), and
-// the tooltip this shows hands on the key that dismisses it.
+// text it carries (Fl_cocoa.mm, doCommandBySelector: and insertText:).
 void openglWindow::_stepPick(int direction, bool rateLimited)
 {
   if(_stepping) return;
@@ -715,12 +674,24 @@ void openglWindow::_stepPick(int direction, bool rateLimited)
   _stepAnchor[0] = _curr.win[0];
   _stepAnchor[1] = _curr.win[1];
   _stepping = true;
-  // where the hover last looked: neither a wheel nor a key moves the
-  // cursor, and the position an event reports is not the pointer's once a
-  // tooltip window has been shown under it
+  // where the hover last looked: neither a wheel nor a key moves the cursor
   _ctx->stepPick(direction);
   _hover();
   _stepping = false;
+}
+
+// the pass of drawContext::pickBehind(), under the lock of _select()
+bool openglWindow::_probeBehind()
+{
+  if(_lock) return false;
+  _lock = true;
+  make_current();
+  glShader::setContext(context());
+  bool behind = _ctx->pickBehind(_selection, CTX::instance()->mouseHoverMeshes,
+                                 CTX::instance()->mouseHoverMeshes,
+                                 (int)_curr.win[0], (int)_curr.win[1], 5, 5);
+  _lock = false;
+  return behind;
 }
 
 // The entity the cursor is over, drawn as a selected one until the cursor is
@@ -743,8 +714,8 @@ void openglWindow::_highlight(GEntity *e)
   redraw();
 }
 
-// What the cursor is over: the tooltip or the status bar says what a click
-// would pick, and the cursor says whether there is anything. When several
+// What the cursor is over: a box by the cursor or the status bar says what a
+// click would pick, and the cursor says whether there is anything. When several
 // entities are under it, the wheel steps through them (FL_MOUSEWHEEL below)
 // and this says which one is current.
 void openglWindow::_hover()
@@ -801,16 +772,14 @@ void openglWindow::_hover()
     text = tmp;
     cmd = views[0]->getOptions()->doubleClickedCommand;
   }
+  // what a double-click and the wheel would do, after the information, in
+  // as few words as will do: the box is read at a glance
+  std::vector<std::string> hints;
   if(cmd.size()) {
-    if(multiline) text += "\n\n";
-    else text += " ";
-    if(cmd == "ONELAB") {
-      text += std::string("Double-click to edit parameters");
-    }
+    if(cmd == "ONELAB") { hints.push_back("Double-click to edit parameters"); }
     else {
-      text += std::string("Double-click to execute\n\n");
       std::replace(cmd.begin(), cmd.end(), '\r', ' ');
-      text += cmd;
+      hints.push_back("Double-click to execute: " + cmd);
     }
   }
   // and drawn as selected, so that it is not only named but shown
@@ -825,20 +794,38 @@ void openglWindow::_hover()
     over = regions[0];
   _highlight(over);
 
-  // how far under the cursor this one is, and how to go further
+  // how far under the cursor this one is and whether there is more, whenever
+  // there is something to step to. The image of the pick shows only what is
+  // in front, so when nothing else is seen around the cursor the pass is run
+  // once more without this entity, once per entity as it costs a redraw.
   if(text.size()) {
     char tmp[256];
-    int d = _ctx->pickDepth();
-    if(d)
-      sprintf(tmp, "%s%d behind (Alt and the wheel, or Alt and the up and "
-                   "down arrows, for what is behind)",
-              multiline ? "\n\n" : " ", d);
+    int d = _ctx->pickDepth(), more = _ctx->pickCandidates() - 1;
+    bool behind = more > 0;
+    if(!behind) {
+      if(text != _hoverBehindFor) {
+        _hoverBehindFor = text;
+        _hoverBehind = _probeBehind();
+      }
+      behind = _hoverBehind;
+    }
+    const char *keys = "(Alt+wheel or Alt+Up/Down)";
+    if(d && more > 0)
+      sprintf(tmp, "%d behind, %d more %s", d, more, keys);
+    else if(d && behind)
+      sprintf(tmp, "%d behind, more %s", d, keys);
+    else if(d)
+      sprintf(tmp, "%d behind %s", d, keys);
+    else if(more > 0)
+      sprintf(tmp, "%d more behind %s", more, keys);
+    else if(behind)
+      sprintf(tmp, "More behind %s", keys);
     else
-      sprintf(tmp, "%sAlt and the wheel, or Alt and the up and down arrows, "
-                   "for what is behind",
-              multiline ? "\n\n" : " ");
-    text += tmp;
+      tmp[0] = '\0';
+    if(tmp[0]) hints.push_back(tmp);
   }
+  for(std::size_t i = 0; i < hints.size(); i++)
+    text += (multiline ? (i ? "\n" : "\n\n") : " ") + hints[i];
   if(CTX::instance()->tooltips)
     drawTooltip(text);
   else
@@ -871,11 +858,13 @@ int openglWindow::handle(int event)
   case FL_LEAVE:
     // nothing under the cursor once it is out of the window
     _highlight(nullptr);
+    drawTooltip("");
     return Fl_Gl_Window::handle(event);
 
   case FL_PUSH:
     // what the click does with the pick is not this highlight's business
     _highlight(nullptr);
+    drawTooltip("");
     if(Fl::event_clicks() == 1 && !selectionMode &&
        CTX::instance()->mouseSelection) {
       // double-click and not in selection mode, but with mouse selection enabled
@@ -1247,9 +1236,7 @@ int openglWindow::handle(int event)
         _hover();
       }
     }
-    // not read from the event again: showing a tooltip under the cursor
-    // leaves the toolkit reporting its own coordinates, and _prev is what a
-    // move is measured against
+    // what the next move is measured against
     _prev = _curr;
     return 1;
 
@@ -1386,35 +1373,34 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
   }
 }
 
+// The box is pinned where it is first shown rather than dragged along, as
+// moving it redraws the picture (and starts the studio frames over): it
+// moves when the text changes, and when the cursor has strayed far from it or
+// is about to cover it.
 void openglWindow::drawTooltip(const std::string &text)
 {
-#if defined(NEW_TOOLTIPS)
-  if(text.empty()) { _tooltip->hide(); }
-  else {
-    // from where the cursor is over this window, not from what an event
-    // reports: a tooltip already shown leaves the toolkit reporting its own
-    // coordinates (see _stepPick())
-    _tooltip->position(x_root() + (int)_curr.win[0],
-                       y_root() + (int)_curr.win[1] + 20);
-    _tooltip->value(text);
-    _tooltip->show();
+  if(text.empty()) {
+    if(_hoverText.empty()) return;
+    _hoverText.clear();
+    redraw();
+    return;
   }
-#else
-  static char str[1024];
-  strncpy(str, text.c_str(), sizeof(str) - 1);
-  str[sizeof(str) - 1] = '\0';
-  Fl_Tooltip::exit(nullptr);
-  bool enabled = Fl_Tooltip::enabled();
-  if(!enabled) Fl_Tooltip::enable();
-  double d1 = Fl_Tooltip::delay();
-  double d2 = Fl_Tooltip::hoverdelay();
-  Fl_Tooltip::delay(0);
-  Fl_Tooltip::hoverdelay(0);
-  Fl_Tooltip::enter_area(this, _curr.win[0], _curr.win[1], 100, 50, str);
-  Fl_Tooltip::delay(d1);
-  Fl_Tooltip::hoverdelay(d2);
-  if(!enabled) Fl_Tooltip::disable();
-#endif
+  double cx = _curr.win[0], cy = _curr.win[1];
+  if(text == _hoverText) {
+    // the box, from the top left of the window as the cursor is measured
+    double left = _hoverBox[0], right = _hoverBox[0] + _hoverBox[2];
+    double top = _ctx->viewport[3] - (_hoverBox[1] + _hoverBox[3]);
+    double bottom = _ctx->viewport[3] - _hoverBox[1];
+    bool over = (cx > left - 4. && cx < right + 4. && cy > top - 4. &&
+                 cy < bottom + 4.);
+    if(!over && fabs(cx - _hoverAnchor[0]) < 60. &&
+       fabs(cy - _hoverAnchor[1]) < 60.)
+      return;
+  }
+  _hoverText = text;
+  _hoverAnchor[0] = cx;
+  _hoverAnchor[1] = cy;
+  redraw();
 }
 
 void openglWindow::moveWithGamepad()

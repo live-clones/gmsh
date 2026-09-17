@@ -323,6 +323,10 @@ public:
   void resetPick();
   int pickDepth() const { return (int)_pickSkip.size(); }
   int pickCandidates() const { return _pickCandidates; }
+  // whether a step from what the last pick returned would find something:
+  // the identifier image holds only what is in front, so this draws it
+  // again without that entity, and leaves the stepping as it was
+  bool pickBehind(int type, bool mesh, bool post, int x, int y, int w, int h);
   // stop attributing what is drawn next to the last registered object, so
   // that decorations (frames, axes, labels) are not picked as it
   void unsetPickColor();
@@ -448,6 +452,14 @@ public:
                 SBoundingBox3d &value_bb);
   void drawAxes();
   void drawSmallAxes();
+  // a box of text over the picture, in the pixel coordinates of draw2d: the
+  // lines are split on newlines and wrapped; (x, y) is the top left corner
+  // of the box (align 0), the top centre (1), or the cursor, which the box
+  // hangs below and to the right of, or above or to the left of when there
+  // is no room (2); the box is kept inside the window, and box gets where it
+  // was drawn (left, bottom, width, height)
+  void drawTextBox(const std::string &text, double x, double y, int align,
+                   double box[4] = nullptr);
   void drawTrackball();
   void drawScales();
   void drawString(const std::string &s, double x, double y, double z,

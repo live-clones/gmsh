@@ -15,54 +15,6 @@
 class GEntity;
 #include "Navigator.h"
 
-#define NEW_TOOLTIPS 1
-
-#if defined(NEW_TOOLTIPS)
-
-// no <FL/fl_draw.H> here: it brings in the platform headers of FLTK
-// (<FL/win32.H> on Windows), which src/common/gmsh.cpp cannot take after
-// all it includes before this header
-#include <FL/Fl_Menu_Window.H>
-#include <FL/Fl_Tooltip.H>
-
-class tooltipWindow : public Fl_Menu_Window {
-private:
-  char _text[1024];
-  // the window this floats over, which the keys are for
-  Fl_Widget *_owner;
-
-public:
-  tooltipWindow(Fl_Widget *owner = nullptr) : Fl_Menu_Window(1, 1), _owner(owner)
-  {
-    _text[0] = '\0';
-    set_override();
-    set_tooltip_window();
-    end();
-  }
-  void draw();
-  int handle(int e)
-  {
-    if(e == FL_PUSH) {
-      hide();
-      return 1;
-    }
-    // A key makes the tooltip go away, but it is not for this window, which
-    // only floats over the graphics: it is handed to the window under it
-    // rather than left to the toolkit, which sends keys to whatever has the
-    // focus and gives one to a tooltip as it is shown. Claiming it, as this
-    // did, swallowed every other press of a key that shows a tooltip - the
-    // steps through the entities under the cursor, say.
-    if(e == FL_KEYDOWN || e == FL_SHORTCUT) {
-      hide();
-      return _owner ? _owner->handle(e) : 0;
-    }
-    return Fl_Menu_Window::handle(e);
-  }
-  void value(const std::string &s);
-};
-
-#endif
-
 class GVertex;
 class GEdge;
 class GFace;
@@ -83,7 +35,7 @@ private:
   drawContext *_ctx;
   double _point[3];
   int _selection, _trySelection, _trySelectionXYWH[4];
-  // what the cursor is over, in the tooltip or the status bar
+  // what the cursor is over, in a box by it or in the status bar
   void _hover();
   // and drawn as selected while it is: the entity, what its selection was
   // before, and the change of one for the other (which redraws)
@@ -100,6 +52,19 @@ private:
   double _stepAnchor[2];
   void _stepPick(int direction, bool rateLimited);
   void _drawScreenMessage();
+  // What the cursor is over, written in a box in the picture rather than in
+  // a window of its own, which some window managers showed and hid with a
+  // flicker on every move: the text, where the cursor was when it was last
+  // placed (window coordinates, from the top left), and where the box was
+  // last drawn (left, bottom, width, height, in the pixel coordinates of
+  // draw2d, from the bottom left)
+  std::string _hoverText;
+  double _hoverAnchor[2], _hoverBox[4];
+  // whether something stands behind what the cursor is over, which costs a
+  // picking pass: asked once per entity, the information that names it
+  std::string _hoverBehindFor;
+  bool _hoverBehind = false;
+  bool _probeBehind();
   void _drawBorder();
   // The accumulation of the studio frames: whether the timer asked for the
   // next draw, whether this draw is one of them, the modelview of this
@@ -137,10 +102,6 @@ private:
                std::vector<GRegion *> &regions,
                std::vector<MElement *> &elements, std::vector<SPoint2> &points,
                std::vector<PView *> &views);
-#if defined(NEW_TOOLTIPS)
-  tooltipWindow *_tooltip;
-#endif
-
 protected:
   void draw();
   int handle(int);
@@ -194,6 +155,7 @@ public:
   // rather than drawn again
   void setAgain(bool again) { _again = again; }
   static void setLastHandled(openglWindow *w) { _lastHandled = w; }
+  // show the text in a box by the cursor, or take the box away
   void drawTooltip(const std::string &text);
   double frequency;
   void moveWithGamepad();
