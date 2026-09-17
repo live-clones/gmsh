@@ -1117,8 +1117,8 @@ Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Shaders
-Use the OpenGL shader pipeline instead of the fixed function one? (recreates the OpenGL context)@*
-Default value: @code{0}@*
+Use the OpenGL shader pipeline instead of the fixed function one?@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Shading
@@ -1191,6 +1191,11 @@ Offset of the floor in studio shading from the bottom of the model, along the fl
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.StudioFloorSize
+Largest half-size of the floor in studio shading, relative to the largest dimension of the bounding box: the floor grows to catch the shadow of a low light up to this@*
+Default value: @code{6}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.StudioLightSpread
 Angular radius (in degrees) of the light in studio shading, which sets the softness of its shadow@*
 Default value: @code{12}@*
@@ -1217,7 +1222,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Tooltips
-Show tooltips in the user interface@*
+Show tooltips in the user interface, and what the cursor is over in a box in the graphic window rather than in the status bar@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

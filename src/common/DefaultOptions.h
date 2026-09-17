@@ -851,9 +851,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Y-axis scale factor" },
   { F,   "ScaleZ" , opt_general_scale2 , 1.0 ,
     "Z-axis scale factor" },
-  { F|O, "Shaders" , opt_general_shaders , 0. ,
-    "Use the OpenGL shader pipeline instead of the fixed function one? "
-    "(recreates the OpenGL context)" },
+  { F|O, "Shaders" , opt_general_shaders , 1. ,
+    "Use the OpenGL shader pipeline instead of the fixed function one?" },
   { F|O, "Shading" , opt_general_shading , 0. ,
     "Shading model (0: classic; 1, 2 or 3: studio, with soft lighting and a "
     "shadow cast by light 0 on a floor normal to the X, Y or Z axis; shader "
