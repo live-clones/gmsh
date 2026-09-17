@@ -809,13 +809,14 @@ void openglWindow::_hover()
       }
       behind = _hoverBehind;
     }
+    // what was stepped past is in front, what a step would reach is behind
     const char *keys = "(Alt+wheel or Alt+Up/Down)";
     if(d && more > 0)
-      sprintf(tmp, "%d behind, %d more %s", d, more, keys);
+      sprintf(tmp, "%d in front, %d more behind %s", d, more, keys);
     else if(d && behind)
-      sprintf(tmp, "%d behind, more %s", d, keys);
+      sprintf(tmp, "%d in front, more behind %s", d, keys);
     else if(d)
-      sprintf(tmp, "%d behind %s", d, keys);
+      sprintf(tmp, "%d in front, nothing behind %s", d, keys);
     else if(more > 0)
       sprintf(tmp, "%d more behind %s", more, keys);
     else if(behind)
