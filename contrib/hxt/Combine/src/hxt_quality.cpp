@@ -1,11 +1,7 @@
 #include "hxt_quality.h"
 
-#include "float.h"
-#include "math.h"
-
-// Error when trying to include. Would be better for sqrt and cbrt computations
-//#include "cmath.h"   
-
+#include <cfloat>
+#include <cmath>
 #include <algorithm>
 
 #include "expansion.h"
@@ -75,7 +71,7 @@ inline double length(const point3d& v) { return v.length(); }
 //-----------------------------------------------------------------------------------------------------
 
 namespace {
- 
+
   // We need some default index value
   const unsigned int NO_ID(-1);
 
@@ -215,7 +211,7 @@ namespace {
 //-----------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------
 
-double orient3dInexact(point3d pa, point3d pb, point3d pc, point3d pd, double &errbound) 
+double orient3dInexact(point3d pa, point3d pb, point3d pc, point3d pd, double &errbound)
 {
   double adx = pa[0] - pd[0];
   double bdx = pb[0] - pd[0];
@@ -364,7 +360,7 @@ void orient3dExact(DynamicExpansion &det, point3d pa, point3d pb, point3d pc, po
  void orient3dMidpointExact(DynamicExpansion &det,
     point3d pa, point3d pb,
     point3d origPc, point3d origPd,
-    point3d origPe, point3d origPf) 
+    point3d origPe, point3d origPf)
 {
   auto pcx = (exact(origPc[0]) + exact(origPd[0])).scaleInPlace(0.5);
   auto pcy = (exact(origPc[1]) + exact(origPd[1])).scaleInPlace(0.5);
@@ -424,7 +420,7 @@ void orient3dExact(DynamicExpansion &det, point3d pa, point3d pb, point3d pc, po
 
 /** Class to manage the computation of Bezier Coefficients to have an
 * evaluation of an hexahedron validity that is robust to floating point errors.
-* 
+*
 * \author Kilian Verhetsel
 */
 class BezierCoefficient {
@@ -1472,7 +1468,7 @@ template<typename T>
 //-----------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------
-//                  API   FUNCTION    IMPLEMENTATIONS                                                 
+//                  API   FUNCTION    IMPLEMENTATIONS
 //-----------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------
@@ -1483,10 +1479,10 @@ using ::point3d;
 
 
 bool pyramidValidityNotImplemented(const point3d* pointCoordinates) {
-  return true; 
+  return true;
 }
 
-/** 
+/**
  * Not robust to floating point errors
  */
 bool prismValidity(const point3d* pointCoordinates)
@@ -1560,7 +1556,7 @@ double hexSubdivisionBasedQuality(const point3d* pointCoordinates)
 
 bool hxtValidityHexahedron(
   const double* p0, const double* p1, const double* p2, const double* p3,
-  const double* p4, const double* p5, const double* p6, const double* p7) 
+  const double* p4, const double* p5, const double* p6, const double* p7)
 {
   point3d points[8];
   points[0].setData(p0);
@@ -1592,7 +1588,7 @@ bool hxtValidityPrism(
 
 double hxtHexSubdivisionBasedQuality(
   const double* p0, const double* p1, const double* p2, const double* p3,
-  const double* p4, const double* p5, const double* p6, const double* p7) 
+  const double* p4, const double* p5, const double* p6, const double* p7)
 {
   point3d points[8];
   points[0].setData(p0);
@@ -1610,7 +1606,7 @@ double hxtHexSubdivisionBasedQuality(
 
 bool hxtValidityPyramid(const double* p0, const double* p1, const double* p2, const double* p3, const double* p4) {
   HXT_ASSERT(false);
-  // This is not implemented 
+  // This is not implemented
   return false;
 }
 
@@ -1751,5 +1747,3 @@ double hxtQualityPyramid(const double* p0, const double* p1, const double* p2, c
   }
   return qmin;
 }
-
-
