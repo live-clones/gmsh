@@ -2018,21 +2018,22 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
   // lowest dimension under the cursor, wherever it is - let it do. A marker
   // standing for an entity (a volume's) goes in front of everything, as it
   // sits inside what it stands for.
-  double far = front ? 0.2 :
-               (type >= 0 && type <= 3) ? 1. - (3 - type) * _pickDepthStep :
-                                          1.;
+  // (not "far", which the Windows headers define as a macro)
+  double zfar = front ? 0.2 :
+                (type >= 0 && type <= 3) ? 1. - (3 - type) * _pickDepthStep :
+                                           1.;
   // The identifier travels with the vertices, so the primitives waiting to be
   // drawn only have to go when the masks or the depth range change - not at
   // every object: a model with 80,000 points made as many draws of one point
   // each, half a second per pass with the shader pipeline.
-  if((int)skip == _pickStateSkip && far == _pickStateFar) return;
+  if((int)skip == _pickStateSkip && zfar == _pickStateFar) return;
   gmshFlushImmediate();
   GLboolean on = skip ? GL_FALSE : GL_TRUE;
   glColorMask(on, on, on, on);
   glDepthMask(on);
-  glDepthRange(0., far);
+  glDepthRange(0., zfar);
   _pickStateSkip = skip;
-  _pickStateFar = far;
+  _pickStateFar = zfar;
 }
 
 void drawContext::unsetPickColor()
