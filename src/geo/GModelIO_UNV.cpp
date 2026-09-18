@@ -318,6 +318,10 @@ int GModel::readUNV(const std::string &name, bool readGroupsOfElements)
     int maxgroup = 0;
     for(auto g : groupNames) maxgroup = std::max(g.first, maxgroup);
 
+    // the physicals created while reading the elements refer to the old
+    // elementary tags, and would hide the name of a group with the same tag
+    for(int i = 0; i < 4; i++) physicals[i].clear();
+
     for(auto &it : elementGroups) {
       MElement *e = it.first;
       if(e) {
