@@ -362,10 +362,9 @@ private:
     if(!_ctx->inPickColorMode() && !colors)
       gmshColor4ubv((const void *)&color);
     if(CTX::instance()->polygonOffset) glEnable(GL_POLYGON_OFFSET_FILL);
-    // a picking pass draws a wireframe surface filled: what is picked is the
-    // surface, not the edges of its triangulation, and the face in front
-    // hides the ones behind it as in solid mode
-    if(CTX::instance()->geom.surfaceType > 1 || _ctx->inPickColorMode()) {
+    // a picking pass draws the surface as it is shown, wireframe or solid:
+    // what is visible is what is picked
+    if(CTX::instance()->geom.surfaceType > 1) {
       if(CTX::instance()->geom.lightTwoSide)
         gmshLightTwoSide(true);
       else

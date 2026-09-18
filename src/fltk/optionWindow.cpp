@@ -213,20 +213,36 @@ static void general_options_color_scheme_cb(Fl_Widget *w, void *data)
 
 void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 {
-  Msg::StatusGl(
-    "Select geometrical entity, mesh element or post-processing view\n"
-    "[Press 'q' to abort]");
+  Msg::StatusGl("Select point on geometry, mesh or post-processing view\n"
+                "[Press 'q' to abort]");
 
-  CTX::instance()->pickElements = 1;
-  CTX::instance()->mesh.changed = ENT_ALL;
-  drawContext::global()->draw();
+  // the point clicked, from the depth of the pick: no need to pick mesh
+  // elements for it, which rebuilt the arrays of the mesh twice (a freeze of
+  // seconds on a large mesh) to give the barycentre of an element
   char ib = FlGui::instance()->selectEntity(ENT_ALL);
   if(ib == 'l') {
     SPoint3 pc(0., 0., 0.);
+    drawContext *ctx =
+      FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+    double xyz[3];
     if(FlGui::instance()->selectedVertices.size())
       pc.setPosition(FlGui::instance()->selectedVertices[0]->x(),
                      FlGui::instance()->selectedVertices[0]->y(),
                      FlGui::instance()->selectedVertices[0]->z());
+    else if(ctx->pickPoint(xyz)) {
+      pc.setPosition(xyz[0], xyz[1], xyz[2]);
+      // on the curve or surface itself, not on the polyline or the
+      // triangulation it is drawn as
+      double t, uv[2] = {0., 0.};
+      if(FlGui::instance()->selectedEdges.size()) {
+        GPoint gp = FlGui::instance()->selectedEdges[0]->closestPoint(pc, t);
+        if(gp.succeeded()) pc.setPosition(gp.x(), gp.y(), gp.z());
+      }
+      else if(FlGui::instance()->selectedFaces.size()) {
+        GPoint gp = FlGui::instance()->selectedFaces[0]->closestPoint(pc, uv);
+        if(gp.succeeded()) pc.setPosition(gp.x(), gp.y(), gp.z());
+      }
+    }
     else if(FlGui::instance()->selectedElements.size())
       pc = FlGui::instance()->selectedElements[0]->barycenter();
     else if(FlGui::instance()->selectedEdges.size())
@@ -245,13 +261,9 @@ void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
     opt_general_rotation_center0(0, GMSH_SET | GMSH_GUI, pc.x());
     opt_general_rotation_center1(0, GMSH_SET | GMSH_GUI, pc.y());
     opt_general_rotation_center2(0, GMSH_SET | GMSH_GUI, pc.z());
-    drawContext *ctx =
-      FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
     ctx->recenterForRotationCenterChange(pc);
     FlGui::instance()->manip->update();
   }
-  CTX::instance()->pickElements = 0;
-  CTX::instance()->mesh.changed = ENT_ALL;
   GModel::current()->setSelection(0);
   drawContext::global()->draw();
   Msg::StatusGl("");

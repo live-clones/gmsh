@@ -2272,6 +2272,11 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
              (int)found.size(), fw, fh, fx0, fy0, _pickCacheWidth,
              _pickCacheHeight, _pickCacheX, _pickCacheY);
   if(found.empty()) return false;
+  if(Msg::GetVerbosity() == 99)
+    for(auto &p : found)
+      Msg::Debug("  found type %d ient %d at depth %g%s",
+                 _pickObjects[p.first].type, _pickObjects[p.first].ient,
+                 p.second, (p.first == under) ? " (under the middle)" : "");
 
   // order by depth, and prefer the entities of lowest dimension, as the
   // selection buffer based code did
@@ -2311,6 +2316,30 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   }
   _pickCandidates = (int)candidates.size();
   if(candidates.empty()) return false;
+
+  // where the first candidate was hit: the depth under the middle when it is
+  // what lies there, its nearest depth otherwise, unprojected with the
+  // matrices of the frame (the rectangle is in the viewport's units, the
+  // image in true pixels)
+  {
+    std::size_t i = (std::size_t)(fy0 + fh / 2) * stride + (fx0 + fw / 2);
+    const pickObject &o = _pickObjects[candidates[0]];
+    // (a view's depth is only known under the middle: found ranks it in
+    // front, and a graph of the 2D overlay wrote none)
+    double z = (under == candidates[0]) ? depths[i] : found[candidates[0]];
+    _pickPointValid = false;
+    if(o.type != 4 && z >= 0. && z < 1.) {
+      // undo the depth range setPickColor() drew the dimension in
+      if(o.front)
+        z /= 0.2;
+      else if(o.type <= 3)
+        z /= 1. - (3 - o.type) * _pickDepthStep;
+      double win[3] = {(double)x, (double)(viewport[3] - y), z};
+      _pickPointValid =
+        glMatrix::unProject(win, model, proj, viewport, _pickPoint) ? true :
+                                                                       false;
+    }
+  }
 
   GModel *m = GModel::current();
   for(auto &id : candidates) {
@@ -2423,6 +2452,7 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
   views.clear();
 
   _pickLastValid = false;
+  _pickPointValid = false;
   if(_selectColor(type, multiple, mesh, post, x, y, w, h, vertices, edges,
                   faces, regions, elements, points, views))
     return true;

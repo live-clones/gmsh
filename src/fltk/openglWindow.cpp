@@ -728,8 +728,11 @@ void openglWindow::_hover()
   std::vector<MElement *> elements;
   std::vector<SPoint2> points;
   std::vector<PView *> views;
-  bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes,
-                     CTX::instance()->mouseHoverMeshes, (int)_curr.win[0],
+  // during a selection the meshes and the views are picked whether or not
+  // the hover looks at them otherwise: what is highlighted is what a click
+  // would take
+  bool all = selectionMode || CTX::instance()->mouseHoverMeshes;
+  bool res = _select(_selection, false, all, all, (int)_curr.win[0],
                      (int)_curr.win[1], 5, 5, vertices, edges, faces,
                      regions, elements, points, views);
   if((_selection == ENT_ALL && res) ||

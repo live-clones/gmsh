@@ -279,6 +279,10 @@ private:
   std::size_t _pickLast = 0;
   bool _pickLastValid = false;
   int _pickCandidates = 0;
+  // the point of the model under the middle of the last pick, from the depth
+  // the pass read back
+  double _pickPoint[3] = {0., 0., 0.};
+  bool _pickPointValid = false;
   static std::size_t _pickKey(int type, int ient, int type2, int ient2);
   // the region of the window the image covers, in real pixels (a region
   // around the pointer is much cheaper to draw than the whole window)
@@ -327,6 +331,15 @@ public:
   // the identifier image holds only what is in front, so this draws it
   // again without that entity, and leaves the stepping as it was
   bool pickBehind(int type, bool mesh, bool post, int x, int y, int w, int h);
+  // the point of the model the last pick hit, from the depth under the middle
+  // of its rectangle (or the nearest depth of what it returned): false when
+  // it hit nothing of the 3D scene
+  bool pickPoint(double xyz[3]) const
+  {
+    if(!_pickPointValid) return false;
+    for(int i = 0; i < 3; i++) xyz[i] = _pickPoint[i];
+    return true;
+  }
   // stop attributing what is drawn next to the last registered object, so
   // that decorations (frames, axes, labels) are not picked as it
   void unsetPickColor();
