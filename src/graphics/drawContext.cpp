@@ -2009,12 +2009,6 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
       break;
     }
 
-  // pending immediate mode primitives belong to the previous object, its
-  // depth range and its masks
-  gmshFlushImmediate();
-  GLboolean on = skip ? GL_FALSE : GL_TRUE;
-  glColorMask(on, on, on, on);
-  glDepthMask(on);
   // What is closest to the viewer is picked, and among what lies at the same
   // depth the lowest dimension: a point or a curve, a pixel or two wide, is
   // drawn a little closer than the surface it lies on (the depth range
@@ -2024,12 +2018,21 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
   // lowest dimension under the cursor, wherever it is - let it do. A marker
   // standing for an entity (a volume's) goes in front of everything, as it
   // sits inside what it stands for.
-  if(front)
-    glDepthRange(0., 0.2);
-  else if(type >= 0 && type <= 3)
-    glDepthRange(0., 1. - (3 - type) * _pickDepthStep);
-  else
-    glDepthRange(0., 1.);
+  double far = front ? 0.2 :
+               (type >= 0 && type <= 3) ? 1. - (3 - type) * _pickDepthStep :
+                                          1.;
+  // The identifier travels with the vertices, so the primitives waiting to be
+  // drawn only have to go when the masks or the depth range change - not at
+  // every object: a model with 80,000 points made as many draws of one point
+  // each, half a second per pass with the shader pipeline.
+  if((int)skip == _pickStateSkip && far == _pickStateFar) return;
+  gmshFlushImmediate();
+  GLboolean on = skip ? GL_FALSE : GL_TRUE;
+  glColorMask(on, on, on, on);
+  glDepthMask(on);
+  glDepthRange(0., far);
+  _pickStateSkip = skip;
+  _pickStateFar = far;
 }
 
 void drawContext::unsetPickColor()
@@ -2039,6 +2042,7 @@ void drawContext::unsetPickColor()
   gmshFlushImmediate();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);
+  _pickStateSkip = -1;
   // 0 is the background: no pickable object
   GLubyte c[4] = {0, 0, 0, 255};
   if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
@@ -2059,6 +2063,8 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   _pickObjects.clear();
   _pickObjects.push_back(pickObject()); // 0: background
   _pickColor = _pickColorActive = true;
+  _pickStateSkip = -1;
+  _pickStateFar = -1.;
   render_mode = drawContext::GMSH_SELECT;
 
   bool oldLighting = gmshLightingEnabled();

@@ -267,6 +267,9 @@ private:
   bool _pickColor;
   // the scale of the depth range per dimension in a picking pass
   double _pickDepthStep = 0.;
+  // the masks and the depth range the pass is drawing with (-1: not known)
+  int _pickStateSkip = -1;
+  double _pickStateFar = -1.;
   // The last identifier image and depths read back from a picking pass, so
   // that hovering costs a lookup instead of a redraw per mouse move. Dropped
   // by openglWindow::draw() on every redraw; the flags record what it was
