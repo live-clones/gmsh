@@ -309,27 +309,23 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
 // the title of the scale: the name of the view, and below it on a line of
 // its own what the time or step is, when there is one, with the power of
 // ten the labels share at the end of that line
-static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
-                           double width, double height, double tick,
-                           int horizontal, const std::string &multiplier)
+// the data a scale is labelled from: that of another view when it is asked
+// for (which is also what the values shown come from)
+static PViewData *scaleData(PView *p)
 {
   PViewOptions *opt = p->getOptions();
-  PViewData *data;
-
-  // requested by Laurent: but is this really what we should be doing?
   if(opt->externalViewIndex >= 0 &&
      opt->externalViewIndex < (int)PView::list.size())
-    data = PView::list[opt->externalViewIndex]->getData();
-  else
-    data = p->getData();
+    return PView::list[opt->externalViewIndex]->getData();
+  return p->getData();
+}
 
-  drawContext::global()->setFont(CTX::instance()->glFontEnum,
-                                 CTX::instance()->glFontSize);
-  double font_h = drawContext::global()->getStringHeight();
-  drawContext::global()->setFont(CTX::instance()->glFontEnumTitle,
-                                 CTX::instance()->glFontSizeTitle);
-  double title_h = drawContext::global()->getStringHeight();
-
+// what is written under the name of a scale: the time, the step or the part
+// of a harmonic view, as View.ShowTime asks
+static std::string scaleSubtitle(PView *p)
+{
+  PViewOptions *opt = p->getOptions();
+  PViewData *data = scaleData(p);
   char sub[512] = "";
   int nt = data->getNumTimeSteps();
   int n0 = data->getFirstNonEmptyTimeStep();
@@ -362,12 +358,29 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   case 7: snprintf(sub, sizeof(sub), "eigenvalue %s (%s part)", time, part); break;
   default: break;
   }
+  return sub;
+}
+
+static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
+                           double width, double height, double tick,
+                           int horizontal, const std::string &multiplier)
+{
+  PViewData *data = scaleData(p);
+
+  drawContext::global()->setFont(CTX::instance()->glFontEnum,
+                                 CTX::instance()->glFontSize);
+  double font_h = drawContext::global()->getStringHeight();
+  drawContext::global()->setFont(CTX::instance()->glFontEnumTitle,
+                                 CTX::instance()->glFontSizeTitle);
+  double title_h = drawContext::global()->getStringHeight();
+
+  std::string sub = scaleSubtitle(p);
   std::string name = data->getName();
 
   if(horizontal) {
     double y = ymin + height + tick + 1.3 * font_h; // adjust for compactness
-    if(sub[0] || multiplier.size()) {
-      if(sub[0]) haloString(ctx, sub, xmin + width / 2., y, 1);
+    if(sub.size() || multiplier.size()) {
+      if(sub.size()) haloString(ctx, sub, xmin + width / 2., y, 1);
       if(multiplier.size()) haloString(ctx, multiplier, xmin + width, y, 2);
       y += 1.1 * title_h; // adjust for compactness
     }
@@ -376,7 +389,7 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   else {
     double y = ymin - 2 * font_h;
     haloString(ctx, name, xmin, y, 0, true);
-    if(sub[0])
+    if(sub.size())
       haloString(ctx, sub, xmin, y - 1.2 * font_h, 0); // adjust for compactness
     if(multiplier.size())
       haloString(ctx, multiplier, xmin + width + 0.8 * tick,
@@ -530,18 +543,19 @@ void drawContext::drawScales()
                    (1 - i % 2) * (h + aboveV + ysep + belowV);
         drawScale(this, p, x, y, w, h, tick, 0);
       }
-      // compute width
+      // the width this scale takes: its values, and under them its name and
+      // its sub-line, each in the font it is drawn with
       width_prev = width;
+      drawContext::global()->setFont(CTX::instance()->glFontEnum,
+                                     CTX::instance()->glFontSize);
       snprintf(label, sizeof(label), opt->getFormat().c_str(), -M_PI * 1.e-4);
       width = bar_size + tick + drawContext::global()->getStringWidth(label);
-      if(opt->showTime) {
-        char tmp[256];
-        snprintf(tmp, sizeof(tmp), opt->getFormat().c_str(), data->getTime(opt->timeStep));
-        snprintf(label, sizeof(label), "%s (%s)", data->getName().c_str(), tmp);
-      }
-      else
-        snprintf(label, sizeof(label), "%s", data->getName().c_str());
-      width = std::max(width, drawContext::global()->getStringWidth(label));
+      width = std::max(
+        width, drawContext::global()->getStringWidth(scaleSubtitle(p).c_str()));
+      drawContext::global()->setFont(CTX::instance()->glFontEnumTitle,
+                                     CTX::instance()->glFontSizeTitle);
+      width = std::max(
+        width, drawContext::global()->getStringWidth(data->getName().c_str()));
       if(i % 2)
         width_total += std::max(bar_size + width, bar_size + width_prev);
     }
