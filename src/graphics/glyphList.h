@@ -35,9 +35,7 @@ private:
 
 public:
   void add(double v) { _v.push_back(v); }
-  void add(const void *p) { _v.push_back((double)(std::size_t)p); }
   bool operator==(const glyphToken &o) const { return _v == o._v; }
-  bool operator!=(const glyphToken &o) const { return !(_v == o._v); }
 };
 
 // a run of glyphs, collected instead of drawn

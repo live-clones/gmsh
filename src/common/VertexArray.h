@@ -187,7 +187,6 @@ private:
   ShardLock _mutex[NUM_SHARDS];
   bool _threaded;
   // the top bits pick the shard, the low bits index inside it
-  const Shard &_shardOfConst(std::uint64_t h) const { return _shard[(h >> 56) & (NUM_SHARDS - 1)]; }
   Shard &_shardOf(std::uint64_t h) { return _shard[(h >> 56) & (NUM_SHARDS - 1)]; }
 
 public:
@@ -201,25 +200,20 @@ public:
   // already been seen
   bool isDuplicate(int npe, double *x, double *y, double *z, unsigned char *r,
                    unsigned char *g, unsigned char *b, unsigned char *a);
-  // same, for data with a topology: the element is identified by its
-  // vertices (any stable pointer or index) and its color
-  bool isDuplicate(unsigned int col, const void *v0, const void *v1,
-                   const void *v2 = nullptr, const void *v3 = nullptr)
-  {
-    std::uint64_t k[5];
-    return isDuplicate(k, vaVertexKey(col, v0, v1, v2, v3, k));
-  }
-  // most general form: the caller builds the key itself, e.g. from node
-  // identifiers paired with the color of each node
+  // same, with a key the caller builds itself, e.g. from node identifiers
+  // paired with the color of each node
   bool isDuplicate(const std::uint64_t *key, int n)
   {
-    std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
-    if(!_threaded) return !_shardOf(h).insert(h);
-    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
-    return !_shardOf(h).insert(h);
+    return isDuplicate(vaHashKey(key, n * sizeof(std::uint64_t)));
   }
-  bool contains(const std::uint64_t *key, int n);
-  void insertOrErase(const std::uint64_t *key, int n);
+  bool contains(const std::uint64_t *key, int n)
+  {
+    return contains(vaHashKey(key, n * sizeof(std::uint64_t)));
+  }
+  void insertOrErase(const std::uint64_t *key, int n)
+  {
+    insertOrErase(vaHashKey(key, n * sizeof(std::uint64_t)));
+  }
   // the hash, the table entry and the lookup separately, so that a caller can
   // prefetch the entries of a whole element before looking them up
   std::uint64_t hashOf(unsigned int col, const void *v0, const void *v1,
@@ -240,6 +234,9 @@ public:
     ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
     return !_shardOf(h).insert(h);
   }
+  // insert the element, or remove it if already seen: once all elements have
+  // been passed, the filter holds those seen an odd number of times, i.e. the
+  // boundary faces
   void insertOrErase(std::uint64_t h)
   {
     if(!_threaded) {
@@ -258,12 +255,10 @@ public:
   // test without inserting: used to ask whether a face has been seen twice,
   // i.e. whether it is interior to the mesh
   bool contains(unsigned int col, const void *v0, const void *v1,
-                const void *v2 = nullptr, const void *v3 = nullptr);
-  // insert the element, or remove it if already seen: once all elements have
-  // been passed, the filter holds those seen an odd number of times, i.e. the
-  // boundary faces
-  void insertOrErase(unsigned int col, const void *v0, const void *v1,
-                     const void *v2 = nullptr, const void *v3 = nullptr);
+                const void *v2 = nullptr, const void *v3 = nullptr)
+  {
+    return contains(hashOf(col, v0, v1, v2, v3));
+  }
 };
 
 class VertexArray {
@@ -315,8 +310,6 @@ public:
   // range check 2) calling this if _vertices.size() == 0 will cause
   // some compilers to throw an exception)
   float *getVertexArray(int i = 0) { return &_vertices[i]; }
-  std::vector<float>::iterator firstVertex() { return _vertices.begin(); }
-  std::vector<float>::iterator lastVertex() { return _vertices.end(); }
 
   // return true if the array stores normals (resp. colors)
   bool hasNormals() { return (int)_normals.size() == 3 * getNumVertices(); }
@@ -330,24 +323,12 @@ public:
   void setVboValid() { _vboContext = vboContext; }
   // return a pointer to the raw normal array
   normal_type *getNormalArray(int i = 0) { return &_normals[i]; }
-  std::vector<normal_type>::iterator firstNormal() { return _normals.begin(); }
-  std::vector<normal_type>::iterator lastNormal() { return _normals.end(); }
 
   // return a pointer to the raw color array
   unsigned char *getColorArray(int i = 0) { return &_colors[i]; }
-  std::vector<unsigned char>::iterator firstColor() { return _colors.begin(); }
-  std::vector<unsigned char>::iterator lastColor() { return _colors.end(); }
 
   // return a pointer to the raw element array
   MElement **getElementPointerArray(int i = 0) { return &_elements[i]; }
-  std::vector<MElement *>::iterator firstElementPointer()
-  {
-    return _elements.begin();
-  }
-  std::vector<MElement *>::iterator lastElementPointer()
-  {
-    return _elements.end();
-  }
 
   // add element data in the arrays (if unique is set, only add the element if
   // an identical one has not already been added)

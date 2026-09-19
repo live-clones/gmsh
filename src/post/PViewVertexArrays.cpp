@@ -377,7 +377,8 @@ static bool elementIsCut(PViewOptions *opt, int dim, int numNodes, double **xyz)
 // nothing depends on the planes here, except in the mode drawing only the
 // cut volumes, whose arrays are filled through the planes (see
 // checkClipPlanesChanged()).
-bool isElementVisible(PViewOptions *opt, int dim, int numNodes, double **xyz)
+static bool isElementVisible(PViewOptions *opt, int dim, int numNodes,
+                             double **xyz)
 {
   CTX *ctx = CTX::instance();
   if(!ctx->clipWholeElements || !opt->clip) return true;
@@ -1579,10 +1580,9 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
   }
 }
 
-// fill the arrays of one target with the elements numbered [first, last) in the
-// flat index space built by addElementsInArrays below
-void changeCoordinates(PView *p, int ient, int iele, int numNodes, int type,
-                       int numComp, double **xyz, double **val)
+// the same, for an element read outside the filling of the arrays
+static void changeCoordinates(PView *p, int ient, int iele, int numNodes,
+                              int type, int numComp, double **xyz, double **val)
 {
   drawTarget t(p);
   changeCoordinates(&t, ient, iele, numNodes, type, numComp, xyz, val);
@@ -1680,6 +1680,8 @@ static void addFieldElement(drawTarget *p, int ient, int iele, int numNodes,
     addTensorElement(p, ient, iele, numNodes, type, xyz, val, pre);
 }
 
+// fill the arrays of one target with the elements numbered [first, last) in the
+// flat index space built by addElementsInArrays below
 static void addElementRange(drawTarget *p, PViewData *data,
                             bool preprocessNormalsOnly,
                             const std::vector<int> &ents,

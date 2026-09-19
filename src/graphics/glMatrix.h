@@ -36,11 +36,6 @@ namespace glMatrix {
                double zNear, double zFar, double m[16]);
   void lookAt(const double eye[3], const double center[3], const double up[3],
               double m[16]);
-  // the projection of the region of width w and height h centred on (x, y),
-  // in window coordinates, onto the whole viewport
-  void pickRegion(double x, double y, double w, double h, const int viewport[4],
-                  double m[16]);
-
   // object coordinates to window coordinates and back; false if the point
   // cannot be mapped
   bool project(const double xyz[3], const double model[16],

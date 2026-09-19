@@ -384,7 +384,6 @@ public:
   void setPickColorFor(GEntity *e, bool front = false);
   static bool pickColorActive() { return _pickColorActive; }
   drawContext(drawTransform *transform = nullptr);
-  ~drawContext();
   // factor between the true size in pixels and the size reported by the OS
   // (e.g. 2 on an Apple "retina" display); refreshed by the GUI before each
   // draw, as it changes when a window moves across displays
@@ -450,8 +449,6 @@ public:
   {
     return (_hiddenViews.find(v) == _hiddenViews.end());
   }
-  void createQuadricsAndDisplayLists();
-  void invalidateQuadricsAndDisplayLists();
   bool generateTextureForImage(const std::string &name, int page,
                                GLuint &imageTexture, GLuint &imageW,
                                GLuint &imageH);
@@ -462,8 +459,7 @@ public:
   void addQuaternionFromAxisAndAngle(double axis[3], double angle);
   void setQuaternionFromEulerAngles();
   void setEulerAnglesFromRotationMatrix();
-  void initProjection(int xpick = 0, int ypick = 0, int wpick = 0,
-                      int hpick = 0);
+  void initProjection();
   // the matrices of camera mode: the projection (the camera's frustum,
   // shifted for a studio frame) and the modelview (the camera looking at
   // its target), which `view' comes back with
@@ -529,17 +525,8 @@ public:
                  int align = 0);
   void drawSphere(double R, double x, double y, double z, int n1, int n2,
                   int light);
-  void drawCube(double x, double y, double z, float v0[3], float v1[3],
-		float v2[3], int light);
-  void drawEllipsoid(double x, double y, double z, float v0[3], float v1[3],
-                     float v2[3], int light);
-  void drawEllipse(double x, double y, double z, float v0[3], float v1[3],
-                   int light);
   void drawSphere(double size, double x, double y, double z, int light);
   void drawCylinder(double width, double *x, double *y, double *z, int light);
-  void drawTaperedCylinder(double width, double val1, double val2,
-                           double ValMin, double ValMax, double *x, double *y,
-                           double *z, int light);
   // update the glyph shapes to the options; they are only read afterwards,
   // possibly by several threads at once
   void updateGlyphTemplates();
@@ -551,9 +538,6 @@ public:
   // updateGlyphTemplates(), null if the shape has no triangles
   const float *glyphTemplate(int kind, const float *&normals,
                              const normal_type *&encoded, int &numVertices);
-  // draw one glyph placed by the transform m, with its shape parameters
-  void drawGlyph(int kind, const double m[16], const float *param,
-                 unsigned int color);
   void drawArrow3d(double x, double y, double z, double dx, double dy,
                    double dz, double length, int light);
   void drawVector(int Type, int Fill, double x, double y, double z, double dx,

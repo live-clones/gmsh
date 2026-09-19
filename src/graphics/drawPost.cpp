@@ -241,93 +241,38 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
   if(type == GL_POINTS && opt->pointType > 0) {
     // a sphere is drawn whole or not at all
     glyphClip clip(opt);
-    (void)clipArray; // no array of points is held apart
     // the spheres are worth keeping: dozens of triangles each
-    if(opt->pointType != 2 && va->getNumVertices()) {
+    if(opt->pointType != 2) {
       drawPointGlyphs(ctx, p, va);
       glDisable(GL_POLYGON_OFFSET_FILL);
       gmshLighting(false);
       return;
     }
+    // points sized by the value, one at a time
     for(int i = 0; i < va->getNumVertices(); i++) {
       float *p = va->getVertexArray(3 * i);
       if(!glyphIsKept(opt, p)) continue;
       gmshColor4ubv((const void *)va->getColorArray(4 * i));
-      double f = 1.;
-      if(opt->pointType > 1) {
 #if defined(HAVE_VISUDEV)
-        f = *va->getNormalArray(3 * i);
+      double f = *va->getNormalArray(3 * i);
 #else
-        char *n = va->getNormalArray(3 * i);
-        f = char2float(*n);
+      double f = char2float(*va->getNormalArray(3 * i));
 #endif
+      int s = (int)(opt->pointSize * f);
+      if(s) {
+        gmshPointSize((float)s);
+        gl2psPointSize((float)(s * CTX::instance()->print.epsPointSizeFactor));
+        gmshBegin(GL_POINTS);
+        gmshVertex3d(p[0], p[1], p[2]);
+        gmshEnd();
       }
-      if(opt->pointType == 2) {
-        int s = (int)(opt->pointSize * f);
-        if(s) {
-          gmshPointSize((float)s);
-          gl2psPointSize(
-            (float)(s * CTX::instance()->print.epsPointSizeFactor));
-          gmshBegin(GL_POINTS);
-          gmshVertex3d(p[0], p[1], p[2]);
-          gmshEnd();
-        }
-      }
-      else
-        ctx->drawSphere(opt->pointSize * f, p[0], p[1], p[2], opt->light);
     }
   }
   else if(type == GL_LINES && opt->lineType > 0) {
-    // as with the spheres above: a cylinder is drawn whole or not at all
+    // as with the spheres above: a cylinder is drawn whole or not at all, and
+    // the cylinders are worth keeping
     glyphClip clip(opt);
-    // the cylinders are worth keeping: dozens of triangles each
-    if(opt->lineType <= 2 && va->getNumVertices()) {
-      drawLineGlyphs(ctx, p, va, clipArray);
-      glDisable(GL_POLYGON_OFFSET_FILL);
-      gmshLighting(false);
-      return;
-    }
-    for(int i = 0; i < va->getNumVertices(); i += 2) {
-      float *p0 = va->getVertexArray(3 * i);
-      float *p1 = va->getVertexArray(3 * (i + 1));
-      if(!clipArray && !glyphIsKept(opt, p0, p1)) continue;
-      double x[2] = {p0[0], p1[0]}, y[2] = {p0[1], p1[1]},
-             z[2] = {p0[2], p1[2]};
-      gmshColor4ubv((const void *)va->getColorArray(4 * i));
-      if(opt->lineType == 2) {
-#if defined(HAVE_VISUDEV)
-        double v0 = *va->getNormalArray(3 * i);
-        double v1 = *va->getNormalArray(3 * (i + 1));
-#else
-        char *n0 = va->getNormalArray(3 * i);
-        char *n1 = va->getNormalArray(3 * (i + 1));
-        double v0 = char2float(*n0), v1 = char2float(*n1);
-#endif
-        ctx->drawTaperedCylinder(opt->lineWidth, v0, v1, 0., 1., x, y, z,
-                                 opt->light);
-      }
-      else if(opt->lineType == 1)
-        ctx->drawCylinder(opt->lineWidth, x, y, z, opt->light);
-      else { // 2D (for now) MNT diagrams for frames
-        float l = std::sqrt((p0[0] - p1[0]) * (p0[0] - p1[0]) +
-                            (p0[1] - p1[1]) * (p0[1] - p1[1]) +
-                            (p0[2] - p1[2]) * (p0[2] - p1[2]));
-#if defined(HAVE_VISUDEV)
-        double v0 = *va->getNormalArray(3 * i);
-        double v1 = *va->getNormalArray(3 * (i + 1));
-#else
-        char *n0 = va->getNormalArray(3 * i);
-        char *n1 = va->getNormalArray(3 * (i + 1));
-        double v0 = char2float(*n0), v1 = char2float(*n1);
-#endif
-        float dir[3] = {(p1[0] - p0[0]) / l, (p1[1] - p0[1]) / l,
-                        (p1[2] - p0[2]) / l};
-        //printf("%g %g %g %g %g %g\n", v0, v1, p0[0], p0[1], p1[0], p1[1]);
-        ctx->drawVector(1, 0, p0[0] - dir[1] * v0, p0[1] + dir[0] * v0, 0.0,
-                        p1[0] - dir[1] * v1, p1[1] + dir[0] * v1, 0.0,
-                        opt->light);
-      }
-    }
+    drawLineGlyphs(ctx, p, va, clipArray);
   }
   else {
 
@@ -400,45 +345,24 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
   // as with the arrows: an ellipsoid is drawn whole or not at all
   glyphClip clip(opt);
 
-  // ellipses and ellipsoids are glyphs; frames are still drawn one at a time
-  if(opt->tensorType != PViewOptions::Frame && va->getNumVertices()) {
-    glyphToken tok;
-    tok.add(ctx->pixel_equiv_x / ctx->s[0]);
-    tok.add(opt->tensorType);
-    tok.add(opt->arrowSizeMin);
-    tok.add(opt->arrowSizeMax);
-    tok.add(opt->tmpMax);
-    addClipToken(tok, opt);
-    glyphList *g;
-    if(!glyphCache::get(p, GLYPH_TENSORS, tok, g)) {
-      int num = va->getNumVertices() / 4;
-      collect(num, g, [ctx, opt, va](int e, glyphList *into) {
-        if(!glyphIsKept(opt, va->getVertexArray(3 * 4 * e))) return;
-        addEllipseFor(ctx, opt, va, 4 * e, into);
-      });
-    }
-    g->draw(ctx, opt->light);
-    return;
+  // the array only holds ellipses and ellipsoids (frames are triangles)
+  if(!va->getNumVertices()) return;
+  glyphToken tok;
+  tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+  tok.add(opt->tensorType);
+  tok.add(opt->arrowSizeMin);
+  tok.add(opt->arrowSizeMax);
+  tok.add(opt->tmpMax);
+  addClipToken(tok, opt);
+  glyphList *g;
+  if(!glyphCache::get(p, GLYPH_TENSORS, tok, g)) {
+    int num = va->getNumVertices() / 4;
+    collect(num, g, [ctx, opt, va](int e, glyphList *into) {
+      if(!glyphIsKept(opt, va->getVertexArray(3 * 4 * e))) return;
+      addEllipseFor(ctx, opt, va, 4 * e, into);
+    });
   }
-
-  for(int i = 0; i < va->getNumVertices(); i += 4) {
-    float *s = va->getVertexArray(3 * i);
-    if(!glyphIsKept(opt, s)) continue;
-    float vv[3][3];
-    double lmax = opt->tmpMax;
-    double scale = (opt->arrowSizeMax - opt->arrowSizeMin) *
-                   ctx->pixel_equiv_x / ctx->s[0] / 2;
-    double lmin = opt->arrowSizeMin * ctx->pixel_equiv_x / ctx->s[0] / 2;
-    for(int j = 0; j < 3; j++) {
-      float *v = va->getVertexArray(3 * (i + j + 1));
-      double l = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-      double l2 = std::min(1., l / lmax);
-      for(int k = 0; k < 3; k++) { vv[j][k] = v[k] / l * (scale * l2 + lmin); }
-    }
-    gmshColor4ubv((const void *)va->getColorArray(4 * i));
-
-    ctx->drawCube(s[0], s[1], s[2], vv[0], vv[1], vv[2], opt->light);
-  }
+  g->draw(ctx, opt->light);
 }
 
 // the arrow of one element, appended if worth drawing; shared with the

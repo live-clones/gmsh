@@ -168,20 +168,6 @@ namespace glMatrix {
     multiply(r, t, m);
   }
 
-  void pickRegion(double x, double y, double w, double h, const int viewport[4],
-                  double m[16])
-  {
-    if(w <= 0. || h <= 0.) {
-      identity(m);
-      return;
-    }
-    double t[16], s[16];
-    translate((viewport[2] - 2. * (x - viewport[0])) / w,
-              (viewport[3] - 2. * (y - viewport[1])) / h, 0., t);
-    scale(viewport[2] / w, viewport[3] / h, 1., s);
-    multiply(t, s, m);
-  }
-
   bool project(const double xyz[3], const double model[16],
                const double proj[16], const int viewport[4], double win[3])
   {

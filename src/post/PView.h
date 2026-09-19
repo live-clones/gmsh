@@ -187,9 +187,6 @@ public:
 // this is the maximum number of nodes of elements we actually *draw*
 // (high order elements are always subdivided before drawing)
 #define PVIEW_NMAX 8
-void changeCoordinates(PView *p, int ient, int iele, int numNodes, int type,
-                       int numComp, double **xyz, double **val);
-bool isElementVisible(PViewOptions *opt, int dim, int numNodes, double **xyz);
 bool elementIsKept(PViewOptions *opt, int dim, int numNodes, double **xyz);
 
 // An element of a view as it is drawn, at the time step of the view (in its

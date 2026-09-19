@@ -70,13 +70,6 @@ inline void gmshVertex2d(double x, double y)
   else
     glVertex2d(x, y);
 }
-inline void gmshVertex2f(float x, float y)
-{
-  if(gmshCollecting)
-    gmshImVertex(x, y, 0.f);
-  else
-    glVertex2f(x, y);
-}
 inline void gmshVertex2i(int x, int y)
 {
   if(gmshCollecting)
@@ -144,10 +137,6 @@ inline void gmshColor3d(double r, double g, double b)
 {
   gmshColor4ub(gmshColorByte(r), gmshColorByte(g), gmshColorByte(b), 255);
 }
-inline void gmshColor3f(float r, float g, float b)
-{
-  gmshColor4ub(gmshColorByte(r), gmshColorByte(g), gmshColorByte(b), 255);
-}
 inline void gmshColor3ub(unsigned char r, unsigned char g, unsigned char b)
 {
   gmshColor4ub(r, g, b, 255);
@@ -156,11 +145,6 @@ inline void gmshColor4f(float r, float g, float b, float a)
 {
   gmshColor4ub(gmshColorByte(r), gmshColorByte(g), gmshColorByte(b),
                gmshColorByte(a));
-}
-inline void gmshColor4dv(const double *c)
-{
-  gmshColor4ub(gmshColorByte(c[0]), gmshColorByte(c[1]), gmshColorByte(c[2]),
-               gmshColorByte(c[3]));
 }
 // set the current colour from four bytes; does nothing during a colour
 // picking pass, where the colour encodes the object instead
@@ -189,7 +173,6 @@ enum gmshTextureMode { GMSH_TEXTURE_NONE = 0, GMSH_TEXTURE_ALPHA = 1,
 // the texture the primitives after this are drawn through, zero for none
 // (the shader pipeline needs it said, not only bound)
 void gmshTexture(unsigned int id, int mode = GMSH_TEXTURE_ALPHA);
-unsigned int gmshCurrentTexture();
 
 // The fixed function state that decides how primitives are drawn and that
 // the shader pipeline has to carry itself: lighting, line width, point size,
@@ -202,12 +185,12 @@ bool gmshLightingEnabled();
 void gmshLightTwoSide(bool on);
 bool gmshLightTwoSideEnabled();
 
-// the line width; a core profile draws every line one pixel wide, so the
-// shader pipeline makes wider lines out of triangles
 // the scale applied to what is given in pixels of the window (line widths,
 // point sizes): 1 on the window, more in a picture drawn at another size
 void gmshPixelScale(double scale);
 double gmshPixelScale();
+// the line width; a core profile draws every line one pixel wide, so the
+// shader pipeline makes wider lines out of triangles
 void gmshLineWidth(double w);
 double gmshCurrentLineWidth();
 void gmshPointSize(double s);
@@ -223,7 +206,6 @@ int gmshShadingModel();
 // options; ignored by the fixed function pipeline); filledOnly leaves lines
 // and points opaque
 void gmshAlphaScale(double s, bool filledOnly);
-double gmshCurrentAlphaScale();
 // the scale that applies to this primitive, given filledOnly
 double gmshAlphaScaleFor(unsigned int primitive);
 
@@ -299,7 +281,6 @@ bool gmshClipPlaneEnabled(int i);
 // keep only what the enabled planes cut off (shader pipeline only: the fixed
 // function planes have no such mode)
 void gmshClipOutside(bool outside);
-bool gmshClipOutside();
 // the plane in eye coordinates, which is what a shader is handed
 const double *gmshClipPlaneEye(int i);
 

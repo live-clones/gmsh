@@ -229,7 +229,6 @@ void openglWindow::draw()
   _ctx->invalidatePickCache();
 
   if(!context_valid()) {
-    _ctx->invalidateQuadricsAndDisplayLists();
     // the buffer objects and entry points belonged to the previous context
     VertexArray::invalidateBuffers();
     glApi::reset();

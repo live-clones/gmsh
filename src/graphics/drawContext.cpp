@@ -76,8 +76,6 @@ drawContext::drawContext(drawTransform *transform)
 
 }
 
-drawContext::~drawContext() { invalidateQuadricsAndDisplayLists(); }
-
 int drawContextGlobal::getFontAlign(const char *alignstr)
 {
   if(alignstr) {
@@ -122,17 +120,6 @@ drawContextGlobal *drawContext::global()
 {
   if(!_global) _global = new drawContextGlobal(); // create dummy default
   return _global;
-}
-
-void drawContext::invalidateQuadricsAndDisplayLists()
-{
-  // nothing to invalidate: the glyph shapes belong to no OpenGL context
-}
-
-void drawContext::createQuadricsAndDisplayLists()
-{
-  // the glyph shapes are built as triangles in drawGlyph.cpp: a core
-  // profile has neither quadrics nor display lists
 }
 
 void drawContext::buildRotationMatrix()
@@ -704,11 +691,6 @@ void drawContext::draw3d()
   checkClipPlanesChanged();
 
   deleteOrphanVertexArrayBuffers();
-
-  // We can only create this when a valid opengl context exists. (It's cheap to
-  // create so we just do it at each redraw: this makes it much simpler to deal
-  // with option changes, e.g. arrow shape changes)
-  createQuadricsAndDisplayLists();
 
   // We should only enable the polygon offset when there is a mix of lines and
   // polygons to be drawn; enabling it all the time can lead to very small but
@@ -1510,7 +1492,7 @@ void drawContext::drawBackgroundImage(bool threeD)
   glDisable(GL_BLEND);
 }
 
-void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
+void drawContext::initProjection()
 {
   double Va =
     (double)(viewport[3] - viewport[1]) / (double)(viewport[2] - viewport[0]);
@@ -1598,12 +1580,8 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     // setup projection matrix
     gmshMatrixMode(GMSH_PROJECTION);
 
-    // restrict picking to a rectangular region around xpick,ypick
     double pick[16];
     studioJitter(pick);
-    if(render_mode == GMSH_SELECT)
-      glMatrix::pickRegion(xpick, viewport[3] - ypick, wpick, hpick, viewport,
-                           pick);
 
     // draw background if not in selection mode
     if(render_mode != GMSH_SELECT &&

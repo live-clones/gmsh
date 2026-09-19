@@ -3,13 +3,10 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <map>
 #include <set>
 #include <algorithm>
-#include <cmath>
 #include "drawContext.h"
 #include "GmshMessage.h"
-#include "GmshDefines.h"
 #include "GModel.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -24,10 +21,8 @@
 #include "Context.h"
 #include "OwnerCache.h"
 #include "glyphList.h"
-#include "OS.h"
 #include "gl2ps.h"
 #include "VertexArray.h"
-#include "SmoothData.h"
 #include "PView.h"
 #include "PViewData.h"
 

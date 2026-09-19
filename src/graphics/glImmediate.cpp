@@ -271,8 +271,6 @@ void gmshClipOutside(bool outside)
   _clipOutside = outside;
 }
 
-bool gmshClipOutside() { return _clipOutside; }
-
 const double *gmshClipPlaneEye(int i)
 {
   return _clipEye[(i >= 0 && i <= 5) ? i : 0];
@@ -514,8 +512,6 @@ void gmshAlphaScale(double s, bool filledOnly)
   _alphaScaleFilledOnly = filledOnly;
 }
 
-double gmshCurrentAlphaScale() { return _alphaScale; }
-
 double gmshAlphaScaleFor(unsigned int primitive)
 {
   if(_alphaScaleFilledOnly && primitive != GL_TRIANGLES) return 1.;
@@ -572,8 +568,6 @@ void gmshTexture(unsigned int id, int mode)
     }
   }
 }
-
-unsigned int gmshCurrentTexture() { return _texture; }
 
 void gmshImTexCoord(float s, float t)
 {

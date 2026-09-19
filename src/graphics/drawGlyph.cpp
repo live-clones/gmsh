@@ -579,60 +579,6 @@ void drawContext::drawImage(const std::string &name, double x, double y,
   }
 }
 
-static void _drawBox()
-{
-  gmshBegin(GL_QUADS);
-  // FRONT
-  gmshVertex3f(-0.5f, -0.5f, 0.5f);
-  gmshVertex3f( 0.5f, -0.5f, 0.5f);
-  gmshVertex3f( 0.5f, 0.5f, 0.5f);
-  gmshVertex3f(-0.5f, 0.5f, 0.5f);
-  // BACK
-  gmshVertex3f(-0.5f, -0.5f, -0.5f);
-  gmshVertex3f(-0.5f, 0.5f, -0.5f);
-  gmshVertex3f( 0.5f, 0.5f, -0.5f);
-  gmshVertex3f( 0.5f, -0.5f, -0.5f);
-  // LEFT
-  gmshVertex3f(-0.5f, -0.5f, 0.5f);
-  gmshVertex3f(-0.5f, 0.5f, 0.5f);
-  gmshVertex3f(-0.5f, 0.5f, -0.5f);
-  gmshVertex3f(-0.5f, -0.5f, -0.5f);
-  // RIGHT
-  gmshVertex3f( 0.5f, -0.5f, -0.5f);
-  gmshVertex3f( 0.5f, 0.5f, -0.5f);
-  gmshVertex3f( 0.5f, 0.5f, 0.5f);
-  gmshVertex3f( 0.5f, -0.5f, 0.5f);
-  // TOP
-  gmshVertex3f(-0.5f, 0.5f, 0.5f);
-  gmshVertex3f( 0.5f, 0.5f, 0.5f);
-  gmshVertex3f( 0.5f, 0.5f, -0.5f);
-  gmshVertex3f(-0.5f, 0.5f, -0.5f);
-  // BOTTOM
-  gmshVertex3f(-0.5f, -0.5f, 0.5f);
-  gmshVertex3f(-0.5f, -0.5f, -0.5f);
-  gmshVertex3f( 0.5f, -0.5f, -0.5f);
-  gmshVertex3f( 0.5f, -0.5f, 0.5f);
-  gmshEnd();
-}
-
-void drawContext::drawCube(double x, double y, double z, float v0[3],
-			   float v1[3], float v2[3], int light)
-{
- 
-  if(light) gmshLighting(true);
-  gmshPushMatrix();
-
-  GLfloat m[16] = {v0[0],      v0[1],      v0[2],      .0f,   v1[0], v1[1],
-                   v1[2],      .0f,        v2[0],      v2[1], v2[2], .0f,
-                   (GLfloat)x, (GLfloat)y, (GLfloat)z, 1.f};
-  double md[16];
-  for(int i = 0; i < 16; i++) md[i] = m[i];
-  gmshMultMatrix(md);
-  _drawBox();
-  gmshPopMatrix();
-  gmshLighting(false);
-}
-
 void drawContext::drawSphere(double R, double x, double y, double z, int n1,
                              int n2, int light)
 {
@@ -647,47 +593,6 @@ void drawContext::drawSphere(double R, double x, double y, double z, int n1,
 }
 
 
-void drawContext::drawEllipse(double x, double y, double z, float v0[3],
-                              float v1[3], int light)
-{
-  GLfloat m[16] = {v0[0],
-                   v0[1],
-                   v0[2],
-                   .0f,
-                   v1[0],
-                   v1[1],
-                   v1[2],
-                   .0f,
-                   v0[1] * v1[2] - v0[2] * v1[1],
-                   v0[2] * v1[0] - v0[0] * v1[2],
-                   v0[0] * v1[1] - v0[1] * v1[0],
-                   .0f,
-                   (GLfloat)x,
-                   (GLfloat)y,
-                   (GLfloat)z,
-                   1.f};
-  double md[16];
-  for(int i = 0; i < 16; i++) md[i] = m[i];
-  _tmpl.update();
-  if(light) gmshLighting(true);
-  emit(_tmpl.shape[GLYPH_DISK], md);
-  gmshLighting(false);
-}
-
-void drawContext::drawEllipsoid(double x, double y, double z, float v0[3],
-                                float v1[3], float v2[3], int light)
-{
-  GLfloat m[16] = {v0[0],      v0[1],      v0[2],      .0f,   v1[0], v1[1],
-                   v1[2],      .0f,        v2[0],      v2[1], v2[2], .0f,
-                   (GLfloat)x, (GLfloat)y, (GLfloat)z, 1.f};
-  double md[16];
-  for(int i = 0; i < 16; i++) md[i] = m[i];
-  _tmpl.update();
-  if(light) gmshLighting(true);
-  emit(_tmpl.shape[GLYPH_SPHERE], md);
-  gmshLighting(false);
-}
-
 void drawContext::drawSphere(double size, double x, double y, double z,
                              int light)
 {
@@ -699,44 +604,6 @@ void drawContext::drawSphere(double size, double x, double y, double z,
   _tmpl.update();
   if(light) gmshLighting(true);
   emit(_tmpl.shape[GLYPH_SPHERE], m);
-  gmshLighting(false);
-}
-
-void drawContext::drawTaperedCylinder(double width, double val1, double val2,
-                                      double ValMin, double ValMax, double *x,
-                                      double *y, double *z, int light)
-{
-  if(light) gmshLighting(true);
-
-  double dx = x[1] - x[0];
-  double dy = y[1] - y[0];
-  double dz = z[1] - z[0];
-  double const length = std::sqrt(dx * dx + dy * dy + dz * dz);
-  double fact = width * pixel_equiv_x / s[0] / (ValMax - ValMin);
-  double radius1 = (val1 - ValMin) * fact;
-  double radius2 = (val2 - ValMin) * fact;
-  double zdir[3] = {0., 0., 1.};
-  double vdir[3] = {dx / length, dy / length, dz / length};
-  double axis[3], phi;
-  prodve(zdir, vdir, axis);
-  double const cosphi = prosca(zdir, vdir);
-  if(!norme(axis)) {
-    axis[0] = 0.;
-    axis[1] = 1.;
-    axis[2] = 0.;
-  }
-  phi = 180. * myacos(cosphi) / M_PI;
-
-  // the radii differ from one end to the other, so this one is built here
-  Tessellation t;
-  int n = CTX::instance()->quadricSubdivisions;
-  t.side(radius1, radius2, 0., length, (n < 3) ? 3 : n);
-  double tr[16], r[16], m[16];
-  glMatrix::translate(x[0], y[0], z[0], tr);
-  glMatrix::rotate(phi, axis[0], axis[1], axis[2], r);
-  glMatrix::multiply(tr, r, m);
-  emit(t, m);
-
   gmshLighting(false);
 }
 
@@ -963,23 +830,6 @@ const float *drawContext::glyphTemplate(int kind, const float *&normals,
   normals = &t.nrm[0];
   encoded = &_tmpl.normals[kind][0];
   return &t.pos[0];
-}
-
-void drawContext::drawGlyph(int kind, const double m[16], const float *param,
-                            unsigned int color)
-{
-  _tmpl.update();
-  gmshColor4ubv((const void *)&color);
-  if(kind == GLYPH_CYLINDER) {
-    // the two radii are what this one is shaped by, so it is built here
-    static thread_local Tessellation t;
-    int n = CTX::instance()->quadricSubdivisions;
-    t.clear();
-    t.side(param[0], param[1], 0., 1., (n < 3) ? 3 : n);
-    emit(t, m);
-    return;
-  }
-  emit(_tmpl.shape[kind], m);
 }
 
 void drawContext::drawArrow3d(double x, double y, double z, double dx,

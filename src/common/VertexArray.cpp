@@ -106,56 +106,6 @@ void UniqueElementFilter::reserve(std::size_t n)
   for(int i = 0; i < NUM_SHARDS; i++) _shard[i].reserve(n / NUM_SHARDS + 16);
 }
 
-bool UniqueElementFilter::contains(const std::uint64_t *key, int n)
-{
-  std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
-  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
-  if(!_threaded) return _shard[sh].contains(h);
-  ShardGuard lock(_mutex[sh]);
-  return _shard[sh].contains(h);
-}
-
-void UniqueElementFilter::insertOrErase(const std::uint64_t *key, int n)
-{
-  std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
-  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
-  if(!_threaded) {
-    _shard[sh].insertOrErase(h);
-    return;
-  }
-  ShardGuard lock(_mutex[sh]);
-  _shard[sh].insertOrErase(h);
-}
-
-void UniqueElementFilter::insertOrErase(unsigned int col, const void *v0,
-                                       const void *v1, const void *v2,
-                                       const void *v3)
-{
-  std::uint64_t k[5];
-  int n = vaVertexKey(col, v0, v1, v2, v3, k);
-  std::uint64_t h = vaHashKey(k, n * sizeof(std::uint64_t));
-  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
-  if(!_threaded) {
-    _shard[sh].insertOrErase(h);
-    return;
-  }
-  ShardGuard lock(_mutex[sh]);
-  _shard[sh].insertOrErase(h);
-}
-
-bool UniqueElementFilter::contains(unsigned int col, const void *v0,
-                                    const void *v1, const void *v2,
-                                    const void *v3)
-{
-  std::uint64_t k[5];
-  int n = vaVertexKey(col, v0, v1, v2, v3, k);
-  std::uint64_t h = vaHashKey(k, n * sizeof(std::uint64_t));
-  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
-  if(!_threaded) return _shard[sh].contains(h);
-  ShardGuard lock(_mutex[sh]);
-  return _shard[sh].contains(h);
-}
-
 bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
                                      unsigned char *r, unsigned char *g,
                                      unsigned char *b, unsigned char *a)
@@ -174,11 +124,7 @@ bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
   else
     return false;
 
-  // the top bits pick the shard, the low bits index inside it
-  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
-  if(!_threaded) return !_shard[sh].insert(h);
-  ShardGuard lock(_mutex[sh]);
-  return !_shard[sh].insert(h);
+  return isDuplicate(h);
 }
 
 VertexArray::~VertexArray()
@@ -517,8 +463,9 @@ void VertexArray::merge(VertexArray* va, const unsigned char *color)
   _statUniqueIn += va->_statUniqueIn;
   _statUniqueKept += va->_statUniqueKept;
   if(va->getNumVertices() != 0) {
-    _vertices.insert(_vertices.end(), va->firstVertex(), va->lastVertex());
-    _normals.insert(_normals.end(), va->firstNormal(), va->lastNormal());
+    _vertices.insert(_vertices.end(), va->_vertices.begin(),
+                     va->_vertices.end());
+    _normals.insert(_normals.end(), va->_normals.begin(), va->_normals.end());
     if(color) {
       // the merged data is drawn in a single color: repeat it (no reserve()
       // here, which would be quadratic over the merged arrays)
@@ -526,9 +473,9 @@ void VertexArray::merge(VertexArray* va, const unsigned char *color)
         for(int j = 0; j < 4; j++) _colors.push_back(color[j]);
     }
     else
-      _colors.insert(_colors.end(), va->firstColor(), va->lastColor());
-    _elements.insert(_elements.end(), va->firstElementPointer(),
-                     va->lastElementPointer());
+      _colors.insert(_colors.end(), va->_colors.begin(), va->_colors.end());
+    _elements.insert(_elements.end(), va->_elements.begin(),
+                     va->_elements.end());
   }
   _vboDirty = true;
 }
