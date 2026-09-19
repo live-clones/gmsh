@@ -71,11 +71,18 @@ bool compare_zmax_triangle(const TriangleToSort *first,
 
 bool PView::writeX3D(const std::string &fileName)
 {
+  // what is written is what the views draw: their arrays, which a view that
+  // has not been drawn yet (in a script, say) does not have; a view that
+  // still has none (hidden, or without data) is left out
+  for(std::size_t i = 0; i < PView::list.size(); i++)
+    PView::list[i]->fillVertexArrays();
+
   // tags duplicated triangles
   int _size = 1;
   if(!CTX::instance()->print.x3dRemoveInnerBorders) {
     for(std::size_t i = 0; i < PView::list.size(); i++) {
       VertexArray *va = PView::list[i]->va_triangles;
+      if(!va) continue;
       _size += va->getNumVertices() / 3;
     }
   }
@@ -87,6 +94,7 @@ bool PView::writeX3D(const std::string &fileName)
     tlist.clear();
     for(std::size_t ivp = 0; ivp < PView::list.size(); ivp++) {
       VertexArray *va = PView::list[ivp]->va_triangles;
+      if(!va) continue;
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3) {
         float *p0 = va->getVertexArray(3 * ipt);
         float *p1 = va->getVertexArray(3 * (ipt + 1));
@@ -468,6 +476,7 @@ bool PView::writeX3D(const std::string &fileName)
     PViewOptions *opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
       va = PView::list[ipv]->va_lines;
+      if(!va) continue;
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 2) {
         if(opt->lineType != 2 && opt->lineType != 1) {
           fprintf(fp, "%i %i %i ", _ind, _ind + 1, -1);
@@ -483,6 +492,7 @@ bool PView::writeX3D(const std::string &fileName)
     PViewOptions *opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
       va = PView::list[ipv]->va_lines;
+      if(!va) continue;
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 2) {
         if(opt->lineType != 2 && opt->lineType != 1) {
           float *p0 = va->getVertexArray(3 * ipt);
@@ -508,6 +518,7 @@ bool PView::writeX3D(const std::string &fileName)
     opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
       va = PView::list[ipv]->va_vectors;
+      if(!va) continue;
       for(int iv = 0; iv < va->getNumVertices(); iv += 2) {
         float *s = va->getVertexArray(3 * iv);
         float *v = va->getVertexArray(3 * (iv + 1));
@@ -560,6 +571,7 @@ bool PView::writeX3D(const std::string &fileName)
     opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
       va = PView::list[ipv]->va_triangles;
+      if(!va) continue;
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3) {
         if((!CTX::instance()->print.x3dRemoveInnerBorders && visible[_count]) ||
            CTX::instance()->print.x3dRemoveInnerBorders) {
@@ -579,6 +591,7 @@ bool PView::writeX3D(const std::string &fileName)
     opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
       va = PView::list[ipv]->va_triangles;
+      if(!va) continue;
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3) {
         if((!CTX::instance()->print.x3dRemoveInnerBorders && visible[_count]) ||
            CTX::instance()->print.x3dRemoveInnerBorders) {
@@ -602,6 +615,7 @@ bool PView::writeX3D(const std::string &fileName)
     opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
       va = PView::list[ipv]->va_triangles;
+      if(!va) continue;
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3) {
         if((!CTX::instance()->print.x3dRemoveInnerBorders && visible[_count]) ||
            CTX::instance()->print.x3dRemoveInnerBorders) {
@@ -644,18 +658,8 @@ static void writeX3DScale(FILE *fp, PView *p, double xmin, double ymin,
     opt->tmpMin = opt->externalMin;
     opt->tmpMax = opt->externalMax;
   }
-  else if(opt->rangeType == PViewOptions::Custom) {
-    opt->tmpMin = opt->customMin;
-    opt->tmpMax = opt->customMax;
-  }
-  else if(opt->rangeType == PViewOptions::PerTimeStep) {
-    opt->tmpMin = data->getMin(opt->timeStep);
-    opt->tmpMax = data->getMax(opt->timeStep);
-  }
-  else {
-    opt->tmpMin = data->getMin();
-    opt->tmpMax = data->getMax();
-  }
+  else
+    opt->getRange(data, opt->tmpMin, opt->tmpMax);
 
   writeX3DScaleBar(fp, p, xmin, ymin, width, height, tick, horizontal);
   writeX3DScaleValues(fp, p, xmin, ymin, width, height, tick, horizontal,
