@@ -12,6 +12,7 @@ set(SRC
   glImmediate.cpp
   glShader.cpp
   drawContext.cpp
+  drawPick.cpp
   drawMesh.cpp
   drawGeom.cpp
   drawPost.cpp
