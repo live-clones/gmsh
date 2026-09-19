@@ -7,6 +7,7 @@
 #define DRAW_CONTEXT_H
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <set>
 #include "SBoundingBox3d.h"
@@ -27,29 +28,25 @@
 #define NORMAL_GLTYPE GL_BYTE
 #endif
 
-// Bind the vertex, normal and color arrays and return the pointer to be passed
-// to glVertexPointer(), glNormalPointer() and glColorPointer(). When buffer
-// objects are enabled the arrays are uploaded to the GPU on first use, the
-// corresponding buffer is bound and the returned offset is null; otherwise the
-// client-side pointer is returned.
-const GLvoid *vaVertexPointer(VertexArray *va);
-const GLvoid *vaNormalPointer(VertexArray *va);
-const GLvoid *vaColorPointer(VertexArray *va);
+// Draw a vertex array as primitives of the given type, all of it or the runs
+// [first, last) of its vertices: lit with its normals (GMSH_DRAW_LIGHT, when
+// it has some), in its colours (GMSH_DRAW_COLORS, when it has some) or else
+// in the current colour, and with its polygons pushed behind the lines drawn
+// over them (GMSH_DRAW_OFFSET). A picking pass draws it unlit, in the colour
+// of the identifier it has set, unless the colours of the array are the
+// identifiers (GMSH_DRAW_IDENTIFIERS). The shader pipeline makes quads of the
+// lines wider than a pixel, and dashes the lines if stippling is on. Leaves
+// the lighting off.
+enum {
+  GMSH_DRAW_LIGHT = 1,
+  GMSH_DRAW_COLORS = 2,
+  GMSH_DRAW_OFFSET = 4,
+  GMSH_DRAW_IDENTIFIERS = 8
+};
+void gmshDrawVertexArray(VertexArray *va, GLenum type, int flags,
+                         const std::vector<std::pair<int, int> > *runs =
+                           nullptr);
 
-// Bind the arrays of a vertex array for drawing: the vertices always, the
-// normals and colours on request (an unbound colour array means the current
-// colour is used). gmshUnbindArrays() undoes it. The shader pipeline binds
-// them as vertex attributes rather than as client arrays.
-void gmshBindVertexArray(VertexArray *va, bool normals, bool colors);
-// same, for arrays the caller holds itself rather than in a VertexArray
-void gmshBindArrays(const float *vertices, const unsigned char *colors);
-void gmshUnbindArrays();
-
-// draw what the last bind left
-void gmshDrawArrays(GLenum type, int count, const float *dashes = nullptr);
-// the vertices [first, first + count) of the bound array (not for arrays
-// bound with gmshBindArrays(), which are streamed from the first)
-void gmshDrawArraysRange(GLenum type, int first, int count);
 // which part of the scene a pass draws: everything transparent is drawn after
 // everything else, in one pass
 enum gmshTransparencyPass {
@@ -57,8 +54,6 @@ enum gmshTransparencyPass {
   TRANSPARENCY_OPAQUE = 1,
   TRANSPARENCY_TRANSPARENT = 2
 };
-// is anything in the geometry or the mesh transparent, through the
-// Transparency options or through a non-opaque colour?
 // Is anything in the geometry or the mesh transparent, through the
 // Transparency options, the colours of the options, or the colour of an
 // entity? Everything is, when the options' colours are; otherwise only the
@@ -70,8 +65,6 @@ bool gmshMeshIsTransparent();
 bool gmshMeshColorsAreTransparent();
 bool gmshMeshEntityIsTransparent(GEntity *e);
 
-// draw a vertex array, using its index array if it has one
-void drawVertexArray(VertexArray *va, GLenum type);
 class GModel;
 // GModel::getMeshStatus() for the drawing, which asks it several times a
 // frame: computed again only when the mesh, the geometry or the visibilities

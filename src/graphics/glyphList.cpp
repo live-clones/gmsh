@@ -8,6 +8,7 @@
 #include <map>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "OwnerCache.h"
 #include "glyphList.h"
 #include "glImmediate.h"
 #include "glMatrix.h"
@@ -389,14 +390,10 @@ void glyphList::draw(drawContext *ctx, bool light)
   for(int i = 0; i < 3; i++) {
     VertexArray *va = _rec[i];
     if(!va || !va->getNumVertices()) continue;
-    bool normals = (i == 2) && light && !ctx->inPickColorMode();
-    bool colors = !ctx->inPickColorMode();
-    if(normals) gmshLighting(true);
-    gmshBindVertexArray(va, normals, colors);
-    drawVertexArray(va, (i == 0) ? GL_POINTS : (i == 1) ? GL_LINES :
-                                                          GL_TRIANGLES);
-    gmshUnbindArrays();
-    gmshLighting(false);
+    gmshDrawVertexArray(va, (i == 0) ? GL_POINTS : (i == 1) ? GL_LINES :
+                                                              GL_TRIANGLES,
+                        ((i == 2 && light) ? GMSH_DRAW_LIGHT : 0) |
+                          GMSH_DRAW_COLORS);
   }
   bool instances = false;
   for(int k = 0; k < GLYPH_NUMKINDS; k++)
@@ -493,14 +490,8 @@ bool glyphList::_instanced(drawContext *ctx, bool light)
 
 void glyphList::_draw(drawContext *ctx, VertexArray *va, bool light)
 {
-  if(!va || !va->getNumVertices()) return;
-  bool normals = !ctx->inPickColorMode() && light && va->hasNormals();
-  bool colors = !ctx->inPickColorMode() && va->hasColors();
-  if(normals) gmshLighting(true);
-  gmshBindVertexArray(va, normals, colors);
-  drawVertexArray(va, GL_TRIANGLES);
-  gmshUnbindArrays();
-  gmshLighting(false);
+  gmshDrawVertexArray(va, GL_TRIANGLES,
+                      (light ? GMSH_DRAW_LIGHT : 0) | GMSH_DRAW_COLORS);
 }
 
 // how many vertices a scratch array holds at a time
@@ -536,39 +527,36 @@ void glyphList::_stream(drawContext *ctx, bool light)
 }
 
 namespace glyphCache {
-  typedef std::pair<const void *, int> key;
-  static std::map<key, glyphList *> _lists;
+  // the lists of an owner, one per slot
+  struct slots {
+    glyphList *list[GLYPH_NUMSLOTS] = {};
+    slots() = default;
+    slots(const slots &) = delete;
+    ~slots()
+    {
+      for(auto l : list) delete l;
+    }
+  };
+  static OwnerCache<slots> _lists;
 
   bool get(const void *owner, glyphSlot slot, const glyphToken &token,
            glyphList *&list)
   {
-    auto it = _lists.find(key(owner, slot));
-    if(it == _lists.end()) {
-      list = new glyphList();
-      _lists[key(owner, slot)] = list;
-      list->setToken(token);
+    glyphList *&l = _lists[owner].list[slot];
+    if(!l) {
+      l = new glyphList();
+      l->setToken(token);
+      list = l;
       return false;
     }
-    list = it->second;
+    list = l;
     if(list->filled() && list->token() == token) return true;
     list->clear();
     list->setToken(token);
     return false;
   }
 
-  void clear(const void *owner)
-  {
-    // the slots of an owner are consecutive: one lookup
-    auto it = _lists.lower_bound(key(owner, 0));
-    while(it != _lists.end() && it->first.first == owner) {
-      delete it->second;
-      it = _lists.erase(it);
-    }
-  }
+  void clear(const void *owner) { _lists.erase(owner); }
 
-  void clearAll()
-  {
-    for(auto &p : _lists) delete p.second;
-    _lists.clear();
-  }
+  void clearAll() { _lists.clear(); }
 } // namespace glyphCache

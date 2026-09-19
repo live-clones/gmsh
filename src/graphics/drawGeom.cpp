@@ -6,6 +6,7 @@
 #include <string.h>
 #include "drawContext.h"
 #include "Context.h"
+#include "OwnerCache.h"
 
 // the colour a selected entity is drawn in (GModelVertexArrays.cpp)
 extern unsigned int getSelectionColor(GEntity *e);
@@ -86,71 +87,6 @@ static glyphList *geomGlyphs(drawContext *ctx)
   return &_geomGlyphs;
 }
 
-// Draw every plain geometry point in one call instead of a gmshBegin/gmshEnd
-// block each, from an array per model kept between frames: gathered again at
-// every frame, 780,000 points took a tenth of a second. Rebuilt when the
-// geometry, the colours or the visibilities change (see CTX::stampChanges())
-// or the point colour. Returns true if it drew them; the selected points are
-// drawn again on top by the per-entity pass, and the labels too.
-namespace {
-  struct mergedPoints {
-    VertexArray *points = nullptr;
-    std::vector<double> token;
-  };
-  std::map<GModel *, mergedPoints> _mergedPoints;
-} // namespace
-
-static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
-{
-  CTX *c = CTX::instance();
-  if(ctx->render_mode == drawContext::GMSH_SELECT) return false;
-  if(!c->geom.points) return false; // only the selected ones are drawn
-  if(c->geom.pointType > 0) return false; // spheres, not points
-  if(c->geom.highlightOrphans) return false; // needs the per-entity colours
-  // which points are visible depends on which are selected; the display
-  // transform is applied here, and not kept
-  if(c->hideUnselected || ctx->getTransform()) return false;
-
-  for(auto it = _mergedPoints.begin(); it != _mergedPoints.end();) {
-    if(std::find(GModel::list.begin(), GModel::list.end(), it->first) ==
-       GModel::list.end()) {
-      delete it->second.points;
-      it = _mergedPoints.erase(it);
-    }
-    else
-      it++;
-  }
-  std::vector<double> tok = {(double)c->geom.stamp[0],
-                             (double)c->entityColorsStamp,
-                             (double)c->entityVisibilityStamp,
-                             (double)c->color.geom.point};
-  mergedPoints &mp = _mergedPoints[m];
-  if(!mp.points || tok != mp.token) {
-    delete mp.points;
-    mp.points = new VertexArray(1, (int)m->getNumVertices() + 1);
-    mp.token = tok;
-    for(auto it = m->firstVertex(); it != m->lastVertex(); it++) {
-      GVertex *v = *it;
-      if(!v->getVisibility()) continue;
-      if(v->geomType() == GEntity::BoundaryLayerPoint) continue;
-      double x = v->x(), y = v->y(), z = v->z();
-      unsigned int cc = v->useColor() ? v->getColor() : c->color.geom.point;
-      mp.points->add(&x, &y, &z, nullptr, &cc, nullptr, false);
-    }
-    mp.points->finalize();
-  }
-  if(!mp.points->getNumVertices()) return true;
-
-  gmshLightTwoSide(false);
-  gmshLighting(false);
-  gmshPointSize((float)(c->geom.pointSize * ctx->highResolutionPixelFactor()));
-  gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
-  gmshBindVertexArray(mp.points, false, true);
-  drawVertexArray(mp.points, GL_POINTS);
-  gmshUnbindArrays();
-  return true;
-}
-
 // does this pass draw this entity? A mixed geometry draws its opaque
 // entities in the opaque pass and the others in the transparent one
 static bool passWants(drawContext *ctx, GEntity *e)
@@ -160,217 +96,290 @@ static bool passWants(drawContext *ctx, GEntity *e)
          gmshGeometryEntityIsTransparent(e);
 }
 
-// The picking arrays of a model, per dimension: the points, the curves as
-// lines or the surfaces as triangles, with the identifier of their entity as
-// the colour of each vertex, kept between passes and drawn at once. Drawn
-// entity by entity, a picking pass of a model of 2.4 million entities took
-// 2 s, 15 s with its surfaces shown, and every hover asks for one. The
-// entities are registered in the same order at every pass, which gives them
-// the same identifiers as long as nothing before them changes; when
-// something does, the colours are written again. An entity stepped past with
-// the wheel is left out by drawing the array around its vertices.
+// The arrays of the geometry kept between frames, per model and dimension:
+// the points, the curves as lines and the surfaces as triangles (merged from
+// their own arrays), each drawn in one call. For the picture they carry the
+// colours of the entities; gathered and drawn entity by entity at every
+// frame, 780,000 points took a tenth of a second and 14,400 curves or
+// surfaces 70 ms with the shader pipeline. For a picking pass they carry the
+// identifiers of the entities: a pass over a model of 2.4 million entities
+// took 2 s drawn entity by entity, 15 s with its surfaces shown, and every
+// hover asks for one. The entities are registered in the same order at every
+// pass, which gives them the same identifiers as long as nothing before them
+// changes; when something does, the colours are written again. An entity
+// stepped past with the wheel is left out by drawing the array around its
+// vertices. An array is built again when what it is made from changes (see
+// keptToken()). The selected entities are drawn again on top by the
+// per-entity pass, which also draws the labels and what is not kept.
 namespace {
-  struct pickArray {
+  struct keptArray {
     VertexArray *va = nullptr;
-    std::vector<int> tags;
-    // the first vertex of each entity, and one past the last
-    std::vector<int> start;
     std::vector<double> token;
-    // the identifier of the first entity the colours were written for
+    // for picking: the entities, and the first vertex of each (and one past
+    // the last), and the identifier of the first the colours were written
+    // for
+    std::vector<int> tags, start;
     std::size_t base = 0;
     // some surfaces have no triangulation, and are left to the per-entity
     // pass (which draws their cross)
     bool incomplete = false;
+    keptArray() = default;
+    keptArray(const keptArray &) = delete;
+    ~keptArray() { delete va; }
   };
-  std::map<std::pair<GModel *, int>, pickArray> _pickArrays;
-  // set by the last kept drawing of surfaces (for the picture or for
-  // picking) of the model being drawn
-  bool _surfacesIncomplete = false;
+  struct keptModel {
+    keptArray shown[3], picked[3];
+  };
+  OwnerCache<keptModel> _keptModels;
+  // set while the dimension of the model being drawn comes from its kept
+  // array, and when some of its entities could not be kept
+  bool _kept = false, _keptIncomplete = false;
 } // namespace
 
-// whether an entity of the model is drawn by the pass, as the per-entity
-// drawers decide
-static bool pickWanted(drawContext *ctx, GEntity *e)
+static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts);
+static unsigned int curveColor(GEdge *e);
+
+// does a kept array cover this dimension of the model? Not for what it does
+// not hold: spheres (the cylinders of the curves are kept in a glyph list),
+// crosses, per-entity colours of orphans, points and curves under a display
+// transform, the models other than the current one for picking, or what
+// depends on the selection
+static bool keptCovers(drawContext *ctx, GModel *m, int dim, bool pick)
 {
-  if(!passWants(ctx, e) || !e->getVisibility()) return false;
-  switch(e->geomType()) {
-  case GEntity::BoundaryLayerPoint:
-  case GEntity::DiscreteCurve:
-  case GEntity::PartitionCurve:
-  case GEntity::BoundaryLayerCurve:
-  case GEntity::PartitionSurface:
-  case GEntity::BoundaryLayerSurface: return false;
-  default: return true;
+  CTX *c = CTX::instance();
+  if(c->hideUnselected) return false;
+  if((pick || dim < 2) && ctx->getTransform()) return false;
+  if(pick && m != GModel::current()) return false;
+  switch(dim) {
+  case 0:
+    return c->geom.points && c->geom.pointType <= 0 &&
+           (pick || !c->geom.highlightOrphans);
+  case 1: return c->geom.curves && (!pick || c->geom.curveType <= 0);
+  case 2: return c->geom.surfaces && c->geom.surfaceType >= 1;
+  default: return false;
   }
 }
 
-static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts);
-
-// Draw the entities of a dimension of the model from its picking array;
-// false if they have to be drawn one at a time (a display this does not
-// cover: spheres, cylinders, crosses)
-static bool drawPickArray(drawContext *ctx, GModel *m, int dim)
+// what a kept array is made from, besides the entities themselves
+static std::vector<double> keptToken(drawContext *ctx, int dim, bool pick)
 {
   CTX *c = CTX::instance();
-  if(ctx->render_mode != drawContext::GMSH_SELECT) return false;
-  if(m != GModel::current() || ctx->getTransform()) return false;
-  if(c->hideUnselected) return false;
-  if(dim == 0 && (!c->geom.points || c->geom.pointType > 0)) return false;
-  if(dim == 1 && (!c->geom.curves || c->geom.curveType > 0)) return false;
-  if(dim == 2 && (!c->geom.surfaces || c->geom.surfaceType < 1)) return false;
+  std::vector<double> tok = {(double)c->geom.stamp[dim],
+                             (double)c->entityVisibilityStamp};
+  if(pick) {
+    tok.push_back(c->geom.numSubEdges);
+    tok.push_back(ctx->transparencyPass);
+  }
+  else if(dim == 0) {
+    tok.push_back(c->entityColorsStamp);
+    tok.push_back(c->color.geom.point);
+  }
+  else if(dim == 1) {
+    std::vector<double> more = {(double)c->entityColorsStamp,
+                                (double)c->geom.numSubEdges,
+                                (double)c->geom.curveType,
+                                (double)c->color.geom.curve,
+                                (double)c->geom.highlightOrphans,
+                                (double)c->color.geom.highlight[0],
+                                (double)c->color.geom.highlight[1],
+                                (double)c->geom.useTransform};
+    tok.insert(tok.end(), more.begin(), more.end());
+  }
+  return tok;
+}
 
-  for(auto it = _pickArrays.begin(); it != _pickArrays.end();) {
-    if(std::find(GModel::list.begin(), GModel::list.end(), it->first.first) ==
-       GModel::list.end()) {
-      delete it->second.va;
-      it = _pickArrays.erase(it);
+// f(e) for each entity of a dimension of the model a kept array holds: those
+// drawn by the pass, as the per-entity drawers decide
+template <class F>
+static void forKeptEntities(drawContext *ctx, GModel *m, int dim, F f)
+{
+  std::vector<GEntity *> ents;
+  if(dim == 0) ents.insert(ents.end(), m->firstVertex(), m->lastVertex());
+  if(dim == 1) ents.insert(ents.end(), m->firstEdge(), m->lastEdge());
+  if(dim == 2) ents.insert(ents.end(), m->firstFace(), m->lastFace());
+  for(auto e : ents) {
+    if(!passWants(ctx, e) || !e->getVisibility()) continue;
+    switch(e->geomType()) {
+    case GEntity::BoundaryLayerPoint:
+    case GEntity::DiscreteCurve:
+    case GEntity::PartitionCurve:
+    case GEntity::BoundaryLayerCurve:
+    case GEntity::PartitionSurface:
+    case GEntity::BoundaryLayerSurface: continue;
+    default: f(e);
+    }
+  }
+}
+
+// the kept array of a dimension of the model, built again if needed; the
+// colours of a picking array are written when it is drawn
+static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
+{
+  CTX *c = CTX::instance();
+  keptModel &km = _keptModels[m];
+  keptArray &ka = pick ? km.picked[dim] : km.shown[dim];
+  if(ka.va && keptToken(ctx, dim, pick) == ka.token) return ka;
+  delete ka.va;
+  ka.va = new VertexArray(dim + 1, dim ? 1000 : (int)m->getNumVertices() + 1);
+  ka.tags.clear();
+  ka.start.clear();
+  ka.base = 0;
+  ka.incomplete = false;
+  const unsigned int black[3] = {0, 0, 0};
+  std::vector<SPoint3> pts;
+  forKeptEntities(ctx, m, dim, [&](GEntity *e) {
+    GFace *f = (dim == 2) ? static_cast<GFace *>(e) : nullptr;
+    if(f) {
+      f->fillVertexArray();
+      if(!f->va_geom_triangles) {
+        ka.incomplete = true;
+        return;
+      }
+    }
+    ka.tags.push_back(e->tag());
+    ka.start.push_back(ka.va->getNumVertices());
+    if(dim == 0) {
+      GVertex *v = static_cast<GVertex *>(e);
+      double x = v->x(), y = v->y(), z = v->z();
+      unsigned int col = pick ? 0 : v->useColor() ? v->getColor() :
+                                                    c->color.geom.point;
+      ka.va->add(&x, &y, &z, nullptr, &col, nullptr, false);
+    }
+    else if(dim == 1) {
+      curvePoints(ctx, static_cast<GEdge *>(e), pts);
+      unsigned int col[2];
+      col[0] = col[1] = pick ? 0 : curveColor(static_cast<GEdge *>(e));
+      for(std::size_t i = 0; i + 1 < pts.size(); i++) {
+        double x[2] = {pts[i].x(), pts[i + 1].x()};
+        double y[2] = {pts[i].y(), pts[i + 1].y()};
+        double z[2] = {pts[i].z(), pts[i + 1].z()};
+        ka.va->add(x, y, z, nullptr, col, nullptr, false);
+      }
     }
     else
-      it++;
-  }
-  std::vector<double> tok = {(double)c->geom.stamp[dim],
-                             (double)c->entityVisibilityStamp,
-                             (double)c->geom.numSubEdges,
-                             (double)ctx->transparencyPass};
-  pickArray &pa = _pickArrays[std::make_pair(m, dim)];
-  if(!pa.va || tok != pa.token) {
-    delete pa.va;
-    pa.va = new VertexArray(dim + 1, 1000);
-    pa.tags.clear();
-    pa.start.clear();
-    pa.incomplete = false;
-    unsigned int black = 0;
-    unsigned int col[3] = {black, black, black};
+      ka.va->merge(f->va_geom_triangles,
+                   pick ? (const unsigned char *)black : nullptr);
+  });
+  ka.start.push_back(ka.va->getNumVertices());
+  ka.va->finalize();
+  // after the arrays of the surfaces have been filled, which may have
+  // dropped some of them
+  c->stampChanges();
+  ka.token = keptToken(ctx, dim, pick);
+  return ka;
+}
+
+// the curves of the model as cylinders, kept in a list of the glyph cache
+static void drawKeptCylinders(drawContext *ctx, GModel *m)
+{
+  CTX *c = CTX::instance();
+  glyphToken gt;
+  for(auto v : keptToken(ctx, 1, false)) gt.add(v);
+  gt.add(ctx->pixel_equiv_x / ctx->s[0]);
+  gt.add(c->geom.curveWidth);
+  glyphList *g;
+  if(!glyphCache::get(m, GLYPH_GEOM_CURVES, gt, g)) {
+    double r = c->geom.curveWidth * ctx->pixel_equiv_x / ctx->s[0];
     std::vector<SPoint3> pts;
-    std::vector<GEntity *> ents;
-    if(dim == 0) ents.insert(ents.end(), m->firstVertex(), m->lastVertex());
-    if(dim == 1) ents.insert(ents.end(), m->firstEdge(), m->lastEdge());
-    if(dim == 2) ents.insert(ents.end(), m->firstFace(), m->lastFace());
-    for(auto e : ents) {
-      if(!pickWanted(ctx, e)) continue;
-      if(dim == 2) {
-        GFace *f = static_cast<GFace *>(e);
-        f->fillVertexArray();
-        if(!f->va_geom_triangles) {
-          pa.incomplete = true;
-          continue;
-        }
+    forKeptEntities(ctx, m, 1, [&](GEntity *e) {
+      curvePoints(ctx, static_cast<GEdge *>(e), pts);
+      unsigned int col = curveColor(static_cast<GEdge *>(e));
+      for(std::size_t i = 0; i + 1 < pts.size(); i++) {
+        double x[2] = {pts[i].x(), pts[i + 1].x()};
+        double y[2] = {pts[i].y(), pts[i + 1].y()};
+        double z[2] = {pts[i].z(), pts[i + 1].z()};
+        g->addCylinder(x, y, z, r, r, col);
       }
-      pa.tags.push_back(e->tag());
-      pa.start.push_back(pa.va->getNumVertices());
-      if(dim == 0) {
-        GVertex *v = static_cast<GVertex *>(e);
-        double x = v->x(), y = v->y(), z = v->z();
-        pa.va->add(&x, &y, &z, nullptr, col, nullptr, false);
-      }
-      else if(dim == 1) {
-        curvePoints(ctx, static_cast<GEdge *>(e), pts);
-        for(std::size_t i = 0; i + 1 < pts.size(); i++) {
-          double x[2] = {pts[i].x(), pts[i + 1].x()};
-          double y[2] = {pts[i].y(), pts[i + 1].y()};
-          double z[2] = {pts[i].z(), pts[i + 1].z()};
-          pa.va->add(x, y, z, nullptr, col, nullptr, false);
-        }
-      }
-      else {
-        GFace *f = static_cast<GFace *>(e);
-        f->fillVertexArray();
-        VertexArray *t = f->va_geom_triangles;
-        for(int i = 0; t && i + 2 < t->getNumVertices(); i += 3) {
-          double x[3], y[3], z[3];
-          for(int k = 0; k < 3; k++) {
-            float *p = t->getVertexArray(3 * (i + k));
-            x[k] = p[0];
-            y[k] = p[1];
-            z[k] = p[2];
-          }
-          pa.va->add(x, y, z, nullptr, col, nullptr, false);
-        }
-      }
-    }
-    pa.start.push_back(pa.va->getNumVertices());
-    pa.va->finalize();
-    // the surfaces filling their arrays may have said so: that is done
-    c->stampChanges();
-    pa.token = {(double)c->geom.stamp[dim], (double)c->entityVisibilityStamp,
-                (double)c->geom.numSubEdges, (double)ctx->transparencyPass};
-    pa.base = 0;
+    });
   }
-  if(dim == 2) _surfacesIncomplete = pa.incomplete;
-  if(pa.tags.empty()) return true;
-
-  // the identifiers of this pass, and the colours for them if they moved
-  std::size_t base = ctx->pickRegister(dim, pa.tags);
-  if(base != pa.base) {
-    for(std::size_t k = 0; k < pa.tags.size(); k++) {
-      unsigned char id[4];
-      drawContext::pickIdColor(base + k, id);
-      for(int i = pa.start[k]; i < pa.start[k + 1]; i++) {
-        unsigned char *p = pa.va->getColorArray(4 * i);
-        for(int j = 0; j < 4; j++) p[j] = id[j];
-      }
-    }
-    pa.va->setVboDirty(true);
-    pa.base = base;
-  }
-
-  // the runs of vertices between the entities stepped past
-  std::vector<std::pair<int, int> > runs;
-  int from = 0;
-  for(std::size_t k = 0; k < pa.tags.size(); k++) {
-    if(!ctx->pickSkipped(dim, pa.tags[k])) continue;
-    if(pa.start[k] > from) runs.push_back(std::make_pair(from, pa.start[k]));
-    from = pa.start[k + 1];
-  }
-  if(pa.start.back() > from) runs.push_back(std::make_pair(from, pa.start.back()));
-
-  ctx->pickStateFor(dim);
+  // the inside of the open end of a tube shows: lit on both sides, as the
+  // pass drawing them after the surfaces had left it
+  gmshLightTwoSide(c->geom.lightTwoSide ? true : false);
+  g->draw(ctx, c->geom.light);
   gmshLightTwoSide(false);
+}
+
+// draw a dimension of the model from its kept array; false if its entities
+// have to be drawn one at a time (see keptCovers())
+static bool drawKept(drawContext *ctx, GModel *m, int dim)
+{
+  CTX *c = CTX::instance();
+  bool pick = (ctx->render_mode == drawContext::GMSH_SELECT);
+  if(!keptCovers(ctx, m, dim, pick)) return false;
+  if(dim == 1 && !pick && c->geom.curveType > 0) {
+    drawKeptCylinders(ctx, m);
+    return true;
+  }
+  keptArray &ka = getKept(ctx, m, dim, pick);
+  _keptIncomplete = ka.incomplete;
+  if(pick ? ka.tags.empty() : !ka.va->getNumVertices()) return true;
+
+  std::vector<std::pair<int, int> > runs;
+  if(pick) {
+    // the identifiers of this pass, and the colours for them if they moved
+    std::size_t base = ctx->pickRegister(dim, ka.tags);
+    if(base != ka.base) {
+      for(std::size_t k = 0; k < ka.tags.size(); k++) {
+        unsigned char id[4];
+        drawContext::pickIdColor(base + k, id);
+        for(int i = ka.start[k]; i < ka.start[k + 1]; i++) {
+          unsigned char *p = ka.va->getColorArray(4 * i);
+          for(int j = 0; j < 4; j++) p[j] = id[j];
+        }
+      }
+      ka.va->setVboDirty(true);
+      ka.base = base;
+    }
+    // the runs of vertices between the entities stepped past
+    int from = 0;
+    for(std::size_t k = 0; k < ka.tags.size(); k++) {
+      if(!ctx->pickSkipped(dim, ka.tags[k])) continue;
+      if(ka.start[k] > from) runs.push_back(std::make_pair(from, ka.start[k]));
+      from = ka.start[k + 1];
+    }
+    if(ka.start.back() > from)
+      runs.push_back(std::make_pair(from, ka.start.back()));
+    ctx->pickStateFor(dim);
+  }
+
+  // as the entities are drawn one at a time: a wireframe half as wide as the
+  // curves, a picking pass the surfaces as they are shown (what is visible is
+  // what is picked)
+  double width = (dim == 1) ? c->geom.curveWidth : c->geom.curveWidth / 2.;
+  gmshLightTwoSide(!pick && dim == 2 && c->geom.surfaceType > 1 &&
+                   c->geom.lightTwoSide);
   gmshLighting(false);
-  double fact = ctx->highResolutionPixelFactor();
-  gmshPointSize((float)(c->geom.pointSize * fact));
-  gmshLineWidth((float)(dim == 1 ? c->geom.curveWidth : c->geom.curveWidth / 2.));
-  bool fill = (dim == 2 && c->geom.surfaceType > 1);
-  if(dim == 2) {
-    gmshPolygonFill(fill);
-    if(c->polygonOffset) glEnable(GL_POLYGON_OFFSET_FILL);
-  }
+  gmshPointSize((float)(c->geom.pointSize * ctx->highResolutionPixelFactor()));
+  gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
+  gmshLineWidth((float)width);
+  gl2psLineWidth((float)(width * c->print.epsLineWidthFactor));
+  if(dim == 2) gmshPolygonFill(c->geom.surfaceType > 1);
   GLenum type = (dim == 0) ? GL_POINTS : (dim == 1) ? GL_LINES : GL_TRIANGLES;
-  gmshBindVertexArray(pa.va, false, true);
-  if(runs.size() == 1 && runs[0].first == 0 &&
-     runs[0].second == pa.start.back())
-    drawVertexArray(pa.va, type);
-  else
-    for(auto &r : runs) gmshDrawArraysRange(type, r.first, r.second - r.first);
-  gmshUnbindArrays();
-  if(dim == 2) {
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    gmshPolygonFill(true);
-  }
+  int flags = pick ? GMSH_DRAW_IDENTIFIERS : GMSH_DRAW_COLORS;
+  if(dim == 2 && !pick && c->geom.light) flags |= GMSH_DRAW_LIGHT;
+  if(dim == 2 && c->polygonOffset) flags |= GMSH_DRAW_OFFSET;
+  gmshDrawVertexArray(ka.va, type, flags, pick ? &runs : nullptr);
+  if(dim == 2) gmshPolygonFill(true);
   return true;
 }
 
 class drawGVertex {
 private:
   drawContext *_ctx;
-  bool _batched, _picked;
 
 public:
-  drawGVertex(drawContext *ctx, bool batched = false, bool picked = false)
-    : _ctx(ctx), _batched(batched), _picked(picked)
-  {
-  }
+  drawGVertex(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GVertex *v)
   {
     if(!passWants(_ctx, v)) return;
     if(!v->getVisibility()) return;
     if(v->geomType() == GEntity::BoundaryLayerPoint) return;
-    // already drawn by drawGeomPointsBatched(), and nothing else here applies
-    if(_batched && !v->getSelection() && !CTX::instance()->geom.pointLabels)
+    // already in the kept array: for a picking pass, selected or not (it
+    // draws them all alike, and no label); for the picture, unless selected
+    // or labelled
+    if(_kept && (_ctx->render_mode == drawContext::GMSH_SELECT ||
+                 (!v->getSelection() && !CTX::instance()->geom.pointLabels)))
       return;
-    // already in the picking array, selected or not (a picking pass draws
-    // them all alike), and a label is not drawn in a picking pass
-    if(_picked) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    v->model() == GModel::current());
@@ -425,11 +434,11 @@ public:
       }
       else {
         // over the kept points, which hold this one too
-        if(_batched) glDepthFunc(GL_LEQUAL);
+        if(_kept) glDepthFunc(GL_LEQUAL);
         gmshBegin(GL_POINTS);
         gmshVertex3d(x, y, z);
         gmshEnd();
-        if(_batched) {
+        if(_kept) {
           gmshFlushImmediate();
           glDepthFunc(GL_LESS);
         }
@@ -477,121 +486,6 @@ static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts)
     ctx->transform(x, y, z);
     pts.push_back(SPoint3(x, y, z));
   }
-}
-
-// The curves of a model, sampled once and kept between frames - as lines in
-// one array, or as cylinders in a list of the glyph cache - and drawn at
-// once: sampled again at every frame, a line strip or cylinders at a time,
-// 14,400 curves took 70 ms a frame with the shader pipeline. Rebuilt when the
-// geometry, the colours or the visibilities change (see CTX::stampChanges()),
-// or the options they are drawn with. The selected curves are drawn again
-// on top by the per-entity pass, and a picking pass draws them one at a
-// time, each with its own identifier.
-namespace {
-  struct mergedCurves {
-    VertexArray *lines = nullptr;
-    std::vector<double> token;
-  };
-  std::map<GModel *, mergedCurves> _mergedCurves;
-  // set while the curves of the model being drawn come from these
-  bool _curvesMerged = false;
-} // namespace
-
-static bool drawMergedCurves(drawContext *ctx, GModel *m)
-{
-  CTX *c = CTX::instance();
-  if(ctx->render_mode == drawContext::GMSH_SELECT) return false;
-  if(!c->geom.curves) return false; // only the ones shown by the selection
-  // which entities are visible depends on which are selected
-  if(c->hideUnselected) return false;
-  // the models that are gone take their arrays with them
-  for(auto it = _mergedCurves.begin(); it != _mergedCurves.end();) {
-    if(std::find(GModel::list.begin(), GModel::list.end(), it->first) ==
-       GModel::list.end()) {
-      delete it->second.lines;
-      it = _mergedCurves.erase(it);
-    }
-    else
-      it++;
-  }
-  std::vector<double> tok = {(double)CTX::instance()->geom.stamp[1],
-                             (double)CTX::instance()->entityColorsStamp,
-                             (double)CTX::instance()->entityVisibilityStamp,
-                             (double)c->geom.numSubEdges,
-                             (double)c->geom.curveType,
-                             (double)c->color.geom.curve,
-                             (double)c->geom.highlightOrphans,
-                             (double)c->color.geom.highlight[0],
-                             (double)c->color.geom.highlight[1],
-                             (double)c->geom.useTransform};
-  bool cylinders = (c->geom.curveType > 0);
-  std::vector<SPoint3> pts;
-  if(cylinders) {
-    glyphToken gt;
-    for(auto v : tok) gt.add(v);
-    gt.add(ctx->pixel_equiv_x / ctx->s[0]);
-    gt.add(c->geom.curveWidth);
-    glyphList *g;
-    if(!glyphCache::get(m, GLYPH_GEOM_CURVES, gt, g)) {
-      double r = c->geom.curveWidth * ctx->pixel_equiv_x / ctx->s[0];
-      for(auto it = m->firstEdge(); it != m->lastEdge(); it++) {
-        GEdge *e = *it;
-        if(!e->getVisibility()) continue;
-        if(e->geomType() == GEntity::DiscreteCurve ||
-           e->geomType() == GEntity::PartitionCurve ||
-           e->geomType() == GEntity::BoundaryLayerCurve)
-          continue;
-        curvePoints(ctx, e, pts);
-        unsigned int col = curveColor(e);
-        for(std::size_t i = 0; i + 1 < pts.size(); i++) {
-          double x[2] = {pts[i].x(), pts[i + 1].x()};
-          double y[2] = {pts[i].y(), pts[i + 1].y()};
-          double z[2] = {pts[i].z(), pts[i + 1].z()};
-          g->addCylinder(x, y, z, r, r, col);
-        }
-      }
-    }
-    // the inside of the open end of a tube shows: lit on both sides, as the
-    // pass drawing them after the surfaces had left it
-    gmshLightTwoSide(c->geom.lightTwoSide ? true : false);
-    g->draw(ctx, c->geom.light);
-    gmshLightTwoSide(false);
-    return true;
-  }
-  mergedCurves &mc = _mergedCurves[m];
-  if(!mc.lines || tok != mc.token) {
-    delete mc.lines;
-    mc.lines = new VertexArray(2, 1000);
-    mc.token = tok;
-    for(auto it = m->firstEdge(); it != m->lastEdge(); it++) {
-      GEdge *e = *it;
-      if(!e->getVisibility()) continue;
-      if(e->geomType() == GEntity::DiscreteCurve ||
-         e->geomType() == GEntity::PartitionCurve ||
-         e->geomType() == GEntity::BoundaryLayerCurve)
-        continue;
-      curvePoints(ctx, e, pts);
-      unsigned int col[2];
-      col[0] = col[1] = curveColor(e);
-      for(std::size_t i = 0; i + 1 < pts.size(); i++) {
-        double x[2] = {pts[i].x(), pts[i + 1].x()};
-        double y[2] = {pts[i].y(), pts[i + 1].y()};
-        double z[2] = {pts[i].z(), pts[i + 1].z()};
-        mc.lines->add(x, y, z, nullptr, col, nullptr, false);
-      }
-    }
-    mc.lines->finalize();
-  }
-  if(mc.lines->getNumVertices()) {
-    gmshLightTwoSide(false);
-    gmshLighting(false);
-    gmshLineWidth((float)c->geom.curveWidth);
-    gl2psLineWidth((float)(c->geom.curveWidth * c->print.epsLineWidthFactor));
-    gmshBindVertexArray(mc.lines, false, true);
-    drawVertexArray(mc.lines, GL_LINES);
-    gmshUnbindArrays();
-  }
-  return true;
 }
 
 class drawGEdge {
@@ -646,7 +540,7 @@ public:
 
     // already in the kept curves, unless selected: then drawn again on top,
     // which needs the depth test to accept equal depths
-    bool merged = _curvesMerged && CTX::instance()->geom.curves;
+    bool merged = _kept && CTX::instance()->geom.curves;
     bool drawIt =
       (CTX::instance()->geom.curves ||
        e->getSelection() == GEntity::SelectShow) &&
@@ -729,85 +623,6 @@ public:
   }
 };
 
-// The surfaces of a model drawn as their triangulation (wireframe or solid),
-// merged into one array kept between frames and drawn at once, rather than
-// an array per surface: 14,400 surfaces took 70 ms a frame with the shader
-// pipeline, a draw call each. Merged from the arrays of the surfaces, which
-// keep their colours, and rebuilt when one of them is dropped or the
-// geometry changes (CTX::geom.changed, ENT_SURFACE), or the visibilities.
-// The selected surfaces are drawn again on top by the per-entity pass, and
-// a picking pass draws them one at a time as before.
-namespace {
-  struct mergedSurfaces {
-    VertexArray *triangles = nullptr;
-    std::vector<double> token;
-    // some surfaces have no triangulation (see _surfacesIncomplete)
-    bool incomplete = false;
-  };
-  std::map<GModel *, mergedSurfaces> _mergedSurfaces;
-  bool _surfacesMerged = false;
-} // namespace
-
-static bool drawMergedSurfaces(drawContext *ctx, GModel *m)
-{
-  CTX *c = CTX::instance();
-  if(ctx->render_mode == drawContext::GMSH_SELECT) return false;
-  if(!c->geom.surfaces || c->geom.surfaceType < 1) return false;
-  if(c->hideUnselected) return false;
-  for(auto it = _mergedSurfaces.begin(); it != _mergedSurfaces.end();) {
-    if(std::find(GModel::list.begin(), GModel::list.end(), it->first) ==
-       GModel::list.end()) {
-      delete it->second.triangles;
-      it = _mergedSurfaces.erase(it);
-    }
-    else
-      it++;
-  }
-  std::vector<double> tok = {(double)c->geom.stamp[2],
-                             (double)c->entityVisibilityStamp};
-  mergedSurfaces &ms = _mergedSurfaces[m];
-  if(!ms.triangles || tok != ms.token) {
-    delete ms.triangles;
-    ms.triangles = new VertexArray(3, 1000);
-    ms.incomplete = false;
-    for(auto it = m->firstFace(); it != m->lastFace(); it++) {
-      GFace *f = *it;
-      if(!f->getVisibility()) continue;
-      if(f->geomType() == GEntity::PartitionSurface ||
-         f->geomType() == GEntity::BoundaryLayerSurface)
-        continue;
-      f->fillVertexArray();
-      if(f->va_geom_triangles)
-        ms.triangles->merge(f->va_geom_triangles);
-      else
-        ms.incomplete = true;
-    }
-    ms.triangles->finalize();
-    // after the arrays of the surfaces have been filled, which may have
-    // dropped some of them
-    c->stampChanges();
-    ms.token = {(double)c->geom.stamp[2], (double)c->entityVisibilityStamp};
-  }
-  _surfacesIncomplete = ms.incomplete;
-  VertexArray *va = ms.triangles;
-  if(!va->getNumVertices()) return true;
-  bool normals = c->geom.light && va->hasNormals();
-  if(normals) gmshLighting(true);
-  gmshBindVertexArray(va, normals, va->hasColors());
-  if(c->polygonOffset) glEnable(GL_POLYGON_OFFSET_FILL);
-  gmshLightTwoSide(c->geom.surfaceType > 1 && c->geom.lightTwoSide);
-  gmshPolygonFill(c->geom.surfaceType > 1);
-  // a wireframe is drawn half as wide as the curves, as drawGFace does
-  gmshLineWidth((float)(c->geom.curveWidth / 2.));
-  gl2psLineWidth((float)(c->geom.curveWidth / 2. * c->print.epsLineWidthFactor));
-  drawVertexArray(va, GL_TRIANGLES);
-  glDisable(GL_POLYGON_OFFSET_FILL);
-  gmshLighting(false);
-  gmshPolygonFill(true);
-  gmshUnbindArrays();
-  return true;
-}
-
 class drawGFace {
 private:
   drawContext *_ctx;
@@ -815,14 +630,9 @@ private:
                         int forceColor = 0, unsigned int color = 0)
   {
     if(!va || !va->getNumVertices()) return;
-    bool normals =
-      !_ctx->inPickColorMode() && useNormalArray && va->hasNormals();
-    if(normals) gmshLighting(true);
-    bool colors = !_ctx->inPickColorMode() && !forceColor && va->hasColors();
-    gmshBindVertexArray(va, normals, colors);
+    bool colors = !forceColor && va->hasColors();
     if(!_ctx->inPickColorMode() && !colors)
       gmshColor4ubv((const void *)&color);
-    if(CTX::instance()->polygonOffset) glEnable(GL_POLYGON_OFFSET_FILL);
     // a picking pass draws the surface as it is shown, wireframe or solid:
     // what is visible is what is picked
     if(CTX::instance()->geom.surfaceType > 1) {
@@ -836,11 +646,12 @@ private:
       gmshLightTwoSide(false);
       gmshPolygonFill(false);
     }
-    drawVertexArray(va, GL_TRIANGLES);
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    gmshLighting(false);
+    gmshDrawVertexArray(va, GL_TRIANGLES,
+                        (useNormalArray ? GMSH_DRAW_LIGHT : 0) |
+                          (colors ? GMSH_DRAW_COLORS : 0) |
+                          (CTX::instance()->polygonOffset ? GMSH_DRAW_OFFSET :
+                                                            0));
     gmshPolygonFill(true);
-    gmshUnbindArrays();
   }
 
 public:
@@ -901,7 +712,7 @@ public:
         if(f->getSelection()) selected = true;
         // already in the merged array, unless selected: then drawn again on
         // top, which needs the depth test to accept equal depths
-        bool merged = _surfacesMerged && CTX::instance()->geom.surfaces;
+        bool merged = _kept && CTX::instance()->geom.surfaces;
         if(!merged || (selected && !_ctx->inPickColorMode())) {
           if(merged) glDepthFunc(GL_LEQUAL);
           _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
@@ -1122,30 +933,23 @@ void drawContext::drawGeom()
                    !gmshGeometryColorsAreTransparent();
       bool pick = (render_mode == GMSH_SELECT);
       CTX *c = CTX::instance();
-      {
-        bool picked = !mixed && drawPickArray(this, m, 0);
-        bool batched = picked || (!mixed && drawGeomPointsBatched(this, m));
-        bool all = (!pick && c->geom.pointLabels) ||
-                   (c->geom.points && !batched);
-        forEntities<GVertex>(m, 0, all, drawGVertex(this, batched, picked));
-      }
-      {
-        bool picked = !mixed && drawPickArray(this, m, 1);
-        _curvesMerged =
-          picked || (!mixed && !getTransform() && drawMergedCurves(this, m));
-        bool all = (!pick && c->geom.curveLabels) || c->geom.tangents ||
-                   (c->geom.curves && !_curvesMerged);
-        forEntities<GEdge>(m, 1, all, drawGEdge(this));
-        _curvesMerged = false;
-      }
-      {
-        _surfacesIncomplete = false;
-        bool picked = !mixed && drawPickArray(this, m, 2);
-        _surfacesMerged = picked || (!mixed && drawMergedSurfaces(this, m));
-        bool all = (!pick && c->geom.surfaceLabels) || c->geom.normals ||
-                   (c->geom.surfaces && (!_surfacesMerged || _surfacesIncomplete));
-        forEntities<GFace>(m, 2, all, drawGFace(this));
-        _surfacesMerged = false;
+      for(int dim = 0; dim < 3; dim++) {
+        _kept = !mixed && drawKept(this, m, dim);
+        bool shown = (dim == 0) ? c->geom.points :
+                     (dim == 1) ? c->geom.curves :
+                                  c->geom.surfaces;
+        bool labels = (dim == 0) ? c->geom.pointLabels :
+                      (dim == 1) ? c->geom.curveLabels :
+                                   c->geom.surfaceLabels;
+        bool vectors = (dim == 1) ? c->geom.tangents :
+                       (dim == 2) ? c->geom.normals :
+                                    false;
+        bool all = (!pick && labels) || vectors ||
+                   (shown && (!_kept || _keptIncomplete));
+        if(dim == 0) forEntities<GVertex>(m, 0, all, drawGVertex(this));
+        if(dim == 1) forEntities<GEdge>(m, 1, all, drawGEdge(this));
+        if(dim == 2) forEntities<GFace>(m, 2, all, drawGFace(this));
+        _kept = _keptIncomplete = false;
       }
       std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
     }

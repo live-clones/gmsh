@@ -21,6 +21,7 @@
 #include "VertexArray.h"
 #include "SmoothData.h"
 #include "Context.h"
+#include "OwnerCache.h"
 #include "OS.h"
 #include "OpenFile.h"
 #include "mathEvaluator.h"
@@ -463,6 +464,64 @@ static bool topoDuplicate(VertexArray *va, const std::size_t *nodeIds,
   return false;
 }
 
+// With smoothed normals, the normal at a point is the average of those of
+// the faces through it: gathered by the pass that only collects them (pre),
+// read back by the one that draws.
+static void smoothNormal(drawTarget *p, bool pre, double x, double y, double z,
+                         SVector3 &n)
+{
+  if(!p->opt->smoothNormals) return;
+  if(pre)
+    p->normals->add(x, y, z, n[0], n[1], n[2]);
+  else
+    p->normals->get(x, y, z, n[0], n[1], n[2]);
+}
+
+// f(k, min, max) for each band of the scale, or f(k, iso) for each iso-value:
+// the middle one only when the range is empty
+template <class F>
+static void forBands(PViewOptions *opt, double vmin, double vmax, F f)
+{
+  for(int k = 0; k < opt->nbIso; k++) {
+    if(vmin == vmax) k = opt->nbIso / 2;
+    f(k, opt->getScaleValue(k, opt->nbIso + 1, vmin, vmax),
+      opt->getScaleValue(k + 1, opt->nbIso + 1, vmin, vmax));
+    if(vmin == vmax) break;
+  }
+}
+
+template <class F>
+static void forIsos(PViewOptions *opt, double vmin, double vmax, F f)
+{
+  for(int k = 0; k < opt->nbIso; k++) {
+    if(vmin == vmax) k = opt->nbIso / 2;
+    f(k, opt->getScaleValue(k, opt->nbIso, vmin, vmax));
+    if(vmin == vmax) break;
+  }
+}
+
+// the triangles of a convex polygon of nb points, as a fan around its first,
+// with the normal n and a colour per point of the polygon
+static void addFan(drawTarget *p, bool pre, int nb, const double *x,
+                   const double *y, const double *z, const SVector3 &nfac,
+                   const unsigned int *col, bool unique)
+{
+  for(int j = 2; j < nb; j++) {
+    const int t[3] = {0, j - 1, j};
+    double x3[3], y3[3], z3[3];
+    SVector3 n[3] = {nfac, nfac, nfac};
+    unsigned int c3[3];
+    for(int i = 0; i < 3; i++) {
+      x3[i] = x[t[i]];
+      y3[i] = y[t[i]];
+      z3[i] = z[t[i]];
+      c3[i] = col[t[i]];
+      smoothNormal(p, pre, x3[i], y3[i], z3[i], n[i]);
+    }
+    if(!pre) p->va_triangles->add(x3, y3, z3, n, c3, nullptr, unique);
+  }
+}
+
 static void addScalarPoint(drawTarget *p, double **xyz, double **val, bool pre,
                            int i0 = 0, bool unique = false)
 {
@@ -548,10 +607,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
   }
 
   if(opt->intervalsType == PViewOptions::Discrete) {
-    for(int k = 0; k < opt->nbIso; k++) {
-      if(vmin == vmax) k = opt->nbIso / 2;
-      double min = opt->getScaleValue(k, opt->nbIso + 1, vmin, vmax);
-      double max = opt->getScaleValue(k + 1, opt->nbIso + 1, vmin, vmax);
+    forBands(opt, vmin, vmax, [&](int k, double min, double max) {
       double x2[2], y2[2], z2[2], v2[2];
       int nb = CutLine(x, y, z, v, min, max, x2, y2, z2, v2);
       if(nb == 2) {
@@ -561,14 +617,11 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
         getLineNormal(p, x2, y2, z2, v2, n, true);
         p->va_lines->add(x2, y2, z2, n, col, nullptr, unique);
       }
-      if(vmin == vmax) break;
-    }
+    });
   }
 
   if(opt->intervalsType == PViewOptions::Iso) {
-    for(int k = 0; k < opt->nbIso; k++) {
-      if(vmin == vmax) k = opt->nbIso / 2;
-      double iso = opt->getScaleValue(k, opt->nbIso, vmin, vmax);
+    forIsos(opt, vmin, vmax, [&](int k, double iso) {
       double x2[1], y2[1], z2[1];
       int nb = IsoLine(x, y, z, v, iso, x2, y2, z2);
       if(nb == 1) {
@@ -576,37 +629,33 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
         SVector3 n = getPointNormal(p, iso);
         p->va_points->add(x2, y2, z2, &n, &color, nullptr, unique);
       }
-      if(vmin == vmax) break;
-    }
+    });
+  }
+}
+
+// the edges of a face of n corners, lit with the normal of the face
+static void addOutlineFace(drawTarget *p, double **xyz, unsigned int color,
+                           bool pre, const int *idx, int n)
+{
+  SVector3 nfac = normal3(xyz, idx[0], idx[1], idx[2]);
+  for(int i = 0; i < n; i++) {
+    int a = idx[i], b = idx[(i + 1) % n];
+    double x[2] = {xyz[a][0], xyz[b][0]};
+    double y[2] = {xyz[a][1], xyz[b][1]};
+    double z[2] = {xyz[a][2], xyz[b][2]};
+    SVector3 nn[2] = {nfac, nfac};
+    unsigned int col[2] = {color, color};
+    for(int j = 0; j < 2; j++) smoothNormal(p, pre, x[j], y[j], z[j], nn[j]);
+    getLineNormal(p, x, y, z, nullptr, nn, false);
+    if(!pre) p->va_lines->add(x, y, z, nn, col, nullptr, true);
   }
 }
 
 static void addOutlineTriangle(drawTarget *p, double **xyz, unsigned int color,
                                bool pre, int i0 = 0, int i1 = 1, int i2 = 2)
 {
-  PViewOptions *opt = p->opt;
-
-  const int il[3][2] = {{i0, i1}, {i1, i2}, {i2, i0}};
-
-  SVector3 nfac = normal3(xyz, i0, i1, i2);
-
-  for(int i = 0; i < 3; i++) {
-    double x[2] = {xyz[il[i][0]][0], xyz[il[i][1]][0]};
-    double y[2] = {xyz[il[i][0]][1], xyz[il[i][1]][1]};
-    double z[2] = {xyz[il[i][0]][2], xyz[il[i][1]][2]};
-    SVector3 n[2] = {nfac, nfac};
-    unsigned int col[2] = {color, color};
-    if(opt->smoothNormals) {
-      for(int j = 0; j < 2; j++) {
-        if(pre)
-          p->normals->add(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
-        else
-          p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
-      }
-    }
-    getLineNormal(p, x, y, z, nullptr, n, false);
-    if(!pre) p->va_lines->add(x, y, z, n, col, nullptr, true);
-  }
+  const int idx[3] = {i0, i1, i2};
+  addOutlineFace(p, xyz, color, pre, idx, 3);
 }
 
 static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
@@ -665,12 +714,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
       SVector3 n[3] = {nfac, nfac, nfac};
       unsigned int col[3];
       for(int i = 0; i < 3; i++) {
-        if(opt->smoothNormals) {
-          if(pre)
-            p->normals->add(x[i], y[i], z[i], n[i][0], n[i][1], n[i][2]);
-          else
-            p->normals->get(x[i], y[i], z[i], n[i][0], n[i][1], n[i][2]);
-        }
+        smoothNormal(p, pre, x[i], y[i], z[i], n[i]);
         col[i] = opt->getColor(v[i], vmin, vmax);
       }
       const int ii[3] = {i0, i1, i2};
@@ -682,85 +726,36 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
     else {
       double x2[10], y2[10], z2[10], v2[10];
       int nb = CutTriangle(x, y, z, v, vmin, vmax, x2, y2, z2, v2);
-      if(nb >= 3) {
-        for(int j = 2; j < nb; j++) {
-          double x3[3] = {x2[0], x2[j - 1], x2[j]};
-          double y3[3] = {y2[0], y2[j - 1], y2[j]};
-          double z3[3] = {z2[0], z2[j - 1], z2[j]};
-          double v3[3] = {v2[0], v2[j - 1], v2[j]};
-          SVector3 n[3] = {nfac, nfac, nfac};
-          unsigned int col[3];
-          for(int i = 0; i < 3; i++) {
-            if(opt->smoothNormals) {
-              if(pre)
-                p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-              else
-                p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-            }
-            col[i] = opt->getColor(v3[i], vmin, vmax);
-          }
-          if(!pre)
-            p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique);
-        }
-      }
+      unsigned int col[10];
+      for(int i = 0; i < nb; i++) col[i] = opt->getColor(v2[i], vmin, vmax);
+      addFan(p, pre, nb, x2, y2, z2, nfac, col, unique);
     }
   }
 
   if(opt->intervalsType == PViewOptions::Discrete) {
-    for(int k = 0; k < opt->nbIso; k++) {
-      if(vmin == vmax) k = opt->nbIso / 2;
-      double min = opt->getScaleValue(k, opt->nbIso + 1, vmin, vmax);
-      double max = opt->getScaleValue(k + 1, opt->nbIso + 1, vmin, vmax);
+    forBands(opt, vmin, vmax, [&](int k, double min, double max) {
       double x2[10], y2[10], z2[10], v2[10];
       int nb = CutTriangle(x, y, z, v, min, max, x2, y2, z2, v2);
-      if(nb >= 3) {
-        unsigned int color = opt->getColor(k, opt->nbIso);
-        unsigned int col[3] = {color, color, color};
-        for(int j = 2; j < nb; j++) {
-          double x3[3] = {x2[0], x2[j - 1], x2[j]};
-          double y3[3] = {y2[0], y2[j - 1], y2[j]};
-          double z3[3] = {z2[0], z2[j - 1], z2[j]};
-          SVector3 n[3] = {nfac, nfac, nfac};
-          if(opt->smoothNormals) {
-            for(int i = 0; i < 3; i++) {
-              if(pre)
-                p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-              else
-                p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-            }
-          }
-          if(!pre)
-            p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique);
-        }
-      }
-      if(vmin == vmax) break;
-    }
+      unsigned int col[10];
+      for(int i = 0; i < nb; i++) col[i] = opt->getColor(k, opt->nbIso);
+      addFan(p, pre, nb, x2, y2, z2, nfac, col, unique);
+    });
   }
 
   if(opt->intervalsType == PViewOptions::Iso) {
-    for(int k = 0; k < opt->nbIso; k++) {
-      if(vmin == vmax) k = opt->nbIso / 2;
-      double iso = opt->getScaleValue(k, opt->nbIso, vmin, vmax);
+    forIsos(opt, vmin, vmax, [&](int k, double iso) {
       double x2[3], y2[3], z2[3];
       int nb = IsoTriangle(x, y, z, v, iso, x2, y2, z2);
       if(nb == 2) {
         unsigned int color = opt->getColor(k, opt->nbIso);
         unsigned int col[2] = {color, color};
         SVector3 n[2] = {nfac, nfac};
-        if(opt->smoothNormals) {
-          for(int i = 0; i < 2; i++) {
-            if(pre)
-              p->normals->add(x2[i], y2[i], z2[i], n[i][0], n[i][1], n[i][2]);
-            else
-              p->normals->get(x2[i], y2[i], z2[i], n[i][0], n[i][1], n[i][2]);
-          }
-        }
+        for(int i = 0; i < 2; i++) smoothNormal(p, pre, x2[i], y2[i], z2[i], n[i]);
         double v[2] = {iso, iso};
         getLineNormal(p, x, y, z, v, n, false);
         if(!pre) p->va_lines->add(x2, y2, z2, n, col, nullptr, unique);
       }
-      if(vmin == vmax) break;
-    }
+    });
   }
 }
 
@@ -768,29 +763,8 @@ static void addOutlineQuadrangle(drawTarget *p, double **xyz,
                                  unsigned int color, bool pre, int i0 = 0,
                                  int i1 = 1, int i2 = 2, int i3 = 3)
 {
-  PViewOptions *opt = p->opt;
-
-  const int il[4][2] = {{i0, i1}, {i1, i2}, {i2, i3}, {i3, i0}};
-
-  SVector3 nfac = normal3(xyz, i0, i1, i2);
-
-  for(int i = 0; i < 4; i++) {
-    double x[2] = {xyz[il[i][0]][0], xyz[il[i][1]][0]};
-    double y[2] = {xyz[il[i][0]][1], xyz[il[i][1]][1]};
-    double z[2] = {xyz[il[i][0]][2], xyz[il[i][1]][2]};
-    SVector3 n[2] = {nfac, nfac};
-    unsigned int col[2] = {color, color};
-    if(opt->smoothNormals) {
-      for(int j = 0; j < 2; j++) {
-        if(pre)
-          p->normals->add(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
-        else
-          p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
-      }
-    }
-    getLineNormal(p, x, y, z, nullptr, n, false);
-    if(!pre) p->va_lines->add(x, y, z, n, col, nullptr, true);
-  }
+  const int idx[4] = {i0, i1, i2, i3};
+  addOutlineFace(p, xyz, color, pre, idx, 4);
 }
 
 static void addScalarQuadrangle(drawTarget *p, double **xyz, double **val,
@@ -864,12 +838,53 @@ static void addScalarPolygon(drawTarget *p, double **xyz, double **val,
     addScalarTriangle(p, xyz, val, pre, 3 * i, 3 * i + 1, 3 * i + 2);
 }
 
+// How a 3D element is drawn: its faces, for its outline, its boundary and
+// its skin (the quadrangles first), and the tetrahedra it is split into for
+// the rest (and for the caps)
+struct solidShape {
+  int numQuads;
+  const int (*quads)[4];
+  int numTriangles;
+  const int (*triangles)[3];
+  int numTets;
+  const int (*tets)[4];
+};
+
+static const int tetTriangles[4][3] = {
+  {0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
+static const int tetTets[1][4] = {{0, 1, 2, 3}};
+static const solidShape tetShape = {0, nullptr, 4, tetTriangles, 1, tetTets};
+
+static const int hexQuads[6][4] = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
+                                   {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
+static const int hexTets[6][4] = {{0, 1, 3, 7}, {0, 4, 1, 7}, {1, 4, 5, 7},
+                                  {1, 2, 3, 7}, {1, 6, 2, 7}, {1, 5, 6, 7}};
+static const solidShape hexShape = {6, hexQuads, 0, nullptr, 6, hexTets};
+
+static const int priQuads[3][4] = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
+static const int priTriangles[2][3] = {{0, 2, 1}, {3, 4, 5}};
+static const int priTets[3][4] = {{0, 1, 2, 4}, {0, 4, 2, 5}, {0, 3, 4, 5}};
+static const solidShape priShape = {3, priQuads, 2, priTriangles, 3, priTets};
+
+static const int pyrQuads[1][4] = {{0, 3, 2, 1}};
+static const int pyrTriangles[4][3] = {
+  {0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}};
+static const int pyrTets[2][4] = {{0, 1, 3, 4}, {1, 2, 3, 4}};
+static const solidShape pyrShape = {1, pyrQuads, 4, pyrTriangles, 2, pyrTets};
+
+static void addOutlineSolid(drawTarget *p, double **xyz, unsigned int color,
+                            bool pre, const solidShape &s)
+{
+  for(int i = 0; i < s.numQuads; i++)
+    addOutlineFace(p, xyz, color, pre, s.quads[i], 4);
+  for(int i = 0; i < s.numTriangles; i++)
+    addOutlineFace(p, xyz, color, pre, s.triangles[i], 3);
+}
+
 static void addOutlineTetrahedron(drawTarget *p, double **xyz,
                                   unsigned int color, bool pre)
 {
-  const int it[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
-  for(int i = 0; i < 4; i++)
-    addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
+  addOutlineSolid(p, xyz, color, pre, tetShape);
 }
 
 // add the section a clipping plane cuts out of a 3D element, colored with
@@ -952,7 +967,7 @@ static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
 {
   PViewOptions *opt = p->opt;
 
-  const int it[4][3] = {{i0, i2, i1}, {i0, i1, i3}, {i0, i3, i2}, {i3, i1, i2}};
+  const int ii[4] = {i0, i1, i2, i3};
 
   if(!pre && opt->boundary <= 0) addScalarCap(p, xyz, val, i0, i1, i2, i3);
   // the pass gathering the section stops here
@@ -962,9 +977,11 @@ static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
      opt->intervalsType == PViewOptions::Discrete) {
     bool skin = (opt->boundary > 0) ? false : opt->drawSkinOnly;
     opt->boundary--;
-    for(int i = 0; i < 4; i++)
-      addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true,
+    for(int i = 0; i < 4; i++) {
+      const int *t = tetTriangles[i];
+      addScalarTriangle(p, xyz, val, pre, ii[t[0]], ii[t[1]], ii[t[2]], true,
                         skin);
+    }
     opt->boundary++;
     return;
   }
@@ -978,65 +995,32 @@ static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
   double v[4] = {val[i0][0], val[i1][0], val[i2][0], val[i3][0]};
 
   if(opt->intervalsType == PViewOptions::Iso) {
-    for(int k = 0; k < opt->nbIso; k++) {
-      if(vmin == vmax) k = opt->nbIso / 2;
-      double iso = opt->getScaleValue(k, opt->nbIso, vmin, vmax);
+    forIsos(opt, vmin, vmax, [&](int k, double iso) {
       double x2[6], y2[6], z2[6], nn[3];
       int nb = IsoSimplex(x, y, z, v, iso, x2, y2, z2, nn);
-      if(nb >= 3) {
-        unsigned int color = opt->getColor(k, opt->nbIso);
-        unsigned int col[3] = {color, color, color};
-        for(int j = 2; j < nb; j++) {
-          double x3[3] = {x2[0], x2[j - 1], x2[j]};
-          double y3[3] = {y2[0], y2[j - 1], y2[j]};
-          double z3[3] = {z2[0], z2[j - 1], z2[j]};
-          SVector3 n[3];
-          for(int i = 0; i < 3; i++) {
-            n[i][0] = nn[0];
-            n[i][1] = nn[1];
-            n[i][2] = nn[2];
-            if(opt->smoothNormals) {
-              if(pre)
-                p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-              else
-                p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-            }
-          }
-          if(!pre)
-            p->va_triangles->add(x3, y3, z3, n, col, nullptr, false);
-        }
-      }
-      if(vmin == vmax) break;
-    }
+      unsigned int col[6];
+      for(int i = 0; i < nb; i++) col[i] = opt->getColor(k, opt->nbIso);
+      addFan(p, pre, nb, x2, y2, z2, SVector3(nn[0], nn[1], nn[2]), col,
+             false);
+    });
   }
 }
 
-static void addOutlineHexahedron(drawTarget *p, double **xyz,
-                                 unsigned int color, bool pre)
-{
-  const int iq[6][4] = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
-                        {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
-
-  for(int i = 0; i < 6; i++)
-    addOutlineQuadrangle(p, xyz, color, pre, iq[i][0], iq[i][1], iq[i][2],
-                         iq[i][3]);
-}
-
-static void addScalarHexahedron(drawTarget *p, double **xyz, double **val,
-                                bool pre)
+// the elements a 3D element is made of, for the value of a scalar: its faces
+// for its boundary or its skin, its tetrahedra otherwise
+static void addScalarSolid(drawTarget *p, double **xyz, double **val, bool pre,
+                           const solidShape &s)
 {
   PViewOptions *opt = p->opt;
 
-  const int iq[6][4] = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
-                        {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
-  const int is[6][4] = {{0, 1, 3, 7}, {0, 4, 1, 7}, {1, 4, 5, 7},
-                        {1, 2, 3, 7}, {1, 6, 2, 7}, {1, 5, 6, 7}};
-
   if(opt->boundary > 0) {
     opt->boundary--;
-    for(int i = 0; i < 6; i++)
-      addScalarQuadrangle(p, xyz, val, pre, iq[i][0], iq[i][1], iq[i][2],
-                          iq[i][3], true);
+    for(int i = 0; i < s.numQuads; i++)
+      addScalarQuadrangle(p, xyz, val, pre, s.quads[i][0], s.quads[i][1],
+                          s.quads[i][2], s.quads[i][3], true);
+    for(int i = 0; i < s.numTriangles; i++)
+      addScalarTriangle(p, xyz, val, pre, s.triangles[i][0],
+                        s.triangles[i][1], s.triangles[i][2], true);
     opt->boundary++;
     return;
   }
@@ -1044,116 +1028,59 @@ static void addScalarHexahedron(drawTarget *p, double **xyz, double **val,
   if(skinOnly(opt)) {
     // the caps still come from the tetrahedra it is split into
     if(!pre)
-      for(int i = 0; i < 6; i++)
-        addScalarCap(p, xyz, val, is[i][0], is[i][1], is[i][2], is[i][3]);
+      for(int i = 0; i < s.numTets; i++)
+        addScalarCap(p, xyz, val, s.tets[i][0], s.tets[i][1], s.tets[i][2],
+                     s.tets[i][3]);
     if(p->collect == drawTarget::COLLECT_CAPS) return;
-    for(int i = 0; i < 6; i++)
-      if(skinFace(p, iq[i], 4))
-        addScalarQuadrangle(p, xyz, val, pre, iq[i][0], iq[i][1], iq[i][2],
-                            iq[i][3], true);
+    for(int i = 0; i < s.numQuads; i++)
+      if(skinFace(p, s.quads[i], 4))
+        addScalarQuadrangle(p, xyz, val, pre, s.quads[i][0], s.quads[i][1],
+                            s.quads[i][2], s.quads[i][3], true);
+    for(int i = 0; i < s.numTriangles; i++)
+      if(skinFace(p, s.triangles[i], 3))
+        addScalarTriangle(p, xyz, val, pre, s.triangles[i][0],
+                          s.triangles[i][1], s.triangles[i][2], true);
     return;
   }
 
-  for(int i = 0; i < 6; i++)
-    addScalarTetrahedron(p, xyz, val, pre, is[i][0], is[i][1], is[i][2],
-                         is[i][3]);
+  for(int i = 0; i < s.numTets; i++)
+    addScalarTetrahedron(p, xyz, val, pre, s.tets[i][0], s.tets[i][1],
+                         s.tets[i][2], s.tets[i][3]);
+}
+
+static void addOutlineHexahedron(drawTarget *p, double **xyz,
+                                 unsigned int color, bool pre)
+{
+  addOutlineSolid(p, xyz, color, pre, hexShape);
+}
+
+static void addScalarHexahedron(drawTarget *p, double **xyz, double **val,
+                                bool pre)
+{
+  addScalarSolid(p, xyz, val, pre, hexShape);
 }
 
 static void addOutlinePrism(drawTarget *p, double **xyz, unsigned int color,
                             bool pre)
 {
-  const int iq[3][4] = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
-  const int it[2][3] = {{0, 2, 1}, {3, 4, 5}};
-
-  for(int i = 0; i < 3; i++)
-    addOutlineQuadrangle(p, xyz, color, pre, iq[i][0], iq[i][1], iq[i][2],
-                         iq[i][3]);
-  for(int i = 0; i < 2; i++)
-    addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
+  addOutlineSolid(p, xyz, color, pre, priShape);
 }
 
 static void addScalarPrism(drawTarget *p, double **xyz, double **val, bool pre)
 {
-  PViewOptions *opt = p->opt;
-  const int iq[3][4] = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
-  const int it[2][3] = {{0, 2, 1}, {3, 4, 5}};
-  const int is[3][4] = {{0, 1, 2, 4}, {0, 4, 2, 5}, {0, 3, 4, 5}};
-
-  if(opt->boundary > 0) {
-    opt->boundary--;
-    for(int i = 0; i < 3; i++)
-      addScalarQuadrangle(p, xyz, val, pre, iq[i][0], iq[i][1], iq[i][2],
-                          iq[i][3], true);
-    for(int i = 0; i < 2; i++)
-      addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
-    opt->boundary++;
-    return;
-  }
-
-  if(skinOnly(opt)) {
-    if(!pre)
-      for(int i = 0; i < 3; i++)
-        addScalarCap(p, xyz, val, is[i][0], is[i][1], is[i][2], is[i][3]);
-    if(p->collect == drawTarget::COLLECT_CAPS) return;
-    for(int i = 0; i < 3; i++)
-      if(skinFace(p, iq[i], 4))
-        addScalarQuadrangle(p, xyz, val, pre, iq[i][0], iq[i][1], iq[i][2],
-                            iq[i][3], true);
-    for(int i = 0; i < 2; i++)
-      if(skinFace(p, it[i], 3))
-        addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
-    return;
-  }
-
-  for(int i = 0; i < 3; i++)
-    addScalarTetrahedron(p, xyz, val, pre, is[i][0], is[i][1], is[i][2],
-                         is[i][3]);
+  addScalarSolid(p, xyz, val, pre, priShape);
 }
 
 static void addOutlinePyramid(drawTarget *p, double **xyz, unsigned int color,
                               bool pre)
 {
-  const int it[4][3] = {{0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}};
-
-  addOutlineQuadrangle(p, xyz, color, pre, 0, 3, 2, 1);
-  for(int i = 0; i < 4; i++)
-    addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
+  addOutlineSolid(p, xyz, color, pre, pyrShape);
 }
 
 static void addScalarPyramid(drawTarget *p, double **xyz, double **val,
                              bool pre)
 {
-  PViewOptions *opt = p->opt;
-
-  const int it[4][3] = {{0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}};
-  const int is[2][4] = {{0, 1, 3, 4}, {1, 2, 3, 4}};
-
-  if(opt->boundary > 0) {
-    opt->boundary--;
-    addScalarQuadrangle(p, xyz, val, pre, 0, 3, 2, 1, true);
-    for(int i = 0; i < 4; i++)
-      addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
-    opt->boundary++;
-    return;
-  }
-
-  if(skinOnly(opt)) {
-    if(!pre)
-      for(int i = 0; i < 2; i++)
-        addScalarCap(p, xyz, val, is[i][0], is[i][1], is[i][2], is[i][3]);
-    if(p->collect == drawTarget::COLLECT_CAPS) return;
-    const int iq[4] = {0, 3, 2, 1};
-    if(skinFace(p, iq, 4))
-      addScalarQuadrangle(p, xyz, val, pre, iq[0], iq[1], iq[2], iq[3], true);
-    for(int i = 0; i < 4; i++)
-      if(skinFace(p, it[i], 3))
-        addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
-    return;
-  }
-
-  for(int i = 0; i < 2; i++)
-    addScalarTetrahedron(p, xyz, val, pre, is[i][0], is[i][1], is[i][2],
-                         is[i][3]);
+  addScalarSolid(p, xyz, val, pre, pyrShape);
 }
 
 static void addOutlineTrihedron(drawTarget *p, double **xyz, unsigned int color,
@@ -1897,7 +1824,7 @@ static void addElementRange(drawTarget *p, PViewData *data,
 // without marking the view as changed (the planes and the clipping options;
 // capping marks the mesh, which only reaches model-based views); everything
 // else marks the view as changed, and drawPost() then invalidates them
-static std::map<PView *, std::vector<double> > _viewClipToken;
+static OwnerCache<std::vector<double> > _viewClipToken;
 
 static std::vector<double> viewClipToken(PView *p)
 {
@@ -2201,8 +2128,8 @@ public:
 bool PView::fillClipVertexArrays()
 {
   std::vector<double> tok = viewClipToken(this);
-  auto found = _viewClipToken.find(this);
-  if(found != _viewClipToken.end() && found->second == tok) return false;
+  std::vector<double> *found = _viewClipToken.find(this);
+  if(found && *found == tok) return false;
   _viewClipToken[this] = tok;
 
   deleteClipVertexArrays();

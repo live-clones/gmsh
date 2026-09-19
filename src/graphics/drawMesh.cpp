@@ -21,6 +21,7 @@
 #include "MTrihedron.h"
 #include "MElementCut.h"
 #include "Context.h"
+#include "OwnerCache.h"
 #include "glyphList.h"
 #include "OS.h"
 #include "gl2ps.h"
@@ -162,6 +163,64 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
                   v->z() + offset / ctx->s[2]);
 }
 
+// f(elements) for each list of elements of an entity whose type is shown
+// (none for a point entity)
+template <class F> static void forShownElements(GEntity *e, F f)
+{
+  CTX *c = CTX::instance();
+  if(e->dim() == 1) { f(static_cast<GEdge *>(e)->lines); }
+  else if(e->dim() == 2) {
+    GFace *g = static_cast<GFace *>(e);
+    if(c->mesh.triangles) f(g->triangles);
+    if(c->mesh.quadrangles) f(g->quadrangles);
+    f(g->polygons);
+  }
+  else if(e->dim() == 3) {
+    GRegion *g = static_cast<GRegion *>(e);
+    if(c->mesh.tetrahedra) f(g->tetrahedra);
+    if(c->mesh.hexahedra) f(g->hexahedra);
+    if(c->mesh.prisms) f(g->prisms);
+    if(c->mesh.pyramids) f(g->pyramids);
+    if(c->mesh.trihedra) f(g->trihedra);
+    f(g->polyhedra);
+  }
+}
+
+// f(e) for each entity of a dimension of a model
+template <class F> static void forMeshEntities(GModel *m, int dim, F f)
+{
+  switch(dim) {
+  case 0:
+    for(auto it = m->firstVertex(); it != m->lastVertex(); it++) f(*it);
+    break;
+  case 1:
+    for(auto it = m->firstEdge(); it != m->lastEdge(); it++) f(*it);
+    break;
+  case 2:
+    for(auto it = m->firstFace(); it != m->lastFace(); it++) f(*it);
+    break;
+  case 3:
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) f(*it);
+    break;
+  }
+}
+
+// how the edges of the elements of a dimension are lit, and whether they take
+// the colour of the lines (when the faces are drawn) rather than their own
+static bool edgesLit(int dim)
+{
+  CTX *c = CTX::instance();
+  return c->mesh.light && (dim == 2 ? c->mesh.lightLines > 0 :
+                           dim == 3 ? c->mesh.lightLines > 1 :
+                                      false);
+}
+
+static int edgesForced(int dim)
+{
+  CTX *c = CTX::instance();
+  return (dim == 2) ? c->mesh.surfaceFaces : (dim == 3) ? c->mesh.volumeFaces : 0;
+}
+
 // The node spheres of a mesh entity, collected once and kept: they depend on
 // the mesh (every list is dropped when it changes, see drawMesh()), the
 // options deciding their size and colour, and the pixel size. The labels are
@@ -170,10 +229,13 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
 // what a walk over the nodes of an entity is being asked to do
 enum { NODES_COLLECT = 1, NODES_POINTS = 2, NODES_LABELS = 4 };
 
-// set while the nodes of the model being drawn come from its merged array,
-// and its normals and tangents from its recorded ones
-static bool _mergedPoints = false, _mergedNormals = false,
-            _mergedTangents = false;
+// What the arrays kept for the model being drawn cover (see mergedArrays),
+// which its entities then do not draw again, but when selected (on top of
+// it) or in a picking pass: the nodes as points, the edges and the faces of
+// the elements of the dimension being drawn, their normals or tangents.
+static struct {
+  bool points, lines, triangles, normals, tangents;
+} _merged = {false, false, false, false, false};
 
 // the list an entity keeps its node spheres in, and whether it has to be
 // filled
@@ -219,7 +281,7 @@ static void drawNodes(drawContext *ctx, GEntity *e, W walk)
     // picking pass, or when that array could not be used
     // (a selected entity draws its own on top, in the selection colour)
     bool points = CTX::instance()->mesh.nodes &&
-                  (!_mergedPoints || ctx->inPickColorMode() ||
+                  (!_merged.points || ctx->inPickColorMode() ||
                    e->getSelection());
     int what = (points ? NODES_POINTS : 0) | labels;
     if(what) walk(nullptr, what);
@@ -420,10 +482,16 @@ public:
   // first shown, with what decides which nodes and which colours.
   VertexArray *points;
   std::vector<double> pointsToken;
-  mergedArrays() : built(false), colorStamp(0), points(nullptr)
+  // the mesh status of the model (drawMeshStatus()), and what it was
+  // computed for
+  std::vector<int> statusKey;
+  int status;
+  mergedArrays() : built(false), colorStamp(0), points(nullptr), status(-1)
   {
     for(int i = 0; i < 4; i++) lines[i] = triangles[i] = nullptr;
   }
+  mergedArrays(const mergedArrays &) = delete;
+  ~mergedArrays() { clear(); }
   void clearPoints()
   {
     delete points;
@@ -442,36 +510,38 @@ public:
   }
 };
 
-static std::map<GModel *, mergedArrays> _merged;
-// set while a merged array covers the entities being drawn, per primitive
-static bool _mergedLines = false, _mergedTriangles = false;
+// what is kept for each model
+static OwnerCache<mergedArrays> _models;
 
 // below this many entities merging is not worth the duplicated memory
 static const std::size_t mergeThreshold = 200;
 
-template <class IT>
-static VertexArray *buildMerged(IT first, IT last, bool lines, bool forceColor,
-                                unsigned int flatColor)
+// the edges (lines) or the faces of the elements of a dimension of a model in
+// one array, or null when there are too few entities for it to be worth it
+static VertexArray *buildMerged(GModel *m, int dim, bool lines)
 {
   std::size_t num = 0, n = 0;
-  for(IT it = first; it != last; it++) {
-    VertexArray *va = lines ? (*it)->va_lines : (*it)->va_triangles;
-    if(va && va->getNumVertices()) { n += va->getNumVertices(); num++; }
-  }
+  forMeshEntities(m, dim, [&](GEntity *e) {
+    VertexArray *va = lines ? e->va_lines : e->va_triangles;
+    if(va && va->getNumVertices()) {
+      n += va->getNumVertices();
+      num++;
+    }
+  });
   if(num < mergeThreshold || !n) return nullptr;
 
   // the total is known: size the merged array once, instead of letting it grow
   int npe = lines ? 2 : 3;
   VertexArray *out = new VertexArray(npe, (int)(n / npe) + 1);
-  for(IT it = first; it != last; it++) {
-    GEntity *e = *it;
+  int force = lines ? edgesForced(dim) : 0;
+  forMeshEntities(m, dim, [&](GEntity *e) {
     VertexArray *va = lines ? e->va_lines : e->va_triangles;
-    if(!va || !va->getNumVertices()) continue;
+    if(!va || !va->getNumVertices()) return;
     // reproduce exactly the colour drawArrays() would have used
     unsigned int col = 0;
     const unsigned char *c = nullptr;
-    if(forceColor) {
-      col = flatColor;
+    if(force) {
+      col = CTX::instance()->color.mesh.line;
       c = (const unsigned char *)&col;
     }
     else if(!(va->hasColors() &&
@@ -482,29 +552,27 @@ static VertexArray *buildMerged(IT first, IT last, bool lines, bool forceColor,
       c = (const unsigned char *)&col;
     }
     out->merge(va, c);
-  }
+  });
   out->clearElementPointers();
   return out;
 }
 
-// draw one of the merged arrays: it always carries its own colours
-static void drawMergedArray(drawContext *ctx, VertexArray *va, GLenum type,
-                            bool useNormalArray)
+// the flags for drawing an array of mesh elements: lit if asked, and its
+// polygons behind the edges drawn over them
+static int meshDrawFlags(VertexArray *va, bool light)
 {
-  if(!va || !va->getNumVertices()) return;
+  return (light ? GMSH_DRAW_LIGHT : 0) |
+         ((va && va->getNumVerticesPerElement() > 2 &&
+           CTX::instance()->polygonOffset) ?
+            GMSH_DRAW_OFFSET :
+            0);
+}
 
-  bool normals = useNormalArray && va->hasNormals();
-  if(normals) gmshLighting(true);
-  gmshBindVertexArray(va, normals, true);
-
-  if(va->getNumVerticesPerElement() > 2 && CTX::instance()->polygonOffset)
-    glEnable(GL_POLYGON_OFFSET_FILL);
-
-  drawVertexArray(va, type);
-
-  glDisable(GL_POLYGON_OFFSET_FILL);
-  gmshLighting(false);
-  gmshUnbindArrays();
+// draw one of the merged arrays: it always carries its own colours
+static void drawMergedArray(VertexArray *va, GLenum type, bool useNormalArray)
+{
+  gmshDrawVertexArray(va, type,
+                      meshDrawFlags(va, useNormalArray) | GMSH_DRAW_COLORS);
 }
 
 // the nodes of the elements of an entity that are visible, once each
@@ -539,27 +607,8 @@ static void collectNodes(GEntity *e, VertexArray *va)
     }
     return;
   }
-  CTX *c = CTX::instance();
   std::set<MVertex *> seen;
-  if(e->dim() == 1) {
-    GEdge *ge = static_cast<GEdge *>(e);
-    collectNodes(e, ge->lines, seen, va);
-  }
-  else if(e->dim() == 2) {
-    GFace *f = static_cast<GFace *>(e);
-    if(c->mesh.triangles) collectNodes(e, f->triangles, seen, va);
-    if(c->mesh.quadrangles) collectNodes(e, f->quadrangles, seen, va);
-    collectNodes(e, f->polygons, seen, va);
-  }
-  else if(e->dim() == 3) {
-    GRegion *r = static_cast<GRegion *>(e);
-    if(c->mesh.tetrahedra) collectNodes(e, r->tetrahedra, seen, va);
-    if(c->mesh.hexahedra) collectNodes(e, r->hexahedra, seen, va);
-    if(c->mesh.prisms) collectNodes(e, r->prisms, seen, va);
-    if(c->mesh.pyramids) collectNodes(e, r->pyramids, seen, va);
-    if(c->mesh.trihedra) collectNodes(e, r->trihedra, seen, va);
-    collectNodes(e, r->polyhedra, seen, va);
-  }
+  forShownElements(e, [&](auto &elements) { collectNodes(e, elements, seen, va); });
 }
 
 // the points of a model, (re)built when what they depend on has changed;
@@ -594,18 +643,8 @@ static void fillMergedPoints(GModel *m, mergedArrays &ma, int status)
   ma.clearPoints();
   ma.pointsToken = tok;
   ma.points = new VertexArray(1, (int)m->getNumMeshVertices());
-  if(status >= 0)
-    for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
-      collectNodes(*it, ma.points);
-  if(status >= 1)
-    for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
-      collectNodes(*it, ma.points);
-  if(status >= 2)
-    for(auto it = m->firstFace(); it != m->lastFace(); it++)
-      collectNodes(*it, ma.points);
-  if(status >= 3)
-    for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
-      collectNodes(*it, ma.points);
+  for(int dim = 0; dim <= status; dim++)
+    forMeshEntities(m, dim, [&](GEntity *e) { collectNodes(e, ma.points); });
   ma.points->finalize();
   Msg::Debug("%d mesh nodes in the merged array of points",
              ma.points->getNumVertices());
@@ -640,19 +679,15 @@ static void drawMergedVectors(drawContext *ctx, GModel *m, int dim)
   glyphList *g;
   if(!glyphCache::get(m, dim == 2 ? GLYPH_NORMALS : GLYPH_TANGENTS, tok, g)) {
     g->recordBegin();
-    if(dim == 2) {
-      for(auto it = m->firstFace(); it != m->lastFace(); it++) {
-        GFace *f = *it;
-        if(!f->getVisibility()) continue;
-        if(c->mesh.triangles) drawNormals(ctx, f->triangles);
-        if(c->mesh.quadrangles) drawNormals(ctx, f->quadrangles);
-        drawNormals(ctx, f->polygons);
-      }
-    }
-    else {
-      for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
-        if((*it)->getVisibility()) drawTangents(ctx, (*it)->lines);
-    }
+    forMeshEntities(m, dim, [&](GEntity *e) {
+      if(!e->getVisibility()) return;
+      forShownElements(e, [&](auto &elements) {
+        if(dim == 2)
+          drawNormals(ctx, elements);
+        else
+          drawTangents(ctx, elements);
+      });
+    });
     g->recordEnd();
   }
   g->draw(ctx, c->mesh.light);
@@ -685,9 +720,9 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   }
 
   // already covered by the merged draw, unless it is selected and has to be
-  // drawn again on top of it
-  bool merged = (va->getNumVerticesPerElement() == 2) ? _mergedLines :
-                                                        _mergedTriangles;
+  // drawn again on top of it (what the clipping planes add is never merged)
+  bool merged = (va == e->va_lines && _merged.lines) ||
+                (va == e->va_triangles && _merged.triangles);
   bool overlay = false;
   if(merged && !ctx->inPickColorMode()) {
     if(!e->getSelection()) return;
@@ -697,39 +732,22 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
     glDepthFunc(GL_LEQUAL);
   }
 
-  bool normals =
-    !ctx->inPickColorMode() && useNormalArray && va->hasNormals();
-  if(normals) gmshLighting(true);
-
   // in picking mode the colour set by setPickColor() is kept; otherwise the
   // colours come from the array unless forced, selected or by carousel
-  bool colors = false;
-  if(!ctx->inPickColorMode() && !forceColor && va->hasColors() &&
-     (CTX::instance()->pickElements ||
-      (!e->getSelection() && (CTX::instance()->mesh.colorCarousel == 0 ||
-                              CTX::instance()->mesh.colorCarousel == 3))))
-    colors = true;
-
-  gmshBindVertexArray(va, normals, colors);
-
+  bool colors = !forceColor && va->hasColors() &&
+                (CTX::instance()->pickElements ||
+                 (!e->getSelection() &&
+                  (CTX::instance()->mesh.colorCarousel == 0 ||
+                   CTX::instance()->mesh.colorCarousel == 3)));
   if(!ctx->inPickColorMode() && !colors) {
     if(!forceColor) color = getColorByEntity(e);
     gmshColor4ubv((const void *)&color);
   }
-
-  if(va->getNumVerticesPerElement() > 2 && CTX::instance()->polygonOffset)
-    glEnable(GL_POLYGON_OFFSET_FILL);
-
-  drawVertexArray(va, type);
-
+  gmshDrawVertexArray(va, type,
+                      meshDrawFlags(va, useNormalArray) |
+                        (colors ? GMSH_DRAW_COLORS : 0));
   if(overlay) glDepthFunc(GL_LESS);
-  glDisable(GL_POLYGON_OFFSET_FILL);
-  gmshLighting(false);
-
-  gmshUnbindArrays();
 }
-
-// GVertex drawing routines
 
 // does this pass draw this entity? A mixed mesh draws its opaque entities in
 // the opaque pass and the others in the transparent one
@@ -740,250 +758,63 @@ static bool passWants(drawContext *ctx, GEntity *e)
          gmshMeshEntityIsTransparent(e);
 }
 
-class drawMeshGVertex {
-private:
-  drawContext *_ctx;
+// what an entity draws of its mesh: its edges and faces (unless merged), the
+// labels of its elements, its nodes, its normals or tangents (unless
+// recorded for the whole model), the duals
+static void drawMeshEntity(drawContext *ctx, GEntity *e)
+{
+  if(!e->getVisibility() || !passWants(ctx, e)) return;
+  CTX *c = CTX::instance();
+  int dim = e->dim();
 
-public:
-  drawMeshGVertex(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GVertex *v)
-  {
-    if(!v->getVisibility() || !passWants(_ctx, v)) return;
+  if(ctx->render_mode == drawContext::GMSH_SELECT &&
+     e->model() == GModel::current())
+    ctx->setPickColor(dim, e->tag());
 
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
-                   v->model() == GModel::current());
-    if(select) {
-      _ctx->setPickColor(0, v->tag());
-    }
+  gmshLightTwoSide(false);
 
-    gmshLightTwoSide(false);
-
-    drawNodes(_ctx, v, [this, v](glyphList *g, int what) {
-      drawVerticesPerEntity(_ctx, v, g, what);
-    });
-
-    if(select) {
-    }
+  if(dim > 1 || (dim == 1 && c->mesh.lines))
+    drawArrays(ctx, e, e->va_lines, GL_LINES, edgesLit(dim), edgesForced(dim),
+               c->color.mesh.line);
+  if(dim > 1) {
+    if(c->mesh.lightTwoSide) gmshLightTwoSide(true);
+    drawArrays(ctx, e, e->va_triangles, GL_TRIANGLES, c->mesh.light);
   }
-};
 
-// GEdge drawing routines
-
-class drawMeshGEdge {
-private:
-  drawContext *_ctx;
-
-public:
-  drawMeshGEdge(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GEdge *e)
-  {
-    if(!e->getVisibility() || !passWants(_ctx, e)) return;
-
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
-                   e->model() == GModel::current());
-    if(select) {
-      _ctx->setPickColor(1, e->tag());
-    }
-
-    gmshLightTwoSide(false);
-
-    if(CTX::instance()->mesh.lines)
-      drawArrays(_ctx, e, e->va_lines, GL_LINES, false);
-
-    if(CTX::instance()->mesh.lineLabels) drawElementLabels(_ctx, e, e->lines);
-
-    drawNodes(_ctx, e, [this, e](glyphList *g, int what) {
-      if(!e->getOnlySomeElementsVisible())
-        drawVerticesPerEntity(_ctx, e, g, what);
-      else
-        drawVerticesPerElement(_ctx, e, e->lines, g, what);
+  bool labels = (dim == 1) ? c->mesh.lineLabels :
+                (dim == 2) ? c->mesh.surfaceLabels :
+                (dim == 3) ? c->mesh.volumeLabels :
+                             false;
+  if(labels) {
+    int force = (dim == 2) ? c->mesh.surfaceFaces :
+                (dim == 3) ? (c->mesh.volumeFaces || c->mesh.surfaceFaces) :
+                             0;
+    forShownElements(e, [&](auto &elements) {
+      drawElementLabels(ctx, e, elements, force, c->color.mesh.line);
     });
-
-    if(CTX::instance()->mesh.tangents && !_mergedTangents)
-      drawTangents(_ctx, e->lines);
-
-    if(select) {
-    }
   }
-};
 
-// GFace drawing routines
+  drawNodes(ctx, e, [&](glyphList *g, int what) {
+    if(dim == 0 || !e->getOnlySomeElementsVisible())
+      drawVerticesPerEntity(ctx, e, g, what);
+    else
+      forShownElements(e, [&](auto &elements) {
+        drawVerticesPerElement(ctx, e, elements, g, what);
+      });
+  });
 
-class drawMeshGFace {
-private:
-  drawContext *_ctx;
+  if(dim == 1 && c->mesh.tangents && !_merged.tangents)
+    drawTangents(ctx, static_cast<GEdge *>(e)->lines);
+  if(dim == 2 && c->mesh.normals && !_merged.normals)
+    forShownElements(e, [&](auto &elements) { drawNormals(ctx, elements); });
 
-public:
-  drawMeshGFace(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GFace *f)
-  {
-    if(!f->getVisibility() || !passWants(_ctx, f)) return;
-
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
-                   f->model() == GModel::current());
-    if(select) {
-      _ctx->setPickColor(2, f->tag());
-    }
-
-    gmshLightTwoSide(false);
-
-    drawArrays(_ctx, f, f->va_lines, GL_LINES,
-               CTX::instance()->mesh.light && CTX::instance()->mesh.lightLines,
-               CTX::instance()->mesh.surfaceFaces,
-               CTX::instance()->color.mesh.line);
-
-    if(CTX::instance()->mesh.lightTwoSide)
-      gmshLightTwoSide(true);
-
-    drawArrays(_ctx, f, f->va_triangles, GL_TRIANGLES,
-               CTX::instance()->mesh.light);
-
-    if(CTX::instance()->mesh.surfaceLabels) {
-      if(CTX::instance()->mesh.triangles)
-        drawElementLabels(_ctx, f, f->triangles,
-                          CTX::instance()->mesh.surfaceFaces,
-                          CTX::instance()->color.mesh.line);
-      if(CTX::instance()->mesh.quadrangles)
-        drawElementLabels(_ctx, f, f->quadrangles,
-                          CTX::instance()->mesh.surfaceFaces,
-                          CTX::instance()->color.mesh.line);
-      drawElementLabels(_ctx, f, f->polygons,
-                        CTX::instance()->mesh.surfaceFaces,
-                        CTX::instance()->color.mesh.line);
-    }
-
-    drawNodes(_ctx, f, [this, f](glyphList *g, int what) {
-      if(!f->getOnlySomeElementsVisible()) {
-        drawVerticesPerEntity(_ctx, f, g, what);
-      }
-      else {
-        if(CTX::instance()->mesh.triangles)
-          drawVerticesPerElement(_ctx, f, f->triangles, g, what);
-        if(CTX::instance()->mesh.quadrangles)
-          drawVerticesPerElement(_ctx, f, f->quadrangles, g, what);
-        drawVerticesPerElement(_ctx, f, f->polygons, g, what);
-      }
-    });
-
-    if(CTX::instance()->mesh.normals && !_mergedNormals) {
-      if(CTX::instance()->mesh.triangles) drawNormals(_ctx, f->triangles);
-      if(CTX::instance()->mesh.quadrangles) drawNormals(_ctx, f->quadrangles);
-      drawNormals(_ctx, f->polygons);
-    }
-
-    if(CTX::instance()->mesh.dual) {
-      if(CTX::instance()->mesh.triangles) drawBarycentricDual(f->triangles);
-      if(CTX::instance()->mesh.quadrangles) drawBarycentricDual(f->quadrangles);
-      drawBarycentricDual(f->polygons);
-    }
-    else if(CTX::instance()->mesh.voronoi) {
-      if(CTX::instance()->mesh.triangles) drawVoronoiDual(f->triangles);
-    }
-
-    if(select) {
-    }
-  }
-};
-
-// GRegion drawing routines
-
-class drawMeshGRegion {
-private:
-  drawContext *_ctx;
-
-public:
-  drawMeshGRegion(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GRegion *r)
-  {
-    if(!r->getVisibility() || !passWants(_ctx, r)) return;
-
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
-                   r->model() == GModel::current());
-    if(select) {
-      _ctx->setPickColor(3, r->tag());
-    }
-
-    gmshLightTwoSide(false);
-
-    drawArrays(
-      _ctx, r, r->va_lines, GL_LINES,
-      CTX::instance()->mesh.light && (CTX::instance()->mesh.lightLines > 1),
-      CTX::instance()->mesh.volumeFaces, CTX::instance()->color.mesh.line);
-
-    if(CTX::instance()->mesh.lightTwoSide)
-      gmshLightTwoSide(true);
-
-    drawArrays(_ctx, r, r->va_triangles, GL_TRIANGLES,
-               CTX::instance()->mesh.light);
-
-    if(CTX::instance()->mesh.volumeLabels) {
-      if(CTX::instance()->mesh.tetrahedra)
-        drawElementLabels(_ctx, r, r->tetrahedra,
-                          CTX::instance()->mesh.volumeFaces ||
-                            CTX::instance()->mesh.surfaceFaces,
-                          CTX::instance()->color.mesh.line);
-      if(CTX::instance()->mesh.hexahedra)
-        drawElementLabels(_ctx, r, r->hexahedra,
-                          CTX::instance()->mesh.volumeFaces ||
-                            CTX::instance()->mesh.surfaceFaces,
-                          CTX::instance()->color.mesh.line);
-      if(CTX::instance()->mesh.prisms)
-        drawElementLabels(_ctx, r, r->prisms,
-                          CTX::instance()->mesh.volumeFaces ||
-                            CTX::instance()->mesh.surfaceFaces,
-                          CTX::instance()->color.mesh.line);
-      if(CTX::instance()->mesh.pyramids)
-        drawElementLabels(_ctx, r, r->pyramids,
-                          CTX::instance()->mesh.volumeFaces ||
-                            CTX::instance()->mesh.surfaceFaces,
-                          CTX::instance()->color.mesh.line);
-      if(CTX::instance()->mesh.trihedra)
-        drawElementLabels(_ctx, r, r->trihedra,
-                          CTX::instance()->mesh.volumeFaces ||
-                            CTX::instance()->mesh.surfaceFaces,
-                          CTX::instance()->color.mesh.line);
-      drawElementLabels(_ctx, r, r->polyhedra,
-                        CTX::instance()->mesh.volumeFaces ||
-                          CTX::instance()->mesh.surfaceFaces,
-                        CTX::instance()->color.mesh.line);
-    }
-
-    drawNodes(_ctx, r, [this, r](glyphList *g, int what) {
-      if(!r->getOnlySomeElementsVisible()) {
-        drawVerticesPerEntity(_ctx, r, g, what);
-      }
-      else {
-        if(CTX::instance()->mesh.tetrahedra)
-          drawVerticesPerElement(_ctx, r, r->tetrahedra, g, what);
-        if(CTX::instance()->mesh.hexahedra)
-          drawVerticesPerElement(_ctx, r, r->hexahedra, g, what);
-        if(CTX::instance()->mesh.prisms)
-          drawVerticesPerElement(_ctx, r, r->prisms, g, what);
-        if(CTX::instance()->mesh.pyramids)
-          drawVerticesPerElement(_ctx, r, r->pyramids, g, what);
-        if(CTX::instance()->mesh.trihedra)
-          drawVerticesPerElement(_ctx, r, r->trihedra, g, what);
-        drawVerticesPerElement(_ctx, r, r->polyhedra, g, what);
-      }
-    });
-
-    if(CTX::instance()->mesh.dual) {
-      if(CTX::instance()->mesh.tetrahedra) drawBarycentricDual(r->tetrahedra);
-      if(CTX::instance()->mesh.hexahedra) drawBarycentricDual(r->hexahedra);
-      if(CTX::instance()->mesh.prisms) drawBarycentricDual(r->prisms);
-      if(CTX::instance()->mesh.pyramids) drawBarycentricDual(r->pyramids);
-      if(CTX::instance()->mesh.trihedra) drawBarycentricDual(r->trihedra);
-      drawBarycentricDual(r->polyhedra);
-    }
-
-    if(CTX::instance()->mesh.voronoi) {
-      if(CTX::instance()->mesh.tetrahedra) drawVoronoiDual(r->tetrahedra);
-    }
-
-    if(select) {
-    }
-  }
-};
+  if(dim > 1 && c->mesh.dual)
+    forShownElements(e, [&](auto &elements) { drawBarycentricDual(elements); });
+  if(dim == 2 && c->mesh.voronoi && !c->mesh.dual && c->mesh.triangles)
+    drawVoronoiDual(static_cast<GFace *>(e)->triangles);
+  if(dim == 3 && c->mesh.voronoi && c->mesh.tetrahedra)
+    drawVoronoiDual(static_cast<GRegion *>(e)->tetrahedra);
+}
 
 // turn the clipping planes of the mesh on or off (the cut elements of whole
 // element mode are drawn with them off)
@@ -993,74 +824,75 @@ static void setMeshClipPlanes(bool on)
     gmshClipPlaneOn(i, on && (CTX::instance()->mesh.clip & (1 << i)));
 }
 
-// Draw what the clipping planes add for these entities: the cut elements.
-// With the shader pipeline they are clipped to what the planes cut off, so
-// that they sit next to the clipped rest without overlapping it (a
-// transparent mesh would show the overlap); the fixed function pipeline
-// draws them whole with the planes off, as does either when nothing else is
-// drawn (whole = true) or the planes are already off.
-template <class IT>
-static void drawClipArrays(drawContext *ctx, IT first, IT last, int dim,
+// Draw what the clipping planes add for the entities of a dimension: the
+// section of the volumes in capping mode, clipped like everything else, or
+// the cut elements in whole element mode. With the shader pipeline these are
+// clipped to what the planes cut off, so that they sit next to the clipped
+// rest without overlapping it (a transparent mesh would show the overlap);
+// the fixed function pipeline draws them whole with the planes off, as does
+// either when nothing else is drawn (whole = true) or the planes are already
+// off.
+static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
                            bool whole = false)
 {
-  if(!CTX::instance()->clipWholeElements) return;
   bool any = false;
-  for(IT it = first; it != last; it++)
-    if((*it)->va_clip_lines || (*it)->va_clip_triangles) any = true;
+  forMeshEntities(m, dim, [&](GEntity *e) {
+    if(e->va_clip_lines || e->va_clip_triangles) any = true;
+  });
   if(!any) return;
+  CTX *c = CTX::instance();
+  // the section (only volumes have one) is clipped as the rest
+  bool section = !c->clipWholeElements;
   bool planesOn = false;
   for(int i = 0; i < 6; i++)
     if(gmshClipPlaneEnabled(i)) planesOn = true;
   bool outside = gmshUseShaders() && planesOn && !whole;
-  if(outside)
-    gmshClipOutside(true);
-  else
-    setMeshClipPlanes(false);
-  for(IT it = first; it != last; it++) {
-    GEntity *e = *it;
-    if(!e->getVisibility() || !passWants(ctx, e)) continue;
-    if(!e->va_clip_lines && !e->va_clip_triangles) continue;
+  if(!section) {
+    if(outside)
+      gmshClipOutside(true);
+    else
+      setMeshClipPlanes(false);
+  }
+  forMeshEntities(m, dim, [&](GEntity *e) {
+    if(!e->getVisibility() || !passWants(ctx, e)) return;
+    if(!e->va_clip_lines && !e->va_clip_triangles) return;
     if(ctx->render_mode == drawContext::GMSH_SELECT)
       ctx->setPickColor(dim, e->tag());
     // lit and coloured as the entities draw their own lines
-    CTX *c = CTX::instance();
-    bool lit = c->mesh.light && (dim == 1 ? false :
-                                 dim == 2 ? c->mesh.lightLines > 0 :
-                                            c->mesh.lightLines > 1);
-    int force = (dim == 1) ? 0 : (dim == 2) ? c->mesh.surfaceFaces :
-                                             c->mesh.volumeFaces;
-    drawArrays(ctx, e, e->va_clip_lines, GL_LINES, lit, force,
-               c->color.mesh.line);
-    drawArrays(ctx, e, e->va_clip_triangles, GL_TRIANGLES,
-               CTX::instance()->mesh.light);
+    drawArrays(ctx, e, e->va_clip_lines, GL_LINES, edgesLit(dim),
+               edgesForced(dim), c->color.mesh.line);
+    drawArrays(ctx, e, e->va_clip_triangles, GL_TRIANGLES, c->mesh.light);
     if(ctx->render_mode == drawContext::GMSH_SELECT) ctx->unsetPickColor();
+  });
+  if(!section) {
+    if(outside)
+      gmshClipOutside(false);
+    else
+      setMeshClipPlanes(true);
   }
-  if(outside)
-    gmshClipOutside(false);
-  else
-    setMeshClipPlanes(true);
 }
 
-static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
-                              bool mergedTriangles)
+// is a pass over the entities of a dimension needed, for what the merged
+// arrays do not cover?
+static bool needPerEntityPass(drawContext *ctx, int dim)
 {
   if(ctx->render_mode != drawContext::GMSH_RENDER) return true;
   if(GEntity::numSelected) return true;
   CTX *c = CTX::instance();
-  if((c->mesh.nodes && !_mergedPoints) || c->mesh.nodeLabels) return true;
+  if((c->mesh.nodes && !_merged.points) || c->mesh.nodeLabels) return true;
   switch(dim) {
   case 0: return false;
   case 1:
-    return (c->mesh.lines && !mergedLines) || c->mesh.lineLabels ||
-           (c->mesh.tangents && !_mergedTangents);
+    return (c->mesh.lines && !_merged.lines) || c->mesh.lineLabels ||
+           (c->mesh.tangents && !_merged.tangents);
   case 2:
-    return (c->mesh.surfaceEdges && !mergedLines) ||
-           (c->mesh.surfaceFaces && !mergedTriangles) || c->mesh.surfaceLabels ||
-           (c->mesh.normals && !_mergedNormals) || c->mesh.dual ||
-           c->mesh.voronoi;
+    return (c->mesh.surfaceEdges && !_merged.lines) ||
+           (c->mesh.surfaceFaces && !_merged.triangles) ||
+           c->mesh.surfaceLabels || (c->mesh.normals && !_merged.normals) ||
+           c->mesh.dual || c->mesh.voronoi;
   case 3:
-    return (c->mesh.volumeEdges && !mergedLines) ||
-           (c->mesh.volumeFaces && !mergedTriangles) ||
+    return (c->mesh.volumeEdges && !_merged.lines) ||
+           (c->mesh.volumeFaces && !_merged.triangles) ||
            c->mesh.volumeLabels || c->mesh.dual || c->mesh.voronoi;
   default: return true;
   }
@@ -1068,22 +900,53 @@ static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
 
 int drawMeshStatus(GModel *m)
 {
-  struct entry {
-    std::vector<int> key;
-    int status;
-  };
-  static std::map<GModel *, entry> cache;
   CTX *c = CTX::instance();
   c->stampChanges();
   std::vector<int> key = {c->mesh.stamp[0], c->mesh.stamp[1], c->mesh.stamp[2],
                           c->mesh.stamp[3], c->geom.stamp[0], c->geom.stamp[1],
                           c->geom.stamp[2], c->geom.stamp[3],
                           c->entityVisibilityStamp, c->mesh.meshOnlyVisible};
-  auto it = cache.find(m);
-  if(it != cache.end() && it->second.key == key) return it->second.status;
-  int status = m->getMeshStatus();
-  cache[m] = {key, status};
-  return status;
+  mergedArrays &ma = _models[m];
+  if(ma.statusKey != key) {
+    ma.status = m->getMeshStatus();
+    ma.statusKey = key;
+  }
+  return ma.status;
+}
+
+// The elements of a dimension of a model: the merged arrays of their edges
+// and faces in one call each (none when only the cut volumes are drawn), what
+// the clipping planes add, and the entities for what the merged arrays do not
+// cover. The volumes draw what the planes add first, the others last.
+static void drawDimension(drawContext *ctx, GModel *m, mergedArrays &ma,
+                          int dim, bool merge, bool cutOnly = false)
+{
+  CTX *c = CTX::instance();
+  merge = merge && !cutOnly;
+  VertexArray *lines = ma.lines[dim], *triangles = ma.triangles[dim];
+  // The merged draws set the two-sided lighting themselves, as the
+  // per-entity draws do: it was left to whatever the previous pass had set,
+  // and once an entity was selected or hovered the pass over the curves,
+  // which turns it off, ran before the merged faces, which then lit their
+  // back faces no more and went dark.
+  if(merge) {
+    gmshLightTwoSide(false);
+    drawMergedArray(lines, GL_LINES, edgesLit(dim));
+    if(dim > 1) {
+      gmshLightTwoSide(c->mesh.lightTwoSide);
+      drawMergedArray(triangles, GL_TRIANGLES, c->mesh.light);
+    }
+  }
+  _merged.lines = merge && lines;
+  _merged.triangles = merge && triangles;
+  _merged.tangents = merge && dim == 1 && c->mesh.tangents;
+  _merged.normals = merge && dim == 2 && c->mesh.normals;
+  if(_merged.tangents || _merged.normals) drawMergedVectors(ctx, m, dim);
+  if(dim == 3) drawClipArrays(ctx, m, dim, cutOnly);
+  if(!cutOnly && needPerEntityPass(ctx, dim))
+    forMeshEntities(m, dim, [&](GEntity *e) { drawMeshEntity(ctx, e); });
+  if(dim < 3) drawClipArrays(ctx, m, dim);
+  _merged.lines = _merged.triangles = _merged.tangents = _merged.normals = false;
 }
 
 // Main drawing routine
@@ -1130,17 +993,6 @@ void drawContext::drawMesh()
   // elements back from va_clip_*, drawn with the planes off
   setMeshClipPlanes(true);
 
-  // the merged arrays of a model that is gone go with it
-  for(auto it = _merged.begin(); it != _merged.end();) {
-    if(std::find(GModel::list.begin(), GModel::list.end(), it->first) ==
-       GModel::list.end()) {
-      it->second.clear();
-      it = _merged.erase(it);
-    }
-    else
-      it++;
-  }
-
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     bool changed = m->fillVertexArrays();
@@ -1152,141 +1004,56 @@ void drawContext::drawMesh()
     // FIXME: resetting texture pile fixes bug with recent macOS versions
     if(changed) global()->resetFontTextures();
 #endif
-    if(m->getVisibility() && isVisible(m)) {
-      int status = drawMeshStatus(m);
+    if(!m->getVisibility() || !isVisible(m)) continue;
+    int status = drawMeshStatus(m);
+    CTX *c = CTX::instance();
 
-      // concatenate the arrays of the dimensions that hold many entities, and
-      // draw each of them in a single call; the entities then only draw their
-      // labels and, if they are selected, themselves on top
-      mergedArrays &ma = _merged[m];
-      if(changed || ma.colorStamp != CTX::instance()->entityColorsStamp) ma.clear();
-      if(!ma.built && !inPickColorMode()) {
-        ma.built = true;
-        ma.colorStamp = CTX::instance()->entityColorsStamp;
-        if(status >= 1)
-          ma.lines[1] =
-            buildMerged(m->firstEdge(), m->lastEdge(), true, false, 0);
-        if(status >= 2) {
-          ma.lines[2] = buildMerged(m->firstFace(), m->lastFace(), true,
-                                    CTX::instance()->mesh.surfaceFaces,
-                                    CTX::instance()->color.mesh.line);
-          ma.triangles[2] =
-            buildMerged(m->firstFace(), m->lastFace(), false, false, 0);
-        }
-        if(status >= 3) {
-          ma.lines[3] = buildMerged(m->firstRegion(), m->lastRegion(), true,
-                                    CTX::instance()->mesh.volumeFaces,
-                                    CTX::instance()->color.mesh.line);
-          ma.triangles[3] =
-            buildMerged(m->firstRegion(), m->lastRegion(), false, false, 0);
-        }
+    // concatenate the arrays of the dimensions that hold many entities, and
+    // draw each of them in a single call; the entities then only draw their
+    // labels and, if they are selected, themselves on top
+    mergedArrays &ma = _models[m];
+    if(changed || ma.colorStamp != c->entityColorsStamp) ma.clear();
+    if(!ma.built && !inPickColorMode()) {
+      ma.built = true;
+      ma.colorStamp = c->entityColorsStamp;
+      for(int dim = 1; dim <= std::min(status, 3); dim++) {
+        ma.lines[dim] = buildMerged(m, dim, true);
+        if(dim > 1) ma.triangles[dim] = buildMerged(m, dim, false);
       }
-      // a mixed mesh, some entities transparent and the others not, is drawn
-      // entity by entity: the merged arrays hold them all
-      bool mixed = transparencyPass != TRANSPARENCY_ALL &&
-                   !gmshMeshColorsAreTransparent();
-      bool merge = !inPickColorMode() && !mixed;
-      CTX *c = CTX::instance();
-      // only the volume is clipped: curves and surfaces are drawn whole
-      bool volumeOnly = c->clipWholeElements && c->clipOnlyVolume;
-      if(volumeOnly) setMeshClipPlanes(false);
-
-      // the nodes drawn as points, all at once - unless the planes only
-      // apply to some of them, which the single draw cannot tell apart
-      _mergedPoints = merge && c->mesh.nodes && !c->mesh.nodeType &&
-                      !(c->mesh.clip && c->clipWholeElements);
-
-      if(status >= 0 && needPerEntityPass(this, 0, false, false))
-        std::for_each(m->firstVertex(), m->lastVertex(),
-                      drawMeshGVertex(this));
-      // The merged draws set the two-sided lighting themselves, as the
-      // per-entity draws do: it was left to whatever the previous pass had
-      // set, and once an entity was selected or hovered the pass over the
-      // curves, which turns it off, ran before the merged faces, which
-      // then lit their back faces no more and went dark.
-      if(status >= 1) {
-        if(merge) {
-          gmshLightTwoSide(false);
-          drawMergedArray(this, ma.lines[1], GL_LINES, false);
-        }
-        _mergedLines = (merge && ma.lines[1]);
-        _mergedTangents = (merge && c->mesh.tangents);
-        if(_mergedTangents) drawMergedVectors(this, m, 1);
-        if(needPerEntityPass(this, 1, _mergedLines, false))
-          std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
-        _mergedLines = _mergedTangents = false;
-        drawClipArrays(this, m->firstEdge(), m->lastEdge(), 1);
-      }
-      if(status >= 2) {
-        if(merge) {
-          gmshLightTwoSide(false);
-          drawMergedArray(this, ma.lines[2], GL_LINES,
-                          CTX::instance()->mesh.light &&
-                            CTX::instance()->mesh.lightLines);
-          gmshLightTwoSide(CTX::instance()->mesh.lightTwoSide);
-          drawMergedArray(this, ma.triangles[2], GL_TRIANGLES,
-                          CTX::instance()->mesh.light);
-        }
-        _mergedLines = (merge && ma.lines[2]);
-        _mergedTriangles = (merge && ma.triangles[2]);
-        _mergedNormals = (merge && c->mesh.normals);
-        if(_mergedNormals) drawMergedVectors(this, m, 2);
-        if(needPerEntityPass(this, 2, _mergedLines, _mergedTriangles))
-          std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
-        _mergedLines = _mergedTriangles = _mergedNormals = false;
-        drawClipArrays(this, m->firstFace(), m->lastFace(), 2);
-      }
-      if(volumeOnly) setMeshClipPlanes(true);
-      // only the cut elements are drawn, which is what the clip arrays hold
-      bool cutOnly = c->clipWholeElements && c->clipOnlyDrawIntersectingVolume &&
-                     c->mesh.clip;
-      if(status >= 3) {
-        if(merge && !cutOnly) {
-          gmshLightTwoSide(false);
-          drawMergedArray(this, ma.lines[3], GL_LINES,
-                          CTX::instance()->mesh.light &&
-                            (CTX::instance()->mesh.lightLines > 1));
-          gmshLightTwoSide(CTX::instance()->mesh.lightTwoSide);
-          drawMergedArray(this, ma.triangles[3], GL_TRIANGLES,
-                          CTX::instance()->mesh.light);
-        }
-        // what the clipping planes add is not merged, so it is drawn here,
-        // before the flags that say the volumes are (drawArrays() would take
-        // these arrays for merged ones and skip them):
-        // the section in capping mode (clipped like everything else), the
-        // cut elements in whole element mode (whole, with the planes off)
-        if(CTX::instance()->clipWholeElements) {
-          drawClipArrays(this, m->firstRegion(), m->lastRegion(), 3, cutOnly);
-        }
-        else {
-          for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
-            GRegion *r = *it;
-            if(!r->va_clip_triangles || !r->getVisibility() ||
-               !passWants(this, r))
-              continue;
-            if(render_mode == GMSH_SELECT) setPickColor(3, r->tag());
-            drawArrays(this, r, r->va_clip_triangles, GL_TRIANGLES,
-                       CTX::instance()->mesh.light);
-            if(render_mode == GMSH_SELECT) unsetPickColor();
-          }
-        }
-        _mergedLines = (merge && !cutOnly && ma.lines[3]);
-        _mergedTriangles = (merge && !cutOnly && ma.triangles[3]);
-        if(!cutOnly && needPerEntityPass(this, 3, _mergedLines, _mergedTriangles))
-          std::for_each(m->firstRegion(), m->lastRegion(),
-                        drawMeshGRegion(this));
-        _mergedLines = _mergedTriangles = false;
-      }
-      // after the edges and the faces, as the entities drew their nodes: a
-      // node is then covered by the lines that meet at it, as it always was
-      if(_mergedPoints) {
-        fillMergedPoints(m, ma, status);
-        gmshLightTwoSide(false);
-        if(volumeOnly || cutOnly) setMeshClipPlanes(true);
-        drawMergedArray(this, ma.points, GL_POINTS, false);
-      }
-      _mergedPoints = false;
     }
+    // a mixed mesh, some entities transparent and the others not, is drawn
+    // entity by entity: the merged arrays hold them all
+    bool mixed = transparencyPass != TRANSPARENCY_ALL &&
+                 !gmshMeshColorsAreTransparent();
+    bool merge = !inPickColorMode() && !mixed;
+    // only the volume is clipped: curves and surfaces are drawn whole
+    bool volumeOnly = c->clipWholeElements && c->clipOnlyVolume;
+    // only the cut elements are drawn, which is what the clip arrays hold
+    bool cutOnly =
+      c->clipWholeElements && c->clipOnlyDrawIntersectingVolume && c->mesh.clip;
+
+    // the nodes drawn as points, all at once - unless the planes only apply
+    // to some of them, which the single draw cannot tell apart
+    _merged.points = merge && c->mesh.nodes && !c->mesh.nodeType &&
+                     !(c->mesh.clip && c->clipWholeElements);
+
+    if(volumeOnly) setMeshClipPlanes(false);
+    if(status >= 0 && needPerEntityPass(this, 0))
+      forMeshEntities(m, 0, [&](GEntity *e) { drawMeshEntity(this, e); });
+    if(status >= 1) drawDimension(this, m, ma, 1, merge);
+    if(status >= 2) drawDimension(this, m, ma, 2, merge);
+    if(volumeOnly) setMeshClipPlanes(true);
+    if(status >= 3) drawDimension(this, m, ma, 3, merge, cutOnly);
+
+    // after the edges and the faces, as the entities drew their nodes: a
+    // node is then covered by the lines that meet at it, as it always was
+    if(_merged.points) {
+      fillMergedPoints(m, ma, status);
+      gmshLightTwoSide(false);
+      if(volumeOnly || cutOnly) setMeshClipPlanes(true);
+      drawMergedArray(ma.points, GL_POINTS, false);
+    }
+    _merged.points = false;
   }
 
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);

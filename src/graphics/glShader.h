@@ -120,10 +120,6 @@ namespace glShader {
   // multiplies the alpha of everything drawn afterwards (the Transparency
   // options)
   void setAlphaScale(double scale);
-  // Upload client arrays into buffers of ours and bind them (a core profile
-  // cannot read client memory). Null colours use the current colour.
-  void streamArrays(const float *vertices, const unsigned char *colors,
-                    int count);
   // Distance along its line of each vertex about to be drawn, in pixels, for
   // the dash pattern; without it the pattern has nothing to measure against.
   void streamDash(const float *dashes, int count);

@@ -336,13 +336,9 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       gl2psEnable(GL2PS_LINE_STIPPLE);
     }
 
-    bool normals =
-      !ctx->inPickColorMode() && useNormalArray && va->hasNormals();
-    if(normals) gmshLighting(true);
-    bool colors = !ctx->inPickColorMode() && va->hasColors();
-    gmshBindVertexArray(va, normals, colors);
-    drawVertexArray(va, type);
-    gmshUnbindArrays();
+    gmshDrawVertexArray(va, type,
+                        (useNormalArray ? GMSH_DRAW_LIGHT : 0) |
+                          GMSH_DRAW_COLORS);
 
     if(type == GL_LINES && opt->useStipple) {
       gmshLineStippleOff();

@@ -11,9 +11,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
-#if defined(HAVE_OPENGL)
-#include "glyphList.h"
-#endif
+#include "OwnerCache.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
 #include "MPoint.h"
@@ -100,11 +98,9 @@ GModel::GModel(const std::string &name)
 
 GModel::~GModel()
 {
-#if defined(HAVE_OPENGL)
-  // the glyphs kept for the whole model (its curves, its mesh normals) go
-  // with it
-  glyphCache::clear(this);
-#endif
+  // what the drawing keeps for the model (its arrays, its glyphs) goes with
+  // it
+  OwnerCacheBase::release(this);
   auto it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
 

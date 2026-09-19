@@ -18,6 +18,7 @@
 #include "MTrihedron.h"
 #include "MElementCut.h"
 #include "Context.h"
+#include "OwnerCache.h"
 #include "VertexArray.h"
 #include "OS.h"
 #include "SmoothData.h"
@@ -787,7 +788,7 @@ public:
 // what each model's clip arrays were last built for: only what changes them
 // without marking the mesh as changed (the planes and the clipping options);
 // everything else sets mesh.changed, and drawMesh() then invalidates them
-static std::map<GModel *, std::vector<double> > _clipToken;
+static OwnerCache<std::vector<double> > _clipToken;
 
 static std::vector<double> clipToken()
 {
@@ -845,8 +846,8 @@ static void fillCutEntity(GEntity *e, bool edges, bool faces, int est)
 bool GModel::fillClipVertexArrays()
 {
   std::vector<double> tok = clipToken();
-  auto found = _clipToken.find(this);
-  if(found != _clipToken.end() && found->second == tok) return false;
+  std::vector<double> *found = _clipToken.find(this);
+  if(found && *found == tok) return false;
   _clipToken[this] = tok;
 
   CTX *ctx = CTX::instance();

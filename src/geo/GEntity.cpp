@@ -16,9 +16,7 @@
 #include "GRegion.h"
 #include "closestVertex.h"
 #include "GmshConfig.h"
-#if defined(HAVE_OPENGL)
-#include "glyphList.h"
-#endif
+#include "OwnerCache.h"
 
 int GEntity::numSelected = 0;
 std::set<GEntity *> GEntity::selected;
@@ -62,10 +60,8 @@ GEntity::~GEntity()
     numSelected--;
     selected.erase(this);
   }
-#if defined(HAVE_OPENGL)
-  // the glyphs kept for this entity go with it
-  glyphCache::clear(this);
-#endif
+  // what the drawing keeps for this entity goes with it
+  OwnerCacheBase::release(this);
 }
 
 GEntity::GEntity(GModel *m, int t)

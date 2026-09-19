@@ -1654,33 +1654,6 @@ void main()
     glApi::Uniform1f(_u.alphaScale, (float)scale);
   }
 
-  void streamArrays(const float *vertices, const unsigned char *colors,
-                    int count)
-  {
-    if(count <= 0 || !ensure()) return;
-    if(!_streamVertices) glApi::GenBuffers(1, &_streamVertices);
-    glApi::BindBuffer(GL_ARRAY_BUFFER, _streamVertices);
-    glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * 3 * sizeof(float),
-                      vertices, GL_STREAM_DRAW);
-    glApi::EnableVertexAttribArray(ATTRIB_VERTEX);
-    glApi::VertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE, 0,
-                               nullptr);
-    glApi::DisableVertexAttribArray(ATTRIB_NORMAL);
-    if(colors) {
-      if(!_streamColors) glApi::GenBuffers(1, &_streamColors);
-      glApi::BindBuffer(GL_ARRAY_BUFFER, _streamColors);
-      glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * 4, colors,
-                        GL_STREAM_DRAW);
-      glApi::EnableVertexAttribArray(ATTRIB_COLOR);
-      glApi::VertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0,
-                                 nullptr);
-    }
-    else {
-      glApi::DisableVertexAttribArray(ATTRIB_COLOR);
-    }
-    glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
-  }
-
   void streamDash(const float *dashes, int count)
   {
     if(!ensure()) return;

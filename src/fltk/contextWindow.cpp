@@ -60,7 +60,6 @@ static void draw_stl(std::vector<SPoint3> &vertices,
     gmshPolygonFill(false);
   else
     gmshPolygonFill(true);
-  gmshLighting(true);
   gmshLightTwoSide(true);
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
 
@@ -80,11 +79,7 @@ static void draw_stl(std::vector<SPoint3> &vertices,
   }
   va.finalize();
 
-  gmshBindVertexArray(&va, true, false);
-  drawVertexArray(&va, GL_TRIANGLES);
-  gmshUnbindArrays();
-
-  gmshLighting(false);
+  gmshDrawVertexArray(&va, GL_TRIANGLES, GMSH_DRAW_LIGHT);
   gmshPolygonFill(fill);
 }
 

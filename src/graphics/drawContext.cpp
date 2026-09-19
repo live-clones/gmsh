@@ -331,7 +331,10 @@ static void uploadVertexArray(VertexArray *va)
   vboTime += TimeOfDay() - t1;
 }
 
-const GLvoid *vaVertexPointer(VertexArray *va)
+// bind the buffer of the vertices, normals or colours of an array (uploaded
+// on first use) and return the offset to pass to the pointer calls (null);
+// without buffer objects, the client-side pointer
+static const GLvoid *vaVertexPointer(VertexArray *va)
 {
   if(!useVertexBufferObjects()) {
     // make sure a buffer left bound by a previous frame does not turn the
@@ -344,7 +347,7 @@ const GLvoid *vaVertexPointer(VertexArray *va)
   return nullptr;
 }
 
-const GLvoid *vaNormalPointer(VertexArray *va)
+static const GLvoid *vaNormalPointer(VertexArray *va)
 {
   if(!useVertexBufferObjects()) {
     // make sure a buffer left bound by a previous frame does not turn the
@@ -357,7 +360,7 @@ const GLvoid *vaNormalPointer(VertexArray *va)
   return nullptr;
 }
 
-const GLvoid *vaColorPointer(VertexArray *va)
+static const GLvoid *vaColorPointer(VertexArray *va)
 {
   if(!useVertexBufferObjects()) {
     // make sure a buffer left bound by a previous frame does not turn the
@@ -370,22 +373,11 @@ const GLvoid *vaColorPointer(VertexArray *va)
   return nullptr;
 }
 
-// what the last bind left for the draw: client arrays are uploaded at the
-// draw, when the count is known
-static const float *_clientVertices = nullptr;
-static const unsigned char *_clientColors = nullptr;
-static bool _boundColors = false, _boundNormals = false;
-
-void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
+// bind the arrays of a vertex array: the vertices always, the normals and
+// colours if asked (an unbound colour array means the current colour is
+// used); the shader pipeline binds them as vertex attributes
+static void bindVertexArray(VertexArray *va, bool normals, bool colors)
 {
-  // pending immediate mode primitives must be drawn before the attributes
-  // are bound: drawing them disables the attribute arrays on the way out
-  gmshFlushImmediate();
-  _clientVertices = nullptr;
-  _clientColors = nullptr;
-  _boundColors = colors;
-  _boundNormals = normals;
-
   if(useShaders()) {
     // the attributes are recorded in the program's vertex array object,
     // which must be bound first: on the first frame of a context nothing has
@@ -433,47 +425,19 @@ void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
   }
 }
 
-void gmshBindArrays(const float *vertices, const unsigned char *colors)
+static void unbindVertexArray()
 {
-  // as above
-  gmshFlushImmediate();
-  _boundColors = (colors != nullptr);
-  _boundNormals = false;
-
-  if(useShaders()) {
-    // uploaded at the draw, when the count is known
-    _clientVertices = vertices;
-    _clientColors = colors;
-    return;
-  }
-
-  _clientVertices = nullptr;
-  _clientColors = nullptr;
-  glVertexPointer(3, GL_FLOAT, 0, vertices);
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_NORMAL_ARRAY);
-  if(colors) {
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-    glEnableClientState(GL_COLOR_ARRAY);
-  }
-  else {
-    glDisableClientState(GL_COLOR_ARRAY);
-  }
-}
-
-void gmshUnbindArrays()
-{
-  _clientVertices = nullptr;
-  _clientColors = nullptr;
   if(useShaders()) {
     glApi::DisableVertexAttribArray(glShader::ATTRIB_VERTEX);
     glApi::DisableVertexAttribArray(glShader::ATTRIB_NORMAL);
     glApi::DisableVertexAttribArray(glShader::ATTRIB_COLOR);
-    return;
   }
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_NORMAL_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
+  else {
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+  }
+  if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 // is any of these colours transparent, through the Transparency option or
@@ -588,62 +552,20 @@ bool gmshMeshEntityIsTransparent(GEntity *e)
          (meshUsesEntityColors() && entityColorIsTransparent(e));
 }
 
-static void gmshDrawArraysImpl(GLenum type, int first, int count,
-                               const float *dashes);
-
-void gmshDrawArrays(GLenum type, int count, const float *dashes)
+// distance along its segment of every vertex of the lines [first, first +
+// count) of an array of independent lines, in pixels, for the dash pattern
+// (restarting at every segment as OpenGL's stipple did for GL_LINES), at the
+// index of the vertex: the attribute is read from the start of the buffer
+static void dashDistances(VertexArray *va, int first, int count,
+                          std::vector<float> &dash)
 {
-  gmshDrawArraysImpl(type, 0, count, dashes);
-}
-
-void gmshDrawArraysRange(GLenum type, int first, int count)
-{
-  gmshDrawArraysImpl(type, first, count, nullptr);
-}
-
-static void gmshDrawArraysImpl(GLenum type, int first, int count,
-                               const float *dashes)
-{
-  // pending immediate mode primitives come before this one
-  gmshFlushImmediate();
-  if(count <= 0) return;
-
-  if(useShaders()) {
-    if(!glShader::use()) return;
-    if(_clientVertices) {
-      glShader::streamArrays(_clientVertices, _clientColors, count);
-    }
-    glShader::setColorArray(_boundColors);
-    // no texture, but the sampler must still point to a valid one
-    glShader::noTexture();
-    gmshPushShaderState();
-    // the transparency may apply to filled surfaces only
-    glShader::setAlphaScale(gmshAlphaScaleFor(type));
-    // gmshPushShaderState() leaves the dash pattern off; a caller that has
-    // computed the distances along the line turns it on here
-    glShader::streamDash(dashes, count);
-    if(dashes)
-      glShader::setStipple(true, gmshLineStippleFactor(),
-                           gmshLineStipplePattern());
-  }
-
-  glDrawArrays(type, first, count);
-}
-
-// distance along its segment of every vertex of a set of independent lines,
-// in pixels, for the dash pattern; restarts at every segment as OpenGL's
-// stipple did for GL_LINES. Empty if the array cannot be dashed.
-static void dashDistances(VertexArray *va, std::vector<float> &dash)
-{
-  int count = va->getNumVertices();
-  if(count < 2) return;
   GLint glvp[4];
   glGetIntegerv(GL_VIEWPORT, glvp);
   int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
   const double *modelview = gmshMatrix(GMSH_MODELVIEW);
   const double *projection = gmshMatrix(GMSH_PROJECTION);
-  dash.assign(count, 0.f);
-  for(int i = 0; i + 1 < count; i += 2) {
+  dash.assign(first + count, 0.f);
+  for(int i = first; i + 1 < first + count; i += 2) {
     float *v0 = va->getVertexArray(3 * i);
     float *v1 = va->getVertexArray(3 * (i + 1));
     double p0[3] = {v0[0], v0[1], v0[2]}, p1[3] = {v1[0], v1[1], v1[2]};
@@ -656,46 +578,79 @@ static void dashDistances(VertexArray *va, std::vector<float> &dash)
   }
 }
 
-void drawVertexArray(VertexArray *va, GLenum type)
+// the vertices [first, first + count) of the bound array
+static void drawRange(VertexArray *va, GLenum type, bool normals, bool colors,
+                      int first, int count)
 {
+  if(count <= 0) return;
+  if(!useShaders()) {
+    glDrawArrays(type, first, count);
+    return;
+  }
+  if(!glShader::use()) return;
+  gmshPushShaderState();
+  // the transparency may apply to filled surfaces only
+  glShader::setAlphaScale(gmshAlphaScaleFor(type));
+  bool dashed = (type == GL_LINES && gmshLineStippleEnabled());
   // a core profile draws no wide lines: the shader makes quads out of the
-  // segments instead
-  if(useShaders() && type == GL_LINES && gmshCurrentLineWidth() > 1. &&
-     va->getNumVertices() > 1) {
-    gmshFlushImmediate();
-    gmshPushShaderState();
-    // the transparency may apply to filled surfaces only, as for the other
-    // arrays (gmshDrawArrays())
-    glShader::setAlphaScale(gmshAlphaScaleFor(type));
-    // the shader knows both ends of a quad and computes the dash distance
-    // itself
-    if(gmshLineStippleEnabled())
+  // segments instead, and computes the dash distances itself
+  if(type == GL_LINES && gmshCurrentLineWidth() > 1. && count > 1) {
+    if(dashed)
       glShader::setStipple(true, gmshLineStippleFactor(),
                            gmshLineStipplePattern());
-    // what the caller bound: an array drawn in a forced colour (selected,
-    // or identifiers in a picking pass) is bound without its colours
-    bool lit = gmshLightingEnabled() && _boundNormals && va->hasNormals();
+    bool lit = normals && gmshLightingEnabled();
     if(glShader::drawWideLines(
-         va->getVertexArray(), lit ? (const void *)va->getNormalArray() :
-                                     nullptr,
-         NORMAL_GLTYPE,
-         _boundColors && va->hasColors() ? va->getColorArray() : nullptr,
-         va->getNumVertices(), gmshCurrentLineWidth(), lit)) {
-      if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+         va->getVertexArray(3 * first),
+         lit ? (const void *)va->getNormalArray(3 * first) : nullptr,
+         NORMAL_GLTYPE, colors ? va->getColorArray(4 * first) : nullptr,
+         count, gmshCurrentLineWidth(), lit)) {
+      // it has bound its own buffers and attributes: bind the array again
+      // for the next range
+      bindVertexArray(va, normals, colors);
       return;
     }
+    gmshPushShaderState();
+    glShader::setAlphaScale(gmshAlphaScaleFor(type));
   }
-
-  // a dashed line from an array: the distances along the line are computed
-  // here
+  glShader::setColorArray(colors);
+  // no texture, but the sampler must still point to a valid one
+  glShader::noTexture();
+  // gmshPushShaderState() leaves the dash pattern off: turned on here with
+  // the distances along the lines
   std::vector<float> dash;
-  if(useShaders() && type == GL_LINES && gmshLineStippleEnabled())
-    dashDistances(va, dash);
+  if(dashed) dashDistances(va, first, count, dash);
+  glShader::streamDash(dash.empty() ? nullptr : &dash[0], first + count);
+  if(!dash.empty())
+    glShader::setStipple(true, gmshLineStippleFactor(),
+                         gmshLineStipplePattern());
+  glDrawArrays(type, first, count);
+}
 
-  gmshDrawArrays(type, va->getNumVertices(), dash.empty() ? nullptr :
-                                                            &dash[0]);
-
-  if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+void gmshDrawVertexArray(VertexArray *va, GLenum type, int flags,
+                         const std::vector<std::pair<int, int> > *runs)
+{
+  if(!va || !va->getNumVertices()) return;
+  // pending immediate mode primitives come first, and must be drawn before
+  // the attributes are bound: drawing them disables the attribute arrays
+  gmshFlushImmediate();
+  // a picking pass draws in the colour of the identifier it has set, unless
+  // the array holds the identifiers
+  bool pick = drawContext::pickColorActive();
+  bool normals = !pick && (flags & GMSH_DRAW_LIGHT) && va->hasNormals();
+  bool colors = va->hasColors() && ((flags & GMSH_DRAW_IDENTIFIERS) ||
+                                    (!pick && (flags & GMSH_DRAW_COLORS)));
+  if(normals) gmshLighting(true);
+  if(flags & GMSH_DRAW_OFFSET) glEnable(GL_POLYGON_OFFSET_FILL);
+  bindVertexArray(va, normals, colors);
+  if(runs) {
+    for(auto &r : *runs)
+      drawRange(va, type, normals, colors, r.first, r.second - r.first);
+  }
+  else
+    drawRange(va, type, normals, colors, 0, va->getNumVertices());
+  unbindVertexArray();
+  if(flags & GMSH_DRAW_OFFSET) glDisable(GL_POLYGON_OFFSET_FILL);
+  gmshLighting(false);
 }
 
 // The clipping planes are applied by OpenGL and what they add (the section,

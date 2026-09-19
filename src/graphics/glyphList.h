@@ -141,13 +141,13 @@ enum glyphSlot {
 };
 
 // the lists kept between frames, keyed by owner (a view, a mesh entity, the
-// geometry) and slot
+// geometry) and slot; dropped with their owner (see OwnerCache.h)
 namespace glyphCache {
   // the list of an owner and slot; true if it was built with this token and
   // can be drawn as is, false if it has to be filled again
   bool get(const void *owner, glyphSlot slot, const glyphToken &token,
            glyphList *&list);
-  // throw away everything an owner has, e.g. because it is being deleted
+  // throw away everything an owner has
   void clear(const void *owner);
   void clearAll();
 } // namespace glyphCache
