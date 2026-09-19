@@ -1389,8 +1389,8 @@ bool adaptPolytope(int level, int numComp, MElement *e, int &numNodes,
 
   // Refinement
   auto hasher = [](const std::pair<std::size_t, std::size_t> p) -> size_t {
-    std::size_t packed = (p.first << 32) | (p.second & 0xFFFFFFFF);
-    return std::hash<std::size_t>{}(packed);
+    uint64_t packed = ((uint64_t)p.first << 32) | (p.second & 0xFFFFFFFF);
+    return std::hash<uint64_t>{}(packed);
   };
   for(int i = 0; i < level; ++i) {
     // create sub simplices
