@@ -194,6 +194,8 @@ post_model_scalar elements_o1.msh views_o1.msh view3d.opt
   View[0].Visible = 0; View[1].Visible = 1;
   View[1].Visible = 0; View[2].Visible = 1;
   View[2].ShowElement = 1; View[2].Explode = 0.8;
+  View[2].Explode = 1; View[2].UseGeneralizedRaise = 1; \
+  View[2].GeneralizedRaiseZ = "0.3 * v0";
 
 post_model_vector elements_o1.msh views_o1.msh view3d.opt
   For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 3); EndFor
