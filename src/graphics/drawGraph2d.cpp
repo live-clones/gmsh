@@ -662,8 +662,16 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   drawContext::global()->setStringHalo(false);
 }
 
+// the points of the graphs a picking pass can return, numbered as they are
+// drawn into it and forgotten with it (they are read back during that pass)
 static std::map<SPoint2, unsigned int> tags;
 static std::map<unsigned int, SPoint2> tags_rev;
+
+void clearGraph2dDataPointTags()
+{
+  tags.clear();
+  tags_rev.clear();
+}
 
 static unsigned int getTagForGraph2dDataPoint(const SPoint2 &p)
 {

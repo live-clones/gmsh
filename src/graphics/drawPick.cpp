@@ -25,6 +25,7 @@
 #include "gl2ps.h"
 
 extern SPoint2 getGraph2dDataPointForTag(unsigned int);
+extern void clearGraph2dDataPointTags();
 
 bool drawContext::_pickColorActive = false;
 
@@ -182,6 +183,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   if(fw < 1 || fh < 1) return false;
 
   _pickObjects.clear();
+  clearGraph2dDataPointTags();
   _pickObjects.push_back(pickObject()); // 0: background
   _pickColor = _pickColorActive = true;
   _pickStateSkip = -1;
