@@ -1350,8 +1350,9 @@ bool drawContext::generateTextureForImage(const std::string &name, int page,
         img = new Fl_JPEG_Image(name.c_str());
       else if(ext == ".png" || ext == ".PNG")
         img = new Fl_PNG_Image(name.c_str());
-      if(!img) {
+      if(!img || img->fail() || img->w() <= 0 || img->h() <= 0) {
         Msg::Error("Could not load background image '%s'", name.c_str());
+        if(img) delete img;
         return false;
       }
       Fl_RGB_Image *img2 = (Fl_RGB_Image *)img->copy(2048, 2048);
