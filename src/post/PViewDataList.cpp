@@ -1263,7 +1263,6 @@ std::vector<double> *PViewDataList::incrementList(int numComp, int type,
     warned = true;
     return nullptr;
   }
-  int nb;
   switch(type) {
   case TYPE_PNT:
     if(numComp == 1) {
