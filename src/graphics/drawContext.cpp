@@ -746,7 +746,8 @@ void drawContext::draw3d()
 
   if(split) {
     transparencyPass = TRANSPARENCY_TRANSPARENT;
-    bool summed = glShader::beginTransparent();
+    bool summed = CTX::instance()->orderIndependentTransparency &&
+                  glShader::beginTransparent();
     if(!summed) {
       // no summing buffers: blend in drawing order. The geometry and the
       // mesh are not sorted, so they must not write depth, or a face in
