@@ -1637,6 +1637,12 @@ void drawContext::initCameraMatrices(double view[16])
   double up[3] = {camera.up.x, camera.up.y, camera.up.z};
   glMatrix::lookAt(eye, target, up, view);
   gmshLoadMatrix(view);
+  // what unproject() and the picked points are read back with (the jitter of
+  // a studio frame is not part of the view)
+  for(int i = 0; i < 16; i++) {
+    model[i] = view[i];
+    this->proj[i] = frustum[i];
+  }
 }
 
 void drawContext::studioJitter(double m[16])
@@ -1792,9 +1798,10 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
   winx *= fact;
   winy *= fact;
 
-  GLint glvp[4];
-  glGetIntegerv(GL_VIEWPORT, glvp);
-  int vp[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  // the viewport of this window in true pixels: asking OpenGL would answer
+  // for whichever window drew last, and this runs outside a draw
+  int vp[4] = {(int)(viewport[0] * fact), (int)(viewport[1] * fact),
+               (int)(viewport[2] * fact), (int)(viewport[3] * fact)};
 
   winy = vp[3] - winy;
 
