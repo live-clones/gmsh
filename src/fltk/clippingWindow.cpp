@@ -29,17 +29,30 @@ static void clip_num_cb(Fl_Widget *w, void *data)
 static void clip_update(bool adjusting);
 
 // no event says that typing a value is over: the full representation is put
-// back a moment after the last change
+// back a moment after the last change (or at once with Enter)
 static void clip_settle_cb(void *) { clip_update(false); }
 
-// is the user still choosing the value (a drag, a scroll, a keystroke)?
+// a drag ends with a release, which the input does not get when the button
+// comes up outside the window: the full representation comes back as soon as
+// no button is down any more
+static void clip_drag_cb(void *)
+{
+  if(Fl::pushed())
+    Fl::repeat_timeout(0.1, clip_drag_cb);
+  else
+    clip_update(false);
+}
+
+// is the user still choosing the value (a drag, a scroll, a keystroke other
+// than Enter)?
 static bool clip_adjusting()
 {
   switch(Fl::event()) {
   case FL_DRAG:
   case FL_MOUSEWHEEL:
-  case FL_KEYBOARD:
   case FL_PASTE: return true;
+  case FL_KEYBOARD:
+    return Fl::event_key() != FL_Enter && Fl::event_key() != FL_KP_Enter;
   default: return false;
   }
 }
@@ -158,9 +171,13 @@ static void clip_update(bool adjusting)
     CTX::instance()->clipCapping = 0;
   }
 
-  // a drag says when it is over; a typed or scrolled value settles on its own
+  // a typed or scrolled value settles on its own; a drag when the button is
+  // released, wherever it is
   Fl::remove_timeout(clip_settle_cb);
-  if(adjusting && Fl::event() != FL_DRAG) Fl::add_timeout(0.5, clip_settle_cb);
+  Fl::remove_timeout(clip_drag_cb);
+  if(adjusting)
+    Fl::add_timeout(Fl::event() == FL_DRAG ? 0.1 : 0.5,
+                    Fl::event() == FL_DRAG ? clip_drag_cb : clip_settle_cb);
 
   CTX::instance()->drawBBox = adjusting ? 1 : 0;
   drawContext::global()->draw();
@@ -252,9 +269,10 @@ clippingWindow::clippingWindow(int deltaFontSize)
     for(int j = 0; j < 4; j++) {
       plane[j]->align(FL_ALIGN_RIGHT);
       plane[j]->callback(clip_update_cb);
-      // also called on release, so that the full scene comes back even if the
-      // value did not change
-      plane[j]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+      // also called on release and on Enter, changed or not, so that the full
+      // scene comes back even if the value did not change
+      plane[j]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY |
+                     FL_WHEN_NOT_CHANGED);
       plane[j]->tooltip("A * X + B * Y + C * Z + D = 0");
     }
 
@@ -276,7 +294,8 @@ clippingWindow::clippingWindow(int deltaFontSize)
     for(int i = 0; i < 6; i++) {
       box[i]->align(FL_ALIGN_RIGHT);
       box[i]->callback(clip_update_cb);
-      box[i]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+      box[i]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY |
+                   FL_WHEN_NOT_CHANGED);
     }
 
     group[1]->end();
