@@ -212,6 +212,13 @@ trackball(double q[4], double p1x, double p1y, double p2x, double p2y)
  */
 void axis_to_quat(double a[3], double phi, double q[4])
 {
+    /* a drag straight towards the centre gives no axis to turn about: the
+       rotation is then the identity, not a quaternion of NaNs */
+    if(vlength(a) == 0.0) {
+      vzero(q);
+      q[3] = 1.0;
+      return;
+    }
     vnormal(a);
     vcopy(a,q);
     vscale(q,sin(phi/2.0));
@@ -311,7 +318,9 @@ normalize_quat(double q[4])
     int i;
     double mag;
 
-    mag = (q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
+    /* the length of the quaternion, not its square */
+    mag = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
+    if (mag == 0.0) return;
     for (i = 0; i < 4; i++) q[i] /= mag;
 }
 
