@@ -379,7 +379,11 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
           gmshVertex3d(v->x(), v->y(), v->z());
           gmshEnd();
         }
-        if(what & NODES_LABELS)
+        // one node in Mesh.LabelsSampling is labelled, as the walk over the
+        // nodes of the entity does
+        int labelStep = CTX::instance()->mesh.labelSampling;
+        if(labelStep <= 0) labelStep = 1;
+        if((what & NODES_LABELS) && (seen.size() - 1) % labelStep == 0)
           drawVertexLabel(ctx, v->onWhat() ? v->onWhat() : e, v);
       }
     }
