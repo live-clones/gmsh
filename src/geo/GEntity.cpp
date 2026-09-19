@@ -21,6 +21,19 @@
 #endif
 
 int GEntity::numSelected = 0;
+std::set<GEntity *> GEntity::selected;
+
+void GEntity::setSelection(char val)
+{
+  if(!_selection != !val) {
+    numSelected += val ? 1 : -1;
+    if(val)
+      selected.insert(this);
+    else
+      selected.erase(this);
+  }
+  _selection = val;
+}
 // The flags are raised only on an actual change.
 void GEntity::setVisibility(char val, bool recursive)
 {
@@ -44,6 +57,11 @@ void GEntity::setColor(unsigned color, bool recursive)
 
 GEntity::~GEntity()
 {
+  // a selected entity that goes is no longer selected
+  if(_selection) {
+    numSelected--;
+    selected.erase(this);
+  }
 #if defined(HAVE_OPENGL)
   // the glyphs kept for this entity go with it
   glyphCache::clear(this);

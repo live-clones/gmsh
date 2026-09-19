@@ -586,7 +586,21 @@ bool gmshMeshEntityIsTransparent(GEntity *e)
          (meshUsesEntityColors() && entityColorIsTransparent(e));
 }
 
+static void gmshDrawArraysImpl(GLenum type, int first, int count,
+                               const float *dashes);
+
 void gmshDrawArrays(GLenum type, int count, const float *dashes)
+{
+  gmshDrawArraysImpl(type, 0, count, dashes);
+}
+
+void gmshDrawArraysRange(GLenum type, int first, int count)
+{
+  gmshDrawArraysImpl(type, first, count, nullptr);
+}
+
+static void gmshDrawArraysImpl(GLenum type, int first, int count,
+                               const float *dashes)
 {
   // pending immediate mode primitives come before this one
   gmshFlushImmediate();
@@ -611,7 +625,7 @@ void gmshDrawArrays(GLenum type, int count, const float *dashes)
                            gmshLineStipplePattern());
   }
 
-  glDrawArrays(type, 0, count);
+  glDrawArrays(type, first, count);
 }
 
 // distance along its segment of every vertex of a set of independent lines,
@@ -2038,6 +2052,37 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
   glDepthMask(on);
   glDepthRange(0., zfar);
   _pickStateSkip = skip;
+  _pickStateFar = zfar;
+}
+
+std::size_t drawContext::pickRegister(int type, const std::vector<int> &tags)
+{
+  if(!_pickColor || tags.empty()) return 0;
+  std::size_t first = _pickObjects.size();
+  for(auto t : tags) _pickObjects.push_back(pickObject(type, t, -1, -1, false));
+  return first;
+}
+
+bool drawContext::pickSkipped(int type, int ient)
+{
+  if(_pickSkip.empty()) return false;
+  std::size_t key = _pickKey(type, ient, -1, -1);
+  for(std::size_t i = 0; i < _pickSkip.size(); i++)
+    if(_pickSkip[i] == key) return true;
+  return false;
+}
+
+void drawContext::pickStateFor(int type)
+{
+  if(!_pickColor) return;
+  double zfar =
+    (type >= 0 && type <= 3) ? 1. - (3 - type) * _pickDepthStep : 1.;
+  if(_pickStateSkip == 0 && zfar == _pickStateFar) return;
+  gmshFlushImmediate();
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
+  glDepthRange(0., zfar);
+  _pickStateSkip = 0;
   _pickStateFar = zfar;
 }
 

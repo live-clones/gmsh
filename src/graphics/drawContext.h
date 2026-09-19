@@ -47,6 +47,9 @@ void gmshUnbindArrays();
 
 // draw what the last bind left
 void gmshDrawArrays(GLenum type, int count, const float *dashes = nullptr);
+// the vertices [first, first + count) of the bound array (not for arrays
+// bound with gmshBindArrays(), which are streamed from the first)
+void gmshDrawArraysRange(GLenum type, int first, int count);
 // which part of the scene a pass draws: everything transparent is drawn after
 // everything else, in one pass
 enum gmshTransparencyPass {
@@ -321,6 +324,23 @@ public:
   // its shape (the sphere of a volume, which floats inside it).
   void setPickColor(int type, int ient, int type2 = -1, int ient2 = -1,
                     bool front = false);
+  // For what is drawn from a kept array with the identifiers as its vertex
+  // colours (see drawGeom.cpp): register the entities of a type as
+  // setPickColor() would, returning the identifier of the first (the others
+  // follow), or 0 outside a picking pass; say whether one has been stepped
+  // past with the wheel; and set the masks and the depth range setPickColor()
+  // gives the type
+  std::size_t pickRegister(int type, const std::vector<int> &tags);
+  bool pickSkipped(int type, int ient);
+  void pickStateFor(int type);
+  // the colour of an identifier
+  static void pickIdColor(std::size_t id, unsigned char c[4])
+  {
+    c[0] = (unsigned char)(id & 0xff);
+    c[1] = (unsigned char)((id >> 8) & 0xff);
+    c[2] = (unsigned char)((id >> 16) & 0xff);
+    c[3] = 255;
+  }
   // forget the identifier image: anything that changes what a redraw would
   // show must call this
   void invalidatePickCache() { _pickCacheValid = false; }
