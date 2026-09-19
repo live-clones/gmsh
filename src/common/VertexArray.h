@@ -306,10 +306,8 @@ public:
   int getNumVerticesPerElement() { return _numVerticesPerElement; }
   // return the number of element pointers
   int getNumElementPointers() { return (int)_elements.size(); }
-  // return a pointer to the raw vertex array (warning: 1) we don't
-  // range check 2) calling this if _vertices.size() == 0 will cause
-  // some compilers to throw an exception)
-  float *getVertexArray(int i = 0) { return &_vertices[i]; }
+  // the raw arrays, not range checked (null when empty)
+  float *getVertexArray(int i = 0) { return _vertices.data() + i; }
 
   // return true if the array stores normals (resp. colors)
   bool hasNormals() { return (int)_normals.size() == 3 * getNumVertices(); }
@@ -322,13 +320,13 @@ public:
   bool getVboValid() { return _vboContext == vboContext; }
   void setVboValid() { _vboContext = vboContext; }
   // return a pointer to the raw normal array
-  normal_type *getNormalArray(int i = 0) { return &_normals[i]; }
+  normal_type *getNormalArray(int i = 0) { return _normals.data() + i; }
 
   // return a pointer to the raw color array
-  unsigned char *getColorArray(int i = 0) { return &_colors[i]; }
+  unsigned char *getColorArray(int i = 0) { return _colors.data() + i; }
 
   // return a pointer to the raw element array
-  MElement **getElementPointerArray(int i = 0) { return &_elements[i]; }
+  MElement **getElementPointerArray(int i = 0) { return _elements.data() + i; }
 
   // add element data in the arrays (if unique is set, only add the element if
   // an identical one has not already been added)
