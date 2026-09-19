@@ -8,21 +8,17 @@
 #ifndef DRAW_CONTEXT_FLTK_STRING_TEXTURE_H
 #define DRAW_CONTEXT_FLTK_STRING_TEXTURE_H
 
-#include "drawContextFltk.h"
+#include "drawContextFltkQueued.h"
 
-class drawContextFltkStringTexture : public drawContextFltk {
-  class queueString;
-  queueString *_queue;
-  int _currentFontId;
-  int _currentFontSize;
+// the strings rasterised by FLTK in an offscreen image
+class drawContextFltkStringTexture : public drawContextFltkQueued {
+protected:
+  char engine() { return 'T'; }
+  extent measure(const element &e, double f);
+  void rasterise(const std::vector<slot> &slots, double f, int w, int h,
+                 unsigned char *image);
 
 public:
-  drawContextFltkStringTexture();
-  ~drawContextFltkStringTexture();
-  void flushString();
-  void drawString(const char *str);
-  void drawString(const char *str, const double win[3]);
-  void setFont(int fontid, int fontsize);
   std::string getName() { return "StringTexture"; }
 };
 

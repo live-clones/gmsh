@@ -6,258 +6,72 @@
 // Contributed by Jonathan Lambrechts
 
 #include "drawContextFltkCairo.h"
-#include "glImmediate.h"
-#include "glShader.h"
 
 #if defined(HAVE_CAIRO)
 #include <cairo/cairo.h>
 
-// FIXME: hack for current version of mingw
-#if defined(WIN32) && !defined(GL_TEXTURE_RECTANGLE_ARB)
-#define GL_TEXTURE_RECTANGLE_ARB 0x84F5
-#endif
+static void setFontOptions(cairo_t *cr)
+{
+  cairo_font_options_t *fontOptions = cairo_font_options_create();
+  cairo_get_font_options(cr, fontOptions);
+  cairo_font_options_set_hint_style(fontOptions, CAIRO_HINT_STYLE_FULL);
+  cairo_font_options_set_antialias(fontOptions, CAIRO_ANTIALIAS_GRAY);
+  cairo_set_font_options(cr, fontOptions);
+  cairo_font_options_destroy(fontOptions);
+}
 
-class drawContextFltkCairo::queueString {
-public:
-  typedef struct {
-    std::string text;
-    GLfloat x, y, z;
-    GLfloat r, g, b, alpha;
-    int fontSize;
-    cairo_font_face_t *fontFace;
-    int width, height;
-    double xBearing, yBearing;
-    bool halo;
-    // was the depth test on when this string was queued? It then belongs to
-    // the scene and is drawn depth tested; the 2D overlay is not
-    bool depth;
-  } element;
-
-private:
-  std::vector<element> _elements;
-  int _totalWidth, _maxHeight;
-
-public:
-  queueString()
-  {
-    _totalWidth = 0;
-    _maxHeight = 0;
+// the Cairo face of an FLTK font
+static void selectFontFace(cairo_t *cr, int fontid)
+{
+  cairo_font_slant_t slant =
+    (fontid & FL_ITALIC) ? CAIRO_FONT_SLANT_ITALIC : CAIRO_FONT_SLANT_NORMAL;
+  cairo_font_weight_t weight =
+    (fontid & FL_BOLD) ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL;
+  switch(fontid) {
+  case FL_HELVETICA:
+  case FL_HELVETICA_BOLD:
+  case FL_HELVETICA_BOLD_ITALIC:
+  case FL_HELVETICA_ITALIC:
+    cairo_select_font_face(cr, "sans", slant, weight);
+    break;
+  case FL_COURIER:
+  case FL_COURIER_BOLD:
+  case FL_COURIER_BOLD_ITALIC:
+  case FL_COURIER_ITALIC:
+    cairo_select_font_face(cr, "courier", slant, weight);
+    break;
+  case FL_TIMES:
+  case FL_TIMES_BOLD:
+  case FL_TIMES_BOLD_ITALIC:
+  case FL_TIMES_ITALIC:
+    cairo_select_font_face(cr, "serif", slant, weight);
+    break;
+  default:
+    cairo_select_font_face(cr, "sans", CAIRO_FONT_SLANT_NORMAL,
+                           CAIRO_FONT_WEIGHT_NORMAL);
   }
+}
 
-  ~queueString()
-  {
-    for(auto it = _elements.begin(); it != _elements.end(); ++it) {
-      cairo_font_face_destroy(it->fontFace);
-    }
-  }
+drawContextFltkCairo::drawContextFltkCairo()
+{
+  _surface = cairo_image_surface_create(CAIRO_FORMAT_A8, 1, 1);
+  _cr = cairo_create(_surface);
+  setFontOptions(_cr);
+}
 
-  void append(const element &elem)
-  {
-    if(_totalWidth + elem.width > 1000) flush();
-    _elements.push_back(elem);
-    _totalWidth += elem.width;
-    _maxHeight = std::max(_maxHeight, (int)elem.height + 1);
-  }
+drawContextFltkCairo::~drawContextFltkCairo()
+{
+  cairo_destroy(_cr);
+  cairo_surface_destroy(_surface);
+}
 
-  void flush()
-  {
-    if(_elements.empty()) return;
-
-    // everything below is in true pixels, and the strings are drawn at that
-    // scale so that they are sharp on a high resolution screen
-    double f = drawContext::global()->pixelFactor();
-
-    cairo_surface_t *surface = cairo_image_surface_create(
-      CAIRO_FORMAT_A8, (int)(_totalWidth * f) + 1, (int)(_maxHeight * f) + 1);
-    cairo_t *cr = cairo_create(surface);
-    double pos = 0.;
-    cairo_set_source_rgba(cr, 0., 0., 0., 0);
-    cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-    cairo_paint(cr);
-    cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-    cairo_font_options_t *fontOptions = cairo_font_options_create();
-    cairo_get_font_options(cr, fontOptions);
-    cairo_font_options_set_hint_style(fontOptions, CAIRO_HINT_STYLE_FULL);
-    cairo_font_options_set_antialias(fontOptions, CAIRO_ANTIALIAS_GRAY);
-    cairo_set_font_options(cr, fontOptions);
-    cairo_font_options_destroy(fontOptions);
-
-    cairo_set_source_rgba(cr, 1, 1, 1, 1);
-    for(auto it = _elements.begin(); it != _elements.end(); ++it) {
-      cairo_move_to(cr, pos - it->xBearing * f, -it->yBearing * f);
-      cairo_set_font_size(cr, it->fontSize * f);
-      cairo_set_font_face(cr, it->fontFace);
-      cairo_show_text(cr, it->text.c_str());
-      cairo_font_face_destroy(it->fontFace);
-      pos += it->width * f;
-    }
-    cairo_destroy(cr);
-    // setup matrices
-    int matrixMode;
-    GLuint textureId;
-    matrixMode = gmshMatrixMode();
-    gmshMatrixMode(GMSH_PROJECTION);
-    gmshPushMatrix();
-    gmshLoadIdentity();
-    gmshMatrixMode(GMSH_MODELVIEW);
-    gmshPushMatrix();
-    gmshLoadIdentity();
-    // the whole window, in the true pixels the positions are given in
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
-    gmshScale(2. / vp[2], 2. / vp[3], 1.);
-    gmshTranslate(-vp[2] / 2., -vp[3] / 2., 0.);
-
-    // a plain 2D texture with coordinates in [0, 1] (rectangle textures are
-    // not in OpenGL ES), with one channel giving the alpha of the colour:
-    // an alpha texture for the fixed function pipeline, a red one for the
-    // shader
-    bool shaders = gmshUseShaders();
-    bool wasLit = gmshLightingEnabled();
-    // the queue can be flushed in the middle of the scene, so the state
-    // changed here is put back afterwards: through the attribute stack with
-    // the fixed function pipeline, by hand with the shader one. The
-    // transparency pass keeps its own blending.
-    GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
-    GLboolean wasBlend = glIsEnabled(GL_BLEND);
-    bool ownBlend = !glShader::transparentPass();
-    if(!shaders) {
-      // glPopAttrib() does not restore the lighting we remember ourselves
-      glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
-    }
-    GLboolean wasMask = GL_TRUE;
-    GLint wasFunc = GL_LESS;
-    glGetBooleanv(GL_DEPTH_WRITEMASK, &wasMask);
-    glGetIntegerv(GL_DEPTH_FUNC, &wasFunc);
-    // the quads below are in window coordinates: the clipping planes, which
-    // are in the coordinates of the scene, would cut them at random
-    bool wasClip[6];
-    for(int i = 0; i < 6; i++) {
-      wasClip[i] = gmshClipPlaneEnabled(i);
-      if(wasClip[i]) gmshClipPlaneOn(i, false);
-    }
-    gmshLighting(false);
-    glDisable(GL_DEPTH_TEST);
-    if(ownBlend) {
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-    int tw = cairo_image_surface_get_width(surface);
-    int th = cairo_image_surface_get_height(surface);
-    glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    // cairo pads the rows to a multiple of four bytes
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH,
-                  cairo_image_surface_get_stride(surface));
-    glTexImage2D(GL_TEXTURE_2D, 0, shaders ? GL_R8 : GL_ALPHA, tw, th, 0,
-                 shaders ? GL_RED : GL_ALPHA, GL_UNSIGNED_BYTE,
-                 cairo_image_surface_get_data(surface));
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    // the filtering a rectangle texture had by default
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    gmshTexture(textureId);
-
-    pos = 0.;
-    const unsigned char *cc = gmshCurrentColor();
-    unsigned char savedColor[4] = {cc[0], cc[1], cc[2], cc[3]};
-    unsigned int bg = CTX::instance()->color.bg;
-    float bgf[3] = {CTX::instance()->unpackRed(bg) / 255.f,
-                    CTX::instance()->unpackGreen(bg) / 255.f,
-                    CTX::instance()->unpackBlue(bg) / 255.f};
-    // The strings of the scene first, depth tested, then the 2D overlay on
-    // top of everything. The collector is flushed between the two, as it
-    // does not follow the depth state.
-    for(int pass = 0; pass < 2; pass++) {
-      bool depth = (pass == 0);
-      bool any = false;
-      for(auto it = _elements.begin(); it != _elements.end(); ++it)
-        if(it->depth == depth) any = true;
-      if(!any) continue;
-      if(depth) {
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-        // a string does not hide the strings drawn after it
-        glDepthMask(GL_FALSE);
-      }
-      else
-        glDisable(GL_DEPTH_TEST);
-      pos = 0.;
-      for(auto it = _elements.begin(); it != _elements.end(); ++it) {
-        float Lx = (float)(it->width * f);
-        float Ly = (float)(it->height * f);
-        if(it->depth != depth) {
-          pos += Lx;
-          continue;
-        }
-        // the coordinates are in [0, 1] across the picture, not in its pixels
-        float s0 = (float)(pos / tw), s1 = (float)((pos + Lx) / tw);
-        float t0 = 0.f, t1 = Ly / (float)th;
-        // the depth of the point the string is anchored to, in the [-1, 1]
-        // the identity projection expects, a little towards the eye so that
-        // a label is not eaten by the surface it names
-        float z = 2.f * it->z - 1.f - 2.e-3f;
-        // the string, and before it, if it has a halo, copies of it around it
-        // in the background colour
-        float halo[12][2];
-        int nh = it->halo ? drawContextGlobal::stringHaloOffsets(halo) : 0;
-        for(int k = 0; k <= nh; k++) {
-          float dx = 0.f, dy = 0.f;
-          if(k < nh) {
-            dx = halo[k][0];
-            dy = halo[k][1];
-            gmshColor4f(bgf[0], bgf[1], bgf[2], it->alpha);
-          }
-          else
-            gmshColor4f(it->r, it->g, it->b, it->alpha);
-          gmshTranslate(it->x + dx, it->y + dy, z);
-          gmshBegin(GL_QUADS);
-          gmshTexCoord2f(s0, t0);
-          gmshVertex2f(0.0f, Ly);
-          gmshTexCoord2f(s1, t0);
-          gmshVertex2f(Lx, Ly);
-          gmshTexCoord2f(s1, t1);
-          gmshVertex2f(Lx, 0.0f);
-          gmshTexCoord2f(s0, t1);
-          gmshVertex2f(0.0f, 0.0f);
-          gmshEnd();
-          gmshTranslate(-it->x - dx, -it->y - dy, -z);
-        }
-        pos += Lx;
-      }
-      // whatever is waiting was collected to be drawn through this texture
-      gmshFlushImmediate();
-    }
-    glDepthMask(wasMask);
-    glDepthFunc(wasFunc);
-    gmshTexture(0);
-    glDeleteTextures(1, &textureId);
-
-    if(!shaders)
-      glPopAttrib();
-    else {
-      if(wasDepth) glEnable(GL_DEPTH_TEST);
-      if(ownBlend && !wasBlend) glDisable(GL_BLEND);
-    }
-    gmshLighting(wasLit);
-    for(int i = 0; i < 6; i++)
-      if(wasClip[i]) gmshClipPlaneOn(i, true);
-    gmshColor4ubv(savedColor);
-
-    // reset original matrices
-    gmshPopMatrix(); // GL_MODELVIEW
-    gmshMatrixMode(GMSH_PROJECTION);
-    gmshPopMatrix();
-    gmshMatrixMode(matrixMode);
-    _elements.clear();
-    _maxHeight = 0;
-    _totalWidth = 0;
-    cairo_surface_destroy(surface);
-  }
-};
+void drawContextFltkCairo::setFont(int fontid, int fontsize)
+{
+  if(_currentFontId != fontid) selectFontFace(_cr, fontid);
+  cairo_set_font_size(_cr, fontsize);
+  _currentFontId = fontid;
+  _currentFontSize = fontsize;
+}
 
 double drawContextFltkCairo::getStringWidth(const char *str)
 {
@@ -266,105 +80,48 @@ double drawContextFltkCairo::getStringWidth(const char *str)
   return e.width;
 }
 
-void drawContextFltkCairo::flushString() { _queue->flush(); }
-
-void drawContextFltkCairo::drawString(const char *str)
+// the extents of the string at its size in the window's units, with a pixel
+// of margin all around, scaled
+drawContextFltkQueued::extent drawContextFltkCairo::measure(const element &e,
+                                                            double f)
 {
-  GLfloat pos[4];
-  glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-  double win[3] = {pos[0], pos[1], pos[2]};
-  drawString(str, win);
+  setFont(e.fontId, e.fontSize);
+  cairo_text_extents_t x;
+  cairo_text_extents(_cr, e.text.c_str(), &x);
+  int width = (int)ceil(x.width) + 2, height = (int)ceil(x.height) + 2;
+  return {(int)ceil(width * f), (int)ceil(height * f), 0,
+          -(x.x_bearing - 1) * f, -(x.y_bearing - 1) * f};
 }
 
-// the position and colour are passed in, as a core profile has neither a
-// raster position nor a current colour to query
-void drawContextFltkCairo::drawString(const char *str, const double win[3])
+void drawContextFltkCairo::rasterise(const std::vector<slot> &slots, double f,
+                                     int w, int h, unsigned char *image)
 {
-  const unsigned char *c = gmshCurrentColor();
-  GLfloat color[4] = {c[0] / 255.f, c[1] / 255.f, c[2] / 255.f, c[3] / 255.f};
-  cairo_set_font_size(_cr, _currentFontSize);
-  cairo_text_extents_t extent;
-  cairo_text_extents(_cr, str, &extent);
-  queueString::element elem = {str,
-                               (GLfloat)win[0],
-                               (GLfloat)win[1],
-                               (GLfloat)win[2],
-                               color[0],
-                               color[1],
-                               color[2],
-                               color[3],
-                               _currentFontSize,
-                               cairo_get_font_face(_cr),
-                               (int)ceil(extent.width) + 2,
-                               (int)ceil(extent.height) + 2,
-                               extent.x_bearing - 1,
-                               extent.y_bearing - 1,
-                               stringHalo(),
-                               glIsEnabled(GL_DEPTH_TEST) ? true : false};
-  cairo_font_face_reference(elem.fontFace);
-  _queue->append(elem);
-}
-
-drawContextFltkCairo::~drawContextFltkCairo()
-{
-  cairo_destroy(_cr);
-  cairo_surface_destroy(_surface);
-  delete _queue;
-}
-
-drawContextFltkCairo::drawContextFltkCairo()
-{
-  _surface = cairo_image_surface_create(CAIRO_FORMAT_A8, 1, 1);
-  _queue = new queueString;
-  _cr = cairo_create(_surface);
-  cairo_font_options_t *fontOptions = cairo_font_options_create();
-  cairo_get_font_options(_cr, fontOptions);
-  cairo_font_options_set_hint_style(fontOptions, CAIRO_HINT_STYLE_FULL);
-  cairo_font_options_set_antialias(fontOptions, CAIRO_ANTIALIAS_GRAY);
-  cairo_set_font_options(_cr, fontOptions);
-  cairo_font_options_destroy(fontOptions);
-  _currentFontId = -1;
-}
-
-void drawContextFltkCairo::setFont(int fontid, int fontsize)
-{
-  if(_currentFontId != fontid) {
-    switch(fontid) {
-    case FL_HELVETICA:
-    case FL_HELVETICA_BOLD:
-    case FL_HELVETICA_BOLD_ITALIC:
-    case FL_HELVETICA_ITALIC:
-      cairo_select_font_face(
-        _cr, "sans",
-        fontid & FL_ITALIC ? CAIRO_FONT_SLANT_ITALIC : CAIRO_FONT_SLANT_NORMAL,
-        fontid & FL_BOLD ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
-      break;
-    case FL_COURIER:
-    case FL_COURIER_BOLD:
-    case FL_COURIER_BOLD_ITALIC:
-    case FL_COURIER_ITALIC:
-      cairo_select_font_face(
-        _cr, "courier",
-        fontid & FL_ITALIC ? CAIRO_FONT_SLANT_ITALIC : CAIRO_FONT_SLANT_NORMAL,
-        fontid & FL_BOLD ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
-      break;
-    case FL_TIMES:
-    case FL_TIMES_BOLD:
-    case FL_TIMES_BOLD_ITALIC:
-    case FL_TIMES_ITALIC:
-      cairo_select_font_face(
-        _cr, "serif",
-        fontid & FL_ITALIC ? CAIRO_FONT_SLANT_ITALIC : CAIRO_FONT_SLANT_NORMAL,
-        fontid & FL_BOLD ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
-      break;
-    default:
-      cairo_select_font_face(_cr, "sans", CAIRO_FONT_SLANT_NORMAL,
-                             CAIRO_FONT_WEIGHT_NORMAL);
-    }
-    _currentFontId = fontid;
+  cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_A8, w, h);
+  cairo_t *cr = cairo_create(surface);
+  cairo_set_source_rgba(cr, 0., 0., 0., 0);
+  cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+  cairo_paint(cr);
+  cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+  setFontOptions(cr);
+  cairo_set_source_rgba(cr, 1, 1, 1, 1);
+  int font = -1;
+  for(const slot &s : slots) {
+    if(s.e->fontId != font) selectFontFace(cr, font = s.e->fontId);
+    cairo_set_font_size(cr, s.e->fontSize * f);
+    cairo_save(cr);
+    cairo_rectangle(cr, s.x, s.y, s.w, s.h);
+    cairo_clip(cr);
+    cairo_move_to(cr, s.x - s.shift + s.ext.penX, s.y + s.ext.penY);
+    cairo_show_text(cr, s.e->text.c_str());
+    cairo_restore(cr);
   }
-  cairo_set_font_size(_cr, fontsize);
-  _currentFontSize = fontsize;
+  cairo_destroy(cr);
+  cairo_surface_flush(surface);
+  // cairo pads the rows to a multiple of four bytes
+  const unsigned char *data = cairo_image_surface_get_data(surface);
+  int stride = cairo_image_surface_get_stride(surface);
+  for(int j = 0; j < h; j++) memcpy(image + j * w, data + j * stride, w);
+  cairo_surface_destroy(surface);
 }
 
 #endif

@@ -9,6 +9,7 @@ set(SRC
       openglWindow.cpp
     optionWindow.cpp
       colorbarWindow.cpp
+    drawContextFltkQueued.cpp
     drawContextFltkCairo.cpp
     drawContextFltkStringTexture.cpp
     gamepadWindow.cpp

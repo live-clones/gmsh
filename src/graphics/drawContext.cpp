@@ -1165,6 +1165,8 @@ void drawContext::drawStudioFloor()
 
 void drawContext::draw2d()
 {
+  // the strings of the scene go under the overlay
+  global()->flushString();
   gmshDepthTest(false);
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
 

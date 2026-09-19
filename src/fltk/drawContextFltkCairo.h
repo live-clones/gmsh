@@ -11,26 +11,26 @@
 #include "GmshConfig.h"
 
 #if defined(HAVE_CAIRO)
-#include "drawContextFltk.h"
+#include "drawContextFltkQueued.h"
 
 typedef struct _cairo_surface cairo_surface_t;
 typedef struct _cairo cairo_t;
 
-class drawContextFltkCairo : public drawContextFltk {
-  class queueString;
-  queueString *_queue;
+// the strings rasterised by Cairo
+class drawContextFltkCairo : public drawContextFltkQueued {
   cairo_surface_t *_surface;
   cairo_t *_cr;
-  int _currentFontId;
-  int _currentFontSize;
+
+protected:
+  char engine() { return 'C'; }
+  extent measure(const element &e, double f);
+  void rasterise(const std::vector<slot> &slots, double f, int w, int h,
+                 unsigned char *image);
 
 public:
   drawContextFltkCairo();
   ~drawContextFltkCairo();
   double getStringWidth(const char *str);
-  void flushString();
-  void drawString(const char *str);
-  void drawString(const char *str, const double win[3]);
   void setFont(int fontid, int fontsize);
   std::string getName() { return "Cairo"; }
 };
