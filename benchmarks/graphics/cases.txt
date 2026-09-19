@@ -11,7 +11,7 @@
 # as the parser skips the body of a loop that starts on the line of its
 # header.)
 #
-# View[] indices in views_o*.msh: 0, 1, 2 the scalar node, element and
+# View[] indices in views_o*.msh and polytopes_views.msh: 0, 1, 2 the scalar node, element and
 # element node data, 3, 4, 5 the same for vectors and 6, 7, 8 for tensors.
 # In lists.pos: 0 scalars, 1 vectors, 2 tensors, 3 strings, 4 the graph.
 # Tags in OpenCASCADE models are taken from the model (e.g. s() = Surface{:};
@@ -99,6 +99,22 @@ mesh_elements_o2i elements_o2i.msh view3d.opt
 mesh_elements_o3 elements_o3.msh view3d.opt
   Mesh.SurfaceFaces = 1; Mesh.VolumeFaces = 1;
   Mesh.NumSubEdges = 4;
+
+mesh_polytopes polytopes.msh view3d.opt
+  Mesh.SurfaceFaces = 1;
+  Mesh.VolumeFaces = 1;
+  Mesh.SurfaceEdges = 0; Mesh.VolumeEdges = 0;
+  Mesh.SurfaceEdges = 1; Mesh.VolumeEdges = 1; Mesh.Nodes = 1;
+  Mesh.Nodes = 0; Mesh.Polygons = 0;
+  Mesh.Polygons = 1; Mesh.Polyhedra = 0;
+  Mesh.Polyhedra = 1; Mesh.SurfaceLabels = 1; Mesh.VolumeLabels = 1;
+  Mesh.SurfaceLabels = 0; Mesh.VolumeLabels = 0; Mesh.Explode = 0.8;
+  Mesh.Explode = 1; Mesh.Normals = 10;
+  Mesh.Normals = 0; Mesh.ColorCarousel = 0;
+  Mesh.Dual = 1;
+  Mesh.Dual = 0; General.Clip0A = 1; General.Clip0D = -3.6; Mesh.Clip = 1;
+  General.ClipWholeElements = 1;
+  General.ClipWholeElements = 0; General.ClipCapping = 1;
 
 mesh_labels elements_o1.msh view3d.opt
   Mesh.NodeLabels = 1;
@@ -216,6 +232,28 @@ post_model_o3 elements_o3.msh views_o3.msh view3d.opt
   For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
   View[0].AdaptVisualizationGrid = 1; View[0].MaxRecursionLevel = 1;
   View[0].Visible = 0; View[6].Visible = 1; View[6].TensorType = 6;
+
+post_polytopes polytopes.msh polytopes_views.msh view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
+  View[0].IntervalsType = 1;
+  View[0].IntervalsType = 3;
+  View[0].IntervalsType = 2; View[0].ShowElement = 1;
+  View[0].Boundary = 1;
+  View[0].Boundary = 0; View[0].DrawSkinOnly = 1;
+  View[0].DrawSkinOnly = 0; View[0].Explode = 0.8;
+  View[0].Explode = 1; View[0].SmoothNormals = 1;
+  View[0].SmoothNormals = 0; View[0].AdaptVisualizationGrid = 1; \
+  View[0].MaxRecursionLevel = 1;
+  View[0].AdaptVisualizationGrid = 0; View[0].Visible = 0; View[1].Visible = 1;
+  View[1].Visible = 0; View[2].Visible = 1;
+  View[2].Visible = 0; View[3].Visible = 1; View[3].VectorType = 4;
+  View[3].GlyphLocation = 2;
+  View[3].VectorType = 5; View[3].DisplacementFactor = 0.3;
+  View[3].Visible = 0; View[6].Visible = 1; View[6].TensorType = 6;
+  View[6].TensorType = 1;
+  View[6].Visible = 0; View[8].Visible = 1;
+  General.Clip0A = 1; General.Clip0D = -3.6; View[8].Clip = 1;
+  General.ClipCapping = 1;
 
 post_list_scalar lists.pos view3d.opt
   For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
