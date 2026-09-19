@@ -86,10 +86,20 @@ static glyphList *geomGlyphs(drawContext *ctx)
   return &_geomGlyphs;
 }
 
-// Draw every plain, unselected geometry point in one call instead of a
-// gmshBegin/gmshEnd block each, which costs tens of thousands of draw calls
-// on a partitioned model. Returns true if it drew them; selected points and
-// labels are left to the per-entity pass.
+// Draw every plain geometry point in one call instead of a gmshBegin/gmshEnd
+// block each, from an array per model kept between frames: gathered again at
+// every frame, 780,000 points took a tenth of a second. Rebuilt when the
+// geometry, the colours or the visibilities change (see CTX::stampChanges())
+// or the point colour. Returns true if it drew them; the selected points are
+// drawn again on top by the per-entity pass, and the labels too.
+namespace {
+  struct mergedPoints {
+    VertexArray *points = nullptr;
+    std::vector<double> token;
+  };
+  std::map<GModel *, mergedPoints> _mergedPoints;
+} // namespace
+
 static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
 {
   CTX *c = CTX::instance();
@@ -97,33 +107,46 @@ static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
   if(!c->geom.points) return false; // only the selected ones are drawn
   if(c->geom.pointType > 0) return false; // spheres, not points
   if(c->geom.highlightOrphans) return false; // needs the per-entity colours
+  // which points are visible depends on which are selected; the display
+  // transform is applied here, and not kept
+  if(c->hideUnselected || ctx->getTransform()) return false;
 
-  static std::vector<float> xyz;
-  static std::vector<unsigned char> col;
-  xyz.clear();
-  col.clear();
-  for(auto it = m->firstVertex(); it != m->lastVertex(); it++) {
-    GVertex *v = *it;
-    if(!v->getVisibility()) continue;
-    if(v->geomType() == GEntity::BoundaryLayerPoint) continue;
-    if(v->getSelection()) continue;
-    double x = v->x(), y = v->y(), z = v->z();
-    ctx->transform(x, y, z);
-    xyz.push_back((float)x);
-    xyz.push_back((float)y);
-    xyz.push_back((float)z);
-    unsigned int cc = v->useColor() ? v->getColor() : c->color.geom.point;
-    const unsigned char *p = (const unsigned char *)&cc;
-    for(int k = 0; k < 4; k++) col.push_back(p[k]);
+  for(auto it = _mergedPoints.begin(); it != _mergedPoints.end();) {
+    if(std::find(GModel::list.begin(), GModel::list.end(), it->first) ==
+       GModel::list.end()) {
+      delete it->second.points;
+      it = _mergedPoints.erase(it);
+    }
+    else
+      it++;
   }
-  if(xyz.empty()) return true;
+  std::vector<double> tok = {(double)c->geom.stamp[0],
+                             (double)c->entityColorsStamp,
+                             (double)c->entityVisibilityStamp,
+                             (double)c->color.geom.point};
+  mergedPoints &mp = _mergedPoints[m];
+  if(!mp.points || tok != mp.token) {
+    delete mp.points;
+    mp.points = new VertexArray(1, (int)m->getNumVertices() + 1);
+    mp.token = tok;
+    for(auto it = m->firstVertex(); it != m->lastVertex(); it++) {
+      GVertex *v = *it;
+      if(!v->getVisibility()) continue;
+      if(v->geomType() == GEntity::BoundaryLayerPoint) continue;
+      double x = v->x(), y = v->y(), z = v->z();
+      unsigned int cc = v->useColor() ? v->getColor() : c->color.geom.point;
+      mp.points->add(&x, &y, &z, nullptr, &cc, nullptr, false);
+    }
+    mp.points->finalize();
+  }
+  if(!mp.points->getNumVertices()) return true;
 
   gmshLightTwoSide(false);
   gmshLighting(false);
   gmshPointSize((float)(c->geom.pointSize * ctx->highResolutionPixelFactor()));
   gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
-  gmshBindArrays(&xyz[0], &col[0]);
-  gmshDrawArrays(GL_POINTS, (int)(xyz.size() / 3));
+  gmshBindVertexArray(mp.points, false, true);
+  drawVertexArray(mp.points, GL_POINTS);
   gmshUnbindArrays();
   return true;
 }
@@ -208,9 +231,15 @@ public:
           _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
       }
       else {
+        // over the kept points, which hold this one too
+        if(_batched) glDepthFunc(GL_LEQUAL);
         gmshBegin(GL_POINTS);
         gmshVertex3d(x, y, z);
         gmshEnd();
+        if(_batched) {
+          gmshFlushImmediate();
+          glDepthFunc(GL_LESS);
+        }
       }
     }
 
@@ -865,8 +894,9 @@ void drawContext::drawGeom()
         bool mixed = transparencyPass != TRANSPARENCY_ALL &&
                      !gmshGeometryColorsAreTransparent();
         bool batched = !mixed && drawGeomPointsBatched(this, m);
-        if(!batched || CTX::instance()->geom.pointLabels ||
-           GEntity::numSelected)
+        CTX *c = CTX::instance();
+        if(c->geom.pointLabels || GEntity::numSelected ||
+           (c->geom.points && !batched))
           std::for_each(m->firstVertex(), m->lastVertex(),
                         drawGVertex(this, batched));
       }
@@ -875,8 +905,10 @@ void drawContext::drawGeom()
                      !gmshGeometryColorsAreTransparent();
         _curvesMerged = !mixed && !getTransform() && drawMergedCurves(this, m);
         CTX *c = CTX::instance();
-        if(!_curvesMerged || c->geom.curveLabels || c->geom.tangents ||
-           GEntity::numSelected)
+        // one by one only what the kept curves do not draw: a million curves
+        // were walked at every frame for nothing
+        if(c->geom.curveLabels || c->geom.tangents || GEntity::numSelected ||
+           (c->geom.curves && !_curvesMerged))
           std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
         _curvesMerged = false;
       }
@@ -885,8 +917,8 @@ void drawContext::drawGeom()
                      !gmshGeometryColorsAreTransparent();
         _surfacesMerged = !mixed && drawMergedSurfaces(this, m);
         CTX *c = CTX::instance();
-        if(!_surfacesMerged || c->geom.surfaceLabels || c->geom.normals ||
-           GEntity::numSelected)
+        if(c->geom.surfaceLabels || c->geom.normals || GEntity::numSelected ||
+           (c->geom.surfaces && !_surfacesMerged))
           std::for_each(m->firstFace(), m->lastFace(), drawGFace(this));
         _surfacesMerged = false;
       }

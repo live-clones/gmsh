@@ -1699,54 +1699,76 @@ int GModel::setOrderN(int order, int linear, int incomplete, int onlyVisible)
 #endif
 }
 
+// The type of an entity is asked of the CAD kernel, which costs: it is only
+// asked of the entities that have elements, and what else a dimension needs
+// only when it has some - a model of a million unmeshed entities was walked
+// three times a frame, half a second, to find it had no mesh.
 int GModel::getMeshStatus(bool countDiscrete)
 {
-  std::size_t numEle3D = 0;
-  bool toMesh3D = false;
   bool onlyVisible = CTX::instance()->mesh.meshOnlyVisible;
 
+  std::size_t numEle3D = 0;
   for(auto it = firstRegion(); it != lastRegion(); ++it) {
     GRegion *gr = *it;
-    if(countDiscrete || gr->geomType() != GEntity::DiscreteVolume)
-      numEle3D += gr->getNumMeshElements();
+    std::size_t n = gr->getNumMeshElements();
+    if(n && (countDiscrete || gr->geomType() != GEntity::DiscreteVolume))
+      numEle3D += n;
     if(countDiscrete && numEle3D) return 3;
-    if(gr->geomType() != GEntity::DiscreteVolume &&
-       gr->meshAttributes.method != MESH_NONE)
-      toMesh3D = true;
   }
-  if(numEle3D && toMesh3D) return 3;
+  if(numEle3D) {
+    bool toMesh3D = false;
+    for(auto it = firstRegion(); it != lastRegion() && !toMesh3D; ++it) {
+      GRegion *gr = *it;
+      if(gr->geomType() != GEntity::DiscreteVolume &&
+         gr->meshAttributes.method != MESH_NONE)
+        toMesh3D = true;
+    }
+    if(toMesh3D) return 3;
+  }
 
   std::size_t numEle2D = 0;
-  bool toMesh2D = false, meshDone2D = true;
   for(auto it = firstFace(); it != lastFace(); ++it) {
     GFace *gf = *it;
-    if(countDiscrete || gf->geomType() != GEntity::DiscreteSurface)
-      numEle2D += gf->getNumMeshElements();
+    std::size_t n = gf->getNumMeshElements();
+    if(n && (countDiscrete || gf->geomType() != GEntity::DiscreteSurface))
+      numEle2D += n;
     if(countDiscrete && numEle2D) return 2;
-    if(gf->geomType() != GEntity::DiscreteSurface &&
-       gf->meshAttributes.method != MESH_NONE)
-      toMesh2D = true;
-    if(gf->meshStatistics.status != GEntity::DONE &&
-       (!onlyVisible || (onlyVisible && gf->getVisibility())))
-      meshDone2D = false;
   }
-  if(numEle2D && toMesh2D && meshDone2D) return 2;
+  if(numEle2D) {
+    bool toMesh2D = false, meshDone2D = true;
+    for(auto it = firstFace(); it != lastFace(); ++it) {
+      GFace *gf = *it;
+      if(gf->geomType() != GEntity::DiscreteSurface &&
+         gf->meshAttributes.method != MESH_NONE)
+        toMesh2D = true;
+      if(gf->meshStatistics.status != GEntity::DONE &&
+         (!onlyVisible || (onlyVisible && gf->getVisibility())))
+        meshDone2D = false;
+    }
+    if(toMesh2D && meshDone2D) return 2;
+  }
 
   std::size_t numEle1D = 0;
-  bool toMesh1D = false, meshDone1D = true;
   for(auto it = firstEdge(); it != lastEdge(); ++it) {
     GEdge *ge = *it;
-    if(countDiscrete || ge->geomType() != GEntity::DiscreteCurve)
-      numEle1D += ge->getNumMeshElements();
+    std::size_t n = ge->getNumMeshElements();
+    if(n && (countDiscrete || ge->geomType() != GEntity::DiscreteCurve))
+      numEle1D += n;
     if(countDiscrete && numEle1D) return 1;
-    if(ge->geomType() != GEntity::DiscreteCurve &&
-       ge->meshAttributes.method != MESH_NONE)
-      toMesh1D = true;
-    if(ge->meshStatistics.status != GEntity::DONE &&
-       (!onlyVisible || (onlyVisible && ge->getVisibility())))
-      meshDone1D = false;
   }
-  if(numEle1D && toMesh1D && meshDone1D) return 1;
+  if(numEle1D) {
+    bool toMesh1D = false, meshDone1D = true;
+    for(auto it = firstEdge(); it != lastEdge(); ++it) {
+      GEdge *ge = *it;
+      if(ge->geomType() != GEntity::DiscreteCurve &&
+         ge->meshAttributes.method != MESH_NONE)
+        toMesh1D = true;
+      if(ge->meshStatistics.status != GEntity::DONE &&
+         (!onlyVisible || (onlyVisible && ge->getVisibility())))
+        meshDone1D = false;
+    }
+    if(toMesh1D && meshDone1D) return 1;
+  }
 
   for(auto it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->mesh_vertices.size()) return 0;

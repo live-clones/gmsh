@@ -69,6 +69,11 @@ bool gmshMeshEntityIsTransparent(GEntity *e);
 
 // draw a vertex array, using its index array if it has one
 void drawVertexArray(VertexArray *va, GLenum type);
+class GModel;
+// GModel::getMeshStatus() for the drawing, which asks it several times a
+// frame: computed again only when the mesh, the geometry or the visibilities
+// have changed (see CTX::stampChanges())
+int drawMeshStatus(GModel *m);
 // delete the buffer objects of the vertex arrays that have been destroyed since
 // the last frame: this requires a current GL context
 void deleteOrphanVertexArrayBuffers();

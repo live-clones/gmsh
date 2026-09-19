@@ -1060,6 +1060,26 @@ static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
   }
 }
 
+int drawMeshStatus(GModel *m)
+{
+  struct entry {
+    std::vector<int> key;
+    int status;
+  };
+  static std::map<GModel *, entry> cache;
+  CTX *c = CTX::instance();
+  c->stampChanges();
+  std::vector<int> key = {c->mesh.stamp[0], c->mesh.stamp[1], c->mesh.stamp[2],
+                          c->mesh.stamp[3], c->geom.stamp[0], c->geom.stamp[1],
+                          c->geom.stamp[2], c->geom.stamp[3],
+                          c->entityVisibilityStamp, c->mesh.meshOnlyVisible};
+  auto it = cache.find(m);
+  if(it != cache.end() && it->second.key == key) return it->second.status;
+  int status = m->getMeshStatus();
+  cache[m] = {key, status};
+  return status;
+}
+
 // Main drawing routine
 
 void drawContext::drawMesh()
@@ -1127,7 +1147,7 @@ void drawContext::drawMesh()
     if(changed) global()->resetFontTextures();
 #endif
     if(m->getVisibility() && isVisible(m)) {
-      int status = m->getMeshStatus();
+      int status = drawMeshStatus(m);
 
       // concatenate the arrays of the dimensions that hold many entities, and
       // draw each of them in a single call; the entities then only draw their

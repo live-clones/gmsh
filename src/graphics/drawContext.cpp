@@ -245,11 +245,12 @@ void drawContext::setEulerAnglesFromRotationMatrix()
 static int needPolygonOffset()
 {
   GModel *m = GModel::current();
-  if(m->getMeshStatus() == 2 &&
+  int status = drawMeshStatus(m);
+  if(status == 2 &&
      (CTX::instance()->mesh.surfaceEdges || CTX::instance()->geom.curves ||
       CTX::instance()->geom.surfaces))
     return 1;
-  if(m->getMeshStatus() == 3 && (CTX::instance()->mesh.surfaceEdges ||
+  if(status == 3 && (CTX::instance()->mesh.surfaceEdges ||
                                  CTX::instance()->mesh.volumeEdges))
     return 1;
   for(std::size_t i = 0; i < PView::list.size(); i++) {
