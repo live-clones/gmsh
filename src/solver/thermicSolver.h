@@ -17,7 +17,6 @@
 class GModel;
 class PView;
 class groupOfElements;
-class gLevelset;
 
 struct LagrangeMultiplierFieldT {
   int _tag;
@@ -82,7 +81,6 @@ public:
   }
   void assemble(linearSystem<double> *lsys);
   virtual void setMesh(const std::string &meshFileName);
-  void cutMesh(gLevelset *ls);
   void setThermicDomain(int phys, double k);
   void setLagrangeMultipliers(int phys, double tau, int tag,
                               simpleFunction<double> *f);
