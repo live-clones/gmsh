@@ -2078,6 +2078,9 @@ void PView::fillVertexArray(onelab::localNetworkClient *remote, int length,
   // not perfect (does not take transformations into account)
   p->getOptions()->tmpBBox = bbox;
 
+  // the glyphs of this view were expanded from the arrays being replaced
+  OwnerCacheBase::release(p);
+
   switch(type) {
   case 1:
     if(p->va_points) delete p->va_points;
