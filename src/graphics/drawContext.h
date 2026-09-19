@@ -278,16 +278,26 @@ private:
   std::vector<unsigned char> _pickCache;
   std::vector<float> _pickCacheDepth;
   bool _pickCacheValid, _pickCacheMesh, _pickCachePost, _pickCacheElements;
+  void _pickCheckLimit();
+  // what names an object of a picking pass from one pass to the next: the
+  // identifiers are indices into a list rebuilt every time, the tags are not
+  struct pickKey {
+    int type = -1, ient = 0, type2 = -1, ient2 = -1;
+    bool operator==(const pickKey &o) const
+    {
+      return type == o.type && ient == o.ient && type2 == o.type2 &&
+             ient2 == o.ient2;
+    }
+  };
   // the entities stepped past, and the last one a pick chose
-  std::vector<std::size_t> _pickSkip;
-  std::size_t _pickLast = 0;
+  std::vector<pickKey> _pickSkip;
+  pickKey _pickLast;
   bool _pickLastValid = false;
   int _pickCandidates = 0;
   // the point of the model under the middle of the last pick, from the depth
   // the pass read back
   double _pickPoint[3] = {0., 0., 0.};
   bool _pickPointValid = false;
-  static std::size_t _pickKey(int type, int ient, int type2, int ient2);
   // the region of the window the image covers, in real pixels (a region
   // around the pointer is much cheaper to draw than the whole window)
   int _pickCacheX, _pickCacheY, _pickCacheWidth, _pickCacheHeight;
@@ -326,9 +336,12 @@ public:
   std::size_t pickRegister(int type, const std::vector<int> &tags);
   bool pickSkipped(int type, int ient);
   void pickStateFor(int type);
-  // the colour of an identifier
+  // the colour of an identifier: 24 bits, 0 being the background; beyond,
+  // the background (what cannot be told apart is not pickable, rather than
+  // taken for something else)
   static void pickIdColor(std::size_t id, unsigned char c[4])
   {
+    if(id >= (std::size_t)1 << 24) id = 0;
     c[0] = (unsigned char)(id & 0xff);
     c[1] = (unsigned char)((id >> 8) & 0xff);
     c[2] = (unsigned char)((id >> 16) & 0xff);
@@ -364,6 +377,11 @@ public:
   // stop attributing what is drawn next to the last registered object, so
   // that decorations (frames, axes, labels) are not picked as it
   void unsetPickColor();
+  // the identifier of an entity for a picking pass - or the background for
+  // an entity of another model than the current one, as a pick looks the
+  // tags up in the current model (drawn with whatever identifier was set
+  // last, it was taken for the entity that had set it)
+  void setPickColorFor(GEntity *e, bool front = false);
   static bool pickColorActive() { return _pickColorActive; }
   drawContext(drawTransform *transform = nullptr);
   ~drawContext();
@@ -525,6 +543,9 @@ public:
   // update the glyph shapes to the options; they are only read afterwards,
   // possibly by several threads at once
   void updateGlyphTemplates();
+  // the version of the templates, which changes when they are built again
+  // (in any window)
+  int glyphTemplatesVersion();
   // the shape of a kind of glyph: triangle corners, normals, and the normals
   // encoded as a vertex array stores them; valid after
   // updateGlyphTemplates(), null if the shape has no triangles

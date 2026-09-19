@@ -170,8 +170,10 @@ namespace {
     keptArray(const keptArray &) = delete;
     ~keptArray() { delete va; }
   };
+  // for the picture, one set per transparency pass (all, opaque,
+  // transparent): with mixed transparency each pass keeps its own entities
   struct keptModel {
-    keptArray shown[3], picked[3];
+    keptArray shown[3][3], picked[3];
   };
   OwnerCache<keptModel> _keptModels;
   // set while the dimension of the model being drawn comes from its kept
@@ -207,11 +209,9 @@ static std::vector<double> keptToken(drawContext *ctx, int dim, bool pick)
 {
   CTX *c = CTX::instance();
   std::vector<double> tok = {(double)c->geom.stamp[dim],
-                             (double)c->entityVisibilityStamp};
-  if(pick) {
-    tok.push_back(c->geom.numSubEdges);
-    tok.push_back(ctx->transparencyPass);
-  }
+                             (double)c->entityVisibilityStamp,
+                             (double)ctx->transparencyPass};
+  if(pick) tok.push_back(c->geom.numSubEdges);
   else if(dim == 0) {
     tok.push_back(c->entityColorsStamp);
     tok.push_back(c->color.geom.point);
@@ -249,7 +249,7 @@ static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
 {
   CTX *c = CTX::instance();
   keptModel &km = _keptModels[m];
-  keptArray &ka = pick ? km.picked[dim] : km.shown[dim];
+  keptArray &ka = pick ? km.picked[dim] : km.shown[ctx->transparencyPass][dim];
   if(ka.va && keptToken(ctx, dim, pick) == ka.token) return ka;
   delete ka.va;
   ka.va = new VertexArray(dim + 1, dim ? 1000 : (int)m->getNumVertices() + 1);
@@ -338,6 +338,10 @@ static bool drawKept(drawContext *ctx, GModel *m, int dim)
   bool pick = (ctx->render_mode == drawContext::GMSH_SELECT);
   if(!keptCovers(ctx, m, dim, pick)) return false;
   if(dim == 1 && !pick && c->geom.curveType > 0) {
+    // one glyph list per model: not for passes that draw some curves only
+    if(ctx->transparencyPass != TRANSPARENCY_ALL &&
+       !gmshGeometryColorsAreTransparent())
+      return false;
     drawKeptCylinders(ctx, m);
     return true;
   }
@@ -631,14 +635,9 @@ static void drawGeomEntity(drawContext *ctx, GEntity *e)
      (pick || (!e->getSelection() && !c->geom.pointLabels)))
     return;
 
-  if(pick && e->model() == GModel::current()) {
-    if(dim == 3)
-      // all a volume draws is a marker at its middle: it is picked in front
-      // of the surfaces around it, which would otherwise always cover it
-      ctx->setPickColor(3, e->tag(), -1, -1, true);
-    else
-      ctx->setPickColor(dim, e->tag());
-  }
+  // all a volume draws is a marker at its middle: it is picked in front of
+  // the surfaces around it, which would otherwise always cover it
+  ctx->setPickColorFor(e, dim == 3);
   gmshLightTwoSide(dim >= 2 && c->geom.lightTwoSide);
 
   // a picking pass draws what is selected at its plain size and colour: the
@@ -662,7 +661,9 @@ static void drawGeomEntity(drawContext *ctx, GEntity *e)
   gmshColor4ubv((const void *)&col);
 
   switch(dim) {
-  case 0: drawGeomPoint(ctx, static_cast<GVertex *>(e), size * fact); break;
+  // (a sphere is sized in pixels of the window, as those of the mesh nodes,
+  // not of the framebuffer, which the point size is)
+  case 0: drawGeomPoint(ctx, static_cast<GVertex *>(e), size); break;
   case 1: drawGeomCurve(ctx, static_cast<GEdge *>(e), sel, width); break;
   case 2: drawGeomSurface(ctx, static_cast<GFace *>(e), sel); break;
   case 3: drawGeomVolume(ctx, static_cast<GRegion *>(e)); break;
@@ -719,12 +720,10 @@ void drawContext::drawGeom()
       // normals or a display not kept need them, or else only the selected
       // ones, drawn again on top (a million entities were walked at every
       // frame, and at every pick, for the one highlighted)
-      bool mixed = transparencyPass != TRANSPARENCY_ALL &&
-                   !gmshGeometryColorsAreTransparent();
       bool pick = (render_mode == GMSH_SELECT);
       CTX *c = CTX::instance();
       for(int dim = 0; dim < 3; dim++) {
-        _kept = !mixed && drawKept(this, m, dim);
+        _kept = drawKept(this, m, dim);
         bool shown = (dim == 0) ? c->geom.points :
                      (dim == 1) ? c->geom.curves :
                                   c->geom.surfaces;

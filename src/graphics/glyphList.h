@@ -55,8 +55,10 @@ public:
 
 private:
   std::vector<instance> _inst[GLYPH_NUMKINDS];
-  // the triangles of the instances, built on first request
+  // the triangles of the instances, built on first request, and the version
+  // of the templates they were built from
   VertexArray *_va;
+  int _vaVersion = -1;
   // the glyphs packed for instanced drawing (glShader::GLYPH_STRIDE bytes
   // each), built on first use
   std::vector<unsigned char> _gpu[GLYPH_NUMKINDS];

@@ -307,10 +307,17 @@ namespace {
 
 VertexArray *glyphList::triangles(drawContext *ctx)
 {
+  int version = ctx->glyphTemplatesVersion();
+  if(_va && _vaVersion != version) {
+    // the shapes have changed (subdivisions, arrow proportions)
+    _keptVertices -= _va->getNumVertices();
+    delete _va;
+    _va = nullptr;
+  }
   if(_va) return _va;
   if(!size()) return nullptr;
+  _vaVersion = version;
 
-  ctx->updateGlyphTemplates();
   int num[GLYPH_NUMKINDS];
   long total = 0;
   for(int k = 0; k < GLYPH_NUMKINDS; k++) {

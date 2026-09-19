@@ -1935,16 +1935,6 @@ static MElement *getElement(GEntity *e, int va_type, int index)
   return nullptr;
 }
 
-// what names an object of a picking pass from one pass to the next: the
-// identifiers are indices into a list rebuilt every time, the tags are not
-std::size_t drawContext::_pickKey(int type, int ient, int type2, int ient2)
-{
-  return ((std::size_t)(type & 0xff) << 56) |
-         ((std::size_t)(type2 & 0xff) << 48) |
-         ((std::size_t)(unsigned int)ient << 16) |
-         ((std::size_t)(unsigned int)ient2 & 0xffff);
-}
-
 void drawContext::stepPick(int direction)
 {
   if(direction > 0) {
@@ -1972,15 +1962,16 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
   _pickObjects.push_back(pickObject(type, ient, type2, ient2, front));
   // 0 is the background: 24 bits give 16 million pickable objects per pass
   std::size_t id = _pickObjects.size() - 1;
-  GLubyte c[4] = {(GLubyte)(id & 0xff), (GLubyte)((id >> 8) & 0xff),
-                  (GLubyte)((id >> 16) & 0xff), 255};
+  _pickCheckLimit();
+  GLubyte c[4];
+  pickIdColor(id, c);
   if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
   gmshPickColor4ubv(c);
 
   // an entity stepped past with the wheel is drawn into neither the colours
   // nor the depth, so that the pass finds what stands behind it
   bool skip = false;
-  std::size_t key = _pickKey(type, ient, type2, ient2);
+  pickKey key = {type, ient, type2, ient2};
   for(std::size_t i = 0; i < _pickSkip.size(); i++)
     if(_pickSkip[i] == key) {
       skip = true;
@@ -2014,18 +2005,31 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
   _pickStateFar = zfar;
 }
 
+// more objects in a pass than 24 bits of identifiers: the others are drawn
+// as the background (see pickIdColor()), and said once
+void drawContext::_pickCheckLimit()
+{
+  static bool warned = false;
+  if(warned || _pickObjects.size() <= ((std::size_t)1 << 24)) return;
+  warned = true;
+  Msg::Warning("More than %d objects in a picking pass: the others cannot be "
+               "picked (pick entities rather than elements, or hide some)",
+               1 << 24);
+}
+
 std::size_t drawContext::pickRegister(int type, const std::vector<int> &tags)
 {
   if(!_pickColor || tags.empty()) return 0;
   std::size_t first = _pickObjects.size();
   for(auto t : tags) _pickObjects.push_back(pickObject(type, t, -1, -1, false));
+  _pickCheckLimit();
   return first;
 }
 
 bool drawContext::pickSkipped(int type, int ient)
 {
   if(_pickSkip.empty()) return false;
-  std::size_t key = _pickKey(type, ient, -1, -1);
+  pickKey key = {type, ient, -1, -1};
   for(std::size_t i = 0; i < _pickSkip.size(); i++)
     if(_pickSkip[i] == key) return true;
   return false;
@@ -2043,6 +2047,15 @@ void drawContext::pickStateFor(int type)
   glDepthRange(0., zfar);
   _pickStateSkip = 0;
   _pickStateFar = zfar;
+}
+
+void drawContext::setPickColorFor(GEntity *e, bool front)
+{
+  if(render_mode != GMSH_SELECT) return;
+  if(e->model() == GModel::current())
+    setPickColor(e->dim(), e->tag(), -1, -1, front);
+  else
+    unsetPickColor();
 }
 
 void drawContext::unsetPickColor()
@@ -2362,7 +2375,7 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
     const pickObject &o = _pickObjects[id];
     // what the wheel would step past, if this is the one that is returned
     if(!multiple) {
-      _pickLast = _pickKey(o.type, o.ient, o.type2, o.ient2);
+      _pickLast = {o.type, o.ient, o.type2, o.ient2};
       _pickLastValid = true;
     }
     switch(o.type) {
@@ -2429,7 +2442,7 @@ bool drawContext::pickBehind(int type, bool mesh, bool post, int x, int y,
                              int w, int h)
 {
   if(!_pickLastValid) return false;
-  std::size_t last = _pickLast;
+  pickKey last = _pickLast;
   int candidates = _pickCandidates;
   _pickSkip.push_back(last);
   _pickCacheValid = false;

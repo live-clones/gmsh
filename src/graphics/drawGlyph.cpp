@@ -159,6 +159,10 @@ namespace {
     gmshEnd();
   }
 
+  // bumped whenever the templates of a window are built again (what was
+  // expanded from them is then out of date)
+  int templatesVersion = 0;
+
   // the shapes that only depend on the subdivision count, built once and
   // indexed by glyph kind
   class Templates {
@@ -183,6 +187,7 @@ namespace {
          stemLength == CTX::instance()->arrowRelStemLength)
         return;
       subdivisions = n;
+      templatesVersion++;
       headRadius = CTX::instance()->arrowRelHeadRadius;
       stemRadius = CTX::instance()->arrowRelStemRadius;
       stemLength = CTX::instance()->arrowRelStemLength;
@@ -937,6 +942,12 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
 }
 
 void drawContext::updateGlyphTemplates() { _tmpl.update(); }
+
+int drawContext::glyphTemplatesVersion()
+{
+  _tmpl.update();
+  return templatesVersion;
+}
 
 const float *drawContext::glyphTemplate(int kind, const float *&normals,
                                        const normal_type *&encoded,

@@ -734,7 +734,8 @@ static void drawGlyphs(drawContext *ctx, PView *p)
   bool record = false;
   if(arrows) {
     glyphToken tok;
-    tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+    // the arrows are scaled per axis
+    for(int i = 0; i < 3; i++) tok.add(ctx->pixel_equiv_x / ctx->s[i]);
     // the options that do not mark the view as changed
     tok.add(opt->normals);
     tok.add(opt->tangents);

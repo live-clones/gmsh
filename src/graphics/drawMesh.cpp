@@ -771,9 +771,7 @@ static void drawMeshEntity(drawContext *ctx, GEntity *e)
   CTX *c = CTX::instance();
   int dim = e->dim();
 
-  if(ctx->render_mode == drawContext::GMSH_SELECT &&
-     e->model() == GModel::current())
-    ctx->setPickColor(dim, e->tag());
+  ctx->setPickColorFor(e);
 
   gmshLightTwoSide(false);
 
@@ -860,8 +858,7 @@ static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
   forMeshEntities(m, dim, [&](GEntity *e) {
     if(!e->getVisibility() || !passWants(ctx, e)) return;
     if(!e->va_clip_lines && !e->va_clip_triangles) return;
-    if(ctx->render_mode == drawContext::GMSH_SELECT)
-      ctx->setPickColor(dim, e->tag());
+    ctx->setPickColorFor(e);
     // lit and coloured as the entities draw their own lines
     drawArrays(ctx, e, e->va_clip_lines, GL_LINES, edgesLit(dim),
                edgesForced(dim), c->color.mesh.line);
