@@ -1695,8 +1695,8 @@ void adaptiveElements<T>::addInView(double tol, int step, PViewData *in,
 adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
   : _step(-1), _level(-1), _tol(-1.), _inData(data), _points(nullptr),
     _lines(nullptr), _triangles(nullptr), _quadrangles(nullptr),
-    _tetrahedra(nullptr), _hexahedra(nullptr), _prisms(nullptr),
-    _pyramids(nullptr)
+    _polygons(nullptr), _tetrahedra(nullptr), _hexahedra(nullptr),
+    _prisms(nullptr), _pyramids(nullptr), _polyhedra(nullptr)
 {
   if(outDataInit ==
      true) { // For visualization of the adapted view in GMSH GUI only
