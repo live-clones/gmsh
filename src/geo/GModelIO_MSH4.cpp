@@ -1859,6 +1859,7 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
   }
 
   Msg::Info("%zu edge%s", numEdges, numEdges > 1 ? "s" : "");
+  Msg::StartProgressMeter(numEdges);
 
   std::array<size_t, 3> edgeData;
   for(size_t k = 0; k < numEdges; ++k) {
@@ -1882,6 +1883,7 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
 
     MEdge me(v0, v1);
     model->addMEdge(std::move(me), edgeData[0]);
+    if(numEdges > 100000) Msg::ProgressMeter(k + 1, true, "Reading edges");
   }
 
   return true;
@@ -1898,8 +1900,9 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
     if(fscanf(fp, "%zu %zu", &numFaces3, &numFaces4) != 2) { return false; }
   }
 
-  Msg::Info("%zu face%s", numFaces3 + numFaces4,
-            (numFaces3 + numFaces4) > 1 ? "s" : "");
+  std::size_t totalNumFaces = numFaces3 + numFaces4, faceRead = 0;
+  Msg::Info("%zu face%s", totalNumFaces, totalNumFaces > 1 ? "s" : "");
+  Msg::StartProgressMeter(totalNumFaces);
 
   for(std::size_t type = 3; type <= 4; type++) {
     std::array<size_t, 5> faceData; // face tag followed by vertex tags
@@ -1929,6 +1932,9 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
       }
       MFace mf(v0, v1, v2, v3);
       model->addMFace(std::move(mf), faceData[0]);
+      faceRead++;
+      if(totalNumFaces > 100000)
+        Msg::ProgressMeter(faceRead, true, "Reading faces");
     }
   }
 
@@ -2174,14 +2180,18 @@ int GModel::_readMSH4(const std::string &name)
       delete[] elementsRead;
     }
     else if(!strncmp(&str[1], "Edges", 5)) {
-      if(!readMSH4Edges(this, fp, binary)) {
+      bool ok = readMSH4Edges(this, fp, binary);
+      Msg::StopProgressMeter();
+      if(!ok) {
         Msg::Error("Could not read edges");
         fclose(fp);
         return 0;
       }
     }
     else if(!strncmp(&str[1], "Faces", 5)) {
-      if(!readMSH4Faces(this, fp, binary)) {
+      bool ok = readMSH4Faces(this, fp, binary);
+      Msg::StopProgressMeter();
+      if(!ok) {
         Msg::Error("Could not read faces");
         fclose(fp);
         return 0;
