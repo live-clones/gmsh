@@ -771,21 +771,17 @@ public:
     bool whole = c->clipWholeElements && opt->clip && !cutOnly;
     setViewClipPlanes(opt, !cutOnly);
 
-    if(CTX::instance()->alpha && ColorTable_IsAlpha(&opt->colorTable)) {
-      if(glShader::transparentPass()) {
-        // the transparency pass sums in any order, with its own blending
-      }
-      else {
-        // real translucent blending (requires back-to-front traversal)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        // glBlendEquation(GL_FUNC_ADD);
-        glEnable(GL_BLEND);
-        if(p->va_triangles && p->va_triangles->getNumVertices() &&
-           eyeChanged(_ctx, p)) {
-          Msg::Debug("Sorting View[%d] for transparency", p->getIndex());
-          p->va_triangles->sort(p->getEye().x(), p->getEye().y(),
-                                p->getEye().z());
-        }
+    // a transparent view is blended back to front, unless the transparency
+    // pass sums it in any order with its own blending
+    bool blend = viewIsTransparent(p) && !glShader::transparentPass();
+    if(blend) {
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glEnable(GL_BLEND);
+      if(p->va_triangles && p->va_triangles->getNumVertices() &&
+         eyeChanged(_ctx, p)) {
+        Msg::Debug("Sorting View[%d] for transparency", p->getIndex());
+        p->va_triangles->sort(p->getEye().x(), p->getEye().y(),
+                              p->getEye().z());
       }
     }
 
@@ -837,7 +833,7 @@ public:
       }
     }
 
-    if(CTX::instance()->alpha && !glShader::transparentPass()) {
+    if(blend) {
       glDisable(GL_BLEND);
       gmshDepthTest(true);
     }
