@@ -82,6 +82,9 @@ static void addClipToken(glyphToken &tok, PViewOptions *opt)
 {
   tok.add(clipGlyphs(opt) ? opt->clip : 0);
   if(!clipGlyphs(opt)) return;
+  // what the planes keep of the elements
+  tok.add(CTX::instance()->clipOnlyVolume);
+  tok.add(CTX::instance()->clipOnlyDrawIntersectingVolume);
   for(int i = 0; i < 6; i++)
     if(opt->clip & (1 << i))
       for(int j = 0; j < 4; j++) tok.add(CTX::instance()->clipPlane[i][j]);
