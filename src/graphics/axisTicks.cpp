@@ -176,8 +176,10 @@ void makeAxisTicks(double min, double max, double length, double fontH,
   bool automatic = format.empty();
   char str[128];
 
-  if(min >= max) {
-    // an empty range, or one given the other way round: its two ends
+  if(min >= max || max - min <= 1.e-12 * std::max(fabs(min), fabs(max))) {
+    // an empty range, one given the other way round, or one too narrow for
+    // round values between its ends (a few units in the last place): its two
+    // ends
     int exp = automatic ? axisSharedExponent(min, max) : 0;
     multiplier = axisMultiplier(exp);
     for(int i = 0; i < 2; i++) {
@@ -259,8 +261,11 @@ void makeAxisTicks(double min, double max, double length, double fontH,
       w1 = labelWidth(last.label);
     }
     // a round value too close to an end for both labels gives way
-    for(double v = ceil(min / st) * st; v < max + 1.e-9 * r; v += st) {
-      if(v < min - 1.e-9 * r) continue;
+    // multiples of the step, counted rather than accumulated
+    double i0 = ceil(min / st), i1 = floor((max + 1.e-9 * r) / st);
+    for(double i = i0; i <= i1 && i - i0 < 1000.; i++) {
+      double v = i * st;
+      if(v < min - 1.e-9 * r || v >= max + 1.e-9 * r) continue;
       axisTick tk;
       tk.v = v;
       tk.t = (v - min) / r;
