@@ -302,7 +302,8 @@ static void addEllipseFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
     double l = std::sqrt((double)v[0] * v[0] + (double)v[1] * v[1] +
                          (double)v[2] * v[2]);
     double l2 = std::min(1., l / lmax);
-    for(int k = 0; k < 3; k++) vv[j][k] = v[k] / l * (scale * l2 + lmin);
+    // an axis of zero length (a singular tensor, a plane stress) is flat
+    for(int k = 0; k < 3; k++) vv[j][k] = l ? v[k] / l * (scale * l2 + lmin) : 0.;
   }
   unsigned int col;
   memcpy(&col, va->getColorArray(4 * i), 4);
