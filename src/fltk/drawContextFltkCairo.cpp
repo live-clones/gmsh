@@ -8,6 +8,7 @@
 #include "drawContextFltkCairo.h"
 
 #if defined(HAVE_CAIRO)
+#include <algorithm>
 #include <cairo/cairo.h>
 
 static void setFontOptions(cairo_t *cr)
@@ -67,6 +68,8 @@ drawContextFltkCairo::~drawContextFltkCairo()
 
 void drawContextFltkCairo::setFont(int fontid, int fontsize)
 {
+  // the heights and descents are asked of FLTK, as the other engines do
+  drawContextFltk::setFont(fontid, fontsize);
   if(_currentFontId != fontid) selectFontFace(_cr, fontid);
   cairo_set_font_size(_cr, fontsize);
   _currentFontId = fontid;
@@ -80,17 +83,25 @@ double drawContextFltkCairo::getStringWidth(const char *str)
   return e.width;
 }
 
-// the extents of the string at its size in the window's units, with a pixel
-// of margin all around, scaled
+// The width of the string and the height of its font, with a pixel of margin
+// all around, at the size it is rasterised. The box is the font's, not the
+// ink of this string: the baseline then falls on the anchor whatever the
+// string is, as it does with the other engines.
 drawContextFltkQueued::extent drawContextFltkCairo::measure(const element &e,
                                                             double f)
 {
   setFont(e.fontId, e.fontSize);
   cairo_text_extents_t x;
   cairo_text_extents(_cr, e.text.c_str(), &x);
-  int width = (int)ceil(x.width) + 2, height = (int)ceil(x.height) + 2;
-  return {(int)ceil(width * f), (int)ceil(height * f), 0,
-          -(x.x_bearing - 1) * f, -(x.y_bearing - 1) * f};
+  cairo_font_extents_t fe;
+  cairo_font_extents(_cr, &fe);
+  // an italic or a swash can reach left of the pen and past the advance
+  double left = std::min(0., x.x_bearing);
+  double width = std::max(x.x_advance, x.x_bearing + x.width) - left + 2.;
+  double height = fe.ascent + fe.descent + 2.;
+  return {(int)ceil(width * f), (int)ceil(height * f),
+          (int)ceil((fe.descent + 1.) * f), (1. - left) * f,
+          (fe.ascent + 1.) * f};
 }
 
 void drawContextFltkCairo::rasterise(const std::vector<slot> &slots, double f,
