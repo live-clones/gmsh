@@ -819,9 +819,10 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "QuadricSubdivisions" , opt_general_quadric_subdivisions, 6. ,
     "Number of subdivisions used to draw points or lines as spheres or cylinders" },
-  { F|O, "GlyphCacheSize" , opt_general_glyph_cache_size, 0. ,
-    "Maximum memory (in MB) used to cache glyphs (spheres, arrows, ...) "
-    "between frames (0: automatic; unused with the shader pipeline)" },
+  { F|O, "GraphicsCacheSize" , opt_general_graphics_cache_size, 0. ,
+    "Maximum memory (in MB) used by each of the caches kept between frames: "
+    "glyphs (spheres, arrows, ...; fixed function pipeline only) and strings "
+    "(0: automatic)" },
 
   { F,   "RotationX" , opt_general_rotation0 , 0.0 ,
     "First Euler angle (used if Trackball=0)" },

@@ -18,7 +18,6 @@
 #include "VertexArray.h"
 #include "Numeric.h"
 #include "Context.h"
-#include "OS.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -371,17 +370,10 @@ void glyphList::_expandRange(drawContext *ctx, glyphKind kind,
 // how many vertices it is worth keeping; past this the glyphs are expanded
 // a batch at a time for every frame, which is slower but takes no memory
 // (60000 spheres are 13 million vertices, about half a gigabyte with the
-// buffer objects). Set by General.GlyphCacheSize, or derived from the
-// machine.
+// buffer objects). Set by General.GraphicsCacheSize.
 static long maxKeptVertices()
 {
-  double mb = CTX::instance()->glyphCacheSize;
-  if(mb <= 0.) {
-    mb = TotalRam() / 32.;
-    if(mb > 1024.) mb = 1024.;
-    if(mb < 64.) mb = 64.;
-  }
-  return (long)(mb * 1024. * 1024. / 38.);
+  return (long)(CTX::instance()->graphicsCacheMB() * 1024. * 1024. / 38.);
 }
 
 void glyphList::draw(drawContext *ctx, bool light)

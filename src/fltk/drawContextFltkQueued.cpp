@@ -13,12 +13,13 @@
 namespace {
 
   // The atlas: pages of kSize x kSize pixels of one channel (the size OpenGL
-  // ES 3 guarantees), at most kPages of them (64 MB). Each string sits in a
+  // ES 3 guarantees, 4 MB), as many as General.GraphicsCacheSize allows,
+  // made when they are needed. Each string sits in a
   // cell of a shelf, with a pixel of blank around it so that the linear
   // filtering of a quad does not pick up its neighbours; a string wider than
   // a page is cut into several cells. When the pages are full, everything is
   // forgotten and the atlas starts again from the strings that come next.
-  const int kSize = 2048, kPages = 16;
+  const int kSize = 2048;
 
   struct cell {
     int page, x, y, w, h;
@@ -44,7 +45,8 @@ namespace {
 
     bool _newPage()
     {
-      if((int)_textures.size() == kPages) return false;
+      int pages = (int)(CTX::instance()->graphicsCacheMB() / 4.);
+      if((int)_textures.size() >= std::max(1, pages)) return false;
       unsigned int id;
       glGenTextures(1, &id);
       glBindTexture(GL_TEXTURE_2D, id);

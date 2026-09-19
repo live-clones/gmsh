@@ -127,6 +127,17 @@ CTX *CTX::_create()
   return _instance;
 }
 
+double CTX::graphicsCacheMB()
+{
+  double mb = graphicsCacheSize;
+  if(mb <= 0.) {
+    mb = TotalRam() / 32.;
+    if(mb > 1024.) mb = 1024.;
+    if(mb < 64.) mb = 64.;
+  }
+  return mb;
+}
+
 unsigned int CTX::packColor(int R, int G, int B, int A)
 {
   if(bigEndian)

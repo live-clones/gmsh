@@ -3619,10 +3619,10 @@ double opt_general_quadric_subdivisions(OPT_ARGS_NUM)
   return CTX::instance()->quadricSubdivisions;
 }
 
-double opt_general_glyph_cache_size(OPT_ARGS_NUM)
+double opt_general_graphics_cache_size(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->glyphCacheSize = val;
-  return CTX::instance()->glyphCacheSize;
+  if(action & GMSH_SET) CTX::instance()->graphicsCacheSize = val;
+  return CTX::instance()->graphicsCacheSize;
 }
 
 double opt_general_double_buffer(OPT_ARGS_NUM)

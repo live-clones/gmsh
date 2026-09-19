@@ -382,9 +382,10 @@ public:
   int colorScheme;
   // number of subdivisions for gluQuadrics
   int quadricSubdivisions;
-  // memory (in MB) the glyph triangles may take between frames (0:
-  // automatic)
-  double glyphCacheSize;
+  // memory (in MB) each of the caches kept between frames may take, the
+  // glyph triangles and the string atlas (0: automatic, see
+  // graphicsCacheMB())
+  double graphicsCacheSize;
   // vector display type and options (for normals, etc.)
   int vectorType;
   double arrowRelHeadRadius, arrowRelStemRadius, arrowRelStemLength;
@@ -472,6 +473,8 @@ public:
   int bigEndian;
   // how RGBA values are packed and unpacked into/from an unsigned integer to be
   // fed to gmshColor4ubv (depends on machine byte ordering!):
+  // the bound set by General.GraphicsCacheSize, or derived from the machine
+  double graphicsCacheMB();
   unsigned int packColor(int R, int G, int B, int A);
   int unpackRed(unsigned int X);
   int unpackGreen(unsigned int X);
