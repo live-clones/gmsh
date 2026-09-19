@@ -691,7 +691,9 @@ static bool eyeChanged(drawContext *ctx, PView *p)
 {
   double zeye = 100 * CTX::instance()->lc;
   SPoint3 tmp(ctx->rot[2] * zeye, ctx->rot[6] * zeye, ctx->rot[10] * zeye);
-  if(tmp.distance(p->getEye()) > 1.e-3) {
+  // a fraction of the distance to the eye: an absolute tolerance never
+  // sorted a small model again, and sorted a large one at every frame
+  if(tmp.distance(p->getEye()) > 1.e-5 * zeye) {
     p->setEye(tmp);
     return true;
   }
