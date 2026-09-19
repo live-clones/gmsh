@@ -374,7 +374,7 @@ const GLvoid *vaColorPointer(VertexArray *va)
 // draw, when the count is known
 static const float *_clientVertices = nullptr;
 static const unsigned char *_clientColors = nullptr;
-static bool _boundColors = false;
+static bool _boundColors = false, _boundNormals = false;
 
 void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
 {
@@ -384,6 +384,7 @@ void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
   _clientVertices = nullptr;
   _clientColors = nullptr;
   _boundColors = colors;
+  _boundNormals = normals;
 
   if(useShaders()) {
     // the attributes are recorded in the program's vertex array object,
@@ -437,6 +438,7 @@ void gmshBindArrays(const float *vertices, const unsigned char *colors)
   // as above
   gmshFlushImmediate();
   _boundColors = (colors != nullptr);
+  _boundNormals = false;
 
   if(useShaders()) {
     // uploaded at the draw, when the count is known
@@ -670,11 +672,14 @@ void drawVertexArray(VertexArray *va, GLenum type)
     if(gmshLineStippleEnabled())
       glShader::setStipple(true, gmshLineStippleFactor(),
                            gmshLineStipplePattern());
-    bool lit = gmshLightingEnabled() && va->hasNormals();
+    // what the caller bound: an array drawn in a forced colour (selected,
+    // or identifiers in a picking pass) is bound without its colours
+    bool lit = gmshLightingEnabled() && _boundNormals && va->hasNormals();
     if(glShader::drawWideLines(
          va->getVertexArray(), lit ? (const void *)va->getNormalArray() :
                                      nullptr,
-         NORMAL_GLTYPE, va->hasColors() ? va->getColorArray() : nullptr,
+         NORMAL_GLTYPE,
+         _boundColors && va->hasColors() ? va->getColorArray() : nullptr,
          va->getNumVertices(), gmshCurrentLineWidth(), lit)) {
       if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
       return;

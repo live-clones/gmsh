@@ -9196,7 +9196,7 @@ double opt_view_center_glyphs(OPT_ARGS_NUM)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
     opt->centerGlyphs = (int)val;
-    if(opt->centerGlyphs < 0 || opt->centerGlyphs > 2) opt->glyphLocation = 0;
+    if(opt->centerGlyphs < 0 || opt->centerGlyphs > 2) opt->centerGlyphs = 0;
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
@@ -10219,6 +10219,9 @@ unsigned int opt_mesh_color_lines(OPT_ARGS_COL)
     if(CTX::instance()->color.mesh.line != val &&
        CTX::instance()->mesh.colorCarousel == 0)
       CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+    // the merged mesh arrays bake it in as the colour of the edges
+    if(CTX::instance()->color.mesh.line != val)
+      CTX::instance()->entityColorsChanged = 1;
     CTX::instance()->color.mesh.line = val;
   }
 #if defined(HAVE_FLTK)
@@ -10376,6 +10379,9 @@ unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
     if(CTX::instance()->color.mesh.carousel[n] != val &&
        CTX::instance()->mesh.colorCarousel == 3)
       CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+    // the merged mesh arrays bake in the colours of the entities
+    if(CTX::instance()->color.mesh.carousel[n] != val)
+      CTX::instance()->entityColorsChanged = 1;
     CTX::instance()->color.mesh.carousel[n] = val;
   }
 #if defined(HAVE_FLTK)

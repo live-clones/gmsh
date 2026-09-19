@@ -30,7 +30,7 @@
 #include "PViewData.h"
 
 // from GModelVertexArrays
-extern unsigned int getColorByEntity(GEntity *e);
+extern unsigned int getColorByEntity(GEntity *e, bool withSelection = true);
 extern bool isElementVisible(MElement *ele);
 
 template <class T>
@@ -217,8 +217,10 @@ static void drawNodes(drawContext *ctx, GEntity *e, W walk)
     // the points of the whole model are drawn at once from an array kept
     // between frames (see mergedArrays); an entity only draws its own in a
     // picking pass, or when that array could not be used
+    // (a selected entity draws its own on top, in the selection colour)
     bool points = CTX::instance()->mesh.nodes &&
-                  (!_mergedPoints || ctx->inPickColorMode());
+                  (!_mergedPoints || ctx->inPickColorMode() ||
+                   e->getSelection());
     int what = (points ? NODES_POINTS : 0) | labels;
     if(what) walk(nullptr, what);
   }
@@ -226,7 +228,8 @@ static void drawNodes(drawContext *ctx, GEntity *e, W walk)
 
 // the colour a node is drawn in, which is the one of its order or the one of
 // the entity it belongs to
-static unsigned int getColorByVertex(GEntity *e, MVertex *v)
+static unsigned int getColorByVertex(GEntity *e, MVertex *v,
+                                     bool withSelection = true)
 {
   if(CTX::instance()->mesh.colorCarousel == 0 ||
      CTX::instance()->mesh.volumeFaces ||
@@ -235,7 +238,7 @@ static unsigned int getColorByVertex(GEntity *e, MVertex *v)
       return CTX::instance()->color.mesh.nodeSup;
     return CTX::instance()->color.mesh.node;
   }
-  return getColorByEntity(e);
+  return getColorByEntity(e, withSelection);
 }
 
 // the nodes of an entity: spheres are collected into the list (kept between
@@ -475,7 +478,7 @@ static VertexArray *buildMerged(IT first, IT last, bool lines, bool forceColor,
               (CTX::instance()->pickElements ||
                (CTX::instance()->mesh.colorCarousel == 0 ||
                 CTX::instance()->mesh.colorCarousel == 3)))) {
-      col = getColorByEntity(e);
+      col = getColorByEntity(e, false);
       c = (const unsigned char *)&col;
     }
     out->merge(va, c);
@@ -516,7 +519,7 @@ static void collectNodes(GEntity *e, std::vector<T *> &elements,
       MVertex *v = ele->getVertex(j);
       if(!v->getVisibility() || !seen.insert(v).second) continue;
       double x = v->x(), y = v->y(), z = v->z();
-      unsigned int col = getColorByVertex(e, v);
+      unsigned int col = getColorByVertex(e, v, false);
       va->add(&x, &y, &z, nullptr, &col, nullptr, false);
     }
   }
@@ -531,7 +534,7 @@ static void collectNodes(GEntity *e, VertexArray *va)
       MVertex *v = e->mesh_vertices[i];
       if(!v->getVisibility()) continue;
       double x = v->x(), y = v->y(), z = v->z();
-      unsigned int col = getColorByVertex(e, v);
+      unsigned int col = getColorByVertex(e, v, false);
       va->add(&x, &y, &z, nullptr, &col, nullptr, false);
     }
     return;
@@ -572,7 +575,6 @@ static void fillMergedPoints(GModel *m, mergedArrays &ma, int status)
                              (double)c->color.mesh.node,
                              (double)c->color.mesh.nodeSup,
                              (double)CTX::instance()->entityColorsStamp,
-                             (double)GEntity::numSelected,
                              c->mesh.qualityInf,
                              c->mesh.qualitySup,
                              c->mesh.radiusInf,
@@ -1020,11 +1022,15 @@ static void drawClipArrays(drawContext *ctx, IT first, IT last, int dim,
     if(!e->va_clip_lines && !e->va_clip_triangles) continue;
     if(ctx->render_mode == drawContext::GMSH_SELECT)
       ctx->setPickColor(dim, e->tag());
-    drawArrays(ctx, e, e->va_clip_lines, GL_LINES,
-               CTX::instance()->mesh.light &&
-                 (CTX::instance()->mesh.lightLines > 1),
-               CTX::instance()->mesh.surfaceFaces,
-               CTX::instance()->color.mesh.line);
+    // lit and coloured as the entities draw their own lines
+    CTX *c = CTX::instance();
+    bool lit = c->mesh.light && (dim == 1 ? false :
+                                 dim == 2 ? c->mesh.lightLines > 0 :
+                                            c->mesh.lightLines > 1);
+    int force = (dim == 1) ? 0 : (dim == 2) ? c->mesh.surfaceFaces :
+                                             c->mesh.volumeFaces;
+    drawArrays(ctx, e, e->va_clip_lines, GL_LINES, lit, force,
+               c->color.mesh.line);
     drawArrays(ctx, e, e->va_clip_triangles, GL_TRIANGLES,
                CTX::instance()->mesh.light);
     if(ctx->render_mode == drawContext::GMSH_SELECT) ctx->unsetPickColor();
@@ -1244,9 +1250,9 @@ void drawContext::drawMesh()
           drawMergedArray(this, ma.triangles[3], GL_TRIANGLES,
                           CTX::instance()->mesh.light);
         }
-        _mergedLines = (merge && !cutOnly && ma.lines[3]);
-        _mergedTriangles = (merge && !cutOnly && ma.triangles[3]);
-        // what the clipping planes add is not merged, so it is drawn here:
+        // what the clipping planes add is not merged, so it is drawn here,
+        // before the flags that say the volumes are (drawArrays() would take
+        // these arrays for merged ones and skip them):
         // the section in capping mode (clipped like everything else), the
         // cut elements in whole element mode (whole, with the planes off)
         if(CTX::instance()->clipWholeElements) {
@@ -1264,6 +1270,8 @@ void drawContext::drawMesh()
             if(render_mode == GMSH_SELECT) unsetPickColor();
           }
         }
+        _mergedLines = (merge && !cutOnly && ma.lines[3]);
+        _mergedTriangles = (merge && !cutOnly && ma.triangles[3]);
         if(!cutOnly && needPerEntityPass(this, 3, _mergedLines, _mergedTriangles))
           std::for_each(m->firstRegion(), m->lastRegion(),
                         drawMeshGRegion(this));

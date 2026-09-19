@@ -408,6 +408,8 @@ static bool faceKey(const std::size_t *nodeIds, int ent, const int *idx, int n,
 // sides of every such face are drawn.
 static bool skinFace(drawTarget *p, const int *idx, int n)
 {
+  // no topology to use (see addElementRange()): all the faces are drawn
+  if(!p->nodeIds) return !markingBoundaryFaces;
   std::uint64_t k[5];
   if(!faceKey(p->nodeIds, p->ent, idx, n, k)) {
     if(markingBoundaryFaces) return false;
@@ -628,7 +630,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
     }
     else if(markingBoundaryFaces)
       return;
-    else if(skin && !noNodeIdWarning++) {
+    else if(skin && p->nodeIds && !noNodeIdWarning++) {
       Msg::Warning("DrawSkinOnly needs node identifiers, which this data does "
                    "not have: drawing all the faces");
       skin = false;
@@ -1525,11 +1527,14 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
     }
   }
   else if(opt->tensorType == PViewOptions::Frame) {
+    // glyphs: nothing for the passes gathering normals or the skin
+    if(pre) return;
     if(opt->glyphLocation == PViewOptions::Vertex) {
       for(int i = 0; i < numNodes; i++) {
         double d0[3], d1[3], d2[3];
         double nrm = sqrt(val[i][0] * val[i][0] + val[i][1] * val[i][1] +
                           val[i][2] * val[i][2]);
+        if(!nrm) continue;
 
         for(int j = 0; j < 3; j++) {
           d0[j] = opt->displacementFactor * val[i][j + 0 * 3] / nrm;
@@ -1559,7 +1564,8 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
         double x7[3] = {x + d0[0] - d1[0] - d2[0], y + d0[1] - d1[1] - d2[1],
                         z + d0[2] - d1[2] - d2[2]};
 
-        if((nrm > opt->tmpMin && opt->tmpMax) || opt->saturateValues) {
+        if((nrm >= opt->tmpMin && nrm <= opt->tmpMax) ||
+           opt->saturateValues) {
           addTriangle(p, opt, x0, x1, x2, xx, nrm);
           addTriangle(p, opt, x2, x3, x0, xx, nrm);
           addTriangle(p, opt, x4, x7, x6, xx, nrm);
@@ -1579,6 +1585,9 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
   else if(opt->tensorType == PViewOptions::Ellipse ||
           opt->tensorType == PViewOptions::Ellipsoid ||
 	  opt->tensorType == PViewOptions::Frame) {
+    // glyphs: added once, by the pass filling the arrays, and not also by
+    // those gathering normals or the skin (va_ellipses keeps duplicates)
+    if(pre) return;
     if(opt->glyphLocation == PViewOptions::Vertex) {
       double vval[3][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
       for(int i = 0; i < numNodes; i++) {
@@ -1731,7 +1740,11 @@ static void addElementRange(drawTarget *p, PViewData *data,
     xyz[i] = new double[3];
     val[i] = new double[9];
   }
-  p->nodeIds = nodeIds;
+  // elements are told apart by their nodes (shared edges drawn once, the
+  // skin) unless their coordinates are changed element by element: exploded
+  // or raised along their normal, they no longer meet at their nodes
+  bool topology = opt->explode == 1. && !opt->normalRaise && !opt->useGenRaise;
+  p->nodeIds = topology ? nodeIds : nullptr;
 
   // the entity the range starts in
   std::size_t e = 0;
@@ -1762,7 +1775,7 @@ static void addElementRange(drawTarget *p, PViewData *data,
             xyz = new double *[NMAX];
             val = new double *[NMAX];
             nodeIds = new std::size_t[NMAX];
-            p->nodeIds = nodeIds;
+            if(topology) p->nodeIds = nodeIds;
             for(int j = 0; j < NMAX; j++) {
               xyz[j] = new double[3];
               val[j] = new double[9];

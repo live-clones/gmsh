@@ -178,8 +178,14 @@ namespace {
     std::vector<double> token;
     // the identifier of the first entity the colours were written for
     std::size_t base = 0;
+    // some surfaces have no triangulation, and are left to the per-entity
+    // pass (which draws their cross)
+    bool incomplete = false;
   };
   std::map<std::pair<GModel *, int>, pickArray> _pickArrays;
+  // set by the last kept drawing of surfaces (for the picture or for
+  // picking) of the model being drawn
+  bool _surfacesIncomplete = false;
 } // namespace
 
 // whether an entity of the model is drawn by the pass, as the per-entity
@@ -232,6 +238,7 @@ static bool drawPickArray(drawContext *ctx, GModel *m, int dim)
     pa.va = new VertexArray(dim + 1, 1000);
     pa.tags.clear();
     pa.start.clear();
+    pa.incomplete = false;
     unsigned int black = 0;
     unsigned int col[3] = {black, black, black};
     std::vector<SPoint3> pts;
@@ -241,6 +248,14 @@ static bool drawPickArray(drawContext *ctx, GModel *m, int dim)
     if(dim == 2) ents.insert(ents.end(), m->firstFace(), m->lastFace());
     for(auto e : ents) {
       if(!pickWanted(ctx, e)) continue;
+      if(dim == 2) {
+        GFace *f = static_cast<GFace *>(e);
+        f->fillVertexArray();
+        if(!f->va_geom_triangles) {
+          pa.incomplete = true;
+          continue;
+        }
+      }
       pa.tags.push_back(e->tag());
       pa.start.push_back(pa.va->getNumVertices());
       if(dim == 0) {
@@ -281,6 +296,7 @@ static bool drawPickArray(drawContext *ctx, GModel *m, int dim)
                 (double)c->geom.numSubEdges, (double)ctx->transparencyPass};
     pa.base = 0;
   }
+  if(dim == 2) _surfacesIncomplete = pa.incomplete;
   if(pa.tags.empty()) return true;
 
   // the identifiers of this pass, and the colours for them if they moved
@@ -650,10 +666,12 @@ public:
           double z[2] = {p1.z(), p2.z()};
           _ctx->transform(x[0], y[0], z[0]);
           _ctx->transform(x[1], y[1], z[1]);
-          double w = e->getSelection() ?
-                       CTX::instance()->geom.selectedCurveWidth :
-                       CTX::instance()->geom.curveWidth;
-          if(glyphList *g = geomGlyphs(_ctx)) {
+          // a picking pass draws it at its plain width, as it does points
+          double w = sel ? CTX::instance()->geom.selectedCurveWidth :
+                           CTX::instance()->geom.curveWidth;
+          // over the kept cylinders it is drawn now, under the depth test
+          // set above, and not with the glyphs drawn at the end of the pass
+          if(glyphList *g = merged ? nullptr : geomGlyphs(_ctx)) {
             double r = w * _ctx->pixel_equiv_x / _ctx->s[0];
             g->addCylinder(x, y, z, r, r, glyphCurrentColor());
           }
@@ -723,6 +741,8 @@ namespace {
   struct mergedSurfaces {
     VertexArray *triangles = nullptr;
     std::vector<double> token;
+    // some surfaces have no triangulation (see _surfacesIncomplete)
+    bool incomplete = false;
   };
   std::map<GModel *, mergedSurfaces> _mergedSurfaces;
   bool _surfacesMerged = false;
@@ -749,6 +769,7 @@ static bool drawMergedSurfaces(drawContext *ctx, GModel *m)
   if(!ms.triangles || tok != ms.token) {
     delete ms.triangles;
     ms.triangles = new VertexArray(3, 1000);
+    ms.incomplete = false;
     for(auto it = m->firstFace(); it != m->lastFace(); it++) {
       GFace *f = *it;
       if(!f->getVisibility()) continue;
@@ -756,7 +777,10 @@ static bool drawMergedSurfaces(drawContext *ctx, GModel *m)
          f->geomType() == GEntity::BoundaryLayerSurface)
         continue;
       f->fillVertexArray();
-      if(f->va_geom_triangles) ms.triangles->merge(f->va_geom_triangles);
+      if(f->va_geom_triangles)
+        ms.triangles->merge(f->va_geom_triangles);
+      else
+        ms.incomplete = true;
     }
     ms.triangles->finalize();
     // after the arrays of the surfaces have been filled, which may have
@@ -764,6 +788,7 @@ static bool drawMergedSurfaces(drawContext *ctx, GModel *m)
     c->stampChanges();
     ms.token = {(double)c->geom.stamp[2], (double)c->entityVisibilityStamp};
   }
+  _surfacesIncomplete = ms.incomplete;
   VertexArray *va = ms.triangles;
   if(!va->getNumVertices()) return true;
   bool normals = c->geom.light && va->hasNormals();
@@ -1114,10 +1139,11 @@ void drawContext::drawGeom()
         _curvesMerged = false;
       }
       {
+        _surfacesIncomplete = false;
         bool picked = !mixed && drawPickArray(this, m, 2);
         _surfacesMerged = picked || (!mixed && drawMergedSurfaces(this, m));
         bool all = (!pick && c->geom.surfaceLabels) || c->geom.normals ||
-                   (c->geom.surfaces && !_surfacesMerged);
+                   (c->geom.surfaces && (!_surfacesMerged || _surfacesIncomplete));
         forEntities<GFace>(m, 2, all, drawGFace(this));
         _surfacesMerged = false;
       }

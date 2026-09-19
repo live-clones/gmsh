@@ -39,9 +39,12 @@ unsigned int getSelectionColor(GEntity *e)
            CTX::instance()->color.geom.selection;
 }
 
-unsigned int getColorByEntity(GEntity *e)
+// (what is merged across entities and kept takes the colour an entity has
+// unselected: a selected one is drawn again on top, and the selection
+// changes without anything being rebuilt)
+unsigned int getColorByEntity(GEntity *e, bool withSelection)
 {
-  if(e->getSelection()) { // selection
+  if(withSelection && e->getSelection()) { // selection
     return getSelectionColor(e);
   }
   else if(e->useColor()) { // forced from a script
@@ -91,7 +94,7 @@ static unsigned int getColorByElement(MElement *ele)
     // associated entity in the element
     for(std::size_t i = 0; i < ele->getNumVertices(); i++) {
       GEntity *e = ele->getVertex(i)->onWhat();
-      if(e && (e->dim() == ele->getDim())) return getColorByEntity(e);
+      if(e && (e->dim() == ele->getDim())) return getColorByEntity(e, true);
     }
   }
   return CTX::instance()->color.fg;
