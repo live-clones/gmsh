@@ -616,7 +616,9 @@ static void collectNodes(GEntity *e, std::vector<T *> &elements,
 static void collectNodes(GEntity *e, VertexArray *va)
 {
   if(!e->getVisibility()) return;
-  if(!e->getOnlySomeElementsVisible()) {
+  // a point entity has no element list to walk (and keeps the flag it was
+  // built with): it shows all of its nodes
+  if(e->dim() == 0 || !e->getOnlySomeElementsVisible()) {
     for(std::size_t i = 0; i < e->mesh_vertices.size(); i++)
       if(e->mesh_vertices[i]->getVisibility())
         addNode(e, e->mesh_vertices[i], va);
