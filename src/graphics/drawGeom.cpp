@@ -20,9 +20,13 @@ extern unsigned int getSelectionColor(GEntity *e);
 #include "glImmediate.h"
 #include <map>
 
+// the label of an entity (those shown by the selection in the foreground
+// colour)
 static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
                             double z, double offset)
 {
+  if(e->getSelection() == GEntity::SelectShow)
+    gmshColor4ubv((const void *)&CTX::instance()->color.fg);
   double xx = x + offset / ctx->s[0];
   double yy = y + offset / ctx->s[1];
   double zz = z + offset / ctx->s[2];
@@ -96,6 +100,45 @@ static bool passWants(drawContext *ctx, GEntity *e)
          gmshGeometryEntityIsTransparent(e);
 }
 
+// is this entity drawn by the pass? Not when hidden, and never the discrete,
+// partition and boundary layer entities, which only carry a mesh
+static bool geomDrawn(drawContext *ctx, GEntity *e)
+{
+  if(!passWants(ctx, e) || !e->getVisibility()) return false;
+  switch(e->geomType()) {
+  case GEntity::BoundaryLayerPoint:
+  case GEntity::DiscreteCurve:
+  case GEntity::PartitionCurve:
+  case GEntity::BoundaryLayerCurve:
+  case GEntity::PartitionSurface:
+  case GEntity::BoundaryLayerSurface: return false;
+  default: return true;
+  }
+}
+
+// the colour of an entity, selected or not: the selection colour, or its own
+// or that of its dimension; orphans (and curves or surfaces bounding a single
+// surface or volume) highlighted if asked
+static unsigned int geomColor(GEntity *e, bool selected)
+{
+  CTX *c = CTX::instance();
+  const unsigned int own[4] = {c->color.geom.point, c->color.geom.curve,
+                               c->color.geom.surface, c->color.geom.volume};
+  unsigned int col = selected       ? getSelectionColor(e) :
+                     e->useColor() ? e->getColor() :
+                                     own[e->dim()];
+  if(c->geom.highlightOrphans && e->dim() < 3) {
+    std::size_t up = (e->dim() == 0) ? static_cast<GVertex *>(e)->numEdges() :
+                     (e->dim() == 1) ? static_cast<GEdge *>(e)->numFaces() :
+                                       static_cast<GFace *>(e)->numRegions();
+    if(e->isOrphan())
+      col = c->color.geom.highlight[0];
+    else if(up == 1)
+      col = c->color.geom.highlight[1];
+  }
+  return col;
+}
+
 // The arrays of the geometry kept between frames, per model and dimension:
 // the points, the curves as lines and the surfaces as triangles (merged from
 // their own arrays), each drawn in one call. For the picture they carry the
@@ -137,7 +180,6 @@ namespace {
 } // namespace
 
 static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts);
-static unsigned int curveColor(GEdge *e);
 
 // does a kept array cover this dimension of the model? Not for what it does
 // not hold: spheres (the cylinders of the curves are kept in a glyph list),
@@ -197,18 +239,8 @@ static void forKeptEntities(drawContext *ctx, GModel *m, int dim, F f)
   if(dim == 0) ents.insert(ents.end(), m->firstVertex(), m->lastVertex());
   if(dim == 1) ents.insert(ents.end(), m->firstEdge(), m->lastEdge());
   if(dim == 2) ents.insert(ents.end(), m->firstFace(), m->lastFace());
-  for(auto e : ents) {
-    if(!passWants(ctx, e) || !e->getVisibility()) continue;
-    switch(e->geomType()) {
-    case GEntity::BoundaryLayerPoint:
-    case GEntity::DiscreteCurve:
-    case GEntity::PartitionCurve:
-    case GEntity::BoundaryLayerCurve:
-    case GEntity::PartitionSurface:
-    case GEntity::BoundaryLayerSurface: continue;
-    default: f(e);
-    }
-  }
+  for(auto e : ents)
+    if(geomDrawn(ctx, e)) f(e);
 }
 
 // the kept array of a dimension of the model, built again if needed; the
@@ -248,7 +280,7 @@ static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
     else if(dim == 1) {
       curvePoints(ctx, static_cast<GEdge *>(e), pts);
       unsigned int col[2];
-      col[0] = col[1] = pick ? 0 : curveColor(static_cast<GEdge *>(e));
+      col[0] = col[1] = pick ? 0 : geomColor(e, false);
       for(std::size_t i = 0; i + 1 < pts.size(); i++) {
         double x[2] = {pts[i].x(), pts[i + 1].x()};
         double y[2] = {pts[i].y(), pts[i + 1].y()};
@@ -282,7 +314,7 @@ static void drawKeptCylinders(drawContext *ctx, GModel *m)
     std::vector<SPoint3> pts;
     forKeptEntities(ctx, m, 1, [&](GEntity *e) {
       curvePoints(ctx, static_cast<GEdge *>(e), pts);
-      unsigned int col = curveColor(static_cast<GEdge *>(e));
+      unsigned int col = geomColor(e, false);
       for(std::size_t i = 0; i + 1 < pts.size(); i++) {
         double x[2] = {pts[i].x(), pts[i + 1].x()};
         double y[2] = {pts[i].y(), pts[i + 1].y()};
@@ -362,115 +394,6 @@ static bool drawKept(drawContext *ctx, GModel *m, int dim)
   return true;
 }
 
-class drawGVertex {
-private:
-  drawContext *_ctx;
-
-public:
-  drawGVertex(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GVertex *v)
-  {
-    if(!passWants(_ctx, v)) return;
-    if(!v->getVisibility()) return;
-    if(v->geomType() == GEntity::BoundaryLayerPoint) return;
-    // already in the kept array: for a picking pass, selected or not (it
-    // draws them all alike, and no label); for the picture, unless selected
-    // or labelled
-    if(_kept && (_ctx->render_mode == drawContext::GMSH_SELECT ||
-                 (!v->getSelection() && !CTX::instance()->geom.pointLabels)))
-      return;
-
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
-                   v->model() == GModel::current());
-    if(select) {
-      _ctx->setPickColor(0, v->tag());
-    }
-
-    gmshLightTwoSide(false);
-
-    double fact = _ctx->highResolutionPixelFactor();
-    double ps = CTX::instance()->geom.pointSize * fact;
-    double sps = CTX::instance()->geom.selectedPointSize * fact;
-
-    // a picking pass draws what is selected at its plain size: the image it
-    // reads identifiers from must not depend on what is selected, or
-    // highlighting a point would grow it over the marker of the volume next
-    // to it and there would be no way back
-    bool sel = v->getSelection() && !_ctx->inPickColorMode();
-    if(sel) {
-      gmshPointSize((float)sps);
-      gl2psPointSize((float)(CTX::instance()->geom.selectedPointSize *
-                             CTX::instance()->print.epsPointSizeFactor));
-      unsigned int sc = getSelectionColor(v);
-      gmshColor4ubv((const void *)&sc);
-    }
-    else {
-      gmshPointSize((float)ps);
-      gl2psPointSize((float)(CTX::instance()->geom.pointSize *
-                             CTX::instance()->print.epsPointSizeFactor));
-      unsigned int col = v->useColor() ? v->getColor() :
-        CTX::instance()->color.geom.point;
-      gmshColor4ubv((const void *)&col);
-    }
-
-    if(CTX::instance()->geom.highlightOrphans) {
-      if(v->isOrphan())
-        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[0]);
-      else if(v->numEdges() == 1)
-        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[1]);
-    }
-
-    double x = v->x(), y = v->y(), z = v->z();
-    _ctx->transform(x, y, z);
-
-    if(CTX::instance()->geom.points || v->getSelection() == GEntity::SelectShow) {
-      if(CTX::instance()->geom.pointType > 0) {
-        double size = sel ? sps : ps;
-        if(glyphList *g = geomGlyphs(_ctx))
-          g->addSphere(_ctx, size, x, y, z, glyphCurrentColor());
-        else
-          _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
-      }
-      else {
-        // over the kept points, which hold this one too
-        if(_kept) glDepthFunc(GL_LEQUAL);
-        gmshBegin(GL_POINTS);
-        gmshVertex3d(x, y, z);
-        gmshEnd();
-        if(_kept) {
-          gmshFlushImmediate();
-          glDepthFunc(GL_LESS);
-        }
-      }
-    }
-
-    if(CTX::instance()->geom.pointLabels || v->getSelection() == GEntity::SelectShow) {
-      double offset =
-        (0.5 * ps + 0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
-      if(v->getSelection() == GEntity::SelectShow)
-        gmshColor4ubv((const void *)&CTX::instance()->color.fg);
-      drawEntityLabel(_ctx, v, x, y, z, offset);
-    }
-
-    if(select) {
-    }
-  }
-};
-
-// The colour a curve is drawn in when it is not selected
-static unsigned int curveColor(GEdge *e)
-{
-  CTX *c = CTX::instance();
-  unsigned int col = e->useColor() ? e->getColor() : c->color.geom.curve;
-  if(c->geom.highlightOrphans) {
-    if(e->isOrphan())
-      col = c->color.geom.highlight[0];
-    else if(e->numFaces() == 1)
-      col = c->color.geom.highlight[1];
-  }
-  return col;
-}
-
 // the points a curve is drawn through
 static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts)
 {
@@ -487,403 +410,274 @@ static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts)
   }
 }
 
-class drawGEdge {
-private:
-  drawContext *_ctx;
-
-public:
-  drawGEdge(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GEdge *e)
-  {
-    if(!passWants(_ctx, e)) return;
-    if(!e->getVisibility()) return;
-    if(e->geomType() == GEntity::DiscreteCurve) return;
-    if(e->geomType() == GEntity::PartitionCurve) return;
-    if(e->geomType() == GEntity::BoundaryLayerCurve) return;
-
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
-                   e->model() == GModel::current());
-    if(select) {
-      _ctx->setPickColor(1, e->tag());
-    }
-
-    gmshLightTwoSide(false);
-
-    bool sel = e->getSelection() && !_ctx->inPickColorMode();
-    if(sel) {
-      gmshLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
-      gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth *
-                             CTX::instance()->print.epsLineWidthFactor));
-      unsigned int sc = getSelectionColor(e);
-      gmshColor4ubv((const void *)&sc);
+static void drawGeomPoint(drawContext *ctx, GVertex *v, double size)
+{
+  CTX *c = CTX::instance();
+  double x = v->x(), y = v->y(), z = v->z();
+  ctx->transform(x, y, z);
+  if(c->geom.points || v->getSelection() == GEntity::SelectShow) {
+    if(c->geom.pointType > 0) {
+      if(glyphList *g = geomGlyphs(ctx))
+        g->addSphere(ctx, size, x, y, z, glyphCurrentColor());
+      else
+        ctx->drawSphere(size, x, y, z, c->geom.light);
     }
     else {
-      gmshLineWidth((float)CTX::instance()->geom.curveWidth);
-      gl2psLineWidth((float)(CTX::instance()->geom.curveWidth *
-                             CTX::instance()->print.epsLineWidthFactor));
-      unsigned int col = e->useColor() ? e->getColor() :
-        CTX::instance()->color.geom.curve;
-      gmshColor4ubv((const void *)&col);
-    }
-
-    if(CTX::instance()->geom.highlightOrphans) {
-      if(e->isOrphan())
-        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[0]);
-      else if(e->numFaces() == 1)
-        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[1]);
-    }
-
-    Range<double> t_bounds = e->parBounds(0);
-    double t_min = t_bounds.low();
-    double t_max = t_bounds.high();
-
-    // already in the kept curves, unless selected: then drawn again on top,
-    // which needs the depth test to accept equal depths
-    bool merged = _kept && CTX::instance()->geom.curves;
-    bool drawIt =
-      (CTX::instance()->geom.curves ||
-       e->getSelection() == GEntity::SelectShow) &&
-      (!merged || (e->getSelection() && !_ctx->inPickColorMode()));
-    if(drawIt && merged) glDepthFunc(GL_LEQUAL);
-    if(drawIt) {
-      int N = e->minimumDrawSegments() + 1;
-      if(CTX::instance()->geom.curveType > 0) {
-        for(int i = 0; i < N - 1; i++) {
-          double t1 = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-          GPoint p1 = e->point(t1);
-          double t2 =
-            t_min + (double)(i + 1) / (double)(N - 1) * (t_max - t_min);
-          GPoint p2 = e->point(t2);
-          double x[2] = {p1.x(), p2.x()};
-          double y[2] = {p1.y(), p2.y()};
-          double z[2] = {p1.z(), p2.z()};
-          _ctx->transform(x[0], y[0], z[0]);
-          _ctx->transform(x[1], y[1], z[1]);
-          // a picking pass draws it at its plain width, as it does points
-          double w = sel ? CTX::instance()->geom.selectedCurveWidth :
-                           CTX::instance()->geom.curveWidth;
-          // over the kept cylinders it is drawn now, under the depth test
-          // set above, and not with the glyphs drawn at the end of the pass
-          if(glyphList *g = merged ? nullptr : geomGlyphs(_ctx)) {
-            double r = w * _ctx->pixel_equiv_x / _ctx->s[0];
-            g->addCylinder(x, y, z, r, r, glyphCurrentColor());
-          }
-          else
-            _ctx->drawCylinder(w, x, y, z, CTX::instance()->geom.light);
-        }
-      }
-      else {
-        gmshBegin(GL_LINE_STRIP);
-        for(int i = 0; i < N; i++) {
-          double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-          GPoint p = e->point(t);
-          double x = p.x(), y = p.y(), z = p.z();
-          _ctx->transform(x, y, z);
-          gmshVertex3d(x, y, z);
-        }
-        gmshEnd();
+      // over the kept points, which hold this one too
+      if(_kept) glDepthFunc(GL_LEQUAL);
+      gmshBegin(GL_POINTS);
+      gmshVertex3d(x, y, z);
+      gmshEnd();
+      if(_kept) {
+        gmshFlushImmediate();
+        glDepthFunc(GL_LESS);
       }
     }
-    if(drawIt && merged) {
+  }
+  if(c->geom.pointLabels || v->getSelection() == GEntity::SelectShow) {
+    double ps = c->geom.pointSize * ctx->highResolutionPixelFactor();
+    double offset = (0.5 * ps + 0.1 * c->glFontSize) * ctx->pixel_equiv_x;
+    drawEntityLabel(ctx, v, x, y, z, offset);
+  }
+}
+
+static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
+{
+  CTX *c = CTX::instance();
+  // already in the kept curves, unless selected: then drawn again on top,
+  // which needs the depth test to accept equal depths
+  bool merged = _kept && c->geom.curves;
+  bool drawIt = (c->geom.curves || e->getSelection() == GEntity::SelectShow) &&
+                (!merged || sel);
+  if(drawIt) {
+    if(merged) glDepthFunc(GL_LEQUAL);
+    std::vector<SPoint3> pts;
+    curvePoints(ctx, e, pts);
+    if(c->geom.curveType > 0) {
+      for(std::size_t i = 0; i + 1 < pts.size(); i++) {
+        double x[2] = {pts[i].x(), pts[i + 1].x()};
+        double y[2] = {pts[i].y(), pts[i + 1].y()};
+        double z[2] = {pts[i].z(), pts[i + 1].z()};
+        // over the kept cylinders it is drawn now, under the depth test set
+        // above, and not with the glyphs drawn at the end of the pass
+        if(glyphList *g = merged ? nullptr : geomGlyphs(ctx)) {
+          double r = width * ctx->pixel_equiv_x / ctx->s[0];
+          g->addCylinder(x, y, z, r, r, glyphCurrentColor());
+        }
+        else
+          ctx->drawCylinder(width, x, y, z, c->geom.light);
+      }
+    }
+    else {
+      gmshBegin(GL_LINE_STRIP);
+      for(auto &p : pts) gmshVertex3d(p.x(), p.y(), p.z());
+      gmshEnd();
+    }
+    if(merged) {
       gmshFlushImmediate();
       glDepthFunc(GL_LESS);
     }
-
-    if(CTX::instance()->geom.curveLabels || e->getSelection() == GEntity::SelectShow) {
-      GPoint p = e->point(t_min + 0.5 * (t_max - t_min));
-      double offset = (0.5 * CTX::instance()->geom.curveWidth +
-                       0.1 * CTX::instance()->glFontSize) *
-                      _ctx->pixel_equiv_x;
-      double x = p.x(), y = p.y(), z = p.z();
-      _ctx->transform(x, y, z);
-      if(e->getSelection() == GEntity::SelectShow)
-        gmshColor4ubv((const void *)&CTX::instance()->color.fg);
-      drawEntityLabel(_ctx, e, x, y, z, offset);
-    }
-
-    if(CTX::instance()->geom.tangents) {
-      double t = t_min + 0.5 * (t_max - t_min);
-      GPoint p = e->point(t);
-      SVector3 der = e->firstDer(t);
-      der.normalize();
-      for(int i = 0; i < 3; i++)
-        der[i] *=
-          CTX::instance()->geom.tangents * _ctx->pixel_equiv_x / _ctx->s[i];
-      gmshColor4ubv((const void *)&CTX::instance()->color.geom.tangents);
-      double x = p.x(), y = p.y(), z = p.z();
-      _ctx->transform(x, y, z);
-      _ctx->transformOneForm(der[0], der[1], der[2]);
-      _ctx->drawVector(CTX::instance()->vectorType, 0, x, y, z, der[0], der[1],
-                       der[2], CTX::instance()->geom.light);
-    }
-
-    if(select) {
-    }
-  }
-};
-
-class drawGFace {
-private:
-  drawContext *_ctx;
-  void _drawVertexArray(VertexArray *va, bool useNormalArray,
-                        int forceColor = 0, unsigned int color = 0)
-  {
-    if(!va || !va->getNumVertices()) return;
-    bool colors = !forceColor && va->hasColors();
-    if(!_ctx->inPickColorMode() && !colors)
-      gmshColor4ubv((const void *)&color);
-    // a picking pass draws the surface as it is shown, wireframe or solid:
-    // what is visible is what is picked
-    if(CTX::instance()->geom.surfaceType > 1) {
-      if(CTX::instance()->geom.lightTwoSide)
-        gmshLightTwoSide(true);
-      else
-        gmshLightTwoSide(false);
-      gmshPolygonFill(true);
-    }
-    else {
-      gmshLightTwoSide(false);
-      gmshPolygonFill(false);
-    }
-    gmshDrawVertexArray(va, GL_TRIANGLES,
-                        (useNormalArray ? GMSH_DRAW_LIGHT : 0) |
-                          (colors ? GMSH_DRAW_COLORS : 0) |
-                          (CTX::instance()->polygonOffset ? GMSH_DRAW_OFFSET :
-                                                            0));
-    gmshPolygonFill(true);
   }
 
-public:
-  drawGFace(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GFace *f)
-  {
-    if(!passWants(_ctx, f)) return;
-    if(!f->getVisibility()) return;
-    if(f->geomType() == GEntity::PartitionSurface) return;
-    if(f->geomType() == GEntity::BoundaryLayerSurface) return;
+  Range<double> t_bounds = e->parBounds(0);
+  double t = t_bounds.low() + 0.5 * (t_bounds.high() - t_bounds.low());
+  if(c->geom.curveLabels || e->getSelection() == GEntity::SelectShow) {
+    GPoint p = e->point(t);
+    double offset =
+      (0.5 * c->geom.curveWidth + 0.1 * c->glFontSize) * ctx->pixel_equiv_x;
+    double x = p.x(), y = p.y(), z = p.z();
+    ctx->transform(x, y, z);
+    drawEntityLabel(ctx, e, x, y, z, offset);
+  }
+  if(c->geom.tangents) {
+    GPoint p = e->point(t);
+    SVector3 der = e->firstDer(t);
+    der.normalize();
+    for(int i = 0; i < 3; i++)
+      der[i] *= c->geom.tangents * ctx->pixel_equiv_x / ctx->s[i];
+    gmshColor4ubv((const void *)&c->color.geom.tangents);
+    double x = p.x(), y = p.y(), z = p.z();
+    ctx->transform(x, y, z);
+    ctx->transformOneForm(der[0], der[1], der[2]);
+    ctx->drawVector(c->vectorType, 0, x, y, z, der[0], der[1], der[2],
+                    c->geom.light);
+  }
+}
 
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
-                   f->model() == GModel::current());
-    if(select) {
-      _ctx->setPickColor(2, f->tag());
-    }
+static void drawGeomSurface(drawContext *ctx, GFace *f, bool sel)
+{
+  CTX *c = CTX::instance();
+  bool shown = c->geom.surfaces || f->getSelection() == GEntity::SelectShow;
+  if(shown && c->geom.surfaceType > 0) f->fillVertexArray();
+  if((shown && c->geom.surfaceType == 0) || c->geom.surfaceLabels ||
+     c->geom.normals)
+    f->buildRepresentationCross();
 
-    if(f->getSelection() && !_ctx->inPickColorMode()) {
-      gmshLineWidth((float)(CTX::instance()->geom.selectedCurveWidth / 2.));
-      gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth / 2. *
-                             CTX::instance()->print.epsLineWidthFactor));
-      unsigned int sc = getSelectionColor(f);
-      gmshColor4ubv((const void *)&sc);
-    }
-    else {
-      gmshLineWidth((float)(CTX::instance()->geom.curveWidth / 2.));
-      gl2psLineWidth((float)(CTX::instance()->geom.curveWidth / 2. *
-                             CTX::instance()->print.epsLineWidthFactor));
-      unsigned int col = f->useColor() ? f->getColor() :
-        CTX::instance()->color.geom.surface;
-      gmshColor4ubv((const void *)&col);
-    }
-
-    if(CTX::instance()->geom.highlightOrphans) {
-      if(f->isOrphan())
-        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[0]);
-      else if(f->numRegions() == 1)
-        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[1]);
-    }
-
-    if(CTX::instance()->geom.lightTwoSide)
-      gmshLightTwoSide(true);
-    else
-      gmshLightTwoSide(false);
-
-    if((CTX::instance()->geom.surfaces || f->getSelection() == GEntity::SelectShow) &&
-       CTX::instance()->geom.surfaceType > 0)
-      f->fillVertexArray();
-
-    if(((CTX::instance()->geom.surfaces || f->getSelection() == GEntity::SelectShow) &&
-        CTX::instance()->geom.surfaceType == 0) ||
-       CTX::instance()->geom.surfaceLabels || CTX::instance()->geom.normals)
-      f->buildRepresentationCross();
-
-    if(CTX::instance()->geom.surfaces || f->getSelection() == GEntity::SelectShow) {
-      if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles) {
-        bool selected = false;
-        if(f->getSelection()) selected = true;
-        // already in the merged array, unless selected: then drawn again on
-        // top, which needs the depth test to accept equal depths
-        bool merged = _kept && CTX::instance()->geom.surfaces;
-        if(!merged || (selected && !_ctx->inPickColorMode())) {
-          if(merged) glDepthFunc(GL_LEQUAL);
-          _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
-                           selected, getSelectionColor(f));
-          if(merged) glDepthFunc(GL_LESS);
+  if(shown) {
+    VertexArray *va = f->va_geom_triangles;
+    if(c->geom.surfaceType > 0 && va) {
+      // already in the merged array, unless selected: then drawn again on
+      // top, which needs the depth test to accept equal depths
+      bool merged = _kept && c->geom.surfaces;
+      if((!merged || sel) && va->getNumVertices()) {
+        if(merged) glDepthFunc(GL_LEQUAL);
+        bool colors = !f->getSelection() && va->hasColors();
+        if(!ctx->inPickColorMode() && !colors) {
+          unsigned int col = getSelectionColor(f);
+          gmshColor4ubv((const void *)&col);
         }
+        // a picking pass draws the surface as it is shown, wireframe or
+        // solid: what is visible is what is picked
+        bool solid = c->geom.surfaceType > 1;
+        gmshLightTwoSide(solid && c->geom.lightTwoSide);
+        gmshPolygonFill(solid);
+        gmshDrawVertexArray(va, GL_TRIANGLES,
+                            (c->geom.light ? GMSH_DRAW_LIGHT : 0) |
+                              (colors ? GMSH_DRAW_COLORS : 0) |
+                              (c->polygonOffset ? GMSH_DRAW_OFFSET : 0));
+        gmshPolygonFill(true);
+        if(merged) glDepthFunc(GL_LESS);
       }
-      else {
-        gmshLineStipple(1, 0x0F0F);
-        gl2psEnable(GL2PS_LINE_STIPPLE);
-        for(int dim = 0; dim < 2; dim++) {
-          for(std::size_t i = 0; i < f->cross[dim].size(); i++) {
-            if(f->cross[dim][i].size() >= 2) {
-              gmshBegin(GL_LINE_STRIP);
-              for(std::size_t j = 0; j < f->cross[dim][i].size(); j++) {
-                double x = f->cross[dim][i][j].x();
-                double y = f->cross[dim][i][j].y();
-                double z = f->cross[dim][i][j].z();
-                _ctx->transform(x, y, z);
-                gmshVertex3d(x, y, z);
-              }
-              gmshEnd();
-            }
+    }
+    else {
+      gmshLineStipple(1, 0x0F0F);
+      gl2psEnable(GL2PS_LINE_STIPPLE);
+      for(int dim = 0; dim < 2; dim++) {
+        for(auto &line : f->cross[dim]) {
+          if(line.size() < 2) continue;
+          gmshBegin(GL_LINE_STRIP);
+          for(auto &p : line) {
+            double x = p.x(), y = p.y(), z = p.z();
+            ctx->transform(x, y, z);
+            gmshVertex3d(x, y, z);
           }
+          gmshEnd();
         }
-        gmshLineStippleOff();
-        gl2psDisable(GL2PS_LINE_STIPPLE);
       }
-    }
-
-    if(f->cross[0].size() && f->cross[0][0].size()) {
-      int idx = f->cross[0][0].size() / 2;
-      if(CTX::instance()->geom.surfaceLabels || f->getSelection() == GEntity::SelectShow) {
-        double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
-        double x = f->cross[0][0][idx].x();
-        double y = f->cross[0][0][idx].y();
-        double z = f->cross[0][0][idx].z();
-        _ctx->transform(x, y, z);
-        if(f->getSelection() == GEntity::SelectShow)
-          gmshColor4ubv((const void *)&CTX::instance()->color.fg);
-        drawEntityLabel(_ctx, f, x, y, z, offset);
-      }
-
-      if(CTX::instance()->geom.normals) {
-        SPoint3 p(f->cross[0][0][idx].x(), f->cross[0][0][idx].y(),
-                  f->cross[0][0][idx].z());
-        SPoint2 uv = f->parFromPoint(p);
-        SVector3 n = f->normal(uv);
-        for(int i = 0; i < 3; i++)
-          n[i] *=
-            CTX::instance()->geom.normals * _ctx->pixel_equiv_x / _ctx->s[i];
-        gmshColor4ubv((const void *)&CTX::instance()->color.geom.normals);
-        double x = p.x(), y = p.y(), z = p.z();
-        _ctx->transform(x, y, z);
-        _ctx->transformTwoForm(n[0], n[1], n[2]);
-        _ctx->drawVector(CTX::instance()->vectorType, 0, x, y, z, n[0], n[1],
-                         n[2], CTX::instance()->geom.light);
-      }
-    }
-
-    if(select) {
+      gmshLineStippleOff();
+      gl2psDisable(GL2PS_LINE_STIPPLE);
     }
   }
-};
 
-class drawGRegion {
-private:
-  drawContext *_ctx;
+  // the label and the normal at the middle of the first line of the cross
+  if(f->cross[0].empty() || f->cross[0][0].empty()) return;
+  SPoint3 p = f->cross[0][0][f->cross[0][0].size() / 2];
+  double x = p.x(), y = p.y(), z = p.z();
+  ctx->transform(x, y, z);
+  if(c->geom.surfaceLabels || f->getSelection() == GEntity::SelectShow)
+    drawEntityLabel(ctx, f, x, y, z, 0.1 * c->glFontSize * ctx->pixel_equiv_x);
+  if(c->geom.normals) {
+    SVector3 n = f->normal(f->parFromPoint(p));
+    for(int i = 0; i < 3; i++)
+      n[i] *= c->geom.normals * ctx->pixel_equiv_x / ctx->s[i];
+    gmshColor4ubv((const void *)&c->color.geom.normals);
+    ctx->transformTwoForm(n[0], n[1], n[2]);
+    ctx->drawVector(c->vectorType, 0, x, y, z, n[0], n[1], n[2],
+                    c->geom.light);
+  }
+}
 
-public:
-  drawGRegion(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GRegion *r)
-  {
-    if(!passWants(_ctx, r)) return;
-    if(!r->getVisibility()) return;
+// a volume is drawn as a marker at the middle of its bounding box
+static void drawGeomVolume(drawContext *ctx, GRegion *r)
+{
+  CTX *c = CTX::instance();
+  bool shown = c->geom.volumes || r->getSelection() == GEntity::SelectShow;
+  bool label = c->geom.volumeLabels || r->getSelection() == GEntity::SelectShow;
+  if(!shown && !label) return;
+  const double size = 8.;
+  SBoundingBox3d bb = r->bounds(true); // fast approx if mesh-based
+  double x = bb.center().x(), y = bb.center().y(), z = bb.center().z();
+  double d = bb.diag() / 50.;
+  ctx->transform(x, y, z);
+  if(shown) {
+    if(c->geom.volumeType == 0) {
+      if(glyphList *g = geomGlyphs(ctx))
+        g->addSphere(ctx, size, x, y, z, glyphCurrentColor());
+      else
+        ctx->drawSphere(size, x, y, z, c->geom.light);
+    }
+    else {
+      // three squares in the planes of the axes
+      const double sq[3][4][3] = {
+        {{d, 0, 0}, {0, d, 0}, {-d, 0, 0}, {0, -d, 0}},
+        {{d, 0, 0}, {0, 0, d}, {-d, 0, 0}, {0, 0, -d}},
+        {{0, d, 0}, {0, 0, d}, {0, -d, 0}, {0, 0, -d}}};
+      for(int i = 0; i < 3; i++) {
+        gmshBegin(GL_LINE_LOOP);
+        for(int j = 0; j < 4; j++)
+          gmshVertex3d(x + sq[i][j][0], y + sq[i][j][1], z + sq[i][j][2]);
+        gmshEnd();
+      }
+    }
+  }
+  if(label)
+    drawEntityLabel(ctx, r, x, y, z,
+                    (size + 0.1 * c->glFontSize) * ctx->pixel_equiv_x);
+}
 
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
-                   r->model() == GModel::current());
-    if(select) {
+// what an entity draws itself: all of it, or what the kept arrays do not
+// cover (its label, or itself on top when selected)
+static void drawGeomEntity(drawContext *ctx, GEntity *e)
+{
+  CTX *c = CTX::instance();
+  int dim = e->dim();
+  if(dim < 3 ? !geomDrawn(ctx, e) : (!passWants(ctx, e) || !e->getVisibility()))
+    return;
+  bool pick = (ctx->render_mode == drawContext::GMSH_SELECT);
+  // a point already in the kept array: for a picking pass, selected or not
+  // (it draws them all alike, and no label); for the picture, unless selected
+  // or labelled
+  if(dim == 0 && _kept &&
+     (pick || (!e->getSelection() && !c->geom.pointLabels)))
+    return;
+
+  if(pick && e->model() == GModel::current()) {
+    if(dim == 3)
       // all a volume draws is a marker at its middle: it is picked in front
       // of the surfaces around it, which would otherwise always cover it
-      _ctx->setPickColor(3, r->tag(), -1, -1, true);
-    }
-
-    if(CTX::instance()->geom.lightTwoSide)
-      gmshLightTwoSide(true);
+      ctx->setPickColor(3, e->tag(), -1, -1, true);
     else
-      gmshLightTwoSide(false);
-
-    if(r->getSelection() && !_ctx->inPickColorMode()) {
-      gmshLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
-      gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth *
-                             CTX::instance()->print.epsLineWidthFactor));
-      unsigned int sc = getSelectionColor(r);
-      gmshColor4ubv((const void *)&sc);
-    }
-    else {
-      gmshLineWidth((float)CTX::instance()->geom.curveWidth);
-      gl2psLineWidth((float)(CTX::instance()->geom.curveWidth *
-                             CTX::instance()->print.epsLineWidthFactor));
-      unsigned int col = r->useColor() ? r->getColor() :
-        CTX::instance()->color.geom.volume;
-      gmshColor4ubv((const void *)&col);
-    }
-
-    const double size = 8.;
-    double x = 0., y = 0., z = 0., d = 0.;
-
-    if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumeLabels ||
-       r->getSelection() == GEntity::SelectShow) {
-      SBoundingBox3d bb = r->bounds(true); // fast approx if mesh-based
-      SPoint3 p = bb.center();
-      x = p.x();
-      y = p.y();
-      z = p.z();
-      d = bb.diag() / 50.;
-      _ctx->transform(x, y, z);
-    }
-
-    if(CTX::instance()->geom.volumes || r->getSelection() == GEntity::SelectShow) {
-      if(CTX::instance()->geom.volumeType == 0) {
-        if(glyphList *g = geomGlyphs(_ctx))
-          g->addSphere(_ctx, size, x, y, z, glyphCurrentColor());
-        else
-          _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
-      }
-      else {
-        gmshBegin(GL_LINE_LOOP);
-        gmshVertex3d(x + d, y, z);
-        gmshVertex3d(x, y + d, z);
-        gmshVertex3d(x - d, y, z);
-        gmshVertex3d(x, y - d, z);
-        gmshEnd();
-        gmshBegin(GL_LINE_LOOP);
-        gmshVertex3d(x + d, y, z);
-        gmshVertex3d(x, y, z + d);
-        gmshVertex3d(x - d, y, z);
-        gmshVertex3d(x, y, z - d);
-        gmshEnd();
-        gmshBegin(GL_LINE_LOOP);
-        gmshVertex3d(x, y + d, z);
-        gmshVertex3d(x, y, z + d);
-        gmshVertex3d(x, y - d, z);
-        gmshVertex3d(x, y, z - d);
-        gmshEnd();
-      }
-    }
-
-    if(CTX::instance()->geom.volumeLabels || r->getSelection() == GEntity::SelectShow) {
-      double offset =
-        (1. * size + 0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
-      if(r->getSelection() == GEntity::SelectShow)
-        gmshColor4ubv((const void *)&CTX::instance()->color.fg);
-      drawEntityLabel(_ctx, r, x, y, z, offset);
-    }
-
-    if(select) {
-    }
+      ctx->setPickColor(dim, e->tag());
   }
-};
+  gmshLightTwoSide(dim >= 2 && c->geom.lightTwoSide);
 
-// the entities of a dimension of the model the per-entity drawer f is given:
-// all of them, or only the selected ones
-template <class T, class F>
+  // a picking pass draws what is selected at its plain size and colour: the
+  // image it reads identifiers from must not depend on what is selected, or
+  // highlighting a point would grow it over the marker of the volume next to
+  // it and there would be no way back
+  bool sel = e->getSelection() && !ctx->inPickColorMode();
+  double fact = ctx->highResolutionPixelFactor();
+  double size = sel ? c->geom.selectedPointSize : c->geom.pointSize;
+  double width = sel ? c->geom.selectedCurveWidth : c->geom.curveWidth;
+  if(dim == 2) width /= 2.; // the wireframe of a surface
+  if(dim == 0) {
+    gmshPointSize((float)(size * fact));
+    gl2psPointSize((float)(size * c->print.epsPointSizeFactor));
+  }
+  else {
+    gmshLineWidth((float)width);
+    gl2psLineWidth((float)(width * c->print.epsLineWidthFactor));
+  }
+  unsigned int col = geomColor(e, sel);
+  gmshColor4ubv((const void *)&col);
+
+  switch(dim) {
+  case 0: drawGeomPoint(ctx, static_cast<GVertex *>(e), size * fact); break;
+  case 1: drawGeomCurve(ctx, static_cast<GEdge *>(e), sel, width); break;
+  case 2: drawGeomSurface(ctx, static_cast<GFace *>(e), sel); break;
+  case 3: drawGeomVolume(ctx, static_cast<GRegion *>(e)); break;
+  }
+}
+
+// the entities of a dimension of the model: all of them, or only the
+// selected ones
+template <class F>
 static void forEntities(GModel *m, int dim, bool all, F f)
 {
   if(all) {
     std::vector<GEntity *> ents;
-    if(dim == 0) ents.insert(ents.end(), m->firstVertex(), m->lastVertex());
-    if(dim == 1) ents.insert(ents.end(), m->firstEdge(), m->lastEdge());
-    if(dim == 2) ents.insert(ents.end(), m->firstFace(), m->lastFace());
-    for(auto e : ents) f(static_cast<T *>(e));
+    m->getEntities(ents, dim);
+    for(auto e : ents) f(e);
     return;
   }
   if(!GEntity::numSelected) return;
@@ -891,7 +685,7 @@ static void forEntities(GModel *m, int dim, bool all, F f)
   std::vector<GEntity *> sel(GEntity::selected.begin(),
                              GEntity::selected.end());
   for(auto e : sel)
-    if(e->model() == m && e->dim() == dim) f(static_cast<T *>(e));
+    if(e->model() == m && e->dim() == dim) f(e);
 }
 
 void drawContext::drawGeom()
@@ -942,12 +736,11 @@ void drawContext::drawGeom()
                                     false;
         bool all = (!pick && labels) || vectors ||
                    (shown && (!_kept || _keptIncomplete));
-        if(dim == 0) forEntities<GVertex>(m, 0, all, drawGVertex(this));
-        if(dim == 1) forEntities<GEdge>(m, 1, all, drawGEdge(this));
-        if(dim == 2) forEntities<GFace>(m, 2, all, drawGFace(this));
+        forEntities(m, dim, all,
+                    [this](GEntity *e) { drawGeomEntity(this, e); });
         _kept = _keptIncomplete = false;
       }
-      std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
+      forEntities(m, 3, true, [this](GEntity *e) { drawGeomEntity(this, e); });
     }
   }
 

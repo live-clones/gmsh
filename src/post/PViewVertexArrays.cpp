@@ -1588,6 +1588,84 @@ void changeCoordinates(PView *p, int ient, int iele, int numNodes, int type,
   changeCoordinates(&t, ient, iele, numNodes, type, numComp, xyz, val);
 }
 
+bool PViewElement::select(PView *p, int ient, int iele)
+{
+  // only written when an element cannot be drawn, to warn about it once
+  static std::atomic<int> numNodesError(0), numCompError(0);
+  PViewData *data = p->getData(true);
+  PViewOptions *opt = p->getOptions();
+  int step = opt->timeStep;
+  if(data->skipElement(step, ient, iele, true, opt->sampling)) return false;
+  type = data->getType(step, ient, iele);
+  if(opt->skipElement(type)) return false;
+  ent = ient;
+  ele = iele;
+  dim = data->getDimension(step, ient, iele);
+  numComp = data->getNumComponents(step, ient, iele);
+  numNodes = data->getNumNodes(step, ient, iele);
+  // (polytopes have as many nodes as they need)
+  if(numNodes > PVIEW_NMAX && type != TYPE_POLYG && type != TYPE_POLYH) {
+    if(numNodesError != numNodes) {
+      numNodesError = numNodes;
+      Msg::Warning("Fields with %d nodes per element cannot be displayed: "
+                   "either force the field type or select 'Adapt "
+                   "visualization grid' if the field is high-order",
+                   numNodes);
+    }
+    return false;
+  }
+  if((numComp > 9 && !opt->forceNumComponents) ||
+     opt->forceNumComponents > 9) {
+    if(numCompError != numComp) {
+      numCompError = numComp;
+      Msg::Warning("Fields with %d components cannot be displayed: "
+                   "either force the field type or select 'Adapt "
+                   "visualization grid' if the field is high-order",
+                   numComp);
+    }
+    return false;
+  }
+  return true;
+}
+
+void PViewElement::read(PView *p, bool ids)
+{
+  PViewData *data = p->getData(true);
+  PViewOptions *opt = p->getOptions();
+  int step = opt->timeStep;
+  if(_xyz.size() < 3 * (std::size_t)numNodes) {
+    _xyz.resize(3 * numNodes);
+    _val.resize(9 * numNodes);
+  }
+  _xyzRows.resize(numNodes);
+  _valRows.resize(numNodes);
+  for(int j = 0; j < numNodes; j++) {
+    _xyzRows[j] = &_xyz[3 * j];
+    _valRows[j] = &_val[9 * j];
+  }
+  xyz = _xyzRows.data();
+  val = _valRows.data();
+  if(ids) nodeIds.resize(numNodes);
+  for(int j = 0; j < numNodes; j++) {
+    data->getNode(step, ent, ele, j, xyz[j][0], xyz[j][1], xyz[j][2]);
+    if(ids) nodeIds[j] = data->getNodeId(step, ent, ele, j);
+    if(opt->forceNumComponents) {
+      for(int k = 0; k < opt->forceNumComponents; k++) {
+        int comp = opt->componentMap[k];
+        if(comp >= 0 && comp < numComp)
+          data->getValue(step, ent, ele, j, comp, val[j][k]);
+        else
+          val[j][k] = 0.;
+      }
+    }
+    else
+      for(int k = 0; k < numComp; k++)
+        data->getValue(step, ent, ele, j, k, val[j][k]);
+  }
+  if(opt->forceNumComponents) numComp = opt->forceNumComponents;
+  changeCoordinates(p, ent, ele, numNodes, type, numComp, xyz, val);
+}
+
 // an element drawn as the field its values are: scalar, vector or tensor
 static void addFieldElement(drawTarget *p, int ient, int iele, int numNodes,
                             int type, int numComp, double **xyz, double **val,
@@ -1608,13 +1686,8 @@ static void addElementRange(drawTarget *p, PViewData *data,
                             const std::vector<std::size_t> &start,
                             std::size_t first, std::size_t last)
 {
-  // only written when an element cannot be drawn, to warn about it once
-  static std::atomic<int> numNodesError(0), numCompError(0);
-
   PViewOptions *opt = p->opt;
-
-  nodeRows xyzRows, valRows;
-  std::vector<std::size_t> nodeIds;
+  PViewElement el;
   // elements are told apart by their nodes (shared edges drawn once, the
   // skin) unless their coordinates are changed element by element: exploded
   // or raised along their normal, they no longer meet at their nodes
@@ -1629,60 +1702,12 @@ static void addElementRange(drawTarget *p, PViewData *data,
     int i0 = (int)(first > start[e] ? first - start[e] : 0);
     int i1 = (int)std::min(last, start[e + 1]) - (int)start[e];
     for(int i = i0; i < i1; i++) {
-      if(data->skipElement(opt->timeStep, ent, i, true, opt->sampling))
-        continue;
-      int type = data->getType(opt->timeStep, ent, i);
-      if(opt->skipElement(type)) continue;
-      int numComp = data->getNumComponents(opt->timeStep, ent, i);
-      int numNodes = data->getNumNodes(opt->timeStep, ent, i);
-      // (polytopes have as many nodes as they need)
-      if(numNodes > PVIEW_NMAX && type != TYPE_POLYG && type != TYPE_POLYH) {
-        if(numNodesError != numNodes) {
-          numNodesError = numNodes;
-          Msg::Warning("Fields with %d nodes per element cannot be displayed: "
-                       "either force the field type or select 'Adapt "
-                       "visualization grid' if the field is high-order",
-                       numNodes);
-        }
-        continue;
-      }
-      if((numComp > 9 && !opt->forceNumComponents) ||
-         opt->forceNumComponents > 9) {
-        if(numCompError != numComp) {
-          numCompError = numComp;
-          Msg::Warning(
-            "Fields with %d components cannot be displayed: "
-            "either force the field type or select 'Adapt visualization "
-            "grid' if the field is high-order",
-            numComp);
-        }
-        continue;
-      }
-      double **xyz = xyzRows.get(numNodes, 3);
-      double **val = valRows.get(numNodes, 9);
-      nodeIds.resize(numNodes);
-      p->nodeIds = topology ? nodeIds.data() : nullptr;
-      for(int j = 0; j < numNodes; j++) {
-        data->getNode(opt->timeStep, ent, i, j, xyz[j][0], xyz[j][1],
-                      xyz[j][2]);
-        nodeIds[j] = data->getNodeId(opt->timeStep, ent, i, j);
-        if(opt->forceNumComponents) {
-          for(int k = 0; k < opt->forceNumComponents; k++) {
-            int comp = opt->componentMap[k];
-            if(comp >= 0 && comp < numComp)
-              data->getValue(opt->timeStep, ent, i, j, comp, val[j][k]);
-            else
-              val[j][k] = 0.;
-          }
-        }
-        else
-          for(int k = 0; k < numComp; k++)
-            data->getValue(opt->timeStep, ent, i, j, k, val[j][k]);
-      }
-      if(opt->forceNumComponents) numComp = opt->forceNumComponents;
-
-      changeCoordinates(p, ent, i, numNodes, type, numComp, xyz, val);
-      int dim = data->getDimension(opt->timeStep, ent, i);
+      if(!el.select(p->view, ent, i)) continue;
+      el.read(p->view, true);
+      p->nodeIds = topology ? el.nodeIds.data() : nullptr;
+      int type = el.type, dim = el.dim, numNodes = el.numNodes;
+      int numComp = el.numComp;
+      double **xyz = el.xyz, **val = el.val;
       // the cut pass wants the cut elements only, the ordinary fill the rest
       if(p->collect == drawTarget::COLLECT_CUT) {
         if(!elementIsCut(opt, dim, numNodes, xyz)) continue;

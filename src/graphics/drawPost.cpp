@@ -716,8 +716,6 @@ static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
 
 static void drawGlyphs(drawContext *ctx, PView *p)
 {
-  static int numNodesError = 0;
-
   // use adaptive data if available
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
@@ -757,7 +755,6 @@ static void drawGlyphs(drawContext *ctx, PView *p)
   }
 
   Msg::Debug("drawing extra glyphs (this is slow...)");
-  if(record) g->recordBegin();
 
   // speedup drawing of textured fonts on cocoa mac version
 #if defined(__APPLE__)
@@ -769,97 +766,43 @@ static void drawGlyphs(drawContext *ctx, PView *p)
   }
 #endif
 
-  // double xyz[PVIEW_NMAX][3], val[PVIEW_NMAX][9];
-  int NMAX = PVIEW_NMAX;
-  double **xyz = new double *[NMAX];
-  double **val = new double *[NMAX];
-  for(int i = 0; i < NMAX; i++) {
-    xyz[i] = new double[3];
-    val[i] = new double[9];
-  }
-  for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++) {
-    if(data->skipEntity(opt->timeStep, ent)) continue;
-    for(int i = 0; i < data->getNumElements(opt->timeStep, ent); i++) {
-      if(data->skipElement(opt->timeStep, ent, i, true, opt->sampling))
-        continue;
-      int type = data->getType(opt->timeStep, ent, i);
-      if(opt->skipElement(type)) continue;
-      int dim = data->getDimension(opt->timeStep, ent, i);
-      // a normal is drawn for a surface element, a tangent for a line: the
-      // others are not worth reading (this runs at every frame, and a view
-      // of a million tetrahedra with normals on took a quarter of a second
-      // to draw none)
-      if(!numbers && !(dim == 2 && opt->normals) &&
-         !(dim == 1 && opt->tangents))
-        continue;
-      int numComp = data->getNumComponents(opt->timeStep, ent, i);
-      int numNodes = data->getNumNodes(opt->timeStep, ent, i);
-      if(numNodes > NMAX) {
-        if(type == TYPE_POLYG || type == TYPE_POLYH) {
-          for(int j = 0; j < NMAX; j++) {
-            delete[] xyz[j];
-            delete[] val[j];
-          }
-          delete[] xyz;
-          delete[] val;
-          NMAX = numNodes;
-          xyz = new double *[NMAX];
-          val = new double *[NMAX];
-          for(int j = 0; j < NMAX; j++) {
-            xyz[j] = new double[3];
-            val[j] = new double[9];
-          }
-        }
-        else {
-          if(numNodesError != numNodes) {
-            numNodesError = numNodes;
-            Msg::Warning(
-              "Fields with %d nodes per element cannot be displayed: "
-              "either force the field type or select 'Adapt visualization "
-              "grid' if the field is high-order",
-              numNodes);
-          }
-          continue;
-        }
+  // The arrows are recorded on a walk of their own, before the numbers are
+  // drawn: the strings would otherwise be recorded with them (the shader
+  // pipeline draws them through the same immediate mode path), and replayed
+  // as huge quads without the projection of the text.
+  PViewElement el;
+  auto walk = [&](bool numbersNow, bool arrowsNow) {
+    for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++) {
+      if(data->skipEntity(opt->timeStep, ent)) continue;
+      for(int i = 0; i < data->getNumElements(opt->timeStep, ent); i++) {
+        if(!el.select(p, ent, i)) continue;
+        int dim = el.dim;
+        // a normal is drawn for a surface element, a tangent for a line:
+        // the others are not worth reading (this runs at every frame, and a
+        // view of a million tetrahedra with normals on took a quarter of a
+        // second to draw none)
+        bool normal = arrowsNow && dim == 2 && opt->normals;
+        bool tangent = arrowsNow && dim == 1 && opt->tangents;
+        if(!numbersNow && !normal && !tangent) continue;
+        el.read(p);
+        // drawn straight from the elements: whole element mode applies here
+        if(!elementIsKept(opt, dim, el.numNodes, el.xyz)) continue;
+        if(numbersNow)
+          drawNumberGlyphs(ctx, p, el.numNodes, el.numComp, el.xyz, el.val);
+        if(normal)
+          drawNormalVectorGlyphs(ctx, p, el.numNodes, el.xyz, el.val);
+        else if(tangent)
+          drawTangentVectorGlyphs(ctx, p, el.numNodes, el.xyz, el.val);
       }
-      for(int j = 0; j < numNodes; j++) {
-        data->getNode(opt->timeStep, ent, i, j, xyz[j][0], xyz[j][1],
-                      xyz[j][2]);
-        if(opt->forceNumComponents) {
-          for(int k = 0; k < opt->forceNumComponents; k++) {
-            int comp = opt->componentMap[k];
-            if(comp >= 0 && comp < numComp)
-              data->getValue(opt->timeStep, ent, i, j, comp, val[j][k]);
-            else
-              val[j][k] = 0.;
-          }
-        }
-        else
-          for(int k = 0; k < numComp; k++)
-            data->getValue(opt->timeStep, ent, i, j, k, val[j][k]);
-      }
-      if(opt->forceNumComponents) numComp = opt->forceNumComponents;
-      changeCoordinates(p, ent, i, numNodes, type, numComp, xyz, val);
-      // drawn straight from the elements: whole element mode applies here
-      if(!elementIsKept(opt, dim, numNodes, xyz)) continue;
-      if(numbers) drawNumberGlyphs(ctx, p, numNodes, numComp, xyz, val);
-      if(!arrows) continue;
-      if(dim == 2 && opt->normals)
-        drawNormalVectorGlyphs(ctx, p, numNodes, xyz, val);
-      else if(dim == 1 && opt->tangents)
-        drawTangentVectorGlyphs(ctx, p, numNodes, xyz, val);
     }
-  }
+  };
   if(record) {
+    g->recordBegin();
+    walk(false, true);
     g->recordEnd();
     g->draw(ctx, opt->light);
   }
-  for(int j = 0; j < NMAX; j++) {
-    delete[] xyz[j];
-    delete[] val[j];
-  }
-  delete[] xyz;
-  delete[] val;
+  if(numbers) walk(true, false);
 }
 
 static bool eyeChanged(drawContext *ctx, PView *p)

@@ -192,4 +192,25 @@ void changeCoordinates(PView *p, int ient, int iele, int numNodes, int type,
 bool isElementVisible(PViewOptions *opt, int dim, int numNodes, double **xyz);
 bool elementIsKept(PViewOptions *opt, int dim, int numNodes, double **xyz);
 
+// An element of a view as it is drawn, at the time step of the view (in its
+// adaptive data if any): its nodes, moved as the view says (explode, raise,
+// displacement...), and the values at them (the components it is asked to
+// show). The memory is kept from one element to the next.
+class PViewElement {
+private:
+  std::vector<double> _xyz, _val;
+  std::vector<double *> _xyzRows, _valRows;
+
+public:
+  int ent = 0, ele = 0, type = 0, dim = 0, numNodes = 0, numComp = 0;
+  double **xyz = nullptr, **val = nullptr;
+  std::vector<std::size_t> nodeIds;
+  // take the element ele of the entity ent; false if it is not drawn: skipped
+  // by the sampling or the options, or with more nodes or components than can
+  // be drawn (with a warning, once)
+  bool select(PView *p, int ent, int ele);
+  // read its nodes (and their identifiers, if asked) and its values
+  void read(PView *p, bool ids = false);
+};
+
 #endif
