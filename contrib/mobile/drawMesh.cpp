@@ -76,7 +76,14 @@ void drawContext::drawMesh()
 {
   if(!CTX::instance()->mesh.draw) return;
 
-  if(CTX::instance()->mesh.changed)
+  // the views based on a mesh that has changed since the last draw
+  static int seen[4] = {0, 0, 0, 0};
+  bool changed = false;
+  for(int d = 0; d < 4; d++) {
+    if(seen[d] != CTX::instance()->mesh.stamp[d]) changed = true;
+    seen[d] = CTX::instance()->mesh.stamp[d];
+  }
+  if(changed)
     for(unsigned int i = 0; i < GModel::list.size(); i++)
       for(unsigned int j = 0; j < PView::list.size(); j++)
         if(PView::list[j]->getData()->hasModel(GModel::list[i]))
@@ -99,5 +106,4 @@ void drawContext::drawMesh()
     if(status >= 3)
       std::for_each(m->firstRegion(), m->lastRegion(), drawMeshRegion);
   }
-  CTX::instance()->mesh.changed = 0;
 }

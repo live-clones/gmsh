@@ -89,11 +89,8 @@ void CTX::init()
 
   // need to initialize these too, since the corresponding opt_XXX routines use
   // the current value to detect changes
-  mesh.changed = 0;
-  geom.changed = 0;
   for(int d = 0; d < 4; d++) mesh.stamp[d] = 0;
   for(int d = 0; d < 4; d++) geom.stamp[d] = 0;
-  entityColorsChanged = entityVisibilityChanged = 0;
   entityColorsStamp = entityVisibilityStamp = 0;
   mesh.qualityInf = mesh.qualitySup = mesh.qualityType = 0;
   mesh.radiusInf = mesh.radiusSup = 0;

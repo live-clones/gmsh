@@ -491,7 +491,7 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
   // if the browser is not empty, get the selections made in the
   // browser and apply them into the model
   if(VisibilityList::instance()->getNumEntities()) {
-    CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+    CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     bool recursive =
       FlGui::instance()->visibility->butt[0]->value() ? true : false;
     bool allmodels =
@@ -824,7 +824,7 @@ static void _recur_update_selected(Fl_Tree_Item *n)
 
 static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   bool recursive =
     FlGui::instance()->visibility->butt[0]->value() ? true : false;
 
@@ -1096,7 +1096,7 @@ static void _apply_visibility(char mode, bool physical,
 
 static void visibility_number_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
 
   // what = 0 for nodes, 1 for elements, 2 for points, 3 for lines, 4
   // for surfaces, 5 for volumes, 6 for physical points, 7 for
@@ -1201,7 +1201,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
       FlGui::instance()->visibility->butt[1]->value() ? true : false;
     for(int i = 1; i <= 5; i++) // elements, points, curves, surfaces, volumes
       _set_visibility_by_number(i, -1, 1, false, allmodels);
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
     drawContext::global()->draw();
     return;
   }
@@ -1215,7 +1215,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   std::vector<MElement *> elements;
 
   while(1) {
-    if(what == ENT_ALL) CTX::instance()->mesh.changed = ENT_ALL;
+    if(what == ENT_ALL) CTX::instance()->meshChanged();
     drawContext::global()->draw();
     Msg::StatusGl("Select %s\n[Press %s'q' to abort]", str.c_str(),
                   mode ? "" : "'u' to undo or ");
@@ -1237,7 +1237,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     if(ib == 'q') { break; }
   }
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
   Msg::StatusGl("");

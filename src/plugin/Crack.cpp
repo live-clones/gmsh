@@ -328,7 +328,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
 
   m->destroyMeshCaches();
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 
   return view;
 }

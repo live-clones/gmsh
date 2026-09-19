@@ -157,7 +157,7 @@ Range<double> discreteEdge::parBounds(int i) const
 
 int discreteEdge::createGeometry()
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   if(lines.empty()) return 0;
 
   if(!_discretization.empty()) return 0;

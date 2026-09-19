@@ -787,7 +787,8 @@ public:
 
 // what each model's clip arrays were last built for: only what changes them
 // without marking the mesh as changed (the planes and the clipping options);
-// everything else sets mesh.changed, and drawMesh() then invalidates them
+// everything else changes the mesh (CTX::meshChanged()), and drawMesh()
+// then invalidates them
 static OwnerCache<std::vector<double> > _clipToken;
 
 static std::vector<double> clipToken()
@@ -975,7 +976,6 @@ bool GModel::fillVertexArrays()
   // the dimensions whose mesh changed since the arrays were filled; a model
   // hidden meanwhile is brought up to date when it is shown again
   CTX *ctx = CTX::instance();
-  ctx->stampChanges();
   if(!getVisibility()) return false;
   // hidden entities get no arrays: showing one again (the API does not flag
   // the mesh as the visibility window does) needs them filled

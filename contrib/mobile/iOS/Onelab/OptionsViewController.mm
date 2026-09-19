@@ -262,7 +262,7 @@
 - (void)setShowMeshVolumeEdges:(UISwitch *)sender
 {
   CTX::instance()->mesh.volumeEdges = sender.on;
-  CTX::instance()->mesh.changed = ENT_VOLUME;
+  CTX::instance()->meshChanged(ENT_VOLUME);
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender"
                                                       object:nil];
 }
@@ -270,7 +270,7 @@
 - (void)setShowMeshSurfaceEdges:(UISwitch *)sender
 {
   CTX::instance()->mesh.surfaceEdges = sender.on;
-  CTX::instance()->mesh.changed = ENT_SURFACE;
+  CTX::instance()->meshChanged(ENT_SURFACE);
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender"
                                                       object:nil];
 }

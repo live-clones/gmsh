@@ -32,7 +32,7 @@ GPoint discreteVertex::point() const { return GPoint(x(), y(), z(), this); }
 
 void discreteVertex::setPosition(GPoint &p)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   if(_v) {
     _v->Pos.X = p.x();
     _v->Pos.Y = p.y();

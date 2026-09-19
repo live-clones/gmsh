@@ -11260,7 +11260,7 @@ yyreduce:
 #line 3684 "Gmsh.y"
     {
 #if defined(HAVE_OPENGL)
-     CTX::instance()->mesh.changed = ENT_ALL;
+     CTX::instance()->meshChanged();
      for(std::size_t index = 0; index < PView::list.size(); index++)
        PView::list[index]->setChanged(true);
 #endif

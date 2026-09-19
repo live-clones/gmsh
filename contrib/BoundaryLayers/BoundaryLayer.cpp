@@ -2890,7 +2890,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   //  for (auto gf : f)
   //    expandL(gf, perfectShapes, layers, f);
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 
   return v;
 }

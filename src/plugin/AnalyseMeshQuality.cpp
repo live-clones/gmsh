@@ -237,7 +237,7 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
   int whichMeasure = computeICN ? 2 : computeIGE ? 1 : computeJac ? 0 : -1;
   if(threshold < 99 && whichMeasure >= 0) {
     _hideWithThreshold(askedDim, whichMeasure, threshold, thresholdGreater);
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
 #if defined(HAVE_OPENGL)
     drawContext::global()->draw();
 #endif

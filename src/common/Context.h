@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "GmshDefines.h"
 
 #define NUM_SOLVERS 10
 
@@ -89,10 +90,9 @@ struct contextMeshOptions {
   double metisMaxLoadImbalance;
   int overlapLayers;
   // mesh display
-  // changed: what of the mesh has changed since it was last drawn (ENT_*
-  // bits of the dimensions), set wherever it changes; stamp: how many times
-  // each dimension has (see CTX::stampChanges())
-  int changed, stamp[4];
+  // how many times the mesh of each dimension has changed (see
+  // CTX::meshChanged())
+  int stamp[4];
   int draw, light, lightTwoSide, lightLines, nodeType;
   int nodes, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
   int pyramids, trihedra;
@@ -110,11 +110,9 @@ struct contextMeshOptions {
 };
 
 struct contextGeometryOptions {
-  // what of the geometry has changed since it was last drawn (ENT_* bits),
-  // as mesh.changed for the mesh: set where entities are added, removed or
-  // given new geometry, or what a surface is drawn with is dropped; stamp:
-  // how many times each dimension has (see CTX::stampChanges())
-  int changed, stamp[4];
+  // how many times the geometry of each dimension has changed (see
+  // CTX::geomChanged())
+  int stamp[4];
   // what the transparency is applied to: 0 filled surfaces only, 1
   // everything
   int transparencyMode;
@@ -186,30 +184,26 @@ public:
   static CTX *instance() { return _instance ? _instance : _create(); }
 
   // What is drawn is kept between frames, and rebuilt when what it was built
-  // from changes. The code that changes it says so with a flag - mesh.changed
-  // and geom.changed (ENT_* bits), entityColorsChanged and
-  // entityVisibilityChanged (the colours and the visibility of the entities,
-  // for the mesh and the geometry alike) - and what is kept records the
-  // stamps below, which stampChanges() turns the flags into. A flag is not
-  // cleared by the one reader that sees it: every reader (the mesh, the
-  // geometry, a picking pass, another window) calls stampChanges() before
-  // looking, and compares the stamps with the ones it was built with. What
-  // is kept records the values of the options it reads besides.
-  int entityColorsChanged, entityVisibilityChanged;
+  // from changes. The code that changes it says so - the mesh or the geometry
+  // of some dimensions (ENT_* bits), the colours or the visibility of the
+  // entities (for the mesh and the geometry alike) - which bumps a stamp;
+  // what is kept records the stamps it was built with, and compares them
+  // with the current ones (as it records the values of the options it reads
+  // besides). Every reader (the mesh, the geometry, a picking pass, another
+  // window) sees every change: none is cleared by the one that sees it.
   int entityColorsStamp, entityVisibilityStamp;
-  void stampChanges()
+  void meshChanged(int ents = ENT_ALL)
   {
     for(int d = 0; d < 4; d++)
-      if(mesh.changed & (1 << d)) mesh.stamp[d]++;
-    mesh.changed = 0;
-    for(int d = 0; d < 4; d++)
-      if(geom.changed & (1 << d)) geom.stamp[d]++;
-    geom.changed = 0;
-    if(entityColorsChanged) entityColorsStamp++;
-    entityColorsChanged = 0;
-    if(entityVisibilityChanged) entityVisibilityStamp++;
-    entityVisibilityChanged = 0;
+      if(ents & (1 << d)) mesh.stamp[d]++;
   }
+  void geomChanged(int ents = ENT_ALL)
+  {
+    for(int d = 0; d < 4; d++)
+      if(ents & (1 << d)) geom.stamp[d]++;
+  }
+  void entityColorsChanged() { entityColorsStamp++; }
+  void entityVisibilityChanged() { entityVisibilityStamp++; }
 
   // for debug purposes only, i.e. JF and CG personal use
   int debugSurface;

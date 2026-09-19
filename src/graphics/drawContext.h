@@ -68,7 +68,7 @@ bool gmshMeshEntityIsTransparent(GEntity *e);
 class GModel;
 // GModel::getMeshStatus() for the drawing, which asks it several times a
 // frame: computed again only when the mesh, the geometry or the visibilities
-// have changed (see CTX::stampChanges())
+// have changed (see CTX::meshChanged())
 int drawMeshStatus(GModel *m);
 // delete the buffer objects of the vertex arrays that have been destroyed since
 // the last frame: this requires a current GL context

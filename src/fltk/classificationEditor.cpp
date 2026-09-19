@@ -36,7 +36,7 @@ static void NoElementsSelectedMode(classificationEditor *e)
   e->inputs[CLASS_VALUE_ANGLE]->deactivate();
   e->buttons[CLASS_BUTTON_CLASSIFY]->deactivate();
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
   Msg::StatusGl("");
@@ -81,7 +81,7 @@ static void update_edges_cb(Fl_Widget *w, void *data)
             (int)e->edges_detected.size(), (int)e->edges_lonly.size(),
             (int)e->selected->lines.size());
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   drawContext::global()->draw();
 }
 
@@ -110,7 +110,7 @@ static void select_elements_cb(Fl_Widget *w, void *data)
   else {
     CTX::instance()->pickElements = 1;
     while(1) {
-      CTX::instance()->mesh.changed = ENT_ALL;
+      CTX::instance()->meshChanged();
       drawContext::global()->draw();
       Msg::StatusGl("Select elements\n"
                     "[Press 'e' to end selection or 'q' to abort]");
@@ -165,7 +165,7 @@ static void select_elements_cb(Fl_Widget *w, void *data)
 static void hide_cb(Fl_Widget *w, void *data)
 {
   CTX::instance()->hideUnselected = !CTX::instance()->hideUnselected;
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   drawContext::global()->draw();
 }
 
@@ -198,7 +198,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
   std::vector<MLine *> ele;
 
   while(1) {
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
     drawContext::global()->draw();
 
     Msg::StatusGl("Select elements\n"
@@ -248,7 +248,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
       e->selected->lines.push_back(temp[i]);
   }
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
   Msg::StatusGl("");

@@ -69,7 +69,7 @@ PView *GMSH_ShowNeighborElementsPlugin::execute(PView *v)
   }
 
 #if defined(HAVE_OPENGL)
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   drawContext::global()->draw();
 #endif
 

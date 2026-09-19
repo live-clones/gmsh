@@ -142,7 +142,7 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
                outputdim);
   }
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 
   return view;
 }

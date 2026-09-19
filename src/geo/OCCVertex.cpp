@@ -29,7 +29,7 @@ OCCVertex::OCCVertex(GModel *m, TopoDS_Vertex v, int num, double lc)
 
 void OCCVertex::setPosition(GPoint &p)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   _x = p.x();
   _y = p.y();
   _z = p.z();

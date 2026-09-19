@@ -466,7 +466,6 @@ static bool anyEntityColorIsTransparent()
     n += m->getNumVertices() + m->getNumEdges() + m->getNumFaces() +
          m->getNumRegions();
   }
-  CTX::instance()->stampChanges();
   if(stamp == CTX::instance()->entityColorsStamp && count == n) return result;
   stamp = CTX::instance()->entityColorsStamp;
   count = n;

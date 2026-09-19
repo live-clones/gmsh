@@ -560,7 +560,7 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   if(setBoundingBox) SetBoundingBox();
 
   CTX::instance()->geom.draw = 1;
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 
   if(importPhysicalsInOnelab) Msg::ImportPhysicalGroupsInOnelab();
 

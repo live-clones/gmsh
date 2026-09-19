@@ -264,7 +264,6 @@ static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
   ka.va->finalize();
   // after the arrays of the surfaces have been filled, which may have
   // dropped some of them
-  c->stampChanges();
   ka.token = keptToken(ctx, dim, pick);
   return ka;
 }
@@ -897,9 +896,6 @@ static void forEntities(GModel *m, int dim, bool all, F f)
 
 void drawContext::drawGeom()
 {
-  // before anything else, whatever this pass draws (see CTX::stampChanges())
-  CTX::instance()->stampChanges();
-
   // nothing of the geometry is opaque when the colours of the options are
   // transparent; otherwise the entities are sorted out one by one
   if(transparencyPass == TRANSPARENCY_OPAQUE &&

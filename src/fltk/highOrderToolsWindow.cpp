@@ -59,7 +59,7 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
   }
   */
 
-  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
 }
 
@@ -232,7 +232,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
 
   FixPeriodicMesh(GModel::current());
 
-  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
 }
 

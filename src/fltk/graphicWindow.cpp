@@ -2251,7 +2251,7 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
   while(1) {
     if(!FlGui::available()) return;
 
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
     drawContext::global()->draw();
 
     if(ele.size() || ent.size())
@@ -2358,7 +2358,7 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
     }
   }
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
   FlGui::instance()->updateStatistics();
@@ -2378,7 +2378,7 @@ static void mesh_reverse_parts_cb(Fl_Widget *w, void *data)
 static void mesh_inspect_cb(Fl_Widget *w, void *data)
 {
   CTX::instance()->pickElements = 1;
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   drawContext::global()->draw();
 
   while(1) {
@@ -2392,7 +2392,7 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
         MElement *ele = FlGui::instance()->selectedElements[0];
         GModel::current()->setSelection(0);
         ele->setVisibility(2);
-        CTX::instance()->mesh.changed = ENT_ALL;
+        CTX::instance()->meshChanged();
         drawContext::global()->draw();
         std::vector<std::string> info =
           SplitString(ele->getInfoString(true), '\n');
@@ -2412,7 +2412,7 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
   }
 
   CTX::instance()->pickElements = 0;
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   drawContext::global()->draw();
   Msg::StatusGl("");
 }
@@ -2514,7 +2514,7 @@ static void mesh_unpartition_cb(Fl_Widget *w, void *data)
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 0.);
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 1.);
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
     FlGui::instance()->resetVisibility();
     drawContext::global()->draw();
   }
@@ -2528,7 +2528,7 @@ static void mesh_convert_old_partitioning_cb(Fl_Widget *w, void *data)
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 0.);
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 1.);
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
     drawContext::global()->draw();
   }
 }
@@ -3416,7 +3416,7 @@ static void model_switch_cb(Fl_Widget *w, void *data)
   for(std::size_t i = 0; i < GModel::list.size(); i++)
     GModel::list[i]->setVisibility(0);
   GModel::current()->setVisibility(1);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   Msg::SetWindowTitle(GModel::current()->getFileName());
   FlGui::instance()->resetVisibility();
   drawContext::global()->draw();

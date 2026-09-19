@@ -35,7 +35,7 @@ void GEntity::setSelection(char val)
 // The flags are raised only on an actual change.
 void GEntity::setVisibility(char val, bool recursive)
 {
-  if(_visible != val) CTX::instance()->entityVisibilityChanged = 1;
+  if(_visible != val) CTX::instance()->entityVisibilityChanged();
   _visible = val;
 }
 
@@ -49,7 +49,7 @@ void GEntity::setOnlySomeElementsVisible(bool val)
 
 void GEntity::setColor(unsigned color, bool recursive)
 {
-  if(_color != color) CTX::instance()->entityColorsChanged = 1;
+  if(_color != color) CTX::instance()->entityColorsChanged();
   _color = color;
 }
 

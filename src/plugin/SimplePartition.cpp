@@ -167,7 +167,7 @@ int GMSH_SimplePartitionPlugin::run()
   int ier = PartitionUsingThisSplit(m, elmToPartition);
   if(!ier) {
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
   }
 
 #else

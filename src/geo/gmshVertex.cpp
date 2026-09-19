@@ -36,7 +36,7 @@ double gmshVertex::z() const { return _v->Pos.Z; }
 
 void gmshVertex::setPosition(GPoint &p)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   _v->Pos.X = p.x();
   _v->Pos.Y = p.y();
   _v->Pos.Z = p.z();

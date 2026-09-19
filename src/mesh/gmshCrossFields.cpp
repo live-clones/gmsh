@@ -3561,7 +3561,7 @@ public:
     }
     fprintf(F, "};\n");
     fclose(F);
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
   }
 
   int correctionOnCutGraph(

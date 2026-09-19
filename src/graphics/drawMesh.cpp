@@ -901,7 +901,6 @@ static bool needPerEntityPass(drawContext *ctx, int dim)
 int drawMeshStatus(GModel *m)
 {
   CTX *c = CTX::instance();
-  c->stampChanges();
   std::vector<int> key = {c->mesh.stamp[0], c->mesh.stamp[1], c->mesh.stamp[2],
                           c->mesh.stamp[3], c->geom.stamp[0], c->geom.stamp[1],
                           c->geom.stamp[2], c->geom.stamp[3],
@@ -953,9 +952,6 @@ static void drawDimension(drawContext *ctx, GModel *m, mergedArrays &ma,
 
 void drawContext::drawMesh()
 {
-  // before anything else, whatever this pass draws (see CTX::stampChanges())
-  CTX::instance()->stampChanges();
-
   // nothing of the mesh is opaque when the colours of the options are
   // transparent; otherwise the entities are sorted out one by one
   if(transparencyPass == TRANSPARENCY_OPAQUE && gmshMeshColorsAreTransparent())

@@ -433,7 +433,7 @@ public:
   bool changeEntityTag(int dim, int tag, int newTag);
 
   // add/remove an entity in the model
-  // (each add or remove sets CTX::geom.changed)
+  // (each add or remove calls CTX::geomChanged())
   bool add(GRegion *r);
   bool add(GFace *f);
   bool add(GEdge *e);

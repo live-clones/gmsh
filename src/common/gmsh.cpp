@@ -354,7 +354,7 @@ GMSH_API void gmsh::model::setCurrent(const std::string &name)
   GModel::setCurrent(m);
   for(auto m : GModel::list) m->setVisibility(0);
   GModel::current()->setVisibility(1);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::getFileName(std::string &fileName)
@@ -1358,7 +1358,7 @@ GMSH_API void gmsh::model::mesh::generate(const int dim)
 {
   if(!_checkInit()) return;
   GModel::current()->mesh(dim);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void
@@ -1386,7 +1386,7 @@ gmsh::model::mesh::partition(const int numPart,
   }
   GModel::current()->partitionMesh(
     numPart >= 0 ? numPart : CTX::instance()->mesh.numPartitions, epart);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API int gmsh::model::mesh::createOverlaps(const int layers,
@@ -1850,7 +1850,7 @@ GMSH_API void gmsh::model::mesh::unpartition()
 {
   if(!_checkInit()) return;
   GModel::current()->unpartitionMesh();
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::mesh::writePartitions(
@@ -1874,14 +1874,14 @@ GMSH_API void gmsh::model::mesh::refine()
                                 CTX::instance()->mesh.algoSubdivide == 1,
                                 CTX::instance()->mesh.algoSubdivide == 2,
                                 CTX::instance()->mesh.algoSubdivide == 3);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::mesh::recombine()
 {
   if(!_checkInit()) return;
   GModel::current()->recombineMesh();
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
@@ -1894,7 +1894,7 @@ GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
       "Optimization of specified model entities is not interfaced yet");
   }
   GModel::current()->optimizeMesh(how, force, niter, quality);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::mesh::computeCrossField(std::vector<int> &tags)
@@ -1930,7 +1930,7 @@ GMSH_API void gmsh::model::mesh::splitQuadrangles(const double quality,
     GFace *gf = static_cast<GFace *>(entities[i]);
     quadsToTriangles(gf, quality);
   }
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 #else
   Msg::Error("splitQuadrangles requires the mesh module");
 #endif
@@ -1942,7 +1942,7 @@ GMSH_API void gmsh::model::mesh::setOrder(const int order)
   GModel::current()->setOrderN(order, CTX::instance()->mesh.secondOrderLinear,
                                CTX::instance()->mesh.secondOrderIncomplete,
                                CTX::instance()->mesh.meshOnlyVisible);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::mesh::getLastEntityError(vectorpair &dimTags)
@@ -6095,7 +6095,7 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes(const vectorpair &dimTags)
   GModel::current()->getEntities(entities, dimTags);
   GModel::current()->removeDuplicateMeshVertices(
     CTX::instance()->geom.tolerance, entities);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void
@@ -6105,7 +6105,7 @@ gmsh::model::mesh::removeDuplicateElements(const vectorpair &dimTags)
   std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities, dimTags);
   GModel::current()->removeDuplicateMeshElements(entities);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void
@@ -9122,7 +9122,7 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
   _createFltk();
   int old = CTX::instance()->pickElements;
   CTX::instance()->pickElements = 1;
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
   CTX::instance()->pickElements = old;
   if(!FlGui::available()) return 0; // GUI closed during selection
@@ -9177,7 +9177,7 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   int old = CTX::instance()->pickElements;
   if(elements) {
     CTX::instance()->pickElements = 1;
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
   }
   std::vector<GVertex *> vertices;
   std::vector<GEdge *> edges;
@@ -9191,7 +9191,7 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
              (int)y, w, h, vertices, edges, faces, regions, ele, points, views);
   if(elements) {
     CTX::instance()->pickElements = old;
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
   }
   for(std::size_t i = 0; i < vertices.size(); i++)
     dimTags.push_back(std::make_pair(0, vertices[i]->tag()));

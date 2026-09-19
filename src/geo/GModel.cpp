@@ -170,7 +170,7 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
 
 void GModel::destroy(bool keepName)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   Msg::Debug("Destroying model %s", getName().c_str());
 
   if(!keepName) {
@@ -513,31 +513,31 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
 
 bool GModel::add(GRegion *r)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   return regions.insert(r).second;
 }
 
 bool GModel::add(GFace *f)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   return faces.insert(f).second;
 }
 
 bool GModel::add(GEdge *e)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   return edges.insert(e).second;
 }
 
 bool GModel::add(GVertex *v)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   return vertices.insert(v).second;
 }
 
 bool GModel::remove(GRegion *r)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -558,7 +558,7 @@ bool GModel::remove(GRegion *r)
 
 bool GModel::remove(GFace *f)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -579,7 +579,7 @@ bool GModel::remove(GFace *f)
 
 bool GModel::remove(GEdge *e)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -600,7 +600,7 @@ bool GModel::remove(GEdge *e)
 
 bool GModel::remove(GVertex *v)
 {
-  CTX::instance()->geom.changed = ENT_ALL;
+  CTX::instance()->geomChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -1301,7 +1301,7 @@ int GModel::mesh(int dimension)
   // must be done after renumbering:
   std::vector<std::pair<int, int>> newPhysicals;
   computeHomology(newPhysicals);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   return true;
 #else
   Msg::Error("Mesh module not compiled");
@@ -1444,7 +1444,7 @@ int GModel::adaptMesh()
     renumberMeshVertices();
     renumberMeshElements();
   }
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   return 1;
 #else
   Msg::Error("Mesh module not compiled");
@@ -1613,7 +1613,7 @@ int GModel::adaptMesh(std::vector<int> technique,
     renumberMeshVertices();
     renumberMeshElements();
   }
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 
   return 0;
 #else
@@ -1634,7 +1634,7 @@ int GModel::refineMesh(int linear, bool splitIntoQuads, bool splitIntoHexas,
     renumberMeshVertices();
     renumberMeshElements();
   }
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   return 1;
 #else
   Msg::Error("Mesh module not compiled");
@@ -1650,7 +1650,7 @@ int GModel::recombineMesh()
     renumberMeshVertices();
     renumberMeshElements();
   }
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   return 1;
 #else
   Msg::Error("Mesh module not compiled");
@@ -1667,7 +1667,7 @@ int GModel::optimizeMesh(const std::string &how, const bool force, int niter, do
     renumberMeshVertices();
     renumberMeshElements();
   }
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   return 1;
 #else
   Msg::Error("Mesh module not compiled");
@@ -1687,7 +1687,7 @@ int GModel::setOrderN(int order, int linear, int incomplete, int onlyVisible)
     renumberMeshVertices();
     renumberMeshElements();
   }
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   return true;
 #else
   Msg::Error("Mesh module not compiled");
