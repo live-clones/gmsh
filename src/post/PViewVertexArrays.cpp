@@ -1969,6 +1969,17 @@ public:
 
 bool PView::fillClipVertexArrays()
 {
+  PViewOptions *o = getOptions();
+  // a view that is not drawn builds nothing: what it holds is dropped, and
+  // built again when it is shown (every plane moved walked every view)
+  if(!o->visible || o->type != PViewOptions::Plot3D) {
+    if(_viewClipToken.find(this)) {
+      deleteClipVertexArrays();
+      _viewClipToken.erase(this);
+    }
+    return false;
+  }
+
   std::vector<double> tok = viewClipToken(this);
   std::vector<double> *found = _viewClipToken.find(this);
   if(found && *found == tok) return false;
