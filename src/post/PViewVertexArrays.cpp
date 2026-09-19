@@ -82,6 +82,24 @@ static SVector3 normal3(double **xyz, int i0 = 0, int i1 = 1, int i2 = 2)
 // what the drawing functions read the options from and write the primitives
 // to; each thread gets its own, with its own copy of the options (which the
 // functions modify) and its own arrays, merged in thread order afterwards
+// n rows of doubles, as the double ** the drawing routines take for the
+// coordinates or the values at the nodes of an element; the memory is kept
+// from one element to the next
+class nodeRows {
+private:
+  std::vector<double> _data;
+  std::vector<double *> _rows;
+
+public:
+  double **get(int n, int width)
+  {
+    if(_data.size() < (std::size_t)(n * width)) _data.resize(n * width);
+    _rows.resize(n);
+    for(int i = 0; i < n; i++) _rows[i] = &_data[i * width];
+    return _rows.data();
+  }
+};
+
 class drawTarget {
 public:
   PView *view;
@@ -297,13 +315,11 @@ static void changeCoordinates(drawTarget *p, int ient, int iele, int numNodes,
 
   if(opt->useGenRaise) {
     int numComp2;
-    double **val2 = new double *[numNodes];
-    for(int i = 0; i < numNodes; i++) val2[i] = new double[9];
+    static thread_local nodeRows rows;
+    double **val2 = rows.get(numNodes, 9);
     getExternalValues(p, opt->viewIndexForGenRaise, ient, iele, numNodes,
                       numComp, val, numComp2, val2);
     applyGeneralRaise(p, numNodes, numComp2, val2, xyz);
-    for(int i = 0; i < numNodes; i++) delete[] val2[i];
-    delete[] val2;
   }
 }
 
@@ -637,21 +653,31 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
 }
 
 // the edges of a face of n corners, lit with the normal of the face
+// an edge (a, b) of the outline of an element, lit with the normal of its
+// face when there is one
+static void addOutlineEdge(drawTarget *p, double **xyz, unsigned int color,
+                           bool pre, int a, int b, const SVector3 *nfac)
+{
+  double x[2] = {xyz[a][0], xyz[b][0]};
+  double y[2] = {xyz[a][1], xyz[b][1]};
+  double z[2] = {xyz[a][2], xyz[b][2]};
+  SVector3 n[2];
+  if(nfac) {
+    n[0] = n[1] = *nfac;
+    for(int j = 0; j < 2; j++) smoothNormal(p, pre, x[j], y[j], z[j], n[j]);
+  }
+  unsigned int col[2] = {color, color};
+  getLineNormal(p, x, y, z, nullptr, n, false);
+  if(!pre) p->va_lines->add(x, y, z, n, col, nullptr, true);
+}
+
+// the edges of a face of n corners
 static void addOutlineFace(drawTarget *p, double **xyz, unsigned int color,
                            bool pre, const int *idx, int n)
 {
   SVector3 nfac = normal3(xyz, idx[0], idx[1], idx[2]);
-  for(int i = 0; i < n; i++) {
-    int a = idx[i], b = idx[(i + 1) % n];
-    double x[2] = {xyz[a][0], xyz[b][0]};
-    double y[2] = {xyz[a][1], xyz[b][1]};
-    double z[2] = {xyz[a][2], xyz[b][2]};
-    SVector3 nn[2] = {nfac, nfac};
-    unsigned int col[2] = {color, color};
-    for(int j = 0; j < 2; j++) smoothNormal(p, pre, x[j], y[j], z[j], nn[j]);
-    getLineNormal(p, x, y, z, nullptr, nn, false);
-    if(!pre) p->va_lines->add(x, y, z, nn, col, nullptr, true);
-  }
+  for(int i = 0; i < n; i++)
+    addOutlineEdge(p, xyz, color, pre, idx[i], idx[(i + 1) % n], &nfac);
 }
 
 static void addOutlineTriangle(drawTarget *p, double **xyz, unsigned int color,
@@ -803,21 +829,7 @@ static void addOutlinePolygon(drawTarget *p, int ient, int iele, int numNodes,
   for(int i = 0; i < numEdges; i++) {
     std::array<int, 2> is = polygon ? polygon->getEdgeRepIndices(false, i) :
                                       std::array<int, 2>{i, (i + 1) % numNodes};
-    double x[2] = {xyz[is[0]][0], xyz[is[1]][0]};
-    double y[2] = {xyz[is[0]][1], xyz[is[1]][1]};
-    double z[2] = {xyz[is[0]][2], xyz[is[1]][2]};
-    SVector3 n[2] = {nfac, nfac};
-    unsigned int col[2] = {color, color};
-    if(opt->smoothNormals) {
-      for(int j = 0; j < 2; j++) {
-        if(pre)
-          p->normals->add(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
-        else
-          p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
-      }
-    }
-    getLineNormal(p, x, y, z, nullptr, n, false);
-    if(!pre) p->va_lines->add(x, y, z, n, col, nullptr, true);
+    addOutlineEdge(p, xyz, color, pre, is[0], is[1], &nfac);
   }
 }
 
@@ -1123,13 +1135,7 @@ static void addOutlinePolyhedron(drawTarget *p, int ient, int iele,
   if(!polyhedron) return; // list data: the faces are unknown
   for(int i = 0; i < polyhedron->getNumEdgesRep(false); i++) {
     std::array<int, 2> is = polyhedron->getEdgeRepIndices(false, i);
-    double x[2] = {xyz[is[0]][0], xyz[is[1]][0]};
-    double y[2] = {xyz[is[0]][1], xyz[is[1]][1]};
-    double z[2] = {xyz[is[0]][2], xyz[is[1]][2]};
-    SVector3 n[2];
-    unsigned int col[2] = {color, color};
-    getLineNormal(p, x, y, z, nullptr, n, false);
-    if(!pre) p->va_lines->add(x, y, z, n, col, nullptr, true);
+    addOutlineEdge(p, xyz, color, pre, is[0], is[1], nullptr);
   }
 }
 
@@ -1214,6 +1220,24 @@ static void addScalarElement(drawTarget *p, int ient, int iele, int numNodes,
   }
 }
 
+// an arrow from x along d, coloured by v (the norm, or the value of an
+// external view)
+static void addArrow(drawTarget *p, const double *x, const double *d,
+                     double v, bool unique)
+{
+  PViewOptions *opt = p->opt;
+  unsigned int color = opt->getColor(
+    v, opt->externalMin, opt->externalMax, false,
+    (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
+  unsigned int col[2] = {color, color};
+  double dxyz[3][2];
+  for(int j = 0; j < 3; j++) {
+    dxyz[j][0] = x[j];
+    dxyz[j][1] = d[j];
+  }
+  p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr, unique);
+}
+
 static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
                              int type, double **xyz, double **val, bool pre)
 {
@@ -1224,8 +1248,8 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
   if(opt->tmpMin > opt->tmpMax) return;
 
   int numComp2;
-  double **val2 = new double *[numNodes];
-  for(int i = 0; i < numNodes; i++) val2[i] = new double[9];
+  static thread_local nodeRows rows;
+  double **val2 = rows.get(numNodes, 9);
   getExternalValues(p, opt->externalViewIndex, ient, iele, numNodes, 3, val,
                     numComp2, val2);
 
@@ -1272,16 +1296,10 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
         p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], n, col, nullptr, false);
       }
     }
-    for(int i = 0; i < numNodes; i++) delete[] val2[i];
-    delete[] val2;
     return;
   }
 
-  if(pre) {
-    for(int i = 0; i < numNodes; i++) delete[] val2[i];
-    delete[] val2;
-    return;
-  }
+  if(pre) return;
 
   if(opt->glyphLocation == PViewOptions::Vertex) {
     for(int i = 0; i < numNodes; i++) {
@@ -1289,22 +1307,11 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
                     saturateVector(val[i], numComp2, val2[i], opt->externalMin,
                                    opt->externalMax) :
                     ComputeScalarRep(numComp2, val2[i]);
-      if(v2 >= opt->externalMin && v2 <= opt->externalMax) {
-        unsigned int color = opt->getColor(
-          v2, opt->externalMin, opt->externalMax, false,
-          (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
-        unsigned int col[2] = {color, color};
-        double dxyz[3][2];
-        for(int j = 0; j < 3; j++) {
-          dxyz[j][0] = xyz[i][j];
-          dxyz[j][1] = val[i][j];
-        }
-        // once per node, not once per element around it (two dozen of them
-        // for a node of a tetrahedral mesh): the same position with the same
-        // value is the same arrow
-        p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr,
-                           true);
-      }
+      // once per node, not once per element around it (two dozen of them
+      // for a node of a tetrahedral mesh): the same position with the same
+      // value is the same arrow
+      if(v2 >= opt->externalMin && v2 <= opt->externalMax)
+        addArrow(p, xyz[i], val[i], v2, true);
     }
   }
 
@@ -1331,21 +1338,10 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
     // instead of the raw data used to compute bounds
     if(v2 >= opt->externalMin * (1. - 1.e-15) &&
        v2 <= opt->externalMax * (1. + 1.e-15)) {
-      unsigned int color = opt->getColor(
-        v2, opt->externalMin, opt->externalMax, false,
-        (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
-      unsigned int col[2] = {color, color};
-      double dxyz[3][2];
-      for(int i = 0; i < 3; i++) {
-        dxyz[i][0] = pc[i];
-        dxyz[i][1] = d[i];
-      }
-      p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr,
-                         false);
+      double x[3] = {pc.x(), pc.y(), pc.z()};
+      addArrow(p, x, d, v2, false);
     }
   }
-  for(int i = 0; i < numNodes; i++) delete[] val2[i];
-  delete[] val2;
 }
 
 static void addTriangle(drawTarget *p, PViewOptions *opt, double *x0,
@@ -1438,6 +1434,22 @@ static void tensorEig(fullMatrix<double> &tensor, fullVector<double> &S,
   tensor.eig(S, imS, leftV, rightV, sortRealPart);
 }
 
+// the tensor at a node, as a matrix
+static void loadTensor(fullMatrix<double> &tensor, const double *v)
+{
+  for(int j = 0; j < 3; j++)
+    for(int k = 0; k < 3; k++) tensor(j, k) = v[k + j * 3];
+}
+
+// the box drawn for the frame of a node: its corners, as signs of the three
+// axes, and its triangles, facing out
+static const int frameCorners[8][3] = {{1, 1, 1},   {-1, 1, 1}, {-1, -1, 1},
+                                       {1, -1, 1},  {1, 1, -1}, {-1, 1, -1},
+                                       {-1, -1, -1}, {1, -1, -1}};
+static const int frameTriangles[12][3] = {
+  {0, 1, 2}, {2, 3, 0}, {4, 7, 6}, {6, 5, 4}, {0, 3, 7}, {7, 4, 0},
+  {1, 5, 6}, {6, 2, 1}, {0, 4, 5}, {5, 1, 0}, {3, 2, 6}, {6, 7, 3}};
+
 static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
                              int type, double **xyz, double **val, bool pre)
 {
@@ -1445,10 +1457,11 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
   // a range given the other way round holds no value: nothing is drawn
   if(opt->tmpMin > opt->tmpMax) return;
   // kept from one element to the next (and one set per thread, as elements
-  // are added in parallel): five allocations per element otherwise
+  // are added in parallel): allocations for each element otherwise
   static thread_local fullMatrix<double> tensor(3, 3), leftV(3, 3),
     rightV(3, 3);
   static thread_local fullVector<double> S(3), imS(3);
+  static thread_local nodeRows rows[3];
 
   if(opt->tensorType == PViewOptions::VonMises) {
     for(int i = 0; i < numNodes; i++) val[i][0] = ComputeVonMises(val[i]);
@@ -1456,22 +1469,16 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
   }
   else if(opt->tensorType == PViewOptions::FrameVectors) {
     if(opt->glyphLocation == PViewOptions::Vertex) {
-      double **vval = new double *[numNodes];
-      for(int j = 0; j < numNodes; j++) vval[j] = new double[3];
-
-      // Plot six vectors to visualize a frame
-      for(int i = 0; i < 3; i++) { // for each branch
-        for(int d = 0; d < 2; d++) { // for each direction
-          for(int j = 0; j < numNodes; j++) { // for each node
-            for(int k = 0; k < 3; k++) { // for each vector component
+      // six vectors: each axis, both ways
+      double **vval = rows[0].get(numNodes, 3);
+      for(int i = 0; i < 3; i++) {
+        for(int d = 0; d < 2; d++) {
+          for(int j = 0; j < numNodes; j++)
+            for(int k = 0; k < 3; k++)
               vval[j][k] = (2 * d - 1) * val[j][3 * i + k];
-            }
-          }
           addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval, pre);
         }
       }
-      for(int j = 0; j < numNodes; j++) delete[] vval[j];
-      delete[] vval;
     }
   }
   else if(opt->tensorType == PViewOptions::Frame) {
@@ -1479,129 +1486,65 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
     if(pre) return;
     if(opt->glyphLocation == PViewOptions::Vertex) {
       for(int i = 0; i < numNodes; i++) {
-        double d0[3], d1[3], d2[3];
         double nrm = sqrt(val[i][0] * val[i][0] + val[i][1] * val[i][1] +
                           val[i][2] * val[i][2]);
         if(!nrm) continue;
-
-        for(int j = 0; j < 3; j++) {
-          d0[j] = opt->displacementFactor * val[i][j + 0 * 3] / nrm;
-          d1[j] = opt->displacementFactor * val[i][j + 1 * 3] / nrm;
-          d2[j] = opt->displacementFactor * val[i][j + 2 * 3] / nrm;
-        }
-        double x = xyz[i][0];
-        double y = xyz[i][1];
-        double z = xyz[i][2];
-
-        SPoint3 xx(x, y, z);
-        double x0[3] = {x + d0[0] + d1[0] + d2[0], y + d0[1] + d1[1] + d2[1],
-                        z + d0[2] + d1[2] + d2[2]};
-        double x1[3] = {x - d0[0] + d1[0] + d2[0], y - d0[1] + d1[1] + d2[1],
-                        z - d0[2] + d1[2] + d2[2]};
-        double x2[3] = {x - d0[0] - d1[0] + d2[0], y - d0[1] - d1[1] + d2[1],
-                        z - d0[2] - d1[2] + d2[2]};
-        double x3[3] = {x + d0[0] - d1[0] + d2[0], y + d0[1] - d1[1] + d2[1],
-                        z + d0[2] - d1[2] + d2[2]};
-
-        double x4[3] = {x + d0[0] + d1[0] - d2[0], y + d0[1] + d1[1] - d2[1],
-                        z + d0[2] + d1[2] - d2[2]};
-        double x5[3] = {x - d0[0] + d1[0] - d2[0], y - d0[1] + d1[1] - d2[1],
-                        z - d0[2] + d1[2] - d2[2]};
-        double x6[3] = {x - d0[0] - d1[0] - d2[0], y - d0[1] - d1[1] - d2[1],
-                        z - d0[2] - d1[2] - d2[2]};
-        double x7[3] = {x + d0[0] - d1[0] - d2[0], y + d0[1] - d1[1] - d2[1],
-                        z + d0[2] - d1[2] - d2[2]};
-
-        if((nrm >= opt->tmpMin && nrm <= opt->tmpMax) ||
-           opt->saturateValues) {
-          addTriangle(p, opt, x0, x1, x2, xx, nrm);
-          addTriangle(p, opt, x2, x3, x0, xx, nrm);
-          addTriangle(p, opt, x4, x7, x6, xx, nrm);
-          addTriangle(p, opt, x6, x5, x4, xx, nrm);
-          addTriangle(p, opt, x0, x3, x7, xx, nrm);
-          addTriangle(p, opt, x7, x4, x0, xx, nrm);
-          addTriangle(p, opt, x1, x5, x6, xx, nrm);
-          addTriangle(p, opt, x6, x2, x1, xx, nrm);
-          addTriangle(p, opt, x0, x4, x5, xx, nrm);
-          addTriangle(p, opt, x5, x1, x0, xx, nrm);
-          addTriangle(p, opt, x3, x2, x6, xx, nrm);
-          addTriangle(p, opt, x6, x7, x3, xx, nrm);
-        }
+        if((nrm < opt->tmpMin || nrm > opt->tmpMax) && !opt->saturateValues)
+          continue;
+        // the axes, scaled
+        double d[3][3];
+        for(int a = 0; a < 3; a++)
+          for(int j = 0; j < 3; j++)
+            d[a][j] = opt->displacementFactor * val[i][j + a * 3] / nrm;
+        double c[8][3];
+        for(int k = 0; k < 8; k++)
+          for(int j = 0; j < 3; j++)
+            c[k][j] = xyz[i][j] + frameCorners[k][0] * d[0][j] +
+                      frameCorners[k][1] * d[1][j] +
+                      frameCorners[k][2] * d[2][j];
+        SPoint3 xx(xyz[i][0], xyz[i][1], xyz[i][2]);
+        for(int t = 0; t < 12; t++)
+          addTriangle(p, opt, c[frameTriangles[t][0]], c[frameTriangles[t][1]],
+                      c[frameTriangles[t][2]], xx, nrm);
       }
     }
   }
   else if(opt->tensorType == PViewOptions::Ellipse ||
-          opt->tensorType == PViewOptions::Ellipsoid ||
-          opt->tensorType == PViewOptions::Frame) {
+          opt->tensorType == PViewOptions::Ellipsoid) {
     // glyphs: added once, by the pass filling the arrays, and not also by
     // those gathering normals or the skin (va_ellipses keeps duplicates)
     if(pre) return;
-    if(opt->glyphLocation == PViewOptions::Vertex) {
-      double vval[3][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
-      for(int i = 0; i < numNodes; i++) {
-        if(opt->tensorType == PViewOptions::Frame) {
-          SVector3 v0(val[i][0], val[i][3], val[i][6]);
-          SVector3 v1(val[i][1], val[i][4], val[i][7]);
-          SVector3 v2(val[i][2], val[i][5], val[i][8]);
-          S(0) = v0.norm();
-          S(1) = v1.norm();
-          S(2) = v2.norm();
-          for(int k = 0; k < 3; k++) vval[k][0] = xyz[i][k];
-          vval[0][1] = v0.x();
-          vval[0][2] = v0.y();
-          vval[0][3] = v0.z();
-          vval[1][1] = v1.x();
-          vval[1][2] = v1.y();
-          vval[1][3] = v1.z();
-          vval[2][1] = v2.x();
-          vval[2][2] = v2.y();
-          vval[2][3] = v2.z();
+    // the center and the three axes (the eigenvectors scaled by the
+    // eigenvalues), at each node or averaged over the element
+    double vval[3][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+    bool vertex = (opt->glyphLocation == PViewOptions::Vertex);
+    if(!vertex && opt->glyphLocation != PViewOptions::COG) return;
+    for(int i = 0; i < numNodes; i++) {
+      loadTensor(tensor, val[i]);
+      tensorEig(tensor, S, imS, leftV, rightV, false);
+      for(int k = 0; k < 3; k++) {
+        if(vertex) {
+          vval[k][0] = xyz[i][k];
+          for(int j = 0; j < 3; j++) vval[k][j + 1] = rightV(k, j) * S(j);
         }
         else {
-          for(int j = 0; j < 3; j++) {
-            tensor(j, 0) = val[i][0 + j * 3];
-            tensor(j, 1) = val[i][1 + j * 3];
-            tensor(j, 2) = val[i][2 + j * 3];
-          }
-          tensorEig(tensor, S, imS, leftV, rightV, false);
-          for(int k = 0; k < 3; k++) {
-            vval[k][0] = xyz[i][k];
-            for(int j = 0; j < 3; j++) { vval[k][j + 1] = rightV(k, j) * S(j); }
-          }
+          vval[k][0] += xyz[i][k] / numNodes;
+          for(int j = 0; j < 3; j++)
+            vval[k][j + 1] += rightV(k, j) * S(j) / numNodes;
         }
-
-        // double lmax = std::max(S(0), std::max(S(1), S(2)));
-        // double lmin = std::min(S(0), std::min(S(1), S(2)));
-        double det = S(0) * S(1) * S(2);
-
-        // printf("%12.5E %12.5E %12.5E \n",det,opt->tmpMin, opt->tmpMax);
-
-        unsigned int color = opt->getColor(
-          det, opt->tmpMin, opt->tmpMax, false,
-          (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
-        unsigned int col[4] = {color, color, color, color};
-        p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr,
-                            false);
       }
+      if(!vertex) continue;
+      // coloured by the determinant at a node
+      double det = S(0) * S(1) * S(2);
+      unsigned int color = opt->getColor(
+        det, opt->tmpMin, opt->tmpMax, false,
+        (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
+      unsigned int col[4] = {color, color, color, color};
+      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr,
+                          false);
     }
-    else if(opt->glyphLocation == PViewOptions::COG) {
-      double vval[3][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
-      for(int i = 0; i < numNodes; i++) {
-        for(int j = 0; j < 3; j++) {
-          tensor(j, 0) = val[i][0 + j * 3];
-          tensor(j, 1) = val[i][1 + j * 3];
-          tensor(j, 2) = val[i][2 + j * 3];
-        }
-        tensorEig(tensor, S, imS, leftV, rightV, false);
-        for(int j = 0; j < 3; j++) {
-          vval[0][j + 1] += rightV(0, j) * S(j) / numNodes;
-          vval[1][j + 1] += rightV(1, j) * S(j) / numNodes;
-          vval[2][j + 1] += rightV(2, j) * S(j) / numNodes;
-        }
-        vval[0][0] += xyz[i][0] / numNodes;
-        vval[1][0] += xyz[i][1] / numNodes;
-        vval[2][0] += xyz[i][2] / numNodes;
-      }
+    if(!vertex) {
+      // coloured by the largest eigenvalue (of the last node)
       double lmax = std::max(S(0), std::max(S(1), S(2)));
       unsigned int color = opt->getColor(
         lmax, opt->tmpMin, opt->tmpMax, false,
@@ -1612,51 +1555,27 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
     }
   }
   else {
-    // on the stack for the usual elements, rather than fifteen allocations
-    // for each of them
-    double buf[3][PVIEW_NMAX][3], *ptr[3][PVIEW_NMAX];
-    bool heap = (numNodes > PVIEW_NMAX);
+    bool eigenVectors = (opt->tensorType == PViewOptions::EigenVectors);
     double **vval[3];
-    for(int i = 0; i < 3; i++) {
-      vval[i] = heap ? new double *[numNodes] : ptr[i];
-      for(int j = 0; j < numNodes; j++)
-        vval[i][j] = heap ? new double[3] : buf[i][j];
-    }
+    if(eigenVectors)
+      for(int k = 0; k < 3; k++) vval[k] = rows[k].get(numNodes, 3);
     for(int i = 0; i < numNodes; i++) {
-      for(int j = 0; j < 3; j++) {
-        tensor(j, 0) = val[i][0 + j * 3];
-        tensor(j, 1) = val[i][1 + j * 3];
-        tensor(j, 2) = val[i][2 + j * 3];
-      }
-      tensorEig(tensor, S, imS, leftV, rightV,
-                opt->tensorType != PViewOptions::EigenVectors,
-                opt->tensorType != PViewOptions::EigenVectors);
-      if(PViewOptions::MinEigenValue == opt->tensorType)
+      loadTensor(tensor, val[i]);
+      tensorEig(tensor, S, imS, leftV, rightV, !eigenVectors, !eigenVectors);
+      if(opt->tensorType == PViewOptions::MinEigenValue)
         val[i][0] = S(0);
-      else if(PViewOptions::MaxEigenValue == opt->tensorType)
+      else if(opt->tensorType == PViewOptions::MaxEigenValue)
         val[i][0] = S(2);
-      else if(PViewOptions::EigenVectors == opt->tensorType) {
-        for(int j = 0; j < 3; j++) {
-          vval[0][i][j] = rightV(j, 0) * S(0);
-          vval[1][i][j] = rightV(j, 1) * S(1);
-          vval[2][i][j] = rightV(j, 2) * S(2);
-        }
+      else if(eigenVectors) {
+        for(int k = 0; k < 3; k++)
+          for(int j = 0; j < 3; j++) vval[k][i][j] = rightV(j, k) * S(k);
       }
     }
-
-    if(PViewOptions::EigenVectors == opt->tensorType) {
-      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[0], pre);
-      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[1], pre);
-      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[2], pre);
-    }
+    if(eigenVectors)
+      for(int k = 0; k < 3; k++)
+        addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[k], pre);
     else
       addScalarElement(p, iEnt, iEle, numNodes, type, xyz, val, pre);
-    if(heap) {
-      for(int i = 0; i < 3; i++) {
-        for(int j = 0; j < numNodes; j++) delete[] vval[i][j];
-        delete[] vval[i];
-      }
-    }
   }
 }
 
@@ -1667,6 +1586,20 @@ void changeCoordinates(PView *p, int ient, int iele, int numNodes, int type,
 {
   drawTarget t(p);
   changeCoordinates(&t, ient, iele, numNodes, type, numComp, xyz, val);
+}
+
+// an element drawn as the field its values are: scalar, vector or tensor
+static void addFieldElement(drawTarget *p, int ient, int iele, int numNodes,
+                            int type, int numComp, double **xyz, double **val,
+                            bool pre)
+{
+  PViewOptions *opt = p->opt;
+  if(numComp == 1 && opt->drawScalars)
+    addScalarElement(p, ient, iele, numNodes, type, xyz, val, pre);
+  else if(numComp == 3 && opt->drawVectors)
+    addVectorElement(p, ient, iele, numNodes, type, xyz, val, pre);
+  else if(numComp == 9 && opt->drawTensors)
+    addTensorElement(p, ient, iele, numNodes, type, xyz, val, pre);
 }
 
 static void addElementRange(drawTarget *p, PViewData *data,
@@ -1680,19 +1613,12 @@ static void addElementRange(drawTarget *p, PViewData *data,
 
   PViewOptions *opt = p->opt;
 
-  int NMAX = PVIEW_NMAX;
-  double **xyz = new double *[NMAX];
-  double **val = new double *[NMAX];
-  std::size_t *nodeIds = new std::size_t[NMAX];
-  for(int i = 0; i < NMAX; i++) {
-    xyz[i] = new double[3];
-    val[i] = new double[9];
-  }
+  nodeRows xyzRows, valRows;
+  std::vector<std::size_t> nodeIds;
   // elements are told apart by their nodes (shared edges drawn once, the
   // skin) unless their coordinates are changed element by element: exploded
   // or raised along their normal, they no longer meet at their nodes
   bool topology = opt->explode == 1. && !opt->normalRaise && !opt->useGenRaise;
-  p->nodeIds = topology ? nodeIds : nullptr;
 
   // the entity the range starts in
   std::size_t e = 0;
@@ -1709,38 +1635,16 @@ static void addElementRange(drawTarget *p, PViewData *data,
       if(opt->skipElement(type)) continue;
       int numComp = data->getNumComponents(opt->timeStep, ent, i);
       int numNodes = data->getNumNodes(opt->timeStep, ent, i);
-      if(numNodes > PVIEW_NMAX) {
-        if(type == TYPE_POLYG || type == TYPE_POLYH) {
-          if(numNodes > NMAX) {
-            for(int j = 0; j < NMAX; j++) {
-              delete[] xyz[j];
-              delete[] val[j];
-            }
-            delete[] xyz;
-            delete[] val;
-            delete[] nodeIds;
-            NMAX = numNodes;
-            xyz = new double *[NMAX];
-            val = new double *[NMAX];
-            nodeIds = new std::size_t[NMAX];
-            if(topology) p->nodeIds = nodeIds;
-            for(int j = 0; j < NMAX; j++) {
-              xyz[j] = new double[3];
-              val[j] = new double[9];
-            }
-          }
+      // (polytopes have as many nodes as they need)
+      if(numNodes > PVIEW_NMAX && type != TYPE_POLYG && type != TYPE_POLYH) {
+        if(numNodesError != numNodes) {
+          numNodesError = numNodes;
+          Msg::Warning("Fields with %d nodes per element cannot be displayed: "
+                       "either force the field type or select 'Adapt "
+                       "visualization grid' if the field is high-order",
+                       numNodes);
         }
-        else {
-          if(numNodesError != numNodes) {
-            numNodesError = numNodes;
-            Msg::Warning(
-              "Fields with %d nodes per element cannot be displayed: "
-              "either force the field type or select 'Adapt visualization "
-              "grid' if the field is high-order",
-              numNodes);
-          }
-          continue;
-        }
+        continue;
       }
       if((numComp > 9 && !opt->forceNumComponents) ||
          opt->forceNumComponents > 9) {
@@ -1754,6 +1658,10 @@ static void addElementRange(drawTarget *p, PViewData *data,
         }
         continue;
       }
+      double **xyz = xyzRows.get(numNodes, 3);
+      double **val = valRows.get(numNodes, 9);
+      nodeIds.resize(numNodes);
+      p->nodeIds = topology ? nodeIds.data() : nullptr;
       for(int j = 0; j < numNodes; j++) {
         data->getNode(opt->timeStep, ent, i, j, xyz[j][0], xyz[j][1],
                       xyz[j][2]);
@@ -1799,47 +1707,22 @@ static void addElementRange(drawTarget *p, PViewData *data,
 
       if(opt->intervalsType != PViewOptions::Numeric) {
         if(data->useGaussPoints()) {
+          // a point at each Gauss point, with a copy of its values (a tensor
+          // field changes them)
           for(int j = 0; j < numNodes; j++) {
-            double *x2 = new double[3];
-            double **xyz2 = &x2;
-            double *v2 = new double[9];
-            double **val2 = &v2;
-            xyz2[0][0] = xyz[j][0];
-            xyz2[0][1] = xyz[j][1];
-            xyz2[0][2] = xyz[j][2];
-            for(int k = 0; k < numComp; k++) val2[0][k] = val[j][k];
-            if(numComp == 1 && opt->drawScalars)
-              addScalarElement(p, ent, i, numNodes, TYPE_PNT, xyz2, val2,
-                               preprocessNormalsOnly);
-            else if(numComp == 3 && opt->drawVectors)
-              addVectorElement(p, ent, i, 1, TYPE_PNT, xyz2, val2,
-                               preprocessNormalsOnly);
-            else if(numComp == 9 && opt->drawTensors)
-              addTensorElement(p, ent, i, 1, TYPE_PNT, xyz2, val2,
-                               preprocessNormalsOnly);
-            delete[] x2;
-            delete[] v2;
+            double x2[3] = {xyz[j][0], xyz[j][1], xyz[j][2]}, v2[9];
+            for(int k = 0; k < numComp; k++) v2[k] = val[j][k];
+            double *px = x2, *pv = v2;
+            addFieldElement(p, ent, i, 1, TYPE_PNT, numComp, &px, &pv,
+                            preprocessNormalsOnly);
           }
         }
-        else if(numComp == 1 && opt->drawScalars)
-          addScalarElement(p, ent, i, numNodes, type, xyz, val,
-                           preprocessNormalsOnly);
-        else if(numComp == 3 && opt->drawVectors)
-          addVectorElement(p, ent, i, numNodes, type, xyz, val,
-                           preprocessNormalsOnly);
-        else if(numComp == 9 && opt->drawTensors)
-          addTensorElement(p, ent, i, numNodes, type, xyz, val,
-                           preprocessNormalsOnly);
+        else
+          addFieldElement(p, ent, i, numNodes, type, numComp, xyz, val,
+                          preprocessNormalsOnly);
       }
     }
   }
-  for(int j = 0; j < NMAX; j++) {
-    delete[] xyz[j];
-    delete[] val[j];
-  }
-  delete[] xyz;
-  delete[] val;
-  delete[] nodeIds;
   p->nodeIds = nullptr;
 }
 
