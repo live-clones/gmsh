@@ -1311,6 +1311,11 @@ void drawContext::drawBackgroundGradient()
 
 void drawContext::invalidateBgImageTexture()
 {
+  // the pages of a PDF are kept by the wrapper, which draws them again
+#if defined(HAVE_POPPLER)
+  if(_bgImageTexture && gmshPopplerWrapper::ownsTexture(_bgImageTexture))
+    _bgImageTexture = 0;
+#endif
   if(_bgImageTexture) glDeleteTextures(1, &_bgImageTexture);
   _bgImageTexture = 0;
 }
