@@ -5834,6 +5834,44 @@ double opt_mesh_trihedra(OPT_ARGS_NUM)
 #endif
   return CTX::instance()->mesh.trihedra;
 }
+double opt_mesh_polygons(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX::instance()->mesh.polygons != val)
+      CTX::instance()->meshChanged(ENT_SURFACE);
+    CTX::instance()->mesh.polygons = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    if(CTX::instance()->mesh.polygons)
+      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[7].set();
+    else
+      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[7]
+        .clear();
+  }
+#endif
+  return CTX::instance()->mesh.polygons;
+}
+
+double opt_mesh_polyhedra(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX::instance()->mesh.polyhedra != val)
+      CTX::instance()->meshChanged(ENT_VOLUME);
+    CTX::instance()->mesh.polyhedra = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    if(CTX::instance()->mesh.polyhedra)
+      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[8].set();
+    else
+      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[8]
+        .clear();
+  }
+#endif
+  return CTX::instance()->mesh.polyhedra;
+}
+
 
 double opt_mesh_transfinite_tri(OPT_ARGS_NUM)
 {
@@ -7026,6 +7064,20 @@ double opt_mesh_nb_trihedra(OPT_ARGS_NUM)
   double s[50];
   GetStatistics(s);
   return s[13];
+}
+
+double opt_mesh_nb_polygons(OPT_ARGS_NUM)
+{
+  double s[50];
+  GetStatistics(s);
+  return s[46];
+}
+
+double opt_mesh_nb_polyhedra(OPT_ARGS_NUM)
+{
+  double s[50];
+  GetStatistics(s);
+  return s[47];
 }
 
 double opt_mesh_cpu_time(OPT_ARGS_NUM)
@@ -8963,6 +9015,54 @@ double opt_view_draw_trihedra(OPT_ARGS_NUM)
   return 0.;
 #endif
 }
+double opt_view_draw_polygons(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    opt->drawPolygons = (int)val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    if(opt->drawPolygons)
+      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[9]
+        .set();
+    else
+      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[9]
+        .clear();
+  }
+#endif
+  return opt->drawPolygons;
+#else
+  return 0.;
+#endif
+}
+
+double opt_view_draw_polyhedra(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    opt->drawPolyhedra = (int)val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    if(opt->drawPolyhedra)
+      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[10]
+        .set();
+    else
+      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[10]
+        .clear();
+  }
+#endif
+  return opt->drawPolyhedra;
+#else
+  return 0.;
+#endif
+}
+
 
 double opt_view_draw_scalars(OPT_ARGS_NUM)
 {
@@ -10349,13 +10449,43 @@ unsigned int opt_mesh_color_trihedron(OPT_ARGS_COL)
 #endif
   return CTX::instance()->color.mesh.trihedron;
 }
+unsigned int opt_mesh_color_polygon(OPT_ARGS_COL)
+{
+  if(action & GMSH_SET) {
+    if(CTX::instance()->color.mesh.polygon != val &&
+       CTX::instance()->mesh.colorCarousel == 0)
+      CTX::instance()->meshChanged(ENT_SURFACE);
+    CTX::instance()->color.mesh.polygon = val;
+  }
+#if defined(HAVE_FLTK)
+  CCC(CTX::instance()->color.mesh.polygon,
+      FlGui::instance()->options->mesh.color[10]);
+#endif
+  return CTX::instance()->color.mesh.polygon;
+}
+
+unsigned int opt_mesh_color_polyhedron(OPT_ARGS_COL)
+{
+  if(action & GMSH_SET) {
+    if(CTX::instance()->color.mesh.polyhedron != val &&
+       CTX::instance()->mesh.colorCarousel == 0)
+      CTX::instance()->meshChanged(ENT_VOLUME);
+    CTX::instance()->color.mesh.polyhedron = val;
+  }
+#if defined(HAVE_FLTK)
+  CCC(CTX::instance()->color.mesh.polyhedron,
+      FlGui::instance()->options->mesh.color[11]);
+#endif
+  return CTX::instance()->color.mesh.polyhedron;
+}
+
 
 unsigned int opt_mesh_color_tangents(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) { CTX::instance()->color.mesh.tangents = val; }
 #if defined(HAVE_FLTK)
   CCC(CTX::instance()->color.mesh.tangents,
-      FlGui::instance()->options->mesh.color[10]);
+      FlGui::instance()->options->mesh.color[12]);
 #endif
   return CTX::instance()->color.mesh.tangents;
 }
@@ -10365,7 +10495,7 @@ unsigned int opt_mesh_color_normals(OPT_ARGS_COL)
   if(action & GMSH_SET) { CTX::instance()->color.mesh.normals = val; }
 #if defined(HAVE_FLTK)
   CCC(CTX::instance()->color.mesh.normals,
-      FlGui::instance()->options->mesh.color[11]);
+      FlGui::instance()->options->mesh.color[13]);
 #endif
   return CTX::instance()->color.mesh.normals;
 }
@@ -10386,7 +10516,7 @@ unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   CCC(CTX::instance()->color.mesh.carousel[n],
-      FlGui::instance()->options->mesh.color[12 + n]);
+      FlGui::instance()->options->mesh.color[14 + n]);
 #endif
   return CTX::instance()->color.mesh.carousel[n];
 }

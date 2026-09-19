@@ -1633,6 +1633,120 @@ GMSH_API void gmshModelMeshAddElementsByType(const int tag, const int elementTyp
   }
 }
 
+GMSH_API void gmshModelMeshAddPolygons(const int tag, const size_t * elementTags, const size_t elementTags_n, const size_t * nodeTags, const size_t nodeTags_n, const int * numNodes, const size_t numNodes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<int> api_numNodes_(numNodes, numNodes + numNodes_n);
+    gmsh::model::mesh::addPolygons(tag, api_elementTags_, api_nodeTags_, api_numNodes_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetPolygons(size_t ** elementTags, size_t * elementTags_n, size_t ** nodeTags, size_t * nodeTags_n, int ** numNodes, size_t * numNodes_n, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_;
+    std::vector<std::size_t> api_nodeTags_;
+    std::vector<int> api_numNodes_;
+    gmsh::model::mesh::getPolygons(api_elementTags_, api_nodeTags_, api_numNodes_, tag);
+    vector2ptr(api_elementTags_, elementTags, elementTags_n);
+    vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+    vector2ptr(api_numNodes_, numNodes, numNodes_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshAddPolyhedra(const int tag, const size_t * elementTags, const size_t elementTags_n, const int * numFaces, const size_t numFaces_n, const int * faceSizes, const size_t faceSizes_n, const size_t * nodeTags, const size_t nodeTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    std::vector<int> api_numFaces_(numFaces, numFaces + numFaces_n);
+    std::vector<int> api_faceSizes_(faceSizes, faceSizes + faceSizes_n);
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    gmsh::model::mesh::addPolyhedra(tag, api_elementTags_, api_numFaces_, api_faceSizes_, api_nodeTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetPolyhedra(size_t ** elementTags, size_t * elementTags_n, int ** numFaces, size_t * numFaces_n, int ** faceSizes, size_t * faceSizes_n, size_t ** nodeTags, size_t * nodeTags_n, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_;
+    std::vector<int> api_numFaces_;
+    std::vector<int> api_faceSizes_;
+    std::vector<std::size_t> api_nodeTags_;
+    gmsh::model::mesh::getPolyhedra(api_elementTags_, api_numFaces_, api_faceSizes_, api_nodeTags_, tag);
+    vector2ptr(api_elementTags_, elementTags, elementTags_n);
+    vector2ptr(api_numFaces_, numFaces, numFaces_n);
+    vector2ptr(api_faceSizes_, faceSizes, faceSizes_n);
+    vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetPolytopeSimplices(const int elementType, size_t ** elementTags, size_t * elementTags_n, int ** numSimplices, size_t * numSimplices_n, size_t ** nodeTags, size_t * nodeTags_n, int ** given, size_t * given_n, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_;
+    std::vector<int> api_numSimplices_;
+    std::vector<std::size_t> api_nodeTags_;
+    std::vector<int> api_given_;
+    gmsh::model::mesh::getPolytopeSimplices(elementType, api_elementTags_, api_numSimplices_, api_nodeTags_, api_given_, tag);
+    vector2ptr(api_elementTags_, elementTags, elementTags_n);
+    vector2ptr(api_numSimplices_, numSimplices, numSimplices_n);
+    vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+    vector2ptr(api_given_, given, given_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshSetPolytopeSimplices(const size_t * elementTags, const size_t elementTags_n, const int * numSimplices, const size_t numSimplices_n, const size_t * nodeTags, const size_t nodeTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    std::vector<int> api_numSimplices_(numSimplices, numSimplices + numSimplices_n);
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    gmsh::model::mesh::setPolytopeSimplices(api_elementTags_, api_numSimplices_, api_nodeTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshCreatePolytopeSimplices(const int * dimTags, const size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::createPolytopeSimplices(api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType, const char * integrationType, double ** localCoord, size_t * localCoord_n, double ** weights, size_t * weights_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1782,14 +1896,31 @@ GMSH_API void gmshModelMeshGetEdges(const size_t * nodeTags, const size_t nodeTa
   }
 }
 
-GMSH_API void gmshModelMeshGetFaces(const int faceType, const size_t * nodeTags, const size_t nodeTags_n, size_t ** faceTags, size_t * faceTags_n, int ** faceOrientations, size_t * faceOrientations_n, int * ierr)
+GMSH_API void gmshModelMeshGetFaces(const size_t * nodeTags, const size_t nodeTags_n, const int * faceSizes, const size_t faceSizes_n, size_t ** faceTags, size_t * faceTags_n, int ** faceOrientations, size_t * faceOrientations_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<int> api_faceSizes_(faceSizes, faceSizes + faceSizes_n);
+    std::vector<std::size_t> api_faceTags_;
+    std::vector<int> api_faceOrientations_;
+    gmsh::model::mesh::getFaces(api_nodeTags_, api_faceSizes_, api_faceTags_, api_faceOrientations_);
+    vector2ptr(api_faceTags_, faceTags, faceTags_n);
+    vector2ptr(api_faceOrientations_, faceOrientations, faceOrientations_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetFacesByType(const int faceType, const size_t * nodeTags, const size_t nodeTags_n, size_t ** faceTags, size_t * faceTags_n, int ** faceOrientations, size_t * faceOrientations_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
     std::vector<std::size_t> api_faceTags_;
     std::vector<int> api_faceOrientations_;
-    gmsh::model::mesh::getFaces(faceType, api_nodeTags_, api_faceTags_, api_faceOrientations_);
+    gmsh::model::mesh::getFacesByType(faceType, api_nodeTags_, api_faceTags_, api_faceOrientations_);
     vector2ptr(api_faceTags_, faceTags, faceTags_n);
     vector2ptr(api_faceOrientations_, faceOrientations, faceOrientations_n);
   }
@@ -1845,15 +1976,17 @@ GMSH_API void gmshModelMeshGetAllEdges(size_t ** edgeTags, size_t * edgeTags_n, 
   }
 }
 
-GMSH_API void gmshModelMeshGetAllFaces(const int faceType, size_t ** faceTags, size_t * faceTags_n, size_t ** faceNodes, size_t * faceNodes_n, int * ierr)
+GMSH_API void gmshModelMeshGetAllFaces(size_t ** faceTags, size_t * faceTags_n, size_t ** faceNodes, size_t * faceNodes_n, int ** faceSizes, size_t * faceSizes_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_faceTags_;
     std::vector<std::size_t> api_faceNodes_;
-    gmsh::model::mesh::getAllFaces(faceType, api_faceTags_, api_faceNodes_);
+    std::vector<int> api_faceSizes_;
+    gmsh::model::mesh::getAllFaces(api_faceTags_, api_faceNodes_, api_faceSizes_);
     vector2ptr(api_faceTags_, faceTags, faceTags_n);
     vector2ptr(api_faceNodes_, faceNodes, faceNodes_n);
+    vector2ptr(api_faceSizes_, faceSizes, faceSizes_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1873,13 +2006,14 @@ GMSH_API void gmshModelMeshAddEdges(const size_t * edgeTags, const size_t edgeTa
   }
 }
 
-GMSH_API void gmshModelMeshAddFaces(const int faceType, const size_t * faceTags, const size_t faceTags_n, const size_t * faceNodes, const size_t faceNodes_n, int * ierr)
+GMSH_API void gmshModelMeshAddFaces(const size_t * faceTags, const size_t faceTags_n, const size_t * faceNodes, const size_t faceNodes_n, const int * faceSizes, const size_t faceSizes_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_faceTags_(faceTags, faceTags + faceTags_n);
     std::vector<std::size_t> api_faceNodes_(faceNodes, faceNodes + faceNodes_n);
-    gmsh::model::mesh::addFaces(faceType, api_faceTags_, api_faceNodes_);
+    std::vector<int> api_faceSizes_(faceSizes, faceSizes + faceSizes_n);
+    gmsh::model::mesh::addFaces(api_faceTags_, api_faceNodes_, api_faceSizes_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1987,12 +2121,27 @@ GMSH_API void gmshModelMeshGetElementEdgeNodes(const int elementType, size_t ** 
   }
 }
 
-GMSH_API void gmshModelMeshGetElementFaceNodes(const int elementType, const int faceType, size_t ** nodeTags, size_t * nodeTags_n, const int tag, const int primary, const size_t task, const size_t numTasks, int * ierr)
+GMSH_API void gmshModelMeshGetElementFaceNodes(const int elementType, size_t ** nodeTags, size_t * nodeTags_n, int ** faceSizes, size_t * faceSizes_n, const int tag, const int primary, const size_t task, const size_t numTasks, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_nodeTags_;
-    gmsh::model::mesh::getElementFaceNodes(elementType, faceType, api_nodeTags_, tag, primary, task, numTasks);
+    std::vector<int> api_faceSizes_;
+    gmsh::model::mesh::getElementFaceNodes(elementType, api_nodeTags_, api_faceSizes_, tag, primary, task, numTasks);
+    vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+    vector2ptr(api_faceSizes_, faceSizes, faceSizes_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetElementFaceNodesByType(const int elementType, const int faceType, size_t ** nodeTags, size_t * nodeTags_n, const int tag, const int primary, const size_t task, const size_t numTasks, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_nodeTags_;
+    gmsh::model::mesh::getElementFaceNodesByType(elementType, faceType, api_nodeTags_, tag, primary, task, numTasks);
     vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
   }
   catch(...){

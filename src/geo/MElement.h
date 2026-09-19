@@ -244,8 +244,6 @@ public:
   virtual MElement *getBaseElement() { return this; }
 
   // get and set domain for borders
-  virtual MElement *getDomain(int i) const { return nullptr; }
-  virtual void setDomain(MElement *e, int i) {}
 
   // get the type of the element
   virtual int getType() const = 0;
@@ -459,8 +457,7 @@ public:
   // IO routines
   virtual void writeMSH2(FILE *fp, double version = 1.0, bool binary = false,
                          int num = 0, int elementary = 1, int physical = 1,
-                         int parentNum = 0, int dom1Num = 0, int dom2Num = 0,
-                         std::vector<short> *ghosts = nullptr);
+                         int parentNum = 0,                          std::vector<short> *ghosts = nullptr);
   virtual void writeMSH3(FILE *fp, bool binary = false, int elementary = 1,
                          std::vector<short> *ghosts = nullptr);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
@@ -515,8 +512,7 @@ public:
 
   // copy element and parent if any, vertexMap contains the new vertices
   virtual MElement *copy(std::map<std::size_t, MVertex *> &vertexMap,
-                         std::map<MElement *, MElement *> &newParents,
-                         std::map<MElement *, MElement *> &newDomains);
+                         std::map<MElement *, MElement *> &newParents);
 
   // Return the number of nodes that this element must have with the other in
   // order to put an edge between them in the dual graph used during the
@@ -528,8 +524,7 @@ class MElementFactory {
 public:
   MElement *create(int type, std::vector<MVertex *> &v, std::size_t num = 0,
                    int part = 0, bool owner = false, int parent = 0,
-                   MElement *parent_ptr = nullptr, MElement *d1 = nullptr,
-                   MElement *d2 = nullptr);
+                   MElement *parent_ptr = nullptr);
   MElement *create(int num, int type, const std::vector<int> &data,
                    GModel *model);
 };

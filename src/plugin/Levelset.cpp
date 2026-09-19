@@ -4,6 +4,8 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "Levelset.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "MakeSimplex.h"
 #include "Numeric.h"
 #include "Iso.h"
@@ -374,7 +376,8 @@ void GMSH_LevelsetPlugin::_addElement(int np, int numEdges, int numComp,
 void GMSH_LevelsetPlugin::_cutAndAddElements(
   PViewData *vdata, PViewData *wdata, int ent, int ele, int vstep, int wstep,
   double x[8], double y[8], double z[8], double levels[8],
-  double scalarValues[8], PViewDataList *out)
+  double scalarValues[8], PViewDataList *out, int simplexType, int numNodes,
+  int numEdges, const int *nodeMap)
 {
   int stepmin = vstep, stepmax = vstep + 1, otherstep = wstep;
   if(stepmin < 0) {
@@ -383,10 +386,16 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
   }
   if(wstep < 0) otherstep = wdata->getFirstNonEmptyTimeStep();
 
-  int numNodes = vdata->getNumNodes(stepmin, ent, ele);
-  int numEdges = vdata->getNumEdges(stepmin, ent, ele);
+  int type = simplexType;
+  if(type < 0) {
+    numNodes = vdata->getNumNodes(stepmin, ent, ele);
+    numEdges = vdata->getNumEdges(stepmin, ent, ele);
+    type = vdata->getType(stepmin, ent, ele);
+  }
   int numComp = wdata->getNumComponents(otherstep, ent, ele);
-  int type = vdata->getType(stepmin, ent, ele);
+  // the index of a node in the data: for a sub-simplex of a polytope, the
+  // index of the node in the polytope
+  auto nn = [&](int i) { return nodeMap ? nodeMap[i] : i; };
 
   // decompose the element into simplices
   for(int simplex = 0; simplex < numSimplexDec(type); simplex++) {
@@ -410,8 +419,8 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
                                     &yp[np], &zp[np]);
           for(int comp = 0; comp < numComp; comp++) {
             double v0, v1;
-            wdata->getValue(otherstep, ent, ele, n[n0], comp, v0);
-            wdata->getValue(otherstep, ent, ele, n[n1], comp, v1);
+            wdata->getValue(otherstep, ent, ele, nn(n[n0]), comp, v0);
+            wdata->getValue(otherstep, ent, ele, nn(n[n1]), comp, v1);
             valp[np][comp] = v0 + c * (v1 - v0);
           }
           ep[np++] = i + 1;
@@ -439,7 +448,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
             yp[nod] = y[n[nod]];
             zp[nod] = z[n[nod]];
             for(int comp = 0; comp < numComp; comp++)
-              wdata->getValue(otherstep, ent, ele, n[nod], comp,
+              wdata->getValue(otherstep, ent, ele, nn(n[nod]), comp,
                               valp[nod][comp]);
           }
           _addElement(nsn, nse, numComp, xp, yp, zp, valp, out,
@@ -545,6 +554,53 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
   }
 }
 
+// cut a polygon or a polyhedron: each of its sub-simplices is cut as a
+// triangle or a tetrahedron, with the values at all the nodes of the polytope
+void GMSH_LevelsetPlugin::_cutPolytope(PViewData *vdata, PViewData *wdata,
+                                       int ent, int ele, int vstep, int wstep,
+                                       PViewDataList *out)
+{
+  int step = (vstep < 0) ? vdata->getFirstNonEmptyTimeStep() : vstep;
+  MElement *e = vdata->getElement(step, ent, ele);
+  if(!e) return;
+  int type = e->getType(), numSimplices = 0, numNodes = 0, numEdges = 0;
+  if(type == TYPE_POLYG) {
+    numSimplices = static_cast<MPolygon *>(e)->getNumTriangles();
+    numNodes = 3;
+    numEdges = 3;
+  }
+  else if(type == TYPE_POLYH) {
+    numSimplices = static_cast<MPolyhedron *>(e)->getNumTetrahedra();
+    numNodes = 4;
+    numEdges = 6;
+  }
+  else
+    return;
+  double x[8], y[8], z[8], levels[8], scalarValues[8] = {0.};
+  for(int i = 0; i < numSimplices; i++) {
+    int map[4];
+    if(type == TYPE_POLYG) {
+      std::array<int, 3> is = static_cast<MPolygon *>(e)->getTriangleIndices(i);
+      for(int k = 0; k < 3; k++) map[k] = is[k];
+    }
+    else {
+      std::array<int, 4> is =
+        static_cast<MPolyhedron *>(e)->getTetrahedronIndices(i);
+      for(int k = 0; k < 4; k++) map[k] = is[k];
+    }
+    for(int k = 0; k < numNodes; k++) {
+      vdata->getNode(step, ent, ele, map[k], x[k], y[k], z[k]);
+      if(vstep >= 0)
+        vdata->getScalarValue(step, ent, ele, map[k], scalarValues[k]);
+      levels[k] = levelset(x[k], y[k], z[k], scalarValues[k]);
+    }
+    _cutAndAddElements(vdata, wdata, ent, ele, vstep, wstep, x, y, z, levels,
+                       scalarValues, out, (type == TYPE_POLYG) ? TYPE_TRI :
+                                                                 TYPE_TET,
+                       numNodes, numEdges, map);
+  }
+}
+
 PView *GMSH_LevelsetPlugin::execute(PView *v)
 {
   // for adapted views we can only run the plugin on one step at a time
@@ -594,6 +650,11 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
       for(int ele = 0; ele < vdata->getNumElements(firstNonEmptyStep, ent);
           ele++) {
         if(vdata->skipElement(firstNonEmptyStep, ent, ele)) continue;
+        int type = vdata->getType(firstNonEmptyStep, ent, ele);
+        if(type == TYPE_POLYG || type == TYPE_POLYH) {
+          _cutPolytope(vdata, wdata, ent, ele, -1, _valueTimeStep, out);
+          continue;
+        }
         for(int nod = 0; nod < vdata->getNumNodes(firstNonEmptyStep, ent, ele);
             nod++) {
           vdata->getNode(firstNonEmptyStep, ent, ele, nod, x[nod], y[nod],
@@ -618,12 +679,17 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
       if(_visible && vdata->skipEntity(step, ent)) continue;
         for(int ele = 0; ele < vdata->getNumElements(step, ent); ele++) {
           if(vdata->skipElement(step, ent, ele)) continue;
+          int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
+          int type = vdata->getType(step, ent, ele);
+          if(type == TYPE_POLYG || type == TYPE_POLYH) {
+            _cutPolytope(vdata, wdata, ent, ele, step, wstep, out);
+            continue;
+          }
           for(int nod = 0; nod < vdata->getNumNodes(step, ent, ele); nod++) {
             vdata->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
             vdata->getScalarValue(step, ent, ele, nod, scalarValues[nod]);
             levels[nod] = levelset(x[nod], y[nod], z[nod], scalarValues[nod]);
           }
-          int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
           _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
                              levels, scalarValues, out);
         }

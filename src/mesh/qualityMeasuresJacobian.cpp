@@ -4,6 +4,8 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <limits>
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "qualityMeasuresJacobian.h"
 #include "FuncSpaceData.h"
 #include "MElement.h"
@@ -242,6 +244,30 @@ namespace jacobianBasedQuality {
   void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
                                  const fullMatrix<double> *normals, bool debug)
   {
+    // polytopes: the extrema over their sub-simplices
+    if(el->getType() == TYPE_POLYG || el->getType() == TYPE_POLYH) {
+      min = 1e300;
+      max = -1e300;
+      int n = (el->getType() == TYPE_POLYG) ?
+                static_cast<MPolygon *>(el)->getNumTriangles() :
+                static_cast<MPolyhedron *>(el)->getNumTetrahedra();
+      for(int i = 0; i < n; i++) {
+        double a, b;
+        if(el->getType() == TYPE_POLYG) {
+          MTriangle t = static_cast<MPolygon *>(el)->getTriangle(i);
+          minMaxJacobianDeterminant(&t, a, b, normals, debug);
+        }
+        else {
+          MTetrahedron t = static_cast<MPolyhedron *>(el)->getTetrahedron(i);
+          minMaxJacobianDeterminant(&t, a, b, normals, debug);
+        }
+        min = std::min(min, a);
+        max = std::max(max, b);
+      }
+      if(min > max) min = max = 0.;
+      return;
+    }
+
     // Get Jacobian basis
     const JacobianBasis *jfs = el->getJacobianFuncSpace();
     if(!jfs) {
@@ -280,6 +306,25 @@ namespace jacobianBasedQuality {
   double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk,
                        const fullMatrix<double> *normals, bool debug)
   {
+    // polytopes: the worst of their sub-simplices
+    if(el->getType() == TYPE_POLYG || el->getType() == TYPE_POLYH) {
+      double m = 1e300;
+      int n = (el->getType() == TYPE_POLYG) ?
+                static_cast<MPolygon *>(el)->getNumTriangles() :
+                static_cast<MPolyhedron *>(el)->getNumTetrahedra();
+      for(int i = 0; i < n; i++) {
+        if(el->getType() == TYPE_POLYG) {
+          MTriangle t = static_cast<MPolygon *>(el)->getTriangle(i);
+          m = std::min(m, minIGEMeasure(&t, knownValid, reversedOk, normals, debug));
+        }
+        else {
+          MTetrahedron t = static_cast<MPolyhedron *>(el)->getTetrahedron(i);
+          m = std::min(m, minIGEMeasure(&t, knownValid, reversedOk, normals, debug));
+        }
+      }
+      return n ? m : 0.;
+    }
+
     if(!knownValid) {
       // Computation of the measure should never be performed to invalid
       // elements (for which the measure is 0).
@@ -326,6 +371,25 @@ namespace jacobianBasedQuality {
   double minICNMeasure(MElement *el, bool knownValid, bool reversedOk,
                        const fullMatrix<double> *normals, bool debug)
   {
+    // polytopes: the worst of their sub-simplices
+    if(el->getType() == TYPE_POLYG || el->getType() == TYPE_POLYH) {
+      double m = 1e300;
+      int n = (el->getType() == TYPE_POLYG) ?
+                static_cast<MPolygon *>(el)->getNumTriangles() :
+                static_cast<MPolyhedron *>(el)->getNumTetrahedra();
+      for(int i = 0; i < n; i++) {
+        if(el->getType() == TYPE_POLYG) {
+          MTriangle t = static_cast<MPolygon *>(el)->getTriangle(i);
+          m = std::min(m, minICNMeasure(&t, knownValid, reversedOk, normals, debug));
+        }
+        else {
+          MTetrahedron t = static_cast<MPolyhedron *>(el)->getTetrahedron(i);
+          m = std::min(m, minICNMeasure(&t, knownValid, reversedOk, normals, debug));
+        }
+      }
+      return n ? m : 0.;
+    }
+
     if(!knownValid) {
       // Computation of the measure should never
       // be performed to invalid elements (for which the measure is 0).

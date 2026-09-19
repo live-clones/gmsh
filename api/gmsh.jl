@@ -2908,7 +2908,9 @@ Get the properties of an element of type `elementType`: its name
 (`elementName`), dimension (`dim`), order (`order`), number of nodes
 (`numNodes`), local coordinates of the nodes in the reference element
 (`localNodeCoord` vector, of length `dim` times `numNodes`) and number of
-primary (first order) nodes (`numPrimaryNodes`).
+primary (first order) nodes (`numPrimaryNodes`). Polygons and polyhedra have no
+reference element and a variable number of nodes: `numNodes` and
+`numPrimaryNodes` are -1 and `localNodeCoord` is empty.
 
 Return `elementName`, `dim`, `order`, `numNodes`, `localNodeCoord`, `numPrimaryNodes`.
 
@@ -3096,6 +3098,231 @@ function addElementsByType(tag, elementType, elementTags, nodeTags)
     return nothing
 end
 const add_elements_by_type = addElementsByType
+
+"""
+    gmsh.model.mesh.addPolygons(tag, elementTags, nodeTags, numNodes)
+
+Add polygons classified on the surface `tag`. `elementTags` contains the tags
+(unique, strictly positive identifiers) of the polygons; if empty, new tags are
+assigned automatically. `nodeTags` contains the tags of the boundary nodes of
+all the polygons, concatenated, and `numNodes` the number of boundary nodes of
+each polygon. The nodes of a polygon must be ordered along its boundary; hanging
+nodes are boundary nodes. A sub-triangulation can be given with
+`setPolytopeSimplices`.
+
+Types:
+ - `tag`: integer
+ - `elementTags`: vector of sizes
+ - `nodeTags`: vector of sizes
+ - `numNodes`: vector of integers
+"""
+function addPolygons(tag, elementTags, nodeTags, numNodes)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAddPolygons, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          tag, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cint}, numNodes), length(numNodes), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const add_polygons = addPolygons
+
+"""
+    gmsh.model.mesh.getPolygons(tag = -1)
+
+Get the polygons classified on the surface `tag`: their tags `elementTags`, the
+tags of their boundary nodes concatenated in `nodeTags`, and the number of
+boundary nodes `numNodes` of each polygon. If `tag` < 0, get the polygons of all
+the surfaces.
+
+Return `elementTags`, `nodeTags`, `numNodes`.
+
+Types:
+ - `elementTags`: vector of sizes
+ - `nodeTags`: vector of sizes
+ - `numNodes`: vector of integers
+ - `tag`: integer
+"""
+function getPolygons(tag = -1)
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_numNodes_ = Ref{Ptr{Cint}}()
+    api_numNodes_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPolygons, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, api_numNodes_, api_numNodes_n_, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    numNodes = unsafe_wrap(Array, api_numNodes_[], api_numNodes_n_[], own = true)
+    return elementTags, nodeTags, numNodes
+end
+const get_polygons = getPolygons
+
+"""
+    gmsh.model.mesh.addPolyhedra(tag, elementTags, numFaces, faceSizes, nodeTags)
+
+Add polyhedra classified on the volume `tag`. `elementTags` contains the tags
+(unique, strictly positive identifiers) of the polyhedra; if empty, new tags are
+assigned automatically. `numFaces` contains the number of faces of each
+polyhedron, `faceSizes` the number of nodes of each face, and `nodeTags` the
+tags of the nodes of all the faces, concatenated. A sub-tetrahedralization can
+be given with `setPolytopeSimplices`.
+
+Types:
+ - `tag`: integer
+ - `elementTags`: vector of sizes
+ - `numFaces`: vector of integers
+ - `faceSizes`: vector of integers
+ - `nodeTags`: vector of sizes
+"""
+function addPolyhedra(tag, elementTags, numFaces, faceSizes, nodeTags)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAddPolyhedra, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          tag, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Cint}, numFaces), length(numFaces), convert(Vector{Cint}, faceSizes), length(faceSizes), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const add_polyhedra = addPolyhedra
+
+"""
+    gmsh.model.mesh.getPolyhedra(tag = -1)
+
+Get the polyhedra classified on the volume `tag`: their tags `elementTags`, the
+number of faces `numFaces` of each polyhedron, the number of nodes `faceSizes`
+of each face, and the tags of the nodes of all the faces concatenated in
+`nodeTags`. If `tag` < 0, get the polyhedra of all the volumes.
+
+Return `elementTags`, `numFaces`, `faceSizes`, `nodeTags`.
+
+Types:
+ - `elementTags`: vector of sizes
+ - `numFaces`: vector of integers
+ - `faceSizes`: vector of integers
+ - `nodeTags`: vector of sizes
+ - `tag`: integer
+"""
+function getPolyhedra(tag = -1)
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_numFaces_ = Ref{Ptr{Cint}}()
+    api_numFaces_n_ = Ref{Csize_t}()
+    api_faceSizes_ = Ref{Ptr{Cint}}()
+    api_faceSizes_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPolyhedra, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          api_elementTags_, api_elementTags_n_, api_numFaces_, api_numFaces_n_, api_faceSizes_, api_faceSizes_n_, api_nodeTags_, api_nodeTags_n_, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
+    numFaces = unsafe_wrap(Array, api_numFaces_[], api_numFaces_n_[], own = true)
+    faceSizes = unsafe_wrap(Array, api_faceSizes_[], api_faceSizes_n_[], own = true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    return elementTags, numFaces, faceSizes, nodeTags
+end
+const get_polyhedra = getPolyhedra
+
+"""
+    gmsh.model.mesh.getPolytopeSimplices(elementType, tag = -1)
+
+Get the simplices (triangles for polygons, tetrahedra for polyhedra) subdividing
+the polytopes of type `elementType` (34 for polygons, 35 for polyhedra)
+classified on the entity of tag `tag`: the tags of the polytopes `elementTags`,
+the number of simplices `numSimplices` of each polytope, and the tags of the
+nodes of all the simplices concatenated in `nodeTags`. The nodes of the
+simplices that are not boundary nodes of a polytope are its hanging or interior
+nodes. If the simplices of a polytope were neither given (in the mesh file or
+with `setPolytopeSimplices`) nor created (with `createPolytopeSimplices`), they
+are computed on the fly and not saved with the mesh; `given` tells for each
+polytope if its simplices are saved with the mesh. If `tag` < 0, get the
+simplices of the polytopes of all the entities.
+
+Return `elementTags`, `numSimplices`, `nodeTags`, `given`.
+
+Types:
+ - `elementType`: integer
+ - `elementTags`: vector of sizes
+ - `numSimplices`: vector of integers
+ - `nodeTags`: vector of sizes
+ - `given`: vector of integers
+ - `tag`: integer
+"""
+function getPolytopeSimplices(elementType, tag = -1)
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_numSimplices_ = Ref{Ptr{Cint}}()
+    api_numSimplices_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_given_ = Ref{Ptr{Cint}}()
+    api_given_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPolytopeSimplices, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, api_elementTags_, api_elementTags_n_, api_numSimplices_, api_numSimplices_n_, api_nodeTags_, api_nodeTags_n_, api_given_, api_given_n_, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
+    numSimplices = unsafe_wrap(Array, api_numSimplices_[], api_numSimplices_n_[], own = true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    given = unsafe_wrap(Array, api_given_[], api_given_n_[], own = true)
+    return elementTags, numSimplices, nodeTags, given
+end
+const get_polytope_simplices = getPolytopeSimplices
+
+"""
+    gmsh.model.mesh.setPolytopeSimplices(elementTags, numSimplices, nodeTags)
+
+Set the simplices (triangles for polygons, tetrahedra for polyhedra) subdividing
+the polytopes `elementTags`: `numSimplices` contains the number of simplices of
+each polytope, and `nodeTags` the tags of the nodes of all the simplices,
+concatenated. The nodes of the simplices that are not boundary nodes of a
+polytope become its hanging or interior nodes. The simplices are saved with the
+mesh.
+
+Types:
+ - `elementTags`: vector of sizes
+ - `numSimplices`: vector of integers
+ - `nodeTags`: vector of sizes
+"""
+function setPolytopeSimplices(elementTags, numSimplices, nodeTags)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetPolytopeSimplices, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Cint}, numSimplices), length(numSimplices), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_polytope_simplices = setPolytopeSimplices
+
+"""
+    gmsh.model.mesh.createPolytopeSimplices(dimTags = Tuple{Cint,Cint}[])
+
+Create the simplices subdividing the polytopes classified on the entities
+`dimTags` (given as a vector of (dim, tag) pairs), or on all the entities if
+`dimTags` is empty, when none were given: polygons are triangulated by ear
+clipping, and polyhedra are tetrahedralized as a fan from their first node
+(which is only correct if the polyhedron is star-shaped with respect to it). The
+simplices are then saved with the mesh.
+
+Types:
+ - `dimTags`: vector of pairs of integers
+"""
+function createPolytopeSimplices(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreatePolytopeSimplices, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const create_polytope_simplices = createPolytopeSimplices
 
 """
     gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
@@ -3389,13 +3616,46 @@ end
 const get_edges = getEdges
 
 """
-    gmsh.model.mesh.getFaces(faceType, nodeTags)
+    gmsh.model.mesh.getFaces(nodeTags, faceSizes)
 
 Get the global unique mesh face identifiers `faceTags` and orientations
-`faceOrientations` for an input list of a multiple of three (if `faceType` == 3)
-or four (if `faceType` == 4) node tags defining these faces, concatenated in the
-vector `nodeTags`. Mesh faces are created e.g. by `createFaces()`, `getKeys()`
-or `addFaces()`.
+`faceOrientations` for an input list of faces defined by their node tags
+concatenated in the vector `nodeTags`, with `faceSizes` the number of nodes of
+each face. Mesh faces are created e.g. by `createFaces()`, `getKeys()` or
+`addFaces()`.
+
+Return `faceTags`, `faceOrientations`.
+
+Types:
+ - `nodeTags`: vector of sizes
+ - `faceSizes`: vector of integers
+ - `faceTags`: vector of sizes
+ - `faceOrientations`: vector of integers
+"""
+function getFaces(nodeTags, faceSizes)
+    api_faceTags_ = Ref{Ptr{Csize_t}}()
+    api_faceTags_n_ = Ref{Csize_t}()
+    api_faceOrientations_ = Ref{Ptr{Cint}}()
+    api_faceOrientations_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetFaces, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cint}, faceSizes), length(faceSizes), api_faceTags_, api_faceTags_n_, api_faceOrientations_, api_faceOrientations_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    faceTags = unsafe_wrap(Array, api_faceTags_[], api_faceTags_n_[], own = true)
+    faceOrientations = unsafe_wrap(Array, api_faceOrientations_[], api_faceOrientations_n_[], own = true)
+    return faceTags, faceOrientations
+end
+const get_faces = getFaces
+
+"""
+    gmsh.model.mesh.getFacesByType(faceType, nodeTags)
+
+Get the global unique mesh face identifiers `faceTags` and orientations
+`faceOrientations` for an input list of faces with `faceType` nodes each (3 for
+triangular faces, 4 for quadrangular faces, etc.), defined by their node tags
+concatenated in the vector `nodeTags`. Mesh faces are created e.g. by
+`createFaces()`, `getKeys()` or `addFaces()`.
 
 Return `faceTags`, `faceOrientations`.
 
@@ -3405,13 +3665,13 @@ Types:
  - `faceTags`: vector of sizes
  - `faceOrientations`: vector of integers
 """
-function getFaces(faceType, nodeTags)
+function getFacesByType(faceType, nodeTags)
     api_faceTags_ = Ref{Ptr{Csize_t}}()
     api_faceTags_n_ = Ref{Csize_t}()
     api_faceOrientations_ = Ref{Ptr{Cint}}()
     api_faceOrientations_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetFaces, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetFacesByType, gmsh.lib), Cvoid,
           (Cint, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           faceType, convert(Vector{Csize_t}, nodeTags), length(nodeTags), api_faceTags_, api_faceTags_n_, api_faceOrientations_, api_faceOrientations_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
@@ -3419,7 +3679,7 @@ function getFaces(faceType, nodeTags)
     faceOrientations = unsafe_wrap(Array, api_faceOrientations_[], api_faceOrientations_n_[], own = true)
     return faceTags, faceOrientations
 end
-const get_faces = getFaces
+const get_faces_by_type = getFacesByType
 
 """
     gmsh.model.mesh.createEdges(dimTags = Tuple{Cint,Cint}[])
@@ -3493,32 +3753,35 @@ end
 const get_all_edges = getAllEdges
 
 """
-    gmsh.model.mesh.getAllFaces(faceType)
+    gmsh.model.mesh.getAllFaces()
 
-Get the global unique identifiers `faceTags` and the nodes `faceNodes` of the
-faces of type `faceType` in the mesh. Mesh faces are created e.g. by
-`createFaces()`, `getKeys()` or addFaces().
+Get the global unique identifiers `faceTags` and the nodes `faceNodes` of all
+the faces in the mesh, with `faceSizes` the number of nodes of each face. Mesh
+faces are created e.g. by `createFaces()`, `getKeys()` or addFaces().
 
-Return `faceTags`, `faceNodes`.
+Return `faceTags`, `faceNodes`, `faceSizes`.
 
 Types:
- - `faceType`: integer
  - `faceTags`: vector of sizes
  - `faceNodes`: vector of sizes
+ - `faceSizes`: vector of integers
 """
-function getAllFaces(faceType)
+function getAllFaces()
     api_faceTags_ = Ref{Ptr{Csize_t}}()
     api_faceTags_n_ = Ref{Csize_t}()
     api_faceNodes_ = Ref{Ptr{Csize_t}}()
     api_faceNodes_n_ = Ref{Csize_t}()
+    api_faceSizes_ = Ref{Ptr{Cint}}()
+    api_faceSizes_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetAllFaces, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          faceType, api_faceTags_, api_faceTags_n_, api_faceNodes_, api_faceNodes_n_, ierr)
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_faceTags_, api_faceTags_n_, api_faceNodes_, api_faceNodes_n_, api_faceSizes_, api_faceSizes_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     faceTags = unsafe_wrap(Array, api_faceTags_[], api_faceTags_n_[], own = true)
     faceNodes = unsafe_wrap(Array, api_faceNodes_[], api_faceNodes_n_[], own = true)
-    return faceTags, faceNodes
+    faceSizes = unsafe_wrap(Array, api_faceSizes_[], api_faceSizes_n_[], own = true)
+    return faceTags, faceNodes, faceSizes
 end
 const get_all_faces = getAllFaces
 
@@ -3543,21 +3806,22 @@ end
 const add_edges = addEdges
 
 """
-    gmsh.model.mesh.addFaces(faceType, faceTags, faceNodes)
+    gmsh.model.mesh.addFaces(faceTags, faceNodes, faceSizes)
 
-Add mesh faces of type `faceType` defined by their global unique identifiers
-`faceTags` and their nodes `faceNodes`.
+Add mesh faces defined by their global unique identifiers `faceTags`, their
+nodes `faceNodes` concatenated in a single vector, and `faceSizes` the number of
+nodes of each face.
 
 Types:
- - `faceType`: integer
  - `faceTags`: vector of sizes
  - `faceNodes`: vector of sizes
+ - `faceSizes`: vector of integers
 """
-function addFaces(faceType, faceTags, faceNodes)
+function addFaces(faceTags, faceNodes, faceSizes)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAddFaces, gmsh.lib), Cvoid,
-          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
-          faceType, convert(Vector{Csize_t}, faceTags), length(faceTags), convert(Vector{Csize_t}, faceNodes), length(faceNodes), ierr)
+          (Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Csize_t}, faceTags), length(faceTags), convert(Vector{Csize_t}, faceNodes), length(faceNodes), convert(Vector{Cint}, faceSizes), length(faceSizes), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -3764,13 +4028,54 @@ end
 const get_element_edge_nodes = getElementEdgeNodes
 
 """
-    gmsh.model.mesh.getElementFaceNodes(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
+    gmsh.model.mesh.getElementFaceNodes(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
 
-Get the nodes on the faces of type `faceType` (3 for triangular faces, 4 for
-quadrangular faces) of all elements of type `elementType` classified on the
-entity of tag `tag`. `nodeTags` contains the node tags of the faces for all
-elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is returned by
-element, with elements in the same order as in `getElements` and
+Get the nodes on the faces of all elements of type `elementType` classified on
+the entity of tag `tag`. `nodeTags` contains the node tags of the faces for all
+elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], and `faceSizes` the number of
+nodes of each face: [e1f1N, e1f2N, ...]. Faces are returned for each element in
+their canonical order, with elements in the same order as in `getElements` and
+`getElementsByType`. If `primary` is set, only the primary (corner) nodes of the
+faces are returned. If `tag` < 0, get the face nodes for all entities. If
+`numTasks` > 1, only compute and return the part of the data indexed by `task`
+(for C++ only; output vectors must be preallocated).
+
+Return `nodeTags`, `faceSizes`.
+
+Types:
+ - `elementType`: integer
+ - `nodeTags`: vector of sizes
+ - `faceSizes`: vector of integers
+ - `tag`: integer
+ - `primary`: boolean
+ - `task`: size
+ - `numTasks`: size
+"""
+function getElementFaceNodes(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_faceSizes_ = Ref{Ptr{Cint}}()
+    api_faceSizes_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementFaceNodes, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, api_nodeTags_, api_nodeTags_n_, api_faceSizes_, api_faceSizes_n_, tag, primary, task, numTasks, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    faceSizes = unsafe_wrap(Array, api_faceSizes_[], api_faceSizes_n_[], own = true)
+    return nodeTags, faceSizes
+end
+const get_element_face_nodes = getElementFaceNodes
+
+"""
+    gmsh.model.mesh.getElementFaceNodesByType(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
+
+Get the nodes on the faces with `faceType` primary nodes (3 for triangular
+faces, 4 for quadrangular faces, etc.) of all elements of type `elementType`
+classified on the entity of tag `tag`. `nodeTags` contains the node tags of
+these faces for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], with the same
+number of nodes N for each face. Faces are returned for each element in their
+canonical order, with elements in the same order as in `getElements` and
 `getElementsByType`. If `primary` is set, only the primary (corner) nodes of the
 faces are returned. If `tag` < 0, get the face nodes for all entities. If
 `numTasks` > 1, only compute and return the part of the data indexed by `task`
@@ -3787,18 +4092,18 @@ Types:
  - `task`: size
  - `numTasks`: size
 """
-function getElementFaceNodes(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
+function getElementFaceNodesByType(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetElementFaceNodes, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetElementFaceNodesByType, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, faceType, api_nodeTags_, api_nodeTags_n_, tag, primary, task, numTasks, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
     return nodeTags
 end
-const get_element_face_nodes = getElementFaceNodes
+const get_element_face_nodes_by_type = getElementFaceNodesByType
 
 """
     gmsh.model.mesh.getGhostElements(dim, tag)

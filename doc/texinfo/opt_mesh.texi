@@ -511,6 +511,16 @@ Number of prisms in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Mesh.NbPolygons
+Number of polygons in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbPolyhedra
+Number of polyhedra in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item Mesh.NbPyramids
 Number of pyramids in the current mesh (read-only)@*
 Default value: @code{0}@*
@@ -996,6 +1006,16 @@ Display mesh trihedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Polygons
+Display mesh polygons?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Polyhedra
+Display mesh polyhedra?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.TransfiniteTri
 Use alternative transfinite arrangement when meshing 3-sided surfaces@*
 Default value: @code{0}@*
@@ -1079,6 +1099,16 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Color.Trihedra
 Mesh trihedron color (if Mesh.ColorCarousel=0)@*
 Default value: @code{@{20,255,0@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Polygons
+Mesh polygon color (if Mesh.ColorCarousel=0)@*
+Default value: @code{@{160,150,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Polyhedra
+Mesh polyhedron color (if Mesh.ColorCarousel=0)@*
+Default value: @code{@{130,120,225@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Tangents

@@ -389,7 +389,7 @@ mesh.add('getElementTypes', doc, None, ovectorint('elementTypes'), iint('dim', '
 doc = '''Return an element type given its family name `familyName' ("Point", "Line", "Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism", "Hexahedron") and polynomial order `order'. If `serendip' is true, return the corresponding serendip element type (element without interior nodes).'''
 mesh.add('getElementType', doc, oint, istring('familyName'), iint('order'), ibool('serendip', 'false', 'False'))
 
-doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes'), local coordinates of the nodes in the reference element (`localNodeCoord' vector, of length `dim' times `numNodes') and number of primary (first order) nodes (`numPrimaryNodes').'''
+doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes'), local coordinates of the nodes in the reference element (`localNodeCoord' vector, of length `dim' times `numNodes') and number of primary (first order) nodes (`numPrimaryNodes'). Polygons and polyhedra have no reference element and a variable number of nodes: `numNodes' and `numPrimaryNodes' are -1 and `localNodeCoord' is empty.'''
 mesh.add('getElementProperties', doc, None, iint('elementType'), ostring('elementName'), oint('dim'), oint('order'), oint('numNodes'), ovectordouble('localNodeCoord'), oint('numPrimaryNodes'))
 
 doc = '''Get the elements of type `elementType' classified on the entity of tag `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements of the given type times the number N of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If `numTasks' > 1, only compute and return the part of the data indexed by `task' (for C++ only; output vectors must be preallocated).'''
@@ -409,6 +409,27 @@ mesh.add('addElements', doc, None, iint('dim'), iint('tag'), ivectorint('element
 
 doc = '''Add elements of type `elementType' classified on the entity of tag `tag'. `elementTags' contains the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements times the number N of nodes per element, that contains the node tags of all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are automatically assigned to the elements.'''
 mesh.add('addElementsByType', doc, None, iint('tag'), iint('elementType'), ivectorsize('elementTags'), ivectorsize('nodeTags'))
+
+doc = '''Add polygons classified on the surface `tag'. `elementTags' contains the tags (unique, strictly positive identifiers) of the polygons; if empty, new tags are assigned automatically. `nodeTags' contains the tags of the boundary nodes of all the polygons, concatenated, and `numNodes' the number of boundary nodes of each polygon. The nodes of a polygon must be ordered along its boundary; hanging nodes are boundary nodes. A sub-triangulation can be given with `setPolytopeSimplices'.'''
+mesh.add('addPolygons', doc, None, iint('tag'), ivectorsize('elementTags'), ivectorsize('nodeTags'), ivectorint('numNodes'))
+
+doc = '''Get the polygons classified on the surface `tag': their tags `elementTags', the tags of their boundary nodes concatenated in `nodeTags', and the number of boundary nodes `numNodes' of each polygon. If `tag' < 0, get the polygons of all the surfaces.'''
+mesh.add('getPolygons', doc, None, ovectorsize('elementTags'), ovectorsize('nodeTags'), ovectorint('numNodes'), iint('tag', '-1'))
+
+doc = '''Add polyhedra classified on the volume `tag'. `elementTags' contains the tags (unique, strictly positive identifiers) of the polyhedra; if empty, new tags are assigned automatically. `numFaces' contains the number of faces of each polyhedron, `faceSizes' the number of nodes of each face, and `nodeTags' the tags of the nodes of all the faces, concatenated. A sub-tetrahedralization can be given with `setPolytopeSimplices'.'''
+mesh.add('addPolyhedra', doc, None, iint('tag'), ivectorsize('elementTags'), ivectorint('numFaces'), ivectorint('faceSizes'), ivectorsize('nodeTags'))
+
+doc = '''Get the polyhedra classified on the volume `tag': their tags `elementTags', the number of faces `numFaces' of each polyhedron, the number of nodes `faceSizes' of each face, and the tags of the nodes of all the faces concatenated in `nodeTags'. If `tag' < 0, get the polyhedra of all the volumes.'''
+mesh.add('getPolyhedra', doc, None, ovectorsize('elementTags'), ovectorint('numFaces'), ovectorint('faceSizes'), ovectorsize('nodeTags'), iint('tag', '-1'))
+
+doc = '''Get the simplices (triangles for polygons, tetrahedra for polyhedra) subdividing the polytopes of type `elementType' (34 for polygons, 35 for polyhedra) classified on the entity of tag `tag': the tags of the polytopes `elementTags', the number of simplices `numSimplices' of each polytope, and the tags of the nodes of all the simplices concatenated in `nodeTags'. The nodes of the simplices that are not boundary nodes of a polytope are its hanging or interior nodes. If the simplices of a polytope were neither given (in the mesh file or with `setPolytopeSimplices') nor created (with `createPolytopeSimplices'), they are computed on the fly and not saved with the mesh; `given' tells for each polytope if its simplices are saved with the mesh. If `tag' < 0, get the simplices of the polytopes of all the entities.'''
+mesh.add('getPolytopeSimplices', doc, None, iint('elementType'), ovectorsize('elementTags'), ovectorint('numSimplices'), ovectorsize('nodeTags'), ovectorint('given'), iint('tag', '-1'))
+
+doc = '''Set the simplices (triangles for polygons, tetrahedra for polyhedra) subdividing the polytopes `elementTags': `numSimplices' contains the number of simplices of each polytope, and `nodeTags' the tags of the nodes of all the simplices, concatenated. The nodes of the simplices that are not boundary nodes of a polytope become its hanging or interior nodes. The simplices are saved with the mesh.'''
+mesh.add('setPolytopeSimplices', doc, None, ivectorsize('elementTags'), ivectorint('numSimplices'), ivectorsize('nodeTags'))
+
+doc = '''Create the simplices subdividing the polytopes classified on the entities `dimTags' (given as a vector of (dim, tag) pairs), or on all the entities if `dimTags' is empty, when none were given: polygons are triangulated by ear clipping, and polyhedra are tetrahedralized as a fan from their first node (which is only correct if the polyhedron is star-shaped with respect to it). The simplices are then saved with the mesh.'''
+mesh.add('createPolytopeSimplices', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'))
 
 doc = '''Get the numerical quadrature information for the given element type `elementType' and integration rule `integrationType', where `integrationType' concatenates the integration rule family name with the desired order (e.g. "Gauss4" for a quadrature suited for integrating 4th order polynomials). The "CompositeGauss" family uses tensor-product rules based the 1D Gauss-Legendre rule; the "Gauss" family uses an economic scheme when available (i.e. with a minimal number of points), and falls back to "CompositeGauss" otherwise. Note that integration points for the "Gauss" family can fall outside of the reference element for high-order rules. `localCoord' contains the u, v, w coordinates of the G integration points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights' contains the associated weights: [g1q, ..., gGq].'''
 mesh.add('getIntegrationPoints', doc, None, iint('elementType'), istring('integrationType'), ovectordouble('localCoord'), ovectordouble('weights'))
@@ -440,8 +461,11 @@ mesh.add_special('preallocateBasisFunctionsOrientation', doc, ['onlycc++'], None
 doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g. by `createEdges()', `getKeys()' or `addEdges()'. The reference positive orientation is n1 < n2, where n1 and n2 are the tags of the two edge nodes, which corresponds to the local orientation of edge-based basis functions as well.'''
 mesh.add('getEdges', doc, None, ivectorsize('nodeTags'), ovectorsize('edgeTags'), ovectorint('edgeOrientations'))
 
-doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of a multiple of three (if `faceType' == 3) or four (if `faceType' == 4) node tags defining these faces, concatenated in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()', `getKeys()' or `addFaces()'.'''
-mesh.add('getFaces', doc, None, iint('faceType'), ivectorsize('nodeTags'), ovectorsize('faceTags'), ovectorint('faceOrientations'))
+doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of faces defined by their node tags concatenated in the vector `nodeTags', with `faceSizes' the number of nodes of each face. Mesh faces are created e.g. by `createFaces()', `getKeys()' or `addFaces()'.'''
+mesh.add('getFaces', doc, None, ivectorsize('nodeTags'), ivectorint('faceSizes'), ovectorsize('faceTags'), ovectorint('faceOrientations'))
+
+doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of faces with `faceType' nodes each (3 for triangular faces, 4 for quadrangular faces, etc.), defined by their node tags concatenated in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()', `getKeys()' or `addFaces()'.'''
+mesh.add('getFacesByType', doc, None, iint('faceType'), ivectorsize('nodeTags'), ovectorsize('faceTags'), ovectorint('faceOrientations'))
 
 doc = '''Create unique mesh edges for the entities `dimTags', given as a vector of (dim, tag) pairs.'''
 mesh.add('createEdges', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'))
@@ -452,14 +476,14 @@ mesh.add('createFaces', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', 
 doc = '''Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of the edges in the mesh. Mesh edges are created e.g. by `createEdges()', `getKeys()' or addEdges().'''
 mesh.add('getAllEdges', doc, None, ovectorsize('edgeTags'), ovectorsize('edgeNodes'))
 
-doc = '''Get the global unique identifiers `faceTags' and the nodes `faceNodes' of the faces of type `faceType' in the mesh. Mesh faces are created e.g. by `createFaces()', `getKeys()' or addFaces().'''
-mesh.add('getAllFaces', doc, None, iint('faceType'), ovectorsize('faceTags'), ovectorsize('faceNodes'))
+doc = '''Get the global unique identifiers `faceTags' and the nodes `faceNodes' of all the faces in the mesh, with `faceSizes' the number of nodes of each face. Mesh faces are created e.g. by `createFaces()', `getKeys()' or addFaces().'''
+mesh.add('getAllFaces', doc, None, ovectorsize('faceTags'), ovectorsize('faceNodes'), ovectorint('faceSizes'))
 
 doc = '''Add mesh edges defined by their global unique identifiers `edgeTags' and their nodes `edgeNodes'.'''
 mesh.add('addEdges', doc, None, ivectorsize('edgeTags'), ivectorsize('edgeNodes'))
 
-doc = '''Add mesh faces of type `faceType' defined by their global unique identifiers `faceTags' and their nodes `faceNodes'.'''
-mesh.add('addFaces', doc, None, iint('faceType'), ivectorsize('faceTags'), ivectorsize('faceNodes'))
+doc = '''Add mesh faces defined by their global unique identifiers `faceTags', their nodes `faceNodes' concatenated in a single vector, and `faceSizes' the number of nodes of each face.'''
+mesh.add('addFaces', doc, None, ivectorsize('faceTags'), ivectorsize('faceNodes'), ivectorint('faceSizes'))
 
 doc = '''Generate the pair of keys for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each pair (`typeKey', `entityKey') uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeys', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorint('typeKeys'), ovectorsize('entityKeys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
@@ -482,8 +506,11 @@ mesh.add_special('preallocateBarycenters', doc, ['onlycc++'], None, iint('elemen
 doc = '''Get the nodes on the edges of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags of the edges for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. If `primary' is set, only the primary (begin/end) nodes of the edges are returned. If `tag' < 0, get the edge nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task' (for C++ only; output vector must be preallocated).'''
 mesh.add('getElementEdgeNodes', doc, None, iint('elementType'), ovectorsize('nodeTags'), iint('tag', '-1'), ibool('primary', 'false', 'False'), isize('task', '0'), isize('numTasks', '1'))
 
-doc = '''Get the nodes on the faces of type `faceType' (3 for triangular faces, 4 for quadrangular faces) of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags of the faces for all elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. If `primary' is set, only the primary (corner) nodes of the faces are returned. If `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task' (for C++ only; output vector must be preallocated).'''
-mesh.add('getElementFaceNodes', doc, None, iint('elementType'), iint('faceType'), ovectorsize('nodeTags'), iint('tag', '-1'), ibool('primary', 'false', 'False'), isize('task', '0'), isize('numTasks', '1'))
+doc = '''Get the nodes on the faces of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags of the faces for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], and `faceSizes' the number of nodes of each face: [e1f1N, e1f2N, ...]. Faces are returned for each element in their canonical order, with elements in the same order as in `getElements' and `getElementsByType'. If `primary' is set, only the primary (corner) nodes of the faces are returned. If `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task' (for C++ only; output vectors must be preallocated).'''
+mesh.add('getElementFaceNodes', doc, None, iint('elementType'), ovectorsize('nodeTags'), ovectorint('faceSizes'), iint('tag', '-1'), ibool('primary', 'false', 'False'), isize('task', '0'), isize('numTasks', '1'))
+
+doc = '''Get the nodes on the faces with `faceType' primary nodes (3 for triangular faces, 4 for quadrangular faces, etc.) of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags of these faces for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], with the same number of nodes N for each face. Faces are returned for each element in their canonical order, with elements in the same order as in `getElements' and `getElementsByType'. If `primary' is set, only the primary (corner) nodes of the faces are returned. If `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task' (for C++ only; output vector must be preallocated).'''
+mesh.add('getElementFaceNodesByType', doc, None, iint('elementType'), iint('faceType'), ovectorsize('nodeTags'), iint('tag', '-1'), ibool('primary', 'false', 'False'), isize('task', '0'), isize('numTasks', '1'))
 
 doc = '''Get the ghost elements `elementTags' and their associated `partitions' stored in the ghost entity of dimension `dim' and tag `tag'.'''
 mesh.add('getGhostElements', doc, None, iint('dim'), iint('tag'), ovectorsize('elementTags'), ovectorint('partitions'))

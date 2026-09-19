@@ -19,7 +19,8 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "MTrihedron.h"
-#include "MElementCut.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "Context.h"
 #include "OwnerCache.h"
 #include "glyphList.h"
@@ -173,7 +174,7 @@ template <class F> static void forShownElements(GEntity *e, F f)
     GFace *g = static_cast<GFace *>(e);
     if(c->mesh.triangles) f(g->triangles);
     if(c->mesh.quadrangles) f(g->quadrangles);
-    f(g->polygons);
+    if(c->mesh.polygons) f(g->polygons);
   }
   else if(e->dim() == 3) {
     GRegion *g = static_cast<GRegion *>(e);
@@ -182,7 +183,7 @@ template <class F> static void forShownElements(GEntity *e, F f)
     if(c->mesh.prisms) f(g->prisms);
     if(c->mesh.pyramids) f(g->pyramids);
     if(c->mesh.trihedra) f(g->trihedra);
-    f(g->polyhedra);
+    if(c->mesh.polyhedra) f(g->polyhedra);
   }
 }
 
@@ -634,7 +635,9 @@ static void fillMergedPoints(GModel *m, mergedArrays &ma, int status)
                              (double)c->mesh.hexahedra,
                              (double)c->mesh.prisms,
                              (double)c->mesh.pyramids,
-                             (double)c->mesh.trihedra};
+                             (double)c->mesh.trihedra,
+                             (double)c->mesh.polygons,
+                             (double)c->mesh.polyhedra};
   // which entities are shown, which can change without the mesh being
   // flagged as changed
   tok.push_back((double)CTX::instance()->entityVisibilityStamp);
@@ -674,6 +677,7 @@ static void drawMergedVectors(drawContext *ctx, GModel *m, int dim)
   tok.add(c->mesh.radiusSup);
   tok.add(c->mesh.triangles);
   tok.add(c->mesh.quadrangles);
+  tok.add(c->mesh.polygons);
   tok.add(CTX::instance()->entityVisibilityStamp);
   tok.add(c->hideUnselected);
   glyphList *g;

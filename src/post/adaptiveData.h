@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <sys/stat.h>
 #include <assert.h>
-#include <fstream>
 #include <stdio.h>
 #include <string>
 #include <sstream>
@@ -197,6 +196,26 @@ public:
   static void recurError(adaptiveQuadrangle *q, double AVG, double tol);
 };
 
+class adaptivePolygon {
+public:
+  bool visible;
+  adaptiveVertex **p;
+  static std::list<adaptivePolygon *> all;
+  static std::set<adaptiveVertex> allVertices;
+  static int numNodes, numEdges;
+
+public:
+  adaptivePolygon(std::vector<adaptiveVertex *> vertices,
+                  std::vector<size_t> triangles)
+    : visible(true)
+  {
+  }
+  static void create(int maxlevel) {}
+  static void recurCreate(adaptiveTriangle *q, int maxlevel, int level) {}
+  static void error(double AVG, double tol) {}
+  static void recurError(adaptiveTriangle *q, double AVG, double tol) {}
+};
+
 class adaptivePrism {
 public:
   bool visible;
@@ -369,6 +388,26 @@ public:
   static void recurCreate(adaptivePyramid *h, int maxlevel, int level);
   static void error(double AVG, double tol);
   static void recurError(adaptivePyramid *h, double AVG, double tol);
+};
+
+class adaptivePolyhedron {
+public:
+  bool visible;
+  adaptiveVertex **p;
+  static std::list<adaptivePolyhedron *> all;
+  static std::set<adaptiveVertex> allVertices;
+  static int numNodes, numEdges;
+
+public:
+  adaptivePolyhedron(std::vector<adaptiveVertex *> vertices,
+                     std::vector<size_t> triangles)
+    : visible(true)
+  {
+  }
+  static void create(int maxlevel) {}
+  static void recurCreate(adaptiveTriangle *q, int maxlevel, int level) {}
+  static void error(double AVG, double tol) {}
+  static void recurError(adaptiveTriangle *q, double AVG, double tol) {}
 };
 
 class PCoords {
@@ -613,7 +652,7 @@ public:
   // refined elements in the output view (we will remove this when we
   // switch to true on-the-fly local refinement in drawPost())
   void addInView(double tol, int step, PViewData *in, PViewDataList *out,
-                 GMSH_PostPlugin *plug = nullptr);
+                 GMSH_PostPlugin *plug = nullptr, int level = 0);
 
   // Routines for
   // - export of adapted views to pvtu file format for parallel visualization
@@ -647,10 +686,12 @@ private:
   adaptiveElements<adaptiveLine> *_lines;
   adaptiveElements<adaptiveTriangle> *_triangles;
   adaptiveElements<adaptiveQuadrangle> *_quadrangles;
+  adaptiveElements<adaptivePolygon> *_polygons;
   adaptiveElements<adaptiveTetrahedron> *_tetrahedra;
   adaptiveElements<adaptiveHexahedron> *_hexahedra;
   adaptiveElements<adaptivePrism> *_prisms;
   adaptiveElements<adaptivePyramid> *_pyramids;
+  adaptiveElements<adaptivePolyhedron> *_polyhedra;
 
   // When set to true, this builds a global VTK data structure (connectivity,
   // coords, etc) for the adaptive views.  This can be very memory consuming for

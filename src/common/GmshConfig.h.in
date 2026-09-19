@@ -17,7 +17,6 @@
 #cmakedefine HAVE_BLOSSOM
 #cmakedefine HAVE_CAIRO
 #cmakedefine HAVE_DLOPEN
-#cmakedefine HAVE_DINTEGRATION
 #cmakedefine HAVE_DOMHEX
 #cmakedefine HAVE_EIGEN
 #cmakedefine HAVE_FLTK

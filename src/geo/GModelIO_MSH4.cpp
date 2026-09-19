@@ -785,6 +785,13 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       }
     }
 
+    if(elmType == MSH_POLYG_ || elmType == MSH_POLYH_) {
+      Msg::Error("Element type %d is a polytope: define it in $Polytopes "
+                 "instead of $Elements", elmType);
+      delete[] elementsRead;
+      return nullptr;
+    }
+
     GEntity *entity = model->getEntityByTag(entityDim, entityTag);
     if(!entity) {
       Msg::Error("Unknown entity %d of dimension %d", entityTag, entityDim);
@@ -828,7 +835,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
         MElementFactory elementFactory;
         MElement *element = elementFactory.create(
-          elmType, vertices, data[j], 0, false, 0, nullptr, nullptr, nullptr);
+          elmType, vertices, data[j], 0, false, 0, nullptr);
         if(!element) {
           Msg::Error("Could not create element %zu of type %d", data[j],
                      elmType);
@@ -902,7 +909,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
         MElementFactory elementFactory;
         MElement *element = elementFactory.create(
-          elmType, vertices, elmTag, 0, false, 0, nullptr, nullptr, nullptr);
+          elmType, vertices, elmTag, 0, false, 0, nullptr);
         if(!element) {
           Msg::Error("Could not create element %zu of type %d", elmTag,
                      elmType);
@@ -921,6 +928,214 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       }
     }
   }
+  // if the vertex numbering is dense, we fill the vector cache, otherwise we
+  // fill the map cache
+  if(minElementNum == 1 && maxElementNum == totalNumRead) {
+    Msg::Debug("Element numbering is dense");
+    dense = true;
+  }
+  else if(maxElementNum < 10 * totalNumRead) {
+    Msg::Debug(
+      "Element numbering is fairly dense - still caching with a vector");
+    dense = true;
+  }
+  else {
+    Msg::Debug("Element numbering is not dense");
+    dense = false;
+  }
+
+  return elementsRead;
+}
+
+static bool readMSH4SizeT(FILE *fp, bool binary, bool swap, std::size_t &v)
+{
+  if(binary) {
+    if(fread(&v, sizeof(std::size_t), 1, fp) != 1) return false;
+    if(swap) SwapBytes((char *)&v, sizeof(std::size_t), 1);
+    return true;
+  }
+  return fscanf(fp, "%zu", &v) == 1;
+}
+
+static bool readMSH4SizeTs(FILE *fp, bool binary, bool swap, std::size_t n,
+                           std::vector<std::size_t> &v)
+{
+  v.resize(n);
+  if(!n) return true;
+  if(binary) {
+    if(fread(&v[0], sizeof(std::size_t), n, fp) != n) return false;
+    if(swap) SwapBytes((char *)&v[0], sizeof(std::size_t), n);
+    return true;
+  }
+  for(std::size_t i = 0; i < n; i++)
+    if(fscanf(fp, "%zu", &v[i]) != 1) return false;
+  return true;
+}
+
+// As in $Elements, the type in the block header fixes the shape of the records.
+// A polygon is `elementTag numNodes nodeTag ...`, a polyhedron is `elementTag
+// numFaces` then `numNodes nodeTag ...` for each face. Both end with
+// `numSimplices nodeTag ...`, the optional sub-triangulation or
+// sub-tetrahedralization, whose nodes need not be nodes of the polygon or of
+// the faces: those are the hanging or interior nodes.
+static std::pair<MElement *, GEntity *> *
+readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
+                  std::size_t &totalNumRead, std::size_t &maxElementNum,
+                  bool swap, double version)
+{
+  std::size_t numBlock = 0, minTag = 0, maxTag = 0;
+  totalNumRead = 0;
+  maxElementNum = 0;
+
+  if(binary) {
+    std::size_t data[4];
+    if(fread(data, sizeof(std::size_t), 4, fp) != 4) return nullptr;
+    if(swap) SwapBytes((char *)data, sizeof(std::size_t), 4);
+    numBlock = data[0];
+    totalNumRead = data[1];
+    minTag = data[2];
+    maxTag = data[3];
+  }
+  else {
+    if(fscanf(fp, "%zu %zu %zu %zu", &numBlock, &totalNumRead, &minTag,
+              &maxTag) != 4)
+      return nullptr;
+  }
+
+  std::size_t elementRead = 0;
+  std::size_t minElementNum = std::numeric_limits<std::size_t>::max();
+
+  std::pair<MElement *, GEntity *> *elementsRead =
+    new std::pair<MElement *, GEntity *>[totalNumRead];
+  Msg::StartProgressMeter(totalNumRead);
+
+  auto fail = [&]() -> std::pair<MElement *, GEntity *> * {
+    delete[] elementsRead;
+    return nullptr;
+  };
+
+  for(std::size_t i = 0; i < numBlock; i++) {
+    int entityTag = 0, entityDim = 0, elmType = 0;
+    std::size_t numElements = 0;
+
+    if(binary) {
+      int data[3];
+      if(fread(data, sizeof(int), 3, fp) != 3) return fail();
+      if(swap) SwapBytes((char *)data, sizeof(int), 3);
+      entityDim = data[0];
+      entityTag = data[1];
+      elmType = data[2];
+      if(fread(&numElements, sizeof(std::size_t), 1, fp) != 1) return fail();
+      if(swap) SwapBytes((char *)&numElements, sizeof(std::size_t), 1);
+    }
+    else {
+      if(fscanf(fp, "%d %d %d %zu", &entityDim, &entityTag, &elmType,
+                &numElements) != 4)
+        return fail();
+    }
+
+    if(elmType != MSH_POLYG_ && elmType != MSH_POLYH_) {
+      Msg::Error("Element type %d is not a polytope: define it in $Elements "
+                 "instead of $Polytopes", elmType);
+      return fail();
+    }
+
+    GEntity *entity = model->getEntityByTag(entityDim, entityTag);
+    if(!entity) {
+      Msg::Error("Unknown entity %d of dimension %d", entityTag, entityDim);
+      return fail();
+    }
+    if(entity->geomType() == GEntity::GhostCurve) {
+      static_cast<ghostEdge *>(entity)->haveMesh(true);
+    }
+    else if(entity->geomType() == GEntity::GhostSurface) {
+      static_cast<ghostFace *>(entity)->haveMesh(true);
+    }
+    else if(entity->geomType() == GEntity::GhostVolume) {
+      static_cast<ghostRegion *>(entity)->haveMesh(true);
+    }
+
+    const std::size_t numVertPerSimplex = (elmType == MSH_POLYG_) ? 3 : 4;
+
+    // node tags to nodes, with the same diagnostic as in readMSH4Elements
+    auto getNodes = [&](const std::vector<std::size_t> &tags,
+                        std::vector<MVertex *> &nodes, std::size_t elmTag) {
+      nodes.resize(tags.size());
+      for(std::size_t k = 0; k < tags.size(); k++) {
+        nodes[k] = model->getMeshVertexByTag(tags[k]);
+        if(!nodes[k]) {
+          auto parts = getEntityPartition(entity, false);
+          std::string partitionInfo = "";
+          if(!parts.empty()) {
+            partitionInfo = " (partitions:";
+            for(auto p : parts) partitionInfo += " " + std::to_string(p);
+            partitionInfo += ")";
+          }
+          Msg::Error("Unknown node %zu in element %zu in entity %d %d and "
+                     "elementType %d. Entity type is %s. Partition data is %s",
+                     tags[k], elmTag, entityDim, entityTag, elmType,
+                     entity->getTypeString().c_str(), partitionInfo.c_str());
+          return false;
+        }
+      }
+      return true;
+    };
+
+    for(std::size_t j = 0; j < numElements; j++) {
+      std::size_t elmTag = 0, numPolygons = 1;
+      if(!readMSH4SizeT(fp, binary, swap, elmTag)) return fail();
+      if(elmType == MSH_POLYH_ &&
+         !readMSH4SizeT(fp, binary, swap, numPolygons))
+        return fail();
+
+      std::vector<std::size_t> tags;
+      std::vector<MVertex *> polygons, nodes;
+      std::vector<int> polygonStarts = {0};
+      for(std::size_t k = 0; k < numPolygons; k++) {
+        std::size_t polygonSize = 0;
+        if(!readMSH4SizeT(fp, binary, swap, polygonSize) ||
+           !readMSH4SizeTs(fp, binary, swap, polygonSize, tags))
+          return fail();
+        if(!getNodes(tags, nodes, elmTag)) return fail();
+        polygons.insert(polygons.end(), nodes.begin(), nodes.end());
+        polygonStarts.push_back(polygonStarts.back() + (int)polygonSize);
+      }
+
+      std::size_t numSimplices = 0;
+      std::vector<MVertex *> simplices;
+      if(!readMSH4SizeT(fp, binary, swap, numSimplices) ||
+         !readMSH4SizeTs(fp, binary, swap, numSimplices * numVertPerSimplex,
+                         tags))
+        return fail();
+      if(!getNodes(tags, simplices, elmTag)) return fail();
+
+      MElementFactory elementFactory;
+      MElement *element = elementFactory.create(
+        elmType, polygons, elmTag, 0, false, 0, nullptr);
+      if(!element) {
+        Msg::Error("Could not create element %zu of type %d", elmTag, elmType);
+        return fail();
+      }
+
+      if(elmType == MSH_POLYG_) {
+        static_cast<MPolygon *>(element)->setTriangles(simplices);
+      }
+      else {
+        static_cast<MPolyhedron *>(element)->setPolygonsAndTetrahedra(
+          polygons, polygonStarts, simplices);
+      }
+
+      minElementNum = std::min(minElementNum, elmTag);
+      maxElementNum = std::max(maxElementNum, elmTag);
+
+      elementsRead[elementRead] = std::make_pair(element, entity);
+      elementRead++;
+
+      if(totalNumRead > 100000)
+        Msg::ProgressMeter(elementRead, true, "Reading elements");
+    }
+  }
+
   // if the vertex numbering is dense, we fill the vector cache, otherwise we
   // fill the map cache
   if(minElementNum == 1 && maxElementNum == totalNumRead) {
@@ -1886,13 +2101,21 @@ int GModel::_readMSH4(const std::string &name)
       }
       delete[] verticesRead;
     }
-    else if(!strncmp(&str[1], "Elements", 8)) {
+    else if(!strncmp(&str[1], "Elements", 8) ||
+            !strncmp(&str[1], "Polytopes", 9)) {
       bool hadElementsBefore =
         !_elementVectorCache.empty() || !_elementMapCache.empty();
       bool dense = false;
       std::size_t totalNumRead = 0, maxElementNum = 0;
-      std::pair<MElement *, GEntity *> *elementsRead = readMSH4Elements(
-        this, fp, binary, dense, totalNumRead, maxElementNum, swap, version);
+      std::pair<MElement *, GEntity *> *elementsRead = nullptr;
+      if(!strncmp(&str[1], "Elements", 8)) {
+        elementsRead = readMSH4Elements(this, fp, binary, dense, totalNumRead,
+                                        maxElementNum, swap, version);
+      }
+      else if(!strncmp(&str[1], "Polytopes", 9)) {
+        elementsRead = readMSH4Polytopes(this, fp, binary, dense, totalNumRead,
+                                         maxElementNum, swap, version);
+      }
       Msg::StopProgressMeter();
       if(!elementsRead) {
         Msg::Error("Could not read elements");
@@ -3134,6 +3357,169 @@ writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   fprintf(fp, "$EndNodes\n");
 }
 
+static void writeMSH4Polytopes(
+  FILE *fp, bool binary, double version,
+  std::map<std::pair<int, int>, std::vector<MElement *>> polytopesByType[4],
+  std::size_t &numPolytopes)
+{
+  if(!numPolytopes) return;
+
+  fprintf(fp, "$Polytopes\n");
+
+  std::size_t numSection = 0;
+  for(int dim = 0; dim <= 3; dim++) numSection += polytopesByType[dim].size();
+
+  std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
+  for(int dim = 0; dim <= 3; dim++) {
+    for(auto it = polytopesByType[dim].begin();
+        it != polytopesByType[dim].end(); ++it) {
+      for(std::size_t i = 0; i < it->second.size(); i++) {
+        minTag = std::min(minTag, it->second[i]->getNum());
+        maxTag = std::max(maxTag, it->second[i]->getNum());
+      }
+    }
+  }
+
+  if(binary) {
+    fwrite(&numSection, sizeof(std::size_t), 1, fp);
+    fwrite(&numPolytopes, sizeof(std::size_t), 1, fp);
+    fwrite(&minTag, sizeof(std::size_t), 1, fp);
+    fwrite(&maxTag, sizeof(std::size_t), 1, fp);
+  }
+  else {
+    if(version >= 4.1)
+      fprintf(fp, "%zu %zu %zu %zu\n", numSection, numPolytopes, minTag,
+              maxTag);
+    else
+      fprintf(fp, "%zu %zu\n", numSection, numPolytopes);
+  }
+
+  for(int dim = 0; dim <= 3; dim++) {
+    for(auto it = polytopesByType[dim].begin();
+        it != polytopesByType[dim].end(); ++it) {
+      int entityTag = it->first.first;
+      int elmType = it->first.second;
+      std::size_t numElm = it->second.size();
+      if(binary) {
+        fwrite(&dim, sizeof(int), 1, fp);
+        fwrite(&entityTag, sizeof(int), 1, fp);
+        fwrite(&elmType, sizeof(int), 1, fp);
+        fwrite(&numElm, sizeof(std::size_t), 1, fp);
+      }
+      else {
+        fprintf(fp, "%d %d %d %zu\n", (version >= 4.1) ? dim : entityTag,
+                (version >= 4.1) ? entityTag : dim, elmType, numElm);
+      }
+
+      std::size_t N = it->second.size();
+      if(binary) {
+        std::vector<std::size_t> tags;
+        for(std::size_t i = 0; i < N; i++) {
+          MElement *e = it->second[i];
+          tags.push_back(e->getNum());
+          if(e->getTypeForMSH() == MSH_POLYG_) {
+            MPolygon *polygon = static_cast<MPolygon *>(e);
+            size_t polygonSize = polygon->getNumPrimaryVertices();
+            tags.push_back(polygonSize);
+            for(std::size_t j = 0; j < polygonSize; j++) {
+              tags.push_back(polygon->getVertex(j)->getNum());
+            }
+
+            const int numTriangles =
+              polygon->hasGivenTriangles() ? polygon->getNumTriangles() : 0;
+            tags.push_back(numTriangles);
+            for(int j = 0; j < numTriangles; j++) {
+              MTriangle tri = polygon->getTriangle(j);
+              for(int k = 0; k < 3; k++) {
+                tags.push_back(tri.getVertex(k)->getNum());
+              }
+            }
+          }
+          else if(e->getTypeForMSH() == MSH_POLYH_) {
+            MPolyhedron *polyhedron = static_cast<MPolyhedron *>(e);
+            size_t numPolygons = polyhedron->getNumPolygons();
+            tags.push_back(numPolygons);
+            for(std::size_t j = 0; j < numPolygons; j++) {
+              int i0 = polyhedron->getPolygonStart(j);
+              int i1 = polyhedron->getPolygonStart(j + 1);
+              tags.push_back(i1 - i0);
+              for(int k = i0; k < i1; k++) {
+                tags.push_back(polyhedron->getPolygonVertex(k)->getNum());
+              }
+            }
+
+            const int numTetrahedra = polyhedron->hasGivenTetrahedra() ?
+                                        polyhedron->getNumTetrahedra() :
+                                        0;
+            tags.push_back(numTetrahedra);
+            for(int j = 0; j < numTetrahedra; j++) {
+              MTetrahedron tetra = polyhedron->getTetrahedron(j);
+              for(int k = 0; k < 4; k++) {
+                tags.push_back(tetra.getVertex(k)->getNum());
+              }
+            }
+          }
+        }
+        fwrite(&tags[0], sizeof(std::size_t), tags.size(), fp);
+      }
+      else {
+        for(std::size_t i = 0; i < N; i++) {
+          MElement *e = it->second[i];
+          fprintf(fp, "%zu ", e->getNum());
+          if(e->getTypeForMSH() == MSH_POLYG_) {
+            MPolygon *polygon = static_cast<MPolygon *>(e);
+            int polygonSize = polygon->getNumPrimaryVertices();
+            fprintf(fp, "%d ", polygonSize);
+            for(int j = 0; j < polygonSize; j++) {
+              fprintf(fp, "%zu ", polygon->getVertex(j)->getNum());
+            }
+
+            const int numTriangles =
+              polygon->hasGivenTriangles() ? polygon->getNumTriangles() : 0;
+            fprintf(fp, "\n%d ", numTriangles);
+            for(int j = 0; j < numTriangles; j++) {
+              MTriangle tri = polygon->getTriangle(j);
+              for(int k = 0; k < 3; k++) {
+                fprintf(fp, "%zu ", tri.getVertex(k)->getNum());
+              }
+            }
+          }
+          else if(e->getTypeForMSH() == MSH_POLYH_) {
+            MPolyhedron *polyhedron = static_cast<MPolyhedron *>(e);
+
+            int numPolygons = polyhedron->getNumPolygons();
+            fprintf(fp, "%d", numPolygons);
+            for(int j = 0; j < numPolygons; j++) {
+              int i0 = polyhedron->getPolygonStart(j);
+              int i1 = polyhedron->getPolygonStart(j + 1);
+              fprintf(fp, "\n%d ", i1 - i0);
+              for(int k = i0; k < i1; k++) {
+                fprintf(fp, "%zu ", polyhedron->getPolygonVertex(k)->getNum());
+              }
+            }
+
+            const int numTetrahedra = polyhedron->hasGivenTetrahedra() ?
+                                        polyhedron->getNumTetrahedra() :
+                                        0;
+            fprintf(fp, "\n%d ", numTetrahedra);
+            for(int j = 0; j < numTetrahedra; j++) {
+              MTetrahedron tera = polyhedron->getTetrahedron(j);
+              for(int k = 0; k < 4; k++) {
+                fprintf(fp, "%zu ", tera.getVertex(k)->getNum());
+              }
+            }
+          }
+          fprintf(fp, "\n");
+        }
+      }
+    }
+  }
+
+  if(binary) fprintf(fp, "\n");
+
+  fprintf(fp, "$EndPolytopes\n");
+}
+
 static void writeMSH4Elements(
   GModel *const model, FILE *fp, bool partitioned,
   const std::vector<int> &partitionsToSave, bool binary, bool saveAll,
@@ -3204,6 +3590,8 @@ static void writeMSH4Elements(
 
   std::map<std::pair<int, int>, std::vector<MElement *>> elementsByType[4];
   std::size_t numElements = 0;
+  std::map<std::pair<int, int>, std::vector<MElement *>> polytopesByType[4];
+  std::size_t numPolytopes = 0;
 
   for(auto it = vertices.begin(); it != vertices.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0) continue;
@@ -3243,6 +3631,11 @@ static void writeMSH4Elements(
       std::pair<int, int> p((*it)->tag(),
                             (*it)->quadrangles[i]->getTypeForMSH());
       elementsByType[2][p].push_back((*it)->quadrangles[i]);
+    }
+    numPolytopes += (*it)->polygons.size();
+    for(std::size_t i = 0; i < (*it)->polygons.size(); i++) {
+      std::pair<int, int> p((*it)->tag(), (*it)->polygons[i]->getTypeForMSH());
+      polytopesByType[2][p].push_back((*it)->polygons[i]);
     }
   }
 
@@ -3302,6 +3695,11 @@ static void writeMSH4Elements(
       std::pair<int, int> p((*it)->tag(), (*it)->trihedra[i]->getTypeForMSH());
       elementsByType[3][p].push_back((*it)->trihedra[i]);
     }
+    numPolytopes += (*it)->polyhedra.size();
+    for(std::size_t i = 0; i < (*it)->polyhedra.size(); i++) {
+      std::pair<int, int> p((*it)->tag(), (*it)->polyhedra[i]->getTypeForMSH());
+      polytopesByType[3][p].push_back((*it)->polyhedra[i]);
+    }
   }
 
   // Overlap regions - TODO: ensure it's exported only if not all partitions are
@@ -3329,86 +3727,90 @@ static void writeMSH4Elements(
     }
   }
 
-  if(!numElements) return;
+  if(numElements) {
+    fprintf(fp, "$Elements\n");
 
-  fprintf(fp, "$Elements\n");
+    std::size_t numSection = 0;
+    for(int dim = 0; dim <= 3; dim++) numSection += elementsByType[dim].size();
 
-  std::size_t numSection = 0;
-  for(int dim = 0; dim <= 3; dim++) numSection += elementsByType[dim].size();
-
-  std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
-  for(int dim = 0; dim <= 3; dim++) {
-    for(auto it = elementsByType[dim].begin(); it != elementsByType[dim].end();
-        ++it) {
-      for(std::size_t i = 0; i < it->second.size(); i++) {
-        minTag = std::min(minTag, it->second[i]->getNum());
-        maxTag = std::max(maxTag, it->second[i]->getNum());
-      }
-    }
-  }
-
-  if(binary) {
-    fwrite(&numSection, sizeof(std::size_t), 1, fp);
-    fwrite(&numElements, sizeof(std::size_t), 1, fp);
-    fwrite(&minTag, sizeof(std::size_t), 1, fp);
-    fwrite(&maxTag, sizeof(std::size_t), 1, fp);
-  }
-  else {
-    if(version >= 4.1)
-      fprintf(fp, "%zu %zu %zu %zu\n", numSection, numElements, minTag, maxTag);
-    else
-      fprintf(fp, "%zu %zu\n", numSection, numElements);
-  }
-
-  for(int dim = 0; dim <= 3; dim++) {
-    for(auto it = elementsByType[dim].begin(); it != elementsByType[dim].end();
-        ++it) {
-      int entityTag = it->first.first;
-      int elmType = it->first.second;
-      std::size_t numElm = it->second.size();
-      if(binary) {
-        fwrite(&dim, sizeof(int), 1, fp);
-        fwrite(&entityTag, sizeof(int), 1, fp);
-        fwrite(&elmType, sizeof(int), 1, fp);
-        fwrite(&numElm, sizeof(std::size_t), 1, fp);
-      }
-      else {
-        fprintf(fp, "%d %d %d %zu\n", (version >= 4.1) ? dim : entityTag,
-                (version >= 4.1) ? entityTag : dim, elmType, numElm);
-      }
-
-      std::size_t N = it->second.size();
-      if(binary) {
-        const int numVertPerElm = MElement::getInfoMSH(elmType);
-        std::size_t n = 1 + numVertPerElm;
-        std::vector<std::size_t> tags(N * n);
-        std::size_t k = 0;
-        for(std::size_t i = 0; i < N; i++) {
-          MElement *e = it->second[i];
-          tags[k] = e->getNum();
-          for(int j = 0; j < numVertPerElm; j++) {
-            tags[k + 1 + j] = e->getVertex(j)->getNum();
-          }
-          k += n;
-        }
-        fwrite(&tags[0], sizeof(std::size_t), N * n, fp);
-      }
-      else {
-        for(std::size_t i = 0; i < N; i++) {
-          MElement *e = it->second[i];
-          fprintf(fp, "%zu ", e->getNum());
-          for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-            fprintf(fp, "%zu ", e->getVertex(i)->getNum());
-          }
-          fprintf(fp, "\n");
+    std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
+    for(int dim = 0; dim <= 3; dim++) {
+      for(auto it = elementsByType[dim].begin();
+          it != elementsByType[dim].end(); ++it) {
+        for(std::size_t i = 0; i < it->second.size(); i++) {
+          minTag = std::min(minTag, it->second[i]->getNum());
+          maxTag = std::max(maxTag, it->second[i]->getNum());
         }
       }
     }
+
+    if(binary) {
+      fwrite(&numSection, sizeof(std::size_t), 1, fp);
+      fwrite(&numElements, sizeof(std::size_t), 1, fp);
+      fwrite(&minTag, sizeof(std::size_t), 1, fp);
+      fwrite(&maxTag, sizeof(std::size_t), 1, fp);
+    }
+    else {
+      if(version >= 4.1)
+        fprintf(fp, "%zu %zu %zu %zu\n", numSection, numElements, minTag,
+                maxTag);
+      else
+        fprintf(fp, "%zu %zu\n", numSection, numElements);
+    }
+
+    for(int dim = 0; dim <= 3; dim++) {
+      for(auto it = elementsByType[dim].begin();
+          it != elementsByType[dim].end(); ++it) {
+        int entityTag = it->first.first;
+        int elmType = it->first.second;
+        std::size_t numElm = it->second.size();
+        if(binary) {
+          fwrite(&dim, sizeof(int), 1, fp);
+          fwrite(&entityTag, sizeof(int), 1, fp);
+          fwrite(&elmType, sizeof(int), 1, fp);
+          fwrite(&numElm, sizeof(std::size_t), 1, fp);
+        }
+        else {
+          fprintf(fp, "%d %d %d %zu\n", (version >= 4.1) ? dim : entityTag,
+                  (version >= 4.1) ? entityTag : dim, elmType, numElm);
+        }
+
+        std::size_t N = it->second.size();
+        if(binary) {
+          const int numVertPerElm = MElement::getInfoMSH(elmType);
+          std::size_t n = 1 + numVertPerElm;
+          std::vector<std::size_t> tags(N * n);
+          std::size_t k = 0;
+          for(std::size_t i = 0; i < N; i++) {
+            MElement *e = it->second[i];
+            tags[k] = e->getNum();
+            for(int j = 0; j < numVertPerElm; j++) {
+              tags[k + 1 + j] = e->getVertex(j)->getNum();
+            }
+            k += n;
+          }
+          fwrite(&tags[0], sizeof(std::size_t), N * n, fp);
+        }
+        else {
+          for(std::size_t i = 0; i < N; i++) {
+            MElement *e = it->second[i];
+            fprintf(fp, "%zu ", e->getNum());
+            for(std::size_t i = 0; i < e->getNumVertices(); i++) {
+              fprintf(fp, "%zu ", e->getVertex(i)->getNum());
+            }
+            fprintf(fp, "\n");
+          }
+        }
+      }
+    }
+
+    if(binary) fprintf(fp, "\n");
+
+    fprintf(fp, "$EndElements\n");
   }
 
-  if(binary) fprintf(fp, "\n");
-
-  fprintf(fp, "$EndElements\n");
+  if(numPolytopes)
+    writeMSH4Polytopes(fp, binary, version, polytopesByType, numPolytopes);
 }
 
 static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,

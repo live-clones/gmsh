@@ -27,16 +27,21 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(3);
 
   // Like elements, mesh edges and faces are described by (an ordered list of)
-  // their nodes. Let us retrieve the edges and the (triangular) faces of all
-  // the first order tetrahedra in the mesh:
+  // their nodes. Let us retrieve the edges and the faces of all the first order
+  // tetrahedra in the mesh:
   int elementType = gmsh::model::mesh::getElementType("tetrahedron", 1);
   std::vector<std::size_t> edgeNodes, faceNodes;
+  std::vector<int> faceSizes;
   gmsh::model::mesh::getElementEdgeNodes(elementType, edgeNodes);
-  gmsh::model::mesh::getElementFaceNodes(elementType, 3, faceNodes);
+  gmsh::model::mesh::getElementFaceNodes(elementType, faceNodes, faceSizes);
 
   // Edges and faces are returned for each element as a list of nodes
   // corresponding to the canonical orientation of the edges and faces for a
-  // given element type.
+  // given element type. As faces can have a different number of nodes (e.g. in
+  // prisms, or in polyhedra), the number of nodes of each face is returned as
+  // well. To get only the faces with a given number of nodes, as a flat list,
+  // use e.g. gmsh::model::mesh::getElementFaceNodesByType(elementType, 3,
+  // faceNodes) for the triangles.
 
   // Gmsh can also identify unique edges and faces (a single edge or face
   // whatever the ordering of their nodes) and assign them a unique tag. This
@@ -49,7 +54,7 @@ int main(int argc, char **argv)
   std::vector<std::size_t> edgeTags, faceTags;
   std::vector<int> edgeOrientations, faceOrientations;
   gmsh::model::mesh::getEdges(edgeNodes, edgeTags, edgeOrientations);
-  gmsh::model::mesh::getFaces(3, faceNodes, faceTags, faceOrientations);
+  gmsh::model::mesh::getFaces(faceNodes, faceSizes, faceTags, faceOrientations);
 
   // Since element edge and face nodes are returned in the same order as the
   // elements, one can easily keep track of which element(s) each edge or face
@@ -101,7 +106,7 @@ int main(int argc, char **argv)
   // If all you need is the list of all edges or faces in terms of their nodes, you
   // can also directly call:
   gmsh::model::mesh::getAllEdges(edgeTags, edgeNodes);
-  gmsh::model::mesh::getAllFaces(3, faceTags, faceNodes);
+  gmsh::model::mesh::getAllFaces(faceTags, faceNodes, faceSizes);
 
   // Launch the GUI to see the results:
   std::set<std::string> args(argv, argv + argc);

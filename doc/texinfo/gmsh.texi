@@ -3968,12 +3968,6 @@ volumes, TransfQuadTri has no effect on those volumes. @value{SYNC}
 @end ftable
 
 @c .........................................................................
-@c Levelsets
-@c .........................................................................
-
-@c TODO document levelsets; explain use e.g. with AdaptMesh
-
-@c .........................................................................
 @c Other mesh commands
 @c .........................................................................
 
@@ -4829,14 +4823,15 @@ one mandatory section giving information about the file
 physical group names (@code{$PhysicalName}), the elementary model
 entities (@code{$Entities}), the partitioned entities
 (@code{$PartitionedEntities}), the nodes (@code{$Nodes}), the elements
-(@code{$Elements}), the periodicity relations (@code{$Periodic}), the
+(@code{$Elements}), the polygons and polyhedra (@code{$Polytopes}), the
+periodicity relations (@code{$Periodic}), the
 ghost elements (@code{$GhostElements}), the parametrizations
 (@code{$Parametrizations}) and the post-processing datasets
 (@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}). The
 sections reflect the underlying Gmsh data model: @code{$Entities} store
 the boundary representation of the model geometrical entities,
-@code{$Nodes} and @code{$Elements} store mesh data classified on these
-entities, and @code{$NodeData}, @code{$ElementData},
+@code{$Nodes}, @code{$Elements} and @code{$Polytopes} store mesh data
+classified on these entities, and @code{$NodeData}, @code{$ElementData},
 @code{$ElementNodeData} store post-processing data (views). (See
 @ref{Gmsh application programming interface} and @ref{Source code
 structure} for a more detailed description of the internal Gmsh data
@@ -4982,6 +4977,21 @@ $Elements
     ...
   ...
 $EndElements
+
+$Polytopes
+  numEntityBlocks(size_t) numPolytopes(size_t)
+    minElementTag(size_t) maxElementTag(size_t)
+  entityDim(int) entityTag(int) elementType(int; 34 or 35, see below)
+    numPolytopesInBlock(size_t)
+    < elementTag(size_t) numNodes(size_t) nodeTag(size_t) ...
+      numTriangles(size_t) nodeTag(size_t) ...  (if elementType == 34) >
+    < elementTag(size_t) numFaces(size_t)
+      numNodes(size_t) nodeTag(size_t) ...
+      ...
+      numTetrahedra(size_t) nodeTag(size_t) ...  (if elementType == 35) >
+    ...
+  ...
+$EndPolytopes
 
 $Periodic
   numPeriodicLinks(size_t)
@@ -5154,6 +5164,17 @@ with the edges, 24 with the faces, 8 in the volume)
 with the edges, 54 with the faces, 27 in the volume)
 @item ...
 @end table
+
+Polygons (@code{elementType} 34) and polyhedra (@code{elementType} 35) are
+stored in the @code{$Polytopes} section instead of @code{$Elements}, as
+their number of nodes varies. As in @code{$Elements}, the element type of the
+block fixes the shape of its records: a polygon is given by its list of
+nodes, a polyhedron by the list of nodes of each of its faces. Both are
+followed by an optional sub-triangulation or sub-tetrahedralization (with 0
+simplices if none is given): 3 node tags per triangle, 4 per tetrahedron, in
+which nodes that are not nodes of the polygon or of the faces of the
+polyhedron are the hanging or interior nodes of the polytope. Polytopes share
+the element tag space with the elements of the @code{$Elements} section.
 All the currently supported elements in the format are defined in
 @url{https://gitlab.onelab.info/gmsh/gmsh/blob/master/src/common/GmshDefines.h,GmshDefines.h}. See
 @ref{Node ordering} for the ordering of the nodes.

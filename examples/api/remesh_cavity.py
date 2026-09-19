@@ -33,9 +33,9 @@ TRI=2 # first order tri
 TET=4 # first order tet
 
 # get the faces from the remaining tets
-facenodes = gmsh.model.mesh.getElementFaceNodes(TET, 3, cube)
+facenodes, facesizes = gmsh.model.mesh.getElementFaceNodes(TET, cube)
 gmsh.model.mesh.createFaces([(3, cube)])
-facetags, faceori = gmsh.model.mesh.getFaces(3, facenodes)
+facetags, faceori = gmsh.model.mesh.getFaces(facenodes, facesizes)
 
 # keep track of face/nodes map
 def map_keys_to_triplets(keys, values):
@@ -53,8 +53,8 @@ bndfaces = set(remove_elements_appearing_twice(facetags))
 # remove the faces that are on the boundary of the cube
 bnd = gmsh.model.getBoundary([(3, cube)], oriented=False)
 for b in bnd:
-    facenodes = gmsh.model.mesh.getElementFaceNodes(TRI, 3, b[1])
-    facetags, faceori = gmsh.model.mesh.getFaces(3, facenodes)
+    facenodes, facesizes = gmsh.model.mesh.getElementFaceNodes(TRI, b[1])
+    facetags, faceori = gmsh.model.mesh.getFaces(facenodes, facesizes)
     for f in facetags: bndfaces.remove(f)
 
 # create a discrete surface with the triangles corresponding to the remaining

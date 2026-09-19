@@ -1015,7 +1015,9 @@ GMSH_API int gmshModelMeshGetElementType(const char * familyName,
  * (`elementName'), dimension (`dim'), order (`order'), number of nodes
  * (`numNodes'), local coordinates of the nodes in the reference element
  * (`localNodeCoord' vector, of length `dim' times `numNodes') and number of
- * primary (first order) nodes (`numPrimaryNodes'). */
+ * primary (first order) nodes (`numPrimaryNodes'). Polygons and polyhedra
+ * have no reference element and a variable number of nodes: `numNodes' and
+ * `numPrimaryNodes' are -1 and `localNodeCoord' is empty. */
 GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
                                                 char ** elementName,
                                                 int * dim,
@@ -1105,6 +1107,94 @@ GMSH_API void gmshModelMeshAddElementsByType(const int tag,
                                              const size_t * elementTags, const size_t elementTags_n,
                                              const size_t * nodeTags, const size_t nodeTags_n,
                                              int * ierr);
+
+/* Add polygons classified on the surface `tag'. `elementTags' contains the
+ * tags (unique, strictly positive identifiers) of the polygons; if empty, new
+ * tags are assigned automatically. `nodeTags' contains the tags of the
+ * boundary nodes of all the polygons, concatenated, and `numNodes' the number
+ * of boundary nodes of each polygon. The nodes of a polygon must be ordered
+ * along its boundary; hanging nodes are boundary nodes. A sub-triangulation
+ * can be given with `setPolytopeSimplices'. */
+GMSH_API void gmshModelMeshAddPolygons(const int tag,
+                                       const size_t * elementTags, const size_t elementTags_n,
+                                       const size_t * nodeTags, const size_t nodeTags_n,
+                                       const int * numNodes, const size_t numNodes_n,
+                                       int * ierr);
+
+/* Get the polygons classified on the surface `tag': their tags `elementTags',
+ * the tags of their boundary nodes concatenated in `nodeTags', and the number
+ * of boundary nodes `numNodes' of each polygon. If `tag' < 0, get the
+ * polygons of all the surfaces. */
+GMSH_API void gmshModelMeshGetPolygons(size_t ** elementTags, size_t * elementTags_n,
+                                       size_t ** nodeTags, size_t * nodeTags_n,
+                                       int ** numNodes, size_t * numNodes_n,
+                                       const int tag,
+                                       int * ierr);
+
+/* Add polyhedra classified on the volume `tag'. `elementTags' contains the
+ * tags (unique, strictly positive identifiers) of the polyhedra; if empty,
+ * new tags are assigned automatically. `numFaces' contains the number of
+ * faces of each polyhedron, `faceSizes' the number of nodes of each face, and
+ * `nodeTags' the tags of the nodes of all the faces, concatenated. A sub-
+ * tetrahedralization can be given with `setPolytopeSimplices'. */
+GMSH_API void gmshModelMeshAddPolyhedra(const int tag,
+                                        const size_t * elementTags, const size_t elementTags_n,
+                                        const int * numFaces, const size_t numFaces_n,
+                                        const int * faceSizes, const size_t faceSizes_n,
+                                        const size_t * nodeTags, const size_t nodeTags_n,
+                                        int * ierr);
+
+/* Get the polyhedra classified on the volume `tag': their tags `elementTags',
+ * the number of faces `numFaces' of each polyhedron, the number of nodes
+ * `faceSizes' of each face, and the tags of the nodes of all the faces
+ * concatenated in `nodeTags'. If `tag' < 0, get the polyhedra of all the
+ * volumes. */
+GMSH_API void gmshModelMeshGetPolyhedra(size_t ** elementTags, size_t * elementTags_n,
+                                        int ** numFaces, size_t * numFaces_n,
+                                        int ** faceSizes, size_t * faceSizes_n,
+                                        size_t ** nodeTags, size_t * nodeTags_n,
+                                        const int tag,
+                                        int * ierr);
+
+/* Get the simplices (triangles for polygons, tetrahedra for polyhedra)
+ * subdividing the polytopes of type `elementType' (34 for polygons, 35 for
+ * polyhedra) classified on the entity of tag `tag': the tags of the polytopes
+ * `elementTags', the number of simplices `numSimplices' of each polytope, and
+ * the tags of the nodes of all the simplices concatenated in `nodeTags'. The
+ * nodes of the simplices that are not boundary nodes of a polytope are its
+ * hanging or interior nodes. If the simplices of a polytope were neither
+ * given (in the mesh file or with `setPolytopeSimplices') nor created (with
+ * `createPolytopeSimplices'), they are computed on the fly and not saved with
+ * the mesh; `given' tells for each polytope if its simplices are saved with
+ * the mesh. If `tag' < 0, get the simplices of the polytopes of all the
+ * entities. */
+GMSH_API void gmshModelMeshGetPolytopeSimplices(const int elementType,
+                                                size_t ** elementTags, size_t * elementTags_n,
+                                                int ** numSimplices, size_t * numSimplices_n,
+                                                size_t ** nodeTags, size_t * nodeTags_n,
+                                                int ** given, size_t * given_n,
+                                                const int tag,
+                                                int * ierr);
+
+/* Set the simplices (triangles for polygons, tetrahedra for polyhedra)
+ * subdividing the polytopes `elementTags': `numSimplices' contains the number
+ * of simplices of each polytope, and `nodeTags' the tags of the nodes of all
+ * the simplices, concatenated. The nodes of the simplices that are not
+ * boundary nodes of a polytope become its hanging or interior nodes. The
+ * simplices are saved with the mesh. */
+GMSH_API void gmshModelMeshSetPolytopeSimplices(const size_t * elementTags, const size_t elementTags_n,
+                                                const int * numSimplices, const size_t numSimplices_n,
+                                                const size_t * nodeTags, const size_t nodeTags_n,
+                                                int * ierr);
+
+/* Create the simplices subdividing the polytopes classified on the entities
+ * `dimTags' (given as a vector of (dim, tag) pairs), or on all the entities
+ * if `dimTags' is empty, when none were given: polygons are triangulated by
+ * ear clipping, and polyhedra are tetrahedralized as a fan from their first
+ * node (which is only correct if the polyhedron is star-shaped with respect
+ * to it). The simplices are then saved with the mesh. */
+GMSH_API void gmshModelMeshCreatePolytopeSimplices(const int * dimTags, const size_t dimTags_n,
+                                                   int * ierr);
 
 /* Get the numerical quadrature information for the given element type
  * `elementType' and integration rule `integrationType', where
@@ -1257,15 +1347,26 @@ GMSH_API void gmshModelMeshGetEdges(const size_t * nodeTags, const size_t nodeTa
                                     int * ierr);
 
 /* Get the global unique mesh face identifiers `faceTags' and orientations
- * `faceOrientations' for an input list of a multiple of three (if `faceType'
- * == 3) or four (if `faceType' == 4) node tags defining these faces,
- * concatenated in the vector `nodeTags'. Mesh faces are created e.g. by
- * `createFaces()', `getKeys()' or `addFaces()'. */
-GMSH_API void gmshModelMeshGetFaces(const int faceType,
-                                    const size_t * nodeTags, const size_t nodeTags_n,
+ * `faceOrientations' for an input list of faces defined by their node tags
+ * concatenated in the vector `nodeTags', with `faceSizes' the number of nodes
+ * of each face. Mesh faces are created e.g. by `createFaces()', `getKeys()'
+ * or `addFaces()'. */
+GMSH_API void gmshModelMeshGetFaces(const size_t * nodeTags, const size_t nodeTags_n,
+                                    const int * faceSizes, const size_t faceSizes_n,
                                     size_t ** faceTags, size_t * faceTags_n,
                                     int ** faceOrientations, size_t * faceOrientations_n,
                                     int * ierr);
+
+/* Get the global unique mesh face identifiers `faceTags' and orientations
+ * `faceOrientations' for an input list of faces with `faceType' nodes each (3
+ * for triangular faces, 4 for quadrangular faces, etc.), defined by their
+ * node tags concatenated in the vector `nodeTags'. Mesh faces are created
+ * e.g. by `createFaces()', `getKeys()' or `addFaces()'. */
+GMSH_API void gmshModelMeshGetFacesByType(const int faceType,
+                                          const size_t * nodeTags, const size_t nodeTags_n,
+                                          size_t ** faceTags, size_t * faceTags_n,
+                                          int ** faceOrientations, size_t * faceOrientations_n,
+                                          int * ierr);
 
 /* Create unique mesh edges for the entities `dimTags', given as a vector of
  * (dim, tag) pairs. */
@@ -1285,11 +1386,12 @@ GMSH_API void gmshModelMeshGetAllEdges(size_t ** edgeTags, size_t * edgeTags_n,
                                        int * ierr);
 
 /* Get the global unique identifiers `faceTags' and the nodes `faceNodes' of
- * the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
- * `createFaces()', `getKeys()' or addFaces(). */
-GMSH_API void gmshModelMeshGetAllFaces(const int faceType,
-                                       size_t ** faceTags, size_t * faceTags_n,
+ * all the faces in the mesh, with `faceSizes' the number of nodes of each
+ * face. Mesh faces are created e.g. by `createFaces()', `getKeys()' or
+ * addFaces(). */
+GMSH_API void gmshModelMeshGetAllFaces(size_t ** faceTags, size_t * faceTags_n,
                                        size_t ** faceNodes, size_t * faceNodes_n,
+                                       int ** faceSizes, size_t * faceSizes_n,
                                        int * ierr);
 
 /* Add mesh edges defined by their global unique identifiers `edgeTags' and
@@ -1298,11 +1400,12 @@ GMSH_API void gmshModelMeshAddEdges(const size_t * edgeTags, const size_t edgeTa
                                     const size_t * edgeNodes, const size_t edgeNodes_n,
                                     int * ierr);
 
-/* Add mesh faces of type `faceType' defined by their global unique
- * identifiers `faceTags' and their nodes `faceNodes'. */
-GMSH_API void gmshModelMeshAddFaces(const int faceType,
-                                    const size_t * faceTags, const size_t faceTags_n,
+/* Add mesh faces defined by their global unique identifiers `faceTags', their
+ * nodes `faceNodes' concatenated in a single vector, and `faceSizes' the
+ * number of nodes of each face. */
+GMSH_API void gmshModelMeshAddFaces(const size_t * faceTags, const size_t faceTags_n,
                                     const size_t * faceNodes, const size_t faceNodes_n,
+                                    const int * faceSizes, const size_t faceSizes_n,
                                     int * ierr);
 
 /* Generate the pair of keys for the elements of type `elementType' in the
@@ -1390,23 +1493,44 @@ GMSH_API void gmshModelMeshGetElementEdgeNodes(const int elementType,
                                                const size_t numTasks,
                                                int * ierr);
 
-/* Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
- * for quadrangular faces) of all elements of type `elementType' classified on
- * the entity of tag `tag'. `nodeTags' contains the node tags of the faces for
- * all elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is returned
- * by element, with elements in the same order as in `getElements' and
- * `getElementsByType'. If `primary' is set, only the primary (corner) nodes
- * of the faces are returned. If `tag' < 0, get the face nodes for all
- * entities. If `numTasks' > 1, only compute and return the part of the data
- * indexed by `task' (for C++ only; output vector must be preallocated). */
+/* Get the nodes on the faces of all elements of type `elementType' classified
+ * on the entity of tag `tag'. `nodeTags' contains the node tags of the faces
+ * for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], and `faceSizes' the
+ * number of nodes of each face: [e1f1N, e1f2N, ...]. Faces are returned for
+ * each element in their canonical order, with elements in the same order as
+ * in `getElements' and `getElementsByType'. If `primary' is set, only the
+ * primary (corner) nodes of the faces are returned. If `tag' < 0, get the
+ * face nodes for all entities. If `numTasks' > 1, only compute and return the
+ * part of the data indexed by `task' (for C++ only; output vectors must be
+ * preallocated). */
 GMSH_API void gmshModelMeshGetElementFaceNodes(const int elementType,
-                                               const int faceType,
                                                size_t ** nodeTags, size_t * nodeTags_n,
+                                               int ** faceSizes, size_t * faceSizes_n,
                                                const int tag,
                                                const int primary,
                                                const size_t task,
                                                const size_t numTasks,
                                                int * ierr);
+
+/* Get the nodes on the faces with `faceType' primary nodes (3 for triangular
+ * faces, 4 for quadrangular faces, etc.) of all elements of type
+ * `elementType' classified on the entity of tag `tag'. `nodeTags' contains
+ * the node tags of these faces for all elements: [e1f1n1, ..., e1f1nN,
+ * e1f2n1, ...], with the same number of nodes N for each face. Faces are
+ * returned for each element in their canonical order, with elements in the
+ * same order as in `getElements' and `getElementsByType'. If `primary' is
+ * set, only the primary (corner) nodes of the faces are returned. If `tag' <
+ * 0, get the face nodes for all entities. If `numTasks' > 1, only compute and
+ * return the part of the data indexed by `task' (for C++ only; output vector
+ * must be preallocated). */
+GMSH_API void gmshModelMeshGetElementFaceNodesByType(const int elementType,
+                                                     const int faceType,
+                                                     size_t ** nodeTags, size_t * nodeTags_n,
+                                                     const int tag,
+                                                     const int primary,
+                                                     const size_t task,
+                                                     const size_t numTasks,
+                                                     int * ierr);
 
 /* Get the ghost elements `elementTags' and their associated `partitions'
  * stored in the ghost entity of dimension `dim' and tag `tag'. */

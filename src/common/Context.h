@@ -66,7 +66,7 @@ struct contextMeshOptions {
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
-  int saveAll, saveTri, saveGroupsOfNodes, saveGroupsOfElements;
+  int saveAll, saveGroupsOfNodes, saveGroupsOfElements;
   int readGroupsOfElements;
   int binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveBadTriangles, stlOneSolidPerSurface;
@@ -95,7 +95,7 @@ struct contextMeshOptions {
   int stamp[4];
   int draw, light, lightTwoSide, lightLines, nodeType;
   int nodes, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
-  int pyramids, trihedra;
+  int pyramids, trihedra, polygons, polyhedra;
   int surfaceEdges, surfaceFaces, volumeEdges, volumeFaces, numSubEdges;
   int nodeLabels, lineLabels, surfaceLabels, volumeLabels, qualityType;
   int labelType;
@@ -463,6 +463,7 @@ public:
     struct {
       unsigned int node, nodeSup, line, triangle, quadrangle;
       unsigned int tetrahedron, hexahedron, prism, pyramid, trihedron;
+      unsigned int polygon, polyhedron;
       unsigned int carousel[20];
       unsigned int tangents, normals;
     } mesh;

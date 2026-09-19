@@ -1,10 +1,17 @@
-(Work-in-progress): improved performance of default 2D and 3D meshing
-algorithms; improved graphics performance and interactive entity selection; new
-shader rendering pipeline with order-independent transparency and studio
-shading; new capping visualization mode in clipping tool; improved colorbars and
-2D plots; new faster homology solver; improved performance of mesh partitioning
-pipeline and added support for partition overlaps; added IO of edges and faces
-in MSH4 file format, as well as ability to save only the local partitioned Brep;
+(Work-in-progress): new $Polytopes section in the MSH4 format for polygons and
+polyhedra, which replaces the old polygon/polyhedron elements, levelset commands
+and Plugin(CutMesh); new mesh/addPolygons, mesh/getPolygons, mesh/addPolyhedra,
+mesh/getPolyhedra, mesh/getPolytopeSimplices, mesh/setPolytopeSimplices and
+mesh/createPolytopeSimplices functions; mesh/getElementFaceNodes, mesh/getFaces,
+mesh/getAllFaces and mesh/addFaces take or return the number of nodes of each
+face (faceSizes) instead of a face type, so all the faces of an element come in
+a single call; improved performance of default 2D and 3D meshing algorithms;
+improved graphics performance and interactive entity selection; new shader
+rendering pipeline with order-independent transparency and studio shading; new
+capping visualization mode in clipping tool; improved colorbars and 2D plots;
+new faster homology solver; improved performance of mesh partitioning pipeline
+and added support for partition overlaps; added IO of edges and faces in MSH4
+file format, as well as ability to save only the local partitioned Brep;
 improved performance of high-order element generation; the Extend mesh size
 field is now applied per entity and takes an element growth rate as input;
 improved XAO export that preserves entity tags; new Curvature Curve|Surface
@@ -13,11 +20,14 @@ requires C++17 and CMake 3.10, and uses Eigen 5.0 by default; fixed mangled
 output of wavefront obj exporter.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
-  mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent, mesh/setNodes,
+  mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent, mesh/setNodes, mesh/
   algorithm/refineTetrahedra, fltk/pick
 
 * Incompatible API changes: new optional argument to mesh/optimize and
-  mesh/relocateNodes; new arguments to mesh/classifySurfaces
+  mesh/relocateNodes; new arguments to mesh/classifySurfaces; new and/or
+  modified arguments to mesh/getFaces and mesh/getElementFaceNodes (use
+  getFacesByType and getElementFaceNodesByType for the old behavior),
+  mesh/getAllFaces, mesh/addFaces;
 
 4.15.2 (March 24, 2026): fixed issue in 3D structured CGNS output.
 

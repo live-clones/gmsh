@@ -47,7 +47,6 @@ opt(CGNS "Enable CGNS import/export (experimental)" ${DEFAULT})
 opt(CGNS_CPEX0045 "Enable high-order CGNS import/export following CPEX0045 (experimental)" OFF)
 opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
 opt(COVERAGE "Enable code coverage instrumentation (GCC/Clang only)" OFF)
-opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT})
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
@@ -159,7 +158,7 @@ if(ENABLE_PRIVATE_API)
           "on the stable public API (gmsh/api) instead.")
   file(GLOB_RECURSE HEADERS src/common/*.h src/numeric/*.h src/numeric/*.hpp
        src/geo/*.h src/mesh/*.h src/solver/*.h src/post/*.h src/plugin/*.h
-       src/graphics/*.h contrib/DiscreteIntegration/*.h
+       src/graphics/*.h
        contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
        contrib/MeshQualityOptimizer/*.h)
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h
@@ -817,13 +816,6 @@ if(HAVE_FLTK AND ENABLE_CAIRO)
      list(APPEND EXTERNAL_LIBRARIES ${CAIRO_LIB})
      list(APPEND EXTERNAL_INCLUDES ${CAIRO_INC})
   endif()
-endif()
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/DiscreteIntegration AND
-   ENABLE_DINTEGRATION)
-  add_subdirectory(contrib/DiscreteIntegration)
-  include_directories(contrib/DiscreteIntegration)
-  set_config_option(HAVE_DINTEGRATION "DIntegration")
 endif()
 
 if(ENABLE_MATHEX)
@@ -2309,7 +2301,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   include(CTest)
   file(GLOB_RECURSE ALLFILES
        tutorials/*.geo examples/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
-       benchmarks/occ/*.geo)
+       benchmarks/occ/*.geo benchmarks/io_msh/polytopes.geo)
   filter_tests("${ALLFILES}" TESTFILES)
   foreach(TESTFILE ${TESTFILES})
     # use relative path for Cygwin/MinGW (the pure win exe built with the MinGW

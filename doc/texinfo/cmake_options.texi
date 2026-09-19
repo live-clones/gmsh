@@ -32,8 +32,6 @@ Enable high-order CGNS import/export following CPEX0045 (experimental) (default:
 Enable Cairo to render fonts (experimental) (default: ON)
 @item ENABLE_COVERAGE
 Enable code coverage instrumentation (GCC/Clang only) (default: OFF)
-@item ENABLE_DINTEGRATION
-Enable discrete integration (needed for levelsets) (default: ON)
 @item ENABLE_DOMHEX
 Enable experimental DOMHEX code (default: ON)
 @item ENABLE_EIGEN

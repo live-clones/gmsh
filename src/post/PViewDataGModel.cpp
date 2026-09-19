@@ -13,7 +13,8 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
-#include "MElementCut.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
 #include "pyramidalBasis.h"
@@ -522,7 +523,11 @@ int PViewDataGModel::getNumNodes(int step, int ent, int ele)
   else {
     if(e->getNumChildren())
       return e->getNumChildren() * e->getChild(0)->getNumVertices();
-    if(getAdaptiveData()) return e->getNumVertices();
+    // polytopes need all their nodes, as their data is P1 on their
+    // sub-simplices, whose nodes are not all primary
+    if(getAdaptiveData() || e->getType() == TYPE_POLYG ||
+       e->getType() == TYPE_POLYH)
+      return e->getNumVertices();
     return (int)e->getNumPrimaryVertices();
   }
 }

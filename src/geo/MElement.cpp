@@ -21,7 +21,8 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "MTrihedron.h"
-#include "MElementCut.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "MSubElement.h"
 #include "GEntity.h"
 #include "StringUtils.h"
@@ -1398,7 +1399,7 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
 
 void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
                          int elementary, int physical, int parentNum,
-                         int dom1Num, int dom2Num, std::vector<short> *ghosts)
+                         std::vector<short> *ghosts)
 {
   int type = getTypeForMSH();
 
@@ -1406,34 +1407,6 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
 
   int n = getNumVerticesForMSH();
   int par = (parentNum) ? 1 : 0;
-  int dom = (dom1Num) ? 2 : 0;
-  bool poly = (type == MSH_POLYG_ || type == MSH_POLYH_ || type == MSH_POLYG_B);
-
-  // if polygon loop over children (triangles and tets)
-  if(CTX::instance()->mesh.saveTri) {
-    if(poly) {
-      for(int i = 0; i < getNumChildren(); i++) {
-        MElement *t = getChild(i);
-        t->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0,
-                     ghosts);
-      }
-      return;
-    }
-    if(type == MSH_TRI_B) {
-      MTriangle *t = new MTriangle(getVertex(0), getVertex(1), getVertex(2));
-      t->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0,
-                   ghosts);
-      delete t;
-      return;
-    }
-    if(type == MSH_LIN_B || type == MSH_LIN_C) {
-      MLine *l = new MLine(getVertex(0), getVertex(1));
-      l->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0,
-                   ghosts);
-      delete l;
-      return;
-    }
-  }
 
   if(CTX::instance()->mesh.preserveNumberingMsh2) num = (int)_num;
 
@@ -1443,21 +1416,19 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
       fprintf(fp, " %d %d %d", abs(physical), elementary, n);
     else if(version < 2.2)
       fprintf(fp, " %d %d %d", abs(physical), elementary, _partition);
-    else if(!_partition && !par && !dom)
-      fprintf(fp, " %d %d %d", 2 + par + dom, abs(physical), elementary);
+    else if(!_partition && !par)
+      fprintf(fp, " %d %d %d", 2 + par, abs(physical), elementary);
     else if(!ghosts)
-      fprintf(fp, " %d %d %d 1 %d", 4 + par + dom, abs(physical), elementary,
+      fprintf(fp, " %d %d %d 1 %d", 4 + par, abs(physical), elementary,
               _partition);
     else {
       int numGhosts = ghosts->size();
-      fprintf(fp, " %d %d %d %d %d", 4 + numGhosts + par + dom, abs(physical),
+      fprintf(fp, " %d %d %d %d %d", 4 + numGhosts + par, abs(physical),
               elementary, 1 + numGhosts, _partition);
       for(std::size_t i = 0; i < ghosts->size(); i++)
         fprintf(fp, " %d", -(*ghosts)[i]);
     }
     if(version >= 2.0 && par) fprintf(fp, " %d", parentNum);
-    if(version >= 2.0 && dom) fprintf(fp, " %d %d", dom1Num, dom2Num);
-    if(version >= 2.0 && poly) fprintf(fp, " %d", n);
   }
   else {
     int numTags, numGhosts = 0;
@@ -1481,7 +1452,6 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
     if(ghosts)
       for(int i = 0; i < numGhosts; i++) blob[8 + i] = -(*ghosts)[i];
     if(par) blob[8 + numGhosts] = parentNum;
-    if(poly) Msg::Error("Unable to write polygons/polyhedra in binary files.");
     fwrite(blob, sizeof(int), 4 + numTags, fp);
   }
 
@@ -2124,12 +2094,6 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_LIN_11:
     if(name) *name = "Line 11";
     return 2 + 9;
-  case MSH_LIN_B:
-    if(name) *name = "Line Border";
-    return 2;
-  case MSH_LIN_C:
-    if(name) *name = "Line Child";
-    return 2;
   case MSH_TRI_1:
     if(name) *name = "Triangle 1";
     return 1;
@@ -2187,9 +2151,6 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_TRI_30:
     if(name) *name = "Triangle 30";
     return 3 + 27;
-  case MSH_TRI_B:
-    if(name) *name = "Triangle Border";
-    return 3;
   case MSH_QUA_1:
     if(name) *name = "Quadrilateral 1";
     return 1;
@@ -2252,9 +2213,6 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
     return 40;
   case MSH_POLYG_:
     if(name) *name = "Polygon";
-    return 0;
-  case MSH_POLYG_B:
-    if(name) *name = "Polygon Border";
     return 0;
   case MSH_TET_1:
     if(name) *name = "Tetrahedron 1";
@@ -2496,7 +2454,7 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
   default:
     Msg::Error("Unknown type of element %d", typeMSH);
     if(name) *name = "Unknown";
-    return -1;
+    return 0;
   }
 }
 
@@ -2515,10 +2473,8 @@ void MElement::getVerticesIdForMSH(std::vector<int> &verts)
 }
 
 MElement *MElement::copy(std::map<std::size_t, MVertex *> &vertexMap,
-                         std::map<MElement *, MElement *> &newParents,
-                         std::map<MElement *, MElement *> &newDomains)
+                         std::map<MElement *, MElement *> &newParents)
 {
-  if(newDomains.count(this)) return newDomains.find(this)->second;
   std::vector<MVertex *> vmv;
   int eType = getTypeForMSH();
   MElement *eParent = getParent();
@@ -2552,11 +2508,11 @@ MElement *MElement::copy(std::map<std::size_t, MVertex *> &vertexMap,
   }
 
   MElement *parent = nullptr;
-  if(eParent && !getDomain(0) && !getDomain(1)) {
+  if(eParent) {
     auto it = newParents.find(eParent);
     MElement *newParent;
     if(it == newParents.end()) {
-      newParent = eParent->copy(vertexMap, newParents, newDomains);
+      newParent = eParent->copy(vertexMap, newParents);
       newParents[eParent] = newParent;
     }
     else
@@ -2565,29 +2521,12 @@ MElement *MElement::copy(std::map<std::size_t, MVertex *> &vertexMap,
   }
 
   MElementFactory f;
-  MElement *newEl =
-    f.create(eType, vmv, getNum(), _partition, ownsParent(), 0, parent);
-
-  for(int i = 0; i < 2; i++) {
-    MElement *dom = getDomain(i);
-    if(!dom) continue;
-    auto it = newDomains.find(dom);
-    MElement *newDom;
-    if(it == newDomains.end()) {
-      newDom = dom->copy(vertexMap, newParents, newDomains);
-      newDomains[dom] = newDom;
-    }
-    else
-      newDom = newDomains.find(dom)->second;
-    newEl->setDomain(newDom, i);
-  }
-  return newEl;
+  return f.create(eType, vmv, getNum(), _partition, ownsParent(), 0, parent);
 }
 
 MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
                                   std::size_t num, int part, bool owner,
-                                  int parent, MElement *parent_ptr,
-                                  MElement *d1, MElement *d2)
+                                  int parent, MElement *parent_ptr)
 {
   switch(type) {
   case MSH_PNT: return new MPoint(v, num, part);
@@ -2601,8 +2540,6 @@ MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
   case MSH_LIN_9: return new MLineN(v, num, part);
   case MSH_LIN_10: return new MLineN(v, num, part);
   case MSH_LIN_11: return new MLineN(v, num, part);
-  case MSH_LIN_B: return new MLineBorder(v, num, part, d1, d2);
-  case MSH_LIN_C: return new MLineChild(v, num, part, owner, parent_ptr);
   case MSH_TRI_3: return new MTriangle(v, num, part);
   case MSH_TRI_6: return new MTriangle6(v, num, part);
   case MSH_TRI_10: return new MTriangleN(v, 3, num, part);
@@ -2621,7 +2558,6 @@ MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
   case MSH_TRI_24: return new MTriangleN(v, 8, num, part);
   case MSH_TRI_27: return new MTriangleN(v, 9, num, part);
   case MSH_TRI_30: return new MTriangleN(v, 10, num, part);
-  case MSH_TRI_B: return new MTriangleBorder(v, num, part, d1, d2);
   case MSH_QUA_4: return new MQuadrangle(v, num, part);
   case MSH_QUA_9: return new MQuadrangle9(v, num, part);
   case MSH_QUA_16: return new MQuadrangleN(v, 3, num, part);
@@ -2641,8 +2577,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
   case MSH_QUA_32: return new MQuadrangleN(v, 8, num, part);
   case MSH_QUA_36I: return new MQuadrangleN(v, 9, num, part);
   case MSH_QUA_40: return new MQuadrangleN(v, 10, num, part);
-  case MSH_POLYG_: return new MPolygon(v, num, part, owner, parent_ptr);
-  case MSH_POLYG_B: return new MPolygonBorder(v, num, part, d1, d2);
+  case MSH_POLYG_: return new MPolygon(v, num, part);
   case MSH_TET_4: return new MTetrahedron(v, num, part);
   case MSH_TET_10: return new MTetrahedron10(v, num, part);
   case MSH_HEX_8: return new MHexahedron(v, num, part);
@@ -2682,7 +2617,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
   case MSH_TET_46: return new MTetrahedronN(v, 8, num, part);
   case MSH_TET_52: return new MTetrahedronN(v, 9, num, part);
   case MSH_TET_58: return new MTetrahedronN(v, 10, num, part);
-  case MSH_POLYH_: return new MPolyhedron(v, num, part, owner, parent_ptr);
+  case MSH_POLYH_: return new MPolyhedron(v, num, part);
   case MSH_HEX_32: return new MHexahedronN(v, 3, num, part);
   case MSH_HEX_64: return new MHexahedronN(v, 3, num, part);
   case MSH_HEX_125: return new MHexahedronN(v, 4, num, part);

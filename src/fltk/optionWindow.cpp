@@ -579,6 +579,8 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_prisms(0, GMSH_SET, o->mesh.menu->menu()[4].value() ? 1 : 0);
   opt_mesh_pyramids(0, GMSH_SET, o->mesh.menu->menu()[5].value() ? 1 : 0);
   opt_mesh_trihedra(0, GMSH_SET, o->mesh.menu->menu()[6].value() ? 1 : 0);
+  opt_mesh_polygons(0, GMSH_SET, o->mesh.menu->menu()[7].value() ? 1 : 0);
+  opt_mesh_polyhedra(0, GMSH_SET, o->mesh.menu->menu()[8].value() ? 1 : 0);
   opt_mesh_surface_edges(0, GMSH_SET, o->mesh.butt[8]->value());
   opt_mesh_surface_faces(0, GMSH_SET, o->mesh.butt[9]->value());
   opt_mesh_volume_edges(0, GMSH_SET, o->mesh.butt[10]->value());
@@ -818,6 +820,9 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double draw_hexahedra = opt_view_draw_hexahedra(current, GMSH_GET, 0);
   double draw_prisms = opt_view_draw_prisms(current, GMSH_GET, 0);
   double draw_pyramids = opt_view_draw_pyramids(current, GMSH_GET, 0);
+  double draw_trihedra = opt_view_draw_trihedra(current, GMSH_GET, 0);
+  double draw_polygons = opt_view_draw_polygons(current, GMSH_GET, 0);
+  double draw_polyhedra = opt_view_draw_polyhedra(current, GMSH_GET, 0);
   double draw_scalars = opt_view_draw_scalars(current, GMSH_GET, 0);
   double draw_vectors = opt_view_draw_vectors(current, GMSH_GET, 0);
   double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
@@ -1058,6 +1063,18 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.menu[1]->menu()[7].value() ? 1 : 0;
       if(force || (val != draw_pyramids))
         opt_view_draw_pyramids(i, GMSH_SET, val);
+
+      val = o->view.menu[1]->menu()[8].value() ? 1 : 0;
+      if(force || (val != draw_trihedra))
+        opt_view_draw_trihedra(i, GMSH_SET, val);
+
+      val = o->view.menu[1]->menu()[9].value() ? 1 : 0;
+      if(force || (val != draw_polygons))
+        opt_view_draw_polygons(i, GMSH_SET, val);
+
+      val = o->view.menu[1]->menu()[10].value() ? 1 : 0;
+      if(force || (val != draw_polyhedra))
+        opt_view_draw_polyhedra(i, GMSH_SET, val);
 
       val = o->view.butt[6]->value();
       if(force || (val != use_gen_raise))
@@ -2821,13 +2838,16 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Prisms", 0, nullptr, nullptr, FL_MENU_TOGGLE},
         {"Pyramids", 0, nullptr, nullptr, FL_MENU_TOGGLE},
         {"Trihedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Polygons", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Polyhedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
         {nullptr}};
 
       mesh.menu =
         new Fl_Menu_Button(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Elements");
       mesh.menu->tooltip(
         "Mesh.Triangles, Mesh.Quadrangles, Mesh.Tetrahedra, "
-        "Mesh.Hexahedra, Mesh.Prisms, Mesh.Pyramids, Mesh.Trihedra");
+        "Mesh.Hexahedra, Mesh.Prisms, Mesh.Pyramids, Mesh.Trihedra, "
+        "Mesh.Polygons, Mesh.Polyhedra");
       mesh.menu->menu(menu_mesh_element_types);
       mesh.menu->callback(mesh_options_ok_cb);
 
@@ -3548,6 +3568,9 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Hexahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
         {"Prisms", 0, nullptr, nullptr, FL_MENU_TOGGLE},
         {"Pyramids", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Trihedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Polygons", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Polyhedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
         {nullptr}};
 
       view.menu[1] =
@@ -3555,7 +3578,8 @@ optionWindow::optionWindow(int deltaFontSize)
       view.menu[1]->tooltip(
         "View.DrawPoints, View.DrawLines, View.DrawTriangles, "
         "View.DrawQuadrangles, View.DrawTetrahedra, View.DrawHexahedra, "
-        "View.DrawPrisms, View.DrawPyramids");
+        "View.DrawPrisms, View.DrawPyramids, View.DrawTrihedra, "
+        "View.DrawPolygons, View.DrawPolyhedra");
       view.menu[1]->menu(menu_view_element_types);
       view.menu[1]->callback(view_options_ok_cb);
 
@@ -4198,6 +4222,8 @@ void optionWindow::updateViewGroup(int index)
   opt_view_draw_prisms(index, GMSH_GUI, 0);
   opt_view_draw_pyramids(index, GMSH_GUI, 0);
   opt_view_draw_trihedra(index, GMSH_GUI, 0);
+  opt_view_draw_polygons(index, GMSH_GUI, 0);
+  opt_view_draw_polyhedra(index, GMSH_GUI, 0);
   opt_view_draw_scalars(index, GMSH_GUI, 0);
   opt_view_draw_vectors(index, GMSH_GUI, 0);
   opt_view_draw_tensors(index, GMSH_GUI, 0);

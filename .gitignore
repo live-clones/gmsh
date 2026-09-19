@@ -25,6 +25,7 @@ cmake-build-*
 # Python virtual environment
 venv/
 .venv/
+benchmarks/io_msh/polytopes_out.msh
 
 # output of the graphics tests
 benchmarks/graphics/out/

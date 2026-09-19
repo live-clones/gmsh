@@ -624,6 +624,20 @@ module gmsh
         gmshModelMeshAddElements
     procedure, nopass :: addElementsByType => &
         gmshModelMeshAddElementsByType
+    procedure, nopass :: addPolygons => &
+        gmshModelMeshAddPolygons
+    procedure, nopass :: getPolygons => &
+        gmshModelMeshGetPolygons
+    procedure, nopass :: addPolyhedra => &
+        gmshModelMeshAddPolyhedra
+    procedure, nopass :: getPolyhedra => &
+        gmshModelMeshGetPolyhedra
+    procedure, nopass :: getPolytopeSimplices => &
+        gmshModelMeshGetPolytopeSimplices
+    procedure, nopass :: setPolytopeSimplices => &
+        gmshModelMeshSetPolytopeSimplices
+    procedure, nopass :: createPolytopeSimplices => &
+        gmshModelMeshCreatePolytopeSimplices
     procedure, nopass :: getIntegrationPoints => &
         gmshModelMeshGetIntegrationPoints
     procedure, nopass :: getJacobians => &
@@ -646,6 +660,8 @@ module gmsh
         gmshModelMeshGetEdges
     procedure, nopass :: getFaces => &
         gmshModelMeshGetFaces
+    procedure, nopass :: getFacesByType => &
+        gmshModelMeshGetFacesByType
     procedure, nopass :: createEdges => &
         gmshModelMeshCreateEdges
     procedure, nopass :: createFaces => &
@@ -674,6 +690,8 @@ module gmsh
         gmshModelMeshGetElementEdgeNodes
     procedure, nopass :: getElementFaceNodes => &
         gmshModelMeshGetElementFaceNodes
+    procedure, nopass :: getElementFaceNodesByType => &
+        gmshModelMeshGetElementFaceNodesByType
     procedure, nopass :: getGhostElements => &
         gmshModelMeshGetGhostElements
     procedure, nopass :: setSize => &
@@ -4866,7 +4884,9 @@ module gmsh
   !! (`elementName'), dimension (`dim'), order (`order'), number of nodes
   !! (`numNodes'), local coordinates of the nodes in the reference element
   !! (`localNodeCoord' vector, of length `dim' times `numNodes') and number of
-  !! primary (first order) nodes (`numPrimaryNodes').
+  !! primary (first order) nodes (`numPrimaryNodes'). Polygons and polyhedra
+  !! have no reference element and a variable number of nodes: `numNodes' and
+  !! `numPrimaryNodes' are -1 and `localNodeCoord' is empty.
   subroutine gmshModelMeshGetElementProperties(elementType, &
                                                elementName, &
                                                dim, &
@@ -5250,6 +5270,386 @@ module gmsh
          api_nodeTags_n_=size_gmsh_size(nodeTags), &
          ierr_=ierr)
   end subroutine gmshModelMeshAddElementsByType
+
+  !> Add polygons classified on the surface `tag'. `elementTags' contains the
+  !! tags (unique, strictly positive identifiers) of the polygons; if empty, new
+  !! tags are assigned automatically. `nodeTags' contains the tags of the
+  !! boundary nodes of all the polygons, concatenated, and `numNodes' the number
+  !! of boundary nodes of each polygon. The nodes of a polygon must be ordered
+  !! along its boundary; hanging nodes are boundary nodes. A sub-triangulation
+  !! can be given with `setPolytopeSimplices'.
+  subroutine gmshModelMeshAddPolygons(tag, &
+                                      elementTags, &
+                                      nodeTags, &
+                                      numNodes, &
+                                      ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_numNodes_, &
+                     api_numNodes_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshAddPolygons")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      integer(c_size_t), dimension(*) :: api_elementTags_
+      integer(c_size_t), value, intent(in) :: api_elementTags_n_
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      integer(c_int), dimension(*) :: api_numNodes_
+      integer(c_size_t), value, intent(in) :: api_numNodes_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    integer(c_size_t), dimension(:), intent(in) :: elementTags
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    integer(c_int), dimension(:), intent(in) :: numNodes
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         api_elementTags_=elementTags, &
+         api_elementTags_n_=size_gmsh_size(elementTags), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         api_numNodes_=numNodes, &
+         api_numNodes_n_=size_gmsh_int(numNodes), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshAddPolygons
+
+  !> Get the polygons classified on the surface `tag': their tags `elementTags',
+  !! the tags of their boundary nodes concatenated in `nodeTags', and the number
+  !! of boundary nodes `numNodes' of each polygon. If `tag' < 0, get the
+  !! polygons of all the surfaces.
+  subroutine gmshModelMeshGetPolygons(elementTags, &
+                                      nodeTags, &
+                                      numNodes, &
+                                      tag, &
+                                      ierr)
+    interface
+    subroutine C_API(api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_numNodes_, &
+                     api_numNodes_n_, &
+                     tag, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetPolygons")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), intent(out) :: api_elementTags_
+      integer(c_size_t), intent(out) :: api_elementTags_n_
+      type(c_ptr), intent(out) :: api_nodeTags_
+      integer(c_size_t), intent(out) :: api_nodeTags_n_
+      type(c_ptr), intent(out) :: api_numNodes_
+      integer(c_size_t), intent(out) :: api_numNodes_n_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
+    integer(c_int), dimension(:), allocatable, intent(out) :: numNodes
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_elementTags_
+    integer(c_size_t) :: api_elementTags_n_
+    type(c_ptr) :: api_nodeTags_
+    integer(c_size_t) :: api_nodeTags_n_
+    type(c_ptr) :: api_numNodes_
+    integer(c_size_t) :: api_numNodes_n_
+    call C_API(api_elementTags_=api_elementTags_, &
+         api_elementTags_n_=api_elementTags_n_, &
+         api_nodeTags_=api_nodeTags_, &
+         api_nodeTags_n_=api_nodeTags_n_, &
+         api_numNodes_=api_numNodes_, &
+         api_numNodes_n_=api_numNodes_n_, &
+         tag=optval_c_int(-1, tag), &
+         ierr_=ierr)
+    elementTags = ovectorsize_(api_elementTags_, &
+      api_elementTags_n_)
+    nodeTags = ovectorsize_(api_nodeTags_, &
+      api_nodeTags_n_)
+    numNodes = ovectorint_(api_numNodes_, &
+      api_numNodes_n_)
+  end subroutine gmshModelMeshGetPolygons
+
+  !> Add polyhedra classified on the volume `tag'. `elementTags' contains the
+  !! tags (unique, strictly positive identifiers) of the polyhedra; if empty,
+  !! new tags are assigned automatically. `numFaces' contains the number of
+  !! faces of each polyhedron, `faceSizes' the number of nodes of each face, and
+  !! `nodeTags' the tags of the nodes of all the faces, concatenated. A sub-
+  !! tetrahedralization can be given with `setPolytopeSimplices'.
+  subroutine gmshModelMeshAddPolyhedra(tag, &
+                                       elementTags, &
+                                       numFaces, &
+                                       faceSizes, &
+                                       nodeTags, &
+                                       ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_numFaces_, &
+                     api_numFaces_n_, &
+                     api_faceSizes_, &
+                     api_faceSizes_n_, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshAddPolyhedra")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      integer(c_size_t), dimension(*) :: api_elementTags_
+      integer(c_size_t), value, intent(in) :: api_elementTags_n_
+      integer(c_int), dimension(*) :: api_numFaces_
+      integer(c_size_t), value, intent(in) :: api_numFaces_n_
+      integer(c_int), dimension(*) :: api_faceSizes_
+      integer(c_size_t), value, intent(in) :: api_faceSizes_n_
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    integer(c_size_t), dimension(:), intent(in) :: elementTags
+    integer(c_int), dimension(:), intent(in) :: numFaces
+    integer(c_int), dimension(:), intent(in) :: faceSizes
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         api_elementTags_=elementTags, &
+         api_elementTags_n_=size_gmsh_size(elementTags), &
+         api_numFaces_=numFaces, &
+         api_numFaces_n_=size_gmsh_int(numFaces), &
+         api_faceSizes_=faceSizes, &
+         api_faceSizes_n_=size_gmsh_int(faceSizes), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshAddPolyhedra
+
+  !> Get the polyhedra classified on the volume `tag': their tags `elementTags',
+  !! the number of faces `numFaces' of each polyhedron, the number of nodes
+  !! `faceSizes' of each face, and the tags of the nodes of all the faces
+  !! concatenated in `nodeTags'. If `tag' < 0, get the polyhedra of all the
+  !! volumes.
+  subroutine gmshModelMeshGetPolyhedra(elementTags, &
+                                       numFaces, &
+                                       faceSizes, &
+                                       nodeTags, &
+                                       tag, &
+                                       ierr)
+    interface
+    subroutine C_API(api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_numFaces_, &
+                     api_numFaces_n_, &
+                     api_faceSizes_, &
+                     api_faceSizes_n_, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     tag, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetPolyhedra")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), intent(out) :: api_elementTags_
+      integer(c_size_t), intent(out) :: api_elementTags_n_
+      type(c_ptr), intent(out) :: api_numFaces_
+      integer(c_size_t), intent(out) :: api_numFaces_n_
+      type(c_ptr), intent(out) :: api_faceSizes_
+      integer(c_size_t), intent(out) :: api_faceSizes_n_
+      type(c_ptr), intent(out) :: api_nodeTags_
+      integer(c_size_t), intent(out) :: api_nodeTags_n_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
+    integer(c_int), dimension(:), allocatable, intent(out) :: numFaces
+    integer(c_int), dimension(:), allocatable, intent(out) :: faceSizes
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_elementTags_
+    integer(c_size_t) :: api_elementTags_n_
+    type(c_ptr) :: api_numFaces_
+    integer(c_size_t) :: api_numFaces_n_
+    type(c_ptr) :: api_faceSizes_
+    integer(c_size_t) :: api_faceSizes_n_
+    type(c_ptr) :: api_nodeTags_
+    integer(c_size_t) :: api_nodeTags_n_
+    call C_API(api_elementTags_=api_elementTags_, &
+         api_elementTags_n_=api_elementTags_n_, &
+         api_numFaces_=api_numFaces_, &
+         api_numFaces_n_=api_numFaces_n_, &
+         api_faceSizes_=api_faceSizes_, &
+         api_faceSizes_n_=api_faceSizes_n_, &
+         api_nodeTags_=api_nodeTags_, &
+         api_nodeTags_n_=api_nodeTags_n_, &
+         tag=optval_c_int(-1, tag), &
+         ierr_=ierr)
+    elementTags = ovectorsize_(api_elementTags_, &
+      api_elementTags_n_)
+    numFaces = ovectorint_(api_numFaces_, &
+      api_numFaces_n_)
+    faceSizes = ovectorint_(api_faceSizes_, &
+      api_faceSizes_n_)
+    nodeTags = ovectorsize_(api_nodeTags_, &
+      api_nodeTags_n_)
+  end subroutine gmshModelMeshGetPolyhedra
+
+  !> Get the simplices (triangles for polygons, tetrahedra for polyhedra)
+  !! subdividing the polytopes of type `elementType' (34 for polygons, 35 for
+  !! polyhedra) classified on the entity of tag `tag': the tags of the polytopes
+  !! `elementTags', the number of simplices `numSimplices' of each polytope, and
+  !! the tags of the nodes of all the simplices concatenated in `nodeTags'. The
+  !! nodes of the simplices that are not boundary nodes of a polytope are its
+  !! hanging or interior nodes. If the simplices of a polytope were neither
+  !! given (in the mesh file or with `setPolytopeSimplices') nor created (with
+  !! `createPolytopeSimplices'), they are computed on the fly and not saved with
+  !! the mesh; `given' tells for each polytope if its simplices are saved with
+  !! the mesh. If `tag' < 0, get the simplices of the polytopes of all the
+  !! entities.
+  subroutine gmshModelMeshGetPolytopeSimplices(elementType, &
+                                               elementTags, &
+                                               numSimplices, &
+                                               nodeTags, &
+                                               given, &
+                                               tag, &
+                                               ierr)
+    interface
+    subroutine C_API(elementType, &
+                     api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_numSimplices_, &
+                     api_numSimplices_n_, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_given_, &
+                     api_given_n_, &
+                     tag, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetPolytopeSimplices")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: elementType
+      type(c_ptr), intent(out) :: api_elementTags_
+      integer(c_size_t), intent(out) :: api_elementTags_n_
+      type(c_ptr), intent(out) :: api_numSimplices_
+      integer(c_size_t), intent(out) :: api_numSimplices_n_
+      type(c_ptr), intent(out) :: api_nodeTags_
+      integer(c_size_t), intent(out) :: api_nodeTags_n_
+      type(c_ptr), intent(out) :: api_given_
+      integer(c_size_t), intent(out) :: api_given_n_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: elementType
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
+    integer(c_int), dimension(:), allocatable, intent(out) :: numSimplices
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
+    integer(c_int), dimension(:), allocatable, intent(out) :: given
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_elementTags_
+    integer(c_size_t) :: api_elementTags_n_
+    type(c_ptr) :: api_numSimplices_
+    integer(c_size_t) :: api_numSimplices_n_
+    type(c_ptr) :: api_nodeTags_
+    integer(c_size_t) :: api_nodeTags_n_
+    type(c_ptr) :: api_given_
+    integer(c_size_t) :: api_given_n_
+    call C_API(elementType=int(elementType, c_int), &
+         api_elementTags_=api_elementTags_, &
+         api_elementTags_n_=api_elementTags_n_, &
+         api_numSimplices_=api_numSimplices_, &
+         api_numSimplices_n_=api_numSimplices_n_, &
+         api_nodeTags_=api_nodeTags_, &
+         api_nodeTags_n_=api_nodeTags_n_, &
+         api_given_=api_given_, &
+         api_given_n_=api_given_n_, &
+         tag=optval_c_int(-1, tag), &
+         ierr_=ierr)
+    elementTags = ovectorsize_(api_elementTags_, &
+      api_elementTags_n_)
+    numSimplices = ovectorint_(api_numSimplices_, &
+      api_numSimplices_n_)
+    nodeTags = ovectorsize_(api_nodeTags_, &
+      api_nodeTags_n_)
+    given = ovectorint_(api_given_, &
+      api_given_n_)
+  end subroutine gmshModelMeshGetPolytopeSimplices
+
+  !> Set the simplices (triangles for polygons, tetrahedra for polyhedra)
+  !! subdividing the polytopes `elementTags': `numSimplices' contains the number
+  !! of simplices of each polytope, and `nodeTags' the tags of the nodes of all
+  !! the simplices, concatenated. The nodes of the simplices that are not
+  !! boundary nodes of a polytope become its hanging or interior nodes. The
+  !! simplices are saved with the mesh.
+  subroutine gmshModelMeshSetPolytopeSimplices(elementTags, &
+                                               numSimplices, &
+                                               nodeTags, &
+                                               ierr)
+    interface
+    subroutine C_API(api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_numSimplices_, &
+                     api_numSimplices_n_, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshSetPolytopeSimplices")
+      use, intrinsic :: iso_c_binding
+      integer(c_size_t), dimension(*) :: api_elementTags_
+      integer(c_size_t), value, intent(in) :: api_elementTags_n_
+      integer(c_int), dimension(*) :: api_numSimplices_
+      integer(c_size_t), value, intent(in) :: api_numSimplices_n_
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_size_t), dimension(:), intent(in) :: elementTags
+    integer(c_int), dimension(:), intent(in) :: numSimplices
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_elementTags_=elementTags, &
+         api_elementTags_n_=size_gmsh_size(elementTags), &
+         api_numSimplices_=numSimplices, &
+         api_numSimplices_n_=size_gmsh_int(numSimplices), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshSetPolytopeSimplices
+
+  !> Create the simplices subdividing the polytopes classified on the entities
+  !! `dimTags' (given as a vector of (dim, tag) pairs), or on all the entities
+  !! if `dimTags' is empty, when none were given: polygons are triangulated by
+  !! ear clipping, and polyhedra are tetrahedralized as a fan from their first
+  !! node (which is only correct if the polyhedron is star-shaped with respect
+  !! to it). The simplices are then saved with the mesh.
+  subroutine gmshModelMeshCreatePolytopeSimplices(dimTags, &
+                                                  ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshCreatePolytopeSimplices")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*), optional :: api_dimTags_
+      integer(c_size_t), value, intent(in) :: api_dimTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_dimTags_=dimTags, &
+         api_dimTags_n_=size_gmsh_pair(dimTags), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshCreatePolytopeSimplices
 
   !> Get the numerical quadrature information for the given element type
   !! `elementType' and integration rule `integrationType', where
@@ -5831,15 +6231,72 @@ module gmsh
   end subroutine gmshModelMeshGetEdges
 
   !> Get the global unique mesh face identifiers `faceTags' and orientations
-  !! `faceOrientations' for an input list of a multiple of three (if `faceType'
-  !! == 3) or four (if `faceType' == 4) node tags defining these faces,
-  !! concatenated in the vector `nodeTags'. Mesh faces are created e.g. by
-  !! `createFaces()', `getKeys()' or `addFaces()'.
-  subroutine gmshModelMeshGetFaces(faceType, &
-                                   nodeTags, &
+  !! `faceOrientations' for an input list of faces defined by their node tags
+  !! concatenated in the vector `nodeTags', with `faceSizes' the number of nodes
+  !! of each face. Mesh faces are created e.g. by `createFaces()', `getKeys()'
+  !! or `addFaces()'.
+  subroutine gmshModelMeshGetFaces(nodeTags, &
+                                   faceSizes, &
                                    faceTags, &
                                    faceOrientations, &
                                    ierr)
+    interface
+    subroutine C_API(api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_faceSizes_, &
+                     api_faceSizes_n_, &
+                     api_faceTags_, &
+                     api_faceTags_n_, &
+                     api_faceOrientations_, &
+                     api_faceOrientations_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetFaces")
+      use, intrinsic :: iso_c_binding
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      integer(c_int), dimension(*) :: api_faceSizes_
+      integer(c_size_t), value, intent(in) :: api_faceSizes_n_
+      type(c_ptr), intent(out) :: api_faceTags_
+      integer(c_size_t), intent(out) :: api_faceTags_n_
+      type(c_ptr), intent(out) :: api_faceOrientations_
+      integer(c_size_t), intent(out) :: api_faceOrientations_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    integer(c_int), dimension(:), intent(in) :: faceSizes
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: faceTags
+    integer(c_int), dimension(:), allocatable, intent(out) :: faceOrientations
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_faceTags_
+    integer(c_size_t) :: api_faceTags_n_
+    type(c_ptr) :: api_faceOrientations_
+    integer(c_size_t) :: api_faceOrientations_n_
+    call C_API(api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         api_faceSizes_=faceSizes, &
+         api_faceSizes_n_=size_gmsh_int(faceSizes), &
+         api_faceTags_=api_faceTags_, &
+         api_faceTags_n_=api_faceTags_n_, &
+         api_faceOrientations_=api_faceOrientations_, &
+         api_faceOrientations_n_=api_faceOrientations_n_, &
+         ierr_=ierr)
+    faceTags = ovectorsize_(api_faceTags_, &
+      api_faceTags_n_)
+    faceOrientations = ovectorint_(api_faceOrientations_, &
+      api_faceOrientations_n_)
+  end subroutine gmshModelMeshGetFaces
+
+  !> Get the global unique mesh face identifiers `faceTags' and orientations
+  !! `faceOrientations' for an input list of faces with `faceType' nodes each (3
+  !! for triangular faces, 4 for quadrangular faces, etc.), defined by their
+  !! node tags concatenated in the vector `nodeTags'. Mesh faces are created
+  !! e.g. by `createFaces()', `getKeys()' or `addFaces()'.
+  subroutine gmshModelMeshGetFacesByType(faceType, &
+                                         nodeTags, &
+                                         faceTags, &
+                                         faceOrientations, &
+                                         ierr)
     interface
     subroutine C_API(faceType, &
                      api_nodeTags_, &
@@ -5849,7 +6306,7 @@ module gmsh
                      api_faceOrientations_, &
                      api_faceOrientations_n_, &
                      ierr_) &
-      bind(C, name="gmshModelMeshGetFaces")
+      bind(C, name="gmshModelMeshGetFacesByType")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: faceType
       integer(c_size_t), dimension(*) :: api_nodeTags_
@@ -5882,7 +6339,7 @@ module gmsh
       api_faceTags_n_)
     faceOrientations = ovectorint_(api_faceOrientations_, &
       api_faceOrientations_n_)
-  end subroutine gmshModelMeshGetFaces
+  end subroutine gmshModelMeshGetFacesByType
 
   !> Create unique mesh edges for the entities `dimTags', given as a vector of
   !! (dim, tag) pairs.
@@ -5968,47 +6425,55 @@ module gmsh
   end subroutine gmshModelMeshGetAllEdges
 
   !> Get the global unique identifiers `faceTags' and the nodes `faceNodes' of
-  !! the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
-  !! `createFaces()', `getKeys()' or addFaces().
-  subroutine gmshModelMeshGetAllFaces(faceType, &
-                                      faceTags, &
+  !! all the faces in the mesh, with `faceSizes' the number of nodes of each
+  !! face. Mesh faces are created e.g. by `createFaces()', `getKeys()' or
+  !! addFaces().
+  subroutine gmshModelMeshGetAllFaces(faceTags, &
                                       faceNodes, &
+                                      faceSizes, &
                                       ierr)
     interface
-    subroutine C_API(faceType, &
-                     api_faceTags_, &
+    subroutine C_API(api_faceTags_, &
                      api_faceTags_n_, &
                      api_faceNodes_, &
                      api_faceNodes_n_, &
+                     api_faceSizes_, &
+                     api_faceSizes_n_, &
                      ierr_) &
       bind(C, name="gmshModelMeshGetAllFaces")
       use, intrinsic :: iso_c_binding
-      integer(c_int), value, intent(in) :: faceType
       type(c_ptr), intent(out) :: api_faceTags_
       integer(c_size_t), intent(out) :: api_faceTags_n_
       type(c_ptr), intent(out) :: api_faceNodes_
       integer(c_size_t), intent(out) :: api_faceNodes_n_
+      type(c_ptr), intent(out) :: api_faceSizes_
+      integer(c_size_t), intent(out) :: api_faceSizes_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer, intent(in) :: faceType
     integer(c_size_t), dimension(:), allocatable, intent(out) :: faceTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: faceNodes
+    integer(c_int), dimension(:), allocatable, intent(out) :: faceSizes
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_faceTags_
     integer(c_size_t) :: api_faceTags_n_
     type(c_ptr) :: api_faceNodes_
     integer(c_size_t) :: api_faceNodes_n_
-    call C_API(faceType=int(faceType, c_int), &
-         api_faceTags_=api_faceTags_, &
+    type(c_ptr) :: api_faceSizes_
+    integer(c_size_t) :: api_faceSizes_n_
+    call C_API(api_faceTags_=api_faceTags_, &
          api_faceTags_n_=api_faceTags_n_, &
          api_faceNodes_=api_faceNodes_, &
          api_faceNodes_n_=api_faceNodes_n_, &
+         api_faceSizes_=api_faceSizes_, &
+         api_faceSizes_n_=api_faceSizes_n_, &
          ierr_=ierr)
     faceTags = ovectorsize_(api_faceTags_, &
       api_faceTags_n_)
     faceNodes = ovectorsize_(api_faceNodes_, &
       api_faceNodes_n_)
+    faceSizes = ovectorint_(api_faceSizes_, &
+      api_faceSizes_n_)
   end subroutine gmshModelMeshGetAllFaces
 
   !> Add mesh edges defined by their global unique identifiers `edgeTags' and
@@ -6041,38 +6506,42 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshAddEdges
 
-  !> Add mesh faces of type `faceType' defined by their global unique
-  !! identifiers `faceTags' and their nodes `faceNodes'.
-  subroutine gmshModelMeshAddFaces(faceType, &
-                                   faceTags, &
+  !> Add mesh faces defined by their global unique identifiers `faceTags', their
+  !! nodes `faceNodes' concatenated in a single vector, and `faceSizes' the
+  !! number of nodes of each face.
+  subroutine gmshModelMeshAddFaces(faceTags, &
                                    faceNodes, &
+                                   faceSizes, &
                                    ierr)
     interface
-    subroutine C_API(faceType, &
-                     api_faceTags_, &
+    subroutine C_API(api_faceTags_, &
                      api_faceTags_n_, &
                      api_faceNodes_, &
                      api_faceNodes_n_, &
+                     api_faceSizes_, &
+                     api_faceSizes_n_, &
                      ierr_) &
       bind(C, name="gmshModelMeshAddFaces")
       use, intrinsic :: iso_c_binding
-      integer(c_int), value, intent(in) :: faceType
       integer(c_size_t), dimension(*) :: api_faceTags_
       integer(c_size_t), value, intent(in) :: api_faceTags_n_
       integer(c_size_t), dimension(*) :: api_faceNodes_
       integer(c_size_t), value, intent(in) :: api_faceNodes_n_
+      integer(c_int), dimension(*) :: api_faceSizes_
+      integer(c_size_t), value, intent(in) :: api_faceSizes_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer, intent(in) :: faceType
     integer(c_size_t), dimension(:), intent(in) :: faceTags
     integer(c_size_t), dimension(:), intent(in) :: faceNodes
+    integer(c_int), dimension(:), intent(in) :: faceSizes
     integer(c_int), intent(out), optional :: ierr
-    call C_API(faceType=int(faceType, c_int), &
-         api_faceTags_=faceTags, &
+    call C_API(api_faceTags_=faceTags, &
          api_faceTags_n_=size_gmsh_size(faceTags), &
          api_faceNodes_=faceNodes, &
          api_faceNodes_n_=size_gmsh_size(faceNodes), &
+         api_faceSizes_=faceSizes, &
+         api_faceSizes_n_=size_gmsh_int(faceSizes), &
          ierr_=ierr)
   end subroutine gmshModelMeshAddFaces
 
@@ -6453,23 +6922,96 @@ module gmsh
       api_nodeTags_n_)
   end subroutine gmshModelMeshGetElementEdgeNodes
 
-  !> Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
-  !! for quadrangular faces) of all elements of type `elementType' classified on
-  !! the entity of tag `tag'. `nodeTags' contains the node tags of the faces for
-  !! all elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is returned
-  !! by element, with elements in the same order as in `getElements' and
-  !! `getElementsByType'. If `primary' is set, only the primary (corner) nodes
-  !! of the faces are returned. If `tag' < 0, get the face nodes for all
-  !! entities. If `numTasks' > 1, only compute and return the part of the data
-  !! indexed by `task' (for C++ only; output vector must be preallocated).
+  !> Get the nodes on the faces of all elements of type `elementType' classified
+  !! on the entity of tag `tag'. `nodeTags' contains the node tags of the faces
+  !! for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], and `faceSizes' the
+  !! number of nodes of each face: [e1f1N, e1f2N, ...]. Faces are returned for
+  !! each element in their canonical order, with elements in the same order as
+  !! in `getElements' and `getElementsByType'. If `primary' is set, only the
+  !! primary (corner) nodes of the faces are returned. If `tag' < 0, get the
+  !! face nodes for all entities. If `numTasks' > 1, only compute and return the
+  !! part of the data indexed by `task' (for C++ only; output vectors must be
+  !! preallocated).
   subroutine gmshModelMeshGetElementFaceNodes(elementType, &
-                                              faceType, &
                                               nodeTags, &
+                                              faceSizes, &
                                               tag, &
                                               primary, &
                                               task, &
                                               numTasks, &
                                               ierr)
+    interface
+    subroutine C_API(elementType, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_faceSizes_, &
+                     api_faceSizes_n_, &
+                     tag, &
+                     primary, &
+                     task, &
+                     numTasks, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetElementFaceNodes")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: elementType
+      type(c_ptr), intent(out) :: api_nodeTags_
+      integer(c_size_t), intent(out) :: api_nodeTags_n_
+      type(c_ptr), intent(out) :: api_faceSizes_
+      integer(c_size_t), intent(out) :: api_faceSizes_n_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: primary
+      integer(c_size_t), value, intent(in) :: task
+      integer(c_size_t), value, intent(in) :: numTasks
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: elementType
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
+    integer(c_int), dimension(:), allocatable, intent(out) :: faceSizes
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: primary
+    integer, intent(in), optional :: task
+    integer, intent(in), optional :: numTasks
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_nodeTags_
+    integer(c_size_t) :: api_nodeTags_n_
+    type(c_ptr) :: api_faceSizes_
+    integer(c_size_t) :: api_faceSizes_n_
+    call C_API(elementType=int(elementType, c_int), &
+         api_nodeTags_=api_nodeTags_, &
+         api_nodeTags_n_=api_nodeTags_n_, &
+         api_faceSizes_=api_faceSizes_, &
+         api_faceSizes_n_=api_faceSizes_n_, &
+         tag=optval_c_int(-1, tag), &
+         primary=optval_c_bool(.false., primary), &
+         task=optval_c_size_t(0, task), &
+         numTasks=optval_c_size_t(1, numTasks), &
+         ierr_=ierr)
+    nodeTags = ovectorsize_(api_nodeTags_, &
+      api_nodeTags_n_)
+    faceSizes = ovectorint_(api_faceSizes_, &
+      api_faceSizes_n_)
+  end subroutine gmshModelMeshGetElementFaceNodes
+
+  !> Get the nodes on the faces with `faceType' primary nodes (3 for triangular
+  !! faces, 4 for quadrangular faces, etc.) of all elements of type
+  !! `elementType' classified on the entity of tag `tag'. `nodeTags' contains
+  !! the node tags of these faces for all elements: [e1f1n1, ..., e1f1nN,
+  !! e1f2n1, ...], with the same number of nodes N for each face. Faces are
+  !! returned for each element in their canonical order, with elements in the
+  !! same order as in `getElements' and `getElementsByType'. If `primary' is
+  !! set, only the primary (corner) nodes of the faces are returned. If `tag' <
+  !! 0, get the face nodes for all entities. If `numTasks' > 1, only compute and
+  !! return the part of the data indexed by `task' (for C++ only; output vector
+  !! must be preallocated).
+  subroutine gmshModelMeshGetElementFaceNodesByType(elementType, &
+                                                    faceType, &
+                                                    nodeTags, &
+                                                    tag, &
+                                                    primary, &
+                                                    task, &
+                                                    numTasks, &
+                                                    ierr)
     interface
     subroutine C_API(elementType, &
                      faceType, &
@@ -6480,7 +7022,7 @@ module gmsh
                      task, &
                      numTasks, &
                      ierr_) &
-      bind(C, name="gmshModelMeshGetElementFaceNodes")
+      bind(C, name="gmshModelMeshGetElementFaceNodesByType")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: elementType
       integer(c_int), value, intent(in) :: faceType
@@ -6514,7 +7056,7 @@ module gmsh
          ierr_=ierr)
     nodeTags = ovectorsize_(api_nodeTags_, &
       api_nodeTags_n_)
-  end subroutine gmshModelMeshGetElementFaceNodes
+  end subroutine gmshModelMeshGetElementFaceNodesByType
 
   !> Get the ghost elements `elementTags' and their associated `partitions'
   !! stored in the ghost entity of dimension `dim' and tag `tag'.
