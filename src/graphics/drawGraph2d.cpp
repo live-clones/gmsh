@@ -59,20 +59,7 @@ void drawContext::drawText2d()
 // The values a graph is plotted over, from the options and the data alone
 static void getGraphValueRange(PView *p, double &min, double &max)
 {
-  PViewData *data = p->getData(true);
-  PViewOptions *opt = p->getOptions();
-  if(opt->rangeType == PViewOptions::Custom) {
-    min = opt->customMin;
-    max = opt->customMax;
-  }
-  else if(opt->rangeType == PViewOptions::PerTimeStep) {
-    min = data->getMin(opt->timeStep);
-    max = data->getMax(opt->timeStep);
-  }
-  else {
-    min = data->getMin();
-    max = data->getMax();
-  }
+  p->getOptions()->getRange(p->getData(true), min, max);
 }
 
 // The scale a graph is drawn on: the one the view asks for, or the linear

@@ -183,6 +183,17 @@ namespace {
 
 static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts);
 
+// f(x, y, z) for each segment between two consecutive points
+template <class F> static void forSegments(const std::vector<SPoint3> &pts, F f)
+{
+  for(std::size_t i = 0; i + 1 < pts.size(); i++) {
+    double x[2] = {pts[i].x(), pts[i + 1].x()};
+    double y[2] = {pts[i].y(), pts[i + 1].y()};
+    double z[2] = {pts[i].z(), pts[i + 1].z()};
+    f(x, y, z);
+  }
+}
+
 // does a kept array cover this dimension of the model? Not for what it does
 // not hold: spheres (the cylinders of the curves are kept in a glyph list),
 // crosses, per-entity colours of orphans, points and curves under a display
@@ -281,12 +292,9 @@ static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
       curvePoints(ctx, static_cast<GEdge *>(e), pts);
       unsigned int col[2];
       col[0] = col[1] = pick ? 0 : geomColor(e, false);
-      for(std::size_t i = 0; i + 1 < pts.size(); i++) {
-        double x[2] = {pts[i].x(), pts[i + 1].x()};
-        double y[2] = {pts[i].y(), pts[i + 1].y()};
-        double z[2] = {pts[i].z(), pts[i + 1].z()};
+      forSegments(pts, [&](double *x, double *y, double *z) {
         ka.va->add(x, y, z, nullptr, col, nullptr, false);
-      }
+      });
     }
     else
       ka.va->merge(f->va_geom_triangles,
@@ -315,12 +323,9 @@ static void drawKeptCylinders(drawContext *ctx, GModel *m)
     forKeptEntities(ctx, m, 1, [&](GEntity *e) {
       curvePoints(ctx, static_cast<GEdge *>(e), pts);
       unsigned int col = geomColor(e, false);
-      for(std::size_t i = 0; i + 1 < pts.size(); i++) {
-        double x[2] = {pts[i].x(), pts[i + 1].x()};
-        double y[2] = {pts[i].y(), pts[i + 1].y()};
-        double z[2] = {pts[i].z(), pts[i + 1].z()};
+      forSegments(pts, [&](double *x, double *y, double *z) {
         g->addCylinder(x, y, z, r, r, col);
-      }
+      });
     });
   }
   // the inside of the open end of a tube shows: lit on both sides, as the
@@ -458,10 +463,7 @@ static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
     std::vector<SPoint3> pts;
     curvePoints(ctx, e, pts);
     if(c->geom.curveType > 0) {
-      for(std::size_t i = 0; i + 1 < pts.size(); i++) {
-        double x[2] = {pts[i].x(), pts[i + 1].x()};
-        double y[2] = {pts[i].y(), pts[i + 1].y()};
-        double z[2] = {pts[i].z(), pts[i + 1].z()};
+      forSegments(pts, [&](double *x, double *y, double *z) {
         // over the kept cylinders it is drawn now, under the depth test set
         // above, and not with the glyphs drawn at the end of the pass
         if(glyphList *g = merged ? nullptr : geomGlyphs(ctx)) {
@@ -470,7 +472,7 @@ static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
         }
         else
           ctx->drawCylinder(width, x, y, z, c->geom.light);
-      }
+      });
     }
     else {
       gmshBegin(GL_LINE_STRIP);
@@ -625,8 +627,7 @@ static void drawGeomEntity(drawContext *ctx, GEntity *e)
 {
   CTX *c = CTX::instance();
   int dim = e->dim();
-  if(dim < 3 ? !geomDrawn(ctx, e) : (!passWants(ctx, e) || !e->getVisibility()))
-    return;
+  if(!geomDrawn(ctx, e)) return;
   bool pick = (ctx->render_mode == drawContext::GMSH_SELECT);
   // a point already in the kept array: for a picking pass, selected or not
   // (it draws them all alike, and no label); for the picture, unless selected
@@ -712,12 +713,10 @@ void drawContext::drawGeom()
 
   _geomGlyphs.clear();
 
-  for(int i = 0; i < 6; i++)
-    if(CTX::instance()->geom.clip & (1 << i))
-      gmshClipPlaneOn(i, true);
-    else
-      gmshClipPlaneOn(i, false);
+  CTX *c = CTX::instance();
+  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, (c->geom.clip >> i) & 1);
 
+  bool pick = (render_mode == GMSH_SELECT);
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     if(m->getVisibility() && isVisible(m)) {
@@ -727,8 +726,6 @@ void drawContext::drawGeom()
       // normals or a display not kept need them, or else only the selected
       // ones, drawn again on top (a million entities were walked at every
       // frame, and at every pick, for the one highlighted)
-      bool pick = (render_mode == GMSH_SELECT);
-      CTX *c = CTX::instance();
       for(int dim = 0; dim < 3; dim++) {
         _kept = drawKept(this, m, dim);
         bool shown = (dim == 0) ? c->geom.points :
@@ -750,7 +747,7 @@ void drawContext::drawGeom()
     }
   }
 
-  _geomGlyphs.draw(this, CTX::instance()->geom.light);
+  _geomGlyphs.draw(this, c->geom.light);
   _geomGlyphs.clear();
 
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);

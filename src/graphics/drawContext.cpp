@@ -314,47 +314,26 @@ static void uploadVertexArray(VertexArray *va)
   vboTime += TimeOfDay() - t1;
 }
 
-// bind the buffer of the vertices, normals or colours of an array (uploaded
-// on first use) and return the offset to pass to the pointer calls (null);
-// without buffer objects, the client-side pointer
-static const GLvoid *vaVertexPointer(VertexArray *va)
+// bind the buffer of the vertices (which = 0), normals (1) or colours (2) of
+// an array (uploaded on first use) and return the offset to pass to the
+// pointer calls (null); without buffer objects, the client-side pointer
+static const GLvoid *vaPointer(VertexArray *va, int which)
 {
   if(!useVertexBufferObjects()) {
     // make sure a buffer left bound by a previous frame does not turn the
     // client-side pointer below into an offset
     if(glApi::haveBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
-    return va->getVertexArray();
-  }
-  uploadVertexArray(va);
-  glApi::BindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[0]);
-  return nullptr;
-}
-
-static const GLvoid *vaNormalPointer(VertexArray *va)
-{
-  if(!useVertexBufferObjects()) {
-    // make sure a buffer left bound by a previous frame does not turn the
-    // client-side pointer below into an offset
-    if(glApi::haveBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
-    return va->getNormalArray();
-  }
-  uploadVertexArray(va);
-  glApi::BindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[1]);
-  return nullptr;
-}
-
-static const GLvoid *vaColorPointer(VertexArray *va)
-{
-  if(!useVertexBufferObjects()) {
-    // make sure a buffer left bound by a previous frame does not turn the
-    // client-side pointer below into an offset
-    if(glApi::haveBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+    if(which == 0) return va->getVertexArray();
+    if(which == 1) return va->getNormalArray();
     return va->getColorArray();
   }
   uploadVertexArray(va);
-  glApi::BindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[2]);
+  glApi::BindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[which]);
   return nullptr;
 }
+static const GLvoid *vaVertexPointer(VertexArray *va) { return vaPointer(va, 0); }
+static const GLvoid *vaNormalPointer(VertexArray *va) { return vaPointer(va, 1); }
+static const GLvoid *vaColorPointer(VertexArray *va) { return vaPointer(va, 2); }
 
 // bind the arrays of a vertex array: the vertices always, the normals and
 // colours if asked (an unbound colour array means the current colour is
@@ -753,30 +732,19 @@ void drawContext::draw3d()
   bool geomFilled = (CTX::instance()->geom.transparencyMode == 0);
   bool meshFilled = (CTX::instance()->mesh.transparencyMode == 0);
 
-  if(!split) {
-    transparencyPass = TRANSPARENCY_ALL;
-    gmshAlphaScale(geomScale, geomFilled);
-    drawGeom();
-    gmshAlphaScale(1., false);
-    drawBackgroundImage(true);
-    gmshAlphaScale(meshScale, meshFilled);
-    drawMesh();
-    gmshAlphaScale(1., false);
-    drawPost();
-    if(studio) drawStudioFloor();
-  }
-  else {
-    transparencyPass = TRANSPARENCY_OPAQUE;
-    gmshAlphaScale(geomScale, geomFilled);
-    drawGeom();
-    gmshAlphaScale(1., false);
-    drawBackgroundImage(true);
-    gmshAlphaScale(meshScale, meshFilled);
-    drawMesh();
-    gmshAlphaScale(1., false);
-    drawPost();
-    if(studio) drawStudioFloor();
+  // everything, or what is opaque
+  transparencyPass = split ? TRANSPARENCY_OPAQUE : TRANSPARENCY_ALL;
+  gmshAlphaScale(geomScale, geomFilled);
+  drawGeom();
+  gmshAlphaScale(1., false);
+  drawBackgroundImage(true);
+  gmshAlphaScale(meshScale, meshFilled);
+  drawMesh();
+  gmshAlphaScale(1., false);
+  drawPost();
+  if(studio) drawStudioFloor();
 
+  if(split) {
     transparencyPass = TRANSPARENCY_TRANSPARENT;
     bool summed = glShader::beginTransparent();
     if(!summed) {
@@ -802,7 +770,6 @@ void drawContext::draw3d()
     transparencyPass = TRANSPARENCY_ALL;
   }
 
-  // drawAxes();
   drawGraph2d(true);
 }
 
@@ -1706,51 +1673,24 @@ void drawContext::initRenderModel()
       double eye[4];
       glMatrix::transform(gmshMatrix(GMSH_MODELVIEW), pos, eye);
 
-      GLfloat r = (GLfloat)(
-        CTX::instance()->unpackRed(CTX::instance()->color.ambientLight[i]) /
-        255.);
-      GLfloat g = (GLfloat)(
-        CTX::instance()->unpackGreen(CTX::instance()->color.ambientLight[i]) /
-        255.);
-      GLfloat b = (GLfloat)(
-        CTX::instance()->unpackBlue(CTX::instance()->color.ambientLight[i]) /
-        255.);
-      GLfloat ambient[4] = {r, g, b, 1.0F};
-      if(fixed) {
-        GLfloat a[4] = {k * r, k * g, k * b, 1.0F};
-        glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, a);
-      }
-
-      r = (GLfloat)(
-        CTX::instance()->unpackRed(CTX::instance()->color.diffuseLight[i]) /
-        255.);
-      g = (GLfloat)(
-        CTX::instance()->unpackGreen(CTX::instance()->color.diffuseLight[i]) /
-        255.);
-      b = (GLfloat)(
-        CTX::instance()->unpackBlue(CTX::instance()->color.diffuseLight[i]) /
-        255.);
-      GLfloat diffuse[4] = {r, g, b, 1.0F};
-      if(fixed) {
-        GLfloat d[4] = {k * r, k * g, k * b, 1.0F};
-        glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, d);
-      }
-
-      r = (GLfloat)(
-        CTX::instance()->unpackRed(CTX::instance()->color.specularLight[i]) /
-        255.);
-      g = (GLfloat)(
-        CTX::instance()->unpackGreen(CTX::instance()->color.specularLight[i]) /
-        255.);
-      b = (GLfloat)(
-        CTX::instance()->unpackBlue(CTX::instance()->color.specularLight[i]) /
-        255.);
-      GLfloat specular[4] = {r, g, b, 1.0F};
-      if(fixed) {
-        GLfloat sp[4] = {k * r, k * g, k * b, 1.0F};
-        glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, sp);
-        glEnable((GLenum)(GL_LIGHT0 + i));
-      }
+      // the colours of the light, and what the fixed function pipeline is
+      // given of them (scaled by k)
+      auto color = [&](unsigned int c, GLfloat out[4], GLenum what) {
+        CTX *x = CTX::instance();
+        out[0] = (GLfloat)(x->unpackRed(c) / 255.);
+        out[1] = (GLfloat)(x->unpackGreen(c) / 255.);
+        out[2] = (GLfloat)(x->unpackBlue(c) / 255.);
+        out[3] = 1.0F;
+        if(fixed) {
+          GLfloat f[4] = {k * out[0], k * out[1], k * out[2], 1.0F};
+          glLightfv((GLenum)(GL_LIGHT0 + i), what, f);
+        }
+      };
+      GLfloat ambient[4], diffuse[4], specular[4];
+      color(CTX::instance()->color.ambientLight[i], ambient, GL_AMBIENT);
+      color(CTX::instance()->color.diffuseLight[i], diffuse, GL_DIFFUSE);
+      color(CTX::instance()->color.specularLight[i], specular, GL_SPECULAR);
+      if(fixed) glEnable((GLenum)(GL_LIGHT0 + i));
       glShader::setLight(i, eye, ambient, diffuse, specular);
     }
     else {

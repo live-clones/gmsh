@@ -79,9 +79,6 @@ static SVector3 normal3(double **xyz, int i0 = 0, int i1 = 1, int i2 = 2)
   return n;
 }
 
-// what the drawing functions read the options from and write the primitives
-// to; each thread gets its own, with its own copy of the options (which the
-// functions modify) and its own arrays, merged in thread order afterwards
 // n rows of doubles, as the double ** the drawing routines take for the
 // coordinates or the values at the nodes of an element; the memory is kept
 // from one element to the next
@@ -100,6 +97,9 @@ public:
   }
 };
 
+// what the drawing functions read the options from and write the primitives
+// to; each thread gets its own, with its own copy of the options (which the
+// functions modify) and its own arrays, merged in thread order afterwards
 class drawTarget {
 public:
   PView *view;
@@ -210,18 +210,7 @@ static bool getExternalValues(drawTarget *p, int index, int ient, int iele,
     for(int i = 0; i < numNodes; i++)
       for(int j = 0; j < numComp2; j++)
         data2->getValue(opt->timeStep, ient, iele, i, j, val2[i][j]);
-    if(opt->rangeType == PViewOptions::Custom) {
-      opt->externalMin = opt->customMin;
-      opt->externalMax = opt->customMax;
-    }
-    else if(opt->rangeType == PViewOptions::PerTimeStep) {
-      opt->externalMin = data2->getMin(opt->timeStep);
-      opt->externalMax = data2->getMax(opt->timeStep);
-    }
-    else {
-      opt->externalMin = data2->getMin();
-      opt->externalMax = data2->getMax();
-    }
+    opt->getRange(data2, opt->externalMin, opt->externalMax);
     return true;
   }
   return false;
@@ -653,7 +642,6 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
   }
 }
 
-// the edges of a face of n corners, lit with the normal of the face
 // an edge (a, b) of the outline of an element, lit with the normal of its
 // face when there is one
 static void addOutlineEdge(drawTarget *p, double **xyz, unsigned int color,
@@ -694,28 +682,10 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
 {
   PViewOptions *opt = p->opt;
 
+  // the pass marking the skin only draws the faces that may be on it
   if(skin || markingBoundaryFaces) {
     const int ii[3] = {i0, i1, i2};
-    std::uint64_t k[4];
-    if(skin && faceKey(p->nodeIds, p->ent, ii, 3, k)) {
-      if(markingBoundaryFaces) {
-        boundaryFaces->insertOrErase(k, 4);
-        return;
-      }
-      // a face shared by two elements of the same entity is interior, and
-      // hidden by the skin
-      if(!boundaryFaces->contains(k, 4)) return;
-      skin = false;
-    }
-    else if(markingBoundaryFaces)
-      return;
-    else if(skin && p->nodeIds && !noNodeIdWarning++) {
-      Msg::Warning("DrawSkinOnly needs node identifiers, which this data does "
-                   "not have: drawing all the faces");
-      skin = false;
-    }
-    else if(skin)
-      skin = false;
+    if(!skin || !skinFace(p, ii, 3)) return;
   }
 
   const int il[3][2] = {{i0, i1}, {i1, i2}, {i2, i0}};
@@ -748,7 +718,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
         col[i] = opt->getColor(v[i], vmin, vmax);
       }
       const int ii[3] = {i0, i1, i2};
-      if(!pre && !skin &&
+      if(!pre &&
          topoDuplicate(p->va_triangles, p->nodeIds, unique, ii, 3, col))
         return;
       if(!pre) p->va_triangles->add(x, y, z, n, col, nullptr, unique);
@@ -908,12 +878,6 @@ static void addOutlineSolid(drawTarget *p, double **xyz, unsigned int color,
     addOutlineFace(p, xyz, color, pre, s.quads[i], 4);
   for(int i = 0; i < s.numTriangles; i++)
     addOutlineFace(p, xyz, color, pre, s.triangles[i], 3);
-}
-
-static void addOutlineTetrahedron(drawTarget *p, double **xyz,
-                                  unsigned int color, bool pre)
-{
-  addOutlineSolid(p, xyz, color, pre, tetShape);
 }
 
 // add the section a clipping plane cuts out of a 3D element, colored with
@@ -1077,54 +1041,6 @@ static void addScalarSolid(drawTarget *p, double **xyz, double **val, bool pre,
                          s.tets[i][2], s.tets[i][3]);
 }
 
-static void addOutlineHexahedron(drawTarget *p, double **xyz,
-                                 unsigned int color, bool pre)
-{
-  addOutlineSolid(p, xyz, color, pre, hexShape);
-}
-
-static void addScalarHexahedron(drawTarget *p, double **xyz, double **val,
-                                bool pre)
-{
-  addScalarSolid(p, xyz, val, pre, hexShape);
-}
-
-static void addOutlinePrism(drawTarget *p, double **xyz, unsigned int color,
-                            bool pre)
-{
-  addOutlineSolid(p, xyz, color, pre, priShape);
-}
-
-static void addScalarPrism(drawTarget *p, double **xyz, double **val, bool pre)
-{
-  addScalarSolid(p, xyz, val, pre, priShape);
-}
-
-static void addOutlinePyramid(drawTarget *p, double **xyz, unsigned int color,
-                              bool pre)
-{
-  addOutlineSolid(p, xyz, color, pre, pyrShape);
-}
-
-static void addScalarPyramid(drawTarget *p, double **xyz, double **val,
-                             bool pre)
-{
-  addScalarSolid(p, xyz, val, pre, pyrShape);
-}
-
-static void addOutlineTrihedron(drawTarget *p, double **xyz, unsigned int color,
-                                bool pre)
-{
-  addOutlineQuadrangle(p, xyz, color, pre, 0, 1, 2, 3);
-}
-
-static void addScalarTrihedron(drawTarget *p, double **xyz, double **val,
-                               bool pre, int i0 = 0, int i1 = 1, int i2 = 2,
-                               int i3 = 3, bool unique = false)
-{
-  addScalarQuadrangle(p, xyz, val, pre, i0, i1, i2, i3, unique);
-}
-
 static void addOutlinePolyhedron(drawTarget *p, int ient, int iele,
                                  int numNodes, double **xyz, unsigned int color,
                                  bool pre)
@@ -1181,14 +1097,18 @@ static void addOutlineElement(drawTarget *p, int ient, int iele, int numNodes,
     addOutlinePolygon(p, ient, iele, numNodes, xyz, opt->color.quadrangle, pre);
     break;
   case TYPE_TET:
-    addOutlineTetrahedron(p, xyz, opt->color.tetrahedron, pre);
+    addOutlineSolid(p, xyz, opt->color.tetrahedron, pre, tetShape);
     break;
   case TYPE_HEX:
-    addOutlineHexahedron(p, xyz, opt->color.hexahedron, pre);
+    addOutlineSolid(p, xyz, opt->color.hexahedron, pre, hexShape);
     break;
-  case TYPE_PRI: addOutlinePrism(p, xyz, opt->color.prism, pre); break;
-  case TYPE_PYR: addOutlinePyramid(p, xyz, opt->color.pyramid, pre); break;
-  case TYPE_TRIH: addOutlineTrihedron(p, xyz, opt->color.pyramid, pre); break;
+  case TYPE_PRI: addOutlineSolid(p, xyz, opt->color.prism, pre, priShape); break;
+  case TYPE_PYR:
+    addOutlineSolid(p, xyz, opt->color.pyramid, pre, pyrShape);
+    break;
+  case TYPE_TRIH:
+    addOutlineQuadrangle(p, xyz, opt->color.pyramid, pre);
+    break;
   case TYPE_POLYH:
     addOutlinePolyhedron(p, ient, iele, numNodes, xyz, opt->color.pyramid, pre);
     break;
@@ -1211,10 +1131,10 @@ static void addScalarElement(drawTarget *p, int ient, int iele, int numNodes,
     addScalarPolygon(p, ient, iele, numNodes, xyz, val, pre);
     break;
   case TYPE_TET: addScalarTetrahedron(p, xyz, val, pre); break;
-  case TYPE_HEX: addScalarHexahedron(p, xyz, val, pre); break;
-  case TYPE_PRI: addScalarPrism(p, xyz, val, pre); break;
-  case TYPE_PYR: addScalarPyramid(p, xyz, val, pre); break;
-  case TYPE_TRIH: addScalarTrihedron(p, xyz, val, pre); break;
+  case TYPE_HEX: addScalarSolid(p, xyz, val, pre, hexShape); break;
+  case TYPE_PRI: addScalarSolid(p, xyz, val, pre, priShape); break;
+  case TYPE_PYR: addScalarSolid(p, xyz, val, pre, pyrShape); break;
+  case TYPE_TRIH: addScalarQuadrangle(p, xyz, val, pre); break;
   case TYPE_POLYH:
     addScalarPolyhedron(p, ient, iele, numNodes, xyz, val, pre);
     break;
@@ -1990,20 +1910,9 @@ public:
 
     if(opt->useGenRaise) opt->createGeneralRaise();
 
-    if(opt->rangeType == PViewOptions::Custom) {
-      opt->tmpMin = opt->customMin;
-      opt->tmpMax = opt->customMax;
-    }
-    else if(opt->rangeType == PViewOptions::PerTimeStep) {
-      opt->tmpMin = data->getMin(opt->timeStep);
-      opt->tmpMax = data->getMax(opt->timeStep);
-    }
-    else {
-      // FIXME: this is not perfect for multi-step adaptive views, as
-      // we don't have the correct min/max info for the other steps
-      opt->tmpMin = data->getMin();
-      opt->tmpMax = data->getMax();
-    }
+    // (not perfect for multi-step adaptive views, which do not know the
+    // range of the other steps)
+    opt->getRange(data, opt->tmpMin, opt->tmpMax);
 
     p->va_points = new VertexArray(1, _estimateNumPoints(p));
     p->va_lines = new VertexArray(2, _estimateNumLines(p));

@@ -74,40 +74,44 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
   }
 }
 
+// the normals of the surface elements (normals = true) or the tangents of
+// the line elements, at their barycentres
 template <class T>
-static void drawNormals(drawContext *ctx, std::vector<T *> &elements)
+static void drawElementVectors(drawContext *ctx, std::vector<T *> &elements,
+                               bool normals)
 {
-  gmshColor4ubv((const void *)&CTX::instance()->color.mesh.normals);
+  CTX *c = CTX::instance();
+  gmshColor4ubv(normals ? (const void *)&c->color.mesh.normals :
+                          (const void *)&c->color.mesh.tangents);
+  double length = normals ? c->mesh.normals : c->mesh.tangents;
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
-    SVector3 n = ele->getFace(0).normal();
-    for(int j = 0; j < 3; j++)
-      n[j] *= CTX::instance()->mesh.normals * ctx->pixel_equiv_x / ctx->s[j];
+    SVector3 n = normals ? ele->getFace(0).normal() : ele->getEdge(0).tangent();
+    for(int j = 0; j < 3; j++) n[j] *= length * ctx->pixel_equiv_x / ctx->s[j];
     SPoint3 pc = ele->barycenter();
-    ctx->drawVector(CTX::instance()->vectorType, 0, pc.x(), pc.y(), pc.z(),
-                    n[0], n[1], n[2], CTX::instance()->mesh.light);
+    ctx->drawVector(c->vectorType, 0, pc.x(), pc.y(), pc.z(), n[0], n[1], n[2],
+                    c->mesh.light);
   }
 }
 
-template <class T>
-static void drawTangents(drawContext *ctx, std::vector<T *> &elements)
+// the colour a node is drawn in, which is the one of its order or the one of
+// the entity it belongs to
+static unsigned int getColorByVertex(GEntity *e, MVertex *v,
+                                     bool withSelection = true)
 {
-  gmshColor4ubv((const void *)&CTX::instance()->color.mesh.tangents);
-  for(std::size_t i = 0; i < elements.size(); i++) {
-    MElement *ele = elements[i];
-    if(!isElementVisible(ele)) continue;
-    SVector3 t = ele->getEdge(0).tangent();
-    for(int j = 0; j < 3; j++)
-      t[j] *= CTX::instance()->mesh.tangents * ctx->pixel_equiv_x / ctx->s[j];
-    SPoint3 pc = ele->barycenter();
-    ctx->drawVector(CTX::instance()->vectorType, 0, pc.x(), pc.y(), pc.z(),
-                    t[0], t[1], t[2], CTX::instance()->mesh.light);
+  if(CTX::instance()->mesh.colorCarousel == 0 ||
+     CTX::instance()->mesh.volumeFaces ||
+     CTX::instance()->mesh.surfaceFaces) { // by element type
+    if(v->getPolynomialOrder() > 1)
+      return CTX::instance()->color.mesh.nodeSup;
+    return CTX::instance()->color.mesh.node;
   }
+  return getColorByEntity(e, withSelection);
 }
 
-static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
-                            int partition = -1)
+// the label of a node (its partition is not known here: "NA")
+static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v)
 {
   if(!v->getVisibility()) return;
 
@@ -115,24 +119,12 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   int physical = np ? e->physicals[np - 1] : 0;
   char str[256];
   if(CTX::instance()->mesh.labelType == 4) {
-    strcpy(str, "(");
-    char tmp[256];
-    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->x());
-    strcat(str, tmp);
-    strcat(str, ",");
-    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->y());
-    strcat(str, tmp);
-    strcat(str, ",");
-    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->z());
-    strcat(str, tmp);
-    strcat(str, ")");
+    const std::string &f = CTX::instance()->numberFormat;
+    std::string fmt = "(" + f + "," + f + "," + f + ")";
+    snprintf(str, sizeof(str), fmt.c_str(), v->x(), v->y(), v->z());
   }
-  else if(CTX::instance()->mesh.labelType == 3) {
-    if(partition < 0)
-      sprintf(str, "NA");
-    else
-      sprintf(str, "%d", partition);
-  }
+  else if(CTX::instance()->mesh.labelType == 3)
+    sprintf(str, "NA");
   else if(CTX::instance()->mesh.labelType == 2)
     sprintf(str, "%d", physical);
   else if(CTX::instance()->mesh.labelType == 1)
@@ -140,18 +132,8 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   else
     sprintf(str, "%zu", v->getNum());
 
-  if(CTX::instance()->mesh.colorCarousel == 0 ||
-     CTX::instance()->mesh.volumeFaces ||
-     CTX::instance()->mesh.surfaceFaces) { // by element type
-    if(v->getPolynomialOrder() > 1)
-      gmshColor4ubv((const void *)&CTX::instance()->color.mesh.nodeSup);
-    else
-      gmshColor4ubv((const void *)&CTX::instance()->color.mesh.node);
-  }
-  else {
-    unsigned int col = getColorByEntity(e);
-    gmshColor4ubv((const void *)&col);
-  }
+  unsigned int col = getColorByVertex(e, v);
+  gmshColor4ubv((const void *)&col);
   double offset = (0.5 * CTX::instance()->mesh.nodeSize +
                    0.1 * CTX::instance()->glFontSize) *
                   ctx->pixel_equiv_x;
@@ -217,11 +199,6 @@ static int edgesForced(int dim)
   return (dim == 2) ? c->mesh.surfaceFaces : (dim == 3) ? c->mesh.volumeFaces : 0;
 }
 
-// The node spheres of a mesh entity, collected once and kept: they depend on
-// the mesh (every list is dropped when it changes, see drawMesh()), the
-// options deciding their size and colour, and the pixel size. The labels are
-// not collected.
-
 // what a walk over the nodes of an entity is being asked to do
 enum { NODES_COLLECT = 1, NODES_POINTS = 2, NODES_LABELS = 4 };
 
@@ -233,8 +210,11 @@ static struct {
   bool points, lines, triangles, normals, tangents;
 } _merged = {false, false, false, false, false};
 
-// the list an entity keeps its node spheres in, and whether it has to be
-// filled
+// The node spheres of a mesh entity, collected once and kept: they depend on
+// the mesh (every list is dropped when it changes, see drawMesh()), the
+// options deciding their size and colour, and the pixel size; the labels are
+// not collected. The list an entity keeps them in, and whether it has to be
+// filled.
 static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
 {
   glyphToken tok;
@@ -282,21 +262,6 @@ static void drawNodes(drawContext *ctx, GEntity *e, W walk)
     int what = (points ? NODES_POINTS : 0) | labels;
     if(what) walk(nullptr, what);
   }
-}
-
-// the colour a node is drawn in, which is the one of its order or the one of
-// the entity it belongs to
-static unsigned int getColorByVertex(GEntity *e, MVertex *v,
-                                     bool withSelection = true)
-{
-  if(CTX::instance()->mesh.colorCarousel == 0 ||
-     CTX::instance()->mesh.volumeFaces ||
-     CTX::instance()->mesh.surfaceFaces) { // by element type
-    if(v->getPolynomialOrder() > 1)
-      return CTX::instance()->color.mesh.nodeSup;
-    return CTX::instance()->color.mesh.node;
-  }
-  return getColorByEntity(e, withSelection);
 }
 
 // the nodes of an entity: spheres are collected into the list (kept between
@@ -349,8 +314,6 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
     MElement *ele = elements[i];
     for(std::size_t j = 0; j < ele->getNumVertices(); j++) {
       MVertex *v = ele->getVertex(j);
-      // FIXME isElementVisible() can be slow: we should also use a
-      // vertex array for drawing vertices...
       if(isElementVisible(ele) && v->getVisibility()) {
         if(what & NODES_COLLECT)
           g->addSphere(ctx, CTX::instance()->mesh.nodeSize, v->x(), v->y(),
@@ -369,12 +332,46 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
   }
 }
 
-template <class T> static void drawBarycentricDual(std::vector<T *> &elements)
+// the lines of a dual drawn in dashes of the foreground colour, begun and
+// ended around the elements
+static void beginDual()
 {
   gmshColor4ubv((const void *)&CTX::instance()->color.fg);
   gmshLineStipple(1, 0x0F0F);
   gl2psEnable(GL2PS_LINE_STIPPLE);
   gmshBegin(GL_LINES);
+}
+
+static void endDual()
+{
+  gmshEnd();
+  gmshLineStippleOff();
+  gl2psDisable(GL2PS_LINE_STIPPLE);
+}
+
+// the dual of a 3D element around its centre pc: pc to the middle of each
+// face, and the middle of each face to the middle of its edges
+static void dualOfFaces(MElement *ele, const SPoint3 &pc)
+{
+  for(int j = 0; j < ele->getNumFaces(); j++) {
+    MFace f = ele->getFace(j);
+    SPoint3 p = f.barycenter();
+    gmshVertex3d(pc.x(), pc.y(), pc.z());
+    gmshVertex3d(p.x(), p.y(), p.z());
+    for(std::size_t k = 0; k < f.getNumVertices(); k++) {
+      MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ?
+                                f.getVertex(0) :
+                                f.getVertex(k + 1));
+      SPoint3 pe = e.barycenter();
+      gmshVertex3d(p.x(), p.y(), p.z());
+      gmshVertex3d(pe.x(), pe.y(), pe.z());
+    }
+  }
+}
+
+template <class T> static void drawBarycentricDual(std::vector<T *> &elements)
+{
+  beginDual();
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
@@ -387,34 +384,15 @@ template <class T> static void drawBarycentricDual(std::vector<T *> &elements)
         gmshVertex3d(p.x(), p.y(), p.z());
       }
     }
-    else if(ele->getDim() == 3) {
-      for(int j = 0; j < ele->getNumFaces(); j++) {
-        MFace f = ele->getFace(j);
-        SPoint3 p = f.barycenter();
-        gmshVertex3d(pc.x(), pc.y(), pc.z());
-        gmshVertex3d(p.x(), p.y(), p.z());
-        for(std::size_t k = 0; k < f.getNumVertices(); k++) {
-          MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ?
-                                    f.getVertex(0) :
-                                    f.getVertex(k + 1));
-          SPoint3 pe = e.barycenter();
-          gmshVertex3d(p.x(), p.y(), p.z());
-          gmshVertex3d(pe.x(), pe.y(), pe.z());
-        }
-      }
-    }
+    else if(ele->getDim() == 3)
+      dualOfFaces(ele, pc);
   }
-  gmshEnd();
-  gmshLineStippleOff();
-  gl2psDisable(GL2PS_LINE_STIPPLE);
+  endDual();
 }
 
 template <class T> static void drawVoronoiDual(std::vector<T *> &elements)
 {
-  gmshColor4ubv((const void *)&CTX::instance()->color.fg);
-  gmshLineStipple(1, 0x0F0F);
-  gl2psEnable(GL2PS_LINE_STIPPLE);
-  gmshBegin(GL_LINES);
+  beginDual();
   for(std::size_t i = 0; i < elements.size(); i++) {
     T *ele = elements[i];
     if(!isElementVisible(ele)) continue;
@@ -437,29 +415,11 @@ template <class T> static void drawVoronoiDual(std::vector<T *> &elements)
         gmshVertex3d(p.x(), p.y(), p.z());
       }
     }
-    else if(ele->getDim() == 3) {
-      for(int j = 0; j < ele->getNumFaces(); j++) {
-        MFace f = ele->getFace(j);
-        SPoint3 p = f.barycenter();
-        gmshVertex3d(pc.x(), pc.y(), pc.z());
-        gmshVertex3d(p.x(), p.y(), p.z());
-        for(std::size_t k = 0; k < f.getNumVertices(); k++) {
-          MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ?
-                                    f.getVertex(0) :
-                                    f.getVertex(k + 1));
-          SPoint3 pe = e.barycenter();
-          gmshVertex3d(p.x(), p.y(), p.z());
-          gmshVertex3d(pe.x(), pe.y(), pe.z());
-        }
-      }
-    }
+    else if(ele->getDim() == 3)
+      dualOfFaces(ele, pc);
   }
-  gmshEnd();
-  gmshLineStippleOff();
-  gl2psDisable(GL2PS_LINE_STIPPLE);
+  endDual();
 }
-
-// Routine for drawing the vertex arrays
 
 // Merged vertex arrays: on a model with many entities the per-entity draw
 // calls dominate the frame, so the arrays of all the entities of a dimension
@@ -571,6 +531,14 @@ static void drawMergedArray(VertexArray *va, GLenum type, bool useNormalArray)
                       meshDrawFlags(va, useNormalArray) | GMSH_DRAW_COLORS);
 }
 
+// a node of an entity, in the colour it is drawn in
+static void addNode(GEntity *e, MVertex *v, VertexArray *va)
+{
+  double x = v->x(), y = v->y(), z = v->z();
+  unsigned int col = getColorByVertex(e, v, false);
+  va->add(&x, &y, &z, nullptr, &col, nullptr, false);
+}
+
 // the nodes of the elements of an entity that are visible, once each
 template <class T>
 static void collectNodes(GEntity *e, std::vector<T *> &elements,
@@ -581,10 +549,7 @@ static void collectNodes(GEntity *e, std::vector<T *> &elements,
     if(!isElementVisible(ele)) continue;
     for(std::size_t j = 0; j < ele->getNumVertices(); j++) {
       MVertex *v = ele->getVertex(j);
-      if(!v->getVisibility() || !seen.insert(v).second) continue;
-      double x = v->x(), y = v->y(), z = v->z();
-      unsigned int col = getColorByVertex(e, v, false);
-      va->add(&x, &y, &z, nullptr, &col, nullptr, false);
+      if(v->getVisibility() && seen.insert(v).second) addNode(e, v, va);
     }
   }
 }
@@ -594,13 +559,9 @@ static void collectNodes(GEntity *e, VertexArray *va)
 {
   if(!e->getVisibility()) return;
   if(!e->getOnlySomeElementsVisible()) {
-    for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
-      MVertex *v = e->mesh_vertices[i];
-      if(!v->getVisibility()) continue;
-      double x = v->x(), y = v->y(), z = v->z();
-      unsigned int col = getColorByVertex(e, v, false);
-      va->add(&x, &y, &z, nullptr, &col, nullptr, false);
-    }
+    for(std::size_t i = 0; i < e->mesh_vertices.size(); i++)
+      if(e->mesh_vertices[i]->getVisibility())
+        addNode(e, e->mesh_vertices[i], va);
     return;
   }
   std::set<MVertex *> seen;
@@ -681,10 +642,7 @@ static void drawMergedVectors(drawContext *ctx, GModel *m, int dim)
     forMeshEntities(m, dim, [&](GEntity *e) {
       if(!e->getVisibility()) return;
       forShownElements(e, [&](auto &elements) {
-        if(dim == 2)
-          drawNormals(ctx, elements);
-        else
-          drawTangents(ctx, elements);
+        drawElementVectors(ctx, elements, dim == 2);
       });
     });
     g->recordEnd();
@@ -801,9 +759,11 @@ static void drawMeshEntity(drawContext *ctx, GEntity *e)
   });
 
   if(dim == 1 && c->mesh.tangents && !_merged.tangents)
-    drawTangents(ctx, static_cast<GEdge *>(e)->lines);
+    drawElementVectors(ctx, static_cast<GEdge *>(e)->lines, false);
   if(dim == 2 && c->mesh.normals && !_merged.normals)
-    forShownElements(e, [&](auto &elements) { drawNormals(ctx, elements); });
+    forShownElements(e, [&](auto &elements) {
+      drawElementVectors(ctx, elements, true);
+    });
 
   if(dim > 1 && c->mesh.dual)
     forShownElements(e, [&](auto &elements) { drawBarycentricDual(elements); });
@@ -919,11 +879,8 @@ static void drawDimension(drawContext *ctx, GModel *m, mergedArrays &ma,
   CTX *c = CTX::instance();
   merge = merge && !cutOnly;
   VertexArray *lines = ma.lines[dim], *triangles = ma.triangles[dim];
-  // The merged draws set the two-sided lighting themselves, as the
-  // per-entity draws do: it was left to whatever the previous pass had set,
-  // and once an entity was selected or hovered the pass over the curves,
-  // which turns it off, ran before the merged faces, which then lit their
-  // back faces no more and went dark.
+  // the merged draws set the two-sided lighting themselves, as the
+  // per-entity draws do, rather than inherit what the pass before left
   if(merge) {
     gmshLightTwoSide(false);
     drawMergedArray(lines, GL_LINES, edgesLit(dim));
@@ -988,7 +945,7 @@ void drawContext::drawMesh()
                          CTX::instance()->print.epsLineWidthFactor));
 
   // OpenGL applies the planes in both modes; whole element mode gets its cut
-  // elements back from va_clip_*, drawn with the planes off
+  // elements back from va_clip_* (see drawClipArrays())
   setMeshClipPlanes(true);
 
   for(std::size_t i = 0; i < GModel::list.size(); i++) {

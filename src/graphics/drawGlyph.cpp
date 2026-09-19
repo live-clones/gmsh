@@ -617,24 +617,14 @@ void drawContext::drawCylinder(double width, double *x, double *y, double *z,
   double dz = z[1] - z[0];
   double const length = std::sqrt(dx * dx + dy * dy + dz * dz);
   double radius = width * pixel_equiv_x / s[0];
-  double zdir[3] = {0., 0., 1.};
   double vdir[3] = {dx / length, dy / length, dz / length};
-  double axis[3], phi;
-  prodve(zdir, vdir, axis);
-  double const cosphi = prosca(zdir, vdir);
-  if(!norme(axis)) {
-    axis[0] = 0.;
-    axis[1] = 1.;
-    axis[2] = 0.;
-  }
-  phi = 180. * myacos(cosphi) / M_PI;
 
   Tessellation t;
   int n = CTX::instance()->quadricSubdivisions;
   t.side(radius, radius, 0., length, (n < 3) ? 3 : n);
   double tr[16], r[16], m[16];
   glMatrix::translate(x[0], y[0], z[0], tr);
-  glMatrix::rotate(phi, axis[0], axis[1], axis[2], r);
+  glMatrix::rotateZTo(vdir, r);
   glMatrix::multiply(tr, r, m);
   emit(t, m);
 
@@ -835,17 +825,7 @@ const float *drawContext::glyphTemplate(int kind, const float *&normals,
 void drawContext::drawArrow3d(double x, double y, double z, double dx,
                               double dy, double dz, double length, int light)
 {
-  double zdir[3] = {0., 0., 1.};
   double vdir[3] = {dx / length, dy / length, dz / length};
-  double axis[3];
-  prodve(zdir, vdir, axis);
-  double const cosphi = prosca(zdir, vdir);
-  if(!norme(axis)) {
-    axis[0] = 0.;
-    axis[1] = 1.;
-    axis[2] = 0.;
-  }
-  double phi = 180. * myacos(cosphi) / M_PI;
 
   _tmpl.update();
   if(_tmpl.shape[GLYPH_ARROW].empty()) return;
@@ -854,7 +834,7 @@ void drawContext::drawArrow3d(double x, double y, double z, double dx,
   double t[16], sc[16], r[16], a[16], m[16];
   glMatrix::translate(x, y, z, t);
   glMatrix::scale(length, length, length, sc);
-  glMatrix::rotate(phi, axis[0], axis[1], axis[2], r);
+  glMatrix::rotateZTo(vdir, r);
   glMatrix::multiply(t, sc, a);
   glMatrix::multiply(a, r, m);
 

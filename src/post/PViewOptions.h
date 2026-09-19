@@ -11,6 +11,7 @@
 #include "SBoundingBox3d.h"
 
 class mathEvaluator;
+class PViewData;
 
 // The display options of a post-processing view.
 class PViewOptions {
@@ -134,6 +135,9 @@ public:
                         bool forceLinear = false, int numColors = -1);
   // get i-th color amongst nb (i in [0, nb - 1])
   unsigned int getColor(int i, int nb);
+  // the range of the values of data the options ask for: the custom one, that
+  // of the current time step, or that of all the steps
+  void getRange(PViewData *data, double &min, double &max);
   // create math evaluator for general raise option
   void createGeneralRaise();
   // return true if one should not draw elements with type type

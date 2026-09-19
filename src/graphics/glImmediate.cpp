@@ -411,6 +411,29 @@ void gmshShadingModel(int model)
 
 int gmshShadingModel() { return _shadingModel; }
 
+// what the shader is handed alike by the vertex arrays and by the collected
+// primitives: the material, the shading and the clipping planes (on[i] says
+// which are on); nothing is cut off when no plane is on, whatever outside
+// says (the glyphs of the cut elements are drawn whole, with the planes off)
+static void setShaderCommon(const bool on[6], const double eye[6][4],
+                            bool outside)
+{
+  glShader::setMaterial(CTX::instance()->shine,
+                        CTX::instance()->shineExponent);
+  glShader::setShading(gmshShadingModel(), CTX::instance()->brightness,
+                       CTX::instance()->studioShadowStrength);
+  bool anyPlane = false;
+  for(int i = 0; i < 6; i++) {
+    if(on[i]) {
+      glShader::setClipPlane(i, eye[i]);
+      anyPlane = true;
+    }
+    else
+      glShader::setClipPlaneOff(i);
+  }
+  glShader::setClipOutside(outside && anyPlane);
+}
+
 void gmshPushShaderState()
 {
   glShader::setMatrices(gmshMatrix(GMSH_MODELVIEW), gmshMatrix(GMSH_PROJECTION));
@@ -418,25 +441,10 @@ void gmshPushShaderState()
   glShader::setColor(gmshCurrentColor());
   glShader::setPointSize(gmshCurrentPointSize());
   glShader::setAlphaScale(_alphaScale);
-  glShader::setMaterial(CTX::instance()->shine,
-                        CTX::instance()->shineExponent);
-  glShader::setShading(gmshShadingModel(), CTX::instance()->brightness,
-                       CTX::instance()->studioShadowStrength);
   // everything but the collected lines draws undashed: the vertex arrays
   // carry no distance along the line, and a glyph is not a line
   glShader::setStipple(false, 1, 0xffff);
-  bool anyPlane = false;
-  for(int i = 0; i < 6; i++) {
-    if(gmshClipPlaneEnabled(i)) {
-      glShader::setClipPlane(i, gmshClipPlaneEye(i));
-      anyPlane = true;
-    }
-    else
-      glShader::setClipPlaneOff(i);
-  }
-  // nothing is cut off when no plane is on: drawn as is then (the glyphs of
-  // the cut elements are drawn whole, with the planes off)
-  glShader::setClipOutside(_clipOutside && anyPlane);
+  setShaderCommon(_clipOn, _clipEye, _clipOutside);
 }
 
 void gmshRecordBegin(VertexArray *points, VertexArray *lines,
@@ -695,20 +703,8 @@ void gmshFlushImmediate()
     glShader::setAlphaScale(
       (_batchState.alphaScaleFilledOnly && _batchMode != GL_TRIANGLES) ?
         1. : _batchState.alphaScale);
-    glShader::setMaterial(CTX::instance()->shine,
-                          CTX::instance()->shineExponent);
-    glShader::setShading(gmshShadingModel(), CTX::instance()->brightness,
-                         CTX::instance()->studioShadowStrength);
-    bool anyPlane = false;
-    for(int i = 0; i < 6; i++) {
-      if(_batchState.clipOn[i]) {
-        glShader::setClipPlane(i, _batchState.clip[i]);
-        anyPlane = true;
-      }
-      else
-        glShader::setClipPlaneOff(i);
-    }
-    glShader::setClipOutside(_batchState.clipOutside && anyPlane);
+    setShaderCommon(_batchState.clipOn, _batchState.clip,
+                    _batchState.clipOutside);
     // the pattern only applies to lines
     glShader::setStipple(_batchState.stipple && _batchMode == GL_LINES,
                          _batchState.stippleFactor,

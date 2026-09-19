@@ -104,20 +104,23 @@ public:
   }
 };
 
+// the value a point or a line of a view carries in its normal (what its
+// sphere or its cylinder is sized by)
+static double normalValue(VertexArray *va, int i)
+{
+#if defined(HAVE_VISUDEV)
+  return *va->getNormalArray(3 * i);
+#else
+  return char2float(*va->getNormalArray(3 * i));
+#endif
+}
+
 // the sphere of one point (thread safe: only reads the view)
 static void addSphereFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
                          int i, glyphList *into)
 {
   float *pt = va->getVertexArray(3 * i);
-  double f = 1.;
-  if(opt->pointType > 1) {
-#if defined(HAVE_VISUDEV)
-    f = *va->getNormalArray(3 * i);
-#else
-    char *n = va->getNormalArray(3 * i);
-    f = char2float(*n);
-#endif
-  }
+  double f = (opt->pointType > 1) ? normalValue(va, i) : 1.;
   unsigned int col;
   memcpy(&col, va->getColorArray(4 * i), 4);
   into->addSphere(ctx, opt->pointSize * f, pt[0], pt[1], pt[2], col);
@@ -165,16 +168,8 @@ static void addCylinderFor(drawContext *ctx, PViewOptions *opt,
   double r0 = r, r1 = r;
   if(opt->lineType == 2) {
     // the thickness follows the value at each end
-#if defined(HAVE_VISUDEV)
-    double v0 = *va->getNormalArray(3 * i);
-    double v1 = *va->getNormalArray(3 * (i + 1));
-#else
-    char *n0 = va->getNormalArray(3 * i);
-    char *n1 = va->getNormalArray(3 * (i + 1));
-    double v0 = char2float(*n0), v1 = char2float(*n1);
-#endif
-    r0 = v0 * r;
-    r1 = v1 * r;
+    r0 = normalValue(va, i) * r;
+    r1 = normalValue(va, i + 1) * r;
   }
   unsigned int col;
   memcpy(&col, va->getColorArray(4 * i), 4);
@@ -253,12 +248,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       float *p = va->getVertexArray(3 * i);
       if(!glyphIsKept(opt, p)) continue;
       gmshColor4ubv((const void *)va->getColorArray(4 * i));
-#if defined(HAVE_VISUDEV)
-      double f = *va->getNormalArray(3 * i);
-#else
-      double f = char2float(*va->getNormalArray(3 * i));
-#endif
-      int s = (int)(opt->pointSize * f);
+      int s = (int)(opt->pointSize * normalValue(va, i));
       if(s) {
         gmshPointSize((float)s);
         gl2psPointSize((float)(s * CTX::instance()->print.epsPointSizeFactor));
@@ -365,17 +355,17 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
   g->draw(ctx, opt->light);
 }
 
-// the arrow of one element, appended if worth drawing; shared with the
-// drawing loop below (thread safe: only reads the view)
-static void addArrowFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
-                        int i, glyphList *into)
+// where the arrow of the vector v at s goes and how long it is, scaled as
+// the options of the view say; false if it is not worth drawing, i.e. zero or
+// less than a pixel long, unless it is a comet (vector type 6)
+static bool placeArrow(drawContext *ctx, PViewOptions *opt, const float *s,
+                       const float *v, double x[3], double d[3])
 {
-  float *s = va->getVertexArray(3 * i);
-  float *v = va->getVertexArray(3 * (i + 1));
+  bool comet = (opt->vectorType == 6);
   double l = sqrt((double)v[0] * v[0] + (double)v[1] * v[1] +
                   (double)v[2] * v[2]);
   double lmax = opt->tmpMax;
-  if(!l || !lmax) return;
+  if((!l && !comet) || !lmax) return false;
   double scale = (opt->arrowSizeMax - opt->arrowSizeMin) / lmax;
   if(opt->getScaleType(opt->tmpMin, opt->tmpMax) != PViewOptions::Linear &&
      opt->tmpMax > opt->tmpMin && l != opt->tmpMin) {
@@ -386,25 +376,40 @@ static void addArrowFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
             (opt->scaleForward(l, opt->tmpMin, opt->tmpMax) - a) / (b - a);
   }
   if(opt->arrowSizeMin && l) scale += opt->arrowSizeMin / l;
-  double px = scale * v[0], py = scale * v[1], pz = scale * v[2];
-  // only draw vectors larger than one pixel on screen
-  if(fabs(px) <= 1. && fabs(py) <= 1. && fabs(pz) <= 1.) return;
-  double d = ctx->pixel_equiv_x / ctx->s[0];
-  double dx = px * d, dy = py * d, dz = pz * d;
-  double x = s[0], y = s[1], z = s[2];
-  if(opt->centerGlyphs == 2) {
-    x -= dx;
-    y -= dy;
-    z -= dz;
+  double p[3] = {scale * v[0], scale * v[1], scale * v[2]};
+  if(!comet && fabs(p[0]) <= 1. && fabs(p[1]) <= 1. && fabs(p[2]) <= 1.)
+    return false;
+  double f = ctx->pixel_equiv_x / ctx->s[0];
+  // hanging from s, centred on it or ending at it
+  double c = (opt->centerGlyphs == 2) ? 1. : (opt->centerGlyphs == 1) ? 0.5 : 0.;
+  for(int k = 0; k < 3; k++) {
+    d[k] = p[k] * f;
+    x[k] = c ? s[k] - c * d[k] : s[k];
   }
-  else if(opt->centerGlyphs == 1) {
-    x -= 0.5 * dx;
-    y -= 0.5 * dy;
-    z -= 0.5 * dz;
-  }
+  return true;
+}
+
+// the arrow of one element, appended if worth drawing (thread safe: only
+// reads the view)
+static void addArrowFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
+                        int i, glyphList *into)
+{
+  double x[3], d[3];
+  if(!placeArrow(ctx, opt, va->getVertexArray(3 * i),
+                 va->getVertexArray(3 * (i + 1)), x, d))
+    return;
   unsigned int col;
   memcpy(&col, va->getColorArray(4 * i), 4);
-  into->addArrow(x, y, z, dx, dy, dz, col);
+  into->addArrow(x[0], x[1], x[2], d[0], d[1], d[2], col);
+}
+
+// draw a list of arrows, with the offset of the faces the view asks for
+static void drawArrowList(drawContext *ctx, PViewOptions *opt, glyphList *g)
+{
+  if(CTX::instance()->polygonOffset || opt->showElement)
+    glEnable(GL_POLYGON_OFFSET_FILL);
+  g->draw(ctx, opt->light);
+  glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
 static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
@@ -439,10 +444,7 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
         addArrowFor(ctx, opt, va, 2 * e, into);
       });
     }
-    if(CTX::instance()->polygonOffset || opt->showElement)
-      glEnable(GL_POLYGON_OFFSET_FILL);
-    g->draw(ctx, opt->light);
-    glDisable(GL_POLYGON_OFFSET_FILL);
+    drawArrowList(ctx, opt, g);
     return;
   }
 
@@ -466,64 +468,21 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
   tok.add(CTX::instance()->color.bg);
   addClipToken(tok, opt);
   glyphList *g;
-  if(glyphCache::get(p, GLYPH_VECTORS, tok, g)) {
-    if(CTX::instance()->polygonOffset || opt->showElement)
-      glEnable(GL_POLYGON_OFFSET_FILL);
-    g->draw(ctx, opt->light);
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    return;
-  }
-  g->recordBegin();
-  for(int i = 0; i < va->getNumVertices(); i += 2) {
-    float *s = va->getVertexArray(3 * i);
-    float *v = va->getVertexArray(3 * (i + 1));
-    if(!glyphIsKept(opt, s)) continue;
-    gmshColor4ubv((const void *)va->getColorArray(4 * i));
-    double vv[3] = {v[0], v[1], v[2]};
-    double l = sqrt(vv[0] * vv[0] + vv[1] * vv[1] + vv[2] * vv[2]);
-    double lmax = opt->tmpMax;
-    if((l || opt->vectorType == 6) && lmax) {
-      double scale = (opt->arrowSizeMax - opt->arrowSizeMin) / lmax;
-      // log scaling
-      if(opt->getScaleType(opt->tmpMin, opt->tmpMax) != PViewOptions::Linear &&
-         opt->tmpMax > opt->tmpMin && l != opt->tmpMin) {
-        double a = opt->scaleForward(opt->tmpMin, opt->tmpMin, opt->tmpMax);
-        double b = opt->scaleForward(opt->tmpMax, opt->tmpMin, opt->tmpMax);
-        scale = (opt->arrowSizeMax - opt->arrowSizeMin) / l *
-                (opt->scaleForward(l, opt->tmpMin, opt->tmpMax) - a) / (b - a);
-      }
-      if(opt->arrowSizeMin && l) scale += opt->arrowSizeMin / l;
-      double px = scale * v[0];
-      double py = scale * v[1];
-      double pz = scale * v[2];
-      // only draw vectors larger than 1 pixel on screen, except when
-      // drawing "comet" glyphs
-      if(opt->vectorType == 6 || fabs(px) > 1. || fabs(py) > 1. ||
-         fabs(pz) > 1.) {
-        double d = ctx->pixel_equiv_x / ctx->s[0];
-        double dx = px * d, dy = py * d, dz = pz * d;
-        double x = s[0], y = s[1], z = s[2];
-        if(opt->centerGlyphs == 2) {
-          x -= dx;
-          y -= dy;
-          z -= dz;
-        }
-        else if(opt->centerGlyphs == 1) {
-          x -= 0.5 * dx;
-          y -= 0.5 * dy;
-          z -= 0.5 * dz;
-        }
-        ctx->drawVector(opt->vectorType,
-                        opt->intervalsType != PViewOptions::Iso, x, y, z, dx,
-                        dy, dz, opt->light);
-      }
+  if(!glyphCache::get(p, GLYPH_VECTORS, tok, g)) {
+    g->recordBegin();
+    for(int i = 0; i < va->getNumVertices(); i += 2) {
+      float *s = va->getVertexArray(3 * i);
+      if(!glyphIsKept(opt, s)) continue;
+      gmshColor4ubv((const void *)va->getColorArray(4 * i));
+      double x[3], d[3];
+      if(!placeArrow(ctx, opt, s, va->getVertexArray(3 * (i + 1)), x, d))
+        continue;
+      ctx->drawVector(opt->vectorType, opt->intervalsType != PViewOptions::Iso,
+                      x[0], x[1], x[2], d[0], d[1], d[2], opt->light);
     }
+    g->recordEnd();
   }
-  g->recordEnd();
-  if(CTX::instance()->polygonOffset || opt->showElement)
-    glEnable(GL_POLYGON_OFFSET_FILL);
-  g->draw(ctx, opt->light);
-  glDisable(GL_POLYGON_OFFSET_FILL);
+  drawArrowList(ctx, opt, g);
 }
 
 static std::string stringValue(int numComp, double d[9], double norm,
@@ -542,6 +501,15 @@ static std::string stringValue(int numComp, double d[9], double norm,
   else if(numComp == 9)
     sprintf(label, format, norm);
   return std::string(label);
+}
+
+// a number at (x, y, z): starting there, centred on it or ending at it
+static void drawNumber(drawContext *ctx, PViewOptions *opt, const std::string &s,
+                       double x, double y, double z)
+{
+  int align = (opt->centerGlyphs == 2) ? 2 : (opt->centerGlyphs == 1) ? 1 : 0;
+  ctx->drawString(s, x, y, z, CTX::instance()->glFont,
+                  CTX::instance()->glFontEnum, CTX::instance()->glFontSize, align);
 }
 
 static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
@@ -564,15 +532,8 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
     if(v >= vmin && v <= vmax) {
       unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
       gmshColor4ubv((const void *)&col);
-      if(opt->centerGlyphs == 2)
-        ctx->drawStringRight(stringValue(numComp, d, v, opt->getFormat().c_str()),
-                             pc.x(), pc.y(), pc.z());
-      else if(opt->centerGlyphs == 1)
-        ctx->drawStringCenter(stringValue(numComp, d, v, opt->getFormat().c_str()),
-                              pc.x(), pc.y(), pc.z());
-      else
-        ctx->drawString(stringValue(numComp, d, v, opt->getFormat().c_str()), pc.x(),
-                        pc.y(), pc.z());
+      drawNumber(ctx, opt, stringValue(numComp, d, v, opt->getFormat().c_str()),
+                 pc.x(), pc.y(), pc.z());
     }
   }
   else if(opt->glyphLocation == PViewOptions::Vertex) {
@@ -581,17 +542,9 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
       if(v >= vmin && v <= vmax) {
         unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
         gmshColor4ubv((const void *)&col);
-        if(opt->centerGlyphs == 2)
-          ctx->drawStringRight(
-            stringValue(numComp, val[i], v, opt->getFormat().c_str()), xyz[i][0],
-            xyz[i][1], xyz[i][2]);
-        else if(opt->centerGlyphs == 1)
-          ctx->drawStringCenter(
-            stringValue(numComp, val[i], v, opt->getFormat().c_str()), xyz[i][0],
-            xyz[i][1], xyz[i][2]);
-        else
-          ctx->drawString(stringValue(numComp, val[i], v, opt->getFormat().c_str()),
-                          xyz[i][0], xyz[i][1], xyz[i][2]);
+        drawNumber(ctx, opt,
+                   stringValue(numComp, val[i], v, opt->getFormat().c_str()),
+                   xyz[i][0], xyz[i][1], xyz[i][2]);
       }
     }
   }
@@ -792,7 +745,7 @@ public:
     gl2psLineWidth(
       (float)(opt->lineWidth * CTX::instance()->print.epsLineWidthFactor));
 
-    if(opt->axes && opt->type == PViewOptions::Plot3D) {
+    if(opt->axes) {
       gmshColor4ubv((const void *)&opt->color.axes);
       gmshLineWidth((float)CTX::instance()->lineWidth);
       gl2psLineWidth((float)(CTX::instance()->lineWidth *
@@ -835,20 +788,9 @@ public:
       }
     }
 
-    if(opt->rangeType == PViewOptions::Custom) {
-      opt->tmpMin = opt->customMin;
-      opt->tmpMax = opt->customMax;
-    }
-    else if(opt->rangeType == PViewOptions::PerTimeStep) {
-      opt->tmpMin = data->getMin(opt->timeStep);
-      opt->tmpMax = data->getMax(opt->timeStep);
-    }
-    else {
-      // FIXME: this is not perfect for multi-step adaptive views, as
-      // we don't have the correct min/max info for the other steps
-      opt->tmpMin = data->getMin();
-      opt->tmpMax = data->getMax();
-    }
+    // (not perfect for multi-step adaptive views, which do not know the
+    // range of the other steps)
+    opt->getRange(data, opt->tmpMin, opt->tmpMax);
 
     // draw all the vertex arrays
     gmshLightTwoSide(false);
@@ -880,9 +822,7 @@ public:
     drawVectorArray(_ctx, p, p->va_vectors);
     drawEllipseArray(_ctx, p, p->va_ellipses);
 
-    // to avoid looping over elements (and to enable drawing glyphs
-    // for remote views) we should also store these glyphs in "pseudo"
-    // vertex arrays
+    // the numbers, normals and tangents, read from the elements
     drawGlyphs(_ctx, p);
 
     // draw the 3D strings

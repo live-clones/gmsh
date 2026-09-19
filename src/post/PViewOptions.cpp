@@ -11,6 +11,7 @@
 #include "GmshDefines.h"
 #include "PViewOptions.h"
 #include "mathEvaluator.h"
+#include "PViewData.h"
 
 PViewOptions::PViewOptions() : genRaiseEvaluator(nullptr)
 {
@@ -123,6 +124,22 @@ unsigned int PViewOptions::getColor(int i, int nb)
   else if(index > colorTable.size - 1)
     index = colorTable.size - 1;
   return colorTable.table[index];
+}
+
+void PViewOptions::getRange(PViewData *data, double &min, double &max)
+{
+  if(rangeType == Custom) {
+    min = customMin;
+    max = customMax;
+  }
+  else if(rangeType == PerTimeStep) {
+    min = data->getMin(timeStep);
+    max = data->getMax(timeStep);
+  }
+  else {
+    min = data->getMin();
+    max = data->getMax();
+  }
 }
 
 void PViewOptions::createGeneralRaise()

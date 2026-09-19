@@ -75,13 +75,11 @@ int drawMeshStatus(GModel *m);
 void deleteOrphanVertexArrayBuffers();
 
 class PView;
-class GModel;
 class GVertex;
 class GEdge;
 class GFace;
 class GRegion;
 class MElement;
-class PView;
 
 class drawTransform {
 public:
@@ -271,6 +269,15 @@ private:
   // the masks and the depth range the pass is drawing with (-1: not known)
   int _pickStateSkip = -1;
   double _pickStateFar = -1.;
+  // the far end of the depth range an object of a type is drawn into (see
+  // setPickColor()), and a change of the masks and of that range
+  double _pickFar(int type, bool front) const
+  {
+    return front ? 0.2 :
+           (type >= 0 && type <= 3) ? 1. - (3 - type) * _pickDepthStep :
+                                      1.;
+  }
+  void _pickState(bool skip, double zfar);
   // The last identifier image and depths read back from a picking pass, so
   // that hovering costs a lookup instead of a redraw per mouse move. Dropped
   // by openglWindow::draw() on every redraw; the flags record what it was
@@ -426,16 +433,8 @@ public:
   }
   void hide(GModel *m) { _hiddenModels.insert(m); }
   void hide(PView *v) { _hiddenViews.insert(v); }
-  void show(GModel *m)
-  {
-    auto it = _hiddenModels.find(m);
-    if(it != _hiddenModels.end()) _hiddenModels.erase(it);
-  }
-  void show(PView *v)
-  {
-    auto it = _hiddenViews.find(v);
-    if(it != _hiddenViews.end()) _hiddenViews.erase(it);
-  }
+  void show(GModel *m) { _hiddenModels.erase(m); }
+  void show(PView *v) { _hiddenViews.erase(v); }
   void showAll()
   {
     _hiddenModels.clear();
@@ -454,7 +453,7 @@ public:
                                GLuint &imageH);
   void invalidateBgImageTexture();
   void buildRotationMatrix();
-  void setQuaternion(double p1x, double p1y, double p2x, double p2y);
+  void setQuaternion(double q0, double q1, double q2, double q3);
   void addQuaternion(double p1x, double p1y, double p2x, double p2y);
   void addQuaternionFromAxisAndAngle(double axis[3], double angle);
   void setQuaternionFromEulerAngles();
@@ -561,15 +560,6 @@ public:
   mousePosition()
   {
     for(int i = 0; i < 3; i++) win[i] = wnr[i] = s[i] = t[i] = 0.;
-  }
-  mousePosition(const mousePosition &instance)
-  {
-    for(int i = 0; i < 3; i++) {
-      win[i] = instance.win[i];
-      wnr[i] = instance.wnr[i];
-      s[i] = instance.s[i];
-      t[i] = instance.t[i];
-    }
   }
   void set(drawContext *ctx, int x, int y)
   {

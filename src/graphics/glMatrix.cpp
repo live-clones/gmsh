@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "glMatrix.h"
+#include "Numeric.h"
 
 namespace glMatrix {
   static void normalize(double v[3])
@@ -118,6 +119,20 @@ namespace glMatrix {
     m[8] = x * z * c1 + y * s;
     m[9] = y * z * c1 - x * s;
     m[10] = z * z * c1 + c;
+  }
+
+  void rotateZTo(const double v[3], double m[16])
+  {
+    double zdir[3] = {0., 0., 1.}, vdir[3] = {v[0], v[1], v[2]};
+    double axis[3];
+    prodve(zdir, vdir, axis);
+    double const cosphi = prosca(zdir, vdir);
+    if(!norme(axis)) {
+      axis[0] = 0.;
+      axis[1] = 1.;
+      axis[2] = 0.;
+    }
+    rotate(180. * myacos(cosphi) / M_PI, axis[0], axis[1], axis[2], m);
   }
 
   void ortho(double left, double right, double bottom, double top,

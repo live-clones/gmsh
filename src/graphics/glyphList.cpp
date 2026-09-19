@@ -124,23 +124,13 @@ void glyphList::addArrow(double x, double y, double z, double dx, double dy,
   double length = std::sqrt(dx * dx + dy * dy + dz * dz);
   if(length == 0.) return;
 
-  double zdir[3] = {0., 0., 1.};
   double vdir[3] = {dx / length, dy / length, dz / length};
-  double axis[3];
-  prodve(zdir, vdir, axis);
-  double const cosphi = prosca(zdir, vdir);
-  if(!norme(axis)) {
-    axis[0] = 0.;
-    axis[1] = 1.;
-    axis[2] = 0.;
-  }
-  double phi = 180. * myacos(cosphi) / M_PI;
 
   // translate, then scale, then rotate, applied to the point from the right
   double t[16], sc[16], r[16], a[16], m[16];
   glMatrix::translate(x, y, z, t);
   glMatrix::scale(length, length, length, sc);
-  glMatrix::rotate(phi, axis[0], axis[1], axis[2], r);
+  glMatrix::rotateZTo(vdir, r);
   glMatrix::multiply(t, sc, a);
   glMatrix::multiply(a, r, m);
   add(GLYPH_ARROW, m, color);
@@ -153,22 +143,12 @@ void glyphList::addCylinder(const double *x, const double *y, const double *z,
   double length = std::sqrt(dx * dx + dy * dy + dz * dz);
   if(length == 0. || (r0 == 0. && r1 == 0.)) return;
 
-  double zdir[3] = {0., 0., 1.};
   double vdir[3] = {dx / length, dy / length, dz / length};
-  double axis[3];
-  prodve(zdir, vdir, axis);
-  double const cosphi = prosca(zdir, vdir);
-  if(!norme(axis)) {
-    axis[0] = 0.;
-    axis[1] = 1.;
-    axis[2] = 0.;
-  }
-  double phi = 180. * myacos(cosphi) / M_PI;
 
   // the length is in the transform, the radii are parameters
   double t[16], r[16], sc[16], a[16], m[16];
   glMatrix::translate(x[0], y[0], z[0], t);
-  glMatrix::rotate(phi, axis[0], axis[1], axis[2], r);
+  glMatrix::rotateZTo(vdir, r);
   glMatrix::scale(1., 1., length, sc);
   glMatrix::multiply(t, r, a);
   glMatrix::multiply(a, sc, m);
@@ -400,14 +380,6 @@ void glyphList::draw(drawContext *ctx, bool light)
   if(!instances) return;
 
   ctx->updateGlyphTemplates();
-  long total = 0;
-  for(int k = 0; k < GLYPH_NUMKINDS; k++) {
-    const float *tq;
-    const normal_type *tn;
-    int num = 0;
-    if(_inst[k].size()) ctx->glyphTemplate(k, tq, tn, num);
-    total += (long)num * (long)_inst[k].size();
-  }
 
   // instanced drawing needs none of what follows
   if(_instanced(ctx, light)) return;
@@ -417,6 +389,15 @@ void glyphList::draw(drawContext *ctx, bool light)
   if(!filled()) {
     _stream(ctx, light);
     return;
+  }
+
+  long total = 0;
+  for(int k = 0; k < GLYPH_NUMKINDS; k++) {
+    const float *tq;
+    const normal_type *tn;
+    int num = 0;
+    if(_inst[k].size()) ctx->glyphTemplate(k, tq, tn, num);
+    total += (long)num * (long)_inst[k].size();
   }
 
   // what is already kept stays kept

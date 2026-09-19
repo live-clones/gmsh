@@ -33,7 +33,7 @@ static inline void fillCornerKey(CornerKey<N> &k, double *x, double *y,
     py[i] = (float)y[i];
     pz[i] = (float)z[i];
   }
-  // sorting network: one comparison for a line, three for a triangle
+  // insertion sort: one comparison for a line, three at most for a triangle
   for(int i = 1; i < N; i++) {
     for(int j = i; j > 0; j--) {
       if(px[j] > px[j - 1] ||
@@ -58,7 +58,7 @@ static inline void fillCornerKey(CornerKey<N> &k, double *x, double *y,
   }
 }
 
-// hash a key word by word; never returns 0, which marks an empty slot
+// room for n keys at most half full, the keys already there hashed again
 void UniqueElementFilter::Shard::reserve(std::size_t n)
 {
   std::size_t want = 16;

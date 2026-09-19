@@ -80,13 +80,9 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
 
   // an entity stepped past with the wheel is drawn into neither the colours
   // nor the depth, so that the pass finds what stands behind it
-  bool skip = false;
   pickKey key = {type, ient, type2, ient2};
-  for(std::size_t i = 0; i < _pickSkip.size(); i++)
-    if(_pickSkip[i] == key) {
-      skip = true;
-      break;
-    }
+  bool skip =
+    std::find(_pickSkip.begin(), _pickSkip.end(), key) != _pickSkip.end();
 
   // What is closest to the viewer is picked, and among what lies at the same
   // depth the lowest dimension: a point or a curve, a pixel or two wide, is
@@ -97,14 +93,16 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
   // lowest dimension under the cursor, wherever it is - let it do. A marker
   // standing for an entity (a volume's) goes in front of everything, as it
   // sits inside what it stands for.
-  // (not "far", which the Windows headers define as a macro)
-  double zfar = front ? 0.2 :
-                (type >= 0 && type <= 3) ? 1. - (3 - type) * _pickDepthStep :
-                                           1.;
-  // The identifier travels with the vertices, so the primitives waiting to be
-  // drawn only have to go when the masks or the depth range change - not at
-  // every object: a model with 80,000 points made as many draws of one point
-  // each, half a second per pass with the shader pipeline.
+  _pickState(skip, _pickFar(type, front));
+}
+
+// The identifier travels with the vertices, so the primitives waiting to be
+// drawn only have to go when the masks or the depth range change - not at
+// every object: a model with 80,000 points made as many draws of one point
+// each, half a second per pass with the shader pipeline. (Not "far", which
+// the Windows headers define as a macro.)
+void drawContext::_pickState(bool skip, double zfar)
+{
   if((int)skip == _pickStateSkip && zfar == _pickStateFar) return;
   gmshFlushImmediate();
   GLboolean on = skip ? GL_FALSE : GL_TRUE;
@@ -140,23 +138,13 @@ bool drawContext::pickSkipped(int type, int ient)
 {
   if(_pickSkip.empty()) return false;
   pickKey key = {type, ient, -1, -1};
-  for(std::size_t i = 0; i < _pickSkip.size(); i++)
-    if(_pickSkip[i] == key) return true;
-  return false;
+  return std::find(_pickSkip.begin(), _pickSkip.end(), key) != _pickSkip.end();
 }
 
 void drawContext::pickStateFor(int type)
 {
   if(!_pickColor) return;
-  double zfar =
-    (type >= 0 && type <= 3) ? 1. - (3 - type) * _pickDepthStep : 1.;
-  if(_pickStateSkip == 0 && zfar == _pickStateFar) return;
-  gmshFlushImmediate();
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  glDepthMask(GL_TRUE);
-  glDepthRange(0., zfar);
-  _pickStateSkip = 0;
-  _pickStateFar = zfar;
+  _pickState(false, _pickFar(type, false));
 }
 
 void drawContext::setPickColorFor(GEntity *e, bool front)
@@ -469,10 +457,7 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
     _pickPointValid = false;
     if(o.type != 4 && z >= 0. && z < 1.) {
       // undo the depth range setPickColor() drew the dimension in
-      if(o.front)
-        z /= 0.2;
-      else if(o.type <= 3)
-        z /= 1. - (3 - o.type) * _pickDepthStep;
+      z /= _pickFar(o.type, o.front);
       double win[3] = {(double)x, (double)(viewport[3] - y), z};
       _pickPointValid =
         glMatrix::unProject(win, model, proj, viewport, _pickPoint) ? true :
