@@ -2170,6 +2170,9 @@ void main()
     // the transparency buffers were made to match the window
     dropOitBuffers();
     _oitDepthFormat = 0;
+    // the fire copies the depth of what it burns: its format was chosen for
+    // the window too
+    _fireDepthFormat = 0;
     Msg::Debug("Printing into a %dx%d buffer", width, height);
     return true;
   }
@@ -2196,6 +2199,9 @@ void main()
     _printFbo = _printColor = _printDepth = 0;
     dropOitBuffers();
     _oitDepthFormat = 0;
+    // the fire copies the depth of what it burns: its format was chosen for
+    // the window too
+    _fireDepthFormat = 0;
   }
 
   bool beginTransparent()

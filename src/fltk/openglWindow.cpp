@@ -563,6 +563,8 @@ bool openglWindow::printTo(int width, int height, int supersampling,
                            void *pixels)
 {
   make_current();
+  // the buffers of this window, not of the one that drew last
+  glShader::setContext(context());
   if(!glShader::beginPrintTarget(width, height)) return false;
   _printW = width;
   _printH = height;
