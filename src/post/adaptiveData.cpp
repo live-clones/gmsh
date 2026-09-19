@@ -6,6 +6,7 @@
 #include <math.h>
 #include <list>
 #include <set>
+#include <unordered_map>
 #include <algorithm>
 #include <vector>
 #include "adaptiveData.h"
