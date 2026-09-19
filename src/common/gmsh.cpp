@@ -6557,6 +6557,8 @@ gmsh::model::mesh::setVisibility(const std::vector<size_t> &elementTags,
     MElement *e = GModel::current()->getMeshElementByTag(t);
     if(e) e->setVisibility(value);
   }
+  // what is drawn of the mesh is built again
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void
