@@ -492,18 +492,17 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
 static std::string stringValue(int numComp, double d[9], double norm,
                                const char *format)
 {
-  char label[100];
+  // a field of 2, 4 or 6 components is none of the cases below
+  char label[100] = "";
   if(numComp == 1)
-    sprintf(label, format, d[0]);
+    snprintf(label, sizeof(label), format, d[0]);
   else if(numComp == 3) {
     char str[3][32];
-    sprintf(str[0], format, d[0]);
-    sprintf(str[1], format, d[1]);
-    sprintf(str[2], format, d[2]);
-    sprintf(label, "(%s,%s,%s)", str[0], str[1], str[2]);
+    for(int i = 0; i < 3; i++) snprintf(str[i], sizeof(str[i]), format, d[i]);
+    snprintf(label, sizeof(label), "(%s,%s,%s)", str[0], str[1], str[2]);
   }
   else if(numComp == 9)
-    sprintf(label, format, norm);
+    snprintf(label, sizeof(label), format, norm);
   return std::string(label);
 }
 

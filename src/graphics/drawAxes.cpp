@@ -58,7 +58,7 @@ static int drawTicks(drawContext *ctx, int comp, double n, std::string &format,
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   char tmp[256];
-  sprintf(tmp, fmt.c_str(), -M_PI * 1.e4);
+  snprintf(tmp, sizeof(tmp), fmt.c_str(), -M_PI * 1.e4);
   double win1[3], win2[3];
   ctx->world2Viewport(p1, win1);
   ctx->world2Viewport(p2, win2);
@@ -95,9 +95,9 @@ static int drawTicks(drawContext *ctx, int comp, double n, std::string &format,
 
     // draw tick labels
     if(comp < 0) // display the length value (ruler-mode, starting at 0)
-      sprintf(tmp, fmt.c_str(), value_d);
+      snprintf(tmp, sizeof(tmp), fmt.c_str(), value_d);
     else // display the coordinate value
-      sprintf(tmp, fmt.c_str(), value_p[comp]);
+      snprintf(tmp, sizeof(tmp), fmt.c_str(), value_p[comp]);
     double winp[3], winr[3];
     ctx->world2Viewport(p, winp);
     ctx->world2Viewport(r, winr);

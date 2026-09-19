@@ -299,11 +299,11 @@ static std::string getGraphTitle(PView *p)
     int nt = data->getNumTimeSteps();
     char tmp[256];
     if((opt->showTime == 1 && nt > 1) || opt->showTime == 2) {
-      sprintf(tmp, opt->getFormat().c_str(), data->getTime(opt->timeStep));
+      snprintf(tmp, sizeof(tmp), opt->getFormat().c_str(), data->getTime(opt->timeStep));
       label += std::string(" (") + tmp + ")";
     }
     else if((opt->showTime == 3 && nt > 1) || opt->showTime == 4) {
-      sprintf(tmp, "%d", opt->timeStep);
+      snprintf(tmp, sizeof(tmp), "%d", opt->timeStep);
       label += std::string(" (") + tmp + ")";
     }
   }
@@ -711,7 +711,7 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
       double offset = 3;
       if(inModelCoordinates) offset *= ctx->pixel_equiv_x / ctx->s[0];
       char label[256];
-      sprintf(label, opt->getFormat().c_str(), opt->scaleInverse(y, vmin, vmax));
+      snprintf(label, sizeof(label), opt->getFormat().c_str(), opt->scaleInverse(y, vmin, vmax));
       ctx->drawString(label, px + offset, py + offset, 0.);
     }
     else if(singlePoint && (opt->pointType == 1 || opt->pointType == 3)) {

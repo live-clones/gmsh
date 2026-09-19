@@ -27,7 +27,7 @@ namespace {
     const char *sup[10] = {"⁰", "¹", "²", "³", "⁴",
                            "⁵", "⁶", "⁷", "⁸", "⁹"};
     char str[32];
-    sprintf(str, "%d", abs(n));
+    snprintf(str, sizeof(str), "%d", abs(n));
     std::string s;
     for(const char *c = str; *c; c++) s += sup[*c - '0'];
     return s;
@@ -40,12 +40,12 @@ namespace {
     if(CTX::instance()->printing) {
       int f = CTX::instance()->print.fileFormat;
       if(f == FORMAT_TEX) {
-        sprintf(str, "$10^{%d}$", exp);
+        snprintf(str, sizeof(str), "$10^{%d}$", exp);
         return str;
       }
       if(f == FORMAT_PS || f == FORMAT_EPS || f == FORMAT_PDF ||
          f == FORMAT_SVG || f == FORMAT_TIKZ) {
-        sprintf(str, "10^%d", exp);
+        snprintf(str, sizeof(str), "10^%d", exp);
         return str;
       }
     }
@@ -62,12 +62,12 @@ std::string axisMultiplier(int exp)
   if(CTX::instance()->printing) {
     int f = CTX::instance()->print.fileFormat;
     if(f == FORMAT_TEX) {
-      sprintf(str, "$\\times 10^{%d}$", exp);
+      snprintf(str, sizeof(str), "$\\times 10^{%d}$", exp);
       return str;
     }
     if(f == FORMAT_PS || f == FORMAT_EPS || f == FORMAT_PDF ||
        f == FORMAT_SVG || f == FORMAT_TIKZ) {
-      sprintf(str, "x10^%d", exp);
+      snprintf(str, sizeof(str), "x10^%d", exp);
       return str;
     }
   }
@@ -80,7 +80,7 @@ std::string axisNumber(double v, int decimals, int exp)
 {
   double m = exp ? v / pow(10., exp) : v;
   char str[64];
-  sprintf(str, "%.*f", decimals, m);
+  snprintf(str, sizeof(str), "%.*f", decimals, m);
   // no "-0.00"
   bool zero = true;
   for(const char *c = str; *c; c++)
@@ -189,7 +189,7 @@ void makeAxisTicks(double min, double max, double length, double fontH,
       if(automatic)
         tk.label = endLabel(tk.v, 0, exp, fabs(min - max));
       else {
-        sprintf(str, format.c_str(), tk.v);
+        snprintf(str, sizeof(str), format.c_str(), tk.v);
         tk.label = str;
       }
       ticks.push_back(tk);
@@ -205,7 +205,7 @@ void makeAxisTicks(double min, double max, double length, double fontH,
       axisTick tk;
       tk.t = (double)i / n;
       tk.v = min + tk.t * (max - min);
-      sprintf(str, format.c_str(), tk.v);
+      snprintf(str, sizeof(str), format.c_str(), tk.v);
       tk.label = str;
       ticks.push_back(tk);
     }
@@ -397,7 +397,7 @@ namespace {
         axisTick tk;
         tk.t = (double)i / n;
         tk.v = logVal(fmin + tk.t * r, thr);
-        sprintf(str, format.c_str(), tk.v);
+        snprintf(str, sizeof(str), format.c_str(), tk.v);
         tk.label = str;
         ticks.push_back(tk);
       }

@@ -57,24 +57,24 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
       char str[256];
       switch(CTX::instance()->mesh.labelType) {
       case 4:
-        sprintf(str, "(%g,%g,%g)", pc.x(), pc.y(), pc.z());
+        snprintf(str, sizeof(str), "(%g,%g,%g)", pc.x(), pc.y(), pc.z());
         break;
       case 3:
-        sprintf(str, "%d", ele->getPartition());
+        snprintf(str, sizeof(str), "%d", ele->getPartition());
         break;
       case 2:
         {
           int np = e->physicals.size();
           int p = np ? e->physicals[np - 1] : 0;
-          sprintf(str, "%d", p);
+          snprintf(str, sizeof(str), "%d", p);
         }
         break;
       case 1:
-        sprintf(str, "%d", e->tag());
+        snprintf(str, sizeof(str), "%d", e->tag());
         break;
       case 0:
       default:
-        sprintf(str, "%zu", ele->getNum());
+        snprintf(str, sizeof(str), "%zu", ele->getNum());
         break;
       }
       ctx->drawString(str, pc.x(), pc.y(), pc.z());
@@ -159,11 +159,11 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v)
   else if(CTX::instance()->mesh.labelType == 3)
     snprintf(str, sizeof(str), "%s", nodePartitions(e).c_str());
   else if(CTX::instance()->mesh.labelType == 2)
-    sprintf(str, "%d", physical);
+    snprintf(str, sizeof(str), "%d", physical);
   else if(CTX::instance()->mesh.labelType == 1)
-    sprintf(str, "%d", e->tag());
+    snprintf(str, sizeof(str), "%d", e->tag());
   else
-    sprintf(str, "%zu", v->getNum());
+    snprintf(str, sizeof(str), "%zu", v->getNum());
 
   unsigned int col = getColorByVertex(e, v);
   gmshColor4ubv((const void *)&col);
