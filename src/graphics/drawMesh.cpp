@@ -715,10 +715,14 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
      CTX::instance()->pickElements && e->model() == GModel::current());
   if(select) {
     if(va->getNumElementPointers() == va->getNumVertices()) {
+      // the number of vertices per element says which array an element is
+      // read back from, ten more for what the clipping planes add
+      int kind = va->getNumVerticesPerElement() +
+                 ((va == e->va_clip_lines || va == e->va_clip_triangles) ? 10 :
+                                                                          0);
       for(int i = 0; i < va->getNumVertices();
           i += va->getNumVerticesPerElement()) {
-        ctx->setPickColor(e->dim(), e->tag(),
-                          va->getNumVerticesPerElement(), i);
+        ctx->setPickColor(e->dim(), e->tag(), kind, i);
         gmshBegin(type);
         for(int j = 0; j < va->getNumVerticesPerElement(); j++)
           gmshVertex3fv(va->getVertexArray(3 * (i + j)));

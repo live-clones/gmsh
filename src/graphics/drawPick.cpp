@@ -32,16 +32,16 @@ bool drawContext::_pickColorActive = false;
 // are not always stored: returning 0 is not an error)
 static MElement *getElement(GEntity *e, int va_type, int index)
 {
+  VertexArray *va = nullptr;
   switch(va_type) {
-  case 2:
-    if(e->va_lines && index < e->va_lines->getNumElementPointers())
-      return *e->va_lines->getElementPointerArray(index);
-    break;
-  case 3:
-    if(e->va_triangles && index < e->va_triangles->getNumElementPointers())
-      return *e->va_triangles->getElementPointerArray(index);
-    break;
+  case 2: va = e->va_lines; break;
+  case 3: va = e->va_triangles; break;
+  // what the clipping planes add (see drawArrays() in drawMesh.cpp)
+  case 12: va = e->va_clip_lines; break;
+  case 13: va = e->va_clip_triangles; break;
   }
+  if(va && index < va->getNumElementPointers())
+    return *va->getElementPointerArray(index);
   return nullptr;
 }
 
