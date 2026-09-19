@@ -689,6 +689,13 @@ static void forEntities(GModel *m, int dim, bool all, F f)
     if(e->model() == m && e->dim() == dim) f(e);
 }
 
+// The geometry is drawn from arrays kept between frames, one per model and
+// dimension, each in a single call - with the colours of the entities for the
+// picture, with their identifiers for a picking pass - and built again only
+// when the geometry, the options they depend on or the colours and visibility
+// change. Entities are then walked one by one only for what those arrays do
+// not hold: labels, tangents and normals, displays that are not kept, and the
+// selected entities, drawn again on top.
 void drawContext::drawGeom()
 {
   // nothing of the geometry is opaque when the colours of the options are

@@ -1019,6 +1019,13 @@ public:
   }
 };
 
+// Each view is drawn from vertex arrays built when its data or the options
+// that shape it change (PView::fillVertexArrays()): a redraw only issues them,
+// sorting the transparent triangles again when the eye has moved. The glyphs
+// (arrows, normals and tangents, spheres...) are expanded through the glyph
+// cache, the numbers are drawn as strings at every frame, and what the
+// clipping planes add has arrays of its own, so that moving a plane only
+// rebuilds those.
 void drawContext::drawPost()
 {
   // draw any plugin-specific stuff

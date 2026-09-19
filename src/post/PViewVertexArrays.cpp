@@ -2109,6 +2109,11 @@ bool PView::fillClipVertexArrays()
   return true;
 }
 
+// The arrays of a view are built by walking its elements once (twice for
+// smoothed normals, and once more to find the skin), each element turned into
+// points, lines and triangles coloured from the colour table, or into
+// vectors and ellipses for the glyphs, according to the options of the view.
+// They are only built again when setChanged() says the view has changed.
 bool PView::fillVertexArrays()
 {
   initPView init;

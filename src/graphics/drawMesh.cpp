@@ -949,8 +949,14 @@ static void drawDimension(drawContext *ctx, GModel *m, mergedArrays &ma,
   _merged.lines = _merged.triangles = _merged.tangents = _merged.normals = false;
 }
 
-// Main drawing routine
-
+// The mesh is drawn from the vertex arrays of its entities, built when the
+// mesh or the options that shape it change (GModel::fillVertexArrays()), and
+// concatenated per model and dimension so that each dimension is drawn in a
+// single call. Entities are then walked one by one only for what the merged
+// arrays do not hold: labels, nodes drawn as spheres, the duals, a mixed
+// transparent mesh, picking, and the selected entities, drawn again on top.
+// What the clipping planes add has arrays of its own, so that moving a plane
+// only rebuilds those.
 void drawContext::drawMesh()
 {
   // nothing of the mesh is opaque when the colours of the options are
