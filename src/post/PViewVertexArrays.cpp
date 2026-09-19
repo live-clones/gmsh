@@ -1468,8 +1468,15 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
                           false);
     }
     if(!vertex) {
-      // coloured by the largest eigenvalue (of the last node)
-      double lmax = std::max(S(0), std::max(S(1), S(2)));
+      // coloured by the largest of the averaged axes, which are the
+      // eigenvalues of the averaged tensor: the value of the last node read
+      // depended on the order its nodes came in
+      double lmax = 0.;
+      for(int j = 0; j < 3; j++) {
+        double l = 0.;
+        for(int k = 0; k < 3; k++) l += vval[k][j + 1] * vval[k][j + 1];
+        lmax = std::max(lmax, sqrt(l));
+      }
       unsigned int color = opt->getColor(
         lmax, opt->tmpMin, opt->tmpMax, false,
         (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
