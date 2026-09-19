@@ -514,15 +514,26 @@ namespace {
     // The next finer division, marked but not labelled: what tells a
     // logarithmic axis from a linear one at a glance. The finest one that
     // does not smudge, as marks a couple of pixels apart are a texture, not
-    // a scale: every digit of a decade, then its half and its fifth, then
-    // none.
-    const int twofive[2] = {2, 5};
+    // a scale: every digit of a decade (about 60 pixels a decade), then its
+    // even digits (30), then 2 and 5 (10), then the decades alone - the
+    // decades always marked, and a value already labelled adding nothing.
+    // When only the ends are labelled, every step gave the same labels and
+    // the last one was kept: the decades are then what is left to mark.
+    const int evens[5] = {1, 2, 4, 6, 8};
+    bool interior = false;
+    for(std::size_t i = 0; i < best.size(); i++)
+      if(best[i].t > 1.e-9 && best[i].t < 1. - 1.e-9) interior = true;
     std::vector<logStep> fine;
-    if(chosen < 0 || steps[chosen].decades > 1 || steps[chosen].skip > 0)
-      fine.push_back({1, one, 1, 0}); // the decades that are not labelled
+    if(chosen < 0 || !interior || steps[chosen].decades > 1 ||
+       steps[chosen].skip > 0) {
+      fine.push_back({1, onetwofive, 3, 0});
+      fine.push_back({1, one, 1, 0});
+    }
     else if(steps[chosen].nm < 9) {
       fine.push_back({1, every, 9, 0});
-      if(steps[chosen].nm == 1) fine.push_back({1, twofive, 2, 0});
+      fine.push_back({1, evens, 5, 0});
+      fine.push_back({1, onetwofive, 3, 0});
+      fine.push_back({1, one, 1, 0});
     }
 
     ticks = best;
@@ -536,7 +547,14 @@ namespace {
         tk.t = (logPos(tk.v, thr) - fmin) / r;
         if(tk.t < -1.e-9 || tk.t > 1. + 1.e-9) continue;
         tk.t = std::min(1., std::max(0., tk.t));
-        tk.minor = true;
+        // the ends are the values of the range, not round ones: a mark that
+        // would crowd one is left out rather than the whole division
+        if(labelEnds && (tk.t * length < 3. || (1. - tk.t) * length < 3.))
+          continue;
+        // a decade is a major value, marked as such, that had no room for its
+        // label; the other digits are minor
+        double e = tk.v ? log10(fabs(tk.v)) : 0.5;
+        tk.minor = fabs(e - floor(e + 0.5)) > 1.e-9;
         bool same = false;
         for(std::size_t i = 0; i < best.size(); i++)
           if(fabs(best[i].t - tk.t) < 1.e-6) same = true;

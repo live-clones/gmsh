@@ -274,6 +274,12 @@ post_list_scalar lists.pos view3d.opt
   View[0].Explode = 1; View[0].Normals = 20; View[0].Tangents = 20;
   View[0].IntervalsType = 4;
   General.ScaleY = 1.5;
+  General.ScaleY = 1; View[0].IntervalsType = 2; View[0].RangeType = 2; \
+  View[0].CustomMin = 1e-3; View[0].CustomMax = 1e3; View[0].ScaleType = 2; \
+  View[0].AutoPosition = 0; View[0].PositionX = 40; View[0].PositionY = 60; \
+  View[0].Height = 20; View[0].Width = 250;
+  View[0].Width = 120;
+  View[0].Width = 60;
 
 post_list_vector lists.pos view3d.opt
   For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 1); EndFor
