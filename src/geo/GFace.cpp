@@ -160,6 +160,8 @@ void GFace::deleteGeometryVertexArrays()
   if(!va_geom_triangles) return;
   delete va_geom_triangles;
   va_geom_triangles = nullptr;
+  // what the surfaces of the model are drawn from is merged from these
+  CTX::instance()->geom.changed |= ENT_SURFACE;
 }
 
 std::size_t GFace::getNumMeshElements() const
@@ -1619,7 +1621,7 @@ bool GFace::fillVertexArray(bool force)
 {
   if(va_geom_triangles) {
     if(force)
-      delete va_geom_triangles;
+      deleteGeometryVertexArrays();
     else
       return true;
   }

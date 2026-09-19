@@ -45,13 +45,34 @@ void glyphList::clear()
     delete _va;
   }
   _va = nullptr;
+  for(int i = 0; i < 3; i++) {
+    delete _rec[i];
+    _rec[i] = nullptr;
+  }
   _filled = false;
+}
+
+void glyphList::recordBegin()
+{
+  for(int i = 0; i < 3; i++) {
+    delete _rec[i];
+    _rec[i] = new VertexArray(i + 1, 100);
+  }
+  gmshRecordBegin(_rec[0], _rec[1], _rec[2]);
+}
+
+void glyphList::recordEnd()
+{
+  gmshRecordEnd();
+  for(int i = 0; i < 3; i++) _rec[i]->finalize();
 }
 
 std::size_t glyphList::size() const
 {
   std::size_t n = 0;
   for(int k = 0; k < GLYPH_NUMKINDS; k++) n += _inst[k].size();
+  for(int i = 0; i < 3; i++)
+    if(_rec[i]) n += _rec[i]->getNumVertices();
   return n;
 }
 
@@ -362,6 +383,25 @@ void glyphList::draw(drawContext *ctx, bool light)
   // pending immediate mode primitives come first, and the backends below
   // bind attributes of their own
   gmshFlushImmediate();
+
+  // what was recorded: in its own colours but for a picking pass, the
+  // triangles lit as asked
+  for(int i = 0; i < 3; i++) {
+    VertexArray *va = _rec[i];
+    if(!va || !va->getNumVertices()) continue;
+    bool normals = (i == 2) && light && !ctx->inPickColorMode();
+    bool colors = !ctx->inPickColorMode();
+    if(normals) gmshLighting(true);
+    gmshBindVertexArray(va, normals, colors);
+    drawVertexArray(va, (i == 0) ? GL_POINTS : (i == 1) ? GL_LINES :
+                                                          GL_TRIANGLES);
+    gmshUnbindArrays();
+    gmshLighting(false);
+  }
+  bool instances = false;
+  for(int k = 0; k < GLYPH_NUMKINDS; k++)
+    if(_inst[k].size()) instances = true;
+  if(!instances) return;
 
   ctx->updateGlyphTemplates();
   long total = 0;

@@ -21,7 +21,26 @@
 #endif
 
 int GEntity::numSelected = 0;
-int GEntity::colorChanges = 0;
+// The flags are raised only on an actual change.
+void GEntity::setVisibility(char val, bool recursive)
+{
+  if(_visible != val) CTX::instance()->entityVisibilityChanged = 1;
+  _visible = val;
+}
+
+// Derived from the visibility of the elements when the mesh arrays are
+// filled, and what depends on it is filled again with them: raising the flag
+// here asked for the arrays to be filled again once more.
+void GEntity::setOnlySomeElementsVisible(bool val)
+{
+  _onlySomeElementsVisible = val ? 1 : 0;
+}
+
+void GEntity::setColor(unsigned color, bool recursive)
+{
+  if(_color != color) CTX::instance()->entityColorsChanged = 1;
+  _color = color;
+}
 
 GEntity::~GEntity()
 {

@@ -1348,8 +1348,11 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
           dxyz[j][0] = xyz[i][j];
           dxyz[j][1] = val[i][j];
         }
+        // once per node, not once per element around it (two dozen of them
+        // for a node of a tetrahedral mesh): the same position with the same
+        // value is the same arrow
         p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr,
-                           false);
+                           true);
       }
     }
   }
@@ -1407,20 +1410,81 @@ static void addTriangle(drawTarget *p, PViewOptions *opt, double *x0,
   SVector3 N = crossprod(a, b);
   unsigned int col[3] = {color, color, color};
   N.normalize();
+  // unique: the box of a node comes once per element around it otherwise
   if(dot(c, N) > 0) {
     double XX[3] = {x0[0], x1[0], x2[0]};
     double YY[3] = {x0[1], x1[1], x2[1]};
     double ZZ[3] = {x0[2], x1[2], x2[2]};
     SVector3 NN[3] = {N, N, N};
-    p->va_triangles->add(XX, YY, ZZ, NN, col, nullptr, false);
+    p->va_triangles->add(XX, YY, ZZ, NN, col, nullptr, true);
   }
   else {
     double XX[3] = {x1[0], x0[0], x2[0]};
     double YY[3] = {x1[1], x0[1], x2[1]};
     double ZZ[3] = {x1[2], x0[2], x2[2]};
     SVector3 NN[3] = {-N, -N, -N};
-    p->va_triangles->add(XX, YY, ZZ, NN, col, nullptr, false);
+    p->va_triangles->add(XX, YY, ZZ, NN, col, nullptr, true);
   }
+}
+
+// Whether a view draws faces, which only the skin of its volumes is kept of:
+// a view of vectors drawn as arrows, or of tensors drawn as glyphs, has
+// none, and the pass locating the skin would walk its elements - computing
+// every eigenvector twice for tensors - for nothing. A view that cannot say
+// what it holds is assumed to.
+static bool viewDrawsFaces(PView *p)
+{
+  PViewData *data = p->getData(true);
+  PViewOptions *opt = p->getOptions();
+  if(opt->forceNumComponents) return true;
+  int ns = data->getNumScalars(), nv = data->getNumVectors();
+  int nt = data->getNumTensors();
+  if(ns || (!nv && !nt)) return true;
+  if(nv && opt->vectorType == PViewOptions::Displacement) return true;
+  if(nt && (opt->tensorType == PViewOptions::VonMises ||
+            opt->tensorType == PViewOptions::MinEigenValue ||
+            opt->tensorType == PViewOptions::MaxEigenValue))
+    return true;
+  return false;
+}
+
+// the eigenvalues and eigenvectors (columns of rightV) of a tensor: by
+// Jacobi rotations when it is symmetric, by LAPACK otherwise (a general
+// solver, with allocations, for each node of each element: ten seconds for
+// a million tetrahedra)
+static void tensorEig(fullMatrix<double> &tensor, fullVector<double> &S,
+                      fullVector<double> &imS, fullMatrix<double> &leftV,
+                      fullMatrix<double> &rightV, bool sortRealPart,
+                      bool valuesOnly = false)
+{
+  double a[9], w[3], v[3][3];
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 3; j++) a[3 * i + j] = tensor(i, j);
+  if(valuesOnly && eigenvaluesSymmetric3x3(a, w)) {
+    for(int j = 0; j < 3; j++) {
+      S(j) = w[j];
+      imS(j) = 0.;
+    }
+    return;
+  }
+  if(eigenSymmetric3x3(a, w, v)) {
+    // Unsorted, the axes go by decreasing magnitude: an ellipse is drawn
+    // from the first two, which for a plane tensor are then the ones in its
+    // plane, as LAPACK happened to give them (its order is otherwise
+    // arbitrary).
+    int o[3] = {0, 1, 2};
+    if(!sortRealPart)
+      std::stable_sort(o, o + 3, [&w](int i, int j) {
+        return std::abs(w[i]) > std::abs(w[j]);
+      });
+    for(int j = 0; j < 3; j++) {
+      S(j) = w[o[j]];
+      imS(j) = 0.;
+      for(int k = 0; k < 3; k++) rightV(k, j) = v[k][o[j]];
+    }
+    return;
+  }
+  tensor.eig(S, imS, leftV, rightV, sortRealPart);
 }
 
 static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
@@ -1429,9 +1493,11 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
   PViewOptions *opt = p->opt;
   // a range given the other way round holds no value: nothing is drawn
   if(opt->tmpMin > opt->tmpMax) return;
-  fullMatrix<double> tensor(3, 3);
-  fullVector<double> S(3), imS(3);
-  fullMatrix<double> leftV(3, 3), rightV(3, 3);
+  // kept from one element to the next (and one set per thread, as elements
+  // are added in parallel): five allocations per element otherwise
+  static thread_local fullMatrix<double> tensor(3, 3), leftV(3, 3),
+    rightV(3, 3);
+  static thread_local fullVector<double> S(3), imS(3);
 
   if(opt->tensorType == PViewOptions::VonMises) {
     for(int i = 0; i < numNodes; i++) val[i][0] = ComputeVonMises(val[i]);
@@ -1454,6 +1520,8 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
           addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval, pre);
         }
       }
+      for(int j = 0; j < numNodes; j++) delete[] vval[j];
+      delete[] vval;
     }
   }
   else if(opt->tensorType == PViewOptions::Frame) {
@@ -1538,7 +1606,7 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
 	    tensor(j, 1) = val[i][1 + j * 3];
 	    tensor(j, 2) = val[i][2 + j * 3];
 	  }
-	  tensor.eig(S, imS, leftV, rightV, false);
+	  tensorEig(tensor, S, imS, leftV, rightV, false);
 	  for(int k = 0; k < 3; k++) {
 	    vval[k][0] = xyz[i][k];
 	    for(int j = 0; j < 3; j++) { vval[k][j + 1] = rightV(k, j) * S(j); }
@@ -1567,7 +1635,7 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
           tensor(j, 1) = val[i][1 + j * 3];
           tensor(j, 2) = val[i][2 + j * 3];
         }
-        tensor.eig(S, imS, leftV, rightV, false);
+        tensorEig(tensor, S, imS, leftV, rightV, false);
         for(int j = 0; j < 3; j++) {
           vval[0][j + 1] += rightV(0, j) * S(j) / numNodes;
           vval[1][j + 1] += rightV(1, j) * S(j) / numNodes;
@@ -1587,18 +1655,25 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
     }
   }
   else {
-    double **vval[3] = {new double *[numNodes], new double *[numNodes],
-                        new double *[numNodes]};
-    for(int i = 0; i < 3; i++)
-      for(int j = 0; j < numNodes; j++) vval[i][j] = new double[3];
+    // on the stack for the usual elements, rather than fifteen allocations
+    // for each of them
+    double buf[3][PVIEW_NMAX][3], *ptr[3][PVIEW_NMAX];
+    bool heap = (numNodes > PVIEW_NMAX);
+    double **vval[3];
+    for(int i = 0; i < 3; i++) {
+      vval[i] = heap ? new double *[numNodes] : ptr[i];
+      for(int j = 0; j < numNodes; j++)
+        vval[i][j] = heap ? new double[3] : buf[i][j];
+    }
     for(int i = 0; i < numNodes; i++) {
       for(int j = 0; j < 3; j++) {
         tensor(j, 0) = val[i][0 + j * 3];
         tensor(j, 1) = val[i][1 + j * 3];
         tensor(j, 2) = val[i][2 + j * 3];
       }
-      tensor.eig(S, imS, leftV, rightV,
-                 opt->tensorType != PViewOptions::EigenVectors);
+      tensorEig(tensor, S, imS, leftV, rightV,
+                opt->tensorType != PViewOptions::EigenVectors,
+                opt->tensorType != PViewOptions::EigenVectors);
       if(PViewOptions::MinEigenValue == opt->tensorType)
         val[i][0] = S(0);
       else if(PViewOptions::MaxEigenValue == opt->tensorType)
@@ -1619,9 +1694,11 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
     }
     else
       addScalarElement(p, type, xyz, val, pre, numNodes);
-    for(int i = 0; i < 3; i++) {
-      for(int j = 0; j < numNodes; j++) delete[] vval[i][j];
-      delete[] vval[i];
+    if(heap) {
+      for(int i = 0; i < 3; i++) {
+        for(int j = 0; j < numNodes; j++) delete[] vval[i][j];
+        delete[] vval[i];
+      }
     }
   }
 }
@@ -1907,6 +1984,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     d->va_triangles->setUniqueFilter(
       (own ? p->va_triangles : vaT)->getUniqueFilter(true));
     d->va_vectors = new VertexArray(2, n / 4);
+    if(own)
+      d->va_vectors->setUniqueFilter(p->va_vectors->getUniqueFilter(true));
     d->va_ellipses = new VertexArray(4, n / 4);
     targets[t] = d;
   }
@@ -2063,7 +2142,7 @@ public:
 
     p->normals = new smooth_normals(opt->angleSmoothNormals);
 
-    if(opt->drawSkinOnly) {
+    if(opt->drawSkinOnly && viewDrawsFaces(p)) {
       // first pass: locate the faces that bound the mesh
       double t1 = TimeOfDay();
       delete boundaryFaces;

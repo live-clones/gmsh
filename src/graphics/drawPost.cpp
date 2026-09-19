@@ -526,6 +526,34 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
     return;
   }
 
+  // The other types are drawn a primitive at a time: recorded once into the
+  // list, which is then drawn as a whole (a million flat arrows took 13 s a
+  // frame with the shader pipeline, 3 s without).
+  glyphToken tok;
+  tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+  tok.add(opt->vectorType);
+  tok.add(opt->intervalsType == PViewOptions::Iso);
+  tok.add(opt->arrowSizeMin);
+  tok.add(opt->arrowSizeMax);
+  tok.add(opt->tmpMin);
+  tok.add(opt->tmpMax);
+  tok.add(opt->scaleType);
+  tok.add(opt->scaleThreshold);
+  tok.add(opt->centerGlyphs);
+  tok.add(CTX::instance()->arrowRelHeadRadius);
+  tok.add(CTX::instance()->arrowRelStemLength);
+  tok.add(CTX::instance()->arrowRelStemRadius);
+  tok.add(CTX::instance()->color.bg);
+  addClipToken(tok, opt);
+  glyphList *g;
+  if(glyphCache::get(p, GLYPH_VECTORS, tok, g)) {
+    if(CTX::instance()->polygonOffset || opt->showElement)
+      glEnable(GL_POLYGON_OFFSET_FILL);
+    g->draw(ctx, opt->light);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    return;
+  }
+  g->recordBegin();
   for(int i = 0; i < va->getNumVertices(); i += 2) {
     float *s = va->getVertexArray(3 * i);
     float *v = va->getVertexArray(3 * (i + 1));
@@ -571,7 +599,11 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
       }
     }
   }
-
+  g->recordEnd();
+  if(CTX::instance()->polygonOffset || opt->showElement)
+    glEnable(GL_POLYGON_OFFSET_FILL);
+  g->draw(ctx, opt->light);
+  glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
 static std::string stringValue(int numComp, double d[9], double norm,
@@ -694,14 +726,42 @@ static void drawGlyphs(drawContext *ctx, PView *p)
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
 
-  if(!opt->normals && !opt->tangents &&
-     opt->intervalsType != PViewOptions::Numeric)
-    return;
-
-  Msg::Debug("drawing extra glyphs (this is slow...)");
+  bool arrows = opt->normals || opt->tangents;
+  bool numbers = (opt->intervalsType == PViewOptions::Numeric);
+  if(!arrows && !numbers) return;
 
   // a number or a normal is drawn whole or not at all, like the other glyphs
   glyphClip clip(opt);
+
+  // The normals and tangents are recorded once and drawn as a whole
+  // afterwards (a change of any option of the view drops them); the numbers
+  // are strings, drawn every time.
+  glyphList *g = nullptr;
+  bool record = false;
+  if(arrows) {
+    glyphToken tok;
+    tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+    // the options that do not mark the view as changed
+    tok.add(opt->normals);
+    tok.add(opt->tangents);
+    tok.add(opt->color.normals);
+    tok.add(opt->color.tangents);
+    tok.add(CTX::instance()->vectorType);
+    tok.add(CTX::instance()->arrowRelHeadRadius);
+    tok.add(CTX::instance()->arrowRelStemLength);
+    tok.add(CTX::instance()->arrowRelStemRadius);
+    addClipToken(tok, opt);
+    if(glyphCache::get(p, GLYPH_NORMALS, tok, g)) {
+      g->draw(ctx, opt->light);
+      arrows = false;
+      if(!numbers) return;
+    }
+    else
+      record = true;
+  }
+
+  Msg::Debug("drawing extra glyphs (this is slow...)");
+  if(record) g->recordBegin();
 
   // speedup drawing of textured fonts on cocoa mac version
 #if defined(__APPLE__)
@@ -729,13 +789,20 @@ static void drawGlyphs(drawContext *ctx, PView *p)
       int type = data->getType(opt->timeStep, ent, i);
       if(opt->skipElement(type)) continue;
       int dim = data->getDimension(opt->timeStep, ent, i);
+      // a normal is drawn for a surface element, a tangent for a line: the
+      // others are not worth reading (this runs at every frame, and a view
+      // of a million tetrahedra with normals on took a quarter of a second
+      // to draw none)
+      if(!numbers && !(dim == 2 && opt->normals) &&
+         !(dim == 1 && opt->tangents))
+        continue;
       int numComp = data->getNumComponents(opt->timeStep, ent, i);
       int numNodes = data->getNumNodes(opt->timeStep, ent, i);
       if(numNodes > NMAX) {
         if(type == TYPE_POLYG || type == TYPE_POLYH) {
           for(int j = 0; j < NMAX; j++) {
-            delete[] xyz[i];
-            delete[] val[i];
+            delete[] xyz[j];
+            delete[] val[j];
           }
           delete[] xyz;
           delete[] val;
@@ -779,13 +846,17 @@ static void drawGlyphs(drawContext *ctx, PView *p)
       changeCoordinates(p, ent, i, numNodes, type, numComp, xyz, val);
       // drawn straight from the elements: whole element mode applies here
       if(!elementIsKept(opt, dim, numNodes, xyz)) continue;
-      if(opt->intervalsType == PViewOptions::Numeric)
-        drawNumberGlyphs(ctx, p, numNodes, numComp, xyz, val);
+      if(numbers) drawNumberGlyphs(ctx, p, numNodes, numComp, xyz, val);
+      if(!arrows) continue;
       if(dim == 2 && opt->normals)
         drawNormalVectorGlyphs(ctx, p, numNodes, xyz, val);
       else if(dim == 1 && opt->tangents)
         drawTangentVectorGlyphs(ctx, p, numNodes, xyz, val);
     }
+  }
+  if(record) {
+    g->recordEnd();
+    g->draw(ctx, opt->light);
   }
   for(int j = 0; j < NMAX; j++) {
     delete[] xyz[j];

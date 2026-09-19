@@ -15,6 +15,7 @@
 
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
+#include "GmshDefines.h"
 #endif
 
 discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
@@ -156,6 +157,7 @@ Range<double> discreteEdge::parBounds(int i) const
 
 int discreteEdge::createGeometry()
 {
+  CTX::instance()->geom.changed = ENT_ALL;
   if(lines.empty()) return 0;
 
   if(!_discretization.empty()) return 0;

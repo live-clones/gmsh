@@ -17,6 +17,7 @@ extern unsigned int getSelectionColor(GEntity *e);
 #include "StringUtils.h"
 #include "glyphList.h"
 #include "glImmediate.h"
+#include <map>
 
 static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
                             double z, double offset)
@@ -226,6 +227,151 @@ public:
   }
 };
 
+// The colour a curve is drawn in when it is not selected
+static unsigned int curveColor(GEdge *e)
+{
+  CTX *c = CTX::instance();
+  unsigned int col = e->useColor() ? e->getColor() : c->color.geom.curve;
+  if(c->geom.highlightOrphans) {
+    if(e->isOrphan())
+      col = c->color.geom.highlight[0];
+    else if(e->numFaces() == 1)
+      col = c->color.geom.highlight[1];
+  }
+  return col;
+}
+
+// the points a curve is drawn through
+static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts)
+{
+  pts.clear();
+  Range<double> t_bounds = e->parBounds(0);
+  double t_min = t_bounds.low(), t_max = t_bounds.high();
+  int N = e->minimumDrawSegments() + 1;
+  for(int i = 0; i < N; i++) {
+    double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
+    GPoint p = e->point(t);
+    double x = p.x(), y = p.y(), z = p.z();
+    ctx->transform(x, y, z);
+    pts.push_back(SPoint3(x, y, z));
+  }
+}
+
+// The curves of a model, sampled once and kept between frames - as lines in
+// one array, or as cylinders in a list of the glyph cache - and drawn at
+// once: sampled again at every frame, a line strip or cylinders at a time,
+// 14,400 curves took 70 ms a frame with the shader pipeline. Rebuilt when the
+// geometry, the colours or the visibilities change (see CTX::stampChanges()),
+// or the options they are drawn with. The selected curves are drawn again
+// on top by the per-entity pass, and a picking pass draws them one at a
+// time, each with its own identifier.
+namespace {
+  struct mergedCurves {
+    VertexArray *lines = nullptr;
+    std::vector<double> token;
+  };
+  std::map<GModel *, mergedCurves> _mergedCurves;
+  // set while the curves of the model being drawn come from these
+  bool _curvesMerged = false;
+} // namespace
+
+static bool drawMergedCurves(drawContext *ctx, GModel *m)
+{
+  CTX *c = CTX::instance();
+  if(ctx->render_mode == drawContext::GMSH_SELECT) return false;
+  if(!c->geom.curves) return false; // only the ones shown by the selection
+  // which entities are visible depends on which are selected
+  if(c->hideUnselected) return false;
+  // the models that are gone take their arrays with them
+  for(auto it = _mergedCurves.begin(); it != _mergedCurves.end();) {
+    if(std::find(GModel::list.begin(), GModel::list.end(), it->first) ==
+       GModel::list.end()) {
+      delete it->second.lines;
+      it = _mergedCurves.erase(it);
+    }
+    else
+      it++;
+  }
+  std::vector<double> tok = {(double)CTX::instance()->geom.stamp[1],
+                             (double)CTX::instance()->entityColorsStamp,
+                             (double)CTX::instance()->entityVisibilityStamp,
+                             (double)c->geom.numSubEdges,
+                             (double)c->geom.curveType,
+                             (double)c->color.geom.curve,
+                             (double)c->geom.highlightOrphans,
+                             (double)c->color.geom.highlight[0],
+                             (double)c->color.geom.highlight[1],
+                             (double)c->geom.useTransform};
+  bool cylinders = (c->geom.curveType > 0);
+  std::vector<SPoint3> pts;
+  if(cylinders) {
+    glyphToken gt;
+    for(auto v : tok) gt.add(v);
+    gt.add(ctx->pixel_equiv_x / ctx->s[0]);
+    gt.add(c->geom.curveWidth);
+    glyphList *g;
+    if(!glyphCache::get(m, GLYPH_GEOM_CURVES, gt, g)) {
+      double r = c->geom.curveWidth * ctx->pixel_equiv_x / ctx->s[0];
+      for(auto it = m->firstEdge(); it != m->lastEdge(); it++) {
+        GEdge *e = *it;
+        if(!e->getVisibility()) continue;
+        if(e->geomType() == GEntity::DiscreteCurve ||
+           e->geomType() == GEntity::PartitionCurve ||
+           e->geomType() == GEntity::BoundaryLayerCurve)
+          continue;
+        curvePoints(ctx, e, pts);
+        unsigned int col = curveColor(e);
+        for(std::size_t i = 0; i + 1 < pts.size(); i++) {
+          double x[2] = {pts[i].x(), pts[i + 1].x()};
+          double y[2] = {pts[i].y(), pts[i + 1].y()};
+          double z[2] = {pts[i].z(), pts[i + 1].z()};
+          g->addCylinder(x, y, z, r, r, col);
+        }
+      }
+    }
+    // the inside of the open end of a tube shows: lit on both sides, as the
+    // pass drawing them after the surfaces had left it
+    gmshLightTwoSide(c->geom.lightTwoSide ? true : false);
+    g->draw(ctx, c->geom.light);
+    gmshLightTwoSide(false);
+    return true;
+  }
+  mergedCurves &mc = _mergedCurves[m];
+  if(!mc.lines || tok != mc.token) {
+    delete mc.lines;
+    mc.lines = new VertexArray(2, 1000);
+    mc.token = tok;
+    for(auto it = m->firstEdge(); it != m->lastEdge(); it++) {
+      GEdge *e = *it;
+      if(!e->getVisibility()) continue;
+      if(e->geomType() == GEntity::DiscreteCurve ||
+         e->geomType() == GEntity::PartitionCurve ||
+         e->geomType() == GEntity::BoundaryLayerCurve)
+        continue;
+      curvePoints(ctx, e, pts);
+      unsigned int col[2];
+      col[0] = col[1] = curveColor(e);
+      for(std::size_t i = 0; i + 1 < pts.size(); i++) {
+        double x[2] = {pts[i].x(), pts[i + 1].x()};
+        double y[2] = {pts[i].y(), pts[i + 1].y()};
+        double z[2] = {pts[i].z(), pts[i + 1].z()};
+        mc.lines->add(x, y, z, nullptr, col, nullptr, false);
+      }
+    }
+    mc.lines->finalize();
+  }
+  if(mc.lines->getNumVertices()) {
+    gmshLightTwoSide(false);
+    gmshLighting(false);
+    gmshLineWidth((float)c->geom.curveWidth);
+    gl2psLineWidth((float)(c->geom.curveWidth * c->print.epsLineWidthFactor));
+    gmshBindVertexArray(mc.lines, false, true);
+    drawVertexArray(mc.lines, GL_LINES);
+    gmshUnbindArrays();
+  }
+  return true;
+}
+
 class drawGEdge {
 private:
   drawContext *_ctx;
@@ -276,7 +422,14 @@ public:
     double t_min = t_bounds.low();
     double t_max = t_bounds.high();
 
-    if(CTX::instance()->geom.curves || e->getSelection() == GEntity::SelectShow) {
+    // already in the kept curves, unless selected: then drawn again on top,
+    // which needs the depth test to accept equal depths
+    bool merged = _curvesMerged && CTX::instance()->geom.curves;
+    bool drawIt = (CTX::instance()->geom.curves ||
+                   e->getSelection() == GEntity::SelectShow) &&
+                  (!merged || e->getSelection());
+    if(drawIt && merged) glDepthFunc(GL_LEQUAL);
+    if(drawIt) {
       int N = e->minimumDrawSegments() + 1;
       if(CTX::instance()->geom.curveType > 0) {
         for(int i = 0; i < N - 1; i++) {
@@ -313,6 +466,10 @@ public:
         gmshEnd();
       }
     }
+    if(drawIt && merged) {
+      gmshFlushImmediate();
+      glDepthFunc(GL_LESS);
+    }
 
     if(CTX::instance()->geom.curveLabels || e->getSelection() == GEntity::SelectShow) {
       GPoint p = e->point(t_min + 0.5 * (t_max - t_min));
@@ -346,6 +503,78 @@ public:
     }
   }
 };
+
+// The surfaces of a model drawn as their triangulation (wireframe or solid),
+// merged into one array kept between frames and drawn at once, rather than
+// an array per surface: 14,400 surfaces took 70 ms a frame with the shader
+// pipeline, a draw call each. Merged from the arrays of the surfaces, which
+// keep their colours, and rebuilt when one of them is dropped or the
+// geometry changes (CTX::geom.changed, ENT_SURFACE), or the visibilities.
+// The selected surfaces are drawn again on top by the per-entity pass, and
+// a picking pass draws them one at a time as before.
+namespace {
+  struct mergedSurfaces {
+    VertexArray *triangles = nullptr;
+    std::vector<double> token;
+  };
+  std::map<GModel *, mergedSurfaces> _mergedSurfaces;
+  bool _surfacesMerged = false;
+} // namespace
+
+static bool drawMergedSurfaces(drawContext *ctx, GModel *m)
+{
+  CTX *c = CTX::instance();
+  if(ctx->render_mode == drawContext::GMSH_SELECT) return false;
+  if(!c->geom.surfaces || c->geom.surfaceType < 1) return false;
+  if(c->hideUnselected) return false;
+  for(auto it = _mergedSurfaces.begin(); it != _mergedSurfaces.end();) {
+    if(std::find(GModel::list.begin(), GModel::list.end(), it->first) ==
+       GModel::list.end()) {
+      delete it->second.triangles;
+      it = _mergedSurfaces.erase(it);
+    }
+    else
+      it++;
+  }
+  std::vector<double> tok = {(double)c->geom.stamp[2],
+                             (double)c->entityVisibilityStamp};
+  mergedSurfaces &ms = _mergedSurfaces[m];
+  if(!ms.triangles || tok != ms.token) {
+    delete ms.triangles;
+    ms.triangles = new VertexArray(3, 1000);
+    for(auto it = m->firstFace(); it != m->lastFace(); it++) {
+      GFace *f = *it;
+      if(!f->getVisibility()) continue;
+      if(f->geomType() == GEntity::PartitionSurface ||
+         f->geomType() == GEntity::BoundaryLayerSurface)
+        continue;
+      f->fillVertexArray();
+      if(f->va_geom_triangles) ms.triangles->merge(f->va_geom_triangles);
+    }
+    ms.triangles->finalize();
+    // after the arrays of the surfaces have been filled, which may have
+    // dropped some of them
+    c->stampChanges();
+    ms.token = {(double)c->geom.stamp[2], (double)c->entityVisibilityStamp};
+  }
+  VertexArray *va = ms.triangles;
+  if(!va->getNumVertices()) return true;
+  bool normals = c->geom.light && va->hasNormals();
+  if(normals) gmshLighting(true);
+  gmshBindVertexArray(va, normals, va->hasColors());
+  if(c->polygonOffset) glEnable(GL_POLYGON_OFFSET_FILL);
+  gmshLightTwoSide(c->geom.surfaceType > 1 && c->geom.lightTwoSide);
+  gmshPolygonFill(c->geom.surfaceType > 1);
+  // a wireframe is drawn half as wide as the curves, as drawGFace does
+  gmshLineWidth((float)(c->geom.curveWidth / 2.));
+  gl2psLineWidth((float)(c->geom.curveWidth / 2. * c->print.epsLineWidthFactor));
+  drawVertexArray(va, GL_TRIANGLES);
+  glDisable(GL_POLYGON_OFFSET_FILL);
+  gmshLighting(false);
+  gmshPolygonFill(true);
+  gmshUnbindArrays();
+  return true;
+}
 
 class drawGFace {
 private:
@@ -438,8 +667,15 @@ public:
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles) {
         bool selected = false;
         if(f->getSelection()) selected = true;
-        _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
-                         selected, getSelectionColor(f));
+        // already in the merged array, unless selected: then drawn again on
+        // top, which needs the depth test to accept equal depths
+        bool merged = _surfacesMerged && CTX::instance()->geom.surfaces;
+        if(!merged || selected) {
+          if(merged) glDepthFunc(GL_LEQUAL);
+          _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
+                           selected, getSelectionColor(f));
+          if(merged) glDepthFunc(GL_LESS);
+        }
       }
       else {
         gmshLineStipple(1, 0x0F0F);
@@ -597,6 +833,9 @@ public:
 
 void drawContext::drawGeom()
 {
+  // before anything else, whatever this pass draws (see CTX::stampChanges())
+  CTX::instance()->stampChanges();
+
   // nothing of the geometry is opaque when the colours of the options are
   // transparent; otherwise the entities are sorted out one by one
   if(transparencyPass == TRANSPARENCY_OPAQUE &&
@@ -631,8 +870,26 @@ void drawContext::drawGeom()
           std::for_each(m->firstVertex(), m->lastVertex(),
                         drawGVertex(this, batched));
       }
-      std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
-      std::for_each(m->firstFace(), m->lastFace(), drawGFace(this));
+      {
+        bool mixed = transparencyPass != TRANSPARENCY_ALL &&
+                     !gmshGeometryColorsAreTransparent();
+        _curvesMerged = !mixed && !getTransform() && drawMergedCurves(this, m);
+        CTX *c = CTX::instance();
+        if(!_curvesMerged || c->geom.curveLabels || c->geom.tangents ||
+           GEntity::numSelected)
+          std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
+        _curvesMerged = false;
+      }
+      {
+        bool mixed = transparencyPass != TRANSPARENCY_ALL &&
+                     !gmshGeometryColorsAreTransparent();
+        _surfacesMerged = !mixed && drawMergedSurfaces(this, m);
+        CTX *c = CTX::instance();
+        if(!_surfacesMerged || c->geom.surfaceLabels || c->geom.normals ||
+           GEntity::numSelected)
+          std::for_each(m->firstFace(), m->lastFace(), drawGFace(this));
+        _surfacesMerged = false;
+      }
       std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
     }
   }

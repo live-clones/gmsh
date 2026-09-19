@@ -499,8 +499,9 @@ static bool anyEntityColorIsTransparent()
     n += m->getNumVertices() + m->getNumEdges() + m->getNumFaces() +
          m->getNumRegions();
   }
-  if(stamp == GEntity::colorChanges && count == n) return result;
-  stamp = GEntity::colorChanges;
+  CTX::instance()->stampChanges();
+  if(stamp == CTX::instance()->entityColorsStamp && count == n) return result;
+  stamp = CTX::instance()->entityColorsStamp;
   count = n;
   result = false;
   CTX *ctx = CTX::instance();
@@ -646,6 +647,9 @@ void drawVertexArray(VertexArray *va, GLenum type)
      va->getNumVertices() > 1) {
     gmshFlushImmediate();
     gmshPushShaderState();
+    // the transparency may apply to filled surfaces only, as for the other
+    // arrays (gmshDrawArrays())
+    glShader::setAlphaScale(gmshAlphaScaleFor(type));
     // the shader knows both ends of a quad and computes the dash distance
     // itself
     if(gmshLineStippleEnabled())

@@ -10,6 +10,8 @@
 #include "MPoint.h"
 #include "GModelIO_GEO.h"
 #include "Geo.h"
+#include "GmshDefines.h"
+#include "Context.h"
 
 discreteVertex::discreteVertex(GModel *m, int num, double x, double y, double z)
   : GVertex(m, num)
@@ -30,6 +32,7 @@ GPoint discreteVertex::point() const { return GPoint(x(), y(), z(), this); }
 
 void discreteVertex::setPosition(GPoint &p)
 {
+  CTX::instance()->geom.changed = ENT_ALL;
   if(_v) {
     _v->Pos.X = p.x();
     _v->Pos.Y = p.y();

@@ -968,17 +968,33 @@ bool GModel::fillClipVertexArrays()
 
 bool GModel::fillVertexArrays()
 {
-  if(!getVisibility() || !CTX::instance()->mesh.changed) return false;
+  // the dimensions whose mesh changed since the arrays were filled; a model
+  // hidden meanwhile is brought up to date when it is shown again
+  CTX *ctx = CTX::instance();
+  ctx->stampChanges();
+  if(!getVisibility()) return false;
+  // hidden entities get no arrays: showing one again (the API does not flag
+  // the mesh as the visibility window does) needs them filled
+  bool visibility = (ctx->entityVisibilityStamp != visibilityStampBuilt);
+  visibilityStampBuilt = ctx->entityVisibilityStamp;
+  bool changed[4];
+  bool any = false;
+  for(int d = 0; d < 4; d++) {
+    changed[d] = visibility || (ctx->mesh.stamp[d] != meshStampBuilt[d]);
+    if(changed[d]) any = true;
+    meshStampBuilt[d] = ctx->mesh.stamp[d];
+  }
+  if(!any) return false;
 
   Msg::Debug("Mesh has changed: reinitializing vertex arrays");
 
   double tStart = TimeOfDay();
   int status = getMeshStatus();
 
-  if(status >= 1 && CTX::instance()->mesh.changed & ENT_CURVE)
+  if(status >= 1 && changed[1])
     std::for_each(firstEdge(), lastEdge(), initMeshGEdge());
 
-  if(status >= 2 && CTX::instance()->mesh.changed & ENT_SURFACE) {
+  if(status >= 2 && changed[2]) {
     if(normals) delete normals;
     normals = new smooth_normals(CTX::instance()->mesh.angleSmoothNormals);
     if(CTX::instance()->mesh.smoothNormals)
@@ -986,7 +1002,7 @@ bool GModel::fillVertexArrays()
     std::for_each(firstFace(), lastFace(), initMeshGFace());
   }
 
-  if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME)
+  if(status >= 3 && changed[3])
     std::for_each(firstRegion(), lastRegion(), initMeshGRegion());
 
   Msg::Debug("Vertex arrays built in %g s", TimeOfDay() - tStart);

@@ -60,12 +60,19 @@ private:
   // the glyphs packed for instanced drawing (glShader::GLYPH_STRIDE bytes
   // each), built on first use
   std::vector<unsigned char> _gpu[GLYPH_NUMKINDS];
+  // what is drawn a primitive at a time rather than as glyphs (flat arrows,
+  // pyramids, segments, comets), recorded once as points, lines and
+  // triangles (see gmshRecordBegin())
+  VertexArray *_rec[3];
   glyphToken _token;
   // has the list been filled with this token? (a filled list can be empty)
   bool _filled;
 
 public:
-  glyphList() : _va(nullptr), _filled(false) {}
+  glyphList() : _va(nullptr), _filled(false)
+  {
+    _rec[0] = _rec[1] = _rec[2] = nullptr;
+  }
   ~glyphList() { clear(); }
   void clear();
   std::size_t size() const;
@@ -80,6 +87,9 @@ public:
   void reserve(glyphKind kind, std::size_t n) { _inst[kind].reserve(n); }
   // the glyph placed by the transform m, which is 4x4 and column major
   void add(glyphKind kind, const double m[16], unsigned int color);
+  // what is drawn between the two goes into the list instead of the picture
+  void recordBegin();
+  void recordEnd();
   // a sphere of a radius given in pixels
   void addSphere(drawContext *ctx, double size, double x, double y, double z,
                  unsigned int color);
@@ -121,6 +131,12 @@ enum glyphSlot {
   GLYPH_VECTORS,
   GLYPH_TENSORS,
   GLYPH_NODES,
+  // the normals and tangents of a view, the normals of the surfaces of a
+  // model, the tangents of its curves
+  GLYPH_NORMALS,
+  GLYPH_TANGENTS,
+  // the curves of a model drawn as cylinders
+  GLYPH_GEOM_CURVES,
   GLYPH_NUMSLOTS
 };
 

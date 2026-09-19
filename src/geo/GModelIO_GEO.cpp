@@ -24,6 +24,7 @@
 
 #if defined(HAVE_MESH)
 #include "Field.h"
+#include "GmshDefines.h"
 #endif
 
 void GEO_Internals::_allocateAll()
@@ -1384,6 +1385,8 @@ bool sortEntities(const std::pair<int, int> &a,
 
 void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
 {
+  // existing entities can be given new geometry
+  CTX::instance()->geom.changed = ENT_ALL;
   Msg::Debug("Syncing GEO_Internals with GModel");
 
   // if the entities do not exist in GModel, we create them; if they exist as

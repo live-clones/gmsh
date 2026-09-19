@@ -433,10 +433,11 @@ public:
   bool changeEntityTag(int dim, int tag, int newTag);
 
   // add/remove an entity in the model
-  bool add(GRegion *r) { return regions.insert(r).second; }
-  bool add(GFace *f) { return faces.insert(f).second; }
-  bool add(GEdge *e) { return edges.insert(e).second; }
-  bool add(GVertex *v) { return vertices.insert(v).second; }
+  // (each add or remove sets CTX::geom.changed)
+  bool add(GRegion *r);
+  bool add(GFace *f);
+  bool add(GEdge *e);
+  bool add(GVertex *v);
   bool remove(GRegion *r);
   bool remove(GFace *f);
   bool remove(GEdge *e);
@@ -736,6 +737,11 @@ public:
 
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();
+  // the stamps of the mesh (CTX::mesh.stamp) the arrays were filled with,
+  // per dimension
+  int meshStampBuilt[4] = {-1, -1, -1, -1};
+  // and of the visibility of the entities, as a hidden entity gets no arrays
+  int visibilityStampBuilt = -1;
 
   // build what the clipping planes add (see GEntity::va_clip_*); false if
   // nothing had to change

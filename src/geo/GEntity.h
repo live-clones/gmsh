@@ -328,10 +328,8 @@ public:
 
   // get/set the visibility flag
   virtual char getVisibility();
-  virtual void setVisibility(char val, bool recursive = false)
-  {
-    _visible = val;
-  }
+  // (sets CTX::entityVisibilityChanged)
+  virtual void setVisibility(char val, bool recursive = false);
 
   // What the selection flag holds: nothing, an entity the user has chosen,
   // one chosen and drawn with its marker and label, or one the cursor is
@@ -357,14 +355,8 @@ public:
 
   // get/set the color
   virtual unsigned int getColor() { return _color; }
-  virtual void setColor(unsigned color, bool recursive = false)
-  {
-    _color = color;
-    // tells whoever bakes the entity colours in (the merged mesh arrays)
-    // that they changed
-    colorChanges++;
-  }
-  static int colorChanges;
+  // (sets CTX::entityColorsChanged)
+  virtual void setColor(unsigned color, bool recursive = false);
 
   // return true if we should use this color to represent the entity
   virtual bool useColor();
@@ -418,10 +410,7 @@ public:
   {
     return _onlySomeElementsVisible ? true : false;
   }
-  void setOnlySomeElementsVisible(bool val)
-  {
-    _onlySomeElementsVisible = val ? 1 : 0;
-  }
+  void setOnlySomeElementsVisible(bool val);
 
   // get the number of mesh vertices in the entity
   std::size_t getNumMeshVertices() { return mesh_vertices.size(); }

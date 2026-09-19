@@ -15,6 +15,8 @@
 
 #include "GModelIO_OCC.h"
 #include <gp_Pnt.hxx>
+#include "GmshDefines.h"
+#include "Context.h"
 
 OCCVertex::OCCVertex(GModel *m, TopoDS_Vertex v, int num, double lc)
   : GVertex(m, num, lc), _v(v)
@@ -27,6 +29,7 @@ OCCVertex::OCCVertex(GModel *m, TopoDS_Vertex v, int num, double lc)
 
 void OCCVertex::setPosition(GPoint &p)
 {
+  CTX::instance()->geom.changed = ENT_ALL;
   _x = p.x();
   _y = p.y();
   _z = p.z();

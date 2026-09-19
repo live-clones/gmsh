@@ -36,6 +36,17 @@ void gmshFlushImmediate();
 // false if it did not take the primitive
 bool gmshImBegin(GLenum mode);
 void gmshImEnd();
+
+// While recording, what gmshBegin() and gmshEnd() make goes into the arrays
+// given - as independent points, lines and triangles, with their colours,
+// and the normals of the triangles - instead of being drawn, on either
+// pipeline: what is drawn a primitive at a time can then be kept and drawn
+// at once. The current colour is put back at the end, as the colours set
+// while recording, which a picking pass would otherwise ignore, are taken.
+class VertexArray;
+void gmshRecordBegin(VertexArray *points, VertexArray *lines,
+                     VertexArray *triangles);
+void gmshRecordEnd();
 void gmshImVertex(float x, float y, float z);
 void gmshImNormal(float x, float y, float z);
 void gmshImTexCoord(float s, float t);

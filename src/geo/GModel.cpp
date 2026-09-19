@@ -11,6 +11,9 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#if defined(HAVE_OPENGL)
+#include "glyphList.h"
+#endif
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
 #include "MPoint.h"
@@ -97,6 +100,11 @@ GModel::GModel(const std::string &name)
 
 GModel::~GModel()
 {
+#if defined(HAVE_OPENGL)
+  // the glyphs kept for the whole model (its curves, its mesh normals) go
+  // with it
+  glyphCache::clear(this);
+#endif
   auto it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
 
@@ -166,6 +174,7 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
 
 void GModel::destroy(bool keepName)
 {
+  CTX::instance()->geom.changed = ENT_ALL;
   Msg::Debug("Destroying model %s", getName().c_str());
 
   if(!keepName) {
@@ -506,8 +515,33 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
   return tags;
 }
 
+bool GModel::add(GRegion *r)
+{
+  CTX::instance()->geom.changed = ENT_ALL;
+  return regions.insert(r).second;
+}
+
+bool GModel::add(GFace *f)
+{
+  CTX::instance()->geom.changed = ENT_ALL;
+  return faces.insert(f).second;
+}
+
+bool GModel::add(GEdge *e)
+{
+  CTX::instance()->geom.changed = ENT_ALL;
+  return edges.insert(e).second;
+}
+
+bool GModel::add(GVertex *v)
+{
+  CTX::instance()->geom.changed = ENT_ALL;
+  return vertices.insert(v).second;
+}
+
 bool GModel::remove(GRegion *r)
 {
+  CTX::instance()->geom.changed = ENT_ALL;
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -528,6 +562,7 @@ bool GModel::remove(GRegion *r)
 
 bool GModel::remove(GFace *f)
 {
+  CTX::instance()->geom.changed = ENT_ALL;
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -548,6 +583,7 @@ bool GModel::remove(GFace *f)
 
 bool GModel::remove(GEdge *e)
 {
+  CTX::instance()->geom.changed = ENT_ALL;
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -568,6 +604,7 @@ bool GModel::remove(GEdge *e)
 
 bool GModel::remove(GVertex *v)
 {
+  CTX::instance()->geom.changed = ENT_ALL;
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was

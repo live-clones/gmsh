@@ -11,6 +11,7 @@
 #include "glShader.h"
 #include "drawContext.h"
 #include "Context.h"
+#include "VertexArray.h"
 
 bool gmshCollecting = false;
 
@@ -20,12 +21,65 @@ bool gmshUseShaders()
 }
 
 namespace {
+  // A growable array whose appends are a few inline instructions: the
+  // primitives collected here come a number at a time, millions to a frame,
+  // and std::vector's push_back() is a call of its own in some builds (with
+  // the checks of a hardened library), which made most of the cost of
+  // drawing a curve or a glyph this way. The storage only grows.
+  template <class T> class growBuf {
+  private:
+    std::vector<T> _v;
+    T *_p = nullptr;
+    std::size_t _n = 0, _cap = 0;
+    // the rare case, kept out of the way of the common one
+    void _reserve(std::size_t n)
+    {
+      _v.resize(std::max(n, 2 * _cap + 64));
+      _p = _v.data();
+      _cap = _v.size();
+    }
+
+  public:
+    std::size_t size() const { return _n; }
+    bool empty() const { return !_n; }
+    void clear() { _n = 0; }
+    T &operator[](std::size_t i) { return _p[i]; }
+    const T &operator[](std::size_t i) const { return _p[i]; }
+    T *data() { return _p; }
+    // k more elements at the end, to be written through the pointer
+    inline T *grow(std::size_t k)
+    {
+      if(_n + k > _cap) _reserve(_n + k);
+      T *p = _p + _n;
+      _n += k;
+      return p;
+    }
+    void push_back(const T &t) { *grow(1) = t; }
+    // shrink, or grow with the value given
+    void resize(std::size_t n, const T &t = T())
+    {
+      if(n > _n) {
+        std::size_t k = n - _n;
+        T *p = grow(k);
+        for(std::size_t i = 0; i < k; i++) p[i] = t;
+      }
+      else
+        _n = n;
+    }
+    // append the whole of another one
+    void append(const growBuf<T> &o)
+    {
+      T *p = grow(o._n);
+      std::copy(o._p, o._p + o._n, p);
+    }
+  };
+
   // the vertices of the primitive being collected, with the colour and
   // normal current at each of them
-  std::vector<float> _imPos, _imNrm, _imTex;
+  growBuf<float> _imPos, _imNrm, _imTex;
   // how far along its line each vertex of the batch is, in pixels
-  std::vector<float> _batchDash;
-  std::vector<unsigned char> _imCol;
+  growBuf<float> _batchDash;
+  growBuf<unsigned char> _imCol;
   float _imNormal[3] = {0.f, 0.f, 1.f};
   float _imTexCoord[2] = {0.f, 0.f};
   GLenum _imMode = GL_POINTS;
@@ -35,8 +89,8 @@ namespace {
   // draw (the decorations are thousands of two-vertex runs). Anything that
   // changes how they would be drawn flushes them first.
   GLenum _batchMode = GL_POINTS;
-  std::vector<float> _batchPos, _batchNrm, _batchTex;
-  std::vector<unsigned char> _batchCol;
+  growBuf<float> _batchPos, _batchNrm, _batchTex;
+  growBuf<unsigned char> _batchCol;
 
   // the state the batch is drawn with; setting one of these does not end
   // the batch, only a primitive that does not match does
@@ -95,6 +149,11 @@ namespace {
   // the state a shader is handed as uniforms, which a core profile cannot
   // be asked for
   unsigned char _color[4] = {255, 255, 255, 255};
+  // recording (gmshRecordBegin()): into which arrays, and the colour to put
+  // back afterwards
+  bool _recording = false;
+  VertexArray *_recTo[3] = {nullptr, nullptr, nullptr};
+  unsigned char _recColor[4];
   bool _lighting = false, _twoSide = false;
   double _pointSize = 1.;
   unsigned int _texture = 0;
@@ -126,7 +185,7 @@ const unsigned char *gmshCurrentColor() { return _color; }
 
 void gmshColor4ubv(const void *col)
 {
-  if(drawContext::pickColorActive()) return;
+  if(drawContext::pickColorActive() && !_recording) return;
   const GLubyte *c = (const GLubyte *)col;
   gmshColor4ub(c[0], c[1], c[2], c[3]);
 }
@@ -382,9 +441,27 @@ void gmshPushShaderState()
   glShader::setClipOutside(_clipOutside && anyPlane);
 }
 
+void gmshRecordBegin(VertexArray *points, VertexArray *lines,
+                     VertexArray *triangles)
+{
+  // what is waiting belongs to what was drawn before
+  gmshFlushImmediate();
+  _recTo[0] = points;
+  _recTo[1] = lines;
+  _recTo[2] = triangles;
+  for(int i = 0; i < 4; i++) _recColor[i] = _color[i];
+  _recording = true;
+}
+
+void gmshRecordEnd()
+{
+  _recording = false;
+  gmshColor4ub(_recColor[0], _recColor[1], _recColor[2], _recColor[3]);
+}
+
 bool gmshImBegin(GLenum mode)
 {
-  if(!gmshUseShaders()) return false;
+  if(!gmshUseShaders() && !_recording) return false;
   gmshCollecting = true;
   _imPos.clear();
   _imNrm.clear();
@@ -399,12 +476,14 @@ bool gmshImBegin(GLenum mode)
 
 void gmshImVertex(float x, float y, float z)
 {
-  _imPos.push_back(x);
-  _imPos.push_back(y);
-  _imPos.push_back(z);
-  for(int i = 0; i < 3; i++) _imNrm.push_back(_imNormal[i]);
-  for(int i = 0; i < 4; i++) _imCol.push_back(gmshCurrentColor()[i]);
-  for(int i = 0; i < 2; i++) _imTex.push_back(_imTexCoord[i]);
+  float *p = _imPos.grow(3), *n = _imNrm.grow(3), *t = _imTex.grow(2);
+  unsigned char *c = _imCol.grow(4);
+  p[0] = x;
+  p[1] = y;
+  p[2] = z;
+  for(int i = 0; i < 3; i++) n[i] = _imNormal[i];
+  for(int i = 0; i < 4; i++) c[i] = _color[i];
+  for(int i = 0; i < 2; i++) t[i] = _imTexCoord[i];
 }
 
 void gmshLineWidth(double w)
@@ -511,13 +590,29 @@ void gmshImNormal(float x, float y, float z)
 
 namespace {
   // copy vertex i of what has been collected to the end of what will be drawn
-  void _emit(std::size_t i)
+  // the vertices of the primitive being converted, in the order they go
+  // into the batch: gathered first, so that the batch grows once
+  growBuf<std::size_t> _emitted;
+  inline void _emit(std::size_t i) { _emitted.push_back(i); }
+  void _emitFlush()
   {
-    for(int k = 0; k < 3; k++) _batchPos.push_back(_imPos[3 * i + k]);
-    for(int k = 0; k < 3; k++) _batchNrm.push_back(_imNrm[3 * i + k]);
-    for(int k = 0; k < 4; k++) _batchCol.push_back(_imCol[4 * i + k]);
-    for(int k = 0; k < 2; k++) _batchTex.push_back(_imTex[2 * i + k]);
-    _batchDash.push_back(0.f);
+    std::size_t m = _emitted.size();
+    if(!m) return;
+    float *p = _batchPos.grow(3 * m), *n = _batchNrm.grow(3 * m);
+    float *t = _batchTex.grow(2 * m);
+    unsigned char *c = _batchCol.grow(4 * m);
+    float *d = _batchDash.grow(m);
+    const float *ip = _imPos.data(), *in = _imNrm.data(), *it = _imTex.data();
+    const unsigned char *ic = _imCol.data();
+    for(std::size_t j = 0; j < m; j++) {
+      std::size_t i = _emitted[j];
+      for(int k = 0; k < 3; k++) p[3 * j + k] = ip[3 * i + k];
+      for(int k = 0; k < 3; k++) n[3 * j + k] = in[3 * i + k];
+      for(int k = 0; k < 4; k++) c[4 * j + k] = ic[4 * i + k];
+      for(int k = 0; k < 2; k++) t[2 * j + k] = it[2 * i + k];
+      d[j] = 0.f;
+    }
+    _emitted.clear();
   }
 
   // distance along its line of each vertex of the segments just added, in
@@ -684,9 +779,11 @@ void gmshImEnd()
   std::size_t num = _imPos.size() / 3;
   if(!num) return;
 
-  BatchState now = _currentState();
-  if(!_batchPos.empty() && now != _batchState) gmshFlushImmediate();
-  _batchState = now;
+  if(!_recording) {
+    BatchState now = _currentState();
+    if(!_batchPos.empty() && now != _batchState) gmshFlushImmediate();
+    _batchState = now;
+  }
 
   // what the primitive becomes as independent points, lines or triangles
   GLenum mode = GL_TRIANGLES;
@@ -696,8 +793,10 @@ void gmshImEnd()
           _imMode == GL_LINE_LOOP)
     mode = GL_LINES;
 
-  if(!_batchPos.empty() && mode != _batchMode) gmshFlushImmediate();
-  _batchMode = mode;
+  if(!_recording) {
+    if(!_batchPos.empty() && mode != _batchMode) gmshFlushImmediate();
+    _batchMode = mode;
+  }
 
   std::size_t firstEmitted = _batchPos.size() / 3;
 
@@ -705,7 +804,13 @@ void gmshImEnd()
   case GL_POINTS:
   case GL_LINES:
   case GL_TRIANGLES:
-    for(std::size_t i = 0; i < num; i++) _emit(i);
+    // already independent primitives: appended as they are, in one go (the
+    // nodes of a large mesh come through here, millions to a frame)
+    _batchPos.append(_imPos);
+    _batchNrm.append(_imNrm);
+    _batchCol.append(_imCol);
+    _batchTex.append(_imTex);
+    _batchDash.resize(_batchDash.size() + num, 0.f);
     break;
   case GL_LINE_STRIP:
     for(std::size_t i = 0; i + 1 < num; i++) {
@@ -754,11 +859,46 @@ void gmshImEnd()
     break;
   default:
     // an unknown primitive is drawn on its own rather than guessed at
+    if(_recording) break;
     gmshFlushImmediate();
     for(std::size_t i = 0; i < num; i++) _emit(i);
+    _emitFlush();
     _batchMode = _imMode;
     gmshFlushImmediate();
     break;
+  }
+
+  _emitFlush();
+
+  if(_recording) {
+    // into the array of the primitive, and out of the batch
+    int npe = (mode == GL_POINTS) ? 1 : (mode == GL_LINES) ? 2 : 3;
+    VertexArray *va = _recTo[npe - 1];
+    std::size_t last = _batchPos.size() / 3;
+    for(std::size_t i = firstEmitted; va && i + npe <= last; i += npe) {
+      double x[3], y[3], z[3];
+      unsigned char r[3], g[3], b[3], a[3];
+      SVector3 n[3];
+      for(int k = 0; k < npe; k++) {
+        std::size_t j = i + k;
+        x[k] = _batchPos[3 * j];
+        y[k] = _batchPos[3 * j + 1];
+        z[k] = _batchPos[3 * j + 2];
+        n[k] = SVector3(_batchNrm[3 * j], _batchNrm[3 * j + 1],
+                        _batchNrm[3 * j + 2]);
+        r[k] = _batchCol[4 * j];
+        g[k] = _batchCol[4 * j + 1];
+        b[k] = _batchCol[4 * j + 2];
+        a[k] = _batchCol[4 * j + 3];
+      }
+      va->add(x, y, z, (npe == 3) ? n : nullptr, r, g, b, a, nullptr, false);
+    }
+    _batchPos.resize(3 * firstEmitted);
+    _batchNrm.resize(3 * firstEmitted);
+    _batchCol.resize(4 * firstEmitted);
+    _batchTex.resize(2 * firstEmitted);
+    _batchDash.resize(firstEmitted);
+    return;
   }
 
   if(mode == GL_LINES && _stipple)

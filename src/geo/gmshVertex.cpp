@@ -11,6 +11,8 @@
 #include "GmshMessage.h"
 #include "MVertex.h"
 #include "MPoint.h"
+#include "GmshDefines.h"
+#include "Context.h"
 
 gmshVertex::gmshVertex(GModel *m, Vertex *v) : GVertex(m, v->Num, v->lc), _v(v)
 {
@@ -34,6 +36,7 @@ double gmshVertex::z() const { return _v->Pos.Z; }
 
 void gmshVertex::setPosition(GPoint &p)
 {
+  CTX::instance()->geom.changed = ENT_ALL;
   _v->Pos.X = p.x();
   _v->Pos.Y = p.y();
   _v->Pos.Z = p.z();

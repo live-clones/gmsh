@@ -171,6 +171,7 @@
 
 #if defined(HAVE_TINYXML2)
 #include "tinyxml2.h"
+#include "GmshDefines.h"
 #endif
 
 OCC_Internals::OCC_Internals()
@@ -5633,6 +5634,8 @@ bool const sortByInvDim(std::pair<int, int> const &lhs,
 
 void OCC_Internals::synchronize(GModel *model)
 {
+  // existing entities can be given new geometry
+  CTX::instance()->geom.changed = ENT_ALL;
   Msg::Debug("Syncing OCC_Internals with GModel");
 
   // make sure to remove from GModel all entities that have been deleted in

@@ -6912,7 +6912,8 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
        ((val == 0. || val == 3.) || CTX::instance()->pickElements))
       CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     // the other modes colour by entity, which the merged mesh arrays bake in
-    if(CTX::instance()->mesh.colorCarousel != (int)val) GEntity::colorChanges++;
+    if(CTX::instance()->mesh.colorCarousel != (int)val)
+      CTX::instance()->entityColorsChanged = 1;
     CTX::instance()->mesh.colorCarousel = (int)val;
     if(CTX::instance()->mesh.colorCarousel < 0 ||
        CTX::instance()->mesh.colorCarousel > 3)

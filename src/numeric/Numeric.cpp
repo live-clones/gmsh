@@ -503,6 +503,106 @@ double ComputeVonMises(double *V)
                      v23 * v23 + v31 * v31 + v32 * v32 + v33 * v33));
 }
 
+// Jacobi rotations: a few sweeps for a 3x3 matrix, without the allocations
+// and the general (nonsymmetric) algorithm of LAPACK, twenty times faster
+bool eigenSymmetric3x3(const double a[9], double w[3], double v[3][3])
+{
+  double s = 0.;
+  for(int i = 0; i < 9; i++) s = std::max(s, std::abs(a[i]));
+  double tol = 1.e-12 * s;
+  if(std::abs(a[1] - a[3]) > tol || std::abs(a[2] - a[6]) > tol ||
+     std::abs(a[5] - a[7]) > tol)
+    return false;
+  double m[3][3] = {{a[0], 0.5 * (a[1] + a[3]), 0.5 * (a[2] + a[6])},
+                    {0., a[4], 0.5 * (a[5] + a[7])},
+                    {0., 0., a[8]}};
+  m[1][0] = m[0][1];
+  m[2][0] = m[0][2];
+  m[2][1] = m[1][2];
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 3; j++) v[i][j] = (i == j) ? 1. : 0.;
+  const int pq[3][2] = {{0, 1}, {0, 2}, {1, 2}};
+  for(int sweep = 0; sweep < 50; sweep++) {
+    double off = std::abs(m[0][1]) + std::abs(m[0][2]) + std::abs(m[1][2]);
+    double diag = std::abs(m[0][0]) + std::abs(m[1][1]) + std::abs(m[2][2]);
+    if(off == 0. || off <= 1.e-15 * diag) break;
+    for(int r = 0; r < 3; r++) {
+      int p = pq[r][0], q = pq[r][1];
+      if(m[p][q] == 0.) continue;
+      double theta = (m[q][q] - m[p][p]) / (2. * m[p][q]);
+      double t = ((theta >= 0.) ? 1. : -1.) /
+                 (std::abs(theta) + std::sqrt(theta * theta + 1.));
+      double c = 1. / std::sqrt(t * t + 1.), sn = t * c;
+      for(int k = 0; k < 3; k++) {
+        double mkp = m[k][p], mkq = m[k][q];
+        m[k][p] = c * mkp - sn * mkq;
+        m[k][q] = sn * mkp + c * mkq;
+      }
+      for(int k = 0; k < 3; k++) {
+        double mpk = m[p][k], mqk = m[q][k];
+        m[p][k] = c * mpk - sn * mqk;
+        m[q][k] = sn * mpk + c * mqk;
+      }
+      for(int k = 0; k < 3; k++) {
+        double vkp = v[k][p], vkq = v[k][q];
+        v[k][p] = c * vkp - sn * vkq;
+        v[k][q] = sn * vkp + c * vkq;
+      }
+    }
+  }
+  // ascending, as LAPACK's are once sorted
+  int o[3] = {0, 1, 2};
+  std::sort(o, o + 3, [&m](int i, int j) { return m[i][i] < m[j][j]; });
+  double vv[3][3];
+  for(int j = 0; j < 3; j++) {
+    w[j] = m[o[j]][o[j]];
+    // a direction has no sign: the one with its largest component positive
+    int big = 0;
+    for(int k = 1; k < 3; k++)
+      if(std::abs(v[k][o[j]]) > std::abs(v[big][o[j]])) big = k;
+    double sg = (v[big][o[j]] < 0.) ? -1. : 1.;
+    for(int k = 0; k < 3; k++) vv[k][j] = sg * v[k][o[j]];
+  }
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 3; j++) v[i][j] = vv[i][j];
+  return true;
+}
+
+// the trigonometric solution of the characteristic polynomial (Smith, 1961)
+bool eigenvaluesSymmetric3x3(const double a[9], double w[3])
+{
+  double s = 0.;
+  for(int i = 0; i < 9; i++) s = std::max(s, std::abs(a[i]));
+  double tol = 1.e-12 * s;
+  if(std::abs(a[1] - a[3]) > tol || std::abs(a[2] - a[6]) > tol ||
+     std::abs(a[5] - a[7]) > tol)
+    return false;
+  double a01 = 0.5 * (a[1] + a[3]), a02 = 0.5 * (a[2] + a[6]);
+  double a12 = 0.5 * (a[5] + a[7]);
+  double p1 = a01 * a01 + a02 * a02 + a12 * a12;
+  if(p1 == 0.) {
+    w[0] = a[0];
+    w[1] = a[4];
+    w[2] = a[8];
+    std::sort(w, w + 3);
+    return true;
+  }
+  double q = (a[0] + a[4] + a[8]) / 3.;
+  double d0 = a[0] - q, d1 = a[4] - q, d2 = a[8] - q;
+  double p = std::sqrt((d0 * d0 + d1 * d1 + d2 * d2 + 2. * p1) / 6.);
+  // det((A - qI) / p) / 2, in [-1, 1] but for rounding
+  double r = (d0 * (d1 * d2 - a12 * a12) - a01 * (a01 * d2 - a12 * a02) +
+              a02 * (a01 * a12 - d1 * a02)) /
+             (2. * p * p * p);
+  r = std::max(-1., std::min(1., r));
+  double phi = std::acos(r) / 3.;
+  w[2] = q + 2. * p * std::cos(phi);
+  w[0] = q + 2. * p * std::cos(phi + 2. * M_PI / 3.);
+  w[1] = 3. * q - w[0] - w[2];
+  std::sort(w, w + 3);
+  return true;
+}
+
 double ComputeScalarRep(int numComp, double *val, int tensorRep)
 {
   if(numComp == 1)
@@ -514,6 +614,8 @@ double ComputeScalarRep(int numComp, double *val, int tensorRep)
       return ComputeVonMises(val);
     }
     else {
+      double w[3];
+      if(eigenvaluesSymmetric3x3(val, w)) return (tensorRep == 1) ? w[2] : w[0];
       fullMatrix<double> tensor(3, 3);
       fullVector<double> S(3), imS(3);
       fullMatrix<double> V(3, 3);

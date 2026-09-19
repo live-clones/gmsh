@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <map>
+#include <set>
 #include <algorithm>
 #include <cmath>
 #include "drawContext.h"
@@ -169,6 +170,11 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
 // what a walk over the nodes of an entity is being asked to do
 enum { NODES_COLLECT = 1, NODES_POINTS = 2, NODES_LABELS = 4 };
 
+// set while the nodes of the model being drawn come from its merged array,
+// and its normals and tangents from its recorded ones
+static bool _mergedPoints = false, _mergedNormals = false,
+            _mergedTangents = false;
+
 // the list an entity keeps its node spheres in, and whether it has to be
 // filled
 static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
@@ -208,7 +214,12 @@ static void drawNodes(drawContext *ctx, GEntity *e, W walk)
     if(labels) walk(nullptr, labels);
   }
   else {
-    int what = (CTX::instance()->mesh.nodes ? NODES_POINTS : 0) | labels;
+    // the points of the whole model are drawn at once from an array kept
+    // between frames (see mergedArrays); an entity only draws its own in a
+    // picking pass, or when that array could not be used
+    bool points = CTX::instance()->mesh.nodes &&
+                  (!_mergedPoints || ctx->inPickColorMode());
+    int what = (points ? NODES_POINTS : 0) | labels;
     if(what) walk(nullptr, what);
   }
 }
@@ -243,11 +254,19 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e, glyphList *g,
   }
   if(what & NODES_POINTS) {
     gmshBegin(GL_POINTS);
+    // the colour is only set when it changes: it is the same for all the
+    // nodes of an entity but for those of high order elements
+    unsigned int last = 0;
+    bool first = true;
     for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
       MVertex *v = e->mesh_vertices[i];
       if(!v->getVisibility()) continue;
       unsigned int col = getColorByVertex(e, v);
-      gmshColor4ubv((const void *)&col);
+      if(first || col != last) {
+        gmshColor4ubv((const void *)&col);
+        last = col;
+        first = false;
+      }
       gmshVertex3d(v->x(), v->y(), v->z());
     }
     gmshEnd();
@@ -391,9 +410,22 @@ public:
   bool built;
   // the colours are baked in: rebuild when they change
   int colorStamp;
-  mergedArrays() : built(false), colorStamp(0)
+  // The nodes of the whole model drawn as points, which no entity keeps an
+  // array of: walking them at every frame cost more than drawing them (half a
+  // second for 11 million), and an array per entity is no better when the
+  // entities are many (80,000 draws of a point each). Built when they are
+  // first shown, with what decides which nodes and which colours.
+  VertexArray *points;
+  std::vector<double> pointsToken;
+  mergedArrays() : built(false), colorStamp(0), points(nullptr)
   {
     for(int i = 0; i < 4; i++) lines[i] = triangles[i] = nullptr;
+  }
+  void clearPoints()
+  {
+    delete points;
+    points = nullptr;
+    pointsToken.clear();
   }
   void clear()
   {
@@ -402,6 +434,7 @@ public:
       delete triangles[i];
       lines[i] = triangles[i] = nullptr;
     }
+    clearPoints();
     built = false;
   }
 };
@@ -469,6 +502,158 @@ static void drawMergedArray(drawContext *ctx, VertexArray *va, GLenum type,
   glDisable(GL_POLYGON_OFFSET_FILL);
   gmshLighting(false);
   gmshUnbindArrays();
+}
+
+// the nodes of the elements of an entity that are visible, once each
+template <class T>
+static void collectNodes(GEntity *e, std::vector<T *> &elements,
+                         std::set<MVertex *> &seen, VertexArray *va)
+{
+  for(std::size_t i = 0; i < elements.size(); i++) {
+    MElement *ele = elements[i];
+    if(!isElementVisible(ele)) continue;
+    for(std::size_t j = 0; j < ele->getNumVertices(); j++) {
+      MVertex *v = ele->getVertex(j);
+      if(!v->getVisibility() || !seen.insert(v).second) continue;
+      double x = v->x(), y = v->y(), z = v->z();
+      unsigned int col = getColorByVertex(e, v);
+      va->add(&x, &y, &z, nullptr, &col, nullptr, false);
+    }
+  }
+}
+
+// the nodes an entity shows: all of them, or those of its visible elements
+static void collectNodes(GEntity *e, VertexArray *va)
+{
+  if(!e->getVisibility()) return;
+  if(!e->getOnlySomeElementsVisible()) {
+    for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
+      MVertex *v = e->mesh_vertices[i];
+      if(!v->getVisibility()) continue;
+      double x = v->x(), y = v->y(), z = v->z();
+      unsigned int col = getColorByVertex(e, v);
+      va->add(&x, &y, &z, nullptr, &col, nullptr, false);
+    }
+    return;
+  }
+  CTX *c = CTX::instance();
+  std::set<MVertex *> seen;
+  if(e->dim() == 1) {
+    GEdge *ge = static_cast<GEdge *>(e);
+    collectNodes(e, ge->lines, seen, va);
+  }
+  else if(e->dim() == 2) {
+    GFace *f = static_cast<GFace *>(e);
+    if(c->mesh.triangles) collectNodes(e, f->triangles, seen, va);
+    if(c->mesh.quadrangles) collectNodes(e, f->quadrangles, seen, va);
+    collectNodes(e, f->polygons, seen, va);
+  }
+  else if(e->dim() == 3) {
+    GRegion *r = static_cast<GRegion *>(e);
+    if(c->mesh.tetrahedra) collectNodes(e, r->tetrahedra, seen, va);
+    if(c->mesh.hexahedra) collectNodes(e, r->hexahedra, seen, va);
+    if(c->mesh.prisms) collectNodes(e, r->prisms, seen, va);
+    if(c->mesh.pyramids) collectNodes(e, r->pyramids, seen, va);
+    if(c->mesh.trihedra) collectNodes(e, r->trihedra, seen, va);
+    collectNodes(e, r->polyhedra, seen, va);
+  }
+}
+
+// the points of a model, (re)built when what they depend on has changed;
+// the mesh itself and the visibilities go through Mesh.Changed, which drops
+// the merged arrays altogether
+static void fillMergedPoints(GModel *m, mergedArrays &ma, int status)
+{
+  CTX *c = CTX::instance();
+  std::vector<double> tok = {(double)status,
+                             (double)c->mesh.colorCarousel,
+                             (double)c->mesh.volumeFaces,
+                             (double)c->mesh.surfaceFaces,
+                             (double)c->color.mesh.node,
+                             (double)c->color.mesh.nodeSup,
+                             (double)CTX::instance()->entityColorsStamp,
+                             (double)GEntity::numSelected,
+                             c->mesh.qualityInf,
+                             c->mesh.qualitySup,
+                             c->mesh.radiusInf,
+                             c->mesh.radiusSup,
+                             (double)c->mesh.triangles,
+                             (double)c->mesh.quadrangles,
+                             (double)c->mesh.tetrahedra,
+                             (double)c->mesh.hexahedra,
+                             (double)c->mesh.prisms,
+                             (double)c->mesh.pyramids,
+                             (double)c->mesh.trihedra};
+  // which entities are shown, which can change without the mesh being
+  // flagged as changed
+  tok.push_back((double)CTX::instance()->entityVisibilityStamp);
+  tok.push_back((double)c->hideUnselected);
+  if(ma.points && tok == ma.pointsToken) return;
+  ma.clearPoints();
+  ma.pointsToken = tok;
+  ma.points = new VertexArray(1, (int)m->getNumMeshVertices());
+  if(status >= 0)
+    for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
+      collectNodes(*it, ma.points);
+  if(status >= 1)
+    for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
+      collectNodes(*it, ma.points);
+  if(status >= 2)
+    for(auto it = m->firstFace(); it != m->lastFace(); it++)
+      collectNodes(*it, ma.points);
+  if(status >= 3)
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
+      collectNodes(*it, ma.points);
+  ma.points->finalize();
+  Msg::Debug("%d mesh nodes in the merged array of points",
+             ma.points->getNumVertices());
+}
+
+// The normals of the surfaces (dim 2) or the tangents of the curves (dim 1)
+// of a model, recorded once into a list of the model and drawn as a whole:
+// drawn a 3D arrow at a time at every frame, the normals of a large mesh
+// took half a second. The mesh changing drops the list (drawMesh()).
+static void drawMergedVectors(drawContext *ctx, GModel *m, int dim)
+{
+  CTX *c = CTX::instance();
+  glyphToken tok;
+  tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+  tok.add(ctx->pixel_equiv_x / ctx->s[1]);
+  tok.add(ctx->pixel_equiv_x / ctx->s[2]);
+  tok.add(dim == 2 ? c->mesh.normals : c->mesh.tangents);
+  tok.add(dim == 2 ? c->color.mesh.normals : c->color.mesh.tangents);
+  tok.add(c->mesh.light);
+  tok.add(c->vectorType);
+  tok.add(c->arrowRelHeadRadius);
+  tok.add(c->arrowRelStemLength);
+  tok.add(c->arrowRelStemRadius);
+  tok.add(c->mesh.qualityInf);
+  tok.add(c->mesh.qualitySup);
+  tok.add(c->mesh.radiusInf);
+  tok.add(c->mesh.radiusSup);
+  tok.add(c->mesh.triangles);
+  tok.add(c->mesh.quadrangles);
+  tok.add(CTX::instance()->entityVisibilityStamp);
+  tok.add(c->hideUnselected);
+  glyphList *g;
+  if(!glyphCache::get(m, dim == 2 ? GLYPH_NORMALS : GLYPH_TANGENTS, tok, g)) {
+    g->recordBegin();
+    if(dim == 2) {
+      for(auto it = m->firstFace(); it != m->lastFace(); it++) {
+        GFace *f = *it;
+        if(!f->getVisibility()) continue;
+        if(c->mesh.triangles) drawNormals(ctx, f->triangles);
+        if(c->mesh.quadrangles) drawNormals(ctx, f->quadrangles);
+        drawNormals(ctx, f->polygons);
+      }
+    }
+    else {
+      for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
+        if((*it)->getVisibility()) drawTangents(ctx, (*it)->lines);
+    }
+    g->recordEnd();
+  }
+  g->draw(ctx, c->mesh.light);
 }
 
 static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
@@ -612,7 +797,8 @@ public:
         drawVerticesPerElement(_ctx, e, e->lines, g, what);
     });
 
-    if(CTX::instance()->mesh.tangents) drawTangents(_ctx, e->lines);
+    if(CTX::instance()->mesh.tangents && !_mergedTangents)
+      drawTangents(_ctx, e->lines);
 
     if(select) {
     }
@@ -677,7 +863,7 @@ public:
       }
     });
 
-    if(CTX::instance()->mesh.normals) {
+    if(CTX::instance()->mesh.normals && !_mergedNormals) {
       if(CTX::instance()->mesh.triangles) drawNormals(_ctx, f->triangles);
       if(CTX::instance()->mesh.quadrangles) drawNormals(_ctx, f->quadrangles);
       drawNormals(_ctx, f->polygons);
@@ -855,16 +1041,17 @@ static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
   if(ctx->render_mode != drawContext::GMSH_RENDER) return true;
   if(GEntity::numSelected) return true;
   CTX *c = CTX::instance();
-  if(c->mesh.nodes || c->mesh.nodeLabels) return true;
+  if((c->mesh.nodes && !_mergedPoints) || c->mesh.nodeLabels) return true;
   switch(dim) {
   case 0: return false;
   case 1:
     return (c->mesh.lines && !mergedLines) || c->mesh.lineLabels ||
-           c->mesh.tangents;
+           (c->mesh.tangents && !_mergedTangents);
   case 2:
     return (c->mesh.surfaceEdges && !mergedLines) ||
            (c->mesh.surfaceFaces && !mergedTriangles) || c->mesh.surfaceLabels ||
-           c->mesh.normals || c->mesh.dual || c->mesh.voronoi;
+           (c->mesh.normals && !_mergedNormals) || c->mesh.dual ||
+           c->mesh.voronoi;
   case 3:
     return (c->mesh.volumeEdges && !mergedLines) ||
            (c->mesh.volumeFaces && !mergedTriangles) ||
@@ -877,6 +1064,9 @@ static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
 
 void drawContext::drawMesh()
 {
+  // before anything else, whatever this pass draws (see CTX::stampChanges())
+  CTX::instance()->stampChanges();
+
   // nothing of the mesh is opaque when the colours of the options are
   // transparent; otherwise the entities are sorted out one by one
   if(transparencyPass == TRANSPARENCY_OPAQUE && gmshMeshColorsAreTransparent())
@@ -885,10 +1075,15 @@ void drawContext::drawMesh()
     return;
   if(!CTX::instance()->mesh.draw) return;
 
-  // make sure to flag any model-dependent post-processing view as
-  // changed if the underlying mesh has, before resetting the changed
-  // flag
-  if(CTX::instance()->mesh.changed) {
+  // make sure to flag any model-dependent post-processing view as changed if
+  // the underlying mesh has
+  static int seen[4] = {0, 0, 0, 0};
+  bool meshChanged = false;
+  for(int d = 0; d < 4; d++) {
+    if(seen[d] != CTX::instance()->mesh.stamp[d]) meshChanged = true;
+    seen[d] = CTX::instance()->mesh.stamp[d];
+  }
+  if(meshChanged) {
     for(std::size_t i = 0; i < GModel::list.size(); i++)
       for(std::size_t j = 0; j < PView::list.size(); j++)
         if(PView::list[j]->getData()->hasModel(GModel::list[i]))
@@ -938,10 +1133,10 @@ void drawContext::drawMesh()
       // draw each of them in a single call; the entities then only draw their
       // labels and, if they are selected, themselves on top
       mergedArrays &ma = _merged[m];
-      if(changed || ma.colorStamp != GEntity::colorChanges) ma.clear();
+      if(changed || ma.colorStamp != CTX::instance()->entityColorsStamp) ma.clear();
       if(!ma.built && !inPickColorMode()) {
         ma.built = true;
-        ma.colorStamp = GEntity::colorChanges;
+        ma.colorStamp = CTX::instance()->entityColorsStamp;
         if(status >= 1)
           ma.lines[1] =
             buildMerged(m->firstEdge(), m->lastEdge(), true, false, 0);
@@ -970,6 +1165,11 @@ void drawContext::drawMesh()
       bool volumeOnly = c->clipWholeElements && c->clipOnlyVolume;
       if(volumeOnly) setMeshClipPlanes(false);
 
+      // the nodes drawn as points, all at once - unless the planes only
+      // apply to some of them, which the single draw cannot tell apart
+      _mergedPoints = merge && c->mesh.nodes && !c->mesh.nodeType &&
+                      !(c->mesh.clip && c->clipWholeElements);
+
       if(status >= 0 && needPerEntityPass(this, 0, false, false))
         std::for_each(m->firstVertex(), m->lastVertex(),
                       drawMeshGVertex(this));
@@ -984,9 +1184,11 @@ void drawContext::drawMesh()
           drawMergedArray(this, ma.lines[1], GL_LINES, false);
         }
         _mergedLines = (merge && ma.lines[1]);
+        _mergedTangents = (merge && c->mesh.tangents);
+        if(_mergedTangents) drawMergedVectors(this, m, 1);
         if(needPerEntityPass(this, 1, _mergedLines, false))
           std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
-        _mergedLines = false;
+        _mergedLines = _mergedTangents = false;
         drawClipArrays(this, m->firstEdge(), m->lastEdge(), 1);
       }
       if(status >= 2) {
@@ -1001,9 +1203,11 @@ void drawContext::drawMesh()
         }
         _mergedLines = (merge && ma.lines[2]);
         _mergedTriangles = (merge && ma.triangles[2]);
+        _mergedNormals = (merge && c->mesh.normals);
+        if(_mergedNormals) drawMergedVectors(this, m, 2);
         if(needPerEntityPass(this, 2, _mergedLines, _mergedTriangles))
           std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
-        _mergedLines = _mergedTriangles = false;
+        _mergedLines = _mergedTriangles = _mergedNormals = false;
         drawClipArrays(this, m->firstFace(), m->lastFace(), 2);
       }
       if(volumeOnly) setMeshClipPlanes(true);
@@ -1045,10 +1249,17 @@ void drawContext::drawMesh()
                         drawMeshGRegion(this));
         _mergedLines = _mergedTriangles = false;
       }
+      // after the edges and the faces, as the entities drew their nodes: a
+      // node is then covered by the lines that meet at it, as it always was
+      if(_mergedPoints) {
+        fillMergedPoints(m, ma, status);
+        gmshLightTwoSide(false);
+        if(volumeOnly || cutOnly) setMeshClipPlanes(true);
+        drawMergedArray(this, ma.points, GL_POINTS, false);
+      }
+      _mergedPoints = false;
     }
   }
-
-  CTX::instance()->mesh.changed = 0;
 
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
 }
