@@ -867,6 +867,9 @@ static void drawMeshEntity(drawContext *ctx, GEntity *e)
     if(c->mesh.lightTwoSide) gmshLightTwoSide(true);
     drawArrays(ctx, e, e->va_triangles, GL_TRIANGLES, c->mesh.light);
   }
+  // what follows belongs to the entity, not to the last element the arrays
+  // were drawn with when picking elements
+  ctx->setPickColorFor(e);
 
   bool labels = (dim == 1) ? c->mesh.lineLabels :
                 (dim == 2) ? c->mesh.surfaceLabels :
