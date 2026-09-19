@@ -10,6 +10,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "drawContext.h"
+#include "VertexArray.h"
 
 #if defined(WIN32)
 #include <windows.h>
@@ -121,9 +122,13 @@ public:
                             _height)) {
         Msg::Error("OSMesaMakeCurrent failed");
       }
+      // nothing of the window's context can be used in this one, and what is
+      // filled here is gone when it is destroyed
+      VertexArray::invalidateBuffers();
       drawContext::global()->drawCurrentOpenglWindow(false);
       glFinish();
       OSMesaDestroyContext(ctx);
+      VertexArray::invalidateBuffers();
 #else
       Msg::Warning(
         "Gmsh must be compiled with OSMesa to support offscreen rendering");
