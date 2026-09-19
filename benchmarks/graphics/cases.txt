@@ -91,6 +91,8 @@ mesh_elements_o2 elements_o2.msh view3d.opt
   Mesh.NumSubEdges = 4;
   Mesh.Nodes = 1;
   Mesh.Light = 0;
+  Mesh.Light = 1; Mesh.NodeType = 1; Mesh.NodeSize = 8;
+  General.QuadricSubdivisions = 3;
 
 mesh_elements_o2i elements_o2i.msh view3d.opt
   Mesh.SurfaceFaces = 1; Mesh.VolumeFaces = 1;
@@ -264,12 +266,17 @@ post_list_scalar lists.pos view3d.opt
   View[0].IntervalsType = 3; View[0].ShowElement = 1;
   View[0].Boundary = 2;
   View[0].Boundary = 0; View[0].Explode = 0.7;
+  View[0].Explode = 1; View[0].Normals = 20; View[0].Tangents = 20;
+  View[0].IntervalsType = 4;
+  General.ScaleY = 1.5;
 
 post_list_vector lists.pos view3d.opt
   For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 1); EndFor
   View[1].VectorType = 1;
   View[1].VectorType = 5; View[1].DisplacementFactor = 0.3;
   View[1].VectorType = 3; View[1].GlyphLocation = 2;
+  View[1].ForceNumComponents = 1; View[1].ComponentMap0 = 1;
+  View[1].IntervalsType = 4;
 
 post_list_tensor lists.pos view3d.opt
   For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 2); EndFor
