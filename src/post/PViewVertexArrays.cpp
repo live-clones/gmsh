@@ -610,7 +610,10 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
       if(nb == 2) {
         unsigned int col[2];
         for(int i = 0; i < 2; i++) col[i] = opt->getColor(v2[i], vmin, vmax);
-        p->va_lines->add(x2, y2, z2, n, col, nullptr, unique);
+        // the values of the cut segment, which its cylinder is sized by
+        SVector3 n2[2];
+        getLineNormal(p, x2, y2, z2, v2, n2, true);
+        p->va_lines->add(x2, y2, z2, n2, col, nullptr, unique);
       }
     }
   }
