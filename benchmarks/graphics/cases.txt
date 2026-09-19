@@ -1,0 +1,274 @@
+# Graphics test cases, run by run.py.
+#
+# A case starts on an unindented line: its name, the files it opens (the
+# first opened, the others merged; looked for next to this file, then among
+# the files generate.py writes) and optionally N=<value>, passed to the
+# DefineConstant[] of the .geo files. The indented lines that follow are its
+# steps, in the .geo language: each is applied to the state left by the
+# previous one, and drawn. A step can span several lines by ending them with
+# a backslash. Every case is drawn once before its first step. (The steps
+# are written out with a line break after every ';' and every For header,
+# as the parser skips the body of a loop that starts on the line of its
+# header.)
+#
+# View[] indices in views_o*.msh: 0, 1, 2 the scalar node, element and
+# element node data, 3, 4, 5 the same for vectors and 6, 7, 8 for tensors.
+# In lists.pos: 0 scalars, 1 vectors, 2 tensors, 3 strings, 4 the graph.
+# Tags in OpenCASCADE models are taken from the model (e.g. s() = Surface{:};
+# then s(0)): the kernel numbers the entities of its operations itself, and
+# a missing tag is silently ignored.
+
+# ---------------------------------------------------------------- geometry
+
+geo_occ geo_occ.geo
+  Geometry.Surfaces = 1;
+  Geometry.SurfaceType = 2;
+  Geometry.SurfaceType = 1;
+  Geometry.SurfaceType = 2; Geometry.CurveType = 2; Geometry.CurveWidth = 3;
+  Geometry.CurveType = 0; Geometry.PointType = 1; Geometry.PointSize = 3;
+  Geometry.PointType = 0; Geometry.Light = 0;
+  Geometry.Light = 1; Geometry.HighlightOrphans = 1;
+  Geometry.SurfaceLabels = 1; Geometry.VolumeLabels = 1;
+  Geometry.SurfaceLabels = 0; Geometry.VolumeLabels = 0; \
+  Geometry.Normals = 20; Geometry.Tangents = 20;
+  Geometry.Normals = 0; Geometry.Tangents = 0; \
+  Geometry.Transparency = 0.5;
+  Geometry.Transparency = 1; \
+  General.Clip0A = 1; General.Clip0D = -3; Geometry.Clip = 1;
+
+geo_occ_colors geo_occ.geo
+  Geometry.Surfaces = 1; Geometry.SurfaceType = 2; s() = Surface{:}; \
+  Color Red { Surface{s({0:40})}; }
+  v() = Volume{:}; Recursive Hide { Volume{v({0:5})}; }
+  Show "*";
+  Recursive Color Blue { Volume{v(8)}; }
+  Geometry.Color.Surfaces = {255, 200, 0};
+  Geometry.Color.Curves = {0, 128, 0};
+  Geometry.NumSubEdges = 2;
+  Color {255, 0, 0, 100} { Surface{s(5)}; }
+  Delete All; SetFactory("OpenCASCADE"); Box(1) = {0, 0, 0, 8, 8, 1}; \
+  Sphere(2) = {4, 12, 0, 2};
+
+geo_builtin geo_builtin.geo
+  Geometry.Surfaces = 1;
+  Geometry.SurfaceType = 2;
+  Geometry.SurfaceType = 0;
+  Geometry.CurveType = 1; Geometry.CurveWidth = 4;
+  Geometry.PointNumbers = 1; Geometry.CurveNumbers = 1;
+  Geometry.PointNumbers = 0; Geometry.CurveNumbers = 0; \
+  Translate {0, 0, 1} { Volume{1}; }
+  Geometry.HighlightOrphans = 1;
+  Geometry.SurfaceType = 2; Translate {0, 0.5, 0} { Volume{1}; }
+
+geo_discrete geo_discrete.geo
+  Geometry.Surfaces = 1;
+  Geometry.SurfaceType = 2;
+  Geometry.Surfaces = 0; Geometry.Points = 0;
+
+# -------------------------------------------------------------------- mesh
+
+mesh_elements_o1 elements_o1.msh view3d.opt
+  Mesh.SurfaceFaces = 1;
+  Mesh.VolumeFaces = 1;
+  Mesh.SurfaceEdges = 0; Mesh.VolumeEdges = 0;
+  Mesh.Nodes = 1; Mesh.NodeType = 1; Mesh.NodeSize = 5;
+  Mesh.NodeType = 0; Mesh.Nodes = 0; Mesh.SurfaceEdges = 1; \
+  Mesh.VolumeEdges = 1; Mesh.ColorCarousel = 0;
+  Mesh.ColorCarousel = 1; Mesh.Light = 0;
+  Mesh.Light = 1; Mesh.Explode = 0.8;
+  Mesh.Explode = 1; Mesh.Normals = 20; Mesh.Tangents = 20;
+  Mesh.Normals = 0; Mesh.Tangents = 0; Mesh.Trihedra = 0;
+  Mesh.Trihedra = 1; Mesh.Hexahedra = 0; Mesh.Prisms = 0;
+  Mesh.Hexahedra = 1; Mesh.Prisms = 1; Mesh.Tetrahedra = 0; \
+  Mesh.Pyramids = 0;
+  Mesh.Tetrahedra = 1; Mesh.Pyramids = 1; Mesh.Transparency = 0.5;
+  Mesh.Transparency = 1; Mesh.Dual = 1;
+  Mesh.Dual = 0; Mesh.Voronoi = 1;
+  Mesh.Voronoi = 0; PartitionMesh 3; Mesh.ColorCarousel = 3;
+
+mesh_elements_o2 elements_o2.msh view3d.opt
+  Mesh.SurfaceFaces = 1; Mesh.VolumeFaces = 1;
+  Mesh.NumSubEdges = 4;
+  Mesh.Nodes = 1;
+  Mesh.Light = 0;
+
+mesh_elements_o2i elements_o2i.msh view3d.opt
+  Mesh.SurfaceFaces = 1; Mesh.VolumeFaces = 1;
+  Mesh.NumSubEdges = 4;
+
+mesh_elements_o3 elements_o3.msh view3d.opt
+  Mesh.SurfaceFaces = 1; Mesh.VolumeFaces = 1;
+  Mesh.NumSubEdges = 4;
+
+mesh_labels elements_o1.msh view3d.opt
+  Mesh.NodeLabels = 1;
+  Mesh.NodeLabels = 0; Mesh.LineLabels = 1; Mesh.Lines = 1;
+  Mesh.NodeLabels = 0; Mesh.SurfaceLabels = 1; Mesh.VolumeLabels = 1;
+  Mesh.LabelType = 2;
+
+mesh_many mesh_many.geo
+  Mesh.SurfaceFaces = 1;
+  Mesh.VolumeFaces = 1;
+  Mesh.Nodes = 1;
+  Mesh.Nodes = 0; Mesh.Normals = 20;
+  Mesh.Normals = 0; Mesh.Tangents = 20;
+  Mesh.Tangents = 0; v() = Volume{:}; \
+  Recursive Color Red { Volume{v({0:40})}; }
+  Recursive Hide { Volume{v({41:80})}; }
+  Mesh.ColorCarousel = 0;
+  Mesh.LineWidth = 3;
+  Mesh.LineWidth = 1; Recursive Color {0, 0, 255, 100} { Volume{v(100)}; }
+  Mesh.VolumeFaces = 0; Mesh.VolumeEdges = 0;
+  Mesh.SurfaceFaces = 0; Mesh.SurfaceEdges = 0; Mesh.Lines = 1;
+  Mesh.SurfaceFaces = 1; Mesh.SurfaceEdges = 1; Mesh.VolumeFaces = 1; \
+  Mesh.VolumeEdges = 1; General.Clip0A = 1; General.Clip0D = -4; Mesh.Clip = 1;
+  General.ClipWholeElements = 1;
+  General.ClipOnlyDrawIntersectingVolume = 1;
+  General.ClipOnlyDrawIntersectingVolume = 0; General.ClipWholeElements = 0; \
+  General.ClipCapping = 1;
+  General.ClipCapping = 0; General.ClipWholeElements = 1; \
+  General.ClipOnlyVolume = 0;
+  Delete Model; SetFactory("OpenCASCADE"); Box(1) = {0, 0, 0, 5, 5, 5}; \
+  Mesh 3;
+  Delete All; SetFactory("OpenCASCADE"); Sphere(1) = {2, 2, 2, 3}; Mesh 3;
+
+mesh_quality mesh_3d.geo
+  Mesh.VolumeFaces = 1;
+  Mesh.ColorCarousel = 0; Mesh.QualityType = 2; Mesh.QualitySup = 0.5;
+  Mesh.QualitySup = 0; Mesh.RadiusInf = 0.05;
+
+mesh_clip mesh_3d.geo
+  Mesh.VolumeFaces = 1; \
+  General.Clip0A = 1; General.Clip0D = -0.5; Mesh.Clip = 1;
+  General.ClipWholeElements = 1;
+  General.ClipOnlyDrawIntersectingVolume = 1;
+  General.ClipOnlyDrawIntersectingVolume = 0; General.ClipWholeElements = 0; \
+  General.ClipCapping = 1;
+  General.Clip0D = -0.3;
+  General.ClipCapping = 0; General.ClipOnlyVolume = 0;
+
+mesh_2d mesh_2d.geo
+  Mesh.SurfaceFaces = 1;
+  Mesh.LineWidth = 3;
+  Mesh.LineWidth = 1; Hide { Surface{1}; }
+  Show "*"; Color Red { Surface{1}; }
+  Mesh.ColorCarousel = 2;
+  Mesh.SurfaceEdges = 0; Mesh.Lines = 1; Mesh.LineWidth = 4;
+  RefineMesh;
+
+mesh_entity_colors mesh_3d.geo
+  Mesh.VolumeFaces = 1; v() = Volume{:}; Recursive Color Red { Volume{v(0)}; }
+  Mesh.Color.Lines = {255, 0, 255};
+  Mesh.ColorCarousel = 0; Mesh.Color.Tetrahedra = {0, 255, 0};
+
+# ----------------------------------------------------------------- post-pro
+
+post_model_scalar elements_o1.msh views_o1.msh view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
+  View[0].IntervalsType = 1;
+  View[0].IntervalsType = 2; View[0].ShowElement = 1;
+  View[0].IntervalsType = 4; View[0].ShowElement = 0;
+  View[0].IntervalsType = 3;
+  View[0].Boundary = 1;
+  View[0].Boundary = 0; View[0].DrawSkinOnly = 1;
+  View[0].DrawSkinOnly = 0; View[0].Explode = 0.8;
+  View[0].Explode = 1; View[0].RaiseZ = 0.2;
+  View[0].RaiseZ = 0; View[0].Light = 0;
+  View[0].Light = 1; View[0].SmoothNormals = 1;
+  View[0].Visible = 0; View[1].Visible = 1;
+  View[1].Visible = 0; View[2].Visible = 1;
+  View[2].ShowElement = 1; View[2].Explode = 0.8;
+
+post_model_vector elements_o1.msh views_o1.msh view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 3); EndFor
+  View[3].VectorType = 1;
+  View[3].VectorType = 2;
+  View[3].VectorType = 3;
+  View[3].VectorType = 5; View[3].DisplacementFactor = 0.3;
+  View[3].VectorType = 6;
+  View[3].VectorType = 4; View[3].GlyphLocation = 2;
+  View[3].CenterGlyphs = 1;
+  View[3].Visible = 0; View[4].Visible = 1;
+  View[4].Visible = 0; View[5].Visible = 1;
+
+post_model_tensor elements_o1.msh views_o1.msh view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 6); EndFor
+  View[6].TensorType = 2;
+  View[6].TensorType = 3;
+  View[6].TensorType = 4;
+  View[6].TensorType = 5;
+  View[6].TensorType = 6;
+  View[6].TensorType = 7;
+  View[6].TensorType = 1; View[6].Visible = 0; View[7].Visible = 1;
+  View[7].Visible = 0; View[8].Visible = 1;
+
+post_model_o2 elements_o2.msh views_o2.msh view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
+  View[0].AdaptVisualizationGrid = 1; View[0].MaxRecursionLevel = 2;
+  View[0].Visible = 0; View[2].Visible = 1;
+  View[2].Visible = 0; View[3].Visible = 1;
+
+post_model_o2i elements_o2i.msh views_o2i.msh view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
+  View[0].AdaptVisualizationGrid = 1; View[0].MaxRecursionLevel = 2;
+
+post_model_o3 elements_o3.msh views_o3.msh view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
+  View[0].AdaptVisualizationGrid = 1; View[0].MaxRecursionLevel = 1;
+  View[0].Visible = 0; View[6].Visible = 1; View[6].TensorType = 6;
+
+post_list_scalar lists.pos view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
+  View[0].IntervalsType = 1;
+  View[0].IntervalsType = 4;
+  View[0].IntervalsType = 3; View[0].ShowElement = 1;
+  View[0].Boundary = 2;
+  View[0].Boundary = 0; View[0].Explode = 0.7;
+
+post_list_vector lists.pos view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 1); EndFor
+  View[1].VectorType = 1;
+  View[1].VectorType = 5; View[1].DisplacementFactor = 0.3;
+  View[1].VectorType = 3; View[1].GlyphLocation = 2;
+
+post_list_tensor lists.pos view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 2); EndFor
+  View[2].TensorType = 5;
+  View[2].TensorType = 7;
+
+post_list_strings_graph lists.pos view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i >= 3); EndFor
+  View[4].Type = 2;
+  View[4].Type = 3; View[4].AutoPosition = 0;
+  View[4].Visible = 0; View[3].Color.Text2D = {255, 0, 0}; \
+  View[3].Color.Text3D = {0, 0, 255};
+
+post_clip elements_o1.msh views_o1.msh view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
+  General.Clip0A = 1; General.Clip0D = -0.5; View[0].Clip = 1;
+  General.ClipWholeElements = 1;
+  General.ClipWholeElements = 0; General.ClipCapping = 1;
+  View[0].Visible = 0; View[3].Visible = 1; View[3].Clip = 1;
+  View[3].Visible = 0; View[6].Visible = 1; View[6].Clip = 1; \
+  View[6].TensorType = 6;
+
+post_transparency elements_o1.msh views_o1.msh view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
+  View[0].ColormapAlpha = 0.5;
+  General.Shading = 1;
+
+# ------------------------------------------------------------- larger cases
+# (for the timings)
+
+perf_geo_occ geo_occ.geo
+  Geometry.Surfaces = 1; Geometry.SurfaceType = 2;
+
+perf_mesh_3d mesh_3d.geo N=4
+  Mesh.VolumeFaces = 1;
+
+perf_mesh_nodes mesh_3d.geo N=4
+  Mesh.Nodes = 1;
+
+perf_post_fields post_fields.geo N=3
+  View[0].Visible = 0; View[1].Visible = 1; View[1].VectorType = 4;
+  View[1].Visible = 0; View[2].Visible = 1; View[2].TensorType = 6;

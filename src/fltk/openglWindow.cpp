@@ -223,6 +223,7 @@ void openglWindow::draw()
   _lock = true;
 
   Msg::Debug("openglWindow::draw()");
+  double start = TimeOfDay();
 
   // the picking image is out of date
   _ctx->invalidatePickCache();
@@ -464,7 +465,8 @@ void openglWindow::draw()
   drawContext::global()->flushString();
   _lock = false;
   _studioTimer = false;
-
+  // (read by the graphics tests, benchmarks/graphics)
+  Msg::Debug("openglWindow::draw() done in %g s", TimeOfDay() - start);
 }
 
 void openglWindow::_cameraMatrices() { _ctx->initCameraMatrices(_frameView); }

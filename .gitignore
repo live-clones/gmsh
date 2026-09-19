@@ -25,3 +25,6 @@ cmake-build-*
 # Python virtual environment
 venv/
 .venv/
+
+# output of the graphics tests
+benchmarks/graphics/out/
