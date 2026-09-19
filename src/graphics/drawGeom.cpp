@@ -221,11 +221,15 @@ static std::vector<double> keptToken(drawContext *ctx, int dim, bool pick)
   std::vector<double> tok = {(double)c->geom.stamp[dim],
                              (double)c->entityVisibilityStamp,
                              (double)ctx->transparencyPass};
+  // which entities the pass holds, when it is not all of them
+  if(!pick) tok.push_back(gmshGeometryColorsAreTransparent());
   if(pick) tok.push_back(c->geom.numSubEdges);
   else if(dim == 0) {
     tok.push_back(c->entityColorsStamp);
     tok.push_back(c->color.geom.point);
   }
+  else if(dim == 2)
+    tok.push_back(c->entityColorsStamp);
   else if(dim == 1) {
     std::vector<double> more = {(double)c->entityColorsStamp,
                                 (double)c->geom.numSubEdges,
