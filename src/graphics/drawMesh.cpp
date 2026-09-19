@@ -268,9 +268,11 @@ static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
   tok.add(CTX::instance()->mesh.qualitySup);
   tok.add(CTX::instance()->mesh.radiusInf);
   tok.add(CTX::instance()->mesh.radiusSup);
-  // which elements whole element mode keeps
+  // which elements whole element mode keeps, which depends on the other
+  // entities of the model as well
   CTX *c = CTX::instance();
   if(c->mesh.clip && c->clipWholeElements) {
+    tok.add(c->entityVisibilityStamp);
     tok.add(c->mesh.clip);
     tok.add(c->clipOnlyVolume);
     tok.add(c->clipOnlyDrawIntersectingVolume);
@@ -942,9 +944,11 @@ static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
     if(!e->getVisibility() || !passWants(ctx, e)) return;
     if(!e->va_clip_lines && !e->va_clip_triangles) return;
     ctx->setPickColorFor(e);
-    // lit and coloured as the entities draw their own lines
+    // lit and coloured as the entities draw their own lines and faces
+    gmshLightTwoSide(false);
     drawArrays(ctx, e, e->va_clip_lines, GL_LINES, edgesLit(dim),
                edgesForced(dim), c->color.mesh.line);
+    gmshLightTwoSide(c->mesh.lightTwoSide ? true : false);
     drawArrays(ctx, e, e->va_clip_triangles, GL_TRIANGLES, c->mesh.light);
     if(ctx->render_mode == drawContext::GMSH_SELECT) ctx->unsetPickColor();
   });
