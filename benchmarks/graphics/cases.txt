@@ -85,6 +85,7 @@ mesh_elements_o1 elements_o1.msh view3d.opt
   Mesh.Transparency = 1; Mesh.Dual = 1;
   Mesh.Dual = 0; Mesh.Voronoi = 1;
   Mesh.Voronoi = 0; PartitionMesh 3; Mesh.ColorCarousel = 3;
+  Mesh.NodeLabels = 1; Mesh.LabelType = 3;
 
 mesh_elements_o2 elements_o2.msh view3d.opt
   Mesh.SurfaceFaces = 1; Mesh.VolumeFaces = 1;
@@ -164,6 +165,10 @@ mesh_clip mesh_3d.geo
   General.ClipCapping = 1;
   General.Clip0D = -0.3;
   General.ClipCapping = 0; General.ClipOnlyVolume = 0;
+  General.ClipWholeElements = 1; Mesh.VolumeFaces = 0; Mesh.VolumeEdges = 1; \
+  Mesh.Nodes = 1;
+  Mesh.NodeType = 1;
+  General.ClipOnlyDrawIntersectingVolume = 1;
 
 mesh_2d mesh_2d.geo
   Mesh.SurfaceFaces = 1;

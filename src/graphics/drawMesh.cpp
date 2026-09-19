@@ -4,10 +4,12 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <set>
+#include <unordered_set>
 #include <algorithm>
 #include "drawContext.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -18,6 +20,10 @@
 #include "MTrihedron.h"
 #include "MPolygon.h"
 #include "MPolyhedron.h"
+#include "partitionVertex.h"
+#include "partitionEdge.h"
+#include "partitionFace.h"
+#include "partitionRegion.h"
 #include "Context.h"
 #include "OwnerCache.h"
 #include "glyphList.h"
@@ -29,6 +35,8 @@
 // from GModelVertexArrays
 extern unsigned int getColorByEntity(GEntity *e, bool withSelection = true);
 extern bool isElementVisible(MElement *ele);
+// is the element kept by whole element mode (clipping planes)?
+extern bool elementIsKept(MElement *ele);
 
 template <class T>
 static void drawElementLabels(drawContext *ctx, GEntity *e,
@@ -110,7 +118,32 @@ static unsigned int getColorByVertex(GEntity *e, MVertex *v,
   return getColorByEntity(e, withSelection);
 }
 
-// the label of a node (its partition is not known here: "NA")
+// the partitions of the entity a node lies on, "NA" if not partitioned
+static std::string nodePartitions(GEntity *e)
+{
+  const std::vector<int> *p = nullptr;
+  switch(e->geomType()) {
+  case GEntity::PartitionPoint:
+    p = &static_cast<partitionVertex *>(e)->getPartitions();
+    break;
+  case GEntity::PartitionCurve:
+    p = &static_cast<partitionEdge *>(e)->getPartitions();
+    break;
+  case GEntity::PartitionSurface:
+    p = &static_cast<partitionFace *>(e)->getPartitions();
+    break;
+  case GEntity::PartitionVolume:
+    p = &static_cast<partitionRegion *>(e)->getPartitions();
+    break;
+  default: return "NA";
+  }
+  std::string s;
+  for(std::size_t i = 0; i < p->size(); i++)
+    s += (i ? "," : "") + std::to_string((*p)[i]);
+  return s.empty() ? "NA" : s;
+}
+
+// the label of a node
 static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v)
 {
   if(!v->getVisibility()) return;
@@ -124,7 +157,7 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v)
     snprintf(str, sizeof(str), fmt.c_str(), v->x(), v->y(), v->z());
   }
   else if(CTX::instance()->mesh.labelType == 3)
-    sprintf(str, "NA");
+    snprintf(str, sizeof(str), "%s", nodePartitions(e).c_str());
   else if(CTX::instance()->mesh.labelType == 2)
     sprintf(str, "%d", physical);
   else if(CTX::instance()->mesh.labelType == 1)
@@ -235,6 +268,16 @@ static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
   tok.add(CTX::instance()->mesh.qualitySup);
   tok.add(CTX::instance()->mesh.radiusInf);
   tok.add(CTX::instance()->mesh.radiusSup);
+  // which elements whole element mode keeps
+  CTX *c = CTX::instance();
+  if(c->mesh.clip && c->clipWholeElements) {
+    tok.add(c->mesh.clip);
+    tok.add(c->clipOnlyVolume);
+    tok.add(c->clipOnlyDrawIntersectingVolume);
+    for(int i = 0; i < 6; i++)
+      if(c->mesh.clip & (1 << i))
+        for(int j = 0; j < 4; j++) tok.add(c->clipPlane[i][j]);
+  }
   return !glyphCache::get(e, GLYPH_NODES, tok, g);
 }
 
@@ -265,15 +308,20 @@ static void drawNodes(drawContext *ctx, GEntity *e, W walk)
 }
 
 // the nodes of an entity: spheres are collected into the list (kept between
-// frames) when it asks for it, labels are drawn either way
+// frames) when it asks for it, labels are drawn either way; only those in the
+// set, if one is given
 static void drawVerticesPerEntity(drawContext *ctx, GEntity *e, glyphList *g,
-                                  int what)
+                                  int what,
+                                  const std::unordered_set<MVertex *> *only)
 {
+  auto shown = [only](MVertex *v) {
+    return v->getVisibility() && (!only || only->count(v));
+  };
   if(what & NODES_COLLECT) {
     g->reserve(GLYPH_SPHERE, e->mesh_vertices.size());
     for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
       MVertex *v = e->mesh_vertices[i];
-      if(!v->getVisibility()) continue;
+      if(!shown(v)) continue;
       g->addSphere(ctx, CTX::instance()->mesh.nodeSize, v->x(), v->y(), v->z(),
                    getColorByVertex(e, v));
     }
@@ -286,7 +334,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e, glyphList *g,
     bool first = true;
     for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
       MVertex *v = e->mesh_vertices[i];
-      if(!v->getVisibility()) continue;
+      if(!shown(v)) continue;
       unsigned int col = getColorByVertex(e, v);
       if(first || col != last) {
         gmshColor4ubv((const void *)&col);
@@ -301,20 +349,24 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e, glyphList *g,
     int labelStep = CTX::instance()->mesh.labelSampling;
     if(labelStep <= 0) labelStep = 1;
     for(std::size_t i = 0; i < e->mesh_vertices.size(); i++)
-      if(i % labelStep == 0) drawVertexLabel(ctx, e, e->mesh_vertices[i]);
+      if(i % labelStep == 0 && shown(e->mesh_vertices[i]))
+        drawVertexLabel(ctx, e, e->mesh_vertices[i]);
   }
 }
 
+// the nodes of the visible elements, each once (seen is shared by the lists of
+// elements of the entity)
 template <class T>
 static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
                                    std::vector<T *> &elements, glyphList *g,
-                                   int what)
+                                   int what, std::set<MVertex *> &seen)
 {
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
+    if(!isElementVisible(ele)) continue;
     for(std::size_t j = 0; j < ele->getNumVertices(); j++) {
       MVertex *v = ele->getVertex(j);
-      if(isElementVisible(ele) && v->getVisibility()) {
+      if(v->getVisibility() && seen.insert(v).second) {
         if(what & NODES_COLLECT)
           g->addSphere(ctx, CTX::instance()->mesh.nodeSize, v->x(), v->y(),
                        v->z(), getColorByVertex(e, v));
@@ -706,6 +758,82 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   if(overlay) glDepthFunc(GL_LESS);
 }
 
+// The nodes of the elements whole element mode keeps, which include those of
+// the cut elements beyond the planes; per model, built again when the mesh,
+// the visibilities, the planes or the elements shown change
+struct keptNodeSet {
+  std::vector<double> token;
+  std::unordered_set<MVertex *> nodes;
+};
+static OwnerCache<keptNodeSet> _keptNodes;
+
+static const std::unordered_set<MVertex *> &keptNodes(GModel *m)
+{
+  CTX *c = CTX::instance();
+  std::vector<double> tok = {
+    (double)c->mesh.stamp[0], (double)c->mesh.stamp[1],
+    (double)c->mesh.stamp[2], (double)c->mesh.stamp[3],
+    (double)c->entityVisibilityStamp, (double)c->mesh.clip,
+    (double)c->clipOnlyVolume, (double)c->clipOnlyDrawIntersectingVolume,
+    c->mesh.qualityInf, c->mesh.qualitySup, c->mesh.radiusInf,
+    c->mesh.radiusSup, (double)c->mesh.triangles, (double)c->mesh.quadrangles,
+    (double)c->mesh.polygons, (double)c->mesh.tetrahedra,
+    (double)c->mesh.hexahedra, (double)c->mesh.prisms, (double)c->mesh.pyramids,
+    (double)c->mesh.trihedra, (double)c->mesh.polyhedra};
+  for(int i = 0; i < 6; i++)
+    for(int j = 0; j < 4; j++) tok.push_back(c->clipPlane[i][j]);
+  keptNodeSet &k = _keptNodes[m];
+  if(k.token == tok) return k.nodes;
+  k.token = tok;
+  k.nodes.clear();
+  auto add = [&](MElement *ele) {
+    if(!isElementVisible(ele) || !elementIsKept(ele)) return;
+    for(std::size_t j = 0; j < ele->getNumVertices(); j++)
+      k.nodes.insert(ele->getVertex(j));
+  };
+  for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
+    if((*it)->getVisibility())
+      for(auto p : (*it)->points) add(p);
+  for(int dim = 1; dim <= 3; dim++)
+    forMeshEntities(m, dim, [&](GEntity *e) {
+      if(!e->getVisibility()) return;
+      forShownElements(e, [&](auto &elements) {
+        for(auto ele : elements) add(ele);
+      });
+    });
+  return k.nodes;
+}
+
+// The nodes of an entity: all of them, or those of the elements shown - the
+// visible ones, or in whole element mode those it keeps, drawn with the
+// planes off as the cut elements are (the planes would remove the nodes of
+// the cut elements beyond them)
+static void drawEntityNodes(drawContext *ctx, GEntity *e)
+{
+  CTX *c = CTX::instance();
+  const std::unordered_set<MVertex *> *only = nullptr;
+  bool planes[6];
+  if(c->mesh.clip && c->clipWholeElements) {
+    only = &keptNodes(e->model());
+    for(int i = 0; i < 6; i++) {
+      planes[i] = gmshClipPlaneEnabled(i);
+      gmshClipPlaneOn(i, false);
+    }
+  }
+  drawNodes(ctx, e, [&](glyphList *g, int what) {
+    if(only || e->dim() == 0 || !e->getOnlySomeElementsVisible())
+      drawVerticesPerEntity(ctx, e, g, what, only);
+    else {
+      std::set<MVertex *> seen;
+      forShownElements(e, [&](auto &elements) {
+        drawVerticesPerElement(ctx, e, elements, g, what, seen);
+      });
+    }
+  });
+  if(only)
+    for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, planes[i]);
+}
+
 // does this pass draw this entity? A mixed mesh draws its opaque entities in
 // the opaque pass and the others in the transparent one
 static bool passWants(drawContext *ctx, GEntity *e)
@@ -749,14 +877,7 @@ static void drawMeshEntity(drawContext *ctx, GEntity *e)
     });
   }
 
-  drawNodes(ctx, e, [&](glyphList *g, int what) {
-    if(dim == 0 || !e->getOnlySomeElementsVisible())
-      drawVerticesPerEntity(ctx, e, g, what);
-    else
-      forShownElements(e, [&](auto &elements) {
-        drawVerticesPerElement(ctx, e, elements, g, what);
-      });
-  });
+  drawEntityNodes(ctx, e);
 
   if(dim == 1 && c->mesh.tangents && !_merged.tangents)
     drawElementVectors(ctx, static_cast<GEdge *>(e)->lines, false);
@@ -897,6 +1018,14 @@ static void drawDimension(drawContext *ctx, GModel *m, mergedArrays &ma,
   if(dim == 3) drawClipArrays(ctx, m, dim, cutOnly);
   if(!cutOnly && needPerEntityPass(ctx, dim))
     forMeshEntities(m, dim, [&](GEntity *e) { drawMeshEntity(ctx, e); });
+  // only the cut volumes are drawn: their nodes all the same
+  if(cutOnly && (c->mesh.nodes || c->mesh.nodeLabels))
+    forMeshEntities(m, dim, [&](GEntity *e) {
+      if(!e->getVisibility() || !passWants(ctx, e)) return;
+      ctx->setPickColorFor(e);
+      drawEntityNodes(ctx, e);
+      if(ctx->render_mode == drawContext::GMSH_SELECT) ctx->unsetPickColor();
+    });
   if(dim < 3) drawClipArrays(ctx, m, dim);
   _merged.lines = _merged.triangles = _merged.tangents = _merged.normals = false;
 }

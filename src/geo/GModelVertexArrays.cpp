@@ -339,7 +339,7 @@ static bool elementIsCut(MElement *ele)
 
 // is this element kept by whole element mode? Only those entirely beyond a
 // plane are dropped.
-static bool elementIsKept(MElement *ele)
+bool elementIsKept(MElement *ele)
 {
   CTX *ctx = CTX::instance();
   for(int clip = 0; clip < 6; clip++) {
