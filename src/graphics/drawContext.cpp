@@ -746,6 +746,9 @@ void drawContext::draw3d()
 
   if(split) {
     transparencyPass = TRANSPARENCY_TRANSPARENT;
+    // what the opaque pass collected belongs to the window, not to the
+    // buffers the transparent one is summed into
+    gmshFlushImmediate();
     bool summed = CTX::instance()->orderIndependentTransparency &&
                   glShader::beginTransparent();
     if(!summed) {
@@ -764,6 +767,8 @@ void drawContext::draw3d()
     // the views sort back to front and write depth, as they always did
     if(!summed) gmshDepthMask(true);
     drawPost();
+    // and what this pass collected belongs to those buffers
+    gmshFlushImmediate();
     if(summed)
       glShader::endTransparent();
     else
