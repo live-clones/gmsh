@@ -1915,6 +1915,8 @@ void main()
     glApi::DisableVertexAttribArray(ATTRIB_NORMAL);
     glApi::DisableVertexAttribArray(ATTRIB_COLOR);
     glApi::DisableVertexAttribArray(ATTRIB_TEXCOORD);
+    // left on, the glyphs drawn next would read past this buffer
+    glApi::DisableVertexAttribArray(ATTRIB_DASH);
   }
 
   bool bindPickBuffer(int width, int height)
