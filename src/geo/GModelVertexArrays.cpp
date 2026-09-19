@@ -657,7 +657,8 @@ public:
     f->deleteVertexArrays();
     if(!f->getVisibility()) return;
     f->setOnlySomeElementsVisible(areOnlySomeElementsVisible(f->triangles) ||
-                                  areOnlySomeElementsVisible(f->quadrangles));
+                                  areOnlySomeElementsVisible(f->quadrangles) ||
+                                  areOnlySomeElementsVisible(f->polygons));
 
     bool edg = CTX::instance()->mesh.surfaceEdges;
     bool fac = CTX::instance()->mesh.surfaceFaces;
@@ -671,7 +672,8 @@ public:
         addElementsInArrays(f, f->va_lines, f->va_triangles, f->triangles, edg, fac);
       if(CTX::instance()->mesh.quadrangles)
         addElementsInArrays(f, f->va_lines, f->va_triangles, f->quadrangles, edg, fac);
-      addElementsInArrays(f, f->va_lines, f->va_triangles, f->polygons, edg, fac);
+      if(CTX::instance()->mesh.polygons)
+        addElementsInArrays(f, f->va_lines, f->va_triangles, f->polygons, edg, fac);
       f->va_lines->finalize();
       f->va_triangles->finalize();
     }
@@ -731,7 +733,8 @@ public:
                                   areOnlySomeElementsVisible(r->hexahedra) ||
                                   areOnlySomeElementsVisible(r->prisms) ||
                                   areOnlySomeElementsVisible(r->pyramids) ||
-                                  areOnlySomeElementsVisible(r->trihedra));
+                                  areOnlySomeElementsVisible(r->trihedra) ||
+                                  areOnlySomeElementsVisible(r->polyhedra));
 
     bool edg = CTX::instance()->mesh.volumeEdges;
     bool fac = CTX::instance()->mesh.volumeFaces;
@@ -763,7 +766,8 @@ public:
           markBoundaryFaces(r->pyramids, interior, nth);
         if(CTX::instance()->mesh.trihedra)
           markBoundaryFaces(r->trihedra, interior, nth);
-        markBoundaryFaces(r->polyhedra, interior, nth);
+        if(CTX::instance()->mesh.polyhedra)
+          markBoundaryFaces(r->polyhedra, interior, nth);
         Msg::Debug("Located the boundary faces of volume %d in %g s", r->tag(),
                    TimeOfDay() - t1);
       }
@@ -778,7 +782,8 @@ public:
         addElementsInArrays(r, r->va_lines, r->va_triangles, r->pyramids, edg, fac, interior);
       if(CTX::instance()->mesh.trihedra)
         addElementsInArrays(r, r->va_lines, r->va_triangles, r->trihedra, edg, fac, interior);
-      addElementsInArrays(r, r->va_lines, r->va_triangles, r->polyhedra, edg, fac, interior);
+      if(CTX::instance()->mesh.polyhedra)
+        addElementsInArrays(r, r->va_lines, r->va_triangles, r->polyhedra, edg, fac, interior);
       delete interior;
       r->va_lines->finalize();
       r->va_triangles->finalize();
@@ -839,7 +844,8 @@ static void fillCutEntity(GEntity *e, bool edges, bool faces, int est)
       addCutElements(e, f->triangles, edges, faces, nullptr);
     if(CTX::instance()->mesh.quadrangles)
       addCutElements(e, f->quadrangles, edges, faces, nullptr);
-    addCutElements(e, f->polygons, edges, faces, nullptr);
+    if(CTX::instance()->mesh.polygons)
+      addCutElements(e, f->polygons, edges, faces, nullptr);
   }
   e->va_clip_lines->finalize();
   e->va_clip_triangles->finalize();
@@ -880,7 +886,7 @@ bool GModel::fillClipVertexArrays()
       if(ctx->mesh.prisms) addCapsInArray(r, r->prisms);
       if(ctx->mesh.pyramids) addCapsInArray(r, r->pyramids);
       if(ctx->mesh.trihedra) addCapsInArray(r, r->trihedra);
-      addCapsInArray(r, r->polyhedra);
+      if(ctx->mesh.polyhedra) addCapsInArray(r, r->polyhedra);
       r->va_clip_triangles->finalize();
     }
     else {
@@ -902,7 +908,7 @@ bool GModel::fillClipVertexArrays()
         if(ctx->mesh.prisms) markKeptBoundaryFaces(r->prisms, bnd, nth);
         if(ctx->mesh.pyramids) markKeptBoundaryFaces(r->pyramids, bnd, nth);
         if(ctx->mesh.trihedra) markKeptBoundaryFaces(r->trihedra, bnd, nth);
-        markKeptBoundaryFaces(r->polyhedra, bnd, nth);
+        if(ctx->mesh.polyhedra) markKeptBoundaryFaces(r->polyhedra, bnd, nth);
       }
       if(ctx->mesh.tetrahedra) {
         std::vector<MTetrahedron *> cut;
@@ -929,9 +935,11 @@ bool GModel::fillClipVertexArrays()
         gatherCutElements(r->trihedra, cut);
         addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
       }
-      std::vector<MPolyhedron *> cutp;
-      gatherCutElements(r->polyhedra, cutp);
-      addElementsInArrays(r, vl, vt, cutp, edg, fac, bnd);
+      if(ctx->mesh.polyhedra) {
+        std::vector<MPolyhedron *> cut;
+        gatherCutElements(r->polyhedra, cut);
+        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
+      }
       delete bnd;
       r->va_clip_lines->finalize();
       r->va_clip_triangles->finalize();
