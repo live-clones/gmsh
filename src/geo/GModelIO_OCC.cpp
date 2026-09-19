@@ -5349,7 +5349,9 @@ bool OCC_Internals::_getBoundingBox(const TopoDS_Shape &shape, double &xmin,
   }
   Bnd_Box b;
   try {
-    BRepBndLib::Add(shape, b);
+    // not from a triangulation the shape may carry (e.g. made to draw it):
+    // the box would change once the shape has been drawn
+    BRepBndLib::Add(shape, b, false);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;

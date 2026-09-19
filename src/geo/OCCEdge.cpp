@@ -102,7 +102,9 @@ SBoundingBox3d OCCEdge::bounds(bool fast)
 
   Bnd_Box b;
   try {
-    BRepBndLib::Add(_c, b);
+    // not from a triangulation the shape may carry (e.g. made to draw it):
+    // the box would change once the shape has been drawn
+    BRepBndLib::Add(_c, b, false);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return SBoundingBox3d();
