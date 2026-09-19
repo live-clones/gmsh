@@ -116,17 +116,16 @@ static bool geomDrawn(drawContext *ctx, GEntity *e)
   }
 }
 
-// the colour of an entity, selected or not: the selection colour, or its own
-// or that of its dimension; orphans (and curves or surfaces bounding a single
+// the colour of an entity: the selection colour if selected, or else its own
+// or that of its dimension, orphans (and curves or surfaces bounding a single
 // surface or volume) highlighted if asked
 static unsigned int geomColor(GEntity *e, bool selected)
 {
   CTX *c = CTX::instance();
+  if(selected) return getSelectionColor(e);
   const unsigned int own[4] = {c->color.geom.point, c->color.geom.curve,
                                c->color.geom.surface, c->color.geom.volume};
-  unsigned int col = selected       ? getSelectionColor(e) :
-                     e->useColor() ? e->getColor() :
-                                     own[e->dim()];
+  unsigned int col = e->useColor() ? e->getColor() : own[e->dim()];
   if(c->geom.highlightOrphans && e->dim() < 3) {
     std::size_t up = (e->dim() == 0) ? static_cast<GVertex *>(e)->numEdges() :
                      (e->dim() == 1) ? static_cast<GEdge *>(e)->numFaces() :
