@@ -76,6 +76,8 @@ public:
   void moveUp(double &theta);
   void zoom(double &factor);
   void update();
+  // the whole state of the camera, printed for debugging
+  void affiche();
   // looking along an axis, and turning up to one: 0, 1, 2 for x, y, z
   void alongAxis(int axis);
   void upAxis(int axis);

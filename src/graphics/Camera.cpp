@@ -141,6 +141,48 @@ void Camera::update()
   ndfl = glFnear / focallength;
 }
 
+// the whole state of the camera, for debugging
+void Camera::affiche()
+{
+  std::cout << "  ------------ GENERAL PARAMETERS ------------" << std::endl;
+  std::cout << "  CTX aperture " << CTX::instance()->camera_aperture
+            << std::endl;
+  std::cout << "  CTX eyesep ratio " << CTX::instance()->eye_sep_ratio
+            << std::endl;
+  std::cout << "  CTX focallength ratio " << CTX::instance()->focallength_ratio
+            << std::endl;
+  std::cout << "  ------------ CAMERA PARAMETERS ------------" << std::endl;
+  std::cout << "  position " << position.x << "," << position.y << ","
+            << position.z << std::endl;
+  std::cout << "  front " << front.x << "," << front.y << "," << front.z
+            << std::endl;
+  std::cout << "  up " << up.x << "," << up.y << "," << up.z << std::endl;
+  std::cout << "  right " << right.x << "," << right.y << "," << right.z
+            << std::endl;
+  std::cout << "  target " << target.x << "," << target.y << "," << target.z
+            << std::endl;
+  std::cout << "  focallength_ratio " << focallength_ratio << std::endl;
+  std::cout << "  focallength " << focallength << std::endl;
+  std::cout << "  aperture " << aperture << std::endl;
+  std::cout << "  eyesep_ratio " << eye_sep_ratio << std::endl;
+  std::cout << "  eyesep " << eyesep << std::endl;
+  std::cout << "  screenwidth " << screenwidth << std::endl;
+  std::cout << "  screenheight " << screenheight << std::endl;
+  std::cout << "  distance " << distance << std::endl;
+  std::cout << "  ref_distance " << ref_distance << std::endl;
+  std::cout << "  button_left_down " << button_left_down << std::endl;
+  std::cout << "  button_middle_down " << button_middle_down << std::endl;
+  std::cout << "  button_right_down " << button_right_down << std::endl;
+  std::cout << "  stereoEnable " << stereoEnable << std::endl;
+  std::cout << "  Lc " << Lc << std::endl;
+  std::cout << "  eye_sep_ratio " << eye_sep_ratio << std::endl;
+  std::cout << "  closeness " << closeness << std::endl;
+  std::cout << "  glFnear " << glFnear << std::endl;
+  std::cout << "  glFfar " << glFfar << std::endl;
+  std::cout << "  radians " << radians << std::endl;
+  std::cout << "  wd2 " << wd2 << std::endl;
+}
+
 void Camera::moveRight(double &theta)
 {
   this->update();
