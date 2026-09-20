@@ -1149,6 +1149,54 @@ void main()
     GLuint floatTarget(int width, int height, GLenum internal, GLenum format,
                        GLenum type);
 
+    // A pass that covers the window: the state it needs, and every piece of
+    // state it is allowed to change, put back when it ends. The pass itself
+    // binds its textures, sets its uniforms and calls draw(). It exists
+    // because three passes each saved and restored their own selection of
+    // this, and each forgot a different piece.
+    class fullscreenPass {
+    public:
+      fullscreenPass(int width, int height, GLuint program)
+      {
+        _depth = glIsEnabled(GL_DEPTH_TEST);
+        _blend = glIsEnabled(GL_BLEND);
+        glGetIntegerv(GL_VIEWPORT, _vp);
+        glGetFloatv(GL_COLOR_CLEAR_VALUE, _clear);
+        glGetIntegerv(GL_BLEND_SRC_RGB, &_func[0]);
+        glGetIntegerv(GL_BLEND_DST_RGB, &_func[1]);
+        glGetIntegerv(GL_BLEND_SRC_ALPHA, &_func[2]);
+        glGetIntegerv(GL_BLEND_DST_ALPHA, &_func[3]);
+        glViewport(0, 0, width, height);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        glApi::UseProgram(program);
+        glApi::BindVertexArray(_c->vao);
+        // the vertices come from gl_VertexID; an attribute left enabled
+        // would read a stale buffer
+        for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
+          glApi::DisableVertexAttribArray(i);
+      }
+      void draw() { glDrawArrays(GL_TRIANGLES, 0, 3); }
+      ~fullscreenPass()
+      {
+        glViewport(_vp[0], _vp[1], _vp[2], _vp[3]);
+        glClearColor(_clear[0], _clear[1], _clear[2], _clear[3]);
+        if(glApi::BlendFuncSeparate)
+          glApi::BlendFuncSeparate(_func[0], _func[1], _func[2], _func[3]);
+        else
+          glBlendFunc(_func[0], _func[1]);
+        _depth ? glEnable(GL_DEPTH_TEST) : glDisable(GL_DEPTH_TEST);
+        _blend ? glEnable(GL_BLEND) : glDisable(GL_BLEND);
+        glApi::UseProgram(_program);
+        glApi::BindVertexArray(_c->vao);
+      }
+
+    private:
+      GLint _vp[4], _func[4];
+      GLfloat _clear[4];
+      GLboolean _depth, _blend;
+    };
+
     // A full-screen program: the vertex shader every one of them uses, and
     // the fragment body given. Returns 0 if it cannot be built, with what
     // the linker said in log when one is asked for; the caller says what the
@@ -1250,57 +1298,30 @@ void main()
     glBindTexture(GL_TEXTURE_2D, _c->accCopy);
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
-    // what is changed below is put back: this runs in the middle of a frame,
-    // and what is drawn afterwards expects the state it left
-    GLint vp[4];
-    GLfloat clear[4];
-    GLint blend[4];
-    GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
-    GLboolean wasBlend = glIsEnabled(GL_BLEND);
-    glGetIntegerv(GL_VIEWPORT, vp);
-    glGetFloatv(GL_COLOR_CLEAR_VALUE, clear);
-    glGetIntegerv(GL_BLEND_SRC_RGB, &blend[0]);
-    glGetIntegerv(GL_BLEND_DST_RGB, &blend[1]);
-    glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend[2]);
-    glGetIntegerv(GL_BLEND_DST_ALPHA, &blend[3]);
-    glViewport(0, 0, width, height);
-    glDisable(GL_DEPTH_TEST);
-    glApi::UseProgram(_blitProgram);
-    glApi::BindVertexArray(_c->vao);
-    // the vertices come from gl_VertexID; an attribute left enabled would
-    // read a stale buffer
-    for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
-      glApi::DisableVertexAttribArray(i);
-    glApi::Uniform1i(_uBlitTex, 0);
+    // this runs in the middle of a frame, and what is drawn afterwards
+    // expects the state it left
+    {
+      fullscreenPass pass(width, height, _blitProgram);
+      glApi::Uniform1i(_uBlitTex, 0);
 
-    // added to the sum
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->accFbo);
-    if(first) {
-      glClearColor(0.f, 0.f, 0.f, 0.f);
-      glClear(GL_COLOR_BUFFER_BIT);
+      // added to the sum
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->accFbo);
+      if(first) {
+        glClearColor(0.f, 0.f, 0.f, 0.f);
+        glClear(GL_COLOR_BUFFER_BIT);
+      }
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_ONE, GL_ONE);
+      glApi::Uniform1f(_uBlitScale, 1.f);
+      pass.draw();
+
+      // and the average put back on the window
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+      glDisable(GL_BLEND);
+      glBindTexture(GL_TEXTURE_2D, _c->accTex);
+      glApi::Uniform1f(_uBlitScale, 1.f / count);
+      pass.draw();
     }
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
-    glApi::Uniform1f(_uBlitScale, 1.f);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    // and the average put back on the window
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
-    glDisable(GL_BLEND);
-    glBindTexture(GL_TEXTURE_2D, _c->accTex);
-    glApi::Uniform1f(_uBlitScale, 1.f / count);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    glViewport(vp[0], vp[1], vp[2], vp[3]);
-    glClearColor(clear[0], clear[1], clear[2], clear[3]);
-    if(glApi::BlendFuncSeparate)
-      glApi::BlendFuncSeparate(blend[0], blend[1], blend[2], blend[3]);
-    else
-      glBlendFunc(blend[0], blend[1]);
-    if(wasDepth) glEnable(GL_DEPTH_TEST);
-    if(wasBlend) glEnable(GL_BLEND);
-    glApi::UseProgram(_program);
-    glApi::BindVertexArray(_c->vao);
     noTexture();
     return true;
   }
@@ -1310,28 +1331,15 @@ void main()
     if(count < 1 || !ensure() || !_c->accFbo || _c->accWidth != width ||
        _c->accHeight != height || !buildBlit())
       return false;
-    GLint vp[4];
-    GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
-    GLboolean wasBlend = glIsEnabled(GL_BLEND);
-    glGetIntegerv(GL_VIEWPORT, vp);
-    glViewport(0, 0, width, height);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
-    glApi::UseProgram(_blitProgram);
-    glApi::BindVertexArray(_c->vao);
-    for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
-      glApi::DisableVertexAttribArray(i);
-    glApi::ActiveTexture(GL_TEXTURE0);
-    glApi::Uniform1i(_uBlitTex, 0);
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
-    glBindTexture(GL_TEXTURE_2D, _c->accTex);
-    glApi::Uniform1f(_uBlitScale, 1.f / count);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glViewport(vp[0], vp[1], vp[2], vp[3]);
-    if(wasDepth) glEnable(GL_DEPTH_TEST);
-    if(wasBlend) glEnable(GL_BLEND);
-    glApi::UseProgram(_program);
-    glApi::BindVertexArray(_c->vao);
+    {
+      fullscreenPass pass(width, height, _blitProgram);
+      glApi::ActiveTexture(GL_TEXTURE0);
+      glApi::Uniform1i(_uBlitTex, 0);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+      glBindTexture(GL_TEXTURE_2D, _c->accTex);
+      glApi::Uniform1f(_uBlitScale, 1.f / count);
+      pass.draw();
+    }
     noTexture();
     return true;
   }
@@ -1474,45 +1482,31 @@ void main()
 
     // the window drawn over, wherever the fire reaches; what is changed is
     // put back afterwards
-    GLint vp[4];
-    GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
-    GLboolean wasBlend = glIsEnabled(GL_BLEND);
-    glGetIntegerv(GL_VIEWPORT, vp);
-    glViewport(0, 0, width, height);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
-    glApi::UseProgram(_fireProgram);
-    glApi::BindVertexArray(_c->vao);
-    for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
-      glApi::DisableVertexAttribArray(i);
-    glApi::ActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _c->fireDepth);
-    glApi::Uniform1i(_uFireDepth, 0);
-    glApi::Uniform1i(_uFireFrame, 1);
-    // the transparent things drawn this frame, from the summing buffers; on
-    // unit 4, as units 2 and 3 hold the shadow maps of the main program for
-    // the whole frame and a texture bound over one of them is read as black
-    bool reveal = _oitUsed && _c->oitReveal && _c->oitWidth == width &&
-                  _c->oitHeight == height;
-    _oitUsed = false;
-    glApi::ActiveTexture(GL_TEXTURE0 + 4);
-    glBindTexture(GL_TEXTURE_2D, reveal ? _c->oitReveal : 0);
-    glApi::Uniform1i(_uFireReveal, 4);
-    glApi::Uniform1i(_uFireRevealOn, reveal ? 1 : 0);
-    glApi::Uniform1f(_uFireLevel, (float)level);
-    glApi::Uniform1f(_uFireTime, (float)fmod(time, 100.));
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    glViewport(vp[0], vp[1], vp[2], vp[3]);
-    if(wasDepth) glEnable(GL_DEPTH_TEST);
-    if(wasBlend) glEnable(GL_BLEND);
+    {
+      fullscreenPass pass(width, height, _fireProgram);
+      glApi::ActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, _c->fireDepth);
+      glApi::Uniform1i(_uFireDepth, 0);
+      glApi::Uniform1i(_uFireFrame, 1);
+      // the transparent things drawn this frame, from the summing buffers; on
+      // unit 4, as units 2 and 3 hold the shadow maps of the main program for
+      // the whole frame and a texture bound over one of them is read as black
+      bool reveal = _oitUsed && _c->oitReveal && _c->oitWidth == width &&
+                    _c->oitHeight == height;
+      _oitUsed = false;
+      glApi::ActiveTexture(GL_TEXTURE0 + 4);
+      glBindTexture(GL_TEXTURE_2D, reveal ? _c->oitReveal : 0);
+      glApi::Uniform1i(_uFireReveal, 4);
+      glApi::Uniform1i(_uFireRevealOn, reveal ? 1 : 0);
+      glApi::Uniform1f(_uFireLevel, (float)level);
+      glApi::Uniform1f(_uFireTime, (float)fmod(time, 100.));
+      pass.draw();
+    }
     glApi::ActiveTexture(GL_TEXTURE0 + 4);
     glBindTexture(GL_TEXTURE_2D, 0);
     glApi::ActiveTexture(GL_TEXTURE0 + 1);
     glBindTexture(GL_TEXTURE_2D, 0);
     glApi::ActiveTexture(GL_TEXTURE0);
-    glApi::UseProgram(_program);
-    glApi::BindVertexArray(_c->vao);
     noTexture();
     return true;
   }
@@ -2209,6 +2203,9 @@ void main()
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     glDepthMask(GL_TRUE);
 
+    // This pass ends the transparent one rather than interrupting the frame:
+    // it leaves the state the rest of the frame is drawn with, and so is not
+    // a fullscreenPass, which would put back what the summing pass had set.
     glApi::UseProgram(_oitProgram);
     glApi::BindVertexArray(_c->vao);
     // the vertices come from gl_VertexID; an attribute left enabled would
