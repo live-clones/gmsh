@@ -71,9 +71,6 @@ class GModel;
 // frame: computed again only when the mesh, the geometry or the visibilities
 // have changed (see CTX::meshChanged())
 int drawMeshStatus(GModel *m);
-// delete the buffer objects of the vertex arrays that have been destroyed since
-// the last frame: this requires a current GL context
-void deleteOrphanVertexArrayBuffers();
 
 class PView;
 class GVertex;
@@ -89,7 +86,7 @@ public:
   virtual void transform(double &x, double &y, double &z) {}
   virtual void transformOneForm(double &x, double &y, double &z) {}
   virtual void transformTwoForm(double &x, double &y, double &z) {}
-  virtual void setMatrix(double mat[3][3], double tra[3]) {}
+  virtual void setMatrix(double mat[3][3], double tra[3] = nullptr) {}
 };
 
 class drawTransformScaled : public drawTransform {
@@ -173,26 +170,6 @@ public:
   // that they read over the data
   void setStringHalo(bool halo) { _stringHalo = halo; }
   bool stringHalo() { return _stringHalo; }
-  // Where the copies of a string drawn behind it for its halo go, in the
-  // pixels the strings are drawn in: twelve directions around a circle one
-  // pixel of the window across (in a print, that pixel scaled as the line
-  // widths are). This is the outline the native engine draws with its eight
-  // copies one pixel apart, thin and even; eight copies a whole pixel factor
-  // apart (two pixels on a high resolution screen) gave a thick corona.
-  static int stringHaloOffsets(float offsets[12][2])
-  {
-    static const float dir[12][2] = {
-      {1.f, 0.f},         {0.8660254f, 0.5f},   {0.5f, 0.8660254f},
-      {0.f, 1.f},         {-0.5f, 0.8660254f},  {-0.8660254f, 0.5f},
-      {-1.f, 0.f},        {-0.8660254f, -0.5f}, {-0.5f, -0.8660254f},
-      {0.f, -1.f},        {0.5f, -0.8660254f},  {0.8660254f, -0.5f}};
-    float r = (float)gmshPixelScale();
-    for(int k = 0; k < 12; k++) {
-      offsets[k][0] = r * dir[k][0];
-      offsets[k][1] = r * dir[k][1];
-    }
-    return 12;
-  }
   // the pixels per unit of the drawing of what is being drawn (a window, or
   // a picture being printed), which the strings are rasterised at: said by
   // the window at the beginning of its draw, as a window that has not drawn
@@ -209,14 +186,12 @@ public:
   virtual std::string getName() { return "None"; }
 };
 
-class imgtex {
-public:
-  GLuint tex, w, h;
-  imgtex() : tex(0), w(0), h(0) {}
-};
-
 class drawContext {
 private:
+  // a picture drawn in the scene, kept as a texture with its size
+  struct imgtex {
+    GLuint tex = 0, w = 0, h = 0;
+  };
   static drawContextGlobal *_global;
   drawTransform *_transform;
   std::set<GModel *> _hiddenModels;

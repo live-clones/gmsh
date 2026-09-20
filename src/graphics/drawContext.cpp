@@ -261,7 +261,9 @@ static bool useVertexBufferObjects()
 // statistics on the data uploaded to the GPU since the last frame
 static double vboBytes = 0., vboTime = 0.;
 
-void deleteOrphanVertexArrayBuffers()
+// delete the buffer objects of the vertex arrays destroyed since the last
+// frame: this needs a current GL context, so it happens here
+static void deleteOrphanVertexArrayBuffers()
 {
   if(vboBytes > 0.) {
     Msg::Debug("Uploaded %.1f Mb to buffer objects in %g s",

@@ -326,7 +326,7 @@ void drawContextFltkQueued::flushString()
           float z = 2.f * e.z - 1.f - 2.e-3f;
           // the string, and before it, if it has a halo, copies of it around
           // it in the background colour
-          int nh = e.halo ? drawContextGlobal::stringHaloOffsets(halo) : 0;
+          int nh = e.halo ? stringHaloOffsets(halo) : 0;
           float x0 = e.x;
           for(const cell &c : en->cells) {
             if(c.page == page) {
