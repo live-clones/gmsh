@@ -1838,19 +1838,22 @@ private:
     }
     return num;
   }
+  // How much to reserve for an array: what the data holds of that kind, what
+  // the planes are likely to leave of it when they are applied here, and room
+  // to spare. Only a starting size: an array grows if it has to.
+  int _estimate(PView *p, int count, bool clipped, int spare)
+  {
+    return (clipped ? _estimateIfClipped(p, count) : count) + spare;
+  }
   int _estimateNumPoints(PView *p)
   {
-    PViewData *data = p->getData(true);
-    PViewOptions *opt = p->getOptions();
-    int heuristic = data->getNumPoints(opt->timeStep);
-    return heuristic + 10000;
+    return _estimate(p, p->getData(true)->getNumPoints(p->getOptions()->timeStep),
+                     false, 10000);
   }
   int _estimateNumLines(PView *p)
   {
-    PViewData *data = p->getData(true);
-    PViewOptions *opt = p->getOptions();
-    int heuristic = data->getNumLines(opt->timeStep);
-    return heuristic + 10000;
+    return _estimate(p, p->getData(true)->getNumLines(p->getOptions()->timeStep),
+                     false, 10000);
   }
   int _estimateNumTriangles(PView *p)
   {
@@ -1875,24 +1878,17 @@ private:
       heuristic = (tris + 2 * quads + 3 * polygs + 6 * tets + 8 * prisms +
                    6 * pyrs + 2 * trihs + 12 * hexas + 10 * polyhs) *
                   2;
-    heuristic = _estimateIfClipped(p, heuristic);
-    return heuristic + 10000;
+    return _estimate(p, heuristic, true, 10000);
   }
   int _estimateNumVectors(PView *p)
   {
-    PViewData *data = p->getData(true);
-    PViewOptions *opt = p->getOptions();
-    int heuristic = data->getNumVectors(opt->timeStep);
-    heuristic = _estimateIfClipped(p, heuristic);
-    return heuristic + 1000;
+    return _estimate(p, p->getData(true)->getNumVectors(p->getOptions()->timeStep),
+                     true, 1000);
   }
   int _estimateNumEllipses(PView *p)
   {
-    PViewData *data = p->getData(true);
-    PViewOptions *opt = p->getOptions();
-    int heuristic = data->getNumTensors(opt->timeStep);
-    heuristic = _estimateIfClipped(p, heuristic);
-    return heuristic + 1000;
+    return _estimate(p, p->getData(true)->getNumTensors(p->getOptions()->timeStep),
+                     true, 1000);
   }
 
 public:
