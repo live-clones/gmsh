@@ -485,19 +485,22 @@ static bool meshUsesEntityColors()
   return carousel == 1 || carousel == 2;
 }
 
+// this is asked once per entity while a mixed mesh is drawn: the colours are
+// gathered on the stack rather than in a vector allocated every time
 bool gmshMeshColorsAreTransparent()
 {
   CTX *ctx = CTX::instance();
-  std::vector<unsigned int> c = {
+  unsigned int c[30] = {
     ctx->color.mesh.line,       ctx->color.mesh.triangle,
     ctx->color.mesh.quadrangle, ctx->color.mesh.tetrahedron,
     ctx->color.mesh.hexahedron, ctx->color.mesh.prism,
     ctx->color.mesh.pyramid,    ctx->color.mesh.trihedron,
     ctx->color.fg,              ctx->color.geom.selection};
+  int n = 10;
   int carousel = ctx->mesh.colorCarousel;
   if(carousel >= 1 && carousel <= 3)
-    for(int i = 0; i < 20; i++) c.push_back(ctx->color.mesh.carousel[i]);
-  return anyColorIsTransparent(&c[0], (int)c.size(), ctx->mesh.transparency);
+    for(int i = 0; i < 20; i++) c[n++] = ctx->color.mesh.carousel[i];
+  return anyColorIsTransparent(c, n, ctx->mesh.transparency);
 }
 
 bool gmshMeshIsTransparent()
