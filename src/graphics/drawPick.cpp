@@ -216,6 +216,11 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glClearColor(0., 0., 0., 0.);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  // both matrices are the frame's, and both are changed below: each stack is
+  // its own, so each is pushed under its own mode and popped under it
+  gmshMatrixMode(GMSH_PROJECTION);
+  gmshPushMatrix();
+  gmshMatrixMode(GMSH_MODELVIEW);
   gmshPushMatrix();
   initProjection();
   // in camera mode the projection and the modelview are the camera's, which
@@ -270,6 +275,9 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   drawGraph2d(false);
   drawText2d();
   gmshPopMatrix();
+  gmshMatrixMode(GMSH_PROJECTION);
+  gmshPopMatrix();
+  gmshMatrixMode(GMSH_MODELVIEW);
 
   _pickCache.assign((std::size_t)4 * fw * fh, 0);
   _pickCacheDepth.assign((std::size_t)fw * fh, 1.f);
