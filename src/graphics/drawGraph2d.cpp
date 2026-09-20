@@ -683,7 +683,12 @@ static unsigned int getTagForGraph2dDataPoint(const SPoint2 &p)
   return t;
 }
 
-SPoint2 getGraph2dDataPointForTag(unsigned int tag) { return tags_rev[tag]; }
+SPoint2 getGraph2dDataPointForTag(unsigned int tag)
+{
+  // a tag of no point answers the origin without recording one
+  auto it = tags_rev.find(tag);
+  return (it == tags_rev.end()) ? SPoint2(0., 0.) : it->second;
+}
 
 // Adds the point to what is being drawn, and says whether it was: a value
 // with no place on the graph (a nan, which is what a logarithmic scale makes
