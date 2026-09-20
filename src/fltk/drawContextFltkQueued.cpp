@@ -108,7 +108,8 @@ namespace {
         // start again from the first page
         _shelves.resize(1);
         _top.resize(1);
-        glDeleteTextures((GLsizei)_textures.size() - 1, &_textures[1]);
+        if(_textures.size() > 1)
+          glDeleteTextures((GLsizei)_textures.size() - 1, &_textures[1]);
         _textures.resize(1);
       }
       _entries.clear();
