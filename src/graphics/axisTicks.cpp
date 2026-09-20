@@ -557,9 +557,14 @@ namespace {
         if(labelEnds && (tk.t * length < 3. || (1. - tk.t) * length < 3.))
           continue;
         // a decade is a major value, marked as such, that had no room for its
-        // label; the other digits are minor
-        double e = tk.v ? log10(fabs(tk.v)) : 0.5;
-        tk.minor = fabs(e - floor(e + 0.5)) > 1.e-9;
+        // label; the other digits are minor. Zero, which the symmetric axis
+        // is built around, is a major value too.
+        if(tk.v == 0.)
+          tk.minor = false;
+        else {
+          double e = log10(fabs(tk.v));
+          tk.minor = fabs(e - floor(e + 0.5)) > 1.e-9;
+        }
         bool same = false;
         for(std::size_t i = 0; i < best.size(); i++)
           if(fabs(best[i].t - tk.t) < 1.e-6) same = true;
