@@ -9329,7 +9329,12 @@ double opt_view_line_width(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
-  if(action & GMSH_SET) { opt->lineWidth = val; }
+  if(action & GMSH_SET) {
+    // whether there is a width at all decides whether the trajectories of the
+    // points over the time steps go into the arrays
+    if(view && (val == 0.) != (opt->lineWidth == 0.)) view->setChanged(true);
+    opt->lineWidth = val;
+  }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
     FlGui::instance()->options->view.value[62]->value(opt->lineWidth);
