@@ -59,6 +59,14 @@ public:
   void drawString(const char *str);
   void drawString(const char *str, const double win[3]);
   void setFont(int fontid, int fontsize);
+  // The strings of this engine live in its own atlas, which grows as it
+  // needs to: FLTK's pile of one texture per string is never used (they are
+  // rasterised with fl_draw into an image), so there is nothing to size for
+  // the frame. The atlas holds one channel and the colour is the quad's, so
+  // a colour change costs it nothing either.
+  bool keepsStringTextures() { return false; }
+  void resetFontTextures() {}
+  void reserveStringTextures(std::size_t n) {}
 };
 
 #endif

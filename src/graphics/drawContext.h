@@ -142,9 +142,9 @@ public:
   virtual int getFontIndex(const char *fontname) { return 0; }
   virtual int getFontEnum(int index) { return 0; }
   virtual const char *getFontName(int index) { return "Helvetica"; }
-  // implemented once in drawContext.cpp, as the names do not depend on the
-  // widget toolkit
-  virtual int getFontAlign(const char *alignstr);
+  // the same for every toolkit, so not a hook: implemented once in
+  // drawContext.cpp
+  int getFontAlign(const char *alignstr);
   virtual int getFontSize() { return 12; }
   virtual void setFont(int fontid, int fontsize) {}
   virtual double getStringWidth(const char *str) { return 1.; }
