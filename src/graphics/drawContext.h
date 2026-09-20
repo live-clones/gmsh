@@ -531,8 +531,11 @@ public:
   void drawPlaneInBoundingBox(double xmin, double ymin, double zmin,
                               double xmax, double ymax, double zmax, double a,
                               double b, double c, double d, int shade = 0);
-  // dynamic pointer to a transient geometry drawing function
+  // a function drawing transient geometry, called by drawGeom(): set by the
+  // dialogs that show a shape while it is being defined
   static void setDrawGeomTransientFunction(void (*fct)(void *));
+
+private:
   static void (*drawGeomTransient)(void *);
 };
 
