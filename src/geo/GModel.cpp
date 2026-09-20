@@ -308,6 +308,9 @@ void GModel::deleteMesh(const std::vector<GEntity *> &entities)
 
 void GModel::deleteVertexArrays()
 {
+  // what the planes add goes with them, and is only built again when the
+  // state it was built for has changed: it has to be asked for again here
+  invalidateClipVertexArrays();
   for(auto it = firstRegion(); it != lastRegion(); ++it)
     (*it)->deleteVertexArrays();
   for(auto it = firstFace(); it != lastFace(); ++it)

@@ -234,6 +234,9 @@ void PView::deleteVertexArrays()
   if(va_ellipses) delete va_ellipses;
   va_ellipses = nullptr;
   deleteClipVertexArrays();
+  // as above: the arrays of the planes are only filled again when what they
+  // were filled for has changed
+  invalidateClipVertexArrays();
 }
 
 void PView::setOptions(PViewOptions *val)
