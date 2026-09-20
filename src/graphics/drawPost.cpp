@@ -637,16 +637,6 @@ static void drawGlyphs(drawContext *ctx, PView *p)
 
   Msg::Debug("drawing extra glyphs (this is slow...)");
 
-  // speedup drawing of textured fonts on cocoa mac version
-#if defined(__APPLE__)
-  if(opt->intervalsType == PViewOptions::Numeric) {
-    int numStrings = 0;
-    for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++)
-      numStrings += data->getNumElements(opt->timeStep, ent);
-    drawContext::global()->reserveStringTextures(numStrings);
-  }
-#endif
-
   // The arrows are recorded on a walk of their own, before the numbers are
   // drawn: the strings would otherwise be recorded with them (the shader
   // pipeline draws them through the same immediate mode path), and replayed
@@ -913,10 +903,8 @@ void drawContext::drawPost()
       Msg::Debug("post-pro vertex arrays have changed");
       clearGlyphArrays(PView::list[i]);
     }
-#if defined(__APPLE__)
-    // FIXME: resetting texture pile fixes bug with recent macOS versions
+    // the strings of the arrays that changed are drawn again
     if(changed) global()->resetFontTextures();
-#endif
   }
 
   // draw3d() draws the opaque part of the scene, then the transparent one

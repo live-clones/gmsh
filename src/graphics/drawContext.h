@@ -157,9 +157,15 @@ public:
   {
     drawString(str);
   }
+  // Does this engine keep a pile of string textures, one per string, that has
+  // to be sized for the frame? Only the native one does, and only where FLTK
+  // draws its strings as textures; the others hold their strings in an atlas
+  // that grows by itself. The count is only worth making when the answer is
+  // yes (see stringsInFrame()).
+  virtual bool keepsStringTextures() { return false; }
   virtual void resetFontTextures() {}
-  // make the string texture cache able to hold n strings: past its capacity
-  // strings are recomputed one by one, which is slow on macOS
+  // make the pile able to hold n strings: past its capacity the textures are
+  // recomputed one by one, which is slow
   virtual void reserveStringTextures(std::size_t n) {}
   virtual void flushString() {}
   // draw the strings with a one pixel halo in the background colour, so

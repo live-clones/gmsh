@@ -1091,10 +1091,8 @@ void drawContext::drawMesh()
     // what the planes add is built on its own: moving a plane costs only this
     if(changed) m->invalidateClipVertexArrays();
     m->fillClipVertexArrays();
-#if defined(__APPLE__)
-    // FIXME: resetting texture pile fixes bug with recent macOS versions
+    // the strings of the arrays that changed are drawn again
     if(changed) global()->resetFontTextures();
-#endif
     if(!m->getVisibility() || !isVisible(m)) continue;
     int status = drawMeshStatus(m);
     CTX *c = CTX::instance();

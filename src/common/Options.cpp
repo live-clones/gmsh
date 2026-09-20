@@ -59,6 +59,18 @@
 #include "drawContextFltkStringTexture.h"
 #endif
 
+// A colour that strings are drawn in has changed. The native font engine
+// keeps a texture of every string, in the colour it was drawn in, so they
+// all have to be made again; the engines that hold their strings in an atlas
+// do nothing here. Called wherever such a colour is set, whether from the
+// GUI or from a script.
+static void stringColorsChanged()
+{
+#if defined(HAVE_FLTK)
+  drawContext::global()->resetFontTextures();
+#endif
+}
+
 #if defined(HAVE_FLTK)
 // give the graphic windows the visual the options ask for; FLTK recreates the
 // OpenGL context of those whose mode changed
@@ -6956,13 +6968,13 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
     if(CTX::instance()->mesh.colorCarousel < 0 ||
        CTX::instance()->mesh.colorCarousel > 3)
       CTX::instance()->mesh.colorCarousel = 0;
+    // the labels take the colours of what they name
+    stringColorsChanged();
   }
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
+  if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.choice[4]->value(
       CTX::instance()->mesh.colorCarousel);
-    drawContext::global()->resetFontTextures();
-  }
 #endif
   return CTX::instance()->mesh.colorCarousel;
 }
@@ -10119,33 +10131,39 @@ unsigned int opt_general_color_foreground(OPT_ARGS_COL)
 
 unsigned int opt_general_color_text(OPT_ARGS_COL)
 {
-  if(action & GMSH_SET) CTX::instance()->color.text = val;
+  if(action & GMSH_SET) {
+    CTX::instance()->color.text = val;
+    stringColorsChanged();
+  }
 #if defined(HAVE_FLTK)
   CCC(CTX::instance()->color.text,
       FlGui::instance()->options->general.color[3]);
-  drawContext::global()->resetFontTextures();
 #endif
   return CTX::instance()->color.text;
 }
 
 unsigned int opt_general_color_axes(OPT_ARGS_COL)
 {
-  if(action & GMSH_SET) CTX::instance()->color.axes = val;
+  if(action & GMSH_SET) {
+    CTX::instance()->color.axes = val;
+    stringColorsChanged();
+  }
 #if defined(HAVE_FLTK)
   CCC(CTX::instance()->color.axes,
       FlGui::instance()->options->general.color[4]);
-  drawContext::global()->resetFontTextures();
 #endif
   return CTX::instance()->color.axes;
 }
 
 unsigned int opt_general_color_small_axes(OPT_ARGS_COL)
 {
-  if(action & GMSH_SET) CTX::instance()->color.smallAxes = val;
+  if(action & GMSH_SET) {
+    CTX::instance()->color.smallAxes = val;
+    stringColorsChanged();
+  }
 #if defined(HAVE_FLTK)
   CCC(CTX::instance()->color.smallAxes,
       FlGui::instance()->options->general.color[5]);
-  drawContext::global()->resetFontTextures();
 #endif
   return CTX::instance()->color.smallAxes;
 }
@@ -10820,12 +10838,13 @@ unsigned int opt_view_color_text2d(OPT_ARGS_COL)
 {
 #if defined(HAVE_POST)
   GET_VIEWo(0);
-  if(action & GMSH_SET) { opt->color.text2d = val; }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.text2d, FlGui::instance()->options->view.color[11]);
-    drawContext::global()->resetFontTextures();
+  if(action & GMSH_SET) {
+    opt->color.text2d = val;
+    stringColorsChanged();
   }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    CCC(opt->color.text2d, FlGui::instance()->options->view.color[11]);
 #endif
   return opt->color.text2d;
 #else
@@ -10837,12 +10856,13 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL)
 {
 #if defined(HAVE_POST)
   GET_VIEWo(0);
-  if(action & GMSH_SET) { opt->color.text3d = val; }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.text3d, FlGui::instance()->options->view.color[12]);
-    drawContext::global()->resetFontTextures();
+  if(action & GMSH_SET) {
+    opt->color.text3d = val;
+    stringColorsChanged();
   }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    CCC(opt->color.text3d, FlGui::instance()->options->view.color[12]);
 #endif
   return opt->color.text3d;
 #else
@@ -10854,12 +10874,13 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
 {
 #if defined(HAVE_POST)
   GET_VIEWo(0);
-  if(action & GMSH_SET) { opt->color.axes = val; }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.axes, FlGui::instance()->options->view.color[13]);
-    drawContext::global()->resetFontTextures();
+  if(action & GMSH_SET) {
+    opt->color.axes = val;
+    stringColorsChanged();
   }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    CCC(opt->color.axes, FlGui::instance()->options->view.color[13]);
 #endif
   return opt->color.axes;
 #else
@@ -10871,12 +10892,13 @@ unsigned int opt_view_color_background2d(OPT_ARGS_COL)
 {
 #if defined(HAVE_POST)
   GET_VIEWo(0);
-  if(action & GMSH_SET) { opt->color.background2d = val; }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.background2d, FlGui::instance()->options->view.color[14]);
-    drawContext::global()->resetFontTextures();
+  if(action & GMSH_SET) {
+    opt->color.background2d = val;
+    stringColorsChanged();
   }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    CCC(opt->color.background2d, FlGui::instance()->options->view.color[14]);
 #endif
   return opt->color.background2d;
 #else

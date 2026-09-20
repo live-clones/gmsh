@@ -20,6 +20,7 @@
 #include "MElement.h"
 #include "PView.h"
 #include "PViewOptions.h"
+#include "PViewData.h"
 #include "VertexArray.h"
 #include "StringUtils.h"
 #include "OS.h"
@@ -668,6 +669,36 @@ static void checkClipPlanesChanged()
 #endif
 }
 
+// How many strings a frame may draw: every label of the mesh, and a number
+// on every element of a view that writes them. The native font engine keeps
+// a pile of string textures and recomputes them one by one once it is full,
+// which is slow, so it is told up front how large to be; the other engines
+// hold their strings in an atlas and ignore this. Counting is cheap next to
+// drawing them, and the pile only ever grows.
+static std::size_t stringsInFrame()
+{
+  CTX *ctx = CTX::instance();
+  GModel *m = GModel::current();
+  std::size_t n = m->getNumVertices();
+  if(ctx->mesh.nodeLabels) n = std::max(n, m->getNumMeshVertices());
+  if(ctx->mesh.lineLabels || ctx->mesh.surfaceLabels || ctx->mesh.volumeLabels)
+    n = std::max(n, m->getNumMeshElements());
+  // the larger of the two kinds, twice over: a frame that labels both the
+  // nodes and the elements then still fits (the pile is only a capacity)
+  n *= 2;
+#if defined(HAVE_POST)
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
+    PView *p = PView::list[i];
+    PViewOptions *opt = p->getOptions();
+    if(!opt->visible || opt->intervalsType != PViewOptions::Numeric) continue;
+    PViewData *data = p->getData(true);
+    for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++)
+      n += data->getNumElements(opt->timeStep, ent);
+  }
+#endif
+  return n;
+}
+
 void drawContext::draw3d()
 {
   checkClipPlanesChanged();
@@ -692,17 +723,8 @@ void drawContext::draw3d()
   else
     CTX::instance()->polygonOffset = 0;
 
-    // speedup drawing of textured fonts on cocoa mac version
-#if defined(__APPLE__)
-  std::size_t numStrings = GModel::current()->getNumVertices();
-  if(CTX::instance()->mesh.nodeLabels)
-    numStrings = std::max(numStrings, GModel::current()->getNumMeshVertices());
-  if(CTX::instance()->mesh.lineLabels || CTX::instance()->mesh.surfaceLabels ||
-     CTX::instance()->mesh.volumeLabels)
-    numStrings = std::max(numStrings, GModel::current()->getNumMeshElements());
-  numStrings *= 2;
-  global()->reserveStringTextures(numStrings);
-#endif
+  if(global()->keepsStringTextures())
+    global()->reserveStringTextures(stringsInFrame());
 
   glDepthFunc(GL_LESS);
   gmshDepthTest(true);
