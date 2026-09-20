@@ -84,8 +84,6 @@ public:
   drawTransform() {}
   virtual ~drawTransform() {}
   virtual void transform(double &x, double &y, double &z) {}
-  virtual void transformOneForm(double &x, double &y, double &z) {}
-  virtual void transformTwoForm(double &x, double &y, double &z) {}
   virtual void setMatrix(double mat[3][3], double tra[3] = nullptr) {}
 };
 
@@ -431,14 +429,6 @@ public:
   void transform(double &x, double &y, double &z)
   {
     if(_transform) _transform->transform(x, y, z);
-  }
-  void transformOneForm(double &x, double &y, double &z)
-  {
-    if(_transform) _transform->transformOneForm(x, y, z);
-  }
-  void transformTwoForm(double &x, double &y, double &z)
-  {
-    if(_transform) _transform->transformTwoForm(x, y, z);
   }
   void hide(GModel *m) { _hiddenModels.insert(m); }
   void hide(PView *v) { _hiddenViews.insert(v); }

@@ -506,7 +506,6 @@ static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
     gmshColor4ubv((const void *)&c->color.geom.tangents);
     double x = p.x(), y = p.y(), z = p.z();
     ctx->transform(x, y, z);
-    ctx->transformOneForm(der[0], der[1], der[2]);
     ctx->drawVector(c->vectorType, 0, x, y, z, der[0], der[1], der[2],
                     c->geom.light);
   }
@@ -579,7 +578,6 @@ static void drawGeomSurface(drawContext *ctx, GFace *f, bool sel)
     for(int i = 0; i < 3; i++)
       n[i] *= c->geom.normals * ctx->pixel_equiv_x / ctx->s[i];
     gmshColor4ubv((const void *)&c->color.geom.normals);
-    ctx->transformTwoForm(n[0], n[1], n[2]);
     ctx->drawVector(c->vectorType, 0, x, y, z, n[0], n[1], n[2],
                     c->geom.light);
   }
