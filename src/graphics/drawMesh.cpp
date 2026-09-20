@@ -1112,10 +1112,14 @@ void drawContext::drawMesh()
         if(dim > 1) ma.triangles[dim] = buildMerged(m, dim, false);
       }
     }
-    // a mixed mesh, some entities transparent and the others not, is drawn
-    // entity by entity: the merged arrays hold them all
+    // A mixed mesh, some entities transparent and the others not, is drawn
+    // entity by entity: the merged arrays hold them all, and each entity
+    // belongs to a different pass. A mesh that is all one way belongs to one
+    // pass entire, which the returns at the top of this function pick, and is
+    // drawn merged - the split itself is decided by the whole scene, so
+    // anything else transparent used to cost the mesh its merged arrays.
     bool mixed = transparencyPass != TRANSPARENCY_ALL &&
-                 !gmshMeshColorsAreTransparent();
+                 !gmshMeshColorsAreTransparent() && gmshMeshIsTransparent();
     bool merge = !inPickColorMode() && !mixed;
     // only the volume is clipped: curves and surfaces are drawn whole
     bool volumeOnly = c->clipWholeElements && c->clipOnlyVolume;
