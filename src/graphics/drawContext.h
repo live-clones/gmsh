@@ -48,6 +48,9 @@ void gmshDrawVertexArray(VertexArray *va, GLenum type, int flags,
                          const std::vector<std::pair<int, int> > *runs =
                            nullptr);
 
+class GEntity;
+class PView;
+
 // which part of the scene a pass draws: everything transparent is drawn after
 // everything else, in one pass
 enum gmshTransparencyPass {
@@ -55,16 +58,19 @@ enum gmshTransparencyPass {
   TRANSPARENCY_OPAQUE = 1,
   TRANSPARENCY_TRANSPARENT = 2
 };
-// Is anything in the geometry or the mesh transparent, through the
-// Transparency options, the colours of the options, or the colour of an
-// entity? Everything is, when the options' colours are; otherwise only the
-// entities whose own colour is, which a pass asks about one by one.
+// Is anything in the scene transparent, through the Transparency options, the
+// colours of the options, or the colour of an entity? The geometry and the
+// mesh are transparent entire when the options' colours are; otherwise only
+// the entities whose own colour is, which a pass asks about one by one. A
+// view is transparent through the alpha of its colormap or its own factor.
 bool gmshGeometryIsTransparent();
 bool gmshGeometryColorsAreTransparent();
 bool gmshGeometryEntityIsTransparent(GEntity *e);
 bool gmshMeshIsTransparent();
 bool gmshMeshColorsAreTransparent();
 bool gmshMeshEntityIsTransparent(GEntity *e);
+bool gmshAnyViewIsTransparent();
+bool gmshViewIsTransparent(PView *p);
 
 class GModel;
 // GModel::getMeshStatus() for the drawing, which asks it several times a
@@ -72,7 +78,6 @@ class GModel;
 // have changed (see CTX::meshChanged())
 int drawMeshStatus(GModel *m);
 
-class PView;
 class GVertex;
 class GEdge;
 class GFace;
@@ -306,7 +311,6 @@ private:
   void drawGeom();
   void drawMesh();
   void drawPost();
-  bool anyViewIsTransparent();
   void drawBackgroundGradient();
   void drawBackgroundImage(bool moving);
   void drawText2d();

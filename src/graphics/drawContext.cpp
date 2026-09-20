@@ -740,7 +740,7 @@ void drawContext::draw3d()
   // never splits, as it reads back identifiers rather than blends
   bool split = (render_mode != GMSH_SELECT) &&
                (gmshGeometryIsTransparent() || gmshMeshIsTransparent() ||
-                anyViewIsTransparent());
+                gmshAnyViewIsTransparent());
 
   // the studio shading casts a shadow, drawn first into a map of its own
   bool studio = gmshUseShaders() && CTX::instance()->shading >= 1 &&
