@@ -351,6 +351,19 @@ public:
   int clipWholeElements, clipOnlyDrawIntersectingVolume, clipOnlyVolume;
   // fill the section cut by the clipping planes in 3D meshes and views
   int clipCapping;
+  // What the planes add to the key of an array kept between frames: the modes
+  // the clipping window sets directly (they never mark the mesh as changed)
+  // and the planes themselves. In one place, so that a mode added to the
+  // group is not forgotten by one of the caches.
+  void addClipToKey(std::vector<double> &key) const
+  {
+    key.push_back(clipCapping);
+    key.push_back(clipWholeElements);
+    key.push_back(clipOnlyVolume);
+    key.push_back(clipOnlyDrawIntersectingVolume);
+    for(int i = 0; i < 6; i++)
+      for(int j = 0; j < 4; j++) key.push_back(clipPlane[i][j]);
+  }
   // draw the vertex arrays from OpenGL buffer objects instead of client memory
   int vertexBufferObjects;
   // draw with the shader pipeline instead of the fixed function one

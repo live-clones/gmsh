@@ -803,14 +803,7 @@ static std::vector<double> clipToken()
   CTX *ctx = CTX::instance();
   std::vector<double> t;
   t.push_back(ctx->mesh.clip);
-  // the clipping window sets these directly, without going through the
-  // options (which mark the mesh as changed)
-  t.push_back(ctx->clipCapping);
-  t.push_back(ctx->clipWholeElements);
-  t.push_back(ctx->clipOnlyVolume);
-  t.push_back(ctx->clipOnlyDrawIntersectingVolume);
-  for(int i = 0; i < 6; i++)
-    for(int j = 0; j < 4; j++) t.push_back(ctx->clipPlane[i][j]);
+  ctx->addClipToKey(t);
   return t;
 }
 
