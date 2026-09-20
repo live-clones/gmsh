@@ -1149,16 +1149,19 @@ void main()
     GLuint floatTarget(int width, int height, GLenum internal, GLenum format,
                        GLenum type);
 
-    bool buildBlit()
+    // A full-screen program: the vertex shader every one of them uses, and
+    // the fragment body given. Returns 0 if it cannot be built, with what
+    // the linker said in log when one is asked for; the caller says what the
+    // program was for, and how loudly.
+    GLuint buildFullscreenProgram(const std::string &fragmentBody,
+                                  std::string *log = nullptr)
     {
-      if(_blitTried) return _blitProgram != 0;
-      _blitTried = true;
       GLuint vs = compile(GL_VERTEX_SHADER, prologue() + compositeVertexBody);
-      if(!vs) return false;
-      GLuint fs = compile(GL_FRAGMENT_SHADER, prologue() + blitFragmentBody);
+      if(!vs) return 0;
+      GLuint fs = compile(GL_FRAGMENT_SHADER, prologue() + fragmentBody);
       if(!fs) {
         glApi::DeleteShader(vs);
-        return false;
+        return 0;
       }
       GLuint p = glApi::CreateProgram();
       glApi::AttachShader(p, vs);
@@ -1168,9 +1171,25 @@ void main()
       glApi::DeleteShader(fs);
       GLint ok = 0;
       glApi::GetProgramiv(p, GL_LINK_STATUS, &ok);
-      if(!ok) {
+      if(ok) return p;
+      if(log) {
+        GLint len = 0;
+        glApi::GetProgramiv(p, GL_INFO_LOG_LENGTH, &len);
+        std::vector<char> buf(len > 1 ? len : 1, 0);
+        if(len > 1) glApi::GetProgramInfoLog(p, len, nullptr, &buf[0]);
+        *log = &buf[0];
+      }
+      glApi::DeleteProgram(p);
+      return 0;
+    }
+
+    bool buildBlit()
+    {
+      if(_blitTried) return _blitProgram != 0;
+      _blitTried = true;
+      GLuint p = buildFullscreenProgram(blitFragmentBody);
+      if(!p) {
         Msg::Warning("Could not link the accumulation program");
-        glApi::DeleteProgram(p);
         return false;
       }
       _uBlitTex = glApi::GetUniformLocation(p, "uTex");
@@ -1322,24 +1341,9 @@ void main()
     {
       if(_fireTried) return _fireProgram != 0;
       _fireTried = true;
-      GLuint vs = compile(GL_VERTEX_SHADER, prologue() + compositeVertexBody);
-      if(!vs) return false;
-      GLuint fs = compile(GL_FRAGMENT_SHADER, prologue() + fireFragmentBody);
-      if(!fs) {
-        glApi::DeleteShader(vs);
-        return false;
-      }
-      GLuint p = glApi::CreateProgram();
-      glApi::AttachShader(p, vs);
-      glApi::AttachShader(p, fs);
-      glApi::LinkProgram(p);
-      glApi::DeleteShader(vs);
-      glApi::DeleteShader(fs);
-      GLint ok = 0;
-      glApi::GetProgramiv(p, GL_LINK_STATUS, &ok);
-      if(!ok) {
+      GLuint p = buildFullscreenProgram(fireFragmentBody);
+      if(!p) {
         Msg::Debug("Could not link the fire program");
-        glApi::DeleteProgram(p);
         return false;
       }
       _uFireDepth = glApi::GetUniformLocation(p, "uDepth");
@@ -1966,31 +1970,10 @@ void main()
     {
       if(_oitTried) return _oitProgram != 0;
       _oitTried = true;
-
-      GLuint vs = compile(GL_VERTEX_SHADER, prologue() + compositeVertexBody);
-      if(!vs) return false;
-      GLuint fs =
-        compile(GL_FRAGMENT_SHADER, prologue() + compositeFragmentBody);
-      if(!fs) {
-        glApi::DeleteShader(vs);
-        return false;
-      }
-      GLuint p = glApi::CreateProgram();
-      glApi::AttachShader(p, vs);
-      glApi::AttachShader(p, fs);
-      glApi::LinkProgram(p);
-      glApi::DeleteShader(vs);
-      glApi::DeleteShader(fs);
-
-      GLint ok = 0;
-      glApi::GetProgramiv(p, GL_LINK_STATUS, &ok);
-      if(!ok) {
-        GLint len = 0;
-        glApi::GetProgramiv(p, GL_INFO_LOG_LENGTH, &len);
-        std::vector<char> log(len > 1 ? len : 1, 0);
-        if(len > 1) glApi::GetProgramInfoLog(p, len, nullptr, &log[0]);
-        Msg::Error("Could not link the transparency program: %s", &log[0]);
-        glApi::DeleteProgram(p);
+      std::string log;
+      GLuint p = buildFullscreenProgram(compositeFragmentBody, &log);
+      if(!p) {
+        Msg::Error("Could not link the transparency program: %s", log.c_str());
         return false;
       }
       _oitProgram = p;
