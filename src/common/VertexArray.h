@@ -225,6 +225,9 @@ public:
   }
   void prefetch(std::uint64_t h)
   {
+    // a hint, and not one worth a lock: another thread may be growing the
+    // shard, and its table and mask cannot be read while it is
+    if(_threaded) return;
     const Shard &s = _shard[(h >> 56) & (NUM_SHARDS - 1)];
     if(s.table) vaPrefetch(&s.table[h & s.mask]);
   }
