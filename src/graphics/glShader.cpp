@@ -1310,10 +1310,15 @@ void main()
     // and what is drawn afterwards expects the state it left
     GLint vp[4];
     GLfloat clear[4];
+    GLint blend[4];
     GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
     GLboolean wasBlend = glIsEnabled(GL_BLEND);
     glGetIntegerv(GL_VIEWPORT, vp);
     glGetFloatv(GL_COLOR_CLEAR_VALUE, clear);
+    glGetIntegerv(GL_BLEND_SRC_RGB, &blend[0]);
+    glGetIntegerv(GL_BLEND_DST_RGB, &blend[1]);
+    glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend[2]);
+    glGetIntegerv(GL_BLEND_DST_ALPHA, &blend[3]);
     glViewport(0, 0, width, height);
     glDisable(GL_DEPTH_TEST);
     glApi::UseProgram(_blitProgram);
@@ -1344,6 +1349,10 @@ void main()
 
     glViewport(vp[0], vp[1], vp[2], vp[3]);
     glClearColor(clear[0], clear[1], clear[2], clear[3]);
+    if(glApi::BlendFuncSeparate)
+      glApi::BlendFuncSeparate(blend[0], blend[1], blend[2], blend[3]);
+    else
+      glBlendFunc(blend[0], blend[1]);
     if(wasDepth) glEnable(GL_DEPTH_TEST);
     if(wasBlend) glEnable(GL_BLEND);
     glApi::UseProgram(_program);
