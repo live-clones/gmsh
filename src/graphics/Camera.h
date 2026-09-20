@@ -77,12 +77,15 @@ public:
   void zoom(double &factor);
   void update();
   void affiche();
-  void alongX();
-  void alongY();
-  void alongZ();
-  void upX();
-  void upY();
-  void upZ();
+  // looking along an axis, and turning up to one: 0, 1, 2 for x, y, z
+  void alongAxis(int axis);
+  void upAxis(int axis);
+  void alongX() { alongAxis(0); }
+  void alongY() { alongAxis(1); }
+  void alongZ() { alongAxis(2); }
+  void upX() { upAxis(0); }
+  void upY() { upAxis(1); }
+  void upZ() { upAxis(2); }
   void tiltHeadLeft();
   void tiltHeadRight();
 };
