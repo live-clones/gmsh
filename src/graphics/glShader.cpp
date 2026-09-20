@@ -1427,6 +1427,15 @@ void main()
       return true;
     }
 
+    void dropAccBuffers()
+    {
+      if(_accFbo) glApi::DeleteFramebuffers(1, &_accFbo);
+      if(_accTex) glDeleteTextures(1, &_accTex);
+      if(_accCopy) glDeleteTextures(1, &_accCopy);
+      _accFbo = _accTex = _accCopy = 0;
+      _accWidth = _accHeight = 0;
+    }
+
     void dropFireBuffers()
     {
       if(_fireFbo) glApi::DeleteFramebuffers(1, &_fireFbo);
@@ -2216,7 +2225,12 @@ void main()
     _oitDepthFormat = 0;
     // the fire copies the depth of what it burns: its format was chosen for
     // the window too
+    dropFireBuffers();
     _fireDepthFormat = 0;
+    // a picture of a few thousand pixels a side leaves buffers of hundreds of
+    // megabytes behind otherwise: they are kept for a window, which is small
+    // and drawn again and again, not for a print
+    dropAccBuffers();
   }
 
   bool beginTransparent()
