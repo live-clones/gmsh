@@ -607,7 +607,7 @@ void main()
 }
 )";
 
-    GLuint _program = 0, _vao = 0;
+    GLuint _program = 0;
     // buffers for client arrays, grown as needed and reused across frames
     GLuint _streamVertices = 0, _streamColors = 0, _streamNormals = 0;
     // and for the glyphs, the texture coordinates and the dashes
@@ -618,36 +618,28 @@ void main()
     // the shadow maps of the studio shading (the key light and the dome), and
     // the 1x1 depth texture bound in their place when there is none (the
     // samplers must always point at one)
-    GLuint _shadowFbo[2] = {0, 0}, _shadowTex[2] = {0, 0}, _noShadow = 0;
+    GLuint _shadowTex[2] = {0, 0}, _noShadow = 0;
     int _shadowSize[2] = {0, 0};
     GLint _shadowViewport[4] = {0, 0, 0, 0};
     int _shadowPass = -1;
     // what stands in for the window: 0, or the print target while there is
     // one
     GLuint _window = 0, _printFbo = 0, _printColor = 0, _printDepth = 0;
-    // the accumulation of the studio frames: the sum, a copy of the window
-    // to add to it, and the program that does both
-    GLuint _accFbo = 0, _accTex = 0, _accCopy = 0, _blitProgram = 0;
-    int _accWidth = 0, _accHeight = 0;
+    // the program that adds a studio frame to the accumulation and puts the
+    // average back
+    GLuint _blitProgram = 0;
     GLint _uBlitTex = -1, _uBlitScale = -1;
     bool _blitTried = false;
-    // the fire: a copy of the window's depth it rises from, and its program
-    GLuint _fireFbo = 0, _fireDepth = 0, _fireFrame = 0, _fireProgram = 0;
-    int _fireWidth = 0, _fireHeight = 0;
-    GLenum _fireDepthFormat = 0;
+    // the fire and its program
+    GLuint _fireProgram = 0;
     GLint _uFireDepth = -1, _uFireFrame = -1, _uFireLevel = -1, _uFireTime = -1;
     GLint _uFireReveal = -1, _uFireRevealOn = -1;
     bool _fireTried = false;
-    // the picking buffer and what it is made of
-    GLuint _pickFbo = 0, _pickColorTex = 0, _pickDepthTex = 0, _pickDepthRb = 0;
-    int _pickWidth = 0, _pickHeight = 0;
     bool _tried = false;
 
     // the transparency buffers, the composite program and whether that pass
     // is being drawn; the depth is a copy of the window's, so that opaque
     // geometry hides what is behind it
-    GLuint _oitFbo = 0, _oitAccum = 0, _oitReveal = 0, _oitDepthRb = 0;
-    int _oitWidth = 0, _oitHeight = 0;
     GLuint _oitProgram = 0;
     GLint _uAccum = -1, _uReveal = -1;
     bool _oitOn = false, _oitFailed = false, _oitTried = false;
@@ -655,17 +647,16 @@ void main()
     // looked: their light let through says where transparent things are,
     // which the depth does not
     bool _oitUsed = false;
-    // the depth format the window's buffer can be copied into: it must match
-    // exactly and cannot be queried
-    GLenum _oitDepthFormat = 0;
 
     // Every window has an OpenGL context of its own, which shares the
     // programs, textures and buffers of the first but not the container
     // objects (the vertex array object and the framebuffers), nor should it
     // share what is the size of the window or holds its frames: the
-    // transparency, accumulation and picking buffers. Those live per
-    // context, the current one's names in the variables above, the others'
-    // here. The shadow maps are shared, with a framebuffer per context.
+    // transparency, accumulation and picking buffers. Those are held here,
+    // one set per context, and _c points at the current one: a name that
+    // belongs to a context is never read while another is current, and a set
+    // added here needs nothing else to switch or to clear it. The shadow
+    // maps are shared, with a framebuffer per context.
     struct contextObjects {
       GLuint vao = 0, shadowFbo[2] = {0, 0};
       GLuint oitFbo = 0, oitAccum = 0, oitReveal = 0, oitDepthRb = 0;
@@ -681,68 +672,9 @@ void main()
     };
     std::map<const void *, contextObjects> _contexts;
     const void *_context = nullptr;
-    void storeContext()
-    {
-      contextObjects &c = _contexts[_context];
-      c.vao = _vao;
-      c.shadowFbo[0] = _shadowFbo[0];
-      c.shadowFbo[1] = _shadowFbo[1];
-      c.oitFbo = _oitFbo;
-      c.oitAccum = _oitAccum;
-      c.oitReveal = _oitReveal;
-      c.oitDepthRb = _oitDepthRb;
-      c.oitWidth = _oitWidth;
-      c.oitHeight = _oitHeight;
-      c.oitDepthFormat = _oitDepthFormat;
-      c.accFbo = _accFbo;
-      c.accTex = _accTex;
-      c.accCopy = _accCopy;
-      c.accWidth = _accWidth;
-      c.accHeight = _accHeight;
-      c.fireFbo = _fireFbo;
-      c.fireDepth = _fireDepth;
-      c.fireFrame = _fireFrame;
-      c.fireWidth = _fireWidth;
-      c.fireHeight = _fireHeight;
-      c.fireDepthFormat = _fireDepthFormat;
-      c.pickFbo = _pickFbo;
-      c.pickColorTex = _pickColorTex;
-      c.pickDepthTex = _pickDepthTex;
-      c.pickDepthRb = _pickDepthRb;
-      c.pickWidth = _pickWidth;
-      c.pickHeight = _pickHeight;
-    }
-    void loadContext()
-    {
-      contextObjects &c = _contexts[_context];
-      _vao = c.vao;
-      _shadowFbo[0] = c.shadowFbo[0];
-      _shadowFbo[1] = c.shadowFbo[1];
-      _oitFbo = c.oitFbo;
-      _oitAccum = c.oitAccum;
-      _oitReveal = c.oitReveal;
-      _oitDepthRb = c.oitDepthRb;
-      _oitWidth = c.oitWidth;
-      _oitHeight = c.oitHeight;
-      _oitDepthFormat = c.oitDepthFormat;
-      _accFbo = c.accFbo;
-      _accTex = c.accTex;
-      _accCopy = c.accCopy;
-      _accWidth = c.accWidth;
-      _accHeight = c.accHeight;
-      _fireFbo = c.fireFbo;
-      _fireDepth = c.fireDepth;
-      _fireFrame = c.fireFrame;
-      _fireWidth = c.fireWidth;
-      _fireHeight = c.fireHeight;
-      _fireDepthFormat = c.fireDepthFormat;
-      _pickFbo = c.pickFbo;
-      _pickColorTex = c.pickColorTex;
-      _pickDepthTex = c.pickDepthTex;
-      _pickDepthRb = c.pickDepthRb;
-      _pickWidth = c.pickWidth;
-      _pickHeight = c.pickHeight;
-    }
+    // the objects of the current context: the map never moves what it holds,
+    // so this stays valid until the map is cleared
+    contextObjects *_c = &_contexts[nullptr];
 
     struct {
       GLint modelview, projection, normalMatrix, colorArray, color, pointSize;
@@ -839,7 +771,7 @@ void main()
       if(_tried) {
         // a context that has none yet: one is enough, its arrays are set at
         // every draw
-        if(_program && !_vao) glApi::GenVertexArrays(1, &_vao);
+        if(_program && !_c->vao) glApi::GenVertexArrays(1, &_c->vao);
         return _program != 0;
       }
       _tried = true;
@@ -952,7 +884,7 @@ void main()
 
       // a core profile draws nothing without a vertex array object; one is
       // enough, its arrays are set at every draw
-      glApi::GenVertexArrays(1, &_vao);
+      glApi::GenVertexArrays(1, &_c->vao);
 
       Msg::Debug("Drawing program built, GLSL %s",
                  (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION));
@@ -966,7 +898,7 @@ void main()
   {
     if(!build()) return false;
     glApi::UseProgram(_program);
-    glApi::BindVertexArray(_vao);
+    glApi::BindVertexArray(_c->vao);
     // OpenGL ES always takes the point size from the shader, a desktop core
     // profile only if told to
     if(!glApi::isES()) glEnable(GL_PROGRAM_POINT_SIZE);
@@ -977,44 +909,37 @@ void main()
   {
     // the names belonged to a context that is gone: deleting them now would
     // delete names of the current one
-    _program = _vao = 0;
+    _program = 0;
     _streamVertices = _streamColors = _streamNormals = 0;
     _streamGlyphs = _streamTex = _streamDash = 0;
     _noTexture = 0;
-    _shadowFbo[0] = _shadowFbo[1] = _shadowTex[0] = _shadowTex[1] = 0;
+    _shadowTex[0] = _shadowTex[1] = 0;
     _shadowSize[0] = _shadowSize[1] = 0;
     _noShadow = 0;
     _shadowPass = -1;
-    _accFbo = _accTex = _accCopy = _blitProgram = 0;
-    _accWidth = _accHeight = 0;
     _window = _printFbo = _printColor = _printDepth = 0;
+    _blitProgram = 0;
     _uBlitTex = _uBlitScale = -1;
     _blitTried = false;
-    _fireFbo = _fireDepth = _fireFrame = _fireProgram = 0;
-    _fireWidth = _fireHeight = 0;
-    _fireDepthFormat = 0;
+    _fireProgram = 0;
     _uFireDepth = _uFireFrame = _uFireLevel = _uFireTime = -1;
     _uFireReveal = _uFireRevealOn = -1;
     _fireTried = false;
-    _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
-    _pickWidth = _pickHeight = 0;
     _tried = false;
-    _oitFbo = _oitAccum = _oitReveal = _oitDepthRb = 0;
-    _oitWidth = _oitHeight = 0;
     _oitProgram = 0;
     _uAccum = _uReveal = -1;
     _oitOn = _oitFailed = _oitTried = _oitUsed = false;
-    _oitDepthFormat = 0;
+    // the objects of every context go with it
     _contexts.clear();
     _context = nullptr;
+    _c = &_contexts[nullptr];
   }
 
   void setContext(const void *id)
   {
     if(id == _context) return;
-    storeContext();
     _context = id;
-    loadContext();
+    _c = &_contexts[id];
   }
 
   void setMatrices(const double modelview[16], const double projection[16])
@@ -1129,7 +1054,7 @@ void main()
   {
     if(which < 0 || which > 1 || size < 1 || _shadowPass >= 0) return false;
     if(!ensure() || !glApi::haveFramebufferObjects()) return false;
-    GLuint &fbo = _shadowFbo[which], &tex = _shadowTex[which];
+    GLuint &fbo = _c->shadowFbo[which], &tex = _shadowTex[which];
     if(tex && _shadowSize[which] != size) {
       // another size: the map is made again, and the framebuffers holding
       // it, this context's and the others', with it
@@ -1261,49 +1186,49 @@ void main()
     if(!ensure() || !glApi::haveFramebufferObjects() ||
        !glApi::haveFloatColorBuffers() || !buildBlit())
       return false;
-    if(_accFbo && (_accWidth != width || _accHeight != height)) {
-      glApi::DeleteFramebuffers(1, &_accFbo);
-      glDeleteTextures(1, &_accTex);
-      glDeleteTextures(1, &_accCopy);
-      _accFbo = _accTex = _accCopy = 0;
+    if(_c->accFbo && (_c->accWidth != width || _c->accHeight != height)) {
+      glApi::DeleteFramebuffers(1, &_c->accFbo);
+      glDeleteTextures(1, &_c->accTex);
+      glDeleteTextures(1, &_c->accCopy);
+      _c->accFbo = _c->accTex = _c->accCopy = 0;
     }
     glApi::ActiveTexture(GL_TEXTURE0);
-    if(!_accFbo) {
-      glApi::GenFramebuffers(1, &_accFbo);
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, _accFbo);
+    if(!_c->accFbo) {
+      glApi::GenFramebuffers(1, &_c->accFbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->accFbo);
       // 32 bits: the same 8 bit value added many times over rounds the same
       // way each time in a half float, which bands a smooth gradient
-      _accTex = floatTarget(width, height, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+      _c->accTex = floatTarget(width, height, GL_RGBA32F, GL_RGBA, GL_FLOAT);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                  GL_TEXTURE_2D, _accTex, 0);
+                                  GL_TEXTURE_2D, _c->accTex, 0);
       const GLenum buf = GL_COLOR_ATTACHMENT0;
       glApi::DrawBuffers(1, &buf);
       if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
          GL_FRAMEBUFFER_COMPLETE) {
         Msg::Warning("Could not make an accumulation buffer");
         glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
-        glApi::DeleteFramebuffers(1, &_accFbo);
-        glDeleteTextures(1, &_accTex);
-        _accFbo = _accTex = 0;
+        glApi::DeleteFramebuffers(1, &_c->accFbo);
+        glDeleteTextures(1, &_c->accTex);
+        _c->accFbo = _c->accTex = 0;
         return false;
       }
-      glGenTextures(1, &_accCopy);
-      glBindTexture(GL_TEXTURE_2D, _accCopy);
+      glGenTextures(1, &_c->accCopy);
+      glBindTexture(GL_TEXTURE_2D, _c->accCopy);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
                    GL_UNSIGNED_BYTE, nullptr);
-      _accWidth = width;
-      _accHeight = height;
+      _c->accWidth = width;
+      _c->accHeight = height;
       first = true;
     }
 
     // the window into the copy
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : GL_BACK);
-    glBindTexture(GL_TEXTURE_2D, _accCopy);
+    glBindTexture(GL_TEXTURE_2D, _c->accCopy);
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
     // what is changed below is put back: this runs in the middle of a frame,
@@ -1322,7 +1247,7 @@ void main()
     glViewport(0, 0, width, height);
     glDisable(GL_DEPTH_TEST);
     glApi::UseProgram(_blitProgram);
-    glApi::BindVertexArray(_vao);
+    glApi::BindVertexArray(_c->vao);
     // the vertices come from gl_VertexID; an attribute left enabled would
     // read a stale buffer
     for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
@@ -1330,7 +1255,7 @@ void main()
     glApi::Uniform1i(_uBlitTex, 0);
 
     // added to the sum
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, _accFbo);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->accFbo);
     if(first) {
       glClearColor(0.f, 0.f, 0.f, 0.f);
       glClear(GL_COLOR_BUFFER_BIT);
@@ -1343,7 +1268,7 @@ void main()
     // and the average put back on the window
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     glDisable(GL_BLEND);
-    glBindTexture(GL_TEXTURE_2D, _accTex);
+    glBindTexture(GL_TEXTURE_2D, _c->accTex);
     glApi::Uniform1f(_uBlitScale, 1.f / count);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -1356,15 +1281,15 @@ void main()
     if(wasDepth) glEnable(GL_DEPTH_TEST);
     if(wasBlend) glEnable(GL_BLEND);
     glApi::UseProgram(_program);
-    glApi::BindVertexArray(_vao);
+    glApi::BindVertexArray(_c->vao);
     noTexture();
     return true;
   }
 
   bool showAccumulation(int width, int height, int count)
   {
-    if(count < 1 || !ensure() || !_accFbo || _accWidth != width ||
-       _accHeight != height || !buildBlit())
+    if(count < 1 || !ensure() || !_c->accFbo || _c->accWidth != width ||
+       _c->accHeight != height || !buildBlit())
       return false;
     GLint vp[4];
     GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
@@ -1374,20 +1299,20 @@ void main()
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glApi::UseProgram(_blitProgram);
-    glApi::BindVertexArray(_vao);
+    glApi::BindVertexArray(_c->vao);
     for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
       glApi::DisableVertexAttribArray(i);
     glApi::ActiveTexture(GL_TEXTURE0);
     glApi::Uniform1i(_uBlitTex, 0);
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
-    glBindTexture(GL_TEXTURE_2D, _accTex);
+    glBindTexture(GL_TEXTURE_2D, _c->accTex);
     glApi::Uniform1f(_uBlitScale, 1.f / count);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glViewport(vp[0], vp[1], vp[2], vp[3]);
     if(wasDepth) glEnable(GL_DEPTH_TEST);
     if(wasBlend) glEnable(GL_BLEND);
     glApi::UseProgram(_program);
-    glApi::BindVertexArray(_vao);
+    glApi::BindVertexArray(_c->vao);
     noTexture();
     return true;
   }
@@ -1429,32 +1354,32 @@ void main()
 
     void dropAccBuffers()
     {
-      if(_accFbo) glApi::DeleteFramebuffers(1, &_accFbo);
-      if(_accTex) glDeleteTextures(1, &_accTex);
-      if(_accCopy) glDeleteTextures(1, &_accCopy);
-      _accFbo = _accTex = _accCopy = 0;
-      _accWidth = _accHeight = 0;
+      if(_c->accFbo) glApi::DeleteFramebuffers(1, &_c->accFbo);
+      if(_c->accTex) glDeleteTextures(1, &_c->accTex);
+      if(_c->accCopy) glDeleteTextures(1, &_c->accCopy);
+      _c->accFbo = _c->accTex = _c->accCopy = 0;
+      _c->accWidth = _c->accHeight = 0;
     }
 
     void dropFireBuffers()
     {
-      if(_fireFbo) glApi::DeleteFramebuffers(1, &_fireFbo);
-      if(_fireDepth) glDeleteTextures(1, &_fireDepth);
-      if(_fireFrame) glDeleteTextures(1, &_fireFrame);
-      _fireFbo = _fireDepth = _fireFrame = 0;
-      _fireWidth = _fireHeight = 0;
+      if(_c->fireFbo) glApi::DeleteFramebuffers(1, &_c->fireFbo);
+      if(_c->fireDepth) glDeleteTextures(1, &_c->fireDepth);
+      if(_c->fireFrame) glDeleteTextures(1, &_c->fireFrame);
+      _c->fireFbo = _c->fireDepth = _c->fireFrame = 0;
+      _c->fireWidth = _c->fireHeight = 0;
     }
 
     // the window's depth into a texture of the given format, which has to
     // be the window's own, unknown: tried like the transparency buffers'
     bool copyDepthToTexture(int width, int height, GLenum format)
     {
-      if(!_fireFbo) {
-        glApi::GenFramebuffers(1, &_fireFbo);
-        glApi::BindFramebuffer(GL_FRAMEBUFFER, _fireFbo);
+      if(!_c->fireFbo) {
+        glApi::GenFramebuffers(1, &_c->fireFbo);
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->fireFbo);
         bool stencil = (format == GL_DEPTH24_STENCIL8);
-        glGenTextures(1, &_fireDepth);
-        glBindTexture(GL_TEXTURE_2D, _fireDepth);
+        glGenTextures(1, &_c->fireDepth);
+        glBindTexture(GL_TEXTURE_2D, _c->fireDepth);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1466,8 +1391,8 @@ void main()
                      stencil ? GL_DEPTH_STENCIL : GL_DEPTH_COMPONENT,
                      stencil ? GL_UNSIGNED_INT_24_8 : GL_UNSIGNED_INT, nullptr);
         // and the frame itself, for the shimmer of the air over the flames
-        glGenTextures(1, &_fireFrame);
-        glBindTexture(GL_TEXTURE_2D, _fireFrame);
+        glGenTextures(1, &_c->fireFrame);
+        glBindTexture(GL_TEXTURE_2D, _c->fireFrame);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1478,7 +1403,7 @@ void main()
         glApi::FramebufferTexture2D(
           GL_FRAMEBUFFER,
           stencil ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT,
-          GL_TEXTURE_2D, _fireDepth, 0);
+          GL_TEXTURE_2D, _c->fireDepth, 0);
         const GLenum none = GL_NONE;
         glApi::DrawBuffers(1, &none);
         if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
@@ -1486,13 +1411,13 @@ void main()
           dropFireBuffers();
           return false;
         }
-        _fireWidth = width;
-        _fireHeight = height;
+        _c->fireWidth = width;
+        _c->fireHeight = height;
       }
       while(glGetError() != GL_NO_ERROR) {}
       // the whole copy is cleared first, so that the row over the window's
       // own holds a depth of one; the blit covers the rest of it
-      glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _fireFbo);
+      glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _c->fireFbo);
       GLboolean wasMask = GL_TRUE, wasScissor = glIsEnabled(GL_SCISSOR_TEST);
       glGetBooleanv(GL_DEPTH_WRITEMASK, &wasMask);
       GLdouble wasClear = 1.;
@@ -1519,15 +1444,15 @@ void main()
     if(!ensure() || !glApi::haveFramebufferObjects() ||
        !glApi::BlitFramebuffer || !buildFire())
       return false;
-    if(_fireFbo && (_fireWidth != width || _fireHeight != height))
+    if(_c->fireFbo && (_c->fireWidth != width || _c->fireHeight != height))
       dropFireBuffers();
     bool ok = false;
-    if(_fireDepthFormat) { ok = copyDepthToTexture(width, height, _fireDepthFormat); }
+    if(_c->fireDepthFormat) { ok = copyDepthToTexture(width, height, _c->fireDepthFormat); }
     else {
       const GLenum formats[2] = {GL_DEPTH24_STENCIL8, GL_DEPTH_COMPONENT24};
       for(int i = 0; i < 2 && !ok; i++) {
         ok = copyDepthToTexture(width, height, formats[i]);
-        if(ok) _fireDepthFormat = formats[i];
+        if(ok) _c->fireDepthFormat = formats[i];
       }
     }
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
@@ -1540,7 +1465,7 @@ void main()
     if(drawBuf == GL_NONE) drawBuf = GL_BACK;
     glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : (GLenum)drawBuf);
     glApi::ActiveTexture(GL_TEXTURE0 + 1);
-    glBindTexture(GL_TEXTURE_2D, _fireFrame);
+    glBindTexture(GL_TEXTURE_2D, _c->fireFrame);
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
     // the window drawn over, wherever the fire reaches; what is changed is
@@ -1553,21 +1478,21 @@ void main()
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glApi::UseProgram(_fireProgram);
-    glApi::BindVertexArray(_vao);
+    glApi::BindVertexArray(_c->vao);
     for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
       glApi::DisableVertexAttribArray(i);
     glApi::ActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _fireDepth);
+    glBindTexture(GL_TEXTURE_2D, _c->fireDepth);
     glApi::Uniform1i(_uFireDepth, 0);
     glApi::Uniform1i(_uFireFrame, 1);
     // the transparent things drawn this frame, from the summing buffers; on
     // unit 4, as units 2 and 3 hold the shadow maps of the main program for
     // the whole frame and a texture bound over one of them is read as black
-    bool reveal = _oitUsed && _oitReveal && _oitWidth == width &&
-                  _oitHeight == height;
+    bool reveal = _oitUsed && _c->oitReveal && _c->oitWidth == width &&
+                  _c->oitHeight == height;
     _oitUsed = false;
     glApi::ActiveTexture(GL_TEXTURE0 + 4);
-    glBindTexture(GL_TEXTURE_2D, reveal ? _oitReveal : 0);
+    glBindTexture(GL_TEXTURE_2D, reveal ? _c->oitReveal : 0);
     glApi::Uniform1i(_uFireReveal, 4);
     glApi::Uniform1i(_uFireRevealOn, reveal ? 1 : 0);
     glApi::Uniform1f(_uFireLevel, (float)level);
@@ -1583,7 +1508,7 @@ void main()
     glBindTexture(GL_TEXTURE_2D, 0);
     glApi::ActiveTexture(GL_TEXTURE0);
     glApi::UseProgram(_program);
-    glApi::BindVertexArray(_vao);
+    glApi::BindVertexArray(_c->vao);
     noTexture();
     return true;
   }
@@ -1698,7 +1623,7 @@ void main()
   {
     if(count < 2 || !glApi::haveInstancing() || !ensure()) return false;
     int segments = count / 2;
-    glApi::BindVertexArray(_vao);
+    glApi::BindVertexArray(_c->vao);
 
     GLint vp[4];
     glGetIntegerv(GL_VIEWPORT, vp);
@@ -1788,7 +1713,7 @@ void main()
   {
     if(numVertices <= 0 || numGlyphs <= 0) return true;
     if(!glApi::haveInstancing() || !ensure()) return false;
-    glApi::BindVertexArray(_vao);
+    glApi::BindVertexArray(_c->vao);
 
     // the shape itself, once
     if(!_streamVertices) glApi::GenBuffers(1, &_streamVertices);
@@ -1866,7 +1791,7 @@ void main()
                      int count)
   {
     if(count <= 0 || !ensure()) return;
-    glApi::BindVertexArray(_vao);
+    glApi::BindVertexArray(_c->vao);
 
     if(!_streamVertices) glApi::GenBuffers(1, &_streamVertices);
     glApi::BindBuffer(GL_ARRAY_BUFFER, _streamVertices);
@@ -1944,44 +1869,44 @@ void main()
     if(width < 1 || height < 1) return false;
     if(!ensure() || !glApi::haveFramebufferObjects()) return false;
 
-    if(_pickFbo && (_pickWidth != width || _pickHeight != height)) {
+    if(_c->pickFbo && (_c->pickWidth != width || _c->pickHeight != height)) {
       // the window has been resized: the attachments are the wrong size
-      glApi::DeleteFramebuffers(1, &_pickFbo);
-      glDeleteTextures(1, &_pickColorTex);
-      glDeleteTextures(1, &_pickDepthTex);
-      glApi::DeleteRenderbuffers(1, &_pickDepthRb);
-      _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
+      glApi::DeleteFramebuffers(1, &_c->pickFbo);
+      glDeleteTextures(1, &_c->pickColorTex);
+      glDeleteTextures(1, &_c->pickDepthTex);
+      glApi::DeleteRenderbuffers(1, &_c->pickDepthRb);
+      _c->pickFbo = _c->pickColorTex = _c->pickDepthTex = _c->pickDepthRb = 0;
     }
 
-    if(!_pickFbo) {
-      glApi::GenFramebuffers(1, &_pickFbo);
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, _pickFbo);
+    if(!_c->pickFbo) {
+      glApi::GenFramebuffers(1, &_c->pickFbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->pickFbo);
 
-      glGenTextures(1, &_pickColorTex);
-      glBindTexture(GL_TEXTURE_2D, _pickColorTex);
+      glGenTextures(1, &_c->pickColorTex);
+      glBindTexture(GL_TEXTURE_2D, _c->pickColorTex);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
                    GL_UNSIGNED_BYTE, nullptr);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                  GL_TEXTURE_2D, _pickColorTex, 0);
+                                  GL_TEXTURE_2D, _c->pickColorTex, 0);
 
-      glGenTextures(1, &_pickDepthTex);
-      glBindTexture(GL_TEXTURE_2D, _pickDepthTex);
+      glGenTextures(1, &_c->pickDepthTex);
+      glBindTexture(GL_TEXTURE_2D, _c->pickDepthTex);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
                    GL_UNSIGNED_BYTE, nullptr);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + 1,
-                                  GL_TEXTURE_2D, _pickDepthTex, 0);
+                                  GL_TEXTURE_2D, _c->pickDepthTex, 0);
 
       // depth tested, so that what is read back is what ended up in front
-      glApi::GenRenderbuffers(1, &_pickDepthRb);
-      glApi::BindRenderbuffer(GL_RENDERBUFFER, _pickDepthRb);
+      glApi::GenRenderbuffers(1, &_c->pickDepthRb);
+      glApi::BindRenderbuffer(GL_RENDERBUFFER, _c->pickDepthRb);
       glApi::RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width,
                                  height);
       glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                                     GL_RENDERBUFFER, _pickDepthRb);
+                                     GL_RENDERBUFFER, _c->pickDepthRb);
       glBindTexture(GL_TEXTURE_2D, 0);
 
       if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
@@ -1990,20 +1915,20 @@ void main()
                      "window instead");
         glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
         // its attachments go with it, or every pick would make a set more
-        glApi::DeleteFramebuffers(1, &_pickFbo);
-        glDeleteTextures(1, &_pickColorTex);
-        glDeleteTextures(1, &_pickDepthTex);
-        glApi::DeleteRenderbuffers(1, &_pickDepthRb);
-        _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
+        glApi::DeleteFramebuffers(1, &_c->pickFbo);
+        glDeleteTextures(1, &_c->pickColorTex);
+        glDeleteTextures(1, &_c->pickDepthTex);
+        glApi::DeleteRenderbuffers(1, &_c->pickDepthRb);
+        _c->pickFbo = _c->pickColorTex = _c->pickDepthTex = _c->pickDepthRb = 0;
         return false;
       }
-      _pickWidth = width;
-      _pickHeight = height;
+      _c->pickWidth = width;
+      _c->pickHeight = height;
       Msg::Debug("Picking into a %dx%d buffer, with the depth as a colour",
                  width, height);
     }
 
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, _pickFbo);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->pickFbo);
     const GLenum bufs[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0 + 1};
     glApi::DrawBuffers(2, bufs);
     return true;
@@ -2012,7 +1937,7 @@ void main()
   void readPickBuffer(int x, int y, int w, int h, unsigned char *colors,
                       float *depths)
   {
-    if(!_pickFbo || w < 1 || h < 1) return;
+    if(!_c->pickFbo || w < 1 || h < 1) return;
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadBuffer(GL_COLOR_ATTACHMENT0);
     glReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, colors);
@@ -2032,7 +1957,7 @@ void main()
 
   void releasePickBuffer()
   {
-    if(!_pickFbo) return;
+    if(!_c->pickFbo) return;
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
   }
 
@@ -2076,13 +2001,13 @@ void main()
 
     void dropOitBuffers()
     {
-      if(!_oitFbo) return;
+      if(!_c->oitFbo) return;
       glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
-      glApi::DeleteFramebuffers(1, &_oitFbo);
-      glDeleteTextures(1, &_oitAccum);
-      glDeleteTextures(1, &_oitReveal);
-      glApi::DeleteRenderbuffers(1, &_oitDepthRb);
-      _oitFbo = _oitAccum = _oitReveal = _oitDepthRb = 0;
+      glApi::DeleteFramebuffers(1, &_c->oitFbo);
+      glDeleteTextures(1, &_c->oitAccum);
+      glDeleteTextures(1, &_c->oitReveal);
+      glApi::DeleteRenderbuffers(1, &_c->oitDepthRb);
+      _c->oitFbo = _c->oitAccum = _c->oitReveal = _c->oitDepthRb = 0;
     }
 
     GLuint floatTarget(int width, int height, GLenum internal, GLenum format,
@@ -2105,44 +2030,44 @@ void main()
     // tried.
     bool makeOitBuffers(int width, int height, GLenum depthFormat)
     {
-      glApi::GenFramebuffers(1, &_oitFbo);
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, _oitFbo);
+      glApi::GenFramebuffers(1, &_c->oitFbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->oitFbo);
 
       // the weighted colours, and the light let through
-      _oitAccum = floatTarget(width, height, GL_RGBA16F, GL_RGBA, GL_HALF_FLOAT);
+      _c->oitAccum = floatTarget(width, height, GL_RGBA16F, GL_RGBA, GL_HALF_FLOAT);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                  GL_TEXTURE_2D, _oitAccum, 0);
-      _oitReveal = floatTarget(width, height, GL_R16F, GL_RED, GL_HALF_FLOAT);
+                                  GL_TEXTURE_2D, _c->oitAccum, 0);
+      _c->oitReveal = floatTarget(width, height, GL_R16F, GL_RED, GL_HALF_FLOAT);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + 1,
-                                  GL_TEXTURE_2D, _oitReveal, 0);
+                                  GL_TEXTURE_2D, _c->oitReveal, 0);
       glBindTexture(GL_TEXTURE_2D, 0);
 
-      glApi::GenRenderbuffers(1, &_oitDepthRb);
-      glApi::BindRenderbuffer(GL_RENDERBUFFER, _oitDepthRb);
+      glApi::GenRenderbuffers(1, &_c->oitDepthRb);
+      glApi::BindRenderbuffer(GL_RENDERBUFFER, _c->oitDepthRb);
       glApi::RenderbufferStorage(GL_RENDERBUFFER, depthFormat, width, height);
       glApi::FramebufferRenderbuffer(
         GL_FRAMEBUFFER,
         (depthFormat == GL_DEPTH24_STENCIL8) ? GL_DEPTH_STENCIL_ATTACHMENT :
                                                GL_DEPTH_ATTACHMENT,
-        GL_RENDERBUFFER, _oitDepthRb);
+        GL_RENDERBUFFER, _c->oitDepthRb);
 
       if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
          GL_FRAMEBUFFER_COMPLETE) {
         dropOitBuffers();
         return false;
       }
-      _oitWidth = width;
-      _oitHeight = height;
+      _c->oitWidth = width;
+      _c->oitHeight = height;
       return true;
     }
 
     bool copyWindowDepth(int width, int height, GLenum depthFormat)
     {
-      if(!_oitFbo && !makeOitBuffers(width, height, depthFormat)) return false;
+      if(!_c->oitFbo && !makeOitBuffers(width, height, depthFormat)) return false;
       // whatever error was already pending is not ours to read
       while(glGetError() != GL_NO_ERROR) {}
       glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, _window);
-      glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _oitFbo);
+      glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _c->oitFbo);
       glApi::BlitFramebuffer(0, 0, width, height, 0, 0, width, height,
                              GL_DEPTH_BUFFER_BIT, GL_NEAREST);
       if(glGetError() == GL_NO_ERROR) return true;
@@ -2193,10 +2118,10 @@ void main()
     _window = _printFbo;
     // the transparency buffers were made to match the window
     dropOitBuffers();
-    _oitDepthFormat = 0;
+    _c->oitDepthFormat = 0;
     // the fire copies the depth of what it burns: its format was chosen for
     // the window too
-    _fireDepthFormat = 0;
+    _c->fireDepthFormat = 0;
     Msg::Debug("Printing into a %dx%d buffer", width, height);
     return true;
   }
@@ -2222,11 +2147,11 @@ void main()
     glApi::DeleteRenderbuffers(1, &_printDepth);
     _printFbo = _printColor = _printDepth = 0;
     dropOitBuffers();
-    _oitDepthFormat = 0;
+    _c->oitDepthFormat = 0;
     // the fire copies the depth of what it burns: its format was chosen for
     // the window too
     dropFireBuffers();
-    _fireDepthFormat = 0;
+    _c->fireDepthFormat = 0;
     // a picture of a few thousand pixels a side leaves buffers of hundreds of
     // megabytes behind otherwise: they are kept for a window, which is small
     // and drawn again and again, not for a print
@@ -2249,15 +2174,15 @@ void main()
     int w = vp[0] + vp[2], h = vp[1] + vp[3];
     if(w < 1 || h < 1) return false;
 
-    if(_oitFbo && (_oitWidth != w || _oitHeight != h)) dropOitBuffers();
+    if(_c->oitFbo && (_c->oitWidth != w || _c->oitHeight != h)) dropOitBuffers();
 
     bool ok = false;
-    if(_oitDepthFormat) { ok = copyWindowDepth(w, h, _oitDepthFormat); }
+    if(_c->oitDepthFormat) { ok = copyWindowDepth(w, h, _c->oitDepthFormat); }
     else {
       const GLenum formats[2] = {GL_DEPTH24_STENCIL8, GL_DEPTH_COMPONENT24};
       for(int i = 0; i < 2 && !ok; i++) {
         ok = copyWindowDepth(w, h, formats[i]);
-        if(ok) _oitDepthFormat = formats[i];
+        if(ok) _c->oitDepthFormat = formats[i];
       }
     }
     if(!ok) {
@@ -2268,7 +2193,7 @@ void main()
       return false;
     }
 
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, _oitFbo);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->oitFbo);
     const GLenum bufs[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0 + 1};
     glApi::DrawBuffers(2, bufs);
 
@@ -2302,17 +2227,17 @@ void main()
     glDepthMask(GL_TRUE);
 
     glApi::UseProgram(_oitProgram);
-    glApi::BindVertexArray(_vao);
+    glApi::BindVertexArray(_c->vao);
     // the vertices come from gl_VertexID; an attribute left enabled would
     // read a stale buffer
     for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
       glApi::DisableVertexAttribArray(i);
 
     glApi::ActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _oitAccum);
+    glBindTexture(GL_TEXTURE_2D, _c->oitAccum);
     glApi::Uniform1i(_uAccum, 0);
     glApi::ActiveTexture(GL_TEXTURE0 + 1);
-    glBindTexture(GL_TEXTURE_2D, _oitReveal);
+    glBindTexture(GL_TEXTURE_2D, _c->oitReveal);
     glApi::Uniform1i(_uReveal, 1);
     glApi::ActiveTexture(GL_TEXTURE0);
 
