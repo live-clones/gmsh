@@ -625,6 +625,28 @@ public:
   }
 };
 
+// The element lists of a surface or a volume, each passed to f when its own
+// option shows it, always in the same order: what goes into an array in
+// which order decides what is drawn over what, and what a pick returns.
+template <class F> static void forShownFaceElements(GFace *f, F fun)
+{
+  CTX *c = CTX::instance();
+  if(c->mesh.triangles) fun(f->triangles);
+  if(c->mesh.quadrangles) fun(f->quadrangles);
+  if(c->mesh.polygons) fun(f->polygons);
+}
+
+template <class F> static void forShownRegionElements(GRegion *r, F fun)
+{
+  CTX *c = CTX::instance();
+  if(c->mesh.tetrahedra) fun(r->tetrahedra);
+  if(c->mesh.hexahedra) fun(r->hexahedra);
+  if(c->mesh.prisms) fun(r->prisms);
+  if(c->mesh.pyramids) fun(r->pyramids);
+  if(c->mesh.trihedra) fun(r->trihedra);
+  if(c->mesh.polyhedra) fun(r->polyhedra);
+}
+
 class initMeshGFace {
 private:
   bool _curved;
@@ -668,12 +690,9 @@ public:
       f->va_lines = new VertexArray(2, edg ? _estimateNumLines(f) : 100);
       f->va_triangles =
         new VertexArray(3, fac ? _estimateNumTriangles(f) : 100);
-      if(CTX::instance()->mesh.triangles)
-        addElementsInArrays(f, f->va_lines, f->va_triangles, f->triangles, edg, fac);
-      if(CTX::instance()->mesh.quadrangles)
-        addElementsInArrays(f, f->va_lines, f->va_triangles, f->quadrangles, edg, fac);
-      if(CTX::instance()->mesh.polygons)
-        addElementsInArrays(f, f->va_lines, f->va_triangles, f->polygons, edg, fac);
+      forShownFaceElements(f, [&](auto &els) {
+        addElementsInArrays(f, f->va_lines, f->va_triangles, els, edg, fac);
+      });
       f->va_lines->finalize();
       f->va_triangles->finalize();
     }
@@ -756,34 +775,16 @@ public:
         if(!nth) nth = Msg::GetMaxThreads();
         double t1 = TimeOfDay();
         interior = new UniqueElementFilter(nth > 1);
-        if(CTX::instance()->mesh.tetrahedra)
-          markBoundaryFaces(r->tetrahedra, interior, nth);
-        if(CTX::instance()->mesh.hexahedra)
-          markBoundaryFaces(r->hexahedra, interior, nth);
-        if(CTX::instance()->mesh.prisms)
-          markBoundaryFaces(r->prisms, interior, nth);
-        if(CTX::instance()->mesh.pyramids)
-          markBoundaryFaces(r->pyramids, interior, nth);
-        if(CTX::instance()->mesh.trihedra)
-          markBoundaryFaces(r->trihedra, interior, nth);
-        if(CTX::instance()->mesh.polyhedra)
-          markBoundaryFaces(r->polyhedra, interior, nth);
+        forShownRegionElements(
+          r, [&](auto &els) { markBoundaryFaces(els, interior, nth); });
         Msg::Debug("Located the boundary faces of volume %d in %g s", r->tag(),
                    TimeOfDay() - t1);
       }
 
-      if(CTX::instance()->mesh.tetrahedra)
-        addElementsInArrays(r, r->va_lines, r->va_triangles, r->tetrahedra, edg, fac, interior);
-      if(CTX::instance()->mesh.hexahedra)
-        addElementsInArrays(r, r->va_lines, r->va_triangles, r->hexahedra, edg, fac, interior);
-      if(CTX::instance()->mesh.prisms)
-        addElementsInArrays(r, r->va_lines, r->va_triangles, r->prisms, edg, fac, interior);
-      if(CTX::instance()->mesh.pyramids)
-        addElementsInArrays(r, r->va_lines, r->va_triangles, r->pyramids, edg, fac, interior);
-      if(CTX::instance()->mesh.trihedra)
-        addElementsInArrays(r, r->va_lines, r->va_triangles, r->trihedra, edg, fac, interior);
-      if(CTX::instance()->mesh.polyhedra)
-        addElementsInArrays(r, r->va_lines, r->va_triangles, r->polyhedra, edg, fac, interior);
+      forShownRegionElements(r, [&](auto &els) {
+        addElementsInArrays(r, r->va_lines, r->va_triangles, els, edg, fac,
+                            interior);
+      });
       delete interior;
       r->va_lines->finalize();
       r->va_triangles->finalize();
@@ -840,12 +841,8 @@ static void fillCutEntity(GEntity *e, bool edges, bool faces, int est)
   }
   else if(e->dim() == 2) {
     GFace *f = (GFace *)e;
-    if(CTX::instance()->mesh.triangles)
-      addCutElements(e, f->triangles, edges, faces, nullptr);
-    if(CTX::instance()->mesh.quadrangles)
-      addCutElements(e, f->quadrangles, edges, faces, nullptr);
-    if(CTX::instance()->mesh.polygons)
-      addCutElements(e, f->polygons, edges, faces, nullptr);
+    forShownFaceElements(
+      f, [&](auto &els) { addCutElements(e, els, edges, faces, nullptr); });
   }
   e->va_clip_lines->finalize();
   e->va_clip_triangles->finalize();
@@ -881,12 +878,7 @@ bool GModel::fillClipVertexArrays()
 
     if(caps) {
       r->va_clip_triangles = new VertexArray(3, est);
-      if(ctx->mesh.tetrahedra) addCapsInArray(r, r->tetrahedra);
-      if(ctx->mesh.hexahedra) addCapsInArray(r, r->hexahedra);
-      if(ctx->mesh.prisms) addCapsInArray(r, r->prisms);
-      if(ctx->mesh.pyramids) addCapsInArray(r, r->pyramids);
-      if(ctx->mesh.trihedra) addCapsInArray(r, r->trihedra);
-      if(ctx->mesh.polyhedra) addCapsInArray(r, r->polyhedra);
+      forShownRegionElements(r, [&](auto &els) { addCapsInArray(r, els); });
       r->va_clip_triangles->finalize();
     }
     else {
@@ -895,7 +887,6 @@ bool GModel::fillClipVertexArrays()
       if(!edg && !fac) continue;
       r->va_clip_lines = new VertexArray(2, edg ? 6 * est : 100);
       r->va_clip_triangles = new VertexArray(3, fac ? 4 * est : 100);
-      VertexArray *vl = r->va_clip_lines, *vt = r->va_clip_triangles;
 
       // only the boundary of what is kept is drawn
       UniqueElementFilter *bnd = nullptr;
@@ -903,43 +894,11 @@ bool GModel::fillClipVertexArrays()
       if(!nth) nth = Msg::GetMaxThreads();
       if(fac && removeInteriorFaces()) {
         bnd = new UniqueElementFilter(nth > 1);
-        if(ctx->mesh.tetrahedra) markKeptBoundaryFaces(r->tetrahedra, bnd, nth);
-        if(ctx->mesh.hexahedra) markKeptBoundaryFaces(r->hexahedra, bnd, nth);
-        if(ctx->mesh.prisms) markKeptBoundaryFaces(r->prisms, bnd, nth);
-        if(ctx->mesh.pyramids) markKeptBoundaryFaces(r->pyramids, bnd, nth);
-        if(ctx->mesh.trihedra) markKeptBoundaryFaces(r->trihedra, bnd, nth);
-        if(ctx->mesh.polyhedra) markKeptBoundaryFaces(r->polyhedra, bnd, nth);
+        forShownRegionElements(
+          r, [&](auto &els) { markKeptBoundaryFaces(els, bnd, nth); });
       }
-      if(ctx->mesh.tetrahedra) {
-        std::vector<MTetrahedron *> cut;
-        gatherCutElements(r->tetrahedra, cut);
-        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
-      }
-      if(ctx->mesh.hexahedra) {
-        std::vector<MHexahedron *> cut;
-        gatherCutElements(r->hexahedra, cut);
-        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
-      }
-      if(ctx->mesh.prisms) {
-        std::vector<MPrism *> cut;
-        gatherCutElements(r->prisms, cut);
-        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
-      }
-      if(ctx->mesh.pyramids) {
-        std::vector<MPyramid *> cut;
-        gatherCutElements(r->pyramids, cut);
-        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
-      }
-      if(ctx->mesh.trihedra) {
-        std::vector<MTrihedron *> cut;
-        gatherCutElements(r->trihedra, cut);
-        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
-      }
-      if(ctx->mesh.polyhedra) {
-        std::vector<MPolyhedron *> cut;
-        gatherCutElements(r->polyhedra, cut);
-        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
-      }
+      forShownRegionElements(
+        r, [&](auto &els) { addCutElements(r, els, edg, fac, bnd); });
       delete bnd;
       r->va_clip_lines->finalize();
       r->va_clip_triangles->finalize();
