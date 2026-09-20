@@ -31,38 +31,37 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
   double yy = y + offset / ctx->s[1];
   double zz = z + offset / ctx->s[2];
 
-  char str[1024];
+  // the names are the user's, of any length: the label is built as a string
+  // rather than into a buffer it could run past
+  std::string str;
+  char tmp[64];
   switch(CTX::instance()->geom.labelType) {
   case 5:
-    {
-      sprintf(str, "(%g,%g,%g)", x, y, z);
-    }
+    snprintf(tmp, sizeof(tmp), "(%g,%g,%g)", x, y, z);
+    str = tmp;
     break;
   case 4:
-    {
-      strcpy(str, "");
-      std::string name = "";
-      for(std::size_t i = 0; i < e->physicals.size(); i++) {
-        if(name.size()) strcat(str, ", ");
-        name = e->model()->getPhysicalName(e->dim(), std::abs(e->physicals[i]));
-        if(name.size()) strcat(str, name.c_str());
-      }
+    for(std::size_t i = 0; i < e->physicals.size(); i++) {
+      std::string name =
+        e->model()->getPhysicalName(e->dim(), std::abs(e->physicals[i]));
+      if(name.empty()) continue;
+      if(str.size()) str += ", ";
+      str += name;
     }
     break;
   case 3:
-    strcpy(str, e->model()->getElementaryName(e->dim(), e->tag()).c_str());
+    str = e->model()->getElementaryName(e->dim(), e->tag());
     break;
   case 2:
-    strcpy(str, "");
     for(std::size_t i = 0; i < e->physicals.size(); i++) {
-      char tmp[32];
-      if(i) strcat(str, ", ");
-      sprintf(tmp, "%d", e->physicals[i]);
-      strcat(str, tmp);
+      if(i) str += ", ";
+      snprintf(tmp, sizeof(tmp), "%d", e->physicals[i]);
+      str += tmp;
     }
     break;
   case 1:
-    sprintf(str, "%d", e->tag());
+    snprintf(tmp, sizeof(tmp), "%d", e->tag());
+    str = tmp;
     break;
   case 0:
   default:
@@ -75,7 +74,7 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
     return;
   }
 
-  ctx->drawString(str, xx, yy, zz);
+  ctx->drawString(str.c_str(), xx, yy, zz);
 }
 
 // the glyphs of the geometry (point spheres, curve cylinders), collected
