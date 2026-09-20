@@ -685,7 +685,11 @@ static unsigned int getTagForGraph2dDataPoint(const SPoint2 &p)
 
 SPoint2 getGraph2dDataPointForTag(unsigned int tag) { return tags_rev[tag]; }
 
-static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
+// Adds the point to what is being drawn, and says whether it was: a value
+// with no place on the graph (a nan, which is what a logarithmic scale makes
+// of a value that is not positive, or one outside the range when the values
+// are not saturated) is left out.
+static bool addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
                           double width, double height, double x, double y,
                           double xmin, double xmax, double ymin, double ymax,
                           bool numeric, bool singlePoint, double vmin,
@@ -737,7 +741,9 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
 
     if(singlePoint && ctx->render_mode == drawContext::GMSH_SELECT)
       ctx->unsetPickColor();
+    return true;
   }
+  return false;
 }
 
 static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
@@ -767,11 +773,17 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
         gmshLineStipple(opt->stipple[i % 10][0], opt->stipple[i % 10][1]);
         gl2psEnable(GL2PS_LINE_STIPPLE);
       }
+      // the curve is broken where it has no point to draw, rather than a
+      // segment drawn straight across the gap
       gmshBegin(GL_LINE_STRIP);
-      for(std::size_t j = 0; j < x.size(); j++)
-        addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], xmin,
-                      xmax, opt->tmpMin, opt->tmpMax, false, false, vmin, vmax,
-                      inModelCoordinates);
+      for(std::size_t j = 0; j < x.size(); j++) {
+        if(!addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j],
+                          xmin, xmax, opt->tmpMin, opt->tmpMax, false, false,
+                          vmin, vmax, inModelCoordinates)) {
+          gmshEnd();
+          gmshBegin(GL_LINE_STRIP);
+        }
+      }
       gmshEnd();
       if(opt->useStipple) {
         gmshLineStippleOff();
