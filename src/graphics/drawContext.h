@@ -72,6 +72,12 @@ bool gmshMeshEntityIsTransparent(GEntity *e);
 bool gmshAnyViewIsTransparent();
 bool gmshViewIsTransparent(PView *p);
 
+// The points of the 2D graphs a picking pass can return: numbered as they are
+// drawn into it (drawGraph2d.cpp), forgotten with it, and looked up by the
+// pass that read the identifiers back (drawPick.cpp).
+void clearGraph2dDataPointTags();
+SPoint2 getGraph2dDataPointForTag(unsigned int tag);
+
 class GModel;
 // GModel::getMeshStatus() for the drawing, which asks it several times a
 // frame: computed again only when the mesh, the geometry or the visibilities

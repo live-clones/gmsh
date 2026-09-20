@@ -5,11 +5,10 @@
 
 #include <string.h>
 #include "drawContext.h"
+#include "GModelVertexArrays.h"
 #include "Context.h"
 #include "OwnerCache.h"
 
-// the colour a selected entity is drawn in (GModelVertexArrays.cpp)
-extern unsigned int getSelectionColor(GEntity *e);
 #include "gl2ps.h"
 #include "VertexArray.h"
 #include "GModel.h"

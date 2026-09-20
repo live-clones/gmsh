@@ -24,9 +24,6 @@
 #include "OS.h"
 #include "gl2ps.h"
 
-extern SPoint2 getGraph2dDataPointForTag(unsigned int);
-extern void clearGraph2dDataPointTags();
-
 bool drawContext::_pickColorActive = false;
 
 // returns the element at a given position in a vertex array (element pointers

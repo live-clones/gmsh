@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <map>
+#include "GModelVertexArrays.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "GModel.h"

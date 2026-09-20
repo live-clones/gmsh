@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include "drawContext.h"
+#include "GModelVertexArrays.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "MPoint.h"
@@ -32,11 +33,6 @@
 #include "PView.h"
 #include "PViewData.h"
 
-// from GModelVertexArrays
-extern unsigned int getColorByEntity(GEntity *e, bool withSelection = true);
-extern bool isElementVisible(MElement *ele);
-// is the element kept by whole element mode (clipping planes)?
-extern bool elementIsKept(MElement *ele);
 
 template <class T>
 static void drawElementLabels(drawContext *ctx, GEntity *e,
