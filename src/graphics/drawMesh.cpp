@@ -644,16 +644,8 @@ static void fillMergedPoints(GModel *m, mergedArrays &ma, int status)
                              c->mesh.qualityInf,
                              c->mesh.qualitySup,
                              c->mesh.radiusInf,
-                             c->mesh.radiusSup,
-                             (double)c->mesh.triangles,
-                             (double)c->mesh.quadrangles,
-                             (double)c->mesh.tetrahedra,
-                             (double)c->mesh.hexahedra,
-                             (double)c->mesh.prisms,
-                             (double)c->mesh.pyramids,
-                             (double)c->mesh.trihedra,
-                             (double)c->mesh.polygons,
-                             (double)c->mesh.polyhedra};
+                             c->mesh.radiusSup};
+  c->addElementTypesToKey(tok);
   // which entities are shown, which can change without the mesh being
   // flagged as changed
   tok.push_back((double)CTX::instance()->entityVisibilityStamp);
@@ -788,10 +780,8 @@ static const std::unordered_set<MVertex *> &keptNodes(GModel *m)
     (double)c->entityVisibilityStamp, (double)c->mesh.clip,
     (double)c->clipOnlyVolume, (double)c->clipOnlyDrawIntersectingVolume,
     c->mesh.qualityInf, c->mesh.qualitySup, c->mesh.radiusInf,
-    c->mesh.radiusSup, (double)c->mesh.triangles, (double)c->mesh.quadrangles,
-    (double)c->mesh.polygons, (double)c->mesh.tetrahedra,
-    (double)c->mesh.hexahedra, (double)c->mesh.prisms, (double)c->mesh.pyramids,
-    (double)c->mesh.trihedra, (double)c->mesh.polyhedra};
+    c->mesh.radiusSup};
+  c->addElementTypesToKey(tok);
   for(int i = 0; i < 6; i++)
     for(int j = 0; j < 4; j++) tok.push_back(c->clipPlane[i][j]);
   keptNodeSet &k = _keptNodes[m];

@@ -351,6 +351,21 @@ public:
   int clipWholeElements, clipOnlyDrawIntersectingVolume, clipOnlyVolume;
   // fill the section cut by the clipping planes in 3D meshes and views
   int clipCapping;
+  // Which kinds of element are drawn, for the key of an array kept between
+  // frames: in one place, and so in one order, for every cache that holds
+  // elements of several kinds.
+  void addElementTypesToKey(std::vector<double> &key) const
+  {
+    key.push_back(mesh.triangles);
+    key.push_back(mesh.quadrangles);
+    key.push_back(mesh.polygons);
+    key.push_back(mesh.tetrahedra);
+    key.push_back(mesh.hexahedra);
+    key.push_back(mesh.prisms);
+    key.push_back(mesh.pyramids);
+    key.push_back(mesh.trihedra);
+    key.push_back(mesh.polyhedra);
+  }
   // What the planes add to the key of an array kept between frames: the modes
   // the clipping window sets directly (they never mark the mesh as changed)
   // and the planes themselves. In one place, so that a mode added to the
