@@ -229,7 +229,6 @@ public:
   // the shift of the projection of the frame being accumulated, a fraction
   // of a pixel, which antialiases the average (identity on the plain frame
   // and when picking)
-  void studioJitter(double m[16]);
 
 private:
   // Colour buffer picking: a selection pass draws every pickable object in a
@@ -296,7 +295,27 @@ private:
   // the projection built by initProjection(), and the modelview it leaves
   // for initPosition()
   double _projection[16], _modelBase[16];
-  // steps of a draw, called by draw3d() and by nothing else
+  void drawAxis(double xmin, double ymin, double zmin, double xmax, double ymax,
+                double zmax, int nticks, int mikado);
+  bool generateTextureForImage(const std::string &name, int page,
+                               GLuint &imageTexture, GLuint &imageW,
+                               GLuint &imageH);
+  // The steps of a frame, called by draw3d(), draw2d() and the picking pass
+  // and by nothing outside this class: the order they go in is what a frame
+  // is, and is not something a caller picks.
+  void studioJitter(double m[16]);
+  void initProjection();
+  void drawGeom();
+  void drawMesh();
+  void drawPost();
+  bool anyViewIsTransparent();
+  void drawBackgroundGradient();
+  void drawBackgroundImage(bool moving);
+  void drawText2d();
+  void drawGraph2d(bool inModelCoordinates);
+  void drawAxes();
+  void drawSmallAxes();
+  void drawScales();
   void buildRotationMatrix();
   void setEulerAnglesFromRotationMatrix();
   void initRenderModel();
@@ -438,15 +457,11 @@ public:
   {
     return (_hiddenViews.find(v) == _hiddenViews.end());
   }
-  bool generateTextureForImage(const std::string &name, int page,
-                               GLuint &imageTexture, GLuint &imageW,
-                               GLuint &imageH);
   void invalidateBgImageTexture();
   void setQuaternion(double q0, double q1, double q2, double q3);
   void addQuaternion(double p1x, double p1y, double p2x, double p2y);
   void addQuaternionFromAxisAndAngle(double axis[3], double angle);
   void setQuaternionFromEulerAngles();
-  void initProjection();
   // the matrices of camera mode: the projection (the camera's frustum,
   // shifted for a studio frame) and the modelview (the camera looking at
   // its target), which `view' comes back with
@@ -465,24 +480,12 @@ public:
   int fix2dCoordinates(double *x, double *y);
   void draw3d();
   void draw2d();
-  void drawGeom();
-  void drawMesh();
-  void drawPost();
-  bool anyViewIsTransparent();
-  void drawBackgroundGradient();
-  void drawBackgroundImage(bool moving);
-  void drawText2d();
-  void drawGraph2d(bool inModelCoordinates);
-  void drawAxis(double xmin, double ymin, double zmin, double xmax, double ymax,
-                double zmax, int nticks, int mikado);
   void drawAxes(int mode, double ticks[3], std::string format[3],
                 std::string label[3], double bb[6], int mikado,
                 double value_bb[6]);
   void drawAxes(int mode, double ticks[3], std::string format[3],
                 std::string label[3], SBoundingBox3d &bb, int mikado,
                 SBoundingBox3d &value_bb);
-  void drawAxes();
-  void drawSmallAxes();
   // a box of text over the picture, in the pixel coordinates of draw2d: the
   // lines are split on newlines and wrapped; (x, y) is the top left corner
   // of the box (align 0), the top centre (1), or the cursor, which the box
@@ -491,7 +494,6 @@ public:
   // was drawn (left, bottom, width, height)
   void drawTextBox(const std::string &text, double x, double y, int align,
                    double box[4] = nullptr);
-  void drawScales();
   void drawString(const std::string &s, double x, double y, double z,
                   const std::string &font_name, int font_enum, int font_size,
                   int align, int line_num = 0);
