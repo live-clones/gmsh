@@ -20,8 +20,6 @@ namespace glApi {
   void(APIENTRY *BindBuffer)(GLenum, GLuint) = nullptr;
   void(APIENTRY *BufferData)(GLenum, GLsizeiptr, const GLvoid *,
                              GLenum) = nullptr;
-  void(APIENTRY *BufferSubData)(GLenum, GLintptr, GLsizeiptr,
-                                const GLvoid *) = nullptr;
 
   GLuint(APIENTRY *CreateShader)(GLenum) = nullptr;
   void(APIENTRY *ShaderSource)(GLuint, GLsizei, const GLchar *const *,
@@ -43,8 +41,6 @@ namespace glApi {
   GLint(APIENTRY *GetUniformLocation)(GLuint, const GLchar *) = nullptr;
   void(APIENTRY *Uniform1i)(GLint, GLint) = nullptr;
   void(APIENTRY *Uniform1f)(GLint, GLfloat) = nullptr;
-  void(APIENTRY *Uniform1iv)(GLint, GLsizei, const GLint *) = nullptr;
-  void(APIENTRY *Uniform1fv)(GLint, GLsizei, const GLfloat *) = nullptr;
   void(APIENTRY *Uniform2fv)(GLint, GLsizei, const GLfloat *) = nullptr;
   void(APIENTRY *Uniform3fv)(GLint, GLsizei, const GLfloat *) = nullptr;
   void(APIENTRY *Uniform4fv)(GLint, GLsizei, const GLfloat *) = nullptr;
@@ -59,7 +55,6 @@ namespace glApi {
                                       const GLvoid *) = nullptr;
 
   void(APIENTRY *GenVertexArrays)(GLsizei, GLuint *) = nullptr;
-  void(APIENTRY *DeleteVertexArrays)(GLsizei, const GLuint *) = nullptr;
   void(APIENTRY *BindVertexArray)(GLuint) = nullptr;
   void(APIENTRY *VertexAttribDivisor)(GLuint, GLuint) = nullptr;
   void(APIENTRY *DrawArraysInstanced)(GLenum, GLint, GLsizei, GLsizei) =
@@ -86,12 +81,10 @@ namespace glApi {
   const GLubyte *(APIENTRY *GetStringi)(GLenum, GLuint) = nullptr;
   void(APIENTRY *BlendFuncSeparate)(GLenum, GLenum, GLenum, GLenum) = nullptr;
 
-  void(APIENTRY *BlendFunci)(GLuint, GLenum, GLenum) = nullptr;
-  void(APIENTRY *BlendEquationi)(GLuint, GLenum) = nullptr;
 
   static bool _loaded = false, _buffers = false, _shaders = false;
   static bool _framebuffers = false, _clipDistance = false;
-  static bool _indexedBlend = false, _es = false;
+  static bool _es = false;
   static bool _instancing = false, _floatColorBuffers = false;
   static int _major = 0, _minor = 0;
 
@@ -173,8 +166,6 @@ namespace glApi {
     BindBuffer = (void(APIENTRY *)(GLenum, GLuint))address("glBindBuffer");
     BufferData = (void(APIENTRY *)(GLenum, GLsizeiptr, const GLvoid *,
                                    GLenum))address("glBufferData");
-    BufferSubData = (void(APIENTRY *)(GLenum, GLintptr, GLsizeiptr,
-                                      const GLvoid *))address("glBufferSubData");
 
     CreateShader = (GLuint(APIENTRY *)(GLenum))address("glCreateShader");
     ShaderSource =
@@ -202,10 +193,6 @@ namespace glApi {
       address("glGetUniformLocation");
     Uniform1i = (void(APIENTRY *)(GLint, GLint))address("glUniform1i");
     Uniform1f = (void(APIENTRY *)(GLint, GLfloat))address("glUniform1f");
-    Uniform1iv =
-      (void(APIENTRY *)(GLint, GLsizei, const GLint *))address("glUniform1iv");
-    Uniform1fv =
-      (void(APIENTRY *)(GLint, GLsizei, const GLfloat *))address("glUniform1fv");
     Uniform2fv =
       (void(APIENTRY *)(GLint, GLsizei, const GLfloat *))address("glUniform2fv");
     Uniform3fv =
@@ -229,8 +216,6 @@ namespace glApi {
 
     GenVertexArrays =
       (void(APIENTRY *)(GLsizei, GLuint *))address("glGenVertexArrays");
-    DeleteVertexArrays = (void(APIENTRY *)(GLsizei, const GLuint *))
-      address("glDeleteVertexArrays");
     BindVertexArray = (void(APIENTRY *)(GLuint))address("glBindVertexArray");
     VertexAttribDivisor =
       (void(APIENTRY *)(GLuint, GLuint))address("glVertexAttribDivisor");
@@ -271,9 +256,6 @@ namespace glApi {
     BlendFuncSeparate = (void(APIENTRY *)(GLenum, GLenum, GLenum, GLenum))
       address("glBlendFuncSeparate");
 
-    BlendFunci =
-      (void(APIENTRY *)(GLuint, GLenum, GLenum))address("glBlendFunci");
-    BlendEquationi = (void(APIENTRY *)(GLuint, GLenum))address("glBlendEquationi");
 
     parseVersion((const char *)glGetString(GL_VERSION), _major, _minor, _es);
 
@@ -304,11 +286,6 @@ namespace glApi {
     // instanced drawing is OpenGL 3.3 and OpenGL ES 3.0
     _instancing = VertexAttribDivisor && DrawArraysInstanced && _shaders &&
                   (_es ? atLeast(3, 0) : atLeast(3, 3));
-    // per target blending is OpenGL 4.0, and OpenGL ES 3.2
-    _indexedBlend = BlendFunci && BlendEquationi &&
-                    (_es ? (atLeast(3, 2) ||
-                            haveExtension("GL_EXT_draw_buffers_indexed")) :
-                           atLeast(4, 0));
     // floating point colour buffers are core from OpenGL 3.0; OpenGL ES 3.0
     // needs an extension to draw into one, until ES 3.2
     _floatColorBuffers =
@@ -321,7 +298,7 @@ namespace glApi {
   void reset()
   {
     _loaded = _buffers = _shaders = false;
-    _framebuffers = _clipDistance = _indexedBlend = _es = false;
+    _framebuffers = _clipDistance = _es = false;
     _instancing = _floatColorBuffers = false;
     _major = _minor = 0;
 
@@ -329,7 +306,6 @@ namespace glApi {
     DeleteBuffers = nullptr;
     BindBuffer = nullptr;
     BufferData = nullptr;
-    BufferSubData = nullptr;
 
     CreateShader = nullptr;
     ShaderSource = nullptr;
@@ -348,8 +324,6 @@ namespace glApi {
     GetUniformLocation = nullptr;
     Uniform1i = nullptr;
     Uniform1f = nullptr;
-    Uniform1iv = nullptr;
-    Uniform1fv = nullptr;
     Uniform2fv = nullptr;
     Uniform3fv = nullptr;
     Uniform4fv = nullptr;
@@ -361,7 +335,6 @@ namespace glApi {
     VertexAttribPointer = nullptr;
 
     GenVertexArrays = nullptr;
-    DeleteVertexArrays = nullptr;
     BindVertexArray = nullptr;
     VertexAttribDivisor = nullptr;
     DrawArraysInstanced = nullptr;
@@ -383,8 +356,6 @@ namespace glApi {
     GetStringi = nullptr;
     BlendFuncSeparate = nullptr;
 
-    BlendFunci = nullptr;
-    BlendEquationi = nullptr;
   }
 
   bool haveBufferObjects()
@@ -409,12 +380,6 @@ namespace glApi {
   {
     load();
     return _clipDistance;
-  }
-
-  bool haveIndexedBlend()
-  {
-    load();
-    return _indexedBlend;
   }
 
   bool haveInstancing()
@@ -456,11 +421,10 @@ namespace glApi {
     Msg::Info("OpenGL %s on %s", v ? v : "?", r ? r : "?");
     Msg::Info("OpenGL shading language %s", s ? s : "none");
     Msg::Info("OpenGL has buffer objects: %s, shaders: %s, framebuffer "
-              "objects: %s, clip distances: %s, per target blending: %s, "
-              "instancing: %s, floating point colour buffers: %s",
+              "objects: %s, clip distances: %s, instancing: %s, floating "
+              "point colour buffers: %s",
               _buffers ? "yes" : "no", _shaders ? "yes" : "no",
               _framebuffers ? "yes" : "no", _clipDistance ? "yes" : "no",
-              _indexedBlend ? "yes" : "no", _instancing ? "yes" : "no",
-              _floatColorBuffers ? "yes" : "no");
+              _instancing ? "yes" : "no", _floatColorBuffers ? "yes" : "no");
   }
 } // namespace glApi

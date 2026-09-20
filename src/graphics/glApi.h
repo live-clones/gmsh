@@ -165,8 +165,6 @@ namespace glApi {
   extern void(APIENTRY *BindBuffer)(GLenum target, GLuint buffer);
   extern void(APIENTRY *BufferData)(GLenum target, GLsizeiptr size,
                                     const GLvoid *data, GLenum usage);
-  extern void(APIENTRY *BufferSubData)(GLenum target, GLintptr offset,
-                                       GLsizeiptr size, const GLvoid *data);
 
   // shaders and programs (OpenGL 2.0)
   extern GLuint(APIENTRY *CreateShader)(GLenum type);
@@ -194,10 +192,6 @@ namespace glApi {
                                              const GLchar *name);
   extern void(APIENTRY *Uniform1i)(GLint location, GLint v0);
   extern void(APIENTRY *Uniform1f)(GLint location, GLfloat v0);
-  extern void(APIENTRY *Uniform1iv)(GLint location, GLsizei count,
-                                    const GLint *value);
-  extern void(APIENTRY *Uniform1fv)(GLint location, GLsizei count,
-                                    const GLfloat *value);
   extern void(APIENTRY *Uniform2fv)(GLint location, GLsizei count,
                                     const GLfloat *value);
   extern void(APIENTRY *Uniform3fv)(GLint location, GLsizei count,
@@ -227,7 +221,6 @@ namespace glApi {
 
   // vertex array objects (OpenGL 3.0)
   extern void(APIENTRY *GenVertexArrays)(GLsizei n, GLuint *arrays);
-  extern void(APIENTRY *DeleteVertexArrays)(GLsizei n, const GLuint *arrays);
   extern void(APIENTRY *BindVertexArray)(GLuint array);
 
   // framebuffer objects and multiple render targets (OpenGL 3.0)
@@ -267,8 +260,6 @@ namespace glApi {
                                            GLenum srcAlpha, GLenum dstAlpha);
 
   // per target blending (OpenGL 4.0, OpenGL ES 3.2)
-  extern void(APIENTRY *BlendFunci)(GLuint buf, GLenum src, GLenum dst);
-  extern void(APIENTRY *BlendEquationi)(GLuint buf, GLenum mode);
 
   // resolve the entry points (a context must be current); does nothing once
   // it has run, until reset()
@@ -287,7 +278,6 @@ namespace glApi {
   // discards instead)
   bool haveClipDistance();
   // per draw buffer blend functions
-  bool haveIndexedBlend();
   // drawing into floating point colour buffers (order independent
   // transparency)
   bool haveFloatColorBuffers();
