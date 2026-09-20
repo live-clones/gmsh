@@ -944,10 +944,10 @@ void drawContext::drawBox(double xmin, double ymin, double zmin, double xmax,
   if(labels) {
     char label[256];
     double offset = 0.3 * CTX::instance()->glFontSize * pixel_equiv_x;
-    sprintf(label, "(%g,%g,%g)", xmin, ymin, zmin);
+    snprintf(label, sizeof(label), "(%g,%g,%g)", xmin, ymin, zmin);
     drawString(label, xmin + offset / s[0], ymin + offset / s[1],
                zmin + offset / s[2]);
-    sprintf(label, "(%g,%g,%g)", xmax, ymax, zmax);
+    snprintf(label, sizeof(label), "(%g,%g,%g)", xmax, ymax, zmax);
     drawString(label, xmax + offset / s[0], ymax + offset / s[1],
                zmax + offset / s[2]);
   }
