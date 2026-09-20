@@ -1524,70 +1524,67 @@ void drawContext::initProjection()
     std::max(fabs(CTX::instance()->min[2]), fabs(CTX::instance()->max[2]));
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
 
-  if(CTX::instance()->camera) { // if we use the camera mode
+  double clip_near, clip_far;
+  if(CTX::instance()->ortho) {
+    clip_near = -zmax * s[2] * CTX::instance()->clipFactor;
+    clip_far = -clip_near;
+  }
+  else {
+    clip_near = 0.75 * CTX::instance()->clipFactor * zmax;
+    clip_far = 75. * CTX::instance()->clipFactor * zmax;
+  }
+
+  // The background, in pixel coordinates and behind everything, if it is
+  // asked for and not in a selection pass. Camera mode draws the same one:
+  // it used to paint a gradient of its own in the camera's space, which
+  // ignored General.BackgroundGradient and Print.Background and left no
+  // room for the background image.
+  if(render_mode != GMSH_SELECT &&
+     (CTX::instance()->bgGradient || CTX::instance()->bgImageFileName.size()) &&
+     (!CTX::instance()->printing || CTX::instance()->print.background)) {
     gmshDepthTest(false);
+    // in pixels, whatever the frame is drawn with: camera mode has the
+    // camera's own view loaded here already
+    gmshMatrixMode(GMSH_MODELVIEW);
     gmshPushMatrix();
     gmshLoadIdentity();
-    double w = (double)viewport[2];
-    double h = (double)viewport[3];
-    double ratio = w / h;
-    double dx = 1.5 * tan(camera.radians) * w * ratio;
-    double dy = 1.5 * tan(camera.radians) * w;
-    double dz = -w * 1.25;
-    gmshBegin(GL_QUADS);
-    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bg);
-    gmshVertex3i((int)-dx, (int)-dy, (int)dz);
-    gmshVertex3i((int)dx, (int)-dy, (int)dz);
-    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
-    gmshVertex3i((int)dx, (int)dy, (int)dz);
-    gmshVertex3i((int)-dx, (int)dy, (int)dz);
-    gmshEnd();
+    gmshMatrixMode(GMSH_PROJECTION);
+    gmshPushMatrix();
+    // the z values and the translation are only needed for GL2PS, which does
+    // not understand "no depth test" (hence we must make sure that we draw
+    // the background behind the rest of the scene)
+    double bg[16], back[16], m[16];
+    glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3],
+                    clip_near, clip_far, bg);
+    glMatrix::translate(0., 0., -0.99 * clip_far, back);
+    glMatrix::multiply(bg, back, m);
+    gmshLoadMatrix(m);
+    drawBackgroundGradient();
+    // hack for GL2PS (to make sure that the image is in front of the
+    // gradient)
+    glMatrix::translate(0., 0., -0.98 * clip_far, back);
+    glMatrix::multiply(bg, back, m);
+    gmshLoadMatrix(m);
+    drawBackgroundImage(false);
+    gmshPopMatrix();
+    gmshMatrixMode(GMSH_MODELVIEW);
     gmshPopMatrix();
     gmshDepthTest(true);
   }
-  else if(!CTX::instance()->camera) { // if not in camera mode
 
-    double clip_near, clip_far;
-    if(CTX::instance()->ortho) {
-      clip_near = -zmax * s[2] * CTX::instance()->clipFactor;
-      clip_far = -clip_near;
-    }
-    else {
-      clip_near = 0.75 * CTX::instance()->clipFactor * zmax;
-      clip_far = 75. * CTX::instance()->clipFactor * zmax;
-    }
+  // in camera mode the matrices are the camera's, loaded by
+  // initCameraMatrices() once this has sized the viewport
+  if(CTX::instance()->camera) {
+    gmshMatrixMode(GMSH_MODELVIEW);
+    return;
+  }
+
+  {
     // setup projection matrix
     gmshMatrixMode(GMSH_PROJECTION);
 
     double pick[16];
     studioJitter(pick);
-
-    // draw background if not in selection mode
-    if(render_mode != GMSH_SELECT &&
-       (CTX::instance()->bgGradient ||
-        CTX::instance()->bgImageFileName.size()) &&
-       (!CTX::instance()->printing || CTX::instance()->print.background)) {
-      gmshDepthTest(false);
-      gmshPushMatrix();
-      // the z values and the translation are only needed for GL2PS, which does
-      // not understand "no depth test" (hence we must make sure that we draw
-      // the background behind the rest of the scene)
-      double bg[16], back[16], m[16];
-      glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3],
-                      clip_near, clip_far, bg);
-      glMatrix::translate(0., 0., -0.99 * clip_far, back);
-      glMatrix::multiply(bg, back, m);
-      gmshLoadMatrix(m);
-      drawBackgroundGradient();
-      // hack for GL2PS (to make sure that the image is in front of the
-      // gradient)
-      glMatrix::translate(0., 0., -0.98 * clip_far, back);
-      glMatrix::multiply(bg, back, m);
-      gmshLoadMatrix(m);
-      drawBackgroundImage(false);
-      gmshPopMatrix();
-      gmshDepthTest(true);
-    }
 
     double projection[16];
     if(CTX::instance()->ortho) {
