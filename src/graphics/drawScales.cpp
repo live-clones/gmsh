@@ -181,6 +181,13 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
     return (i <= 0) ? 0. :
            (i >= nb) ? length : alongBar(opt, (double)i / nb, length);
   };
+  // a point of the bar, given how far along it lies and how far across:
+  // which of the two is x and which is y is all a vertical bar changes
+  double across = horizontal ? height : width;
+  auto at = [&](double along, double a) {
+    horizontal ? gmshVertex2d(xmin + along, ymin + a) :
+                 gmshVertex2d(xmin + a, ymin + along);
+  };
 
   bool iso = (opt->intervalsType == PViewOptions::Iso);
   // nothing is drawn with a range given the other way round: an empty bar
@@ -192,18 +199,10 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       unsigned int col = opt->getColor(i, opt->nbIso);
       gmshColor4ubv((GLubyte *)&col);
       gmshBegin(GL_QUADS);
-      if(horizontal) {
-        gmshVertex2d(xmin + edge(i), ymin);
-        gmshVertex2d(xmin + edge(i + 1), ymin);
-        gmshVertex2d(xmin + edge(i + 1), ymin + height);
-        gmshVertex2d(xmin + edge(i), ymin + height);
-      }
-      else {
-        gmshVertex2d(xmin, ymin + edge(i));
-        gmshVertex2d(xmin + width, ymin + edge(i));
-        gmshVertex2d(xmin + width, ymin + edge(i + 1));
-        gmshVertex2d(xmin, ymin + edge(i + 1));
-      }
+      at(edge(i), 0.);
+      at(edge(i + 1), 0.);
+      at(edge(i + 1), across);
+      at(edge(i), across);
       gmshEnd();
     }
     else if(opt->intervalsType == PViewOptions::Continuous) {
@@ -212,25 +211,13 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       double v1 = opt->tmpMin + i * dv;
       unsigned int col1 = opt->getColor(v1, opt->tmpMin, opt->tmpMax, true);
       gmshColor4ubv((GLubyte *)&col1);
-      if(horizontal) {
-        gmshVertex2d(xmin + edge(i), ymin + height);
-        gmshVertex2d(xmin + edge(i), ymin);
-      }
-      else {
-        gmshVertex2d(xmin, ymin + edge(i));
-        gmshVertex2d(xmin + width, ymin + edge(i));
-      }
+      at(edge(i), across);
+      at(edge(i), 0.);
       double v2 = opt->tmpMin + (i + 1) * dv;
       unsigned int col2 = opt->getColor(v2, opt->tmpMin, opt->tmpMax, true);
       gmshColor4ubv((GLubyte *)&col2);
-      if(horizontal) {
-        gmshVertex2d(xmin + edge(i + 1), ymin);
-        gmshVertex2d(xmin + edge(i + 1), ymin + height);
-      }
-      else {
-        gmshVertex2d(xmin + width, ymin + edge(i + 1));
-        gmshVertex2d(xmin, ymin + edge(i + 1));
-      }
+      at(edge(i + 1), 0.);
+      at(edge(i + 1), across);
       gmshEnd();
     }
     else {
@@ -240,16 +227,9 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       gmshColor4ubv((GLubyte *)&col);
       double t = (opt->nbIso > 1) ? (double)i / (opt->nbIso - 1) : 0.5;
       gmshBegin(GL_LINES);
-      if(horizontal) {
-        double x = xmin + lineAt(alongBar(opt, t, width));
-        gmshVertex2d(x, ymin);
-        gmshVertex2d(x, ymin + height);
-      }
-      else {
-        double y = ymin + lineAt(alongBar(opt, t, height));
-        gmshVertex2d(xmin, y);
-        gmshVertex2d(xmin + width, y);
-      }
+      double along = lineAt(alongBar(opt, t, length));
+      at(along, 0.);
+      at(along, across);
       gmshEnd();
     }
   }
@@ -266,16 +246,9 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
   gmshBegin(GL_LINES);
   for(std::size_t i = 0; i < ticks.size(); i++) {
     double out = (ticks[i].minor ? 0.2 : 0.4) * tick;
-    if(horizontal) {
-      double x = xmin + tickAt(opt, ticks[i].t, width);
-      gmshVertex2d(x, ymin + height);
-      gmshVertex2d(x, ymin + height + out);
-    }
-    else {
-      double y = ymin + tickAt(opt, ticks[i].t, height);
-      gmshVertex2d(xmin + width, y);
-      gmshVertex2d(xmin + width + out, y);
-    }
+    double along = tickAt(opt, ticks[i].t, length);
+    at(along, across);
+    at(along, across + out);
   }
   gmshEnd();
 }
