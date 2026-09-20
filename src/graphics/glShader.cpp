@@ -1980,8 +1980,12 @@ void main()
         Msg::Warning("Could not make a buffer to pick in: picking in the "
                      "window instead");
         glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+        // its attachments go with it, or every pick would make a set more
         glApi::DeleteFramebuffers(1, &_pickFbo);
-        _pickFbo = 0;
+        glDeleteTextures(1, &_pickColorTex);
+        glDeleteTextures(1, &_pickDepthTex);
+        glApi::DeleteRenderbuffers(1, &_pickDepthRb);
+        _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
         return false;
       }
       _pickWidth = width;
