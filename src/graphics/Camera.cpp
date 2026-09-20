@@ -141,47 +141,6 @@ void Camera::update()
   ndfl = glFnear / focallength;
 }
 
-void Camera::affiche()
-{
-  std::cout << "  ------------ GENERAL PARAMETERS ------------" << std::endl;
-  std::cout << "  CTX aperture " << CTX::instance()->camera_aperture
-            << std::endl;
-  std::cout << "  CTX eyesep ratio " << CTX::instance()->eye_sep_ratio
-            << std::endl;
-  std::cout << "  CTX focallength ratio " << CTX::instance()->focallength_ratio
-            << std::endl;
-  std::cout << "  ------------ CAMERA PARAMETERS ------------" << std::endl;
-  std::cout << "  position " << position.x << "," << position.y << ","
-            << position.z << std::endl;
-  std::cout << "  front " << front.x << "," << front.y << "," << front.z
-            << std::endl;
-  std::cout << "  up " << up.x << "," << up.y << "," << up.z << std::endl;
-  std::cout << "  right " << right.x << "," << right.y << "," << right.z
-            << std::endl;
-  std::cout << "  target " << target.x << "," << target.y << "," << target.z
-            << std::endl;
-  std::cout << "  focallength_ratio " << focallength_ratio << std::endl;
-  std::cout << "  focallength " << focallength << std::endl;
-  std::cout << "  aperture " << aperture << std::endl;
-  std::cout << "  eyesep_ratio " << eye_sep_ratio << std::endl;
-  std::cout << "  eyesep " << eyesep << std::endl;
-  std::cout << "  screenwidth " << screenwidth << std::endl;
-  std::cout << "  screenheight " << screenheight << std::endl;
-  std::cout << "  distance " << distance << std::endl;
-  std::cout << "  ref_distance " << ref_distance << std::endl;
-  std::cout << "  button_left_down " << button_left_down << std::endl;
-  std::cout << "  button_middle_down " << button_middle_down << std::endl;
-  std::cout << "  button_right_down " << button_right_down << std::endl;
-  std::cout << "  stereoEnable " << stereoEnable << std::endl;
-  std::cout << "  Lc " << Lc << std::endl;
-  std::cout << "  eye_sep_ratio " << eye_sep_ratio << std::endl;
-  std::cout << "  closeness " << closeness << std::endl;
-  std::cout << "  glFnear " << glFnear << std::endl;
-  std::cout << "  glFfar " << glFfar << std::endl;
-  std::cout << "  radians " << radians << std::endl;
-  std::cout << "  wd2 " << wd2 << std::endl;
-}
-
 void Camera::moveRight(double &theta)
 {
   this->update();
@@ -226,31 +185,25 @@ void Camera::rotate(double *q)
   this->update();
 }
 
+// the turn of an angle about an axis, as a quaternion
+static Quaternion turn(double theta, const XYZ &axis)
+{
+  Quaternion q;
+  q.x = sin(theta) * axis.x;
+  q.y = sin(theta) * axis.y;
+  q.z = sin(theta) * axis.z;
+  q.w = cos(theta);
+  normalize(q);
+  return q;
+}
+
 void Camera::move_and_look(double _movfront, double _movright, double _movup,
                            double _thetafront, double _thetaright,
                            double _thetaup, double _azimut, double _elevation)
 {
   position = position + _movfront * front + _movright * right + _movup * up;
-  Quaternion omega_up;
-  omega_up.x = sin(_thetaup) * up.x;
-  omega_up.y = sin(_thetaup) * up.y;
-  omega_up.z = sin(_thetaup) * up.z;
-  omega_up.w = cos(_thetaup);
-  normalize(omega_up);
-  Quaternion omega_right;
-  omega_right.x = sin(_thetaright) * right.x;
-  omega_right.y = sin(_thetaright) * right.y;
-  omega_right.z = sin(_thetaright) * right.z;
-  omega_right.w = cos(_thetaright);
-  normalize(omega_right);
-  Quaternion omega_front;
-  omega_front.x = sin(_thetafront) * front.x;
-  omega_front.y = sin(_thetafront) * front.y;
-  omega_front.z = sin(_thetafront) * front.z;
-  omega_front.w = cos(_thetafront);
-  normalize(omega_front);
-  Quaternion omega;
-  omega = omega_up * omega_right * omega_front;
+  Quaternion omega = turn(_thetaup, up) * turn(_thetaright, right) *
+                     turn(_thetafront, front);
   normalize(omega);
   Quaternion conj = conjugate(omega);
   front = omega * front * conj;
