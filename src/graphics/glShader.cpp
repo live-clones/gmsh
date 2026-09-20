@@ -1551,13 +1551,15 @@ void main()
     glBindTexture(GL_TEXTURE_2D, _fireDepth);
     glApi::Uniform1i(_uFireDepth, 0);
     glApi::Uniform1i(_uFireFrame, 1);
-    // the transparent things drawn this frame, from the summing buffers
+    // the transparent things drawn this frame, from the summing buffers; on
+    // unit 4, as units 2 and 3 hold the shadow maps of the main program for
+    // the whole frame and a texture bound over one of them is read as black
     bool reveal = _oitUsed && _oitReveal && _oitWidth == width &&
                   _oitHeight == height;
     _oitUsed = false;
-    glApi::ActiveTexture(GL_TEXTURE0 + 2);
+    glApi::ActiveTexture(GL_TEXTURE0 + 4);
     glBindTexture(GL_TEXTURE_2D, reveal ? _oitReveal : 0);
-    glApi::Uniform1i(_uFireReveal, 2);
+    glApi::Uniform1i(_uFireReveal, 4);
     glApi::Uniform1i(_uFireRevealOn, reveal ? 1 : 0);
     glApi::Uniform1f(_uFireLevel, (float)level);
     glApi::Uniform1f(_uFireTime, (float)fmod(time, 100.));
@@ -1566,7 +1568,7 @@ void main()
     glViewport(vp[0], vp[1], vp[2], vp[3]);
     if(wasDepth) glEnable(GL_DEPTH_TEST);
     if(wasBlend) glEnable(GL_BLEND);
-    glApi::ActiveTexture(GL_TEXTURE0 + 2);
+    glApi::ActiveTexture(GL_TEXTURE0 + 4);
     glBindTexture(GL_TEXTURE_2D, 0);
     glApi::ActiveTexture(GL_TEXTURE0 + 1);
     glBindTexture(GL_TEXTURE_2D, 0);
