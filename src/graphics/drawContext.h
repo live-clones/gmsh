@@ -6,10 +6,11 @@
 #ifndef DRAW_CONTEXT_H
 #define DRAW_CONTEXT_H
 
+#include <map>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
-#include <set>
 #include "SBoundingBox3d.h"
 #include "SPoint2.h"
 #include "Camera.h"
@@ -239,7 +240,8 @@ public:
   double model[16],
     proj[16]; // the modelview and projection matrix as they were
               // at the time of the last InitPosition() call
-  enum RenderMode { GMSH_RENDER = 1, GMSH_SELECT = 2, GMSH_FEEDBACK = 3 };
+  // a pass either draws the scene or draws it in picking colours
+  enum RenderMode { GMSH_RENDER = 1, GMSH_SELECT = 2 };
   int render_mode; // current rendering mode
   // which half of the scene is being drawn, see gmshTransparencyPass
   int transparencyPass;
@@ -319,6 +321,13 @@ private:
   // the projection built by initProjection(), and the modelview it leaves
   // for initPosition()
   double _projection[16], _modelBase[16];
+  // steps of a draw, called by draw3d() and by nothing else
+  void buildRotationMatrix();
+  void setEulerAnglesFromRotationMatrix();
+  void initRenderModel();
+  void drawShadowMap();
+  bool drawOneShadowMap(int which, const double dir[3]);
+  void drawStudioFloor();
   // same as _pickColor, but reachable from the free drawing functions
   static bool _pickColorActive;
   bool _selectColor(int type, bool multiple, bool mesh, bool post, int x, int y,
@@ -458,18 +467,15 @@ public:
                                GLuint &imageTexture, GLuint &imageW,
                                GLuint &imageH);
   void invalidateBgImageTexture();
-  void buildRotationMatrix();
   void setQuaternion(double q0, double q1, double q2, double q3);
   void addQuaternion(double p1x, double p1y, double p2x, double p2y);
   void addQuaternionFromAxisAndAngle(double axis[3], double angle);
   void setQuaternionFromEulerAngles();
-  void setEulerAnglesFromRotationMatrix();
   void initProjection();
   // the matrices of camera mode: the projection (the camera's frustum,
   // shifted for a studio frame) and the modelview (the camera looking at
   // its target), which `view' comes back with
   void initCameraMatrices(double view[16]);
-  void initRenderModel();
   void initPosition(bool saveMatrices);
   void unproject(double winx, double winy, double p[3], double d[3]);
   void viewport2World(double vp[3], double xyz[3]);
@@ -488,9 +494,6 @@ public:
   void drawMesh();
   void drawPost();
   bool anyViewIsTransparent();
-  void drawShadowMap();
-  bool drawOneShadowMap(int which, const double dir[3]);
-  void drawStudioFloor();
   void drawBackgroundGradient();
   void drawBackgroundImage(bool moving);
   void drawText2d();
@@ -513,7 +516,6 @@ public:
   // was drawn (left, bottom, width, height)
   void drawTextBox(const std::string &text, double x, double y, int align,
                    double box[4] = nullptr);
-  void drawTrackball();
   void drawScales();
   void drawString(const std::string &s, double x, double y, double z,
                   const std::string &font_name, int font_enum, int font_size,
