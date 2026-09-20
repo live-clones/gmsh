@@ -76,11 +76,14 @@ void drawContextFltkCairo::setFont(int fontid, int fontsize)
   _currentFontSize = fontsize;
 }
 
+// The width the string is laid out with, which is the width of the quad
+// measure() asks for below: the ink of the glyphs is narrower than that, and
+// a label placed by it would not sit where it is drawn.
 double drawContextFltkCairo::getStringWidth(const char *str)
 {
   cairo_text_extents_t e;
   cairo_text_extents(_cr, str, &e);
-  return e.width;
+  return std::max(e.x_advance, e.x_bearing + e.width) - std::min(0., e.x_bearing);
 }
 
 // The width of the string and the height of its font, with a pixel of margin
