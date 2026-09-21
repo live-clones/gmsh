@@ -62,6 +62,7 @@
 #define FORMAT_RAD          55
 #define FORMAT_XAO          56
 #define FORMAT_OBJ          57
+#define FORMAT_VTU          58
 
 // Element types
 #define TYPE_PNT     1

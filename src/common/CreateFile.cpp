@@ -14,6 +14,11 @@
 #include "CreateFile.h"
 #include "OS.h"
 
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewData.h"
+#endif
+
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
@@ -76,6 +81,8 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".vis")      return FORMAT_VIS;
   else if(ext == ".unv")      return FORMAT_UNV;
   else if(ext == ".vtk")      return FORMAT_VTK;
+  else if(ext == ".vtu")      return FORMAT_VTU;
+  else if(ext == ".pvd")      return FORMAT_VTU;
   else if(ext == ".m")        return FORMAT_MATLAB;
   else if(ext == ".dat")      return FORMAT_TOCHNOG;
   else if(ext == ".txt")      return FORMAT_TXT;
@@ -147,6 +154,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_VIS:     name = ".vis"; break;
   case FORMAT_UNV:     name = ".unv"; mesh = true; break;
   case FORMAT_VTK:     name = ".vtk"; mesh = true; break;
+  case FORMAT_VTU:     name = ".vtu"; mesh = true; break;
   case FORMAT_MATLAB:  name = ".m"; mesh = true; break;
   case FORMAT_TOCHNOG: name = ".dat"; mesh = true; break;
   case FORMAT_STL:     name = ".stl"; mesh = true; break;
@@ -477,6 +485,26 @@ void CreateOutputFile(const std::string &fileName, int format,
       (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.scalingFactor,
        CTX::instance()->bigEndian);
+    break;
+
+  case FORMAT_VTU:
+    {
+      // with the views based on the model, if any; or all the views if
+      // there is no mesh
+      std::vector<PView *> views;
+#if defined(HAVE_POST)
+      bool mesh = (GModel::current()->getNumMeshElements() > 0);
+      for(auto v : PView::list)
+        if(!mesh || v->getData()->hasModel(GModel::current()))
+          views.push_back(v);
+      if(views.size())
+        PView::writeVTU(name, CTX::instance()->mesh.binary, views);
+#endif
+      if(views.empty())
+        GModel::current()->writeVTU
+          (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+           CTX::instance()->mesh.scalingFactor);
+    }
     break;
 
   case FORMAT_MATLAB:

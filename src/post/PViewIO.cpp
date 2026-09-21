@@ -322,6 +322,7 @@ bool PView::write(const std::string &fileName, int format, bool append)
     break;
   case 6: ret = _data->writeMED(fileName); break;
   case 7: ret = writeX3D(fileName); break;
+  case 8: ret = writeVTU(fileName, CTX::instance()->post.binary, {this}); break;
   case 10: {
     std::string ext = SplitFileName(fileName)[2];
     if(ext == ".pos")
@@ -340,6 +341,8 @@ bool PView::write(const std::string &fileName, int format, bool append)
       ret = _data->writeMED(fileName);
     else if(ext == ".x3d")
       ret = writeX3D(fileName);
+    else if(ext == ".vtu" || ext == ".pvd")
+      ret = writeVTU(fileName, CTX::instance()->post.binary, {this});
     else
       ret = _data->writeTXT(fileName);
     break;

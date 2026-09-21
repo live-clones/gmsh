@@ -142,6 +142,8 @@ public:
   static bool readMED(const std::string &fileName, int fileIndex = -1);
   static bool readPCH(const std::string &fileName, int fileIndex = -1);
   static bool writeX3D(const std::string &fileName);
+  static bool writeVTU(const std::string &fileName, bool binary,
+                       const std::vector<PView *> &views);
   // IO write routine
   bool write(const std::string &fileName, int format, bool append = false);
 

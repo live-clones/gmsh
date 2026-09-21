@@ -18,6 +18,7 @@ set(SRC
   Octree.cpp
     OctreeInternals.cpp
   StringUtils.cpp
+  VTKXML.cpp
   ListUtils.cpp
   TreeUtils.cpp avl.cpp
   MallocUtils.cpp
