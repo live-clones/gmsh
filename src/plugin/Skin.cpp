@@ -262,7 +262,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   for(auto &b : skin) {
     const element &e = elements[b.first];
     const int(*boundary)[6][4];
-    getBoundary(e.type, &boundary);
+    if(!getBoundary(e.type, &boundary)) continue;
     int nodes[4], numNodes = 0;
     for(int c = 0; c < 4; c++)
       if((*boundary)[b.second][c] >= 0)
