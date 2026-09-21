@@ -2054,6 +2054,8 @@ gmsh::model::mesh::affineTransform(const std::vector<double> &affineTransform,
                    _getEntityName(ge->dim(), ge->tag()).c_str());
     }
   }
+  // the nodes moved: what is drawn of the mesh is built again
+  CTX::instance()->meshChanged();
 }
 
 static void _getAdditionalNodesOnBoundary(GEntity *entity,
@@ -2277,6 +2279,8 @@ gmsh::model::mesh::setNode(const std::size_t nodeTag,
   v->setXYZ(coord[0], coord[1], coord[2]);
   if(parametricCoord.size() >= 1) v->setParameter(0, parametricCoord[0]);
   if(parametricCoord.size() >= 2) v->setParameter(1, parametricCoord[1]);
+  // the node moved: what is drawn of the mesh is built again
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void
@@ -2330,6 +2334,8 @@ gmsh::model::mesh::setNodes(const std::vector<std::size_t> &nodeTags,
     for(std::size_t j = 0; j < numPar; j++)
       v->setParameter(j, parametricCoord[numPar * i + j]);
   }
+  // the nodes moved: what is drawn of the mesh is built again
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::mesh::rebuildNodeCache(bool onlyIfNecessary)
@@ -2423,6 +2429,9 @@ GMSH_API void gmsh::model::mesh::reclassifyNodes()
 {
   if(!_checkInit()) return;
   GModel::current()->pruneMeshVertexAssociations();
+  // the nodes changed entity, whose colours and labels they take: what is
+  // drawn of the mesh is built again
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::mesh::relocateNodes(const int dim, const int tag,
@@ -2444,6 +2453,8 @@ GMSH_API void gmsh::model::mesh::relocateNodes(const int dim, const int tag,
   }
   for(std::size_t i = 0; i < entities.size(); i++)
     entities[i]->relocateMeshVertices(min, max);
+  // the nodes moved: what is drawn of the mesh is built again
+  CTX::instance()->meshChanged();
 }
 
 static void
@@ -6317,6 +6328,9 @@ gmsh::model::mesh::renumberNodes(const std::vector<std::size_t> &oldTags,
   for(std::size_t i = 0; i < oldTags.size(); i++)
     remap[oldTags[i]] = newTags[i];
   GModel::current()->renumberMeshVertices(remap);
+  // the tags changed, which the labels show: what is drawn of the mesh is
+  // built again
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void
@@ -6333,6 +6347,9 @@ gmsh::model::mesh::renumberElements(const std::vector<std::size_t> &oldTags,
   for(std::size_t i = 0; i < oldTags.size(); i++)
     remap[oldTags[i]] = newTags[i];
   GModel::current()->renumberMeshElements(remap);
+  // the tags changed, which the labels show: what is drawn of the mesh is
+  // built again
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void
