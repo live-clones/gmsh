@@ -341,7 +341,7 @@ bool PView::write(const std::string &fileName, int format, bool append)
       ret = _data->writeMED(fileName);
     else if(ext == ".x3d")
       ret = writeX3D(fileName);
-    else if(ext == ".vtu" || ext == ".pvd")
+    else if(ext == ".vtu" || ext == ".pvtu" || ext == ".pvd")
       ret = writeVTU(fileName, CTX::instance()->post.binary, {this});
     else
       ret = _data->writeTXT(fileName);

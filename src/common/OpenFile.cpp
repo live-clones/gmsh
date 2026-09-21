@@ -402,7 +402,8 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
     status = GModel::current()->readUNV
       (fileName, CTX::instance()->mesh.readGroupsOfElements);
   }
-  else if(ext == ".vtu" || ext == ".VTU" || ext == ".pvd" || ext == ".PVD") {
+  else if(ext == ".vtu" || ext == ".VTU" || ext == ".pvtu" || ext == ".PVTU" ||
+          ext == ".pvd" || ext == ".PVD") {
     status = GModel::current()->readVTU(fileName);
   }
   else if(ext == ".vtk" || ext == ".VTK") {

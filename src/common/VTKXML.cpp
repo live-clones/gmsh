@@ -10,6 +10,7 @@
 #include "GmshConfig.h"
 #include "VTKXML.h"
 #include "OS.h"
+#include "StringUtils.h"
 #include "GmshMessage.h"
 
 #if defined(HAVE_LIBZ)
@@ -229,7 +230,9 @@ bool vtkXMLGrid::write(const std::string &fileName, bool binary,
     w.dataArray("faceoffsets", 1, faceOffsets);
   }
   fprintf(fp, "</Cells>\n");
-  fprintf(fp, "<PointData>\n");
+  fprintf(fp, "<PointData%s>\n",
+          globalNodeIds.empty() ? "" : " GlobalIds=\"GlobalNodeIds\"");
+  if(globalNodeIds.size()) w.dataArray("GlobalNodeIds", 1, globalNodeIds);
   for(auto &a : pointData) w.dataArray(vtkXMLWriter::escape(a.name), a.numComp, a.data);
   fprintf(fp, "</PointData>\n");
   fprintf(fp, "<CellData>\n");
@@ -238,6 +241,47 @@ bool vtkXMLGrid::write(const std::string &fileName, bool binary,
   fprintf(fp, "</CellData>\n");
   fprintf(fp, "</Piece>\n");
   fprintf(fp, "</UnstructuredGrid>\n");
+  fprintf(fp, "</VTKFile>\n");
+  fclose(fp);
+  return true;
+}
+
+bool vtkXMLGrid::writeParallel(const std::string &fileName,
+                               const std::vector<std::string> &pieces,
+                               const std::string &comment) const
+{
+  FILE *fp = Fopen(fileName.c_str(), "w");
+  if(!fp) {
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
+    return false;
+  }
+  auto array = [&](const char *type, const std::string &name, int numComp) {
+    fprintf(fp, "<PDataArray type=\"%s\" Name=\"%s\" "
+            "NumberOfComponents=\"%d\"/>\n", type,
+            vtkXMLWriter::escape(name).c_str(), numComp);
+  };
+  vtkXMLWriter w(fp, vtkXMLWriter::ASCII);
+  fprintf(fp, "<?xml version=\"1.0\"?>\n");
+  fprintf(fp, "<!-- %s -->\n", comment.c_str());
+  fprintf(fp, "<VTKFile type=\"PUnstructuredGrid\" %s>\n",
+          w.fileAttributes().c_str());
+  fprintf(fp, "<PUnstructuredGrid GhostLevel=\"0\">\n");
+  fprintf(fp, "<PPoints>\n");
+  array("Float64", "Points", 3);
+  fprintf(fp, "</PPoints>\n");
+  fprintf(fp, "<PPointData%s>\n",
+          globalNodeIds.empty() ? "" : " GlobalIds=\"GlobalNodeIds\"");
+  if(globalNodeIds.size()) array("Int64", "GlobalNodeIds", 1);
+  for(auto &a : pointData) array("Float64", a.name, a.numComp);
+  fprintf(fp, "</PPointData>\n");
+  fprintf(fp, "<PCellData>\n");
+  for(auto &a : cellTags) array("Int32", a.name, 1);
+  for(auto &a : cellData) array("Float64", a.name, a.numComp);
+  fprintf(fp, "</PCellData>\n");
+  for(auto &piece : pieces)
+    fprintf(fp, "<Piece Source=\"%s\"/>\n",
+            vtkXMLWriter::escape(piece).c_str());
+  fprintf(fp, "</PUnstructuredGrid>\n");
   fprintf(fp, "</VTKFile>\n");
   fclose(fp);
   return true;
@@ -595,7 +639,7 @@ bool vtkXMLGrid::read(const std::string &fileName)
   }
 
   std::string section;
-  bool found = false;
+  bool found = false, parallel = false;
   pos = 0;
   while(pos < xmlEnd && nextTag(text, pos, tag)) {
     if(tag.contentStart > xmlEnd && tag.name != "AppendedData") break;
@@ -603,7 +647,19 @@ bool vtkXMLGrid::read(const std::string &fileName)
       if(tag.name == section) section = "";
       continue;
     }
-    if(tag.name == "VTKFile") {
+    if(tag.name == "VTKFile" && tag.get("type") == "PUnstructuredGrid") {
+      parallel = found = true;
+    }
+    else if(parallel) {
+      // the files of the pieces, given relative to this one
+      if(tag.name != "Piece") continue;
+      std::string source = tag.get("Source");
+      if(source.size() && source[0] != '/' &&
+         source.find(':') == std::string::npos)
+        source = SplitFileName(fileName)[0] + source;
+      if(!read(source)) return false;
+    }
+    else if(tag.name == "VTKFile") {
       if(tag.get("type") != "UnstructuredGrid") {
         Msg::Error("'%s' is a VTK %s: only unstructured grids can be read",
                    fileName.c_str(), tag.get("type").c_str());

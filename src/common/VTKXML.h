@@ -61,12 +61,20 @@ struct vtkXMLGrid {
   std::vector<std::uint8_t> types;
   std::vector<intArray> cellTags;
   std::vector<realArray> pointData, cellData;
+  // what VTK calls GlobalNodeIds: the same number for the copies of a point
+  // in the pieces of a partitioned grid (empty if not needed)
+  std::vector<std::int64_t> globalNodeIds;
   // a name no other array has
   std::string uniqueName(const std::string &name) const;
   bool write(const std::string &fileName, bool binary,
              const std::string &comment) const;
-  // the pieces of the file merged in one grid; all the data arrays are read
-  // as reals
+  // the .pvtu file that makes one grid of pieces written with write(), all
+  // with the arrays of this one
+  bool writeParallel(const std::string &fileName,
+                     const std::vector<std::string> &pieces,
+                     const std::string &comment) const;
+  // the pieces of the file (a .vtu, or a .pvtu and the files it lists) merged
+  // in one grid; all the data arrays are read as reals
   bool read(const std::string &fileName);
 
 private:

@@ -458,50 +458,79 @@ int GModel::writeVTU(const std::string &name, bool binary, bool saveAll,
   }
 #endif
 
-  vtkXMLGrid grid;
-  std::vector<vtuPoint> points;
-  std::vector<MElement *> elements;
-  grid.cellTags.resize(getNumPartitions() ? 4 : 3);
-  grid.cellTags[0].name = "gmsh:physical"; // the two names meshio uses
-  grid.cellTags[1].name = "gmsh:geometrical";
-  grid.cellTags[2].name = "gmsh:dim"; // entity tags are per dimension
-  if(getNumPartitions()) grid.cellTags[3].name = "gmsh:partition";
+  // a .pvtu is made of a .vtu per partition; the copies of a node in several
+  // of them are told by their number
+  std::vector<std::string> split = SplitFileName(name);
+  bool parallel = (split[2] == ".pvtu" || split[2] == ".PVTU");
+  std::size_t numPieces = parallel ? std::max<std::size_t>(getNumPartitions(), 1) : 1;
+  if(parallel && !getNumPartitions())
+    Msg::Warning("The mesh is not partitioned: '%s' will have a single piece",
+                 name.c_str());
+  std::vector<std::string> pieces;
+  std::string comment = getName() + ", created by Gmsh " + GMSH_VERSION;
+  bool ok = true;
 
-  for(auto ge : entities)
-    for(auto v : ge->mesh_vertices) v->setIndex(-1);
+  for(std::size_t piece = 1; piece <= numPieces; piece++) {
+    vtkXMLGrid grid;
+    std::vector<vtuPoint> points;
+    std::vector<MElement *> elements;
+    grid.cellTags.resize(getNumPartitions() ? 4 : 3);
+    grid.cellTags[0].name = "gmsh:physical"; // the two names meshio uses
+    grid.cellTags[1].name = "gmsh:geometrical";
+    grid.cellTags[2].name = "gmsh:dim"; // entity tags are per dimension
+    if(getNumPartitions()) grid.cellTags[3].name = "gmsh:partition";
 
-  for(auto ge : entities) {
-    if(views.empty() ? (ge->physicals.empty() && !saveAll) : (ge->dim() != dim))
-      continue;
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      if(!hasVTUCell(e)) continue;
+    for(auto ge : entities)
+      for(auto v : ge->mesh_vertices) v->setIndex(-1);
+
+    for(auto ge : entities) {
+      if(views.empty() ? (ge->physicals.empty() && !saveAll) :
+                         (ge->dim() != dim))
+        continue;
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+        MElement *e = ge->getMeshElement(j);
+        if(!hasVTUCell(e)) continue;
+        if(parallel && getNumPartitions() &&
+           e->getPartition() != (int)piece)
+          continue;
 #if defined(HAVE_POST)
-      if(views.size() && !hasData(e, views, step)) continue;
+        if(views.size() && !hasData(e, views, step)) continue;
 #endif
-      addVTUCell(e, discontinuous, grid, points);
-      elements.push_back(e);
-      grid.cellTags[0].data.push_back(
-        ge->physicals.empty() ? 0 : ge->physicals[0]);
-      grid.cellTags[1].data.push_back(ge->tag());
-      grid.cellTags[2].data.push_back(ge->dim());
-      if(getNumPartitions()) grid.cellTags[3].data.push_back(e->getPartition());
+        addVTUCell(e, discontinuous, grid, points);
+        elements.push_back(e);
+        grid.cellTags[0].data.push_back(
+          ge->physicals.empty() ? 0 : ge->physicals[0]);
+        // (the entity a piece of a partitioned mesh was cut from)
+        GEntity *parent = ge->getParentEntity();
+        bool cut = (parent && parent->dim() == ge->dim());
+        grid.cellTags[1].data.push_back(cut ? parent->tag() : ge->tag());
+        grid.cellTags[2].data.push_back(ge->dim());
+        if(getNumPartitions())
+          grid.cellTags[3].data.push_back(e->getPartition());
+      }
     }
-  }
 
-  grid.points.reserve(3 * points.size());
-  for(auto &p : points) {
-    grid.points.push_back(p.vertex->x() * scalingFactor);
-    grid.points.push_back(p.vertex->y() * scalingFactor);
-    grid.points.push_back(p.vertex->z() * scalingFactor);
-  }
+    grid.points.reserve(3 * points.size());
+    for(auto &p : points) {
+      grid.points.push_back(p.vertex->x() * scalingFactor);
+      grid.points.push_back(p.vertex->y() * scalingFactor);
+      grid.points.push_back(p.vertex->z() * scalingFactor);
+      if(parallel && !discontinuous)
+        grid.globalNodeIds.push_back(p.vertex->getNum());
+    }
 
 #if defined(HAVE_POST)
-  for(auto view : views) addVTUData(view, step, points, elements, grid);
+    for(auto view : views) addVTUData(view, step, points, elements, grid);
 #endif
 
-  return grid.write(name, binary,
-                    getName() + ", created by Gmsh " + GMSH_VERSION) ? 1 : 0;
+    if(!parallel) return grid.write(name, binary, comment) ? 1 : 0;
+
+    pieces.push_back(split[1] + "_" + std::to_string(piece) + ".vtu");
+    if(!grid.write(split[0] + pieces.back(), binary, comment)) ok = false;
+    if(piece == numPieces && !grid.writeParallel(name, pieces, comment))
+      ok = false;
+  }
+  return ok ? 1 : 0;
 }
 
 // Reads a .vtu file, or the series of files of a .pvd: the mesh from the
@@ -527,6 +556,7 @@ int GModel::readVTU(const std::string &name)
   struct part {
     std::size_t numPoints, numCells;
     std::vector<MVertex *> vertices;
+    std::vector<bool> copy; // of a point met before (in another piece)
     std::vector<std::pair<std::size_t, MElement *> > elements;
 #if defined(HAVE_POST)
     std::map<std::string, PViewDataGModel *> views;
@@ -558,10 +588,30 @@ int GModel::readVTU(const std::string &name)
         const std::vector<double> *physical = array("gmsh:physical");
         if(!physical) physical = array("CellEntityIds"); // legacy .vtk
 
+        // the points with the same global number, in the pieces of a
+        // partitioned grid, are one node
+        const std::vector<double> *ids = nullptr;
+        for(auto &a : grid.pointData)
+          if(a.name == "GlobalNodeIds" && a.numComp == 1 &&
+             a.data.size() == numPoints)
+            ids = &a.data;
+        std::map<std::size_t, MVertex *> numbered;
+        std::vector<MVertex *> unique;
         p.vertices.resize(numPoints);
-        for(std::size_t i = 0; i < numPoints; i++)
+        p.copy.resize(numPoints, false);
+        for(std::size_t i = 0; i < numPoints; i++) {
+          std::size_t num = (ids && (*ids)[i] > 0) ? (std::size_t)(*ids)[i] : 0;
+          MVertex *&known = numbered[num];
+          if(num && known) {
+            p.vertices[i] = known;
+            p.copy[i] = true;
+            continue;
+          }
           p.vertices[i] = new MVertex(grid.points[3 * i], grid.points[3 * i + 1],
-                                      grid.points[3 * i + 2]);
+                                      grid.points[3 * i + 2], nullptr, num);
+          unique.push_back(p.vertices[i]);
+          if(num) known = p.vertices[i];
+        }
 
         std::map<int, std::vector<MElement *> > elements[16];
         std::map<int, std::map<int, std::string> > physicals[4];
@@ -662,7 +712,13 @@ int GModel::readVTU(const std::string &name)
 
         for(int i = 0; i < 16; i++) _storeElementsInEntities(elements[i]);
         _associateEntityWithMeshVertices();
-        _storeVerticesInEntities(p.vertices);
+        // (the points no cell uses are deleted)
+        std::vector<bool> unused(numPoints);
+        for(std::size_t i = 0; i < numPoints; i++)
+          unused[i] = !p.vertices[i]->onWhat();
+        _storeVerticesInEntities(unique);
+        for(std::size_t i = 0; i < numPoints; i++)
+          if(unused[i]) p.vertices[i] = nullptr;
         for(int i = 0; i < 4; i++)
           _storePhysicalTagsInEntities(i, physicals[i]);
       }
@@ -676,7 +732,9 @@ int GModel::readVTU(const std::string &name)
 
 #if defined(HAVE_POST)
       auto addData = [&](const vtkXMLGrid::realArray &a, bool onPoints) {
-        if(!a.name.compare(0, 5, "gmsh:") || a.name == "CellEntityIds") return;
+        if(!a.name.compare(0, 5, "gmsh:") || a.name == "CellEntityIds" ||
+           a.name == "GlobalNodeIds")
+          return;
         std::size_t n = onPoints ? numPoints : numCells;
         if(a.data.size() != n * a.numComp) return;
         // Gmsh fields have 1, 3 or 9 components
@@ -691,7 +749,7 @@ int GModel::readVTU(const std::string &name)
         };
         if(onPoints) {
           for(std::size_t i = 0; i < numPoints; i++)
-            if(p.vertices[i]) add(p.vertices[i]->getNum(), i);
+            if(p.vertices[i] && !p.copy[i]) add(p.vertices[i]->getNum(), i);
         }
         else {
           for(auto &e : p.elements) add(e.second->getNum(), e.first);

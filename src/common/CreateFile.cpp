@@ -488,6 +488,7 @@ void CreateOutputFile(const std::string &fileName, int format,
     break;
 
   case FORMAT_VTU:
+  case FORMAT_PVTU: // a .vtu per partition
     {
       // with the views based on the model, if any; or all the views if
       // there is no mesh

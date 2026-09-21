@@ -122,8 +122,11 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
   std::vector<double> times(numSteps, 0.);
   bool ok = true;
 
+  // a .pvtu asks for the views based on a model in a file per partition
+  bool parallel = (split[2] == ".pvtu" || split[2] == ".PVTU");
+
   for(int step = 0; step < numSteps; step++) {
-    auto name = [&]() {
+    auto name = [&](bool onModel) {
       std::string n = split[1];
       if(numParts > 1) n += "_" + std::to_string(files[step].size());
       if(series) {
@@ -131,8 +134,9 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
         snprintf(s, sizeof(s), "_%04d", step);
         n += s;
       }
-      files[step].push_back(n + ".vtu");
-      return split[0] + n + ".vtu";
+      n += (parallel && onModel) ? ".pvtu" : ".vtu";
+      files[step].push_back(n);
+      return split[0] + n;
     };
     bool timed = false;
     auto time = [&](PViewData *d) {
@@ -147,7 +151,7 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
         if(d->getNumTimeSteps() == 1 || d->hasTimeStep(step)) any = true;
       }
       if(!any) continue;
-      if(!m.first->writeVTU(name(), binary, CTX::instance()->mesh.saveAll,
+      if(!m.first->writeVTU(name(true), binary, CTX::instance()->mesh.saveAll,
                             CTX::instance()->mesh.scalingFactor, m.second,
                             step))
         ok = false;
@@ -155,7 +159,7 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
     for(auto d : others) {
       if(!d->hasTimeStep(step)) continue;
       time(d);
-      if(!writeVTUStep(d, step, name(), binary)) ok = false;
+      if(!writeVTUStep(d, step, name(false), binary)) ok = false;
     }
   }
 
