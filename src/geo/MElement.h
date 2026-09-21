@@ -120,8 +120,13 @@ public:
   // get the vertex using the I-deas UNV ordering
   virtual MVertex *getVertexUNV(int num) { return getVertex(num); }
 
-  // get the vertex using the VTK ordering
-  virtual MVertex *getVertexVTK(int num) { return getVertex(num); }
+  // The element as a VTK cell (see getVTKXMLCell(), shared by the .vtk, .vtu
+  // and .su2 writers): its type (0 if none), its number of nodes and its
+  // nodes in the VTK ordering. An element of an order VTK has no cell for is
+  // a first order cell.
+  int getTypeForVTK() const;
+  std::size_t getNumVerticesVTK() const;
+  MVertex *getVertexVTK(int num);
 
   // get the vertex using the MATLAB ordering
   virtual MVertex *getVertexMATLAB(int num) { return getVertex(num); }
@@ -499,7 +504,6 @@ public:
   // implemented in that format)
   virtual int getTypeForMSH() const { return 0; }
   virtual int getTypeForUNV() const { return 0; }
-  virtual int getTypeForVTK() const { return 0; }
   virtual const char *getStringForTOCHNOG() const { return nullptr; }
   virtual const char *getStringForPOS() const { return nullptr; }
   virtual const char *getStringForBDF() const { return nullptr; }

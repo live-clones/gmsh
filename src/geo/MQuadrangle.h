@@ -114,7 +114,6 @@ public:
   {
     return 94;
   } // thin shell linear quadrilateral
-  virtual int getTypeForVTK() const { return 9; }
   virtual const char *getStringForPOS() const { return "SQ"; }
   virtual const char *getStringForBDF() const { return "CQUAD4"; }
   virtual const char *getStringForDIFF() const { return "ElmB4n2D"; }
@@ -285,7 +284,6 @@ public:
   {
     return 95;
   } // shell parabolic quadrilateral
-  virtual int getTypeForVTK() const { return 23; }
   virtual const char *getStringForBDF() const { return "CQUAD8"; }
   virtual const char *getStringForDIFF() const { return "ElmB8n2D"; }
   virtual const char *getStringForINP() const { return "CPS8" /*"C2D8"*/; }
@@ -401,7 +399,6 @@ public:
     v[8] = _vs[4];
   }
   virtual int getTypeForMSH() const { return MSH_QUA_9; }
-  virtual int getTypeForVTK() const { return 28; }
   virtual const char *getStringForPOS() const { return "SQ2"; }
   virtual const char *getStringForBDF() const { return "CQUAD9"; }
   virtual const char *getStringForDIFF() const { return "ElmB9n2D"; }
@@ -554,12 +551,6 @@ public:
     Msg::Error("No MSH type found for P%d quadrangle with %d nodes", _order,
                4 + _vs.size());
     return 0;
-  }
-  virtual int getTypeForVTK() const
-  {
-    if(_order == 2 && _vs.size() + 4 == 9) return 28;
-    if(_order == 2 && _vs.size() + 4 == 8) return 23;
-    return MQuadrangle::getTypeForVTK();
   }
   virtual void reverse();
 

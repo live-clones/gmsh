@@ -112,7 +112,6 @@ public:
   virtual int getType() const { return TYPE_TRI; }
   virtual int getTypeForMSH() const { return MSH_TRI_3; }
   virtual int getTypeForUNV() const { return 91; } // thin shell linear triangle
-  virtual int getTypeForVTK() const { return 5; }
   virtual const char *getStringForPOS() const { return "ST"; }
   virtual const char *getStringForBDF() const { return "CTRIA3"; }
   virtual const char *getStringForDIFF() const { return "ElmT3n2D"; }
@@ -269,7 +268,6 @@ public:
   {
     return 92;
   } // thin shell parabolic triangle
-  virtual int getTypeForVTK() const { return 22; }
   virtual const char *getStringForPOS() const { return "ST2"; }
   virtual const char *getStringForBDF() const { return "CTRIA6"; }
   virtual const char *getStringForDIFF() const { return "ElmT6n2D"; }
@@ -419,10 +417,6 @@ public:
     Msg::Error("No MSH type found for P%d triangle with %d nodes", _order,
                3 + _vs.size());
     return 0;
-  }
-  virtual int getTypeForVTK() const
-  {
-    return 69; // VTK_LAGRANGE_TRIANGLE
   }
   virtual void reverse();
   virtual void getNode(int num, double &u, double &v, double &w) const
