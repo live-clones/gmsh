@@ -15,6 +15,7 @@
 #include <vector>
 #include "qualityMeasures.h"
 
+class GFace;
 class GRegion;
 class MVertex;
 class MTetrahedron;

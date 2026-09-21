@@ -25,7 +25,7 @@
 #include "MVertex.h"
 #include "BackgroundMeshTools.h"
 #include "Context.h"
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionDelaunay.h"
 
 extern "C" {
 #include <mmg/libmmg.h>
