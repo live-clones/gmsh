@@ -727,7 +727,7 @@ static bool addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
       ctx->drawString(label, px + offset, py + offset, 0.);
     }
     else if(singlePoint && (opt->pointType == 1 || opt->pointType == 3)) {
-      double ps = CTX::instance()->pointSize * ctx->highResolutionPixelFactor();
+      double ps = opt->pointSize * ctx->highResolutionPixelFactor();
       if(inModelCoordinates)
         ctx->drawSphere(ps, px, py, 0, opt->light);
       else
@@ -756,7 +756,7 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
 
   PViewOptions *opt = p->getOptions();
 
-  double ps = CTX::instance()->pointSize * ctx->highResolutionPixelFactor();
+  double ps = opt->pointSize * ctx->highResolutionPixelFactor();
 
   gmshPointSize((float)ps);
   gl2psPointSize(
