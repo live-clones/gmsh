@@ -358,7 +358,7 @@ void glyphList::draw(drawContext *ctx, bool light)
   for(int i = 0; i < 3; i++) {
     VertexArray *va = _rec[i];
     if(!va || !va->getNumVertices()) continue;
-    gmshDrawVertexArray(va, (i == 0) ? GL_POINTS : (i == 1) ? GL_LINES :
+    drawVertexArray(va, (i == 0) ? GL_POINTS : (i == 1) ? GL_LINES :
                                                               GL_TRIANGLES,
                         ((i == 2 && light) ? GMSH_DRAW_LIGHT : 0) |
                           GMSH_DRAW_COLORS);
@@ -459,7 +459,7 @@ bool glyphList::_instanced(drawContext *ctx, bool light)
 
 void glyphList::_draw(drawContext *ctx, VertexArray *va, bool light)
 {
-  gmshDrawVertexArray(va, GL_TRIANGLES,
+  drawVertexArray(va, GL_TRIANGLES,
                       (light ? GMSH_DRAW_LIGHT : 0) | GMSH_DRAW_COLORS);
 }
 

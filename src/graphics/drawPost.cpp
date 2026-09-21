@@ -247,7 +247,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       gl2psEnable(GL2PS_LINE_STIPPLE);
     }
 
-    gmshDrawVertexArray(va, type,
+    drawVertexArray(va, type,
                         (useNormalArray ? GMSH_DRAW_LIGHT : 0) |
                           GMSH_DRAW_COLORS);
 
@@ -664,7 +664,7 @@ static bool eyeChanged(drawContext *ctx, PView *p)
 
 // does this view have to be blended with what is behind it? (a "fake"
 // transparency view is additive and unordered already)
-bool gmshViewIsTransparent(PView *p)
+bool viewIsTransparent(PView *p)
 {
   PViewOptions *opt = p->getOptions();
   if(!CTX::instance()->alpha) return false;
@@ -698,7 +698,7 @@ public:
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
     if(!_ctx->isVisible(p)) return;
     if(_which != ALL_VIEWS &&
-       (gmshViewIsTransparent(p) != (_which == TRANSPARENT_VIEWS)))
+       (viewIsTransparent(p) != (_which == TRANSPARENT_VIEWS)))
       return;
 
     if(_ctx->render_mode == drawContext::GMSH_SELECT) {
@@ -740,7 +740,7 @@ public:
 
     // a transparent view is blended back to front, unless the transparency
     // pass sums it in any order with its own blending
-    bool blend = gmshViewIsTransparent(p) && !glShader::transparentPass();
+    bool blend = viewIsTransparent(p) && !glShader::transparentPass();
     if(blend) {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glEnable(GL_BLEND);
@@ -891,9 +891,9 @@ void drawContext::drawPost()
 }
 
 // whether any view would be drawn in the transparent pass
-bool gmshAnyViewIsTransparent()
+bool anyViewIsTransparent()
 {
   for(std::size_t i = 0; i < PView::list.size(); i++)
-    if(gmshViewIsTransparent(PView::list[i])) return true;
+    if(viewIsTransparent(PView::list[i])) return true;
   return false;
 }

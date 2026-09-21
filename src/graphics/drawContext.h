@@ -44,7 +44,7 @@ enum {
   GMSH_DRAW_OFFSET = 4,
   GMSH_DRAW_IDENTIFIERS = 8
 };
-void gmshDrawVertexArray(VertexArray *va, GLenum type, int flags,
+void drawVertexArray(VertexArray *va, GLenum type, int flags,
                          const std::vector<std::pair<int, int> > *runs =
                            nullptr);
 
@@ -53,7 +53,7 @@ class PView;
 
 // which part of the scene a pass draws: everything transparent is drawn after
 // everything else, in one pass
-enum gmshTransparencyPass {
+enum TransparencyPass {
   TRANSPARENCY_ALL = 0,
   TRANSPARENCY_OPAQUE = 1,
   TRANSPARENCY_TRANSPARENT = 2
@@ -63,14 +63,14 @@ enum gmshTransparencyPass {
 // mesh are transparent entire when the options' colours are; otherwise only
 // the entities whose own colour is, which a pass asks about one by one. A
 // view is transparent through the alpha of its colormap or its own factor.
-bool gmshGeometryIsTransparent();
-bool gmshGeometryColorsAreTransparent();
-bool gmshGeometryEntityIsTransparent(GEntity *e);
-bool gmshMeshIsTransparent();
-bool gmshMeshColorsAreTransparent();
-bool gmshMeshEntityIsTransparent(GEntity *e);
-bool gmshAnyViewIsTransparent();
-bool gmshViewIsTransparent(PView *p);
+bool geometryIsTransparent();
+bool geometryColorsAreTransparent();
+bool geometryEntityIsTransparent(GEntity *e);
+bool meshIsTransparent();
+bool meshColorsAreTransparent();
+bool meshEntityIsTransparent(GEntity *e);
+bool anyViewIsTransparent();
+bool viewIsTransparent(PView *p);
 
 // The points of the 2D graphs a picking pass can return: numbered as they are
 // drawn into it (drawGraph2d.cpp), forgotten with it, and looked up by the
@@ -227,7 +227,7 @@ public:
   // a pass either draws the scene or draws it in picking colours
   enum RenderMode { GMSH_RENDER = 1, GMSH_SELECT = 2 };
   int render_mode; // current rendering mode
-  // which half of the scene is being drawn, see gmshTransparencyPass
+  // which half of the scene is being drawn, see TransparencyPass
   int transparencyPass;
   // does this pass draw something that is (or is not) transparent? A mixed
   // mesh or geometry draws its opaque entities in the opaque pass and the

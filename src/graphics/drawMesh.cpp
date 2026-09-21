@@ -605,7 +605,7 @@ static int meshDrawFlags(VertexArray *va, bool light)
 // draw one of the merged arrays: it always carries its own colours
 static void drawMergedArray(VertexArray *va, GLenum type, bool useNormalArray)
 {
-  gmshDrawVertexArray(va, type,
+  drawVertexArray(va, type,
                       meshDrawFlags(va, useNormalArray) | GMSH_DRAW_COLORS);
 }
 
@@ -776,7 +776,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
     if(!forceColor) color = getColorByEntity(e);
     gmshColor4ubv((const void *)&color);
   }
-  gmshDrawVertexArray(va, type,
+  drawVertexArray(va, type,
                       meshDrawFlags(va, useNormalArray) |
                         (colors ? GMSH_DRAW_COLORS : 0));
   if(overlay) glDepthFunc(GL_LESS);
@@ -904,7 +904,7 @@ static void drawEntityNodes(drawContext *ctx, GEntity *e)
 // recorded for the whole model), the duals
 static void drawMeshEntity(drawContext *ctx, GEntity *e)
 {
-  if(!e->getVisibility() || !ctx->passWants(gmshMeshEntityIsTransparent(e))) return;
+  if(!e->getVisibility() || !ctx->passWants(meshEntityIsTransparent(e))) return;
   CTX *c = CTX::instance();
   int dim = e->dim();
 
@@ -989,7 +989,7 @@ static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
       setMeshClipPlanes(false);
   }
   forMeshEntities(m, dim, [&](GEntity *e) {
-    if(!e->getVisibility() || !ctx->passWants(gmshMeshEntityIsTransparent(e))) return;
+    if(!e->getVisibility() || !ctx->passWants(meshEntityIsTransparent(e))) return;
     if(!e->va_clip_lines && !e->va_clip_triangles) return;
     ctx->setPickColorFor(e);
     // lit and coloured as the entities draw their own lines and faces
@@ -1080,7 +1080,7 @@ static void drawDimension(drawContext *ctx, GModel *m, mergedArrays &ma,
   // only the cut volumes are drawn: their nodes all the same
   if(cutOnly && (c->mesh.nodes || c->mesh.nodeLabels))
     forMeshEntities(m, dim, [&](GEntity *e) {
-      if(!e->getVisibility() || !ctx->passWants(gmshMeshEntityIsTransparent(e))) return;
+      if(!e->getVisibility() || !ctx->passWants(meshEntityIsTransparent(e))) return;
       ctx->setPickColorFor(e);
       drawEntityNodes(ctx, e);
       if(ctx->render_mode == drawContext::GMSH_SELECT) ctx->unsetPickColor();
@@ -1101,9 +1101,9 @@ void drawContext::drawMesh()
 {
   // nothing of the mesh is opaque when the colours of the options are
   // transparent; otherwise the entities are sorted out one by one
-  if(transparencyPass == TRANSPARENCY_OPAQUE && gmshMeshColorsAreTransparent())
+  if(transparencyPass == TRANSPARENCY_OPAQUE && meshColorsAreTransparent())
     return;
-  if(transparencyPass == TRANSPARENCY_TRANSPARENT && !gmshMeshIsTransparent())
+  if(transparencyPass == TRANSPARENCY_TRANSPARENT && !meshIsTransparent())
     return;
   if(!CTX::instance()->mesh.draw) return;
 
@@ -1167,7 +1167,7 @@ void drawContext::drawMesh()
     // drawn merged - the split itself is decided by the whole scene, so
     // anything else transparent used to cost the mesh its merged arrays.
     bool mixed = transparencyPass != TRANSPARENCY_ALL &&
-                 !gmshMeshColorsAreTransparent() && gmshMeshIsTransparent();
+                 !meshColorsAreTransparent() && meshIsTransparent();
     bool merge = !inPickColorMode() && !mixed;
     // only the volume is clipped: curves and surfaces are drawn whole
     bool volumeOnly = c->clipWholeElements && c->clipOnlyVolume;

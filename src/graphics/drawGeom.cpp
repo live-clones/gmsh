@@ -91,7 +91,7 @@ static glyphList *geomGlyphs(drawContext *ctx)
 // partition and boundary layer entities, which only carry a mesh
 static bool geomDrawn(drawContext *ctx, GEntity *e)
 {
-  if(!ctx->passWants(gmshGeometryEntityIsTransparent(e)) || !e->getVisibility()) return false;
+  if(!ctx->passWants(geometryEntityIsTransparent(e)) || !e->getVisibility()) return false;
   switch(e->geomType()) {
   case GEntity::BoundaryLayerPoint:
   case GEntity::DiscreteCurve:
@@ -211,7 +211,7 @@ static std::vector<double> keptToken(drawContext *ctx, int dim, bool pick)
                              (double)c->entityVisibilityStamp,
                              (double)ctx->transparencyPass};
   // which entities the pass holds, when it is not all of them
-  if(!pick) tok.push_back(gmshGeometryColorsAreTransparent());
+  if(!pick) tok.push_back(geometryColorsAreTransparent());
   if(pick) tok.push_back(c->geom.numSubEdges);
   else if(dim == 0) {
     tok.push_back(c->entityColorsStamp);
@@ -337,7 +337,7 @@ static bool drawKept(drawContext *ctx, GModel *m, int dim)
   if(dim == 1 && !pick && c->geom.curveType > 0) {
     // one glyph list per model: not for passes that draw some curves only
     if(ctx->transparencyPass != TRANSPARENCY_ALL &&
-       !gmshGeometryColorsAreTransparent())
+       !geometryColorsAreTransparent())
       return false;
     drawKeptCylinders(ctx, m);
     return true;
@@ -390,7 +390,7 @@ static bool drawKept(drawContext *ctx, GModel *m, int dim)
   int flags = pick ? GMSH_DRAW_IDENTIFIERS : GMSH_DRAW_COLORS;
   if(dim == 2 && !pick && c->geom.light) flags |= GMSH_DRAW_LIGHT;
   if(dim == 2 && c->polygonOffset) flags |= GMSH_DRAW_OFFSET;
-  gmshDrawVertexArray(ka.va, type, flags, pick ? &runs : nullptr);
+  drawVertexArray(ka.va, type, flags, pick ? &runs : nullptr);
   if(dim == 2) gmshPolygonFill(true);
   return true;
 }
@@ -528,7 +528,7 @@ static void drawGeomSurface(drawContext *ctx, GFace *f, bool sel)
         bool solid = c->geom.surfaceType > 1;
         gmshLightTwoSide(solid && c->geom.lightTwoSide);
         gmshPolygonFill(solid);
-        gmshDrawVertexArray(va, GL_TRIANGLES,
+        drawVertexArray(va, GL_TRIANGLES,
                             (c->geom.light ? GMSH_DRAW_LIGHT : 0) |
                               (colors ? GMSH_DRAW_COLORS : 0) |
                               (c->polygonOffset ? GMSH_DRAW_OFFSET : 0));
@@ -692,9 +692,9 @@ void drawContext::drawGeom()
   // nothing of the geometry is opaque when the colours of the options are
   // transparent; otherwise the entities are sorted out one by one
   if(transparencyPass == TRANSPARENCY_OPAQUE &&
-     gmshGeometryColorsAreTransparent())
+     geometryColorsAreTransparent())
     return;
-  if(transparencyPass == TRANSPARENCY_TRANSPARENT && !gmshGeometryIsTransparent())
+  if(transparencyPass == TRANSPARENCY_TRANSPARENT && !geometryIsTransparent())
     return;
   if(!CTX::instance()->geom.draw) return;
 

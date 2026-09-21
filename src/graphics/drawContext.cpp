@@ -451,7 +451,7 @@ static bool entityColorIsTransparent(GEntity *e)
   return ctx->alpha && e->useColor() && ctx->unpackAlpha(e->getColor()) < 255;
 }
 
-bool gmshGeometryColorsAreTransparent()
+bool geometryColorsAreTransparent()
 {
   CTX *ctx = CTX::instance();
   const unsigned int c[7] = {
@@ -462,16 +462,16 @@ bool gmshGeometryColorsAreTransparent()
   return anyColorIsTransparent(c, 7, ctx->geom.transparency);
 }
 
-bool gmshGeometryIsTransparent()
+bool geometryIsTransparent()
 {
   // the colours the entities were given one by one count too
-  return gmshGeometryColorsAreTransparent() ||
+  return geometryColorsAreTransparent() ||
          (CTX::instance()->alpha && anyEntityColorIsTransparent());
 }
 
-bool gmshGeometryEntityIsTransparent(GEntity *e)
+bool geometryEntityIsTransparent(GEntity *e)
 {
-  return gmshGeometryColorsAreTransparent() || entityColorIsTransparent(e);
+  return geometryColorsAreTransparent() || entityColorIsTransparent(e);
 }
 
 // the carousel colours the mesh by entity, physical group or partition, and
@@ -484,7 +484,7 @@ static bool meshUsesEntityColors()
 
 // this is asked once per entity while a mixed mesh is drawn: the colours are
 // gathered on the stack rather than in a vector allocated every time
-bool gmshMeshColorsAreTransparent()
+bool meshColorsAreTransparent()
 {
   CTX *ctx = CTX::instance();
   unsigned int c[30] = {
@@ -500,16 +500,16 @@ bool gmshMeshColorsAreTransparent()
   return anyColorIsTransparent(c, n, ctx->mesh.transparency);
 }
 
-bool gmshMeshIsTransparent()
+bool meshIsTransparent()
 {
-  return gmshMeshColorsAreTransparent() ||
+  return meshColorsAreTransparent() ||
          (CTX::instance()->alpha && meshUsesEntityColors() &&
           anyEntityColorIsTransparent());
 }
 
-bool gmshMeshEntityIsTransparent(GEntity *e)
+bool meshEntityIsTransparent(GEntity *e)
 {
-  return gmshMeshColorsAreTransparent() ||
+  return meshColorsAreTransparent() ||
          (meshUsesEntityColors() && entityColorIsTransparent(e));
 }
 
@@ -587,7 +587,7 @@ static void drawRange(VertexArray *va, GLenum type, bool normals, bool colors,
   glDrawArrays(type, first, count);
 }
 
-void gmshDrawVertexArray(VertexArray *va, GLenum type, int flags,
+void drawVertexArray(VertexArray *va, GLenum type, int flags,
                          const std::vector<std::pair<int, int> > *runs)
 {
   if(!va || !va->getNumVertices()) return;
@@ -733,8 +733,8 @@ void drawContext::draw3d()
   // that the result does not depend on the drawing order; a picking pass
   // never splits, as it reads back identifiers rather than blends
   bool split = (render_mode != GMSH_SELECT) &&
-               (gmshGeometryIsTransparent() || gmshMeshIsTransparent() ||
-                gmshAnyViewIsTransparent());
+               (geometryIsTransparent() || meshIsTransparent() ||
+                anyViewIsTransparent());
 
   // the studio shading casts a shadow, drawn first into a map of its own
   bool studio = glShader::enabled() && CTX::instance()->shading >= 1 &&
