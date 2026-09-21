@@ -14,6 +14,7 @@
 #include "StringUtils.h"
 #include "GModel.h"
 #include "Context.h"
+#include "OwnerCache.h"
 #include "Options.h"
 #include "OS.h"
 #include "Colors.h"
@@ -498,6 +499,33 @@ static void PrintColorOptionsDoc(StringXColor s[], const char *prefix,
 
 // General routines
 
+// The mesh statistics the Mesh.Nb* options read. Each is one number of a walk
+// over every entity and every physical group, which a list of all the options
+// used to make once per option (a second on a large CAD model): while all
+// the options are read in one go (PrintOptions(), InitOptionsGUI()), which
+// cannot change the model, the walk is made once.
+namespace {
+  bool _statsKept = false, _statsValid = false;
+  double _stats[50];
+  // the statistics are kept for as long as one of these lives
+  struct keepMeshStatistics {
+    keepMeshStatistics() { _statsKept = true; _statsValid = false; }
+    ~keepMeshStatistics() { _statsKept = _statsValid = false; }
+  };
+} // namespace
+
+static double meshStatistic(int i)
+{
+  if(_statsKept && _statsValid) return _stats[i];
+  double s[50];
+  GetStatistics(s);
+  if(_statsKept) {
+    for(int k = 0; k < 50; k++) _stats[k] = s[k];
+    _statsValid = true;
+  }
+  return s[i];
+}
+
 void InitOptions(int num)
 {
   CTX::instance()->init();
@@ -549,6 +577,7 @@ void ReInitOptions(int num)
 
 void InitOptionsGUI(int num)
 {
+  keepMeshStatistics keep;
   SetStringOptionsGUI(num, GeneralOptions_String);
   SetStringOptionsGUI(num, GeometryOptions_String);
   SetStringOptionsGUI(num, MeshOptions_String);
@@ -666,6 +695,7 @@ void Sanitize_String_Texi(std::string &s)
 void PrintOptions(int num, int level, int diff, int help, const char *filename,
                   std::vector<std::string> *vec)
 {
+  keepMeshStatistics keep;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) FlGui::instance()->storeCurrentWindowsInfo();
 #endif
@@ -3358,39 +3388,66 @@ double opt_general_draw_bounding_box(OPT_ARGS_NUM)
   return CTX::instance()->drawBBox;
 }
 
+// The bounding box of the current model, which the six options below read.
+// It walks every entity (seconds on a large CAD model, and a list of all the
+// options asked for it six times), so it is computed once for all six and
+// again only when the geometry or the mesh has changed.
+namespace {
+  struct modelBox {
+    std::vector<int> token;
+    SBoundingBox3d bb;
+  };
+  OwnerCache<modelBox> _modelBoxes;
+} // namespace
+
+static SBoundingBox3d modelBounds()
+{
+  CTX *c = CTX::instance();
+  GModel *m = GModel::current();
+  std::vector<int> token = {c->meshContentStamp, c->geom.stamp[0],
+                            c->geom.stamp[1], c->geom.stamp[2],
+                            c->geom.stamp[3]};
+  modelBox &b = _modelBoxes[m];
+  if(b.token != token) {
+    b.bb = m->bounds();
+    b.token = token;
+  }
+  return b.bb;
+}
+
 double opt_general_xmin(OPT_ARGS_NUM)
 {
-  SBoundingBox3d bb = GModel::current()->bounds();
+  SBoundingBox3d bb = modelBounds();
   return bb.empty() ? 0. : bb.min().x();
 }
 
 double opt_general_xmax(OPT_ARGS_NUM)
 {
-  SBoundingBox3d bb = GModel::current()->bounds();
+  SBoundingBox3d bb = modelBounds();
   return bb.empty() ? 0. : bb.max().x();
 }
 
 double opt_general_ymin(OPT_ARGS_NUM)
 {
-  SBoundingBox3d bb = GModel::current()->bounds();
+  SBoundingBox3d bb = modelBounds();
   return bb.empty() ? 0. : bb.min().y();
 }
 
 double opt_general_ymax(OPT_ARGS_NUM)
 {
-  SBoundingBox3d bb = GModel::current()->bounds();
+  SBoundingBox3d bb = modelBounds();
   return bb.empty() ? 0. : bb.max().y();
 }
 
 double opt_general_zmin(OPT_ARGS_NUM)
 {
-  SBoundingBox3d bb = GModel::current()->bounds();
+  SBoundingBox3d bb = modelBounds();
   return bb.empty() ? 0. : bb.min().z();
 }
 
 double opt_general_zmax(OPT_ARGS_NUM)
 {
-  SBoundingBox3d bb = GModel::current()->bounds();
+  SBoundingBox3d bb = modelBounds();
   return bb.empty() ? 0. : bb.max().z();
 }
 
@@ -7037,75 +7094,25 @@ static void GetStatistics(double stat[50])
 }
 #endif
 
-double opt_mesh_nb_nodes(OPT_ARGS_NUM)
-{
-  double s[50];
-  GetStatistics(s);
-  return s[4];
-}
+double opt_mesh_nb_nodes(OPT_ARGS_NUM) { return meshStatistic(4); }
 
-double opt_mesh_nb_triangles(OPT_ARGS_NUM)
-{
-  double s[50];
-  GetStatistics(s);
-  return s[7];
-}
+double opt_mesh_nb_triangles(OPT_ARGS_NUM) { return meshStatistic(7); }
 
-double opt_mesh_nb_quadrangles(OPT_ARGS_NUM)
-{
-  double s[50];
-  GetStatistics(s);
-  return s[8];
-}
+double opt_mesh_nb_quadrangles(OPT_ARGS_NUM) { return meshStatistic(8); }
 
-double opt_mesh_nb_tetrahedra(OPT_ARGS_NUM)
-{
-  double s[50];
-  GetStatistics(s);
-  return s[9];
-}
+double opt_mesh_nb_tetrahedra(OPT_ARGS_NUM) { return meshStatistic(9); }
 
-double opt_mesh_nb_hexahedra(OPT_ARGS_NUM)
-{
-  double s[50];
-  GetStatistics(s);
-  return s[10];
-}
+double opt_mesh_nb_hexahedra(OPT_ARGS_NUM) { return meshStatistic(10); }
 
-double opt_mesh_nb_prisms(OPT_ARGS_NUM)
-{
-  double s[50];
-  GetStatistics(s);
-  return s[11];
-}
+double opt_mesh_nb_prisms(OPT_ARGS_NUM) { return meshStatistic(11); }
 
-double opt_mesh_nb_pyramids(OPT_ARGS_NUM)
-{
-  double s[50];
-  GetStatistics(s);
-  return s[12];
-}
+double opt_mesh_nb_pyramids(OPT_ARGS_NUM) { return meshStatistic(12); }
 
-double opt_mesh_nb_trihedra(OPT_ARGS_NUM)
-{
-  double s[50];
-  GetStatistics(s);
-  return s[13];
-}
+double opt_mesh_nb_trihedra(OPT_ARGS_NUM) { return meshStatistic(13); }
 
-double opt_mesh_nb_polygons(OPT_ARGS_NUM)
-{
-  double s[50];
-  GetStatistics(s);
-  return s[46];
-}
+double opt_mesh_nb_polygons(OPT_ARGS_NUM) { return meshStatistic(46); }
 
-double opt_mesh_nb_polyhedra(OPT_ARGS_NUM)
-{
-  double s[50];
-  GetStatistics(s);
-  return s[47];
-}
+double opt_mesh_nb_polyhedra(OPT_ARGS_NUM) { return meshStatistic(47); }
 
 double opt_mesh_cpu_time(OPT_ARGS_NUM)
 {
