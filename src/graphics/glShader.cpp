@@ -1133,8 +1133,21 @@ void main()
   }
 
   namespace {
+    // an empty texture to draw into, read back as it was written
     GLuint floatTarget(int width, int height, GLenum internal, GLenum format,
-                       GLenum type);
+                       GLenum type)
+    {
+      GLuint t = 0;
+      glGenTextures(1, &t);
+      glBindTexture(GL_TEXTURE_2D, t);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, type,
+                   nullptr);
+      return t;
+    }
 
     // A pass that covers the window: the state it needs, and every piece of
     // state it is allowed to change, put back when it ends. The pass itself
@@ -1982,21 +1995,6 @@ void main()
       glDeleteTextures(1, &_c->oitReveal);
       glApi::DeleteRenderbuffers(1, &_c->oitDepthRb);
       _c->oitFbo = _c->oitAccum = _c->oitReveal = _c->oitDepthRb = 0;
-    }
-
-    GLuint floatTarget(int width, int height, GLenum internal, GLenum format,
-                       GLenum type)
-    {
-      GLuint t = 0;
-      glGenTextures(1, &t);
-      glBindTexture(GL_TEXTURE_2D, t);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, type,
-                   nullptr);
-      return t;
     }
 
     // The two buffers plus a copy of the window's depth. The depth formats

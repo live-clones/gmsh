@@ -167,7 +167,21 @@ namespace {
   bool _kept = false, _keptIncomplete = false;
 } // namespace
 
-static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts);
+// the points a curve is drawn through
+static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts)
+{
+  pts.clear();
+  Range<double> t_bounds = e->parBounds(0);
+  double t_min = t_bounds.low(), t_max = t_bounds.high();
+  int N = e->minimumDrawSegments() + 1;
+  for(int i = 0; i < N; i++) {
+    double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
+    GPoint p = e->point(t);
+    double x = p.x(), y = p.y(), z = p.z();
+    ctx->transform(x, y, z);
+    pts.push_back(SPoint3(x, y, z));
+  }
+}
 
 // f(x, y, z) for each segment between two consecutive points
 template <class F> static void forSegments(const std::vector<SPoint3> &pts, F f)
@@ -393,22 +407,6 @@ static bool drawKept(drawContext *ctx, GModel *m, int dim)
   drawVertexArray(ka.va, type, flags, pick ? &runs : nullptr);
   if(dim == 2) gmshPolygonFill(true);
   return true;
-}
-
-// the points a curve is drawn through
-static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts)
-{
-  pts.clear();
-  Range<double> t_bounds = e->parBounds(0);
-  double t_min = t_bounds.low(), t_max = t_bounds.high();
-  int N = e->minimumDrawSegments() + 1;
-  for(int i = 0; i < N; i++) {
-    double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-    GPoint p = e->point(t);
-    double x = p.x(), y = p.y(), z = p.z();
-    ctx->transform(x, y, z);
-    pts.push_back(SPoint3(x, y, z));
-  }
 }
 
 static void drawGeomPoint(drawContext *ctx, GVertex *v, double size)
