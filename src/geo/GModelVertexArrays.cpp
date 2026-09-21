@@ -169,26 +169,40 @@ template <class T> static bool areSomeElementsCurved(std::vector<T *> &elements)
   return false;
 }
 
+// is the element drawn with its curved representation?
+static bool isCurved(MElement *ele)
+{
+  return (ele->getPolynomialOrder() > 1) &&
+         (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
+}
+
+// Mesh.Explode: the n points of an element moved towards its barycentre pc
+// (or away from it) by the factor
+static void explodeAbout(const SPoint3 &pc, double factor, int n, double *x,
+                         double *y, double *z)
+{
+  if(factor == 1.) return;
+  for(int k = 0; k < n; k++) {
+    x[k] = pc[0] + factor * (x[k] - pc[0]);
+    y[k] = pc[1] + factor * (y[k] - pc[1]);
+    z[k] = pc[2] + factor * (z[k] - pc[2]);
+  }
+}
+
 template <class T>
 static void addSmoothNormals(GEntity *e, std::vector<T *> &elements)
 {
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
-    const bool curved =
-      (ele->getPolynomialOrder() > 1) &&
-      (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
+    const bool curved = isCurved(ele);
     SPoint3 pc(0., 0., 0.);
     if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
     for(int j = 0; j < ele->getNumFacesRep(curved); j++) {
       double x[3], y[3], z[3];
       SVector3 n[3];
       ele->getFaceRep(curved, j, x, y, z, n);
+      explodeAbout(pc, CTX::instance()->mesh.explode, 3, x, y, z);
       for(int k = 0; k < 3; k++) {
-        if(CTX::instance()->mesh.explode != 1.) {
-          x[k] = pc[0] + CTX::instance()->mesh.explode * (x[k] - pc[0]);
-          y[k] = pc[1] + CTX::instance()->mesh.explode * (y[k] - pc[1]);
-          z[k] = pc[2] + CTX::instance()->mesh.explode * (z[k] - pc[2]);
-        }
         e->model()->normals->add(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
       }
     }
@@ -222,20 +236,6 @@ static int repPerFace(MElement *ele, bool curved)
   return numRep / numFaces;
 }
 
-static int numFillThreads(std::size_t numElements)
-{
-  int nthreads = CTX::instance()->numThreads;
-  if(!nthreads) nthreads = Msg::GetMaxThreads();
-  if(numElements < 1000) nthreads = 1;
-  return nthreads;
-}
-
-static bool isCurved(MElement *ele)
-{
-  return (ele->getPolynomialOrder() > 1) &&
-         (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
-}
-
 // The skin of a set of 3D elements: their faces that no other element of the
 // set shares, in the order of the elements, and apart the elements whose
 // faces cannot be told from what draws them, which are drawn whole.
@@ -244,68 +244,74 @@ struct meshSkin {
   std::vector<MElement *> whole;
 };
 
+// The faces (the edges, if in 2D) of a set of elements that no other element
+// of the set shares, as (index of the element, face), in the order of the
+// elements; the elements with a 0 in `use', if given, are left out. Each
+// thread matches its share of the faces, in a table of its own (see
+// FaceMatcher.h).
+void findBoundaryOfElements(const std::vector<MElement *> &elements,
+                            bool in2D, const std::vector<std::uint8_t> *use,
+                            std::vector<std::pair<std::uint32_t, int> > &left)
+{
+  left.clear();
+  std::size_t num = elements.size();
+  int nthreads = CTX::instance()->numThreadsFor(num, 1000);
+  std::vector<std::vector<std::pair<std::uint32_t, int> > > found(nthreads);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    FaceMatcher<std::uintptr_t, std::uint32_t> matcher;
+    for(std::size_t i = 0; i < num; i++) {
+      if(use && !(*use)[i]) continue;
+      MElement *ele = elements[i];
+      // (the faces of an element are hashed together, then added)
+      int nf = in2D ? ele->getNumEdges() : ele->getNumFaces();
+      std::uint64_t hash[8];
+      for(int j0 = 0; j0 < nf; j0 += 8) {
+        int n = std::min(nf - j0, 8);
+        for(int j = 0; j < n; j++) {
+          MVertex *v[4];
+          int nc = in2D ? ele->getEdgeCorners(j0 + j, v) :
+                          ele->getFaceCorners(j0 + j, v);
+          std::uintptr_t k[4] = {0, 0, 0, 0};
+          for(int c = 0; c < nc; c++) k[c] = (std::uintptr_t)v[c];
+          hash[j] = (nc >= 2 && matcher.share(k, nc, nthreads) == t) ?
+                      matcher.hashOf(k, nc, 0) : 0;
+        }
+        for(int j = 0; j < n; j++)
+          if(hash[j]) matcher.add(hash[j], (std::uint32_t)i, j0 + j);
+      }
+    }
+    matcher.forEachLeft([&](std::uint32_t i, int j) {
+      found[t].push_back(std::make_pair(i, j));
+    });
+  }
+  for(auto &f : found) left.insert(left.end(), f.begin(), f.end());
+  std::sort(left.begin(), left.end());
+}
+
 static void findSkin(const std::vector<MElement *> &elements, meshSkin &skin)
 {
   skin.faces.clear();
   skin.whole.clear();
   std::size_t num = elements.size();
-  if(num >= 0xffffffffu) { // (they are numbered on 32 bits below)
+  if(num >= 0xffffffffu) { // (they are numbered on 32 bits)
     skin.whole = elements;
     return;
   }
-  int nthreads = numFillThreads(num);
 
   // (what decides it is not cheap for curved elements: once, not per thread)
   std::vector<std::uint8_t> mapped(num);
+  int nthreads = CTX::instance()->numThreadsFor(num, 1000);
 #pragma omp parallel for schedule(static) num_threads(nthreads)
   for(std::size_t i = 0; i < num; i++)
     mapped[i] = repPerFace(elements[i], isCurved(elements[i])) ? 1 : 0;
   for(std::size_t i = 0; i < num; i++)
     if(!mapped[i]) skin.whole.push_back(elements[i]);
 
-  // each thread matches its share of the faces, in a table of its own
-  typedef std::pair<std::size_t, int> face;
-  std::vector<std::vector<face> > left(nthreads);
-#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
-  for(int t = 0; t < nthreads; t++) {
-    FaceMatcher<std::uintptr_t, std::uint32_t> matcher;
-    for(std::size_t i = 0; i < num; i++) {
-      if(!mapped[i]) continue;
-      MElement *ele = elements[i];
-      // (the faces of an element are hashed together, then added)
-      int nf = ele->getNumFaces();
-      std::uint64_t hash[8];
-      for(int j0 = 0; j0 < nf; j0 += 8) {
-        int n = std::min(nf - j0, 8);
-        for(int j = 0; j < n; j++) {
-          MVertex *fv[4];
-          int nc = ele->getFaceCorners(j0 + j, fv);
-          if(!nc) { // no corner accessor: fall back on the face
-            MFace fa = ele->getFace(j0 + j);
-            nc = std::min((int)fa.getNumVertices(), 4);
-            for(int k = 0; k < nc; k++) fv[k] = fa.getVertex(k);
-          }
-          hash[j] = 0;
-          if(nc < 3) continue;
-          std::uintptr_t k[4] = {(std::uintptr_t)fv[0], (std::uintptr_t)fv[1],
-                                 (std::uintptr_t)fv[2],
-                                 nc > 3 ? (std::uintptr_t)fv[3] : 0};
-          if(matcher.share(k, nc, nthreads) == t)
-            hash[j] = matcher.hashOf(k, nc, 0);
-        }
-        for(int j = 0; j < n; j++)
-          if(hash[j]) matcher.add(hash[j], (std::uint32_t)i, j0 + j);
-      }
-    }
-    matcher.forEachLeft(
-      [&](std::uint32_t i, int j) { left[t].push_back(face(i, j)); });
-  }
-
-  std::vector<face> all;
-  for(auto &l : left) all.insert(all.end(), l.begin(), l.end());
-  std::sort(all.begin(), all.end());
-  skin.faces.reserve(all.size());
-  for(auto &f : all)
+  std::vector<std::pair<std::uint32_t, int> > left;
+  findBoundaryOfElements(elements, false, &mapped, left);
+  skin.faces.reserve(left.size());
+  for(auto &f : left)
     skin.faces.push_back(std::make_pair(elements[f.first], f.second));
 }
 
@@ -423,7 +429,7 @@ static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
                                 bool faces,
                                 std::vector<std::uint16_t> *newEdges = nullptr)
 {
-  int nthreads = numFillThreads(elements.size());
+  int nthreads = CTX::instance()->numThreadsFor(elements.size(), 1000);
 
   // each thread fills its own vertex arrays, which are merged below: this
   // avoids the critical sections that used to serialize the whole loop
@@ -499,11 +505,7 @@ static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
       std::uint64_t hash[MAX_MASKED_EDGES];
       for(int j = 0; j < numRep; j++) {
         MVertex *ev[2];
-        if(!ele->getEdgeCorners(j, ev)) {
-          MEdge ed = ele->getEdge(j);
-          ev[0] = ed.getVertex(0);
-          ev[1] = ed.getVertex(1);
-        }
+        ele->getEdgeCorners(j, ev);
         hash[j] = filter->hashOf(c, ev[0], ev[1]);
         filter->prefetch(hash[j]);
       }
@@ -552,13 +554,7 @@ static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
         double x[2], y[2], z[2];
         SVector3 n[2];
         ele->getEdgeRep(curved, j, x, y, z, n);
-        if(explode != 1.) {
-          for(int k = 0; k < 2; k++) {
-            x[k] = pc[0] + explode * (x[k] - pc[0]);
-            y[k] = pc[1] + explode * (y[k] - pc[1]);
-            z[k] = pc[2] + explode * (z[k] - pc[2]);
-          }
-        }
+        explodeAbout(pc, explode, 2, x, y, z);
         if(e->dim() == 2 && smooth)
           for(int k = 0; k < 2; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
@@ -573,13 +569,7 @@ static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
         double x[3], y[3], z[3];
         SVector3 n[3];
         ele->getFaceRep(curved, j, x, y, z, n);
-        if(explode != 1.) {
-          for(int k = 0; k < 3; k++) {
-            x[k] = pc[0] + explode * (x[k] - pc[0]);
-            y[k] = pc[1] + explode * (y[k] - pc[1]);
-            z[k] = pc[2] + explode * (z[k] - pc[2]);
-          }
-        }
+        explodeAbout(pc, explode, 3, x, y, z);
         if(e->dim() == 2 && smooth)
           for(int k = 0; k < 3; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
@@ -629,13 +619,7 @@ static void addSkinInArray(GEntity *e, VertexArray *va, const meshSkin &skin)
       double x[3], y[3], z[3];
       SVector3 n[3];
       ele->getFaceRep(curved, j, x, y, z, n);
-      if(explode != 1.) {
-        for(int k = 0; k < 3; k++) {
-          x[k] = pc[0] + explode * (x[k] - pc[0]);
-          y[k] = pc[1] + explode * (y[k] - pc[1]);
-          z[k] = pc[2] + explode * (z[k] - pc[2]);
-        }
-      }
+      explodeAbout(pc, explode, 3, x, y, z);
       va->add(x, y, z, n, col, ele, false);
     }
   }
@@ -670,20 +654,11 @@ static void addSkinEdgesInArray(GEntity *e, VertexArray *va,
     }
     MVertex *fv[4];
     int nc = ele->getFaceCorners(f.second, fv);
-    if(!nc) {
-      MFace fa = ele->getFace(f.second);
-      nc = std::min((int)fa.getNumVertices(), 4);
-      for(int k = 0; k < nc; k++) fv[k] = fa.getVertex(k);
-    }
     unsigned int col[4] = {c, c, c, c};
     for(int j = 0; j < numEdges; j++) {
       // the edges of the element that join two corners of the face
       MVertex *ev[2];
-      if(!ele->getEdgeCorners(j, ev)) {
-        MEdge ed = ele->getEdge(j);
-        ev[0] = ed.getVertex(0);
-        ev[1] = ed.getVertex(1);
-      }
+      ele->getEdgeCorners(j, ev);
       int in = 0;
       for(int k = 0; k < nc; k++)
         if(fv[k] == ev[0] || fv[k] == ev[1]) in++;
@@ -701,13 +676,7 @@ static void addSkinEdgesInArray(GEntity *e, VertexArray *va,
             y[k] = ev[k]->y();
             z[k] = ev[k]->z();
           }
-        if(explode != 1.) {
-          for(int k = 0; k < 2; k++) {
-            x[k] = pc[0] + explode * (x[k] - pc[0]);
-            y[k] = pc[1] + explode * (y[k] - pc[1]);
-            z[k] = pc[2] + explode * (z[k] - pc[2]);
-          }
-        }
+        explodeAbout(pc, explode, 2, x, y, z);
         va->add(x, y, z, n, col, ele, false);
       }
     }
@@ -732,25 +701,25 @@ static std::vector<double> regionKey(GRegion *r)
   return k;
 }
 
-struct keptSkin {
+struct regionSkin {
   std::vector<double> key;
   meshSkin skin;
 };
-static OwnerCache<keptSkin> _regionSkin;
+static OwnerCache<regionSkin> _regionSkin;
 
 // the edges each element draws, for each of the lists of elements of a volume
 // (they also depend on the colours, which tell edges apart)
-struct keptEdges {
+struct regionEdges {
   std::vector<double> key;
   std::vector<std::vector<std::uint16_t> > masks;
 };
-static OwnerCache<keptEdges> _regionEdges;
+static OwnerCache<regionEdges> _regionEdges;
 
-struct keptSpheres {
+struct regionSpheres {
   std::vector<double> key;
   elementSpheres spheres;
 };
-static OwnerCache<keptSpheres> _regionSpheres;
+static OwnerCache<regionSpheres> _regionSpheres;
 
 class initMeshGEdge {
 private:
@@ -866,7 +835,7 @@ public:
 // the skin of a volume, found from all its element types together and kept
 static const meshSkin &getSkin(GRegion *r)
 {
-  keptSkin &kept = _regionSkin[r];
+  regionSkin &kept = _regionSkin[r];
   std::vector<double> key = regionKey(r);
   if(kept.key != key) {
     double t1 = TimeOfDay();
@@ -933,7 +902,7 @@ public:
   void addEdges(GRegion *r, bool edg, bool faces)
   {
     CTX *ctx = CTX::instance();
-    keptEdges &kept = _regionEdges[r];
+    regionEdges &kept = _regionEdges[r];
     std::vector<double> key = regionKey(r);
     key.push_back(ctx->mesh.colorCarousel);
     key.push_back(ctx->mesh.drawUniqueEdges);
@@ -1041,7 +1010,7 @@ static const elementSpheres *getSpheres(GRegion *r)
   std::size_t num = 0;
   forShownRegionElements(r, [&](auto &els) { num += els.size(); });
   if(num < 50000) return nullptr;
-  keptSpheres &kept = _regionSpheres[r];
+  regionSpheres &kept = _regionSpheres[r];
   std::vector<double> key = regionKey(r);
   if(kept.key == key && kept.spheres.size() == num) return &kept.spheres;
   double t1 = TimeOfDay();
@@ -1049,7 +1018,7 @@ static const elementSpheres *getSpheres(GRegion *r)
   kept.spheres.assign(num);
   std::size_t first = 0;
   forShownRegionElements(r, [&](auto &els) {
-    int nthreads = numFillThreads(els.size());
+    int nthreads = CTX::instance()->numThreadsFor(els.size(), 1000);
 #pragma omp parallel for schedule(static) num_threads(nthreads)
     for(std::size_t i = 0; i < els.size(); i++) {
       MElement *ele = els[i];
@@ -1072,7 +1041,7 @@ static void gatherCloseElements(GRegion *r, const elementSpheres *spheres,
 {
   std::size_t first = 0;
   forShownRegionElements(r, [&](auto &els) {
-    int nthreads = numFillThreads(els.size() / 100);
+    int nthreads = CTX::instance()->numThreadsFor(els.size(), 100000);
     std::vector<std::vector<MElement *> > found(nthreads);
 #pragma omp parallel for schedule(static, 1) num_threads(nthreads)
     for(int t = 0; t < nthreads; t++) {
@@ -1159,11 +1128,6 @@ static void fillCutRegion(GRegion *r, bool caps, std::size_t est)
       if(!drawn) {
         MVertex *fv[4];
         int nc = f.first->getFaceCorners(f.second, fv);
-        if(!nc) {
-          MFace fa = f.first->getFace(f.second);
-          nc = std::min((int)fa.getNumVertices(), 4);
-          for(int k = 0; k < nc; k++) fv[k] = fa.getVertex(k);
-        }
         drawn = clipPlanes::removesAll(ctx->mesh.clip, nc, [&](int j, int k) {
           return k == 0 ? fv[j]->x() : k == 1 ? fv[j]->y() : fv[j]->z();
         });

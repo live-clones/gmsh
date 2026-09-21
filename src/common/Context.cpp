@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "Context.h"
 #include "OS.h"
+#include "GmshMessage.h"
 #include "GamePad.h"
 
 #if defined(HAVE_FLTK)
@@ -176,4 +177,10 @@ int CTX::unpackAlpha(unsigned int X)
     return ( (X) & 0xff );
   else
     return ( ( (X) >> 24 ) & 0xff );
+}
+
+int CTX::numThreadsFor(std::size_t num, std::size_t worthIt) const
+{
+  if(num < worthIt) return 1;
+  return numThreads ? numThreads : Msg::GetMaxThreads();
 }

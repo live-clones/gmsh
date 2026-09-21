@@ -194,13 +194,14 @@ public:
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) const = 0;
   // fill v[] with the corner vertices of face `num' and return how many
-  // there are (0 if not implemented); unlike getFace() this does not sort
-  // them, which is cheaper when only the identity of the face is needed
-  virtual int getFaceCorners(int num, MVertex *v[4]) const { return 0; }
+  // there are (the first 4 of a face that has more); unlike getFace() this
+  // does not sort them, which is cheaper when only the identity of the face
+  // is needed (the elements that have no faster way go through getFace())
+  virtual int getFaceCorners(int num, MVertex *v[4]) const;
   // same for the two ends of an edge (an MEdge reads the numbers of its
   // nodes to order them, which is two cache misses when all that is wanted
   // is to tell edges apart)
-  virtual int getEdgeCorners(int num, MVertex *v[2]) const { return 0; }
+  virtual int getEdgeCorners(int num, MVertex *v[2]) const;
   virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   MFaceN getHighOrderFace(const MFace &face)
   {

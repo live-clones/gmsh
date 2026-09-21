@@ -946,9 +946,7 @@ struct flatElements {
 // handled serially
 static int numWalkThreads(PViewData *data, PViewOptions *opt, std::size_t num)
 {
-  int nthreads = CTX::instance()->numThreads;
-  if(!nthreads) nthreads = Msg::GetMaxThreads();
-  if(num < 10000) nthreads = 1;
+  int nthreads = CTX::instance()->numThreadsFor(num, 10000);
   if(opt->smoothNormals || opt->useGenRaise || opt->externalViewIndex >= 0 ||
      data->useGaussPoints() || !data->isThreadSafe())
     nthreads = 1;
@@ -1003,11 +1001,11 @@ static const std::vector<std::uint8_t> *activeSkinMasks = nullptr;
 // of the skin alone.
 // The elements that have data can differ from one step to the next, so each
 // step has its own, the last few being kept for a view that is animated.
-struct keptSkin {
+struct viewSkin {
   std::vector<double> key;
   std::vector<std::uint8_t> masks;
 };
-static OwnerCache<std::list<keptSkin> > _viewSkin;
+static OwnerCache<std::list<viewSkin> > _viewSkin;
 static const std::size_t maxKeptSkins = 16;
 
 static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
@@ -1052,14 +1050,14 @@ static const std::vector<std::uint8_t> *getSkin(PView *p, PViewData *data,
 {
   double t1 = TimeOfDay();
   std::vector<double> key = skinKey(data, opt, flat);
-  std::list<keptSkin> &kept = _viewSkin[p];
+  std::list<viewSkin> &kept = _viewSkin[p];
   // what was found for another state of the data or of the mesh is of no
   // use any more (the step is the last entry of the key)
-  kept.remove_if([&](const keptSkin &k) {
+  kept.remove_if([&](const viewSkin &k) {
     return k.key.size() != key.size() ||
            !std::equal(key.begin(), key.end() - 1, k.key.begin());
   });
-  auto it = std::find_if(kept.begin(), kept.end(), [&](const keptSkin &k) {
+  auto it = std::find_if(kept.begin(), kept.end(), [&](const viewSkin &k) {
     return k.key == key && k.masks.size() == flat.num;
   });
   if(it != kept.end()) {
@@ -1067,7 +1065,7 @@ static const std::vector<std::uint8_t> *getSkin(PView *p, PViewData *data,
     return &kept.front().masks;
   }
   if(!findSkin(p, flat, false, nullptr, nullptr)) return nullptr;
-  kept.push_front(keptSkin());
+  kept.push_front(viewSkin());
   kept.front().key = key;
   kept.front().masks.swap(skinMasks);
   if(kept.size() > maxKeptSkins) kept.pop_back();

@@ -250,6 +250,9 @@ public:
   int terminal;
   // number of threads (0 == use system default)
   int numThreads;
+  // how many threads a loop over num items runs on: General.NumThreads (all
+  // there are if 0), or 1 if there are fewer items than are worth it
+  int numThreadsFor(std::size_t num, std::size_t worthIt) const;
   // detached processes (WIN32)?
   int detachedProcess;
   // number of graphical windows/tiles

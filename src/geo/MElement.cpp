@@ -1687,6 +1687,22 @@ void MElement::writeTOCHNOG(FILE *fp, int num)
   fprintf(fp, "\n");
 }
 
+int MElement::getFaceCorners(int num, MVertex *v[4]) const
+{
+  MFace f = getFace(num);
+  int n = std::min((int)f.getNumVertices(), 4);
+  for(int i = 0; i < n; i++) v[i] = f.getVertex(i);
+  return n;
+}
+
+int MElement::getEdgeCorners(int num, MVertex *v[2]) const
+{
+  MEdge e = getEdge(num);
+  v[0] = e.getVertex(0);
+  v[1] = e.getVertex(1);
+  return 2;
+}
+
 void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
 {
   if(!getTypeForVTK()) return;

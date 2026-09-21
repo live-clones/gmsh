@@ -18,6 +18,7 @@
 #include "discreteEdge.h"
 #include "ElementType.h"
 #include "FaceMatcher.h"
+#include "GModelVertexArrays.h"
 
 StringXNumber SkinOptions_Number[] = {{GMSH_FULLRC, "Visible", nullptr, 1., ""},
                                       {GMSH_FULLRC, "FromMesh", nullptr, 0., ""},
@@ -73,17 +74,9 @@ static int getBoundary(int type, const int (**boundary)[6][4])
   }
 }
 
-static int numSkinThreads(std::size_t num)
-{
-  int nthreads = CTX::instance()->numThreads;
-  if(!nthreads) nthreads = Msg::GetMaxThreads();
-  return (num < 10000) ? 1 : nthreads;
-}
-
 // The skin of the elements of highest dimension of a mesh: their faces (or
-// edges, in 2D) that no other element shares, whatever the entity, found by
-// the matcher the drawing of the mesh uses, each thread taking its share of
-// the faces.
+// edges, in 2D) that no other element shares, whatever the entity, found as
+// the drawing of the mesh finds them.
 static void getBoundaryFromMesh(GModel *m, int visible)
 {
   int dim = m->getDim();
@@ -102,47 +95,8 @@ static void getBoundaryFromMesh(GModel *m, int visible)
     return;
   }
 
-  typedef std::pair<std::uint32_t, int> bnd; // element, face or edge
-  int nthreads = numSkinThreads(elements.size());
-  std::vector<std::vector<bnd> > left(nthreads);
-#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
-  for(int t = 0; t < nthreads; t++) {
-    FaceMatcher<std::uintptr_t, std::uint32_t> matcher;
-    for(std::size_t i = 0; i < elements.size(); i++) {
-      MElement *e = elements[i];
-      int n = (dim == 3) ? e->getNumFaces() : e->getNumEdges();
-      std::uint64_t hash[8];
-      for(int j0 = 0; j0 < n; j0 += 8) {
-        int nb = std::min(n - j0, 8);
-        for(int j = 0; j < nb; j++) {
-          MVertex *v[4];
-          int nc = (dim == 3) ? e->getFaceCorners(j0 + j, v) :
-                                e->getEdgeCorners(j0 + j, v);
-          if(!nc && dim == 3) {
-            MFace f = e->getFace(j0 + j);
-            nc = std::min((int)f.getNumVertices(), 4);
-            for(int k = 0; k < nc; k++) v[k] = f.getVertex(k);
-          }
-          else if(!nc) {
-            MEdge ed = e->getEdge(j0 + j);
-            nc = 2;
-            for(int k = 0; k < 2; k++) v[k] = ed.getVertex(k);
-          }
-          std::uintptr_t key[4] = {0, 0, 0, 0};
-          for(int k = 0; k < nc; k++) key[k] = (std::uintptr_t)v[k];
-          hash[j] = (matcher.share(key, nc, nthreads) == t) ?
-                      matcher.hashOf(key, nc, 0) : 0;
-        }
-        for(int j = 0; j < nb; j++)
-          if(hash[j]) matcher.add(hash[j], (std::uint32_t)i, j0 + j);
-      }
-    }
-    matcher.forEachLeft(
-      [&](std::uint32_t i, int j) { left[t].push_back(bnd(i, j)); });
-  }
-  std::vector<bnd> skin;
-  for(auto &l : left) skin.insert(skin.end(), l.begin(), l.end());
-  std::sort(skin.begin(), skin.end());
+  std::vector<std::pair<std::uint32_t, int> > skin; // element, face or edge
+  findBoundaryOfElements(elements, dim == 2, nullptr, skin);
 
   if(dim == 2) {
     discreteEdge *e =
@@ -274,7 +228,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
 
   // their faces (edges in 2D) that no other shares
   typedef std::pair<std::uint32_t, int> bnd; // element, face or edge
-  int nthreads = numSkinThreads(elements.size());
+  int nthreads = CTX::instance()->numThreadsFor(elements.size(), 10000);
   std::vector<std::vector<bnd> > left(nthreads);
 #pragma omp parallel for schedule(static, 1) num_threads(nthreads)
   for(int t = 0; t < nthreads; t++) {
