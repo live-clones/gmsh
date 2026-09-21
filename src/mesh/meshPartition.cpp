@@ -746,13 +746,20 @@ static int partitionGraph(Graph &graph, bool verbose)
     }
 
     // Check that all partitions have at least one element
+    std::vector<int> emptyPartitions;
     std::vector<int> partitionCount(numPart, 0);
     for(std::size_t i = 0; i < epart.size(); i++) { partitionCount[epart[i]]++; }
     for(std::size_t i = 0; i < partitionCount.size(); i++) {
-      if(partitionCount[i] == 0) {
-        Msg::Error("METIS produced an empty partition");
-        return 1;
+      if(partitionCount[i] == 0) emptyPartitions.push_back(i + 1);
+    }
+
+    if(!emptyPartitions.empty()) {
+      std::string list;
+      for(std::size_t i = 0; i < emptyPartitions.size(); i++) {
+        list += " " + std::to_string(emptyPartitions[i]);
       }
+      Msg::Warning("METIS produced %d empty partitions:%s",
+                   (int)emptyPartitions.size(), list.c_str());
     }
 
     // Check and correct the topology
