@@ -10,7 +10,7 @@
 #include <cmath>
 #include <cstdint>
 #include <vector>
-#include "Context.h"
+#include "ClipPlanes.h"
 
 // A sphere around each element of a list, as it is drawn, kept from one
 // position of the clipping planes to the next: the elements a plane may cut
@@ -54,39 +54,6 @@ public:
   int dim(std::size_t i) const { return _dim[i]; }
   double radius(std::size_t i) const { return _s[4 * i + 3]; }
   const float *sphere(std::size_t i) const { return &_s[4 * i]; }
-};
-
-// the clipping planes of a mask, with normals of length 1
-class activePlanes {
-private:
-  int _n;
-  double _eq[6][4];
-
-public:
-  activePlanes(int mask) : _n(0)
-  {
-    for(int clip = 0; clip < 6; clip++) {
-      if(!(mask & (1 << clip))) continue;
-      const double *pl = CTX::instance()->clipPlane[clip];
-      double norm = std::sqrt(pl[0] * pl[0] + pl[1] * pl[1] + pl[2] * pl[2]);
-      if(!norm) continue;
-      for(int k = 0; k < 4; k++) _eq[_n][k] = pl[k] / norm;
-      _n++;
-    }
-  }
-  int num() const { return _n; }
-  // the distance from a sphere to the closest plane, negative or zero if
-  // one may cut what it holds
-  double gap(const float *s) const
-  {
-    double g = 1e300;
-    for(int i = 0; i < _n; i++) {
-      double d =
-        _eq[i][0] * s[0] + _eq[i][1] * s[1] + _eq[i][2] * s[2] + _eq[i][3];
-      g = std::min(g, std::abs(d) - (double)s[3] * (1. + 1e-5));
-    }
-    return g;
-  }
 };
 
 #endif

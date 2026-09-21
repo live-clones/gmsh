@@ -271,6 +271,26 @@ const double *gmshMatrix(int kind);
 void gmshClipPlane(int i, const double plane[4]);
 void gmshClipPlaneOn(int i, bool on);
 bool gmshClipPlaneEnabled(int i);
+// the planes of a mask (a bit each) on, the others off; none with 0
+void gmshClipPlanesOn(int mask);
+// all the planes off for as long as it lives (if active), then as they were
+class gmshClipPlanesOff {
+private:
+  bool _active, _was[6];
+
+public:
+  gmshClipPlanesOff(bool active = true) : _active(active)
+  {
+    if(!_active) return;
+    for(int i = 0; i < 6; i++) _was[i] = gmshClipPlaneEnabled(i);
+    gmshClipPlanesOn(0);
+  }
+  ~gmshClipPlanesOff()
+  {
+    if(_active)
+      for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, _was[i]);
+  }
+};
 // keep only what the enabled planes cut off (shader pipeline only: the fixed
 // function planes have no such mode)
 void gmshClipOutside(bool outside);

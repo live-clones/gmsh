@@ -322,54 +322,28 @@ static void changeCoordinates(drawTarget *p, int ient, int iele, int numNodes,
   }
 }
 
-static double evalClipPlane(int clip, double x, double y, double z)
+// the nodes of an element of a view, as the clipping planes are asked about
+// them (see ClipPlanes.h)
+static auto nodesOf(double **xyz)
 {
-  return CTX::instance()->clipPlane[clip][0] * x +
-         CTX::instance()->clipPlane[clip][1] * y +
-         CTX::instance()->clipPlane[clip][2] * z +
-         CTX::instance()->clipPlane[clip][3];
+  return [xyz](int j, int k) { return xyz[j][k]; };
 }
 
-static double intersectClipPlane(int clip, int numNodes, double **xyz)
-{
-  double val = evalClipPlane(clip, xyz[0][0], xyz[0][1], xyz[0][2]);
-  for(int i = 1; i < numNodes; i++) {
-    if(val * evalClipPlane(clip, xyz[i][0], xyz[i][1], xyz[i][2]) <= 0)
-      return 0.; // the element intersects the cut plane
-  }
-  return val;
-}
-
-// is this element kept by whole element mode? Only those entirely beyond a
-// plane are dropped. Used for the glyphs drawn straight from the elements.
+// is this element kept by whole element mode? Used for the glyphs drawn
+// straight from the elements as well.
 bool elementIsKept(PViewOptions *opt, int dim, int numNodes, double **xyz)
 {
-  CTX *ctx = CTX::instance();
-  if(!ctx->clipWholeElements) return true;
-  for(int clip = 0; clip < 6; clip++) {
-    if(!(opt->clip & (1 << clip))) continue;
-    // only the volume is clipped
-    if(dim < 3 && ctx->clipOnlyVolume) continue;
-    double d = intersectClipPlane(clip, numNodes, xyz);
-    // only the cut volumes are drawn
-    if(dim == 3 && ctx->clipOnlyDrawIntersectingVolume && d) return false;
-    if(d < 0.) return false;
-  }
-  return true;
+  if(!CTX::instance()->clipWholeElements) return true;
+  return clipPlanes::keeps(opt->clip, dim, numNodes, nodesOf(xyz));
 }
 
 // does this element go in the array of whole element mode? The cut ones do,
 // and everything the planes are not applied to (OpenGL would slice both).
 static bool elementIsCut(PViewOptions *opt, int dim, int numNodes, double **xyz)
 {
-  CTX *ctx = CTX::instance();
   if(!elementIsKept(opt, dim, numNodes, xyz)) return false;
-  if(dim < 3 && ctx->clipOnlyVolume) return true;
-  for(int clip = 0; clip < 6; clip++) {
-    if(!(opt->clip & (1 << clip))) continue;
-    if(!intersectClipPlane(clip, numNodes, xyz)) return true;
-  }
-  return false;
+  if(dim < 3 && CTX::instance()->clipOnlyVolume) return true;
+  return clipPlanes::cuts(opt->clip, numNodes, nodesOf(xyz));
 }
 
 // does this element go in the view's own arrays? OpenGL clips those, so
@@ -1184,8 +1158,8 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
             std::uint8_t b = 0;
             if(opt->clip & (1 << clip))
               for(int j = 0; j < nc; j++)
-                if(evalClipPlane(clip, el.xyz[j][0], el.xyz[j][1],
-                                 el.xyz[j][2]) < 0.)
+                if(clipPlanes::eval(clip, el.xyz[j][0], el.xyz[j][1],
+                                    el.xyz[j][2]) < 0.)
                   b |= (std::uint8_t)(1 << j);
             c.beyond.push_back(b);
           }
@@ -2125,8 +2099,7 @@ static std::vector<double> viewClipToken(PView *p)
   CTX *ctx = CTX::instance();
   PViewOptions *opt = p->getOptions();
   std::vector<double> t;
-  t.push_back(opt->clip);
-  ctx->addClipToKey(t);
+  ctx->addClipToKey(t, opt->clip);
   return t;
 }
 

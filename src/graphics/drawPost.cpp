@@ -16,6 +16,7 @@
 #include "Numeric.h"
 #include "VertexArray.h"
 #include "Context.h"
+#include "ClipPlanes.h"
 #include <vector>
 #include <cstring>
 #include "gl2ps.h"
@@ -28,8 +29,7 @@ void clearGlyphArrays(PView *p) { glyphCache::clear(p); }
 // element mode and the glyphs are drawn with them off)
 static void setViewClipPlanes(PViewOptions *opt, bool on)
 {
-  for(int i = 0; i < 6; i++)
-    gmshClipPlaneOn(i, on && (opt->clip & (1 << i)));
+  gmshClipPlanesOn(on ? opt->clip : 0);
 }
 
 // The cut elements of whole element mode, with the shader pipeline, are
@@ -61,49 +61,23 @@ static bool glyphIsKept(PViewOptions *opt, const float *p0,
                         const float *p1 = nullptr)
 {
   if(!clipGlyphs(opt)) return true;
-  CTX *ctx = CTX::instance();
-  for(int clip = 0; clip < 6; clip++) {
-    if(!(opt->clip & (1 << clip))) continue;
-    const double *e = ctx->clipPlane[clip];
-    double d0 = e[0] * p0[0] + e[1] * p0[1] + e[2] * p0[2] + e[3];
-    if(p1) {
-      double d1 = e[0] * p1[0] + e[1] * p1[1] + e[2] * p1[2] + e[3];
-      if(d0 < 0. && d1 < 0.) return false;
-    }
-    else if(d0 < 0.)
-      return false;
-  }
-  return true;
+  const float *ends[2] = {p0, p1};
+  return !clipPlanes::removesAll(opt->clip, p1 ? 2 : 1,
+                                 [&](int j, int k) { return ends[j][k]; });
 }
 
 // what the kept glyphs depend on
 static void addClipToken(glyphToken &tok, PViewOptions *opt)
 {
   tok.add(clipGlyphs(opt) ? opt->clip : 0);
-  if(!clipGlyphs(opt)) return;
   // what the planes keep of the elements
-  tok.add(CTX::instance()->clipOnlyVolume);
-  tok.add(CTX::instance()->clipOnlyDrawIntersectingVolume);
-  for(int i = 0; i < 6; i++)
-    if(opt->clip & (1 << i))
-      for(int j = 0; j < 4; j++) tok.add(CTX::instance()->clipPlane[i][j]);
+  if(clipGlyphs(opt)) tok.add(CTX::instance()->clipKey(opt->clip));
 }
 
 // the clipping planes off while the glyphs are drawn, and back on after
-class glyphClip {
-private:
-  PViewOptions *_opt;
-  bool _off;
-
+class glyphClip : public gmshClipPlanesOff {
 public:
-  glyphClip(PViewOptions *opt) : _opt(opt), _off(clipGlyphs(opt))
-  {
-    if(_off) setViewClipPlanes(_opt, false);
-  }
-  ~glyphClip()
-  {
-    if(_off) setViewClipPlanes(_opt, true);
-  }
+  glyphClip(PViewOptions *opt) : gmshClipPlanesOff(clipGlyphs(opt)) {}
 };
 
 // the value a point or a line of a view carries in its normal (what its
@@ -833,7 +807,7 @@ public:
 
     gmshAlphaScale(1., false);
 
-    for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
+    gmshClipPlanesOn(0);
 
     if(_ctx->render_mode == drawContext::GMSH_SELECT) _ctx->unsetPickColor();
   }

@@ -28,6 +28,7 @@
 #include "partitionRegion.h"
 #include "Context.h"
 #include "OwnerCache.h"
+#include "ClipPlanes.h"
 #include "glyphList.h"
 #include "gl2ps.h"
 #include "VertexArray.h"
@@ -271,12 +272,7 @@ static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
   CTX *c = CTX::instance();
   if(c->mesh.clip && c->clipWholeElements) {
     tok.add(c->entityVisibilityStamp);
-    tok.add(c->mesh.clip);
-    tok.add(c->clipOnlyVolume);
-    tok.add(c->clipOnlyDrawIntersectingVolume);
-    for(int i = 0; i < 6; i++)
-      if(c->mesh.clip & (1 << i))
-        for(int j = 0; j < 4; j++) tok.add(c->clipPlane[i][j]);
+    tok.add(c->clipKey(c->mesh.clip));
   }
   return !glyphCache::get(e, GLYPH_NODES, tok, g);
 }
@@ -310,13 +306,8 @@ static void drawNodes(drawContext *ctx, GEntity *e, W walk)
 // is this node beyond one of the clipping planes of the mesh?
 static bool nodeIsBeyondAPlane(MVertex *v)
 {
-  CTX *c = CTX::instance();
-  for(int i = 0; i < 6; i++) {
-    if(!(c->mesh.clip & (1 << i))) continue;
-    const double *p = c->clipPlane[i];
-    if(p[0] * v->x() + p[1] * v->y() + p[2] * v->z() + p[3] < 0.) return true;
-  }
-  return false;
+  return clipPlanes::removes(CTX::instance()->mesh.clip, v->x(), v->y(),
+                             v->z());
 }
 
 // (see keptNodes())
@@ -809,13 +800,11 @@ static const keptNodeSet &keptNodes(GModel *m)
   std::vector<double> tok = {
     (double)c->mesh.stamp[0], (double)c->mesh.stamp[1],
     (double)c->mesh.stamp[2], (double)c->mesh.stamp[3],
-    (double)c->entityVisibilityStamp, (double)c->mesh.clip,
-    (double)c->clipOnlyVolume, (double)c->clipOnlyDrawIntersectingVolume,
+    (double)c->entityVisibilityStamp,
     c->mesh.qualityInf, c->mesh.qualitySup, c->mesh.radiusInf,
     c->mesh.radiusSup};
   c->addElementTypesToKey(tok);
-  for(int i = 0; i < 6; i++)
-    for(int j = 0; j < 4; j++) tok.push_back(c->clipPlane[i][j]);
+  c->addClipToKey(tok, c->mesh.clip);
   keptNodeSet &k = _keptNodes[m];
   if(k.token == tok) return k;
   k.token = tok;
@@ -890,18 +879,13 @@ static const keptNodeSet &keptNodes(GModel *m)
 static void drawEntityNodes(drawContext *ctx, GEntity *e)
 {
   CTX *c = CTX::instance();
+  // the nodes whole element mode keeps (not looked for unless nodes are
+  // drawn), drawn with the planes off
   const keptNodeSet *only = nullptr;
-  bool planes[6];
-  // (the nodes whole element mode keeps are found by going through every
-  // element: not unless nodes are drawn)
   if(c->mesh.clip && c->clipWholeElements &&
-     (c->mesh.nodes || c->mesh.nodeLabels)) {
+     (c->mesh.nodes || c->mesh.nodeLabels))
     only = &keptNodes(e->model());
-    for(int i = 0; i < 6; i++) {
-      planes[i] = gmshClipPlaneEnabled(i);
-      gmshClipPlaneOn(i, false);
-    }
-  }
+  gmshClipPlanesOff planesOff(only != nullptr);
   drawNodes(ctx, e, [&](glyphList *g, int what) {
     if(only || e->dim() == 0 || !e->getOnlySomeElementsVisible())
       drawVerticesPerEntity(ctx, e, g, what, only);
@@ -912,8 +896,6 @@ static void drawEntityNodes(drawContext *ctx, GEntity *e)
       });
     }
   });
-  if(only)
-    for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, planes[i]);
 }
 
 // does this pass draw this entity? A mixed mesh draws its opaque entities in
@@ -983,8 +965,7 @@ static void drawMeshEntity(drawContext *ctx, GEntity *e)
 // element mode are drawn with them off)
 static void setMeshClipPlanes(bool on)
 {
-  for(int i = 0; i < 6; i++)
-    gmshClipPlaneOn(i, on && (CTX::instance()->mesh.clip & (1 << i)));
+  gmshClipPlanesOn(on ? CTX::instance()->mesh.clip : 0);
 }
 
 // Draw what the clipping planes add for the entities of a dimension: the
@@ -1229,5 +1210,5 @@ void drawContext::drawMesh()
     _merged.points = false;
   }
 
-  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
+  gmshClipPlanesOn(0);
 }

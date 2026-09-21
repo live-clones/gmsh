@@ -35,6 +35,10 @@ private:
 
 public:
   void add(double v) { _v.push_back(v); }
+  void add(const std::vector<double> &v)
+  {
+    _v.insert(_v.end(), v.begin(), v.end());
+  }
   bool operator==(const glyphToken &o) const { return _v == o._v; }
 };
 

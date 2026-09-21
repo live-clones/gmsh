@@ -114,24 +114,14 @@ public:
   }
 };
 
-static double evalClipPlane(int clip, double x, double y, double z)
+// the nodes of an element, as the clipping planes are asked about them (see
+// ClipPlanes.h)
+static auto nodesOf(MElement *ele)
 {
-  return CTX::instance()->clipPlane[clip][0] * x +
-         CTX::instance()->clipPlane[clip][1] * y +
-         CTX::instance()->clipPlane[clip][2] * z +
-         CTX::instance()->clipPlane[clip][3];
-}
-
-static double intersectClipPlane(int clip, MElement *ele)
-{
-  MVertex *v = ele->getVertex(0);
-  double val = evalClipPlane(clip, v->x(), v->y(), v->z());
-  for(std::size_t i = 1; i < ele->getNumVertices(); i++) {
-    v = ele->getVertex(i);
-    if(val * evalClipPlane(clip, v->x(), v->y(), v->z()) <= 0)
-      return 0.; // the element intersects the cut plane
-  }
-  return val;
+  return [ele](int j, int k) {
+    MVertex *v = ele->getVertex(j);
+    return k == 0 ? v->x() : k == 1 ? v->y() : v->z();
+  };
 }
 
 bool isElementVisible(MElement *ele)
@@ -334,7 +324,7 @@ static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
     int neg = 0, pos = 0;
     for(int i = 0; i < nv; i++) {
       MVertex *v = ele->getVertex(i);
-      if(evalClipPlane(c, v->x(), v->y(), v->z()) < 0.)
+      if(clipPlanes::eval(c, v->x(), v->y(), v->z()) < 0.)
         neg++;
       else
         pos++;
@@ -351,8 +341,8 @@ static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
     for(int j = 0; j < ne && nb < 12; j++) {
       MEdge ed = ele->getEdge(j);
       MVertex *a = ed.getVertex(0), *b = ed.getVertex(1);
-      double da = evalClipPlane(c, a->x(), a->y(), a->z());
-      double db = evalClipPlane(c, b->x(), b->y(), b->z());
+      double da = clipPlanes::eval(c, a->x(), a->y(), a->z());
+      double db = clipPlanes::eval(c, b->x(), b->y(), b->z());
       if((da < 0. && db < 0.) || (da >= 0. && db >= 0.)) continue;
       double t = (da == db) ? 0. : da / (da - db);
       double x = a->x() + t * (b->x() - a->x());
@@ -399,29 +389,16 @@ static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
 // what is kept and what is removed.
 static bool elementIsCut(MElement *ele)
 {
-  CTX *ctx = CTX::instance();
-  for(int clip = 0; clip < 6; clip++) {
-    if(!(ctx->mesh.clip & (1 << clip))) continue;
-    if(ele->getDim() < 3 && ctx->clipOnlyVolume) continue;
-    if(intersectClipPlane(clip, ele) == 0.) return true;
-  }
-  return false;
+  if(ele->getDim() < 3 && CTX::instance()->clipOnlyVolume) return false;
+  return clipPlanes::cuts(CTX::instance()->mesh.clip,
+                          (int)ele->getNumVertices(), nodesOf(ele));
 }
 
-// is this element kept by whole element mode? Only those entirely beyond a
-// plane are dropped.
+// is this element kept by whole element mode?
 bool elementIsKept(MElement *ele)
 {
-  CTX *ctx = CTX::instance();
-  for(int clip = 0; clip < 6; clip++) {
-    if(!(ctx->mesh.clip & (1 << clip))) continue;
-    if(ele->getDim() < 3 && ctx->clipOnlyVolume) continue;
-    double d = intersectClipPlane(clip, ele);
-    if(ele->getDim() == 3 && ctx->clipOnlyDrawIntersectingVolume && d)
-      return false;
-    if(d < 0.) return false;
-  }
-  return true;
+  return clipPlanes::keeps(CTX::instance()->mesh.clip, ele->getDim(),
+                           (int)ele->getNumVertices(), nodesOf(ele));
 }
 
 // the elements a plane cuts, to be drawn whole while OpenGL clips the rest
@@ -1037,8 +1014,7 @@ static std::vector<double> clipToken()
 {
   CTX *ctx = CTX::instance();
   std::vector<double> t;
-  t.push_back(ctx->mesh.clip);
-  ctx->addClipToKey(t);
+  ctx->addClipToKey(t, ctx->mesh.clip);
   return t;
 }
 
@@ -1078,11 +1054,7 @@ static const elementSpheres *getSpheres(GRegion *r)
     for(std::size_t i = 0; i < els.size(); i++) {
       MElement *ele = els[i];
       if(ele->getDim() != 3 || !isElementVisible(ele)) continue;
-      kept.spheres.set(first + i, 3, (int)ele->getNumVertices(),
-                       [&](int j, int k) {
-                         MVertex *v = ele->getVertex(j);
-                         return k == 0 ? v->x() : k == 1 ? v->y() : v->z();
-                       });
+      kept.spheres.set(first + i, 3, (int)ele->getNumVertices(), nodesOf(ele));
     }
     first += els.size();
   });
@@ -1192,14 +1164,9 @@ static void fillCutRegion(GRegion *r, bool caps, std::size_t est)
           nc = std::min((int)fa.getNumVertices(), 4);
           for(int k = 0; k < nc; k++) fv[k] = fa.getVertex(k);
         }
-        for(int clip = 0; clip < 6 && !drawn; clip++) {
-          if(!(ctx->mesh.clip & (1 << clip))) continue;
-          bool beyond = true;
-          for(int k = 0; k < nc && beyond; k++)
-            beyond = (evalClipPlane(clip, fv[k]->x(), fv[k]->y(),
-                                    fv[k]->z()) < 0.);
-          drawn = beyond;
-        }
+        drawn = clipPlanes::removesAll(ctx->mesh.clip, nc, [&](int j, int k) {
+          return k == 0 ? fv[j]->x() : k == 1 ? fv[j]->y() : fv[j]->z();
+        });
       }
       if(drawn) ofCut.faces.push_back(f);
     }

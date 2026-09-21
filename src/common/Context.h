@@ -380,14 +380,23 @@ public:
   // the clipping window sets directly (they never mark the mesh as changed)
   // and the planes themselves. In one place, so that a mode added to the
   // group is not forgotten by one of the caches.
-  void addClipToKey(std::vector<double> &key) const
+  // (mask: the planes that apply, a bit each, the others being left out)
+  void addClipToKey(std::vector<double> &key, int mask = 63) const
   {
+    key.push_back(mask);
     key.push_back(clipCapping);
     key.push_back(clipWholeElements);
     key.push_back(clipOnlyVolume);
     key.push_back(clipOnlyDrawIntersectingVolume);
     for(int i = 0; i < 6; i++)
-      for(int j = 0; j < 4; j++) key.push_back(clipPlane[i][j]);
+      if(mask & (1 << i))
+        for(int j = 0; j < 4; j++) key.push_back(clipPlane[i][j]);
+  }
+  std::vector<double> clipKey(int mask) const
+  {
+    std::vector<double> key;
+    addClipToKey(key, mask);
+    return key;
   }
   // draw the vertex arrays from OpenGL buffer objects instead of client memory
   int vertexBufferObjects;
