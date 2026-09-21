@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "drawContext.h"
 #include "GModelVertexArrays.h"
+#include "OS.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "MPoint.h"
@@ -305,15 +306,45 @@ static void drawNodes(drawContext *ctx, GEntity *e, W walk)
   }
 }
 
+// is this node beyond one of the clipping planes of the mesh?
+static bool nodeIsBeyondAPlane(MVertex *v)
+{
+  CTX *c = CTX::instance();
+  for(int i = 0; i < 6; i++) {
+    if(!(c->mesh.clip & (1 << i))) continue;
+    const double *p = c->clipPlane[i];
+    if(p[0] * v->x() + p[1] * v->y() + p[2] * v->z() + p[3] < 0.) return true;
+  }
+  return false;
+}
+
+// (see keptNodes())
+struct keptNodeSet {
+  std::vector<double> token;
+  std::unordered_set<MVertex *> nodes;
+  bool all; // nodes holds every kept node, not those of the cut elements alone
+  bool keeps(MVertex *v, int dim) const
+  {
+    if(nodes.count(v)) return true;
+    if(all) return false;
+    CTX *c = CTX::instance();
+    // the elements of a volume are all removed but the cut ones
+    if(dim == 3 && c->clipOnlyDrawIntersectingVolume) return false;
+    // the planes are not applied to the elements of a curve or a surface
+    if(dim < 3 && c->clipOnlyVolume) return true;
+    return !nodeIsBeyondAPlane(v);
+  }
+};
+
 // the nodes of an entity: spheres are collected into the list (kept between
 // frames) when it asks for it, labels are drawn either way; only those in the
 // set, if one is given
 static void drawVerticesPerEntity(drawContext *ctx, GEntity *e, glyphList *g,
-                                  int what,
-                                  const std::unordered_set<MVertex *> *only)
+                                  int what, const keptNodeSet *only)
 {
-  auto shown = [only](MVertex *v) {
-    return v->getVisibility() && (!only || only->count(v));
+  int dim = e->dim();
+  auto shown = [only, dim](MVertex *v) {
+    return v->getVisibility() && (!only || only->keeps(v, dim));
   };
   if(what & NODES_COLLECT) {
     g->reserve(GLYPH_SPHERE, e->mesh_vertices.size());
@@ -760,14 +791,18 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
 
 // The nodes of the elements whole element mode keeps, which include those of
 // the cut elements beyond the planes; per model, built again when the mesh,
-// the visibilities, the planes or the elements shown change
-struct keptNodeSet {
-  std::vector<double> token;
-  std::unordered_set<MVertex *> nodes;
-};
+// the visibilities, the planes or the elements shown change.
+//
+// A node that no plane removes belongs to kept elements only, and one that a
+// plane removes is kept by the cut elements it belongs to: so that the nodes
+// of the cut elements are all there is to look for, and the elements of the
+// volumes that may be cut are told from their spheres (see ElementSpheres.h).
+// That holds if every element is drawn; if some are hidden, by their
+// visibility, their type, or the ranges of quality and size, the nodes of
+// every kept element are gathered as before.
 static OwnerCache<keptNodeSet> _keptNodes;
 
-static const std::unordered_set<MVertex *> &keptNodes(GModel *m)
+static const keptNodeSet &keptNodes(GModel *m)
 {
   CTX *c = CTX::instance();
   std::vector<double> tok = {
@@ -781,25 +816,70 @@ static const std::unordered_set<MVertex *> &keptNodes(GModel *m)
   for(int i = 0; i < 6; i++)
     for(int j = 0; j < 4; j++) tok.push_back(c->clipPlane[i][j]);
   keptNodeSet &k = _keptNodes[m];
-  if(k.token == tok) return k.nodes;
+  if(k.token == tok) return k;
   k.token = tok;
   k.nodes.clear();
+  double t1 = TimeOfDay();
+
+  // is every element drawn?
+  k.all = c->mesh.qualitySup || c->mesh.radiusSup || !c->mesh.triangles ||
+          !c->mesh.quadrangles || !c->mesh.polygons || !c->mesh.tetrahedra ||
+          !c->mesh.hexahedra || !c->mesh.prisms || !c->mesh.pyramids ||
+          !c->mesh.trihedra || !c->mesh.polyhedra;
+  // (the flag telling that some elements are hidden is only kept up to date
+  // for the entities that have arrays: not for the points)
+  for(int dim = 0; dim <= 3 && !k.all; dim++)
+    forMeshEntities(m, dim, [&](GEntity *e) {
+      if(!e->getVisibility() || (dim && e->getOnlySomeElementsVisible()))
+        k.all = true;
+    });
+  for(auto it = m->firstVertex(); it != m->lastVertex() && !k.all; it++)
+    for(auto p : (*it)->points)
+      if(!isElementVisible(p)) k.all = true;
+
   auto add = [&](MElement *ele) {
     if(!isElementVisible(ele) || !elementIsKept(ele)) return;
     for(std::size_t j = 0; j < ele->getNumVertices(); j++)
       k.nodes.insert(ele->getVertex(j));
   };
-  for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
-    if((*it)->getVisibility())
-      for(auto p : (*it)->points) add(p);
-  for(int dim = 1; dim <= 3; dim++)
-    forMeshEntities(m, dim, [&](GEntity *e) {
-      if(!e->getVisibility()) return;
-      forShownElements(e, [&](auto &elements) {
-        for(auto ele : elements) add(ele);
+  if(k.all) {
+    for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
+      if((*it)->getVisibility())
+        for(auto p : (*it)->points) add(p);
+    for(int dim = 1; dim <= 3; dim++)
+      forMeshEntities(m, dim, [&](GEntity *e) {
+        if(!e->getVisibility()) return;
+        forShownElements(e, [&](auto &elements) {
+          for(auto ele : elements) add(ele);
+        });
       });
-    });
-  return k.nodes;
+    Msg::Debug("Nodes of the kept elements: %zu in %g s", k.nodes.size(),
+               TimeOfDay() - t1);
+    return k;
+  }
+
+  // the nodes of the kept elements that have a node beyond a plane: of the
+  // curves and surfaces (few elements: all looked at), and of the volumes
+  if(!c->clipOnlyVolume)
+    for(int dim = 1; dim <= 2; dim++)
+      forMeshEntities(m, dim, [&](GEntity *e) {
+        forShownElements(e, [&](auto &elements) {
+          for(auto ele : elements) {
+            bool beyond = false;
+            for(std::size_t j = 0; j < ele->getNumVertices() && !beyond; j++)
+              beyond = nodeIsBeyondAPlane(ele->getVertex(j));
+            if(beyond) add(ele);
+          }
+        });
+      });
+  for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
+    std::vector<MElement *> near;
+    getElementsNearClipPlanes(*it, near);
+    for(auto ele : near) add(ele);
+  }
+  Msg::Debug("Nodes of the cut elements: %zu in %g s", k.nodes.size(),
+             TimeOfDay() - t1);
+  return k;
 }
 
 // The nodes of an entity: all of them, or those of the elements shown - the
@@ -809,9 +889,12 @@ static const std::unordered_set<MVertex *> &keptNodes(GModel *m)
 static void drawEntityNodes(drawContext *ctx, GEntity *e)
 {
   CTX *c = CTX::instance();
-  const std::unordered_set<MVertex *> *only = nullptr;
+  const keptNodeSet *only = nullptr;
   bool planes[6];
-  if(c->mesh.clip && c->clipWholeElements) {
+  // (the nodes whole element mode keeps are found by going through every
+  // element: not unless nodes are drawn)
+  if(c->mesh.clip && c->clipWholeElements &&
+     (c->mesh.nodes || c->mesh.nodeLabels)) {
     only = &keptNodes(e->model());
     for(int i = 0; i < 6; i++) {
       planes[i] = gmshClipPlaneEnabled(i);

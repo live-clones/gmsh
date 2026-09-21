@@ -1123,6 +1123,12 @@ static void gatherCloseElements(GRegion *r, const elementSpheres *spheres,
   });
 }
 
+void getElementsNearClipPlanes(GRegion *r, std::vector<MElement *> &elements)
+{
+  gatherCloseElements(r, getSpheres(r), activePlanes(CTX::instance()->mesh.clip),
+                      0., elements);
+}
+
 // What the planes add to a volume: the section they cut, or the elements
 // they cut drawn whole. Only the elements close enough to a plane are looked
 // at, when there are spheres to tell.

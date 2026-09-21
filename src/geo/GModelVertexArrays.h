@@ -10,7 +10,10 @@
 // with, and what the drawing needs to ask the same questions of an entity or
 // an element as the arrays were filled with.
 
+#include <vector>
+
 class GEntity;
+class GRegion;
 class MElement;
 
 // the colour a selected entity is drawn in
@@ -24,5 +27,9 @@ bool isElementVisible(MElement *ele);
 // is this element kept by whole element mode, which removes the elements a
 // clipping plane cuts rather than cutting them?
 bool elementIsKept(MElement *ele);
+// the 3D elements of a volume that are drawn and that a clipping plane of the
+// mesh may cut: told from the spheres kept around them, without going through
+// the others, if there are enough of them (all of them otherwise)
+void getElementsNearClipPlanes(GRegion *r, std::vector<MElement *> &elements);
 
 #endif
