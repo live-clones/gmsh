@@ -24,6 +24,10 @@ namespace glMatrix {
   void transform(const double m[16], const double in[4], double out[4]);
   // Gauss-Jordan with partial pivoting; false if m is singular
   bool invert(const double m[16], double out[16]);
+  // The cofactors of a 3x3 matrix, laid out as its inverse transpose is (which
+  // they are once divided by the determinant, returned): what transforms the
+  // normals when a transforms the points.
+  double cofactors(const double a[9], double c[9]);
 
   void translate(double x, double y, double z, double m[16]);
   void scale(double x, double y, double z, double m[16]);

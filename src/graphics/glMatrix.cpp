@@ -52,6 +52,20 @@ namespace glMatrix {
     }
   }
 
+  double cofactors(const double a[9], double c[9])
+  {
+    c[0] = a[4] * a[8] - a[5] * a[7];
+    c[1] = a[6] * a[5] - a[3] * a[8];
+    c[2] = a[3] * a[7] - a[6] * a[4];
+    c[3] = a[7] * a[2] - a[1] * a[8];
+    c[4] = a[0] * a[8] - a[6] * a[2];
+    c[5] = a[6] * a[1] - a[0] * a[7];
+    c[6] = a[1] * a[5] - a[4] * a[2];
+    c[7] = a[3] * a[2] - a[0] * a[5];
+    c[8] = a[0] * a[4] - a[3] * a[1];
+    return a[0] * c[0] + a[3] * c[3] + a[6] * c[6];
+  }
+
   bool invert(const double m[16], double out[16])
   {
     // [a | i] reduced to [i | m^-1], in row-major so that the rows the pivoting

@@ -735,7 +735,7 @@ public:
     CTX *c = CTX::instance();
     bool cutOnly = c->clipWholeElements && opt->clip &&
                    c->clipOnlyDrawIntersectingVolume;
-    bool whole = c->clipWholeElements && opt->clip && !cutOnly;
+    bool whole = clipGlyphs(opt); // whole element mode, other than cutOnly
     setViewClipPlanes(opt, !cutOnly);
 
     // a transparent view is blended back to front, unless the transparency

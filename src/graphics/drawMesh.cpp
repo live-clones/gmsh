@@ -899,21 +899,12 @@ static void drawEntityNodes(drawContext *ctx, GEntity *e)
   });
 }
 
-// does this pass draw this entity? A mixed mesh draws its opaque entities in
-// the opaque pass and the others in the transparent one
-static bool passWants(drawContext *ctx, GEntity *e)
-{
-  if(ctx->transparencyPass == TRANSPARENCY_ALL) return true;
-  return (ctx->transparencyPass == TRANSPARENCY_TRANSPARENT) ==
-         gmshMeshEntityIsTransparent(e);
-}
-
 // what an entity draws of its mesh: its edges and faces (unless merged), the
 // labels of its elements, its nodes, its normals or tangents (unless
 // recorded for the whole model), the duals
 static void drawMeshEntity(drawContext *ctx, GEntity *e)
 {
-  if(!e->getVisibility() || !passWants(ctx, e)) return;
+  if(!e->getVisibility() || !ctx->passWants(gmshMeshEntityIsTransparent(e))) return;
   CTX *c = CTX::instance();
   int dim = e->dim();
 
@@ -975,10 +966,9 @@ static void setMeshClipPlanes(bool on)
 // clipped to what the planes cut off, so that they sit next to the clipped
 // rest without overlapping it (a transparent mesh would show the overlap);
 // the fixed function pipeline draws them whole with the planes off, as does
-// either when nothing else is drawn (whole = true) or the planes are already
-// off.
+// either when nothing else is drawn (cutOnly) or the planes are already off.
 static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
-                           bool whole = false)
+                           bool cutOnly = false)
 {
   bool any = false;
   forMeshEntities(m, dim, [&](GEntity *e) {
@@ -986,20 +976,20 @@ static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
   });
   if(!any) return;
   CTX *c = CTX::instance();
-  // the section (only volumes have one) is clipped as the rest
-  bool section = !c->clipWholeElements;
+  // the section of capping mode (only volumes have one) is clipped as the rest
+  bool capping = !c->clipWholeElements;
   bool planesOn = false;
   for(int i = 0; i < 6; i++)
     if(gmshClipPlaneEnabled(i)) planesOn = true;
-  bool outside = gmshUseShaders() && planesOn && !whole;
-  if(!section) {
+  bool outside = gmshUseShaders() && planesOn && !cutOnly;
+  if(!capping) {
     if(outside)
       gmshClipOutside(true);
     else
       setMeshClipPlanes(false);
   }
   forMeshEntities(m, dim, [&](GEntity *e) {
-    if(!e->getVisibility() || !passWants(ctx, e)) return;
+    if(!e->getVisibility() || !ctx->passWants(gmshMeshEntityIsTransparent(e))) return;
     if(!e->va_clip_lines && !e->va_clip_triangles) return;
     ctx->setPickColorFor(e);
     // lit and coloured as the entities draw their own lines and faces
@@ -1010,7 +1000,7 @@ static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
     drawArrays(ctx, e, e->va_clip_triangles, GL_TRIANGLES, c->mesh.light);
     if(ctx->render_mode == drawContext::GMSH_SELECT) ctx->unsetPickColor();
   });
-  if(!section) {
+  if(!capping) {
     if(outside)
       gmshClipOutside(false);
     else
@@ -1090,7 +1080,7 @@ static void drawDimension(drawContext *ctx, GModel *m, mergedArrays &ma,
   // only the cut volumes are drawn: their nodes all the same
   if(cutOnly && (c->mesh.nodes || c->mesh.nodeLabels))
     forMeshEntities(m, dim, [&](GEntity *e) {
-      if(!e->getVisibility() || !passWants(ctx, e)) return;
+      if(!e->getVisibility() || !ctx->passWants(gmshMeshEntityIsTransparent(e))) return;
       ctx->setPickColorFor(e);
       drawEntityNodes(ctx, e);
       if(ctx->render_mode == drawContext::GMSH_SELECT) ctx->unsetPickColor();

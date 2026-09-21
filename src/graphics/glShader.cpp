@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstddef>
 #include "glShader.h"
+#include "glMatrix.h"
 #include "GmshMessage.h"
 
 namespace glShader {
@@ -958,26 +959,9 @@ void main()
     double a[9] = {modelview[0], modelview[1], modelview[2],
                    modelview[4], modelview[5], modelview[6],
                    modelview[8], modelview[9], modelview[10]};
-    double det = a[0] * (a[4] * a[8] - a[5] * a[7]) -
-                 a[3] * (a[1] * a[8] - a[2] * a[7]) +
-                 a[6] * (a[1] * a[5] - a[2] * a[4]);
+    double c[9], det = glMatrix::cofactors(a, c), id = det ? 1. / det : 0.;
     float n[9];
-    if(det != 0.) {
-      double id = 1. / det;
-      // the inverse transpose, written out in the same column major layout
-      n[0] = (float)((a[4] * a[8] - a[5] * a[7]) * id);
-      n[1] = (float)((a[6] * a[5] - a[3] * a[8]) * id);
-      n[2] = (float)((a[3] * a[7] - a[6] * a[4]) * id);
-      n[3] = (float)((a[7] * a[2] - a[1] * a[8]) * id);
-      n[4] = (float)((a[0] * a[8] - a[6] * a[2]) * id);
-      n[5] = (float)((a[6] * a[1] - a[0] * a[7]) * id);
-      n[6] = (float)((a[1] * a[5] - a[4] * a[2]) * id);
-      n[7] = (float)((a[3] * a[2] - a[0] * a[5]) * id);
-      n[8] = (float)((a[0] * a[4] - a[3] * a[1]) * id);
-    }
-    else {
-      for(int i = 0; i < 9; i++) n[i] = (float)a[i];
-    }
+    for(int i = 0; i < 9; i++) n[i] = (float)(det != 0. ? c[i] * id : a[i]);
     glApi::UniformMatrix3fv(_u.normalMatrix, 1, GL_FALSE, n);
   }
 
@@ -1382,6 +1366,22 @@ void main()
       _c->fireWidth = _c->fireHeight = 0;
     }
 
+    // A blit of the depth needs the format of the window's depth buffer,
+    // which cannot be asked: the first time, tries the two likely ones with
+    // copy(format), and remembers in known the one that worked.
+    template <class Copy> bool withDepthFormat(GLenum &known, Copy copy)
+    {
+      if(known) return copy(known);
+      const GLenum formats[2] = {GL_DEPTH24_STENCIL8, GL_DEPTH_COMPONENT24};
+      for(GLenum format : formats) {
+        if(copy(format)) {
+          known = format;
+          return true;
+        }
+      }
+      return false;
+    }
+
     // the window's depth into a texture of the given format, which has to
     // be the window's own, unknown: tried like the transparency buffers'
     bool copyDepthToTexture(int width, int height, GLenum format)
@@ -1458,15 +1458,9 @@ void main()
       return false;
     if(_c->fireFbo && (_c->fireWidth != width || _c->fireHeight != height))
       dropFireBuffers();
-    bool ok = false;
-    if(_c->fireDepthFormat) { ok = copyDepthToTexture(width, height, _c->fireDepthFormat); }
-    else {
-      const GLenum formats[2] = {GL_DEPTH24_STENCIL8, GL_DEPTH_COMPONENT24};
-      for(int i = 0; i < 2 && !ok; i++) {
-        ok = copyDepthToTexture(width, height, formats[i]);
-        if(ok) _c->fireDepthFormat = formats[i];
-      }
-    }
+    bool ok = withDepthFormat(_c->fireDepthFormat, [&](GLenum format) {
+      return copyDepthToTexture(width, height, format);
+    });
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     if(!ok) return false;
 
@@ -2153,15 +2147,9 @@ void main()
 
     if(_c->oitFbo && (_c->oitWidth != w || _c->oitHeight != h)) dropOitBuffers();
 
-    bool ok = false;
-    if(_c->oitDepthFormat) { ok = copyWindowDepth(w, h, _c->oitDepthFormat); }
-    else {
-      const GLenum formats[2] = {GL_DEPTH24_STENCIL8, GL_DEPTH_COMPONENT24};
-      for(int i = 0; i < 2 && !ok; i++) {
-        ok = copyWindowDepth(w, h, formats[i]);
-        if(ok) _c->oitDepthFormat = formats[i];
-      }
-    }
+    bool ok = withDepthFormat(_c->oitDepthFormat, [&](GLenum format) {
+      return copyWindowDepth(w, h, format);
+    });
     if(!ok) {
       Msg::Debug("Could not sum transparency into buffers of our own: "
                  "drawing it sorted instead");

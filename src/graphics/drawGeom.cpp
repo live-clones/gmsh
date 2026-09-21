@@ -87,20 +87,11 @@ static glyphList *geomGlyphs(drawContext *ctx)
   return &_geomGlyphs;
 }
 
-// does this pass draw this entity? A mixed geometry draws its opaque
-// entities in the opaque pass and the others in the transparent one
-static bool passWants(drawContext *ctx, GEntity *e)
-{
-  if(ctx->transparencyPass == TRANSPARENCY_ALL) return true;
-  return (ctx->transparencyPass == TRANSPARENCY_TRANSPARENT) ==
-         gmshGeometryEntityIsTransparent(e);
-}
-
 // is this entity drawn by the pass? Not when hidden, and never the discrete,
 // partition and boundary layer entities, which only carry a mesh
 static bool geomDrawn(drawContext *ctx, GEntity *e)
 {
-  if(!passWants(ctx, e) || !e->getVisibility()) return false;
+  if(!ctx->passWants(gmshGeometryEntityIsTransparent(e)) || !e->getVisibility()) return false;
   switch(e->geomType()) {
   case GEntity::BoundaryLayerPoint:
   case GEntity::DiscreteCurve:

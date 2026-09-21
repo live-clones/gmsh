@@ -229,6 +229,14 @@ public:
   int render_mode; // current rendering mode
   // which half of the scene is being drawn, see gmshTransparencyPass
   int transparencyPass;
+  // does this pass draw something that is (or is not) transparent? A mixed
+  // mesh or geometry draws its opaque entities in the opaque pass and the
+  // others in the transparent one.
+  bool passWants(bool transparent) const
+  {
+    return transparencyPass == TRANSPARENCY_ALL ||
+           (transparencyPass == TRANSPARENCY_TRANSPARENT) == transparent;
+  }
   // true while the scene is drawn into the shadow map of the studio shading:
   // only the model is drawn then, no strings or images
   bool shadowPass;
