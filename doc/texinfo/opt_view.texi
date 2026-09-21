@@ -398,7 +398,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.DrawSkinEdgesOnly
 Draw only the outlines of the boundary faces of 3D views?@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.DrawSkinOnly
