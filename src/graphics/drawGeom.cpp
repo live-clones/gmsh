@@ -205,7 +205,9 @@ static bool keptCovers(drawContext *ctx, GModel *m, int dim, bool pick)
 static std::vector<double> keptToken(drawContext *ctx, int dim, bool pick)
 {
   CTX *c = CTX::instance();
+  // (the mesh too: discrete points, curves and surfaces are drawn from it)
   std::vector<double> tok = {(double)c->geom.stamp[dim],
+                             (double)c->meshContentStamp,
                              (double)c->entityVisibilityStamp,
                              (double)ctx->transparencyPass};
   // which entities the pass holds, when it is not all of them

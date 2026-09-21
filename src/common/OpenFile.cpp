@@ -508,7 +508,6 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   }
 #endif
   else {
-    CTX::instance()->geom.draw = 1;
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) ||
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11) ||
@@ -540,6 +539,8 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
     }
 #endif
     else {
+      // a script can ask for the model to be drawn while it runs
+      CTX::instance()->geom.draw = 1;
       status = GModel::readGEO(fileName);
     }
   }
