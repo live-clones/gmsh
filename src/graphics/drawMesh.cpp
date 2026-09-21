@@ -864,9 +864,9 @@ static const keptNodeSet &keptNodes(GModel *m)
         });
       });
   for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
-    std::vector<MElement *> near;
-    getElementsNearClipPlanes(*it, near);
-    for(auto ele : near) add(ele);
+    std::vector<MElement *> cut;
+    getElementsNearClipPlanes(*it, cut);
+    for(auto ele : cut) add(ele);
   }
   Msg::Debug("Nodes of the cut elements: %zu in %g s", k.nodes.size(),
              TimeOfDay() - t1);

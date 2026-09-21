@@ -1198,7 +1198,7 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
         const std::uint32_t *ids = &c.ids[c.first[e]];
         int nf = 0;
         auto hashFace = [&](int, const int *fi, int n) {
-          std::uint32_t few[8], *kk = few; // (on the stack if they fit)
+          std::uint32_t few[8] = {}, *kk = few; // (on the stack if they fit)
           if(n > 8) {
             k.resize(n);
             kk = k.data();
