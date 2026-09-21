@@ -410,7 +410,7 @@ void glyphList::draw(drawContext *ctx, bool light)
 
 bool glyphList::_instanced(drawContext *ctx, bool light)
 {
-  if(!gmshUseShaders() || !glApi::haveInstancing()) return false;
+  if(!glShader::enabled() || !glApi::haveInstancing()) return false;
   if(!glShader::available()) return false;
 
   ctx->updateGlyphTemplates();

@@ -38,7 +38,7 @@ static void setViewClipPlanes(PViewOptions *opt, bool on)
 // overlap); the fixed function pipeline draws them whole with the planes off.
 static void setViewClipOutside(PViewOptions *opt, bool on)
 {
-  if(gmshUseShaders())
+  if(glShader::enabled())
     gmshClipOutside(on);
   else
     setViewClipPlanes(opt, !on);
@@ -670,7 +670,7 @@ bool gmshViewIsTransparent(PView *p)
   if(!CTX::instance()->alpha) return false;
   // an alpha in the colormap, or the factor the shader applies
   return ColorTable_IsAlpha(&opt->colorTable) ||
-         (gmshUseShaders() && opt->transparency < 1.);
+         (glShader::enabled() && opt->transparency < 1.);
 }
 
 class drawPView {

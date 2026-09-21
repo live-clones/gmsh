@@ -286,7 +286,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   // opt_general_graphics_font_engine), as computing it there crashes some
   // drivers (Mesa/llvmpipe) on gl_VertexID. Only recomputed when the
   // alignment moved the string.
-  if(!gmshUseShaders() || CTX::instance()->printing) {
+  if(!glShader::enabled() || CTX::instance()->printing) {
     if(moved) {
       double where[3];
       viewport2World(w, where);

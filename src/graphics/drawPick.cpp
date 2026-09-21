@@ -68,7 +68,7 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
   _pickCheckLimit();
   GLubyte c[4];
   pickIdColor(id, c);
-  if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
+  if(!glShader::enabled()) glDisableClientState(GL_COLOR_ARRAY);
   gmshPickColor4ubv(c);
 
   // an entity stepped past with the wheel is drawn into neither the colours
@@ -159,7 +159,7 @@ void drawContext::unsetPickColor()
   _pickStateSkip = -1;
   // 0 is the background: no pickable object
   GLubyte c[4] = {0, 0, 0, 255};
-  if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
+  if(!glShader::enabled()) glDisableClientState(GL_COLOR_ARRAY);
   gmshPickColor4ubv(c);
 }
 
@@ -191,7 +191,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   // written as a colour: OpenGL ES and WebGL cannot read a depth buffer back
   double hr = highResolutionPixelFactor();
   bool intoPickBuffer =
-    gmshUseShaders() &&
+    glShader::enabled() &&
     glShader::bindPickBuffer((int)((viewport[2] - viewport[0]) * hr),
                              (int)((viewport[3] - viewport[1]) * hr));
   if(!intoPickBuffer) glDrawBuffer(GL_BACK);
@@ -201,7 +201,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glDisable(GL_BLEND);
   // the identifier colour must not be interpolated (the shader gives every
   // fragment the same one)
-  if(!gmshUseShaders()) glShadeModel(GL_FLAT);
+  if(!glShader::enabled()) glShadeModel(GL_FLAT);
   // only rasterise the region the image covers
   glEnable(GL_SCISSOR_TEST);
   glScissor(fx, fy, fw, fh);
@@ -294,7 +294,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
   if(oldLighting) gmshLighting(true);
   if(oldBlend) glEnable(GL_BLEND);
-  if(!gmshUseShaders()) glShadeModel(GL_SMOOTH);
+  if(!glShader::enabled()) glShadeModel(GL_SMOOTH);
   _pickColor = _pickColorActive = false;
   render_mode = drawContext::GMSH_RENDER;
 

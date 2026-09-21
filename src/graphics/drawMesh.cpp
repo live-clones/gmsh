@@ -981,7 +981,7 @@ static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
   bool planesOn = false;
   for(int i = 0; i < 6; i++)
     if(gmshClipPlaneEnabled(i)) planesOn = true;
-  bool outside = gmshUseShaders() && planesOn && !cutOnly;
+  bool outside = glShader::enabled() && planesOn && !cutOnly;
   if(!capping) {
     if(outside)
       gmshClipOutside(true);

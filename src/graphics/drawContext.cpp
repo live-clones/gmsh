@@ -248,7 +248,7 @@ static bool useVertexBufferObjects()
 {
   // a core profile has no client arrays: the shader pipeline needs buffer
   // objects whatever the option says
-  if(gmshUseShaders()) return true;
+  if(glShader::enabled()) return true;
   return CTX::instance()->vertexBufferObjects && glApi::haveBufferObjects();
 }
 
@@ -337,7 +337,7 @@ static const GLvoid *vaColorPointer(VertexArray *va) { return vaPointer(va, 2); 
 // used); the shader pipeline binds them as vertex attributes
 static void bindVertexArray(VertexArray *va, bool normals, bool colors)
 {
-  if(gmshUseShaders()) {
+  if(glShader::enabled()) {
     // the attributes are recorded in the program's vertex array object,
     // which must be bound first: on the first frame of a context nothing has
     // bound it yet, and a core profile drops attributes set with none bound,
@@ -386,7 +386,7 @@ static void bindVertexArray(VertexArray *va, bool normals, bool colors)
 
 static void unbindVertexArray()
 {
-  if(gmshUseShaders()) {
+  if(glShader::enabled()) {
     glApi::DisableVertexAttribArray(glShader::ATTRIB_VERTEX);
     glApi::DisableVertexAttribArray(glShader::ATTRIB_NORMAL);
     glApi::DisableVertexAttribArray(glShader::ATTRIB_COLOR);
@@ -406,7 +406,7 @@ static bool anyColorIsTransparent(const unsigned int *colors, int n,
 {
   if(!CTX::instance()->alpha) return false;
   // the Transparency factor is only applied by the shader pipeline
-  if(gmshUseShaders() && transparency < 1.) return true;
+  if(glShader::enabled() && transparency < 1.) return true;
   for(int i = 0; i < n; i++)
     if(CTX::instance()->unpackAlpha(colors[i]) < 255) return true;
   return false;
@@ -544,7 +544,7 @@ static void drawRange(VertexArray *va, GLenum type, bool normals, bool colors,
                       int first, int count)
 {
   if(count <= 0) return;
-  if(!gmshUseShaders()) {
+  if(!glShader::enabled()) {
     glDrawArrays(type, first, count);
     return;
   }
@@ -737,12 +737,12 @@ void drawContext::draw3d()
                 gmshAnyViewIsTransparent());
 
   // the studio shading casts a shadow, drawn first into a map of its own
-  bool studio = gmshUseShaders() && CTX::instance()->shading >= 1 &&
+  bool studio = glShader::enabled() && CTX::instance()->shading >= 1 &&
                 render_mode != GMSH_SELECT && !inPickColorMode();
   gmshShadingModel(studio ? 1 : 0);
   if(studio)
     drawShadowMap();
-  else if(gmshUseShaders())
+  else if(glShader::enabled())
     glShader::setShadowOff();
 
   drawAxes();
@@ -1689,7 +1689,7 @@ void drawContext::initRenderModel()
 
   // a core profile has no fixed function lighting: the shader gets the lights
   // as uniforms instead
-  bool fixed = !gmshUseShaders();
+  bool fixed = !glShader::enabled();
   // General.Brightness: the shader applies it itself, the fixed function
   // pipeline to the colours of its lights and of the global ambient (raised
   // to 1/2.2 like the shader's classic shading)

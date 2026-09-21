@@ -481,7 +481,7 @@ void openglWindow::_studioFrame()
   int n = ctx->studioSamples;
   int printed = _studioPrinted;
   _studioPrinted = 0;
-  if(!gmshUseShaders() || ctx->shading < 1 || n < 2 || ctx->stereo) {
+  if(!glShader::enabled() || ctx->shading < 1 || n < 2 || ctx->stereo) {
     _ctx->studioSample = 0;
     return;
   }

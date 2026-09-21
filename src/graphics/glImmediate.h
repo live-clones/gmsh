@@ -7,6 +7,7 @@
 #define GL_IMMEDIATE_H
 
 #include "glApi.h"
+#include "glShader.h"
 
 // Immediate mode drawing (glBegin/glVertex/glEnd and the state that goes
 // with it) behind functions of our own. The decorations of the scene (axes,
@@ -16,9 +17,8 @@
 // has no immediate mode, collects the vertices with their colour and normal
 // and draws them in batches.
 
-// is the shader pipeline drawing? The calls below then collect the vertices
-// and remember the state instead of handing them to OpenGL.
-bool gmshUseShaders();
+// With the shader pipeline (glShader::enabled()) the calls below collect the
+// vertices and remember the state instead of handing them to OpenGL.
 
 // true while a primitive is being collected for the shader pipeline
 extern bool gmshCollecting;
@@ -215,7 +215,7 @@ unsigned short gmshLineStipplePattern();
 
 inline void gmshPolygonFill(bool fill)
 {
-  if(gmshUseShaders()) gmshFlushImmediate();
+  if(glShader::enabled()) gmshFlushImmediate();
   glPolygonMode(GL_FRONT_AND_BACK, fill ? GL_FILL : GL_LINE);
 }
 
@@ -227,7 +227,7 @@ inline void gmshPolygonFill(bool fill)
 // for the model.
 inline void gmshDepthTest(bool on)
 {
-  if(gmshUseShaders()) gmshFlushImmediate();
+  if(glShader::enabled()) gmshFlushImmediate();
   if(on)
     glEnable(GL_DEPTH_TEST);
   else
@@ -235,7 +235,7 @@ inline void gmshDepthTest(bool on)
 }
 inline void gmshDepthMask(bool on)
 {
-  if(gmshUseShaders()) gmshFlushImmediate();
+  if(glShader::enabled()) gmshFlushImmediate();
   glDepthMask(on ? GL_TRUE : GL_FALSE);
 }
 inline bool gmshPolygonFilled()

@@ -15,11 +15,6 @@
 
 bool gmshCollecting = false;
 
-bool gmshUseShaders()
-{
-  return CTX::instance()->shaders && glShader::available();
-}
-
 namespace {
   // A growable array whose appends are a few inline instructions: the
   // primitives collected here come a number at a time, millions to a frame,
@@ -178,7 +173,7 @@ void gmshColor4ub(unsigned char r, unsigned char g, unsigned char b,
   _color[2] = b;
   _color[3] = a;
   // a core profile has no current colour: the shader is handed the one above
-  if(!gmshUseShaders()) glColor4ub(r, g, b, a);
+  if(!glShader::enabled()) glColor4ub(r, g, b, a);
 }
 
 const unsigned char *gmshCurrentColor() { return _color; }
@@ -198,7 +193,7 @@ void gmshLighting(bool on)
   // there for the same reason (see gmshColor4ubv).
   if(on && drawContext::pickColorActive()) on = false;
   _lighting = on;
-  if(gmshUseShaders()) return;
+  if(glShader::enabled()) return;
   if(on)
     glEnable(GL_LIGHTING);
   else
@@ -210,7 +205,7 @@ bool gmshLightingEnabled() { return _lighting; }
 void gmshLightTwoSide(bool on)
 {
   _twoSide = on;
-  if(gmshUseShaders()) return;
+  if(glShader::enabled()) return;
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, on ? GL_TRUE : GL_FALSE);
 }
 
@@ -225,7 +220,7 @@ void gmshPointSize(double s)
   s *= _pixelScale;
   _pointSize = s;
   // the shader writes gl_PointSize instead
-  if(!gmshUseShaders()) glPointSize((float)s);
+  if(!glShader::enabled()) glPointSize((float)s);
 }
 
 double gmshCurrentPointSize() { return _pointSize; }
@@ -247,14 +242,14 @@ void gmshClipPlane(int i, const double plane[4])
   else {
     for(int j = 0; j < 4; j++) _clipEye[i][j] = plane[j];
   }
-  if(!gmshUseShaders()) glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), plane);
+  if(!glShader::enabled()) glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), plane);
 }
 
 void gmshClipPlaneOn(int i, bool on)
 {
   if(i < 0 || i > 5) return;
   _clipOn[i] = on;
-  if(gmshUseShaders()) return;
+  if(glShader::enabled()) return;
   if(on)
     glEnable((GLenum)(GL_CLIP_PLANE0 + i));
   else
@@ -296,7 +291,7 @@ namespace {
   void _apply(int kind)
   {
     // the shader gets the matrices as uniforms
-    if(gmshUseShaders()) return;
+    if(glShader::enabled()) return;
     glMatrixMode(kind == GMSH_PROJECTION ? GL_PROJECTION : GL_MODELVIEW);
     glLoadMatrixd(_stack[kind].top());
     if(kind != _mode)
@@ -307,7 +302,7 @@ namespace {
 void gmshMatrixMode(int kind)
 {
   _mode = (kind == GMSH_PROJECTION) ? GMSH_PROJECTION : GMSH_MODELVIEW;
-  if(gmshUseShaders()) return;
+  if(glShader::enabled()) return;
   glMatrixMode(_mode == GMSH_PROJECTION ? GL_PROJECTION : GL_MODELVIEW);
 }
 
@@ -405,7 +400,7 @@ static int _shadingModel = 0;
 void gmshShadingModel(int model)
 {
   if(model == _shadingModel) return;
-  if(gmshUseShaders()) gmshFlushImmediate();
+  if(glShader::enabled()) gmshFlushImmediate();
   _shadingModel = model;
 }
 
@@ -467,7 +462,7 @@ void gmshRecordEnd()
 
 bool gmshImBegin(GLenum mode)
 {
-  if(!gmshUseShaders() && !_recording) return false;
+  if(!glShader::enabled() && !_recording) return false;
   gmshCollecting = true;
   _imPos.clear();
   _imNrm.clear();
@@ -495,7 +490,7 @@ void gmshImVertex(float x, float y, float z)
 void gmshLineWidth(double w)
 {
   w *= _pixelScale;
-  if(gmshUseShaders()) {
+  if(glShader::enabled()) {
     if(_lineWidth == w) return;
     // what is waiting was collected to be drawn at the old width
     gmshFlushImmediate();
@@ -515,7 +510,7 @@ void gmshAlphaScale(double s, bool filledOnly)
   if(s > 1.) s = 1.;
   if(s == _alphaScale && filledOnly == _alphaScaleFilledOnly) return;
   // what is waiting was collected to be drawn with the old one
-  if(gmshUseShaders()) gmshFlushImmediate();
+  if(glShader::enabled()) gmshFlushImmediate();
   _alphaScale = s;
   _alphaScaleFilledOnly = filledOnly;
 }
@@ -528,7 +523,7 @@ double gmshAlphaScaleFor(unsigned int primitive)
 
 void gmshLineStipple(int factor, unsigned short pattern)
 {
-  if(gmshUseShaders()) {
+  if(glShader::enabled()) {
     if(_stipple && _stippleFactor == factor && _stipplePattern == pattern)
       return;
     // what is waiting was collected to be drawn with the old pattern
@@ -544,7 +539,7 @@ void gmshLineStipple(int factor, unsigned short pattern)
 
 void gmshLineStippleOff()
 {
-  if(gmshUseShaders()) {
+  if(glShader::enabled()) {
     if(!_stipple) return;
     gmshFlushImmediate();
     _stipple = false;
@@ -561,10 +556,10 @@ void gmshTexture(unsigned int id, int mode)
 {
   if(id == _texture && (!id || mode == _textureMode)) return;
   // what is waiting was collected to be drawn through the old one
-  if(gmshUseShaders()) gmshFlushImmediate();
+  if(glShader::enabled()) gmshFlushImmediate();
   _texture = id;
   _textureMode = id ? mode : GMSH_TEXTURE_NONE;
-  if(!gmshUseShaders()) {
+  if(!glShader::enabled()) {
     if(id) {
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, id);

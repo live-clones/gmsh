@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstddef>
 #include "glShader.h"
+#include "Context.h"
 #include "glMatrix.h"
 #include "GmshMessage.h"
 
@@ -894,6 +895,8 @@ void main()
   } // namespace
 
   bool available() { return build(); }
+
+  bool enabled() { return CTX::instance()->shaders && available(); }
 
   bool use()
   {
