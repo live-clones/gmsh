@@ -78,29 +78,6 @@ void UniqueElementFilter::Shard::reserve(std::size_t n)
   }
 }
 
-// Knuth's algorithm R: after removing the entry at i, shift back the following
-// entries that probed past it, so that the table stays free of tombstones
-void UniqueElementFilter::Shard::erase(std::size_t i)
-{
-  std::size_t j = i;
-  table[i] = 0;
-  num--;
-  for(;;) {
-    j = (j + 1) & mask;
-    if(!table[j]) break;
-    std::size_t k = table[j] & mask;
-    if(i <= j) {
-      if(i < k && k <= j) continue;
-    }
-    else {
-      if(i < k || k <= j) continue;
-    }
-    table[i] = table[j];
-    table[j] = 0;
-    i = j;
-  }
-}
-
 void UniqueElementFilter::reserve(std::size_t n)
 {
   for(int i = 0; i < NUM_SHARDS; i++) _shard[i].reserve(n / NUM_SHARDS + 16);

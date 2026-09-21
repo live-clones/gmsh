@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdint>
 #include <list>
+#include <map>
 #include <vector>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
@@ -118,12 +119,15 @@ public:
   int ent;
   // what is gathered: everything, or only what the clipping planes add (the
   // section they cut, or the cut elements drawn whole)
-  enum { COLLECT_ALL, COLLECT_CAPS, COLLECT_CUT, COLLECT_KEPT };
+  enum { COLLECT_ALL, COLLECT_CAPS, COLLECT_CUT };
   int collect;
   // the faces of the element being drawn that are on the skin, a bit each in
   // the order of its shape, when the skin was found ahead (-1 otherwise)
   int skinMask;
   const struct solidShape *skinShape;
+  // the skin itself, and the element being drawn in it (for the polyhedra)
+  const struct viewSkinFaces *skin;
+  std::size_t element;
   // bounding box of the elements that were drawn
   SBoundingBox3d bbox;
   drawTarget(PView *p)
@@ -131,7 +135,7 @@ public:
       va_lines(p->va_lines), va_triangles(p->va_triangles),
       va_vectors(p->va_vectors), va_ellipses(p->va_ellipses),
       normals(p->normals), nodeIds(nullptr), ent(0), collect(COLLECT_ALL),
-      skinMask(-1), skinShape(nullptr)
+      skinMask(-1), skinShape(nullptr), skin(nullptr), element(0)
   {
   }
 };
@@ -369,59 +373,16 @@ static void addOutlinePoint(drawTarget *p, double **xyz, unsigned int color,
                     true);
 }
 
-// the boundary faces of the 3D elements when View.DrawSkinOnly is set, found
-// by inserting every face and cancelling it when seen a second time
-static UniqueElementFilter *boundaryFaces = nullptr;
-static bool markingBoundaryFaces = false;
-static std::atomic<int> noNodeIdWarning(0);
-
-// The key of a face of n nodes, from their sorted identifiers and the entity
-// (so that the skin is taken entity by entity); false if the data has no
-// topology. A quadrangle and a triangle never collide: the keys differ in
-// length.
-static bool faceKey(const std::size_t *nodeIds, int ent, const int *idx, int n,
-                    std::uint64_t *k)
-{
-  if(!nodeIds) return false;
-  for(int i = 0; i < n; i++) {
-    if(!nodeIds[idx[i]]) return false;
-    k[i] = nodeIds[idx[i]];
-  }
-  for(int i = 1; i < n; i++)
-    for(int j = i; j > 0 && k[j] < k[j - 1]; j--) std::swap(k[j], k[j - 1]);
-  k[n] = (std::uint64_t)ent;
-  return true;
-}
-
-// Is this face of a 3D element on the skin of the field? In the pass that
-// marks them it is inserted, and cancelled when the element on the other
-// side inserts it too. The faces of the element itself are used, not those
-// of the tetrahedra a hexahedron, a prism or a pyramid is split into: the
-// diagonal that splits a shared quadrangle into two triangles need not be
-// the one the neighbour chose, and the halves then cancel nothing and both
-// sides of every such face are drawn.
+// Is this face of a 3D element on the skin of the field (see findSkin())? If
+// the skin could not be found, every face is drawn. The faces of the element
+// itself are used, not those of the tetrahedra a hexahedron, a prism or a
+// pyramid is split into: the diagonal that splits a shared quadrangle into
+// two triangles need not be the one the neighbour chose.
 static bool maskedSkinFace(drawTarget *p, const int *idx, int n);
 
 static bool skinFace(drawTarget *p, const int *idx, int n)
 {
-  // the skin was found ahead (see findSkin())
-  if(p->skinMask >= 0) return maskedSkinFace(p, idx, n);
-  if(!boundaryFaces && !markingBoundaryFaces) return true;
-  // no topology to use (see addElementRange()): all the faces are drawn
-  if(!p->nodeIds) return !markingBoundaryFaces;
-  std::uint64_t k[5];
-  if(!faceKey(p->nodeIds, p->ent, idx, n, k)) {
-    if(markingBoundaryFaces) return false;
-    if(!noNodeIdWarning++)
-      Msg::Warning("DrawSkinOnly needs node identifiers, which this data does "
-                   "not have: drawing all the faces");
-    return true; // nothing to tell the faces apart: draw them all
-  }
-  if(markingBoundaryFaces) {
-    boundaryFaces->insertOrErase(k, n + 1);
-    return false;
-  }
-  return boundaryFaces->contains(k, n + 1);
+  return (p->skinMask >= 0) ? maskedSkinFace(p, idx, n) : true;
 }
 
 // are only the outlines of the faces on the skin drawn?
@@ -681,9 +642,9 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
   PViewOptions *opt = p->opt;
 
   // the pass marking the skin only draws the faces that may be on it
-  if(skin || markingBoundaryFaces) {
+  if(skin) {
     const int ii[3] = {i0, i1, i2};
-    if(!skin || !skinFace(p, ii, 3)) return;
+    if(!skinFace(p, ii, 3)) return;
   }
 
   const int il[3][2] = {{i0, i1}, {i1, i2}, {i2, i0}};
@@ -960,7 +921,6 @@ static OwnerCache<elementSpheres> _viewSpheres;
 
 static const elementSpheres *getSpheres(PView *p, const flatElements &flat)
 {
-  if(flat.num < 50000) return nullptr; // walking them all is fast enough
   elementSpheres *found = _viewSpheres.find(p);
   if(found && found->size() == flat.num) return found;
   double t1 = TimeOfDay();
@@ -985,14 +945,23 @@ static const elementSpheres *getSpheres(PView *p, const flatElements &flat)
 }
 
 // The skin found ahead of the drawing, from the nodes of the 3D elements
-// alone: a byte per element, 0x80 if its faces were looked at, plus a bit for
-// each of them seen once only (faces are told apart by their sorted nodes and
-// the entity, so that the skin is taken entity by entity). The drawing then
-// reads the elements that have a face on the skin and none of the others.
-// (A face that an invalid mesh gives to three elements is drawn by the last
-// of them, where matching faces while drawing had the first one draw it.)
-static std::vector<std::uint8_t> skinMasks;
-static const std::vector<std::uint8_t> *activeSkinMasks = nullptr;
+// alone (faces are told apart by their sorted nodes and the entity, so that
+// the skin is taken entity by entity). The drawing then reads the elements
+// that have a face on the skin and none of the others. (A face that an
+// invalid mesh gives to three elements is drawn by the last of them.)
+struct viewSkinFaces {
+  // a byte per element: 0x80 if its faces were looked at, plus a bit for each
+  // of them that is on the skin, in the order of its shape (see solidFace());
+  // 0x40 for a polyhedron, which has any number of faces, listed apart (and
+  // bit 0 if it has some)
+  std::vector<std::uint8_t> masks;
+  std::vector<std::pair<std::uint32_t, int> > ofPolyhedra; // sorted
+  bool polyhedronFace(std::size_t element, int face) const
+  {
+    return std::binary_search(ofPolyhedra.begin(), ofPolyhedra.end(),
+                              std::make_pair((std::uint32_t)element, face));
+  }
+};
 
 // The skin of a view is kept from one filling of its arrays to the next, as
 // long as what it depends on stays: the data, the mesh (the visibility of
@@ -1003,10 +972,19 @@ static const std::vector<std::uint8_t> *activeSkinMasks = nullptr;
 // step has its own, the last few being kept for a view that is animated.
 struct viewSkin {
   std::vector<double> key;
-  std::vector<std::uint8_t> masks;
+  viewSkinFaces faces;
 };
 static OwnerCache<std::list<viewSkin> > _viewSkin;
 static const std::size_t maxKeptSkins = 16;
+
+// are the view's own arrays filled through the planes? (the mode that draws
+// only the cut volumes, see isElementVisible())
+static bool filledThroughPlanes(PViewOptions *opt)
+{
+  CTX *ctx = CTX::instance();
+  return ctx->clipWholeElements && opt->clip &&
+         ctx->clipOnlyDrawIntersectingVolume;
+}
 
 static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
                                    const flatElements &flat)
@@ -1022,6 +1000,7 @@ static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
   k.push_back(data->getNumHexahedra(step));
   k.push_back(data->getNumPrisms(step));
   k.push_back(data->getNumPyramids(step));
+  k.push_back(data->getNumPolyhedra(step));
   for(int d = 0; d < 4; d++) k.push_back(ctx->mesh.stamp[d]);
   k.push_back(ctx->entityVisibilityStamp);
   k.push_back(opt->sampling);
@@ -1029,51 +1008,59 @@ static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
   k.push_back(opt->drawHexahedra);
   k.push_back(opt->drawPrisms);
   k.push_back(opt->drawPyramids);
+  k.push_back(opt->drawPolyhedra);
   k.push_back(opt->drawScalars);
   k.push_back(opt->drawVectors);
   k.push_back(opt->drawTensors);
   k.push_back(opt->vectorType == PViewOptions::Displacement);
+  k.push_back(opt->tensorType);
   k.push_back(opt->forceNumComponents);
   k.push_back(skinOutlines(opt));
+  if(filledThroughPlanes(opt)) ctx->addClipToKey(k, opt->clip);
   k.push_back(step); // last: see where the key is used
   return k;
 }
 
-static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
-                     const elementSpheres *spheres,
-                     const std::vector<std::uint8_t> *original);
-
-// the skin of the field, kept or found now (null if it cannot be)
-static const std::vector<std::uint8_t> *getSkin(PView *p, PViewData *data,
-                                                PViewOptions *opt,
-                                                const flatElements &flat)
+// the faces of a polyhedron, each as indices in its nodes (the fans that draw
+// its faces go through them all)
+static void polyhedronFaces(MPolyhedron *ph, std::vector<std::vector<int> > &faces)
 {
-  double t1 = TimeOfDay();
-  std::vector<double> key = skinKey(data, opt, flat);
-  std::list<viewSkin> &kept = _viewSkin[p];
-  // what was found for another state of the data or of the mesh is of no
-  // use any more (the step is the last entry of the key)
-  kept.remove_if([&](const viewSkin &k) {
-    return k.key.size() != key.size() ||
-           !std::equal(key.begin(), key.end() - 1, k.key.begin());
-  });
-  auto it = std::find_if(kept.begin(), kept.end(), [&](const viewSkin &k) {
-    return k.key == key && k.masks.size() == flat.num;
-  });
-  if(it != kept.end()) {
-    kept.splice(kept.begin(), kept, it); // most recently used first
-    return &kept.front().masks;
+  faces.clear();
+  std::vector<MVertex *> fv;
+  int rep = 0;
+  for(int f = 0; f < ph->getNumFaces(); f++) {
+    ph->getFaceVertices(f, fv);
+    std::vector<int> idx;
+    for(int t = 0; t + 2 < (int)fv.size(); t++) {
+      std::array<int, 3> is = ph->getFaceRepIndices(false, rep++);
+      if(!t) idx = {is[0], is[1]};
+      idx.push_back(is[2]);
+    }
+    faces.push_back(idx);
   }
-  if(!findSkin(p, flat, false, nullptr, nullptr)) return nullptr;
-  kept.push_front(viewSkin());
-  kept.front().key = key;
-  kept.front().masks.swap(skinMasks);
-  if(kept.size() > maxKeptSkins) kept.pop_back();
-  Msg::Debug("Found the skin of View[%d] in %g s", p->getIndex(),
-             TimeOfDay() - t1);
-  return &kept.front().masks;
 }
 
+// do the faces of this element show the value of a scalar? Those of a scalar
+// field do, of a vector shown as a displacement, and of a tensor shown as
+// one of its invariants.
+static bool drawsScalarFaces(PViewOptions *opt, int numComp)
+{
+  if(opt->forceNumComponents) numComp = opt->forceNumComponents;
+  if(numComp == 1) return opt->drawScalars;
+  if(numComp == 3)
+    return opt->drawVectors && opt->vectorType == PViewOptions::Displacement;
+  if(numComp == 9)
+    return opt->drawTensors && (opt->tensorType == PViewOptions::VonMises ||
+                                opt->tensorType == PViewOptions::MaxEigenValue ||
+                                opt->tensorType == PViewOptions::MinEigenValue);
+  return false;
+}
+
+// Finds the skin of the elements whose faces are drawn (of all the 3D
+// elements if it is wanted for their outlines); false if it cannot be, in
+// which case every face is drawn: no topology (elements exploded or raised
+// along their normal, each with nodes of its own), or no node identifiers.
+//
 // keptOnly: the faces of the cut elements that are on the skin of what whole
 // element mode keeps (the other elements are not drawn from the clip arrays).
 // They are found from the cut elements alone. A face two of them share is
@@ -1083,40 +1070,38 @@ static const std::vector<std::uint8_t> *getSkin(PView *p, PViewData *data,
 // the other side of a face of the skin of the field (original).
 static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
                      const elementSpheres *spheres,
-                     const std::vector<std::uint8_t> *original)
+                     const viewSkinFaces *original, viewSkinFaces &skin)
 {
+  static std::atomic<int> warned(0);
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
-  CTX *ctx = CTX::instance();
   int step = opt->timeStep;
+  skin.masks.clear();
+  skin.ofPolyhedra.clear();
   if(flat.num >= 0xffffffffu) return false;
   if(!(opt->explode == 1. && !opt->normalRaise && !opt->useGenRaise))
     return false; // no topology
   if(data->useGaussPoints() || opt->intervalsType == PViewOptions::Numeric ||
      opt->tmpMin > opt->tmpMax)
-    return false;
-  if(data->getNumPolyhedra(step)) return false; // drawn through tetrahedra
-  if(keptOnly && !spheres) return false;
-  // the view's own arrays are filled through the planes in that mode
-  if(!keptOnly && ctx->clipWholeElements && opt->clip &&
-     ctx->clipOnlyDrawIntersectingVolume)
-    return false;
-
-  if(keptOnly && (!original || original->size() != flat.num)) return false;
+    return false; // no face is drawn
+  if(keptOnly && (!spheres || !original)) return false;
+  bool throughPlanes = !keptOnly && filledThroughPlanes(opt);
   activePlanes planes(opt->clip);
 
-  double t0 = TimeOfDay();
+  // the elements and the identifiers of their nodes, gathered by each thread
+  // for its share of the elements
   struct chunk {
-    std::vector<std::uint32_t> elem, ids;
-    std::vector<std::uint8_t> shape;
+    std::vector<std::uint32_t> elem, first, ids;
+    std::vector<std::uint8_t> shape; // in solidShapes, or 4 for a polyhedron
     std::vector<int> ent;
-    // for each plane, the corners that are beyond it, a bit each (keptOnly)
+    std::vector<MPolyhedron *> polyhedra; // those of shape 4, in order
+    // for each node, the planes it is beyond, a bit each (keptOnly)
     std::vector<std::uint8_t> beyond;
   };
   int nthreads = numWalkThreads(data, opt, flat.num);
   std::vector<chunk> chunks(nthreads);
   std::atomic<bool> bad(false);
-  skinMasks.assign(flat.num, 0);
+  skin.masks.assign(flat.num, 0);
 
 #pragma omp parallel for schedule(static, 1) num_threads(nthreads)
   for(int t = 0; t < nthreads; t++) {
@@ -1130,111 +1115,184 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
                         planes.gap(spheres->sphere(i)) > 0.))
           return;
         if(!el.select(p, ent, ele)) return;
-        int sh = solidShapeIndex(el.type);
+        int sh = (el.type == TYPE_POLYH) ? 4 : solidShapeIndex(el.type);
         if(sh < 0) return;
-        int numComp = opt->forceNumComponents ? opt->forceNumComponents :
-                                                el.numComp;
-        // the elements whose faces are drawn: those of a scalar, or of a
-        // vector shown as a displacement (what a tensor draws is left to
-        // the drawing itself)
-        if(numComp == 9 && opt->drawTensors) {
-          bad = true;
-          return;
+        if(!drawsScalarFaces(opt, el.numComp) && !skinOutlines(opt)) return;
+        MPolyhedron *ph = nullptr;
+        if(sh == 4) {
+          ph = static_cast<MPolyhedron *>(data->getElement(step, ent, ele));
+          if(!ph) return; // list data: the faces are unknown
+          if(ph->getNumFaces() > 255) bad = true;
         }
-        // (all of them if the skin is wanted for the outlines)
-        if(!(numComp == 1 && opt->drawScalars) &&
-           !(numComp == 3 && opt->drawVectors &&
-             opt->vectorType == PViewOptions::Displacement) &&
-           !skinOutlines(opt))
-          return;
-        int nc = solidCorners[sh];
-        if(el.numNodes < nc) return;
-        if(keptOnly) {
+        int nn = ph ? el.numNodes : solidCorners[sh];
+        if(el.numNodes < nn) return;
+        if(keptOnly || throughPlanes) {
           el.read(p, false);
-          if(!elementIsCut(opt, el.dim, el.numNodes, el.xyz)) return;
-          for(int clip = 0; clip < 6; clip++) {
+          if(keptOnly ? !elementIsCut(opt, el.dim, el.numNodes, el.xyz) :
+                        !isElementVisible(opt, el.dim, el.numNodes, el.xyz))
+            return;
+          for(int j = 0; j < nn; j++) {
             std::uint8_t b = 0;
-            if(opt->clip & (1 << clip))
-              for(int j = 0; j < nc; j++)
-                if(clipPlanes::eval(clip, el.xyz[j][0], el.xyz[j][1],
-                                    el.xyz[j][2]) < 0.)
-                  b |= (std::uint8_t)(1 << j);
+            for(int clip = 0; clip < 6; clip++)
+              if(clipPlanes::inMask(opt->clip, clip) &&
+                 clipPlanes::eval(clip, el.xyz[j][0], el.xyz[j][1],
+                                  el.xyz[j][2]) < 0.)
+                b |= (std::uint8_t)(1 << clip);
             c.beyond.push_back(b);
           }
         }
-        for(int j = 0; j < nc; j++) {
+        c.first.push_back((std::uint32_t)c.ids.size());
+        for(int j = 0; j < nn; j++) {
           std::size_t id = data->getNodeId(step, ent, ele, j);
-          if(!id || id >= 0xffffffffu) {
-            bad = true;
-            return;
-          }
+          if(!id || id >= 0xffffffffu) bad = true;
           c.ids.push_back((std::uint32_t)id);
         }
         c.elem.push_back((std::uint32_t)i);
         c.shape.push_back((std::uint8_t)sh);
         c.ent.push_back(ent);
-        skinMasks[i] = 0x80;
+        if(ph) c.polyhedra.push_back(ph);
+        skin.masks[i] = ph ? 0xc0 : 0x80;
       });
   }
   if(bad) {
-    skinMasks.clear();
+    if(!warned++)
+      Msg::Warning("DrawSkinOnly needs node identifiers, which this data does "
+                   "not have: drawing all the faces");
+    skin.masks.clear();
     return false;
   }
-  Msg::Debug("Skin: nodes of the elements read in %g s", TimeOfDay() - t0);
 
-  // each thread matches its share of the faces, in a table of its own
-  std::vector<std::vector<std::pair<std::uint32_t, int> > > skin(nthreads);
+  // f(face, its nodes in the element, how many) for the faces of element e
+  // of a chunk (ip: how many polyhedra came before it)
+  std::vector<std::vector<int> > polyFaces;
+  auto forFaces = [](const chunk &c, std::size_t e, std::size_t ip,
+                     std::vector<std::vector<int> > &polyFaces, auto f) {
+    if(c.shape[e] == 4) {
+      polyhedronFaces(c.polyhedra[ip], polyFaces);
+      for(std::size_t i = 0; i < polyFaces.size(); i++)
+        f((int)i, polyFaces[i].data(), (int)polyFaces[i].size());
+    }
+    else {
+      const solidShape &s = *solidShapes[c.shape[e]];
+      for(int i = 0; i < s.numQuads + s.numTriangles; i++) {
+        const int *fi;
+        int n = solidFace(s, i, fi);
+        f(i, fi, n);
+      }
+    }
+  };
 
+  // each thread matches its share of the faces, in a table of its own (the
+  // faces of an element are hashed together, then added)
+  typedef std::pair<std::uint32_t, int> face; // element, face
+  std::vector<std::vector<face> > left(nthreads);
 #pragma omp parallel for schedule(static, 1) num_threads(nthreads)
   for(int t = 0; t < nthreads; t++) {
     FaceMatcher<std::uint32_t, std::uint32_t> matcher;
+    std::vector<std::vector<int> > faces;
+    std::uint64_t hash[256]; // (a polyhedron has 255 faces at most)
+    std::vector<std::uint32_t> k;
     for(auto &c : chunks) {
-      const std::uint32_t *ids = c.ids.data();
+      std::size_t ip = 0;
       for(std::size_t e = 0; e < c.elem.size(); e++) {
-        const solidShape &s = *solidShapes[c.shape[e]];
-        int nf = s.numQuads + s.numTriangles; // 6 at most
-        std::uint64_t hash[6];
-        for(int f = 0; f < nf; f++) {
-          const int *fi;
-          int n = solidFace(s, f, fi);
-          std::uint32_t k[4] = {ids[fi[0]], ids[fi[1]], ids[fi[2]],
-                                n == 4 ? ids[fi[3]] : 0};
-          hash[f] = (matcher.share(k, n, nthreads) == t) ?
-                      matcher.hashOf(k, n, c.ent[e]) : 0;
+        const std::uint32_t *ids = &c.ids[c.first[e]];
+        int nf = 0;
+        auto hashFace = [&](int, const int *fi, int n) {
+          std::uint32_t few[8], *kk = few; // (on the stack if they fit)
+          if(n > 8) {
+            k.resize(n);
+            kk = k.data();
+          }
+          for(int j = 0; j < n; j++) kk[j] = ids[fi[j]];
+          hash[nf++] = matcher.share(kk, n, nthreads) == t ?
+                         matcher.hashOf(kk, n, c.ent[e]) : 0;
+        };
+        if(c.shape[e] == 4)
+          forFaces(c, e, ip, faces, hashFace);
+        else { // (the same, spelled out: this is where the time goes)
+          const solidShape &sh = *solidShapes[c.shape[e]];
+          for(int i = 0; i < sh.numQuads; i++) hashFace(i, sh.quads[i], 4);
+          for(int i = 0; i < sh.numTriangles; i++)
+            hashFace(i, sh.triangles[i], 3);
         }
         for(int f = 0; f < nf; f++)
           if(hash[f]) matcher.add(hash[f], c.elem[e], f);
-        ids += solidCorners[c.shape[e]];
+        if(c.shape[e] == 4) ip++;
       }
     }
-    matcher.forEachLeft([&](std::uint32_t elem, int face) {
-      skin[t].push_back({elem, face});
+    matcher.forEachLeft([&](std::uint32_t elem, int f) {
+      left[t].push_back(face(elem, f));
     });
   }
-  for(auto &sk : skin) {
-    for(auto &f : sk) {
-      if(keptOnly && !(((*original)[f.first] >> f.second) & 1)) {
-        // is the element on the other side removed?
-        int t = 0;
-        while(t + 1 < nthreads && flat.num * (t + 1) / nthreads <= f.first) t++;
-        const chunk &c = chunks[t];
-        std::size_t e =
-          std::lower_bound(c.elem.begin(), c.elem.end(), f.first) -
-          c.elem.begin();
-        const int *fi;
-        int n = solidFace(*solidShapes[c.shape[e]], f.second, fi);
-        unsigned int corners = 0;
-        for(int k = 0; k < n; k++) corners |= 1u << fi[k];
-        bool removed = false;
-        for(int clip = 0; clip < 6 && !removed; clip++)
-          removed = (opt->clip & (1 << clip)) &&
-                    (c.beyond[6 * e + clip] & corners) == corners;
-        if(!removed) continue;
+
+  // in whole element mode, is the element on the other side of the face
+  // removed?
+  auto removed = [&](const face &f) {
+    int t = 0;
+    while(t + 1 < nthreads && flat.num * (t + 1) / nthreads <= f.first) t++;
+    const chunk &c = chunks[t];
+    std::size_t e = std::lower_bound(c.elem.begin(), c.elem.end(), f.first) -
+                    c.elem.begin();
+    std::size_t ip = (c.shape[e] == 4) ?
+      std::count(c.shape.begin(), c.shape.begin() + e, 4) : 0;
+    std::uint8_t all = 0xff;
+    forFaces(c, e, ip, polyFaces, [&](int i, const int *fi, int n) {
+      if(i != f.second) return;
+      for(int j = 0; j < n; j++) all &= c.beyond[c.first[e] + fi[j]];
+    });
+    return all != 0;
+  };
+
+  for(auto &l : left) {
+    for(auto &f : l) {
+      bool poly = (skin.masks[f.first] & 0x40);
+      if(keptOnly) {
+        bool outer = poly ? original->polyhedronFace(f.first, f.second) :
+                            ((original->masks[f.first] >> f.second) & 1);
+        if(!outer && !removed(f)) continue;
       }
-      skinMasks[f.first] |= (std::uint8_t)(1 << f.second);
+      if(poly) {
+        skin.ofPolyhedra.push_back(f);
+        skin.masks[f.first] |= 1; // it has some
+      }
+      else
+        skin.masks[f.first] |= (std::uint8_t)(1 << f.second);
     }
   }
+  std::sort(skin.ofPolyhedra.begin(), skin.ofPolyhedra.end());
   return true;
+}
+
+// the skin of the field, kept or found now (null if it cannot be)
+static const viewSkinFaces *getSkin(PView *p, PViewData *data,
+                                    PViewOptions *opt,
+                                    const flatElements &flat)
+{
+  double t1 = TimeOfDay();
+  std::vector<double> key = skinKey(data, opt, flat);
+  std::list<viewSkin> &kept = _viewSkin[p];
+  // what was found for another state of the data or of the mesh is of no
+  // use any more (the step is the last entry of the key)
+  kept.remove_if([&](const viewSkin &k) {
+    return k.key.size() != key.size() ||
+           !std::equal(key.begin(), key.end() - 1, k.key.begin());
+  });
+  auto it = std::find_if(kept.begin(), kept.end(), [&](const viewSkin &k) {
+    return k.key == key && k.faces.masks.size() == flat.num;
+  });
+  if(it != kept.end()) {
+    kept.splice(kept.begin(), kept, it); // most recently used first
+    return &kept.front().faces;
+  }
+  viewSkin found;
+  if(!findSkin(p, flat, false, nullptr, nullptr, found.faces)) return nullptr;
+  found.key = key;
+  kept.push_front(viewSkin());
+  std::swap(kept.front(), found);
+  if(kept.size() > maxKeptSkins) kept.pop_back();
+  Msg::Debug("Found the skin of View[%d] in %g s", p->getIndex(),
+             TimeOfDay() - t1);
+  return &kept.front().faces;
 }
 
 static void addOutlineSolid(drawTarget *p, double **xyz, unsigned int color,
@@ -1442,6 +1500,47 @@ static void addScalarPolyhedron(drawTarget *p, int ient, int iele,
       addScalarTriangle(p, xyz, val, pre, is[0], is[1], is[2], true);
     }
     opt->boundary++;
+    return;
+  }
+
+  if(skinOnly(opt) && p->skinMask >= 0) {
+    // its faces that are on the skin; the caps still come from the
+    // tetrahedra it is split into
+    for(int i = 0; !pre && i < polyhedron->getNumTetrahedra(); i++) {
+      std::array<int, 4> is = polyhedron->getTetrahedronIndices(i);
+      addScalarCap(p, xyz, val, is[0], is[1], is[2], is[3]);
+    }
+    if(p->collect == drawTarget::COLLECT_CAPS) return;
+    // (the field is linear on each tetrahedron: a face is drawn by the
+    // triangles the tetrahedra have on it, those with their three nodes on it)
+    std::vector<std::vector<int> > faces;
+    polyhedronFaces(polyhedron, faces);
+    std::vector<std::vector<char> > onFace;
+    for(std::size_t f = 0; f < faces.size(); f++) {
+      if(!p->skin->polyhedronFace(p->element, (int)f)) continue;
+      onFace.push_back(std::vector<char>(numNodes, 0));
+      for(int n : faces[f]) onFace.back()[n] = 1;
+    }
+    // (the triangles on the boundary of the tetrahedra: those that only one
+    // of them has)
+    std::map<std::array<int, 3>, std::array<int, 3> > boundary;
+    for(int i = 0; i < polyhedron->getNumTetrahedra(); i++) {
+      std::array<int, 4> is = polyhedron->getTetrahedronIndices(i);
+      for(int j = 0; j < 4; j++) {
+        const int *t = tetTriangles[j];
+        std::array<int, 3> tri = {is[t[0]], is[t[1]], is[t[2]]}, key = tri;
+        std::sort(key.begin(), key.end());
+        if(!boundary.erase(key)) boundary[key] = tri;
+      }
+    }
+    for(auto &b : boundary) {
+      const std::array<int, 3> &t = b.second;
+      for(auto &on : onFace)
+        if(on[t[0]] && on[t[1]] && on[t[2]]) {
+          addScalarTriangle(p, xyz, val, pre, t[0], t[1], t[2], true);
+          break;
+        }
+    }
     return;
   }
 
@@ -1983,11 +2082,13 @@ static void addElementRange(drawTarget *p, PViewData *data,
                             const std::vector<int> &ents,
                             const std::vector<std::size_t> &start,
                             std::size_t first, std::size_t last,
-                            const elementSpheres *spheres)
+                            const elementSpheres *spheres,
+                            const viewSkinFaces *skin)
 {
   PViewOptions *opt = p->opt;
   PViewElement el;
-  const std::vector<std::uint8_t> *masks = activeSkinMasks;
+  const std::vector<std::uint8_t> *masks = skin ? &skin->masks : nullptr;
+  p->skin = skin;
   const bool facesOnSkin = skinOnly(opt);
   activePlanes planes(opt->clip);
   bool onlyVolume = CTX::instance()->clipOnlyVolume;
@@ -2025,12 +2126,14 @@ static void addElementRange(drawTarget *p, PViewData *data,
         std::uint8_t m = (*masks)[flat];
         // inside the field: nothing to draw, unless all the faces or all
         // the outlines are
-        if(m == 0x80 && facesOnSkin && (!opt->showElement || skinOutlines(opt)))
+        if((m & 0x80) && !(m & 0x3f) && facesOnSkin &&
+           (!opt->showElement || skinOutlines(opt)))
           continue;
         if(m & 0x80) p->skinMask = m & 0x3f;
+        p->element = flat;
       }
       if(!el.select(p->view, ent, i)) continue;
-      if(p->skinMask >= 0) {
+      if(p->skinMask >= 0 && el.type != TYPE_POLYH) {
         int sh = solidShapeIndex(el.type);
         if(sh < 0)
           p->skinMask = -1;
@@ -2045,9 +2148,6 @@ static void addElementRange(drawTarget *p, PViewData *data,
       // the cut pass wants the cut elements only, the ordinary fill the rest
       if(p->collect == drawTarget::COLLECT_CUT) {
         if(!elementIsCut(opt, dim, numNodes, xyz)) continue;
-      }
-      else if(p->collect == drawTarget::COLLECT_KEPT) {
-        if(!elementIsKept(opt, dim, numNodes, xyz)) continue;
       }
       else if(!isElementVisible(opt, dim, numNodes, xyz))
         continue;
@@ -2112,7 +2212,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
                                 VertexArray *vaL = nullptr,
                                 VertexArray *vaT = nullptr,
                                 smooth_normals *normals = nullptr,
-                                const elementSpheres *spheres = nullptr)
+                                const elementSpheres *spheres = nullptr,
+                                const viewSkinFaces *skin = nullptr)
 {
   // use adaptive data if available
   PViewData *data = p->getData(true);
@@ -2142,7 +2243,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
       if(normals) t.normals = normals;
     }
     addElementRange(&t, data, preprocessNormalsOnly, ents, start, 0, num,
-                    spheres);
+                    spheres, skin);
     if(own && !t.bbox.empty()) opt->tmpBBox += t.bbox;
     return;
   }
@@ -2174,12 +2275,12 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     d->va_ellipses = new VertexArray(4, n / 4);
     targets[t] = d;
   }
-  if(boundaryFaces) boundaryFaces->setThreaded();
 
 #pragma omp parallel for schedule(static, 1) num_threads(nthreads)
   for(int t = 0; t < nthreads; t++)
     addElementRange(targets[t], data, preprocessNormalsOnly, ents, start,
-                    num * t / nthreads, num * (t + 1) / nthreads, spheres);
+                    num * t / nthreads, num * (t + 1) / nthreads, spheres,
+                    skin);
 
   for(int t = 0; t < nthreads; t++) {
     if(own) {
@@ -2325,39 +2426,17 @@ public:
     // the spheres around the elements are those of the view as it was
     _viewSpheres.erase(p);
 
-    bool skinFound = false;
-    if((skinOnly(opt) && viewDrawsFaces(p)) || skinOutlines(opt)) {
-      // the skin from the nodes of the elements alone, if it can be
-      const std::vector<std::uint8_t> *masks =
-        getSkin(p, data, opt, flatElements(data, opt));
-      if(masks) {
-        skinFound = true;
-        activeSkinMasks = masks;
-      }
-    }
+    // the skin from the nodes of the elements alone, if it can be (every
+    // face is drawn otherwise)
+    const viewSkinFaces *skin = nullptr;
+    if((skinOnly(opt) && viewDrawsFaces(p)) || skinOutlines(opt))
+      skin = getSkin(p, data, opt, flatElements(data, opt));
 
-    if(!skinFound && opt->drawSkinOnly && viewDrawsFaces(p)) {
-      // first pass: locate the faces that bound the mesh
-      double t1 = TimeOfDay();
-      delete boundaryFaces;
-      boundaryFaces = new UniqueElementFilter(false);
-      markingBoundaryFaces = true;
-      addElementsInArrays(p, true);
-      markingBoundaryFaces = false;
-      // that pass may have fed the smooth normals: start over
-      delete p->normals;
-      p->normals = new smooth_normals(opt->angleSmoothNormals);
-      Msg::Debug("Located the boundary faces of View[%d] in %g s",
-                 p->getIndex(), TimeOfDay() - t1);
-    }
-
-    if(opt->smoothNormals) addElementsInArrays(p, true);
-    addElementsInArrays(p, false);
-
-    delete boundaryFaces;
-    boundaryFaces = nullptr;
-    activeSkinMasks = nullptr;
-    std::vector<std::uint8_t>().swap(skinMasks);
+    if(opt->smoothNormals)
+      addElementsInArrays(p, true, drawTarget::COLLECT_ALL, nullptr, nullptr,
+                          nullptr, nullptr, skin);
+    addElementsInArrays(p, false, drawTarget::COLLECT_ALL, nullptr, nullptr,
+                        nullptr, nullptr, skin);
 
     p->va_points->finalize();
     p->va_lines->finalize();
@@ -2419,34 +2498,19 @@ bool PView::fillClipVertexArrays()
   flatElements flat(data, opt);
   const elementSpheres *spheres = getSpheres(this, flat);
 
-  bool skinFound = false;
-  if(whole && ((skinOnly(opt) && viewDrawsFaces(this)) || skinOutlines(opt))) {
-    skinFound = findSkin(this, flat, true, spheres,
-                         spheres ? getSkin(this, data, opt, flat) : nullptr);
-    if(skinFound) activeSkinMasks = &skinMasks;
-  }
-
-  if(whole && opt->drawSkinOnly && !skinFound) {
-    // the skin of what whole element mode keeps, which differs from the
-    // skin of the whole field
-    delete boundaryFaces;
-    boundaryFaces = new UniqueElementFilter(false);
-    markingBoundaryFaces = true;
-    // this pass feeds the smoothed normals, which are built already
-    smooth_normals scratch(opt->angleSmoothNormals);
-    addElementsInArrays(this, true, drawTarget::COLLECT_KEPT, va_clip_lines,
-                        va_clip_triangles, &scratch);
-    markingBoundaryFaces = false;
-  }
+  // in whole element mode, the faces of the cut elements on the skin of what
+  // is kept, which differs from the skin of the whole field
+  viewSkinFaces cutSkin;
+  bool skinFound =
+    whole && ((skinOnly(opt) && viewDrawsFaces(this)) || skinOutlines(opt)) &&
+    findSkin(this, flat, true, spheres, getSkin(this, data, opt, flat),
+             cutSkin);
   // the same walk as for the view's own arrays, into the clip arrays
   addElementsInArrays(this, false,
                       whole ? drawTarget::COLLECT_CUT :
                               drawTarget::COLLECT_CAPS,
-                      va_clip_lines, va_clip_triangles, nullptr, spheres);
-  delete boundaryFaces;
-  boundaryFaces = nullptr;
-  activeSkinMasks = nullptr;
-  std::vector<std::uint8_t>().swap(skinMasks);
+                      va_clip_lines, va_clip_triangles, nullptr, spheres,
+                      skinFound ? &cutSkin : nullptr);
 
   va_clip_lines->finalize();
   va_clip_triangles->finalize();

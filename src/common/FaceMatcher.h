@@ -12,9 +12,9 @@
 
 // Finds the faces that are met an odd number of times - the skin of a set of
 // 3D elements, when each element gives its faces (or of 2D elements, when
-// each gives its edges). A face is told apart by its 2 to 4 nodes (of type K:
-// an identifier or an address, never 0) and a tag (the entity, so that the skin can be taken
-// entity by entity); what gave it (of type Owner) and its number in it are
+// each gives its edges). A face is told apart by its nodes, 2 or more (of type
+// K: an identifier or an address) and a tag (the entity, so that the skin can
+// be taken entity by entity); what gave it (of type Owner) and its number in it are
 // kept for the faces that are left. A face met a second time is taken out of
 // the table, which thus never holds more than the front between the elements
 // seen and the others.
@@ -73,14 +73,11 @@ public:
   // overlap.
   std::uint64_t hashOf(K *k, int numNodes, int tag) const
   {
-    for(int a = numNodes; a < 4; a++) k[a] = 0;
     for(int a = 1; a < numNodes; a++)
       for(int b = a; b > 0 && k[b] < k[b - 1]; b--) std::swap(k[b], k[b - 1]);
-    std::uint64_t h = _mix((std::uint64_t)k[0] * 0x9e3779b97f4a7c15ull ^
-                           (std::uint64_t)k[1]);
-    h = _mix(h * 0x9e3779b97f4a7c15ull ^ (std::uint64_t)k[2]);
-    h = _mix(h * 0x9e3779b97f4a7c15ull ^ (std::uint64_t)k[3] ^
-             ((std::uint64_t)(unsigned int)tag << 40));
+    std::uint64_t h = ((std::uint64_t)(unsigned int)tag << 8) ^ numNodes;
+    for(int a = 0; a < numNodes; a++)
+      h = _mix(h * 0x9e3779b97f4a7c15ull ^ (std::uint64_t)k[a]);
     if(!h) h = 1;
 #if defined(__GNUC__) || defined(__clang__)
     __builtin_prefetch(&_slots[h & _mask]);

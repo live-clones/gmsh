@@ -110,7 +110,6 @@ private:
     std::size_t mask, num, growAt;
     Shard() : table(nullptr), mask(0), num(0), growAt(0) {}
     void reserve(std::size_t n);
-    void erase(std::size_t i);
     bool insert(std::uint64_t h)
     {
       // an empty shard has growAt == 0, so this also allocates the table
@@ -118,32 +117,6 @@ private:
       std::size_t i = h & mask;
       while(table[i]) {
         if(table[i] == h) return false;
-        i = (i + 1) & mask;
-      }
-      table[i] = h;
-      num++;
-      return true;
-    }
-    bool contains(std::uint64_t h) const
-    {
-      if(!num) return false;
-      std::size_t i = h & mask;
-      while(table[i]) {
-        if(table[i] == h) return true;
-        i = (i + 1) & mask;
-      }
-      return false;
-    }
-    // insert the key, or erase it if it is already there
-    bool insertOrErase(std::uint64_t h)
-    {
-      if(num >= growAt) reserve(num + 1);
-      std::size_t i = h & mask;
-      while(table[i]) {
-        if(table[i] == h) {
-          erase(i);
-          return false;
-        }
         i = (i + 1) & mask;
       }
       table[i] = h;
@@ -206,14 +179,6 @@ public:
   {
     return isDuplicate(vaHashKey(key, n * sizeof(std::uint64_t)));
   }
-  bool contains(const std::uint64_t *key, int n)
-  {
-    return contains(vaHashKey(key, n * sizeof(std::uint64_t)));
-  }
-  void insertOrErase(const std::uint64_t *key, int n)
-  {
-    insertOrErase(vaHashKey(key, n * sizeof(std::uint64_t)));
-  }
   // the hash, the table entry and the lookup separately, so that a caller can
   // prefetch the entries of a whole element before looking them up
   std::uint64_t hashOf(unsigned int col, const void *v0, const void *v1,
@@ -236,24 +201,6 @@ public:
     if(!_threaded) return !_shardOf(h).insert(h);
     ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
     return !_shardOf(h).insert(h);
-  }
-  // insert the element, or remove it if already seen: once all elements have
-  // been passed, the filter holds those seen an odd number of times, i.e. the
-  // boundary faces
-  void insertOrErase(std::uint64_t h)
-  {
-    if(!_threaded) {
-      _shardOf(h).insertOrErase(h);
-      return;
-    }
-    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
-    _shardOf(h).insertOrErase(h);
-  }
-  bool contains(std::uint64_t h)
-  {
-    if(!_threaded) return _shardOf(h).contains(h);
-    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
-    return _shardOf(h).contains(h);
   }
 };
 
