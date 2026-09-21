@@ -1001,7 +1001,7 @@ static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
   k.push_back(data->getNumPrisms(step));
   k.push_back(data->getNumPyramids(step));
   k.push_back(data->getNumPolyhedra(step));
-  for(int d = 0; d < 4; d++) k.push_back(ctx->mesh.stamp[d]);
+  k.push_back(ctx->meshContentStamp);
   k.push_back(ctx->entityVisibilityStamp);
   k.push_back(opt->sampling);
   k.push_back(opt->drawTetrahedra);

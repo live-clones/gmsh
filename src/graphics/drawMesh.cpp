@@ -267,6 +267,7 @@ static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
   tok.add(CTX::instance()->mesh.qualitySup);
   tok.add(CTX::instance()->mesh.radiusInf);
   tok.add(CTX::instance()->mesh.radiusSup);
+  tok.add(CTX::instance()->elementTypesKey());
   // which elements whole element mode keeps, which depends on the other
   // entities of the model as well
   CTX *c = CTX::instance();
@@ -1116,14 +1117,12 @@ void drawContext::drawMesh()
     return;
   if(!CTX::instance()->mesh.draw) return;
 
-  // make sure to flag any model-dependent post-processing view as changed if
-  // the underlying mesh has
-  static int seen[4] = {0, 0, 0, 0};
-  bool meshChanged = false;
-  for(int d = 0; d < 4; d++) {
-    if(seen[d] != CTX::instance()->mesh.stamp[d]) meshChanged = true;
-    seen[d] = CTX::instance()->mesh.stamp[d];
-  }
+  // flag the post-processing views that depend on a model as changed if the
+  // mesh has (the mesh itself: not the options it is drawn with, which the
+  // views do not read)
+  static int seen = 0;
+  bool meshChanged = (seen != CTX::instance()->meshContentStamp);
+  seen = CTX::instance()->meshContentStamp;
   if(meshChanged) {
     for(std::size_t i = 0; i < GModel::list.size(); i++)
       for(std::size_t j = 0; j < PView::list.size(); j++)

@@ -379,6 +379,12 @@ public:
     key.push_back(mesh.trihedra);
     key.push_back(mesh.polyhedra);
   }
+  std::vector<double> elementTypesKey() const
+  {
+    std::vector<double> key;
+    addElementTypesToKey(key);
+    return key;
+  }
   // What the planes add to the key of an array kept between frames: the modes
   // the clipping window sets directly (they never mark the mesh as changed)
   // and the planes themselves. In one place, so that a mode added to the
