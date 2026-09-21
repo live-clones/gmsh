@@ -184,7 +184,6 @@ void GModel::destroy(bool keepName)
   _checkPointedMaxVertexNum = _maxVertexNum;
   _checkPointedMaxElementNum = _maxElementNum;
   _currentMeshEntity = nullptr;
-  _numPartitions = 0;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
 

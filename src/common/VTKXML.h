@@ -65,6 +65,12 @@ struct vtkXMLGrid {
   std::string uniqueName(const std::string &name) const;
   bool write(const std::string &fileName, bool binary,
              const std::string &comment) const;
+  // the pieces of the file merged in one grid; all the data arrays are read
+  // as reals
+  bool read(const std::string &fileName);
+
+private:
+  std::size_t _pieceStart = 0, _pieceConnectivity = 0, _pieceFaces = 0;
 };
 
 // The .pvd file that makes a time series (of one or several parts) out of
@@ -72,6 +78,9 @@ struct vtkXMLGrid {
 bool writePVD(const std::string &fileName,
               const std::vector<std::vector<std::string> > &files,
               const std::vector<double> &times);
+bool readPVD(const std::string &fileName,
+             std::vector<std::vector<std::string> > &files,
+             std::vector<double> &times);
 
 // How the elements of a MSH type are written: the VTK cell type (0 if none),
 // and for each node of the VTK cell the index of the node in the element.
@@ -80,6 +89,8 @@ struct vtkXMLCell {
   int type;
   std::vector<int> nodes;
 };
-const vtkXMLCell &getVTKXMLCell(int mshType);
+const vtkXMLCell &getVTKXMLCell(int mshType, bool warn = true);
+// the MSH type of a VTK cell (0 if none)
+int getMSHTypeOfVTKXMLCell(int vtkType, int numNodes);
 
 #endif

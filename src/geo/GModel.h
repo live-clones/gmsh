@@ -940,7 +940,9 @@ public:
   int writeMED(const std::string &name, bool saveAll = false,
                double scalingFactor = 1.0);
 
-  // VTK XML unstructured grid format, with a step of model-based views
+  // VTK XML unstructured grid format, with a step of model-based views (the
+  // reader also takes the .pvd of a time series)
+  int readVTU(const std::string &name);
   int writeVTU(const std::string &name, bool binary = false,
                bool saveAll = false, double scalingFactor = 1.0,
                const std::vector<PViewDataGModel *> &views =

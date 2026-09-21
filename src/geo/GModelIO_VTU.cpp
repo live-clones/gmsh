@@ -11,6 +11,10 @@
 #include "MElement.h"
 #include "MPolygon.h"
 #include "MPolyhedron.h"
+#include "MLine.h"
+#include "MPoint.h"
+#include "MTriangle.h"
+#include "StringUtils.h"
 #include "ElementType.h"
 #include "BasisFactory.h"
 #include "nodalBasis.h"
@@ -19,6 +23,7 @@
 #include "GmshConfig.h"
 
 #if defined(HAVE_POST)
+#include "PView.h"
 #include "PViewDataGModel.h"
 #endif
 
@@ -235,20 +240,55 @@ static vtkXMLCell makeVTKCell(int mshType)
   return c;
 }
 
-const vtkXMLCell &getVTKXMLCell(int mshType)
+const vtkXMLCell &getVTKXMLCell(int mshType, bool warn)
 {
   static std::map<int, vtkXMLCell> cells;
+  static std::map<int, bool> warned;
   auto it = cells.find(mshType);
-  if(it == cells.end()) {
-    vtkXMLCell c = makeVTKCell(mshType);
-    if(c.type && ElementType::getOrder(mshType) > 1 &&
-       c.nodes.size() < (std::size_t)ElementType::getNumVertices(mshType))
-      Msg::Warning("No VTK equivalent for %s: written as first order cells",
-                   ElementType::nameOfParentType(
-                     ElementType::getParentType(mshType), true).c_str());
-    it = cells.insert(std::make_pair(mshType, c)).first;
+  if(it == cells.end())
+    it = cells.insert(std::make_pair(mshType, makeVTKCell(mshType))).first;
+  const vtkXMLCell &c = it->second;
+  if(warn && c.type && !warned[mshType] &&
+     c.nodes.size() < (std::size_t)ElementType::getNumVertices(mshType)) {
+    warned[mshType] = true;
+    Msg::Warning("No VTK equivalent for %s of order %d: written as first "
+                 "order cells",
+                 ElementType::nameOfParentType(
+                   ElementType::getParentType(mshType), true).c_str(),
+                 ElementType::getOrder(mshType));
   }
-  return it->second;
+  return c;
+}
+
+int getMSHTypeOfVTKXMLCell(int vtkType, int numNodes)
+{
+  static std::map<std::pair<int, int>, int> types;
+  if(types.empty()) {
+    for(int parent = TYPE_PNT; parent <= TYPE_HEX; parent++) {
+      for(int order = 0; order <= 10; order++) {
+        for(int serendip = 0; serendip < 2; serendip++) {
+          if((order == 0) != (parent == TYPE_PNT)) continue;
+          if(parent == TYPE_PYR && order > 2) continue; // no VTK equivalent
+          if(parent == TYPE_PRI && order > 2) continue; // not in Gmsh
+          if(parent == TYPE_HEX && order > 9) continue;
+          if(serendip && (order != 2 || parent < TYPE_QUA)) continue;
+          int t = ElementType::getType(parent, order, serendip);
+          if(t <= 0) continue;
+          const vtkXMLCell &c = getVTKXMLCell(t, false);
+          int n = ElementType::getNumVertices(t);
+          if(!c.type || (int)c.nodes.size() != n) continue;
+          if(!types.count({c.type, n})) types[{c.type, n}] = t;
+          // VTK can also write the cells of order 1 and 2 as Lagrange
+          // cells, which order their nodes in the same way
+          static const int lagrange[] = {0, 0, 68, 69, 70, 71, 0, 73, 72};
+          int l = serendip ? 0 : lagrange[parent];
+          if(l && !types.count({l, n})) types[{l, n}] = t;
+        }
+      }
+    }
+  }
+  auto it = types.find({vtkType, numNodes});
+  return it == types.end() ? 0 : it->second;
 }
 
 // The cells of an element, with a point per node of the mesh, or per node of
@@ -462,4 +502,222 @@ int GModel::writeVTU(const std::string &name, bool binary, bool saveAll,
 
   return grid.write(name, binary,
                     getName() + ", created by Gmsh " + GMSH_VERSION) ? 1 : 0;
+}
+
+// Reads a .vtu file, or the series of files of a .pvd: the mesh from the
+// first step, and the data arrays of each step as steps of model-based views
+
+int GModel::readVTU(const std::string &name)
+{
+  std::vector<std::vector<std::string> > files(1, {name});
+  std::vector<double> times(1, 0.);
+  std::vector<std::string> split = SplitFileName(name);
+  if(split[2] == ".pvd" || split[2] == ".PVD") {
+    if(!readPVD(name, files, times)) {
+      Msg::Error("No data set in '%s'", name.c_str());
+      return 0;
+    }
+    for(auto &f : files)
+      for(auto &n : f)
+        if(n.size() && n[0] != '/' && n.find(':') == std::string::npos)
+          n = split[0] + n;
+  }
+
+  // the mesh of each part, kept to put the data of the next steps on
+  struct part {
+    std::size_t numPoints, numCells;
+    std::vector<MVertex *> vertices;
+    std::vector<std::pair<std::size_t, MElement *> > elements;
+#if defined(HAVE_POST)
+    std::map<std::string, PViewDataGModel *> views;
+#endif
+  };
+  std::vector<part> parts;
+
+  for(std::size_t step = 0; step < files.size(); step++) {
+    for(std::size_t ip = 0; ip < files[step].size(); ip++) {
+      vtkXMLGrid grid;
+      if(!grid.read(files[step][ip])) return 0;
+      std::size_t numPoints = grid.points.size() / 3;
+      std::size_t numCells = grid.types.size();
+
+      if(ip >= parts.size()) {
+        parts.resize(ip + 1);
+        part &p = parts[ip];
+        p.numPoints = numPoints;
+        p.numCells = numCells;
+        Msg::Info("%zu points, %zu cells", numPoints, numCells);
+
+        auto array = [&](const std::string &n) -> const std::vector<double> * {
+          for(auto &a : grid.cellData)
+            if(a.name == n && a.numComp == 1 && a.data.size() == numCells)
+              return &a.data;
+          return nullptr;
+        };
+        const std::vector<double> *geometrical = array("gmsh:geometrical");
+        const std::vector<double> *physical = array("gmsh:physical");
+        if(!physical) physical = array("CellEntityIds"); // legacy .vtk
+
+        p.vertices.resize(numPoints);
+        for(std::size_t i = 0; i < numPoints; i++)
+          p.vertices[i] = new MVertex(grid.points[3 * i], grid.points[3 * i + 1],
+                                      grid.points[3 * i + 2]);
+
+        std::map<int, std::vector<MElement *> > elements[16];
+        std::map<int, std::map<int, std::string> > physicals[4];
+        MElementFactory factory;
+        std::map<int, int> unknown;
+
+        for(std::size_t c = 0; c < numCells; c++) {
+          std::int64_t start = c ? grid.offsets[c - 1] : 0;
+          std::int64_t n = grid.offsets[c] - start;
+          std::vector<MVertex *> v(n);
+          bool ok = (n > 0);
+          for(std::int64_t k = 0; k < n && ok; k++) {
+            std::int64_t i = grid.connectivity[start + k];
+            if(i < 0 || i >= (std::int64_t)numPoints)
+              ok = false;
+            else
+              v[k] = p.vertices[i];
+          }
+          if(!ok) {
+            Msg::Error("Wrong node index in cell %zu", c);
+            return 0;
+          }
+          int type = grid.types[c];
+          std::vector<MElement *> created;
+          switch(type) {
+          case 2: // poly-vertex
+            for(auto w : v) created.push_back(new MPoint(w));
+            break;
+          case 4: // poly-line
+            for(std::int64_t k = 0; k + 1 < n; k++)
+              created.push_back(new MLine(v[k], v[k + 1]));
+            break;
+          case 6: // triangle strip
+            for(std::int64_t k = 0; k + 2 < n; k++)
+              created.push_back((k % 2) ? new MTriangle(v[k + 1], v[k], v[k + 2]) :
+                                          new MTriangle(v[k], v[k + 1], v[k + 2]));
+            break;
+          case 7: created.push_back(new MPolygon(v)); break;
+          case 42: {
+            MPolyhedron *ph = new MPolyhedron(v);
+            std::vector<MVertex *> fv;
+            std::vector<int> fo(1, 0);
+            if(c < grid.faceOffsets.size() && grid.faceOffsets[c] > 0) {
+              // the faces end at the offset: find where they start
+              std::int64_t end = grid.faceOffsets[c], i = 0;
+              for(std::size_t b = c; b-- > 0;)
+                if(grid.faceOffsets[b] > 0) {
+                  i = grid.faceOffsets[b];
+                  break;
+                }
+              if(end <= (std::int64_t)grid.faces.size() && i < end) {
+                std::int64_t numFaces = grid.faces[i++];
+                for(std::int64_t f = 0; f < numFaces && i < end; f++) {
+                  std::int64_t m = grid.faces[i++];
+                  for(std::int64_t k = 0; k < m && i < end; k++, i++)
+                    if(grid.faces[i] >= 0 &&
+                       grid.faces[i] < (std::int64_t)numPoints)
+                      fv.push_back(p.vertices[grid.faces[i]]);
+                  fo.push_back(fv.size());
+                }
+              }
+            }
+            ph->setPolygons(fv, fo);
+            created.push_back(ph);
+          } break;
+          default: {
+            if(type == 8 && n == 4) { // pixel
+              std::swap(v[2], v[3]);
+              type = 9;
+            }
+            else if(type == 11 && n == 8) { // voxel
+              std::swap(v[2], v[3]);
+              std::swap(v[6], v[7]);
+              type = 12;
+            }
+            int mshType = getMSHTypeOfVTKXMLCell(type, n);
+            if(!mshType) {
+              unknown[type]++;
+              break;
+            }
+            const vtkXMLCell &cell = getVTKXMLCell(mshType);
+            std::vector<MVertex *> w(n);
+            for(std::int64_t k = 0; k < n; k++) w[cell.nodes[k]] = v[k];
+            MElement *e = factory.create(mshType, w);
+            if(e) created.push_back(e);
+          } break;
+          }
+          for(auto e : created) {
+            int tag = geometrical ? (int)(*geometrical)[c] : 1;
+            elements[e->getType() % 16][tag].push_back(e);
+            if(physical && (*physical)[c] > 0)
+              physicals[e->getDim()][tag][(int)(*physical)[c]] = "";
+            p.elements.push_back({c, e});
+          }
+        }
+        for(auto &u : unknown)
+          Msg::Warning("%d cells of VTK type %d ignored", u.second, u.first);
+
+        for(int i = 0; i < 16; i++) _storeElementsInEntities(elements[i]);
+        _associateEntityWithMeshVertices();
+        _storeVerticesInEntities(p.vertices);
+        for(int i = 0; i < 4; i++)
+          _storePhysicalTagsInEntities(i, physicals[i]);
+      }
+
+      part &p = parts[ip];
+      if(numPoints != p.numPoints || numCells != p.numCells) {
+        Msg::Warning("Mesh changes in '%s': data ignored",
+                     files[step][ip].c_str());
+        continue;
+      }
+
+#if defined(HAVE_POST)
+      auto addData = [&](const vtkXMLGrid::realArray &a, bool onPoints) {
+        if(!a.name.compare(0, 5, "gmsh:") || a.name == "CellEntityIds") return;
+        std::size_t n = onPoints ? numPoints : numCells;
+        if(a.data.size() != n * a.numComp) return;
+        // Gmsh fields have 1, 3 or 9 components
+        int numComp = (a.numComp == 1) ? 1 : (a.numComp <= 3) ? 3 : 9;
+        std::vector<std::size_t> tags;
+        std::vector<double> data;
+        auto add = [&](std::size_t tag, std::size_t i) {
+          if(std::isnan(a.data[i * a.numComp])) return;
+          tags.push_back(tag);
+          for(int c = 0; c < numComp; c++)
+            data.push_back(c < a.numComp ? a.data[i * a.numComp + c] : 0.);
+        };
+        if(onPoints) {
+          for(std::size_t i = 0; i < numPoints; i++)
+            if(p.vertices[i]) add(p.vertices[i]->getNum(), i);
+        }
+        else {
+          for(auto &e : p.elements) add(e.second->getNum(), e.first);
+        }
+        if(tags.empty()) return;
+        std::string key = (onPoints ? "p:" : "c:") + a.name;
+        PViewDataGModel *&d = p.views[key];
+        bool first = !d;
+        if(first) {
+          d = new PViewDataGModel(onPoints ? PViewDataGModel::NodeData :
+                                             PViewDataGModel::ElementData);
+          d->setName(a.name);
+          d->setFileName(name);
+        }
+        d->addData(this, tags, data, step, times[step], 0, numComp);
+        if(first) new PView(d);
+      };
+      for(auto &a : grid.pointData) addData(a, true);
+      for(auto &a : grid.cellData) addData(a, false);
+#endif
+    }
+  }
+
+#if defined(HAVE_POST)
+  for(auto &p : parts)
+    for(auto &v : p.views) v.second->finalize();
+#endif
+  return 1;
 }

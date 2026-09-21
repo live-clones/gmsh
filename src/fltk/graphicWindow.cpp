@@ -144,7 +144,7 @@ static const char *input_formats =
   "Mesh - Plot3D Structured Mesh\t*.p3d\n"
   "Mesh - STL Surface\t*.stl\n"
   "Mesh - VTK\t*.vtk\n"
-  "Mesh - VTK XML Unstructured Grid\t*.vtu\n"
+  "Mesh - VTK XML Unstructured Grid\t*.{vtu,pvd}\n"
   "Mesh - VRML Surface\t*.{wrl,vrml}\n"
   "Mesh - PLY2 Surface\t*.ply2\n"
   "Post-processing - Gmsh POS\t*.pos\n"
