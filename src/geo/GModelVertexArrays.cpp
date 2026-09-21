@@ -421,8 +421,123 @@ static void gatherCutElements(std::vector<T *> &elements,
   }
 }
 
-// vaL and vaT are where the lines and triangles go: the entity's own arrays,
-// or the ones holding what the clipping planes add
+// one line of what represents the edges of an element (or one triangle of what
+// represents its faces), exploded about pc and with the smoothed normals of a
+// surface if asked
+static void addEdgeRep(GEntity *e, VertexArray *va, MElement *ele, bool curved,
+                       int j, const SPoint3 &pc, unsigned int *col,
+                       bool unique)
+{
+  double x[2], y[2], z[2];
+  SVector3 n[2];
+  ele->getEdgeRep(curved, j, x, y, z, n);
+  explodeAbout(pc, CTX::instance()->mesh.explode, 2, x, y, z);
+  if(e->dim() == 2 && CTX::instance()->mesh.smoothNormals)
+    for(int k = 0; k < 2; k++)
+      e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
+  va->add(x, y, z, n, col, ele, unique);
+}
+
+static void addFaceRep(GEntity *e, VertexArray *va, MElement *ele, bool curved,
+                       int j, const SPoint3 &pc, unsigned int *col)
+{
+  double x[3], y[3], z[3];
+  SVector3 n[3];
+  ele->getFaceRep(curved, j, x, y, z, n);
+  explodeAbout(pc, CTX::instance()->mesh.explode, 3, x, y, z);
+  if(e->dim() == 2 && CTX::instance()->mesh.smoothNormals)
+    for(int k = 0; k < 3; k++)
+      e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
+  va->add(x, y, z, n, col, ele, false);
+}
+
+// An array for each thread that fills `va`, put together in the order of the
+// threads at the end, which with a static schedule is the order of a serial
+// run (one thread fills `va` itself). The threads share the filter of `va`,
+// which also lives across the calls made for each type of element.
+class arraysPerThread {
+private:
+  VertexArray *_va;
+  std::vector<VertexArray *> _own;
+
+public:
+  arraysPerThread(VertexArray *va, bool used, int nthreads, int numVertices,
+                  std::size_t numElements)
+    : _va(va), _own(nthreads, va)
+  {
+    if(nthreads == 1 || !used) return;
+    UniqueElementFilter *filter = va->getUniqueFilter(true);
+    for(auto &own : _own) {
+      own = new VertexArray(numVertices, numElements / nthreads + 100);
+      own->setUniqueFilter(filter);
+    }
+  }
+  VertexArray *mine() { return _own[_own.size() == 1 ? 0 : Msg::GetThreadNum()]; }
+  ~arraysPerThread()
+  {
+    for(auto own : _own) {
+      if(own == _va) continue;
+      _va->merge(own);
+      delete own;
+    }
+  }
+};
+
+// The edges each element is the first to meet, a bit each (see
+// MAX_MASKED_EDGES), found in a loop that does nothing else: the table of the
+// filter does not fit in the caches, and its misses overlap far better than
+// when edges are drawn between them. With a topology an edge is told by its
+// two nodes rather than by its coordinates: cheaper, exact, and what
+// represents it need not be asked for.
+template <class T>
+static void findNewEdges(std::vector<T *> &elements, UniqueElementFilter *filter,
+                         const elementColor &color, int nthreads,
+                         std::vector<std::uint16_t> &mask)
+{
+  long int numIn = 0, numKept = 0;
+  mask.assign(elements.size(), 0);
+  // size the tables up front: growing them by successive doublings costs about
+  // as much as the lookups themselves
+  filter->reserve(2 * elements.size());
+#pragma omp parallel for schedule(static) num_threads(nthreads) \
+  reduction(+ : numIn, numKept)
+  for(std::size_t i = 0; i < elements.size(); i++) {
+    MElement *ele = elements[i];
+    if(!isElementVisible(ele) || ele->getDim() < 1) continue;
+    const bool curved = isCurved(ele);
+    int numRep = ele->getNumEdgesRep(curved);
+    // the representation of a curved edge is subdivided, and does not map
+    // one to one onto the topological edges: left to the coordinates
+    if(numRep != ele->getNumEdges() || numRep > MAX_MASKED_EDGES) {
+      mask[i] = EDGES_NOT_MASKED;
+      continue;
+    }
+    // (the edges are hashed together, then looked up)
+    unsigned int c = color(ele);
+    std::uint64_t hash[MAX_MASKED_EDGES];
+    for(int j = 0; j < numRep; j++) {
+      MVertex *ev[2];
+      ele->getEdgeCorners(j, ev);
+      hash[j] = filter->hashOf(c, ev[0], ev[1]);
+      filter->prefetch(hash[j]);
+    }
+    std::uint16_t m = curved ? EDGES_CURVED : 0;
+    for(int j = 0; j < numRep; j++) {
+      numIn += 2;
+      if(filter->isDuplicate(hash[j])) continue;
+      numKept += 2;
+      m |= (std::uint16_t)(1 << j);
+    }
+    mask[i] = m;
+  }
+  VertexArray::statUniqueIn += numIn;
+  VertexArray::statUniqueKept += numKept;
+}
+
+// The edges and the faces of the elements of an entity. vaL and vaT are where
+// the lines and triangles go: the entity's own arrays, or the ones holding
+// what the clipping planes add. The caller can keep the edges each element
+// draws (newEdges): they are not looked for again while they are there.
 template <class T>
 static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
                                 std::vector<T *> &elements, bool edges,
@@ -430,96 +545,24 @@ static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
                                 std::vector<std::uint16_t> *newEdges = nullptr)
 {
   int nthreads = CTX::instance()->numThreadsFor(elements.size(), 1000);
-
-  // each thread fills its own vertex arrays, which are merged below: this
-  // avoids the critical sections that used to serialize the whole loop
-  std::vector<VertexArray *> vaLines(nthreads, nullptr);
-  std::vector<VertexArray *> vaTriangles(nthreads, nullptr);
-  if(nthreads == 1) {
-    vaLines[0] = vaL;
-    vaTriangles[0] = vaT;
-  }
-  else {
-    int n = (int)(elements.size() / nthreads) + 100;
-    // the threads share the entity's filter, which also survives across the
-    // calls made for each element type
-    UniqueElementFilter *fl = vaL ? vaL->getUniqueFilter(true) : nullptr;
-    UniqueElementFilter *ft = vaT ? vaT->getUniqueFilter(true) : nullptr;
-    for(int t = 0; t < nthreads; t++) {
-      if(edges) {
-        vaLines[t] = new VertexArray(2, 6 * n);
-        vaLines[t]->setUniqueFilter(fl);
-      }
-      if(faces) {
-        vaTriangles[t] = new VertexArray(3, 4 * n);
-        vaTriangles[t]->setUniqueFilter(ft);
-      }
-    }
-  }
-
-  // static scheduling, merged in thread order, keeps the arrays in the same
-  // order as in a serial run
   const double explode = CTX::instance()->mesh.explode;
-  const bool smooth = CTX::instance()->mesh.smoothNormals;
-  const bool pick = CTX::instance()->pickElements;
-  // the filter is only worth it on edges, and finds nothing when the elements
-  // are exploded
-  const bool filtering =
-    CTX::instance()->mesh.drawUniqueEdges && (explode == 1.) && !pick;
-  const bool uniqueEdges = (e->dim() > 1 && filtering);
-
-  // with a topology, identify a duplicated edge by its two vertices rather
-  // than by coordinates: cheaper, exact, and getEdgeRep() can be skipped
-  UniqueElementFilter *filter =
-    (uniqueEdges && vaL) ? vaL->getUniqueFilter(nthreads > 1) : nullptr;
-  // size the tables up front: growing them by successive doublings costs about
-  // as much as the lookups themselves
-  if(filter) filter->reserve(2 * elements.size());
-
-  long int numIn = 0, numKept = 0;
   const elementColor color(e);
 
-  // The edges that are met for the first time are looked for ahead, in a
-  // loop that does nothing else (the table of the filter does not fit in the
-  // caches: its misses overlap far better than when edges are drawn between
-  // them). They make a mask for each element, which the caller can keep: the
-  // search is not done again while they are there.
+  // an edge shared by several elements is drawn once (the filter finds
+  // nothing when the elements are exploded, and picking wants them all)
+  const bool uniqueEdges = e->dim() > 1 && explode == 1. &&
+                           CTX::instance()->mesh.drawUniqueEdges &&
+                           !CTX::instance()->pickElements;
+  UniqueElementFilter *filter =
+    (uniqueEdges && edges) ? vaL->getUniqueFilter(nthreads > 1) : nullptr;
   std::vector<std::uint16_t> local;
   std::vector<std::uint16_t> &mask = newEdges ? *newEdges : local;
-  if(edges && filter && mask.size() != elements.size()) {
-    mask.assign(elements.size(), 0);
-#pragma omp parallel for schedule(static) num_threads(nthreads) \
-  reduction(+ : numIn, numKept)
-    for(std::size_t i = 0; i < elements.size(); i++) {
-      MElement *ele = elements[i];
-      if(!isElementVisible(ele) || ele->getDim() < 1) continue;
-      const bool curved = isCurved(ele);
-      int numRep = ele->getNumEdgesRep(curved);
-      // the representation of a curved edge is subdivided, and does not map
-      // one to one onto the topological edges: left to the coordinates
-      if(numRep != ele->getNumEdges() || numRep > MAX_MASKED_EDGES) {
-        mask[i] = EDGES_NOT_MASKED;
-        continue;
-      }
-      unsigned int c = color(ele);
-      std::uint64_t hash[MAX_MASKED_EDGES];
-      for(int j = 0; j < numRep; j++) {
-        MVertex *ev[2];
-        ele->getEdgeCorners(j, ev);
-        hash[j] = filter->hashOf(c, ev[0], ev[1]);
-        filter->prefetch(hash[j]);
-      }
-      std::uint16_t m = curved ? EDGES_CURVED : 0;
-      for(int j = 0; j < numRep; j++) {
-        numIn += 2;
-        if(filter->isDuplicate(hash[j])) continue;
-        numKept += 2;
-        m |= (std::uint16_t)(1 << j);
-      }
-      mask[i] = m;
-    }
-  }
-  const bool masked = (edges && filter && mask.size() == elements.size());
+  if(filter && mask.size() != elements.size())
+    findNewEdges(elements, filter, color, nthreads, mask);
+  const bool masked = (filter && mask.size() == elements.size());
+
+  arraysPerThread lines(vaL, edges, nthreads, 2, 6 * elements.size());
+  arraysPerThread triangles(vaT, faces, nthreads, 3, 4 * elements.size());
 
 #pragma omp parallel for schedule(static) num_threads(nthreads)
   for(std::size_t i = 0; i < elements.size(); i++) {
@@ -527,71 +570,29 @@ static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
     if(masked && !faces && !(mask[i] & ~EDGES_CURVED)) continue;
 
     MElement *ele = elements[i];
-
     if(!isElementVisible(ele) || ele->getDim() < 1) continue;
-
-    const int tnum = (nthreads == 1) ? 0 : Msg::GetThreadNum();
-    VertexArray *vaLine = vaLines[tnum];
-    VertexArray *vaTriangle = vaTriangles[tnum];
 
     unsigned int c = color(ele);
     unsigned int col[4] = {c, c, c, c};
-
     // (what decides it is not cheap, and the mask has it)
     const bool known = masked && mask[i] != EDGES_NOT_MASKED;
     const bool curved = known ? (mask[i] & EDGES_CURVED) != 0 : isCurved(ele);
-
     SPoint3 pc(0., 0., 0.);
     if(explode != 1.) pc = ele->barycenter();
 
     if(edges) {
-      int numRep = ele->getNumEdgesRep(curved);
       // an edge that is not in a mask is told from the others by its
       // coordinates
       bool unique = uniqueEdges && !known;
-      for(int j = 0; j < numRep; j++) {
-        if(known && !(mask[i] & (1 << j))) continue;
-        double x[2], y[2], z[2];
-        SVector3 n[2];
-        ele->getEdgeRep(curved, j, x, y, z, n);
-        explodeAbout(pc, explode, 2, x, y, z);
-        if(e->dim() == 2 && smooth)
-          for(int k = 0; k < 2; k++)
-            e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
-                                     n[k][2]);
-        vaLine->add(x, y, z, n, col, ele, unique);
-      }
+      int numRep = ele->getNumEdgesRep(curved);
+      for(int j = 0; j < numRep; j++)
+        if(!known || (mask[i] & (1 << j)))
+          addEdgeRep(e, lines.mine(), ele, curved, j, pc, col, unique);
     }
-
     if(faces) {
       int numRep = ele->getNumFacesRep(curved);
-      for(int j = 0; j < numRep; j++) {
-        double x[3], y[3], z[3];
-        SVector3 n[3];
-        ele->getFaceRep(curved, j, x, y, z, n);
-        explodeAbout(pc, explode, 3, x, y, z);
-        if(e->dim() == 2 && smooth)
-          for(int k = 0; k < 3; k++)
-            e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
-                                     n[k][2]);
-        vaTriangle->add(x, y, z, n, col, ele, false);
-      }
-    }
-  }
-
-  VertexArray::statUniqueIn += numIn;
-  VertexArray::statUniqueKept += numKept;
-
-  if(nthreads == 1) return;
-
-  for(int t = 0; t < nthreads; t++) {
-    if(vaLines[t]) {
-      vaL->merge(vaLines[t]);
-      delete vaLines[t];
-    }
-    if(vaTriangles[t]) {
-      vaT->merge(vaTriangles[t]);
-      delete vaTriangles[t];
+      for(int j = 0; j < numRep; j++)
+        addFaceRep(e, triangles.mine(), ele, curved, j, pc, col);
     }
   }
 }
@@ -615,13 +616,8 @@ static void addSkinInArray(GEntity *e, VertexArray *va, const meshSkin &skin)
       col[0] = col[1] = col[2] = col[3] = color(ele);
       if(explode != 1.) pc = ele->barycenter();
     }
-    for(int j = f.second * perFace; j < (f.second + 1) * perFace; j++) {
-      double x[3], y[3], z[3];
-      SVector3 n[3];
-      ele->getFaceRep(curved, j, x, y, z, n);
-      explodeAbout(pc, explode, 3, x, y, z);
-      va->add(x, y, z, n, col, ele, false);
-    }
+    for(int j = f.second * perFace; j < (f.second + 1) * perFace; j++)
+      addFaceRep(e, va, ele, curved, j, pc, col);
   }
 }
 
@@ -665,17 +661,12 @@ static void addSkinEdgesInArray(GEntity *e, VertexArray *va,
       if(in != 2) continue;
       if(filter && filter->isDuplicate(filter->hashOf(c, ev[0], ev[1])))
         continue;
-      for(int r = 0; r < std::max(perEdge, 1); r++) {
-        double x[2], y[2], z[2];
+      for(int r = 0; r < perEdge; r++)
+        addEdgeRep(e, va, ele, curved, j * perEdge + r, pc, col, false);
+      if(!perEdge) { // straight from one end to the other
+        double x[2] = {ev[0]->x(), ev[1]->x()}, y[2] = {ev[0]->y(), ev[1]->y()};
+        double z[2] = {ev[0]->z(), ev[1]->z()};
         SVector3 n[2];
-        if(perEdge)
-          ele->getEdgeRep(curved, j * perEdge + r, x, y, z, n);
-        else
-          for(int k = 0; k < 2; k++) {
-            x[k] = ev[k]->x();
-            y[k] = ev[k]->y();
-            z[k] = ev[k]->z();
-          }
         explodeAbout(pc, explode, 2, x, y, z);
         va->add(x, y, z, n, col, ele, false);
       }
