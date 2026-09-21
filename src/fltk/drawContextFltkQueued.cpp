@@ -357,7 +357,7 @@ void drawContextFltkQueued::flushString()
           }
         }
         // whatever is waiting was collected to be drawn through this page
-        gmshFlushImmediate();
+        glImmediate::flush();
       }
     }
     // the pages are bound directly when filled

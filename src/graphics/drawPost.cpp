@@ -758,7 +758,8 @@ public:
 
     // draw all the vertex arrays
     gmshLightTwoSide(false);
-    gmshAlphaScale(_ctx->inPickColorMode() ? 1. : opt->transparency, false);
+    glImmediate::alphaScale(_ctx->inPickColorMode() ? 1. : opt->transparency,
+                            false);
 
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
@@ -805,7 +806,7 @@ public:
       gmshDepthTest(true);
     }
 
-    gmshAlphaScale(1., false);
+    glImmediate::alphaScale(1., false);
 
     gmshClipPlanesOn(0);
 

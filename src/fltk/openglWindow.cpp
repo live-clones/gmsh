@@ -233,7 +233,7 @@ void openglWindow::draw()
     VertexArray::invalidateBuffers();
     glApi::reset();
     glShader::reset();
-    gmshResetMatrices();
+    glImmediate::resetMatrices();
     // report what the new context can do
     glApi::describe();
     // report now if the shader pipeline cannot be had
@@ -293,7 +293,7 @@ void openglWindow::draw()
     double x0 = _click.win[0], y0 = _ctx->viewport[3] - _click.win[1];
     double x1 = _curr.win[0], y1 = _ctx->viewport[3] - _curr.win[1];
     // flush before changing the blending, which the collector does not track
-    gmshFlushImmediate();
+    glImmediate::flush();
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -307,7 +307,7 @@ void openglWindow::draw()
     gmshVertex2d(x1, y1);
     gmshVertex2d(x0, y1);
     gmshEnd();
-    gmshFlushImmediate();
+    glImmediate::flush();
     // white blended to one minus the destination: an inversion
     glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     gmshColor3d(1., 1., 1.);
@@ -331,7 +331,7 @@ void openglWindow::draw()
     gmshVertex2d(x1, y0 + sy);
     gmshVertex2d(x1, y1 - sy);
     gmshEnd();
-    gmshFlushImmediate();
+    glImmediate::flush();
     gmshLineStippleOff();
     gmshLineWidth(1.);
     glDisable(GL_BLEND);
@@ -460,7 +460,7 @@ void openglWindow::draw()
       _drawBorder();
     }
   }
-  gmshFlushImmediate();
+  glImmediate::flush();
   drawContext::global()->flushString();
   _lock = false;
   _studioTimer = false;
@@ -492,7 +492,7 @@ void openglWindow::_studioFrame()
   if(ctx->printing && _again && printed == n && k == 0 && w == _studioW &&
      h == _studioH &&
      !memcmp(_studioModel, _frameView, sizeof(_studioModel))) {
-    gmshFlushImmediate();
+    glImmediate::flush();
     drawContext::global()->flushString();
     if(glShader::showAccumulation(w, h, n - 1)) return;
   }
@@ -506,7 +506,7 @@ void openglWindow::_studioFrame()
     else {
       // the frame has to be complete before it is added: what the overlay
       // collected is still pending
-      gmshFlushImmediate();
+      glImmediate::flush();
       drawContext::global()->flushString();
       if(!glShader::accumulate(w, h, k == 1, k)) {
         _ctx->studioSample = 0;
@@ -537,7 +537,7 @@ void openglWindow::_studioFrame()
       if(ctx->camera) _cameraMatrices();
       _ctx->draw3d();
       _ctx->draw2d();
-      gmshFlushImmediate();
+      glImmediate::flush();
       drawContext::global()->flushString();
       if(!glShader::accumulate(w, h, j == 1, j)) {
         _ctx->studioSample = 0;
@@ -579,7 +579,7 @@ bool openglWindow::printTo(int width, int height, int supersampling,
   if(CTX::instance()->print.scalePixelSizes && pixel_w() > 0)
     ratio = (double)width / (ss * pixel_w());
   _printScale = ss * hr * ratio;
-  gmshPixelScale(ss * ratio);
+  glImmediate::pixelScale(ss * ratio);
   // the native font engine places its strings from the window's size and
   // scale, which the picture has neither of: strings as textures meanwhile
   drawContextGlobal *native = nullptr;
@@ -594,7 +594,7 @@ bool openglWindow::printTo(int width, int height, int supersampling,
   }
   glShader::readPrintTarget(width, height, format, type, pixels);
   glShader::endPrintTarget();
-  gmshPixelScale(1.);
+  glImmediate::pixelScale(1.);
   _printW = _printH = 0;
   _printScale = 1.;
   // the window itself is drawn again at its own size
@@ -639,7 +639,7 @@ void openglWindow::_burn(bool sameFrame)
     _fire = 0.;
     return;
   }
-  gmshFlushImmediate();
+  glImmediate::flush();
   int w = _printW ? _printW : pixel_w(), h = _printW ? _printH : pixel_h();
   if(!glShader::fire(w, h, _fire, now)) {
     _fire = 0.;

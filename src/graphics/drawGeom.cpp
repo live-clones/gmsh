@@ -430,7 +430,7 @@ static void drawGeomPoint(drawContext *ctx, GVertex *v, double size)
       gmshVertex3d(x, y, z);
       gmshEnd();
       if(_kept) {
-        gmshFlushImmediate();
+        glImmediate::flush();
         glDepthFunc(GL_LESS);
       }
     }
@@ -472,7 +472,7 @@ static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
       gmshEnd();
     }
     if(merged) {
-      gmshFlushImmediate();
+      glImmediate::flush();
       glDepthFunc(GL_LESS);
     }
   }

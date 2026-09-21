@@ -69,7 +69,7 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
   GLubyte c[4];
   pickIdColor(id, c);
   if(!glShader::enabled()) glDisableClientState(GL_COLOR_ARRAY);
-  gmshPickColor4ubv(c);
+  glImmediate::pickColor(c);
 
   // an entity stepped past with the wheel is drawn into neither the colours
   // nor the depth, so that the pass finds what stands behind it
@@ -97,7 +97,7 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
 void drawContext::_pickState(bool skip, double zfar)
 {
   if((int)skip == _pickStateSkip && zfar == _pickStateFar) return;
-  gmshFlushImmediate();
+  glImmediate::flush();
   GLboolean on = skip ? GL_FALSE : GL_TRUE;
   glColorMask(on, on, on, on);
   glDepthMask(on);
@@ -153,14 +153,14 @@ void drawContext::unsetPickColor()
 {
   if(!_pickColor) return;
   // what was set aside for the wheel is drawn again from here on
-  gmshFlushImmediate();
+  glImmediate::flush();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);
   _pickStateSkip = -1;
   // 0 is the background: no pickable object
   GLubyte c[4] = {0, 0, 0, 255};
   if(!glShader::enabled()) glDisableClientState(GL_COLOR_ARRAY);
-  gmshPickColor4ubv(c);
+  glImmediate::pickColor(c);
 }
 
 // side (in real pixels) of the region a picking pass draws and keeps around
@@ -237,8 +237,8 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
                      (i & 2) ? c->max[1] : c->min[1],
                      (i & 4) ? c->max[2] : c->min[2], 1.};
       double e[4], q[4];
-      glMatrix::transform(gmshMatrix(GMSH_MODELVIEW), p, e);
-      glMatrix::transform(gmshMatrix(GMSH_PROJECTION), e, q);
+      glMatrix::transform(glImmediate::matrix(GMSH_MODELVIEW), p, e);
+      glMatrix::transform(glImmediate::matrix(GMSH_PROJECTION), e, q);
       if(q[3] == 0.) continue;
       double z = 0.5 * (q[2] / q[3] + 1.);
       zmin = std::min(zmin, z);
@@ -287,7 +287,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   }
 
   glDisable(GL_SCISSOR_TEST);
-  gmshFlushImmediate();
+  glImmediate::flush();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);
   glDepthRange(0., 1.);

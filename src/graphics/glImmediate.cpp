@@ -13,7 +13,7 @@
 #include "Context.h"
 #include "VertexArray.h"
 
-bool gmshCollecting = false;
+bool glImmediate::collecting = false;
 
 namespace {
   // A growable array whose appends are a few inline instructions: the
@@ -144,8 +144,8 @@ namespace {
   // the state a shader is handed as uniforms, which a core profile cannot
   // be asked for
   unsigned char _color[4] = {255, 255, 255, 255};
-  // recording (gmshRecordBegin()): into which arrays, and the colour to put
-  // back afterwards
+  // recording (glImmediate::recordBegin()): into which arrays, and the colour
+  // to put back afterwards
   bool _recording = false;
   VertexArray *_recTo[3] = {nullptr, nullptr, nullptr};
   unsigned char _recColor[4];
@@ -211,9 +211,12 @@ void gmshLightTwoSide(bool on)
 
 bool gmshLightTwoSideEnabled() { return _twoSide; }
 
-void gmshPixelScale(double scale) { _pixelScale = (scale > 0.) ? scale : 1.; }
+void glImmediate::pixelScale(double scale)
+{
+  _pixelScale = (scale > 0.) ? scale : 1.;
+}
 
-double gmshPixelScale() { return _pixelScale; }
+double glImmediate::pixelScale() { return _pixelScale; }
 
 void gmshPointSize(double s)
 {
@@ -232,7 +235,7 @@ void gmshClipPlane(int i, const double plane[4])
   // OpenGL keeps the plane in eye coordinates: the equation (a row vector)
   // is transformed by the inverse transpose of the current modelview
   double inv[16];
-  if(glMatrix::invert(gmshMatrix(GMSH_MODELVIEW), inv)) {
+  if(glMatrix::invert(glImmediate::matrix(GMSH_MODELVIEW), inv)) {
     for(int r = 0; r < 4; r++) {
       double v = 0.;
       for(int c = 0; c < 4; c++) v += inv[4 * r + c] * plane[c];
@@ -356,13 +359,13 @@ void gmshRotate(double angle, double x, double y, double z)
   gmshMultMatrix(r);
 }
 
-const double *gmshMatrix(int kind)
+const double *glImmediate::matrix(int kind)
 {
   return _stack[(kind == GMSH_PROJECTION) ? GMSH_PROJECTION : GMSH_MODELVIEW]
     .top();
 }
 
-void gmshResetMatrices()
+void glImmediate::resetMatrices()
 {
   // what was pending belonged to the context that is gone
   _batchPos.clear();
@@ -400,7 +403,7 @@ static int _shadingModel = 0;
 void gmshShadingModel(int model)
 {
   if(model == _shadingModel) return;
-  if(glShader::enabled()) gmshFlushImmediate();
+  if(glShader::enabled()) glImmediate::flush();
   _shadingModel = model;
 }
 
@@ -429,9 +432,10 @@ static void setShaderCommon(const bool on[6], const double eye[6][4],
   glShader::setClipOutside(outside && anyPlane);
 }
 
-void gmshPushShaderState()
+void glImmediate::pushShaderState()
 {
-  glShader::setMatrices(gmshMatrix(GMSH_MODELVIEW), gmshMatrix(GMSH_PROJECTION));
+  glShader::setMatrices(glImmediate::matrix(GMSH_MODELVIEW),
+                        glImmediate::matrix(GMSH_PROJECTION));
   glShader::setLighting(gmshLightingEnabled(), gmshLightTwoSideEnabled());
   glShader::setColor(gmshCurrentColor());
   glShader::setPointSize(gmshCurrentPointSize());
@@ -442,11 +446,11 @@ void gmshPushShaderState()
   setShaderCommon(_clipOn, _clipEye, _clipOutside);
 }
 
-void gmshRecordBegin(VertexArray *points, VertexArray *lines,
+void glImmediate::recordBegin(VertexArray *points, VertexArray *lines,
                      VertexArray *triangles)
 {
   // what is waiting belongs to what was drawn before
-  gmshFlushImmediate();
+  glImmediate::flush();
   _recTo[0] = points;
   _recTo[1] = lines;
   _recTo[2] = triangles;
@@ -454,16 +458,16 @@ void gmshRecordBegin(VertexArray *points, VertexArray *lines,
   _recording = true;
 }
 
-void gmshRecordEnd()
+void glImmediate::recordEnd()
 {
   _recording = false;
   gmshColor4ub(_recColor[0], _recColor[1], _recColor[2], _recColor[3]);
 }
 
-bool gmshImBegin(GLenum mode)
+bool glImmediate::begin(GLenum mode)
 {
   if(!glShader::enabled() && !_recording) return false;
-  gmshCollecting = true;
+  glImmediate::collecting = true;
   _imPos.clear();
   _imNrm.clear();
   _imCol.clear();
@@ -475,7 +479,7 @@ bool gmshImBegin(GLenum mode)
   return true;
 }
 
-void gmshImVertex(float x, float y, float z)
+void glImmediate::vertex(float x, float y, float z)
 {
   float *p = _imPos.grow(3), *n = _imNrm.grow(3), *t = _imTex.grow(2);
   unsigned char *c = _imCol.grow(4);
@@ -493,7 +497,7 @@ void gmshLineWidth(double w)
   if(glShader::enabled()) {
     if(_lineWidth == w) return;
     // what is waiting was collected to be drawn at the old width
-    gmshFlushImmediate();
+    glImmediate::flush();
     _lineWidth = w;
     // a wider line is made of triangles: nothing to tell OpenGL
     return;
@@ -504,18 +508,18 @@ void gmshLineWidth(double w)
 
 double gmshCurrentLineWidth() { return _lineWidth; }
 
-void gmshAlphaScale(double s, bool filledOnly)
+void glImmediate::alphaScale(double s, bool filledOnly)
 {
   if(s < 0.) s = 0.;
   if(s > 1.) s = 1.;
   if(s == _alphaScale && filledOnly == _alphaScaleFilledOnly) return;
   // what is waiting was collected to be drawn with the old one
-  if(glShader::enabled()) gmshFlushImmediate();
+  if(glShader::enabled()) glImmediate::flush();
   _alphaScale = s;
   _alphaScaleFilledOnly = filledOnly;
 }
 
-double gmshAlphaScaleFor(unsigned int primitive)
+double glImmediate::alphaScaleFor(unsigned int primitive)
 {
   if(_alphaScaleFilledOnly && primitive != GL_TRIANGLES) return 1.;
   return _alphaScale;
@@ -527,7 +531,7 @@ void gmshLineStipple(int factor, unsigned short pattern)
     if(_stipple && _stippleFactor == factor && _stipplePattern == pattern)
       return;
     // what is waiting was collected to be drawn with the old pattern
-    gmshFlushImmediate();
+    glImmediate::flush();
     _stipple = true;
     _stippleFactor = (factor > 0) ? factor : 1;
     _stipplePattern = pattern;
@@ -541,7 +545,7 @@ void gmshLineStippleOff()
 {
   if(glShader::enabled()) {
     if(!_stipple) return;
-    gmshFlushImmediate();
+    glImmediate::flush();
     _stipple = false;
     return;
   }
@@ -556,7 +560,7 @@ void gmshTexture(unsigned int id, int mode)
 {
   if(id == _texture && (!id || mode == _textureMode)) return;
   // what is waiting was collected to be drawn through the old one
-  if(glShader::enabled()) gmshFlushImmediate();
+  if(glShader::enabled()) glImmediate::flush();
   _texture = id;
   _textureMode = id ? mode : GMSH_TEXTURE_NONE;
   if(!glShader::enabled()) {
@@ -572,13 +576,13 @@ void gmshTexture(unsigned int id, int mode)
   }
 }
 
-void gmshImTexCoord(float s, float t)
+void glImmediate::texCoord(float s, float t)
 {
   _imTexCoord[0] = s;
   _imTexCoord[1] = t;
 }
 
-void gmshImNormal(float x, float y, float z)
+void glImmediate::normal(float x, float y, float z)
 {
   _imNormal[0] = x;
   _imNormal[1] = y;
@@ -680,7 +684,7 @@ namespace {
   }
 } // namespace
 
-void gmshFlushImmediate()
+void glImmediate::flush()
 {
   if(_batchPos.empty()) return;
   int count = (int)(_batchPos.size() / 3);
@@ -728,8 +732,8 @@ namespace {
   BatchState _currentState()
   {
     BatchState b;
-    const double *m = gmshMatrix(GMSH_MODELVIEW);
-    const double *p = gmshMatrix(GMSH_PROJECTION);
+    const double *m = glImmediate::matrix(GMSH_MODELVIEW);
+    const double *p = glImmediate::matrix(GMSH_PROJECTION);
     for(int i = 0; i < 16; i++) {
       b.modelview[i] = m[i];
       b.projection[i] = p[i];
@@ -758,15 +762,15 @@ namespace {
   }
 } // namespace
 
-void gmshImEnd()
+void glImmediate::end()
 {
-  gmshCollecting = false;
+  glImmediate::collecting = false;
   std::size_t num = _imPos.size() / 3;
   if(!num) return;
 
   if(!_recording) {
     BatchState now = _currentState();
-    if(!_batchPos.empty() && now != _batchState) gmshFlushImmediate();
+    if(!_batchPos.empty() && now != _batchState) glImmediate::flush();
     _batchState = now;
   }
 
@@ -779,7 +783,7 @@ void gmshImEnd()
     mode = GL_LINES;
 
   if(!_recording) {
-    if(!_batchPos.empty() && mode != _batchMode) gmshFlushImmediate();
+    if(!_batchPos.empty() && mode != _batchMode) glImmediate::flush();
     _batchMode = mode;
   }
 
@@ -845,11 +849,11 @@ void gmshImEnd()
   default:
     // an unknown primitive is drawn on its own rather than guessed at
     if(_recording) break;
-    gmshFlushImmediate();
+    glImmediate::flush();
     for(std::size_t i = 0; i < num; i++) _emit(i);
     _emitFlush();
     _batchMode = _imMode;
-    gmshFlushImmediate();
+    glImmediate::flush();
     break;
   }
 

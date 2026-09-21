@@ -58,12 +58,12 @@ void glyphList::recordBegin()
     delete _rec[i];
     _rec[i] = new VertexArray(i + 1, 100);
   }
-  gmshRecordBegin(_rec[0], _rec[1], _rec[2]);
+  glImmediate::recordBegin(_rec[0], _rec[1], _rec[2]);
 }
 
 void glyphList::recordEnd()
 {
-  gmshRecordEnd();
+  glImmediate::recordEnd();
   for(int i = 0; i < 3; i++) _rec[i]->finalize();
 }
 
@@ -351,7 +351,7 @@ void glyphList::draw(drawContext *ctx, bool light)
 
   // pending immediate mode primitives come first, and the backends below
   // bind attributes of their own
-  gmshFlushImmediate();
+  glImmediate::flush();
 
   // what was recorded: in its own colours but for a picking pass, the
   // triangles lit as asked
@@ -416,8 +416,8 @@ bool glyphList::_instanced(drawContext *ctx, bool light)
   ctx->updateGlyphTemplates();
   bool colors = !ctx->inPickColorMode();
   if(light) gmshLighting(true);
-  gmshPushShaderState();
-  glShader::setAlphaScale(gmshAlphaScaleFor(GL_POINTS));
+  glImmediate::pushShaderState();
+  glShader::setAlphaScale(glImmediate::alphaScaleFor(GL_POINTS));
 
   for(int k = 0; k < GLYPH_NUMKINDS; k++) {
     std::size_t n = _inst[k].size();

@@ -66,7 +66,7 @@ private:
   std::vector<unsigned char> _gpu[GLYPH_NUMKINDS];
   // what is drawn a primitive at a time rather than as glyphs (flat arrows,
   // pyramids, segments, comets), recorded once as points, lines and
-  // triangles (see gmshRecordBegin())
+  // triangles (see glImmediate::recordBegin())
   VertexArray *_rec[3];
   glyphToken _token;
   // has the list been filled with this token? (a filled list can be empty)

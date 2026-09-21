@@ -69,8 +69,8 @@ void GMSH_AnnotatePlugin::draw(void *context)
     // the matrices are ours, not OpenGL's: a core profile has none to ask for
     double modelview[16], projection[16], px[16];
     for(int i = 0; i < 16; i++) {
-      projection[i] = gmshMatrix(GMSH_PROJECTION)[i];
-      modelview[i] = gmshMatrix(GMSH_MODELVIEW)[i];
+      projection[i] = glImmediate::matrix(GMSH_PROJECTION)[i];
+      modelview[i] = glImmediate::matrix(GMSH_MODELVIEW)[i];
     }
     gmshMatrixMode(GMSH_PROJECTION);
     glMatrix::ortho(ctx->viewport[0], ctx->viewport[2], ctx->viewport[1],
