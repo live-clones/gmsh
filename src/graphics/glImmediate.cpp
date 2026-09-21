@@ -259,7 +259,7 @@ void gmshClipPlaneOn(int i, bool on)
     glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 }
 
-void gmshClipPlanesOn(int mask)
+void clipPlanes::on(int mask)
 {
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, (mask >> i) & 1);
 }
@@ -269,7 +269,7 @@ bool gmshClipPlaneEnabled(int i)
   return (i >= 0 && i <= 5) ? _clipOn[i] : false;
 }
 
-void gmshClipOutside(bool outside)
+void clipPlanes::outside(bool outside)
 {
   _clipOutside = outside;
 }

@@ -256,7 +256,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   // 2D overlay, painted on top in drawing order as in draw2d(): without the
   // depth test off, the graph frame and axes would hide the data points
   gmshDepthTest(false);
-  gmshClipPlanesOn(0);
+  clipPlanes::on(0);
   gmshMatrixMode(GMSH_PROJECTION);
   double px2d[16];
   glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3], -100.,

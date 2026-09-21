@@ -886,7 +886,7 @@ static void drawEntityNodes(drawContext *ctx, GEntity *e)
   if(c->mesh.clip && c->clipWholeElements &&
      (c->mesh.nodes || c->mesh.nodeLabels))
     only = &keptNodes(e->model());
-  gmshClipPlanesOff planesOff(only != nullptr);
+  clipPlanes::off planesOff(only != nullptr);
   drawNodes(ctx, e, [&](glyphList *g, int what) {
     if(only || e->dim() == 0 || !e->getOnlySomeElementsVisible())
       drawVerticesPerEntity(ctx, e, g, what, only);
@@ -957,7 +957,7 @@ static void drawMeshEntity(drawContext *ctx, GEntity *e)
 // element mode are drawn with them off)
 static void setMeshClipPlanes(bool on)
 {
-  gmshClipPlanesOn(on ? CTX::instance()->mesh.clip : 0);
+  clipPlanes::on(on ? CTX::instance()->mesh.clip : 0);
 }
 
 // Draw what the clipping planes add for the entities of a dimension: the
@@ -984,7 +984,7 @@ static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
   bool outside = glShader::enabled() && planesOn && !cutOnly;
   if(!capping) {
     if(outside)
-      gmshClipOutside(true);
+      clipPlanes::outside(true);
     else
       setMeshClipPlanes(false);
   }
@@ -1002,7 +1002,7 @@ static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
   });
   if(!capping) {
     if(outside)
-      gmshClipOutside(false);
+      clipPlanes::outside(false);
     else
       setMeshClipPlanes(true);
   }
@@ -1199,5 +1199,5 @@ void drawContext::drawMesh()
     _merged.points = false;
   }
 
-  gmshClipPlanesOn(0);
+  clipPlanes::on(0);
 }

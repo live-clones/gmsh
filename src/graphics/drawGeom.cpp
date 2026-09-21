@@ -704,7 +704,7 @@ void drawContext::drawGeom()
   _geomGlyphs.clear();
 
   CTX *c = CTX::instance();
-  gmshClipPlanesOn(c->geom.clip);
+  clipPlanes::on(c->geom.clip);
 
   bool pick = (render_mode == GMSH_SELECT);
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
@@ -740,5 +740,5 @@ void drawContext::drawGeom()
   _geomGlyphs.draw(this, c->geom.light);
   _geomGlyphs.clear();
 
-  gmshClipPlanesOn(0);
+  clipPlanes::on(0);
 }

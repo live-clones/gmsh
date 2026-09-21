@@ -29,7 +29,7 @@ void clearGlyphArrays(PView *p) { glyphCache::clear(p); }
 // element mode and the glyphs are drawn with them off)
 static void setViewClipPlanes(PViewOptions *opt, bool on)
 {
-  gmshClipPlanesOn(on ? opt->clip : 0);
+  clipPlanes::on(on ? opt->clip : 0);
 }
 
 // The cut elements of whole element mode, with the shader pipeline, are
@@ -39,7 +39,7 @@ static void setViewClipPlanes(PViewOptions *opt, bool on)
 static void setViewClipOutside(PViewOptions *opt, bool on)
 {
   if(glShader::enabled())
-    gmshClipOutside(on);
+    clipPlanes::outside(on);
   else
     setViewClipPlanes(opt, !on);
 }
@@ -75,9 +75,9 @@ static void addClipToken(glyphToken &tok, PViewOptions *opt)
 }
 
 // the clipping planes off while the glyphs are drawn, and back on after
-class glyphClip : public gmshClipPlanesOff {
+class glyphClip : public clipPlanes::off {
 public:
-  glyphClip(PViewOptions *opt) : gmshClipPlanesOff(clipGlyphs(opt)) {}
+  glyphClip(PViewOptions *opt) : clipPlanes::off(clipGlyphs(opt)) {}
 };
 
 // the value a point or a line of a view carries in its normal (what its
@@ -808,7 +808,7 @@ public:
 
     glImmediate::alphaScale(1., false);
 
-    gmshClipPlanesOn(0);
+    clipPlanes::on(0);
 
     if(_ctx->render_mode == drawContext::GMSH_SELECT) _ctx->unsetPickColor();
   }

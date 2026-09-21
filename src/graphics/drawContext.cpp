@@ -1146,7 +1146,7 @@ void drawContext::draw2d()
   // the strings of the scene go under the overlay
   global()->flushString();
   gmshDepthTest(false);
-  gmshClipPlanesOn(0);
+  clipPlanes::on(0);
 
   gmshMatrixMode(GMSH_PROJECTION);
 
