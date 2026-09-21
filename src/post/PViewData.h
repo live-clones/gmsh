@@ -30,6 +30,7 @@ class PViewData {
 private:
   // flag to mark that the data is 'dirty' and should not be displayed
   bool _dirty;
+  int _stamp = 0;
   // name of the view
   std::string _name;
   // name of the file the data was loaded from
@@ -60,7 +61,17 @@ public:
 
   // get/set the dirty ("not ready for display") flag
   virtual bool getDirty() { return _dirty; }
-  virtual void setDirty(bool val) { _dirty = val; }
+  virtual void setDirty(bool val)
+  {
+    _dirty = val;
+    if(val) _stamp++;
+  }
+
+  // bumped whenever the data may have changed (made dirty, finalized, added
+  // to): what is derived from the data alone, not from the options of the
+  // view, records it and is kept until it moves
+  int getStamp() const { return _stamp; }
+  void changed() { _stamp++; }
 
   // finalize the view data (compute min/max, etc.)
   virtual bool finalize(bool computeMinMax = true,

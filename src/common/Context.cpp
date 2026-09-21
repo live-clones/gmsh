@@ -91,7 +91,7 @@ void CTX::init()
   // the current value to detect changes
   for(int d = 0; d < 4; d++) mesh.stamp[d] = 0;
   for(int d = 0; d < 4; d++) geom.stamp[d] = 0;
-  entityColorsStamp = entityVisibilityStamp = 0;
+  entityColorsStamp = entityVisibilityStamp = meshContentStamp = 0;
   mesh.qualityInf = mesh.qualitySup = mesh.qualityType = 0;
   mesh.radiusInf = mesh.radiusSup = 0;
   mesh.lines = mesh.triangles = mesh.tetrahedra = mesh.quadrangles = 0;

@@ -31,6 +31,7 @@ bool PViewData::finalize(bool computeMinMax,
                          const std::string &interpolationScheme)
 {
   _dirty = false;
+  _stamp++;
   return true;
 }
 

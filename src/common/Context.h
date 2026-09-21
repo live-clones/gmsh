@@ -194,9 +194,18 @@ public:
   int entityColorsStamp, entityVisibilityStamp;
   void meshChanged(int ents = ENT_ALL)
   {
+    meshOptionsChanged(ents);
+    meshContentStamp++;
+  }
+  // an option changed the way the mesh is drawn, not the mesh: what only
+  // depends on the elements (the skin of a volume, which also records the
+  // options it reads) is kept
+  void meshOptionsChanged(int ents = ENT_ALL)
+  {
     for(int d = 0; d < 4; d++)
       if(ents & (1 << d)) mesh.stamp[d]++;
   }
+  int meshContentStamp;
   void geomChanged(int ents = ENT_ALL)
   {
     for(int d = 0; d < 4; d++)

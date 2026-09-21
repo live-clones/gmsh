@@ -255,13 +255,6 @@ public:
     ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
     return _shardOf(h).contains(h);
   }
-  // test without inserting: used to ask whether a face has been seen twice,
-  // i.e. whether it is interior to the mesh
-  bool contains(unsigned int col, const void *v0, const void *v1,
-                const void *v2 = nullptr, const void *v3 = nullptr)
-  {
-    return contains(hashOf(col, v0, v1, v2, v3));
-  }
 };
 
 class VertexArray {

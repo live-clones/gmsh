@@ -19,6 +19,7 @@ bool PViewDataGModel::addData(GModel *model,
 {
   if(data.empty()) return false;
   if(step < 0) return false;
+  changed();
 
   if(numComp < 0) {
     numComp = 9;
@@ -52,6 +53,7 @@ bool PViewDataGModel::addData(GModel *model,
                               int step, double time, int partition, int numComp)
 {
   if(data.empty() || tags.empty() || data.size() != tags.size()) return false;
+  changed();
 
   if(numComp < 0) {
     if(_type == ElementNodeData) {
@@ -90,6 +92,7 @@ bool PViewDataGModel::addData(GModel *model,
                               double time, int partition, int numComp)
 {
   if(data.empty() || tags.empty()) return false;
+  changed();
 
   std::size_t stride = data.size() / tags.size();
   if(stride < 1) return false;

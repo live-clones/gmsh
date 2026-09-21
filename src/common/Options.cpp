@@ -3882,7 +3882,7 @@ double opt_general_heavy_visualization(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
 #if defined(HAVE_VISUDEV)
     if(CTX::instance()->heavyVisu != val)
-      CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
 #endif
     CTX::instance()->heavyVisu = (int)val;
   }
@@ -4198,7 +4198,7 @@ double opt_general_clip_capping(OPT_ARGS_NUM)
     if(CTX::instance()->clipCapping != (int)val) {
       CTX::instance()->clipCapping = (int)val;
       // the caps are part of the arrays, so they have to be built again
-      CTX::instance()->meshChanged();
+      CTX::instance()->meshOptionsChanged();
 #if defined(HAVE_POST)
       for(std::size_t i = 0; i < PView::list.size(); i++)
         PView::list[i]->setChanged(true);
@@ -5336,7 +5336,7 @@ double opt_mesh_num_sub_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.numSubEdges != val)
-      CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     CTX::instance()->mesh.numSubEdges = (int)val;
     if(CTX::instance()->mesh.numSubEdges < 1)
       CTX::instance()->mesh.numSubEdges = 1;
@@ -5364,7 +5364,7 @@ double opt_mesh_explode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.explode != val)
-      CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     CTX::instance()->mesh.explode = val;
   }
 #if defined(HAVE_FLTK)
@@ -5580,7 +5580,7 @@ double opt_mesh_quality_type(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.qualityType != val)
-      CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     CTX::instance()->mesh.qualityType = (int)val;
     if(CTX::instance()->mesh.qualityType < 0 ||
        CTX::instance()->mesh.qualityType > 3)
@@ -5599,7 +5599,7 @@ double opt_mesh_quality_inf(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.qualityInf != val)
-      CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     CTX::instance()->mesh.qualityInf = val;
   }
 #if defined(HAVE_FLTK)
@@ -5614,7 +5614,7 @@ double opt_mesh_quality_sup(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.qualitySup != val)
-      CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     CTX::instance()->mesh.qualitySup = val;
   }
 #if defined(HAVE_FLTK)
@@ -5629,7 +5629,7 @@ double opt_mesh_radius_inf(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.radiusInf != val)
-      CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     CTX::instance()->mesh.radiusInf = val;
   }
 #if defined(HAVE_FLTK)
@@ -5644,7 +5644,7 @@ double opt_mesh_radius_sup(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.radiusSup != val)
-      CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     CTX::instance()->mesh.radiusSup = val;
   }
 #if defined(HAVE_FLTK)
@@ -5703,7 +5703,7 @@ double opt_mesh_lines(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.lines != val)
-      CTX::instance()->meshChanged(ENT_CURVE);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE);
     CTX::instance()->mesh.lines = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5718,7 +5718,7 @@ double opt_mesh_triangles(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.triangles != val)
-      CTX::instance()->meshChanged(ENT_SURFACE);
+      CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->mesh.triangles = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5737,7 +5737,7 @@ double opt_mesh_quadrangles(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.quadrangles != val)
-      CTX::instance()->meshChanged(ENT_SURFACE);
+      CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->mesh.quadrangles = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5756,7 +5756,7 @@ double opt_mesh_tetrahedra(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.tetrahedra != val)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.tetrahedra = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5775,7 +5775,7 @@ double opt_mesh_hexahedra(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.hexahedra != val)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.hexahedra = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5794,7 +5794,7 @@ double opt_mesh_prisms(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.prisms != val)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.prisms = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5813,7 +5813,7 @@ double opt_mesh_pyramids(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.pyramids != val)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.pyramids = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5832,7 +5832,7 @@ double opt_mesh_trihedra(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.trihedra != val)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.trihedra = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5850,7 +5850,7 @@ double opt_mesh_polygons(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.polygons != val)
-      CTX::instance()->meshChanged(ENT_SURFACE);
+      CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->mesh.polygons = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5869,7 +5869,7 @@ double opt_mesh_polyhedra(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.polyhedra != val)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.polyhedra = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5895,7 +5895,7 @@ double opt_mesh_surface_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.surfaceEdges != val)
-      CTX::instance()->meshChanged(ENT_SURFACE);
+      CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->mesh.surfaceEdges = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5910,7 +5910,7 @@ double opt_mesh_surface_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.surfaceFaces != val)
-      CTX::instance()->meshChanged(ENT_SURFACE);
+      CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->mesh.surfaceFaces = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5925,7 +5925,7 @@ double opt_mesh_volume_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.volumeEdges != val)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.volumeEdges = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5940,7 +5940,7 @@ double opt_mesh_volume_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.volumeFaces != val)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.volumeFaces = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -6044,7 +6044,7 @@ double opt_mesh_smooth_normals(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.smoothNormals != val)
-      CTX::instance()->meshChanged(ENT_SURFACE);
+      CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->mesh.smoothNormals = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -6071,7 +6071,7 @@ double opt_mesh_angle_smooth_normals(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.angleSmoothNormals != val)
-      CTX::instance()->meshChanged(ENT_SURFACE);
+      CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->mesh.angleSmoothNormals = val;
   }
 #if defined(HAVE_FLTK)
@@ -6099,7 +6099,7 @@ double opt_mesh_light_lines(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.lightLines != (int)val)
-      CTX::instance()->meshChanged(ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_SURFACE | ENT_VOLUME);
     CTX::instance()->mesh.lightLines = (int)val;
     if(CTX::instance()->mesh.lightLines < 0 ||
        CTX::instance()->mesh.lightLines > 2)
@@ -6884,7 +6884,7 @@ double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.drawSkinOnly != val)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.drawSkinOnly = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -6899,7 +6899,7 @@ double opt_mesh_draw_unique_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX::instance()->mesh.drawUniqueEdges != (int)val)
-      CTX::instance()->meshChanged();
+      CTX::instance()->meshOptionsChanged();
     CTX::instance()->mesh.drawUniqueEdges = (int)val;
   }
   return CTX::instance()->mesh.drawUniqueEdges;
@@ -6960,7 +6960,7 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
     // element type or by partition
     if(CTX::instance()->mesh.colorCarousel != (int)val &&
        ((val == 0. || val == 3.) || CTX::instance()->pickElements))
-      CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     // the other modes colour by entity, which the merged mesh arrays bake in
     if(CTX::instance()->mesh.colorCarousel != (int)val)
       CTX::instance()->entityColorsChanged();
@@ -10341,7 +10341,7 @@ unsigned int opt_mesh_color_lines(OPT_ARGS_COL)
     // element type
     if(CTX::instance()->color.mesh.line != val &&
        CTX::instance()->mesh.colorCarousel == 0)
-      CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     // the merged mesh arrays bake it in as the colour of the edges
     if(CTX::instance()->color.mesh.line != val)
       CTX::instance()->entityColorsChanged();
@@ -10361,7 +10361,7 @@ unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
     // element type
     if(CTX::instance()->color.mesh.triangle != val &&
        CTX::instance()->mesh.colorCarousel == 0)
-      CTX::instance()->meshChanged(ENT_SURFACE);
+      CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->color.mesh.triangle = val;
   }
 #if defined(HAVE_FLTK)
@@ -10378,7 +10378,7 @@ unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
     // element type
     if(CTX::instance()->color.mesh.quadrangle != val &&
        CTX::instance()->mesh.colorCarousel == 0)
-      CTX::instance()->meshChanged(ENT_SURFACE);
+      CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->color.mesh.quadrangle = val;
   }
 #if defined(HAVE_FLTK)
@@ -10395,7 +10395,7 @@ unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
     // element type
     if(CTX::instance()->color.mesh.tetrahedron != val &&
        CTX::instance()->mesh.colorCarousel == 0)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.tetrahedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -10412,7 +10412,7 @@ unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
     // element type
     if(CTX::instance()->color.mesh.hexahedron != val &&
        CTX::instance()->mesh.colorCarousel == 0)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.hexahedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -10429,7 +10429,7 @@ unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
     // element type
     if(CTX::instance()->color.mesh.prism != val &&
        CTX::instance()->mesh.colorCarousel == 0)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.prism = val;
   }
 #if defined(HAVE_FLTK)
@@ -10446,7 +10446,7 @@ unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL)
     // element type
     if(CTX::instance()->color.mesh.pyramid != val &&
        CTX::instance()->mesh.colorCarousel == 0)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.pyramid = val;
   }
 #if defined(HAVE_FLTK)
@@ -10463,7 +10463,7 @@ unsigned int opt_mesh_color_trihedron(OPT_ARGS_COL)
     // element type
     if(CTX::instance()->color.mesh.trihedron != val &&
        CTX::instance()->mesh.colorCarousel == 0)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.trihedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -10477,7 +10477,7 @@ unsigned int opt_mesh_color_polygon(OPT_ARGS_COL)
   if(action & GMSH_SET) {
     if(CTX::instance()->color.mesh.polygon != val &&
        CTX::instance()->mesh.colorCarousel == 0)
-      CTX::instance()->meshChanged(ENT_SURFACE);
+      CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->color.mesh.polygon = val;
   }
 #if defined(HAVE_FLTK)
@@ -10492,7 +10492,7 @@ unsigned int opt_mesh_color_polyhedron(OPT_ARGS_COL)
   if(action & GMSH_SET) {
     if(CTX::instance()->color.mesh.polyhedron != val &&
        CTX::instance()->mesh.colorCarousel == 0)
-      CTX::instance()->meshChanged(ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.polyhedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -10531,7 +10531,7 @@ unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
     // partition
     if(CTX::instance()->color.mesh.carousel[n] != val &&
        CTX::instance()->mesh.colorCarousel == 3)
-      CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+      CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     // the merged mesh arrays bake in the colours of the entities
     if(CTX::instance()->color.mesh.carousel[n] != val)
       CTX::instance()->entityColorsChanged();
