@@ -572,6 +572,32 @@ static void drawGeomSurface(drawContext *ctx, GFace *f, bool sel)
 }
 
 // a volume is drawn as a marker at the middle of its bounding box
+// The bounding box of a volume, which its marker is placed by: for a volume
+// that is only a mesh this is a walk over every node of every element (half a
+// second a frame for 24 million tetrahedra), so it is kept until the mesh or
+// the geometry changes.
+namespace {
+  struct volumeBox {
+    std::vector<int> token;
+    SBoundingBox3d bb;
+  };
+  OwnerCache<volumeBox> _volumeBoxes;
+} // namespace
+
+static const SBoundingBox3d &volumeBounds(GRegion *r)
+{
+  CTX *c = CTX::instance();
+  std::vector<int> token = {c->meshContentStamp, c->geom.stamp[0],
+                            c->geom.stamp[1], c->geom.stamp[2],
+                            c->geom.stamp[3]};
+  volumeBox &v = _volumeBoxes[r];
+  if(v.token != token) {
+    v.bb = r->bounds(true);
+    v.token = token;
+  }
+  return v.bb;
+}
+
 static void drawGeomVolume(drawContext *ctx, GRegion *r)
 {
   CTX *c = CTX::instance();
@@ -579,7 +605,7 @@ static void drawGeomVolume(drawContext *ctx, GRegion *r)
   bool label = c->geom.volumeLabels || r->getSelection() == GEntity::SelectShow;
   if(!shown && !label) return;
   const double size = 8.;
-  SBoundingBox3d bb = r->bounds(true); // fast approx if mesh-based
+  const SBoundingBox3d &bb = volumeBounds(r);
   double x = bb.center().x(), y = bb.center().y(), z = bb.center().z();
   double d = bb.diag() / 50.;
   ctx->transform(x, y, z);
