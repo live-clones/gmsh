@@ -77,6 +77,12 @@ public:
   {
     return MEdge(_v[edges_trihedron(num, 0)], _v[edges_trihedron(num, 1)]);
   }
+  virtual int getEdgeCorners(int num, MVertex *v[2]) const
+  {
+    v[0] = _v[edges_trihedron(num, 0)];
+    v[1] = _v[edges_trihedron(num, 1)];
+    return 2;
+  }
   virtual int getNumEdgesRep(bool curved) { return 5; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n)

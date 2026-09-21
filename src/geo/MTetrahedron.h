@@ -72,6 +72,12 @@ public:
   {
     return MEdge(_v[edges_tetra(num, 0)], _v[edges_tetra(num, 1)]);
   }
+  virtual int getEdgeCorners(int num, MVertex *v[2]) const
+  {
+    v[0] = _v[edges_tetra(num, 0)];
+    v[1] = _v[edges_tetra(num, 1)];
+    return 2;
+  }
   virtual int numEdge2numVertex(int numEdge, int numVert) const
   {
     return edges_tetra(numEdge, numVert);

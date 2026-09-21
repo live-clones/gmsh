@@ -230,12 +230,14 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
   if(col){
     unsigned char r[100], g[100], b[100], a[100];
     int npe = getNumVerticesPerElement();
-    CTX *ctx = CTX::instance();
+    // (as CTX::unpackRed() and the others do, without a call for each)
+    const bool big = CTX::instance()->bigEndian;
     for(int i = 0; i < npe; i++){
-      r[i] = ctx->unpackRed(col[i]);
-      g[i] = ctx->unpackGreen(col[i]);
-      b[i] = ctx->unpackBlue(col[i]);
-      a[i] = ctx->unpackAlpha(col[i]);
+      unsigned int c = col[i];
+      r[i] = big ? (c >> 24) & 0xff : c & 0xff;
+      g[i] = big ? (c >> 16) & 0xff : (c >> 8) & 0xff;
+      b[i] = big ? (c >> 8) & 0xff : (c >> 16) & 0xff;
+      a[i] = big ? c & 0xff : (c >> 24) & 0xff;
     }
     add(x, y, z, n, r, g, b, a, ele, unique);
   }
@@ -258,12 +260,43 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
     _statUniqueKept += npe;
   }
 
-  for(int i = 0; i < npe; i++){
-    _addVertex((float)x[i], (float)y[i], (float)z[i]);
-    if(n) _addNormal((float)n[i].x(), (float)n[i].y(), (float)n[i].z());
-    if(r && g && b && a) _addColor(r[i], g[i], b[i], a[i]);
-    _addElement(ele);
+  // the arrays grow once for the element, not once for each number
+  std::size_t nv = _vertices.size();
+  _vertices.resize(nv + 3 * npe);
+  float *pv = &_vertices[nv];
+  for(int i = 0; i < npe; i++) {
+    *pv++ = (float)x[i];
+    *pv++ = (float)y[i];
+    *pv++ = (float)z[i];
   }
+  if(n) {
+    std::size_t nn = _normals.size();
+    _normals.resize(nn + 3 * npe);
+    normal_type *pn = &_normals[nn];
+    for(int i = 0; i < npe; i++) {
+#if defined(HAVE_VISUDEV)
+      *pn++ = (float)n[i].x();
+      *pn++ = (float)n[i].y();
+      *pn++ = (float)n[i].z();
+#else
+      *pn++ = float2char((float)n[i].x());
+      *pn++ = float2char((float)n[i].y());
+      *pn++ = float2char((float)n[i].z());
+#endif
+    }
+  }
+  if(r && g && b && a) {
+    std::size_t nc = _colors.size();
+    _colors.resize(nc + 4 * npe);
+    unsigned char *pc = &_colors[nc];
+    for(int i = 0; i < npe; i++) {
+      *pc++ = r[i];
+      *pc++ = g[i];
+      *pc++ = b[i];
+      *pc++ = a[i];
+    }
+  }
+  if(ele && _storeElements) _elements.insert(_elements.end(), npe, ele);
 }
 
 int VertexArray::addBlock(int n)
