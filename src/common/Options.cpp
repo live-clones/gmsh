@@ -6880,6 +6880,21 @@ double opt_mesh_voronoi(OPT_ARGS_NUM)
   return CTX::instance()->mesh.voronoi;
 }
 
+double opt_mesh_draw_skin_edges_only(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX::instance()->mesh.drawSkinEdgesOnly != val)
+      CTX::instance()->meshOptionsChanged(ENT_VOLUME);
+    CTX::instance()->mesh.drawSkinEdgesOnly = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.butt[1]->value(
+      CTX::instance()->mesh.drawSkinEdgesOnly);
+#endif
+  return CTX::instance()->mesh.drawSkinEdgesOnly;
+}
+
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -9143,6 +9158,24 @@ double opt_view_draw_tensors(OPT_ARGS_NUM)
   }
 #endif
   return opt->drawTensors;
+#else
+  return 0.;
+#endif
+}
+
+double opt_view_draw_skin_edges_only(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    opt->drawSkinEdgesOnly = (int)val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    FlGui::instance()->options->view.butt[1]->value(opt->drawSkinEdgesOnly);
+#endif
+  return opt->drawSkinEdgesOnly;
 #else
   return 0.;
 #endif

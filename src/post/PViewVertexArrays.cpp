@@ -450,6 +450,12 @@ static bool skinFace(drawTarget *p, const int *idx, int n)
   return boundaryFaces->contains(k, n + 1);
 }
 
+// are only the outlines of the faces on the skin drawn?
+static bool skinOutlines(PViewOptions *opt)
+{
+  return opt->showElement && opt->drawSkinEdgesOnly;
+}
+
 // does this element draw its own faces, and only the ones on the skin?
 static bool skinOnly(PViewOptions *opt)
 {
@@ -1056,6 +1062,7 @@ static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
   k.push_back(opt->drawTensors);
   k.push_back(opt->vectorType == PViewOptions::Displacement);
   k.push_back(opt->forceNumComponents);
+  k.push_back(skinOutlines(opt));
   k.push_back(step); // last: see where the key is used
   return k;
 }
@@ -1127,9 +1134,11 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
           bad = true;
           return;
         }
+        // (all of them if the skin is wanted for the outlines)
         if(!(numComp == 1 && opt->drawScalars) &&
            !(numComp == 3 && opt->drawVectors &&
-             opt->vectorType == PViewOptions::Displacement))
+             opt->vectorType == PViewOptions::Displacement) &&
+           !skinOutlines(opt))
           return;
         int nc = solidCorners[sh];
         if(el.numNodes < nc) return;
@@ -1194,10 +1203,13 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
 static void addOutlineSolid(drawTarget *p, double **xyz, unsigned int color,
                             bool pre, const solidShape &s)
 {
+  // the faces on the skin alone, if asked and if it was found ahead
+  int mask = (p->opt->drawSkinEdgesOnly && p->skinMask >= 0) ? p->skinMask : ~0;
   for(int i = 0; i < s.numQuads; i++)
-    addOutlineFace(p, xyz, color, pre, s.quads[i], 4);
+    if(mask & (1 << i)) addOutlineFace(p, xyz, color, pre, s.quads[i], 4);
   for(int i = 0; i < s.numTriangles; i++)
-    addOutlineFace(p, xyz, color, pre, s.triangles[i], 3);
+    if(mask & (1 << (s.numQuads + i)))
+      addOutlineFace(p, xyz, color, pre, s.triangles[i], 3);
 }
 
 // add the section a clipping plane cuts out of a 3D element, colored with
@@ -1939,6 +1951,7 @@ static void addElementRange(drawTarget *p, PViewData *data,
   PViewOptions *opt = p->opt;
   PViewElement el;
   const std::vector<std::uint8_t> *masks = activeSkinMasks;
+  const bool facesOnSkin = skinOnly(opt);
   activePlanes planes(opt->clip);
   bool onlyVolume = CTX::instance()->clipOnlyVolume;
   // what the planes add is looked for among the elements they may cut
@@ -1973,8 +1986,10 @@ static void addElementRange(drawTarget *p, PViewData *data,
       p->skinMask = -1;
       if(masks) {
         std::uint8_t m = (*masks)[flat];
-        // inside the field: nothing but its outline to draw
-        if(m == 0x80 && !opt->showElement) continue;
+        // inside the field: nothing to draw, unless all the faces or all
+        // the outlines are
+        if(m == 0x80 && facesOnSkin && (!opt->showElement || skinOutlines(opt)))
+          continue;
         if(m & 0x80) p->skinMask = m & 0x3f;
       }
       if(!el.select(p->view, ent, i)) continue;
@@ -2265,7 +2280,7 @@ public:
     _viewSpheres.erase(p);
 
     bool skinFound = false;
-    if(skinOnly(opt) && viewDrawsFaces(p)) {
+    if((skinOnly(opt) && viewDrawsFaces(p)) || skinOutlines(opt)) {
       // the skin from the nodes of the elements alone, if it can be
       double t1 = TimeOfDay();
       flatElements flat(data, opt);
@@ -2380,7 +2395,7 @@ bool PView::fillClipVertexArrays()
   const elementSpheres *spheres = getSpheres(this, flat);
 
   bool skinFound = false;
-  if(whole && skinOnly(opt) && viewDrawsFaces(this)) {
+  if(whole && ((skinOnly(opt) && viewDrawsFaces(this)) || skinOutlines(opt))) {
     skinFound = findSkin(this, flat, true, spheres);
     if(skinFound) activeSkinMasks = &skinMasks;
   }

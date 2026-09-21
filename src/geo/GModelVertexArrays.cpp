@@ -205,6 +205,14 @@ static void addSmoothNormals(GEntity *e, std::vector<T *> &elements)
   }
 }
 
+// same for the edges: only those of the boundary faces are drawn
+static bool removeInteriorEdges()
+{
+  if(!CTX::instance()->mesh.drawSkinEdgesOnly) return false;
+  if(CTX::instance()->pickElements) return false;
+  return true;
+}
+
 // drop the faces interior to a 3D mesh (shared by two elements of the same
 // entity) when only the skin is asked for; they are then not in the arrays
 // at all, so they cannot be picked either
@@ -656,6 +664,79 @@ static void addSkinInArray(GEntity *e, VertexArray *va, const meshSkin &skin)
   }
 }
 
+// the edges of the faces of a skin, each once
+static void addSkinEdgesInArray(GEntity *e, VertexArray *va,
+                                const meshSkin &skin)
+{
+  const double explode = CTX::instance()->mesh.explode;
+  const elementColor color(e);
+  UniqueElementFilter *filter =
+    (CTX::instance()->mesh.drawUniqueEdges && explode == 1.) ?
+      va->getUniqueFilter(false) : nullptr;
+  MElement *last = nullptr;
+  bool curved = false;
+  int numEdges = 0, perEdge = 0;
+  unsigned int c = 0;
+  SPoint3 pc(0., 0., 0.);
+  for(auto &f : skin.faces) {
+    MElement *ele = f.first;
+    if(ele != last) {
+      last = ele;
+      curved = isCurved(ele);
+      numEdges = ele->getNumEdges();
+      int numRep = ele->getNumEdgesRep(curved);
+      // how many segments draw an edge (0: they do not map onto the edges,
+      // which are then drawn straight)
+      perEdge = (numEdges > 0 && numRep % numEdges == 0) ? numRep / numEdges : 0;
+      c = color(ele);
+      if(explode != 1.) pc = ele->barycenter();
+    }
+    MVertex *fv[4];
+    int nc = ele->getFaceCorners(f.second, fv);
+    if(!nc) {
+      MFace fa = ele->getFace(f.second);
+      nc = std::min((int)fa.getNumVertices(), 4);
+      for(int k = 0; k < nc; k++) fv[k] = fa.getVertex(k);
+    }
+    unsigned int col[4] = {c, c, c, c};
+    for(int j = 0; j < numEdges; j++) {
+      // the edges of the element that join two corners of the face
+      MVertex *ev[2];
+      if(!ele->getEdgeCorners(j, ev)) {
+        MEdge ed = ele->getEdge(j);
+        ev[0] = ed.getVertex(0);
+        ev[1] = ed.getVertex(1);
+      }
+      int in = 0;
+      for(int k = 0; k < nc; k++)
+        if(fv[k] == ev[0] || fv[k] == ev[1]) in++;
+      if(in != 2) continue;
+      if(filter && filter->isDuplicate(filter->hashOf(c, ev[0], ev[1])))
+        continue;
+      for(int r = 0; r < std::max(perEdge, 1); r++) {
+        double x[2], y[2], z[2];
+        SVector3 n[2];
+        if(perEdge)
+          ele->getEdgeRep(curved, j * perEdge + r, x, y, z, n);
+        else
+          for(int k = 0; k < 2; k++) {
+            x[k] = ev[k]->x();
+            y[k] = ev[k]->y();
+            z[k] = ev[k]->z();
+          }
+        if(explode != 1.) {
+          for(int k = 0; k < 2; k++) {
+            x[k] = pc[0] + explode * (x[k] - pc[0]);
+            y[k] = pc[1] + explode * (y[k] - pc[1]);
+            z[k] = pc[2] + explode * (z[k] - pc[2]);
+          }
+        }
+        va->add(x, y, z, n, col, ele, false);
+      }
+    }
+  }
+}
+
 // What is kept for a volume from one filling of its arrays to the next, as
 // long as its mesh stays (CTX::meshChanged(), not the options that change the
 // way it is drawn) along with the options choosing the elements: its skin,
@@ -852,10 +933,9 @@ public:
 
   // the elements with their edges (the ones each element draws are kept from
   // one filling to the next), and with their faces if asked
-  void addEdges(GRegion *r, bool faces)
+  void addEdges(GRegion *r, bool edg, bool faces)
   {
     CTX *ctx = CTX::instance();
-    bool edg = ctx->mesh.volumeEdges;
     keptEdges &kept = _regionEdges[r];
     std::vector<double> key = regionKey(r);
     key.push_back(ctx->mesh.colorCarousel);
@@ -897,7 +977,9 @@ public:
       r->va_triangles =
         new VertexArray(3, fac ? _estimateNumTriangles(r) : 100);
 
-      if(fac && removeInteriorFaces()) {
+      bool skinFaces = fac && removeInteriorFaces();
+      bool skinEdges = edg && removeInteriorEdges();
+      if(skinFaces || skinEdges) {
         // the skin, found from all the element types before any is drawn
         keptSkin &kept = _regionSkin[r];
         std::vector<double> key = regionKey(r);
@@ -913,13 +995,16 @@ public:
           Msg::Debug("Found the skin of volume %d in %g s", r->tag(),
                      TimeOfDay() - t1);
         }
-        if(edg) addEdges(r, false);
-        addSkinInArray(r, r->va_triangles, kept.skin);
+        // what is not taken from the skin is taken from all the elements
+        if((edg && !skinEdges) || (fac && !skinFaces))
+          addEdges(r, edg && !skinEdges, fac && !skinFaces);
+        if(skinEdges) addSkinEdgesInArray(r, r->va_lines, kept.skin);
+        if(skinFaces) addSkinInArray(r, r->va_triangles, kept.skin);
         addElementsInArrays(r, r->va_lines, r->va_triangles, kept.skin.whole,
-                            false, true);
+                            skinEdges, skinFaces);
       }
       else
-        addEdges(r, fac);
+        addEdges(r, edg, fac);
       r->va_lines->finalize();
       r->va_triangles->finalize();
     }
@@ -1047,7 +1132,9 @@ static void fillCutRegion(GRegion *r, bool caps, int est)
   r->va_clip_triangles = new VertexArray(3, fac ? 4 * est : 100);
   std::vector<MElement *> cut;
   gatherCutElements(close, cut);
-  if(fac && removeInteriorFaces()) {
+  bool skinFaces = fac && removeInteriorFaces();
+  bool skinEdges = edg && removeInteriorEdges();
+  if(skinFaces || skinEdges) {
     // only the boundary of what is kept is drawn (a face between two kept
     // elements is interior, one facing a removed element is not): the faces
     // of the cut elements in the skin of the kept elements around them
@@ -1063,12 +1150,13 @@ static void fillCutRegion(GRegion *r, bool caps, int est)
       if(isCut.count(f.first)) ofCut.faces.push_back(f);
     for(auto e : skin.whole)
       if(isCut.count(e)) ofCut.whole.push_back(e);
-    if(edg)
-      addElementsInArrays(r, r->va_clip_lines, r->va_clip_triangles, cut, true,
-                          false);
-    addSkinInArray(r, r->va_clip_triangles, ofCut);
+    if((edg && !skinEdges) || (fac && !skinFaces))
+      addElementsInArrays(r, r->va_clip_lines, r->va_clip_triangles, cut,
+                          edg && !skinEdges, fac && !skinFaces);
+    if(skinEdges) addSkinEdgesInArray(r, r->va_clip_lines, ofCut);
+    if(skinFaces) addSkinInArray(r, r->va_clip_triangles, ofCut);
     addElementsInArrays(r, r->va_clip_lines, r->va_clip_triangles, ofCut.whole,
-                        false, true);
+                        skinEdges, skinFaces);
   }
   else
     addElementsInArrays(r, r->va_clip_lines, r->va_clip_triangles, cut, edg,

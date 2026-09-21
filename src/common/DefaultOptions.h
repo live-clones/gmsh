@@ -1278,6 +1278,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CreateFaces" , opt_mesh_create_faces, 0. ,
     "Create mesh edges before saving MSH files" },
 
+  { F|O, "DrawSkinEdgesOnly" , opt_mesh_draw_skin_edges_only , 0. ,
+    "Draw only the edges of the boundary faces of 3D meshes?" },
   { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 1. ,
     "Draw only the boundary faces of 3D meshes?" },
   { F|O, "DrawUniqueEdges" , opt_mesh_draw_unique_edges , 1. ,
@@ -2017,6 +2019,8 @@ StringXNumber ViewOptions_Number[] = {
     "Display post-processing quadrangles?" },
   { F|O, "DrawScalars" , opt_view_draw_scalars , 1. ,
     "Display scalar values?" },
+  { F|O, "DrawSkinEdgesOnly" , opt_view_draw_skin_edges_only , 0. ,
+    "Draw only the outlines of the boundary faces of 3D views?" },
   { F|O, "DrawSkinOnly" , opt_view_draw_skin_only , 1. ,
     "Draw only the boundary faces of 3D views?" },
   { F|O, "DrawStrings" , opt_view_draw_strings , 1. ,

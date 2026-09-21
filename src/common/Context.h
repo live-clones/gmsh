@@ -100,7 +100,8 @@ struct contextMeshOptions {
   int nodeLabels, lineLabels, surfaceLabels, volumeLabels, qualityType;
   int labelType;
   double nodeSize, lineWidth;
-  int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
+  int dual, voronoi, drawSkinOnly, drawSkinEdgesOnly, colorCarousel;
+  int labelSampling;
   int drawUniqueEdges;
   int smoothNormals, clip;
   // records cpu times for 1D, 2D and 3D mesh generation
