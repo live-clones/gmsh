@@ -289,7 +289,8 @@ private:
   void _addElement(MElement *ele);
 
 public:
-  VertexArray(int numVerticesPerElement, int numElements);
+  // (numElements is a hint of how many will be added)
+  VertexArray(int numVerticesPerElement, std::size_t numElements);
   ~VertexArray();
   // return the filter used to drop elements that are drawn several times,
   // creating it if necessary

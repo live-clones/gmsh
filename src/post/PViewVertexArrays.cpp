@@ -1067,11 +1067,51 @@ static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
   return k;
 }
 
-// keptOnly: the skin of what whole element mode keeps, looked for among the
-// elements close enough to a plane to be cut or to touch a cut one (the others
-// are not drawn from the clip arrays)
 static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
-                     const elementSpheres *spheres)
+                     const elementSpheres *spheres,
+                     const std::vector<std::uint8_t> *original);
+
+// the skin of the field, kept or found now (null if it cannot be)
+static const std::vector<std::uint8_t> *getSkin(PView *p, PViewData *data,
+                                                PViewOptions *opt,
+                                                const flatElements &flat)
+{
+  double t1 = TimeOfDay();
+  std::vector<double> key = skinKey(data, opt, flat);
+  std::list<keptSkin> &kept = _viewSkin[p];
+  // what was found for another state of the data or of the mesh is of no
+  // use any more (the step is the last entry of the key)
+  kept.remove_if([&](const keptSkin &k) {
+    return k.key.size() != key.size() ||
+           !std::equal(key.begin(), key.end() - 1, k.key.begin());
+  });
+  auto it = std::find_if(kept.begin(), kept.end(), [&](const keptSkin &k) {
+    return k.key == key && k.masks.size() == flat.num;
+  });
+  if(it != kept.end()) {
+    kept.splice(kept.begin(), kept, it); // most recently used first
+    return &kept.front().masks;
+  }
+  if(!findSkin(p, flat, false, nullptr, nullptr)) return nullptr;
+  kept.push_front(keptSkin());
+  kept.front().key = key;
+  kept.front().masks.swap(skinMasks);
+  if(kept.size() > maxKeptSkins) kept.pop_back();
+  Msg::Debug("Found the skin of View[%d] in %g s", p->getIndex(),
+             TimeOfDay() - t1);
+  return &kept.front().masks;
+}
+
+// keptOnly: the faces of the cut elements that are on the skin of what whole
+// element mode keeps (the other elements are not drawn from the clip arrays).
+// They are found from the cut elements alone. A face two of them share is
+// interior. The element on the other side of any other face is not cut, so
+// that it is wholly kept or wholly removed, and the face tells which: removed
+// if its corners are all beyond one of the planes. And there is no element on
+// the other side of a face of the skin of the field (original).
+static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
+                     const elementSpheres *spheres,
+                     const std::vector<std::uint8_t> *original)
 {
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
@@ -1090,21 +1130,16 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
      ctx->clipOnlyDrawIntersectingVolume)
     return false;
 
-  double reach = 0.;
+  if(keptOnly && (!original || original->size() != flat.num)) return false;
   activePlanes planes(opt->clip);
-  if(keptOnly) {
-    // a neighbour of a cut element is within twice its radius of the plane
-    for(std::size_t i = 0; i < flat.num; i++)
-      if(spheres->drawn(i) && spheres->dim(i) == 3 &&
-         planes.gap(spheres->sphere(i)) <= 0.)
-        reach = std::max(reach, 2. * spheres->radius(i));
-  }
 
   double t0 = TimeOfDay();
   struct chunk {
     std::vector<std::uint32_t> elem, ids;
     std::vector<std::uint8_t> shape;
     std::vector<int> ent;
+    // for each plane, the corners that are beyond it, a bit each (keptOnly)
+    std::vector<std::uint8_t> beyond;
   };
   int nthreads = numWalkThreads(data, opt, flat.num);
   std::vector<chunk> chunks(nthreads);
@@ -1120,7 +1155,7 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
       [&](int ent, int ele, std::size_t i) {
         if(bad) return;
         if(keptOnly && (!spheres->drawn(i) || spheres->dim(i) != 3 ||
-                        planes.gap(spheres->sphere(i)) > reach))
+                        planes.gap(spheres->sphere(i)) > 0.))
           return;
         if(!el.select(p, ent, ele)) return;
         int sh = solidShapeIndex(el.type);
@@ -1144,7 +1179,16 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
         if(el.numNodes < nc) return;
         if(keptOnly) {
           el.read(p, false);
-          if(!elementIsKept(opt, el.dim, el.numNodes, el.xyz)) return;
+          if(!elementIsCut(opt, el.dim, el.numNodes, el.xyz)) return;
+          for(int clip = 0; clip < 6; clip++) {
+            std::uint8_t b = 0;
+            if(opt->clip & (1 << clip))
+              for(int j = 0; j < nc; j++)
+                if(evalClipPlane(clip, el.xyz[j][0], el.xyz[j][1],
+                                 el.xyz[j][2]) < 0.)
+                  b |= (std::uint8_t)(1 << j);
+            c.beyond.push_back(b);
+          }
         }
         for(int j = 0; j < nc; j++) {
           std::size_t id = data->getNodeId(step, ent, ele, j);
@@ -1195,8 +1239,29 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
       skin[t].push_back({elem, face});
     });
   }
-  for(auto &sk : skin)
-    for(auto &f : sk) skinMasks[f.first] |= (std::uint8_t)(1 << f.second);
+  for(auto &sk : skin) {
+    for(auto &f : sk) {
+      if(keptOnly && !(((*original)[f.first] >> f.second) & 1)) {
+        // is the element on the other side removed?
+        int t = 0;
+        while(t + 1 < nthreads && flat.num * (t + 1) / nthreads <= f.first) t++;
+        const chunk &c = chunks[t];
+        std::size_t e =
+          std::lower_bound(c.elem.begin(), c.elem.end(), f.first) -
+          c.elem.begin();
+        const int *fi;
+        int n = solidFace(*solidShapes[c.shape[e]], f.second, fi);
+        unsigned int corners = 0;
+        for(int k = 0; k < n; k++) corners |= 1u << fi[k];
+        bool removed = false;
+        for(int clip = 0; clip < 6 && !removed; clip++)
+          removed = (opt->clip & (1 << clip)) &&
+                    (c.beyond[6 * e + clip] & corners) == corners;
+        if(!removed) continue;
+      }
+      skinMasks[f.first] |= (std::uint8_t)(1 << f.second);
+    }
+  }
   return true;
 }
 
@@ -2173,13 +2238,13 @@ private:
   // we try to estimate how many primitives will end up in the vertex
   // arrays, since reallocating the arrays takes a huge amount of time
   // on Windows/Cygwin
-  int _estimateIfClipped(PView *p, int num)
+  std::size_t _estimateIfClipped(PView *p, std::size_t num)
   {
     if(CTX::instance()->clipWholeElements &&
        CTX::instance()->clipOnlyDrawIntersectingVolume) {
       PViewOptions *opt = p->getOptions();
       for(int clip = 0; clip < 6; clip++) {
-        if(opt->clip & (1 << clip)) return (int)sqrt((double)num);
+        if(opt->clip & (1 << clip)) return (std::size_t)sqrt((double)num);
       }
     }
     return num;
@@ -2187,34 +2252,44 @@ private:
   // How much to reserve for an array: what the data holds of that kind, what
   // the planes are likely to leave of it when they are applied here, and room
   // to spare. Only a starting size: an array grows if it has to.
-  int _estimate(PView *p, int count, bool clipped, int spare)
+  // (on 64 bits: six triangles for each of 400 million tetrahedra do not fit
+  // in an int)
+  std::size_t _estimate(PView *p, std::size_t count, bool clipped,
+                        std::size_t spare)
   {
     return (clipped ? _estimateIfClipped(p, count) : count) + spare;
   }
-  int _estimateNumPoints(PView *p)
+  std::size_t _estimateNumPoints(PView *p)
   {
     return _estimate(p, p->getData(true)->getNumPoints(p->getOptions()->timeStep),
                      false, 10000);
   }
-  int _estimateNumLines(PView *p)
+  std::size_t _estimateNumLines(PView *p)
   {
     return _estimate(p, p->getData(true)->getNumLines(p->getOptions()->timeStep),
                      false, 10000);
   }
-  int _estimateNumTriangles(PView *p)
+  std::size_t _estimateNumTriangles(PView *p)
   {
     PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
-    int tris = data->getNumTriangles(opt->timeStep);
-    int quads = data->getNumQuadrangles(opt->timeStep);
-    int polygs = data->getNumPolygons(opt->timeStep);
-    int tets = data->getNumTetrahedra(opt->timeStep);
-    int prisms = data->getNumPrisms(opt->timeStep);
-    int pyrs = data->getNumPyramids(opt->timeStep);
-    int trihs = data->getNumTrihedra(opt->timeStep);
-    int hexas = data->getNumHexahedra(opt->timeStep);
-    int polyhs = data->getNumPolyhedra(opt->timeStep);
-    int heuristic = 0;
+    std::size_t tris = data->getNumTriangles(opt->timeStep);
+    std::size_t quads = data->getNumQuadrangles(opt->timeStep);
+    std::size_t polygs = data->getNumPolygons(opt->timeStep);
+    std::size_t tets = data->getNumTetrahedra(opt->timeStep);
+    std::size_t prisms = data->getNumPrisms(opt->timeStep);
+    std::size_t pyrs = data->getNumPyramids(opt->timeStep);
+    std::size_t trihs = data->getNumTrihedra(opt->timeStep);
+    std::size_t hexas = data->getNumHexahedra(opt->timeStep);
+    std::size_t polyhs = data->getNumPolyhedra(opt->timeStep);
+    std::size_t heuristic = 0;
+    // the faces on the skin alone: about the 2/3 power of the 3D elements
+    if(skinOnly(opt)) {
+      double solids = (double)(tets + prisms + pyrs + hexas + polyhs);
+      heuristic = tris + 2 * quads + 3 * polygs +
+                  (std::size_t)(12. * pow(solids, 2. / 3.));
+      return _estimate(p, heuristic, true, 10000);
+    }
     if(opt->intervalsType == PViewOptions::Iso)
       heuristic = (tets + prisms + pyrs + hexas + polyhs) / 10;
     else if(opt->intervalsType == PViewOptions::Continuous)
@@ -2226,12 +2301,12 @@ private:
                   2;
     return _estimate(p, heuristic, true, 10000);
   }
-  int _estimateNumVectors(PView *p)
+  std::size_t _estimateNumVectors(PView *p)
   {
     return _estimate(p, p->getData(true)->getNumVectors(p->getOptions()->timeStep),
                      true, 1000);
   }
-  int _estimateNumEllipses(PView *p)
+  std::size_t _estimateNumEllipses(PView *p)
   {
     return _estimate(p, p->getData(true)->getNumTensors(p->getOptions()->timeStep),
                      true, 1000);
@@ -2282,32 +2357,11 @@ public:
     bool skinFound = false;
     if((skinOnly(opt) && viewDrawsFaces(p)) || skinOutlines(opt)) {
       // the skin from the nodes of the elements alone, if it can be
-      double t1 = TimeOfDay();
-      flatElements flat(data, opt);
-      std::vector<double> key = skinKey(data, opt, flat);
-      std::list<keptSkin> &kept = _viewSkin[p];
-      // what was found for another state of the data or of the mesh is of
-      // no use any more (the step is the last entry of the key)
-      kept.remove_if([&](const keptSkin &k) {
-        return k.key.size() != key.size() ||
-               !std::equal(key.begin(), key.end() - 1, k.key.begin());
-      });
-      auto it = std::find_if(kept.begin(), kept.end(), [&](const keptSkin &k) {
-        return k.key == key && k.masks.size() == flat.num;
-      });
-      if(it != kept.end()) {
+      const std::vector<std::uint8_t> *masks =
+        getSkin(p, data, opt, flatElements(data, opt));
+      if(masks) {
         skinFound = true;
-        kept.splice(kept.begin(), kept, it); // most recently used first
-        activeSkinMasks = &kept.front().masks;
-      }
-      else if((skinFound = findSkin(p, flat, false, nullptr))) {
-        kept.push_front(keptSkin());
-        kept.front().key = key;
-        kept.front().masks.swap(skinMasks);
-        if(kept.size() > maxKeptSkins) kept.pop_back();
-        activeSkinMasks = &kept.front().masks;
-        Msg::Debug("Found the skin of View[%d] in %g s", p->getIndex(),
-                   TimeOfDay() - t1);
+        activeSkinMasks = masks;
       }
     }
 
@@ -2396,7 +2450,8 @@ bool PView::fillClipVertexArrays()
 
   bool skinFound = false;
   if(whole && ((skinOnly(opt) && viewDrawsFaces(this)) || skinOutlines(opt))) {
-    skinFound = findSkin(this, flat, true, spheres);
+    skinFound = findSkin(this, flat, true, spheres,
+                         spheres ? getSkin(this, data, opt, flat) : nullptr);
     if(skinFound) activeSkinMasks = &skinMasks;
   }
 

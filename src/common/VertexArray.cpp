@@ -155,7 +155,7 @@ void VertexArray::setUniqueFilter(UniqueElementFilter *f)
   _ownsFilter = false;
 }
 
-VertexArray::VertexArray(int numVerticesPerElement, int numElements)
+VertexArray::VertexArray(int numVerticesPerElement, std::size_t numElements)
   : _numVerticesPerElement(numVerticesPerElement), _filter(nullptr),
     _ownsFilter(false), _storeElements(CTX::instance()->pickElements ? true :
                                                                        false),
@@ -163,14 +163,16 @@ VertexArray::VertexArray(int numVerticesPerElement, int numElements)
 {
   _vbo[0] = _vbo[1] = _vbo[2] = 0;
 
-  int nb = (numElements ? numElements : 1) * _numVerticesPerElement;
+  // (counted on 64 bits: the elements of a large mesh, times their vertices,
+  // times their coordinates, do not fit in an int)
+  std::size_t nb = (numElements ? numElements : 1) * _numVerticesPerElement;
 
   double memv = (nb * 3. * sizeof(float)) / 1024. / 1024.;
   double memmax = TotalRam() / 3.;
   if(memv > memmax){
-    int old = nb;
-    nb = memmax / (3. * sizeof(float)) * 1024 * 1024;
-    Msg::Debug("Reduce preallocation of vertex array (%d -> %d)", old, nb);
+    std::size_t old = nb;
+    nb = (std::size_t)(memmax / (3. * sizeof(float)) * 1024 * 1024);
+    Msg::Debug("Reduce preallocation of vertex array (%zu -> %zu)", old, nb);
   }
   _vertices.reserve(nb * 3);
   _normals.reserve(nb * 3);

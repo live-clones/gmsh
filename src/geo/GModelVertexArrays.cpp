@@ -777,9 +777,9 @@ static OwnerCache<keptSpheres> _regionSpheres;
 
 class initMeshGEdge {
 private:
-  int _estimateNumLines(GEdge *e)
+  std::size_t _estimateNumLines(GEdge *e)
   {
-    int num = 0;
+    std::size_t num = 0;
     if(CTX::instance()->mesh.lines) {
       num += e->lines.size();
       if(areSomeElementsCurved(e->lines)) num *= 2;
@@ -837,9 +837,9 @@ template <class F> static void forShownRegionElements(GRegion *r, F fun)
 class initMeshGFace {
 private:
   bool _curved;
-  int _estimateNumLines(GFace *f)
+  std::size_t _estimateNumLines(GFace *f)
   {
-    int num = 0;
+    std::size_t num = 0;
     if(CTX::instance()->mesh.surfaceEdges) {
       num += (3 * f->triangles.size() + 4 * f->quadrangles.size() +
               4 * f->polygons.size()) /
@@ -849,9 +849,9 @@ private:
     }
     return num + 100;
   }
-  int _estimateNumTriangles(GFace *f)
+  std::size_t _estimateNumTriangles(GFace *f)
   {
-    int num = 0;
+    std::size_t num = 0;
     if(CTX::instance()->mesh.surfaceFaces) {
       num += (f->triangles.size() + 2 * f->quadrangles.size() +
               2 * f->polygons.size());
@@ -886,15 +886,35 @@ public:
   }
 };
 
+// the skin of a volume, found from all its element types together and kept
+static const meshSkin &getSkin(GRegion *r)
+{
+  keptSkin &kept = _regionSkin[r];
+  std::vector<double> key = regionKey(r);
+  if(kept.key != key) {
+    double t1 = TimeOfDay();
+    std::vector<MElement *> shown;
+    forShownRegionElements(r, [&](auto &els) {
+      for(auto e : els)
+        if(isElementVisible(e) && e->getDim() == 3) shown.push_back(e);
+    });
+    findSkin(shown, kept.skin);
+    kept.key = key;
+    Msg::Debug("Found the skin of volume %d in %g s", r->tag(),
+               TimeOfDay() - t1);
+  }
+  return kept.skin;
+}
+
 class initMeshGRegion {
 private:
   bool _curved;
-  int _estimateNumLines(GRegion *r)
+  std::size_t _estimateNumLines(GRegion *r)
   {
-    int num = 0;
+    std::size_t num = 0;
     if(CTX::instance()->mesh.volumeEdges) {
       // suppose edge shared by 4 elements on averge (pessmistic)
-      int numLP = 0;
+      std::size_t numLP = 0;
       for(std::size_t i = 0; i < r->polyhedra.size(); i++)
         numLP += 2 * r->polyhedra[i]->getNumEdges();
       num += (12 * r->tetrahedra.size() + 24 * r->hexahedra.size() +
@@ -906,11 +926,11 @@ private:
     }
     return num + 100;
   }
-  int _estimateNumTriangles(GRegion *r)
+  std::size_t _estimateNumTriangles(GRegion *r)
   {
-    int num = 0;
+    std::size_t num = 0;
     if(CTX::instance()->mesh.volumeFaces) {
-      int numFP = 0;
+      std::size_t numFP = 0;
       for(std::size_t i = 0; i < r->polyhedra.size(); i++)
         numFP += r->polyhedra[i]->getNumFaces();
       num += (4 * r->tetrahedra.size() + 12 * r->hexahedra.size() +
@@ -924,7 +944,7 @@ private:
   }
 
 public:
-  int _estimateNumCaps(GRegion *r)
+  std::size_t _estimateNumCaps(GRegion *r)
   {
     // the cut elements form a surface: about the 2/3 power of the elements
     std::size_t n = r->getNumMeshElements();
@@ -973,38 +993,34 @@ public:
                  areSomeElementsCurved(r->prisms) ||
                  areSomeElementsCurved(r->pyramids) ||
                  areSomeElementsCurved(r->trihedra));
-      r->va_lines = new VertexArray(2, edg ? _estimateNumLines(r) : 100);
-      r->va_triangles =
-        new VertexArray(3, fac ? _estimateNumTriangles(r) : 100);
 
       bool skinFaces = fac && removeInteriorFaces();
       bool skinEdges = edg && removeInteriorEdges();
       if(skinFaces || skinEdges) {
         // the skin, found from all the element types before any is drawn
-        keptSkin &kept = _regionSkin[r];
-        std::vector<double> key = regionKey(r);
-        if(kept.key != key) {
-          double t1 = TimeOfDay();
-          std::vector<MElement *> shown;
-          forShownRegionElements(r, [&](auto &els) {
-            for(auto e : els)
-              if(isElementVisible(e) && e->getDim() == 3) shown.push_back(e);
-          });
-          findSkin(shown, kept.skin);
-          kept.key = key;
-          Msg::Debug("Found the skin of volume %d in %g s", r->tag(),
-                     TimeOfDay() - t1);
-        }
+        const meshSkin &found = getSkin(r);
+        // (what comes from the skin is known: a few times its faces)
+        std::size_t ns = found.faces.size();
+        r->va_lines = new VertexArray(
+          2, !edg ? 100 : skinEdges ? 2 * ns + 100 : _estimateNumLines(r));
+        r->va_triangles = new VertexArray(
+          3, !fac ? 100 : skinFaces ? 2 * ns + 100 : _estimateNumTriangles(r));
         // what is not taken from the skin is taken from all the elements
         if((edg && !skinEdges) || (fac && !skinFaces))
           addEdges(r, edg && !skinEdges, fac && !skinFaces);
-        if(skinEdges) addSkinEdgesInArray(r, r->va_lines, kept.skin);
-        if(skinFaces) addSkinInArray(r, r->va_triangles, kept.skin);
-        addElementsInArrays(r, r->va_lines, r->va_triangles, kept.skin.whole,
+        if(skinEdges) addSkinEdgesInArray(r, r->va_lines, found);
+        if(skinFaces) addSkinInArray(r, r->va_triangles, found);
+        // (not const: the elements are only read)
+        std::vector<MElement *> whole(found.whole);
+        addElementsInArrays(r, r->va_lines, r->va_triangles, whole,
                             skinEdges, skinFaces);
       }
-      else
+      else {
+        r->va_lines = new VertexArray(2, edg ? _estimateNumLines(r) : 100);
+        r->va_triangles =
+          new VertexArray(3, fac ? _estimateNumTriangles(r) : 100);
         addEdges(r, edg, fac);
+      }
       r->va_lines->finalize();
       r->va_triangles->finalize();
     }
@@ -1076,25 +1092,33 @@ static const elementSpheres *getSpheres(GRegion *r)
 }
 
 // the elements of a volume that are drawn and within a distance of a plane
+// (the spheres are gone through by several threads, each with its share of
+// the elements, put together in order)
 static void gatherCloseElements(GRegion *r, const elementSpheres *spheres,
                                 const activePlanes &planes, double distance,
-                                std::vector<MElement *> &close,
-                                double *maxRadius = nullptr)
+                                std::vector<MElement *> &close)
 {
   std::size_t first = 0;
   forShownRegionElements(r, [&](auto &els) {
-    for(std::size_t i = 0; i < els.size(); i++) {
-      if(spheres) {
-        if(!spheres->drawn(first + i) ||
-           planes.gap(spheres->sphere(first + i)) > distance)
+    int nthreads = numFillThreads(els.size() / 100);
+    std::vector<std::vector<MElement *> > found(nthreads);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+    for(int t = 0; t < nthreads; t++) {
+      std::size_t i0 = els.size() * t / nthreads;
+      std::size_t i1 = els.size() * (t + 1) / nthreads;
+      for(std::size_t i = i0; i < i1; i++) {
+        if(spheres) {
+          if(!spheres->drawn(first + i) ||
+             planes.gap(spheres->sphere(first + i)) > distance)
+            continue;
+        }
+        else if(els[i]->getDim() != 3 || !isElementVisible(els[i]))
           continue;
-        if(maxRadius)
-          *maxRadius = std::max(*maxRadius, spheres->radius(first + i));
+        found[t].push_back(els[i]);
       }
-      else if(els[i]->getDim() != 3 || !isElementVisible(els[i]))
-        continue;
-      close.push_back(els[i]);
     }
+    for(int t = 0; t < nthreads; t++)
+      close.insert(close.end(), found[t].begin(), found[t].end());
     first += els.size();
   });
 }
@@ -1102,7 +1126,7 @@ static void gatherCloseElements(GRegion *r, const elementSpheres *spheres,
 // What the planes add to a volume: the section they cut, or the elements
 // they cut drawn whole. Only the elements close enough to a plane are looked
 // at, when there are spheres to tell.
-static void fillCutRegion(GRegion *r, bool caps, int est)
+static void fillCutRegion(GRegion *r, bool caps, std::size_t est)
 {
   CTX *ctx = CTX::instance();
   const elementSpheres *spheres = getSpheres(r);
@@ -1110,8 +1134,7 @@ static void fillCutRegion(GRegion *r, bool caps, int est)
 
   // the elements a plane may cut
   std::vector<MElement *> close;
-  double maxRadius = 0.;
-  gatherCloseElements(r, spheres, planes, 0., close, &maxRadius);
+  gatherCloseElements(r, spheres, planes, 0., close);
 
   if(caps) {
     r->va_clip_triangles = new VertexArray(3, est);
@@ -1135,21 +1158,46 @@ static void fillCutRegion(GRegion *r, bool caps, int est)
   bool skinFaces = fac && removeInteriorFaces();
   bool skinEdges = edg && removeInteriorEdges();
   if(skinFaces || skinEdges) {
-    // only the boundary of what is kept is drawn (a face between two kept
-    // elements is interior, one facing a removed element is not): the faces
-    // of the cut elements in the skin of the kept elements around them
-    // (one that touches a cut element is within twice its radius of a plane)
-    std::vector<MElement *> near, around;
-    gatherCloseElements(r, spheres, planes, 2. * maxRadius, near);
-    for(auto e : near)
-      if(elementIsKept(e)) around.push_back(e);
+    // Only the boundary of what is kept is drawn: a face between two kept
+    // elements is interior, one facing a removed element is not. It is found
+    // from the cut elements alone. A face two of them share is interior. The
+    // element on the other side of any other face is not cut, so that it is
+    // wholly kept or wholly removed, and the face tells which: removed if
+    // the corners of the face are all beyond one of the planes. And there is
+    // no element on the other side of a face of the skin of the volume.
     meshSkin skin, ofCut;
-    findSkin(around, skin);
-    std::set<MElement *> isCut(cut.begin(), cut.end());
-    for(auto &f : skin.faces)
-      if(isCut.count(f.first)) ofCut.faces.push_back(f);
-    for(auto e : skin.whole)
-      if(isCut.count(e)) ofCut.whole.push_back(e);
+    findSkin(cut, skin);
+    const meshSkin &whole = getSkin(r);
+    std::vector<std::pair<MElement *, int> > outer;
+    {
+      std::set<MElement *> isCut(cut.begin(), cut.end());
+      for(auto &f : whole.faces)
+        if(isCut.count(f.first)) outer.push_back(f);
+      std::sort(outer.begin(), outer.end());
+    }
+    bool onlyCut = ctx->clipOnlyDrawIntersectingVolume;
+    for(auto &f : skin.faces) {
+      bool drawn = onlyCut || std::binary_search(outer.begin(), outer.end(), f);
+      if(!drawn) {
+        MVertex *fv[4];
+        int nc = f.first->getFaceCorners(f.second, fv);
+        if(!nc) {
+          MFace fa = f.first->getFace(f.second);
+          nc = std::min((int)fa.getNumVertices(), 4);
+          for(int k = 0; k < nc; k++) fv[k] = fa.getVertex(k);
+        }
+        for(int clip = 0; clip < 6 && !drawn; clip++) {
+          if(!(ctx->mesh.clip & (1 << clip))) continue;
+          bool beyond = true;
+          for(int k = 0; k < nc && beyond; k++)
+            beyond = (evalClipPlane(clip, fv[k]->x(), fv[k]->y(),
+                                    fv[k]->z()) < 0.);
+          drawn = beyond;
+        }
+      }
+      if(drawn) ofCut.faces.push_back(f);
+    }
+    ofCut.whole = skin.whole;
     if((edg && !skinEdges) || (fac && !skinFaces))
       addElementsInArrays(r, r->va_clip_lines, r->va_clip_triangles, cut,
                           edg && !skinEdges, fac && !skinFaces);
@@ -1167,7 +1215,8 @@ static void fillCutRegion(GRegion *r, bool caps, int est)
 
 // What the planes cut out of a curve or a surface. There is no interior to
 // hide here, so the elements go in as they are.
-static void fillCutEntity(GEntity *e, bool edges, bool faces, int est)
+static void fillCutEntity(GEntity *e, bool edges, bool faces,
+                          std::size_t est)
 {
   e->va_clip_lines = new VertexArray(2, edges ? 6 * est : 100);
   e->va_clip_triangles = new VertexArray(3, faces ? 4 * est : 100);
@@ -1209,7 +1258,7 @@ bool GModel::fillClipVertexArrays()
     if(!r->getVisibility() || (!caps && !whole)) continue;
     // the cut elements form a surface: about the 2/3 power of the elements
     std::size_t ne = r->getNumMeshElements();
-    int est = (int)(2. * pow((double)ne, 2. / 3.)) + 100;
+    std::size_t est = (std::size_t)(2. * pow((double)ne, 2. / 3.)) + 100;
 
     fillCutRegion(r, caps, est);
     if(r->va_clip_lines) n += r->va_clip_lines->getNumVertices();
