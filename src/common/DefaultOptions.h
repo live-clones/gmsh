@@ -2019,7 +2019,7 @@ StringXNumber ViewOptions_Number[] = {
     "Display post-processing quadrangles?" },
   { F|O, "DrawScalars" , opt_view_draw_scalars , 1. ,
     "Display scalar values?" },
-  { F|O, "DrawSkinEdgesOnly" , opt_view_draw_skin_edges_only , 0. ,
+  { F|O, "DrawSkinEdgesOnly" , opt_view_draw_skin_edges_only , 1. ,
     "Draw only the outlines of the boundary faces of 3D views?" },
   { F|O, "DrawSkinOnly" , opt_view_draw_skin_only , 1. ,
     "Draw only the boundary faces of 3D views?" },
