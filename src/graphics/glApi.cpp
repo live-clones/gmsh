@@ -81,9 +81,8 @@ namespace glApi {
   const GLubyte *(APIENTRY *GetStringi)(GLenum, GLuint) = nullptr;
   void(APIENTRY *BlendFuncSeparate)(GLenum, GLenum, GLenum, GLenum) = nullptr;
 
-
   static bool _loaded = false, _buffers = false, _shaders = false;
-  static bool _framebuffers = false, _clipDistance = false;
+  static bool _framebuffers = false;
   static bool _es = false;
   static bool _instancing = false, _floatColorBuffers = false;
   static int _major = 0, _minor = 0;
@@ -256,7 +255,6 @@ namespace glApi {
     BlendFuncSeparate = (void(APIENTRY *)(GLenum, GLenum, GLenum, GLenum))
       address("glBlendFuncSeparate");
 
-
     parseVersion((const char *)glGetString(GL_VERSION), _major, _minor, _es);
 
     // an entry point being there says nothing about the context (macOS
@@ -278,11 +276,6 @@ namespace glApi {
                     FramebufferTexture2D && CheckFramebufferStatus &&
                     DrawBuffers &&
                     (atLeast(3, 0) || haveExtension("GL_ARB_framebuffer_object"));
-    // gl_ClipDistance is core desktop OpenGL from 3.0, and only an extension on
-    // OpenGL ES, where it arrived in 3.2
-    _clipDistance = _es ? (atLeast(3, 2) ||
-                           haveExtension("GL_EXT_clip_cull_distance")) :
-                          atLeast(3, 0);
     // instanced drawing is OpenGL 3.3 and OpenGL ES 3.0
     _instancing = VertexAttribDivisor && DrawArraysInstanced && _shaders &&
                   (_es ? atLeast(3, 0) : atLeast(3, 3));
@@ -298,7 +291,7 @@ namespace glApi {
   void reset()
   {
     _loaded = _buffers = _shaders = false;
-    _framebuffers = _clipDistance = _es = false;
+    _framebuffers = _es = false;
     _instancing = _floatColorBuffers = false;
     _major = _minor = 0;
 
@@ -355,7 +348,6 @@ namespace glApi {
     ActiveTexture = nullptr;
     GetStringi = nullptr;
     BlendFuncSeparate = nullptr;
-
   }
 
   bool haveBufferObjects()
@@ -374,12 +366,6 @@ namespace glApi {
   {
     load();
     return _framebuffers;
-  }
-
-  bool haveClipDistance()
-  {
-    load();
-    return _clipDistance;
   }
 
   bool haveInstancing()
@@ -421,10 +407,9 @@ namespace glApi {
     Msg::Info("OpenGL %s on %s", v ? v : "?", r ? r : "?");
     Msg::Info("OpenGL shading language %s", s ? s : "none");
     Msg::Info("OpenGL has buffer objects: %s, shaders: %s, framebuffer "
-              "objects: %s, clip distances: %s, instancing: %s, floating "
-              "point colour buffers: %s",
+              "objects: %s, instancing: %s, floating point colour buffers: %s",
               _buffers ? "yes" : "no", _shaders ? "yes" : "no",
-              _framebuffers ? "yes" : "no", _clipDistance ? "yes" : "no",
-              _instancing ? "yes" : "no", _floatColorBuffers ? "yes" : "no");
+              _framebuffers ? "yes" : "no", _instancing ? "yes" : "no",
+              _floatColorBuffers ? "yes" : "no");
   }
 } // namespace glApi

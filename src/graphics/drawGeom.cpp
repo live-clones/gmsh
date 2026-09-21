@@ -3,7 +3,6 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <string.h>
 #include "drawContext.h"
 #include "GModelVertexArrays.h"
 #include "Context.h"
@@ -17,7 +16,6 @@
 #include "StringUtils.h"
 #include "glyphList.h"
 #include "glImmediate.h"
-#include <map>
 
 // the label of an entity (those shown by the selection in the foreground
 // colour)

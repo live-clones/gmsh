@@ -37,8 +37,8 @@
 
 template <class T>
 static void drawElementLabels(drawContext *ctx, GEntity *e,
-                              std::vector<T *> &elements, int forceColor = 0,
-                              unsigned int color = 0)
+                              std::vector<T *> &elements, int forceColor,
+                              unsigned int color)
 {
   unsigned col = forceColor ? color : getColorByEntity(e);
   gmshColor4ubv((const void *)&col);
@@ -213,8 +213,7 @@ template <class F> static void forMeshEntities(GModel *m, int dim, F f)
   }
 }
 
-// how the edges of the elements of a dimension are lit, and whether they take
-// the colour of the lines (when the faces are drawn) rather than their own
+// how the edges of the elements of a dimension are lit
 static bool edgesLit(int dim)
 {
   CTX *c = CTX::instance();
@@ -223,6 +222,8 @@ static bool edgesLit(int dim)
                                       false);
 }
 
+// do they take the colour of the lines (when the faces are drawn) rather
+// than their own?
 static int edgesForced(int dim)
 {
   CTX *c = CTX::instance();

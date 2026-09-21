@@ -9,8 +9,6 @@
 // show; the objects under the cursor can be stepped through, front to back.
 
 #include <algorithm>
-#include <cmath>
-#include <cstring>
 #include "GmshMessage.h"
 #include "drawContext.h"
 #include "glMatrix.h"
@@ -19,10 +17,7 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "PView.h"
-#include "PViewOptions.h"
 #include "VertexArray.h"
-#include "OS.h"
-#include "gl2ps.h"
 
 bool drawContext::_pickColorActive = false;
 

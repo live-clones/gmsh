@@ -16,7 +16,6 @@
 #include "Numeric.h"
 #include "VertexArray.h"
 #include "Context.h"
-#include <map>
 #include <vector>
 #include <cstring>
 #include "gl2ps.h"
@@ -248,15 +247,15 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
     }
     // points sized by the value, one at a time
     for(int i = 0; i < va->getNumVertices(); i++) {
-      float *p = va->getVertexArray(3 * i);
-      if(!glyphIsKept(opt, p)) continue;
+      float *pt = va->getVertexArray(3 * i);
+      if(!glyphIsKept(opt, pt)) continue;
       gmshColor4ubv((const void *)va->getColorArray(4 * i));
       int s = (int)(opt->pointSize * normalValue(va, i));
       if(s) {
         gmshPointSize((float)s);
         gl2psPointSize((float)(s * CTX::instance()->print.epsPointSizeFactor));
         gmshBegin(GL_POINTS);
-        gmshVertex3d(p[0], p[1], p[2]);
+        gmshVertex3d(pt[0], pt[1], pt[2]);
         gmshEnd();
       }
     }
@@ -554,7 +553,7 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
 }
 
 static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
-                                   double **xyz, double **val)
+                                   double **xyz)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -578,7 +577,7 @@ static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
 }
 
 static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
-                                    double **xyz, double **val)
+                                    double **xyz)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -661,9 +660,9 @@ static void drawGlyphs(drawContext *ctx, PView *p)
         if(numbersNow)
           drawNumberGlyphs(ctx, p, el.numNodes, el.numComp, el.xyz, el.val);
         if(normal)
-          drawNormalVectorGlyphs(ctx, p, el.numNodes, el.xyz, el.val);
+          drawNormalVectorGlyphs(ctx, p, el.numNodes, el.xyz);
         else if(tangent)
-          drawTangentVectorGlyphs(ctx, p, el.numNodes, el.xyz, el.val);
+          drawTangentVectorGlyphs(ctx, p, el.numNodes, el.xyz);
       }
     }
   };

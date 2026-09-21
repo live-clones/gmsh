@@ -235,9 +235,6 @@ public:
   // the frame being accumulated in studio shading: 0 draws the plain frame,
   // higher ones jitter the light, the dome and the projection
   int studioSample;
-  // the shift of the projection of the frame being accumulated, a fraction
-  // of a pixel, which antialiases the average (identity on the plain frame
-  // and when picking)
 
 private:
   // Colour buffer picking: a selection pass draws every pickable object in a
@@ -312,13 +309,16 @@ private:
   // The steps of a frame, called by draw3d(), draw2d() and the picking pass
   // and by nothing outside this class: the order they go in is what a frame
   // is, and is not something a caller picks.
+  // (the shift of the projection of the frame being accumulated, a fraction
+  // of a pixel, which antialiases the average: identity on the plain frame
+  // and when picking)
   void studioJitter(double m[16]);
   void initProjection();
   void drawGeom();
   void drawMesh();
   void drawPost();
   void drawBackgroundGradient();
-  void drawBackgroundImage(bool moving);
+  void drawBackgroundImage(bool threeD);
   void drawText2d();
   void drawGraph2d(bool inModelCoordinates);
   void drawAxes();

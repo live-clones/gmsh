@@ -244,17 +244,11 @@ static int needPolygonOffset()
   return 0;
 }
 
-// is what is drawn next drawn with the shader pipeline?
-static bool useShaders()
-{
-  return CTX::instance()->shaders && glShader::available();
-}
-
 static bool useVertexBufferObjects()
 {
   // a core profile has no client arrays: the shader pipeline needs buffer
   // objects whatever the option says
-  if(useShaders()) return true;
+  if(gmshUseShaders()) return true;
   return CTX::instance()->vertexBufferObjects && glApi::haveBufferObjects();
 }
 
@@ -343,7 +337,7 @@ static const GLvoid *vaColorPointer(VertexArray *va) { return vaPointer(va, 2); 
 // used); the shader pipeline binds them as vertex attributes
 static void bindVertexArray(VertexArray *va, bool normals, bool colors)
 {
-  if(useShaders()) {
+  if(gmshUseShaders()) {
     // the attributes are recorded in the program's vertex array object,
     // which must be bound first: on the first frame of a context nothing has
     // bound it yet, and a core profile drops attributes set with none bound,
@@ -392,7 +386,7 @@ static void bindVertexArray(VertexArray *va, bool normals, bool colors)
 
 static void unbindVertexArray()
 {
-  if(useShaders()) {
+  if(gmshUseShaders()) {
     glApi::DisableVertexAttribArray(glShader::ATTRIB_VERTEX);
     glApi::DisableVertexAttribArray(glShader::ATTRIB_NORMAL);
     glApi::DisableVertexAttribArray(glShader::ATTRIB_COLOR);
@@ -550,7 +544,7 @@ static void drawRange(VertexArray *va, GLenum type, bool normals, bool colors,
                       int first, int count)
 {
   if(count <= 0) return;
-  if(!useShaders()) {
+  if(!gmshUseShaders()) {
     glDrawArrays(type, first, count);
     return;
   }

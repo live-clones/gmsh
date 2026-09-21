@@ -127,9 +127,6 @@ typedef char GLchar;
 #if !defined(GL_NUM_EXTENSIONS)
 #define GL_NUM_EXTENSIONS 0x821D
 #endif
-#if !defined(GL_CLIP_DISTANCE0)
-#define GL_CLIP_DISTANCE0 0x3000
-#endif
 
 // the two halves of the blend function (OpenGL 1.4), to read back what the
 // caller set: the Windows header stops at 1.1, which has GL_BLEND_SRC and
@@ -259,8 +256,6 @@ namespace glApi {
   extern void(APIENTRY *BlendFuncSeparate)(GLenum srcRGB, GLenum dstRGB,
                                            GLenum srcAlpha, GLenum dstAlpha);
 
-  // per target blending (OpenGL 4.0, OpenGL ES 3.2)
-
   // resolve the entry points (a context must be current); does nothing once
   // it has run, until reset()
   void load();
@@ -274,10 +269,6 @@ namespace glApi {
   bool haveShaders();
   // render to texture with several targets (the picking pass)
   bool haveFramebufferObjects();
-  // gl_ClipDistance (not in OpenGL ES 3.0, where the fragment shader
-  // discards instead)
-  bool haveClipDistance();
-  // per draw buffer blend functions
   // drawing into floating point colour buffers (order independent
   // transparency)
   bool haveFloatColorBuffers();

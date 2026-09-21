@@ -1091,11 +1091,11 @@ static const elementSpheres *getSpheres(GRegion *r)
   return &kept.spheres;
 }
 
-// the elements of a volume that are drawn and within a distance of a plane
+// the elements of a volume that are drawn and that a plane may cut
 // (the spheres are gone through by several threads, each with its share of
 // the elements, put together in order)
 static void gatherCloseElements(GRegion *r, const elementSpheres *spheres,
-                                const activePlanes &planes, double distance,
+                                const activePlanes &planes,
                                 std::vector<MElement *> &close)
 {
   std::size_t first = 0;
@@ -1109,7 +1109,7 @@ static void gatherCloseElements(GRegion *r, const elementSpheres *spheres,
       for(std::size_t i = i0; i < i1; i++) {
         if(spheres) {
           if(!spheres->drawn(first + i) ||
-             planes.gap(spheres->sphere(first + i)) > distance)
+             planes.gap(spheres->sphere(first + i)) > 0.)
             continue;
         }
         else if(els[i]->getDim() != 3 || !isElementVisible(els[i]))
@@ -1125,8 +1125,8 @@ static void gatherCloseElements(GRegion *r, const elementSpheres *spheres,
 
 void getElementsNearClipPlanes(GRegion *r, std::vector<MElement *> &elements)
 {
-  gatherCloseElements(r, getSpheres(r), activePlanes(CTX::instance()->mesh.clip),
-                      0., elements);
+  gatherCloseElements(r, getSpheres(r),
+                      activePlanes(CTX::instance()->mesh.clip), elements);
 }
 
 // What the planes add to a volume: the section they cut, or the elements
@@ -1140,7 +1140,7 @@ static void fillCutRegion(GRegion *r, bool caps, std::size_t est)
 
   // the elements a plane may cut
   std::vector<MElement *> close;
-  gatherCloseElements(r, spheres, planes, 0., close);
+  gatherCloseElements(r, spheres, planes, close);
 
   if(caps) {
     r->va_clip_triangles = new VertexArray(3, est);

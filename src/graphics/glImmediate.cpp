@@ -271,11 +271,6 @@ void gmshClipOutside(bool outside)
   _clipOutside = outside;
 }
 
-const double *gmshClipPlaneEye(int i)
-{
-  return _clipEye[(i >= 0 && i <= 5) ? i : 0];
-}
-
 namespace {
   // one stack per matrix, each holding at least the matrix itself
   class MatrixStack {

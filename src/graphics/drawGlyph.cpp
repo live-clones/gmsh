@@ -461,16 +461,12 @@ void drawContext::drawImage(const std::string &name, double x, double y,
       billboard = true; // texture will always face camera
   }
 
-  imgtex *img;
-  if(!_imageTextures.count(file)) {
-    img = &_imageTextures[file];
+  // (kept under the name it was asked by, not the path it was found at)
+  bool loaded = _imageTextures.count(file);
+  imgtex *img = &_imageTextures[file];
+  if(!loaded) {
     file = FixRelativePath(GModel::current()->getFileName(), file);
-    if(!generateTextureForImage(file, 1, img->tex, img->w, img->h)) {
-      return;
-    }
-  }
-  else {
-    img = &_imageTextures[file];
+    if(!generateTextureForImage(file, 1, img->tex, img->w, img->h)) return;
   }
   if(!img->tex) {
     Msg::Debug("No texture for image - skipping image draw");
@@ -679,7 +675,7 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
       gmshVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       gmshEnd();
 
-      if(light && fill) gmshLighting(true);
+      if(light) gmshLighting(true);
       gmshBegin(GL_TRIANGLES);
       if(light) gmshNormal3dv(u);
       gmshVertex3d(x + dx, y + dy, z + dz);
@@ -733,7 +729,7 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
       double um[3] = {x - b * u[0], y - b * u[1], z - b * u[2]};
       double nn[3];
 
-      if(light && fill) gmshLighting(true);
+      if(light) gmshLighting(true);
       gmshBegin(GL_TRIANGLES);
       if(light) {
         normal3points(tm[0], tm[1], tm[2], um[0], um[1], um[2], top[0], top[1],

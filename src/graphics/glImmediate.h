@@ -91,13 +91,6 @@ inline void gmshVertex3f(float x, float y, float z)
   else
     glVertex3f(x, y, z);
 }
-inline void gmshVertex3i(int x, int y, int z)
-{
-  if(gmshCollecting)
-    gmshImVertex((float)x, (float)y, (float)z);
-  else
-    glVertex3i(x, y, z);
-}
 inline void gmshVertex3fv(const float *v)
 {
   if(gmshCollecting)
@@ -281,8 +274,6 @@ bool gmshClipPlaneEnabled(int i);
 // keep only what the enabled planes cut off (shader pipeline only: the fixed
 // function planes have no such mode)
 void gmshClipOutside(bool outside);
-// the plane in eye coordinates, which is what a shader is handed
-const double *gmshClipPlaneEye(int i);
 
 // forget the stacks and the state above (e.g. after the OpenGL context was
 // recreated)

@@ -31,7 +31,7 @@ private:
   int _tag;
   // index of the view in the current view list
   int _index;
-  // flag to mark that the view has changed1
+  // flag to mark that the view has changed
   bool _changed;
   // tag of the source view if this view is an alias, -1 otherwise
   int _aliasOf;
