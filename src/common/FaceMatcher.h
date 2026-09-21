@@ -11,9 +11,9 @@
 #include <vector>
 
 // Finds the faces that are met an odd number of times - the skin of a set of
-// 3D elements, when each element gives its faces. A face is told apart by
-// its 3 or 4 nodes (of type K: an identifier or an address; 0 for the fourth
-// node of a triangle) and a tag (the entity, so that the skin can be taken
+// 3D elements, when each element gives its faces (or of 2D elements, when
+// each gives its edges). A face is told apart by its 2 to 4 nodes (of type K:
+// an identifier or an address, never 0) and a tag (the entity, so that the skin can be taken
 // entity by entity); what gave it (of type Owner) and its number in it are
 // kept for the faces that are left. A face met a second time is taken out of
 // the table, which thus never holds more than the front between the elements
@@ -64,8 +64,8 @@ public:
   static int share(const K *k, int numNodes, int n)
   {
     if(n <= 1) return 0;
-    K kmin = std::min(std::min(k[0], k[1]), k[2]);
-    if(numNodes == 4) kmin = std::min(kmin, k[3]);
+    K kmin = std::min(k[0], k[1]);
+    for(int a = 2; a < numNodes; a++) kmin = std::min(kmin, k[a]);
     return (int)((_mix((std::uint64_t)kmin) >> 20) % (std::uint64_t)n);
   }
   // The hash that stands for a face (k is sorted in place). Asking for the
@@ -73,7 +73,7 @@ public:
   // overlap.
   std::uint64_t hashOf(K *k, int numNodes, int tag) const
   {
-    if(numNodes < 4) k[3] = 0;
+    for(int a = numNodes; a < 4; a++) k[a] = 0;
     for(int a = 1; a < numNodes; a++)
       for(int b = a; b > 0 && k[b] < k[b - 1]; b--) std::swap(k[b], k[b - 1]);
     std::uint64_t h = _mix((std::uint64_t)k[0] * 0x9e3779b97f4a7c15ull ^
