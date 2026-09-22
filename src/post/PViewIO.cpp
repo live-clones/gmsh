@@ -322,7 +322,7 @@ bool PView::write(const std::string &fileName, int format, bool append)
     break;
   case 6: ret = _data->writeMED(fileName); break;
   case 7: ret = writeX3D(fileName); break;
-  case 8: ret = writeVTU(fileName, CTX::instance()->post.binary, {this}); break;
+  case 8: ret = _writeVTUOrAdapted(fileName); break;
   case 10: {
     std::string ext = SplitFileName(fileName)[2];
     if(ext == ".pos")
@@ -342,7 +342,7 @@ bool PView::write(const std::string &fileName, int format, bool append)
     else if(ext == ".x3d")
       ret = writeX3D(fileName);
     else if(ext == ".vtu" || ext == ".pvtu" || ext == ".pvd")
-      ret = writeVTU(fileName, CTX::instance()->post.binary, {this});
+      ret = _writeVTUOrAdapted(fileName);
     else
       ret = _data->writeTXT(fileName);
     break;
@@ -355,6 +355,19 @@ bool PView::write(const std::string &fileName, int format, bool append)
 
   if(ret) Msg::StatusBar(true, "Done writing '%s'", fileName.c_str());
   return ret;
+}
+
+// an adaptive view is written as it is shown: refined, with the recursion
+// level and the target error of the view (in a single .vtu, or in the pieces
+// of a .pvtu, as many as it takes to keep them small)
+bool PView::_writeVTUOrAdapted(const std::string &fileName)
+{
+  bool binary = CTX::instance()->post.binary;
+  if(!_options->adaptVisualizationGrid)
+    return writeVTU(fileName, binary, {this});
+  std::string ext = SplitFileName(fileName)[2];
+  return writeAdapt(fileName, 0, binary, _options->maxRecursionLevel,
+                    _options->targetError, (ext == ".pvtu") ? 0 : 1);
 }
 
 // Routines for export of adapted views to pvtu file format for parallel

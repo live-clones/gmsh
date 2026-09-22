@@ -9,24 +9,10 @@
 #include <deque>
 #include <set>
 #include <vector>
-#include <cstdlib>
 #include <algorithm>
-#include <sys/stat.h>
-#include <assert.h>
-#include <stdio.h>
 #include <string>
 #include <sstream>
 #include "fullMatrix.h"
-
-#if defined(WIN32)
-typedef unsigned __int8 uint8_t; // Valid for _MSC_VER >= 1300
-typedef unsigned __int64 uint64_t;
-#define PRIu8 "u"
-#define PRIu64 "I64u"
-#else
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-#endif
 
 typedef std::vector<int> vectInt;
 
@@ -34,7 +20,7 @@ class PViewData;
 class PViewDataList;
 class GMSH_PostPlugin;
 
-// For old compilers that do not support yet std::to_string()
+// (used by ParaView's GmshReader plugin)
 template <class T> std::string ToString(const T &val)
 {
   std::stringstream stream;
@@ -282,116 +268,7 @@ public:
   ~globalVTKData() { clearGlobalData(); }
 };
 
-class VTKData {
-public:
-  // Data container to write output files readable for ParaView
-  // vtk legacy and vtu for now
-  std::string vtkFieldName;
-  std::string vtkFileName;
-  std::string vtkFormat;
-  std::string vtkDirName;
-
-  int vtkStep;
-  int vtkLevel;
-  int vtkNumComp;
-  double vtkTol;
-  int vtkNpart;
-
-  bool vtkIsBinary;
-  int vtkUseDefaultName;
-  int minElmPerPart, maxElmPerPart, numPartMinElm, numPartMaxElm;
-
-  // File variables
-  FILE *vtkFile;
-  FILE *vtkFileCoord;
-  FILE *vtkFileConnect;
-  FILE *vtkFileCellOffset;
-  FILE *vtkFileCellType;
-  FILE *vtkFileNodVal;
-  int vtkCountFile;
-
-  int vtkTotNumElmLev0;
-  int vtkCountTotElmLev0;
-  int vtkCountTotNod;
-  int vtkCountTotElm;
-  int vtkCountCoord;
-  int vtkCountTotNodConnect;
-  int vtkCountTotVal;
-  int vtkCountCellOffset; // used only for ascii output
-  int vtkCountCellType; // used only for ascii output
-
-  std::vector<vectInt> vtkLocalConnectivity; // conectivity (vector of vector)
-  std::vector<int> vtkLocalCellType; // topology
-  std::vector<PCoords> vtkLocalCoords; // coordinates
-  std::vector<PValues> vtkLocalValues; // nodal values (either scalar or vector)
-
-public:
-  VTKData(std::string fieldName = "unknown", int numComp = -1, int step = -1,
-          int level = -1, double tol = 0.0, std::string filename = "unknown",
-          int useDefaultName = 1, int npart = -1, bool isBinary = true)
-  {
-    vtkIsBinary = isBinary; // choice: true, false
-    vtkFormat =
-      std::string("vtu"); // choice: vtk (VTK legacy), vtu (XML appended)
-
-    vtkFieldName = fieldName;
-    vtkFileName = filename;
-    vtkUseDefaultName = useDefaultName;
-    vtkNumComp = numComp;
-    vtkStep = step;
-    vtkLevel = level;
-    vtkTol = tol;
-    vtkNpart = npart;
-
-    vtkCountFile = 0;
-    vtkTotNumElmLev0 = 0;
-    vtkCountTotElmLev0 = 0;
-    vtkCountTotNod = 0;
-    vtkCountTotElm = 0;
-    vtkCountCoord = 0;
-    vtkCountTotNodConnect = 0;
-    vtkCountTotVal = 0;
-    vtkCountCellOffset = 0; // used only for ascii output
-    vtkCountCellType = 0;
-  }
-  void clearLocalData()
-  {
-    for(auto it = vtkLocalConnectivity.begin();
-        it != vtkLocalConnectivity.end(); ++it) {
-      it->clear();
-    }
-    vtkLocalConnectivity.clear();
-    vtkLocalCellType.clear();
-    vtkLocalCoords.clear();
-    vtkLocalValues.clear();
-  }
-  ~VTKData() { clearLocalData(); }
-  void incrementTotNod(int increment) { vtkCountTotNod += increment; }
-  void incrementTotElm(int increment) { vtkCountTotElm += increment; }
-  void incrementTotElmLev0(int increment) { vtkCountTotElmLev0 += increment; }
-  bool isLittleEndian();
-  void SwapArrayByteOrder(void *array, int nbytes,
-                          int nItems); // used only for VTK
-  int getPVCellType(int numEdges);
-  // void writeParaViewData();
-  void writeVTKElmData();
-  void initVTKFile();
-  void finalizeVTKFile();
-  void setFileDistribution()
-  {
-    int tmpmod = vtkTotNumElmLev0 % vtkNpart;
-    minElmPerPart = (vtkTotNumElmLev0 - tmpmod) / vtkNpart;
-    numPartMinElm = vtkNpart - tmpmod;
-
-    if(tmpmod == 0)
-      maxElmPerPart = minElmPerPart;
-    else
-      maxElmPerPart = minElmPerPart + 1;
-    numPartMaxElm = tmpmod;
-    assert(vtkTotNumElmLev0 ==
-           minElmPerPart * numPartMinElm + maxElmPerPart * numPartMaxElm);
-  }
-};
+class adaptiveVTKWriter; // (in adaptiveData.cpp)
 
 // The elements of one kind of a view
 class adaptiveElements {
@@ -445,9 +322,10 @@ public:
   //   with paraview,
   // - and/or generation of VTK data structure for ParaView plugin.
 
-  // addInView for VTK output files
-  void addInViewForVTK(int step, PViewData *in, VTKData &myVTKData,
-                       bool writeVtk = true, bool buildStaticData = false);
+  // addInView for VTK output files and for globalVTKData
+  void addInViewForVTK(int step, double tol, PViewData *in,
+                       adaptiveVTKWriter *writer, bool buildStaticData,
+                       int &numPoints);
 
   int countElmLev0(int step, PViewData *in);
 

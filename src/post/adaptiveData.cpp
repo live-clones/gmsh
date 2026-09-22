@@ -17,6 +17,9 @@
 #include "Plugin.h"
 #include "OS.h"
 #include "GmshDefines.h"
+#include <sstream>
+#include "StringUtils.h"
+#include "VTKXML.h"
 #include "ElementType.h"
 
 std::vector<vectInt> globalVTKData::vtkGlobalConnectivity;
@@ -1068,641 +1071,101 @@ void adaptiveData::changeResolution(int step, int level, double tol,
 
 }
 
-bool VTKData::isLittleEndian()
-{
-  int num = 1;
-  if(*(char *)&num == 1)
-    return true; // Little Endian
-  else
-    return false; // Big Endian
-}
+// The export of adapted views to VTK files, and the VTK data structure built
+// for ParaView's GmshReader plugin (globalVTKData). The view is refined an
+// element at a time, and written a piece (a .vtu file) at a time, so that the
+// memory that is needed is the one of a piece: with enough pieces, views of
+// any size can be refined to any level.
 
-void VTKData::SwapArrayByteOrder(void *array, int nbytes, int nItems)
-{
-  // This swaps the byte order for the array of nItems each of size nbytes
-  int i, j;
-  unsigned char *ucDst = (unsigned char *)array;
-
-  for(i = 0; i < nItems; i++) {
-    for(j = 0; j < (nbytes / 2); j++)
-      std::swap(ucDst[j], ucDst[(nbytes - 1) - j]);
-    ucDst += nbytes;
+class adaptiveVTKWriter {
+private:
+  std::string _path, _name; // of the files, without extension
+  bool _binary;
+  std::size_t _numPieces, _numElements, _element;
+  vtkXMLGrid _grid;
+  std::vector<std::string> _pieces;
+  bool _ok;
+  std::size_t _pieceOf(std::size_t element) const
+  {
+    return (_numElements && _numPieces) ? element * _numPieces / _numElements : 0;
   }
-}
-
-void VTKData::writeVTKElmData()
-{
-  // This routine writes vtu files (ascii or binary) from a elemental data base
-  // of nodes coordinates, cell connectivity, type and offset, and point data
-  // (either scalar or vector field)
-
-  // Format choice
-  if(vtkFormat == "vtu") {
-    if(vtkCountTotElmLev0 <= numPartMinElm * minElmPerPart) {
-      if((vtkCountTotElmLev0 - 1) % minElmPerPart == 0) { // new filename
-        vtkCountFile = (vtkCountTotElmLev0 - 1) / minElmPerPart;
-        initVTKFile();
-      }
-    }
-    else {
-      if((vtkCountTotElmLev0 - 1 - numPartMinElm * minElmPerPart) %
-           maxElmPerPart ==
-         0) {
-        // new filename
-        vtkCountFile = numPartMinElm + (vtkCountTotElmLev0 - 1 -
-                                        numPartMinElm * minElmPerPart) /
-                                         maxElmPerPart;
-        initVTKFile();
-      }
-    }
-
-    if(vtkIsBinary == true) { // Use appended format for raw binary
-
-      // Write raw binary data to separate files first.  Text headers will be
-      // added later, as wall as raw data size (needs to know the size before)
-
-      int counter;
-      uint64_t *i64array;
-      uint8_t *i8array;
-      double *darray;
-
-      // Node value
-      counter = 0;
-      darray = new double[vtkNumComp * vtkLocalValues.size()];
-      for(auto it = vtkLocalValues.begin(); it != vtkLocalValues.end(); ++it) {
-        for(int i = 0; i < vtkNumComp; i++) { darray[counter + i] = it->v[i]; }
-        counter += vtkNumComp;
-        vtkCountTotVal += vtkNumComp;
-      }
-      assert(counter == vtkNumComp * (int)vtkLocalValues.size());
-      fwrite(darray, sizeof(double), vtkNumComp * vtkLocalValues.size(),
-             vtkFileNodVal);
-      delete[] darray;
-
-      // Points
-      int sizeArray = (int)vtkLocalCoords.size();
-      darray = new double[3 * sizeArray];
-      counter = 0;
-      for(auto it = vtkLocalCoords.begin(); it != vtkLocalCoords.end(); ++it) {
-        for(int i = 0; i < 3; i++) { darray[counter + i] = (*it).c[i]; }
-        counter += 3;
-        vtkCountCoord += 3;
-      }
-      fwrite(darray, sizeof(double), 3 * sizeArray, vtkFileCoord);
-      delete[] darray;
-
-      // Cells
-
-      // First count the number of integers that described the cell data in
-      // vtkConnectivity See
-      // http://www.vtk.org/wp-content/uploads/2015/04/file-formats.pdf (page 4)
-      int cellSizeData = 0;
-      for(auto it = vtkLocalConnectivity.begin();
-          it != vtkLocalConnectivity.end(); ++it) {
-        // Contrary to vtk format, no +1 required for the number of nodes in the
-        // element
-        cellSizeData += (int)it->size();
-      }
-
-      // Connectivity (and build offset at the same time)
-      counter = 0;
-      int cellcounter = 0;
-      i64array = new uint64_t[cellSizeData];
-      uint64_t *cellOffset = new uint64_t[vtkLocalConnectivity.size()];
-      for(auto it = vtkLocalConnectivity.begin();
-          it != vtkLocalConnectivity.end(); ++it) {
-        for(auto jt = it->begin(); jt != it->end(); ++jt) {
-          i64array[counter] = *jt;
-          counter++;
-          vtkCountTotNodConnect++;
-        }
-        cellOffset[cellcounter] = vtkCountTotNodConnect; // build the offset
-        cellcounter++;
-      }
-      fwrite(i64array, sizeof(uint64_t), cellSizeData, vtkFileConnect);
-      delete[] i64array;
-
-      // Cell offset
-      fwrite(cellOffset, sizeof(uint64_t), vtkLocalConnectivity.size(),
-             vtkFileCellOffset);
-      delete[] cellOffset;
-
-      // Cell type
-      counter = 0;
-      i8array = new uint8_t[vtkLocalConnectivity.size()];
-      for(auto it = vtkLocalCellType.begin(); it != vtkLocalCellType.end();
-          it++) {
-        i8array[counter] = *it;
-        counter++;
-      }
-      fwrite(i8array, sizeof(uint8_t), vtkLocalConnectivity.size(),
-             vtkFileCellType);
-      delete[] i8array;
-    }
-    else { // ascii
-
-      // Node values
-      for(auto it = vtkLocalValues.begin(); it != vtkLocalValues.end(); ++it) {
-        for(int i = 0; i < vtkNumComp; i++) {
-          fprintf(vtkFileNodVal, "%23.16e ", (*it).v[i]);
-          vtkCountTotVal++;
-          if(vtkCountTotVal % 6 == 0) fprintf(vtkFileNodVal, "\n");
-        }
-      }
-
-      for(auto it = vtkLocalCoords.begin(); it != vtkLocalCoords.end(); it++) {
-        fprintf(vtkFileCoord, "%23.16e %23.16e %23.16e ", (*it).c[0],
-                (*it).c[1], (*it).c[2]);
-        vtkCountCoord += 3;
-        if(vtkCountCoord % 6 == 0) fprintf(vtkFileCoord, "\n");
-      }
-
-      // Cells
-      // Connectivity
-      int *cellOffset = new int[vtkLocalConnectivity.size()];
-      int cellcounter = 0;
-      for(auto it = vtkLocalConnectivity.begin();
-          it != vtkLocalConnectivity.end(); ++it) {
-        for(auto jt = it->begin(); jt != it->end(); ++jt) {
-          fprintf(vtkFileConnect, "%d ", *jt);
-          vtkCountTotNodConnect++;
-          if(vtkCountTotNodConnect % 6 == 0) fprintf(vtkFileConnect, "\n");
-        }
-        cellOffset[cellcounter] = vtkCountTotNodConnect; // build the offset
-        cellcounter++;
-      }
-
-      // Cell offset
-      for(uint64_t i = 0; i < vtkLocalConnectivity.size(); i++) {
-        fprintf(vtkFileCellOffset, "%d ", cellOffset[i]);
-        vtkCountCellOffset++;
-        if(vtkCountCellOffset % 6 == 0) fprintf(vtkFileCellOffset, "\n");
-      }
-      delete[] cellOffset;
-
-      // Cell type
-      for(auto it = vtkLocalCellType.begin(); it != vtkLocalCellType.end();
-          it++) {
-        fprintf(vtkFileCellType, "%d ", *it);
-        vtkCountCellType++;
-        if(vtkCountCellType % 6 == 0) fprintf(vtkFileCellType, "\n");
-      }
-
-    } // if ascii
-
-    // finalize and close current vtu file
-    if(vtkCountTotElmLev0 <= numPartMinElm * minElmPerPart) {
-      if(vtkCountTotElmLev0 % minElmPerPart == 0) { finalizeVTKFile(); }
-    }
-    else {
-      if((vtkCountTotElmLev0 - numPartMinElm * minElmPerPart) % maxElmPerPart ==
-         0) {
-        finalizeVTKFile();
-      }
-    }
-
-  } // vtu format
-  else
-    Msg::Error("Unknown format");
-}
-
-void VTKData::initVTKFile()
-{
-  // Temporary files
-  vtkFileCoord = fopen("vtkCoords.vtu", "wb");
-  vtkFileConnect = fopen("vtkConnectivity.vtu", "wb");
-  vtkFileCellOffset = fopen("vtkCellOffset.vtu", "wb");
-  vtkFileCellType = fopen("vtkCellType.vtu", "wb");
-  vtkFileNodVal = fopen("vtkNodeValue.vtu", "wb");
-
-  if(vtkCountFile == 0) {
-    // write the pvtu file and create the corresponding directory for vtu files
-
-    if(vtkUseDefaultName == 1) {
-      vtkDirName = vtkFieldName + "_step" + ToString<int>(vtkStep) + "_level" +
-                   ToString<int>(vtkLevel) + "_tol" + ToString<double>(vtkTol) +
-                   "_npart" + ToString<int>(vtkNpart);
-    }
-    else {
-      // Remove existing extension here to avoid duplicate
-      std::size_t found = vtkFileName.find_last_of('.');
-      // remove extension
-      if(found != std::string::npos) vtkFileName = vtkFileName.substr(0, found);
-      vtkDirName = vtkFileName;
-    }
-
-    CreateSingleDir(vtkDirName);
-
-    vtkFileName =
-      vtkDirName + ".p" + vtkFormat; // add pvtu extension to file name
-    vtkFile = fopen(vtkFileName.c_str(), "w");
-
-    bool littleEndian = isLittleEndian(); // Determine endianess
-    if(littleEndian == true)
-      fprintf(vtkFile, "<VTKFile type=\"PUnstructuredGrid\" version=\"1.0\" "
-                       "byte_order=\"LittleEndian\">\n");
-    else
-      fprintf(vtkFile, "<VTKFile type=\"PUnstructuredGrid\" version=\"1.0\" "
-                       "byte_order=\"BigEndian\">\n");
-
-    fprintf(vtkFile, "<PUnstructuredGrid GhostLevel=\"0\">\n");
-    fprintf(vtkFile, "<PPoints>\n");
-    fprintf(vtkFile, "<DataArray type=\"Float64\" Name=\"Points\" "
-                     "NumberOfComponents=\"3\"/>\n");
-    fprintf(vtkFile, "</PPoints>\n");
-
-    fprintf(vtkFile, "<PCells>\n");
-    fprintf(vtkFile, "<PDataArray type=\"Int64\" Name=\"connectivity\" "
-                     "NumberOfComponents=\"1\"/>\n");
-    fprintf(vtkFile, "<PDataArray type=\"Int64\" Name=\"offsets\" "
-                     "NumberOfComponents=\"1\"/>\n");
-    fprintf(
-      vtkFile,
-      "<PDataArray type=\"UInt8\" Name=\"types\" NumberOfComponents=\"1\"/>\n");
-    fprintf(vtkFile, "</PCells>\n");
-
-    fprintf(vtkFile, "<PPointData>\n");
-    fprintf(
-      vtkFile,
-      "<PDataArray type=\"Float64\" Name=\"%s\" NumberOfComponents=\"%d\"/>\n",
-      vtkFieldName.c_str(), vtkNumComp);
-    fprintf(vtkFile, "</PPointData>\n");
-
-    fprintf(vtkFile, "<PCellData>\n");
-    fprintf(vtkFile, "</PCellData>\n");
-
-    for(int i = 0; i < vtkNpart; i++)
-      fprintf(vtkFile, "<Piece Source=\"%s/data%d.vtu\"/>\n",
-              vtkDirName.c_str(), i);
-    fprintf(vtkFile, "</PUnstructuredGrid>\n");
-    fprintf(vtkFile, "</VTKFile>\n");
-    fclose(vtkFile);
-  }
-}
-
-void VTKData::finalizeVTKFile()
-{
-  // This routine writes vtu files (ascii or binary) from a complete data base
-  // of nodes coordinates, cell connectivity, type and offset, and point data
-  // (either scalar or vector field)
-
-  // Close first temporary files.  Todo: Avoid multiple open/close actions and
-  // keep the file open to write all information
-  fclose(vtkFileCoord);
-  fclose(vtkFileConnect);
-  fclose(vtkFileCellOffset);
-  fclose(vtkFileCellType);
-  fclose(vtkFileNodVal);
-
-  bool littleEndian = isLittleEndian(); // Determine endianess
-
-  // Open final file
-  std::string filename;
-  filename = vtkDirName + "/data" + ToString(vtkCountFile) + "." + vtkFormat;
-
-  Msg::StatusBar(true,
-                 "Writing VTK data in %s: fieldname = %s - numElm = %d - "
-                 "numNod = %d nodes\n",
-                 filename.c_str(), vtkFieldName.c_str(), vtkCountTotElm,
-                 vtkCountTotNod);
-
-  assert(vtkCountTotNod == vtkCountCoord / 3);
-
-  // Now concatenate headers with data files
-  if(vtkFormat == "vtu") { // Format choice
-
-    if(vtkIsBinary == true) { // Binary or ascii
-
-      vtkFile = fopen(filename.c_str(), "wb");
-      if(vtkFile == nullptr) {
-        printf("Could not open file %s\n", filename.c_str());
-        return;
-      }
-
-      uint64_t byteoffset = 0;
-
-      // Headers first
-
-      if(littleEndian == true)
-        fprintf(vtkFile, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" "
-                         "byte_order=\"LittleEndian\" "
-                         "header_type=\"UInt64\">\n");
-      else
-        fprintf(vtkFile, "<VTKFile type=\"PUnstructuredGrid\" version=\"1.0\" "
-                         "byte_order=\"BigEndian\" header_type=\"UInt64\">\n");
-      fprintf(vtkFile, "<UnstructuredGrid>\n");
-      fprintf(vtkFile, "<Piece NumberOfPoints=\"%d\" NumberOfCells=\"%d\">\n",
-              vtkCountTotNod, vtkCountTotElm);
-
-      // Node value
-      fprintf(vtkFile, "<PointData>\n");
-      fprintf(vtkFile,
-              "<DataArray type=\"Float64\" Name=\"%s\" "
-              "NumberOfComponents=\"%d\" format=\"appended\" offset=\"%" PRIu64
-              "\"/>\n",
-              vtkFieldName.c_str(), vtkNumComp, byteoffset);
-      fprintf(vtkFile, "</PointData>\n");
-      byteoffset = byteoffset + (vtkCountTotNod * vtkNumComp + 1) *
-                                  sizeof(double); // +1 for datasize in bytes
-
-      // Cell values (none here but may change)
-      fprintf(vtkFile, "<CellData>\n");
-      fprintf(vtkFile,
-              "</CellData>\n"); // no offset here because empty cell data
-
-      // Nodes
-      fprintf(vtkFile, "<Points>\n");
-      fprintf(vtkFile,
-              "<DataArray type=\"Float64\" Name=\"Points\" "
-              "NumberOfComponents=\"3\" format=\"appended\" offset=\"%" PRIu64
-              "\"/>\n",
-              byteoffset);
-      fprintf(vtkFile, "</Points>\n");
-      byteoffset = byteoffset + (vtkCountCoord + 1) *
-                                  sizeof(double); // +1 for datasize in bytes
-
-      // Cells
-      fprintf(vtkFile, "<Cells>\n");
-      fprintf(vtkFile,
-              "<DataArray type=\"Int64\" Name=\"connectivity\" "
-              "format=\"appended\" offset=\"%" PRIu64 "\"/>\n",
-              byteoffset);
-      byteoffset = byteoffset + (vtkCountTotNodConnect + 1) * sizeof(uint64_t);
-      fprintf(vtkFile,
-              "<DataArray type=\"Int64\" Name=\"offsets\" format=\"appended\" "
-              "offset=\"%" PRIu64 "\"/>\n",
-              byteoffset);
-      byteoffset = byteoffset + (vtkCountTotElm + 1) * sizeof(uint64_t);
-      fprintf(vtkFile,
-              "<DataArray type=\"UInt8\" Name=\"types\" format=\"appended\" "
-              "offset=\"%" PRIu64 "\"/>\n",
-              byteoffset);
-      byteoffset = byteoffset + (vtkCountTotElm + 1) * sizeof(uint8_t);
-      fprintf(vtkFile, "</Cells>\n");
-
-      fprintf(vtkFile, "</Piece>\n");
-      fprintf(vtkFile, "</UnstructuredGrid>\n");
-
-      fprintf(vtkFile, "<AppendedData encoding=\"raw\">\n");
-      fprintf(vtkFile, "_");
-
-      uint64_t datasize;
-
-      // Node values
-      datasize = vtkNumComp * vtkCountTotNod * sizeof(double);
-      fwrite(&datasize, sizeof(uint64_t), 1, vtkFile);
-      fclose(vtkFile);
-
-      std::ifstream if_vtkNodeValue("vtkNodeValue.vtu", std::ios_base::binary);
-      std::ofstream of_vtkfile(filename.c_str(),
-                               std::ios_base::binary | std::ios_base::app);
-      of_vtkfile << if_vtkNodeValue.rdbuf();
-      if_vtkNodeValue.close();
-      of_vtkfile.close();
-
-      // Points
-      vtkFile = fopen(filename.c_str(), "ab");
-      datasize = vtkCountTotNod * 3 * sizeof(double);
-      fwrite(&datasize, sizeof(uint64_t), 1, vtkFile);
-      fclose(vtkFile);
-
-      std::ifstream if_vtkCoords("vtkCoords.vtu", std::ios_base::binary);
-      of_vtkfile.open(filename.c_str(),
-                      std::ios_base::binary | std::ios_base::app);
-      of_vtkfile << if_vtkCoords.rdbuf();
-      if_vtkCoords.close();
-      of_vtkfile.close();
-
-      // Cells
-      // Connectivity
-      vtkFile = fopen(filename.c_str(), "ab");
-      datasize = vtkCountTotNodConnect * sizeof(uint64_t);
-      fwrite(&datasize, sizeof(uint64_t), 1, vtkFile);
-      fclose(vtkFile);
-
-      std::ifstream if_vtkConnectivity("vtkConnectivity.vtu",
-                                       std::ios_base::binary);
-      of_vtkfile.open(filename.c_str(),
-                      std::ios_base::binary | std::ios_base::app);
-      of_vtkfile << if_vtkConnectivity.rdbuf();
-      if_vtkConnectivity.close();
-      of_vtkfile.close();
-
-      // Cell offset
-      vtkFile = fopen(filename.c_str(), "ab");
-      datasize = vtkCountTotElm * sizeof(uint64_t);
-      fwrite(&datasize, sizeof(uint64_t), 1, vtkFile);
-      fclose(vtkFile);
-
-      std::ifstream if_vtkCellOffset("vtkCellOffset.vtu",
-                                     std::ios_base::binary);
-      of_vtkfile.open(filename.c_str(),
-                      std::ios_base::binary | std::ios_base::app);
-      of_vtkfile << if_vtkCellOffset.rdbuf();
-      if_vtkCellOffset.close();
-      of_vtkfile.close();
-
-      // Cell type
-      vtkFile = fopen(filename.c_str(), "ab");
-      datasize = vtkCountTotElm * sizeof(uint8_t);
-      fwrite(&datasize, sizeof(uint64_t), 1, vtkFile);
-      fclose(vtkFile);
-
-      std::ifstream if_vtkCellType("vtkCellType.vtu", std::ios_base::binary);
-      of_vtkfile.open(filename.c_str(),
-                      std::ios_base::binary | std::ios_base::app);
-      of_vtkfile << if_vtkCellType.rdbuf();
-      if_vtkCellType.close();
-      of_vtkfile.close();
-
-      vtkFile = fopen(filename.c_str(), "ab");
-      fprintf(vtkFile, "\n");
-      fprintf(vtkFile, "</AppendedData>\n");
-      fprintf(vtkFile, "</VTKFile>\n"); // for both binary and ascii
-      fclose(vtkFile);
-    }
-    else { // ascii
-
-      vtkFile = fopen(filename.c_str(), "w");
-      if(vtkFile == nullptr) {
-        printf("Could not open file %s\n", filename.c_str());
-        return;
-      }
-
-      if(littleEndian == true)
-        fprintf(vtkFile, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" "
-                         "byte_order=\"LittleEndian\" "
-                         "header_type=\"UInt64\">\n");
-      else
-        fprintf(vtkFile, "<VTKFile type=\"PUnstructuredGrid\" version=\"1.0\" "
-                         "byte_order=\"BigEndian\" header_type=\"UInt64\">\n");
-      fprintf(vtkFile, "<UnstructuredGrid>\n");
-      fprintf(vtkFile, "<Piece NumberOfPoints=\"%d\" NumberOfCells=\"%d\">\n",
-              vtkCountTotNod, vtkCountTotElm);
-
-      // Node values
-      fprintf(vtkFile, "<PointData>\n");
-      fprintf(vtkFile,
-              "<DataArray type=\"Float64\" Name=\"%s\" "
-              "NumberOfComponents=\"%d\" format=\"ascii\">\n",
-              vtkFieldName.c_str(), vtkNumComp);
-      fclose(vtkFile); // close file for binary concatenation
-
-      std::ifstream if_vtkNodeValue("vtkNodeValue.vtu", std::ios_base::binary);
-      std::ofstream of_vtkfile(filename.c_str(),
-                               std::ios_base::binary | std::ios_base::app);
-      of_vtkfile << if_vtkNodeValue.rdbuf();
-      if_vtkNodeValue.close();
-      of_vtkfile.close();
-
-      vtkFile = fopen(filename.c_str(), "a");
-      fprintf(vtkFile, "</DataArray>\n");
-      fprintf(vtkFile, "</PointData>\n");
-
-      // Cell values
-      fprintf(vtkFile, "<CellData>\n");
-      fprintf(vtkFile, "</CellData>\n");
-
-      // Nodes
-      fprintf(vtkFile, "<Points>\n");
-      fprintf(vtkFile, "<DataArray type=\"Float64\" Name=\"Points\" "
-                       "NumberOfComponents=\"3\" format=\"ascii\">\n");
-      fclose(vtkFile); // close file for binary concatenation
-
-      of_vtkfile.open(filename.c_str(),
-                      std::ios_base::binary | std::ios_base::app);
-      std::ifstream if_vtkCoords("vtkCoords.vtu", std::ios_base::binary);
-      of_vtkfile << if_vtkCoords.rdbuf();
-      if_vtkCoords.close();
-      of_vtkfile.close();
-
-      vtkFile = fopen(filename.c_str(), "a");
-      fprintf(vtkFile, "</DataArray>\n");
-      fprintf(vtkFile, "</Points>\n");
-
-      // Cells
-      fprintf(vtkFile, "<Cells>\n");
-      fprintf(
-        vtkFile,
-        "<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n");
-      fclose(vtkFile); // close file for binary concatenation
-
-      // Connectivity
-      of_vtkfile.open(filename.c_str(),
-                      std::ios_base::binary | std::ios_base::app);
-      std::ifstream if_vtkConnectivity("vtkConnectivity.vtu",
-                                       std::ios_base::binary);
-      of_vtkfile << if_vtkConnectivity.rdbuf();
-      if_vtkConnectivity.close();
-      of_vtkfile.close();
-
-      vtkFile = fopen(filename.c_str(), "a");
-      fprintf(vtkFile, "</DataArray>\n");
-
-      // Cell offset
-      fprintf(vtkFile,
-              "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n");
-      fclose(vtkFile); // close file for binary concatenation
-
-      of_vtkfile.open(filename.c_str(),
-                      std::ios_base::binary | std::ios_base::app);
-      std::ifstream if_vtkCellOffset("vtkCellOffset.vtu",
-                                     std::ios_base::binary);
-      of_vtkfile << if_vtkCellOffset.rdbuf();
-      if_vtkCellOffset.close();
-      of_vtkfile.close();
-
-      vtkFile = fopen(filename.c_str(), "a");
-      fprintf(vtkFile, "</DataArray>\n");
-
-      // Cell type
-      fprintf(vtkFile,
-              "<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n");
-      fclose(vtkFile); // close file for binary concatenation
-
-      of_vtkfile.open(filename.c_str(),
-                      std::ios_base::binary | std::ios_base::app);
-      std::ifstream if_vtkCellType("vtkCellType.vtu", std::ios_base::binary);
-      of_vtkfile << if_vtkCellType.rdbuf();
-      if_vtkCellType.close();
-      of_vtkfile.close();
-
-      vtkFile = fopen(filename.c_str(), "a");
-      fprintf(vtkFile, "</DataArray>\n");
-      fprintf(vtkFile, "</Cells>\n");
-
-      fprintf(vtkFile, "</Piece>\n");
-      fprintf(vtkFile, "</UnstructuredGrid>\n");
-
-      fprintf(vtkFile, "</VTKFile>\n"); // for both binary and ascii
-      fclose(vtkFile);
-    } // if binary/ascii
-
-    // Remove temporary files now
-    if(remove("vtkCoords.vtu") != 0)
-      printf("ERROR: Could not remove vtkCoords.vtu\n");
-    if(remove("vtkConnectivity.vtu") != 0)
-      printf("ERROR: Could not remove vtkConnectivity.vtu\n");
-    if(remove("vtkCellOffset.vtu") != 0)
-      printf("ERROR: Could not remove vtkCellOffset.vtu\n");
-    if(remove("vtkCellType.vtu") != 0)
-      printf("ERROR: Could not remove vtkCellType.vtu\n");
-    if(remove("vtkNodeValue.vtu") != 0)
-      printf("ERROR: Could not remove vtkNodeValue.vtu\n");
-
-    // Reset counters for next file
-    vtkCountTotNod = 0;
-    vtkCountTotElm = 0;
-    vtkCountCoord = 0;
-    vtkCountTotNodConnect = 0;
-    vtkCountTotVal = 0;
-    vtkCountCellOffset = 0;
-    vtkCountCellType = 0;
+  void _flush()
+  {
+    if(_grid.types.empty()) return;
+    std::string name = _name + ".vtu";
+    if(_numPieces)
+      name = _name + "_" + std::to_string(_pieces.size() + 1) + ".vtu";
+    if(!_grid.write(_path + name, _binary, "Created by Gmsh")) _ok = false;
+    _pieces.push_back(name);
+    _grid.points.clear();
+    _grid.connectivity.clear();
+    _grid.offsets.clear();
+    _grid.types.clear();
+    _grid.pointData[0].data.clear();
   }
 
-  else
-    Msg::Error("File format unknown: %s", vtkFormat.c_str());
-}
-
-int VTKData::getPVCellType(int numEdges)
-{
-  int cellType; // Convention for cell types in ParaView
-  switch(numEdges) {
-  case 0:
-    printf(
-      "WARNING: Trying to write a node to the ParaView data base and file\n");
-    cellType = -1;
-    break;
-  case 1:
-    printf(
-      "WARNING: Trying to write a node to the ParaView data base and file\n");
-    cellType = -2;
-    break;
-  case 3:
-    cellType = 5; // 2D VTK triangle
-    break;
-  case 4:
-    cellType = 9; // 2D VTK quadrangle
-    break;
-  case 6:
-    cellType = 10; // 3D VTK tetrahedron
-    break;
-  case 9:
-    cellType = 13; // 3D VTK prism/wedge
-    break;
-  case 8:
-    cellType = 14; // 3D VTK pyramid
-    break;
-  case 12:
-    cellType = 12; // 3D VTK hexahedron
-    break;
-  default:
-    printf("ERROR: No cell type was detected\n");
-    cellType = -1;
-    break;
+public:
+  // the file name without its extension; the elements of the view are shared
+  // between the pieces (0: a single .vtu file and no .pvtu)
+  adaptiveVTKWriter(const std::string &path, const std::string &name,
+                    bool binary, int numPieces,
+                    std::size_t numElements, const std::string &fieldName,
+                    int numComp)
+    : _path(path), _name(name), _binary(binary),
+      _numPieces(std::max(numPieces, 0)),
+      _numElements(numElements), _element(0), _ok(true)
+  {
+    vtkXMLGrid::realArray a;
+    a.name = fieldName;
+    a.numComp = numComp;
+    _grid.pointData.push_back(a);
   }
+  std::size_t numPoints() const { return _grid.points.size() / 3; }
+  void addPoint(const PCoords &x, const PValues &v)
+  {
+    for(int k = 0; k < 3; k++) _grid.points.push_back(x.c[k]);
+    for(int k = 0; k < v.sizev; k++) _grid.pointData[0].data.push_back(v.v[k]);
+  }
+  void addCell(int vtkType, const std::vector<int> &pointsInPiece)
+  {
+    for(int n : pointsInPiece) _grid.connectivity.push_back(n);
+    _grid.offsets.push_back(_grid.connectivity.size());
+    _grid.types.push_back((std::uint8_t)vtkType);
+  }
+  // an element of the view has been refined
+  void endElement()
+  {
+    _element++;
+    if(_pieceOf(_element) != _pieceOf(_element - 1)) _flush();
+  }
+  bool finish()
+  {
+    _flush();
+    if(_pieces.empty()) {
+      Msg::Warning("No element to write in '%s%s'", _path.c_str(),
+                   _name.c_str());
+      return false;
+    }
+    if(_numPieces &&
+       !_grid.writeParallel(_path + _name + ".pvtu", _pieces,
+                            "Created by Gmsh"))
+      _ok = false;
+    return _ok;
+  }
+};
 
-  return cellType;
+// the VTK cell of the (first order) refined elements
+static int vtkCellType(int type)
+{
+  switch(type) {
+  case TYPE_TRI: return 5;
+  case TYPE_QUA: return 9;
+  case TYPE_TET: return 10;
+  case TYPE_HEX: return 12;
+  case TYPE_PRI: return 13;
+  case TYPE_PYR: return 14;
+  default: return 0;
+  }
 }
 
 void adaptiveElements::buildMapping(nodMap &myNodMap, double tol,
@@ -1750,9 +1213,13 @@ void adaptiveElements::buildMapping(nodMap &myNodMap, double tol,
   }
 }
 
-void adaptiveElements::addInViewForVTK(int step, PViewData *in,
-                                          VTKData &myVTKData, bool writeVTK,
-                                          bool buildStaticData)
+// Refine the elements of this kind: into the writer if there is one, and into
+// globalVTKData if asked to. The points are shared between the refined
+// elements of an element of the view, but not further; numPoints counts the
+// ones made so far, which number those of globalVTKData.
+void adaptiveElements::addInViewForVTK(int step, double tol, PViewData *in,
+                                       adaptiveVTKWriter *writer,
+                                       bool buildStaticData, int &numPoints)
 {
   int numComp = in->getNumComponents(0, 0, 0);
   if(numComp != 1 && numComp != 3 && numComp != 9) return;
@@ -1826,92 +1293,41 @@ void adaptiveElements::addInViewForVTK(int step, PViewData *in,
         break;
       }
 
-      adapt(myVTKData.vtkTol, numComp, coords, values, range);
+      if(!adapt(tol, numComp, coords, values, range)) continue;
 
-      // Inside initial element, after adapt() has been called
+      // the points of the refined elements, numbered in the element
+      buildMapping(myNodMap, tol, numNodInsert);
+      std::vector<PCoords> points(numNodInsert, PCoords(0., 0., 0.));
+      std::vector<PValues> pointValues(numNodInsert, PValues(numComp));
+      for(std::size_t i = 0; i < coords.size(); i++) {
+        points[myNodMap.mapping[i]] = coords[i];
+        pointValues[myNodMap.mapping[i]] = values[i];
+      }
 
-      // Build the mapping of the canonical element,
-      // or recycle existing one in case  of uniform refinement
-      buildMapping(myNodMap, myVTKData.vtkTol, numNodInsert);
-
-      // Pre-allocate some space for the local coordinates and connectivity
-      // in order to write to any component of the vector later through vec[i]
-
-      myVTKData.vtkLocalCoords.resize(numNodInsert, PCoords(0.0, 0.0, 0.0));
-      myVTKData.vtkLocalValues.resize(numNodInsert, PValues(numComp));
-
+      int firstInPiece = writer ? (int)writer->numPoints() : 0;
       for(std::size_t i = 0; i < coords.size() / _shape.numNodes; i++) {
-        // Loop over
-        //  - all refined elements if refinement level > 0
-        //  - single initial element when refinement box is checked for the
-        //  first time (ref level =0)
-
-        // local connectivity for the considered sub triangle
-        vectInt vtkElmConnectivity;
-
-        for(int k = 0; k < _shape.numNodes; ++k) {
-          // Connectivity of the considered sub-element
-          int countTotNodloc = _shape.numNodes * i + k; // Nodes are duplicate here
-          int vtkNodeId =
-            myVTKData.vtkCountTotNod + myNodMap.mapping[countTotNodloc];
-          vtkElmConnectivity.push_back(vtkNodeId);
-
-          // Coordinates of the nodes of the considered sub-element
-          double px, py, pz;
-          px = coords[_shape.numNodes * i + k].c[0];
-          py = coords[_shape.numNodes * i + k].c[1];
-          pz = coords[_shape.numNodes * i + k].c[2];
-          PCoords tmpCoords = PCoords(px, py, pz);
-          myVTKData.vtkLocalCoords[myNodMap.mapping[countTotNodloc]] =
-            tmpCoords;
-
-          // Value associated with each nodes of the sub-element
-          myVTKData.vtkLocalValues[myNodMap.mapping[countTotNodloc]] =
-            values[_shape.numNodes * i + k];
+        vectInt inPiece, inAll;
+        for(int k = 0; k < _shape.numNodes; k++) {
+          int n = myNodMap.mapping[_shape.numNodes * i + k];
+          inPiece.push_back(firstInPiece + n);
+          inAll.push_back(numPoints + n);
         }
-
-        // Add elm connectivity to vector
-        myVTKData.vtkLocalConnectivity.push_back(vtkElmConnectivity);
-
-        // Increment global elm number
-        myVTKData.incrementTotElm(1);
-
-        // Save element type
-        myVTKData.vtkLocalCellType.push_back(
-          myVTKData.getPVCellType(_shape.numEdges));
-
-        // Global variables
-        if(buildStaticData == true) {
-          globalVTKData::vtkGlobalConnectivity.push_back(vtkElmConnectivity);
-          globalVTKData::vtkGlobalCellType.push_back(
-            myVTKData.getPVCellType(_shape.numEdges));
-        }
-
-        // Clear existing structure (safer)
-        vtkElmConnectivity.clear();
-      }
-
-      // Increment global node and elm-lev0 number
-      myVTKData.incrementTotNod(numNodInsert);
-      myVTKData.incrementTotElmLev0(1);
-
-      // Write the VTK data structure of the consider element to vtu file
-
-      if(writeVTK == true) { myVTKData.writeVTKElmData(); }
-
-      if(buildStaticData == true) {
-        for(int i = 0; i < numNodInsert; i++) {
-          globalVTKData::vtkGlobalCoords.push_back(myVTKData.vtkLocalCoords[i]);
-        }
-
-        for(int i = 0; i < numNodInsert; i++) {
-          globalVTKData::vtkGlobalValues.push_back(myVTKData.vtkLocalValues[i]);
+        if(writer) writer->addCell(vtkCellType(_shape.type), inPiece);
+        if(buildStaticData) {
+          globalVTKData::vtkGlobalConnectivity.push_back(inAll);
+          globalVTKData::vtkGlobalCellType.push_back(vtkCellType(_shape.type));
         }
       }
-
-      myVTKData.clearLocalData();
-
-    } // loop over mesh element
+      for(int i = 0; i < numNodInsert; i++) {
+        if(writer) writer->addPoint(points[i], pointValues[i]);
+        if(buildStaticData) {
+          globalVTKData::vtkGlobalCoords.push_back(points[i]);
+          globalVTKData::vtkGlobalValues.push_back(pointValues[i]);
+        }
+      }
+      numPoints += numNodInsert;
+      if(writer) writer->endElement();
+    }
   }
 }
 
@@ -1952,39 +1368,47 @@ void adaptiveData::changeResolutionForVTK(int step, int level, double tol,
   // clean global VTK data structure before (re)generating it
   if(buildStaticData == true) globalVTKData::clearGlobalData();
 
-  VTKData myVTKData(_inData->getName(), _inData->getNumComponents(0, 0, 0),
-                    step, level, tol, guiFileName, useDefaultName, npart,
-                    isBinary);
-  myVTKData.vtkTotNumElmLev0 = countTotElmLev0(step, _inData);
-  myVTKData.setFileDistribution();
+  // the files: name.pvtu and name_1.vtu, name_2.vtu, ..., with the name given
+  // or made from the view and the parameters
+  adaptiveVTKWriter *writer = nullptr;
+  if(writeVTK) {
+    std::vector<std::string> split = SplitFileName(guiFileName);
+    std::string name = split[1];
+    if(useDefaultName) {
+      std::string view = _inData->getName();
+      for(auto &c : view)
+        if(!isalnum((unsigned char)c) && c != '-' && c != '.') c = '_';
+      std::ostringstream os;
+      os << view << "_step" << step << "_level" << level << "_tol" << tol
+         << "_npart" << npart;
+      name = os.str();
+    }
+    // (npart <= 0: as many pieces as it takes for a piece to stay under two
+    // million cells if every element is refined down to the level)
+    std::size_t numElements = countTotElmLev0(step, _inData);
+    if(npart <= 0) npart = (int)(numElements * pow(8., level) / 2.e6) + 1;
+    bool single = (npart == 1 && split[2] != ".pvtu");
+    writer = new adaptiveVTKWriter(split[0], name, isBinary,
+                                   single ? 0 : npart,
+                                   numElements,
+                                   _inData->getName(),
+                                   _inData->getNumComponents(0, 0, 0));
+  }
 
   // Views of 2D and 3D elements only supported for VTK. _points and _lines are
   // currently ignored.
-  if(_triangles) _triangles->init(myVTKData.vtkLevel);
-  if(_quadrangles) _quadrangles->init(myVTKData.vtkLevel);
-  if(_tetrahedra) _tetrahedra->init(myVTKData.vtkLevel);
-  if(_prisms) _prisms->init(myVTKData.vtkLevel);
-  if(_hexahedra) _hexahedra->init(myVTKData.vtkLevel);
-  if(_pyramids) _pyramids->init(myVTKData.vtkLevel);
+  int numPoints = 0;
+  for(auto e : {_triangles, _quadrangles, _tetrahedra, _prisms, _hexahedra,
+                _pyramids}) {
+    if(!e) continue;
+    e->init(level);
+    e->addInViewForVTK(step, tol, _inData, writer, buildStaticData, numPoints);
+  }
+  // (the trees no longer are the ones of the adapted view, if there is one)
+  _level = -1;
 
-  if(_triangles)
-    _triangles->addInViewForVTK(step, _inData, myVTKData, writeVTK,
-                                buildStaticData);
-  if(_quadrangles)
-    _quadrangles->addInViewForVTK(step, _inData, myVTKData, writeVTK,
-                                  buildStaticData);
-  if(_tetrahedra)
-    _tetrahedra->addInViewForVTK(step, _inData, myVTKData, writeVTK,
-                                 buildStaticData);
-  if(_prisms)
-    _prisms->addInViewForVTK(step, _inData, myVTKData, writeVTK,
-                             buildStaticData);
-  if(_hexahedra)
-    _hexahedra->addInViewForVTK(step, _inData, myVTKData, writeVTK,
-                                buildStaticData);
-  if(_pyramids)
-    _pyramids->addInViewForVTK(step, _inData, myVTKData, writeVTK,
-                               buildStaticData);
-
-  Msg::StatusBar(true, "Done writing VTK data");
+  if(writer) {
+    if(writer->finish()) Msg::StatusBar(true, "Done writing VTK data");
+    delete writer;
+  }
 }

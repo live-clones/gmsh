@@ -152,6 +152,7 @@ public:
 
   // Routines for export of adapted views to pvtu file format for parallel
   // visualization with paraview
+  bool _writeVTUOrAdapted(const std::string &fileName);
   bool writeAdapt(const std::string &fileName, int useDefaultName,
                   bool isBinary, int adaptLev, double adaptErr, int npart,
                   bool append = false);
