@@ -45,20 +45,24 @@ static_assert(sizeof(CornerKey<2>) == 32 && sizeof(CornerKey<3>) == 40,
 
 // hash of a key made of 64 bit words; the filter only stores the hash, so
 // changing the function changes which elements (very rarely) collide
+// (the whole state is mixed after each word: with a lighter mixing, two
+// neighbouring triangles of a regular grid, whose coordinates differ in a few
+// bits, were found with the same hash, and one of them was not drawn)
+static inline std::uint64_t vaMix(std::uint64_t h)
+{
+  h ^= h >> 30;
+  h *= 0xbf58476d1ce4e5b9ULL;
+  h ^= h >> 27;
+  h *= 0x94d049bb133111ebULL;
+  h ^= h >> 31;
+  return h;
+}
+
 static inline std::uint64_t vaHashKey(const void *p, std::size_t bytes)
 {
   const std::uint64_t *w = (const std::uint64_t *)p;
   std::uint64_t h = 0x9e3779b97f4a7c15ULL;
-  for(std::size_t i = 0; i < bytes / 8; i++) {
-    h ^= w[i];
-    h *= 0xff51afd7ed558ccdULL;
-    h = (h << 31) | (h >> 33);
-  }
-  h ^= h >> 33;
-  h *= 0xff51afd7ed558ccdULL;
-  h ^= h >> 29;
-  h *= 0xc4ceb9fe1a85ec53ULL;
-  h ^= h >> 32;
+  for(std::size_t i = 0; i < bytes / 8; i++) h = vaMix(h ^ w[i]);
   return h ? h : 1;
 }
 
