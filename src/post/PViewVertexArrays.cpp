@@ -127,12 +127,17 @@ public:
   std::size_t element;
   // bounding box of the elements that were drawn
   SBoundingBox3d bbox;
+  // the iso-values or the limits of the bands, as last computed (isoValues())
+  std::vector<double> isos;
+  int isosNum;
+  double isosMin, isosMax;
   drawTarget(PView *p)
     : view(p), opt(p->getOptions()), va_points(p->va_points),
       va_lines(p->va_lines), va_triangles(p->va_triangles),
       va_vectors(p->va_vectors), va_ellipses(p->va_ellipses),
       normals(p->normals), ent(0), collect(COLLECT_ALL),
-      skinMask(-1), skinShape(nullptr), skin(nullptr), element(0)
+      skinMask(-1), skinShape(nullptr), skin(nullptr), element(0), isosNum(-1),
+      isosMin(0.), isosMax(0.)
   {
   }
 };
@@ -411,23 +416,50 @@ static void smoothNormal(drawTarget *p, bool pre, double x, double y, double z,
 
 // f(k, min, max) for each band of the scale, or f(k, iso) for each iso-value:
 // the middle one only when the range is empty
-template <class F>
-static void forBands(PViewOptions *opt, double vmin, double vmax, F f)
+// The iso-values of the view (num = NbIso), or the limits of its bands (num =
+// NbIso + 1), computed once for all the elements
+static const std::vector<double> &isoValues(drawTarget *p, int num,
+                                            double vmin, double vmax)
 {
+  if(num != p->isosNum || vmin != p->isosMin || vmax != p->isosMax) {
+    p->isos.resize(num);
+    for(int k = 0; k < num; k++)
+      p->isos[k] = p->opt->getScaleValue(k, num, vmin, vmax);
+    p->isosNum = num;
+    p->isosMin = vmin;
+    p->isosMax = vmax;
+  }
+  return p->isos;
+}
+
+// f(k, min, max) for the bands of the view that the n values v of an element
+// reach (a band out of their range would give nothing)
+template <class F>
+static void forBands(drawTarget *p, double vmin, double vmax, const double *v,
+                     int n, F f)
+{
+  PViewOptions *opt = p->opt;
+  const std::vector<double> &limits = isoValues(p, opt->nbIso + 1, vmin, vmax);
+  double lo = *std::min_element(v, v + n), hi = *std::max_element(v, v + n);
   for(int k = 0; k < opt->nbIso; k++) {
     if(vmin == vmax) k = opt->nbIso / 2;
-    f(k, opt->getScaleValue(k, opt->nbIso + 1, vmin, vmax),
-      opt->getScaleValue(k + 1, opt->nbIso + 1, vmin, vmax));
+    if(limits[k + 1] >= lo && limits[k] <= hi) f(k, limits[k], limits[k + 1]);
     if(vmin == vmax) break;
   }
 }
 
+// f(k, iso) for the iso-values of the view within the range of the n values v
+// of an element
 template <class F>
-static void forIsos(PViewOptions *opt, double vmin, double vmax, F f)
+static void forIsos(drawTarget *p, double vmin, double vmax, const double *v,
+                    int n, F f)
 {
+  PViewOptions *opt = p->opt;
+  const std::vector<double> &isos = isoValues(p, opt->nbIso, vmin, vmax);
+  double lo = *std::min_element(v, v + n), hi = *std::max_element(v, v + n);
   for(int k = 0; k < opt->nbIso; k++) {
     if(vmin == vmax) k = opt->nbIso / 2;
-    f(k, opt->getScaleValue(k, opt->nbIso, vmin, vmax));
+    if(isos[k] >= lo && isos[k] <= hi) f(k, isos[k]);
     if(vmin == vmax) break;
   }
 }
@@ -540,7 +572,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
   }
 
   if(opt->intervalsType == PViewOptions::Discrete) {
-    forBands(opt, vmin, vmax, [&](int k, double min, double max) {
+    forBands(p, vmin, vmax, v, 2, [&](int k, double min, double max) {
       double x2[2], y2[2], z2[2], v2[2];
       int nb = CutLine(x, y, z, v, min, max, x2, y2, z2, v2);
       if(nb == 2) {
@@ -554,7 +586,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
   }
 
   if(opt->intervalsType == PViewOptions::Iso) {
-    forIsos(opt, vmin, vmax, [&](int k, double iso) {
+    forIsos(p, vmin, vmax, v, 2, [&](int k, double iso) {
       double x2[1], y2[1], z2[1];
       int nb = IsoLine(x, y, z, v, iso, x2, y2, z2);
       if(nb == 1) {
@@ -653,7 +685,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
   }
 
   if(opt->intervalsType == PViewOptions::Discrete) {
-    forBands(opt, vmin, vmax, [&](int k, double min, double max) {
+    forBands(p, vmin, vmax, v, 3, [&](int k, double min, double max) {
       double x2[10], y2[10], z2[10], v2[10];
       int nb = CutTriangle(x, y, z, v, min, max, x2, y2, z2, v2);
       unsigned int col[10];
@@ -663,7 +695,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
   }
 
   if(opt->intervalsType == PViewOptions::Iso) {
-    forIsos(opt, vmin, vmax, [&](int k, double iso) {
+    forIsos(p, vmin, vmax, v, 3, [&](int k, double iso) {
       double x2[3], y2[3], z2[3];
       int nb = IsoTriangle(x, y, z, v, iso, x2, y2, z2);
       if(nb == 2) {
@@ -1389,7 +1421,7 @@ static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
   double v[4] = {val[i0][0], val[i1][0], val[i2][0], val[i3][0]};
 
   if(opt->intervalsType == PViewOptions::Iso) {
-    forIsos(opt, vmin, vmax, [&](int k, double iso) {
+    forIsos(p, vmin, vmax, v, 4, [&](int k, double iso) {
       double x2[6], y2[6], z2[6], nn[3];
       int nb = IsoSimplex(x, y, z, v, iso, x2, y2, z2, nn);
       unsigned int col[6];
