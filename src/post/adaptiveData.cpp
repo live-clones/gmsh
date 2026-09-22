@@ -843,66 +843,78 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
 
   double range = in->getMax() - in->getMin(); // (of all the steps)
 
-  // Each thread adapts its share of the elements, with a workspace of its own
-  // (the tree is only read), into a list of its own. A plugin changes the
-  // tree, and some views cannot be read by several threads.
+  // The elements are cut in chunks, which the threads take as they are free,
+  // each with a workspace of its own (the tree is only read), into a list of
+  // its own: put together in their order, the chunks give what a single
+  // thread would. The work of an element varies a lot with the refinement:
+  // chunks many times more than the threads keep them all busy. A plugin
+  // changes the tree, and some views cannot be read by several threads.
   int nthreads = CTX::instance()->numThreadsFor(elements.size(), 16);
   if(plug || polytopes || !in->isThreadSafe()) nthreads = 1;
-  std::vector<std::vector<double> > lists(nthreads);
-  std::vector<std::vector<unsigned char> > skins(nthreads);
-  std::vector<std::size_t> num(nthreads, 0);
+  std::size_t numChunks =
+    (nthreads == 1) ? 1 : std::min<std::size_t>(elements.size(), 32 * nthreads);
+  std::vector<std::vector<double> > lists(numChunks);
+  std::vector<std::vector<unsigned char> > skins(numChunks);
+  std::vector<std::size_t> num(numChunks, 0);
   bool skin = (inSkin && outSkin && !polytopes);
 
   // All the last elements of the tree are kept if the target error is
-  // negative: how much each thread adds is known, which saves growing the
+  // negative: how much each chunk adds is known, which saves growing the
   // lists (a level or two down, the refined view is what takes the memory).
+  auto first = [&](std::size_t c) { return elements.size() * c / numChunks; };
   std::size_t each = 0;
   if(tol < 0. && !plug && !polytopes)
     each = _leaves.size() * _shape.numNodes * (3 + numComp);
-  for(int t = 0; t < nthreads && each; t++)
-    lists[t].reserve((elements.size() * (t + 1) / nthreads -
-                      elements.size() * t / nthreads) * each);
 
-#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
-  for(int t = 0; t < nthreads; t++) {
+#pragma omp parallel num_threads(nthreads)
+  {
     adaptiveWork work;
     std::vector<double> xyz, values;
-    std::size_t first = elements.size() * t / nthreads;
-    std::size_t last = elements.size() * (t + 1) / nthreads;
-    for(std::size_t i = first; i < last; i++) {
-      int ent = elements[i].first, ele = elements[i].second;
-      if(polytopes) {
-        num[t] += _addPolytope(level, step, in, ent, ele, numComp, lists[t]);
-        continue;
+#pragma omp for schedule(dynamic, 1)
+    for(std::size_t c = 0; c < numChunks; c++) {
+      if(each) lists[c].reserve((first(c + 1) - first(c)) * each);
+      for(std::size_t i = first(c); i < first(c + 1); i++) {
+        int ent = elements[i].first, ele = elements[i].second;
+        if(polytopes) {
+          num[c] += _addPolytope(level, step, in, ent, ele, numComp, lists[c]);
+          continue;
+        }
+        readElement(in, step, ent, ele, numComp, xyz, values);
+        if((int)xyz.size() != 3 * _numNodes ||
+           (int)values.size() != numComp * _numVals) {
+          Msg::Warning("Wrong number of nodes or values in adaptation");
+          continue;
+        }
+        num[c] += adapt(work, tol, numComp, &xyz[0], &values[0], range, plug,
+                        skin ? (*inSkin)[ent][ele] : 0, lists[c],
+                        skin ? &skins[c] : nullptr);
       }
-      readElement(in, step, ent, ele, numComp, xyz, values);
-      if((int)xyz.size() != 3 * _numNodes ||
-         (int)values.size() != numComp * _numVals) {
-        Msg::Warning("Wrong number of nodes or values in adaptation");
-        continue;
-      }
-      num[t] += adapt(work, tol, numComp, &xyz[0], &values[0], range, plug,
-                      skin ? (*inSkin)[ent][ele] : 0, lists[t],
-                      skin ? &skins[t] : nullptr);
     }
   }
 
   double total = *outNb;
-  for(int t = 0; t < nthreads; t++) total += num[t];
+  for(std::size_t c = 0; c < numChunks; c++) total += num[c];
   if(total > 2147483647.) {
     Msg::Error("Too many elements in adaptive view: lower the recursion level "
                "or raise the target error");
     return;
   }
-  std::size_t size = outList->size();
-  for(int t = 0; t < nthreads; t++) size += lists[t].size();
-  if(nthreads == 1 && outList->empty()) outList->swap(lists[0]);
-  outList->reserve(size);
-  for(int t = 0; t < nthreads; t++) {
-    *outNb += (int)num[t];
-    outList->insert(outList->end(), lists[t].begin(), lists[t].end());
-    if(skin) outSkin->insert(outSkin->end(), skins[t].begin(), skins[t].end());
-    std::vector<double>().swap(lists[t]);
+  // the chunks one after the other, copied by the threads
+  std::vector<std::size_t> at(numChunks + 1, outList->size());
+  for(std::size_t c = 0; c < numChunks; c++) {
+    at[c + 1] = at[c] + lists[c].size();
+    *outNb += (int)num[c];
+    if(skin) outSkin->insert(outSkin->end(), skins[c].begin(), skins[c].end());
+  }
+  if(numChunks == 1 && outList->empty())
+    outList->swap(lists[0]);
+  else {
+    outList->resize(at[numChunks]);
+#pragma omp parallel for schedule(dynamic, 1) num_threads(nthreads)
+    for(std::size_t c = 0; c < numChunks; c++) {
+      std::copy(lists[c].begin(), lists[c].end(), outList->begin() + at[c]);
+      std::vector<double>().swap(lists[c]);
+    }
   }
   // (the elements of a view without skin still have their place in it)
   if(outSkin && !skin) outSkin->resize(outSkin->size() + (std::size_t)total, 0);
