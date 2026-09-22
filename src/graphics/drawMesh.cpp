@@ -35,7 +35,6 @@
 #include "PView.h"
 #include "PViewData.h"
 
-
 template <class T>
 static void drawElementLabels(drawContext *ctx, GEntity *e,
                               std::vector<T *> &elements, int forceColor,

@@ -14,14 +14,19 @@
 #include "SBoundingBox3d.h"
 #include "SPoint2.h"
 #include "Camera.h"
-
-// the OpenGL headers, and the entry points that came after OpenGL 1.1
 #include "glApi.h"
-// the immediate mode drawing the decorations of the scene are made of
 #include "glImmediate.h"
-
 #include "GmshConfig.h"
 #include "VertexArray.h"
+
+class GModel;
+class GEntity;
+class GVertex;
+class GEdge;
+class GFace;
+class GRegion;
+class MElement;
+class PView;
 
 #if defined(HAVE_VISUDEV)
 #define NORMAL_GLTYPE GL_FLOAT
@@ -44,12 +49,10 @@ enum {
   GMSH_DRAW_OFFSET = 4,
   GMSH_DRAW_IDENTIFIERS = 8
 };
-void drawVertexArray(VertexArray *va, GLenum type, int flags,
-                         const std::vector<std::pair<int, int> > *runs =
-                           nullptr);
 
-class GEntity;
-class PView;
+void drawVertexArray(VertexArray *va, GLenum type, int flags,
+                     const std::vector<std::pair<int, int> > *runs =
+                     nullptr);
 
 // which part of the scene a pass draws: everything transparent is drawn after
 // everything else, in one pass
@@ -58,6 +61,7 @@ enum TransparencyPass {
   TRANSPARENCY_OPAQUE = 1,
   TRANSPARENCY_TRANSPARENT = 2
 };
+
 // Is anything in the scene transparent, through the Transparency options, the
 // colours of the options, or the colour of an entity? The geometry and the
 // mesh are transparent entire when the options' colours are; otherwise only
@@ -78,17 +82,10 @@ bool viewIsTransparent(PView *p);
 void clearGraph2dDataPointTags();
 SPoint2 getGraph2dDataPointForTag(unsigned int tag);
 
-class GModel;
 // GModel::getMeshStatus() for the drawing, which asks it several times a
 // frame: computed again only when the mesh, the geometry or the visibilities
 // have changed (see CTX::meshChanged())
 int drawMeshStatus(GModel *m);
-
-class GVertex;
-class GEdge;
-class GFace;
-class GRegion;
-class MElement;
 
 class drawTransform {
 public:
