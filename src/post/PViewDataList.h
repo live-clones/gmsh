@@ -8,6 +8,7 @@
 #define PVIEW_DATA_LIST_H
 
 #include <vector>
+#include <atomic>
 #include <string>
 #include "PViewData.h"
 #include "SBoundingBox3d.h"
@@ -51,23 +52,36 @@ private:
   // merging the nodes that have the same coordinates, and cached here. _nodeId
   // is indexed by _nodeOffset[element] + node
   std::vector<unsigned int> _nodeId, _nodeOffset;
-  int _nodeIndexStatus; // 0: not built, 1: built, -1: not available
+  std::atomic<int> _nodeIndexStatus; // 0: not built, 1: built, -1: none
   // see getSkinMasks(): given by the adaptive views, which know where the
   // refined elements come from
   std::vector<unsigned char> _skinMasks;
   void _buildNodeIndex();
 
-  int _lastElement, _lastDimension;
-  int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges,
-    _lastType;
-  double *_lastXYZ, *_lastVal;
+  // What was last read of an element, kept by each thread: the element, the
+  // state of the lists it was read in (a number no other state of any list-
+  // based view has: it changes when they are finalized), and where its data
+  // is in them. Several threads can then read the view at the same time.
+  struct lastElement {
+    std::size_t state = 0;
+    int ele = -1, dim = 0, numNodes = 0, numComponents = 0, numValues = 0,
+        numEdges = 0, type = 0;
+    double *xyz = nullptr, *val = nullptr;
+  };
+  std::size_t _state;
+  static thread_local lastElement _lastRead;
+  lastElement &_last(int ele)
+  {
+    if(_lastRead.state != _state || _lastRead.ele != ele) _setLast(_lastRead, ele);
+    return _lastRead;
+  }
   bool _isAdapted;
   void _stat(std::vector<double> &D, std::vector<char> &C, int nb);
   void _stat(std::vector<double> &list, int nbcomp, int nbelm, int nbnod,
              int type);
-  void _setLast(int ele);
-  void _setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg, int type,
-                std::vector<double> &list, int nblist);
+  void _setLast(lastElement &l, int ele);
+  void _setLast(lastElement &l, int i, int dim, int nbnod, int nbcomp,
+                int nbedg, int type, std::vector<double> &list, int nblist);
   void _getString(int dim, int i, int timestep, std::string &str, double &x,
                   double &y, double &z, double &style);
   int _getRawData(int idxtype, std::vector<double> **l, int **ne, int *nc,
@@ -107,6 +121,19 @@ public:
   int getNumNodes(int step, int ent, int ele);
   int getNode(int step, int ent, int ele, int nod, double &x, double &y,
               double &z);
+  void getElementInfo(int step, int ent, int ele, int &type, int &dim,
+                      int &numNodes, int &numComp)
+  {
+    lastElement &l = _last(ele);
+    type = l.type;
+    dim = l.dim;
+    numNodes = l.numNodes;
+    numComp = l.numComponents;
+  }
+  void getNodesAndValues(int step, int ent, int ele, int numNodes, int numComp,
+                         double **xyz, double **val);
+  // (several threads can read the data at the same time, see _last())
+  bool isThreadSafe() { return true; }
   std::size_t getNodeId(int step, int ent, int ele, int nod);
   const std::vector<unsigned char> *getSkinMasks()
   {

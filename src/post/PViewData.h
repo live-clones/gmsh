@@ -190,6 +190,26 @@ public:
                         double &val)
   {
   }
+
+  // what getType(), getDimension(), getNumNodes() and getNumComponents() give,
+  // and the coordinates and the numComp first values of the numNodes nodes:
+  // the same, element by element, in one call (the drawing reads millions)
+  virtual void getElementInfo(int step, int ent, int ele, int &type, int &dim,
+                              int &numNodes, int &numComp)
+  {
+    type = getType(step, ent, ele);
+    dim = getDimension(step, ent, ele);
+    numNodes = getNumNodes(step, ent, ele);
+    numComp = getNumComponents(step, ent, ele);
+  }
+  virtual void getNodesAndValues(int step, int ent, int ele, int numNodes,
+                                 int numComp, double **xyz, double **val)
+  {
+    for(int j = 0; j < numNodes; j++) {
+      getNode(step, ent, ele, j, xyz[j][0], xyz[j][1], xyz[j][2]);
+      for(int k = 0; k < numComp; k++) getValue(step, ent, ele, j, k, val[j][k]);
+    }
+  }
   virtual void setValue(int step, int ent, int ele, int nod, int comp,
                         double val);
 

@@ -1997,13 +1997,10 @@ bool PViewElement::select(PView *p, int ient, int iele)
   PViewOptions *opt = p->getOptions();
   int step = opt->timeStep;
   if(data->skipElement(step, ient, iele, true, opt->sampling)) return false;
-  type = data->getType(step, ient, iele);
+  data->getElementInfo(step, ient, iele, type, dim, numNodes, numComp);
   if(opt->skipElement(type)) return false;
   ent = ient;
   ele = iele;
-  dim = data->getDimension(step, ient, iele);
-  numComp = data->getNumComponents(step, ient, iele);
-  numNodes = data->getNumNodes(step, ient, iele);
   // (polytopes have as many nodes as they need)
   if(numNodes > PVIEW_NMAX && type != TYPE_POLYG && type != TYPE_POLYH) {
     if(numNodesError != numNodes) {
@@ -2046,9 +2043,11 @@ void PViewElement::read(PView *p)
   }
   xyz = _xyzRows.data();
   val = _valRows.data();
-  for(int j = 0; j < numNodes; j++) {
-    data->getNode(step, ent, ele, j, xyz[j][0], xyz[j][1], xyz[j][2]);
-    if(opt->forceNumComponents) {
+  if(!opt->forceNumComponents)
+    data->getNodesAndValues(step, ent, ele, numNodes, numComp, xyz, val);
+  else {
+    for(int j = 0; j < numNodes; j++) {
+      data->getNode(step, ent, ele, j, xyz[j][0], xyz[j][1], xyz[j][2]);
       for(int k = 0; k < opt->forceNumComponents; k++) {
         int comp = opt->componentMap[k];
         if(comp >= 0 && comp < numComp)
@@ -2057,9 +2056,6 @@ void PViewElement::read(PView *p)
           val[j][k] = 0.;
       }
     }
-    else
-      for(int k = 0; k < numComp; k++)
-        data->getValue(step, ent, ele, j, k, val[j][k]);
   }
   if(opt->forceNumComponents) numComp = opt->forceNumComponents;
   changeCoordinates(p, ent, ele, numNodes, type, numComp, xyz, val);
