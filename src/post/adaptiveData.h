@@ -43,9 +43,8 @@ public:
   float x, y, z; // in the reference element (halves of halves: exact)
   int index; // in adaptiveElements::vertices, and in the interpolation matrices
   unsigned char onFaces; // the faces of the reference element it is on, a bit each
-  // for the element of the view being adapted:
+  // for the element of the view being adapted, when a plugin looks at it:
   double X, Y, Z; // in the model
-  double norm; // what the error is estimated on: the value, or its norm
   double val, valy, valz; // the value (a scalar, a vector or a tensor)
   double valyx, valyy, valyz;
   double valzx, valzy, valzz;
@@ -107,22 +106,6 @@ public:
   // for each face, the face of the reference element it lies on (-1 if none)
   signed char onFace[6];
 
-public:
-  // the mean of the field at the nodes
-  double V() const
-  {
-    double v = p[0]->norm;
-    for(int i = 1; i < shape->numNodes; i++) v += p[i]->norm;
-    return v / shape->numNodes;
-  }
-  // the weighted mean over the children
-  double meanOfChildren() const
-  {
-    double v = 0.;
-    for(int i = 0; i < shape->numChildren; i++)
-      v += shape->weights[i] * e[i]->V();
-    return v / shape->sumOfWeights;
-  }
 };
 
 class nodMap {
@@ -270,6 +253,19 @@ public:
 
 class adaptiveVTKWriter; // (in adaptiveData.cpp)
 
+// What adapting an element needs to remember: the field and the positions at
+// the vertices of the tree where they have been computed (known for the
+// element whose number, the stamp, they carry), and the elements that are kept
+class adaptiveWork {
+public:
+  int stamp, numComp;
+  const double *inXYZ, *inValues; // the element, as given to adapt()
+  std::vector<int> evaluated, located;
+  std::vector<double> values, norm, xyz;
+  std::vector<const adaptiveElement *> visible;
+  adaptiveWork() : stamp(0), numComp(0), inXYZ(nullptr), inValues(nullptr) {}
+};
+
 // The elements of one kind of a view
 class adaptiveElements {
 private:
@@ -277,12 +273,23 @@ private:
   // the shape functions of the view (monomials and coefficients) for the
   // values and for the geometry, if it provides them, and their values at the
   // vertices of the tree
-  fullMatrix<double> *_coeffsVal, *_eexpsVal, *_interpolVal;
-  fullMatrix<double> *_coeffsGeom, *_eexpsGeom, *_interpolGeom;
+  fullMatrix<double> *_coeffsVal, *_eexpsVal;
+  fullMatrix<double> *_coeffsGeom, *_eexpsGeom;
+  std::vector<double> _interpolVal, _interpolGeom; // a row per vertex
+  int _numVals, _numNodes; // their numbers of columns
+  std::vector<const adaptiveElement *> _leaves; // the last level of the tree
+  void _evaluate(adaptiveWork &w, const adaptiveVertex *p) const;
+  void _locate(adaptiveWork &w, const adaptiveVertex *p) const;
+  double _mean(adaptiveWork &w, const adaptiveElement *e) const;
+  double _meanOfChildren(adaptiveWork &w, const adaptiveElement *e) const;
+  void _error(adaptiveWork &w, const adaptiveElement *e,
+              double threshold) const;
+  void _askPlugin(adaptiveWork &w, GMSH_PostPlugin *plug);
+  int _addPolytope(int level, int step, PViewData *in, int ent, int ele,
+                   int numComp, std::vector<double> &list);
   adaptiveElement *_create(const std::vector<adaptiveVertex *> &nodes,
                            int maxLevel, int level);
   adaptiveVertex *_vertex(double x, double y, double z);
-  void _error(adaptiveElement *e, double threshold);
 
 public:
   // the tree: its root first
@@ -297,14 +304,17 @@ public:
   // build the tree down to the given level, and the _interpolVal and
   // _interpolGeom matrices
   void init(int level);
-  // process the element data in coords/values and return the refined
-  // elements in coords/values
-  // (and if skin is given, which faces of the element are on the skin of the
-  // view, a bit each, in exchange for which faces of the refined elements are)
-  bool adapt(double tol, int numComp, std::vector<PCoords> &coords,
-             std::vector<PValues> &values, double range,
-             GMSH_PostPlugin *plug = nullptr,
-             std::vector<unsigned char> *skin = nullptr);
+  // Refine an element of the view, given as the x, then the y, then the z
+  // of its nodes and its values a component after the other, and as the bits
+  // of its faces that are on the skin of the view. The elements that are kept
+  // are added to out as the lists of a view hold them (and the bits of their
+  // faces to outSkin); returns their number. The tree is only read, unless
+  // there is a plugin: several threads can adapt elements at the same time,
+  // each with its own workspace.
+  int adapt(adaptiveWork &w, double tol, int numComp, const double *xyz,
+            const double *values, double range, GMSH_PostPlugin *plug,
+            unsigned char onSkin, std::vector<double> &out,
+            std::vector<unsigned char> *outSkin);
   // adapt all the elements of this kind in the input view and add the refined
   // elements in the output view (we will remove this when we switch to true
   // on-the-fly local refinement in drawPost()); polygons and polyhedra are
@@ -332,7 +342,8 @@ public:
   // Build a mapping between all the nodes of the refined element
   // and the node of the canonical refined element in order to
   // generate a connectivity related to the canonical element
-  void buildMapping(nodMap &myNodMap, double tol, int &numNodInsert);
+  void buildMapping(const adaptiveWork &w, nodMap &myNodMap, double tol,
+                    int &numNodInsert);
 };
 
 class adaptiveData {

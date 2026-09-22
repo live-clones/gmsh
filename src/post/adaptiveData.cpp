@@ -17,6 +17,7 @@
 #include "Plugin.h"
 #include "OS.h"
 #include "GmshDefines.h"
+#include "Context.h"
 #include <sstream>
 #include "StringUtils.h"
 #include "VTKXML.h"
@@ -288,8 +289,7 @@ const adaptiveShape &adaptiveShape::get(int type)
 adaptiveElements::adaptiveElements(
   int type, const std::vector<fullMatrix<double> *> &p)
   : _shape(adaptiveShape::get(type)), _coeffsVal(nullptr), _eexpsVal(nullptr),
-    _interpolVal(nullptr), _coeffsGeom(nullptr), _eexpsGeom(nullptr),
-    _interpolGeom(nullptr)
+    _coeffsGeom(nullptr), _eexpsGeom(nullptr), _numVals(0), _numNodes(0)
 {
   if(p.size() >= 2) {
     _coeffsVal = p[0];
@@ -301,11 +301,7 @@ adaptiveElements::adaptiveElements(
   }
 }
 
-adaptiveElements::~adaptiveElements()
-{
-  if(_interpolVal) delete _interpolVal;
-  if(_interpolGeom) delete _interpolGeom;
-}
+adaptiveElements::~adaptiveElements() {}
 
 // the vertex at this place of the reference element, new if need be (the
 // elements of a set do not move)
@@ -398,14 +394,16 @@ void adaptiveElements::init(int level)
   int index = 0;
   for(auto &v : allVertices) ((adaptiveVertex *)&v)->index = index++;
 
-  int numVals = _coeffsVal ? _coeffsVal->size1() : _shape.numNodes;
-  int numNodes = _coeffsGeom ? _coeffsGeom->size1() : _shape.numNodes;
+  int numVals = _numVals = _coeffsVal ? _coeffsVal->size1() : _shape.numNodes;
+  int numNodes = _numNodes =
+    _coeffsGeom ? _coeffsGeom->size1() : _shape.numNodes;
 
-  if(_interpolVal) delete _interpolVal;
-  _interpolVal = new fullMatrix<double>(allVertices.size(), numVals);
-
-  if(_interpolGeom) delete _interpolGeom;
-  _interpolGeom = new fullMatrix<double>(allVertices.size(), numNodes);
+  // the shape functions at the vertices of the tree, a row per vertex
+  _interpolVal.assign(allVertices.size() * numVals, 0.);
+  _interpolGeom.assign(allVertices.size() * numNodes, 0.);
+  _leaves.clear();
+  for(auto &e : all)
+    if(!e.e[0]) _leaves.push_back(&e);
 
   fullVector<double> sfv(numVals), sfg(numNodes);
   auto evaluate = [&](fullMatrix<double> *coeffs, fullMatrix<double> *eexps,
@@ -422,172 +420,190 @@ void adaptiveElements::init(int level)
   };
   for(auto &v : allVertices) {
     evaluate(_coeffsVal, _eexpsVal, v, sfv);
-    for(int j = 0; j < numVals; j++) (*_interpolVal)(v.index, j) = sfv(j);
+    for(int j = 0; j < numVals; j++)
+      _interpolVal[v.index * numVals + j] = sfv(j);
     evaluate(_coeffsGeom, _eexpsGeom, v, sfg);
-    for(int j = 0; j < numNodes; j++) (*_interpolGeom)(v.index, j) = sfg(j);
+    for(int j = 0; j < numNodes; j++)
+      _interpolGeom[v.index * numNodes + j] = sfg(j);
   }
+}
+
+// The field at a vertex of the tree, and its position, for the element being
+// adapted: computed when first asked for, as an error estimate that is
+// satisfied early leaves most of the tree alone
+void adaptiveElements::_evaluate(adaptiveWork &w, const adaptiveVertex *p) const
+{
+  if(w.evaluated[p->index] == w.stamp) return;
+  w.evaluated[p->index] = w.stamp;
+  const double *row = &_interpolVal[p->index * _numVals];
+  double *v = &w.values[p->index * w.numComp];
+  for(int c = 0; c < w.numComp; c++) {
+    const double *in = &w.inValues[c * _numVals];
+    double sum = 0.;
+    for(int j = 0; j < _numVals; j++) sum += row[j] * in[j];
+    v[c] = sum;
+  }
+  // the error is estimated on the norm of vectors and tensors
+  double norm = v[0];
+  if(w.numComp > 1) {
+    norm = 0.;
+    for(int c = 0; c < w.numComp; c++) norm += v[c] * v[c];
+    norm = sqrt(norm);
+  }
+  w.norm[p->index] = norm;
+}
+
+void adaptiveElements::_locate(adaptiveWork &w, const adaptiveVertex *p) const
+{
+  if(w.located[p->index] == w.stamp) return;
+  w.located[p->index] = w.stamp;
+  const double *row = &_interpolGeom[p->index * _numNodes];
+  for(int k = 0; k < 3; k++) {
+    const double *in = &w.inXYZ[k * _numNodes];
+    double sum = 0.;
+    for(int j = 0; j < _numNodes; j++) sum += row[j] * in[j];
+    w.xyz[3 * p->index + k] = sum;
+  }
+}
+
+// The mean of the field over an element is estimated by the mean of its values
+// at the nodes. The weighted mean over the children is a better estimate, and
+// equal to the first for a field that varies linearly: their difference
+// measures what another subdivision would bring.
+double adaptiveElements::_mean(adaptiveWork &w, const adaptiveElement *e) const
+{
+  double v = 0.;
+  for(int i = 0; i < _shape.numNodes; i++) {
+    _evaluate(w, e->p[i]);
+    v += w.norm[e->p[i]->index];
+  }
+  return v / _shape.numNodes;
+}
+
+double adaptiveElements::_meanOfChildren(adaptiveWork &w,
+                                         const adaptiveElement *e) const
+{
+  double v = 0.;
+  for(int i = 0; i < _shape.numChildren; i++)
+    v += _shape.weights[i] * _mean(w, e->e[i]);
+  return v / _shape.sumOfWeights;
 }
 
 // An element is kept if the mean of the field over it would not change by
 // more than the threshold if it were subdivided once more, nor the means
-// over its children if they were
-void adaptiveElements::_error(adaptiveElement *e, double threshold)
+// over its children if they were. The elements kept are added to w.visible.
+void adaptiveElements::_error(adaptiveWork &w, const adaptiveElement *e,
+                              double threshold) const
 {
-  e->visible = true;
-  if(!e->e[0]) return;
+  if(!e->e[0]) {
+    w.visible.push_back(e);
+    return;
+  }
 
-  bool grandChildren = (e->e[0]->e[0] != nullptr);
-  double mean = e->meanOfChildren();
-
-  bool refine = fabs(e->V() - mean) > threshold;
+  double mean = _meanOfChildren(w, e);
+  bool refine = fabs(_mean(w, e) - mean) > threshold;
   if(!refine && _shape.diagonal[0] >= 0) {
-    double onDiagonal =
-      (e->p[_shape.diagonal[0]]->norm + e->p[_shape.diagonal[1]]->norm) / 2.;
+    double onDiagonal = (w.norm[e->p[_shape.diagonal[0]]->index] +
+                         w.norm[e->p[_shape.diagonal[1]]->index]) / 2.;
     refine = fabs(onDiagonal - mean) > threshold;
   }
+  bool grandChildren = (e->e[0]->e[0] != nullptr);
   for(int i = 0; i < _shape.numChildren && grandChildren && !refine; i++)
-    refine = fabs(e->e[i]->V() - e->e[i]->meanOfChildren()) > threshold;
+    refine =
+      fabs(_mean(w, e->e[i]) - _meanOfChildren(w, e->e[i])) > threshold;
 
-  if(refine) {
-    e->visible = false;
-    for(int i = 0; i < _shape.numChildren; i++) _error(e->e[i], threshold);
-  }
+  if(refine)
+    for(int i = 0; i < _shape.numChildren; i++) _error(w, e->e[i], threshold);
+  else
+    w.visible.push_back(e);
 }
 
-bool adaptiveElements::adapt(double tol, int numComp,
-                             std::vector<PCoords> &coords,
-                             std::vector<PValues> &values, double range,
-                             GMSH_PostPlugin *plug,
-                             std::vector<unsigned char> *skin)
+// the elements a plugin keeps: it looks at the tree itself, which is given
+// the field everywhere (one element at a time: not for several threads)
+void adaptiveElements::_askPlugin(adaptiveWork &w, GMSH_PostPlugin *plug)
 {
-  int numVertices = allVertices.size();
+  for(auto &e : all) e.visible = false;
+  for(const adaptiveElement *e : w.visible)
+    ((adaptiveElement *)e)->visible = true;
+  for(auto &v : allVertices) {
+    adaptiveVertex *p = (adaptiveVertex *)&v;
+    _evaluate(w, p);
+    _locate(w, p);
+    p->X = w.xyz[3 * p->index];
+    p->Y = w.xyz[3 * p->index + 1];
+    p->Z = w.xyz[3 * p->index + 2];
+    p->val = w.values[p->index * w.numComp];
+  }
+  plug->assignSpecificVisibility(&all.front());
+  w.visible.clear();
+  for(auto &e : all)
+    if(e.visible) w.visible.push_back(&e);
+}
 
+int adaptiveElements::adapt(adaptiveWork &w, double tol, int numComp,
+                            const double *xyz, const double *values,
+                            double range, GMSH_PostPlugin *plug,
+                            unsigned char onSkin, std::vector<double> &out,
+                            std::vector<unsigned char> *outSkin)
+{
+  std::size_t numVertices = allVertices.size();
   if(!numVertices) {
     Msg::Warning("No adapted vertices to interpolate");
-    return false;
+    return 0;
   }
-
-  int numVals = _coeffsVal ? _coeffsVal->size1() : _shape.numNodes;
-
-  if(numVals != (int)values.size()) {
-    Msg::Warning("Wrong number of values in adaptation %d != %d", numVals,
-                 (int)values.size());
-    return false;
-  }
-
   if(numComp != 1 && numComp != 3 && numComp != 9) {
     Msg::Error("Can only adapt scalar, vector or tensor data");
-    return false;
+    return 0;
   }
 
-  // the field at all the vertices of the tree
-  fullVector<double> val(numVals), res(numVertices);
-  if(numComp == 1) {
-    for(int i = 0; i < numVals; i++) val(i) = values[i].v[0];
-    _interpolVal->mult(val, res);
+  // nothing is known of the field for this element yet
+  if(w.evaluated.size() != numVertices || w.numComp != numComp) {
+    w.stamp = 0;
+    w.numComp = numComp;
+    w.evaluated.assign(numVertices, 0);
+    w.located.assign(numVertices, 0);
+    w.values.resize(numVertices * numComp);
+    w.norm.resize(numVertices);
+    w.xyz.resize(numVertices * 3);
   }
+  w.stamp++;
+  w.inXYZ = xyz;
+  w.inValues = values;
+  w.visible.clear();
 
-  fullMatrix<double> *resxyz = nullptr;
-  if(numComp == 3 || numComp == 9) {
-    fullMatrix<double> valxyz(numVals, numComp);
-    resxyz = new fullMatrix<double>(numVertices, numComp);
-    for(int i = 0; i < numVals; i++) {
-      for(int k = 0; k < numComp; k++) { valxyz(i, k) = values[i].v[k]; }
+  // The target error is relative to the range of the view. A negative one, or
+  // a view that is constant, keeps the smallest subdivision.
+  double threshold = (tol < 0. || range <= 0.) ? -1. : tol * range;
+  if(threshold < 0. && !plug)
+    w.visible.assign(_leaves.begin(), _leaves.end());
+  else if(!plug || tol != 0.)
+    _error(w, &all.front(), threshold);
+  if(plug) _askPlugin(w, plug);
+
+  // the elements that are kept, as the lists of a view hold them: the x, y
+  // and z of the nodes, then their values
+  int numNodes = _shape.numNodes;
+  for(const adaptiveElement *e : w.visible) {
+    for(int i = 0; i < numNodes; i++) {
+      _evaluate(w, e->p[i]);
+      _locate(w, e->p[i]);
     }
-    _interpolVal->mult(valxyz, *resxyz);
-  }
-
-  int numNodes = _coeffsGeom ? _coeffsGeom->size1() : _shape.numNodes;
-  if(numNodes != (int)coords.size()) {
-    Msg::Error("Wrong number of nodes in adaptation %d != %d", numNodes,
-               (int)coords.size());
-    if(resxyz) delete resxyz;
-    return false;
-  }
-
-  fullMatrix<double> xyz(numNodes, 3), XYZ(numVertices, 3);
-  for(int i = 0; i < numNodes; i++) {
-    xyz(i, 0) = coords[i].c[0];
-    xyz(i, 1) = coords[i].c[1];
-    xyz(i, 2) = coords[i].c[2];
-  }
-  _interpolGeom->mult(xyz, XYZ);
-
-  for(auto &v : allVertices) {
-    // ok because we know this will not change the set ordering
-    adaptiveVertex *p = (adaptiveVertex *)&v;
-    int i = p->index;
-    p->val = p->norm = res(i);
-    if(resxyz) {
-      // the error is estimated on the norm of what is interpolated
-      p->norm = 0.;
-      for(int k = 0; k < numComp; k++)
-        p->norm += (*resxyz)(i, k) * (*resxyz)(i, k);
-      p->norm = sqrt(p->norm);
-      p->val = (*resxyz)(i, 0);
-      p->valy = (*resxyz)(i, 1);
-      p->valz = (*resxyz)(i, 2);
-      if(numComp == 9) {
-        p->valyx = (*resxyz)(i, 3);
-        p->valyy = (*resxyz)(i, 4);
-        p->valyz = (*resxyz)(i, 5);
-        p->valzx = (*resxyz)(i, 6);
-        p->valzy = (*resxyz)(i, 7);
-        p->valzz = (*resxyz)(i, 8);
-      }
-    }
-    p->X = XYZ(i, 0);
-    p->Y = XYZ(i, 1);
-    p->Z = XYZ(i, 2);
-  }
-
-  if(resxyz) delete resxyz;
-
-  for(auto &e : all) e.visible = false;
-
-  if(!plug || tol != 0.) {
-    // The target error is relative to the range of the view. A negative one,
-    // or a view that is constant, keeps the smallest subdivision.
-    double threshold = (tol < 0. || range <= 0.) ? -1. : tol * range;
-    _error(&all.front(), threshold);
-  }
-
-  if(plug) plug->assignSpecificVisibility(&all.front());
-
-  // a face of a refined element is on the skin if it lies on a face of the
-  // element that is
-  unsigned char onSkin = (skin && skin->size()) ? (*skin)[0] : 0;
-  if(skin) skin->clear();
-
-  coords.clear();
-  values.clear();
-  for(auto &e : all) {
-    if(!e.visible) continue;
-    if(skin) {
+    for(int k = 0; k < 3; k++)
+      for(int i = 0; i < numNodes; i++)
+        out.push_back(w.xyz[3 * e->p[i]->index + k]);
+    for(int i = 0; i < numNodes; i++)
+      for(int c = 0; c < numComp; c++)
+        out.push_back(w.values[e->p[i]->index * numComp + c]);
+    if(outSkin) {
+      // a face is on the skin if it lies on a face of the element that is
       unsigned char mask = 0;
       for(int f = 0; f < 6; f++)
-        if(e.onFace[f] >= 0 && (onSkin & (1 << e.onFace[f])))
+        if(e->onFace[f] >= 0 && (onSkin & (1 << e->onFace[f])))
           mask |= (unsigned char)(1 << f);
-      skin->push_back(mask);
-    }
-    adaptiveVertex *const *p = e.p;
-    for(int i = 0; i < _shape.numNodes; i++) {
-      coords.push_back(PCoords(p[i]->X, p[i]->Y, p[i]->Z));
-      switch(numComp) {
-      case 1: values.push_back(PValues(p[i]->val)); break;
-      case 3:
-        values.push_back(PValues(p[i]->val, p[i]->valy, p[i]->valz));
-        break;
-      case 9:
-        values.push_back(PValues(p[i]->val, p[i]->valy, p[i]->valz,
-                                 p[i]->valyx, p[i]->valyy, p[i]->valyz,
-                                 p[i]->valzx, p[i]->valzy, p[i]->valzz));
-        break;
-      }
+      outSkin->push_back(mask);
     }
   }
-
-  return true;
+  return (int)w.visible.size();
 }
 
 
@@ -788,6 +804,23 @@ static void getList(PViewDataList *out, int type, int numComp, int *&nb,
   }
 }
 
+// the element of a view as adapt() takes it: the x, then the y, then the z of
+// its nodes, and its values a component after the other
+static void readElement(PViewData *in, int step, int ent, int ele, int numComp,
+                        std::vector<double> &xyz, std::vector<double> &values)
+{
+  int numNodes = in->getNumNodes(step, ent, ele);
+  xyz.resize(3 * numNodes);
+  for(int i = 0; i < numNodes; i++)
+    in->getNode(step, ent, ele, i, xyz[i], xyz[numNodes + i],
+                xyz[2 * numNodes + i]);
+  int numVals = in->getNumValues(step, ent, ele) / numComp;
+  values.resize(numVals * numComp);
+  for(int i = 0; i < numVals; i++)
+    for(int c = 0; c < numComp; c++)
+      in->getValue(step, ent, ele, numComp * i + c, values[c * numVals + i]);
+}
+
 void adaptiveElements::addInView(double tol, int step, PViewData *in,
                                  PViewDataList *out, GMSH_PostPlugin *plug,
                                  int level, int type,
@@ -800,126 +833,126 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
   // polygons and polyhedra come after the triangles and the tetrahedra, in
   // the same list
   if(!type) type = _shape.type;
-  int numEle = 0, *outNb = nullptr;
+  bool polytopes = (type == TYPE_POLYG || type == TYPE_POLYH);
+  int *outNb = nullptr;
   std::vector<double> *outList = nullptr;
-  bool clear = true;
-  switch(type) {
-  case TYPE_PNT: numEle = in->getNumPoints(); break;
-  case TYPE_LIN: numEle = in->getNumLines(); break;
-  case TYPE_TRI: numEle = in->getNumTriangles(); break;
-  case TYPE_QUA: numEle = in->getNumQuadrangles(); break;
-  case TYPE_TET: numEle = in->getNumTetrahedra(); break;
-  case TYPE_HEX: numEle = in->getNumHexahedra(); break;
-  case TYPE_PRI: numEle = in->getNumPrisms(); break;
-  case TYPE_PYR: numEle = in->getNumPyramids(); break;
-  case TYPE_POLYG:
-    numEle = in->getNumPolygons();
-    if(in->getNumTriangles()) clear = false;
-    break;
-  case TYPE_POLYH:
-    numEle = in->getNumPolyhedra();
-    if(in->getNumTetrahedra()) clear = false;
-    break;
-  }
   getList(out, _shape.type, numComp, outNb, outList);
-  if(!numEle || !outList) return;
-
+  if(!outList) return;
+  bool clear = !polytopes || !((type == TYPE_POLYG) ? in->getNumTriangles() :
+                                                      in->getNumTetrahedra());
   if(clear) {
     outList->clear();
     *outNb = 0;
   }
 
+  std::vector<std::pair<int, int> > elements;
+  for(int ent = 0; ent < in->getNumEntities(step); ent++)
+    for(int ele = 0; ele < in->getNumElements(step, ent); ele++)
+      if(!in->skipElement(step, ent, ele) &&
+         in->getType(step, ent, ele) == type)
+        elements.push_back({ent, ele});
+  if(elements.empty()) return;
+
   double range = in->getMax(step) - in->getMin(step);
 
-  for(int ent = 0; ent < in->getNumEntities(step); ent++) {
-    for(int ele = 0; ele < in->getNumElements(step, ent); ele++) {
-      if(in->skipElement(step, ent, ele) || in->getType(step, ent, ele) != type)
+  // Each thread adapts its share of the elements, with a workspace of its own
+  // (the tree is only read), into a list of its own. A plugin changes the
+  // tree, and some views cannot be read by several threads.
+  int nthreads = CTX::instance()->numThreadsFor(elements.size(), 16);
+  if(plug || polytopes || !in->isThreadSafe()) nthreads = 1;
+  std::vector<std::vector<double> > lists(nthreads);
+  std::vector<std::vector<unsigned char> > skins(nthreads);
+  std::vector<std::size_t> num(nthreads, 0);
+  bool skin = (inSkin && outSkin && !polytopes);
+
+  // All the last elements of the tree are kept if the target error is
+  // negative: how much each thread adds is known, which saves growing the
+  // lists (a level or two down, the refined view is what takes the memory).
+  std::size_t each = 0;
+  if(tol < 0. && !plug && !polytopes)
+    each = _leaves.size() * _shape.numNodes * (3 + numComp);
+  for(int t = 0; t < nthreads && each; t++)
+    lists[t].reserve((elements.size() * (t + 1) / nthreads -
+                      elements.size() * t / nthreads) * each);
+
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    adaptiveWork work;
+    std::vector<double> xyz, values;
+    std::size_t first = elements.size() * t / nthreads;
+    std::size_t last = elements.size() * (t + 1) / nthreads;
+    for(std::size_t i = first; i < last; i++) {
+      int ent = elements[i].first, ele = elements[i].second;
+      if(polytopes) {
+        num[t] += _addPolytope(level, step, in, ent, ele, numComp, lists[t]);
         continue;
-      int numNodes = in->getNumNodes(step, ent, ele);
-      std::vector<PCoords> coords;
-      for(int i = 0; i < numNodes; i++) {
-        double x, y, z;
-        in->getNode(step, ent, ele, i, x, y, z);
-        coords.push_back(PCoords(x, y, z));
       }
-      int numVal = in->getNumValues(step, ent, ele);
-      std::vector<PValues> values;
-
-      switch(numComp) {
-      case 1:
-        for(int i = 0; i < numVal; i++) {
-          double val;
-          in->getValue(step, ent, ele, i, val);
-          values.push_back(PValues(val));
-        }
-        break;
-      case 3: {
-        for(int i = 0; i < numVal / 3; i++) {
-          double vx, vy, vz;
-          in->getValue(step, ent, ele, 3 * i + 0, vx);
-          in->getValue(step, ent, ele, 3 * i + 1, vy);
-          in->getValue(step, ent, ele, 3 * i + 2, vz);
-          values.push_back(PValues(vx, vy, vz));
-        }
-        break;
+      readElement(in, step, ent, ele, numComp, xyz, values);
+      if((int)xyz.size() != 3 * _numNodes ||
+         (int)values.size() != numComp * _numVals) {
+        Msg::Warning("Wrong number of nodes or values in adaptation");
+        continue;
       }
-      case 9: {
-        for(int i = 0; i < numVal / 9; i++) {
-          double vxx, vxy, vxz, vyx, vyy, vyz, vzx, vzy, vzz;
-          in->getValue(step, ent, ele, 9 * i + 0, vxx);
-          in->getValue(step, ent, ele, 9 * i + 1, vxy);
-          in->getValue(step, ent, ele, 9 * i + 2, vxz);
-          in->getValue(step, ent, ele, 9 * i + 3, vyx);
-          in->getValue(step, ent, ele, 9 * i + 4, vyy);
-          in->getValue(step, ent, ele, 9 * i + 5, vyz);
-          in->getValue(step, ent, ele, 9 * i + 6, vzx);
-          in->getValue(step, ent, ele, 9 * i + 7, vzy);
-          in->getValue(step, ent, ele, 9 * i + 8, vzz);
-          values.push_back(
-            PValues(vxx, vxy, vxz, vyx, vyy, vyz, vzx, vzy, vzz));
-        }
-        break;
-      }
-      }
-
-      bool result = false;
-      if(type == TYPE_POLYG || type == TYPE_POLYH) {
-        result = adaptPolytope(level, numComp, in->getElement(step, ent, ele),
-                               numNodes, coords, values);
-      }
-      else {
-        std::vector<unsigned char> skin;
-        if(inSkin && outSkin) skin.push_back((*inSkin)[ent][ele]);
-        result = adapt(tol, numComp, coords, values, range, plug,
-                       (inSkin && outSkin) ? &skin : nullptr);
-        if(result && outSkin)
-          outSkin->insert(outSkin->end(), skin.begin(), skin.end());
-        // the refined elements are first order, whatever the order of the
-        // element they come from
-        numNodes = _shape.numNodes;
-      }
-      if(result && (double)*outNb + coords.size() / numNodes > 2147483647.) {
-        Msg::Error("Too many elements in adaptive view: lower the recursion "
-                   "level or raise the target error");
-        return;
-      }
-      if(result) {
-        *outNb += coords.size() / numNodes;
-        for(std::size_t i = 0; i < coords.size() / numNodes; i++) {
-          for(int k = 0; k < numNodes; ++k)
-            outList->push_back(coords[numNodes * i + k].c[0]);
-          for(int k = 0; k < numNodes; ++k)
-            outList->push_back(coords[numNodes * i + k].c[1]);
-          for(int k = 0; k < numNodes; ++k)
-            outList->push_back(coords[numNodes * i + k].c[2]);
-          for(int k = 0; k < numNodes; ++k)
-            for(int l = 0; l < numComp; ++l)
-              outList->push_back(values[numNodes * i + k].v[l]);
-        }
-      }
+      num[t] += adapt(work, tol, numComp, &xyz[0], &values[0], range, plug,
+                      skin ? (*inSkin)[ent][ele] : 0, lists[t],
+                      skin ? &skins[t] : nullptr);
     }
   }
+
+  double total = *outNb;
+  for(int t = 0; t < nthreads; t++) total += num[t];
+  if(total > 2147483647.) {
+    Msg::Error("Too many elements in adaptive view: lower the recursion level "
+               "or raise the target error");
+    return;
+  }
+  std::size_t size = outList->size();
+  for(int t = 0; t < nthreads; t++) size += lists[t].size();
+  if(nthreads == 1 && outList->empty()) outList->swap(lists[0]);
+  outList->reserve(size);
+  for(int t = 0; t < nthreads; t++) {
+    *outNb += (int)num[t];
+    outList->insert(outList->end(), lists[t].begin(), lists[t].end());
+    if(skin) outSkin->insert(outSkin->end(), skins[t].begin(), skins[t].end());
+    std::vector<double>().swap(lists[t]);
+  }
+  // (the elements of a view without skin still have their place in it)
+  if(outSkin && !skin) outSkin->resize(outSkin->size() + (std::size_t)total, 0);
 }
+
+// a polygon or a polyhedron, refined through its triangles or tetrahedra:
+// added to the list, as adapt() adds the elements it keeps
+int adaptiveElements::_addPolytope(int level, int step, PViewData *in, int ent,
+                                   int ele, int numComp,
+                                   std::vector<double> &list)
+{
+  int numNodes = in->getNumNodes(step, ent, ele);
+  std::vector<PCoords> coords;
+  for(int i = 0; i < numNodes; i++) {
+    double x, y, z;
+    in->getNode(step, ent, ele, i, x, y, z);
+    coords.push_back(PCoords(x, y, z));
+  }
+  std::vector<PValues> values;
+  for(int i = 0; i < in->getNumValues(step, ent, ele) / numComp; i++) {
+    values.push_back(PValues(numComp));
+    for(int c = 0; c < numComp; c++)
+      in->getValue(step, ent, ele, numComp * i + c, values.back().v[c]);
+  }
+  if(!adaptPolytope(level, numComp, in->getElement(step, ent, ele), numNodes,
+                    coords, values))
+    return 0;
+  for(std::size_t i = 0; i < coords.size() / numNodes; i++) {
+    for(int k = 0; k < 3; k++)
+      for(int n = 0; n < numNodes; n++)
+        list.push_back(coords[numNodes * i + n].c[k]);
+    for(int n = 0; n < numNodes; n++)
+      for(int c = 0; c < numComp; c++)
+        list.push_back(values[numNodes * i + n].v[c]);
+  }
+  return (int)(coords.size() / numNodes);
+}
+
 
 adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
   : _step(-1), _level(-1), _tol(-1.), _inData(data), _points(nullptr),
@@ -1168,49 +1201,27 @@ static int vtkCellType(int type)
   }
 }
 
-void adaptiveElements::buildMapping(nodMap &myNodMap, double tol,
-                                    int &numNodInsert)
+void adaptiveElements::buildMapping(const adaptiveWork &w, nodMap &myNodMap,
+                                    double tol, int &numNodInsert)
 {
-  if(tol > 0.0 || myNodMap.getSize() == 0) {
-    // Either this is not a uniform refinement and we need to rebuild the whole
-    // mapping for each canonical element, or this is the first time we try to
-    // build the mapping
+  // Either this is not a uniform refinement and the mapping has to be rebuilt
+  // for each element, or this is the first time
+  if(!(tol > 0.0 || myNodMap.getSize() == 0)) return;
+  myNodMap.cleanMapping();
 
-    myNodMap
-      .cleanMapping(); // Required if tol > 0 (local error based adaptation)
+  // the vertices of the elements that are kept, by their index in the tree
+  for(const adaptiveElement *leaf : w.visible)
+    for(int i = 0; i < _shape.numNodes; i++)
+      myNodMap.mapping.push_back(leaf->p[i]->index);
+  if(myNodMap.mapping.size() == 0)
+    Msg::Error("Node mapping in buildMapping has zero size");
 
-    // the vertices of the elements that are kept, by their index in the
-    // canonical refined element
-    for(auto &leaf : all) {
-      if(!leaf.visible) continue;
-      for(int i = 0; i < _shape.numNodes; i++)
-        myNodMap.mapping.push_back(leaf.p[i]->index);
-    }
-
-    if(myNodMap.mapping.size() == 0) {
-      Msg::Error("Node mapping in buildMapping has zero size");
-    }
-
-    // Count number of unique nodes from the mapping
-    // Use an ordered set for efficiency
-    // This set is also used in case of partiel refinement
-    std::set<int> uniqueNod;
-    for(auto it = myNodMap.mapping.begin(); it != myNodMap.mapping.end();
-        it++) {
-      uniqueNod.insert(*it);
-    }
-    numNodInsert = (int)uniqueNod.size();
-
-    // Renumber the elm in the mapping in case of partial refinement (when vis
-    // tolerance > 0) so that we have a continuous numbering starting from 0
-    // with no missing node id in the connectivity This require a new local and
-    // temporary mapping, based on uniqueNod already generated above
-    if(tol > 0.0) {
-      std::map<int, int> renumbered;
-      for(int n : uniqueNod) renumbered[n] = (int)renumbered.size();
-      for(auto &n : myNodMap.mapping) n = renumbered[n];
-    }
-  }
+  // numbered from 0 without holes
+  std::map<int, int> renumbered;
+  for(int n : myNodMap.mapping) renumbered[n] = 0;
+  numNodInsert = 0;
+  for(auto &r : renumbered) r.second = numNodInsert++;
+  for(auto &n : myNodMap.mapping) n = renumbered[n];
 }
 
 // Refine the elements of this kind: into the writer if there is one, and into
@@ -1224,23 +1235,10 @@ void adaptiveElements::addInViewForVTK(int step, double tol, PViewData *in,
   int numComp = in->getNumComponents(0, 0, 0);
   if(numComp != 1 && numComp != 3 && numComp != 9) return;
 
-  int numEle = 0;
-  switch(_shape.numEdges) {
-  case 0: numEle = in->getNumPoints(); break;
-  case 1: numEle = in->getNumLines(); break;
-  case 3: numEle = in->getNumTriangles(); break;
-  case 4: numEle = in->getNumQuadrangles(); break;
-  case 6: numEle = in->getNumTetrahedra(); break;
-  case 9: numEle = in->getNumPrisms(); break;
-  case 8: numEle = in->getNumPyramids(); break;
-  case 12: numEle = in->getNumHexahedra(); break;
-  }
-  if(!numEle) return;
-
-  // New variables for high order visualiztion through vtk files
-  int numNodInsert = 0;
+  int numNodInsert = 0, numNodes = _shape.numNodes;
   nodMap myNodMap;
-
+  adaptiveWork work;
+  std::vector<double> xyz, values, list;
   double range = in->getMax(step) - in->getMin(step);
 
   for(int ent = 0; ent < in->getNumEntities(step); ent++) {
@@ -1248,67 +1246,35 @@ void adaptiveElements::addInViewForVTK(int step, double tol, PViewData *in,
       if(in->skipElement(step, ent, ele) ||
          in->getNumEdges(step, ent, ele) != _shape.numEdges)
         continue;
-      int numNodes = in->getNumNodes(step, ent, ele);
-      std::vector<PCoords> coords;
-      for(int i = 0; i < numNodes; i++) {
-        double x, y, z;
-        in->getNode(step, ent, ele, i, x, y, z);
-        coords.push_back(PCoords(x, y, z));
-      }
-      int numVal = in->getNumValues(step, ent, ele);
-      std::vector<PValues> values;
-
-      switch(numComp) {
-      case 1:
-        for(int i = 0; i < numVal; i++) {
-          double val;
-          in->getValue(step, ent, ele, i, val);
-          values.push_back(PValues(val));
-        }
-        break;
-      case 3:
-        for(int i = 0; i < numVal / 3; i++) {
-          double vx, vy, vz;
-          in->getValue(step, ent, ele, 3 * i, vx);
-          in->getValue(step, ent, ele, 3 * i + 1, vy);
-          in->getValue(step, ent, ele, 3 * i + 2, vz);
-          values.push_back(PValues(vx, vy, vz));
-        }
-        break;
-      case 9:
-        for(int i = 0; i < numVal / 9; i++) {
-          double vxx, vxy, vxz, vyx, vyy, vyz, vzx, vzy, vzz;
-          in->getValue(step, ent, ele, 9 * i + 0, vxx);
-          in->getValue(step, ent, ele, 9 * i + 1, vxy);
-          in->getValue(step, ent, ele, 9 * i + 2, vxz);
-          in->getValue(step, ent, ele, 9 * i + 3, vyx);
-          in->getValue(step, ent, ele, 9 * i + 4, vyy);
-          in->getValue(step, ent, ele, 9 * i + 5, vyz);
-          in->getValue(step, ent, ele, 9 * i + 6, vzx);
-          in->getValue(step, ent, ele, 9 * i + 7, vzy);
-          in->getValue(step, ent, ele, 9 * i + 8, vzz);
-          values.push_back(
-            PValues(vxx, vxy, vxz, vyx, vyy, vyz, vzx, vzy, vzz));
-        }
-        break;
-      }
-
-      if(!adapt(tol, numComp, coords, values, range)) continue;
+      readElement(in, step, ent, ele, numComp, xyz, values);
+      if((int)xyz.size() != 3 * _numNodes ||
+         (int)values.size() != numComp * _numVals)
+        continue;
+      list.clear();
+      int num = adapt(work, tol, numComp, &xyz[0], &values[0], range, nullptr,
+                      0, list, nullptr);
+      if(!num) continue;
 
       // the points of the refined elements, numbered in the element
-      buildMapping(myNodMap, tol, numNodInsert);
+      buildMapping(work, myNodMap, tol, numNodInsert);
       std::vector<PCoords> points(numNodInsert, PCoords(0., 0., 0.));
       std::vector<PValues> pointValues(numNodInsert, PValues(numComp));
-      for(std::size_t i = 0; i < coords.size(); i++) {
-        points[myNodMap.mapping[i]] = coords[i];
-        pointValues[myNodMap.mapping[i]] = values[i];
+      int stride = numNodes * (3 + numComp);
+      for(int i = 0; i < num; i++) {
+        const double *e = &list[i * stride];
+        for(int k = 0; k < numNodes; k++) {
+          int n = myNodMap.mapping[numNodes * i + k];
+          points[n] = PCoords(e[k], e[numNodes + k], e[2 * numNodes + k]);
+          for(int c = 0; c < numComp; c++)
+            pointValues[n].v[c] = e[3 * numNodes + numComp * k + c];
+        }
       }
 
       int firstInPiece = writer ? (int)writer->numPoints() : 0;
-      for(std::size_t i = 0; i < coords.size() / _shape.numNodes; i++) {
+      for(int i = 0; i < num; i++) {
         vectInt inPiece, inAll;
-        for(int k = 0; k < _shape.numNodes; k++) {
-          int n = myNodMap.mapping[_shape.numNodes * i + k];
+        for(int k = 0; k < numNodes; k++) {
+          int n = myNodMap.mapping[numNodes * i + k];
           inPiece.push_back(firstInPiece + n);
           inAll.push_back(numPoints + n);
         }
@@ -1330,6 +1296,7 @@ void adaptiveElements::addInViewForVTK(int step, double tol, PViewData *in,
     }
   }
 }
+
 
 int adaptiveElements::countElmLev0(int step, PViewData *in)
 {
