@@ -514,6 +514,13 @@ namespace {
   };
 } // namespace
 
+#if !defined(HAVE_MESH)
+static void GetStatistics(double stat[50])
+{
+  for(int i = 0; i < 50; i++) stat[i] = 0;
+}
+#endif
+
 static double meshStatistic(int i)
 {
   if(_statsKept && _statsValid) return _stats[i];
@@ -7086,13 +7093,6 @@ double opt_mesh_zone_definition(OPT_ARGS_NUM)
   }
   return CTX::instance()->mesh.zoneDefinition;
 }
-
-#if !defined(HAVE_MESH)
-static void GetStatistics(double stat[50])
-{
-  for(int i = 0; i < 50; i++) stat[i] = 0;
-}
-#endif
 
 double opt_mesh_nb_nodes(OPT_ARGS_NUM) { return meshStatistic(4); }
 
