@@ -492,16 +492,19 @@ void CreateOutputFile(const std::string &fileName, int format,
     {
       // with the views based on the model, if any; or all the views if
       // there is no mesh
-      std::vector<PView *> views;
+      bool withViews = false;
 #if defined(HAVE_POST)
+      std::vector<PView *> views;
       bool mesh = (GModel::current()->getNumMeshElements() > 0);
       for(auto v : PView::list)
         if(!mesh || v->getData()->hasModel(GModel::current()))
           views.push_back(v);
-      if(views.size())
+      if(views.size()) {
         PView::writeVTU(name, CTX::instance()->mesh.binary, views);
+        withViews = true;
+      }
 #endif
-      if(views.empty())
+      if(!withViews)
         GModel::current()->writeVTU
           (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
            CTX::instance()->mesh.scalingFactor);
