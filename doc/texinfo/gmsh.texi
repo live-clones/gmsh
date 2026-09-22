@@ -4824,7 +4824,8 @@ physical group names (@code{$PhysicalName}), the elementary model
 entities (@code{$Entities}), the partitioned entities
 (@code{$PartitionedEntities}), the nodes (@code{$Nodes}), the elements
 (@code{$Elements}), the polygons and polyhedra (@code{$Polytopes}), the
-periodicity relations (@code{$Periodic}), the
+mesh edges and faces (@code{$Edges}, @code{$Faces}), the periodicity
+relations (@code{$Periodic}), the
 ghost elements (@code{$GhostElements}), the parametrizations
 (@code{$Parametrizations}) and the post-processing datasets
 (@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}). The
@@ -4992,6 +4993,20 @@ $Polytopes
     ...
   ...
 $EndPolytopes
+
+$Edges
+  numEdges(size_t)
+  edgeTag(size_t) nodeTag(size_t) nodeTag(size_t)
+  ...
+$EndEdges
+
+$Faces
+  numBlocks(size_t) numFaces(size_t)
+  numNodes(size_t) numFacesInBlock(size_t)
+    faceTag(size_t) nodeTag(size_t) ...
+    ...
+  ...
+$EndFaces
 
 $Periodic
   numPeriodicLinks(size_t)
@@ -5175,6 +5190,12 @@ simplices if none is given): 3 node tags per triangle, 4 per tetrahedron, in
 which nodes that are not nodes of the polygon or of the faces of the
 polyhedron are the hanging or interior nodes of the polytope. Polytopes share
 the element tag space with the elements of the @code{$Elements} section.
+
+The @code{$Edges} and @code{$Faces} sections store the global mesh edges
+and faces with their tags, as created e.g. by @code{createEdges()} and
+@code{createFaces()} in the API (@pxref{Gmsh application programming
+interface}). Faces are grouped in blocks of faces with the same number of
+nodes: 3 for triangles, 4 for quadrangles, more for polygons.
 All the currently supported elements in the format are defined in
 @url{https://gitlab.onelab.info/gmsh/gmsh/blob/master/src/common/GmshDefines.h,GmshDefines.h}. See
 @ref{Node ordering} for the ordering of the nodes.

@@ -677,8 +677,8 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.TargetError
-Target representation error for adaptive views@*
-Default value: @code{0.0001}@*
+Target error of adaptive views: the largest difference allowed between the field and what is drawn of it, as a fraction of the range of the view (the elements are refined until it is reached, down to MaxRecursionLevel; a negative value refines them all)@*
+Default value: @code{0.001}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.TensorType

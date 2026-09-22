@@ -899,7 +899,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
             }
             Msg::Error(
               "Unknown node %zu in element %zu in entity %d %d and elementType "
-              "%d. Entity type is %s. Partition data is %s",
+              "%d: entity type is %s%s",
               vertexTag, elmTag, entityDim, entityTag, elmType,
               entity->getTypeString().c_str(), partitionInfo.c_str());
             delete[] elementsRead;
@@ -1850,37 +1850,24 @@ static bool readMSH4OverlapInterfaceBoundaries(GModel *const model, FILE *fp,
 
 static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
 {
-  size_t numEdges = 0;
-  if(binary) {
-    if(fread(&numEdges, sizeof(size_t), 1, fp) != 1) { return false; }
-  }
-  else {
-    if(fscanf(fp, "%zu", &numEdges) != 1) { return false; }
-  }
+  std::vector<std::size_t> header;
+  if(!readMSH4SizeTs(fp, binary, false, 1, header)) return false;
+  std::size_t numEdges = header[0];
 
   Msg::Info("%zu edge%s", numEdges, numEdges > 1 ? "s" : "");
   Msg::StartProgressMeter(numEdges);
 
-  std::array<size_t, 3> edgeData;
-  for(size_t k = 0; k < numEdges; ++k) {
-    if(binary) {
-      // TODO if this proves too slow we could read all edge data at once
-      if(fread(edgeData.data(), sizeof(size_t), 3, fp) != 3) { return false; }
-    }
-    else {
-      if(fscanf(fp, "%zu %zu %zu", &edgeData[0], &edgeData[1], &edgeData[2]) !=
-         3) {
-        return false;
-      }
-    }
-
+  // each edge is its tag followed by its 2 node tags
+  std::vector<std::size_t> data;
+  if(!readMSH4SizeTs(fp, binary, false, 3 * numEdges, data)) return false;
+  for(std::size_t k = 0; k < numEdges; k++) {
+    const std::size_t *edgeData = &data[3 * k];
     MVertex *v0 = model->getMeshVertexByTag(edgeData[1]);
     MVertex *v1 = model->getMeshVertexByTag(edgeData[2]);
     if(!v0 || !v1) {
-      Msg::Error("Invalid node numbers in edge data in MSH4 file");
+      Msg::Error("Invalid node tags in edge data in MSH4 file");
       return false;
     }
-
     MEdge me(v0, v1);
     model->addMEdge(std::move(me), edgeData[0]);
     if(numEdges > 100000) Msg::ProgressMeter(k + 1, true, "Reading edges");
@@ -1889,52 +1876,47 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
   return true;
 }
 
+// Faces are stored by blocks of faces with the same number of nodes (3 for
+// triangles, 4 for quadrangles, more for polygons): `numBlocks numFaces`, then
+// for each block `numNodes numFacesInBlock` followed by `faceTag nodeTag ...`
+// for each face.
 static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
 {
-  size_t numFaces3 = 0, numFaces4 = 0;
-  if(binary) {
-    if(fread(&numFaces3, sizeof(size_t), 1, fp) != 1) { return false; }
-    if(fread(&numFaces4, sizeof(size_t), 1, fp) != 1) { return false; }
-  }
-  else {
-    if(fscanf(fp, "%zu %zu", &numFaces3, &numFaces4) != 2) { return false; }
-  }
+  std::vector<std::size_t> header;
+  if(!readMSH4SizeTs(fp, binary, false, 2, header)) return false;
+  std::size_t numBlocks = header[0], numFaces = header[1];
 
-  std::size_t totalNumFaces = numFaces3 + numFaces4, faceRead = 0;
-  Msg::Info("%zu face%s", totalNumFaces, totalNumFaces > 1 ? "s" : "");
-  Msg::StartProgressMeter(totalNumFaces);
+  Msg::Info("%zu face%s", numFaces, numFaces > 1 ? "s" : "");
+  Msg::StartProgressMeter(numFaces);
 
-  for(std::size_t type = 3; type <= 4; type++) {
-    std::array<size_t, 5> faceData; // face tag followed by vertex tags
-    std::size_t numFaces = (type == 3) ? numFaces3 : numFaces4;
-    for(size_t k = 0; k < numFaces; ++k) {
-      if(binary) {
-        // TODO if this proves too slow we could read all face data at once
-        if(fread(faceData.data(), sizeof(size_t), type + 1, fp) != type + 1) {
+  std::vector<std::size_t> data;
+  std::vector<MVertex *> v;
+  std::size_t faceRead = 0;
+  for(std::size_t block = 0; block < numBlocks; block++) {
+    if(!readMSH4SizeTs(fp, binary, false, 2, header)) return false;
+    std::size_t numNodes = header[0], numFacesInBlock = header[1];
+    if(numNodes < 3) {
+      Msg::Error("Invalid number of nodes (%zu) for faces in MSH4 file",
+                 numNodes);
+      return false;
+    }
+    std::size_t stride = numNodes + 1;
+    if(!readMSH4SizeTs(fp, binary, false, stride * numFacesInBlock, data))
+      return false;
+    v.resize(numNodes);
+    for(std::size_t k = 0; k < numFacesInBlock; k++) {
+      const std::size_t *faceData = &data[stride * k];
+      for(std::size_t j = 0; j < numNodes; j++) {
+        v[j] = model->getMeshVertexByTag(faceData[j + 1]);
+        if(!v[j]) {
+          Msg::Error("Invalid node tags in face data in MSH4 file");
           return false;
         }
       }
-      else {
-        if(fscanf(fp, "%zu %zu %zu %zu", &faceData[0], &faceData[1],
-                  &faceData[2], &faceData[3]) != 4) {
-          return false;
-        }
-        if(type == 4 && fscanf(fp, "%zu", &faceData[4]) != 1) { return false; }
-      }
-      MVertex *v0 = model->getMeshVertexByTag(faceData[1]);
-      MVertex *v1 = model->getMeshVertexByTag(faceData[2]);
-      MVertex *v2 = model->getMeshVertexByTag(faceData[3]);
-      MVertex *v3 =
-        type == 4 ? model->getMeshVertexByTag(faceData[4]) : nullptr;
-      if(!v0 || !v1 || !v2 || (type == 4 && !v3)) {
-        Msg::Error("Invalid node tags in face data in MSH4 file");
-        return false;
-      }
-      MFace mf(v0, v1, v2, v3);
+      MFace mf(v);
       model->addMFace(std::move(mf), faceData[0]);
       faceRead++;
-      if(totalNumFaces > 100000)
-        Msg::ProgressMeter(faceRead, true, "Reading faces");
+      if(numFaces > 100000) Msg::ProgressMeter(faceRead, true, "Reading faces");
     }
   }
 
@@ -3837,19 +3819,17 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
     else {
       fprintf(fp, "%zu\n", edges.size());
     }
+    std::vector<std::size_t> data;
+    if(binary) data.reserve(3 * edges.size());
     for(const auto &[edge, tag] : edges) {
       size_t v0 = edge.getVertex(0)->getNum();
       size_t v1 = edge.getVertex(1)->getNum();
-      // TODO if this proves too slow we could write all edge data at once
-      if(binary) {
-        fwrite(&tag, sizeof(size_t), 1, fp);
-        fwrite(&v0, sizeof(size_t), 1, fp);
-        fwrite(&v1, sizeof(size_t), 1, fp);
-      }
-      else {
+      if(binary)
+        data.insert(data.end(), {tag, v0, v1});
+      else
         fprintf(fp, "%zu %zu %zu\n", tag, v0, v1);
-      }
     }
+    if(binary) fwrite(data.data(), sizeof(std::size_t), data.size(), fp);
 
     if(binary) fprintf(fp, "\n");
     fprintf(fp, "$EndEdges\n");
@@ -3905,40 +3885,43 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
 {
   auto printFaces = [&](const GModel::hashmapMFace &faces) {
     if(faces.empty()) return;
+    // one block per number of nodes
+    std::map<std::size_t, std::vector<const GModel::hashmapMFace::value_type *>>
+      blocks;
+    for(const auto &f : faces) blocks[f.first.getNumVertices()].push_back(&f);
     fprintf(fp, "$Faces\n");
-    std::size_t numFaces3 = 0, numFaces4 = 0;
-    for(const auto &[face, tag] : faces) {
-      if(face.getNumVertices() == 3) numFaces3++;
-      if(face.getNumVertices() == 4) numFaces4++;
-    }
     if(binary) {
-      fwrite(&numFaces3, sizeof(std::size_t), 1, fp);
-      fwrite(&numFaces4, sizeof(std::size_t), 1, fp);
+      std::size_t header[2] = {blocks.size(), faces.size()};
+      fwrite(header, sizeof(std::size_t), 2, fp);
     }
     else {
-      fprintf(fp, "%zu %zu\n", numFaces3, numFaces4);
+      fprintf(fp, "%zu %zu\n", blocks.size(), faces.size());
     }
-    for(std::size_t type = 3; type <= 4; type++) {
-      for(const auto &[face, tag] : faces) {
-        size_t numVertices = face.getNumVertices();
-        if(numVertices != type) continue;
-        size_t v0 = face.getVertex(0)->getNum();
-        size_t v1 = face.getVertex(1)->getNum();
-        size_t v2 = face.getVertex(2)->getNum();
-        size_t v3 = type == 4 ? face.getVertex(3)->getNum() : 0;
-        if(binary) {
-          // TODO if this proves too slow we could write all face data at once
-          fwrite(&tag, sizeof(size_t), 1, fp);
-          fwrite(&v0, sizeof(size_t), 1, fp);
-          fwrite(&v1, sizeof(size_t), 1, fp);
-          fwrite(&v2, sizeof(size_t), 1, fp);
-          if(type == 4) fwrite(&v3, sizeof(size_t), 1, fp);
+    std::vector<std::size_t> data;
+    for(const auto &[numNodes, block] : blocks) {
+      if(binary) {
+        std::size_t header[2] = {numNodes, block.size()};
+        fwrite(header, sizeof(std::size_t), 2, fp);
+      }
+      else {
+        fprintf(fp, "%zu %zu\n", numNodes, block.size());
+      }
+      if(binary) {
+        data.clear();
+        data.reserve((numNodes + 1) * block.size());
+        for(auto f : block) {
+          data.push_back(f->second);
+          for(std::size_t j = 0; j < numNodes; j++)
+            data.push_back(f->first.getVertex(j)->getNum());
         }
-        else {
-          if(type == 4)
-            fprintf(fp, "%zu %zu %zu %zu %zu\n", tag, v0, v1, v2, v3);
-          else
-            fprintf(fp, "%zu %zu %zu %zu\n", tag, v0, v1, v2);
+        fwrite(data.data(), sizeof(std::size_t), data.size(), fp);
+      }
+      else {
+        for(auto f : block) {
+          fprintf(fp, "%zu", f->second);
+          for(std::size_t j = 0; j < numNodes; j++)
+            fprintf(fp, " %zu", f->first.getVertex(j)->getNum());
+          fprintf(fp, "\n");
         }
       }
     }

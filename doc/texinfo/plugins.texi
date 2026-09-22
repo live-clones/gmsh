@@ -334,7 +334,7 @@ Default value: @code{0}
 @item RecurLevel
 Default value: @code{3}
 @item TargetError
-Default value: @code{0.0001}
+Default value: @code{0.001}
 @item View
 Default value: @code{-1}
 @item Visible
@@ -364,7 +364,7 @@ Default value: @code{0}
 @item RecurLevel
 Default value: @code{3}
 @item TargetError
-Default value: @code{0.0001}
+Default value: @code{0.001}
 @item View
 Default value: @code{-1}
 @item Visible
@@ -724,7 +724,7 @@ Default value: @code{0}
 @item RecurLevel
 Default value: @code{3}
 @item TargetError
-Default value: @code{0.0001}
+Default value: @code{0.001}
 @item View
 Default value: @code{-1}
 @item OtherTimeStep

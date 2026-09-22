@@ -475,6 +475,10 @@ struct GEntityPtrLessThan {
   {
     return ent1->tag() < ent2->tag();
   }
+  // lookup by tag, without creating a temporary entity
+  using is_transparent = void;
+  bool operator()(const GEntity *ent, int tag) const { return ent->tag() < tag; }
+  bool operator()(int tag, const GEntity *ent) const { return tag < ent->tag(); }
 };
 
 struct GEntityPtrFullLessThan {

@@ -383,8 +383,7 @@ void GModel::clearOverlaps()
 
 GRegion *GModel::getRegionByTag(int n) const
 {
-  GRegion tmp((GModel *)this, n);
-  auto it = regions.find(&tmp);
+  auto it = regions.find(n);
   if(it != regions.end())
     return *it;
   else
@@ -393,8 +392,7 @@ GRegion *GModel::getRegionByTag(int n) const
 
 GFace *GModel::getFaceByTag(int n) const
 {
-  GFace tmp((GModel *)this, n);
-  auto it = faces.find(&tmp);
+  auto it = faces.find(n);
   if(it != faces.end())
     return *it;
   else
@@ -403,8 +401,7 @@ GFace *GModel::getFaceByTag(int n) const
 
 GEdge *GModel::getEdgeByTag(int n) const
 {
-  GEdge tmp((GModel *)this, n);
-  auto it = edges.find(&tmp);
+  auto it = edges.find(n);
   if(it != edges.end())
     return *it;
   else
@@ -413,8 +410,7 @@ GEdge *GModel::getEdgeByTag(int n) const
 
 GVertex *GModel::getVertexByTag(int n) const
 {
-  GVertex tmp((GModel *)this, n);
-  auto it = vertices.find(&tmp);
+  auto it = vertices.find(n);
   if(it != vertices.end())
     return *it;
   else
@@ -2279,15 +2275,31 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
   }
 }
 
-MVertex *GModel::getMeshVertexByTag(std::size_t n)
+// The OpenMP constructs needed to rebuild the caches from within a parallel
+// region are kept out of the lookups below: a function containing any of them
+// fetches the OpenMP thread number on entry, which costs more than the lookup.
+static void rebuildMeshVertexCacheOnce(GModel *m)
 {
-  if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
 #pragma omp barrier
 #pragma omp single
-    {
-      rebuildMeshVertexCache();
-    }
+  {
+    m->rebuildMeshVertexCache();
   }
+}
+
+static void rebuildMeshElementCacheOnce(GModel *m)
+{
+#pragma omp barrier
+#pragma omp single
+  {
+    m->rebuildMeshElementCache();
+  }
+}
+
+MVertex *GModel::getMeshVertexByTag(std::size_t n)
+{
+  if(_vertexVectorCache.empty() && _vertexMapCache.empty())
+    rebuildMeshVertexCacheOnce(this);
 
   if(n < _vertexVectorCache.size())
     return _vertexVectorCache[n];
@@ -2334,13 +2346,8 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
 
 MElement *GModel::getMeshElementByTag(std::size_t n, int &entityTag)
 {
-  if(_elementVectorCache.empty() && _elementMapCache.empty()) {
-#pragma omp barrier
-#pragma omp single
-    {
-      rebuildMeshElementCache();
-    }
-  }
+  if(_elementVectorCache.empty() && _elementMapCache.empty())
+    rebuildMeshElementCacheOnce(this);
 
   std::pair<MElement *, int> ret;
   if(n < _elementVectorCache.size())
