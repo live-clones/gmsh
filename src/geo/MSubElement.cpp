@@ -146,7 +146,7 @@ void MSubTetrahedron::movePointFromElementSpaceToParentSpace(double &u,
   w = uvwP[2];
 }
 
-bool MSubTetrahedron::isInside(double u, double v, double w) const
+bool MSubTetrahedron::isInside(double u, double v, double w, double tol) const
 {
   if(!_orig) return false;
 
@@ -158,14 +158,13 @@ bool MSubTetrahedron::isInside(double u, double v, double w) const
     getBaseElement()->xyz2uvw(xyz, uvwE);
     SPoint3 pE;
     getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
-    double tol = getTolerance();
     if(fabs(p.x() - pE.x()) > tol) return false;
     if(fabs(p.y() - pE.y()) > tol) return false;
     if(fabs(p.z() - pE.z()) > tol) return false;
   }
 
   movePointFromParentSpaceToElementSpace(u, v, w);
-  if(getBaseElement()->isInside(u, v, w)) return true;
+  if(getBaseElement()->isInside(u, v, w, tol)) return true;
   return false;
 }
 
@@ -405,7 +404,7 @@ void MSubTriangle::movePointFromElementSpaceToParentSpace(double &u, double &v,
   w = uvwP[2];
 }
 
-bool MSubTriangle::isInside(double u, double v, double w) const
+bool MSubTriangle::isInside(double u, double v, double w, double tol) const
 {
   if(!_orig) return false;
 
@@ -417,14 +416,13 @@ bool MSubTriangle::isInside(double u, double v, double w) const
     getBaseElement()->xyz2uvw(xyz, uvwE);
     SPoint3 pE;
     getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
-    double tol = getTolerance();
     if(fabs(p.x() - pE.x()) > tol) return false;
     if(fabs(p.y() - pE.y()) > tol) return false;
     if(fabs(p.z() - pE.z()) > tol) return false;
   }
 
   movePointFromParentSpaceToElementSpace(u, v, w);
-  if(getBaseElement()->isInside(u, v, w)) return true;
+  if(getBaseElement()->isInside(u, v, w, tol)) return true;
   return false;
 }
 
@@ -652,7 +650,7 @@ void MSubLine::movePointFromElementSpaceToParentSpace(double &u, double &v,
   w = uvwP[2];
 }
 
-bool MSubLine::isInside(double u, double v, double w) const
+bool MSubLine::isInside(double u, double v, double w, double tol) const
 {
   if(!_orig) return false;
 
@@ -664,14 +662,13 @@ bool MSubLine::isInside(double u, double v, double w) const
     getBaseElement()->xyz2uvw(xyz, uvwE);
     SPoint3 pE;
     getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
-    double tol = getTolerance();
     if(fabs(p.x() - pE.x()) > tol) return false;
     if(fabs(p.y() - pE.y()) > tol) return false;
     if(fabs(p.z() - pE.z()) > tol) return false;
   }
 
   movePointFromParentSpaceToElementSpace(u, v, w);
-  if(getBaseElement()->isInside(u, v, w)) return true;
+  if(getBaseElement()->isInside(u, v, w, tol)) return true;
   return false;
 }
 
@@ -858,7 +855,7 @@ void MSubPoint::movePointFromElementSpaceToParentSpace(double &u, double &v,
   w = uvwP[2];
 }
 
-bool MSubPoint::isInside(double u, double v, double w) const
+bool MSubPoint::isInside(double u, double v, double w, double tol) const
 {
   if(!_orig) return false;
 
@@ -870,14 +867,13 @@ bool MSubPoint::isInside(double u, double v, double w) const
     getBaseElement()->xyz2uvw(xyz, uvwE);
     SPoint3 pE;
     getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
-    double tol = getTolerance();
     if(fabs(p.x() - pE.x()) > tol) return false;
     if(fabs(p.y() - pE.y()) > tol) return false;
     if(fabs(p.z() - pE.z()) > tol) return false;
   }
 
   movePointFromParentSpaceToElementSpace(u, v, w);
-  if(getBaseElement()->isInside(u, v, w)) return true;
+  if(getBaseElement()->isInside(u, v, w, tol)) return true;
   return false;
 }
 

@@ -232,12 +232,11 @@ int MPolyhedron::_findTetrahedron(double x, double y, double z,
   return best;
 }
 
-bool MPolyhedron::isInside(double u, double v, double w) const
+bool MPolyhedron::isInside(double u, double v, double w, double tol) const
 {
   double bary[4];
   int i = _findTetrahedron(u, v, w, bary);
   if(i < 0) return false;
-  double tol = getTolerance();
   for(int k = 0; k < 4; k++)
     if(bary[k] < -tol) return false;
   return true;

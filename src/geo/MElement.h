@@ -435,8 +435,14 @@ public:
   virtual void movePointFromElementSpaceToParentSpace(double &u, double &v,
                                                       double &w) const;
 
-  // test if a point, given in parametric coordinates, belongs to the element
-  virtual bool isInside(double u, double v, double w) const = 0;
+  // test if a point, given in parametric coordinates, belongs to the element,
+  // enlarged by tol in parametric coordinates (by default,
+  // Mesh.ToleranceReferenceElement)
+  virtual bool isInside(double u, double v, double w, double tol) const = 0;
+  bool isInside(double u, double v, double w) const
+  {
+    return isInside(u, v, w, getTolerance());
+  }
 
   // interpolate the given nodal data (resp. its gradient, curl and divergence)
   // at point (u,v,w) in parametric coordinates

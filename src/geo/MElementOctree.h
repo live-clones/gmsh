@@ -14,17 +14,29 @@ class MElement;
 
 class MElementOctree {
 private:
-  Octree *_octree;
+  Octree *_octree[4]; // one per dimension
   GModel *_gm;
-  std::vector<MElement *> _elems;
+  int _maxOrder;
+  void _insert(MElement *e);
+  std::vector<MElement *> _find(double *P, int dim, double tol,
+                                bool onlyFirst) const;
+  std::vector<MElement *> _find(double *P, int dim, double tol, bool strict,
+                                double maxTol, bool onlyFirst) const;
 
 public:
   MElementOctree(GModel *);
   MElementOctree(const std::vector<MElement *> &);
   ~MElementOctree();
+  // Get an element of dimension dim (of highest dimension if dim == -1)
+  // containing the point, i.e. in its reference element enlarged by tol
+  // (Mesh.ToleranceReferenceElement if negative); if none and not strict,
+  // retry with the tolerance multiplied by 10 up to 1 (0.1 for an octree built
+  // from a list of elements). Among the elements of the same dimension, the
+  // first one inserted.
   MElement *find(double x, double y, double z, int dim = -1,
-                 bool strict = false) const;
+                 bool strict = false, double tol = -1.) const;
+  // Same, for all the elements, by increasing dimension and in insertion order.
   std::vector<MElement *> findAll(double x, double y, double z, int dim,
-                                  bool strict = false) const;
+                                  bool strict = false, double tol = -1.) const;
 };
 #endif

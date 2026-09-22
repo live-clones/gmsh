@@ -215,12 +215,11 @@ int MPolygon::_findTriangle(double x, double y, double z, double bary[3],
   return best;
 }
 
-bool MPolygon::isInside(double u, double v, double w) const
+bool MPolygon::isInside(double u, double v, double w, double tol) const
 {
   double bary[3], dist;
   int i = _findTriangle(u, v, w, bary, dist);
   if(i < 0) return false;
-  double tol = getTolerance();
   if(bary[0] < -tol || bary[1] < -tol || bary[2] < -tol) return false;
   // out of the plane: compare with the size of the triangle
   MTriangle t = getTriangle(i);

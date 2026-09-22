@@ -58,22 +58,6 @@ static void minmax(int n, double *X, double *Y, double *Z, double *min,
   min[2] = bb.min().z();
 }
 
-static void centroid(int n, double *X, double *Y, double *Z, double *c)
-{
-  const double oc = 1. / (double)n;
-  c[0] = X[0];
-  c[1] = Y[0];
-  c[2] = Z[0];
-  for(int i = 1; i < n; i++) {
-    c[0] += X[i];
-    c[1] += Y[i];
-    c[2] += Z[i];
-  }
-  c[0] *= oc;
-  c[1] *= oc;
-  c[2] *= oc;
-}
-
 static void pntBB(void *a, double *min, double *max)
 {
   double *X = (double *)a, *Y = &X[1], *Z = &X[2];
@@ -180,54 +164,6 @@ static int pyrInEle(void *a, double *x)
   return pyr.isInside(uvw[0], uvw[1], uvw[2]);
 }
 
-static void pntCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[1], *Z = &X[2];
-  centroid(1, X, Y, Z, x);
-}
-
-static void linCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[2], *Z = &X[4];
-  centroid(2, X, Y, Z, x);
-}
-
-static void triCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[3], *Z = &X[6];
-  centroid(3, X, Y, Z, x);
-}
-
-static void quaCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[4], *Z = &X[8];
-  centroid(4, X, Y, Z, x);
-}
-
-static void tetCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[4], *Z = &X[8];
-  centroid(4, X, Y, Z, x);
-}
-
-static void hexCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[8], *Z = &X[16];
-  centroid(8, X, Y, Z, x);
-}
-
-static void priCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[6], *Z = &X[12];
-  centroid(6, X, Y, Z, x);
-}
-
-static void pyrCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[5], *Z = &X[10];
-  centroid(5, X, Y, Z, x);
-}
-
 static void addListOfStuff(Octree *o, std::vector<double> &l, int nbelm)
 {
   for(std::size_t i = 0; i < l.size(); i += nbelm) Octree_Insert(&l[i], o);
@@ -294,125 +230,83 @@ void OctreePost::_create(PViewData *data)
       return;
     }
 
-    SBoundingBox3d bb = l->getBoundingBox();
-
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
-       CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
-      /* TODO FIXME: ugly temporary fix, but we need larger bbox for the
-       * guiding field sampling on curved surfaces, thicken is not sufficient */
-      bb *= 1.1;
-    }
-    else {
-      bb.thicken(0.01); // make 1% thicker
-    }
-
-    SPoint3 bbmin = bb.min(), bbmax = bb.max();
-    double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
-    double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
-                      bbmax.z() - bbmin.z()};
-    const int maxElePerBucket = 100; // memory vs. speed trade-off
-
-    _sp =
-      Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
+    _sp = Octree_Create(pntBB, pntInEle);
     addListOfStuff(_sp, l->SP, 3 + 1 * l->getNumTimeSteps());
     Octree_Arrange(_sp);
-    _vp =
-      Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
+    _vp = Octree_Create(pntBB, pntInEle);
     addListOfStuff(_vp, l->VP, 3 + 3 * l->getNumTimeSteps());
     Octree_Arrange(_vp);
-    _tp =
-      Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
+    _tp = Octree_Create(pntBB, pntInEle);
     addListOfStuff(_tp, l->TP, 3 + 9 * l->getNumTimeSteps());
     Octree_Arrange(_tp);
 
-    _sl =
-      Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
+    _sl = Octree_Create(linBB, linInEle);
     addListOfStuff(_sl, l->SL, 6 + 2 * l->getNumTimeSteps());
     Octree_Arrange(_sl);
-    _vl =
-      Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
+    _vl = Octree_Create(linBB, linInEle);
     addListOfStuff(_vl, l->VL, 6 + 6 * l->getNumTimeSteps());
     Octree_Arrange(_vl);
-    _tl =
-      Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
+    _tl = Octree_Create(linBB, linInEle);
     addListOfStuff(_tl, l->TL, 6 + 18 * l->getNumTimeSteps());
     Octree_Arrange(_tl);
 
-    _st =
-      Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
+    _st = Octree_Create(triBB, triInEle);
     addListOfStuff(_st, l->ST, 9 + 3 * l->getNumTimeSteps());
     Octree_Arrange(_st);
-    _vt =
-      Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
+    _vt = Octree_Create(triBB, triInEle);
     addListOfStuff(_vt, l->VT, 9 + 9 * l->getNumTimeSteps());
     Octree_Arrange(_vt);
-    _tt =
-      Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
+    _tt = Octree_Create(triBB, triInEle);
     addListOfStuff(_tt, l->TT, 9 + 27 * l->getNumTimeSteps());
     Octree_Arrange(_tt);
 
-    _sq =
-      Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
+    _sq = Octree_Create(quaBB, quaInEle);
     addListOfStuff(_sq, l->SQ, 12 + 4 * l->getNumTimeSteps());
     Octree_Arrange(_sq);
-    _vq =
-      Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
+    _vq = Octree_Create(quaBB, quaInEle);
     addListOfStuff(_vq, l->VQ, 12 + 12 * l->getNumTimeSteps());
     Octree_Arrange(_vq);
-    _tq =
-      Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
+    _tq = Octree_Create(quaBB, quaInEle);
     addListOfStuff(_tq, l->TQ, 12 + 36 * l->getNumTimeSteps());
     Octree_Arrange(_tq);
 
-    _ss =
-      Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
+    _ss = Octree_Create(tetBB, tetInEle);
     addListOfStuff(_ss, l->SS, 12 + 4 * l->getNumTimeSteps());
     Octree_Arrange(_ss);
-    _vs =
-      Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
+    _vs = Octree_Create(tetBB, tetInEle);
     addListOfStuff(_vs, l->VS, 12 + 12 * l->getNumTimeSteps());
     Octree_Arrange(_vs);
-    _ts =
-      Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
+    _ts = Octree_Create(tetBB, tetInEle);
     addListOfStuff(_ts, l->TS, 12 + 36 * l->getNumTimeSteps());
     Octree_Arrange(_ts);
 
-    _sh =
-      Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
+    _sh = Octree_Create(hexBB, hexInEle);
     addListOfStuff(_sh, l->SH, 24 + 8 * l->getNumTimeSteps());
     Octree_Arrange(_sh);
-    _vh =
-      Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
+    _vh = Octree_Create(hexBB, hexInEle);
     addListOfStuff(_vh, l->VH, 24 + 24 * l->getNumTimeSteps());
     Octree_Arrange(_vh);
-    _th =
-      Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
+    _th = Octree_Create(hexBB, hexInEle);
     addListOfStuff(_th, l->TH, 24 + 72 * l->getNumTimeSteps());
     Octree_Arrange(_th);
 
-    _si =
-      Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
+    _si = Octree_Create(priBB, priInEle);
     addListOfStuff(_si, l->SI, 18 + 6 * l->getNumTimeSteps());
     Octree_Arrange(_si);
-    _vi =
-      Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
+    _vi = Octree_Create(priBB, priInEle);
     addListOfStuff(_vi, l->VI, 18 + 18 * l->getNumTimeSteps());
     Octree_Arrange(_vi);
-    _ti =
-      Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
+    _ti = Octree_Create(priBB, priInEle);
     addListOfStuff(_ti, l->TI, 18 + 54 * l->getNumTimeSteps());
     Octree_Arrange(_ti);
 
-    _sy =
-      Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
+    _sy = Octree_Create(pyrBB, pyrInEle);
     addListOfStuff(_sy, l->SY, 15 + 5 * l->getNumTimeSteps());
     Octree_Arrange(_sy);
-    _vy =
-      Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
+    _vy = Octree_Create(pyrBB, pyrInEle);
     addListOfStuff(_vy, l->VY, 15 + 15 * l->getNumTimeSteps());
     Octree_Arrange(_vy);
-    _ty =
-      Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
+    _ty = Octree_Create(pyrBB, pyrInEle);
     addListOfStuff(_ty, l->TY, 15 + 45 * l->getNumTimeSteps());
     Octree_Arrange(_ty);
   }

@@ -16,7 +16,6 @@ set(SRC
   VertexArray.cpp
   SmoothData.cpp
   Octree.cpp
-    OctreeInternals.cpp
   StringUtils.cpp
   VTKXML.cpp
   ListUtils.cpp

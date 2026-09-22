@@ -160,9 +160,9 @@ public:
   // in computeCorrespondence
   virtual void reorient(int rotation, bool swap);
 
-  virtual bool isInside(double u, double v, double w) const
+  using MElement::isInside;
+  virtual bool isInside(double u, double v, double w, double tol) const
   {
-    double tol = getTolerance();
     if(u < -(1. + tol) || v < -(1. + tol) || u > (1. + tol) || v > (1. + tol) ||
        fabs(w) > tol)
       return false;

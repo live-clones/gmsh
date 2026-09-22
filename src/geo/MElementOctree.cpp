@@ -61,26 +61,6 @@ void MElementBB(void *a, double *min, double *max)
   min[2] = bb.min().z();
 }
 
-static void MElementCentroid(void *a, double *x)
-{
-  MElement *e = (MElement *)a;
-  MVertex *v = e->getVertex(0);
-  int n = e->getNumVertices();
-  x[0] = v->x();
-  x[1] = v->y();
-  x[2] = v->z();
-  for(int i = 1; i < n; i++) {
-    v = e->getVertex(i);
-    x[0] += v->x();
-    x[1] += v->y();
-    x[2] += v->z();
-  }
-  double oc = 1. / (double)n;
-  x[0] *= oc;
-  x[1] *= oc;
-  x[2] *= oc;
-}
-
 int MElementInEle(void *a, double *x)
 {
   MElement *e = (MElement *)a;
@@ -89,17 +69,18 @@ int MElementInEle(void *a, double *x)
   return e->isInside(uvw[0], uvw[1], uvw[2]) ? 1 : 0;
 }
 
-MElementOctree::MElementOctree(GModel *m) : _gm(m)
+void MElementOctree::_insert(MElement *e)
 {
-  SBoundingBox3d bb = m->bounds();
-  bb.thicken(0.01); // make 1% thicker
-  SPoint3 bbmin = bb.min(), bbmax = bb.max();
-  double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
-  double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
-                    bbmax.z() - bbmin.z()};
-  const int maxElePerBucket = 100; // memory vs. speed trade-off
-  _octree = Octree_Create(maxElePerBucket, min, size, MElementBB,
-                          MElementCentroid, MElementInEle);
+  int dim = e->getDim();
+  if(dim < 0 || dim > 3) return;
+  Octree_Insert(e, _octree[dim]);
+  _maxOrder = std::max(_maxOrder, e->getPolynomialOrder());
+}
+
+MElementOctree::MElementOctree(GModel *m) : _gm(m), _maxOrder(1)
+{
+  for(int d = 0; d < 4; d++)
+    _octree[d] = Octree_Create(MElementBB, MElementInEle);
   std::vector<GEntity *> entities;
   m->getEntities(entities);
   // do not add Gvertex non-associated to any GEdge
@@ -108,155 +89,89 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
       if(entities[i]->dim() == 0) {
         GVertex *gv = dynamic_cast<GVertex *>(entities[i]);
         if(gv && gv->edges().size() > 0) {
-          Octree_Insert(entities[i]->getMeshElement(j), _octree);
+          _insert(entities[i]->getMeshElement(j));
         }
       }
       else
-        Octree_Insert(entities[i]->getMeshElement(j), _octree);
+        _insert(entities[i]->getMeshElement(j));
     }
   }
-  Octree_Arrange(_octree);
+  for(int d = 0; d < 4; d++) Octree_Arrange(_octree[d]);
 }
 
 MElementOctree::MElementOctree(const std::vector<MElement *> &v)
-  : _gm(nullptr), _elems(v)
+  : _gm(nullptr), _maxOrder(1)
 {
-  SBoundingBox3d bb;
-  for(std::size_t i = 0; i < v.size(); i++) {
-    for(std::size_t j = 0; j < v[i]->getNumVertices(); j++) {
-      bb += SPoint3(v[i]->getVertex(j)->x(), v[i]->getVertex(j)->y(),
-                    v[i]->getVertex(j)->z());
-    }
-  }
-  bb.thicken(0.01); // make 1% thicker
-  SPoint3 bbmin = bb.min(), bbmax = bb.max();
-  double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
-  double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
-                    bbmax.z() - bbmin.z()};
-  const int maxElePerBucket = 100; // memory vs. speed trade-off
-  _octree = Octree_Create(maxElePerBucket, min, size, MElementBB,
-                          MElementCentroid, MElementInEle);
-  for(std::size_t i = 0; i < v.size(); i++) Octree_Insert(v[i], _octree);
-  Octree_Arrange(_octree);
+  for(int d = 0; d < 4; d++)
+    _octree[d] = Octree_Create(MElementBB, MElementInEle);
+  for(std::size_t i = 0; i < v.size(); i++) _insert(v[i]);
+  for(int d = 0; d < 4; d++) Octree_Arrange(_octree[d]);
 }
 
-MElementOctree::~MElementOctree() { Octree_Delete(_octree); }
-
-std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
-                                                int dim, bool strict) const
+MElementOctree::~MElementOctree()
 {
-  double maxTol = 1.;
-  double tolIncr = 10.;
+  for(int d = 0; d < 4; d++) Octree_Delete(_octree[d]);
+}
 
-  double P[3] = {x, y, z};
-  std::vector<void *> v;
+// Get the elements of dimension dim (all if dim == -1) containing the point,
+// in the reference element enlarged by tol: all of them, by increasing
+// dimension, or only the first one, trying the highest dimension first.
+std::vector<MElement *> MElementOctree::_find(double *P, int dim, double tol,
+                                              bool onlyFirst) const
+{
   std::vector<MElement *> e;
-  Octree_SearchAll(P, _octree, &v);
-  for(auto it = v.begin(); it != v.end(); ++it) {
-    MElement *el = (MElement *)*it;
-    if(dim == -1 || el->getDim() == dim) e.push_back(el);
-  }
-  if(e.empty() && !strict && _gm) {
-    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
-    double tol = initialTol;
-    while(tol < maxTol) {
-      tol *= tolIncr;
-      CTX::instance()->mesh.toleranceReferenceElement = tol;
-      std::vector<GEntity *> entities;
-      _gm->getEntities(entities);
-      for(std::size_t i = 0; i < entities.size(); i++) {
-        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-          MElement *el = entities[i]->getMeshElement(j);
-          if(dim == -1 || el->getDim() == dim) {
-            if(MElementInEle(el, P)) { e.push_back(el); }
-          }
-        }
-      }
-      if(!e.empty()) {
-        CTX::instance()->mesh.toleranceReferenceElement = initialTol;
-        return e;
+  int dmin = (dim < 0) ? 0 : dim, dmax = (dim < 0) ? 3 : dim;
+  for(int i = dmin; i <= dmax; i++) {
+    int d = onlyFirst ? dmax + dmin - i : i;
+    // a point inside the reference element enlarged by tol lies within about
+    // 4 tol times the element size of its bounding box (the enlarged reference
+    // tetrahedron is the original one scaled by 1 + 4 tol); more for curved
+    // elements
+    std::vector<void *> v;
+    Octree_SearchAllNear(P, _octree[d], 4. * _maxOrder * tol, &v);
+    for(auto it = v.begin(); it != v.end(); ++it) {
+      MElement *el = (MElement *)*it;
+      double uvw[3];
+      el->xyz2uvw(P, uvw);
+      if(el->isInside(uvw[0], uvw[1], uvw[2], tol)) {
+        e.push_back(el);
+        if(onlyFirst) return e;
       }
     }
-    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
-  }
-  else if(e.empty() && !strict && !_gm) {
-    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
-    double tol = initialTol;
-    while(tol < maxTol) {
-      tol *= tolIncr;
-      CTX::instance()->mesh.toleranceReferenceElement = tol;
-      for(std::size_t i = 0; i < _elems.size(); i++) {
-        MElement *el = _elems[i];
-        if(dim == -1 || el->getDim() == dim) {
-          if(MElementInEle(el, P)) { e.push_back(el); }
-        }
-      }
-      if(!e.empty()) {
-        CTX::instance()->mesh.toleranceReferenceElement = initialTol;
-        return e;
-      }
-    }
-    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
-    // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
   return e;
 }
 
-MElement *MElementOctree::find(double x, double y, double z, int dim,
-                               bool strict) const
+// Search with the tolerance tol (Mesh.ToleranceReferenceElement if negative),
+// then, if nothing is found and not strict, with the tolerance multiplied by
+// 10 until something is found or it reaches maxTol.
+std::vector<MElement *> MElementOctree::_find(double *P, int dim, double tol,
+                                              bool strict, double maxTol,
+                                              bool onlyFirst) const
+{
+  if(dim > 3) return {};
+  if(tol < 0) tol = CTX::instance()->mesh.toleranceReferenceElement;
+  std::vector<MElement *> e = _find(P, dim, tol, onlyFirst);
+  if(strict) return e;
+  while(e.empty() && tol < maxTol) {
+    tol *= 10.;
+    e = _find(P, dim, tol, onlyFirst);
+  }
+  return e;
+}
+
+std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
+                                                int dim, bool strict,
+                                                double tol) const
 {
   double P[3] = {x, y, z};
-  MElement *e = (MElement *)Octree_Search(P, _octree);
-  if(e && (dim == -1 || e->getDim() == dim)) return e;
-  std::vector<void *> l;
-  if(e && e->getDim() != dim) {
-    Octree_SearchAll(P, _octree, &l);
-    for(auto it = l.begin(); it != l.end(); it++) {
-      MElement *el = (MElement *)*it;
-      if(el->getDim() == dim) { return el; }
-    }
-  }
-  if(!strict && _gm) {
-    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
-    double tol = initialTol;
-    while(tol < 1.) {
-      tol *= 10;
-      CTX::instance()->mesh.toleranceReferenceElement = tol;
-      std::vector<GEntity *> entities;
-      _gm->getEntities(entities);
-      for(std::size_t i = 0; i < entities.size(); i++) {
-        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-          e = entities[i]->getMeshElement(j);
-          if(dim == -1 || e->getDim() == dim) {
-            if(MElementInEle(e, P)) {
-              CTX::instance()->mesh.toleranceReferenceElement = initialTol;
-              return e;
-            }
-          }
-        }
-      }
-    }
-    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
-    // Msg::Warning("Point %g %g %g not found",x,y,z);
-  }
-  else if(!strict && !_gm) {
-    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
-    double tol = initialTol;
-    while(tol < 0.1) {
-      tol *= 10.0;
-      CTX::instance()->mesh.toleranceReferenceElement = tol;
-      for(std::size_t i = 0; i < _elems.size(); i++) {
-        e = _elems[i];
-        if(dim == -1 || e->getDim() == dim) {
-          if(MElementInEle(e, P)) {
-            CTX::instance()->mesh.toleranceReferenceElement = initialTol;
-            return e;
-          }
-        }
-      }
-    }
-    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
-    // Msg::Warning("Point %g %g %g not found",x,y,z);
-  }
-  return nullptr;
+  return _find(P, dim, tol, strict, 1., false);
+}
+
+MElement *MElementOctree::find(double x, double y, double z, int dim,
+                               bool strict, double tol) const
+{
+  double P[3] = {x, y, z};
+  std::vector<MElement *> e = _find(P, dim, tol, strict, _gm ? 1. : 0.1, true);
+  return e.empty() ? nullptr : e[0];
 }
