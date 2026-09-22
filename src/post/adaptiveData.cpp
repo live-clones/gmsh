@@ -163,7 +163,6 @@ static adaptiveShape makeShape(int type)
     nodes = {{-1, 0, 0}, {1, 0, 0}};
     more = {{0, 1}};
     s.children = {{0, 2}, {2, 1}};
-    s.weights = {1, 1};
     s.shapeFunctions = lineSF;
     break;
   case TYPE_TRI:
@@ -174,7 +173,6 @@ static adaptiveShape makeShape(int type)
     nodes = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}};
     more = {{0, 1}, {0, 2}, {1, 2}};
     s.children = {{0, 3, 4}, {1, 5, 3}, {2, 4, 5}, {3, 5, 4}};
-    s.weights = {2, 2, 2, 1};
     s.shapeFunctions = triangleSF;
     break;
   case TYPE_QUA:
@@ -185,7 +183,6 @@ static adaptiveShape makeShape(int type)
     nodes = {{-1, -1, 0}, {1, -1, 0}, {1, 1, 0}, {-1, 1, 0}};
     more = {{0, 1}, {1, 2}, {2, 3}, {0, 3}, {0, 1, 2, 3}};
     s.children = {{0, 4, 8, 7}, {1, 5, 8, 4}, {2, 6, 8, 5}, {3, 7, 8, 6}};
-    s.weights = {1, 1, 1, 1};
     s.diagonal[0] = 0;
     s.diagonal[1] = 2;
     s.shapeFunctions = quadrangleSF;
@@ -197,7 +194,6 @@ static adaptiveShape makeShape(int type)
     more = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}};
     s.children = {{0, 4, 5, 6}, {5, 7, 2, 9}, {4, 1, 7, 8}, {6, 8, 9, 3},
                   {7, 6, 8, 9}, {7, 5, 6, 9}, {6, 7, 8, 4}, {5, 7, 6, 4}};
-    s.weights = {1, 1, 1, 1, 1, 1, 1, 1};
     s.faces = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
     s.shapeFunctions = tetrahedronSF;
     break;
@@ -214,7 +210,6 @@ static adaptiveShape makeShape(int type)
                   {16, 23, 15, 4, 20, 26, 24, 12}, {23, 19, 7, 15, 26, 22, 14, 24},
                   {20, 26, 24, 12, 17, 21, 13, 5}, {26, 22, 14, 24, 21, 18, 6, 13},
                   {8, 25, 26, 20, 1, 9, 21, 17},   {25, 10, 22, 26, 9, 2, 18, 21}};
-    s.weights = {1, 1, 1, 1, 1, 1, 1, 1};
     s.diagonal[0] = 3;
     s.diagonal[1] = 5;
     s.faces = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
@@ -222,9 +217,7 @@ static adaptiveShape makeShape(int type)
     s.shapeFunctions = hexahedronSF;
     break;
   case TYPE_PRI:
-    // the triangles are cut in four, below and above the middle; the
-    // children on the inner triangles weigh half of the others, as in the
-    // triangle
+    // the triangles are cut in four, below and above the middle
     s.numEdges = 9;
     nodes = {{0, 0, -1}, {1, 0, -1}, {0, 1, -1}, {0, 0, 1}, {1, 0, 1}, {0, 1, 1}};
     more = {{0, 3}, {1, 4}, {2, 5}, // 6: the vertical edges
@@ -235,16 +228,13 @@ static adaptiveShape makeShape(int type)
                   {2, 11, 10, 8, 14, 13},  {9, 10, 11, 12, 13, 14},
                   {6, 12, 14, 3, 15, 17},  {7, 13, 12, 4, 16, 15},
                   {8, 14, 13, 5, 17, 16},  {12, 13, 14, 15, 16, 17}};
-    s.weights = {1, 1, 1, 0.5, 1, 1, 1, 0.5};
-    s.sumOfWeights = 7;
     s.faces = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}, {0, 2, 1}, {3, 4, 5}};
     s.shapeFunctions = prismSF;
     break;
   case TYPE_PYR:
     // Four pyramids on the base, one at the top, one upside down under it,
     // and four tetrahedra in the holes that are left: these are pyramids with
-    // two nodes at the same place (the first and the fourth), and half the
-    // volume of the others.
+    // two nodes at the same place (the first and the fourth).
     s.numEdges = 8;
     nodes = {{-1, -1, 0}, {1, -1, 0}, {1, 1, 0}, {-1, 1, 0}, {0, 0, 1}};
     more = {{0, 1, 2, 3}, // 5: the centre of the base
@@ -254,8 +244,6 @@ static adaptiveShape makeShape(int type)
                   {3, 9, 5, 8, 13},    {10, 11, 12, 13, 4}, {10, 13, 12, 11, 5},
                   {5, 11, 10, 5, 6},   {5, 12, 11, 5, 7},  {5, 13, 12, 5, 8},
                   {5, 10, 13, 5, 9}};
-    s.weights = {1, 1, 1, 1, 1, 1, 0.5, 0.5, 0.5, 0.5};
-    s.sumOfWeights = 8;
     s.faces = {{0, 3, 2, 1}, {0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}};
     s.shapeFunctions = pyramidSF;
     s.pyramid = true;
@@ -270,10 +258,11 @@ static adaptiveShape makeShape(int type)
     s.points.push_back({i});
   }
   s.points.insert(s.points.end(), more.begin(), more.end());
-  if(type != TYPE_PRI && type != TYPE_PYR) {
-    s.sumOfWeights = 0;
-    for(auto w : s.weights) s.sumOfWeights += w;
-  }
+  // a child and the node of it at each point
+  s.where.assign(s.points.size(), {0, 0});
+  for(int c = 0; c < s.numChildren; c++)
+    for(std::size_t j = 0; j < s.children[c].size(); j++)
+      s.where[s.children[c][j]] = {c, (int)j};
   return s;
 }
 
@@ -466,32 +455,38 @@ void adaptiveElements::_locate(adaptiveWork &w, const adaptiveVertex *p) const
   }
 }
 
-// The mean of the field over an element is estimated by the mean of its values
-// at the nodes. The weighted mean over the children is a better estimate, and
-// equal to the first for a field that varies linearly: their difference
-// measures what another subdivision would bring.
-double adaptiveElements::_mean(adaptiveWork &w, const adaptiveElement *e) const
+// What is drawn of the field in an element is its first order interpolation
+// between the nodes. At a point the next subdivision adds, the mean of some
+// of the nodes, this is the mean of their values: the error of an element is
+// the largest difference with the field itself at these points. (Quadrangles
+// and hexahedra are drawn cut along a diagonal, which makes another value at
+// their centre.)
+double adaptiveElements::_errorOf(adaptiveWork &w,
+                                  const adaptiveElement *e) const
 {
-  double v = 0.;
-  for(int i = 0; i < _shape.numNodes; i++) {
-    _evaluate(w, e->p[i]);
-    v += w.norm[e->p[i]->index];
+  auto field = [&](const adaptiveVertex *p) {
+    _evaluate(w, p);
+    return w.norm[p->index];
+  };
+  double error = 0.;
+  for(std::size_t k = _shape.numNodes; k < _shape.points.size(); k++) {
+    double drawn = 0.;
+    for(int i : _shape.points[k]) drawn += field(e->p[i]);
+    drawn /= _shape.points[k].size();
+    const adaptiveVertex *p = e->e[_shape.where[k][0]]->p[_shape.where[k][1]];
+    error = std::max(error, fabs(field(p) - drawn));
+    if(k + 1 == _shape.points.size() && _shape.diagonal[0] >= 0) {
+      drawn = 0.5 * (field(e->p[_shape.diagonal[0]]) +
+                     field(e->p[_shape.diagonal[1]]));
+      error = std::max(error, fabs(field(p) - drawn));
+    }
   }
-  return v / _shape.numNodes;
+  return error;
 }
 
-double adaptiveElements::_meanOfChildren(adaptiveWork &w,
-                                         const adaptiveElement *e) const
-{
-  double v = 0.;
-  for(int i = 0; i < _shape.numChildren; i++)
-    v += _shape.weights[i] * _mean(w, e->e[i]);
-  return v / _shape.sumOfWeights;
-}
-
-// An element is kept if the mean of the field over it would not change by
-// more than the threshold if it were subdivided once more, nor the means
-// over its children if they were. The elements kept are added to w.visible.
+// An element is kept if its error is below the threshold, and the errors of
+// its children too: a field can happen to be right at the few points looked
+// at and wrong in between. The elements kept are added to w.visible.
 void adaptiveElements::_error(adaptiveWork &w, const adaptiveElement *e,
                               double threshold) const
 {
@@ -500,17 +495,10 @@ void adaptiveElements::_error(adaptiveWork &w, const adaptiveElement *e,
     return;
   }
 
-  double mean = _meanOfChildren(w, e);
-  bool refine = fabs(_mean(w, e) - mean) > threshold;
-  if(!refine && _shape.diagonal[0] >= 0) {
-    double onDiagonal = (w.norm[e->p[_shape.diagonal[0]]->index] +
-                         w.norm[e->p[_shape.diagonal[1]]->index]) / 2.;
-    refine = fabs(onDiagonal - mean) > threshold;
-  }
+  bool refine = _errorOf(w, e) > threshold;
   bool grandChildren = (e->e[0]->e[0] != nullptr);
   for(int i = 0; i < _shape.numChildren && grandChildren && !refine; i++)
-    refine =
-      fabs(_mean(w, e->e[i]) - _meanOfChildren(w, e->e[i])) > threshold;
+    refine = _errorOf(w, e->e[i]) > threshold;
 
   if(refine)
     for(int i = 0; i < _shape.numChildren; i++) _error(w, e->e[i], threshold);
@@ -853,7 +841,7 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
         elements.push_back({ent, ele});
   if(elements.empty()) return;
 
-  double range = in->getMax(step) - in->getMin(step);
+  double range = in->getMax() - in->getMin(); // (of all the steps)
 
   // Each thread adapts its share of the elements, with a workspace of its own
   // (the tree is only read), into a list of its own. A plugin changes the
@@ -1239,7 +1227,7 @@ void adaptiveElements::addInViewForVTK(int step, double tol, PViewData *in,
   nodMap myNodMap;
   adaptiveWork work;
   std::vector<double> xyz, values, list;
-  double range = in->getMax(step) - in->getMin(step);
+  double range = in->getMax() - in->getMin(); // (of all the steps)
 
   for(int ent = 0; ent < in->getNumEntities(step); ent++) {
     for(int ele = 0; ele < in->getNumElements(step, ent); ele++) {

@@ -2153,8 +2153,11 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "Tangents" , opt_view_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },
-  { F|O, "TargetError" , opt_view_target_error , 1e-4 ,
-    "Target representation error for adaptive views" },
+  { F|O, "TargetError" , opt_view_target_error , 1e-3 ,
+    "Target error of adaptive views: the largest difference allowed between the "
+    "field and what is drawn of it, as a fraction of the range of the view (the "
+    "elements are refined until it is reached, down to MaxRecursionLevel; a "
+    "negative value refines them all)" },
   { F|O, "TensorType" , opt_view_tensor_type , 1. ,
     "Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, "
     "4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame (box), 8: frame (vectors))"},

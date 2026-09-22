@@ -6,6 +6,7 @@
 #ifndef ADAPTIVE_DATA_H
 #define ADAPTIVE_DATA_H
 
+#include <array>
 #include <deque>
 #include <set>
 #include <vector>
@@ -62,7 +63,7 @@ public:
 };
 
 // What tells one kind of element from another: its reference element, how it
-// is cut in children, and the weights of the children in the error estimate
+// is cut in children
 class adaptiveShape {
 public:
   int type; // TYPE_TRI, ...
@@ -73,17 +74,13 @@ public:
   std::vector<std::vector<int> > points;
   // the nodes of each child, as indices in points
   std::vector<std::vector<int> > children;
-  // The mean of a field over an element is estimated by the mean of its
-  // values at the nodes. The weighted mean over the children is a better
-  // estimate, and equal to the first for a field that varies linearly: their
-  // difference measures what another subdivision would bring.
-  std::vector<double> weights;
-  double sumOfWeights;
+  // a child and its node at each of the points
+  std::vector<std::array<int, 2> > where;
   // the faces of a volume by their nodes, ordered as the drawing code orders
   // them (the quadrangles first)
   std::vector<std::vector<int> > faces;
-  // the diagonal the drawing code cuts quadrangles and hexahedra along, along
-  // which the field is tested too (-1 if none)
+  // the diagonal the drawing code cuts quadrangles and hexahedra along (-1 if
+  // none)
   int diagonal[2];
   // first order shape functions, for the views that do not provide theirs
   void (*shapeFunctions)(double u, double v, double w, fullVector<double> &sf);
@@ -280,8 +277,7 @@ private:
   std::vector<const adaptiveElement *> _leaves; // the last level of the tree
   void _evaluate(adaptiveWork &w, const adaptiveVertex *p) const;
   void _locate(adaptiveWork &w, const adaptiveVertex *p) const;
-  double _mean(adaptiveWork &w, const adaptiveElement *e) const;
-  double _meanOfChildren(adaptiveWork &w, const adaptiveElement *e) const;
+  double _errorOf(adaptiveWork &w, const adaptiveElement *e) const;
   void _error(adaptiveWork &w, const adaptiveElement *e,
               double threshold) const;
   void _askPlugin(adaptiveWork &w, GMSH_PostPlugin *plug);

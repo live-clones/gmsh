@@ -3370,9 +3370,10 @@ optionWindow::optionWindow(int deltaFontSize)
                                           "Target visualization error");
       view.value[34]->tooltip("View.TargetError");
       view.value[34]->align(FL_ALIGN_RIGHT);
-      view.value[34]->minimum(-1.e-4);
+      // (a fraction of the range of the view; negative: refine everything)
+      view.value[34]->minimum(-1.e-3);
       view.value[34]->maximum(0.1);
-      if(CTX::instance()->inputScrolling) view.value[34]->step(1.e-4);
+      if(CTX::instance()->inputScrolling) view.value[34]->step(1.e-3);
       view.value[34]->when(FL_WHEN_RELEASE);
       view.value[34]->callback(view_options_ok_cb);
 
