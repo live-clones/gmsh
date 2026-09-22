@@ -9,10 +9,10 @@ improved performance of high-order element generation; new polytope
 implementation with support in the API and MSH4 format, which replaces the old
 polygon/polyhedron elements, levelset commands and Plugin(CutMesh); the Extend
 mesh size field is now applied per entity and takes an element growth rate as
-input; improved XAO export that preserves entity tags; new Curvature
-Curve|Surface parser functions; new Plugin(DuplicateNodes); new predefined
-colormaps; new VTK/Paraview IO for meshes and post-processing views; Gmsh now
-requires C++17 and CMake 3.10, and uses Eigen 5.0 by default; bug fixes.
+input; improved XAO export that preserves entity tags; new VTK/Paraview IO for
+meshes and post-processing views; new Curvature Curve|Surface parser functions;
+new Plugin(DuplicateNodes); new predefined colormaps; Gmsh now requires C++17
+and CMake 3.10, and uses Eigen 5.0 by default; bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent, mesh/setNodes, mesh/

@@ -1760,7 +1760,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Transparency" , opt_mesh_transparency , 1. ,
     "Opacity factor applied to all mesh colors (1: opaque, 0: fully "
     "transparent)" },
-  { F|O, "TransparencyMode" , opt_mesh_transparency_mode , 0. ,
+  { F|O, "TransparencyMode" , opt_mesh_transparency_mode , 1. ,
     "Apply Mesh.Transparency to (0: filled surfaces only; 1: everything)" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
