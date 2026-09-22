@@ -52,6 +52,9 @@ private:
   // is indexed by _nodeOffset[element] + node
   std::vector<unsigned int> _nodeId, _nodeOffset;
   int _nodeIndexStatus; // 0: not built, 1: built, -1: not available
+  // see getSkinMasks(): given by the adaptive views, which know where the
+  // refined elements come from
+  std::vector<unsigned char> _skinMasks;
   void _buildNodeIndex();
 
   int _lastElement, _lastDimension;
@@ -105,6 +108,14 @@ public:
   int getNode(int step, int ent, int ele, int nod, double &x, double &y,
               double &z);
   std::size_t getNodeId(int step, int ent, int ele, int nod);
+  const std::vector<unsigned char> *getSkinMasks()
+  {
+    return _skinMasks.empty() ? nullptr : &_skinMasks;
+  }
+  void setSkinMasks(const std::vector<unsigned char> &masks)
+  {
+    _skinMasks = masks;
+  }
   void setNode(int step, int ent, int ele, int nod, double x, double y,
                double z);
   int getNumComponents(int step, int ent, int ele);

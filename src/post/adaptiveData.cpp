@@ -5,6 +5,7 @@
 
 #include <math.h>
 #include <map>
+#include <array>
 #include <set>
 #include <unordered_map>
 #include <algorithm>
@@ -193,6 +194,7 @@ static adaptiveShape makeShape(int type)
     s.children = {{0, 4, 5, 6}, {5, 7, 2, 9}, {4, 1, 7, 8}, {6, 8, 9, 3},
                   {7, 6, 8, 9}, {7, 5, 6, 9}, {6, 7, 8, 4}, {5, 7, 6, 4}};
     s.weights = {1, 1, 1, 1, 1, 1, 1, 1};
+    s.faces = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
     s.shapeFunctions = tetrahedronSF;
     break;
   case TYPE_HEX:
@@ -211,6 +213,8 @@ static adaptiveShape makeShape(int type)
     s.weights = {1, 1, 1, 1, 1, 1, 1, 1};
     s.diagonal[0] = 3;
     s.diagonal[1] = 5;
+    s.faces = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
+               {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
     s.shapeFunctions = hexahedronSF;
     break;
   case TYPE_PRI:
@@ -229,6 +233,7 @@ static adaptiveShape makeShape(int type)
                   {8, 14, 13, 5, 17, 16},  {12, 13, 14, 15, 16, 17}};
     s.weights = {1, 1, 1, 0.5, 1, 1, 1, 0.5};
     s.sumOfWeights = 7;
+    s.faces = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}, {0, 2, 1}, {3, 4, 5}};
     s.shapeFunctions = prismSF;
     break;
   case TYPE_PYR:
@@ -247,6 +252,7 @@ static adaptiveShape makeShape(int type)
                   {5, 10, 13, 5, 9}};
     s.weights = {1, 1, 1, 1, 1, 1, 0.5, 0.5, 0.5, 0.5};
     s.sumOfWeights = 8;
+    s.faces = {{0, 3, 2, 1}, {0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}};
     s.shapeFunctions = pyramidSF;
     s.pyramid = true;
     break;
@@ -306,6 +312,19 @@ adaptiveVertex *adaptiveElements::_vertex(double x, double y, double z)
   p.x = x;
   p.y = y;
   p.z = z;
+  // it is on a face of the reference element if the first order shape
+  // functions of the nodes that are not on that face vanish
+  p.onFaces = 0;
+  fullVector<double> sf(_shape.numNodes);
+  _shape.shapeFunctions(x, y, z, sf);
+  for(std::size_t f = 0; f < _shape.faces.size(); f++) {
+    double off = 0.;
+    for(int i = 0; i < _shape.numNodes; i++)
+      if(std::find(_shape.faces[f].begin(), _shape.faces[f].end(), i) ==
+         _shape.faces[f].end())
+        off += fabs(sf(i));
+    if(off < 1e-10) p.onFaces |= (unsigned char)(1 << f);
+  }
   return (adaptiveVertex *)&(*allVertices.insert(p).first);
 }
 
@@ -319,6 +338,15 @@ adaptiveElements::_create(const std::vector<adaptiveVertex *> &nodes,
   e->visible = false;
   for(int i = 0; i < 8; i++) e->p[i] = (i < _shape.numNodes) ? nodes[i] : nullptr;
   for(int i = 0; i < 10; i++) e->e[i] = nullptr;
+  for(std::size_t f = 0; f < 6; f++) {
+    // a face lies on a face of the reference element if all its nodes do
+    unsigned char on = (f < _shape.faces.size()) ? 0xff : 0;
+    for(std::size_t k = 0; f < _shape.faces.size() && k < _shape.faces[f].size(); k++)
+      on &= nodes[_shape.faces[f][k]]->onFaces;
+    e->onFace[f] = -1;
+    for(int b = 0; b < 6 && e->onFace[f] < 0; b++)
+      if(on & (1 << b)) e->onFace[f] = b;
+  }
   if(level >= maxLevel) return e;
 
   // the points of the subdivision, then the children on them
@@ -426,7 +454,8 @@ void adaptiveElements::_error(adaptiveElement *e, double threshold)
 bool adaptiveElements::adapt(double tol, int numComp,
                              std::vector<PCoords> &coords,
                              std::vector<PValues> &values, double range,
-                             GMSH_PostPlugin *plug)
+                             GMSH_PostPlugin *plug,
+                             std::vector<unsigned char> *skin)
 {
   int numVertices = allVertices.size();
 
@@ -522,10 +551,22 @@ bool adaptiveElements::adapt(double tol, int numComp,
 
   if(plug) plug->assignSpecificVisibility(&all.front());
 
+  // a face of a refined element is on the skin if it lies on a face of the
+  // element that is
+  unsigned char onSkin = (skin && skin->size()) ? (*skin)[0] : 0;
+  if(skin) skin->clear();
+
   coords.clear();
   values.clear();
   for(auto &e : all) {
     if(!e.visible) continue;
+    if(skin) {
+      unsigned char mask = 0;
+      for(int f = 0; f < 6; f++)
+        if(e.onFace[f] >= 0 && (onSkin & (1 << e.onFace[f])))
+          mask |= (unsigned char)(1 << f);
+      skin->push_back(mask);
+    }
     adaptiveVertex *const *p = e.p;
     for(int i = 0; i < _shape.numNodes; i++) {
       coords.push_back(PCoords(p[i]->X, p[i]->Y, p[i]->Z));
@@ -746,7 +787,9 @@ static void getList(PViewDataList *out, int type, int numComp, int *&nb,
 
 void adaptiveElements::addInView(double tol, int step, PViewData *in,
                                  PViewDataList *out, GMSH_PostPlugin *plug,
-                                 int level, int type)
+                                 int level, int type,
+                                 const std::vector<std::vector<unsigned char> > *inSkin,
+                                 std::vector<unsigned char> *outSkin)
 {
   int numComp = in->getNumComponents(0, 0, 0);
   if(numComp != 1 && numComp != 3 && numComp != 9) return;
@@ -842,7 +885,12 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
                                numNodes, coords, values);
       }
       else {
-        result = adapt(tol, numComp, coords, values, range, plug);
+        std::vector<unsigned char> skin;
+        if(inSkin && outSkin) skin.push_back((*inSkin)[ent][ele]);
+        result = adapt(tol, numComp, coords, values, range, plug,
+                       (inSkin && outSkin) ? &skin : nullptr);
+        if(result && outSkin)
+          outSkin->insert(outSkin->end(), skin.begin(), skin.end());
         // the refined elements are first order, whatever the order of the
         // element they come from
         numNodes = _shape.numNodes;
@@ -924,6 +972,51 @@ adaptiveData::~adaptiveData()
   if(_polyhedra) delete _polyhedra;
 }
 
+// The faces of the volumes of the view that no other volume shares, a bit
+// each, for each entity and element. Not for the views with polyhedra, whose
+// refined elements are matched by the coordinates of their nodes, nor for
+// those without node identifiers.
+bool adaptiveData::_findSkin(int step,
+                             std::vector<std::vector<unsigned char> > &skin)
+{
+  skin.clear();
+  if(_polygons || _polyhedra) return false;
+  if(!_tetrahedra && !_hexahedra && !_prisms && !_pyramids) return false;
+  struct where {
+    int ent, ele, face, count;
+  };
+  std::map<std::array<std::size_t, 4>, where> faces;
+  skin.resize(_inData->getNumEntities(step));
+  for(int ent = 0; ent < _inData->getNumEntities(step); ent++) {
+    skin[ent].resize(_inData->getNumElements(step, ent), 0);
+    for(int ele = 0; ele < _inData->getNumElements(step, ent); ele++) {
+      if(_inData->skipElement(step, ent, ele)) continue;
+      int type = _inData->getType(step, ent, ele);
+      if(type != TYPE_TET && type != TYPE_HEX && type != TYPE_PRI &&
+         type != TYPE_PYR)
+        continue;
+      const adaptiveShape &shape = adaptiveShape::get(type);
+      for(std::size_t f = 0; f < shape.faces.size(); f++) {
+        std::array<std::size_t, 4> key = {0, 0, 0, 0};
+        for(std::size_t k = 0; k < shape.faces[f].size(); k++) {
+          key[k] = _inData->getNodeId(step, ent, ele, shape.faces[f][k]);
+          if(!key[k]) return false;
+        }
+        std::sort(key.begin(), key.end());
+        auto it = faces.find(key);
+        if(it == faces.end())
+          faces[key] = {ent, ele, (int)f, 1};
+        else
+          it->second.count++;
+      }
+    }
+  }
+  for(auto &f : faces)
+    if(f.second.count == 1)
+      skin[f.second.ent][f.second.ele] |= (unsigned char)(1 << f.second.face);
+  return true;
+}
+
 void adaptiveData::changeResolution(int step, int level, double tol,
                                     GMSH_PostPlugin *plug)
 {
@@ -939,22 +1032,35 @@ void adaptiveData::changeResolution(int step, int level, double tol,
   }
   if(plug || _step != step || _level != level || _tol != tol) {
     _outData->setDirty(true);
-    if(_points) _points->addInView(tol, step, _inData, _outData, plug);
-    if(_lines) _lines->addInView(tol, step, _inData, _outData, plug);
-    if(_triangles) _triangles->addInView(tol, step, _inData, _outData, plug);
-    if(_quadrangles)
-      _quadrangles->addInView(tol, step, _inData, _outData, plug);
-    if(_polygons)
-      _polygons->addInView(tol, step, _inData, _outData, plug, level,
-                           TYPE_POLYG);
-    if(_tetrahedra) _tetrahedra->addInView(tol, step, _inData, _outData, plug);
-    if(_prisms) _prisms->addInView(tol, step, _inData, _outData, plug);
-    if(_hexahedra) _hexahedra->addInView(tol, step, _inData, _outData, plug);
-    if(_pyramids) _pyramids->addInView(tol, step, _inData, _outData, plug);
-    if(_polyhedra)
-      _polyhedra->addInView(tol, step, _inData, _outData, plug, level,
-                            TYPE_POLYH);
+    // which faces of the elements are on the skin of the view, so that the
+    // refined elements can tell the faces they have on it
+    std::vector<std::vector<unsigned char> > inSkin;
+    std::map<int, std::vector<unsigned char> > outSkin;
+    bool skin = _findSkin(step, inSkin);
+    auto add = [&](adaptiveElements *e, int type) {
+      if(!e) return;
+      e->addInView(tol, step, _inData, _outData, plug, level, type,
+                   skin ? &inSkin : nullptr, skin ? &outSkin[type] : nullptr);
+    };
+    add(_points, TYPE_PNT);
+    add(_lines, TYPE_LIN);
+    add(_triangles, TYPE_TRI);
+    add(_quadrangles, TYPE_QUA);
+    add(_polygons, TYPE_POLYG);
+    add(_tetrahedra, TYPE_TET);
+    add(_prisms, TYPE_PRI);
+    add(_hexahedra, TYPE_HEX);
+    add(_pyramids, TYPE_PYR);
+    add(_polyhedra, TYPE_POLYH);
     _outData->finalize();
+    if(skin) {
+      // in the order of the lists
+      std::vector<unsigned char> all;
+      for(int type : {TYPE_PNT, TYPE_LIN, TYPE_TRI, TYPE_QUA, TYPE_TET,
+                      TYPE_HEX, TYPE_PRI, TYPE_PYR})
+        all.insert(all.end(), outSkin[type].begin(), outSkin[type].end());
+      _outData->setSkinMasks(all);
+    }
   }
   _step = step;
   _level = level;

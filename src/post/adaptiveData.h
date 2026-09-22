@@ -56,6 +56,7 @@ class adaptiveVertex {
 public:
   float x, y, z; // in the reference element (halves of halves: exact)
   int index; // in adaptiveElements::vertices, and in the interpolation matrices
+  unsigned char onFaces; // the faces of the reference element it is on, a bit each
   // for the element of the view being adapted:
   double X, Y, Z; // in the model
   double norm; // what the error is estimated on: the value, or its norm
@@ -93,6 +94,9 @@ public:
   // difference measures what another subdivision would bring.
   std::vector<double> weights;
   double sumOfWeights;
+  // the faces of a volume by their nodes, ordered as the drawing code orders
+  // them (the quadrangles first)
+  std::vector<std::vector<int> > faces;
   // the diagonal the drawing code cuts quadrangles and hexahedra along, along
   // which the field is tested too (-1 if none)
   int diagonal[2];
@@ -114,6 +118,8 @@ public:
   bool visible; // kept for the element of the view being adapted?
   adaptiveVertex *p[8]; // its nodes
   adaptiveElement *e[10]; // its children (null at the last level)
+  // for each face, the face of the reference element it lies on (-1 if none)
+  signed char onFace[6];
 
 public:
   // the mean of the field at the nodes
@@ -416,17 +422,23 @@ public:
   void init(int level);
   // process the element data in coords/values and return the refined
   // elements in coords/values
+  // (and if skin is given, which faces of the element are on the skin of the
+  // view, a bit each, in exchange for which faces of the refined elements are)
   bool adapt(double tol, int numComp, std::vector<PCoords> &coords,
              std::vector<PValues> &values, double range,
-             GMSH_PostPlugin *plug = nullptr);
+             GMSH_PostPlugin *plug = nullptr,
+             std::vector<unsigned char> *skin = nullptr);
   // adapt all the elements of this kind in the input view and add the refined
   // elements in the output view (we will remove this when we switch to true
   // on-the-fly local refinement in drawPost()); polygons and polyhedra are
   // refined through their triangles and tetrahedra (type = TYPE_POLYG or
   // TYPE_POLYH)
+  // (inSkin: for each entity and element of the input view, its faces on the
+  // skin of the view; outSkin: the same for the elements added)
   void addInView(double tol, int step, PViewData *in, PViewDataList *out,
-                 GMSH_PostPlugin *plug = nullptr, int level = 0,
-                 int type = 0);
+                 GMSH_PostPlugin *plug = nullptr, int level = 0, int type = 0,
+                 const std::vector<std::vector<unsigned char> > *inSkin = nullptr,
+                 std::vector<unsigned char> *outSkin = nullptr);
 
   // Routines for
   // - export of adapted views to pvtu file format for parallel visualization
@@ -470,6 +482,8 @@ private:
   // as disk space allows it.  This variable is set to true by default in the
   // constructor.
   bool writeVTK;
+
+  bool _findSkin(int step, std::vector<std::vector<unsigned char> > &skin);
 
 public:
   adaptiveData(PViewData *data, bool outDataInit = true);

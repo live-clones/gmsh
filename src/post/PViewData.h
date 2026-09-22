@@ -152,6 +152,11 @@ public:
   virtual int getNumNodes(int step, int ent, int ele) { return 0; }
   // a stable identifier for a node of an element, the same for the elements
   // sharing it; 0 if the data has no node topology
+  // for each element, its faces that are on the skin of the view (a bit
+  // each, ordered as the drawing code orders them), if the data knows them
+  // better than a matching of the faces would find them (null otherwise)
+  virtual const std::vector<unsigned char> *getSkinMasks() { return nullptr; }
+
   virtual std::size_t getNodeId(int step, int ent, int ele, int nod)
   {
     return 0;

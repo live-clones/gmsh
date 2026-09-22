@@ -81,6 +81,13 @@ void PViewDataList::addStep(std::vector<double> &y)
 bool PViewDataList::finalize(bool computeMinMax,
                              const std::string &interpolationScheme)
 {
+  _skinMasks.clear(); // (whoever knows them gives them again)
+  // the lists may have changed: the nodes recreated from them are not theirs
+  // any more
+  _nodeIndexStatus = 0;
+  _nodeId.clear();
+  _nodeOffset.clear();
+
   BBox.reset();
   Min = VAL_INF;
   Max = -VAL_INF;

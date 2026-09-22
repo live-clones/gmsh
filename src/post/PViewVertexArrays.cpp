@@ -1086,6 +1086,19 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
     return false; // no face is drawn
   if(keptOnly && (!spheres || !original)) return false;
   bool throughPlanes = !keptOnly && filledThroughPlanes(opt);
+
+  // the data may know its skin (adaptive views do): no face to match
+  const std::vector<unsigned char> *known = data->getSkinMasks();
+  if(known && known->size() == flat.num && !keptOnly && !throughPlanes) {
+    PViewElement el;
+    skin.masks.assign(flat.num, 0);
+    flat.forRange(0, flat.num, [&](int ent, int ele, std::size_t i) {
+      if(!el.select(p, ent, ele) || solidShapeIndex(el.type) < 0) return;
+      if(!drawsScalarFaces(opt, el.numComp) && !skinOutlines(opt)) return;
+      skin.masks[i] = 0x80 | ((*known)[i] & 0x3f);
+    });
+    return true;
+  }
   activePlanes planes(opt->clip);
 
   // the elements and the identifiers of their nodes, gathered by each thread
