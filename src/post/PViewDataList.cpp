@@ -282,14 +282,21 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
 
     // update min/max
     int tensorRep = 0; // Von-Mises: we could/should be able to choose this
-    for(int j = 0; j < N; j += nbcomp) {
-      double l0 = ComputeScalarRep(nbcomp, &V[j], tensorRep);
-      Min = std::min(l0, Min);
-      Max = std::max(l0, Max);
-      int ts = j / nbval;
+    for(int ts = 0; ts * nbval < N; ts++) {
+      // (the range of the step, then of the view: this loop is what takes the
+      // time for a view with millions of elements)
+      double min = VAL_INF, max = -VAL_INF;
+      for(int j = ts * nbval; j < std::min((ts + 1) * nbval, N); j += nbcomp) {
+        double l0 =
+          (nbcomp == 1) ? V[j] : ComputeScalarRep(nbcomp, &V[j], tensorRep);
+        min = std::min(l0, min);
+        max = std::max(l0, max);
+      }
+      Min = std::min(min, Min);
+      Max = std::max(max, Max);
       if(ts < NbTimeStep) { // security
-        TimeStepMin[ts] = std::min(l0, TimeStepMin[ts]);
-        TimeStepMax[ts] = std::max(l0, TimeStepMax[ts]);
+        TimeStepMin[ts] = std::min(min, TimeStepMin[ts]);
+        TimeStepMax[ts] = std::max(max, TimeStepMax[ts]);
       }
     }
   }
