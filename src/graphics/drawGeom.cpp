@@ -3,7 +3,6 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <string.h>
 #include "drawContext.h"
 #include "GModelVertexArrays.h"
 #include "Context.h"
@@ -17,7 +16,6 @@
 #include "StringUtils.h"
 #include "glyphList.h"
 #include "glImmediate.h"
-#include <map>
 
 // the label of an entity (those shown by the selection in the foreground
 // colour)
@@ -89,20 +87,11 @@ static glyphList *geomGlyphs(drawContext *ctx)
   return &_geomGlyphs;
 }
 
-// does this pass draw this entity? A mixed geometry draws its opaque
-// entities in the opaque pass and the others in the transparent one
-static bool passWants(drawContext *ctx, GEntity *e)
-{
-  if(ctx->transparencyPass == TRANSPARENCY_ALL) return true;
-  return (ctx->transparencyPass == TRANSPARENCY_TRANSPARENT) ==
-         gmshGeometryEntityIsTransparent(e);
-}
-
 // is this entity drawn by the pass? Not when hidden, and never the discrete,
 // partition and boundary layer entities, which only carry a mesh
 static bool geomDrawn(drawContext *ctx, GEntity *e)
 {
-  if(!passWants(ctx, e) || !e->getVisibility()) return false;
+  if(!ctx->passWants(geometryEntityIsTransparent(e)) || !e->getVisibility()) return false;
   switch(e->geomType()) {
   case GEntity::BoundaryLayerPoint:
   case GEntity::DiscreteCurve:
@@ -178,7 +167,21 @@ namespace {
   bool _kept = false, _keptIncomplete = false;
 } // namespace
 
-static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts);
+// the points a curve is drawn through
+static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts)
+{
+  pts.clear();
+  Range<double> t_bounds = e->parBounds(0);
+  double t_min = t_bounds.low(), t_max = t_bounds.high();
+  int N = e->minimumDrawSegments() + 1;
+  for(int i = 0; i < N; i++) {
+    double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
+    GPoint p = e->point(t);
+    double x = p.x(), y = p.y(), z = p.z();
+    ctx->transform(x, y, z);
+    pts.push_back(SPoint3(x, y, z));
+  }
+}
 
 // f(x, y, z) for each segment between two consecutive points
 template <class F> static void forSegments(const std::vector<SPoint3> &pts, F f)
@@ -216,11 +219,13 @@ static bool keptCovers(drawContext *ctx, GModel *m, int dim, bool pick)
 static std::vector<double> keptToken(drawContext *ctx, int dim, bool pick)
 {
   CTX *c = CTX::instance();
+  // (the mesh too: discrete points, curves and surfaces are drawn from it)
   std::vector<double> tok = {(double)c->geom.stamp[dim],
+                             (double)c->meshContentStamp,
                              (double)c->entityVisibilityStamp,
                              (double)ctx->transparencyPass};
   // which entities the pass holds, when it is not all of them
-  if(!pick) tok.push_back(gmshGeometryColorsAreTransparent());
+  if(!pick) tok.push_back(geometryColorsAreTransparent());
   if(pick) tok.push_back(c->geom.numSubEdges);
   else if(dim == 0) {
     tok.push_back(c->entityColorsStamp);
@@ -346,7 +351,7 @@ static bool drawKept(drawContext *ctx, GModel *m, int dim)
   if(dim == 1 && !pick && c->geom.curveType > 0) {
     // one glyph list per model: not for passes that draw some curves only
     if(ctx->transparencyPass != TRANSPARENCY_ALL &&
-       !gmshGeometryColorsAreTransparent())
+       !geometryColorsAreTransparent())
       return false;
     drawKeptCylinders(ctx, m);
     return true;
@@ -399,25 +404,9 @@ static bool drawKept(drawContext *ctx, GModel *m, int dim)
   int flags = pick ? GMSH_DRAW_IDENTIFIERS : GMSH_DRAW_COLORS;
   if(dim == 2 && !pick && c->geom.light) flags |= GMSH_DRAW_LIGHT;
   if(dim == 2 && c->polygonOffset) flags |= GMSH_DRAW_OFFSET;
-  gmshDrawVertexArray(ka.va, type, flags, pick ? &runs : nullptr);
+  drawVertexArray(ka.va, type, flags, pick ? &runs : nullptr);
   if(dim == 2) gmshPolygonFill(true);
   return true;
-}
-
-// the points a curve is drawn through
-static void curvePoints(drawContext *ctx, GEdge *e, std::vector<SPoint3> &pts)
-{
-  pts.clear();
-  Range<double> t_bounds = e->parBounds(0);
-  double t_min = t_bounds.low(), t_max = t_bounds.high();
-  int N = e->minimumDrawSegments() + 1;
-  for(int i = 0; i < N; i++) {
-    double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-    GPoint p = e->point(t);
-    double x = p.x(), y = p.y(), z = p.z();
-    ctx->transform(x, y, z);
-    pts.push_back(SPoint3(x, y, z));
-  }
 }
 
 static void drawGeomPoint(drawContext *ctx, GVertex *v, double size)
@@ -439,7 +428,7 @@ static void drawGeomPoint(drawContext *ctx, GVertex *v, double size)
       gmshVertex3d(x, y, z);
       gmshEnd();
       if(_kept) {
-        gmshFlushImmediate();
+        glImmediate::flush();
         glDepthFunc(GL_LESS);
       }
     }
@@ -481,7 +470,7 @@ static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
       gmshEnd();
     }
     if(merged) {
-      gmshFlushImmediate();
+      glImmediate::flush();
       glDepthFunc(GL_LESS);
     }
   }
@@ -537,7 +526,7 @@ static void drawGeomSurface(drawContext *ctx, GFace *f, bool sel)
         bool solid = c->geom.surfaceType > 1;
         gmshLightTwoSide(solid && c->geom.lightTwoSide);
         gmshPolygonFill(solid);
-        gmshDrawVertexArray(va, GL_TRIANGLES,
+        drawVertexArray(va, GL_TRIANGLES,
                             (c->geom.light ? GMSH_DRAW_LIGHT : 0) |
                               (colors ? GMSH_DRAW_COLORS : 0) |
                               (c->polygonOffset ? GMSH_DRAW_OFFSET : 0));
@@ -583,6 +572,32 @@ static void drawGeomSurface(drawContext *ctx, GFace *f, bool sel)
 }
 
 // a volume is drawn as a marker at the middle of its bounding box
+// The bounding box of a volume, which its marker is placed by: for a volume
+// that is only a mesh this is a walk over every node of every element (half a
+// second a frame for 24 million tetrahedra), so it is kept until the mesh or
+// the geometry changes.
+namespace {
+  struct volumeBox {
+    std::vector<int> token;
+    SBoundingBox3d bb;
+  };
+  OwnerCache<volumeBox> _volumeBoxes;
+} // namespace
+
+static const SBoundingBox3d &volumeBounds(GRegion *r)
+{
+  CTX *c = CTX::instance();
+  std::vector<int> token = {c->meshContentStamp, c->geom.stamp[0],
+                            c->geom.stamp[1], c->geom.stamp[2],
+                            c->geom.stamp[3]};
+  volumeBox &v = _volumeBoxes[r];
+  if(v.token != token) {
+    v.bb = r->bounds(true);
+    v.token = token;
+  }
+  return v.bb;
+}
+
 static void drawGeomVolume(drawContext *ctx, GRegion *r)
 {
   CTX *c = CTX::instance();
@@ -590,7 +605,7 @@ static void drawGeomVolume(drawContext *ctx, GRegion *r)
   bool label = c->geom.volumeLabels || r->getSelection() == GEntity::SelectShow;
   if(!shown && !label) return;
   const double size = 8.;
-  SBoundingBox3d bb = r->bounds(true); // fast approx if mesh-based
+  const SBoundingBox3d &bb = volumeBounds(r);
   double x = bb.center().x(), y = bb.center().y(), z = bb.center().z();
   double d = bb.diag() / 50.;
   ctx->transform(x, y, z);
@@ -701,9 +716,9 @@ void drawContext::drawGeom()
   // nothing of the geometry is opaque when the colours of the options are
   // transparent; otherwise the entities are sorted out one by one
   if(transparencyPass == TRANSPARENCY_OPAQUE &&
-     gmshGeometryColorsAreTransparent())
+     geometryColorsAreTransparent())
     return;
-  if(transparencyPass == TRANSPARENCY_TRANSPARENT && !gmshGeometryIsTransparent())
+  if(transparencyPass == TRANSPARENCY_TRANSPARENT && !geometryIsTransparent())
     return;
   if(!CTX::instance()->geom.draw) return;
 
@@ -713,7 +728,7 @@ void drawContext::drawGeom()
   _geomGlyphs.clear();
 
   CTX *c = CTX::instance();
-  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, (c->geom.clip >> i) & 1);
+  clipPlanes::on(c->geom.clip);
 
   bool pick = (render_mode == GMSH_SELECT);
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
@@ -749,5 +764,5 @@ void drawContext::drawGeom()
   _geomGlyphs.draw(this, c->geom.light);
   _geomGlyphs.clear();
 
-  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
+  clipPlanes::on(0);
 }

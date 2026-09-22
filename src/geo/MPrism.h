@@ -76,6 +76,12 @@ public:
   {
     return MEdge(_v[edges_prism(num, 0)], _v[edges_prism(num, 1)]);
   }
+  virtual int getEdgeCorners(int num, MVertex *v[2]) const
+  {
+    v[0] = _v[edges_prism(num, 0)];
+    v[1] = _v[edges_prism(num, 1)];
+    return 2;
+  }
   virtual int numEdge2numVertex(int numEdge, int numVert) const
   {
     return edges_prism(numEdge, numVert);
@@ -117,7 +123,6 @@ public:
   virtual int getType() const { return TYPE_PRI; }
   virtual int getTypeForMSH() const { return MSH_PRI_6; }
   virtual int getTypeForUNV() const { return 112; } // solid linear wedge
-  virtual int getTypeForVTK() const { return 13; }
   virtual const char *getStringForPOS() const { return "SI"; }
   virtual const char *getStringForBDF() const { return "CPENTA"; }
   virtual const char *getStringForINP() const { return "C3D6"; }
@@ -239,11 +244,6 @@ public:
                    _v[fSolin[num][2]], _v[fSolin[num][3]]);
     }
   }
-  virtual MVertex *getVertexVTK(int num)
-  {
-    static const int map[6] = {0, 2, 1, 3, 5, 4};
-    return getVertex(map[num]);
-  }
 };
 
 /*
@@ -330,12 +330,6 @@ public:
                                 7, 12, 14, 13, 8, 10, 11};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexVTK(int num)
-  {
-    static const int map[15] = {0, 1,  2,  3,  4, 5,  6, 9,
-                                7, 12, 14, 13, 8, 10, 11};
-    return getVertex(map[num]);
-  }
   virtual MVertex *getVertexKEY(int num) { return getVertexBDF(num); }
   virtual int getNumEdgeVertices() const { return 9; }
   virtual int getNumEdgesRep(bool curved);
@@ -364,7 +358,6 @@ public:
   }
   virtual int getTypeForMSH() const { return MSH_PRI_15; }
   virtual int getTypeForUNV() const { return 113; } // solid parabolic wedge
-  virtual int getTypeForVTK() const { return 26; }
   virtual const char *getStringForBDF() const { return "CPENTA"; }
   virtual const char *getStringForINP() const { return "C3D15"; }
   virtual const char *getStringForKEY() const
@@ -523,13 +516,6 @@ public:
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 6 ? MPrism::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
-  }
-  virtual int getTypeForVTK() const { return 32; }
-  virtual MVertex *getVertexVTK(int num)
-  {
-    static const int map[18] = {0,  1,  2,  3, 4,  5,  6,  9,  7,
-                                12, 14, 13, 8, 10, 11, 15, 17, 16};
-    return getVertex(map[num]);
   }
 };
 

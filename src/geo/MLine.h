@@ -75,7 +75,6 @@ public:
   virtual int getType() const { return TYPE_LIN; }
   virtual int getTypeForMSH() const { return MSH_LIN_2; }
   virtual int getTypeForUNV() const { return 21; } // linear beam
-  virtual int getTypeForVTK() const { return 3; }
   virtual const char *getStringForPOS() const { return "SL"; }
   virtual const char *getStringForBDF() const { return "CBAR"; }
   virtual const char *getStringForINP() const { return "T3D2" /*"C1D2"*/; }
@@ -180,7 +179,6 @@ public:
   }
   virtual int getTypeForMSH() const { return MSH_LIN_3; }
   virtual int getTypeForUNV() const { return 24; } // parabolic beam
-  virtual int getTypeForVTK() const { return 21; }
   virtual const char *getStringForPOS() const { return "SL2"; }
   virtual const char *getStringForINP() const { return "T3D3" /*"C1D3"*/; }
   virtual const char *getStringForKEY() const { return "_BEAM_ELBOW"; }
@@ -269,7 +267,6 @@ public:
       return 0;
     }
   }
-  virtual int getTypeForVTK() const { return 68; } // VTK_LAGRANGE_CURVE
 
   virtual void reverse()
   {

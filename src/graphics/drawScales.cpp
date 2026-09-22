@@ -25,7 +25,7 @@ static double _pixelFactor = 1.;
 // pixels wide, then overlap the outline, which is drawn over them). Snapped
 // to a pixel boundary, so that the edge of a box and the line drawn at it
 // (half a pixel further) fall on the same pixel.
-static double alongBar(PViewOptions *opt, double t, double length)
+static double alongBar(double t, double length)
 {
   // in pixels: the outline, a line centred on the bar's ends, covers the
   // pixel before the first and the last one of the bar, so the inside runs
@@ -42,11 +42,11 @@ static double lineAt(double edge) { return edge + 0.5 / _pixelFactor; }
 // ends of the range are marked on the outline of the box itself: they are
 // what it stops at, and a mark a pixel inside it, at the first and the last
 // colour, reads as a misalignment.
-static double tickAt(PViewOptions *opt, double t, double length)
+static double tickAt(double t, double length)
 {
   if(t <= 0.) return 0.;
   if(t >= 1.) return length;
-  return lineAt(alongBar(opt, t, length));
+  return lineAt(alongBar(t, length));
 }
 
 // The labels of the scale. Iso: one per iso value, centred on it; discrete
@@ -179,7 +179,7 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
   double length = horizontal ? width : height;
   auto edge = [&](int i) {
     return (i <= 0) ? 0. :
-           (i >= nb) ? length : alongBar(opt, (double)i / nb, length);
+           (i >= nb) ? length : alongBar((double)i / nb, length);
   };
   // a point of the bar, given how far along it lies and how far across:
   // which of the two is x and which is y is all a vertical bar changes
@@ -227,7 +227,7 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       gmshColor4ubv((GLubyte *)&col);
       double t = (opt->nbIso > 1) ? (double)i / (opt->nbIso - 1) : 0.5;
       gmshBegin(GL_LINES);
-      double along = lineAt(alongBar(opt, t, length));
+      double along = lineAt(alongBar(t, length));
       at(along, 0.);
       at(along, across);
       gmshEnd();
@@ -246,7 +246,7 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
   gmshBegin(GL_LINES);
   for(std::size_t i = 0; i < ticks.size(); i++) {
     double out = (ticks[i].minor ? 0.2 : 0.4) * tick;
-    double along = tickAt(opt, ticks[i].t, length);
+    double along = tickAt(ticks[i].t, length);
     at(along, across);
     at(along, across + out);
   }
@@ -271,17 +271,14 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
     if(ticks[i].minor) continue; // a subdivision: the mark says enough
     // centred on its tick mark
     if(horizontal)
-      haloString(ctx, ticks[i].label, xmin + tickAt(opt, ticks[i].t, width),
+      haloString(ctx, ticks[i].label, xmin + tickAt(ticks[i].t, width),
                  ymin + height + tick, 1); // adjust for compactness
     else
       haloString(ctx, ticks[i].label, xmin + width + 0.8 * tick,
-                 ymin + tickAt(opt, ticks[i].t, height) - font_a / 3., 0);
+                 ymin + tickAt(ticks[i].t, height) - font_a / 3., 0);
   }
 }
 
-// the title of the scale: the name of the view, and below it on a line of
-// its own what the time or step is, when there is one, with the power of
-// ten the labels share at the end of that line
 // the data a scale is labelled from: that of another view when it is asked
 // for (which is also what the values shown come from)
 static PViewData *scaleData(PView *p)
@@ -334,6 +331,9 @@ static std::string scaleSubtitle(PView *p)
   return sub;
 }
 
+// the title of the scale: the name of the view, and below it on a line of
+// its own what the time or step is, when there is one, with the power of
+// ten the labels share at the end of that line
 static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
                            double width, double height, double tick,
                            int horizontal, const std::string &multiplier)

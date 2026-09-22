@@ -32,33 +32,37 @@ typedef char normal_type;
 class MElement;
 
 // key used by the "unique" filter to detect elements drawn several times
-// (e.g. an edge shared by several tetrahedra): the N corners in sorted order
-// plus the color. The alignment rounds the size up to a multiple of 8 bytes
-// so that the key can be hashed word by word; the padding is zeroed.
+// (e.g. an edge shared by several tetrahedra): the N corners in sorted order,
+// each with its color. The alignment rounds the size up to a multiple of 8
+// bytes so that the key can be hashed word by word; the padding is zeroed.
 template <int N> class alignas(8) CornerKey {
 public:
   float p[3 * N];
-  unsigned char c[4];
+  unsigned char c[4 * N];
 };
-static_assert(sizeof(CornerKey<2>) == 32 && sizeof(CornerKey<3>) == 40,
+static_assert(sizeof(CornerKey<2>) == 32 && sizeof(CornerKey<3>) == 48,
               "a corner key is hashed as whole 64 bit words");
 
 // hash of a key made of 64 bit words; the filter only stores the hash, so
 // changing the function changes which elements (very rarely) collide
+// (the whole state is mixed after each word: with a lighter mixing, two
+// neighbouring triangles of a regular grid, whose coordinates differ in a few
+// bits, were found with the same hash, and one of them was not drawn)
+static inline std::uint64_t vaMix(std::uint64_t h)
+{
+  h ^= h >> 30;
+  h *= 0xbf58476d1ce4e5b9ULL;
+  h ^= h >> 27;
+  h *= 0x94d049bb133111ebULL;
+  h ^= h >> 31;
+  return h;
+}
+
 static inline std::uint64_t vaHashKey(const void *p, std::size_t bytes)
 {
   const std::uint64_t *w = (const std::uint64_t *)p;
   std::uint64_t h = 0x9e3779b97f4a7c15ULL;
-  for(std::size_t i = 0; i < bytes / 8; i++) {
-    h ^= w[i];
-    h *= 0xff51afd7ed558ccdULL;
-    h = (h << 31) | (h >> 33);
-  }
-  h ^= h >> 33;
-  h *= 0xff51afd7ed558ccdULL;
-  h ^= h >> 29;
-  h *= 0xc4ceb9fe1a85ec53ULL;
-  h ^= h >> 32;
+  for(std::size_t i = 0; i < bytes / 8; i++) h = vaMix(h ^ w[i]);
   return h ? h : 1;
 }
 
@@ -110,7 +114,6 @@ private:
     std::size_t mask, num, growAt;
     Shard() : table(nullptr), mask(0), num(0), growAt(0) {}
     void reserve(std::size_t n);
-    void erase(std::size_t i);
     bool insert(std::uint64_t h)
     {
       // an empty shard has growAt == 0, so this also allocates the table
@@ -118,32 +121,6 @@ private:
       std::size_t i = h & mask;
       while(table[i]) {
         if(table[i] == h) return false;
-        i = (i + 1) & mask;
-      }
-      table[i] = h;
-      num++;
-      return true;
-    }
-    bool contains(std::uint64_t h) const
-    {
-      if(!num) return false;
-      std::size_t i = h & mask;
-      while(table[i]) {
-        if(table[i] == h) return true;
-        i = (i + 1) & mask;
-      }
-      return false;
-    }
-    // insert the key, or erase it if it is already there
-    bool insertOrErase(std::uint64_t h)
-    {
-      if(num >= growAt) reserve(num + 1);
-      std::size_t i = h & mask;
-      while(table[i]) {
-        if(table[i] == h) {
-          erase(i);
-          return false;
-        }
         i = (i + 1) & mask;
       }
       table[i] = h;
@@ -206,14 +183,6 @@ public:
   {
     return isDuplicate(vaHashKey(key, n * sizeof(std::uint64_t)));
   }
-  bool contains(const std::uint64_t *key, int n)
-  {
-    return contains(vaHashKey(key, n * sizeof(std::uint64_t)));
-  }
-  void insertOrErase(const std::uint64_t *key, int n)
-  {
-    insertOrErase(vaHashKey(key, n * sizeof(std::uint64_t)));
-  }
   // the hash, the table entry and the lookup separately, so that a caller can
   // prefetch the entries of a whole element before looking them up
   std::uint64_t hashOf(unsigned int col, const void *v0, const void *v1,
@@ -236,31 +205,6 @@ public:
     if(!_threaded) return !_shardOf(h).insert(h);
     ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
     return !_shardOf(h).insert(h);
-  }
-  // insert the element, or remove it if already seen: once all elements have
-  // been passed, the filter holds those seen an odd number of times, i.e. the
-  // boundary faces
-  void insertOrErase(std::uint64_t h)
-  {
-    if(!_threaded) {
-      _shardOf(h).insertOrErase(h);
-      return;
-    }
-    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
-    _shardOf(h).insertOrErase(h);
-  }
-  bool contains(std::uint64_t h)
-  {
-    if(!_threaded) return _shardOf(h).contains(h);
-    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
-    return _shardOf(h).contains(h);
-  }
-  // test without inserting: used to ask whether a face has been seen twice,
-  // i.e. whether it is interior to the mesh
-  bool contains(unsigned int col, const void *v0, const void *v1,
-                const void *v2 = nullptr, const void *v3 = nullptr)
-  {
-    return contains(hashOf(col, v0, v1, v2, v3));
   }
 };
 
@@ -296,7 +240,8 @@ private:
   void _addElement(MElement *ele);
 
 public:
-  VertexArray(int numVerticesPerElement, int numElements);
+  // (numElements is a hint of how many will be added)
+  VertexArray(int numVerticesPerElement, std::size_t numElements);
   ~VertexArray();
   // return the filter used to drop elements that are drawn several times,
   // creating it if necessary

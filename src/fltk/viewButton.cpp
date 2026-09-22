@@ -158,7 +158,8 @@ static void view_save_cb(Fl_Widget *w, void *data)
   static const char *formats =
     "Gmsh Parsed\t*.pos\nGmsh Mesh-based\t*.pos\n"
     "Gmsh Legacy ASCII\t*.pos\nGmsh Legacy Binary\t*.pos\n"
-    "MED\t*.rmed\nSTL Surface\t*.stl\nGeneric TXT\t*.txt\n";
+    "MED\t*.rmed\nSTL Surface\t*.stl\nGeneric TXT\t*.txt\n"
+    "VTK XML Unstructured Grid\t*.vtu\n";
 
   PView *view = PView::list[(intptr_t)data];
 test:
@@ -185,6 +186,7 @@ test:
     case 4: format = 6; break;
     case 5: format = 3; break;
     case 6: format = 4; break;
+    case 7: format = 8; break;
     }
     view->write(name, format);
   }

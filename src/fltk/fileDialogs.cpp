@@ -1966,7 +1966,9 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName,
           if(!canAppend && numVisible > 1) {
             std::ostringstream os;
             os << "_" << i;
-            fileName += os.str();
+            // (before the extension)
+            std::vector<std::string> split = SplitFileName(name);
+            fileName = split[0] + split[1] + os.str() + split[2];
           }
           PView::list[i]->writeAdapt(fileName, useDefaultName, isBinary,
                                      adaptLev, adaptErr, npart,
@@ -1982,7 +1984,8 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName,
       if(!canAppend && PView::list.size() > 1) {
         std::ostringstream os;
         os << "_" << i;
-        fileName += os.str();
+        std::vector<std::string> split = SplitFileName(name);
+        fileName = split[0] + split[1] + os.str() + split[2];
       }
       PView::list[i]->writeAdapt(fileName, useDefaultName, isBinary, adaptLev,
                                  adaptErr, npart, i ? canAppend : false);

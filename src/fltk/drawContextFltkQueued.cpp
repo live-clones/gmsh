@@ -221,7 +221,7 @@ void drawContextFltkQueued::_upload(double f)
       glPixelStorei(GL_UNPACK_SKIP_PIXELS, slots[k].x - 1);
       glPixelStorei(GL_UNPACK_SKIP_ROWS, slots[k].y - 1);
       glTexSubImage2D(GL_TEXTURE_2D, 0, c.x - 1, c.y - 1, c.w + 2, c.h + 2,
-                      gmshUseShaders() ? GL_RED : GL_ALPHA, GL_UNSIGNED_BYTE,
+                      glShader::enabled() ? GL_RED : GL_ALPHA, GL_UNSIGNED_BYTE,
                       image.data());
     }
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
@@ -239,7 +239,7 @@ void drawContextFltkQueued::flushString()
   // that scale so that they are sharp on a high resolution screen: the
   // window's scale, or the picture's being printed
   double f = drawContext::global()->pixelFactor();
-  bool shaders = gmshUseShaders();
+  bool shaders = glShader::enabled();
   // measuring the strings sets their fonts: the caller's comes back
   int fontId = _currentFontId, fontSize = _currentFontSize;
   _atlas.check(shaders);
@@ -357,7 +357,7 @@ void drawContextFltkQueued::flushString()
           }
         }
         // whatever is waiting was collected to be drawn through this page
-        gmshFlushImmediate();
+        glImmediate::flush();
       }
     }
     // the pages are bound directly when filled

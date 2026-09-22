@@ -58,12 +58,12 @@ void glyphList::recordBegin()
     delete _rec[i];
     _rec[i] = new VertexArray(i + 1, 100);
   }
-  gmshRecordBegin(_rec[0], _rec[1], _rec[2]);
+  glImmediate::recordBegin(_rec[0], _rec[1], _rec[2]);
 }
 
 void glyphList::recordEnd()
 {
-  gmshRecordEnd();
+  glImmediate::recordEnd();
   for(int i = 0; i < 3; i++) _rec[i]->finalize();
 }
 
@@ -212,19 +212,8 @@ namespace {
                   n[7] == 0.);
         }
         else {
-          double det = m[0] * (m[4] * m[8] - m[5] * m[7]) -
-                       m[3] * (m[1] * m[8] - m[2] * m[7]) +
-                       m[6] * (m[1] * m[5] - m[2] * m[4]);
-          double d = det ? 1. / det : 1.;
-          n[0] = (m[4] * m[8] - m[5] * m[7]) * d;
-          n[1] = (m[6] * m[5] - m[3] * m[8]) * d;
-          n[2] = (m[3] * m[7] - m[6] * m[4]) * d;
-          n[3] = (m[7] * m[2] - m[1] * m[8]) * d;
-          n[4] = (m[0] * m[8] - m[6] * m[2]) * d;
-          n[5] = (m[6] * m[1] - m[0] * m[7]) * d;
-          n[6] = (m[1] * m[5] - m[4] * m[2]) * d;
-          n[7] = (m[3] * m[2] - m[0] * m[5]) * d;
-          n[8] = (m[0] * m[4] - m[3] * m[1]) * d;
+          double c[9], det = glMatrix::cofactors(m, c), d = det ? 1. / det : 1.;
+          for(int i = 0; i < 9; i++) n[i] = c[i] * d;
         }
       }
 
@@ -362,14 +351,14 @@ void glyphList::draw(drawContext *ctx, bool light)
 
   // pending immediate mode primitives come first, and the backends below
   // bind attributes of their own
-  gmshFlushImmediate();
+  glImmediate::flush();
 
   // what was recorded: in its own colours but for a picking pass, the
   // triangles lit as asked
   for(int i = 0; i < 3; i++) {
     VertexArray *va = _rec[i];
     if(!va || !va->getNumVertices()) continue;
-    gmshDrawVertexArray(va, (i == 0) ? GL_POINTS : (i == 1) ? GL_LINES :
+    drawVertexArray(va, (i == 0) ? GL_POINTS : (i == 1) ? GL_LINES :
                                                               GL_TRIANGLES,
                         ((i == 2 && light) ? GMSH_DRAW_LIGHT : 0) |
                           GMSH_DRAW_COLORS);
@@ -421,14 +410,14 @@ void glyphList::draw(drawContext *ctx, bool light)
 
 bool glyphList::_instanced(drawContext *ctx, bool light)
 {
-  if(!gmshUseShaders() || !glApi::haveInstancing()) return false;
+  if(!glShader::enabled() || !glApi::haveInstancing()) return false;
   if(!glShader::available()) return false;
 
   ctx->updateGlyphTemplates();
   bool colors = !ctx->inPickColorMode();
   if(light) gmshLighting(true);
-  gmshPushShaderState();
-  glShader::setAlphaScale(gmshAlphaScaleFor(GL_POINTS));
+  glImmediate::pushShaderState();
+  glShader::setAlphaScale(glImmediate::alphaScaleFor(GL_POINTS));
 
   for(int k = 0; k < GLYPH_NUMKINDS; k++) {
     std::size_t n = _inst[k].size();
@@ -470,7 +459,7 @@ bool glyphList::_instanced(drawContext *ctx, bool light)
 
 void glyphList::_draw(drawContext *ctx, VertexArray *va, bool light)
 {
-  gmshDrawVertexArray(va, GL_TRIANGLES,
+  drawVertexArray(va, GL_TRIANGLES,
                       (light ? GMSH_DRAW_LIGHT : 0) | GMSH_DRAW_COLORS);
 }
 

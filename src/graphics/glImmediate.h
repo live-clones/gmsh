@@ -7,6 +7,7 @@
 #define GL_IMMEDIATE_H
 
 #include "glApi.h"
+#include "glShader.h"
 
 // Immediate mode drawing (glBegin/glVertex/glEnd and the state that goes
 // with it) behind functions of our own. The decorations of the scene (axes,
@@ -16,107 +17,132 @@
 // has no immediate mode, collects the vertices with their colour and normal
 // and draws them in batches.
 
-// is the shader pipeline drawing? The calls below then collect the vertices
-// and remember the state instead of handing them to OpenGL.
-bool gmshUseShaders();
+// With the shader pipeline (glShader::enabled()) the gmsh calls below, each
+// named after the OpenGL call it stands for, collect the vertices and
+// remember the state instead of handing them to OpenGL. What has no OpenGL
+// counterpart is in the namespace.
 
-// true while a primitive is being collected for the shader pipeline
-extern bool gmshCollecting;
-
-// hand the shader program the state the fixed function pipeline kept itself
-// (matrices, lighting, colour, point size, material, clipping planes);
-// everything that draws through the program calls this first
-void gmshPushShaderState();
-
-// draw the pending immediate mode primitives; anything that changes how
-// they would be drawn, or that draws by another route, must call this first
-void gmshFlushImmediate();
-
-// what gmshBegin() and gmshEnd() do when collecting; gmshImBegin() returns
-// false if it did not take the primitive
-bool gmshImBegin(GLenum mode);
-void gmshImEnd();
-
-// While recording, what gmshBegin() and gmshEnd() make goes into the arrays
-// given - as independent points, lines and triangles, with their colours,
-// and the normals of the triangles - instead of being drawn, on either
-// pipeline: what is drawn a primitive at a time can then be kept and drawn
-// at once. The current colour is put back at the end, as the colours set
-// while recording, which a picking pass would otherwise ignore, are taken.
 class VertexArray;
-void gmshRecordBegin(VertexArray *points, VertexArray *lines,
-                     VertexArray *triangles);
-void gmshRecordEnd();
-void gmshImVertex(float x, float y, float z);
-void gmshImNormal(float x, float y, float z);
-void gmshImTexCoord(float s, float t);
+
+namespace glImmediate {
+  // true while a primitive is being collected for the shader pipeline
+  extern bool collecting;
+
+  // hand the shader program the state the fixed function pipeline kept itself
+  // (matrices, lighting, colour, point size, material, clipping planes);
+  // everything that draws through the program calls this first
+  void pushShaderState();
+
+  // draw the pending immediate mode primitives; anything that changes how
+  // they would be drawn, or that draws by another route, must call this first
+  void flush();
+
+  // what gmshBegin(), gmshEnd(), gmshVertex(), ... do when collecting;
+  // begin() returns false if it did not take the primitive
+  bool begin(GLenum mode);
+  void end();
+  void vertex(float x, float y, float z);
+  void normal(float x, float y, float z);
+  void texCoord(float s, float t);
+
+  // While recording, what gmshBegin() and gmshEnd() make goes into the arrays
+  // given - as independent points, lines and triangles, with their colours,
+  // and the normals of the triangles - instead of being drawn, on either
+  // pipeline: what is drawn a primitive at a time can then be kept and drawn
+  // at once. The current colour is put back at the end, as the colours set
+  // while recording, which a picking pass would otherwise ignore, are taken.
+  void recordBegin(VertexArray *points, VertexArray *lines,
+                   VertexArray *triangles);
+  void recordEnd();
+
+  // a colour component in [0, 1] as a byte
+  inline unsigned char colorByte(double v)
+  {
+    double c = v * 255. + 0.5;
+    return (unsigned char)((c < 0.) ? 0. : (c > 255.) ? 255. : c);
+  }
+  // set the identifier colour of a picking pass; only
+  // drawContext::setPickColor() and unsetPickColor() should call this
+  void pickColor(const void *col);
+
+  // the scale applied to what is given in pixels of the window (line widths,
+  // point sizes): 1 on the window, more in a picture drawn at another size
+  void pixelScale(double scale);
+  double pixelScale();
+
+  // multiplies the alpha of every colour drawn afterwards (the Transparency
+  // options; ignored by the fixed function pipeline); filledOnly leaves lines
+  // and points opaque
+  void alphaScale(double s, bool filledOnly);
+  // the scale that applies to this primitive, given filledOnly
+  double alphaScaleFor(unsigned int primitive);
+
+  // the current matrix of either stack (GMSH_MODELVIEW, GMSH_PROJECTION)
+  const double *matrix(int kind);
+  // forget the stacks and the state (e.g. after the OpenGL context was
+  // recreated)
+  void resetMatrices();
+} // namespace glImmediate
 
 inline void gmshBegin(GLenum mode)
 {
-  if(!gmshImBegin(mode)) glBegin(mode);
+  if(!glImmediate::begin(mode)) glBegin(mode);
 }
 inline void gmshEnd()
 {
-  if(gmshCollecting)
-    gmshImEnd();
+  if(glImmediate::collecting)
+    glImmediate::end();
   else
     glEnd();
 }
 
 inline void gmshVertex2d(double x, double y)
 {
-  if(gmshCollecting)
-    gmshImVertex((float)x, (float)y, 0.f);
+  if(glImmediate::collecting)
+    glImmediate::vertex((float)x, (float)y, 0.f);
   else
     glVertex2d(x, y);
 }
 inline void gmshVertex2i(int x, int y)
 {
-  if(gmshCollecting)
-    gmshImVertex((float)x, (float)y, 0.f);
+  if(glImmediate::collecting)
+    glImmediate::vertex((float)x, (float)y, 0.f);
   else
     glVertex2i(x, y);
 }
 inline void gmshVertex3d(double x, double y, double z)
 {
-  if(gmshCollecting)
-    gmshImVertex((float)x, (float)y, (float)z);
+  if(glImmediate::collecting)
+    glImmediate::vertex((float)x, (float)y, (float)z);
   else
     glVertex3d(x, y, z);
 }
 inline void gmshVertex3f(float x, float y, float z)
 {
-  if(gmshCollecting)
-    gmshImVertex(x, y, z);
+  if(glImmediate::collecting)
+    glImmediate::vertex(x, y, z);
   else
     glVertex3f(x, y, z);
 }
-inline void gmshVertex3i(int x, int y, int z)
-{
-  if(gmshCollecting)
-    gmshImVertex((float)x, (float)y, (float)z);
-  else
-    glVertex3i(x, y, z);
-}
 inline void gmshVertex3fv(const float *v)
 {
-  if(gmshCollecting)
-    gmshImVertex(v[0], v[1], v[2]);
+  if(glImmediate::collecting)
+    glImmediate::vertex(v[0], v[1], v[2]);
   else
     glVertex3fv(v);
 }
 
 inline void gmshNormal3d(double x, double y, double z)
 {
-  if(gmshCollecting)
-    gmshImNormal((float)x, (float)y, (float)z);
+  if(glImmediate::collecting)
+    glImmediate::normal((float)x, (float)y, (float)z);
   else
     glNormal3d(x, y, z);
 }
 inline void gmshNormal3dv(const double *v)
 {
-  if(gmshCollecting)
-    gmshImNormal((float)v[0], (float)v[1], (float)v[2]);
+  if(glImmediate::collecting)
+    glImmediate::normal((float)v[0], (float)v[1], (float)v[2]);
   else
     glNormal3dv(v);
 }
@@ -128,14 +154,10 @@ void gmshColor4ub(unsigned char r, unsigned char g, unsigned char b,
 // the colour that is current, as four bytes
 const unsigned char *gmshCurrentColor();
 
-inline unsigned char gmshColorByte(double v)
-{
-  double c = v * 255. + 0.5;
-  return (unsigned char)((c < 0.) ? 0. : (c > 255.) ? 255. : c);
-}
 inline void gmshColor3d(double r, double g, double b)
 {
-  gmshColor4ub(gmshColorByte(r), gmshColorByte(g), gmshColorByte(b), 255);
+  gmshColor4ub(glImmediate::colorByte(r), glImmediate::colorByte(g),
+               glImmediate::colorByte(b), 255);
 }
 inline void gmshColor3ub(unsigned char r, unsigned char g, unsigned char b)
 {
@@ -143,15 +165,13 @@ inline void gmshColor3ub(unsigned char r, unsigned char g, unsigned char b)
 }
 inline void gmshColor4f(float r, float g, float b, float a)
 {
-  gmshColor4ub(gmshColorByte(r), gmshColorByte(g), gmshColorByte(b),
-               gmshColorByte(a));
+  gmshColor4ub(glImmediate::colorByte(r), glImmediate::colorByte(g),
+               glImmediate::colorByte(b), glImmediate::colorByte(a));
 }
 // set the current colour from four bytes; does nothing during a colour
 // picking pass, where the colour encodes the object instead
 void gmshColor4ubv(const void *col);
-// set the identifier colour of a picking pass; only
-// drawContext::setPickColor() and unsetPickColor() should call this
-inline void gmshPickColor4ubv(const void *col)
+inline void glImmediate::pickColor(const void *col)
 {
   const unsigned char *c = (const unsigned char *)col;
   gmshColor4ub(c[0], c[1], c[2], c[3]);
@@ -159,8 +179,8 @@ inline void gmshPickColor4ubv(const void *col)
 
 inline void gmshTexCoord2f(float s, float t)
 {
-  if(gmshCollecting)
-    gmshImTexCoord(s, t);
+  if(glImmediate::collecting)
+    glImmediate::texCoord(s, t);
   else
     glTexCoord2f(s, t);
 }
@@ -185,10 +205,6 @@ bool gmshLightingEnabled();
 void gmshLightTwoSide(bool on);
 bool gmshLightTwoSideEnabled();
 
-// the scale applied to what is given in pixels of the window (line widths,
-// point sizes): 1 on the window, more in a picture drawn at another size
-void gmshPixelScale(double scale);
-double gmshPixelScale();
 // the line width; a core profile draws every line one pixel wide, so the
 // shader pipeline makes wider lines out of triangles
 void gmshLineWidth(double w);
@@ -201,13 +217,6 @@ double gmshCurrentPointSize();
 // General.Shading, and by the floor for itself.
 void gmshShadingModel(int model);
 int gmshShadingModel();
-
-// multiplies the alpha of every colour drawn afterwards (the Transparency
-// options; ignored by the fixed function pipeline); filledOnly leaves lines
-// and points opaque
-void gmshAlphaScale(double s, bool filledOnly);
-// the scale that applies to this primitive, given filledOnly
-double gmshAlphaScaleFor(unsigned int primitive);
 
 // a factor and a 16 bit pattern as glLineStipple takes them; a core profile
 // has no stipple, so the shader discards the fragments in a hole of the
@@ -222,7 +231,7 @@ unsigned short gmshLineStipplePattern();
 
 inline void gmshPolygonFill(bool fill)
 {
-  if(gmshUseShaders()) gmshFlushImmediate();
+  if(glShader::enabled()) glImmediate::flush();
   glPolygonMode(GL_FRONT_AND_BACK, fill ? GL_FILL : GL_LINE);
 }
 
@@ -234,7 +243,7 @@ inline void gmshPolygonFill(bool fill)
 // for the model.
 inline void gmshDepthTest(bool on)
 {
-  if(gmshUseShaders()) gmshFlushImmediate();
+  if(glShader::enabled()) glImmediate::flush();
   if(on)
     glEnable(GL_DEPTH_TEST);
   else
@@ -242,7 +251,7 @@ inline void gmshDepthTest(bool on)
 }
 inline void gmshDepthMask(bool on)
 {
-  if(gmshUseShaders()) gmshFlushImmediate();
+  if(glShader::enabled()) glImmediate::flush();
   glDepthMask(on ? GL_TRUE : GL_FALSE);
 }
 inline bool gmshPolygonFilled()
@@ -271,21 +280,38 @@ void gmshMultMatrix(const double m[16]);
 void gmshTranslate(double x, double y, double z);
 void gmshScale(double x, double y, double z);
 void gmshRotate(double angle, double x, double y, double z);
-// the current matrix of either stack
-const double *gmshMatrix(int kind);
 // the six clipping planes, given in the coordinates of the current modelview
 // as glClipPlane() takes them, and kept in eye coordinates
 void gmshClipPlane(int i, const double plane[4]);
 void gmshClipPlaneOn(int i, bool on);
 bool gmshClipPlaneEnabled(int i);
-// keep only what the enabled planes cut off (shader pipeline only: the fixed
-// function planes have no such mode)
-void gmshClipOutside(bool outside);
-// the plane in eye coordinates, which is what a shader is handed
-const double *gmshClipPlaneEye(int i);
 
-// forget the stacks and the state above (e.g. after the OpenGL context was
-// recreated)
-void gmshResetMatrices();
+// Switching several planes at once, next to the questions asked to them in
+// ClipPlanes.h
+namespace clipPlanes {
+  // the planes of a mask (a bit each) on, the others off; none with 0
+  void on(int mask);
+  // all the planes off for as long as it lives (if active), then as they were
+  class off {
+  private:
+    bool _active, _was[6];
+
+  public:
+    off(bool active = true) : _active(active)
+    {
+      if(!_active) return;
+      for(int i = 0; i < 6; i++) _was[i] = gmshClipPlaneEnabled(i);
+      on(0);
+    }
+    ~off()
+    {
+      if(_active)
+        for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, _was[i]);
+    }
+  };
+  // keep only what the enabled planes cut off (shader pipeline only: the
+  // fixed function planes have no such mode)
+  void outside(bool on);
+} // namespace clipPlanes
 
 #endif

@@ -19,42 +19,44 @@ unsigned int VertexArray::vboContext = 1;
 long int VertexArray::statUniqueIn = 0;
 long int VertexArray::statUniqueKept = 0;
 
-// fill a corner key with the N corners sorted lexicographically, so that an
-// element added with its corners in any order maps to the same key
+// fill a corner key with the N corners sorted lexicographically, each with its
+// color, so that an element added with its corners in any order maps to the
+// same key (with the color of its first corner only, a face shared by two
+// elements that list its corners in another order was drawn twice)
 template <int N>
 static inline void fillCornerKey(CornerKey<N> &k, double *x, double *y,
                                  double *z, unsigned char *r, unsigned char *g,
                                  unsigned char *b, unsigned char *a)
 {
   memset(&k, 0, sizeof(CornerKey<N>));
-  float px[N], py[N], pz[N];
+  float p[N][3];
+  unsigned char c[N][4] = {};
   for(int i = 0; i < N; i++) {
-    px[i] = (float)x[i];
-    py[i] = (float)y[i];
-    pz[i] = (float)z[i];
+    p[i][0] = (float)x[i];
+    p[i][1] = (float)y[i];
+    p[i][2] = (float)z[i];
+    if(r && g && b && a) {
+      c[i][0] = r[i];
+      c[i][1] = g[i];
+      c[i][2] = b[i];
+      c[i][3] = a[i];
+    }
   }
   // insertion sort: one comparison for a line, three at most for a triangle
+  auto before = [&](int i, int j) {
+    for(int d = 0; d < 3; d++)
+      if(p[i][d] != p[j][d]) return p[i][d] < p[j][d];
+    return false;
+  };
   for(int i = 1; i < N; i++) {
-    for(int j = i; j > 0; j--) {
-      if(px[j] > px[j - 1] ||
-         (px[j] == px[j - 1] &&
-          (py[j] > py[j - 1] || (py[j] == py[j - 1] && pz[j] >= pz[j - 1]))))
-        break;
-      std::swap(px[j], px[j - 1]);
-      std::swap(py[j], py[j - 1]);
-      std::swap(pz[j], pz[j - 1]);
+    for(int j = i; j > 0 && before(j, j - 1); j--) {
+      std::swap(p[j], p[j - 1]);
+      std::swap(c[j], c[j - 1]);
     }
   }
   for(int i = 0; i < N; i++) {
-    k.p[3 * i] = px[i];
-    k.p[3 * i + 1] = py[i];
-    k.p[3 * i + 2] = pz[i];
-  }
-  if(r && g && b && a) {
-    k.c[0] = r[0];
-    k.c[1] = g[0];
-    k.c[2] = b[0];
-    k.c[3] = a[0];
+    for(int d = 0; d < 3; d++) k.p[3 * i + d] = p[i][d];
+    for(int d = 0; d < 4; d++) k.c[4 * i + d] = c[i][d];
   }
 }
 
@@ -75,29 +77,6 @@ void UniqueElementFilter::Shard::reserve(std::size_t n)
     std::size_t j = old[i] & mask;
     while(table[j]) j = (j + 1) & mask;
     table[j] = old[i];
-  }
-}
-
-// Knuth's algorithm R: after removing the entry at i, shift back the following
-// entries that probed past it, so that the table stays free of tombstones
-void UniqueElementFilter::Shard::erase(std::size_t i)
-{
-  std::size_t j = i;
-  table[i] = 0;
-  num--;
-  for(;;) {
-    j = (j + 1) & mask;
-    if(!table[j]) break;
-    std::size_t k = table[j] & mask;
-    if(i <= j) {
-      if(i < k && k <= j) continue;
-    }
-    else {
-      if(i < k || k <= j) continue;
-    }
-    table[i] = table[j];
-    table[j] = 0;
-    i = j;
   }
 }
 
@@ -155,7 +134,7 @@ void VertexArray::setUniqueFilter(UniqueElementFilter *f)
   _ownsFilter = false;
 }
 
-VertexArray::VertexArray(int numVerticesPerElement, int numElements)
+VertexArray::VertexArray(int numVerticesPerElement, std::size_t numElements)
   : _numVerticesPerElement(numVerticesPerElement), _filter(nullptr),
     _ownsFilter(false), _storeElements(CTX::instance()->pickElements ? true :
                                                                        false),
@@ -163,14 +142,16 @@ VertexArray::VertexArray(int numVerticesPerElement, int numElements)
 {
   _vbo[0] = _vbo[1] = _vbo[2] = 0;
 
-  int nb = (numElements ? numElements : 1) * _numVerticesPerElement;
+  // (counted on 64 bits: the elements of a large mesh, times their vertices,
+  // times their coordinates, do not fit in an int)
+  std::size_t nb = (numElements ? numElements : 1) * _numVerticesPerElement;
 
   double memv = (nb * 3. * sizeof(float)) / 1024. / 1024.;
   double memmax = TotalRam() / 3.;
   if(memv > memmax){
-    int old = nb;
-    nb = memmax / (3. * sizeof(float)) * 1024 * 1024;
-    Msg::Debug("Reduce preallocation of vertex array (%d -> %d)", old, nb);
+    std::size_t old = nb;
+    nb = (std::size_t)(memmax / (3. * sizeof(float)) * 1024 * 1024);
+    Msg::Debug("Reduce preallocation of vertex array (%zu -> %zu)", old, nb);
   }
   _vertices.reserve(nb * 3);
   _normals.reserve(nb * 3);
@@ -230,12 +211,14 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
   if(col){
     unsigned char r[100], g[100], b[100], a[100];
     int npe = getNumVerticesPerElement();
-    CTX *ctx = CTX::instance();
+    // (as CTX::unpackRed() and the others do, without a call for each)
+    const bool big = CTX::instance()->bigEndian;
     for(int i = 0; i < npe; i++){
-      r[i] = ctx->unpackRed(col[i]);
-      g[i] = ctx->unpackGreen(col[i]);
-      b[i] = ctx->unpackBlue(col[i]);
-      a[i] = ctx->unpackAlpha(col[i]);
+      unsigned int c = col[i];
+      r[i] = big ? (c >> 24) & 0xff : c & 0xff;
+      g[i] = big ? (c >> 16) & 0xff : (c >> 8) & 0xff;
+      b[i] = big ? (c >> 8) & 0xff : (c >> 16) & 0xff;
+      a[i] = big ? c & 0xff : (c >> 24) & 0xff;
     }
     add(x, y, z, n, r, g, b, a, ele, unique);
   }
@@ -258,12 +241,43 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
     _statUniqueKept += npe;
   }
 
-  for(int i = 0; i < npe; i++){
-    _addVertex((float)x[i], (float)y[i], (float)z[i]);
-    if(n) _addNormal((float)n[i].x(), (float)n[i].y(), (float)n[i].z());
-    if(r && g && b && a) _addColor(r[i], g[i], b[i], a[i]);
-    _addElement(ele);
+  // the arrays grow once for the element, not once for each number
+  std::size_t nv = _vertices.size();
+  _vertices.resize(nv + 3 * npe);
+  float *pv = &_vertices[nv];
+  for(int i = 0; i < npe; i++) {
+    *pv++ = (float)x[i];
+    *pv++ = (float)y[i];
+    *pv++ = (float)z[i];
   }
+  if(n) {
+    std::size_t nn = _normals.size();
+    _normals.resize(nn + 3 * npe);
+    normal_type *pn = &_normals[nn];
+    for(int i = 0; i < npe; i++) {
+#if defined(HAVE_VISUDEV)
+      *pn++ = (float)n[i].x();
+      *pn++ = (float)n[i].y();
+      *pn++ = (float)n[i].z();
+#else
+      *pn++ = float2char((float)n[i].x());
+      *pn++ = float2char((float)n[i].y());
+      *pn++ = float2char((float)n[i].z());
+#endif
+    }
+  }
+  if(r && g && b && a) {
+    std::size_t nc = _colors.size();
+    _colors.resize(nc + 4 * npe);
+    unsigned char *pc = &_colors[nc];
+    for(int i = 0; i < npe; i++) {
+      *pc++ = r[i];
+      *pc++ = g[i];
+      *pc++ = b[i];
+      *pc++ = a[i];
+    }
+  }
+  if(ele && _storeElements) _elements.insert(_elements.end(), npe, ele);
 }
 
 int VertexArray::addBlock(int n)

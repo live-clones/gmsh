@@ -31,7 +31,7 @@ private:
   int _tag;
   // index of the view in the current view list
   int _index;
-  // flag to mark that the view has changed1
+  // flag to mark that the view has changed
   bool _changed;
   // tag of the source view if this view is an alias, -1 otherwise
   int _aliasOf;
@@ -142,6 +142,8 @@ public:
   static bool readMED(const std::string &fileName, int fileIndex = -1);
   static bool readPCH(const std::string &fileName, int fileIndex = -1);
   static bool writeX3D(const std::string &fileName);
+  static bool writeVTU(const std::string &fileName, bool binary,
+                       const std::vector<PView *> &views);
   // IO write routine
   bool write(const std::string &fileName, int format, bool append = false);
 
@@ -150,6 +152,7 @@ public:
 
   // Routines for export of adapted views to pvtu file format for parallel
   // visualization with paraview
+  bool _writeVTUOrAdapted(const std::string &fileName);
   bool writeAdapt(const std::string &fileName, int useDefaultName,
                   bool isBinary, int adaptLev, double adaptErr, int npart,
                   bool append = false);
@@ -201,13 +204,12 @@ private:
 public:
   int ent = 0, ele = 0, type = 0, dim = 0, numNodes = 0, numComp = 0;
   double **xyz = nullptr, **val = nullptr;
-  std::vector<std::size_t> nodeIds;
   // take the element ele of the entity ent; false if it is not drawn: skipped
   // by the sampling or the options, or with more nodes or components than can
   // be drawn (with a warning, once)
   bool select(PView *p, int ent, int ele);
-  // read its nodes (and their identifiers, if asked) and its values
-  void read(PView *p, bool ids = false);
+  // read its nodes and its values
+  void read(PView *p);
 };
 
 #endif

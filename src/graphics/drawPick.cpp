@@ -9,8 +9,6 @@
 // show; the objects under the cursor can be stepped through, front to back.
 
 #include <algorithm>
-#include <cmath>
-#include <cstring>
 #include "GmshMessage.h"
 #include "drawContext.h"
 #include "glMatrix.h"
@@ -19,10 +17,7 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "PView.h"
-#include "PViewOptions.h"
 #include "VertexArray.h"
-#include "OS.h"
-#include "gl2ps.h"
 
 bool drawContext::_pickColorActive = false;
 
@@ -73,8 +68,8 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
   _pickCheckLimit();
   GLubyte c[4];
   pickIdColor(id, c);
-  if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
-  gmshPickColor4ubv(c);
+  if(!glShader::enabled()) glDisableClientState(GL_COLOR_ARRAY);
+  glImmediate::pickColor(c);
 
   // an entity stepped past with the wheel is drawn into neither the colours
   // nor the depth, so that the pass finds what stands behind it
@@ -102,7 +97,7 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
 void drawContext::_pickState(bool skip, double zfar)
 {
   if((int)skip == _pickStateSkip && zfar == _pickStateFar) return;
-  gmshFlushImmediate();
+  glImmediate::flush();
   GLboolean on = skip ? GL_FALSE : GL_TRUE;
   glColorMask(on, on, on, on);
   glDepthMask(on);
@@ -158,14 +153,14 @@ void drawContext::unsetPickColor()
 {
   if(!_pickColor) return;
   // what was set aside for the wheel is drawn again from here on
-  gmshFlushImmediate();
+  glImmediate::flush();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);
   _pickStateSkip = -1;
   // 0 is the background: no pickable object
   GLubyte c[4] = {0, 0, 0, 255};
-  if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
-  gmshPickColor4ubv(c);
+  if(!glShader::enabled()) glDisableClientState(GL_COLOR_ARRAY);
+  glImmediate::pickColor(c);
 }
 
 // side (in real pixels) of the region a picking pass draws and keeps around
@@ -196,7 +191,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   // written as a colour: OpenGL ES and WebGL cannot read a depth buffer back
   double hr = highResolutionPixelFactor();
   bool intoPickBuffer =
-    gmshUseShaders() &&
+    glShader::enabled() &&
     glShader::bindPickBuffer((int)((viewport[2] - viewport[0]) * hr),
                              (int)((viewport[3] - viewport[1]) * hr));
   if(!intoPickBuffer) glDrawBuffer(GL_BACK);
@@ -206,7 +201,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glDisable(GL_BLEND);
   // the identifier colour must not be interpolated (the shader gives every
   // fragment the same one)
-  if(!gmshUseShaders()) glShadeModel(GL_FLAT);
+  if(!glShader::enabled()) glShadeModel(GL_FLAT);
   // only rasterise the region the image covers
   glEnable(GL_SCISSOR_TEST);
   glScissor(fx, fy, fw, fh);
@@ -242,8 +237,8 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
                      (i & 2) ? c->max[1] : c->min[1],
                      (i & 4) ? c->max[2] : c->min[2], 1.};
       double e[4], q[4];
-      glMatrix::transform(gmshMatrix(GMSH_MODELVIEW), p, e);
-      glMatrix::transform(gmshMatrix(GMSH_PROJECTION), e, q);
+      glMatrix::transform(glImmediate::matrix(GMSH_MODELVIEW), p, e);
+      glMatrix::transform(glImmediate::matrix(GMSH_PROJECTION), e, q);
       if(q[3] == 0.) continue;
       double z = 0.5 * (q[2] / q[3] + 1.);
       zmin = std::min(zmin, z);
@@ -261,7 +256,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   // 2D overlay, painted on top in drawing order as in draw2d(): without the
   // depth test off, the graph frame and axes would hide the data points
   gmshDepthTest(false);
-  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
+  clipPlanes::on(0);
   gmshMatrixMode(GMSH_PROJECTION);
   double px2d[16];
   glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3], -100.,
@@ -292,14 +287,14 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   }
 
   glDisable(GL_SCISSOR_TEST);
-  gmshFlushImmediate();
+  glImmediate::flush();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);
   glDepthRange(0., 1.);
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
   if(oldLighting) gmshLighting(true);
   if(oldBlend) glEnable(GL_BLEND);
-  if(!gmshUseShaders()) glShadeModel(GL_SMOOTH);
+  if(!glShader::enabled()) glShadeModel(GL_SMOOTH);
   _pickColor = _pickColorActive = false;
   render_mode = drawContext::GMSH_RENDER;
 

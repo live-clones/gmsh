@@ -585,6 +585,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_surface_faces(0, GMSH_SET, o->mesh.butt[9]->value());
   opt_mesh_volume_edges(0, GMSH_SET, o->mesh.butt[10]->value());
   opt_mesh_volume_faces(0, GMSH_SET, o->mesh.butt[11]->value());
+  opt_mesh_draw_skin_edges_only(0, GMSH_SET, o->mesh.butt[1]->value());
   opt_mesh_draw_skin_only(0, GMSH_SET, o->mesh.butt[0]->value());
   opt_mesh_node_labels(0, GMSH_SET, o->mesh.butt[12]->value());
   opt_mesh_line_labels(0, GMSH_SET, o->mesh.butt[13]->value());
@@ -804,6 +805,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double target_error = opt_view_target_error(current, GMSH_GET, 0);
   double show_element = opt_view_show_element(current, GMSH_GET, 0);
   double draw_skin_only = opt_view_draw_skin_only(current, GMSH_GET, 0);
+  double draw_skin_edges_only =
+    opt_view_draw_skin_edges_only(current, GMSH_GET, 0);
   double show_scale = opt_view_show_scale(current, GMSH_GET, 0);
   double auto_position = opt_view_auto_position(current, GMSH_GET, 0);
   double axes_auto_position = opt_view_axes_auto_position(current, GMSH_GET, 0);
@@ -990,6 +993,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.butt[10]->value();
       if(force || (val != show_element))
         opt_view_show_element(i, GMSH_SET, val);
+
+      val = o->view.butt[1]->value();
+      if(force || (val != draw_skin_edges_only))
+        opt_view_draw_skin_edges_only(i, GMSH_SET, val);
 
       val = o->view.butt[2]->value();
       if(force || (val != draw_skin_only))
@@ -2775,6 +2782,12 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[11]->type(FL_TOGGLE_BUTTON);
       mesh.butt[11]->callback(mesh_options_ok_cb);
 
+      mesh.butt[1] = new Fl_Check_Button(L + width / 2, 2 * WB + 5 * BH,
+                                         BW / 2 - WB, BH, "Hide interior edges");
+      mesh.butt[1]->tooltip("Mesh.DrawSkinEdgesOnly");
+      mesh.butt[1]->type(FL_TOGGLE_BUTTON);
+      mesh.butt[1]->callback(mesh_options_ok_cb);
+
       mesh.butt[0] = new Fl_Check_Button(L + width / 2, 2 * WB + 6 * BH,
                                           BW / 2 - WB, BH, "Hide interior faces");
       mesh.butt[0]->tooltip("Mesh.DrawSkinOnly");
@@ -3357,9 +3370,10 @@ optionWindow::optionWindow(int deltaFontSize)
                                           "Target visualization error");
       view.value[34]->tooltip("View.TargetError");
       view.value[34]->align(FL_ALIGN_RIGHT);
-      view.value[34]->minimum(-1.e-4);
+      // (a fraction of the range of the view; negative: refine everything)
+      view.value[34]->minimum(-1.e-3);
       view.value[34]->maximum(0.1);
-      if(CTX::instance()->inputScrolling) view.value[34]->step(1.e-4);
+      if(CTX::instance()->inputScrolling) view.value[34]->step(1.e-3);
       view.value[34]->when(FL_WHEN_RELEASE);
       view.value[34]->callback(view_options_ok_cb);
 
@@ -3547,13 +3561,22 @@ optionWindow::optionWindow(int deltaFontSize)
       view.butt[5]->type(FL_TOGGLE_BUTTON);
       view.butt[5]->callback(view_options_ok_cb);
 
-      view.butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
+      view.butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH,
+                                          BW / 2 - WB, BH,
                                           "Draw element outlines");
       view.butt[10]->tooltip("View.ShowElement (Alt+e)");
       view.butt[10]->type(FL_TOGGLE_BUTTON);
       view.butt[10]->callback(view_options_ok_cb);
 
-      view.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
+      view.butt[1] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH,
+                                         BW / 2 - WB, BH,
+                                         "Hide interior edges");
+      view.butt[1]->tooltip("View.DrawSkinEdgesOnly");
+      view.butt[1]->type(FL_TOGGLE_BUTTON);
+      view.butt[1]->callback(view_options_ok_cb);
+
+      view.butt[2] = new Fl_Check_Button(L + width / 2, 2 * WB + 5 * BH,
+                                         BW / 2 - WB, BH,
                                          "Hide interior faces");
       view.butt[2]->tooltip("View.DrawSkinOnly");
       view.butt[2]->type(FL_TOGGLE_BUTTON);
@@ -4205,6 +4228,7 @@ void optionWindow::updateViewGroup(int index)
     ((Fl_Menu_Item *)view.choice[13]->menu())[0].deactivate();
   }
   opt_view_show_element(index, GMSH_GUI, 0);
+  opt_view_draw_skin_edges_only(index, GMSH_GUI, 0);
   opt_view_draw_skin_only(index, GMSH_GUI, 0);
   opt_view_light(index, GMSH_GUI, 0);
   opt_view_light_two_side(index, GMSH_GUI, 0);

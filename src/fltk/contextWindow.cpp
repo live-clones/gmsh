@@ -79,7 +79,7 @@ static void draw_stl(std::vector<SPoint3> &vertices,
   }
   va.finalize();
 
-  gmshDrawVertexArray(&va, GL_TRIANGLES, GMSH_DRAW_LIGHT);
+  drawVertexArray(&va, GL_TRIANGLES, GMSH_DRAW_LIGHT);
   gmshPolygonFill(fill);
 }
 

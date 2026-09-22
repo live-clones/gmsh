@@ -234,76 +234,51 @@ int CutSimplexByPlane(double *X, double *Y, double *Z, double *Val, double *D,
                       const double n[3], double *Xp, double *Yp, double *Zp,
                       double *Vp)
 {
-  // the edges are visited in the order IsoSimplex() uses, so that the two last
-  // corners of a quadrangle are the ones to swap to get it ordered
-  int nb = 0;
-  nb = cutEdgeByPlane(X, Y, Z, Val, D, 0, 1, Xp, Yp, Zp, Vp, nb);
-  nb = cutEdgeByPlane(X, Y, Z, Val, D, 0, 2, Xp, Yp, Zp, Vp, nb);
-  nb = cutEdgeByPlane(X, Y, Z, Val, D, 0, 3, Xp, Yp, Zp, Vp, nb);
-  nb = cutEdgeByPlane(X, Y, Z, Val, D, 1, 2, Xp, Yp, Zp, Vp, nb);
-  nb = cutEdgeByPlane(X, Y, Z, Val, D, 1, 3, Xp, Yp, Zp, Vp, nb);
-  nb = cutEdgeByPlane(X, Y, Z, Val, D, 2, 3, Xp, Yp, Zp, Vp, nb);
-
   // a plane through a node or along an edge crosses several edges at the same
-  // point: keep each corner once
-  if(nb > 4) {
-    int ni = 1;
-    for(int j = 1; j < nb; j++) {
-      int same = 0;
-      for(int i = 0; i < ni; i++)
-        if(fabs(Xp[j] - Xp[i]) < 1.e-12 && fabs(Yp[j] - Yp[i]) < 1.e-12 &&
-           fabs(Zp[j] - Zp[i]) < 1.e-12) {
-          same = 1;
-          break;
-        }
-      if(same) continue;
-      Xp[ni] = Xp[j];
-      Yp[ni] = Yp[j];
-      Zp[ni] = Zp[j];
-      if(Val) Vp[ni] = Vp[j];
-      ni++;
-    }
-    nb = ni;
-  }
+  // point, up to 6 points in all: they are gathered here, not in the arrays
+  // of the caller, which hold the 4 corners a section can have
+  double x[6], y[6], z[6], v[6];
+  int nb = 0;
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 0, 1, x, y, z, v, nb);
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 0, 2, x, y, z, v, nb);
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 0, 3, x, y, z, v, nb);
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 1, 2, x, y, z, v, nb);
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 1, 3, x, y, z, v, nb);
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 2, 3, x, y, z, v, nb);
 
+  // keep each corner once, whatever their number (4 points can hold the same
+  // one twice); the tolerance is relative to the size of the simplex
+  double size = 0.;
+  for(int i = 1; i < 4; i++)
+    size = std::max(size, fabs(X[i] - X[0]) + fabs(Y[i] - Y[0]) +
+                            fabs(Z[i] - Z[0]));
+  double tol = 1.e-10 * size;
+  int ni = 0;
+  for(int j = 0; j < nb; j++) {
+    bool same = false;
+    for(int i = 0; i < ni && !same; i++)
+      same = (fabs(x[j] - x[i]) <= tol && fabs(y[j] - y[i]) <= tol &&
+              fabs(z[j] - z[i]) <= tol);
+    if(same) continue;
+    x[ni] = x[j];
+    y[ni] = y[j];
+    z[ni] = z[j];
+    if(Val) v[ni] = v[j];
+    ni++;
+  }
+  nb = ni;
   if(nb < 3 || nb > 4) return 0;
 
-  if(nb == 4) {
-    double x = Xp[3], y = Yp[3], z = Zp[3], v = Val ? Vp[3] : 0.;
-    Xp[3] = Xp[2];
-    Yp[3] = Yp[2];
-    Zp[3] = Zp[2];
-    Xp[2] = x;
-    Yp[2] = y;
-    Zp[2] = z;
-    if(Val) {
-      Vp[3] = Vp[2];
-      Vp[2] = v;
-    }
-  }
+  // counter-clockwise as seen from the side n points to: the order of the
+  // edges says nothing once corners were merged
+  OrderPolygonInPlane(nb, n, x, y, z, Val ? v : nullptr);
 
-  // wind the polygon counter-clockwise as seen from the side n points to
-  double v1[3] = {Xp[1] - Xp[0], Yp[1] - Yp[0], Zp[1] - Zp[0]};
-  double v2[3] = {Xp[2] - Xp[0], Yp[2] - Yp[0], Zp[2] - Zp[0]};
-  double c[3];
-  prodve(v1, v2, c);
-  if(prosca(c, n) < 0.) {
-    for(int i = 0; i < nb / 2; i++) {
-      int j = nb - i - 1;
-      double x = Xp[i], y = Yp[i], z = Zp[i], v = Val ? Vp[i] : 0.;
-      Xp[i] = Xp[j];
-      Yp[i] = Yp[j];
-      Zp[i] = Zp[j];
-      Xp[j] = x;
-      Yp[j] = y;
-      Zp[j] = z;
-      if(Val) {
-        Vp[i] = Vp[j];
-        Vp[j] = v;
-      }
-    }
+  for(int i = 0; i < nb; i++) {
+    Xp[i] = x[i];
+    Yp[i] = y[i];
+    Zp[i] = z[i];
+    if(Val) Vp[i] = v[i];
   }
-
   return nb;
 }
 

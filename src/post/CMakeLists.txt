@@ -4,7 +4,7 @@
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
-  PView.cpp PViewIO.cpp PViewIO_CGNS.cpp PViewVertexArrays.cpp
+  PView.cpp PViewIO.cpp PViewIO_CGNS.cpp PViewIO_VTU.cpp PViewVertexArrays.cpp
     PViewData.cpp PViewDataIO.cpp PViewX3D.cpp
       PViewDataList.cpp PViewDataListIO.cpp
       PViewDataGModel.cpp PViewDataGModelIO.cpp

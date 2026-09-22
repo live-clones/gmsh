@@ -108,16 +108,21 @@ namespace {
     return axisNumber(v, std::max(stepDecimals, axisDecimals(v, exp)), exp);
   }
 
+  // how far apart the centres of two labels have to be: side by side with
+  // some air along a horizontal axis, a line and a bit along a vertical one
+  double labelGap(double w, double wOther, double fontH, bool horizontal)
+  {
+    return horizontal ? 0.5 * (w + wOther) + 0.6 * fontH : 1.3 * fontH;
+  }
+
   bool ticksFit(const std::vector<axisTick> &ticks, double length,
                 const std::vector<double> &widths, double fontH,
                 bool horizontal)
   {
     for(std::size_t i = 1; i < ticks.size(); i++) {
       double gap = (ticks[i].t - ticks[i - 1].t) * length;
-      double need = horizontal ?
-                      0.5 * (widths[i] + widths[i - 1]) + 0.6 * fontH :
-                      1.3 * fontH;
-      if(gap < need) return false;
+      if(gap < labelGap(widths[i], widths[i - 1], fontH, horizontal))
+        return false;
     }
     return true;
   }
@@ -275,8 +280,8 @@ void makeAxisTicks(double min, double max, double length, double fontH,
       if(labelEnds) {
         if(tk.t <= 0. || tk.t >= 1.) continue;
         double w = labelWidth(tk.label);
-        double need0 = horizontal ? 0.5 * (w + w0) + 0.6 * fontH : 1.3 * fontH;
-        double need1 = horizontal ? 0.5 * (w + w1) + 0.6 * fontH : 1.3 * fontH;
+        double need0 = labelGap(w, w0, fontH, horizontal);
+        double need1 = labelGap(w, w1, fontH, horizontal);
         if(tk.t * length < need0 || (1. - tk.t) * length < need1) continue;
       }
       cand.push_back(tk);
@@ -484,10 +489,8 @@ namespace {
           // a round value too close to an end for both labels gives way
           if(tk.t <= 1.e-9 || tk.t >= 1. - 1.e-9) continue;
           double w = labelWidth(tk.label);
-          double need0 =
-            horizontal ? 0.5 * (w + w0) + 0.6 * fontH : 1.3 * fontH;
-          double need1 =
-            horizontal ? 0.5 * (w + w1) + 0.6 * fontH : 1.3 * fontH;
+          double need0 = labelGap(w, w0, fontH, horizontal);
+          double need1 = labelGap(w, w1, fontH, horizontal);
           if(tk.t * length < need0 || (1. - tk.t) * length < need1) continue;
         }
         else

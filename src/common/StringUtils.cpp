@@ -102,6 +102,7 @@ std::vector<std::string> SplitFileName(const std::string &fileName)
     int islash = (int)fileName.find_last_of("/\\");
     if(idot == (int)std::string::npos) idot = -1;
     if(islash == (int)std::string::npos) islash = -1;
+    if(idot < islash) idot = -1; // a dot in the path is not an extension
     if(idot > 0) s[2] = fileName.substr(idot);
     if(islash > 0) s[0] = fileName.substr(0, islash + 1);
     s[1] =

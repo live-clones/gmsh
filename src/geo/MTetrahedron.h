@@ -72,6 +72,12 @@ public:
   {
     return MEdge(_v[edges_tetra(num, 0)], _v[edges_tetra(num, 1)]);
   }
+  virtual int getEdgeCorners(int num, MVertex *v[2]) const
+  {
+    v[0] = _v[edges_tetra(num, 0)];
+    v[1] = _v[edges_tetra(num, 1)];
+    return 2;
+  }
   virtual int numEdge2numVertex(int numEdge, int numVert) const
   {
     return edges_tetra(numEdge, numVert);
@@ -112,7 +118,6 @@ public:
   virtual int getType() const { return TYPE_TET; }
   virtual int getTypeForMSH() const { return MSH_TET_4; }
   virtual int getTypeForUNV() const { return 111; } // solid linear tetrahedron
-  virtual int getTypeForVTK() const { return 10; }
   virtual const char *getStringForPOS() const { return "SS"; }
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual const char *getStringForDIFF() const { return "ElmT4n3D"; }
@@ -287,11 +292,6 @@ public:
     static const int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexVTK(int num)
-  {
-    static const int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
-    return getVertex(map[num]);
-  }
   virtual MVertex *getVertexDIFF(int num) { return getVertexBDF(num); }
   virtual MVertex *getVertexINP(int num) { return getVertexBDF(num); }
   virtual MVertex *getVertexKEY(int num) { return getVertexBDF(num); }
@@ -323,7 +323,6 @@ public:
   {
     return 118;
   } // solid parabolic tetrahedron
-  virtual int getTypeForVTK() const { return 24; }
   virtual const char *getStringForPOS() const { return "SS2"; }
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual const char *getStringForDIFF() const { return "ElmT10n3D"; }
@@ -492,7 +491,6 @@ public:
                4 + _vs.size());
     return 0;
   }
-  virtual int getTypeForVTK() const { return 71; } // VTK_LAGRANGE_TETRAHEDRON
 
   virtual void reverse();
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,

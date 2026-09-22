@@ -131,6 +131,11 @@ Create mesh edges before saving MSH files@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.DrawSkinEdgesOnly
+Draw only the edges of the boundary faces of 3D meshes?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.DrawSkinOnly
 Draw only the boundary faces of 3D meshes?@*
 Default value: @code{1}@*

@@ -144,6 +144,7 @@ static const char *input_formats =
   "Mesh - Plot3D Structured Mesh\t*.p3d\n"
   "Mesh - STL Surface\t*.stl\n"
   "Mesh - VTK\t*.vtk\n"
+  "Mesh - VTK XML Unstructured Grid\t*.{vtu,pvtu,pvd}\n"
   "Mesh - VRML Surface\t*.{wrl,vrml}\n"
   "Mesh - PLY2 Surface\t*.ply2\n"
   "Post-processing - Gmsh POS\t*.pos\n"
@@ -338,6 +339,10 @@ static int _save_vtk(const char *name)
 {
   return genericMeshFileDialog(name, "VTK Options", FORMAT_VTK, true, false);
 }
+static int _save_vtu(const char *name)
+{
+  return genericMeshFileDialog(name, "VTU Options", FORMAT_VTU, true, false);
+}
 static int _save_tochnog(const char *name)
 {
   return genericMeshFileDialog(name, "Tochnog Options", FORMAT_TOCHNOG, true,
@@ -507,6 +512,7 @@ static int _save_auto(const char *name)
   case FORMAT_CGNS: return _save_cgns(name);
   case FORMAT_UNV: return _save_unv(name);
   case FORMAT_VTK: return _save_vtk(name);
+  case FORMAT_VTU: return _save_vtu(name);
   case FORMAT_TOCHNOG: return _save_tochnog(name);
   case FORMAT_MED: return _save_med(name);
   case FORMAT_RMED: return _save_view_med(name);
@@ -595,6 +601,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Mesh - STL Surface\t*.stl", _save_stl},
     {"Mesh - VRML Surface\t*.wrl", _save_vrml},
     {"Mesh - VTK\t*.vtk", _save_vtk},
+    {"Mesh - VTK XML Unstructured Grid\t*.vtu", _save_vtu},
     {"Mesh - Tochnog\t*.dat", _save_tochnog},
     {"Mesh - PLY2 Surface\t*.ply2", _save_ply2},
     {"Mesh - SU2\t*.su2", _save_su2},

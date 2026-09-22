@@ -30,6 +30,7 @@ class PViewData {
 private:
   // flag to mark that the data is 'dirty' and should not be displayed
   bool _dirty;
+  int _stamp = 0;
   // name of the view
   std::string _name;
   // name of the file the data was loaded from
@@ -60,7 +61,17 @@ public:
 
   // get/set the dirty ("not ready for display") flag
   virtual bool getDirty() { return _dirty; }
-  virtual void setDirty(bool val) { _dirty = val; }
+  virtual void setDirty(bool val)
+  {
+    _dirty = val;
+    if(val) _stamp++;
+  }
+
+  // bumped whenever the data may have changed (made dirty, finalized, added
+  // to): what is derived from the data alone, not from the options of the
+  // view, records it and is kept until it moves
+  int getStamp() const { return _stamp; }
+  void changed() { _stamp++; }
 
   // finalize the view data (compute min/max, etc.)
   virtual bool finalize(bool computeMinMax = true,
@@ -141,6 +152,11 @@ public:
   virtual int getNumNodes(int step, int ent, int ele) { return 0; }
   // a stable identifier for a node of an element, the same for the elements
   // sharing it; 0 if the data has no node topology
+  // for each element, its faces that are on the skin of the view (a bit
+  // each, ordered as the drawing code orders them), if the data knows them
+  // better than a matching of the faces would find them (null otherwise)
+  virtual const std::vector<unsigned char> *getSkinMasks() { return nullptr; }
+
   virtual std::size_t getNodeId(int step, int ent, int ele, int nod)
   {
     return 0;
@@ -173,6 +189,26 @@ public:
   virtual void getValue(int step, int ent, int ele, int nod, int comp,
                         double &val)
   {
+  }
+
+  // what getType(), getDimension(), getNumNodes() and getNumComponents() give,
+  // and the coordinates and the numComp first values of the numNodes nodes:
+  // the same, element by element, in one call (the drawing reads millions)
+  virtual void getElementInfo(int step, int ent, int ele, int &type, int &dim,
+                              int &numNodes, int &numComp)
+  {
+    type = getType(step, ent, ele);
+    dim = getDimension(step, ent, ele);
+    numNodes = getNumNodes(step, ent, ele);
+    numComp = getNumComponents(step, ent, ele);
+  }
+  virtual void getNodesAndValues(int step, int ent, int ele, int numNodes,
+                                 int numComp, double **xyz, double **val)
+  {
+    for(int j = 0; j < numNodes; j++) {
+      getNode(step, ent, ele, j, xyz[j][0], xyz[j][1], xyz[j][2]);
+      for(int k = 0; k < numComp; k++) getValue(step, ent, ele, j, k, val[j][k]);
+    }
   }
   virtual void setValue(int step, int ent, int ele, int nod, int comp,
                         double val);

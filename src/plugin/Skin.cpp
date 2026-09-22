@@ -3,7 +3,9 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <set>
+#include <algorithm>
+#include <cstdint>
+#include <cmath>
 #include "Skin.h"
 #include "Context.h"
 #include "GmshDefines.h"
@@ -14,6 +16,9 @@
 #include "MEdge.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
+#include "ElementType.h"
+#include "FaceMatcher.h"
+#include "GModelVertexArrays.h"
 
 StringXNumber SkinOptions_Number[] = {{GMSH_FULLRC, "Visible", nullptr, 1., ""},
                                       {GMSH_FULLRC, "FromMesh", nullptr, 0., ""},
@@ -43,125 +48,8 @@ StringXNumber *GMSH_SkinPlugin::getOption(int iopt)
   return &SkinOptions_Number[iopt];
 }
 
-class ElmData {
-public:
-  int numComp;
-  std::vector<double> x, y, z;
-  std::vector<double> v;
-  ElmData(int n) : numComp(n) {}
-  SPoint3 barycenter() const
-  {
-    SPoint3 p(0., 0., 0.);
-    int N = x.size();
-    for(int i = 0; i < N; i++) {
-      p[0] += x[i];
-      p[1] += y[i];
-      p[2] += z[i];
-    }
-    p[0] /= (double)N;
-    p[1] /= (double)N;
-    p[2] /= (double)N;
-    return p;
-  }
-  void addInView(PViewDataList *data) const
-  {
-    std::vector<double> *vec = nullptr;
-    switch(x.size()) {
-    case 1:
-      if(numComp == 1) {
-        data->NbSP++;
-        vec = &data->SP;
-        break;
-      }
-      else if(numComp == 3) {
-        data->NbVP++;
-        vec = &data->VP;
-        break;
-      }
-      else if(numComp == 9) {
-        data->NbTP++;
-        vec = &data->TP;
-        break;
-      }
-      break;
-    case 2:
-      if(numComp == 1) {
-        data->NbSL++;
-        vec = &data->SL;
-        break;
-      }
-      else if(numComp == 3) {
-        data->NbVL++;
-        vec = &data->VL;
-        break;
-      }
-      else if(numComp == 9) {
-        data->NbTL++;
-        vec = &data->TL;
-        break;
-      }
-      break;
-    case 3:
-      if(numComp == 1) {
-        data->NbST++;
-        vec = &data->ST;
-        break;
-      }
-      else if(numComp == 3) {
-        data->NbVT++;
-        vec = &data->VT;
-        break;
-      }
-      else if(numComp == 9) {
-        data->NbTT++;
-        vec = &data->TT;
-        break;
-      }
-      break;
-    case 4:
-      if(numComp == 1) {
-        data->NbSQ++;
-        vec = &data->SQ;
-        break;
-      }
-      else if(numComp == 3) {
-        data->NbVQ++;
-        vec = &data->VQ;
-        break;
-      }
-      else if(numComp == 9) {
-        data->NbTQ++;
-        vec = &data->TQ;
-        break;
-      }
-      break;
-    }
-    if(!vec) return;
-    for(std::size_t i = 0; i < x.size(); i++) vec->push_back(x[i]);
-    for(std::size_t i = 0; i < y.size(); i++) vec->push_back(y[i]);
-    for(std::size_t i = 0; i < z.size(); i++) vec->push_back(z[i]);
-    for(std::size_t i = 0; i < v.size(); i++) vec->push_back(v[i]);
-  }
-};
-
-class ElmDataLessThan {
-public:
-  static double tolerance;
-  bool operator()(const ElmData &e1, const ElmData &e2) const
-  {
-    SPoint3 p1 = e1.barycenter();
-    SPoint3 p2 = e2.barycenter();
-    if(p1.x() - p2.x() > tolerance) return true;
-    if(p1.x() - p2.x() < -tolerance) return false;
-    if(p1.y() - p2.y() > tolerance) return true;
-    if(p1.y() - p2.y() < -tolerance) return false;
-    if(p1.z() - p2.z() > tolerance) return true;
-    return false;
-  }
-};
-
-double ElmDataLessThan::tolerance = 1.e-12;
-
+// The faces of an element, or the edges of a 2D one, outward as the old
+// tables of this plugin had them
 static int getBoundary(int type, const int (**boundary)[6][4])
 {
   static const int tri[6][4] = {{0, 1, -1, -1}, {1, 2, -1, -1}, {2, 0, -1, -1}};
@@ -186,61 +74,102 @@ static int getBoundary(int type, const int (**boundary)[6][4])
   }
 }
 
+// The skin of the elements of highest dimension of a mesh: their faces (or
+// edges, in 2D) that no other element shares, whatever the entity, found as
+// the drawing of the mesh finds them.
 static void getBoundaryFromMesh(GModel *m, int visible)
 {
   int dim = m->getDim();
+  if(dim < 2) return;
   std::vector<GEntity *> entities;
   m->getEntities(entities);
-  std::set<MFace, MFaceLessThan> bndFaces;
-  std::set<MEdge, MEdgeLessThan> bndEdges;
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
+  std::vector<MElement *> elements;
+  for(auto ge : entities) {
     if(ge->dim() != dim) continue;
     if(visible && !ge->getVisibility()) continue;
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      if(dim == 2) {
-        for(int i = 0; i < e->getNumEdges(); i++) {
-          MEdge f = e->getEdge(i);
-          if(bndEdges.find(f) == bndEdges.end())
-            bndEdges.insert(f);
-          else
-            bndEdges.erase(f);
-        }
-      }
-      else if(dim == 3) {
-        for(int i = 0; i < e->getNumFaces(); i++) {
-          MFace f = e->getFace(i);
-          if(bndFaces.find(f) == bndFaces.end())
-            bndFaces.insert(f);
-          else
-            bndFaces.erase(f);
-        }
-      }
-    }
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++)
+      elements.push_back(ge->getMeshElement(j));
   }
+  if(elements.size() >= 0xffffffffu) {
+    Msg::Error("Too many elements for the Skin plugin");
+    return;
+  }
+
+  std::vector<std::pair<std::uint32_t, int> > skin; // element, face or edge
+  findBoundaryOfElements(elements, dim == 2, nullptr, skin);
 
   if(dim == 2) {
     discreteEdge *e =
       new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
     m->add(e);
-    for(auto it = bndEdges.begin(); it != bndEdges.end(); it++) {
-      e->lines.push_back(new MLine(it->getVertex(0), it->getVertex(1)));
+    for(auto &b : skin) {
+      MEdge ed = elements[b.first]->getEdge(b.second);
+      e->lines.push_back(new MLine(ed.getVertex(0), ed.getVertex(1)));
     }
   }
-  else if(dim == 3) {
+  else {
     discreteFace *f = new discreteFace(m, m->getMaxElementaryNumber(2) + 1);
     m->add(f);
-    for(auto it = bndFaces.begin(); it != bndFaces.end(); it++) {
-      if(it->getNumVertices() == 3)
+    for(auto &b : skin) {
+      MFace fa = elements[b.first]->getFace(b.second);
+      if(fa.getNumVertices() == 3)
         f->triangles.push_back(
-          new MTriangle(it->getVertex(0), it->getVertex(1), it->getVertex(2)));
-      else if(it->getNumVertices() == 4)
-        f->quadrangles.push_back(
-          new MQuadrangle(it->getVertex(0), it->getVertex(1), it->getVertex(2),
-                          it->getVertex(3)));
+          new MTriangle(fa.getVertex(0), fa.getVertex(1), fa.getVertex(2)));
+      else if(fa.getNumVertices() == 4)
+        f->quadrangles.push_back(new MQuadrangle(
+          fa.getVertex(0), fa.getVertex(1), fa.getVertex(2), fa.getVertex(3)));
     }
   }
+  CTX::instance()->meshChanged();
+}
+
+// where the values of an element with numNodes nodes and numComp components
+// go in a list-based view
+static std::vector<double> *getList(PViewDataList *data, int numNodes,
+                                    int numComp, int **num)
+{
+  int c = (numComp == 1) ? 0 : (numComp == 3) ? 1 : (numComp == 9) ? 2 : -1;
+  if(c < 0) return nullptr;
+  switch(numNodes) {
+  case 2: {
+    std::vector<double> *l[3] = {&data->SL, &data->VL, &data->TL};
+    int *n[3] = {&data->NbSL, &data->NbVL, &data->NbTL};
+    *num = n[c];
+    return l[c];
+  }
+  case 3: {
+    std::vector<double> *l[3] = {&data->ST, &data->VT, &data->TT};
+    int *n[3] = {&data->NbST, &data->NbVT, &data->NbTT};
+    *num = n[c];
+    return l[c];
+  }
+  case 4: {
+    std::vector<double> *l[3] = {&data->SQ, &data->VQ, &data->TQ};
+    int *n[3] = {&data->NbSQ, &data->NbVQ, &data->NbTQ};
+    *num = n[c];
+    return l[c];
+  }
+  }
+  return nullptr;
+}
+
+// What stands for a node when the faces of a view are matched: its
+// coordinates, as before (a view need not have a topology, and where it has
+// one, nodes at the same place - both sides of what was cut out of a mesh, an
+// element given nodes of its own - are still the same point of the field),
+// on a grid of the tolerance the plugin always had.
+static std::uint64_t nodeKey(PViewData *data, int step, int ent, int ele,
+                             int nod, double tol)
+{
+  double x[3];
+  data->getNode(step, ent, ele, nod, x[0], x[1], x[2]);
+  std::uint64_t h = 0x9e3779b97f4a7c15ull;
+  for(int i = 0; i < 3; i++) {
+    h ^= (std::uint64_t)std::llround(x[i] / tol);
+    h *= 0xff51afd7ed558ccdull;
+    h ^= h >> 32;
+  }
+  return h | 1; // never 0
 }
 
 PView *GMSH_SkinPlugin::execute(PView *v)
@@ -267,58 +196,98 @@ PView *GMSH_SkinPlugin::execute(PView *v)
 
   Msg::Info("Extracting boundary from View[%d]", v1->getIndex());
 
-  PView *v2 = new PView();
-  PViewDataList *data2 = getDataList(v2);
+  int step0 = data1->getFirstNonEmptyTimeStep();
 
-  std::set<ElmData, ElmDataLessThan> skin;
-  ElmDataLessThan::tolerance = CTX::instance()->lc * 1.e-12;
-
-  int firstNonEmptyStep = data1->getFirstNonEmptyTimeStep();
-  for(int ent = 0; ent < data1->getNumEntities(firstNonEmptyStep); ent++) {
-    if(visible && data1->skipEntity(firstNonEmptyStep, ent)) continue;
-    for(int ele = 0; ele < data1->getNumElements(firstNonEmptyStep, ent);
-        ele++) {
-      if(data1->skipElement(firstNonEmptyStep, ent, ele, visible)) continue;
-      int numComp = data1->getNumComponents(firstNonEmptyStep, ent, ele);
-      int type = data1->getType(firstNonEmptyStep, ent, ele);
+  // the elements that have a boundary, and what stands for their corners
+  struct element {
+    int ent, ele, type, first; // (first: of its corners in the keys)
+  };
+  std::vector<element> elements;
+  std::vector<std::uint64_t> keys;
+  double tol = CTX::instance()->lc * 1.e-12;
+  if(tol <= 0.) tol = 1.e-12;
+  for(int ent = 0; ent < data1->getNumEntities(step0); ent++) {
+    if(visible && data1->skipEntity(step0, ent)) continue;
+    for(int ele = 0; ele < data1->getNumElements(step0, ent); ele++) {
+      if(data1->skipElement(step0, ent, ele, visible)) continue;
+      int type = data1->getType(step0, ent, ele);
       const int(*boundary)[6][4];
-      int numBoundary = getBoundary(type, &boundary);
-      if(!numBoundary) continue;
-      for(int i = 0; i < numBoundary; i++) {
-        ElmData e(numComp);
-        for(int j = 0; j < 4; j++) {
-          int nod = (*boundary)[i][j];
-          if(nod < 0) continue;
-          double x, y, z;
-          data1->getNode(firstNonEmptyStep, ent, ele, nod, x, y, z);
-          e.x.push_back(x);
-          e.y.push_back(y);
-          e.z.push_back(z);
-        }
-        auto it = skin.find(e);
-        if(it == skin.end()) {
-          for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-            if(data1->hasTimeStep(step)) {
-              for(int j = 0; j < 4; j++) {
-                int nod = (*boundary)[i][j];
-                if(nod < 0) continue;
-                double v;
-                for(int comp = 0; comp < numComp; comp++) {
-                  data1->getValue(step, ent, ele, nod, comp, v);
-                  e.v.push_back(v);
-                }
-              }
-            }
-          }
-          skin.insert(e);
-        }
-        else
-          skin.erase(it);
-      }
+      if(!getBoundary(type, &boundary)) continue;
+      int numCorners =
+        ElementType::getNumVertices(ElementType::getType(type, 1));
+      if(data1->getNumNodes(step0, ent, ele) < numCorners) continue;
+      elements.push_back({ent, ele, type, (int)keys.size()});
+      for(int nod = 0; nod < numCorners; nod++)
+        keys.push_back(nodeKey(data1, step0, ent, ele, nod, tol));
     }
   }
+  if(keys.size() >= 0x7fffffffu) {
+    Msg::Error("Too many elements for the Skin plugin");
+    return v;
+  }
 
-  for(auto it = skin.begin(); it != skin.end(); it++) it->addInView(data2);
+  // their faces (edges in 2D) that no other shares
+  typedef std::pair<std::uint32_t, int> bnd; // element, face or edge
+  int nthreads = CTX::instance()->numThreadsFor(elements.size(), 10000);
+  std::vector<std::vector<bnd> > left(nthreads);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    FaceMatcher<std::uint64_t, std::uint32_t> matcher;
+    for(std::size_t i = 0; i < elements.size(); i++) {
+      const int(*boundary)[6][4];
+      int n = getBoundary(elements[i].type, &boundary);
+      const std::uint64_t *k = &keys[elements[i].first];
+      std::uint64_t hash[6];
+      for(int j = 0; j < n; j++) {
+        std::uint64_t key[4] = {0, 0, 0, 0};
+        int nc = 0;
+        for(int c = 0; c < 4; c++)
+          if((*boundary)[j][c] >= 0) key[nc++] = k[(*boundary)[j][c]];
+        hash[j] = (matcher.share(key, nc, nthreads) == t) ?
+                    matcher.hashOf(key, nc, 0) : 0;
+      }
+      for(int j = 0; j < n; j++)
+        if(hash[j]) matcher.add(hash[j], (std::uint32_t)i, j);
+    }
+    matcher.forEachLeft(
+      [&](std::uint32_t i, int j) { left[t].push_back(bnd(i, j)); });
+  }
+  std::vector<bnd> skin;
+  for(auto &l : left) skin.insert(skin.end(), l.begin(), l.end());
+  std::sort(skin.begin(), skin.end());
+
+  // the values are only read for what is left
+  PView *v2 = new PView();
+  PViewDataList *data2 = getDataList(v2);
+  for(auto &b : skin) {
+    const element &e = elements[b.first];
+    const int(*boundary)[6][4];
+    if(!getBoundary(e.type, &boundary)) continue;
+    int nodes[4], numNodes = 0;
+    for(int c = 0; c < 4; c++)
+      if((*boundary)[b.second][c] >= 0)
+        nodes[numNodes++] = (*boundary)[b.second][c];
+    int numComp = data1->getNumComponents(step0, e.ent, e.ele);
+    int *num = nullptr;
+    std::vector<double> *list = getList(data2, numNodes, numComp, &num);
+    if(!list) continue;
+    (*num)++;
+    double xyz[4][3];
+    for(int j = 0; j < numNodes; j++)
+      data1->getNode(step0, e.ent, e.ele, nodes[j], xyz[j][0], xyz[j][1],
+                     xyz[j][2]);
+    for(int k = 0; k < 3; k++)
+      for(int j = 0; j < numNodes; j++) list->push_back(xyz[j][k]);
+    for(int step = 0; step < data1->getNumTimeSteps(); step++) {
+      if(!data1->hasTimeStep(step)) continue;
+      for(int j = 0; j < numNodes; j++)
+        for(int comp = 0; comp < numComp; comp++) {
+          double val;
+          data1->getValue(step, e.ent, e.ele, nodes[j], comp, val);
+          list->push_back(val);
+        }
+    }
+  }
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
     if(data1->hasTimeStep(i)) data2->Time.push_back(data1->getTime(i));

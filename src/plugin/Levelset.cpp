@@ -708,32 +708,31 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
 // On high order maps, we draw only the elements that have a cut with
 // the levelset, this is as accurate as it should be
 
-static bool recur_sign_change(adaptiveTriangle *t,
+static bool recur_sign_change(adaptiveElement *t,
                               const GMSH_LevelsetPlugin *plug)
 {
+  int numNodes = t->shape->numNodes, numChildren = t->shape->numChildren;
   if(!t->e[0] || t->visible) {
-    double v1 =
+    // does the levelset change sign between the first node and another one?
+    double v0 =
       plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
-    double v2 =
-      plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
-    double v3 =
-      plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
-    if(v1 * v2 > 0 && v1 * v3 > 0)
-      t->visible = false;
-    else
-      t->visible = true;
+    t->visible = false;
+    for(int i = 1; i < numNodes; i++) {
+      double v =
+        plug->levelset(t->p[i]->X, t->p[i]->Y, t->p[i]->Z, t->p[i]->val);
+      if(!(v0 * v > 0)) t->visible = true;
+    }
     return t->visible;
   }
   else {
-    bool sc1 = recur_sign_change(t->e[0], plug);
-    bool sc2 = recur_sign_change(t->e[1], plug);
-    bool sc3 = recur_sign_change(t->e[2], plug);
-    bool sc4 = recur_sign_change(t->e[3], plug);
-    if(sc1 || sc2 || sc3 || sc4) {
-      if(!sc1) t->e[0]->visible = true;
-      if(!sc2) t->e[1]->visible = true;
-      if(!sc3) t->e[2]->visible = true;
-      if(!sc4) t->e[3]->visible = true;
+    bool sc[10], any = false;
+    for(int i = 0; i < numChildren; i++) {
+      sc[i] = recur_sign_change(t->e[i], plug);
+      if(sc[i]) any = true;
+    }
+    if(any) {
+      for(int i = 0; i < numChildren; i++)
+        if(!sc[i]) t->e[i]->visible = true;
       return true;
     }
     t->visible = false;
@@ -741,255 +740,8 @@ static bool recur_sign_change(adaptiveTriangle *t,
   }
 }
 
-static bool recur_sign_change(adaptiveQuadrangle *q,
-                              const GMSH_LevelsetPlugin *plug)
+void GMSH_LevelsetPlugin::assignSpecificVisibility(adaptiveElement *root) const
 {
-  if(!q->e[0] || q->visible) {
-    double v1 =
-      plug->levelset(q->p[0]->X, q->p[0]->Y, q->p[0]->Z, q->p[0]->val);
-    double v2 =
-      plug->levelset(q->p[1]->X, q->p[1]->Y, q->p[1]->Z, q->p[1]->val);
-    double v3 =
-      plug->levelset(q->p[2]->X, q->p[2]->Y, q->p[2]->Z, q->p[2]->val);
-    double v4 =
-      plug->levelset(q->p[3]->X, q->p[3]->Y, q->p[3]->Z, q->p[3]->val);
-    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0)
-      q->visible = false;
-    else
-      q->visible = true;
-    return q->visible;
-  }
-  else {
-    bool sc1 = recur_sign_change(q->e[0], plug);
-    bool sc2 = recur_sign_change(q->e[1], plug);
-    bool sc3 = recur_sign_change(q->e[2], plug);
-    bool sc4 = recur_sign_change(q->e[3], plug);
-    if(sc1 || sc2 || sc3 || sc4) {
-      if(!sc1) q->e[0]->visible = true;
-      if(!sc2) q->e[1]->visible = true;
-      if(!sc3) q->e[2]->visible = true;
-      if(!sc4) q->e[3]->visible = true;
-      return true;
-    }
-    q->visible = false;
-    return false;
-  }
-}
-
-static bool recur_sign_change(adaptiveTetrahedron *t,
-                              const GMSH_LevelsetPlugin *plug)
-{
-  if(!t->e[0] || t->visible) {
-    double v1 =
-      plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
-    double v2 =
-      plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
-    double v3 =
-      plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
-    double v4 =
-      plug->levelset(t->p[3]->X, t->p[3]->Y, t->p[3]->Z, t->p[3]->val);
-    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0)
-      t->visible = false;
-    else
-      t->visible = true;
-    return t->visible;
-  }
-  else {
-    bool sc1 = recur_sign_change(t->e[0], plug);
-    bool sc2 = recur_sign_change(t->e[1], plug);
-    bool sc3 = recur_sign_change(t->e[2], plug);
-    bool sc4 = recur_sign_change(t->e[3], plug);
-    bool sc5 = recur_sign_change(t->e[4], plug);
-    bool sc6 = recur_sign_change(t->e[5], plug);
-    bool sc7 = recur_sign_change(t->e[6], plug);
-    bool sc8 = recur_sign_change(t->e[7], plug);
-    if(sc1 || sc2 || sc3 || sc4 || sc5 || sc6 || sc7 || sc8) {
-      if(!sc1) t->e[0]->visible = true;
-      if(!sc2) t->e[1]->visible = true;
-      if(!sc3) t->e[2]->visible = true;
-      if(!sc4) t->e[3]->visible = true;
-      if(!sc5) t->e[4]->visible = true;
-      if(!sc6) t->e[5]->visible = true;
-      if(!sc7) t->e[6]->visible = true;
-      if(!sc8) t->e[7]->visible = true;
-      return true;
-    }
-    t->visible = false;
-    return false;
-  }
-}
-
-static bool recur_sign_change(adaptiveHexahedron *t,
-                              const GMSH_LevelsetPlugin *plug)
-{
-  if(!t->e[0] || t->visible) {
-    double v1 =
-      plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
-    double v2 =
-      plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
-    double v3 =
-      plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
-    double v4 =
-      plug->levelset(t->p[3]->X, t->p[3]->Y, t->p[3]->Z, t->p[3]->val);
-    double v5 =
-      plug->levelset(t->p[4]->X, t->p[4]->Y, t->p[4]->Z, t->p[4]->val);
-    double v6 =
-      plug->levelset(t->p[5]->X, t->p[5]->Y, t->p[5]->Z, t->p[5]->val);
-    double v7 =
-      plug->levelset(t->p[6]->X, t->p[6]->Y, t->p[6]->Z, t->p[6]->val);
-    double v8 =
-      plug->levelset(t->p[7]->X, t->p[7]->Y, t->p[7]->Z, t->p[7]->val);
-    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0 && v1 * v5 > 0 &&
-       v1 * v6 > 0 && v1 * v7 > 0 && v1 * v8 > 0)
-      t->visible = false;
-    else
-      t->visible = true;
-    return t->visible;
-  }
-  else {
-    bool sc1 = recur_sign_change(t->e[0], plug);
-    bool sc2 = recur_sign_change(t->e[1], plug);
-    bool sc3 = recur_sign_change(t->e[2], plug);
-    bool sc4 = recur_sign_change(t->e[3], plug);
-    bool sc5 = recur_sign_change(t->e[4], plug);
-    bool sc6 = recur_sign_change(t->e[5], plug);
-    bool sc7 = recur_sign_change(t->e[6], plug);
-    bool sc8 = recur_sign_change(t->e[7], plug);
-    if(sc1 || sc2 || sc3 || sc4 || sc5 || sc6 || sc7 || sc8) {
-      if(!sc1) t->e[0]->visible = true;
-      if(!sc2) t->e[1]->visible = true;
-      if(!sc3) t->e[2]->visible = true;
-      if(!sc4) t->e[3]->visible = true;
-      if(!sc5) t->e[4]->visible = true;
-      if(!sc6) t->e[5]->visible = true;
-      if(!sc7) t->e[6]->visible = true;
-      if(!sc8) t->e[7]->visible = true;
-      return true;
-    }
-    t->visible = false;
-    return false;
-  }
-}
-
-static bool recur_sign_change(adaptivePrism *t, const GMSH_LevelsetPlugin *plug)
-{
-  if(!t->e[0] || t->visible) {
-    double v1 =
-      plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
-    double v2 =
-      plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
-    double v3 =
-      plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
-    double v4 =
-      plug->levelset(t->p[3]->X, t->p[3]->Y, t->p[3]->Z, t->p[3]->val);
-    double v5 =
-      plug->levelset(t->p[4]->X, t->p[4]->Y, t->p[4]->Z, t->p[4]->val);
-    double v6 =
-      plug->levelset(t->p[5]->X, t->p[5]->Y, t->p[5]->Z, t->p[5]->val);
-    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0 && v1 * v5 > 0 && v1 * v6 > 0)
-      t->visible = false;
-    else
-      t->visible = true;
-    return t->visible;
-  }
-  else {
-    bool sc1 = recur_sign_change(t->e[0], plug);
-    bool sc2 = recur_sign_change(t->e[1], plug);
-    bool sc3 = recur_sign_change(t->e[2], plug);
-    bool sc4 = recur_sign_change(t->e[3], plug);
-    bool sc5 = recur_sign_change(t->e[4], plug);
-    bool sc6 = recur_sign_change(t->e[5], plug);
-    bool sc7 = recur_sign_change(t->e[6], plug);
-    bool sc8 = recur_sign_change(t->e[7], plug);
-    if(sc1 || sc2 || sc3 || sc4 || sc5 || sc6 || sc7 || sc8) {
-      if(!sc1) t->e[0]->visible = true;
-      if(!sc2) t->e[1]->visible = true;
-      if(!sc3) t->e[2]->visible = true;
-      if(!sc4) t->e[3]->visible = true;
-      if(!sc5) t->e[4]->visible = true;
-      if(!sc6) t->e[5]->visible = true;
-      if(!sc7) t->e[6]->visible = true;
-      if(!sc8) t->e[7]->visible = true;
-      return true;
-    }
-    t->visible = false;
-    return false;
-  }
-}
-
-static bool recur_sign_change(adaptivePyramid *t,
-                              const GMSH_LevelsetPlugin *plug)
-{
-  if(!t->e[0] || t->visible) {
-    double v1 =
-      plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
-    double v2 =
-      plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
-    double v3 =
-      plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
-    double v4 =
-      plug->levelset(t->p[3]->X, t->p[3]->Y, t->p[3]->Z, t->p[3]->val);
-    double v5 =
-      plug->levelset(t->p[4]->X, t->p[4]->Y, t->p[4]->Z, t->p[4]->val);
-    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0 && v1 * v5 > 0)
-      t->visible = false;
-    else
-      t->visible = true;
-    return t->visible;
-  }
-  else {
-    bool sc1 = recur_sign_change(t->e[0], plug);
-    bool sc2 = recur_sign_change(t->e[1], plug);
-    bool sc3 = recur_sign_change(t->e[2], plug);
-    bool sc4 = recur_sign_change(t->e[3], plug);
-    bool sc5 = recur_sign_change(t->e[4], plug);
-    bool sc6 = recur_sign_change(t->e[5], plug);
-    bool sc7 = recur_sign_change(t->e[6], plug);
-    bool sc8 = recur_sign_change(t->e[7], plug);
-    bool sc9 = recur_sign_change(t->e[8], plug);
-    bool sc10 = recur_sign_change(t->e[9], plug);
-    if(sc1 || sc2 || sc3 || sc4 || sc5 || sc6 || sc7 || sc8 || sc9 || sc10) {
-      if(!sc1) t->e[0]->visible = true;
-      if(!sc2) t->e[1]->visible = true;
-      if(!sc3) t->e[2]->visible = true;
-      if(!sc4) t->e[3]->visible = true;
-      if(!sc5) t->e[4]->visible = true;
-      if(!sc6) t->e[5]->visible = true;
-      if(!sc7) t->e[6]->visible = true;
-      if(!sc8) t->e[7]->visible = true;
-      if(!sc9) t->e[8]->visible = true;
-      if(!sc10) t->e[9]->visible = true;
-      return true;
-    }
-    t->visible = false;
-    return false;
-  }
-}
-
-void GMSH_LevelsetPlugin::assignSpecificVisibility() const
-{
-  if(adaptiveTriangle::all.size()) {
-    adaptiveTriangle *t = *adaptiveTriangle::all.begin();
-    if(!t->visible) t->visible = !recur_sign_change(t, this);
-  }
-  if(adaptiveQuadrangle::all.size()) {
-    adaptiveQuadrangle *q = *adaptiveQuadrangle::all.begin();
-    if(!q->visible) q->visible = !recur_sign_change(q, this);
-  }
-  if(adaptiveTetrahedron::all.size()) {
-    adaptiveTetrahedron *t = *adaptiveTetrahedron::all.begin();
-    if(!t->visible) t->visible = !recur_sign_change(t, this);
-  }
-  if(adaptiveHexahedron::all.size()) {
-    adaptiveHexahedron *h = *adaptiveHexahedron::all.begin();
-    if(!h->visible) h->visible = !recur_sign_change(h, this);
-  }
-  if(adaptivePrism::all.size()) {
-    adaptivePrism *p = *adaptivePrism::all.begin();
-    if(!p->visible) p->visible = !recur_sign_change(p, this);
-  }
-  if(adaptivePyramid::all.size()) {
-    adaptivePyramid *p = *adaptivePyramid::all.begin();
-    if(!p->visible) p->visible = !recur_sign_change(p, this);
-  }
+  if(root->shape->numNodes < 3) return; // (as before: not points and lines)
+  if(!root->visible) root->visible = !recur_sign_change(root, this);
 }

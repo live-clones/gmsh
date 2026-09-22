@@ -88,7 +88,7 @@ public:
   int drawTetrahedra, drawHexahedra, drawPrisms, drawPyramids, drawTrihedra,
     drawPolyhedra;
   int drawScalars, drawVectors, drawTensors;
-  int boundary, pointType, lineType, drawSkinOnly;
+  int boundary, pointType, lineType, drawSkinOnly, drawSkinEdgesOnly;
   double pointSize, lineWidth;
   GmshColorTable colorTable;
   // multiplies the alpha of the colormap (applied by the shader)

@@ -37,7 +37,7 @@ public:
   GMSH_LevelsetPlugin();
   virtual double levelset(double x, double y, double z, double val) const = 0;
   virtual PView *execute(PView *);
-  void assignSpecificVisibility() const;
+  void assignSpecificVisibility(adaptiveElement *root) const;
 };
 
 #endif

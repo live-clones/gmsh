@@ -120,8 +120,13 @@ public:
   // get the vertex using the I-deas UNV ordering
   virtual MVertex *getVertexUNV(int num) { return getVertex(num); }
 
-  // get the vertex using the VTK ordering
-  virtual MVertex *getVertexVTK(int num) { return getVertex(num); }
+  // The element as a VTK cell (see getVTKXMLCell(), shared by the .vtk, .vtu
+  // and .su2 writers): its type (0 if none), its number of nodes and its
+  // nodes in the VTK ordering. An element of an order VTK has no cell for is
+  // a first order cell.
+  int getTypeForVTK() const;
+  std::size_t getNumVerticesVTK() const;
+  MVertex *getVertexVTK(int num);
 
   // get the vertex using the MATLAB ordering
   virtual MVertex *getVertexMATLAB(int num) { return getVertex(num); }
@@ -194,9 +199,14 @@ public:
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) const = 0;
   // fill v[] with the corner vertices of face `num' and return how many
-  // there are (0 if not implemented); unlike getFace() this does not sort
-  // them, which is cheaper when only the identity of the face is needed
-  virtual int getFaceCorners(int num, MVertex *v[4]) const { return 0; }
+  // there are (the first 4 of a face that has more); unlike getFace() this
+  // does not sort them, which is cheaper when only the identity of the face
+  // is needed (the elements that have no faster way go through getFace())
+  virtual int getFaceCorners(int num, MVertex *v[4]) const;
+  // same for the two ends of an edge (an MEdge reads the numbers of its
+  // nodes to order them, which is two cache misses when all that is wanted
+  // is to tell edges apart)
+  virtual int getEdgeCorners(int num, MVertex *v[2]) const;
   virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   MFaceN getHighOrderFace(const MFace &face)
   {
@@ -494,7 +504,6 @@ public:
   // implemented in that format)
   virtual int getTypeForMSH() const { return 0; }
   virtual int getTypeForUNV() const { return 0; }
-  virtual int getTypeForVTK() const { return 0; }
   virtual const char *getStringForTOCHNOG() const { return nullptr; }
   virtual const char *getStringForPOS() const { return nullptr; }
   virtual const char *getStringForBDF() const { return nullptr; }

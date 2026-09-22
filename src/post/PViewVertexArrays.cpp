@@ -6,6 +6,10 @@
 #include <string.h>
 #include <algorithm>
 #include <atomic>
+#include <cmath>
+#include <cstdint>
+#include <list>
+#include <map>
 #include <vector>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
@@ -25,6 +29,8 @@
 #include "SmoothData.h"
 #include "Context.h"
 #include "OwnerCache.h"
+#include "ElementSpheres.h"
+#include "FaceMatcher.h"
 #include "OS.h"
 #include "OpenFile.h"
 #include "mathEvaluator.h"
@@ -106,22 +112,32 @@ public:
   PViewOptions *opt;
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;
   smooth_normals *normals;
-  // identifiers of the nodes of the element being drawn, or null when the data
-  // has no topology and none could be recreated
-  std::size_t *nodeIds;
   // the entity it belongs to
   int ent;
   // what is gathered: everything, or only what the clipping planes add (the
   // section they cut, or the cut elements drawn whole)
-  enum { COLLECT_ALL, COLLECT_CAPS, COLLECT_CUT, COLLECT_KEPT };
+  enum { COLLECT_ALL, COLLECT_CAPS, COLLECT_CUT };
   int collect;
+  // the faces of the element being drawn that are on the skin, a bit each in
+  // the order of its shape, when the skin was found ahead (-1 otherwise)
+  int skinMask;
+  const struct solidShape *skinShape;
+  // the skin itself, and the element being drawn in it (for the polyhedra)
+  const struct viewSkinFaces *skin;
+  std::size_t element;
   // bounding box of the elements that were drawn
   SBoundingBox3d bbox;
+  // the iso-values or the limits of the bands, as last computed (isoValues())
+  std::vector<double> isos;
+  int isosNum;
+  double isosMin, isosMax;
   drawTarget(PView *p)
     : view(p), opt(p->getOptions()), va_points(p->va_points),
       va_lines(p->va_lines), va_triangles(p->va_triangles),
       va_vectors(p->va_vectors), va_ellipses(p->va_ellipses),
-      normals(p->normals), nodeIds(nullptr), ent(0), collect(COLLECT_ALL)
+      normals(p->normals), ent(0), collect(COLLECT_ALL),
+      skinMask(-1), skinShape(nullptr), skin(nullptr), element(0), isosNum(-1),
+      isosMin(0.), isosMax(0.)
   {
   }
 };
@@ -312,54 +328,28 @@ static void changeCoordinates(drawTarget *p, int ient, int iele, int numNodes,
   }
 }
 
-static double evalClipPlane(int clip, double x, double y, double z)
+// the nodes of an element of a view, as the clipping planes are asked about
+// them (see ClipPlanes.h)
+static auto nodesOf(double **xyz)
 {
-  return CTX::instance()->clipPlane[clip][0] * x +
-         CTX::instance()->clipPlane[clip][1] * y +
-         CTX::instance()->clipPlane[clip][2] * z +
-         CTX::instance()->clipPlane[clip][3];
+  return [xyz](int j, int k) { return xyz[j][k]; };
 }
 
-static double intersectClipPlane(int clip, int numNodes, double **xyz)
-{
-  double val = evalClipPlane(clip, xyz[0][0], xyz[0][1], xyz[0][2]);
-  for(int i = 1; i < numNodes; i++) {
-    if(val * evalClipPlane(clip, xyz[i][0], xyz[i][1], xyz[i][2]) <= 0)
-      return 0.; // the element intersects the cut plane
-  }
-  return val;
-}
-
-// is this element kept by whole element mode? Only those entirely beyond a
-// plane are dropped. Used for the glyphs drawn straight from the elements.
+// is this element kept by whole element mode? Used for the glyphs drawn
+// straight from the elements as well.
 bool elementIsKept(PViewOptions *opt, int dim, int numNodes, double **xyz)
 {
-  CTX *ctx = CTX::instance();
-  if(!ctx->clipWholeElements) return true;
-  for(int clip = 0; clip < 6; clip++) {
-    if(!(opt->clip & (1 << clip))) continue;
-    // only the volume is clipped
-    if(dim < 3 && ctx->clipOnlyVolume) continue;
-    double d = intersectClipPlane(clip, numNodes, xyz);
-    // only the cut volumes are drawn
-    if(dim == 3 && ctx->clipOnlyDrawIntersectingVolume && d) return false;
-    if(d < 0.) return false;
-  }
-  return true;
+  if(!CTX::instance()->clipWholeElements) return true;
+  return clipPlanes::keeps(opt->clip, dim, numNodes, nodesOf(xyz));
 }
 
 // does this element go in the array of whole element mode? The cut ones do,
 // and everything the planes are not applied to (OpenGL would slice both).
 static bool elementIsCut(PViewOptions *opt, int dim, int numNodes, double **xyz)
 {
-  CTX *ctx = CTX::instance();
   if(!elementIsKept(opt, dim, numNodes, xyz)) return false;
-  if(dim < 3 && ctx->clipOnlyVolume) return true;
-  for(int clip = 0; clip < 6; clip++) {
-    if(!(opt->clip & (1 << clip))) continue;
-    if(!intersectClipPlane(clip, numNodes, xyz)) return true;
-  }
-  return false;
+  if(dim < 3 && CTX::instance()->clipOnlyVolume) return true;
+  return clipPlanes::cuts(opt->clip, numNodes, nodesOf(xyz));
 }
 
 // does this element go in the view's own arrays? OpenGL clips those, so
@@ -385,54 +375,22 @@ static void addOutlinePoint(drawTarget *p, double **xyz, unsigned int color,
                     true);
 }
 
-// the boundary faces of the 3D elements when View.DrawSkinOnly is set, found
-// by inserting every face and cancelling it when seen a second time
-static UniqueElementFilter *boundaryFaces = nullptr;
-static bool markingBoundaryFaces = false;
-static std::atomic<int> noNodeIdWarning(0);
+// Is this face of a 3D element on the skin of the field (see findSkin())? If
+// the skin could not be found, every face is drawn. The faces of the element
+// itself are used, not those of the tetrahedra a hexahedron, a prism or a
+// pyramid is split into: the diagonal that splits a shared quadrangle into
+// two triangles need not be the one the neighbour chose.
+static bool maskedSkinFace(drawTarget *p, const int *idx, int n);
 
-// The key of a face of n nodes, from their sorted identifiers and the entity
-// (so that the skin is taken entity by entity); false if the data has no
-// topology. A quadrangle and a triangle never collide: the keys differ in
-// length.
-static bool faceKey(const std::size_t *nodeIds, int ent, const int *idx, int n,
-                    std::uint64_t *k)
-{
-  if(!nodeIds) return false;
-  for(int i = 0; i < n; i++) {
-    if(!nodeIds[idx[i]]) return false;
-    k[i] = nodeIds[idx[i]];
-  }
-  for(int i = 1; i < n; i++)
-    for(int j = i; j > 0 && k[j] < k[j - 1]; j--) std::swap(k[j], k[j - 1]);
-  k[n] = (std::uint64_t)ent;
-  return true;
-}
-
-// Is this face of a 3D element on the skin of the field? In the pass that
-// marks them it is inserted, and cancelled when the element on the other
-// side inserts it too. The faces of the element itself are used, not those
-// of the tetrahedra a hexahedron, a prism or a pyramid is split into: the
-// diagonal that splits a shared quadrangle into two triangles need not be
-// the one the neighbour chose, and the halves then cancel nothing and both
-// sides of every such face are drawn.
 static bool skinFace(drawTarget *p, const int *idx, int n)
 {
-  // no topology to use (see addElementRange()): all the faces are drawn
-  if(!p->nodeIds) return !markingBoundaryFaces;
-  std::uint64_t k[5];
-  if(!faceKey(p->nodeIds, p->ent, idx, n, k)) {
-    if(markingBoundaryFaces) return false;
-    if(!noNodeIdWarning++)
-      Msg::Warning("DrawSkinOnly needs node identifiers, which this data does "
-                   "not have: drawing all the faces");
-    return true; // nothing to tell the faces apart: draw them all
-  }
-  if(markingBoundaryFaces) {
-    boundaryFaces->insertOrErase(k, n + 1);
-    return false;
-  }
-  return boundaryFaces->contains(k, n + 1);
+  return (p->skinMask >= 0) ? maskedSkinFace(p, idx, n) : true;
+}
+
+// are only the outlines of the faces on the skin drawn?
+static bool skinOutlines(PViewOptions *opt)
+{
+  return opt->showElement && opt->drawSkinEdgesOnly;
 }
 
 // does this element draw its own faces, and only the ones on the skin?
@@ -441,36 +399,6 @@ static bool skinOnly(PViewOptions *opt)
   return opt->drawSkinOnly && opt->boundary <= 0 &&
          (opt->intervalsType == PViewOptions::Continuous ||
           opt->intervalsType == PViewOptions::Discrete);
-}
-
-// skip an element already added, identified by its nodes rather than by
-// coordinates; clears `unique' when the check was done here
-static bool topoDuplicate(VertexArray *va, const std::size_t *nodeIds,
-                          bool &unique, const int *idx, int n,
-                          const unsigned int *col)
-{
-  if(!unique || !nodeIds) return false;
-
-  std::uint64_t k[8];
-  for(int i = 0; i < n; i++) {
-    if(!nodeIds[idx[i]]) return false; // no topology for this node
-    k[2 * i] = nodeIds[idx[i]];
-    k[2 * i + 1] = col[i];
-  }
-  // sort the (node, color) pairs by node; the color is part of the key
-  for(int i = 1; i < n; i++)
-    for(int j = i; j > 0 && k[2 * j] < k[2 * (j - 1)]; j--) {
-      std::swap(k[2 * j], k[2 * (j - 1)]);
-      std::swap(k[2 * j + 1], k[2 * (j - 1) + 1]);
-    }
-
-  unique = false;
-  if(va->getUniqueFilter(false)->isDuplicate(k, 2 * n)) {
-    va->addUniqueStats(n, 0);
-    return true;
-  }
-  va->addUniqueStats(n, n);
-  return false;
 }
 
 // With smoothed normals, the normal at a point is the average of those of
@@ -488,23 +416,50 @@ static void smoothNormal(drawTarget *p, bool pre, double x, double y, double z,
 
 // f(k, min, max) for each band of the scale, or f(k, iso) for each iso-value:
 // the middle one only when the range is empty
-template <class F>
-static void forBands(PViewOptions *opt, double vmin, double vmax, F f)
+// The iso-values of the view (num = NbIso), or the limits of its bands (num =
+// NbIso + 1), computed once for all the elements
+static const std::vector<double> &isoValues(drawTarget *p, int num,
+                                            double vmin, double vmax)
 {
+  if(num != p->isosNum || vmin != p->isosMin || vmax != p->isosMax) {
+    p->isos.resize(num);
+    for(int k = 0; k < num; k++)
+      p->isos[k] = p->opt->getScaleValue(k, num, vmin, vmax);
+    p->isosNum = num;
+    p->isosMin = vmin;
+    p->isosMax = vmax;
+  }
+  return p->isos;
+}
+
+// f(k, min, max) for the bands of the view that the n values v of an element
+// reach (a band out of their range would give nothing)
+template <class F>
+static void forBands(drawTarget *p, double vmin, double vmax, const double *v,
+                     int n, F f)
+{
+  PViewOptions *opt = p->opt;
+  const std::vector<double> &limits = isoValues(p, opt->nbIso + 1, vmin, vmax);
+  double lo = *std::min_element(v, v + n), hi = *std::max_element(v, v + n);
   for(int k = 0; k < opt->nbIso; k++) {
     if(vmin == vmax) k = opt->nbIso / 2;
-    f(k, opt->getScaleValue(k, opt->nbIso + 1, vmin, vmax),
-      opt->getScaleValue(k + 1, opt->nbIso + 1, vmin, vmax));
+    if(limits[k + 1] >= lo && limits[k] <= hi) f(k, limits[k], limits[k + 1]);
     if(vmin == vmax) break;
   }
 }
 
+// f(k, iso) for the iso-values of the view within the range of the n values v
+// of an element
 template <class F>
-static void forIsos(PViewOptions *opt, double vmin, double vmax, F f)
+static void forIsos(drawTarget *p, double vmin, double vmax, const double *v,
+                    int n, F f)
 {
+  PViewOptions *opt = p->opt;
+  const std::vector<double> &isos = isoValues(p, opt->nbIso, vmin, vmax);
+  double lo = *std::min_element(v, v + n), hi = *std::max_element(v, v + n);
   for(int k = 0; k < opt->nbIso; k++) {
     if(vmin == vmax) k = opt->nbIso / 2;
-    f(k, opt->getScaleValue(k, opt->nbIso, vmin, vmax));
+    if(isos[k] >= lo && isos[k] <= hi) f(k, isos[k]);
     if(vmin == vmax) break;
   }
 }
@@ -600,8 +555,6 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
        val[i1][0] <= vmax) {
       unsigned int col[2];
       for(int i = 0; i < 2; i++) col[i] = opt->getColor(v[i], vmin, vmax);
-      const int ii[2] = {i0, i1};
-      if(topoDuplicate(p->va_lines, p->nodeIds, unique, ii, 2, col)) return;
       p->va_lines->add(x, y, z, n, col, nullptr, unique);
     }
     else {
@@ -619,7 +572,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
   }
 
   if(opt->intervalsType == PViewOptions::Discrete) {
-    forBands(opt, vmin, vmax, [&](int k, double min, double max) {
+    forBands(p, vmin, vmax, v, 2, [&](int k, double min, double max) {
       double x2[2], y2[2], z2[2], v2[2];
       int nb = CutLine(x, y, z, v, min, max, x2, y2, z2, v2);
       if(nb == 2) {
@@ -633,7 +586,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
   }
 
   if(opt->intervalsType == PViewOptions::Iso) {
-    forIsos(opt, vmin, vmax, [&](int k, double iso) {
+    forIsos(p, vmin, vmax, v, 2, [&](int k, double iso) {
       double x2[1], y2[1], z2[1];
       int nb = IsoLine(x, y, z, v, iso, x2, y2, z2);
       if(nb == 1) {
@@ -686,9 +639,9 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
   PViewOptions *opt = p->opt;
 
   // the pass marking the skin only draws the faces that may be on it
-  if(skin || markingBoundaryFaces) {
+  if(skin) {
     const int ii[3] = {i0, i1, i2};
-    if(!skin || !skinFace(p, ii, 3)) return;
+    if(!skinFace(p, ii, 3)) return;
   }
 
   const int il[3][2] = {{i0, i1}, {i1, i2}, {i2, i0}};
@@ -720,10 +673,6 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
         smoothNormal(p, pre, x[i], y[i], z[i], n[i]);
         col[i] = opt->getColor(v[i], vmin, vmax);
       }
-      const int ii[3] = {i0, i1, i2};
-      if(!pre &&
-         topoDuplicate(p->va_triangles, p->nodeIds, unique, ii, 3, col))
-        return;
       if(!pre) p->va_triangles->add(x, y, z, n, col, nullptr, unique);
     }
     else {
@@ -736,7 +685,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
   }
 
   if(opt->intervalsType == PViewOptions::Discrete) {
-    forBands(opt, vmin, vmax, [&](int k, double min, double max) {
+    forBands(p, vmin, vmax, v, 3, [&](int k, double min, double max) {
       double x2[10], y2[10], z2[10], v2[10];
       int nb = CutTriangle(x, y, z, v, min, max, x2, y2, z2, v2);
       unsigned int col[10];
@@ -746,7 +695,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
   }
 
   if(opt->intervalsType == PViewOptions::Iso) {
-    forIsos(opt, vmin, vmax, [&](int k, double iso) {
+    forIsos(p, vmin, vmax, v, 3, [&](int k, double iso) {
       double x2[3], y2[3], z2[3];
       int nb = IsoTriangle(x, y, z, v, iso, x2, y2, z2);
       if(nb == 2) {
@@ -874,13 +823,494 @@ static const int pyrTriangles[4][3] = {
 static const int pyrTets[2][4] = {{0, 1, 3, 4}, {1, 2, 3, 4}};
 static const solidShape pyrShape = {1, pyrQuads, 4, pyrTriangles, 2, pyrTets};
 
+static const solidShape *solidShapes[4] = {&tetShape, &hexShape, &priShape,
+                                           &pyrShape};
+static const int solidCorners[4] = {4, 8, 6, 5};
+
+static int solidShapeIndex(int type)
+{
+  switch(type) {
+  case TYPE_TET: return 0;
+  case TYPE_HEX: return 1;
+  case TYPE_PRI: return 2;
+  case TYPE_PYR: return 3;
+  }
+  return -1;
+}
+
+// the nodes of face f of a shape (its quadrangles first, then its triangles)
+static int solidFace(const solidShape &s, int f, const int *&idx)
+{
+  if(f < s.numQuads) {
+    idx = s.quads[f];
+    return 4;
+  }
+  idx = s.triangles[f - s.numQuads];
+  return 3;
+}
+
+static bool maskedSkinFace(drawTarget *p, const int *idx, int n)
+{
+  const solidShape &s = *p->skinShape;
+  unsigned int bits = 0;
+  for(int k = 0; k < n; k++) bits |= 1u << idx[k];
+  for(int f = 0; f < s.numQuads + s.numTriangles; f++) {
+    const int *fi;
+    if(solidFace(s, f, fi) != n) continue;
+    unsigned int b = 0;
+    for(int k = 0; k < n; k++) b |= 1u << fi[k];
+    if(b == bits) return (p->skinMask >> f) & 1;
+  }
+  return true;
+}
+
+// The elements of the entities that are drawn, numbered in a single flat
+// index space, so that a loop on them can be split evenly between threads
+// whatever the size of each entity
+struct flatElements {
+  std::vector<int> ents;
+  std::vector<std::size_t> start;
+  std::size_t num;
+  flatElements(PViewData *data, PViewOptions *opt) : num(0)
+  {
+    int numEnt = data->getNumEntities(opt->timeStep);
+    for(int ent = 0; ent < numEnt; ent++) {
+      if(data->skipEntity(opt->timeStep, ent)) continue;
+      ents.push_back(ent);
+      start.push_back(num);
+      num += data->getNumElements(opt->timeStep, ent);
+    }
+    start.push_back(num);
+  }
+  // calls f(entity, element in it, flat index) on [first, last)
+  template <class F> void forRange(std::size_t first, std::size_t last, F f) const
+  {
+    std::size_t e = 0;
+    while(e + 1 < ents.size() && start[e + 1] <= first) e++;
+    for(; e < ents.size() && start[e] < last; e++) {
+      std::size_t i0 = first > start[e] ? first - start[e] : 0;
+      std::size_t i1 = std::min(last, start[e + 1]) - start[e];
+      for(std::size_t i = i0; i < i1; i++) f(ents[e], (int)i, start[e] + i);
+    }
+  }
+};
+
+// how many threads walk the elements of a view: options that touch shared
+// state (smoothed normals, general raise, external view, Gauss points) are
+// handled serially
+static int numWalkThreads(PViewData *data, PViewOptions *opt, std::size_t num)
+{
+  int nthreads = CTX::instance()->numThreadsFor(num, 10000);
+  if(opt->smoothNormals || opt->useGenRaise || opt->externalViewIndex >= 0 ||
+     data->useGaussPoints() || !data->isThreadSafe())
+    nthreads = 1;
+  return nthreads;
+}
+
+// The spheres around the elements of a view (see ElementSpheres.h), from their
+// coordinates as the options change them. Built when the planes first need
+// them, dropped when the view changes.
+static OwnerCache<elementSpheres> _viewSpheres;
+
+static const elementSpheres *getSpheres(PView *p, const flatElements &flat)
+{
+  elementSpheres *found = _viewSpheres.find(p);
+  if(found && found->size() == flat.num) return found;
+  double t1 = TimeOfDay();
+  elementSpheres &sp = _viewSpheres[p];
+  sp.assign(flat.num);
+  PViewData *data = p->getData(true);
+  int nthreads = numWalkThreads(data, p->getOptions(), flat.num);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    PViewElement el;
+    flat.forRange(flat.num * t / nthreads, flat.num * (t + 1) / nthreads,
+                  [&](int ent, int ele, std::size_t i) {
+                    if(!el.select(p, ent, ele)) return;
+                    el.read(p);
+                    sp.set(i, el.dim, el.numNodes,
+                           [&](int j, int k) { return el.xyz[j][k]; });
+                  });
+  }
+  Msg::Debug("Bounded the elements of View[%d] in %g s (%g MB)", p->getIndex(),
+             TimeOfDay() - t1, sp.getMemoryInMB());
+  return &sp;
+}
+
+// The skin found ahead of the drawing, from the nodes of the 3D elements
+// alone (faces are told apart by their sorted nodes and the entity, so that
+// the skin is taken entity by entity). The drawing then reads the elements
+// that have a face on the skin and none of the others. (A face that an
+// invalid mesh gives to three elements is drawn by the last of them.)
+struct viewSkinFaces {
+  // a byte per element: 0x80 if its faces were looked at, plus a bit for each
+  // of them that is on the skin, in the order of its shape (see solidFace());
+  // 0x40 for a polyhedron, which has any number of faces, listed apart (and
+  // bit 0 if it has some)
+  std::vector<std::uint8_t> masks;
+  std::vector<std::pair<std::uint32_t, int> > ofPolyhedra; // sorted
+  bool polyhedronFace(std::size_t element, int face) const
+  {
+    return std::binary_search(ofPolyhedra.begin(), ofPolyhedra.end(),
+                              std::make_pair((std::uint32_t)element, face));
+  }
+};
+
+// The skin of a view is kept from one filling of its arrays to the next, as
+// long as what it depends on stays: the data, the mesh (the visibility of
+// its elements included), and the options choosing the elements that are
+// drawn. A change of range, of colours or of light then costs the drawing
+// of the skin alone.
+// The elements that have data can differ from one step to the next, so each
+// step has its own, the last few being kept for a view that is animated.
+struct viewSkin {
+  std::vector<double> key;
+  viewSkinFaces faces;
+};
+static OwnerCache<std::list<viewSkin> > _viewSkin;
+static const std::size_t maxKeptSkins = 16;
+
+// are the view's own arrays filled through the planes? (the mode that draws
+// only the cut volumes, see isElementVisible())
+static bool filledThroughPlanes(PViewOptions *opt)
+{
+  CTX *ctx = CTX::instance();
+  return ctx->clipWholeElements && opt->clip &&
+         ctx->clipOnlyDrawIntersectingVolume;
+}
+
+static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
+                                   const flatElements &flat)
+{
+  CTX *ctx = CTX::instance();
+  int step = opt->timeStep;
+  std::vector<double> k;
+  k.push_back((double)(std::uintptr_t)data);
+  k.push_back(data->getStamp());
+  k.push_back((double)flat.num);
+  k.push_back((double)flat.ents.size());
+  k.push_back(data->getNumTetrahedra(step));
+  k.push_back(data->getNumHexahedra(step));
+  k.push_back(data->getNumPrisms(step));
+  k.push_back(data->getNumPyramids(step));
+  k.push_back(data->getNumPolyhedra(step));
+  k.push_back(ctx->meshContentStamp);
+  k.push_back(ctx->entityVisibilityStamp);
+  k.push_back(opt->sampling);
+  k.push_back(opt->drawTetrahedra);
+  k.push_back(opt->drawHexahedra);
+  k.push_back(opt->drawPrisms);
+  k.push_back(opt->drawPyramids);
+  k.push_back(opt->drawPolyhedra);
+  k.push_back(opt->drawScalars);
+  k.push_back(opt->drawVectors);
+  k.push_back(opt->drawTensors);
+  k.push_back(opt->vectorType == PViewOptions::Displacement);
+  k.push_back(opt->tensorType);
+  k.push_back(opt->forceNumComponents);
+  k.push_back(skinOutlines(opt));
+  if(filledThroughPlanes(opt)) ctx->addClipToKey(k, opt->clip);
+  k.push_back(step); // last: see where the key is used
+  return k;
+}
+
+// the faces of a polyhedron, each as indices in its nodes (the fans that draw
+// its faces go through them all)
+static void polyhedronFaces(MPolyhedron *ph, std::vector<std::vector<int> > &faces)
+{
+  faces.clear();
+  std::vector<MVertex *> fv;
+  int rep = 0;
+  for(int f = 0; f < ph->getNumFaces(); f++) {
+    ph->getFaceVertices(f, fv);
+    std::vector<int> idx;
+    for(int t = 0; t + 2 < (int)fv.size(); t++) {
+      std::array<int, 3> is = ph->getFaceRepIndices(false, rep++);
+      if(!t) idx = {is[0], is[1]};
+      idx.push_back(is[2]);
+    }
+    faces.push_back(idx);
+  }
+}
+
+// do the faces of this element show the value of a scalar? Those of a scalar
+// field do, of a vector shown as a displacement, and of a tensor shown as
+// one of its invariants.
+static bool drawsScalarFaces(PViewOptions *opt, int numComp)
+{
+  if(opt->forceNumComponents) numComp = opt->forceNumComponents;
+  if(numComp == 1) return opt->drawScalars;
+  if(numComp == 3)
+    return opt->drawVectors && opt->vectorType == PViewOptions::Displacement;
+  if(numComp == 9)
+    return opt->drawTensors && (opt->tensorType == PViewOptions::VonMises ||
+                                opt->tensorType == PViewOptions::MaxEigenValue ||
+                                opt->tensorType == PViewOptions::MinEigenValue);
+  return false;
+}
+
+// Finds the skin of the elements whose faces are drawn (of all the 3D
+// elements if it is wanted for their outlines); false if it cannot be, in
+// which case every face is drawn: no topology (elements exploded or raised
+// along their normal, each with nodes of its own), or no node identifiers.
+//
+// keptOnly: the faces of the cut elements that are on the skin of what whole
+// element mode keeps (the other elements are not drawn from the clip arrays).
+// They are found from the cut elements alone. A face two of them share is
+// interior. The element on the other side of any other face is not cut, so
+// that it is wholly kept or wholly removed, and the face tells which: removed
+// if its corners are all beyond one of the planes. And there is no element on
+// the other side of a face of the skin of the field (original).
+static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
+                     const elementSpheres *spheres,
+                     const viewSkinFaces *original, viewSkinFaces &skin)
+{
+  static std::atomic<int> warned(0);
+  PViewData *data = p->getData(true);
+  PViewOptions *opt = p->getOptions();
+  int step = opt->timeStep;
+  skin.masks.clear();
+  skin.ofPolyhedra.clear();
+  if(flat.num >= 0xffffffffu) return false;
+  if(!(opt->explode == 1. && !opt->normalRaise && !opt->useGenRaise))
+    return false; // no topology
+  if(data->useGaussPoints() || opt->intervalsType == PViewOptions::Numeric ||
+     opt->tmpMin > opt->tmpMax)
+    return false; // no face is drawn
+  if(keptOnly && (!spheres || !original)) return false;
+  bool throughPlanes = !keptOnly && filledThroughPlanes(opt);
+
+  // the data may know its skin (adaptive views do): no face to match
+  const std::vector<unsigned char> *known = data->getSkinMasks();
+  if(known && known->size() == flat.num && !keptOnly && !throughPlanes) {
+    PViewElement el;
+    skin.masks.assign(flat.num, 0);
+    flat.forRange(0, flat.num, [&](int ent, int ele, std::size_t i) {
+      if(!el.select(p, ent, ele) || solidShapeIndex(el.type) < 0) return;
+      if(!drawsScalarFaces(opt, el.numComp) && !skinOutlines(opt)) return;
+      skin.masks[i] = 0x80 | ((*known)[i] & 0x3f);
+    });
+    return true;
+  }
+  activePlanes planes(opt->clip);
+
+  // the elements and the identifiers of their nodes, gathered by each thread
+  // for its share of the elements
+  struct chunk {
+    std::vector<std::uint32_t> elem, first, ids;
+    std::vector<std::uint8_t> shape; // in solidShapes, or 4 for a polyhedron
+    std::vector<int> ent;
+    std::vector<MPolyhedron *> polyhedra; // those of shape 4, in order
+    // for each node, the planes it is beyond, a bit each (keptOnly)
+    std::vector<std::uint8_t> beyond;
+  };
+  int nthreads = numWalkThreads(data, opt, flat.num);
+  std::vector<chunk> chunks(nthreads);
+  std::atomic<bool> bad(false);
+  skin.masks.assign(flat.num, 0);
+
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    PViewElement el;
+    chunk &c = chunks[t];
+    flat.forRange(
+      flat.num * t / nthreads, flat.num * (t + 1) / nthreads,
+      [&](int ent, int ele, std::size_t i) {
+        if(bad) return;
+        if(keptOnly && (!spheres->drawn(i) || spheres->dim(i) != 3 ||
+                        planes.gap(spheres->sphere(i)) > 0.))
+          return;
+        if(!el.select(p, ent, ele)) return;
+        int sh = (el.type == TYPE_POLYH) ? 4 : solidShapeIndex(el.type);
+        if(sh < 0) return;
+        if(!drawsScalarFaces(opt, el.numComp) && !skinOutlines(opt)) return;
+        MPolyhedron *ph = nullptr;
+        if(sh == 4) {
+          ph = static_cast<MPolyhedron *>(data->getElement(step, ent, ele));
+          if(!ph) return; // list data: the faces are unknown
+          if(ph->getNumFaces() > 255) bad = true;
+        }
+        int nn = ph ? el.numNodes : solidCorners[sh];
+        if(el.numNodes < nn) return;
+        if(keptOnly || throughPlanes) {
+          el.read(p);
+          if(keptOnly ? !elementIsCut(opt, el.dim, el.numNodes, el.xyz) :
+                        !isElementVisible(opt, el.dim, el.numNodes, el.xyz))
+            return;
+          for(int j = 0; j < nn; j++) {
+            std::uint8_t b = 0;
+            for(int clip = 0; clip < 6; clip++)
+              if(clipPlanes::inMask(opt->clip, clip) &&
+                 clipPlanes::eval(clip, el.xyz[j][0], el.xyz[j][1],
+                                  el.xyz[j][2]) < 0.)
+                b |= (std::uint8_t)(1 << clip);
+            c.beyond.push_back(b);
+          }
+        }
+        c.first.push_back((std::uint32_t)c.ids.size());
+        for(int j = 0; j < nn; j++) {
+          std::size_t id = data->getNodeId(step, ent, ele, j);
+          if(!id || id >= 0xffffffffu) bad = true;
+          c.ids.push_back((std::uint32_t)id);
+        }
+        c.elem.push_back((std::uint32_t)i);
+        c.shape.push_back((std::uint8_t)sh);
+        c.ent.push_back(ent);
+        if(ph) c.polyhedra.push_back(ph);
+        skin.masks[i] = ph ? 0xc0 : 0x80;
+      });
+  }
+  if(bad) {
+    if(!warned++)
+      Msg::Warning("DrawSkinOnly needs node identifiers, which this data does "
+                   "not have: drawing all the faces");
+    skin.masks.clear();
+    return false;
+  }
+
+  // f(face, its nodes in the element, how many) for the faces of element e
+  // of a chunk (ip: how many polyhedra came before it)
+  std::vector<std::vector<int> > polyFaces;
+  auto forFaces = [](const chunk &c, std::size_t e, std::size_t ip,
+                     std::vector<std::vector<int> > &polyFaces, auto f) {
+    if(c.shape[e] == 4) {
+      polyhedronFaces(c.polyhedra[ip], polyFaces);
+      for(std::size_t i = 0; i < polyFaces.size(); i++)
+        f((int)i, polyFaces[i].data(), (int)polyFaces[i].size());
+    }
+    else {
+      const solidShape &s = *solidShapes[c.shape[e]];
+      for(int i = 0; i < s.numQuads + s.numTriangles; i++) {
+        const int *fi;
+        int n = solidFace(s, i, fi);
+        f(i, fi, n);
+      }
+    }
+  };
+
+  // each thread matches its share of the faces, in a table of its own (the
+  // faces of an element are hashed together, then added)
+  typedef std::pair<std::uint32_t, int> face; // element, face
+  std::vector<std::vector<face> > left(nthreads);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    FaceMatcher<std::uint32_t, std::uint32_t> matcher;
+    std::vector<std::vector<int> > faces;
+    std::uint64_t hash[256]; // (a polyhedron has 255 faces at most)
+    std::vector<std::uint32_t> k;
+    for(auto &c : chunks) {
+      std::size_t ip = 0;
+      for(std::size_t e = 0; e < c.elem.size(); e++) {
+        const std::uint32_t *ids = &c.ids[c.first[e]];
+        int nf = 0;
+        auto hashFace = [&](int, const int *fi, int n) {
+          std::uint32_t few[8] = {}, *kk = few; // (on the stack if they fit)
+          if(n > 8) {
+            k.resize(n);
+            kk = k.data();
+          }
+          for(int j = 0; j < n; j++) kk[j] = ids[fi[j]];
+          hash[nf++] = matcher.share(kk, n, nthreads) == t ?
+                         matcher.hashOf(kk, n, c.ent[e]) : 0;
+        };
+        if(c.shape[e] == 4)
+          forFaces(c, e, ip, faces, hashFace);
+        else { // (the same, spelled out: this is where the time goes)
+          const solidShape &sh = *solidShapes[c.shape[e]];
+          for(int i = 0; i < sh.numQuads; i++) hashFace(i, sh.quads[i], 4);
+          for(int i = 0; i < sh.numTriangles; i++)
+            hashFace(i, sh.triangles[i], 3);
+        }
+        for(int f = 0; f < nf; f++)
+          if(hash[f]) matcher.add(hash[f], c.elem[e], f);
+        if(c.shape[e] == 4) ip++;
+      }
+    }
+    matcher.forEachLeft([&](std::uint32_t elem, int f) {
+      left[t].push_back(face(elem, f));
+    });
+  }
+
+  // in whole element mode, is the element on the other side of the face
+  // removed?
+  auto removed = [&](const face &f) {
+    int t = 0;
+    while(t + 1 < nthreads && flat.num * (t + 1) / nthreads <= f.first) t++;
+    const chunk &c = chunks[t];
+    std::size_t e = std::lower_bound(c.elem.begin(), c.elem.end(), f.first) -
+                    c.elem.begin();
+    std::size_t ip = (c.shape[e] == 4) ?
+      std::count(c.shape.begin(), c.shape.begin() + e, 4) : 0;
+    std::uint8_t all = 0xff;
+    forFaces(c, e, ip, polyFaces, [&](int i, const int *fi, int n) {
+      if(i != f.second) return;
+      for(int j = 0; j < n; j++) all &= c.beyond[c.first[e] + fi[j]];
+    });
+    return all != 0;
+  };
+
+  for(auto &l : left) {
+    for(auto &f : l) {
+      bool poly = (skin.masks[f.first] & 0x40);
+      if(keptOnly) {
+        bool outer = poly ? original->polyhedronFace(f.first, f.second) :
+                            ((original->masks[f.first] >> f.second) & 1);
+        if(!outer && !removed(f)) continue;
+      }
+      if(poly) {
+        skin.ofPolyhedra.push_back(f);
+        skin.masks[f.first] |= 1; // it has some
+      }
+      else
+        skin.masks[f.first] |= (std::uint8_t)(1 << f.second);
+    }
+  }
+  std::sort(skin.ofPolyhedra.begin(), skin.ofPolyhedra.end());
+  return true;
+}
+
+// the skin of the field, kept or found now (null if it cannot be)
+static const viewSkinFaces *getSkin(PView *p, PViewData *data,
+                                    PViewOptions *opt,
+                                    const flatElements &flat)
+{
+  double t1 = TimeOfDay();
+  std::vector<double> key = skinKey(data, opt, flat);
+  std::list<viewSkin> &kept = _viewSkin[p];
+  // what was found for another state of the data or of the mesh is of no
+  // use any more (the step is the last entry of the key)
+  kept.remove_if([&](const viewSkin &k) {
+    return k.key.size() != key.size() ||
+           !std::equal(key.begin(), key.end() - 1, k.key.begin());
+  });
+  auto it = std::find_if(kept.begin(), kept.end(), [&](const viewSkin &k) {
+    return k.key == key && k.faces.masks.size() == flat.num;
+  });
+  if(it != kept.end()) {
+    kept.splice(kept.begin(), kept, it); // most recently used first
+    return &kept.front().faces;
+  }
+  viewSkin found;
+  if(!findSkin(p, flat, false, nullptr, nullptr, found.faces)) return nullptr;
+  found.key = key;
+  kept.push_front(viewSkin());
+  std::swap(kept.front(), found);
+  if(kept.size() > maxKeptSkins) kept.pop_back();
+  Msg::Debug("Found the skin of View[%d] in %g s", p->getIndex(),
+             TimeOfDay() - t1);
+  return &kept.front().faces;
+}
+
 static void addOutlineSolid(drawTarget *p, double **xyz, unsigned int color,
                             bool pre, const solidShape &s)
 {
+  // the faces on the skin alone, if asked and if it was found ahead
+  int mask = (p->opt->drawSkinEdgesOnly && p->skinMask >= 0) ? p->skinMask : ~0;
   for(int i = 0; i < s.numQuads; i++)
-    addOutlineFace(p, xyz, color, pre, s.quads[i], 4);
+    if(mask & (1 << i)) addOutlineFace(p, xyz, color, pre, s.quads[i], 4);
   for(int i = 0; i < s.numTriangles; i++)
-    addOutlineFace(p, xyz, color, pre, s.triangles[i], 3);
+    if(mask & (1 << (s.numQuads + i)))
+      addOutlineFace(p, xyz, color, pre, s.triangles[i], 3);
 }
 
 // add the section a clipping plane cuts out of a 3D element, colored with
@@ -991,7 +1421,7 @@ static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
   double v[4] = {val[i0][0], val[i1][0], val[i2][0], val[i3][0]};
 
   if(opt->intervalsType == PViewOptions::Iso) {
-    forIsos(opt, vmin, vmax, [&](int k, double iso) {
+    forIsos(p, vmin, vmax, v, 4, [&](int k, double iso) {
       double x2[6], y2[6], z2[6], nn[3];
       int nb = IsoSimplex(x, y, z, v, iso, x2, y2, z2, nn);
       unsigned int col[6];
@@ -1076,6 +1506,47 @@ static void addScalarPolyhedron(drawTarget *p, int ient, int iele,
       addScalarTriangle(p, xyz, val, pre, is[0], is[1], is[2], true);
     }
     opt->boundary++;
+    return;
+  }
+
+  if(skinOnly(opt) && p->skinMask >= 0) {
+    // its faces that are on the skin; the caps still come from the
+    // tetrahedra it is split into
+    for(int i = 0; !pre && i < polyhedron->getNumTetrahedra(); i++) {
+      std::array<int, 4> is = polyhedron->getTetrahedronIndices(i);
+      addScalarCap(p, xyz, val, is[0], is[1], is[2], is[3]);
+    }
+    if(p->collect == drawTarget::COLLECT_CAPS) return;
+    // (the field is linear on each tetrahedron: a face is drawn by the
+    // triangles the tetrahedra have on it, those with their three nodes on it)
+    std::vector<std::vector<int> > faces;
+    polyhedronFaces(polyhedron, faces);
+    std::vector<std::vector<char> > onFace;
+    for(std::size_t f = 0; f < faces.size(); f++) {
+      if(!p->skin->polyhedronFace(p->element, (int)f)) continue;
+      onFace.push_back(std::vector<char>(numNodes, 0));
+      for(int n : faces[f]) onFace.back()[n] = 1;
+    }
+    // (the triangles on the boundary of the tetrahedra: those that only one
+    // of them has)
+    std::map<std::array<int, 3>, std::array<int, 3> > boundary;
+    for(int i = 0; i < polyhedron->getNumTetrahedra(); i++) {
+      std::array<int, 4> is = polyhedron->getTetrahedronIndices(i);
+      for(int j = 0; j < 4; j++) {
+        const int *t = tetTriangles[j];
+        std::array<int, 3> tri = {is[t[0]], is[t[1]], is[t[2]]}, key = tri;
+        std::sort(key.begin(), key.end());
+        if(!boundary.erase(key)) boundary[key] = tri;
+      }
+    }
+    for(auto &b : boundary) {
+      const std::array<int, 3> &t = b.second;
+      for(auto &on : onFace)
+        if(on[t[0]] && on[t[1]] && on[t[2]]) {
+          addScalarTriangle(p, xyz, val, pre, t[0], t[1], t[2], true);
+          break;
+        }
+    }
     return;
   }
 
@@ -1526,13 +1997,10 @@ bool PViewElement::select(PView *p, int ient, int iele)
   PViewOptions *opt = p->getOptions();
   int step = opt->timeStep;
   if(data->skipElement(step, ient, iele, true, opt->sampling)) return false;
-  type = data->getType(step, ient, iele);
+  data->getElementInfo(step, ient, iele, type, dim, numNodes, numComp);
   if(opt->skipElement(type)) return false;
   ent = ient;
   ele = iele;
-  dim = data->getDimension(step, ient, iele);
-  numComp = data->getNumComponents(step, ient, iele);
-  numNodes = data->getNumNodes(step, ient, iele);
   // (polytopes have as many nodes as they need)
   if(numNodes > PVIEW_NMAX && type != TYPE_POLYG && type != TYPE_POLYH) {
     if(numNodesError != numNodes) {
@@ -1558,7 +2026,7 @@ bool PViewElement::select(PView *p, int ient, int iele)
   return true;
 }
 
-void PViewElement::read(PView *p, bool ids)
+void PViewElement::read(PView *p)
 {
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
@@ -1575,11 +2043,11 @@ void PViewElement::read(PView *p, bool ids)
   }
   xyz = _xyzRows.data();
   val = _valRows.data();
-  if(ids) nodeIds.resize(numNodes);
-  for(int j = 0; j < numNodes; j++) {
-    data->getNode(step, ent, ele, j, xyz[j][0], xyz[j][1], xyz[j][2]);
-    if(ids) nodeIds[j] = data->getNodeId(step, ent, ele, j);
-    if(opt->forceNumComponents) {
+  if(!opt->forceNumComponents)
+    data->getNodesAndValues(step, ent, ele, numNodes, numComp, xyz, val);
+  else {
+    for(int j = 0; j < numNodes; j++) {
+      data->getNode(step, ent, ele, j, xyz[j][0], xyz[j][1], xyz[j][2]);
       for(int k = 0; k < opt->forceNumComponents; k++) {
         int comp = opt->componentMap[k];
         if(comp >= 0 && comp < numComp)
@@ -1588,9 +2056,6 @@ void PViewElement::read(PView *p, bool ids)
           val[j][k] = 0.;
       }
     }
-    else
-      for(int k = 0; k < numComp; k++)
-        data->getValue(step, ent, ele, j, k, val[j][k]);
   }
   if(opt->forceNumComponents) numComp = opt->forceNumComponents;
   changeCoordinates(p, ent, ele, numNodes, type, numComp, xyz, val);
@@ -1616,15 +2081,21 @@ static void addElementRange(drawTarget *p, PViewData *data,
                             bool preprocessNormalsOnly,
                             const std::vector<int> &ents,
                             const std::vector<std::size_t> &start,
-                            std::size_t first, std::size_t last)
+                            std::size_t first, std::size_t last,
+                            const elementSpheres *spheres,
+                            const viewSkinFaces *skin)
 {
   PViewOptions *opt = p->opt;
   PViewElement el;
-  // elements are told apart by their nodes (shared edges drawn once, the
-  // skin) unless their coordinates are changed element by element: exploded
-  // or raised along their normal, they no longer meet at their nodes
-  bool topology = opt->explode == 1. && !opt->normalRaise && !opt->useGenRaise;
-
+  const std::vector<std::uint8_t> *masks = skin ? &skin->masks : nullptr;
+  p->skin = skin;
+  const bool facesOnSkin = skinOnly(opt);
+  activePlanes planes(opt->clip);
+  bool onlyVolume = CTX::instance()->clipOnlyVolume;
+  // what the planes add is looked for among the elements they may cut
+  bool nearPlanes = spheres && planes.num() &&
+                    (p->collect == drawTarget::COLLECT_CAPS ||
+                     p->collect == drawTarget::COLLECT_CUT);
   // the entity the range starts in
   std::size_t e = 0;
   while(e + 1 < ents.size() && start[e + 1] <= first) e++;
@@ -1634,18 +2105,43 @@ static void addElementRange(drawTarget *p, PViewData *data,
     int i0 = (int)(first > start[e] ? first - start[e] : 0);
     int i1 = (int)std::min(last, start[e + 1]) - (int)start[e];
     for(int i = i0; i < i1; i++) {
+      std::size_t flat = start[e] + i;
+      if(nearPlanes) {
+        if(!spheres->drawn(flat)) continue;
+        const float *sp = spheres->sphere(flat);
+        int d = spheres->dim(flat);
+        if(p->collect == drawTarget::COLLECT_CAPS) {
+          if(d < 3 || planes.gap(sp) > 0.) continue;
+        }
+        else if(!(d < 3 && onlyVolume) && planes.gap(sp) > 0.)
+          continue;
+      }
+      p->skinMask = -1;
+      if(masks) {
+        std::uint8_t m = (*masks)[flat];
+        // inside the field: nothing to draw, unless all the faces or all
+        // the outlines are
+        if((m & 0x80) && !(m & 0x3f) && facesOnSkin &&
+           (!opt->showElement || skinOutlines(opt)))
+          continue;
+        if(m & 0x80) p->skinMask = m & 0x3f;
+        p->element = flat;
+      }
       if(!el.select(p->view, ent, i)) continue;
-      el.read(p->view, true);
-      p->nodeIds = topology ? el.nodeIds.data() : nullptr;
+      if(p->skinMask >= 0 && el.type != TYPE_POLYH) {
+        int sh = solidShapeIndex(el.type);
+        if(sh < 0)
+          p->skinMask = -1;
+        else
+          p->skinShape = solidShapes[sh];
+      }
+      el.read(p->view);
       int type = el.type, dim = el.dim, numNodes = el.numNodes;
       int numComp = el.numComp;
       double **xyz = el.xyz, **val = el.val;
       // the cut pass wants the cut elements only, the ordinary fill the rest
       if(p->collect == drawTarget::COLLECT_CUT) {
         if(!elementIsCut(opt, dim, numNodes, xyz)) continue;
-      }
-      else if(p->collect == drawTarget::COLLECT_KEPT) {
-        if(!elementIsKept(opt, dim, numNodes, xyz)) continue;
       }
       else if(!isElementVisible(opt, dim, numNodes, xyz))
         continue;
@@ -1680,7 +2176,7 @@ static void addElementRange(drawTarget *p, PViewData *data,
       }
     }
   }
-  p->nodeIds = nullptr;
+  p->skinMask = -1;
 }
 
 // what each view's clip arrays were last built for: only what changes them
@@ -1694,8 +2190,7 @@ static std::vector<double> viewClipToken(PView *p)
   CTX *ctx = CTX::instance();
   PViewOptions *opt = p->getOptions();
   std::vector<double> t;
-  t.push_back(opt->clip);
-  ctx->addClipToKey(t);
+  ctx->addClipToKey(t, opt->clip);
   return t;
 }
 
@@ -1709,7 +2204,9 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
                                 int collect = drawTarget::COLLECT_ALL,
                                 VertexArray *vaL = nullptr,
                                 VertexArray *vaT = nullptr,
-                                smooth_normals *normals = nullptr)
+                                smooth_normals *normals = nullptr,
+                                const elementSpheres *spheres = nullptr,
+                                const viewSkinFaces *skin = nullptr)
 {
   // use adaptive data if available
   PViewData *data = p->getData(true);
@@ -1718,30 +2215,13 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
 
   if(own) opt->tmpBBox.reset();
 
-  // number the elements of the entities that are drawn in a single flat index
-  // space, so that the loop below can be split evenly between the threads
-  // whatever the size of each entity
-  std::vector<int> ents;
-  std::vector<std::size_t> start;
-  std::size_t num = 0;
-  int numEnt = data->getNumEntities(opt->timeStep);
-  for(int ent = 0; ent < numEnt; ent++) {
-    if(data->skipEntity(opt->timeStep, ent)) continue;
-    ents.push_back(ent);
-    start.push_back(num);
-    num += data->getNumElements(opt->timeStep, ent);
-  }
-  start.push_back(num);
+  flatElements flat(data, opt);
+  const std::vector<int> &ents = flat.ents;
+  const std::vector<std::size_t> &start = flat.start;
+  std::size_t num = flat.num;
   if(!num) return;
 
-  int nthreads = CTX::instance()->numThreads;
-  if(!nthreads) nthreads = Msg::GetMaxThreads();
-  if(num < 10000) nthreads = 1;
-  // options that touch shared state (smoothed normals, general raise,
-  // external view, Gauss points) are handled serially
-  if(opt->smoothNormals || opt->useGenRaise || opt->externalViewIndex >= 0 ||
-     data->useGaussPoints() || !data->isThreadSafe())
-    nthreads = 1;
+  int nthreads = numWalkThreads(data, opt, num);
 
   if(nthreads == 1) {
     drawTarget t(p);
@@ -1755,7 +2235,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
       t.va_ellipses = &ellipses;
       if(normals) t.normals = normals;
     }
-    addElementRange(&t, data, preprocessNormalsOnly, ents, start, 0, num);
+    addElementRange(&t, data, preprocessNormalsOnly, ents, start, 0, num,
+                    spheres, skin);
     if(own && !t.bbox.empty()) opt->tmpBBox += t.bbox;
     return;
   }
@@ -1787,12 +2268,12 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     d->va_ellipses = new VertexArray(4, n / 4);
     targets[t] = d;
   }
-  if(boundaryFaces) boundaryFaces->setThreaded();
 
 #pragma omp parallel for schedule(static, 1) num_threads(nthreads)
   for(int t = 0; t < nthreads; t++)
     addElementRange(targets[t], data, preprocessNormalsOnly, ents, start,
-                    num * t / nthreads, num * (t + 1) / nthreads);
+                    num * t / nthreads, num * (t + 1) / nthreads, spheres,
+                    skin);
 
   for(int t = 0; t < nthreads; t++) {
     if(own) {
@@ -1822,13 +2303,13 @@ private:
   // we try to estimate how many primitives will end up in the vertex
   // arrays, since reallocating the arrays takes a huge amount of time
   // on Windows/Cygwin
-  int _estimateIfClipped(PView *p, int num)
+  std::size_t _estimateIfClipped(PView *p, std::size_t num)
   {
     if(CTX::instance()->clipWholeElements &&
        CTX::instance()->clipOnlyDrawIntersectingVolume) {
       PViewOptions *opt = p->getOptions();
       for(int clip = 0; clip < 6; clip++) {
-        if(opt->clip & (1 << clip)) return (int)sqrt((double)num);
+        if(opt->clip & (1 << clip)) return (std::size_t)sqrt((double)num);
       }
     }
     return num;
@@ -1836,34 +2317,44 @@ private:
   // How much to reserve for an array: what the data holds of that kind, what
   // the planes are likely to leave of it when they are applied here, and room
   // to spare. Only a starting size: an array grows if it has to.
-  int _estimate(PView *p, int count, bool clipped, int spare)
+  // (on 64 bits: six triangles for each of 400 million tetrahedra do not fit
+  // in an int)
+  std::size_t _estimate(PView *p, std::size_t count, bool clipped,
+                        std::size_t spare)
   {
     return (clipped ? _estimateIfClipped(p, count) : count) + spare;
   }
-  int _estimateNumPoints(PView *p)
+  std::size_t _estimateNumPoints(PView *p)
   {
     return _estimate(p, p->getData(true)->getNumPoints(p->getOptions()->timeStep),
                      false, 10000);
   }
-  int _estimateNumLines(PView *p)
+  std::size_t _estimateNumLines(PView *p)
   {
     return _estimate(p, p->getData(true)->getNumLines(p->getOptions()->timeStep),
                      false, 10000);
   }
-  int _estimateNumTriangles(PView *p)
+  std::size_t _estimateNumTriangles(PView *p)
   {
     PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
-    int tris = data->getNumTriangles(opt->timeStep);
-    int quads = data->getNumQuadrangles(opt->timeStep);
-    int polygs = data->getNumPolygons(opt->timeStep);
-    int tets = data->getNumTetrahedra(opt->timeStep);
-    int prisms = data->getNumPrisms(opt->timeStep);
-    int pyrs = data->getNumPyramids(opt->timeStep);
-    int trihs = data->getNumTrihedra(opt->timeStep);
-    int hexas = data->getNumHexahedra(opt->timeStep);
-    int polyhs = data->getNumPolyhedra(opt->timeStep);
-    int heuristic = 0;
+    std::size_t tris = data->getNumTriangles(opt->timeStep);
+    std::size_t quads = data->getNumQuadrangles(opt->timeStep);
+    std::size_t polygs = data->getNumPolygons(opt->timeStep);
+    std::size_t tets = data->getNumTetrahedra(opt->timeStep);
+    std::size_t prisms = data->getNumPrisms(opt->timeStep);
+    std::size_t pyrs = data->getNumPyramids(opt->timeStep);
+    std::size_t trihs = data->getNumTrihedra(opt->timeStep);
+    std::size_t hexas = data->getNumHexahedra(opt->timeStep);
+    std::size_t polyhs = data->getNumPolyhedra(opt->timeStep);
+    std::size_t heuristic = 0;
+    // the faces on the skin alone: about the 2/3 power of the 3D elements
+    if(skinOnly(opt)) {
+      double solids = (double)(tets + prisms + pyrs + hexas + polyhs);
+      heuristic = tris + 2 * quads + 3 * polygs +
+                  (std::size_t)(12. * pow(solids, 2. / 3.));
+      return _estimate(p, heuristic, true, 10000);
+    }
     if(opt->intervalsType == PViewOptions::Iso)
       heuristic = (tets + prisms + pyrs + hexas + polyhs) / 10;
     else if(opt->intervalsType == PViewOptions::Continuous)
@@ -1875,12 +2366,12 @@ private:
                   2;
     return _estimate(p, heuristic, true, 10000);
   }
-  int _estimateNumVectors(PView *p)
+  std::size_t _estimateNumVectors(PView *p)
   {
     return _estimate(p, p->getData(true)->getNumVectors(p->getOptions()->timeStep),
                      true, 1000);
   }
-  int _estimateNumEllipses(PView *p)
+  std::size_t _estimateNumEllipses(PView *p)
   {
     return _estimate(p, p->getData(true)->getNumTensors(p->getOptions()->timeStep),
                      true, 1000);
@@ -1925,26 +2416,20 @@ public:
 
     p->normals = new smooth_normals(opt->angleSmoothNormals);
 
-    if(opt->drawSkinOnly && viewDrawsFaces(p)) {
-      // first pass: locate the faces that bound the mesh
-      double t1 = TimeOfDay();
-      delete boundaryFaces;
-      boundaryFaces = new UniqueElementFilter(false);
-      markingBoundaryFaces = true;
-      addElementsInArrays(p, true);
-      markingBoundaryFaces = false;
-      // that pass may have fed the smooth normals: start over
-      delete p->normals;
-      p->normals = new smooth_normals(opt->angleSmoothNormals);
-      Msg::Debug("Located the boundary faces of View[%d] in %g s",
-                 p->getIndex(), TimeOfDay() - t1);
-    }
+    // the spheres around the elements are those of the view as it was
+    _viewSpheres.erase(p);
 
-    if(opt->smoothNormals) addElementsInArrays(p, true);
-    addElementsInArrays(p, false);
+    // the skin from the nodes of the elements alone, if it can be (every
+    // face is drawn otherwise)
+    const viewSkinFaces *skin = nullptr;
+    if((skinOnly(opt) && viewDrawsFaces(p)) || skinOutlines(opt))
+      skin = getSkin(p, data, opt, flatElements(data, opt));
 
-    delete boundaryFaces;
-    boundaryFaces = nullptr;
+    if(opt->smoothNormals)
+      addElementsInArrays(p, true, drawTarget::COLLECT_ALL, nullptr, nullptr,
+                          nullptr, nullptr, skin);
+    addElementsInArrays(p, false, drawTarget::COLLECT_ALL, nullptr, nullptr,
+                        nullptr, nullptr, skin);
 
     p->va_points->finalize();
     p->va_lines->finalize();
@@ -2002,25 +2487,23 @@ bool PView::fillClipVertexArrays()
   va_clip_lines = new VertexArray(2, 100);
   va_clip_triangles = new VertexArray(3, 1000);
 
-  if(whole && opt->drawSkinOnly) {
-    // the skin of what whole element mode keeps, which differs from the
-    // skin of the whole field
-    delete boundaryFaces;
-    boundaryFaces = new UniqueElementFilter(false);
-    markingBoundaryFaces = true;
-    // this pass feeds the smoothed normals, which are built already
-    smooth_normals scratch(opt->angleSmoothNormals);
-    addElementsInArrays(this, true, drawTarget::COLLECT_KEPT, va_clip_lines,
-                        va_clip_triangles, &scratch);
-    markingBoundaryFaces = false;
-  }
+  // the elements the planes may cut, without reading the others
+  flatElements flat(data, opt);
+  const elementSpheres *spheres = getSpheres(this, flat);
+
+  // in whole element mode, the faces of the cut elements on the skin of what
+  // is kept, which differs from the skin of the whole field
+  viewSkinFaces cutSkin;
+  bool skinFound =
+    whole && ((skinOnly(opt) && viewDrawsFaces(this)) || skinOutlines(opt)) &&
+    findSkin(this, flat, true, spheres, getSkin(this, data, opt, flat),
+             cutSkin);
   // the same walk as for the view's own arrays, into the clip arrays
   addElementsInArrays(this, false,
                       whole ? drawTarget::COLLECT_CUT :
                               drawTarget::COLLECT_CAPS,
-                      va_clip_lines, va_clip_triangles);
-  delete boundaryFaces;
-  boundaryFaces = nullptr;
+                      va_clip_lines, va_clip_triangles, nullptr, spheres,
+                      skinFound ? &cutSkin : nullptr);
 
   va_clip_lines->finalize();
   va_clip_triangles->finalize();

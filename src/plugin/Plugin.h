@@ -20,6 +20,7 @@
 #include "PViewDataList.h"
 
 class PluginDialogBox;
+class adaptiveElement;
 class Vertex;
 template <class scalar> class fullMatrix;
 
@@ -108,7 +109,8 @@ public:
   // get the the adapted data (i.e. linear, on refined mesh) if
   // available, otherwise get the original data
   virtual PViewData *getPossiblyAdaptiveData(PView *view);
-  virtual void assignSpecificVisibility() const {}
+  // (given the root of the tree of subdivisions of an adaptive view)
+  virtual void assignSpecificVisibility(adaptiveElement *root) const {}
   virtual bool geometricalFilter(fullMatrix<double> *) const { return true; }
 };
 

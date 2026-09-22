@@ -76,6 +76,12 @@ public:
   {
     return MEdge(_v[edges_hexa(num, 0)], _v[edges_hexa(num, 1)]);
   }
+  virtual int getEdgeCorners(int num, MVertex *v[2]) const
+  {
+    v[0] = _v[edges_hexa(num, 0)];
+    v[1] = _v[edges_hexa(num, 1)];
+    return 2;
+  }
   virtual int numEdge2numVertex(int numEdge, int numVert) const
   {
     return edges_hexa(numEdge, numVert);
@@ -114,7 +120,6 @@ public:
   virtual int getType() const { return TYPE_HEX; }
   virtual int getTypeForMSH() const { return MSH_HEX_8; }
   virtual int getTypeForUNV() const { return 115; } // solid linear brick
-  virtual int getTypeForVTK() const { return 12; }
   virtual const char *getStringForPOS() const { return "SH"; }
   virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual const char *getStringForDIFF() const { return "ElmB8n3D"; }
@@ -339,12 +344,6 @@ public:
                                 12, 19, 14, 11, 15, 13, 8, 16, 17, 10};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexVTK(int num)
-  {
-    static const int map[20] = {0,  1, 2,  3,  4,  5,  6,  7,  8,  11,
-                                13, 9, 16, 18, 19, 17, 10, 12, 14, 15};
-    return getVertex(map[num]);
-  }
   virtual int getNumEdgeVertices() const { return 12; }
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
@@ -371,7 +370,6 @@ public:
   }
   virtual int getTypeForMSH() const { return MSH_HEX_20; }
   virtual int getTypeForUNV() const { return 116; } // solid parabolic brick
-  virtual int getTypeForVTK() const { return 25; }
   virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual const char *getStringForINP() const { return "C3D20"; }
   virtual const char *getStringForKEY() const { return "_SOLID_H20"; }
@@ -509,13 +507,6 @@ public:
                                 11, 19, 16, 4,  12, 14, 22, 10, 13};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexVTK(int num)
-  {
-    static const int map[27] = {0,  1,  2,  3,  4,  5,  6,  7,  8,
-                                11, 13, 9,  16, 18, 19, 17, 10, 12,
-                                14, 15, 22, 23, 21, 24, 20, 25, 26};
-    return getVertex(map[num]);
-  }
   virtual int getNumEdgeVertices() const { return 12; }
   virtual int getNumFaceVertices() const { return 6; }
   virtual int getNumVolumeVertices() const { return 1; }
@@ -544,7 +535,6 @@ public:
     v[8] = _vs[12 + num];
   }
   virtual int getTypeForMSH() const { return MSH_HEX_27; }
-  virtual int getTypeForVTK() const { return 29; }
   virtual const char *getStringForPOS() const { return "SH2"; }
   virtual const char *getStringForDIFF() const { return "ElmB27n3D"; }
   virtual const char *getStringForINP() const { return "C3D27"; }

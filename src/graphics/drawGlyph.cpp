@@ -110,23 +110,8 @@ namespace {
   void normalMatrix(const double m[16], double n[9])
   {
     double a[9] = {m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]};
-    double det = a[0] * (a[4] * a[8] - a[5] * a[7]) -
-                 a[3] * (a[1] * a[8] - a[2] * a[7]) +
-                 a[6] * (a[1] * a[5] - a[2] * a[4]);
-    if(det == 0.) {
-      for(int i = 0; i < 9; i++) n[i] = a[i];
-      return;
-    }
-    double d = 1. / det;
-    n[0] = (a[4] * a[8] - a[5] * a[7]) * d;
-    n[1] = (a[6] * a[5] - a[3] * a[8]) * d;
-    n[2] = (a[3] * a[7] - a[6] * a[4]) * d;
-    n[3] = (a[7] * a[2] - a[1] * a[8]) * d;
-    n[4] = (a[0] * a[8] - a[6] * a[2]) * d;
-    n[5] = (a[6] * a[1] - a[0] * a[7]) * d;
-    n[6] = (a[1] * a[5] - a[4] * a[2]) * d;
-    n[7] = (a[3] * a[2] - a[0] * a[5]) * d;
-    n[8] = (a[0] * a[4] - a[3] * a[1]) * d;
+    double c[9], det = glMatrix::cofactors(a, c), id = det ? 1. / det : 0.;
+    for(int i = 0; i < 9; i++) n[i] = (det != 0.) ? c[i] * id : a[i];
   }
 
   // hand a tessellation over, transformed
@@ -226,6 +211,16 @@ namespace {
   Templates _tmpl;
 } // namespace
 
+// moves the anchor (x, y) of something w wide and h high according to the
+// alignment: 0-2 bottom, 3-5 top, 6-8 center; in each row left, center, right
+static void alignOffset(int align, double w, double h, double &x, double &y)
+{
+  if(align < 0 || align > 8) return;
+  const double down[3] = {0., 1., 0.5};
+  x -= (align % 3) * w / 2.;
+  y -= down[align / 3] * h;
+}
+
 void drawContext::drawString(const std::string &s, double x, double y, double z,
                              const std::string &font_name, int font_enum,
                              int font_size, int align, int line_num)
@@ -279,37 +274,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
     // alignment for TeX is handled directly by gl2ps
     if(!CTX::instance()->printing ||
        CTX::instance()->print.fileFormat != FORMAT_TEX) {
-      switch(align) {
-      case 1:
-        w[0] -= width / 2.;
-        break; // bottom center
-      case 2:
-        w[0] -= width;
-        break; // bottom right
-      case 3:
-        w[1] -= height;
-        break; // top left
-      case 4:
-        w[0] -= width / 2.;
-        w[1] -= height;
-        break; // top center
-      case 5:
-        w[0] -= width;
-        w[1] -= height;
-        break; // top right
-      case 6:
-        w[1] -= height / 2.;
-        break; // center left
-      case 7:
-        w[0] -= width / 2.;
-        w[1] -= height / 2.;
-        break; // center center
-      case 8:
-        w[0] -= width;
-        w[1] -= height / 2.;
-        break; // center right
-      default: break;
-      }
+      alignOffset(align, width, height, w[0], w[1]);
     }
     // treat line number also for TeX
     if(line_num) w[1] -= line_num * (1.1 * height);
@@ -321,7 +286,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   // opt_general_graphics_font_engine), as computing it there crashes some
   // drivers (Mesa/llvmpipe) on gl_VertexID. Only recomputed when the
   // alignment moved the string.
-  if(!gmshUseShaders() || CTX::instance()->printing) {
+  if(!glShader::enabled() || CTX::instance()->printing) {
     if(moved) {
       double where[3];
       viewport2World(w, where);
@@ -461,16 +426,12 @@ void drawContext::drawImage(const std::string &name, double x, double y,
       billboard = true; // texture will always face camera
   }
 
-  imgtex *img;
-  if(!_imageTextures.count(file)) {
-    img = &_imageTextures[file];
+  // (kept under the name it was asked by, not the path it was found at)
+  bool loaded = _imageTextures.count(file);
+  imgtex *img = &_imageTextures[file];
+  if(!loaded) {
     file = FixRelativePath(GModel::current()->getFileName(), file);
-    if(!generateTextureForImage(file, 1, img->tex, img->w, img->h)) {
-      return;
-    }
-  }
-  else {
-    img = &_imageTextures[file];
+    if(!generateTextureForImage(file, 1, img->tex, img->w, img->h)) return;
   }
   if(!img->tex) {
     Msg::Debug("No texture for image - skipping image draw");
@@ -520,37 +481,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
       valid = GL_FALSE;
   }
   if(valid == GL_TRUE) {
-    switch(align) {
-    case 1:
-      x -= w / 2.;
-      break; // bottom center
-    case 2:
-      x -= w;
-      break; // bottom right
-    case 3:
-      y -= h;
-      break; // top left
-    case 4:
-      x -= w / 2.;
-      y -= h;
-      break; // top center
-    case 5:
-      x -= w;
-      y -= h;
-      break; // top right
-    case 6:
-      y -= h / 2.;
-      break; // center left
-    case 7:
-      x -= w / 2.;
-      y -= h / 2.;
-      break; // center center
-    case 8:
-      x -= w;
-      y -= h / 2.;
-      break; // center right
-    default: break;
-    }
+    alignOffset(align, w, h, x, y);
     // the transparency pass has a blending of its own
     bool ownBlend = !glShader::transparentPass();
     if(ownBlend) {
@@ -679,7 +610,7 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
       gmshVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       gmshEnd();
 
-      if(light && fill) gmshLighting(true);
+      if(light) gmshLighting(true);
       gmshBegin(GL_TRIANGLES);
       if(light) gmshNormal3dv(u);
       gmshVertex3d(x + dx, y + dy, z + dz);
@@ -733,7 +664,7 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
       double um[3] = {x - b * u[0], y - b * u[1], z - b * u[2]};
       double nn[3];
 
-      if(light && fill) gmshLighting(true);
+      if(light) gmshLighting(true);
       gmshBegin(GL_TRIANGLES);
       if(light) {
         normal3points(tm[0], tm[1], tm[2], um[0], um[1], um[2], top[0], top[1],

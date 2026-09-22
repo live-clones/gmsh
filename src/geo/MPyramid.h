@@ -79,6 +79,12 @@ public:
   {
     return MEdge(_v[edges_pyramid(num, 0)], _v[edges_pyramid(num, 1)]);
   }
+  virtual int getEdgeCorners(int num, MVertex *v[2]) const
+  {
+    v[0] = _v[edges_pyramid(num, 0)];
+    v[1] = _v[edges_pyramid(num, 1)];
+    return 2;
+  }
   virtual int numEdge2numVertex(int numEdge, int numVert) const
   {
     return edges_pyramid(numEdge, numVert);
@@ -129,7 +135,6 @@ public:
                            int &rot) const;
   virtual int getType() const { return TYPE_PYR; }
   virtual int getTypeForMSH() const { return MSH_PYR_5; }
-  virtual int getTypeForVTK() const { return 14; }
   virtual const char *getStringForPOS() const { return "SY"; }
   virtual const char *getStringForBDF() const { return "CPYRAM"; }
   virtual const char *getStringForINP() const { return "C3D5"; }

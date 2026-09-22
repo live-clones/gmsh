@@ -138,7 +138,7 @@ gmsh.view.addListData(t2, "SQ", 1, quad)
 # level (Gmsh does automatic mesh refinement to visualize the high-order field
 # with the requested accuracy):
 gmsh.view.option.setNumber(t2, "AdaptVisualizationGrid", 1)
-gmsh.view.option.setNumber(t2, "TargetError", 1e-2)
+gmsh.view.option.setNumber(t2, "TargetError", 1e-3)
 gmsh.view.option.setNumber(t2, "MaxRecursionLevel", 5)
 
 # Note that the adapted visualization data can be retrieved by setting the

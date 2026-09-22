@@ -67,7 +67,7 @@ private:
       {0.f, 1.f},         {-0.5f, 0.8660254f},  {-0.8660254f, 0.5f},
       {-1.f, 0.f},        {-0.8660254f, -0.5f}, {-0.5f, -0.8660254f},
       {0.f, -1.f},        {0.5f, -0.8660254f},  {0.8660254f, -0.5f}};
-    float r = (float)gmshPixelScale();
+    float r = (float)glImmediate::pixelScale();
     for(int k = 0; k < 12; k++) {
       offsets[k][0] = r * dir[k][0];
       offsets[k][1] = r * dir[k][1];

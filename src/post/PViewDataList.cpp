@@ -17,16 +17,20 @@
 #include "polynomialBasis.h"
 #include "OS.h"
 
+// a number for a state of the lists of a view, none of which has another
+static std::size_t newState()
+{
+  static std::atomic<std::size_t> last(0);
+  return ++last;
+}
+
 PViewDataList::PViewDataList(bool isAdapted)
   : PViewData(), NbTimeStep(0), Min(VAL_INF), Max(-VAL_INF), NbSP(0), NbVP(0),
     NbTP(0), NbSL(0), NbVL(0), NbTL(0), NbST(0), NbVT(0), NbTT(0), NbSQ(0),
     NbVQ(0), NbTQ(0), NbSS(0), NbVS(0), NbTS(0),
     NbSH(0), NbVH(0), NbTH(0), NbSI(0), NbVI(0), NbTI(0), NbSY(0), NbVY(0),
     NbTY(0), NbSR(0), NbVR(0), NbTR(0), NbT2(0),
-    NbT3(0), _nodeIndexStatus(0), _lastElement(-1), _lastDimension(-1),
-    _lastNumNodes(-1),
-    _lastNumComponents(-1), _lastNumValues(-1), _lastNumEdges(-1),
-    _lastType(-1), _lastXYZ(nullptr), _lastVal(nullptr), _isAdapted(isAdapted)
+    NbT3(0), _nodeIndexStatus(0), _state(newState()), _isAdapted(isAdapted)
 {
   for(int i = 0; i < 27; i++) _index[i] = 0;
 }
@@ -81,6 +85,15 @@ void PViewDataList::addStep(std::vector<double> &y)
 bool PViewDataList::finalize(bool computeMinMax,
                              const std::string &interpolationScheme)
 {
+  _skinMasks.clear(); // (whoever knows them gives them again)
+  // what the threads last read comes from lists that may have changed
+  _state = newState();
+  // the lists may have changed: the nodes recreated from them are not theirs
+  // any more
+  _nodeIndexStatus = 0;
+  _nodeId.clear();
+  _nodeOffset.clear();
+
   BBox.reset();
   Min = VAL_INF;
   Max = -VAL_INF;
@@ -253,156 +266,172 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
     if(nim) nbval = nbcomp * im[0]->size1();
   }
 
+  // all the elements of a list have the same size: as many steps each
   int nb = list.size() / nbelm;
-  for(int ele = 0; ele < nbelm; ele++) {
-    int i = ele * nb;
-    int N = nb - 3 * nbnod;
-    double *X = &list[i];
-    double *Y = &list[i + 1 * nbnod];
-    double *Z = &list[i + 2 * nbnod];
-    double *V = &list[i + 3 * nbnod];
+  int N = nb - 3 * nbnod;
+  int numSteps = N / nbval;
+  if(Min == VAL_INF || Max == -VAL_INF) {
+    NbTimeStep = numSteps;
+    TimeStepMin.assign(NbTimeStep, VAL_INF);
+    TimeStepMax.assign(NbTimeStep, -VAL_INF);
+  }
+  else if(numSteps < NbTimeStep) {
+    // if some elts have less steps, reduce the total number!
+    NbTimeStep = numSteps;
+  }
 
-    // update bounding box
-    for(int j = 0; j < nbnod; j++) BBox += SPoint3(X[j], Y[j], Z[j]);
-
-    // update num time steps
-    if(Min == VAL_INF || Max == -VAL_INF) {
-      NbTimeStep = N / nbval;
-      TimeStepMin.clear();
-      TimeStepMax.clear();
-      for(int j = 0; j < NbTimeStep; j++) {
-        TimeStepMin.push_back(VAL_INF);
-        TimeStepMax.push_back(-VAL_INF);
+  // the bounding box and the range of each step, found by each thread for its
+  // share of the elements (a view with millions of elements spends its time
+  // here), then put together
+  int nthreads = CTX::instance()->numThreadsFor(nbelm, 100000);
+  int numRanges = (N + nbval - 1) / nbval; // (the last one may be partial)
+  std::vector<SBoundingBox3d> bbox(nthreads);
+  std::vector<std::vector<double> > min(nthreads), max(nthreads);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    min[t].assign(numRanges, VAL_INF);
+    max[t].assign(numRanges, -VAL_INF);
+    int tensorRep = 0; // Von-Mises: we could/should be able to choose this
+    for(int ele = (int)((std::size_t)nbelm * t / nthreads);
+        ele < (int)((std::size_t)nbelm * (t + 1) / nthreads); ele++) {
+      double *X = &list[(std::size_t)ele * nb];
+      double *Y = X + nbnod, *Z = X + 2 * nbnod, *V = X + 3 * nbnod;
+      for(int j = 0; j < nbnod; j++) bbox[t] += SPoint3(X[j], Y[j], Z[j]);
+      for(int ts = 0; ts < numRanges; ts++) {
+        double &mi = min[t][ts], &ma = max[t][ts];
+        for(int j = ts * nbval; j < std::min((ts + 1) * nbval, N); j += nbcomp) {
+          double l0 =
+            (nbcomp == 1) ? V[j] : ComputeScalarRep(nbcomp, &V[j], tensorRep);
+          mi = std::min(l0, mi);
+          ma = std::max(l0, ma);
+        }
       }
     }
-    else if(N / nbval < NbTimeStep) {
-      // if some elts have less steps, reduce the total number!
-      NbTimeStep = N / nbval;
-    }
-
-    // update min/max
-    int tensorRep = 0; // Von-Mises: we could/should be able to choose this
-    for(int j = 0; j < N; j += nbcomp) {
-      double l0 = ComputeScalarRep(nbcomp, &V[j], tensorRep);
-      Min = std::min(l0, Min);
-      Max = std::max(l0, Max);
-      int ts = j / nbval;
+  }
+  for(int t = 0; t < nthreads; t++) {
+    if(!bbox[t].empty()) BBox += bbox[t];
+    for(int ts = 0; ts < numRanges; ts++) {
+      Min = std::min(min[t][ts], Min);
+      Max = std::max(max[t][ts], Max);
       if(ts < NbTimeStep) { // security
-        TimeStepMin[ts] = std::min(l0, TimeStepMin[ts]);
-        TimeStepMax[ts] = std::max(l0, TimeStepMax[ts]);
+        TimeStepMin[ts] = std::min(min[t][ts], TimeStepMin[ts]);
+        TimeStepMax[ts] = std::max(max[t][ts], TimeStepMax[ts]);
       }
     }
   }
 }
 
-void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
-                             int type, std::vector<double> &list, int nblist)
+void PViewDataList::_setLast(lastElement &l, int i, int dim, int nbnod,
+                             int nbcomp, int nbedg, int type,
+                             std::vector<double> &list, int nblist)
 {
   if(haveInterpolationMatrices()) {
     std::vector<fullMatrix<double> *> im;
     if(getInterpolationMatrices(type, im) == 4) nbnod = im[2]->size1();
   }
 
-  _lastDimension = dim;
-  _lastNumNodes = nbnod;
-  _lastNumComponents = nbcomp;
-  _lastNumEdges = nbedg;
-  _lastType = type;
-  int nb = list.size() / nblist; // number of coords and values for the element
-  int nbAg =
-    ele * nb; // number of coords and values before the ones of the element
-  _lastNumValues = (nb - 3 * nbnod) / NbTimeStep;
-  _lastXYZ = &list[nbAg];
-  _lastVal = &list[nbAg + 3 * _lastNumNodes];
+  l.dim = dim;
+  l.numNodes = nbnod;
+  l.numComponents = nbcomp;
+  l.numEdges = nbedg;
+  l.type = type;
+  // the numbers of coordinates and values of an element, and before it
+  std::size_t nb = list.size() / nblist, before = (std::size_t)i * nb;
+  l.numValues = (int)((nb - 3 * nbnod) / NbTimeStep);
+  l.xyz = &list[before];
+  l.val = &list[before + 3 * l.numNodes];
 }
 
-void PViewDataList::_setLast(int ele)
+void PViewDataList::_setLast(lastElement &l, int ele)
 {
-  _lastElement = ele;
+  l.state = _state;
+  l.ele = ele;
   if(ele < _index[2]) { // points
     if(ele < _index[0])
-      _setLast(ele, 0, 1, 1, 0, TYPE_PNT, SP, NbSP);
+      _setLast(l, ele, 0, 1, 1, 0, TYPE_PNT, SP, NbSP);
     else if(ele < _index[1])
-      _setLast(ele - _index[0], 0, 1, 3, 0, TYPE_PNT, VP, NbVP);
+      _setLast(l, ele - _index[0], 0, 1, 3, 0, TYPE_PNT, VP, NbVP);
     else
-      _setLast(ele - _index[1], 0, 1, 9, 0, TYPE_PNT, TP, NbTP);
+      _setLast(l, ele - _index[1], 0, 1, 9, 0, TYPE_PNT, TP, NbTP);
   }
   else if(ele < _index[5]) { // lines
     if(ele < _index[3])
-      _setLast(ele - _index[2], 1, 2, 1, 1, TYPE_LIN, SL, NbSL);
+      _setLast(l, ele - _index[2], 1, 2, 1, 1, TYPE_LIN, SL, NbSL);
     else if(ele < _index[4])
-      _setLast(ele - _index[3], 1, 2, 3, 1, TYPE_LIN, VL, NbVL);
+      _setLast(l, ele - _index[3], 1, 2, 3, 1, TYPE_LIN, VL, NbVL);
     else
-      _setLast(ele - _index[4], 1, 2, 9, 1, TYPE_LIN, TL, NbTL);
+      _setLast(l, ele - _index[4], 1, 2, 9, 1, TYPE_LIN, TL, NbTL);
   }
   else if(ele < _index[8]) { // triangles
     if(ele < _index[6])
-      _setLast(ele - _index[5], 2, 3, 1, 3, TYPE_TRI, ST, NbST);
+      _setLast(l, ele - _index[5], 2, 3, 1, 3, TYPE_TRI, ST, NbST);
     else if(ele < _index[7])
-      _setLast(ele - _index[6], 2, 3, 3, 3, TYPE_TRI, VT, NbVT);
+      _setLast(l, ele - _index[6], 2, 3, 3, 3, TYPE_TRI, VT, NbVT);
     else
-      _setLast(ele - _index[7], 2, 3, 9, 3, TYPE_TRI, TT, NbTT);
+      _setLast(l, ele - _index[7], 2, 3, 9, 3, TYPE_TRI, TT, NbTT);
   }
   else if(ele < _index[11]) { // quadrangles
     if(ele < _index[9])
-      _setLast(ele - _index[8], 2, 4, 1, 4, TYPE_QUA, SQ, NbSQ);
+      _setLast(l, ele - _index[8], 2, 4, 1, 4, TYPE_QUA, SQ, NbSQ);
     else if(ele < _index[10])
-      _setLast(ele - _index[9], 2, 4, 3, 4, TYPE_QUA, VQ, NbVQ);
+      _setLast(l, ele - _index[9], 2, 4, 3, 4, TYPE_QUA, VQ, NbVQ);
     else
-      _setLast(ele - _index[10], 2, 4, 9, 4, TYPE_QUA, TQ, NbTQ);
+      _setLast(l, ele - _index[10], 2, 4, 9, 4, TYPE_QUA, TQ, NbTQ);
   }
   else if(ele < _index[14]) { // tetrahedra
     if(ele < _index[12])
-      _setLast(ele - _index[11], 3, 4, 1, 6, TYPE_TET, SS, NbSS);
+      _setLast(l, ele - _index[11], 3, 4, 1, 6, TYPE_TET, SS, NbSS);
     else if(ele < _index[13])
-      _setLast(ele - _index[12], 3, 4, 3, 6, TYPE_TET, VS, NbVS);
+      _setLast(l, ele - _index[12], 3, 4, 3, 6, TYPE_TET, VS, NbVS);
     else
-      _setLast(ele - _index[13], 3, 4, 9, 6, TYPE_TET, TS, NbTS);
+      _setLast(l, ele - _index[13], 3, 4, 9, 6, TYPE_TET, TS, NbTS);
   }
   else if(ele < _index[17]) { // hexahedra
     if(ele < _index[15])
-      _setLast(ele - _index[14], 3, 8, 1, 12, TYPE_HEX, SH, NbSH);
+      _setLast(l, ele - _index[14], 3, 8, 1, 12, TYPE_HEX, SH, NbSH);
     else if(ele < _index[16])
-      _setLast(ele - _index[15], 3, 8, 3, 12, TYPE_HEX, VH, NbVH);
+      _setLast(l, ele - _index[15], 3, 8, 3, 12, TYPE_HEX, VH, NbVH);
     else
-      _setLast(ele - _index[16], 3, 8, 9, 12, TYPE_HEX, TH, NbTH);
+      _setLast(l, ele - _index[16], 3, 8, 9, 12, TYPE_HEX, TH, NbTH);
   }
   else if(ele < _index[20]) { // prisms
     if(ele < _index[18])
-      _setLast(ele - _index[17], 3, 6, 1, 9, TYPE_PRI, SI, NbSI);
+      _setLast(l, ele - _index[17], 3, 6, 1, 9, TYPE_PRI, SI, NbSI);
     else if(ele < _index[19])
-      _setLast(ele - _index[18], 3, 6, 3, 9, TYPE_PRI, VI, NbVI);
+      _setLast(l, ele - _index[18], 3, 6, 3, 9, TYPE_PRI, VI, NbVI);
     else
-      _setLast(ele - _index[19], 3, 6, 9, 9, TYPE_PRI, TI, NbTI);
+      _setLast(l, ele - _index[19], 3, 6, 9, 9, TYPE_PRI, TI, NbTI);
   }
   else if(ele < _index[23]) { // pyramids
     if(ele < _index[21])
-      _setLast(ele - _index[20], 3, 5, 1, 8, TYPE_PYR, SY, NbSY);
+      _setLast(l, ele - _index[20], 3, 5, 1, 8, TYPE_PYR, SY, NbSY);
     else if(ele < _index[22])
-      _setLast(ele - _index[21], 3, 5, 3, 8, TYPE_PYR, VY, NbVY);
+      _setLast(l, ele - _index[21], 3, 5, 3, 8, TYPE_PYR, VY, NbVY);
     else
-      _setLast(ele - _index[22], 3, 5, 9, 8, TYPE_PYR, TY, NbTY);
+      _setLast(l, ele - _index[22], 3, 5, 9, 8, TYPE_PYR, TY, NbTY);
   }
   else if(ele < _index[26]) { // trihedra
     if(ele < _index[24])
-      _setLast(ele - _index[23], 3, 4, 1, 5, TYPE_TRIH, SR, NbSR);
+      _setLast(l, ele - _index[23], 3, 4, 1, 5, TYPE_TRIH, SR, NbSR);
     else if(ele < _index[25])
-      _setLast(ele - _index[24], 3, 4, 3, 5, TYPE_TRIH, VR, NbVR);
+      _setLast(l, ele - _index[24], 3, 4, 3, 5, TYPE_TRIH, VR, NbVR);
     else
-      _setLast(ele - _index[25], 3, 4, 9, 5, TYPE_TRIH, TR, NbTR);
+      _setLast(l, ele - _index[25], 3, 4, 9, 5, TYPE_TRIH, TR, NbTR);
   }
 }
 
+thread_local PViewDataList::lastElement PViewDataList::_lastRead;
+
 int PViewDataList::getDimension(int step, int ent, int ele)
 {
-  if(ele != _lastElement) _setLast(ele);
-  return _lastDimension;
+  lastElement &l = _last(ele);
+  return l.dim;
 }
 
 int PViewDataList::getNumNodes(int step, int ent, int ele)
 {
-  if(ele != _lastElement) _setLast(ele);
-  return _lastNumNodes;
+  lastElement &l = _last(ele);
+  return l.numNodes;
 }
 
 // list-based data has no topology: recreate one by merging the nodes with
@@ -487,7 +516,11 @@ void PViewDataList::_buildNodeIndex()
 
 std::size_t PViewDataList::getNodeId(int step, int ent, int ele, int nod)
 {
-  _buildNodeIndex();
+  if(!_nodeIndexStatus) {
+    // (by the first thread that asks)
+#pragma omp critical(PViewDataList_buildNodeIndex)
+    _buildNodeIndex();
+  }
   if(_nodeIndexStatus != 1) return 0;
   if(ele < 0 || ele + 1 >= (int)_nodeOffset.size()) return 0;
   std::size_t k = (std::size_t)_nodeOffset[ele] + nod;
@@ -499,11 +532,25 @@ std::size_t PViewDataList::getNodeId(int step, int ent, int ele, int nod)
 int PViewDataList::getNode(int step, int ent, int ele, int nod, double &x,
                            double &y, double &z)
 {
-  if(ele != _lastElement) _setLast(ele);
-  x = _lastXYZ[nod];
-  y = _lastXYZ[_lastNumNodes + nod];
-  z = _lastXYZ[2 * _lastNumNodes + nod];
+  lastElement &l = _last(ele);
+  x = l.xyz[nod];
+  y = l.xyz[l.numNodes + nod];
+  z = l.xyz[2 * l.numNodes + nod];
   return 0;
+}
+
+void PViewDataList::getNodesAndValues(int step, int ent, int ele, int numNodes,
+                                      int numComp, double **xyz, double **val)
+{
+  lastElement &l = _last(ele);
+  if(step >= NbTimeStep) step = 0;
+  const double *v = l.val + step * l.numNodes * l.numComponents;
+  for(int j = 0; j < numNodes; j++) {
+    xyz[j][0] = l.xyz[j];
+    xyz[j][1] = l.xyz[l.numNodes + j];
+    xyz[j][2] = l.xyz[2 * l.numNodes + j];
+    for(int k = 0; k < numComp; k++) val[j][k] = v[j * l.numComponents + k];
+  }
 }
 
 void PViewDataList::setNode(int step, int ent, int ele, int nod, double x,
@@ -514,59 +561,59 @@ void PViewDataList::setNode(int step, int ent, int ele, int nod, double x,
   _nodeIndexStatus = 0;
   _nodeId.clear();
   _nodeOffset.clear();
-  if(ele != _lastElement) _setLast(ele);
-  _lastXYZ[nod] = x;
-  _lastXYZ[_lastNumNodes + nod] = y;
-  _lastXYZ[2 * _lastNumNodes + nod] = z;
+  lastElement &l = _last(ele);
+  l.xyz[nod] = x;
+  l.xyz[l.numNodes + nod] = y;
+  l.xyz[2 * l.numNodes + nod] = z;
 }
 
 int PViewDataList::getNumComponents(int step, int ent, int ele)
 {
-  if(ele != _lastElement) _setLast(ele);
-  return _lastNumComponents;
+  lastElement &l = _last(ele);
+  return l.numComponents;
 }
 
 int PViewDataList::getNumValues(int step, int ent, int ele)
 {
-  if(ele != _lastElement) _setLast(ele);
-  return _lastNumValues;
+  lastElement &l = _last(ele);
+  return l.numValues;
 }
 
 void PViewDataList::getValue(int step, int ent, int ele, int idx, double &val)
 {
-  if(ele != _lastElement) _setLast(ele);
+  lastElement &l = _last(ele);
   if(step >= NbTimeStep) step = 0;
-  val = _lastVal[step * _lastNumValues + idx];
+  val = l.val[step * l.numValues + idx];
 }
 
 void PViewDataList::getValue(int step, int ent, int ele, int nod, int comp,
                              double &val)
 {
-  if(ele != _lastElement) _setLast(ele);
+  lastElement &l = _last(ele);
   if(step >= NbTimeStep) step = 0;
-  val = _lastVal[step * _lastNumNodes * _lastNumComponents +
-                 nod * _lastNumComponents + comp];
+  val = l.val[step * l.numNodes * l.numComponents +
+                 nod * l.numComponents + comp];
 }
 
 void PViewDataList::setValue(int step, int ent, int ele, int nod, int comp,
                              double val)
 {
-  if(ele != _lastElement) _setLast(ele);
+  lastElement &l = _last(ele);
   if(step >= NbTimeStep) step = 0;
-  _lastVal[step * _lastNumNodes * _lastNumComponents +
-           nod * _lastNumComponents + comp] = val;
+  l.val[step * l.numNodes * l.numComponents +
+           nod * l.numComponents + comp] = val;
 }
 
 int PViewDataList::getNumEdges(int step, int ent, int ele)
 {
-  if(ele != _lastElement) _setLast(ele);
-  return _lastNumEdges;
+  lastElement &l = _last(ele);
+  return l.numEdges;
 }
 
 int PViewDataList::getType(int step, int ent, int ele)
 {
-  if(ele != _lastElement) _setLast(ele);
-  return _lastType;
+  lastElement &l = _last(ele);
+  return l.type;
 }
 
 void PViewDataList::_getString(int dim, int i, int step, std::string &str,
@@ -637,29 +684,29 @@ void PViewDataList::getString3D(int i, int step, std::string &str, double &x,
 void PViewDataList::reverseElement(int step, int ent, int ele)
 {
   if(step) return;
-  if(ele != _lastElement) _setLast(ele);
+  lastElement &l = _last(ele);
 
   // copy data
-  std::vector<double> XYZ(3 * _lastNumNodes);
-  for(std::size_t i = 0; i < XYZ.size(); i++) XYZ[i] = _lastXYZ[i];
+  std::vector<double> XYZ(3 * l.numNodes);
+  for(std::size_t i = 0; i < XYZ.size(); i++) XYZ[i] = l.xyz[i];
 
-  std::vector<double> V(_lastNumNodes * _lastNumComponents * getNumTimeSteps());
-  for(std::size_t i = 0; i < V.size(); i++) V[i] = _lastVal[i];
+  std::vector<double> V(l.numNodes * l.numComponents * getNumTimeSteps());
+  for(std::size_t i = 0; i < V.size(); i++) V[i] = l.val[i];
 
   // reverse node order
-  for(int i = 0; i < _lastNumNodes; i++) {
-    _lastXYZ[i] = XYZ[_lastNumNodes - i - 1];
-    _lastXYZ[_lastNumNodes + i] = XYZ[2 * _lastNumNodes - i - 1];
-    _lastXYZ[2 * _lastNumNodes + i] = XYZ[3 * _lastNumNodes - i - 1];
+  for(int i = 0; i < l.numNodes; i++) {
+    l.xyz[i] = XYZ[l.numNodes - i - 1];
+    l.xyz[l.numNodes + i] = XYZ[2 * l.numNodes - i - 1];
+    l.xyz[2 * l.numNodes + i] = XYZ[3 * l.numNodes - i - 1];
   }
 
   for(int step = 0; step < getNumTimeSteps(); step++)
-    for(int i = 0; i < _lastNumNodes; i++)
-      for(int k = 0; k < _lastNumComponents; k++)
-        _lastVal[_lastNumComponents * _lastNumNodes * step +
-                 _lastNumComponents * i + k] =
-          V[_lastNumComponents * _lastNumNodes * step +
-            _lastNumComponents * (_lastNumNodes - i - 1) + k];
+    for(int i = 0; i < l.numNodes; i++)
+      for(int k = 0; k < l.numComponents; k++)
+        l.val[l.numComponents * l.numNodes * step +
+                 l.numComponents * i + k] =
+          V[l.numComponents * l.numNodes * step +
+            l.numComponents * (l.numNodes - i - 1) + k];
 }
 
 static void generateConnectivities(std::vector<double> &list, int nbList,

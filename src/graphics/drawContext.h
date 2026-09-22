@@ -14,14 +14,19 @@
 #include "SBoundingBox3d.h"
 #include "SPoint2.h"
 #include "Camera.h"
-
-// the OpenGL headers, and the entry points that came after OpenGL 1.1
 #include "glApi.h"
-// the immediate mode drawing the decorations of the scene are made of
 #include "glImmediate.h"
-
 #include "GmshConfig.h"
 #include "VertexArray.h"
+
+class GModel;
+class GEntity;
+class GVertex;
+class GEdge;
+class GFace;
+class GRegion;
+class MElement;
+class PView;
 
 #if defined(HAVE_VISUDEV)
 #define NORMAL_GLTYPE GL_FLOAT
@@ -44,33 +49,32 @@ enum {
   GMSH_DRAW_OFFSET = 4,
   GMSH_DRAW_IDENTIFIERS = 8
 };
-void gmshDrawVertexArray(VertexArray *va, GLenum type, int flags,
-                         const std::vector<std::pair<int, int> > *runs =
-                           nullptr);
 
-class GEntity;
-class PView;
+void drawVertexArray(VertexArray *va, GLenum type, int flags,
+                     const std::vector<std::pair<int, int> > *runs =
+                     nullptr);
 
 // which part of the scene a pass draws: everything transparent is drawn after
 // everything else, in one pass
-enum gmshTransparencyPass {
+enum TransparencyPass {
   TRANSPARENCY_ALL = 0,
   TRANSPARENCY_OPAQUE = 1,
   TRANSPARENCY_TRANSPARENT = 2
 };
+
 // Is anything in the scene transparent, through the Transparency options, the
 // colours of the options, or the colour of an entity? The geometry and the
 // mesh are transparent entire when the options' colours are; otherwise only
 // the entities whose own colour is, which a pass asks about one by one. A
 // view is transparent through the alpha of its colormap or its own factor.
-bool gmshGeometryIsTransparent();
-bool gmshGeometryColorsAreTransparent();
-bool gmshGeometryEntityIsTransparent(GEntity *e);
-bool gmshMeshIsTransparent();
-bool gmshMeshColorsAreTransparent();
-bool gmshMeshEntityIsTransparent(GEntity *e);
-bool gmshAnyViewIsTransparent();
-bool gmshViewIsTransparent(PView *p);
+bool geometryIsTransparent();
+bool geometryColorsAreTransparent();
+bool geometryEntityIsTransparent(GEntity *e);
+bool meshIsTransparent();
+bool meshColorsAreTransparent();
+bool meshEntityIsTransparent(GEntity *e);
+bool anyViewIsTransparent();
+bool viewIsTransparent(PView *p);
 
 // The points of the 2D graphs a picking pass can return: numbered as they are
 // drawn into it (drawGraph2d.cpp), forgotten with it, and looked up by the
@@ -78,17 +82,10 @@ bool gmshViewIsTransparent(PView *p);
 void clearGraph2dDataPointTags();
 SPoint2 getGraph2dDataPointForTag(unsigned int tag);
 
-class GModel;
 // GModel::getMeshStatus() for the drawing, which asks it several times a
 // frame: computed again only when the mesh, the geometry or the visibilities
 // have changed (see CTX::meshChanged())
 int drawMeshStatus(GModel *m);
-
-class GVertex;
-class GEdge;
-class GFace;
-class GRegion;
-class MElement;
 
 class drawTransform {
 public:
@@ -227,17 +224,22 @@ public:
   // a pass either draws the scene or draws it in picking colours
   enum RenderMode { GMSH_RENDER = 1, GMSH_SELECT = 2 };
   int render_mode; // current rendering mode
-  // which half of the scene is being drawn, see gmshTransparencyPass
+  // which half of the scene is being drawn, see TransparencyPass
   int transparencyPass;
+  // does this pass draw something that is (or is not) transparent? A mixed
+  // mesh or geometry draws its opaque entities in the opaque pass and the
+  // others in the transparent one.
+  bool passWants(bool transparent) const
+  {
+    return transparencyPass == TRANSPARENCY_ALL ||
+           (transparencyPass == TRANSPARENCY_TRANSPARENT) == transparent;
+  }
   // true while the scene is drawn into the shadow map of the studio shading:
   // only the model is drawn then, no strings or images
   bool shadowPass;
   // the frame being accumulated in studio shading: 0 draws the plain frame,
   // higher ones jitter the light, the dome and the projection
   int studioSample;
-  // the shift of the projection of the frame being accumulated, a fraction
-  // of a pixel, which antialiases the average (identity on the plain frame
-  // and when picking)
 
 private:
   // Colour buffer picking: a selection pass draws every pickable object in a
@@ -312,13 +314,16 @@ private:
   // The steps of a frame, called by draw3d(), draw2d() and the picking pass
   // and by nothing outside this class: the order they go in is what a frame
   // is, and is not something a caller picks.
+  // (the shift of the projection of the frame being accumulated, a fraction
+  // of a pixel, which antialiases the average: identity on the plain frame
+  // and when picking)
   void studioJitter(double m[16]);
   void initProjection();
   void drawGeom();
   void drawMesh();
   void drawPost();
   void drawBackgroundGradient();
-  void drawBackgroundImage(bool moving);
+  void drawBackgroundImage(bool threeD);
   void drawText2d();
   void drawGraph2d(bool inModelCoordinates);
   void drawAxes();

@@ -32,6 +32,7 @@ class ACIS_Internals;
 class Parasolid_Internals;
 class smooth_normals;
 class FieldManager;
+class PViewDataGModel;
 class discreteFace;
 class discreteRegion;
 class MElementOctree;
@@ -938,6 +939,15 @@ public:
   int readMED(const std::string &name, int meshIndex);
   int writeMED(const std::string &name, bool saveAll = false,
                double scalingFactor = 1.0);
+
+  // VTK XML unstructured grid format, with a step of model-based views (the
+  // reader also takes the .pvd of a time series)
+  int readVTU(const std::string &name);
+  int writeVTU(const std::string &name, bool binary = false,
+               bool saveAll = false, double scalingFactor = 1.0,
+               const std::vector<PViewDataGModel *> &views =
+                 std::vector<PViewDataGModel *>(),
+               int step = 0);
 
   // VTK format
   int readVTK(const std::string &name, bool bigEndian = false);

@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "Context.h"
 #include "OS.h"
+#include "GmshMessage.h"
 #include "GamePad.h"
 
 #if defined(HAVE_FLTK)
@@ -91,7 +92,7 @@ void CTX::init()
   // the current value to detect changes
   for(int d = 0; d < 4; d++) mesh.stamp[d] = 0;
   for(int d = 0; d < 4; d++) geom.stamp[d] = 0;
-  entityColorsStamp = entityVisibilityStamp = 0;
+  entityColorsStamp = entityVisibilityStamp = meshContentStamp = 0;
   mesh.qualityInf = mesh.qualitySup = mesh.qualityType = 0;
   mesh.radiusInf = mesh.radiusSup = 0;
   mesh.lines = mesh.triangles = mesh.tetrahedra = mesh.quadrangles = 0;
@@ -176,4 +177,10 @@ int CTX::unpackAlpha(unsigned int X)
     return ( (X) & 0xff );
   else
     return ( ( (X) >> 24 ) & 0xff );
+}
+
+int CTX::numThreadsFor(std::size_t num, std::size_t worthIt) const
+{
+  if(num < worthIt) return 1;
+  return numThreads ? numThreads : Msg::GetMaxThreads();
 }

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "drawContext.h"
 #include "GModelVertexArrays.h"
+#include "OS.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "MPoint.h"
@@ -27,17 +28,17 @@
 #include "partitionRegion.h"
 #include "Context.h"
 #include "OwnerCache.h"
+#include "ClipPlanes.h"
 #include "glyphList.h"
 #include "gl2ps.h"
 #include "VertexArray.h"
 #include "PView.h"
 #include "PViewData.h"
 
-
 template <class T>
 static void drawElementLabels(drawContext *ctx, GEntity *e,
-                              std::vector<T *> &elements, int forceColor = 0,
-                              unsigned int color = 0)
+                              std::vector<T *> &elements, int forceColor,
+                              unsigned int color)
 {
   unsigned col = forceColor ? color : getColorByEntity(e);
   gmshColor4ubv((const void *)&col);
@@ -212,8 +213,7 @@ template <class F> static void forMeshEntities(GModel *m, int dim, F f)
   }
 }
 
-// how the edges of the elements of a dimension are lit, and whether they take
-// the colour of the lines (when the faces are drawn) rather than their own
+// how the edges of the elements of a dimension are lit
 static bool edgesLit(int dim)
 {
   CTX *c = CTX::instance();
@@ -222,6 +222,8 @@ static bool edgesLit(int dim)
                                       false);
 }
 
+// do they take the colour of the lines (when the faces are drawn) rather
+// than their own?
 static int edgesForced(int dim)
 {
   CTX *c = CTX::instance();
@@ -264,17 +266,13 @@ static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
   tok.add(CTX::instance()->mesh.qualitySup);
   tok.add(CTX::instance()->mesh.radiusInf);
   tok.add(CTX::instance()->mesh.radiusSup);
+  tok.add(CTX::instance()->elementTypesKey());
   // which elements whole element mode keeps, which depends on the other
   // entities of the model as well
   CTX *c = CTX::instance();
   if(c->mesh.clip && c->clipWholeElements) {
     tok.add(c->entityVisibilityStamp);
-    tok.add(c->mesh.clip);
-    tok.add(c->clipOnlyVolume);
-    tok.add(c->clipOnlyDrawIntersectingVolume);
-    for(int i = 0; i < 6; i++)
-      if(c->mesh.clip & (1 << i))
-        for(int j = 0; j < 4; j++) tok.add(c->clipPlane[i][j]);
+    tok.add(c->clipKey(c->mesh.clip));
   }
   return !glyphCache::get(e, GLYPH_NODES, tok, g);
 }
@@ -305,15 +303,40 @@ static void drawNodes(drawContext *ctx, GEntity *e, W walk)
   }
 }
 
+// is this node beyond one of the clipping planes of the mesh?
+static bool nodeIsBeyondAPlane(MVertex *v)
+{
+  return clipPlanes::removes(CTX::instance()->mesh.clip, v->x(), v->y(),
+                             v->z());
+}
+
+// (see keptNodes())
+struct keptNodeSet {
+  std::vector<double> token;
+  std::unordered_set<MVertex *> nodes;
+  bool all; // nodes holds every kept node, not those of the cut elements alone
+  bool keeps(MVertex *v, int dim) const
+  {
+    if(nodes.count(v)) return true;
+    if(all) return false;
+    CTX *c = CTX::instance();
+    // the elements of a volume are all removed but the cut ones
+    if(dim == 3 && c->clipOnlyDrawIntersectingVolume) return false;
+    // the planes are not applied to the elements of a curve or a surface
+    if(dim < 3 && c->clipOnlyVolume) return true;
+    return !nodeIsBeyondAPlane(v);
+  }
+};
+
 // the nodes of an entity: spheres are collected into the list (kept between
 // frames) when it asks for it, labels are drawn either way; only those in the
 // set, if one is given
 static void drawVerticesPerEntity(drawContext *ctx, GEntity *e, glyphList *g,
-                                  int what,
-                                  const std::unordered_set<MVertex *> *only)
+                                  int what, const keptNodeSet *only)
 {
-  auto shown = [only](MVertex *v) {
-    return v->getVisibility() && (!only || only->count(v));
+  int dim = e->dim();
+  auto shown = [only, dim](MVertex *v) {
+    return v->getVisibility() && (!only || only->keeps(v, dim));
   };
   if(what & NODES_COLLECT) {
     g->reserve(GLYPH_SPHERE, e->mesh_vertices.size());
@@ -581,7 +604,7 @@ static int meshDrawFlags(VertexArray *va, bool light)
 // draw one of the merged arrays: it always carries its own colours
 static void drawMergedArray(VertexArray *va, GLenum type, bool useNormalArray)
 {
-  gmshDrawVertexArray(va, type,
+  drawVertexArray(va, type,
                       meshDrawFlags(va, useNormalArray) | GMSH_DRAW_COLORS);
 }
 
@@ -752,7 +775,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
     if(!forceColor) color = getColorByEntity(e);
     gmshColor4ubv((const void *)&color);
   }
-  gmshDrawVertexArray(va, type,
+  drawVertexArray(va, type,
                       meshDrawFlags(va, useNormalArray) |
                         (colors ? GMSH_DRAW_COLORS : 0));
   if(overlay) glDepthFunc(GL_LESS);
@@ -760,46 +783,93 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
 
 // The nodes of the elements whole element mode keeps, which include those of
 // the cut elements beyond the planes; per model, built again when the mesh,
-// the visibilities, the planes or the elements shown change
-struct keptNodeSet {
-  std::vector<double> token;
-  std::unordered_set<MVertex *> nodes;
-};
+// the visibilities, the planes or the elements shown change.
+//
+// A node that no plane removes belongs to kept elements only, and one that a
+// plane removes is kept by the cut elements it belongs to: so that the nodes
+// of the cut elements are all there is to look for, and the elements of the
+// volumes that may be cut are told from their spheres (see ElementSpheres.h).
+// That holds if every element is drawn; if some are hidden, by their
+// visibility, their type, or the ranges of quality and size, the nodes of
+// every kept element are gathered as before.
 static OwnerCache<keptNodeSet> _keptNodes;
 
-static const std::unordered_set<MVertex *> &keptNodes(GModel *m)
+static const keptNodeSet &keptNodes(GModel *m)
 {
   CTX *c = CTX::instance();
   std::vector<double> tok = {
     (double)c->mesh.stamp[0], (double)c->mesh.stamp[1],
     (double)c->mesh.stamp[2], (double)c->mesh.stamp[3],
-    (double)c->entityVisibilityStamp, (double)c->mesh.clip,
-    (double)c->clipOnlyVolume, (double)c->clipOnlyDrawIntersectingVolume,
+    (double)c->entityVisibilityStamp,
     c->mesh.qualityInf, c->mesh.qualitySup, c->mesh.radiusInf,
     c->mesh.radiusSup};
   c->addElementTypesToKey(tok);
-  for(int i = 0; i < 6; i++)
-    for(int j = 0; j < 4; j++) tok.push_back(c->clipPlane[i][j]);
+  c->addClipToKey(tok, c->mesh.clip);
   keptNodeSet &k = _keptNodes[m];
-  if(k.token == tok) return k.nodes;
+  if(k.token == tok) return k;
   k.token = tok;
   k.nodes.clear();
+  double t1 = TimeOfDay();
+
+  // is every element drawn?
+  k.all = c->mesh.qualitySup || c->mesh.radiusSup || !c->mesh.triangles ||
+          !c->mesh.quadrangles || !c->mesh.polygons || !c->mesh.tetrahedra ||
+          !c->mesh.hexahedra || !c->mesh.prisms || !c->mesh.pyramids ||
+          !c->mesh.trihedra || !c->mesh.polyhedra;
+  // (the flag telling that some elements are hidden is only kept up to date
+  // for the entities that have arrays: not for the points)
+  for(int dim = 0; dim <= 3 && !k.all; dim++)
+    forMeshEntities(m, dim, [&](GEntity *e) {
+      if(!e->getVisibility() || (dim && e->getOnlySomeElementsVisible()))
+        k.all = true;
+    });
+  for(auto it = m->firstVertex(); it != m->lastVertex() && !k.all; it++)
+    for(auto p : (*it)->points)
+      if(!isElementVisible(p)) k.all = true;
+
   auto add = [&](MElement *ele) {
     if(!isElementVisible(ele) || !elementIsKept(ele)) return;
     for(std::size_t j = 0; j < ele->getNumVertices(); j++)
       k.nodes.insert(ele->getVertex(j));
   };
-  for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
-    if((*it)->getVisibility())
-      for(auto p : (*it)->points) add(p);
-  for(int dim = 1; dim <= 3; dim++)
-    forMeshEntities(m, dim, [&](GEntity *e) {
-      if(!e->getVisibility()) return;
-      forShownElements(e, [&](auto &elements) {
-        for(auto ele : elements) add(ele);
+  if(k.all) {
+    for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
+      if((*it)->getVisibility())
+        for(auto p : (*it)->points) add(p);
+    for(int dim = 1; dim <= 3; dim++)
+      forMeshEntities(m, dim, [&](GEntity *e) {
+        if(!e->getVisibility()) return;
+        forShownElements(e, [&](auto &elements) {
+          for(auto ele : elements) add(ele);
+        });
       });
-    });
-  return k.nodes;
+    Msg::Debug("Nodes of the kept elements: %zu in %g s", k.nodes.size(),
+               TimeOfDay() - t1);
+    return k;
+  }
+
+  // the nodes of the kept elements that have a node beyond a plane: of the
+  // curves and surfaces (few elements: all looked at), and of the volumes
+  if(!c->clipOnlyVolume)
+    for(int dim = 1; dim <= 2; dim++)
+      forMeshEntities(m, dim, [&](GEntity *e) {
+        forShownElements(e, [&](auto &elements) {
+          for(auto ele : elements) {
+            bool beyond = false;
+            for(std::size_t j = 0; j < ele->getNumVertices() && !beyond; j++)
+              beyond = nodeIsBeyondAPlane(ele->getVertex(j));
+            if(beyond) add(ele);
+          }
+        });
+      });
+  for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
+    std::vector<MElement *> cut;
+    getElementsNearClipPlanes(*it, cut);
+    for(auto ele : cut) add(ele);
+  }
+  Msg::Debug("Nodes of the cut elements: %zu in %g s", k.nodes.size(),
+             TimeOfDay() - t1);
+  return k;
 }
 
 // The nodes of an entity: all of them, or those of the elements shown - the
@@ -809,15 +879,13 @@ static const std::unordered_set<MVertex *> &keptNodes(GModel *m)
 static void drawEntityNodes(drawContext *ctx, GEntity *e)
 {
   CTX *c = CTX::instance();
-  const std::unordered_set<MVertex *> *only = nullptr;
-  bool planes[6];
-  if(c->mesh.clip && c->clipWholeElements) {
+  // the nodes whole element mode keeps (not looked for unless nodes are
+  // drawn), drawn with the planes off
+  const keptNodeSet *only = nullptr;
+  if(c->mesh.clip && c->clipWholeElements &&
+     (c->mesh.nodes || c->mesh.nodeLabels))
     only = &keptNodes(e->model());
-    for(int i = 0; i < 6; i++) {
-      planes[i] = gmshClipPlaneEnabled(i);
-      gmshClipPlaneOn(i, false);
-    }
-  }
+  clipPlanes::off planesOff(only != nullptr);
   drawNodes(ctx, e, [&](glyphList *g, int what) {
     if(only || e->dim() == 0 || !e->getOnlySomeElementsVisible())
       drawVerticesPerEntity(ctx, e, g, what, only);
@@ -828,17 +896,6 @@ static void drawEntityNodes(drawContext *ctx, GEntity *e)
       });
     }
   });
-  if(only)
-    for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, planes[i]);
-}
-
-// does this pass draw this entity? A mixed mesh draws its opaque entities in
-// the opaque pass and the others in the transparent one
-static bool passWants(drawContext *ctx, GEntity *e)
-{
-  if(ctx->transparencyPass == TRANSPARENCY_ALL) return true;
-  return (ctx->transparencyPass == TRANSPARENCY_TRANSPARENT) ==
-         gmshMeshEntityIsTransparent(e);
 }
 
 // what an entity draws of its mesh: its edges and faces (unless merged), the
@@ -846,7 +903,7 @@ static bool passWants(drawContext *ctx, GEntity *e)
 // recorded for the whole model), the duals
 static void drawMeshEntity(drawContext *ctx, GEntity *e)
 {
-  if(!e->getVisibility() || !passWants(ctx, e)) return;
+  if(!e->getVisibility() || !ctx->passWants(meshEntityIsTransparent(e))) return;
   CTX *c = CTX::instance();
   int dim = e->dim();
 
@@ -899,8 +956,7 @@ static void drawMeshEntity(drawContext *ctx, GEntity *e)
 // element mode are drawn with them off)
 static void setMeshClipPlanes(bool on)
 {
-  for(int i = 0; i < 6; i++)
-    gmshClipPlaneOn(i, on && (CTX::instance()->mesh.clip & (1 << i)));
+  clipPlanes::on(on ? CTX::instance()->mesh.clip : 0);
 }
 
 // Draw what the clipping planes add for the entities of a dimension: the
@@ -909,10 +965,9 @@ static void setMeshClipPlanes(bool on)
 // clipped to what the planes cut off, so that they sit next to the clipped
 // rest without overlapping it (a transparent mesh would show the overlap);
 // the fixed function pipeline draws them whole with the planes off, as does
-// either when nothing else is drawn (whole = true) or the planes are already
-// off.
+// either when nothing else is drawn (cutOnly) or the planes are already off.
 static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
-                           bool whole = false)
+                           bool cutOnly = false)
 {
   bool any = false;
   forMeshEntities(m, dim, [&](GEntity *e) {
@@ -920,20 +975,20 @@ static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
   });
   if(!any) return;
   CTX *c = CTX::instance();
-  // the section (only volumes have one) is clipped as the rest
-  bool section = !c->clipWholeElements;
+  // the section of capping mode (only volumes have one) is clipped as the rest
+  bool capping = !c->clipWholeElements;
   bool planesOn = false;
   for(int i = 0; i < 6; i++)
     if(gmshClipPlaneEnabled(i)) planesOn = true;
-  bool outside = gmshUseShaders() && planesOn && !whole;
-  if(!section) {
+  bool outside = glShader::enabled() && planesOn && !cutOnly;
+  if(!capping) {
     if(outside)
-      gmshClipOutside(true);
+      clipPlanes::outside(true);
     else
       setMeshClipPlanes(false);
   }
   forMeshEntities(m, dim, [&](GEntity *e) {
-    if(!e->getVisibility() || !passWants(ctx, e)) return;
+    if(!e->getVisibility() || !ctx->passWants(meshEntityIsTransparent(e))) return;
     if(!e->va_clip_lines && !e->va_clip_triangles) return;
     ctx->setPickColorFor(e);
     // lit and coloured as the entities draw their own lines and faces
@@ -944,9 +999,9 @@ static void drawClipArrays(drawContext *ctx, GModel *m, int dim,
     drawArrays(ctx, e, e->va_clip_triangles, GL_TRIANGLES, c->mesh.light);
     if(ctx->render_mode == drawContext::GMSH_SELECT) ctx->unsetPickColor();
   });
-  if(!section) {
+  if(!capping) {
     if(outside)
-      gmshClipOutside(false);
+      clipPlanes::outside(false);
     else
       setMeshClipPlanes(true);
   }
@@ -1024,7 +1079,7 @@ static void drawDimension(drawContext *ctx, GModel *m, mergedArrays &ma,
   // only the cut volumes are drawn: their nodes all the same
   if(cutOnly && (c->mesh.nodes || c->mesh.nodeLabels))
     forMeshEntities(m, dim, [&](GEntity *e) {
-      if(!e->getVisibility() || !passWants(ctx, e)) return;
+      if(!e->getVisibility() || !ctx->passWants(meshEntityIsTransparent(e))) return;
       ctx->setPickColorFor(e);
       drawEntityNodes(ctx, e);
       if(ctx->render_mode == drawContext::GMSH_SELECT) ctx->unsetPickColor();
@@ -1045,20 +1100,18 @@ void drawContext::drawMesh()
 {
   // nothing of the mesh is opaque when the colours of the options are
   // transparent; otherwise the entities are sorted out one by one
-  if(transparencyPass == TRANSPARENCY_OPAQUE && gmshMeshColorsAreTransparent())
+  if(transparencyPass == TRANSPARENCY_OPAQUE && meshColorsAreTransparent())
     return;
-  if(transparencyPass == TRANSPARENCY_TRANSPARENT && !gmshMeshIsTransparent())
+  if(transparencyPass == TRANSPARENCY_TRANSPARENT && !meshIsTransparent())
     return;
   if(!CTX::instance()->mesh.draw) return;
 
-  // make sure to flag any model-dependent post-processing view as changed if
-  // the underlying mesh has
-  static int seen[4] = {0, 0, 0, 0};
-  bool meshChanged = false;
-  for(int d = 0; d < 4; d++) {
-    if(seen[d] != CTX::instance()->mesh.stamp[d]) meshChanged = true;
-    seen[d] = CTX::instance()->mesh.stamp[d];
-  }
+  // flag the post-processing views that depend on a model as changed if the
+  // mesh has (the mesh itself: not the options it is drawn with, which the
+  // views do not read)
+  static int seen = 0;
+  bool meshChanged = (seen != CTX::instance()->meshContentStamp);
+  seen = CTX::instance()->meshContentStamp;
   if(meshChanged) {
     for(std::size_t i = 0; i < GModel::list.size(); i++)
       for(std::size_t j = 0; j < PView::list.size(); j++)
@@ -1113,7 +1166,7 @@ void drawContext::drawMesh()
     // drawn merged - the split itself is decided by the whole scene, so
     // anything else transparent used to cost the mesh its merged arrays.
     bool mixed = transparencyPass != TRANSPARENCY_ALL &&
-                 !gmshMeshColorsAreTransparent() && gmshMeshIsTransparent();
+                 !meshColorsAreTransparent() && meshIsTransparent();
     bool merge = !inPickColorMode() && !mixed;
     // only the volume is clipped: curves and surfaces are drawn whole
     bool volumeOnly = c->clipWholeElements && c->clipOnlyVolume;
@@ -1145,5 +1198,5 @@ void drawContext::drawMesh()
     _merged.points = false;
   }
 
-  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
+  clipPlanes::on(0);
 }
