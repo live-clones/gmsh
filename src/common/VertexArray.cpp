@@ -19,42 +19,44 @@ unsigned int VertexArray::vboContext = 1;
 long int VertexArray::statUniqueIn = 0;
 long int VertexArray::statUniqueKept = 0;
 
-// fill a corner key with the N corners sorted lexicographically, so that an
-// element added with its corners in any order maps to the same key
+// fill a corner key with the N corners sorted lexicographically, each with its
+// color, so that an element added with its corners in any order maps to the
+// same key (with the color of its first corner only, a face shared by two
+// elements that list its corners in another order was drawn twice)
 template <int N>
 static inline void fillCornerKey(CornerKey<N> &k, double *x, double *y,
                                  double *z, unsigned char *r, unsigned char *g,
                                  unsigned char *b, unsigned char *a)
 {
   memset(&k, 0, sizeof(CornerKey<N>));
-  float px[N], py[N], pz[N];
+  float p[N][3];
+  unsigned char c[N][4] = {};
   for(int i = 0; i < N; i++) {
-    px[i] = (float)x[i];
-    py[i] = (float)y[i];
-    pz[i] = (float)z[i];
+    p[i][0] = (float)x[i];
+    p[i][1] = (float)y[i];
+    p[i][2] = (float)z[i];
+    if(r && g && b && a) {
+      c[i][0] = r[i];
+      c[i][1] = g[i];
+      c[i][2] = b[i];
+      c[i][3] = a[i];
+    }
   }
   // insertion sort: one comparison for a line, three at most for a triangle
+  auto before = [&](int i, int j) {
+    for(int d = 0; d < 3; d++)
+      if(p[i][d] != p[j][d]) return p[i][d] < p[j][d];
+    return false;
+  };
   for(int i = 1; i < N; i++) {
-    for(int j = i; j > 0; j--) {
-      if(px[j] > px[j - 1] ||
-         (px[j] == px[j - 1] &&
-          (py[j] > py[j - 1] || (py[j] == py[j - 1] && pz[j] >= pz[j - 1]))))
-        break;
-      std::swap(px[j], px[j - 1]);
-      std::swap(py[j], py[j - 1]);
-      std::swap(pz[j], pz[j - 1]);
+    for(int j = i; j > 0 && before(j, j - 1); j--) {
+      std::swap(p[j], p[j - 1]);
+      std::swap(c[j], c[j - 1]);
     }
   }
   for(int i = 0; i < N; i++) {
-    k.p[3 * i] = px[i];
-    k.p[3 * i + 1] = py[i];
-    k.p[3 * i + 2] = pz[i];
-  }
-  if(r && g && b && a) {
-    k.c[0] = r[0];
-    k.c[1] = g[0];
-    k.c[2] = b[0];
-    k.c[3] = a[0];
+    for(int d = 0; d < 3; d++) k.p[3 * i + d] = p[i][d];
+    for(int d = 0; d < 4; d++) k.c[4 * i + d] = c[i][d];
   }
 }
 

@@ -32,15 +32,15 @@ typedef char normal_type;
 class MElement;
 
 // key used by the "unique" filter to detect elements drawn several times
-// (e.g. an edge shared by several tetrahedra): the N corners in sorted order
-// plus the color. The alignment rounds the size up to a multiple of 8 bytes
-// so that the key can be hashed word by word; the padding is zeroed.
+// (e.g. an edge shared by several tetrahedra): the N corners in sorted order,
+// each with its color. The alignment rounds the size up to a multiple of 8
+// bytes so that the key can be hashed word by word; the padding is zeroed.
 template <int N> class alignas(8) CornerKey {
 public:
   float p[3 * N];
-  unsigned char c[4];
+  unsigned char c[4 * N];
 };
-static_assert(sizeof(CornerKey<2>) == 32 && sizeof(CornerKey<3>) == 40,
+static_assert(sizeof(CornerKey<2>) == 32 && sizeof(CornerKey<3>) == 48,
               "a corner key is hashed as whole 64 bit words");
 
 // hash of a key made of 64 bit words; the filter only stores the hash, so

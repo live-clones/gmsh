@@ -204,13 +204,12 @@ private:
 public:
   int ent = 0, ele = 0, type = 0, dim = 0, numNodes = 0, numComp = 0;
   double **xyz = nullptr, **val = nullptr;
-  std::vector<std::size_t> nodeIds;
   // take the element ele of the entity ent; false if it is not drawn: skipped
   // by the sampling or the options, or with more nodes or components than can
   // be drawn (with a warning, once)
   bool select(PView *p, int ent, int ele);
-  // read its nodes (and their identifiers, if asked) and its values
-  void read(PView *p, bool ids = false);
+  // read its nodes and its values
+  void read(PView *p);
 };
 
 #endif

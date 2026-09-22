@@ -112,9 +112,6 @@ public:
   PViewOptions *opt;
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;
   smooth_normals *normals;
-  // identifiers of the nodes of the element being drawn, or null when the data
-  // has no topology and none could be recreated
-  std::size_t *nodeIds;
   // the entity it belongs to
   int ent;
   // what is gathered: everything, or only what the clipping planes add (the
@@ -134,7 +131,7 @@ public:
     : view(p), opt(p->getOptions()), va_points(p->va_points),
       va_lines(p->va_lines), va_triangles(p->va_triangles),
       va_vectors(p->va_vectors), va_ellipses(p->va_ellipses),
-      normals(p->normals), nodeIds(nullptr), ent(0), collect(COLLECT_ALL),
+      normals(p->normals), ent(0), collect(COLLECT_ALL),
       skinMask(-1), skinShape(nullptr), skin(nullptr), element(0)
   {
   }
@@ -399,36 +396,6 @@ static bool skinOnly(PViewOptions *opt)
           opt->intervalsType == PViewOptions::Discrete);
 }
 
-// skip an element already added, identified by its nodes rather than by
-// coordinates; clears `unique' when the check was done here
-static bool topoDuplicate(VertexArray *va, const std::size_t *nodeIds,
-                          bool &unique, const int *idx, int n,
-                          const unsigned int *col)
-{
-  if(!unique || !nodeIds) return false;
-
-  std::uint64_t k[8];
-  for(int i = 0; i < n; i++) {
-    if(!nodeIds[idx[i]]) return false; // no topology for this node
-    k[2 * i] = nodeIds[idx[i]];
-    k[2 * i + 1] = col[i];
-  }
-  // sort the (node, color) pairs by node; the color is part of the key
-  for(int i = 1; i < n; i++)
-    for(int j = i; j > 0 && k[2 * j] < k[2 * (j - 1)]; j--) {
-      std::swap(k[2 * j], k[2 * (j - 1)]);
-      std::swap(k[2 * j + 1], k[2 * (j - 1) + 1]);
-    }
-
-  unique = false;
-  if(va->getUniqueFilter(false)->isDuplicate(k, 2 * n)) {
-    va->addUniqueStats(n, 0);
-    return true;
-  }
-  va->addUniqueStats(n, n);
-  return false;
-}
-
 // With smoothed normals, the normal at a point is the average of those of
 // the faces through it: gathered by the pass that only collects them (pre),
 // read back by the one that draws.
@@ -556,8 +523,6 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
        val[i1][0] <= vmax) {
       unsigned int col[2];
       for(int i = 0; i < 2; i++) col[i] = opt->getColor(v[i], vmin, vmax);
-      const int ii[2] = {i0, i1};
-      if(topoDuplicate(p->va_lines, p->nodeIds, unique, ii, 2, col)) return;
       p->va_lines->add(x, y, z, n, col, nullptr, unique);
     }
     else {
@@ -676,10 +641,6 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
         smoothNormal(p, pre, x[i], y[i], z[i], n[i]);
         col[i] = opt->getColor(v[i], vmin, vmax);
       }
-      const int ii[3] = {i0, i1, i2};
-      if(!pre &&
-         topoDuplicate(p->va_triangles, p->nodeIds, unique, ii, 3, col))
-        return;
       if(!pre) p->va_triangles->add(x, y, z, n, col, nullptr, unique);
     }
     else {
@@ -934,7 +895,7 @@ static const elementSpheres *getSpheres(PView *p, const flatElements &flat)
     flat.forRange(flat.num * t / nthreads, flat.num * (t + 1) / nthreads,
                   [&](int ent, int ele, std::size_t i) {
                     if(!el.select(p, ent, ele)) return;
-                    el.read(p, false);
+                    el.read(p);
                     sp.set(i, el.dim, el.numNodes,
                            [&](int j, int k) { return el.xyz[j][k]; });
                   });
@@ -1140,7 +1101,7 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
         int nn = ph ? el.numNodes : solidCorners[sh];
         if(el.numNodes < nn) return;
         if(keptOnly || throughPlanes) {
-          el.read(p, false);
+          el.read(p);
           if(keptOnly ? !elementIsCut(opt, el.dim, el.numNodes, el.xyz) :
                         !isElementVisible(opt, el.dim, el.numNodes, el.xyz))
             return;
@@ -2036,7 +1997,7 @@ bool PViewElement::select(PView *p, int ient, int iele)
   return true;
 }
 
-void PViewElement::read(PView *p, bool ids)
+void PViewElement::read(PView *p)
 {
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
@@ -2053,10 +2014,8 @@ void PViewElement::read(PView *p, bool ids)
   }
   xyz = _xyzRows.data();
   val = _valRows.data();
-  if(ids) nodeIds.resize(numNodes);
   for(int j = 0; j < numNodes; j++) {
     data->getNode(step, ent, ele, j, xyz[j][0], xyz[j][1], xyz[j][2]);
-    if(ids) nodeIds[j] = data->getNodeId(step, ent, ele, j);
     if(opt->forceNumComponents) {
       for(int k = 0; k < opt->forceNumComponents; k++) {
         int comp = opt->componentMap[k];
@@ -2109,11 +2068,6 @@ static void addElementRange(drawTarget *p, PViewData *data,
   bool nearPlanes = spheres && planes.num() &&
                     (p->collect == drawTarget::COLLECT_CAPS ||
                      p->collect == drawTarget::COLLECT_CUT);
-  // elements are told apart by their nodes (shared edges drawn once, the
-  // skin) unless their coordinates are changed element by element: exploded
-  // or raised along their normal, they no longer meet at their nodes
-  bool topology = opt->explode == 1. && !opt->normalRaise && !opt->useGenRaise;
-
   // the entity the range starts in
   std::size_t e = 0;
   while(e + 1 < ents.size() && start[e + 1] <= first) e++;
@@ -2153,8 +2107,7 @@ static void addElementRange(drawTarget *p, PViewData *data,
         else
           p->skinShape = solidShapes[sh];
       }
-      el.read(p->view, true);
-      p->nodeIds = topology ? el.nodeIds.data() : nullptr;
+      el.read(p->view);
       int type = el.type, dim = el.dim, numNodes = el.numNodes;
       int numComp = el.numComp;
       double **xyz = el.xyz, **val = el.val;
@@ -2195,7 +2148,6 @@ static void addElementRange(drawTarget *p, PViewData *data,
       }
     }
   }
-  p->nodeIds = nullptr;
   p->skinMask = -1;
 }
 
