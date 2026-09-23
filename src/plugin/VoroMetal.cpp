@@ -152,6 +152,8 @@ void voroMetal3D::execute(std::vector<SPoint3> &vertices,
   std::map<int, int> table;
   geo_cell obj;
 
+  if(vertices.empty()) return;
+
   min_x = 1000000000.0;
   max_x = -1000000000.0;
   min_y = 1000000000.0;
@@ -1034,6 +1036,10 @@ static void microstructure(const char *filename)
     file >> xMax;
     file >> yMax;
     file >> zMax;
+    if(!file || max < 1) {
+      Msg::Error("Could not read the number of seeds in '%s'", filename);
+      return;
+    }
     properties.clear();
     properties.resize(4 * max);
     for(j = 0; j < max; j++) {
@@ -1071,6 +1077,10 @@ static void computeBestSeeds(const char *filename)
     file >> xMax;
     file >> yMax;
     file >> zMax;
+    if(!file || max < 1) {
+      Msg::Error("Could not read the number of seeds in '%s'", filename);
+      return;
+    }
     properties.clear();
     properties.resize(4 * max);
     for(j = 0; j < max; j++) {
