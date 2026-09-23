@@ -3,7 +3,8 @@
 # runs a plugin on it) in a process of its own, in a directory of its own, and
 # summarizes what it leaves behind: the mesh (nodes, elements of each type,
 # physical groups), every view (for each kind of list or each step of model
-# data: counts, sum, sum of absolute values, min and max of what it holds) and
+# data: counts, sum, sum of absolute values, min and max of what it holds, and
+# the sum of the vector areas of the triangles and quadrangles of lists) and
 # the names of the files written. Checks the summaries against ref.json.
 #
 #   python3 run.py [-o dir] [--api dir] [-j jobs] [--update] [cases...]
@@ -25,7 +26,7 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REF = os.path.join(HERE, 'ref.json')
-RTOL = 1e-6  # relative to the sum of absolute values
+RTOL = 1e-6  # relative to the largest number of a list
 
 
 def stats(values):
@@ -33,6 +34,26 @@ def stats(values):
         return [0, 0., 0., 0., 0.]
     return [len(values), math.fsum(values), math.fsum(abs(v) for v in values),
             float(min(values)), float(max(values))]
+
+
+def vector_area(t, n, d):
+    # sum of the vector areas of the triangles or quadrangles of a list, which
+    # depends on their orientation (the other sums do not)
+    m = {'T': 3, 'Q': 4}.get(t[1])
+    if not m or not n:
+        return None
+    k = len(d) // n
+    s = [0., 0., 0.]
+    for i in range(n):
+        e = d[i * k:i * k + 3 * m]
+        p = [(e[j], e[m + j], e[2 * m + j]) for j in range(m)]
+        for j in range(1, m - 1):  # fan of triangles
+            a = [p[j][c] - p[0][c] for c in range(3)]
+            b = [p[j + 1][c] - p[0][c] for c in range(3)]
+            s[0] += 0.5 * (a[1] * b[2] - a[2] * b[1])
+            s[1] += 0.5 * (a[2] * b[0] - a[0] * b[2])
+            s[2] += 0.5 * (a[0] * b[1] - a[1] * b[0])
+    return s
 
 
 def summarize(gmsh):
@@ -55,6 +76,10 @@ def summarize(gmsh):
         if len(gmsh.logger.get()) == nerr:
             v['list'] = {t: [int(n)] + stats(d)[1:]
                          for t, n, d in zip(types, nums, data) if n}
+            for t, n, d in zip(types, nums, data):
+                a = vector_area(t, n, d)
+                if a:
+                    v['list'][t + ' area'] = a
             for dim in (2, 3):
                 s = gmsh.view.getListDataStrings(tag, dim)[1]
                 if s:
@@ -121,9 +146,10 @@ def differences(a, b, path=''):
     if isinstance(a, list) and isinstance(b, list):
         if len(a) != len(b):
             return ['%s: length %d, ref %d' % (path, len(a), len(b))]
-        # count, sum, sum of absolute values, min, max: compare the four
-        # floating point numbers relative to the sum of absolute values
-        scale = abs(a[2]) if len(a) == 5 and isinstance(a[2], float) else 0
+        # the numbers of a list (count, sum, sum of absolute values, min, max,
+        # or the 3 components of an area) relative to the largest of them
+        nums = [abs(x) for x in a + b if isinstance(x, (int, float))]
+        scale = max(nums) if nums else 0
         d = []
         for i, (x, y) in enumerate(zip(a, b)):
             if isinstance(x, float) or isinstance(y, float):
