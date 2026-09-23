@@ -59,9 +59,9 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
 
   int step = (thisStep < 0) ? 0 : thisStep;
   if(thisStep > data1->getNumTimeSteps() - 1) {
-    Msg::Error("Invalid time step (%d) in View[%d]: using first step instead",
+    Msg::Warning("Invalid time step (%d) in View[%d]: using first step instead",
                thisStep, v1->getIndex());
-    step = 0;
+    step = thisStep = 0;
   }
 
   PView *v2 = new PView();
@@ -93,6 +93,7 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
       int type = data1->getType(step, ent, ele);
       int numComp = data1->getNumComponents(step, ent, ele);
       std::vector<double> *out = data2->incrementList(numComp, type, numNodes);
+      if(!out) continue;
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       std::vector<double> v(numNodes * numComp);
       for(int nod = 0; nod < numNodes; nod++)
@@ -120,7 +121,7 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
     data2->Time.push_back(data1->getTime(thisStep));
   else {
     for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-      data2->Time.push_back(data1->getTime(step));
+      if(data1->hasTimeStep(step)) data2->Time.push_back(data1->getTime(step));
     }
   }
 

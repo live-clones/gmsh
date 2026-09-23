@@ -34,3 +34,8 @@ Plugin(ExtractElements).Dimension = 2;
 Plugin(ExtractElements).Run;
 Plugin(ExtractElements).Dimension = 1;
 Plugin(ExtractElements).Run;
+
+// a time step the view does not have: the first one is used (it crashed)
+Plugin(ExtractElements).View = 0;
+Plugin(ExtractElements).TimeStep = 5;
+Plugin(ExtractElements).Run;

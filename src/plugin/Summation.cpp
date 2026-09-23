@@ -11,13 +11,13 @@
 #include <algorithm>
 
 StringXNumber SummationOptions_Number[] = {
-  {GMSH_FULLRC, "View 0", nullptr, -1., ""}, {GMSH_FULLRC, "View 1", nullptr, -1., ""},
-  {GMSH_FULLRC, "View 2", nullptr, -1., ""}, {GMSH_FULLRC, "View 3", nullptr, -1., ""},
-  {GMSH_FULLRC, "View 4", nullptr, -1., ""}, {GMSH_FULLRC, "View 5", nullptr, -1., ""},
-  {GMSH_FULLRC, "View 6", nullptr, -1., ""}, {GMSH_FULLRC, "View 7", nullptr, -1., ""}};
+  {GMSH_FULLRC, "View0", nullptr, -1., ""}, {GMSH_FULLRC, "View1", nullptr, -1., ""},
+  {GMSH_FULLRC, "View2", nullptr, -1., ""}, {GMSH_FULLRC, "View3", nullptr, -1., ""},
+  {GMSH_FULLRC, "View4", nullptr, -1., ""}, {GMSH_FULLRC, "View5", nullptr, -1., ""},
+  {GMSH_FULLRC, "View6", nullptr, -1., ""}, {GMSH_FULLRC, "View7", nullptr, -1., ""}};
 
 StringXString SummationOptions_String[] = {
-  {GMSH_FULLRC, "Resuling View Name", nullptr, "default", ""}};
+  {GMSH_FULLRC, "ResultingViewName", nullptr, "default", ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterSummationPlugin()
@@ -28,14 +28,15 @@ GMSH_Plugin *GMSH_RegisterSummationPlugin()
 
 std::string GMSH_SummationPlugin::getHelp() const
 {
-  return "Plugin(Summation) sums every time steps "
-         "of 'Reference View' and (every) 'Other View X'"
-         "and store the result in a new view.\n"
-         "If 'View 0' < 0 then the current view is selected.\n"
-         "If 'View 1...8' < 0 then this view is skipped.\n"
-         "Views can have different number of time steps\n"
-         "Warning: the Plugin assume that every views share"
-         "the same mesh and that meshes do not move between time steps!";
+  return "Plugin(Summation) sums every time step of the views `View0', "
+         "..., `View7' and stores the result in a new view, named "
+         "`ResultingViewName' (unless it is `default').\n\n"
+         "If `View0' < 0, the current view is used; views `View1' to `View7' "
+         "< 0 are skipped.\n\n"
+         "The views can have different numbers of time steps, but they must "
+         "share the same mesh, and the mesh must not move between time "
+         "steps.\n\n"
+         "Plugin(Summation) creates one new list-based view.";
 }
 
 int GMSH_SummationPlugin::getNbOptions() const
@@ -94,6 +95,7 @@ PView *GMSH_SummationPlugin::execute(PView *view)
     if((pviewsdata[0]->getNumEntities() != pviewsdata[j]->getNumEntities()) ||
        (pviewsdata[0]->getNumElements() != pviewsdata[j]->getNumElements())) {
       Msg::Error("Summation plugin: views based on different grid.");
+      return view;
     }
   }
   // get min/max indices of time steps
@@ -116,13 +118,14 @@ PView *GMSH_SummationPlugin::execute(PView *view)
   for(int ent = 0; ent < pviewsdata[iref]->getNumEntities(stepref); ent++) {
     for(int ele = 0; ele < pviewsdata[iref]->getNumElements(stepref, ent);
         ele++) {
-      //      if(pviewsdata[0]->skipElement(timeBeg, ent, ele)) continue;
+      if(pviewsdata[iref]->skipElement(stepref, ent, ele)) continue;
       int numNodes = getNumCornerNodes(pviewsdata[iref], stepref, ent, ele);
       if(!numNodes) continue;
       int type = pviewsdata[iref]->getType(stepref, ent, ele);
       int numComp = pviewsdata[iref]->getNumComponents(stepref, ent, ele);
       int numComp2 = numComp;
       std::vector<double> *out = data2->incrementList(numComp2, type, numNodes);
+      if(!out) continue;
       std::vector<double> v(std::max(9, numComp), 0.);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       for(int nod = 0; nod < numNodes; nod++)
@@ -136,7 +139,9 @@ PView *GMSH_SummationPlugin::execute(PView *view)
           for(int comp = 0; comp < numComp; comp++) {
             v[comp] = 0;
             for(int iview = 0; iview < nviews; iview++) {
-              if(!pviewsdata[iview]->hasTimeStep(step)) continue;
+              if(!pviewsdata[iview]->hasTimeStep(step) ||
+                 pviewsdata[iview]->skipElement(step, ent, ele))
+                continue;
               double d;
               pviewsdata[iview]->getValue(step, ent, ele, nod, comp, d);
               v[comp] += d;
@@ -151,11 +156,9 @@ PView *GMSH_SummationPlugin::execute(PView *view)
   // Set time
   for(int step = timeBeg; step < timeEnd; step++) {
     int iview = 0;
-    for(iview = 0; iview < nviews; iview++) {
-      if(!pviewsdata[iview]->hasTimeStep(step)) continue;
-      break;
-    }
-    data2->Time.push_back(pviewsdata[iview]->getTime(step));
+    while(iview < nviews && !pviewsdata[iview]->hasTimeStep(step)) iview++;
+    data2->Time.push_back(iview < nviews ? pviewsdata[iview]->getTime(step) :
+                                           step);
   }
 
   std::string outputname = SummationOptions_String[0].def;
@@ -163,7 +166,7 @@ PView *GMSH_SummationPlugin::execute(PView *view)
     outputname = pviewsdata[0]->getName() + "_Summation";
 
   data2->setName(outputname);
-  data2->setFileName(outputname + "_Summation.pos");
+  data2->setFileName(outputname + ".pos");
   data2->finalize();
 
   return v2;

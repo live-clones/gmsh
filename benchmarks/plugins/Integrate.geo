@@ -29,3 +29,12 @@ Plugin(Integrate).Run;
 Merge "data/quads.pos";
 Plugin(Integrate).View = PostProcessing.NbViews - 4;
 Plugin(Integrate).Run;
+
+// over time from the second step, and over a single step (it crashed)
+Merge "data/square.pos";
+Plugin(Integrate).View = PostProcessing.NbViews - 4; // the scalar view
+Plugin(Integrate).OverTime = 1;
+Plugin(Integrate).Run;
+Plugin(Integrate).OverTime = 2;
+Plugin(Integrate).Run;
+Plugin(Integrate).OverTime = -1;

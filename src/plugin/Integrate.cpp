@@ -143,20 +143,23 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
   else {
     int firstStep = data1->getFirstNonEmptyTimeStep();
     int numSteps = data1->getNumTimeSteps();
+    bool warned = false;
     for(int ent = 0; ent < data1->getNumEntities(firstStep); ent++) {
       for(int ele = 0; ele < data1->getNumElements(firstStep, ent); ele++) {
         if(data1->skipElement(firstStep, ent, ele)) continue;
         int dim = data1->getDimension(firstStep, ent, ele);
         if((dimension > 0) && (dim != dimension)) continue;
 
+        if(data1->getNumComponents(firstStep, ent, ele) != 1) {
+          if(!warned) Msg::Warning("Can only integrate scalar views over time");
+          warned = true;
+          continue;
+        }
         int numNodes = getNumCornerNodes(data1, firstStep, ent, ele);
         if(!numNodes) continue;
         int type = data1->getType(firstStep, ent, ele);
-        int numComp = data1->getNumComponents(firstStep, ent, ele);
-        if(numComp != 1)
-          Msg::Error("Can only integrate scalar views over time");
-        std::vector<double> *out =
-          data2->incrementList(numComp, type, numNodes);
+        std::vector<double> *out = data2->incrementList(1, type, numNodes);
+        if(!out) continue;
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
         for(int nod = 0; nod < numNodes; nod++)
           data1->getNode(firstStep, ent, ele, nod, x[nod], y[nod], z[nod]);
@@ -165,7 +168,7 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
         for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
 
         std::vector<double> val, t;
-        for(int step = firstStep + overTime; step < numSteps - 1; step++) {
+        for(int step = firstStep + overTime; step < numSteps; step++) {
           if(!data1->hasTimeStep(step)) continue;
           t.push_back(data1->getTime(step));
           for(int nod = 0; nod < numNodes; nod++) {
@@ -175,7 +178,7 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
           }
         }
         std::vector<double> timeIntegral(numNodes, 0.);
-        for(std::size_t step = 0; step < t.size() - 1; step++) {
+        for(std::size_t step = 0; step + 1 < t.size(); step++) {
           double dt = t[step + 1] - t[step];
           for(int nod = 0; nod < numNodes; nod++) {
             timeIntegral[nod] += 0.5 *
