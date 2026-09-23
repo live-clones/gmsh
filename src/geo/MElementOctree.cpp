@@ -14,7 +14,6 @@
 #include "bezierBasis.h"
 #include "BasisFactory.h"
 #include "SBoundingBox3d.h"
-#include "Context.h"
 
 // The Bezier control points of a curved element, which bound it, as a linear
 // combination of its nodes: the same for all the elements of a type, so
@@ -154,7 +153,7 @@ void MElementOctree::_insert(MElement *e)
   _maxOrder = std::max(_maxOrder, e->getPolynomialOrder());
 }
 
-MElementOctree::MElementOctree(GModel *m) : _gm(m), _maxOrder(1)
+MElementOctree::MElementOctree(GModel *m) : _maxOrder(1), _maxTol(1.)
 {
   for(int d = 0; d < 4; d++)
     _octree[d] = Octree_Create(MElementBB);
@@ -177,7 +176,7 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m), _maxOrder(1)
 }
 
 MElementOctree::MElementOctree(const std::vector<MElement *> &v)
-  : _gm(nullptr), _maxOrder(1)
+  : _maxOrder(1), _maxTol(0.1)
 {
   for(int d = 0; d < 4; d++)
     _octree[d] = Octree_Create(MElementBB);
@@ -231,16 +230,15 @@ std::vector<MElement *> MElementOctree::_find(double *P, int dim, double tol,
 
 // Search with the tolerance tol (Mesh.ToleranceReferenceElement if negative),
 // then, if nothing is found and not strict, with the tolerance multiplied by
-// 10 until something is found or it reaches maxTol.
+// 10 until something is found or it reaches _maxTol.
 std::vector<MElement *> MElementOctree::_find(double *P, int dim, double tol,
-                                              bool strict, double maxTol,
-                                              bool onlyFirst) const
+                                              bool strict, bool onlyFirst) const
 {
   if(dim > 3) return {};
   if(tol < 0) tol = CTX::instance()->mesh.toleranceReferenceElement;
   std::vector<MElement *> e = _find(P, dim, tol, onlyFirst);
   if(strict) return e;
-  while(e.empty() && tol < maxTol) {
+  while(e.empty() && tol < _maxTol) {
     tol *= 10.;
     e = _find(P, dim, tol, onlyFirst);
   }
@@ -252,7 +250,7 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
                                                 double tol) const
 {
   double P[3] = {x, y, z};
-  return _find(P, dim, tol, strict, 1., false);
+  return _find(P, dim, tol, strict, false);
 }
 
 MElement *MElementOctree::findClosest(double x, double y, double z, int dim,
@@ -279,6 +277,6 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
                                bool strict, double tol) const
 {
   double P[3] = {x, y, z};
-  std::vector<MElement *> e = _find(P, dim, tol, strict, _gm ? 1. : 0.1, true);
+  std::vector<MElement *> e = _find(P, dim, tol, strict, true);
   return e.empty() ? nullptr : e[0];
 }

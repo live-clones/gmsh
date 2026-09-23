@@ -2162,8 +2162,7 @@ std::size_t GModel::getNumMeshElements(unsigned c[6])
   return 0;
 }
 
-MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
-                                        bool strict)
+MElementOctree *GModel::_getElementOctree()
 {
   if(!_elementOctree) {
 #pragma omp barrier
@@ -2173,7 +2172,13 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
       _elementOctree = new MElementOctree(this);
     }
   }
-  MElement *e = _elementOctree->find(p.x(), p.y(), p.z(), dim, strict);
+  return _elementOctree;
+}
+
+MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
+                                        bool strict)
+{
+  MElement *e = _getElementOctree()->find(p.x(), p.y(), p.z(), dim, strict);
   if(e) {
     double xyz[3] = {p.x(), p.y(), p.z()}, uvw[3];
     e->xyz2uvw(xyz, uvw);
@@ -2188,29 +2193,13 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
 MElement *GModel::getMeshElementClosestTo(const SPoint3 &p, int dim,
                                           double distance)
 {
-  if(!_elementOctree) {
-#pragma omp barrier
-#pragma omp single
-    {
-      Msg::Debug("Rebuilding mesh element octree");
-      _elementOctree = new MElementOctree(this);
-    }
-  }
-  return _elementOctree->findClosest(p.x(), p.y(), p.z(), dim, distance);
+  return _getElementOctree()->findClosest(p.x(), p.y(), p.z(), dim, distance);
 }
 
 std::vector<MElement *> GModel::getMeshElementsByCoord(SPoint3 &p, int dim,
                                                        bool strict)
 {
-  if(!_elementOctree) {
-#pragma omp barrier
-#pragma omp single
-    {
-      Msg::Debug("Rebuilding mesh element octree");
-      _elementOctree = new MElementOctree(this);
-    }
-  }
-  return _elementOctree->findAll(p.x(), p.y(), p.z(), dim, strict);
+  return _getElementOctree()->findAll(p.x(), p.y(), p.z(), dim, strict);
 }
 
 void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)

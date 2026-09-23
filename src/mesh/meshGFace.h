@@ -11,7 +11,6 @@
 #include <list>
 #include "SPoint2.h"
 #include "SVector3.h"
-#include "MElementOctree.h"
 
 class GEdge;
 class GFace;

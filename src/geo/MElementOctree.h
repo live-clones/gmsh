@@ -12,16 +12,22 @@ class Octree;
 class GModel;
 class MElement;
 
+// The bounding box of a mesh element (the hull of its Bezier control points
+// when it is curved), 1% thicker.
+void MElementBB(void *a, double *min, double *max);
+
 class MElementOctree {
 private:
   Octree *_octree[4]; // one per dimension
-  GModel *_gm;
   int _maxOrder;
+  // the largest tolerance of a lenient search: 1, or 0.1 for an octree built
+  // from a list of elements
+  double _maxTol;
   void _insert(MElement *e);
   std::vector<MElement *> _find(double *P, int dim, double tol,
                                 bool onlyFirst) const;
   std::vector<MElement *> _find(double *P, int dim, double tol, bool strict,
-                                double maxTol, bool onlyFirst) const;
+                                bool onlyFirst) const;
 
 public:
   MElementOctree(GModel *);
@@ -36,7 +42,8 @@ public:
   // dimension, the closest, and among those as close the first one inserted.
   MElement *find(double x, double y, double z, int dim = -1,
                  bool strict = false, double tol = -1.) const;
-  // Same, for all the elements, by increasing dimension and in insertion order.
+  // Same, for all the elements, by increasing dimension and in insertion
+  // order.
   std::vector<MElement *> findAll(double x, double y, double z, int dim,
                                   bool strict = false, double tol = -1.) const;
   // The element of dimension dim closest to the point, no farther than the

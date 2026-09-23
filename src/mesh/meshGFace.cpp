@@ -41,7 +41,6 @@
 #include "BDS.h"
 #include "qualityMeasures.h"
 #include "OS.h"
-#include "MElementOctree.h"
 #include "HighOrder.h"
 #include "Context.h"
 #include "boundaryLayersData.h"

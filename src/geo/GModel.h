@@ -123,6 +123,8 @@ protected:
 
   // an octree for fast mesh element lookup
   MElementOctree *_elementOctree;
+  // the octree of the mesh elements, built on first use
+  MElementOctree *_getElementOctree();
 
   // global cache storage of discrete curvatures
   std::map<MVertex *, std::pair<SVector3, SVector3>> _curvatures;
