@@ -24,3 +24,11 @@ Plugin(MinMax).Run;
 Merge "data/square.pos";
 Plugin(MinMax).View = PostProcessing.NbViews - 4;
 Plugin(MinMax).Run;
+
+// over time, with the point where the extremum is reached (the views were
+// empty)
+Merge "data/square.pos";
+Plugin(MinMax).View = PostProcessing.NbViews - 4;
+Plugin(MinMax).OverTime = 1;
+Plugin(MinMax).Argument = 1;
+Plugin(MinMax).Run;

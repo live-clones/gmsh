@@ -80,19 +80,22 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
-  for(int ent = 0; ent < data1->getNumEntities(0); ent++) {
-    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++) {
-      if(data1->skipElement(0, ent, ele)) continue;
-      int numNodes = getNumCornerNodes(data1, 0, ent, ele);
+  // the elements of the real part step, with values in both steps
+  int s0 = rIndex;
+  for(int ent = 0; ent < data1->getNumEntities(s0); ent++) {
+    for(int ele = 0; ele < data1->getNumElements(s0, ent); ele++) {
+      if(data1->skipElement(s0, ent, ele) || data1->skipElement(iIndex, ent, ele))
+        continue;
+      int numNodes = getNumCornerNodes(data1, s0, ent, ele);
       if(!numNodes) continue;
-      int type = data1->getType(0, ent, ele);
-      int numComp = data1->getNumComponents(0, ent, ele);
+      int type = data1->getType(s0, ent, ele);
+      int numComp = data1->getNumComponents(s0, ent, ele);
       std::vector<double> *out = data2->incrementList(numComp, type, numNodes);
       if(!out) continue;
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       std::vector<double> vr(numNodes * numComp), vi(numNodes * numComp);
       for(int nod = 0; nod < numNodes; nod++) {
-        data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+        data1->getNode(s0, ent, ele, nod, x[nod], y[nod], z[nod]);
         for(int comp = 0; comp < numComp; comp++) {
           data1->getValue(rIndex, ent, ele, nod, comp,
                           vr[numComp * nod + comp]);
@@ -118,8 +121,7 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
   }
 
   for(int k = 0; k < nSteps; k++) {
-    double t =
-      frequency ? (2. * M_PI * nPeriods * k / frequency / (double)nSteps) : 0.;
+    double t = frequency ? (nPeriods * k / frequency / (double)nSteps) : 0.;
     data2->Time.push_back(t);
   }
   data2->setName(data1->getName() + "_HarmonicToTime");

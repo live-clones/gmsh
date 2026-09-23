@@ -67,6 +67,7 @@ PView *GMSH_MinMaxPlugin::execute(PView *v)
   }
 
   double min = VAL_INF, max = -VAL_INF, timeMin = 0, timeMax = 0;
+  double pmin[3] = {0., 0., 0.}, pmax[3] = {0., 0., 0.}; // over time
 
   for(int step = 0; step < data1->getNumTimeSteps(); step++) {
     if(data1->hasTimeStep(step)) {
@@ -114,16 +115,29 @@ PView *GMSH_MinMaxPlugin::execute(PView *v)
         if(minView < min) {
           min = minView;
           timeMin = data1->getTime(step);
+          pmin[0] = xmin;
+          pmin[1] = ymin;
+          pmin[2] = zmin;
         }
         if(maxView > max) {
           max = maxView;
           timeMax = data1->getTime(step);
+          pmax[0] = xmax;
+          pmax[1] = ymax;
+          pmax[2] = zmax;
         }
       }
     }
   }
 
   if(overTime) {
+    if(argument) {
+      for(int i = 0; i < 3; i++) {
+        dataMin->SP.push_back(pmin[i]);
+        dataMax->SP.push_back(pmax[i]);
+      }
+      dataMin->NbSP = dataMax->NbSP = 1;
+    }
     dataMin->SP.push_back(min);
     dataMax->SP.push_back(max);
     dataMin->Time.push_back(timeMin);
@@ -140,5 +154,5 @@ PView *GMSH_MinMaxPlugin::execute(PView *v)
   dataMax->setFileName(data1->getName() + "_Max.pos");
   dataMax->finalize();
 
-  return nullptr;
+  return vMax;
 }

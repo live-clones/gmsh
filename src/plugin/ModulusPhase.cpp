@@ -99,7 +99,7 @@ PView *GMSH_ModulusPhasePlugin::execute(PView *v)
   }
 
   data1->setName(data1->getName() + "_ModulusPhase");
-  data1->setName(data1->getName() + ".pos");
+  data1->setFileName(data1->getName() + ".pos");
   data1->finalize();
 
   v1->setChanged(true);
