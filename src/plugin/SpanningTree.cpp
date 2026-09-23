@@ -11,6 +11,7 @@
 #include "GModel.h"
 #include "MLine.h"
 #include "OS.h"
+#include "Context.h"
 
 using namespace std;
 
@@ -130,7 +131,7 @@ int GMSH_SpanningTreePlugin::run()
   for(int i = 0; i < 3; i++) getAllMEdge(element[i], edge[i]);
 
   // Build spanning tree (in ascending dimension order) and save into the model
-  DSU vertex(model->getNumMeshVertices());
+  DSU vertex(model->getMaxVertexNumber()); // indexed by node tag - 1
   Tree tree;
   for(int i = 0; i < 3; i++) spanningTree(edge[i], vertex, tree);
 
@@ -260,6 +261,7 @@ void GMSH_SpanningTreePlugin::addToModel(GModel &model, Tree &tree, int tag)
   // Add in GModel
   model.storeChain(1, entityMap, physicalMap);
   model.setPhysicalName(name, 1, physicalNum);
+  CTX::instance()->meshChanged();
 }
 
 std::pair<int, int>

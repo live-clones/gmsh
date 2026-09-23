@@ -5,6 +5,7 @@
 
 #include "GModel.h"
 #include "Invisible.h"
+#include "Context.h"
 
 StringXNumber InvisibleOptions_Number[] = {
   {GMSH_FULLRC, "DeleteElements", nullptr, 1., ""},
@@ -85,5 +86,7 @@ PView *GMSH_InvisiblePlugin::execute(PView *v)
   if(InvisibleOptions_Number[1].def)
     m->reverseInvisibleElements();
 
+  // what is drawn depends on the visibility of the elements too
+  CTX::instance()->meshChanged();
   return nullptr;
 }

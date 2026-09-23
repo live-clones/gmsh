@@ -37,7 +37,9 @@ public:
 
 class GMSH_AnalyseMeshQualityPlugin : public GMSH_PostPlugin {
 private:
+  // the model and the version of its mesh the kept measures are for
   GModel *_m;
+  int _meshStamp;
 
 #if defined(HAVE_VISUDEV)
   // Pointwise data
@@ -60,14 +62,8 @@ public:
   GMSH_AnalyseMeshQualityPlugin()
   {
     _m = nullptr;
-    for(int i = 0; i < 3; ++i) {
-      _computedJac[i] = false;
-      _computedIGE[i] = false;
-      _computedICN[i] = false;
-      _pviewJac[i] = false;
-      _pviewIGE[i] = false;
-      _pviewICN[i] = false;
-    }
+    _meshStamp = -1;
+    _clear();
   }
   std::string getName() const { return "AnalyseMeshQuality"; }
   std::string getShortHelp() const
@@ -89,7 +85,7 @@ private:
   void _printStatJacobian();
   void _printStatIGE();
   void _printStatICN();
-  void _clear(int askedDim);
+  void _clear();
 
 #if defined(HAVE_VISUDEV)
   void _computePointwiseQuantities(MElement *,

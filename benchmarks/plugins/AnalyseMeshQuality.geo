@@ -24,3 +24,15 @@ Plugin(AnalyseMeshQuality).HidingThreshold = 0.95;
 Plugin(AnalyseMeshQuality).ThresholdGreater = 0;
 Plugin(AnalyseMeshQuality).Run;
 Plugin(Invisible).Run;
+
+// the measures kept from a run are recomputed after the mesh changes (the
+// elements they pointed to were freed), and an empty model is left alone
+Plugin(AnalyseMeshQuality).Recompute = 0;
+Plugin(AnalyseMeshQuality).HidingThreshold = 99;
+Plugin(AnalyseMeshQuality).CreateView = 1;
+Plugin(AnalyseMeshQuality).Run;
+RefineMesh;
+Plugin(AnalyseMeshQuality).Run;
+NewModel;
+Plugin(AnalyseMeshQuality).DimensionOfElements = -1;
+Plugin(AnalyseMeshQuality).Run;

@@ -104,7 +104,6 @@ std::string GMSH_AnalyseMeshQualityPlugin::getHelp() const
 
 PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
 {
-  _m = GModel::current();
   int computeJac = static_cast<int>(CurvedMeshOptions_Number[0].def);
   int computeIGE = static_cast<int>(CurvedMeshOptions_Number[1].def);
   int computeICN = static_cast<int>(CurvedMeshOptions_Number[2].def);
@@ -126,9 +125,18 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
   _dataPViewICN.clear();
 #endif
 
-  if(askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
+  // the measures kept from a previous run point to elements that are gone if
+  // the mesh has changed since
+  if(recompute || _m != GModel::current() ||
+     _meshStamp != CTX::instance()->meshContentStamp)
+    _clear();
+  _m = GModel::current();
 
-  if(recompute) _clear(askedDim);
+  if(askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
+  if(askedDim < 1) {
+    Msg::Warning("No elements to analyse");
+    return v;
+  }
 
   // Compute what have to
   bool printStatJ = false;
@@ -243,6 +251,7 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
 #endif
   }
 
+  _meshStamp = CTX::instance()->meshContentStamp;
   return view;
 }
 
@@ -481,24 +490,12 @@ void GMSH_AnalyseMeshQualityPlugin::_printStatICN()
             avgminI, supminI);
 }
 
-void GMSH_AnalyseMeshQualityPlugin::_clear(int askedDim)
+void GMSH_AnalyseMeshQualityPlugin::_clear()
 {
   _data.clear();
-  if(askedDim < 4) {
-    _computedJac[askedDim - 1] = false;
-    _computedIGE[askedDim - 1] = false;
-    _computedICN[askedDim - 1] = false;
-    _pviewJac[askedDim - 1] = false;
-    _pviewIGE[askedDim - 1] = false;
-    _pviewICN[askedDim - 1] = false;
-  }
-  else {
-    _computedJac[1] = _computedJac[2] = false;
-    _computedIGE[1] = _computedIGE[2] = false;
-    _computedICN[1] = _computedICN[2] = false;
-    _pviewJac[1] = _pviewJac[2] = false;
-    _pviewIGE[1] = _pviewIGE[2] = false;
-    _pviewICN[1] = _pviewICN[2] = false;
+  for(int i = 0; i < 3; ++i) {
+    _computedJac[i] = _computedIGE[i] = _computedICN[i] = false;
+    _pviewJac[i] = _pviewIGE[i] = _pviewICN[i] = false;
   }
 }
 
