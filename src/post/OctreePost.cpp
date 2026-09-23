@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <set>
 #include "Octree.h"
 #include "OctreePost.h"
@@ -114,8 +115,10 @@ OctreePost::OctreePost(PViewData *data) { _create(data); }
 
 void OctreePost::_create(PViewData *data)
 {
-  for(int c = 0; c < 3; c++)
+  for(int c = 0; c < 3; c++) {
+    _topDim[c] = -1;
     for(int k = 0; k < 8; k++) _trees[c][k] = nullptr;
+  }
   _theViewDataList = nullptr;
 
   _theViewDataGModel = dynamic_cast<PViewDataGModel *>(data);
@@ -147,6 +150,7 @@ void OctreePost::_create(PViewData *data)
         std::vector<double> &list = *V[3 * k + c];
         for(std::size_t i = 0; i < list.size(); i += size)
           Octree_Insert(&list[i], o);
+        if(list.size()) _topDim[c] = std::max(_topDim[c], listElement[k].dim);
         Octree_Arrange(o);
         _trees[c][k] = o;
       }
@@ -339,7 +343,8 @@ void OctreePost::prepareThreads()
 
 bool OctreePost::_search(int numComp, double x, double y, double z,
                          double *values, int step, double *size, int qn,
-                         double *qx, double *qy, double *qz, bool grad, int dim)
+                         double *qx, double *qy, double *qz, bool grad, int dim,
+                         Cache *cache)
 {
   double P[3] = {x, y, z};
   int mult = grad ? 3 : 1;
@@ -355,19 +360,48 @@ bool OctreePost::_search(int numComp, double x, double y, double z,
 
   if(_theViewDataList) {
     int c = componentIndex(numComp);
+    if(cache && cache->element) { // the last element, with the test of
+      // Octree_Search()
+      int k = cache->kind, n = listElement[k].numNodes, d = listElement[k].dim;
+      double min[3], max[3];
+      listElement[k].bb(cache->element, min, max);
+      if((dim < 0 || dim == d) && P[0] >= min[0] && P[0] <= max[0] &&
+         P[1] >= min[1] && P[1] <= max[1] && P[2] >= min[2] && P[2] <= max[2] &&
+         listElement[k].in(cache->element, P) &&
+         _getValue(cache->element, d, n, numComp, P, step, values, size, grad))
+        return true;
+    }
     for(int k : searchOrder) {
       int n = listElement[k].numNodes, d = listElement[k].dim;
-      if((dim < 0 || dim == d) &&
-         _getValue(getElement(P, _trees[c][k], n, qn, qx, qy, qz), d, n,
-                   numComp, P, step, values, size, grad))
+      if(dim >= 0 && dim != d) continue;
+      void *e = getElement(P, _trees[c][k], n, qn, qx, qy, qz);
+      if(_getValue(e, d, n, numComp, P, step, values, size, grad)) {
+        if(cache) {
+          cache->element = (d == _topDim[c]) ? e : nullptr;
+          cache->kind = k;
+        }
         return true;
+      }
     }
   }
   else if(_theViewDataGModel) {
+    if(cache && cache->element) { // the last element
+      MElement *e = (MElement *)cache->element;
+      double uvw[3];
+      e->xyz2uvw(P, uvw);
+      if((dim < 0 || dim == e->getDim()) &&
+         e->isInside(uvw[0], uvw[1], uvw[2]) &&
+         _getValue(e, numComp, P, step, values, size, grad))
+        return true;
+    }
     GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
     if(m) {
       MElement *e = getElement(P, m, qn, qx, qy, qz, dim);
-      if(_getValue(e, numComp, P, step, values, size, grad)) return true;
+      if(_getValue(e, numComp, P, step, values, size, grad)) {
+        if(cache)
+          cache->element = (e->getDim() == m->getMeshDim()) ? e : nullptr;
+        return true;
+      }
     }
   }
 
@@ -383,6 +417,13 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
                               int step, double *size, int qn, double *qx,
                               double *qy, double *qz, bool grad, int dim)
 { return _search(3, x, y, z, values, step, size, qn, qx, qy, qz, grad, dim); }
+
+bool OctreePost::searchVector(double x, double y, double z, double *values,
+                              int step, Cache &cache)
+{
+  return _search(3, x, y, z, values, step, nullptr, 0, nullptr, nullptr,
+                 nullptr, false, -1, &cache);
+}
 
 bool OctreePost::searchTensor(double x, double y, double z, double *values,
                               int step, double *size, int qn, double *qx,

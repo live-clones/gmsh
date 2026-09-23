@@ -1330,9 +1330,9 @@ dX(t)/dt = V(x,y,z)@*
 @*
 is then solved with the initial condition X(t=0) chosen as the grid and with V(x,y,z) interpolated on the vector view.@*
 @*
-The time stepping scheme is a RK44 with step size `DT' and `MaxIter' maximum number of iterations.@*
+The lines are computed over `MaxIter' steps of size `DT', forward if `Direction' = 1, backward if `Direction' = -1, or both ways from the seeds if `Direction' = 0 (with `OtherView' only). If `Tolerance' = 0, each step is a step of the classical fourth order Runge-Kutta scheme; otherwise it is made of the steps of an embedded Runge-Kutta 5(4) scheme (Dormand-Prince), whose sizes adapt to keep the estimated error of each below `Tolerance' times the size of the model. A line stops where it leaves the domain, or where the speed falls below `MinSpeed'.@*
 @*
-If `TimeStep' < 0, the plugin tries to compute streamlines of the unsteady flow.@*
+If `TimeStep' < 0, the plugin tries to compute streamlines of the unsteady flow (forward only), with the time step closest to the time of each step.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
@@ -1371,6 +1371,12 @@ Default value: @code{0}
 Default value: @code{-1}
 @item OtherView
 Default value: @code{-1}
+@item Tolerance
+Default value: @code{0}
+@item Direction
+Default value: @code{1}
+@item MinSpeed
+Default value: @code{0}
 @end table
 
 @item Plugin(Summation)
