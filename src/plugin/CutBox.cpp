@@ -3,6 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <array>
+#include <functional>
 #include "GmshConfig.h"
 #include "OctreePost.h"
 #include "CutBox.h"
@@ -231,668 +233,112 @@ void GMSH_CutBoxPlugin::addInView(int connect, int boundary, int numsteps,
                                   std::vector<double> &Q, int *nQ,
                                   std::vector<double> &H, int *nH)
 {
-  if(!connect ||
-     (getNbU() == 1 && getNbV() == 1 && getNbW() == 1)) { // generate points
-    if(!boundary)
-      for(int i = 0; i < getNbU(); ++i) {
-        for(int j = 0; j < getNbV(); ++j) {
-          for(int m = 0; m < getNbW(); ++m) {
-            P.push_back(pnts[i][j][m][0]);
-            P.push_back(pnts[i][j][m][1]);
-            P.push_back(pnts[i][j][m][2]);
-            (*nP)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                P.push_back(vals[i][j][m][nbcomp * k + l]);
-            }
-          }
-        }
+  typedef std::array<int, 3> ijk;
+  // an element on the grid points p: all the x, the y, the z, then the values
+  // of each step, node after node
+  auto add = [&](std::vector<double> &list, int *n,
+                 const std::vector<ijk> &p) {
+    for(int c = 0; c < 3; c++)
+      for(auto &q : p) list.push_back(pnts[q[0]][q[1]][q[2]][c]);
+    for(int k = 0; k < numsteps; ++k)
+      for(auto &q : p)
+        for(int l = 0; l < nbcomp; ++l)
+          list.push_back(vals[q[0]][q[1]][q[2]][nbcomp * k + l]);
+    (*n)++;
+  };
+  int nu = getNbU(), nv = getNbV(), nw = getNbW();
+  int u = nu - 1, v = nv - 1, w = nw - 1; // the last points
+
+  if(!connect || (nu == 1 && nv == 1 && nw == 1)) { // points
+    if(!boundary) {
+      for(int i = 0; i < nu; ++i)
+        for(int j = 0; j < nv; ++j)
+          for(int m = 0; m < nw; ++m) add(P, nP, {{i, j, m}});
+      return;
+    }
+    for(int i = 0; i < nu; ++i) {
+      for(int j = 0; j < nv; ++j) {
+        add(P, nP, {{i, j, 0}});
+        add(P, nP, {{i, j, w}});
       }
+    }
+    for(int i = 0; i < nu; ++i) {
+      for(int j = 0; j < nw; ++j) {
+        add(P, nP, {{i, 0, j}});
+        add(P, nP, {{i, v, j}});
+      }
+    }
+    for(int i = 0; i < nv; ++i) {
+      for(int j = 0; j < nw; ++j) {
+        add(P, nP, {{0, i, j}});
+        add(P, nP, {{u, i, j}});
+      }
+    }
+    return;
+  }
+
+  // a line of points along one direction: lines, or its 2 ends
+  auto line = [&](int n, const std::function<ijk(int)> &q) {
+    if(!boundary)
+      for(int i = 0; i < n - 1; ++i) add(L, nL, {q(i), q(i + 1)});
     else {
-      for(int i = 0; i < getNbU(); ++i) {
-        for(int j = 0; j < getNbV(); ++j) {
-          P.push_back(pnts[i][j][0][0]);
-          P.push_back(pnts[i][j][0][1]);
-          P.push_back(pnts[i][j][0][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[i][j][0][nbcomp * k + l]);
-          }
-          P.push_back(pnts[i][j][getNbW() - 1][0]);
-          P.push_back(pnts[i][j][getNbW() - 1][1]);
-          P.push_back(pnts[i][j][getNbW() - 1][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[i][j][getNbW() - 1][nbcomp * k + l]);
-          }
-        }
-      } // end UV planes
-      for(int i = 0; i < getNbU(); ++i) {
-        for(int j = 0; j < getNbW(); ++j) {
-          P.push_back(pnts[i][0][j][0]);
-          P.push_back(pnts[i][0][j][1]);
-          P.push_back(pnts[i][0][j][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[i][0][j][nbcomp * k + l]);
-          }
-          P.push_back(pnts[i][getNbV() - 1][j][0]);
-          P.push_back(pnts[i][getNbV() - 1][j][1]);
-          P.push_back(pnts[i][getNbV() - 1][j][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[i][getNbV() - 1][j][nbcomp * k + l]);
-          }
-        }
-      } // end UW planes
-      for(int i = 0; i < getNbV(); ++i) {
-        for(int j = 0; j < getNbW(); ++j) {
-          P.push_back(pnts[0][i][j][0]);
-          P.push_back(pnts[0][i][j][1]);
-          P.push_back(pnts[0][i][j][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[0][i][j][nbcomp * k + l]);
-          }
-          P.push_back(pnts[getNbU() - 1][i][j][0]);
-          P.push_back(pnts[getNbU() - 1][i][j][1]);
-          P.push_back(pnts[getNbU() - 1][i][j][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[getNbU() - 1][i][j][nbcomp * k + l]);
-          }
-        }
-      } // end VW planes
+      add(P, nP, {q(0)});
+      add(P, nP, {q(n - 1)});
+    }
+  };
+  if(nu == 1 && nv == 1) return line(nw, [](int i) { return ijk{0, 0, i}; });
+  if(nu == 1 && nw == 1) return line(nv, [](int i) { return ijk{0, i, 0}; });
+  if(nv == 1 && nw == 1) return line(nu, [](int i) { return ijk{i, 0, 0}; });
+
+  // a plane of points along two directions (a, b): quadrangles, or the lines
+  // of its boundary
+  auto plane = [&](int na, int nb, const std::function<ijk(int, int)> &q) {
+    if(!boundary) {
+      for(int i = 0; i < na - 1; ++i)
+        for(int j = 0; j < nb - 1; ++j)
+          add(Q, nQ, {q(i, j), q(i + 1, j), q(i + 1, j + 1), q(i, j + 1)});
+      return;
+    }
+    for(int i = 0; i < na - 1; ++i) {
+      add(L, nL, {q(i, 0), q(i + 1, 0)});
+      add(L, nL, {q(i, nb - 1), q(i + 1, nb - 1)});
+    }
+    for(int i = 0; i < nb - 1; ++i) {
+      add(L, nL, {q(0, i), q(0, i + 1)});
+      add(L, nL, {q(na - 1, i), q(na - 1, i + 1)});
+    }
+  };
+  if(nu == 1) return plane(nv, nw, [](int i, int j) { return ijk{0, i, j}; });
+  if(nv == 1) return plane(nu, nw, [](int i, int j) { return ijk{i, 0, j}; });
+  if(nw == 1) return plane(nu, nv, [](int i, int j) { return ijk{i, j, 0}; });
+
+  if(!boundary) { // hexahedra in the box
+    for(int i = 0; i < u; ++i)
+      for(int j = 0; j < v; ++j)
+        for(int m = 0; m < w; ++m)
+          add(H, nH,
+              {{i, j, m}, {i + 1, j, m}, {i + 1, j + 1, m}, {i, j + 1, m},
+               {i, j, m + 1}, {i + 1, j, m + 1}, {i + 1, j + 1, m + 1},
+               {i, j + 1, m + 1}});
+    return;
+  }
+  // quadrangles on the boundary of the box, with exterior normals
+  for(int i = 0; i < u; ++i) {
+    for(int j = 0; j < v; ++j) {
+      add(Q, nQ, {{i, j, 0}, {i, j + 1, 0}, {i + 1, j + 1, 0}, {i + 1, j, 0}});
+      add(Q, nQ, {{i, j, w}, {i + 1, j, w}, {i + 1, j + 1, w}, {i, j + 1, w}});
     }
   }
-  else { // generate lines or quads
-    if(getNbU() == 1 && getNbV() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbW() - 1; ++i) {
-          L.push_back(pnts[0][0][i][0]);
-          L.push_back(pnts[0][0][i + 1][0]);
-          L.push_back(pnts[0][0][i][1]);
-          L.push_back(pnts[0][0][i + 1][1]);
-          L.push_back(pnts[0][0][i][2]);
-          L.push_back(pnts[0][0][i + 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i + 1][nbcomp * k + l]);
-          }
-        }
-      else {
-        P.push_back(pnts[0][0][0][0]);
-        P.push_back(pnts[0][0][0][1]);
-        P.push_back(pnts[0][0][0][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[0][0][0][nbcomp * k + l]);
-        }
-        P.push_back(pnts[0][0][getNbW() - 1][0]);
-        P.push_back(pnts[0][0][getNbW() - 1][1]);
-        P.push_back(pnts[0][0][getNbW() - 1][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[0][0][getNbW() - 1][nbcomp * k + l]);
-        }
-      }
+  for(int i = 0; i < u; ++i) {
+    for(int j = 0; j < w; ++j) {
+      add(Q, nQ, {{i, 0, j}, {i + 1, 0, j}, {i + 1, 0, j + 1}, {i, 0, j + 1}});
+      add(Q, nQ, {{i, v, j}, {i, v, j + 1}, {i + 1, v, j + 1}, {i + 1, v, j}});
     }
-    else if(getNbU() == 1 && getNbW() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbV() - 1; ++i) {
-          L.push_back(pnts[0][i][0][0]);
-          L.push_back(pnts[0][i + 1][0][0]);
-          L.push_back(pnts[0][i][0][1]);
-          L.push_back(pnts[0][i + 1][0][1]);
-          L.push_back(pnts[0][i][0][2]);
-          L.push_back(pnts[0][i + 1][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i + 1][0][nbcomp * k + l]);
-          }
-        }
-      else {
-        P.push_back(pnts[0][0][0][0]);
-        P.push_back(pnts[0][0][0][1]);
-        P.push_back(pnts[0][0][0][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[0][0][0][nbcomp * k + l]);
-        }
-        P.push_back(pnts[0][getNbV() - 1][0][0]);
-        P.push_back(pnts[0][getNbV() - 1][0][1]);
-        P.push_back(pnts[0][getNbV() - 1][0][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[0][getNbV() - 1][0][nbcomp * k + l]);
-        }
-      }
-    }
-    else if(getNbV() == 1 && getNbW() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          L.push_back(pnts[i][0][0][0]);
-          L.push_back(pnts[i + 1][0][0][0]);
-          L.push_back(pnts[i][0][0][1]);
-          L.push_back(pnts[i + 1][0][0][1]);
-          L.push_back(pnts[i][0][0][2]);
-          L.push_back(pnts[i + 1][0][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i][0][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i + 1][0][0][nbcomp * k + l]);
-          }
-        }
-      else {
-        P.push_back(pnts[0][0][0][0]);
-        P.push_back(pnts[0][0][0][1]);
-        P.push_back(pnts[0][0][0][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[0][0][0][nbcomp * k + l]);
-        }
-        P.push_back(pnts[getNbU() - 1][0][0][0]);
-        P.push_back(pnts[getNbU() - 1][0][0][1]);
-        P.push_back(pnts[getNbU() - 1][0][0][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[getNbU() - 1][0][0][nbcomp * k + l]);
-        }
-      }
-    }
-    else if(getNbU() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbV() - 1; ++i) {
-          for(int j = 0; j < getNbW() - 1; ++j) {
-            Q.push_back(pnts[0][i][j][0]);
-            Q.push_back(pnts[0][i + 1][j][0]);
-            Q.push_back(pnts[0][i + 1][j + 1][0]);
-            Q.push_back(pnts[0][i][j + 1][0]);
-            Q.push_back(pnts[0][i][j][1]);
-            Q.push_back(pnts[0][i + 1][j][1]);
-            Q.push_back(pnts[0][i + 1][j + 1][1]);
-            Q.push_back(pnts[0][i][j + 1][1]);
-            Q.push_back(pnts[0][i][j][2]);
-            Q.push_back(pnts[0][i + 1][j][2]);
-            Q.push_back(pnts[0][i + 1][j + 1][2]);
-            Q.push_back(pnts[0][i][j + 1][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i + 1][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i + 1][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i][j + 1][nbcomp * k + l]);
-            }
-          }
-        }
-      else {
-        for(int i = 0; i < getNbV() - 1; ++i) {
-          L.push_back(pnts[0][i][0][0]);
-          L.push_back(pnts[0][i + 1][0][0]);
-          L.push_back(pnts[0][i][0][1]);
-          L.push_back(pnts[0][i + 1][0][1]);
-          L.push_back(pnts[0][i][0][2]);
-          L.push_back(pnts[0][i + 1][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i + 1][0][nbcomp * k + l]);
-          }
-          L.push_back(pnts[0][i][getNbW() - 1][0]);
-          L.push_back(pnts[0][i + 1][getNbW() - 1][0]);
-          L.push_back(pnts[0][i][getNbW() - 1][1]);
-          L.push_back(pnts[0][i + 1][getNbW() - 1][1]);
-          L.push_back(pnts[0][i][getNbW() - 1][2]);
-          L.push_back(pnts[0][i + 1][getNbW() - 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i][getNbW() - 1][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i + 1][getNbW() - 1][nbcomp * k + l]);
-          }
-        }
-        for(int i = 0; i < getNbW() - 1; ++i) {
-          L.push_back(pnts[0][0][i][0]);
-          L.push_back(pnts[0][0][i + 1][0]);
-          L.push_back(pnts[0][0][i][1]);
-          L.push_back(pnts[0][0][i + 1][1]);
-          L.push_back(pnts[0][0][i][2]);
-          L.push_back(pnts[0][0][i + 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i + 1][nbcomp * k + l]);
-          }
-          L.push_back(pnts[0][getNbV() - 1][i][0]);
-          L.push_back(pnts[0][getNbV() - 1][i + 1][0]);
-          L.push_back(pnts[0][getNbV() - 1][i][1]);
-          L.push_back(pnts[0][getNbV() - 1][i + 1][1]);
-          L.push_back(pnts[0][getNbV() - 1][i][2]);
-          L.push_back(pnts[0][getNbV() - 1][i + 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][getNbV() - 1][i][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][getNbV() - 1][i + 1][nbcomp * k + l]);
-          }
-        }
-      }
-    }
-    else if(getNbV() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          for(int j = 0; j < getNbW() - 1; ++j) {
-            Q.push_back(pnts[i][0][j][0]);
-            Q.push_back(pnts[i + 1][0][j][0]);
-            Q.push_back(pnts[i + 1][0][j + 1][0]);
-            Q.push_back(pnts[i][0][j + 1][0]);
-            Q.push_back(pnts[i][0][j][1]);
-            Q.push_back(pnts[i + 1][0][j][1]);
-            Q.push_back(pnts[i + 1][0][j + 1][1]);
-            Q.push_back(pnts[i][0][j + 1][1]);
-            Q.push_back(pnts[i][0][j][2]);
-            Q.push_back(pnts[i + 1][0][j][2]);
-            Q.push_back(pnts[i + 1][0][j + 1][2]);
-            Q.push_back(pnts[i][0][j + 1][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][0][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][0][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][0][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][0][j + 1][nbcomp * k + l]);
-            }
-          }
-        }
-      else {
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          L.push_back(pnts[i][0][0][0]);
-          L.push_back(pnts[i + 1][0][0][0]);
-          L.push_back(pnts[i][0][0][1]);
-          L.push_back(pnts[i + 1][0][0][1]);
-          L.push_back(pnts[i][0][0][2]);
-          L.push_back(pnts[i + 1][0][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i][0][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i + 1][0][0][nbcomp * k + l]);
-          }
-          L.push_back(pnts[i][0][getNbW() - 1][0]);
-          L.push_back(pnts[i + 1][0][getNbW() - 1][0]);
-          L.push_back(pnts[i][0][getNbW() - 1][1]);
-          L.push_back(pnts[i + 1][0][getNbW() - 1][1]);
-          L.push_back(pnts[i][0][getNbW() - 1][2]);
-          L.push_back(pnts[i + 1][0][getNbW() - 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i][0][getNbW() - 1][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i + 1][0][getNbW() - 1][nbcomp * k + l]);
-          }
-        }
-        for(int i = 0; i < getNbW() - 1; ++i) {
-          L.push_back(pnts[0][0][i][0]);
-          L.push_back(pnts[0][0][i + 1][0]);
-          L.push_back(pnts[0][0][i][1]);
-          L.push_back(pnts[0][0][i + 1][1]);
-          L.push_back(pnts[0][0][i][2]);
-          L.push_back(pnts[0][0][i + 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i + 1][nbcomp * k + l]);
-          }
-          L.push_back(pnts[getNbU() - 1][0][i][0]);
-          L.push_back(pnts[getNbU() - 1][0][i + 1][0]);
-          L.push_back(pnts[getNbU() - 1][0][i][1]);
-          L.push_back(pnts[getNbU() - 1][0][i + 1][1]);
-          L.push_back(pnts[getNbU() - 1][0][i][2]);
-          L.push_back(pnts[getNbU() - 1][0][i + 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[getNbU() - 1][0][i][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[getNbU() - 1][0][i + 1][nbcomp * k + l]);
-          }
-        }
-      }
-    }
-    else if(getNbW() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          for(int j = 0; j < getNbV() - 1; ++j) {
-            Q.push_back(pnts[i][j][0][0]);
-            Q.push_back(pnts[i + 1][j][0][0]);
-            Q.push_back(pnts[i + 1][j + 1][0][0]);
-            Q.push_back(pnts[i][j + 1][0][0]);
-            Q.push_back(pnts[i][j][0][1]);
-            Q.push_back(pnts[i + 1][j][0][1]);
-            Q.push_back(pnts[i + 1][j + 1][0][1]);
-            Q.push_back(pnts[i][j + 1][0][1]);
-            Q.push_back(pnts[i][j][0][2]);
-            Q.push_back(pnts[i + 1][j][0][2]);
-            Q.push_back(pnts[i + 1][j + 1][0][2]);
-            Q.push_back(pnts[i][j + 1][0][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j + 1][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j + 1][0][nbcomp * k + l]);
-            }
-          }
-        }
-      else {
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          L.push_back(pnts[i][0][0][0]);
-          L.push_back(pnts[i + 1][0][0][0]);
-          L.push_back(pnts[i][0][0][1]);
-          L.push_back(pnts[i + 1][0][0][1]);
-          L.push_back(pnts[i][0][0][2]);
-          L.push_back(pnts[i + 1][0][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i][0][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i + 1][0][0][nbcomp * k + l]);
-          }
-          L.push_back(pnts[i][getNbV() - 1][0][0]);
-          L.push_back(pnts[i + 1][getNbV() - 1][0][0]);
-          L.push_back(pnts[i][getNbV() - 1][0][1]);
-          L.push_back(pnts[i + 1][getNbV() - 1][0][1]);
-          L.push_back(pnts[i][getNbV() - 1][0][2]);
-          L.push_back(pnts[i + 1][getNbV() - 1][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i][getNbV() - 1][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i + 1][getNbV() - 1][0][nbcomp * k + l]);
-          }
-        }
-        for(int i = 0; i < getNbV() - 1; ++i) {
-          L.push_back(pnts[0][i][0][0]);
-          L.push_back(pnts[0][i + 1][0][0]);
-          L.push_back(pnts[0][i][0][1]);
-          L.push_back(pnts[0][i + 1][0][1]);
-          L.push_back(pnts[0][i][0][2]);
-          L.push_back(pnts[0][i + 1][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i + 1][0][nbcomp * k + l]);
-          }
-          L.push_back(pnts[getNbU() - 1][i][0][0]);
-          L.push_back(pnts[getNbU() - 1][i + 1][0][0]);
-          L.push_back(pnts[getNbU() - 1][i][0][1]);
-          L.push_back(pnts[getNbU() - 1][i + 1][0][1]);
-          L.push_back(pnts[getNbU() - 1][i][0][2]);
-          L.push_back(pnts[getNbU() - 1][i + 1][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[getNbU() - 1][i][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[getNbU() - 1][i + 1][0][nbcomp * k + l]);
-          }
-        }
-      }
-    }
-    // from here, general case
-    else {
-      if(!boundary) { // Hexaedra in the box
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          for(int j = 0; j < getNbV() - 1; ++j) {
-            for(int m = 0; m < getNbW() - 1; ++m) {
-              H.push_back(pnts[i][j][m][0]);
-              H.push_back(pnts[i + 1][j][m][0]);
-              H.push_back(pnts[i + 1][j + 1][m][0]);
-              H.push_back(pnts[i][j + 1][m][0]);
-              H.push_back(pnts[i][j][m + 1][0]);
-              H.push_back(pnts[i + 1][j][m + 1][0]);
-              H.push_back(pnts[i + 1][j + 1][m + 1][0]);
-              H.push_back(pnts[i][j + 1][m + 1][0]);
-
-              H.push_back(pnts[i][j][m][1]);
-              H.push_back(pnts[i + 1][j][m][1]);
-              H.push_back(pnts[i + 1][j + 1][m][1]);
-              H.push_back(pnts[i][j + 1][m][1]);
-              H.push_back(pnts[i][j][m + 1][1]);
-              H.push_back(pnts[i + 1][j][m + 1][1]);
-              H.push_back(pnts[i + 1][j + 1][m + 1][1]);
-              H.push_back(pnts[i][j + 1][m + 1][1]);
-
-              H.push_back(pnts[i][j][m][2]);
-              H.push_back(pnts[i + 1][j][m][2]);
-              H.push_back(pnts[i + 1][j + 1][m][2]);
-              H.push_back(pnts[i][j + 1][m][2]);
-              H.push_back(pnts[i][j][m + 1][2]);
-              H.push_back(pnts[i + 1][j][m + 1][2]);
-              H.push_back(pnts[i + 1][j + 1][m + 1][2]);
-              H.push_back(pnts[i][j + 1][m + 1][2]);
-              (*nH)++;
-
-              for(int k = 0; k < numsteps; ++k) {
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i][j][m][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i + 1][j][m][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i + 1][j + 1][m][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i][j + 1][m][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i][j][m + 1][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i + 1][j][m + 1][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i + 1][j + 1][m + 1][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i][j + 1][m + 1][nbcomp * k + l]);
-              }
-            }
-          }
-        }
-      }
-      else { // Quadrangles at boundary of the box + forcing exterior normals
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          for(int j = 0; j < getNbV() - 1; ++j) {
-            Q.push_back(pnts[i][j][0][0]);
-            Q.push_back(pnts[i][j + 1][0][0]);
-            Q.push_back(pnts[i + 1][j + 1][0][0]);
-            Q.push_back(pnts[i + 1][j][0][0]);
-            Q.push_back(pnts[i][j][0][1]);
-            Q.push_back(pnts[i][j + 1][0][1]);
-            Q.push_back(pnts[i + 1][j + 1][0][1]);
-            Q.push_back(pnts[i + 1][j][0][1]);
-            Q.push_back(pnts[i][j][0][2]);
-            Q.push_back(pnts[i][j + 1][0][2]);
-            Q.push_back(pnts[i + 1][j + 1][0][2]);
-            Q.push_back(pnts[i + 1][j][0][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j + 1][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j + 1][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j][0][nbcomp * k + l]);
-            }
-            Q.push_back(pnts[i][j][getNbW() - 1][0]);
-            Q.push_back(pnts[i + 1][j][getNbW() - 1][0]);
-            Q.push_back(pnts[i + 1][j + 1][getNbW() - 1][0]);
-            Q.push_back(pnts[i][j + 1][getNbW() - 1][0]);
-            Q.push_back(pnts[i][j][getNbW() - 1][1]);
-            Q.push_back(pnts[i + 1][j][getNbW() - 1][1]);
-            Q.push_back(pnts[i + 1][j + 1][getNbW() - 1][1]);
-            Q.push_back(pnts[i][j + 1][getNbW() - 1][1]);
-            Q.push_back(pnts[i][j][getNbW() - 1][2]);
-            Q.push_back(pnts[i + 1][j][getNbW() - 1][2]);
-            Q.push_back(pnts[i + 1][j + 1][getNbW() - 1][2]);
-            Q.push_back(pnts[i][j + 1][getNbW() - 1][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j][getNbW() - 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j][getNbW() - 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j + 1][getNbW() - 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j + 1][getNbW() - 1][nbcomp * k + l]);
-            }
-          }
-        }
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          for(int j = 0; j < getNbW() - 1; ++j) {
-            Q.push_back(pnts[i][0][j][0]);
-            Q.push_back(pnts[i + 1][0][j][0]);
-            Q.push_back(pnts[i + 1][0][j + 1][0]);
-            Q.push_back(pnts[i][0][j + 1][0]);
-            Q.push_back(pnts[i][0][j][1]);
-            Q.push_back(pnts[i + 1][0][j][1]);
-            Q.push_back(pnts[i + 1][0][j + 1][1]);
-            Q.push_back(pnts[i][0][j + 1][1]);
-            Q.push_back(pnts[i][0][j][2]);
-            Q.push_back(pnts[i + 1][0][j][2]);
-            Q.push_back(pnts[i + 1][0][j + 1][2]);
-            Q.push_back(pnts[i][0][j + 1][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][0][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][0][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][0][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][0][j + 1][nbcomp * k + l]);
-            }
-            Q.push_back(pnts[i][getNbV() - 1][j][0]);
-            Q.push_back(pnts[i][getNbV() - 1][j + 1][0]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j + 1][0]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j][0]);
-            Q.push_back(pnts[i][getNbV() - 1][j][1]);
-            Q.push_back(pnts[i][getNbV() - 1][j + 1][1]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j + 1][1]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j][1]);
-            Q.push_back(pnts[i][getNbV() - 1][j][2]);
-            Q.push_back(pnts[i][getNbV() - 1][j + 1][2]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j + 1][2]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][getNbV() - 1][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][getNbV() - 1][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][getNbV() - 1][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][getNbV() - 1][j][nbcomp * k + l]);
-            }
-          }
-        }
-
-        for(int i = 0; i < getNbV() - 1; ++i) {
-          for(int j = 0; j < getNbW() - 1; ++j) {
-            Q.push_back(pnts[0][i][j][0]);
-            Q.push_back(pnts[0][i][j + 1][0]);
-            Q.push_back(pnts[0][i + 1][j + 1][0]);
-            Q.push_back(pnts[0][i + 1][j][0]);
-            Q.push_back(pnts[0][i][j][1]);
-            Q.push_back(pnts[0][i][j + 1][1]);
-            Q.push_back(pnts[0][i + 1][j + 1][1]);
-            Q.push_back(pnts[0][i + 1][j][1]);
-            Q.push_back(pnts[0][i][j][2]);
-            Q.push_back(pnts[0][i][j + 1][2]);
-            Q.push_back(pnts[0][i + 1][j + 1][2]);
-            Q.push_back(pnts[0][i + 1][j][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i + 1][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i + 1][j][nbcomp * k + l]);
-            }
-            Q.push_back(pnts[getNbU() - 1][i][j][0]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j][0]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j + 1][0]);
-            Q.push_back(pnts[getNbU() - 1][i][j + 1][0]);
-            Q.push_back(pnts[getNbU() - 1][i][j][1]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j][1]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j + 1][1]);
-            Q.push_back(pnts[getNbU() - 1][i][j + 1][1]);
-            Q.push_back(pnts[getNbU() - 1][i][j][2]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j][2]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j + 1][2]);
-            Q.push_back(pnts[getNbU() - 1][i][j + 1][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[getNbU() - 1][i][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[getNbU() - 1][i + 1][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[getNbU() - 1][i + 1][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[getNbU() - 1][i][j + 1][nbcomp * k + l]);
-            }
-          }
-        }
-      }
+  }
+  for(int i = 0; i < v; ++i) {
+    for(int j = 0; j < w; ++j) {
+      add(Q, nQ, {{0, i, j}, {0, i, j + 1}, {0, i + 1, j + 1}, {0, i + 1, j}});
+      add(Q, nQ, {{u, i, j}, {u, i + 1, j}, {u, i + 1, j + 1}, {u, i, j + 1}});
     }
   }
 }
