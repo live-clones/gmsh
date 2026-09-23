@@ -482,16 +482,25 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
           double gr[3], normal[3];
           prodve(v1, v2, normal);
           switch(_orientation) {
-          case MAP:
-            gradSimplex(x, y, z, scalarValues, gr);
+          case MAP: {
+            // the gradient in the simplex being cut
+            double xs[4], ys[4], zs[4], vs[4];
+            for(int i = 0; i < 4; i++) {
+              xs[i] = x[n[i]];
+              ys[i] = y[n[i]];
+              zs[i] = z[n[i]];
+              vs[i] = scalarValues[n[i]];
+            }
+            gradSimplex(xs, ys, zs, vs, gr);
             _invert = prosca(gr, normal);
-            break;
+          } break;
           case PLANE: _invert = prosca(normal, _ref); break;
           case SPHERE:
             gr[0] = xp[0] - _ref[0];
             gr[1] = yp[0] - _ref[1];
             gr[2] = zp[0] - _ref[2];
             _invert = prosca(gr, normal);
+            break;
           case NONE:
           default: break;
           }
@@ -518,7 +527,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
             yp[np] = y[n[nod]];
             zp[np] = z[n[nod]];
             for(int comp = 0; comp < numComp; comp++)
-              wdata->getValue(otherstep, ent, ele, n[nod], comp,
+              wdata->getValue(otherstep, ent, ele, nn(n[nod]), comp,
                               valp[np][comp]);
             ep[np] = -(nod + 1); // store node num!
             np++;
@@ -551,11 +560,12 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
 
   }
 
-  if(vstep < 0 && (stepmax - stepmin) > (int)out->Time.size()) {
-    out->Time.clear();
-    for(int i = stepmin; i < stepmax; i++) {
-      out->Time.push_back(vdata->getTime(i));
-    }
+  if(vstep < 0) {
+    // the steps the values were taken at
+    std::vector<double> time;
+    for(int i = stepmin; i < stepmax; i++)
+      if(wstep >= 0 || wdata->hasTimeStep(i)) time.push_back(vdata->getTime(i));
+    if(time.size() > out->Time.size()) out->Time = time;
   }
 }
 
