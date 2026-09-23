@@ -72,8 +72,8 @@ private:
   int _hideWithThreshold(int askedDim, int whichMeasure, double threshold,
                          bool greater);
   void _printStatJacobian();
-  void _printStatIGE();
-  void _printStatICN();
+  // the worst, average and best of a measure of the elements
+  void _printStat(const char *name, double (data_elementMinMax::*measure)());
   void _clear();
 
 #if defined(HAVE_VISUDEV)

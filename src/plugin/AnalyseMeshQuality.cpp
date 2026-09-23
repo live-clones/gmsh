@@ -7,6 +7,7 @@
 
 #if defined(HAVE_MESH)
 
+#include <functional>
 #include "AnalyseMeshQuality.h"
 #include "OS.h"
 #include "Context.h"
@@ -165,8 +166,8 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
     }
   }
   if(printStatJ) _printStatJacobian();
-  if(printStatS) _printStatIGE();
-  if(printStatI) _printStatICN();
+  if(printStatS) _printStat("IGE", &data_elementMinMax::minS);
+  if(printStatI) _printStat("ICN", &data_elementMinMax::minI);
 
 #if defined(HAVE_VISUDEV)
   _createPViewPointwise();
@@ -174,57 +175,33 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
 
   // Create PView
   PView *view = nullptr;
+  // a view of a measure of the elements of dimension dim, if not already made
+  auto addView = [&](bool compute, bool &made, int dim, const char *name,
+                     const std::function<double(data_elementMinMax &)> &q) {
+    if(!compute || made) return;
+    made = true;
+    std::map<int, std::vector<double>> dataPV;
+    for(auto &d : _data)
+      if(d.element()->getDim() == dim)
+        dataPV[d.element()->getNum()].push_back(q(d));
+    if(dataPV.empty()) return;
+    std::stringstream n;
+    n << name << " " << dim << "D";
+    view = new PView(n.str().c_str(), "ElementData", _m, dataPV);
+  };
   if(createView) {
     for(int dim = 1; dim <= 3; ++dim) {
       if((askedDim == 4 && dim > 1) || dim == askedDim) {
-        if(!_pviewJac[dim - 1] && computeJac) {
-          _pviewJac[dim - 1] = true;
-          std::map<int, std::vector<double> > dataPV;
-          for(std::size_t i = 0; i < _data.size(); ++i) {
-            MElement *const el = _data[i].element();
-            if(el->getDim() == dim) {
-              double q = 0;
-              if(_data[i].maxJ() > 0)
-                q = _data[i].minJ() / _data[i].maxJ();
-              else if(_data[i].maxJ() < 0)
-                q = _data[i].maxJ() / _data[i].minJ();
-              dataPV[el->getNum()].push_back(q);
-            }
-          }
-          if(dataPV.size()) {
-            std::stringstream name;
-            name << "minJ/maxJ " << dim << "D";
-            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
-          }
-        }
-        if(!_pviewIGE[dim - 1] && computeIGE) {
-          _pviewIGE[dim - 1] = true;
-          std::map<int, std::vector<double> > dataPV;
-          for(std::size_t i = 0; i < _data.size(); ++i) {
-            MElement *const el = _data[i].element();
-            if(el->getDim() == dim)
-              dataPV[el->getNum()].push_back(_data[i].minS());
-          }
-          if(dataPV.size()) {
-            std::stringstream name;
-            name << "IGE " << dim << "D";
-            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
-          }
-        }
-        if(!_pviewICN[dim - 1] && computeICN) {
-          _pviewICN[dim - 1] = true;
-          std::map<int, std::vector<double> > dataPV;
-          for(std::size_t i = 0; i < _data.size(); ++i) {
-            MElement *const el = _data[i].element();
-            if(el->getDim() == dim)
-              dataPV[el->getNum()].push_back(_data[i].minI());
-          }
-          if(dataPV.size()) {
-            std::stringstream name;
-            name << "ICN " << dim << "D";
-            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
-          }
-        }
+        addView(computeJac, _pviewJac[dim - 1], dim, "minJ/maxJ",
+                [](data_elementMinMax &d) {
+                  if(d.maxJ() > 0) return d.minJ() / d.maxJ();
+                  if(d.maxJ() < 0) return d.maxJ() / d.minJ();
+                  return 0.;
+                });
+        addView(computeIGE, _pviewIGE[dim - 1], dim, "IGE",
+                [](data_elementMinMax &d) { return d.minS(); });
+        addView(computeICN, _pviewICN[dim - 1], dim, "ICN",
+                [](data_elementMinMax &d) { return d.minI(); });
       }
     }
   }
@@ -438,44 +415,23 @@ void GMSH_AnalyseMeshQualityPlugin::_printStatJacobian()
             avgratJ, supratJ);
 }
 
-void GMSH_AnalyseMeshQualityPlugin::_printStatIGE()
+void GMSH_AnalyseMeshQualityPlugin::_printStat(
+  const char *name, double (data_elementMinMax::*measure)())
 {
   if(_data.empty()) {
     Msg::Info("No stat to print");
     return;
   }
-  double infminS, supminS, avgminS;
-  infminS = supminS = avgminS = _data[0].minS();
-
-  for(std::size_t i = 1; i < _data.size(); ++i) {
-    infminS = std::min(infminS, _data[i].minS());
-    supminS = std::max(supminS, _data[i].minS());
-    avgminS += _data[i].minS();
+  double inf = (_data[0].*measure)(), sup = inf, avg = 0.;
+  for(auto &d : _data) {
+    double m = (d.*measure)();
+    inf = std::min(inf, m);
+    sup = std::max(sup, m);
+    avg += m;
   }
-  avgminS /= _data.size();
-
-  Msg::Info("IGE       = %8.3g, %8.3g, %8.3g (worst, avg, best)", infminS,
-            avgminS, supminS);
-}
-
-void GMSH_AnalyseMeshQualityPlugin::_printStatICN()
-{
-  if(_data.empty()) {
-    Msg::Info("No stat to print");
-    return;
-  }
-  double infminI, supminI, avgminI;
-  infminI = supminI = avgminI = _data[0].minI();
-
-  for(std::size_t i = 1; i < _data.size(); ++i) {
-    infminI = std::min(infminI, _data[i].minI());
-    supminI = std::max(supminI, _data[i].minI());
-    avgminI += _data[i].minI();
-  }
-  avgminI /= _data.size();
-
-  Msg::Info("ICN       = %8.3g, %8.3g, %8.3g (worst, avg, best)", infminI,
-            avgminI, supminI);
+  avg /= _data.size();
+  Msg::Info("%-9s = %8.3g, %8.3g, %8.3g (worst, avg, best)", name, inf, avg,
+            sup);
 }
 
 void GMSH_AnalyseMeshQualityPlugin::_clear()
