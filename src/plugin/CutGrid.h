@@ -6,9 +6,9 @@
 #ifndef CUT_GRID_H
 #define CUT_GRID_H
 
-#include "Plugin.h"
+#include "PointGrid.h"
 
-class GMSH_CutGridPlugin : public GMSH_PostPlugin {
+class GMSH_CutGridPlugin : public GMSH_PointGridPlugin {
   void addInView(int numsteps, int connect, int nbcomp, double ***pnts,
                  double ***vals, std::vector<double> &P, int *nP,
                  std::vector<double> &L, int *nL, std::vector<double> &Q,
@@ -24,10 +24,6 @@ public:
   }
   std::string getHelp() const;
   PView *execute(PView *);
-
-  int getNbU();
-  int getNbV();
-  void getPoint(int iU, int iV, double *X);
 
   bool optionCallback(int iopt, int num, int action, double &value);
   void drawPreview(void *context);

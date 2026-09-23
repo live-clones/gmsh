@@ -10,7 +10,7 @@ set(SRC
   Smooth.cpp CutParametric.cpp
   Lambda2.cpp
   Eigenvectors.cpp Eigenvalues.cpp
-  StreamLines.cpp Particles.cpp CutGrid.cpp CutBox.cpp
+  PointGrid.cpp StreamLines.cpp Particles.cpp CutGrid.cpp CutBox.cpp
   Transform.cpp
   LongitudeLatitude.cpp
   Triangulate.cpp Tetrahedralize.cpp

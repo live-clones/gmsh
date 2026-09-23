@@ -6,9 +6,9 @@
 #ifndef PARTICLES_H
 #define PARTICLES_H
 
-#include "Plugin.h"
+#include "PointGrid.h"
 
-class GMSH_ParticlesPlugin : public GMSH_PostPlugin {
+class GMSH_ParticlesPlugin : public GMSH_PointGridPlugin {
 public:
   GMSH_ParticlesPlugin();
   std::string getName() const { return "Particles"; }
@@ -18,13 +18,6 @@ public:
   }
   std::string getHelp() const;
   PView *execute(PView *);
-
-  int getNbU();
-  int getNbV();
-  void getPoint(int iU, int iV, double *X);
-
-  bool optionCallback(int iopt, int num, int action, double &value);
-  void drawPreview(void *context);
 };
 
 #endif

@@ -14,19 +14,19 @@
 #endif
 
 GMSH_CutGridPlugin::GMSH_CutGridPlugin()
-  : GMSH_PostPlugin({{GMSH_FULLRC, "X0", nullptr, 0., ""},
-                     {GMSH_FULLRC, "Y0", nullptr, 0., ""},
-                     {GMSH_FULLRC, "Z0", nullptr, 0., ""},
-                     {GMSH_FULLRC, "X1", nullptr, 1., ""},
-                     {GMSH_FULLRC, "Y1", nullptr, 0., ""},
-                     {GMSH_FULLRC, "Z1", nullptr, 0., ""},
-                     {GMSH_FULLRC, "X2", nullptr, 0., ""},
-                     {GMSH_FULLRC, "Y2", nullptr, 1., ""},
-                     {GMSH_FULLRC, "Z2", nullptr, 0., ""},
-                     {GMSH_FULLRC, "NumPointsU", nullptr, 20, ""},
-                     {GMSH_FULLRC, "NumPointsV", nullptr, 20, ""},
-                     {GMSH_FULLRC, "ConnectPoints", nullptr, 1, ""},
-                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
+  : GMSH_PointGridPlugin({{GMSH_FULLRC, "X0", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Y0", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Z0", nullptr, 0., ""},
+                          {GMSH_FULLRC, "X1", nullptr, 1., ""},
+                          {GMSH_FULLRC, "Y1", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Z1", nullptr, 0., ""},
+                          {GMSH_FULLRC, "X2", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Y2", nullptr, 1., ""},
+                          {GMSH_FULLRC, "Z2", nullptr, 0., ""},
+                          {GMSH_FULLRC, "NumPointsU", nullptr, 20, ""},
+                          {GMSH_FULLRC, "NumPointsV", nullptr, 20, ""},
+                          {GMSH_FULLRC, "ConnectPoints", nullptr, 1, ""},
+                          {GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
 }
 
@@ -110,19 +110,6 @@ std::string GMSH_CutGridPlugin::getHelp() const
          "`NumPointsV'.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "Plugin(CutGrid) creates one new list-based view.";
-}
-
-int GMSH_CutGridPlugin::getNbU() { return (int)option(9); }
-
-int GMSH_CutGridPlugin::getNbV() { return (int)option(10); }
-
-void GMSH_CutGridPlugin::getPoint(int iU, int iV, double *X)
-{
-  double u = getNbU() > 1 ? (double)iU / (double)(getNbU() - 1.) : 0.;
-  double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
-  X[0] = option(0) + u * (option(3) - option(0)) + v * (option(6) - option(0));
-  X[1] = option(1) + u * (option(4) - option(1)) + v * (option(7) - option(1));
-  X[2] = option(2) + u * (option(5) - option(2)) + v * (option(8) - option(2));
 }
 
 void GMSH_CutGridPlugin::addInView(int numsteps, int connect, int nbcomp,

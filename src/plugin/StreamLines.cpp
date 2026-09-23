@@ -12,57 +12,26 @@
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
-#include "glyphList.h"
 #endif
 
 GMSH_StreamLinesPlugin::GMSH_StreamLinesPlugin()
-  : GMSH_PostPlugin({{GMSH_FULLRC, "X0", nullptr, 0., ""},
-                     {GMSH_FULLRC, "Y0", nullptr, 0., ""},
-                     {GMSH_FULLRC, "Z0", nullptr, 0., ""},
-                     {GMSH_FULLRC, "X1", nullptr, 1., ""},
-                     {GMSH_FULLRC, "Y1", nullptr, 0., ""},
-                     {GMSH_FULLRC, "Z1", nullptr, 0., ""},
-                     {GMSH_FULLRC, "X2", nullptr, 0., ""},
-                     {GMSH_FULLRC, "Y2", nullptr, 1., ""},
-                     {GMSH_FULLRC, "Z2", nullptr, 0., ""},
-                     {GMSH_FULLRC, "NumPointsU", nullptr, 10, ""},
-                     {GMSH_FULLRC, "NumPointsV", nullptr, 1, ""},
-                     {GMSH_FULLRC, "DT", nullptr, .1, ""},
-                     {GMSH_FULLRC, "MaxIter", nullptr, 100, ""},
-                     {GMSH_FULLRC, "TimeStep", nullptr, 0, ""},
-                     {GMSH_FULLRC, "View", nullptr, -1., ""},
-                     {GMSH_FULLRC, "OtherView", nullptr, -1., ""}})
+  : GMSH_PointGridPlugin({{GMSH_FULLRC, "X0", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Y0", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Z0", nullptr, 0., ""},
+                          {GMSH_FULLRC, "X1", nullptr, 1., ""},
+                          {GMSH_FULLRC, "Y1", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Z1", nullptr, 0., ""},
+                          {GMSH_FULLRC, "X2", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Y2", nullptr, 1., ""},
+                          {GMSH_FULLRC, "Z2", nullptr, 0., ""},
+                          {GMSH_FULLRC, "NumPointsU", nullptr, 10, ""},
+                          {GMSH_FULLRC, "NumPointsV", nullptr, 1, ""},
+                          {GMSH_FULLRC, "DT", nullptr, .1, ""},
+                          {GMSH_FULLRC, "MaxIter", nullptr, 100, ""},
+                          {GMSH_FULLRC, "TimeStep", nullptr, 0, ""},
+                          {GMSH_FULLRC, "View", nullptr, -1., ""},
+                          {GMSH_FULLRC, "OtherView", nullptr, -1., ""}})
 {
-}
-
-void GMSH_StreamLinesPlugin::drawPreview(void *context)
-{
-#if defined(HAVE_OPENGL)
-  gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
-  drawContext *ctx = (drawContext *)context;
-  double p[3];
-  glyphList g;
-  unsigned int col = glyphCurrentColor();
-  g.reserve(GLYPH_SPHERE, getNbU() * getNbV());
-  for(int i = 0; i < getNbU(); ++i) {
-    for(int j = 0; j < getNbV(); ++j) {
-      getPoint(i, j, p);
-      g.addSphere(ctx, CTX::instance()->pointSize, p[0], p[1], p[2], col);
-    }
-  }
-  g.draw(ctx, 1);
-#endif
-}
-
-bool GMSH_StreamLinesPlugin::optionCallback(int iopt, int num, int action,
-                                            double &value)
-{
-  double lc = CTX::instance()->lc;
-  if(iopt < 9) // coordinates of the 3 points
-    return sliderOption(iopt, action, value, lc / 100., -2 * lc, 2 * lc);
-  if(iopt == 9 || iopt == 10)
-    return sliderOption(iopt, action, value, 1, 1, 100);
-  return false;
 }
 
 std::string GMSH_StreamLinesPlugin::getHelp() const
@@ -90,19 +59,6 @@ std::string GMSH_StreamLinesPlugin::getHelp() const
          "Plugin(StreamLines) creates one new list-based view. This "
          "view contains multi-step vector points if `OtherView' "
          "< 0, or single-step scalar lines if `OtherView' >= 0.";
-}
-
-int GMSH_StreamLinesPlugin::getNbU() { return (int)option(9); }
-
-int GMSH_StreamLinesPlugin::getNbV() { return (int)option(10); }
-
-void GMSH_StreamLinesPlugin::getPoint(int iU, int iV, double *X)
-{
-  double u = getNbU() > 1 ? (double)iU / (double)(getNbU() - 1.) : 0.;
-  double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
-  X[0] = option(0) + u * (option(3) - option(0)) + v * (option(6) - option(0));
-  X[1] = option(1) + u * (option(4) - option(1)) + v * (option(7) - option(1));
-  X[2] = option(2) + u * (option(5) - option(2)) + v * (option(8) - option(2));
 }
 
 PView *GMSH_StreamLinesPlugin::execute(PView *v)
