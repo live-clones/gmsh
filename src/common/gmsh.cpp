@@ -8631,11 +8631,8 @@ GMSH_API void gmsh::view::addListData(const int tag,
     d->setFileName(name + ".pos");
     view->setData(d);
   }
-  const char *types[] = {"SP", "VP", "TP", "SL", "VL", "TL", "ST", "VT",
-                         "TT", "SQ", "VQ", "TQ", "SS", "VS", "TS", "SH",
-                         "VH", "TH", "SI", "VI", "TI", "SY", "VY", "TY"};
   for(int idxtype = 0; idxtype < 24; idxtype++) {
-    if(dataType == types[idxtype]) {
+    if(dataType == PViewDataList::listKinds[idxtype].name) {
       d->importList(idxtype, numElements, data, true);
       view->setChanged(true);
       return;
@@ -8669,15 +8666,12 @@ GMSH_API void gmsh::view::getListData(const int tag,
     Msg::Error("View with tag %d does not contain list data", tag);
     return;
   }
-  const char *types[] = {"SP", "VP", "TP", "SL", "VL", "TL", "ST", "VT",
-                         "TT", "SQ", "VQ", "TQ", "SS", "VS", "TS", "SH",
-                         "VH", "TH", "SI", "VI", "TI", "SY", "VY", "TY"};
   std::vector<int> N(24);
   std::vector<std::vector<double> *> V(24);
   d->getListPointers(&N[0], &V[0]);
   for(int idxtype = 0; idxtype < 24; idxtype++) {
     if(N[idxtype]) {
-      dataTypes.push_back(types[idxtype]);
+      dataTypes.push_back(PViewDataList::listKinds[idxtype].name);
       numElements.push_back(N[idxtype]);
       data.push_back(*V[idxtype]);
     }

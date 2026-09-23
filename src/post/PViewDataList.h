@@ -46,6 +46,17 @@ public:
   std::vector<double> T2D, T3D; // 2D and 3D text strings
   std::vector<char> T2C, T3C;
 
+  // the kinds of lists: points, lines, triangles, quadrangles, tetrahedra,
+  // hexahedra, prisms, pyramids and trihedra, each with 1, 3 and 9 components,
+  // in this order (that of the files)
+  struct listKind {
+    const char *name;
+    int type, dim, numNodes, numEdges, numComp;
+    std::vector<double> PViewDataList::*list;
+    int PViewDataList::*num;
+  };
+  static const listKind listKinds[27];
+
 private:
   int _index[27];
   // list-based data has no topology: node identifiers are recreated once, by
@@ -80,8 +91,6 @@ private:
   void _stat(std::vector<double> &list, int nbcomp, int nbelm, int nbnod,
              int type);
   void _setLast(lastElement &l, int ele);
-  void _setLast(lastElement &l, int i, int dim, int nbnod, int nbcomp,
-                int nbedg, int type, std::vector<double> &list, int nblist);
   void _getString(int dim, int i, int timestep, std::string &str, double &x,
                   double &y, double &z, double &style);
   int _getRawData(int idxtype, std::vector<double> **l, int **ne, int *nc,

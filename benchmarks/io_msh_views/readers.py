@@ -99,6 +99,8 @@ def legacy(fmt):
                'differs (%s)' % name)
 
 
+f, err = legacy(2)
+check('parsed .pos read back', err)
 for fmt, name in ((0, 'ASCII'), (1, 'binary')):
     f, err = legacy(fmt)
     check('legacy %s .pos read back' % name, err)

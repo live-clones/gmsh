@@ -6,6 +6,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "PViewDataGModel.h"
+#include "PViewDataList.h"
 #include "MVertex.h"
 #include "MElement.h"
 #include "Numeric.h"
@@ -128,12 +129,11 @@ void PViewDataGModel::destroyData()
 // element, its tag and then its values at each step
 void PViewDataGModel::importLists(int N[24], std::vector<double> *V[24])
 {
-  const int numNodes[8] = {1, 2, 3, 4, 4, 8, 6, 5};
-  const int numComps[3] = {1, 3, 9};
   for(int i = 0; i < 24; i++) {
     if(!N[i]) continue;
     std::vector<double> &list = *V[i];
-    int nc = numComps[i % 3], nn = numNodes[i / 3];
+    int nc = PViewDataList::listKinds[i].numComp;
+    int nn = PViewDataList::listKinds[i].numNodes;
     int stride = list.size() / N[i];
     int numSteps = (stride - 1) / nc / nn;
     for(int step = 0; step < numSteps; step++) {

@@ -168,7 +168,6 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
 
   // the lists, in the order of the file (as in _getRawData()), then their
   // second order versions, which replace them
-  const int numNodes[8] = {1, 2, 3, 4, 4, 8, 6, 5};
   const int numNodes2[8] = {1, 3, 6, 9, 10, 27, 18, 14};
   const int num2[24] = {0,     0,     0,     NbSL2, NbVL2, NbTL2, NbST2, NbVT2,
                         NbTT2, NbSQ2, NbVQ2, NbTQ2, NbSS2, NbVS2, NbTS2, NbSH2,
@@ -178,7 +177,7 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
     std::vector<double> *list;
     int *num, numComp, n;
     _getRawData(i, &list, &num, &numComp, &n);
-    int nn = numNodes[i / 3];
+    int nn = listKinds[i].numNodes;
     ok = dVecRead(*list, *num * (NbTimeStep * nn * numComp + 3 * nn), fp,
                   binary, swap);
   }
@@ -320,13 +319,10 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
       fprintf(fp, "noname ");
     else
       fprintf(fp, "%s ", str.c_str());
-    fprintf(fp,
-            "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-            "%d %d %d %d %d %d %d %d %d %d %d %d\n",
-            (int)Time.size(), NbSP, NbVP, NbTP, NbSL, NbVL, NbTL, NbST, NbVT,
-            NbTT, NbSQ, NbVQ, NbTQ, NbSS, NbVS, NbTS, NbSH, NbVH, NbTH, NbSI,
-            NbVI, NbTI, NbSY, NbVY, NbTY, NbT2, (int)T2C.size(), NbT3,
-            (int)T3C.size());
+    // (the format has no trihedra)
+    fprintf(fp, "%d", (int)Time.size());
+    for(int i = 0; i < 24; i++) fprintf(fp, " %d", this->*listKinds[i].num);
+    fprintf(fp, " %d %d %d %d\n", NbT2, (int)T2C.size(), NbT3, (int)T3C.size());
     if(binary) {
       int one = 1;
       if(!fwrite(&one, sizeof(int), 1, fp)) {
@@ -336,30 +332,7 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
       }
     }
     dVecWrite(Time, fp, binary);
-    dVecWrite(SP, fp, binary);
-    dVecWrite(VP, fp, binary);
-    dVecWrite(TP, fp, binary);
-    dVecWrite(SL, fp, binary);
-    dVecWrite(VL, fp, binary);
-    dVecWrite(TL, fp, binary);
-    dVecWrite(ST, fp, binary);
-    dVecWrite(VT, fp, binary);
-    dVecWrite(TT, fp, binary);
-    dVecWrite(SQ, fp, binary);
-    dVecWrite(VQ, fp, binary);
-    dVecWrite(TQ, fp, binary);
-    dVecWrite(SS, fp, binary);
-    dVecWrite(VS, fp, binary);
-    dVecWrite(TS, fp, binary);
-    dVecWrite(SH, fp, binary);
-    dVecWrite(VH, fp, binary);
-    dVecWrite(TH, fp, binary);
-    dVecWrite(SI, fp, binary);
-    dVecWrite(VI, fp, binary);
-    dVecWrite(TI, fp, binary);
-    dVecWrite(SY, fp, binary);
-    dVecWrite(VY, fp, binary);
-    dVecWrite(TY, fp, binary);
+    for(int i = 0; i < 24; i++) dVecWrite(this->*listKinds[i].list, fp, binary);
     dVecWrite(T2D, fp, binary);
     cVecWrite(T2C, fp, binary);
     dVecWrite(T3D, fp, binary);
@@ -370,30 +343,10 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
   else {
     fprintf(fp, "View \"%s\" {\n", getName().c_str());
     writeTimePOS(fp, Time);
-    writeElementPOS(fp, "SP", 1, NbSP, SP);
-    writeElementPOS(fp, "VP", 1, NbVP, VP);
-    writeElementPOS(fp, "TP", 1, NbTP, TP);
-    writeElementPOS(fp, "SL", 2, NbSL, SL);
-    writeElementPOS(fp, "VL", 2, NbVL, VL);
-    writeElementPOS(fp, "TL", 2, NbTL, TL);
-    writeElementPOS(fp, "ST", 3, NbST, ST);
-    writeElementPOS(fp, "VT", 3, NbVT, VT);
-    writeElementPOS(fp, "TT", 3, NbTT, TT);
-    writeElementPOS(fp, "SQ", 4, NbSQ, SQ);
-    writeElementPOS(fp, "VQ", 4, NbVQ, VQ);
-    writeElementPOS(fp, "TQ", 4, NbTQ, TQ);
-    writeElementPOS(fp, "SS", 4, NbSS, SS);
-    writeElementPOS(fp, "VS", 4, NbVS, VS);
-    writeElementPOS(fp, "TS", 4, NbTS, TS);
-    writeElementPOS(fp, "SH", 8, NbSH, SH);
-    writeElementPOS(fp, "VH", 8, NbVH, VH);
-    writeElementPOS(fp, "TH", 8, NbTH, TH);
-    writeElementPOS(fp, "SI", 6, NbSI, SI);
-    writeElementPOS(fp, "VI", 6, NbVI, VI);
-    writeElementPOS(fp, "TI", 6, NbTI, TI);
-    writeElementPOS(fp, "SY", 5, NbSY, SY);
-    writeElementPOS(fp, "VY", 5, NbVY, VY);
-    writeElementPOS(fp, "TY", 5, NbTY, TY);
+    for(int i = 0; i < 24; i++) {
+      const listKind &k = listKinds[i];
+      writeElementPOS(fp, k.name, k.numNodes, this->*k.num, this->*k.list);
+    }
     writeTextPOS(fp, 4, NbT2, T2D, T2C);
     writeTextPOS(fp, 5, NbT3, T3D, T3C);
     fprintf(fp, "};\n");

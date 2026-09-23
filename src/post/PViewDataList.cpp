@@ -24,14 +24,41 @@ static std::size_t newState()
   return ++last;
 }
 
+const PViewDataList::listKind PViewDataList::listKinds[27] = {
+  {"SP", TYPE_PNT, 0, 1, 0, 1, &PViewDataList::SP, &PViewDataList::NbSP},
+  {"VP", TYPE_PNT, 0, 1, 0, 3, &PViewDataList::VP, &PViewDataList::NbVP},
+  {"TP", TYPE_PNT, 0, 1, 0, 9, &PViewDataList::TP, &PViewDataList::NbTP},
+  {"SL", TYPE_LIN, 1, 2, 1, 1, &PViewDataList::SL, &PViewDataList::NbSL},
+  {"VL", TYPE_LIN, 1, 2, 1, 3, &PViewDataList::VL, &PViewDataList::NbVL},
+  {"TL", TYPE_LIN, 1, 2, 1, 9, &PViewDataList::TL, &PViewDataList::NbTL},
+  {"ST", TYPE_TRI, 2, 3, 3, 1, &PViewDataList::ST, &PViewDataList::NbST},
+  {"VT", TYPE_TRI, 2, 3, 3, 3, &PViewDataList::VT, &PViewDataList::NbVT},
+  {"TT", TYPE_TRI, 2, 3, 3, 9, &PViewDataList::TT, &PViewDataList::NbTT},
+  {"SQ", TYPE_QUA, 2, 4, 4, 1, &PViewDataList::SQ, &PViewDataList::NbSQ},
+  {"VQ", TYPE_QUA, 2, 4, 4, 3, &PViewDataList::VQ, &PViewDataList::NbVQ},
+  {"TQ", TYPE_QUA, 2, 4, 4, 9, &PViewDataList::TQ, &PViewDataList::NbTQ},
+  {"SS", TYPE_TET, 3, 4, 6, 1, &PViewDataList::SS, &PViewDataList::NbSS},
+  {"VS", TYPE_TET, 3, 4, 6, 3, &PViewDataList::VS, &PViewDataList::NbVS},
+  {"TS", TYPE_TET, 3, 4, 6, 9, &PViewDataList::TS, &PViewDataList::NbTS},
+  {"SH", TYPE_HEX, 3, 8, 12, 1, &PViewDataList::SH, &PViewDataList::NbSH},
+  {"VH", TYPE_HEX, 3, 8, 12, 3, &PViewDataList::VH, &PViewDataList::NbVH},
+  {"TH", TYPE_HEX, 3, 8, 12, 9, &PViewDataList::TH, &PViewDataList::NbTH},
+  {"SI", TYPE_PRI, 3, 6, 9, 1, &PViewDataList::SI, &PViewDataList::NbSI},
+  {"VI", TYPE_PRI, 3, 6, 9, 3, &PViewDataList::VI, &PViewDataList::NbVI},
+  {"TI", TYPE_PRI, 3, 6, 9, 9, &PViewDataList::TI, &PViewDataList::NbTI},
+  {"SY", TYPE_PYR, 3, 5, 8, 1, &PViewDataList::SY, &PViewDataList::NbSY},
+  {"VY", TYPE_PYR, 3, 5, 8, 3, &PViewDataList::VY, &PViewDataList::NbVY},
+  {"TY", TYPE_PYR, 3, 5, 8, 9, &PViewDataList::TY, &PViewDataList::NbTY},
+  {"SR", TYPE_TRIH, 3, 4, 5, 1, &PViewDataList::SR, &PViewDataList::NbSR},
+  {"VR", TYPE_TRIH, 3, 4, 5, 3, &PViewDataList::VR, &PViewDataList::NbVR},
+  {"TR", TYPE_TRIH, 3, 4, 5, 9, &PViewDataList::TR, &PViewDataList::NbTR},
+};
+
 PViewDataList::PViewDataList(bool isAdapted)
-  : PViewData(), NbTimeStep(0), Min(VAL_INF), Max(-VAL_INF), NbSP(0), NbVP(0),
-    NbTP(0), NbSL(0), NbVL(0), NbTL(0), NbST(0), NbVT(0), NbTT(0), NbSQ(0),
-    NbVQ(0), NbTQ(0), NbSS(0), NbVS(0), NbTS(0),
-    NbSH(0), NbVH(0), NbTH(0), NbSI(0), NbVI(0), NbTI(0), NbSY(0), NbVY(0),
-    NbTY(0), NbSR(0), NbVR(0), NbTR(0), NbT2(0),
-    NbT3(0), _nodeIndexStatus(0), _state(newState()), _isAdapted(isAdapted)
+  : PViewData(), NbTimeStep(0), Min(VAL_INF), Max(-VAL_INF), NbT2(0), NbT3(0),
+    _nodeIndexStatus(0), _state(newState()), _isAdapted(isAdapted)
 {
+  for(auto &k : listKinds) this->*k.num = 0;
   for(int i = 0; i < 27; i++) _index[i] = 0;
 }
 
@@ -107,33 +134,8 @@ bool PViewDataList::finalize(bool computeMinMax,
   _stat(T3D, T3C, 5);
 
   // compute min/max and other statistics for all element lists
-  _stat(SP, 1, NbSP, 1, TYPE_PNT);
-  _stat(VP, 3, NbVP, 1, TYPE_PNT);
-  _stat(TP, 9, NbTP, 1, TYPE_PNT);
-  _stat(SL, 1, NbSL, 2, TYPE_LIN);
-  _stat(VL, 3, NbVL, 2, TYPE_LIN);
-  _stat(TL, 9, NbTL, 2, TYPE_LIN);
-  _stat(ST, 1, NbST, 3, TYPE_TRI);
-  _stat(VT, 3, NbVT, 3, TYPE_TRI);
-  _stat(TT, 9, NbTT, 3, TYPE_TRI);
-  _stat(SQ, 1, NbSQ, 4, TYPE_QUA);
-  _stat(VQ, 3, NbVQ, 4, TYPE_QUA);
-  _stat(TQ, 9, NbTQ, 4, TYPE_QUA);
-  _stat(SS, 1, NbSS, 4, TYPE_TET);
-  _stat(VS, 3, NbVS, 4, TYPE_TET);
-  _stat(TS, 9, NbTS, 4, TYPE_TET);
-  _stat(SH, 1, NbSH, 8, TYPE_HEX);
-  _stat(VH, 3, NbVH, 8, TYPE_HEX);
-  _stat(TH, 9, NbTH, 8, TYPE_HEX);
-  _stat(SI, 1, NbSI, 6, TYPE_PRI);
-  _stat(VI, 3, NbVI, 6, TYPE_PRI);
-  _stat(TI, 9, NbTI, 6, TYPE_PRI);
-  _stat(SY, 1, NbSY, 5, TYPE_PYR);
-  _stat(VY, 3, NbVY, 5, TYPE_PYR);
-  _stat(TY, 9, NbTY, 5, TYPE_PYR);
-  _stat(SY, 1, NbSR, 4, TYPE_TRIH);
-  _stat(VY, 3, NbVR, 4, TYPE_TRIH);
-  _stat(TY, 9, NbTR, 4, TYPE_TRIH);
+  for(auto &k : listKinds)
+    _stat(this->*k.list, k.numComp, this->*k.num, k.numNodes, k.type);
 
   // add dummy time values if none (or too few) time values are
   // provided (e.g. using the old parsed format)
@@ -142,13 +144,8 @@ bool PViewDataList::finalize(bool computeMinMax,
   }
 
   // compute starting element indices
-  int nb[27] = {NbSP, NbVP, NbTP, NbSL, NbVL, NbTL, NbST, NbVT, NbTT,
-                NbSQ, NbVQ, NbTQ, NbSS, NbVS, NbTS, NbSH, NbVH, NbTH,
-                NbSI, NbVI, NbTI, NbSY, NbVY, NbTY, NbSR, NbVR, NbTR};
-  for(int i = 0; i < 27; i++) {
-    _index[i] = 0;
-    for(int j = 0; j <= i; j++) _index[i] += nb[j];
-  }
+  for(int i = 0; i < 27; i++)
+    _index[i] = (i ? _index[i - 1] : 0) + this->*listKinds[i].num;
 
   if(CTX::instance()->post.smooth) smooth();
 
@@ -157,17 +154,26 @@ bool PViewDataList::finalize(bool computeMinMax,
 
 int PViewDataList::getNumScalars(int step)
 {
-  return NbSP + NbSL + NbST + NbSQ + NbSS + NbSH + NbSI + NbSY + NbSR;
+  int n = 0;
+  for(auto &k : listKinds)
+    if(k.numComp == 1) n += this->*k.num;
+  return n;
 }
 
 int PViewDataList::getNumVectors(int step)
 {
-  return NbVP + NbVL + NbVT + NbVQ + NbVS + NbVH + NbVI + NbVY + NbVR;
+  int n = 0;
+  for(auto &k : listKinds)
+    if(k.numComp == 3) n += this->*k.num;
+  return n;
 }
 
 int PViewDataList::getNumTensors(int step)
 {
-  return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY + NbTR;
+  int n = 0;
+  for(auto &k : listKinds)
+    if(k.numComp == 9) n += this->*k.num;
+  return n;
 }
 
 int PViewDataList::getNumElements(int step, int ent)
@@ -321,103 +327,31 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
   }
 }
 
-void PViewDataList::_setLast(lastElement &l, int i, int dim, int nbnod,
-                             int nbcomp, int nbedg, int type,
-                             std::vector<double> &list, int nblist)
-{
-  if(haveInterpolationMatrices()) {
-    std::vector<fullMatrix<double> *> im;
-    if(getInterpolationMatrices(type, im) == 4) nbnod = im[2]->size1();
-  }
-
-  l.dim = dim;
-  l.numNodes = nbnod;
-  l.numComponents = nbcomp;
-  l.numEdges = nbedg;
-  l.type = type;
-  // the numbers of coordinates and values of an element, and before it
-  std::size_t nb = list.size() / nblist, before = (std::size_t)i * nb;
-  l.numValues = (int)((nb - 3 * nbnod) / NbTimeStep);
-  l.xyz = &list[before];
-  l.val = &list[before + 3 * l.numNodes];
-}
-
 void PViewDataList::_setLast(lastElement &l, int ele)
 {
   l.state = _state;
   l.ele = ele;
-  if(ele < _index[2]) { // points
-    if(ele < _index[0])
-      _setLast(l, ele, 0, 1, 1, 0, TYPE_PNT, SP, NbSP);
-    else if(ele < _index[1])
-      _setLast(l, ele - _index[0], 0, 1, 3, 0, TYPE_PNT, VP, NbVP);
-    else
-      _setLast(l, ele - _index[1], 0, 1, 9, 0, TYPE_PNT, TP, NbTP);
+  // the list of the element: the first whose elements end after it
+  int k = std::upper_bound(_index, _index + 27, ele) - _index;
+  if(k >= 27) return;
+  const listKind &kind = listKinds[k];
+  std::vector<double> &list = this->*kind.list;
+  int i = ele - (k ? _index[k - 1] : 0), nbnod = kind.numNodes;
+  if(haveInterpolationMatrices()) {
+    std::vector<fullMatrix<double> *> im;
+    if(getInterpolationMatrices(kind.type, im) == 4) nbnod = im[2]->size1();
   }
-  else if(ele < _index[5]) { // lines
-    if(ele < _index[3])
-      _setLast(l, ele - _index[2], 1, 2, 1, 1, TYPE_LIN, SL, NbSL);
-    else if(ele < _index[4])
-      _setLast(l, ele - _index[3], 1, 2, 3, 1, TYPE_LIN, VL, NbVL);
-    else
-      _setLast(l, ele - _index[4], 1, 2, 9, 1, TYPE_LIN, TL, NbTL);
-  }
-  else if(ele < _index[8]) { // triangles
-    if(ele < _index[6])
-      _setLast(l, ele - _index[5], 2, 3, 1, 3, TYPE_TRI, ST, NbST);
-    else if(ele < _index[7])
-      _setLast(l, ele - _index[6], 2, 3, 3, 3, TYPE_TRI, VT, NbVT);
-    else
-      _setLast(l, ele - _index[7], 2, 3, 9, 3, TYPE_TRI, TT, NbTT);
-  }
-  else if(ele < _index[11]) { // quadrangles
-    if(ele < _index[9])
-      _setLast(l, ele - _index[8], 2, 4, 1, 4, TYPE_QUA, SQ, NbSQ);
-    else if(ele < _index[10])
-      _setLast(l, ele - _index[9], 2, 4, 3, 4, TYPE_QUA, VQ, NbVQ);
-    else
-      _setLast(l, ele - _index[10], 2, 4, 9, 4, TYPE_QUA, TQ, NbTQ);
-  }
-  else if(ele < _index[14]) { // tetrahedra
-    if(ele < _index[12])
-      _setLast(l, ele - _index[11], 3, 4, 1, 6, TYPE_TET, SS, NbSS);
-    else if(ele < _index[13])
-      _setLast(l, ele - _index[12], 3, 4, 3, 6, TYPE_TET, VS, NbVS);
-    else
-      _setLast(l, ele - _index[13], 3, 4, 9, 6, TYPE_TET, TS, NbTS);
-  }
-  else if(ele < _index[17]) { // hexahedra
-    if(ele < _index[15])
-      _setLast(l, ele - _index[14], 3, 8, 1, 12, TYPE_HEX, SH, NbSH);
-    else if(ele < _index[16])
-      _setLast(l, ele - _index[15], 3, 8, 3, 12, TYPE_HEX, VH, NbVH);
-    else
-      _setLast(l, ele - _index[16], 3, 8, 9, 12, TYPE_HEX, TH, NbTH);
-  }
-  else if(ele < _index[20]) { // prisms
-    if(ele < _index[18])
-      _setLast(l, ele - _index[17], 3, 6, 1, 9, TYPE_PRI, SI, NbSI);
-    else if(ele < _index[19])
-      _setLast(l, ele - _index[18], 3, 6, 3, 9, TYPE_PRI, VI, NbVI);
-    else
-      _setLast(l, ele - _index[19], 3, 6, 9, 9, TYPE_PRI, TI, NbTI);
-  }
-  else if(ele < _index[23]) { // pyramids
-    if(ele < _index[21])
-      _setLast(l, ele - _index[20], 3, 5, 1, 8, TYPE_PYR, SY, NbSY);
-    else if(ele < _index[22])
-      _setLast(l, ele - _index[21], 3, 5, 3, 8, TYPE_PYR, VY, NbVY);
-    else
-      _setLast(l, ele - _index[22], 3, 5, 9, 8, TYPE_PYR, TY, NbTY);
-  }
-  else if(ele < _index[26]) { // trihedra
-    if(ele < _index[24])
-      _setLast(l, ele - _index[23], 3, 4, 1, 5, TYPE_TRIH, SR, NbSR);
-    else if(ele < _index[25])
-      _setLast(l, ele - _index[24], 3, 4, 3, 5, TYPE_TRIH, VR, NbVR);
-    else
-      _setLast(l, ele - _index[25], 3, 4, 9, 5, TYPE_TRIH, TR, NbTR);
-  }
+  l.dim = kind.dim;
+  l.numNodes = nbnod;
+  l.numComponents = kind.numComp;
+  l.numEdges = kind.numEdges;
+  l.type = kind.type;
+  // the numbers of coordinates and values of an element, and before it
+  std::size_t nb = list.size() / (this->*kind.num),
+              before = (std::size_t)i * nb;
+  l.numValues = (int)((nb - 3 * nbnod) / NbTimeStep);
+  l.xyz = &list[before];
+  l.val = &list[before + 3 * l.numNodes];
 }
 
 thread_local PViewDataList::lastElement PViewDataList::_lastRead;
@@ -833,59 +767,11 @@ bool PViewDataList::combineSpace(nameData &nd)
 
     if(!i) Time = l->Time;
 
-    // merge elememts
-    dVecMerge(l->SP, SP);
-    NbSP += l->NbSP;
-    dVecMerge(l->VP, VP);
-    NbVP += l->NbVP;
-    dVecMerge(l->TP, TP);
-    NbTP += l->NbTP;
-    dVecMerge(l->SL, SL);
-    NbSL += l->NbSL;
-    dVecMerge(l->VL, VL);
-    NbVL += l->NbVL;
-    dVecMerge(l->TL, TL);
-    NbTL += l->NbTL;
-    dVecMerge(l->ST, ST);
-    NbST += l->NbST;
-    dVecMerge(l->VT, VT);
-    NbVT += l->NbVT;
-    dVecMerge(l->TT, TT);
-    NbTT += l->NbTT;
-    dVecMerge(l->SQ, SQ);
-    NbSQ += l->NbSQ;
-    dVecMerge(l->VQ, VQ);
-    NbVQ += l->NbVQ;
-    dVecMerge(l->TQ, TQ);
-    NbTQ += l->NbTQ;
-    dVecMerge(l->SS, SS);
-    NbSS += l->NbSS;
-    dVecMerge(l->VS, VS);
-    NbVS += l->NbVS;
-    dVecMerge(l->TS, TS);
-    NbTS += l->NbTS;
-    dVecMerge(l->SH, SH);
-    NbSH += l->NbSH;
-    dVecMerge(l->VH, VH);
-    NbVH += l->NbVH;
-    dVecMerge(l->TH, TH);
-    NbTH += l->NbTH;
-    dVecMerge(l->SI, SI);
-    NbSI += l->NbSI;
-    dVecMerge(l->VI, VI);
-    NbVI += l->NbVI;
-    dVecMerge(l->TI, TI);
-    NbTI += l->NbTI;
-    dVecMerge(l->SY, SY);
-    NbSY += l->NbSY;
-    dVecMerge(l->VY, VY);
-    NbVY += l->NbVY;
-    dVecMerge(l->TY, TY);
-    NbTY += l->NbTY;
-    dVecMerge(l->VR, VR);
-    NbVR += l->NbVR;
-    dVecMerge(l->TR, TR);
-    NbTR += l->NbTR;
+    // merge elements
+    for(auto &k : listKinds) {
+      dVecMerge(l->*k.list, this->*k.list);
+      this->*k.num += l->*k.num;
+    }
 
     // merge strings
     for(std::size_t i = 0; i < l->T2D.size(); i += 4) {
@@ -1077,209 +963,21 @@ bool PViewDataList::combineTime(nameData &nd)
 int PViewDataList::_getRawData(int idxtype, std::vector<double> **l, int **ne,
                                int *nc, int *nn)
 {
-  int type = 0;
-  // No constant nn for polygons!
-  if(idxtype > 26 && idxtype < 33)
-    Msg::Warning("No constant number of nodes for polygons and polyhedra");
-  switch(idxtype) {
-  case 0:
-    *l = &SP;
-    *ne = &NbSP;
-    *nc = 1;
-    *nn = 1;
-    type = TYPE_PNT;
-    break;
-  case 1:
-    *l = &VP;
-    *ne = &NbVP;
-    *nc = 3;
-    *nn = 1;
-    type = TYPE_PNT;
-    break;
-  case 2:
-    *l = &TP;
-    *ne = &NbTP;
-    *nc = 9;
-    *nn = 1;
-    type = TYPE_PNT;
-    break;
-  case 3:
-    *l = &SL;
-    *ne = &NbSL;
-    *nc = 1;
-    *nn = 2;
-    type = TYPE_LIN;
-    break;
-  case 4:
-    *l = &VL;
-    *ne = &NbVL;
-    *nc = 3;
-    *nn = 2;
-    type = TYPE_LIN;
-    break;
-  case 5:
-    *l = &TL;
-    *ne = &NbTL;
-    *nc = 9;
-    *nn = 2;
-    type = TYPE_LIN;
-    break;
-  case 6:
-    *l = &ST;
-    *ne = &NbST;
-    *nc = 1;
-    *nn = 3;
-    type = TYPE_TRI;
-    break;
-  case 7:
-    *l = &VT;
-    *ne = &NbVT;
-    *nc = 3;
-    *nn = 3;
-    type = TYPE_TRI;
-    break;
-  case 8:
-    *l = &TT;
-    *ne = &NbTT;
-    *nc = 9;
-    *nn = 3;
-    type = TYPE_TRI;
-    break;
-  case 9:
-    *l = &SQ;
-    *ne = &NbSQ;
-    *nc = 1;
-    *nn = 4;
-    type = TYPE_QUA;
-    break;
-  case 10:
-    *l = &VQ;
-    *ne = &NbVQ;
-    *nc = 3;
-    *nn = 4;
-    type = TYPE_QUA;
-    break;
-  case 11:
-    *l = &TQ;
-    *ne = &NbTQ;
-    *nc = 9;
-    *nn = 4;
-    type = TYPE_QUA;
-    break;
-  case 12:
-    *l = &SS;
-    *ne = &NbSS;
-    *nc = 1;
-    *nn = 4;
-    type = TYPE_TET;
-    break;
-  case 13:
-    *l = &VS;
-    *ne = &NbVS;
-    *nc = 3;
-    *nn = 4;
-    type = TYPE_TET;
-    break;
-  case 14:
-    *l = &TS;
-    *ne = &NbTS;
-    *nc = 9;
-    *nn = 4;
-    type = TYPE_TET;
-    break;
-  case 15:
-    *l = &SH;
-    *ne = &NbSH;
-    *nc = 1;
-    *nn = 8;
-    type = TYPE_HEX;
-    break;
-  case 16:
-    *l = &VH;
-    *ne = &NbVH;
-    *nc = 3;
-    *nn = 8;
-    type = TYPE_HEX;
-    break;
-  case 17:
-    *l = &TH;
-    *ne = &NbTH;
-    *nc = 9;
-    *nn = 8;
-    type = TYPE_HEX;
-    break;
-  case 18:
-    *l = &SI;
-    *ne = &NbSI;
-    *nc = 1;
-    *nn = 6;
-    type = TYPE_PRI;
-    break;
-  case 19:
-    *l = &VI;
-    *ne = &NbVI;
-    *nc = 3;
-    *nn = 6;
-    type = TYPE_PRI;
-    break;
-  case 20:
-    *l = &TI;
-    *ne = &NbTI;
-    *nc = 9;
-    *nn = 6;
-    type = TYPE_PRI;
-    break;
-  case 21:
-    *l = &SY;
-    *ne = &NbSY;
-    *nc = 1;
-    *nn = 5;
-    type = TYPE_PYR;
-    break;
-  case 22:
-    *l = &VY;
-    *ne = &NbVY;
-    *nc = 3;
-    *nn = 5;
-    type = TYPE_PYR;
-    break;
-  case 23:
-    *l = &TY;
-    *ne = &NbTY;
-    *nc = 9;
-    *nn = 5;
-    type = TYPE_PYR;
-    break;
-  case 24:
-    *l = &SR;
-    *ne = &NbSR;
-    *nc = 1;
-    *nn = 4;
-    type = TYPE_TRIH;
-    break;
-  case 25:
-    *l = &VR;
-    *ne = &NbVR;
-    *nc = 3;
-    *nn = 4;
-    type = TYPE_TRIH;
-    break;
-  case 26:
-    *l = &TR;
-    *ne = &NbTR;
-    *nc = 9;
-    *nn = 4;
-    type = TYPE_TRIH;
-    break;
-  default: Msg::Error("Wrong type in PViewDataList"); break;
+  if(idxtype < 0 || idxtype >= 27) {
+    Msg::Error("Wrong type in PViewDataList");
+    return 0;
   }
-
+  const listKind &k = listKinds[idxtype];
+  *l = &(this->*k.list);
+  *ne = &(this->*k.num);
+  *nc = k.numComp;
+  *nn = k.numNodes;
   if(haveInterpolationMatrices()) {
     std::vector<fullMatrix<double> *> im;
-    int nim = getInterpolationMatrices(type, im);
+    int nim = getInterpolationMatrices(k.type, im);
     if(nim == 4) *nn = im[2]->size1();
   }
-  return type;
+  return k.type;
 }
 
 void PViewDataList::setOrder2(int type)
@@ -1317,133 +1015,11 @@ std::vector<double> *PViewDataList::incrementList(int numComp, int type,
     warned = true;
     return nullptr;
   }
-  switch(type) {
-  case TYPE_PNT:
-    if(numComp == 1) {
-      NbSP++;
-      return &SP;
+  for(auto &k : listKinds) {
+    if(k.type == type && k.numComp == numComp) {
+      this->*k.num += 1;
+      return &(this->*k.list);
     }
-    else if(numComp == 3) {
-      NbVP++;
-      return &VP;
-    }
-    else if(numComp == 9) {
-      NbTP++;
-      return &TP;
-    }
-    break;
-  case TYPE_LIN:
-    if(numComp == 1) {
-      NbSL++;
-      return &SL;
-    }
-    else if(numComp == 3) {
-      NbVL++;
-      return &VL;
-    }
-    else if(numComp == 9) {
-      NbTL++;
-      return &TL;
-    }
-    break;
-  case TYPE_TRI:
-    if(numComp == 1) {
-      NbST++;
-      return &ST;
-    }
-    else if(numComp == 3) {
-      NbVT++;
-      return &VT;
-    }
-    else if(numComp == 9) {
-      NbTT++;
-      return &TT;
-    }
-    break;
-  case TYPE_QUA:
-    if(numComp == 1) {
-      NbSQ++;
-      return &SQ;
-    }
-    else if(numComp == 3) {
-      NbVQ++;
-      return &VQ;
-    }
-    else if(numComp == 9) {
-      NbTQ++;
-      return &TQ;
-    }
-    break;
-  case TYPE_TET:
-    if(numComp == 1) {
-      NbSS++;
-      return &SS;
-    }
-    else if(numComp == 3) {
-      NbVS++;
-      return &VS;
-    }
-    else if(numComp == 9) {
-      NbTS++;
-      return &TS;
-    }
-    break;
-  case TYPE_HEX:
-    if(numComp == 1) {
-      NbSH++;
-      return &SH;
-    }
-    else if(numComp == 3) {
-      NbVH++;
-      return &VH;
-    }
-    else if(numComp == 9) {
-      NbTH++;
-      return &TH;
-    }
-    break;
-  case TYPE_PRI:
-    if(numComp == 1) {
-      NbSI++;
-      return &SI;
-    }
-    else if(numComp == 3) {
-      NbVI++;
-      return &VI;
-    }
-    else if(numComp == 9) {
-      NbTI++;
-      return &TI;
-    }
-    break;
-  case TYPE_PYR:
-    if(numComp == 1) {
-      NbSY++;
-      return &SY;
-    }
-    else if(numComp == 3) {
-      NbVY++;
-      return &VY;
-    }
-    else if(numComp == 9) {
-      NbTY++;
-      return &TY;
-    }
-    break;
-  case TYPE_TRIH:
-    if(numComp == 1) {
-      NbSR++;
-      return &SR;
-    }
-    else if(numComp == 3) {
-      NbVR++;
-      return &VR;
-    }
-    else if(numComp == 9) {
-      NbTR++;
-      return &TR;
-    }
-    break;
   }
   return nullptr;
 }
