@@ -14,6 +14,7 @@
 #include "GModel.h"
 #include "Homology.h"
 #include "HomologyComputation.h"
+#include "Context.h"
 
 StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "ComputeHomology", nullptr, 1.},
@@ -136,7 +137,6 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   Homology *homology = new Homology(m, domain, subdomain, imdomain, true,
                                     combine, omit, smoothen, heuristic);
   homology->setPeriodic(periodic, perslaves, permasters);
-  homology->setFileName(fileName);
 
   if(hom != 0) homology->findHomologyBasis(dimsave);
   if(coh != 0) homology->findCohomologyBasis(dimsave);
@@ -156,7 +156,15 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
     }
   }
 
+  // as GModel::computeHomology(), and write the file once the chains are in
+  // the model
+  m->pruneMeshVertexAssociations();
+  if(fileName.size()) {
+    homology->setFileName(fileName);
+    homology->writeBasisMSH();
+  }
   delete homology;
+  CTX::instance()->meshChanged();
 
   return nullptr;
 }
