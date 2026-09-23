@@ -9,6 +9,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <cmath>
 #include "GmshGlobal.h"
 #include "GmshConfig.h"
 #include "GModel.h"
@@ -117,7 +118,7 @@ int GMSH_HomologyPostProcessingPlugin::detIntegerMatrix(
   for(int i = 0; i < n; i++)
     for(int j = 0; j < n; j++) m(i, j) = matrix.at(i * n + j);
 
-  return m.determinant();
+  return (int)std::lround(m.determinant());
 }
 
 bool GMSH_HomologyPostProcessingPlugin::invertIntegerMatrix(
@@ -129,12 +130,14 @@ bool GMSH_HomologyPostProcessingPlugin::invertIntegerMatrix(
     for(int j = 0; j < n; j++) m(i, j) = matrix.at(i * n + j);
 
   if(!m.invertInPlace()) {
-    Msg::Error("Matrix is not unimodular");
+    Msg::Error("Matrix is not invertible");
     return false;
   }
 
+  // integer entries for a unimodular matrix: round, not truncate
   for(int i = 0; i < n; i++)
-    for(int j = 0; j < n; j++) matrix.at(i * n + j) = m(i, j);
+    for(int j = 0; j < n; j++)
+      matrix.at(i * n + j) = (int)std::lround(m(i, j));
   return true;
 }
 
@@ -203,7 +206,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
      basisPhysicals2.empty()) {
     Msg::Error(
       "Number of matrix columns and operated chains must match (%d != %d)",
-      cols, basisPhysicals.size());
+      cols, (int)basisPhysicals.size());
     return nullptr;
   }
   else if(matrixString == "I") {
@@ -216,7 +219,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   if(!basisPhysicals2.empty() &&
      basisPhysicals.size() != basisPhysicals2.size()) {
     Msg::Error("Number of operated chains must match (%d != %d)",
-               basisPhysicals.size(), basisPhysicals2.size());
+               (int)basisPhysicals.size(), (int)basisPhysicals2.size());
     return nullptr;
   }
 
