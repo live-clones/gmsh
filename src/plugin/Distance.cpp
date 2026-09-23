@@ -11,6 +11,8 @@
 #include "Distance.h"
 #include "Context.h"
 #include "Numeric.h"
+#include <algorithm>
+#include <array>
 
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
@@ -49,6 +51,128 @@ std::string GMSH_DistancePlugin::getHelp() const
          "Positive `MinScale' and `MaxScale' scale the distance function.\n\n"
          "Plugin(Distance) creates one new list-based view.";
 }
+
+namespace {
+  // a piece of the entities the distance is computed to: a point, a segment
+  // or a triangle (quadrangles are cut in two)
+  struct Piece {
+    int n;
+    SPoint3 p[3];
+    double center(int d) const
+    {
+      double c = 0.;
+      for(int i = 0; i < n; i++) c += p[i][d] / n;
+      return c;
+    }
+    // the unsigned distance to a point, 1e22 for degenerate triangles
+    double distance(const SPoint3 &x) const
+    {
+      double d = 1.e22;
+      SPoint3 cp;
+      if(n == 1)
+        d = x.distance(p[0]);
+      else if(n == 2)
+        signedDistancePointLine(p[0], p[1], x, d, cp);
+      else
+        signedDistancePointTriangle(p[0], p[1], p[2], x, d, cp);
+      return std::abs(d);
+    }
+  };
+
+  // a bounding volume hierarchy of the pieces, to find the closest to a
+  // point without computing the distance to each
+  class PieceTree {
+  private:
+    struct Node {
+      double min[3], max[3];
+      int left, right; // children, or -1 for a leaf
+      int beg, end; // its pieces, in a leaf
+    };
+    std::vector<Piece> _pieces;
+    std::vector<Node> _nodes;
+    int _build(int beg, int end)
+    {
+      Node n;
+      for(int d = 0; d < 3; d++) {
+        n.min[d] = 1.e300;
+        n.max[d] = -1.e300;
+      }
+      for(int i = beg; i < end; i++) {
+        for(int j = 0; j < _pieces[i].n; j++) {
+          for(int d = 0; d < 3; d++) {
+            n.min[d] = std::min(n.min[d], _pieces[i].p[j][d]);
+            n.max[d] = std::max(n.max[d], _pieces[i].p[j][d]);
+          }
+        }
+      }
+      n.left = n.right = -1;
+      n.beg = beg;
+      n.end = end;
+      int index = _nodes.size();
+      _nodes.push_back(n);
+      if(end - beg > 4) { // split at the median along the longest side
+        int d = 0;
+        for(int k = 1; k < 3; k++)
+          if(n.max[k] - n.min[k] > n.max[d] - n.min[d]) d = k;
+        int mid = (beg + end) / 2;
+        std::nth_element(_pieces.begin() + beg, _pieces.begin() + mid,
+                         _pieces.begin() + end,
+                         [d](const Piece &a, const Piece &b) {
+                           return a.center(d) < b.center(d);
+                         });
+        int left = _build(beg, mid);
+        int right = _build(mid, end);
+        _nodes[index].left = left;
+        _nodes[index].right = right;
+      }
+      return index;
+    }
+    double _boxDistance2(const Node &n, const SPoint3 &x) const
+    {
+      double d2 = 0.;
+      for(int d = 0; d < 3; d++) {
+        double e = std::max(0., std::max(n.min[d] - x[d], x[d] - n.max[d]));
+        d2 += e * e;
+      }
+      return d2;
+    }
+
+  public:
+    PieceTree(std::vector<Piece> &pieces) : _pieces(pieces)
+    {
+      if(_pieces.size()) _build(0, _pieces.size());
+    }
+    // the distance to the closest piece, 1e22 if there is none
+    double closest(const SPoint3 &x) const
+    {
+      double best = 1.e22;
+      if(_nodes.empty()) return best;
+      std::vector<int> stack(1, 0);
+      while(stack.size()) {
+        const Node &n = _nodes[stack.back()];
+        stack.pop_back();
+        if(_boxDistance2(n, x) >= best * best) continue;
+        if(n.left < 0) {
+          for(int i = n.beg; i < n.end; i++)
+            best = std::min(best, _pieces[i].distance(x));
+          continue;
+        }
+        // the closer child last, to be visited first
+        double dl = _boxDistance2(_nodes[n.left], x);
+        double dr = _boxDistance2(_nodes[n.right], x);
+        if(dl < dr) {
+          stack.push_back(n.right);
+          stack.push_back(n.left);
+        }
+        else {
+          stack.push_back(n.left);
+          stack.push_back(n.right);
+        }
+      }
+      return best;
+    }
+  };
+} // namespace
 
 void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
                                     std::map<MVertex *, double> &distanceMap)
@@ -166,44 +290,35 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 
   if(type <= 0.0) { // Compute geometrical distance to mesh boundaries
     bool existEntity = false;
+    std::vector<Piece> pieces;
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *g2 = entities[i];
-      if(isTarget(g2)) {
-        existEntity = true;
-        for(std::size_t k = 0; k < g2->getNumMeshElements(); k++) {
-          MElement *e = g2->getMeshElement(k);
-          std::vector<SPoint3> p(e->getNumPrimaryVertices());
-          for(std::size_t i = 0; i < p.size(); i++)
-            p[i] = e->getVertex(i)->point();
-          // distances to the element, in pieces for quadrangles
-          std::vector<std::vector<double> > iDistances;
-          std::vector<SPoint3> iClosePts;
-          if(e->getType() == TYPE_PNT) {
-            iDistances.resize(1);
-            for(auto &pt : pts) iDistances[0].push_back(pt.distance(p[0]));
-          }
-          else if(e->getType() == TYPE_LIN) {
-            iDistances.resize(1);
-            signedDistancesPointsLine(iDistances[0], iClosePts, pts, p[0],
-                                      p[1]);
-          }
-          else if(e->getType() == TYPE_TRI || e->getType() == TYPE_QUA) {
-            iDistances.resize(e->getType() == TYPE_TRI ? 1 : 2);
-            for(std::size_t t = 0; t < iDistances.size(); t++)
-              signedDistancesPointsTriangle(iDistances[t], iClosePts, pts,
-                                            p[0], p[t + 1], p[t + 2]);
-          }
-          for(auto &d : iDistances) {
-            for(std::size_t kk = 0; kk < pts.size(); kk++) {
-              if(std::abs(d[kk]) < distances[kk]) {
-                distances[kk] = std::abs(d[kk]);
-                distanceMap[pt2Vertex[kk]] = distances[kk];
-              }
-            }
-          }
+      if(!isTarget(g2)) continue;
+      existEntity = true;
+      for(std::size_t k = 0; k < g2->getNumMeshElements(); k++) {
+        MElement *e = g2->getMeshElement(k);
+        std::vector<SPoint3> p(e->getNumPrimaryVertices());
+        for(std::size_t i = 0; i < p.size(); i++)
+          p[i] = e->getVertex(i)->point();
+        if(e->getType() == TYPE_PNT)
+          pieces.push_back({1, {p[0]}});
+        else if(e->getType() == TYPE_LIN)
+          pieces.push_back({2, {p[0], p[1]}});
+        else if(e->getType() == TYPE_TRI)
+          pieces.push_back({3, {p[0], p[1], p[2]}});
+        else if(e->getType() == TYPE_QUA) {
+          pieces.push_back({3, {p[0], p[1], p[2]}});
+          pieces.push_back({3, {p[0], p[2], p[3]}});
         }
       }
     }
+    PieceTree tree(pieces);
+    int nthreads = CTX::instance()->numThreadsFor(pts.size(), 1000);
+#pragma omp parallel for num_threads(nthreads) schedule(dynamic, 256)
+    for(std::size_t kk = 0; kk < pts.size(); kk++)
+      distances[kk] = tree.closest(pts[kk]);
+    for(std::size_t kk = 0; kk < pts.size(); kk++)
+      if(distances[kk] < 1.e22) distanceMap[pt2Vertex[kk]] = distances[kk];
     if(!existEntity) {
       if(id_point) Msg::Warning("Physical Point %d does not exist", id_point);
       if(id_line) Msg::Warning("Physical Curve %d does not exist", id_line);
