@@ -54,7 +54,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -90,7 +95,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -106,7 +116,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -122,7 +135,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -138,7 +154,10 @@
      ]
     ],
     "name": "minJ/maxJ 3D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -154,7 +173,10 @@
      ]
     ],
     "name": "IGE 3D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -170,7 +192,10 @@
      ]
     ],
     "name": "ICN 3D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -186,7 +211,10 @@
      ]
     ],
     "name": "minJ/maxJ 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -202,7 +230,10 @@
      ]
     ],
     "name": "IGE 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -218,7 +249,10 @@
      ]
     ],
     "name": "ICN 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -254,7 +288,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -290,7 +329,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -306,7 +350,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -322,7 +369,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -338,7 +388,10 @@
      ]
     ],
     "name": "minJ/maxJ 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -354,7 +407,10 @@
      ]
     ],
     "name": "IGE 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -370,7 +426,10 @@
      ]
     ],
     "name": "ICN 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -386,7 +445,10 @@
      ]
     ],
     "name": "minJ/maxJ 3D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -402,7 +464,10 @@
      ]
     ],
     "name": "IGE 3D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -418,7 +483,10 @@
      ]
     ],
     "name": "ICN 3D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -454,7 +522,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -490,7 +563,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -506,7 +584,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -522,7 +603,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -538,7 +622,10 @@
      ]
     ],
     "name": "minJ/maxJ 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -554,7 +641,10 @@
      ]
     ],
     "name": "IGE 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -570,7 +660,10 @@
      ]
     ],
     "name": "ICN 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -586,7 +679,10 @@
      ]
     ],
     "name": "minJ/maxJ 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -602,7 +698,10 @@
      ]
     ],
     "name": "IGE 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -618,7 +717,10 @@
      ]
     ],
     "name": "ICN 2D",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -686,6 +788,11 @@
      "3D text",
      "3D text",
      "3D text"
+    ],
+    "times": [
+     0.0,
+     1.0,
+     2.0
     ]
    },
    {
@@ -723,6 +830,11 @@
      "right",
      "right",
      "right"
+    ],
+    "times": [
+     0.0,
+     1.0,
+     2.0
     ]
    },
    {
@@ -755,7 +867,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -773,7 +888,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -809,7 +927,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -845,7 +968,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -861,7 +989,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -877,7 +1008,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {},
@@ -885,6 +1019,9 @@
     "steps": 1,
     "strings2": [
      "model"
+    ],
+    "times": [
+     0.0
     ]
    },
    {
@@ -893,6 +1030,9 @@
     "steps": 1,
     "strings3": [
      "model"
+    ],
+    "times": [
+     0.0
     ]
    }
   ]
@@ -934,7 +1074,10 @@
      ]
     },
     "name": "Angles_Surface_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -947,7 +1090,10 @@
      ]
     },
     "name": "Angles_Surface_11",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -969,8 +1115,8 @@
    ],
    "nodes": [
     624,
-    830.8707706822205,
-    830.8707706822205,
+    830.8707631321928,
+    830.8707631321928,
     0.0,
     1.0
    ],
@@ -998,8 +1144,8 @@
    ],
    "nodes": [
     85,
-    146.7844265054648,
-    146.7844265054648,
+    146.78450203131732,
+    146.78450203131732,
     0.0,
     1.0
    ],
@@ -1106,7 +1252,10 @@
      ]
     ],
     "name": "Positive-side elements and duplicated nodes (1: true, 0: false)",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -1168,7 +1317,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -1204,7 +1358,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -1220,7 +1379,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -1236,7 +1398,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -1261,7 +1426,12 @@
      ]
     },
     "name": "vector_Curl",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1300,7 +1470,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1339,7 +1514,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1378,7 +1558,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -1391,7 +1574,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -1430,7 +1616,12 @@
      ]
     },
     "name": "vector_Curl",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1462,7 +1653,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1494,7 +1690,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1526,7 +1727,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -1544,7 +1748,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -1576,7 +1783,12 @@
      ]
     },
     "name": "vector_Curl",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1608,7 +1820,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1640,7 +1857,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1672,7 +1894,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -1690,7 +1915,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -1722,7 +1950,12 @@
      ]
     },
     "name": "vector_Curl",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1761,7 +1994,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1800,7 +2038,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -1839,7 +2082,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -1852,7 +2098,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -1891,7 +2140,12 @@
      ]
     },
     "name": "vector_Curl",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -1953,7 +2207,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -1989,7 +2248,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -2005,7 +2269,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -2021,7 +2288,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2060,7 +2330,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2099,7 +2374,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2138,7 +2418,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2151,7 +2434,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2169,7 +2455,12 @@
      ]
     },
     "name": "scalar_CutBox",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2187,7 +2478,12 @@
      ]
     },
     "name": "vector_CutBox",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2205,7 +2501,10 @@
      ]
     },
     "name": "tensor_CutBox",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2223,7 +2522,10 @@
      ]
     },
     "name": "cell_CutBox",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2241,7 +2543,12 @@
      ]
     },
     "name": "scalar_CutBox",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2259,7 +2566,12 @@
      ]
     },
     "name": "vector_CutBox",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2277,7 +2589,10 @@
      ]
     },
     "name": "tensor_CutBox",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2295,7 +2610,10 @@
      ]
     },
     "name": "cell_CutBox",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2308,7 +2626,12 @@
      ]
     },
     "name": "scalar_CutBox",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2321,7 +2644,12 @@
      ]
     },
     "name": "scalar_CutBox",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2334,7 +2662,12 @@
      ]
     },
     "name": "scalar_CutBox",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2373,7 +2706,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2412,7 +2750,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2451,7 +2794,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2464,7 +2810,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2482,7 +2831,12 @@
      ]
     },
     "name": "scalar_CutBox",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2495,7 +2849,12 @@
      ]
     },
     "name": "scalar_CutBox",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -2557,7 +2916,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -2593,7 +2957,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -2609,7 +2978,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -2625,7 +2997,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2664,7 +3039,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2703,7 +3083,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2742,7 +3127,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2755,7 +3143,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2773,7 +3164,12 @@
      ]
     },
     "name": "scalar_CutGrid",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2791,7 +3187,12 @@
      ]
     },
     "name": "vector_CutGrid",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2809,7 +3210,10 @@
      ]
     },
     "name": "tensor_CutGrid",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2827,7 +3231,10 @@
      ]
     },
     "name": "cell_CutGrid",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2845,7 +3252,12 @@
      ]
     },
     "name": "scalar_CutGrid",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2863,7 +3275,12 @@
      ]
     },
     "name": "vector_CutGrid",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2881,7 +3298,10 @@
      ]
     },
     "name": "tensor_CutGrid",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2899,7 +3319,10 @@
      ]
     },
     "name": "cell_CutGrid",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -2912,7 +3335,12 @@
      ]
     },
     "name": "scalar_CutGrid",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2925,7 +3353,12 @@
      ]
     },
     "name": "scalar_CutGrid",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -2964,7 +3397,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3003,7 +3441,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3042,7 +3485,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3055,7 +3501,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3073,7 +3522,12 @@
      ]
     },
     "name": "scalar_CutGrid",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3105,7 +3559,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3137,7 +3596,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3169,7 +3633,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3187,7 +3654,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3205,7 +3675,12 @@
      ]
     },
     "name": "scalar_CutGrid",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -3267,7 +3742,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -3303,7 +3783,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -3319,7 +3804,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -3335,7 +3823,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3374,7 +3865,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3413,7 +3909,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3452,7 +3953,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3465,7 +3969,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3478,7 +3985,12 @@
      ]
     },
     "name": "scalar_CutParametric",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3491,7 +4003,12 @@
      ]
     },
     "name": "vector_CutParametric",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3504,7 +4021,10 @@
      ]
     },
     "name": "tensor_CutParametric",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3517,7 +4037,10 @@
      ]
     },
     "name": "cell_CutParametric",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3530,7 +4053,12 @@
      ]
     },
     "name": "scalar_CutParametric",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3543,7 +4071,12 @@
      ]
     },
     "name": "vector_CutParametric",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3556,7 +4089,10 @@
      ]
     },
     "name": "tensor_CutParametric",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3569,7 +4105,10 @@
      ]
     },
     "name": "cell_CutParametric",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3587,7 +4126,12 @@
      ]
     },
     "name": "scalar_CutParametric",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3626,7 +4170,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3665,7 +4214,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3704,7 +4258,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3717,7 +4274,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3735,7 +4295,12 @@
      ]
     },
     "name": "scalar_CutParametric",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3767,7 +4332,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3799,7 +4369,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3831,7 +4406,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3849,7 +4427,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3862,7 +4443,12 @@
      ]
     },
     "name": "scalar_CutParametric",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -3892,7 +4478,10 @@
      ]
     },
     "name": "mixed",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -3912,7 +4501,10 @@
      ]
     },
     "name": "mixed_CutParametric",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -3974,7 +4566,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -4010,7 +4607,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -4026,7 +4628,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -4042,7 +4647,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -4081,7 +4689,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -4120,7 +4733,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -4159,7 +4777,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -4172,7 +4793,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -4209,7 +4833,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -4246,7 +4875,12 @@
      ]
     },
     "name": "vector_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -4283,7 +4917,10 @@
      ]
     },
     "name": "tensor_Levelset",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -4313,7 +4950,10 @@
      ]
     },
     "name": "cell_Levelset",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -4357,7 +4997,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -4401,7 +5046,12 @@
      ]
     },
     "name": "vector_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -4445,7 +5095,10 @@
      ]
     },
     "name": "tensor_Levelset",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -4475,7 +5128,10 @@
      ]
     },
     "name": "cell_Levelset",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -4533,7 +5189,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -4584,7 +5245,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -4620,7 +5286,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -4656,7 +5327,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -4672,7 +5348,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -4688,7 +5367,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -4725,7 +5407,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -4787,7 +5474,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -4823,7 +5515,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -4839,7 +5536,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -4855,7 +5555,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -4894,7 +5597,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -4933,7 +5641,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -4972,7 +5685,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -4985,7 +5701,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5022,7 +5741,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -5059,7 +5783,12 @@
      ]
     },
     "name": "vector_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -5096,7 +5825,10 @@
      ]
     },
     "name": "tensor_Levelset",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5126,7 +5858,10 @@
      ]
     },
     "name": "cell_Levelset",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5170,7 +5905,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -5214,7 +5954,12 @@
      ]
     },
     "name": "vector_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -5258,7 +6003,10 @@
      ]
     },
     "name": "tensor_Levelset",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5288,7 +6036,10 @@
      ]
     },
     "name": "cell_Levelset",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5332,7 +6083,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -5376,7 +6132,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -5415,7 +6176,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -5454,7 +6220,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -5493,7 +6264,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5506,7 +6280,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5550,7 +6327,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -5582,7 +6364,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -5614,7 +6401,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -5646,7 +6438,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5664,7 +6459,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5684,7 +6482,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -5729,7 +6532,10 @@
      ]
     },
     "name": "Discretization Error",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5747,7 +6553,10 @@
      ]
     },
     "name": "Discretization Error",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -5792,7 +6601,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5810,7 +6622,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5828,7 +6643,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5846,7 +6664,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5864,7 +6685,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5882,7 +6706,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5895,7 +6722,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5908,7 +6738,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5921,7 +6754,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5934,7 +6770,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5947,7 +6786,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5960,7 +6802,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -5978,7 +6823,10 @@
      ]
     },
     "name": "distance",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -6040,7 +6888,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -6076,7 +6929,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -6092,7 +6950,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -6108,7 +6969,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -6133,7 +6997,12 @@
      ]
     },
     "name": "vector_Divergence",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6172,7 +7041,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6211,7 +7085,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6250,7 +7129,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -6263,7 +7145,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -6302,7 +7187,12 @@
      ]
     },
     "name": "vector_Divergence",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6334,7 +7224,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6366,7 +7261,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6398,7 +7298,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -6416,7 +7319,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -6448,7 +7354,12 @@
      ]
     },
     "name": "vector_Divergence",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6480,7 +7391,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6512,7 +7428,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6544,7 +7465,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -6562,7 +7486,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -6594,7 +7521,12 @@
      ]
     },
     "name": "vector_Divergence",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6633,7 +7565,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6672,7 +7609,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -6711,7 +7653,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -6724,7 +7669,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -6763,7 +7711,12 @@
      ]
     },
     "name": "vector_Divergence",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -6826,7 +7779,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -6862,7 +7820,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -6878,7 +7841,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -6894,7 +7860,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -6957,7 +7926,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -6993,7 +7967,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -7009,7 +7988,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -7025,7 +8007,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -7087,7 +8072,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -7123,7 +8113,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -7139,7 +8134,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -7155,7 +8153,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7180,7 +8181,10 @@
      ]
     },
     "name": "tensor_MinEigenvalues",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7205,7 +8209,10 @@
      ]
     },
     "name": "tensor_MidEigenvalues",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7230,7 +8237,10 @@
      ]
     },
     "name": "tensor_MaxEigenvalues",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7269,7 +8279,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -7308,7 +8323,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -7347,7 +8367,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7360,7 +8383,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7399,7 +8425,10 @@
      ]
     },
     "name": "tensor_MinEigenvalues",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7438,7 +8467,10 @@
      ]
     },
     "name": "tensor_MidEigenvalues",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7477,7 +8509,10 @@
      ]
     },
     "name": "tensor_MaxEigenvalues",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7516,7 +8551,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -7555,7 +8595,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -7594,7 +8639,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7607,7 +8655,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7646,7 +8697,10 @@
      ]
     },
     "name": "tensor_MinEigenvalues",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7685,7 +8739,10 @@
      ]
     },
     "name": "tensor_MidEigenvalues",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7724,7 +8781,10 @@
      ]
     },
     "name": "tensor_MaxEigenvalues",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -7786,7 +8846,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -7822,7 +8887,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -7838,7 +8908,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -7854,7 +8927,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7879,7 +8955,10 @@
      ]
     },
     "name": "tensor_MinEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7904,7 +8983,10 @@
      ]
     },
     "name": "tensor_MidEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7929,7 +9011,10 @@
      ]
     },
     "name": "tensor_MaxEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7954,7 +9039,10 @@
      ]
     },
     "name": "tensor_MinEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -7979,7 +9067,10 @@
      ]
     },
     "name": "tensor_MidEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8004,7 +9095,10 @@
      ]
     },
     "name": "tensor_MaxEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8043,7 +9137,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -8082,7 +9181,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -8121,7 +9225,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8134,7 +9241,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8173,7 +9283,10 @@
      ]
     },
     "name": "tensor_MinEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8212,7 +9325,10 @@
      ]
     },
     "name": "tensor_MidEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8251,7 +9367,10 @@
      ]
     },
     "name": "tensor_MaxEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8290,7 +9409,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -8329,7 +9453,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -8368,7 +9497,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8381,7 +9513,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8420,7 +9555,10 @@
      ]
     },
     "name": "tensor_MinEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8459,7 +9597,10 @@
      ]
     },
     "name": "tensor_MidEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8498,7 +9639,10 @@
      ]
     },
     "name": "tensor_MaxEigenvectors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -8560,7 +9704,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -8596,7 +9745,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -8612,7 +9766,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -8628,7 +9785,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8641,12 +9801,16 @@
      ]
     },
     "name": "ExtractEdges",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {},
     "name": "ExtractEdges",
-    "steps": 0
+    "steps": 0,
+    "times": []
    },
    {
     "model": [
@@ -8682,7 +9846,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -8718,7 +9887,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -8734,7 +9908,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -8750,7 +9927,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8763,12 +9943,16 @@
      ]
     },
     "name": "ExtractEdges",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {},
     "name": "ExtractEdges",
-    "steps": 0
+    "steps": 0,
+    "times": []
    }
   ]
  },
@@ -8830,7 +10014,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -8866,7 +10055,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -8882,7 +10076,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -8898,7 +10095,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -8937,7 +10137,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -8976,7 +10181,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -9015,7 +10225,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9028,7 +10241,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9053,7 +10269,10 @@
      ]
     },
     "name": "scalar_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9078,7 +10297,10 @@
      ]
     },
     "name": "vector_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9091,7 +10313,10 @@
      ]
     },
     "name": "cell_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9130,7 +10355,10 @@
      ]
     },
     "name": "scalar_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9169,7 +10397,10 @@
      ]
     },
     "name": "vector_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9182,7 +10413,10 @@
      ]
     },
     "name": "cell_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9207,7 +10441,10 @@
      ]
     },
     "name": "scalar_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     2.0
+    ]
    },
    {
     "list": {
@@ -9232,7 +10469,12 @@
      ]
     },
     "name": "scalar_ExtractElements",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -9257,7 +10499,10 @@
      ]
     },
     "name": "scalar_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9296,7 +10541,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -9335,7 +10585,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -9374,7 +10629,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9387,7 +10645,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9426,7 +10687,10 @@
      ]
     },
     "name": "scalar_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9458,7 +10722,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -9490,7 +10759,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -9522,7 +10796,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9540,7 +10817,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9572,7 +10852,10 @@
      ]
     },
     "name": "scalar_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9590,7 +10873,10 @@
      ]
     },
     "name": "scalar_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9603,12 +10889,16 @@
      ]
     },
     "name": "scalar_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {},
     "name": "scalar_ExtractElements",
-    "steps": 0
+    "steps": 0,
+    "times": []
    }
   ]
  },
@@ -9670,7 +10960,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -9706,7 +11001,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -9722,7 +11022,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -9738,7 +11041,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -9763,7 +11069,11 @@
      ]
     },
     "name": "scalar_HarmonicToTime",
-    "steps": 2
+    "steps": 2,
+    "times": [
+     0.0,
+     0.5
+    ]
    },
    {
     "model": [
@@ -9799,7 +11109,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -9835,7 +11150,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -9851,7 +11171,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -9867,7 +11190,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -9893,7 +11219,11 @@
      ]
     ],
     "name": "FieldFromAPhi",
-    "steps": 2
+    "steps": 2,
+    "times": [
+     0.0,
+     1.0
+    ]
    }
   ]
  },
@@ -9955,7 +11285,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -9991,7 +11326,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -10007,7 +11347,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -10023,7 +11366,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -10036,7 +11382,10 @@
      ]
     },
     "name": "GaussPoints",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -10049,7 +11398,10 @@
      ]
     },
     "name": "GaussPoints",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -10085,7 +11437,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -10121,7 +11478,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -10137,7 +11499,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -10153,7 +11518,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -10166,7 +11534,10 @@
      ]
     },
     "name": "GaussPoints",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -10202,7 +11573,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -10238,7 +11614,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -10254,7 +11635,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -10270,7 +11654,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -10283,7 +11670,10 @@
      ]
     },
     "name": "GaussPoints",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -10345,7 +11735,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -10381,7 +11776,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -10397,7 +11797,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -10413,7 +11816,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -10452,7 +11858,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -10491,7 +11902,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -10530,7 +11946,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -10543,7 +11962,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -10568,7 +11990,12 @@
      ]
     },
     "name": "scalar_Gradient",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -10593,7 +12020,12 @@
      ]
     },
     "name": "vector_Gradient",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -10632,7 +12064,12 @@
      ]
     },
     "name": "scalar_Gradient",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -10671,7 +12108,12 @@
      ]
     },
     "name": "vector_Gradient",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -10710,7 +12152,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -10749,7 +12196,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -10788,7 +12240,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -10801,7 +12256,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -10840,7 +12298,12 @@
      ]
     },
     "name": "scalar_Gradient",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -10902,7 +12365,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -10938,7 +12406,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -10954,7 +12427,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -10970,7 +12446,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -10995,7 +12474,17 @@
      ]
     },
     "name": "scalar_HarmonicToTime",
-    "steps": 8
+    "steps": 8,
+    "times": [
+     0.0,
+     0.125,
+     0.25,
+     0.375,
+     0.5,
+     0.625,
+     0.75,
+     0.875
+    ]
    },
    {
     "list": {
@@ -11020,7 +12509,17 @@
      ]
     },
     "name": "scalar_HarmonicToTime",
-    "steps": 8
+    "steps": 8,
+    "times": [
+     0.0,
+     0.005,
+     0.01,
+     0.015,
+     0.02,
+     0.025,
+     0.03,
+     0.035
+    ]
    },
    {
     "list": {
@@ -11045,7 +12544,11 @@
      ]
     },
     "name": "scalar_HarmonicToTime",
-    "steps": 2
+    "steps": 2,
+    "times": [
+     0.0,
+     0.0
+    ]
    },
    {
     "list": {
@@ -11077,7 +12580,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -11109,7 +12617,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -11141,7 +12654,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -11159,7 +12675,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -11191,7 +12710,13 @@
      ]
     },
     "name": "vector_HarmonicToTime",
-    "steps": 4
+    "steps": 4,
+    "times": [
+     0.0,
+     0.25,
+     0.5,
+     0.75
+    ]
    }
   ]
  },
@@ -11237,7 +12762,10 @@
      ]
     ],
     "name": "4=H_1{3}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11253,7 +12781,10 @@
      ]
     ],
     "name": "5=H^1{3}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11269,7 +12800,10 @@
      ]
     ],
     "name": "100=H_1{3},{1,2}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11285,7 +12819,10 @@
      ]
     ],
     "name": "101=H_2{3},{1,2}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11301,7 +12838,10 @@
      ]
     ],
     "name": "200=H^1{3},{1,2}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11317,7 +12857,10 @@
      ]
     ],
     "name": "201=H^2{3},{1,2}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11333,7 +12876,10 @@
      ]
     ],
     "name": "4=H_1{3}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11349,7 +12895,10 @@
      ]
     ],
     "name": "5=H^1{3}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11365,7 +12914,10 @@
      ]
     ],
     "name": "6=H_1{3},{1}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11381,7 +12933,10 @@
      ]
     ],
     "name": "7=H_2{3},{1}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11397,7 +12952,10 @@
      ]
     ],
     "name": "8=H^1{3},{1}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11413,7 +12971,10 @@
      ]
     ],
     "name": "9=H^2{3},{1}1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -11456,7 +13017,10 @@
      ]
     ],
     "name": "301=C1 sum1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11472,7 +13036,10 @@
      ]
     ],
     "name": "302=C1 sum2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11488,7 +13055,10 @@
      ]
     ],
     "name": "303=C1 difference1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11504,7 +13074,10 @@
      ]
     ],
     "name": "304=C1 dual1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11520,7 +13093,10 @@
      ]
     ],
     "name": "305=C1 dual2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11536,7 +13112,10 @@
      ]
     ],
     "name": "306=C1 boundary1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11552,7 +13131,10 @@
      ]
     ],
     "name": "307=C1 traced1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11568,7 +13150,10 @@
      ]
     ],
     "name": "308=C1 projected1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -11630,7 +13215,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -11666,7 +13256,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -11682,7 +13277,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -11698,7 +13296,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -11737,7 +13338,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -11776,7 +13382,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -11815,7 +13426,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -11828,7 +13442,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -11841,7 +13458,12 @@
      ]
     },
     "name": "scalar_Integrate",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -11854,7 +13476,12 @@
      ]
     },
     "name": "vector_Integrate",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -11867,7 +13494,10 @@
      ]
     },
     "name": "cell_Integrate",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -11880,7 +13510,12 @@
      ]
     },
     "name": "scalar_Integrate",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -11893,7 +13528,12 @@
      ]
     },
     "name": "vector_Integrate",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -11906,7 +13546,10 @@
      ]
     },
     "name": "cell_Integrate",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -11919,7 +13562,12 @@
      ]
     },
     "name": "scalar_Integrate",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -11958,7 +13606,10 @@
      ]
     },
     "name": "scalar_Integrate",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -11997,7 +13648,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12036,7 +13692,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12075,7 +13736,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12088,7 +13752,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12101,7 +13768,12 @@
      ]
     },
     "name": "scalar_Integrate",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12133,7 +13805,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12165,7 +13842,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12197,7 +13879,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12215,7 +13900,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12228,7 +13916,12 @@
      ]
     },
     "name": "scalar_Integrate",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12241,7 +13934,12 @@
      ]
     },
     "name": "vector_Integrate",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12273,7 +13971,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12305,7 +14008,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12337,7 +14045,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12355,7 +14066,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12368,7 +14082,12 @@
      ]
     },
     "name": "scalar_Integrate",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12400,7 +14119,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12432,7 +14156,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12464,7 +14193,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12482,7 +14214,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12514,7 +14249,10 @@
      ]
     },
     "name": "scalar_Integrate",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12546,7 +14284,10 @@
      ]
     },
     "name": "scalar_Integrate",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -12608,7 +14349,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -12644,7 +14390,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -12660,7 +14411,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -12676,7 +14430,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -12738,7 +14495,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -12774,7 +14536,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -12790,7 +14557,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -12806,7 +14576,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12845,7 +14618,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12884,7 +14662,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -12923,7 +14706,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12936,7 +14722,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -12973,7 +14762,10 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13010,7 +14802,10 @@
      ]
     },
     "name": "scalar_Levelset_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13047,7 +14842,10 @@
      ]
     },
     "name": "scalar_Levelset_2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13091,7 +14889,10 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13135,7 +14936,10 @@
      ]
     },
     "name": "scalar_Levelset_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13179,7 +14983,10 @@
      ]
     },
     "name": "scalar_Levelset_2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13216,7 +15023,10 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13253,7 +15063,10 @@
      ]
     },
     "name": "scalar_Levelset_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13290,7 +15103,10 @@
      ]
     },
     "name": "scalar_Levelset_2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13327,7 +15143,10 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13364,7 +15183,10 @@
      ]
     },
     "name": "scalar_Levelset_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13401,7 +15223,10 @@
      ]
     },
     "name": "scalar_Levelset_2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13438,7 +15263,10 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13475,7 +15303,10 @@
      ]
     },
     "name": "scalar_Levelset_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13512,7 +15343,10 @@
      ]
     },
     "name": "scalar_Levelset_2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13556,7 +15390,10 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13600,7 +15437,10 @@
      ]
     },
     "name": "scalar_Levelset_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13644,7 +15484,10 @@
      ]
     },
     "name": "scalar_Levelset_2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13702,7 +15545,10 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13760,7 +15606,10 @@
      ]
     },
     "name": "scalar_Levelset_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13818,7 +15667,10 @@
      ]
     },
     "name": "scalar_Levelset_2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13857,7 +15709,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -13896,7 +15753,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -13935,7 +15797,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13948,7 +15813,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -13992,7 +15860,10 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14036,7 +15907,10 @@
      ]
     },
     "name": "scalar_Levelset_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14080,7 +15954,10 @@
      ]
     },
     "name": "scalar_Levelset_2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14112,7 +15989,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -14144,7 +16026,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -14176,7 +16063,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14194,7 +16084,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14214,7 +16107,10 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14234,7 +16130,10 @@
      ]
     },
     "name": "scalar_Levelset_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14254,7 +16153,10 @@
      ]
     },
     "name": "scalar_Levelset_2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14286,7 +16188,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -14318,7 +16225,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -14350,7 +16262,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14368,7 +16283,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14388,7 +16306,10 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14408,7 +16329,10 @@
      ]
     },
     "name": "scalar_Levelset_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14428,7 +16352,10 @@
      ]
     },
     "name": "scalar_Levelset_2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -14490,7 +16417,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -14526,7 +16458,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -14542,7 +16479,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -14558,7 +16498,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14588,17 +16531,22 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {},
     "name": "scalar_Levelset_1",
-    "steps": 0
+    "steps": 0,
+    "times": []
    },
    {
     "list": {},
     "name": "scalar_Levelset_2",
-    "steps": 0
+    "steps": 0,
+    "times": []
    },
    {
     "list": {
@@ -14635,17 +16583,22 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {},
     "name": "scalar_Levelset_1",
-    "steps": 0
+    "steps": 0,
+    "times": []
    },
    {
     "list": {},
     "name": "scalar_Levelset_2",
-    "steps": 0
+    "steps": 0,
+    "times": []
    }
   ]
  },
@@ -14700,7 +16653,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -14732,7 +16690,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -14764,7 +16727,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14782,7 +16748,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14814,7 +16783,10 @@
      ]
     },
     "name": "tensor_Lambda2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14832,7 +16804,12 @@
      ]
     },
     "name": "vector_Lambda2",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -14871,7 +16848,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -14910,7 +16892,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -14949,7 +16936,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -14962,7 +16952,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15001,7 +16994,10 @@
      ]
     },
     "name": "tensor_Lambda2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15026,7 +17022,12 @@
      ]
     },
     "name": "vector_Lambda2",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -15065,7 +17066,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -15104,7 +17110,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -15143,7 +17154,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15156,7 +17170,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15195,7 +17212,10 @@
      ]
     },
     "name": "tensor_Lambda2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -15257,7 +17277,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -15293,7 +17318,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -15309,7 +17339,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -15325,7 +17358,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15357,7 +17393,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -15389,7 +17430,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -15421,7 +17467,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15439,7 +17488,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15471,7 +17523,10 @@
      ]
     },
     "name": "vector_MathEval",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     1.0
+    ]
    },
    {
     "model": [
@@ -15487,7 +17542,10 @@
      ]
     ],
     "name": "New view",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     -1.0
+    ]
    },
    {
     "model": [
@@ -15523,7 +17581,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -15559,7 +17622,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -15575,7 +17643,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -15591,7 +17662,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15623,7 +17697,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -15655,7 +17734,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -15687,7 +17771,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15705,7 +17792,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -15760,7 +17850,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -15792,7 +17887,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -15824,7 +17924,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15842,7 +17945,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15881,7 +17987,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -15920,7 +18031,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -15959,7 +18075,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -15972,7 +18091,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -16004,7 +18126,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16036,7 +18163,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16068,7 +18200,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -16086,7 +18221,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -16106,7 +18244,11 @@
      ]
     },
     "name": "prism and pyramid",
-    "steps": 2
+    "steps": 2,
+    "times": [
+     0.0,
+     1.0
+    ]
    }
   ]
  },
@@ -16168,7 +18310,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -16204,7 +18351,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -16220,7 +18372,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -16236,7 +18391,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -16268,7 +18426,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16300,7 +18463,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16332,7 +18500,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -16350,7 +18521,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -16375,7 +18549,12 @@
      ]
     },
     "name": "scalar_MathEval",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16400,7 +18579,12 @@
      ]
     },
     "name": "vector_MathEval",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16425,7 +18609,10 @@
      ]
     },
     "name": "tensor_MathEval",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -16443,7 +18630,10 @@
      ]
     },
     "name": "cell_MathEval",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -16468,7 +18658,10 @@
      ]
     },
     "name": "scalar_MathEval",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     2.0
+    ]
    },
    {
     "list": {
@@ -16493,7 +18686,12 @@
      ]
     },
     "name": "scalar_MathEval",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16525,7 +18723,12 @@
      ]
     },
     "name": "vector_MathEval",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16543,7 +18746,12 @@
      ]
     },
     "name": "scalar_MathEval",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16582,7 +18790,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16621,7 +18834,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16660,7 +18878,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -16673,7 +18894,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -16712,7 +18936,12 @@
      ]
     },
     "name": "vector_MathEval",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -16751,7 +18980,12 @@
      ]
     },
     "name": "scalar_MathEval",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -16813,7 +19047,12 @@
      ]
     ],
     "name": "Field 1",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -16849,7 +19088,12 @@
      ]
     ],
     "name": "Field 1",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -16865,7 +19109,10 @@
      ]
     ],
     "name": "Field 3",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -16881,7 +19128,10 @@
      ]
     ],
     "name": "Field 1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -16917,7 +19167,12 @@
      ]
     ],
     "name": "Field 1",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -16953,7 +19208,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -16969,7 +19229,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -16985,7 +19248,10 @@
      ]
     ],
     "name": "Field 1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -17047,7 +19313,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -17083,7 +19354,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -17099,7 +19375,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -17115,7 +19394,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -17178,7 +19460,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -17214,7 +19501,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -17230,7 +19522,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -17246,7 +19541,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -17308,7 +19606,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -17344,7 +19647,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -17360,7 +19668,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -17376,7 +19687,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17389,7 +19703,10 @@
      ]
     },
     "name": "MeshVolume",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17402,7 +19719,10 @@
      ]
     },
     "name": "MeshVolume",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17415,7 +19735,10 @@
      ]
     },
     "name": "MeshVolume",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17428,7 +19751,10 @@
      ]
     },
     "name": "MeshVolume",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -17464,7 +19790,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -17500,7 +19831,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -17516,7 +19852,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -17532,7 +19871,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17545,7 +19887,10 @@
      ]
     },
     "name": "MeshVolume",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17558,7 +19903,10 @@
      ]
     },
     "name": "MeshVolume",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17571,7 +19919,10 @@
      ]
     },
     "name": "MeshVolume",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -17633,7 +19984,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -17669,7 +20025,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -17685,7 +20046,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -17701,7 +20065,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17740,7 +20107,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -17779,7 +20151,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -17818,7 +20195,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17831,7 +20211,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17844,7 +20227,12 @@
      ]
     },
     "name": "scalar_Min",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -17857,7 +20245,12 @@
      ]
     },
     "name": "scalar_Max",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -17870,7 +20263,12 @@
      ]
     },
     "name": "vector_Min",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -17883,7 +20281,12 @@
      ]
     },
     "name": "vector_Max",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -17896,7 +20299,10 @@
      ]
     },
     "name": "tensor_Min",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17909,7 +20315,10 @@
      ]
     },
     "name": "tensor_Max",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17922,7 +20331,10 @@
      ]
     },
     "name": "cell_Min",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17935,7 +20347,10 @@
      ]
     },
     "name": "cell_Max",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -17948,7 +20363,12 @@
      ]
     },
     "name": "scalar_Min",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -17961,7 +20381,12 @@
      ]
     },
     "name": "scalar_Max",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -17974,7 +20399,12 @@
      ]
     },
     "name": "vector_Min",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -17987,7 +20417,12 @@
      ]
     },
     "name": "vector_Max",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18000,7 +20435,10 @@
      ]
     },
     "name": "tensor_Min",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18013,7 +20451,10 @@
      ]
     },
     "name": "tensor_Max",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18026,7 +20467,10 @@
      ]
     },
     "name": "cell_Min",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18039,7 +20483,10 @@
      ]
     },
     "name": "cell_Max",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18052,7 +20499,10 @@
      ]
     },
     "name": "scalar_Min",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18065,7 +20515,10 @@
      ]
     },
     "name": "scalar_Max",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     2.0
+    ]
    },
    {
     "list": {
@@ -18078,7 +20531,10 @@
      ]
     },
     "name": "scalar_Min",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18091,7 +20547,10 @@
      ]
     },
     "name": "scalar_Max",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18104,7 +20563,10 @@
      ]
     },
     "name": "scalar_Min",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18117,7 +20579,10 @@
      ]
     },
     "name": "scalar_Max",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18156,7 +20621,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18195,7 +20665,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18234,7 +20709,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18247,7 +20725,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18260,7 +20741,12 @@
      ]
     },
     "name": "scalar_Min",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18273,7 +20759,12 @@
      ]
     },
     "name": "scalar_Max",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18305,7 +20796,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18337,7 +20833,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18369,7 +20870,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18387,7 +20891,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18400,7 +20907,12 @@
      ]
     },
     "name": "scalar_Min",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18413,7 +20925,12 @@
      ]
     },
     "name": "scalar_Max",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18445,7 +20962,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18477,7 +20999,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18509,7 +21036,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18527,7 +21057,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18540,7 +21073,10 @@
      ]
     },
     "name": "scalar_Min",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18553,7 +21089,10 @@
      ]
     },
     "name": "scalar_Max",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     2.0
+    ]
    }
   ]
  },
@@ -18615,7 +21154,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -18651,7 +21195,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -18667,7 +21216,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -18683,7 +21235,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18715,7 +21270,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18747,7 +21307,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18779,7 +21344,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18797,7 +21365,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18836,7 +21407,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18875,7 +21451,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -18914,7 +21495,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -18927,7 +21511,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -18963,7 +21550,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -18999,7 +21591,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -19015,7 +21612,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -19031,7 +21631,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -19093,7 +21696,12 @@
      ]
     ],
     "name": "scalar_ModulusPhase",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -19129,7 +21737,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -19145,7 +21758,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -19161,7 +21777,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -19200,7 +21819,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -19239,7 +21863,12 @@
      ]
     },
     "name": "vector_ModulusPhase",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -19278,7 +21907,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -19291,7 +21923,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -19349,7 +21984,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -19374,7 +22014,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -19406,7 +22051,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -19424,7 +22072,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -19449,7 +22100,11 @@
      ]
     },
     "name": "E_Combine",
-    "steps": 2
+    "steps": 2,
+    "times": [
+     0.0,
+     1.0
+    ]
    },
    {
     "list": {
@@ -19474,7 +22129,11 @@
      ]
     },
     "name": "H_Combine",
-    "steps": 2
+    "steps": 2,
+    "times": [
+     0.0,
+     1.0
+    ]
    },
    {
     "list": {
@@ -19492,7 +22151,10 @@
      ]
     },
     "name": "_NearToFarField",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -19510,7 +22172,10 @@
      ]
     },
     "name": "_NearToFarField",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -19528,7 +22193,10 @@
      ]
     },
     "name": "_NearToFarField",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -19541,7 +22209,10 @@
      ]
     },
     "name": "_NearToFarField",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -19577,7 +22248,11 @@
      ]
     },
     "name": "points_NearestNeighbor",
-    "steps": 2
+    "steps": 2,
+    "times": [
+     0.0,
+     1.0
+    ]
    },
    {
     "list": {
@@ -19616,7 +22291,12 @@
      ]
     },
     "name": "scalar_NearestNeighbor",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -19655,7 +22335,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -19694,7 +22379,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -19707,7 +22395,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -19769,7 +22460,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -19805,7 +22501,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -19821,7 +22522,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -19837,7 +22541,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -19853,7 +22560,10 @@
      ]
     ],
     "name": "New view",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     -1.0
+    ]
    },
    {
     "model": [
@@ -19869,7 +22579,10 @@
      ]
     ],
     "name": "New view",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     100.0
+    ]
    },
    {
     "model": [
@@ -19885,7 +22598,10 @@
      ]
     ],
     "name": "New view",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     -1.0
+    ]
    },
    {
     "model": [
@@ -19901,7 +22617,10 @@
      ]
     ],
     "name": "New view",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     -1.0
+    ]
    },
    {
     "model": [
@@ -19917,7 +22636,10 @@
      ]
     ],
     "name": "New view",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     -1.0
+    ]
    }
   ]
  },
@@ -19984,7 +22706,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20028,7 +22755,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20072,7 +22804,12 @@
      ]
     },
     "name": "scalar_Gradient",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20116,7 +22853,12 @@
      ]
     },
     "name": "vector_Curl",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20160,7 +22902,12 @@
      ]
     },
     "name": "vector_Divergence",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20173,7 +22920,12 @@
      ]
     },
     "name": "scalar_Integrate",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20186,7 +22938,12 @@
      ]
     },
     "name": "vector_Integrate",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20230,7 +22987,12 @@
      ]
     },
     "name": "scalar_MathEval",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20274,7 +23036,10 @@
      ]
     },
     "name": "scalar_ExtractElements",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -20318,7 +23083,29 @@
      ]
     },
     "name": "vector_HarmonicToTime",
-    "steps": 20
+    "steps": 20,
+    "times": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95
+    ]
    },
    {
     "list": {
@@ -20355,7 +23142,12 @@
      ]
     },
     "name": "scalar_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20399,7 +23191,12 @@
      ]
     },
     "name": "vector_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20436,7 +23233,10 @@
      ]
     },
     "name": "scalar_Levelset_0",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -20473,7 +23273,10 @@
      ]
     },
     "name": "scalar_Levelset_1",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -20510,7 +23313,10 @@
      ]
     },
     "name": "scalar_Levelset_2",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -20547,7 +23353,12 @@
      ]
     },
     "name": "vector_Levelset",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -20609,7 +23420,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -20645,7 +23461,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -20661,7 +23482,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -20677,7 +23501,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -20716,7 +23543,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20755,7 +23587,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20794,7 +23631,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -20807,7 +23647,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -20820,7 +23663,29 @@
      ]
     },
     "name": "vector_Particles",
-    "steps": 20
+    "steps": 20,
+    "times": [
+     0.0,
+     1.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0
+    ]
    },
    {
     "list": {
@@ -20833,7 +23698,29 @@
      ]
     },
     "name": "vector_Particles",
-    "steps": 20
+    "steps": 20,
+    "times": [
+     0.0,
+     1.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0
+    ]
    },
    {
     "list": {
@@ -20846,7 +23733,29 @@
      ]
     },
     "name": "vector_Particles",
-    "steps": 20
+    "steps": 20,
+    "times": [
+     0.0,
+     1.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0
+    ]
    },
    {
     "list": {
@@ -20885,7 +23794,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20924,7 +23838,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -20963,7 +23882,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -20976,7 +23898,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -20989,7 +23914,29 @@
      ]
     },
     "name": "vector_Particles",
-    "steps": 20
+    "steps": 20,
+    "times": [
+     0.0,
+     1.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0
+    ]
    },
    {
     "list": {
@@ -21021,7 +23968,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21053,7 +24005,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21085,7 +24042,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21103,7 +24063,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21116,7 +24079,29 @@
      ]
     },
     "name": "vector_Particles",
-    "steps": 20
+    "steps": 20,
+    "times": [
+     0.0,
+     1.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0
+    ]
    },
    {
     "list": {
@@ -21129,7 +24114,29 @@
      ]
     },
     "name": "vector_Particles",
-    "steps": 20
+    "steps": 20,
+    "times": [
+     0.0,
+     1.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0
+    ]
    }
   ]
  },
@@ -21191,7 +24198,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -21227,7 +24239,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -21243,7 +24260,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -21259,7 +24279,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21298,7 +24321,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21337,7 +24365,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21376,7 +24409,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21389,7 +24425,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21402,7 +24441,12 @@
      ]
     },
     "name": "scalar_Probe",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21415,7 +24459,12 @@
      ]
     },
     "name": "vector_Probe",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21428,7 +24477,10 @@
      ]
     },
     "name": "tensor_Probe",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21441,7 +24493,10 @@
      ]
     },
     "name": "cell_Probe",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21454,7 +24509,12 @@
      ]
     },
     "name": "scalar_Probe",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21467,7 +24527,12 @@
      ]
     },
     "name": "vector_Probe",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21480,7 +24545,10 @@
      ]
     },
     "name": "tensor_Probe",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21493,7 +24561,10 @@
      ]
     },
     "name": "cell_Probe",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21532,7 +24603,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21571,7 +24647,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21610,7 +24691,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21623,7 +24707,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21636,7 +24723,12 @@
      ]
     },
     "name": "scalar_Probe",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21668,7 +24760,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21700,7 +24797,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21732,7 +24834,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21750,7 +24855,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21763,7 +24871,12 @@
      ]
     },
     "name": "scalar_Probe",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21795,7 +24908,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21827,7 +24945,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21859,7 +24982,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21877,7 +25003,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21890,7 +25019,12 @@
      ]
     },
     "name": "vector_Probe",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -21931,7 +25065,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21963,7 +25102,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -21976,7 +25120,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -21994,7 +25141,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22026,7 +25176,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22046,7 +25201,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22078,7 +25238,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22096,7 +25259,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22128,7 +25294,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22167,7 +25338,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22199,7 +25375,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22212,7 +25391,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22251,7 +25433,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22283,7 +25470,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22322,7 +25514,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22335,7 +25530,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22358,6 +25556,9 @@
     "steps": 1,
     "strings3": [
      "3D"
+    ],
+    "times": [
+     0.0
     ]
    }
   ]
@@ -22420,7 +25621,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -22456,7 +25662,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -22472,7 +25683,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -22488,7 +25702,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22513,7 +25730,12 @@
      ]
     },
     "name": "diagonal",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22531,7 +25753,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22570,7 +25795,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22609,7 +25839,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22648,7 +25883,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22661,7 +25899,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22700,7 +25941,12 @@
      ]
     },
     "name": "list",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -22762,7 +26008,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -22798,7 +26049,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -22814,7 +26070,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -22830,7 +26089,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22855,7 +26117,12 @@
      ]
     },
     "name": "zero y",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22873,7 +26140,10 @@
      ]
     },
     "name": "cell y",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -22912,7 +26182,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22951,7 +26226,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -22990,7 +26270,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -23003,7 +26286,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -23042,7 +26328,12 @@
      ]
     },
     "name": "list",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -23104,7 +26395,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -23140,7 +26436,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -23156,7 +26457,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -23172,7 +26476,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -23233,7 +26540,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -23269,7 +26581,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -23285,7 +26602,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -23301,7 +26621,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -23365,7 +26688,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -23401,7 +26729,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -23417,7 +26750,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -23433,7 +26769,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -23496,7 +26835,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -23532,7 +26876,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -23548,7 +26897,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -23564,7 +26916,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -23626,7 +26981,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -23662,7 +27022,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -23678,7 +27043,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -23694,7 +27062,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -23733,7 +27104,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -23772,7 +27148,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -23811,7 +27192,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -23824,7 +27208,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -23842,7 +27229,12 @@
      ]
     },
     "name": "scalar_Skin",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -23860,7 +27252,12 @@
      ]
     },
     "name": "vector_Skin",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -23878,7 +27275,10 @@
      ]
     },
     "name": "tensor_Skin",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -23896,7 +27296,10 @@
      ]
     },
     "name": "cell_Skin",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -23914,7 +27317,12 @@
      ]
     },
     "name": "scalar_Skin",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -23932,7 +27340,12 @@
      ]
     },
     "name": "vector_Skin",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -23950,7 +27363,10 @@
      ]
     },
     "name": "tensor_Skin",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -23968,7 +27384,10 @@
      ]
     },
     "name": "cell_Skin",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24007,7 +27426,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24046,7 +27470,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24085,7 +27514,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24098,7 +27530,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24116,7 +27551,12 @@
      ]
     },
     "name": "scalar_Skin",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24148,7 +27588,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24180,7 +27625,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24212,7 +27662,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24230,7 +27683,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24243,7 +27699,12 @@
      ]
     },
     "name": "scalar_Skin",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24275,7 +27736,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24307,7 +27773,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24339,7 +27810,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24357,7 +27831,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24370,7 +27847,12 @@
      ]
     },
     "name": "vector_Skin",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -24457,7 +27939,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -24493,7 +27980,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -24509,7 +28001,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -24525,7 +28020,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24557,7 +28055,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24589,7 +28092,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24621,7 +28129,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24639,7 +28150,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24671,7 +28185,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24703,7 +28222,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24735,7 +28259,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24753,7 +28280,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24792,7 +28322,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24831,7 +28366,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24870,7 +28410,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24883,7 +28426,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -24922,7 +28468,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -24961,7 +28512,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -25000,7 +28556,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -25013,7 +28572,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -25075,7 +28637,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -25111,7 +28678,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -25127,7 +28699,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -25143,7 +28718,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -25206,7 +28784,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -25242,7 +28825,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -25258,7 +28846,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -25274,7 +28865,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -25336,7 +28930,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -25372,7 +28971,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -25388,7 +28992,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -25404,7 +29011,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -25436,7 +29046,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -25468,7 +29083,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -25500,7 +29120,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -25518,7 +29141,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -25557,7 +29183,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -25596,7 +29227,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -25635,7 +29271,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -25648,7 +29287,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -25710,7 +29352,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -25746,7 +29393,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -25762,7 +29414,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -25778,7 +29433,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -25817,7 +29475,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -25856,7 +29519,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -25895,7 +29563,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -25908,7 +29579,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -25921,7 +29595,39 @@
      ]
     },
     "name": "vector_StreamLines",
-    "steps": 30
+    "steps": 30,
+    "times": [
+     0.0,
+     1.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0,
+     20.0,
+     21.0,
+     22.0,
+     23.0,
+     24.0,
+     25.0,
+     26.0,
+     27.0,
+     28.0,
+     29.0
+    ]
    },
    {
     "list": {
@@ -25934,7 +29640,39 @@
      ]
     },
     "name": "vector_StreamLines",
-    "steps": 30
+    "steps": 30,
+    "times": [
+     0.0,
+     1.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0,
+     20.0,
+     21.0,
+     22.0,
+     23.0,
+     24.0,
+     25.0,
+     26.0,
+     27.0,
+     28.0,
+     29.0
+    ]
    },
    {
     "list": {
@@ -25947,7 +29685,39 @@
      ]
     },
     "name": "vector_StreamLines",
-    "steps": 30
+    "steps": 30,
+    "times": [
+     0.0,
+     1.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0,
+     20.0,
+     21.0,
+     22.0,
+     23.0,
+     24.0,
+     25.0,
+     26.0,
+     27.0,
+     28.0,
+     29.0
+    ]
    },
    {
     "list": {
@@ -25960,7 +29730,12 @@
      ]
     },
     "name": "vector_StreamLines",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -25973,7 +29748,39 @@
      ]
     },
     "name": "vector_StreamLines",
-    "steps": 30
+    "steps": 30,
+    "times": [
+     0.1,
+     0.2,
+     0.30000000000000004,
+     0.4,
+     0.5,
+     0.6000000000000001,
+     0.7000000000000001,
+     0.8,
+     0.9,
+     1.0,
+     1.1,
+     1.2000000000000002,
+     1.3,
+     1.4000000000000001,
+     1.5,
+     1.6,
+     1.7000000000000002,
+     1.8,
+     1.9000000000000001,
+     2.0,
+     2.1,
+     2.2,
+     2.3000000000000003,
+     2.4000000000000004,
+     2.5,
+     2.6,
+     2.7,
+     2.8000000000000003,
+     2.9000000000000004,
+     3.0
+    ]
    },
    {
     "list": {
@@ -26012,7 +29819,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -26051,7 +29863,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -26090,7 +29907,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26103,7 +29923,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26116,7 +29939,39 @@
      ]
     },
     "name": "vector_StreamLines",
-    "steps": 30
+    "steps": 30,
+    "times": [
+     0.0,
+     1.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0,
+     20.0,
+     21.0,
+     22.0,
+     23.0,
+     24.0,
+     25.0,
+     26.0,
+     27.0,
+     28.0,
+     29.0
+    ]
    }
   ]
  },
@@ -26178,7 +30033,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -26214,7 +30074,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -26230,7 +30095,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -26246,7 +30114,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26271,7 +30142,12 @@
      ]
     },
     "name": "scalar_Summation",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -26296,7 +30172,12 @@
      ]
     },
     "name": "triple",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -26312,7 +30193,10 @@
      ]
     ],
     "name": "New view",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     -1.0
+    ]
    },
    {
     "list": {
@@ -26330,7 +30214,10 @@
      ]
     },
     "name": "New view_Summation",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     -1.0
+    ]
    },
    {
     "list": {
@@ -26369,7 +30256,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -26408,7 +30300,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -26447,7 +30344,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26460,7 +30360,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26499,7 +30402,12 @@
      ]
     },
     "name": "scalar_Summation",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    }
   ]
  },
@@ -26561,7 +30469,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -26597,7 +30510,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -26613,7 +30531,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -26629,7 +30550,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26642,7 +30566,10 @@
      ]
     },
     "name": "GaussPoints",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26655,7 +30582,10 @@
      ]
     },
     "name": "GaussPoints_Tetrahedralize",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26668,7 +30598,11 @@
      ]
     },
     "name": "vectors",
-    "steps": 2
+    "steps": 2,
+    "times": [
+     0.0,
+     1.0
+    ]
    },
    {
     "list": {
@@ -26681,7 +30615,11 @@
      ]
     },
     "name": "vectors_Tetrahedralize",
-    "steps": 2
+    "steps": 2,
+    "times": [
+     0.0,
+     1.0
+    ]
    },
    {
     "list": {
@@ -26694,7 +30632,10 @@
      ]
     },
     "name": "tensors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26707,7 +30648,10 @@
      ]
     },
     "name": "tensors_Tetrahedralize",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -26769,7 +30713,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -26805,7 +30754,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -26821,7 +30775,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -26837,7 +30794,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26869,7 +30829,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -26901,7 +30866,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -26933,7 +30903,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26951,7 +30924,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -26990,7 +30966,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -27029,7 +31010,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -27068,7 +31054,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27081,7 +31070,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -27117,7 +31109,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -27153,7 +31150,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -27169,7 +31171,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -27185,7 +31190,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27217,7 +31225,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -27249,7 +31262,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -27281,7 +31299,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27299,7 +31320,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -27361,7 +31385,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -27397,7 +31426,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -27413,7 +31447,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -27429,7 +31466,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27442,7 +31482,10 @@
      ]
     },
     "name": "GaussPoints",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27460,7 +31503,10 @@
      ]
     },
     "name": "GaussPoints_Triangulate",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27473,7 +31519,11 @@
      ]
     },
     "name": "vectors",
-    "steps": 2
+    "steps": 2,
+    "times": [
+     0.0,
+     1.0
+    ]
    },
    {
     "list": {
@@ -27491,7 +31541,11 @@
      ]
     },
     "name": "vectors_Triangulate",
-    "steps": 2
+    "steps": 2,
+    "times": [
+     0.0,
+     1.0
+    ]
    },
    {
     "list": {
@@ -27504,7 +31558,10 @@
      ]
     },
     "name": "tensors",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27522,7 +31579,10 @@
      ]
     },
     "name": "tensors_Triangulate",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  },
@@ -27610,7 +31670,12 @@
      ]
     ],
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -27646,7 +31711,12 @@
      ]
     ],
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "model": [
@@ -27662,7 +31732,10 @@
      ]
     ],
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "model": [
@@ -27678,7 +31751,10 @@
      ]
     ],
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27710,7 +31786,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -27742,7 +31823,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -27774,7 +31860,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27792,7 +31881,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27831,7 +31923,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -27870,7 +31967,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -27909,7 +32011,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27922,7 +32027,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -27954,7 +32062,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -27986,7 +32099,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -28018,7 +32136,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -28036,7 +32157,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -28068,7 +32192,12 @@
      ]
     },
     "name": "scalar",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -28100,7 +32229,12 @@
      ]
     },
     "name": "vector",
-    "steps": 3
+    "steps": 3,
+    "times": [
+     0.0,
+     1.0,
+     2.0
+    ]
    },
    {
     "list": {
@@ -28132,7 +32266,10 @@
      ]
     },
     "name": "tensor",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    },
    {
     "list": {
@@ -28150,7 +32287,10 @@
      ]
     },
     "name": "cell",
-    "steps": 1
+    "steps": 1,
+    "times": [
+     0.0
+    ]
    }
   ]
  }

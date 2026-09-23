@@ -2,10 +2,11 @@
 # Plugin tests: runs every case (a .geo file that builds a model or a view and
 # runs a plugin on it) in a process of its own, in a directory of its own, and
 # summarizes what it leaves behind: the mesh (nodes, elements of each type,
-# physical groups), every view (for each kind of list or each step of model
-# data: counts, sum, sum of absolute values, min and max of what it holds, and
-# the sum of the vector areas of the triangles and quadrangles of lists) and
-# the names of the files written. Checks the summaries against ref.json.
+# physical groups), every view (its times, and for each kind of list or each
+# step of model data: counts, sum, sum of absolute values, min and max of what
+# it holds, and the sum of the vector areas of the triangles and quadrangles of
+# lists) and the names of the files written. Checks the summaries against
+# ref.json.
 #
 #   python3 run.py [-o dir] [--api dir] [-j jobs] [--update] [cases...]
 #
@@ -71,6 +72,10 @@ def summarize(gmsh):
         i = gmsh.view.getIndex(tag)
         v = {'name': gmsh.option.getString('View[%d].Name' % i),
              'steps': int(gmsh.option.getNumber('View[%d].NbTimeStep' % i))}
+        v['times'] = []
+        for step in range(v['steps']):
+            gmsh.option.setNumber('View[%d].TimeStep' % i, step)
+            v['times'].append(gmsh.option.getNumber('View[%d].Time' % i))
         nerr = len(gmsh.logger.get())
         types, nums, data = gmsh.view.getListData(tag)
         if len(gmsh.logger.get()) == nerr:
