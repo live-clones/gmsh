@@ -17,12 +17,81 @@
 #include "drawContext.h"
 #endif
 
-void (*GMSH_Plugin::draw)(void *) = nullptr;
+GMSH_Plugin *GMSH_Plugin::preview = nullptr;
 
-void GMSH_Plugin::setDrawFunction(void (*fct)(void *))
+GMSH_Plugin::GMSH_Plugin(const std::vector<StringXNumber> &numOptions,
+                         const std::vector<StringXString> &strOptions)
+  : dialogBox(nullptr), _numOptions(numOptions), _numDefaults(numOptions),
+    _strOptions(strOptions), _strDefaults(strOptions)
 {
+}
+
+StringXNumber *GMSH_Plugin::findOption(const std::string &name)
+{
+  auto it = _aliases.find(name);
+  const std::string &n = (it == _aliases.end()) ? name : it->second;
+  for(int i = 0; i < getNbOptions(); i++)
+    if(n == getOption(i)->str) return getOption(i);
+  return nullptr;
+}
+
+StringXString *GMSH_Plugin::findOptionStr(const std::string &name)
+{
+  auto it = _aliases.find(name);
+  const std::string &n = (it == _aliases.end()) ? name : it->second;
+  for(int i = 0; i < getNbOptionsStr(); i++)
+    if(n == getOptionStr(i)->str) return getOptionStr(i);
+  return nullptr;
+}
+
+void GMSH_Plugin::addOptionAlias(const std::string &alias,
+                                 const std::string &name)
+{ _aliases[alias] = name; }
+
+void GMSH_Plugin::resetOptions()
+{
+  _numOptions = _numDefaults;
+  _strOptions = _strDefaults;
+}
+
+bool GMSH_Plugin::optionCallback(int iopt, int num, int action, double &value)
+{
+  // the function of the option, for plugins that give one
+  auto f = getOption(iopt)->function;
+  if(!f) return false;
+  value = f(num, action, value);
+  return true;
+}
+
+bool GMSH_Plugin::optionStrCallback(int iopt, int num, int action,
+                                    std::string &value)
+{
+  auto f = getOptionStr(iopt)->function;
+  if(!f) return false;
+  value = f(num, action, value);
+  return true;
+}
+
+bool GMSH_Plugin::sliderOption(int iopt, int action, double &value, double step,
+                               double min, double max)
+{
+  switch(action) {
+  case 1: value = step; break;
+  case 2: value = min; break;
+  case 3: value = max; break;
+  default:
+    option(iopt) = value;
+    setPreview(this);
+    break;
+  }
+  return true;
+}
+
+void GMSH_Plugin::setPreview(GMSH_Plugin *p)
+{
+  preview = p;
 #if defined(HAVE_OPENGL)
-  draw = fct;
+  if(!p) return;
   int old = CTX::instance()->drawBBox;
   CTX::instance()->drawBBox = 1;
   if(CTX::instance()->fastRedraw) {

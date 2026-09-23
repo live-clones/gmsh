@@ -858,7 +858,7 @@ public:
 void drawContext::drawPost()
 {
   // draw any plugin-specific stuff
-  if(GMSH_Plugin::draw) (*GMSH_Plugin::draw)(this);
+  if(GMSH_Plugin::preview) GMSH_Plugin::preview->drawPreview(this);
 
   if(PView::list.empty()) return;
 

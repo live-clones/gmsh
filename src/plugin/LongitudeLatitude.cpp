@@ -7,17 +7,12 @@
 #include "LongitudeLatitude.h"
 #include "OpenFile.h"
 
-StringXNumber LongituteLatitudeOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterLongituteLatitudePlugin()
+GMSH_LongitudeLatitudePlugin::GMSH_LongitudeLatitudePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_LongituteLatitudePlugin();
-}
 }
 
-std::string GMSH_LongituteLatitudePlugin::getHelp() const
+std::string GMSH_LongitudeLatitudePlugin::getHelp() const
 {
   return "Plugin(LongitudeLatitude) projects the view `View' "
          "in longitude-latitude.\n\n"
@@ -25,19 +20,9 @@ std::string GMSH_LongituteLatitudePlugin::getHelp() const
          "Plugin(LongitudeLatitude) is executed in place.";
 }
 
-int GMSH_LongituteLatitudePlugin::getNbOptions() const
+PView *GMSH_LongitudeLatitudePlugin::execute(PView *v)
 {
-  return sizeof(LongituteLatitudeOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_LongituteLatitudePlugin::getOption(int iopt)
-{
-  return &LongituteLatitudeOptions_Number[iopt];
-}
-
-PView *GMSH_LongituteLatitudePlugin::execute(PView *v)
-{
-  int iView = (int)LongituteLatitudeOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

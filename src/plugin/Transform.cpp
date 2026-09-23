@@ -5,27 +5,24 @@
 
 #include "Transform.h"
 
-StringXNumber TransformOptions_Number[] = {
-  {GMSH_FULLRC, "A11", nullptr, 1., ""},
-  {GMSH_FULLRC, "A12", nullptr, 0., ""},
-  {GMSH_FULLRC, "A13", nullptr, 0., ""},
-  {GMSH_FULLRC, "A21", nullptr, 0., ""},
-  {GMSH_FULLRC, "A22", nullptr, 1., ""},
-  {GMSH_FULLRC, "A23", nullptr, 0., ""},
-  {GMSH_FULLRC, "A31", nullptr, 0., ""},
-  {GMSH_FULLRC, "A32", nullptr, 0., ""},
-  {GMSH_FULLRC, "A33", nullptr, 1., ""},
-  {GMSH_FULLRC, "Tx", nullptr, 0., ""},
-  {GMSH_FULLRC, "Ty", nullptr, 0., ""}, // cannot use T2 (reserved token in parser)
-  {GMSH_FULLRC, "Tz", nullptr, 0., ""}, // cannot use T3 (reserved token in parser)
-  {GMSH_FULLRC, "SwapOrientation", nullptr, 0., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterTransformPlugin()
+GMSH_TransformPlugin::GMSH_TransformPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "A11", nullptr, 1., ""},
+                     {GMSH_FULLRC, "A12", nullptr, 0., ""},
+                     {GMSH_FULLRC, "A13", nullptr, 0., ""},
+                     {GMSH_FULLRC, "A21", nullptr, 0., ""},
+                     {GMSH_FULLRC, "A22", nullptr, 1., ""},
+                     {GMSH_FULLRC, "A23", nullptr, 0., ""},
+                     {GMSH_FULLRC, "A31", nullptr, 0., ""},
+                     {GMSH_FULLRC, "A32", nullptr, 0., ""},
+                     {GMSH_FULLRC, "A33", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Tx", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Ty", nullptr, 0.,
+                      ""}, // cannot use T2 (reserved token in parser)
+                     {GMSH_FULLRC, "Tz", nullptr, 0.,
+                      ""}, // cannot use T3 (reserved token in parser)
+                     {GMSH_FULLRC, "SwapOrientation", nullptr, 0., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_TransformPlugin();
-}
 }
 
 std::string GMSH_TransformPlugin::getHelp() const
@@ -42,36 +39,26 @@ std::string GMSH_TransformPlugin::getHelp() const
          "Plugin(Transform) is executed in-place.";
 }
 
-int GMSH_TransformPlugin::getNbOptions() const
-{
-  return sizeof(TransformOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_TransformPlugin::getOption(int iopt)
-{
-  return &TransformOptions_Number[iopt];
-}
-
 PView *GMSH_TransformPlugin::execute(PView *v)
 {
   double mat[3][4];
 
-  mat[0][0] = TransformOptions_Number[0].def;
-  mat[0][1] = TransformOptions_Number[1].def;
-  mat[0][2] = TransformOptions_Number[2].def;
-  mat[1][0] = TransformOptions_Number[3].def;
-  mat[1][1] = TransformOptions_Number[4].def;
-  mat[1][2] = TransformOptions_Number[5].def;
-  mat[2][0] = TransformOptions_Number[6].def;
-  mat[2][1] = TransformOptions_Number[7].def;
-  mat[2][2] = TransformOptions_Number[8].def;
+  mat[0][0] = option(0);
+  mat[0][1] = option(1);
+  mat[0][2] = option(2);
+  mat[1][0] = option(3);
+  mat[1][1] = option(4);
+  mat[1][2] = option(5);
+  mat[2][0] = option(6);
+  mat[2][1] = option(7);
+  mat[2][2] = option(8);
 
-  mat[0][3] = TransformOptions_Number[9].def;
-  mat[1][3] = TransformOptions_Number[10].def;
-  mat[2][3] = TransformOptions_Number[11].def;
+  mat[0][3] = option(9);
+  mat[1][3] = option(10);
+  mat[2][3] = option(11);
 
-  int swap = (int)TransformOptions_Number[12].def;
-  int iView = (int)TransformOptions_Number[13].def;
+  int swap = (int)option(12);
+  int iView = (int)option(13);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

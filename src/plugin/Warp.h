@@ -8,21 +8,15 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterWarpPlugin();
-}
-
 class GMSH_WarpPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_WarpPlugin() {}
+  GMSH_WarpPlugin();
   std::string getName() const { return "Warp"; }
   std::string getShortHelp() const
   {
     return "Deform view using a vector field";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

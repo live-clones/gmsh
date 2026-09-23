@@ -14,9 +14,11 @@
 
 // the version of the plugin interface of this file: a plugin loaded from a
 // shared library must have been built with the same
-#define GMSH_PLUGIN_API_VERSION 1
+#define GMSH_PLUGIN_API_VERSION 2
 
+#include <map>
 #include <string>
+#include <vector>
 #include <functional>
 #include "Options.h"
 #include "GmshMessage.h"
@@ -41,7 +43,9 @@ public:
   // a dialog box for the user interface
   PluginDialogBox *dialogBox;
 
-  GMSH_Plugin() : dialogBox(nullptr) {}
+  // the numeric and string options of the plugin, with their default values
+  GMSH_Plugin(const std::vector<StringXNumber> &numOptions = {},
+              const std::vector<StringXString> &strOptions = {});
   virtual ~GMSH_Plugin() {}
 
   // return plugin type, name and info
@@ -59,13 +63,34 @@ public:
   // show the message and hopefully continue
   virtual void catchErrorMessage(char *errorMessage) const;
 
-  // gmsh-style numeric options
-  virtual int getNbOptions() const { return 0; }
-  virtual StringXNumber *getOption(int iopt) { return nullptr; };
+  // the options (virtual for plugins that keep their options themselves)
+  virtual int getNbOptions() const { return (int)_numOptions.size(); }
+  virtual StringXNumber *getOption(int iopt) { return &_numOptions[iopt]; }
+  virtual int getNbOptionsStr() const { return (int)_strOptions.size(); }
+  virtual StringXString *getOptionStr(int iopt) { return &_strOptions[iopt]; }
 
-  // gmsh-style string options
-  virtual int getNbOptionsStr() const { return 0; }
-  virtual StringXString *getOptionStr(int iopt) { return nullptr; }
+  // the option of the given name, or of a former name given to
+  // addOptionAlias(); nullptr if there is none
+  StringXNumber *findOption(const std::string &name);
+  StringXString *findOptionStr(const std::string &name);
+  void addOptionAlias(const std::string &alias, const std::string &name);
+
+  // set the options to the values given to the constructor
+  void resetOptions();
+
+  // for the field of numeric option iopt in the dialog box: get its step
+  // (action 1), minimum (2) or maximum (3) for view num in value, or set it to
+  // value (action 0); false if the option has no such configuration
+  virtual bool optionCallback(int iopt, int num, int action, double &value);
+  // for the field of string option iopt: set it to value (action 0)
+  virtual bool optionStrCallback(int iopt, int num, int action,
+                                 std::string &value);
+
+  // draw a preview of what the plugin will do, while its options are edited
+  virtual void drawPreview(void *context) {}
+  // the plugin whose preview is drawn, if any; setPreview() redraws
+  static GMSH_Plugin *preview;
+  static void setPreview(GMSH_Plugin *p);
 
   // serialize plugin options into a string
   std::string serialize();
@@ -73,11 +98,21 @@ public:
   // run the plugin
   virtual int run() = 0;
 
-  // dynamic pointer to a drawing function
-  static void setDrawFunction(void (*fct)(void *));
-#ifndef SWIG
-  static void (*draw)(void *);
-#endif
+protected:
+  // the value of numeric or string option iopt
+  double &option(int iopt) { return getOption(iopt)->def; }
+  double option(int iopt) const
+  { return const_cast<GMSH_Plugin *>(this)->getOption(iopt)->def; }
+  std::string &optionStr(int iopt) { return getOptionStr(iopt)->def; }
+  // optionCallback() for a numeric option edited with a slider going from min
+  // to max by step, whose changes are previewed
+  bool sliderOption(int iopt, int action, double &value, double step,
+                    double min, double max);
+
+private:
+  std::vector<StringXNumber> _numOptions, _numDefaults;
+  std::vector<StringXString> _strOptions, _strDefaults;
+  std::map<std::string, std::string> _aliases;
 };
 
 // The base class for post-processing plugins. The user can either
@@ -87,6 +122,7 @@ private:
   mutable bool _warnedGauss = false, _warnedCorners = false;
 
 public:
+  using GMSH_Plugin::GMSH_Plugin;
   inline GMSH_PLUGIN_TYPE getType() const
   {
     return GMSH_Plugin::GMSH_POST_PLUGIN;
@@ -169,6 +205,8 @@ public:
 };
 
 class GMSH_MeshPlugin : public GMSH_Plugin {
+public:
+  using GMSH_Plugin::GMSH_Plugin;
   inline GMSH_PLUGIN_TYPE getType() const
   {
     return GMSH_Plugin::GMSH_MESH_PLUGIN;

@@ -8,23 +8,15 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterFieldFromAmplitudePhasePlugin();
-}
-
 class GMSH_FieldFromAmplitudePhasePlugin : public GMSH_PostPlugin {
 public:
-  GMSH_FieldFromAmplitudePhasePlugin() {}
+  GMSH_FieldFromAmplitudePhasePlugin();
   std::string getName() const { return "FieldFromAmplitudePhase"; }
   std::string getShortHelp() const
   {
     return "Compute field from amplitude and phase";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
-  int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

@@ -7,23 +7,17 @@
 #include "Invisible.h"
 #include "Context.h"
 
-StringXNumber InvisibleOptions_Number[] = {
-  {GMSH_FULLRC, "DeleteElements", nullptr, 1., ""},
-  {GMSH_FULLRC, "ReverseElements", nullptr, 0., ""},
-  {GMSH_FULLRC, "XMin", nullptr, 0., ""},
-  {GMSH_FULLRC, "YMin", nullptr, 0., ""},
-  {GMSH_FULLRC, "ZMin", nullptr, 0., ""},
-  {GMSH_FULLRC, "XMax", nullptr, 0., ""},
-  {GMSH_FULLRC, "YMax", nullptr, 0., ""},
-  {GMSH_FULLRC, "ZMax", nullptr, 0., ""},
-  {GMSH_FULLRC, "Inside", nullptr, 0., ""}
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterInvisiblePlugin()
+GMSH_InvisiblePlugin::GMSH_InvisiblePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "DeleteElements", nullptr, 1., ""},
+                     {GMSH_FULLRC, "ReverseElements", nullptr, 0., ""},
+                     {GMSH_FULLRC, "XMin", nullptr, 0., ""},
+                     {GMSH_FULLRC, "YMin", nullptr, 0., ""},
+                     {GMSH_FULLRC, "ZMin", nullptr, 0., ""},
+                     {GMSH_FULLRC, "XMax", nullptr, 0., ""},
+                     {GMSH_FULLRC, "YMax", nullptr, 0., ""},
+                     {GMSH_FULLRC, "ZMax", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Inside", nullptr, 0., ""}})
 {
-  return new GMSH_InvisiblePlugin();
-}
 }
 
 std::string GMSH_InvisiblePlugin::getHelp() const
@@ -36,25 +30,15 @@ std::string GMSH_InvisiblePlugin::getHelp() const
          "as invisible prior to deleting or inverting the elements.";
 }
 
-int GMSH_InvisiblePlugin::getNbOptions() const
-{
-  return sizeof(InvisibleOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_InvisiblePlugin::getOption(int iopt)
-{
-  return &InvisibleOptions_Number[iopt];
-}
-
 PView *GMSH_InvisiblePlugin::execute(PView *v)
 {
-  double xmin = InvisibleOptions_Number[2].def;
-  double ymin = InvisibleOptions_Number[3].def;
-  double zmin = InvisibleOptions_Number[4].def;
-  double xmax = InvisibleOptions_Number[5].def;
-  double ymax = InvisibleOptions_Number[6].def;
-  double zmax = InvisibleOptions_Number[7].def;
-  int inside = (int)InvisibleOptions_Number[8].def;
+  double xmin = option(2);
+  double ymin = option(3);
+  double zmin = option(4);
+  double xmax = option(5);
+  double ymax = option(6);
+  double zmax = option(7);
+  int inside = (int)option(8);
 
   GModel *m = GModel::current();
 
@@ -81,10 +65,8 @@ PView *GMSH_InvisiblePlugin::execute(PView *v)
     }
   }
 
-  if(InvisibleOptions_Number[0].def)
-    m->removeInvisibleElements();
-  if(InvisibleOptions_Number[1].def)
-    m->reverseInvisibleElements();
+  if(option(0)) m->removeInvisibleElements();
+  if(option(1)) m->reverseInvisibleElements();
 
   // what is drawn depends on the visibility of the elements too
   CTX::instance()->meshChanged();

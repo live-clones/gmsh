@@ -8,15 +8,10 @@
 #include "fullMatrix.h"
 #include "GmshDefines.h"
 
-StringXNumber EigenvectorsOptions_Number[] = {
-  {GMSH_FULLRC, "ScaleByEigenvalues", nullptr, 1., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterEigenvectorsPlugin()
+GMSH_EigenvectorsPlugin::GMSH_EigenvectorsPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "ScaleByEigenvalues", nullptr, 1., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_EigenvectorsPlugin();
-}
 }
 
 std::string GMSH_EigenvectorsPlugin::getHelp() const
@@ -32,20 +27,10 @@ std::string GMSH_EigenvectorsPlugin::getHelp() const
          "Plugin(Eigenvectors) creates three new list-based vector view.";
 }
 
-int GMSH_EigenvectorsPlugin::getNbOptions() const
-{
-  return sizeof(EigenvectorsOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_EigenvectorsPlugin::getOption(int iopt)
-{
-  return &EigenvectorsOptions_Number[iopt];
-}
-
 PView *GMSH_EigenvectorsPlugin::execute(PView *v)
 {
-  int scale = (int)EigenvectorsOptions_Number[0].def;
-  int iView = (int)EigenvectorsOptions_Number[1].def;
+  int scale = (int)option(0);
+  int iView = (int)option(1);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

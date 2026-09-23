@@ -20,6 +20,7 @@ private:
   std::map<std::string, GMSH_Plugin *> allPlugins;
   // the shared libraries plugins were loaded from
   std::vector<void *> _libraries;
+  void add(GMSH_Plugin *p);
 
 public:
   virtual ~PluginManager();

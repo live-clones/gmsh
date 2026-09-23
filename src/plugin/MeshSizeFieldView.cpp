@@ -11,16 +11,11 @@
 #include "Field.h"
 #endif
 
-StringXNumber MeshSizeFieldViewOptions_Number[] = {
-  {GMSH_FULLRC, "MeshSizeField", nullptr, 0., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-  {GMSH_FULLRC, "Component", nullptr, 0., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterMeshSizeFieldViewPlugin()
+GMSH_MeshSizeFieldViewPlugin::GMSH_MeshSizeFieldViewPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "MeshSizeField", nullptr, 0., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""},
+                     {GMSH_FULLRC, "Component", nullptr, 0., ""}})
 {
-  return new GMSH_MeshSizeFieldViewPlugin();
-}
 }
 
 std::string GMSH_MeshSizeFieldViewPlugin::getHelp() const
@@ -31,22 +26,12 @@ std::string GMSH_MeshSizeFieldViewPlugin::getHelp() const
          "if negative) of the post-processing view `View'.";
 }
 
-int GMSH_MeshSizeFieldViewPlugin::getNbOptions() const
-{
-  return sizeof(MeshSizeFieldViewOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_MeshSizeFieldViewPlugin::getOption(int iopt)
-{
-  return &MeshSizeFieldViewOptions_Number[iopt];
-}
-
 PView *GMSH_MeshSizeFieldViewPlugin::execute(PView *view)
 {
 #if defined(HAVE_MESH)
-  int field = (int)MeshSizeFieldViewOptions_Number[0].def;
-  int iView = (int)MeshSizeFieldViewOptions_Number[1].def;
-  int comp = (int)MeshSizeFieldViewOptions_Number[2].def;
+  int field = (int)option(0);
+  int iView = (int)option(1);
+  int comp = (int)option(2);
 
   PView *v1 = getView(iView, view);
   if(!v1) return view;

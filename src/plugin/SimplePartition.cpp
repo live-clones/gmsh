@@ -22,23 +22,14 @@
 #include "meshPartition.h"
 #endif
 
-StringXNumber SimplePartitionOptions_Number[] = {
-  {GMSH_FULLRC, "NumSlicesX", nullptr, 4., ""},
-  {GMSH_FULLRC, "NumSlicesY", nullptr, 1., ""},
-  {GMSH_FULLRC, "NumSlicesZ", nullptr, 1., ""}
-};
-
-StringXString SimplePartitionOptions_String[] = {
-  {GMSH_FULLRC, "MappingX", nullptr, "t", ""},
-  {GMSH_FULLRC, "MappingY", nullptr, "t", ""},
-  {GMSH_FULLRC, "MappingZ", nullptr, "t", ""}
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSimplePartitionPlugin()
+GMSH_SimplePartitionPlugin::GMSH_SimplePartitionPlugin()
+  : GMSH_MeshPlugin({{GMSH_FULLRC, "NumSlicesX", nullptr, 4., ""},
+                     {GMSH_FULLRC, "NumSlicesY", nullptr, 1., ""},
+                     {GMSH_FULLRC, "NumSlicesZ", nullptr, 1., ""}},
+                    {{GMSH_FULLRC, "MappingX", nullptr, "t", ""},
+                     {GMSH_FULLRC, "MappingY", nullptr, "t", ""},
+                     {GMSH_FULLRC, "MappingZ", nullptr, "t", ""}})
 {
-  return new GMSH_SimplePartitionPlugin();
-}
 }
 
 std::string GMSH_SimplePartitionPlugin::getHelp() const
@@ -51,36 +42,16 @@ std::string GMSH_SimplePartitionPlugin::getHelp() const
          "`t' will thus lead to equidistant slices along the X-axis.)";
 }
 
-int GMSH_SimplePartitionPlugin::getNbOptions() const
-{
-  return sizeof(SimplePartitionOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_SimplePartitionPlugin::getOption(int iopt)
-{
-  return &SimplePartitionOptions_Number[iopt];
-}
-
-int GMSH_SimplePartitionPlugin::getNbOptionsStr() const
-{
-  return sizeof(SimplePartitionOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_SimplePartitionPlugin::getOptionStr(int iopt)
-{
-  return &SimplePartitionOptions_String[iopt];
-}
-
 int GMSH_SimplePartitionPlugin::run()
 {
 #if defined(HAVE_MESH)
-  int numSlicesX = (int)SimplePartitionOptions_Number[0].def;
-  int numSlicesY = (int)SimplePartitionOptions_Number[1].def;
-  int numSlicesZ = (int)SimplePartitionOptions_Number[2].def;
+  int numSlicesX = (int)option(0);
+  int numSlicesY = (int)option(1);
+  int numSlicesZ = (int)option(2);
   std::vector<std::string> exprX(1), exprY(1), exprZ(1);
-  exprX[0] = SimplePartitionOptions_String[0].def;
-  exprY[0] = SimplePartitionOptions_String[1].def;
-  exprZ[0] = SimplePartitionOptions_String[2].def;
+  exprX[0] = optionStr(0);
+  exprY[0] = optionStr(1);
+  exprZ[0] = optionStr(2);
 
   GModel *m = GModel::current();
 

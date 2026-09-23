@@ -11,13 +11,9 @@
 
 class MVertex;
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin();
-}
-
 class GMSH_ShowNeighborElementsPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_ShowNeighborElementsPlugin() {}
+  GMSH_ShowNeighborElementsPlugin();
   std::string getName() const { return "ShowNeighborElements"; }
   std::string getShortHelp() const
   {
@@ -25,8 +21,6 @@ public:
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "Amaury Johnen"; }
-  int getNbOptions() const;
-  StringXNumber *getOption(int);
   PView *execute(PView *);
 };
 

@@ -10,20 +10,18 @@
 #include "GEntity.h"
 #include <algorithm>
 
-StringXNumber SummationOptions_Number[] = {
-  {GMSH_FULLRC, "View0", nullptr, -1., ""}, {GMSH_FULLRC, "View1", nullptr, -1., ""},
-  {GMSH_FULLRC, "View2", nullptr, -1., ""}, {GMSH_FULLRC, "View3", nullptr, -1., ""},
-  {GMSH_FULLRC, "View4", nullptr, -1., ""}, {GMSH_FULLRC, "View5", nullptr, -1., ""},
-  {GMSH_FULLRC, "View6", nullptr, -1., ""}, {GMSH_FULLRC, "View7", nullptr, -1., ""}};
-
-StringXString SummationOptions_String[] = {
-  {GMSH_FULLRC, "ResultingViewName", nullptr, "default", ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSummationPlugin()
+GMSH_SummationPlugin::GMSH_SummationPlugin()
+  : GMSH_PostPlugin(
+      {{GMSH_FULLRC, "View0", nullptr, -1., ""},
+       {GMSH_FULLRC, "View1", nullptr, -1., ""},
+       {GMSH_FULLRC, "View2", nullptr, -1., ""},
+       {GMSH_FULLRC, "View3", nullptr, -1., ""},
+       {GMSH_FULLRC, "View4", nullptr, -1., ""},
+       {GMSH_FULLRC, "View5", nullptr, -1., ""},
+       {GMSH_FULLRC, "View6", nullptr, -1., ""},
+       {GMSH_FULLRC, "View7", nullptr, -1., ""}},
+      {{GMSH_FULLRC, "ResultingViewName", nullptr, "default", ""}})
 {
-  return new GMSH_SummationPlugin();
-}
 }
 
 std::string GMSH_SummationPlugin::getHelp() const
@@ -39,26 +37,6 @@ std::string GMSH_SummationPlugin::getHelp() const
          "Plugin(Summation) creates one new list-based view.";
 }
 
-int GMSH_SummationPlugin::getNbOptions() const
-{
-  return sizeof(SummationOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_SummationPlugin::getOption(int iopt)
-{
-  return &SummationOptions_Number[iopt];
-}
-
-int GMSH_SummationPlugin::getNbOptionsStr() const
-{
-  return sizeof(SummationOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_SummationPlugin::getOptionStr(int iopt)
-{
-  return &SummationOptions_String[iopt];
-}
-
 PView *GMSH_SummationPlugin::execute(PView *view)
 {
   int nviewmax = 8;
@@ -68,7 +46,7 @@ PView *GMSH_SummationPlugin::execute(PView *view)
 
   // Get view indices and PViews
   for(int i = 0; i < nviewmax; i++) {
-    int iview = (int)SummationOptions_Number[i].def;
+    int iview = (int)option(i);
     if(i == 0 || iview > -1) {
       views_indices.push_back(iview);
       pviews.push_back(getView(iview, view));
@@ -161,7 +139,7 @@ PView *GMSH_SummationPlugin::execute(PView *view)
                                            step);
   }
 
-  std::string outputname = SummationOptions_String[0].def;
+  std::string outputname = optionStr(0);
   if(outputname == "default")
     outputname = pviewsdata[0]->getName() + "_Summation";
 

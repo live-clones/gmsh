@@ -10,15 +10,9 @@
 #include "ANN/ANN.h"
 #endif
 
-StringXNumber NearestNeighborOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterNearestNeighborPlugin()
+GMSH_NearestNeighborPlugin::GMSH_NearestNeighborPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_NearestNeighborPlugin();
-}
 }
 
 std::string GMSH_NearestNeighborPlugin::getHelp() const
@@ -29,19 +23,9 @@ std::string GMSH_NearestNeighborPlugin::getHelp() const
          "Plugin(NearestNeighbor) is executed in-place.";
 }
 
-int GMSH_NearestNeighborPlugin::getNbOptions() const
-{
-  return sizeof(NearestNeighborOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_NearestNeighborPlugin::getOption(int iopt)
-{
-  return &NearestNeighborOptions_Number[iopt];
-}
-
 PView *GMSH_NearestNeighborPlugin::execute(PView *v)
 {
-  int iView = (int)NearestNeighborOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

@@ -140,12 +140,10 @@ void PluginManager::setPluginOption(const std::string &pluginName,
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin) throw std::runtime_error("Unknown plugin '" + pluginName + "'");
 
-  for(int i = 0; i < plugin->getNbOptionsStr(); i++) {
-    StringXString *sxs = plugin->getOptionStr(i);
-    if(option == std::string(sxs->str)) {
-      sxs->def = value;
-      return;
-    }
+  StringXString *sxs = plugin->findOptionStr(option);
+  if(sxs) {
+    sxs->def = value;
+    return;
   }
   throw std::runtime_error("Unknown option '" + option + "' of Plugin(" +
                            pluginName + ")");
@@ -158,12 +156,10 @@ void PluginManager::setPluginOption(const std::string &pluginName,
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin) throw std::runtime_error("Unknown plugin '" + pluginName + "'");
 
-  for(int i = 0; i < plugin->getNbOptions(); i++) {
-    StringXNumber *sxn = plugin->getOption(i);
-    if(option == std::string(sxn->str)) {
-      sxn->def = value;
-      return;
-    }
+  StringXNumber *sxn = plugin->findOption(option);
+  if(sxn) {
+    sxn->def = value;
+    return;
   }
   throw std::runtime_error("Unknown option '" + option + "' of Plugin(" +
                            pluginName + ")");
@@ -175,6 +171,8 @@ PluginManager *PluginManager::instance()
   return _instance;
 }
 
+void PluginManager::add(GMSH_Plugin *p) { allPlugins[p->getName()] = p; }
+
 void PluginManager::registerDefaultPlugins()
 {
   if(CTX::instance()->solver.plugins) {
@@ -182,120 +180,74 @@ void PluginManager::registerDefaultPlugins()
   }
 
   if(CTX::instance()->post.plugins) {
-    allPlugins.insert(
-      std::make_pair("StreamLines", GMSH_RegisterStreamLinesPlugin()));
-    allPlugins.insert(
-      std::make_pair("Particles", GMSH_RegisterParticlesPlugin()));
-    allPlugins.insert(std::make_pair("CutGrid", GMSH_RegisterCutGridPlugin()));
-    allPlugins.insert(
-      std::make_pair("Isosurface", GMSH_RegisterIsosurfacePlugin()));
-    allPlugins.insert(
-      std::make_pair("CutPlane", GMSH_RegisterCutPlanePlugin()));
-    allPlugins.insert(
-      std::make_pair("CutSphere", GMSH_RegisterCutSpherePlugin()));
-    allPlugins.insert(std::make_pair("CutBox", GMSH_RegisterCutBoxPlugin()));
-    allPlugins.insert(std::make_pair("Skin", GMSH_RegisterSkinPlugin()));
-    allPlugins.insert(
-      std::make_pair("MathEval", GMSH_RegisterMathEvalPlugin()));
-    allPlugins.insert(std::make_pair("ModifyComponents",
-                                     GMSH_RegisterModifyComponentsPlugin()));
-    allPlugins.insert(
-      std::make_pair("ExtractElements", GMSH_RegisterExtractElementsPlugin()));
-    allPlugins.insert(
-      std::make_pair("CutParametric", GMSH_RegisterCutParametricPlugin()));
-    allPlugins.insert(
-      std::make_pair("MakeSimplex", GMSH_RegisterMakeSimplexPlugin()));
-    allPlugins.insert(std::make_pair("Smooth", GMSH_RegisterSmoothPlugin()));
-    allPlugins.insert(
-      std::make_pair("Transform", GMSH_RegisterTransformPlugin()));
-    allPlugins.insert(std::make_pair("LongitudeLatitude",
-                                     GMSH_RegisterLongituteLatitudePlugin()));
-    allPlugins.insert(std::make_pair("Warp", GMSH_RegisterWarpPlugin()));
-    allPlugins.insert(
-      std::make_pair("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
-    allPlugins.insert(
-      std::make_pair("HarmonicToTime", GMSH_RegisterHarmonicToTimePlugin()));
-    allPlugins.insert(
-      std::make_pair("ModulusPhase", GMSH_RegisterModulusPhasePlugin()));
-    allPlugins.insert(
-      std::make_pair("Integrate", GMSH_RegisterIntegratePlugin()));
-    allPlugins.insert(std::make_pair("MinMax", GMSH_RegisterMinMaxPlugin()));
-    allPlugins.insert(
-      std::make_pair("Gradient", GMSH_RegisterGradientPlugin()));
-    allPlugins.insert(std::make_pair("Curl", GMSH_RegisterCurlPlugin()));
-    allPlugins.insert(
-      std::make_pair("Divergence", GMSH_RegisterDivergencePlugin()));
-    allPlugins.insert(
-      std::make_pair("Annotate", GMSH_RegisterAnnotatePlugin()));
-    allPlugins.insert(std::make_pair("Remove", GMSH_RegisterRemovePlugin()));
-    allPlugins.insert(
-      std::make_pair("Eigenvectors", GMSH_RegisterEigenvectorsPlugin()));
-    allPlugins.insert(
-      std::make_pair("Eigenvalues", GMSH_RegisterEigenvaluesPlugin()));
-    allPlugins.insert(std::make_pair("Lambda2", GMSH_RegisterLambda2Plugin()));
-    allPlugins.insert(std::make_pair("Probe", GMSH_RegisterProbePlugin()));
-    allPlugins.insert(
-      std::make_pair("Triangulate", GMSH_RegisterTriangulatePlugin()));
-    allPlugins.insert(
-      std::make_pair("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
-    allPlugins.insert(std::make_pair(
-      "FieldFromAmplitudePhase", GMSH_RegisterFieldFromAmplitudePhasePlugin()));
-    allPlugins.insert(
-      std::make_pair("NearToFarField", GMSH_RegisterNearToFarFieldPlugin()));
-    allPlugins.insert(std::make_pair("Bubbles", GMSH_RegisterBubblesPlugin()));
-    allPlugins.insert(std::make_pair("DiscretizationError",
-                                     GMSH_RegisterDiscretizationErrorPlugin()));
-    allPlugins.insert(
-      std::make_pair("Scal2Tens", GMSH_RegisterScal2TensPlugin()));
-    allPlugins.insert(
-      std::make_pair("Scal2Vec", GMSH_RegisterScal2VecPlugin()));
-    allPlugins.insert(std::make_pair("NewView", GMSH_RegisterNewViewPlugin()));
-    allPlugins.insert(
-      std::make_pair("SimplePartition", GMSH_RegisterSimplePartitionPlugin()));
-    allPlugins.insert(std::make_pair("Crack", GMSH_RegisterCrackPlugin()));
-    allPlugins.insert(std::make_pair("DuplicateNodes", GMSH_RegisterDuplicateNodesPlugin()));
-    allPlugins.insert(std::make_pair(
-      "ShowNeighborElements", GMSH_RegisterShowNeighborElementsPlugin()));
-    allPlugins.insert(
-      std::make_pair("MeshSubEntities", GMSH_RegisterMeshSubEntitiesPlugin()));
-    allPlugins.insert(
-      std::make_pair("MeshVolume", GMSH_RegisterMeshVolumePlugin()));
-    allPlugins.insert(
-      std::make_pair("GaussPoints", GMSH_RegisterGaussPointsPlugin()));
-    allPlugins.insert(
-      std::make_pair("Summation", GMSH_RegisterSummationPlugin()));
-    allPlugins.insert(
-      std::make_pair("BoundaryAngles", GMSH_RegisterBoundaryAnglesPlugin()));
-    allPlugins.insert(
-      std::make_pair("Invisible", GMSH_RegisterInvisiblePlugin()));
-    allPlugins.insert(std::make_pair("HomologyComputation",
-                                     GMSH_RegisterHomologyComputationPlugin()));
-    allPlugins.insert(std::make_pair(
-      "HomologyPostProcessing", GMSH_RegisterHomologyPostProcessingPlugin()));
+    add(new GMSH_StreamLinesPlugin());
+    add(new GMSH_ParticlesPlugin());
+    add(new GMSH_CutGridPlugin());
+    add(new GMSH_IsosurfacePlugin());
+    add(new GMSH_CutPlanePlugin());
+    add(new GMSH_CutSpherePlugin());
+    add(new GMSH_CutBoxPlugin());
+    add(new GMSH_SkinPlugin());
+    add(new GMSH_MathEvalPlugin());
+    add(new GMSH_ModifyComponentsPlugin());
+    add(new GMSH_ExtractElementsPlugin());
+    add(new GMSH_CutParametricPlugin());
+    add(new GMSH_MakeSimplexPlugin());
+    add(new GMSH_SmoothPlugin());
+    add(new GMSH_TransformPlugin());
+    add(new GMSH_LongitudeLatitudePlugin());
+    add(new GMSH_WarpPlugin());
+    add(new GMSH_SphericalRaisePlugin());
+    add(new GMSH_HarmonicToTimePlugin());
+    add(new GMSH_ModulusPhasePlugin());
+    add(new GMSH_IntegratePlugin());
+    add(new GMSH_MinMaxPlugin());
+    add(new GMSH_GradientPlugin());
+    add(new GMSH_CurlPlugin());
+    add(new GMSH_DivergencePlugin());
+    add(new GMSH_AnnotatePlugin());
+    add(new GMSH_RemovePlugin());
+    add(new GMSH_EigenvectorsPlugin());
+    add(new GMSH_EigenvaluesPlugin());
+    add(new GMSH_Lambda2Plugin());
+    add(new GMSH_ProbePlugin());
+    add(new GMSH_TriangulatePlugin());
+    add(new GMSH_ExtractEdgesPlugin());
+    add(new GMSH_FieldFromAmplitudePhasePlugin());
+    add(new GMSH_NearToFarFieldPlugin());
+    add(new GMSH_BubblesPlugin());
+    add(new GMSH_DiscretizationErrorPlugin());
+    add(new GMSH_Scal2TensPlugin());
+    add(new GMSH_Scal2VecPlugin());
+    add(new GMSH_NewViewPlugin());
+    add(new GMSH_SimplePartitionPlugin());
+    add(new GMSH_CrackPlugin());
+    add(new GMSH_DuplicateNodesPlugin());
+    add(new GMSH_ShowNeighborElementsPlugin());
+    add(new GMSH_MeshSubEntitiesPlugin());
+    add(new GMSH_MeshVolumePlugin());
+    add(new GMSH_GaussPointsPlugin());
+    add(new GMSH_SummationPlugin());
+    add(new GMSH_BoundaryAnglesPlugin());
+    add(new GMSH_InvisiblePlugin());
+    add(new GMSH_HomologyComputationPlugin());
+    add(new GMSH_HomologyPostProcessingPlugin());
 #if defined(HAVE_MESH)
-    allPlugins.insert(std::make_pair("AnalyseMeshQuality",
-                                     GMSH_RegisterAnalyseMeshQualityPlugin()));
-    allPlugins.insert(
-      std::make_pair("VoroMetal", GMSH_RegisterVoroMetalPlugin()));
-    allPlugins.insert(
-      std::make_pair("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
-    allPlugins.insert(std::make_pair("MeshSizeFieldView",
-                                     GMSH_RegisterMeshSizeFieldViewPlugin()));
+    add(new GMSH_AnalyseMeshQualityPlugin());
+    add(new GMSH_VoroMetalPlugin());
+    add(new GMSH_TetrahedralizePlugin());
+    add(new GMSH_MeshSizeFieldViewPlugin());
 
 #endif
 #if defined(HAVE_SOLVER)
-    allPlugins.insert(
-      std::make_pair("Distance", GMSH_RegisterDistancePlugin()));
+    add(new GMSH_DistancePlugin());
 #endif
 #if defined(HAVE_ANN)
-    allPlugins.insert(
-      std::make_pair("NearestNeighbor", GMSH_RegisterNearestNeighborPlugin()));
+    add(new GMSH_NearestNeighborPlugin());
 #endif
-    allPlugins.insert(
-      std::make_pair("SpanningTree", GMSH_RegisterSpanningTreePlugin()));
+    add(new GMSH_SpanningTreePlugin());
 #if defined(HAVE_BOUNDARY_LAYERS)
-    allPlugins.insert(
-      std::make_pair("BoundaryLayer", GMSH_RegisterBoundaryLayerPlugin()));
+    add(GMSH_RegisterBoundaryLayerPlugin());
 #endif
   }
 

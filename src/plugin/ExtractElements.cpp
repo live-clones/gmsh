@@ -6,19 +6,14 @@
 #include "ExtractElements.h"
 #include "Numeric.h"
 
-StringXNumber ExtractElementsOptions_Number[] = {
-  {GMSH_FULLRC, "MinVal", nullptr, 0., ""},
-  {GMSH_FULLRC, "MaxVal", nullptr, 0., ""},
-  {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
-  {GMSH_FULLRC, "Visible", nullptr, 1., ""},
-  {GMSH_FULLRC, "Dimension", nullptr, -1., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterExtractElementsPlugin()
+GMSH_ExtractElementsPlugin::GMSH_ExtractElementsPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "MinVal", nullptr, 0., ""},
+                     {GMSH_FULLRC, "MaxVal", nullptr, 0., ""},
+                     {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Visible", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Dimension", nullptr, -1., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_ExtractElementsPlugin();
-}
 }
 
 std::string GMSH_ExtractElementsPlugin::getHelp() const
@@ -33,24 +28,14 @@ std::string GMSH_ExtractElementsPlugin::getHelp() const
          "Plugin(ExtractElements) creates one new list-based view.";
 }
 
-int GMSH_ExtractElementsPlugin::getNbOptions() const
-{
-  return sizeof(ExtractElementsOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_ExtractElementsPlugin::getOption(int iopt)
-{
-  return &ExtractElementsOptions_Number[iopt];
-}
-
 PView *GMSH_ExtractElementsPlugin::execute(PView *v)
 {
-  double MinVal = ExtractElementsOptions_Number[0].def;
-  double MaxVal = ExtractElementsOptions_Number[1].def;
-  int thisStep = (int)ExtractElementsOptions_Number[2].def;
-  int visible = (int)ExtractElementsOptions_Number[3].def;
-  int dimension = (int)ExtractElementsOptions_Number[4].def;
-  int iView = (int)ExtractElementsOptions_Number[5].def;
+  double MinVal = option(0);
+  double MaxVal = option(1);
+  int thisStep = (int)option(2);
+  int visible = (int)option(3);
+  int dimension = (int)option(4);
+  int iView = (int)option(5);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

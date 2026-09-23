@@ -15,51 +15,25 @@
 #include "MElement.h"
 #include "VoroMetal.h"
 
-StringXNumber VoroMetalOptions_Number[] = {
-  {GMSH_FULLRC, "ComputeBestSeeds", nullptr, 0., ""},
-  {GMSH_FULLRC, "ComputeMicrostructure", nullptr, 1., ""}};
-
-StringXString VoroMetalOptions_String[] = {
-  {GMSH_FULLRC, "SeedsFile", nullptr, "seeds.txt", ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterVoroMetalPlugin()
-{
-  return new GMSH_VoroMetalPlugin();
-}
-}
-
 std::string GMSH_VoroMetalPlugin::getHelp() const
 {
   return "Plugin(VoroMetal) creates microstructures using Voronoi "
          "diagrams.\n\n";
 }
 
-int GMSH_VoroMetalPlugin::getNbOptions() const
-{
-  return sizeof(VoroMetalOptions_Number) / sizeof(StringXNumber);
-}
-
-int GMSH_VoroMetalPlugin::getNbOptionsStr() const
-{
-  return sizeof(VoroMetalOptions_String) / sizeof(StringXString);
-}
-
-StringXNumber *GMSH_VoroMetalPlugin::getOption(int iopt)
-{
-  return &VoroMetalOptions_Number[iopt];
-}
-
-StringXString *GMSH_VoroMetalPlugin::getOptionStr(int iopt)
-{
-  return &VoroMetalOptions_String[iopt];
-}
-
 #if defined(HAVE_MESH) && defined(HAVE_VOROPP)
 
 #include "meshGRegion.h"
 #include "voro++.hh"
+
+GMSH_VoroMetalPlugin::GMSH_VoroMetalPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "ComputeBestSeeds", nullptr, 0., ""},
+                     {GMSH_FULLRC, "ComputeMicrostructure", nullptr, 1., ""}},
+                    {
+                      {GMSH_FULLRC, "SeedsFile", nullptr, "seeds.txt", ""},
+                    })
+{
+}
 
 using namespace voro;
 
@@ -1375,9 +1349,9 @@ static void computeBestSeeds(const char *filename)
 
 PView *GMSH_VoroMetalPlugin::execute(PView *v)
 {
-  int runBestSeeds = (int)VoroMetalOptions_Number[0].def;
-  int runMicrostructure = (int)VoroMetalOptions_Number[1].def;
-  std::string seedsFile = VoroMetalOptions_String[0].def;
+  int runBestSeeds = (int)option(0);
+  int runMicrostructure = (int)option(1);
+  std::string seedsFile = optionStr(0);
   if(runBestSeeds) computeBestSeeds(seedsFile.c_str());
   if(runMicrostructure) microstructure(seedsFile.c_str());
   return v;

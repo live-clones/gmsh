@@ -8,21 +8,15 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterExtractElementsPlugin();
-}
-
 class GMSH_ExtractElementsPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_ExtractElementsPlugin() {}
+  GMSH_ExtractElementsPlugin();
   std::string getName() const { return "ExtractElements"; }
   std::string getShortHelp() const
   {
     return "Extract elements in given value range";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

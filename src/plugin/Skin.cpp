@@ -20,12 +20,11 @@
 #include "FaceMatcher.h"
 #include "GModelVertexArrays.h"
 
-StringXNumber SkinOptions_Number[] = {{GMSH_FULLRC, "Visible", nullptr, 1., ""},
-                                      {GMSH_FULLRC, "FromMesh", nullptr, 0., ""},
-                                      {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSkinPlugin() { return new GMSH_SkinPlugin(); }
+GMSH_SkinPlugin::GMSH_SkinPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Visible", nullptr, 1., ""},
+                     {GMSH_FULLRC, "FromMesh", nullptr, 0., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
+{
 }
 
 std::string GMSH_SkinPlugin::getHelp() const
@@ -36,16 +35,6 @@ std::string GMSH_SkinPlugin::getHelp() const
          "the plugin is run on the current view.\n"
          "If `Visible' is set, the plugin only extracts the skin of visible "
          "entities.";
-}
-
-int GMSH_SkinPlugin::getNbOptions() const
-{
-  return sizeof(SkinOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_SkinPlugin::getOption(int iopt)
-{
-  return &SkinOptions_Number[iopt];
 }
 
 // The faces of an element, or the edges of a 2D one, outward as the old
@@ -174,9 +163,9 @@ static std::uint64_t nodeKey(PViewData *data, int step, int ent, int ele,
 
 PView *GMSH_SkinPlugin::execute(PView *v)
 {
-  int visible = (int)SkinOptions_Number[0].def;
-  int fromMesh = (int)SkinOptions_Number[1].def;
-  int iView = (int)SkinOptions_Number[2].def;
+  int visible = (int)option(0);
+  int fromMesh = (int)option(1);
+  int iView = (int)option(2);
 
   // compute boundary of current mesh
   if(fromMesh) {

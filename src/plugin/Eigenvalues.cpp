@@ -7,14 +7,9 @@
 #include "Numeric.h"
 #include "GmshDefines.h"
 
-StringXNumber EigenvaluesOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterEigenvaluesPlugin()
+GMSH_EigenvaluesPlugin::GMSH_EigenvaluesPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_EigenvaluesPlugin();
-}
 }
 
 std::string GMSH_EigenvaluesPlugin::getHelp() const
@@ -25,19 +20,9 @@ std::string GMSH_EigenvaluesPlugin::getHelp() const
          "Plugin(Eigenvalues) creates three new list-based scalar views.";
 }
 
-int GMSH_EigenvaluesPlugin::getNbOptions() const
-{
-  return sizeof(EigenvaluesOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_EigenvaluesPlugin::getOption(int iopt)
-{
-  return &EigenvaluesOptions_Number[iopt];
-}
-
 PView *GMSH_EigenvaluesPlugin::execute(PView *v)
 {
-  int iView = (int)EigenvaluesOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

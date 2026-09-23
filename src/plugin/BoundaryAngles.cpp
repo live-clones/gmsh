@@ -17,23 +17,19 @@
 #include <string>
 #include <vector>
 
-StringXNumber BoundaryAnglesOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-  {GMSH_FULLRC, "Save", nullptr, 0., ""},
-  {GMSH_FULLRC, "Visible", nullptr, 0., ""},
-  {GMSH_FULLRC, "Remove", nullptr, 0., ""},
-};
-
-StringXString BoundaryAnglesOptions_String[] = {
-  {GMSH_FULLRC, "Filename", nullptr, "Angles_Surface", ""},
-  {GMSH_FULLRC, "Dir", nullptr, "", ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterBoundaryAnglesPlugin()
+GMSH_BoundaryAnglesPlugin::GMSH_BoundaryAnglesPlugin()
+  : GMSH_PostPlugin(
+      {
+        {GMSH_FULLRC, "View", nullptr, -1., ""},
+        {GMSH_FULLRC, "Save", nullptr, 0., ""},
+        {GMSH_FULLRC, "Visible", nullptr, 0., ""},
+        {GMSH_FULLRC, "Remove", nullptr, 0., ""},
+      },
+      {
+        {GMSH_FULLRC, "Filename", nullptr, "Angles_Surface", ""},
+        {GMSH_FULLRC, "Dir", nullptr, "", ""},
+      })
 {
-  return new GMSH_BoundaryAnglesPlugin();
-}
 }
 
 std::string GMSH_BoundaryAnglesPlugin::getHelp() const
@@ -53,26 +49,6 @@ std::string GMSH_BoundaryAnglesPlugin::getHelp() const
          "- Dir (Default = ''): Output directory (possibly nested)";
 }
 
-int GMSH_BoundaryAnglesPlugin::getNbOptions() const
-{
-  return sizeof(BoundaryAnglesOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_BoundaryAnglesPlugin::getOption(int iopt)
-{
-  return &BoundaryAnglesOptions_Number[iopt];
-}
-
-int GMSH_BoundaryAnglesPlugin::getNbOptionsStr() const
-{
-  return sizeof(BoundaryAnglesOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_BoundaryAnglesPlugin::getOptionStr(int iopt)
-{
-  return &BoundaryAnglesOptions_String[iopt];
-}
-
 struct Less_EdgeEle {
   bool operator()(const std::pair<MEdge, MElement *> &e1,
                   const std::pair<MEdge, MElement *> &e2) const
@@ -84,11 +60,11 @@ struct Less_EdgeEle {
 
 PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
 {
-  int saveOnDisk = (int)BoundaryAnglesOptions_Number[1].def;
-  int viewVisible = (int)BoundaryAnglesOptions_Number[2].def;
-  int removeView = (int)BoundaryAnglesOptions_Number[3].def;
-  std::string opt_filename = BoundaryAnglesOptions_String[0].def;
-  std::string opt_dir = BoundaryAnglesOptions_String[1].def;
+  int saveOnDisk = (int)option(1);
+  int viewVisible = (int)option(2);
+  int removeView = (int)option(3);
+  std::string opt_filename = optionStr(0);
+  std::string opt_dir = optionStr(1);
   // get the mesh of the current model, and iterate on the surfaces
   GModel *m = GModel::current();
   for(auto it = m->firstFace(); it != m->lastFace(); ++it) {

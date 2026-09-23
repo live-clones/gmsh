@@ -11,31 +11,27 @@
 #include "NearToFarField.h"
 #include "OS.h"
 
-StringXNumber NearToFarFieldOptions_Number[] = {
-  {GMSH_FULLRC, "Wavenumber", nullptr, 1., ""},
-  {GMSH_FULLRC, "PhiStart", nullptr, 0., ""},
-  {GMSH_FULLRC, "PhiEnd", nullptr, 2. * M_PI, ""},
-  {GMSH_FULLRC, "NumPointsPhi", nullptr, 60, ""},
-  {GMSH_FULLRC, "ThetaStart", nullptr, 0., ""},
-  {GMSH_FULLRC, "ThetaEnd", nullptr, M_PI, ""},
-  {GMSH_FULLRC, "NumPointsTheta", nullptr, 30, ""},
-  {GMSH_FULLRC, "EView", nullptr, 0, ""},
-  {GMSH_FULLRC, "HView", nullptr, 1, ""},
-  {GMSH_FULLRC, "Normalize", nullptr, 1, ""},
-  {GMSH_FULLRC, "dB", nullptr, 1, ""},
-  {GMSH_FULLRC, "NegativeTime", nullptr, 0., ""},
-  {GMSH_FULLRC, "RFar", nullptr, 0, ""},
-};
-
-StringXString NearToFarFieldOptions_String[] = {
-  {GMSH_FULLRC, "MatlabOutputFile", nullptr, "farfield.m", ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterNearToFarFieldPlugin()
+GMSH_NearToFarFieldPlugin::GMSH_NearToFarFieldPlugin()
+  : GMSH_PostPlugin(
+      {
+        {GMSH_FULLRC, "Wavenumber", nullptr, 1., ""},
+        {GMSH_FULLRC, "PhiStart", nullptr, 0., ""},
+        {GMSH_FULLRC, "PhiEnd", nullptr, 2. * M_PI, ""},
+        {GMSH_FULLRC, "NumPointsPhi", nullptr, 60, ""},
+        {GMSH_FULLRC, "ThetaStart", nullptr, 0., ""},
+        {GMSH_FULLRC, "ThetaEnd", nullptr, M_PI, ""},
+        {GMSH_FULLRC, "NumPointsTheta", nullptr, 30, ""},
+        {GMSH_FULLRC, "EView", nullptr, 0, ""},
+        {GMSH_FULLRC, "HView", nullptr, 1, ""},
+        {GMSH_FULLRC, "Normalize", nullptr, 1, ""},
+        {GMSH_FULLRC, "dB", nullptr, 1, ""},
+        {GMSH_FULLRC, "NegativeTime", nullptr, 0., ""},
+        {GMSH_FULLRC, "RFar", nullptr, 0, ""},
+      },
+      {
+        {GMSH_FULLRC, "MatlabOutputFile", nullptr, "farfield.m", ""},
+      })
 {
-  return new GMSH_NearToFarFieldPlugin();
-}
 }
 
 std::string GMSH_NearToFarFieldPlugin::getHelp() const
@@ -53,26 +49,6 @@ std::string GMSH_NearToFarFieldPlugin::getHelp() const
          "dependency. If `MatlabOutputFile' is given the raw far field data is "
          "also exported in Matlab format.\n\n"
          "Plugin(NearToFarField) creates one new view.";
-}
-
-int GMSH_NearToFarFieldPlugin::getNbOptions() const
-{
-  return sizeof(NearToFarFieldOptions_Number) / sizeof(StringXNumber);
-}
-
-int GMSH_NearToFarFieldPlugin::getNbOptionsStr() const
-{
-  return sizeof(NearToFarFieldOptions_String) / sizeof(StringXString);
-}
-
-StringXNumber *GMSH_NearToFarFieldPlugin::getOption(int iopt)
-{
-  return &NearToFarFieldOptions_Number[iopt];
-}
-
-StringXString *GMSH_NearToFarFieldPlugin::getOptionStr(int iopt)
-{
-  return &NearToFarFieldOptions_String[iopt];
 }
 
 // Compute field using e^{j\omega t} time dependency, following Jin in "Finite
@@ -277,21 +253,21 @@ static void printVector(FILE *fp, const std::string &name,
 
 PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
 {
-  double _k0 = (double)NearToFarFieldOptions_Number[0].def;
-  double _phiStart = (double)NearToFarFieldOptions_Number[1].def;
-  double _phiEnd = (double)NearToFarFieldOptions_Number[2].def;
-  int _nbPhi = (int)NearToFarFieldOptions_Number[3].def;
-  double _thetaStart = (double)NearToFarFieldOptions_Number[4].def;
-  double _thetaEnd = (double)NearToFarFieldOptions_Number[5].def;
-  int _nbThe = (int)NearToFarFieldOptions_Number[6].def;
-  int _eView = (int)NearToFarFieldOptions_Number[7].def;
-  int _hView = (int)NearToFarFieldOptions_Number[8].def;
-  bool _normalize = (bool)NearToFarFieldOptions_Number[9].def;
-  bool _dB = (bool)NearToFarFieldOptions_Number[10].def;
-  int _negativeTime = (int)NearToFarFieldOptions_Number[11].def;
-  double _rfar = NearToFarFieldOptions_Number[12].def;
+  double _k0 = (double)option(0);
+  double _phiStart = (double)option(1);
+  double _phiEnd = (double)option(2);
+  int _nbPhi = (int)option(3);
+  double _thetaStart = (double)option(4);
+  double _thetaEnd = (double)option(5);
+  int _nbThe = (int)option(6);
+  int _eView = (int)option(7);
+  int _hView = (int)option(8);
+  bool _normalize = (bool)option(9);
+  bool _dB = (bool)option(10);
+  int _negativeTime = (int)option(11);
+  double _rfar = option(12);
 
-  std::string _outFile = NearToFarFieldOptions_String[0].def;
+  std::string _outFile = optionStr(0);
 
   if(_nbPhi < 1 || _nbThe < 1) {
     Msg::Error("NearToFarField plugin needs at least one interval in phi and "

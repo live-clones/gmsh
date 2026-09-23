@@ -13,14 +13,9 @@
 #include <MQuadrangle.h>
 #include <MTriangle.h>
 
-StringXNumber DiscretizationErrorOptions_Number[] = {
-  {GMSH_FULLRC, "SuperSamplingNodes", nullptr, 10., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterDiscretizationErrorPlugin()
+GMSH_DiscretizationErrorPlugin::GMSH_DiscretizationErrorPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "SuperSamplingNodes", nullptr, 10., ""}})
 {
-  return new GMSH_DiscretizationErrorPlugin();
-}
 }
 
 std::string GMSH_DiscretizationErrorPlugin::getHelp() const
@@ -33,20 +28,10 @@ std::string GMSH_DiscretizationErrorPlugin::getHelp() const
          "the geometry.";
 }
 
-int GMSH_DiscretizationErrorPlugin::getNbOptions() const
-{
-  return sizeof(DiscretizationErrorOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_DiscretizationErrorPlugin::getOption(int iopt)
-{
-  return &DiscretizationErrorOptions_Number[iopt];
-}
-
 PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
 {
   double tol = CTX::instance()->geom.tolerance;
-  int nEdgeNodes = (int)DiscretizationErrorOptions_Number[0].def;
+  int nEdgeNodes = (int)option(0);
   if(nEdgeNodes < 2) {
     Msg::Error("SuperSamplingNodes should be at least 2");
     return v;

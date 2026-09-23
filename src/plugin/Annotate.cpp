@@ -13,47 +13,41 @@
 #include "glMatrix.h"
 #endif
 
-StringXNumber AnnotateOptions_Number[] = {
-  {GMSH_FULLRC, "X", GMSH_AnnotatePlugin::callbackX, 50., ""},
-  {GMSH_FULLRC, "Y", GMSH_AnnotatePlugin::callbackY, 30., ""},
-  {GMSH_FULLRC, "Z", GMSH_AnnotatePlugin::callbackZ, 0., ""},
-  {GMSH_FULLRC, "ThreeD", GMSH_AnnotatePlugin::callback3D, 0., ""},
-  {GMSH_FULLRC, "FontSize", GMSH_AnnotatePlugin::callbackFontSize, 14., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-StringXString AnnotateOptions_String[] = {
-  {GMSH_FULLRC, "Text", GMSH_AnnotatePlugin::callbackText, "My Text", ""},
-  {GMSH_FULLRC, "Font", GMSH_AnnotatePlugin::callbackFont, "Helvetica", ""},
-  {GMSH_FULLRC, "Align", GMSH_AnnotatePlugin::callbackAlign, "Left", ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterAnnotatePlugin() { return new GMSH_AnnotatePlugin(); }
+GMSH_AnnotatePlugin::GMSH_AnnotatePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "X", nullptr, 50., ""},
+                     {GMSH_FULLRC, "Y", nullptr, 30., ""},
+                     {GMSH_FULLRC, "Z", nullptr, 0., ""},
+                     {GMSH_FULLRC, "ThreeD", nullptr, 0., ""},
+                     {GMSH_FULLRC, "FontSize", nullptr, 14., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}},
+                    {{GMSH_FULLRC, "Text", nullptr, "My Text", ""},
+                     {GMSH_FULLRC, "Font", nullptr, "Helvetica", ""},
+                     {GMSH_FULLRC, "Align", nullptr, "Left", ""}})
+{
 }
 
-static double getStyle()
+double GMSH_AnnotatePlugin::getStyle()
 {
-  int fontsize = (int)AnnotateOptions_Number[4].def, font = 0, align = 0;
+  int fontsize = (int)option(4), font = 0, align = 0;
 #if defined(HAVE_OPENGL)
-  font =
-    drawContext::global()->getFontIndex(AnnotateOptions_String[1].def.c_str());
-  align =
-    drawContext::global()->getFontAlign(AnnotateOptions_String[2].def.c_str());
+  font = drawContext::global()->getFontIndex(optionStr(1).c_str());
+  align = drawContext::global()->getFontAlign(optionStr(2).c_str());
 #endif
   return (double)((align << 16) | (font << 8) | (fontsize));
 }
 
-void GMSH_AnnotatePlugin::draw(void *context)
+void GMSH_AnnotatePlugin::drawPreview(void *context)
 {
 #if defined(HAVE_OPENGL)
-  double X = AnnotateOptions_Number[0].def;
-  double Y = AnnotateOptions_Number[1].def;
-  double Z = AnnotateOptions_Number[2].def;
+  double X = option(0);
+  double Y = option(1);
+  double Z = option(2);
   double style = getStyle();
   drawContext *ctx = (drawContext *)context;
 
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
-  if(AnnotateOptions_Number[3].def) { // 3D
-    ctx->drawString(AnnotateOptions_String[0].def, X, Y, Z, style);
+  if(option(3)) { // 3D
+    ctx->drawString(optionStr(0), X, Y, Z, style);
     // draw 10-pixel marker
     double d = 10 * ctx->pixel_equiv_x / ctx->s[0];
     gmshBegin(GL_LINES);
@@ -79,7 +73,7 @@ void GMSH_AnnotatePlugin::draw(void *context)
     gmshMatrixMode(GMSH_MODELVIEW);
     gmshLoadIdentity();
     ctx->fix2dCoordinates(&X, &Y);
-    ctx->drawString(AnnotateOptions_String[0].def, X, Y, 0., style);
+    ctx->drawString(optionStr(0), X, Y, 0., style);
     // draw 10-pixel marker
     gmshBegin(GL_LINES);
     gmshVertex2d(X - 10, Y);
@@ -96,87 +90,28 @@ void GMSH_AnnotatePlugin::draw(void *context)
 #endif
 }
 
-double GMSH_AnnotatePlugin::callback(int num, int action, double value,
-                                     double *opt, double step, double min,
-                                     double max)
+bool GMSH_AnnotatePlugin::optionCallback(int iopt, int num, int action,
+                                         double &value)
 {
-  switch(action) { // configure the input field
-  case 1: return step;
-  case 2: return min;
-  case 3: return max;
-  default: break;
+  double lc = CTX::instance()->lc;
+  if(iopt < 3) { // the position, in model or screen coordinates
+    // not perfect: the change will only take place if we reopen the dialog...
+    if(option(3)) return sliderOption(iopt, action, value, lc / 200., -lc, lc);
+    return sliderOption(iopt, action, value, 0.5, -100., 100000.);
   }
-  *opt = value;
-  GMSH_Plugin::setDrawFunction(draw);
-  return 0.;
+  switch(iopt) {
+  case 3: return sliderOption(iopt, action, value, 1, 0, 1);
+  case 4: return sliderOption(iopt, action, value, 1, 5, 100);
+  default: return false;
+  }
 }
 
-std::string GMSH_AnnotatePlugin::callbackStr(int num, int action,
-                                             const std::string &value,
-                                             std::string &opt)
+bool GMSH_AnnotatePlugin::optionStrCallback(int iopt, int num, int action,
+                                            std::string &value)
 {
-  opt = value;
-  GMSH_Plugin::setDrawFunction(draw);
-  return opt;
-}
-
-double GMSH_AnnotatePlugin::callbackX(int num, int action, double value)
-{
-  // not perfect: the change will only take place if we reopen the dialog...
-  int dim3 = (int)AnnotateOptions_Number[3].def;
-  return callback(num, action, value, &AnnotateOptions_Number[0].def,
-                  dim3 ? CTX::instance()->lc / 200. : 0.5,
-                  dim3 ? -CTX::instance()->lc : -100.,
-                  dim3 ? CTX::instance()->lc : 100000.);
-}
-
-double GMSH_AnnotatePlugin::callbackY(int num, int action, double value)
-{
-  // not perfect: the change will only take place if we reopen the dialog...
-  int dim3 = (int)AnnotateOptions_Number[3].def;
-  return callback(num, action, value, &AnnotateOptions_Number[1].def,
-                  dim3 ? CTX::instance()->lc / 200. : 0.5,
-                  dim3 ? -CTX::instance()->lc : -100.,
-                  dim3 ? CTX::instance()->lc : 100000.);
-}
-
-double GMSH_AnnotatePlugin::callbackZ(int num, int action, double value)
-{
-  // not perfect: the change will only take place if we reopen the dialog...
-  int dim3 = (int)AnnotateOptions_Number[3].def;
-  return callback(num, action, value, &AnnotateOptions_Number[2].def,
-                  dim3 ? CTX::instance()->lc / 200. : 0.5,
-                  dim3 ? -CTX::instance()->lc : -100.,
-                  dim3 ? CTX::instance()->lc : 100000.);
-}
-
-double GMSH_AnnotatePlugin::callback3D(int num, int action, double value)
-{
-  return callback(num, action, value, &AnnotateOptions_Number[3].def, 1, 0, 1);
-}
-
-double GMSH_AnnotatePlugin::callbackFontSize(int num, int action, double value)
-{
-  return callback(num, action, value, &AnnotateOptions_Number[4].def, 1, 5,
-                  100);
-}
-
-std::string GMSH_AnnotatePlugin::callbackText(int num, int action,
-                                              const std::string &value)
-{
-  return callbackStr(num, action, value, AnnotateOptions_String[0].def);
-}
-
-std::string GMSH_AnnotatePlugin::callbackFont(int num, int action,
-                                              const std::string &value)
-{
-  return callbackStr(num, action, value, AnnotateOptions_String[1].def);
-}
-
-std::string GMSH_AnnotatePlugin::callbackAlign(int num, int action,
-                                               const std::string &value)
-{
-  return callbackStr(num, action, value, AnnotateOptions_String[2].def);
+  optionStr(iopt) = value;
+  setPreview(this);
+  return true;
 }
 
 std::string GMSH_AnnotatePlugin::getHelp() const
@@ -194,34 +129,14 @@ std::string GMSH_AnnotatePlugin::getHelp() const
          "datasets or creates a new list-based view for other datasets.";
 }
 
-int GMSH_AnnotatePlugin::getNbOptions() const
-{
-  return sizeof(AnnotateOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_AnnotatePlugin::getOption(int iopt)
-{
-  return &AnnotateOptions_Number[iopt];
-}
-
-int GMSH_AnnotatePlugin::getNbOptionsStr() const
-{
-  return sizeof(AnnotateOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_AnnotatePlugin::getOptionStr(int iopt)
-{
-  return &AnnotateOptions_String[iopt];
-}
-
 PView *GMSH_AnnotatePlugin::execute(PView *v)
 {
-  double X = AnnotateOptions_Number[0].def;
-  double Y = AnnotateOptions_Number[1].def;
-  double Z = AnnotateOptions_Number[2].def;
-  int dim3 = (int)AnnotateOptions_Number[3].def;
-  int iView = (int)AnnotateOptions_Number[5].def;
-  std::string text = AnnotateOptions_String[0].def;
+  double X = option(0);
+  double Y = option(1);
+  double Z = option(2);
+  int dim3 = (int)option(3);
+  int iView = (int)option(5);
+  std::string text = optionStr(0);
   double style = getStyle();
 
   PView *v1 = getView(iView, v);

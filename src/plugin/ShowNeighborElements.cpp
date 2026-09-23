@@ -17,30 +17,16 @@
 #include "drawContext.h"
 #endif
 
-StringXNumber ShowNeighborElementsOptions_Number[] = {
-  {GMSH_FULLRC, "NumLayers", nullptr, 1, ""},
-  {GMSH_FULLRC, "Element1", nullptr, 0, ""},
-  {GMSH_FULLRC, "Element2", nullptr, 0, ""},
-  {GMSH_FULLRC, "Element3", nullptr, 0, ""},
-  {GMSH_FULLRC, "Element4", nullptr, 0, ""},
-  {GMSH_FULLRC, "Element5", nullptr, 0, ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin()
+GMSH_ShowNeighborElementsPlugin::GMSH_ShowNeighborElementsPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "NumLayers", nullptr, 1, ""},
+                     {GMSH_FULLRC, "Element1", nullptr, 0, ""},
+                     {GMSH_FULLRC, "Element2", nullptr, 0, ""},
+                     {GMSH_FULLRC, "Element3", nullptr, 0, ""},
+                     {GMSH_FULLRC, "Element4", nullptr, 0, ""},
+                     {GMSH_FULLRC, "Element5", nullptr, 0, ""}})
 {
-  return new GMSH_ShowNeighborElementsPlugin();
-}
 }
 
-int GMSH_ShowNeighborElementsPlugin::getNbOptions() const
-{
-  return sizeof(ShowNeighborElementsOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_ShowNeighborElementsPlugin::getOption(int iopt)
-{
-  return &ShowNeighborElementsOptions_Number[iopt];
-}
 std::string GMSH_ShowNeighborElementsPlugin::getHelp() const
 {
   return "Plugin(ShowNeighborElements) sets visible the surface and volume "
@@ -55,10 +41,10 @@ PView *GMSH_ShowNeighborElementsPlugin::execute(PView *v)
 {
   GModel *m = GModel::current();
 
-  int numLayers = static_cast<int>(ShowNeighborElementsOptions_Number[0].def);
+  int numLayers = static_cast<int>(option(0));
   std::set<std::size_t> selected;
   for(int i = 1; i <= 5; i++) {
-    std::size_t num = ShowNeighborElementsOptions_Number[i].def;
+    std::size_t num = option(i);
     if(num) selected.insert(num);
   }
 

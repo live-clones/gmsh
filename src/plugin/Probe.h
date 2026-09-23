@@ -8,28 +8,18 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterProbePlugin();
-}
-
 class GMSH_ProbePlugin : public GMSH_PostPlugin {
-  double levelset(double x, double y, double z, double val) const;
-  static double callback(int num, int action, double value, double *opt);
-  static int iview;
+  int _iview = 0; // the view of the preview
 
 public:
-  GMSH_ProbePlugin() {}
+  GMSH_ProbePlugin();
   std::string getName() const { return "Probe"; }
   std::string getShortHelp() const { return "Get value at point (X, Y, Z)"; }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 
-  static double callbackX(int, int, double);
-  static double callbackY(int, int, double);
-  static double callbackZ(int, int, double);
-  static void draw(void *context);
+  bool optionCallback(int iopt, int num, int action, double &value);
+  void drawPreview(void *context);
 };
 
 #endif

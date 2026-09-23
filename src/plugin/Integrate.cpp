@@ -8,17 +8,12 @@
 #include "shapeFunctions.h"
 #include "PViewOptions.h"
 
-StringXNumber IntegrateOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-  {GMSH_FULLRC, "OverTime", nullptr, -1., ""},
-  {GMSH_FULLRC, "Dimension", nullptr, -1., ""},
-  {GMSH_FULLRC, "Visible", nullptr, 1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterIntegratePlugin()
+GMSH_IntegratePlugin::GMSH_IntegratePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""},
+                     {GMSH_FULLRC, "OverTime", nullptr, -1., ""},
+                     {GMSH_FULLRC, "Dimension", nullptr, -1., ""},
+                     {GMSH_FULLRC, "Visible", nullptr, 1., ""}})
 {
-  return new GMSH_IntegratePlugin();
-}
 }
 
 std::string GMSH_IntegratePlugin::getHelp() const
@@ -36,22 +31,12 @@ std::string GMSH_IntegratePlugin::getHelp() const
          "Plugin(Integrate) creates one new list-based view.";
 }
 
-int GMSH_IntegratePlugin::getNbOptions() const
-{
-  return sizeof(IntegrateOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_IntegratePlugin::getOption(int iopt)
-{
-  return &IntegrateOptions_Number[iopt];
-}
-
 PView *GMSH_IntegratePlugin::execute(PView *v)
 {
-  int iView = (int)IntegrateOptions_Number[0].def;
-  int overTime = (int)IntegrateOptions_Number[1].def;
-  int dimension = (int)IntegrateOptions_Number[2].def;
-  bool visible = (bool)IntegrateOptions_Number[3].def;
+  int iView = (int)option(0);
+  int overTime = (int)option(1);
+  int dimension = (int)option(2);
+  bool visible = (bool)option(3);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

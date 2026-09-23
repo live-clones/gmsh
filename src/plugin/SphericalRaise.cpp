@@ -6,17 +6,15 @@
 #include "SphericalRaise.h"
 #include "Numeric.h"
 
-StringXNumber SphericalRaiseOptions_Number[] = {
-  {GMSH_FULLRC, "Xc", nullptr, 0., ""},     {GMSH_FULLRC, "Yc", nullptr, 0., ""},
-  {GMSH_FULLRC, "Zc", nullptr, 0., ""},     {GMSH_FULLRC, "Raise", nullptr, 1., ""},
-  {GMSH_FULLRC, "Offset", nullptr, 0., ""}, {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSphericalRaisePlugin()
+GMSH_SphericalRaisePlugin::GMSH_SphericalRaisePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Xc", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Yc", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Zc", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Raise", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Offset", nullptr, 0., ""},
+                     {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_SphericalRaisePlugin();
-}
 }
 
 std::string GMSH_SphericalRaisePlugin::getHelp() const
@@ -37,26 +35,16 @@ std::string GMSH_SphericalRaisePlugin::getHelp() const
          "Plugin(SphericalRaise) is executed in-place.";
 }
 
-int GMSH_SphericalRaisePlugin::getNbOptions() const
-{
-  return sizeof(SphericalRaiseOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_SphericalRaisePlugin::getOption(int iopt)
-{
-  return &SphericalRaiseOptions_Number[iopt];
-}
-
 PView *GMSH_SphericalRaisePlugin::execute(PView *v)
 {
   double center[3];
-  center[0] = SphericalRaiseOptions_Number[0].def;
-  center[1] = SphericalRaiseOptions_Number[1].def;
-  center[2] = SphericalRaiseOptions_Number[2].def;
-  double raise = SphericalRaiseOptions_Number[3].def;
-  double offset = SphericalRaiseOptions_Number[4].def;
-  int timeStep = (int)SphericalRaiseOptions_Number[5].def;
-  int iView = (int)SphericalRaiseOptions_Number[6].def;
+  center[0] = option(0);
+  center[1] = option(1);
+  center[2] = option(2);
+  double raise = option(3);
+  double offset = option(4);
+  int timeStep = (int)option(5);
+  int iView = (int)option(6);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

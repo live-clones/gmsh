@@ -10,10 +10,6 @@
 #include <list>
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSpanningTreePlugin();
-}
-
 class GMSH_SpanningTreePlugin : public GMSH_MeshPlugin {
 private:
   class DSU { // Disjoint Set Union
@@ -50,12 +46,6 @@ public:
   std::string getShortHelp() const;
   std::string getHelp() const;
   std::string getAuthor() const;
-
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
-
-  int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);
 
   int run();
 

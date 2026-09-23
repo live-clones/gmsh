@@ -18,18 +18,12 @@
 #include "MFace.h"
 #include "Context.h"
 
-StringXNumber MeshSubEntitiesOptions_Number[] = {
-  {GMSH_FULLRC, "InputDimension", nullptr, 1., ""},
-  {GMSH_FULLRC, "InputPhysicalGroup", nullptr, 1., ""},
-  {GMSH_FULLRC, "OuputDimension", nullptr, 0., ""},
-  {GMSH_FULLRC, "OuputPhysicalGroup", nullptr, 2000., ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterMeshSubEntitiesPlugin()
+GMSH_MeshSubEntitiesPlugin::GMSH_MeshSubEntitiesPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "InputDimension", nullptr, 1., ""},
+                     {GMSH_FULLRC, "InputPhysicalGroup", nullptr, 1., ""},
+                     {GMSH_FULLRC, "OuputDimension", nullptr, 0., ""},
+                     {GMSH_FULLRC, "OuputPhysicalGroup", nullptr, 2000., ""}})
 {
-  return new GMSH_MeshSubEntitiesPlugin();
-}
 }
 
 std::string GMSH_MeshSubEntitiesPlugin::getHelp() const
@@ -41,22 +35,12 @@ std::string GMSH_MeshSubEntitiesPlugin::getHelp() const
          "belonging to `OutputPhysicalGroup'.";
 }
 
-int GMSH_MeshSubEntitiesPlugin::getNbOptions() const
-{
-  return sizeof(MeshSubEntitiesOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_MeshSubEntitiesPlugin::getOption(int iopt)
-{
-  return &MeshSubEntitiesOptions_Number[iopt];
-}
-
 PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
 {
-  int inputdim = (int)MeshSubEntitiesOptions_Number[0].def;
-  int inputphysical = (int)MeshSubEntitiesOptions_Number[1].def;
-  int outputdim = (int)MeshSubEntitiesOptions_Number[2].def;
-  int outphysical = (int)MeshSubEntitiesOptions_Number[3].def;
+  int inputdim = (int)option(0);
+  int inputphysical = (int)option(1);
+  int outputdim = (int)option(2);
+  int outphysical = (int)option(3);
 
   if(inputdim < 0 || inputdim > 3 || outputdim < 0 || outputdim > 3 ||
      outputdim > inputdim) {

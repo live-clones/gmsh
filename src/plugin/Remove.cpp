@@ -5,24 +5,22 @@
 
 #include "Remove.h"
 
-StringXNumber RemoveOptions_Number[] = {
-  {GMSH_FULLRC, "Text2D", nullptr, 1., ""},
-  {GMSH_FULLRC, "Text3D", nullptr, 1., ""},
-  {GMSH_FULLRC, "Points", nullptr, 0., ""},
-  {GMSH_FULLRC, "Lines", nullptr, 0., ""},
-  {GMSH_FULLRC, "Triangles", nullptr, 0., ""},
-  {GMSH_FULLRC, "Quadrangles", nullptr, 0., ""},
-  {GMSH_FULLRC, "Tetrahedra", nullptr, 0., ""},
-  {GMSH_FULLRC, "Hexahedra", nullptr, 0., ""},
-  {GMSH_FULLRC, "Prisms", nullptr, 0., ""},
-  {GMSH_FULLRC, "Pyramids", nullptr, 0., ""},
-  {GMSH_FULLRC, "Scalar", nullptr, 1., ""},
-  {GMSH_FULLRC, "Vector", nullptr, 1., ""},
-  {GMSH_FULLRC, "Tensor", nullptr, 1., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterRemovePlugin() { return new GMSH_RemovePlugin(); }
+GMSH_RemovePlugin::GMSH_RemovePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Text2D", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Text3D", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Points", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Lines", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Triangles", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Quadrangles", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Tetrahedra", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Hexahedra", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Prisms", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Pyramids", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Scalar", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Vector", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Tensor", nullptr, 1., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
+{
 }
 
 std::string GMSH_RemovePlugin::getHelp() const
@@ -32,19 +30,9 @@ std::string GMSH_RemovePlugin::getHelp() const
          "view.\n\nPlugin(Remove) is executed in-place.";
 }
 
-int GMSH_RemovePlugin::getNbOptions() const
-{
-  return sizeof(RemoveOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_RemovePlugin::getOption(int iopt)
-{
-  return &RemoveOptions_Number[iopt];
-}
-
 PView *GMSH_RemovePlugin::execute(PView *v)
 {
-  int iView = (int)RemoveOptions_Number[13].def;
+  int iView = (int)option(13);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -52,21 +40,21 @@ PView *GMSH_RemovePlugin::execute(PView *v)
   PViewDataList *data1 = getDataList(v1);
   if(!data1) return v;
 
-  int scalar = (int)RemoveOptions_Number[10].def;
-  int vector = (int)RemoveOptions_Number[11].def;
-  int tensor = (int)RemoveOptions_Number[12].def;
+  int scalar = (int)option(10);
+  int vector = (int)option(11);
+  int tensor = (int)option(12);
 
-  if(RemoveOptions_Number[0].def) {
+  if(option(0)) {
     data1->NbT2 = 0;
     data1->T2D.clear();
     data1->T2C.clear();
   }
-  if(RemoveOptions_Number[1].def) {
+  if(option(1)) {
     data1->NbT3 = 0;
     data1->T3D.clear();
     data1->T3C.clear();
   }
-  if(RemoveOptions_Number[2].def) {
+  if(option(2)) {
     if(scalar) {
       data1->NbSP = 0;
       data1->SP.clear();
@@ -80,7 +68,7 @@ PView *GMSH_RemovePlugin::execute(PView *v)
       data1->TP.clear();
     }
   }
-  if(RemoveOptions_Number[3].def) {
+  if(option(3)) {
     if(scalar) {
       data1->NbSL = 0;
       data1->SL.clear();
@@ -94,7 +82,7 @@ PView *GMSH_RemovePlugin::execute(PView *v)
       data1->TL.clear();
     }
   }
-  if(RemoveOptions_Number[4].def) {
+  if(option(4)) {
     if(scalar) {
       data1->NbST = 0;
       data1->ST.clear();
@@ -108,7 +96,7 @@ PView *GMSH_RemovePlugin::execute(PView *v)
       data1->TT.clear();
     }
   }
-  if(RemoveOptions_Number[5].def) {
+  if(option(5)) {
     if(scalar) {
       data1->NbSQ = 0;
       data1->SQ.clear();
@@ -122,7 +110,7 @@ PView *GMSH_RemovePlugin::execute(PView *v)
       data1->TQ.clear();
     }
   }
-  if(RemoveOptions_Number[6].def) {
+  if(option(6)) {
     if(scalar) {
       data1->NbSS = 0;
       data1->SS.clear();
@@ -136,7 +124,7 @@ PView *GMSH_RemovePlugin::execute(PView *v)
       data1->TS.clear();
     }
   }
-  if(RemoveOptions_Number[7].def) {
+  if(option(7)) {
     if(scalar) {
       data1->NbSH = 0;
       data1->SH.clear();
@@ -150,7 +138,7 @@ PView *GMSH_RemovePlugin::execute(PView *v)
       data1->TH.clear();
     }
   }
-  if(RemoveOptions_Number[8].def) {
+  if(option(8)) {
     if(scalar) {
       data1->NbSI = 0;
       data1->SI.clear();
@@ -164,7 +152,7 @@ PView *GMSH_RemovePlugin::execute(PView *v)
       data1->TI.clear();
     }
   }
-  if(RemoveOptions_Number[9].def) {
+  if(option(9)) {
     if(scalar) {
       data1->NbSY = 0;
       data1->SY.clear();

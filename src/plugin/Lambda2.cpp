@@ -6,12 +6,10 @@
 #include "Lambda2.h"
 #include "Numeric.h"
 
-StringXNumber Lambda2Options_Number[] = {
-  {GMSH_FULLRC, "Eigenvalue", nullptr, 2., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterLambda2Plugin() { return new GMSH_Lambda2Plugin(); }
+GMSH_Lambda2Plugin::GMSH_Lambda2Plugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Eigenvalue", nullptr, 2., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
+{
 }
 
 std::string GMSH_Lambda2Plugin::getHelp() const
@@ -32,16 +30,6 @@ std::string GMSH_Lambda2Plugin::getHelp() const
          "gradient tensor.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "Plugin(Lambda2) creates one new list-based view.";
-}
-
-int GMSH_Lambda2Plugin::getNbOptions() const
-{
-  return sizeof(Lambda2Options_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_Lambda2Plugin::getOption(int iopt)
-{
-  return &Lambda2Options_Number[iopt];
 }
 
 static int inv3x3tran(double mat[3][3], double inv[3][3], double *det)
@@ -227,8 +215,8 @@ static void eigen(std::vector<double> &inList, int inNb,
 
 PView *GMSH_Lambda2Plugin::execute(PView *v)
 {
-  int ev = (int)Lambda2Options_Number[0].def;
-  int iView = (int)Lambda2Options_Number[1].def;
+  int ev = (int)option(0);
+  int iView = (int)option(1);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

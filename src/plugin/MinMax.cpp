@@ -6,13 +6,12 @@
 #include "MinMax.h"
 #include "PViewOptions.h"
 
-StringXNumber MinMaxOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1., ""},
-                                        {GMSH_FULLRC, "OverTime", nullptr, 0, ""},
-                                        {GMSH_FULLRC, "Argument", nullptr, 0, ""},
-                                        {GMSH_FULLRC, "Visible", nullptr, 1, ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterMinMaxPlugin() { return new GMSH_MinMaxPlugin(); }
+GMSH_MinMaxPlugin::GMSH_MinMaxPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""},
+                     {GMSH_FULLRC, "OverTime", nullptr, 0, ""},
+                     {GMSH_FULLRC, "Argument", nullptr, 0, ""},
+                     {GMSH_FULLRC, "Visible", nullptr, 1, ""}})
+{
 }
 
 std::string GMSH_MinMaxPlugin::getHelp() const
@@ -26,22 +25,12 @@ std::string GMSH_MinMaxPlugin::getHelp() const
          "Plugin(MinMax) creates two new list-based views.";
 }
 
-int GMSH_MinMaxPlugin::getNbOptions() const
-{
-  return sizeof(MinMaxOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_MinMaxPlugin::getOption(int iopt)
-{
-  return &MinMaxOptions_Number[iopt];
-}
-
 PView *GMSH_MinMaxPlugin::execute(PView *v)
 {
-  int iView = (int)MinMaxOptions_Number[0].def;
-  int overTime = (int)MinMaxOptions_Number[1].def;
-  int argument = (int)MinMaxOptions_Number[2].def;
-  bool visible = (bool)MinMaxOptions_Number[3].def;
+  int iView = (int)option(0);
+  int overTime = (int)option(1);
+  int argument = (int)option(2);
+  bool visible = (bool)option(3);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

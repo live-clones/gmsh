@@ -11,10 +11,6 @@
 #include <vector>
 class MElement;
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterAnalyseMeshQualityPlugin();
-}
-
 class data_elementMinMax {
 private:
   MElement *_el;
@@ -59,12 +55,7 @@ private:
   std::vector<data_elementMinMax> _data;
 
 public:
-  GMSH_AnalyseMeshQualityPlugin()
-  {
-    _m = nullptr;
-    _meshStamp = -1;
-    _clear();
-  }
+  GMSH_AnalyseMeshQualityPlugin();
   std::string getName() const { return "AnalyseMeshQuality"; }
   std::string getShortHelp() const
   {
@@ -72,8 +63,6 @@ public:
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "Amaury Johnen"; }
-  int getNbOptions() const;
-  StringXNumber *getOption(int);
   PView *execute(PView *);
 
 private:

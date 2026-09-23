@@ -7,14 +7,9 @@
 #include "shapeFunctions.h"
 #include "GmshDefines.h"
 
-StringXNumber DivergenceOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterDivergencePlugin()
+GMSH_DivergencePlugin::GMSH_DivergencePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_DivergencePlugin();
-}
 }
 
 std::string GMSH_DivergencePlugin::getHelp() const
@@ -25,19 +20,9 @@ std::string GMSH_DivergencePlugin::getHelp() const
          "Plugin(Divergence) creates one new list-based view.";
 }
 
-int GMSH_DivergencePlugin::getNbOptions() const
-{
-  return sizeof(DivergenceOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_DivergencePlugin::getOption(int iopt)
-{
-  return &DivergenceOptions_Number[iopt];
-}
-
 PView *GMSH_DivergencePlugin::execute(PView *v)
 {
-  int iView = (int)DivergenceOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

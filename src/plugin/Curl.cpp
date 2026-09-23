@@ -7,10 +7,9 @@
 #include "shapeFunctions.h"
 #include "GmshDefines.h"
 
-StringXNumber CurlOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterCurlPlugin() { return new GMSH_CurlPlugin(); }
+GMSH_CurlPlugin::GMSH_CurlPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
+{
 }
 
 std::string GMSH_CurlPlugin::getHelp() const
@@ -21,19 +20,9 @@ std::string GMSH_CurlPlugin::getHelp() const
          "Plugin(Curl) creates one new list-based view.";
 }
 
-int GMSH_CurlPlugin::getNbOptions() const
-{
-  return sizeof(CurlOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_CurlPlugin::getOption(int iopt)
-{
-  return &CurlOptions_Number[iopt];
-}
-
 PView *GMSH_CurlPlugin::execute(PView *v)
 {
-  int iView = (int)CurlOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

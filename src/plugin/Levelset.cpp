@@ -223,7 +223,10 @@ static void reorderPrism(int numComp, double xp[12], double yp[12],
   }
 }
 
-GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
+GMSH_LevelsetPlugin::GMSH_LevelsetPlugin(
+  const std::vector<StringXNumber> &numOptions,
+  const std::vector<StringXString> &strOptions)
+  : GMSH_PostPlugin(numOptions, strOptions)
 {
   _invert = 0.;
   _ref[0] = _ref[1] = _ref[2] = 0.;

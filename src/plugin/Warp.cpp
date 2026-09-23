@@ -7,15 +7,13 @@
 #include "SmoothData.h"
 #include "Numeric.h"
 
-StringXNumber WarpOptions_Number[] = {
-  {GMSH_FULLRC, "Factor", nullptr, 1., ""},
-  {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
-  {GMSH_FULLRC, "SmoothingAngle", nullptr, 180., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-  {GMSH_FULLRC, "OtherView", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterWarpPlugin() { return new GMSH_WarpPlugin(); }
+GMSH_WarpPlugin::GMSH_WarpPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Factor", nullptr, 1., ""},
+                     {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
+                     {GMSH_FULLRC, "SmoothingAngle", nullptr, 180., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""},
+                     {GMSH_FULLRC, "OtherView", nullptr, -1., ""}})
+{
 }
 
 std::string GMSH_WarpPlugin::getHelp() const
@@ -33,23 +31,13 @@ std::string GMSH_WarpPlugin::getHelp() const
          "Plugin(Warp) is executed in-place.";
 }
 
-int GMSH_WarpPlugin::getNbOptions() const
-{
-  return sizeof(WarpOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_WarpPlugin::getOption(int iopt)
-{
-  return &WarpOptions_Number[iopt];
-}
-
 PView *GMSH_WarpPlugin::execute(PView *v)
 {
-  double factor = WarpOptions_Number[0].def;
-  int TimeStep = (int)WarpOptions_Number[1].def;
-  double AngleTol = WarpOptions_Number[2].def;
-  int iView = (int)WarpOptions_Number[3].def;
-  int otherView = (int)WarpOptions_Number[4].def;
+  double factor = option(0);
+  int TimeStep = (int)option(1);
+  double AngleTol = option(2);
+  int iView = (int)option(3);
+  int otherView = (int)option(4);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

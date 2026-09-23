@@ -34,7 +34,8 @@ protected:
   ORIENTATION _orientation;
 
 public:
-  GMSH_LevelsetPlugin();
+  GMSH_LevelsetPlugin(const std::vector<StringXNumber> &numOptions = {},
+                      const std::vector<StringXString> &strOptions = {});
   virtual double levelset(double x, double y, double z, double val) const = 0;
   virtual PView *execute(PView *);
   void assignSpecificVisibility(adaptiveElement *root) const;

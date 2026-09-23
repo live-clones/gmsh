@@ -67,21 +67,13 @@ public:
   bool equal(double, double, double);
 };
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterVoroMetalPlugin();
-}
-
 class GMSH_VoroMetalPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_VoroMetalPlugin() {}
+  GMSH_VoroMetalPlugin();
   std::string getName() const { return "VoroMetal"; }
   std::string getShortHelp() const { return "Voronoi microstructures"; }
   std::string getHelp() const;
   std::string getAuthor() const { return "Tristan Carrier & Maxime Melchior"; }
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
-  int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

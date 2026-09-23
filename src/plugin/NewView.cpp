@@ -11,17 +11,13 @@
 #include "GModel.h"
 #include "MElement.h"
 
-StringXNumber NewViewOptions_Number[] = {
-  {GMSH_FULLRC, "NumComp", nullptr, 1., ""},
-  {GMSH_FULLRC, "Value", nullptr, 0., ""},
-  {GMSH_FULLRC, "ViewTag", nullptr, -1., ""},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1., ""}};
-
-StringXString NewViewOptions_String[] = {
-  {GMSH_FULLRC, "Type", nullptr, "NodeData", ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterNewViewPlugin() { return new GMSH_NewViewPlugin(); }
+GMSH_NewViewPlugin::GMSH_NewViewPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "NumComp", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Value", nullptr, 0., ""},
+                     {GMSH_FULLRC, "ViewTag", nullptr, -1., ""},
+                     {GMSH_FULLRC, "PhysicalGroup", nullptr, -1., ""}},
+                    {{GMSH_FULLRC, "Type", nullptr, "NodeData", ""}})
+{
 }
 
 std::string GMSH_NewViewPlugin::getHelp() const
@@ -35,33 +31,13 @@ std::string GMSH_NewViewPlugin::getHelp() const
          "to a specific physical group with a positive `PhysicalGroup'.";
 }
 
-int GMSH_NewViewPlugin::getNbOptions() const
-{
-  return sizeof(NewViewOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_NewViewPlugin::getOption(int iopt)
-{
-  return &NewViewOptions_Number[iopt];
-}
-
-int GMSH_NewViewPlugin::getNbOptionsStr() const
-{
-  return sizeof(NewViewOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_NewViewPlugin::getOptionStr(int iopt)
-{
-  return &NewViewOptions_String[iopt];
-}
-
 PView *GMSH_NewViewPlugin::execute(PView *v)
 {
-  int numComp = (int)NewViewOptions_Number[0].def;
-  double value = NewViewOptions_Number[1].def;
-  int tag = (int)NewViewOptions_Number[2].def;
-  int phys = (int)NewViewOptions_Number[3].def;
-  std::string type = NewViewOptions_String[0].def;
+  int numComp = (int)option(0);
+  double value = option(1);
+  int tag = (int)option(2);
+  int phys = (int)option(3);
+  std::string type = optionStr(0);
 
   if(GModel::current()->getMeshStatus() < 0) {
     Msg::Error("No mesh available to create the view: please mesh your model!");

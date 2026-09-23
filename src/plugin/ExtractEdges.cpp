@@ -11,16 +11,10 @@
 #include "meshGFaceOptimize.h"
 #endif
 
-StringXNumber ExtractEdgesOptions_Number[] = {
-  {GMSH_FULLRC, "Angle", nullptr, 40., ""},
-  {GMSH_FULLRC, "IncludeBoundary", nullptr, 1., ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterExtractEdgesPlugin()
+GMSH_ExtractEdgesPlugin::GMSH_ExtractEdgesPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Angle", nullptr, 40., ""},
+                     {GMSH_FULLRC, "IncludeBoundary", nullptr, 1., ""}})
 {
-  return new GMSH_ExtractEdgesPlugin();
-}
 }
 
 std::string GMSH_ExtractEdgesPlugin::getHelp() const
@@ -28,16 +22,6 @@ std::string GMSH_ExtractEdgesPlugin::getHelp() const
   return "Plugin(ExtractEdges) extracts sharp edges "
          "from a triangular mesh.\n\n"
          "Plugin(ExtractEdges) creates one new view.";
-}
-
-int GMSH_ExtractEdgesPlugin::getNbOptions() const
-{
-  return sizeof(ExtractEdgesOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_ExtractEdgesPlugin::getOption(int iopt)
-{
-  return &ExtractEdgesOptions_Number[iopt];
 }
 
 #if defined(HAVE_MESH)
@@ -76,13 +60,13 @@ PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
   std::vector<edge_angle> edges_detected, edges_lonly;
   buildListOfEdgeAngle(adj, edges_detected, edges_lonly);
 
-  double threshold = ExtractEdgesOptions_Number[0].def / 180. * M_PI;
+  double threshold = option(0) / 180. * M_PI;
   for(std::size_t i = 0; i < edges_detected.size(); i++) {
     if(edges_detected[i].angle <= threshold) break;
     add_edge(edges_detected[i], data2);
   }
 
-  if(ExtractEdgesOptions_Number[1].def) {
+  if(option(1)) {
     for(std::size_t i = 0; i < edges_lonly.size(); i++) {
       add_edge(edges_lonly[i], data2);
     }

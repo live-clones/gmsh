@@ -13,13 +13,9 @@
 #include "MElement.h"
 #include "GModel.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterNearToFarFieldPlugin();
-}
-
 class GMSH_NearToFarFieldPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_NearToFarFieldPlugin() {}
+  GMSH_NearToFarFieldPlugin();
   std::string getName() const { return "NearToFarField"; }
   std::string getShortHelp() const
   {
@@ -27,10 +23,6 @@ public:
   }
   std::string getHelp() const;
   virtual std::string getAuthor() const { return "R. Sabariego, C. Geuzaine"; }
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
-  int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 
   double getFarFieldJin(std::vector<element *> &allElems,

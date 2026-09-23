@@ -19,20 +19,17 @@
 #include "MEdge.h"
 #include "Context.h"
 
-StringXNumber CrackOptions_Number[] = {
-  {GMSH_FULLRC, "Dimension", nullptr, 1.},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, 1.},
-  {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
-  {GMSH_FULLRC, "NormalX", nullptr, 0.},
-  {GMSH_FULLRC, "NormalY", nullptr, 0.},
-  {GMSH_FULLRC, "NormalZ", nullptr, 1.},
-  {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0},
-  {GMSH_FULLRC, "DebugView", nullptr, 0},
-  {GMSH_FULLRC, "SwapOrientation", nullptr, 0}
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterCrackPlugin() { return new GMSH_CrackPlugin(); }
+GMSH_CrackPlugin::GMSH_CrackPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Dimension", nullptr, 1.},
+                     {GMSH_FULLRC, "PhysicalGroup", nullptr, 1.},
+                     {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
+                     {GMSH_FULLRC, "NormalX", nullptr, 0.},
+                     {GMSH_FULLRC, "NormalY", nullptr, 0.},
+                     {GMSH_FULLRC, "NormalZ", nullptr, 1.},
+                     {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0},
+                     {GMSH_FULLRC, "DebugView", nullptr, 0},
+                     {GMSH_FULLRC, "SwapOrientation", nullptr, 0}})
+{
 }
 
 std::string GMSH_CrackPlugin::getHelp() const
@@ -60,16 +57,6 @@ std::string GMSH_CrackPlugin::getHelp() const
          "crack is reversed.";
 }
 
-int GMSH_CrackPlugin::getNbOptions() const
-{
-  return sizeof(CrackOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_CrackPlugin::getOption(int iopt)
-{
-  return &CrackOptions_Number[iopt];
-}
-
 class EdgeData {
 public:
   EdgeData(MEdge e) : edge(e) {}
@@ -90,14 +77,13 @@ struct MEdgeDataLessThan
 
 PView *GMSH_CrackPlugin::execute(PView *view)
 {
-  int dim = (int)CrackOptions_Number[0].def;
-  int physical = (int)CrackOptions_Number[1].def;
-  int open = (int)CrackOptions_Number[2].def;
-  SVector3 normal1d(CrackOptions_Number[3].def, CrackOptions_Number[4].def,
-                    CrackOptions_Number[5].def);
-  int newPhysical = (int)CrackOptions_Number[6].def;
-  int debug = (int)CrackOptions_Number[7].def;
-  int swapOrientation = (int)CrackOptions_Number[8].def;
+  int dim = (int)option(0);
+  int physical = (int)option(1);
+  int open = (int)option(2);
+  SVector3 normal1d(option(3), option(4), option(5));
+  int newPhysical = (int)option(6);
+  int debug = (int)option(7);
+  int swapOrientation = (int)option(8);
 
   if(dim != 1 && dim != 2) {
     Msg::Error("Crack dimension should be 1 or 2");

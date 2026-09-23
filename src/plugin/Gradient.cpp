@@ -7,10 +7,9 @@
 #include "shapeFunctions.h"
 #include "GmshDefines.h"
 
-StringXNumber GradientOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterGradientPlugin() { return new GMSH_GradientPlugin(); }
+GMSH_GradientPlugin::GMSH_GradientPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
+{
 }
 
 std::string GMSH_GradientPlugin::getHelp() const
@@ -21,19 +20,9 @@ std::string GMSH_GradientPlugin::getHelp() const
          "Plugin(Gradient) creates one new list-based view.";
 }
 
-int GMSH_GradientPlugin::getNbOptions() const
-{
-  return sizeof(GradientOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_GradientPlugin::getOption(int iopt)
-{
-  return &GradientOptions_Number[iopt];
-}
-
 PView *GMSH_GradientPlugin::execute(PView *v)
 {
-  int iView = (int)GradientOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

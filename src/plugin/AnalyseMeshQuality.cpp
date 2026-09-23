@@ -24,36 +24,24 @@
 #include "BasisFactory.h"
 #endif
 
-StringXNumber CurvedMeshOptions_Number[] = {
-  {GMSH_FULLRC, "JacobianDeterminant", nullptr, 0, ""},
-  {GMSH_FULLRC, "IGEMeasure", nullptr, 0, ""},
-  {GMSH_FULLRC, "ICNMeasure", nullptr, 0, ""},
-  {GMSH_FULLRC, "HidingThreshold", nullptr, 99, ""},
-  {GMSH_FULLRC, "ThresholdGreater", nullptr, 1, ""},
-  {GMSH_FULLRC, "CreateView", nullptr, 0, ""},
-  {GMSH_FULLRC, "Recompute", nullptr, 0, ""},
-  {GMSH_FULLRC, "DimensionOfElements", nullptr, -1, ""}
+GMSH_AnalyseMeshQualityPlugin::GMSH_AnalyseMeshQualityPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "JacobianDeterminant", nullptr, 0, ""},
+                     {GMSH_FULLRC, "IGEMeasure", nullptr, 0, ""},
+                     {GMSH_FULLRC, "ICNMeasure", nullptr, 0, ""},
+                     {GMSH_FULLRC, "HidingThreshold", nullptr, 99, ""},
+                     {GMSH_FULLRC, "ThresholdGreater", nullptr, 1, ""},
+                     {GMSH_FULLRC, "CreateView", nullptr, 0, ""},
+                     {GMSH_FULLRC, "Recompute", nullptr, 0, ""},
+                     {GMSH_FULLRC, "DimensionOfElements", nullptr, -1, ""}
 #if defined(HAVE_VISUDEV)
-  ,
-  {GMSH_FULLRC, "Element to draw quality", nullptr, 0}
+                     ,
+                     {GMSH_FULLRC, "Element to draw quality", nullptr, 0, ""}
 #endif
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterAnalyseMeshQualityPlugin()
+    })
 {
-  return new GMSH_AnalyseMeshQualityPlugin();
-}
-}
-
-int GMSH_AnalyseMeshQualityPlugin::getNbOptions() const
-{
-  return sizeof(CurvedMeshOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_AnalyseMeshQualityPlugin::getOption(int iopt)
-{
-  return &CurvedMeshOptions_Number[iopt];
+  _m = nullptr;
+  _meshStamp = -1;
+  _clear();
 }
 
 std::string GMSH_AnalyseMeshQualityPlugin::getHelp() const
@@ -104,21 +92,21 @@ std::string GMSH_AnalyseMeshQualityPlugin::getHelp() const
 
 PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
 {
-  int computeJac = static_cast<int>(CurvedMeshOptions_Number[0].def);
-  int computeIGE = static_cast<int>(CurvedMeshOptions_Number[1].def);
-  int computeICN = static_cast<int>(CurvedMeshOptions_Number[2].def);
-  double threshold = CurvedMeshOptions_Number[3].def;
-  bool thresholdGreater = static_cast<bool>(CurvedMeshOptions_Number[4].def);
-  bool createView = static_cast<bool>(CurvedMeshOptions_Number[5].def);
-  bool recompute = static_cast<bool>(CurvedMeshOptions_Number[6].def);
-  int askedDim = static_cast<int>(CurvedMeshOptions_Number[7].def);
+  int computeJac = static_cast<int>(option(0));
+  int computeIGE = static_cast<int>(option(1));
+  int computeICN = static_cast<int>(option(2));
+  double threshold = option(3);
+  bool thresholdGreater = static_cast<bool>(option(4));
+  bool createView = static_cast<bool>(option(5));
+  bool recompute = static_cast<bool>(option(6));
+  int askedDim = static_cast<int>(option(7));
 
 #if defined(HAVE_VISUDEV)
   _pwJac = computeJac / 2;
   _pwIGE = computeIGE / 2;
   _pwICN = computeICN / 2;
 
-  _numElementToScan = static_cast<int>(CurvedMeshOptions_Number[8].def);
+  _numElementToScan = static_cast<int>(option(8));
   _viewOrder = 0;
   _dataPViewJac.clear();
   _dataPViewIGE.clear();

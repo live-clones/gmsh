@@ -15,32 +15,27 @@
 #include "glyphList.h"
 #endif
 
-StringXNumber StreamLinesOptions_Number[] = {
-  {GMSH_FULLRC, "X0", GMSH_StreamLinesPlugin::callbackX0, 0., ""},
-  {GMSH_FULLRC, "Y0", GMSH_StreamLinesPlugin::callbackY0, 0., ""},
-  {GMSH_FULLRC, "Z0", GMSH_StreamLinesPlugin::callbackZ0, 0., ""},
-  {GMSH_FULLRC, "X1", GMSH_StreamLinesPlugin::callbackX1, 1., ""},
-  {GMSH_FULLRC, "Y1", GMSH_StreamLinesPlugin::callbackY1, 0., ""},
-  {GMSH_FULLRC, "Z1", GMSH_StreamLinesPlugin::callbackZ1, 0., ""},
-  {GMSH_FULLRC, "X2", GMSH_StreamLinesPlugin::callbackX2, 0., ""},
-  {GMSH_FULLRC, "Y2", GMSH_StreamLinesPlugin::callbackY2, 1., ""},
-  {GMSH_FULLRC, "Z2", GMSH_StreamLinesPlugin::callbackZ2, 0., ""},
-  {GMSH_FULLRC, "NumPointsU", GMSH_StreamLinesPlugin::callbackU, 10, ""},
-  {GMSH_FULLRC, "NumPointsV", GMSH_StreamLinesPlugin::callbackV, 1, ""},
-  {GMSH_FULLRC, "DT", nullptr, .1, ""},
-  {GMSH_FULLRC, "MaxIter", nullptr, 100, ""},
-  {GMSH_FULLRC, "TimeStep", nullptr, 0, ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-  {GMSH_FULLRC, "OtherView", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterStreamLinesPlugin()
+GMSH_StreamLinesPlugin::GMSH_StreamLinesPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "X0", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Y0", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Z0", nullptr, 0., ""},
+                     {GMSH_FULLRC, "X1", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Y1", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Z1", nullptr, 0., ""},
+                     {GMSH_FULLRC, "X2", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Y2", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Z2", nullptr, 0., ""},
+                     {GMSH_FULLRC, "NumPointsU", nullptr, 10, ""},
+                     {GMSH_FULLRC, "NumPointsV", nullptr, 1, ""},
+                     {GMSH_FULLRC, "DT", nullptr, .1, ""},
+                     {GMSH_FULLRC, "MaxIter", nullptr, 100, ""},
+                     {GMSH_FULLRC, "TimeStep", nullptr, 0, ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""},
+                     {GMSH_FULLRC, "OtherView", nullptr, -1., ""}})
 {
-  return new GMSH_StreamLinesPlugin();
-}
 }
 
-void GMSH_StreamLinesPlugin::draw(void *context)
+void GMSH_StreamLinesPlugin::drawPreview(void *context)
 {
 #if defined(HAVE_OPENGL)
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
@@ -59,94 +54,15 @@ void GMSH_StreamLinesPlugin::draw(void *context)
 #endif
 }
 
-double GMSH_StreamLinesPlugin::callback(int num, int action, double value,
-                                        double *opt, double step, double min,
-                                        double max)
+bool GMSH_StreamLinesPlugin::optionCallback(int iopt, int num, int action,
+                                            double &value)
 {
-  switch(action) { // configure the input field
-  case 1: return step;
-  case 2: return min;
-  case 3: return max;
-  default: break;
-  }
-  *opt = value;
-  GMSH_Plugin::setDrawFunction(draw);
-  return 0.;
-}
-
-double GMSH_StreamLinesPlugin::callbackX0(int num, int action, double value)
-{
-  return callback(num, action, value, &StreamLinesOptions_Number[0].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_StreamLinesPlugin::callbackY0(int num, int action, double value)
-{
-  return callback(num, action, value, &StreamLinesOptions_Number[1].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_StreamLinesPlugin::callbackZ0(int num, int action, double value)
-{
-  return callback(num, action, value, &StreamLinesOptions_Number[2].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_StreamLinesPlugin::callbackX1(int num, int action, double value)
-{
-  return callback(num, action, value, &StreamLinesOptions_Number[3].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_StreamLinesPlugin::callbackY1(int num, int action, double value)
-{
-  return callback(num, action, value, &StreamLinesOptions_Number[4].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_StreamLinesPlugin::callbackZ1(int num, int action, double value)
-{
-  return callback(num, action, value, &StreamLinesOptions_Number[5].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_StreamLinesPlugin::callbackX2(int num, int action, double value)
-{
-  return callback(num, action, value, &StreamLinesOptions_Number[6].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_StreamLinesPlugin::callbackY2(int num, int action, double value)
-{
-  return callback(num, action, value, &StreamLinesOptions_Number[7].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_StreamLinesPlugin::callbackZ2(int num, int action, double value)
-{
-  return callback(num, action, value, &StreamLinesOptions_Number[8].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_StreamLinesPlugin::callbackU(int num, int action, double value)
-{
-  return callback(num, action, value, &StreamLinesOptions_Number[9].def, 1, 1,
-                  100);
-}
-
-double GMSH_StreamLinesPlugin::callbackV(int num, int action, double value)
-{
-  return callback(num, action, value, &StreamLinesOptions_Number[10].def, 1, 1,
-                  100);
+  double lc = CTX::instance()->lc;
+  if(iopt < 9) // coordinates of the 3 points
+    return sliderOption(iopt, action, value, lc / 100., -2 * lc, 2 * lc);
+  if(iopt == 9 || iopt == 10)
+    return sliderOption(iopt, action, value, 1, 1, 100);
+  return false;
 }
 
 std::string GMSH_StreamLinesPlugin::getHelp() const
@@ -176,51 +92,26 @@ std::string GMSH_StreamLinesPlugin::getHelp() const
          "< 0, or single-step scalar lines if `OtherView' >= 0.";
 }
 
-int GMSH_StreamLinesPlugin::getNbOptions() const
-{
-  return sizeof(StreamLinesOptions_Number) / sizeof(StringXNumber);
-}
+int GMSH_StreamLinesPlugin::getNbU() { return (int)option(9); }
 
-StringXNumber *GMSH_StreamLinesPlugin::getOption(int iopt)
-{
-  return &StreamLinesOptions_Number[iopt];
-}
-
-int GMSH_StreamLinesPlugin::getNbU()
-{
-  return (int)StreamLinesOptions_Number[9].def;
-}
-
-int GMSH_StreamLinesPlugin::getNbV()
-{
-  return (int)StreamLinesOptions_Number[10].def;
-}
+int GMSH_StreamLinesPlugin::getNbV() { return (int)option(10); }
 
 void GMSH_StreamLinesPlugin::getPoint(int iU, int iV, double *X)
 {
   double u = getNbU() > 1 ? (double)iU / (double)(getNbU() - 1.) : 0.;
   double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
-  X[0] =
-    StreamLinesOptions_Number[0].def +
-    u * (StreamLinesOptions_Number[3].def - StreamLinesOptions_Number[0].def) +
-    v * (StreamLinesOptions_Number[6].def - StreamLinesOptions_Number[0].def);
-  X[1] =
-    StreamLinesOptions_Number[1].def +
-    u * (StreamLinesOptions_Number[4].def - StreamLinesOptions_Number[1].def) +
-    v * (StreamLinesOptions_Number[7].def - StreamLinesOptions_Number[1].def);
-  X[2] =
-    StreamLinesOptions_Number[2].def +
-    u * (StreamLinesOptions_Number[5].def - StreamLinesOptions_Number[2].def) +
-    v * (StreamLinesOptions_Number[8].def - StreamLinesOptions_Number[2].def);
+  X[0] = option(0) + u * (option(3) - option(0)) + v * (option(6) - option(0));
+  X[1] = option(1) + u * (option(4) - option(1)) + v * (option(7) - option(1));
+  X[2] = option(2) + u * (option(5) - option(2)) + v * (option(8) - option(2));
 }
 
 PView *GMSH_StreamLinesPlugin::execute(PView *v)
 {
-  double DT = StreamLinesOptions_Number[11].def;
-  int maxIter = (int)StreamLinesOptions_Number[12].def;
-  int timeStep = (int)StreamLinesOptions_Number[13].def;
-  int iView = (int)StreamLinesOptions_Number[14].def;
-  int otherView = (int)StreamLinesOptions_Number[15].def;
+  double DT = option(11);
+  int maxIter = (int)option(12);
+  int timeStep = (int)option(13);
+  int iView = (int)option(14);
+  int otherView = (int)option(15);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

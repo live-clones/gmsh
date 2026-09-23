@@ -5,16 +5,11 @@
 
 #include "ModulusPhase.h"
 
-StringXNumber ModulusPhaseOptions_Number[] = {
-  {GMSH_FULLRC, "RealPart", nullptr, 0., ""},
-  {GMSH_FULLRC, "ImaginaryPart", nullptr, 1., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterModulusPhasePlugin()
+GMSH_ModulusPhasePlugin::GMSH_ModulusPhasePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "RealPart", nullptr, 0., ""},
+                     {GMSH_FULLRC, "ImaginaryPart", nullptr, 1., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_ModulusPhasePlugin();
-}
 }
 
 std::string GMSH_ModulusPhasePlugin::getHelp() const
@@ -28,21 +23,11 @@ std::string GMSH_ModulusPhasePlugin::getHelp() const
          "Plugin(ModulusPhase) is executed in-place.";
 }
 
-int GMSH_ModulusPhasePlugin::getNbOptions() const
-{
-  return sizeof(ModulusPhaseOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_ModulusPhasePlugin::getOption(int iopt)
-{
-  return &ModulusPhaseOptions_Number[iopt];
-}
-
 PView *GMSH_ModulusPhasePlugin::execute(PView *v)
 {
-  int rIndex = (int)ModulusPhaseOptions_Number[0].def;
-  int iIndex = (int)ModulusPhaseOptions_Number[1].def;
-  int iView = (int)ModulusPhaseOptions_Number[2].def;
+  int rIndex = (int)option(0);
+  int iIndex = (int)option(1);
+  int iView = (int)option(2);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

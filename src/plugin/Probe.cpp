@@ -12,28 +12,23 @@
 #include "drawContext.h"
 #endif
 
-int GMSH_ProbePlugin::iview = 0;
-
-StringXNumber ProbeOptions_Number[] = {
-  {GMSH_FULLRC, "X", GMSH_ProbePlugin::callbackX, 0., ""},
-  {GMSH_FULLRC, "Y", GMSH_ProbePlugin::callbackY, 0., ""},
-  {GMSH_FULLRC, "Z", GMSH_ProbePlugin::callbackZ, 0., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterProbePlugin() { return new GMSH_ProbePlugin(); }
+GMSH_ProbePlugin::GMSH_ProbePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "X", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Y", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Z", nullptr, 0., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
+{
 }
 
-void GMSH_ProbePlugin::draw(void *context)
+void GMSH_ProbePlugin::drawPreview(void *context)
 {
 #if defined(HAVE_OPENGL)
-  int num = (int)ProbeOptions_Number[3].def;
-  if(num < 0) num = iview;
+  int num = (int)option(3);
+  if(num < 0) num = _iview;
   if(num >= 0 && num < (int)PView::list.size()) {
-    double x = ProbeOptions_Number[0].def;
-    double y = ProbeOptions_Number[1].def;
-    double z = ProbeOptions_Number[2].def;
+    double x = option(0);
+    double y = option(1);
+    double z = option(2);
     drawContext *ctx = (drawContext *)context;
     gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
     gmshLineWidth((float)CTX::instance()->lineWidth);
@@ -67,34 +62,13 @@ void GMSH_ProbePlugin::draw(void *context)
 #endif
 }
 
-double GMSH_ProbePlugin::callback(int num, int action, double value,
-                                  double *opt)
+bool GMSH_ProbePlugin::optionCallback(int iopt, int num, int action,
+                                      double &value)
 {
-  if(action > 0) iview = num;
-  switch(action) { // configure the input field
-  case 1: return CTX::instance()->lc / 100.;
-  case 2: return -2 * CTX::instance()->lc;
-  case 3: return 2 * CTX::instance()->lc;
-  default: break;
-  }
-  *opt = value;
-  GMSH_Plugin::setDrawFunction(draw);
-  return 0.;
-}
-
-double GMSH_ProbePlugin::callbackX(int num, int action, double value)
-{
-  return callback(num, action, value, &ProbeOptions_Number[0].def);
-}
-
-double GMSH_ProbePlugin::callbackY(int num, int action, double value)
-{
-  return callback(num, action, value, &ProbeOptions_Number[1].def);
-}
-
-double GMSH_ProbePlugin::callbackZ(int num, int action, double value)
-{
-  return callback(num, action, value, &ProbeOptions_Number[2].def);
+  if(iopt > 2) return false;
+  if(action > 0) _iview = num;
+  double lc = CTX::instance()->lc;
+  return sliderOption(iopt, action, value, lc / 100., -2 * lc, 2 * lc);
 }
 
 std::string GMSH_ProbePlugin::getHelp() const
@@ -105,22 +79,12 @@ std::string GMSH_ProbePlugin::getHelp() const
          "Plugin(Probe) creates one new view.";
 }
 
-int GMSH_ProbePlugin::getNbOptions() const
-{
-  return sizeof(ProbeOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_ProbePlugin::getOption(int iopt)
-{
-  return &ProbeOptions_Number[iopt];
-}
-
 PView *GMSH_ProbePlugin::execute(PView *v)
 {
-  double x = ProbeOptions_Number[0].def;
-  double y = ProbeOptions_Number[1].def;
-  double z = ProbeOptions_Number[2].def;
-  int iView = (int)ProbeOptions_Number[3].def;
+  double x = option(0);
+  double y = option(1);
+  double z = option(2);
+  int iView = (int)option(3);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

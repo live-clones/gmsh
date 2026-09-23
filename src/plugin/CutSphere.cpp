@@ -12,25 +12,20 @@
 #include "drawContext.h"
 #endif
 
-StringXNumber CutSphereOptions_Number[] = {
-  {GMSH_FULLRC, "Xc", GMSH_CutSpherePlugin::callbackX, 0., ""},
-  {GMSH_FULLRC, "Yc", GMSH_CutSpherePlugin::callbackY, 0., ""},
-  {GMSH_FULLRC, "Zc", GMSH_CutSpherePlugin::callbackZ, 0., ""},
-  {GMSH_FULLRC, "R", GMSH_CutSpherePlugin::callbackR, 0.25, ""},
-  {GMSH_FULLRC, "ExtractVolume", GMSH_CutSpherePlugin::callbackVol, 0., ""},
-  {GMSH_FULLRC, "RecurLevel", GMSH_CutSpherePlugin::callbackRecur, 3, ""},
-  {GMSH_FULLRC, "TargetError", GMSH_CutSpherePlugin::callbackTarget, 1e-3, ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-  {GMSH_FULLRC, "Visible", nullptr, 1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterCutSpherePlugin()
+GMSH_CutSpherePlugin::GMSH_CutSpherePlugin()
+  : GMSH_LevelsetPlugin({{GMSH_FULLRC, "Xc", nullptr, 0., ""},
+                         {GMSH_FULLRC, "Yc", nullptr, 0., ""},
+                         {GMSH_FULLRC, "Zc", nullptr, 0., ""},
+                         {GMSH_FULLRC, "R", nullptr, 0.25, ""},
+                         {GMSH_FULLRC, "ExtractVolume", nullptr, 0., ""},
+                         {GMSH_FULLRC, "RecurLevel", nullptr, 3, ""},
+                         {GMSH_FULLRC, "TargetError", nullptr, 1e-3, ""},
+                         {GMSH_FULLRC, "View", nullptr, -1., ""},
+                         {GMSH_FULLRC, "Visible", nullptr, 1., ""}})
 {
-  return new GMSH_CutSpherePlugin();
-}
 }
 
-void GMSH_CutSpherePlugin::draw(void *context)
+void GMSH_CutSpherePlugin::drawPreview(void *context)
 {
 #if defined(HAVE_OPENGL)
   bool fill = gmshPolygonFilled();
@@ -38,71 +33,25 @@ void GMSH_CutSpherePlugin::draw(void *context)
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
   gmshLineWidth((float)CTX::instance()->lineWidth);
   drawContext *ctx = (drawContext *)context;
-  ctx->drawSphere(
-    CutSphereOptions_Number[3].def, CutSphereOptions_Number[0].def,
-    CutSphereOptions_Number[1].def, CutSphereOptions_Number[2].def, 40, 40, 1);
+  ctx->drawSphere(option(3), option(0), option(1), option(2), 40, 40, 1);
   gmshPolygonFill(fill);
 #endif
 }
 
-double GMSH_CutSpherePlugin::callback(int num, int action, double value,
-                                      double *opt, double step, double min,
-                                      double max)
+bool GMSH_CutSpherePlugin::optionCallback(int iopt, int num, int action,
+                                          double &value)
 {
-  switch(action) { // configure the input field
-  case 1: return step;
-  case 2: return min;
-  case 3: return max;
-  default: break;
+  double lc = CTX::instance()->lc;
+  switch(iopt) {
+  case 0:
+  case 1:
+  case 2: return sliderOption(iopt, action, value, lc / 100., -2 * lc, 2 * lc);
+  case 3: return sliderOption(iopt, action, value, lc / 100., 0., 2 * lc);
+  case 4: return sliderOption(iopt, action, value, 1., -1., 1.);
+  case 5: return sliderOption(iopt, action, value, 1, 0, 10);
+  case 6: return sliderOption(iopt, action, value, 0.01, 0., 1.);
+  default: return false;
   }
-  *opt = value;
-  GMSH_Plugin::setDrawFunction(draw);
-  return 0.;
-}
-
-double GMSH_CutSpherePlugin::callbackX(int num, int action, double value)
-{
-  return callback(num, action, value, &CutSphereOptions_Number[0].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_CutSpherePlugin::callbackY(int num, int action, double value)
-{
-  return callback(num, action, value, &CutSphereOptions_Number[1].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_CutSpherePlugin::callbackZ(int num, int action, double value)
-{
-  return callback(num, action, value, &CutSphereOptions_Number[2].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_CutSpherePlugin::callbackR(int num, int action, double value)
-{
-  return callback(num, action, value, &CutSphereOptions_Number[3].def,
-                  CTX::instance()->lc / 100., 0., 2 * CTX::instance()->lc);
-}
-
-double GMSH_CutSpherePlugin::callbackVol(int num, int action, double value)
-{
-  return callback(num, action, value, &CutSphereOptions_Number[4].def, 1., -1.,
-                  1.);
-}
-
-double GMSH_CutSpherePlugin::callbackRecur(int num, int action, double value)
-{
-  return callback(num, action, value, &CutSphereOptions_Number[5].def, 1, 0,
-                  10);
-}
-
-double GMSH_CutSpherePlugin::callbackTarget(int num, int action, double value)
-{
-  return callback(num, action, value, &CutSphereOptions_Number[6].def, 0.01, 0.,
-                  1.);
 }
 
 std::string GMSH_CutSpherePlugin::getHelp() const
@@ -117,36 +66,26 @@ std::string GMSH_CutSpherePlugin::getHelp() const
          "Plugin(CutSphere) creates one new list-based view.";
 }
 
-int GMSH_CutSpherePlugin::getNbOptions() const
-{
-  return sizeof(CutSphereOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_CutSpherePlugin::getOption(int iopt)
-{
-  return &CutSphereOptions_Number[iopt];
-}
-
 double GMSH_CutSpherePlugin::levelset(double x, double y, double z,
                                       double val) const
 {
-  double a = CutSphereOptions_Number[0].def;
-  double b = CutSphereOptions_Number[1].def;
-  double c = CutSphereOptions_Number[2].def;
-  double r = CutSphereOptions_Number[3].def;
+  double a = option(0);
+  double b = option(1);
+  double c = option(2);
+  double r = option(3);
   return (x - a) * (x - a) + (y - b) * (y - b) + (z - c) * (z - c) - r * r;
 }
 
 PView *GMSH_CutSpherePlugin::execute(PView *v)
 {
-  int iView = (int)CutSphereOptions_Number[7].def;
-  _ref[0] = CutSphereOptions_Number[0].def;
-  _ref[1] = CutSphereOptions_Number[1].def;
-  _ref[2] = CutSphereOptions_Number[2].def;
-  _extractVolume = (int)CutSphereOptions_Number[4].def;
-  _recurLevel = (int)CutSphereOptions_Number[5].def;
-  _targetError = CutSphereOptions_Number[6].def;
-  _visible = (int)CutSphereOptions_Number[8].def;
+  int iView = (int)option(7);
+  _ref[0] = option(0);
+  _ref[1] = option(1);
+  _ref[2] = option(2);
+  _extractVolume = (int)option(4);
+  _recurLevel = (int)option(5);
+  _targetError = option(6);
+  _visible = (int)option(8);
 
   _valueIndependent = 1;
   _valueView = -1;

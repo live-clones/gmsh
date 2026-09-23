@@ -12,98 +12,51 @@
 #include "drawContext.h"
 #endif
 
-int GMSH_CutPlanePlugin::iview = 0;
-
-StringXNumber CutPlaneOptions_Number[] = {
-  {GMSH_FULLRC, "A", GMSH_CutPlanePlugin::callbackA, 1., ""},
-  {GMSH_FULLRC, "B", GMSH_CutPlanePlugin::callbackB, 0., ""},
-  {GMSH_FULLRC, "C", GMSH_CutPlanePlugin::callbackC, 0., ""},
-  {GMSH_FULLRC, "D", GMSH_CutPlanePlugin::callbackD, -0.01, ""},
-  {GMSH_FULLRC, "ExtractVolume", GMSH_CutPlanePlugin::callbackVol, 0, ""},
-  {GMSH_FULLRC, "RecurLevel", GMSH_CutPlanePlugin::callbackRecur, 3, ""},
-  {GMSH_FULLRC, "TargetError", GMSH_CutPlanePlugin::callbackTarget, 1e-3, ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-  {GMSH_FULLRC, "Visible", nullptr, 1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterCutPlanePlugin() { return new GMSH_CutPlanePlugin(); }
+GMSH_CutPlanePlugin::GMSH_CutPlanePlugin()
+  : GMSH_LevelsetPlugin({{GMSH_FULLRC, "A", nullptr, 1., ""},
+                         {GMSH_FULLRC, "B", nullptr, 0., ""},
+                         {GMSH_FULLRC, "C", nullptr, 0., ""},
+                         {GMSH_FULLRC, "D", nullptr, -0.01, ""},
+                         {GMSH_FULLRC, "ExtractVolume", nullptr, 0, ""},
+                         {GMSH_FULLRC, "RecurLevel", nullptr, 3, ""},
+                         {GMSH_FULLRC, "TargetError", nullptr, 1e-3, ""},
+                         {GMSH_FULLRC, "View", nullptr, -1., ""},
+                         {GMSH_FULLRC, "Visible", nullptr, 1., ""}})
+{
 }
 
-void GMSH_CutPlanePlugin::draw(void *context)
+void GMSH_CutPlanePlugin::drawPreview(void *context)
 {
 #if defined(HAVE_OPENGL)
-  int num = (int)CutPlaneOptions_Number[7].def;
+  int num = (int)option(7);
   drawContext *ctx = (drawContext *)context;
-  if(num < 0) num = iview;
+  if(num < 0) num = _iview;
   if(num >= 0 && num < (int)PView::list.size()) {
     gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
     gmshLineWidth((float)CTX::instance()->lineWidth);
     SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
-    ctx->drawPlaneInBoundingBox(
-      bb.min().x(), bb.min().y(), bb.min().z(), bb.max().x(), bb.max().y(),
-      bb.max().z(), CutPlaneOptions_Number[0].def,
-      CutPlaneOptions_Number[1].def, CutPlaneOptions_Number[2].def,
-      CutPlaneOptions_Number[3].def);
+    ctx->drawPlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(),
+                                bb.max().x(), bb.max().y(), bb.max().z(),
+                                option(0), option(1), option(2), option(3));
   }
 #endif
 }
 
-double GMSH_CutPlanePlugin::callback(int num, int action, double value,
-                                     double *opt, double step, double min,
-                                     double max)
+bool GMSH_CutPlanePlugin::optionCallback(int iopt, int num, int action,
+                                         double &value)
 {
-  if(action > 0) iview = num;
-  switch(action) { // configure the input field
-  case 1: return step;
-  case 2: return min;
-  case 3: return max;
-  default: break;
+  if(action > 0) _iview = num;
+  double lc = CTX::instance()->lc;
+  switch(iopt) {
+  case 0:
+  case 1:
+  case 2: return sliderOption(iopt, action, value, 0.01, -1, 1);
+  case 3: return sliderOption(iopt, action, value, lc / 200., -lc, lc);
+  case 4: return sliderOption(iopt, action, value, 1., -1, 1);
+  case 5: return sliderOption(iopt, action, value, 1, 0, 10);
+  case 6: return sliderOption(iopt, action, value, 0.01, 0., 1.);
+  default: return false;
   }
-  *opt = value;
-  GMSH_Plugin::setDrawFunction(draw);
-  return 0.;
-}
-
-double GMSH_CutPlanePlugin::callbackA(int num, int action, double value)
-{
-  return callback(num, action, value, &CutPlaneOptions_Number[0].def, 0.01, -1,
-                  1);
-}
-
-double GMSH_CutPlanePlugin::callbackB(int num, int action, double value)
-{
-  return callback(num, action, value, &CutPlaneOptions_Number[1].def, 0.01, -1,
-                  1);
-}
-
-double GMSH_CutPlanePlugin::callbackC(int num, int action, double value)
-{
-  return callback(num, action, value, &CutPlaneOptions_Number[2].def, 0.01, -1,
-                  1);
-}
-
-double GMSH_CutPlanePlugin::callbackD(int num, int action, double value)
-{
-  return callback(num, action, value, &CutPlaneOptions_Number[3].def,
-                  CTX::instance()->lc / 200., -CTX::instance()->lc,
-                  CTX::instance()->lc);
-}
-
-double GMSH_CutPlanePlugin::callbackVol(int num, int action, double value)
-{
-  return callback(num, action, value, &CutPlaneOptions_Number[4].def, 1., -1,
-                  1);
-}
-
-double GMSH_CutPlanePlugin::callbackRecur(int num, int action, double value)
-{
-  return callback(num, action, value, &CutPlaneOptions_Number[5].def, 1, 0, 10);
-}
-
-double GMSH_CutPlanePlugin::callbackTarget(int num, int action, double value)
-{
-  return callback(num, action, value, &CutPlaneOptions_Number[6].def, 0.01, 0.,
-                  1.);
 }
 
 std::string GMSH_CutPlanePlugin::getHelp() const
@@ -118,22 +71,9 @@ std::string GMSH_CutPlanePlugin::getHelp() const
          "Plugin(CutPlane) creates one new list-based view.";
 }
 
-int GMSH_CutPlanePlugin::getNbOptions() const
-{
-  return sizeof(CutPlaneOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_CutPlanePlugin::getOption(int iopt)
-{
-  return &CutPlaneOptions_Number[iopt];
-}
-
 double GMSH_CutPlanePlugin::levelset(double x, double y, double z,
                                      double val) const
-{
-  return CutPlaneOptions_Number[0].def * x + CutPlaneOptions_Number[1].def * y +
-         CutPlaneOptions_Number[2].def * z + CutPlaneOptions_Number[3].def;
-}
+{ return option(0) * x + option(1) * y + option(2) * z + option(3); }
 
 bool GMSH_CutPlanePlugin::geometricalFilter(
   fullMatrix<double> *node_positions) const
@@ -151,18 +91,18 @@ bool GMSH_CutPlanePlugin::geometricalFilter(
 
 PView *GMSH_CutPlanePlugin::execute(PView *v)
 {
-  int iView = (int)CutPlaneOptions_Number[7].def;
-  _ref[0] = CutPlaneOptions_Number[0].def;
-  _ref[1] = CutPlaneOptions_Number[1].def;
-  _ref[2] = CutPlaneOptions_Number[2].def;
+  int iView = (int)option(7);
+  _ref[0] = option(0);
+  _ref[1] = option(1);
+  _ref[2] = option(2);
   _valueIndependent = 1;
   _valueView = -1;
   _valueTimeStep = -1;
   _orientation = GMSH_LevelsetPlugin::PLANE;
-  _extractVolume = (int)CutPlaneOptions_Number[4].def;
-  _recurLevel = (int)CutPlaneOptions_Number[5].def;
-  _targetError = CutPlaneOptions_Number[6].def;
-  _visible = (int)CutPlaneOptions_Number[8].def;
+  _extractVolume = (int)option(4);
+  _recurLevel = (int)option(5);
+  _targetError = option(6);
+  _visible = (int)option(8);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

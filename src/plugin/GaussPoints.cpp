@@ -8,26 +8,11 @@
 #include "MElement.h"
 #include "PView.h"
 
-StringXNumber GaussPointsOptions_Number[] = {
-  {GMSH_FULLRC, "Order", nullptr, 0, ""},
-  {GMSH_FULLRC, "Dimension", nullptr, 2, ""},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, 0, ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterGaussPointsPlugin()
+GMSH_GaussPointsPlugin::GMSH_GaussPointsPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Order", nullptr, 0, ""},
+                     {GMSH_FULLRC, "Dimension", nullptr, 2, ""},
+                     {GMSH_FULLRC, "PhysicalGroup", nullptr, 0, ""}})
 {
-  return new GMSH_GaussPointsPlugin();
-}
-}
-
-int GMSH_GaussPointsPlugin::getNbOptions() const
-{
-  return sizeof(GaussPointsOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_GaussPointsPlugin::getOption(int iopt)
-{
-  return &GaussPointsOptions_Number[iopt];
 }
 
 std::string GMSH_GaussPointsPlugin::getHelp() const
@@ -40,9 +25,9 @@ std::string GMSH_GaussPointsPlugin::getHelp() const
 
 PView *GMSH_GaussPointsPlugin::execute(PView *v)
 {
-  int order = (int)GaussPointsOptions_Number[0].def;
-  int dim = (int)GaussPointsOptions_Number[1].def;
-  int physical = (int)GaussPointsOptions_Number[2].def;
+  int order = (int)option(0);
+  int dim = (int)option(1);
+  int physical = (int)option(2);
 
   if(dim < 0 || dim > 3) {
     Msg::Error("Invalid dimension %d", dim);

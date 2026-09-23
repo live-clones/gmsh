@@ -11,15 +11,13 @@
 #include "Bubbles.h"
 #include "OS.h"
 
-StringXNumber BubblesOptions_Number[] = {
-  {GMSH_FULLRC, "ShrinkFactor", nullptr, 0., ""},
-};
-
-StringXString BubblesOptions_String[] = {
-  {GMSH_FULLRC, "OutputFile", nullptr, "bubbles.geo", ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterBubblesPlugin() { return new GMSH_BubblesPlugin(); }
+GMSH_BubblesPlugin::GMSH_BubblesPlugin()
+  : GMSH_PostPlugin(
+      {
+        {GMSH_FULLRC, "ShrinkFactor", nullptr, 0., ""},
+      },
+      {{GMSH_FULLRC, "OutputFile", nullptr, "bubbles.geo", ""}})
+{
 }
 
 std::string GMSH_BubblesPlugin::getHelp() const
@@ -30,26 +28,6 @@ std::string GMSH_BubblesPlugin::getHelp() const
          "The plugin expects a triangulation in the `z = 0' plane to exist "
          "in the current model.\n\n"
          "Plugin(Bubbles) creates one `.geo' file.";
-}
-
-int GMSH_BubblesPlugin::getNbOptions() const
-{
-  return sizeof(BubblesOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_BubblesPlugin::getOption(int iopt)
-{
-  return &BubblesOptions_Number[iopt];
-}
-
-int GMSH_BubblesPlugin::getNbOptionsStr() const
-{
-  return sizeof(BubblesOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_BubblesPlugin::getOptionStr(int iopt)
-{
-  return &BubblesOptions_String[iopt];
 }
 
 static double myangle(double c[3], double p[3])
@@ -80,8 +58,8 @@ public:
 
 PView *GMSH_BubblesPlugin::execute(PView *v)
 {
-  double shrink = (double)BubblesOptions_Number[0].def;
-  std::string fileName = BubblesOptions_String[0].def;
+  double shrink = (double)option(0);
+  std::string fileName = optionStr(0);
 
   FILE *fp = Fopen(fileName.c_str(), "w");
   if(!fp) {

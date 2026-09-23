@@ -5,14 +5,9 @@
 
 #include "MakeSimplex.h"
 
-StringXNumber MakeSimplexOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterMakeSimplexPlugin()
+GMSH_MakeSimplexPlugin::GMSH_MakeSimplexPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_MakeSimplexPlugin();
-}
 }
 
 std::string GMSH_MakeSimplexPlugin::getHelp() const
@@ -22,16 +17,6 @@ std::string GMSH_MakeSimplexPlugin::getHelp() const
          "view `View' into simplices (triangles, tetrahedra).\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "Plugin(MakeSimplex) is executed in-place.";
-}
-
-int GMSH_MakeSimplexPlugin::getNbOptions() const
-{
-  return sizeof(MakeSimplexOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_MakeSimplexPlugin::getOption(int iopt)
-{
-  return &MakeSimplexOptions_Number[iopt];
 }
 
 static void decomposeList(PViewDataList *data, int nbNod, int nbComp,
@@ -70,7 +55,7 @@ static void decomposeList(PViewDataList *data, int nbNod, int nbComp,
 
 PView *GMSH_MakeSimplexPlugin::execute(PView *v)
 {
-  int iView = (int)MakeSimplexOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

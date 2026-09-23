@@ -20,25 +20,19 @@
 #include "distanceTerm.h"
 #endif
 
-template <class scalar> class simpleFunction;
-
-StringXNumber DistanceOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalPoint", nullptr, 0., ""},
-  {GMSH_FULLRC, "PhysicalLine", nullptr, 0., ""},
-  {GMSH_FULLRC, "PhysicalSurface", nullptr, 0., ""},
-  {GMSH_FULLRC, "DistanceType", nullptr, 0, ""},
-  {GMSH_FULLRC, "MinScale", nullptr, 0, ""},
-  {GMSH_FULLRC, "MaxScale", nullptr, 0, ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterDistancePlugin() { return new GMSH_DistancePlugin(); }
-}
-
 GMSH_DistancePlugin::GMSH_DistancePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "PhysicalPoint", nullptr, 0., ""},
+                     {GMSH_FULLRC, "PhysicalLine", nullptr, 0., ""},
+                     {GMSH_FULLRC, "PhysicalSurface", nullptr, 0., ""},
+                     {GMSH_FULLRC, "DistanceType", nullptr, 0, ""},
+                     {GMSH_FULLRC, "MinScale", nullptr, 0, ""},
+                     {GMSH_FULLRC, "MaxScale", nullptr, 0, ""}})
 {
   _maxDim = 0;
   _data = nullptr;
 }
+
+template <class scalar> class simpleFunction;
 
 std::string GMSH_DistancePlugin::getHelp() const
 {
@@ -56,21 +50,11 @@ std::string GMSH_DistancePlugin::getHelp() const
          "Plugin(Distance) creates one new list-based view.";
 }
 
-int GMSH_DistancePlugin::getNbOptions() const
-{
-  return sizeof(DistanceOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_DistancePlugin::getOption(int iopt)
-{
-  return &DistanceOptions_Number[iopt];
-}
-
 void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
                                     std::map<MVertex *, double> &distanceMap)
 {
-  double minScale = (double)DistanceOptions_Number[4].def;
-  double maxScale = (double)DistanceOptions_Number[5].def;
+  double minScale = (double)option(4);
+  double maxScale = (double)option(5);
 
   double minDist = 1.e22;
   double maxDist = 0.0;
@@ -131,10 +115,10 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
 
 PView *GMSH_DistancePlugin::execute(PView *v)
 {
-  int id_point = (int)DistanceOptions_Number[0].def;
-  int id_line = (int)DistanceOptions_Number[1].def;
-  int id_face = (int)DistanceOptions_Number[2].def;
-  double type = (double)DistanceOptions_Number[3].def;
+  int id_point = (int)option(0);
+  int id_line = (int)option(1);
+  int id_face = (int)option(2);
+  double type = (double)option(3);
 
   GModel *m = GModel::current();
   int totNumNodes = m->getNumMeshVertices();

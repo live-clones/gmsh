@@ -14,14 +14,9 @@
 #include "MTetrahedron.h"
 #endif
 
-StringXNumber TetrahedralizeOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterTetrahedralizePlugin()
+GMSH_TetrahedralizePlugin::GMSH_TetrahedralizePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_TetrahedralizePlugin();
-}
 }
 
 std::string GMSH_TetrahedralizePlugin::getHelp() const
@@ -30,16 +25,6 @@ std::string GMSH_TetrahedralizePlugin::getHelp() const
          "the view `View'.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "Plugin(Tetrahedralize) creates one new list-based view.";
-}
-
-int GMSH_TetrahedralizePlugin::getNbOptions() const
-{
-  return sizeof(TetrahedralizeOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_TetrahedralizePlugin::getOption(int iopt)
-{
-  return &TetrahedralizeOptions_Number[iopt];
 }
 
 #if defined(HAVE_MESH)
@@ -57,7 +42,7 @@ namespace {
 
 PView *GMSH_TetrahedralizePlugin::execute(PView *v)
 {
-  int iView = (int)TetrahedralizeOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

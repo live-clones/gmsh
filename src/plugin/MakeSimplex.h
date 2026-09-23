@@ -8,21 +8,15 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterMakeSimplexPlugin();
-}
-
 class GMSH_MakeSimplexPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_MakeSimplexPlugin() {}
+  GMSH_MakeSimplexPlugin();
   std::string getName() const { return "MakeSimplex"; }
   std::string getShortHelp() const
   {
     return "Transform quad/hex/prisms into tri/tets";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

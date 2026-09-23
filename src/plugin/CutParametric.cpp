@@ -16,36 +16,26 @@
 #include "glyphList.h"
 #endif
 
-StringXNumber CutParametricOptions_Number[] = {
-  {GMSH_FULLRC, "MinU", GMSH_CutParametricPlugin::callbackMinU, 0., ""},
-  {GMSH_FULLRC, "MaxU", GMSH_CutParametricPlugin::callbackMaxU, 2 * 3.1416, ""},
-  {GMSH_FULLRC, "NumPointsU", GMSH_CutParametricPlugin::callbackNU, 180., ""},
-  {GMSH_FULLRC, "MinV", GMSH_CutParametricPlugin::callbackMinV, 0., ""},
-  {GMSH_FULLRC, "MaxV", GMSH_CutParametricPlugin::callbackMaxV, 2 * 3.1416, ""},
-  {GMSH_FULLRC, "NumPointsV", GMSH_CutParametricPlugin::callbackNV, 180., ""},
-  {GMSH_FULLRC, "ConnectPoints", GMSH_CutParametricPlugin::callbackConnect, 0., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-StringXString CutParametricOptions_String[] = {
-  {GMSH_FULLRC, "X", GMSH_CutParametricPlugin::callbackX,
-   "2 * Cos(u) * Sin(v)", ""},
-  {GMSH_FULLRC, "Y", GMSH_CutParametricPlugin::callbackY,
-   "4 * Sin(u) * Sin(v)", ""},
-  {GMSH_FULLRC, "Z", GMSH_CutParametricPlugin::callbackZ,
-   "0.1 + 0.5 * Cos(v)", ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterCutParametricPlugin()
+GMSH_CutParametricPlugin::GMSH_CutParametricPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "MinU", nullptr, 0., ""},
+                     {GMSH_FULLRC, "MaxU", nullptr, 2 * 3.1416, ""},
+                     {GMSH_FULLRC, "NumPointsU", nullptr, 180., ""},
+                     {GMSH_FULLRC, "MinV", nullptr, 0., ""},
+                     {GMSH_FULLRC, "MaxV", nullptr, 2 * 3.1416, ""},
+                     {GMSH_FULLRC, "NumPointsV", nullptr, 180., ""},
+                     {GMSH_FULLRC, "ConnectPoints", nullptr, 0., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}},
+                    {{GMSH_FULLRC, "X", nullptr, "2 * Cos(u) * Sin(v)", ""},
+                     {GMSH_FULLRC, "Y", nullptr, "4 * Sin(u) * Sin(v)", ""},
+                     {GMSH_FULLRC, "Z", nullptr, "0.1 + 0.5 * Cos(v)", ""}})
 {
-  return new GMSH_CutParametricPlugin();
-}
 }
 
-static double getU(int i)
+double GMSH_CutParametricPlugin::getU(int i)
 {
-  double minU = CutParametricOptions_Number[0].def;
-  double maxU = CutParametricOptions_Number[1].def;
-  int nbU = (int)CutParametricOptions_Number[2].def;
+  double minU = option(0);
+  double maxU = option(1);
+  int nbU = (int)option(2);
 
   if(nbU == 1)
     return minU;
@@ -53,11 +43,11 @@ static double getU(int i)
     return minU + (double)(i) / (double)(nbU - 1) * (maxU - minU);
 }
 
-static double getV(int i)
+double GMSH_CutParametricPlugin::getV(int i)
 {
-  double minV = CutParametricOptions_Number[3].def;
-  double maxV = CutParametricOptions_Number[4].def;
-  int nbV = (int)CutParametricOptions_Number[5].def;
+  double minV = option(3);
+  double maxV = option(4);
+  int nbV = (int)option(5);
 
   if(nbV == 1)
     return minV;
@@ -65,23 +55,18 @@ static double getV(int i)
     return minV + (double)(i) / (double)(nbV - 1) * (maxV - minV);
 }
 
-int GMSH_CutParametricPlugin::recompute = 1;
-std::vector<double> GMSH_CutParametricPlugin::x;
-std::vector<double> GMSH_CutParametricPlugin::y;
-std::vector<double> GMSH_CutParametricPlugin::z;
-
 int GMSH_CutParametricPlugin::fillXYZ()
 {
   std::vector<std::string> expressions(3), variables(2);
-  for(int i = 0; i < 3; i++)
-    expressions[i] = CutParametricOptions_String[i].def;
+  for(int i = 0; i < 3; i++) expressions[i] = optionStr(i);
   variables[0] = "u";
   variables[1] = "v";
   mathEvaluator f(expressions, variables);
 
-  // always as many points as the options ask for, which draw() relies on
-  int nbU = std::max(0, (int)CutParametricOptions_Number[2].def);
-  int nbV = std::max(0, (int)CutParametricOptions_Number[5].def);
+  // always as many points as the options ask for, which drawPreview() relies
+  // on
+  int nbU = std::max(0, (int)option(2));
+  int nbV = std::max(0, (int)option(5));
   x.assign(nbU * nbV, 0.);
   y.assign(nbU * nbV, 0.);
   z.assign(nbU * nbV, 0.);
@@ -99,18 +84,18 @@ int GMSH_CutParametricPlugin::fillXYZ()
   return 1;
 }
 
-void GMSH_CutParametricPlugin::draw(void *context)
+void GMSH_CutParametricPlugin::drawPreview(void *context)
 {
 #if defined(HAVE_OPENGL)
-  if(recompute) {
+  if(_recompute) {
     fillXYZ();
-    recompute = 0;
+    _recompute = false;
   }
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
-  int nbU = CutParametricOptions_Number[2].def;
-  int nbV = CutParametricOptions_Number[5].def;
+  int nbU = option(2);
+  int nbV = option(5);
   if((int)x.size() != nbU * nbV) return;
-  if(CutParametricOptions_Number[6].def && x.size() > 1) {
+  if(option(6) && x.size() > 1) {
     if(nbU == 1 || nbV == 1) {
       gmshBegin(GL_LINES);
       for(std::size_t i = 1; i < x.size(); ++i) {
@@ -148,91 +133,29 @@ void GMSH_CutParametricPlugin::draw(void *context)
 #endif
 }
 
-double GMSH_CutParametricPlugin::callback(int num, int action, double value,
-                                          double *opt, double step, double min,
-                                          double max)
+bool GMSH_CutParametricPlugin::optionCallback(int iopt, int num, int action,
+                                              double &value)
 {
-  switch(action) { // configure the input field
-  case 1: return step;
-  case 2: return min;
-  case 3: return max;
-  default: break;
+  if(action == 0) _recompute = true;
+  switch(iopt) {
+  case 0:
+  case 1:
+  case 3:
+  case 4: return sliderOption(iopt, action, value, 0.01, 0., 10.);
+  case 2:
+  case 5: return sliderOption(iopt, action, value, 1, 1, 1000);
+  case 6: return sliderOption(iopt, action, value, 1, 0, 1);
+  default: return false;
   }
-  *opt = value;
-  recompute = 1;
-  GMSH_Plugin::setDrawFunction(draw);
-  return 0.;
 }
 
-std::string GMSH_CutParametricPlugin::callbackStr(int num, int action,
-                                                  const std::string &value,
-                                                  std::string &opt)
+bool GMSH_CutParametricPlugin::optionStrCallback(int iopt, int num, int action,
+                                                 std::string &value)
 {
-  opt = value;
-  recompute = 1;
-  GMSH_Plugin::setDrawFunction(draw);
-  return opt;
-}
-
-double GMSH_CutParametricPlugin::callbackMinU(int num, int action, double value)
-{
-  return callback(num, action, value, &CutParametricOptions_Number[0].def, 0.01,
-                  0., 10.);
-}
-
-double GMSH_CutParametricPlugin::callbackMaxU(int num, int action, double value)
-{
-  return callback(num, action, value, &CutParametricOptions_Number[1].def, 0.01,
-                  0., 10.);
-}
-
-double GMSH_CutParametricPlugin::callbackNU(int num, int action, double value)
-{
-  return callback(num, action, value, &CutParametricOptions_Number[2].def, 1, 1,
-                  1000);
-}
-
-double GMSH_CutParametricPlugin::callbackMinV(int num, int action, double value)
-{
-  return callback(num, action, value, &CutParametricOptions_Number[3].def, 0.01,
-                  0., 10.);
-}
-
-double GMSH_CutParametricPlugin::callbackMaxV(int num, int action, double value)
-{
-  return callback(num, action, value, &CutParametricOptions_Number[4].def, 0.01,
-                  0., 10.);
-}
-
-double GMSH_CutParametricPlugin::callbackNV(int num, int action, double value)
-{
-  return callback(num, action, value, &CutParametricOptions_Number[5].def, 1, 1,
-                  1000);
-}
-
-double GMSH_CutParametricPlugin::callbackConnect(int num, int action,
-                                                 double value)
-{
-  return callback(num, action, value, &CutParametricOptions_Number[6].def, 1, 0,
-                  1);
-}
-
-std::string GMSH_CutParametricPlugin::callbackX(int num, int action,
-                                                const std::string &value)
-{
-  return callbackStr(num, action, value, CutParametricOptions_String[0].def);
-}
-
-std::string GMSH_CutParametricPlugin::callbackY(int num, int action,
-                                                const std::string &value)
-{
-  return callbackStr(num, action, value, CutParametricOptions_String[1].def);
-}
-
-std::string GMSH_CutParametricPlugin::callbackZ(int num, int action,
-                                                const std::string &value)
-{
-  return callbackStr(num, action, value, CutParametricOptions_String[2].def);
+  optionStr(iopt) = value;
+  _recompute = true;
+  setPreview(this);
+  return true;
 }
 
 std::string GMSH_CutParametricPlugin::getHelp() const
@@ -246,26 +169,6 @@ std::string GMSH_CutParametricPlugin::getHelp() const
          "elements; otherwise, the plugin generates points.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "Plugin(CutParametric) creates one new list-based view.";
-}
-
-int GMSH_CutParametricPlugin::getNbOptions() const
-{
-  return sizeof(CutParametricOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_CutParametricPlugin::getOption(int iopt)
-{
-  return &CutParametricOptions_Number[iopt];
-}
-
-int GMSH_CutParametricPlugin::getNbOptionsStr() const
-{
-  return sizeof(CutParametricOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_CutParametricPlugin::getOptionStr(int iopt)
-{
-  return &CutParametricOptions_String[iopt];
 }
 
 static void addInView(int connect, int i, int nbcomp, int nbtime, double x0,
@@ -327,7 +230,7 @@ static void addInView(int nbcomp, int nbtime, double x0, double y0, double z0,
 
 PView *GMSH_CutParametricPlugin::execute(PView *v)
 {
-  int iView = (int)CutParametricOptions_Number[7].def;
+  int iView = (int)option(7);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -337,9 +240,9 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
   PViewData *data1 = getPossiblyAdaptiveData(v1);
 
   int numSteps = data1->getNumTimeSteps();
-  int nbU = (int)CutParametricOptions_Number[2].def;
-  int nbV = (int)CutParametricOptions_Number[5].def;
-  int connect = (int)CutParametricOptions_Number[6].def;
+  int nbU = (int)option(2);
+  int nbV = (int)option(5);
+  int connect = (int)option(6);
   if(nbU < 2 && nbV < 2) connect = 0;
 
   OctreePost o(v1);

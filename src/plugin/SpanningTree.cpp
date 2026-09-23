@@ -13,26 +13,15 @@
 #include "OS.h"
 #include "Context.h"
 
-using namespace std;
-
-StringXNumber SpanningTreeOptions_Number[] = {
-  {GMSH_FULLRC, "OutputPhysical", nullptr, -1, ""},
-};
-
-StringXString SpanningTreeOptions_String[] = {
-  {GMSH_FULLRC, "PhysicalVolumes", nullptr, "", ""},
-  {GMSH_FULLRC, "PhysicalSurfaces", nullptr, "", ""},
-  {GMSH_FULLRC, "PhysicalCurves", nullptr, "", ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSpanningTreePlugin()
+GMSH_SpanningTreePlugin::GMSH_SpanningTreePlugin()
+  : GMSH_MeshPlugin({{GMSH_FULLRC, "OutputPhysical", nullptr, -1, ""}},
+                    {{GMSH_FULLRC, "PhysicalVolumes", nullptr, "", ""},
+                     {GMSH_FULLRC, "PhysicalSurfaces", nullptr, "", ""},
+                     {GMSH_FULLRC, "PhysicalCurves", nullptr, "", ""}})
 {
-  return new GMSH_SpanningTreePlugin();
-}
 }
 
-GMSH_SpanningTreePlugin::GMSH_SpanningTreePlugin() {}
+using namespace std;
 
 string GMSH_SpanningTreePlugin::getName() const { return "SpanningTree"; }
 
@@ -67,34 +56,14 @@ string GMSH_SpanningTreePlugin::getHelp() const
 
 string GMSH_SpanningTreePlugin::getAuthor() const { return "N. Marsic"; }
 
-int GMSH_SpanningTreePlugin::getNbOptions() const
-{
-  return sizeof(SpanningTreeOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_SpanningTreePlugin::getOption(int iopt)
-{
-  return &SpanningTreeOptions_Number[iopt];
-}
-
-int GMSH_SpanningTreePlugin::getNbOptionsStr() const
-{
-  return sizeof(SpanningTreeOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_SpanningTreePlugin::getOptionStr(int iopt)
-{
-  return &SpanningTreeOptions_String[iopt];
-}
-
 int GMSH_SpanningTreePlugin::run()
 {
   // Get data
   double time = Cpu(), w = TimeOfDay();
-  int output = (int)SpanningTreeOptions_Number[0].def;
-  string volume = SpanningTreeOptions_String[0].def;
-  string surface = SpanningTreeOptions_String[1].def;
-  string curve = SpanningTreeOptions_String[2].def;
+  int output = (int)option(0);
+  string volume = optionStr(0);
+  string surface = optionStr(1);
+  string curve = optionStr(2);
 
   // Parse physical tags
   vector<list<int> > physical(3);

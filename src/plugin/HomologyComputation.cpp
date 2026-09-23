@@ -16,32 +16,26 @@
 #include "HomologyComputation.h"
 #include "Context.h"
 
-StringXNumber HomologyComputationOptions_Number[] = {
-  {GMSH_FULLRC, "ComputeHomology", nullptr, 1.},
-  {GMSH_FULLRC, "ComputeCohomology", nullptr, 0.},
-  {GMSH_FULLRC, "HomologyPhysicalGroupsBegin", nullptr, -1.},
-  {GMSH_FULLRC, "CohomologyPhysicalGroupsBegin", nullptr, -1.},
-  {GMSH_FULLRC, "CreatePostProcessingViews", nullptr, 1.},
-  {GMSH_FULLRC, "ReductionOmit", nullptr, 1.},
-  {GMSH_FULLRC, "ReductionCombine", nullptr, 3.},
-  {GMSH_FULLRC, "PostProcessSimplify", nullptr, 1.},
-  {GMSH_FULLRC, "ReductionHeuristic", nullptr, 1.},
-  {GMSH_FULLRC, "PeriodicIdentification", nullptr, 0.},
-  {GMSH_FULLRC, "PeriodicSlavePhysicalGroup", nullptr, -1.},
-  {GMSH_FULLRC, "PeriodicMasterPhysicalGroup", nullptr, -1.}};
-
-StringXString HomologyComputationOptions_String[] = {
-  {GMSH_FULLRC, "DomainPhysicalGroups", nullptr, ""},
-  {GMSH_FULLRC, "SubdomainPhysicalGroups", nullptr, ""},
-  {GMSH_FULLRC, "ReductionImmunePhysicalGroups", nullptr, ""},
-  {GMSH_FULLRC, "DimensionOfChainsToSave", nullptr, "0, 1, 2, 3"},
-  {GMSH_FULLRC, "Filename", nullptr, ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterHomologyComputationPlugin()
+GMSH_HomologyComputationPlugin::GMSH_HomologyComputationPlugin()
+  : GMSH_PostPlugin(
+      {{GMSH_FULLRC, "ComputeHomology", nullptr, 1.},
+       {GMSH_FULLRC, "ComputeCohomology", nullptr, 0.},
+       {GMSH_FULLRC, "HomologyPhysicalGroupsBegin", nullptr, -1.},
+       {GMSH_FULLRC, "CohomologyPhysicalGroupsBegin", nullptr, -1.},
+       {GMSH_FULLRC, "CreatePostProcessingViews", nullptr, 1.},
+       {GMSH_FULLRC, "ReductionOmit", nullptr, 1.},
+       {GMSH_FULLRC, "ReductionCombine", nullptr, 3.},
+       {GMSH_FULLRC, "PostProcessSimplify", nullptr, 1.},
+       {GMSH_FULLRC, "ReductionHeuristic", nullptr, 1.},
+       {GMSH_FULLRC, "PeriodicIdentification", nullptr, 0.},
+       {GMSH_FULLRC, "PeriodicSlavePhysicalGroup", nullptr, -1.},
+       {GMSH_FULLRC, "PeriodicMasterPhysicalGroup", nullptr, -1.}},
+      {{GMSH_FULLRC, "DomainPhysicalGroups", nullptr, ""},
+       {GMSH_FULLRC, "SubdomainPhysicalGroups", nullptr, ""},
+       {GMSH_FULLRC, "ReductionImmunePhysicalGroups", nullptr, ""},
+       {GMSH_FULLRC, "DimensionOfChainsToSave", nullptr, "0, 1, 2, 3"},
+       {GMSH_FULLRC, "Filename", nullptr, ""}})
 {
-  return new GMSH_HomologyComputationPlugin();
-}
 }
 
 std::string GMSH_HomologyComputationPlugin::getHelp() const
@@ -59,30 +53,10 @@ std::string GMSH_HomologyComputationPlugin::getHelp() const
          "mesh.";
 }
 
-int GMSH_HomologyComputationPlugin::getNbOptions() const
-{
-  return sizeof(HomologyComputationOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_HomologyComputationPlugin::getOption(int iopt)
-{
-  return &HomologyComputationOptions_Number[iopt];
-}
-
-int GMSH_HomologyComputationPlugin::getNbOptionsStr() const
-{
-  return sizeof(HomologyComputationOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_HomologyComputationPlugin::getOptionStr(int iopt)
-{
-  return &HomologyComputationOptions_String[iopt];
-}
-
 bool GMSH_HomologyComputationPlugin::parseStringOpt(int stringOpt,
                                                     std::vector<int> &intList)
 {
-  std::string list = HomologyComputationOptions_String[stringOpt].def;
+  std::string list = optionStr(stringOpt);
   intList.clear();
 
   int n;
@@ -93,7 +67,7 @@ bool GMSH_HomologyComputationPlugin::parseStringOpt(int stringOpt,
     if(ss >> a) {
       if(a != ',') {
         Msg::Error("Unexpected character \'%c\' while parsing \'%s\'", a,
-                   HomologyComputationOptions_String[stringOpt].str);
+                   getOptionStr(stringOpt)->str);
         return false;
       }
     }
@@ -103,19 +77,19 @@ bool GMSH_HomologyComputationPlugin::parseStringOpt(int stringOpt,
 
 PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 {
-  std::string fileName = HomologyComputationOptions_String[4].def;
-  int hom = (int)HomologyComputationOptions_Number[0].def;
-  int coh = (int)HomologyComputationOptions_Number[1].def;
-  int hompg = (int)HomologyComputationOptions_Number[2].def;
-  int cohpg = (int)HomologyComputationOptions_Number[3].def;
-  bool pviews = (bool)HomologyComputationOptions_Number[4].def;
-  bool omit = (bool)HomologyComputationOptions_Number[5].def;
-  int combine = (int)HomologyComputationOptions_Number[6].def;
-  bool smoothen = (bool)HomologyComputationOptions_Number[7].def;
-  int heuristic = (int)HomologyComputationOptions_Number[8].def;
-  bool periodic = (bool)HomologyComputationOptions_Number[9].def;
-  int perslave = (int)HomologyComputationOptions_Number[10].def;
-  int permaster = (int)HomologyComputationOptions_Number[11].def;
+  std::string fileName = optionStr(4);
+  int hom = (int)option(0);
+  int coh = (int)option(1);
+  int hompg = (int)option(2);
+  int cohpg = (int)option(3);
+  bool pviews = (bool)option(4);
+  bool omit = (bool)option(5);
+  int combine = (int)option(6);
+  bool smoothen = (bool)option(7);
+  int heuristic = (int)option(8);
+  bool periodic = (bool)option(9);
+  int perslave = (int)option(10);
+  int permaster = (int)option(11);
 
   std::vector<int> domain;
   std::vector<int> subdomain;

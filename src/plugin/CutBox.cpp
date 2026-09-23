@@ -13,31 +13,29 @@
 #include "drawContext.h"
 #endif
 
-StringXNumber CutBoxOptions_Number[] = {
-  {GMSH_FULLRC, "X0", GMSH_CutBoxPlugin::callbackX0, 0., ""},
-  {GMSH_FULLRC, "Y0", GMSH_CutBoxPlugin::callbackY0, 0., ""},
-  {GMSH_FULLRC, "Z0", GMSH_CutBoxPlugin::callbackZ0, 0., ""},
-  {GMSH_FULLRC, "X1", GMSH_CutBoxPlugin::callbackX1, 1., ""},
-  {GMSH_FULLRC, "Y1", GMSH_CutBoxPlugin::callbackY1, 0., ""},
-  {GMSH_FULLRC, "Z1", GMSH_CutBoxPlugin::callbackZ1, 0., ""},
-  {GMSH_FULLRC, "X2", GMSH_CutBoxPlugin::callbackX2, 0., ""},
-  {GMSH_FULLRC, "Y2", GMSH_CutBoxPlugin::callbackY2, 1., ""},
-  {GMSH_FULLRC, "Z2", GMSH_CutBoxPlugin::callbackZ2, 0., ""},
-  {GMSH_FULLRC, "X3", GMSH_CutBoxPlugin::callbackX3, 0., ""},
-  {GMSH_FULLRC, "Y3", GMSH_CutBoxPlugin::callbackY3, 0., ""},
-  {GMSH_FULLRC, "Z3", GMSH_CutBoxPlugin::callbackZ3, 1., ""},
-  {GMSH_FULLRC, "NumPointsU", GMSH_CutBoxPlugin::callbackU, 20, ""},
-  {GMSH_FULLRC, "NumPointsV", GMSH_CutBoxPlugin::callbackV, 20, ""},
-  {GMSH_FULLRC, "NumPointsW", GMSH_CutBoxPlugin::callbackW, 20, ""},
-  {GMSH_FULLRC, "ConnectPoints", GMSH_CutBoxPlugin::callbackConnect, 1, ""},
-  {GMSH_FULLRC, "Boundary", GMSH_CutBoxPlugin::callbackBoundary, 1, ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterCutBoxPlugin() { return new GMSH_CutBoxPlugin(); }
+GMSH_CutBoxPlugin::GMSH_CutBoxPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "X0", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Y0", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Z0", nullptr, 0., ""},
+                     {GMSH_FULLRC, "X1", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Y1", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Z1", nullptr, 0., ""},
+                     {GMSH_FULLRC, "X2", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Y2", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Z2", nullptr, 0., ""},
+                     {GMSH_FULLRC, "X3", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Y3", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Z3", nullptr, 1., ""},
+                     {GMSH_FULLRC, "NumPointsU", nullptr, 20, ""},
+                     {GMSH_FULLRC, "NumPointsV", nullptr, 20, ""},
+                     {GMSH_FULLRC, "NumPointsW", nullptr, 20, ""},
+                     {GMSH_FULLRC, "ConnectPoints", nullptr, 1, ""},
+                     {GMSH_FULLRC, "Boundary", nullptr, 1, ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
+{
 }
 
-void GMSH_CutBoxPlugin::draw(void *context)
+void GMSH_CutBoxPlugin::drawPreview(void *context)
 {
 #if defined(HAVE_OPENGL)
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
@@ -59,7 +57,7 @@ void GMSH_CutBoxPlugin::draw(void *context)
     ctx->drawString("(X3, Y3, Z3)", p[0], p[1], p[2]);
   }
 
-  if(CutBoxOptions_Number[15].def) {
+  if(option(15)) {
     gmshBegin(GL_LINES);
     // UV
     for(int i = 0; i < getNbU(); ++i) {
@@ -168,128 +166,23 @@ void GMSH_CutBoxPlugin::draw(void *context)
 #endif
 }
 
-double GMSH_CutBoxPlugin::callback(int num, int action, double value,
-                                   double *opt, double step, double min,
-                                   double max)
+bool GMSH_CutBoxPlugin::optionCallback(int iopt, int num, int action,
+                                       double &value)
 {
-  switch(action) { // configure the input field
-  case 1: return step;
-  case 2: return min;
-  case 3: return max;
-  default: break;
+  CTX *c = CTX::instance();
+  if(iopt < 12) { // coordinates of the 4 points
+    int d = iopt % 3;
+    return sliderOption(iopt, action, value, c->lc / 100., c->min[d],
+                        c->max[d]);
   }
-  *opt = value;
-  GMSH_Plugin::setDrawFunction(draw);
-  return 0.;
-}
-
-double GMSH_CutBoxPlugin::callbackX0(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[0].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[0],
-                  CTX::instance()->max[0]);
-}
-
-double GMSH_CutBoxPlugin::callbackY0(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[1].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[1],
-                  CTX::instance()->max[1]);
-}
-
-double GMSH_CutBoxPlugin::callbackZ0(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[2].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[2],
-                  CTX::instance()->max[2]);
-}
-
-double GMSH_CutBoxPlugin::callbackX1(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[3].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[0],
-                  CTX::instance()->max[0]);
-}
-
-double GMSH_CutBoxPlugin::callbackY1(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[4].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[1],
-                  CTX::instance()->max[1]);
-}
-
-double GMSH_CutBoxPlugin::callbackZ1(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[5].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[2],
-                  CTX::instance()->max[2]);
-}
-
-double GMSH_CutBoxPlugin::callbackX2(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[6].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[0],
-                  CTX::instance()->max[0]);
-}
-
-double GMSH_CutBoxPlugin::callbackY2(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[7].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[1],
-                  CTX::instance()->max[1]);
-}
-
-double GMSH_CutBoxPlugin::callbackZ2(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[8].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[2],
-                  CTX::instance()->max[2]);
-}
-
-double GMSH_CutBoxPlugin::callbackX3(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[9].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[0],
-                  CTX::instance()->max[0]);
-}
-
-double GMSH_CutBoxPlugin::callbackY3(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[10].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[1],
-                  CTX::instance()->max[1]);
-}
-
-double GMSH_CutBoxPlugin::callbackZ3(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[11].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[2],
-                  CTX::instance()->max[2]);
-}
-
-double GMSH_CutBoxPlugin::callbackU(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[12].def, 1, 1, 200);
-}
-
-double GMSH_CutBoxPlugin::callbackV(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[13].def, 1, 1, 200);
-}
-
-double GMSH_CutBoxPlugin::callbackW(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[14].def, 1, 1, 200);
-}
-
-double GMSH_CutBoxPlugin::callbackConnect(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[15].def, 1, 0, 1);
-}
-
-double GMSH_CutBoxPlugin::callbackBoundary(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[16].def, 1, 0, 1);
+  switch(iopt) {
+  case 12:
+  case 13:
+  case 14: return sliderOption(iopt, action, value, 1, 1, 200);
+  case 15:
+  case 16: return sliderOption(iopt, action, value, 1, 0, 1);
+  default: return false;
+  }
 }
 
 std::string GMSH_CutBoxPlugin::getHelp() const
@@ -311,21 +204,11 @@ std::string GMSH_CutBoxPlugin::getHelp() const
          "Plugin(CutBox) creates one new list-based view.";
 }
 
-int GMSH_CutBoxPlugin::getNbOptions() const
-{
-  return sizeof(CutBoxOptions_Number) / sizeof(StringXNumber);
-}
+int GMSH_CutBoxPlugin::getNbU() { return (int)option(12); }
 
-StringXNumber *GMSH_CutBoxPlugin::getOption(int iopt)
-{
-  return &CutBoxOptions_Number[iopt];
-}
+int GMSH_CutBoxPlugin::getNbV() { return (int)option(13); }
 
-int GMSH_CutBoxPlugin::getNbU() { return (int)CutBoxOptions_Number[12].def; }
-
-int GMSH_CutBoxPlugin::getNbV() { return (int)CutBoxOptions_Number[13].def; }
-
-int GMSH_CutBoxPlugin::getNbW() { return (int)CutBoxOptions_Number[14].def; }
+int GMSH_CutBoxPlugin::getNbW() { return (int)option(14); }
 
 void GMSH_CutBoxPlugin::getPoint(int iU, int iV, int iW, double *X)
 {
@@ -333,18 +216,12 @@ void GMSH_CutBoxPlugin::getPoint(int iU, int iV, int iW, double *X)
   double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
   double w = getNbW() > 1 ? (double)iW / (double)(getNbW() - 1.) : 0.;
 
-  X[0] = CutBoxOptions_Number[0].def +
-         u * (CutBoxOptions_Number[3].def - CutBoxOptions_Number[0].def) +
-         v * (CutBoxOptions_Number[6].def - CutBoxOptions_Number[0].def) +
-         w * (CutBoxOptions_Number[9].def - CutBoxOptions_Number[0].def);
-  X[1] = CutBoxOptions_Number[1].def +
-         u * (CutBoxOptions_Number[4].def - CutBoxOptions_Number[1].def) +
-         v * (CutBoxOptions_Number[7].def - CutBoxOptions_Number[1].def) +
-         w * (CutBoxOptions_Number[10].def - CutBoxOptions_Number[1].def);
-  X[2] = CutBoxOptions_Number[2].def +
-         u * (CutBoxOptions_Number[5].def - CutBoxOptions_Number[2].def) +
-         v * (CutBoxOptions_Number[8].def - CutBoxOptions_Number[2].def) +
-         w * (CutBoxOptions_Number[11].def - CutBoxOptions_Number[2].def);
+  X[0] = option(0) + u * (option(3) - option(0)) + v * (option(6) - option(0)) +
+         w * (option(9) - option(0));
+  X[1] = option(1) + u * (option(4) - option(1)) + v * (option(7) - option(1)) +
+         w * (option(10) - option(1));
+  X[2] = option(2) + u * (option(5) - option(2)) + v * (option(8) - option(2)) +
+         w * (option(11) - option(2));
 }
 
 void GMSH_CutBoxPlugin::addInView(int connect, int boundary, int numsteps,
@@ -1111,9 +988,9 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
 
 PView *GMSH_CutBoxPlugin::execute(PView *v)
 {
-  int connectPoints = (int)CutBoxOptions_Number[15].def;
-  int boundary = (int)CutBoxOptions_Number[16].def;
-  int iView = (int)CutBoxOptions_Number[17].def;
+  int connectPoints = (int)option(15);
+  int boundary = (int)option(16);
+  int iView = (int)option(17);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

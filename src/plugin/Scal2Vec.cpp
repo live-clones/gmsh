@@ -7,15 +7,12 @@
 #include "PViewOptions.h"
 #include "shapeFunctions.h"
 
-StringXNumber Scal2VecOptions_Number[] = {{GMSH_FULLRC, "ViewX", nullptr, -1, ""},
-                                          {GMSH_FULLRC, "ViewY", nullptr, -1, ""},
-                                          {GMSH_FULLRC, "ViewZ", nullptr, -1, ""}};
-
-StringXString Scal2VecOptions_String[] = {
-  {GMSH_FULLRC, "NameNewView", nullptr, "NewView", ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterScal2VecPlugin() { return new GMSH_Scal2VecPlugin(); }
+GMSH_Scal2VecPlugin::GMSH_Scal2VecPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "ViewX", nullptr, -1, ""},
+                     {GMSH_FULLRC, "ViewY", nullptr, -1, ""},
+                     {GMSH_FULLRC, "ViewZ", nullptr, -1, ""}},
+                    {{GMSH_FULLRC, "NameNewView", nullptr, "NewView", ""}})
+{
 }
 
 std::string GMSH_Scal2VecPlugin::getHelp() const
@@ -26,32 +23,11 @@ std::string GMSH_Scal2VecPlugin::getHelp() const
          "component of the vector field is 0.";
 }
 
-int GMSH_Scal2VecPlugin::getNbOptions() const
-{
-  return sizeof(Scal2VecOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_Scal2VecPlugin::getOption(int iopt)
-{
-  return &Scal2VecOptions_Number[iopt];
-}
-
-int GMSH_Scal2VecPlugin::getNbOptionsStr() const
-{
-  return sizeof(Scal2VecOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_Scal2VecPlugin::getOptionStr(int iopt)
-{
-  return &Scal2VecOptions_String[iopt];
-}
-
 PView *GMSH_Scal2VecPlugin::execute(PView *v)
 {
   // Load options
   int iView[3];
-  for(int comp = 0; comp < 3; comp++)
-    iView[comp] = (int)Scal2VecOptions_Number[comp].def;
+  for(int comp = 0; comp < 3; comp++) iView[comp] = (int)option(comp);
 
   // Load data
   PView *vRef = nullptr, *vComp[3];
@@ -129,7 +105,7 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
     dataNew->Time.push_back(dataRef->getTime(step));
   }
 
-  std::string nameNewView = Scal2VecOptions_String[0].def;
+  std::string nameNewView = optionStr(0);
   dataNew->setName(nameNewView);
   dataNew->setFileName(nameNewView + ".pos");
   dataNew->finalize();

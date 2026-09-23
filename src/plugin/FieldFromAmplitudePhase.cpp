@@ -11,20 +11,15 @@
 #include "OctreePost.h"
 #include "FieldFromAmplitudePhase.h"
 
-StringXNumber FieldFromAmplitudePhaseOptions_Number[] = {
-  {GMSH_FULLRC, "Wavenumber", nullptr, 5., ""},
-  {GMSH_FULLRC, "AmplitudeView", nullptr, 0., ""},
-  {GMSH_FULLRC, "PhaseView", nullptr, 1., ""},
-};
-
-StringXString FieldFromAmplitudePhaseOptions_String[] = {
-  {GMSH_FULLRC, "MeshFile", nullptr, "fine.msh", ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterFieldFromAmplitudePhasePlugin()
+GMSH_FieldFromAmplitudePhasePlugin::GMSH_FieldFromAmplitudePhasePlugin()
+  : GMSH_PostPlugin(
+      {
+        {GMSH_FULLRC, "Wavenumber", nullptr, 5., ""},
+        {GMSH_FULLRC, "AmplitudeView", nullptr, 0., ""},
+        {GMSH_FULLRC, "PhaseView", nullptr, 1., ""},
+      },
+      {{GMSH_FULLRC, "MeshFile", nullptr, "fine.msh", ""}})
 {
-  return new GMSH_FieldFromAmplitudePhasePlugin();
-}
 }
 
 std::string GMSH_FieldFromAmplitudePhasePlugin::getHelp() const
@@ -38,32 +33,12 @@ std::string GMSH_FieldFromAmplitudePhasePlugin::getHelp() const
          "Plugin(FieldFromAmplitudePhase) generates one new view.";
 }
 
-int GMSH_FieldFromAmplitudePhasePlugin::getNbOptions() const
-{
-  return sizeof(FieldFromAmplitudePhaseOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_FieldFromAmplitudePhasePlugin::getOption(int iopt)
-{
-  return &FieldFromAmplitudePhaseOptions_Number[iopt];
-}
-
-int GMSH_FieldFromAmplitudePhasePlugin::getNbOptionsStr() const
-{
-  return sizeof(FieldFromAmplitudePhaseOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_FieldFromAmplitudePhasePlugin::getOptionStr(int iopt)
-{
-  return &FieldFromAmplitudePhaseOptions_String[iopt];
-}
-
 PView *GMSH_FieldFromAmplitudePhasePlugin::execute(PView *v)
 {
-  double k = (double)FieldFromAmplitudePhaseOptions_Number[0].def;
-  int aView = (int)FieldFromAmplitudePhaseOptions_Number[1].def;
-  int phiView = (int)FieldFromAmplitudePhaseOptions_Number[2].def;
-  std::string fileName = FieldFromAmplitudePhaseOptions_String[0].def;
+  double k = (double)option(0);
+  int aView = (int)option(1);
+  int phiView = (int)option(2);
+  std::string fileName = optionStr(0);
 
   std::string name_model("");
 

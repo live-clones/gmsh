@@ -47,19 +47,25 @@ void plugin_cb(Fl_Widget *w, void *data)
   FlGui::instance()->plugins->show((intptr_t)data);
 }
 
+// the field of an option changed: tell the plugin, which may preview it
 static void plugin_input_value_cb(Fl_Widget *w, void *data)
 {
-  double (*f)(int, int, double) = (double (*)(int, int, double))data;
-  Fl_Value_Input *input = (Fl_Value_Input *)w;
-  f(-1, 0, input->value());
+  GMSH_Plugin *p = (GMSH_Plugin *)data;
+  for(int i = 0; i < std::min(p->getNbOptions(), MAX_PLUGIN_OPTIONS); i++) {
+    if(p->dialogBox->value[i] != w) continue;
+    double v = p->dialogBox->value[i]->value();
+    p->optionCallback(i, -1, 0, v);
+  }
 }
 
 static void plugin_input_cb(Fl_Widget *w, void *data)
 {
-  std::string (*f)(int, int, std::string) =
-    (std::string(*)(int, int, std::string))data;
-  Fl_Input *input = (Fl_Input *)w;
-  f(-1, 0, input->value());
+  GMSH_Plugin *p = (GMSH_Plugin *)data;
+  for(int i = 0; i < std::min(p->getNbOptionsStr(), MAX_PLUGIN_OPTIONS); i++) {
+    if(p->dialogBox->input[i] != w) continue;
+    std::string v = p->dialogBox->input[i]->value();
+    p->optionStrCallback(i, -1, 0, v);
+  }
 }
 
 static void plugin_browser_cb(Fl_Widget *w, void *data)
@@ -79,6 +85,7 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
   // been edited
   static GMSH_Plugin *shown = nullptr;
   if(p != shown) {
+    GMSH_Plugin::preview = nullptr; // the preview of the previous plugin
     for(int i = 0; i < std::min(p->getNbOptionsStr(), MAX_PLUGIN_OPTIONS); i++)
       p->dialogBox->input[i]->value(p->getOptionStr(i)->def.c_str());
     for(int i = 0; i < std::min(p->getNbOptions(), MAX_PLUGIN_OPTIONS); i++)
@@ -98,31 +105,23 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
   // set the Fl_Value_Input callbacks and configure the input value
   // fields (we get step, min and max by calling the option function
   // with action==1, 2 and 3, respectively)
-  int n = p->getNbOptions();
-  if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
+  int n = std::min(p->getNbOptions(), MAX_PLUGIN_OPTIONS);
   for(int i = 0; i < n; i++) {
-    StringXNumber *sxn = p->getOption(i);
-    if(sxn->function) {
-      p->dialogBox->value[i]->callback(plugin_input_value_cb,
-                                       (void *)sxn->function);
-      if(iView >= 0) {
-        if(CTX::instance()->inputScrolling)
-          p->dialogBox->value[i]->step(sxn->function(iView, 1, 0.), 1);
-        p->dialogBox->value[i]->minimum(sxn->function(iView, 2, 0.));
-        p->dialogBox->value[i]->maximum(sxn->function(iView, 3, 0.));
-      }
+    p->dialogBox->value[i]->callback(plugin_input_value_cb, (void *)p);
+    double v = 0.;
+    if(iView >= 0 && p->optionCallback(i, iView, 1, v)) {
+      if(CTX::instance()->inputScrolling) p->dialogBox->value[i]->step(v, 1);
+      p->optionCallback(i, iView, 2, v);
+      p->dialogBox->value[i]->minimum(v);
+      p->optionCallback(i, iView, 3, v);
+      p->dialogBox->value[i]->maximum(v);
     }
   }
 
   // set the Fl_Input callbacks
-  int m = p->getNbOptionsStr();
-  if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
-  for(int i = 0; i < m; i++) {
-    StringXString *sxs = p->getOptionStr(i);
-    if(sxs->function) {
-      p->dialogBox->input[i]->callback(plugin_input_cb, (void *)sxs->function);
-    }
-  }
+  int m = std::min(p->getNbOptionsStr(), MAX_PLUGIN_OPTIONS);
+  for(int i = 0; i < m; i++)
+    p->dialogBox->input[i]->callback(plugin_input_cb, (void *)p);
 
   // hide all plugin groups except the selected one
   for(int i = 1; i <= FlGui::instance()->plugins->browser->size(); i++)
@@ -230,7 +229,7 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
   }
 
   FlGui::instance()->updateViews(true, true);
-  GMSH_Plugin::draw = nullptr;
+  GMSH_Plugin::preview = nullptr;
   drawContext::global()->draw();
 }
 

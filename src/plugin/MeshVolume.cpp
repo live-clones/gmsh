@@ -7,15 +7,10 @@
 #include "GModel.h"
 #include "PViewOptions.h"
 
-StringXNumber MeshVolumeOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1, ""},
-  {GMSH_FULLRC, "Dimension", nullptr, 3, ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterMeshVolumePlugin()
+GMSH_MeshVolumePlugin::GMSH_MeshVolumePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "PhysicalGroup", nullptr, -1, ""},
+                     {GMSH_FULLRC, "Dimension", nullptr, 3, ""}})
 {
-  return new GMSH_MeshVolumePlugin();
-}
 }
 
 std::string GMSH_MeshVolumePlugin::getHelp() const
@@ -29,20 +24,10 @@ std::string GMSH_MeshVolumePlugin::getHelp() const
          "Plugin(MeshVolume) creates one new list-based view.";
 }
 
-int GMSH_MeshVolumePlugin::getNbOptions() const
-{
-  return sizeof(MeshVolumeOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_MeshVolumePlugin::getOption(int iopt)
-{
-  return &MeshVolumeOptions_Number[iopt];
-}
-
 PView *GMSH_MeshVolumePlugin::execute(PView *v)
 {
-  int physical = (int)MeshVolumeOptions_Number[0].def;
-  int dim = (int)MeshVolumeOptions_Number[1].def;
+  int physical = (int)option(0);
+  int dim = (int)option(1);
 
   GModel *model = GModel::current();
   if(!model->getNumMeshVertices()) {

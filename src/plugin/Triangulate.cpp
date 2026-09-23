@@ -17,15 +17,9 @@
 #include "meshGFaceDelaunay.h"
 #endif
 
-StringXNumber TriangulateOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""}
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterTriangulatePlugin()
+GMSH_TriangulatePlugin::GMSH_TriangulatePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_TriangulatePlugin();
-}
 }
 
 std::string GMSH_TriangulatePlugin::getHelp() const
@@ -36,16 +30,6 @@ std::string GMSH_TriangulatePlugin::getHelp() const
          "onto a plane. \n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "Plugin(Triangulate) creates one new list-based view.";
-}
-
-int GMSH_TriangulatePlugin::getNbOptions() const
-{
-  return sizeof(TriangulateOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_TriangulatePlugin::getOption(int iopt)
-{
-  return &TriangulateOptions_Number[iopt];
 }
 
 #if defined(HAVE_MESH)
@@ -66,7 +50,7 @@ namespace {
 
 PView *GMSH_TriangulatePlugin::execute(PView *v)
 {
-  int iView = (int)TriangulateOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

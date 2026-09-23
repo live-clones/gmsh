@@ -6,20 +6,16 @@
 #include "HarmonicToTime.h"
 #include "GmshDefines.h"
 
-StringXNumber HarmonicToTimeOptions_Number[] = {
-  {GMSH_FULLRC, "RealPart", nullptr, 0., "RealPart"},
-  {GMSH_FULLRC, "ImaginaryPart", nullptr, 1., "ImaginaryPart"},
-  {GMSH_FULLRC, "NumSteps", nullptr, 20., "NumSteps"},
-  {GMSH_FULLRC, "TimeSign", nullptr, -1., "TimeSign"},
-  {GMSH_FULLRC, "Frequency", nullptr, 1, "Frequency"},
-  {GMSH_FULLRC, "NumPeriods", nullptr, 1, "NumPeriods"},
-  {GMSH_FULLRC, "View", nullptr, -1., "View"}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterHarmonicToTimePlugin()
+GMSH_HarmonicToTimePlugin::GMSH_HarmonicToTimePlugin()
+  : GMSH_PostPlugin(
+      {{GMSH_FULLRC, "RealPart", nullptr, 0., "RealPart"},
+       {GMSH_FULLRC, "ImaginaryPart", nullptr, 1., "ImaginaryPart"},
+       {GMSH_FULLRC, "NumSteps", nullptr, 20., "NumSteps"},
+       {GMSH_FULLRC, "TimeSign", nullptr, -1., "TimeSign"},
+       {GMSH_FULLRC, "Frequency", nullptr, 1, "Frequency"},
+       {GMSH_FULLRC, "NumPeriods", nullptr, 1, "NumPeriods"},
+       {GMSH_FULLRC, "View", nullptr, -1., "View"}})
 {
-  return new GMSH_HarmonicToTimePlugin();
-}
 }
 
 std::string GMSH_HarmonicToTimePlugin::getHelp() const
@@ -37,25 +33,15 @@ std::string GMSH_HarmonicToTimePlugin::getHelp() const
          "Plugin(HarmonicToTime) creates one new list-based view.";
 }
 
-int GMSH_HarmonicToTimePlugin::getNbOptions() const
-{
-  return sizeof(HarmonicToTimeOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_HarmonicToTimePlugin::getOption(int iopt)
-{
-  return &HarmonicToTimeOptions_Number[iopt];
-}
-
 PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
 {
-  int rIndex = (int)HarmonicToTimeOptions_Number[0].def;
-  int iIndex = (int)HarmonicToTimeOptions_Number[1].def;
-  int nSteps = (int)HarmonicToTimeOptions_Number[2].def;
-  double tsign = HarmonicToTimeOptions_Number[3].def > 0 ? 1. : -1.;
-  double frequency = HarmonicToTimeOptions_Number[4].def;
-  int nPeriods = (int)HarmonicToTimeOptions_Number[5].def;
-  int iView = (int)HarmonicToTimeOptions_Number[6].def;
+  int rIndex = (int)option(0);
+  int iIndex = (int)option(1);
+  int nSteps = (int)option(2);
+  double tsign = option(3) > 0 ? 1. : -1.;
+  double frequency = option(4);
+  int nPeriods = (int)option(5);
+  int iView = (int)option(6);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

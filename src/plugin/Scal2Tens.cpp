@@ -7,26 +7,19 @@
 #include "PViewOptions.h"
 #include "shapeFunctions.h"
 
-StringXNumber Scal2TensOptions_Number[] = {
-  {GMSH_FULLRC, "NumberOfComponents", nullptr, 9, ""},
-  {GMSH_FULLRC, "View0", nullptr, -1, ""},
-  {GMSH_FULLRC, "View1", nullptr, -1, ""},
-  {GMSH_FULLRC, "View2", nullptr, -1, ""},
-  {GMSH_FULLRC, "View3", nullptr, -1, ""},
-  {GMSH_FULLRC, "View4", nullptr, -1, ""},
-  {GMSH_FULLRC, "View5", nullptr, -1, ""},
-  {GMSH_FULLRC, "View6", nullptr, -1, ""},
-  {GMSH_FULLRC, "View7", nullptr, -1, ""},
-  {GMSH_FULLRC, "View8", nullptr, -1, ""}};
-
-StringXString Scal2TensOptions_String[] = {
-  {GMSH_FULLRC, "NameNewView", nullptr, "NewView", ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterScal2TensPlugin()
+GMSH_Scal2TensPlugin::GMSH_Scal2TensPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "NumberOfComponents", nullptr, 9, ""},
+                     {GMSH_FULLRC, "View0", nullptr, -1, ""},
+                     {GMSH_FULLRC, "View1", nullptr, -1, ""},
+                     {GMSH_FULLRC, "View2", nullptr, -1, ""},
+                     {GMSH_FULLRC, "View3", nullptr, -1, ""},
+                     {GMSH_FULLRC, "View4", nullptr, -1, ""},
+                     {GMSH_FULLRC, "View5", nullptr, -1, ""},
+                     {GMSH_FULLRC, "View6", nullptr, -1, ""},
+                     {GMSH_FULLRC, "View7", nullptr, -1, ""},
+                     {GMSH_FULLRC, "View8", nullptr, -1, ""}},
+                    {{GMSH_FULLRC, "NameNewView", nullptr, "NewView", ""}})
 {
-  return new GMSH_Scal2TensPlugin();
-}
 }
 
 std::string GMSH_Scal2TensPlugin::getHelp() const
@@ -39,30 +32,10 @@ std::string GMSH_Scal2TensPlugin::getHelp() const
          "of a view is -1, the value of the corresponding component is 0.";
 }
 
-int GMSH_Scal2TensPlugin::getNbOptions() const
-{
-  return sizeof(Scal2TensOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_Scal2TensPlugin::getOption(int iopt)
-{
-  return &Scal2TensOptions_Number[iopt];
-}
-
-int GMSH_Scal2TensPlugin::getNbOptionsStr() const
-{
-  return sizeof(Scal2TensOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_Scal2TensPlugin::getOptionStr(int iopt)
-{
-  return &Scal2TensOptions_String[iopt];
-}
-
 PView *GMSH_Scal2TensPlugin::execute(PView *v)
 {
   // Load options
-  int numComp = (int)Scal2TensOptions_Number[0].def;
+  int numComp = (int)option(0);
   if((numComp < 1) || (numComp > 9)) {
     Msg::Error(
       "Scal2Tens plugin: NumberOfComponents must be between 1 and 9 (not '%i')",
@@ -70,8 +43,7 @@ PView *GMSH_Scal2TensPlugin::execute(PView *v)
     return v;
   }
   int iView[9];
-  for(int comp = 0; comp < numComp; comp++)
-    iView[comp] = (int)Scal2TensOptions_Number[comp + 1].def;
+  for(int comp = 0; comp < numComp; comp++) iView[comp] = (int)option(comp + 1);
 
   // Load data
   PView *vRef = nullptr, *vComp[9];
@@ -152,7 +124,7 @@ PView *GMSH_Scal2TensPlugin::execute(PView *v)
     dataNew->Time.push_back(dataRef->getTime(step));
   }
 
-  std::string nameNewView = Scal2TensOptions_String[0].def;
+  std::string nameNewView = optionStr(0);
   dataNew->setName(nameNewView);
   dataNew->setFileName(nameNewView + ".pos");
   dataNew->finalize();
