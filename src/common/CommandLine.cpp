@@ -110,8 +110,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-save_parametric", "Save nodes with their parametric "
                  "coordinates (Mesh.SaveParametric)"));
   s.push_back(mp("-save_topology", "Save model topology (Mesh.SaveTopology)"));
-  s.push_back(
-    mp("-save_views", "Save all views with the mesh (Mesh.SaveViews)"));
+  s.push_back(mp("-save_views", "Save all views with the mesh (Mesh.SaveViews)"));
   s.push_back(mp("-algo string", "Select mesh algorithm: auto, meshadapt, del2d, "
                  "front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, "
                  "hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
@@ -211,8 +210,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-noenv", "Don't modify the environment at startup"));
   s.push_back(mp("-nolocale", "Don't modify the locale at startup"));
   s.push_back(mp("-option file", "Parse option file at startup"));
-  s.push_back(mp("-convert files",
-                 "Convert the mesh and the views of each file "
+  s.push_back(mp("-convert files", "Convert the mesh and the views of each file "
                  "into a binary MSH 4.1 file (name_new.msh), then exit"));
   s.push_back(mp("-nt int", "Set number of threads (General.NumThreads)"));
   s.push_back(mp("-cpu", "Report CPU times for all operations"));
