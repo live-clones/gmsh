@@ -28,5 +28,6 @@ venv/
 benchmarks/io_msh/polytopes_out.msh
 benchmarks/io_vtk/*_out.*
 
-# output of the graphics tests
+# output of the graphics and plugin tests
 benchmarks/graphics/out/
+benchmarks/plugins/out/
