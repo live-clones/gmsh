@@ -421,7 +421,6 @@ public:
   {
     if(_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
-    printf("coucou\n");
 
     for(std::size_t i = 0; i < R.size(); i++) {
       auto it = associatedWith.find(R[i]);
@@ -481,7 +480,6 @@ public:
   {
     if(_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
-    printf("coucou RHS\n");
 
     for(std::size_t i = 0; i < R.size(); i++) {
       auto it = associatedWith.find(R[i]);
