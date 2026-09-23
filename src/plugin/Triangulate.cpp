@@ -108,8 +108,8 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   double lc = 10 * norm(SVector3(bbox.max(), bbox.min()));
 
   // project points onto plane
-  discreteFace *s =
-    new discreteFace(GModel::current(), GModel::current()->getNumFaces() + 1);
+  // a temporary face, not added to the model nor to its GEO internals
+  discreteFace *s = new discreteFace(GModel::current());
   s->computeMeanPlane(points);
   double x, y, z, VX[3], VY[3];
   s->getMeanPlaneData(VX, VY, x, y, z);
