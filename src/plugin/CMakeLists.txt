@@ -25,7 +25,6 @@ set(SRC
   HomologyComputation.cpp HomologyPostProcessing.cpp
   Distance.cpp ExtractEdges.cpp NearestNeighbor.cpp
   AnalyseMeshQuality.cpp
-  CurvedBndDist.cpp
   FieldFromAmplitudePhase.cpp
   Bubbles.cpp NearToFarField.cpp
   DiscretizationError.cpp
@@ -36,7 +35,6 @@ set(SRC
   DuplicateNodes.cpp
   MeshSubEntities.cpp
   MeshVolume.cpp
-  CVTRemesh.cpp
   ShowNeighborElements.cpp
   GaussPoints.cpp
   VoroMetal.cpp

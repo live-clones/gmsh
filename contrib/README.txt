@@ -13,7 +13,6 @@ their own respective license:
 * Netgen: GNU Lesser General Public License (LGPL) v. 2.1
 * QuadMeshingTools: Gmsh License
 * QuadTri: Gmsh License
-* Revoropt/include/Revoropt: Mozilla Public License (MPL) v. 2.0
 * WinslowUntangler: Gmsh license
 * bamg: GNU Lesser General Public License (LGPL) v. 2.1 or later
 * blossom: Gmsh License

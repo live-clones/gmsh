@@ -22,7 +22,6 @@
 #include "Skin.h"
 #include "AnalyseMeshQuality.h"
 #include "Invisible.h"
-#include "CurvedBndDist.h"
 #include "MathEval.h"
 #include "ExtractElements.h"
 #include "SimplePartition.h"
@@ -64,7 +63,6 @@
 #include "NewView.h"
 #include "MeshSubEntities.h"
 #include "MeshVolume.h"
-#include "CVTRemesh.h"
 #include "ShowNeighborElements.h"
 #include "GaussPoints.h"
 #include "VoroMetal.h"
@@ -198,8 +196,6 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::make_pair("Skin", GMSH_RegisterSkinPlugin()));
     allPlugins.insert(
       std::make_pair("MathEval", GMSH_RegisterMathEvalPlugin()));
-    allPlugins.insert(
-      std::make_pair("CurvedBndDist", GMSH_RegisterCurvedBndDistPlugin()));
     allPlugins.insert(std::make_pair("ModifyComponents",
                                      GMSH_RegisterModifyComponentsPlugin()));
     allPlugins.insert(
@@ -285,10 +281,6 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::make_pair("MeshSizeFieldView",
                                      GMSH_RegisterMeshSizeFieldViewPlugin()));
 
-#endif
-#if defined(HAVE_REVOROPT)
-    allPlugins.insert(
-      std::make_pair("CVTRemesh", GMSH_RegisterCVTRemeshPlugin()));
 #endif
 #if defined(HAVE_SOLVER)
     allPlugins.insert(

@@ -92,7 +92,6 @@ opt(PRO "Enable PRO extensions" ${DEFAULT})
 opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(QUADMESHINGTOOLS "Enable QuadMeshingTools extensions" ${DEFAULT})
 opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
-opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
 opt(RPATH "Use RPATH in dynamically linked targets" ON)
 opt(SLEPC "Enable SLEPc eigensolvers" OFF)
 opt(SOLVER "Enable built-in finite element solvers (required for reparametrization)" ${DEFAULT})
@@ -1626,17 +1625,6 @@ else()
           "src/numeric/robustPredicates.cpp do not use extended double precision "
           "and follow the IEEE754 standard. It is crucial for the robustness of "
           "geometric predicates.")
-endif()
-
-# enable Revoropt and set compile flags for the corresponding plugin
-if(ENABLE_REVOROPT)
-  if(HAVE_EIGEN AND HAVE_MESH AND HAVE_PLUGINS AND HAVE_ANN AND HAVE_ALGLIB)
-    list(APPEND EXTERNAL_INCLUDES contrib/Revoropt/include)
-    set_config_option(HAVE_REVOROPT "Revoropt")
-    add_definitions(-DUSE_ANN)
-  else()
-    message(WARNING "Revoropt requires Eigen, Mesh, Plugins, ANN and ALGLIB")
-  endif()
 endif()
 
 if(HAVE_MESH AND NOT HAVE_EIGEN AND NOT HAVE_LAPACK)
