@@ -4323,13 +4323,13 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[12] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_query");
   _butt[12]->callback(status_query_cb);
-  _butt[12]->tooltip("Query the model where you click (Escape to stop)");
+  _butt[12]->tooltip("Query the model where you click ('q' to stop)");
   x += sw;
   _butt[13] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_measure");
   _butt[13]->callback(status_measure_cb);
   _butt[13]->tooltip("Measure the distance between two points you click "
-                     "(Escape to stop)");
+                     "('q' to stop)");
   x += sw;
   x += 4;
   _butt[6] =

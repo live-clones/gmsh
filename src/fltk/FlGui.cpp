@@ -904,17 +904,11 @@ int FlGui::testGlobalShortcuts(int event)
       status = 1;
     }
     else {
-      bool lasso = false, asking = queryMode() || measureMode();
+      bool lasso = false;
       for(std::size_t i = 0; i < graph.size(); i++)
         for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
           if(graph[i]->gl[j]->lassoMode) lasso = true;
-      if(asking) { // stop the query or the measurement, not the selection
-                   // they use
-        if(queryMode()) status_query_cb(nullptr, nullptr);
-        if(measureMode()) status_measure_cb(nullptr, nullptr);
-        status = 2;
-      }
-      else if(lasso) {
+      if(lasso) {
         for(std::size_t i = 0; i < graph.size(); i++)
           for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
             graph[i]->gl[j]->lassoMode = false;
