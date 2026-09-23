@@ -1478,32 +1478,32 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[13]->type(FL_TOGGLE_BUTTON);
       general.butt[13]->callback(general_options_ok_cb);
 
-      general.butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
-                                            "Show bounding boxes");
-      general.butt[6]->tooltip("General.DrawBoundingBoxes (Alt+b)");
-      general.butt[6]->type(FL_TOGGLE_BUTTON);
-      general.butt[6]->callback(general_options_ok_cb);
-
-      general.butt[2] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
-                            "Draw simplified model during user interaction");
-      general.butt[2]->tooltip("General.FastRedraw (Alt+f)");
-      general.butt[2]->type(FL_TOGGLE_BUTTON);
-      general.butt[2]->callback(general_options_ok_cb, (void *)"fast_redraw");
-
       general.butt[23] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW / 2, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2, BH,
                             "Highlight hovered entity");
       general.butt[23]->tooltip("General.MouseHoverHighlight");
       general.butt[23]->type(FL_TOGGLE_BUTTON);
       general.butt[23]->callback(general_options_ok_cb);
 
       general.butt[11] =
-        new Fl_Check_Button(L + 2 * WB + BW / 2, 2 * WB + 5 * BH, BW / 2, BH,
+        new Fl_Check_Button(L + 2 * WB + BW / 2, 2 * WB + 3 * BH, BW / 2, BH,
                             "Hover mesh and views");
       general.butt[11]->tooltip("General.MouseHoverMeshes");
       general.butt[11]->type(FL_TOGGLE_BUTTON);
       general.butt[11]->callback(general_options_ok_cb);
+
+      general.butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
+                                            "Show bounding boxes");
+      general.butt[6]->tooltip("General.DrawBoundingBoxes (Alt+b)");
+      general.butt[6]->type(FL_TOGGLE_BUTTON);
+      general.butt[6]->callback(general_options_ok_cb);
+
+      general.butt[2] =
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
+                            "Draw simplified model during user interaction");
+      general.butt[2]->tooltip("General.FastRedraw (Alt+f)");
+      general.butt[2]->type(FL_TOGGLE_BUTTON);
+      general.butt[2]->callback(general_options_ok_cb, (void *)"fast_redraw");
 
       general.butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
                                             "Draw with the shader pipeline");
