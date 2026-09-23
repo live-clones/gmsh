@@ -2373,6 +2373,11 @@ StringXColor GeneralOptions_Color[] = {
   { F|O, "SpecularLight" , opt_general_color_specular_light,
     {255, 255, 255, 255}, {255, 255, 255, 255}, {255, 255, 255, 255}, {255, 255, 255, 255},
     "Specular light color" },
+  { F|O, "Query" , opt_general_color_query ,
+    {255, 232, 70, 255}, {255, 232, 70, 255}, {255, 232, 70, 255}, {255, 232, 70, 255},
+    "Color of what a query leaves on the picture: the mark of the point it "
+    "asked about is drawn in it, and the box that answers on paper of it, "
+    "lightened over a light picture and darkened over a dark one" },
   { 0, nullptr , nullptr ,  {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , nullptr }
 } ;
 

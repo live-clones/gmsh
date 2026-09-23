@@ -1500,7 +1500,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.butt[11] =
         new Fl_Check_Button(L + 2 * WB + BW / 2, 2 * WB + 5 * BH, BW / 2, BH,
-                            "Hover meshes and views");
+                            "Hover mesh and views");
       general.butt[11]->tooltip("General.MouseHoverMeshes");
       general.butt[11]->type(FL_TOGGLE_BUTTON);
       general.butt[11]->callback(general_options_ok_cb);

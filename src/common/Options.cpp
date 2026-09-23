@@ -7038,7 +7038,7 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
     // vertex arrays need to be regenerated only when we color by
     // element type or by partition
     if(CTX::instance()->mesh.colorCarousel != (int)val &&
-       ((val == 0. || val == 3.) || CTX::instance()->pickElements))
+       (val == 0. || val == 3.))
       CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     // the other modes colour by entity, which the merged mesh arrays bake in
     if(CTX::instance()->mesh.colorCarousel != (int)val)
@@ -10206,6 +10206,16 @@ unsigned int opt_general_color_small_axes(OPT_ARGS_COL)
       FlGui::instance()->options->general.color[5]);
 #endif
   return CTX::instance()->color.smallAxes;
+}
+
+unsigned int opt_general_color_query(OPT_ARGS_COL)
+{
+  if(action & GMSH_SET) { CTX::instance()->color.query = val; }
+#if defined(HAVE_FLTK)
+  CCC(CTX::instance()->color.query,
+      FlGui::instance()->options->general.color[9]);
+#endif
+  return CTX::instance()->color.query;
 }
 
 unsigned int opt_general_color_ambient_light(OPT_ARGS_COL)

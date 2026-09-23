@@ -880,7 +880,7 @@ void glImmediate::end()
         b[k] = _batchCol[4 * j + 2];
         a[k] = _batchCol[4 * j + 3];
       }
-      va->add(x, y, z, (npe == 3) ? n : nullptr, r, g, b, a, nullptr, false);
+      va->add(x, y, z, (npe == 3) ? n : nullptr, r, g, b, a, false);
     }
     _batchPos.resize(3 * firstEmitted);
     _batchNrm.resize(3 * firstEmitted);

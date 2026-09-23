@@ -9581,7 +9581,6 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
   _createFltk();
   int old = CTX::instance()->pickElements;
   CTX::instance()->pickElements = 1;
-  CTX::instance()->meshChanged();
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
   CTX::instance()->pickElements = old;
   if(!FlGui::available()) return 0; // GUI closed during selection
@@ -9632,12 +9631,8 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   case 3: type = ENT_VOLUME; break;
   default: break;
   }
-  // the arrays only keep the elements when they can be picked
   int old = CTX::instance()->pickElements;
-  if(elements) {
-    CTX::instance()->pickElements = 1;
-    CTX::instance()->meshChanged();
-  }
+  if(elements) CTX::instance()->pickElements = 1;
   std::vector<GVertex *> vertices;
   std::vector<GEdge *> edges;
   std::vector<GFace *> faces;
@@ -9648,10 +9643,7 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   bool ret =
     gl->pick(type, CTX::instance()->mesh.draw ? true : false, true, (int)x,
              (int)y, w, h, vertices, edges, faces, regions, ele, points, views);
-  if(elements) {
-    CTX::instance()->pickElements = old;
-    CTX::instance()->meshChanged();
-  }
+  if(elements) CTX::instance()->pickElements = old;
   for(std::size_t i = 0; i < vertices.size(); i++)
     dimTags.push_back(std::make_pair(0, vertices[i]->tag()));
   for(std::size_t i = 0; i < edges.size(); i++)

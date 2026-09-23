@@ -136,8 +136,7 @@ void VertexArray::setUniqueFilter(UniqueElementFilter *f)
 
 VertexArray::VertexArray(int numVerticesPerElement, std::size_t numElements)
   : _numVerticesPerElement(numVerticesPerElement), _filter(nullptr),
-    _ownsFilter(false), _storeElements(CTX::instance()->pickElements ? true :
-                                                                       false),
+    _ownsFilter(false),
     _vboDirty(true), _vboContext(0), _statUniqueIn(0), _statUniqueKept(0)
 {
   _vbo[0] = _vbo[1] = _vbo[2] = 0;
@@ -200,13 +199,8 @@ void VertexArray::_addColor(unsigned char r, unsigned char g, unsigned char b,
   _colors.push_back(a);
 }
 
-void VertexArray::_addElement(MElement *ele)
-{
-  if(ele && _storeElements) _elements.push_back(ele);
-}
-
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
-                      unsigned int *col, MElement *ele, bool unique)
+                      unsigned int *col, bool unique)
 {
   if(col){
     unsigned char r[100], g[100], b[100], a[100];
@@ -220,15 +214,15 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
       b[i] = big ? (c >> 8) & 0xff : (c >> 16) & 0xff;
       a[i] = big ? c & 0xff : (c >> 24) & 0xff;
     }
-    add(x, y, z, n, r, g, b, a, ele, unique);
+    add(x, y, z, n, r, g, b, a, unique);
   }
   else
-    add(x, y, z, n, nullptr, nullptr, nullptr, nullptr, ele, unique);
+    add(x, y, z, n, nullptr, nullptr, nullptr, nullptr, unique);
 }
 
-void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned char *r,
-                      unsigned char *g, unsigned char *b, unsigned char *a,
-                      MElement *ele, bool unique)
+void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
+                      unsigned char *r, unsigned char *g, unsigned char *b,
+                      unsigned char *a, bool unique)
 {
   int npe = getNumVerticesPerElement();
 
@@ -277,7 +271,6 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
       *pc++ = a[i];
     }
   }
-  if(ele && _storeElements) _elements.insert(_elements.end(), npe, ele);
 }
 
 int VertexArray::addBlock(int n)
@@ -488,8 +481,6 @@ void VertexArray::merge(VertexArray* va, const unsigned char *color)
     }
     else
       _colors.insert(_colors.end(), va->_colors.begin(), va->_colors.end());
-    _elements.insert(_elements.end(), va->_elements.begin(),
-                     va->_elements.end());
   }
   _vboDirty = true;
 }

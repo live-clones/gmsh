@@ -36,7 +36,7 @@ private:
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  Fl_Button *_butt[12];
+  Fl_Button *_butt[13];
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   std::vector<std::string> _messages;
@@ -52,6 +52,7 @@ public:
   onelabGroup *getMenu() { return _onelab; }
   Fl_Progress *getProgress() { return _label; }
   Fl_Button *getSelectionButton() { return _butt[9]; }
+  Fl_Button *getQueryButton() { return _butt[12]; }
   messageBrowser *getMessageBrowser() { return _browser; }
   std::vector<std::string> &getMessages() { return _messages; }
   int getMinWidth() { return _minWidth; }
@@ -109,6 +110,9 @@ void mesh_3d_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
 void status_xyz1p_cb(Fl_Widget *w, void *data);
 void status_options_cb(Fl_Widget *w, void *data);
+void status_query_cb(Fl_Widget *w, void *data);
+// whether a query is waiting for a click (see status_query_cb)
+bool queryMode();
 void status_play_manual(int time, int incr, bool redraw = true);
 void quick_access_cb(Fl_Widget *w, void *data);
 void show_hide_message_cb(Fl_Widget *w, void *data);

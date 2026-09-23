@@ -371,7 +371,7 @@ static void addOutlinePoint(drawTarget *p, double **xyz, unsigned int color,
 {
   if(pre) return;
   SVector3 n = getPointNormal(p, 1.);
-  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &color, nullptr,
+  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &color,
                     true);
 }
 
@@ -482,7 +482,7 @@ static void addFan(drawTarget *p, bool pre, int nb, const double *x,
       c3[i] = col[t[i]];
       smoothNormal(p, pre, x3[i], y3[i], z3[i], n[i]);
     }
-    if(!pre) p->va_triangles->add(x3, y3, z3, n, c3, nullptr, unique);
+    if(!pre) p->va_triangles->add(x3, y3, z3, n, c3, unique);
   }
 }
 
@@ -501,7 +501,7 @@ static void addScalarPoint(drawTarget *p, double **xyz, double **val, bool pre,
       val[i0][0], vmin, vmax, false,
       (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
     SVector3 n = getPointNormal(p, val[i0][0]);
-    p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col, nullptr,
+    p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col,
                       unique);
   }
 }
@@ -522,7 +522,7 @@ static void addOutlineLine(drawTarget *p, double **xyz, unsigned int color,
   }
   SVector3 n[2];
   getLineNormal(p, x, y, z, nullptr, n, true);
-  p->va_lines->add(x, y, z, n, col, nullptr, true);
+  p->va_lines->add(x, y, z, n, col, true);
 }
 
 static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
@@ -555,7 +555,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
        val[i1][0] <= vmax) {
       unsigned int col[2];
       for(int i = 0; i < 2; i++) col[i] = opt->getColor(v[i], vmin, vmax);
-      p->va_lines->add(x, y, z, n, col, nullptr, unique);
+      p->va_lines->add(x, y, z, n, col, unique);
     }
     else {
       double x2[2], y2[2], z2[2], v2[2];
@@ -566,7 +566,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
         // the values of the cut segment, which its cylinder is sized by
         SVector3 n2[2];
         getLineNormal(p, x2, y2, z2, v2, n2, true);
-        p->va_lines->add(x2, y2, z2, n2, col, nullptr, unique);
+        p->va_lines->add(x2, y2, z2, n2, col, unique);
       }
     }
   }
@@ -580,7 +580,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
         unsigned int col[2] = {color, color};
         SVector3 n[2];
         getLineNormal(p, x2, y2, z2, v2, n, true);
-        p->va_lines->add(x2, y2, z2, n, col, nullptr, unique);
+        p->va_lines->add(x2, y2, z2, n, col, unique);
       }
     });
   }
@@ -592,7 +592,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
       if(nb == 1) {
         unsigned int color = opt->getColor(k, opt->nbIso);
         SVector3 n = getPointNormal(p, iso);
-        p->va_points->add(x2, y2, z2, &n, &color, nullptr, unique);
+        p->va_points->add(x2, y2, z2, &n, &color, unique);
       }
     });
   }
@@ -613,7 +613,7 @@ static void addOutlineEdge(drawTarget *p, double **xyz, unsigned int color,
   }
   unsigned int col[2] = {color, color};
   getLineNormal(p, x, y, z, nullptr, n, false);
-  if(!pre) p->va_lines->add(x, y, z, n, col, nullptr, true);
+  if(!pre) p->va_lines->add(x, y, z, n, col, true);
 }
 
 // the edges of a face of n corners
@@ -673,7 +673,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
         smoothNormal(p, pre, x[i], y[i], z[i], n[i]);
         col[i] = opt->getColor(v[i], vmin, vmax);
       }
-      if(!pre) p->va_triangles->add(x, y, z, n, col, nullptr, unique);
+      if(!pre) p->va_triangles->add(x, y, z, n, col, unique);
     }
     else {
       double x2[10], y2[10], z2[10], v2[10];
@@ -705,7 +705,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
         for(int i = 0; i < 2; i++) smoothNormal(p, pre, x2[i], y2[i], z2[i], n[i]);
         double v[2] = {iso, iso};
         getLineNormal(p, x, y, z, v, n, false);
-        if(!pre) p->va_lines->add(x2, y2, z2, n, col, nullptr, unique);
+        if(!pre) p->va_lines->add(x2, y2, z2, n, col, unique);
       }
     });
   }
@@ -1630,7 +1630,7 @@ static void addArrow(drawTarget *p, const double *x, const double *d,
     dxyz[j][0] = x[j];
     dxyz[j][1] = d[j];
   }
-  p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr, unique);
+  p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, unique);
 }
 
 static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
@@ -1688,7 +1688,7 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
         }
         SVector3 n[2];
         getLineNormal(p, dxyz[0], dxyz[1], dxyz[2], norm, n, true);
-        p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], n, col, nullptr, false);
+        p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], n, col, false);
       }
     }
     return;
@@ -1758,14 +1758,14 @@ static void addTriangle(drawTarget *p, PViewOptions *opt, double *x0,
     double YY[3] = {x0[1], x1[1], x2[1]};
     double ZZ[3] = {x0[2], x1[2], x2[2]};
     SVector3 NN[3] = {N, N, N};
-    p->va_triangles->add(XX, YY, ZZ, NN, col, nullptr, true);
+    p->va_triangles->add(XX, YY, ZZ, NN, col, true);
   }
   else {
     double XX[3] = {x1[0], x0[0], x2[0]};
     double YY[3] = {x1[1], x0[1], x2[1]};
     double ZZ[3] = {x1[2], x0[2], x2[2]};
     SVector3 NN[3] = {-N, -N, -N};
-    p->va_triangles->add(XX, YY, ZZ, NN, col, nullptr, true);
+    p->va_triangles->add(XX, YY, ZZ, NN, col, true);
   }
 }
 
@@ -1935,7 +1935,7 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
         det, opt->tmpMin, opt->tmpMax, false,
         (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
       unsigned int col[4] = {color, color, color, color};
-      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr,
+      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col,
                           false);
     }
     if(!vertex) {
@@ -1952,7 +1952,7 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
         lmax, opt->tmpMin, opt->tmpMax, false,
         (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
       unsigned int col[4] = {color, color, color, color};
-      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr,
+      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col,
                           false);
     }
   }

@@ -438,7 +438,7 @@ inline void CondNumBasis::getInvCondNumGeneral(
   }
 
   case 1: {
-    Msg::Warning("Inverse condition number not implemented in 1D");
+    Msg::Info("Inverse condition number not implemented in 1D");
     condNum.setAll(0.);
     break;
   }

@@ -2382,48 +2382,6 @@ static void mesh_reverse_parts_cb(Fl_Widget *w, void *data)
   mesh_modify_parts(w, data, "reverse");
 }
 
-static void mesh_inspect_cb(Fl_Widget *w, void *data)
-{
-  CTX::instance()->pickElements = 1;
-  CTX::instance()->meshChanged();
-  drawContext::global()->draw();
-
-  while(1) {
-    if(!FlGui::available()) return;
-
-    Msg::StatusGl("Select element\n[Press 'q' to abort]");
-    char ib = FlGui::instance()->selectEntity(ENT_ALL);
-    if(!FlGui::available()) return;
-    if(ib == 'l') {
-      if(FlGui::instance()->selectedElements.size()) {
-        MElement *ele = FlGui::instance()->selectedElements[0];
-        GModel::current()->setSelection(0);
-        ele->setVisibility(2);
-        CTX::instance()->meshChanged();
-        drawContext::global()->draw();
-        std::vector<std::string> info =
-          SplitString(ele->getInfoString(true), '\n');
-        for(std::size_t i = 0; i < info.size(); i++)
-          Msg::Direct("%s", info[i].c_str());
-        if(CTX::instance()->tooltips) {
-          std::string str;
-          for(std::size_t i = 0; i < info.size(); i++) str += info[i] + "\n";
-          FlGui::instance()->getCurrentOpenglWindow()->drawTooltip(str);
-        }
-      }
-    }
-    if(ib == 'q') {
-      GModel::current()->setSelection(0);
-      break;
-    }
-  }
-
-  CTX::instance()->pickElements = 0;
-  CTX::instance()->meshChanged();
-  drawContext::global()->draw();
-  Msg::StatusGl("");
-}
-
 static void mesh_degree_cb(Fl_Widget *w, void *data)
 {
   int degree = (intptr_t)data;
@@ -3166,6 +3124,9 @@ void quick_access_cb(Fl_Widget *w, void *data)
     status_xyz1p_cb(nullptr, (void *)"1:1");
     status_xyz1p_cb(nullptr, (void *)"z");
   }
+  else if(what == "query") {
+    status_query_cb(nullptr, nullptr);
+  }
   else if(what == "select_center") {
     opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
     general_options_ok_cb(nullptr, (void *)"rotation_center");
@@ -3429,6 +3390,149 @@ static void model_switch_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+// Query mode: every click says what the model holds where it hit - the
+// entity, the mesh element and the node there, and the value of every visible
+// view. It stays on until it is asked to stop (the button again, Escape, or
+// 'q'), as the first query of a large mesh or view builds a search structure
+// that the ones after it reuse.
+static bool _queryMode = false;
+
+bool queryMode() { return _queryMode; }
+
+static void setQueryButtons(bool on)
+{
+  if(!FlGui::available()) return;
+  // in the colour of what a query leaves on the picture, so that the button
+  // and the note it sticks there are read as one thing
+  CTX *c = CTX::instance();
+  Fl_Color col = fl_rgb_color((uchar)c->unpackRed(c->color.query),
+                              (uchar)c->unpackGreen(c->color.query),
+                              (uchar)c->unpackBlue(c->color.query));
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
+    Fl_Button *b = FlGui::instance()->graph[i]->getQueryButton();
+    b->color(on ? col : FL_BACKGROUND_COLOR);
+    b->redraw();
+  }
+}
+
+void status_query_cb(Fl_Widget *w, void *data)
+{
+  if(!FlGui::available()) return;
+
+  if(_queryMode) { // asked to stop while a query is waiting for a click
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+        FlGui::instance()->graph[i]->gl[j]->quitSelection = 1;
+    return;
+  }
+
+  _queryMode = true;
+  setQueryButtons(true);
+  int old = CTX::instance()->pickElements;
+  CTX::instance()->pickElements = 1;
+  // a query is a pick: it needs the mouse selection the "S" button switches
+  if(!CTX::instance()->mouseSelection)
+    opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
+
+  while(1) {
+    if(!FlGui::available()) break;
+    Msg::StatusGl("Click to query the model\n[Press 'q' to abort]");
+    char ib = FlGui::instance()->selectEntity(ENT_ALL);
+    if(!FlGui::available()) break;
+    if(ib == 'q') break;
+    if(ib != 'l') continue;
+
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    if(!gl) break;
+    double xyz[3];
+    if(!gl->getDrawContext()->pickPoint(xyz)) continue;
+
+    GEntity *entity = nullptr;
+    if(FlGui::instance()->selectedVertices.size())
+      entity = FlGui::instance()->selectedVertices[0];
+    else if(FlGui::instance()->selectedEdges.size())
+      entity = FlGui::instance()->selectedEdges[0];
+    else if(FlGui::instance()->selectedFaces.size())
+      entity = FlGui::instance()->selectedFaces[0];
+    else if(FlGui::instance()->selectedRegions.size())
+      entity = FlGui::instance()->selectedRegions[0];
+    MElement *element = FlGui::instance()->selectedElements.size() ?
+                          FlGui::instance()->selectedElements[0] :
+                          nullptr;
+    // a pick that found a mesh element returns it instead of the entity it
+    // belongs to, which the query names as well
+    if(!entity) entity = gl->getDrawContext()->pickEntity();
+    PView *view = FlGui::instance()->selectedViews.size() ?
+                    FlGui::instance()->selectedViews[0] :
+                    nullptr;
+
+    // A view drawn as glyphs hides the model behind them: the arrow clicked
+    // on hangs off the data it stands for, so the query asks about the point
+    // of the model under it, where the views can be interpolated, and keeps
+    // the point on the glyph only when there is nothing behind it.
+    if(view) {
+      std::vector<GVertex *> v; std::vector<GEdge *> e;
+      std::vector<GFace *> f; std::vector<GRegion *> r;
+      std::vector<MElement *> el; std::vector<SPoint2> p;
+      std::vector<PView *> vw;
+      double behind[3];
+      int at[4];
+      gl->lastSelection(at); // where the click looked, not where the mouse is
+      double px = gl->getDrawContext()->pixel_equiv_x / gl->getDrawContext()->s[0];
+      if(gl->pick(ENT_ALL, true, false, at[0], at[1], at[2], at[3], v, e, f, r,
+                  el, p, vw) &&
+         gl->getDrawContext()->pickPoint(behind)) {
+        GEntity *under = v.size() ? (GEntity *)v[0] :
+                         e.size() ? (GEntity *)e[0] :
+                         f.size() ? (GEntity *)f[0] :
+                         r.size() ? (GEntity *)r[0] :
+                                    nullptr;
+        if(queryBehind(view, xyz, behind, px)) {
+          for(int k = 0; k < 3; k++) xyz[k] = behind[k];
+          entity = under;
+          element = el.size() ? el[0] : nullptr;
+        }
+        else if(!entity) {
+          // the glyph is over something else than what it stands for: name
+          // it, as the query is about a point of the view itself
+          entity = under;
+        }
+      }
+    }
+
+    drawContext *ctx = gl->getDrawContext();
+    double pixel = ctx->pixel_equiv_x / ctx->s[0];
+    std::vector<std::string> info =
+      queryPoint(xyz, entity, element, view, pixel);
+    // the messages keep everything, the box over the picture the lines that
+    // do not begin with a space, i.e. all but the detail of an element
+    std::string text;
+    for(std::size_t i = 0; i < info.size(); i++) {
+      if(info[i].size()) Msg::Direct("%s", info[i].c_str());
+      if(info[i].size() && info[i][0] == ' ') continue;
+      text += (text.size() ? "\n" : "") + info[i];
+    }
+    GModel::current()->setSelection(0);
+    ctx->setQueryPoint(xyz);
+    drawContext::global()->draw();
+    if(CTX::instance()->tooltips) gl->pinTooltip(text);
+  }
+
+  CTX::instance()->pickElements = old;
+  _queryMode = false;
+  setQueryButtons(false);
+  if(FlGui::available()) {
+    GModel::current()->setSelection(0);
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++) {
+        FlGui::instance()->graph[i]->gl[j]->getDrawContext()->clearQueryPoint();
+        FlGui::instance()->graph[i]->gl[j]->pinTooltip("");
+      }
+    drawContext::global()->draw();
+    Msg::StatusGl("");
+  }
+}
+
 void status_options_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -3476,6 +3580,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     static Fl_Menu_Item menu[] = {
       { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport" },
       { "Select rotation center", 0, quick_access_cb, (void*)"select_center" },
+      { "Query", 0, quick_access_cb, (void*)"query" },
       { "Split window", 0, nullptr, nullptr, FL_SUBMENU | FL_MENU_DIVIDER },
          { "Horizontally", 0, quick_access_cb, (void*)"split_hor"},
          { "Vertically", 0, quick_access_cb, (void*)"split_ver"},
@@ -3483,7 +3588,7 @@ void status_options_cb(Fl_Widget *w, void *data)
          { nullptr },
       { "Axes", FL_ALT + 'a', quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
-      { "Hover meshes and views", 0, quick_access_cb, (void*)"hover_meshes",
+      { "Hover mesh and views", 0, quick_access_cb, (void*)"hover_meshes",
         FL_MENU_TOGGLE },
       { "Projection mode", 0, nullptr, nullptr, FL_SUBMENU },
          { "Orthographic", FL_ALT + 'o', quick_access_cb, (void*)"orthographic"},
@@ -3552,7 +3657,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     };
     // clang-format on
     // one item was added to each of the geometry, mesh and view sections
-    const int gen = 7, geo = 14, msh = 22, pos = 34, end = 57;
+    const int gen = 8, geo = 15, msh = 23, pos = 35, end = 58;
     if(opt_general_axes(0, GMSH_GET, 0))
       menu[gen + 0].set();
     else
@@ -4102,6 +4207,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[9]->callback(status_options_cb, (void *)"S");
   _butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
   x += sw;
+  _butt[12] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_query");
+  _butt[12]->callback(status_query_cb);
+  _butt[12]->tooltip("Query the model where you click (Escape to stop)");
+  x += sw;
   x += 4;
   _butt[6] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
@@ -4128,7 +4238,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[11]->deactivate();
   x += sw;
 
-  for(int i = 0; i < 12; i++) {
+  for(int i = 0; i < 13; i++) {
     _butt[i]->box(FL_FLAT_BOX);
     _butt[i]->selection_color(FL_WHITE);
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -4819,7 +4929,6 @@ static menuItem static_modules[] = {
    (void *)"surfaces"},
   {"0Modules/Mesh/Delete/Volumes", (Fl_Callback *)mesh_delete_parts_cb,
    (void *)"volumes"},
-  {"0Modules/Mesh/Inspect", (Fl_Callback *)mesh_inspect_cb},
   {"0Modules/Mesh/Save", (Fl_Callback *)mesh_save_cb},
 #endif
 };

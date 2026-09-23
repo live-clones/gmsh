@@ -902,6 +902,7 @@ unsigned int opt_general_color_foreground(OPT_ARGS_COL);
 unsigned int opt_general_color_text(OPT_ARGS_COL);
 unsigned int opt_general_color_axes(OPT_ARGS_COL);
 unsigned int opt_general_color_small_axes(OPT_ARGS_COL);
+unsigned int opt_general_color_query(OPT_ARGS_COL);
 unsigned int opt_general_color_ambient_light(OPT_ARGS_COL);
 unsigned int opt_general_color_diffuse_light(OPT_ARGS_COL);
 unsigned int opt_general_color_specular_light(OPT_ARGS_COL);

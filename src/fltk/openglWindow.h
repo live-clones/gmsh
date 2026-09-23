@@ -60,6 +60,10 @@ private:
   // draw2d, from the bottom left)
   std::string _hoverText;
   double _hoverAnchor[2], _hoverBox[4];
+  // what a query found, kept by the click that asked for it until the next
+  // one, under what the cursor is over
+  std::string _pinnedText;
+  double _pinnedAnchor[2], _pinnedBox[4];
   // whether something stands behind what the cursor is over, which costs a
   // picking pass: asked once per entity, the information that names it
   std::string _hoverBehindFor;
@@ -158,7 +162,14 @@ public:
   void setAgain(bool again) { _again = again; }
   static void setLastHandled(openglWindow *w) { _lastHandled = w; }
   // show the text in a box by the cursor, or take the box away
+  // where the last selection looked, in the units of the window
+  void lastSelection(int xywh[4])
+  {
+    for(int i = 0; i < 4; i++) xywh[i] = _trySelectionXYWH[i];
+  }
   void drawTooltip(const std::string &text);
+  // the same box, pinned where the mouse is until it is given another text
+  void pinTooltip(const std::string &text);
   double frequency;
   void moveWithGamepad();
   Navigator *Nautilus;

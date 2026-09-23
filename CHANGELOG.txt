@@ -2,6 +2,10 @@
 algorithms; improved graphics performance and entity selection; new shader
 rendering pipeline with order-independent transparency and studio shading; new
 capping visualization mode in clipping tool; improved colorbars and 2D plots;
+new Query button in the status bar, which says what the model holds where it
+is clicked (the entity, the mesh element and node, and the value of every
+visible view), replacing Mesh Inspect; faster searches of the elements
+containing a point;
 new faster homology solver; improved performance of mesh partitioning pipeline
 and added support for partition overlaps; added IO of edges and faces in MSH4
 file format, as well as ability to save only the local partitioned Brep;

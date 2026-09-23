@@ -13,6 +13,7 @@ set(SRC
   glShader.cpp
   drawContext.cpp
   drawPick.cpp
+  drawQuery.cpp
   drawMesh.cpp
   drawGeom.cpp
   drawPost.cpp

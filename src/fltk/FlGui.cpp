@@ -250,6 +250,31 @@ static void gmsh_rotate(Fl_Color c)
   fl_end_polygon();
 }
 
+// a crosshair over a target: the point of the model a query asks about
+static void gmsh_query(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_line();
+  fl_arc(0.0, 0.0, 0.45, 0.0, 360.0);
+  fl_end_line();
+  bl;
+  vv(-0.9, 0.0);
+  vv(-0.2, 0.0);
+  el;
+  bl;
+  vv(0.2, 0.0);
+  vv(0.9, 0.0);
+  el;
+  bl;
+  vv(0.0, -0.9);
+  vv(0.0, -0.2);
+  el;
+  bl;
+  vv(0.0, 0.2);
+  vv(0.0, 0.9);
+  el;
+}
+
 static void gmsh_models(Fl_Color c)
 {
   fl_color(c);
@@ -532,6 +557,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fl_add_symbol("gmsh_forward", gmsh_forward, 1);
   fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
   fl_add_symbol("gmsh_models", gmsh_models, 1);
+  fl_add_symbol("gmsh_query", gmsh_query, 1);
   fl_add_symbol("gmsh_gear", gmsh_gear, 1);
   fl_add_symbol("gmsh_graph", gmsh_graph, 1);
   fl_add_symbol("gmsh_search", gmsh_search, 1);
@@ -865,11 +891,15 @@ int FlGui::testGlobalShortcuts(int event)
       status = 1;
     }
     else {
-      bool lasso = false;
+      bool lasso = false, query = queryMode();
       for(std::size_t i = 0; i < graph.size(); i++)
         for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
           if(graph[i]->gl[j]->lassoMode) lasso = true;
-      if(lasso) {
+      if(query) { // stop the query rather than the selection it uses
+        status_query_cb(nullptr, nullptr);
+        status = 2;
+      }
+      else if(lasso) {
         for(std::size_t i = 0; i < graph.size(); i++)
           for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
             graph[i]->gl[j]->lassoMode = false;

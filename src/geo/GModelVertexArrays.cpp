@@ -212,19 +212,14 @@ static void addSmoothNormals(GEntity *e, std::vector<T *> &elements)
 // same for the edges: only those of the boundary faces are drawn
 static bool removeInteriorEdges()
 {
-  if(!CTX::instance()->mesh.drawSkinEdgesOnly) return false;
-  if(CTX::instance()->pickElements) return false;
-  return true;
+  return CTX::instance()->mesh.drawSkinEdgesOnly ? true : false;
 }
 
 // drop the faces interior to a 3D mesh (shared by two elements of the same
-// entity) when only the skin is asked for; they are then not in the arrays
-// at all, so they cannot be picked either
+// entity) when only the skin is asked for
 static bool removeInteriorFaces()
 {
-  if(!CTX::instance()->mesh.drawSkinOnly) return false;
-  if(CTX::instance()->pickElements) return false;
-  return true;
+  return CTX::instance()->mesh.drawSkinOnly ? true : false;
 }
 
 // number of face representations per topological face, or 0 if they do not map
@@ -385,7 +380,7 @@ static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
       double x[3] = {xp[0], xp[j - 1], xp[j]};
       double y[3] = {yp[0], yp[j - 1], yp[j]};
       double z[3] = {zp[0], zp[j - 1], zp[j]};
-      va->add(x, y, z, nn, col, ele, false);
+      va->add(x, y, z, nn, col, false);
     }
   }
 }
@@ -435,7 +430,7 @@ static void addEdgeRep(GEntity *e, VertexArray *va, MElement *ele, bool curved,
   if(e->dim() == 2 && CTX::instance()->mesh.smoothNormals)
     for(int k = 0; k < 2; k++)
       e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
-  va->add(x, y, z, n, col, ele, unique);
+  va->add(x, y, z, n, col, unique);
 }
 
 static void addFaceRep(GEntity *e, VertexArray *va, MElement *ele, bool curved,
@@ -448,7 +443,7 @@ static void addFaceRep(GEntity *e, VertexArray *va, MElement *ele, bool curved,
   if(e->dim() == 2 && CTX::instance()->mesh.smoothNormals)
     for(int k = 0; k < 3; k++)
       e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
-  va->add(x, y, z, n, col, ele, false);
+  va->add(x, y, z, n, col, false);
 }
 
 // An array for each thread that fills `va`, put together in the order of the
@@ -549,10 +544,9 @@ static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
   const elementColor color(e);
 
   // an edge shared by several elements is drawn once (the filter finds
-  // nothing when the elements are exploded, and picking wants them all)
+  // nothing when the elements are exploded)
   const bool uniqueEdges = e->dim() > 1 && explode == 1. &&
-                           CTX::instance()->mesh.drawUniqueEdges &&
-                           !CTX::instance()->pickElements;
+                           CTX::instance()->mesh.drawUniqueEdges;
   UniqueElementFilter *filter =
     (uniqueEdges && edges) ? vaL->getUniqueFilter(nthreads > 1) : nullptr;
   std::vector<std::uint16_t> local;
@@ -668,7 +662,7 @@ static void addSkinEdgesInArray(GEntity *e, VertexArray *va,
         double z[2] = {ev[0]->z(), ev[1]->z()};
         SVector3 n[2];
         explodeAbout(pc, explode, 2, x, y, z);
-        va->add(x, y, z, n, col, ele, false);
+        va->add(x, y, z, n, col, false);
       }
     }
   }
@@ -898,7 +892,6 @@ public:
     key.push_back(ctx->mesh.colorCarousel);
     key.push_back(ctx->mesh.drawUniqueEdges);
     key.push_back(ctx->mesh.explode);
-    key.push_back(ctx->pickElements);
     key.push_back(ctx->entityColorsStamp);
     if(kept.key != key || !edg) kept.masks.clear();
     kept.key = key;
