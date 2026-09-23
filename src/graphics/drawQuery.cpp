@@ -282,33 +282,72 @@ bool queryBehind(PView *view, const double xyz[3], const double behind[3],
   return d <= reach;
 }
 
-void drawContext::drawQueryPoint()
+// What a measurement found between two points it was given: how far apart
+// they are, and where they are, in the shape a query answers in (see above).
+std::vector<std::string> measurePoints(const double a[3], const double b[3])
 {
-  if(!_queryPointValid || render_mode == GMSH_SELECT) return;
+  double d[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+  double l = std::sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+  std::vector<std::string> lines;
+  lines.push_back("Distance: " + number(l, brief));
+  lines.push_back("  Length: " + number(l));
+  lines.push_back("  From: " + point(a[0], a[1], a[2], full));
+  lines.push_back("  To: " + point(b[0], b[1], b[2], full));
+  lines.push_back("  Along the axes: " + point(d[0], d[1], d[2], full));
+  return lines;
+}
 
-  double x = _queryPoint[0], y = _queryPoint[1], z = _queryPoint[2];
-  // in a darker shade of the colour of the box the query leaves
-  // (General.Color.Query, which the box wears washed out), twice as wide as a
-  // line of the picture: the mark says where it asked, is read as one thing
-  // with the box that answers, and stands out on what it is drawn on
+// the colour a query or a measurement marks the picture in: a darker shade of
+// the colour its box wears washed out (General.Color.Query), so that the mark
+// is read as one thing with the box and stands out on what it is drawn on
+static unsigned int markColor()
+{
   CTX *c = CTX::instance();
   const double shade = 0.85;
-  unsigned int mark =
-    c->packColor((int)(shade * c->unpackRed(c->color.query)),
-                 (int)(shade * c->unpackGreen(c->color.query)),
-                 (int)(shade * c->unpackBlue(c->color.query)), 255);
-  gmshColor4ubv((GLubyte *)&mark);
-  gmshLineWidth((float)(2. * CTX::instance()->lineWidth));
-  // a cross of fourteen pixels, and a sphere half again the size of a point,
-  // so that the point queried is visible whatever is drawn around it
+  return c->packColor((int)(shade * c->unpackRed(c->color.query)),
+                      (int)(shade * c->unpackGreen(c->color.query)),
+                      (int)(shade * c->unpackBlue(c->color.query)), 255);
+}
+
+// a cross of fourteen pixels and a sphere half again the size of a point, so
+// that the point is visible whatever is drawn around it
+void drawContext::drawMark(const double xyz[3])
+{
   double d = 14 * pixel_equiv_x / s[0];
   gmshBegin(GL_LINES);
-  gmshVertex3d(x - d, y, z);
-  gmshVertex3d(x + d, y, z);
-  gmshVertex3d(x, y - d, z);
-  gmshVertex3d(x, y + d, z);
-  gmshVertex3d(x, y, z - d);
-  gmshVertex3d(x, y, z + d);
+  gmshVertex3d(xyz[0] - d, xyz[1], xyz[2]);
+  gmshVertex3d(xyz[0] + d, xyz[1], xyz[2]);
+  gmshVertex3d(xyz[0], xyz[1] - d, xyz[2]);
+  gmshVertex3d(xyz[0], xyz[1] + d, xyz[2]);
+  gmshVertex3d(xyz[0], xyz[1], xyz[2] - d);
+  gmshVertex3d(xyz[0], xyz[1], xyz[2] + d);
   gmshEnd();
-  drawSphere(1.5 * CTX::instance()->pointSize, x, y, z, 1);
+  drawSphere(1.5 * CTX::instance()->pointSize, xyz[0], xyz[1], xyz[2], 1);
+}
+
+void drawContext::drawMarks()
+{
+  if(render_mode == GMSH_SELECT) return;
+  if(_marks.empty() && !_segmentValid) return;
+
+  unsigned int col = markColor();
+  gmshColor4ubv((GLubyte *)&col);
+  gmshLineWidth((float)(2. * CTX::instance()->lineWidth));
+  // over everything: the point asked about is usually on a surface, and the
+  // line between two of them usually runs inside the model
+  gmshDepthTest(false);
+
+  for(std::size_t i = 0; i + 2 < _marks.size(); i += 3) drawMark(&_marks[i]);
+
+  if(_segmentValid) {
+    const double *a = _segment, *b = _segment + 3;
+    // the segment measured; its length is written in a box over the middle
+    // of it (see openglWindow::_drawScreenMessage)
+    gmshBegin(GL_LINES);
+    gmshVertex3d(a[0], a[1], a[2]);
+    gmshVertex3d(b[0], b[1], b[2]);
+    gmshEnd();
+  }
+
+  gmshDepthTest(true);
 }

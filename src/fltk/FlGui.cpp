@@ -275,6 +275,18 @@ static void gmsh_query(Fl_Color c)
   el;
 }
 
+// a ruler: the line a measurement draws between the two points it is given
+static void gmsh_measure(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.75, 0.55); vv(0.75, -0.55); el;   // the line
+  bl; vv(-0.90, 0.35); vv(-0.60, 0.75); el;   // its ends
+  bl; vv(0.60, -0.75); vv(0.90, -0.35); el;
+  bl; vv(-0.38, 0.28); vv(-0.29, 0.40); el;   // graduations
+  bl; vv(0.00, 0.00); vv(0.09, 0.12); el;
+  bl; vv(0.38, -0.28); vv(0.46, -0.15); el;
+}
+
 static void gmsh_models(Fl_Color c)
 {
   fl_color(c);
@@ -558,6 +570,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
   fl_add_symbol("gmsh_models", gmsh_models, 1);
   fl_add_symbol("gmsh_query", gmsh_query, 1);
+  fl_add_symbol("gmsh_measure", gmsh_measure, 1);
   fl_add_symbol("gmsh_gear", gmsh_gear, 1);
   fl_add_symbol("gmsh_graph", gmsh_graph, 1);
   fl_add_symbol("gmsh_search", gmsh_search, 1);
@@ -891,12 +904,14 @@ int FlGui::testGlobalShortcuts(int event)
       status = 1;
     }
     else {
-      bool lasso = false, query = queryMode();
+      bool lasso = false, asking = queryMode() || measureMode();
       for(std::size_t i = 0; i < graph.size(); i++)
         for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
           if(graph[i]->gl[j]->lassoMode) lasso = true;
-      if(query) { // stop the query rather than the selection it uses
-        status_query_cb(nullptr, nullptr);
+      if(asking) { // stop the query or the measurement, not the selection
+                   // they use
+        if(queryMode()) status_query_cb(nullptr, nullptr);
+        if(measureMode()) status_measure_cb(nullptr, nullptr);
         status = 2;
       }
       else if(lasso) {

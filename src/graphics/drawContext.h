@@ -200,6 +200,8 @@ public:
 std::vector<std::string> queryPoint(const double xyz[3], GEntity *entity,
                                     MElement *element, PView *view,
                                     double pixel);
+// What a measurement says of the two points it was given (see drawQuery.cpp)
+std::vector<std::string> measurePoints(const double a[3], const double b[3]);
 // Whether the point of the model behind what was drawn of a view at xyz is
 // the place that view stands for there: it is what a glyph hangs off, but a
 // surface drawn deeper down is somewhere else (see drawQuery.cpp)
@@ -312,9 +314,15 @@ private:
   // the pass read back
   double _pickPoint[3] = {0., 0., 0.};
   bool _pickPointValid = false;
-  // the point the last query asked about, drawn until it is cleared
-  double _queryPoint[3] = {0., 0., 0.};
-  bool _queryPointValid = false;
+  // What a query or a measurement leaves on the picture, until it is
+  // cleared: the points it asked about, each marked; the segment of a
+  // measurement, drawn with its length; and the point the box that answers
+  // hangs from
+  std::vector<double> _marks; // three numbers each
+  double _segment[6] = {0., 0., 0., 0., 0., 0.};
+  bool _segmentValid = false;
+  double _pinPoint[3] = {0., 0., 0.};
+  bool _pinPointValid = false;
   // the entity the last pick was on, which it gives away when it returns the
   // mesh element it found there instead (see pickEntity())
   GEntity *_pickEntity = nullptr;
@@ -414,27 +422,60 @@ public:
   // the identifier image holds only what is in front, so this draws it
   // again without that entity, and leaves the stepping as it was
   bool pickBehind(int type, bool mesh, bool post, int x, int y, int w, int h);
-  // the point of the model the last pick hit, from the depth under the middle
-  // of its rectangle (or the nearest depth of what it returned): false when
-  // it hit nothing of the 3D scene
-  // the point a query asked about: it is marked in the picture until it is
-  // cleared (see drawQuery.cpp)
-  void setQueryPoint(const double xyz[3])
+  // The points a query or a measurement asked about, marked in the picture
+  // until they are cleared, the segment a measurement spans, and the point
+  // the box that answers hangs from (see drawQuery.cpp)
+  void addMark(const double xyz[3])
   {
-    for(int i = 0; i < 3; i++) _queryPoint[i] = xyz[i];
-    _queryPointValid = true;
+    for(int i = 0; i < 3; i++) _marks.push_back(xyz[i]);
   }
-  void clearQueryPoint() { _queryPointValid = false; }
-  bool queryPoint(double xyz[3]) const
+  void setSegment(const double a[3], const double b[3])
   {
-    if(!_queryPointValid) return false;
-    for(int i = 0; i < 3; i++) xyz[i] = _queryPoint[i];
+    for(int i = 0; i < 3; i++) {
+      _segment[i] = a[i];
+      _segment[3 + i] = b[i];
+    }
+    _segmentValid = true;
+  }
+  void setPinPoint(const double xyz[3])
+  {
+    for(int i = 0; i < 3; i++) _pinPoint[i] = xyz[i];
+    _pinPointValid = true;
+  }
+  void clearSegment() { _segmentValid = false; }
+  void clearMarks()
+  {
+    _marks.clear();
+    _segmentValid = false;
+    _pinPointValid = false;
+  }
+  std::size_t numMarks() const { return _marks.size() / 3; }
+  bool mark(std::size_t i, double xyz[3]) const
+  {
+    if(3 * i + 2 >= _marks.size()) return false;
+    for(int k = 0; k < 3; k++) xyz[k] = _marks[3 * i + k];
     return true;
   }
-  void drawQueryPoint();
+  bool segment(double a[3], double b[3]) const
+  {
+    if(!_segmentValid) return false;
+    for(int k = 0; k < 3; k++) { a[k] = _segment[k]; b[k] = _segment[3 + k]; }
+    return true;
+  }
+  bool pinPoint(double xyz[3]) const
+  {
+    if(!_pinPointValid) return false;
+    for(int i = 0; i < 3; i++) xyz[i] = _pinPoint[i];
+    return true;
+  }
+  void drawMarks();
+  void drawMark(const double xyz[3]);
   // the entity of the model the last pick was on, whether it returned it or
   // the mesh element it holds there (null when it was on neither)
   GEntity *pickEntity() const { return _pickEntity; }
+  // the point of the model the last pick hit, from the depth under the middle
+  // of its rectangle (or the nearest depth of what it returned): false when
+  // it hit nothing of the 3D scene
   bool pickPoint(double xyz[3]) const
   {
     if(!_pickPointValid) return false;

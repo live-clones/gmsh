@@ -797,7 +797,7 @@ void drawContext::draw3d()
     transparencyPass = TRANSPARENCY_ALL;
   }
 
-  drawQueryPoint();
+  drawMarks();
 
   drawGraph2d(true);
 }

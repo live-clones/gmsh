@@ -178,26 +178,27 @@ void openglWindow::_drawScreenMessage()
   if(_hoverText.size())
     _ctx->drawTextBox(_hoverText, _hoverAnchor[0],
                       _ctx->viewport[3] - _hoverAnchor[1], 2, _hoverBox);
-  // by the point it asked about, so that it travels with the model: it is
-  // kept whole in the window when it is drawn (the point is under the cursor
-  // then), and leaves it with the point it hangs from afterwards
+  // on paper of its own: the colour of the mark it hangs from
+  // (General.Color.Query, which the mark wears at full strength), lightened
+  // to the paper of a note over a light picture and darkened to the same
+  // note over a dark one, where the full colour would glare
+  CTX *c = CTX::instance();
+  unsigned int q = c->color.query, bg = c->color.bg;
+  double lum = 0.299 * c->unpackRed(bg) + 0.587 * c->unpackGreen(bg) +
+               0.114 * c->unpackBlue(bg);
+  bool dark = (lum < 110.);
+  double paper = dark ? 0. : 255., mix = dark ? 0.32 : 0.45;
+  unsigned int tint =
+    c->packColor((int)(paper * (1. - mix) + mix * c->unpackRed(q)),
+                 (int)(paper * (1. - mix) + mix * c->unpackGreen(q)),
+                 (int)(paper * (1. - mix) + mix * c->unpackBlue(q)), 255);
+  // the box a query pins is drawn by the point it asked about, so that it
+  // travels with the model: it is kept whole in the window when it is drawn
+  // (the point is under the cursor then), and leaves it with that point
+  // afterwards
   if(_pinnedText.size()) {
     double xyz[3], win[2];
-    // on paper of its own: the colour of the mark it hangs from
-    // (General.Color.Query, which the mark wears at full strength), lightened
-    // to the paper of a note over a light picture and darkened to the same
-    // note over a dark one, where the full colour would glare
-    CTX *c = CTX::instance();
-    unsigned int q = c->color.query, bg = c->color.bg;
-    double lum = 0.299 * c->unpackRed(bg) + 0.587 * c->unpackGreen(bg) +
-                 0.114 * c->unpackBlue(bg);
-    bool dark = (lum < 110.);
-    double paper = dark ? 0. : 255., mix = dark ? 0.32 : 0.45;
-    unsigned int tint =
-      c->packColor((int)(paper * (1. - mix) + mix * c->unpackRed(q)),
-                   (int)(paper * (1. - mix) + mix * c->unpackGreen(q)),
-                   (int)(paper * (1. - mix) + mix * c->unpackBlue(q)), 255);
-    if(!_ctx->queryPoint(xyz))
+    if(!_ctx->pinPoint(xyz))
       _ctx->drawTextBox(_pinnedText, _pinnedAnchor[0],
                         _ctx->viewport[3] - _pinnedAnchor[1], 2, _pinnedBox,
                         true, tint);
@@ -207,6 +208,22 @@ void openglWindow::_drawScreenMessage()
       bool in = (win[0] >= _ctx->viewport[0] && win[0] <= _ctx->viewport[2] &&
                  win[1] >= _ctx->viewport[1] && win[1] <= _ctx->viewport[3]);
       _ctx->drawTextBox(_pinnedText, win[0], win[1], 2, _pinnedBox, in, tint);
+    }
+  }
+  // the length of a measurement, on the same paper, over the middle of the
+  // line it measures: it follows the line while the second point is chosen,
+  // and stays there once it is taken
+  double a[3], b[3], win[2];
+  if(_ctx->segment(a, b)) {
+    double mid[3] = {0.5 * (a[0] + b[0]), 0.5 * (a[1] + b[1]),
+                     0.5 * (a[2] + b[2])};
+    if(_ctx->world2Window(mid, win)) {
+      drawContext::global()->setFont(CTX::instance()->glFontEnum,
+                                     drawContext::global()->getFontSize());
+      double h = drawContext::global()->getStringHeight();
+      // just above the line: a box of one line is two heights tall
+      _ctx->drawTextBox(measurePoints(a, b)[0], win[0], win[1] + 2. * h + 4.,
+                        1, nullptr, false, tint);
     }
   }
 }
@@ -847,6 +864,17 @@ void openglWindow::_hover()
   else if(regions.size())
     over = regions[0];
   _highlight(over);
+
+  // while a measurement waits for its second point, the line follows the
+  // cursor over the model, so that its length is seen as it is chosen
+  if(measureMode() && _ctx->numMarks() == 1) {
+    double a[3], p[3];
+    if(_ctx->mark(0, a) && _ctx->pickPoint(p))
+      _ctx->setSegment(a, p);
+    else
+      _ctx->clearSegment();
+    redraw();
+  }
 
   // how far under the cursor this one is and whether there is more, whenever
   // there is something to step to. The image of the pick shows only what is

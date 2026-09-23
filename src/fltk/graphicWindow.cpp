@@ -3124,6 +3124,9 @@ void quick_access_cb(Fl_Widget *w, void *data)
     status_xyz1p_cb(nullptr, (void *)"1:1");
     status_xyz1p_cb(nullptr, (void *)"z");
   }
+  else if(what == "measure") {
+    status_measure_cb(nullptr, nullptr);
+  }
   else if(what == "query") {
     status_query_cb(nullptr, nullptr);
   }
@@ -3390,6 +3393,19 @@ static void model_switch_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+// Query and measure both wait for a click: starting one stops the other,
+// which is only over once its loop has returned, so the one taking over is
+// started from the event loop rather than from here.
+static int _pendingMode = 0; // 1: query, 2: measure
+
+static void _startPendingMode(void *)
+{
+  int what = _pendingMode;
+  _pendingMode = 0;
+  if(what == 1) status_query_cb(nullptr, nullptr);
+  else if(what == 2) status_measure_cb(nullptr, nullptr);
+}
+
 // Query mode: every click says what the model holds where it hit - the
 // entity, the mesh element and the node there, and the value of every visible
 // view. It stays on until it is asked to stop (the button again, Escape, or
@@ -3399,7 +3415,7 @@ static bool _queryMode = false;
 
 bool queryMode() { return _queryMode; }
 
-static void setQueryButtons(bool on)
+static void setQueryButtons(bool on, bool measure = false)
 {
   if(!FlGui::available()) return;
   // in the colour of what a query leaves on the picture, so that the button
@@ -3409,7 +3425,9 @@ static void setQueryButtons(bool on)
                               (uchar)c->unpackGreen(c->color.query),
                               (uchar)c->unpackBlue(c->color.query));
   for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
-    Fl_Button *b = FlGui::instance()->graph[i]->getQueryButton();
+    Fl_Button *b = measure ?
+                     FlGui::instance()->graph[i]->getMeasureButton() :
+                     FlGui::instance()->graph[i]->getQueryButton();
     b->color(on ? col : FL_BACKGROUND_COLOR);
     b->redraw();
   }
@@ -3423,6 +3441,11 @@ void status_query_cb(Fl_Widget *w, void *data)
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
         FlGui::instance()->graph[i]->gl[j]->quitSelection = 1;
+    return;
+  }
+  if(measureMode()) { // stop the measurement, and take over when it is over
+    _pendingMode = 1;
+    status_measure_cb(nullptr, nullptr);
     return;
   }
 
@@ -3513,7 +3536,9 @@ void status_query_cb(Fl_Widget *w, void *data)
       text += (text.size() ? "\n" : "") + info[i];
     }
     GModel::current()->setSelection(0);
-    ctx->setQueryPoint(xyz);
+    ctx->clearMarks();
+    ctx->addMark(xyz);
+    ctx->setPinPoint(xyz);
     drawContext::global()->draw();
     if(CTX::instance()->tooltips) gl->pinTooltip(text);
   }
@@ -3525,12 +3550,99 @@ void status_query_cb(Fl_Widget *w, void *data)
     GModel::current()->setSelection(0);
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++) {
-        FlGui::instance()->graph[i]->gl[j]->getDrawContext()->clearQueryPoint();
+        FlGui::instance()->graph[i]->gl[j]->getDrawContext()->clearMarks();
         FlGui::instance()->graph[i]->gl[j]->pinTooltip("");
       }
     drawContext::global()->draw();
     Msg::StatusGl("");
   }
+  if(_pendingMode) Fl::add_timeout(0., _startPendingMode);
+}
+
+// Measure mode: two clicks on the model, and the distance between the points
+// they hit is drawn on the picture and printed. It stays on until it is asked
+// to stop (the button again, Escape, or 'q'), so that distances can be taken
+// one after the other.
+static bool _measureMode = false;
+
+bool measureMode() { return _measureMode; }
+
+void status_measure_cb(Fl_Widget *w, void *data)
+{
+  if(!FlGui::available()) return;
+
+  if(_measureMode) { // asked to stop while a measurement waits for a click
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+        FlGui::instance()->graph[i]->gl[j]->quitSelection = 1;
+    return;
+  }
+  if(queryMode()) { // stop the query, and take over when it is over
+    _pendingMode = 2;
+    status_query_cb(nullptr, nullptr);
+    return;
+  }
+
+  _measureMode = true;
+  setQueryButtons(true, true);
+  // a measurement is a pick: it needs the mouse selection the "S" button
+  // switches, but not the mesh elements, only where the click hits
+  if(!CTX::instance()->mouseSelection)
+    opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
+
+  double first[3] = {0., 0., 0.};
+  bool half = false; // the first point is taken, the second one is awaited
+
+  while(1) {
+    if(!FlGui::available()) break;
+    Msg::StatusGl(half ? "Click the second point\n[Press 'q' to abort]" :
+                         "Click the first point\n[Press 'q' to abort]");
+    char ib = FlGui::instance()->selectEntity(ENT_ALL);
+    if(!FlGui::available()) break;
+    if(ib == 'q') break;
+    if(ib != 'l') continue;
+
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    if(!gl) break;
+    drawContext *ctx = gl->getDrawContext();
+    double xyz[3];
+    if(!ctx->pickPoint(xyz)) continue;
+    GModel::current()->setSelection(0);
+
+    if(!half) { // start a new measurement
+      ctx->clearMarks();
+      ctx->addMark(xyz);
+      for(int k = 0; k < 3; k++) first[k] = xyz[k];
+      half = true;
+      gl->pinTooltip("");
+    }
+    else {
+      ctx->addMark(xyz);
+      ctx->setSegment(first, xyz);
+      ctx->setPinPoint(xyz);
+      half = false;
+      // the messages keep everything; the length stays on the picture, in a
+      // box over the middle of the line (see drawContext::drawMarks)
+      std::vector<std::string> info = measurePoints(first, xyz);
+      for(std::size_t i = 0; i < info.size(); i++)
+        if(info[i].size()) Msg::Direct("%s", info[i].c_str());
+    }
+    drawContext::global()->draw();
+  }
+
+  _measureMode = false;
+  setQueryButtons(false, true);
+  if(FlGui::available()) {
+    GModel::current()->setSelection(0);
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++) {
+        FlGui::instance()->graph[i]->gl[j]->getDrawContext()->clearMarks();
+        FlGui::instance()->graph[i]->gl[j]->pinTooltip("");
+      }
+    drawContext::global()->draw();
+    Msg::StatusGl("");
+  }
+  if(_pendingMode) Fl::add_timeout(0., _startPendingMode);
 }
 
 void status_options_cb(Fl_Widget *w, void *data)
@@ -3581,6 +3693,7 @@ void status_options_cb(Fl_Widget *w, void *data)
       { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport" },
       { "Select rotation center", 0, quick_access_cb, (void*)"select_center" },
       { "Query", 0, quick_access_cb, (void*)"query" },
+      { "Measure", 0, quick_access_cb, (void*)"measure" },
       { "Split window", 0, nullptr, nullptr, FL_SUBMENU | FL_MENU_DIVIDER },
          { "Horizontally", 0, quick_access_cb, (void*)"split_hor"},
          { "Vertically", 0, quick_access_cb, (void*)"split_ver"},
@@ -3657,7 +3770,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     };
     // clang-format on
     // one item was added to each of the geometry, mesh and view sections
-    const int gen = 8, geo = 15, msh = 23, pos = 35, end = 58;
+    const int gen = 9, geo = 16, msh = 24, pos = 36, end = 59;
     if(opt_general_axes(0, GMSH_GET, 0))
       menu[gen + 0].set();
     else
@@ -4212,6 +4325,12 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[12]->callback(status_query_cb);
   _butt[12]->tooltip("Query the model where you click (Escape to stop)");
   x += sw;
+  _butt[13] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_measure");
+  _butt[13]->callback(status_measure_cb);
+  _butt[13]->tooltip("Measure the distance between two points you click "
+                     "(Escape to stop)");
+  x += sw;
   x += 4;
   _butt[6] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
@@ -4238,7 +4357,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[11]->deactivate();
   x += sw;
 
-  for(int i = 0; i < 13; i++) {
+  for(int i = 0; i < 14; i++) {
     _butt[i]->box(FL_FLAT_BOX);
     _butt[i]->selection_color(FL_WHITE);
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

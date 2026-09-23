@@ -1750,7 +1750,9 @@ the rotation button rotates the view by 90 degrees; and `1:1' resets the
 scale. The crosshair button switches `Query' on: every click then says what
 the model holds where it hit, i.e. the geometrical entity, the mesh element
 and the node there, and the value of every visible post-processing view.
-(The same is available in the quick shortcut menu.)
+The ruler button next to it switches `Measure' on: two clicks then draw the
+line between the points they hit and give its length. (Both are also available
+in the quick shortcut menu.)
 
 @iftex
 @sp 1
