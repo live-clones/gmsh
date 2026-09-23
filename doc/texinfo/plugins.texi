@@ -1374,33 +1374,35 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Summation)
-Plugin(Summation) sums every time steps of 'Reference View' and (every) 'Other View X'and store the result in a new view.@*
-If 'View 0' < 0 then the current view is selected.@*
-If 'View 1...8' < 0 then this view is skipped.@*
-Views can have different number of time steps@*
-Warning: the Plugin assume that every views sharethe same mesh and that meshes do not move between time steps!
+Plugin(Summation) sums every time step of the views `View0', ..., `View7' and stores the result in a new view, named `ResultingViewName' (unless it is `default').@*
+@*
+If `View0' < 0, the current view is used; views `View1' to `View7' < 0 are skipped.@*
+@*
+The views can have different numbers of time steps, but they must share the same mesh, and the mesh must not move between time steps.@*
+@*
+Plugin(Summation) creates one new list-based view.
 String options:
 @table @code
-@item Resuling View Name
+@item ResultingViewName
 Default value: @code{"default"}
 @end table
 Numeric options:
 @table @code
-@item View 0
+@item View0
 Default value: @code{-1}
-@item View 1
+@item View1
 Default value: @code{-1}
-@item View 2
+@item View2
 Default value: @code{-1}
-@item View 3
+@item View3
 Default value: @code{-1}
-@item View 4
+@item View4
 Default value: @code{-1}
-@item View 5
+@item View5
 Default value: @code{-1}
-@item View 6
+@item View6
 Default value: @code{-1}
-@item View 7
+@item View7
 Default value: @code{-1}
 @end table
 
