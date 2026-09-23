@@ -1486,7 +1486,7 @@ void openglWindow::drawTooltip(const std::string &text)
     redraw();
     return;
   }
-  // it follows the cursor, moving once the cursor has strayed fifteen pixels
+  // it follows the cursor, moving once the cursor has strayed sixty pixels
   // from where it hangs (or when it is under it, or says something else):
   // every move of it is a redraw
   double cx = _curr.win[0], cy = _curr.win[1];
@@ -1497,8 +1497,8 @@ void openglWindow::drawTooltip(const std::string &text)
     double bottom = _ctx->viewport[3] - _hoverBox[1];
     bool over = (cx > left - 4. && cx < right + 4. && cy > top - 4. &&
                  cy < bottom + 4.);
-    if(!over && fabs(cx - _hoverAnchor[0]) < 15. &&
-       fabs(cy - _hoverAnchor[1]) < 15.)
+    if(!over && fabs(cx - _hoverAnchor[0]) < 60. &&
+       fabs(cy - _hoverAnchor[1]) < 60.)
       return;
   }
   _hoverText = text;
