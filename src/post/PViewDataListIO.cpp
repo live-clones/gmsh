@@ -748,13 +748,11 @@ bool PViewDataList::writeMSH(const std::string &fileName,
   GModel *model = new GModel();
   GModel::setCurrent(model);
 
-  // an entity of each dimension, holding the elements of that dimension; the
-  // one of highest dimension holds all the nodes
+  // an entity of each dimension, holding the elements of that dimension, and
+  // the nodes of the elements of lowest dimension among those they belong to
   GEntity *entities[4] = {nullptr, nullptr, nullptr, nullptr};
-  int maxDim = 0;
   for(auto &l : lists) {
     int dim = ElementType::getDimension(l.mshType);
-    maxDim = std::max(maxDim, dim);
     if(entities[dim]) continue;
     switch(dim) {
     case 0: {
@@ -779,13 +777,23 @@ bool PViewDataList::writeMSH(const std::string &fileName,
     } break;
     }
   }
+  std::vector<char> nodeDim(numVertices, 3);
+  for(std::size_t t = 0; t < tagType.size(); t++) {
+    int n = ElementType::getNumVertices(tagType[t]);
+    char dim = ElementType::getDimension(tagType[t]);
+    for(int j = 0; j < n; j++) {
+      char &d = nodeDim[merged[tagNodes[t] + j]];
+      d = std::min(d, dim);
+    }
+  }
   std::vector<MVertex *> vertices(numVertices, nullptr);
   for(std::size_t i = 0; i < merged.size(); i++) {
     std::size_t m = merged[i];
     if(vertices[m]) continue;
-    vertices[m] = new MVertex(xyz[3 * i], xyz[3 * i + 1], xyz[3 * i + 2],
-                              entities[maxDim], m + 1);
-    entities[maxDim]->addMeshVertex(vertices[m]);
+    GEntity *ge = entities[(int)nodeDim[m]];
+    vertices[m] =
+      new MVertex(xyz[3 * i], xyz[3 * i + 1], xyz[3 * i + 2], ge, m + 1);
+    ge->addMeshVertex(vertices[m]);
   }
   MElementFactory factory;
   for(std::size_t t = 0; t < tagType.size(); t++) {
