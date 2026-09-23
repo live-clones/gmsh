@@ -31,3 +31,21 @@ Plugin(CutParametric).MaxV = 0;
 Plugin(CutParametric).NumPointsV = 1;
 Plugin(CutParametric).View = PostProcessing.NbViews - 4;
 Plugin(CutParametric).Run;
+
+// a line through a view holding scalar and vector triangles: each line gets
+// the values of its own field at both ends (the scalar lines started with the
+// value of the vector)
+View "mixed" {
+  ST(0, 0, 0, 1, 0, 0, 0, 1, 0){1, 2, 3};
+  VT(0, 0, 0, 1, 0, 0, 0, 1, 0){10, 0, 0, 0, 20, 0, 0, 0, 30};
+};
+Plugin(CutParametric).View = PostProcessing.NbViews - 1;
+Plugin(CutParametric).X = "0.1 + 0.5 * u";
+Plugin(CutParametric).Y = "0.2";
+Plugin(CutParametric).Z = "0";
+Plugin(CutParametric).MinU = 0;
+Plugin(CutParametric).MaxU = 1;
+Plugin(CutParametric).NumPointsU = 5;
+Plugin(CutParametric).NumPointsV = 1;
+Plugin(CutParametric).ConnectPoints = 1;
+Plugin(CutParametric).Run;

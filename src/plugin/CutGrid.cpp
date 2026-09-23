@@ -373,6 +373,7 @@ PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
   delete[] pnts;
   delete[] vals;
 
+  for(int i = 0; i < numsteps; i++) data2->Time.push_back(data1->getTime(i));
   data2->setName(data1->getName() + "_CutGrid");
   data2->setFileName(data1->getName() + "_CutGrid.pos");
   data2->finalize();

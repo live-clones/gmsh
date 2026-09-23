@@ -354,36 +354,39 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
   double x0 = 0., y0 = 0., z0 = 0., x1 = 0., y1 = 0., z1 = 0.;
   double x2 = 0., y2 = 0., z2 = 0., x3 = 0., y3 = 0., z3 = 0.;
 
-  for(int k = 0; k < 9 * numSteps; ++k) res0[k] = res1[k] = 0.;
-
   if(nbU == 1 || nbV == 1 || !connect) {
+    // the values at the previous point, for each kind of field
+    std::vector<double> prev[3], cur[3];
+    for(int f = 0; f < 3; f++) {
+      prev[f].resize(9 * numSteps, 0.);
+      cur[f].resize(9 * numSteps, 0.);
+    }
     for(std::size_t i = 0; i < x.size(); ++i) {
-      if(i && connect) {
-        x0 = x1;
-        y0 = y1;
-        z0 = z1;
-        for(int k = 0; k < 9 * numSteps; ++k) res0[k] = res1[k];
-      }
-
       x1 = x[i];
       y1 = y[i];
       z1 = z[i];
-
       if(data1->getNumScalars()) {
-        o.searchScalar(x1, y1, z1, res1);
-        addInView(connect, i, 1, numSteps, x0, y0, z0, res0, x1, y1, z1, res1,
-                  data2->SP, &data2->NbSP, data2->SL, &data2->NbSL);
+        o.searchScalar(x1, y1, z1, &cur[0][0]);
+        addInView(connect, i, 1, numSteps, x0, y0, z0, &prev[0][0], x1, y1,
+                  z1, &cur[0][0], data2->SP, &data2->NbSP, data2->SL,
+                  &data2->NbSL);
       }
       if(data1->getNumVectors()) {
-        o.searchVector(x1, y1, z1, res1);
-        addInView(connect, i, 3, numSteps, x0, y0, z0, res0, x1, y1, z1, res1,
-                  data2->VP, &data2->NbVP, data2->VL, &data2->NbVL);
+        o.searchVector(x1, y1, z1, &cur[1][0]);
+        addInView(connect, i, 3, numSteps, x0, y0, z0, &prev[1][0], x1, y1,
+                  z1, &cur[1][0], data2->VP, &data2->NbVP, data2->VL,
+                  &data2->NbVL);
       }
       if(data1->getNumTensors()) {
-        o.searchTensor(x1, y1, z1, res1);
-        addInView(connect, i, 9, numSteps, x0, y0, z0, res0, x1, y1, z1, res1,
-                  data2->TP, &data2->NbTP, data2->TL, &data2->NbTL);
+        o.searchTensor(x1, y1, z1, &cur[2][0]);
+        addInView(connect, i, 9, numSteps, x0, y0, z0, &prev[2][0], x1, y1,
+                  z1, &cur[2][0], data2->TP, &data2->NbTP, data2->TL,
+                  &data2->NbTL);
       }
+      x0 = x1;
+      y0 = y1;
+      z0 = z1;
+      for(int f = 0; f < 3; f++) prev[f].swap(cur[f]);
     }
   }
   else {
@@ -436,6 +439,7 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
   delete[] res2;
   delete[] res3;
 
+  for(int i = 0; i < numSteps; i++) data2->Time.push_back(data1->getTime(i));
   data2->setName(data1->getName() + "_CutParametric");
   data2->setFileName(data1->getName() + "_CutParametric.pos");
   data2->finalize();

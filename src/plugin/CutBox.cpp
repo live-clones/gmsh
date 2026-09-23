@@ -1101,6 +1101,7 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
   delete[] pnts;
   delete[] vals;
 
+  for(int i = 0; i < numsteps; i++) data2->Time.push_back(data1->getTime(i));
   data2->setName(data1->getName() + "_CutBox");
   data2->setFileName(data1->getName() + "_CutBox.pos");
   data2->finalize();
