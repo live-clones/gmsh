@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <map>
 #include "GModel.h"
 #include "MElement.h"
 #include "MElementOctree.h"
@@ -14,11 +15,74 @@
 #include "SBoundingBox3d.h"
 #include "Context.h"
 
+// The Bezier control points of a curved element, which bound it, as a linear
+// combination of its nodes: the same for all the elements of a type, so
+// computed once per type rather than by evaluating each element at the
+// sampling points of its Bezier basis and converting them (MElement::
+// getBezierVerticesCoord), which took 11 us per element, i.e. most of the 28 s
+// the octree of 2.5 million second-order tetrahedra took to build. Kept per
+// thread, as octrees can be built concurrently.
+static const fullMatrix<double> *lagrangeToBezier(MElement *e)
+{
+  thread_local std::map<int, fullMatrix<double> > cache;
+  int type = e->getTypeForMSH();
+  auto it = cache.find(type);
+  if(it != cache.end()) return &it->second;
+  const bezierBasis *basis =
+    BasisFactory::getBezierBasis(e->getType(), e->getPolynomialOrder());
+  const fullMatrix<double> &uvw = basis->getSamplingPointsToComputeBezierCoeff();
+  int n = e->getNumShapeFunctions();
+  fullMatrix<double> sf(uvw.size1(), n);
+  double f[1256];
+  for(int i = 0; i < uvw.size1(); i++) {
+    double p[3] = {0., 0., 0.};
+    for(int j = 0; j < uvw.size2(); j++) p[j] = uvw(i, j);
+    e->getShapeFunctions(p[0], p[1], p[2], f);
+    for(int j = 0; j < n; j++) sf(i, j) = f[j];
+  }
+  // the conversion to Bezier coefficients is linear, column by column
+  bezierCoeff b(e->getFuncSpaceData(e->getPolynomialOrder(), false), sf);
+  fullMatrix<double> &m = cache[type];
+  m.resize(b.getNumCoeff(), b.getNumColumns());
+  for(int i = 0; i < m.size1(); i++)
+    for(int j = 0; j < m.size2(); j++) m(i, j) = b(i, j);
+  return &m;
+}
+
 void MElementBB(void *a, double *min, double *max)
 {
   MElement *e = static_cast<MElement *>(a);
 
-  if(e->getPolynomialOrder() == 1) {
+  const fullMatrix<double> *m = nullptr;
+  int n = e->getNumShapeFunctions();
+  if(e->getPolynomialOrder() > 1 && n <= 1256) {
+    m = lagrangeToBezier(e);
+    if(m->size2() != n || !m->size1()) m = nullptr;
+  }
+
+  if(m) {
+    double x[3 * 1256];
+    for(int j = 0; j < n; j++) {
+      const MVertex *v = e->getShapeFunctionNode(j);
+      x[3 * j] = v->x();
+      x[3 * j + 1] = v->y();
+      x[3 * j + 2] = v->z();
+    }
+    for(int i = 0; i < m->size1(); i++) {
+      double p[3] = {0., 0., 0.};
+      for(int j = 0; j < n; j++) {
+        double c = (*m)(i, j);
+        p[0] += c * x[3 * j];
+        p[1] += c * x[3 * j + 1];
+        p[2] += c * x[3 * j + 2];
+      }
+      for(int k = 0; k < 3; k++) {
+        if(!i || p[k] < min[k]) min[k] = p[k];
+        if(!i || p[k] > max[k]) max[k] = p[k];
+      }
+    }
+  }
+  else if(e->getPolynomialOrder() == 1) {
     MVertex *v = e->getVertex(0);
     min[0] = max[0] = v->x();
     min[1] = max[1] = v->y();
