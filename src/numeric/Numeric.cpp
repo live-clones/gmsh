@@ -680,8 +680,11 @@ void FindCubicRoots(const double coef[4], double real[3], double imag[3])
   double c = coef[1];
   double d = coef[0];
 
-  if(!a || !d) {
-    // Msg::Error("Degenerate cubic: use a second degree solver!");
+  // (a zero root, d = 0, needs nothing special: it was left out, and the
+  // eigenvalues of singular matrices undefined)
+  if(!a) { // not a cubic
+    real[0] = real[1] = real[2] = 0.;
+    imag[0] = imag[1] = imag[2] = 0.;
     return;
   }
 
@@ -726,7 +729,8 @@ void FindCubicRoots(const double coef[4], double real[3], double imag[3])
   // here, q < 0)
   q = -q;
   double dum1 = q * q * q;
-  dum1 = acos(r / sqrt(dum1));
+  // clamped: rounding can put the ratio beyond 1 near double roots
+  dum1 = acos(std::max(-1., std::min(1., r / sqrt(dum1))));
   r13 = 2.0 * sqrt(q);
   real[0] = -term1 + r13 * cos(dum1 / 3.0);
   real[1] = -term1 + r13 * cos((dum1 + 2.0 * M_PI) / 3.0);
