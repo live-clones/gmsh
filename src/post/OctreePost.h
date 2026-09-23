@@ -15,14 +15,10 @@ class PViewDataGModel;
 
 class OctreePost {
 private:
-  Octree *_sp, *_vp, *_tp;
-  Octree *_sl, *_vl, *_tl;
-  Octree *_st, *_vt, *_tt;
-  Octree *_sq, *_vq, *_tq;
-  Octree *_ss, *_vs, *_ts;
-  Octree *_sh, *_vh, *_th;
-  Octree *_si, *_vi, *_ti;
-  Octree *_sy, *_vy, *_ty;
+  // for list data: the search structures of the lists of each number of
+  // components (1, 3, 9) and kind of element (points, lines, triangles,
+  // quadrangles, tetrahedra, hexahedra, prisms, pyramids)
+  Octree *_trees[3][8];
   PViewDataList *_theViewDataList;
   PViewDataGModel *_theViewDataGModel;
   void _create(PViewData *data);
@@ -30,6 +26,9 @@ private:
                  int step, double *values, double *elementSize, bool grad);
   bool _getValue(void *in, int nbComp, double P[3], int step, double *values,
                  double *elementSize, bool grad);
+  bool _search(int numComp, double x, double y, double z, double *values,
+               int step, double *size, int qn, double *qx, double *qy,
+               double *qz, bool grad, int dim);
 
 public:
   OctreePost(PView *v);
