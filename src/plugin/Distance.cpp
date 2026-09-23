@@ -112,7 +112,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
         for(std::size_t j = 0; j < numNodes; j++) {
           MVertex *v = nods[j];
           auto it = distanceMap.find(v);
-          dist.push_back(it->second);
+          dist.push_back(it != distanceMap.end() ? it->second : 0.);
         }
 
         for(std::size_t i = 0; i < dist.size(); i++) {
@@ -190,28 +190,34 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       if(computeForEntity) {
         existEntity = true;
         for(std::size_t k = 0; k < g2->getNumMeshElements(); k++) {
-          std::vector<double> iDistances;
-          std::vector<SPoint3> iClosePts;
-          std::vector<double> iDistancesE;
           MElement *e = g2->getMeshElement(k);
-          MVertex *v1 = e->getVertex(0);
-          MVertex *v2 = e->getVertex(1);
-          SPoint3 p1(v1->x(), v1->y(), v1->z());
-          SPoint3 p2(v2->x(), v2->y(), v2->z());
-          if(e->getType() == TYPE_LIN) {
-            signedDistancesPointsLine(iDistances, iClosePts, pts, p1, p2);
+          std::vector<SPoint3> p(e->getNumPrimaryVertices());
+          for(std::size_t i = 0; i < p.size(); i++)
+            p[i] = e->getVertex(i)->point();
+          // distances to the element, in pieces for quadrangles
+          std::vector<std::vector<double> > iDistances;
+          std::vector<SPoint3> iClosePts;
+          if(e->getType() == TYPE_PNT) {
+            iDistances.resize(1);
+            for(auto &pt : pts) iDistances[0].push_back(pt.distance(p[0]));
           }
-          else if(e->getType() == TYPE_TRI) {
-            MVertex *v3 = e->getVertex(2);
-            SPoint3 p3(v3->x(), v3->y(), v3->z());
-            signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2,
-                                          p3);
+          else if(e->getType() == TYPE_LIN) {
+            iDistances.resize(1);
+            signedDistancesPointsLine(iDistances[0], iClosePts, pts, p[0],
+                                      p[1]);
           }
-          for(std::size_t kk = 0; kk < pts.size(); kk++) {
-            if(std::abs(iDistances[kk]) < distances[kk]) {
-              distances[kk] = std::abs(iDistances[kk]);
-              MVertex *v = pt2Vertex[kk];
-              distanceMap[v] = distances[kk];
+          else if(e->getType() == TYPE_TRI || e->getType() == TYPE_QUA) {
+            iDistances.resize(e->getType() == TYPE_TRI ? 1 : 2);
+            for(std::size_t t = 0; t < iDistances.size(); t++)
+              signedDistancesPointsTriangle(iDistances[t], iClosePts, pts,
+                                            p[0], p[t + 1], p[t + 2]);
+          }
+          for(auto &d : iDistances) {
+            for(std::size_t kk = 0; kk < pts.size(); kk++) {
+              if(std::abs(d[kk]) < distances[kk]) {
+                distances[kk] = std::abs(d[kk]);
+                distanceMap[pt2Vertex[kk]] = distances[kk];
+              }
             }
           }
         }

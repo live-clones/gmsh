@@ -44,5 +44,29 @@ Plugin(Distance).Run;
 Plugin(Distance).DistanceType = 0.5;
 Plugin(Distance).Run;
 Plugin(Distance).PhysicalSurface = 0;
-Plugin(Distance).PhysicalPoint = 1; // not with DistanceType = 0: crashes
+Plugin(Distance).PhysicalPoint = 1;
+Plugin(Distance).Run;
+
+// to the boundary quadrangles of hexahedra, and to a physical point (both
+// crashed)
+NewModel;
+Merge "data/hexes.msh";
+For i In {1 : 4}
+  Delete View[PostProcessing.NbViews - 1];
+EndFor
+Plugin(Distance).PhysicalPoint = 0;
+Plugin(Distance).PhysicalLine = 0;
+Plugin(Distance).PhysicalSurface = 0;
+Plugin(Distance).DistanceType = 0;
+Plugin(Distance).Run;
+Plugin(Distance).PhysicalSurface = 1;
+Plugin(Distance).Run;
+Plugin(Distance).PhysicalSurface = 0;
+NewModel;
+Point(1) = {0, 0, 0, 0.25}; Point(2) = {1, 0, 0, 0.25}; Point(3) = {0, 1, 0, 0.25};
+Line(1) = {1, 2}; Line(2) = {2, 3}; Line(3) = {3, 1};
+Curve Loop(1) = {1, 2, 3}; Plane Surface(1) = {1};
+Physical Point(1) = {1};
+Mesh 2;
+Plugin(Distance).PhysicalPoint = 1;
 Plugin(Distance).Run;
