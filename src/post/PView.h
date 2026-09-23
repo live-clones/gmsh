@@ -140,7 +140,6 @@ public:
                        const std::vector<std::vector<MElement *> > &eltPerZone,
                        const std::string &fileName);
   static bool readMED(const std::string &fileName, int fileIndex = -1);
-  static bool readPCH(const std::string &fileName, int fileIndex = -1);
   static bool writeX3D(const std::string &fileName);
   static bool writeVTU(const std::string &fileName, bool binary,
                        const std::vector<PView *> &views);

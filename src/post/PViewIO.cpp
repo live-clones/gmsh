@@ -215,17 +215,21 @@ bool PView::readMSHViewData(const std::string &fileName, FILE *fp,
     // if current partition corresponds to the requested partition, read the
     // data
     if(numEnt > 0) {
-      // either get existing viewData, or create new one
-      PView *p = getViewByName(viewName, timeStep, partition);
+      // the block completes the most recent view of the same name that does
+      // not have this step and partition yet, if it holds the same type of
+      // data with the same number of components; or else it starts a new view
       PViewDataGModel *d = nullptr;
-      if(p) d = dynamic_cast<PViewDataGModel *>(p->getData());
+      for(int i = (int)list.size() - 1; i >= 0 && !d; i--) {
+        auto g = dynamic_cast<PViewDataGModel *>(list[i]->getData());
+        if(!g || g->getName() != viewName) continue;
+        if(g->hasTimeStep(timeStep) && g->hasPartition(timeStep, partition))
+          continue;
+        if(g->canAddData(type, timeStep, numComp)) d = g;
+      }
       bool create = d ? false : true;
       if(create) d = new PViewDataGModel(type);
-      // currently unused indices:
-      int fileIndex = -1, index = 1;
-      if(!d->readMSH(viewName, fileName, fileIndex, fp, binary, swap,
-                     timeStep, time, partition, numComp, numEnt,
-                     interpolationScheme)) {
+      if(!d->readMSH(viewName, fileName, -1, fp, binary, swap, timeStep, time,
+                     partition, numComp, numEnt, interpolationScheme)) {
         Msg::Error("Could not read data in file '%s'", fileName.c_str());
         if(create) delete d;
         return false;
@@ -233,7 +237,6 @@ bool PView::readMSHViewData(const std::string &fileName, FILE *fp,
       else {
         d->setName(viewName);
         d->setFileName(fileName);
-        d->setFileIndex(index);
         if(create) new PView(d);
       }
     }
@@ -288,18 +291,6 @@ bool PView::readMED(const std::string &fileName, int fileIndex)
 }
 
 #endif
-
-bool PView::readPCH(const std::string &fileName, int fileIndex)
-{
-  PViewDataGModel::DataType type = PViewDataGModel::NodeData;
-  // PViewDataGModel::ElementData;
-  // PViewDataGModel::ElementNodeData;
-  PViewDataGModel *d = new PViewDataGModel(type);
-  d->setFileName(fileName);
-  d->readPCH(fileName, fileIndex);
-  new PView(d);
-  return true;
-}
 
 bool PView::write(const std::string &fileName, int format, bool append)
 {

@@ -138,7 +138,9 @@ bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
       int type = getType(firstNonEmptyStep, ent, ele);
       int numComp = getNumComponents(firstNonEmptyStep, ent, ele);
       const char *s = nullptr;
-      switch(type) {
+      // the data at Gauss points is written at points
+      bool gauss = useGaussPoints();
+      switch(gauss ? TYPE_PNT : type) {
       case TYPE_PNT:
         s = (numComp == 9) ? "TP" : (numComp == 3) ? "VP" : "SP";
         break;
@@ -173,7 +175,11 @@ bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
       if(!s) continue;
       // polytopes are written as their sub-simplices, on which the data is P1
       std::vector<std::vector<int>> simplices;
-      if(type == TYPE_POLYG || type == TYPE_POLYH) {
+      if(gauss) {
+        for(int nod = 0; nod < getNumNodes(firstNonEmptyStep, ent, ele); nod++)
+          simplices.push_back({nod});
+      }
+      else if(type == TYPE_POLYG || type == TYPE_POLYH) {
         MElement *e = getElement(firstNonEmptyStep, ent, ele);
         if(!e) continue;
         if(type == TYPE_POLYG) {
@@ -320,21 +326,11 @@ void PViewData::getListPointers(int N[24], std::vector<double> *V[24])
 
 void PViewData::sendToServer(const std::string &name)
 {
-  // Vectorize
+  // a single value
   std::vector<std::vector<double> > vec;
-  bool ok = toVector(vec);
-
-  // Success ?
-  if(!ok) Msg::Error("sendToServer: cannot vectorize PView");
-
-  // Only one step ?
-  if(vec.size() != 1)
-    Msg::Error("sendToServer: cannot send a PView with more than one step");
-
-  // Only one data ?
-  if(vec[0].size() != 1)
-    Msg::Error("sendToServer: cannot send a PView with more than one data");
-
-  // Send data
+  if(!toVector(vec) || vec.size() != 1 || vec[0].size() != 1) {
+    Msg::Error("Cannot send a view with more than one value to ONELAB");
+    return;
+  }
   Msg::SetOnelabNumber(name, vec[0][0]);
 }

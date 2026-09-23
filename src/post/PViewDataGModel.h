@@ -203,6 +203,10 @@ private:
   DataType _type;
   // cache last element to speed up loops
   MElement *_getElement(int step, int ent, int ele);
+  // the step, created on the model with numComp components if needed (and
+  // those before it); nullptr if it holds data with another number of
+  // components
+  stepData<double> *_getStep(int step, GModel *model, int numComp);
   MVertex *_getNode(MElement *e, int nod);
 
 public:
@@ -273,6 +277,8 @@ public:
                    int samplingRate = 1);
   bool isThreadSafe() { return true; }
   bool hasTimeStep(int step);
+  // can data of this type, with numComp components, be added to the step?
+  bool canAddData(DataType type, int step, int numComp);
   bool hasPartition(int step, int part);
   bool hasMultipleMeshes();
   bool hasModel(GModel *model, int step = -1);
@@ -325,7 +331,6 @@ public:
                 const std::vector<std::vector<MElement *> > &eltPerZone);
   bool readMED(const std::string &fileName, int fileIndex);
   bool writeMED(const std::string &fileName);
-  bool readPCH(const std::string &fileName, int fileIndex);
 
   void importLists(int N[24], std::vector<double> *V[24]);
   stepData<double> *getStepData(int step)

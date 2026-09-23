@@ -28,57 +28,39 @@
 #include "adaptiveData.h"
 #include "OS.h"
 
-static void dVecRead(std::vector<double> &v, int n, FILE *fp, bool binary,
+// read n values, false if the file ends before
+static bool dVecRead(std::vector<double> &v, int n, FILE *fp, bool binary,
                      int swap)
 {
-  if(n <= 0) return;
+  if(n <= 0) return true;
   v.resize(n);
   if(binary) {
-    if(!fread(&v[0], sizeof(double), n, fp)) Msg::Error("Read error");
+    if((int)fread(&v[0], sizeof(double), n, fp) != n) return false;
     if(swap) SwapBytes((char *)&v[0], sizeof(double), n);
   }
   else {
-    for(int i = 0; i < n; i++) {
-      if(fscanf(fp, "%lf", &v[i]) != 1) {
-        Msg::Error("Read error");
-        break;
-      }
-    }
+    for(int i = 0; i < n; i++)
+      if(fscanf(fp, "%lf", &v[i]) != 1) return false;
   }
+  return true;
 }
 
-static void cVecRead(std::vector<char> &v, int n, FILE *fp, bool binary,
-                     int swap, bool oldStyle)
+static bool cVecRead(std::vector<char> &v, int n, FILE *fp, bool binary,
+                     bool oldStyle)
 {
-  if(n <= 0) return;
+  if(n <= 0) return true;
   v.resize(n);
   if(binary) {
-    if(!fread(&v[0], sizeof(char), n, fp)) Msg::Error("Read error");
-    if(swap) SwapBytes((char *)&v[0], sizeof(char), n);
+    if((int)fread(&v[0], sizeof(char), n, fp) != n) return false;
   }
   else {
-    if(oldStyle) {
-      for(int i = 0; i < n; i++) {
-        if(fscanf(fp, "%c", &v[i]) != 1) {
-          Msg::Error("Read error");
-          break;
-        }
-        if(v[i] == '^') v[i] = '\0';
-      }
-    }
-    else {
-      for(int i = 0; i < n; i++) {
-        char c = (char)fgetc(fp);
-        if(c == EOF) {
-          Msg::Error("Read error");
-          break;
-        }
-        else {
-          v[i] = c;
-        }
-      }
+    for(int i = 0; i < n; i++) {
+      int c = fgetc(fp);
+      if(c == EOF) return false;
+      v[i] = (oldStyle && c == '^') ? '\0' : (char)c;
     }
   }
+  return true;
 }
 
 static void dVecWrite(std::vector<double> &v, FILE *fp, bool binary)
@@ -115,7 +97,7 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
 
   if(version <= 1.0) {
     Msg::Debug("Detected post-processing view format <= 1.0");
-    if(fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", name,
+    if(fscanf(fp, "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", name,
               &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL, &NbST,
               &NbVT, &NbTT, &NbSS, &NbVS, &NbTS) != 14) {
       Msg::Error("Read error");
@@ -125,7 +107,7 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   }
   else if(version == 1.1) {
     Msg::Debug("Detected post-processing view format 1.1");
-    if(fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+    if(fscanf(fp, "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
               &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS, &NbT2, &t2l, &NbT3,
               &t3l) != 18) {
@@ -136,7 +118,7 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   else if(version == 1.2 || version == 1.3) {
     Msg::Debug("Detected post-processing view format %g", version);
     if(fscanf(fp,
-              "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+              "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
               "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
               &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS,
@@ -149,7 +131,7 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   else if(version == 1.4) {
     Msg::Debug("Detected post-processing view format 1.4");
     if(fscanf(fp,
-              "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+              "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
@@ -184,162 +166,47 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
     }
   }
 
-  dVecRead(Time, NbTimeStep, fp, binary, swap);
-  dVecRead(SP, NbSP * (NbTimeStep * 1 + 3), fp, binary, swap);
-  dVecRead(VP, NbVP * (NbTimeStep * 3 + 3), fp, binary, swap);
-  dVecRead(TP, NbTP * (NbTimeStep * 9 + 3), fp, binary, swap);
-  dVecRead(SL, NbSL * (NbTimeStep * 2 * 1 + 6), fp, binary, swap);
-  dVecRead(VL, NbVL * (NbTimeStep * 2 * 3 + 6), fp, binary, swap);
-  dVecRead(TL, NbTL * (NbTimeStep * 2 * 9 + 6), fp, binary, swap);
-  dVecRead(ST, NbST * (NbTimeStep * 3 * 1 + 9), fp, binary, swap);
-  dVecRead(VT, NbVT * (NbTimeStep * 3 * 3 + 9), fp, binary, swap);
-  dVecRead(TT, NbTT * (NbTimeStep * 3 * 9 + 9), fp, binary, swap);
-  dVecRead(SQ, NbSQ * (NbTimeStep * 4 * 1 + 12), fp, binary, swap);
-  dVecRead(VQ, NbVQ * (NbTimeStep * 4 * 3 + 12), fp, binary, swap);
-  dVecRead(TQ, NbTQ * (NbTimeStep * 4 * 9 + 12), fp, binary, swap);
-  dVecRead(SS, NbSS * (NbTimeStep * 4 * 1 + 12), fp, binary, swap);
-  dVecRead(VS, NbVS * (NbTimeStep * 4 * 3 + 12), fp, binary, swap);
-  dVecRead(TS, NbTS * (NbTimeStep * 4 * 9 + 12), fp, binary, swap);
-  dVecRead(SH, NbSH * (NbTimeStep * 8 * 1 + 24), fp, binary, swap);
-  dVecRead(VH, NbVH * (NbTimeStep * 8 * 3 + 24), fp, binary, swap);
-  dVecRead(TH, NbTH * (NbTimeStep * 8 * 9 + 24), fp, binary, swap);
-  dVecRead(SI, NbSI * (NbTimeStep * 6 * 1 + 18), fp, binary, swap);
-  dVecRead(VI, NbVI * (NbTimeStep * 6 * 3 + 18), fp, binary, swap);
-  dVecRead(TI, NbTI * (NbTimeStep * 6 * 9 + 18), fp, binary, swap);
-  dVecRead(SY, NbSY * (NbTimeStep * 5 * 1 + 15), fp, binary, swap);
-  dVecRead(VY, NbVY * (NbTimeStep * 5 * 3 + 15), fp, binary, swap);
-  dVecRead(TY, NbTY * (NbTimeStep * 5 * 9 + 15), fp, binary, swap);
-
-  // overwrite first order data with second order data (if any)
-  dVecRead(SL, NbSL2 * (NbTimeStep * 3 * 1 + 9), fp, binary, swap);
-  dVecRead(VL, NbVL2 * (NbTimeStep * 3 * 3 + 9), fp, binary, swap);
-  dVecRead(TL, NbTL2 * (NbTimeStep * 3 * 9 + 9), fp, binary, swap);
-  dVecRead(ST, NbST2 * (NbTimeStep * 6 * 1 + 18), fp, binary, swap);
-  dVecRead(VT, NbVT2 * (NbTimeStep * 6 * 3 + 18), fp, binary, swap);
-  dVecRead(TT, NbTT2 * (NbTimeStep * 6 * 9 + 18), fp, binary, swap);
-  dVecRead(SQ, NbSQ2 * (NbTimeStep * 9 * 1 + 27), fp, binary, swap);
-  dVecRead(VQ, NbVQ2 * (NbTimeStep * 9 * 3 + 27), fp, binary, swap);
-  dVecRead(TQ, NbTQ2 * (NbTimeStep * 9 * 9 + 27), fp, binary, swap);
-  dVecRead(SS, NbSS2 * (NbTimeStep * 10 * 1 + 30), fp, binary, swap);
-  dVecRead(VS, NbVS2 * (NbTimeStep * 10 * 3 + 30), fp, binary, swap);
-  dVecRead(TS, NbTS2 * (NbTimeStep * 10 * 9 + 30), fp, binary, swap);
-  dVecRead(SH, NbSH2 * (NbTimeStep * 27 * 1 + 81), fp, binary, swap);
-  dVecRead(VH, NbVH2 * (NbTimeStep * 27 * 3 + 81), fp, binary, swap);
-  dVecRead(TH, NbTH2 * (NbTimeStep * 27 * 9 + 81), fp, binary, swap);
-  dVecRead(SI, NbSI2 * (NbTimeStep * 18 * 1 + 54), fp, binary, swap);
-  dVecRead(VI, NbVI2 * (NbTimeStep * 18 * 3 + 54), fp, binary, swap);
-  dVecRead(TI, NbTI2 * (NbTimeStep * 18 * 9 + 54), fp, binary, swap);
-  dVecRead(SY, NbSY2 * (NbTimeStep * 14 * 1 + 42), fp, binary, swap);
-  dVecRead(VY, NbVY2 * (NbTimeStep * 14 * 3 + 42), fp, binary, swap);
-  dVecRead(TY, NbTY2 * (NbTimeStep * 14 * 9 + 42), fp, binary, swap);
-  if(NbSL2) {
-    NbSL = NbSL2;
-    setOrder2(TYPE_LIN);
+  // the lists, in the order of the file (as in _getRawData()), then their
+  // second order versions, which replace them
+  const int numNodes[8] = {1, 2, 3, 4, 4, 8, 6, 5};
+  const int numNodes2[8] = {1, 3, 6, 9, 10, 27, 18, 14};
+  const int num2[24] = {0,     0,     0,     NbSL2, NbVL2, NbTL2, NbST2, NbVT2,
+                        NbTT2, NbSQ2, NbVQ2, NbTQ2, NbSS2, NbVS2, NbTS2, NbSH2,
+                        NbVH2, NbTH2, NbSI2, NbVI2, NbTI2, NbSY2, NbVY2, NbTY2};
+  bool ok = dVecRead(Time, NbTimeStep, fp, binary, swap);
+  for(int i = 0; i < 24 && ok; i++) {
+    std::vector<double> *list;
+    int *num, numComp, n;
+    _getRawData(i, &list, &num, &numComp, &n);
+    int nn = numNodes[i / 3];
+    ok = dVecRead(*list, *num * (NbTimeStep * nn * numComp + 3 * nn), fp,
+                  binary, swap);
   }
-  if(NbVL2) {
-    NbVL = NbVL2;
-    setOrder2(TYPE_LIN);
+  for(int i = 0; i < 24 && ok; i++) {
+    if(!num2[i]) continue;
+    std::vector<double> *list;
+    int *num, numComp, n;
+    int type = _getRawData(i, &list, &num, &numComp, &n);
+    if(*num)
+      Msg::Warning("Replacing the first order elements of view '%s' by second "
+                   "order ones of the same type",
+                   name);
+    int nn = numNodes2[i / 3];
+    ok = dVecRead(*list, num2[i] * (NbTimeStep * nn * numComp + 3 * nn), fp,
+                  binary, swap);
+    *num = num2[i];
+    setOrder2(type);
   }
-  if(NbTL2) {
-    NbTL = NbTL2;
-    setOrder2(TYPE_LIN);
-  }
-  if(NbST2) {
-    NbST = NbST2;
-    setOrder2(TYPE_TRI);
-  }
-  if(NbVT2) {
-    NbVT = NbVT2;
-    setOrder2(TYPE_TRI);
-  }
-  if(NbTT2) {
-    NbTT = NbTT2;
-    setOrder2(TYPE_TRI);
-  }
-  if(NbSQ2) {
-    NbSQ = NbSQ2;
-    setOrder2(TYPE_QUA);
-  }
-  if(NbVQ2) {
-    NbVQ = NbVQ2;
-    setOrder2(TYPE_QUA);
-  }
-  if(NbTQ2) {
-    NbTQ = NbTQ2;
-    setOrder2(TYPE_QUA);
-  }
-  if(NbSS2) {
-    NbSS = NbSS2;
-    setOrder2(TYPE_TET);
-  }
-  if(NbVS2) {
-    NbVS = NbVS2;
-    setOrder2(TYPE_TET);
-  }
-  if(NbTS2) {
-    NbTS = NbTS2;
-    setOrder2(TYPE_TET);
-  }
-  if(NbSH2) {
-    NbSH = NbSH2;
-    setOrder2(TYPE_HEX);
-  }
-  if(NbVH2) {
-    NbVH = NbVH2;
-    setOrder2(TYPE_HEX);
-  }
-  if(NbTH2) {
-    NbTH = NbTH2;
-    setOrder2(TYPE_HEX);
-  }
-  if(NbSI2) {
-    NbSI = NbSI2;
-    setOrder2(TYPE_PRI);
-  }
-  if(NbVI2) {
-    NbVI = NbVI2;
-    setOrder2(TYPE_PRI);
-  }
-  if(NbTI2) {
-    NbTI = NbTI2;
-    setOrder2(TYPE_PRI);
-  }
-  if(NbSY2) {
-    NbSY = NbSY2;
-    setOrder2(TYPE_PYR);
-  }
-  if(NbVY2) {
-    NbVY = NbVY2;
-    setOrder2(TYPE_PYR);
-  }
-  if(NbTY2) {
-    NbTY = NbTY2;
-    setOrder2(TYPE_PYR);
+  ok = ok && dVecRead(T2D, NbT2 * 4, fp, binary, swap) &&
+       cVecRead(T2C, t2l, fp, binary, (version <= 1.2)) &&
+       dVecRead(T3D, NbT3 * 5, fp, binary, swap) &&
+       cVecRead(T3C, t3l, fp, binary, (version <= 1.2));
+  if(!ok) {
+    Msg::Error("Unexpected end of data of view '%s'", name);
+    return false;
   }
 
-  dVecRead(T2D, NbT2 * 4, fp, binary, swap);
-  cVecRead(T2C, t2l, fp, binary, swap, (version <= 1.2));
-  dVecRead(T3D, NbT3 * 5, fp, binary, swap);
-  cVecRead(T3C, t3l, fp, binary, swap, (version <= 1.2));
-
-  Msg::Debug("Read View '%s' (%d TimeSteps): "
-             "SP(%d/%d) VP(%d/%d) TP(%d/%d) "
-             "SL(%d/%d) VL(%d/%d) TL(%d/%d) "
-             "ST(%d/%d) VT(%d/%d) TT(%d/%d) "
-             "SQ(%d/%d) VQ(%d/%d) TQ(%d/%d) "
-             "SS(%d/%d) VS(%d/%d) TS(%d/%d) "
-             "SH(%d/%d) VH(%d/%d) TH(%d/%d) "
-             "SI(%d/%d) VI(%d/%d) TI(%d/%d) "
-             "SY(%d/%d) VY(%d/%d) TY(%d/%d) "
-             "T2(%d/%d/%d) T3(%d/%d/%d) ",
-             name, NbTimeStep, NbSP, SP.size(), NbVP, VP.size(), NbTP,
-             TP.size(), NbSL, SL.size(), NbVL, VL.size(), NbTL, TL.size(), NbST,
-             ST.size(), NbVT, VT.size(), NbTT, TT.size(), NbSQ, SQ.size(), NbVQ,
-             VQ.size(), NbTQ, TQ.size(), NbSS, SS.size(), NbVS, VS.size(), NbTS,
-             TS.size(), NbSH, SH.size(), NbVH, VH.size(), NbTH, TH.size(), NbSI,
-             SI.size(), NbVI, VI.size(), NbTI, TI.size(), NbSY, SY.size(), NbVY,
-             VY.size(), NbTY, TY.size(), NbT2, T2D.size(), T2C.size(), NbT3,
-             T3D.size(), T3C.size());
+  Msg::Debug("Read view '%s' (%d steps)", name, NbTimeStep);
 
   setName(name);
   finalize();

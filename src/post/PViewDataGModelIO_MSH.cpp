@@ -21,21 +21,10 @@ bool PViewDataGModel::readMSH(const std::string &viewName,
   Msg::Debug("Reading view `%s' step %d (time %g) partition %d: %d records",
              viewName.c_str(), step, time, partition, numEnt);
 
-  while(step >= (int)_steps.size())
-    _steps.push_back(new stepData<double>(GModel::current(), numComp));
-  _steps[step]->fillEntities();
-  _steps[step]->computeBoundingBox();
+  if(!_getStep(step, GModel::current(), numComp)) return false;
   _steps[step]->setFileName(fileName);
   _steps[step]->setFileIndex(fileIndex);
   _steps[step]->setTime(time);
-
-  /*
-  // if we already have maxSteps for this view, return
-  int numSteps = 0, maxSteps = 1000000000;
-  for(std::size_t i = 0; i < _steps.size(); i++)
-    numSteps += _steps[i]->getNumData() ? 1 : 0;
-  if(numSteps > maxSteps) return true;
-  */
 
   _steps[step]->resizeData(numEnt);
 

@@ -27,10 +27,7 @@ bool PViewDataGModel::addData(GModel *model,
       numComp = std::min(numComp, (int)it->second.size());
   }
 
-  while(step >= (int)_steps.size())
-    _steps.push_back(new stepData<double>(model, numComp));
-  _steps[step]->fillEntities();
-  _steps[step]->computeBoundingBox();
+  if(!_getStep(step, model, numComp)) return false;
   _steps[step]->setTime(time);
 
   int numEnt = (_type == NodeData) ? model->getNumMeshVertices() :
@@ -67,10 +64,7 @@ bool PViewDataGModel::addData(GModel *model,
     }
   }
 
-  while(step >= (int)_steps.size())
-    _steps.push_back(new stepData<double>(model, numComp));
-  _steps[step]->fillEntities();
-  _steps[step]->computeBoundingBox();
+  if(!_getStep(step, model, numComp)) return false;
   _steps[step]->setTime(time);
 
   int numEnt = (_type == NodeData) ? model->getNumMeshVertices() :
@@ -107,10 +101,7 @@ bool PViewDataGModel::addData(GModel *model,
     }
   }
 
-  while(step >= (int)_steps.size())
-    _steps.push_back(new stepData<double>(model, numComp));
-  _steps[step]->fillEntities();
-  _steps[step]->computeBoundingBox();
+  if(!_getStep(step, model, numComp)) return false;
   _steps[step]->setTime(time);
 
   int numEnt = (_type == NodeData) ? model->getNumMeshVertices() :
@@ -133,140 +124,29 @@ void PViewDataGModel::destroyData()
   for(std::size_t i = 0; i < _steps.size(); i++) _steps[i]->destroyData();
 }
 
+// the lists (in the order of PViewDataList::getListPointers()) hold, for each
+// element, its tag and then its values at each step
 void PViewDataGModel::importLists(int N[24], std::vector<double> *V[24])
 {
-  for(int idxtype = 0; idxtype < 24; idxtype++) {
-    int nbe = N[idxtype];
-    if(!nbe) continue;
-    std::vector<double> *list = V[idxtype];
-    int nc = 0, nn = 0;
-    switch(idxtype) {
-    case 0:
-      nc = 1;
-      nn = 1;
-      break; // SP
-    case 1:
-      nc = 3;
-      nn = 1;
-      break; // VP
-    case 2:
-      nc = 9;
-      nn = 1;
-      break; // TP
-    case 3:
-      nc = 1;
-      nn = 2;
-      break; // SL
-    case 4:
-      nc = 3;
-      nn = 2;
-      break; // VL
-    case 5:
-      nc = 9;
-      nn = 2;
-      break; // TL
-    case 6:
-      nc = 1;
-      nn = 3;
-      break; // ST
-    case 7:
-      nc = 3;
-      nn = 3;
-      break; // VT
-    case 8:
-      nc = 9;
-      nn = 3;
-      break; // TT
-    case 9:
-      nc = 1;
-      nn = 4;
-      break; // SQ
-    case 10:
-      nc = 3;
-      nn = 4;
-      break; // VQ
-    case 11:
-      nc = 9;
-      nn = 4;
-      break; // TQ
-    case 12:
-      nc = 1;
-      nn = 4;
-      break; // SS
-    case 13:
-      nc = 3;
-      nn = 4;
-      break; // VS
-    case 14:
-      nc = 9;
-      nn = 4;
-      break; // TS
-    case 15:
-      nc = 1;
-      nn = 8;
-      break; // SH
-    case 16:
-      nc = 3;
-      nn = 8;
-      break; // VH
-    case 17:
-      nc = 9;
-      nn = 8;
-      break; // TH
-    case 18:
-      nc = 1;
-      nn = 6;
-      break; // SI
-    case 19:
-      nc = 3;
-      nn = 6;
-      break; // VI
-    case 20:
-      nc = 9;
-      nn = 6;
-      break; // TI
-    case 21:
-      nc = 1;
-      nn = 5;
-      break; // SY
-    case 22:
-      nc = 3;
-      nn = 5;
-      break; // VY
-    case 23:
-      nc = 9;
-      nn = 5;
-      break; // TY
-    }
-    int stride = list->size() / nbe;
+  const int numNodes[8] = {1, 2, 3, 4, 4, 8, 6, 5};
+  const int numComps[3] = {1, 3, 9};
+  for(int i = 0; i < 24; i++) {
+    if(!N[i]) continue;
+    std::vector<double> &list = *V[i];
+    int nc = numComps[i % 3], nn = numNodes[i / 3];
+    int stride = list.size() / N[i];
     int numSteps = (stride - 1) / nc / nn;
     for(int step = 0; step < numSteps; step++) {
-      _steps.push_back(new stepData<double>(GModel::current(), nc));
-      _steps[step]->fillEntities();
-      _steps[step]->computeBoundingBox();
+      if(!_getStep(step, GModel::current(), nc)) break;
       _steps[step]->setTime(step);
-      _steps[step]->resizeData(nbe);
-      for(std::size_t j = 0; j < list->size(); j += stride) {
-        double *tmp = &(*list)[j];
-        int num = (int)tmp[0];
-        double *d = _steps[step]->getData(num, true, nn);
-        for(int k = 0; k < nc * nn; k++) { d[k] = tmp[1 + nc * nn * step + k]; }
+      for(std::size_t j = 0; j < list.size(); j += stride) {
+        double *d = _steps[step]->getData((int)list[j], true, nn);
+        for(int k = 0; k < nc * nn; k++)
+          d[k] = list[j + 1 + nc * nn * step + k];
       }
     }
   }
-
   finalize();
-}
-
-bool PViewDataGModel::readPCH(const std::string &fileName, int fileIndex)
-{
-  Msg::Info("Placeholder for reading punch file '%s'", fileName.c_str());
-
-  std::map<int, std::vector<double> > data;
-  for(int i = 1; i < 200; i++) data[i].push_back(1.234);
-  addData(GModel::current(), data, 0, 0.0, 1, 1);
-
-  return true;
 }
 
 void PViewDataGModel::sendToServer(const std::string &name)

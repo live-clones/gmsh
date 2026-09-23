@@ -848,6 +848,32 @@ bool PViewDataGModel::hasTimeStep(int step)
   return false;
 }
 
+stepData<double> *PViewDataGModel::_getStep(int step, GModel *model,
+                                            int numComp)
+{
+  if(step < 0) return nullptr;
+  while(step >= (int)_steps.size())
+    _steps.push_back(new stepData<double>(model, numComp));
+  if(_steps[step]->getNumComponents() != numComp) {
+    if(_steps[step]->getNumData()) {
+      Msg::Error("Step %d of view '%s' has %d components, not %d", step,
+                 getName().c_str(), _steps[step]->getNumComponents(), numComp);
+      return nullptr;
+    }
+    delete _steps[step];
+    _steps[step] = new stepData<double>(model, numComp);
+  }
+  _steps[step]->fillEntities();
+  _steps[step]->computeBoundingBox();
+  return _steps[step];
+}
+
+bool PViewDataGModel::canAddData(DataType type, int step, int numComp)
+{
+  if(type != _type) return false;
+  return !hasTimeStep(step) || _steps[step]->getNumComponents() == numComp;
+}
+
 bool PViewDataGModel::hasPartition(int step, int part)
 {
   if(step < 0 || step >= getNumTimeSteps()) return false;
