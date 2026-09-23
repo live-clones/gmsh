@@ -5,7 +5,7 @@
 # physical groups), every view (its times, and for each kind of list or each
 # step of model data: counts, sum, sum of absolute values, min and max of what
 # it holds, and the sum of the vector areas of the triangles and quadrangles of
-# lists) and the names of the files written. Checks the summaries against
+# lists) and the sizes of the files written. Checks the summaries against
 # ref.json.
 #
 #   python3 run.py [-o dir] [--api dir] [-j jobs] [--update] [cases...]
@@ -113,10 +113,8 @@ def child(case, jsonfile):
     errors = [l for l in gmsh.logger.get() if l.startswith('Error')]
     out = summarize(gmsh)
     out['errors'] = errors
-    # names only: some files are written in an order that changes from run to
-    # run (Plugin(Bubbles) numbers its entities in the order of pointers)
-    out['files'] = [f for f in sorted(os.listdir('.'))
-                    if f not in ('log.txt', 'summary.json')]
+    out['files'] = {f: os.path.getsize(f) for f in sorted(os.listdir('.'))
+                    if f not in ('log.txt', 'summary.json')}
     out['time'] = wall
     gmsh.finalize()
     json.dump(out, open(jsonfile, 'w'), indent=1)

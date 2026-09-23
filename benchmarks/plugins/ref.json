@@ -1,7 +1,7 @@
 {
  "AnalyseMeshQuality": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {},
    "entities": [
@@ -726,7 +726,7 @@
  },
  "Annotate": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -1039,7 +1039,7 @@
  },
  "BoundaryAngles": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 56,
@@ -1099,7 +1099,7 @@
  },
  "BoundaryLayer": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 74,
@@ -1115,8 +1115,8 @@
    ],
    "nodes": [
     624,
-    830.8707631321928,
-    830.8707631321928,
+    830.870763132415,
+    830.870763132415,
     0.0,
     1.0
    ],
@@ -1126,7 +1126,7 @@
  },
  "BoundaryLayer_3d": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 36,
@@ -1144,8 +1144,8 @@
    ],
    "nodes": [
     85,
-    146.78450203131732,
-    146.78450203131732,
+    146.78450583659964,
+    146.78450583659964,
     0.0,
     1.0
    ],
@@ -1155,10 +1155,10 @@
  },
  "BoundaryLayer_ho": {
   "errors": [],
-  "files": [
-   "highOrderBL_bezier_face_1_after.pos",
-   "highOrderBL_bezier_face_1_before.pos"
-  ],
+  "files": {
+   "highOrderBL_bezier_face_1_after.pos": 116263,
+   "highOrderBL_bezier_face_1_before.pos": 116266
+  },
   "mesh": {
    "elements": {
     "Line 3": 42,
@@ -1185,10 +1185,10 @@
  },
  "Bubbles": {
   "errors": [],
-  "files": [
-   "bubbles.geo",
-   "shrunk.geo"
-  ],
+  "files": {
+   "bubbles.geo": 11236,
+   "shrunk.geo": 11571
+  },
   "mesh": {
    "elements": {
     "Line 2": 16,
@@ -1214,7 +1214,7 @@
  },
  "Crack": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 113,
@@ -1261,7 +1261,7 @@
  },
  "Crack_folded": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 304,
@@ -1287,7 +1287,7 @@
  },
  "Curl": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -2177,7 +2177,7 @@
  },
  "CutBox": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -2886,7 +2886,7 @@
  },
  "CutGrid": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -3712,7 +3712,7 @@
  },
  "CutParametric": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -4536,7 +4536,7 @@
  },
  "CutPlane": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Hexahedron 8": 27,
@@ -5444,7 +5444,7 @@
  },
  "CutSphere": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -6519,7 +6519,7 @@
  },
  "DiscretizationError": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 18,
@@ -6588,7 +6588,7 @@
  },
  "Distance": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 14,
@@ -6858,7 +6858,7 @@
  },
  "Divergence": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -7748,7 +7748,7 @@
  },
  "DuplicateNodes": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 40,
@@ -7895,7 +7895,7 @@
  },
  "DuplicateNodes_quads": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -8042,7 +8042,7 @@
  },
  "Eigenvalues": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -8816,7 +8816,7 @@
  },
  "Eigenvectors": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -9674,7 +9674,7 @@
  },
  "ExtractEdges": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -9984,7 +9984,7 @@
  },
  "ExtractElements": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -10930,7 +10930,7 @@
  },
  "FieldFromAmplitudePhase": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -11255,7 +11255,7 @@
  },
  "GaussPoints": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Hexahedron 8": 27,
@@ -11705,7 +11705,7 @@
  },
  "Gradient": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -12335,7 +12335,7 @@
  },
  "HarmonicToTime": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -12748,9 +12748,9 @@
  },
  "HomologyComputation": {
   "errors": [],
-  "files": [
-   "relative.msh"
-  ],
+  "files": {
+   "relative.msh": 4859
+  },
   "mesh": {
    "elements": {
     "Line 2": 254,
@@ -13006,7 +13006,7 @@
  },
  "HomologyPostProcessing": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 220,
@@ -13185,7 +13185,7 @@
  },
  "Integrate": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -14319,7 +14319,7 @@
  },
  "Invisible": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 80,
@@ -14465,7 +14465,7 @@
  },
  "Isosurface": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -16387,7 +16387,7 @@
  },
  "Isosurface_other": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -16630,7 +16630,7 @@
  },
  "Lambda2": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {},
    "entities": [
@@ -17247,7 +17247,7 @@
  },
  "LongitudeLatitude": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -17827,7 +17827,7 @@
  },
  "MakeSimplex": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {},
    "entities": [
@@ -18280,7 +18280,7 @@
  },
  "MathEval": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -19017,7 +19017,7 @@
  },
  "MeshSizeFieldView": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -19413,7 +19413,7 @@
  },
  "MeshSubEntities": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 129,
@@ -19559,7 +19559,7 @@
  },
  "MeshSubEntities_hexes": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Hexahedron 8": 27,
@@ -19707,7 +19707,7 @@
  },
  "MeshVolume": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -20085,7 +20085,7 @@
  },
  "MinMax": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -21255,7 +21255,7 @@
  },
  "ModifyComponents": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -21797,7 +21797,7 @@
  },
  "ModulusPhase": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -22089,10 +22089,10 @@
  },
  "NearToFarField": {
   "errors": [],
-  "files": [
-   "farfield.m",
-   "monk.m"
-  ],
+  "files": {
+   "farfield.m": 9065,
+   "monk.m": 19238
+  },
   "mesh": {
    "elements": {},
    "entities": [
@@ -22375,7 +22375,7 @@
  },
  "NearestNeighbor": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {},
    "entities": [
@@ -22561,7 +22561,7 @@
  },
  "NewView": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -22802,7 +22802,7 @@
  },
  "Order2": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {},
    "entities": [
@@ -23521,7 +23521,7 @@
  },
  "Particles": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -24299,7 +24299,7 @@
  },
  "Probe": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -25187,7 +25187,7 @@
  },
  "Remove": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {},
    "entities": [
@@ -25722,7 +25722,7 @@
  },
  "Scal2Tens": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -26153,7 +26153,7 @@
  },
  "Scal2Vec": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -26540,7 +26540,7 @@
  },
  "ShowNeighborElements": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -26686,7 +26686,7 @@
  },
  "ShowNeighborElements_cube": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 54
@@ -26831,7 +26831,7 @@
  },
  "SimplePartition": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 12,
@@ -26978,7 +26978,7 @@
  },
  "SimplePartition_quads": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 40,
@@ -27125,7 +27125,7 @@
  },
  "Skin": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -28058,7 +28058,7 @@
  },
  "Skin_FromMesh": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -28083,7 +28083,7 @@
  },
  "Smooth": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -28781,7 +28781,7 @@
  },
  "SpanningTree": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 63,
@@ -28927,7 +28927,7 @@
  },
  "SpanningTree_cube": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 44,
@@ -29074,7 +29074,7 @@
  },
  "SphericalRaise": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -29496,7 +29496,7 @@
  },
  "StreamLines": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -30177,7 +30177,7 @@
  },
  "Summation": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -30613,7 +30613,7 @@
  },
  "Tetrahedralize": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Tetrahedron 4": 100,
@@ -30857,7 +30857,7 @@
  },
  "Transform": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -31529,7 +31529,7 @@
  },
  "Triangulate": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {
     "Line 2": 20,
@@ -31788,14 +31788,14 @@
  },
  "VoroMetal": {
   "errors": [],
-  "files": [
-   "MicrostructurePolycrystal3D.geo",
-   "MicrostructurePolycrystal3D.pos",
-   "MicrostructurePolycrystal3D2.pos",
-   "PERIODIC.map",
-   "SET.map",
-   "table.txt"
-  ],
+  "files": {
+   "MicrostructurePolycrystal3D.geo": 27723,
+   "MicrostructurePolycrystal3D.pos": 2516,
+   "MicrostructurePolycrystal3D2.pos": 24457,
+   "PERIODIC.map": 2279,
+   "SET.map": 1955,
+   "table.txt": 24
+  },
   "mesh": {
    "elements": {},
    "entities": [
@@ -31817,7 +31817,7 @@
  },
  "Warp": {
   "errors": [],
-  "files": [],
+  "files": {},
   "mesh": {
    "elements": {},
    "entities": [
