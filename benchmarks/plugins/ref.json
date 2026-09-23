@@ -26834,10 +26834,9 @@
   "files": [],
   "mesh": {
    "elements": {
-    "Line 2": 48,
-    "Point": 10,
+    "Line 2": 12,
     "Tetrahedron 4": 100,
-    "Triangle 3": 127
+    "Triangle 3": 104
    },
    "entities": [
     18,

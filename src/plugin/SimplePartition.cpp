@@ -5,6 +5,7 @@
 
 #include "GModel.h"
 #include "GmshConfig.h"
+#include <algorithm>
 #include "SimplePartition.h"
 #include "partitionFace.h"
 #include "partitionEdge.h"
@@ -132,6 +133,15 @@ int GMSH_SimplePartitionPlugin::run()
   }
   bool emptyZ = (ppZ[0] == ppZ[numSlicesZ]);
 
+  // the slab of a coordinate: the number of inner slab boundaries below it,
+  // so that it is in (pp[k], pp[k + 1]], the first and last slabs extending
+  // to whatever is beyond the ends
+  auto slab = [](const std::vector<double> &pp, bool empty, double p) {
+    if(empty) return 0;
+    return (int)(std::lower_bound(pp.begin() + 1, pp.end() - 1, p) -
+                 (pp.begin() + 1));
+  };
+
   std::vector<GEntity *> entities;
   m->getEntities(entities);
   std::vector<std::pair<MElement *, int> > elmToPartition;
@@ -140,27 +150,12 @@ int GMSH_SimplePartitionPlugin::run()
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       SPoint3 point = e->barycenter();
-      int part = 0;
-      for(int kx = 0; kx < numSlicesX; kx++) {
-        if(part) break;
-        for(int ky = 0; ky < numSlicesY; ky++) {
-          if(part) break;
-          for(int kz = 0; kz < numSlicesZ; kz++) {
-            if(part) break;
-            if((emptyX || (kx == 0 && ppX[0] == point[0]) ||
-                (ppX[kx] < point[0] && point[0] <= ppX[kx + 1])) &&
-               (emptyY || (ky == 0 && ppY[0] == point[1]) ||
-                (ppY[ky] < point[1] && point[1] <= ppY[ky + 1])) &&
-               (emptyZ || (kz == 0 && ppZ[0] == point[2]) ||
-                (ppZ[kz] < point[2] && point[2] <= ppZ[kz + 1]))) {
-              part = kx * numSlicesY * numSlicesZ + ky * numSlicesZ + kz + 1;
-              elmToPartition.push_back(
-                std::pair<MElement *, unsigned int>(e, part));
-              e->setPartition(part); // this will be removed
-            }
-          }
-        }
-      }
+      int kx = slab(ppX, emptyX, point[0]);
+      int ky = slab(ppY, emptyY, point[1]);
+      int kz = slab(ppZ, emptyZ, point[2]);
+      int part = kx * numSlicesY * numSlicesZ + ky * numSlicesZ + kz + 1;
+      elmToPartition.push_back(std::pair<MElement *, int>(e, part));
+      e->setPartition(part); // this will be removed
     }
   }
 
