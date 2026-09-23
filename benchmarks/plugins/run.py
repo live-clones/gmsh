@@ -13,6 +13,11 @@
 # A case fails if its process crashes, if it logs an error, or if its summary
 # differs from the reference; --update writes the summaries of the cases run
 # into ref.json instead of checking them. Exits with 1 if a case failed.
+#
+# The External* cases run the plugin of examples/api/plugin, loaded from a
+# shared library: run.py compiles it with the compiler of $CXX (c++ by default)
+# against the sources and the build directory (--build, by default the bin
+# directory next to the api directory), and skips them if that fails.
 
 import argparse
 import concurrent.futures
@@ -120,12 +125,38 @@ def child(case, jsonfile):
     json.dump(out, open(jsonfile, 'w'), indent=1)
 
 
+def build_external(args):
+    # the example plugin, against the headers of the sources and the build
+    src = os.path.join(HERE, '..', '..', 'src')
+    inc = ['-I' + os.path.join(args.build, 'src', 'common')]
+    inc += ['-I' + os.path.join(src, d) for d in sorted(os.listdir(src))
+            if os.path.isdir(os.path.join(src, d))]
+    out = os.path.join(args.o, '_external')
+    os.makedirs(out, exist_ok=True)
+    lib = os.path.join(out, 'libElementAverage.so')
+    cmd = [os.environ.get('CXX', 'c++'), '-std=c++17', '-shared', '-fPIC'] + \
+        inc + [os.path.join(HERE, '..', '..', 'examples', 'api', 'plugin',
+                            'ElementAverage.cpp'),
+               '-L' + args.build, '-lgmsh', '-Wl,-rpath,' + args.build,
+               '-o', lib]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode:
+        print('could not build the example plugin: External cases skipped')
+        print(r.stderr[:1000])
+        return None
+    return out
+
+
 def run_case(name, args):
     wdir = os.path.join(args.o, name)
     os.makedirs(wdir, exist_ok=True)
     for f in os.listdir(wdir):
         os.remove(os.path.join(wdir, f))
     env = dict(os.environ, PYTHONPATH=args.api)
+    if name.startswith('External'):
+        if not args.external:
+            return {'skip': True}
+        env['GMSHPLUGINSHOME'] = args.external
     cmd = [sys.executable, os.path.abspath(__file__), '--child',
            os.path.join(HERE, name + '.geo')]
     with open(os.path.join(wdir, 'log.txt'), 'w') as log:
@@ -169,6 +200,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('-o', default=os.path.join(HERE, 'out'))
     p.add_argument('--api', default=os.path.join(HERE, '..', '..', 'api'))
+    p.add_argument('--build', default=None)
     p.add_argument('-j', type=int, default=os.cpu_count())
     p.add_argument('--update', action='store_true')
     p.add_argument('--child', nargs=1)
@@ -178,6 +210,8 @@ def main():
         return child(args.child[0], 'summary.json')
     args.o = os.path.abspath(args.o)
     args.api = os.path.abspath(args.api)
+    args.build = os.path.abspath(args.build or
+                                 os.path.join(args.api, '..', 'bin'))
 
     names = sorted(os.path.basename(f)[:-4]
                    for f in glob.glob(os.path.join(HERE, '*.geo')))
@@ -186,6 +220,9 @@ def main():
         names = [n for n in names
                  if any(fnmatch.fnmatch(n, c) for c in args.cases)]
     ref = json.load(open(REF)) if os.path.exists(REF) else {}
+    args.external = None
+    if any(n.startswith('External') for n in names):
+        args.external = build_external(args)
 
     with concurrent.futures.ThreadPoolExecutor(args.j) as ex:
         results = dict(zip(names, ex.map(lambda n: run_case(n, args), names)))
@@ -193,6 +230,9 @@ def main():
     failed = 0
     for n in names:
         r = results[n]
+        if 'skip' in r:
+            print('skip  %s' % n)
+            continue
         if 'crash' in r:
             status, why = 'CRASH', ['exit code %s, see %s' %
                                     (r['crash'], os.path.join(args.o, n))]
@@ -214,7 +254,7 @@ def main():
 
     if args.update:
         for n in names:
-            if 'crash' not in results[n]:
+            if 'crash' not in results[n] and 'skip' not in results[n]:
                 ref[n] = {k: v for k, v in results[n].items() if k != 'time'}
         json.dump(ref, open(REF, 'w'), indent=1, sort_keys=True)
     print('%d cases, %d failed' % (len(names), failed))
