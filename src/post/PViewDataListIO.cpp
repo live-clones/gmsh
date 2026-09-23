@@ -4,14 +4,26 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
 #include <set>
+#include <unordered_map>
 #include "PViewDataList.h"
+#include "PViewDataGModel.h"
+#include "GModel.h"
+#include "discreteVertex.h"
+#include "discreteEdge.h"
+#include "discreteFace.h"
+#include "discreteRegion.h"
 #include "MElement.h"
+#include "ElementType.h"
 #include "Numeric.h"
 #include "StringUtils.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
-#include "MVertexRTree.h"
 #include "Context.h"
 #include "adaptiveData.h"
 #include "OS.h"
@@ -524,111 +536,76 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
   return true;
 }
 
-static void createVertices(std::vector<double> &list, int nbelm, int nbnod,
-                           std::vector<MVertex *> &nodes)
+// The index of the point each point (x, y, z in sequence) is merged with: the
+// points closer than eps in each direction, the merged points numbered in the
+// order in which they first appear
+static std::vector<std::size_t> mergePoints(const std::vector<double> &xyz,
+                                            double eps, std::size_t &num)
 {
-  if(!nbelm) return;
-  int nb = list.size() / nbelm;
-  for(std::size_t i = 0; i < list.size(); i += nb) {
-    double *x = &list[i];
-    double *y = &list[i + nbnod];
-    double *z = &list[i + 2 * nbnod];
-    for(int j = 0; j < nbnod; j++)
-      nodes.push_back(new MVertex(x[j], y[j], z[j]));
+  std::size_t n = xyz.size() / 3;
+  const double *p = xyz.data();
+
+  // the points kept, in cells of size eps (two points closer than eps are in
+  // the same cell or in neighbors), or at their exact place if eps is too
+  // small for the coordinates
+  bool exact = !(eps > 0.);
+  for(std::size_t i = 0; i < 3 * n && !exact; i++)
+    if(std::abs(p[i] / eps) > 1.e15) exact = true;
+  struct cellHash {
+    std::size_t operator()(const std::array<int64_t, 3> &c) const
+    {
+      return (std::size_t)(c[0] * 73856093) ^ (std::size_t)(c[1] * 19349663) ^
+             (std::size_t)(c[2] * 83492791);
+    }
+  };
+  std::unordered_map<std::array<int64_t, 3>, std::vector<std::size_t>, cellHash>
+    grid;
+  auto close = [&](std::size_t i, std::size_t j) {
+    for(int k = 0; k < 3; k++) {
+      double d = std::abs(p[3 * i + k] - p[3 * j + k]);
+      if(exact ? (d != 0.) : (d > eps)) return false;
+    }
+    return true;
+  };
+
+  std::vector<std::size_t> merged(n);
+  num = 0;
+  for(std::size_t i = 0; i < n; i++) {
+    std::array<int64_t, 3> c;
+    for(int k = 0; k < 3; k++) {
+      double x = p[3 * i + k] + 0.; // (-0. is 0.)
+      if(exact)
+        std::memcpy(&c[k], &x, sizeof(double));
+      else
+        c[k] = (int64_t)std::floor(x / eps);
+    }
+    // the cell of the point first, then its neighbors
+    bool found = false;
+    for(int nb = 0; nb < (exact ? 1 : 27) && !found; nb++) {
+      int d[3] = {nb % 3, (nb / 3) % 3, nb / 9}; // 0, then +1, then -1
+      std::array<int64_t, 3> cn;
+      for(int k = 0; k < 3; k++) cn[k] = c[k] + (d[k] == 2 ? -1 : d[k]);
+      auto it = grid.find(cn);
+      if(it == grid.end()) continue;
+      for(auto j : it->second) {
+        if(close(i, j)) {
+          merged[i] = merged[j];
+          found = true;
+          break;
+        }
+      }
+    }
+    if(!found) {
+      merged[i] = num++;
+      grid[c].push_back(i);
+    }
   }
+  return merged;
 }
 
-class nodeData {
-public:
-  int nbnod;
-  int nod;
-  double *data;
-  nodeData() : nbnod(0), nod(0), data(nullptr) {}
-  nodeData(int _nbnod, int _nod, double *_data)
-    : nbnod(_nbnod), nod(_nod), data(_data)
-  {
-  }
-};
-
-static void createElements(std::vector<double> &list, int nbelm, int nbnod,
-                           MVertexRTree &pos, std::vector<MElement *> &elements,
-                           int type, std::map<MVertex *, nodeData> *vertexData)
-{
-  if(!nbelm) return;
-  int t = 0;
-  // reverse-engineer geometrical element type according to the number
-  // of nodes (this should be completed, but is likely enough for most
-  // legacy .pos files out there...)
-  switch(type) {
-  case TYPE_PNT: t = MSH_PNT; break;
-  case TYPE_LIN:
-    switch(nbnod) {
-    case 2: t = MSH_LIN_2; break;
-    case 3: t = MSH_LIN_3; break;
-    }
-    break;
-  case TYPE_TRI:
-    switch(nbnod) {
-    case 3: t = MSH_TRI_3; break;
-    case 6: t = MSH_TRI_6; break;
-    }
-    break;
-  case TYPE_QUA:
-    switch(nbnod) {
-    case 4: t = MSH_QUA_4; break;
-    case 8: t = MSH_QUA_8; break;
-    case 9: t = MSH_QUA_9; break;
-    }
-    break;
-  case TYPE_TET:
-    switch(nbnod) {
-    case 4: t = MSH_TET_4; break;
-    case 10: t = MSH_TET_10; break;
-    }
-    break;
-  case TYPE_HEX:
-    switch(nbnod) {
-    case 8: t = MSH_HEX_8; break;
-    case 20: t = MSH_HEX_20; break;
-    case 27: t = MSH_HEX_27; break;
-    }
-    break;
-  case TYPE_PRI:
-    switch(nbnod) {
-    case 6: t = MSH_PRI_6; break;
-    case 15: t = MSH_PRI_15; break;
-    case 18: t = MSH_PRI_18; break;
-    }
-    break;
-  case TYPE_PYR:
-    switch(nbnod) {
-    case 5: t = MSH_PYR_5; break;
-    case 13: t = MSH_PYR_13; break;
-    case 14: t = MSH_PYR_14; break;
-    }
-    break;
-  }
-  if(!t) {
-    Msg::Warning("Discarding elements of type (%d nodes)", nbnod);
-    return;
-  }
-  MElementFactory factory;
-  int nb = list.size() / nbelm;
-  for(std::size_t i = 0; i < list.size(); i += nb) {
-    double *x = &list[i];
-    double *y = &list[i + nbnod];
-    double *z = &list[i + 2 * nbnod];
-    std::vector<MVertex *> verts(nbnod);
-    for(int j = 0; j < nbnod; j++) {
-      verts[j] = pos.find(x[j], y[j], z[j]);
-      if(vertexData)
-        (*vertexData)[verts[j]] = nodeData(nbnod, j, &list[i + 3 * nbnod]);
-    }
-    MElement *e = factory.create(t, verts);
-    elements.push_back(e);
-  }
-}
-
+// The elements of the lists become the mesh of a temporary model, their nodes
+// merged within the geometrical tolerance, and their values the data of
+// model-based views on it (one per number of components), which write the file
 bool PViewDataList::writeMSH(const std::string &fileName, double version,
                              bool binary, bool saveMesh, bool multipleView,
                              int partitionNum, bool saveInterpolationMatrices,
@@ -637,164 +614,201 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
   if(_adaptive) {
     Msg::Warning(
       "Writing adapted dataset (will only export current time step)");
-    return _adaptive->getData()->writeMSH(fileName, version, binary);
+    return _adaptive->getData()->writeMSH(
+      fileName, version, binary, saveMesh, multipleView, partitionNum,
+      saveInterpolationMatrices, forceNodeData, forceElementData);
   }
 
-  FILE *fp = Fopen(fileName.c_str(), "w");
-  if(!fp) {
-    Msg::Error("Unable to open file '%s'", fileName.c_str());
-    return false;
-  }
-
-  double tol = CTX::instance()->geom.tolerance;
-  double eps = norm(SVector3(BBox.max(), BBox.min())) * tol;
-
-  std::vector<MVertex *> vertices;
-  std::vector<MElement *> elements;
-
-  int numComponents = 9;
-  for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = nullptr;
-    int *numEle = nullptr, numNodes, numComp;
-    _getRawData(i, &list, &numEle, &numComp, &numNodes);
-    if(*numEle) numComponents = std::min(numComponents, numComp);
-    createVertices(*list, *numEle, numNodes, vertices);
-  }
-  MVertexRTree pos(eps);
-  std::vector<MVertex *> unique;
-  for(std::size_t i = 0; i < vertices.size(); i++) {
-    if(!pos.insert(vertices[i])) unique.push_back(vertices[i]);
-  }
-  vertices.clear();
-
-  std::map<MVertex *, nodeData> vertexData;
-
+  // the lists with elements, with the type of their elements in the mesh, and
+  // the coordinates of the nodes of all the elements
+  struct elementList {
+    std::vector<double> *list;
+    int numEle, numNodes, numComp, mshType, mult;
+  };
+  std::vector<elementList> lists;
+  std::vector<double> xyz;
   for(int i = 0; i < 24; i++) {
     std::vector<double> *list = nullptr;
     int *numEle = nullptr, numComp, numNodes;
-    int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
-    createElements(*list, *numEle, numNodes, pos, elements, typ,
-                   forceNodeData ? &vertexData : nullptr);
+    int type = _getRawData(i, &list, &numEle, &numComp, &numNodes);
+    if(!*numEle) continue;
+    int mshType = 0;
+    for(int order = 0; order <= 10 && !mshType; order++) {
+      for(int serendip = 0; serendip < 2 && !mshType; serendip++) {
+        int t = ElementType::getType(type, order, serendip);
+        if(t > 0 && ElementType::getNumVertices(t) == numNodes) mshType = t;
+      }
+    }
+    if(!mshType) {
+      Msg::Warning("Skipping elements with %d nodes of view '%s': no such "
+                   "element in MSH",
+                   numNodes, getName().c_str());
+      continue;
+    }
+    int nb = list->size() / *numEle;
+    // the number of values per component of an element at each step
+    int mult = (nb - 3 * numNodes) / (NbTimeStep * numComp);
+    lists.push_back({list, *numEle, numNodes, numComp, mshType, mult});
+    for(std::size_t e = 0; e < list->size(); e += nb) {
+      double *x = &(*list)[e];
+      for(int j = 0; j < numNodes; j++) {
+        xyz.push_back(x[j]);
+        xyz.push_back(x[numNodes + j]);
+        xyz.push_back(x[2 * numNodes + j]);
+      }
+    }
+  }
+  if(lists.empty()) {
+    Msg::Warning("No elements to write in view '%s'", getName().c_str());
+    return true;
+  }
+  if(NbT2 || NbT3)
+    Msg::Warning("Strings of view '%s' are not written in MSH",
+                 getName().c_str());
+
+  double eps =
+    norm(SVector3(BBox.max(), BBox.min())) * CTX::instance()->geom.tolerance;
+  std::size_t numVertices;
+  std::vector<std::size_t> merged = mergePoints(xyz, eps, numVertices);
+
+  // the temporary model is current while its mesh is created, so that the
+  // numbering of the nodes and elements of the current one is left alone;
+  // creating it hides the others
+  int current = GModel::getCurrentIndex();
+  std::vector<int> visible;
+  for(auto m : GModel::list) visible.push_back(m->getVisibility());
+  GModel *model = new GModel();
+  GModel::setCurrent(model);
+
+  // an entity of each dimension, holding the elements of that dimension; the
+  // one of highest dimension holds all the nodes
+  GEntity *entities[4] = {nullptr, nullptr, nullptr, nullptr};
+  int maxDim = 0;
+  for(auto &l : lists) {
+    int dim = ElementType::getDimension(l.mshType);
+    maxDim = std::max(maxDim, dim);
+    if(entities[dim]) continue;
+    switch(dim) {
+    case 0: {
+      GVertex *v = new discreteVertex(model, 1);
+      model->add(v);
+      entities[0] = v;
+    } break;
+    case 1: {
+      GEdge *e = new discreteEdge(model, 1);
+      model->add(e);
+      entities[1] = e;
+    } break;
+    case 2: {
+      GFace *f = new discreteFace(model, 1);
+      model->add(f);
+      entities[2] = f;
+    } break;
+    case 3: {
+      GRegion *r = new discreteRegion(model, 1);
+      model->add(r);
+      entities[3] = r;
+    } break;
+    }
+  }
+  std::vector<MVertex *> vertices(numVertices, nullptr);
+  for(std::size_t i = 0; i < merged.size(); i++) {
+    std::size_t m = merged[i];
+    if(vertices[m]) continue;
+    vertices[m] = new MVertex(xyz[3 * i], xyz[3 * i + 1], xyz[3 * i + 2],
+                              entities[maxDim], m + 1);
+    entities[maxDim]->addMeshVertex(vertices[m]);
+  }
+  MElementFactory factory;
+  std::size_t node = 0, num = 0;
+  for(auto &l : lists) {
+    GEntity *ge = entities[ElementType::getDimension(l.mshType)];
+    std::vector<MVertex *> v(l.numNodes);
+    for(int e = 0; e < l.numEle; e++) {
+      for(int j = 0; j < l.numNodes; j++) v[j] = vertices[merged[node++]];
+      ge->addElement(factory.create(l.mshType, v, ++num));
+    }
   }
 
-  int num = 0;
-  for(std::size_t i = 0; i < unique.size(); i++) unique[i]->setIndex(++num);
+  GModel::list.erase(
+    std::find(GModel::list.begin(), GModel::list.end(), model));
+  GModel::setCurrentIndex(current);
+  model->setVisibility(0);
+  for(std::size_t i = 0; i < visible.size(); i++)
+    GModel::list[i]->setVisibility(visible[i]);
 
-  if(version > 2.2)
-    Msg::Warning("Mesh-based export of list-based datasets not available with "
-                 "MSH %g: using MSH 2.2",
-                 version);
-
-  fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
-
-  if(saveMesh) {
-    fprintf(fp, "$Nodes\n");
-    fprintf(fp, "%d\n", (int)unique.size());
-    for(std::size_t i = 0; i < unique.size(); i++) {
-      MVertex *v = unique[i];
-      fprintf(fp, "%ld %.16g %.16g %.16g\n", v->getIndex(), v->x(), v->y(),
-              v->z());
+  // the data of the elements with each number of components
+  PViewDataGModel::DataType type =
+    forceNodeData    ? PViewDataGModel::NodeData :
+    forceElementData ? PViewDataGModel::ElementData :
+                       PViewDataGModel::ElementNodeData;
+  std::vector<PViewDataGModel *> data;
+  for(int numComp : {1, 3, 9}) {
+    bool any = false;
+    for(auto &l : lists) any |= (l.numComp == numComp);
+    if(!any) continue;
+    PViewDataGModel *d = new PViewDataGModel(type);
+    std::string name = getName();
+    for(auto &l : lists) {
+      if(l.numComp != numComp) {
+        name += (numComp == 1) ? " (scalar)" :
+                (numComp == 3) ? " (vector)" :
+                                 " (tensor)";
+        break;
+      }
     }
-    fprintf(fp, "$EndNodes\n");
-
-    fprintf(fp, "$Elements\n");
-    fprintf(fp, "%d\n", (int)elements.size());
-    for(std::size_t i = 0; i < elements.size(); i++) {
-      elements[i]->writeMSH2(fp, 2.2, false, i + 1);
+    d->setName(name);
+    if(type == PViewDataGModel::ElementNodeData) {
+      for(auto &it : _interpolation) {
+        if(it.second.size() >= 4)
+          d->setInterpolationMatrices(it.first, *it.second[0], *it.second[1],
+                                      *it.second[2], *it.second[3]);
+        else if(it.second.size() >= 2)
+          d->setInterpolationMatrices(it.first, *it.second[0], *it.second[1]);
+      }
     }
-    fprintf(fp, "$EndElements\n");
-  }
-
-  if(saveInterpolationMatrices && haveInterpolationMatrices() &&
-     !forceNodeData && !forceElementData) {
-    fprintf(fp, "$InterpolationScheme\n");
-    fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
-    fprintf(fp, "%d\n", (int)_interpolation.size());
-    for(auto it = _interpolation.begin(); it != _interpolation.end(); it++) {
-      if(it->second.size() >= 2) {
-        fprintf(fp, "%d\n2\n", it->first);
-        for(int mat = 0; mat < 2; mat++) {
-          int m = it->second[mat]->size1(), n = it->second[mat]->size2();
-          fprintf(fp, "%d %d\n", m, n);
-          for(int i = 0; i < m; i++) {
-            for(int j = 0; j < n; j++)
-              fprintf(fp, "%.16g ", it->second[mat]->get(i, j));
-            fprintf(fp, "\n");
+    for(int step = 0; step < NbTimeStep; step++) {
+      std::vector<std::size_t> tags;
+      std::vector<std::vector<double>> values;
+      // the value of the last element at each node (NodeData)
+      std::vector<const double *> nodeValues;
+      if(type == PViewDataGModel::NodeData)
+        nodeValues.resize(numVertices, nullptr);
+      std::size_t node = 0, num = 0;
+      for(auto &l : lists) {
+        int nb = l.list->size() / l.numEle;
+        for(int e = 0; e < l.numEle; e++, node += l.numNodes, num++) {
+          if(l.numComp != numComp) continue;
+          const double *v = &(*l.list)[(std::size_t)e * nb + 3 * l.numNodes] +
+                            numComp * l.mult * step;
+          if(type == PViewDataGModel::NodeData) {
+            for(int j = 0; j < std::min(l.numNodes, l.mult); j++)
+              nodeValues[merged[node + j]] = v + numComp * j;
+            continue;
           }
+          tags.push_back(num + 1);
+          int n = (type == PViewDataGModel::ElementData) ? 1 : l.mult;
+          values.emplace_back(v, v + numComp * n);
         }
       }
+      for(std::size_t i = 0; i < nodeValues.size(); i++) {
+        if(!nodeValues[i]) continue;
+        tags.push_back(i + 1);
+        values.emplace_back(nodeValues[i], nodeValues[i] + numComp);
+      }
+      d->addData(model, tags, values, step, getTime(step), -1, numComp, false);
     }
-    fprintf(fp, "$EndInterpolationScheme\n");
+    data.push_back(d);
   }
 
-  for(int ts = 0; ts < NbTimeStep; ts++) {
-    if(forceNodeData)
-      fprintf(fp, "$NodeData\n");
-    else if(forceElementData)
-      fprintf(fp, "$ElementData\n");
-    else
-      fprintf(fp, "$ElementNodeData\n");
-    if(saveInterpolationMatrices && haveInterpolationMatrices() &&
-       !forceNodeData && !forceElementData)
-      fprintf(fp, "2\n\"%s\"\n\"INTERPOLATION_SCHEME\"\n", getName().c_str());
-    else
-      fprintf(fp, "1\n\"%s\"\n", getName().c_str());
-    fprintf(fp, "1\n%.16g\n", getTime(ts));
-    int size = forceNodeData ? (int)unique.size() : (int)elements.size();
-    if(partitionNum > 0)
-      fprintf(fp, "4\n%d\n%d\n%d\n%d\n", ts, numComponents, size, partitionNum);
-    else
-      fprintf(fp, "3\n%d\n%d\n%d\n", ts, numComponents, size);
-
-    if(forceNodeData) {
-      for(std::size_t i = 0; i < unique.size(); i++) {
-        MVertex *v = unique[i];
-        fprintf(fp, "%ld", v->getIndex());
-        int nbnod = vertexData[v].nbnod;
-        int nod = vertexData[v].nod;
-        double *d = vertexData[v].data;
-        for(int j = 0; j < numComponents; j++)
-          fprintf(fp, " %.16g",
-                  d[numComponents * nbnod * ts + numComponents * nod + j]);
-        fprintf(fp, "\n");
-      }
-      fprintf(fp, "$EndNodeData\n");
-    }
-    else {
-      int n = 0;
-      for(int i = 0; i < 24; i++) {
-        std::vector<double> *list = nullptr;
-        int *numEle = nullptr, numComp, numNodes;
-        int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
-        if(*numEle) {
-          int mult = numNodes;
-          if(_interpolation.count(typ)) mult = _interpolation[typ][0]->size1();
-          int nb = list->size() / *numEle;
-          for(std::size_t i = 0; i < list->size(); i += nb) {
-            double *v = &(*list)[i + 3 * numNodes];
-            if(forceElementData) { // just keep first vertex value
-              fprintf(fp, "%d", ++n);
-              for(int j = 0; j < numComponents; j++)
-                fprintf(fp, " %.16g", v[numComponents * mult * ts + j]);
-            }
-            else {
-              fprintf(fp, "%d %d", ++n, mult);
-              for(int j = 0; j < numComponents * mult; j++)
-                fprintf(fp, " %.16g", v[numComponents * mult * ts + j]);
-            }
-            fprintf(fp, "\n");
-          }
-        }
-      }
-      if(forceElementData)
-        fprintf(fp, "$EndElementData\n");
-      else
-        fprintf(fp, "$EndElementNodeData\n");
-    }
-  }
-
-  fclose(fp);
-  return true;
+  bool ok = true;
+  for(std::size_t i = 0; i < data.size() && ok; i++)
+    ok = data[i]->writeMSH(fileName, version, binary, i ? false : saveMesh,
+                           i ? true : multipleView, partitionNum,
+                           saveInterpolationMatrices);
+  for(auto d : data) delete d;
+  delete model;
+  return ok;
 }
 
 void PViewDataList::importLists(int N[24], std::vector<double> *V[24])

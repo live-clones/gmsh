@@ -220,6 +220,10 @@ public:
 
   // sets a model to current
   static int setCurrent(GModel *m);
+  // the index of the current model as set (-1 for the last one), to restore it
+  // after using a model temporarily
+  static int getCurrentIndex() { return _current; }
+  static void setCurrentIndex(int index) { _current = index; }
   int setAsCurrent() { return setCurrent(this); }
 
   // find a model by name; if fileName is given, return model only if it does

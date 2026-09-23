@@ -49,8 +49,9 @@ bool PViewDataGModel::addData(GModel *model,
 
 bool PViewDataGModel::addData(GModel *model,
                               const std::vector<std::size_t> &tags,
-                              const std::vector<std::vector<double> > &data,
-                              int step, double time, int partition, int numComp)
+                              const std::vector<std::vector<double>> &data,
+                              int step, double time, int partition, int numComp,
+                              bool minMax)
 {
   if(data.empty() || tags.empty() || data.size() != tags.size()) return false;
   changed();
@@ -82,7 +83,7 @@ bool PViewDataGModel::addData(GModel *model,
     for(int j = 0; j < numComp * mult; j++) d[j] = data[i][j];
   }
   if(partition >= 0) _steps[step]->getPartitions().insert(partition);
-  finalize();
+  finalize(minMax);
   return true;
 }
 
