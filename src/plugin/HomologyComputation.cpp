@@ -108,9 +108,11 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
     }
   }
 
-  // as GModel::computeHomology(), and write the file once the chains are in
-  // the model
-  m->pruneMeshVertexAssociations();
+  // FIXME GModel::computeHomology() calls pruneMeshVertexAssociations(), but it
+  // breaks existing scripts:
+
+  //m->pruneMeshVertexAssociations();
+
   if(fileName.size()) {
     homology->setFileName(fileName);
     homology->writeBasisMSH();
