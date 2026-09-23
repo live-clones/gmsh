@@ -196,7 +196,8 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
     if(!ok) continue;
     for(int ele = 0; ele < data1->getNumElements(timeBeg, ent); ele++) {
       if(data1->skipElement(timeBeg, ent, ele)) continue;
-      int numNodes = data1->getNumNodes(timeBeg, ent, ele);
+      int numNodes = getNumCornerNodes(data1, timeBeg, ent, ele);
+      if(!numNodes) continue;
       int type = data1->getType(timeBeg, ent, ele);
       int numComp = data1->getNumComponents(timeBeg, ent, ele);
       int otherNumComp = (!otherData || octree) ?

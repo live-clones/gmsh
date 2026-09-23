@@ -10,6 +10,7 @@
 #include "Plugin.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
+#include "PViewDataGModel.h"
 #include "Context.h"
 
 #if defined(HAVE_OPENGL)
@@ -115,4 +116,39 @@ PViewDataList *GMSH_PostPlugin::getDataList(PView *view, bool showError)
     Msg::Error(
       "This plugin can only be run on list-based views (`.pos' files)");
   return nullptr;
+}
+
+static int numCorners(int type)
+{
+  switch(type) {
+  case TYPE_PNT: return 1;
+  case TYPE_LIN: return 2;
+  case TYPE_TRI: return 3;
+  case TYPE_QUA: return 4;
+  case TYPE_TET: return 4;
+  case TYPE_PYR: return 5;
+  case TYPE_PRI: return 6;
+  case TYPE_HEX: return 8;
+  default: return 0; // polytopes: all their nodes
+  }
+}
+
+int GMSH_PostPlugin::getNumCornerNodes(PViewData *data, int step, int ent,
+                                       int ele) const
+{
+  PViewDataGModel *gm = dynamic_cast<PViewDataGModel *>(data);
+  if(gm && gm->getType() == PViewDataGModel::GaussPointData) {
+    if(!_warnedGauss)
+      Msg::Warning("Plugin(%s) skips Gauss point data", getName().c_str());
+    _warnedGauss = true;
+    return 0;
+  }
+  int numNodes = data->getNumNodes(step, ent, ele);
+  int nc = numCorners(data->getType(step, ent, ele));
+  if(!nc || numNodes <= nc) return numNodes;
+  if(!_warnedCorners)
+    Msg::Warning("Plugin(%s) only uses the corners of high order elements",
+                 getName().c_str());
+  _warnedCorners = true;
+  return nc;
 }

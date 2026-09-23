@@ -9,6 +9,10 @@
 #   tensor  node data, 1 step
 #   cell    element data, 1 step
 #
+# and order2.pos: the scalar and vector views of the four meshes made second
+# order (6-node triangles, 9-node quadrangles, 10-node tetrahedra, 27-node
+# hexahedra), as list data
+#
 # The files are committed: run this only to change them.
 
 import math
@@ -32,6 +36,7 @@ def tensor(x, y, z):
 
 
 def geometry(name):
+    gmsh.option.setNumber('Mesh.RecombineAll', 1 if name == 'quads' else 0)
     lc = 0.2 if name in ('square', 'quads') else 0.5
     if name in ('square', 'quads'):
         g = gmsh.model.geo
@@ -42,8 +47,6 @@ def geometry(name):
         gmsh.model.addPhysicalGroup(1, [1], 1, 'bottom')
         gmsh.model.addPhysicalGroup(1, [2, 3, 4], 2, 'rest')
         gmsh.model.addPhysicalGroup(2, [1], 3, 'domain')
-        if name == 'quads':
-            gmsh.option.setNumber('Mesh.RecombineAll', 1)
         gmsh.model.mesh.generate(2)
     else:
         g = gmsh.model.geo
@@ -102,7 +105,6 @@ def main():
     for name in ('square', 'quads', 'cube', 'hexes'):
         gmsh.clear()
         gmsh.option.setNumber('PostProcessing.SaveMesh', 1)
-        gmsh.option.setNumber('Mesh.RecombineAll', 0)
         gmsh.model.add(name)
         geometry(name)
         views(name)
@@ -113,6 +115,28 @@ def main():
         for i, v in enumerate(gmsh.view.getTags()):
             gmsh.view.write(v, msh, True)
             gmsh.view.write(v, pos, i > 0)
+    # the API has no second order list types: write the file ourselves
+    out = {'scalar': [], 'vector': []}
+    for name, t in (('square', 'T2'), ('quads', 'Q2'), ('cube', 'S2'),
+                    ('hexes', 'H2')):
+        gmsh.clear()
+        gmsh.model.add(name)
+        geometry(name)
+        gmsh.model.mesh.setOrder(2)
+        dim = 2 if name in ('square', 'quads') else 3
+        for ee, nn in zip(*gmsh.model.mesh.getElements(dim)[1:]):
+            for n in nn.reshape(len(ee), -1):
+                p = [gmsh.model.mesh.getNode(k)[0] for k in n]
+                xyz = ','.join('%.16g' % c for q in p for c in q)
+                sv = [scalar(*q, st) for st in range(3) for q in p]
+                vv = [c for st in range(3) for q in p for c in vector(*q, st)]
+                for k, vals in (('scalar', sv), ('vector', vv)):
+                    out[k].append('%s%s(%s){%s};' % (
+                        k[0].upper(), t, xyz,
+                        ','.join('%.16g' % c for c in vals)))
+    with open(os.path.join(HERE, 'data', 'order2.pos'), 'w') as f:
+        for k in ('scalar', 'vector'):
+            f.write('View "%s" {\n%s\n};\n' % (k, '\n'.join(out[k])))
     gmsh.finalize()
 
 

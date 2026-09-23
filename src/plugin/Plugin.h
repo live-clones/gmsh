@@ -82,6 +82,9 @@ public:
 // The base class for post-processing plugins. The user can either
 // modify or duplicate a post-processing view
 class GMSH_PostPlugin : public GMSH_Plugin {
+private:
+  mutable bool _warnedGauss = false, _warnedCorners = false;
+
 public:
   inline GMSH_PLUGIN_TYPE getType() const
   {
@@ -109,6 +112,11 @@ public:
   // get the the adapted data (i.e. linear, on refined mesh) if
   // available, otherwise get the original data
   virtual PViewData *getPossiblyAdaptiveData(PView *view);
+  // the number of nodes of an element of a view to read, for a plugin that
+  // writes first order elements (all list data holds) or that uses the element
+  // classes of shapeFunctions.h (which only know those): the corners of a
+  // higher order element, which come first; 0 for Gauss point data
+  int getNumCornerNodes(PViewData *data, int step, int ent, int ele) const;
   // (given the root of the tree of subdivisions of an adaptive view)
   virtual void assignSpecificVisibility(adaptiveElement *root) const {}
   virtual bool geometricalFilter(fullMatrix<double> *) const { return true; }

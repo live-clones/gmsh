@@ -79,7 +79,8 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
           bool scalar = (numComp == 1);
           bool circulation = (numComp == 3 && numEdges == 1);
           bool flux = (numComp == 3 && (numEdges == 3 || numEdges == 4));
-          int numNodes = data1->getNumNodes(step, ent, ele);
+          int numNodes = getNumCornerNodes(data1, step, ent, ele);
+          if(!numNodes) continue;
           int dim = data1->getDimension(step, ent, ele);
           if((dimension > 0) && (dim != dimension)) continue;
           int type = data1->getType(step, ent, ele);
@@ -148,7 +149,8 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
         int dim = data1->getDimension(firstStep, ent, ele);
         if((dimension > 0) && (dim != dimension)) continue;
 
-        int numNodes = data1->getNumNodes(firstStep, ent, ele);
+        int numNodes = getNumCornerNodes(data1, firstStep, ent, ele);
+        if(!numNodes) continue;
         int type = data1->getType(firstStep, ent, ele);
         int numComp = data1->getNumComponents(firstStep, ent, ele);
         if(numComp != 1)

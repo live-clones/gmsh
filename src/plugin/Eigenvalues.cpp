@@ -62,7 +62,8 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
       int numComp = data1->getNumComponents(0, ent, ele);
       if(numComp != 9) continue;
       int type = data1->getType(0, ent, ele);
-      int numNodes = data1->getNumNodes(0, ent, ele);
+      int numNodes = getNumCornerNodes(data1, 0, ent, ele);
+      if(!numNodes) continue;
       std::vector<double> *outmin = dmin->incrementList(1, type, numNodes);
       std::vector<double> *outmid = dmid->incrementList(1, type, numNodes);
       std::vector<double> *outmax = dmax->incrementList(1, type, numNodes);

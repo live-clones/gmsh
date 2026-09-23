@@ -388,11 +388,13 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
 
   int type = simplexType;
   if(type < 0) {
-    numNodes = vdata->getNumNodes(stepmin, ent, ele);
+    numNodes = getNumCornerNodes(vdata, stepmin, ent, ele);
+    if(!numNodes) return;
     numEdges = vdata->getNumEdges(stepmin, ent, ele);
     type = vdata->getType(stepmin, ent, ele);
   }
   int numComp = wdata->getNumComponents(otherstep, ent, ele);
+  if(numComp != 1 && numComp != 3 && numComp != 9) return;
   // the index of a node in the data: for a sub-simplex of a polytope, the
   // index of the node in the polytope
   auto nn = [&](int i) { return nodeMap ? nodeMap[i] : i; };
@@ -655,8 +657,8 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
           _cutPolytope(vdata, wdata, ent, ele, -1, _valueTimeStep, out);
           continue;
         }
-        for(int nod = 0; nod < vdata->getNumNodes(firstNonEmptyStep, ent, ele);
-            nod++) {
+        int numNodes = getNumCornerNodes(vdata, firstNonEmptyStep, ent, ele);
+        for(int nod = 0; nod < numNodes; nod++) {
           vdata->getNode(firstNonEmptyStep, ent, ele, nod, x[nod], y[nod],
                          z[nod]);
           levels[nod] = levelset(x[nod], y[nod], z[nod], 0.);
@@ -685,7 +687,8 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
             _cutPolytope(vdata, wdata, ent, ele, step, wstep, out);
             continue;
           }
-          for(int nod = 0; nod < vdata->getNumNodes(step, ent, ele); nod++) {
+          int numNodes = getNumCornerNodes(vdata, step, ent, ele);
+          for(int nod = 0; nod < numNodes; nod++) {
             vdata->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
             vdata->getScalarValue(step, ent, ele, nod, scalarValues[nod]);
             levels[nod] = levelset(x[nod], y[nod], z[nod], scalarValues[nod]);

@@ -112,8 +112,9 @@ PView *GMSH_WarpPlugin::execute(PView *v)
         if(data1->skipElement(step, ent, ele)) continue;
         int numNodes = data1->getNumNodes(step, ent, ele);
         if(numNodes < 2) continue;
-        double x[8], y[8], z[8], n[3] = {0., 0., 0.};
-        int tag[8];
+        std::vector<double> x(numNodes), y(numNodes), z(numNodes);
+        std::vector<int> tag(numNodes);
+        double n[3] = {0., 0., 0.};
         for(int nod = 0; nod < numNodes; nod++)
           tag[nod] =
             data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);

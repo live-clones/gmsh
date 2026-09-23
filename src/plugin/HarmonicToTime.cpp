@@ -83,7 +83,8 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
   for(int ent = 0; ent < data1->getNumEntities(0); ent++) {
     for(int ele = 0; ele < data1->getNumElements(0, ent); ele++) {
       if(data1->skipElement(0, ent, ele)) continue;
-      int numNodes = data1->getNumNodes(0, ent, ele);
+      int numNodes = getNumCornerNodes(data1, 0, ent, ele);
+      if(!numNodes) continue;
       int type = data1->getType(0, ent, ele);
       int numComp = data1->getNumComponents(0, ent, ele);
       std::vector<double> *out = data2->incrementList(numComp, type, numNodes);

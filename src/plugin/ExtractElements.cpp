@@ -75,7 +75,8 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
       int dim = data1->getDimension(step, ent, ele);
       if((dimension > 0) && (dim != dimension)) continue;
 
-      int numNodes = data1->getNumNodes(step, ent, ele);
+      int numNodes = getNumCornerNodes(data1, step, ent, ele);
+      if(!numNodes) continue;
       if(checkMinMax) {
         double d = 0.;
         for(int nod = 0; nod < numNodes; nod++) {

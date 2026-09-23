@@ -55,7 +55,8 @@ PView *GMSH_GradientPlugin::execute(PView *v)
       int numComp = data1->getNumComponents(firstNonEmptyStep, ent, ele);
       if(numComp != 1 && numComp != 3) continue;
       int type = data1->getType(firstNonEmptyStep, ent, ele);
-      int numNodes = data1->getNumNodes(firstNonEmptyStep, ent, ele);
+      int numNodes = getNumCornerNodes(data1, firstNonEmptyStep, ent, ele);
+      if(!numNodes) continue;
       std::vector<double> *out =
         data2->incrementList((numComp == 1) ? 3 : 9, type, numNodes);
       if(!out) continue;

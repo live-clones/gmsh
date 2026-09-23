@@ -55,7 +55,8 @@ PView *GMSH_CurlPlugin::execute(PView *v)
       int numComp = data1->getNumComponents(firstNonEmptyStep, ent, ele);
       if(numComp != 3) continue;
       int type = data1->getType(firstNonEmptyStep, ent, ele);
-      int numNodes = data1->getNumNodes(firstNonEmptyStep, ent, ele);
+      int numNodes = getNumCornerNodes(data1, firstNonEmptyStep, ent, ele);
+      if(!numNodes) continue;
       std::vector<double> *out = data2->incrementList(3, type, numNodes);
       if(!out) continue;
       double x[8], y[8], z[8], val[8 * 3];

@@ -117,7 +117,8 @@ PView *GMSH_SummationPlugin::execute(PView *view)
     for(int ele = 0; ele < pviewsdata[iref]->getNumElements(stepref, ent);
         ele++) {
       //      if(pviewsdata[0]->skipElement(timeBeg, ent, ele)) continue;
-      int numNodes = pviewsdata[iref]->getNumNodes(stepref, ent, ele);
+      int numNodes = getNumCornerNodes(pviewsdata[iref], stepref, ent, ele);
+      if(!numNodes) continue;
       int type = pviewsdata[iref]->getType(stepref, ent, ele);
       int numComp = pviewsdata[iref]->getNumComponents(stepref, ent, ele);
       int numComp2 = numComp;
