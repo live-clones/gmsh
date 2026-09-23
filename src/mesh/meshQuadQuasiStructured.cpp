@@ -184,7 +184,7 @@ int buildBackgroundField(
   if(exportBGM || Msg::GetVerbosity() >= 99) {
     std::string name = gm->getName() + "_bgm.pos";
     Msg::Warning("Exporting background field to '%s'", name.c_str());
-    view->write(name, 0);
+    view->write(name, PView::POS_ASCII);
   }
 
   return 0;

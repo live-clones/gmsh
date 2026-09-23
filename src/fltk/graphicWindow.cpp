@@ -472,11 +472,11 @@ static int _save_view_adapt_pvtu(const char *name)
 }
 static int _save_view_med(const char *name)
 {
-  return genericViewFileDialog(name, "MED Options", 6);
+  return genericViewFileDialog(name, "MED Options", PView::MED);
 }
 static int _save_view_txt(const char *name)
 {
-  return genericViewFileDialog(name, "TXT Options", 4);
+  return genericViewFileDialog(name, "TXT Options", PView::TXT);
 }
 static int _save_mesh_x3d(const char *name)
 {

@@ -143,7 +143,19 @@ public:
   static bool writeX3D(const std::string &fileName);
   static bool writeVTU(const std::string &fileName, bool binary,
                        const std::vector<PView *> &views);
-  // IO write routine
+  // the formats of write(), as in PostProcessing.Format
+  enum Format {
+    POS_ASCII = 0,
+    POS_BINARY = 1,
+    POS_PARSED = 2,
+    STL = 3,
+    TXT = 4,
+    MSH = 5,
+    MED = 6,
+    X3D = 7,
+    VTU = 8,
+    AUTO = 10 // from the extension of the file
+  };
   bool write(const std::string &fileName, int format, bool append = false);
 
   // send to ONELAB server

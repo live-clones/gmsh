@@ -177,18 +177,12 @@ test:
                       "Cancel", "Replace", nullptr, name.c_str()))
           goto test;
     }
-    int format = 0;
-    switch(fileChooserGetFilter()) {
-    case 0: format = 2; break;
-    case 1: format = 5; break;
-    case 2: format = 0; break;
-    case 3: format = 1; break;
-    case 4: format = 6; break;
-    case 5: format = 3; break;
-    case 6: format = 4; break;
-    case 7: format = 8; break;
-    }
-    view->write(name, format);
+    // (in the order of the formats above)
+    const int format[] = {PView::POS_PARSED, PView::MSH, PView::POS_ASCII,
+                          PView::POS_BINARY, PView::MED, PView::STL,
+                          PView::TXT,        PView::VTU};
+    int f = fileChooserGetFilter();
+    view->write(name, (f >= 0 && f < 8) ? format[f] : PView::POS_PARSED);
   }
 }
 

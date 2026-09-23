@@ -157,7 +157,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
     data->setFileName(filename);
     data->finalize();
     if(!viewVisible) view->getOptions()->visible = 0;
-    if(saveOnDisk) view->write(filename, 0, false);
+    if(saveOnDisk) view->write(filename, PView::POS_ASCII, false);
     if(removeView) delete view;
   }
 

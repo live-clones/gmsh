@@ -9036,7 +9036,7 @@ GMSH_API void gmsh::view::write(const int tag, const std::string &fileName,
     Msg::Error("Unknown view with tag %d", tag);
     return;
   }
-  view->write(fileName, 10, append);
+  view->write(fileName, PView::AUTO, append);
 #else
   Msg::Error("Views require the post-processing module");
 #endif

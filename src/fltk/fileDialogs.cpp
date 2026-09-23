@@ -1938,13 +1938,10 @@ int posFileDialog(const char *name)
       Fl_Widget *o = Fl::readqueue();
       if(!o) break;
       if(o == dialog->ok) {
-        int format = 2;
-        switch(dialog->c[1]->value()) {
-        case 0: format = 2; break;
-        case 1: format = 0; break;
-        case 2: format = 1; break;
-        }
-        bool canAppend = (format == 2) ? true : false;
+        const int formats[] = {PView::POS_PARSED, PView::POS_ASCII,
+                               PView::POS_BINARY};
+        int format = formats[dialog->c[1]->value()];
+        bool canAppend = (format == PView::POS_PARSED);
         _saveViews(name, dialog->c[0]->value(), format, canAppend);
         dialog->window->hide();
         return 1;

@@ -98,34 +98,18 @@ namespace {
       const PViewDataGModel::DataType &fieldType = it->second;
       index++;
 
-      // either get existing view data, or create new one
+      // in the most recent view of the field
       const std::string fullFieldName =
         solFieldName.first + "_" + solFieldName.second;
-      PView *p = PView::getViewByName(
-        fullFieldName, -1, -1); // DBGTT: to be checked for multi-file
-      PViewDataGModel *d;
-      bool create;
-      if(p != nullptr) {
-        d = dynamic_cast<PViewDataGModel *>(p->getData());
-        create = false;
-      }
-      else {
-        d = new PViewDataGModel(fieldType);
-        create = true;
-      }
-
-      // read view data
-      if(!d->readCGNS(solFieldName, fileName, index, fileIndex, baseIndex,
-                      vertPerZone, eltPerZone)) {
+      auto accept = [](PViewDataGModel *d) { return true; };
+      auto read = [&](PViewDataGModel *d) {
+        return d->readCGNS(solFieldName, fileName, index, fileIndex, baseIndex,
+                           vertPerZone, eltPerZone);
+      };
+      if(!PViewDataGModel::readInView(fullFieldName, fileName, fieldType,
+                                      accept, read)) {
         Msg::Error("Could not read data in CGNS file '%s'", fileName.c_str());
-        if(create) delete d;
         return false;
-      }
-      else {
-        d->setName(fullFieldName);
-        d->setFileName(fileName);
-        d->setFileIndex(index);
-        if(create) new PView(d);
       }
     }
 

@@ -67,7 +67,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.Format
-Default file format for post-processing views (0: ASCII view, 1: binary view, 2: parsed view, 3: STL triangulation, 4: raw text, 5: Gmsh mesh, 6: MED file, 10: automatic)@*
+Default file format for post-processing views (0: ASCII view, 1: binary view, 2: parsed view, 3: STL triangulation, 4: raw text, 5: Gmsh mesh, 6: MED file, 7: X3D, 8: VTK XML, 10: automatic)@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 

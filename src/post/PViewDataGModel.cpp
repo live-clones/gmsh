@@ -868,6 +868,28 @@ stepData<double> *PViewDataGModel::_getStep(int step, GModel *model,
   return _steps[step];
 }
 
+bool PViewDataGModel::readInView(
+  const std::string &name, const std::string &fileName, DataType type,
+  const std::function<bool(PViewDataGModel *)> &accept,
+  const std::function<bool(PViewDataGModel *)> &read)
+{
+  PViewDataGModel *d = nullptr;
+  for(int i = (int)PView::list.size() - 1; i >= 0 && !d; i--) {
+    auto g = dynamic_cast<PViewDataGModel *>(PView::list[i]->getData());
+    if(g && g->getName() == name && accept(g)) d = g;
+  }
+  bool create = !d;
+  if(create) d = new PViewDataGModel(type);
+  if(!read(d)) {
+    if(create) delete d;
+    return false;
+  }
+  d->setName(name);
+  d->setFileName(fileName);
+  if(create) new PView(d);
+  return true;
+}
+
 bool PViewDataGModel::canAddData(DataType type, int step, int numComp)
 {
   if(type != _type) return false;

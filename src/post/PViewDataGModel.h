@@ -6,6 +6,7 @@
 #ifndef PVIEW_DATA_GMODEL_H
 #define PVIEW_DATA_GMODEL_H
 
+#include <functional>
 #include "PViewData.h"
 #include "GModel.h"
 #include "SBoundingBox3d.h"
@@ -277,6 +278,13 @@ public:
                    int samplingRate = 1);
   bool isThreadSafe() { return true; }
   bool hasTimeStep(int step);
+  // read data of a file in the most recent view named name whose data is
+  // model-based and accepted, or else in a new view of the given type, kept if
+  // the reading succeeds; the data gets the name and the file name
+  static bool readInView(const std::string &name, const std::string &fileName,
+                         DataType type,
+                         const std::function<bool(PViewDataGModel *)> &accept,
+                         const std::function<bool(PViewDataGModel *)> &read);
   // can data of this type, with numComp components, be added to the step?
   bool canAddData(DataType type, int step, int numComp);
   bool hasPartition(int step, int part);

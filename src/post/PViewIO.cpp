@@ -215,29 +215,22 @@ bool PView::readMSHViewData(const std::string &fileName, FILE *fp,
     // if current partition corresponds to the requested partition, read the
     // data
     if(numEnt > 0) {
-      // the block completes the most recent view of the same name that does
-      // not have this step and partition yet, if it holds the same type of
-      // data with the same number of components; or else it starts a new view
-      PViewDataGModel *d = nullptr;
-      for(int i = (int)list.size() - 1; i >= 0 && !d; i--) {
-        auto g = dynamic_cast<PViewDataGModel *>(list[i]->getData());
-        if(!g || g->getName() != viewName) continue;
-        if(g->hasTimeStep(timeStep) && g->hasPartition(timeStep, partition))
-          continue;
-        if(g->canAddData(type, timeStep, numComp)) d = g;
-      }
-      bool create = d ? false : true;
-      if(create) d = new PViewDataGModel(type);
-      if(!d->readMSH(viewName, fileName, -1, fp, binary, swap, timeStep, time,
-                     partition, numComp, numEnt, interpolationScheme)) {
+      // the block completes a view that does not have this step and
+      // partition yet, if it holds the same type of data with the same number
+      // of components
+      auto accept = [&](PViewDataGModel *d) {
+        return !(d->hasTimeStep(timeStep) &&
+                 d->hasPartition(timeStep, partition)) &&
+               d->canAddData(type, timeStep, numComp);
+      };
+      auto read = [&](PViewDataGModel *d) {
+        return d->readMSH(viewName, fileName, -1, fp, binary, swap, timeStep,
+                          time, partition, numComp, numEnt,
+                          interpolationScheme);
+      };
+      if(!PViewDataGModel::readInView(viewName, fileName, type, accept, read)) {
         Msg::Error("Could not read data in file '%s'", fileName.c_str());
-        if(create) delete d;
         return false;
-      }
-      else {
-        d->setName(viewName);
-        d->setFileName(fileName);
-        if(create) new PView(d);
       }
     }
   }
@@ -259,22 +252,15 @@ bool PView::readMED(const std::string &fileName, int fileIndex)
   std::vector<std::string> fieldNames = medGetFieldNames(fileName);
 
   for(std::size_t index = 0; index < fieldNames.size(); index++) {
-    if(fileIndex < 0 || (int)index == fileIndex) {
-      PViewDataGModel *d = nullptr;
-      // we use the filename as a kind of "partition" indicator, allowing to
-      // complete datasets provided in separate files (e.g. coming from DDM)
-      PView *p = getViewByName(fieldNames[index], -1, -1, fileName);
-      if(p) d = dynamic_cast<PViewDataGModel *>(p->getData());
-      bool create = d ? false : true;
-      if(create) d = new PViewDataGModel();
-      if(!d->readMED(fileName, index)) {
-        Msg::Error("Could not read data in MED file");
-        if(create) delete d;
-        return false;
-      }
-      else {
-        if(create) new PView(d);
-      }
+    if(fileIndex >= 0 && (int)index != fileIndex) continue;
+    // the file is a kind of partition: the field completes a view read from
+    // other files (e.g. of a domain decomposition)
+    auto accept = [&](PViewDataGModel *d) { return !d->hasFileName(fileName); };
+    auto read = [&](PViewDataGModel *d) { return d->readMED(fileName, index); };
+    if(!PViewDataGModel::readInView(fieldNames[index], fileName,
+                                    PViewDataGModel::NodeData, accept, read)) {
+      Msg::Error("Could not read data in MED file");
+      return false;
     }
   }
 
@@ -296,14 +282,32 @@ bool PView::write(const std::string &fileName, int format, bool append)
 {
   Msg::StatusBar(true, "Writing '%s'...", fileName.c_str());
 
+  if(format == AUTO) {
+    std::string ext = SplitFileName(fileName)[2];
+    if(ext == ".pos")
+      format = CTX::instance()->post.binary ? POS_BINARY : POS_PARSED;
+    else if(ext == ".stl")
+      format = STL;
+    else if(ext == ".msh")
+      format = MSH;
+    else if(ext == ".med")
+      format = MED;
+    else if(ext == ".x3d")
+      format = X3D;
+    else if(ext == ".vtu" || ext == ".pvtu" || ext == ".pvd")
+      format = VTU;
+    else
+      format = TXT;
+  }
+
   bool ret;
   switch(format) {
-  case 0: ret = _data->writePOS(fileName, false, false, append); break; // ASCII
-  case 1: ret = _data->writePOS(fileName, true, false, append); break; // binary
-  case 2: ret = _data->writePOS(fileName, false, true, append); break; // parsed
-  case 3: ret = _data->writeSTL(fileName); break;
-  case 4: ret = _data->writeTXT(fileName); break;
-  case 5:
+  case POS_ASCII: ret = _data->writePOS(fileName, false, false, append); break;
+  case POS_BINARY: ret = _data->writePOS(fileName, true, false, append); break;
+  case POS_PARSED: ret = _data->writePOS(fileName, false, true, append); break;
+  case STL: ret = _data->writeSTL(fileName); break;
+  case TXT: ret = _data->writeTXT(fileName); break;
+  case MSH:
     ret = _data->writeMSH(fileName, CTX::instance()->mesh.mshFileVersion,
                           CTX::instance()->mesh.binary,
                           CTX::instance()->post.saveMesh, append, 0,
@@ -311,33 +315,9 @@ bool PView::write(const std::string &fileName, int format, bool append)
                           CTX::instance()->post.forceNodeData,
                           CTX::instance()->post.forceElementData);
     break;
-  case 6: ret = _data->writeMED(fileName); break;
-  case 7: ret = writeX3D(fileName); break;
-  case 8: ret = _writeVTUOrAdapted(fileName); break;
-  case 10: {
-    std::string ext = SplitFileName(fileName)[2];
-    if(ext == ".pos")
-      ret = _data->writePOS(fileName, CTX::instance()->post.binary,
-                            !CTX::instance()->post.binary, append);
-    else if(ext == ".stl")
-      ret = _data->writeSTL(fileName);
-    else if(ext == ".msh")
-      ret = _data->writeMSH(fileName, CTX::instance()->mesh.mshFileVersion,
-                            CTX::instance()->mesh.binary,
-                            CTX::instance()->post.saveMesh, append, 0,
-                            CTX::instance()->post.saveInterpolationMatrices,
-                            CTX::instance()->post.forceNodeData,
-                            CTX::instance()->post.forceElementData);
-    else if(ext == ".med")
-      ret = _data->writeMED(fileName);
-    else if(ext == ".x3d")
-      ret = writeX3D(fileName);
-    else if(ext == ".vtu" || ext == ".pvtu" || ext == ".pvd")
-      ret = _writeVTUOrAdapted(fileName);
-    else
-      ret = _data->writeTXT(fileName);
-    break;
-  }
+  case MED: ret = _data->writeMED(fileName); break;
+  case X3D: ret = writeX3D(fileName); break;
+  case VTU: ret = _writeVTUOrAdapted(fileName); break;
   default:
     ret = false;
     Msg::Error("Unknown view format %d", format);
