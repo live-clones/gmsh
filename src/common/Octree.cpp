@@ -53,8 +53,9 @@ public:
   uint32_t buildNode(uint32_t first, uint32_t count,
                      std::vector<uint32_t> &perm,
                      const std::vector<double> &centers);
-  template <class F> void visit(const double *p, double d, F f) const;
-  void searchAll(double *p, double relTol, bool test,
+  template <class F>
+  void visit(const double *p, double d, double a, F f) const;
+  void searchAll(double *p, double relTol, double margin, bool test,
                  std::vector<void *> *out) const;
 };
 
@@ -136,8 +137,9 @@ void Octree::build()
 }
 
 // Call f(i) for each element i whose box, enlarged by d times the element
-// size, contains p, until f returns true.
-template <class F> void Octree::visit(const double *p, double d, F f) const
+// size plus a, contains p, until f returns true.
+template <class F>
+void Octree::visit(const double *p, double d, double a, F f) const
 {
   if(nodes.empty()) return;
   uint32_t stack[maxDepth];
@@ -145,10 +147,10 @@ template <class F> void Octree::visit(const double *p, double d, F f) const
   stack[n++] = 0;
   while(n) {
     const Node &node = nodes[stack[--n]];
-    if(!node.box.contains(p, d * node.maxSize)) continue;
+    if(!node.box.contains(p, d * node.maxSize + a)) continue;
     if(node.count) {
       for(uint32_t i = node.first; i < node.first + node.count; i++) {
-        if(boxes[i].contains(p, d * boxes[i].size()) && f(i)) return;
+        if(boxes[i].contains(p, d * boxes[i].size() + a) && f(i)) return;
       }
     }
     else {
@@ -159,11 +161,11 @@ template <class F> void Octree::visit(const double *p, double d, F f) const
   }
 }
 
-void Octree::searchAll(double *p, double relTol, bool test,
+void Octree::searchAll(double *p, double relTol, double margin, bool test,
                        std::vector<void *> *out) const
 {
   std::vector<uint32_t> found;
-  visit(p, relTol, [&](uint32_t i) {
+  visit(p, relTol, margin, [&](uint32_t i) {
     if(!test || inEleFunction(elements[i], p)) found.push_back(i);
     return false;
   });
@@ -211,7 +213,7 @@ void *Octree_Search(double *p, Octree *o)
   // the first inserted element containing the point, so that the result does
   // not depend on the structure of the tree
   uint32_t best = UINT32_MAX;
-  o->visit(p, 0., [&](uint32_t i) {
+  o->visit(p, 0., 0., [&](uint32_t i) {
     if(best != UINT32_MAX && o->order[i] > o->order[best]) return false;
     if(o->inEleFunction(o->elements[i], p)) best = i;
     return false;
@@ -223,7 +225,7 @@ void Octree_SearchAll(double *p, Octree *o, std::vector<void *> *out)
 {
   if(!o) return;
   Octree_Arrange(o);
-  o->searchAll(p, 0., true, out);
+  o->searchAll(p, 0., 0., true, out);
 }
 
 void Octree_SearchAllNear(double *p, Octree *o, double relTol,
@@ -231,5 +233,13 @@ void Octree_SearchAllNear(double *p, Octree *o, double relTol,
 {
   if(!o) return;
   Octree_Arrange(o);
-  o->searchAll(p, relTol, false, out);
+  o->searchAll(p, relTol, 0., false, out);
+}
+
+void Octree_SearchAllWithin(double *p, Octree *o, double d,
+                            std::vector<void *> *out)
+{
+  if(!o) return;
+  Octree_Arrange(o);
+  o->searchAll(p, 0., d, false, out);
 }

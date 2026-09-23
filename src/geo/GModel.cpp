@@ -2185,6 +2185,20 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
   return e;
 }
 
+MElement *GModel::getMeshElementClosestTo(const SPoint3 &p, int dim,
+                                          double distance)
+{
+  if(!_elementOctree) {
+#pragma omp barrier
+#pragma omp single
+    {
+      Msg::Debug("Rebuilding mesh element octree");
+      _elementOctree = new MElementOctree(this);
+    }
+  }
+  return _elementOctree->findClosest(p.x(), p.y(), p.z(), dim, distance);
+}
+
 std::vector<MElement *> GModel::getMeshElementsByCoord(SPoint3 &p, int dim,
                                                        bool strict)
 {

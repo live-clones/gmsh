@@ -171,6 +171,35 @@ static std::vector<std::string> viewValue(PView *p, const double xyz[3],
   return lines;
 }
 
+// The mesh element at a point, among the elements of the dimensions whose mesh
+// is drawn, surfaces first as they are what is seen of a volume, then volumes,
+// then curves; for a pick that did not return one, as what it hit holds no
+// element there: a point or a curve of the geometry drawn over the mesh. A
+// point read from the picture is off a surface seen obliquely by the depth a
+// pixel spans there: a surface or a curve is looked for within a few pixels
+// of it, a volume around it.
+MElement *queryElement(const double xyz[3], double pixel)
+{
+  CTX *c = CTX::instance();
+  bool drawn[4] = {false, (bool)c->mesh.lines,
+                   c->mesh.surfaceFaces || c->mesh.surfaceEdges,
+                   c->mesh.volumeFaces || c->mesh.volumeEdges};
+  SPoint3 p(xyz[0], xyz[1], xyz[2]);
+  for(int dim : {2, 3, 1}) {
+    if(!drawn[dim]) continue;
+    MElement *e = nullptr;
+    if(dim == 3) {
+      std::vector<MElement *> v =
+        GModel::current()->getMeshElementsByCoord(p, dim, false);
+      if(v.size()) e = v[0];
+    }
+    else
+      e = GModel::current()->getMeshElementClosestTo(p, dim, 3. * pixel);
+    if(e) return e;
+  }
+  return nullptr;
+}
+
 std::vector<std::string> queryPoint(const double xyz[3], GEntity *entity,
                                     MElement *element, PView *view,
                                     double pixel)

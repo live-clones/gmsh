@@ -38,5 +38,11 @@ public:
   // Same, for all the elements, by increasing dimension and in insertion order.
   std::vector<MElement *> findAll(double x, double y, double z, int dim,
                                   bool strict = false, double tol = -1.) const;
+  // The element of dimension dim closest to the point, no farther than the
+  // distance: for a curve or a surface in space, which a point read from the
+  // picture is off by the depth a pixel spans, the one it projects into
+  // nearest to it; nullptr if none.
+  MElement *findClosest(double x, double y, double z, int dim,
+                        double distance) const;
 };
 #endif

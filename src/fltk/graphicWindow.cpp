@@ -3525,6 +3525,12 @@ void status_query_cb(Fl_Widget *w, void *data)
 
     drawContext *ctx = gl->getDrawContext();
     double pixel = ctx->pixel_equiv_x / ctx->s[0];
+    // what was hit may hold no element there (a point or a curve of the
+    // geometry, drawn over the mesh and picked before it), or the point read
+    // back may be off its surface: the element is then the one of the mesh
+    // drawn under the point
+    if(!element) element = queryElement(xyz, pixel);
+
     std::vector<std::string> info =
       queryPoint(xyz, entity, element, view, pixel);
     // the messages keep everything, the box over the picture the lines that

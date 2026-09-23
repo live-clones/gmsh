@@ -200,6 +200,9 @@ public:
 std::vector<std::string> queryPoint(const double xyz[3], GEntity *entity,
                                     MElement *element, PView *view,
                                     double pixel);
+// The mesh element a query reports at a point when the pick found none there,
+// in the mesh that is drawn (see drawQuery.cpp)
+MElement *queryElement(const double xyz[3], double pixel);
 // What a measurement says of the two points it was given (see drawQuery.cpp)
 std::vector<std::string> measurePoints(const double a[3], const double b[3]);
 // Whether the point of the model behind what was drawn of a view at xyz is
@@ -275,6 +278,8 @@ private:
   bool _pickColor;
   // the scale of the depth range per dimension in a picking pass
   double _pickDepthStep = 0.;
+  // the depth of the front of the model's bounding box in a picking pass
+  double _pickNearest = 0.;
   // the masks and the depth range the pass is drawing with (-1: not known)
   int _pickStateSkip = -1;
   double _pickStateFar = -1.;

@@ -580,6 +580,10 @@ public:
                                   bool strict = true);
   std::vector<MElement *> getMeshElementsByCoord(SPoint3 &p, int dim = -1,
                                                  bool strict = true);
+  // the mesh element of dimension dim closest to a point, no farther than the
+  // distance (see MElementOctree::findClosest())
+  MElement *getMeshElementClosestTo(const SPoint3 &p, int dim,
+                                    double distance);
 
   // access a mesh element by tag, using the element cache
   MElement *getMeshElementByTag(std::size_t n)

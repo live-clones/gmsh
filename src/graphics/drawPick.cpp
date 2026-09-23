@@ -204,6 +204,11 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   gmshDepthTest(true);
   gmshLighting(false);
   glDisable(GL_BLEND);
+  // the faces at their true depth, not pushed back behind their edges: the
+  // point read back must lie on them, and the dimensions are told apart by
+  // their depth ranges instead (see setPickColor())
+  int oldOffset = CTX::instance()->polygonOffset;
+  CTX::instance()->polygonOffset = 0;
   // the identifier colour must not be interpolated (the shader gives every
   // fragment the same one)
   if(!glShader::enabled()) glShadeModel(GL_FLAT);
@@ -237,6 +242,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   {
     CTX *c = CTX::instance();
     double zmin = 1., zmax = 0.;
+    bool behind = false; // (a corner behind the eye: no front to speak of)
     for(int i = 0; i < 8; i++) {
       double p[4] = {(i & 1) ? c->max[0] : c->min[0],
                      (i & 2) ? c->max[1] : c->min[1],
@@ -244,6 +250,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
       double e[4], q[4];
       glMatrix::transform(glImmediate::matrix(GMSH_MODELVIEW), p, e);
       glMatrix::transform(glImmediate::matrix(GMSH_PROJECTION), e, q);
+      if(q[3] <= 0.) behind = true;
       if(q[3] == 0.) continue;
       double z = 0.5 * (q[2] / q[3] + 1.);
       zmin = std::min(zmin, z);
@@ -252,6 +259,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
     double extent = std::max(zmax - zmin, 0.);
     double zmid = std::max(0.05, 0.5 * (zmin + zmax));
     _pickDepthStep = std::max(0.01 * extent, 4. / 16777215.) / zmid;
+    _pickNearest = (!behind && zmin <= zmax) ? std::max(0., zmin) : 0.;
   }
   drawGeom();
   if(mesh) drawMesh();
@@ -296,6 +304,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);
   glDepthRange(0., 1.);
+  CTX::instance()->polygonOffset = oldOffset;
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
   if(oldLighting) gmshLighting(true);
   if(oldBlend) glEnable(GL_BLEND);
@@ -378,12 +387,14 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   // front. What lies under the middle of the rectangle is remembered: the
   // rest are only near the cursor.
   std::size_t under = 0;
+  float underDepth = 1.f;
   {
     std::size_t i = (std::size_t)(fy0 + fh / 2) * stride + (fx0 + fw / 2);
     under = (std::size_t)pixels[4 * i] |
             ((std::size_t)pixels[4 * i + 1] << 8) |
             ((std::size_t)pixels[4 * i + 2] << 16);
     if(under >= _pickObjects.size()) under = 0;
+    underDepth = depths[i];
   }
   // (nearest keeps, for every object, the depth it was drawn at in the pixel
   // closest to the middle of the rectangle - where the cursor points - so
@@ -400,13 +411,23 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
                        ((std::size_t)pixels[4 * i + 1] << 8) |
                        ((std::size_t)pixels[4 * i + 2] << 16);
       if(!id || id >= _pickObjects.size()) continue;
-      float z = (_pickObjects[id].type >= 4) ? -1.f : depths[i];
+      const pickObject &o = _pickObjects[id];
+      // A line gets depths at its ends extrapolated along its slope: seen
+      // nearly end on (the vertical edges of a layered mesh from above), a
+      // fraction of a pixel long but deep, the pixel past its end can be
+      // kilometres in front of it, and in front of everything around. Nothing
+      // of the model is in front of its bounding box, in the depth range of
+      // its type (the glyphs of the views, which can be, are left alone).
+      float depth = depths[i];
+      if(o.type <= 3)
+        depth = std::max(depth, (float)(_pickNearest * _pickFar(o.type, o.front)));
+      float z = (o.type >= 4) ? -1.f : depth;
       auto it = found.find(id);
       if(it == found.end() || z < it->second) found[id] = z;
       int dx = c - fw / 2, dy = r - fh / 2, d2 = dx * dx + dy * dy;
       auto it2 = nearest.find(id);
       if(it2 == nearest.end() || d2 < it2->second.first)
-        nearest[id] = std::make_pair(d2, depths[i]);
+        nearest[id] = std::make_pair(d2, depth);
     }
   }
   Msg::Debug("Colour picking: %d found in a %dx%d rectangle at (%d,%d) of "
@@ -466,10 +487,22 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
     const pickObject &o = _pickObjects[candidates[0]];
     // (a graph of the 2D overlay wrote no depth)
     double z = nearest[candidates[0]].second;
+    double zfar = _pickFar(o.type, o.front);
+    // An entity of the model is given the point of the model under the cursor
+    // when there is one: what is picked can be a point or a curve a few
+    // pixels away, at another depth altogether when the model is seen
+    // obliquely, and the point must lie on what the cursor points at (a
+    // query looks for the mesh element there). A view keeps the point of its
+    // glyph.
+    if(o.type <= 3 && under && _pickObjects[under].type <= 3) {
+      const pickObject &u = _pickObjects[under];
+      zfar = _pickFar(u.type, u.front);
+      z = std::max(underDepth, (float)(_pickNearest * zfar));
+    }
     _pickPointValid = false;
     if(o.type != 4 && z >= 0. && z < 1.) {
       // undo the depth range setPickColor() drew the dimension in
-      z /= _pickFar(o.type, o.front);
+      z /= zfar;
       double win[3] = {(double)x, (double)(viewport[3] - y), z};
       _pickPointValid =
         glMatrix::unProject(win, model, proj, viewport, _pickPoint) ? true :

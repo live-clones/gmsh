@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cmath>
 #include <map>
 #include "GModel.h"
 #include "MElement.h"
@@ -230,6 +231,36 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
 {
   double P[3] = {x, y, z};
   return _find(P, dim, tol, strict, 1., false);
+}
+
+MElement *MElementOctree::findClosest(double x, double y, double z, int dim,
+                                      double distance) const
+{
+  if(dim < 0 || dim > 3 || distance < 0.) return nullptr;
+  double P[3] = {x, y, z};
+  std::vector<void *> v;
+  Octree_SearchAllWithin(P, _octree[dim], distance, &v);
+  MElement *best = nullptr;
+  double bestDistance = distance;
+  const double tol = 1e-3;
+  for(auto it = v.begin(); it != v.end(); ++it) {
+    MElement *e = (MElement *)*it;
+    // the coordinates of the point in the element, those across it (off a
+    // curve or a surface) left out of the test and measured instead
+    double uvw[3];
+    e->xyz2uvw(P, uvw);
+    for(int k = e->getDim(); k < 3; k++) uvw[k] = 0.;
+    if(!e->isInside(uvw[0], uvw[1], uvw[2], tol)) continue;
+    SPoint3 q;
+    e->pnt(uvw[0], uvw[1], uvw[2], q);
+    double d = std::sqrt((q.x() - x) * (q.x() - x) + (q.y() - y) * (q.y() - y) +
+                         (q.z() - z) * (q.z() - z));
+    if(d <= bestDistance) {
+      best = e;
+      bestDistance = d;
+    }
+  }
+  return best;
 }
 
 MElement *MElementOctree::find(double x, double y, double z, int dim,

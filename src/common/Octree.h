@@ -37,4 +37,10 @@ void Octree_SearchAll(double *, Octree *, std::vector<void *> *);
 void Octree_SearchAllNear(double *, Octree *, double relTol,
                           std::vector<void *> *);
 
+// Append all the elements whose bounding box, enlarged on each side by the
+// distance d, contains the point, in insertion order; the InEle callback is
+// not called.
+void Octree_SearchAllWithin(double *, Octree *, double d,
+                            std::vector<void *> *);
+
 #endif
