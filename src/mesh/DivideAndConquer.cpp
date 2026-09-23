@@ -25,7 +25,6 @@
 #include "OS.h"
 #include "GPoint.h"
 #include "GFace.h"
-#include "MLine.h"
 
 #define Pred(x) ((x)->prev)
 #define Succ(x) ((x)->next)
@@ -628,57 +627,6 @@ void DocRecord::makePosView(const std::string &fileName, GFace *gf)
                   points[jPoint].where.h, points[jPoint].where.v, 0.0,
                   points[kPoint].where.h, points[kPoint].where.v, 0.0,
                   (double)iPoint, (double)jPoint, (double)kPoint);
-        }
-      }
-    }
-    fprintf(f, "};\n");
-  }
-  fclose(f);
-}
-
-void DocRecord::printMedialAxis(Octree *_octree, const std::string &fileName,
-                                GFace *gf, GEdge *ge)
-{
-  FILE *f = Fopen(fileName.c_str(), "w");
-  if(!f) {
-    Msg::Error("Could not open file '%s'", fileName.c_str());
-    return;
-  }
-  if(_adjacencies) {
-    fprintf(f, "View \"medial axis\" {\n");
-    for(PointNumero i = 0; i < numPoints; i++) {
-      std::vector<SPoint2> pts;
-      SPoint2 pc((double)points[i].where.h, (double)points[i].where.v);
-      if(!onHull(i)) {
-        GPoint p0(pc[0], pc[1], 0.0);
-        if(gf) p0 = gf->point(pc[0], pc[1]);
-        fprintf(f, "SP(%g,%g,%g){%g};\n", p0.x(), p0.y(), p0.z(), (double)i);
-        voronoiCell(i, pts);
-        for(std::size_t j = 0; j < pts.size(); j++) {
-          SVector3 pp1(pts[j].x(), pts[j].y(), 0.0);
-          SVector3 pp2(pts[(j + 1) % pts.size()].x(),
-                       pts[(j + 1) % pts.size()].y(), 0.0);
-          SVector3 v1(pp1.x() - pc.x(), pp1.y() - pc.y(), 0.0);
-          SVector3 v2(pp2.x() - pc.x(), pp2.y() - pc.y(), 0.0);
-          GPoint p1(pp1.x(), pp1.y(), 0.0);
-          GPoint p2(pp2.x(), pp2.y(), 0.0);
-          if(gf) {
-            p1 = gf->point(p1.x(), p1.y());
-            p2 = gf->point(p2.x(), p2.y());
-          }
-          double P1[3] = {p1.x(), p1.y(), p1.z()};
-          double P2[3] = {p2.x(), p2.y(), p2.z()};
-          MElement *m1 = (MElement *)Octree_Search(P1, _octree);
-          MElement *m2 = (MElement *)Octree_Search(P2, _octree);
-          if(m1 && m2) {
-            MVertex *v0 = new MVertex(p1.x(), p1.y(), p1.z());
-            MVertex *v1 = new MVertex(p2.x(), p2.y(), p2.z());
-            ge->lines.push_back(new MLine(v0, v1));
-            ge->mesh_vertices.push_back(v0);
-            ge->mesh_vertices.push_back(v1);
-            fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n", p1.x(), p1.y(),
-                    p1.z(), p2.x(), p2.y(), p2.z(), (double)i, (double)i);
-          }
         }
       }
     }

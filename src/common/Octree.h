@@ -11,8 +11,10 @@
 // Search structure for the elements containing a point: a bounding volume
 // hierarchy over the elements' bounding boxes, which are computed once, on
 // insertion. Elements are opaque pointers; the callbacks give their bounding
-// box and tell whether a point is inside. Queries do not modify the tree and
-// can run concurrently once it is built.
+// box and tell whether a point is inside (none: whether their box holds it,
+// for a caller that only searches near a point and tests the elements
+// itself). Queries do not modify the tree and can run concurrently once it is
+// built.
 class Octree;
 
 Octree *Octree_Create(void (*BB)(void *, double *, double *),
@@ -32,15 +34,9 @@ void *Octree_Search(double *, Octree *);
 void Octree_SearchAll(double *, Octree *, std::vector<void *> *);
 
 // Append all the elements whose bounding box, enlarged on each side by
-// relTol times its largest extent, contains the point, in insertion order;
-// the InEle callback is not called.
-void Octree_SearchAllNear(double *, Octree *, double relTol,
+// relTol times its largest extent plus the distance d, contains the point, in
+// insertion order; the InEle callback is not called.
+void Octree_SearchAllNear(double *, Octree *, double relTol, double d,
                           std::vector<void *> *);
-
-// Append all the elements whose bounding box, enlarged on each side by the
-// distance d, contains the point, in insertion order; the InEle callback is
-// not called.
-void Octree_SearchAllWithin(double *, Octree *, double d,
-                            std::vector<void *> *);
 
 #endif

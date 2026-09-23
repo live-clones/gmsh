@@ -126,12 +126,24 @@ void MElementBB(void *a, double *min, double *max)
   min[2] = bb.min().z();
 }
 
-int MElementInEle(void *a, double *x)
+// How far the point is off the element, or -1 if it is not in it: in its
+// reference element enlarged by tol, for a curve or a surface in space once
+// projected onto it (xyz2uvw gives the coordinates across it in model units,
+// which a tolerance of the reference element cannot bound), and then 0 for a
+// volume.
+static double offElement(MElement *e, const double *P, double tol)
 {
-  MElement *e = (MElement *)a;
   double uvw[3];
-  e->xyz2uvw(x, uvw);
-  return e->isInside(uvw[0], uvw[1], uvw[2]) ? 1 : 0;
+  e->xyz2uvw(const_cast<double *>(P), uvw);
+  int dim = e->getDim();
+  for(int k = dim; k < 3; k++) uvw[k] = 0.;
+  if(!e->isInside(uvw[0], uvw[1], uvw[2], tol)) return -1.;
+  if(dim == 3) return 0.;
+  SPoint3 q;
+  e->pnt(uvw[0], uvw[1], uvw[2], q);
+  return std::sqrt((q.x() - P[0]) * (q.x() - P[0]) +
+                   (q.y() - P[1]) * (q.y() - P[1]) +
+                   (q.z() - P[2]) * (q.z() - P[2]));
 }
 
 void MElementOctree::_insert(MElement *e)
@@ -145,7 +157,7 @@ void MElementOctree::_insert(MElement *e)
 MElementOctree::MElementOctree(GModel *m) : _gm(m), _maxOrder(1)
 {
   for(int d = 0; d < 4; d++)
-    _octree[d] = Octree_Create(MElementBB, MElementInEle);
+    _octree[d] = Octree_Create(MElementBB, nullptr);
   std::vector<GEntity *> entities;
   m->getEntities(entities);
   // do not add Gvertex non-associated to any GEdge
@@ -168,7 +180,7 @@ MElementOctree::MElementOctree(const std::vector<MElement *> &v)
   : _gm(nullptr), _maxOrder(1)
 {
   for(int d = 0; d < 4; d++)
-    _octree[d] = Octree_Create(MElementBB, MElementInEle);
+    _octree[d] = Octree_Create(MElementBB, nullptr);
   for(std::size_t i = 0; i < v.size(); i++) _insert(v[i]);
   for(int d = 0; d < 4; d++) Octree_Arrange(_octree[d]);
 }
@@ -178,9 +190,12 @@ MElementOctree::~MElementOctree()
   for(int d = 0; d < 4; d++) Octree_Delete(_octree[d]);
 }
 
-// Get the elements of dimension dim (all if dim == -1) containing the point,
-// in the reference element enlarged by tol: all of them, by increasing
-// dimension, or only the first one, trying the highest dimension first.
+// Get the elements of dimension dim (all if dim == -1) containing the point:
+// in the reference element enlarged by tol, and for a curve or a surface in
+// space no farther off it than tol times its size (the enlarged reference
+// element is about that much larger). All of them, by increasing dimension, or
+// only one, trying the highest dimension first: the closest, and among those
+// as close (all the volumes holding the point) the first one inserted.
 std::vector<MElement *> MElementOctree::_find(double *P, int dim, double tol,
                                               bool onlyFirst) const
 {
@@ -193,16 +208,23 @@ std::vector<MElement *> MElementOctree::_find(double *P, int dim, double tol,
     // tetrahedron is the original one scaled by 1 + 4 tol); more for curved
     // elements
     std::vector<void *> v;
-    Octree_SearchAllNear(P, _octree[d], 4. * _maxOrder * tol, &v);
+    Octree_SearchAllNear(P, _octree[d], 4. * _maxOrder * tol, 0., &v);
+    MElement *best = nullptr;
+    double bestOff = 0.;
     for(auto it = v.begin(); it != v.end(); ++it) {
       MElement *el = (MElement *)*it;
-      double uvw[3];
-      el->xyz2uvw(P, uvw);
-      if(el->isInside(uvw[0], uvw[1], uvw[2], tol)) {
+      double off = offElement(el, P, tol);
+      if(off < 0. || (d < 3 && off > tol * el->maxEdge())) continue;
+      if(!onlyFirst)
         e.push_back(el);
-        if(onlyFirst) return e;
+      else if(off == 0.) // (a volume, or right on a curve or a surface)
+        return {el};
+      else if(!best || off < bestOff) {
+        best = el;
+        bestOff = off;
       }
     }
+    if(best) return {best};
   }
   return e;
 }
@@ -239,25 +261,15 @@ MElement *MElementOctree::findClosest(double x, double y, double z, int dim,
   if(dim < 0 || dim > 3 || distance < 0.) return nullptr;
   double P[3] = {x, y, z};
   std::vector<void *> v;
-  Octree_SearchAllWithin(P, _octree[dim], distance, &v);
+  Octree_SearchAllNear(P, _octree[dim], 0., distance, &v);
   MElement *best = nullptr;
-  double bestDistance = distance;
-  const double tol = 1e-3;
+  double bestOff = distance;
   for(auto it = v.begin(); it != v.end(); ++it) {
     MElement *e = (MElement *)*it;
-    // the coordinates of the point in the element, those across it (off a
-    // curve or a surface) left out of the test and measured instead
-    double uvw[3];
-    e->xyz2uvw(P, uvw);
-    for(int k = e->getDim(); k < 3; k++) uvw[k] = 0.;
-    if(!e->isInside(uvw[0], uvw[1], uvw[2], tol)) continue;
-    SPoint3 q;
-    e->pnt(uvw[0], uvw[1], uvw[2], q);
-    double d = std::sqrt((q.x() - x) * (q.x() - x) + (q.y() - y) * (q.y() - y) +
-                         (q.z() - z) * (q.z() - z));
-    if(d <= bestDistance) {
+    double off = offElement(e, P, 1e-3);
+    if(off >= 0. && off <= bestOff && (!best || off < bestOff)) {
       best = e;
-      bestDistance = d;
+      bestOff = off;
     }
   }
   return best;

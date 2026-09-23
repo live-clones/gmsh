@@ -29,10 +29,11 @@ public:
   ~MElementOctree();
   // Get an element of dimension dim (of highest dimension if dim == -1)
   // containing the point, i.e. in its reference element enlarged by tol
-  // (Mesh.ToleranceReferenceElement if negative); if none and not strict,
-  // retry with the tolerance multiplied by 10 up to 1 (0.1 for an octree built
-  // from a list of elements). Among the elements of the same dimension, the
-  // first one inserted.
+  // (Mesh.ToleranceReferenceElement if negative), and for a curve or a
+  // surface in space no farther off it than tol times its size; if none and
+  // not strict, retry with the tolerance multiplied by 10 up to 1 (0.1 for an
+  // octree built from a list of elements). Among the elements of the same
+  // dimension, the closest, and among those as close the first one inserted.
   MElement *find(double x, double y, double z, int dim = -1,
                  bool strict = false, double tol = -1.) const;
   // Same, for all the elements, by increasing dimension and in insertion order.

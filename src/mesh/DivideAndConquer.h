@@ -10,7 +10,6 @@
 #include <algorithm>
 #include "SPoint2.h"
 #include "simpleFunction.h"
-#include "Octree.h"
 #include "MElement.h"
 
 template <class scalar> class fullMatrix;
@@ -109,8 +108,6 @@ public:
     return std::binary_search(_hull, _hull + _hullSize, i);
   }
   void makePosView(const std::string &, GFace *gf = nullptr);
-  void printMedialAxis(Octree *_octree, const std::string &,
-                       GFace *gf = nullptr, GEdge *ge = nullptr);
   void voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const;
 
   std::set<std::pair<void *, void *> > boundaryEdges;

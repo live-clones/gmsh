@@ -25,16 +25,22 @@ bool drawContext::_pickColorActive = false;
 // name entities, not elements, so the element is looked up geometrically, in
 // the octree of the model (nullptr is not an error: the mesh may not be there,
 // or the point may have missed it).
-static MElement *getElement(GEntity *e, const double p[3], bool valid)
+// The mesh element of a picked entity at the point the pick read back: for a
+// curve or a surface, the closest within a few pixels, as the point is off it
+// by the depth a pixel spans when it is seen obliquely; for a volume, one that
+// holds the point, that of the entity if several do (the point lies on a face
+// or an edge they share).
+static MElement *getElement(GEntity *e, const double p[3], bool valid,
+                            double pixel)
 {
   if(!valid || !e->getNumMeshElements()) return nullptr;
   SPoint3 pt(p[0], p[1], p[2]);
+  if(e->dim() < 3)
+    return e->model()->getMeshElementClosestTo(pt, e->dim(), 3. * pixel);
   std::vector<MElement *> candidates =
     e->model()->getMeshElementsByCoord(pt, e->dim(), false);
   if(candidates.empty()) return nullptr;
   if(candidates.size() == 1) return candidates[0];
-  // several elements hold the point (it lies on a face or an edge they
-  // share): the one of the entity that was picked wins
   for(std::size_t i = 0; i < e->getNumMeshElements(); i++) {
     MElement *ele = e->getMeshElement(i);
     for(auto c : candidates)
@@ -532,7 +538,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
       if(e) {
         _pickEntity = e;
         MElement *ele = getElement(e, _pickPoint, _pickPointValid &&
-                                     CTX::instance()->pickElements);
+                                     CTX::instance()->pickElements,
+                                   pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else
@@ -545,7 +552,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
       if(f) {
         _pickEntity = f;
         MElement *ele = getElement(f, _pickPoint, _pickPointValid &&
-                                     CTX::instance()->pickElements);
+                                     CTX::instance()->pickElements,
+                                   pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else
@@ -558,7 +566,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
       if(r) {
         _pickEntity = r;
         MElement *ele = getElement(r, _pickPoint, _pickPointValid &&
-                                     CTX::instance()->pickElements);
+                                     CTX::instance()->pickElements,
+                                   pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else

@@ -166,7 +166,8 @@ void Octree::searchAll(double *p, double relTol, double margin, bool test,
 {
   std::vector<uint32_t> found;
   visit(p, relTol, margin, [&](uint32_t i) {
-    if(!test || inEleFunction(elements[i], p)) found.push_back(i);
+    if(!test || !inEleFunction || inEleFunction(elements[i], p))
+      found.push_back(i);
     return false;
   });
   std::sort(found.begin(), found.end(),
@@ -215,7 +216,7 @@ void *Octree_Search(double *p, Octree *o)
   uint32_t best = UINT32_MAX;
   o->visit(p, 0., 0., [&](uint32_t i) {
     if(best != UINT32_MAX && o->order[i] > o->order[best]) return false;
-    if(o->inEleFunction(o->elements[i], p)) best = i;
+    if(!o->inEleFunction || o->inEleFunction(o->elements[i], p)) best = i;
     return false;
   });
   return (best == UINT32_MAX) ? nullptr : o->elements[best];
@@ -228,18 +229,10 @@ void Octree_SearchAll(double *p, Octree *o, std::vector<void *> *out)
   o->searchAll(p, 0., 0., true, out);
 }
 
-void Octree_SearchAllNear(double *p, Octree *o, double relTol,
+void Octree_SearchAllNear(double *p, Octree *o, double relTol, double d,
                           std::vector<void *> *out)
 {
   if(!o) return;
   Octree_Arrange(o);
-  o->searchAll(p, relTol, 0., false, out);
-}
-
-void Octree_SearchAllWithin(double *p, Octree *o, double d,
-                            std::vector<void *> *out)
-{
-  if(!o) return;
-  Octree_Arrange(o);
-  o->searchAll(p, 0., d, false, out);
+  o->searchAll(p, relTol, d, false, out);
 }

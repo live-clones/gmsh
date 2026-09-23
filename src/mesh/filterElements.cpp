@@ -16,7 +16,6 @@
 #include "robustPredicates.h"
 
 void MElementBB(void *a, double *min, double *max);
-int MElementInEle(void *a, double *x);
 
 struct MElement_Wrapper {
   bool _overlap;
