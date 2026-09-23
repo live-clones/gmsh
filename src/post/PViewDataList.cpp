@@ -709,67 +709,74 @@ void PViewDataList::reverseElement(int step, int ent, int ele)
             l.numComponents * (l.numNodes - i - 1) + k];
 }
 
-static void generateConnectivities(std::vector<double> &list, int nbList,
-                                   int nbTimeStep, int nbVert, int nbComp,
-                                   smooth_data &data)
-{
-  if(!nbList) return;
-  double *vals = new double[nbTimeStep * nbComp];
-  int nb = list.size() / nbList;
-  for(std::size_t i = 0; i < list.size(); i += nb) {
-    double *x = &list[i];
-    double *y = &list[i + nbVert];
-    double *z = &list[i + 2 * nbVert];
-    double *v = &list[i + 3 * nbVert];
-    for(int j = 0; j < nbVert; j++) {
-      for(int ts = 0; ts < nbTimeStep; ts++)
-        for(int k = 0; k < nbComp; k++)
-          vals[nbComp * ts + k] = v[nbVert * nbComp * ts + nbComp * j + k];
-      data.add(x[j], y[j], z[j], nbTimeStep * nbComp, vals);
-    }
-  }
-  delete[] vals;
-}
-
-static void smoothList(std::vector<double> &list, int nbList, int nbTimeStep,
-                       int nbVert, int nbComp, smooth_data &data)
-{
-  if(!nbList) return;
-  double *vals = new double[nbTimeStep * nbComp];
-  int nb = list.size() / nbList;
-  for(std::size_t i = 0; i < list.size(); i += nb) {
-    double *x = &list[i];
-    double *y = &list[i + nbVert];
-    double *z = &list[i + 2 * nbVert];
-    double *v = &list[i + 3 * nbVert];
-    for(int j = 0; j < nbVert; j++) {
-      if(data.get(x[j], y[j], z[j], nbTimeStep * nbComp, vals)) {
-        for(int ts = 0; ts < nbTimeStep; ts++)
-          for(int k = 0; k < nbComp; k++)
-            v[nbVert * nbComp * ts + nbComp * j + k] = vals[nbComp * ts + k];
-      }
-    }
-  }
-  delete[] vals;
-}
-
 void PViewDataList::smooth()
 {
-  double old_eps = xyzv::eps;
-  xyzv::eps = CTX::instance()->lc * 1.e-8;
-  smooth_data data;
-
+  // the nodes of all the elements (but points), in the order of the lists
+  struct node {
+    double x, y, z;
+    double *v; // the values of the first step
+    int stride, n; // between steps, and per step
+    std::size_t seq;
+  };
+  std::vector<node> nodes;
   std::vector<double> *list = nullptr;
   int *nbe = nullptr, nbc, nbn;
   for(int i = 0; i < 27; i++) {
     _getRawData(i, &list, &nbe, &nbc, &nbn);
-    if(nbn > 1) generateConnectivities(*list, *nbe, NbTimeStep, nbn, nbc, data);
+    if(nbn < 2 || !*nbe) continue;
+    std::size_t nb = list->size() / *nbe;
+    for(std::size_t e = 0; e < list->size(); e += nb) {
+      double *x = &(*list)[e], *y = x + nbn, *z = y + nbn, *v = z + nbn;
+      for(int j = 0; j < nbn; j++)
+        nodes.push_back(
+          {x[j], y[j], z[j], v + nbc * j, nbn * nbc, nbc, nodes.size()});
+    }
   }
-  for(int i = 0; i < 27; i++) {
-    _getRawData(i, &list, &nbe, &nbc, &nbn);
-    if(nbn > 1) smoothList(*list, *nbe, NbTimeStep, nbn, nbc, data);
+
+  // the nodes at the same place (within eps), together; their values are
+  // averaged in the order of the lists, as they always were
+  double eps = CTX::instance()->lc * 1.e-8;
+  std::sort(nodes.begin(), nodes.end(), [](const node &a, const node &b) {
+    if(a.x != b.x) return a.x < b.x;
+    if(a.y != b.y) return a.y < b.y;
+    if(a.z != b.z) return a.z < b.z;
+    return a.seq < b.seq;
+  });
+  int numSteps = NbTimeStep;
+  std::vector<double> mean;
+  for(std::size_t beg = 0; beg < nodes.size();) {
+    const node &f = nodes[beg];
+    std::size_t end = beg + 1;
+    while(end < nodes.size() && std::abs(nodes[end].x - f.x) <= eps &&
+          std::abs(nodes[end].y - f.y) <= eps &&
+          std::abs(nodes[end].z - f.z) <= eps)
+      end++;
+    if(end - beg > 1) {
+      std::sort(nodes.begin() + beg, nodes.begin() + end,
+                [](const node &a, const node &b) { return a.seq < b.seq; });
+      // the running mean of the nodes with as many values as the first
+      int n = nodes[beg].n, count = 0;
+      mean.assign(n * numSteps, 0.);
+      for(std::size_t k = beg; k < end; k++) {
+        const node &p = nodes[k];
+        if(p.n != n) continue;
+        double x1 = (double)count / (double)(count + 1);
+        double x2 = 1. / (double)(count + 1);
+        for(int ts = 0; ts < numSteps; ts++)
+          for(int c = 0; c < n; c++)
+            mean[n * ts + c] =
+              x1 * mean[n * ts + c] + x2 * p.v[p.stride * ts + c];
+        count++;
+      }
+      for(std::size_t k = beg; k < end; k++) {
+        const node &p = nodes[k];
+        if(p.n != n) continue;
+        for(int ts = 0; ts < numSteps; ts++)
+          for(int c = 0; c < n; c++) p.v[p.stride * ts + c] = mean[n * ts + c];
+      }
+    }
+    beg = end;
   }
-  xyzv::eps = old_eps;
   finalize();
 }
 

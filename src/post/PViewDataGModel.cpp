@@ -731,7 +731,8 @@ void PViewDataGModel::smooth()
     _steps2.back()->fillEntities();
     _steps2.back()->computeBoundingBox();
 
-    std::map<int, int> nodeConnect;
+    // the number of elements around each node (indexed by node tag)
+    std::vector<int> nodeConnect(m->getMaxVertexNumber() + 1, 0);
     for(int ent = 0; ent < getNumEntities(step); ent++) {
       for(int ele = 0; ele < getNumElements(step, ent); ele++) {
         MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
@@ -739,10 +740,7 @@ void PViewDataGModel::smooth()
         if(!getValueByIndex(step, e->getNum(), 0, 0, val)) continue;
         for(std::size_t nod = 0; nod < e->getNumVertices(); nod++) {
           MVertex *v = e->getVertex(nod);
-          if(nodeConnect.count(v->getNum()))
-            nodeConnect[v->getNum()]++;
-          else
-            nodeConnect[v->getNum()] = 1;
+          nodeConnect[v->getNum()]++;
           double *d = _steps2.back()->getData(v->getNum(), true);
           for(int j = 0; j < numComp; j++)
             if(getValueByIndex(step, e->getNum(), nod, j, val)) d[j] += val;
@@ -751,11 +749,8 @@ void PViewDataGModel::smooth()
     }
     for(std::size_t i = 0; i < _steps2.back()->getNumData(); i++) {
       double *d = _steps2.back()->getData(i);
-      if(d) {
-        double f = nodeConnect[i];
-        if(f)
-          for(int j = 0; j < numComp; j++) d[j] /= f;
-      }
+      if(d && i < nodeConnect.size() && nodeConnect[i])
+        for(int j = 0; j < numComp; j++) d[j] /= nodeConnect[i];
     }
   }
   for(std::size_t i = 0; i < _steps.size(); i++) delete _steps[i];
