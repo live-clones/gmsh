@@ -91,6 +91,16 @@ PView *GMSH_Scal2TensPlugin::execute(PView *v)
     return v;
   }
   PViewData *dataRef = vRef->getData();
+  for(int comp = 0; comp < numComp; comp++) {
+    // the values of each element are read at its index in every view
+    PViewData *d = vComp[comp] ? vComp[comp]->getData() : nullptr;
+    if(d && (d->getNumEntities() != dataRef->getNumEntities() ||
+             d->getNumElements() != dataRef->getNumElements())) {
+      Msg::Error("Scal2Tens plugin: View[%d] and View[%d] have different elements",
+                 vRef->getIndex(), vComp[comp]->getIndex());
+      return v;
+    }
+  }
 
   // Initialize the new view
   PView *vNew = new PView();
@@ -122,8 +132,9 @@ PView *GMSH_Scal2TensPlugin::execute(PView *v)
         for(int nod = 0; nod < numNodes; nod++) {
           for(int comp = 0; comp < numComp; comp++) {
             double val = 0.;
-            if(vComp[comp])
-              vComp[comp]->getData()->getValue(step, ent, ele, nod, 0, val);
+            PViewData *d = vComp[comp] ? vComp[comp]->getData() : nullptr;
+            if(d && d->hasTimeStep(step) && !d->skipElement(step, ent, ele))
+              d->getValue(step, ent, ele, nod, 0, val);
             out->push_back(val); // Save value
           }
         }
