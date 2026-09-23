@@ -5,8 +5,8 @@
 # physical groups), every view (its times, and for each kind of list or each
 # step of model data: counts, sum, sum of absolute values, min and max of what
 # it holds, and the sum of the vector areas of the triangles and quadrangles of
-# lists) and the sizes of the files written. Checks the summaries against
-# ref.json.
+# lists) and the number of lines of the files written. Checks the summaries
+# against ref.json.
 #
 #   python3 run.py [-o dir] [--api dir] [-j jobs] [--update] [cases...]
 #
@@ -49,16 +49,19 @@ def vector_area(t, n, d):
     if not m or not n:
         return None
     k = len(d) // n
-    s = [0., 0., 0.]
+    s = [0., 0., 0., 0.]  # and the total area, the scale of the comparison
     for i in range(n):
         e = d[i * k:i * k + 3 * m]
         p = [(e[j], e[m + j], e[2 * m + j]) for j in range(m)]
         for j in range(1, m - 1):  # fan of triangles
             a = [p[j][c] - p[0][c] for c in range(3)]
             b = [p[j + 1][c] - p[0][c] for c in range(3)]
-            s[0] += 0.5 * (a[1] * b[2] - a[2] * b[1])
-            s[1] += 0.5 * (a[2] * b[0] - a[0] * b[2])
-            s[2] += 0.5 * (a[0] * b[1] - a[1] * b[0])
+            c = [0.5 * (a[1] * b[2] - a[2] * b[1]),
+                 0.5 * (a[2] * b[0] - a[0] * b[2]),
+                 0.5 * (a[0] * b[1] - a[1] * b[0])]
+            for i in range(3):
+                s[i] += c[i]
+            s[3] += math.sqrt(sum(x * x for x in c))
     return s
 
 
@@ -118,7 +121,9 @@ def child(case, jsonfile):
     errors = [l for l in gmsh.logger.get() if l.startswith('Error')]
     out = summarize(gmsh)
     out['errors'] = errors
-    out['files'] = {f: os.path.getsize(f) for f in sorted(os.listdir('.'))
+    # the number of lines: the digits of the numbers in them may change
+    out['files'] = {f: sum(1 for _ in open(f, 'rb'))
+                    for f in sorted(os.listdir('.'))
                     if f not in ('log.txt', 'summary.json')}
     out['time'] = wall
     gmsh.finalize()
@@ -181,7 +186,8 @@ def differences(a, b, path=''):
         if len(a) != len(b):
             return ['%s: length %d, ref %d' % (path, len(a), len(b))]
         # the numbers of a list (count, sum, sum of absolute values, min, max,
-        # or the 3 components of an area) relative to the largest of them
+        # or the 3 components of an area and its total) relative to the
+        # largest of them
         nums = [abs(x) for x in a + b if isinstance(x, (int, float))]
         scale = max(nums) if nums else 0
         d = []
