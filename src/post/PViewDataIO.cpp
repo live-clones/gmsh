@@ -40,28 +40,13 @@ bool PViewData::writeSTL(const std::string &fileName)
       double x[4], y[4], z[4], n[3];
       for(int i = 0; i < N; i++) getNode(step, ent, ele, i, x[i], y[i], z[i]);
       normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n);
-      if(N == 3) {
+      // a quadrangle as two triangles
+      for(int t = 0; t < N - 2; t++) {
+        int v[3] = {0, t + 1, t + 2};
         fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
         fprintf(fp, "  outer loop\n");
-        fprintf(fp, "    vertex %g %g %g\n", x[0], y[0], z[0]);
-        fprintf(fp, "    vertex %g %g %g\n", x[1], y[1], z[1]);
-        fprintf(fp, "    vertex %g %g %g\n", x[2], y[2], z[2]);
-        fprintf(fp, "  endloop\n");
-        fprintf(fp, "endfacet\n");
-      }
-      else {
-        fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
-        fprintf(fp, "  outer loop\n");
-        fprintf(fp, "    vertex %g %g %g\n", x[0], y[0], z[0]);
-        fprintf(fp, "    vertex %g %g %g\n", x[1], y[1], z[1]);
-        fprintf(fp, "    vertex %g %g %g\n", x[2], y[2], z[2]);
-        fprintf(fp, "  endloop\n");
-        fprintf(fp, "endfacet\n");
-        fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
-        fprintf(fp, "  outer loop\n");
-        fprintf(fp, "    vertex %g %g %g\n", x[0], y[0], z[0]);
-        fprintf(fp, "    vertex %g %g %g\n", x[2], y[2], z[2]);
-        fprintf(fp, "    vertex %g %g %g\n", x[3], y[3], z[3]);
+        for(int i : v)
+          fprintf(fp, "    vertex %.16g %.16g %.16g\n", x[i], y[i], z[i]);
         fprintf(fp, "  endloop\n");
         fprintf(fp, "endfacet\n");
       }

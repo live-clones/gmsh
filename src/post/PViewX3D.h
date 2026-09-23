@@ -47,13 +47,4 @@ static void writeX3DScaleLabel(FILE *fp, PView *p, double xmin, double ymin,
 static void writeX3DStringCenter(FILE *fp, char *label, double x, double y,
                                  double z, double font_size);
 
-class TriangleToSort {
-public:
-  PView *_ppv;
-  int _index;
-  int _globalIndex;
-  float xmin, ymin, zmin;
-  float xmax, ymax, zmax;
-};
-
 #endif

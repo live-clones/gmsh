@@ -234,6 +234,41 @@ check('VTU list-based views next to the mesh',
 check('VTU list-based views without a mesh',
       None if views('nomesh.pvd') == [3, 3, 1, 1] else 'differs')
 
+# X3D: the triangles drawn twice are removed only if asked
+def x3dTriangles(remove):
+    start()
+    gmsh.merge(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..',
+                            'plugins', 'data', 'cube.pos'))
+    gmsh.option.setNumber('Print.X3dRemoveInnerBorders', remove)
+    f = os.path.join(OUT, 'views.x3d')
+    gmsh.view.write(gmsh.view.getTags()[0], f)
+    gmsh.finalize()
+    x = open(f).read()
+    index = x[x.index('<IndexedTriangleSet'):].split("index='")[1].split("'")[0]
+    return len(index.split()) // 3
+
+
+check('X3D inner borders kept, then removed',
+      None if (x3dTriangles(0), x3dTriangles(1)) == (420, 84) else
+      str((x3dTriangles(0), x3dTriangles(1))))
+
+# STL of a view: the coordinates in full precision
+start()
+v = gmsh.view.add('stl')
+pts = [(0.1234567890123, 1.1, 1.0 / 3.0), (0.7, 2.2, 0.9876543210987),
+       (0.5, 0.25, 2.0 / 3.0)]
+gmsh.view.addListData(v, 'ST', 1, [p[k] for k in range(3) for p in pts] +
+                      [1, 2, 3])
+f = os.path.join(OUT, 'view.stl')
+gmsh.view.write(v, f)
+gmsh.clear()
+gmsh.merge(f)
+nodes = gmsh.model.mesh.getNodes()[1].reshape(-1, 3)
+gmsh.finalize()
+err = max(min(max(abs(n[k] - p[k]) for k in range(3)) for n in nodes)
+          for p in pts)
+check('STL of a view in full precision', None if err < 1e-15 else str(err))
+
 # a CGNS field with the name of a list-based view (a file of the untracked
 # benchmarks/cgns/new)
 f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'cgns',
