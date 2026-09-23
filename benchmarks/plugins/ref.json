@@ -19260,12 +19260,12 @@
   "files": [],
   "mesh": {
    "elements": {
-    "Line 2": 109,
+    "Line 2": 129,
     "Triangle 3": 66
    },
    "entities": [
     4,
-    93,
+    5,
     1,
     0
    ],
@@ -19407,12 +19407,13 @@
   "mesh": {
    "elements": {
     "Hexahedron 8": 27,
+    "Line 2": 144,
     "Point": 64,
     "Quadrilateral 4": 54
    },
    "entities": [
     64,
-    12,
+    13,
     6,
     1
    ],
@@ -19423,7 +19424,7 @@
     0.0,
     1.0
    ],
-   "physicals": 5
+   "physicals": 6
   },
   "views": [
    {
