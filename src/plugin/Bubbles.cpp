@@ -107,14 +107,21 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
     (*eit)->writeGEO(fp);
 
   for(auto fit = m->firstFace(); fit != m->lastFace(); fit++) {
+    // the cells are cut out of a plane surface written as .geo
+    if((*fit)->geomType() != GEntity::Plane) {
+      Msg::Warning("Plugin(Bubbles) skips surface %d, which is not a plane",
+                   (*fit)->tag());
+      continue;
+    }
     (*fit)->writeGEO(fp);
     fprintf(fp, "Delete { Surface {%d}; }\n", (*fit)->tag());
 
     int sbeg = s;
     int llbeg = ll;
 
-    // compute vertex-to-triangle_barycenter map
-    std::map<MVertex *, std::vector<SPoint3> > v2t;
+    // compute vertex-to-triangle_barycenter map, in the order of the node
+    // tags for the output not to depend on where the nodes are in memory
+    std::map<MVertex *, std::vector<SPoint3>, MVertexPtrLessThan> v2t;
     for(std::size_t i = 0; i < (*fit)->triangles.size(); i++)
       for(int j = 0; j < 3; j++)
         v2t[(*fit)->triangles[i]->getVertex(j)].push_back(
