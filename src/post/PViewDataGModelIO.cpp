@@ -183,7 +183,7 @@ void PViewDataGModel::sendToServer(const std::string &name)
     if(_steps[0]->getData(i)) {
       MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {
-        Msg::Error("Unknown node %d in data", i);
+        Msg::Error("Unknown node %zu in data", i);
         return;
       }
       int num = v->getNum();

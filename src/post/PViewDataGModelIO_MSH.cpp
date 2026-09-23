@@ -203,7 +203,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
         if(_steps[step]->getData(i)) {
           MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
           if(!v) {
-            Msg::Error("Unknown node %d in data (MSH)", i);
+            Msg::Error("Unknown node %zu in data (MSH)", i);
             fclose(fp);
             return false;
           }
@@ -249,7 +249,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
         if(_steps[step]->getData(i)) {
           MElement *e = _steps[step]->getModel()->getMeshElementByTag(i);
           if(!e) {
-            Msg::Error("Unknown element %d in data", i);
+            Msg::Error("Unknown element %zu in data", i);
             fclose(fp);
             return false;
           }
