@@ -4799,7 +4799,7 @@ into, built as a shared library with the private API
 (@code{ENABLE_BUILD_DYNAMIC} and @code{ENABLE_PRIVATE_API}) on a system with
 @code{dlopen} (Linux, macOS): Gmsh refuses a plugin built for another version
 of the plugin interface. See
-@url{@value{GITLAB-PREFIX}/examples/api/plugin,examples/api/plugin} for an
+@url{@value{GITLAB-PREFIX}/examples/external_plugin,examples/external_plugin} for an
 example.
 
 @include plugins.texi

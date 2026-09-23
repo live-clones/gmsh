@@ -14,7 +14,7 @@
 # differs from the reference; --update writes the summaries of the cases run
 # into ref.json instead of checking them. Exits with 1 if a case failed.
 #
-# The External* cases run the plugin of examples/api/plugin, loaded from a
+# The External* cases run the plugin of examples/external_plugin, loaded from a
 # shared library: run.py compiles it with the compiler of $CXX (c++ by default)
 # against the sources and the build directory (--build, by default the bin
 # directory next to the api directory), and skips them if that fails.
@@ -135,7 +135,7 @@ def build_external(args):
     os.makedirs(out, exist_ok=True)
     lib = os.path.join(out, 'libElementAverage.so')
     cmd = [os.environ.get('CXX', 'c++'), '-std=c++17', '-shared', '-fPIC'] + \
-        inc + [os.path.join(HERE, '..', '..', 'examples', 'api', 'plugin',
+        inc + [os.path.join(HERE, '..', '..', 'examples', 'external_plugin',
                             'ElementAverage.cpp'),
                '-L' + args.build, '-lgmsh', '-Wl,-rpath,' + args.build,
                '-o', lib]

@@ -1149,7 +1149,7 @@ plugin.add('setString', doc, None, istring('name'), istring('option'), istring('
 doc = '''Run the plugin `name'. Return the tag of the created view (if any). Plugins available in the official Gmsh release are listed in the "Gmsh plugins" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).'''
 plugin.add('run', doc, oint, istring('name'))
 
-doc = '''Load a plugin from the shared library `fileName'. Such a plugin is a class derived from GMSH_PostPlugin or GMSH_MeshPlugin, defined with the GMSH_PLUGIN() macro of the private API header Plugin.h, and built against the headers of the private API and the shared Gmsh library (see "examples/api/plugin"). The plugins in the directories listed in the environment variable GMSHPLUGINSHOME (separated like in PATH) are loaded when Gmsh is initialized.'''
+doc = '''Load a plugin from the shared library `fileName'. Such a plugin is a class derived from GMSH_PostPlugin or GMSH_MeshPlugin, defined with the GMSH_PLUGIN() macro of the private API header Plugin.h, and built against the headers of the private API and the shared Gmsh library (see "examples/external_plugin"). The plugins in the directories listed in the environment variable GMSHPLUGINSHOME (separated like in PATH) are loaded when Gmsh is initialized.'''
 plugin.add('load', doc, None, istring('fileName'))
 
 ################################################################################

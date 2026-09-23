@@ -4131,7 +4131,7 @@ namespace gmsh { // Top-level functions
     // derived from GMSH_PostPlugin or GMSH_MeshPlugin, defined with the
     // GMSH_PLUGIN() macro of the private API header Plugin.h, and built against
     // the headers of the private API and the shared Gmsh library (see
-    // "examples/api/plugin"). The plugins in the directories listed in the
+    // "examples/external_plugin"). The plugins in the directories listed in the
     // environment variable GMSHPLUGINSHOME (separated like in PATH) are loaded
     // when Gmsh is initialized.
     GMSH_API void load(const std::string & fileName);
