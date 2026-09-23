@@ -399,7 +399,8 @@ public:
                         bool saveInterpolationMatrices = true,
                         bool forceNodeData = false,
                         bool forceElementData = false);
-  virtual bool writeMED(const std::string &fileName);
+  // (in the file of the mesh, written before, if saveMesh is false)
+  virtual bool writeMED(const std::string &fileName, bool saveMesh = true);
   virtual bool toVector(std::vector<std::vector<double> > &vec);
   virtual bool fromVector(const std::vector<std::vector<double> > &vec);
   virtual void importLists(int N[24], std::vector<double> *V[24]);

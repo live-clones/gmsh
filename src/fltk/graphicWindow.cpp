@@ -376,7 +376,7 @@ static int _save_su2(const char *name)
 }
 static int _save_med(const char *name)
 {
-  return genericMeshFileDialog(name, "MED Options", FORMAT_MED, false, false);
+  return medFileDialog(name);
 }
 static int _save_mesh(const char *name)
 {

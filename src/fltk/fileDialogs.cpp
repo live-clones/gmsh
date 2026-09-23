@@ -1157,6 +1157,16 @@ int meshStatFileDialog(const char *name)
   return 0;
 }
 
+// the choice of the views to save with the mesh (Mesh.SaveViews): with views
+// and no mesh, the views are what there is to save
+static int _viewsToSave()
+{
+  int views = (int)opt_mesh_save_views(0, GMSH_GET, 0);
+  if(!views && !PView::list.empty() && !GModel::current()->getNumMeshElements())
+    views = 1;
+  return views;
+}
+
 // Save msh dialog
 struct _mshFileDialog {
   Fl_Window *window;
@@ -1232,11 +1242,7 @@ int mshFileDialog(const char *name)
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 1 : 2);
   else
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 3 : 4);
-  // (with views and no mesh, the views are what there is to save)
-  int views = (int)opt_mesh_save_views(0, GMSH_GET, 0);
-  if(!views && !PView::list.empty() && !GModel::current()->getNumMeshElements())
-    views = 1;
-  dialog->views->value(views);
+  dialog->views->value(_viewsToSave());
   if(PView::list.empty() || dialog->c->value() == 0)
     dialog->views->deactivate();
   else
@@ -1830,6 +1836,75 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
                                        dialog->d->value() + 1);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         CreateOutputFile(name, format);
+        dialog->window->hide();
+        return 1;
+      }
+      if(o == dialog->window || o == dialog->cancel) {
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+int medFileDialog(const char *name)
+{
+  struct _medFileDialog {
+    Fl_Window *window;
+    Fl_Choice *views;
+    Fl_Check_Button *b;
+    Fl_Button *ok, *cancel;
+  };
+  static _medFileDialog *dialog = nullptr;
+
+  static Fl_Menu_Item viewsmenu[] = {{"None", 0, nullptr, nullptr},
+                                     {"Visible", 0, nullptr, nullptr},
+                                     {"All", 0, nullptr, nullptr},
+                                     {nullptr}};
+
+  int BBB = BB + 16; // labels too long
+
+  if(!dialog) {
+    dialog = new _medFileDialog;
+    int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h, "MED Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    dialog->views = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Views");
+    dialog->views->tooltip("Mesh.SaveViews");
+    y += BH;
+    dialog->views->menu(viewsmenu);
+    dialog->views->align(FL_ALIGN_RIGHT);
+    dialog->b =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
+    dialog->b->tooltip("Mesh.SaveAll");
+    y += BH;
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+
+  dialog->views->value(_viewsToSave());
+  if(PView::list.empty())
+    dialog->views->deactivate();
+  else
+    dialog->views->activate();
+  dialog->b->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
+  dialog->window->show();
+
+  while(dialog->window->shown()) {
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(o == dialog->ok) {
+        if(dialog->views->active())
+          opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_MED);
         dialog->window->hide();
         return 1;
       }

@@ -337,7 +337,7 @@ public:
                 const std::vector<std::vector<MVertex *>> &vertPerZone,
                 const std::vector<std::vector<MElement *>> &eltPerZone);
   bool readMED(const std::string &fileName, int fileIndex);
-  bool writeMED(const std::string &fileName);
+  bool writeMED(const std::string &fileName, bool saveMesh = true);
 
   void importLists(int N[24], std::vector<double> *V[24]);
   stepData<double> *getStepData(int step)

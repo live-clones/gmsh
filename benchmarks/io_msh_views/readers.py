@@ -171,6 +171,38 @@ if med:
     gmsh.finalize()
     check('MED with steps on different nodes', err)
 
+    # the mesh and its views saved together (Mesh.SaveViews), the values
+    # compared at the positions of the nodes
+    def fields():
+        tags, xyz, _ = gmsh.model.mesh.getNodes()
+        pos = {int(t): tuple(round(c, 9) for c in xyz[3 * i:3 * i + 3])
+               for i, t in enumerate(tags)}
+        out = {}
+        for v in gmsh.view.getTags():
+            name = gmsh.view.option.getString(v, 'Name')
+            for s in range(int(gmsh.view.option.getNumber(v, 'NbTimeStep'))):
+                t, tg, d, _, _ = gmsh.view.getModelData(v, s)
+                if t == 'NodeData':
+                    out[(name, s)] = sorted(
+                        (pos[int(k)], tuple(round(x, 12) for x in dd))
+                        for k, dd in zip(tg, d))
+        return out
+
+    start()
+    gmsh.merge(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..',
+                            'plugins', 'data', 'square.msh'))
+    ref = fields()
+    gmsh.option.setNumber('Mesh.SaveViews', 2)
+    f = os.path.join(OUT, 'all.med')
+    gmsh.write(f)
+    gmsh.finalize()
+    start()
+    gmsh.merge(f)
+    got = fields()
+    gmsh.finalize()
+    check('MED mesh with its views (%d steps)' % len(ref),
+          None if got == ref else 'differs')
+
 # a CGNS field with the name of a list-based view (a file of the untracked
 # benchmarks/cgns/new)
 f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'cgns',

@@ -385,18 +385,13 @@ static void ChangePrintParameter(int frame)
 #endif
 
 #if defined(HAVE_POST)
-// the views to save in an MSH file with the mesh of the current model
+// the views to save in a mesh file with the mesh of the current model
 // (Mesh.SaveViews): those based on it, and the list-based ones
-static void getViewsToSaveInMSH(std::vector<PViewData *> &onModel,
-                                std::vector<PViewDataList *> &lists)
+static void getViewsToSave(std::vector<PViewData *> &onModel,
+                           std::vector<PViewDataList *> &lists)
 {
   int which = CTX::instance()->mesh.saveViews;
   if(!which || PView::list.empty()) return;
-  if(CTX::instance()->mesh.mshFileVersion < 2.) {
-    Msg::Warning("Views cannot be saved in MSH %g files",
-                 CTX::instance()->mesh.mshFileVersion);
-    return;
-  }
   GModel *m = GModel::current();
   for(auto v : PView::list) {
     if(which == 1 && !v->getOptions()->visible) continue;
@@ -457,7 +452,11 @@ void CreateOutputFile(const std::string &fileName, int format,
 #if defined(HAVE_POST)
     std::vector<PViewData *> onModel;
     std::vector<PViewDataList *> lists;
-    getViewsToSaveInMSH(onModel, lists);
+    if(CTX::instance()->mesh.mshFileVersion >= 2.)
+      getViewsToSave(onModel, lists);
+    else if(CTX::instance()->mesh.saveViews && PView::list.size())
+      Msg::Warning("Views cannot be saved in MSH %g files",
+                   CTX::instance()->mesh.mshFileVersion);
     bool mesh = GModel::current()->getNumMeshElements() > 0;
     if(!mesh && lists.size()) {
       // no mesh: the file holds the list-based views, on a mesh of their
@@ -675,10 +674,29 @@ void CreateOutputFile(const std::string &fileName, int format,
        CTX::instance()->mesh.cgnsExportStructured);
     break;
 
-  case FORMAT_MED:
-    GModel::current()->writeMED
-      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+  case FORMAT_MED: {
+    if(!GModel::current()->writeMED
+       (name, CTX::instance()->mesh.saveAll,
+        CTX::instance()->mesh.scalingFactor))
+      break;
+#if defined(HAVE_POST)
+    // the views with values at the nodes of the mesh, as fields on it
+    std::vector<PViewData *> onModel;
+    std::vector<PViewDataList *> lists;
+    getViewsToSave(onModel, lists);
+    for(auto d : onModel) {
+      if(d->isNodeData())
+        d->writeMED(name, false);
+      else
+        Msg::Warning("View '%s' not saved: MED files only hold values at "
+                     "nodes", d->getName().c_str());
+    }
+    for(auto d : lists)
+      Msg::Warning("View '%s' not saved: MED files only hold views based on "
+                   "the mesh", d->getName().c_str());
+#endif
     break;
+  }
 
   case FORMAT_POS:
     GModel::current()->writePOS

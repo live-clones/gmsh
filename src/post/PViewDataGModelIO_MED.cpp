@@ -439,7 +439,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
   return true;
 }
 
-bool PViewDataGModel::writeMED(const std::string &fileName)
+bool PViewDataGModel::writeMED(const std::string &fileName, bool saveMesh)
 {
   if(_steps.empty()) return true;
 
@@ -455,8 +455,8 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
 
   GModel *model = _steps[0]->getModel();
 
-  // save the mesh
-  if(!model->writeMED(fileName, true)) return false;
+  // save the mesh (its nodes then have their index in the file)
+  if(saveMesh && !model->writeMED(fileName, true)) return false;
 
   std::string meshName(model->getName());
   std::string fieldName(getName());
@@ -482,9 +482,11 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   }
   medFile file(fid);
 
-  // compute profile
-  char *profileName = (char *)"nodeProfile";
+  // compute profile: the nodes with data, in the file
+  std::string profileName = "nodeProfile_" + fieldName;
+  profileName.resize(std::min(profileName.size(), (std::size_t)MED_NAME_SIZE));
   std::vector<med_int> profile, indices;
+  std::size_t notInFile = 0;
   for(std::size_t i = 0; i < _steps[0]->getNumData(); i++) {
     if(_steps[0]->getData(i)) {
       MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
@@ -492,10 +494,18 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
         Msg::Error("Unknown node %zu in data (MED)", i);
         return false;
       }
+      if(v->getIndex() < 1) {
+        notInFile++;
+        continue;
+      }
       profile.push_back(v->getIndex());
       indices.push_back(i);
     }
   }
+  if(notInFile)
+    Msg::Warning("Values of view '%s' at %zu nodes not saved in the MED "
+                 "file are skipped",
+                 fieldName.c_str(), notInFile);
 
   if(profile.empty()) {
     Msg::Error("Nothing to save");
@@ -503,9 +513,11 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   }
 
 #if (MED_MAJOR_NUM >= 3)
-  if(MEDprofileWr(fid, profileName, (med_int)profile.size(), &profile[0]) < 0) {
+  if(MEDprofileWr(fid, profileName.c_str(), (med_int)profile.size(),
+                  &profile[0]) < 0) {
 #else
-  if(MEDprofilEcr(fid, &profile[0], (med_int)profile.size(), profileName) < 0) {
+  if(MEDprofilEcr(fid, &profile[0], (med_int)profile.size(),
+                  (char *)profileName.c_str()) < 0) {
 #endif
     Msg::Error("Could not create MED profile");
     return false;
@@ -571,15 +583,15 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
 #if (MED_MAJOR_NUM >= 3)
     if(MEDfieldValueWithProfileWr(
          fid, (char *)fieldName.c_str(), (med_int)(step + 1), MED_NO_IT, time,
-         MED_NODE, MED_NO_GEOTYPE, MED_COMPACT_STMODE, profileName, "",
+         MED_NODE, MED_NO_GEOTYPE, MED_COMPACT_STMODE, profileName.c_str(), "",
          MED_FULL_INTERLACE, MED_ALL_CONSTITUENT, numNodes,
          (unsigned char *)&val[0]) < 0) {
 #else
     if(MEDchampEcr(fid, (char *)meshName.c_str(), (char *)fieldName.c_str(),
                    (unsigned char *)&val[0], MED_FULL_INTERLACE, numNodes,
-                   (char *)MED_NOGAUSS, MED_ALL, profileName, MED_COMPACT,
-                   MED_NOEUD, MED_NONE, (med_int)step, (char *)"unknown", time,
-                   MED_NONOR) < 0) {
+                   (char *)MED_NOGAUSS, MED_ALL, (char *)profileName.c_str(),
+                   MED_COMPACT, MED_NOEUD, MED_NONE, (med_int)step,
+                   (char *)"unknown", time, MED_NONOR) < 0) {
 #endif
       Msg::Error("Could not write MED field");
       return false;
@@ -602,7 +614,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
   return false;
 }
 
-bool PViewDataGModel::writeMED(const std::string &fileName)
+bool PViewDataGModel::writeMED(const std::string &fileName, bool saveMesh)
 {
   Msg::Error("Gmsh must be compiled with MED support to write '%s'",
              fileName.c_str());

@@ -57,7 +57,7 @@ Save nodes with their parametric coordinates (Mesh.SaveParametric)
 @item -save_topology
 Save model topology (Mesh.SaveTopology)
 @item -save_views
-Save all views in MSH files (Mesh.SaveViews)
+Save all views in MSH and MED files (Mesh.SaveViews)
 @item -algo string
 Select mesh algorithm: auto, meshadapt, del2d, front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)
 @item -smooth int
