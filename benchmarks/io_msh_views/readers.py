@@ -203,6 +203,37 @@ if med:
     check('MED mesh with its views (%d steps)' % len(ref),
           None if got == ref else 'differs')
 
+# views saved with the mesh in VTU (Mesh.SaveViews): the model-based ones with
+# it, the list-based ones in files of their own, or in the file if there is no
+# mesh
+def vtu(files, name):
+    start()
+    for f in files:
+        gmsh.merge(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                '..', 'plugins', 'data', f))
+    gmsh.option.setNumber('Mesh.SaveViews', 2)
+    gmsh.write(os.path.join(OUT, name + '.vtu'))
+    gmsh.finalize()
+
+
+def views(f):
+    start()
+    gmsh.merge(os.path.join(OUT, f))
+    n = [int(gmsh.view.option.getNumber(v, 'NbTimeStep'))
+         for v in gmsh.view.getTags()]
+    gmsh.finalize()
+    return n
+
+
+vtu(['cube.msh', 'cube.pos'], 'withmesh')
+vtu(['cube.pos'], 'nomesh')
+check('VTU with the mesh and its views',
+      None if views('withmesh.pvd') == [3, 3, 3, 3] else 'differs')
+check('VTU list-based views next to the mesh',
+      None if views('withmesh_views.pvd') == [3, 3, 1, 1] else 'differs')
+check('VTU list-based views without a mesh',
+      None if views('nomesh.pvd') == [3, 3, 1, 1] else 'differs')
+
 # a CGNS field with the name of a list-based view (a file of the untracked
 # benchmarks/cgns/new)
 f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'cgns',

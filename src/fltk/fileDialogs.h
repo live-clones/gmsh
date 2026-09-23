@@ -30,6 +30,7 @@ int pgfBitmapFileDialog(const char *filename, const char *title, int format);
 int genericMeshFileDialog(const char *filename, const char *title, int format,
                           bool binary_support, bool element_tag_support);
 int medFileDialog(const char *name);
+int vtuFileDialog(const char *name);
 int posFileDialog(const char *name);
 int x3dViewFileDialog(const char *name, const char *title, int format);
 int pvtuAdaptFileDialog(const char *name);

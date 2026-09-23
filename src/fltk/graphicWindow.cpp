@@ -341,7 +341,7 @@ static int _save_vtk(const char *name)
 }
 static int _save_vtu(const char *name)
 {
-  return genericMeshFileDialog(name, "VTU Options", FORMAT_VTU, true, false);
+  return vtuFileDialog(name);
 }
 static int _save_tochnog(const char *name)
 {

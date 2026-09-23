@@ -1917,6 +1917,84 @@ int medFileDialog(const char *name)
   return 0;
 }
 
+int vtuFileDialog(const char *name)
+{
+  struct _vtuFileDialog {
+    Fl_Window *window;
+    Fl_Choice *c, *views;
+    Fl_Check_Button *b;
+    Fl_Button *ok, *cancel;
+  };
+  static _vtuFileDialog *dialog = nullptr;
+
+  static Fl_Menu_Item formatmenu[] = {
+    {"ASCII", 0, nullptr, nullptr}, {"Binary", 0, nullptr, nullptr}, {nullptr}};
+  static Fl_Menu_Item viewsmenu[] = {{"None", 0, nullptr, nullptr},
+                                     {"Visible", 0, nullptr, nullptr},
+                                     {"All", 0, nullptr, nullptr},
+                                     {nullptr}};
+
+  int BBB = BB + 16; // labels too long
+
+  if(!dialog) {
+    dialog = new _vtuFileDialog;
+    int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h, "VTU Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format");
+    dialog->c->tooltip("Mesh.Binary");
+    y += BH;
+    dialog->c->menu(formatmenu);
+    dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->views = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Views");
+    dialog->views->tooltip("Mesh.SaveViews");
+    y += BH;
+    dialog->views->menu(viewsmenu);
+    dialog->views->align(FL_ALIGN_RIGHT);
+    dialog->b =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
+    dialog->b->tooltip("Mesh.SaveAll");
+    y += BH;
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+
+  dialog->c->value(opt_mesh_binary(0, GMSH_GET, 0) ? 1 : 0);
+  dialog->views->value(_viewsToSave());
+  if(PView::list.empty())
+    dialog->views->deactivate();
+  else
+    dialog->views->activate();
+  dialog->b->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
+  dialog->window->show();
+
+  while(dialog->window->shown()) {
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(o == dialog->ok) {
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+        if(dialog->views->active())
+          opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_VTU);
+        dialog->window->hide();
+        return 1;
+      }
+      if(o == dialog->window || o == dialog->cancel) {
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
 // POS format post-processing export dialog
 
 static void _saveViews(const std::string &name, int which, int format,

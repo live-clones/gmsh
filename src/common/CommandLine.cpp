@@ -111,7 +111,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "coordinates (Mesh.SaveParametric)"));
   s.push_back(mp("-save_topology", "Save model topology (Mesh.SaveTopology)"));
   s.push_back(
-    mp("-save_views", "Save all views in MSH and MED files (Mesh.SaveViews)"));
+    mp("-save_views", "Save all views with the mesh (Mesh.SaveViews)"));
   s.push_back(mp("-algo string", "Select mesh algorithm: auto, meshadapt, del2d, "
                  "front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, "
                  "hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));

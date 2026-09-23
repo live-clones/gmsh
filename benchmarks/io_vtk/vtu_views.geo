@@ -48,6 +48,7 @@ If(Fabs(integral - 42) > 1e-8 || smin != 0 || smax != 14 || cmin != 5 || cmax !=
 EndIf
 vmax0 = vmax;
 
+Mesh.SaveViews = 2; // (with the mesh)
 For binary In {0 : 1}
   Mesh.Binary = binary;
   Save "vtu_views_out.vtu";
