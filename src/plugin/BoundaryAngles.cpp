@@ -43,7 +43,7 @@ std::string GMSH_BoundaryAnglesPlugin::getHelp() const
          "modulo 2*Pi, are stored in a new post-processing view, one for each "
          "surface. The plugin currently only works for planar surfaces."
          "Available options:"
-         "- Visible (1=True, 0 = False, Default = 1): Visibility of the Views "
+         "- Visible (1=True, 0 = False, Default = 0): Visibility of the Views "
          "in the GUI "
          "- Save (1=True, 0 = False, Default = 0): Save the Views on disk ?"
          "- Remove (1=True, 0 = False, Default = 0): Remove the View from the "
@@ -151,8 +151,8 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
           data->SP.push_back(p2.x());
           data->SP.push_back(p2.y());
           data->SP.push_back(p2.z());
-          // Choose the angle inside the polygon
-          if(a > 0) a = -(2 * M_PI - a);
+          // the angle inside the polygon, in [0, 2 pi)
+          a = (a > 0) ? 2 * M_PI - a : -a;
           data->SP.push_back(a);
           data->NbSP++;
         }
