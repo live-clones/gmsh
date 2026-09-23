@@ -128,7 +128,9 @@ PView *GMSH_ProbePlugin::execute(PView *v)
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
-  int numSteps = v1->getData()->getNumTimeSteps();
+  // the data the search structure is built on: adapted if it can be
+  PViewData *data1 = v1->getData(true);
+  int numSteps = data1->getNumTimeSteps();
   double *val = new double[9 * numSteps];
 
   OctreePost o(v1);
@@ -164,7 +166,7 @@ PView *GMSH_ProbePlugin::execute(PView *v)
   delete[] val;
 
   for(int i = 0; i < numSteps; i++) {
-    double time = v1->getData()->getTime(i);
+    double time = data1->getTime(i);
     data2->Time.push_back(time);
   }
   data2->setName(v1->getData()->getName() + "_Probe");

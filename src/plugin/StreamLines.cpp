@@ -271,7 +271,6 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
         if(timeStep < 0) {
           double T0 = data1->getTime(0);
           double currentT = T0 + DT * iter;
-          data3->Time.push_back(currentT);
           for(; currentTimeStep < data1->getNumTimeSteps() - 1 &&
                 currentT > 0.5 * (data1->getTime(currentTimeStep) +
                                   data1->getTime(currentTimeStep + 1));
@@ -324,6 +323,17 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
         }
       }
     }
+  }
+
+  // the steps of the other view on the lines, or the displacements at the end
+  // of each iteration in an unsteady field
+  if(data2) {
+    for(int k = 0; k < data2->getNumTimeSteps(); k++)
+      data3->Time.push_back(data2->getTime(k));
+  }
+  else if(timeStep < 0) {
+    for(int iter = 0; iter < maxIter; iter++)
+      data3->Time.push_back(data1->getTime(0) + DT * (iter + 1));
   }
 
   if(data2) {
