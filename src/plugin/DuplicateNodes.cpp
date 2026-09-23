@@ -17,8 +17,6 @@
 #include "MEdge.h"
 #include "Context.h"
 
-#include "FlGui.h"
-
 #include <algorithm>
 
 constexpr uint64_t SHIFT = 32LL;
@@ -201,7 +199,7 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
   const double DNPP_SHRINK = DuplicateNodesOption_Number[1].def;
   const bool DNPP_MESH1DENT = (bool)DuplicateNodesOption_Number[2].def;
 
-  Msg::Info("InsertMode (1 = triangle, 0 = quads): %d", DNPP_ELTYPETOINSERT);
+  Msg::Info("InsertMode (1 = triangle, 0 = quads): %zu", DNPP_ELTYPETOINSERT);
   Msg::Info("ShrinkFactor: %f", DNPP_SHRINK);
   Msg::Info("Insert1DElement: %s", DNPP_MESH1DENT ? "true" : "false");
 
@@ -209,6 +207,18 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
 
   std::vector<GEntity *> entities;
   m->getEntities(entities);
+
+  // the mesh of every entity is rebuilt from its surface elements and their
+  // corners: volumes would be lost, and higher order nodes taken for corners
+  for(auto e : entities) {
+    for(std::size_t i = 0; i < e->getNumMeshElements(); i++) {
+      MElement *el = e->getMeshElement(i);
+      if(el->getDim() == 3 || el->getPolynomialOrder() > 1) {
+        Msg::Error("Plugin(DuplicateNodes) only handles first order 2D meshes");
+        return view;
+      }
+    }
+  }
 
   std::vector<MVertex *> newNodes;
   std::vector<size_t> newNodesEntity;
