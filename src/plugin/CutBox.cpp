@@ -376,34 +376,42 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
     }
   }
 
+  // the values at the points: only those on the boundary of the grid are
+  // used with Boundary; searched in parallel
+  int nu = getNbU(), nv = getNbV(), nw = getNbW();
+  auto search = [&](int numComp) {
+    o.prepareThreads();
+    int n = nu * nv * nw;
+    int nthreads = CTX::instance()->numThreadsFor(n, 1000);
+#pragma omp parallel for num_threads(nthreads) schedule(dynamic, 256)
+    for(int p = 0; p < n; p++) {
+      int i = p / (nv * nw), j = (p / nw) % nv, k = p % nw;
+      if(boundary && i > 0 && i < nu - 1 && j > 0 && j < nv - 1 && k > 0 &&
+         k < nw - 1)
+        continue;
+      double *x = pnts[i][j][k], *val = vals[i][j][k];
+      if(numComp == 1)
+        o.searchScalar(x[0], x[1], x[2], val);
+      else if(numComp == 3)
+        o.searchVector(x[0], x[1], x[2], val);
+      else
+        o.searchTensor(x[0], x[1], x[2], val);
+    }
+  };
   if(nbs) {
-    for(int i = 0; i < getNbU(); i++)
-      for(int j = 0; j < getNbV(); j++)
-        for(int k = 0; k < getNbW(); k++)
-          o.searchScalar(pnts[i][j][k][0], pnts[i][j][k][1], pnts[i][j][k][2],
-                         vals[i][j][k]);
+    search(1);
     addInView(connect, boundary, numsteps, 1, pnts, vals, data2->SP,
               &data2->NbSP, data2->SL, &data2->NbSL, data2->SQ, &data2->NbSQ,
               data2->SH, &data2->NbSH);
   }
-
   if(nbv) {
-    for(int i = 0; i < getNbU(); i++)
-      for(int j = 0; j < getNbV(); j++)
-        for(int k = 0; k < getNbW(); k++)
-          o.searchVector(pnts[i][j][k][0], pnts[i][j][k][1], pnts[i][j][k][2],
-                         vals[i][j][k]);
+    search(3);
     addInView(connect, boundary, numsteps, 3, pnts, vals, data2->VP,
               &data2->NbVP, data2->VL, &data2->NbVL, data2->VQ, &data2->NbVQ,
               data2->VH, &data2->NbVH);
   }
-
   if(nbt) {
-    for(int i = 0; i < getNbU(); i++)
-      for(int j = 0; j < getNbV(); j++)
-        for(int k = 0; k < getNbW(); k++)
-          o.searchTensor(pnts[i][j][k][0], pnts[i][j][k][1], pnts[i][j][k][2],
-                         vals[i][j][k]);
+    search(9);
     addInView(connect, boundary, numsteps, 9, pnts, vals, data2->TP,
               &data2->NbTP, data2->TL, &data2->NbTL, data2->TQ, &data2->NbTQ,
               data2->TH, &data2->NbTH);
