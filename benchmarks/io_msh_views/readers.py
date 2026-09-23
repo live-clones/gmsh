@@ -153,5 +153,37 @@ if med:
     check('MED with 3 steps read back, twice',
           None if len(tags) == 2 and got == ref else 'differs')
 
+    # steps on different nodes: the others are skipped
+    start()
+    gmsh.merge(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..',
+                            'plugins', 'data', 'square.msh'))
+    tags = list(gmsh.model.mesh.getNodes()[0])
+    v = gmsh.view.add('split')
+    h = len(tags) // 2
+    gmsh.view.addHomogeneousModelData(v, 0, '', 'NodeData', tags[:h], [1.] * h)
+    gmsh.view.addHomogeneousModelData(v, 1, '', 'NodeData', tags[h:2 * h],
+                                      [2.] * h)
+    try:
+        gmsh.view.write(v, os.path.join(OUT, 'split.med'))
+        err = None
+    except Exception as e:
+        err = str(e)
+    gmsh.finalize()
+    check('MED with steps on different nodes', err)
+
+# a CGNS field with the name of a list-based view (a file of the untracked
+# benchmarks/cgns/new)
+f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'cgns',
+                 'new', 'yf17.cgns')
+if os.path.exists(f):
+    start()
+    v = gmsh.view.add('FlowSolution_Density')
+    gmsh.view.addListData(v, 'SP', 1, [0, 0, 0, 1])
+    gmsh.merge(f)
+    names = [gmsh.view.option.getString(t, 'Name') for t in gmsh.view.getTags()]
+    gmsh.finalize()
+    check('CGNS field named as a list-based view',
+          None if names.count('FlowSolution_Density') == 2 else str(names))
+
 print('%d failed' % failed)
 sys.exit(1 if failed else 0)
