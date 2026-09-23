@@ -104,30 +104,36 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
   double c4 =
     DT * DT * (beta + (0.5 + gamma - 2 * beta) + (0.5 - gamma + beta));
 
-  for(int i = 0; i < getNbU(); ++i) {
-    for(int j = 0; j < getNbV(); ++j) {
-      double XINIT[3], X0[3], X1[3];
-      getPoint(i, j, XINIT);
-      getPoint(i, j, X0);
-      getPoint(i, j, X1);
-      data2->NbVP++;
-      data2->VP.push_back(XINIT[0]);
-      data2->VP.push_back(XINIT[1]);
-      data2->VP.push_back(XINIT[2]);
-      for(int iter = 0; iter < maxIter; iter++) {
-        double F[3], X[3];
-        o1.searchVector(X1[0], X1[1], X1[2], F, timeStep);
-        for(int k = 0; k < 3; k++)
-          X[k] = (c2 * X1[k] + c3 * X0[k] + c4 * F[k]) / c1;
-        data2->VP.push_back(X[0] - XINIT[0]);
-        data2->VP.push_back(X[1] - XINIT[1]);
-        data2->VP.push_back(X[2] - XINIT[2]);
-        for(int k = 0; k < 3; k++) {
-          X0[k] = X1[k];
-          X1[k] = X[k];
-        }
+  // the trajectory of each seed, computed in parallel and then written in
+  // the order of the seeds
+  int nbV = getNbV(), numSeeds = getNbU() * nbV;
+  std::vector<std::vector<double>> trajectories(numSeeds);
+  o1.prepareThreads();
+  int nthreads =
+    CTX::instance()->numThreadsFor((std::size_t)numSeeds * maxIter, 10000);
+#pragma omp parallel for num_threads(nthreads) schedule(dynamic, 1)
+  for(int seed = 0; seed < numSeeds; seed++) {
+    std::vector<double> &t = trajectories[seed];
+    double XINIT[3], X0[3], X1[3];
+    getPoint(seed / nbV, seed % nbV, XINIT);
+    getPoint(seed / nbV, seed % nbV, X0);
+    getPoint(seed / nbV, seed % nbV, X1);
+    t.insert(t.end(), XINIT, XINIT + 3);
+    for(int iter = 0; iter < maxIter; iter++) {
+      double F[3], X[3];
+      o1.searchVector(X1[0], X1[1], X1[2], F, timeStep);
+      for(int k = 0; k < 3; k++)
+        X[k] = (c2 * X1[k] + c3 * X0[k] + c4 * F[k]) / c1;
+      for(int k = 0; k < 3; k++) t.push_back(X[k] - XINIT[k]);
+      for(int k = 0; k < 3; k++) {
+        X0[k] = X1[k];
+        X1[k] = X[k];
       }
     }
+  }
+  for(auto &t : trajectories) {
+    data2->NbVP++;
+    data2->VP.insert(data2->VP.end(), t.begin(), t.end());
   }
 
   v2->getOptions()->vectorType = PViewOptions::Displacement;

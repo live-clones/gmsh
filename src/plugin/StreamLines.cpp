@@ -83,113 +83,115 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
   }
 
   OctreePost o1(v1);
-  double *val2 = nullptr;
-  OctreePost *o2 = nullptr;
-  if(data2) {
-    val2 = new double[data2->getNumTimeSteps()];
-    o2 = new OctreePost(v2);
-  }
+  OctreePost *o2 = data2 ? new OctreePost(v2) : nullptr;
 
   PView *v3 = new PView();
   PViewDataList *data3 = getDataList(v3);
 
   const double b1 = 1. / 3., b2 = 2. / 3., b3 = 1. / 3., b4 = 1. / 6.;
   const double a1 = 0.5, a2 = 0.5, a3 = 1., a4 = 1.;
-  double XINIT[3], X[3], DX[3], X1[3], X2[3], X3[3], X4[3];
 
-  for(int i = 0; i < getNbU(); ++i) {
-    for(int j = 0; j < getNbV(); ++j) {
-      getPoint(i, j, XINIT);
-      getPoint(i, j, X);
-      DX[0] = DX[1] = DX[2] = 0.;
+  // the lines of each seed, computed in parallel and then written in the
+  // order of the seeds
+  struct Line {
+    std::vector<double> VP, SL;
+    int nVP = 0, nSL = 0;
+  };
+  int nbV = getNbV(), numSeeds = getNbU() * nbV;
+  std::vector<Line> lines(numSeeds);
+  auto trace = [&](int seed, Line &line) {
+    double XINIT[3], X[3], DX[3] = {0., 0., 0.}, X1[3], X2[3], X3[3], X4[3];
+    std::vector<double> val2(data2 ? data2->getNumTimeSteps() : 0);
+    getPoint(seed / nbV, seed % nbV, XINIT);
+    getPoint(seed / nbV, seed % nbV, X);
 
-      if(data2) { o2->searchScalar(X[0], X[1], X[2], val2, -1); }
+    if(data2) { o2->searchScalar(X[0], X[1], X[2], val2.data(), -1); }
+    else {
+      line.nVP++;
+      line.VP.insert(line.VP.end(), X, X + 3);
+    }
+
+    int currentTimeStep = 0;
+    bool outside = false; // the line has left the domain
+
+    for(int iter = 0; iter < maxIter; iter++) {
+      if(outside) { // the point stays where it left the domain
+        if(data2) break;
+        line.VP.insert(line.VP.end(), DX, DX + 3);
+        continue;
+      }
+      double XPREV[3] = {X[0], X[1], X[2]};
+
+      if(timeStep < 0) {
+        double T0 = data1->getTime(0);
+        double currentT = T0 + DT * iter;
+        for(; currentTimeStep < data1->getNumTimeSteps() - 1 &&
+              currentT > 0.5 * (data1->getTime(currentTimeStep) +
+                                data1->getTime(currentTimeStep + 1));
+            currentTimeStep++);
+      }
       else {
-        data3->NbVP++;
-        data3->VP.push_back(X[0]);
-        data3->VP.push_back(X[1]);
-        data3->VP.push_back(X[2]);
+        currentTimeStep = timeStep;
       }
 
-      int currentTimeStep = 0;
-      bool outside = false; // the line has left the domain
+      // dX/dt = V
+      // X1 = X + a1 * DT * V(X)
+      // X2 = X + a2 * DT * V(X1)
+      // X3 = X + a3 * DT * V(X2)
+      // X4 = X + a4 * DT * V(X3)
+      // X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
+      // stop where a stage falls outside of the domain (its velocity would
+      // be taken as 0)
+      double val[3];
+      if(!o1.searchVector(X[0], X[1], X[2], val, currentTimeStep))
+        outside = true;
+      for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * val[k] * a1;
+      if(!outside &&
+         !o1.searchVector(X1[0], X1[1], X1[2], val, currentTimeStep))
+        outside = true;
+      for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * val[k] * a2;
+      if(!outside &&
+         !o1.searchVector(X2[0], X2[1], X2[2], val, currentTimeStep))
+        outside = true;
+      for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * val[k] * a3;
+      if(!outside &&
+         !o1.searchVector(X3[0], X3[1], X3[2], val, currentTimeStep))
+        outside = true;
+      for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * val[k] * a4;
+      if(outside) {
+        iter--; // redo this iteration as a point that no longer moves
+        continue;
+      }
 
-      for(int iter = 0; iter < maxIter; iter++) {
-        if(outside) { // the point stays where it left the domain
-          if(data2) break;
-          for(int k = 0; k < 3; k++) data3->VP.push_back(DX[k]);
-          continue;
-        }
-        double XPREV[3] = {X[0], X[1], X[2]};
+      for(int k = 0; k < 3; k++)
+        X[k] += (b1 * (X1[k] - X[k]) + b2 * (X2[k] - X[k]) +
+                 b3 * (X3[k] - X[k]) + b4 * (X4[k] - X[k]));
+      for(int k = 0; k < 3; k++) DX[k] = X[k] - XINIT[k];
 
-        if(timeStep < 0) {
-          double T0 = data1->getTime(0);
-          double currentT = T0 + DT * iter;
-          for(; currentTimeStep < data1->getNumTimeSteps() - 1 &&
-                currentT > 0.5 * (data1->getTime(currentTimeStep) +
-                                  data1->getTime(currentTimeStep + 1));
-              currentTimeStep++)
-            ;
-        }
-        else {
-          currentTimeStep = timeStep;
-        }
-
-        // dX/dt = V
-        // X1 = X + a1 * DT * V(X)
-        // X2 = X + a2 * DT * V(X1)
-        // X3 = X + a3 * DT * V(X2)
-        // X4 = X + a4 * DT * V(X3)
-        // X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
-        // stop where a stage falls outside of the domain (its velocity would
-        // be taken as 0)
-        double val[3];
-        if(!o1.searchVector(X[0], X[1], X[2], val, currentTimeStep))
-          outside = true;
-        for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * val[k] * a1;
-        if(!outside &&
-           !o1.searchVector(X1[0], X1[1], X1[2], val, currentTimeStep))
-          outside = true;
-        for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * val[k] * a2;
-        if(!outside &&
-           !o1.searchVector(X2[0], X2[1], X2[2], val, currentTimeStep))
-          outside = true;
-        for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * val[k] * a3;
-        if(!outside &&
-           !o1.searchVector(X3[0], X3[1], X3[2], val, currentTimeStep))
-          outside = true;
-        for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * val[k] * a4;
-        if(outside) {
-          iter--; // redo this iteration as a point that no longer moves
-          continue;
-        }
-
-        for(int k = 0; k < 3; k++)
-          X[k] += (b1 * (X1[k] - X[k]) + b2 * (X2[k] - X[k]) +
-                   b3 * (X3[k] - X[k]) + b4 * (X4[k] - X[k]));
-        for(int k = 0; k < 3; k++) DX[k] = X[k] - XINIT[k];
-
-        if(data2) {
-          data3->NbSL++;
-          data3->SL.push_back(XPREV[0]);
-          data3->SL.push_back(X[0]);
-          data3->SL.push_back(XPREV[1]);
-          data3->SL.push_back(X[1]);
-          data3->SL.push_back(XPREV[2]);
-          data3->SL.push_back(X[2]);
-          for(int k = 0; k < data2->getNumTimeSteps(); k++)
-            data3->SL.push_back(val2[k]);
-          o2->searchScalar(X[0], X[1], X[2], val2, -1);
-          for(int k = 0; k < data2->getNumTimeSteps(); k++)
-            data3->SL.push_back(val2[k]);
-        }
-        else {
-          data3->VP.push_back(DX[0]);
-          data3->VP.push_back(DX[1]);
-          data3->VP.push_back(DX[2]);
-        }
+      if(data2) {
+        line.nSL++;
+        double xyz[6] = {XPREV[0], X[0], XPREV[1], X[1], XPREV[2], X[2]};
+        line.SL.insert(line.SL.end(), xyz, xyz + 6);
+        line.SL.insert(line.SL.end(), val2.begin(), val2.end());
+        o2->searchScalar(X[0], X[1], X[2], val2.data(), -1);
+        line.SL.insert(line.SL.end(), val2.begin(), val2.end());
+      }
+      else {
+        line.VP.insert(line.VP.end(), DX, DX + 3);
       }
     }
+  };
+  o1.prepareThreads();
+  if(o2) o2->prepareThreads();
+  int nthreads =
+    CTX::instance()->numThreadsFor((std::size_t)numSeeds * maxIter, 10000);
+#pragma omp parallel for num_threads(nthreads) schedule(dynamic, 1)
+  for(int seed = 0; seed < numSeeds; seed++) trace(seed, lines[seed]);
+  for(auto &line : lines) {
+    data3->NbVP += line.nVP;
+    data3->VP.insert(data3->VP.end(), line.VP.begin(), line.VP.end());
+    data3->NbSL += line.nSL;
+    data3->SL.insert(data3->SL.end(), line.SL.begin(), line.SL.end());
   }
 
   // the steps of the other view on the lines, or the displacements at the end
@@ -203,10 +205,7 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
       data3->Time.push_back(data1->getTime(0) + DT * (iter + 1));
   }
 
-  if(data2) {
-    delete[] val2;
-    delete o2;
-  }
+  if(data2) { delete o2; }
   else {
     v3->getOptions()->vectorType = PViewOptions::Displacement;
   }

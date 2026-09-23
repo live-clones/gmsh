@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <set>
 #include "Octree.h"
 #include "OctreePost.h"
 #include "PView.h"
@@ -312,6 +313,28 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
 
   if(elementSize) *elementSize = e->maxEdge();
   return true;
+}
+
+void OctreePost::prepareThreads()
+{
+  if(!_theViewDataGModel) return;
+  std::set<GModel *> models;
+  for(int step = 0; step < _theViewDataGModel->getNumTimeSteps(); step++)
+    if(_theViewDataGModel->hasTimeStep(step))
+      models.insert(_theViewDataGModel->getModel(step));
+  for(GModel *m : models) {
+    SPoint3 p(0., 0., 0.), uvw;
+    m->getMeshElementByCoord(p, uvw);
+    std::vector<GEntity *> entities;
+    m->getEntities(entities);
+    std::set<int> types;
+    for(auto ge : entities) {
+      for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+        MElement *e = ge->getMeshElement(i);
+        if(types.insert(e->getTypeForMSH()).second) e->getFunctionSpace();
+      }
+    }
+  }
 }
 
 bool OctreePost::_search(int numComp, double x, double y, double z,

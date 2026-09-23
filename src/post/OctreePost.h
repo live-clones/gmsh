@@ -34,6 +34,10 @@ public:
   OctreePost(PView *v);
   OctreePost(PViewData *data);
   ~OctreePost();
+  // build what the searches in model data create when first needed (the
+  // search structure of the mesh, the bases of its elements), for them to be
+  // run in several threads afterwards; searches in list data only read
+  void prepareThreads();
   // search for the value of the View at point x, y, z. Values are interpolated
   // using standard first order shape functions in the post element. If several
   // time steps are present, they are all interpolated unless time step is set
