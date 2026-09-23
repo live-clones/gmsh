@@ -10,6 +10,7 @@
   #undef HAVE_DLOPEN
   #include "GmshConfig.h"
   #include "fullMatrix.h"
+  #include "simpleFunction.h"
 #if defined(HAVE_POST)
   #include "PluginManager.h"
   #include "Plugin.h"
@@ -36,4 +37,3 @@ namespace std {
 %include "Plugin.h"
 %include "PluginManager.h"
 #endif
-

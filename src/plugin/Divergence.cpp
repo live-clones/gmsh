@@ -44,7 +44,7 @@ PView *GMSH_DivergencePlugin::execute(PView *v)
       std::vector<double> val;
       e.getValues(data1, step, val);
       for(int nod = 0; nod < e.numNodes; nod++) {
-        double u, v, w, f[3];
+        double u, v, w;
         s->getNode(nod, u, v, w);
         res[0].push_back(s->interpolateDiv(&val[0], u, v, w, 3));
       }
