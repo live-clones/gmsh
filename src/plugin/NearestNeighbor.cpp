@@ -49,8 +49,8 @@ PView *GMSH_NearestNeighborPlugin::execute(PView *v)
 
   int totpoints = data1->getNumPoints();
   if(!totpoints) {
-    Msg::Error("View[%d] contains no points", iView);
-    return nullptr;
+    Msg::Error("View[%d] contains no points", v1->getIndex());
+    return v;
   }
 
 #if defined(HAVE_ANN)
@@ -66,7 +66,13 @@ PView *GMSH_NearestNeighborPlugin::execute(PView *v)
       k++;
     }
   }
-  ANNkd_tree *kdtree = new ANNkd_tree(zeronodes, totpoints, 3);
+  // getNumPoints() also counts the points skipped above
+  if(k < 2) {
+    Msg::Error("View[%d] contains less than 2 points", v1->getIndex());
+    annDeallocPts(zeronodes);
+    return v;
+  }
+  ANNkd_tree *kdtree = new ANNkd_tree(zeronodes, k, 3);
   ANNidxArray index = new ANNidx[2];
   ANNdistArray dist = new ANNdist[2];
 

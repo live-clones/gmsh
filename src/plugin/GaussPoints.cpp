@@ -44,6 +44,11 @@ PView *GMSH_GaussPointsPlugin::execute(PView *v)
   int dim = (int)GaussPointsOptions_Number[1].def;
   int physical = (int)GaussPointsOptions_Number[2].def;
 
+  if(dim < 0 || dim > 3) {
+    Msg::Error("Invalid dimension %d", dim);
+    return v;
+  }
+
   GModel *m = GModel::current();
   std::vector<GEntity *> entities;
   if(physical) {
@@ -88,5 +93,5 @@ PView *GMSH_GaussPointsPlugin::execute(PView *v)
   data2->setFileName("GaussPoints.pos");
   data2->finalize();
 
-  return v;
+  return v2;
 }

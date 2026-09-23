@@ -289,9 +289,15 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
   bool _normalize = (bool)NearToFarFieldOptions_Number[9].def;
   bool _dB = (bool)NearToFarFieldOptions_Number[10].def;
   int _negativeTime = (int)NearToFarFieldOptions_Number[11].def;
-  double _rfar = (int)NearToFarFieldOptions_Number[12].def;
+  double _rfar = NearToFarFieldOptions_Number[12].def;
 
   std::string _outFile = NearToFarFieldOptions_String[0].def;
+
+  if(_nbPhi < 1 || _nbThe < 1) {
+    Msg::Error("NearToFarField plugin needs at least one interval in phi and "
+               "theta");
+    return v;
+  }
 
   PView *ve = getView(_eView, v);
   if(!ve) {
@@ -509,9 +515,12 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
       Msg::Error("Could not open file '%s'", _outFile.c_str());
   }
 
-  for(int i = 0; i < _nbPhi; i++) {
-    for(int j = 0; j < _nbThe; j++) {
-      if(_nbPhi == 1 || _nbThe == 1) {
+  // points (all of them) if there is a single interval in phi or theta,
+  // quadrangles otherwise
+  int points = (_nbPhi == 1 || _nbThe == 1) ? 1 : 0;
+  for(int i = 0; i < _nbPhi + points; i++) {
+    for(int j = 0; j < _nbThe + points; j++) {
+      if(points) {
         dataFar->NbSP++;
         dataFar->SP.push_back(x[i][j]);
         dataFar->SP.push_back(y[i][j]);
