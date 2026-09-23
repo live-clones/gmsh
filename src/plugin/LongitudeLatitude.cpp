@@ -19,10 +19,10 @@ GMSH_Plugin *GMSH_RegisterLongituteLatitudePlugin()
 
 std::string GMSH_LongituteLatitudePlugin::getHelp() const
 {
-  return "Plugin(LongituteLatitude) projects the view `View' "
+  return "Plugin(LongitudeLatitude) projects the view `View' "
          "in longitude-latitude.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(LongituteLatitude) is executed in place.";
+         "Plugin(LongitudeLatitude) is executed in place.";
 }
 
 int GMSH_LongituteLatitudePlugin::getNbOptions() const

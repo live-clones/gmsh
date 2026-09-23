@@ -23,3 +23,14 @@ Plugin(Scal2Tens).View5 = PostProcessing.NbViews - 4;
 Plugin(Scal2Tens).View7 = PostProcessing.NbViews - 4;
 Plugin(Scal2Tens).NameNewView = "list";
 Plugin(Scal2Tens).Run;
+
+// 6 components: a tensor view, the last 3 components 0 (the view was empty)
+Plugin(Scal2Tens).NumberOfComponents = 6;
+s = PostProcessing.NbViews - 5; // the scalar list view
+Plugin(Scal2Tens).View0 = s;
+Plugin(Scal2Tens).View1 = s;
+Plugin(Scal2Tens).View2 = s;
+Plugin(Scal2Tens).View3 = s;
+Plugin(Scal2Tens).View4 = s;
+Plugin(Scal2Tens).View5 = s;
+Plugin(Scal2Tens).Run;

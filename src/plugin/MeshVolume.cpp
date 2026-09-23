@@ -51,7 +51,7 @@ PView *GMSH_MeshVolumePlugin::execute(PView *v)
   }
 
   std::vector<GEntity *> entities;
-  if(physical == -1) { model->getEntities(entities, dim); }
+  if(physical < 0) { model->getEntities(entities, dim); }
   else {
     std::map<int, std::vector<GEntity *> > groups;
     model->getPhysicalGroups(dim, groups);

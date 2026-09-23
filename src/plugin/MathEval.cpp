@@ -171,6 +171,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   }
 
   PView *v2 = new PView();
+  bool failed = false;
   PViewDataList *data2 = getDataList(v2);
 
   if(timeStep < 0) { timeStep = -data1->getNumTimeSteps(); }
@@ -244,7 +245,8 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
           if(f.eval(values, res)) {
             for(int i = 0; i < numComp2; i++) out->push_back(res[i]);
           }
-          else {
+          else { // the error was reported: do not keep half an element
+            failed = true;
             goto end;
           }
         }
@@ -254,6 +256,10 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
 
 end:
   if(octree) delete octree;
+  if(failed) {
+    delete v2;
+    return view;
+  }
 
   if(timeStep < 0) {
     for(int i = firstNonEmptyStep; i < data1->getNumTimeSteps(); i++) {

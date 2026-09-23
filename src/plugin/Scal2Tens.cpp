@@ -32,7 +32,8 @@ GMSH_Plugin *GMSH_RegisterScal2TensPlugin()
 std::string GMSH_Scal2TensPlugin::getHelp() const
 {
   return "Plugin(Scal2Tens) converts some scalar fields into a tensor field. "
-         "The number of components must be given (max. 9). "
+         "The number of components must be given (max. 9): a view has 1, 3 or "
+         "9, the components beyond `NumberOfComponents' being 0. "
          "The new view 'NameNewView' contains the new tensor field. If the "
          "number "
          "of a view is -1, the value of the corresponding component is 0.";
@@ -106,6 +107,9 @@ PView *GMSH_Scal2TensPlugin::execute(PView *v)
   PView *vNew = new PView();
   PViewDataList *dataNew = getDataList(vNew);
 
+  // list data holds 1, 3 or 9 components: the others are 0
+  int outComp = (numComp == 1) ? 1 : (numComp <= 3) ? 3 : 9;
+
   int step0 = dataRef->getFirstNonEmptyTimeStep();
   for(int ent = 0; ent < dataRef->getNumEntities(step0); ent++) {
     for(int ele = 0; ele < dataRef->getNumElements(step0, ent); ele++) {
@@ -113,8 +117,7 @@ PView *GMSH_Scal2TensPlugin::execute(PView *v)
       int type = dataRef->getType(step0, ent, ele);
       int numNodes = getNumCornerNodes(dataRef, step0, ent, ele);
       if(!numNodes) continue;
-      std::vector<double> *out = dataNew->incrementList(
-        numComp, type, numNodes); // Pointer in data of the new view
+      std::vector<double> *out = dataNew->incrementList(outComp, type, numNodes);
       if(!out) continue;
       double x[8], y[8], z[8];
       for(int nod = 0; nod < numNodes; nod++)
@@ -130,9 +133,10 @@ PView *GMSH_Scal2TensPlugin::execute(PView *v)
       for(int step = step0; step < dataRef->getNumTimeSteps(); step++) {
         if(!dataRef->hasTimeStep(step)) continue;
         for(int nod = 0; nod < numNodes; nod++) {
-          for(int comp = 0; comp < numComp; comp++) {
+          for(int comp = 0; comp < outComp; comp++) {
             double val = 0.;
-            PViewData *d = vComp[comp] ? vComp[comp]->getData() : nullptr;
+            PViewData *d = nullptr;
+            if(comp < numComp && vComp[comp]) d = vComp[comp]->getData();
             if(d && d->hasTimeStep(step) && !d->skipElement(step, ent, ele))
               d->getValue(step, ent, ele, nod, 0, val);
             out->push_back(val); // Save value
