@@ -261,7 +261,6 @@ public:
   std::size_t getNodeId(int step, int ent, int ele, int nod);
   void setNode(int step, int ent, int ele, int nod, double x, double y,
                double z);
-  void tagNode(int step, int ent, int ele, int nod, int tag);
   int getNumComponents(int step, int ent, int ele);
   int getNumValues(int step, int ent, int ele);
   void getValue(int step, int ent, int ele, int idx, double &val);

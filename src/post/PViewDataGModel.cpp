@@ -598,13 +598,6 @@ void PViewDataGModel::setNode(int step, int ent, int ele, int nod, double x,
   v->z() = z;
 }
 
-void PViewDataGModel::tagNode(int step, int ent, int ele, int nod, int tag)
-{
-  MElement *e = _getElement(step, ent, ele);
-  MVertex *v = _getNode(e, nod);
-  v->setIndex(tag);
-}
-
 int PViewDataGModel::getNumComponents(int step, int ent, int ele)
 {
   return _steps[step]->getNumComponents();

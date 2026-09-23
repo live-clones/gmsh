@@ -171,7 +171,6 @@ public:
   }
   virtual void setNode(int step, int ent, int ele, int nod, double x, double y,
                        double z);
-  virtual void tagNode(int step, int ent, int ele, int nod, int tag) {}
 
   // return the number of components available for the ele-th element in the
   // ent-th entity

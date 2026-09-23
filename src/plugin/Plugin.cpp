@@ -234,6 +234,15 @@ int GMSH_PostPlugin::getNumCornerNodes(PViewData *data, int step, int ent,
   return nc;
 }
 
+// true the first time a node (by number) is seen
+static bool firstVisit(std::vector<char> &seen, std::size_t num)
+{
+  if(num >= seen.size()) seen.resize(std::max(num + 1, 2 * seen.size()), 0);
+  if(seen[num]) return false;
+  seen[num] = 1;
+  return true;
+}
+
 void GMSH_PostPlugin::forEachNode(
   PViewData *data,
   const std::function<void(int step, int ent, int ele, int nod)> &f,
@@ -250,22 +259,13 @@ void GMSH_PostPlugin::forEachNode(
     return data->skipElement(step, ent, ele) ||
            (dim >= 0 && data->getDimension(step, ent, ele) != dim);
   };
-  if(gm) { // tag the nodes of the mesh, to visit each once
-    for(int ent = 0; ent < data->getNumEntities(step); ent++)
-      for(int ele = 0; ele < data->getNumElements(step, ent); ele++)
-        if(!skip(ent, ele))
-          for(int nod = 0; nod < data->getNumNodes(step, ent, ele); nod++)
-            data->tagNode(step, ent, ele, nod, 0);
-  }
+  std::vector<char> seen; // (the nodes of the mesh visited, by number)
   for(int ent = 0; ent < data->getNumEntities(step); ent++) {
     for(int ele = 0; ele < data->getNumElements(step, ent); ele++) {
       if(skip(ent, ele)) continue;
       for(int nod = 0; nod < data->getNumNodes(step, ent, ele); nod++) {
-        if(gm) {
-          double x, y, z;
-          if(data->getNode(step, ent, ele, nod, x, y, z)) continue;
-          data->tagNode(step, ent, ele, nod, 1);
-        }
+        if(gm && !firstVisit(seen, data->getNodeId(step, ent, ele, nod)))
+          continue;
         f(step, ent, ele, nod);
       }
     }
@@ -281,13 +281,7 @@ void GMSH_PostPlugin::forEachValue(
   PViewDataGModel *gm = dynamic_cast<PViewDataGModel *>(data);
   bool nodeData = gm && gm->getType() == PViewDataGModel::NodeData;
   bool elementData = gm && gm->getType() == PViewDataGModel::ElementData;
-  if(nodeData) {
-    for(int ent = 0; ent < data->getNumEntities(step); ent++)
-      for(int ele = 0; ele < data->getNumElements(step, ent); ele++)
-        if(!data->skipElement(step, ent, ele))
-          for(int nod = 0; nod < data->getNumNodes(step, ent, ele); nod++)
-            data->tagNode(step, ent, ele, nod, 0);
-  }
+  std::vector<char> seen; // (node data: the nodes visited, by number)
   for(int ent = 0; ent < data->getNumEntities(step); ent++) {
     for(int ele = 0; ele < data->getNumElements(step, ent); ele++) {
       if(data->skipElement(step, ent, ele)) continue;
@@ -305,12 +299,10 @@ void GMSH_PostPlugin::forEachValue(
         continue;
       }
       for(int nod = 0; nod < numNodes; nod++) {
+        if(nodeData && !firstVisit(seen, data->getNodeId(step, ent, ele, nod)))
+          continue;
         double x, y, z;
-        int tag = data->getNode(step, ent, ele, nod, x, y, z);
-        if(nodeData) {
-          if(tag) continue;
-          data->tagNode(step, ent, ele, nod, 1);
-        }
+        data->getNode(step, ent, ele, nod, x, y, z);
         f(ent, ele, nod, x, y, z);
       }
     }
