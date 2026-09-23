@@ -91,6 +91,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
         std::vector<double> *out =
           _data->incrementList(1, e->getType(), numNodes);
+        if(!out) continue;
         std::vector<MVertex *> nods;
 
         if(!e->getNumChildren())
