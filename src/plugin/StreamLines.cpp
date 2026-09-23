@@ -254,6 +254,7 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
     for(int j = 0; j < getNbV(); ++j) {
       getPoint(i, j, XINIT);
       getPoint(i, j, X);
+      DX[0] = DX[1] = DX[2] = 0.;
 
       if(data2) { o2->searchScalar(X[0], X[1], X[2], val2, -1); }
       else {
@@ -264,8 +265,14 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
       }
 
       int currentTimeStep = 0;
+      bool outside = false; // the line has left the domain
 
       for(int iter = 0; iter < maxIter; iter++) {
+        if(outside) { // the point stays where it left the domain
+          if(data2) break;
+          for(int k = 0; k < 3; k++) data3->VP.push_back(DX[k]);
+          continue;
+        }
         double XPREV[3] = {X[0], X[1], X[2]};
 
         if(timeStep < 0) {
@@ -287,15 +294,28 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
         // X3 = X + a3 * DT * V(X2)
         // X4 = X + a4 * DT * V(X3)
         // X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
+        // stop where a stage falls outside of the domain (its velocity would
+        // be taken as 0)
         double val[3];
-        o1.searchVector(X[0], X[1], X[2], val, currentTimeStep);
+        if(!o1.searchVector(X[0], X[1], X[2], val, currentTimeStep))
+          outside = true;
         for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * val[k] * a1;
-        o1.searchVector(X1[0], X1[1], X1[2], val, currentTimeStep);
+        if(!outside &&
+           !o1.searchVector(X1[0], X1[1], X1[2], val, currentTimeStep))
+          outside = true;
         for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * val[k] * a2;
-        o1.searchVector(X2[0], X2[1], X2[2], val, currentTimeStep);
+        if(!outside &&
+           !o1.searchVector(X2[0], X2[1], X2[2], val, currentTimeStep))
+          outside = true;
         for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * val[k] * a3;
-        o1.searchVector(X3[0], X3[1], X3[2], val, currentTimeStep);
+        if(!outside &&
+           !o1.searchVector(X3[0], X3[1], X3[2], val, currentTimeStep))
+          outside = true;
         for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * val[k] * a4;
+        if(outside) {
+          iter--; // redo this iteration as a point that no longer moves
+          continue;
+        }
 
         for(int k = 0; k < 3; k++)
           X[k] += (b1 * (X1[k] - X[k]) + b2 * (X2[k] - X[k]) +
