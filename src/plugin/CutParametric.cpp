@@ -250,12 +250,7 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
-  double *res0 = new double[9 * numSteps];
-  double *res1 = new double[9 * numSteps];
-  double *res2 = new double[9 * numSteps];
-  double *res3 = new double[9 * numSteps];
   double x0 = 0., y0 = 0., z0 = 0., x1 = 0., y1 = 0., z1 = 0.;
-  double x2 = 0., y2 = 0., z2 = 0., x3 = 0., y3 = 0., z3 = 0.;
 
   if(nbU == 1 || nbV == 1 || !connect) {
     // the values at the previous point, for each kind of field
@@ -293,54 +288,41 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
     }
   }
   else {
-    for(int i = 0; i < nbU - 1; ++i) {
-      for(int j = 0; j < nbV - 1; ++j) {
-        int v = i * nbV + j;
-        x0 = x[v];
-        y0 = y[v];
-        z0 = z[v];
-        x1 = x[v + 1];
-        y1 = y[v + 1];
-        z1 = z[v + 1];
-        x2 = x[v + nbV + 1];
-        y2 = y[v + nbV + 1];
-        z2 = z[v + nbV + 1];
-        x3 = x[v + nbV];
-        y3 = y[v + nbV];
-        z3 = z[v + nbV];
-
-        if(data1->getNumScalars()) {
-          o.searchScalar(x0, y0, z0, res0);
-          o.searchScalar(x1, y1, z1, res1);
-          o.searchScalar(x2, y2, z2, res2);
-          o.searchScalar(x3, y3, z3, res3);
-          addInView(1, numSteps, x0, y0, z0, res0, x1, y1, z1, res1, x2, y2, z2,
-                    res2, x3, y3, z3, res3, data2->SQ, &data2->NbSQ);
-        }
-        if(data1->getNumVectors()) {
-          o.searchVector(x0, y0, z0, res0);
-          o.searchVector(x1, y1, z1, res1);
-          o.searchVector(x2, y2, z2, res2);
-          o.searchVector(x3, y3, z3, res3);
-          addInView(3, numSteps, x0, y0, z0, res0, x1, y1, z1, res1, x2, y2, z2,
-                    res2, x3, y3, z3, res3, data2->VQ, &data2->NbVQ);
-        }
-        if(data1->getNumTensors()) {
-          o.searchTensor(x0, y0, z0, res0);
-          o.searchTensor(x1, y1, z1, res1);
-          o.searchTensor(x2, y2, z2, res2);
-          o.searchTensor(x3, y3, z3, res3);
-          addInView(9, numSteps, x0, y0, z0, res0, x1, y1, z1, res1, x2, y2, z2,
-                    res2, x3, y3, z3, res3, data2->TQ, &data2->NbTQ);
+    // the values at each point of the grid, searched once and in parallel,
+    // then written for each quadrangle it is a corner of
+    o.prepareThreads();
+    int n = x.size();
+    int nthreads = CTX::instance()->numThreadsFor(n, 1000);
+    const int numComp[3] = {1, 3, 9};
+    std::vector<double> *lists[3] = {&data2->SQ, &data2->VQ, &data2->TQ};
+    int *counts[3] = {&data2->NbSQ, &data2->NbVQ, &data2->NbTQ};
+    bool has[3] = {data1->getNumScalars() > 0, data1->getNumVectors() > 0,
+                   data1->getNumTensors() > 0};
+    for(int f = 0; f < 3; f++) {
+      if(!has[f]) continue;
+      int nc = numComp[f] * numSteps;
+      std::vector<double> val(n * nc);
+#pragma omp parallel for num_threads(nthreads) schedule(dynamic, 256)
+      for(int p = 0; p < n; p++) {
+        if(f == 0)
+          o.searchScalar(x[p], y[p], z[p], &val[nc * p]);
+        else if(f == 1)
+          o.searchVector(x[p], y[p], z[p], &val[nc * p]);
+        else
+          o.searchTensor(x[p], y[p], z[p], &val[nc * p]);
+      }
+      for(int i = 0; i < nbU - 1; ++i) {
+        for(int j = 0; j < nbV - 1; ++j) {
+          int q[4] = {i * nbV + j, i * nbV + j + 1, (i + 1) * nbV + j + 1,
+                      (i + 1) * nbV + j};
+          addInView(numComp[f], numSteps, x[q[0]], y[q[0]], z[q[0]],
+                    &val[nc * q[0]], x[q[1]], y[q[1]], z[q[1]], &val[nc * q[1]],
+                    x[q[2]], y[q[2]], z[q[2]], &val[nc * q[2]], x[q[3]],
+                    y[q[3]], z[q[3]], &val[nc * q[3]], *lists[f], counts[f]);
         }
       }
     }
   }
-
-  delete[] res0;
-  delete[] res1;
-  delete[] res2;
-  delete[] res3;
 
   for(int i = 0; i < numSteps; i++) data2->Time.push_back(data1->getTime(i));
   data2->setName(data1->getName() + "_CutParametric");
