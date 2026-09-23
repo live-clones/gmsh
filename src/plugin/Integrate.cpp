@@ -61,6 +61,7 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
   PViewDataList *data2 = getDataList(v2);
 
   if(overTime == -1) {
+    bool skipped = false;
     double x = data1->getBoundingBox().center().x();
     double y = data1->getBoundingBox().center().y();
     double z = data1->getBoundingBox().center().z();
@@ -120,6 +121,12 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
               res += element->integrateCirculation(val);
             else if(flux)
               res += element->integrateFlux(val);
+            else if(!skipped) {
+              Msg::Warning("Only scalars, and the circulation along lines "
+                           "and the flux through surfaces of vectors, are "
+                           "integrated: skipping the other elements");
+              skipped = true;
+            }
             delete element;
           }
         }
