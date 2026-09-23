@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <cmath>
 #include "GmshConfig.h"
 #include "OctreePost.h"
@@ -77,23 +78,22 @@ int GMSH_CutParametricPlugin::fillXYZ()
   variables[0] = "u";
   variables[1] = "v";
   mathEvaluator f(expressions, variables);
-  if(expressions.empty()) return 0;
 
-  int nbU = (int)CutParametricOptions_Number[2].def;
-  int nbV = (int)CutParametricOptions_Number[5].def;
-  x.resize(nbU * nbV);
-  y.resize(nbU * nbV);
-  z.resize(nbU * nbV);
+  // always as many points as the options ask for, which draw() relies on
+  int nbU = std::max(0, (int)CutParametricOptions_Number[2].def);
+  int nbV = std::max(0, (int)CutParametricOptions_Number[5].def);
+  x.assign(nbU * nbV, 0.);
+  y.assign(nbU * nbV, 0.);
+  z.assign(nbU * nbV, 0.);
   std::vector<double> val(2), res(3);
   for(int i = 0; i < nbU; ++i) {
     val[0] = getU(i);
     for(int j = 0; j < nbV; ++j) {
       val[1] = getV(j);
-      if(f.eval(val, res)) {
-        x[i * nbV + j] = res[0];
-        y[i * nbV + j] = res[1];
-        z[i * nbV + j] = res[2];
-      }
+      if(!f.eval(val, res)) return 0; // do not report the error at each point
+      x[i * nbV + j] = res[0];
+      y[i * nbV + j] = res[1];
+      z[i * nbV + j] = res[2];
     }
   }
   return 1;
@@ -109,6 +109,7 @@ void GMSH_CutParametricPlugin::draw(void *context)
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
   int nbU = CutParametricOptions_Number[2].def;
   int nbV = CutParametricOptions_Number[5].def;
+  if((int)x.size() != nbU * nbV) return;
   if(CutParametricOptions_Number[6].def && x.size() > 1) {
     if(nbU == 1 || nbV == 1) {
       gmshBegin(GL_LINES);
