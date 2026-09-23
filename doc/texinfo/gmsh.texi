@@ -4785,6 +4785,23 @@ and then selecting the `Plugin' submenu), in the scripting language
 (@pxref{Namespace gmsh/plugin}).  See @ref{t9} for an example on how to
 use plugins.
 
+@cindex Plugins, loading from shared libraries
+@cindex @code{GMSHPLUGINSHOME}
+
+Plugins can also be loaded from shared libraries: when it starts, Gmsh loads
+the plugins in the directories listed in the @code{GMSHPLUGINSHOME}
+environment variable (separated like in @code{PATH}), and
+@code{gmsh/plugin/load} loads one from a given file. Such a plugin is a C++
+class derived from @code{GMSH_PostPlugin} or @code{GMSH_MeshPlugin}, defined
+for Gmsh by the @code{GMSH_PLUGIN()} macro of the private API header
+@file{Plugin.h}. It must be built with the headers of the Gmsh it is loaded
+into, built as a shared library with the private API
+(@code{ENABLE_BUILD_DYNAMIC} and @code{ENABLE_PRIVATE_API}) on a system with
+@code{dlopen} (Linux, macOS): Gmsh refuses a plugin built for another version
+of the plugin interface. See
+@url{@value{GITLAB-PREFIX}/examples/api/plugin,examples/api/plugin} for an
+example.
+
 @include plugins.texi
 
 @c =========================================================================

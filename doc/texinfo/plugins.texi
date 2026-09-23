@@ -515,12 +515,12 @@ Default value: @code{1}
 @end table
 
 @item Plugin(GaussPoints)
-Given an input mesh, Plugin(GaussPoints) creates a list-based view containing the Gauss points for a given polynomial `Order'.@*
+Given an input mesh, Plugin(GaussPoints) creates a list-based view containing the Gauss points integrating exactly the polynomials of order `IntegrationOrder'.@*
 @*
 If `PhysicalGroup' is nonzero, the plugin only creates points for the elements belonging to the group.
 Numeric options:
 @table @code
-@item Order
+@item IntegrationOrder
 Default value: @code{0}
 @item Dimension
 Default value: @code{2}
@@ -853,9 +853,9 @@ Numeric options:
 Default value: @code{1}
 @item InputPhysicalGroup
 Default value: @code{1}
-@item OuputDimension
+@item OutputDimension
 Default value: @code{0}
-@item OuputPhysicalGroup
+@item OutputPhysicalGroup
 Default value: @code{2000}
 @end table
 
