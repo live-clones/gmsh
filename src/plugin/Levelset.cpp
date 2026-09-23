@@ -376,6 +376,18 @@ void GMSH_LevelsetPlugin::_addElement(int np, int numEdges, int numComp,
     for(int l = 0; l < numComp; l++) list->push_back(valp[k][l]);
 }
 
+// whether the levelset has a node on each side (or zero at a node): an
+// element without is not cut, and only matters if volumes are extracted
+static bool changesSign(const double *levels, int numNodes)
+{
+  bool neg = false, pos = false;
+  for(int i = 0; i < numNodes; i++) {
+    if(levels[i] <= 0.) neg = true;
+    if(levels[i] >= 0.) pos = true;
+  }
+  return neg && pos;
+}
+
 void GMSH_LevelsetPlugin::_cutAndAddElements(
   PViewData *vdata, PViewData *wdata, int ent, int ele, int vstep, int wstep,
   double x[8], double y[8], double z[8], double levels[8],
@@ -679,6 +691,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
                          z[nod]);
           levels[nod] = levelset(x[nod], y[nod], z[nod], 0.);
         }
+        if(!_extractVolume && !changesSign(levels, numNodes)) continue;
         _cutAndAddElements(vdata, wdata, ent, ele, -1, _valueTimeStep, x, y, z,
                            levels, scalarValues, out);
       }
@@ -709,6 +722,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
             vdata->getScalarValue(step, ent, ele, nod, scalarValues[nod]);
             levels[nod] = levelset(x[nod], y[nod], z[nod], scalarValues[nod]);
           }
+          if(!_extractVolume && !changesSign(levels, numNodes)) continue;
           _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
                              levels, scalarValues, out);
         }
