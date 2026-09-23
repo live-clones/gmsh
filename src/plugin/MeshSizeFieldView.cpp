@@ -27,8 +27,8 @@ std::string GMSH_MeshSizeFieldViewPlugin::getHelp() const
 {
   return "Plugin(MeshSizeFieldView) evaluates the mesh size field "
          "`MeshSizeField' "
-         "on specified `Component` (0 for scalar) of the post-processing view "
-         "`View'.";
+         "on the component `Component' (0 for scalar data, all the components "
+         "if negative) of the post-processing view `View'.";
 }
 
 int GMSH_MeshSizeFieldViewPlugin::getNbOptions() const

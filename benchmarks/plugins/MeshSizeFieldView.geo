@@ -34,3 +34,9 @@ Plugin(MeshSizeFieldView).View = PostProcessing.NbViews - 4;
 Plugin(MeshSizeFieldView).Run;
 Plugin(MeshSizeFieldView).View = PostProcessing.NbViews - 1;
 Plugin(MeshSizeFieldView).Run;
+
+// on list data (it logged an error: list data has no model entities)
+Merge "data/square.pos";
+Plugin(MeshSizeFieldView).View = PostProcessing.NbViews - 4;
+Plugin(MeshSizeFieldView).Component = -1;
+Plugin(MeshSizeFieldView).Run;

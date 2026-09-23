@@ -37,6 +37,7 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
+#include "PViewDataGModel.h"
 #endif
 
 #if defined(WIN32) && !defined(__CYGWIN__)
@@ -3368,16 +3369,20 @@ void Field::putOnNewView(int viewTag)
 void Field::putOnView(PView *view, int comp)
 {
   PViewData *data = view->getData();
+  // list data has no model entities
+  bool model = dynamic_cast<PViewDataGModel *>(data) != nullptr;
   for(int ent = 0; ent < data->getNumEntities(0); ent++) {
-    GEntity *ge = data->getEntity(0, ent);
+    GEntity *ge = model ? data->getEntity(0, ent) : nullptr;
     for(int ele = 0; ele < data->getNumElements(0, ent); ele++) {
       if(data->skipElement(0, ent, ele)) continue;
+      int numComp = data->getNumComponents(0, ent, ele);
       for(int nod = 0; nod < data->getNumNodes(0, ent, ele); nod++) {
         double x, y, z;
         data->getNode(0, ent, ele, nod, x, y, z);
         double val = (*this)(x, y, z, ge);
-        for(int comp = 0; comp < data->getNumComponents(0, ent, ele); comp++)
-          data->setValue(0, ent, ele, nod, comp, val);
+        // all the components if comp < 0
+        for(int c = 0; c < numComp; c++)
+          if(comp < 0 || c == comp) data->setValue(0, ent, ele, nod, c, val);
       }
     }
   }
