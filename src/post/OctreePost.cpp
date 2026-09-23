@@ -143,7 +143,7 @@ void OctreePost::_create(PViewData *data)
     const int numComp[3] = {1, 3, 9};
     for(int k = 0; k < 8; k++) {
       for(int c = 0; c < 3; c++) {
-        Octree *o = Octree_Create(listElement[k].bb, listElement[k].in);
+        Octree *o = Octree_Create(listElement[k].bb);
         // an element: its coordinates, then its values at each step
         int n = listElement[k].numNodes;
         std::size_t size = n * (3 + numComp[c] * l->getNumTimeSteps());
@@ -158,32 +158,30 @@ void OctreePost::_create(PViewData *data)
   }
 }
 
-static void *getElement(double P[3], Octree *octree, int nbNod, int qn,
-                        double *qx, double *qy, double *qz)
+// The element of a list-based view holding the point: the first inserted
+// among those whose box holds it, or among those the one with the nodes given
+// in qx/y/z (the same geometrical element) if there is one.
+static void *getElement(double P[3], Octree *octree, int (*in)(void *, double *),
+                        int nbNod, int qn, double *qx, double *qy, double *qz)
 {
-  if(qn && qx && qy && qz) {
-    std::vector<void *> v;
-    Octree_SearchAll(P, octree, &v);
-    if(nbNod == qn) {
-      // try to use the value from the same geometrical element as the one
-      // provided in qx/y/z
-      double eps = CTX::instance()->geom.tolerance;
-      for(std::size_t i = 0; i < v.size(); i++) {
-        double *X = (double *)v[i], *Y = &X[qn], *Z = &X[2 * qn];
-        bool ok = true;
-        for(int j = 0; j < qn; j++) {
-          ok &= (fabs(X[j] - qx[j]) < eps && fabs(Y[j] - qy[j]) < eps &&
-                 fabs(Z[j] - qz[j]) < eps);
-        }
-        if(ok) return v[i];
-      }
+  std::vector<void *> v;
+  Octree_SearchAllNear(P, octree, 0., 0., &v);
+  bool same = (qn && qx && qy && qz && nbNod == qn);
+  void *first = nullptr;
+  double eps = CTX::instance()->geom.tolerance;
+  for(std::size_t i = 0; i < v.size(); i++) {
+    if(!in(v[i], P)) continue;
+    if(!same) return v[i];
+    if(!first) first = v[i];
+    double *X = (double *)v[i], *Y = &X[qn], *Z = &X[2 * qn];
+    bool ok = true;
+    for(int j = 0; j < qn; j++) {
+      ok &= (fabs(X[j] - qx[j]) < eps && fabs(Y[j] - qy[j]) < eps &&
+             fabs(Z[j] - qz[j]) < eps);
     }
-    if(v.size()) return v[0];
+    if(ok) return v[i];
   }
-  else {
-    return Octree_Search(P, octree);
-  }
-  return nullptr;
+  return first;
 }
 
 static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
@@ -361,7 +359,7 @@ bool OctreePost::_search(int numComp, double x, double y, double z,
   if(_theViewDataList) {
     int c = componentIndex(numComp);
     if(cache && cache->element) { // the last element, with the test of
-      // Octree_Search()
+      // getElement()
       int k = cache->kind, n = listElement[k].numNodes, d = listElement[k].dim;
       double min[3], max[3];
       listElement[k].bb(cache->element, min, max);
@@ -374,7 +372,8 @@ bool OctreePost::_search(int numComp, double x, double y, double z,
     for(int k : searchOrder) {
       int n = listElement[k].numNodes, d = listElement[k].dim;
       if(dim >= 0 && dim != d) continue;
-      void *e = getElement(P, _trees[c][k], n, qn, qx, qy, qz);
+      void *e = getElement(P, _trees[c][k], listElement[k].in, n, qn, qx, qy,
+                           qz);
       if(_getValue(e, d, n, numComp, P, step, values, size, grad)) {
         if(cache) {
           cache->element = (d == _topDim[c]) ? e : nullptr;

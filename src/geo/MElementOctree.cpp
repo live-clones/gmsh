@@ -157,7 +157,7 @@ void MElementOctree::_insert(MElement *e)
 MElementOctree::MElementOctree(GModel *m) : _gm(m), _maxOrder(1)
 {
   for(int d = 0; d < 4; d++)
-    _octree[d] = Octree_Create(MElementBB, nullptr);
+    _octree[d] = Octree_Create(MElementBB);
   std::vector<GEntity *> entities;
   m->getEntities(entities);
   // do not add Gvertex non-associated to any GEdge
@@ -180,7 +180,7 @@ MElementOctree::MElementOctree(const std::vector<MElement *> &v)
   : _gm(nullptr), _maxOrder(1)
 {
   for(int d = 0; d < 4; d++)
-    _octree[d] = Octree_Create(MElementBB, nullptr);
+    _octree[d] = Octree_Create(MElementBB);
   for(std::size_t i = 0; i < v.size(); i++) _insert(v[i]);
   for(int d = 0; d < 4; d++) Octree_Arrange(_octree[d]);
 }
