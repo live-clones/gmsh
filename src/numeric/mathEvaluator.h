@@ -28,8 +28,9 @@ public:
                 const std::vector<std::string> &variables);
   ~mathEvaluator();
   // evaluate the expression(s) using the given values and fill the
-  // result vector. Returns true if the evaluation succeeded.
-  bool eval(const std::vector<double> &values, std::vector<double> &res);
+  // result vector. Returns true if the evaluation succeeded. Several threads
+  // can evaluate at once.
+  bool eval(const std::vector<double> &values, std::vector<double> &res) const;
 };
 
 #else
@@ -44,7 +45,7 @@ public:
     expressions.clear();
   }
   ~mathEvaluator() {}
-  bool eval(const std::vector<double> &values, std::vector<double> &res)
+  bool eval(const std::vector<double> &values, std::vector<double> &res) const
   {
     return false;
   }

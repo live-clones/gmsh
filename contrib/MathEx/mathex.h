@@ -14,6 +14,19 @@
 ////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////
+// Changes made for Gmsh:
+// - every function also has a capitalized name, as in Gmsh's .geo files
+//   (Sin, Cos, Exp, Sqrt, Fabs, ..., and Sum, Max, Min, Med, Rand)
+// - atanh and Atanh (not on Windows)
+// - the constant Pi (as well as pi)
+// - the comparison operators < and >, which give 1 or 0
+// - eval(values, stack) const, which evaluates a parsed expression with the
+//   values of its variables in the order they were added, on a stack of the
+//   caller: several threads can evaluate the same expression at once (the
+//   arguments of user functions are no longer kept in a static vector)
+////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////
 // references:
 //-------------------------------------------------------------------------
 // title: Algoritms and Data Structures
@@ -196,6 +209,10 @@ using namespace std;
       void parsearithmetic3(void);  // power
       void parsearithmetic4(void);  // unary minus 
       void parseatom(void);  // atom: functions, variables, numbers...
+
+      // evaluate the parsed code on the given stack, the value of variable i
+      // being var(i): it only reads the expression
+      template <class Var> double run(Var var, vector<double> &stack) const;
       
    public:
        ///////////////////////
@@ -255,6 +272,10 @@ using namespace std;
          return pos; }
       void parse(); /// < parse expression 
       double eval(); /// < eval expression
+      /// eval parsed expression with the values of the variables in the order
+      /// they were added, on the given stack: several threads can evaluate
+      /// the same expression at once, each with its own stack
+      double eval(const double *values, vector<double> &stack) const;
       void reset(); /// < reset all
        mathex() /// < default constructor
       {reset();}

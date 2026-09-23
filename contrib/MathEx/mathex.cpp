@@ -630,66 +630,59 @@
    // main evaluator: internal use only
 
    // main evaluation function
-       double mathex::eval()
-      //  Eval the parsed stack and return
+       template <class Var>
+       double mathex::run(Var var, vector<double> &stack) const
       {
-         static vector <double> x; // suppose that eval does not eval
-         evalstack.clear();
-
-         if(status == notparsed) parse();
-         if(status == invalid) throw error("eval()", "invalid expression");
+         stack.clear();
+         vector<double> x; // (the arguments of user functions)
 
          for(unsigned i=0; i<bytecode.size(); i++)
          {
             switch(bytecode[i].state) {
-               case CODETOKEN::VALUE: evalstack.push_back(bytecode[i].value);
+               case CODETOKEN::VALUE: stack.push_back(bytecode[i].value);
                   break;
                case CODETOKEN::VARIABLE:
-               // get value of variable as value
-                  evalstack.push_back(*vartable[bytecode[i].idx].var);
+                  stack.push_back(var(bytecode[i].idx));
                   break;
                case CODETOKEN::FUNCTION: // Call the C internal functions with one parameter
-               #ifdef _DEBUG_
-               if(evalstack.size()<1) // error: It does not to occur if currect parsed.
-                  throw error("eval()", "stack error");
-               #endif
-                  evalstack.back() = cfunctable[bytecode[i].idx].f(evalstack.back());
+                  stack.back() = cfunctable[bytecode[i].idx].f(stack.back());
                   break;
                case CODETOKEN::BINOP: // Call the intern C function with two parameters
-               #ifdef _DEBUG_
-               if(evalstack.size() < 2) // error: It does not to occur if currect parsed.
-                  throw error("eval()", "stack error");
-               #endif
-                  evalstack[evalstack.size()-2] = binoptable[bytecode[i].idx].f
-                     (evalstack[evalstack.size()-2], evalstack.back());
-                  evalstack.pop_back(); // delete last
+                  stack[stack.size()-2] = binoptable[bytecode[i].idx].f
+                     (stack[stack.size()-2], stack.back());
+                  stack.pop_back(); // delete last
                   break;
                case CODETOKEN::USERFUNC: // Call the user defined functions
-               #ifdef _DEBUG_
-               if(bytecode[i].numargs > evalstack.size())
-                  throw error("eval()", "stack error");
-               #endif
                   if(bytecode[i].numargs > 0) {
                      x.resize(bytecode[i].numargs);
                      for(unsigned j=0; j<static_cast<unsigned>(bytecode[i].numargs); j++)
-                        x[bytecode[i].numargs-1-j] = evalstack[evalstack.size()-1-j];
-                     evalstack.resize(evalstack.size()-bytecode[i].numargs+1);
+                        x[bytecode[i].numargs-1-j] = stack[stack.size()-1-j];
+                     stack.resize(stack.size()-bytecode[i].numargs+1);
 
-                     evalstack.back() = functable[bytecode[i].idx].f(x);
+                     stack.back() = functable[bytecode[i].idx].f(x);
                   }
 						else // Fixing bug pointed by  Hugh Denman <denmanh@tcd.ie> November 06, 2003
-						   evalstack.push_back(functable[bytecode[i].idx].f(x));
+						   stack.push_back(functable[bytecode[i].idx].f(x));
                   break;
                default: // invarid stack. It does not occur if currect parsed
                   throw  error("eval()", "invalid code token");
             }
-         } // for(i=0; ByteCode[i].state != EMPTY;i++);
+         }
+         return stack[0];
+      } // run()
 
-      #ifdef _DEBUG_
-      if(evalstack.size() != 1)
-         throw error("eval()", "stack error");
-      #endif
-         return evalstack[0];
+       double mathex::eval()
+      //  Eval the parsed stack and return
+      {
+         if(status == notparsed) parse();
+         if(status == invalid) throw error("eval()", "invalid expression");
+         return run([this](unsigned i) { return *vartable[i].var; }, evalstack);
+      } // eval()
+
+       double mathex::eval(const double *values, vector<double> &stack) const
+      {
+         if(status != parsed) throw error("eval()", "expression not parsed");
+         return run([values](unsigned i) { return values[i]; }, stack);
       } // eval()
 
    /////////////////
