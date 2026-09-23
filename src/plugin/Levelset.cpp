@@ -385,6 +385,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
     stepmax = vdata->getNumTimeSteps();
   }
   if(wstep < 0) otherstep = wdata->getFirstNonEmptyTimeStep();
+  if(!wdata->hasTimeStep(otherstep)) return;
 
   int type = simplexType;
   if(type < 0) {
@@ -410,7 +411,9 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
       // check which edges cut the iso and interpolate the value
       if(wstep < 0) otherstep = step;
 
-      if(!wdata->hasTimeStep(otherstep)) continue;
+      if(!wdata->hasTimeStep(otherstep) ||
+         wdata->skipElement(otherstep, ent, ele))
+        continue;
 
       int np = 0;
       double xp[12], yp[12], zp[12], valp[12][9];
