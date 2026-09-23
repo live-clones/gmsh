@@ -311,7 +311,7 @@ static unsigned int markColor()
 
 // a cross of fourteen pixels and a sphere half again the size of a point, so
 // that the point is visible whatever is drawn around it
-void drawContext::drawMark(const double xyz[3])
+void drawContext::drawMark(const double xyz[3], bool sphere)
 {
   double d = 14 * pixel_equiv_x / s[0];
   gmshBegin(GL_LINES);
@@ -322,7 +322,8 @@ void drawContext::drawMark(const double xyz[3])
   gmshVertex3d(xyz[0], xyz[1], xyz[2] - d);
   gmshVertex3d(xyz[0], xyz[1], xyz[2] + d);
   gmshEnd();
-  drawSphere(1.5 * CTX::instance()->pointSize, xyz[0], xyz[1], xyz[2], 1);
+  if(sphere) drawSphere(1.5 * CTX::instance()->pointSize, xyz[0], xyz[1],
+                        xyz[2], 1);
 }
 
 void drawContext::drawMarks()
@@ -333,21 +334,35 @@ void drawContext::drawMarks()
   unsigned int col = markColor();
   gmshColor4ubv((GLubyte *)&col);
   gmshLineWidth((float)(2. * CTX::instance()->lineWidth));
-  // over everything: the point asked about is usually on a surface, and the
-  // line between two of them usually runs inside the model
-  gmshDepthTest(false);
 
-  for(std::size_t i = 0; i + 2 < _marks.size(); i += 3) drawMark(&_marks[i]);
+  // Twice: what the model does not hide, and then, dashed and over it, what
+  // it hides - the point asked about is often on the far side of a surface,
+  // and the line between two points usually runs through the model. The
+  // dashes fall on the solid line where nothing is in the way, so only the
+  // hidden parts are seen as dashed, and it is still read which side of the
+  // model the marks are on. The sphere of a mark is drawn in the first pass
+  // alone: a hidden mark is its dashed cross.
+  gmshDepthOffset(true); // the marks lie on surfaces: do not fight them
+  for(int pass = 0; pass < 2; pass++) {
+    gmshDepthTest(pass == 0);
+    if(pass) gmshLineStipple(2, 0x3333);
 
-  if(_segmentValid) {
-    const double *a = _segment, *b = _segment + 3;
-    // the segment measured; its length is written in a box over the middle
-    // of it (see openglWindow::_drawScreenMessage)
-    gmshBegin(GL_LINES);
-    gmshVertex3d(a[0], a[1], a[2]);
-    gmshVertex3d(b[0], b[1], b[2]);
-    gmshEnd();
+    for(std::size_t i = 0; i + 2 < _marks.size(); i += 3)
+      drawMark(&_marks[i], pass == 0);
+
+    if(_segmentValid) {
+      // the segment measured; its length is written in a box over the middle
+      // of it (see openglWindow::_drawScreenMessage)
+      const double *a = _segment, *b = _segment + 3;
+      gmshBegin(GL_LINES);
+      gmshVertex3d(a[0], a[1], a[2]);
+      gmshVertex3d(b[0], b[1], b[2]);
+      gmshEnd();
+    }
+
+    if(pass) gmshLineStippleOff();
   }
+  gmshDepthOffset(false);
 
   gmshDepthTest(true);
 }

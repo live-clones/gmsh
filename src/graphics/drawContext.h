@@ -469,7 +469,7 @@ public:
     return true;
   }
   void drawMarks();
-  void drawMark(const double xyz[3]);
+  void drawMark(const double xyz[3], bool sphere = true);
   // the entity of the model the last pick was on, whether it returned it or
   // the mesh element it holds there (null when it was on neither)
   GEntity *pickEntity() const { return _pickEntity; }
