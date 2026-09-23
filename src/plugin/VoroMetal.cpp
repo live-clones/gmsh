@@ -37,45 +37,6 @@ GMSH_VoroMetalPlugin::GMSH_VoroMetalPlugin()
 
 using namespace voro;
 
-void voroMetal3D::execute(double h)
-{
-  GRegion *gr;
-  GModel *model = GModel::current();
-  GModel::riter it;
-  for(it = model->firstRegion(); it != model->lastRegion(); it++) {
-    gr = *it;
-    if(gr->getNumMeshElements() > 0) { execute(gr, h); }
-  }
-}
-
-void voroMetal3D::execute(GRegion *gr, double h)
-{
-  std::set<MVertex *> vertices;
-  std::set<MVertex *>::iterator it;
-
-  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
-    MElement *element = gr->getMeshElement(i);
-    for(std::size_t j = 0; j < element->getNumVertices(); j++) {
-      MVertex *vertex = element->getVertex(j);
-      vertices.insert(vertex);
-    }
-  }
-
-  std::vector<SPoint3> vertices2;
-  vertices2.reserve(vertices.size());
-
-  std::vector<double> radii(vertices.size(), 1.0);
-
-  for(it = vertices.begin(); it != vertices.end(); it++) {
-    vertices2.push_back(SPoint3((*it)->x(), (*it)->y(), (*it)->z()));
-  }
-
-  double xMax = 1.0;
-  double yMax = 1.0;
-  double zMax = 1.0;
-  execute(vertices2, radii, 0, h, xMax, yMax, zMax);
-}
-
 void voroMetal3D::execute(std::vector<double> &properties, int radical,
                           double h, double xMax, double yMax, double zMax)
 {
@@ -397,12 +358,6 @@ void voroMetal3D::print_geo_face(int index1, int index2, std::ofstream &file)
   file << "Plane Surface(" << index1 << ")={" << index2 << "};\n";
 }
 
-void voroMetal3D::print_geo_physical_face(int index1, int index2,
-                                          std::ofstream &file)
-{
-  file << "Physical Surface(" << index1 << ")={" << index2 << "};\n";
-}
-
 void voroMetal3D::print_geo_volume(int index1, int index2, std::ofstream &file)
 {
   file << "Volume(" << index1 << ")={" << index2 << "};\n";
@@ -447,7 +402,6 @@ void voroMetal3D::correspondence(double e, double xMax, double yMax,
   std::size_t j;
   int count;
   int val;
-  int phase;
   bool flag;
   bool flag1;
   bool flag2;
@@ -471,14 +425,9 @@ void voroMetal3D::correspondence(double e, double xMax, double yMax,
   std::vector<GFace *> faces;
   std::vector<std::pair<GFace *, GFace *> > pairs;
   std::vector<int> categories;
-  std::vector<int> indices1;
-  std::vector<int> indices2;
-  std::vector<int> indices3;
   std::vector<GVertex *> vertices;
   std::vector<GEdge *> edges1;
   std::vector<GEdge *> edges2;
-  std::vector<int> orientations1;
-  std::vector<int> orientations2;
   std::map<GFace *, SPoint3> centers;
   std::map<GFace *, bool> markings;
   std::vector<GVertex *>::iterator it2;
@@ -488,9 +437,6 @@ void voroMetal3D::correspondence(double e, double xMax, double yMax,
   std::map<GFace *, bool>::iterator it6;
   std::vector<GEdge *>::iterator it7;
   std::vector<GEdge *>::iterator it8;
-  std::vector<int>::iterator it9;
-  std::vector<int>::iterator it10;
-  std::vector<GEdge *>::iterator mem;
 
   faces.clear();
 
@@ -775,48 +721,26 @@ void voroMetal3D::correspondence(double e, double xMax, double yMax,
   for(i = 0; i < pairs.size(); i++) {
     gf1 = pairs[i].first;
     gf2 = pairs[i].second;
-    std::vector<GVertex *> gv1 = gf1->vertices();
-    std::vector<GVertex *> gv2 = gf2->vertices();
-    auto it1 = gv1.begin();
-    auto it2 = gv2.begin();
-    SPoint3 cg1(0, 0, 0);
-    SPoint3 cg2(0, 0, 0);
-    for(; it1 != gv1.end(); it1++, it2++) {
-      cg1 += SPoint3((*it1)->x(), (*it1)->y(), (*it1)->z());
-      cg2 += SPoint3((*it2)->x(), (*it2)->y(), (*it2)->z());
-    }
-    SVector3 dx = (cg2 - cg1) * (1. / gv1.size());
+    // the translation between the centers of the two faces
+    SPoint3 cg1(0, 0, 0), cg2(0, 0, 0);
+    for(auto v : gf1->vertices()) cg1 += v->xyz();
+    for(auto v : gf2->vertices()) cg2 += v->xyz();
+    double n1 = gf1->vertices().size(), n2 = gf2->vertices().size();
+    SVector3 dx = (n1 == n2) ? SVector3(cg2 - cg1) * (1. / n1) :
+                               SVector3(cg2 * (1. / n2) - cg1 * (1. / n1));
     edges1 = gf1->edges();
     edges2 = gf2->edges();
-    orientations1 = gf1->edgeOrientations();
-    orientations2 = gf2->edgeOrientations();
-    indices1.clear();
-    indices2.clear();
-    indices3.clear();
-    phase = 1;
-
-    it9 = orientations1.begin();
-    it10 = orientations2.begin();
-    for(it8 = edges2.begin(); it8 != edges2.end(); it8++, it10++) {
-      if(*it10 == 1)
-        indices3.push_back((*it8)->tag());
-      else
-        indices3.push_back(-(*it8)->tag());
-    }
-    int countReverseEdge = 0;
-    for(it7 = edges1.begin(); it7 != edges1.end(); it7++, it9++) {
+    // draw the matching edges of the two faces, and check that each edge of
+    // the first face has one
+    std::size_t matched = 0;
+    for(it7 = edges1.begin(); it7 != edges1.end(); it7++) {
       v1 = (*it7)->getBeginVertex();
       v2 = (*it7)->getEndVertex();
-      if(*it9 == 1)
-        indices1.push_back((*it7)->tag());
-      else
-        indices1.push_back(-(*it7)->tag());
       flag1 = 0;
       flag2 = 0;
       flag3 = 0;
       flag4 = 0;
-      it10 = orientations2.begin();
-      for(it8 = edges2.begin(); it8 != edges2.end(); it8++, it10++) {
+      for(it8 = edges2.begin(); it8 != edges2.end(); it8++) {
         v3 = (*it8)->getBeginVertex();
         v4 = (*it8)->getEndVertex();
         correspondence(fabs(v3->x() - v1->x()), fabs(v3->y() - v1->y()),
@@ -833,50 +757,14 @@ void voroMetal3D::correspondence(double e, double xMax, double yMax,
                        fabs(v3->z() - v2->z()), e, categories[i], flag4, xMax,
                        yMax, zMax);
         if(flag1 && flag2) {
-          if(phase == 1) {
-            mem = it8;
-            phase = 2;
-          }
-          else if(phase == 2) {
-            mem++;
-            /*if(it8==mem){
-              normal = 1;
-            }
-            else{
-              normal = -1;
-            }*/
-            phase = 3;
-          }
-          if(*it9 == 1)
-            indices2.push_back((*it8)->tag());
-          else
-            indices2.push_back(-(*it8)->tag());
-          if(*it9 != *it10) countReverseEdge++;
+          matched++;
           print_segment(SPoint3(v3->x(), v3->y(), v3->z()),
                         SPoint3(v1->x(), v1->y(), v1->z()), file4);
           print_segment(SPoint3(v4->x(), v4->y(), v4->z()),
                         SPoint3(v2->x(), v2->y(), v2->z()), file4);
         }
         else if(flag3 && flag4) {
-          if(phase == 1) {
-            mem = it8;
-            phase = 2;
-          }
-          else if(phase == 2) {
-            mem++;
-            /*if(it8==mem){
-              normal = 1;
-            }
-            else{
-              normal = -1;
-            }*/
-            phase = 3;
-          }
-          if(*it9 == 1)
-            indices2.push_back(-(*it8)->tag());
-          else
-            indices2.push_back((*it8)->tag());
-          if(*it9 != *it10) countReverseEdge++;
+          matched++;
           print_segment(SPoint3(v4->x(), v4->y(), v4->z()),
                         SPoint3(v1->x(), v1->y(), v1->z()), file4);
           print_segment(SPoint3(v3->x(), v3->y(), v3->z()),
@@ -885,7 +773,9 @@ void voroMetal3D::correspondence(double e, double xMax, double yMax,
       }
     }
 
-    if(indices1.size() != indices2.size()) { printf("Error\n\n"); }
+    if(matched != edges1.size())
+      Msg::Warning("Surfaces %d and %d do not have matching edges", gf1->tag(),
+                   gf2->tag());
     file3 << "Periodic Surface {" << gf1->tag() << " }={ " << gf2->tag()
           << " } Translate { " << -dx.x() << "," << -dx.y() << "," << -dx.z()
           << "};\n";
@@ -990,361 +880,108 @@ bool voroMetal3D::equal(double x, double y, double e)
   return flag;
 }
 
-static void microstructure(const char *filename)
+// the seeds file: number of seeds, radical (0 or 1), box size along x, y, z,
+// then x, y, z and radius of each seed
+static bool readSeeds(const char *filename, std::vector<double> &properties,
+                      int &radical, double &xMax, double &yMax, double &zMax)
 {
-  int j;
-  int radical;
-  double max;
-  double xMax;
-  double yMax;
-  double zMax;
-  std::vector<double> properties;
-  if(filename) {
-    std::ifstream file(filename);
-    if(!file.is_open()) {
-      Msg::Error("Could not open file '%s'", filename);
-      return;
-    }
-    file >> max;
-    file >> radical;
-    file >> xMax;
-    file >> yMax;
-    file >> zMax;
-    if(!file || max < 1) {
-      Msg::Error("Could not read the number of seeds in '%s'", filename);
-      return;
-    }
-    properties.clear();
-    properties.resize(4 * max);
-    for(j = 0; j < max; j++) {
-      file >> properties[4 * j];
-      file >> properties[4 * j + 1];
-      file >> properties[4 * j + 2];
-      file >> properties[4 * j + 3];
-    }
-    voroMetal3D vm1;
-    vm1.execute(properties, radical, 0.1, xMax, yMax, zMax);
-    GModel::current()->load("MicrostructurePolycrystal3D.geo");
-    voroMetal3D vm2;
-    vm2.correspondence(0.00001, xMax, yMax, zMax);
+  std::ifstream file(filename);
+  if(!file.is_open()) {
+    Msg::Error("Could not open file '%s'", filename);
+    return false;
   }
+  double max;
+  file >> max;
+  file >> radical;
+  file >> xMax;
+  file >> yMax;
+  file >> zMax;
+  if(!file || max < 1) {
+    Msg::Error("Could not read the number of seeds in '%s'", filename);
+    return false;
+  }
+  properties.clear();
+  properties.resize(4 * max);
+  for(int j = 0; j < max; j++) {
+    file >> properties[4 * j];
+    file >> properties[4 * j + 1];
+    file >> properties[4 * j + 2];
+    file >> properties[4 * j + 3];
+  }
+  return true;
 }
 
+static void microstructure(const char *filename)
+{
+  int radical;
+  double xMax, yMax, zMax;
+  std::vector<double> properties;
+  if(!readSeeds(filename, properties, radical, xMax, yMax, zMax)) return;
+  voroMetal3D vm1;
+  vm1.execute(properties, radical, 0.1, xMax, yMax, zMax);
+  GModel::current()->load("MicrostructurePolycrystal3D.geo");
+  voroMetal3D vm2;
+  vm2.correspondence(0.00001, xMax, yMax, zMax);
+}
+
+// the length of the shortest edge of the microstructure of the seeds
+static double shortestEdge(std::vector<double> &properties, int radical,
+                           double xMax, double yMax, double zMax)
+{
+  voroMetal3D vm;
+  vm.execute(properties, radical, 0.1, xMax, yMax, zMax);
+  GModel *m = new GModel();
+  m->load("MicrostructurePolycrystal3D.geo");
+  double dist = 1000.0;
+  for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
+    GVertex *v1 = (*ite)->getBeginVertex(), *v2 = (*ite)->getEndVertex();
+    double d = sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
+                    (v1->y() - v2->y()) * (v1->y() - v2->y()) +
+                    (v1->z() - v2->z()) * (v1->z() - v2->z()));
+    if(d < dist) dist = d;
+  }
+  delete m;
+  return dist;
+}
+
+// move the seeds, one by 0.01 along x, y or z at a time, 17 times, each time
+// the move that makes the shortest edge of the microstructure the longest
 static void computeBestSeeds(const char *filename)
 {
-  int j;
   int radical;
-  double max;
-  double xMax;
-  double yMax;
-  double zMax;
+  double xMax, yMax, zMax;
   std::vector<double> properties;
-  std::cout << "entree dans computeBestSeeds" << std::endl;
-  if(filename) {
-    std::ifstream file(filename);
-    if(!file.is_open()) {
-      Msg::Error("Could not open file '%s'", filename);
-      return;
-    }
-    file >> max;
-    file >> radical;
-    file >> xMax;
-    file >> yMax;
-    file >> zMax;
-    if(!file || max < 1) {
-      Msg::Error("Could not read the number of seeds in '%s'", filename);
-      return;
-    }
-    properties.clear();
-    properties.resize(4 * max);
-    for(j = 0; j < max; j++) {
-      file >> properties[4 * j];
-      file >> properties[4 * j + 1];
-      file >> properties[4 * j + 2];
-      file >> properties[4 * j + 3];
-    }
-    std::cout << "Before count" << std::endl;
-    std::vector<double> listDistances;
-    listDistances.clear();
-    int nbOfCount = 17;
-    listDistances.resize(nbOfCount);
-    for(int Count = 0; Count < nbOfCount; Count++) {
-      std::cout << "Count" << Count << std::endl;
-      double distMinGlobal = 0.0;
-      int jMinGlobal = 0;
-      int xORyORz = 0;
-      int posORneg = 0;
-      for(j = 0; j < max; j++) {
-        std::cout << "j " << j << std::endl;
-        std::vector<double> propertiesModified;
-        propertiesModified.clear();
-        propertiesModified.resize(4 * max);
-        std::cout << "before assign propModif" << std::endl;
-        for(std::size_t k = 0; k < properties.size(); k++) {
-          propertiesModified[k] = properties[k];
-        }
-        std::cout << "after assign propModif" << std::endl;
-        propertiesModified[4 * j] += 0.01;
-        voroMetal3D vm1;
-        std::cout << "before execute" << std::endl;
-        // std::remove("MicrostructurePolycrystal3D.geo");
-        vm1.execute(propertiesModified, radical, 0.1, xMax, yMax, zMax);
-        // GModel::current()->destroy();
-        GModel *m = new GModel();
-        // GModel::current()->load("MicrostructurePolycrystal3D.geo");
-        m->load("MicrostructurePolycrystal3D.geo");
-        double distMinTmp = 1000.0;
-        // GModel *m = GModel::current();
-        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
-          double distTmp =
-            sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
-                 (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
-                 (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
-        }
-        if(distMinTmp > distMinGlobal) {
-          distMinGlobal = distMinTmp;
-          jMinGlobal = j;
-          xORyORz = 1;
-          posORneg = 1;
-        }
-        delete m;
-      }
-      for(j = 0; j < max; j++) {
-        std::cout << "j " << j << std::endl;
-        std::vector<double> propertiesModified;
-        propertiesModified.clear();
-        propertiesModified.resize(4 * max);
-        std::cout << "before assign propModif" << std::endl;
-        for(std::size_t k = 0; k < properties.size(); k++) {
-          propertiesModified[k] = properties[k];
-        }
-        std::cout << "after assign propModif" << std::endl;
-        propertiesModified[4 * j + 1] += 0.01;
-        voroMetal3D vm1;
-        std::cout << "before execute" << std::endl;
-        // std::remove("MicrostructurePolycrystal3D.geo");
-        vm1.execute(propertiesModified, radical, 0.1, xMax, yMax, zMax);
-        // GModel::current()->destroy();
-        GModel *m = new GModel();
-        // GModel::current()->load("MicrostructurePolycrystal3D.geo");
-        m->load("MicrostructurePolycrystal3D.geo");
-        double distMinTmp = 1000.0;
-        // GModel *m = GModel::current();
-        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
-          double distTmp =
-            sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
-                 (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
-                 (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
-        }
-        if(distMinTmp > distMinGlobal) {
-          distMinGlobal = distMinTmp;
-          jMinGlobal = j;
-          xORyORz = 2;
-          posORneg = 1;
-        }
-        delete m;
-      }
-      for(j = 0; j < max; j++) {
-        std::cout << "j " << j << std::endl;
-        std::vector<double> propertiesModified;
-        propertiesModified.clear();
-        propertiesModified.resize(4 * max);
-        std::cout << "before assign propModif" << std::endl;
-        for(std::size_t k = 0; k < properties.size(); k++) {
-          propertiesModified[k] = properties[k];
-        }
-        std::cout << "after assign propModif" << std::endl;
-        propertiesModified[4 * j + 2] += 0.01;
-        voroMetal3D vm1;
-        std::cout << "before execute" << std::endl;
-        // std::remove("MicrostructurePolycrystal3D.geo");
-        vm1.execute(propertiesModified, radical, 0.1, xMax, yMax, zMax);
-        // GModel::current()->destroy();
-        GModel *m = new GModel();
-        // GModel::current()->load("MicrostructurePolycrystal3D.geo");
-        m->load("MicrostructurePolycrystal3D.geo");
-        double distMinTmp = 1000.0;
-        // GModel *m = GModel::current();
-        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
-          double distTmp =
-            sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
-                 (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
-                 (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
-        }
-        if(distMinTmp > distMinGlobal) {
-          distMinGlobal = distMinTmp;
-          jMinGlobal = j;
-          xORyORz = 3;
-          posORneg = 1;
-        }
-        delete m;
-      }
-      for(j = 0; j < max; j++) {
-        std::cout << "j " << j << std::endl;
-        std::vector<double> propertiesModified;
-        propertiesModified.clear();
-        propertiesModified.resize(4 * max);
-        std::cout << "before assign propModif" << std::endl;
-        for(std::size_t k = 0; k < properties.size(); k++) {
-          propertiesModified[k] = properties[k];
-        }
-        std::cout << "after assign propModif" << std::endl;
-        propertiesModified[4 * j] -= 0.01;
-        voroMetal3D vm1;
-        std::cout << "before execute" << std::endl;
-        // std::remove("MicrostructurePolycrystal3D.geo");
-        vm1.execute(propertiesModified, radical, 0.1, xMax, yMax, zMax);
-        // GModel::current()->destroy();
-        GModel *m = new GModel();
-        // GModel::current()->load("MicrostructurePolycrystal3D.geo");
-        m->load("MicrostructurePolycrystal3D.geo");
-        double distMinTmp = 1000.0;
-        // GModel *m = GModel::current();
-        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
-          double distTmp =
-            sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
-                 (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
-                 (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
-        }
-        if(distMinTmp > distMinGlobal) {
-          distMinGlobal = distMinTmp;
-          jMinGlobal = j;
-          xORyORz = 1;
-          posORneg = 2;
-        }
-        delete m;
-      }
-      for(j = 0; j < max; j++) {
-        std::cout << "j " << j << std::endl;
-        std::vector<double> propertiesModified;
-        propertiesModified.clear();
-        propertiesModified.resize(4 * max);
-        std::cout << "before assign propModif" << std::endl;
-        for(std::size_t k = 0; k < properties.size(); k++) {
-          propertiesModified[k] = properties[k];
-        }
-        std::cout << "after assign propModif" << std::endl;
-        propertiesModified[4 * j + 1] -= 0.01;
-        voroMetal3D vm1;
-        std::cout << "before execute" << std::endl;
-        // std::remove("MicrostructurePolycrystal3D.geo");
-        vm1.execute(propertiesModified, radical, 0.1, xMax, yMax, zMax);
-        // GModel::current()->destroy();
-        GModel *m = new GModel();
-        // GModel::current()->load("MicrostructurePolycrystal3D.geo");
-        m->load("MicrostructurePolycrystal3D.geo");
-        double distMinTmp = 1000.0;
-        // GModel *m = GModel::current();
-        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
-          double distTmp =
-            sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
-                 (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
-                 (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
-        }
-        if(distMinTmp > distMinGlobal) {
-          distMinGlobal = distMinTmp;
-          jMinGlobal = j;
-          xORyORz = 2;
-          posORneg = 2;
-        }
-        delete m;
-      }
-      for(j = 0; j < max; j++) {
-        std::cout << "j " << j << std::endl;
-        std::vector<double> propertiesModified;
-        propertiesModified.clear();
-        propertiesModified.resize(4 * max);
-        std::cout << "before assign propModif" << std::endl;
-        for(std::size_t k = 0; k < properties.size(); k++) {
-          propertiesModified[k] = properties[k];
-        }
-        std::cout << "after assign propModif" << std::endl;
-        propertiesModified[4 * j + 2] -= 0.01;
-        voroMetal3D vm1;
-        std::cout << "before execute" << std::endl;
-        // std::remove("MicrostructurePolycrystal3D.geo");
-        vm1.execute(propertiesModified, radical, 0.1, xMax, yMax, zMax);
-        // GModel::current()->destroy();
-        GModel *m = new GModel();
-        // GModel::current()->load("MicrostructurePolycrystal3D.geo");
-        m->load("MicrostructurePolycrystal3D.geo");
-        double distMinTmp = 1000.0;
-        // GModel *m = GModel::current();
-        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
-          double distTmp =
-            sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
-                 (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
-                 (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
-        }
-        if(distMinTmp > distMinGlobal) {
-          distMinGlobal = distMinTmp;
-          jMinGlobal = j;
-          xORyORz = 3;
-          posORneg = 2;
-        }
-        delete m;
-      }
-      std::cout << "distance minimale de " << distMinGlobal << std::endl;
-      listDistances[Count] = distMinGlobal;
-      if(xORyORz == 1) {
-        if(posORneg == 1) { properties[4 * jMinGlobal] += 0.01; }
-        else if(posORneg == 2) {
-          properties[4 * jMinGlobal] -= 0.01;
-        }
-      }
-      else if(xORyORz == 2) {
-        if(posORneg == 1) { properties[4 * jMinGlobal + 1] += 0.01; }
-        else if(posORneg == 2) {
-          properties[4 * jMinGlobal + 1] -= 0.01;
-        }
-      }
-      else if(xORyORz == 3) {
-        if(posORneg == 1) { properties[4 * jMinGlobal + 2] += 0.01; }
-        else if(posORneg == 2) {
-          properties[4 * jMinGlobal + 2] -= 0.01;
+  if(!readSeeds(filename, properties, radical, xMax, yMax, zMax)) return;
+  int numSeeds = properties.size() / 4;
+  for(int count = 0; count < 17; count++) {
+    double best = 0.0, move = 0.;
+    int index = -1;
+    for(double sign : {1., -1.}) {
+      for(int d = 0; d < 3; d++) {
+        for(int j = 0; j < numSeeds; j++) {
+          std::vector<double> modified(properties);
+          modified[4 * j + d] += sign * 0.01;
+          double dist = shortestEdge(modified, radical, xMax, yMax, zMax);
+          if(dist > best) {
+            best = dist;
+            index = 4 * j + d;
+            move = sign * 0.01;
+          }
         }
       }
     }
-    voroMetal3D vm1;
-    vm1.execute(properties, radical, 0.1, xMax, yMax, zMax);
-    GModel::current()->load("MicrostructurePolycrystal3D.geo");
-    voroMetal3D vm2;
-    vm2.correspondence(0.00001, xMax, yMax, zMax);
-    for(std::size_t iTmp = 0; iTmp < listDistances.size(); iTmp++) {
-      std::cout << "distMinGlobal " << iTmp << " egale a "
-                << listDistances[iTmp] << std::endl;
-    }
-    std::cout << "liste des nouveaux seeds :" << std::endl;
-    for(std::size_t iTmp = 0; iTmp < max; iTmp++) {
-      std::cout << properties[4 * iTmp] << " " << properties[4 * iTmp + 1]
-                << " " << properties[4 * iTmp + 2] << " "
-                << properties[4 * iTmp + 3] << std::endl;
-    }
+    Msg::Info("VoroMetal: shortest edge %g after move %d", best, count + 1);
+    if(index >= 0) properties[index] += move;
   }
+  voroMetal3D vm1;
+  vm1.execute(properties, radical, 0.1, xMax, yMax, zMax);
+  GModel::current()->load("MicrostructurePolycrystal3D.geo");
+  voroMetal3D vm2;
+  vm2.correspondence(0.00001, xMax, yMax, zMax);
+  Msg::Info("VoroMetal: new seeds (x y z radius):");
+  for(int j = 0; j < numSeeds; j++)
+    Msg::Info("%g %g %g %g", properties[4 * j], properties[4 * j + 1],
+              properties[4 * j + 2], properties[4 * j + 3]);
 }
 
 PView *GMSH_VoroMetalPlugin::execute(PView *v)
