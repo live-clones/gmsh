@@ -1259,6 +1259,32 @@
    }
   ]
  },
+ "Crack_folded": {
+  "errors": [],
+  "files": [],
+  "mesh": {
+   "elements": {
+    "Line 2": 304,
+    "Point": 7,
+    "Triangle 3": 4736
+   },
+   "entities": [
+    7,
+    7,
+    1,
+    0
+   ],
+   "nodes": [
+    2520,
+    5030.494897675172,
+    5030.494897675172,
+    0.0,
+    2.0
+   ],
+   "physicals": 2
+  },
+  "views": []
+ },
  "Curl": {
   "errors": [],
   "files": [],
