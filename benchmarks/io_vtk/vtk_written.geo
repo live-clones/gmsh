@@ -32,7 +32,12 @@ Macro Check
   Delete Model;
 Return
 
-file = "vtk_tetrahedra_order3.vtu"; nodes = 869; cells = 96; Call Check;
+// the compressed file can only be read if Gmsh is built with zlib
+If(StrFind(General.BuildOptions, "Zlib"))
+  file = "vtk_tetrahedra_order3.vtu"; nodes = 869; cells = 96; Call Check;
+Else
+  Printf("Skipping vtk_tetrahedra_order3.vtu (zlib-compressed): Gmsh is built without zlib");
+EndIf
 file = "vtk_hexahedra_order3.vtu"; nodes = 343; cells = 8; Call Check;
 file = "vtk_hexahedra_order2.vtu"; nodes = 125; cells = 8; Call Check;
 file = "vtk_prisms_order2.vtu"; nodes = 125; cells = 16; Call Check;
