@@ -10993,6 +10993,29 @@ class plugin:
             raise Exception(logger.getLastError())
         return api_result_
 
+    @staticmethod
+    def load(fileName):
+        """
+        gmsh.plugin.load(fileName)
+
+        Load a plugin from the shared library `fileName'. Such a plugin is a class
+        derived from GMSH_PostPlugin or GMSH_MeshPlugin, defined with the
+        GMSH_PLUGIN() macro of the private API header Plugin.h, and built against
+        the headers of the private API and the shared Gmsh library (see
+        "examples/api/plugin"). The plugins in the directories listed in the
+        environment variable GMSHPLUGINSHOME (separated like in PATH) are loaded
+        when Gmsh is initialized.
+
+        Types:
+        - `fileName': string
+        """
+        ierr = c_int()
+        lib.gmshPluginLoad(
+            c_char_p(fileName.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
 
 class graphics:
     """

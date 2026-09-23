@@ -4965,6 +4965,17 @@ GMSH_API int gmshPluginRun(const char * name, int * ierr)
   return result_api_;
 }
 
+GMSH_API void gmshPluginLoad(const char * fileName, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::plugin::load(fileName);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshGraphicsDraw(int * ierr)
 {
   if(ierr) *ierr = 0;

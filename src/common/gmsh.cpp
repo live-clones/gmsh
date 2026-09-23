@@ -9367,8 +9367,8 @@ GMSH_API void gmsh::plugin::setNumber(const std::string &name,
 #if defined(HAVE_PLUGINS)
   try {
     PluginManager::instance()->setPluginOption(name, option, value);
-  } catch(...) {
-    Msg::Error("Unknown plugin or plugin option");
+  } catch(const std::runtime_error &e) {
+    Msg::Error("%s", e.what());
   }
 #else
   Msg::Error("Views require the post-processing and plugin modules");
@@ -9383,8 +9383,8 @@ GMSH_API void gmsh::plugin::setString(const std::string &name,
 #if defined(HAVE_PLUGINS)
   try {
     PluginManager::instance()->setPluginOption(name, option, value);
-  } catch(...) {
-    Msg::Error("Unknown plugin or plugin option");
+  } catch(const std::runtime_error &e) {
+    Msg::Error("%s", e.what());
   }
 #else
   Msg::Error("Views require the post-processing and plugin modules");
@@ -9395,15 +9395,25 @@ GMSH_API int gmsh::plugin::run(const std::string &name)
 {
   if(!_checkInit()) return 0;
 #if defined(HAVE_PLUGINS)
-  try {
-    return PluginManager::instance()->action(name, "Run", nullptr);
-  } catch(...) {
-    Msg::Error("Unknown plugin or plugin action");
+  // not in a try block: what the plugin throws is not about its name
+  if(!PluginManager::instance()->find(name)) {
+    Msg::Error("Unknown plugin '%s'", name.c_str());
     return 0;
   }
+  return PluginManager::instance()->action(name, "Run", nullptr);
 #else
   Msg::Error("Views require the post-processing and plugin modules");
   return 0;
+#endif
+}
+
+GMSH_API void gmsh::plugin::load(const std::string &fileName)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PLUGINS)
+  PluginManager::instance()->addPlugin(fileName);
+#else
+  Msg::Error("Views require the post-processing and plugin modules");
 #endif
 }
 

@@ -180,6 +180,8 @@ module gmsh
         gmshPluginSetString
     procedure, nopass :: run => &
         gmshPluginRun
+    procedure, nopass :: load => &
+        gmshPluginLoad
   end type gmsh_plugin_t
 
   type, public :: gmsh_algorithm_t
@@ -15749,6 +15751,30 @@ module gmsh
     gmshPluginRun = C_API(name=istring_(name), &
                     ierr_=ierr)
   end function gmshPluginRun
+
+  !> Load a plugin from the shared library `fileName'. Such a plugin is a class
+  !! derived from GMSH_PostPlugin or GMSH_MeshPlugin, defined with the
+  !! GMSH_PLUGIN() macro of the private API header Plugin.h, and built against
+  !! the headers of the private API and the shared Gmsh library (see
+  !! "examples/api/plugin"). The plugins in the directories listed in the
+  !! environment variable GMSHPLUGINSHOME (separated like in PATH) are loaded
+  !! when Gmsh is initialized.
+  subroutine gmshPluginLoad(fileName, &
+                            ierr)
+    interface
+    subroutine C_API(fileName, &
+                     ierr_) &
+      bind(C, name="gmshPluginLoad")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: fileName
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(fileName=istring_(fileName), &
+         ierr_=ierr)
+  end subroutine gmshPluginLoad
 
   !> Draw all the OpenGL scenes.
   subroutine gmshGraphicsDraw(ierr)

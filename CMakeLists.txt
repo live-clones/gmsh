@@ -1787,6 +1787,11 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     endif()
   endif()
   target_link_libraries(shared ${LINK_LIBRARIES})
+  # plugins loaded from shared libraries link to the shared Gmsh library, which
+  # must export what they use (the private API)
+  if(ENABLE_PRIVATE_API AND DLFCN_H)
+    target_compile_definitions(shared PRIVATE HAVE_PLUGIN_LOADING)
+  endif()
   # don't define LC_RPATH in dylib for development, to not get endless warnings
   # about code signing
   if(APPLE AND NOT GMSH_RELEASE)

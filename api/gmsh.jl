@@ -9744,6 +9744,28 @@ function run(name)
     return api_result_
 end
 
+"""
+    gmsh.plugin.load(fileName)
+
+Load a plugin from the shared library `fileName`. Such a plugin is a class
+derived from GMSH_PostPlugin or GMSH_MeshPlugin, defined with the GMSH_PLUGIN()
+macro of the private API header Plugin.h, and built against the headers of the
+private API and the shared Gmsh library (see "examples/api/plugin"). The plugins
+in the directories listed in the environment variable GMSHPLUGINSHOME (separated
+like in PATH) are loaded when Gmsh is initialized.
+
+Types:
+ - `fileName`: string
+"""
+function load(fileName)
+    ierr = Ref{Cint}()
+    ccall((:gmshPluginLoad, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          fileName, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
 end # end of module plugin
 
 """

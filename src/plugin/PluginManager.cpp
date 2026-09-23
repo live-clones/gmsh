@@ -3,6 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
+#include <filesystem>
 #include <map>
 #include <stdexcept>
 #include <stdlib.h>
@@ -75,26 +77,22 @@
 #include "BoundaryLayer.h"
 #endif
 
-// for testing purposes only :-)
-#undef HAVE_DLOPEN
-
-#if defined(HAVE_DLOPEN)
+// HAVE_PLUGIN_LOADING is only defined when compiling the shared library with
+// the private API (which exports what plugins need) on a system with dlopen
+#if defined(HAVE_PLUGIN_LOADING)
 #include <dlfcn.h>
 #endif
-
-#if defined(HAVE_FLTK)
-#include <FL/Fl.H>
-#include <FL/filename.H>
-#endif
-
-const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
 
 PluginManager *PluginManager::_instance = nullptr;
 
 PluginManager::~PluginManager()
 {
+  // the plugins first: their code is in the libraries
   for(auto it = allPlugins.begin(); it != allPlugins.end(); ++it)
     delete it->second;
+#if defined(HAVE_PLUGIN_LOADING)
+  for(auto lib : _libraries) dlclose(lib);
+#endif
   _instance = nullptr;
 }
 
@@ -122,7 +120,7 @@ int PluginManager::action(const std::string &pluginName,
                           const std::string &action, void *data)
 {
   GMSH_Plugin *plugin = find(pluginName);
-  if(!plugin) throw std::runtime_error("Unknown plugin name");
+  if(!plugin) throw std::runtime_error("Unknown plugin '" + pluginName + "'");
 
   if(action == "Run") {
     Msg::Info("Running Plugin(%s)...", pluginName.c_str());
@@ -131,7 +129,8 @@ int PluginManager::action(const std::string &pluginName,
     return tag;
   }
   else
-    throw std::runtime_error("Unknown plugin action");
+    throw std::runtime_error("Unknown action '" + action + "' of Plugin(" +
+                             pluginName + ")");
 }
 
 void PluginManager::setPluginOption(const std::string &pluginName,
@@ -139,7 +138,7 @@ void PluginManager::setPluginOption(const std::string &pluginName,
                                     const std::string &value)
 {
   GMSH_Plugin *plugin = find(pluginName);
-  if(!plugin) throw std::runtime_error("Unknown plugin name");
+  if(!plugin) throw std::runtime_error("Unknown plugin '" + pluginName + "'");
 
   for(int i = 0; i < plugin->getNbOptionsStr(); i++) {
     StringXString *sxs = plugin->getOptionStr(i);
@@ -148,7 +147,8 @@ void PluginManager::setPluginOption(const std::string &pluginName,
       return;
     }
   }
-  throw std::runtime_error("Unknown plugin option name");
+  throw std::runtime_error("Unknown option '" + option + "' of Plugin(" +
+                           pluginName + ")");
 }
 
 void PluginManager::setPluginOption(const std::string &pluginName,
@@ -156,7 +156,7 @@ void PluginManager::setPluginOption(const std::string &pluginName,
                                     double const value)
 {
   GMSH_Plugin *plugin = find(pluginName);
-  if(!plugin) throw std::runtime_error("Unknown plugin name");
+  if(!plugin) throw std::runtime_error("Unknown plugin '" + pluginName + "'");
 
   for(int i = 0; i < plugin->getNbOptions(); i++) {
     StringXNumber *sxn = plugin->getOption(i);
@@ -165,7 +165,8 @@ void PluginManager::setPluginOption(const std::string &pluginName,
       return;
     }
   }
-  throw std::runtime_error("Unknown plugin option name");
+  throw std::runtime_error("Unknown option '" + option + "' of Plugin(" +
+                           pluginName + ")");
 }
 
 PluginManager *PluginManager::instance()
@@ -298,53 +299,91 @@ void PluginManager::registerDefaultPlugins()
 #endif
   }
 
-#if defined(HAVE_FLTK)
-  char *pluginsHome = getenv("GMSHPLUGINSHOME");
-  if(!pluginsHome) return;
-  struct dirent **list;
-  int nbFiles = fl_filename_list(pluginsHome, &list);
-  if(nbFiles <= 0) return;
-  for(int i = 0; i < nbFiles; i++) {
-    std::string ext = SplitFileName(list[i]->d_name)[2];
-    if(ext == ".so" || ext == ".dll") addPlugin(list[i]->d_name);
-  }
-  for(int i = 0; i < nbFiles; i++) free(list[i]);
-  free(list);
-#endif
+  // the plugins in the directories of $GMSHPLUGINSHOME
+  const char *home = getenv("GMSHPLUGINSHOME");
+  if(home) addPlugins(home);
 }
 
-void PluginManager::addPlugin(const std::string &fileName)
+void PluginManager::addPlugins(const std::string &dirs)
 {
-#if !defined(HAVE_DLOPEN) || !defined(HAVE_FLTK)
-  Msg::Warning("No dynamic plugin loading on this platform");
+  // directories separated like in PATH
+#if defined(_WIN32)
+  const char sep = ';';
 #else
-  Msg::Info("Opening Plugin '%s'", fileName.c_str());
-  void *hlib = dlopen(fileName.c_str(), RTLD_NOW);
-  const char *err = dlerror();
-  if(!hlib) {
-    Msg::Warning("Could not open '%s' (dlerror = %s)", fileName.c_str(), err);
-    return;
+  const char sep = ':';
+#endif
+  std::size_t beg = 0;
+  while(beg <= dirs.size()) {
+    std::size_t end = dirs.find(sep, beg);
+    if(end == std::string::npos) end = dirs.size();
+    std::string dir = dirs.substr(beg, end - beg);
+    beg = end + 1;
+    if(dir.empty()) continue;
+    std::error_code ec;
+    std::vector<std::string> files;
+    for(auto &f : std::filesystem::directory_iterator(dir, ec)) {
+      std::string ext = f.path().extension().string();
+      if(ext == ".so" || ext == ".dylib" || ext == ".dll")
+        files.push_back(f.path().string());
+    }
+    if(ec) {
+      Msg::Warning("Could not read plugin directory '%s'", dir.c_str());
+      continue;
+    }
+    std::sort(files.begin(), files.end()); // in the same order everywhere
+    for(auto &f : files) addPlugin(f);
   }
+}
 
-  class GMSH_Plugin *(*registerPlugin)(void);
-  registerPlugin =
-    (class GMSH_Plugin * (*)(void)) dlsym(hlib, GMSH_PluginEntry);
-  err = dlerror();
-  if(err) {
-    Msg::Warning("Symbol '%s' missing in '%s' (dlerror = %s)", GMSH_PluginEntry,
-                 fileName.c_str(), err);
-    return;
+bool PluginManager::addPlugin(const std::string &fileName)
+{
+#if !defined(HAVE_PLUGIN_LOADING)
+  Msg::Error("Cannot load plugin '%s': loading plugins requires Gmsh to be "
+             "built as a shared library with the private API "
+             "(ENABLE_BUILD_DYNAMIC or ENABLE_BUILD_SHARED, and "
+             "ENABLE_PRIVATE_API), on a system with dlopen",
+             fileName.c_str());
+  return false;
+#else
+  void *lib = dlopen(fileName.c_str(), RTLD_NOW | RTLD_LOCAL);
+  if(!lib) {
+    Msg::Error("Could not load plugin '%s' (%s)", fileName.c_str(), dlerror());
+    return false;
   }
-
-  GMSH_Plugin *p = registerPlugin();
-  p->hlib = hlib;
-  if(allPlugins.find(p->getName()) != allPlugins.end()) {
-    Msg::Warning("Plugin '%s' multiply defined", fileName.c_str());
-    return;
+  // the functions defined by GMSH_PLUGIN() in Plugin.h
+  auto version = (int (*)())dlsym(lib, "GMSH_PluginApiVersion");
+  auto create = (GMSH_Plugin * (*)()) dlsym(lib, "GMSH_RegisterPlugin");
+  if(!version || !create) {
+    Msg::Error("'%s' is not a Gmsh plugin (it does not define "
+               "GMSH_PluginApiVersion() and GMSH_RegisterPlugin(), which "
+               "GMSH_PLUGIN() in Plugin.h defines)", fileName.c_str());
+    dlclose(lib);
+    return false;
   }
-
-  allPlugins.insert(std::make_pair(p->getName(), p));
-  Msg::Info("Loaded Plugin '%s' (%s)", p->getName().c_str(),
-            p->getAuthor().c_str());
+  if(version() != GMSH_PLUGIN_API_VERSION) {
+    Msg::Error("Plugin '%s' was built for version %d of the plugin interface, "
+               "this Gmsh has version %d: rebuild it", fileName.c_str(),
+               version(), GMSH_PLUGIN_API_VERSION);
+    dlclose(lib);
+    return false;
+  }
+  GMSH_Plugin *p = create();
+  if(!p) {
+    Msg::Error("Plugin '%s' could not be created", fileName.c_str());
+    dlclose(lib);
+    return false;
+  }
+  std::string name = p->getName();
+  if(allPlugins.count(name)) {
+    Msg::Error("Plugin '%s' in '%s' is already defined", name.c_str(),
+               fileName.c_str());
+    delete p;
+    dlclose(lib);
+    return false;
+  }
+  allPlugins[name] = p;
+  _libraries.push_back(lib);
+  Msg::Info("Loaded Plugin(%s) from '%s'", name.c_str(), fileName.c_str());
+  return true;
 #endif
 }

@@ -6,12 +6,15 @@
 #ifndef PLUGIN_H
 #define PLUGIN_H
 
-// To create a plugin:
-// 1) Create a dynamic lib containing GMSH_RegisterPlugin();
-// 2) When there is an unacceptable error in the plugin, just throw
-//    this, the plugin manager will be able to catch the exception.
-//  Some Plugins are default gmsh plugins and are insterted directly
-//  in the executable. I think that it's a good way to start.
+// A plugin is a class derived from GMSH_PostPlugin (a plugin acting on a
+// view) or GMSH_MeshPlugin (on the model). Besides the plugins built into Gmsh,
+// plugins can be loaded from shared libraries (see PluginManager.h): such a
+// library defines its plugin with GMSH_PLUGIN() below, and is built against the
+// headers of the private API and the shared Gmsh library.
+
+// the version of the plugin interface of this file: a plugin loaded from a
+// shared library must have been built with the same
+#define GMSH_PLUGIN_API_VERSION 1
 
 #include <string>
 #include <functional>
@@ -38,10 +41,7 @@ public:
   // a dialog box for the user interface
   PluginDialogBox *dialogBox;
 
-  // for internal use by PluginManager
-  void *hlib;
-
-  GMSH_Plugin() : dialogBox(nullptr), hlib(nullptr) {}
+  GMSH_Plugin() : dialogBox(nullptr) {}
   virtual ~GMSH_Plugin() {}
 
   // return plugin type, name and info
@@ -175,5 +175,23 @@ class GMSH_MeshPlugin : public GMSH_Plugin {
   }
   virtual int run() { return 0; }
 };
+
+// the functions a shared library defining a plugin exports: write
+//   GMSH_PLUGIN(MyPlugin)
+// in one of its source files, MyPlugin being the class of the plugin
+#if defined(_WIN32)
+#define GMSH_PLUGIN_EXPORT extern "C" __declspec(dllexport)
+#else
+#define GMSH_PLUGIN_EXPORT extern "C" __attribute__((visibility("default")))
+#endif
+#define GMSH_PLUGIN(className)                                                 \
+  GMSH_PLUGIN_EXPORT int GMSH_PluginApiVersion()                               \
+  {                                                                            \
+    return GMSH_PLUGIN_API_VERSION;                                            \
+  }                                                                            \
+  GMSH_PLUGIN_EXPORT GMSH_Plugin *GMSH_RegisterPlugin()                        \
+  {                                                                            \
+    return new className();                                                    \
+  }
 
 #endif

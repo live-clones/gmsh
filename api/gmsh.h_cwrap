@@ -6904,6 +6904,22 @@ namespace gmsh { // Top-level functions
       return result_api_;
     }
 
+    // gmsh::plugin::load
+    //
+    // Load a plugin from the shared library `fileName'. Such a plugin is a class
+    // derived from GMSH_PostPlugin or GMSH_MeshPlugin, defined with the
+    // GMSH_PLUGIN() macro of the private API header Plugin.h, and built against
+    // the headers of the private API and the shared Gmsh library (see
+    // "examples/api/plugin"). The plugins in the directories listed in the
+    // environment variable GMSHPLUGINSHOME (separated like in PATH) are loaded
+    // when Gmsh is initialized.
+    inline void load(const std::string & fileName)
+    {
+      int ierr = 0;
+      gmshPluginLoad(fileName.c_str(), &ierr);
+      if(ierr) throwLastError();
+    }
+
   } // namespace plugin
 
   namespace graphics { // Graphics functions
