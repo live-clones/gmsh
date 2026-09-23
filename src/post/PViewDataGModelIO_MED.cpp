@@ -450,7 +450,8 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     minor = (int)CTX::instance()->mesh.medFileMinorVersion;
     Msg::Info("Forcing MED file version to %d.%d", major, minor);
   }
-  med_idt fid = MEDfileVersionOpen((char *)fileName.c_str(), MED_ACC_RDEXT,
+  // (read-write: each step updates the field)
+  med_idt fid = MEDfileVersionOpen((char *)fileName.c_str(), MED_ACC_RDWR,
                                    major, minor, release);
 #else
   med_idt fid = MEDouvrir((char *)fileName.c_str(), MED_LECTURE_AJOUT);

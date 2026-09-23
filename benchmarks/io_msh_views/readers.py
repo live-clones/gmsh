@@ -130,5 +130,28 @@ except Exception:
 gmsh.finalize()
 check('legacy .pos with a 1000-character name', err)
 
+# a view with several steps written in MED and read back, twice: the second
+# read (the same file) makes a view of its own
+start()
+med = 'Med' in gmsh.option.getString('General.BuildOptions')
+gmsh.finalize()
+if med:
+    start()
+    gmsh.merge(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..',
+                            'plugins', 'data', 'square.msh'))
+    v = gmsh.view.getTags()[0]
+    ref = [list(x) for x in gmsh.view.getModelData(v, 2)[2]]
+    f = os.path.join(OUT, 'steps.med')
+    gmsh.view.write(v, f)
+    gmsh.finalize()
+    start()
+    gmsh.merge(f)
+    gmsh.merge(f)
+    tags = gmsh.view.getTags()
+    got = [list(x) for x in gmsh.view.getModelData(tags[0], 2)[2]]
+    gmsh.finalize()
+    check('MED with 3 steps read back, twice',
+          None if len(tags) == 2 and got == ref else 'differs')
+
 print('%d failed' % failed)
 sys.exit(1 if failed else 0)
