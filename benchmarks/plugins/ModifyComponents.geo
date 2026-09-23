@@ -50,3 +50,22 @@ Plugin(ModifyComponents).View = PostProcessing.NbViews - 3;
 Plugin(ModifyComponents).Expression0 = "v0 * z";
 Plugin(ModifyComponents).Expression1 = "v1 * z";
 Plugin(ModifyComponents).Run;
+
+// element data: one value per element, changed once (it was squared once per
+// node), with the coordinates of the barycenter
+NewModel;
+Merge "data/square.msh";
+Plugin(ModifyComponents).View = PostProcessing.NbViews - 1;
+Plugin(ModifyComponents).OtherView = -1;
+Plugin(ModifyComponents).TimeStep = -1;
+Plugin(ModifyComponents).ForceInterpolation = 0;
+Plugin(ModifyComponents).Expression0 = "v0^2 + x";
+Plugin(ModifyComponents).Expression1 = "";
+Plugin(ModifyComponents).Expression2 = "";
+Plugin(ModifyComponents).Expression3 = "";
+Plugin(ModifyComponents).Expression4 = "";
+Plugin(ModifyComponents).Expression5 = "";
+Plugin(ModifyComponents).Expression6 = "";
+Plugin(ModifyComponents).Expression7 = "";
+Plugin(ModifyComponents).Expression8 = "";
+Plugin(ModifyComponents).Run;

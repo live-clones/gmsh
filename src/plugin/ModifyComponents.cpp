@@ -116,7 +116,9 @@ PView *GMSH_ModifyComponentsPlugin::execute(PView *view)
       Msg::Error("View[%d] does not exist: using self", otherView);
   }
 
-  PViewData *data2 = getPossiblyAdaptiveData(v2);
+  // the view itself is changed, not the adapted data drawn from it: read the
+  // other view the same way
+  PViewData *data2 = v2->getData();
 
   if(otherTimeStep < 0 &&
      data2->getNumTimeSteps() != data1->getNumTimeSteps()) {
@@ -156,72 +158,57 @@ PView *GMSH_ModifyComponentsPlugin::execute(PView *view)
     octree = new OctreePost(v2);
   }
 
+  bool failed = false;
   for(int step = 0; step < data1->getNumTimeSteps(); step++) {
     if(timeStep >= 0 && timeStep != step) continue;
 
     double time = data1->getTime(step);
     int step2 = (otherTimeStep < 0) ? step : otherTimeStep;
 
-    if(data1->isNodeData()) {
-      // tag all the nodes with "0" (the default tag)
-      for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-          if(data1->skipElement(step, ent, ele)) continue;
-          for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-            data1->tagNode(step, ent, ele, nod, 0);
-        }
+    forEachValue(data1, step, [&](int ent, int ele, int nod, double x,
+                                  double y, double z) {
+      if(failed) return; // the error is reported once
+      int numComp = data1->getNumComponents(step, ent, ele);
+      std::vector<double> v(std::max(9, numComp), 0.);
+      for(int comp = 0; comp < numComp; comp++)
+        data1->getValue(step, ent, ele, nod, comp, v[comp]);
+      std::vector<double> w(9, 0.);
+      if(octree) {
+        // with ForceInterpolation, search in the element of the node first
+        int qn = forceInterpolation ? data1->getNumNodes(step, ent, ele) : 0;
+        std::vector<double> xe(qn), ye(qn), ze(qn);
+        for(int i = 0; i < qn; i++)
+          data1->getNode(step, ent, ele, i, xe[i], ye[i], ze[i]);
+        double *px = qn ? &xe[0] : nullptr, *py = qn ? &ye[0] : nullptr,
+               *pz = qn ? &ze[0] : nullptr;
+        if(!octree->searchScalar(x, y, z, &w[0], step2, nullptr, qn, px, py,
+                                 pz))
+          if(!octree->searchVector(x, y, z, &w[0], step2, nullptr, qn, px, py,
+                                   pz))
+            octree->searchTensor(x, y, z, &w[0], step2, nullptr, qn, px, py,
+                                 pz);
       }
-    }
-
-    for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-        if(data1->skipElement(step, ent, ele)) continue;
-        int numComp = data1->getNumComponents(step, ent, ele);
-        int numComp2 = octree ? 9 : data2->getNumComponents(step2, ent, ele);
-        int numNodes = data1->getNumNodes(step, ent, ele);
-        std::vector<double> x(numNodes), y(numNodes), z(numNodes);
-        std::vector<int> tag(numNodes);
-        for(int nod = 0; nod < numNodes; nod++)
-          tag[nod] =
-            data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
-        for(int nod = 0; nod < numNodes; nod++) {
-          if(data1->isNodeData() && tag[nod])
-            continue; // node has already been modified
-          std::vector<double> v(std::max(9, numComp), 0.);
-          for(int comp = 0; comp < numComp; comp++)
-            data1->getValue(step, ent, ele, nod, comp, v[comp]);
-          std::vector<double> w(std::max(9, numComp2), 0.);
-          if(octree) {
-            int qn = forceInterpolation ? numNodes : 0;
-            if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2,
-                                     nullptr, qn, &x[0], &y[0], &z[0]))
-              if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], step2,
-                                       nullptr, qn, &x[0], &y[0], &z[0]))
-                octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2,
-                                     nullptr, qn, &x[0], &y[0], &z[0]);
-          }
-          else {
-            for(int comp = 0; comp < numComp2; comp++)
-              data2->getValue(step2, ent, ele, nod, comp, w[comp]);
-          }
-          values[0] = x[nod];
-          values[1] = y[nod];
-          values[2] = z[nod];
-          values[3] = time;
-          values[4] = step;
-          for(int i = 0; i < 9; i++) values[5 + i] = v[i];
-          for(int i = 0; i < 9; i++) values[14 + i] = w[i];
-          if(f.eval(values, res)) {
-            for(int comp = 0; comp < numComp; comp++) {
-              if(expressions[comp].size()) {
-                data1->setValue(step, ent, ele, nod, comp, res[comp]);
-              }
-            }
-          }
-          if(data1->isNodeData()) data1->tagNode(step, ent, ele, nod, 1);
-        }
+      else if(data2->hasTimeStep(step2) &&
+              !data2->skipElement(step2, ent, ele)) {
+        int numComp2 = std::min(9, data2->getNumComponents(step2, ent, ele));
+        for(int comp = 0; comp < numComp2; comp++)
+          data2->getValue(step2, ent, ele, nod, comp, w[comp]);
       }
-    }
+      values[0] = x;
+      values[1] = y;
+      values[2] = z;
+      values[3] = time;
+      values[4] = step;
+      for(int i = 0; i < 9; i++) values[5 + i] = v[i];
+      for(int i = 0; i < 9; i++) values[14 + i] = w[i];
+      if(!f.eval(values, res)) {
+        failed = true;
+        return;
+      }
+      for(int comp = 0; comp < numComp; comp++)
+        if(expressions[comp].size())
+          data1->setValue(step, ent, ele, nod, comp, res[comp]);
+    });
   }
 
   if(octree) delete octree;

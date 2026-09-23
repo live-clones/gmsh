@@ -152,3 +152,86 @@ int GMSH_PostPlugin::getNumCornerNodes(PViewData *data, int step, int ent,
   _warnedCorners = true;
   return nc;
 }
+
+void GMSH_PostPlugin::forEachNode(
+  PViewData *data,
+  const std::function<void(int step, int ent, int ele, int nod)> &f,
+  int dim) const
+{
+  PViewDataGModel *gm = dynamic_cast<PViewDataGModel *>(data);
+  if(gm && gm->getType() == PViewDataGModel::GaussPointData) {
+    Msg::Warning("Plugin(%s) cannot move the points of Gauss point data",
+                 getName().c_str());
+    return;
+  }
+  int step = data->getFirstNonEmptyTimeStep();
+  auto skip = [&](int ent, int ele) {
+    return data->skipElement(step, ent, ele) ||
+           (dim >= 0 && data->getDimension(step, ent, ele) != dim);
+  };
+  if(gm) { // tag the nodes of the mesh, to visit each once
+    for(int ent = 0; ent < data->getNumEntities(step); ent++)
+      for(int ele = 0; ele < data->getNumElements(step, ent); ele++)
+        if(!skip(ent, ele))
+          for(int nod = 0; nod < data->getNumNodes(step, ent, ele); nod++)
+            data->tagNode(step, ent, ele, nod, 0);
+  }
+  for(int ent = 0; ent < data->getNumEntities(step); ent++) {
+    for(int ele = 0; ele < data->getNumElements(step, ent); ele++) {
+      if(skip(ent, ele)) continue;
+      for(int nod = 0; nod < data->getNumNodes(step, ent, ele); nod++) {
+        if(gm) {
+          double x, y, z;
+          if(data->getNode(step, ent, ele, nod, x, y, z)) continue;
+          data->tagNode(step, ent, ele, nod, 1);
+        }
+        f(step, ent, ele, nod);
+      }
+    }
+  }
+}
+
+void GMSH_PostPlugin::forEachValue(
+  PViewData *data, int step,
+  const std::function<void(int ent, int ele, int nod, double x, double y,
+                           double z)> &f) const
+{
+  if(!data->hasTimeStep(step)) return;
+  PViewDataGModel *gm = dynamic_cast<PViewDataGModel *>(data);
+  bool nodeData = gm && gm->getType() == PViewDataGModel::NodeData;
+  bool elementData = gm && gm->getType() == PViewDataGModel::ElementData;
+  if(nodeData) {
+    for(int ent = 0; ent < data->getNumEntities(step); ent++)
+      for(int ele = 0; ele < data->getNumElements(step, ent); ele++)
+        if(!data->skipElement(step, ent, ele))
+          for(int nod = 0; nod < data->getNumNodes(step, ent, ele); nod++)
+            data->tagNode(step, ent, ele, nod, 0);
+  }
+  for(int ent = 0; ent < data->getNumEntities(step); ent++) {
+    for(int ele = 0; ele < data->getNumElements(step, ent); ele++) {
+      if(data->skipElement(step, ent, ele)) continue;
+      int numNodes = data->getNumNodes(step, ent, ele);
+      if(elementData) {
+        double xc = 0., yc = 0., zc = 0.;
+        for(int nod = 0; nod < numNodes; nod++) {
+          double x, y, z;
+          data->getNode(step, ent, ele, nod, x, y, z);
+          xc += x / numNodes;
+          yc += y / numNodes;
+          zc += z / numNodes;
+        }
+        f(ent, ele, 0, xc, yc, zc);
+        continue;
+      }
+      for(int nod = 0; nod < numNodes; nod++) {
+        double x, y, z;
+        int tag = data->getNode(step, ent, ele, nod, x, y, z);
+        if(nodeData) {
+          if(tag) continue;
+          data->tagNode(step, ent, ele, nod, 1);
+        }
+        f(ent, ele, nod, x, y, z);
+      }
+    }
+  }
+}

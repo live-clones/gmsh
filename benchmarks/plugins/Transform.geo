@@ -35,3 +35,20 @@ Plugin(Transform).A33 = 1;
 Plugin(Transform).Ty = 0;
 Plugin(Transform).View = PostProcessing.NbViews - 3;
 Plugin(Transform).Run; // mirror
+
+// element data on a mesh: each node moved once (they were moved once per
+// element around them); the orientation of list data swapped
+NewModel;
+Merge "data/square.msh";
+Plugin(Transform).View = PostProcessing.NbViews - 1;
+Plugin(Transform).A11 = 1; Plugin(Transform).A12 = 0; Plugin(Transform).A13 = 0;
+Plugin(Transform).A21 = 0; Plugin(Transform).A22 = 1; Plugin(Transform).A23 = 0;
+Plugin(Transform).A31 = 0; Plugin(Transform).A32 = 0; Plugin(Transform).A33 = 1;
+Plugin(Transform).Tx = 1; Plugin(Transform).Ty = 0; Plugin(Transform).Tz = 0;
+Plugin(Transform).SwapOrientation = 0;
+Plugin(Transform).Run;
+Merge "data/square.pos";
+Plugin(Transform).View = PostProcessing.NbViews - 4;
+Plugin(Transform).Tx = 0;
+Plugin(Transform).SwapOrientation = 1;
+Plugin(Transform).Run;

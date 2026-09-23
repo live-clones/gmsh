@@ -53,12 +53,14 @@ PView *GMSH_WarpPlugin::execute(PView *v)
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
-  if(otherView < 0) otherView = iView;
-  PView *v2 = getView(otherView, v);
+  // without another view, the nodes move along the normals of the surfaces
+  bool useNormals = (otherView < 0);
+  PView *v2 = useNormals ? v1 : getView(otherView, v);
   if(!v2) return v;
 
-  PViewData *data1 = getPossiblyAdaptiveData(v1);
-  PViewData *data2 = getPossiblyAdaptiveData(v2);
+  // the view itself is changed, not the adapted data drawn from it
+  PViewData *data1 = v1->getData();
+  PViewData *data2 = v2->getData();
 
   // sanity checks
   if(data1->getNumEntities() != data2->getNumEntities() ||
@@ -71,80 +73,57 @@ PView *GMSH_WarpPlugin::execute(PView *v)
     return v;
   }
 
-  // create smooth normal field if we don't have an explicit warp field
+  // the normal of a surface element, from its first 3 nodes
+  auto normal = [&](int step, int ent, int ele, double n[3]) {
+    double x[3], y[3], z[3];
+    for(int nod = 0; nod < 3; nod++)
+      data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
+    normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n);
+  };
+
+  // smooth normal field if we don't have an explicit warp field
   smooth_normals *normals = nullptr;
-  if(otherView < 0) {
+  if(useNormals) {
     normals = new smooth_normals(AngleTol);
-    for(int ent = 0; ent < data1->getNumEntities(0); ent++) {
-      for(int ele = 0; ele < data1->getNumElements(0, ent); ele++) {
-        if(data1->skipElement(0, ent, ele)) continue;
-        int numEdges = data1->getNumEdges(0, ent, ele);
-        if(numEdges == 3 || numEdges == 4) {
-          double x[4], y[4], z[4], n[4];
-          for(int nod = 0; nod < numEdges; nod++)
-            data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
-          normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2],
-                        n);
-          for(int nod = 0; nod < numEdges; nod++)
-            normals->add(x[nod], y[nod], z[nod], n[0], n[1], n[2]);
-        }
-      }
-    }
-  }
-
-  if(data1->isNodeData()) {
-    // tag all the nodes with "0" (the default tag)
-    for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-      for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-          if(data1->skipElement(step, ent, ele)) continue;
-          for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-            data1->tagNode(step, ent, ele, nod, 0);
-        }
-      }
-    }
-  }
-
-  // transform each "0" node: (x,y,z) += factor * mult * (valx, valy, valz)
-  for(int step = 0; step < data1->getNumTimeSteps(); step++) {
+    int step = data1->getFirstNonEmptyTimeStep();
     for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
         if(data1->skipElement(step, ent, ele)) continue;
-        int numNodes = data1->getNumNodes(step, ent, ele);
-        if(numNodes < 2) continue;
-        std::vector<double> x(numNodes), y(numNodes), z(numNodes);
-        std::vector<int> tag(numNodes);
-        double n[3] = {0., 0., 0.};
-        for(int nod = 0; nod < numNodes; nod++)
-          tag[nod] =
-            data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
-        int dim = data1->getDimension(step, ent, ele);
-        if(normals && dim == 2)
-          normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2],
-                        n);
-        for(int nod = 0; nod < numNodes; nod++) {
-          if(data1->isNodeData() && tag[nod]) continue; // already transformed
-          double mult = 1., val[3] = {n[0], n[1], n[2]};
-          if(normals) {
-            if(dim == 2) {
-              normals->get(x[nod], y[nod], z[nod], val[0], val[1], val[2]);
-              data1->getScalarValue(step, ent, ele, nod, mult);
-            }
-          }
-          else if(data2->getNumComponents(TimeStep, ent, ele) == 3 &&
-                  data2->getNumNodes(TimeStep, ent, ele) == numNodes) {
-            for(int comp = 0; comp < 3; comp++)
-              data2->getValue(TimeStep, ent, ele, nod, comp, val[comp]);
-          }
-          x[nod] += factor * mult * val[0];
-          y[nod] += factor * mult * val[1];
-          z[nod] += factor * mult * val[2];
-          data1->setNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
-          if(data1->isNodeData()) data1->tagNode(step, ent, ele, nod, 1);
+        if(data1->getDimension(step, ent, ele) != 2) continue;
+        double n[3];
+        normal(step, ent, ele, n);
+        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++) {
+          double x, y, z;
+          data1->getNode(step, ent, ele, nod, x, y, z);
+          normals->add(x, y, z, n[0], n[1], n[2]);
         }
       }
     }
   }
+
+  // (x,y,z) += factor * mult * (valx, valy, valz)
+  forEachNode(
+    data1,
+    [&](int step, int ent, int ele, int nod) {
+      double x, y, z, mult = 1., val[3] = {0., 0., 0.};
+      data1->getNode(step, ent, ele, nod, x, y, z);
+      if(useNormals) {
+        normal(step, ent, ele, val);
+        normals->get(x, y, z, val[0], val[1], val[2]);
+        if(data1->hasTimeStep(TimeStep) &&
+           !data1->skipElement(TimeStep, ent, ele))
+          data1->getScalarValue(TimeStep, ent, ele, nod, mult);
+      }
+      else if(data2->getNumComponents(TimeStep, ent, ele) == 3 &&
+              data2->hasTimeStep(TimeStep) &&
+              !data2->skipElement(TimeStep, ent, ele)) {
+        for(int comp = 0; comp < 3; comp++)
+          data2->getValue(TimeStep, ent, ele, nod, comp, val[comp]);
+      }
+      data1->setNode(step, ent, ele, nod, x + factor * mult * val[0],
+                     y + factor * mult * val[1], z + factor * mult * val[2]);
+    },
+    useNormals ? 2 : -1);
 
   if(normals) delete normals;
 

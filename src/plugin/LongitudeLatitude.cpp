@@ -43,65 +43,59 @@ PView *GMSH_LongituteLatitudePlugin::execute(PView *v)
   if(!v1) return v;
   PViewData *data1 = v1->getData();
 
-  if(data1->isNodeData()) {
-    // tag all the nodes with "0" (the default tag)
-    for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-      for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-          if(data1->skipElement(step, ent, ele)) continue;
-          for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-            data1->tagNode(step, ent, ele, nod, 0);
-        }
-      }
-    }
-  }
-  double gxmin = 180, gxmax = -180, gymin = 90, gymax = -90;
-  // transform all "0" nodes
+  // turn the vectors into the frame of each point on the sphere, at every
+  // step, before the points move
   for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-    for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-        if(data1->skipElement(step, ent, ele)) continue;
-        int nbComp = data1->getNumComponents(step, ent, ele);
-        double vin[3], vout[3];
-        double xmin = M_PI, xmax = -M_PI;
-        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++) {
-          double x, y, z;
-          int tag = data1->getNode(step, ent, ele, nod, x, y, z);
-          if(data1->isNodeData() && tag) continue;
-          double x2, y2, z2;
-          z2 = sqrt(x * x + y * y + z * z);
-          y2 = asin(z / z2);
-          x2 = atan2(y, x);
-          xmin = std::min(x2, xmin);
-          xmax = std::max(x2, xmax);
-          gxmin = std::min(x2 * 180 / M_PI, gxmin);
-          gxmax = std::max(x2 * 180 / M_PI, gxmax);
-          gymin = std::min(y2 * 180 / M_PI, gymin);
-          gymax = std::max(y2 * 180 / M_PI, gymax);
-          data1->setNode(step, ent, ele, nod, x2 * 180 / M_PI, y2 * 180 / M_PI,
-                         0);
-          if(data1->isNodeData()) data1->tagNode(step, ent, ele, nod, 1);
-          if(nbComp == 3) {
-            for(int i = 0; i < 3; i++)
-              data1->getValue(step, ent, ele, nod, i, vin[i]);
-            vout[0] = -sin(x2) * vin[0] + cos(x2) * vin[1];
-            vout[1] = -sin(y2) * (cos(x2) * vin[0] + sin(x2) * vin[1]) +
-                      cos(y2) * vin[2];
-            vout[2] = cos(y2) * (cos(x2) * vin[0] + sin(x2) * vin[1]) +
-                      sin(y2) * vin[2];
-            for(int i = 0; i < 3; i++)
-              data1->setValue(step, ent, ele, nod, i, vout[i]);
-          }
-        }
-        if(xmax - xmin >
-           M_PI) { // periodicity check (broken for continuous views)
-          for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++) {
-            double x, y, z;
-            data1->getNode(step, ent, ele, nod, x, y, z);
-            if(xmax * 180 / M_PI - x > 180) x += 360;
-            data1->setNode(step, ent, ele, nod, x, y, z);
-          }
-        }
+    forEachValue(data1, step,
+                 [&](int ent, int ele, int nod, double x, double y, double z) {
+                   if(data1->getNumComponents(step, ent, ele) != 3) return;
+                   double lon = atan2(y, x);
+                   double lat = asin(z / sqrt(x * x + y * y + z * z));
+                   double vin[3], vout[3];
+                   for(int i = 0; i < 3; i++)
+                     data1->getValue(step, ent, ele, nod, i, vin[i]);
+                   double h = cos(lon) * vin[0] + sin(lon) * vin[1];
+                   vout[0] = -sin(lon) * vin[0] + cos(lon) * vin[1];
+                   vout[1] = -sin(lat) * h + cos(lat) * vin[2];
+                   vout[2] = cos(lat) * h + sin(lat) * vin[2];
+                   for(int i = 0; i < 3; i++)
+                     data1->setValue(step, ent, ele, nod, i, vout[i]);
+                 });
+  }
+
+  double gxmin = 180, gxmax = -180, gymin = 90, gymax = -90;
+  forEachNode(data1, [&](int step, int ent, int ele, int nod) {
+    double x, y, z;
+    data1->getNode(step, ent, ele, nod, x, y, z);
+    double lon = atan2(y, x) * 180 / M_PI;
+    double lat = asin(z / sqrt(x * x + y * y + z * z)) * 180 / M_PI;
+    gxmin = std::min(lon, gxmin);
+    gxmax = std::max(lon, gxmax);
+    gymin = std::min(lat, gymin);
+    gymax = std::max(lat, gymax);
+    data1->setNode(step, ent, ele, nod, lon, lat, 0);
+  });
+
+  // elements across the date line: move their nodes on the west side by 360
+  // degrees, which only list data can do (model data shares its nodes)
+  int step = data1->getFirstNonEmptyTimeStep();
+  bool shared = !dynamic_cast<PViewDataList *>(data1);
+  for(int ent = 0; !shared && ent < data1->getNumEntities(step); ent++) {
+    for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
+      if(data1->skipElement(step, ent, ele)) continue;
+      int numNodes = data1->getNumNodes(step, ent, ele);
+      double xmin = 180, xmax = -180;
+      for(int nod = 0; nod < numNodes; nod++) {
+        double x, y, z;
+        data1->getNode(step, ent, ele, nod, x, y, z);
+        xmin = std::min(x, xmin);
+        xmax = std::max(x, xmax);
+      }
+      if(xmax - xmin <= 180) continue;
+      for(int nod = 0; nod < numNodes; nod++) {
+        double x, y, z;
+        data1->getNode(step, ent, ele, nod, x, y, z);
+        if(xmax - x > 180) data1->setNode(step, ent, ele, nod, x + 360, y, z);
       }
     }
   }

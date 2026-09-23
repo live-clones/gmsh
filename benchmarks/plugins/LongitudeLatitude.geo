@@ -23,3 +23,17 @@ For i In {0 : #views() - 1}
   Plugin(LongitudeLatitude).View = views(i);
   Plugin(LongitudeLatitude).Run;
 EndFor
+
+// vectors with 3 steps, model and list data: every step turned with the
+// coordinates of the point before it moves (only the first step was turned
+// right)
+NewModel;
+Merge "data/square.msh";
+Merge "data/square.pos";
+views() = {PostProcessing.NbViews - 7, PostProcessing.NbViews - 3};
+For i In {0 : #views() - 1}
+  Plugin(Transform).View = views(i);
+  Plugin(Transform).Run;
+  Plugin(LongitudeLatitude).View = views(i);
+  Plugin(LongitudeLatitude).Run;
+EndFor

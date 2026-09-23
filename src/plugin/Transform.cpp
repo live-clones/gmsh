@@ -78,39 +78,21 @@ PView *GMSH_TransformPlugin::execute(PView *v)
 
   PViewData *data1 = v1->getData();
 
-  if(data1->isNodeData()) {
-    // tag all the nodes with "0" (the default tag)
-    for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-      for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-          if(data1->skipElement(step, ent, ele)) continue;
-          if(swap) data1->reverseElement(step, ent, ele);
-          for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-            data1->tagNode(step, ent, ele, nod, 0);
-        }
-      }
-    }
+  // elements are reversed at step 0, for all steps
+  if(swap) {
+    for(int ent = 0; ent < data1->getNumEntities(0); ent++)
+      for(int ele = 0; ele < data1->getNumElements(0, ent); ele++)
+        data1->reverseElement(0, ent, ele);
   }
 
-  // transform all "0" nodes
-  for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-    for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-        if(data1->skipElement(step, ent, ele)) continue;
-        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++) {
-          double x, y, z;
-          int tag = data1->getNode(step, ent, ele, nod, x, y, z);
-          if(data1->isNodeData() && tag) continue;
-          double x2, y2, z2;
-          x2 = mat[0][0] * x + mat[0][1] * y + mat[0][2] * z + mat[0][3];
-          y2 = mat[1][0] * x + mat[1][1] * y + mat[1][2] * z + mat[1][3];
-          z2 = mat[2][0] * x + mat[2][1] * y + mat[2][2] * z + mat[2][3];
-          data1->setNode(step, ent, ele, nod, x2, y2, z2);
-          if(data1->isNodeData()) data1->tagNode(step, ent, ele, nod, 1);
-        }
-      }
-    }
-  }
+  forEachNode(data1, [&](int step, int ent, int ele, int nod) {
+    double x, y, z;
+    data1->getNode(step, ent, ele, nod, x, y, z);
+    double x2 = mat[0][0] * x + mat[0][1] * y + mat[0][2] * z + mat[0][3];
+    double y2 = mat[1][0] * x + mat[1][1] * y + mat[1][2] * z + mat[1][3];
+    double z2 = mat[2][0] * x + mat[2][1] * y + mat[2][2] * z + mat[2][3];
+    data1->setNode(step, ent, ele, nod, x2, y2, z2);
+  });
 
   data1->finalize();
 

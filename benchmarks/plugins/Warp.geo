@@ -24,3 +24,13 @@ Plugin(Warp).OtherView = -1; // normals times the cell values
 Plugin(Warp).TimeStep = 0;
 Plugin(Warp).SmoothingAngle = 30;
 Plugin(Warp).Run;
+
+// along the smoothed normals of a view given by its index (they were only
+// used for the current view), scaled by its values at step 2
+NewModel;
+Merge "data/square.pos";
+Plugin(Warp).View = PostProcessing.NbViews - 4;
+Plugin(Warp).OtherView = -1;
+Plugin(Warp).TimeStep = 2;
+Plugin(Warp).Factor = 0.1;
+Plugin(Warp).Run;

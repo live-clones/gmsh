@@ -14,6 +14,7 @@
 //  in the executable. I think that it's a good way to start.
 
 #include <string>
+#include <functional>
 #include "Options.h"
 #include "GmshMessage.h"
 #include "PView.h"
@@ -117,6 +118,23 @@ public:
   // classes of shapeFunctions.h (which only know those): the corners of a
   // higher order element, which come first; 0 for Gauss point data
   int getNumCornerNodes(PViewData *data, int step, int ent, int ele) const;
+  // for a plugin that changes a view in place: call f once for each node of
+  // the view (the nodes of model data are those of the mesh, shared by its
+  // elements and its steps), with the first non-empty step, through the
+  // elements of dimension dim only if dim >= 0; Gauss point data, whose points
+  // are not nodes, is skipped
+  void forEachNode(PViewData *data,
+                   const std::function<void(int step, int ent, int ele,
+                                            int nod)> &f,
+                   int dim = -1) const;
+  // call f once for each value of the given step of a view, with the
+  // coordinates it is given at: a node shared by elements (node data) once,
+  // one value per element (element data) once, at the barycenter of the
+  // element
+  void forEachValue(PViewData *data, int step,
+                    const std::function<void(int ent, int ele, int nod,
+                                             double x, double y, double z)> &f)
+    const;
   // (given the root of the tree of subdivisions of an adaptive view)
   virtual void assignSpecificVisibility(adaptiveElement *root) const {}
   virtual bool geometricalFilter(fullMatrix<double> *) const { return true; }
