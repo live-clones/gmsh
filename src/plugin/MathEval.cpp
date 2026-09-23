@@ -204,6 +204,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
                            9 :
                            otherData->getNumComponents(timeBeg, ent, ele);
       std::vector<double> *out = data2->incrementList(numComp2, type, numNodes);
+      if(!out) continue;
       std::vector<double> v(std::max(9, numComp), 0.);
       std::vector<double> w(std::max(9, otherNumComp), 0.);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);

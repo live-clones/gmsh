@@ -29,3 +29,13 @@ Plugin(CutBox).NumPointsW = 3;
 Merge "data/hexes.pos";
 Plugin(CutBox).View = PostProcessing.NbViews - 4;
 Plugin(CutBox).Run;
+
+// the boundary of a box one point thick along U (it read past the end of the
+// values along W)
+Plugin(CutBox).View = 0;
+Plugin(CutBox).NumPointsU = 1;
+Plugin(CutBox).NumPointsV = 4;
+Plugin(CutBox).NumPointsW = 3;
+Plugin(CutBox).ConnectPoints = 1;
+Plugin(CutBox).Boundary = 1;
+Plugin(CutBox).Run;

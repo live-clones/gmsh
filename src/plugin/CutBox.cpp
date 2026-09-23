@@ -596,9 +596,9 @@ void GMSH_CutBoxPlugin::addInView(int connect, int boundary, int numsteps,
           (*nL)++;
           for(int k = 0; k < numsteps; ++k) {
             for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i][getNbW()][nbcomp * k + l]);
+              L.push_back(vals[0][i][getNbW() - 1][nbcomp * k + l]);
             for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i + 1][getNbW()][nbcomp * k + l]);
+              L.push_back(vals[0][i + 1][getNbW() - 1][nbcomp * k + l]);
           }
         }
         for(int i = 0; i < getNbW() - 1; ++i) {

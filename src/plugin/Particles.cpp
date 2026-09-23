@@ -225,8 +225,9 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
   PViewData *data1 = getPossiblyAdaptiveData(v1);
 
   // sanity checks
-  if(timeStep > data1->getNumTimeSteps() - 1) {
-    Msg::Error("Invalid time step (%d) in view[%d]: using 0", v1->getIndex());
+  if(timeStep < 0 || timeStep > data1->getNumTimeSteps() - 1) {
+    Msg::Warning("Invalid time step (%d) in View[%d]: using 0", timeStep,
+                 v1->getIndex());
     timeStep = 0;
   }
 

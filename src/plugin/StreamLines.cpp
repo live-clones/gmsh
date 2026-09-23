@@ -231,7 +231,7 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
 
   // sanity checks
   if(timeStep > data1->getNumTimeSteps() - 1) {
-    Msg::Error("Invalid time step (%d) in view[%d]", v1->getIndex());
+    Msg::Error("Invalid time step (%d) in View[%d]", timeStep, v1->getIndex());
     return v;
   }
 

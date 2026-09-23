@@ -55,14 +55,15 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
   PViewDataList *dmin = getDataList(min);
   PViewDataList *dmid = getDataList(mid);
   PViewDataList *dmax = getDataList(max);
+  int step0 = data1->getFirstNonEmptyTimeStep();
 
-  for(int ent = 0; ent < data1->getNumEntities(0); ent++) {
-    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++) {
-      if(data1->skipElement(0, ent, ele)) continue;
-      int numComp = data1->getNumComponents(0, ent, ele);
+  for(int ent = 0; ent < data1->getNumEntities(step0); ent++) {
+    for(int ele = 0; ele < data1->getNumElements(step0, ent); ele++) {
+      if(data1->skipElement(step0, ent, ele)) continue;
+      int numComp = data1->getNumComponents(step0, ent, ele);
       if(numComp != 9) continue;
-      int type = data1->getType(0, ent, ele);
-      int numNodes = getNumCornerNodes(data1, 0, ent, ele);
+      int type = data1->getType(step0, ent, ele);
+      int numNodes = getNumCornerNodes(data1, step0, ent, ele);
       if(!numNodes) continue;
       std::vector<double> *outmin = dmin->incrementList(1, type, numNodes);
       std::vector<double> *outmid = dmid->incrementList(1, type, numNodes);
@@ -70,7 +71,8 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
       if(!outmin || !outmid || !outmax) continue;
       double xyz[3][8];
       for(int nod = 0; nod < numNodes; nod++)
-        data1->getNode(0, ent, ele, nod, xyz[0][nod], xyz[1][nod], xyz[2][nod]);
+        data1->getNode(step0, ent, ele, nod, xyz[0][nod], xyz[1][nod],
+                       xyz[2][nod]);
       for(int i = 0; i < 3; i++) {
         for(int nod = 0; nod < numNodes; nod++) {
           outmin->push_back(xyz[i][nod]);
@@ -78,7 +80,8 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
           outmax->push_back(xyz[i][nod]);
         }
       }
-      for(int step = 0; step < data1->getNumTimeSteps(); step++) {
+      for(int step = step0; step < data1->getNumTimeSteps(); step++) {
+        if(!data1->hasTimeStep(step)) continue;
         for(int nod = 0; nod < numNodes; nod++) {
           double val[9], w[3];
           for(int comp = 0; comp < numComp; comp++)
@@ -95,7 +98,8 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
     }
   }
 
-  for(int i = 0; i < data1->getNumTimeSteps(); i++) {
+  for(int i = step0; i < data1->getNumTimeSteps(); i++) {
+    if(!data1->hasTimeStep(i)) continue;
     double time = data1->getTime(i);
     dmin->Time.push_back(time);
     dmid->Time.push_back(time);
@@ -111,5 +115,5 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
   dmax->setFileName(data1->getName() + "_MaxEigenvalues.pos");
   dmax->finalize();
 
-  return nullptr;
+  return max;
 }

@@ -35,3 +35,9 @@ Merge "data/square.pos";
 Plugin(Particles).Z0 = 0; Plugin(Particles).Z1 = 0; Plugin(Particles).Z2 = 0;
 Plugin(Particles).View = PostProcessing.NbViews - 3;
 Plugin(Particles).Run;
+
+// a negative time step: step 0 is used (it overflowed a 3-value array)
+Plugin(Particles).View = 1;
+Plugin(Particles).TimeStep = -1;
+Plugin(Particles).Run;
+Plugin(Particles).TimeStep = 0;

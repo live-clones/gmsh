@@ -88,6 +88,7 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
       int type = data1->getType(0, ent, ele);
       int numComp = data1->getNumComponents(0, ent, ele);
       std::vector<double> *out = data2->incrementList(numComp, type, numNodes);
+      if(!out) continue;
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       std::vector<double> vr(numNodes * numComp), vi(numNodes * numComp);
       for(int nod = 0; nod < numNodes; nod++) {
