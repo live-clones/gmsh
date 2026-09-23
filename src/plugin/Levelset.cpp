@@ -3,6 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <limits>
+#include <cmath>
 #include "Levelset.h"
 #include "MPolygon.h"
 #include "MPolyhedron.h"
@@ -741,18 +743,29 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
 // On high order maps, we draw only the elements that have a cut with
 // the levelset, this is as accurate as it should be
 
+// the levelset at a vertex of the refined element, computed once (the levels
+// are indexed by the vertices, NaN until computed)
+static double vertexLevel(adaptiveVertex *p, std::vector<double> &levels,
+                          const GMSH_LevelsetPlugin *plug)
+{
+  if(p->index >= (int)levels.size())
+    levels.resize(p->index + 1, std::numeric_limits<double>::quiet_NaN());
+  double &l = levels[p->index];
+  if(std::isnan(l)) l = plug->levelset(p->X, p->Y, p->Z, p->val);
+  return l;
+}
+
 static bool recur_sign_change(adaptiveElement *t,
-                              const GMSH_LevelsetPlugin *plug)
+                              const GMSH_LevelsetPlugin *plug,
+                              std::vector<double> &levels)
 {
   int numNodes = t->shape->numNodes, numChildren = t->shape->numChildren;
   if(!t->e[0] || t->visible) {
     // does the levelset change sign between the first node and another one?
-    double v0 =
-      plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
+    double v0 = vertexLevel(t->p[0], levels, plug);
     t->visible = false;
     for(int i = 1; i < numNodes; i++) {
-      double v =
-        plug->levelset(t->p[i]->X, t->p[i]->Y, t->p[i]->Z, t->p[i]->val);
+      double v = vertexLevel(t->p[i], levels, plug);
       if(!(v0 * v > 0)) t->visible = true;
     }
     return t->visible;
@@ -760,7 +773,7 @@ static bool recur_sign_change(adaptiveElement *t,
   else {
     bool sc[10], any = false;
     for(int i = 0; i < numChildren; i++) {
-      sc[i] = recur_sign_change(t->e[i], plug);
+      sc[i] = recur_sign_change(t->e[i], plug, levels);
       if(sc[i]) any = true;
     }
     if(any) {
@@ -773,8 +786,27 @@ static bool recur_sign_change(adaptiveElement *t,
   }
 }
 
+// the levels at the vertices of the element being adapted (one per thread, as
+// elements are adapted in parallel)
+static thread_local std::vector<double> levels;
+
+bool GMSH_LevelsetPlugin::keepsNothing(
+  adaptiveElement *root, const std::set<adaptiveVertex> &vertices) const
+{
+  levels.assign(vertices.size(), std::numeric_limits<double>::quiet_NaN());
+  if(root->shape->numNodes < 3) return false;
+  // nothing is cut if all the vertices are strictly on the same side
+  bool allPos = true, allNeg = true;
+  for(auto &v : vertices) {
+    double l = vertexLevel((adaptiveVertex *)&v, levels, this);
+    if(!(l > 0.)) allPos = false;
+    if(!(l < 0.)) allNeg = false;
+  }
+  return allPos || allNeg;
+}
+
 void GMSH_LevelsetPlugin::assignSpecificVisibility(adaptiveElement *root) const
 {
   if(root->shape->numNodes < 3) return; // (as before: not points and lines)
-  if(!root->visible) root->visible = !recur_sign_change(root, this);
+  if(!root->visible) root->visible = !recur_sign_change(root, this, levels);
 }

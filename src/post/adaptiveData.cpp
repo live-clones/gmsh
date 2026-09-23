@@ -510,18 +510,24 @@ void adaptiveElements::_error(adaptiveWork &w, const adaptiveElement *e,
 // the field everywhere (one element at a time: not for several threads)
 void adaptiveElements::_askPlugin(adaptiveWork &w, GMSH_PostPlugin *plug)
 {
-  for(auto &e : all) e.visible = false;
-  for(const adaptiveElement *e : w.visible)
-    ((adaptiveElement *)e)->visible = true;
+  bool values = plug->valuesNeeded();
   for(auto &v : allVertices) {
     adaptiveVertex *p = (adaptiveVertex *)&v;
-    _evaluate(w, p);
+    if(values) _evaluate(w, p);
     _locate(w, p);
     p->X = w.xyz[3 * p->index];
     p->Y = w.xyz[3 * p->index + 1];
     p->Z = w.xyz[3 * p->index + 2];
-    p->val = w.values[p->index * w.numComp];
+    p->val = values ? w.values[p->index * w.numComp] : 0.;
   }
+  // (the element itself, as the plugin would leave it)
+  if(plug->keepsNothing(&all.front(), allVertices)) {
+    w.visible.assign(1, &all.front());
+    return;
+  }
+  for(auto &e : all) e.visible = false;
+  for(const adaptiveElement *e : w.visible)
+    ((adaptiveElement *)e)->visible = true;
   plug->assignSpecificVisibility(&all.front());
   w.visible.clear();
   for(auto &e : all)

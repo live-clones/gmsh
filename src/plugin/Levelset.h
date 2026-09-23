@@ -39,6 +39,9 @@ public:
   virtual double levelset(double x, double y, double z, double val) const = 0;
   virtual PView *execute(PView *);
   void assignSpecificVisibility(adaptiveElement *root) const;
+  bool valuesNeeded() const { return !_valueIndependent; }
+  bool keepsNothing(adaptiveElement *root,
+                    const std::set<adaptiveVertex> &vertices) const;
 };
 
 #endif

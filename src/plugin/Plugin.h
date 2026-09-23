@@ -17,6 +17,7 @@
 #define GMSH_PLUGIN_API_VERSION 2
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include <functional>
@@ -27,6 +28,7 @@
 
 class PluginDialogBox;
 class adaptiveElement;
+class adaptiveVertex;
 class element;
 
 // an element of a view, as GMSH_PostPlugin::createListData() gives it: its
@@ -192,8 +194,17 @@ public:
                     const std::function<void(int ent, int ele, int nod,
                                              double x, double y, double z)> &f)
     const;
-  // (given the root of the tree of subdivisions of an adaptive view)
+  // for an adaptive view, which elements of the subdivisions of an element to
+  // keep: those visible in the tree whose root is given, with its vertices
+  // placed in the model (and their values if valuesNeeded()); keepsNothing()
+  // is asked first, if the vertices tell that only the element is kept
   virtual void assignSpecificVisibility(adaptiveElement *root) const {}
+  virtual bool valuesNeeded() const { return true; }
+  virtual bool keepsNothing(adaptiveElement *root,
+                            const std::set<adaptiveVertex> &vertices) const
+  {
+    return false;
+  }
 };
 
 class GMSH_MeshPlugin : public GMSH_Plugin {
