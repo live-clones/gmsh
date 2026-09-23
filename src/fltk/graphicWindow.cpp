@@ -466,10 +466,6 @@ static int _save_yuv(const char *name)
   return genericBitmapFileDialog(name, "YUV Options", FORMAT_YUV);
 }
 static int _save_view_pos(const char *name) { return posFileDialog(name); }
-static int _save_view_adapt_pvtu(const char *name)
-{
-  return pvtuAdaptFileDialog(name);
-}
 static int _save_view_med(const char *name)
 {
   return genericViewFileDialog(name, "MED Options", PView::MED);
@@ -500,7 +496,7 @@ static int _save_auto(const char *name)
   case FORMAT_MSH: return _save_msh(name);
   case FORMAT_POS: return _save_view_pos(name);
   case FORMAT_X3D: return _save_x3d(name);
-  case FORMAT_PVTU: return _save_view_adapt_pvtu(name);
+  case FORMAT_PVTU: return _save_vtu(name);
   case FORMAT_TXT: return _save_view_txt(name);
   case FORMAT_OPT: return _save_options(name);
   case FORMAT_VIS: return _save_visibility(name);
@@ -614,7 +610,6 @@ static void file_export_cb(Fl_Widget *w, void *data)
 #endif
     {"Post-processing - Generic TXT\t*.txt", _save_view_txt},
     {"Post-processing - Mesh Statistics\t*.pos", _save_mesh_stat},
-    {"Post-processing - Adapted data\t*.pvtu", _save_view_adapt_pvtu},
     {"Image - Encapsulated PostScript\t*.eps", _save_eps},
     {"Image - GIF\t*.gif", _save_gif},
 #if defined(HAVE_LIBJPEG)

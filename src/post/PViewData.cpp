@@ -59,20 +59,20 @@ void PViewData::initAdaptiveDataLight(int step, int level, double tol)
   }
 }
 
-void PViewData::saveAdaptedViewForVTK(const std::string &guifileName,
-                                      int useDefaultName, int step, int level,
-                                      double tol, int npart, bool isBinary)
+void PViewData::saveAdaptedViewForVTK(const std::string &fileName, int step,
+                                      int level, double tol, int npart,
+                                      bool isBinary)
 {
   if(_adaptive) {
     // _adaptiveData has already been allocated from the adaptive view panel of
     // the GUI for instance.
     _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary,
-                                      guifileName, useDefaultName);
+                                      fileName, 0);
   }
   else {
     initAdaptiveDataLight(step, level, tol);
     _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary,
-                                      guifileName, useDefaultName);
+                                      fileName, 0);
     destroyAdaptiveData();
   }
 }

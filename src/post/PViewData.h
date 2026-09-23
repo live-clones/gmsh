@@ -278,9 +278,8 @@ public:
   //   with paraview,
   // - and/or generation of VTK data structure for ParaView plugin.
   void initAdaptiveDataLight(int step, int level, double tol);
-  void saveAdaptedViewForVTK(const std::string &guifileName, int useDefaultName,
-                             int step, int level, double tol, int npart,
-                             bool isBinary);
+  void saveAdaptedViewForVTK(const std::string &fileName, int step, int level,
+                             double tol, int npart, bool isBinary);
 
   void destroyAdaptiveData();
 

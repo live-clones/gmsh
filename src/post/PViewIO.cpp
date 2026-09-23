@@ -337,19 +337,10 @@ bool PView::_writeVTUOrAdapted(const std::string &fileName)
   if(!_options->adaptVisualizationGrid)
     return writeVTU(fileName, binary, {this});
   std::string ext = SplitFileName(fileName)[2];
-  return writeAdapt(fileName, 0, binary, _options->maxRecursionLevel,
-                    _options->targetError, (ext == ".pvtu") ? 0 : 1);
-}
-
-// Routines for export of adapted views to pvtu file format for parallel
-// visualization with paraview.
-bool PView::writeAdapt(const std::string &guifileName, int useDefaultName,
-                       bool isBinary, int adaptLev, double adaptErr, int npart,
-                       bool append)
-{
-  Msg::StatusBar(true, "Writing '%s'...", guifileName.c_str());
-  _data->saveAdaptedViewForVTK(guifileName, useDefaultName, _options->timeStep,
-                               adaptLev, adaptErr, npart, isBinary);
+  Msg::StatusBar(true, "Writing '%s'...", fileName.c_str());
+  _data->saveAdaptedViewForVTK(
+    fileName, _options->timeStep, _options->maxRecursionLevel,
+    _options->targetError, (ext == ".pvtu") ? 0 : 1, binary);
   return true;
 }
 

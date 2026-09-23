@@ -161,12 +161,8 @@ public:
   // send to ONELAB server
   void sendToServer(const std::string &name);
 
-  // Routines for export of adapted views to pvtu file format for parallel
-  // visualization with paraview
+  // write to .vtu or .pvtu, as shown (refined if the view is adaptive)
   bool _writeVTUOrAdapted(const std::string &fileName);
-  bool writeAdapt(const std::string &fileName, int useDefaultName,
-                  bool isBinary, int adaptLev, double adaptErr, int npart,
-                  bool append = false);
 
   // vertex arrays to draw the elements efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;
