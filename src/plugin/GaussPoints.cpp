@@ -9,16 +9,19 @@
 #include "PView.h"
 
 GMSH_GaussPointsPlugin::GMSH_GaussPointsPlugin()
-  : GMSH_PostPlugin({{GMSH_FULLRC, "Order", nullptr, 0, ""},
+  : GMSH_PostPlugin({{GMSH_FULLRC, "IntegrationOrder", nullptr, 0, ""},
                      {GMSH_FULLRC, "Dimension", nullptr, 2, ""},
                      {GMSH_FULLRC, "PhysicalGroup", nullptr, 0, ""}})
 {
+  // its former name, which the parser cannot read (Order is a keyword)
+  addOptionAlias("Order", "IntegrationOrder");
 }
 
 std::string GMSH_GaussPointsPlugin::getHelp() const
 {
   return "Given an input mesh, Plugin(GaussPoints) creates a list-based view "
-         "containing the Gauss points for a given polynomial `Order'.\n\n"
+         "containing the Gauss points integrating exactly the polynomials of "
+         "order `IntegrationOrder'.\n\n"
          "If `PhysicalGroup' is nonzero, the plugin only creates points for "
          "the elements belonging to the group.";
 }

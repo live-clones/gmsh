@@ -212,10 +212,8 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
             pp->execute(nullptr);
             add_scripting(pp, nullptr);
           }
-        } catch(...) {
-          char tmp[256];
-          pp->catchErrorMessage(tmp);
-          Msg::Warning("%s", tmp);
+        } catch(const std::exception &e) {
+          Msg::Error("Plugin(%s) failed: %s", pp->getName().c_str(), e.what());
         }
       }
     }

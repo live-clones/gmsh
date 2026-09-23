@@ -6,7 +6,6 @@
 #include "GmshConfig.h"
 #include "CutPlane.h"
 #include "Context.h"
-#include "fullMatrix.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
@@ -74,20 +73,6 @@ std::string GMSH_CutPlanePlugin::getHelp() const
 double GMSH_CutPlanePlugin::levelset(double x, double y, double z,
                                      double val) const
 { return option(0) * x + option(1) * y + option(2) * z + option(3); }
-
-bool GMSH_CutPlanePlugin::geometricalFilter(
-  fullMatrix<double> *node_positions) const
-{
-  const double l0 = levelset((*node_positions)(0, 0), (*node_positions)(0, 1),
-                             (*node_positions)(0, 2), 1);
-  for(int i = 1; i < node_positions->size1(); i++)
-    if(levelset((*node_positions)(i, 0), (*node_positions)(i, 1),
-                (*node_positions)(i, 2), 1) *
-         l0 <
-       0)
-      return true;
-  return false;
-}
 
 PView *GMSH_CutPlanePlugin::execute(PView *v)
 {

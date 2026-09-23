@@ -21,9 +21,12 @@
 GMSH_MeshSubEntitiesPlugin::GMSH_MeshSubEntitiesPlugin()
   : GMSH_PostPlugin({{GMSH_FULLRC, "InputDimension", nullptr, 1., ""},
                      {GMSH_FULLRC, "InputPhysicalGroup", nullptr, 1., ""},
-                     {GMSH_FULLRC, "OuputDimension", nullptr, 0., ""},
-                     {GMSH_FULLRC, "OuputPhysicalGroup", nullptr, 2000., ""}})
+                     {GMSH_FULLRC, "OutputDimension", nullptr, 0., ""},
+                     {GMSH_FULLRC, "OutputPhysicalGroup", nullptr, 2000., ""}})
 {
+  // their former, misspelled names
+  addOptionAlias("OuputDimension", "OutputDimension");
+  addOptionAlias("OuputPhysicalGroup", "OutputPhysicalGroup");
 }
 
 std::string GMSH_MeshSubEntitiesPlugin::getHelp() const

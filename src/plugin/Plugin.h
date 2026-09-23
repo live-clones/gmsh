@@ -27,18 +27,11 @@
 
 class PluginDialogBox;
 class adaptiveElement;
-class Vertex;
-template <class scalar> class fullMatrix;
 
 class GMSH_Plugin {
 public:
-  // 4 kinds of plugins
-  typedef enum {
-    GMSH_CAD_PLUGIN,
-    GMSH_MESH_PLUGIN,
-    GMSH_POST_PLUGIN,
-    GMSH_SOLVER_PLUGIN
-  } GMSH_PLUGIN_TYPE;
+  // plugins acting on the model or on a view
+  typedef enum { GMSH_MESH_PLUGIN, GMSH_POST_PLUGIN } GMSH_PLUGIN_TYPE;
 
   // a dialog box for the user interface
   PluginDialogBox *dialogBox;
@@ -58,10 +51,6 @@ public:
   {
     return "C. Geuzaine, J.-F. Remacle";
   }
-
-  // when an error is thrown by the plugin, the plugin manager will
-  // show the message and hopefully continue
-  virtual void catchErrorMessage(char *errorMessage) const;
 
   // the options (virtual for plugins that keep their options themselves)
   virtual int getNbOptions() const { return (int)_numOptions.size(); }
@@ -173,35 +162,6 @@ public:
     const;
   // (given the root of the tree of subdivisions of an adaptive view)
   virtual void assignSpecificVisibility(adaptiveElement *root) const {}
-  virtual bool geometricalFilter(fullMatrix<double> *) const { return true; }
-};
-
-// The base class for solver plugins. The idea is to be able to
-// associate some properties to physical entities, so that we can
-// interface gmsh with a solver (ABAQUS...), i.e., create the input
-// file for the solver
-class GMSH_SolverPlugin : public GMSH_Plugin {
-public:
-  inline GMSH_PLUGIN_TYPE getType() const
-  {
-    return GMSH_Plugin::GMSH_SOLVER_PLUGIN;
-  }
-  virtual int run() { return 0; }
-  // popup dialog box
-  virtual void popupPropertiesForPhysicalEntity(int dim) = 0;
-  // add the given group to the solver data
-  virtual void receiveNewPhysicalGroup(int dim, int id) = 0;
-  // load the solver input file related to the gmsh geo file
-  virtual void readSolverFile(const char *) = 0;
-  // save the solver file
-  virtual void writeSolverFile(const char *) const = 0;
-  // enhance graphics for a giver geo point
-  virtual bool GL_enhancePoint(Vertex *v) { return false; }
-  // enhance graphics for a giver geo line
-  virtual bool GL_enhanceLine(int CurveId, Vertex *v1, Vertex *v2)
-  {
-    return false;
-  }
 };
 
 class GMSH_MeshPlugin : public GMSH_Plugin {

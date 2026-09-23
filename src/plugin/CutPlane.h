@@ -21,7 +21,6 @@ public:
   }
   std::string getHelp() const;
   PView *execute(PView *);
-  virtual bool geometricalFilter(fullMatrix<double> *) const;
 
   bool optionCallback(int iopt, int num, int action, double &value);
   void drawPreview(void *context);

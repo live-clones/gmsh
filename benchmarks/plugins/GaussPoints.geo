@@ -17,3 +17,8 @@ NewModel;
 Merge "data/hexes.msh";
 Plugin(GaussPoints).PhysicalGroup = 3;
 Plugin(GaussPoints).Run;
+
+// a higher order, with the new name of the option (Order is a keyword of the
+// parser)
+Plugin(GaussPoints).IntegrationOrder = 2;
+Plugin(GaussPoints).Run;

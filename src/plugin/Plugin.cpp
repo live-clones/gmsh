@@ -105,12 +105,6 @@ void GMSH_Plugin::setPreview(GMSH_Plugin *p)
 #endif
 }
 
-void GMSH_Plugin::catchErrorMessage(char *errorMessage) const
-{
-  std::string str = getName() + "failed...";
-  strcpy(errorMessage, str.c_str());
-}
-
 std::string GMSH_Plugin::serialize()
 {
   std::ostringstream sstream;

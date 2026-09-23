@@ -11,7 +11,6 @@
 #include <vector>
 
 class GMSH_Plugin;
-class GMSH_SolverPlugin;
 
 class PluginManager {
 private:
@@ -53,9 +52,6 @@ public:
 
   // Find a plugin named pluginName
   GMSH_Plugin *find(const std::string &pluginName);
-
-  // Get The ONLY Solver Plugin
-  GMSH_SolverPlugin *findSolverPlugin();
 
   // Perform an action on the plugin. Default action are Run and
   // Save. Other plugins may perform other actions.

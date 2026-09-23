@@ -103,19 +103,6 @@ GMSH_Plugin *PluginManager::find(const std::string &pluginName)
   return it->second;
 }
 
-GMSH_SolverPlugin *PluginManager::findSolverPlugin()
-{
-  auto it = allPlugins.begin();
-  auto ite = allPlugins.end();
-  for(; it != ite; ++it) {
-    GMSH_Plugin *p = it->second;
-    if(p->getType() == GMSH_Plugin::GMSH_SOLVER_PLUGIN) {
-      return (GMSH_SolverPlugin *)(p);
-    }
-  }
-  return nullptr;
-}
-
 int PluginManager::action(const std::string &pluginName,
                           const std::string &action, void *data)
 {
@@ -175,10 +162,6 @@ void PluginManager::add(GMSH_Plugin *p) { allPlugins[p->getName()] = p; }
 
 void PluginManager::registerDefaultPlugins()
 {
-  if(CTX::instance()->solver.plugins) {
-    // nothing here yet
-  }
-
   if(CTX::instance()->post.plugins) {
     add(new GMSH_StreamLinesPlugin());
     add(new GMSH_ParticlesPlugin());
