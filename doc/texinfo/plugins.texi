@@ -75,7 +75,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(BoundaryAngles)
-Plugin(BoundaryAngles) computes the (interior) angles between the line elements on the boundary of all surfaces. The angles, computed modulo 2*Pi, are stored in a new post-processing view, one for each surface. The plugin currently only works for planar surfaces.Available options:- Visible (1=True, 0 = False, Default = 1): Visibility of the Views in the GUI - Save (1=True, 0 = False, Default = 0): Save the Views on disk ?- Remove (1=True, 0 = False, Default = 0): Remove the View from the memory after execution?- Filename (Default = 'Angles_Surface'): Root name for the Views (in case of save / Visibility)- Dir (Default = ''): Output directory (possibly nested)
+Plugin(BoundaryAngles) computes the (interior) angles between the line elements on the boundary of all surfaces. The angles, computed modulo 2*Pi, are stored in a new post-processing view, one for each surface. The plugin currently only works for planar surfaces.Available options:- Visible (1=True, 0 = False, Default = 0): Visibility of the Views in the GUI - Save (1=True, 0 = False, Default = 0): Save the Views on disk ?- Remove (1=True, 0 = False, Default = 0): Remove the View from the memory after execution?- Filename (Default = 'Angles_Surface'): Root name for the Views (in case of save / Visibility)- Dir (Default = ''): Output directory (possibly nested)
 String options:
 @table @code
 @item Filename
@@ -751,11 +751,11 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(LongitudeLatitude)
-Plugin(LongituteLatitude) projects the view `View' in longitude-latitude.@*
+Plugin(LongitudeLatitude) projects the view `View' in longitude-latitude.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(LongituteLatitude) is executed in place.
+Plugin(LongitudeLatitude) is executed in place.
 Numeric options:
 @table @code
 @item View
@@ -834,7 +834,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(MeshSizeFieldView)
-Plugin(MeshSizeFieldView) evaluates the mesh size field `MeshSizeField' on specified `Component` (0 for scalar) of the post-processing view `View'.
+Plugin(MeshSizeFieldView) evaluates the mesh size field `MeshSizeField' on the component `Component' (0 for scalar data, all the components if negative) of the post-processing view `View'.
 Numeric options:
 @table @code
 @item MeshSizeField
@@ -1153,7 +1153,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Scal2Tens)
-Plugin(Scal2Tens) converts some scalar fields into a tensor field. The number of components must be given (max. 9). The new view 'NameNewView' contains the new tensor field. If the number of a view is -1, the value of the corresponding component is 0.
+Plugin(Scal2Tens) converts some scalar fields into a tensor field. The number of components must be given (max. 9): a view has 1, 3 or 9, the components beyond `NumberOfComponents' being 0. The new view 'NameNewView' contains the new tensor field. If the number of a view is -1, the value of the corresponding component is 0.
 String options:
 @table @code
 @item NameNewView
@@ -1201,7 +1201,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(ShowNeighborElements)
-Plugin(ShowNeighborElements) sets visible some elements and a layer of elements around them, the other being set invisible.
+Plugin(ShowNeighborElements) sets visible the surface and volume elements `Element1', ..., `Element5' (numbers of elements, 0 for none) and `NumLayers' layers of elements around them: the elements of the same dimension that share a node with them, then those that share a node with these, and so on. The other surface and volume elements are set invisible.
 Numeric options:
 @table @code
 @item NumLayers
