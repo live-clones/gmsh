@@ -73,6 +73,23 @@ bool GMSH_Plugin::optionStrCallback(int iopt, int num, int action,
   return true;
 }
 
+bool GMSH_Plugin::optionIntList(int iopt, std::vector<int> &list)
+{
+  list.clear();
+  int n;
+  char a;
+  std::istringstream ss(optionStr(iopt));
+  while(ss >> n) {
+    list.push_back(n);
+    if(ss >> a && a != ',') {
+      Msg::Error("Unexpected character '%c' while parsing '%s'", a,
+                 getOptionStr(iopt)->str);
+      return false;
+    }
+  }
+  return true;
+}
+
 bool GMSH_Plugin::sliderOption(int iopt, int action, double &value, double step,
                                double min, double max)
 {

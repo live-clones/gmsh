@@ -23,7 +23,6 @@ public:
   std::string getHelp() const;
   std::string getAuthor() const { return "M. Pellikka"; }
   PView *execute(PView *);
-  bool parseStringOpt(int stringOpt, std::vector<int> &intList);
   bool invertIntegerMatrix(std::vector<int> &matrix);
   int detIntegerMatrix(std::vector<int> &matrix);
 };

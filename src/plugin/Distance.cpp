@@ -135,6 +135,18 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   std::vector<GEntity *> entities;
   m->getEntities(entities);
 
+  // the entities the distance is computed to: the boundaries (of highest
+  // dimension) if no physical group is given, the groups given otherwise
+  auto isTarget = [&](GEntity *ge) {
+    int d = ge->dim();
+    if(!id_point && !id_line && !id_face) return d == _maxDim - 1;
+    for(int p : ge->getPhysicalEntities())
+      if((p == id_point && d == 0) || (p == id_line && d == 1) ||
+         (p == id_face && d == 2))
+        return true;
+    return false;
+  };
+
   std::vector<SPoint3> pts(totNumNodes);
   std::vector<double> distances(totNumNodes, 1.e22);
   std::vector<MVertex *> pt2Vertex(totNumNodes);
@@ -156,23 +168,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     bool existEntity = false;
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *g2 = entities[i];
-      int gDim = g2->dim();
-      bool computeForEntity = false;
-      if(!id_point && !id_line && !id_face && gDim == _maxDim - 1) {
-        computeForEntity = true;
-      }
-      else {
-        std::vector<int> phys = g2->getPhysicalEntities();
-        for(std::size_t k = 0; k < phys.size(); k++) {
-          if((phys[k] == id_point && gDim == 0) ||
-             (phys[k] == id_line && gDim == 1) ||
-             (phys[k] == id_face && gDim == 2)) {
-            computeForEntity = true;
-            break;
-          }
-        }
-      }
-      if(computeForEntity) {
+      if(isTarget(g2)) {
         existEntity = true;
         for(std::size_t k = 0; k < g2->getNumMeshElements(); k++) {
           MElement *e = g2->getMeshElement(k);
@@ -232,23 +228,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     SBoundingBox3d bbox;
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      int gDim = ge->dim();
-      bool fixForEntity = false;
-      if(!id_point && !id_line && !id_face && gDim == _maxDim - 1) {
-        fixForEntity = true;
-      }
-      else {
-        std::vector<int> phys = ge->getPhysicalEntities();
-        for(std::size_t k = 0; k < phys.size(); k++) {
-          if((phys[k] == id_point && gDim == 0) ||
-             (phys[k] == id_line && gDim == 1) ||
-             (phys[k] == id_face && gDim == 2)) {
-            fixForEntity = true;
-            break;
-          }
-        }
-      }
-      if(fixForEntity) {
+      if(isTarget(ge)) {
         existEntity = true;
         for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
           MElement *t = ge->getMeshElement(i);

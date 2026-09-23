@@ -22,7 +22,6 @@ public:
   std::string getHelp() const;
   std::string getAuthor() const { return "M. Pellikka"; }
   PView *execute(PView *);
-  bool parseStringOpt(int stringOpt, std::vector<int> &intList);
 };
 
 #endif

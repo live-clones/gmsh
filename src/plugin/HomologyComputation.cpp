@@ -53,28 +53,6 @@ std::string GMSH_HomologyComputationPlugin::getHelp() const
          "mesh.";
 }
 
-bool GMSH_HomologyComputationPlugin::parseStringOpt(int stringOpt,
-                                                    std::vector<int> &intList)
-{
-  std::string list = optionStr(stringOpt);
-  intList.clear();
-
-  int n;
-  char a;
-  std::istringstream ss(list);
-  while(ss >> n) {
-    intList.push_back(n);
-    if(ss >> a) {
-      if(a != ',') {
-        Msg::Error("Unexpected character \'%c\' while parsing \'%s\'", a,
-                   getOptionStr(stringOpt)->str);
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
 PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 {
   std::string fileName = optionStr(4);
@@ -95,10 +73,10 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   std::vector<int> subdomain;
   std::vector<int> imdomain;
   std::vector<int> dimsave;
-  if(!parseStringOpt(0, domain)) return nullptr;
-  if(!parseStringOpt(1, subdomain)) return nullptr;
-  if(!parseStringOpt(2, imdomain)) return nullptr;
-  if(!parseStringOpt(3, dimsave)) return nullptr;
+  if(!optionIntList(0, domain)) return nullptr;
+  if(!optionIntList(1, subdomain)) return nullptr;
+  if(!optionIntList(2, imdomain)) return nullptr;
+  if(!optionIntList(3, dimsave)) return nullptr;
 
   // a negative physical group means no restriction on that side
   std::vector<int> perslaves;

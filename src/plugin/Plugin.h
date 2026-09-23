@@ -110,6 +110,9 @@ protected:
   double option(int iopt) const
   { return const_cast<GMSH_Plugin *>(this)->getOption(iopt)->def; }
   std::string &optionStr(int iopt) { return getOptionStr(iopt)->def; }
+  // the integers of string option iopt, separated by commas; false (with an
+  // error) if it holds anything else
+  bool optionIntList(int iopt, std::vector<int> &list);
   // optionCallback() for a numeric option edited with a slider going from min
   // to max by step, whose changes are previewed
   bool sliderOption(int iopt, int action, double &value, double step,

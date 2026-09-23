@@ -63,28 +63,6 @@ std::string GMSH_HomologyPostProcessingPlugin::getHelp() const
          "resulting chains.\n";
 }
 
-bool GMSH_HomologyPostProcessingPlugin::parseStringOpt(
-  int stringOpt, std::vector<int> &intList)
-{
-  std::string list = optionStr(stringOpt);
-  intList.clear();
-
-  int n;
-  char a;
-  std::istringstream ss(list);
-  while(ss >> n) {
-    intList.push_back(n);
-    if(ss >> a) {
-      if(a != ',') {
-        Msg::Error("Unexpected character \'%c\' while parsing \'%s\'", a,
-                   getOptionStr(stringOpt)->str);
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
 int GMSH_HomologyPostProcessingPlugin::detIntegerMatrix(
   std::vector<int> &matrix)
 {
@@ -173,9 +151,9 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   }
 
   std::vector<int> basisPhysicals;
-  if(!parseStringOpt(1, basisPhysicals)) return nullptr;
+  if(!optionIntList(1, basisPhysicals)) return nullptr;
   std::vector<int> basisPhysicals2;
-  if(!parseStringOpt(2, basisPhysicals2)) return nullptr;
+  if(!optionIntList(2, basisPhysicals2)) return nullptr;
 
   if(matrixString != "I" && (int)basisPhysicals.size() != cols &&
      basisPhysicals2.empty()) {
@@ -199,9 +177,9 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   }
 
   std::vector<int> tracePhysicals;
-  if(!parseStringOpt(3, tracePhysicals)) return nullptr;
+  if(!optionIntList(3, tracePhysicals)) return nullptr;
   std::vector<int> projectPhysicals;
-  if(!parseStringOpt(4, projectPhysicals)) return nullptr;
+  if(!optionIntList(4, projectPhysicals)) return nullptr;
 
   std::vector<Chain<int> > curBasis;
   for(std::size_t i = 0; i < basisPhysicals.size(); i++) {
