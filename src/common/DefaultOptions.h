@@ -1314,9 +1314,10 @@ StringXNumber MeshOptions_Number[] = {
     "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
     "by global mesh size factor" },
   { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO ,
-    "Mesh output format (1: msh, 2: unv, 10: auto, 16: vtk, 19: vrml, 21: mail, "
-    "26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, 33: med, 34: diff, "
-    "38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab)" },
+    "Mesh output format (1: msh, 2: unv, 3: vtu, 10: auto, 16: vtk, 19: vrml, "
+    "21: mail, 26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, "
+    "33: med, 34: diff, 38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, "
+    "47: tochnog, 49: neu, 50: matlab, 51: key, 55: rad, 57: obj)"},
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
 
@@ -1862,9 +1863,8 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "ForceNodeData" , opt_post_force_node_data , 0. ,
     "Try to force saving datasets as NodeData" },
   { F|O, "Format" , opt_post_file_format , 10. ,
-    "Default file format for post-processing views (0: ASCII view, 1: binary "
-    "view, 2: parsed view, 3: STL triangulation, 4: raw text, 5: Gmsh mesh, 6: MED file, "
-    "7: X3D, 8: VTK XML, 10: automatic)" },
+    "Default file format for post-processing views (0: pos ASCII, 1: pos binary, "
+    "2: pos parsed, 3: stl, 4: txt, 5: msh, 6: med, 7: x3d, 8: vtu, 10: auto)" },
 
   { F, "GraphPointX" , opt_post_double_clicked_graph_point_x , 0. ,
     "Synonym for `DoubleClickedGraphPointX'" },
