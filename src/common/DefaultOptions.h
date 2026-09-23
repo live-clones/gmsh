@@ -2318,7 +2318,7 @@ StringXNumber PrintOptions_Number[] = {
     "Produce highly compatible X3D output (no scale bar)" },
   { F|O, "X3dPrecision" , opt_print_x3d_precision , 1.e-9 ,
     "Precision of X3D output" },
-  { F|O, "X3dRemoveInnerBorders" , opt_print_x3d_remove_inner_borders , 0. ,
+  { F|O, "X3dRemoveInnerBorders" , opt_print_x3d_remove_inner_borders , 1. ,
     "Remove inner borders in X3D output" },
   { F|O, "X3dTransparency" , opt_print_x3d_transparency , 0. ,
     "Transparency for X3D output" },
