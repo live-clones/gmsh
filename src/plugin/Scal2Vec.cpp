@@ -5,7 +5,6 @@
 
 #include "Scal2Vec.h"
 #include "PViewOptions.h"
-#include "shapeFunctions.h"
 
 GMSH_Scal2VecPlugin::GMSH_Scal2VecPlugin()
   : GMSH_PostPlugin({{GMSH_FULLRC, "ViewX", nullptr, -1, ""},
@@ -63,47 +62,23 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
   PView *vNew = new PView();
   PViewDataList *dataNew = getDataList(vNew);
 
-  int step0 = dataRef->getFirstNonEmptyTimeStep();
-  for(int ent = 0; ent < dataRef->getNumEntities(step0); ent++) {
-    for(int ele = 0; ele < dataRef->getNumElements(step0, ent); ele++) {
-      if(dataRef->skipElement(step0, ent, ele)) continue;
-      int type = dataRef->getType(step0, ent, ele);
-      int numNodes = getNumCornerNodes(dataRef, step0, ent, ele);
-      if(!numNodes) continue;
-      std::vector<double> *out = dataNew->incrementList(
-        3, type, numNodes); // Pointer in data of the new view
-      if(!out) continue;
-      double x[8], y[8], z[8];
-      for(int nod = 0; nod < numNodes; nod++)
-        dataRef->getNode(step0, ent, ele, nod, x[nod], y[nod], z[nod]);
-      int dim = dataRef->getDimension(step0, ent, ele);
-      elementFactory factory;
-      element *element = factory.create(numNodes, dim, x, y, z);
-      if(!element) continue;
-      for(int nod = 0; nod < numNodes; nod++)
-        out->push_back(x[nod]); // Save coordinates (x,y,z)
-      for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
-      for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
-      for(int step = step0; step < dataRef->getNumTimeSteps(); step++) {
-        if(!dataRef->hasTimeStep(step)) continue;
-        for(int nod = 0; nod < numNodes; nod++) {
-          for(int comp = 0; comp < 3; comp++) {
-            double val = 0.;
-            PViewData *d = vComp[comp] ? vComp[comp]->getData() : nullptr;
-            if(d && d->hasTimeStep(step) && !d->skipElement(step, ent, ele))
-              d->getValue(step, ent, ele, nod, 0, val);
-            out->push_back(val); // Save value
-          }
+  // the value of each component at each node, from the component views
+  createListData(
+    dataRef, {dataNew}, [&](const PluginElement &e) { return 3; },
+    [&](const PluginElement &e, int step,
+        std::vector<std::vector<double> > &res) {
+      for(int nod = 0; nod < e.numNodes; nod++) {
+        for(int comp = 0; comp < 3; comp++) {
+          double val = 0.;
+          PViewData *d = nullptr;
+          if(comp < 3 && vComp[comp]) d = vComp[comp]->getData();
+          if(d && d->hasTimeStep(step) && !d->skipElement(step, e.ent, e.ele))
+            d->getValue(step, e.ent, e.ele, nod, 0, val);
+          res[0].push_back(val);
         }
       }
-      delete element;
-    }
-  }
-
-  for(int step = step0; step < dataRef->getNumTimeSteps(); step++) {
-    if(!dataRef->hasTimeStep(step)) continue;
-    dataNew->Time.push_back(dataRef->getTime(step));
-  }
+      return true;
+    });
 
   std::string nameNewView = optionStr(0);
   dataNew->setName(nameNewView);

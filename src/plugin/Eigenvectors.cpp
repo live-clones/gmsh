@@ -48,75 +48,36 @@ PView *GMSH_EigenvectorsPlugin::execute(PView *v)
   PViewDataList *dmin = getDataList(min);
   PViewDataList *dmid = getDataList(mid);
   PViewDataList *dmax = getDataList(max);
-  int step0 = data1->getFirstNonEmptyTimeStep();
-
   int nbcomplex = 0;
   fullMatrix<double> mat(3, 3), vl(3, 3), vr(3, 3);
   fullVector<double> dr(3), di(3);
-  for(int ent = 0; ent < data1->getNumEntities(step0); ent++) {
-    for(int ele = 0; ele < data1->getNumElements(step0, ent); ele++) {
-      if(data1->skipElement(step0, ent, ele)) continue;
-      int numComp = data1->getNumComponents(step0, ent, ele);
-      if(numComp != 9) continue;
-      int type = data1->getType(step0, ent, ele);
-      int numNodes = getNumCornerNodes(data1, step0, ent, ele);
-      if(!numNodes) continue;
-      std::vector<double> *outmin = dmin->incrementList(3, type, numNodes);
-      std::vector<double> *outmid = dmid->incrementList(3, type, numNodes);
-      std::vector<double> *outmax = dmax->incrementList(3, type, numNodes);
-      if(!outmin || !outmid || !outmax) continue;
-      double xyz[3][8];
-      for(int nod = 0; nod < numNodes; nod++)
-        data1->getNode(step0, ent, ele, nod, xyz[0][nod], xyz[1][nod],
-                       xyz[2][nod]);
-      for(int i = 0; i < 3; i++) {
-        for(int nod = 0; nod < numNodes; nod++) {
-          outmin->push_back(xyz[i][nod]);
-          outmid->push_back(xyz[i][nod]);
-          outmax->push_back(xyz[i][nod]);
+  createListData(
+    data1, {dmin, dmid, dmax},
+    [](const PluginElement &e) { return (e.numComp == 9) ? 3 : 0; },
+    [&](const PluginElement &e, int step,
+        std::vector<std::vector<double> > &res) {
+      std::vector<double> val;
+      e.getValues(data1, step, val);
+      for(int nod = 0; nod < e.numNodes; nod++) {
+        for(int i = 0; i < 3; i++)
+          for(int j = 0; j < 3; j++) mat(i, j) = val[9 * nod + 3 * i + j];
+        if(!mat.eig(dr, di, vl, vr, true)) {
+          Msg::Error("Could not compute eigenvalues/vectors");
+          return false;
         }
-      }
-      for(int step = step0; step < data1->getNumTimeSteps(); step++) {
-        if(!data1->hasTimeStep(step)) continue;
-        for(int nod = 0; nod < numNodes; nod++) {
-          for(int i = 0; i < 3; i++)
-            for(int j = 0; j < 3; j++)
-              data1->getValue(step, ent, ele, nod, 3 * i + j, mat(i, j));
-          if(mat.eig(dr, di, vl, vr, true)) {
-            if(!scale) dr(0) = dr(1) = dr(2) = 1.;
-            for(int i = 0; i < 3; i++) {
-              double res;
-              res = dr(0) * vr(i, 0);
-              outmin->push_back(res);
-              res = dr(1) * vr(i, 1);
-              outmid->push_back(res);
-              res = dr(2) * vr(i, 2);
-              outmax->push_back(res);
-            }
-            if(di(0) || di(1) || di(2)) nbcomplex++;
-          }
-          else {
-            Msg::Error("Could not compute eigenvalues/vectors");
-            for(int i = 0; i < 3; i++) {
-              outmin->push_back(0.);
-              outmid->push_back(0.);
-              outmax->push_back(0.);
-            }
-          }
+        if(!scale) dr(0) = dr(1) = dr(2) = 1.;
+        for(int i = 0; i < 3; i++) {
+          res[0].push_back(dr(0) * vr(i, 0));
+          res[1].push_back(dr(1) * vr(i, 1));
+          res[2].push_back(dr(2) * vr(i, 2));
         }
+        if(di(0) || di(1) || di(2)) nbcomplex++;
       }
-    }
-  }
+      return true;
+    });
 
   if(nbcomplex) Msg::Error("%d tensors have complex eigenvalues", nbcomplex);
 
-  for(int i = step0; i < data1->getNumTimeSteps(); i++) {
-    if(!data1->hasTimeStep(i)) continue;
-    double time = data1->getTime(i);
-    dmin->Time.push_back(time);
-    dmid->Time.push_back(time);
-    dmax->Time.push_back(time);
-  }
   dmin->setName(data1->getName() + "_MinEigenvectors");
   dmin->setFileName(data1->getName() + "_MinEigenvectors.pos");
   dmin->finalize();

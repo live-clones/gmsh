@@ -27,6 +27,23 @@
 
 class PluginDialogBox;
 class adaptiveElement;
+class element;
+
+// an element of a view, as GMSH_PostPlugin::createListData() gives it: its
+// corners, for a higher order element
+class PluginElement {
+private:
+  mutable element *_shape = nullptr;
+
+public:
+  int ent, ele, type, dim, numNodes, numComp;
+  std::vector<double> x, y, z;
+  ~PluginElement();
+  // the element of shapeFunctions.h on the corners, created when first asked
+  element *shape() const;
+  // the values of view data at the corners at a step, node after node
+  void getValues(PViewData *data, int step, std::vector<double> &val) const;
+};
 
 class GMSH_Plugin {
 public:
@@ -152,6 +169,18 @@ public:
                    const std::function<void(int step, int ent, int ele,
                                             int nod)> &f,
                    int dim = -1) const;
+  // create list data from the elements of a view: for each element with data,
+  // numComp(e) gives the number of components of its values in the outputs
+  // (1, 3 or 9; 0 skips the element), and values(e, step, res) computes them
+  // for each step of the view with data, res[i] getting the numNodes * numComp
+  // values of output i, node after node (false skips the element); the outputs
+  // get the times of the steps
+  void createListData(
+    PViewData *data, const std::vector<PViewDataList *> &out,
+    const std::function<int(const PluginElement &e)> &numComp,
+    const std::function<bool(const PluginElement &e, int step,
+                             std::vector<std::vector<double> > &res)> &values)
+    const;
   // call f once for each value of the given step of a view, with the
   // coordinates it is given at: a node shared by elements (node data) once,
   // one value per element (element data) once, at the barycenter of the

@@ -11,6 +11,7 @@
 #include "PViewData.h"
 #include "PViewOptions.h"
 #include "PViewDataGModel.h"
+#include "shapeFunctions.h"
 #include "Context.h"
 
 #if defined(HAVE_OPENGL)
@@ -297,4 +298,91 @@ void GMSH_PostPlugin::forEachValue(
       }
     }
   }
+}
+
+PluginElement::~PluginElement() { delete _shape; }
+
+element *PluginElement::shape() const
+{
+  if(!_shape) {
+    elementFactory factory;
+    _shape = factory.create(numNodes, dim, const_cast<double *>(x.data()),
+                            const_cast<double *>(y.data()),
+                            const_cast<double *>(z.data()));
+  }
+  return _shape;
+}
+
+void PluginElement::getValues(PViewData *data, int step,
+                              std::vector<double> &val) const
+{
+  val.resize(numNodes * numComp);
+  for(int nod = 0; nod < numNodes; nod++)
+    for(int comp = 0; comp < numComp; comp++)
+      data->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
+}
+
+void GMSH_PostPlugin::createListData(
+  PViewData *data, const std::vector<PViewDataList *> &out,
+  const std::function<int(const PluginElement &e)> &numComp,
+  const std::function<bool(const PluginElement &e, int step,
+                           std::vector<std::vector<double> > &res)> &values)
+  const
+{
+  int step0 = data->getFirstNonEmptyTimeStep();
+  std::vector<int> steps;
+  for(int step = step0; step < data->getNumTimeSteps(); step++)
+    if(data->hasTimeStep(step)) steps.push_back(step);
+
+  std::vector<std::vector<double> > res(out.size()), all(out.size());
+  for(int ent = 0; ent < data->getNumEntities(step0); ent++) {
+    for(int ele = 0; ele < data->getNumElements(step0, ent); ele++) {
+      if(data->skipElement(step0, ent, ele)) continue;
+      PluginElement e;
+      e.ent = ent;
+      e.ele = ele;
+      e.numNodes = getNumCornerNodes(data, step0, ent, ele);
+      if(!e.numNodes) continue;
+      e.type = data->getType(step0, ent, ele);
+      e.dim = data->getDimension(step0, ent, ele);
+      e.numComp = data->getNumComponents(step0, ent, ele);
+      e.x.resize(e.numNodes);
+      e.y.resize(e.numNodes);
+      e.z.resize(e.numNodes);
+      for(int nod = 0; nod < e.numNodes; nod++)
+        data->getNode(step0, ent, ele, nod, e.x[nod], e.y[nod], e.z[nod]);
+      int nc = numComp(e);
+      if(!nc) continue;
+      // all the values first: an element is written whole or not at all
+      bool ok = true;
+      for(auto &a : all) a.clear();
+      for(int step : steps) {
+        for(auto &r : res) r.clear();
+        if(!values(e, step, res)) {
+          ok = false;
+          break;
+        }
+        for(std::size_t i = 0; i < out.size(); i++) {
+          if((int)res[i].size() != e.numNodes * nc) {
+            Msg::Error("Plugin(%s) gave %d values for %d nodes and %d "
+                       "components", getName().c_str(), (int)res[i].size(),
+                       e.numNodes, nc);
+            return;
+          }
+          all[i].insert(all[i].end(), res[i].begin(), res[i].end());
+        }
+      }
+      if(!ok) continue;
+      for(std::size_t i = 0; i < out.size(); i++) {
+        std::vector<double> *l = out[i]->incrementList(nc, e.type, e.numNodes);
+        if(!l) continue;
+        l->insert(l->end(), e.x.begin(), e.x.end());
+        l->insert(l->end(), e.y.begin(), e.y.end());
+        l->insert(l->end(), e.z.begin(), e.z.end());
+        l->insert(l->end(), all[i].begin(), all[i].end());
+      }
+    }
+  }
+  for(auto o : out)
+    for(int step : steps) o->Time.push_back(data->getTime(step));
 }
