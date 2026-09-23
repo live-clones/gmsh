@@ -9,6 +9,7 @@
 #elif defined(HAVE_NO_INTPTR_T)
 typedef unsigned long intptr_t;
 #endif
+#include <algorithm>
 #include <vector>
 #include <string.h>
 #include <FL/Fl_Return_Button.H>
@@ -72,6 +73,18 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
     }
   }
   if(!p) return;
+
+  // show the current values of the options (a script or the API may have
+  // changed them), unless the plugin was already shown: its fields may have
+  // been edited
+  static GMSH_Plugin *shown = nullptr;
+  if(p != shown) {
+    for(int i = 0; i < std::min(p->getNbOptionsStr(), MAX_PLUGIN_OPTIONS); i++)
+      p->dialogBox->input[i]->value(p->getOptionStr(i)->def.c_str());
+    for(int i = 0; i < std::min(p->getNbOptions(), MAX_PLUGIN_OPTIONS); i++)
+      p->dialogBox->value[i]->value(p->getOption(i)->def);
+    shown = p;
+  }
 
   // get first first selected view
   int iView = -1;
@@ -184,8 +197,16 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
             if(view->getData()->isRemote())
               pp->executeRemote(view);
             else {
+              // run on the selected view, whatever the View option says
+              StringXNumber *opt = nullptr;
+              for(int j = 0; j < pp->getNbOptions(); j++)
+                if(std::string(pp->getOption(j)->str) == "View")
+                  opt = pp->getOption(j);
+              double old = opt ? opt->def : 0.;
+              if(opt) opt->def = view->getIndex();
               pp->execute(view);
               add_scripting(pp, view);
+              if(opt) opt->def = old;
             }
           }
           else {
