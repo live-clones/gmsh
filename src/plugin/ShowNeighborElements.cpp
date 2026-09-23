@@ -3,6 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <set>
+#include <unordered_map>
 #include "ShowNeighborElements.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -41,86 +43,63 @@ StringXNumber *GMSH_ShowNeighborElementsPlugin::getOption(int iopt)
 }
 std::string GMSH_ShowNeighborElementsPlugin::getHelp() const
 {
-  return "Plugin(ShowNeighborElements) sets visible some elements "
-         "and a layer of elements around them, the other being set invisible.";
+  return "Plugin(ShowNeighborElements) sets visible the surface and volume "
+         "elements `Element1', ..., `Element5' (numbers of elements, 0 for "
+         "none) and `NumLayers' layers of elements around them: the "
+         "elements of the same dimension that share a node with them, then "
+         "those that share a node with these, and so on. The other surface and "
+         "volume elements are set invisible.";
 }
 
 PView *GMSH_ShowNeighborElementsPlugin::execute(PView *v)
 {
   GModel *m = GModel::current();
 
-  _nLayers = static_cast<int>(ShowNeighborElementsOptions_Number[0].def);
-  _nel1 = static_cast<int>(ShowNeighborElementsOptions_Number[1].def);
-  _nel2 = static_cast<int>(ShowNeighborElementsOptions_Number[2].def);
-  _nel3 = static_cast<int>(ShowNeighborElementsOptions_Number[3].def);
-  _nel4 = static_cast<int>(ShowNeighborElementsOptions_Number[4].def);
-  _nel5 = static_cast<int>(ShowNeighborElementsOptions_Number[5].def);
-
-  for(auto it = m->firstFace(); it != m->lastFace(); it++) {
-    GFace *f = *it;
-    _init(f);
-    _showLayers(f, _nLayers);
+  int numLayers = static_cast<int>(ShowNeighborElementsOptions_Number[0].def);
+  std::set<std::size_t> selected;
+  for(int i = 1; i <= 5; i++) {
+    std::size_t num = ShowNeighborElementsOptions_Number[i].def;
+    if(num) selected.insert(num);
   }
 
-  for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
-    GRegion *r = *it;
-    _init(r);
-    _showLayers(r, _nLayers);
+  // the surface and volume elements around each node; hide all but the
+  // selected ones
+  std::vector<GEntity *> entities;
+  m->getEntities(entities);
+  std::unordered_map<MVertex *, std::vector<MElement *> > around;
+  std::vector<MElement *> layer;
+  for(auto ent : entities) {
+    if(ent->dim() < 2) continue;
+    for(std::size_t i = 0; i < ent->getNumMeshElements(); i++) {
+      MElement *e = ent->getMeshElement(i);
+      bool sel = selected.count(e->getNum());
+      e->setVisibility(sel);
+      if(sel) layer.push_back(e);
+      for(std::size_t k = 0; k < e->getNumPrimaryVertices(); k++)
+        around[e->getVertex(k)].push_back(e);
+    }
   }
 
-#if defined(HAVE_OPENGL)
+  // each layer: the hidden elements of the same dimension sharing a node with
+  // the previous one
+  for(int l = 0; l < numLayers && layer.size(); l++) {
+    std::vector<MElement *> next;
+    for(auto e : layer) {
+      for(std::size_t k = 0; k < e->getNumPrimaryVertices(); k++) {
+        for(auto n : around[e->getVertex(k)]) {
+          if(n->getVisibility() || n->getDim() != e->getDim()) continue;
+          n->setVisibility(true);
+          next.push_back(n);
+        }
+      }
+    }
+    layer.swap(next);
+  }
+
   CTX::instance()->meshChanged();
+#if defined(HAVE_OPENGL)
   drawContext::global()->draw();
 #endif
 
   return nullptr;
-}
-
-void GMSH_ShowNeighborElementsPlugin::_init(GEntity *ent)
-{
-  _vert2elem.clear();
-  for(unsigned i = 0; i < ent->getNumMeshElements(); ++i) {
-    MElement *el = ent->getMeshElement(i);
-    if(el->getNum() == _nel1 || el->getNum() == _nel2 ||
-       el->getNum() == _nel3 || el->getNum() == _nel4 ||
-       el->getNum() == _nel5) {
-      el->setVisibility(true);
-      for(std::size_t k = 0; k < el->getNumVertices();
-          ++k) { // TODO only corner vertices?
-        _vertices.insert(el->getVertex(k));
-      }
-    }
-    else {
-      el->setVisibility(false);
-      for(std::size_t k = 0; k < el->getNumVertices();
-          ++k) { // TODO only corner vertices?
-        _vert2elem.insert(std::make_pair(el->getVertex(k), el));
-      }
-    }
-  }
-}
-
-void GMSH_ShowNeighborElementsPlugin::_showLayers(GEntity *ent, int nLayer)
-{
-  if(_vertices.empty() || nLayer < 1) return;
-
-  std::set<MVertex *> &vert = _vertices;
-  std::map<MElement *, int> el2cnt;
-
-  for(auto it = vert.begin(); it != vert.end(); ++it) {
-    MVertex *v = *it;
-    auto ite = _vert2elem.lower_bound(v);
-    auto itstop = _vert2elem.upper_bound(v);
-    for(; ite != itstop; ++ite) {
-      MElement *el = ite->second;
-      if(el2cnt.find(el) == el2cnt.end()) el2cnt[el] = 0;
-      ++el2cnt[el];
-    }
-  }
-
-  for(auto it2 = el2cnt.begin(); it2 != el2cnt.end(); ++it2) {
-    if(it2->second && it2->second > 3 - nLayer) {
-      it2->first->setVisibility(true);
-    }
-  }
 }

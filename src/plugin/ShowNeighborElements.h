@@ -16,28 +16,18 @@ GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin();
 }
 
 class GMSH_ShowNeighborElementsPlugin : public GMSH_PostPlugin {
-private:
-  int _nLayers;
-  std::size_t _nel1, _nel2, _nel3, _nel4, _nel5;
-  std::multimap<MVertex *, MElement *> _vert2elem;
-  std::set<MVertex *> _vertices;
-
 public:
   GMSH_ShowNeighborElementsPlugin() {}
   std::string getName() const { return "ShowNeighborElements"; }
   std::string getShortHelp() const
   {
-    return "Choose which type of element to hide.";
+    return "Show some elements and the layers of elements around them";
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "Amaury Johnen"; }
   int getNbOptions() const;
   StringXNumber *getOption(int);
   PView *execute(PView *);
-
-private:
-  void _init(GEntity *);
-  void _showLayers(GEntity *, int nLayer);
 };
 
 #endif
