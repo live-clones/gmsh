@@ -17,6 +17,8 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
+#include "PViewDataList.h"
+#include "PViewOptions.h"
 #endif
 
 #if defined(HAVE_OPENGL)
@@ -382,6 +384,45 @@ static void ChangePrintParameter(int frame)
 }
 #endif
 
+#if defined(HAVE_POST)
+// the views to save in an MSH file with the mesh of the current model
+// (Mesh.SaveViews): those based on it, and the list-based ones
+static void getViewsToSaveInMSH(std::vector<PViewData *> &onModel,
+                                std::vector<PViewDataList *> &lists)
+{
+  int which = CTX::instance()->mesh.saveViews;
+  if(!which || PView::list.empty()) return;
+  if(CTX::instance()->mesh.mshFileVersion < 2.) {
+    Msg::Warning("Views cannot be saved in MSH %g files",
+                 CTX::instance()->mesh.mshFileVersion);
+    return;
+  }
+  GModel *m = GModel::current();
+  for(auto v : PView::list) {
+    if(which == 1 && !v->getOptions()->visible) continue;
+    PViewData *d = v->getData();
+    if(auto l = dynamic_cast<PViewDataList *>(d))
+      lists.push_back(l);
+    else if(d->hasModel(m))
+      onModel.push_back(d);
+    else
+      Msg::Info("View '%s' not saved: it is based on another model",
+                d->getName().c_str());
+  }
+}
+
+static bool writeListViewsInMSH(const std::string &name,
+                                const std::vector<PViewDataList *> &lists)
+{
+  return PViewDataList::writeMSH(
+    name, lists, CTX::instance()->mesh.mshFileVersion,
+    CTX::instance()->mesh.binary, true, false, 0,
+    CTX::instance()->post.saveInterpolationMatrices,
+    CTX::instance()->post.forceNodeData,
+    CTX::instance()->post.forceElementData);
+}
+#endif
+
 void CreateOutputFile(const std::string &fileName, int format,
                       bool status)
 {
@@ -412,9 +453,22 @@ void CreateOutputFile(const std::string &fileName, int format,
     PrintOptions(0, GMSH_FULLRC, 1, 1, name.c_str());
     break;
 
-  case FORMAT_MSH:
-    if(GModel::current()->getNumPartitions() &&
-       CTX::instance()->mesh.partitionSplitMeshFiles){
+  case FORMAT_MSH: {
+#if defined(HAVE_POST)
+    std::vector<PViewData *> onModel;
+    std::vector<PViewDataList *> lists;
+    getViewsToSaveInMSH(onModel, lists);
+    bool mesh = GModel::current()->getNumMeshElements() > 0;
+    if(!mesh && lists.size()) {
+      // no mesh: the file holds the list-based views, on a mesh of their
+      // elements
+      writeListViewsInMSH(name, lists);
+      break;
+    }
+#endif
+    bool split = GModel::current()->getNumPartitions() &&
+                 CTX::instance()->mesh.partitionSplitMeshFiles;
+    if(split) {
       std::vector<std::string> splitName = SplitFileName(name);
       splitName[0] += splitName[1];
       GModel::current()->writePartitionedMSH
@@ -437,7 +491,30 @@ void CreateOutputFile(const std::string &fileName, int format,
       splitName[0] += splitName[1] + "_topology.pro";
       GModel::current()->writePartitionedTopology(splitName[0]);
     }
+#if defined(HAVE_POST)
+    if(split && (onModel.size() || lists.size())) {
+      Msg::Warning("Views not saved: the mesh is split in a file per "
+                   "partition");
+      break;
+    }
+    for(auto d : onModel)
+      d->writeMSH(name, CTX::instance()->mesh.mshFileVersion,
+                  CTX::instance()->mesh.binary, false, true, 0,
+                  CTX::instance()->post.saveInterpolationMatrices,
+                  CTX::instance()->post.forceNodeData,
+                  CTX::instance()->post.forceElementData);
+    if(lists.size()) {
+      // they cannot share the mesh of the model
+      std::vector<std::string> parts = SplitFileName(name);
+      std::string listName = parts[0] + parts[1] + "_views" + parts[2];
+      if(writeListViewsInMSH(listName, lists))
+        Msg::Info("List-based views saved in '%s', on a mesh of their "
+                  "elements",
+                  listName.c_str());
+    }
+#endif
     break;
+  }
 
   case FORMAT_STL:
     GModel::current()->writeSTL

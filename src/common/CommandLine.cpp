@@ -110,6 +110,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-save_parametric", "Save nodes with their parametric "
                  "coordinates (Mesh.SaveParametric)"));
   s.push_back(mp("-save_topology", "Save model topology (Mesh.SaveTopology)"));
+  s.push_back(
+    mp("-save_views", "Save all views in MSH files (Mesh.SaveViews)"));
   s.push_back(mp("-algo string", "Select mesh algorithm: auto, meshadapt, del2d, "
                  "front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, "
                  "hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
@@ -209,8 +211,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-noenv", "Don't modify the environment at startup"));
   s.push_back(mp("-nolocale", "Don't modify the locale at startup"));
   s.push_back(mp("-option file", "Parse option file at startup"));
-  s.push_back(mp("-convert files", "Convert files into latest binary formats, "
-                 "then exit"));
+  s.push_back(mp("-convert files",
+                 "Convert the mesh and the views of each file "
+                 "into a binary MSH 4.1 file (name_new.msh), then exit"));
   s.push_back(mp("-nt int", "Set number of threads (General.NumThreads)"));
   s.push_back(mp("-cpu", "Report CPU times for all operations"));
   s.push_back(mp("-version", "Show version number"));
@@ -641,6 +644,10 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
     opt_mesh_save_all(0, GMSH_SET, 1);
     i++;
   }
+  else if(argv[i] == "-save_views") {
+    opt_mesh_save_views(0, GMSH_SET, 2);
+    i++;
+  }
   else if(argv[i] == "-switch_tags") {
     opt_mesh_switch_elem_tags(0, GMSH_SET, 1);
     i++;
@@ -781,22 +788,27 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
     i++;
     CTX::instance()->batch = 1;
     while(i < argv.size()) {
-      std::string fileName = std::string(argv[i]) + "_new";
+      std::vector<std::string> split = SplitFileName(argv[i]);
+      std::string fileName = split[0] + split[1] + "_new.msh";
+      bool views = false;
 #if defined(HAVE_POST)
       std::size_t n = PView::list.size();
 #endif
       OpenProject(argv[i]);
 #if defined(HAVE_POST)
-      // convert post-processing views to latest binary format
-      for(std::size_t j = n; j < PView::list.size(); j++)
-        PView::list[j]->write(fileName, 1, (j == n) ? false : true);
+      views = (PView::list.size() > n);
 #endif
-      // convert mesh to latest binary format
-      if(GModel::current()->getMeshStatus() > 0) {
+      // the mesh and the views, in the latest binary MSH format
+      if(GModel::current()->getMeshStatus() > 0 || views) {
         opt_mesh_msh_file_version(0, GMSH_SET, 4.1);
         opt_mesh_binary(0, GMSH_SET, 1);
+        opt_mesh_save_views(0, GMSH_SET, 2);
         CreateOutputFile(fileName, FORMAT_MSH);
       }
+#if defined(HAVE_POST)
+      // (not with those of the next file)
+      while(PView::list.size() > n) delete PView::list.back();
+#endif
       i++;
     }
     Msg::Exit(0);

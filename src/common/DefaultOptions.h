@@ -1698,6 +1698,11 @@ StringXNumber MeshOptions_Number[] = {
     "in the model) in MSH4 files" },
   { F|O, "SaveTopology" , opt_mesh_save_topology, 0. ,
     "Save model topology in MSH2 output files (this is always saved in MSH3 and above)" },
+  { F,   "SaveViews" , opt_mesh_save_views , 0. ,
+    "Save post-processing views in MSH files (0: none, 1: visible views, 2: all "
+    "views): the views based on the model after its mesh, and the list-based "
+    "views with a mesh of their elements (in `name_views.msh' if the model has "
+    "a mesh)" },
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,

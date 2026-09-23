@@ -156,7 +156,7 @@ static void view_remove_cb(Fl_Widget *w, void *data)
 static void view_save_cb(Fl_Widget *w, void *data)
 {
   static const char *formats =
-    "Gmsh Parsed\t*.pos\nGmsh Mesh-based\t*.pos\n"
+    "Gmsh Parsed\t*.pos\nGmsh MSH\t*.msh\n"
     "Gmsh Legacy ASCII\t*.pos\nGmsh Legacy Binary\t*.pos\n"
     "MED\t*.rmed\nSTL Surface\t*.stl\nGeneric TXT\t*.txt\n"
     "VTK XML Unstructured Grid\t*.vtu\n";

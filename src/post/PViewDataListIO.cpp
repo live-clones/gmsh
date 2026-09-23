@@ -603,73 +603,141 @@ static std::vector<std::size_t> mergePoints(const std::vector<double> &xyz,
   return merged;
 }
 
-// The elements of the lists become the mesh of a temporary model, their nodes
-// merged within the geometrical tolerance, and their values the data of
-// model-based views on it (one per number of components), which write the file
 bool PViewDataList::writeMSH(const std::string &fileName, double version,
                              bool binary, bool saveMesh, bool multipleView,
                              int partitionNum, bool saveInterpolationMatrices,
                              bool forceNodeData, bool forceElementData)
 {
-  if(_adaptive) {
-    Msg::Warning(
-      "Writing adapted dataset (will only export current time step)");
-    return _adaptive->getData()->writeMSH(
-      fileName, version, binary, saveMesh, multipleView, partitionNum,
-      saveInterpolationMatrices, forceNodeData, forceElementData);
-  }
+  return writeMSH(fileName, {this}, version, binary, saveMesh, multipleView,
+                  partitionNum, saveInterpolationMatrices, forceNodeData,
+                  forceElementData);
+}
 
+// The elements of the lists of the views become the mesh of a temporary model,
+// their nodes merged within the geometrical tolerance and the elements of
+// different views with the same nodes merged, and their values the data of
+// model-based views on it (one per view and number of components), which
+// write the file
+bool PViewDataList::writeMSH(const std::string &fileName,
+                             const std::vector<PViewDataList *> &views,
+                             double version, bool binary, bool saveMesh,
+                             bool multipleView, int partitionNum,
+                             bool saveInterpolationMatrices, bool forceNodeData,
+                             bool forceElementData)
+{
   // the lists with elements, with the type of their elements in the mesh, and
   // the coordinates of the nodes of all the elements
   struct elementList {
+    PViewDataList *view;
     std::vector<double> *list;
     int numEle, numNodes, numComp, mshType, mult;
   };
   std::vector<elementList> lists;
   std::vector<double> xyz;
-  for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = nullptr;
-    int *numEle = nullptr, numComp, numNodes;
-    int type = _getRawData(i, &list, &numEle, &numComp, &numNodes);
-    if(!*numEle) continue;
-    int mshType = 0;
-    for(int order = 0; order <= 10 && !mshType; order++) {
-      for(int serendip = 0; serendip < 2 && !mshType; serendip++) {
-        int t = ElementType::getType(type, order, serendip);
-        if(t > 0 && ElementType::getNumVertices(t) == numNodes) mshType = t;
+  SBoundingBox3d bbox;
+  for(auto view : views) {
+    if(view->_adaptive) {
+      Msg::Warning("Writing adapted view '%s' (only its current time step)",
+                   view->getName().c_str());
+      view = dynamic_cast<PViewDataList *>(view->_adaptive->getData());
+      if(!view) continue;
+    }
+    for(int i = 0; i < 24; i++) {
+      std::vector<double> *list = nullptr;
+      int *numEle = nullptr, numComp, numNodes;
+      int type = view->_getRawData(i, &list, &numEle, &numComp, &numNodes);
+      if(!*numEle) continue;
+      int mshType = 0;
+      for(int order = 0; order <= 10 && !mshType; order++) {
+        for(int serendip = 0; serendip < 2 && !mshType; serendip++) {
+          int t = ElementType::getType(type, order, serendip);
+          if(t > 0 && ElementType::getNumVertices(t) == numNodes) mshType = t;
+        }
+      }
+      if(!mshType) {
+        Msg::Warning("Skipping elements with %d nodes of view '%s': no such "
+                     "element in MSH",
+                     numNodes, view->getName().c_str());
+        continue;
+      }
+      int nb = list->size() / *numEle;
+      // the number of values per component of an element at each step
+      int mult = (nb - 3 * numNodes) / (view->NbTimeStep * numComp);
+      lists.push_back({view, list, *numEle, numNodes, numComp, mshType, mult});
+      for(std::size_t e = 0; e < list->size(); e += nb) {
+        double *x = &(*list)[e];
+        for(int j = 0; j < numNodes; j++) {
+          xyz.push_back(x[j]);
+          xyz.push_back(x[numNodes + j]);
+          xyz.push_back(x[2 * numNodes + j]);
+        }
       }
     }
-    if(!mshType) {
-      Msg::Warning("Skipping elements with %d nodes of view '%s': no such "
-                   "element in MSH",
-                   numNodes, getName().c_str());
-      continue;
-    }
-    int nb = list->size() / *numEle;
-    // the number of values per component of an element at each step
-    int mult = (nb - 3 * numNodes) / (NbTimeStep * numComp);
-    lists.push_back({list, *numEle, numNodes, numComp, mshType, mult});
-    for(std::size_t e = 0; e < list->size(); e += nb) {
-      double *x = &(*list)[e];
-      for(int j = 0; j < numNodes; j++) {
-        xyz.push_back(x[j]);
-        xyz.push_back(x[numNodes + j]);
-        xyz.push_back(x[2 * numNodes + j]);
-      }
-    }
+    if(view->NbT2 || view->NbT3)
+      Msg::Warning("Strings of view '%s' are not written in MSH",
+                   view->getName().c_str());
+    bbox += view->BBox;
   }
   if(lists.empty()) {
-    Msg::Warning("No elements to write in view '%s'", getName().c_str());
+    Msg::Warning("No elements to write in MSH");
     return true;
   }
-  if(NbT2 || NbT3)
-    Msg::Warning("Strings of view '%s' are not written in MSH",
-                 getName().c_str());
 
-  double eps =
-    norm(SVector3(BBox.max(), BBox.min())) * CTX::instance()->geom.tolerance;
+  double eps = bbox.empty() ? 0. :
+                              norm(SVector3(bbox.max(), bbox.min())) *
+                                CTX::instance()->geom.tolerance;
   std::size_t numVertices;
   std::vector<std::size_t> merged = mergePoints(xyz, eps, numVertices);
+
+  // the tag of each element: those of different views with the same type and
+  // nodes are the same element (the n-th such element of a view is the n-th of
+  // another)
+  std::vector<std::size_t> tags;
+  std::vector<int> tagType; // the type of each element, by tag - 1
+  std::vector<std::size_t> tagNodes; // the index of its first node
+  {
+    std::unordered_map<std::size_t, std::vector<std::size_t>> same;
+    std::unordered_map<std::size_t, std::size_t> used; // in the current view
+    PViewDataList *view = nullptr;
+    std::size_t node = 0;
+    for(auto &l : lists) {
+      if(l.view != view) {
+        view = l.view;
+        used.clear();
+      }
+      for(int e = 0; e < l.numEle; e++, node += l.numNodes) {
+        if(lists.front().view == lists.back().view) { // a single view
+          tagType.push_back(l.mshType);
+          tagNodes.push_back(node);
+          tags.push_back(tagType.size());
+          continue;
+        }
+        std::size_t h = l.mshType;
+        for(int j = 0; j < l.numNodes; j++) h = h * 1000003 ^ merged[node + j];
+        auto &candidates = same[h];
+        std::size_t &n = used[h], tag = 0;
+        // the n-th element of the same type and nodes in the previous views
+        for(std::size_t k = 0, found = 0; k < candidates.size(); k++) {
+          std::size_t t = candidates[k];
+          bool eq = (tagType[t - 1] == l.mshType);
+          for(int j = 0; j < l.numNodes && eq; j++)
+            eq = (merged[tagNodes[t - 1] + j] == merged[node + j]);
+          if(eq && found++ == n) {
+            tag = t;
+            break;
+          }
+        }
+        if(!tag) {
+          tag = tagType.size() + 1;
+          tagType.push_back(l.mshType);
+          tagNodes.push_back(node);
+          candidates.push_back(tag);
+        }
+        n++;
+        tags.push_back(tag);
+      }
+    }
+  }
 
   // the temporary model is current while its mesh is created, so that the
   // numbering of the nodes and elements of the current one is left alone;
@@ -720,14 +788,12 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
     entities[maxDim]->addMeshVertex(vertices[m]);
   }
   MElementFactory factory;
-  std::size_t node = 0, num = 0;
-  for(auto &l : lists) {
-    GEntity *ge = entities[ElementType::getDimension(l.mshType)];
-    std::vector<MVertex *> v(l.numNodes);
-    for(int e = 0; e < l.numEle; e++) {
-      for(int j = 0; j < l.numNodes; j++) v[j] = vertices[merged[node++]];
-      ge->addElement(factory.create(l.mshType, v, ++num));
-    }
+  for(std::size_t t = 0; t < tagType.size(); t++) {
+    int n = ElementType::getNumVertices(tagType[t]);
+    std::vector<MVertex *> v(n);
+    for(int j = 0; j < n; j++) v[j] = vertices[merged[tagNodes[t] + j]];
+    entities[ElementType::getDimension(tagType[t])]->addElement(
+      factory.create(tagType[t], v, t + 1));
   }
 
   GModel::list.erase(
@@ -737,68 +803,81 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
   for(std::size_t i = 0; i < visible.size(); i++)
     GModel::list[i]->setVisibility(visible[i]);
 
-  // the data of the elements with each number of components
+  // the data of the elements of each view with each number of components
   PViewDataGModel::DataType type =
     forceNodeData    ? PViewDataGModel::NodeData :
     forceElementData ? PViewDataGModel::ElementData :
                        PViewDataGModel::ElementNodeData;
   std::vector<PViewDataGModel *> data;
-  for(int numComp : {1, 3, 9}) {
-    bool any = false;
-    for(auto &l : lists) any |= (l.numComp == numComp);
-    if(!any) continue;
-    PViewDataGModel *d = new PViewDataGModel(type);
-    std::string name = getName();
-    for(auto &l : lists) {
-      if(l.numComp != numComp) {
+  for(std::size_t first = 0; first < lists.size();) {
+    PViewDataList *view = lists[first].view;
+    std::size_t last = first;
+    while(last < lists.size() && lists[last].view == view) last++;
+    // the index of the first node and element of the view
+    std::size_t node0 = 0, ele0 = 0;
+    for(std::size_t k = 0; k < first; k++) {
+      node0 += lists[k].numEle * lists[k].numNodes;
+      ele0 += lists[k].numEle;
+    }
+    for(int numComp : {1, 3, 9}) {
+      bool any = false, other = false;
+      for(std::size_t k = first; k < last; k++) {
+        any |= (lists[k].numComp == numComp);
+        other |= (lists[k].numComp != numComp);
+      }
+      if(!any) continue;
+      PViewDataGModel *d = new PViewDataGModel(type);
+      std::string name = view->getName();
+      if(other)
         name += (numComp == 1) ? " (scalar)" :
                 (numComp == 3) ? " (vector)" :
                                  " (tensor)";
-        break;
-      }
-    }
-    d->setName(name);
-    if(type == PViewDataGModel::ElementNodeData) {
-      for(auto &it : _interpolation) {
-        if(it.second.size() >= 4)
-          d->setInterpolationMatrices(it.first, *it.second[0], *it.second[1],
-                                      *it.second[2], *it.second[3]);
-        else if(it.second.size() >= 2)
-          d->setInterpolationMatrices(it.first, *it.second[0], *it.second[1]);
-      }
-    }
-    for(int step = 0; step < NbTimeStep; step++) {
-      std::vector<std::size_t> tags;
-      std::vector<std::vector<double>> values;
-      // the value of the last element at each node (NodeData)
-      std::vector<const double *> nodeValues;
-      if(type == PViewDataGModel::NodeData)
-        nodeValues.resize(numVertices, nullptr);
-      std::size_t node = 0, num = 0;
-      for(auto &l : lists) {
-        int nb = l.list->size() / l.numEle;
-        for(int e = 0; e < l.numEle; e++, node += l.numNodes, num++) {
-          if(l.numComp != numComp) continue;
-          const double *v = &(*l.list)[(std::size_t)e * nb + 3 * l.numNodes] +
-                            numComp * l.mult * step;
-          if(type == PViewDataGModel::NodeData) {
-            for(int j = 0; j < std::min(l.numNodes, l.mult); j++)
-              nodeValues[merged[node + j]] = v + numComp * j;
-            continue;
-          }
-          tags.push_back(num + 1);
-          int n = (type == PViewDataGModel::ElementData) ? 1 : l.mult;
-          values.emplace_back(v, v + numComp * n);
+      d->setName(name);
+      if(type == PViewDataGModel::ElementNodeData) {
+        for(auto &it : view->_interpolation) {
+          if(it.second.size() >= 4)
+            d->setInterpolationMatrices(it.first, *it.second[0], *it.second[1],
+                                        *it.second[2], *it.second[3]);
+          else if(it.second.size() >= 2)
+            d->setInterpolationMatrices(it.first, *it.second[0], *it.second[1]);
         }
       }
-      for(std::size_t i = 0; i < nodeValues.size(); i++) {
-        if(!nodeValues[i]) continue;
-        tags.push_back(i + 1);
-        values.emplace_back(nodeValues[i], nodeValues[i] + numComp);
+      for(int step = 0; step < view->NbTimeStep; step++) {
+        std::vector<std::size_t> dataTags;
+        std::vector<std::vector<double>> values;
+        // the value of the last element at each node (NodeData)
+        std::vector<const double *> nodeValues;
+        if(type == PViewDataGModel::NodeData)
+          nodeValues.resize(numVertices, nullptr);
+        std::size_t node = node0, ele = ele0;
+        for(std::size_t k = first; k < last; k++) {
+          auto &l = lists[k];
+          std::size_t nb = l.list->size() / l.numEle;
+          for(int e = 0; e < l.numEle; e++, node += l.numNodes, ele++) {
+            if(l.numComp != numComp) continue;
+            const double *v =
+              &(*l.list)[e * nb + 3 * l.numNodes] + numComp * l.mult * step;
+            if(type == PViewDataGModel::NodeData) {
+              for(int j = 0; j < std::min(l.numNodes, l.mult); j++)
+                nodeValues[merged[node + j]] = v + numComp * j;
+              continue;
+            }
+            dataTags.push_back(tags[ele]);
+            int n = (type == PViewDataGModel::ElementData) ? 1 : l.mult;
+            values.emplace_back(v, v + numComp * n);
+          }
+        }
+        for(std::size_t i = 0; i < nodeValues.size(); i++) {
+          if(!nodeValues[i]) continue;
+          dataTags.push_back(i + 1);
+          values.emplace_back(nodeValues[i], nodeValues[i] + numComp);
+        }
+        d->addData(model, dataTags, values, step, view->getTime(step), -1,
+                   numComp, false);
       }
-      d->addData(model, tags, values, step, getTime(step), -1, numComp, false);
+      data.push_back(d);
     }
-    data.push_back(d);
+    first = last;
   }
 
   bool ok = true;

@@ -124,6 +124,28 @@ for case in ('cube.pos', 'hexes.pos', 'square.pos', 'quads.pos', 'order2.pos',
                                         'binary' if binary else 'ASCII'), err)
 
 
+# all the views of a file saved with the model (Mesh.SaveViews), on a single
+# mesh of their elements if they are list-based and the model has no mesh
+for case in ('cube.pos', 'order2.pos'):
+    for version, binary in ((2.2, 0), (4.1, 1)):
+        start()
+        ref = {}
+        for v in load(case):
+            for k, e in listElements(v).items():
+                ref.setdefault(k, []).extend(e)
+        gmsh.option.setNumber('Mesh.MshFileVersion', version)
+        gmsh.option.setNumber('Mesh.Binary', binary)
+        gmsh.option.setNumber('Mesh.SaveViews', 2)
+        f = os.path.join(OUT, 'all.msh')
+        gmsh.write(f)
+        gmsh.clear()
+        gmsh.merge(f)
+        err = compare(ref, modelElements())
+        gmsh.finalize()
+        check('%s all views MSH %g %s' %
+              (case, version, 'binary' if binary else 'ASCII'), err)
+
+
 # nodes merged within the geometrical tolerance, and forced data types
 def triangles(d, force=None):
     start()

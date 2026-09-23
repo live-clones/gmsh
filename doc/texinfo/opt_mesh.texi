@@ -876,6 +876,11 @@ Save model topology in MSH2 output files (this is always saved in MSH3 and above
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.SaveViews
+Save post-processing views in MSH files (0: none, 1: visible views, 2: all views): the views based on the model after its mesh, and the list-based views with a mesh of their elements (in `name_views.msh' if the model has a mesh)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item Mesh.ScalingFactor
 Global scaling factor applied to the saved mesh@*
 Default value: @code{1}@*

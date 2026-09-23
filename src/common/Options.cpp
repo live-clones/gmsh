@@ -6990,6 +6990,15 @@ double opt_mesh_save_all(OPT_ARGS_NUM)
   return CTX::instance()->mesh.saveAll;
 }
 
+double opt_mesh_save_views(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    int v = (int)val;
+    CTX::instance()->mesh.saveViews = (v < 0 || v > 2) ? 0 : v;
+  }
+  return CTX::instance()->mesh.saveViews;
+}
+
 double opt_mesh_save_element_tag_type(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.saveElementTagType = (int)val;

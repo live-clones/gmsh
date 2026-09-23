@@ -66,7 +66,7 @@ struct contextMeshOptions {
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
-  int saveAll, saveGroupsOfNodes, saveGroupsOfElements;
+  int saveAll, saveViews, saveGroupsOfNodes, saveGroupsOfElements;
   int readGroupsOfElements;
   int binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveBadTriangles, stlOneSolidPerSurface;

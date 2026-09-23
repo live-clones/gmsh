@@ -56,6 +56,8 @@ Save all elements (Mesh.SaveAll)
 Save nodes with their parametric coordinates (Mesh.SaveParametric)
 @item -save_topology
 Save model topology (Mesh.SaveTopology)
+@item -save_views
+Save all views in MSH files (Mesh.SaveViews)
 @item -algo string
 Select mesh algorithm: auto, meshadapt, del2d, front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)
 @item -smooth int
@@ -179,7 +181,7 @@ Don't modify the locale at startup
 @item -option file
 Parse option file at startup
 @item -convert files
-Convert files into latest binary formats, then exit
+Convert the mesh and the views of each file into a binary MSH 4.1 file (name_new.msh), then exit
 @item -nt int
 Set number of threads (General.NumThreads)
 @item -cpu

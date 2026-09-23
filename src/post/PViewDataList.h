@@ -183,6 +183,13 @@ public:
                         bool saveInterpolationMatrices = true,
                         bool forceNodeData = false,
                         bool forceElementData = false);
+  // write several views in an MSH file, on a single mesh of their elements
+  static bool writeMSH(const std::string &fileName,
+                       const std::vector<PViewDataList *> &views,
+                       double version, bool binary, bool saveMesh,
+                       bool multipleView, int partitionNum,
+                       bool saveInterpolationMatrices, bool forceNodeData,
+                       bool forceElementData);
   virtual void importLists(int N[24], std::vector<double> *V[24]);
   virtual void getListPointers(int N[24], std::vector<double> *V[24]);
   void importList(int index, int n, const std::vector<double> &v,

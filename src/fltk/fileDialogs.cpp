@@ -1161,7 +1161,7 @@ int meshStatFileDialog(const char *name)
 struct _mshFileDialog {
   Fl_Window *window;
   Fl_Check_Button *b[4];
-  Fl_Choice *c;
+  Fl_Choice *c, *views;
   Fl_Button *ok, *cancel;
 };
 
@@ -1175,12 +1175,16 @@ int mshFileDialog(const char *name)
                                       {"Version 4 ASCII", 0, nullptr, nullptr},
                                       {"Version 4 Binary", 0, nullptr, nullptr},
                                       {nullptr}};
+  static Fl_Menu_Item viewsmenu[] = {{"None", 0, nullptr, nullptr},
+                                     {"Visible", 0, nullptr, nullptr},
+                                     {"All", 0, nullptr, nullptr},
+                                     {nullptr}};
 
   int BBB = BB + 9; // labels too long
 
   if(!dialog) {
     dialog = new _mshFileDialog;
-    int h = 3 * WB + 6 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    int h = 3 * WB + 7 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "MSH Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -1190,6 +1194,11 @@ int mshFileDialog(const char *name)
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
     dialog->c->callback((Fl_Callback *)format_cb, dialog);
+    dialog->views = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Views");
+    dialog->views->tooltip("Mesh.SaveViews");
+    y += BH;
+    dialog->views->menu(viewsmenu);
+    dialog->views->align(FL_ALIGN_RIGHT);
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     dialog->b[0]->tooltip("Mesh.SaveAll");
@@ -1223,6 +1232,15 @@ int mshFileDialog(const char *name)
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 1 : 2);
   else
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 3 : 4);
+  // (with views and no mesh, the views are what there is to save)
+  int views = (int)opt_mesh_save_views(0, GMSH_GET, 0);
+  if(!views && !PView::list.empty() && !GModel::current()->getNumMeshElements())
+    views = 1;
+  dialog->views->value(views);
+  if(PView::list.empty() || dialog->c->value() == 0)
+    dialog->views->deactivate();
+  else
+    dialog->views->activate();
   dialog->b[0]->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[1]->value(opt_mesh_save_parametric(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[2]->value(opt_mesh_partition_split_mesh_files(0, GMSH_GET, 0) ? 1 :
@@ -1249,6 +1267,8 @@ int mshFileDialog(const char *name)
         opt_mesh_binary(
           0, GMSH_SET | GMSH_GUI,
           (dialog->c->value() == 2 || dialog->c->value() == 4) ? 1 : 0);
+        if(dialog->views->active())
+          opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
                           dialog->b[0]->value() ? 1 : 0);
         opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI,
@@ -1273,6 +1293,11 @@ int mshFileDialog(const char *name)
 void format_cb(Fl_Widget *widget, void *data)
 {
   _mshFileDialog *dialog = static_cast<_mshFileDialog *>(data);
+  // (no views in MSH 1)
+  if(!PView::list.empty() && dialog->c->value() != 0)
+    dialog->views->activate();
+  else
+    dialog->views->deactivate();
   if((dialog->c->value() == 3 || dialog->c->value() == 4 ||
       dialog->c->value() == 1 || dialog->c->value() == 2) &&
      GModel::current()->getNumPartitions() > 0) {
@@ -1879,7 +1904,6 @@ int posFileDialog(const char *name)
                                     {"All", 0, nullptr, nullptr},
                                     {nullptr}};
   static Fl_Menu_Item formatmenu[] = {{"Parsed", 0, nullptr, nullptr},
-                                      {"Mesh-based", 0, nullptr, nullptr},
                                       {"Legacy ASCII", 0, nullptr, nullptr},
                                       {"Legacy Binary", 0, nullptr, nullptr},
                                       {nullptr}};
@@ -1917,9 +1941,8 @@ int posFileDialog(const char *name)
         int format = 2;
         switch(dialog->c[1]->value()) {
         case 0: format = 2; break;
-        case 1: format = 5; break;
-        case 2: format = 0; break;
-        case 3: format = 1; break;
+        case 1: format = 0; break;
+        case 2: format = 1; break;
         }
         bool canAppend = (format == 2) ? true : false;
         _saveViews(name, dialog->c[0]->value(), format, canAppend);
