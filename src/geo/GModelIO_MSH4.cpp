@@ -1879,47 +1879,54 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
 // Faces are stored by blocks of faces with the same number of nodes (3 for
 // triangles, 4 for quadrangles, more for polygons): `numBlocks numFaces`, then
 // for each block `numNodes numFacesInBlock` followed by `faceTag nodeTag ...`
-// for each face.
+// for each face. A section that does not follow this layout (e.g. the
+// `numTriangles numQuadrangles` header written before Gmsh 5.0) is skipped.
 static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
 {
   std::vector<std::size_t> header;
   if(!readMSH4SizeTs(fp, binary, false, 2, header)) return false;
   std::size_t numBlocks = header[0], numFaces = header[1];
 
-  Msg::Info("%zu face%s", numFaces, numFaces > 1 ? "s" : "");
-  Msg::StartProgressMeter(numFaces);
+  auto invalid = [&]() {
+    Msg::Warning("Skipping invalid face data in MSH4 file");
+    return true;
+  };
+  if(numBlocks > numFaces || (!numBlocks && numFaces)) return invalid();
 
+  // faces are added to the model once the whole section is read, and records
+  // are read by chunks so that an invalid count is not allocated
+  std::vector<std::pair<MFace, std::size_t>> faces;
   std::vector<std::size_t> data;
   std::vector<MVertex *> v;
-  std::size_t faceRead = 0;
   for(std::size_t block = 0; block < numBlocks; block++) {
-    if(!readMSH4SizeTs(fp, binary, false, 2, header)) return false;
+    if(!readMSH4SizeTs(fp, binary, false, 2, header)) return invalid();
     std::size_t numNodes = header[0], numFacesInBlock = header[1];
-    if(numNodes < 3) {
-      Msg::Error("Invalid number of nodes (%zu) for faces in MSH4 file",
-                 numNodes);
-      return false;
-    }
+    if(numNodes < 3 || numFacesInBlock > numFaces - faces.size())
+      return invalid();
     std::size_t stride = numNodes + 1;
-    if(!readMSH4SizeTs(fp, binary, false, stride * numFacesInBlock, data))
-      return false;
+    std::size_t chunk = std::max<std::size_t>(1, (1 << 20) / stride);
     v.resize(numNodes);
-    for(std::size_t k = 0; k < numFacesInBlock; k++) {
-      const std::size_t *faceData = &data[stride * k];
-      for(std::size_t j = 0; j < numNodes; j++) {
-        v[j] = model->getMeshVertexByTag(faceData[j + 1]);
-        if(!v[j]) {
-          Msg::Error("Invalid node tags in face data in MSH4 file");
-          return false;
+    for(std::size_t first = 0; first < numFacesInBlock; first += chunk) {
+      std::size_t n = std::min(chunk, numFacesInBlock - first);
+      if(!readMSH4SizeTs(fp, binary, false, stride * n, data)) return invalid();
+      for(std::size_t k = 0; k < n; k++) {
+        const std::size_t *faceData = &data[stride * k];
+        for(std::size_t j = 0; j < numNodes; j++) {
+          v[j] = model->getMeshVertexByTag(faceData[j + 1]);
+          if(!v[j]) return invalid();
         }
+        faces.emplace_back(MFace(v), faceData[0]);
       }
-      MFace mf(v);
-      model->addMFace(std::move(mf), faceData[0]);
-      faceRead++;
-      if(numFaces > 100000) Msg::ProgressMeter(faceRead, true, "Reading faces");
     }
   }
+  if(faces.size() != numFaces) return invalid();
 
+  Msg::Info("%zu face%s", numFaces, numFaces > 1 ? "s" : "");
+  Msg::StartProgressMeter(numFaces);
+  for(std::size_t k = 0; k < numFaces; k++) {
+    model->addMFace(std::move(faces[k].first), faces[k].second);
+    if(numFaces > 100000) Msg::ProgressMeter(k + 1, true, "Reading faces");
+  }
   return true;
 }
 
