@@ -278,6 +278,28 @@ bool PView::readMED(const std::string &fileName, int fileIndex)
 
 #endif
 
+// write the data of a view in a format of a single view
+static bool writeData(PViewData *data, const std::string &fileName,
+                      int format, bool append)
+{
+  switch(format) {
+  case PView::POS_ASCII: return data->writePOS(fileName, false, false, append);
+  case PView::POS_BINARY: return data->writePOS(fileName, true, false, append);
+  case PView::POS_PARSED: return data->writePOS(fileName, false, true, append);
+  case PView::STL: return data->writeSTL(fileName);
+  case PView::TXT: return data->writeTXT(fileName);
+  case PView::MSH:
+    return data->writeMSH(fileName, CTX::instance()->mesh.mshFileVersion,
+                          CTX::instance()->mesh.binary,
+                          CTX::instance()->post.saveMesh, append, 0,
+                          CTX::instance()->post.saveInterpolationMatrices,
+                          CTX::instance()->post.forceNodeData,
+                          CTX::instance()->post.forceElementData);
+  case PView::MED: return data->writeMED(fileName);
+  default: Msg::Error("Unknown view format %d", format); return false;
+  }
+}
+
 bool PView::write(const std::string &fileName, int format, bool append)
 {
   Msg::StatusBar(true, "Writing '%s'...", fileName.c_str());
@@ -300,48 +322,42 @@ bool PView::write(const std::string &fileName, int format, bool append)
       format = TXT;
   }
 
-  bool ret;
-  switch(format) {
-  case POS_ASCII: ret = _data->writePOS(fileName, false, false, append); break;
-  case POS_BINARY: ret = _data->writePOS(fileName, true, false, append); break;
-  case POS_PARSED: ret = _data->writePOS(fileName, false, true, append); break;
-  case STL: ret = _data->writeSTL(fileName); break;
-  case TXT: ret = _data->writeTXT(fileName); break;
-  case MSH:
-    ret = _data->writeMSH(fileName, CTX::instance()->mesh.mshFileVersion,
-                          CTX::instance()->mesh.binary,
-                          CTX::instance()->post.saveMesh, append, 0,
-                          CTX::instance()->post.saveInterpolationMatrices,
-                          CTX::instance()->post.forceNodeData,
-                          CTX::instance()->post.forceElementData);
-    break;
-  case MED: ret = _data->writeMED(fileName); break;
-  case X3D: ret = writeX3D(fileName); break;
-  case VTU: ret = _writeVTUOrAdapted(fileName); break;
-  default:
-    ret = false;
-    Msg::Error("Unknown view format %d", format);
-    break;
+  bool ret = true;
+  if(format == VTU)
+    ret = writeVTU(fileName, CTX::instance()->post.binary, {this});
+  else if(format == X3D)
+    ret = writeX3D(fileName);
+  else if(!savesAdapted())
+    ret = writeData(_data, fileName, format, append);
+  else {
+    // refined, a mesh for each step: all in the file if it can hold them, or
+    // else a file for each step, name_0000.ext, name_0001.ext...
+    std::vector<PViewDataList *> steps = getAdaptedSteps();
+    if(format == MSH)
+      ret = PViewDataList::writeMSH(
+        fileName, {steps}, CTX::instance()->mesh.mshFileVersion,
+        CTX::instance()->mesh.binary, CTX::instance()->post.saveMesh, append,
+        0, CTX::instance()->post.saveInterpolationMatrices,
+        CTX::instance()->post.forceNodeData,
+        CTX::instance()->post.forceElementData);
+    else {
+      std::vector<std::string> split = SplitFileName(fileName);
+      for(std::size_t step = 0; step < steps.size(); step++) {
+        if(!steps[step]) continue;
+        std::string name = fileName;
+        if(steps.size() > 1) {
+          char n[32];
+          snprintf(n, sizeof(n), "_%04d", (int)step);
+          name = split[0] + split[1] + n + split[2];
+        }
+        if(!writeData(steps[step], name, format, append)) ret = false;
+      }
+    }
+    doneSaving();
   }
 
   if(ret) Msg::StatusBar(true, "Done writing '%s'", fileName.c_str());
   return ret;
-}
-
-// an adaptive view is written as it is shown: refined, with the recursion
-// level and the target error of the view (in a single .vtu, or in the pieces
-// of a .pvtu, as many as it takes to keep them small)
-bool PView::_writeVTUOrAdapted(const std::string &fileName)
-{
-  bool binary = CTX::instance()->post.binary;
-  if(!_options->adaptVisualizationGrid)
-    return writeVTU(fileName, binary, {this});
-  std::string ext = SplitFileName(fileName)[2];
-  Msg::StatusBar(true, "Writing '%s'...", fileName.c_str());
-  _data->saveAdaptedViewForVTK(
-    fileName, _options->timeStep, _options->maxRecursionLevel,
-    _options->targetError, (ext == ".pvtu") ? 0 : 1, binary);
-  return true;
 }
 
 void PView::sendToServer(const std::string &name)

@@ -7535,6 +7535,12 @@ double opt_post_save_interpolation_matrices(OPT_ARGS_NUM)
   return CTX::instance()->post.saveInterpolationMatrices;
 }
 
+double opt_post_save_adapted(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->post.saveAdapted = (int)val;
+  return CTX::instance()->post.saveAdapted;
+}
+
 double opt_post_double_clicked_graph_point_x(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->post.doubleClickedGraphPointX = val;

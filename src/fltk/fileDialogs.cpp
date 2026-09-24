@@ -1170,7 +1170,7 @@ static int _viewsToSave()
 // Save msh dialog
 struct _mshFileDialog {
   Fl_Window *window;
-  Fl_Check_Button *b[4];
+  Fl_Check_Button *b[5];
   Fl_Choice *c, *views;
   Fl_Button *ok, *cancel;
 };
@@ -1194,7 +1194,7 @@ int mshFileDialog(const char *name)
 
   if(!dialog) {
     dialog = new _mshFileDialog;
-    int h = 3 * WB + 7 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    int h = 3 * WB + 8 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "MSH Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -1229,6 +1229,11 @@ int mshFileDialog(const char *name)
     dialog->b[3]->tooltip("Mesh.PartitionTopologyFile");
     y += BH;
     dialog->b[3]->type(FL_TOGGLE_BUTTON);
+    dialog->b[4] = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
+                                       "Save high order views refined");
+    dialog->b[4]->tooltip("PostProcessing.SaveAdapted");
+    y += BH;
+    dialog->b[4]->type(FL_TOGGLE_BUTTON);
 
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
@@ -1243,12 +1248,17 @@ int mshFileDialog(const char *name)
   else
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 3 : 4);
   dialog->views->value(_viewsToSave());
-  if(PView::list.empty() || dialog->c->value() == 0)
+  if(PView::list.empty() || dialog->c->value() == 0) {
     dialog->views->deactivate();
-  else
+    dialog->b[4]->deactivate();
+  }
+  else {
     dialog->views->activate();
+    dialog->b[4]->activate();
+  }
   dialog->b[0]->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[1]->value(opt_mesh_save_parametric(0, GMSH_GET, 0) ? 1 : 0);
+  dialog->b[4]->value(opt_post_save_adapted(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[2]->value(opt_mesh_partition_split_mesh_files(0, GMSH_GET, 0) ? 1 :
                                                                             0);
   dialog->b[3]->value(
@@ -1273,8 +1283,11 @@ int mshFileDialog(const char *name)
         opt_mesh_binary(
           0, GMSH_SET | GMSH_GUI,
           (dialog->c->value() == 2 || dialog->c->value() == 4) ? 1 : 0);
-        if(dialog->views->active())
+        if(dialog->views->active()) {
           opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
+          opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
+                                dialog->b[4]->value() ? 1 : 0);
+        }
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
                           dialog->b[0]->value() ? 1 : 0);
         opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI,
@@ -1300,10 +1313,14 @@ void format_cb(Fl_Widget *widget, void *data)
 {
   _mshFileDialog *dialog = static_cast<_mshFileDialog *>(data);
   // (no views in MSH 1)
-  if(!PView::list.empty() && dialog->c->value() != 0)
+  if(!PView::list.empty() && dialog->c->value() != 0) {
     dialog->views->activate();
-  else
+    dialog->b[4]->activate();
+  }
+  else {
     dialog->views->deactivate();
+    dialog->b[4]->deactivate();
+  }
   if((dialog->c->value() == 3 || dialog->c->value() == 4 ||
       dialog->c->value() == 1 || dialog->c->value() == 2) &&
      GModel::current()->getNumPartitions() > 0) {
@@ -1922,7 +1939,7 @@ int vtuFileDialog(const char *name)
   struct _vtuFileDialog {
     Fl_Window *window;
     Fl_Choice *c, *views;
-    Fl_Check_Button *b;
+    Fl_Check_Button *b, *adapted;
     Fl_Button *ok, *cancel;
   };
   static _vtuFileDialog *dialog = nullptr;
@@ -1938,7 +1955,7 @@ int vtuFileDialog(const char *name)
 
   if(!dialog) {
     dialog = new _vtuFileDialog;
-    int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    int h = 3 * WB + 5 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "VTU Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -1957,6 +1974,11 @@ int vtuFileDialog(const char *name)
     dialog->b->tooltip("Mesh.SaveAll");
     y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->adapted = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
+                                          "Save high order views refined");
+    dialog->adapted->tooltip("PostProcessing.SaveAdapted");
+    y += BH;
+    dialog->adapted->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->end();
@@ -1965,11 +1987,16 @@ int vtuFileDialog(const char *name)
 
   dialog->c->value(opt_mesh_binary(0, GMSH_GET, 0) ? 1 : 0);
   dialog->views->value(_viewsToSave());
-  if(PView::list.empty())
+  if(PView::list.empty()) {
     dialog->views->deactivate();
-  else
+    dialog->adapted->deactivate();
+  }
+  else {
     dialog->views->activate();
+    dialog->adapted->activate();
+  }
   dialog->b->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
+  dialog->adapted->value(opt_post_save_adapted(0, GMSH_GET, 0) ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()) {
@@ -1979,8 +2006,11 @@ int vtuFileDialog(const char *name)
       if(!o) break;
       if(o == dialog->ok) {
         opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-        if(dialog->views->active())
+        if(dialog->views->active()) {
           opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
+          opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
+                                dialog->adapted->value() ? 1 : 0);
+        }
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_VTU);
         dialog->window->hide();
@@ -2034,6 +2064,7 @@ int posFileDialog(const char *name)
   struct _posFileDialog {
     Fl_Window *window;
     Fl_Choice *c[2];
+    Fl_Check_Button *adapted;
     Fl_Button *ok, *cancel;
   };
   static _posFileDialog *dialog = nullptr;
@@ -2051,7 +2082,7 @@ int posFileDialog(const char *name)
 
   if(!dialog) {
     dialog = new _posFileDialog;
-    int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "POS Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -2063,12 +2094,18 @@ int posFileDialog(const char *name)
     y += BH;
     dialog->c[1]->menu(formatmenu);
     dialog->c[1]->align(FL_ALIGN_RIGHT);
+    dialog->adapted = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
+                                          "Save high order views refined");
+    dialog->adapted->tooltip("PostProcessing.SaveAdapted");
+    y += BH;
+    dialog->adapted->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
 
+  dialog->adapted->value(opt_post_save_adapted(0, GMSH_GET, 0) ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()) {
@@ -2081,6 +2118,8 @@ int posFileDialog(const char *name)
                                PView::POS_BINARY};
         int format = formats[dialog->c[1]->value()];
         bool canAppend = (format == PView::POS_PARSED);
+        opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
+                              dialog->adapted->value() ? 1 : 0);
         _saveViews(name, dialog->c[0]->value(), format, canAppend);
         dialog->window->hide();
         return 1;

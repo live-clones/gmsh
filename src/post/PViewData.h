@@ -295,6 +295,9 @@ public:
                                 const fullMatrix<double> &expGeo);
   int getInterpolationMatrices(int type, std::vector<fullMatrix<double> *> &p);
   bool haveInterpolationMatrices(int type = 0);
+  // true if the view is interpolated at an order higher than one, in its
+  // values or in its geometry: what adaptation refines
+  bool haveHighOrderInterpolation();
   void deleteInterpolationMatrices(int type = 0);
 
   // access to global interpolation schemes

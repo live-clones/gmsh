@@ -14,6 +14,7 @@
 #include "SPoint3.h"
 
 class PViewData;
+class PViewDataList;
 class PViewOptions;
 class VertexArray;
 class smooth_normals;
@@ -161,8 +162,14 @@ public:
   // send to ONELAB server
   void sendToServer(const std::string &name);
 
-  // write to .vtu or .pvtu, as shown (refined if the view is adaptive)
-  bool _writeVTUOrAdapted(const std::string &fileName);
+  // Views of high order are saved refined if PostProcessing.SaveAdapted says
+  // so, as adapted views are drawn (with the recursion level and the target
+  // error of the view), each step on a mesh of its own: true if this one is,
+  // and the refined steps, a view of a step each (null if the view has no
+  // such step), until doneSaving()
+  bool savesAdapted();
+  std::vector<PViewDataList *> getAdaptedSteps();
+  static void doneSaving();
 
   // vertex arrays to draw the elements efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;

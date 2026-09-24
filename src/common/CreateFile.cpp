@@ -386,7 +386,8 @@ static void ChangePrintParameter(int frame)
 
 #if defined(HAVE_POST)
 // the views to save in a mesh file with the mesh of the current model
-// (Mesh.SaveViews): those based on it, and the list-based ones
+// (Mesh.SaveViews): those based on it, and the list-based ones (as those
+// saved refined, see PostProcessing.SaveAdapted)
 static void getViewsToSave(std::vector<PView *> &onModel,
                            std::vector<PView *> &lists)
 {
@@ -396,7 +397,7 @@ static void getViewsToSave(std::vector<PView *> &onModel,
   for(auto v : PView::list) {
     if(which == 1 && !v->getOptions()->visible) continue;
     PViewData *d = v->getData();
-    if(dynamic_cast<PViewDataList *>(d))
+    if(dynamic_cast<PViewDataList *>(d) || v->savesAdapted())
       lists.push_back(v);
     else if(d->hasModel(m))
       onModel.push_back(v);
@@ -409,9 +410,14 @@ static void getViewsToSave(std::vector<PView *> &onModel,
 static bool writeListViewsInMSH(const std::string &name,
                                 const std::vector<PView *> &views)
 {
-  std::vector<PViewDataList *> lists;
-  for(auto v : views)
-    lists.push_back(static_cast<PViewDataList *>(v->getData()));
+  // (those saved refined with a mesh for each step)
+  std::vector<std::vector<PViewDataList *> > lists;
+  for(auto v : views) {
+    if(v->savesAdapted())
+      lists.push_back(v->getAdaptedSteps());
+    else
+      lists.push_back({static_cast<PViewDataList *>(v->getData())});
+  }
   return PViewDataList::writeMSH(
     name, lists, CTX::instance()->mesh.mshFileVersion,
     CTX::instance()->mesh.binary, true, false, 0,
@@ -509,9 +515,8 @@ void CreateOutputFile(const std::string &fileName, int format,
       std::vector<std::string> parts = SplitFileName(name);
       std::string listName = parts[0] + parts[1] + "_views" + parts[2];
       if(writeListViewsInMSH(listName, lists))
-        Msg::Info("List-based views saved in '%s', on a mesh of their "
-                  "elements",
-                  listName.c_str());
+        Msg::Info("Views not based on the mesh saved in '%s', on a mesh of "
+                  "their elements", listName.c_str());
     }
 #endif
     break;
@@ -594,7 +599,8 @@ void CreateOutputFile(const std::string &fileName, int format,
         std::string ext = (parts[2] == ".pvtu") ? ".vtu" : parts[2];
         std::string listName = parts[0] + parts[1] + "_views" + ext;
         if(PView::writeVTU(listName, binary, lists))
-          Msg::Info("List-based views saved in '%s'", listName.c_str());
+          Msg::Info("Views not based on the mesh saved in '%s'",
+                    listName.c_str());
       }
 #endif
     }
@@ -706,7 +712,8 @@ void CreateOutputFile(const std::string &fileName, int format,
     }
     for(auto v : lists)
       Msg::Warning("View '%s' not saved: MED files only hold views based on "
-                   "the mesh", v->getData()->getName().c_str());
+                   "the mesh%s", v->getData()->getName().c_str(),
+                   v->savesAdapted() ? ", not refined" : "");
 #endif
     break;
   }
@@ -1093,6 +1100,9 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   CTX::instance()->print.fileFormat = oldFormat;
   CTX::instance()->printing = 0;
+#if defined(HAVE_POST)
+  PView::doneSaving();
+#endif
 
   if(status && !error)
     Msg::StatusBar(true, "Done writing '%s'", name.c_str());

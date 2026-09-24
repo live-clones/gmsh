@@ -93,11 +93,6 @@ bool PViewData::writeTXT(const std::string &fileName)
 bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
                          bool append)
 {
-  if(_adaptive) {
-    Msg::Warning(
-      "Writing adapted dataset (will only export current time step)");
-    return _adaptive->getData()->writePOS(fileName, binary, parsed, append);
-  }
   if(hasMultipleMeshes()) {
     Msg::Error("Cannot export multi-mesh datasets in .pos format");
     return false;

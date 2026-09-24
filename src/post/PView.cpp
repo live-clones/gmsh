@@ -15,6 +15,7 @@
 #include "GmshMessage.h"
 #include "GmshConfig.h"
 #include "OwnerCache.h"
+#include "Context.h"
 
 int PView::_globalTag = 1;
 std::vector<PView *> PView::list;
@@ -254,6 +255,48 @@ PViewData *PView::getData(bool useAdaptiveIfAvailable)
     return _data->getAdaptiveData()->getData();
   else
     return _data;
+}
+
+bool PView::savesAdapted()
+{
+  return CTX::instance()->post.saveAdapted && !_data->isRemote() &&
+         _data->haveHighOrderInterpolation();
+}
+
+// the steps refined to be saved (apart from what the view draws), and the
+// data given adaptive data for it
+static std::vector<adaptiveData *> refinedToSave;
+static std::vector<PViewData *> madeAdaptiveToSave;
+
+std::vector<PViewDataList *> PView::getAdaptedSteps()
+{
+  // (model-based data gives all the nodes of its elements, which refining
+  // needs, only if it has adaptive data)
+  if(!_data->getAdaptiveData()) {
+    _data->initAdaptiveDataLight(0, 0, 0.);
+    madeAdaptiveToSave.push_back(_data);
+  }
+  std::vector<PViewDataList *> steps(_data->getNumTimeSteps(), nullptr);
+  for(std::size_t step = 0; step < steps.size(); step++) {
+    if(!_data->hasTimeStep(step)) continue;
+    adaptiveData *a = new adaptiveData(_data);
+    refinedToSave.push_back(a);
+    a->changeResolution(step, _options->maxRecursionLevel,
+                        _options->targetError);
+    PViewDataList *l = static_cast<PViewDataList *>(a->getData());
+    l->setName(_data->getName());
+    l->Time.assign(1, _data->getTime(step));
+    steps[step] = l;
+  }
+  return steps;
+}
+
+void PView::doneSaving()
+{
+  for(auto a : refinedToSave) delete a;
+  refinedToSave.clear();
+  for(auto d : madeAdaptiveToSave) d->destroyAdaptiveData();
+  madeAdaptiveToSave.clear();
 }
 
 void PView::setChanged(bool val)

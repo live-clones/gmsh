@@ -18,7 +18,7 @@
 #   python view_adaptive_cube.py [-structured] [-order n] [-size h]
 #                                [-field gyroid|spikes|shells] [-freq f]
 #                                [-width w] [-level l] [-tol t] [-nt n]
-#                                [-save file.vtu|.pvtu] [-nopopup]
+#                                [-save file.vtu|.pvtu|.msh] [-nopopup]
 #
 # -structured: hexahedra (transfinite and recombined) instead of tetrahedra
 # -order:      order of the elements (default 3)
@@ -34,7 +34,8 @@
 # -tol:        View.TargetError (default: the default of the option); a
 #              negative value refines everything down to the level
 # -nt:         number of threads
-# -save:       also write the adapted view to a file
+# -save:       also write the view refined to a file (PostProcessing.SaveAdapted),
+#              each time step on a mesh of its own
 #
 # The time taken by the first adaptation and by a change of time step is
 # printed, with the number of refined elements.
@@ -186,6 +187,7 @@ gmsh.view.option.setNumber(v, 'TimeStep', 0)
 
 if save:
     t = time.time()
+    gmsh.option.setNumber('PostProcessing.SaveAdapted', 1)
     gmsh.view.write(v, save)
     print('written to %s: %.3f s' % (save, time.time() - t))
 

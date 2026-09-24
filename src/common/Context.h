@@ -473,7 +473,7 @@ public:
     int smooth, animCycle, animStep;
     int combineTime, combineRemoveOrig, combineCopyOptions;
     int fileFormat, plugins, forceNodeData, forceElementData;
-    int saveMesh, saveInterpolationMatrices;
+    int saveMesh, saveInterpolationMatrices, saveAdapted;
     double animDelay;
     std::string doubleClickedGraphPointCommand;
     double doubleClickedGraphPointX, doubleClickedGraphPointY;

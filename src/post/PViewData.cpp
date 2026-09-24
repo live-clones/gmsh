@@ -9,6 +9,7 @@
 #include "GmshMessage.h"
 #include "OctreePost.h"
 #include "fullMatrix.h"
+#include "ElementType.h"
 
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
@@ -190,6 +191,18 @@ bool PViewData::haveInterpolationMatrices(int type)
     return !_interpolation.empty();
   else
     return _interpolation.count(type) ? true : false;
+}
+
+bool PViewData::haveHighOrderInterpolation()
+{
+  for(auto &it : _interpolation) {
+    if(it.second.size() == 4) return true; // curved
+    int t = ElementType::getType(it.first, 1);
+    if(t > 0 && it.second.size() &&
+       it.second[0]->size1() > ElementType::getNumVertices(t))
+      return true;
+  }
+  return false;
 }
 
 void PViewData::deleteInterpolationMatrices(int type)
