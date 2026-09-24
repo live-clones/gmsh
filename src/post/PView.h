@@ -168,6 +168,16 @@ public:
   // send to ONELAB server
   void sendToServer(const std::string &name);
 
+  // create the adaptive data of the view if it is drawn adapted
+  // (View.AdaptVisualizationGrid), and refine it as the options say: the time
+  // step, the recursion level, the target error, and the range drawn if it is
+  // a custom one, which the error is then relative to (nothing is done if it
+  // is already refined so)
+  void adapt();
+  // the range the target error is relative to, as adaptiveData takes it (the
+  // custom range, or else an empty one: that of the data)
+  void getAdaptiveRange(double &min, double &max);
+
   // Views of high order are saved refined if PostProcessing.SaveAdapted says
   // so, as adapted views are drawn (with the recursion level and the target
   // error of the view), each step on a mesh of its own: true if this one is,

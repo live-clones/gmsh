@@ -250,6 +250,21 @@ public:
 
 class adaptiveVTKWriter; // (in adaptiveData.cpp)
 
+// The values the target error is relative to: the range of the data (all the
+// steps), or a range given, as the custom range of a view, outside of which
+// the field is drawn as the nearest end of the range, or not at all: an
+// element whose values (at the points the error estimate looks at) are all
+// on the same side of it then has no error
+class adaptiveRange {
+public:
+  double min, max;
+  bool clamp;
+  adaptiveRange(double mn = 0., double mx = -1., bool c = false)
+    : min(mn), max(mx), clamp(c)
+  {
+  }
+};
+
 // What adapting an element needs to remember: the field and the positions at
 // the vertices of the tree where they have been computed (known for the
 // element whose number, the stamp, they carry), and the elements that are kept
@@ -257,6 +272,7 @@ class adaptiveWork {
 public:
   int stamp, numComp;
   const double *inXYZ, *inValues; // the element, as given to adapt()
+  adaptiveRange range; // as given to adapt()
   std::vector<int> evaluated, located;
   std::vector<double> values, norm, xyz;
   std::vector<const adaptiveElement *> visible;
@@ -307,21 +323,24 @@ public:
   // faces to outSkin); returns their number. The tree is only read, unless
   // there is a plugin: several threads can adapt elements at the same time,
   // each with its own workspace.
+  // (range: that of the values the target error is relative to)
   int adapt(adaptiveWork &w, double tol, int numComp, const double *xyz,
-            const double *values, double range, GMSH_PostPlugin *plug,
-            unsigned char onSkin, std::vector<double> &out,
-            std::vector<unsigned char> *outSkin);
+            const double *values, const adaptiveRange &range,
+            GMSH_PostPlugin *plug, unsigned char onSkin,
+            std::vector<double> &out, std::vector<unsigned char> *outSkin);
   // adapt all the elements of this kind in the input view and add the refined
   // elements in the output view (we will remove this when we switch to true
   // on-the-fly local refinement in drawPost()); polygons and polyhedra are
   // refined through their triangles and tetrahedra (type = TYPE_POLYG or
   // TYPE_POLYH)
   // (inSkin: for each entity and element of the input view, its faces on the
-  // skin of the view; outSkin: the same for the elements added)
+  // skin of the view; outSkin: the same for the elements added; range: the
+  // one given, if its min is not above its max, or else that of the data)
   void addInView(double tol, int step, PViewData *in, PViewDataList *out,
                  GMSH_PostPlugin *plug = nullptr, int level = 0, int type = 0,
                  const std::vector<std::vector<unsigned char> > *inSkin = nullptr,
-                 std::vector<unsigned char> *outSkin = nullptr);
+                 std::vector<unsigned char> *outSkin = nullptr,
+                 const adaptiveRange &range = adaptiveRange());
 
   // Routines for
   // - export of adapted views to pvtu file format for parallel visualization
@@ -331,7 +350,8 @@ public:
   // addInView for VTK output files and for globalVTKData
   void addInViewForVTK(int step, double tol, PViewData *in,
                        adaptiveVTKWriter *writer, bool buildStaticData,
-                       int &numPoints);
+                       int &numPoints,
+                       const adaptiveRange &range = adaptiveRange());
 
   int countElmLev0(int step, PViewData *in);
 
@@ -346,6 +366,7 @@ class adaptiveData {
 private:
   int _step, _level;
   double _tol;
+  adaptiveRange _range; // (as given)
   PViewData *_inData;
   PViewDataList *_outData;
   adaptiveElements *_points, *_lines, *_triangles, *_quadrangles;
@@ -374,13 +395,17 @@ public:
   adaptiveData(PViewData *data, bool outDataInit = true);
   ~adaptiveData();
   PViewData *getData() { return (PViewData *)_outData; }
+  // (min and max: the range the target error is relative to, if min is not
+  // above max, e.g. the custom range of the view; see adaptiveRange)
   void changeResolution(int step, int level, double tol,
-                        GMSH_PostPlugin *plug = nullptr);
+                        GMSH_PostPlugin *plug = nullptr, double min = 0.,
+                        double max = -1.);
   int countTotElmLev0(int step, PViewData *in);
   void changeResolutionForVTK(int step, int level, double tol, int npart = 1,
                               bool isBinary = true,
                               const std::string &guifileName = "unknown",
-                              int useDefaultName = 1);
+                              int useDefaultName = 1, double min = 0.,
+                              double max = -1.);
   void upBuildStaticData(bool newValue) { buildStaticData = newValue; }
   void upWriteVTK(bool newValue) { writeVTK = newValue; }
 };

@@ -103,3 +103,34 @@ Merge "vtu_adaptive_out_steps.msh.geo";
 If(PostProcessing.NbViews != 1 || View[0].NbTimeStep != 2 || Mesh.NbTetrahedra != tets~{1})
   Error("MSH script: %g views, %g steps and %g tetrahedra (expected 1, 2 and %g)", PostProcessing.NbViews, View[0].NbTimeStep, Mesh.NbTetrahedra, tets~{1});
 EndIf
+Delete View[0];
+
+// the target error is relative to the custom range if there is one, and the
+// elements with values all outside of it are not refined: [0.9, 1] is refined
+// more than the whole range at the same target error, and less than the whole
+// range at the same accuracy
+Delete Model;
+Merge "../misc/adaptive_tet20.msh";
+View[0].MaxRecursionLevel = 5;
+View[0].TargetError = 1e-2;
+PostProcessing.SaveAdapted = 1;
+Save View[0] "vtu_adaptive_out_range.vtu";
+View[0].TargetError = 1e-3;
+Save View[0] "vtu_adaptive_out_range_fine.vtu";
+View[0].TargetError = 1e-2;
+View[0].RangeType = 2;
+View[0].CustomMin = 0.9;
+View[0].CustomMax = 1;
+Save View[0] "vtu_adaptive_out_band.vtu";
+PostProcessing.SaveAdapted = 0;
+Delete View[0];
+files[] = Str("vtu_adaptive_out_range.vtu", "vtu_adaptive_out_range_fine.vtu", "vtu_adaptive_out_band.vtu");
+For i In {0 : 2}
+  Delete Model;
+  Merge Str(files[i]);
+  count~{i} = Mesh.NbTetrahedra;
+  Delete View[0];
+EndFor
+If(count~{2} <= count~{0} || count~{2} >= count~{1})
+  Error("Custom range: %g tetrahedra, expected between %g and %g", count~{2}, count~{0}, count~{1});
+EndIf

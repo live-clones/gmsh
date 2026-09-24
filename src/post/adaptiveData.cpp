@@ -468,19 +468,30 @@ double adaptiveElements::_errorOf(adaptiveWork &w,
     _evaluate(w, p);
     return w.norm[p->index];
   };
+  // (with a range given, an element whose values looked at are all on the
+  // same side of it is drawn as an end of the range, or not at all)
+  bool below = true, above = true;
+  auto look = [&](double v) {
+    below &= (v < w.range.min);
+    above &= (v > w.range.max);
+    return v;
+  };
+  for(int i = 0; i < _shape.numNodes; i++) look(field(e->p[i]));
   double error = 0.;
   for(std::size_t k = _shape.numNodes; k < _shape.points.size(); k++) {
     double drawn = 0.;
     for(int i : _shape.points[k]) drawn += field(e->p[i]);
     drawn /= _shape.points[k].size();
     const adaptiveVertex *p = e->e[_shape.where[k][0]]->p[_shape.where[k][1]];
-    error = std::max(error, fabs(field(p) - drawn));
+    double f = look(field(p));
+    error = std::max(error, fabs(f - drawn));
     if(k + 1 == _shape.points.size() && _shape.diagonal[0] >= 0) {
       drawn = 0.5 * (field(e->p[_shape.diagonal[0]]) +
                      field(e->p[_shape.diagonal[1]]));
-      error = std::max(error, fabs(field(p) - drawn));
+      error = std::max(error, fabs(f - drawn));
     }
   }
+  if(w.range.clamp && (below || above)) return 0.;
   return error;
 }
 
@@ -536,7 +547,7 @@ void adaptiveElements::_askPlugin(adaptiveWork &w, GMSH_PostPlugin *plug)
 
 int adaptiveElements::adapt(adaptiveWork &w, double tol, int numComp,
                             const double *xyz, const double *values,
-                            double range, GMSH_PostPlugin *plug,
+                            const adaptiveRange &range, GMSH_PostPlugin *plug,
                             unsigned char onSkin, std::vector<double> &out,
                             std::vector<unsigned char> *outSkin)
 {
@@ -563,11 +574,13 @@ int adaptiveElements::adapt(adaptiveWork &w, double tol, int numComp,
   w.stamp++;
   w.inXYZ = xyz;
   w.inValues = values;
+  w.range = range;
   w.visible.clear();
 
-  // The target error is relative to the range of the view. A negative one, or
-  // a view that is constant, keeps the smallest subdivision.
-  double threshold = (tol < 0. || range <= 0.) ? -1. : tol * range;
+  // The target error is relative to the range. A negative one, or an empty
+  // range (a view that is constant), keeps the smallest subdivision.
+  double size = range.max - range.min;
+  double threshold = (tol < 0. || size <= 0.) ? -1. : tol * size;
   if(threshold < 0. && !plug)
     w.visible.assign(_leaves.begin(), _leaves.end());
   else if(!plug || tol != 0.)
@@ -819,7 +832,8 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
                                  PViewDataList *out, GMSH_PostPlugin *plug,
                                  int level, int type,
                                  const std::vector<std::vector<unsigned char> > *inSkin,
-                                 std::vector<unsigned char> *outSkin)
+                                 std::vector<unsigned char> *outSkin,
+                                 const adaptiveRange &given)
 {
   int numComp = in->getNumComponents(0, 0, 0);
   if(numComp != 1 && numComp != 3 && numComp != 9) return;
@@ -847,7 +861,10 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
         elements.push_back({ent, ele});
   if(elements.empty()) return;
 
-  double range = in->getMax() - in->getMin(); // (of all the steps)
+  // (the range of the data is that of all its steps)
+  adaptiveRange range = (given.min <= given.max) ?
+                          adaptiveRange(given.min, given.max, true) :
+                          adaptiveRange(in->getMin(), in->getMax());
 
   // The elements are cut in chunks, which the threads take as they are free,
   // each with a workspace of its own (the tree is only read), into a list of
@@ -1060,8 +1077,13 @@ bool adaptiveData::_findSkin(int step,
 }
 
 void adaptiveData::changeResolution(int step, int level, double tol,
-                                    GMSH_PostPlugin *plug)
+                                    GMSH_PostPlugin *plug, double min,
+                                    double max)
 {
+  // (the range only matters if the target error does)
+  adaptiveRange range(min, max);
+  bool newRange = (tol >= 0. && (range.min != _range.min ||
+                                 range.max != _range.max));
   if(_level != level) {
     if(_points) _points->init(level);
     if(_lines) _lines->init(level);
@@ -1072,7 +1094,7 @@ void adaptiveData::changeResolution(int step, int level, double tol,
     if(_hexahedra) _hexahedra->init(level);
     if(_pyramids) _pyramids->init(level);
   }
-  if(plug || _step != step || _level != level || _tol != tol) {
+  if(plug || _step != step || _level != level || _tol != tol || newRange) {
     _outData->setDirty(true);
     // which faces of the elements are on the skin of the view, so that the
     // refined elements can tell the faces they have on it
@@ -1082,7 +1104,8 @@ void adaptiveData::changeResolution(int step, int level, double tol,
     auto add = [&](adaptiveElements *e, int type) {
       if(!e) return;
       e->addInView(tol, step, _inData, _outData, plug, level, type,
-                   skin ? &inSkin : nullptr, skin ? &outSkin[type] : nullptr);
+                   skin ? &inSkin : nullptr, skin ? &outSkin[type] : nullptr,
+                   range);
     };
     add(_points, TYPE_PNT);
     add(_lines, TYPE_LIN);
@@ -1107,7 +1130,7 @@ void adaptiveData::changeResolution(int step, int level, double tol,
   _step = step;
   _level = level;
   _tol = tol;
-
+  _range = range;
 }
 
 // The export of adapted views to VTK files, and the VTK data structure built
@@ -1236,7 +1259,8 @@ void adaptiveElements::buildMapping(const adaptiveWork &w, nodMap &myNodMap,
 // ones made so far, which number those of globalVTKData.
 void adaptiveElements::addInViewForVTK(int step, double tol, PViewData *in,
                                        adaptiveVTKWriter *writer,
-                                       bool buildStaticData, int &numPoints)
+                                       bool buildStaticData, int &numPoints,
+                                       const adaptiveRange &given)
 {
   int numComp = in->getNumComponents(0, 0, 0);
   if(numComp != 1 && numComp != 3 && numComp != 9) return;
@@ -1245,7 +1269,10 @@ void adaptiveElements::addInViewForVTK(int step, double tol, PViewData *in,
   nodMap myNodMap;
   adaptiveWork work;
   std::vector<double> xyz, values, list;
-  double range = in->getMax() - in->getMin(); // (of all the steps)
+  // (as in addInView)
+  adaptiveRange range = (given.min <= given.max) ?
+                          adaptiveRange(given.min, given.max, true) :
+                          adaptiveRange(in->getMin(), in->getMax());
 
   for(int ent = 0; ent < in->getNumEntities(step); ent++) {
     for(int ele = 0; ele < in->getNumElements(step, ent); ele++) {
@@ -1336,7 +1363,8 @@ int adaptiveData::countTotElmLev0(int step, PViewData *in)
 void adaptiveData::changeResolutionForVTK(int step, int level, double tol,
                                           int npart, bool isBinary,
                                           const std::string &guiFileName,
-                                          int useDefaultName)
+                                          int useDefaultName, double min,
+                                          double max)
 {
   // clean global VTK data structure before (re)generating it
   if(buildStaticData == true) globalVTKData::clearGlobalData();
@@ -1375,7 +1403,8 @@ void adaptiveData::changeResolutionForVTK(int step, int level, double tol,
                 _pyramids}) {
     if(!e) continue;
     e->init(level);
-    e->addInViewForVTK(step, tol, _inData, writer, buildStaticData, numPoints);
+    e->addInViewForVTK(step, tol, _inData, writer, buildStaticData, numPoints,
+                       adaptiveRange(min, max));
   }
   // (the trees no longer are the ones of the adapted view, if there is one)
   _level = -1;

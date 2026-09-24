@@ -7603,9 +7603,7 @@ double opt_view_timestep(OPT_ARGS_NUM)
         opt->timeStep = 0;
       else if(opt->timeStep < 0)
         opt->timeStep = data->getNumTimeSteps() - 1;
-      if(data->getAdaptiveData())
-        data->getAdaptiveData()->changeResolution(
-          opt->timeStep, opt->maxRecursionLevel, opt->targetError);
+      view->adapt();
       opt->currentTime = data->getTime(opt->timeStep);
     }
     if(view) view->setChanged(true);
@@ -8278,8 +8276,7 @@ double opt_view_adapt_visualization_grid(OPT_ARGS_NUM)
     opt->adaptVisualizationGrid = (int)val;
     if(data) {
       if(opt->adaptVisualizationGrid)
-        data->initAdaptiveData(opt->timeStep, opt->maxRecursionLevel,
-                               opt->targetError);
+        view->adapt();
       else
         data->destroyAdaptiveData();
       view->setChanged(true);
@@ -8304,9 +8301,8 @@ double opt_view_max_recursion_level(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->maxRecursionLevel = (int)val;
-    if(data && data->getAdaptiveData()) {
-      data->getAdaptiveData()->changeResolution(
-        opt->timeStep, opt->maxRecursionLevel, opt->targetError);
+    if(view) {
+      view->adapt();
       view->setChanged(true);
     }
   }
@@ -8327,9 +8323,8 @@ double opt_view_target_error(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->targetError = val;
-    if(data && data->getAdaptiveData()) {
-      data->getAdaptiveData()->changeResolution(
-        opt->timeStep, opt->maxRecursionLevel, opt->targetError);
+    if(view) {
+      view->adapt();
       view->setChanged(true);
     }
   }

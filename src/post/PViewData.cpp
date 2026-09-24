@@ -36,13 +36,12 @@ bool PViewData::finalize(bool computeMinMax,
   return true;
 }
 
-void PViewData::initAdaptiveData(int step, int level, double tol)
+void PViewData::initAdaptiveData()
 {
   if(!_adaptive) {
     Msg::Debug("Initializing adaptive data %p interp size=%d", this,
                _interpolation.size());
     _adaptive = new adaptiveData(this);
-    _adaptive->changeResolution(step, level, tol);
   }
 }
 
@@ -62,18 +61,18 @@ void PViewData::initAdaptiveDataLight(int step, int level, double tol)
 
 void PViewData::saveAdaptedViewForVTK(const std::string &fileName, int step,
                                       int level, double tol, int npart,
-                                      bool isBinary)
+                                      bool isBinary, double min, double max)
 {
   if(_adaptive) {
     // _adaptiveData has already been allocated from the adaptive view panel of
     // the GUI for instance.
     _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary,
-                                      fileName, 0);
+                                      fileName, 0, min, max);
   }
   else {
     initAdaptiveDataLight(step, level, tol);
     _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary,
-                                      fileName, 0);
+                                      fileName, 0, min, max);
     destroyAdaptiveData();
   }
 }

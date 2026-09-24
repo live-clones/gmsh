@@ -2522,6 +2522,8 @@ bool PView::fillClipVertexArrays()
 // They are only built again when setChanged() says the view has changed.
 bool PView::fillVertexArrays()
 {
+  // (a change of the range drawn changes the refinement, see adapt())
+  adapt();
   initPView init;
   return init(this);
 }

@@ -8372,10 +8372,7 @@ _addModelData(const int tag, const int step, const std::string &modelName,
     Msg::Error("Could not add model data");
     return;
   }
-  if(view->getOptions()->adaptVisualizationGrid)
-    d->initAdaptiveData(view->getOptions()->timeStep,
-                        view->getOptions()->maxRecursionLevel,
-                        view->getOptions()->targetError);
+  view->adapt();
   view->setChanged(true);
 #else
   Msg::Error("Views require the post-processing module");
@@ -8660,6 +8657,7 @@ GMSH_API void gmsh::view::getListData(const int tag,
     Msg::Error("Unknown view with tag %d", tag);
     return;
   }
+  if(returnAdaptive) view->adapt();
   PViewDataList *d =
     dynamic_cast<PViewDataList *>(view->getData(returnAdaptive));
   if(!d) {

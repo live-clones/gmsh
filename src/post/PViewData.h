@@ -276,16 +276,18 @@ public:
   // true if data is given at Gauss points (instead of vertices)
   virtual bool useGaussPoints() { return false; }
 
-  // initialize/destroy adaptive data
-  void initAdaptiveData(int step, int level, double tol);
+  // create/destroy adaptive data (see PView::adapt(), which refines it)
+  void initAdaptiveData();
 
   // Routines for
   // - export of adapted views to pvtu file format for parallel visualization
   //   with paraview,
   // - and/or generation of VTK data structure for ParaView plugin.
   void initAdaptiveDataLight(int step, int level, double tol);
+  // (min and max: see adaptiveData::changeResolution())
   void saveAdaptedViewForVTK(const std::string &fileName, int step, int level,
-                             double tol, int npart, bool isBinary);
+                             double tol, int npart, bool isBinary,
+                             double min = 0., double max = -1.);
 
   void destroyAdaptiveData();
 

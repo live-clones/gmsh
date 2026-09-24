@@ -186,8 +186,11 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
       if(!d->hasTimeStep(step)) continue;
       time(d);
       PViewOptions *o = v->getOptions();
+      double min, max;
+      v->getAdaptiveRange(min, max);
       d->saveAdaptedViewForVTK(name(parallel), step, o->maxRecursionLevel,
-                               o->targetError, parallel ? 0 : 1, binary);
+                               o->targetError, parallel ? 0 : 1, binary, min,
+                               max);
     }
   }
 

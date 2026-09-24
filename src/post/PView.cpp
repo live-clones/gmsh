@@ -59,9 +59,7 @@ PView::PView(int tag)
   _init(tag);
   _data = new PViewDataList();
   _options = new PViewOptions(*PViewOptions::reference());
-  if(_options->adaptVisualizationGrid)
-    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
-                            _options->targetError);
+  adapt();
 }
 
 PView::PView(PViewData *data, int tag)
@@ -69,9 +67,7 @@ PView::PView(PViewData *data, int tag)
   _init(tag);
   _data = data;
   _options = new PViewOptions(*PViewOptions::reference());
-  if(_options->adaptVisualizationGrid)
-    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
-                            _options->targetError);
+  adapt();
 }
 
 PView::PView(PView *ref, bool copyOptions, int tag)
@@ -95,9 +91,7 @@ PView::PView(PView *ref, bool copyOptions, int tag)
     _options = new PViewOptions(*ref->getOptions());
   else
     _options = new PViewOptions(*PViewOptions::reference());
-  if(_options->adaptVisualizationGrid)
-    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
-                            _options->targetError);
+  adapt();
 }
 
 PView::PView(const std::string &xname, const std::string &yname,
@@ -164,9 +158,7 @@ PView::PView(const std::string &name, const std::string &type, GModel *model,
   d->setFileName(name + ".msh");
   _data = d;
   _options = new PViewOptions(*PViewOptions::reference());
-  if(_options->adaptVisualizationGrid)
-    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
-                            _options->targetError);
+  adapt();
 }
 
 void PView::addStep(GModel *model,
@@ -257,6 +249,27 @@ PViewData *PView::getData(bool useAdaptiveIfAvailable)
     return _data;
 }
 
+void PView::getAdaptiveRange(double &min, double &max)
+{
+  min = 0.;
+  max = -1.;
+  if(_options->rangeType == PViewOptions::Custom) {
+    min = _options->customMin;
+    max = _options->customMax;
+  }
+}
+
+void PView::adapt()
+{
+  if(!_options->adaptVisualizationGrid || _data->isRemote()) return;
+  _data->initAdaptiveData();
+  double min, max;
+  getAdaptiveRange(min, max);
+  _data->getAdaptiveData()->changeResolution(
+    _options->timeStep, _options->maxRecursionLevel, _options->targetError,
+    nullptr, min, max);
+}
+
 bool PView::savesAdapted()
 {
   return CTX::instance()->post.saveAdapted && !_data->isRemote() &&
@@ -281,8 +294,10 @@ std::vector<PViewDataList *> PView::getAdaptedSteps()
     if(!_data->hasTimeStep(step)) continue;
     adaptiveData *a = new adaptiveData(_data);
     refinedToSave.push_back(a);
+    double min, max;
+    getAdaptiveRange(min, max);
     a->changeResolution(step, _options->maxRecursionLevel,
-                        _options->targetError);
+                        _options->targetError, nullptr, min, max);
     PViewDataList *l = static_cast<PViewDataList *>(a->getData());
     l->setName(_data->getName());
     l->Time.assign(1, _data->getTime(step));
@@ -387,8 +402,7 @@ void PView::combine(bool time, int how, bool remove, bool copyOptions)
           // the (empty) adaptive data created in PView() must be recreated,
           // since we added some data
           data->destroyAdaptiveData();
-          data->initAdaptiveData(opt->timeStep, opt->maxRecursionLevel,
-                                 opt->targetError);
+          p->adapt();
         }
         if(copyOptions && nds[i].options)
           p->setOptions(new PViewOptions(*nds[i].options));

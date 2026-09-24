@@ -2165,7 +2165,9 @@ StringXNumber ViewOptions_Number[] = {
     "Display size of tangent vectors (in pixels)" },
   { F|O, "TargetError" , opt_view_target_error , 1e-3 ,
     "Target error of adaptive views: the largest difference allowed between the "
-    "field and what is drawn of it, as a fraction of the range of the view (the "
+    "field and what is drawn of it, as a fraction of the range of the view: the "
+    "custom range if RangeType is 2 (the elements with values all outside of it "
+    "are then not refined), or else that of the data over all steps (the "
     "elements are refined until it is reached, down to MaxRecursionLevel; a "
     "negative value refines them all)" },
   { F|O, "TensorType" , opt_view_tensor_type , 1. ,
