@@ -479,10 +479,12 @@ double adaptiveElements::_errorOf(adaptiveWork &w,
   for(int i = 0; i < _shape.numNodes; i++) look(field(e->p[i]));
   double error = 0.;
   for(std::size_t k = _shape.numNodes; k < _shape.points.size(); k++) {
+    const adaptiveVertex *p = e->e[_shape.where[k][0]]->p[_shape.where[k][1]];
+    // (only the points on the skin, if only the skin is refined)
+    if(w.skin >= 0 && !(p->onFaces & w.skin)) continue;
     double drawn = 0.;
     for(int i : _shape.points[k]) drawn += field(e->p[i]);
     drawn /= _shape.points[k].size();
-    const adaptiveVertex *p = e->e[_shape.where[k][0]]->p[_shape.where[k][1]];
     double f = look(field(p));
     error = std::max(error, fabs(f - drawn));
     if(k + 1 == _shape.points.size() && _shape.diagonal[0] >= 0) {
@@ -509,10 +511,12 @@ void adaptiveElements::_error(adaptiveWork &w, const adaptiveElement *e,
   bool refine = _errorOf(w, e) > threshold;
   bool grandChildren = (e->e[0]->e[0] != nullptr);
   for(int i = 0; i < _shape.numChildren && grandChildren && !refine; i++)
-    refine = _errorOf(w, e->e[i]) > threshold;
+    if(_onSkin(w, e->e[i])) refine = _errorOf(w, e->e[i]) > threshold;
 
-  if(refine)
-    for(int i = 0; i < _shape.numChildren; i++) _error(w, e->e[i], threshold);
+  if(refine) {
+    for(int i = 0; i < _shape.numChildren; i++)
+      if(_onSkin(w, e->e[i])) _error(w, e->e[i], threshold);
+  }
   else
     w.visible.push_back(e);
 }
@@ -549,8 +553,9 @@ int adaptiveElements::adapt(adaptiveWork &w, double tol, int numComp,
                             const double *xyz, const double *values,
                             const adaptiveRange &range, GMSH_PostPlugin *plug,
                             unsigned char onSkin, std::vector<double> &out,
-                            std::vector<unsigned char> *outSkin)
+                            std::vector<unsigned char> *outSkin, bool skinOnly)
 {
+  if(skinOnly && !onSkin) return 0;
   std::size_t numVertices = allVertices.size();
   if(!numVertices) {
     Msg::Warning("No adapted vertices to interpolate");
@@ -575,14 +580,20 @@ int adaptiveElements::adapt(adaptiveWork &w, double tol, int numComp,
   w.inXYZ = xyz;
   w.inValues = values;
   w.range = range;
+  w.skin = skinOnly ? onSkin : -1;
   w.visible.clear();
 
   // The target error is relative to the range. A negative one, or an empty
   // range (a view that is constant), keeps the smallest subdivision.
   double size = range.max - range.min;
   double threshold = (tol < 0. || size <= 0.) ? -1. : tol * size;
-  if(threshold < 0. && !plug)
-    w.visible.assign(_leaves.begin(), _leaves.end());
+  if(threshold < 0. && !plug) {
+    if(w.skin < 0)
+      w.visible.assign(_leaves.begin(), _leaves.end());
+    else
+      for(const adaptiveElement *e : _leaves)
+        if(_onSkin(w, e)) w.visible.push_back(e);
+  }
   else if(!plug || tol != 0.)
     _error(w, &all.front(), threshold);
   if(plug) _askPlugin(w, plug);
@@ -833,7 +844,7 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
                                  int level, int type,
                                  const std::vector<std::vector<unsigned char> > *inSkin,
                                  std::vector<unsigned char> *outSkin,
-                                 const adaptiveRange &given)
+                                 const adaptiveRange &given, bool skinOnly)
 {
   int numComp = in->getNumComponents(0, 0, 0);
   if(numComp != 1 && numComp != 3 && numComp != 9) return;
@@ -880,13 +891,17 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
   std::vector<std::vector<unsigned char> > skins(numChunks);
   std::vector<std::size_t> num(numChunks, 0);
   bool skin = (inSkin && outSkin && !polytopes);
+  // (only the volumes have a skin)
+  skinOnly = skinOnly && skin && !plug &&
+             (_shape.type == TYPE_TET || _shape.type == TYPE_HEX ||
+              _shape.type == TYPE_PRI || _shape.type == TYPE_PYR);
 
   // All the last elements of the tree are kept if the target error is
   // negative: how much each chunk adds is known, which saves growing the
   // lists (a level or two down, the refined view is what takes the memory).
   auto first = [&](std::size_t c) { return elements.size() * c / numChunks; };
   std::size_t each = 0;
-  if(tol < 0. && !plug && !polytopes)
+  if(tol < 0. && !plug && !polytopes && !skinOnly)
     each = _leaves.size() * _shape.numNodes * (3 + numComp);
 
 #pragma omp parallel num_threads(nthreads)
@@ -902,6 +917,7 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
           num[c] += _addPolytope(level, step, in, ent, ele, numComp, lists[c]);
           continue;
         }
+        if(skinOnly && !(*inSkin)[ent][ele]) continue;
         readElement(in, step, ent, ele, numComp, xyz, values);
         if((int)xyz.size() != 3 * _numNodes ||
            (int)values.size() != numComp * _numVals) {
@@ -910,7 +926,7 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
         }
         num[c] += adapt(work, tol, numComp, &xyz[0], &values[0], range, plug,
                         skin ? (*inSkin)[ent][ele] : 0, lists[c],
-                        skin ? &skins[c] : nullptr);
+                        skin ? &skins[c] : nullptr, skinOnly);
       }
     }
   }
@@ -978,7 +994,8 @@ int adaptiveElements::_addPolytope(int level, int step, PViewData *in, int ent,
 
 
 adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
-  : _step(-1), _level(-1), _tol(-1.), _inData(data), _points(nullptr),
+  : _step(-1), _level(-1), _tol(-1.), _skinAsked(false), _skinOnly(false),
+    _inData(data), _points(nullptr),
     _lines(nullptr), _triangles(nullptr), _quadrangles(nullptr),
     _tetrahedra(nullptr), _hexahedra(nullptr), _prisms(nullptr),
     _pyramids(nullptr), _polygons(nullptr), _polyhedra(nullptr)
@@ -1078,7 +1095,7 @@ bool adaptiveData::_findSkin(int step,
 
 void adaptiveData::changeResolution(int step, int level, double tol,
                                     GMSH_PostPlugin *plug, double min,
-                                    double max)
+                                    double max, bool skinOnly)
 {
   // (the range only matters if the target error does)
   adaptiveRange range(min, max);
@@ -1094,18 +1111,20 @@ void adaptiveData::changeResolution(int step, int level, double tol,
     if(_hexahedra) _hexahedra->init(level);
     if(_pyramids) _pyramids->init(level);
   }
-  if(plug || _step != step || _level != level || _tol != tol || newRange) {
+  if(plug || _step != step || _level != level || _tol != tol || newRange ||
+     skinOnly != _skinAsked) {
     _outData->setDirty(true);
     // which faces of the elements are on the skin of the view, so that the
     // refined elements can tell the faces they have on it
     std::vector<std::vector<unsigned char> > inSkin;
     std::map<int, std::vector<unsigned char> > outSkin;
     bool skin = _findSkin(step, inSkin);
+    _skinOnly = skinOnly && skin && !plug;
     auto add = [&](adaptiveElements *e, int type) {
       if(!e) return;
       e->addInView(tol, step, _inData, _outData, plug, level, type,
                    skin ? &inSkin : nullptr, skin ? &outSkin[type] : nullptr,
-                   range);
+                   range, _skinOnly);
     };
     add(_points, TYPE_PNT);
     add(_lines, TYPE_LIN);
@@ -1131,6 +1150,7 @@ void adaptiveData::changeResolution(int step, int level, double tol,
   _level = level;
   _tol = tol;
   _range = range;
+  _skinAsked = skinOnly;
 }
 
 // The export of adapted views to VTK files, and the VTK data structure built

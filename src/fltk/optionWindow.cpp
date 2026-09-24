@@ -802,6 +802,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
     opt_view_max_recursion_level(current, GMSH_GET, 0);
   double adapt_vis_grid =
     opt_view_adapt_visualization_grid(current, GMSH_GET, 0);
+  double adapt_skin_only = opt_view_adapt_skin_only(current, GMSH_GET, 0);
   double target_error = opt_view_target_error(current, GMSH_GET, 0);
   double show_element = opt_view_show_element(current, GMSH_GET, 0);
   double draw_skin_only = opt_view_draw_skin_only(current, GMSH_GET, 0);
@@ -985,6 +986,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.butt[0]->value();
       if(force || (val != adapt_vis_grid))
         opt_view_adapt_visualization_grid(i, GMSH_SET, val);
+
+      val = o->view.butt[39]->value();
+      if(force || (val != adapt_skin_only))
+        opt_view_adapt_skin_only(i, GMSH_SET, val);
 
       val = o->view.butt[38]->value();
       if(force || (val != saturate_values))
@@ -3344,11 +3349,19 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[32]->when(FL_WHEN_RELEASE);
       view.value[32]->callback(view_options_ok_cb);
 
-      view.butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH,
+      view.butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH,
+                                         width / 2 - 2 * WB, BH,
                                          "Adapt visualization grid");
       view.butt[0]->tooltip("View.AdaptVisualizationGrid");
       view.butt[0]->type(FL_TOGGLE_BUTTON);
       view.butt[0]->callback(view_options_ok_cb, (void *)"view_adaptive");
+
+      view.butt[39] = new Fl_Check_Button(L + width / 2, 2 * WB + 9 * BH,
+                                          width / 2 - 2 * WB, BH,
+                                          "Only the skin if drawn so");
+      view.butt[39]->tooltip("View.AdaptSkinOnly");
+      view.butt[39]->type(FL_TOGGLE_BUTTON);
+      view.butt[39]->callback(view_options_ok_cb);
 
       view.push[5] = new Fl_Button(L + 2 * WB, 2 * WB + 10 * BH, sw, BH, "-");
       view.push[5]->callback(view_options_max_recursion_cb, (void *)"-");
@@ -4533,6 +4546,7 @@ void optionWindow::activate(const char *what)
   }
   else if(!strcmp(what, "view_adaptive")) {
     if(view.butt[0]->value()) {
+      view.butt[39]->activate();
       view.push[5]->activate();
       view.push[6]->activate();
       view.value[33]->activate();
@@ -4540,6 +4554,7 @@ void optionWindow::activate(const char *what)
       view.label[1]->activate();
     }
     else {
+      view.butt[39]->deactivate();
       view.push[5]->deactivate();
       view.push[6]->deactivate();
       view.value[33]->deactivate();

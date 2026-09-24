@@ -100,7 +100,7 @@ public:
   double genRaiseFactor;
   std::string genRaiseX, genRaiseY, genRaiseZ;
   mathEvaluator *genRaiseEvaluator;
-  int adaptVisualizationGrid, maxRecursionLevel;
+  int adaptVisualizationGrid, maxRecursionLevel, adaptSkinOnly;
   double targetError;
   int clip; // status of clip planes (bit array)
   int forceNumComponents, componentMap[9];
@@ -138,6 +138,18 @@ public:
   // the range of the values of data the options ask for: the custom one, that
   // of the current time step, or that of all the steps
   void getRange(PViewData *data, double &min, double &max);
+  // are the faces drawn only those on the skin (DrawSkinOnly, with the values
+  // drawn on them)? and is nothing else drawn of the volumes, so that they can
+  // be refined only there (AdaptSkinOnly)?
+  bool skinOnly() const
+  {
+    return drawSkinOnly && boundary <= 0 &&
+           (intervalsType == Continuous || intervalsType == Discrete);
+  }
+  bool adaptsSkinOnly() const
+  {
+    return adaptSkinOnly && skinOnly() && (!showElement || drawSkinEdgesOnly);
+  }
   // create math evaluator for general raise option
   void createGeneralRaise();
   // return true if one should not draw elements with type type

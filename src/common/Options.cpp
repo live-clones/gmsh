@@ -7650,7 +7650,9 @@ double opt_view_min(OPT_ARGS_NUM)
   GET_VIEWd(0.);
   if(!data) return 0.;
   // use adaptive data if available
-  return view->getData(true)->getMin();
+  double min = view->getData(true)->getMin(), max = min;
+  view->widenAdaptedRange(min, max);
+  return min;
 #else
   return 0.;
 #endif
@@ -7662,7 +7664,9 @@ double opt_view_max(OPT_ARGS_NUM)
   GET_VIEWd(0.);
   if(!data) return 0.;
   // use adaptive data if available
-  return view->getData(true)->getMax();
+  double max = view->getData(true)->getMax(), min = max;
+  view->widenAdaptedRange(min, max);
+  return max;
 #else
   return 0.;
 #endif
@@ -8290,6 +8294,24 @@ double opt_view_adapt_visualization_grid(OPT_ARGS_NUM)
   }
 #endif
   return opt->adaptVisualizationGrid;
+#else
+  return 0.;
+#endif
+}
+
+double opt_view_adapt_skin_only(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    opt->adaptSkinOnly = (int)val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    FlGui::instance()->options->view.butt[39]->value(opt->adaptSkinOnly);
+#endif
+  return opt->adaptSkinOnly;
 #else
   return 0.;
 #endif

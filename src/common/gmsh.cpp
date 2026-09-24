@@ -8657,7 +8657,7 @@ GMSH_API void gmsh::view::getListData(const int tag,
     Msg::Error("Unknown view with tag %d", tag);
     return;
   }
-  if(returnAdaptive) view->adapt();
+  if(returnAdaptive) view->adapt(true);
   PViewDataList *d =
     dynamic_cast<PViewDataList *>(view->getData(returnAdaptive));
   if(!d) {

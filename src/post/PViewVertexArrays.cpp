@@ -394,12 +394,7 @@ static bool skinOutlines(PViewOptions *opt)
 }
 
 // does this element draw its own faces, and only the ones on the skin?
-static bool skinOnly(PViewOptions *opt)
-{
-  return opt->drawSkinOnly && opt->boundary <= 0 &&
-         (opt->intervalsType == PViewOptions::Continuous ||
-          opt->intervalsType == PViewOptions::Discrete);
-}
+static bool skinOnly(PViewOptions *opt) { return opt->skinOnly(); }
 
 // With smoothed normals, the normal at a point is the average of those of
 // the faces through it: gathered by the pass that only collects them (pre),
@@ -2405,6 +2400,8 @@ public:
     // (not perfect for multi-step adaptive views, which do not know the
     // range of the other steps)
     opt->getRange(data, opt->tmpMin, opt->tmpMax);
+    if(opt->rangeType != PViewOptions::Custom)
+      p->widenAdaptedRange(opt->tmpMin, opt->tmpMax);
 
     p->va_points = new VertexArray(1, _estimateNumPoints(p));
     p->va_lines = new VertexArray(2, _estimateNumLines(p));

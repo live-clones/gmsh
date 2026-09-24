@@ -176,6 +176,7 @@ PView *GMSH_PostPlugin::getView(int index, PView *view)
 PViewData *GMSH_PostPlugin::getPossiblyAdaptiveData(PView *view)
 {
   if(!view) return nullptr;
+  view->adaptWhole();
   PViewData *data = view->getData();
   if(data->getAdaptiveData() && data->getNumTimeSteps() > 1)
     Msg::Warning(

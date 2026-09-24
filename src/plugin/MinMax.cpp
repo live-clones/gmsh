@@ -35,7 +35,7 @@ PView *GMSH_MinMaxPlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewData *data1 = v1->getData(true);
+  PViewData *data1 = getPossiblyAdaptiveData(v1);
   PView *vMin = new PView();
   PView *vMax = new PView();
   PViewDataList *dataMin = getDataList(vMin);

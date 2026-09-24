@@ -93,7 +93,7 @@ PView *GMSH_ProbePlugin::execute(PView *v)
   PViewDataList *data2 = getDataList(v2);
 
   // the data the search structure is built on: adapted if it can be
-  PViewData *data1 = v1->getData(true);
+  PViewData *data1 = getPossiblyAdaptiveData(v1);
   int numSteps = data1->getNumTimeSteps();
   double *val = new double[9 * numSteps];
 

@@ -170,10 +170,18 @@ public:
 
   // create the adaptive data of the view if it is drawn adapted
   // (View.AdaptVisualizationGrid), and refine it as the options say: the time
-  // step, the recursion level, the target error, and the range drawn if it is
-  // a custom one, which the error is then relative to (nothing is done if it
-  // is already refined so)
-  void adapt();
+  // step, the recursion level, the target error, the range drawn if it is a
+  // custom one, which the error is then relative to, and only the skin of the
+  // volumes if nothing else is drawn of them (View.AdaptSkinOnly), unless the
+  // whole view is asked for (nothing is done if it is already refined so)
+  void adapt(bool whole = false);
+  // refine the whole view if only its skin is, for what reads the refined data
+  // as a whole (plugins, probes, the API); the next drawing refines the skin
+  // again
+  void adaptWhole();
+  // widen a range of the refined data to the values inside the volumes (those
+  // of the nodes, at the time step drawn) if only the skin is refined
+  void widenAdaptedRange(double &min, double &max);
   // the range the target error is relative to, as adaptiveData takes it (the
   // custom range, or else an empty one: that of the data)
   void getAdaptiveRange(double &min, double &max);

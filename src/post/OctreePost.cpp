@@ -108,7 +108,9 @@ OctreePost::~OctreePost()
 
 OctreePost::OctreePost(PView *v)
 {
-  _create(v->getData(true)); // use adaptive data if available
+  // (the adaptive data if available, refined as a whole)
+  v->adaptWhole();
+  _create(v->getData(true));
 }
 
 OctreePost::OctreePost(PViewData *data) { _create(data); }

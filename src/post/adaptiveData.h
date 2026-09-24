@@ -273,10 +273,16 @@ public:
   int stamp, numComp;
   const double *inXYZ, *inValues; // the element, as given to adapt()
   adaptiveRange range; // as given to adapt()
+  // the faces of the element on the skin, a bit each, when only they are
+  // refined (-1: the whole element)
+  int skin;
   std::vector<int> evaluated, located;
   std::vector<double> values, norm, xyz;
   std::vector<const adaptiveElement *> visible;
-  adaptiveWork() : stamp(0), numComp(0), inXYZ(nullptr), inValues(nullptr) {}
+  adaptiveWork()
+    : stamp(0), numComp(0), inXYZ(nullptr), inValues(nullptr), skin(-1)
+  {
+  }
 };
 
 // The elements of one kind of a view
@@ -294,6 +300,14 @@ private:
   void _evaluate(adaptiveWork &w, const adaptiveVertex *p) const;
   void _locate(adaptiveWork &w, const adaptiveVertex *p) const;
   double _errorOf(adaptiveWork &w, const adaptiveElement *e) const;
+  // does the element have a face on the skin, if only the skin is refined?
+  static bool _onSkin(const adaptiveWork &w, const adaptiveElement *e)
+  {
+    if(w.skin < 0) return true;
+    for(int f = 0; f < 6; f++)
+      if(e->onFace[f] >= 0 && (w.skin & (1 << e->onFace[f]))) return true;
+    return false;
+  }
   void _error(adaptiveWork &w, const adaptiveElement *e,
               double threshold) const;
   void _askPlugin(adaptiveWork &w, GMSH_PostPlugin *plug);
@@ -323,11 +337,14 @@ public:
   // faces to outSkin); returns their number. The tree is only read, unless
   // there is a plugin: several threads can adapt elements at the same time,
   // each with its own workspace.
-  // (range: that of the values the target error is relative to)
+  // (range: that of the values the target error is relative to; skinOnly:
+  // refine only the faces on the skin, the elements with a face there being
+  // kept, and the error being looked at on them)
   int adapt(adaptiveWork &w, double tol, int numComp, const double *xyz,
             const double *values, const adaptiveRange &range,
             GMSH_PostPlugin *plug, unsigned char onSkin,
-            std::vector<double> &out, std::vector<unsigned char> *outSkin);
+            std::vector<double> &out, std::vector<unsigned char> *outSkin,
+            bool skinOnly = false);
   // adapt all the elements of this kind in the input view and add the refined
   // elements in the output view (we will remove this when we switch to true
   // on-the-fly local refinement in drawPost()); polygons and polyhedra are
@@ -340,7 +357,8 @@ public:
                  GMSH_PostPlugin *plug = nullptr, int level = 0, int type = 0,
                  const std::vector<std::vector<unsigned char> > *inSkin = nullptr,
                  std::vector<unsigned char> *outSkin = nullptr,
-                 const adaptiveRange &range = adaptiveRange());
+                 const adaptiveRange &range = adaptiveRange(),
+                 bool skinOnly = false);
 
   // Routines for
   // - export of adapted views to pvtu file format for parallel visualization
@@ -367,6 +385,8 @@ private:
   int _step, _level;
   double _tol;
   adaptiveRange _range; // (as given)
+  // only the skin refined (as asked, and as done: not without a skin)
+  bool _skinAsked, _skinOnly;
   PViewData *_inData;
   PViewDataList *_outData;
   adaptiveElements *_points, *_lines, *_triangles, *_quadrangles;
@@ -397,9 +417,12 @@ public:
   PViewData *getData() { return (PViewData *)_outData; }
   // (min and max: the range the target error is relative to, if min is not
   // above max, e.g. the custom range of the view; see adaptiveRange)
+  // (skinOnly: refine only the faces of the volumes on the skin of the view,
+  // for a view that only draws them)
   void changeResolution(int step, int level, double tol,
                         GMSH_PostPlugin *plug = nullptr, double min = 0.,
-                        double max = -1.);
+                        double max = -1., bool skinOnly = false);
+  bool isSkinOnly() const { return _skinOnly; }
   int countTotElmLev0(int step, PViewData *in);
   void changeResolutionForVTK(int step, int level, double tol, int npart = 1,
                               bool isBinary = true,

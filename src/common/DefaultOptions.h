@@ -1902,6 +1902,10 @@ StringXNumber PostProcessingOptions_Number[] = {
 StringXNumber ViewOptions_Number[] = {
   { F|O, "AbscissaRangeType" , opt_view_abscissa_range_type , 1 ,
     "Ascissa scale range type (1: default, 2: custom)" },
+  { F|O, "AdaptSkinOnly" , opt_view_adapt_skin_only , 1. ,
+    "Refine only the skin of the volumes of an adaptive view when only the skin "
+    "is drawn (DrawSkinOnly): what reads the refined view as a whole (plugins, "
+    "probes, the API) refines it all" },
   { F|O, "AdaptVisualizationGrid" , opt_view_adapt_visualization_grid , 0. ,
     "Use adaptive visualization grid (for high-order elements)?" },
   { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 30.0 ,

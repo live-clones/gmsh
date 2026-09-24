@@ -45,7 +45,7 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
-  PViewData *data1 = v1->getData(true);
+  PViewData *data1 = getPossiblyAdaptiveData(v1);
 
   if(data1->hasMultipleMeshes()) {
     Msg::Error("HarmonicToTime plugin cannot be applied to multi-mesh views");

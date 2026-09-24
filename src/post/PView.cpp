@@ -259,7 +259,7 @@ void PView::getAdaptiveRange(double &min, double &max)
   }
 }
 
-void PView::adapt()
+void PView::adapt(bool whole)
 {
   if(!_options->adaptVisualizationGrid || _data->isRemote()) return;
   _data->initAdaptiveData();
@@ -267,7 +267,21 @@ void PView::adapt()
   getAdaptiveRange(min, max);
   _data->getAdaptiveData()->changeResolution(
     _options->timeStep, _options->maxRecursionLevel, _options->targetError,
-    nullptr, min, max);
+    nullptr, min, max, !whole && _options->adaptsSkinOnly());
+}
+
+void PView::widenAdaptedRange(double &min, double &max)
+{
+  adaptiveData *a = _data->getAdaptiveData();
+  if(!a || !a->isSkinOnly()) return;
+  min = std::min(min, _data->getMin(_options->timeStep));
+  max = std::max(max, _data->getMax(_options->timeStep));
+}
+
+void PView::adaptWhole()
+{
+  adaptiveData *a = _data->getAdaptiveData();
+  if(a && a->isSkinOnly()) adapt(true);
 }
 
 bool PView::savesAdapted()
