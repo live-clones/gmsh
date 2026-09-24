@@ -1363,14 +1363,17 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
         opt_view_color_background2d(
           i, GMSH_SET, opt_view_color_background2d(current, GMSH_GET, 0));
       }
+    }
+  }
 
-      // colorbar window
-
-      if(force || (i != current)) {
-        ColorTable_Copy(&PView::list[current]->getOptions()->colorTable);
-        ColorTable_Paste(&PView::list[i]->getOptions()->colorTable);
-        PView::list[i]->setChanged(true);
-      }
+  // colorbar window: copied once the loop above has set the current view,
+  // or the views before it get its old map back
+  for(int i = 0; i < (int)PView::list.size(); i++) {
+    if((force && i == current) ||
+       (i != current && FlGui::instance()->options->browser->selected(i + 6))) {
+      ColorTable_Copy(&PView::list[current]->getOptions()->colorTable);
+      ColorTable_Paste(&PView::list[i]->getOptions()->colorTable);
+      PView::list[i]->setChanged(true);
     }
   }
 
@@ -3371,9 +3374,9 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[34]->tooltip("View.TargetError");
       view.value[34]->align(FL_ALIGN_RIGHT);
       // (a fraction of the range of the view; negative: refine everything)
-      view.value[34]->minimum(-1.e-3);
-      view.value[34]->maximum(0.1);
-      if(CTX::instance()->inputScrolling) view.value[34]->step(1.e-3);
+      view.value[34]->minimum(-1.e-6);
+      view.value[34]->maximum(1e-2);
+      if(CTX::instance()->inputScrolling) view.value[34]->step(1.e-6);
       view.value[34]->when(FL_WHEN_RELEASE);
       view.value[34]->callback(view_options_ok_cb);
 
