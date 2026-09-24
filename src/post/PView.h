@@ -15,6 +15,7 @@
 
 class PViewData;
 class PViewDataList;
+class adaptiveData;
 class PViewOptions;
 class VertexArray;
 class smooth_normals;
@@ -42,6 +43,12 @@ private:
   PViewOptions *_options;
   // the data
   PViewData *_data;
+  // for a view whose skin alone is refined, the elements the clipping planes
+  // cut, refined apart (and read in place of its adaptive data while what
+  // the planes add is built)
+  adaptiveData *_clipAdaptive;
+  PViewData *_clipLayer;
+  void _deleteClipAdaptive();
   // initialize private stuff
   void _init(int tag = -1);
 
@@ -84,7 +91,11 @@ public:
 
   // get/set the view data
   PViewData *getData(bool useAdaptiveIfAvailable = false);
-  void setData(PViewData *val) { _data = val; }
+  void setData(PViewData *val)
+  {
+    _deleteClipAdaptive();
+    _data = val;
+  }
 
   // get the view tag (unique and immutable)
   int getTag() { return _tag; }
@@ -175,6 +186,12 @@ public:
   // volumes if nothing else is drawn of them (View.AdaptSkinOnly), unless the
   // whole view is asked for (nothing is done if it is already refined so)
   void adapt(bool whole = false);
+  // for a view whose skin alone is refined, refine apart the elements the
+  // clipping planes cut, which what the planes add is built from (see
+  // useClipLayer); false if the view is not refined so
+  bool refineClipLayer();
+  // read the elements refined apart in place of the adaptive data, or stop
+  void useClipLayer(bool use);
   // refine the whole view if only its skin is, for what reads the refined data
   // as a whole (plugins, probes, the API); the next drawing refines the skin
   // again

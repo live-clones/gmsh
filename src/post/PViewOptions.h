@@ -150,6 +150,17 @@ public:
   {
     return adaptSkinOnly && skinOnly() && (!showElement || drawSkinEdgesOnly);
   }
+  // do the options move the nodes drawn from where the data puts them?
+  bool movesNodes() const
+  {
+    for(int i = 0; i < 3; i++) {
+      if(offset[i] || raise[i]) return true;
+      for(int j = 0; j < 3; j++)
+        if(transform[i][j] != (i == j ? 1. : 0.)) return true;
+    }
+    return explode != 1. || normalRaise || useGenRaise ||
+           vectorType == Displacement;
+  }
   // create math evaluator for general raise option
   void createGeneralRaise();
   // return true if one should not draw elements with type type

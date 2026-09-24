@@ -2477,6 +2477,17 @@ bool PView::fillClipVertexArrays()
                !ctx->clipOnlyDrawIntersectingVolume;
   if(!caps && !whole) return true;
 
+  // a view whose skin alone is refined builds this from the elements the
+  // planes cut, refined apart, and read in place of its adaptive data
+  struct layer {
+    PView *p;
+    bool used;
+    layer(PView *v) : p(v), used(v->refineClipLayer()) { p->useClipLayer(used); }
+    ~layer() { p->useClipLayer(false); }
+  } clipLayer(this);
+  // (its spheres are those of the elements refined apart before)
+  if(clipLayer.used) _viewSpheres.erase(this);
+
   PViewData *data = getData(true);
   if(!data || data->getDirty() || !data->getNumTimeSteps()) return true;
 

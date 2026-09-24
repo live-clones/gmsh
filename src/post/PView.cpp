@@ -16,6 +16,7 @@
 #include "GmshConfig.h"
 #include "OwnerCache.h"
 #include "Context.h"
+#include "ClipPlanes.h"
 
 int PView::_globalTag = 1;
 std::vector<PView *> PView::list;
@@ -38,6 +39,8 @@ void PView::_init(int tag)
   va_points = va_lines = va_triangles = va_vectors = va_ellipses = nullptr;
   va_clip_lines = va_clip_triangles = nullptr;
   normals = nullptr;
+  _clipAdaptive = nullptr;
+  _clipLayer = nullptr;
 
   for(std::size_t i = 0; i < list.size(); i++) {
     if(list[i]->getTag() == _tag) {
@@ -175,6 +178,7 @@ void PView::addStep(GModel *model,
 PView::~PView()
 {
   deleteVertexArrays();
+  _deleteClipAdaptive();
   // what the drawing keeps for this view (its glyphs, its clip token) goes
   // with it
   OwnerCacheBase::release(this);
@@ -243,6 +247,7 @@ void PView::setOptions(PViewOptions *val)
 
 PViewData *PView::getData(bool useAdaptiveIfAvailable)
 {
+  if(useAdaptiveIfAvailable && _clipLayer) return _clipLayer;
   if(useAdaptiveIfAvailable && _data->getAdaptiveData() && !_data->isRemote())
     return _data->getAdaptiveData()->getData();
   else
@@ -259,21 +264,81 @@ void PView::getAdaptiveRange(double &min, double &max)
   }
 }
 
+void PView::_deleteClipAdaptive()
+{
+  if(_clipAdaptive) delete _clipAdaptive;
+  _clipAdaptive = nullptr;
+  _clipLayer = nullptr;
+}
+
+// the elements the clipping planes of a view cut
+class planesSelection : public adaptiveSelection {
+private:
+  int _mask;
+
+public:
+  planesSelection(int mask) : _mask(mask) {}
+  bool keeps(int n, const double *x, const double *y,
+             const double *z) const override
+  {
+    // (as the clipping code tells them)
+    return clipPlanes::cuts(_mask, n, [&](int j, int k) {
+      return k == 0 ? x[j] : k == 1 ? y[j] : z[j];
+    });
+  }
+};
+
 void PView::adapt(bool whole)
 {
   if(!_options->adaptVisualizationGrid || _data->isRemote()) return;
   _data->initAdaptiveData();
   double min, max;
   getAdaptiveRange(min, max);
+  bool skin = !whole && _options->adaptsSkinOnly();
+  // Where the clipping planes cut, what is drawn is refined apart (see
+  // refineClipLayer()); where they only leave the cut elements, these are
+  // what is refined. Not if the options move the nodes, which the planes are
+  // compared with: everything is then refined.
+  CTX *ctx = CTX::instance();
+  bool clipped = skin && _options->clip && activePlanes(_options->clip).num();
+  bool cutOnly = clipped && ctx->clipWholeElements &&
+                 ctx->clipOnlyDrawIntersectingVolume;
+  bool apart = clipped && (ctx->clipCapping || ctx->clipWholeElements);
+  if((cutOnly || apart) && _options->movesNodes()) skin = false;
+  planesSelection cut(_options->clip);
+  bool select = cutOnly && skin;
   _data->getAdaptiveData()->changeResolution(
     _options->timeStep, _options->maxRecursionLevel, _options->targetError,
-    nullptr, min, max, !whole && _options->adaptsSkinOnly());
+    nullptr, min, max, skin && !select, select ? &cut : nullptr);
+}
+
+void PView::useClipLayer(bool use)
+{
+  _clipLayer = (use && _clipAdaptive) ? _clipAdaptive->getData() : nullptr;
+}
+
+bool PView::refineClipLayer()
+{
+  adaptiveData *a = _data->getAdaptiveData();
+  if(!a || !a->isSkinOnly()) {
+    _deleteClipAdaptive();
+    return false;
+  }
+  if(!_clipAdaptive) _clipAdaptive = new adaptiveData(_data);
+  double min, max;
+  getAdaptiveRange(min, max);
+  planesSelection cut(_options->clip);
+  _clipAdaptive->changeResolution(_options->timeStep,
+                                  _options->maxRecursionLevel,
+                                  _options->targetError, nullptr, min, max,
+                                  false, &cut);
+  return true;
 }
 
 void PView::widenAdaptedRange(double &min, double &max)
 {
   adaptiveData *a = _data->getAdaptiveData();
-  if(!a || !a->isSkinOnly()) return;
+  if(!a || !a->isPartial()) return;
   min = std::min(min, _data->getMin(_options->timeStep));
   max = std::max(max, _data->getMax(_options->timeStep));
 }
@@ -281,7 +346,7 @@ void PView::widenAdaptedRange(double &min, double &max)
 void PView::adaptWhole()
 {
   adaptiveData *a = _data->getAdaptiveData();
-  if(a && a->isSkinOnly()) adapt(true);
+  if(a && a->isPartial()) adapt(true);
 }
 
 bool PView::savesAdapted()

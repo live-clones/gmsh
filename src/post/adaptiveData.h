@@ -250,6 +250,17 @@ public:
 
 class adaptiveVTKWriter; // (in adaptiveData.cpp)
 
+// What is refined, besides what the error asks for: the elements, and in
+// them the refined elements, kept from the positions of their nodes in the
+// model (e.g. those the clipping planes cut); called by several threads at
+// once
+class adaptiveSelection {
+public:
+  virtual ~adaptiveSelection() {}
+  virtual bool keeps(int numNodes, const double *x, const double *y,
+                     const double *z) const = 0;
+};
+
 // The values the target error is relative to: the range of the data (all the
 // steps), or a range given, as the custom range of a view, outside of which
 // the field is drawn as the nearest end of the range, or not at all: an
@@ -274,13 +285,15 @@ public:
   const double *inXYZ, *inValues; // the element, as given to adapt()
   adaptiveRange range; // as given to adapt()
   // the faces of the element on the skin, a bit each, when only they are
-  // refined (-1: the whole element)
+  // refined (-1: the whole element), and what else selects what is refined
   int skin;
+  const adaptiveSelection *selection;
   std::vector<int> evaluated, located;
   std::vector<double> values, norm, xyz;
   std::vector<const adaptiveElement *> visible;
   adaptiveWork()
-    : stamp(0), numComp(0), inXYZ(nullptr), inValues(nullptr), skin(-1)
+    : stamp(0), numComp(0), inXYZ(nullptr), inValues(nullptr), skin(-1),
+      selection(nullptr)
   {
   }
 };
@@ -300,7 +313,8 @@ private:
   void _evaluate(adaptiveWork &w, const adaptiveVertex *p) const;
   void _locate(adaptiveWork &w, const adaptiveVertex *p) const;
   double _errorOf(adaptiveWork &w, const adaptiveElement *e) const;
-  // does the element have a face on the skin, if only the skin is refined?
+  // does the element have a face on the skin, if only the skin is refined,
+  // and is it selected, if there is a selection?
   static bool _onSkin(const adaptiveWork &w, const adaptiveElement *e)
   {
     if(w.skin < 0) return true;
@@ -308,6 +322,7 @@ private:
       if(e->onFace[f] >= 0 && (w.skin & (1 << e->onFace[f]))) return true;
     return false;
   }
+  bool _kept(adaptiveWork &w, const adaptiveElement *e) const;
   void _error(adaptiveWork &w, const adaptiveElement *e,
               double threshold) const;
   void _askPlugin(adaptiveWork &w, GMSH_PostPlugin *plug);
@@ -344,7 +359,8 @@ public:
             const double *values, const adaptiveRange &range,
             GMSH_PostPlugin *plug, unsigned char onSkin,
             std::vector<double> &out, std::vector<unsigned char> *outSkin,
-            bool skinOnly = false);
+            bool skinOnly = false,
+            const adaptiveSelection *selection = nullptr);
   // adapt all the elements of this kind in the input view and add the refined
   // elements in the output view (we will remove this when we switch to true
   // on-the-fly local refinement in drawPost()); polygons and polyhedra are
@@ -358,7 +374,8 @@ public:
                  const std::vector<std::vector<unsigned char> > *inSkin = nullptr,
                  std::vector<unsigned char> *outSkin = nullptr,
                  const adaptiveRange &range = adaptiveRange(),
-                 bool skinOnly = false);
+                 bool skinOnly = false,
+                 const adaptiveSelection *selection = nullptr);
 
   // Routines for
   // - export of adapted views to pvtu file format for parallel visualization
@@ -385,8 +402,9 @@ private:
   int _step, _level;
   double _tol;
   adaptiveRange _range; // (as given)
-  // only the skin refined (as asked, and as done: not without a skin)
-  bool _skinAsked, _skinOnly;
+  // only the skin refined (as asked, and as done: not without a skin), and
+  // what was refined selected
+  bool _skinAsked, _skinOnly, _selected;
   PViewData *_inData;
   PViewDataList *_outData;
   adaptiveElements *_points, *_lines, *_triangles, *_quadrangles;
@@ -418,11 +436,15 @@ public:
   // (min and max: the range the target error is relative to, if min is not
   // above max, e.g. the custom range of the view; see adaptiveRange)
   // (skinOnly: refine only the faces of the volumes on the skin of the view,
-  // for a view that only draws them)
+  // for a view that only draws them; selection: refine only what it keeps,
+  // which is done again at each call)
   void changeResolution(int step, int level, double tol,
                         GMSH_PostPlugin *plug = nullptr, double min = 0.,
-                        double max = -1., bool skinOnly = false);
+                        double max = -1., bool skinOnly = false,
+                        const adaptiveSelection *selection = nullptr);
   bool isSkinOnly() const { return _skinOnly; }
+  // is only a part of the view refined (the skin, or a selection)?
+  bool isPartial() const { return _skinOnly || _selected; }
   int countTotElmLev0(int step, PViewData *in);
   void changeResolutionForVTK(int step, int level, double tol, int npart = 1,
                               bool isBinary = true,

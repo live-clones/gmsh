@@ -497,6 +497,22 @@ double adaptiveElements::_errorOf(adaptiveWork &w,
   return error;
 }
 
+bool adaptiveElements::_kept(adaptiveWork &w, const adaptiveElement *e) const
+{
+  if(!_onSkin(w, e)) return false;
+  if(!w.selection) return true;
+  int n = _shape.numNodes;
+  double x[8], y[8], z[8];
+  for(int i = 0; i < n; i++) {
+    _locate(w, e->p[i]);
+    const double *p = &w.xyz[3 * e->p[i]->index];
+    x[i] = p[0];
+    y[i] = p[1];
+    z[i] = p[2];
+  }
+  return w.selection->keeps(n, x, y, z);
+}
+
 // An element is kept if its error is below the threshold, and the errors of
 // its children too: a field can happen to be right at the few points looked
 // at and wrong in between. The elements kept are added to w.visible.
@@ -511,11 +527,11 @@ void adaptiveElements::_error(adaptiveWork &w, const adaptiveElement *e,
   bool refine = _errorOf(w, e) > threshold;
   bool grandChildren = (e->e[0]->e[0] != nullptr);
   for(int i = 0; i < _shape.numChildren && grandChildren && !refine; i++)
-    if(_onSkin(w, e->e[i])) refine = _errorOf(w, e->e[i]) > threshold;
+    if(_kept(w, e->e[i])) refine = _errorOf(w, e->e[i]) > threshold;
 
   if(refine) {
     for(int i = 0; i < _shape.numChildren; i++)
-      if(_onSkin(w, e->e[i])) _error(w, e->e[i], threshold);
+      if(_kept(w, e->e[i])) _error(w, e->e[i], threshold);
   }
   else
     w.visible.push_back(e);
@@ -553,9 +569,13 @@ int adaptiveElements::adapt(adaptiveWork &w, double tol, int numComp,
                             const double *xyz, const double *values,
                             const adaptiveRange &range, GMSH_PostPlugin *plug,
                             unsigned char onSkin, std::vector<double> &out,
-                            std::vector<unsigned char> *outSkin, bool skinOnly)
+                            std::vector<unsigned char> *outSkin, bool skinOnly,
+                            const adaptiveSelection *selection)
 {
   if(skinOnly && !onSkin) return 0;
+  if(selection && !selection->keeps(_numNodes, xyz, xyz + _numNodes,
+                                    xyz + 2 * _numNodes))
+    return 0;
   std::size_t numVertices = allVertices.size();
   if(!numVertices) {
     Msg::Warning("No adapted vertices to interpolate");
@@ -581,6 +601,7 @@ int adaptiveElements::adapt(adaptiveWork &w, double tol, int numComp,
   w.inValues = values;
   w.range = range;
   w.skin = skinOnly ? onSkin : -1;
+  w.selection = selection;
   w.visible.clear();
 
   // The target error is relative to the range. A negative one, or an empty
@@ -588,11 +609,11 @@ int adaptiveElements::adapt(adaptiveWork &w, double tol, int numComp,
   double size = range.max - range.min;
   double threshold = (tol < 0. || size <= 0.) ? -1. : tol * size;
   if(threshold < 0. && !plug) {
-    if(w.skin < 0)
+    if(w.skin < 0 && !selection)
       w.visible.assign(_leaves.begin(), _leaves.end());
     else
       for(const adaptiveElement *e : _leaves)
-        if(_onSkin(w, e)) w.visible.push_back(e);
+        if(_kept(w, e)) w.visible.push_back(e);
   }
   else if(!plug || tol != 0.)
     _error(w, &all.front(), threshold);
@@ -844,7 +865,8 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
                                  int level, int type,
                                  const std::vector<std::vector<unsigned char> > *inSkin,
                                  std::vector<unsigned char> *outSkin,
-                                 const adaptiveRange &given, bool skinOnly)
+                                 const adaptiveRange &given, bool skinOnly,
+                                 const adaptiveSelection *selection)
 {
   int numComp = in->getNumComponents(0, 0, 0);
   if(numComp != 1 && numComp != 3 && numComp != 9) return;
@@ -891,17 +913,19 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
   std::vector<std::vector<unsigned char> > skins(numChunks);
   std::vector<std::size_t> num(numChunks, 0);
   bool skin = (inSkin && outSkin && !polytopes);
-  // (only the volumes have a skin)
-  skinOnly = skinOnly && skin && !plug &&
-             (_shape.type == TYPE_TET || _shape.type == TYPE_HEX ||
-              _shape.type == TYPE_PRI || _shape.type == TYPE_PYR);
+  // (only the volumes have a skin, and are selected: the planes leave curves
+  // and surfaces to themselves)
+  bool volume = (_shape.type == TYPE_TET || _shape.type == TYPE_HEX ||
+                 _shape.type == TYPE_PRI || _shape.type == TYPE_PYR);
+  skinOnly = skinOnly && skin && !plug && volume;
+  if(!volume || polytopes) selection = nullptr;
 
   // All the last elements of the tree are kept if the target error is
   // negative: how much each chunk adds is known, which saves growing the
   // lists (a level or two down, the refined view is what takes the memory).
   auto first = [&](std::size_t c) { return elements.size() * c / numChunks; };
   std::size_t each = 0;
-  if(tol < 0. && !plug && !polytopes && !skinOnly)
+  if(tol < 0. && !plug && !polytopes && !skinOnly && !selection)
     each = _leaves.size() * _shape.numNodes * (3 + numComp);
 
 #pragma omp parallel num_threads(nthreads)
@@ -926,7 +950,7 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
         }
         num[c] += adapt(work, tol, numComp, &xyz[0], &values[0], range, plug,
                         skin ? (*inSkin)[ent][ele] : 0, lists[c],
-                        skin ? &skins[c] : nullptr, skinOnly);
+                        skin ? &skins[c] : nullptr, skinOnly, selection);
       }
     }
   }
@@ -995,6 +1019,7 @@ int adaptiveElements::_addPolytope(int level, int step, PViewData *in, int ent,
 
 adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
   : _step(-1), _level(-1), _tol(-1.), _skinAsked(false), _skinOnly(false),
+    _selected(false),
     _inData(data), _points(nullptr),
     _lines(nullptr), _triangles(nullptr), _quadrangles(nullptr),
     _tetrahedra(nullptr), _hexahedra(nullptr), _prisms(nullptr),
@@ -1095,7 +1120,8 @@ bool adaptiveData::_findSkin(int step,
 
 void adaptiveData::changeResolution(int step, int level, double tol,
                                     GMSH_PostPlugin *plug, double min,
-                                    double max, bool skinOnly)
+                                    double max, bool skinOnly,
+                                    const adaptiveSelection *selection)
 {
   // (the range only matters if the target error does)
   adaptiveRange range(min, max);
@@ -1111,8 +1137,8 @@ void adaptiveData::changeResolution(int step, int level, double tol,
     if(_hexahedra) _hexahedra->init(level);
     if(_pyramids) _pyramids->init(level);
   }
-  if(plug || _step != step || _level != level || _tol != tol || newRange ||
-     skinOnly != _skinAsked) {
+  if(plug || selection || _selected || _step != step || _level != level ||
+     _tol != tol || newRange || skinOnly != _skinAsked) {
     _outData->setDirty(true);
     // which faces of the elements are on the skin of the view, so that the
     // refined elements can tell the faces they have on it
@@ -1124,7 +1150,7 @@ void adaptiveData::changeResolution(int step, int level, double tol,
       if(!e) return;
       e->addInView(tol, step, _inData, _outData, plug, level, type,
                    skin ? &inSkin : nullptr, skin ? &outSkin[type] : nullptr,
-                   range, _skinOnly);
+                   range, _skinOnly, selection);
     };
     add(_points, TYPE_PNT);
     add(_lines, TYPE_LIN);
@@ -1151,6 +1177,7 @@ void adaptiveData::changeResolution(int step, int level, double tol,
   _tol = tol;
   _range = range;
   _skinAsked = skinOnly;
+  _selected = (selection != nullptr);
 }
 
 // The export of adapted views to VTK files, and the VTK data structure built

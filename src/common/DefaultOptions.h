@@ -1904,8 +1904,9 @@ StringXNumber ViewOptions_Number[] = {
     "Ascissa scale range type (1: default, 2: custom)" },
   { F|O, "AdaptSkinOnly" , opt_view_adapt_skin_only , 1. ,
     "Refine only the skin of the volumes of an adaptive view when only the skin "
-    "is drawn (DrawSkinOnly): what reads the refined view as a whole (plugins, "
-    "probes, the API) refines it all" },
+    "is drawn (DrawSkinOnly), and apart the volumes the clipping planes cut "
+    "when they are capped or drawn whole: what reads the refined view as a "
+    "whole (plugins, probes, the API) refines it all" },
   { F|O, "AdaptVisualizationGrid" , opt_view_adapt_visualization_grid , 0. ,
     "Use adaptive visualization grid (for high-order elements)?" },
   { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 30.0 ,
