@@ -15,6 +15,7 @@
 #include "Context.h"
 #include "OS.h"
 #include "adaptiveData.h"
+#include "CreateFile.h"
 
 bool PView::readPOS(const std::string &fileName, int fileIndex)
 {
@@ -300,7 +301,8 @@ static bool writeData(PViewData *data, const std::string &fileName,
   }
 }
 
-bool PView::write(const std::string &fileName, int format, bool append)
+bool PView::write(const std::string &fileName, int format, bool append,
+                  std::vector<std::pair<std::string, bool> > *written)
 {
   Msg::StatusBar(true, "Writing '%s'...", fileName.c_str());
 
@@ -332,26 +334,40 @@ bool PView::write(const std::string &fileName, int format, bool append)
     return split[0] + split[1] + s + split[2];
   };
 
+  // the files written, with true if they have a mesh
+  std::vector<std::pair<std::string, bool> > files;
+  bool mesh = (format == MSH || format == MED);
+  auto writeFile = [&](PViewData *data, const std::string &name) {
+    if(!writeData(data, name, format, append)) return false;
+    files.push_back({name, mesh});
+    return true;
+  };
+
   bool ret = true;
   if(format == VTU)
-    ret = writeVTU(fileName, CTX::instance()->post.binary, {this});
+    ret = writeVTU(fileName, CTX::instance()->post.binary, {this}, &files);
   else if(format == X3D)
     ret = writeX3D(fileName);
   else if(savesAdapted()) {
     // refined, each step on a mesh of its own
     std::vector<PViewDataList *> steps = getAdaptedSteps();
     for(std::size_t step = 0; step < steps.size(); step++)
-      if(steps[step] && !writeData(steps[step], name(step), format, append))
-        ret = false;
+      if(steps[step] && !writeFile(steps[step], name(step))) ret = false;
     doneSaving();
   }
   else if(several) {
-    ret = static_cast<PViewDataGModel *>(_data)->forEachMesh([&](int step) {
-      return writeData(_data, name(step), format, append);
-    });
+    ret = static_cast<PViewDataGModel *>(_data)->forEachMesh(
+      [&](int step) { return writeFile(_data, name(step)); });
   }
   else
-    ret = writeData(_data, fileName, format, append);
+    ret = writeFile(_data, fileName);
+
+  // (Gmsh reads back neither TXT nor STL files as views)
+  if(format == TXT || format == STL) files.clear();
+  if(written)
+    written->insert(written->end(), files.begin(), files.end());
+  else
+    CreateReadBackScript(fileName, files);
 
   if(ret) Msg::StatusBar(true, "Done writing '%s'", fileName.c_str());
   return ret;

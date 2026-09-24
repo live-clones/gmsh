@@ -142,8 +142,10 @@ public:
                        const std::string &fileName);
   static bool readMED(const std::string &fileName, int fileIndex = -1);
   static bool writeX3D(const std::string &fileName);
-  static bool writeVTU(const std::string &fileName, bool binary,
-                       const std::vector<PView *> &views);
+  // (the files to read back, each with a mesh, are added to written)
+  static bool writeVTU(
+    const std::string &fileName, bool binary, const std::vector<PView *> &views,
+    std::vector<std::pair<std::string, bool> > *written = nullptr);
   // the formats of write(), as in PostProcessing.Format
   enum Format {
     POS_ASCII = 0,
@@ -157,7 +159,11 @@ public:
     VTU = 8,
     AUTO = 10 // from the extension of the file
   };
-  bool write(const std::string &fileName, int format, bool append = false);
+  // write the view; if it makes several files, a script to read them back
+  // (see CreateReadBackScript()), or else they are added to written, with
+  // true if they have a mesh
+  bool write(const std::string &fileName, int format, bool append = false,
+             std::vector<std::pair<std::string, bool> > *written = nullptr);
 
   // send to ONELAB server
   void sendToServer(const std::string &name);

@@ -95,3 +95,11 @@ Merge "vtu_adaptive_out_steps.pvd";
 If(PostProcessing.NbViews != 1 || View[0].NbTimeStep != 2 || Mesh.NbTetrahedra != tets~{0})
   Error("PVD: %g views, %g steps and %g tetrahedra (expected 1, 2 and %g)", PostProcessing.NbViews, View[0].NbTimeStep, Mesh.NbTetrahedra, tets~{0});
 EndIf
+Delete View[0];
+
+// the script written with the .msh files reads them back as the view was
+Delete Model;
+Merge "vtu_adaptive_out_steps.msh.geo";
+If(PostProcessing.NbViews != 1 || View[0].NbTimeStep != 2 || Mesh.NbTetrahedra != tets~{1})
+  Error("MSH script: %g views, %g steps and %g tetrahedra (expected 1, 2 and %g)", PostProcessing.NbViews, View[0].NbTimeStep, Mesh.NbTetrahedra, tets~{1});
+EndIf

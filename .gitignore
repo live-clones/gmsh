@@ -26,6 +26,7 @@ cmake-build-*
 venv/
 .venv/
 benchmarks/io_msh/polytopes_out.msh
+benchmarks/io_msh/*_out*
 benchmarks/io_vtk/*_out.*
 benchmarks/io_vtk/*_out_*
 

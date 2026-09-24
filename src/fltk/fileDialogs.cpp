@@ -2050,13 +2050,15 @@ static void _saveViews(const std::string &name, int which, int format,
     return;
   }
   std::vector<std::string> split = SplitFileName(name);
+  std::vector<std::pair<std::string, bool> > files;
   for(std::size_t i = 0; i < views.size(); i++) {
     std::string fileName = name;
     if(!canAppend && views.size() > 1)
       fileName = split[0] + split[1] + "_" +
                  std::to_string(views[i]->getIndex()) + split[2];
-    views[i]->write(fileName, format, i ? canAppend : false);
+    views[i]->write(fileName, format, i ? canAppend : false, &files);
   }
+  CreateReadBackScript(name, files);
 }
 
 int posFileDialog(const char *name)

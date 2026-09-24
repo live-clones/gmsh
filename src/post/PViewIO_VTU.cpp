@@ -95,7 +95,8 @@ static bool writeVTUStep(PViewData *data, int step, const std::string &name,
 // its own (or in the pieces of a .pvtu).
 
 bool PView::writeVTU(const std::string &fileName, bool binary,
-                     const std::vector<PView *> &views)
+                     const std::vector<PView *> &views,
+                     std::vector<std::pair<std::string, bool> > *written)
 {
   std::map<GModel *, std::vector<PViewDataGModel *> > onModel;
   std::vector<PViewData *> others;
@@ -192,5 +193,12 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
 
   if(series && !writePVD(split[0] + split[1] + ".pvd", files, times))
     ok = false;
+  // to read back: the .pvd of a series, or else each file
+  if(written) {
+    if(series)
+      written->push_back({split[0] + split[1] + ".pvd", true});
+    else if(files.size())
+      for(auto &f : files[0]) written->push_back({split[0] + f, true});
+  }
   return ok;
 }
