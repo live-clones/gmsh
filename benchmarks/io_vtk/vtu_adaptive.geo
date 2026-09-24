@@ -4,7 +4,8 @@
 // pieces of a .pvtu, in a .msh file, or next to the mesh when the mesh is
 // saved with its views; they must fill the same volume and carry the same
 // range of values. Refined adaptively, each step of a view has a mesh of its
-// own: in a .vtu file each, or all in one .msh file.
+// own: in a .vtu file each (read back through their .pvd as a view whose steps
+// are on the meshes of different models), or all in one .msh file.
 
 Macro Check
   // file, num -> error if the view read is not the one saved
@@ -83,4 +84,10 @@ Delete Model;
 Merge "vtu_adaptive_out_steps.msh";
 If(PostProcessing.NbViews != 1 || View[0].NbTimeStep != 2 || Mesh.NbTetrahedra < tets~{0})
   Error("MSH: %g views, %g steps and %g tetrahedra (expected 1, 2 and at least %g)", PostProcessing.NbViews, View[0].NbTimeStep, Mesh.NbTetrahedra, tets~{0});
+EndIf
+Delete Model;
+Delete View[0];
+Merge "vtu_adaptive_out_steps.pvd";
+If(PostProcessing.NbViews != 1 || View[0].NbTimeStep != 2 || Mesh.NbTetrahedra != tets~{0})
+  Error("PVD: %g views, %g steps and %g tetrahedra (expected 1, 2 and %g)", PostProcessing.NbViews, View[0].NbTimeStep, Mesh.NbTetrahedra, tets~{0});
 EndIf

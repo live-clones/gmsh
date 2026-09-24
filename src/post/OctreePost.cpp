@@ -384,7 +384,23 @@ bool OctreePost::_search(int numComp, double x, double y, double z,
     }
   }
   else if(_theViewDataGModel) {
-    if(cache && cache->element) { // the last element
+    bool multi = _theViewDataGModel->hasMultipleMeshes();
+    if(step < 0 && multi) {
+      // each step in the mesh of its own model
+      bool found = false;
+      int n = numComp * mult;
+      std::vector<double> v(n);
+      for(int s = 0; s < numSteps; s++) {
+        if(!_theViewDataGModel->hasTimeStep(s) ||
+           !_search(numComp, x, y, z, v.data(), s, size, qn, qx, qy, qz, grad,
+                    dim))
+          continue;
+        for(int i = 0; i < n; i++) values[n * s + i] = v[i];
+        found = true;
+      }
+      return found;
+    }
+    if(cache && cache->element && !multi) { // the last element
       MElement *e = (MElement *)cache->element;
       double uvw[3];
       e->xyz2uvw(P, uvw);

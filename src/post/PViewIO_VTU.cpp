@@ -89,15 +89,17 @@ static bool writeVTUStep(PViewData *data, int step, const std::string &name,
 
 // The views based on the same model go in the same file, as arrays on its
 // mesh; several steps make a series of files, and a .pvd with their times.
-// The views saved refined (PostProcessing.SaveAdapted) are refined a step and
-// an element at a time as they are written, each step in a file of its own
-// (or in the pieces of a .pvtu).
+// A view whose steps have different meshes has each step on the mesh of its
+// model. The views saved refined (PostProcessing.SaveAdapted) are refined a
+// step and an element at a time as they are written, each step in a file of
+// its own (or in the pieces of a .pvtu).
 
 bool PView::writeVTU(const std::string &fileName, bool binary,
                      const std::vector<PView *> &views)
 {
   std::map<GModel *, std::vector<PViewDataGModel *> > onModel;
   std::vector<PViewData *> others;
+  std::vector<PViewDataGModel *> multi;
   std::vector<PView *> adapted;
   int numSteps = 0;
   for(auto v : views) {
@@ -109,17 +111,15 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
       continue;
     }
     PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(data);
-    if(d && d->hasMultipleMeshes()) {
-      Msg::Warning("View '%s' not exported: its steps have different meshes",
-                   data->getName().c_str());
-      continue;
-    }
-    if(d)
+    if(d && d->hasMultipleMeshes())
+      multi.push_back(d);
+    else if(d)
       onModel[d->getModel(d->getFirstNonEmptyTimeStep())].push_back(d);
     else
       others.push_back(data);
   }
-  std::size_t numParts = onModel.size() + others.size() + adapted.size();
+  std::size_t numParts =
+    onModel.size() + others.size() + multi.size() + adapted.size();
   if(!numParts) {
     Msg::Error("No view to export in '%s'", fileName.c_str());
     return false;
@@ -170,6 +170,15 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
       if(!d->hasTimeStep(step)) continue;
       time(d);
       if(!writeVTUStep(d, step, name(false), binary)) ok = false;
+    }
+    for(auto d : multi) {
+      if(!d->hasTimeStep(step)) continue;
+      time(d);
+      if(!d->getModel(step)->writeVTU(name(parallel), binary,
+                                      CTX::instance()->mesh.saveAll,
+                                      CTX::instance()->mesh.scalingFactor, {d},
+                                      step))
+        ok = false;
     }
     for(auto v : adapted) {
       PViewData *d = v->getData();
