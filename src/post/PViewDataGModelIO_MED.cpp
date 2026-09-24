@@ -201,6 +201,12 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
   }
 
   for(int step = 0; step < numSteps; step++) {
+    // the step of the view it goes in: the same, as the file completes the
+    // steps read from others on the same mesh (e.g. a domain decomposition);
+    // or, if that step is on another mesh, the step numbered in the file (a
+    // file per mesh), or the next one
+    int target = step;
+
     // FIXME: in MED3 we might want to loop over all profiles instead
     // of relying of the default one
 
@@ -229,15 +235,22 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       }
       // create step data
       if(!pair) {
-        GModel *m = GModel::findByName(meshName);
+        // (the mesh of the file was read in the current model, whose name
+        // another model might have)
+        GModel *m = GModel::current();
+        if(m->getName() != meshName) m = GModel::findByName(meshName);
         if(!m) {
           Msg::Error("Could not find mesh '%s'", meshName);
           return false;
         }
-        if(!_getStep(step, m, numCompMsh)) return false;
-        _steps[step]->setFileName(fileName);
-        _steps[step]->setFileIndex(fileIndex);
-        _steps[step]->setTime(dt);
+        if(hasTimeStep(step) && _steps[step]->getModel() != m)
+          target = (numdt >= 1 && !hasTimeStep(numdt - 1)) ?
+                     (int)numdt - 1 :
+                     getNumTimeSteps();
+        if(!_getStep(target, m, numCompMsh)) return false;
+        _steps[target]->setFileName(fileName);
+        _steps[target]->setFileIndex(fileIndex);
+        _steps[target]->setTime(dt);
       }
 
       char locName[MED_TAILLE_NOM + 1], profileName[MED_TAILLE_NOM + 1];
@@ -266,7 +279,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
         mult = ngauss;
         _type = GaussPointData;
       }
-      _steps[step]->resizeData(numVal / mult);
+      _steps[target]->resizeData(numVal / mult);
 
       // read field data
       std::vector<double> val(numVal * numComp);
@@ -292,7 +305,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       // read Gauss point data
       if(_type == GaussPointData) {
         std::vector<double> &p(
-          _steps[step]->getGaussPoints(med2mshElementType(ele)));
+          _steps[target]->getGaussPoints(med2mshElementType(ele)));
         if(std::string(locName) == MED_GAUSS_ELNO) {
           // special case: the gauss points are the vertices of the
           // element; in this case no explicit localization has to be
@@ -387,7 +400,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       std::size_t startIndex = 0;
       if(tags.empty()) {
         std::size_t maxv, maxe;
-        _steps[step]->getModel()->getCheckPointedMaxNumbers(maxv, maxe);
+        _steps[target]->getModel()->getCheckPointedMaxNumbers(maxv, maxe);
         if(nodal) { startIndex += maxv; }
         else {
           for(int i = 1; i < pairs[pair].second; i++) {
@@ -419,7 +432,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
           num = tags[profile[i] - 1];
         }
 
-        double *d = _steps[step]->getData(num, true, mult);
+        double *d = _steps[target]->getData(num, true, mult);
         for(int j = 0; j < mult; j++) {
           // reorder nodes if we have ElementNode data
           int j2 = (ent == MED_NOEUD_MAILLE) ? med2mshNodeIndex(ele, j) : j;
