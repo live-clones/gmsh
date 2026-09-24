@@ -386,10 +386,12 @@ static void ChangePrintParameter(int frame)
 
 #if defined(HAVE_POST)
 // the views to save in a mesh file with the mesh of the current model
-// (Mesh.SaveViews): those based on it, and the list-based ones (as those
-// saved refined, see PostProcessing.SaveAdapted)
+// (Mesh.SaveViews): those based on it, those with a mesh of their own
+// (list-based, or saved refined, see PostProcessing.SaveAdapted), and those
+// saved on several meshes, in a file for each
 static void getViewsToSave(std::vector<PView *> &onModel,
-                           std::vector<PView *> &lists)
+                           std::vector<PView *> &lists,
+                           std::vector<PView *> &several)
 {
   int which = CTX::instance()->mesh.saveViews;
   if(!which || PView::list.empty()) return;
@@ -397,7 +399,9 @@ static void getViewsToSave(std::vector<PView *> &onModel,
   for(auto v : PView::list) {
     if(which == 1 && !v->getOptions()->visible) continue;
     PViewData *d = v->getData();
-    if(dynamic_cast<PViewDataList *>(d) || v->savesAdapted())
+    if(v->savesSeveralMeshes())
+      several.push_back(v);
+    else if(dynamic_cast<PViewDataList *>(d) || v->savesAdapted())
       lists.push_back(v);
     else if(d->hasModel(m))
       onModel.push_back(v);
@@ -410,13 +414,14 @@ static void getViewsToSave(std::vector<PView *> &onModel,
 static bool writeListViewsInMSH(const std::string &name,
                                 const std::vector<PView *> &views)
 {
-  // (those saved refined with a mesh for each step)
-  std::vector<std::vector<PViewDataList *> > lists;
+  // (those saved refined have a single step)
+  std::vector<PViewDataList *> lists;
   for(auto v : views) {
-    if(v->savesAdapted())
-      lists.push_back(v->getAdaptedSteps());
+    if(!v->savesAdapted())
+      lists.push_back(static_cast<PViewDataList *>(v->getData()));
     else
-      lists.push_back({static_cast<PViewDataList *>(v->getData())});
+      for(auto l : v->getAdaptedSteps())
+        if(l) lists.push_back(l);
   }
   return PViewDataList::writeMSH(
     name, lists, CTX::instance()->mesh.mshFileVersion,
@@ -424,6 +429,24 @@ static bool writeListViewsInMSH(const std::string &name,
     CTX::instance()->post.saveInterpolationMatrices,
     CTX::instance()->post.forceNodeData,
     CTX::instance()->post.forceElementData);
+}
+
+// the views saved on several meshes, each in files of its own, as in VTU:
+// name_views_0000.ext, name_views_0005.ext... or with the number of the view
+// if there are several, name_views_0_0000.ext...
+static void writeViewsOnSeveralMeshes(const std::string &name,
+                                      const std::vector<PView *> &views,
+                                      int format)
+{
+  std::vector<std::string> parts = SplitFileName(name);
+  for(std::size_t i = 0; i < views.size(); i++) {
+    std::string n = parts[0] + parts[1] + "_views";
+    if(views.size() > 1) n += "_" + std::to_string(i);
+    if(views[i]->write(n + parts[2], format))
+      Msg::Info("View '%s' saved on its meshes in '%s_*%s'",
+                views[i]->getData()->getName().c_str(), n.c_str(),
+                parts[2].c_str());
+  }
 }
 #endif
 
@@ -459,13 +482,14 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_MSH: {
 #if defined(HAVE_POST)
-    std::vector<PView *> onModel, lists;
+    std::vector<PView *> onModel, lists, several;
     if(CTX::instance()->mesh.mshFileVersion >= 2.)
-      getViewsToSave(onModel, lists);
+      getViewsToSave(onModel, lists, several);
     else if(CTX::instance()->mesh.saveViews && PView::list.size())
       Msg::Warning("Views cannot be saved in MSH %g files",
                    CTX::instance()->mesh.mshFileVersion);
     bool mesh = GModel::current()->getNumMeshElements() > 0;
+    writeViewsOnSeveralMeshes(name, several, PView::MSH);
     if(!mesh && lists.size()) {
       // no mesh: the file holds the list-based views, on a mesh of their
       // elements
@@ -578,8 +602,10 @@ void CreateOutputFile(const std::string &fileName, int format,
       // their own
       bool binary = CTX::instance()->mesh.binary;
 #if defined(HAVE_POST)
-      std::vector<PView *> onModel, lists;
-      getViewsToSave(onModel, lists);
+      std::vector<PView *> onModel, lists, several;
+      getViewsToSave(onModel, lists, several);
+      // (a .vtu holds a step: VTU saves every view in a file per step)
+      lists.insert(lists.end(), several.begin(), several.end());
       bool mesh = GModel::current()->getNumMeshElements() > 0;
       if(!mesh && lists.size()) {
         PView::writeVTU(name, binary, lists);
@@ -700,8 +726,9 @@ void CreateOutputFile(const std::string &fileName, int format,
       break;
 #if defined(HAVE_POST)
     // the views with values at the nodes of the mesh, as fields on it
-    std::vector<PView *> onModel, lists;
-    getViewsToSave(onModel, lists);
+    std::vector<PView *> onModel, lists, several;
+    getViewsToSave(onModel, lists, several);
+    lists.insert(lists.end(), several.begin(), several.end());
     for(auto v : onModel) {
       PViewData *d = v->getData();
       if(d->isNodeData())
@@ -713,7 +740,8 @@ void CreateOutputFile(const std::string &fileName, int format,
     for(auto v : lists)
       Msg::Warning("View '%s' not saved: MED files only hold views based on "
                    "the mesh%s", v->getData()->getName().c_str(),
-                   v->savesAdapted() ? ", not refined" : "");
+                   v->savesAdapted() ? ", not refined" :
+                   v->savesSeveralMeshes() ? ", not on several meshes" : "");
 #endif
     break;
   }

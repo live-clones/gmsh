@@ -38,6 +38,9 @@ private:
   std::set<std::string> _fileNames;
   // index of the view in the file
   int _fileIndex;
+  // the number of its first step in the files that number the steps, for
+  // data holding the steps of another view from that one on
+  int _firstStep;
   // octree for rapid search
   OctreePost *_octree;
   // kdtree for rapid search of neighrest neighbor
@@ -96,6 +99,10 @@ public:
   // get/set index of view data in file
   virtual int getFileIndex() { return _fileIndex; }
   virtual void setFileIndex(int val) { _fileIndex = val; }
+
+  // get/set the number of the first step in the files that number the steps
+  int getFirstStep() { return _firstStep; }
+  void setFirstStep(int val) { _firstStep = val; }
 
   // get number of time steps in the data
   virtual int getNumTimeSteps() = 0;

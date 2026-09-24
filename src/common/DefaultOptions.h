@@ -1886,8 +1886,9 @@ StringXNumber PostProcessingOptions_Number[] = {
 
   { F|O, "SaveAdapted" , opt_post_save_adapted , 0. ,
     "Save the views of high order refined, as adapted views are drawn (with "
-    "View.MaxRecursionLevel and View.TargetError), each time step on a mesh "
-    "of its own, for readers that cannot handle high order elements" },
+    "View.MaxRecursionLevel and View.TargetError), for readers that cannot "
+    "handle high order elements; each time step then has a mesh of its own, "
+    "and a file of its own, name_0000.ext, name_0001.ext..." },
   { F|O, "SaveInterpolationMatrices" , opt_post_save_interpolation_matrices , 1. ,
     "Save the interpolation matrices when exporting model-based data" },
   { F|O, "SaveMesh" , opt_post_save_mesh , 1. ,

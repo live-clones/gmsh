@@ -34,8 +34,8 @@
 # -tol:        View.TargetError (default: the default of the option); a
 #              negative value refines everything down to the level
 # -nt:         number of threads
-# -save:       also write the view refined to a file (PostProcessing.SaveAdapted),
-#              each time step on a mesh of its own
+# -save:       also write the view refined (PostProcessing.SaveAdapted): each
+#              time step on a mesh of its own, in a file of its own
 #
 # The time taken by the first adaptation and by a change of time step is
 # printed, with the number of refined elements.

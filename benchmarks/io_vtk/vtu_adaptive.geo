@@ -4,8 +4,9 @@
 // pieces of a .pvtu, in a .msh file, or next to the mesh when the mesh is
 // saved with its views; they must fill the same volume and carry the same
 // range of values. Refined adaptively, each step of a view has a mesh of its
-// own: in a .vtu file each (read back through their .pvd as a view whose steps
-// are on the meshes of different models), or all in one .msh file.
+// own, and a file holds one mesh: a .vtu or a .msh file for each step, named
+// after it (the .vtu files read back through their .pvd as a view whose steps
+// are on the meshes of different models).
 
 Macro Check
   // file, num -> error if the view read is not the one saved
@@ -80,13 +81,16 @@ EndFor
 If(tets~{0} <= tets~{1} || tets~{1} <= 24)
   Error("Steps refined into %g and %g tetrahedra (expected more for the first)", tets~{0}, tets~{1});
 EndIf
+// (each .msh file numbers its step as in the view)
+For step In {0 : 1}
+  Delete Model;
+  Merge Sprintf("vtu_adaptive_out_steps_%04g.msh", step);
+  If(PostProcessing.NbViews != 1 || View[0].NbTimeStep != step + 1 || Mesh.NbTetrahedra != tets~{step})
+    Error("MSH step %g: %g views, %g steps and %g tetrahedra (expected 1, %g and %g)", step, PostProcessing.NbViews, View[0].NbTimeStep, Mesh.NbTetrahedra, step + 1, tets~{step});
+  EndIf
+  Delete View[0];
+EndFor
 Delete Model;
-Merge "vtu_adaptive_out_steps.msh";
-If(PostProcessing.NbViews != 1 || View[0].NbTimeStep != 2 || Mesh.NbTetrahedra < tets~{0})
-  Error("MSH: %g views, %g steps and %g tetrahedra (expected 1, 2 and at least %g)", PostProcessing.NbViews, View[0].NbTimeStep, Mesh.NbTetrahedra, tets~{0});
-EndIf
-Delete Model;
-Delete View[0];
 Merge "vtu_adaptive_out_steps.pvd";
 If(PostProcessing.NbViews != 1 || View[0].NbTimeStep != 2 || Mesh.NbTetrahedra != tets~{0})
   Error("PVD: %g views, %g steps and %g tetrahedra (expected 1, 2 and %g)", PostProcessing.NbViews, View[0].NbTimeStep, Mesh.NbTetrahedra, tets~{0});

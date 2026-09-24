@@ -88,6 +88,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
 {
   if(_steps.empty()) return true;
 
+  // (a file for each mesh, name_0000.msh, named after its first step)
   if(hasMultipleMeshes()) {
     Msg::Info("Exporting multi-mesh view in separate files");
   }
@@ -103,7 +104,6 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
 
   FILE *fp = nullptr;
   GModel *model0 = _steps[0]->getModel();
-  int numFile = 0;
 
   for(std::size_t step = 0; step < _steps.size(); step++) {
     int numEnt = 0, numComp = _steps[step]->getNumComponents();
@@ -116,10 +116,10 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
       if(fp) fclose(fp);
       std::string stepFileName = fileName;
       if(hasMultipleMeshes()) {
-        std::ostringstream sstream;
         std::vector<std::string> n = SplitFileName(fileName);
-        sstream << n[0] << n[1] << "_" << numFile++ << n[2];
-        stepFileName = sstream.str();
+        char s[32];
+        snprintf(s, sizeof(s), "_%04d", (int)step);
+        stepFileName = n[0] + n[1] + s + n[2];
         model0 = _steps[step]->getModel();
       }
       if(saveMesh) {

@@ -170,6 +170,11 @@ public:
   bool savesAdapted();
   std::vector<PViewDataList *> getAdaptedSteps();
   static void doneSaving();
+  // true if the view is saved on several meshes: refined with several steps,
+  // or with its steps on the meshes of different models. A file holds one
+  // mesh: such a view is saved in a file for each, name_0000.ext, named after
+  // the first step it holds.
+  bool savesSeveralMeshes();
 
   // vertex arrays to draw the elements efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;

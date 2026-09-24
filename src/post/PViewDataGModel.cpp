@@ -834,6 +834,35 @@ bool PViewDataGModel::skipElement(int step, int ent, int ele,
   return PViewData::skipElement(step, ent, ele, checkVisibility, samplingRate);
 }
 
+bool PViewDataGModel::forEachMesh(const std::function<bool(int)> &f)
+{
+  std::vector<stepData<double> *> all = _steps;
+  bool ok = true;
+  for(std::size_t first = 0; first < all.size();) {
+    if(!all[first]->getNumData()) {
+      first++;
+      continue;
+    }
+    GModel *model = all[first]->getModel();
+    std::size_t last = first + 1;
+    while(last < all.size() && (all[last]->getModel() == model ||
+                                !all[last]->getNumData()))
+      last++;
+    std::vector<stepData<double> *> empty;
+    for(std::size_t step = 0; step < all.size(); step++) {
+      if(step >= first && step < last) continue;
+      empty.push_back(new stepData<double>(model, all[step]->getNumComponents(),
+                                           "", -1, all[step]->getTime()));
+      _steps[step] = empty.back();
+    }
+    if(!f(first)) ok = false;
+    for(auto e : empty) delete e;
+    _steps = all;
+    first = last;
+  }
+  return ok;
+}
+
 bool PViewDataGModel::hasTimeStep(int step)
 {
   if(step >= 0 && step < getNumTimeSteps() && _steps[step]->getNumData())

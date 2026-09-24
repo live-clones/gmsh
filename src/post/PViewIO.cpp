@@ -322,39 +322,36 @@ bool PView::write(const std::string &fileName, int format, bool append)
       format = TXT;
   }
 
+  // a file for each mesh if there are several, named after its first step
+  std::vector<std::string> split = SplitFileName(fileName);
+  bool several = savesSeveralMeshes();
+  auto name = [&](int step) {
+    if(!several) return fileName;
+    char s[32];
+    snprintf(s, sizeof(s), "_%04d", step);
+    return split[0] + split[1] + s + split[2];
+  };
+
   bool ret = true;
   if(format == VTU)
     ret = writeVTU(fileName, CTX::instance()->post.binary, {this});
   else if(format == X3D)
     ret = writeX3D(fileName);
-  else if(!savesAdapted())
-    ret = writeData(_data, fileName, format, append);
-  else {
-    // refined, a mesh for each step: all in the file if it can hold them, or
-    // else a file for each step, name_0000.ext, name_0001.ext...
+  else if(savesAdapted()) {
+    // refined, each step on a mesh of its own
     std::vector<PViewDataList *> steps = getAdaptedSteps();
-    if(format == MSH)
-      ret = PViewDataList::writeMSH(
-        fileName, {steps}, CTX::instance()->mesh.mshFileVersion,
-        CTX::instance()->mesh.binary, CTX::instance()->post.saveMesh, append,
-        0, CTX::instance()->post.saveInterpolationMatrices,
-        CTX::instance()->post.forceNodeData,
-        CTX::instance()->post.forceElementData);
-    else {
-      std::vector<std::string> split = SplitFileName(fileName);
-      for(std::size_t step = 0; step < steps.size(); step++) {
-        if(!steps[step]) continue;
-        std::string name = fileName;
-        if(steps.size() > 1) {
-          char n[32];
-          snprintf(n, sizeof(n), "_%04d", (int)step);
-          name = split[0] + split[1] + n + split[2];
-        }
-        if(!writeData(steps[step], name, format, append)) ret = false;
-      }
-    }
+    for(std::size_t step = 0; step < steps.size(); step++)
+      if(steps[step] && !writeData(steps[step], name(step), format, append))
+        ret = false;
     doneSaving();
   }
+  else if(several) {
+    ret = static_cast<PViewDataGModel *>(_data)->forEachMesh([&](int step) {
+      return writeData(_data, name(step), format, append);
+    });
+  }
+  else
+    ret = writeData(_data, fileName, format, append);
 
   if(ret) Msg::StatusBar(true, "Done writing '%s'", fileName.c_str());
   return ret;

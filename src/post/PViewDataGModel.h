@@ -277,6 +277,11 @@ public:
                    int samplingRate = 1);
   bool isThreadSafe() { return true; }
   bool hasTimeStep(int step);
+  // for a view whose steps are on several meshes: call f for each run of
+  // consecutive steps on the same mesh, with the first of them, the view
+  // holding only those steps while f runs (the others are empty), so that it
+  // can be written as a view on a single mesh
+  bool forEachMesh(const std::function<bool(int)> &f);
   // read data of a file in the most recent view named name whose data is
   // model-based and accepted, or else in a new view of the given type, kept if
   // the reading succeeds; the data gets the name and the file name

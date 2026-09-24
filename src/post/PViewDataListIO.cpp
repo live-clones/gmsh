@@ -422,7 +422,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
                              int partitionNum, bool saveInterpolationMatrices,
                              bool forceNodeData, bool forceElementData)
 {
-  return writeMSH(fileName, {{this}}, version, binary, saveMesh, multipleView,
+  return writeMSH(fileName, {this}, version, binary, saveMesh, multipleView,
                   partitionNum, saveInterpolationMatrices, forceNodeData,
                   forceElementData);
 }
@@ -432,65 +432,59 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
 // different views with the same nodes merged, and their values the data of
 // model-based views on it (one per view and number of components), which
 // write the file
-bool PViewDataList::writeMSH(
-  const std::string &fileName,
-  const std::vector<std::vector<PViewDataList *> > &views, double version,
-  bool binary, bool saveMesh, bool multipleView, int partitionNum,
-  bool saveInterpolationMatrices, bool forceNodeData, bool forceElementData)
+bool PViewDataList::writeMSH(const std::string &fileName,
+                             const std::vector<PViewDataList *> &views,
+                             double version, bool binary, bool saveMesh,
+                             bool multipleView, int partitionNum,
+                             bool saveInterpolationMatrices, bool forceNodeData,
+                             bool forceElementData)
 {
-  // the lists with elements, with the type of their elements in the mesh, the
-  // view they are written in and their step in it (-1 for all the steps of
-  // their list), and the coordinates of the nodes of all the elements
+  // the lists with elements, with the type of their elements in the mesh, and
+  // the coordinates of the nodes of all the elements
   struct elementList {
     PViewDataList *view;
     std::vector<double> *list;
-    int numEle, numNodes, numComp, mshType, mult, group, step;
+    int numEle, numNodes, numComp, mshType, mult;
   };
   std::vector<elementList> lists;
   std::vector<double> xyz;
   SBoundingBox3d bbox;
-  for(std::size_t g = 0; g < views.size(); g++) {
-    for(std::size_t s = 0; s < views[g].size(); s++) {
-      PViewDataList *view = views[g][s];
-      if(!view) continue;
-      int step = (views[g].size() > 1) ? (int)s : -1;
-      for(int i = 0; i < 24; i++) {
-        std::vector<double> *list = nullptr;
-        int *numEle = nullptr, numComp, numNodes;
-        int type = view->_getRawData(i, &list, &numEle, &numComp, &numNodes);
-        if(!*numEle) continue;
-        int mshType = 0;
-        for(int order = 0; order <= 10 && !mshType; order++) {
-          for(int serendip = 0; serendip < 2 && !mshType; serendip++) {
-            int t = ElementType::getType(type, order, serendip);
-            if(t > 0 && ElementType::getNumVertices(t) == numNodes) mshType = t;
-          }
-        }
-        if(!mshType) {
-          Msg::Warning("Skipping elements with %d nodes of view '%s': no such "
-                       "element in MSH",
-                       numNodes, view->getName().c_str());
-          continue;
-        }
-        int nb = list->size() / *numEle;
-        // the number of values per component of an element at each step
-        int mult = (nb - 3 * numNodes) / (view->NbTimeStep * numComp);
-        lists.push_back({view, list, *numEle, numNodes, numComp, mshType, mult,
-                         (int)g, step});
-        for(std::size_t e = 0; e < list->size(); e += nb) {
-          double *x = &(*list)[e];
-          for(int j = 0; j < numNodes; j++) {
-            xyz.push_back(x[j]);
-            xyz.push_back(x[numNodes + j]);
-            xyz.push_back(x[2 * numNodes + j]);
-          }
+  for(auto view : views) {
+    for(int i = 0; i < 24; i++) {
+      std::vector<double> *list = nullptr;
+      int *numEle = nullptr, numComp, numNodes;
+      int type = view->_getRawData(i, &list, &numEle, &numComp, &numNodes);
+      if(!*numEle) continue;
+      int mshType = 0;
+      for(int order = 0; order <= 10 && !mshType; order++) {
+        for(int serendip = 0; serendip < 2 && !mshType; serendip++) {
+          int t = ElementType::getType(type, order, serendip);
+          if(t > 0 && ElementType::getNumVertices(t) == numNodes) mshType = t;
         }
       }
-      if(view->NbT2 || view->NbT3)
-        Msg::Warning("Strings of view '%s' are not written in MSH",
-                     view->getName().c_str());
-      bbox += view->BBox;
+      if(!mshType) {
+        Msg::Warning("Skipping elements with %d nodes of view '%s': no such "
+                     "element in MSH",
+                     numNodes, view->getName().c_str());
+        continue;
+      }
+      int nb = list->size() / *numEle;
+      // the number of values per component of an element at each step
+      int mult = (nb - 3 * numNodes) / (view->NbTimeStep * numComp);
+      lists.push_back({view, list, *numEle, numNodes, numComp, mshType, mult});
+      for(std::size_t e = 0; e < list->size(); e += nb) {
+        double *x = &(*list)[e];
+        for(int j = 0; j < numNodes; j++) {
+          xyz.push_back(x[j]);
+          xyz.push_back(x[numNodes + j]);
+          xyz.push_back(x[2 * numNodes + j]);
+        }
+      }
     }
+    if(view->NbT2 || view->NbT3)
+      Msg::Warning("Strings of view '%s' are not written in MSH",
+                   view->getName().c_str());
+    bbox += view->BBox;
   }
   if(lists.empty()) {
     Msg::Warning("No elements to write in MSH");
@@ -633,12 +627,8 @@ bool PViewDataList::writeMSH(
   std::vector<PViewDataGModel *> data;
   for(std::size_t first = 0; first < lists.size();) {
     PViewDataList *view = lists[first].view;
-    int group = lists[first].group;
     std::size_t last = first;
-    while(last < lists.size() && lists[last].group == group) last++;
-    // (a list for each step, or one with all the steps)
-    int numSteps =
-      (lists[first].step < 0) ? view->NbTimeStep : (int)views[group].size();
+    while(last < lists.size() && lists[last].view == view) last++;
     // the index of the first node and element of the view
     std::size_t node0 = 0, ele0 = 0;
     for(std::size_t k = 0; k < first; k++) {
@@ -668,10 +658,8 @@ bool PViewDataList::writeMSH(
             d->setInterpolationMatrices(it.first, *it.second[0], *it.second[1]);
         }
       }
-      for(int step = 0; step < numSteps; step++) {
+      for(int step = 0; step < view->NbTimeStep; step++) {
         std::vector<std::size_t> dataTags;
-        double time = 0.;
-        bool found = false;
         std::vector<std::vector<double>> values;
         // the value of the last element at each node (NodeData)
         std::vector<const double *> nodeValues;
@@ -681,15 +669,10 @@ bool PViewDataList::writeMSH(
         for(std::size_t k = first; k < last; k++) {
           auto &l = lists[k];
           std::size_t nb = l.list->size() / l.numEle;
-          bool here = (l.step < 0 || l.step == step);
-          if(here && !found) {
-            time = l.view->getTime(l.step < 0 ? step : 0);
-            found = true;
-          }
           for(int e = 0; e < l.numEle; e++, node += l.numNodes, ele++) {
-            if(l.numComp != numComp || !here) continue;
-            const double *v = &(*l.list)[e * nb + 3 * l.numNodes] +
-                              numComp * l.mult * (l.step < 0 ? step : 0);
+            if(l.numComp != numComp) continue;
+            const double *v =
+              &(*l.list)[e * nb + 3 * l.numNodes] + numComp * l.mult * step;
             if(type == PViewDataGModel::NodeData) {
               for(int j = 0; j < std::min(l.numNodes, l.mult); j++)
                 nodeValues[merged[node + j]] = v + numComp * j;
@@ -705,8 +688,8 @@ bool PViewDataList::writeMSH(
           dataTags.push_back(i + 1);
           values.emplace_back(nodeValues[i], nodeValues[i] + numComp);
         }
-        if(!found) continue;
-        d->addData(model, dataTags, values, step, time, -1, numComp, false);
+        d->addData(model, dataTags, values, view->getFirstStep() + step,
+                   view->getTime(step), -1, numComp, false);
       }
       data.push_back(d);
     }

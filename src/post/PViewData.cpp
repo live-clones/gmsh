@@ -14,7 +14,7 @@
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
 PViewData::PViewData()
-  : _dirty(true), _fileIndex(0), _octree(nullptr), _pc2kdtree(_pc),
+  : _dirty(true), _fileIndex(0), _firstStep(0), _octree(nullptr), _pc2kdtree(_pc),
     _kdtree(nullptr), _adaptive(nullptr)
 {
 }

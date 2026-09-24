@@ -67,14 +67,15 @@ bool PViewData::writeTXT(const std::string &fileName)
   }
 
   for(int step = 0; step < getNumTimeSteps(); step++) {
+    if(!hasTimeStep(step)) continue;
     for(int ent = 0; ent < getNumEntities(step); ent++) {
       for(int ele = 0; ele < getNumElements(step, ent); ele++) {
         if(skipElement(step, ent, ele)) continue;
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++) {
           double x, y, z;
           getNode(step, ent, ele, nod, x, y, z);
-          fprintf(fp, "%d %.16g %d %d %.16g %.16g %.16g ", step, getTime(step),
-                  ent, ele, x, y, z);
+          fprintf(fp, "%d %.16g %d %d %.16g %.16g %.16g ",
+                  getFirstStep() + step, getTime(step), ent, ele, x, y, z);
           for(int comp = 0; comp < getNumComponents(step, ent, ele); comp++) {
             double val;
             getValue(step, ent, ele, nod, comp, val);

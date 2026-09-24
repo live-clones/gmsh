@@ -286,9 +286,19 @@ std::vector<PViewDataList *> PView::getAdaptedSteps()
     PViewDataList *l = static_cast<PViewDataList *>(a->getData());
     l->setName(_data->getName());
     l->Time.assign(1, _data->getTime(step));
+    l->setFirstStep(step);
     steps[step] = l;
   }
   return steps;
+}
+
+bool PView::savesSeveralMeshes()
+{
+  if(!savesAdapted()) return _data->hasMultipleMeshes();
+  int numSteps = 0;
+  for(int step = 0; step < _data->getNumTimeSteps(); step++)
+    if(_data->hasTimeStep(step)) numSteps++;
+  return numSteps > 1;
 }
 
 void PView::doneSaving()

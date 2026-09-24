@@ -192,12 +192,9 @@ public:
                         bool saveInterpolationMatrices = true,
                         bool forceNodeData = false,
                         bool forceElementData = false);
-  // write several views in an MSH file, on a single mesh of their elements:
-  // each view a list with all its steps, or a list for each step (with a
-  // step each, null if the view has no such step), the elements of each step
-  // then its own
+  // write several views in an MSH file, on a single mesh of their elements
   static bool writeMSH(const std::string &fileName,
-                       const std::vector<std::vector<PViewDataList *> > &views,
+                       const std::vector<PViewDataList *> &views,
                        double version, bool binary, bool saveMesh,
                        bool multipleView, int partitionNum,
                        bool saveInterpolationMatrices, bool forceNodeData,

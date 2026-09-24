@@ -453,7 +453,9 @@ bool PViewDataGModel::writeMED(const std::string &fileName, bool saveMesh)
     return false;
   }
 
-  GModel *model = _steps[0]->getModel();
+  // (the first steps may have no data)
+  int first = getFirstNonEmptyTimeStep();
+  GModel *model = _steps[first]->getModel();
 
   // save the mesh (its nodes then have their index in the file)
   if(saveMesh && !model->writeMED(fileName, true)) return false;
@@ -487,9 +489,9 @@ bool PViewDataGModel::writeMED(const std::string &fileName, bool saveMesh)
   profileName.resize(std::min(profileName.size(), (std::size_t)MED_NAME_SIZE));
   std::vector<med_int> profile, indices;
   std::size_t notInFile = 0;
-  for(std::size_t i = 0; i < _steps[0]->getNumData(); i++) {
-    if(_steps[0]->getData(i)) {
-      MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
+  for(std::size_t i = 0; i < _steps[first]->getNumData(); i++) {
+    if(_steps[first]->getData(i)) {
+      MVertex *v = model->getMeshVertexByTag(i);
       if(!v) {
         Msg::Error("Unknown node %zu in data (MED)", i);
         return false;
@@ -523,7 +525,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName, bool saveMesh)
     return false;
   }
 
-  int numComp = _steps[0]->getNumComponents();
+  int numComp = _steps[first]->getNumComponents();
 #if (MED_MAJOR_NUM >= 3)
   // the names and units of the components, MED_SNAME_SIZE characters each
   std::string compNames, compUnits;
@@ -561,6 +563,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName, bool saveMesh)
     return false;
   }
   for(std::size_t step = 0; step < _steps.size(); step++) {
+    if(!hasTimeStep(step)) continue;
     // the values of the step at the nodes of the profile (of the first step)
     std::size_t n = 0;
     for(std::size_t i = 0; i < _steps[step]->getNumData(); i++)
