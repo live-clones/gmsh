@@ -205,6 +205,9 @@ public:
   {
     return false;
   }
+  // may anything be kept of an element within this sphere (centre and
+  // radius)? (asked first, so that the others are not read)
+  virtual bool mayKeep(const float *sphere) const { return true; }
 };
 
 class GMSH_MeshPlugin : public GMSH_Plugin {

@@ -275,9 +275,14 @@ void PView::_deleteClipAdaptive()
 class planesSelection : public adaptiveSelection {
 private:
   int _mask;
+  activePlanes _planes;
 
 public:
-  planesSelection(int mask) : _mask(mask) {}
+  planesSelection(int mask) : _mask(mask), _planes(mask) {}
+  bool mayKeep(const float *sphere) const override
+  {
+    return _planes.gap(sphere) <= 0.;
+  }
   bool keeps(int n, const double *x, const double *y,
              const double *z) const override
   {
@@ -325,6 +330,7 @@ bool PView::refineClipLayer()
     return false;
   }
   if(!_clipAdaptive) _clipAdaptive = new adaptiveData(_data);
+  _clipAdaptive->copySkinOf(*a);
   double min, max;
   getAdaptiveRange(min, max);
   planesSelection cut(_options->clip);

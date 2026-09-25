@@ -10,6 +10,7 @@
 
 class GMSH_CutSpherePlugin : public GMSH_LevelsetPlugin {
   double levelset(double x, double y, double z, double val) const;
+  bool mayKeep(const float *sphere) const;
 
 public:
   GMSH_CutSpherePlugin();

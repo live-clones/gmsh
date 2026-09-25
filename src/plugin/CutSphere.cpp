@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
+#include <cmath>
 #include "GmshConfig.h"
 #include "CutSphere.h"
 #include "Context.h"
@@ -74,6 +75,14 @@ double GMSH_CutSpherePlugin::levelset(double x, double y, double z,
   double c = option(2);
   double r = option(3);
   return (x - a) * (x - a) + (y - b) * (y - b) + (z - c) * (z - c) - r * r;
+}
+
+bool GMSH_CutSpherePlugin::mayKeep(const float *s) const
+{
+  double d = std::sqrt((s[0] - option(0)) * (s[0] - option(0)) +
+                       (s[1] - option(1)) * (s[1] - option(1)) +
+                       (s[2] - option(2)) * (s[2] - option(2)));
+  return std::abs(d - std::abs(option(3))) <= s[3];
 }
 
 PView *GMSH_CutSpherePlugin::execute(PView *v)

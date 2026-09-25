@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cmath>
 #include "GmshConfig.h"
 #include "CutPlane.h"
 #include "Context.h"
@@ -73,6 +74,13 @@ std::string GMSH_CutPlanePlugin::getHelp() const
 double GMSH_CutPlanePlugin::levelset(double x, double y, double z,
                                      double val) const
 { return option(0) * x + option(1) * y + option(2) * z + option(3); }
+
+bool GMSH_CutPlanePlugin::mayKeep(const float *s) const
+{
+  double n = std::sqrt(option(0) * option(0) + option(1) * option(1) +
+                       option(2) * option(2));
+  return !n || std::abs(levelset(s[0], s[1], s[2], 0.)) <= n * s[3];
+}
 
 PView *GMSH_CutPlanePlugin::execute(PView *v)
 {

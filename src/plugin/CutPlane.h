@@ -10,6 +10,7 @@
 
 class GMSH_CutPlanePlugin : public GMSH_LevelsetPlugin {
   double levelset(double x, double y, double z, double val) const;
+  bool mayKeep(const float *sphere) const;
   int _iview = 0; // the view of the preview
 
 public:

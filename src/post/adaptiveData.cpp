@@ -10,7 +10,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <vector>
+#include <atomic>
 #include "adaptiveData.h"
+#include "FaceMatcher.h"
 #include "MElement.h"
 #include "MPolygon.h"
 #include "MPolyhedron.h"
@@ -278,7 +280,8 @@ const adaptiveShape &adaptiveShape::get(int type)
 adaptiveElements::adaptiveElements(
   int type, const std::vector<fullMatrix<double> *> &p)
   : _shape(adaptiveShape::get(type)), _coeffsVal(nullptr), _eexpsVal(nullptr),
-    _coeffsGeom(nullptr), _eexpsGeom(nullptr), _numVals(0), _numNodes(0)
+    _coeffsGeom(nullptr), _eexpsGeom(nullptr), _numVals(0), _numNodes(0),
+    _listStep(-1), _listStamp(-1), _listType(0)
 {
   if(p.size() >= 2) {
     _coeffsVal = p[0];
@@ -860,6 +863,57 @@ static void readElement(PViewData *in, int step, int ent, int ele, int numComp,
       in->getValue(step, ent, ele, numComp * i + c, values[c * numVals + i]);
 }
 
+void adaptiveElements::_listElements(PViewData *in, int step, int type)
+{
+  if(_listStep == step && _listStamp == in->getStamp() && _listType == type)
+    return;
+  _elements.clear();
+  _spheres.clear();
+  for(int ent = 0; ent < in->getNumEntities(step); ent++)
+    for(int ele = 0; ele < in->getNumElements(step, ent); ele++)
+      if(!in->skipElement(step, ent, ele) &&
+         in->getType(step, ent, ele) == type)
+        _elements.push_back({ent, ele});
+  _listStep = step;
+  _listStamp = in->getStamp();
+  _listType = type;
+}
+
+// (the sphere around the box of the nodes, a little larger for the elements
+// that are curved)
+void adaptiveElements::_boundElements(PViewData *in, int step)
+{
+  _spheres.assign(4 * _elements.size(), 0.f);
+  int nthreads = in->isThreadSafe() ?
+                   CTX::instance()->numThreadsFor(_elements.size(), 10000) :
+                   1;
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+  for(std::size_t i = 0; i < _elements.size(); i++) {
+    int ent = _elements[i].first, ele = _elements[i].second;
+    int n = in->getNumNodes(step, ent, ele);
+    double min[3] = {1e300, 1e300, 1e300}, max[3] = {-1e300, -1e300, -1e300};
+    std::vector<double> xyz(3 * n);
+    for(int j = 0; j < n; j++) {
+      double *x = &xyz[3 * j];
+      in->getNode(step, ent, ele, j, x[0], x[1], x[2]);
+      for(int k = 0; k < 3; k++) {
+        min[k] = std::min(min[k], x[k]);
+        max[k] = std::max(max[k], x[k]);
+      }
+    }
+    double c[3], r2 = 0.;
+    for(int k = 0; k < 3; k++) c[k] = 0.5 * (min[k] + max[k]);
+    for(int j = 0; j < n; j++) {
+      double d2 = 0.;
+      for(int k = 0; k < 3; k++)
+        d2 += (xyz[3 * j + k] - c[k]) * (xyz[3 * j + k] - c[k]);
+      r2 = std::max(r2, d2);
+    }
+    for(int k = 0; k < 3; k++) _spheres[4 * i + k] = (float)c[k];
+    _spheres[4 * i + 3] = (float)(1.1 * std::sqrt(r2));
+  }
+}
+
 void adaptiveElements::addInView(double tol, int step, PViewData *in,
                                  PViewDataList *out, GMSH_PostPlugin *plug,
                                  int level, int type,
@@ -886,12 +940,26 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
     *outNb = 0;
   }
 
-  std::vector<std::pair<int, int> > elements;
-  for(int ent = 0; ent < in->getNumEntities(step); ent++)
-    for(int ele = 0; ele < in->getNumElements(step, ent); ele++)
-      if(!in->skipElement(step, ent, ele) &&
-         in->getType(step, ent, ele) == type)
-        elements.push_back({ent, ele});
+  // (only the volumes have a skin, and are selected: the planes leave curves
+  // and surfaces to themselves)
+  bool volume = (_shape.type == TYPE_TET || _shape.type == TYPE_HEX ||
+                 _shape.type == TYPE_PRI || _shape.type == TYPE_PYR);
+  if(!volume || polytopes) selection = nullptr;
+
+  // the elements, those a selection or a plugin may keep something of if
+  // they say so from the spheres around them, without reading the others
+  _listElements(in, step, type);
+  std::vector<std::pair<int, int> > near;
+  bool bounded = (selection || plug) && !polytopes;
+  if(bounded) {
+    if(_spheres.empty()) _boundElements(in, step);
+    for(std::size_t i = 0; i < _elements.size(); i++)
+      if(selection ? selection->mayKeep(&_spheres[4 * i]) :
+                     plug->mayKeep(&_spheres[4 * i]))
+        near.push_back(_elements[i]);
+  }
+  const std::vector<std::pair<int, int> > &elements =
+    bounded ? near : _elements;
   if(elements.empty()) return;
 
   // (the range of the data is that of all its steps)
@@ -913,12 +981,7 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
   std::vector<std::vector<unsigned char> > skins(numChunks);
   std::vector<std::size_t> num(numChunks, 0);
   bool skin = (inSkin && outSkin && !polytopes);
-  // (only the volumes have a skin, and are selected: the planes leave curves
-  // and surfaces to themselves)
-  bool volume = (_shape.type == TYPE_TET || _shape.type == TYPE_HEX ||
-                 _shape.type == TYPE_PRI || _shape.type == TYPE_PYR);
   skinOnly = skinOnly && skin && !plug && volume;
-  if(!volume || polytopes) selection = nullptr;
 
   // All the last elements of the tree are kept if the target error is
   // negative: how much each chunk adds is known, which saves growing the
@@ -1019,7 +1082,7 @@ int adaptiveElements::_addPolytope(int level, int step, PViewData *in, int ent,
 
 adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
   : _step(-1), _level(-1), _tol(-1.), _skinAsked(false), _skinOnly(false),
-    _selected(false),
+    _selected(false), _skinStep(-1), _skinStamp(-1), _skinFound(false),
     _inData(data), _points(nullptr),
     _lines(nullptr), _triangles(nullptr), _quadrangles(nullptr),
     _tetrahedra(nullptr), _hexahedra(nullptr), _prisms(nullptr),
@@ -1083,39 +1146,84 @@ bool adaptiveData::_findSkin(int step,
   skin.clear();
   if(_polygons || _polyhedra) return false;
   if(!_tetrahedra && !_hexahedra && !_prisms && !_pyramids) return false;
-  struct where {
-    int ent, ele, face, count;
+  // the elements numbered in a single index, and the identifiers of the
+  // corners of the volumes
+  int numEnt = _inData->getNumEntities(step);
+  std::vector<std::size_t> start(numEnt + 1, 0);
+  skin.resize(numEnt);
+  for(int ent = 0; ent < numEnt; ent++) {
+    int n = _inData->getNumElements(step, ent);
+    skin[ent].assign(n, 0);
+    start[ent + 1] = start[ent] + n;
+  }
+  std::size_t num = start[numEnt];
+  // (their shapes before the threads, which only read them)
+  const adaptiveShape *shapes[4] = {
+    &adaptiveShape::get(TYPE_TET), &adaptiveShape::get(TYPE_HEX),
+    &adaptiveShape::get(TYPE_PRI), &adaptiveShape::get(TYPE_PYR)};
+  std::vector<std::int8_t> shapeOf(num, -1);
+  std::vector<std::size_t> ids(8 * num, 0);
+  int nthreads = _inData->isThreadSafe() ?
+                   CTX::instance()->numThreadsFor(num, 10000) :
+                   1;
+  std::atomic<bool> bad(false);
+  auto entityOf = [&](std::size_t i) {
+    return (int)(std::upper_bound(start.begin(), start.end(), i) -
+                 start.begin()) - 1;
   };
-  std::map<std::array<std::size_t, 4>, where> faces;
-  skin.resize(_inData->getNumEntities(step));
-  for(int ent = 0; ent < _inData->getNumEntities(step); ent++) {
-    skin[ent].resize(_inData->getNumElements(step, ent), 0);
-    for(int ele = 0; ele < _inData->getNumElements(step, ent); ele++) {
-      if(_inData->skipElement(step, ent, ele)) continue;
-      int type = _inData->getType(step, ent, ele);
-      if(type != TYPE_TET && type != TYPE_HEX && type != TYPE_PRI &&
-         type != TYPE_PYR)
-        continue;
-      const adaptiveShape &shape = adaptiveShape::get(type);
-      for(std::size_t f = 0; f < shape.faces.size(); f++) {
-        std::array<std::size_t, 4> key = {0, 0, 0, 0};
-        for(std::size_t k = 0; k < shape.faces[f].size(); k++) {
-          key[k] = _inData->getNodeId(step, ent, ele, shape.faces[f][k]);
-          if(!key[k]) return false;
-        }
-        std::sort(key.begin(), key.end());
-        auto it = faces.find(key);
-        if(it == faces.end())
-          faces[key] = {ent, ele, (int)f, 1};
-        else
-          it->second.count++;
-      }
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+  for(std::size_t i = 0; i < num; i++) {
+    if(bad) continue;
+    int ent = entityOf(i), ele = (int)(i - start[ent]);
+    if(_inData->skipElement(step, ent, ele)) continue;
+    int type = _inData->getType(step, ent, ele);
+    int sh = (type == TYPE_TET) ? 0 : (type == TYPE_HEX) ? 1 :
+             (type == TYPE_PRI) ? 2 : (type == TYPE_PYR) ? 3 : -1;
+    if(sh < 0) continue;
+    shapeOf[i] = (std::int8_t)sh;
+    for(int k = 0; k < shapes[sh]->numNodes; k++) {
+      ids[8 * i + k] = _inData->getNodeId(step, ent, ele, k);
+      if(!ids[8 * i + k]) bad = true;
     }
   }
-  for(auto &f : faces)
-    if(f.second.count == 1)
-      skin[f.second.ent][f.second.ele] |= (unsigned char)(1 << f.second.face);
+  if(bad) return false;
+
+  // the faces met once, each thread matching its share of them
+  std::vector<std::vector<std::pair<std::size_t, int> > > left(nthreads);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    FaceMatcher<std::size_t, std::size_t> matcher;
+    for(std::size_t i = 0; i < num; i++) {
+      if(shapeOf[i] < 0) continue;
+      const adaptiveShape &shape = *shapes[(int)shapeOf[i]];
+      for(std::size_t f = 0; f < shape.faces.size(); f++) {
+        std::size_t k[4];
+        int n = (int)shape.faces[f].size();
+        for(int j = 0; j < n; j++) k[j] = ids[8 * i + shape.faces[f][j]];
+        if(FaceMatcher<std::size_t, std::size_t>::share(k, n, nthreads) != t)
+          continue;
+        matcher.add(matcher.hashOf(k, n, 0), i, (int)f);
+      }
+    }
+    matcher.forEachLeft(
+      [&](std::size_t i, int f) { left[t].push_back({i, f}); });
+  }
+  for(auto &l : left)
+    for(auto &f : l) {
+      int ent = entityOf(f.first);
+      skin[ent][f.first - start[ent]] |= (unsigned char)(1 << f.second);
+    }
   return true;
+}
+
+void adaptiveData::copySkinOf(const adaptiveData &other)
+{
+  if(other._inData != _inData || other._skinStep < 0) return;
+  if(_skinStep == other._skinStep && _skinStamp == other._skinStamp) return;
+  _inSkin = other._inSkin;
+  _skinFound = other._skinFound;
+  _skinStep = other._skinStep;
+  _skinStamp = other._skinStamp;
 }
 
 void adaptiveData::changeResolution(int step, int level, double tol,
@@ -1142,9 +1250,16 @@ void adaptiveData::changeResolution(int step, int level, double tol,
     _outData->setDirty(true);
     // which faces of the elements are on the skin of the view, so that the
     // refined elements can tell the faces they have on it
-    std::vector<std::vector<unsigned char> > inSkin;
+    // (not for a plugin, which does not look at them; the same while the
+    // data and the step stay)
     std::map<int, std::vector<unsigned char> > outSkin;
-    bool skin = _findSkin(step, inSkin);
+    if(!plug && (_skinStep != step || _skinStamp != _inData->getStamp())) {
+      _skinFound = _findSkin(step, _inSkin);
+      _skinStep = step;
+      _skinStamp = _inData->getStamp();
+    }
+    bool skin = !plug && _skinFound;
+    const std::vector<std::vector<unsigned char> > &inSkin = _inSkin;
     _skinOnly = skinOnly && skin && !plug;
     auto add = [&](adaptiveElements *e, int type) {
       if(!e) return;

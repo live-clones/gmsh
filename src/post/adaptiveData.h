@@ -259,6 +259,9 @@ public:
   virtual ~adaptiveSelection() {}
   virtual bool keeps(int numNodes, const double *x, const double *y,
                      const double *z) const = 0;
+  // may it keep something of an element within this sphere (centre and
+  // radius)? (asked first, so that the others are not read)
+  virtual bool mayKeep(const float *sphere) const { return true; }
 };
 
 // The values the target error is relative to: the range of the data (all the
@@ -310,6 +313,14 @@ private:
   std::vector<double> _interpolVal, _interpolGeom; // a row per vertex
   int _numVals, _numNodes; // their numbers of columns
   std::vector<const adaptiveElement *> _leaves; // the last level of the tree
+  // the elements of this kind in the view (entity, element), and the spheres
+  // around their nodes when a selection or a plugin asks for them, kept while
+  // the data, its step and the kind stay
+  int _listStep, _listStamp, _listType;
+  std::vector<std::pair<int, int> > _elements;
+  std::vector<float> _spheres; // centre and radius
+  void _listElements(PViewData *in, int step, int type);
+  void _boundElements(PViewData *in, int step);
   void _evaluate(adaptiveWork &w, const adaptiveVertex *p) const;
   void _locate(adaptiveWork &w, const adaptiveVertex *p) const;
   double _errorOf(adaptiveWork &w, const adaptiveElement *e) const;
@@ -405,6 +416,11 @@ private:
   // only the skin refined (as asked, and as done: not without a skin), and
   // what was refined selected
   bool _skinAsked, _skinOnly, _selected;
+  // the faces of the elements on the skin of the view (see _findSkin()), kept
+  // while the data and the step stay
+  int _skinStep, _skinStamp;
+  bool _skinFound;
+  std::vector<std::vector<unsigned char> > _inSkin;
   PViewData *_inData;
   PViewDataList *_outData;
   adaptiveElements *_points, *_lines, *_triangles, *_quadrangles;
@@ -443,6 +459,8 @@ public:
                         double max = -1., bool skinOnly = false,
                         const adaptiveSelection *selection = nullptr);
   bool isSkinOnly() const { return _skinOnly; }
+  // take the skin of the data another adaptive data of it has found
+  void copySkinOf(const adaptiveData &other);
   // is only a part of the view refined (the skin, or a selection)?
   bool isPartial() const { return _skinOnly || _selected; }
   int countTotElmLev0(int step, PViewData *in);
