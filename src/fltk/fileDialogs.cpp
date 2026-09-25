@@ -1179,12 +1179,15 @@ int mshFileDialog(const char *name)
 {
   static _mshFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item formatmenu[] = {{"Version 1", 0, nullptr, nullptr},
-                                      {"Version 2 ASCII", 0, nullptr, nullptr},
-                                      {"Version 2 Binary", 0, nullptr, nullptr},
-                                      {"Version 4 ASCII", 0, nullptr, nullptr},
-                                      {"Version 4 Binary", 0, nullptr, nullptr},
-                                      {nullptr}};
+  static Fl_Menu_Item formatmenu[] = {
+    {"Version 1", 0, nullptr, nullptr},
+    {"Version 2 ASCII", 0, nullptr, nullptr},
+    {"Version 2 Binary", 0, nullptr, nullptr},
+    {"Version 4.1 ASCII", 0, nullptr, nullptr},
+    {"Version 4.1 Binary", 0, nullptr, nullptr},
+    {"Version 4.2 ASCII", 0, nullptr, nullptr},
+    {"Version 4.2 Binary", 0, nullptr, nullptr},
+    {nullptr}};
   static Fl_Menu_Item viewsmenu[] = {{"None", 0, nullptr, nullptr},
                                      {"Visible", 0, nullptr, nullptr},
                                      {"All", 0, nullptr, nullptr},
@@ -1245,8 +1248,10 @@ int mshFileDialog(const char *name)
     dialog->c->value(0);
   else if(opt_mesh_msh_file_version(0, GMSH_GET, 0) < 4.0)
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 1 : 2);
-  else
+  else if(opt_mesh_msh_file_version(0, GMSH_GET, 0) < 4.2)
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 3 : 4);
+  else
+    dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 5 : 6);
   dialog->views->value(_viewsToSave());
   if(PView::list.empty() || dialog->c->value() == 0) {
     dialog->views->deactivate();
@@ -1275,14 +1280,14 @@ int mshFileDialog(const char *name)
       Fl_Widget *o = Fl::readqueue();
       if(!o) break;
       if(o == dialog->ok) {
-        opt_mesh_msh_file_version(
-          0, GMSH_SET | GMSH_GUI,
-          (dialog->c->value() == 0)                            ? 1.0 :
-          (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 :
-                                                                 4.1);
-        opt_mesh_binary(
-          0, GMSH_SET | GMSH_GUI,
-          (dialog->c->value() == 2 || dialog->c->value() == 4) ? 1 : 0);
+        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,
+                                  (dialog->c->value() == 0) ? 1.0 :
+                                  (dialog->c->value() <= 2) ? 2.2 :
+                                  (dialog->c->value() <= 4) ? 4.1 :
+                                                              4.2);
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI,
+                        (dialog->c->value() && !(dialog->c->value() % 2)) ? 1 :
+                                                                            0);
         if(dialog->views->active()) {
           opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
           opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,

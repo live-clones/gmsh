@@ -4841,7 +4841,7 @@ cases.)
 @cindex File format, mesh
 @cindex MSH4 file
 
-The MSH file format version 4 (current revision: version 4.1) contains
+The MSH file format version 4 (current revision: version 4.2) contains
 one mandatory section giving information about the file
 (@code{$MeshFormat}), followed by several optional sections defining the
 physical group names (@code{$PhysicalName}), the elementary model
@@ -4888,7 +4888,8 @@ vector to access nodes and elements. The performance hit is on
 speed. For post-processing datasets, which always use vectors to access
 data, the performance hit is on memory. A @code{$NodeData} with two
 nodes, tagged 1 and 1000000, will allocate a (mostly empty) vector of
-1000000 elements. By default, for non-partitioned, single file meshes,
+1000000 elements (whose size is known from @code{maxTag} in the header of
+the records). By default, for non-partitioned, single file meshes,
 Gmsh will create files with a continuous ordering of node and element
 tags, starting at 1. Detecting if the numbering is continuous can be
 done easily when reading a file by inspecting @code{numNodes},
@@ -4900,15 +4901,16 @@ In binary mode (@code{Mesh.Binary=1} or @code{-bin} on the command
 line), all the numerical values (integer and floating point) not marked
 as ASCII in the format description below are written in binary form,
 using the type given between parentheses. The block structure of the
-@code{$Nodes} and @code{$Elements} sections makes it possible to read integer and
-floating point data in each block in a single step (e.g. using
-@code{fread} in C).
+@code{$Nodes}, @code{$Elements}, @code{$Faces}, @code{$GhostElements},
+@code{$NodeData}, @code{$ElementData} and @code{$ElementNodeData} sections
+makes it possible to read integer and floating point data in each block in
+a single step (e.g. using @code{fread} in C).
 
 The format is defined as follows:
 
 @example
 $MeshFormat // same as MSH version 2
-  version(ASCII double; currently 4.1)
+  version(ASCII double; currently 4.2)
     file-type(ASCII int; 0 for ASCII mode, 1 for binary mode)
     data-size(ASCII int; sizeof(size_t))
   < int with value one; only in binary mode, to detect endianness >
@@ -5043,9 +5045,9 @@ $Periodic
 $EndPeriodic
 
 $GhostElements
-  numGhostElements(size_t)
-  elementTag(size_t) partitionTag(int)
-    numGhostPartitions(size_t) ghostPartitionTag(int) ...
+  numBlocks(size_t) numGhostElements(size_t)
+  partitionTag(int) ghostPartitionTag(int) numElementsInBlock(size_t)
+    elementTag(size_t) ...
   ...
 $EndGhostElements
 
@@ -5073,7 +5075,13 @@ $NodeData
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  nodeTag(int) value(double) ...
+  numBlocks(size_t) numNodes(size_t)
+    minNodeTag(size_t) maxNodeTag(size_t)
+  numNodesInBlock(size_t)
+    nodeTag(size_t)
+    ...
+    value(double) ...
+    ...
   ...
 $EndNodeData
 
@@ -5084,7 +5092,13 @@ $ElementData
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  elementTag(int) value(double) ...
+  numBlocks(size_t) numElements(size_t)
+    minElementTag(size_t) maxElementTag(size_t)
+  numElementsInBlock(size_t)
+    elementTag(size_t)
+    ...
+    value(double) ...
+    ...
   ...
 $EndElementData
 
@@ -5095,7 +5109,14 @@ $ElementNodeData
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  elementTag(int) numNodesPerElement(int) value(double) ...
+  numBlocks(size_t) numElements(size_t)
+    minElementTag(size_t) maxElementTag(size_t)
+  elementType(int; see below) numValuesPerElement(int)
+    numElementsInBlock(size_t)
+    elementTag(size_t)
+    ...
+    value(double) ...
+    ...
   ...
 $EndElementNodeData
 
@@ -5224,8 +5245,33 @@ All the currently supported elements in the format are defined in
 @url{https://gitlab.onelab.info/gmsh/gmsh/blob/master/src/common/GmshDefines.h,GmshDefines.h}. See
 @ref{Node ordering} for the ordering of the nodes.
 
-The post-processing sections (@code{$NodeData}, @code{$ElementData},
-@code{$ElementNodeData}) can contain @code{numStringTags} string tags,
+The @code{$GhostElements} section groups the ghost elements in blocks:
+each block lists the tags of the elements of partition
+@code{partitionTag} that are ghosts in partition @code{ghostPartitionTag}
+(an element that is a ghost in several partitions appears in several
+blocks). @code{numGhostElements} is the total number of element tags in
+the blocks.
+
+In the post-processing sections (@code{$NodeData}, @code{$ElementData},
+@code{$ElementNodeData}), the records (the tags of the nodes or elements
+and their values) follow the tags described below, in blocks: all the
+tags of a block come first, then all their values, @code{numComponents}
+values per node in @code{$NodeData} and per element in
+@code{$ElementData}, where @code{numComponents} is the number of field
+components given in the integer tags. In @code{$ElementNodeData}, each
+block holds elements of the same type, with the same number of values
+per element (@code{numValuesPerElement}): there are
+@code{numComponents} values per value, i.e. @code{numComponents *
+numValuesPerElement} values per element. This number is usually the
+number of nodes of the element (the values are given at the nodes, in
+the order of the nodes of the element), but it can differ, e.g. with
+interpolation schemes (see below). The @code{numNodes},
+@code{minNodeTag} and @code{maxNodeTag} (resp. @code{numElements},
+@code{minElementTag} and @code{maxElementTag}) in the header give the
+number of nodes (resp. elements) in all the blocks and the range of
+their tags.
+
+The post-processing sections can contain @code{numStringTags} string tags,
 @code{numRealTags} real value tags and @code{numIntegerTags} integer
 tags. The default set of tags understood by Gmsh is as follows:
 @table @code
@@ -5261,13 +5307,13 @@ integers (@code{numRows} and @code{numColumns}) followed by the values,
 by row.
 @end table
 
-Here is a small example of a minimal ASCII MSH4.1 file, with a mesh
+Here is a small example of a minimal ASCII MSH4.2 file, with a mesh
 consisting of two quadrangles and an associated nodal scalar dataset
 (the comments are not part of the actual file):
 
 @example
 $MeshFormat
-4.1 0 8     @emph{MSH4.1, ASCII}
+4.2 0 8     @emph{MSH4.2, ASCII}
 $EndMeshFormat
 $Nodes
 1 6 1 6     @emph{1 entity bloc, 6 nodes total, min/max node tags: 1 and 6}
@@ -5300,14 +5346,49 @@ $NodeData
 0           @emph{  the time step (0; time steps always start at 0)}
 1           @emph{  1-component (scalar) field}
 6           @emph{  6 associated nodal values}
-1 0.0       @emph{value associated with node #1 (0.0)}
-2 0.1       @emph{value associated with node #2 (0.1)}
-3 0.2       @emph{etc.}
-4 0.0
-5 0.2
-6 0.4
+1 6 1 6     @emph{1 block, 6 nodes total, min/max node tags: 1 and 6}
+6           @emph{6 nodes in the block}
+1           @emph{  node tag #1}
+2           @emph{  node tag #2}
+3           @emph{  etc.}
+4
+5
+6
+0.0         @emph{  value associated with node #1 (0.0)}
+0.1         @emph{  value associated with node #2 (0.1)}
+0.2         @emph{  etc.}
+0.0
+0.2
+0.4
 $EndNodeData
 @end example
+
+The 4.2 revision of the format includes the following modifications with
+respect to the 4.1 version:
+@itemize @bullet
+@item
+The @code{$NodeData}, @code{$ElementData} and @code{$ElementNodeData}
+sections store their records in blocks, with the tags of the nodes or
+elements first and their values next, and the node and element tags are
+now @code{size_t}. In version 4.1, each record is given in turn, after
+the tags of the section: @code{nodeTag(int) value(double) ...} in
+@code{$NodeData}, @code{elementTag(int) value(double) ...} in
+@code{$ElementData}, and @code{elementTag(int) numNodesPerElement(int)
+value(double) ...} in @code{$ElementNodeData}.
+@item
+The @code{$GhostElements} section stores the ghost elements in blocks. In
+version 4.1, it is given by @code{numGhostElements(size_t)}, followed for
+each element by @code{elementTag(size_t) partitionTag(int)
+numGhostPartitions(size_t) ghostPartitionTag(int) ...}.
+@item
+The @code{$Polytopes}, @code{$Edges} and @code{$Faces} sections have been
+added. (Development versions of Gmsh wrote @code{$Edges} and
+@code{$Faces} sections in files of version 4.1, with the same
+@code{$Edges} section, and a @code{$Faces} section given by
+@code{numTriangles(size_t) numQuadrangles(size_t)}, followed by
+@code{faceTag(size_t) nodeTag(size_t) ...} for all the triangles and then
+for all the quadrangles.)
+@end itemize
 
 The 4.1 revision of the format includes the following modifications with
 respect to the initial 4.0 version:
@@ -5339,18 +5420,6 @@ reading the file.
 The @code{$Periodic} section has been changed to always provide the
 number of values in the affine transform (which can be zero, if the
 transform is not provided).
-@end itemize
-
-The following changes are foreseen in a future revision of the MSH format:
-@itemize @bullet
-@item
-The @code{$GhostElements}, @code{$NodeData}, @code{$ElementData} and
-@code{$ElementNodeData} will be reworked for greater IO efficiency, with
-separation of entries by type and a block structure with predictable
-sizes.
-@item
-Node and element tags in @code{$NodeData}, @code{$ElementData} and
-@code{$ElementNodeData} will be switched to @code{size_t}.
 @end itemize
 
 @c -------------------------------------------------------------------------

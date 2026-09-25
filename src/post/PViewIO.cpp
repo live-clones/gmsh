@@ -122,8 +122,8 @@ bool PView::readMSHInterpolationScheme(FILE *fp)
   return true;
 }
 
-bool PView::readMSHViewData(const std::string &fileName, FILE *fp,
-                            bool binary, bool swap, const char *dataType,
+bool PView::readMSHViewData(const std::string &fileName, FILE *fp, bool binary,
+                            bool swap, const char *dataType, double version,
                             int partitionToRead)
 {
   PViewDataGModel::DataType type;
@@ -226,8 +226,8 @@ bool PView::readMSHViewData(const std::string &fileName, FILE *fp,
       };
       auto read = [&](PViewDataGModel *d) {
         return d->readMSH(viewName, fileName, -1, fp, binary, swap, timeStep,
-                          time, partition, numComp, numEnt,
-                          interpolationScheme);
+                          time, partition, numComp, numEnt, interpolationScheme,
+                          version);
       };
       if(!PViewDataGModel::readInView(viewName, fileName, type, accept, read)) {
         Msg::Error("Could not read data in file '%s'", fileName.c_str());

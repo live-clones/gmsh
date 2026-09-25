@@ -4,16 +4,17 @@ rendering pipeline with order-independent transparency and studio shading; new
 capping visualization mode in clipping tool; new interactive model query and
 measurement; improved colorbars and 2D plots; new faster homology solver;
 improved performance of mesh partitioning pipeline and added support for
-partition overlaps; added IO of edges and faces in MSH4 file format, as well as
-ability to save only the local partitioned Brep; improved performance of
-high-order element generation; new polytope implementation with support in the
-API and MSH4 format, which replaces the old polygon/polyhedron elements,
-levelset commands and Plugin(CutMesh); the Extend mesh size field is now applied
-per entity and takes an element growth rate as input; improved XAO export that
-preserves entity tags; new VTK/Paraview IO for meshes and post-processing views;
-new Curvature Curve|Surface parser functions; new Plugin(DuplicateNodes); new
-predefined colormaps; Gmsh now requires C++17 and CMake 3.10, and uses Eigen 5.0
-by default; bug fixes.
+partition overlaps; new ability to save only the local partitioned Brep;
+improved performance of high-order element generation; new MSH4.2 format with
+updated $NodeData, $ElementData, $ElementNodeData and $GhostElements sections,
+and support for $Edges and $Faces sections; new polytope implementation with
+support in the API and MSH4.2 format, which replaces the old polygon/polyhedron
+elements, levelset commands and Plugin(CutMesh); the Extend mesh size field is
+now applied per entity and takes an element growth rate as input; improved XAO
+export that preserves entity tags; new VTK/Paraview IO for meshes and
+post-processing views; new Curvature Curve|Surface parser functions; new
+Plugin(DuplicateNodes); new predefined colormaps; Gmsh now requires C++17 and
+CMake 3.10, and uses Eigen 5.0 by default; bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent, mesh/setNodes, mesh/

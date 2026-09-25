@@ -403,10 +403,12 @@ public:
   void destroyData();
 
   // I/O routines
+  // read the records of a data section of an MSH file (after its tags), in the
+  // layout of the given version of the format
   bool readMSH(const std::string &viewName, const std::string &fileName,
                int fileIndex, FILE *fp, bool binary, bool swap, int step,
                double time, int partition, int numComp, int numNodes,
-               const std::string &interpolationScheme);
+               const std::string &interpolationScheme, double version);
   virtual bool writeMSH(const std::string &fileName, double version = 2.2,
                         bool binary = false, bool savemesh = true,
                         bool multipleView = false, int partitionNum = -1,

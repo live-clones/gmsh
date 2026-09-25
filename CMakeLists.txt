@@ -2296,6 +2296,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
        tutorials/*.geo examples/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
        benchmarks/occ/*.geo benchmarks/io_msh/polytopes.geo
        benchmarks/io_msh/read_back.geo benchmarks/io_msh/faces.geo
+       benchmarks/io_msh/views.geo
        benchmarks/io_vtk/*.geo)
   # (fails on the CI machines, not understood yet)
   list(FILTER ALLFILES EXCLUDE REGEX "io_vtk/vtu_roundtrip.geo$")

@@ -1452,19 +1452,83 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
   return true;
 }
 
+// In MSH 4.2, ghost elements come in blocks of the elements of a partition that
+// are ghosts in another: `numBlocks numGhostElements`, then for each block
+// `partitionTag ghostPartitionTag numElementsInBlock` and the element tags.
+// Before, each element is given with its partition and the list of partitions
+// where it is a ghost.
 static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
-                                  bool swap)
+                                  bool swap, double version)
 {
-  std::size_t numGhostCells = 0;
-  if(binary) {
-    if(fread(&numGhostCells, sizeof(std::size_t), 1, fp) != 1) { return false; }
-    if(swap) SwapBytes((char *)&numGhostCells, sizeof(std::size_t), 1);
+  // the ghost entity of each partition
+  std::vector<GEntity *> ghostEntities(model->getNumPartitions() + 1, nullptr);
+  std::vector<GEntity *> entities;
+  model->getEntities(entities);
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    int partNum = -1;
+    if(ge->geomType() == GEntity::GhostCurve)
+      partNum = static_cast<ghostEdge *>(ge)->getPartition();
+    else if(ge->geomType() == GEntity::GhostSurface)
+      partNum = static_cast<ghostFace *>(ge)->getPartition();
+    else if(ge->geomType() == GEntity::GhostVolume)
+      partNum = static_cast<ghostRegion *>(ge)->getPartition();
+    if(partNum >= 0 && partNum < (int)ghostEntities.size())
+      ghostEntities[partNum] = ge;
   }
-  else {
-    if(fscanf(fp, "%zu", &numGhostCells) != 1) { return false; }
+  // add element elm of partition partNum as a ghost in partition ghostPartition
+  auto addGhost = [&](MElement *elm, int partNum, int ghostPartition) {
+    if(ghostPartition < 0 || ghostPartition >= (int)ghostEntities.size()) {
+      Msg::Error("Invalid partition %d in ghost elements", ghostPartition);
+      return false;
+    }
+    GEntity *ge = ghostEntities[ghostPartition];
+    if(!ge) {
+      Msg::Warning("Missing ghost entity on partition %d", ghostPartition);
+    }
+    else if(ge->geomType() == GEntity::GhostCurve) {
+      static_cast<ghostEdge *>(ge)->addElement(elm, partNum);
+    }
+    else if(ge->geomType() == GEntity::GhostSurface) {
+      static_cast<ghostFace *>(ge)->addElement(elm, partNum);
+    }
+    else if(ge->geomType() == GEntity::GhostVolume) {
+      static_cast<ghostRegion *>(ge)->addElement(elm, partNum);
+    }
+    return true;
+  };
+
+  std::vector<std::size_t> header;
+  if(version >= 4.2) {
+    if(!readMSH4SizeTs(fp, binary, swap, 2, header)) return false;
+    std::size_t numBlocks = header[0];
+    std::vector<std::size_t> tags;
+    for(std::size_t b = 0; b < numBlocks; b++) {
+      int part[2] = {0, 0}; // partitionTag ghostPartitionTag
+      if(binary) {
+        if(fread(part, sizeof(int), 2, fp) != 2) return false;
+        if(swap) SwapBytes((char *)part, sizeof(int), 2);
+      }
+      else if(fscanf(fp, "%d %d", &part[0], &part[1]) != 2) {
+        return false;
+      }
+      std::size_t num = 0;
+      if(!readMSH4SizeT(fp, binary, swap, num)) return false;
+      if(!readMSH4SizeTs(fp, binary, swap, num, tags)) return false;
+      for(auto tag : tags) {
+        MElement *elm = model->getMeshElementByTag(tag);
+        if(!elm) {
+          Msg::Error("No element with tag %zu", tag);
+          continue;
+        }
+        if(!addGhost(elm, part[0], part[1])) return false;
+      }
+    }
+    return true;
   }
 
-  std::multimap<std::pair<MElement *, int>, int> ghostCells;
+  std::size_t numGhostCells = 0;
+  if(!readMSH4SizeT(fp, binary, swap, numGhostCells)) return false;
   for(std::size_t i = 0; i < numGhostCells; i++) {
     std::size_t elmTag = 0;
     int partNum = 0;
@@ -1488,14 +1552,10 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
     }
 
     MElement *elm = model->getMeshElementByTag(elmTag);
-    if(!elm) {
-      Msg::Error("No element with tag %zu", elmTag);
-      continue;
-    }
+    if(!elm) Msg::Error("No element with tag %zu", elmTag);
 
     for(std::size_t j = 0; j < numGhostPartitions; j++) {
       int ghostPartition = 0;
-
       if(binary) {
         if(fread(&ghostPartition, sizeof(int), 1, fp) != 1) { return false; }
         if(swap) SwapBytes((char *)&ghostPartition, sizeof(int), 1);
@@ -1503,48 +1563,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
       else {
         if(fscanf(fp, "%d", &ghostPartition) != 1) { return false; }
       }
-
-      ghostCells.insert(
-        std::make_pair(std::make_pair(elm, partNum), ghostPartition));
-    }
-  }
-
-  std::vector<GEntity *> ghostEntities(model->getNumPartitions() + 1, nullptr);
-  std::vector<GEntity *> entities;
-  model->getEntities(entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    int partNum = -1;
-    if(ge->geomType() == GEntity::GhostCurve)
-      partNum = static_cast<ghostEdge *>(ge)->getPartition();
-    else if(ge->geomType() == GEntity::GhostSurface)
-      partNum = static_cast<ghostFace *>(ge)->getPartition();
-    else if(ge->geomType() == GEntity::GhostVolume)
-      partNum = static_cast<ghostRegion *>(ge)->getPartition();
-    if(partNum >= 0 && partNum < (int)ghostEntities.size())
-      ghostEntities[partNum] = ge;
-  }
-
-  for(auto it = ghostCells.begin(); it != ghostCells.end(); ++it) {
-    if(it->second >= (int)ghostEntities.size()) {
-      Msg::Error("Invalid partition %d in ghost elements", it->second);
-      return false;
-    }
-    GEntity *ge = ghostEntities[it->second];
-    if(!ge) {
-      Msg::Warning("Missing ghost entity on partition %d", it->second);
-    }
-    else if(ge->geomType() == GEntity::GhostCurve) {
-      static_cast<ghostEdge *>(ge)->addElement(it->first.first,
-                                               it->first.second);
-    }
-    else if(ge->geomType() == GEntity::GhostSurface) {
-      static_cast<ghostFace *>(ge)->addElement(it->first.first,
-                                               it->first.second);
-    }
-    else if(ge->geomType() == GEntity::GhostVolume) {
-      static_cast<ghostRegion *>(ge)->addElement(it->first.first,
-                                                 it->first.second);
+      if(elm && !addGhost(elm, partNum, ghostPartition)) return false;
     }
   }
   return true;
@@ -2026,16 +2045,25 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
   return true;
 }
 
-// Faces are stored by blocks of faces with the same number of nodes (3 for
-// triangles, 4 for quadrangles, more for polygons): `numBlocks numFaces`, then
-// for each block `numNodes numFacesInBlock` followed by `faceTag nodeTag ...`
-// for each face. A section that does not follow this layout (e.g. the
-// `numTriangles numQuadrangles` header written before Gmsh 5.0) is skipped.
-static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
+// In MSH 4.2, faces are stored by blocks of faces with the same number of nodes
+// (3 for triangles, 4 for quadrangles, more for polygons): `numBlocks
+// numFaces`, then for each block `numNodes numFacesInBlock` followed by
+// `faceTag nodeTag ...` for each face. Before, the header is `numTriangles
+// numQuadrangles`, followed by the triangles and the quadrangles. A section
+// that does not follow the layout of its version is skipped.
+static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
+                          double version)
 {
   std::vector<std::size_t> header;
-  if(!readMSH4SizeTs(fp, binary, false, 2, header)) return false;
+  if(!readMSH4SizeTs(fp, binary, swap, 2, header)) return false;
   std::size_t numBlocks = header[0], numFaces = header[1];
+  // (numNodes, numFacesInBlock) of the triangles and quadrangles before 4.2
+  std::vector<std::size_t> blocks41;
+  if(version < 4.2) {
+    blocks41 = {3, header[0], 4, header[1]};
+    numBlocks = 2;
+    numFaces = header[0] + header[1];
+  }
 
   auto invalid = [&]() {
     Msg::Warning("Skipping invalid face data in MSH4 file");
@@ -2049,7 +2077,10 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
   std::vector<std::size_t> data;
   std::vector<MVertex *> v;
   for(std::size_t block = 0; block < numBlocks; block++) {
-    if(!readMSH4SizeTs(fp, binary, false, 2, header)) return invalid();
+    if(version < 4.2)
+      header = {blocks41[2 * block], blocks41[2 * block + 1]};
+    else if(!readMSH4SizeTs(fp, binary, swap, 2, header))
+      return invalid();
     std::size_t numNodes = header[0], numFacesInBlock = header[1];
     if(numNodes < 3 || numFacesInBlock > numFaces - faces.size())
       return invalid();
@@ -2058,7 +2089,7 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
     v.resize(numNodes);
     for(std::size_t first = 0; first < numFacesInBlock; first += chunk) {
       std::size_t n = std::min(chunk, numFacesInBlock - first);
-      if(!readMSH4SizeTs(fp, binary, false, stride * n, data)) return invalid();
+      if(!readMSH4SizeTs(fp, binary, swap, stride * n, data)) return invalid();
       for(std::size_t k = 0; k < n; k++) {
         const std::size_t *faceData = &data[stride * k];
         for(std::size_t j = 0; j < numNodes; j++) {
@@ -2339,7 +2370,7 @@ int GModel::_readMSH4(const std::string &name)
       }
     }
     else if(!strncmp(&str[1], "Faces", 5)) {
-      bool ok = readMSH4Faces(this, fp, binary);
+      bool ok = readMSH4Faces(this, fp, binary, swap, version);
       Msg::StopProgressMeter();
       if(!ok) {
         Msg::Error("Could not read faces");
@@ -2355,7 +2386,7 @@ int GModel::_readMSH4(const std::string &name)
       }
     }
     else if(!strncmp(&str[1], "GhostElements", 13)) {
-      if(!readMSH4GhostElements(this, fp, binary, swap)) {
+      if(!readMSH4GhostElements(this, fp, binary, swap, version)) {
         Msg::Error("Could not read ghost elements");
         fclose(fp);
         return 0;
@@ -2420,7 +2451,7 @@ int GModel::_readMSH4(const std::string &name)
     else if(!strncmp(&str[1], "NodeData", 8) ||
             !strncmp(&str[1], "ElementData", 11) ||
             !strncmp(&str[1], "ElementNodeData", 15)) {
-      if(!PView::readMSHViewData(name, fp, binary, swap, &str[1])) {
+      if(!PView::readMSHViewData(name, fp, binary, swap, &str[1], version)) {
         fclose(fp);
         return 0;
       }
@@ -3969,7 +4000,10 @@ static void writeMSH4Elements(
     fprintf(fp, "$EndElements\n");
   }
 
-  if(numPolytopes)
+  if(numPolytopes && version < 4.2)
+    Msg::Warning("Skipping %zu polygons and polyhedra: use MSH 4.2",
+                 numPolytopes);
+  else if(numPolytopes)
     writeMSH4Polytopes(fp, binary, version, polytopesByType, numPolytopes);
 }
 
@@ -4049,7 +4083,8 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
 
 static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
                            bool partitioned,
-                           const std::vector<int> &partitionsToSave)
+                           const std::vector<int> &partitionsToSave,
+                           double version)
 {
   auto printFaces = [&](const GModel::hashmapMFace &faces) {
     if(faces.empty()) return;
@@ -4057,22 +4092,32 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
     std::map<std::size_t, std::vector<const GModel::hashmapMFace::value_type *>>
       blocks;
     for(const auto &f : faces) blocks[f.first.getNumVertices()].push_back(&f);
+    // (before MSH 4.2: the numbers of triangles and quadrangles, and no block
+    // headers)
+    std::size_t header[2] = {blocks.size(), faces.size()};
+    if(version < 4.2) {
+      if(blocks.size() > blocks.count(3) + blocks.count(4))
+        Msg::Warning("Skipping faces with more than 4 nodes: use MSH 4.2");
+      for(auto it = blocks.begin(); it != blocks.end();)
+        it =
+          (it->first == 3 || it->first == 4) ? std::next(it) : blocks.erase(it);
+      header[0] = blocks.count(3) ? blocks[3].size() : 0;
+      header[1] = blocks.count(4) ? blocks[4].size() : 0;
+      if(blocks.empty()) return;
+    }
     fprintf(fp, "$Faces\n");
-    if(binary) {
-      std::size_t header[2] = {blocks.size(), faces.size()};
+    if(binary)
       fwrite(header, sizeof(std::size_t), 2, fp);
-    }
-    else {
-      fprintf(fp, "%zu %zu\n", blocks.size(), faces.size());
-    }
+    else
+      fprintf(fp, "%zu %zu\n", header[0], header[1]);
     std::vector<std::size_t> data;
     for(const auto &[numNodes, block] : blocks) {
-      if(binary) {
-        std::size_t header[2] = {numNodes, block.size()};
-        fwrite(header, sizeof(std::size_t), 2, fp);
-      }
-      else {
-        fprintf(fp, "%zu %zu\n", numNodes, block.size());
+      if(version >= 4.2) {
+        std::size_t h[2] = {numNodes, block.size()};
+        if(binary)
+          fwrite(h, sizeof(std::size_t), 2, fp);
+        else
+          fprintf(fp, "%zu %zu\n", h[0], h[1]);
       }
       if(binary) {
         data.clear();
@@ -4246,16 +4291,16 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
 
 static void writeMSH4GhostCells(GModel *const model, FILE *fp,
                                 const std::vector<int> &partitionsToSave,
-                                bool binary)
+                                bool binary, double version)
 {
   std::vector<GEntity *> entities;
   model->getEntities(entities);
-  std::map<MElement *, std::vector<int>, MElementPtrLessThan> ghostCells;
-
+  // the tags of the elements of each partition that are ghosts in another
+  std::map<std::pair<int, int>, std::vector<std::size_t>> blocks;
+  std::size_t numGhosts = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     std::map<MElement *, int, MElementPtrLessThan> ghostElements;
     int partition = -1;
-
     if(entities[i]->geomType() == GEntity::GhostCurve) {
       ghostElements = static_cast<ghostEdge *>(entities[i])->getGhostCells();
       partition = static_cast<ghostEdge *>(entities[i])->getPartition();
@@ -4268,51 +4313,78 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp,
       ghostElements = static_cast<ghostRegion *>(entities[i])->getGhostCells();
       partition = static_cast<ghostRegion *>(entities[i])->getPartition();
     }
-
     if(partitionsToSave.empty() ||
        std::find(partitionsToSave.begin(), partitionsToSave.end(), partition) !=
          partitionsToSave.end()) {
       for(auto it = ghostElements.begin(); it != ghostElements.end(); ++it) {
-        if(ghostCells[it->first].size() == 0)
-          ghostCells[it->first].push_back(it->second);
-        ghostCells[it->first].push_back(partition);
+        blocks[std::make_pair(it->second, partition)].push_back(
+          it->first->getNum());
+        numGhosts++;
       }
     }
   }
+  if(blocks.empty()) return;
 
-  if(ghostCells.size() != 0) {
-    fprintf(fp, "$GhostElements\n");
+  fprintf(fp, "$GhostElements\n");
+  if(version >= 4.2) {
+    std::size_t header[2] = {blocks.size(), numGhosts};
+    if(binary)
+      fwrite(header, sizeof(std::size_t), 2, fp);
+    else
+      fprintf(fp, "%zu %zu\n", header[0], header[1]);
+    for(auto &b : blocks) {
+      std::sort(b.second.begin(), b.second.end());
+      std::size_t num = b.second.size();
+      if(binary) {
+        int part[2] = {b.first.first, b.first.second};
+        fwrite(part, sizeof(int), 2, fp);
+        fwrite(&num, sizeof(std::size_t), 1, fp);
+        fwrite(b.second.data(), sizeof(std::size_t), num, fp);
+      }
+      else {
+        fprintf(fp, "%d %d %zu\n", b.first.first, b.first.second, num);
+        for(std::size_t k = 0; k < num; k++)
+          fprintf(fp, (k % 10 == 9 || k == num - 1) ? "%zu\n" : "%zu ",
+                  b.second[k]);
+      }
+    }
+  }
+  else {
+    // each element with its partition, and the partitions where it is a ghost
+    std::map<std::size_t, std::vector<int>> ghostCells;
+    for(auto &b : blocks) {
+      for(auto tag : b.second) {
+        std::vector<int> &p = ghostCells[tag];
+        if(p.empty()) p.push_back(b.first.first);
+        p.push_back(b.first.second);
+      }
+    }
     if(binary) {
       std::size_t ghostCellsSize = ghostCells.size();
       fwrite(&ghostCellsSize, sizeof(std::size_t), 1, fp);
-
       for(auto it = ghostCells.begin(); it != ghostCells.end(); ++it) {
-        std::size_t elmTag = it->first->getNum();
+        std::size_t elmTag = it->first;
         int partNum = it->second[0];
         std::size_t numGhostPartitions = it->second.size() - 1;
         fwrite(&elmTag, sizeof(std::size_t), 1, fp);
         fwrite(&partNum, sizeof(int), 1, fp);
         fwrite(&numGhostPartitions, sizeof(std::size_t), 1, fp);
-        for(std::size_t i = 1; i < it->second.size(); i++) {
-          fwrite(&it->second[i], sizeof(int), 1, fp);
-        }
+        fwrite(&it->second[1], sizeof(int), numGhostPartitions, fp);
       }
-      fprintf(fp, "\n");
     }
     else {
       fprintf(fp, "%zu\n", ghostCells.size());
-
       for(auto it = ghostCells.begin(); it != ghostCells.end(); ++it) {
-        fprintf(fp, "%zu %d %ld", it->first->getNum(), it->second[0],
+        fprintf(fp, "%zu %d %zu", it->first, it->second[0],
                 it->second.size() - 1);
-        for(std::size_t i = 1; i < it->second.size(); i++) {
+        for(std::size_t i = 1; i < it->second.size(); i++)
           fprintf(fp, " %d", it->second[i]);
-        }
         fprintf(fp, "\n");
       }
     }
-    fprintf(fp, "$EndGhostElements\n");
   }
+  if(binary) fprintf(fp, "\n");
+  fprintf(fp, "$EndGhostElements\n");
 }
 
 static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
@@ -4746,13 +4818,13 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   writeMSH4Edges(this, fp, binary, partitioned, partitionsToSave);
 
   // faces
-  writeMSH4Faces(this, fp, binary, partitioned, partitionsToSave);
+  writeMSH4Faces(this, fp, binary, partitioned, partitionsToSave, version);
 
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
 
   // ghostCells
-  writeMSH4GhostCells(this, fp, partitionsToSave, binary);
+  writeMSH4GhostCells(this, fp, partitionsToSave, binary, version);
 
   // overlaps
   if(partitioned && overlapDim > 0) {

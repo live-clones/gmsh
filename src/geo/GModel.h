@@ -883,7 +883,7 @@ public:
                           double scalingFactor = 1.0);
   int writeMSHPartitions(const std::string &name,
                          const std::vector<int> &partitions,
-                         double version = 4.1, bool binary = false,
+                         double version = 4.2, bool binary = false,
                          bool saveAll = false, bool saveParametric = false,
                          double scalingFactor = 1.0);
 

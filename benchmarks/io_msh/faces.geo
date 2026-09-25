@@ -1,6 +1,6 @@
 // The edges and faces of a mesh (Mesh.CreateEdges, Mesh.CreateFaces) are saved
-// in MSH 4 files, in ASCII and in binary, and read back: prisms and
-// hexahedra, whose faces are triangles and quadrangles, in blocks of each.
+// in MSH 4.1 and 4.2 files, in ASCII and in binary, and read back: prisms and
+// hexahedra, whose faces are triangles and quadrangles.
 
 Point(1) = {0, 0, 0}; Point(2) = {1, 0, 0}; Point(3) = {1, 1, 0};
 Point(4) = {0, 1, 0}; Point(5) = {2, 0, 0}; Point(6) = {2, 1, 0};
@@ -15,10 +15,16 @@ Mesh 3;
 
 Mesh.CreateEdges = 1;
 Mesh.CreateFaces = 1;
-Mesh.Binary = 0;
-Save "faces_out.msh";
-Mesh.Binary = 1;
-Save "faces_binary_out.msh";
+// (MSH 4.1 files hold the triangles and the quadrangles, 4.2 files blocks of
+// faces with the same number of nodes)
+files[] = Str("faces_out.msh", "faces_binary_out.msh", "faces_41_out.msh",
+              "faces_41_binary_out.msh");
+For i In {0 : 3}
+  Mesh.MshFileVersion = (i < 2) ? 4.2 : 4.1;
+  Mesh.Binary = i % 2;
+  Save Str(files[i]);
+EndFor
+Mesh.MshFileVersion = 4.2;
 Mesh.Binary = 0;
 Mesh.CreateEdges = 0;
 Mesh.CreateFaces = 0;
@@ -28,8 +34,7 @@ If(!edges || !faces)
   Error("No edges or faces created (%g and %g)", edges, faces);
 EndIf
 
-files[] = Str("faces_out.msh", "faces_binary_out.msh");
-For i In {0 : 1}
+For i In {0 : 3}
   Delete Model;
   Merge Str(files[i]);
   If(Mesh.NbEdges != edges || Mesh.NbFaces != faces)

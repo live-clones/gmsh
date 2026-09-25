@@ -545,7 +545,7 @@ int GModel::_readMSH3(const std::string &name)
         _storeElementsInEntities(elements[i]);
         elements[i].clear();
       }
-      if(!PView::readMSHViewData(name, fp, binary, swap, &str[1])) {
+      if(!PView::readMSHViewData(name, fp, binary, swap, &str[1], version)) {
         fclose(fp);
         return 0;
       }

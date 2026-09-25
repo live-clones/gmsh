@@ -478,7 +478,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
-Default value: @code{4.1}@*
+Default value: @code{4.2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MedFileMinorVersion

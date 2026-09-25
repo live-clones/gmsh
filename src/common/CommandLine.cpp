@@ -210,8 +210,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-noenv", "Don't modify the environment at startup"));
   s.push_back(mp("-nolocale", "Don't modify the locale at startup"));
   s.push_back(mp("-option file", "Parse option file at startup"));
-  s.push_back(mp("-convert files", "Convert the mesh and the views of each file "
-                 "into a binary MSH 4.1 file (name_new.msh), then exit"));
+  s.push_back(mp("-convert files",
+                 "Convert the mesh and the views of each file "
+                 "into a binary MSH 4.2 file (name_new.msh), then exit"));
   s.push_back(mp("-nt int", "Set number of threads (General.NumThreads)"));
   s.push_back(mp("-cpu", "Report CPU times for all operations"));
   s.push_back(mp("-version", "Show version number"));
@@ -798,7 +799,7 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
 #endif
       // the mesh and the views, in the latest binary MSH format
       if(GModel::current()->getMeshStatus() > 0 || views) {
-        opt_mesh_msh_file_version(0, GMSH_SET, 4.1);
+        opt_mesh_msh_file_version(0, GMSH_SET, 4.2);
         opt_mesh_binary(0, GMSH_SET, 1);
         opt_mesh_save_views(0, GMSH_SET, 2);
         CreateOutputFile(fileName, FORMAT_MSH);
