@@ -3350,15 +3350,15 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[32]->callback(view_options_ok_cb);
 
       view.butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH,
-                                         width / 2 - 2 * WB, BH,
+                                         width - IW - 5 * WB, BH,
                                          "Adapt visualization grid");
       view.butt[0]->tooltip("View.AdaptVisualizationGrid");
       view.butt[0]->type(FL_TOGGLE_BUTTON);
       view.butt[0]->callback(view_options_ok_cb, (void *)"view_adaptive");
 
-      view.butt[39] = new Fl_Check_Button(L + width / 2, 2 * WB + 9 * BH,
-                                          width / 2 - 2 * WB, BH,
-                                          "Only the skin if drawn so");
+      view.butt[39] = new Fl_Check_Button(L + width - IW - 2 * WB,
+                                          2 * WB + 9 * BH, IW, BH,
+                                          "Adapt skin only");
       view.butt[39]->tooltip("View.AdaptSkinOnly");
       view.butt[39]->type(FL_TOGGLE_BUTTON);
       view.butt[39]->callback(view_options_ok_cb);
@@ -3387,9 +3387,9 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[34]->tooltip("View.TargetError");
       view.value[34]->align(FL_ALIGN_RIGHT);
       // (a fraction of the range of the view; negative: refine everything)
-      view.value[34]->minimum(-1.e-6);
-      view.value[34]->maximum(1e-2);
-      if(CTX::instance()->inputScrolling) view.value[34]->step(1.e-6);
+      view.value[34]->minimum(-1.e-4);
+      view.value[34]->maximum(1e-1);
+      if(CTX::instance()->inputScrolling) view.value[34]->step(1.e-4);
       view.value[34]->when(FL_WHEN_RELEASE);
       view.value[34]->callback(view_options_ok_cb);
 
