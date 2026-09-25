@@ -3860,10 +3860,14 @@ static void _printBooleanWarnings(T &algo, const std::string &what)
 static void _filterTags(std::vector<std::pair<int, int>> &outDimTags,
                         int minDim)
 {
+  // keep the entities of dimension >= minDim, each once (the same entity can be
+  // found several times in the result, e.g. a curve embedded in a surface)
   std::vector<std::pair<int, int>> tmp(outDimTags);
+  std::set<std::pair<int, int>> seen;
   outDimTags.clear();
   for(std::size_t i = 0; i < tmp.size(); i++) {
-    if(tmp[i].first >= minDim) outDimTags.push_back(tmp[i]);
+    if(tmp[i].first >= minDim && seen.insert(tmp[i]).second)
+      outDimTags.push_back(tmp[i]);
   }
 }
 
@@ -4079,6 +4083,49 @@ bool OCC_Internals::booleanOperator(
   inDimTags.insert(inDimTags.end(), toolDimTags.begin(), toolDimTags.end());
   std::size_t numObjects = objectDimTags.size();
 
+  // the bound images of input i, as listed in outDimTagsMap[i]; called before
+  // the result is bound, to mark the existing images, and after, to build
+  // outDimTagsMap
+  auto boundImages = [&](std::size_t i) {
+    int dim = inDimTags[i].first;
+    std::vector<std::pair<int, int>> dimTags;
+    if(mapModified[i].Extent() == 0) { // not modified
+      if(_isBound(dim, mapOriginal[i])) {
+        int t = _find(dim, mapOriginal[i]);
+        dimTags.push_back(std::make_pair(dim, t));
+      }
+    }
+    else {
+      NCollection_List<TopoDS_Shape>::Iterator it(mapModified[i]);
+      for(; it.More(); it.Next()) {
+        if(_isBound(dim, it.Value())) {
+          int t = _find(dim, it.Value());
+          dimTags.push_back(std::make_pair(dim, t));
+        }
+      }
+      NCollection_List<TopoDS_Shape>::Iterator it2(mapGenerated[i]);
+      for(; it2.More(); it2.Next()) {
+        if(_isBound(dim, it2.Value())) {
+          int t = _find(dim, it2.Value());
+          dimTags.push_back(std::make_pair(dim, t));
+        }
+      }
+    }
+    return dimTags;
+  };
+
+  // the result can contain existing entities (a kept input left unchanged, or
+  // an image coinciding with an existing entity): mark them in _toPreserve so
+  // that _multiBind returns them; after the inputs are unbound, because _unbind
+  // skips the entities in _toPreserve
+  auto markBoundImages = [&]() {
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
+      if(mapDeleted[i]) continue;
+      std::vector<std::pair<int, int>> dimTags = boundImages(i);
+      _toPreserve.insert(dimTags.begin(), dimTags.end());
+    }
+  };
+
   if(tag >= 0 || !CTX::instance()->geom.occBooleanPreserveNumbering) {
     // if we specify the tag explicitly, or if we don't care about preserving
     // the numering, just go ahead and bind the resulting shape (and sub-shapes)
@@ -4095,9 +4142,11 @@ bool OCC_Internals::booleanOperator(
         }
       }
     }
+    if(tag < 0) markBoundImages();
     _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
                (tag >= 0) ? false : true);
     _filterTags(outDimTags, minDim);
+    _toPreserve.clear();
   }
   else {
     // otherwise, try to preserve the numbering of the input shapes that did not
@@ -4161,7 +4210,9 @@ bool OCC_Internals::booleanOperator(
       }
     }
     for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
-    // bind all remaining entities and add the new ones to the returned list
+    markBoundImages();
+    // bind all remaining entities and add the new and the marked ones to the
+    // returned list
     _multiBind(result, -1, outDimTags, false, true, true);
     _filterTags(outDimTags, minDim);
     _toPreserve.clear();
@@ -4171,30 +4222,7 @@ bool OCC_Internals::booleanOperator(
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
-    std::pair<int, int> dimTag(dim, tag);
-    std::vector<std::pair<int, int>> dimTags;
-    if(mapModified[i].Extent() == 0) { // not modified
-      if(_isBound(dim, mapOriginal[i])) {
-        int t = _find(dim, mapOriginal[i]);
-        dimTags.push_back(std::make_pair(dim, t));
-      }
-    }
-    else {
-      NCollection_List<TopoDS_Shape>::Iterator it(mapModified[i]);
-      for(; it.More(); it.Next()) {
-        if(_isBound(dim, it.Value())) {
-          int t = _find(dim, it.Value());
-          dimTags.push_back(std::make_pair(dim, t));
-        }
-      }
-      NCollection_List<TopoDS_Shape>::Iterator it2(mapGenerated[i]);
-      for(; it2.More(); it2.Next()) {
-        if(_isBound(dim, it2.Value())) {
-          int t = _find(dim, it2.Value());
-          dimTags.push_back(std::make_pair(dim, t));
-        }
-      }
-    }
+    std::vector<std::pair<int, int>> dimTags = boundImages(i);
     std::ostringstream sstream;
     sstream << "BOOL in (" << dim << "," << tag << ") -> out";
     for(std::size_t j = 0; j < dimTags.size(); j++)
