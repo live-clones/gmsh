@@ -764,13 +764,12 @@ public:
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
 
-    // the outlines of the cut elements, on the side the planes cut off
-    if(whole) {
-      setViewClipOutside(opt, true);
-      drawArrays(_ctx, p, p->va_clip_lines, GL_LINES,
-                 opt->light && opt->lightLines, true);
-      setViewClipOutside(opt, false);
-    }
+    // the outlines of the cut elements, on the side the planes cut off; in
+    // capping mode those of the section, clipped like everything else
+    if(whole) setViewClipOutside(opt, true);
+    drawArrays(_ctx, p, p->va_clip_lines, GL_LINES,
+               opt->light && opt->lightLines, true);
+    if(whole) setViewClipOutside(opt, false);
 
     if(opt->lightTwoSide) gmshLightTwoSide(true);
 

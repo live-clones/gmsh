@@ -1382,6 +1382,50 @@ static void addScalarCap(drawTarget *p, double **xyz, double **val, int i0,
   }
 }
 
+// the outline of the section a clipping plane cuts out of a 3D element,
+// with the outlines of the elements: where the plane crosses its faces
+// (moved towards the kept side, like the section, but less, so that it is
+// drawn over it)
+static void addCapOutline(drawTarget *p, double **xyz, unsigned int color,
+                          const solidShape &s)
+{
+  PViewOptions *opt = p->opt;
+  double eps = 0.5e-5 * CTX::instance()->lc;
+  for(int c = 0; c < 6; c++) {
+    if(!(opt->clip & (1 << c))) continue;
+    const double *pl = CTX::instance()->clipPlane[c];
+    double len = sqrt(pl[0] * pl[0] + pl[1] * pl[1] + pl[2] * pl[2]);
+    if(len < 1.e-15) continue;
+    double n[3] = {pl[0] / len, pl[1] / len, pl[2] / len};
+    auto face = [&](const int *idx, int nn) {
+      double q[4][3];
+      int nq = 0;
+      for(int i = 0; i < nn && nq < 4; i++) {
+        const double *a = xyz[idx[i]], *b = xyz[idx[(i + 1) % nn]];
+        double da = pl[0] * a[0] + pl[1] * a[1] + pl[2] * a[2] + pl[3];
+        double db = pl[0] * b[0] + pl[1] * b[1] + pl[2] * b[2] + pl[3];
+        if((da < 0.) == (db < 0.)) continue;
+        double t = da / (da - db);
+        for(int k = 0; k < 3; k++)
+          q[nq][k] = a[k] + t * (b[k] - a[k]) + eps * n[k];
+        nq++;
+      }
+      // (a face that is not flat can be crossed twice)
+      for(int i = 0; i + 1 < nq; i += 2) {
+        double x[2] = {q[i][0], q[i + 1][0]}, y[2] = {q[i][1], q[i + 1][1]};
+        double z[2] = {q[i][2], q[i + 1][2]};
+        SVector3 nl[2] = {SVector3(n[0], n[1], n[2]),
+                          SVector3(n[0], n[1], n[2])};
+        unsigned int col[2] = {color, color};
+        getLineNormal(p, x, y, z, nullptr, nl, false);
+        p->va_lines->add(x, y, z, nl, col, true);
+      }
+    };
+    for(int i = 0; i < s.numQuads; i++) face(s.quads[i], 4);
+    for(int i = 0; i < s.numTriangles; i++) face(s.triangles[i], 3);
+  }
+}
+
 static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
                                  bool pre, int i0 = 0, int i1 = 1, int i2 = 2,
                                  int i3 = 3)
@@ -2140,8 +2184,19 @@ static void addElementRange(drawTarget *p, PViewData *data,
       }
       else if(!isElementVisible(opt, dim, numNodes, xyz))
         continue;
-      // the caps pass wants 3D elements only, and no outlines
+      // the caps pass wants 3D elements only, and no outlines but those of
+      // the sections
       if(p->collect == drawTarget::COLLECT_CAPS && dim < 3) continue;
+      if(p->collect == drawTarget::COLLECT_CAPS && opt->showElement &&
+         !preprocessNormalsOnly && drawsScalarFaces(opt, numComp) &&
+         (opt->intervalsType == PViewOptions::Continuous ||
+          opt->intervalsType == PViewOptions::Discrete)) {
+        int sh = solidShapeIndex(type);
+        const unsigned int colors[4] = {
+          opt->color.tetrahedron, opt->color.hexahedron, opt->color.prism,
+          opt->color.pyramid};
+        if(sh >= 0) addCapOutline(p, xyz, colors[sh], *solidShapes[sh]);
+      }
 
       for(int j = 0; j < numNodes; j++)
         p->bbox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
