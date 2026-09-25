@@ -17,6 +17,7 @@
 #include "MPolyhedron.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
+#include "Context.h"
 #include "pyramidalBasis.h"
 
 PViewDataGModel::PViewDataGModel(DataType type)
@@ -885,8 +886,19 @@ stepData<double> *PViewDataGModel::_getStep(int step, GModel *model,
     delete _steps[step];
     _steps[step] = new stepData<double>(model, numComp);
   }
-  _steps[step]->fillEntities();
-  _steps[step]->computeBoundingBox();
+  // (the stamps of the changes to the mesh and the geometry, bumped once a file
+  // is read or the model is changed, and the numbers of entities and the
+  // largest node tag, that change as a file is read)
+  GModel *m = _steps[step]->getModel();
+  CTX *ctx = CTX::instance();
+  std::vector<std::size_t> signature = {
+    (std::size_t)ctx->meshContentStamp,
+    (std::size_t)(ctx->geom.stamp[0] + ctx->geom.stamp[1] + ctx->geom.stamp[2] +
+                  ctx->geom.stamp[3]),
+    m->getNumRegions() + m->getNumFaces() + m->getNumEdges() +
+      m->getNumVertices(),
+    m->getMaxVertexNumber()};
+  _steps[step]->updateModelInfo(_steps, signature);
   return _steps[step];
 }
 

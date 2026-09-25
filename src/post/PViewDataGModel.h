@@ -7,6 +7,8 @@
 #define PVIEW_DATA_GMODEL_H
 
 #include <functional>
+#include <memory>
+#include <algorithm>
 #include "PViewData.h"
 #include "GModel.h"
 #include "SBoundingBox3d.h"
@@ -19,6 +21,11 @@ private:
   std::vector<GEntity *> _entities;
   // the bounding box of the view
   SBoundingBox3d _bbox;
+  // the number of nodes of the model when the bounding box was computed, and
+  // what the entities and the bounding box were last checked against (see
+  // updateModelInfo())
+  std::size_t _numModelNodes;
+  std::vector<std::size_t> _modelSignature;
   // the file the data was read from (if empty, refer to PViewData)
   std::string _fileName;
   // the index in the file (if negative, refer to PViewData)
@@ -38,6 +45,11 @@ private:
   // FIXME: we should change this design and store a vector<int> of tags, and do
   // indirect addressing, even if it's a bit slower...
   std::vector<Real *> *_data;
+  // the memory the values point into: large arrays, each holding the values of
+  // many entities (see allocate())
+  std::vector<std::unique_ptr<Real[]>> _pools;
+  Real *_poolNext;
+  std::size_t _poolLeft, _poolSize;
   // a vector containing the multiplying factor allowing to compute
   // the number of values stored in _data for each index (number of
   // values = getMult() * getNumComponents()). If _mult is empty, a
@@ -53,15 +65,19 @@ public:
   stepData(GModel *model, int numComp, const std::string &fileName = "",
            int fileIndex = -1, double time = 0., double min = VAL_INF,
            double max = -VAL_INF)
-    : _model(model), _fileName(fileName), _fileIndex(fileIndex), _time(time),
-      _min(min), _max(max), _numComp(numComp), _data(0)
+    : _model(model), _numModelNodes(0), _fileName(fileName),
+      _fileIndex(fileIndex), _time(time), _min(min), _max(max),
+      _numComp(numComp), _data(0), _poolNext(0), _poolLeft(0), _poolSize(128)
   {
   }
-  stepData(stepData<Real> &other) : _data(0)
+  stepData(stepData<Real> &other)
+    : _data(0), _poolNext(0), _poolLeft(0), _poolSize(128)
   {
     _model = other._model;
     _entities = other._entities;
     _bbox = other._bbox;
+    _numModelNodes = other._numModelNodes;
+    _modelSignature = other._modelSignature;
     _fileName = other._fileName;
     _fileIndex = other._fileIndex;
     _time = other._time;
@@ -74,9 +90,9 @@ public:
       for(std::size_t i = 0; i < n; i++) {
         Real *d = other.getData(i);
         if(d) {
-          int m = other.getMult(i) * _numComp;
-          (*_data)[i] = new Real[m];
-          for(int j = 0; j < m; j++) (*_data)[i][j] = d[j];
+          std::size_t m = other.getMult(i) * _numComp;
+          (*_data)[i] = allocate(m);
+          std::copy(d, d + m, (*_data)[i]);
         }
       }
     }
@@ -87,14 +103,44 @@ public:
   ~stepData() { destroyData(); }
   void fillEntities() { _model->getEntities(_entities); }
   void computeBoundingBox() { _bbox = _model->bounds(); }
+  // fill the entities and compute the bounding box, unless the model has the
+  // same entities and the same number of nodes as when they were last computed
+  // (going over all the nodes for each step, or for each block of data read,
+  // is slow); and check that only if the signature of the model (values that
+  // change with it and are cheap to get) is not the one they were last checked
+  // against, here or in another step on the same model (listing the entities
+  // and counting the nodes for each block is slow too, with many partitions)
+  void updateModelInfo(const std::vector<stepData<Real> *> &steps,
+                       const std::vector<std::size_t> &signature)
+  {
+    if(signature == _modelSignature) return;
+    for(auto s : steps) {
+      if(s != this && s->_model == _model && s->_modelSignature == signature) {
+        _entities = s->_entities;
+        _bbox = s->_bbox;
+        _numModelNodes = s->_numModelNodes;
+        _modelSignature = signature;
+        return;
+      }
+    }
+    std::vector<GEntity *> entities;
+    _model->getEntities(entities);
+    std::size_t numNodes = _model->getNumMeshVertices();
+    if(entities != _entities || numNodes != _numModelNodes) {
+      _entities.swap(entities);
+      computeBoundingBox();
+      _numModelNodes = numNodes;
+    }
+    _modelSignature = signature;
+  }
   GModel *getModel() { return _model; }
   SBoundingBox3d getBoundingBox() { return _bbox; }
   int getNumEntities() { return _entities.size(); }
   GEntity *getEntity(int ent) { return _entities[ent]; }
   int getNumComponents() { return _numComp; }
-  int getMult(int index)
+  int getMult(std::size_t index)
   {
-    if(index < 0 || index >= (int)_mult.size()) return 1;
+    if(index >= _mult.size()) return 1;
     return _mult[index];
   }
   std::string getFileName() { return _fileName; }
@@ -112,39 +158,70 @@ public:
     if(!_data) return 0;
     return _data->size();
   }
-  void resizeData(int n)
+  void resizeData(std::size_t n)
   {
     if(!_data) _data = new std::vector<Real *>(n, (Real *)0);
-    if(n > (int)_data->size()) _data->resize(n, (Real *)0);
+    if(n > _data->size()) _data->resize(n, (Real *)0);
   }
-  Real *getData(int index, bool allocIfNeeded = false, int mult = 1)
+  // n values owned by the step, uninitialized: taken from the current pool, or
+  // from a new one, twice as large as the last up to 64k values (so that a
+  // step with a few values stays small), or of their own if they are many
+  Real *allocate(std::size_t n)
   {
-    if(index < 0) return 0;
+    if(n > (1 << 14)) {
+      _pools.emplace_back(new Real[n]);
+      return _pools.back().get();
+    }
+    if(n > _poolLeft) {
+      _poolSize = std::max(n, std::min<std::size_t>(2 * _poolSize, 1 << 16));
+      _pools.emplace_back(new Real[_poolSize]);
+      _poolNext = _pools.back().get();
+      _poolLeft = _poolSize;
+    }
+    Real *d = _poolNext;
+    _poolNext += n;
+    _poolLeft -= n;
+    return d;
+  }
+  // point the data of entity index to values allocated with allocate()
+  void setData(std::size_t index, Real *d, int mult = 1)
+  {
+    if(index >= getNumData()) resizeData(index + 1);
+    (*_data)[index] = d;
+    setMult(index, mult);
+  }
+  void setMult(std::size_t index, int mult)
+  {
+    if(mult == getMult(index)) return;
+    if(index >= _mult.size()) _mult.resize(index + 1, 1);
+    _mult[index] = mult;
+  }
+  Real *getData(std::size_t index, bool allocIfNeeded = false, int mult = 1)
+  {
     if(allocIfNeeded) {
-      if(index >= (int)getNumData()) resizeData(index + 100); // optimize this
-      if(!(*_data)[index]) {
-        (*_data)[index] = new Real[_numComp * mult];
-        for(int i = 0; i < _numComp * mult; i++) (*_data)[index][i] = 0.;
+      if(index >= getNumData()) resizeData(index + 1);
+      Real *&d = (*_data)[index];
+      if(!d || mult > getMult(index)) {
+        d = allocate(_numComp * mult);
+        std::fill(d, d + _numComp * mult, (Real)0.);
       }
-      if(mult > 1) {
-        if(index >= (int)_mult.size())
-          _mult.resize(index + 100, 1); // optimize this
-        _mult[index] = mult;
-      }
+      setMult(index, mult);
     }
     else {
-      if(index >= (int)getNumData()) return 0;
+      if(index >= getNumData()) return 0;
     }
     return (*_data)[index];
   }
   void destroyData()
   {
     if(_data) {
-      for(unsigned int i = 0; i < _data->size(); i++)
-        if((*_data)[i]) delete[](*_data)[i];
       delete _data;
       _data = 0;
     }
+    _pools.clear();
+    _poolNext = 0;
+    _poolLeft = 0;
+    _poolSize = 128;
   }
   void renumberData(const std::map<std::size_t, std::size_t> &mapping)
   {
