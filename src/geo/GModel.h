@@ -300,6 +300,15 @@ public:
   // or number it (starting at 1) if num == 0
   std::size_t addMEdge(MEdge &&edge, std::size_t num = 0);
   std::size_t addMFace(MFace &&face, std::size_t num = 0);
+  // make room for n more mesh edges or faces, before adding them
+  void reserveMEdges(std::size_t n)
+  {
+    _mapEdgeNum.reserve(_mapEdgeNum.size() + n);
+  }
+  void reserveMFaces(std::size_t n)
+  {
+    _mapFaceNum.reserve(_mapFaceNum.size() + n);
+  }
 
   // get number of edges or faces
   std::size_t getNumMEdges() const { return _mapEdgeNum.size(); };

@@ -48,17 +48,74 @@
 #include "PView.h"
 #endif
 
+// is the progress of a loop on n items worth reporting at item i? (every 1024
+// items and at the last: the meter would otherwise be asked for each of
+// millions of nodes or elements)
+static inline bool progressDue(std::size_t i, std::size_t n)
+{
+  return !(i & 1023) || i == n;
+}
+
+// The entities of a model by dimension and tag, for the readers of the entity
+// sections, which look one up for each tag they read (an entity, its parent,
+// what bounds it): a vector indexed by tag, filled with the entities of the
+// model when it is made and with those created as they are read. The tags
+// above a bound (of a numbering that is not dense) are looked for in the
+// model. The buffers of the entities are kept from one to the next.
+class msh4EntityIndex {
+private:
+  GModel *_model;
+  std::vector<GEntity *> _byTag[4];
+  std::size_t _bound[4];
+
+public:
+  std::vector<int> ints, signs, partitions;
+  std::vector<GEntity *> bounding, embedded;
+  std::vector<GEdge *> edges;
+  std::vector<GFace *> faces;
+  msh4EntityIndex(GModel *model, const std::size_t numEntities[4])
+    : _model(model)
+  {
+    std::vector<GEntity *> entities;
+    model->getEntities(entities);
+    for(int dim = 0; dim < 4; dim++)
+      _bound[dim] = 2 * (numEntities[dim] + entities.size()) + 1024;
+    for(auto e : entities) add(e);
+  }
+  void add(GEntity *e)
+  {
+    int dim = e->dim(), tag = e->tag();
+    if(dim < 0 || dim > 3 || tag <= 0 || (std::size_t)tag >= _bound[dim])
+      return;
+    if(_byTag[dim].size() <= (std::size_t)tag)
+      _byTag[dim].resize(std::min(_bound[dim], 2 * (std::size_t)tag + 1),
+                         nullptr);
+    _byTag[dim][tag] = e;
+  }
+  GEntity *get(int dim, int tag) const
+  {
+    if(dim < 0 || dim > 3) return nullptr;
+    if(tag <= 0 || (std::size_t)tag >= _bound[dim])
+      return _model->getEntityByTag(dim, tag);
+    return (std::size_t)tag < _byTag[dim].size() ? _byTag[dim][tag] : nullptr;
+  }
+};
+
 static bool readMSH4Physicals(GModel *const model, FILE *fp,
-                              GEntity *const entity, bool binary, bool swap)
+                              GEntity *const entity, bool binary, bool swap,
+                              msh4EntityIndex &index)
 {
   std::size_t numPhy = 0;
   if(binary) {
     if(fread(&numPhy, sizeof(std::size_t), 1, fp) != 1) { return false; }
     if(swap) SwapBytes((char *)&numPhy, sizeof(std::size_t), 1);
 
-    std::vector<int> phyTags(numPhy);
-    if(fread(&phyTags[0], sizeof(int), numPhy, fp) != numPhy) { return false; }
-    if(swap) SwapBytes((char *)&phyTags[0], sizeof(int), numPhy);
+    std::vector<int> &phyTags = index.ints;
+    phyTags.resize(numPhy);
+    if(fread(phyTags.data(), sizeof(int), numPhy, fp) != numPhy) {
+      return false;
+    }
+    if(swap) SwapBytes((char *)phyTags.data(), sizeof(int), numPhy);
 
     for(std::size_t i = 0; i < numPhy; i++) {
       entity->addPhysicalEntity(phyTags[i]);
@@ -77,25 +134,31 @@ static bool readMSH4Physicals(GModel *const model, FILE *fp,
 
 static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
                                      GEntity *const entity, bool binary,
-                                     bool swap, int maxTagEmbed)
+                                     bool swap, int maxTagEmbed,
+                                     msh4EntityIndex &index)
 {
   std::size_t numBrep = 0;
-  std::vector<GEntity *> boundingEntities, embeddedEntities;
-  std::vector<int> boundingSign;
+  std::vector<GEntity *> &boundingEntities = index.bounding;
+  std::vector<GEntity *> &embeddedEntities = index.embedded;
+  std::vector<int> &boundingSign = index.signs;
+  boundingEntities.clear();
+  embeddedEntities.clear();
+  boundingSign.clear();
 
   if(binary) {
     if(fread(&numBrep, sizeof(std::size_t), 1, fp) != 1) { return false; }
     if(swap) SwapBytes((char *)&numBrep, sizeof(std::size_t), 1);
 
-    std::vector<int> brepTags(numBrep);
-    if(fread(&brepTags[0], sizeof(int), numBrep, fp) != numBrep) {
+    std::vector<int> &brepTags = index.ints;
+    brepTags.resize(numBrep);
+    if(fread(brepTags.data(), sizeof(int), numBrep, fp) != numBrep) {
       return false;
     }
-    if(swap) SwapBytes((char *)&brepTags[0], sizeof(int), numBrep);
+    if(swap) SwapBytes((char *)brepTags.data(), sizeof(int), numBrep);
 
     for(std::size_t i = 0; i < numBrep; i++) {
       GEntity *brep =
-        model->getEntityByTag(entity->dim() - 1, std::abs(brepTags[i]));
+        index.get(entity->dim() - 1, std::abs(brepTags[i]));
       if(!brep) {
         Msg::Warning("Entity %d not found in the Brep of entity %d",
                      brepTags[i], entity->tag());
@@ -117,7 +180,7 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       // this does not work for e.g. points in surfaces (dimension == dim - 2)
       if(std::abs(entityTag) > maxTagEmbed) {
         int embeddedTag = std::abs(entityTag) - maxTagEmbed;
-        GEntity *emb = model->getEntityByTag(entity->dim() - 1, embeddedTag);
+        GEntity *emb = index.get(entity->dim() - 1, embeddedTag);
         if(!emb) {
           Msg::Warning("Embedded entity %d not found in the Brep of entity %d",
                        embeddedTag, entity->tag());
@@ -128,7 +191,7 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       }
       else {
         GEntity *brep =
-          model->getEntityByTag(entity->dim() - 1, std::abs(entityTag));
+          index.get(entity->dim() - 1, std::abs(entityTag));
         if(!brep) {
           Msg::Warning("Entity %d not found in the Brep of entity %d",
                        entityTag, entity->tag());
@@ -161,20 +224,20 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
     }
     break;
   case 2: {
-    std::vector<int> tags(boundingEntities.size());
-    for(std::size_t i = 0; i < boundingEntities.size(); i++)
-      tags[i] = std::abs(boundingEntities[i]->tag());
-    reinterpret_cast<GFace *>(entity)->setBoundEdges(tags, boundingSign);
+    std::vector<GEdge *> &edges = index.edges;
+    edges.clear();
+    for(auto e : boundingEntities) edges.push_back(static_cast<GEdge *>(e));
+    reinterpret_cast<GFace *>(entity)->setBoundEdges(edges, boundingSign);
     for(std::size_t i = 0; i < embeddedEntities.size(); i++) {
       reinterpret_cast<GFace *>(entity)->addEmbeddedEdge(
         reinterpret_cast<GEdge *>(embeddedEntities[i]));
     }
   } break;
   case 3: {
-    std::vector<int> tags(boundingEntities.size());
-    for(std::size_t i = 0; i < boundingEntities.size(); i++)
-      tags[i] = std::abs(boundingEntities[i]->tag());
-    reinterpret_cast<GRegion *>(entity)->setBoundFaces(tags, boundingSign);
+    std::vector<GFace *> &faces = index.faces;
+    faces.clear();
+    for(auto e : boundingEntities) faces.push_back(static_cast<GFace *>(e));
+    reinterpret_cast<GRegion *>(entity)->setBoundFaces(faces, boundingSign);
   } break;
   default: break;
   }
@@ -360,10 +423,18 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   // FIXME: remove this when embedded entities are correctly handled
   int maxTags[3] = {0, 0, 0};
 
+  // (the partition entities are not created in the GEO internals, as the
+  // other discrete entities are so that scripts can refer to them: a
+  // partitioned mesh has as many of them as there are partitions, and
+  // nothing refers to them there)
+  msh4EntityIndex index(model, numEntities);
+  auto parentOf = [&](int parentDim, int parentTag) {
+    return index.get(parentDim, parentTag);
+  };
   for(int dim = 0; dim < 4; dim++) {
     for(std::size_t i = 0; i < numEntities[dim]; i++) {
       int tag = 0, parentDim = 0, parentTag = 0;
-      std::vector<int> partitions;
+      std::vector<int> &partitions = index.partitions;
       double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
       if(!readMSH4EntityInfo(fp, binary, swap, version, partition, dim, tag,
                              parentDim, parentTag, partitions, minX, minY, minZ,
@@ -373,75 +444,86 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
       switch(dim) {
       case 0: {
-        GVertex *gv = model->getVertexByTag(tag);
+        GVertex *gv = static_cast<GVertex *>(index.get(0, tag));
         if(!gv) {
           if(partition) {
             gv = new partitionVertex(model, tag, partitions);
             if(parentTag)
               static_cast<partitionVertex *>(gv)->setParentEntity(
-                model->getEntityByTag(parentDim, parentTag));
+                parentOf(parentDim, parentTag));
           }
           else {
             gv = new discreteVertex(model, tag, minX, minY, minZ);
           }
           model->add(gv);
+          index.add(gv);
         }
-        if(!readMSH4Physicals(model, fp, gv, binary, swap)) { return false; }
+        if(!readMSH4Physicals(model, fp, gv, binary, swap, index))
+          return false;
       } break;
       case 1: {
-        GEdge *ge = model->getEdgeByTag(tag);
+        GEdge *ge = static_cast<GEdge *>(index.get(1, tag));
         if(!ge) {
           if(partition) {
             ge = new partitionEdge(model, tag, nullptr, nullptr, partitions);
             if(parentTag)
               static_cast<partitionEdge *>(ge)->setParentEntity(
-                model->getEntityByTag(parentDim, parentTag));
+                parentOf(parentDim, parentTag));
           }
           else {
             ge = new discreteEdge(model, tag, nullptr, nullptr);
           }
           model->add(ge);
+          index.add(ge);
         }
-        if(!readMSH4Physicals(model, fp, ge, binary, swap)) { return false; }
-        if(!readMSH4BoundingEntities(model, fp, ge, binary, swap, maxTags[0])) {
+        if(!readMSH4Physicals(model, fp, ge, binary, swap, index))
+          return false;
+        if(!readMSH4BoundingEntities(model, fp, ge, binary, swap, maxTags[0],
+                                    index)) {
           return false;
         }
       } break;
       case 2: {
-        GFace *gf = model->getFaceByTag(tag);
+        GFace *gf = static_cast<GFace *>(index.get(2, tag));
         if(!gf) {
           if(partition) {
             gf = new partitionFace(model, tag, partitions);
             if(parentTag)
               static_cast<partitionFace *>(gf)->setParentEntity(
-                model->getEntityByTag(parentDim, parentTag));
+                parentOf(parentDim, parentTag));
           }
           else {
             gf = new discreteFace(model, tag);
           }
           model->add(gf);
+          index.add(gf);
         }
-        if(!readMSH4Physicals(model, fp, gf, binary, swap)) { return false; }
-        if(!readMSH4BoundingEntities(model, fp, gf, binary, swap, maxTags[1])) {
+        if(!readMSH4Physicals(model, fp, gf, binary, swap, index))
+          return false;
+        if(!readMSH4BoundingEntities(model, fp, gf, binary, swap, maxTags[1],
+                                    index)) {
           return false;
         }
       } break;
       case 3: {
-        GRegion *gr = model->getRegionByTag(tag);
+        GRegion *gr = static_cast<GRegion *>(index.get(3, tag));
         if(!gr) {
           if(partition) {
             gr = new partitionRegion(model, tag, partitions);
             if(parentTag)
               static_cast<partitionRegion *>(gr)->setParentEntity(
-                model->getEntityByTag(parentDim, parentTag));
+                parentOf(parentDim, parentTag));
           }
           else {
             gr = new discreteRegion(model, tag);
           }
           model->add(gr);
+          index.add(gr);
         }
-        if(!readMSH4Physicals(model, fp, gr, binary, swap)) { return false; }
-        if(!readMSH4BoundingEntities(model, fp, gr, binary, swap, maxTags[2])) {
+        if(!readMSH4Physicals(model, fp, gr, binary, swap, index))
+          return false;
+        if(!readMSH4BoundingEntities(model, fp, gr, binary, swap, maxTags[2],
+                                    index)) {
           return false;
         }
       } break;
@@ -614,7 +696,7 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
         maxNodeNum = std::max(maxNodeNum, tagNode);
         verticesRead[nodeRead] = mv;
         nodeRead++;
-        if(totalNumRead > 100000)
+        if(totalNumRead > 100000 && progressDue(nodeRead, totalNumRead))
           Msg::ProgressMeter(nodeRead, true, "Reading nodes");
       }
     }
@@ -674,7 +756,7 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
         maxNodeNum = std::max(maxNodeNum, tagNode);
         verticesRead[nodeRead] = mv;
         nodeRead++;
-        if(totalNumRead > 100000)
+        if(totalNumRead > 100000 && progressDue(nodeRead, totalNumRead))
           Msg::ProgressMeter(nodeRead, true, "Reading nodes");
       }
     }
@@ -849,7 +931,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         elementsRead[elementRead] = std::make_pair(element, entity);
         elementRead++;
 
-        if(totalNumRead > 100000)
+        if(totalNumRead > 100000 && progressDue(elementRead, totalNumRead))
           Msg::ProgressMeter(elementRead, true, "Reading elements");
       }
     }
@@ -923,7 +1005,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         elementsRead[elementRead] = std::make_pair(element, entity);
         elementRead++;
 
-        if(totalNumRead > 100000)
+        if(totalNumRead > 100000 && progressDue(elementRead, totalNumRead))
           Msg::ProgressMeter(elementRead, true, "Reading elements");
       }
     }
@@ -1131,7 +1213,7 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
       elementsRead[elementRead] = std::make_pair(element, entity);
       elementRead++;
 
-      if(totalNumRead > 100000)
+      if(totalNumRead > 100000 && progressDue(elementRead, totalNumRead))
         Msg::ProgressMeter(elementRead, true, "Reading elements");
     }
   }
@@ -1860,6 +1942,7 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
   // each edge is its tag followed by its 2 node tags
   std::vector<std::size_t> data;
   if(!readMSH4SizeTs(fp, binary, false, 3 * numEdges, data)) return false;
+  model->reserveMEdges(numEdges);
   for(std::size_t k = 0; k < numEdges; k++) {
     const std::size_t *edgeData = &data[3 * k];
     MVertex *v0 = model->getMeshVertexByTag(edgeData[1]);
@@ -1870,7 +1953,8 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
     }
     MEdge me(v0, v1);
     model->addMEdge(std::move(me), edgeData[0]);
-    if(numEdges > 100000) Msg::ProgressMeter(k + 1, true, "Reading edges");
+    if(numEdges > 100000 && progressDue(k + 1, numEdges))
+      Msg::ProgressMeter(k + 1, true, "Reading edges");
   }
 
   return true;
@@ -1923,9 +2007,11 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
 
   Msg::Info("%zu face%s", numFaces, numFaces > 1 ? "s" : "");
   Msg::StartProgressMeter(numFaces);
+  model->reserveMFaces(numFaces);
   for(std::size_t k = 0; k < numFaces; k++) {
     model->addMFace(std::move(faces[k].first), faces[k].second);
-    if(numFaces > 100000) Msg::ProgressMeter(k + 1, true, "Reading faces");
+    if(numFaces > 100000 && progressDue(k + 1, numFaces))
+      Msg::ProgressMeter(k + 1, true, "Reading faces");
   }
   return true;
 }

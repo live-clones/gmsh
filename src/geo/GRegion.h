@@ -75,6 +75,9 @@ public:
   void setBoundFaces(const std::set<int> &tagFaces);
   void setBoundFaces(const std::vector<int> &tagFaces,
                      const std::vector<int> &signFaces);
+  // (the surfaces themselves, for a reader that has found them)
+  void setBoundFaces(const std::vector<GFace *> &faces,
+                     const std::vector<int> &signFaces);
 
   // direct access to embedded entities
   std::vector<GVertex *> &embeddedVertices() { return embedded_vertices; }
