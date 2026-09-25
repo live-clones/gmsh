@@ -1870,9 +1870,6 @@ static int meshCompoundComputeCrossFieldWithHeatEquation(GFace *gf)
 
   std::vector<std::array<double, 5> > singularityList;
 
-  FieldManager *fields = gf->model()->getFields();
-  fields->setBackgroundFieldId(0);
-
   int TEMP = CTX::instance()->mesh.algo2d;
   CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
 
@@ -1975,8 +1972,9 @@ static void meshCompound(GFace *gf, bool verbose)
     df->addEmbeddedVertex(*it);
 
   FieldManager *fields = gf->model()->getFields();
-  int BGTAG = fields->getBackgroundField();
-  Field *backgroundField = fields->get(BGTAG);
+  int previousGuidingView = -1;
+  if(Field *guiding = fields->get(fields->getGuidingField()))
+    previousGuidingView = (int)guiding->options["ViewIndex"]->numericalValue();
 
   if(df->createGeometry()) {
     Msg::Error("Could not create geometry of discrete surface %d (check "
@@ -1997,11 +1995,10 @@ static void meshCompound(GFace *gf, bool verbose)
 
   meshCompoundMakeQuads(df);
 
-  if(fields->getBackgroundField() > 0 &&
-     fields->getBackgroundField() != BGTAG) {
-    fields->deleteField(fields->getBackgroundField());
-    fields->setBackgroundField(backgroundField);
-  }
+  if(previousGuidingView >= 0)
+    fields->setGuidingField(previousGuidingView);
+  else
+    fields->clearGuidingField();
 
   if(!magic) {
     df->physicals.clear();

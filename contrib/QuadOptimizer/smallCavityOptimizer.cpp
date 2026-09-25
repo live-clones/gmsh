@@ -5062,8 +5062,8 @@ namespace QuadOptimizer {
          face->model()) {
         FieldManager *fields = face->model()->getFields();
         if(fields) {
-          Field *field = fields->get(fields->getBackgroundField());
-          if(field && field->numComponents() == 3) {
+          Field *field = fields->getDirectionField();
+          if(field) {
             SVector3 value(0., 0., 0.);
             (*field)(xyz[0], xyz[1], xyz[2], value, face);
             const double size = value.norm();
@@ -5483,9 +5483,8 @@ namespace QuadOptimizer {
       else if((options.enforceSizeMap || options.auditSizeMap) && face &&
               face->model()) {
         FieldManager *fields = face->model()->getFields();
-        Field *field = fields ?
-          fields->get(fields->getBackgroundField()) : nullptr;
-        if(field && field->numComponents() == 3)
+        Field *field = fields ? fields->getDirectionField() : nullptr;
+        if(field)
           targetNeedsParameters = false;
       }
       for(MElement *element : elements) {

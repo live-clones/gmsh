@@ -31,6 +31,16 @@ bool PViewData::finalize(bool computeMinMax,
                          const std::string &interpolationScheme)
 {
   _dirty = false;
+  // search structures are built lazily on the first query: drop them so
+  // that data refilled and finalized again is not searched with stale ones
+  if(_octree) {
+    delete _octree;
+    _octree = nullptr;
+  }
+  if(_kdtree) {
+    delete _kdtree;
+    _kdtree = nullptr;
+  }
   return true;
 }
 

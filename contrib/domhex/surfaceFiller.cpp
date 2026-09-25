@@ -575,12 +575,8 @@ static void packingOfOrientedCubes3D(GFace *gf,
                                      std::vector<SMetric3> &metrics)
 {
   FieldManager *fields = gf->model()->getFields();
-  if(fields->getBackgroundField() <= 0) {
-    Msg::Error("3D surface packing requires a scaled cross field");
-    return;
-  }
-  Field *crossField = fields->get(fields->getBackgroundField());
-  if(!crossField || crossField->numComponents() != 3) {
+  Field *crossField = fields->getDirectionField();
+  if(!crossField) {
     Msg::Error("3D surface packing requires a three-component scaled cross "
                "field");
     return;
@@ -701,9 +697,9 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   Field *cross_field = NULL;
   SVector3 t1;
   double L;
-  if(fields->getBackgroundField() > 0) {
-    cross_field = fields->get(fields->getBackgroundField());
-    if(cross_field->numComponents() != 3) {// we hae a true scaled cross fields !!
+  if(fields->getBackgroundField() > 0 || fields->getGuidingField() > 0) {
+    cross_field = fields->getDirectionField();
+    if(!cross_field) {// we hae a true scaled cross fields !!
       Msg::Error ("Packing of Parallelograms require a scaled cross field");
       Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
       Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
