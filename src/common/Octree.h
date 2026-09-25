@@ -9,10 +9,11 @@
 #include <vector>
 
 // Search structure for the elements near a point: a bounding volume
-// hierarchy over the elements' bounding boxes, which are computed once, on
-// insertion, by the callback. Elements are opaque pointers: the caller tests
-// the ones it gets back. Queries do not modify the tree and can run
-// concurrently once it is built.
+// hierarchy over the elements' bounding boxes, which the callback gives,
+// concurrently for all the elements when the tree is built (it must be
+// thread-safe). Elements are opaque pointers: the caller tests the ones it
+// gets back. Queries do not modify the tree and can run concurrently once it
+// is built.
 class Octree;
 
 Octree *Octree_Create(void (*BB)(void *, double *, double *));
