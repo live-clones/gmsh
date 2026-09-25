@@ -16,6 +16,7 @@
 #include <string>
 #include <cstdlib>
 #include <limits>
+#include <atomic>
 #include <stdexcept>
 #include <variant>
 
@@ -829,6 +830,89 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
   Msg::Info("%zu element%s", totalNumRead, totalNumRead > 1 ? "s" : "");
   Msg::StartProgressMeter(totalNumRead);
 
+  // In a binary file the blocks are read first, about 64 MB of them at a time,
+  // and their elements made after by several threads, in chunks of at most
+  // 4096 elements. The constructors of the elements of high order set the
+  // order of the nodes they add, which several elements only share if they
+  // have the same order.
+  struct pendingBlock {
+    GEntity *entity;
+    int type, numVert;
+    std::size_t first, offset, num;
+  };
+  std::vector<pendingBlock> pending;
+  std::vector<std::size_t> pendingData;
+  std::size_t made = 0;
+  auto makePending = [&]() -> bool {
+    // (a lookup that builds the caches of the model if need be, before the
+    // threads read them)
+    if(pendingData.size() > 1) model->getMeshVertexByTag(pendingData[1]);
+    const std::size_t chunk = 4096;
+    std::vector<std::pair<std::size_t, std::size_t> > chunks; // block, start
+    std::size_t num = 0;
+    for(std::size_t b = 0; b < pending.size(); b++) {
+      for(std::size_t j = 0; j < pending[b].num; j += chunk)
+        chunks.push_back(std::make_pair(b, j));
+      num += pending[b].num;
+    }
+    std::size_t minNum = std::numeric_limits<std::size_t>::max(), maxNum = 0;
+    std::atomic<bool> bad(false);
+    const std::size_t *badData = nullptr;
+    const pendingBlock *badBlock = nullptr;
+#pragma omp parallel for schedule(dynamic)                                     \
+  num_threads(CTX::instance()->numThreadsFor(num, 10000))                      \
+  reduction(min : minNum) reduction(max : maxNum)
+    for(std::size_t c = 0; c < chunks.size(); c++) {
+      if(bad) continue;
+      const pendingBlock &p = pending[chunks[c].first];
+      std::size_t end = std::min(p.num, chunks[c].second + chunk);
+      std::vector<MVertex *> vertices(p.numVert);
+      MElementFactory factory;
+      for(std::size_t j = chunks[c].second; j < end; j++) {
+        const std::size_t *d = &pendingData[p.offset + j * (1 + p.numVert)];
+        MElement *e = nullptr;
+        int k = 0;
+        for(; k < p.numVert; k++)
+          if(!(vertices[k] = model->findMeshVertexByTag(d[k + 1]))) break;
+        if(k == p.numVert)
+          e = factory.create(p.type, vertices, d[0], 0, false, 0, nullptr);
+        if(!e) {
+#pragma omp critical
+          if(!bad) {
+            badData = d;
+            badBlock = &p;
+            bad = true;
+          }
+          break;
+        }
+        elementsRead[p.first + j] = std::make_pair(e, p.entity);
+        minNum = std::min(minNum, d[0]);
+        maxNum = std::max(maxNum, d[0]);
+      }
+    }
+    if(bad) {
+      for(int k = 0; k < badBlock->numVert; k++) {
+        if(!model->findMeshVertexByTag(badData[k + 1])) {
+          Msg::Error("Unknown node %zu in element %zu in entity %d %d and "
+                     "element type %d",
+                     badData[k + 1], badData[0], badBlock->entity->dim(),
+                     badBlock->entity->tag(), badBlock->type);
+          return false;
+        }
+      }
+      Msg::Error("Could not create element %zu of type %d", badData[0],
+                 badBlock->type);
+      return false;
+    }
+    minElementNum = std::min(minElementNum, minNum);
+    maxElementNum = std::max(maxElementNum, maxNum);
+    made += num;
+    if(totalNumRead > 100000) Msg::ProgressMeter(made, true, "Reading elements");
+    pending.clear();
+    pendingData.clear();
+    return true;
+  };
+
   for(std::size_t i = 0; i < numBlock; i++) {
     int entityTag = 0, entityDim = 0, elmType = 0;
     std::size_t numElements = 0;
@@ -892,47 +976,22 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
     const int numVertPerElm = MElement::getInfoMSH(elmType);
     if(binary) {
-      std::size_t n = 1 + numVertPerElm;
-      std::vector<std::size_t> data(numElements * n);
-      if(fread(&data[0], sizeof(std::size_t), numElements * n, fp) !=
-         numElements * n) {
+      std::size_t n = 1 + numVertPerElm, offset = pendingData.size();
+      pendingData.resize(offset + numElements * n);
+      if(fread(&pendingData[offset], sizeof(std::size_t), numElements * n,
+               fp) != numElements * n) {
         delete[] elementsRead;
         return nullptr;
       }
       if(swap)
-        SwapBytes((char *)&data[0], sizeof(std::size_t), numElements * n);
-
-      std::vector<MVertex *> vertices(numVertPerElm, (MVertex *)nullptr);
-      for(std::size_t j = 0; j < numElements * n; j += n) {
-        for(int k = 0; k < numVertPerElm; k++) {
-          vertices[k] = model->getMeshVertexByTag(data[j + k + 1]);
-          if(!vertices[k]) {
-            Msg::Error("Unknown node %zu in element %zu, for entity %d %d and "
-                       "element type %d",
-                       data[j + k + 1], data[j], entityDim, entityTag, elmType);
-            delete[] elementsRead;
-            return nullptr;
-          }
-        }
-
-        MElementFactory elementFactory;
-        MElement *element = elementFactory.create(
-          elmType, vertices, data[j], 0, false, 0, nullptr);
-        if(!element) {
-          Msg::Error("Could not create element %zu of type %d", data[j],
-                     elmType);
-          delete[] elementsRead;
-          return nullptr;
-        }
-
-        minElementNum = std::min(minElementNum, data[j]);
-        maxElementNum = std::max(maxElementNum, data[j]);
-
-        elementsRead[elementRead] = std::make_pair(element, entity);
-        elementRead++;
-
-        if(totalNumRead > 100000 && progressDue(elementRead, totalNumRead))
-          Msg::ProgressMeter(elementRead, true, "Reading elements");
+        SwapBytes((char *)&pendingData[offset], sizeof(std::size_t),
+                  numElements * n);
+      pending.push_back(
+        {entity, elmType, numVertPerElm, elementRead, offset, numElements});
+      elementRead += numElements;
+      if(pendingData.size() > (1 << 23) && !makePending()) {
+        delete[] elementsRead;
+        return nullptr;
       }
     }
     else {
@@ -1010,6 +1069,13 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       }
     }
   }
+  if(!makePending()) {
+    delete[] elementsRead;
+    return nullptr;
+  }
+  // (the element constructors of several threads may leave a smaller one)
+  GModel::current()->setMaxElementNumber(maxElementNum);
+
   // if the vertex numbering is dense, we fill the vector cache, otherwise we
   // fill the map cache
   if(minElementNum == 1 && maxElementNum == totalNumRead) {

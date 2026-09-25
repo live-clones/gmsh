@@ -625,6 +625,14 @@ public:
 
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(std::size_t n);
+  // the same, without building the caches or adding to them (null if they do
+  // not know the tag): for several threads, once the caches are built
+  MVertex *findMeshVertexByTag(std::size_t n) const
+  {
+    if(n < _vertexVectorCache.size()) return _vertexVectorCache[n];
+    auto it = _vertexMapCache.find(n);
+    return (it == _vertexMapCache.end()) ? nullptr : it->second;
+  }
 
   // add a mesh vertex to the global mesh vertex cache
   void addMVertexToVertexCache(MVertex *v);
