@@ -4191,6 +4191,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_draw_strings(index, GMSH_GUI, 0);
 
   opt_view_adapt_visualization_grid(index, GMSH_GUI, 0);
+  opt_view_adapt_skin_only(index, GMSH_GUI, 0);
   opt_view_max_recursion_level(index, GMSH_GUI, 0);
   opt_view_target_error(index, GMSH_GUI, 0);
 
@@ -4546,7 +4547,6 @@ void optionWindow::activate(const char *what)
   }
   else if(!strcmp(what, "view_adaptive")) {
     if(view.butt[0]->value()) {
-      view.butt[39]->activate();
       view.push[5]->activate();
       view.push[6]->activate();
       view.value[33]->activate();
@@ -4554,7 +4554,6 @@ void optionWindow::activate(const char *what)
       view.label[1]->activate();
     }
     else {
-      view.butt[39]->deactivate();
       view.push[5]->deactivate();
       view.push[6]->deactivate();
       view.value[33]->deactivate();
