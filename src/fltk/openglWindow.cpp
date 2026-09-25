@@ -122,6 +122,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
+  _addQuery = false;
 
   addPointMode = 0;
   lassoMode = selectionMode = false;
@@ -192,23 +193,15 @@ void openglWindow::_drawScreenMessage()
     c->packColor((int)(paper * (1. - mix) + mix * c->unpackRed(q)),
                  (int)(paper * (1. - mix) + mix * c->unpackGreen(q)),
                  (int)(paper * (1. - mix) + mix * c->unpackBlue(q)), 255);
-  // the box a query pins is drawn by the point it asked about, so that it
-  // travels with the model: it is kept whole in the window when it is drawn
-  // (the point is under the cursor then), and leaves it with that point
-  // afterwards
-  if(_pinnedText.size()) {
-    double xyz[3], win[2];
-    if(!_ctx->pinPoint(xyz))
-      _ctx->drawTextBox(_pinnedText, _pinnedAnchor[0],
-                        _ctx->viewport[3] - _pinnedAnchor[1], 2, _pinnedBox,
-                        true, tint);
-    else if(_ctx->world2Window(xyz, win)) {
-      // kept whole in the window while the point it hangs from is in it, and
-      // out of the window with that point
-      bool in = (win[0] >= _ctx->viewport[0] && win[0] <= _ctx->viewport[2] &&
-                 win[1] >= _ctx->viewport[1] && win[1] <= _ctx->viewport[3]);
-      _ctx->drawTextBox(_pinnedText, win[0], win[1], 2, _pinnedBox, in, tint);
-    }
+  // the boxes the queries pin are drawn by the points they asked about, so
+  // that they travel with the model: each is kept whole in the window while
+  // its point is in it, and leaves the window with that point
+  for(std::size_t i = 0; i < _pinned.size(); i++) {
+    double win[2];
+    if(!_ctx->world2Window(_pinned[i].xyz, win)) continue;
+    bool in = (win[0] >= _ctx->viewport[0] && win[0] <= _ctx->viewport[2] &&
+               win[1] >= _ctx->viewport[1] && win[1] <= _ctx->viewport[3]);
+    _ctx->drawTextBox(_pinned[i].text, win[0], win[1], 2, nullptr, in, tint);
   }
   // the length of a measurement, on the same paper, over the middle of the
   // line it measures: it follows the line while the second point is chosen,
@@ -1015,7 +1008,13 @@ int openglWindow::handle(int event)
     _curr.set(_ctx, Fl::event_x(), Fl::event_y());
     if(Fl::event_button() == 1 && !Fl::event_state(FL_SHIFT) &&
        !Fl::event_state(FL_ALT)) {
-      if(!lassoMode && Fl::event_state(FL_CTRL)) { lassoMode = true; }
+      // Ctrl+click adds a query in query mode (when the clicks select), and
+      // starts a lasso otherwise
+      _addQuery = queryMode() && CTX::instance()->mouseSelection &&
+                  Fl::event_state(FL_CTRL);
+      if(!lassoMode && Fl::event_state(FL_CTRL) && !_addQuery) {
+        lassoMode = true;
+      }
       else if(lassoMode) {
         lassoMode = false;
         if(selectionMode && CTX::instance()->mouseSelection) {
@@ -1463,18 +1462,19 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
   }
 }
 
-// The box is pinned where it is first shown rather than dragged along, as
-// moving it redraws the picture (and starts the studio frames over): it
-// moves when the text changes, and when the cursor has strayed far from it or
-// is about to cover it.
-void openglWindow::pinTooltip(const std::string &text)
+void openglWindow::pinTooltip(const std::string &text, const double *xyz,
+                             bool add)
 {
-  if(text == _pinnedText && _pinnedAnchor[0] == _curr.win[0] &&
-     _pinnedAnchor[1] == _curr.win[1])
-    return;
-  _pinnedText = text;
-  _pinnedAnchor[0] = _curr.win[0];
-  _pinnedAnchor[1] = _curr.win[1];
+  if(!add) {
+    if(_pinned.empty() && text.empty()) return;
+    _pinned.clear();
+  }
+  if(text.size() && xyz) {
+    pinnedNote n;
+    n.text = text;
+    for(int i = 0; i < 3; i++) n.xyz[i] = xyz[i];
+    _pinned.push_back(n);
+  }
   redraw();
 }
 

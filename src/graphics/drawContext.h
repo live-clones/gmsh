@@ -320,14 +320,11 @@ private:
   double _pickPoint[3] = {0., 0., 0.};
   bool _pickPointValid = false;
   // What a query or a measurement leaves on the picture, until it is
-  // cleared: the points it asked about, each marked; the segment of a
-  // measurement, drawn with its length; and the point the box that answers
-  // hangs from
+  // cleared: the points it asked about, each marked; and the segment of a
+  // measurement, drawn with its length
   std::vector<double> _marks; // three numbers each
   double _segment[6] = {0., 0., 0., 0., 0., 0.};
   bool _segmentValid = false;
-  double _pinPoint[3] = {0., 0., 0.};
-  bool _pinPointValid = false;
   // the entity the last pick was on, which it gives away when it returns the
   // mesh element it found there instead (see pickEntity())
   GEntity *_pickEntity = nullptr;
@@ -430,8 +427,8 @@ public:
   // again without that entity, and leaves the stepping as it was
   bool pickBehind(int type, bool mesh, bool post, int x, int y, int w, int h);
   // The points a query or a measurement asked about, marked in the picture
-  // until they are cleared, the segment a measurement spans, and the point
-  // the box that answers hangs from (see drawQuery.cpp)
+  // until they are cleared, and the segment a measurement spans (see
+  // drawQuery.cpp)
   void addMark(const double xyz[3])
   {
     for(int i = 0; i < 3; i++) _marks.push_back(xyz[i]);
@@ -444,17 +441,11 @@ public:
     }
     _segmentValid = true;
   }
-  void setPinPoint(const double xyz[3])
-  {
-    for(int i = 0; i < 3; i++) _pinPoint[i] = xyz[i];
-    _pinPointValid = true;
-  }
   void clearSegment() { _segmentValid = false; }
   void clearMarks()
   {
     _marks.clear();
     _segmentValid = false;
-    _pinPointValid = false;
   }
   std::size_t numMarks() const { return _marks.size() / 3; }
   bool mark(std::size_t i, double xyz[3]) const
@@ -467,12 +458,6 @@ public:
   {
     if(!_segmentValid) return false;
     for(int k = 0; k < 3; k++) { a[k] = _segment[k]; b[k] = _segment[3 + k]; }
-    return true;
-  }
-  bool pinPoint(double xyz[3]) const
-  {
-    if(!_pinPointValid) return false;
-    for(int i = 0; i < 3; i++) xyz[i] = _pinPoint[i];
     return true;
   }
   void drawMarks();

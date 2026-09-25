@@ -35,6 +35,9 @@ private:
   drawContext *_ctx;
   double _point[3];
   int _selection, _trySelection, _trySelectionXYWH[4];
+  // whether the last click asked to add a query to those on the picture
+  // (Ctrl+click in query mode) rather than to replace them
+  bool _addQuery;
   // what the cursor is over, in a box by it or in the status bar
   void _hover();
   // and drawn as selected while it is: the entity, what its selection was
@@ -60,10 +63,14 @@ private:
   // draw2d, from the bottom left)
   std::string _hoverText;
   double _hoverAnchor[2], _hoverBox[4];
-  // what a query found, kept by the click that asked for it until the next
-  // one, under what the cursor is over
-  std::string _pinnedText;
-  double _pinnedAnchor[2], _pinnedBox[4];
+  // what the queries found, each in a box hanging from the point it asked
+  // about, kept until a click replaces them all, under what the cursor is
+  // over
+  struct pinnedNote {
+    std::string text;
+    double xyz[3];
+  };
+  std::vector<pinnedNote> _pinned;
   // whether something stands behind what the cursor is over, which costs a
   // picking pass: asked once per entity, the information that names it
   std::string _hoverBehindFor;
@@ -168,8 +175,11 @@ public:
     for(int i = 0; i < 4; i++) xywh[i] = _trySelectionXYWH[i];
   }
   void drawTooltip(const std::string &text);
-  // the same box, pinned where the mouse is until it is given another text
-  void pinTooltip(const std::string &text);
+  // the same box, pinned to the point xyz of the model: it replaces the
+  // boxes pinned before, or is added to them; an empty text removes them all
+  void pinTooltip(const std::string &text, const double *xyz = nullptr,
+                  bool add = false);
+  bool addQuery() const { return _addQuery; }
   double frequency;
   void moveWithGamepad();
   Navigator *Nautilus;

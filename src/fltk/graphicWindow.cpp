@@ -3403,9 +3403,10 @@ static void _startPendingMode(void *)
 
 // Query mode: every click says what the model holds where it hit - the
 // entity, the mesh element and the node there, and the value of every visible
-// view. It stays on until it is asked to stop (the button again, Escape, or
-// 'q'), as the first query of a large mesh or view builds a search structure
-// that the ones after it reuse.
+// view. A click replaces what the queries before it left on the picture, a
+// Ctrl+click adds to it. It stays on until it is asked to stop (the button
+// again or 'q'), as the first query of a large mesh or view builds a search
+// structure that the ones after it reuse.
 static bool _queryMode = false;
 
 bool queryMode() { return _queryMode; }
@@ -3454,7 +3455,8 @@ void status_query_cb(Fl_Widget *w, void *data)
 
   while(1) {
     if(!FlGui::available()) break;
-    Msg::StatusGl("Click to query the model\n[Press 'q' to abort]");
+    Msg::StatusGl("Click to query the model, Ctrl+click to add a query\n"
+                  "[Press 'q' to abort]");
     char ib = FlGui::instance()->selectEntity(ENT_ALL);
     if(!FlGui::available()) break;
     if(ib == 'q') break;
@@ -3537,11 +3539,11 @@ void status_query_cb(Fl_Widget *w, void *data)
       text += (text.size() ? "\n" : "") + info[i];
     }
     GModel::current()->setSelection(0);
-    ctx->clearMarks();
+    bool add = gl->addQuery();
+    if(!add) ctx->clearMarks();
     ctx->addMark(xyz);
-    ctx->setPinPoint(xyz);
     drawContext::global()->draw();
-    if(CTX::instance()->tooltips) gl->pinTooltip(text);
+    if(CTX::instance()->tooltips) gl->pinTooltip(text, xyz, add);
   }
 
   CTX::instance()->pickElements = old;
@@ -3620,7 +3622,6 @@ void status_measure_cb(Fl_Widget *w, void *data)
     else {
       ctx->addMark(xyz);
       ctx->setSegment(first, xyz);
-      ctx->setPinPoint(xyz);
       half = false;
       // the messages keep everything; the length stays on the picture, in a
       // box over the middle of the line (see drawContext::drawMarks)
