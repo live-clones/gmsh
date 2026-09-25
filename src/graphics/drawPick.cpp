@@ -268,8 +268,15 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
     _pickNearest = (!behind && zmin <= zmax) ? std::max(0., zmin) : 0.;
   }
   drawGeom();
-  if(mesh) drawMesh();
-  if(post) drawPost();
+  // a mesh or views that are not picked still hide what is behind them
+  if(mesh)
+    drawMesh();
+  else
+    drawMeshOccluders();
+  if(post)
+    drawPost();
+  else
+    drawPostOccluders();
   drawGraph2d(true);
 
   // 2D overlay, painted on top in drawing order as in draw2d(): without the

@@ -890,6 +890,30 @@ void drawContext::drawPost()
   std::for_each(PView::list.begin(), PView::list.end(), drawPView(this, which));
 }
 
+// The surfaces of the opaque views in a picking pass that does not pick the
+// views, so that they hide what is behind them, as the mesh does (see
+// drawMeshOccluders()); nothing of a transparent view.
+void drawContext::drawPostOccluders()
+{
+  CTX *c = CTX::instance();
+  if(!c->post.draw) return;
+  unsetPickColor();
+  _pickState(false, 1.);
+  for(auto p : PView::list) {
+    PViewData *data = p->getData(true);
+    PViewOptions *opt = p->getOptions();
+    if(data->getDirty() || !data->getNumTimeSteps()) continue;
+    if(!opt->visible || opt->type != PViewOptions::Plot3D || !isVisible(p) ||
+       viewIsTransparent(p))
+      continue;
+    bool cutOnly = c->clipWholeElements && opt->clip &&
+                   c->clipOnlyDrawIntersectingVolume;
+    setViewClipPlanes(opt, !cutOnly);
+    drawVertexArray(p->va_triangles, GL_TRIANGLES, 0);
+  }
+  clipPlanes::on(0);
+}
+
 // whether any view would be drawn in the transparent pass
 bool anyViewIsTransparent()
 {

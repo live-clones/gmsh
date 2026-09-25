@@ -1171,3 +1171,39 @@ void drawContext::drawMesh()
 
   clipPlanes::on(0);
 }
+
+// The faces of the mesh in a picking pass that does not pick the mesh, so that
+// they hide what is behind them: in the background's identifier, and in the
+// farthest depth range, behind the entities that lie on them (see
+// setPickColor()). The merged arrays drawn by the frame, or the arrays of the
+// entities where there are too few for them; nothing of a transparent mesh.
+void drawContext::drawMeshOccluders()
+{
+  CTX *c = CTX::instance();
+  if(!c->mesh.draw || meshIsTransparent()) return;
+  unsetPickColor();
+  _pickState(false, 1.);
+  // only the volume is clipped, and only its cut elements are drawn in whole
+  // element mode (which the clip arrays hold, left out here)
+  bool volumeOnly = c->clipWholeElements && c->clipOnlyVolume;
+  bool cutOnly =
+    c->clipWholeElements && c->clipOnlyDrawIntersectingVolume && c->mesh.clip;
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
+    GModel *m = GModel::list[i];
+    if(!m->getVisibility() || !isVisible(m)) continue;
+    int status = drawMeshStatus(m);
+    mergedArrays &ma = _models[m];
+    for(int dim = 2; dim <= std::min(status, 3); dim++) {
+      if(dim == 3 && cutOnly) continue;
+      setMeshClipPlanes(!volumeOnly || dim == 3);
+      if(ma.built && ma.triangles[dim])
+        drawVertexArray(ma.triangles[dim], GL_TRIANGLES, 0);
+      else
+        forMeshEntities(m, dim, [&](GEntity *e) {
+          if(e->getVisibility())
+            drawVertexArray(e->va_triangles, GL_TRIANGLES, 0);
+        });
+    }
+  }
+  clipPlanes::on(0);
+}

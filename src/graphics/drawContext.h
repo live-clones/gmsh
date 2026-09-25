@@ -354,7 +354,9 @@ private:
   void initProjection();
   void drawGeom();
   void drawMesh();
+  void drawMeshOccluders();
   void drawPost();
+  void drawPostOccluders();
   void drawBackgroundGradient();
   void drawBackgroundImage(bool threeD);
   void drawText2d();
