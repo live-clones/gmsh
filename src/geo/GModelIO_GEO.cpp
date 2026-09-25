@@ -1383,6 +1383,15 @@ bool sortEntities(const std::pair<int, int> &a,
   return a.second < b.second;
 }
 
+// (the entities of a partitioned mesh are not in the GEO internals, and are
+// not to be removed with the discrete entities that are no longer there)
+static bool isPartitionEntity(GEntity *e)
+{
+  GEntity::GeomType t = e->geomType();
+  return t == GEntity::PartitionPoint || t == GEntity::PartitionCurve ||
+         t == GEntity::PartitionSurface || t == GEntity::PartitionVolume;
+}
+
 void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
 {
   // existing entities can be given new geometry
@@ -1402,32 +1411,36 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
   std::vector<std::pair<int, int> > toRemove;
   for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
     GVertex *gv = *it;
-    if(gv->getNativeType() == GEntity::GmshModel ||
-       gv->getNativeType() == GEntity::UnknownModel) {
+    if((gv->getNativeType() == GEntity::GmshModel ||
+        gv->getNativeType() == GEntity::UnknownModel) &&
+       !isPartitionEntity(gv)) {
       if(!FindPoint(gv->tag()))
         toRemove.push_back(std::make_pair(0, gv->tag()));
     }
   }
   for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
     GEdge *ge = *it;
-    if(ge->getNativeType() == GEntity::GmshModel ||
-       ge->getNativeType() == GEntity::UnknownModel) {
+    if((ge->getNativeType() == GEntity::GmshModel ||
+        ge->getNativeType() == GEntity::UnknownModel) &&
+       !isPartitionEntity(ge)) {
       if(!FindCurve(ge->tag()))
         toRemove.push_back(std::make_pair(1, ge->tag()));
     }
   }
   for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
     GFace *gf = *it;
-    if(gf->getNativeType() == GEntity::GmshModel ||
-       gf->getNativeType() == GEntity::UnknownModel) {
+    if((gf->getNativeType() == GEntity::GmshModel ||
+        gf->getNativeType() == GEntity::UnknownModel) &&
+       !isPartitionEntity(gf)) {
       if(!FindSurface(gf->tag()))
         toRemove.push_back(std::make_pair(2, gf->tag()));
     }
   }
   for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
     GRegion *gr = *it;
-    if(gr->getNativeType() == GEntity::GmshModel ||
-       gr->getNativeType() == GEntity::UnknownModel) {
+    if((gr->getNativeType() == GEntity::GmshModel ||
+        gr->getNativeType() == GEntity::UnknownModel) &&
+       !isPartitionEntity(gr)) {
       if(!FindVolume(gr->tag()))
         toRemove.push_back(std::make_pair(3, gr->tag()));
     }

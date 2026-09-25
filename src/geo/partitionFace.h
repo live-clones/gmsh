@@ -16,11 +16,12 @@ private:
 
 public:
   partitionFace(GModel *model, int num, const std::vector<int> &partitions)
-    : discreteFace(model, num), _partitions(partitions), _parentEntity(nullptr)
+    : discreteFace(model, num, false), _partitions(partitions),
+      _parentEntity(nullptr)
   {
   }
   partitionFace(GModel *model, int num)
-    : discreteFace(model, num), _partitions(), _parentEntity(nullptr)
+    : discreteFace(model, num, false), _partitions(), _parentEntity(nullptr)
   {
   }
   partitionFace(GModel *model, const std::vector<int> &partitions)

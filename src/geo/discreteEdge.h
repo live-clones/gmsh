@@ -16,8 +16,11 @@ private:
   bool _getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
 
 public:
-  discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
-  discreteEdge(GModel *model, int num);
+  // (geo: also create the curve in the GEO internals, so that scripts can
+  // refer to it)
+  discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1,
+               bool geo = true);
+  discreteEdge(GModel *model, int num, bool geo = true);
   discreteEdge(GModel *model);
   virtual ~discreteEdge() {}
   virtual GeomType geomType() const { return DiscreteCurve; }

@@ -965,21 +965,17 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int>> &inDimTags,
 
 int GModel::getMaxElementaryNumber(int dim)
 {
-  // scan the relevant containers directly, rather than materializing a vector
-  // of every entity in the model on each call
+  // the sets are sorted by tag: the largest in absolute value is at one end
+  auto ends = [](const auto &s) {
+    if(s.empty()) return 0;
+    return std::max(std::abs((*s.begin())->tag()),
+                    std::abs((*s.rbegin())->tag()));
+  };
   int num = 0;
-  if(dim < 0 || dim == 0)
-    for(auto it = vertices.begin(); it != vertices.end(); ++it)
-      num = std::max(num, std::abs((*it)->tag()));
-  if(dim < 0 || dim == 1)
-    for(auto it = edges.begin(); it != edges.end(); ++it)
-      num = std::max(num, std::abs((*it)->tag()));
-  if(dim < 0 || dim == 2)
-    for(auto it = faces.begin(); it != faces.end(); ++it)
-      num = std::max(num, std::abs((*it)->tag()));
-  if(dim < 0 || dim == 3)
-    for(auto it = regions.begin(); it != regions.end(); ++it)
-      num = std::max(num, std::abs((*it)->tag()));
+  if(dim < 0 || dim == 0) num = std::max(num, ends(vertices));
+  if(dim < 0 || dim == 1) num = std::max(num, ends(edges));
+  if(dim < 0 || dim == 2) num = std::max(num, ends(faces));
+  if(dim < 0 || dim == 3) num = std::max(num, ends(regions));
   return num;
 }
 

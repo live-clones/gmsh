@@ -96,11 +96,13 @@ bool discreteFace::param::checkPlanar()
   return true;
 }
 
-discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
+discreteFace::discreteFace(GModel *model, int num, bool geo)
+  : GFace(model, num)
 {
+  meshStatistics.status = GFace::DONE;
+  if(!geo) return;
   Surface *s = CreateSurface(num, MSH_SURF_DISCRETE);
   Tree_Add(model->getGEOInternals()->Surfaces, &s);
-  meshStatistics.status = GFace::DONE;
 }
 
 discreteFace::discreteFace(GModel *model) : GFace(model, 0)

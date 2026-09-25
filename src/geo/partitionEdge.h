@@ -17,12 +17,13 @@ private:
 public:
   partitionEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1,
                 const std::vector<int> &partitions)
-    : discreteEdge(model, num, _v0, _v1), _partitions(partitions),
+    : discreteEdge(model, num, _v0, _v1, false), _partitions(partitions),
       _parentEntity(nullptr)
   {
   }
   partitionEdge(GModel *model, int num, const std::vector<int> &partitions)
-    : discreteEdge(model, num), _partitions(partitions), _parentEntity(nullptr)
+    : discreteEdge(model, num, false), _partitions(partitions),
+      _parentEntity(nullptr)
   {
   }
   partitionEdge(GModel *model, const std::vector<int> &partitions)
