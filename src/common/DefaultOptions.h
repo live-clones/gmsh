@@ -1484,6 +1484,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MedSingleModel" , opt_mesh_med_single_model , 0. ,
     "Import MED meshes in the current model, even if several MED mesh names exist" },
 
+  { F, "NbEdges" , opt_mesh_nb_edges , 0. ,
+    "Number of edges of the current mesh, when they have been created or read "
+    "(Mesh.CreateEdges) (read-only)" },
+  { F, "NbFaces" , opt_mesh_nb_faces , 0. ,
+    "Number of faces of the current mesh, when they have been created or read "
+    "(Mesh.CreateFaces) (read-only)" },
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. ,
     "Number of hexahedra in the current mesh (read-only)" },
   { F, "NbNodes" , opt_mesh_nb_nodes , 0. ,

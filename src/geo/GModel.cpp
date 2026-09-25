@@ -187,6 +187,9 @@ void GModel::destroy(bool keepName)
   _numPartitions = 0;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
+  // (the mesh edges and faces hold nodes about to be deleted)
+  hashmapMEdge().swap(_mapEdgeNum);
+  hashmapMFace().swap(_mapFaceNum);
 
   for(auto it = firstRegion(); it != lastRegion(); ++it) delete *it;
   regions.clear();

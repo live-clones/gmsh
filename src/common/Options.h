@@ -656,6 +656,8 @@ double opt_mesh_nb_triangles(OPT_ARGS_NUM);
 double opt_mesh_nb_quadrangles(OPT_ARGS_NUM);
 double opt_mesh_nb_tetrahedra(OPT_ARGS_NUM);
 double opt_mesh_nb_hexahedra(OPT_ARGS_NUM);
+double opt_mesh_nb_edges(OPT_ARGS_NUM);
+double opt_mesh_nb_faces(OPT_ARGS_NUM);
 double opt_mesh_nb_prisms(OPT_ARGS_NUM);
 double opt_mesh_nb_pyramids(OPT_ARGS_NUM);
 double opt_mesh_nb_trihedra(OPT_ARGS_NUM);

@@ -7113,6 +7113,16 @@ double opt_mesh_nb_tetrahedra(OPT_ARGS_NUM) { return meshStatistic(9); }
 
 double opt_mesh_nb_hexahedra(OPT_ARGS_NUM) { return meshStatistic(10); }
 
+double opt_mesh_nb_edges(OPT_ARGS_NUM)
+{
+  return (double)GModel::current()->getNumMEdges();
+}
+
+double opt_mesh_nb_faces(OPT_ARGS_NUM)
+{
+  return (double)GModel::current()->getNumMFaces();
+}
+
 double opt_mesh_nb_prisms(OPT_ARGS_NUM) { return meshStatistic(11); }
 
 double opt_mesh_nb_pyramids(OPT_ARGS_NUM) { return meshStatistic(12); }
