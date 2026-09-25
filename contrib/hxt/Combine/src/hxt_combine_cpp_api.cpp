@@ -228,14 +228,26 @@ namespace {
         if (!selected[s]) continue; // already ejected for good by an earlier swap
         const HXTCombineCell& cellS = cells[s];
 
+        // Tet ownership only grows during the refill below, so a candidate
+        // with an interior tet owned by anything but s can never pass
+        // isCellCompatible: leave it out of the pool.
+        auto refillable = [&](CellIndex c) {
+          if (selected[c]) return false;
+          const HXTCombineCell& cc = cells[c];
+          for (unsigned int i = 0; i < cc.nbInteriorTets(); ++i) {
+            CellIndex o = tetOwner_[cc.interiorTetrahedra[i]];
+            if (o != NO_CELL && o != s) return false;
+          }
+          return true;
+        };
         pool.clear();
         for (unsigned int i = 0; i < cellS.nbInteriorTets(); ++i)
           for (CellIndex c : tetToCells[cellS.interiorTetrahedra[i]])
-            if (!selected[c]) pool.insert(c);
+            if (refillable(c)) pool.insert(c);
         for (unsigned int i = 0; i < cellS.nbVertices(); ++i)
           for (CellIndex c : vertexToCells[cellS.vertexes[i]])
-            if (!selected[c]) pool.insert(c);
-        if (pool.empty()) continue; // ejecting s cannot unlock anything
+            if (refillable(c)) pool.insert(c);
+        if (pool.size() < 2) continue; // cannot reach the net gain of 2
 
         removeCellCompatibilityConstraints(cellS, s);
         selected[s] = false;
@@ -303,8 +315,11 @@ namespace {
       const std::size_t kMaxEject = 18;
 
       std::vector<CellIndex> order = orderCellDecreasingQuality(cells, cellQualities);
-      std::set<CellIndex> blockers, pool;
-      std::vector<CellIndex> poolSorted, added;
+      std::set<CellIndex> blockers;
+      std::vector<CellIndex> pool, added;
+      // per-attempt membership stamps, O(1) instead of std::set lookups
+      std::vector<unsigned> blockerStamp(cells.size(), 0), poolStamp(cells.size(), 0);
+      unsigned stamp = 0;
 
       for (CellIndex c : order) {
         if (selected[c] || !cells[c].isHex()) continue;
@@ -317,35 +332,61 @@ namespace {
             if (selected[other]) blockers.insert(other);
         if (blockers.empty() || blockers.size() > kMaxEject) continue;
 
+        ++stamp;
+        for (CellIndex b : blockers) blockerStamp[b] = stamp;
+        auto isBlocker = [&](CellIndex x) {
+          return x != NO_CELL && blockerStamp[x] == stamp;
+        };
+        // Same exact pruning as in localSearchImprove: once the blockers
+        // are ejected, a candidate with an interior tet owned by any other
+        // selected cell stays incompatible for the whole refill.
+        auto visit = [&](CellIndex p) {
+          if (poolStamp[p] == stamp) return;
+          poolStamp[p] = stamp;
+          if (p == c || (selected[p] && !isBlocker(p))) return;
+          const HXTCombineCell& cp = cells[p];
+          for (unsigned int i = 0; i < cp.nbInteriorTets(); ++i) {
+            CellIndex o = tetOwner_[cp.interiorTetrahedra[i]];
+            if (o != NO_CELL && !isBlocker(o)) return;
+          }
+          pool.push_back(p);
+        };
+        pool.clear();
+        for (CellIndex b : blockers) {
+          const HXTCombineCell& cb = cells[b];
+          for (unsigned int i = 0; i < cb.nbInteriorTets(); ++i)
+            for (CellIndex p : tetToCells[cb.interiorTetrahedra[i]]) visit(p);
+          for (unsigned int i = 0; i < cb.nbVertices(); ++i)
+            for (CellIndex p : vertexToCells[cb.vertexes[i]]) visit(p);
+        }
+        // c plus the whole pool must beat the number of ejected blockers
+        if (1 + pool.size() <= blockers.size()) continue;
+
         for (CellIndex b : blockers) {
           removeCellCompatibilityConstraints(cells[b], b);
           selected[b] = false;
         }
 
-        pool.clear();
-        for (CellIndex b : blockers) {
-          const HXTCombineCell& cb = cells[b];
-          for (unsigned int i = 0; i < cb.nbInteriorTets(); ++i)
-            for (CellIndex p : tetToCells[cb.interiorTetrahedra[i]])
-              if (!selected[p]) pool.insert(p);
-          for (unsigned int i = 0; i < cb.nbVertices(); ++i)
-            for (CellIndex p : vertexToCells[cb.vertexes[i]])
-              if (!selected[p]) pool.insert(p);
+        // the swap is only ever kept if c itself goes in first
+        if (!isCellCompatible(cells[c], cells)) {
+          for (CellIndex b : blockers) {
+            selected[b] = true;
+            addCellCompatibilityConstraints(cells[b], b);
+          }
+          continue;
         }
-        pool.erase(c);
-
         added.clear();
-        if (isCellCompatible(cells[c], cells)) {
-          selected[c] = true;
-          addCellCompatibilityConstraints(cells[c], c);
-          added.push_back(c);
-        }
-        poolSorted.assign(pool.begin(), pool.end());
-        std::sort(poolSorted.begin(), poolSorted.end(),
+        selected[c] = true;
+        addCellCompatibilityConstraints(cells[c], c);
+        added.push_back(c);
+
+        std::sort(pool.begin(), pool.end(),
           [&](CellIndex a, CellIndex b) {
-            return cellQualities[a] > cellQualities[b];
+            if (cellQualities[a] != cellQualities[b])
+              return cellQualities[a] > cellQualities[b];
+            return a < b;
           });
-        for (CellIndex p : poolSorted) {
+        for (CellIndex p : pool) {
           if (selected[p]) continue;
           if (isCellCompatible(cells[p], cells)) {
             selected[p] = true;
@@ -354,11 +395,9 @@ namespace {
           }
         }
 
-        bool candidateKept =
-          std::find(added.begin(), added.end(), c) != added.end();
-        if (candidateKept && added.size() > blockers.size()) {
-          // net gain, and it actually includes the candidate we were
-          // trying to unlock: keep this swap.
+        if (added.size() > blockers.size()) {
+          // net gain, and it includes the candidate we were trying to
+          // unlock: keep this swap.
         }
         else {
           for (CellIndex a : added) {
