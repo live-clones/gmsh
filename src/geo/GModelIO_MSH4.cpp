@@ -2134,19 +2134,24 @@ int GModel::_readMSH4(const std::string &name)
         return false;
       }
       if(hadNodesBefore) {
-        // assume numbering is not dense, and fill map cache with previous
-        // vertices in the vector cache (if any)
-        dense = false;
-        for(std::size_t i = 0; i < _vertexVectorCache.size(); i++) {
-          MVertex *v = _vertexVectorCache[i];
-          if(v) _vertexMapCache[v->getNum()] = v;
+        // the vector cache is kept if the numbering of all the nodes stays
+        // fairly dense (e.g. the partitions of a mesh read from several
+        // files); otherwise the map cache takes the previous nodes
+        dense = _vertexMapCache.empty() &&
+                maxNodeNum < 10 * (getNumMeshVertices() + totalNumRead);
+        if(!dense) {
+          for(std::size_t i = 0; i < _vertexVectorCache.size(); i++) {
+            MVertex *v = _vertexVectorCache[i];
+            if(v) _vertexMapCache[v->getNum()] = v;
+          }
+          _vertexVectorCache.clear();
         }
-        _vertexVectorCache.clear();
       }
       // populate map cache with just-read nodes, and put them in entity if not
       // already in cache
       if(dense) {
-        _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
+        if(_vertexVectorCache.size() < maxNodeNum + 1)
+          _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
         for(std::size_t i = 0; i < totalNumRead; i++) {
           MVertex *v = verticesRead[i];
           if(!_vertexVectorCache[v->getNum()]) {
@@ -2157,8 +2162,8 @@ int GModel::_readMSH4(const std::string &name)
               Msg::Error("Node %zu not classified on any entity", v->getNum());
           }
           else {
-            // should not happen
-            Msg::Warning("Skipping duplicate node %zu", v->getNum());
+            if(!hadNodesBefore) // should not happen
+              Msg::Warning("Skipping duplicate node %zu", v->getNum());
             delete v;
           }
         }
@@ -2204,18 +2209,21 @@ int GModel::_readMSH4(const std::string &name)
         return 0;
       }
       if(hadElementsBefore) {
-        // assume numbering is not dense, and fill map cache with previous
-        // elements in the vector cache (if any)
-        dense = false;
-        for(std::size_t i = 0; i < _elementVectorCache.size(); i++) {
-          std::pair<MElement *, int> p = _elementVectorCache[i];
-          if(p.first) _elementMapCache[p.first->getNum()] = p;
+        // (as for the nodes)
+        dense = _elementMapCache.empty() &&
+                maxElementNum < 10 * (getNumMeshElements() + totalNumRead);
+        if(!dense) {
+          for(std::size_t i = 0; i < _elementVectorCache.size(); i++) {
+            std::pair<MElement *, int> p = _elementVectorCache[i];
+            if(p.first) _elementMapCache[p.first->getNum()] = p;
+          }
+          _elementVectorCache.clear();
         }
-        _elementVectorCache.clear();
       }
       if(dense) {
-        _elementVectorCache.resize(maxElementNum + 1,
-                                   std::make_pair(nullptr, 0));
+        if(_elementVectorCache.size() < maxElementNum + 1)
+          _elementVectorCache.resize(maxElementNum + 1,
+                                     std::make_pair(nullptr, 0));
         for(std::size_t i = 0; i < totalNumRead; i++) {
           MElement *e = elementsRead[i].first;
           GEntity *entity = elementsRead[i].second;
@@ -2227,8 +2235,9 @@ int GModel::_readMSH4(const std::string &name)
               entity->addElement(e);
             }
           }
-          else { // should not happen
-            Msg::Warning("Skipping duplicate element %zu", e->getNum());
+          else {
+            if(!hadElementsBefore) // should not happen
+              Msg::Warning("Skipping duplicate element %zu", e->getNum());
             delete e;
           }
         }
