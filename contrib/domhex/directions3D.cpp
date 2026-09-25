@@ -1160,8 +1160,6 @@ void Size_field::init_region(GRegion *gr)
 {
 #if defined(HAVE_ANN)
 
-  GModel *model = GModel::current();
-
   std::vector<GFace *> faces = gr->faces();
 
   field.clear();
@@ -1219,7 +1217,9 @@ void Size_field::init_region(GRegion *gr)
     }
   }
 
-  octree = new MElementOctree(model);
+  // the interpolated sizes live on this region's tets only (see solve)
+  octree = new MElementOctree(std::vector<MElement *>(gr->tetrahedra.begin(),
+                                                      gr->tetrahedra.end()));
 
   annDeallocPt(query);
   delete[] indices;

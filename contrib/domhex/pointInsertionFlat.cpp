@@ -16,6 +16,9 @@
 #include "GFace.h"
 #include "MElement.h"
 #include "MElementOctree.h"
+#include "MTetrahedron.h"
+#include "BackgroundMeshTools.h"
+#include "meshGRegionDelaunay.h"
 #include "MVertex.h"
 #include "meshGRegion.h"
 #include "directions3D.h"
@@ -221,10 +224,39 @@ void fillRegionFlat(GRegion *gr)
   }
 
   Frame_field::init_region(gr);
-  Size_field::init_region(gr);
-  Size_field::solve(gr);
 
-  MElementOctree *octree = new MElementOctree(gr->model());
+  // Sizes follow gmsh's general 3D scheme (as in insertVerticesInRegion):
+  // the background size, clamped by the sizes extended from the boundary
+  // mesh and interpolated on the current tets.
+  const bool extend = Extend2dMeshIn3dVolumes();
+  std::unordered_map<MVertex *, double> vSizes;
+  if(extend) computeMeshSizesFromBoundary(gr, vSizes);
+  auto sizeAt = [&](MElement *e, double x, double y, double z) {
+    double lc = BGM_MeshSize(gr, 0, 0, x, y, z);
+    if(!extend || !e) return lc;
+    double xyz[3] = {x, y, z}, uvw[3];
+    e->xyz2uvw(xyz, uvw);
+    double w[4] = {1. - uvw[0] - uvw[1] - uvw[2], uvw[0], uvw[1], uvw[2]};
+    double lcb = 0.;
+    for(int i = 0; i < 4; i++) {
+      auto it = vSizes.find(e->getVertex(i));
+      if(it == vSizes.end()) return lc;
+      lcb += w[i] * it->second;
+    }
+    return std::min(lc, lcb);
+  };
+  auto sizeAtVertex = [&](MVertex *v) {
+    double lc = BGM_MeshSize(gr, 0, 0, v->x(), v->y(), v->z());
+    if(!extend) return lc;
+    auto it = vSizes.find(v);
+    return it == vSizes.end() ? lc : std::min(lc, it->second);
+  };
+
+  // Only this region's own tets: a model-wide octree lets the front leak
+  // into neighbouring, already-meshed regions.
+  std::vector<MElement *> regionElements(gr->tetrahedra.begin(),
+                                         gr->tetrahedra.end());
+  MElementOctree *octree = new MElementOctree(regionElements);
 
   // seed the front from the boundary mesh (points, then curves, then
   // surfaces, matching Filler::treat_region's ordering)
@@ -258,20 +290,24 @@ void fillRegionFlat(GRegion *gr)
   std::vector<uint32_t> queue;
   queue.reserve(pts.capacity());
 
-  double h0 = Size_field::search(gr->bounds().center().x(),
-                                 gr->bounds().center().y(),
-                                 gr->bounds().center().z());
-  if(h0 <= 0.) h0 = gr->bounds().diag() * 0.05;
-  SpatialHash hash(std::max(h0, 1e-12));
-
+  std::vector<FlatPoint> seeds;
+  seeds.reserve(boundaryVertices.size());
+  double h0 = 0.;
   for(MVertex *v : boundaryVertices) {
     FlatPoint p;
     p.x = v->x(); p.y = v->y(); p.z = v->z();
-    p.h = Size_field::search(p.x, p.y, p.z);
+    p.h = sizeAtVertex(v);
     metricAt(p.x, p.y, p.z, p.m);
     if(!isFinitePoint(p.h, p.m)) continue;
     p.layer = 0;
     p.limit = limitOf[v];
+    seeds.push_back(p);
+    h0 += p.h;
+  }
+  h0 = seeds.empty() ? gr->bounds().diag() * 0.05 : h0 / seeds.size();
+  SpatialHash hash(std::max(h0, 1e-12));
+
+  for(const FlatPoint &p : seeds) {
     uint32_t idx = (uint32_t)pts.size();
     pts.push_back(p);
     hash.insert(idx, p.x, p.y, p.z);
@@ -314,17 +350,19 @@ void fillRegionFlat(GRegion *gr)
 
       FlatPoint cand;
       cand.x = x; cand.y = y; cand.z = z;
-      cand.h = Size_field::search(x, y, z);
+      cand.h = sizeAt(e, x, y, z);
       metricAt(x, y, z, cand.m);
       if(!isFinitePoint(cand.h, cand.m)) continue;
       cand.layer = parent.layer + 1;
       cand.limit = parent.limit;
 
-      if(!farFromBoundary(octree, x, y, z, cand.h)) continue;
-
+      // cheap spacing test first: most spawns land on an existing point,
+      // and farFromBoundary costs 6 octree queries
       double radius = k1 * cand.h;
       if(hash.hasNeighborWithin(pts, x, y, z, radius, cand.m, parentIdx))
         continue;
+
+      if(!farFromBoundary(octree, x, y, z, cand.h)) continue;
 
       uint32_t idx = (uint32_t)pts.size();
       pts.push_back(cand);
@@ -372,6 +410,8 @@ void fillRegionFlat(GRegion *gr)
       pts.swap(kept);
     }
   }
+
+  delete octree;
 
   // hand the points to the Delaunay tetrahedralizer, same embedded-vertex
   // mechanism as Filler::treat_region.
@@ -429,7 +469,5 @@ void fillRegionFlat(GRegion *gr)
 
   for(Vertex *vv : newVertex) delete vv;
 
-  delete octree;
-  Size_field::clear();
   Frame_field::clear();
 }
