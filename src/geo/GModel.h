@@ -241,13 +241,23 @@ public:
   std::size_t getMaxElementNumber() const { return _maxElementNum; }
   void setMaxVertexNumber(std::size_t num)
   {
+    std::size_t max;
+#pragma omp atomic read
+    max = _maxVertexNum;
+    if(num > max) {
 #pragma omp atomic write
-    _maxVertexNum = _maxVertexNum > num ? _maxVertexNum : num;
+      _maxVertexNum = num;
+    }
   }
   void setMaxElementNumber(std::size_t num)
   {
+    std::size_t max;
+#pragma omp atomic read
+    max = _maxElementNum;
+    if(num > max) {
 #pragma omp atomic write
-    _maxElementNum = _maxElementNum > num ? _maxElementNum : num;
+      _maxElementNum = num;
+    }
   }
 
   // increment and get global vertex/element num
