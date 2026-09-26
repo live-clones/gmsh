@@ -3388,8 +3388,9 @@ optionWindow::optionWindow(int deltaFontSize)
       view.label[1]->box(FL_NO_BOX);
       view.label[1]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
-      view.value[34] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH,
-                                          "Target visualization error");
+      // (shown as it is set, e.g. 1e-6, whatever the step of the scrolling)
+      view.value[34] = new inputValueFloat(L + 2 * WB, 2 * WB + 11 * BH, IW, BH,
+                                           "Target visualization error");
       view.value[34]->tooltip("View.TargetError");
       view.value[34]->align(FL_ALIGN_RIGHT);
       // (a fraction of the range of the view; negative: refine everything)
