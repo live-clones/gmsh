@@ -287,10 +287,24 @@ void statisticsWindow::compute(bool elementQuality)
 
 #if defined(HAVE_MESH)
   bool visibleOnly = visible->value() ? true : false;
-  if(elementQuality)
-    GetStatistics(s, quality, visibleOnly);
+  GetStatistics(s, elementQuality ? quality : nullptr, visibleOnly);
+  // the qualities computed last are kept (e.g. when the histogram adds a view)
+  // as long as neither the mesh nor the entities counted change
+  CTX *ctx = CTX::instance();
+  std::vector<std::size_t> key = {
+    (std::size_t)GModel::current(), (std::size_t)ctx->meshContentStamp,
+    visibleOnly, visibleOnly ? (std::size_t)ctx->entityVisibilityStamp : 0};
+  for(int i = 4; i < 14; i++) key.push_back((std::size_t)s[i]);
+  if(elementQuality) {
+    _qualityKey = key;
+    for(int i = 0; i < 9; i++) _qualityStats[i] = s[18 + i];
+  }
+  else if(!_qualityKey.empty() && key == _qualityKey) {
+    elementQuality = true;
+    for(int i = 0; i < 9; i++) s[18 + i] = _qualityStats[i];
+  }
   else
-    GetStatistics(s, nullptr, visibleOnly);
+    _qualityKey.clear();
 #else
   for(int i = 0; i < 3; i++)
     for(int j = 0; j < 100; j++)
