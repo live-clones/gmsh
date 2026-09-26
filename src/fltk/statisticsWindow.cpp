@@ -13,6 +13,10 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "PView.h"
+#include "PViewData.h"
+#include "adaptiveData.h"
+#include "PViewDataGModel.h"
+#include "PViewOptions.h"
 #include "Context.h"
 #include "OS.h"
 
@@ -186,22 +190,27 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
     {
       group[2] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                               height - 3 * WB - 2 * BH, "Post-processing");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Views");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Points");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Lines");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Triangles");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 5 * BH, IW, BH, "Quadrangles");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 6 * BH, IW, BH, "Tetrahedra");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 7 * BH, IW, BH, "Hexahedra");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 8 * BH, IW, BH, "Prisms");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 9 * BH, IW, BH, "Pyramids");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Trihedra");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Strings");
+      // the data as given, and the elements the adaptive views are refined
+      // into
+      int cw = 8 * FL_NORMAL_SIZE;
+      new Fl_Box(2 * WB, 2 * WB + 1 * BH, cw, BH, "Data");
+      new Fl_Box(3 * WB + cw, 2 * WB + 1 * BH, cw, BH, "Adapted");
+      const char *rows[11] = {"Views",     "Points",      "Lines",
+                              "Triangles", "Quadrangles", "Tetrahedra",
+                              "Hexahedra", "Prisms",      "Pyramids",
+                              "Trihedra",  "Strings"};
+      for(int r = 0; r < 11; r++)
+        value[num++] = new Fl_Output(2 * WB, 2 * WB + (r + 2) * BH, cw, BH);
+      for(int r = 0; r < 11; r++) {
+        value[num] = new Fl_Output(3 * WB + cw, 2 * WB + (r + 2) * BH, cw, BH);
+        value[num++]->tooltip("The elements of the adaptive views as last "
+                              "refined (they are refined when drawn), with "
+                              "those refined apart where clipping planes cut");
+        // (apart from the fields, which are greyed out when empty)
+        Fl_Box *b = new Fl_Box(3 * WB + 2 * cw, 2 * WB + (r + 2) * BH,
+                               width - 5 * WB - 2 * cw, BH, rows[r]);
+        b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+      }
       group[2]->end();
     }
     o->end();
@@ -227,6 +236,48 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
+
+#if defined(HAVE_POST)
+// the points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms,
+// pyramids and trihedra of a view; for model-based data, those that have data
+// at the step shown (the model may have more: e.g. a view of the part of a
+// partitioned mesh a process computed, in the model of all the parts)
+static void countViewElements(PView *p, double count[9])
+{
+  PViewData *data = p->getData();
+  if(!dynamic_cast<PViewDataGModel *>(data)) {
+    count[0] += data->getNumPoints();
+    count[1] += data->getNumLines();
+    count[2] += data->getNumTriangles();
+    count[3] += data->getNumQuadrangles();
+    count[4] += data->getNumTetrahedra();
+    count[5] += data->getNumHexahedra();
+    count[6] += data->getNumPrisms();
+    count[7] += data->getNumPyramids();
+    count[8] += data->getNumTrihedra();
+    return;
+  }
+  int step = p->getOptions()->timeStep;
+  if(!data->hasTimeStep(step)) step = data->getFirstNonEmptyTimeStep();
+  if(!data->hasTimeStep(step)) return;
+  for(int ent = 0; ent < data->getNumEntities(step); ent++) {
+    for(int ele = 0; ele < data->getNumElements(step, ent); ele++) {
+      if(data->skipElement(step, ent, ele)) continue;
+      switch(data->getType(step, ent, ele)) {
+      case TYPE_PNT: count[0]++; break;
+      case TYPE_LIN: count[1]++; break;
+      case TYPE_TRI: count[2]++; break;
+      case TYPE_QUA: count[3]++; break;
+      case TYPE_TET: count[4]++; break;
+      case TYPE_HEX: count[5]++; break;
+      case TYPE_PRI: count[6]++; break;
+      case TYPE_PYR: count[7]++; break;
+      case TYPE_TRIH: count[8]++; break;
+      }
+    }
+  }
+}
+#endif
 
 void statisticsWindow::compute(bool elementQuality)
 {
@@ -336,7 +387,15 @@ void statisticsWindow::compute(bool elementQuality)
     num++;
   }
 
-  // post
+  // post (the views here, not in GetStatistics(), which the options reading
+  // the numbers of mesh elements call)
+#if defined(HAVE_POST)
+  s[27] = PView::list.size();
+  for(auto p : PView::list) {
+    countViewElements(p, &s[28]);
+    s[37] += p->getData()->getNumStrings2D() + p->getData()->getNumStrings3D();
+  }
+#endif
   sprintf(label[num], "%g", s[27]);
   value[num]->value(label[num]);
   num++;
@@ -369,6 +428,47 @@ void statisticsWindow::compute(bool elementQuality)
   num++;
   sprintf(label[num], "%g", s[37]);
   value[num]->value(label[num]);
+  num++;
+
+#if defined(HAVE_POST)
+  // the elements of the adaptive views, as last refined (they are refined
+  // when they are used, as drawn, not here), with those refined apart where
+  // the clipping planes cut them (see PView::refineClipLayer())
+  double a[10] = {0.};
+  for(auto p : PView::list) {
+    bool refined = false;
+    for(adaptiveData *ad :
+        {p->getData()->getAdaptiveData(), p->getClipAdaptiveData()}) {
+      PViewData *d = ad ? ad->getData() : nullptr;
+      if(!d) continue;
+      refined = true;
+      a[1] += d->getNumPoints();
+      a[2] += d->getNumLines();
+      a[3] += d->getNumTriangles();
+      a[4] += d->getNumQuadrangles();
+      a[5] += d->getNumTetrahedra();
+      a[6] += d->getNumHexahedra();
+      a[7] += d->getNumPrisms();
+      a[8] += d->getNumPyramids();
+      a[9] += d->getNumTrihedra();
+    }
+    if(refined) a[0] += 1;
+  }
+  // (empty and greyed out if no view is refined)
+  for(int r = 0; r < 10; r++) {
+    sprintf(label[num], "%g", a[r]);
+    value[num]->value(a[0] ? label[num] : nullptr);
+    if(a[0])
+      value[num]->activate();
+    else
+      value[num]->deactivate();
+    num++;
+  }
+#else
+  num += 10;
+#endif
+  value[num]->value(nullptr); // (no strings in the refined data)
+  value[num]->deactivate();
   num++;
 
   static char mem[256];

@@ -195,6 +195,8 @@ public:
   bool refineClipLayer();
   // read the elements refined apart in place of the adaptive data, or stop
   void useClipLayer(bool use);
+  // the adaptive data refining them (null if none)
+  adaptiveData *getClipAdaptiveData() { return _clipAdaptive; }
   // refine the whole view if only its skin is, for what reads the refined data
   // as a whole (plugins, probes, the API); the next drawing refines the skin
   // again

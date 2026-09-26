@@ -67,11 +67,6 @@
 
 #include "meshMesquite.h"
 
-#if defined(HAVE_POST)
-#include "PView.h"
-#include "PViewData.h"
-#endif
-
 #if defined(HAVE_QUADMESHINGTOOLS)
 #include "cppUtils.h"
 #include "qmtMeshUtils.h"
@@ -302,21 +297,6 @@ void GetStatistics(double stat[50], double quality[3][101], bool visibleOnly)
     }
   }
 
-#if defined(HAVE_POST)
-  stat[27] = PView::list.size();
-  for(std::size_t i = 0; i < PView::list.size(); i++) {
-    PViewData *data = PView::list[i]->getData(true);
-    stat[28] += data->getNumPoints();
-    stat[29] += data->getNumLines();
-    stat[30] += data->getNumTriangles();
-    stat[31] += data->getNumQuadrangles();
-    stat[32] += data->getNumTetrahedra();
-    stat[33] += data->getNumHexahedra();
-    stat[34] += data->getNumPrisms();
-    stat[35] += data->getNumPyramids();
-    stat[36] += data->getNumStrings2D() + data->getNumStrings3D();
-  }
-#endif
 }
 
 // Same quantity as MElement::minSICNShapeMeasure() (signedInvCondNumRange
