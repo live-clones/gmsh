@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <set>
 #include <stack>
 #include <stdexcept>
 
@@ -166,32 +167,92 @@ public:
   }
 };
 
-template <class T>
-static void
-GetQualityMeasure(std::vector<T *> &ele, double &gamma, double &gammaMin,
-                  double &gammaMax, double &minSICN, double &minSICNMin,
-                  double &minSICNMax, double &minSIGE, double &minSIGEMin,
-                  double &minSIGEMax, double quality[3][101])
-{
-  for(std::size_t i = 0; i < ele.size(); i++) {
-    double g = ele[i]->gammaShapeMeasure();
-    gamma += g;
-    gammaMin = std::min(gammaMin, g);
-    gammaMax = std::max(gammaMax, g);
-    double s = ele[i]->minSICNShapeMeasure();
-    minSICN += s;
-    minSICNMin = std::min(minSICNMin, s);
-    minSICNMax = std::max(minSICNMax, s);
-    double e = ele[i]->minSIGEShapeMeasure();
-    minSIGE += e;
-    minSIGEMin = std::min(minSIGEMin, e);
-    minSIGEMax = std::max(minSIGEMax, e);
-    for(int j = 0; j < 101; j++) {
-      if(s > (2 * j - 101) / 101. && s <= (2 * j - 99) / 101.) quality[0][j]++;
-      if(g > j / 101. && g <= (j + 1) / 101.) quality[1][j]++;
-      if(e > (2 * j - 101) / 101. && e <= (2 * j - 99) / 101.) quality[2][j]++;
-    }
+// The quality measures of some elements (gamma, SICN, SIGE): their sums and
+// ranges, and their histograms (101 bins: ]j/101, (j+1)/101] for gamma,
+// ](2j-101)/101, (2j-99)/101] for SICN and SIGE)
+struct qualityStats {
+  double gamma = 0., gammaMin = 1., gammaMax = 0.;
+  double sicn = 0., sicnMin = 1., sicnMax = -1.;
+  double sige = 0., sigeMin = 1., sigeMax = -1.;
+  double histogram[3][101] = {};
+  void add(const qualityStats &o)
+  {
+    gamma += o.gamma;
+    gammaMin = std::min(gammaMin, o.gammaMin);
+    gammaMax = std::max(gammaMax, o.gammaMax);
+    sicn += o.sicn;
+    sicnMin = std::min(sicnMin, o.sicnMin);
+    sicnMax = std::max(sicnMax, o.sicnMax);
+    sige += o.sige;
+    sigeMin = std::min(sigeMin, o.sigeMin);
+    sigeMax = std::max(sigeMax, o.sigeMax);
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 101; j++) histogram[i][j] += o.histogram[i][j];
   }
+};
+
+// the bin j such that lo(j) < v <= hi(j), if any: guessed, then checked with
+// the bounds themselves
+template <class L, class H>
+static int histogramBin(double v, double guess, L lo, H hi)
+{
+  if(!(guess > -2. && guess < 103.)) return -1; // (NaN, or far outside)
+  int j0 = (int)std::ceil(guess);
+  for(int j = j0 - 1; j <= j0 + 1; j++)
+    if(j >= 0 && j <= 100 && lo(j) < v && v <= hi(j)) return j;
+  return -1;
+}
+
+static void addQualityMeasures(MElement *e, qualityStats &q)
+{
+  double g = e->gammaShapeMeasure();
+  q.gamma += g;
+  q.gammaMin = std::min(q.gammaMin, g);
+  q.gammaMax = std::max(q.gammaMax, g);
+  double s = e->minSICNShapeMeasure();
+  q.sicn += s;
+  q.sicnMin = std::min(q.sicnMin, s);
+  q.sicnMax = std::max(q.sicnMax, s);
+  double ge = e->minSIGEShapeMeasure();
+  q.sige += ge;
+  q.sigeMin = std::min(q.sigeMin, ge);
+  q.sigeMax = std::max(q.sigeMax, ge);
+  auto lo2 = [](int j) { return (2 * j - 101) / 101.; };
+  auto hi2 = [](int j) { return (2 * j - 99) / 101.; };
+  int j = histogramBin(s, (101. * s + 99.) / 2., lo2, hi2);
+  if(j >= 0) q.histogram[0][j]++;
+  j = histogramBin(
+    g, 101. * g - 1., [](int j) { return j / 101.; },
+    [](int j) { return (j + 1) / 101.; });
+  if(j >= 0) q.histogram[1][j]++;
+  j = histogramBin(ge, (101. * ge + 99.) / 2., lo2, hi2);
+  if(j >= 0) q.histogram[2][j]++;
+}
+
+// the quality measures of the elements, computed by several threads (each on
+// its share, added up in order)
+static void getQualityMeasures(const std::vector<MElement *> &elements,
+                               qualityStats &q)
+{
+  // (the bases the measures use are made by the first element of each type,
+  // before the threads, which then only read them)
+  std::set<int> types;
+  std::vector<bool> first(elements.size(), false);
+  for(std::size_t i = 0; i < elements.size(); i++)
+    if(types.insert(elements[i]->getTypeForMSH()).second) {
+      addQualityMeasures(elements[i], q);
+      first[i] = true;
+    }
+  int nthreads = CTX::instance()->numThreadsFor(elements.size(), 1000);
+  std::vector<qualityStats> parts(nthreads);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    std::size_t beg = elements.size() * t / nthreads;
+    std::size_t end = elements.size() * (t + 1) / nthreads;
+    for(std::size_t i = beg; i < end; i++)
+      if(!first[i]) addQualityMeasures(elements[i], parts[t]);
+  }
+  for(auto &p : parts) q.add(p);
 }
 
 void GetStatistics(double stat[50], double quality[3][101], bool visibleOnly)
@@ -248,52 +309,46 @@ void GetStatistics(double stat[50], double quality[3][101], bool visibleOnly)
   stat[16] = CTX::instance()->mesh.timer[2];
 
   if(quality) {
-    for(int i = 0; i < 3; i++)
-      for(int j = 0; j < 101; j++) quality[i][j] = 0.;
-    double minSICN = 0., minSICNMin = 1., minSICNMax = -1.;
-    double minSIGE = 0., minSIGEMin = 1., minSIGEMax = -1.;
-    double gamma = 0., gammaMin = 1., gammaMax = 0.;
-
+    // the 3D elements if there are any, else the 2D ones
+    std::vector<MElement *> elements;
     double N = stat[9] + stat[10] + stat[11] + stat[12] + stat[13];
-    if(N) { // if we have 3D elements
+    if(N) {
       for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
         if(visibleOnly && !(*it)->getVisibility()) continue;
-        GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax, minSICN,
-                          minSICNMin, minSICNMax, minSIGE, minSIGEMin,
-                          minSIGEMax, quality);
-        GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax, minSICN,
-                          minSICNMin, minSICNMax, minSIGE, minSIGEMin,
-                          minSIGEMax, quality);
-        GetQualityMeasure((*it)->prisms, gamma, gammaMin, gammaMax, minSICN,
-                          minSICNMin, minSICNMax, minSIGE, minSIGEMin,
-                          minSIGEMax, quality);
-        GetQualityMeasure((*it)->pyramids, gamma, gammaMin, gammaMax, minSICN,
-                          minSICNMin, minSICNMax, minSIGE, minSIGEMin,
-                          minSIGEMax, quality);
+        GRegion *r = *it;
+        elements.insert(elements.end(), r->tetrahedra.begin(),
+                        r->tetrahedra.end());
+        elements.insert(elements.end(), r->hexahedra.begin(),
+                        r->hexahedra.end());
+        elements.insert(elements.end(), r->prisms.begin(), r->prisms.end());
+        elements.insert(elements.end(), r->pyramids.begin(), r->pyramids.end());
       }
     }
-    else { // 2D elements
+    else {
       N = stat[7] + stat[8];
       for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
         if(visibleOnly && !(*it)->getVisibility()) continue;
-        GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, minSIGE, minSIGEMin,
-                          minSIGEMax, quality);
-        GetQualityMeasure((*it)->triangles, gamma, gammaMin, gammaMax, minSICN,
-                          minSICNMin, minSICNMax, minSIGE, minSIGEMin,
-                          minSIGEMax, quality);
+        GFace *f = *it;
+        elements.insert(elements.end(), f->quadrangles.begin(),
+                        f->quadrangles.end());
+        elements.insert(elements.end(), f->triangles.begin(),
+                        f->triangles.end());
       }
     }
+    qualityStats q;
+    getQualityMeasures(elements, q);
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 101; j++) quality[i][j] = q.histogram[i][j];
     if(N) {
-      stat[18] = minSICN / N;
-      stat[19] = minSICNMin;
-      stat[20] = minSICNMax;
-      stat[21] = gamma / N;
-      stat[22] = gammaMin;
-      stat[23] = gammaMax;
-      stat[24] = minSIGE / N;
-      stat[25] = minSIGEMin;
-      stat[26] = minSIGEMax;
+      stat[18] = q.sicn / N;
+      stat[19] = q.sicnMin;
+      stat[20] = q.sicnMax;
+      stat[21] = q.gamma / N;
+      stat[22] = q.gammaMin;
+      stat[23] = q.gammaMax;
+      stat[24] = q.sige / N;
+      stat[25] = q.sigeMin;
+      stat[26] = q.sigeMax;
     }
   }
 
