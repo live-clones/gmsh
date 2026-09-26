@@ -131,6 +131,11 @@ Ascissa scale range type (1: default, 2: custom)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.AdaptSkinOnly
+Refine only the skin of the volumes of an adaptive view when only the skin is drawn (DrawSkinOnly), and apart the volumes the clipping planes cut when they are capped or drawn whole: what reads the refined view as a whole (plugins, probes, the API) refines it all (2: the same, with the partitions of an entity together, without the faces between them)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.AdaptVisualizationGrid
 Use adaptive visualization grid (for high-order elements)?@*
 Default value: @code{0}@*
@@ -402,7 +407,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.DrawSkinOnly
-Draw only the boundary faces of 3D views?@*
+Draw only the boundary faces of 3D views, entity by entity (1), or with the partitions of an entity together, without the faces between them (2)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -677,7 +682,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.TargetError
-Target error of adaptive views: the largest difference allowed between the field and what is drawn of it, as a fraction of the range of the view (the elements are refined until it is reached, down to MaxRecursionLevel; a negative value refines them all)@*
+Target error of adaptive views: the largest difference allowed between the field and what is drawn of it, as a fraction of the range of the view: the custom range if RangeType is 2 (the elements with values all outside of it are then not refined), or else that of the data over all steps (the elements are refined until it is reached, down to MaxRecursionLevel; a negative value refines them all)@*
 Default value: @code{0.001}@*
 Saved in: @code{General.OptionsFileName}
 

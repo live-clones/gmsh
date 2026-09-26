@@ -101,6 +101,11 @@ Enable default post-processing plugins?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item PostProcessing.SaveAdapted
+Save the views of high order refined, as adapted views are drawn (with View.MaxRecursionLevel and View.TargetError), for readers that cannot handle high order elements; each time step then has a mesh of its own, and a file of its own, name_0000.ext, name_0001.ext...@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item PostProcessing.SaveInterpolationMatrices
 Save the interpolation matrices when exporting model-based data@*
 Default value: @code{1}@*
