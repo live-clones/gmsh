@@ -1909,7 +1909,7 @@ StringXNumber PostProcessingOptions_Number[] = {
 StringXNumber ViewOptions_Number[] = {
   { F|O, "AbscissaRangeType" , opt_view_abscissa_range_type , 1 ,
     "Ascissa scale range type (1: default, 2: custom)" },
-  { F|O, "AdaptSkinOnly" , opt_view_adapt_skin_only , 1. ,
+  { F|O, "AdaptSkinOnly" , opt_view_adapt_skin_only , 2. ,
     "Refine only the skin of the volumes of an adaptive view when only the skin "
     "is drawn (DrawSkinOnly), and apart the volumes the clipping planes cut "
     "when they are capped or drawn whole: what reads the refined view as a "
