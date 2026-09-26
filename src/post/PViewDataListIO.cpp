@@ -91,19 +91,19 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   if(version <= 1.0) {
     Msg::Debug("Detected post-processing view format <= 1.0");
     if(fscanf(fp, "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", name,
-              &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL, &NbST,
-              &NbVT, &NbTT, &NbSS, &NbVS, &NbTS) != 14) {
+              &_nbTimeStep, &_nbSP, &_nbVP, &_nbTP, &_nbSL, &_nbVL, &_nbTL,
+              &_nbST, &_nbVT, &_nbTT, &_nbSS, &_nbVS, &_nbTS) != 14) {
       Msg::Error("Read error");
       return false;
     }
-    NbT2 = t2l = NbT3 = t3l = 0;
+    _nbT2 = t2l = _nbT3 = t3l = 0;
   }
   else if(version == 1.1) {
     Msg::Debug("Detected post-processing view format 1.1");
     if(fscanf(fp, "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-              name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-              &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS, &NbT2, &t2l, &NbT3,
-              &t3l) != 18) {
+              name, &_nbTimeStep, &_nbSP, &_nbVP, &_nbTP, &_nbSL, &_nbVL,
+              &_nbTL, &_nbST, &_nbVT, &_nbTT, &_nbSS, &_nbVS, &_nbTS, &_nbT2,
+              &t2l, &_nbT3, &t3l) != 18) {
       Msg::Error("Read error");
       return false;
     }
@@ -113,10 +113,10 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
     if(fscanf(fp,
               "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
               "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-              name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-              &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS,
-              &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
-              &NbT2, &t2l, &NbT3, &t3l) != 30) {
+              name, &_nbTimeStep, &_nbSP, &_nbVP, &_nbTP, &_nbSL, &_nbVL,
+              &_nbTL, &_nbST, &_nbVT, &_nbTT, &_nbSQ, &_nbVQ, &_nbTQ, &_nbSS,
+              &_nbVS, &_nbTS, &_nbSH, &_nbVH, &_nbTH, &_nbSI, &_nbVI, &_nbTI,
+              &_nbSY, &_nbVY, &_nbTY, &_nbT2, &t2l, &_nbT3, &t3l) != 30) {
       Msg::Error("Read error");
       return false;
     }
@@ -127,13 +127,13 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
               "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-              name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-              &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS,
-              &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
-              &NbSL2, &NbVL2, &NbTL2, &NbST2, &NbVT2, &NbTT2, &NbSQ2, &NbVQ2,
-              &NbTQ2, &NbSS2, &NbVS2, &NbTS2, &NbSH2, &NbVH2, &NbTH2, &NbSI2,
-              &NbVI2, &NbTI2, &NbSY2, &NbVY2, &NbTY2, &NbT2, &t2l, &NbT3,
-              &t3l) != 51) {
+              name, &_nbTimeStep, &_nbSP, &_nbVP, &_nbTP, &_nbSL, &_nbVL,
+              &_nbTL, &_nbST, &_nbVT, &_nbTT, &_nbSQ, &_nbVQ, &_nbTQ, &_nbSS,
+              &_nbVS, &_nbTS, &_nbSH, &_nbVH, &_nbTH, &_nbSI, &_nbVI, &_nbTI,
+              &_nbSY, &_nbVY, &_nbTY, &NbSL2, &NbVL2, &NbTL2, &NbST2, &NbVT2,
+              &NbTT2, &NbSQ2, &NbVQ2, &NbTQ2, &NbSS2, &NbVS2, &NbTS2, &NbSH2,
+              &NbVH2, &NbTH2, &NbSI2, &NbVI2, &NbTI2, &NbSY2, &NbVY2, &NbTY2,
+              &_nbT2, &t2l, &_nbT3, &t3l) != 51) {
       Msg::Error("Read error");
       return false;
     }
@@ -165,13 +165,13 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   const int num2[24] = {0,     0,     0,     NbSL2, NbVL2, NbTL2, NbST2, NbVT2,
                         NbTT2, NbSQ2, NbVQ2, NbTQ2, NbSS2, NbVS2, NbTS2, NbSH2,
                         NbVH2, NbTH2, NbSI2, NbVI2, NbTI2, NbSY2, NbVY2, NbTY2};
-  bool ok = dVecRead(Time, NbTimeStep, fp, binary, swap);
+  bool ok = dVecRead(_time, _nbTimeStep, fp, binary, swap);
   for(int i = 0; i < 24 && ok; i++) {
     std::vector<double> *list;
     int *num, numComp, n;
     _getRawData(i, &list, &num, &numComp, &n);
     int nn = listKinds[i].numNodes;
-    ok = dVecRead(*list, *num * (NbTimeStep * nn * numComp + 3 * nn), fp,
+    ok = dVecRead(*list, *num * (_nbTimeStep * nn * numComp + 3 * nn), fp,
                   binary, swap);
   }
   for(int i = 0; i < 24 && ok; i++) {
@@ -184,21 +184,21 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
                    "order ones of the same type",
                    name);
     int nn = numNodes2[i / 3];
-    ok = dVecRead(*list, num2[i] * (NbTimeStep * nn * numComp + 3 * nn), fp,
+    ok = dVecRead(*list, num2[i] * (_nbTimeStep * nn * numComp + 3 * nn), fp,
                   binary, swap);
     *num = num2[i];
     setOrder2(type);
   }
-  ok = ok && dVecRead(T2D, NbT2 * 4, fp, binary, swap) &&
-       cVecRead(T2C, t2l, fp, binary, (version <= 1.2)) &&
-       dVecRead(T3D, NbT3 * 5, fp, binary, swap) &&
-       cVecRead(T3C, t3l, fp, binary, (version <= 1.2));
+  ok = ok && dVecRead(_t2d, _nbT2 * 4, fp, binary, swap) &&
+       cVecRead(_t2c, t2l, fp, binary, (version <= 1.2)) &&
+       dVecRead(_t3d, _nbT3 * 5, fp, binary, swap) &&
+       cVecRead(_t3c, t3l, fp, binary, (version <= 1.2));
   if(!ok) {
     Msg::Error("Unexpected end of data of view '%s'", name);
     return false;
   }
 
-  Msg::Debug("Read view '%s' (%d steps)", name, NbTimeStep);
+  Msg::Debug("Read view '%s' (%d steps)", name, _nbTimeStep);
 
   setName(name);
   finalize();
@@ -307,9 +307,10 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
     else
       fprintf(fp, "%s ", str.c_str());
     // (the format has no trihedra)
-    fprintf(fp, "%d", (int)Time.size());
+    fprintf(fp, "%d", (int)_time.size());
     for(int i = 0; i < 24; i++) fprintf(fp, " %d", this->*listKinds[i].num);
-    fprintf(fp, " %d %d %d %d\n", NbT2, (int)T2C.size(), NbT3, (int)T3C.size());
+    fprintf(fp, " %d %d %d %d\n", _nbT2, (int)_t2c.size(), _nbT3,
+            (int)_t3c.size());
     if(binary) {
       int one = 1;
       if(!fwrite(&one, sizeof(int), 1, fp)) {
@@ -318,24 +319,24 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
         return false;
       }
     }
-    dVecWrite(Time, fp, binary);
+    dVecWrite(_time, fp, binary);
     for(int i = 0; i < 24; i++) dVecWrite(this->*listKinds[i].list, fp, binary);
-    dVecWrite(T2D, fp, binary);
-    cVecWrite(T2C, fp, binary);
-    dVecWrite(T3D, fp, binary);
-    cVecWrite(T3C, fp, binary);
+    dVecWrite(_t2d, fp, binary);
+    cVecWrite(_t2c, fp, binary);
+    dVecWrite(_t3d, fp, binary);
+    cVecWrite(_t3c, fp, binary);
     fprintf(fp, "\n");
     fprintf(fp, "$EndView\n");
   }
   else {
     fprintf(fp, "View \"%s\" {\n", getName().c_str());
-    writeTimePOS(fp, Time);
+    writeTimePOS(fp, _time);
     for(int i = 0; i < 24; i++) {
       const listKind &k = listKinds[i];
       writeElementPOS(fp, k.name, k.numNodes, this->*k.num, this->*k.list);
     }
-    writeTextPOS(fp, 4, NbT2, T2D, T2C);
-    writeTextPOS(fp, 5, NbT3, T3D, T3C);
+    writeTextPOS(fp, 4, _nbT2, _t2d, _t2c);
+    writeTextPOS(fp, 5, _nbT3, _t3d, _t3c);
     fprintf(fp, "};\n");
   }
 
@@ -463,7 +464,7 @@ bool PViewDataList::writeMSH(const std::string &fileName,
       }
       int nb = list->size() / *numEle;
       // the number of values per component of an element at each step
-      int mult = (nb - 3 * numNodes) / (view->NbTimeStep * numComp);
+      int mult = (nb - 3 * numNodes) / (view->_nbTimeStep * numComp);
       lists.push_back({view, list, *numEle, numNodes, numComp, mshType, mult});
       for(std::size_t e = 0; e < list->size(); e += nb) {
         double *x = &(*list)[e];
@@ -474,10 +475,10 @@ bool PViewDataList::writeMSH(const std::string &fileName,
         }
       }
     }
-    if(view->NbT2 || view->NbT3)
+    if(view->_nbT2 || view->_nbT3)
       Msg::Warning("Strings of view '%s' are not written in MSH",
                    view->getName().c_str());
-    bbox += view->BBox;
+    bbox += view->_bbox;
   }
   if(lists.empty()) {
     Msg::Warning("No elements to write in MSH");
@@ -651,7 +652,7 @@ bool PViewDataList::writeMSH(const std::string &fileName,
             d->setInterpolationMatrices(it.first, *it.second[0], *it.second[1]);
         }
       }
-      for(int step = 0; step < view->NbTimeStep; step++) {
+      for(int step = 0; step < view->_nbTimeStep; step++) {
         std::vector<std::size_t> dataTags;
         std::vector<std::vector<double>> values;
         // the value of the last element at each node (NodeData)

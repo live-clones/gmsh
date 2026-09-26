@@ -202,7 +202,7 @@ int GModel::readPLY(const std::string &name)
       }
     }
     data->setName(propName[iV]);
-    data->Time.push_back(0);
+    data->addTime(0);
     data->setFileName("property.pos");
     data->finalize();
   }

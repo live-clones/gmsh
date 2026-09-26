@@ -10,9 +10,7 @@
 
 class GMSH_CutGridPlugin : public GMSH_PointGridPlugin {
   void addInView(int numsteps, int connect, int nbcomp, double ***pnts,
-                 double ***vals, std::vector<double> &P, int *nP,
-                 std::vector<double> &L, int *nL, std::vector<double> &Q,
-                 int *nQ);
+                 double ***vals, PViewDataList *data);
   PView *GenerateView(PView *v, int connectPoints);
 
 public:

@@ -96,35 +96,26 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
     }
     if(!ok) continue;
     int numComp = 0;
-    std::vector<double> *vec = nullptr;
     if((int)p[0]->val.size() == 9 * numSteps &&
        (int)p[1]->val.size() == 9 * numSteps &&
        (int)p[2]->val.size() == 9 * numSteps &&
-       (int)p[3]->val.size() == 9 * numSteps) {
+       (int)p[3]->val.size() == 9 * numSteps)
       numComp = 9;
-      data2->NbTS++;
-      vec = &data2->TS;
-    }
     else if((int)p[0]->val.size() == 3 * numSteps &&
             (int)p[1]->val.size() == 3 * numSteps &&
             (int)p[2]->val.size() == 3 * numSteps &&
-            (int)p[3]->val.size() == 3 * numSteps) {
+            (int)p[3]->val.size() == 3 * numSteps)
       numComp = 3;
-      data2->NbVS++;
-      vec = &data2->VS;
-    }
     else if((int)p[0]->val.size() == numSteps &&
             (int)p[1]->val.size() == numSteps &&
             (int)p[2]->val.size() == numSteps &&
-            (int)p[3]->val.size() == numSteps) {
+            (int)p[3]->val.size() == numSteps)
       numComp = 1;
-      data2->NbSS++;
-      vec = &data2->SS;
-    }
     else {
       Msg::Warning("Skipping unknown type of data");
       continue;
     }
+    std::vector<double> *vec = data2->incrementList(numComp, TYPE_TET);
     for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->x());
     for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->y());
     for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->z());
@@ -138,7 +129,7 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
   for(std::size_t i = 0; i < points.size(); i++) delete points[i];
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
-    data2->Time.push_back(data1->getTime(i));
+    data2->addTime(data1->getTime(i));
   data2->setName(data1->getName() + "_Tetrahedralize");
   data2->setFileName(data1->getName() + "_Tetrahedralize.pos");
   data2->finalize();

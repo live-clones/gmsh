@@ -8724,31 +8724,10 @@ gmsh::view::addListDataString(const int tag, const std::vector<double> &coord,
     d->setFileName(name + ".pos");
     view->setData(d);
   }
-  if(coord.size() == 3) {
-    d->T3D.push_back(coord[0]);
-    d->T3D.push_back(coord[1]);
-    d->T3D.push_back(coord[2]);
-    d->T3D.push_back(getStringStyle(style)), d->T3D.push_back(d->T3C.size());
-    d->NbT3++;
-    for(std::size_t i = 0; i < data.size(); i++) {
-      for(std::size_t j = 0; j < data[i].size(); j++) {
-        d->T3C.push_back(data[i][j]);
-      }
-      d->T3C.push_back('\0');
-    }
-  }
-  else if(coord.size() == 2) {
-    d->T2D.push_back(coord[0]);
-    d->T2D.push_back(coord[1]);
-    d->T2D.push_back(getStringStyle(style)), d->T2D.push_back(d->T2C.size());
-    d->NbT2++;
-    for(std::size_t i = 0; i < data.size(); i++) {
-      for(std::size_t j = 0; j < data[i].size(); j++) {
-        d->T2C.push_back(data[i][j]);
-      }
-      d->T2C.push_back('\0');
-    }
-  }
+  if(coord.size() == 3)
+    d->addString3D(coord[0], coord[1], coord[2], getStringStyle(style), data);
+  else if(coord.size() == 2)
+    d->addString2D(coord[0], coord[1], getStringStyle(style), data);
   d->finalize();
   view->setChanged(true);
 #else

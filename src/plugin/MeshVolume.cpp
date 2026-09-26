@@ -55,11 +55,9 @@ PView *GMSH_MeshVolumePlugin::execute(PView *v)
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
   SBoundingBox3d bbox = model->bounds();
-  data2->SP.push_back(bbox.center().x());
-  data2->SP.push_back(bbox.center().y());
-  data2->SP.push_back(bbox.center().z());
-  data2->SP.push_back(vol);
-  data2->NbSP = 1;
+  std::vector<double> *l = data2->incrementList(1, TYPE_PNT);
+  l->insert(l->end(),
+            {bbox.center().x(), bbox.center().y(), bbox.center().z(), vol});
   v2->getOptions()->intervalsType = PViewOptions::Numeric;
   data2->setName("MeshVolume");
   data2->setFileName("MeshVolume.pos");

@@ -173,11 +173,11 @@ std::string GMSH_CutParametricPlugin::getHelp() const
 
 static void addInView(int connect, int i, int nbcomp, int nbtime, double x0,
                       double y0, double z0, double *res0, double x, double y,
-                      double z, double *res, std::vector<double> &P, int *nP,
-                      std::vector<double> &L, int *nL)
+                      double z, double *res, PViewDataList *data)
 {
   if(connect) {
     if(i) {
+      std::vector<double> &L = *data->incrementList(nbcomp, TYPE_LIN);
       L.push_back(x0);
       L.push_back(x);
       L.push_back(y0);
@@ -188,16 +188,15 @@ static void addInView(int connect, int i, int nbcomp, int nbtime, double x0,
         for(int l = 0; l < nbcomp; ++l) L.push_back(res0[nbcomp * k + l]);
         for(int l = 0; l < nbcomp; ++l) L.push_back(res[nbcomp * k + l]);
       }
-      (*nL)++;
     }
   }
   else {
+    std::vector<double> &P = *data->incrementList(nbcomp, TYPE_PNT);
     P.push_back(x);
     P.push_back(y);
     P.push_back(z);
     for(int k = 0; k < nbtime; ++k)
       for(int l = 0; l < nbcomp; ++l) P.push_back(res[nbcomp * k + l]);
-    (*nP)++;
   }
 }
 
@@ -205,8 +204,9 @@ static void addInView(int nbcomp, int nbtime, double x0, double y0, double z0,
                       double *res0, double x1, double y1, double z1,
                       double *res1, double x2, double y2, double z2,
                       double *res2, double x3, double y3, double z3,
-                      double *res3, std::vector<double> &Q, int *nQ)
+                      double *res3, PViewDataList *data)
 {
+  std::vector<double> &Q = *data->incrementList(nbcomp, TYPE_QUA);
   Q.push_back(x0);
   Q.push_back(x1);
   Q.push_back(x2);
@@ -225,7 +225,6 @@ static void addInView(int nbcomp, int nbtime, double x0, double y0, double z0,
     for(int l = 0; l < nbcomp; ++l) Q.push_back(res2[nbcomp * k + l]);
     for(int l = 0; l < nbcomp; ++l) Q.push_back(res3[nbcomp * k + l]);
   }
-  (*nQ)++;
 }
 
 PView *GMSH_CutParametricPlugin::execute(PView *v)
@@ -265,21 +264,18 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
       z1 = z[i];
       if(data1->getNumScalars()) {
         o.searchScalar(x1, y1, z1, &cur[0][0]);
-        addInView(connect, i, 1, numSteps, x0, y0, z0, &prev[0][0], x1, y1,
-                  z1, &cur[0][0], data2->SP, &data2->NbSP, data2->SL,
-                  &data2->NbSL);
+        addInView(connect, i, 1, numSteps, x0, y0, z0, &prev[0][0], x1, y1, z1,
+                  &cur[0][0], data2);
       }
       if(data1->getNumVectors()) {
         o.searchVector(x1, y1, z1, &cur[1][0]);
-        addInView(connect, i, 3, numSteps, x0, y0, z0, &prev[1][0], x1, y1,
-                  z1, &cur[1][0], data2->VP, &data2->NbVP, data2->VL,
-                  &data2->NbVL);
+        addInView(connect, i, 3, numSteps, x0, y0, z0, &prev[1][0], x1, y1, z1,
+                  &cur[1][0], data2);
       }
       if(data1->getNumTensors()) {
         o.searchTensor(x1, y1, z1, &cur[2][0]);
-        addInView(connect, i, 9, numSteps, x0, y0, z0, &prev[2][0], x1, y1,
-                  z1, &cur[2][0], data2->TP, &data2->NbTP, data2->TL,
-                  &data2->NbTL);
+        addInView(connect, i, 9, numSteps, x0, y0, z0, &prev[2][0], x1, y1, z1,
+                  &cur[2][0], data2);
       }
       x0 = x1;
       y0 = y1;
@@ -294,8 +290,6 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
     int n = x.size();
     int nthreads = CTX::instance()->numThreadsFor(n, 1000);
     const int numComp[3] = {1, 3, 9};
-    std::vector<double> *lists[3] = {&data2->SQ, &data2->VQ, &data2->TQ};
-    int *counts[3] = {&data2->NbSQ, &data2->NbVQ, &data2->NbTQ};
     bool has[3] = {data1->getNumScalars() > 0, data1->getNumVectors() > 0,
                    data1->getNumTensors() > 0};
     for(int f = 0; f < 3; f++) {
@@ -318,13 +312,13 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
           addInView(numComp[f], numSteps, x[q[0]], y[q[0]], z[q[0]],
                     &val[nc * q[0]], x[q[1]], y[q[1]], z[q[1]], &val[nc * q[1]],
                     x[q[2]], y[q[2]], z[q[2]], &val[nc * q[2]], x[q[3]],
-                    y[q[3]], z[q[3]], &val[nc * q[3]], *lists[f], counts[f]);
+                    y[q[3]], z[q[3]], &val[nc * q[3]], data2);
         }
       }
     }
   }
 
-  for(int i = 0; i < numSteps; i++) data2->Time.push_back(data1->getTime(i));
+  for(int i = 0; i < numSteps; i++) data2->addTime(data1->getTime(i));
   data2->setName(data1->getName() + "_CutParametric");
   data2->setFileName(data1->getName() + "_CutParametric.pos");
   data2->finalize();

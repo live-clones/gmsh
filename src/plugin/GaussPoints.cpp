@@ -68,11 +68,8 @@ PView *GMSH_GaussPointsPlugin::execute(PView *v)
         // double weight = gp[i].weight;
         SPoint3 p;
         e->pnt(u, v, w, p);
-        data2->SP.push_back(p.x());
-        data2->SP.push_back(p.y());
-        data2->SP.push_back(p.z());
-        data2->SP.push_back(e->getNum());
-        data2->NbSP++;
+        std::vector<double> *l = data2->incrementList(1, TYPE_PNT);
+        l->insert(l->end(), {p.x(), p.y(), p.z(), (double)e->getNum()});
       }
     }
   }

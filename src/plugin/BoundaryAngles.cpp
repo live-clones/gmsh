@@ -124,13 +124,10 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
           SVector3 v1(p2, p1);
           SVector3 v2(p2, p3);
           double a = signedAngle(v1, v2, normal);
-          data->SP.push_back(p2.x());
-          data->SP.push_back(p2.y());
-          data->SP.push_back(p2.z());
           // the angle inside the polygon, in [0, 2 pi)
           a = (a > 0) ? 2 * M_PI - a : -a;
-          data->SP.push_back(a);
-          data->NbSP++;
+          std::vector<double> *l = data->incrementList(1, TYPE_PNT);
+          l->insert(l->end(), {p2.x(), p2.y(), p2.z(), a});
         }
       }
     }
@@ -152,7 +149,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
     // viewname and filename (=outputdir/viewname.pos)
     std::string viewname = rootname + "_" + std::to_string(gf->tag());
     std::string filename = outputdir + viewname + ".pos";
-    data->Time.push_back(0.);
+    data->addTime(0.);
     data->setName(viewname);
     data->setFileName(filename);
     data->finalize();

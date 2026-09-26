@@ -19,17 +19,23 @@ std::string GMSH_MakeSimplexPlugin::getHelp() const
          "Plugin(MakeSimplex) is executed in-place.";
 }
 
-static void decomposeList(PViewDataList *data, int nbNod, int nbComp,
-                          std::vector<double> &listIn, int *nbIn,
-                          std::vector<double> &listOut, int *nbOut)
+// replace the elements of the list idx (see getListPointers()) by simplices
+static void decomposeList(PViewDataList *data, int idx)
 {
-  if(!(*nbIn)) return;
+  int N[24];
+  std::vector<double> *V[24];
+  data->getListPointers(N, V);
+  if(!N[idx]) return;
+  const PViewDataList::listKind &kind = PViewDataList::listKinds[idx];
+  int nbNod = kind.numNodes, nbComp = kind.numComp;
+  int typeOut = (kind.dim == 2) ? TYPE_TRI : TYPE_TET;
 
   double xNew[4], yNew[4], zNew[4];
   double *valNew = new double[data->getNumTimeSteps() * nbComp * nbNod];
   MakeSimplex dec(nbNod, nbComp, data->getNumTimeSteps());
 
-  int nb = listIn.size() / (*nbIn);
+  std::vector<double> &listIn = *V[idx];
+  int nb = listIn.size() / N[idx];
   for(std::size_t i = 0; i < listIn.size(); i += nb) {
     double *x = &listIn[i];
     double *y = &listIn[i + nbNod];
@@ -37,20 +43,19 @@ static void decomposeList(PViewDataList *data, int nbNod, int nbComp,
     double *val = &listIn[i + 3 * nbNod];
     for(int j = 0; j < dec.numSimplices(); j++) {
       dec.decompose(j, x, y, z, val, xNew, yNew, zNew, valNew);
+      std::vector<double> &listOut = *data->incrementList(nbComp, typeOut);
       for(int k = 0; k < dec.numSimplexNodes(); k++) listOut.push_back(xNew[k]);
       for(int k = 0; k < dec.numSimplexNodes(); k++) listOut.push_back(yNew[k]);
       for(int k = 0; k < dec.numSimplexNodes(); k++) listOut.push_back(zNew[k]);
       for(int k = 0;
           k < dec.numSimplexNodes() * data->getNumTimeSteps() * nbComp; k++)
         listOut.push_back(valNew[k]);
-      (*nbOut)++;
     }
   }
 
   delete[] valNew;
 
-  listIn.clear();
-  *nbIn = 0;
+  data->clearList(nbComp, kind.type);
 }
 
 PView *GMSH_MakeSimplexPlugin::execute(PView *v)
@@ -63,25 +68,13 @@ PView *GMSH_MakeSimplexPlugin::execute(PView *v)
   PViewDataList *data1 = getDataList(v1);
   if(!data1) return v;
 
-  // quads
-  decomposeList(data1, 4, 1, data1->SQ, &data1->NbSQ, data1->ST, &data1->NbST);
-  decomposeList(data1, 4, 3, data1->VQ, &data1->NbVQ, data1->VT, &data1->NbVT);
-  decomposeList(data1, 4, 9, data1->TQ, &data1->NbTQ, data1->TT, &data1->NbTT);
-
-  // hexas
-  decomposeList(data1, 8, 1, data1->SH, &data1->NbSH, data1->SS, &data1->NbSS);
-  decomposeList(data1, 8, 3, data1->VH, &data1->NbVH, data1->VS, &data1->NbVS);
-  decomposeList(data1, 8, 9, data1->TH, &data1->NbTH, data1->TS, &data1->NbTS);
-
-  // prisms
-  decomposeList(data1, 6, 1, data1->SI, &data1->NbSI, data1->SS, &data1->NbSS);
-  decomposeList(data1, 6, 3, data1->VI, &data1->NbVI, data1->VS, &data1->NbVS);
-  decomposeList(data1, 6, 9, data1->TI, &data1->NbTI, data1->TS, &data1->NbTS);
-
-  // pyramids
-  decomposeList(data1, 5, 1, data1->SY, &data1->NbSY, data1->SS, &data1->NbSS);
-  decomposeList(data1, 5, 3, data1->VY, &data1->NbVY, data1->VS, &data1->NbVS);
-  decomposeList(data1, 5, 9, data1->TY, &data1->NbTY, data1->TS, &data1->NbTS);
+  // quadrangles, hexahedra, prisms and pyramids
+  for(int i = 0; i < 24; i++) {
+    int type = PViewDataList::listKinds[i].type;
+    if(type == TYPE_QUA || type == TYPE_HEX || type == TYPE_PRI ||
+       type == TYPE_PYR)
+      decomposeList(data1, i);
+  }
 
   data1->finalize();
   v1->setChanged(true);

@@ -245,135 +245,32 @@ GMSH_LevelsetPlugin::GMSH_LevelsetPlugin(
 void GMSH_LevelsetPlugin::_addElement(int np, int numEdges, int numComp,
                                       double xp[12], double yp[12],
                                       double zp[12], double valp[12][9],
-                                      PViewDataList *out, bool firstStep)
+                                      PViewDataList *out, bool firstStep,
+                                      std::vector<double> *&list)
 {
-  std::vector<double> *list;
-  int *nbPtr;
-  switch(np) {
-  case 1:
-    if(numComp == 1) {
-      list = &out->SP;
-      nbPtr = &out->NbSP;
-    }
-    else if(numComp == 3) {
-      list = &out->VP;
-      nbPtr = &out->NbVP;
-    }
-    else {
-      list = &out->TP;
-      nbPtr = &out->NbTP;
-    }
-    break;
-  case 2:
-    if(numComp == 1) {
-      list = &out->SL;
-      nbPtr = &out->NbSL;
-    }
-    else if(numComp == 3) {
-      list = &out->VL;
-      nbPtr = &out->NbVL;
-    }
-    else {
-      list = &out->TL;
-      nbPtr = &out->NbTL;
-    }
-    break;
-  case 3:
-    if(numComp == 1) {
-      list = &out->ST;
-      nbPtr = &out->NbST;
-    }
-    else if(numComp == 3) {
-      list = &out->VT;
-      nbPtr = &out->NbVT;
-    }
-    else {
-      list = &out->TT;
-      nbPtr = &out->NbTT;
-    }
-    break;
-  case 4:
-    if(!_extractVolume || numEdges <= 4) {
-      if(numComp == 1) {
-        list = &out->SQ;
-        nbPtr = &out->NbSQ;
-      }
-      else if(numComp == 3) {
-        list = &out->VQ;
-        nbPtr = &out->NbVQ;
-      }
-      else {
-        list = &out->TQ;
-        nbPtr = &out->NbTQ;
-      }
-    }
-    else {
-      if(numComp == 1) {
-        list = &out->SS;
-        nbPtr = &out->NbSS;
-      }
-      else if(numComp == 3) {
-        list = &out->VS;
-        nbPtr = &out->NbVS;
-      }
-      else {
-        list = &out->TS;
-        nbPtr = &out->NbTS;
-      }
-    }
-    break;
-  case 5:
-    if(numComp == 1) {
-      list = &out->SY;
-      nbPtr = &out->NbSY;
-    }
-    else if(numComp == 3) {
-      list = &out->VY;
-      nbPtr = &out->NbVY;
-    }
-    else {
-      list = &out->TY;
-      nbPtr = &out->NbTY;
-    }
-    break;
-  case 6:
-    if(numComp == 1) {
-      list = &out->SI;
-      nbPtr = &out->NbSI;
-    }
-    else if(numComp == 3) {
-      list = &out->VI;
-      nbPtr = &out->NbVI;
-    }
-    else {
-      list = &out->TI;
-      nbPtr = &out->NbTI;
-    }
-    break;
-  case 8:
-    if(numComp == 1) {
-      list = &out->SH;
-      nbPtr = &out->NbSH;
-    }
-    else if(numComp == 3) {
-      list = &out->VH;
-      nbPtr = &out->NbVH;
-    }
-    else {
-      list = &out->TH;
-      nbPtr = &out->NbTH;
-    }
-    break;
-  default: return;
-  }
-
-  // copy the elements in the output data
+  // the coordinates are added with the first step (and each step for a
+  // levelset that depends on it), the values of the other steps after them
   if(firstStep || !_valueIndependent) {
+    int type;
+    switch(np) {
+    case 1: type = TYPE_PNT; break;
+    case 2: type = TYPE_LIN; break;
+    case 3: type = TYPE_TRI; break;
+    case 4:
+      type = (!_extractVolume || numEdges <= 4) ? TYPE_QUA : TYPE_TET;
+      break;
+    case 5: type = TYPE_PYR; break;
+    case 6: type = TYPE_PRI; break;
+    case 8: type = TYPE_HEX; break;
+    default: return;
+    }
+    list = out->incrementList(numComp, type);
+    if(!list) return;
     for(int k = 0; k < np; k++) list->push_back(xp[k]);
     for(int k = 0; k < np; k++) list->push_back(yp[k]);
     for(int k = 0; k < np; k++) list->push_back(zp[k]);
-    (*nbPtr)++;
   }
+  if(!list) return;
   for(int k = 0; k < np; k++)
     for(int l = 0; l < numComp; l++) list->push_back(valp[k][l]);
 }
@@ -424,6 +321,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
                   nsn, nse);
 
     // loop over time steps
+    std::vector<double> *list = nullptr;
     for(int step = stepmin; step < stepmax; step++) {
       // check which edges cut the iso and interpolate the value
       if(wstep < 0) otherstep = step;
@@ -473,8 +371,8 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
               wdata->getValue(otherstep, ent, ele, nn(n[nod]), comp,
                               valp[nod][comp]);
           }
-          _addElement(nsn, nse, numComp, xp, yp, zp, valp, out,
-                      step == stepmin);
+          _addElement(nsn, nse, numComp, xp, yp, zp, valp, out, step == stepmin,
+                      list);
         }
         continue;
       }
@@ -571,8 +469,8 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
       }
 
       // finally, add the new element
-      _addElement(np, numEdges, numComp, xp, yp, zp, valp, out,
-                  step == stepmin);
+      _addElement(np, numEdges, numComp, xp, yp, zp, valp, out, step == stepmin,
+                  list);
     }
 
   }
@@ -582,7 +480,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
     std::vector<double> time;
     for(int i = stepmin; i < stepmax; i++)
       if(wstep >= 0 || wdata->hasTimeStep(i)) time.push_back(vdata->getTime(i));
-    if(time.size() > out->Time.size()) out->Time = time;
+    if(time.size() > out->getTimes().size()) out->setTimes(time);
   }
 }
 

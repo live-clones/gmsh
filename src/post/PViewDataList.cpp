@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <cstring>
 #include <unordered_map>
 #include "PView.h"
 #include "PViewDataList.h"
@@ -23,38 +24,38 @@ static std::size_t newState()
 }
 
 const PViewDataList::listKind PViewDataList::listKinds[27] = {
-  {"SP", TYPE_PNT, 0, 1, 0, 1, &PViewDataList::SP, &PViewDataList::NbSP},
-  {"VP", TYPE_PNT, 0, 1, 0, 3, &PViewDataList::VP, &PViewDataList::NbVP},
-  {"TP", TYPE_PNT, 0, 1, 0, 9, &PViewDataList::TP, &PViewDataList::NbTP},
-  {"SL", TYPE_LIN, 1, 2, 1, 1, &PViewDataList::SL, &PViewDataList::NbSL},
-  {"VL", TYPE_LIN, 1, 2, 1, 3, &PViewDataList::VL, &PViewDataList::NbVL},
-  {"TL", TYPE_LIN, 1, 2, 1, 9, &PViewDataList::TL, &PViewDataList::NbTL},
-  {"ST", TYPE_TRI, 2, 3, 3, 1, &PViewDataList::ST, &PViewDataList::NbST},
-  {"VT", TYPE_TRI, 2, 3, 3, 3, &PViewDataList::VT, &PViewDataList::NbVT},
-  {"TT", TYPE_TRI, 2, 3, 3, 9, &PViewDataList::TT, &PViewDataList::NbTT},
-  {"SQ", TYPE_QUA, 2, 4, 4, 1, &PViewDataList::SQ, &PViewDataList::NbSQ},
-  {"VQ", TYPE_QUA, 2, 4, 4, 3, &PViewDataList::VQ, &PViewDataList::NbVQ},
-  {"TQ", TYPE_QUA, 2, 4, 4, 9, &PViewDataList::TQ, &PViewDataList::NbTQ},
-  {"SS", TYPE_TET, 3, 4, 6, 1, &PViewDataList::SS, &PViewDataList::NbSS},
-  {"VS", TYPE_TET, 3, 4, 6, 3, &PViewDataList::VS, &PViewDataList::NbVS},
-  {"TS", TYPE_TET, 3, 4, 6, 9, &PViewDataList::TS, &PViewDataList::NbTS},
-  {"SH", TYPE_HEX, 3, 8, 12, 1, &PViewDataList::SH, &PViewDataList::NbSH},
-  {"VH", TYPE_HEX, 3, 8, 12, 3, &PViewDataList::VH, &PViewDataList::NbVH},
-  {"TH", TYPE_HEX, 3, 8, 12, 9, &PViewDataList::TH, &PViewDataList::NbTH},
-  {"SI", TYPE_PRI, 3, 6, 9, 1, &PViewDataList::SI, &PViewDataList::NbSI},
-  {"VI", TYPE_PRI, 3, 6, 9, 3, &PViewDataList::VI, &PViewDataList::NbVI},
-  {"TI", TYPE_PRI, 3, 6, 9, 9, &PViewDataList::TI, &PViewDataList::NbTI},
-  {"SY", TYPE_PYR, 3, 5, 8, 1, &PViewDataList::SY, &PViewDataList::NbSY},
-  {"VY", TYPE_PYR, 3, 5, 8, 3, &PViewDataList::VY, &PViewDataList::NbVY},
-  {"TY", TYPE_PYR, 3, 5, 8, 9, &PViewDataList::TY, &PViewDataList::NbTY},
-  {"SR", TYPE_TRIH, 3, 4, 5, 1, &PViewDataList::SR, &PViewDataList::NbSR},
-  {"VR", TYPE_TRIH, 3, 4, 5, 3, &PViewDataList::VR, &PViewDataList::NbVR},
-  {"TR", TYPE_TRIH, 3, 4, 5, 9, &PViewDataList::TR, &PViewDataList::NbTR},
+  {"SP", TYPE_PNT, 0, 1, 0, 1, &PViewDataList::_sp, &PViewDataList::_nbSP},
+  {"VP", TYPE_PNT, 0, 1, 0, 3, &PViewDataList::_vp, &PViewDataList::_nbVP},
+  {"TP", TYPE_PNT, 0, 1, 0, 9, &PViewDataList::_tp, &PViewDataList::_nbTP},
+  {"SL", TYPE_LIN, 1, 2, 1, 1, &PViewDataList::_sl, &PViewDataList::_nbSL},
+  {"VL", TYPE_LIN, 1, 2, 1, 3, &PViewDataList::_vl, &PViewDataList::_nbVL},
+  {"TL", TYPE_LIN, 1, 2, 1, 9, &PViewDataList::_tl, &PViewDataList::_nbTL},
+  {"ST", TYPE_TRI, 2, 3, 3, 1, &PViewDataList::_st, &PViewDataList::_nbST},
+  {"VT", TYPE_TRI, 2, 3, 3, 3, &PViewDataList::_vt, &PViewDataList::_nbVT},
+  {"TT", TYPE_TRI, 2, 3, 3, 9, &PViewDataList::_tt, &PViewDataList::_nbTT},
+  {"SQ", TYPE_QUA, 2, 4, 4, 1, &PViewDataList::_sq, &PViewDataList::_nbSQ},
+  {"VQ", TYPE_QUA, 2, 4, 4, 3, &PViewDataList::_vq, &PViewDataList::_nbVQ},
+  {"TQ", TYPE_QUA, 2, 4, 4, 9, &PViewDataList::_tq, &PViewDataList::_nbTQ},
+  {"SS", TYPE_TET, 3, 4, 6, 1, &PViewDataList::_ss, &PViewDataList::_nbSS},
+  {"VS", TYPE_TET, 3, 4, 6, 3, &PViewDataList::_vs, &PViewDataList::_nbVS},
+  {"TS", TYPE_TET, 3, 4, 6, 9, &PViewDataList::_ts, &PViewDataList::_nbTS},
+  {"SH", TYPE_HEX, 3, 8, 12, 1, &PViewDataList::_sh, &PViewDataList::_nbSH},
+  {"VH", TYPE_HEX, 3, 8, 12, 3, &PViewDataList::_vh, &PViewDataList::_nbVH},
+  {"TH", TYPE_HEX, 3, 8, 12, 9, &PViewDataList::_th, &PViewDataList::_nbTH},
+  {"SI", TYPE_PRI, 3, 6, 9, 1, &PViewDataList::_si, &PViewDataList::_nbSI},
+  {"VI", TYPE_PRI, 3, 6, 9, 3, &PViewDataList::_vi, &PViewDataList::_nbVI},
+  {"TI", TYPE_PRI, 3, 6, 9, 9, &PViewDataList::_ti, &PViewDataList::_nbTI},
+  {"SY", TYPE_PYR, 3, 5, 8, 1, &PViewDataList::_sy, &PViewDataList::_nbSY},
+  {"VY", TYPE_PYR, 3, 5, 8, 3, &PViewDataList::_vy, &PViewDataList::_nbVY},
+  {"TY", TYPE_PYR, 3, 5, 8, 9, &PViewDataList::_ty, &PViewDataList::_nbTY},
+  {"SR", TYPE_TRIH, 3, 4, 5, 1, &PViewDataList::_sr, &PViewDataList::_nbSR},
+  {"VR", TYPE_TRIH, 3, 4, 5, 3, &PViewDataList::_vr, &PViewDataList::_nbVR},
+  {"TR", TYPE_TRIH, 3, 4, 5, 9, &PViewDataList::_tr, &PViewDataList::_nbTR},
 };
 
 PViewDataList::PViewDataList(bool isAdapted)
-  : PViewData(), NbTimeStep(0), Min(VAL_INF), Max(-VAL_INF), NbT2(0), NbT3(0),
-    _nodeIndexStatus(0), _state(newState()), _isAdapted(isAdapted),
+  : PViewData(), _nbTimeStep(0), _min(VAL_INF), _max(-VAL_INF), _nbT2(0),
+    _nbT3(0), _nodeIndexStatus(0), _state(newState()), _isAdapted(isAdapted),
     _smoothing(false)
 {
   for(auto &k : listKinds) this->*k.num = 0;
@@ -63,14 +64,14 @@ PViewDataList::PViewDataList(bool isAdapted)
 
 void PViewDataList::setXY(std::vector<double> &x, std::vector<double> &y)
 {
-  NbSP = 0;
-  SP.clear();
+  _nbSP = 0;
+  _sp.clear();
   for(std::size_t i = 0; i < std::min(x.size(), y.size()); i++) {
-    SP.push_back(x[i]);
-    SP.push_back(0.);
-    SP.push_back(0.);
-    SP.push_back(y[i]);
-    NbSP++;
+    _sp.push_back(x[i]);
+    _sp.push_back(0.);
+    _sp.push_back(0.);
+    _sp.push_back(y[i]);
+    _nbSP++;
   }
   finalize();
 }
@@ -78,34 +79,34 @@ void PViewDataList::setXY(std::vector<double> &x, std::vector<double> &y)
 void PViewDataList::setXYZV(std::vector<double> &x, std::vector<double> &y,
                             std::vector<double> &z, std::vector<double> &v)
 {
-  NbSP = 0;
-  SP.clear();
+  _nbSP = 0;
+  _sp.clear();
   int n = std::min(std::min(std::min(x.size(), y.size()), z.size()), v.size());
   for(int i = 0; i < n; i++) {
-    SP.push_back(x[i]);
-    SP.push_back(y[i]);
-    SP.push_back(z[i]);
-    SP.push_back(v[i]);
-    NbSP++;
+    _sp.push_back(x[i]);
+    _sp.push_back(y[i]);
+    _sp.push_back(z[i]);
+    _sp.push_back(v[i]);
+    _nbSP++;
   }
   finalize();
 }
 
 void PViewDataList::addStep(std::vector<double> &y)
 {
-  if(NbSP != (int)y.size()) {
+  if(_nbSP != (int)y.size()) {
     Msg::Error("Wrong number of values while adding step in list-based view");
     return;
   }
   // (each point gets its value of the new step after those it has)
   std::vector<double> tmp;
-  tmp.reserve(SP.size() + NbSP);
-  int stride = SP.size() / NbSP;
-  for(int i = 0; i < NbSP; i++) {
-    for(int j = 0; j < stride; j++) tmp.push_back(SP[i * stride + j]);
+  tmp.reserve(_sp.size() + _nbSP);
+  int stride = _sp.size() / _nbSP;
+  for(int i = 0; i < _nbSP; i++) {
+    for(int j = 0; j < stride; j++) tmp.push_back(_sp[i * stride + j]);
     tmp.push_back(y[i]);
   }
-  SP = tmp;
+  _sp = tmp;
   finalize();
 }
 
@@ -121,17 +122,17 @@ bool PViewDataList::finalize(bool computeMinMax,
   _nodeId.clear();
   _nodeOffset.clear();
 
-  BBox.reset();
-  Min = VAL_INF;
-  Max = -VAL_INF;
+  _bbox.reset();
+  _min = VAL_INF;
+  _max = -VAL_INF;
 
-  // finalize text strings first, to get the max value of NbTimeStep
+  // finalize text strings first, to get the max value of _nbTimeStep
   // for strings-only views (strings are designed to degrade
   // gracefully when some have fewer time steps than others). If there
   // are any elements in the view, this value will be replaced by the
   // minimum number of time steps common to all elements.
-  _stat(T2D, T2C, 4);
-  _stat(T3D, T3C, 5);
+  _stat(_t2d, _t2c, 4);
+  _stat(_t3d, _t3c, 5);
 
   // compute min/max and other statistics for all element lists
   for(auto &k : listKinds)
@@ -139,8 +140,8 @@ bool PViewDataList::finalize(bool computeMinMax,
 
   // add dummy time values if none (or too few) time values are
   // provided (e.g. using the old parsed format)
-  if((int)Time.size() < NbTimeStep) {
-    for(int i = Time.size(); i < NbTimeStep; i++) Time.push_back(i);
+  if((int)_time.size() < _nbTimeStep) {
+    for(int i = _time.size(); i < _nbTimeStep; i++) _time.push_back(i);
   }
 
   // compute starting element indices
@@ -185,14 +186,14 @@ int PViewDataList::getNumElements(int step, int ent)
 
 double PViewDataList::getTime(int step)
 {
-  if(step < 0 || step >= (int)Time.size()) return 0.;
-  return Time[step];
+  if(step < 0 || step >= (int)_time.size()) return 0.;
+  return _time[step];
 }
 
 double PViewDataList::getMin(int step, bool onlyVisible, int tensorRep,
                              int forceNumComponents, int componentMap[9])
 {
-  if(step >= (int)TimeStepMin.size()) return Min;
+  if(step >= (int)_timeStepMin.size()) return _min;
 
   if(forceNumComponents || tensorRep) {
     double vmin = VAL_INF;
@@ -209,14 +210,14 @@ double PViewDataList::getMin(int step, bool onlyVisible, int tensorRep,
     return vmin;
   }
 
-  if(step < 0) return Min;
-  return TimeStepMin[step];
+  if(step < 0) return _min;
+  return _timeStepMin[step];
 }
 
 double PViewDataList::getMax(int step, bool onlyVisible, int tensorRep,
                              int forceNumComponents, int componentMap[9])
 {
-  if(step >= (int)TimeStepMax.size()) return Max;
+  if(step >= (int)_timeStepMax.size()) return _max;
 
   if(forceNumComponents || tensorRep) {
     double vmax = -VAL_INF;
@@ -233,8 +234,8 @@ double PViewDataList::getMax(int step, bool onlyVisible, int tensorRep,
     return vmax;
   }
 
-  if(step < 0) return Max;
-  return TimeStepMax[step];
+  if(step < 0) return _max;
+  return _timeStepMax[step];
 }
 
 void PViewDataList::_stat(std::vector<double> &D, std::vector<char> &C, int nb)
@@ -246,11 +247,11 @@ void PViewDataList::_stat(std::vector<double> &D, std::vector<char> &C, int nb)
     int nbtime = 0;
     for(std::size_t j = beg; j < end; j++)
       if(C[j] == '\0') nbtime++;
-    if(nbtime > NbTimeStep) NbTimeStep = nbtime;
+    if(nbtime > _nbTimeStep) _nbTimeStep = nbtime;
   }
   if(nb == 5) {
     for(std::size_t i = 0; i < D.size(); i += nb)
-      BBox += SPoint3(D[i], D[i + 1], D[i + 2]);
+      _bbox += SPoint3(D[i], D[i + 1], D[i + 2]);
   }
 }
 
@@ -273,14 +274,14 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
   int nb = list.size() / nbelm;
   int N = nb - 3 * nbnod;
   int numSteps = N / nbval;
-  if(Min == VAL_INF || Max == -VAL_INF) {
-    NbTimeStep = numSteps;
-    TimeStepMin.assign(NbTimeStep, VAL_INF);
-    TimeStepMax.assign(NbTimeStep, -VAL_INF);
+  if(_min == VAL_INF || _max == -VAL_INF) {
+    _nbTimeStep = numSteps;
+    _timeStepMin.assign(_nbTimeStep, VAL_INF);
+    _timeStepMax.assign(_nbTimeStep, -VAL_INF);
   }
-  else if(numSteps < NbTimeStep) {
+  else if(numSteps < _nbTimeStep) {
     // if some elts have less steps, reduce the total number!
-    NbTimeStep = numSteps;
+    _nbTimeStep = numSteps;
   }
 
   // the bounding box and the range of each step, found by each thread for its
@@ -312,13 +313,13 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
     }
   }
   for(int t = 0; t < nthreads; t++) {
-    if(!bbox[t].empty()) BBox += bbox[t];
+    if(!bbox[t].empty()) _bbox += bbox[t];
     for(int ts = 0; ts < numRanges; ts++) {
-      Min = std::min(min[t][ts], Min);
-      Max = std::max(max[t][ts], Max);
-      if(ts < NbTimeStep) { // security
-        TimeStepMin[ts] = std::min(min[t][ts], TimeStepMin[ts]);
-        TimeStepMax[ts] = std::max(max[t][ts], TimeStepMax[ts]);
+      _min = std::min(min[t][ts], _min);
+      _max = std::max(max[t][ts], _max);
+      if(ts < _nbTimeStep) { // security
+        _timeStepMin[ts] = std::min(min[t][ts], _timeStepMin[ts]);
+        _timeStepMax[ts] = std::max(max[t][ts], _timeStepMax[ts]);
       }
     }
   }
@@ -358,8 +359,8 @@ void PViewDataList::_setLast(lastElement &l, int ele)
     kind.numComp * ((im != _interpolation.end() && im->second.size()) ?
                       im->second[0]->size1() :
                       nbnod);
-  if(numValues * NbTimeStep > (int)(nb - 3 * nbnod))
-    numValues = (int)((nb - 3 * nbnod) / NbTimeStep);
+  if(numValues * _nbTimeStep > (int)(nb - 3 * nbnod))
+    numValues = (int)((nb - 3 * nbnod) / _nbTimeStep);
   l.numValues = numValues;
   l.xyz = &list[before];
   l.val = &list[before + 3 * l.numNodes];
@@ -488,7 +489,7 @@ void PViewDataList::getNodesAndValues(int step, int ent, int ele, int numNodes,
                                       int numComp, double **xyz, double **val)
 {
   lastElement &l = _last(ele);
-  if(step >= NbTimeStep) step = 0;
+  if(step >= _nbTimeStep) step = 0;
   const double *v = l.val + step * l.numValues;
   for(int j = 0; j < numNodes; j++) {
     xyz[j][0] = l.xyz[j];
@@ -527,7 +528,7 @@ int PViewDataList::getNumValues(int step, int ent, int ele)
 void PViewDataList::getValue(int step, int ent, int ele, int idx, double &val)
 {
   lastElement &l = _last(ele);
-  if(step >= NbTimeStep) step = 0;
+  if(step >= _nbTimeStep) step = 0;
   val = l.val[step * l.numValues + idx];
 }
 
@@ -535,7 +536,7 @@ void PViewDataList::getValue(int step, int ent, int ele, int nod, int comp,
                              double &val)
 {
   lastElement &l = _last(ele);
-  if(step >= NbTimeStep) step = 0;
+  if(step >= _nbTimeStep) step = 0;
   val = l.val[step * l.numValues + nod * l.numComponents + comp];
 }
 
@@ -543,7 +544,7 @@ void PViewDataList::setValue(int step, int ent, int ele, int nod, int comp,
                              double val)
 {
   lastElement &l = _last(ele);
-  if(step >= NbTimeStep) step = 0;
+  if(step >= _nbTimeStep) step = 0;
   l.val[step * l.numValues + nod * l.numComponents + comp] = val;
 }
 
@@ -562,15 +563,15 @@ int PViewDataList::getType(int step, int ent, int ele)
 void PViewDataList::_getString(int dim, int i, int step, std::string &str,
                                double &x, double &y, double &z, double &style)
 {
-  // 3D: T3D is a list of double: x,y,z,style,index,x,y,z,style,index,...
-  //     T3C is a list of chars: string\0,string\0,string\0,string\0,...
+  // 3D: _t3d is a list of double: x,y,z,style,index,x,y,z,style,index,...
+  //     _t3c is a list of chars: string\0,string\0,string\0,string\0,...
   //     Parser format is: T3(x,y,z,style){"str","str",...};
-  // 2D: T2D is a list of double: x,y,style,index,x,y,style,index,...
-  //     T2C is a list of chars: string\0,string\0,string\0,string\0,...
+  // 2D: _t2d is a list of double: x,y,style,index,x,y,style,index,...
+  //     _t2c is a list of chars: string\0,string\0,string\0,string\0,...
   //     Parser format is: T2(x,y,style){"str","str",...};
 
-  std::vector<double> &td = (dim == 2) ? T2D : T3D;
-  std::vector<char> &tc = (dim == 2) ? T2C : T3C;
+  std::vector<double> &td = (dim == 2) ? _t2d : _t3d;
+  std::vector<char> &tc = (dim == 2) ? _t2c : _t3c;
   int nbd = (dim == 2) ? 4 : 5;
 
   int index, nbchar;
@@ -685,7 +686,7 @@ void PViewDataList::smooth()
   std::vector<std::size_t> next(first.begin(), first.end() - 1);
   for(std::size_t k = 0; k < nodes.size(); k++) order[next[merged[k]]++] = k;
 
-  int numSteps = NbTimeStep;
+  int numSteps = _nbTimeStep;
   std::vector<double> mean;
   for(std::size_t m = 0; m < num; m++) {
     std::size_t beg = first[m], end = first[m + 1];
@@ -719,17 +720,18 @@ void PViewDataList::smooth()
 double PViewDataList::getMemoryInMB()
 {
   double b = 0.;
-  b += (TimeStepMin.size() + TimeStepMax.size() + Time.size()) * sizeof(double);
-  b += (SP.size() + VP.size() + TP.size()) * sizeof(double);
-  b += (SL.size() + VL.size() + TL.size()) * sizeof(double);
-  b += (ST.size() + VT.size() + TT.size()) * sizeof(double);
-  b += (SQ.size() + VQ.size() + TQ.size()) * sizeof(double);
-  b += (SS.size() + VS.size() + TS.size()) * sizeof(double);
-  b += (SH.size() + VH.size() + TH.size()) * sizeof(double);
-  b += (SI.size() + VI.size() + TI.size()) * sizeof(double);
-  b += (SY.size() + VY.size() + TY.size()) * sizeof(double);
-  b += (SR.size() + VR.size() + TR.size()) * sizeof(double);
-  b += (T2D.size() + T3D.size()) * sizeof(double);
+  b +=
+    (_timeStepMin.size() + _timeStepMax.size() + _time.size()) * sizeof(double);
+  b += (_sp.size() + _vp.size() + _tp.size()) * sizeof(double);
+  b += (_sl.size() + _vl.size() + _tl.size()) * sizeof(double);
+  b += (_st.size() + _vt.size() + _tt.size()) * sizeof(double);
+  b += (_sq.size() + _vq.size() + _tq.size()) * sizeof(double);
+  b += (_ss.size() + _vs.size() + _ts.size()) * sizeof(double);
+  b += (_sh.size() + _vh.size() + _th.size()) * sizeof(double);
+  b += (_si.size() + _vi.size() + _ti.size()) * sizeof(double);
+  b += (_sy.size() + _vy.size() + _ty.size()) * sizeof(double);
+  b += (_sr.size() + _vr.size() + _tr.size()) * sizeof(double);
+  b += (_t2d.size() + _t3d.size()) * sizeof(double);
   return b / 1024. / 1024.;
 }
 
@@ -767,7 +769,7 @@ bool PViewDataList::combineSpace(nameData &nd)
 
     // copy time values
 
-    if(!i) Time = l->Time;
+    if(!i) _time = l->_time;
 
     // merge elements
     for(auto &k : listKinds) {
@@ -776,26 +778,26 @@ bool PViewDataList::combineSpace(nameData &nd)
     }
 
     // merge strings
-    for(std::size_t i = 0; i < l->T2D.size(); i += 4) {
-      T2D.push_back(l->T2D[i]);
-      T2D.push_back(l->T2D[i + 1]);
-      T2D.push_back(l->T2D[i + 2]);
-      T2D.push_back(T2C.size());
+    for(std::size_t i = 0; i < l->_t2d.size(); i += 4) {
+      _t2d.push_back(l->_t2d[i]);
+      _t2d.push_back(l->_t2d[i + 1]);
+      _t2d.push_back(l->_t2d[i + 2]);
+      _t2d.push_back(_t2c.size());
       std::size_t beg, end;
-      _stringSpan(l->T2D, l->T2C, i, 4, beg, end);
-      T2C.insert(T2C.end(), l->T2C.begin() + beg, l->T2C.begin() + end);
-      NbT2++;
+      _stringSpan(l->_t2d, l->_t2c, i, 4, beg, end);
+      _t2c.insert(_t2c.end(), l->_t2c.begin() + beg, l->_t2c.begin() + end);
+      _nbT2++;
     }
-    for(std::size_t i = 0; i < l->T3D.size(); i += 5) {
-      T3D.push_back(l->T3D[i]);
-      T3D.push_back(l->T3D[i + 1]);
-      T3D.push_back(l->T3D[i + 2]);
-      T3D.push_back(l->T3D[i + 3]);
-      T3D.push_back(T3C.size());
+    for(std::size_t i = 0; i < l->_t3d.size(); i += 5) {
+      _t3d.push_back(l->_t3d[i]);
+      _t3d.push_back(l->_t3d[i + 1]);
+      _t3d.push_back(l->_t3d[i + 2]);
+      _t3d.push_back(l->_t3d[i + 3]);
+      _t3d.push_back(_t3c.size());
       std::size_t beg, end;
-      _stringSpan(l->T3D, l->T3C, i, 5, beg, end);
-      T3C.insert(T3C.end(), l->T3C.begin() + beg, l->T3C.begin() + end);
-      NbT3++;
+      _stringSpan(l->_t3d, l->_t3c, i, 5, beg, end);
+      _t3c.insert(_t3c.end(), l->_t3c.begin() + beg, l->_t3c.begin() + end);
+      _nbT3++;
     }
   }
 
@@ -836,8 +838,8 @@ bool PViewDataList::combineTime(nameData &nd)
     data[0]->_getRawData(i, &list2, &nbe2, &nbc2, &nbn2);
     *nbe = *nbe2;
   }
-  NbT2 = data[0]->NbT2;
-  NbT3 = data[0]->NbT3;
+  _nbT2 = data[0]->_nbT2;
+  _nbT3 = data[0]->_nbT3;
   for(auto it = data[0]->_interpolation.begin();
       it != data[0]->_interpolation.end(); it++)
     if(_interpolation[it->first].empty())
@@ -868,65 +870,65 @@ bool PViewDataList::combineTime(nameData &nd)
   }
 
   // merge 2d strings
-  for(int j = 0; j < NbT2; j++) {
+  for(int j = 0; j < _nbT2; j++) {
     for(std::size_t k = 0; k < data.size(); k++) {
-      if(NbT2 == data[k]->NbT2) {
+      if(_nbT2 == data[k]->_nbT2) {
         if(!k) {
           // copy coordinates
-          T2D.push_back(data[k]->T2D[j * 4]);
-          T2D.push_back(data[k]->T2D[j * 4 + 1]);
-          T2D.push_back(data[k]->T2D[j * 4 + 2]);
+          _t2d.push_back(data[k]->_t2d[j * 4]);
+          _t2d.push_back(data[k]->_t2d[j * 4 + 1]);
+          _t2d.push_back(data[k]->_t2d[j * 4 + 2]);
           // index
-          T2D.push_back(T2C.size());
+          _t2d.push_back(_t2c.size());
         }
         // copy char values
         std::size_t beg, end;
-        _stringSpan(data[k]->T2D, data[k]->T2C, j * 4, 4, beg, end);
-        T2C.insert(T2C.end(), data[k]->T2C.begin() + beg,
-                   data[k]->T2C.begin() + end);
+        _stringSpan(data[k]->_t2d, data[k]->_t2c, j * 4, 4, beg, end);
+        _t2c.insert(_t2c.end(), data[k]->_t2c.begin() + beg,
+                    data[k]->_t2c.begin() + end);
       }
     }
   }
 
   // merge 3d strings
-  for(int j = 0; j < NbT3; j++) {
+  for(int j = 0; j < _nbT3; j++) {
     for(std::size_t k = 0; k < data.size(); k++) {
-      if(NbT3 == data[k]->NbT3) {
+      if(_nbT3 == data[k]->_nbT3) {
         if(!k) {
           // copy coordinates
-          T3D.push_back(data[k]->T3D[j * 5]);
-          T3D.push_back(data[k]->T3D[j * 5 + 1]);
-          T3D.push_back(data[k]->T3D[j * 5 + 2]);
-          T3D.push_back(data[k]->T3D[j * 5 + 3]);
+          _t3d.push_back(data[k]->_t3d[j * 5]);
+          _t3d.push_back(data[k]->_t3d[j * 5 + 1]);
+          _t3d.push_back(data[k]->_t3d[j * 5 + 2]);
+          _t3d.push_back(data[k]->_t3d[j * 5 + 3]);
           // index
-          T3D.push_back(T3C.size());
+          _t3d.push_back(_t3c.size());
         }
         // copy char values
         std::size_t beg, end;
-        _stringSpan(data[k]->T3D, data[k]->T3C, j * 5, 5, beg, end);
-        T3C.insert(T3C.end(), data[k]->T3C.begin() + beg,
-                   data[k]->T3C.begin() + end);
+        _stringSpan(data[k]->_t3d, data[k]->_t3c, j * 5, 5, beg, end);
+        _t3c.insert(_t3c.end(), data[k]->_t3c.begin() + beg,
+                    data[k]->_t3c.begin() + end);
       }
     }
   }
 
   // create the time data
-  for(std::size_t i = 0; i < data.size(); i++) dVecMerge(data[i]->Time, Time);
+  for(std::size_t i = 0; i < data.size(); i++) dVecMerge(data[i]->_time, _time);
 
   // if all the time values are the same, it probably means that the
   // original views didn't have any time data: then we'll just use
   // time step values
-  if(Time.size()) {
-    double t0 = Time[0], ti;
+  if(_time.size()) {
+    double t0 = _time[0], ti;
     bool allTheSame = true;
-    for(std::size_t i = 1; i < Time.size(); i++) {
-      ti = Time[i];
+    for(std::size_t i = 1; i < _time.size(); i++) {
+      ti = _time[i];
       if(ti != t0) {
         allTheSame = false;
         break;
       }
     }
-    if(allTheSame) Time.clear();
+    if(allTheSame) _time.clear();
   }
 
   std::string tmp;
@@ -987,6 +989,13 @@ void PViewDataList::setOrder2(int type)
                            fs->coefficients, fs->monomials);
 }
 
+const PViewDataList::listKind *PViewDataList::_kind(int numComp, int type)
+{
+  for(auto &k : listKinds)
+    if(k.type == type && k.numComp == numComp) return &k;
+  return nullptr;
+}
+
 std::vector<double> *PViewDataList::incrementList(int numComp, int type,
                                                   int numNodes)
 {
@@ -999,11 +1008,64 @@ std::vector<double> *PViewDataList::incrementList(int numComp, int type,
     warned = true;
     return nullptr;
   }
-  for(auto &k : listKinds) {
-    if(k.type == type && k.numComp == numComp) {
-      this->*k.num += 1;
-      return &(this->*k.list);
-    }
+  const listKind *k = _kind(numComp, type);
+  if(!k) return nullptr;
+  this->*k->num += 1;
+  return &(this->*k->list);
+}
+
+void PViewDataList::appendList(int numComp, int type, int numElements,
+                               const std::vector<double> &values)
+{
+  const listKind *k = _kind(numComp, type);
+  if(!k || !numElements) return;
+  this->*k->num += numElements;
+  (this->*k->list).insert((this->*k->list).end(), values.begin(), values.end());
+}
+
+void PViewDataList::addString2D(double x, double y, double style,
+                                const std::vector<std::string> &values)
+{
+  _t2d.push_back(x);
+  _t2d.push_back(y);
+  _t2d.push_back(style);
+  _t2d.push_back(_t2c.size());
+  for(auto &v : values)
+    _t2c.insert(_t2c.end(), v.c_str(), v.c_str() + v.size() + 1);
+  _nbT2++;
+}
+
+void PViewDataList::addString3D(double x, double y, double z, double style,
+                                const std::vector<std::string> &values)
+{
+  _t3d.push_back(x);
+  _t3d.push_back(y);
+  _t3d.push_back(z);
+  _t3d.push_back(style);
+  _t3d.push_back(_t3c.size());
+  for(auto &v : values)
+    _t3c.insert(_t3c.end(), v.c_str(), v.c_str() + v.size() + 1);
+  _nbT3++;
+}
+
+void PViewDataList::clearList(int numComp, int type)
+{
+  const listKind *k = _kind(numComp, type);
+  if(!k) return;
+  this->*k->num = 0;
+  (this->*k->list).clear();
+}
+
+void PViewDataList::clearStrings(int dim)
+{
+  if(dim == 2) {
+    _nbT2 = 0;
+    _t2d.clear();
+    _t2c.clear();
   }
-  return nullptr;
+  else {
+    _nbT3 = 0;
+    _t3d.clear();
+    _t3c.clear();
+  }
 }

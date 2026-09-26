@@ -400,7 +400,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   }
 
   _data->setName("distance");
-  _data->Time.push_back(0);
+  _data->addTime(0);
   _data->setFileName("distance.pos");
   _data->finalize();
   return view;

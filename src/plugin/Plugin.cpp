@@ -394,5 +394,5 @@ void GMSH_PostPlugin::createListData(
     }
   }
   for(auto o : out)
-    for(int step : steps) o->Time.push_back(data->getTime(step));
+    for(int step : steps) o->addTime(data->getTime(step));
 }

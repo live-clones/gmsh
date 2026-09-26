@@ -108,7 +108,7 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
 
   for(int k = 0; k < nSteps; k++) {
     double t = frequency ? (nPeriods * k / frequency / (double)nSteps) : 0.;
-    data2->Time.push_back(t);
+    data2->addTime(t);
   }
   data2->setName(data1->getName() + "_HarmonicToTime");
   data2->setFileName(data1->getName() + "_HarmonicToTime.pos");

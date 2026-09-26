@@ -131,10 +131,7 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
       }
     }
   }
-  for(auto &t : trajectories) {
-    data2->NbVP++;
-    data2->VP.insert(data2->VP.end(), t.begin(), t.end());
-  }
+  for(auto &t : trajectories) data2->appendList(3, TYPE_PNT, 1, t);
 
   v2->getOptions()->vectorType = PViewOptions::Displacement;
 

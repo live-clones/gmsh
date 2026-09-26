@@ -128,26 +128,17 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
     p[1] = (PointData *)tris[i]->getVertex(1);
     p[2] = (PointData *)tris[i]->getVertex(2);
     int numComp = 0;
-    std::vector<double> *vec = nullptr;
     if((int)p[0]->v.size() == 3 + 9 * numSteps &&
        (int)p[1]->v.size() == 3 + 9 * numSteps &&
-       (int)p[2]->v.size() == 3 + 9 * numSteps) {
+       (int)p[2]->v.size() == 3 + 9 * numSteps)
       numComp = 9;
-      data2->NbTT++;
-      vec = &data2->TT;
-    }
     else if((int)p[0]->v.size() == 3 + 3 * numSteps &&
             (int)p[1]->v.size() == 3 + 3 * numSteps &&
-            (int)p[2]->v.size() == 3 + 3 * numSteps) {
+            (int)p[2]->v.size() == 3 + 3 * numSteps)
       numComp = 3;
-      data2->NbVT++;
-      vec = &data2->VT;
-    }
-    else {
+    else
       numComp = 1;
-      data2->NbST++;
-      vec = &data2->ST;
-    }
+    std::vector<double> *vec = data2->incrementList(numComp, TYPE_TRI);
     for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[0]);
     for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[1]);
     for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[2]);
@@ -161,7 +152,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   for(std::size_t i = 0; i < points.size(); i++) delete points[i];
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
-    data2->Time.push_back(data1->getTime(i));
+    data2->addTime(data1->getTime(i));
   data2->setName(data1->getName() + "_Triangulate");
   data2->setFileName(data1->getName() + "_Triangulate.pos");
   data2->finalize();

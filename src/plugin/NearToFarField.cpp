@@ -497,34 +497,19 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
   for(int i = 0; i < _nbPhi + points; i++) {
     for(int j = 0; j < _nbThe + points; j++) {
       if(points) {
-        dataFar->NbSP++;
-        dataFar->SP.push_back(x[i][j]);
-        dataFar->SP.push_back(y[i][j]);
-        dataFar->SP.push_back(z[i][j]);
-        dataFar->SP.push_back(farField[i][j]);
+        std::vector<double> *l = dataFar->incrementList(1, TYPE_PNT);
+        l->insert(l->end(), {x[i][j], y[i][j], z[i][j], farField[i][j]});
       }
       else {
         double P1[3] = {x[i][j], y[i][j], z[i][j]};
         double P2[3] = {x[i + 1][j], y[i + 1][j], z[i + 1][j]};
         double P3[3] = {x[i + 1][j + 1], y[i + 1][j + 1], z[i + 1][j + 1]};
         double P4[3] = {x[i][j + 1], y[i][j + 1], z[i][j + 1]};
-        dataFar->NbSQ++;
-        dataFar->SQ.push_back(P1[0]);
-        dataFar->SQ.push_back(P2[0]);
-        dataFar->SQ.push_back(P3[0]);
-        dataFar->SQ.push_back(P4[0]);
-        dataFar->SQ.push_back(P1[1]);
-        dataFar->SQ.push_back(P2[1]);
-        dataFar->SQ.push_back(P3[1]);
-        dataFar->SQ.push_back(P4[1]);
-        dataFar->SQ.push_back(P1[2]);
-        dataFar->SQ.push_back(P2[2]);
-        dataFar->SQ.push_back(P3[2]);
-        dataFar->SQ.push_back(P4[2]);
-        dataFar->SQ.push_back(farField[i][j]);
-        dataFar->SQ.push_back(farField[i + 1][j]);
-        dataFar->SQ.push_back(farField[i + 1][j + 1]);
-        dataFar->SQ.push_back(farField[i][j + 1]);
+        std::vector<double> *l = dataFar->incrementList(1, TYPE_QUA);
+        for(int k = 0; k < 3; k++)
+          l->insert(l->end(), {P1[k], P2[k], P3[k], P4[k]});
+        l->insert(l->end(), {farField[i][j], farField[i + 1][j],
+                             farField[i + 1][j + 1], farField[i][j + 1]});
       }
     }
   }

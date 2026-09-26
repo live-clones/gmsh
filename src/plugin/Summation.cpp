@@ -134,8 +134,7 @@ PView *GMSH_SummationPlugin::execute(PView *view)
   for(int step = timeBeg; step < timeEnd; step++) {
     int iview = 0;
     while(iview < nviews && !pviewsdata[iview]->hasTimeStep(step)) iview++;
-    data2->Time.push_back(iview < nviews ? pviewsdata[iview]->getTime(step) :
-                                           step);
+    data2->addTime(iview < nviews ? pviewsdata[iview]->getTime(step) : step);
   }
 
   std::string outputname = optionStr(0);

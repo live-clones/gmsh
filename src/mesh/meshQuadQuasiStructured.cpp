@@ -915,14 +915,19 @@ bool getSingularitiesFromBackgroundField(
     return false;
   }
 
-  size_t nVP = d->VP.size() / 6;
+  // the vector points (list 1, see getListPointers())
+  int N[24];
+  std::vector<double> *V[24];
+  d->getListPointers(N, V);
+  const std::vector<double> &VP = *V[1];
+  size_t nVP = VP.size() / 6;
   for(size_t i = 0; i < nVP; ++i) {
-    int gfTag = int(std::round(d->VP[6 * i + 3] / VIEW_INT_SCALING));
+    int gfTag = int(std::round(VP[6 * i + 3] / VIEW_INT_SCALING));
     if(gfTag != gf->tag()) continue;
-    int index = int(std::round(d->VP[6 * i + 4] / VIEW_INT_SCALING));
-    double x = d->VP[6 * i + 0];
-    double y = d->VP[6 * i + 1];
-    double z = d->VP[6 * i + 2];
+    int index = int(std::round(VP[6 * i + 4] / VIEW_INT_SCALING));
+    double x = VP[6 * i + 0];
+    double y = VP[6 * i + 1];
+    double z = VP[6 * i + 2];
     singularities.push_back(std::make_pair(SPoint3(x, y, z), index));
   }
 

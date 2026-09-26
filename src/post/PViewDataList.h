@@ -16,36 +16,35 @@
 // The container for list-based datasets (for which all elements are
 // discontinuous).
 class PViewDataList : public PViewData {
-public:
-  // FIXME: all these members will be made private once the plugins
-  // have been rewritten
-  int NbTimeStep;
-  double Min, Max;
-  std::vector<double> TimeStepMin, TimeStepMax;
-  SBoundingBox3d BBox;
-  std::vector<double> Time;
-  int NbSP, NbVP, NbTP;
-  std::vector<double> SP, VP, TP; // points
-  int NbSL, NbVL, NbTL;
-  std::vector<double> SL, VL, TL; // lines
-  int NbST, NbVT, NbTT;
-  std::vector<double> ST, VT, TT; // triangles
-  int NbSQ, NbVQ, NbTQ;
-  std::vector<double> SQ, VQ, TQ; // quadrangles
-  int NbSS, NbVS, NbTS;
-  std::vector<double> SS, VS, TS; // tetrahedra
-  int NbSH, NbVH, NbTH;
-  std::vector<double> SH, VH, TH; // hexahedra
-  int NbSI, NbVI, NbTI;
-  std::vector<double> SI, VI, TI; // prisms
-  int NbSY, NbVY, NbTY;
-  std::vector<double> SY, VY, TY; // pyramids
-  int NbSR, NbVR, NbTR;
-  std::vector<double> SR, VR, TR; // trihedra
-  int NbT2, NbT3;
-  std::vector<double> T2D, T3D; // 2D and 3D text strings
-  std::vector<char> T2C, T3C;
+private:
+  int _nbTimeStep;
+  double _min, _max;
+  std::vector<double> _timeStepMin, _timeStepMax;
+  SBoundingBox3d _bbox;
+  std::vector<double> _time;
+  int _nbSP, _nbVP, _nbTP;
+  std::vector<double> _sp, _vp, _tp; // points
+  int _nbSL, _nbVL, _nbTL;
+  std::vector<double> _sl, _vl, _tl; // lines
+  int _nbST, _nbVT, _nbTT;
+  std::vector<double> _st, _vt, _tt; // triangles
+  int _nbSQ, _nbVQ, _nbTQ;
+  std::vector<double> _sq, _vq, _tq; // quadrangles
+  int _nbSS, _nbVS, _nbTS;
+  std::vector<double> _ss, _vs, _ts; // tetrahedra
+  int _nbSH, _nbVH, _nbTH;
+  std::vector<double> _sh, _vh, _th; // hexahedra
+  int _nbSI, _nbVI, _nbTI;
+  std::vector<double> _si, _vi, _ti; // prisms
+  int _nbSY, _nbVY, _nbTY;
+  std::vector<double> _sy, _vy, _ty; // pyramids
+  int _nbSR, _nbVR, _nbTR;
+  std::vector<double> _sr, _vr, _tr; // trihedra
+  int _nbT2, _nbT3;
+  std::vector<double> _t2d, _t3d; // 2D and 3D text strings
+  std::vector<char> _t2c, _t3c;
 
+public:
   // the kinds of lists: points, lines, triangles, quadrangles, tetrahedra,
   // hexahedra, prisms, pyramids and trihedra, each with 1, 3 and 9 components,
   // in this order (that of the files, which have no trihedra)
@@ -69,6 +68,7 @@ private:
   // refined elements come from
   std::vector<unsigned char> _skinMasks;
   void _buildNodeIndex();
+  static const listKind *_kind(int numComp, int type);
 
   // What was last read of an element, kept by each thread: the element, the
   // state of the lists it was read in (a number no other state of any list-
@@ -123,28 +123,28 @@ public:
   bool isAdapted() { return _isAdapted; }
   bool finalize(bool computeMinMax = true,
                 const std::string &interpolationScheme = "");
-  int getNumTimeSteps() { return NbTimeStep; }
+  int getNumTimeSteps() { return _nbTimeStep; }
   double getTime(int step);
   double getMin(int step = -1, bool onlyVisible = false, int tensorRep = 0,
                 int forceNumComponents = 0, int componentMap[9] = nullptr);
   double getMax(int step = -1, bool onlyVisible = false, int tensorRep = 0,
                 int forceNumComponents = 0, int componentMap[9] = nullptr);
-  void setMin(double min) { Min = min; }
-  void setMax(double max) { Max = max; }
-  SBoundingBox3d getBoundingBox(int step = -1) { return BBox; }
-  void setBoundingBox(SBoundingBox3d &box) { BBox = box; }
+  void setMin(double min) { _min = min; }
+  void setMax(double max) { _max = max; }
+  SBoundingBox3d getBoundingBox(int step = -1) { return _bbox; }
+  void setBoundingBox(SBoundingBox3d &box) { _bbox = box; }
   int getNumScalars(int step = -1);
   int getNumVectors(int step = -1);
   int getNumTensors(int step = -1);
-  int getNumPoints(int step = -1) { return NbSP + NbVP + NbTP; }
-  int getNumLines(int step = -1) { return NbSL + NbVL + NbTL; }
-  int getNumTriangles(int step = -1) { return NbST + NbVT + NbTT; }
-  int getNumQuadrangles(int step = -1) { return NbSQ + NbVQ + NbTQ; }
-  int getNumTetrahedra(int step = -1) { return NbSS + NbVS + NbTS; }
-  int getNumHexahedra(int step = -1) { return NbSH + NbVH + NbTH; }
-  int getNumPrisms(int step = -1) { return NbSI + NbVI + NbTI; }
-  int getNumPyramids(int step = -1) { return NbSY + NbVY + NbTY; }
-  int getNumTrihedra(int step = -1) { return NbSR + NbVR + NbTR; }
+  int getNumPoints(int step = -1) { return _nbSP + _nbVP + _nbTP; }
+  int getNumLines(int step = -1) { return _nbSL + _nbVL + _nbTL; }
+  int getNumTriangles(int step = -1) { return _nbST + _nbVT + _nbTT; }
+  int getNumQuadrangles(int step = -1) { return _nbSQ + _nbVQ + _nbTQ; }
+  int getNumTetrahedra(int step = -1) { return _nbSS + _nbVS + _nbTS; }
+  int getNumHexahedra(int step = -1) { return _nbSH + _nbVH + _nbTH; }
+  int getNumPrisms(int step = -1) { return _nbSI + _nbVI + _nbTI; }
+  int getNumPyramids(int step = -1) { return _nbSY + _nbVY + _nbTY; }
+  int getNumTrihedra(int step = -1) { return _nbSR + _nbVR + _nbTR; }
   int getNumEntities(int step = -1) { return 1; }
   int getNumElements(int step = -1, int ent = -1);
   int getDimension(int step, int ent, int ele);
@@ -182,8 +182,8 @@ public:
   void setValue(int step, int ent, int ele, int nod, int comp, double val);
   int getNumEdges(int step, int ent, int ele);
   int getType(int step, int ent, int ele);
-  int getNumStrings2D() { return NbT2; }
-  int getNumStrings3D() { return NbT3; }
+  int getNumStrings2D() { return _nbT2; }
+  int getNumStrings3D() { return _nbT3; }
   void getString2D(int i, int step, std::string &str, double &x, double &y,
                    double &style);
   void getString3D(int i, int step, std::string &str, double &x, double &y,
@@ -201,7 +201,26 @@ public:
 
   // specific to list-based data sets
   void setOrder2(int type);
+  // the list of the elements of a type with numComp components, their number
+  // incremented: the caller appends the element to it (coordinates, then
+  // values). Null for a kind the lists cannot hold
   std::vector<double> *incrementList(int numComp, int type, int numNodes = 0);
+  // numElements elements appended at once
+  void appendList(int numComp, int type, int numElements,
+                  const std::vector<double> &values);
+  void addTime(double time) { _time.push_back(time); }
+  const std::vector<double> &getTimes() const { return _time; }
+  void setTimes(const std::vector<double> &times) { _time = times; }
+  // a string at (x, y) in the window or at (x, y, z) in the model, with one
+  // value per time step
+  void addString2D(double x, double y, double style,
+                   const std::vector<std::string> &values);
+  void addString3D(double x, double y, double z, double style,
+                   const std::vector<std::string> &values);
+  // remove the elements of a type with numComp components, or the strings of
+  // dimension dim
+  void clearList(int numComp, int type);
+  void clearStrings(int dim);
 
   // I/O routines
   bool readPOS(FILE *fp, double version, bool binary);

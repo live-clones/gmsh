@@ -150,29 +150,14 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
     data2 = getDataList(v2);
   }
 
-  if(dim3) {
-    data2->T3D.push_back(X);
-    data2->T3D.push_back(Y);
-    data2->T3D.push_back(Z);
-    data2->T3D.push_back(style);
-    data2->T3D.push_back(data2->T3C.size());
-    for(std::size_t i = 0; i < text.size(); i++) data2->T3C.push_back(text[i]);
-    data2->T3C.push_back('\0');
-    data2->NbT3++;
-  }
-  else {
-    data2->T2D.push_back(X);
-    data2->T2D.push_back(Y);
-    data2->T2D.push_back(style);
-    data2->T2D.push_back(data2->T2C.size());
-    for(std::size_t i = 0; i < text.size(); i++) data2->T2C.push_back(text[i]);
-    data2->T2C.push_back('\0');
-    data2->NbT2++;
-  }
+  if(dim3)
+    data2->addString3D(X, Y, Z, style, {text});
+  else
+    data2->addString2D(X, Y, style, {text});
 
   if(v2 != v1) {
     for(int i = 0; i < data1->getNumTimeSteps(); i++)
-      data2->Time.push_back(data1->getTime(i));
+      data2->addTime(data1->getTime(i));
     data2->setName(data1->getName() + "_Annotate");
     data2->setFileName(data1->getName() + "_Annotate.pos");
   }

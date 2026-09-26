@@ -407,7 +407,7 @@ std::vector<PViewDataList *> PView::getAdaptedSteps()
                         _options->targetError, nullptr, min, max);
     PViewDataList *l = static_cast<PViewDataList *>(a->getData());
     l->setName(_data->getName());
-    l->Time.assign(1, _data->getTime(step));
+    l->setTimes({_data->getTime(step)});
     l->setFirstStep(step);
     steps[step] = l;
   }

@@ -228,23 +228,19 @@ void GMSH_CutBoxPlugin::getPoint(int iU, int iV, int iW, double *X)
 
 void GMSH_CutBoxPlugin::addInView(int connect, int boundary, int numsteps,
                                   int nbcomp, double ****pnts, double ****vals,
-                                  std::vector<double> &P, int *nP,
-                                  std::vector<double> &L, int *nL,
-                                  std::vector<double> &Q, int *nQ,
-                                  std::vector<double> &H, int *nH)
+                                  PViewDataList *data)
 {
   typedef std::array<int, 3> ijk;
   // an element on the grid points p: all the x, the y, the z, then the values
   // of each step, node after node
-  auto add = [&](std::vector<double> &list, int *n,
-                 const std::vector<ijk> &p) {
+  auto add = [&](int type, const std::vector<ijk> &p) {
+    std::vector<double> &list = *data->incrementList(nbcomp, type);
     for(int c = 0; c < 3; c++)
       for(auto &q : p) list.push_back(pnts[q[0]][q[1]][q[2]][c]);
     for(int k = 0; k < numsteps; ++k)
       for(auto &q : p)
         for(int l = 0; l < nbcomp; ++l)
           list.push_back(vals[q[0]][q[1]][q[2]][nbcomp * k + l]);
-    (*n)++;
   };
   int nu = getNbU(), nv = getNbV(), nw = getNbW();
   int u = nu - 1, v = nv - 1, w = nw - 1; // the last points
@@ -253,25 +249,25 @@ void GMSH_CutBoxPlugin::addInView(int connect, int boundary, int numsteps,
     if(!boundary) {
       for(int i = 0; i < nu; ++i)
         for(int j = 0; j < nv; ++j)
-          for(int m = 0; m < nw; ++m) add(P, nP, {{i, j, m}});
+          for(int m = 0; m < nw; ++m) add(TYPE_PNT, {{i, j, m}});
       return;
     }
     for(int i = 0; i < nu; ++i) {
       for(int j = 0; j < nv; ++j) {
-        add(P, nP, {{i, j, 0}});
-        add(P, nP, {{i, j, w}});
+        add(TYPE_PNT, {{i, j, 0}});
+        add(TYPE_PNT, {{i, j, w}});
       }
     }
     for(int i = 0; i < nu; ++i) {
       for(int j = 0; j < nw; ++j) {
-        add(P, nP, {{i, 0, j}});
-        add(P, nP, {{i, v, j}});
+        add(TYPE_PNT, {{i, 0, j}});
+        add(TYPE_PNT, {{i, v, j}});
       }
     }
     for(int i = 0; i < nv; ++i) {
       for(int j = 0; j < nw; ++j) {
-        add(P, nP, {{0, i, j}});
-        add(P, nP, {{u, i, j}});
+        add(TYPE_PNT, {{0, i, j}});
+        add(TYPE_PNT, {{u, i, j}});
       }
     }
     return;
@@ -280,10 +276,10 @@ void GMSH_CutBoxPlugin::addInView(int connect, int boundary, int numsteps,
   // a line of points along one direction: lines, or its 2 ends
   auto line = [&](int n, const std::function<ijk(int)> &q) {
     if(!boundary)
-      for(int i = 0; i < n - 1; ++i) add(L, nL, {q(i), q(i + 1)});
+      for(int i = 0; i < n - 1; ++i) add(TYPE_LIN, {q(i), q(i + 1)});
     else {
-      add(P, nP, {q(0)});
-      add(P, nP, {q(n - 1)});
+      add(TYPE_PNT, {q(0)});
+      add(TYPE_PNT, {q(n - 1)});
     }
   };
   if(nu == 1 && nv == 1) return line(nw, [](int i) { return ijk{0, 0, i}; });
@@ -296,16 +292,16 @@ void GMSH_CutBoxPlugin::addInView(int connect, int boundary, int numsteps,
     if(!boundary) {
       for(int i = 0; i < na - 1; ++i)
         for(int j = 0; j < nb - 1; ++j)
-          add(Q, nQ, {q(i, j), q(i + 1, j), q(i + 1, j + 1), q(i, j + 1)});
+          add(TYPE_QUA, {q(i, j), q(i + 1, j), q(i + 1, j + 1), q(i, j + 1)});
       return;
     }
     for(int i = 0; i < na - 1; ++i) {
-      add(L, nL, {q(i, 0), q(i + 1, 0)});
-      add(L, nL, {q(i, nb - 1), q(i + 1, nb - 1)});
+      add(TYPE_LIN, {q(i, 0), q(i + 1, 0)});
+      add(TYPE_LIN, {q(i, nb - 1), q(i + 1, nb - 1)});
     }
     for(int i = 0; i < nb - 1; ++i) {
-      add(L, nL, {q(0, i), q(0, i + 1)});
-      add(L, nL, {q(na - 1, i), q(na - 1, i + 1)});
+      add(TYPE_LIN, {q(0, i), q(0, i + 1)});
+      add(TYPE_LIN, {q(na - 1, i), q(na - 1, i + 1)});
     }
   };
   if(nu == 1) return plane(nv, nw, [](int i, int j) { return ijk{0, i, j}; });
@@ -316,29 +312,39 @@ void GMSH_CutBoxPlugin::addInView(int connect, int boundary, int numsteps,
     for(int i = 0; i < u; ++i)
       for(int j = 0; j < v; ++j)
         for(int m = 0; m < w; ++m)
-          add(H, nH,
-              {{i, j, m}, {i + 1, j, m}, {i + 1, j + 1, m}, {i, j + 1, m},
-               {i, j, m + 1}, {i + 1, j, m + 1}, {i + 1, j + 1, m + 1},
-               {i, j + 1, m + 1}});
+          add(TYPE_HEX, {{i, j, m},
+                         {i + 1, j, m},
+                         {i + 1, j + 1, m},
+                         {i, j + 1, m},
+                         {i, j, m + 1},
+                         {i + 1, j, m + 1},
+                         {i + 1, j + 1, m + 1},
+                         {i, j + 1, m + 1}});
     return;
   }
   // quadrangles on the boundary of the box, with exterior normals
   for(int i = 0; i < u; ++i) {
     for(int j = 0; j < v; ++j) {
-      add(Q, nQ, {{i, j, 0}, {i, j + 1, 0}, {i + 1, j + 1, 0}, {i + 1, j, 0}});
-      add(Q, nQ, {{i, j, w}, {i + 1, j, w}, {i + 1, j + 1, w}, {i, j + 1, w}});
+      add(TYPE_QUA,
+          {{i, j, 0}, {i, j + 1, 0}, {i + 1, j + 1, 0}, {i + 1, j, 0}});
+      add(TYPE_QUA,
+          {{i, j, w}, {i + 1, j, w}, {i + 1, j + 1, w}, {i, j + 1, w}});
     }
   }
   for(int i = 0; i < u; ++i) {
     for(int j = 0; j < w; ++j) {
-      add(Q, nQ, {{i, 0, j}, {i + 1, 0, j}, {i + 1, 0, j + 1}, {i, 0, j + 1}});
-      add(Q, nQ, {{i, v, j}, {i, v, j + 1}, {i + 1, v, j + 1}, {i + 1, v, j}});
+      add(TYPE_QUA,
+          {{i, 0, j}, {i + 1, 0, j}, {i + 1, 0, j + 1}, {i, 0, j + 1}});
+      add(TYPE_QUA,
+          {{i, v, j}, {i, v, j + 1}, {i + 1, v, j + 1}, {i + 1, v, j}});
     }
   }
   for(int i = 0; i < v; ++i) {
     for(int j = 0; j < w; ++j) {
-      add(Q, nQ, {{0, i, j}, {0, i, j + 1}, {0, i + 1, j + 1}, {0, i + 1, j}});
-      add(Q, nQ, {{u, i, j}, {u, i + 1, j}, {u, i + 1, j + 1}, {u, i, j + 1}});
+      add(TYPE_QUA,
+          {{0, i, j}, {0, i, j + 1}, {0, i + 1, j + 1}, {0, i + 1, j}});
+      add(TYPE_QUA,
+          {{u, i, j}, {u, i + 1, j}, {u, i + 1, j + 1}, {u, i, j + 1}});
     }
   }
 }
@@ -400,21 +406,15 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
   };
   if(nbs) {
     search(1);
-    addInView(connect, boundary, numsteps, 1, pnts, vals, data2->SP,
-              &data2->NbSP, data2->SL, &data2->NbSL, data2->SQ, &data2->NbSQ,
-              data2->SH, &data2->NbSH);
+    addInView(connect, boundary, numsteps, 1, pnts, vals, data2);
   }
   if(nbv) {
     search(3);
-    addInView(connect, boundary, numsteps, 3, pnts, vals, data2->VP,
-              &data2->NbVP, data2->VL, &data2->NbVL, data2->VQ, &data2->NbVQ,
-              data2->VH, &data2->NbVH);
+    addInView(connect, boundary, numsteps, 3, pnts, vals, data2);
   }
   if(nbt) {
     search(9);
-    addInView(connect, boundary, numsteps, 9, pnts, vals, data2->TP,
-              &data2->NbTP, data2->TL, &data2->NbTL, data2->TQ, &data2->NbTQ,
-              data2->TH, &data2->NbTH);
+    addInView(connect, boundary, numsteps, 9, pnts, vals, data2);
   }
 
   for(int i = 0; i < getNbU(); i++) {
@@ -432,7 +432,7 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
   delete[] pnts;
   delete[] vals;
 
-  for(int i = 0; i < numsteps; i++) data2->Time.push_back(data1->getTime(i));
+  for(int i = 0; i < numsteps; i++) data2->addTime(data1->getTime(i));
   data2->setName(data1->getName() + "_CutBox");
   data2->setFileName(data1->getName() + "_CutBox.pos");
   data2->finalize();

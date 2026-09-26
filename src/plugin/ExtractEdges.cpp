@@ -28,15 +28,9 @@ std::string GMSH_ExtractEdgesPlugin::getHelp() const
 
 static void add_edge(edge_angle &ea, PViewDataList *data)
 {
-  data->SL.push_back(ea.v1->x());
-  data->SL.push_back(ea.v2->x());
-  data->SL.push_back(ea.v1->y());
-  data->SL.push_back(ea.v2->y());
-  data->SL.push_back(ea.v1->z());
-  data->SL.push_back(ea.v2->z());
-  data->SL.push_back(1.);
-  data->SL.push_back(1.);
-  data->NbSL++;
+  std::vector<double> *l = data->incrementList(1, TYPE_LIN);
+  l->insert(l->end(), {ea.v1->x(), ea.v2->x(), ea.v1->y(), ea.v2->y(),
+                       ea.v1->z(), ea.v2->z(), 1., 1.});
 }
 
 PView *GMSH_ExtractEdgesPlugin::execute(PView *v)

@@ -100,38 +100,32 @@ PView *GMSH_ProbePlugin::execute(PView *v)
   OctreePost o(v1);
 
   if(o.searchScalar(x, y, z, val)) {
-    data2->SP.push_back(x);
-    data2->SP.push_back(y);
-    data2->SP.push_back(z);
-    for(int i = 0; i < numSteps; i++) data2->SP.push_back(val[i]);
-    data2->NbSP++;
+    std::vector<double> *l = data2->incrementList(1, TYPE_PNT);
+    l->insert(l->end(), {x, y, z});
+    for(int i = 0; i < numSteps; i++) l->push_back(val[i]);
   }
 
   if(o.searchVector(x, y, z, val)) {
-    data2->VP.push_back(x);
-    data2->VP.push_back(y);
-    data2->VP.push_back(z);
+    std::vector<double> *l = data2->incrementList(3, TYPE_PNT);
+    l->insert(l->end(), {x, y, z});
     for(int i = 0; i < numSteps; i++) {
-      for(int j = 0; j < 3; j++) data2->VP.push_back(val[3 * i + j]);
+      for(int j = 0; j < 3; j++) l->push_back(val[3 * i + j]);
     }
-    data2->NbVP++;
   }
 
   if(o.searchTensor(x, y, z, val)) {
-    data2->TP.push_back(x);
-    data2->TP.push_back(y);
-    data2->TP.push_back(z);
+    std::vector<double> *l = data2->incrementList(9, TYPE_PNT);
+    l->insert(l->end(), {x, y, z});
     for(int i = 0; i < numSteps; i++) {
-      for(int j = 0; j < 9; j++) data2->TP.push_back(val[9 * i + j]);
+      for(int j = 0; j < 9; j++) l->push_back(val[9 * i + j]);
     }
-    data2->NbTP++;
   }
 
   delete[] val;
 
   for(int i = 0; i < numSteps; i++) {
     double time = data1->getTime(i);
-    data2->Time.push_back(time);
+    data2->addTime(time);
   }
   data2->setName(v1->getData()->getName() + "_Probe");
   data2->setFileName(v1->getData()->getName() + "_Probe.pos");

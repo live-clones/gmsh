@@ -10,10 +10,7 @@
 
 class GMSH_CutBoxPlugin : public GMSH_PostPlugin {
   void addInView(int connect, int boundary, int numsteps, int nbcomp,
-                 double ****pnts, double ****vals, std::vector<double> &P,
-                 int *nP, std::vector<double> &L, int *nL,
-                 std::vector<double> &Q, int *nQ, std::vector<double> &H,
-                 int *nH);
+                 double ****pnts, double ****vals, PViewDataList *data);
   PView *GenerateView(PView *v, int connectPoints, int boundary);
 
 public:

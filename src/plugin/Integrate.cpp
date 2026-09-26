@@ -47,12 +47,9 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
 
   if(overTime == -1) {
     bool skipped = false;
-    double x = data1->getBoundingBox().center().x();
-    double y = data1->getBoundingBox().center().y();
-    double z = data1->getBoundingBox().center().z();
-    data2->SP.push_back(x);
-    data2->SP.push_back(y);
-    data2->SP.push_back(z);
+    SPoint3 c = data1->getBoundingBox().center();
+    std::vector<double> *l = data2->incrementList(1, TYPE_PNT);
+    l->insert(l->end(), {c.x(), c.y(), c.z()});
     for(int step = 0; step < data1->getNumTimeSteps(); step++) {
       double res = 0, resv[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
       bool simpleSum = false;
@@ -122,14 +119,13 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
                   resv[8]);
       else
         Msg::Info("Step %d: integral = %.16g", step, res);
-      data2->SP.push_back(res);
+      l->push_back(res);
     }
-    data2->NbSP = 1;
     v2->getOptions()->intervalsType = PViewOptions::Numeric;
 
     for(int i = 0; i < data1->getNumTimeSteps(); i++) {
       double time = data1->getTime(i);
-      data2->Time.push_back(time);
+      data2->addTime(time);
     }
   }
   else {

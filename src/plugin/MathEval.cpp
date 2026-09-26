@@ -241,11 +241,11 @@ end:
   if(timeStep < 0) {
     for(int i = firstNonEmptyStep; i < data1->getNumTimeSteps(); i++) {
       if(!data1->hasTimeStep(i)) continue;
-      data2->Time.push_back(data1->getTime(i));
+      data2->addTime(data1->getTime(i));
     }
   }
   else
-    data2->Time.push_back(data1->getTime(timeStep));
+    data2->addTime(data1->getTime(timeStep));
 
   data2->setName(data1->getName() + "_MathEval");
   data2->setFileName(data1->getName() + "_MathEval.pos");

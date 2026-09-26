@@ -41,18 +41,14 @@ PView *GMSH_MinMaxPlugin::execute(PView *v)
   PViewDataList *dataMin = getDataList(vMin);
   PViewDataList *dataMax = getDataList(vMax);
 
+  // the point the values are appended to
+  std::vector<double> *sMin = nullptr, *sMax = nullptr;
   if(!argument) {
-    double x = data1->getBoundingBox().center().x();
-    double y = data1->getBoundingBox().center().y();
-    double z = data1->getBoundingBox().center().z();
-    dataMin->SP.push_back(x);
-    dataMin->SP.push_back(y);
-    dataMin->SP.push_back(z);
-    dataMax->SP.push_back(x);
-    dataMax->SP.push_back(y);
-    dataMax->SP.push_back(z);
-    dataMin->NbSP = 1;
-    dataMax->NbSP = 1;
+    SPoint3 c = data1->getBoundingBox().center();
+    sMin = dataMin->incrementList(1, TYPE_PNT);
+    sMax = dataMax->incrementList(1, TYPE_PNT);
+    sMin->insert(sMin->end(), {c.x(), c.y(), c.z()});
+    sMax->insert(sMax->end(), {c.x(), c.y(), c.z()});
   }
 
   double min = VAL_INF, max = -VAL_INF, timeMin = 0, timeMax = 0;
@@ -83,22 +79,18 @@ PView *GMSH_MinMaxPlugin::execute(PView *v)
 
       if(!overTime) {
         if(argument) {
-          dataMin->SP.push_back(xmin);
-          dataMin->SP.push_back(ymin);
-          dataMin->SP.push_back(zmin);
-          dataMax->SP.push_back(xmax);
-          dataMax->SP.push_back(ymax);
-          dataMax->SP.push_back(zmax);
-          (dataMin->NbSP)++;
-          (dataMax->NbSP)++;
+          sMin = dataMin->incrementList(1, TYPE_PNT);
+          sMax = dataMax->incrementList(1, TYPE_PNT);
+          sMin->insert(sMin->end(), {xmin, ymin, zmin});
+          sMax->insert(sMax->end(), {xmax, ymax, zmax});
         }
         else {
           double time = data1->getTime(step);
-          dataMin->Time.push_back(time);
-          dataMax->Time.push_back(time);
+          dataMin->addTime(time);
+          dataMax->addTime(time);
         }
-        dataMin->SP.push_back(minView);
-        dataMax->SP.push_back(maxView);
+        sMin->push_back(minView);
+        sMax->push_back(maxView);
       }
       else {
         if(minView < min) {
@@ -121,16 +113,15 @@ PView *GMSH_MinMaxPlugin::execute(PView *v)
 
   if(overTime) {
     if(argument) {
-      for(int i = 0; i < 3; i++) {
-        dataMin->SP.push_back(pmin[i]);
-        dataMax->SP.push_back(pmax[i]);
-      }
-      dataMin->NbSP = dataMax->NbSP = 1;
+      sMin = dataMin->incrementList(1, TYPE_PNT);
+      sMax = dataMax->incrementList(1, TYPE_PNT);
+      sMin->insert(sMin->end(), pmin, pmin + 3);
+      sMax->insert(sMax->end(), pmax, pmax + 3);
     }
-    dataMin->SP.push_back(min);
-    dataMax->SP.push_back(max);
-    dataMin->Time.push_back(timeMin);
-    dataMax->Time.push_back(timeMax);
+    sMin->push_back(min);
+    sMax->push_back(max);
+    dataMin->addTime(timeMin);
+    dataMax->addTime(timeMax);
   }
 
   vMin->getOptions()->intervalsType = PViewOptions::Numeric;

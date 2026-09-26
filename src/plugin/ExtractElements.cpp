@@ -103,10 +103,10 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
   }
 
   if(thisStep >= 0)
-    data2->Time.push_back(data1->getTime(thisStep));
+    data2->addTime(data1->getTime(thisStep));
   else {
     for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-      if(data1->hasTimeStep(step)) data2->Time.push_back(data1->getTime(step));
+      if(data1->hasTimeStep(step)) data2->addTime(data1->getTime(step));
     }
   }
 

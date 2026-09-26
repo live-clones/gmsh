@@ -286,21 +286,19 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
       trace(seed, direction, lines[seed]);
   }
   for(auto &line : lines) {
-    data3->NbVP += line.nVP;
-    data3->VP.insert(data3->VP.end(), line.VP.begin(), line.VP.end());
-    data3->NbSL += line.nSL;
-    data3->SL.insert(data3->SL.end(), line.SL.begin(), line.SL.end());
+    data3->appendList(3, TYPE_PNT, line.nVP, line.VP);
+    data3->appendList(1, TYPE_LIN, line.nSL, line.SL);
   }
 
   // the steps of the other view on the lines, or the displacements at the end
   // of each iteration in an unsteady field
   if(data2) {
     for(int k = 0; k < data2->getNumTimeSteps(); k++)
-      data3->Time.push_back(data2->getTime(k));
+      data3->addTime(data2->getTime(k));
   }
   else if(timeStep < 0) {
     for(int iter = 0; iter < maxIter; iter++)
-      data3->Time.push_back(data1->getTime(0) + DT * (iter + 1));
+      data3->addTime(data1->getTime(0) + DT * (iter + 1));
   }
 
   if(data2) { delete o2; }
