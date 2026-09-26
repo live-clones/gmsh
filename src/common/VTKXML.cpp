@@ -4,12 +4,14 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <atomic>
 #include <cstdlib>
 #include <cstring>
 #include <map>
 #include "GmshConfig.h"
 #include "VTKXML.h"
 #include "OS.h"
+#include "Context.h"
 #include "StringUtils.h"
 #include "GmshMessage.h"
 
@@ -64,23 +66,22 @@ void vtkXMLWriter::_base64(const unsigned char *data, std::size_t numBytes)
 {
   static const char *t =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  std::string out;
-  out.reserve(4 * ((numBytes + 2) / 3));
+  std::string out(4 * ((numBytes + 2) / 3), '=');
+  char *o = &out[0];
   std::size_t i = 0;
-  for(; i + 2 < numBytes; i += 3) {
+  for(; i + 2 < numBytes; i += 3, o += 4) {
     unsigned int v = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
-    out += t[(v >> 18) & 63];
-    out += t[(v >> 12) & 63];
-    out += t[(v >> 6) & 63];
-    out += t[v & 63];
+    o[0] = t[(v >> 18) & 63];
+    o[1] = t[(v >> 12) & 63];
+    o[2] = t[(v >> 6) & 63];
+    o[3] = t[v & 63];
   }
   if(i < numBytes) {
     bool two = (i + 1 < numBytes);
     unsigned int v = (data[i] << 16) | (two ? (data[i + 1] << 8) : 0);
-    out += t[(v >> 18) & 63];
-    out += t[(v >> 12) & 63];
-    out += two ? t[(v >> 6) & 63] : '=';
-    out += '=';
+    o[0] = t[(v >> 18) & 63];
+    o[1] = t[(v >> 12) & 63];
+    if(two) o[2] = t[(v >> 6) & 63];
   }
   fwrite(out.data(), 1, out.size(), _fp);
 }
@@ -98,15 +99,24 @@ void vtkXMLWriter::_binary(const void *data, std::size_t numBytes)
     header[0] = numBlocks;
     header[1] = blockSize;
     header[2] = numBytes % blockSize;
-    std::vector<unsigned char> out, block(compressBound(blockSize));
+    // (the blocks compressed by several threads, at the fastest level: a
+    // larger one hardly makes the files smaller, the values of a mesh or a
+    // field compressing little, but takes much longer)
+    std::vector<std::vector<unsigned char>> blocks(numBlocks);
+    int nthreads = CTX::instance()->numThreadsFor(numBlocks, 2);
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
     for(std::size_t b = 0; b < numBlocks; b++) {
       std::size_t n = std::min(blockSize, numBytes - b * blockSize);
-      uLongf size = block.size();
-      compress2(block.data(), &size, bytes + b * blockSize, n,
-                Z_DEFAULT_COMPRESSION);
+      blocks[b].resize(compressBound(n));
+      uLongf size = blocks[b].size();
+      compress2(blocks[b].data(), &size, bytes + b * blockSize, n,
+                Z_BEST_SPEED);
+      blocks[b].resize(size);
       header[3 + b] = size;
-      out.insert(out.end(), block.begin(), block.begin() + size);
     }
+    std::vector<unsigned char> out;
+    out.reserve(numBytes / 2);
+    for(auto &blk : blocks) out.insert(out.end(), blk.begin(), blk.end());
     _base64((const unsigned char *)header.data(),
             header.size() * sizeof(std::uint64_t));
     _base64(out.data(), out.size());
@@ -401,6 +411,13 @@ namespace {
     bool _base64;
     unsigned char _buf[3];
     int _have, _idx;
+    // the value of each character, -1 if it is not one of the 64
+    static const signed char *_table()
+    {
+      static signed char t[256];
+      for(int c = 0; c < 256; c++) t[c] = (signed char)_value((char)c);
+      return t;
+    }
     static int _value(char c)
     {
       if(c >= 'A' && c <= 'Z') return c - 'A';
@@ -450,6 +467,24 @@ namespace {
         memcpy(d, _p, n);
         _p += n;
         return true;
+      }
+      // (the bytes decoded last, then whole groups of 4 characters without
+      // padding or spaces through a table, then the others one at a time)
+      static const signed char *table = _table();
+      while(n && _idx < _have) {
+        *d++ = _buf[_idx++];
+        n--;
+      }
+      while(n >= 3 && _end - _p >= 4) {
+        int a = table[(unsigned char)_p[0]], b = table[(unsigned char)_p[1]],
+            c = table[(unsigned char)_p[2]], e = table[(unsigned char)_p[3]];
+        if((a | b | c | e) < 0) break;
+        d[0] = (unsigned char)((a << 2) | (b >> 4));
+        d[1] = (unsigned char)(((b & 15) << 4) | (c >> 2));
+        d[2] = (unsigned char)(((c & 3) << 6) | e);
+        d += 3;
+        n -= 3;
+        _p += 4;
       }
       while(n) {
         if(_idx == _have && !_group()) return false;
@@ -516,18 +551,26 @@ namespace {
     in.endRun();
     bytes.resize(numBlocks ? (numBlocks - 1) * blockSize +
                                (lastSize ? lastSize : blockSize) : 0);
-    std::vector<unsigned char> block;
-    std::size_t done = 0;
+    // (all the compressed blocks, then each uncompressed in its place, by
+    // several threads)
+    std::vector<std::size_t> start(numBlocks + 1, 0);
+    for(std::size_t b = 0; b < numBlocks; b++)
+      start[b + 1] = start[b] + sizes[b];
+    std::vector<unsigned char> blocks(start[numBlocks]);
+    if(!blocks.empty() && !in.read(blocks.data(), blocks.size())) return false;
+    std::atomic<bool> ok(true);
+    int nthreads = CTX::instance()->numThreadsFor(numBlocks, 2);
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
     for(std::size_t b = 0; b < numBlocks; b++) {
-      block.resize(sizes[b]);
-      if(!in.read(block.data(), block.size())) return false;
-      uLongf size = bytes.size() - done;
-      if(uncompress(bytes.data() + done, &size, block.data(), block.size()) !=
-         Z_OK)
-        return false;
-      done += size;
+      std::size_t expected =
+        (b + 1 < numBlocks || !lastSize) ? blockSize : lastSize;
+      uLongf size = expected;
+      if(uncompress(bytes.data() + b * blockSize, &size,
+                    blocks.data() + start[b], sizes[b]) != Z_OK ||
+         size != expected)
+        ok = false;
     }
-    return done == bytes.size();
+    return ok;
 #else
     Msg::Error("Gmsh must be compiled with zlib to read compressed VTK files");
     return false;
