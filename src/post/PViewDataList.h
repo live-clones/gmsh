@@ -48,7 +48,7 @@ public:
 
   // the kinds of lists: points, lines, triangles, quadrangles, tetrahedra,
   // hexahedra, prisms, pyramids and trihedra, each with 1, 3 and 9 components,
-  // in this order (that of the files)
+  // in this order (that of the files, which have no trihedra)
   struct listKind {
     const char *name;
     int type, dim, numNodes, numEdges, numComp;
@@ -58,6 +58,7 @@ public:
   static const listKind listKinds[27];
 
 private:
+  // the number of elements in the lists up to each one, included
   int _index[27];
   // list-based data has no topology: node identifiers are recreated once, by
   // merging the nodes that have the same coordinates, and cached here. _nodeId
@@ -72,7 +73,9 @@ private:
   // What was last read of an element, kept by each thread: the element, the
   // state of the lists it was read in (a number no other state of any list-
   // based view has: it changes when they are finalized), and where its data
-  // is in them. Several threads can then read the view at the same time.
+  // is in them. Several threads can then read the view at the same time, and
+  // a few views in turn (as plugins reading several views value by value) keep
+  // an entry each.
   struct lastElement {
     std::size_t state = 0;
     int ele = -1, dim = 0, numNodes = 0, numComponents = 0, numValues = 0,
@@ -80,14 +83,32 @@ private:
     double *xyz = nullptr, *val = nullptr;
   };
   std::size_t _state;
-  static thread_local lastElement _lastRead;
+  static thread_local lastElement _lastRead[4];
   lastElement &_last(int ele)
   {
-    if(_lastRead.state != _state || _lastRead.ele != ele) _setLast(_lastRead, ele);
-    return _lastRead;
+    lastElement &l = _lastRead[_state & 3];
+    if(l.state != _state || l.ele != ele) _setLast(l, ele);
+    return l;
   }
+  // made by an adaptive view (see adaptiveData): its elements are the refined
+  // ones, searched as they are (see OctreePost)
   bool _isAdapted;
+  // set while smooth() finalizes the view, as finalize() smooths it when
+  // PostProcessing.Smoothing is set
+  bool _smoothing;
+  // the index of the point each point (x, y, z in sequence) is merged with
+  static std::vector<std::size_t> _mergePoints(const std::vector<double> &xyz,
+                                               double eps, std::size_t &num);
   void _stat(std::vector<double> &D, std::vector<char> &C, int nb);
+  // the characters of the string whose record (of nb values: 4 for the 2D
+  // strings, 5 for the 3D ones) starts at D[i] are C[beg, end)
+  static void _stringSpan(const std::vector<double> &D,
+                          const std::vector<char> &C, std::size_t i, int nb,
+                          std::size_t &beg, std::size_t &end)
+  {
+    beg = (std::size_t)D[i + nb - 1];
+    end = (i + 2 * nb <= D.size()) ? (std::size_t)D[i + 2 * nb - 1] : C.size();
+  }
   void _stat(std::vector<double> &list, int nbcomp, int nbelm, int nbnod,
              int type);
   void _setLast(lastElement &l, int ele);

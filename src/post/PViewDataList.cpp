@@ -4,7 +4,6 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
-#include <string.h>
 #include <unordered_map>
 #include "PView.h"
 #include "PViewDataList.h"
@@ -12,7 +11,6 @@
 #include "GmshDefines.h"
 #include "BasisFactory.h"
 #include "Numeric.h"
-#include "SmoothData.h"
 #include "Context.h"
 #include "polynomialBasis.h"
 #include "OS.h"
@@ -56,7 +54,8 @@ const PViewDataList::listKind PViewDataList::listKinds[27] = {
 
 PViewDataList::PViewDataList(bool isAdapted)
   : PViewData(), NbTimeStep(0), Min(VAL_INF), Max(-VAL_INF), NbT2(0), NbT3(0),
-    _nodeIndexStatus(0), _state(newState()), _isAdapted(isAdapted)
+    _nodeIndexStatus(0), _state(newState()), _isAdapted(isAdapted),
+    _smoothing(false)
 {
   for(auto &k : listKinds) this->*k.num = 0;
   for(int i = 0; i < 27; i++) _index[i] = 0;
@@ -98,8 +97,9 @@ void PViewDataList::addStep(std::vector<double> &y)
     Msg::Error("Wrong number of values while adding step in list-based view");
     return;
   }
-  // This is not very efficient, but well... ;-)
+  // (each point gets its value of the new step after those it has)
   std::vector<double> tmp;
+  tmp.reserve(SP.size() + NbSP);
   int stride = SP.size() / NbSP;
   for(int i = 0; i < NbSP; i++) {
     for(int j = 0; j < stride; j++) tmp.push_back(SP[i * stride + j]);
@@ -147,7 +147,7 @@ bool PViewDataList::finalize(bool computeMinMax,
   for(int i = 0; i < 27; i++)
     _index[i] = (i ? _index[i - 1] : 0) + this->*listKinds[i].num;
 
-  if(CTX::instance()->post.smooth) smooth();
+  if(CTX::instance()->post.smooth && !_smoothing) smooth();
 
   return PViewData::finalize();
 }
@@ -178,7 +178,9 @@ int PViewDataList::getNumTensors(int step)
 
 int PViewDataList::getNumElements(int step, int ent)
 {
-  return getNumScalars() + getNumVectors() + getNumTensors();
+  int n = 0;
+  for(auto &k : listKinds) n += this->*k.num;
+  return n;
 }
 
 double PViewDataList::getTime(int step)
@@ -239,16 +241,11 @@ void PViewDataList::_stat(std::vector<double> &D, std::vector<char> &C, int nb)
 {
   // compute statistics for text lists
   for(std::size_t i = 0; i < D.size(); i += nb) {
-    double beg = D[i + nb - 1];
-    double end;
-    if(i + 2 * nb > D.size())
-      end = C.size();
-    else
-      end = D[i + nb + nb - 1];
-    char *c = &C[(int)beg];
+    std::size_t beg, end;
+    _stringSpan(D, C, i, nb, beg, end);
     int nbtime = 0;
-    for(int j = 0; j < (int)(end - beg); j++)
-      if(c[j] == '\0') nbtime++;
+    for(std::size_t j = beg; j < end; j++)
+      if(C[j] == '\0') nbtime++;
     if(nbtime > NbTimeStep) NbTimeStep = nbtime;
   }
   if(nb == 5) {
@@ -333,28 +330,42 @@ void PViewDataList::_setLast(lastElement &l, int ele)
   l.ele = ele;
   // the list of the element: the first whose elements end after it
   int k = std::upper_bound(_index, _index + 27, ele) - _index;
-  if(k >= 27) return;
+  if(k >= 27) { // (no such element)
+    l = lastElement();
+    l.state = _state;
+    l.ele = ele;
+    return;
+  }
   const listKind &kind = listKinds[k];
   std::vector<double> &list = this->*kind.list;
   int i = ele - (k ? _index[k - 1] : 0), nbnod = kind.numNodes;
-  if(haveInterpolationMatrices()) {
-    std::vector<fullMatrix<double> *> im;
-    if(getInterpolationMatrices(kind.type, im) == 4) nbnod = im[2]->size1();
-  }
+  // (with interpolation matrices: as many values as functions, and with 4 of
+  // them as many nodes as geometric functions)
+  auto im = _interpolation.find(kind.type);
+  if(im != _interpolation.end() && im->second.size() == 4)
+    nbnod = im->second[2]->size1();
   l.dim = kind.dim;
   l.numNodes = nbnod;
   l.numComponents = kind.numComp;
   l.numEdges = kind.numEdges;
   l.type = kind.type;
-  // the numbers of coordinates and values of an element, and before it
+  // the numbers of coordinates and values of an element, and before it; the
+  // values of a step, unless the element has fewer (lists may have more
+  // steps than the view)
   std::size_t nb = list.size() / (this->*kind.num),
               before = (std::size_t)i * nb;
-  l.numValues = (int)((nb - 3 * nbnod) / NbTimeStep);
+  int numValues =
+    kind.numComp * ((im != _interpolation.end() && im->second.size()) ?
+                      im->second[0]->size1() :
+                      nbnod);
+  if(numValues * NbTimeStep > (int)(nb - 3 * nbnod))
+    numValues = (int)((nb - 3 * nbnod) / NbTimeStep);
+  l.numValues = numValues;
   l.xyz = &list[before];
   l.val = &list[before + 3 * l.numNodes];
 }
 
-thread_local PViewDataList::lastElement PViewDataList::_lastRead;
+thread_local PViewDataList::lastElement PViewDataList::_lastRead[4];
 
 int PViewDataList::getDimension(int step, int ent, int ele)
 {
@@ -478,7 +489,7 @@ void PViewDataList::getNodesAndValues(int step, int ent, int ele, int numNodes,
 {
   lastElement &l = _last(ele);
   if(step >= NbTimeStep) step = 0;
-  const double *v = l.val + step * l.numNodes * l.numComponents;
+  const double *v = l.val + step * l.numValues;
   for(int j = 0; j < numNodes; j++) {
     xyz[j][0] = l.xyz[j];
     xyz[j][1] = l.xyz[l.numNodes + j];
@@ -525,8 +536,7 @@ void PViewDataList::getValue(int step, int ent, int ele, int nod, int comp,
 {
   lastElement &l = _last(ele);
   if(step >= NbTimeStep) step = 0;
-  val = l.val[step * l.numNodes * l.numComponents +
-                 nod * l.numComponents + comp];
+  val = l.val[step * l.numValues + nod * l.numComponents + comp];
 }
 
 void PViewDataList::setValue(int step, int ent, int ele, int nod, int comp,
@@ -534,8 +544,7 @@ void PViewDataList::setValue(int step, int ent, int ele, int nod, int comp,
 {
   lastElement &l = _last(ele);
   if(step >= NbTimeStep) step = 0;
-  l.val[step * l.numNodes * l.numComponents +
-           nod * l.numComponents + comp] = val;
+  l.val[step * l.numValues + nod * l.numComponents + comp] = val;
 }
 
 int PViewDataList::getNumEdges(int step, int ent, int ele)
@@ -624,7 +633,7 @@ void PViewDataList::reverseElement(int step, int ent, int ele)
   std::vector<double> XYZ(3 * l.numNodes);
   for(std::size_t i = 0; i < XYZ.size(); i++) XYZ[i] = l.xyz[i];
 
-  std::vector<double> V(l.numNodes * l.numComponents * getNumTimeSteps());
+  std::vector<double> V(l.numValues * getNumTimeSteps());
   for(std::size_t i = 0; i < V.size(); i++) V[i] = l.val[i];
 
   // reverse node order
@@ -637,22 +646,19 @@ void PViewDataList::reverseElement(int step, int ent, int ele)
   for(int step = 0; step < getNumTimeSteps(); step++)
     for(int i = 0; i < l.numNodes; i++)
       for(int k = 0; k < l.numComponents; k++)
-        l.val[l.numComponents * l.numNodes * step +
-                 l.numComponents * i + k] =
-          V[l.numComponents * l.numNodes * step +
-            l.numComponents * (l.numNodes - i - 1) + k];
+        l.val[l.numValues * step + l.numComponents * i + k] =
+          V[l.numValues * step + l.numComponents * (l.numNodes - i - 1) + k];
 }
 
 void PViewDataList::smooth()
 {
   // the nodes of all the elements (but points), in the order of the lists
   struct node {
-    double x, y, z;
     double *v; // the values of the first step
     int stride, n; // between steps, and per step
-    std::size_t seq;
   };
   std::vector<node> nodes;
+  std::vector<double> xyz;
   std::vector<double> *list = nullptr;
   int *nbe = nullptr, nbc, nbn;
   for(int i = 0; i < 27; i++) {
@@ -661,57 +667,53 @@ void PViewDataList::smooth()
     std::size_t nb = list->size() / *nbe;
     for(std::size_t e = 0; e < list->size(); e += nb) {
       double *x = &(*list)[e], *y = x + nbn, *z = y + nbn, *v = z + nbn;
-      for(int j = 0; j < nbn; j++)
-        nodes.push_back(
-          {x[j], y[j], z[j], v + nbc * j, nbn * nbc, nbc, nodes.size()});
+      for(int j = 0; j < nbn; j++) {
+        nodes.push_back({v + nbc * j, nbn * nbc, nbc});
+        xyz.insert(xyz.end(), {x[j], y[j], z[j]});
+      }
     }
   }
 
-  // the nodes at the same place (within eps), together; their values are
-  // averaged in the order of the lists, as they always were
-  double eps = CTX::instance()->lc * 1.e-8;
-  std::sort(nodes.begin(), nodes.end(), [](const node &a, const node &b) {
-    if(a.x != b.x) return a.x < b.x;
-    if(a.y != b.y) return a.y < b.y;
-    if(a.z != b.z) return a.z < b.z;
-    return a.seq < b.seq;
-  });
+  // the nodes at the same place (within eps), together, in the order of the
+  // lists: their values are averaged in that order, as they always were
+  std::size_t num = 0;
+  std::vector<std::size_t> merged =
+    _mergePoints(xyz, CTX::instance()->lc * 1.e-8, num);
+  std::vector<std::size_t> first(num + 1, 0), order(nodes.size());
+  for(auto m : merged) first[m + 1]++;
+  for(std::size_t m = 0; m < num; m++) first[m + 1] += first[m];
+  std::vector<std::size_t> next(first.begin(), first.end() - 1);
+  for(std::size_t k = 0; k < nodes.size(); k++) order[next[merged[k]]++] = k;
+
   int numSteps = NbTimeStep;
   std::vector<double> mean;
-  for(std::size_t beg = 0; beg < nodes.size();) {
-    const node &f = nodes[beg];
-    std::size_t end = beg + 1;
-    while(end < nodes.size() && std::abs(nodes[end].x - f.x) <= eps &&
-          std::abs(nodes[end].y - f.y) <= eps &&
-          std::abs(nodes[end].z - f.z) <= eps)
-      end++;
-    if(end - beg > 1) {
-      std::sort(nodes.begin() + beg, nodes.begin() + end,
-                [](const node &a, const node &b) { return a.seq < b.seq; });
-      // the running mean of the nodes with as many values as the first
-      int n = nodes[beg].n, count = 0;
-      mean.assign(n * numSteps, 0.);
-      for(std::size_t k = beg; k < end; k++) {
-        const node &p = nodes[k];
-        if(p.n != n) continue;
-        double x1 = (double)count / (double)(count + 1);
-        double x2 = 1. / (double)(count + 1);
-        for(int ts = 0; ts < numSteps; ts++)
-          for(int c = 0; c < n; c++)
-            mean[n * ts + c] =
-              x1 * mean[n * ts + c] + x2 * p.v[p.stride * ts + c];
-        count++;
-      }
-      for(std::size_t k = beg; k < end; k++) {
-        const node &p = nodes[k];
-        if(p.n != n) continue;
-        for(int ts = 0; ts < numSteps; ts++)
-          for(int c = 0; c < n; c++) p.v[p.stride * ts + c] = mean[n * ts + c];
-      }
+  for(std::size_t m = 0; m < num; m++) {
+    std::size_t beg = first[m], end = first[m + 1];
+    if(end - beg < 2) continue;
+    // the running mean of the nodes with as many values as the first
+    int n = nodes[order[beg]].n, count = 0;
+    mean.assign(n * numSteps, 0.);
+    for(std::size_t k = beg; k < end; k++) {
+      const node &p = nodes[order[k]];
+      if(p.n != n) continue;
+      double x1 = (double)count / (double)(count + 1);
+      double x2 = 1. / (double)(count + 1);
+      for(int ts = 0; ts < numSteps; ts++)
+        for(int c = 0; c < n; c++)
+          mean[n * ts + c] =
+            x1 * mean[n * ts + c] + x2 * p.v[p.stride * ts + c];
+      count++;
     }
-    beg = end;
+    for(std::size_t k = beg; k < end; k++) {
+      const node &p = nodes[order[k]];
+      if(p.n != n) continue;
+      for(int ts = 0; ts < numSteps; ts++)
+        for(int c = 0; c < n; c++) p.v[p.stride * ts + c] = mean[n * ts + c];
+    }
   }
+  _smoothing = true;
   finalize();
+  _smoothing = false;
 }
 
 double PViewDataList::getMemoryInMB()
@@ -779,14 +781,9 @@ bool PViewDataList::combineSpace(nameData &nd)
       T2D.push_back(l->T2D[i + 1]);
       T2D.push_back(l->T2D[i + 2]);
       T2D.push_back(T2C.size());
-      double beg = l->T2D[i + 3];
-      double end;
-      if(i > l->T2D.size() - 8)
-        end = l->T2C.size();
-      else
-        end = l->T2D[i + 3 + 4];
-      char *c = &l->T2C[(int)beg];
-      for(int j = 0; j < (int)(end - beg); j++) T2C.push_back(c[j]);
+      std::size_t beg, end;
+      _stringSpan(l->T2D, l->T2C, i, 4, beg, end);
+      T2C.insert(T2C.end(), l->T2C.begin() + beg, l->T2C.begin() + end);
       NbT2++;
     }
     for(std::size_t i = 0; i < l->T3D.size(); i += 5) {
@@ -795,14 +792,9 @@ bool PViewDataList::combineSpace(nameData &nd)
       T3D.push_back(l->T3D[i + 2]);
       T3D.push_back(l->T3D[i + 3]);
       T3D.push_back(T3C.size());
-      double beg = l->T3D[i + 4];
-      double end;
-      if(i > l->T3D.size() - 10)
-        end = l->T3C.size();
-      else
-        end = l->T3D[i + 4 + 5];
-      char *c = &l->T3C[(int)beg];
-      for(int j = 0; j < (int)(end - beg); j++) T3C.push_back(c[j]);
+      std::size_t beg, end;
+      _stringSpan(l->T3D, l->T3C, i, 5, beg, end);
+      T3C.insert(T3C.end(), l->T3C.begin() + beg, l->T3C.begin() + end);
       NbT3++;
     }
   }
@@ -888,14 +880,10 @@ bool PViewDataList::combineTime(nameData &nd)
           T2D.push_back(T2C.size());
         }
         // copy char values
-        double beg = data[k]->T2D[j * 4 + 3];
-        double end;
-        if(j == NbT2 - 1)
-          end = data[k]->T2C.size();
-        else
-          end = data[k]->T2D[j * 4 + 4 + 3];
-        char *c = &data[k]->T2C[(int)beg];
-        for(int l = 0; l < (int)(end - beg); l++) T2C.push_back(c[l]);
+        std::size_t beg, end;
+        _stringSpan(data[k]->T2D, data[k]->T2C, j * 4, 4, beg, end);
+        T2C.insert(T2C.end(), data[k]->T2C.begin() + beg,
+                   data[k]->T2C.begin() + end);
       }
     }
   }
@@ -914,14 +902,10 @@ bool PViewDataList::combineTime(nameData &nd)
           T3D.push_back(T3C.size());
         }
         // copy char values
-        double beg = data[k]->T3D[j * 5 + 4];
-        double end;
-        if(j == NbT3 - 1)
-          end = data[k]->T3C.size();
-        else
-          end = data[k]->T3D[j * 5 + 5 + 4];
-        char *c = &data[k]->T3C[(int)beg];
-        for(int l = 0; l < (int)(end - beg); l++) T3C.push_back(c[l]);
+        std::size_t beg, end;
+        _stringSpan(data[k]->T3D, data[k]->T3C, j * 5, 5, beg, end);
+        T3C.insert(T3C.end(), data[k]->T3C.begin() + beg,
+                   data[k]->T3C.begin() + end);
       }
     }
   }

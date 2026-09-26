@@ -41,12 +41,14 @@ private:
   // the number of its first step in the files that number the steps, for
   // data holding the steps of another view from that one on
   int _firstStep;
-  // octree for rapid search
+  // octree for rapid search, and kdtree for the nearest node, built on first
+  // use and again when the data has changed (see getStamp()): _getOctree()
   OctreePost *_octree;
-  // kdtree for rapid search of neighrest neighbor
   SPoint3Cloud _pc;
   SPoint3CloudAdaptor<SPoint3Cloud> _pc2kdtree;
   SPoint3KDTree *_kdtree;
+  int _octreeStamp, _kdtreeStamp;
+  OctreePost *_getOctree();
 
 protected:
   // adaptive visualization data
@@ -157,13 +159,14 @@ public:
 
   // return the number of nodes of the ele-th element in the ent-th entity
   virtual int getNumNodes(int step, int ent, int ele) { return 0; }
-  // a stable identifier for a node of an element, the same for the elements
-  // sharing it; 0 if the data has no node topology
+
   // for each element, its faces that are on the skin of the view (a bit
   // each, ordered as the drawing code orders them), if the data knows them
   // better than a matching of the faces would find them (null otherwise)
   virtual const std::vector<unsigned char> *getSkinMasks() { return nullptr; }
 
+  // a stable identifier for a node of an element, the same for the elements
+  // sharing it; 0 if the data has no node topology
   virtual std::size_t getNodeId(int step, int ent, int ele, int nod)
   {
     return 0;
@@ -279,10 +282,8 @@ public:
   // create/destroy adaptive data (see PView::adapt(), which refines it)
   void initAdaptiveData();
 
-  // Routines for
-  // - export of adapted views to pvtu file format for parallel visualization
-  //   with paraview,
-  // - and/or generation of VTK data structure for ParaView plugin.
+  // adaptive data without data refined for the drawing: to save the view
+  // refined (see PView::getAdaptedSteps()), and for the ParaView plugin
   void initAdaptiveDataLight(int step, int level, double tol);
   // (min and max: see adaptiveData::changeResolution())
   void saveAdaptedViewForVTK(const std::string &fileName, int step, int level,
@@ -307,6 +308,7 @@ public:
   // true if the view is interpolated at an order higher than one, in its
   // values or in its geometry: what adaptation refines
   bool haveHighOrderInterpolation();
+  // (all of them if type is 0)
   void deleteInterpolationMatrices(int type = 0);
 
   // access to global interpolation schemes
@@ -344,7 +346,7 @@ public:
   // is the view a list-based dataset
   virtual bool isListBased() { return false; }
 
-  // get (approx) memry used by data in MB
+  // get (approx) memory used by data in MB
   virtual double getMemoryInMB() { return 0; }
 
   // get GModel (if view supports it)
@@ -356,14 +358,13 @@ public:
   // get MElement (if view supports it)
   virtual MElement *getElement(int step, int entity, int element);
 
-  // find coordinates of closest node to point (xn, yn, zn); currently performs
-  // a simple linear search - we might want to use a kdtree instead
+  // find coordinates of closest node to point (xn, yn, zn), with a kdtree
   double findClosestNode(double &xn, double &yn, double &zn, int step);
 
   // search for the value of the View at point x, y, z. Values are interpolated
-  // using standard first order shape functions in the post element. If several
-  // time steps are present, they are all interpolated unless time step is set
-  // to a different value than -1.
+  // with the shape functions of the elements (first order for list-based
+  // views). If several time steps are present, they are all interpolated
+  // unless time step is set to a different value than -1.
   bool searchScalar(double x, double y, double z, double *values, int step = -1,
                     double *size = nullptr, int qn = 0, double *qx = nullptr,
                     double *qy = nullptr, double *qz = nullptr,

@@ -4,14 +4,12 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdio.h>
-#include <string.h>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "Numeric.h"
 #include "PViewData.h"
 #include "MPolygon.h"
 #include "MPolyhedron.h"
-#include "adaptiveData.h"
 #include "OS.h"
 
 bool PViewData::writeSTL(const std::string &fileName)

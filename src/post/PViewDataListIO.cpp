@@ -3,13 +3,11 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <string.h>
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
-#include <set>
 #include <unordered_map>
 #include "PViewDataList.h"
 #include "PViewDataGModel.h"
@@ -25,7 +23,6 @@
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "Context.h"
-#include "adaptiveData.h"
 #include "OS.h"
 
 // read n values, false if the file ends before
@@ -90,10 +87,6 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   int NbSQ2 = 0, NbVQ2 = 0, NbTQ2 = 0, NbSS2 = 0, NbVS2 = 0, NbTS2 = 0;
   int NbSH2 = 0, NbVH2 = 0, NbTH2 = 0, NbSI2 = 0, NbVI2 = 0, NbTI2 = 0;
   int NbSY2 = 0, NbVY2 = 0, NbTY2 = 0;
-  std::vector<double> SL2, VL2, TL2, ST2, VT2, TT2;
-  std::vector<double> SQ2, VQ2, TQ2, SS2, VS2, TS2;
-  std::vector<double> SH2, VH2, TH2, SI2, VI2, TI2;
-  std::vector<double> SY2, VY2, TY2;
 
   if(version <= 1.0) {
     Msg::Debug("Detected post-processing view format <= 1.0");
@@ -166,7 +159,7 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
     }
   }
 
-  // the lists, in the order of the file (as in _getRawData()), then their
+  // the lists, in the order of the file (as in listKinds), then their
   // second order versions, which replace them
   const int numNodes2[8] = {1, 3, 6, 9, 10, 27, 18, 14};
   const int num2[24] = {0,     0,     0,     NbSL2, NbVL2, NbTL2, NbST2, NbVT2,
@@ -350,11 +343,11 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
   return true;
 }
 
-// The index of the point each point (x, y, z in sequence) is merged with: the
-// points closer than eps in each direction, the merged points numbered in the
-// order in which they first appear
-static std::vector<std::size_t> mergePoints(const std::vector<double> &xyz,
-                                            double eps, std::size_t &num)
+// The points closer than eps in each direction are merged, the merged points
+// numbered in the order in which they first appear
+std::vector<std::size_t>
+PViewDataList::_mergePoints(const std::vector<double> &xyz, double eps,
+                            std::size_t &num)
 {
   std::size_t n = xyz.size() / 3;
   const double *p = xyz.data();
@@ -495,7 +488,7 @@ bool PViewDataList::writeMSH(const std::string &fileName,
                               norm(SVector3(bbox.max(), bbox.min())) *
                                 CTX::instance()->geom.tolerance;
   std::size_t numVertices;
-  std::vector<std::size_t> merged = mergePoints(xyz, eps, numVertices);
+  std::vector<std::size_t> merged = _mergePoints(xyz, eps, numVertices);
 
   // the tag of each element: those of different views with the same type and
   // nodes are the same element (the n-th such element of a view is the n-th of

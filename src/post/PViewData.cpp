@@ -14,8 +14,9 @@
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
 PViewData::PViewData()
-  : _dirty(true), _fileIndex(0), _firstStep(0), _octree(nullptr), _pc2kdtree(_pc),
-    _kdtree(nullptr), _adaptive(nullptr)
+  : _dirty(true), _fileIndex(0), _firstStep(0), _octree(nullptr),
+    _pc2kdtree(_pc), _kdtree(nullptr), _octreeStamp(-1), _kdtreeStamp(-1),
+    _adaptive(nullptr)
 {
 }
 
@@ -50,10 +51,8 @@ void PViewData::initAdaptiveDataLight(int step, int level, double tol)
   if(!_adaptive) {
     Msg::Debug("Initializing adaptive data %p interp size=%d", this,
                _interpolation.size());
-    // _outData in adaptive.h is only used for visualization of adapted views in
-    // the GMSH GUI.  In some cases (export of adapted views under pvtu format,
-    // use of GMSH as external lib), this object is not needed so avoid its
-    // allocation in order to limit memory consumption
+    // (without the data refined for the drawing, not needed to save the
+    // refined view or to build the data of the ParaView plugin)
     bool outDataInit = false;
     _adaptive = new adaptiveData(this, outDataInit);
   }
@@ -63,18 +62,13 @@ void PViewData::saveAdaptedViewForVTK(const std::string &fileName, int step,
                                       int level, double tol, int npart,
                                       bool isBinary, double min, double max)
 {
-  if(_adaptive) {
-    // _adaptiveData has already been allocated from the adaptive view panel of
-    // the GUI for instance.
-    _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary,
-                                      fileName, 0, min, max);
-  }
-  else {
-    initAdaptiveDataLight(step, level, tol);
-    _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary,
-                                      fileName, 0, min, max);
-    destroyAdaptiveData();
-  }
+  // (with the adaptive data of the view if it has some, else with some made
+  // for the occasion)
+  bool made = !_adaptive;
+  if(made) initAdaptiveDataLight(step, level, tol);
+  _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary, fileName,
+                                    0, min, max);
+  if(made) destroyAdaptiveData();
 }
 
 void PViewData::destroyAdaptiveData()
@@ -100,25 +94,27 @@ void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val,
                                int componentMap[9])
 {
   int numComp = getNumComponents(step, ent, ele);
+  // (on the stack: there are at most 9 components)
+  double d[9];
   if(forceNumComponents && componentMap) {
-    std::vector<double> d(forceNumComponents);
-    for(int i = 0; i < forceNumComponents; i++) {
+    int n = std::min(forceNumComponents, 9);
+    for(int i = 0; i < n; i++) {
       int comp = componentMap[i];
       if(comp >= 0 && comp < numComp)
         getValue(step, ent, ele, nod, comp, d[i]);
       else
         d[i] = 0.;
     }
-    val = ComputeScalarRep(forceNumComponents, &d[0], tensorRep);
+    val = ComputeScalarRep(n, d, tensorRep);
   }
   else if(numComp == 1) {
     getValue(step, ent, ele, nod, 0, val);
   }
   else {
-    std::vector<double> d(numComp);
-    for(int comp = 0; comp < numComp; comp++)
+    int n = std::min(numComp, 9);
+    for(int comp = 0; comp < n; comp++)
       getValue(step, ent, ele, nod, comp, d[comp]);
-    val = ComputeScalarRep(numComp, &d[0], tensorRep);
+    val = ComputeScalarRep(n, d, tensorRep);
   }
 }
 
@@ -206,7 +202,14 @@ bool PViewData::haveHighOrderInterpolation()
 
 void PViewData::deleteInterpolationMatrices(int type)
 {
-  _interpolation.erase(type);
+  for(auto it = _interpolation.begin(); it != _interpolation.end();) {
+    if(type && it->first != type) {
+      it++;
+      continue;
+    }
+    for(auto m : it->second) delete m;
+    it = _interpolation.erase(it);
+  }
 }
 
 void PViewData::removeInterpolationScheme(const std::string &name)
@@ -226,7 +229,6 @@ void PViewData::removeAllInterpolationSchemes()
     for(auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
       for(std::size_t i = 0; i < it2->second.size(); i++) delete it2->second[i];
   _interpolationSchemes.clear();
-  std::map<std::string, interpolationMatrices>().swap(_interpolationSchemes);
 }
 
 void PViewData::addMatrixToInterpolationScheme(const std::string &name,
@@ -262,39 +264,11 @@ double PViewData::findClosestNode(double &xn, double &yn, double &zn, int step)
 {
   double x = xn, y = yn, z = zn;
 
-#if 0
-
-  // slow, naive implementation; beware that iterations on view data is
-  // currently not thread-safe (it uses a cache for the current element/node)
-  double dist2 = 1e200;
 #pragma omp critical(PViewDataFindClosestNode)
-  {
-    if(step < 0) step = getFirstNonEmptyTimeStep();
-    for(int ent = 0; ent < getNumEntities(step); ent++) {
-      for(int ele = 0; ele < getNumElements(step, ent); ele++) {
-        int numNodes = getNumNodes(step, ent, ele);
-        for(int nod = 0; nod < numNodes; nod++) {
-          double xx, yy, zz;
-          getNode(step, ent, ele, nod, xx, yy, zz);
-          double d2 =
-            (x - xx) * (x - xx) + (y - yy) * (y - yy) + (z - zz) * (z - zz);
-          if(d2 < dist2) {
-            dist2 = d2;
-            xn = xx;
-            yn = yy;
-            zn = zz;
-          }
-        }
-      }
-    }
-  }
-  return sqrt(dist2);
-
-#else
-
-#pragma omp critical(PViewDataFindClosestNode)
-  if(!_kdtree) {
+  if(!_kdtree || _kdtreeStamp != _stamp) {
     Msg::Debug("Rebuilding kdtree for view data '%s'", _name.c_str());
+    delete _kdtree;
+    _kdtreeStamp = _stamp;
     _pc.pts.clear();
     // FIXME: should directly iterate on mesh nodes for model-based views
     if(step < 0) step = getFirstNonEmptyTimeStep();
@@ -325,27 +299,29 @@ double PViewData::findClosestNode(double &xn, double &yn, double &zn, int step)
     zn = _pc.pts[idx].z();
     return sqrt(squ_dist);
   }
-  else{
-    return -1.;
-  }
+  return -1.;
+}
 
-#endif
+OctreePost *PViewData::_getOctree()
+{
+  if(!_octree || _octreeStamp != _stamp) {
+#pragma omp critical(PViewDataOctree)
+    if(!_octree || _octreeStamp != _stamp) {
+      Msg::Debug("Rebuilding octree for view data '%s'", _name.c_str());
+      delete _octree;
+      _octree = new OctreePost(this);
+      _octreeStamp = _stamp;
+    }
+  }
+  return _octree;
 }
 
 bool PViewData::searchScalar(double x, double y, double z, double *values,
                              int step, double *size, int qn, double *qx,
                              double *qy, double *qz, bool grad, int dim)
 {
-  if(!_octree) {
-#pragma omp barrier
-#pragma omp single
-    {
-      Msg::Debug("Rebuilding octree for view data '%s'", _name.c_str());
-      _octree = new OctreePost(this);
-    }
-  }
-  return _octree->searchScalar(x, y, z, values, step, size, qn, qx, qy, qz,
-                               grad, dim);
+  return _getOctree()->searchScalar(x, y, z, values, step, size, qn, qx, qy, qz,
+                                    grad, dim);
 }
 
 bool PViewData::searchScalarClosest(double x, double y, double z,
@@ -376,16 +352,8 @@ bool PViewData::searchVector(double x, double y, double z, double *values,
                              int step, double *size, int qn, double *qx,
                              double *qy, double *qz, bool grad, int dim)
 {
-  if(!_octree) {
-#pragma omp barrier
-#pragma omp single
-    {
-      Msg::Debug("Rebuilding octree for view data '%s'", _name.c_str());
-      _octree = new OctreePost(this);
-    }
-  }
-  return _octree->searchVector(x, y, z, values, step, size, qn, qx, qy, qz,
-                               grad, dim);
+  return _getOctree()->searchVector(x, y, z, values, step, size, qn, qx, qy, qz,
+                                    grad, dim);
 }
 
 bool PViewData::searchVectorClosest(double x, double y, double z,
@@ -416,16 +384,8 @@ bool PViewData::searchTensor(double x, double y, double z, double *values,
                              int step, double *size, int qn, double *qx,
                              double *qy, double *qz, bool grad, int dim)
 {
-  if(!_octree) {
-#pragma omp barrier
-#pragma omp single
-    {
-      Msg::Debug("Rebuilding octree for view data '%s'", _name.c_str());
-      _octree = new OctreePost(this);
-    }
-  }
-  return _octree->searchTensor(x, y, z, values, step, size, qn, qx, qy, qz,
-                               grad, dim);
+  return _getOctree()->searchTensor(x, y, z, values, step, size, qn, qx, qy, qz,
+                                    grad, dim);
 }
 
 bool PViewData::searchTensorClosest(double x, double y, double z,
