@@ -264,8 +264,23 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
   // now do insertion of points
   if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
-    for(std::size_t i = 0; i < regions.size(); i++) {
-      refineMeshMMG(regions[i]);
+    // boundary recovery on a connected group of regions leaves every
+    // tetrahedron in regions[0]->tetrahedra; distribute them to their true
+    // owning region before invoking MMG3D
+    classifyTetrahedraInRegions(regions, &sqr);
+    if(regions.size() > 1 && CTX::instance()->mesh.mmg3dCombineDomains) {
+      refineMeshMMGGroup(regions, allFaces);
+    }
+    else {
+      // must stay sequential: MMG3D is not safe to call concurrently from
+      // multiple threads (two threads independently running
+      // MMG3D_mmg3dlib segfault reliably). This is not affected by
+      // General.NumThreads, which never parallelizes this loop or the
+      // per-region-group loop above it -- only the 1D/2D meshing phases
+      // and the (mutually exclusive) HXT 3D algorithm honor it.
+      for(std::size_t i = 0; i < regions.size(); i++) {
+        refineMeshMMG(regions[i]);
+      }
     }
   }
   else if(CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&

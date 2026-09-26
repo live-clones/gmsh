@@ -34,6 +34,7 @@ struct contextMeshOptions {
   int lcFromPoints, lcFromParametricPoints, lcFromCurvature, lcFromCurvatureIso;
   int lcExtendFromBoundary, checkSurfaceNormalValidity;
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
+  int mmg3dCombineDomains;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombineNodeRepositioning;
   double recombineMinimumQuality;
