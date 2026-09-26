@@ -20,7 +20,6 @@ class PViewOptions;
 class VertexArray;
 class smooth_normals;
 class GModel;
-class GMSH_PostPlugin;
 namespace onelab {
   class localNetworkClient;
 }
@@ -114,7 +113,6 @@ public:
   // get/set the eye position (for transparency calculations)
   SPoint3 &getEye() { return _eye; }
   void setEye(SPoint3 &p) { _eye = p; }
-  //  void setDrawContext(drawContext *ctx){_ctx=ctx;}
 
   // get (approx.) memory used by the view, in MB
   double getMemoryInMB();

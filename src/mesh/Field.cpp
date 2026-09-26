@@ -3387,7 +3387,6 @@ void Field::putOnView(PView *view, int comp)
   data->setName(oss.str());
   data->finalize();
   view->setChanged(true);
-  data->destroyAdaptiveData();
 }
 #endif
 

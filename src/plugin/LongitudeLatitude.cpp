@@ -84,7 +84,6 @@ PView *GMSH_LongitudeLatitudePlugin::execute(PView *v)
       }
     }
   }
-  data1->destroyAdaptiveData();
   data1->finalize();
   SetBoundingBox();
   SBoundingBox3d bb(gxmin, gymin, 0, gxmax, gymax, 0);

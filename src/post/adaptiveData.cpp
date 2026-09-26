@@ -17,7 +17,6 @@
 #include "MPolygon.h"
 #include "MPolyhedron.h"
 #include "Plugin.h"
-#include "OS.h"
 #include "GmshDefines.h"
 #include "Context.h"
 #include <sstream>
@@ -212,8 +211,8 @@ static adaptiveShape makeShape(int type)
                   {16, 23, 15, 4, 20, 26, 24, 12}, {23, 19, 7, 15, 26, 22, 14, 24},
                   {20, 26, 24, 12, 17, 21, 13, 5}, {26, 22, 14, 24, 21, 18, 6, 13},
                   {8, 25, 26, 20, 1, 9, 21, 17},   {25, 10, 22, 26, 9, 2, 18, 21}};
-    s.diagonal[0] = 3;
-    s.diagonal[1] = 5;
+    s.diagonal[0] = 1; // (as hexTets in PViewVertexArrays.cpp)
+    s.diagonal[1] = 7;
     s.faces = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
                {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
     s.shapeFunctions = hexahedronSF;
@@ -293,7 +292,6 @@ adaptiveElements::adaptiveElements(
   }
 }
 
-adaptiveElements::~adaptiveElements() {}
 
 // the vertex at this place of the reference element, new if need be (the
 // elements of a set do not move)
@@ -637,7 +635,8 @@ int adaptiveElements::adapt(adaptiveWork &w, double tol, int numComp,
       for(int c = 0; c < numComp; c++)
         out.push_back(w.values[e->p[i]->index * numComp + c]);
     if(outSkin) {
-      // a face is on the skin if it lies on a face of the element that is
+      // a face of a refined element is on the skin if it lies on a face of the
+      // element that is on it
       unsigned char mask = 0;
       for(int f = 0; f < 6; f++)
         if(e->onFace[f] >= 0 && (onSkin & (1 << e->onFace[f])))
@@ -648,9 +647,9 @@ int adaptiveElements::adapt(adaptiveWork &w, double tol, int numComp,
   return (int)w.visible.size();
 }
 
-
-bool adaptPolytope(int level, int numComp, MElement *e, int &numNodes,
-                   std::vector<PCoords> &coords, std::vector<PValues> &values)
+static void adaptPolytope(int level, int numComp, MElement *e, int &numNodes,
+                          std::vector<PCoords> &coords,
+                          std::vector<PValues> &values)
 {
   int type = e->getType();
 
@@ -793,56 +792,20 @@ bool adaptPolytope(int level, int numComp, MElement *e, int &numNodes,
   values = std::move(newValues);
   if(type == TYPE_POLYG) numNodes = 3;
   if(type == TYPE_POLYH) numNodes = 4;
-  return true;
 }
 
 // the list of a list-based view that holds the elements of a type
 static void getList(PViewDataList *out, int type, int numComp, int *&nb,
                     std::vector<double> *&list)
 {
-  int k = (numComp == 1) ? 0 : (numComp == 3) ? 1 : 2;
-  switch(type) {
-  case TYPE_PNT: {
-    int *n[3] = {&out->NbSP, &out->NbVP, &out->NbTP};
-    std::vector<double> *l[3] = {&out->SP, &out->VP, &out->TP};
-    nb = n[k]; list = l[k];
-  } break;
-  case TYPE_LIN: {
-    int *n[3] = {&out->NbSL, &out->NbVL, &out->NbTL};
-    std::vector<double> *l[3] = {&out->SL, &out->VL, &out->TL};
-    nb = n[k]; list = l[k];
-  } break;
-  case TYPE_TRI: {
-    int *n[3] = {&out->NbST, &out->NbVT, &out->NbTT};
-    std::vector<double> *l[3] = {&out->ST, &out->VT, &out->TT};
-    nb = n[k]; list = l[k];
-  } break;
-  case TYPE_QUA: {
-    int *n[3] = {&out->NbSQ, &out->NbVQ, &out->NbTQ};
-    std::vector<double> *l[3] = {&out->SQ, &out->VQ, &out->TQ};
-    nb = n[k]; list = l[k];
-  } break;
-  case TYPE_TET: {
-    int *n[3] = {&out->NbSS, &out->NbVS, &out->NbTS};
-    std::vector<double> *l[3] = {&out->SS, &out->VS, &out->TS};
-    nb = n[k]; list = l[k];
-  } break;
-  case TYPE_HEX: {
-    int *n[3] = {&out->NbSH, &out->NbVH, &out->NbTH};
-    std::vector<double> *l[3] = {&out->SH, &out->VH, &out->TH};
-    nb = n[k]; list = l[k];
-  } break;
-  case TYPE_PRI: {
-    int *n[3] = {&out->NbSI, &out->NbVI, &out->NbTI};
-    std::vector<double> *l[3] = {&out->SI, &out->VI, &out->TI};
-    nb = n[k]; list = l[k];
-  } break;
-  case TYPE_PYR: {
-    int *n[3] = {&out->NbSY, &out->NbVY, &out->NbTY};
-    std::vector<double> *l[3] = {&out->SY, &out->VY, &out->TY};
-    nb = n[k]; list = l[k];
-  } break;
-  default: nb = nullptr; list = nullptr; break;
+  nb = nullptr;
+  list = nullptr;
+  for(auto &k : PViewDataList::listKinds) {
+    if(k.type == type && k.numComp == numComp) {
+      nb = &(out->*k.num);
+      list = &(out->*k.list);
+      return;
+    }
   }
 }
 
@@ -892,7 +855,13 @@ void adaptiveElements::_boundElements(PViewData *in, int step)
     int ent = _elements[i].first, ele = _elements[i].second;
     int n = in->getNumNodes(step, ent, ele);
     double min[3] = {1e300, 1e300, 1e300}, max[3] = {-1e300, -1e300, -1e300};
-    std::vector<double> xyz(3 * n);
+    // (on the stack if they fit)
+    double few[3 * 64], *xyz = few;
+    std::vector<double> many;
+    if(n > 64) {
+      many.resize(3 * n);
+      xyz = many.data();
+    }
     for(int j = 0; j < n; j++) {
       double *x = &xyz[3 * j];
       in->getNode(step, ent, ele, j, x[0], x[1], x[2]);
@@ -922,7 +891,7 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
                                  const adaptiveRange &given, bool skinOnly,
                                  const adaptiveSelection *selection)
 {
-  int numComp = in->getNumComponents(0, 0, 0);
+  int numComp = in->getNumComponents(step, 0, 0);
   if(numComp != 1 && numComp != 3 && numComp != 9) return;
 
   // polygons and polyhedra come after the triangles and the tetrahedra, in
@@ -940,11 +909,16 @@ void adaptiveElements::addInView(double tol, int step, PViewData *in,
     *outNb = 0;
   }
 
-  // (only the volumes have a skin, and are selected: the planes leave curves
-  // and surfaces to themselves)
+  // (only the volumes have a skin; the curves and surfaces are selected as
+  // the selection says)
   bool volume = (_shape.type == TYPE_TET || _shape.type == TYPE_HEX ||
                  _shape.type == TYPE_PRI || _shape.type == TYPE_PYR);
-  if(!volume || polytopes) selection = nullptr;
+  if(selection && !volume) {
+    if(selection->others() == adaptiveSelection::noneRefined) return;
+    if(selection->others() == adaptiveSelection::allRefined)
+      selection = nullptr;
+  }
+  if(polytopes) selection = nullptr;
 
   // the elements, those a selection or a plugin may keep something of if
   // they say so from the spheres around them, without reading the others
@@ -1065,9 +1039,8 @@ int adaptiveElements::_addPolytope(int level, int step, PViewData *in, int ent,
     for(int c = 0; c < numComp; c++)
       in->getValue(step, ent, ele, numComp * i + c, values.back().v[c]);
   }
-  if(!adaptPolytope(level, numComp, in->getElement(step, ent, ele), numNodes,
-                    coords, values))
-    return 0;
+  adaptPolytope(level, numComp, in->getElement(step, ent, ele), numNodes,
+                coords, values);
   for(std::size_t i = 0; i < coords.size() / numNodes; i++) {
     for(int k = 0; k < 3; k++)
       for(int n = 0; n < numNodes; n++)
@@ -1079,14 +1052,13 @@ int adaptiveElements::_addPolytope(int level, int step, PViewData *in, int ent,
   return (int)(coords.size() / numNodes);
 }
 
-
 adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
   : _step(-1), _level(-1), _tol(-1.), _skinAsked(false), _skinOnly(false),
-    _selected(false), _skinStep(-1), _skinStamp(-1), _skinFound(false),
-    _inData(data), _points(nullptr),
-    _lines(nullptr), _triangles(nullptr), _quadrangles(nullptr),
-    _tetrahedra(nullptr), _hexahedra(nullptr), _prisms(nullptr),
-    _pyramids(nullptr), _polygons(nullptr), _polyhedra(nullptr)
+    _selected(false), _inStamp(data->getStamp()), _skinStep(-1), _skinStamp(-1),
+    _skinFound(false), _inData(data), _points(nullptr), _lines(nullptr),
+    _triangles(nullptr), _quadrangles(nullptr), _tetrahedra(nullptr),
+    _hexahedra(nullptr), _prisms(nullptr), _pyramids(nullptr),
+    _polygons(nullptr), _polyhedra(nullptr)
 {
   if(outDataInit ==
      true) { // For visualization of the adapted view in GMSH GUI only
@@ -1120,6 +1092,9 @@ adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
   upBuildStaticData(false); // ... and do not generated global static data
                             // structure (only useful for ParaView plugin).
 }
+
+bool adaptiveData::isOutdated() const
+{ return _inStamp != _inData->getStamp(); }
 
 adaptiveData::~adaptiveData()
 {
@@ -1196,13 +1171,15 @@ bool adaptiveData::_findSkin(int step,
     for(std::size_t i = 0; i < num; i++) {
       if(shapeOf[i] < 0) continue;
       const adaptiveShape &shape = *shapes[(int)shapeOf[i]];
+      // (entity by entity, as the skin of the views: findSkin())
+      int ent = entityOf(i);
       for(std::size_t f = 0; f < shape.faces.size(); f++) {
         std::size_t k[4];
         int n = (int)shape.faces[f].size();
         for(int j = 0; j < n; j++) k[j] = ids[8 * i + shape.faces[f][j]];
         if(FaceMatcher<std::size_t, std::size_t>::share(k, n, nthreads) != t)
           continue;
-        matcher.add(matcher.hashOf(k, n, 0), i, (int)f);
+        matcher.add(matcher.hashOf(k, n, ent), i, (int)f);
       }
     }
     matcher.forEachLeft(
@@ -1245,8 +1222,12 @@ void adaptiveData::changeResolution(int step, int level, double tol,
     if(_hexahedra) _hexahedra->init(level);
     if(_pyramids) _pyramids->init(level);
   }
-  if(plug || selection || _selected || _step != step || _level != level ||
-     _tol != tol || newRange || skinOnly != _skinAsked) {
+  std::vector<double> selectionKey;
+  if(selection) selectionKey = selection->key();
+  bool newSelection =
+    (selection != nullptr) != _selected || selectionKey != _selectionKey;
+  if(plug || newSelection || _step != step || _level != level || _tol != tol ||
+     newRange || skinOnly != _skinAsked) {
     _outData->setDirty(true);
     // which faces of the elements are on the skin of the view, so that the
     // refined elements can tell the faces they have on it
@@ -1293,6 +1274,7 @@ void adaptiveData::changeResolution(int step, int level, double tol,
   _range = range;
   _skinAsked = skinOnly;
   _selected = (selection != nullptr);
+  _selectionKey.swap(selectionKey);
 }
 
 // The export of adapted views to VTK files, and the VTK data structure built
@@ -1395,9 +1377,11 @@ static int vtkCellType(int type)
 void adaptiveElements::buildMapping(const adaptiveWork &w, nodMap &myNodMap,
                                     double tol, int &numNodInsert)
 {
-  // Either this is not a uniform refinement and the mapping has to be rebuilt
-  // for each element, or this is the first time
-  if(!(tol > 0.0 || myNodMap.getSize() == 0)) return;
+  // the same for every element when all are refined everywhere (a negative
+  // tolerance), else built again for each
+  if(tol < 0. && myNodMap.getSize() &&
+     myNodMap.mapping.size() == w.visible.size() * _shape.numNodes)
+    return;
   myNodMap.cleanMapping();
 
   // the vertices of the elements that are kept, by their index in the tree
@@ -1424,7 +1408,7 @@ void adaptiveElements::addInViewForVTK(int step, double tol, PViewData *in,
                                        bool buildStaticData, int &numPoints,
                                        const adaptiveRange &given)
 {
-  int numComp = in->getNumComponents(0, 0, 0);
+  int numComp = in->getNumComponents(step, 0, 0);
   if(numComp != 1 && numComp != 3 && numComp != 9) return;
 
   int numNodInsert = 0, numNodes = _shape.numNodes;
@@ -1551,11 +1535,9 @@ void adaptiveData::changeResolutionForVTK(int step, int level, double tol,
     std::size_t numElements = countTotElmLev0(step, _inData);
     if(npart <= 0) npart = (int)(numElements * pow(8., level) / 2.e6) + 1;
     bool single = (npart == 1 && split[2] != ".pvtu");
-    writer = new adaptiveVTKWriter(split[0], name, isBinary,
-                                   single ? 0 : npart,
-                                   numElements,
-                                   _inData->getName(),
-                                   _inData->getNumComponents(0, 0, 0));
+    writer = new adaptiveVTKWriter(split[0], name, isBinary, single ? 0 : npart,
+                                   numElements, _inData->getName(),
+                                   _inData->getNumComponents(step, 0, 0));
   }
 
   // Views of 2D and 3D elements only supported for VTK. _points and _lines are

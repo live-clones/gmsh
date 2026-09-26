@@ -248,10 +248,11 @@ void PView::setOptions(PViewOptions *val)
 PViewData *PView::getData(bool useAdaptiveIfAvailable)
 {
   if(useAdaptiveIfAvailable && _clipLayer) return _clipLayer;
-  if(useAdaptiveIfAvailable && _data->getAdaptiveData() && !_data->isRemote())
+  // (the adaptive data refining a view to save it has no data of its own)
+  if(useAdaptiveIfAvailable && _data->getAdaptiveData() && !_data->isRemote() &&
+     _data->getAdaptiveData()->getData())
     return _data->getAdaptiveData()->getData();
-  else
-    return _data;
+  return _data;
 }
 
 void PView::getAdaptiveRange(double &min, double &max)
@@ -276,9 +277,14 @@ class planesSelection : public adaptiveSelection {
 private:
   int _mask;
   activePlanes _planes;
+  lowerDims _others;
 
 public:
-  planesSelection(int mask) : _mask(mask), _planes(mask) {}
+  planesSelection(int mask, lowerDims others = allRefined)
+    : _mask(mask), _planes(mask), _others(others)
+  {
+  }
+  lowerDims others() const override { return _others; }
   bool mayKeep(const float *sphere) const override
   {
     return _planes.gap(sphere) <= 0.;
@@ -291,11 +297,15 @@ public:
       return k == 0 ? x[j] : k == 1 ? y[j] : z[j];
     });
   }
+  std::vector<double> key() const override
+  { return CTX::instance()->clipKey(_mask); }
 };
 
 void PView::adapt(bool whole)
 {
   if(!_options->adaptVisualizationGrid || _data->isRemote()) return;
+  if(_data->getAdaptiveData() && _data->getAdaptiveData()->isOutdated())
+    _data->destroyAdaptiveData();
   _data->initAdaptiveData();
   double min, max;
   getAdaptiveRange(min, max);
@@ -329,11 +339,19 @@ bool PView::refineClipLayer()
     _deleteClipAdaptive();
     return false;
   }
+  if(_clipAdaptive && _clipAdaptive->isOutdated()) _deleteClipAdaptive();
   if(!_clipAdaptive) _clipAdaptive = new adaptiveData(_data);
   _clipAdaptive->copySkinOf(*a);
   double min, max;
   getAdaptiveRange(min, max);
-  planesSelection cut(_options->clip);
+  // (the curves and surfaces the clip arrays take from it: none for the caps,
+  // the cut ones for the whole elements, or all if the planes only cut the
+  // volumes; see fillClipVertexArrays())
+  CTX *ctx = CTX::instance();
+  planesSelection cut(_options->clip,
+                      !ctx->clipWholeElements ? adaptiveSelection::noneRefined :
+                      ctx->clipOnlyVolume     ? adaptiveSelection::allRefined :
+                                                adaptiveSelection::selected);
   _clipAdaptive->changeResolution(_options->timeStep,
                                   _options->maxRecursionLevel,
                                   _options->targetError, nullptr, min, max,
@@ -419,7 +437,7 @@ void PView::setChanged(bool val)
 
 void PView::combine(bool time, int how, bool remove, bool copyOptions)
 {
-  // time == true: combine the timesteps (oherwise combine the elements)
+  // time == true: combine the timesteps (otherwise combine the elements)
   // how == 0: try to combine all visible views
   //        1: try to combine all views
   //        2: try to combine all views having identical names
@@ -482,15 +500,9 @@ void PView::combine(bool time, int how, bool remove, bool copyOptions)
       if(res) {
         for(std::size_t j = 0; j < nds[i].indices.size(); j++)
           rm.insert(list[nds[i].indices[j]]);
-        PViewOptions *opt = p->getOptions();
-        if(opt->adaptVisualizationGrid) {
-          // the (empty) adaptive data created in PView() must be recreated,
-          // since we added some data
-          data->destroyAdaptiveData();
-          p->adapt();
-        }
-        if(copyOptions && nds[i].options)
-          p->setOptions(new PViewOptions(*nds[i].options));
+        // (the adaptive data made in PView() is made again: see adapt())
+        if(p->getOptions()->adaptVisualizationGrid) p->adapt();
+        if(copyOptions && nds[i].options) p->setOptions(nds[i].options);
       }
       else
         delete p;
