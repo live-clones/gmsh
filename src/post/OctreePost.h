@@ -6,12 +6,11 @@
 #ifndef OCTREE_POST_H
 #define OCTREE_POST_H
 
-#include "Octree.h"
-
 class PView;
 class PViewData;
 class PViewDataList;
 class PViewDataGModel;
+class Octree;
 
 class OctreePost {
 public:
@@ -44,6 +43,8 @@ private:
                double *qz, bool grad, int dim, Cache *cache = nullptr);
 
 public:
+  // in the data of a view, refined as a whole if the view is adaptive (as
+  // plugins see it), or in some data as it is (as PViewData::search*() do)
   OctreePost(PView *v);
   OctreePost(PViewData *data);
   ~OctreePost();
@@ -52,14 +53,14 @@ public:
   // run in several threads afterwards; searches in list data only read
   void prepareThreads();
   // search for the value of the View at point x, y, z. Values are interpolated
-  // using standard first order shape functions in the post element. If several
-  // time steps are present, they are all interpolated unless time step is set
-  // to a different value than -1. If qn is given, n node coordinates stored in
-  // qx/y/z are used to select which element is used to interpolate (if the
-  // query returned more than one). If grad is true, return the component-wise
-  // derivative (gradient) in xyz coordinates instead of the value. If dim !=
-  // -1, only return a value if it was found on an element of the
-  // prescribed dimension.
+  // with the shape functions of the element (of the first order for list-based
+  // views). If several time steps are present, they are all interpolated
+  // unless time step is set to a different value than -1. If qn is given, n
+  // node coordinates stored in qx/y/z are used to select which element is used
+  // to interpolate (if the query returned more than one). If grad is true,
+  // return the component-wise derivative (gradient) in xyz coordinates instead
+  // of the value. If dim != -1, only return a value if it was found on an
+  // element of the prescribed dimension.
   bool searchScalar(double x, double y, double z, double *values, int step = -1,
                     double *size = nullptr, int qn = 0, double *qx = nullptr,
                     double *qy = nullptr, double *qz = nullptr,

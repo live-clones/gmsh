@@ -14,6 +14,26 @@ class mathEvaluator;
 class PViewData;
 
 // The display options of a post-processing view.
+// The evaluator of the general raise, built from its expressions when the view
+// is drawn: owned by the options, and not copied with them
+class raiseEvaluator {
+private:
+  mathEvaluator *_e = nullptr;
+
+public:
+  raiseEvaluator() = default;
+  raiseEvaluator(const raiseEvaluator &) {}
+  raiseEvaluator &operator=(const raiseEvaluator &)
+  {
+    reset();
+    return *this;
+  }
+  ~raiseEvaluator() { reset(); }
+  void reset(mathEvaluator *e = nullptr);
+  mathEvaluator *operator->() const { return _e; }
+  explicit operator bool() const { return _e != nullptr; }
+};
+
 class PViewOptions {
 public:
   enum PlotType { Plot3D = 1, Plot2DSpace = 2, Plot2DTime = 3, Plot2D = 4 };
@@ -99,7 +119,7 @@ public:
   int useGenRaise;
   double genRaiseFactor;
   std::string genRaiseX, genRaiseY, genRaiseZ;
-  mathEvaluator *genRaiseEvaluator;
+  raiseEvaluator genRaiseEvaluator;
   int adaptVisualizationGrid, maxRecursionLevel, adaptSkinOnly;
   double targetError;
   int clip; // status of clip planes (bit array)
@@ -120,7 +140,6 @@ private:
 
 public:
   PViewOptions();
-  ~PViewOptions();
   static PViewOptions *reference();
   // return a floating point value in [min, max] corresponding to the
   // integer iso in [0, numIso - 1]

@@ -95,10 +95,13 @@ namespace {
       const SolFieldName &solFieldName = it->first;
       const PViewDataGModel::DataType &fieldType = it->second;
 
-      // in the most recent view of the field
+      // in the most recent view of the field with the same type of data, read
+      // from other files (e.g. the other steps of a series)
       const std::string fullFieldName =
         solFieldName.first + "_" + solFieldName.second;
-      auto accept = [](PViewDataGModel *d) { return true; };
+      auto accept = [&](PViewDataGModel *d) {
+        return d->getType() == fieldType && !d->hasFileName(fileName);
+      };
       auto read = [&](PViewDataGModel *d) {
         return d->readCGNS(solFieldName, fileName, fileIndex, baseIndex,
                            vertPerZone, eltPerZone);

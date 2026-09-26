@@ -13,16 +13,17 @@
 #include "mathEvaluator.h"
 #include "PViewData.h"
 
-PViewOptions::PViewOptions() : genRaiseEvaluator(nullptr)
+void raiseEvaluator::reset(mathEvaluator *e)
+{
+  delete _e;
+  _e = e;
+}
+
+PViewOptions::PViewOptions()
 {
   ColorTable_InitParam(2, &colorTable);
   ColorTable_Recompute(&colorTable);
   currentTime = 0.;
-}
-
-PViewOptions::~PViewOptions()
-{
-  if(genRaiseEvaluator) delete genRaiseEvaluator;
 }
 
 PViewOptions *PViewOptions::_reference = nullptr;
@@ -153,12 +154,9 @@ void PViewOptions::createGeneralRaise()
   expressions[2] = genRaiseZ;
   for(std::size_t i = 0; i < numVariables; i++) variables[i] = names[i];
 
-  if(genRaiseEvaluator) delete genRaiseEvaluator;
-  genRaiseEvaluator = new mathEvaluator(expressions, variables);
-  if(expressions.empty()) {
-    delete genRaiseEvaluator;
-    genRaiseEvaluator = nullptr;
-  }
+  genRaiseEvaluator.reset(new mathEvaluator(expressions, variables));
+  // (the evaluator empties the expressions if they cannot be parsed)
+  if(expressions.empty()) genRaiseEvaluator.reset();
 }
 
 bool PViewOptions::skipElement(int type)

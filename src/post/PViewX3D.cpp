@@ -95,25 +95,25 @@ bool PView::writeX3D(const std::string &fileName)
       return almostEqual(a[0], b[0]) && almostEqual(a[1], b[1]) &&
              almostEqual(a[2], b[2]);
     };
-    // the same vertices, the first one deciding which of the others match
+    // the same vertices, in either orientation
     auto sameTriangle = [&](const triangle &a, const triangle &b) {
       for(int j = 0; j < 3; j++) {
         if(!eq(a.p[0], b.p[j])) continue;
         const float *n1 = b.p[(j + 1) % 3], *n2 = b.p[(j + 2) % 3];
-        if(j == 1) std::swap(n1, n2); // (as a.p[1] is compared with b.p[0])
         if(eq(a.p[1], n1)) return eq(a.p[2], n2);
         if(eq(a.p[1], n2)) return eq(a.p[2], n1);
         return false;
       }
       return false;
     };
+    // (among those with the same bounding box, next to each other)
     for(std::size_t i = 0; i < order.size(); i++) {
+      if(!keep[order[i]]) continue;
       for(std::size_t j = i + 1; j < order.size(); j++) {
         const triangle &a = tri[order[i]], &b = tri[order[j]];
         if(!sameBox(a, b)) break;
-        if(sameTriangle(a, b)) {
+        if(keep[order[j]] && sameTriangle(a, b)) {
           keep[order[i]] = keep[order[j]] = false;
-          i++; // (the next one is not compared)
           break;
         }
       }
@@ -317,7 +317,8 @@ bool PView::writeX3D(const std::string &fileName)
           width = bar_size + tick + 10. * font_size * 3 / 4;
           if(opt->showTime) {
             char tmp[256];
-            sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
+            sprintf(tmp, opt->getFormat().c_str(),
+                    data->getTime(opt->timeStep));
             sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
           }
           else {
@@ -338,33 +339,7 @@ bool PView::writeX3D(const std::string &fileName)
   PViewData *data;
   PViewOptions *opt;
 
-  // points - NOT TREATED YET
-  /*
-    for(std::size_t ipv = 0; ipv < PView::list.size(); ipv++){
-    data = PView::list[ipv]->getData(true);
-    opt  = PView::list[ipv]->getOptions();
-    if( !data->getDirty() && opt->visible ) {
-      va=PView::list[ipv]->va_points;
-      for(int ipt = 0; ipt < va->getNumVertices(); ipt++){
-    float *p = va->getVertexArray(3 * ipt);
-    double f = 1.;
-    if(opt->pointType > 1){
-      char *n = va->getNormalArray(3 * ipt);
-      f = char2float(*n);
-    }
-    if(opt->pointType == 2){
-      int s = (int)(opt->pointSize * f);
-      if(s){
-        fprintf(fp,"points : %g %g %g\n", p[0], p[1], p[2]);
-      }
-    }
-    else
-      fprintf(fp,"sphere : %g %g %g \n", p[0], p[1], p[2] );
-      }
-    } // enf if dirty
-
-  }// end loop on PView::list
-  */
+  // (the points are not written)
 
   // lines
   int _ind = 0;
@@ -377,10 +352,11 @@ bool PView::writeX3D(const std::string &fileName)
       va = PView::list[ipv]->va_lines;
       if(!va) continue;
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 2) {
+        // (the lines drawn as cylinders or tapers are not written)
         if(opt->lineType != 2 && opt->lineType != 1) {
           fprintf(fp, "%i %i %i ", _ind, _ind + 1, -1);
+          _ind += 2;
         }
-        _ind += 2;
       }
     } // end if dirty
   } // end for loop on PView::list
@@ -426,7 +402,7 @@ bool PView::writeX3D(const std::string &fileName)
         UnsignedChar2rgba(c, rgba);
         double l = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
         double lmax = opt->tmpMax;
-        if((l || opt->vectorType == 6) && lmax) {
+        if(l && lmax) {
           double scale = .5 / _diagonal;
           double theta = acos(v[1] / l);
           fprintf(
@@ -451,7 +427,7 @@ bool PView::writeX3D(const std::string &fileName)
   // triangles - colored triangles
   // count all visible triangles of previous visited PView
   _count = 0;
-  _ind = 0.;
+  _ind = 0;
   fprintf(fp, "    <Transform> \n");
   fprintf(fp, "      <Shape> \n");
   fprintf(fp, "        <Appearance> \n");
@@ -537,17 +513,7 @@ static void writeX3DScale(FILE *fp, PView *p, double xmin, double ymin,
                           double width, double height, double tick,
                           int horizontal, double font_size)
 {
-  // use adaptive data if available
-  PViewData *data = p->getData(true);
-  PViewOptions *opt = p->getOptions();
-
-  if(opt->externalViewIndex >= 0) {
-    opt->tmpMin = opt->externalMin;
-    opt->tmpMax = opt->externalMax;
-  }
-  else
-    opt->getRange(data, opt->tmpMin, opt->tmpMax);
-
+  // (in the range the vertex arrays were filled with)
   writeX3DScaleBar(fp, p, xmin, ymin, width, height, tick, horizontal);
   writeX3DScaleValues(fp, p, xmin, ymin, width, height, tick, horizontal,
                       font_size);
@@ -652,7 +618,7 @@ static void writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
   double maxw = 0.;
   for(int i = 0; i < nbv + 1; i++) {
     double v = opt->getScaleValue(i, nbv + 1, opt->tmpMin, opt->tmpMax);
-    sprintf(label, opt->format.c_str(), v);
+    sprintf(label, opt->getFormat().c_str(), v);
     maxw = max(maxw, strlen(label) * font_size * 3. / 4.);
   }
   double f = (opt->intervalsType == PViewOptions::Discrete ||
@@ -683,7 +649,7 @@ static void writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
      opt->intervalsType == PViewOptions::Continuous) {
     for(int i = 0; i < nbv + 1; i++) {
       double v = opt->getScaleValue(i, nbv + 1, opt->tmpMin, opt->tmpMax);
-      sprintf(label, opt->format.c_str(), v);
+      sprintf(label, opt->getFormat().c_str(), v);
       if(horizontal) {
         writeX3DStringCenter(fp, label, xmin + i * vbox, ymin + height + tick,
                              0., font_h);
@@ -701,7 +667,7 @@ static void writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
     }
     for(int i = 0; i < nbv; i++) {
       double v = opt->getScaleValue(i, nbv, opt->tmpMin, opt->tmpMax);
-      sprintf(label, opt->format.c_str(), v);
+      sprintf(label, opt->getFormat().c_str(), v);
       if(horizontal) {
         writeX3DStringCenter(fp, label, xmin + box / 2. + i * vbox,
                              ymin + height + tick, 0., font_h);
@@ -734,7 +700,7 @@ static void writeX3DScaleLabel(FILE *fp, PView *p, double xmin, double ymin,
   int nt = data->getNumTimeSteps();
   if((opt->showTime == 1 && nt > 1) || opt->showTime == 2) {
     char tmp[256];
-    sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
+    sprintf(tmp, opt->getFormat().c_str(), data->getTime(opt->timeStep));
     sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
   }
   else if((opt->showTime == 3 && nt > 1) || opt->showTime == 4) {
@@ -760,8 +726,8 @@ static void writeX3DStringCenter(FILE *fp, char *label, double x, double y,
   fprintf(fp, "          <Text string='\"%s\"'>\n", label);
   fprintf(
     fp,
-    "            <FontStyle justify='\"MIDDLE\" \"MIDDLE\"' size=' %d '/>  \n",
-    (int)font_size);
+    "            <FontStyle justify='\"MIDDLE\" \"MIDDLE\"' size=' %g '/>  \n",
+    font_size);
   fprintf(fp, "          </Text>\n");
   fprintf(fp, "          <Appearance>\n");
   fprintf(fp, "            <Material diffuseColor='0. 0. 0. '/>\n");

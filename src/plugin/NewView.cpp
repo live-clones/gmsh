@@ -56,7 +56,8 @@ PView *GMSH_NewViewPlugin::execute(PView *v)
   if(type == "NodeData") nodeData(numComp, value, d);
   if(type == "ElementData") elementData(numComp, value, d, phys);
 
-  PView *vn = new PView("New view", type, GModel::current(), d, tag);
+  PView *vn =
+    new PView("New view", type, GModel::current(), d, 0., numComp, tag);
   return vn;
 }
 

@@ -6,7 +6,6 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "Summation.h"
-#include "OctreePost.h"
 #include "GEntity.h"
 #include <algorithm>
 

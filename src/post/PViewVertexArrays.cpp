@@ -3,7 +3,6 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <string.h>
 #include <algorithm>
 #include <atomic>
 #include <cmath>
@@ -18,8 +17,6 @@
 #include "MPolyhedron.h"
 #include "onelab.h"
 #include "Iso.h"
-#include "MEdge.h"
-#include "MFace.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
@@ -409,8 +406,6 @@ static void smoothNormal(drawTarget *p, bool pre, double x, double y, double z,
     p->normals->get(x, y, z, n[0], n[1], n[2]);
 }
 
-// f(k, min, max) for each band of the scale, or f(k, iso) for each iso-value:
-// the middle one only when the range is empty
 // The iso-values of the view (num = NbIso), or the limits of its bands (num =
 // NbIso + 1), computed once for all the elements
 static const std::vector<double> &isoValues(drawTarget *p, int num,
@@ -633,7 +628,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
 {
   PViewOptions *opt = p->opt;
 
-  // the pass marking the skin only draws the faces that may be on it
+  // (a face of a volume whose skin is drawn: only if it is on the skin)
   if(skin) {
     const int ii[3] = {i0, i1, i2};
     if(!skinFace(p, ii, 3)) return;
@@ -1226,6 +1221,20 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
     });
   }
 
+  // (the index of each element among the polyhedra of its chunk, see
+  // forFaces(), if there are any)
+  std::vector<std::vector<std::uint32_t>> polyIndex(nthreads);
+  for(int t = 0; t < nthreads; t++) {
+    const chunk &c = chunks[t];
+    if(std::find(c.shape.begin(), c.shape.end(), 4) == c.shape.end()) continue;
+    polyIndex[t].resize(c.shape.size());
+    std::uint32_t n = 0;
+    for(std::size_t e = 0; e < c.shape.size(); e++) {
+      polyIndex[t][e] = n;
+      if(c.shape[e] == 4) n++;
+    }
+  }
+
   // in whole element mode, is the element on the other side of the face
   // removed?
   auto removed = [&](const face &f) {
@@ -1234,8 +1243,7 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
     const chunk &c = chunks[t];
     std::size_t e = std::lower_bound(c.elem.begin(), c.elem.end(), f.first) -
                     c.elem.begin();
-    std::size_t ip = (c.shape[e] == 4) ?
-      std::count(c.shape.begin(), c.shape.begin() + e, 4) : 0;
+    std::size_t ip = (c.shape[e] == 4) ? polyIndex[t][e] : 0;
     std::uint8_t all = 0xff;
     forFaces(c, e, ip, polyFaces, [&](int i, const int *fi, int n) {
       if(i != f.second) return;
@@ -1809,10 +1817,9 @@ static void addTriangle(drawTarget *p, PViewOptions *opt, double *x0,
 }
 
 // Whether a view draws faces, which only the skin of its volumes is kept of:
-// a view of vectors drawn as arrows, or of tensors drawn as glyphs, has
-// none, and the pass locating the skin would walk its elements - computing
-// every eigenvector twice for tensors - for nothing. A view that cannot say
-// what it holds is assumed to.
+// a view of vectors drawn as arrows, or of tensors drawn as glyphs, has none,
+// and finding the skin of its volumes would be for nothing. A view that cannot
+// say what it holds is assumed to.
 static bool viewDrawsFaces(PView *p)
 {
   PViewData *data = p->getData(true);
@@ -1916,7 +1923,7 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
     }
   }
   else if(opt->tensorType == PViewOptions::Frame) {
-    // glyphs: nothing for the passes gathering normals or the skin
+    // glyphs: nothing for the pass gathering normals
     if(pre) return;
     if(opt->glyphLocation == PViewOptions::Vertex) {
       for(int i = 0; i < numNodes; i++) {
@@ -1945,8 +1952,8 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
   }
   else if(opt->tensorType == PViewOptions::Ellipse ||
           opt->tensorType == PViewOptions::Ellipsoid) {
-    // glyphs: added once, by the pass filling the arrays, and not also by
-    // those gathering normals or the skin (va_ellipses keeps duplicates)
+    // glyphs: added once, by the pass filling the arrays, and not also by the
+    // one gathering normals (va_ellipses keeps duplicates)
     if(pre) return;
     // the center and the three axes (the eigenvectors scaled by the
     // eigenvalues), at each node or averaged over the element
@@ -2299,8 +2306,6 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
   for(int t = 0; t < nthreads; t++) {
     drawTarget *d = new drawTarget(p);
     opts[t] = new PViewOptions(*opt);
-    // the copy must not delete the shared general raise evaluator
-    opts[t]->genRaiseEvaluator = nullptr;
     d->opt = opts[t];
     d->collect = collect;
     if(normals) d->normals = normals;

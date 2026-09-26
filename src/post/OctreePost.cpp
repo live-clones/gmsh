@@ -11,7 +11,6 @@
 #include "PViewData.h"
 #include "PViewDataList.h"
 #include "PViewDataGModel.h"
-#include "Numeric.h"
 #include "GmshMessage.h"
 #include "shapeFunctions.h"
 #include "GModel.h"
@@ -142,14 +141,14 @@ void OctreePost::_create(PViewData *data)
     int N[24];
     std::vector<double> *V[24];
     l->getListPointers(N, V);
-    const int numComp[3] = {1, 3, 9};
     for(int k = 0; k < 8; k++) {
       for(int c = 0; c < 3; c++) {
         Octree *o = Octree_Create(listElement[k].bb);
-        // an element: its coordinates, then its values at each step
-        int n = listElement[k].numNodes;
-        std::size_t size = n * (3 + numComp[c] * l->getNumTimeSteps());
+        // an element: its coordinates, then its values at each step (lists
+        // may have more steps than the view)
         std::vector<double> &list = *V[3 * k + c];
+        int num = N[3 * k + c];
+        std::size_t size = num ? list.size() / num : 1;
         for(std::size_t i = 0; i < list.size(); i += size)
           Octree_Insert(&list[i], o);
         if(list.size()) _topDim[c] = std::max(_topDim[c], listElement[k].dim);
@@ -160,9 +159,9 @@ void OctreePost::_create(PViewData *data)
   }
 }
 
-// The element of a list-based view holding the point: the first inserted
-// among those whose box holds it, or among those the one with the nodes given
-// in qx/y/z (the same geometrical element) if there is one.
+// The element of a list-based view holding the point: the first inserted among
+// those that hold it, or among those the one with the nodes given in qx/y/z
+// (the same geometrical element) if there is one.
 static void *getElement(double P[3], Octree *octree, int (*in)(void *, double *),
                         int nbNod, int qn, double *qx, double *qy, double *qz)
 {
@@ -207,17 +206,10 @@ static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
         if(ok) return elements[i];
       }
     }
-    if(elements.size()) return elements[0];
   }
-  else {
-    // TODO sort the elements by decreasing dimension and return the first match
-    //- this will be consistent with what we do for list-based datasets
-    //
-    // std::vector<MElement *> elements = m->getMeshElementsByCoord(pt, dim);
-    SPoint3 uvw;
-    return m->getMeshElementByCoord(pt, uvw, dim);
-  }
-  return nullptr;
+  // (the highest dimension first, as for list-based views)
+  SPoint3 uvw;
+  return m->getMeshElementByCoord(pt, uvw, dim);
 }
 
 bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
@@ -275,7 +267,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
 
   MElement *e = (MElement *)in;
 
-  std::vector<int> dataIndex(e->getNumVertices());
+  std::vector<std::size_t> dataIndex(e->getNumVertices());
   if(_theViewDataGModel->getType() == PViewDataGModel::NodeData)
     for(std::size_t i = 0; i < e->getNumVertices(); i++)
       dataIndex[i] = e->getVertex(i)->getNum();
@@ -359,6 +351,7 @@ bool OctreePost::_search(int numComp, double x, double y, double z,
   for(int i = 0; i < numComp * numSteps * mult; i++) values[i] = 0.;
 
   if(_theViewDataList) {
+    if(step >= _theViewDataList->getNumTimeSteps()) return false;
     int c = componentIndex(numComp);
     if(cache && cache->element) { // the last element, with the test of
       // getElement()
