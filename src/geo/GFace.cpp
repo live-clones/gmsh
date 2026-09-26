@@ -47,6 +47,7 @@ GFace::GFace(GModel *model, int tag)
 {
   meshStatistics.status = GFace::PENDING;
   meshStatistics.refineAllEdges = false;
+  meshStatistics.nbRefineAllEdges = 0;
   GFace::resetMeshAttributes();
 }
 
@@ -139,6 +140,19 @@ void GFace::setBoundEdges(const std::vector<int> &tagEdges,
     else {
       Msg::Error("Unknown curve %d in surface %d", tagEdges[i], tag());
     }
+  }
+}
+
+void GFace::setBoundEdges(const std::vector<GEdge *> &edges,
+                          const std::vector<int> &signEdges)
+{
+  for(std::size_t i = 0; i < edges.size(); i++) {
+    GEdge *ge = edges[i];
+    if(std::find(l_edges.begin(), l_edges.end(), ge) != l_edges.end())
+      continue;
+    l_edges.push_back(ge);
+    l_dirs.push_back(i < signEdges.size() ? signEdges[i] : 1);
+    ge->addFace(this);
   }
 }
 

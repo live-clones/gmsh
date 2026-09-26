@@ -41,8 +41,6 @@ private:
 public:
   voroMetal3D() {}
   ~voroMetal3D() {}
-  void execute(double);
-  void execute(GRegion *, double);
   void execute(std::vector<SPoint3> &, std::vector<double> &, int, double,
                double, double, double);
   void execute(std::vector<double> &, int, double, double, double, double);
@@ -53,7 +51,6 @@ public:
   void print_geo_point(int, double, double, double, std::ofstream &);
   void print_geo_line(int, int, int, std::ofstream &);
   void print_geo_face(int, int, std::ofstream &);
-  void print_geo_physical_face(int, int, std::ofstream &);
   void print_geo_volume(int, int, std::ofstream &);
   void print_geo_physical_volume(int, int, std::ofstream &);
   void print_geo_line_loop(int, std::vector<int> &, std::vector<int> &,
@@ -67,21 +64,13 @@ public:
   bool equal(double, double, double);
 };
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterVoroMetalPlugin();
-}
-
 class GMSH_VoroMetalPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_VoroMetalPlugin() {}
+  GMSH_VoroMetalPlugin();
   std::string getName() const { return "VoroMetal"; }
   std::string getShortHelp() const { return "Voronoi microstructures"; }
   std::string getHelp() const;
   std::string getAuthor() const { return "Tristan Carrier & Maxime Melchior"; }
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
-  int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

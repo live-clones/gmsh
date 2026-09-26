@@ -764,13 +764,12 @@ public:
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
 
-    // the outlines of the cut elements, on the side the planes cut off
-    if(whole) {
-      setViewClipOutside(opt, true);
-      drawArrays(_ctx, p, p->va_clip_lines, GL_LINES,
-                 opt->light && opt->lightLines, true);
-      setViewClipOutside(opt, false);
-    }
+    // the outlines of the cut elements, on the side the planes cut off; in
+    // capping mode those of the section, clipped like everything else
+    if(whole) setViewClipOutside(opt, true);
+    drawArrays(_ctx, p, p->va_clip_lines, GL_LINES,
+               opt->light && opt->lightLines, true);
+    if(whole) setViewClipOutside(opt, false);
 
     if(opt->lightTwoSide) gmshLightTwoSide(true);
 
@@ -858,7 +857,7 @@ public:
 void drawContext::drawPost()
 {
   // draw any plugin-specific stuff
-  if(GMSH_Plugin::draw) (*GMSH_Plugin::draw)(this);
+  if(GMSH_Plugin::preview) GMSH_Plugin::preview->drawPreview(this);
 
   if(PView::list.empty()) return;
 
@@ -888,6 +887,30 @@ void drawContext::drawPost()
       ((transparencyPass == TRANSPARENCY_TRANSPARENT) ?
          drawPView::TRANSPARENT_VIEWS : drawPView::ALL_VIEWS);
   std::for_each(PView::list.begin(), PView::list.end(), drawPView(this, which));
+}
+
+// The surfaces of the opaque views in a picking pass that does not pick the
+// views, so that they hide what is behind them, as the mesh does (see
+// drawMeshOccluders()); nothing of a transparent view.
+void drawContext::drawPostOccluders()
+{
+  CTX *c = CTX::instance();
+  if(!c->post.draw) return;
+  unsetPickColor();
+  _pickState(false, 1.);
+  for(auto p : PView::list) {
+    PViewData *data = p->getData(true);
+    PViewOptions *opt = p->getOptions();
+    if(data->getDirty() || !data->getNumTimeSteps()) continue;
+    if(!opt->visible || opt->type != PViewOptions::Plot3D || !isVisible(p) ||
+       viewIsTransparent(p))
+      continue;
+    bool cutOnly = c->clipWholeElements && opt->clip &&
+                   c->clipOnlyDrawIntersectingVolume;
+    setViewClipPlanes(opt, !cutOnly);
+    drawVertexArray(p->va_triangles, GL_TRIANGLES, 0);
+  }
+  clipPlanes::on(0);
 }
 
 // whether any view would be drawn in the transparent pass

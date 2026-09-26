@@ -16,6 +16,7 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "PView.h"
+#include "PViewData.h"
 #include "PViewOptions.h"
 #include "Numeric.h"
 #include "FlGui.h"
@@ -121,6 +122,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
+  _addQuery = false;
 
   addPointMode = 0;
   lassoMode = selectionMode = false;
@@ -172,9 +174,51 @@ void openglWindow::_drawScreenMessage()
     _ctx->drawTextBox(msg, _ctx->viewport[2] / 2., _ctx->viewport[3] - 0.5 * h,
                       1);
   }
+  // what the cursor is over, under what a query found: the query answered a
+  // click and stays, the hover follows the cursor and gives way to it
   if(_hoverText.size())
     _ctx->drawTextBox(_hoverText, _hoverAnchor[0],
                       _ctx->viewport[3] - _hoverAnchor[1], 2, _hoverBox);
+  // on paper of its own: the colour of the mark it hangs from
+  // (General.Color.Query, which the mark wears at full strength), lightened
+  // to the paper of a note over a light picture and darkened to the same
+  // note over a dark one, where the full colour would glare
+  CTX *c = CTX::instance();
+  unsigned int q = c->color.query, bg = c->color.bg;
+  double lum = 0.299 * c->unpackRed(bg) + 0.587 * c->unpackGreen(bg) +
+               0.114 * c->unpackBlue(bg);
+  bool dark = (lum < 110.);
+  double paper = dark ? 0. : 255., mix = dark ? 0.32 : 0.45;
+  unsigned int tint =
+    c->packColor((int)(paper * (1. - mix) + mix * c->unpackRed(q)),
+                 (int)(paper * (1. - mix) + mix * c->unpackGreen(q)),
+                 (int)(paper * (1. - mix) + mix * c->unpackBlue(q)), 255);
+  // the boxes the queries pin are drawn by the points they asked about, so
+  // that they travel with the model: each is kept whole in the window while
+  // its point is in it, and leaves the window with that point
+  for(std::size_t i = 0; i < _pinned.size(); i++) {
+    double win[2];
+    if(!_ctx->world2Window(_pinned[i].xyz, win)) continue;
+    bool in = (win[0] >= _ctx->viewport[0] && win[0] <= _ctx->viewport[2] &&
+               win[1] >= _ctx->viewport[1] && win[1] <= _ctx->viewport[3]);
+    _ctx->drawTextBox(_pinned[i].text, win[0], win[1], 2, nullptr, in, tint);
+  }
+  // the length of a measurement, on the same paper, over the middle of the
+  // line it measures: it follows the line while the second point is chosen,
+  // and stays there once it is taken
+  double a[3], b[3], win[2];
+  if(_ctx->segment(a, b)) {
+    double mid[3] = {0.5 * (a[0] + b[0]), 0.5 * (a[1] + b[1]),
+                     0.5 * (a[2] + b[2])};
+    if(_ctx->world2Window(mid, win)) {
+      drawContext::global()->setFont(CTX::instance()->glFontEnum,
+                                     drawContext::global()->getFontSize());
+      double h = drawContext::global()->getStringHeight();
+      // just above the line: a box of one line is two heights tall
+      _ctx->drawTextBox(measurePoints(a, b)[0], win[0], win[1] + 2. * h + 4.,
+                        1, nullptr, false, tint);
+    }
+  }
 }
 
 void openglWindow::_drawBorder()
@@ -735,9 +779,14 @@ void openglWindow::_hover()
   // the hover looks at them otherwise: what is highlighted is what a click
   // would take
   bool all = selectionMode || CTX::instance()->mouseHoverMeshes;
+  // the mesh element under the cursor is looked for in the octree of the
+  // model: a query asks for it on a click, a hover would ask on every move
+  int elems = CTX::instance()->pickElements;
+  CTX::instance()->pickElements = 0;
   bool res = _select(_selection, false, all, all, (int)_curr.win[0],
                      (int)_curr.win[1], 5, 5, vertices, edges, faces,
                      regions, elements, points, views);
+  CTX::instance()->pickElements = elems;
   if((_selection == ENT_ALL && res) ||
      (_selection == ENT_POINT && vertices.size()) ||
      (_selection == ENT_CURVE && edges.size()) ||
@@ -774,9 +823,12 @@ void openglWindow::_hover()
     cmd = CTX::instance()->post.doubleClickedGraphPointCommand;
   }
   else if(views.size()) {
+    // named as a query names it
     char tmp[256];
     sprintf(tmp, "View[%d]", views[0]->getIndex());
     text = tmp;
+    if(views[0]->getData() && views[0]->getData()->getName().size())
+      text += " \"" + views[0]->getData()->getName() + "\"";
     cmd = views[0]->getOptions()->doubleClickedCommand;
   }
   // what a double-click and the wheel would do, after the information, in
@@ -805,6 +857,17 @@ void openglWindow::_hover()
   else if(regions.size())
     over = regions[0];
   _highlight(over);
+
+  // while a measurement waits for its second point, the line follows the
+  // cursor over the model, so that its length is seen as it is chosen
+  if(measureMode() && _ctx->numMarks() == 1) {
+    double a[3], p[3];
+    if(_ctx->mark(0, a) && _ctx->pickPoint(p))
+      _ctx->setSegment(a, p);
+    else
+      _ctx->clearSegment();
+    redraw();
+  }
 
   // how far under the cursor this one is and whether there is more, whenever
   // there is something to step to. The image of the pick shows only what is
@@ -945,7 +1008,13 @@ int openglWindow::handle(int event)
     _curr.set(_ctx, Fl::event_x(), Fl::event_y());
     if(Fl::event_button() == 1 && !Fl::event_state(FL_SHIFT) &&
        !Fl::event_state(FL_ALT)) {
-      if(!lassoMode && Fl::event_state(FL_CTRL)) { lassoMode = true; }
+      // Ctrl+click adds a query in query mode (when the clicks select), and
+      // starts a lasso otherwise
+      _addQuery = queryMode() && CTX::instance()->mouseSelection &&
+                  Fl::event_state(FL_CTRL);
+      if(!lassoMode && Fl::event_state(FL_CTRL) && !_addQuery) {
+        lassoMode = true;
+      }
       else if(lassoMode) {
         lassoMode = false;
         if(selectionMode && CTX::instance()->mouseSelection) {
@@ -1393,10 +1462,22 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
   }
 }
 
-// The box is pinned where it is first shown rather than dragged along, as
-// moving it redraws the picture (and starts the studio frames over): it
-// moves when the text changes, and when the cursor has strayed far from it or
-// is about to cover it.
+void openglWindow::pinTooltip(const std::string &text, const double *xyz,
+                             bool add)
+{
+  if(!add) {
+    if(_pinned.empty() && text.empty()) return;
+    _pinned.clear();
+  }
+  if(text.size() && xyz) {
+    pinnedNote n;
+    n.text = text;
+    for(int i = 0; i < 3; i++) n.xyz[i] = xyz[i];
+    _pinned.push_back(n);
+  }
+  redraw();
+}
+
 void openglWindow::drawTooltip(const std::string &text)
 {
   if(text.empty()) {
@@ -1405,6 +1486,9 @@ void openglWindow::drawTooltip(const std::string &text)
     redraw();
     return;
   }
+  // it follows the cursor, moving once the cursor has strayed sixty pixels
+  // from where it hangs (or when it is under it, or says something else):
+  // every move of it is a redraw
   double cx = _curr.win[0], cy = _curr.win[1];
   if(text == _hoverText) {
     // the box, from the top left of the window as the cursor is measured

@@ -192,6 +192,25 @@ public:
   virtual std::string getName() { return "None"; }
 };
 
+// What the model holds at a point (see drawQuery.cpp): the entity, the mesh
+// element and node there, and the value of every visible view that covers it,
+// one line of text per item. view is the view the point was picked on, which
+// is read at its closest node when the point itself holds nothing; pixel is
+// the size of a pixel in the units of the model.
+std::vector<std::string> queryPoint(const double xyz[3], GEntity *entity,
+                                    MElement *element, PView *view,
+                                    double pixel);
+// The mesh element a query reports at a point when the pick found none there,
+// in the mesh that is drawn (see drawQuery.cpp)
+MElement *queryElement(const double xyz[3], double pixel);
+// What a measurement says of the two points it was given (see drawQuery.cpp)
+std::vector<std::string> measurePoints(const double a[3], const double b[3]);
+// Whether the point of the model behind what was drawn of a view at xyz is
+// the place that view stands for there: it is what a glyph hangs off, but a
+// surface drawn deeper down is somewhere else (see drawQuery.cpp)
+bool queryBehind(PView *view, const double xyz[3], const double behind[3],
+                 double pixel);
+
 class drawContext {
 private:
   // a picture drawn in the scene, kept as a texture with its size
@@ -259,6 +278,8 @@ private:
   bool _pickColor;
   // the scale of the depth range per dimension in a picking pass
   double _pickDepthStep = 0.;
+  // the depth of the front of the model's bounding box in a picking pass
+  double _pickNearest = 0.;
   // the masks and the depth range the pass is drawing with (-1: not known)
   int _pickStateSkip = -1;
   double _pickStateFar = -1.;
@@ -277,7 +298,7 @@ private:
   // drawn with, as a pick asking for something else has to redraw.
   std::vector<unsigned char> _pickCache;
   std::vector<float> _pickCacheDepth;
-  bool _pickCacheValid, _pickCacheMesh, _pickCachePost, _pickCacheElements;
+  bool _pickCacheValid, _pickCacheMesh, _pickCachePost;
   void _pickCheckLimit();
   // what names an object of a picking pass from one pass to the next: the
   // identifiers are indices into a list rebuilt every time, the tags are not
@@ -298,6 +319,15 @@ private:
   // the pass read back
   double _pickPoint[3] = {0., 0., 0.};
   bool _pickPointValid = false;
+  // What a query or a measurement leaves on the picture, until it is
+  // cleared: the points it asked about, each marked; and the segment of a
+  // measurement, drawn with its length
+  std::vector<double> _marks; // three numbers each
+  double _segment[6] = {0., 0., 0., 0., 0., 0.};
+  bool _segmentValid = false;
+  // the entity the last pick was on, which it gives away when it returns the
+  // mesh element it found there instead (see pickEntity())
+  GEntity *_pickEntity = nullptr;
   // the region of the window the image covers, in real pixels (a region
   // around the pointer is much cheaper to draw than the whole window)
   int _pickCacheX, _pickCacheY, _pickCacheWidth, _pickCacheHeight;
@@ -321,7 +351,9 @@ private:
   void initProjection();
   void drawGeom();
   void drawMesh();
+  void drawMeshOccluders();
   void drawPost();
+  void drawPostOccluders();
   void drawBackgroundGradient();
   void drawBackgroundImage(bool threeD);
   void drawText2d();
@@ -394,6 +426,45 @@ public:
   // the identifier image holds only what is in front, so this draws it
   // again without that entity, and leaves the stepping as it was
   bool pickBehind(int type, bool mesh, bool post, int x, int y, int w, int h);
+  // The points a query or a measurement asked about, marked in the picture
+  // until they are cleared, and the segment a measurement spans (see
+  // drawQuery.cpp)
+  void addMark(const double xyz[3])
+  {
+    for(int i = 0; i < 3; i++) _marks.push_back(xyz[i]);
+  }
+  void setSegment(const double a[3], const double b[3])
+  {
+    for(int i = 0; i < 3; i++) {
+      _segment[i] = a[i];
+      _segment[3 + i] = b[i];
+    }
+    _segmentValid = true;
+  }
+  void clearSegment() { _segmentValid = false; }
+  void clearMarks()
+  {
+    _marks.clear();
+    _segmentValid = false;
+  }
+  std::size_t numMarks() const { return _marks.size() / 3; }
+  bool mark(std::size_t i, double xyz[3]) const
+  {
+    if(3 * i + 2 >= _marks.size()) return false;
+    for(int k = 0; k < 3; k++) xyz[k] = _marks[3 * i + k];
+    return true;
+  }
+  bool segment(double a[3], double b[3]) const
+  {
+    if(!_segmentValid) return false;
+    for(int k = 0; k < 3; k++) { a[k] = _segment[k]; b[k] = _segment[3 + k]; }
+    return true;
+  }
+  void drawMarks();
+  void drawMark(const double xyz[3], bool sphere = true);
+  // the entity of the model the last pick was on, whether it returned it or
+  // the mesh element it holds there (null when it was on neither)
+  GEntity *pickEntity() const { return _pickEntity; }
   // the point of the model the last pick hit, from the depth under the middle
   // of its rectangle (or the nearest depth of what it returned): false when
   // it hit nothing of the 3D scene
@@ -473,6 +544,15 @@ public:
   void initCameraMatrices(double view[16]);
   void initPosition(bool saveMatrices);
   void unproject(double winx, double winy, double p[3], double d[3]);
+  // where a point of the model is in the window, in its units and with the
+  // matrices of the frame, as unproject() reads them back: false when the
+  // point is not in the picture (behind the camera, or outside the depth
+  // range). world2Viewport() below answers in true pixels and with the
+  // matrices that are current, which are those of the overlay once the scene
+  // has been drawn
+  bool world2Window(const double xyz[3], double win[2]);
+  // in true pixels, with the matrices that are current: only inside the draw
+  // that set them (see world2Window() above)
   void viewport2World(double vp[3], double xyz[3]);
   void world2Viewport(double xyz[3], double vp[3]);
   bool select(int type, bool multiple, bool mesh, bool post, int x, int y,
@@ -495,10 +575,13 @@ public:
   // lines are split on newlines and wrapped; (x, y) is the top left corner
   // of the box (align 0), the top centre (1), or the cursor, which the box
   // hangs below and to the right of, or above or to the left of when there
-  // is no room (2); the box is kept inside the window, and box gets where it
-  // was drawn (left, bottom, width, height)
+  // is no room (2); it is kept whole inside the window unless inside is
+  // false, box gets where it was drawn (left, bottom, width, height), and
+  // tint, when it is not zero, is the colour of its background instead of
+  // that of the picture, telling one box from another
   void drawTextBox(const std::string &text, double x, double y, int align,
-                   double box[4] = nullptr);
+                   double box[4] = nullptr, bool inside = true,
+                   unsigned int tint = 0);
   void drawString(const std::string &s, double x, double y, double z,
                   const std::string &font_name, int font_enum, int font_size,
                   int align, int line_num = 0);

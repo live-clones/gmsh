@@ -51,6 +51,28 @@
 
 #define SQU(a) ((a) * (a))
 
+// give the linear system the sparsity pattern of the elements before
+// assembling, so that its rows are allocated and sorted once, instead of being
+// grown and searched as linked lists
+static void insertInSparsityPattern(const std::vector<MElement *> &v,
+                                    const femTerm<double> &term,
+                                    dofManager<double> &assembler,
+                                    linearSystem<double> *lsys)
+{
+  if(!lsys->isAllocated()) lsys->allocate(assembler.sizeOfR());
+  std::vector<int> num;
+  for(auto e : v) {
+    SElement se(e);
+    num.clear();
+    for(int j = 0; j < term.sizeOfR(&se); j++) {
+      int n = assembler.getDofNumber(term.getLocalDofR(&se, j));
+      if(n >= 0) num.push_back(n);
+    }
+    for(auto r : num)
+      for(auto c : num) lsys->insertInSparsityPattern(r, c);
+  }
+}
+
 void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
 {
   double t1 = Cpu();
@@ -665,6 +687,10 @@ double highOrderTools::_applyIncrementalDisplacement(
   }
 
   if(myAssembler.sizeOfR()) {
+    if(mixed)
+      insertInSparsityPattern(v, El_mixed, myAssembler, lsys);
+    else
+      insertInSparsityPattern(v, El, myAssembler, lsys);
     // assembly of the elasticity term on the
     for(std::size_t i = 0; i < v.size(); i++) {
       SElement se(v[i]);

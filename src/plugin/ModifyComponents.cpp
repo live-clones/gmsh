@@ -10,29 +10,22 @@
 #include "OctreePost.h"
 #include "mathEvaluator.h"
 
-StringXNumber ModifyComponentsOptions_Number[] = {
-  {GMSH_FULLRC, "TimeStep", nullptr, -1., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-  {GMSH_FULLRC, "OtherTimeStep", nullptr, -1., ""},
-  {GMSH_FULLRC, "OtherView", nullptr, -1., ""},
-  {GMSH_FULLRC, "ForceInterpolation", nullptr, 0., ""}};
-
-StringXString ModifyComponentsOptions_String[] = {
-  {GMSH_FULLRC, "Expression0", nullptr, "v0 * Sin(x)", ""},
-  {GMSH_FULLRC, "Expression1", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression2", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression3", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression4", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression5", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression6", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression7", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression8", nullptr, "", ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterModifyComponentsPlugin()
+GMSH_ModifyComponentsPlugin::GMSH_ModifyComponentsPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "TimeStep", nullptr, -1., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""},
+                     {GMSH_FULLRC, "OtherTimeStep", nullptr, -1., ""},
+                     {GMSH_FULLRC, "OtherView", nullptr, -1., ""},
+                     {GMSH_FULLRC, "ForceInterpolation", nullptr, 0., ""}},
+                    {{GMSH_FULLRC, "Expression0", nullptr, "v0 * Sin(x)", ""},
+                     {GMSH_FULLRC, "Expression1", nullptr, "", ""},
+                     {GMSH_FULLRC, "Expression2", nullptr, "", ""},
+                     {GMSH_FULLRC, "Expression3", nullptr, "", ""},
+                     {GMSH_FULLRC, "Expression4", nullptr, "", ""},
+                     {GMSH_FULLRC, "Expression5", nullptr, "", ""},
+                     {GMSH_FULLRC, "Expression6", nullptr, "", ""},
+                     {GMSH_FULLRC, "Expression7", nullptr, "", ""},
+                     {GMSH_FULLRC, "Expression8", nullptr, "", ""}})
 {
-  return new GMSH_ModifyComponentsPlugin();
-}
 }
 
 std::string GMSH_ModifyComponentsPlugin::getHelp() const
@@ -68,33 +61,13 @@ std::string GMSH_ModifyComponentsPlugin::getHelp() const
          "Plugin(ModifyComponents) is executed in-place.";
 }
 
-int GMSH_ModifyComponentsPlugin::getNbOptions() const
-{
-  return sizeof(ModifyComponentsOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_ModifyComponentsPlugin::getOption(int iopt)
-{
-  return &ModifyComponentsOptions_Number[iopt];
-}
-
-int GMSH_ModifyComponentsPlugin::getNbOptionsStr() const
-{
-  return sizeof(ModifyComponentsOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_ModifyComponentsPlugin::getOptionStr(int iopt)
-{
-  return &ModifyComponentsOptions_String[iopt];
-}
-
 PView *GMSH_ModifyComponentsPlugin::execute(PView *view)
 {
-  int timeStep = (int)ModifyComponentsOptions_Number[0].def;
-  int iView = (int)ModifyComponentsOptions_Number[1].def;
-  int otherTimeStep = (int)ModifyComponentsOptions_Number[2].def;
-  int otherView = (int)ModifyComponentsOptions_Number[3].def;
-  int forceInterpolation = (int)ModifyComponentsOptions_Number[4].def;
+  int timeStep = (int)option(0);
+  int iView = (int)option(1);
+  int otherTimeStep = (int)option(2);
+  int otherView = (int)option(3);
+  int forceInterpolation = (int)option(4);
 
   PView *v1 = getView(iView, view);
   if(!v1) return view;
@@ -116,7 +89,9 @@ PView *GMSH_ModifyComponentsPlugin::execute(PView *view)
       Msg::Error("View[%d] does not exist: using self", otherView);
   }
 
-  PViewData *data2 = getPossiblyAdaptiveData(v2);
+  // the view itself is changed, not the adapted data drawn from it: read the
+  // other view the same way
+  PViewData *data2 = v2->getData();
 
   if(otherTimeStep < 0 &&
      data2->getNumTimeSteps() != data1->getNumTimeSteps()) {
@@ -131,7 +106,7 @@ PView *GMSH_ModifyComponentsPlugin::execute(PView *view)
 
   std::vector<std::string> expressions(9), expressions0(9);
   for(int i = 0; i < 9; i++) {
-    expressions[i] = ModifyComponentsOptions_String[i].def;
+    expressions[i] = optionStr(i);
     if(expressions[i].size())
       expressions0[i] = expressions[i];
     else
@@ -156,72 +131,57 @@ PView *GMSH_ModifyComponentsPlugin::execute(PView *view)
     octree = new OctreePost(v2);
   }
 
+  bool failed = false;
   for(int step = 0; step < data1->getNumTimeSteps(); step++) {
     if(timeStep >= 0 && timeStep != step) continue;
 
     double time = data1->getTime(step);
     int step2 = (otherTimeStep < 0) ? step : otherTimeStep;
 
-    if(data1->isNodeData()) {
-      // tag all the nodes with "0" (the default tag)
-      for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-          if(data1->skipElement(step, ent, ele)) continue;
-          for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-            data1->tagNode(step, ent, ele, nod, 0);
-        }
+    forEachValue(data1, step, [&](int ent, int ele, int nod, double x,
+                                  double y, double z) {
+      if(failed) return; // the error is reported once
+      int numComp = data1->getNumComponents(step, ent, ele);
+      std::vector<double> v(std::max(9, numComp), 0.);
+      for(int comp = 0; comp < numComp; comp++)
+        data1->getValue(step, ent, ele, nod, comp, v[comp]);
+      std::vector<double> w(9, 0.);
+      if(octree) {
+        // with ForceInterpolation, search in the element of the node first
+        int qn = forceInterpolation ? data1->getNumNodes(step, ent, ele) : 0;
+        std::vector<double> xe(qn), ye(qn), ze(qn);
+        for(int i = 0; i < qn; i++)
+          data1->getNode(step, ent, ele, i, xe[i], ye[i], ze[i]);
+        double *px = qn ? &xe[0] : nullptr, *py = qn ? &ye[0] : nullptr,
+               *pz = qn ? &ze[0] : nullptr;
+        if(!octree->searchScalar(x, y, z, &w[0], step2, nullptr, qn, px, py,
+                                 pz))
+          if(!octree->searchVector(x, y, z, &w[0], step2, nullptr, qn, px, py,
+                                   pz))
+            octree->searchTensor(x, y, z, &w[0], step2, nullptr, qn, px, py,
+                                 pz);
       }
-    }
-
-    for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-        if(data1->skipElement(step, ent, ele)) continue;
-        int numComp = data1->getNumComponents(step, ent, ele);
-        int numComp2 = octree ? 9 : data2->getNumComponents(step2, ent, ele);
-        int numNodes = data1->getNumNodes(step, ent, ele);
-        std::vector<double> x(numNodes), y(numNodes), z(numNodes);
-        std::vector<int> tag(numNodes);
-        for(int nod = 0; nod < numNodes; nod++)
-          tag[nod] =
-            data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
-        for(int nod = 0; nod < numNodes; nod++) {
-          if(data1->isNodeData() && tag[nod])
-            continue; // node has already been modified
-          std::vector<double> v(std::max(9, numComp), 0.);
-          for(int comp = 0; comp < numComp; comp++)
-            data1->getValue(step, ent, ele, nod, comp, v[comp]);
-          std::vector<double> w(std::max(9, numComp2), 0.);
-          if(octree) {
-            int qn = forceInterpolation ? numNodes : 0;
-            if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2,
-                                     nullptr, qn, &x[0], &y[0], &z[0]))
-              if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], step2,
-                                       nullptr, qn, &x[0], &y[0], &z[0]))
-                octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2,
-                                     nullptr, qn, &x[0], &y[0], &z[0]);
-          }
-          else {
-            for(int comp = 0; comp < numComp2; comp++)
-              data2->getValue(step2, ent, ele, nod, comp, w[comp]);
-          }
-          values[0] = x[nod];
-          values[1] = y[nod];
-          values[2] = z[nod];
-          values[3] = time;
-          values[4] = step;
-          for(int i = 0; i < 9; i++) values[5 + i] = v[i];
-          for(int i = 0; i < 9; i++) values[14 + i] = w[i];
-          if(f.eval(values, res)) {
-            for(int comp = 0; comp < numComp; comp++) {
-              if(expressions[comp].size()) {
-                data1->setValue(step, ent, ele, nod, comp, res[comp]);
-              }
-            }
-          }
-          if(data1->isNodeData()) data1->tagNode(step, ent, ele, nod, 1);
-        }
+      else if(data2->hasTimeStep(step2) &&
+              !data2->skipElement(step2, ent, ele)) {
+        int numComp2 = std::min(9, data2->getNumComponents(step2, ent, ele));
+        for(int comp = 0; comp < numComp2; comp++)
+          data2->getValue(step2, ent, ele, nod, comp, w[comp]);
       }
-    }
+      values[0] = x;
+      values[1] = y;
+      values[2] = z;
+      values[3] = time;
+      values[4] = step;
+      for(int i = 0; i < 9; i++) values[5 + i] = v[i];
+      for(int i = 0; i < 9; i++) values[14 + i] = w[i];
+      if(!f.eval(values, res)) {
+        failed = true;
+        return;
+      }
+      for(int comp = 0; comp < numComp; comp++)
+        if(expressions[comp].size())
+          data1->setValue(step, ent, ele, nod, comp, res[comp]);
+    });
   }
 
   if(octree) delete octree;

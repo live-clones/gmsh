@@ -87,9 +87,9 @@ public:
     _v[0] = _v[1];
     _v[1] = tmp;
   }
-  virtual bool isInside(double u, double v, double w) const
+  using MElement::isInside;
+  virtual bool isInside(double u, double v, double w, double tol) const
   {
-    double tol = getTolerance();
     if(u < -(1. + tol) || u > (1. + tol) || fabs(v) > tol || fabs(w) > tol)
       return false;
     return true;

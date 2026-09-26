@@ -22,6 +22,9 @@ static const double cTri = 2 / std::sqrt(3);
 static const double cTet = std::sqrt(2);
 static const double cPyr = 4 * std::sqrt(2);
 
+// (not pow_int, which the compiler does not always inline)
+static inline double sq(double x) { return x * x; }
+
 static void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
                                        fullMatrix<double> &coeff, int type,
                                        int numCoeff = -1)
@@ -43,62 +46,57 @@ static void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
 
   if(type != TYPE_PYR) {
     for(int i = 0; i < sz1; i++) {
-      coeff(i, 0) = std::sqrt(pow_int(mat(i, 0), 2) + pow_int(mat(i, 1), 2) +
-                              pow_int(mat(i, 2), 2));
-      coeff(i, 1) = std::sqrt(pow_int(mat(i, 3), 2) + pow_int(mat(i, 4), 2) +
-                              pow_int(mat(i, 5), 2));
+      coeff(i, 0) = std::sqrt(sq(mat(i, 0)) + sq(mat(i, 1)) + sq(mat(i, 2)));
+      coeff(i, 1) = std::sqrt(sq(mat(i, 3)) + sq(mat(i, 4)) + sq(mat(i, 5)));
     }
     if(type == TYPE_TRI) {
       for(int i = 0; i < sz1; i++) {
-        coeff(i, 2) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
-                                pow_int(mat(i, 4) - mat(i, 1), 2) +
-                                pow_int(mat(i, 5) - mat(i, 2), 2));
+        coeff(i, 2) =
+          std::sqrt(sq(mat(i, 3) - mat(i, 0)) + sq(mat(i, 4) - mat(i, 1)) +
+                    sq(mat(i, 5) - mat(i, 2)));
       }
     }
     else if(type != TYPE_QUA) { // if 3D
       for(int i = 0; i < sz1; i++) {
-        coeff(i, 2) = std::sqrt(pow_int(mat(i, 6), 2) + pow_int(mat(i, 7), 2) +
-                                pow_int(mat(i, 8), 2));
+        coeff(i, 2) = std::sqrt(sq(mat(i, 6)) + sq(mat(i, 7)) + sq(mat(i, 8)));
       }
     }
     if(type == TYPE_TET || type == TYPE_PRI) {
       for(int i = 0; i < sz1; i++) {
-        coeff(i, 3) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
-                                pow_int(mat(i, 4) - mat(i, 1), 2) +
-                                pow_int(mat(i, 5) - mat(i, 2), 2));
+        coeff(i, 3) =
+          std::sqrt(sq(mat(i, 3) - mat(i, 0)) + sq(mat(i, 4) - mat(i, 1)) +
+                    sq(mat(i, 5) - mat(i, 2)));
       }
     }
     if(type == TYPE_TET) {
       for(int i = 0; i < sz1; i++) {
-        coeff(i, 4) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0), 2) +
-                                pow_int(mat(i, 7) - mat(i, 1), 2) +
-                                pow_int(mat(i, 8) - mat(i, 2), 2));
-        coeff(i, 5) = std::sqrt(pow_int(mat(i, 6) - mat(i, 3), 2) +
-                                pow_int(mat(i, 7) - mat(i, 4), 2) +
-                                pow_int(mat(i, 8) - mat(i, 5), 2));
+        coeff(i, 4) =
+          std::sqrt(sq(mat(i, 6) - mat(i, 0)) + sq(mat(i, 7) - mat(i, 1)) +
+                    sq(mat(i, 8) - mat(i, 2)));
+        coeff(i, 5) =
+          std::sqrt(sq(mat(i, 6) - mat(i, 3)) + sq(mat(i, 7) - mat(i, 4)) +
+                    sq(mat(i, 8) - mat(i, 5)));
       }
     }
   }
   else {
     for(int i = 0; i < sz1; i++) {
       coeff(i, 0) =
-        std::sqrt(pow_int(2 * mat(i, 0), 2) + pow_int(2 * mat(i, 1), 2) +
-                  pow_int(2 * mat(i, 2), 2));
+        std::sqrt(sq(2 * mat(i, 0)) + sq(2 * mat(i, 1)) + sq(2 * mat(i, 2)));
       coeff(i, 1) =
-        std::sqrt(pow_int(2 * mat(i, 3), 2) + pow_int(2 * mat(i, 4), 2) +
-                  pow_int(2 * mat(i, 5), 2));
-      coeff(i, 2) = std::sqrt(pow_int(mat(i, 6) + mat(i, 0) + mat(i, 3), 2) +
-                              pow_int(mat(i, 7) + mat(i, 1) + mat(i, 4), 2) +
-                              pow_int(mat(i, 8) + mat(i, 2) + mat(i, 5), 2));
-      coeff(i, 3) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0) + mat(i, 3), 2) +
-                              pow_int(mat(i, 7) - mat(i, 1) + mat(i, 4), 2) +
-                              pow_int(mat(i, 8) - mat(i, 2) + mat(i, 5), 2));
-      coeff(i, 4) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0) - mat(i, 3), 2) +
-                              pow_int(mat(i, 7) - mat(i, 1) - mat(i, 4), 2) +
-                              pow_int(mat(i, 8) - mat(i, 2) - mat(i, 5), 2));
-      coeff(i, 5) = std::sqrt(pow_int(mat(i, 6) + mat(i, 0) - mat(i, 3), 2) +
-                              pow_int(mat(i, 7) + mat(i, 1) - mat(i, 4), 2) +
-                              pow_int(mat(i, 8) + mat(i, 2) - mat(i, 5), 2));
+        std::sqrt(sq(2 * mat(i, 3)) + sq(2 * mat(i, 4)) + sq(2 * mat(i, 5)));
+      coeff(i, 2) = std::sqrt(sq(mat(i, 6) + mat(i, 0) + mat(i, 3)) +
+                              sq(mat(i, 7) + mat(i, 1) + mat(i, 4)) +
+                              sq(mat(i, 8) + mat(i, 2) + mat(i, 5)));
+      coeff(i, 3) = std::sqrt(sq(mat(i, 6) - mat(i, 0) + mat(i, 3)) +
+                              sq(mat(i, 7) - mat(i, 1) + mat(i, 4)) +
+                              sq(mat(i, 8) - mat(i, 2) + mat(i, 5)));
+      coeff(i, 4) = std::sqrt(sq(mat(i, 6) - mat(i, 0) - mat(i, 3)) +
+                              sq(mat(i, 7) - mat(i, 1) - mat(i, 4)) +
+                              sq(mat(i, 8) - mat(i, 2) - mat(i, 5)));
+      coeff(i, 5) = std::sqrt(sq(mat(i, 6) + mat(i, 0) - mat(i, 3)) +
+                              sq(mat(i, 7) + mat(i, 1) - mat(i, 4)) +
+                              sq(mat(i, 8) + mat(i, 2) - mat(i, 5)));
     }
   }
 }

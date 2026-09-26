@@ -69,9 +69,9 @@ public:
   {
     return BasisFactory::getJacobianBasis(MSH_PNT);
   }
-  virtual bool isInside(double u, double v, double w) const
+  using MElement::isInside;
+  virtual bool isInside(double u, double v, double w, double tol) const
   {
-    double tol = getTolerance();
     if(fabs(u) > tol || fabs(v) > tol || fabs(w) > tol) return false;
     return true;
   }

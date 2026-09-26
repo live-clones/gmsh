@@ -1157,11 +1157,21 @@ int meshStatFileDialog(const char *name)
   return 0;
 }
 
+// the choice of the views to save with the mesh (Mesh.SaveViews): with views
+// and no mesh, the views are what there is to save
+static int _viewsToSave()
+{
+  int views = (int)opt_mesh_save_views(0, GMSH_GET, 0);
+  if(!views && !PView::list.empty() && !GModel::current()->getNumMeshElements())
+    views = 1;
+  return views;
+}
+
 // Save msh dialog
 struct _mshFileDialog {
   Fl_Window *window;
-  Fl_Check_Button *b[4];
-  Fl_Choice *c;
+  Fl_Check_Button *b[5];
+  Fl_Choice *c, *views;
   Fl_Button *ok, *cancel;
 };
 
@@ -1169,18 +1179,25 @@ int mshFileDialog(const char *name)
 {
   static _mshFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item formatmenu[] = {{"Version 1", 0, nullptr, nullptr},
-                                      {"Version 2 ASCII", 0, nullptr, nullptr},
-                                      {"Version 2 Binary", 0, nullptr, nullptr},
-                                      {"Version 4 ASCII", 0, nullptr, nullptr},
-                                      {"Version 4 Binary", 0, nullptr, nullptr},
-                                      {nullptr}};
+  static Fl_Menu_Item formatmenu[] = {
+    {"Version 1", 0, nullptr, nullptr},
+    {"Version 2 ASCII", 0, nullptr, nullptr},
+    {"Version 2 Binary", 0, nullptr, nullptr},
+    {"Version 4.1 ASCII", 0, nullptr, nullptr},
+    {"Version 4.1 Binary", 0, nullptr, nullptr},
+    {"Version 4.2 ASCII", 0, nullptr, nullptr},
+    {"Version 4.2 Binary", 0, nullptr, nullptr},
+    {nullptr}};
+  static Fl_Menu_Item viewsmenu[] = {{"None", 0, nullptr, nullptr},
+                                     {"Visible", 0, nullptr, nullptr},
+                                     {"All", 0, nullptr, nullptr},
+                                     {nullptr}};
 
   int BBB = BB + 9; // labels too long
 
   if(!dialog) {
     dialog = new _mshFileDialog;
-    int h = 3 * WB + 6 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    int h = 3 * WB + 8 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "MSH Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -1190,6 +1207,11 @@ int mshFileDialog(const char *name)
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
     dialog->c->callback((Fl_Callback *)format_cb, dialog);
+    dialog->views = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Views");
+    dialog->views->tooltip("Mesh.SaveViews");
+    y += BH;
+    dialog->views->menu(viewsmenu);
+    dialog->views->align(FL_ALIGN_RIGHT);
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     dialog->b[0]->tooltip("Mesh.SaveAll");
@@ -1210,6 +1232,11 @@ int mshFileDialog(const char *name)
     dialog->b[3]->tooltip("Mesh.PartitionTopologyFile");
     y += BH;
     dialog->b[3]->type(FL_TOGGLE_BUTTON);
+    dialog->b[4] = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
+                                       "Save high order views refined");
+    dialog->b[4]->tooltip("PostProcessing.SaveAdapted");
+    y += BH;
+    dialog->b[4]->type(FL_TOGGLE_BUTTON);
 
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
@@ -1221,10 +1248,22 @@ int mshFileDialog(const char *name)
     dialog->c->value(0);
   else if(opt_mesh_msh_file_version(0, GMSH_GET, 0) < 4.0)
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 1 : 2);
-  else
+  else if(opt_mesh_msh_file_version(0, GMSH_GET, 0) < 4.2)
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 3 : 4);
+  else
+    dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 5 : 6);
+  dialog->views->value(_viewsToSave());
+  if(PView::list.empty() || dialog->c->value() == 0) {
+    dialog->views->deactivate();
+    dialog->b[4]->deactivate();
+  }
+  else {
+    dialog->views->activate();
+    dialog->b[4]->activate();
+  }
   dialog->b[0]->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[1]->value(opt_mesh_save_parametric(0, GMSH_GET, 0) ? 1 : 0);
+  dialog->b[4]->value(opt_post_save_adapted(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[2]->value(opt_mesh_partition_split_mesh_files(0, GMSH_GET, 0) ? 1 :
                                                                             0);
   dialog->b[3]->value(
@@ -1241,14 +1280,19 @@ int mshFileDialog(const char *name)
       Fl_Widget *o = Fl::readqueue();
       if(!o) break;
       if(o == dialog->ok) {
-        opt_mesh_msh_file_version(
-          0, GMSH_SET | GMSH_GUI,
-          (dialog->c->value() == 0)                            ? 1.0 :
-          (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 :
-                                                                 4.1);
-        opt_mesh_binary(
-          0, GMSH_SET | GMSH_GUI,
-          (dialog->c->value() == 2 || dialog->c->value() == 4) ? 1 : 0);
+        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,
+                                  (dialog->c->value() == 0) ? 1.0 :
+                                  (dialog->c->value() <= 2) ? 2.2 :
+                                  (dialog->c->value() <= 4) ? 4.1 :
+                                                              4.2);
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI,
+                        (dialog->c->value() && !(dialog->c->value() % 2)) ? 1 :
+                                                                            0);
+        if(dialog->views->active()) {
+          opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
+          opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
+                                dialog->b[4]->value() ? 1 : 0);
+        }
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
                           dialog->b[0]->value() ? 1 : 0);
         opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI,
@@ -1273,6 +1317,15 @@ int mshFileDialog(const char *name)
 void format_cb(Fl_Widget *widget, void *data)
 {
   _mshFileDialog *dialog = static_cast<_mshFileDialog *>(data);
+  // (no views in MSH 1)
+  if(!PView::list.empty() && dialog->c->value() != 0) {
+    dialog->views->activate();
+    dialog->b[4]->activate();
+  }
+  else {
+    dialog->views->deactivate();
+    dialog->b[4]->deactivate();
+  }
   if((dialog->c->value() == 3 || dialog->c->value() == 4 ||
       dialog->c->value() == 1 || dialog->c->value() == 2) &&
      GModel::current()->getNumPartitions() > 0) {
@@ -1817,95 +1870,51 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
   return 0;
 }
 
-// POS format post-processing export dialog
-
-static void _saveViews(const std::string &name, int which, int format,
-                       bool canAppend)
+int medFileDialog(const char *name)
 {
-  if(PView::list.empty()) { Msg::Error("No views to save"); }
-  else if(which == 0) {
-    int iview = FlGui::instance()->options->view.index;
-    if(iview < 0 || iview >= (int)PView::list.size()) {
-      Msg::Info("No or invalid current view: saving View[0]");
-      iview = 0;
-    }
-    PView::list[iview]->write(name, format);
-  }
-  else if(which == 1) {
-    int numVisible = 0;
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(PView::list[i]->getOptions()->visible) numVisible++;
-    if(!numVisible) { Msg::Error("No visible view"); }
-    else {
-      bool first = true;
-      for(std::size_t i = 0; i < PView::list.size(); i++) {
-        if(PView::list[i]->getOptions()->visible) {
-          std::string fileName = name;
-          if(!canAppend && numVisible > 1) {
-            std::ostringstream os;
-            os << "_" << i;
-            fileName += os.str();
-          }
-          PView::list[i]->write(fileName, format, first ? false : canAppend);
-          first = false;
-        }
-      }
-    }
-  }
-  else {
-    for(std::size_t i = 0; i < PView::list.size(); i++) {
-      std::string fileName = name;
-      if(!canAppend && PView::list.size() > 1) {
-        std::ostringstream os;
-        os << "_" << i;
-        fileName += os.str();
-      }
-      PView::list[i]->write(fileName, format, i ? canAppend : false);
-    }
-  }
-}
-
-int posFileDialog(const char *name)
-{
-  struct _posFileDialog {
+  struct _medFileDialog {
     Fl_Window *window;
-    Fl_Choice *c[2];
+    Fl_Choice *views;
+    Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
-  static _posFileDialog *dialog = nullptr;
+  static _medFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item viewmenu[] = {{"Current", 0, nullptr, nullptr},
-                                    {"Visible", 0, nullptr, nullptr},
-                                    {"All", 0, nullptr, nullptr},
-                                    {nullptr}};
-  static Fl_Menu_Item formatmenu[] = {{"Parsed", 0, nullptr, nullptr},
-                                      {"Mesh-based", 0, nullptr, nullptr},
-                                      {"Legacy ASCII", 0, nullptr, nullptr},
-                                      {"Legacy Binary", 0, nullptr, nullptr},
-                                      {nullptr}};
+  static Fl_Menu_Item viewsmenu[] = {{"None", 0, nullptr, nullptr},
+                                     {"Visible", 0, nullptr, nullptr},
+                                     {"All", 0, nullptr, nullptr},
+                                     {nullptr}};
 
-  int BBB = BB + 9; // labels too long
+  int BBB = BB + 16; // labels too long
 
   if(!dialog) {
-    dialog = new _posFileDialog;
+    dialog = new _medFileDialog;
     int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "POS Options");
+    dialog->window = new Fl_Double_Window(w, h, "MED Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)");
+    dialog->views = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Views");
+    dialog->views->tooltip("Mesh.SaveViews");
     y += BH;
-    dialog->c[0]->menu(viewmenu);
-    dialog->c[0]->align(FL_ALIGN_RIGHT);
-    dialog->c[1] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format");
+    dialog->views->menu(viewsmenu);
+    dialog->views->align(FL_ALIGN_RIGHT);
+    dialog->b =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
+    dialog->b->tooltip("Mesh.SaveAll");
     y += BH;
-    dialog->c[1]->menu(formatmenu);
-    dialog->c[1]->align(FL_ALIGN_RIGHT);
+    dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
 
+  dialog->views->value(_viewsToSave());
+  if(PView::list.empty())
+    dialog->views->deactivate();
+  else
+    dialog->views->activate();
+  dialog->b->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()) {
@@ -1914,15 +1923,10 @@ int posFileDialog(const char *name)
       Fl_Widget *o = Fl::readqueue();
       if(!o) break;
       if(o == dialog->ok) {
-        int format = 2;
-        switch(dialog->c[1]->value()) {
-        case 0: format = 2; break;
-        case 1: format = 5; break;
-        case 2: format = 0; break;
-        case 3: format = 1; break;
-        }
-        bool canAppend = (format == 2) ? true : false;
-        _saveViews(name, dialog->c[0]->value(), format, canAppend);
+        if(dialog->views->active())
+          opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_MED);
         dialog->window->hide();
         return 1;
       }
@@ -1935,137 +1939,69 @@ int posFileDialog(const char *name)
   return 0;
 }
 
-// FIXME: The way this is written makes it non scriptable. It would be much
-// better to have options giverning the various parameters, and go through the
-// standard file creation mechanism...
-
-static void _saveAdaptedViews(const std::string &name, int useDefaultName,
-                              int which, bool isBinary, int adaptLev,
-                              double adaptErr, int npart, bool canAppend)
+int vtuFileDialog(const char *name)
 {
-  if(PView::list.empty()) { Msg::Error("No views to save"); }
-  else if(which == 0) {
-    int iview = FlGui::instance()->options->view.index;
-    if(iview < 0 || iview >= (int)PView::list.size()) {
-      Msg::Info("No or invalid current view: saving View[0]");
-      iview = 0;
-    }
-    PView::list[iview]->writeAdapt(name, useDefaultName, isBinary, adaptLev,
-                                   adaptErr, npart);
-  }
-  else if(which == 1) {
-    int numVisible = 0;
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(PView::list[i]->getOptions()->visible) numVisible++;
-    if(!numVisible) { Msg::Error("No visible view"); }
-    else {
-      bool first = true;
-      for(std::size_t i = 0; i < PView::list.size(); i++) {
-        if(PView::list[i]->getOptions()->visible) {
-          std::string fileName = name;
-          if(!canAppend && numVisible > 1) {
-            std::ostringstream os;
-            os << "_" << i;
-            // (before the extension)
-            std::vector<std::string> split = SplitFileName(name);
-            fileName = split[0] + split[1] + os.str() + split[2];
-          }
-          PView::list[i]->writeAdapt(fileName, useDefaultName, isBinary,
-                                     adaptLev, adaptErr, npart,
-                                     first ? false : canAppend);
-          first = false;
-        }
-      }
-    }
-  }
-  else {
-    for(std::size_t i = 0; i < PView::list.size(); i++) {
-      std::string fileName = name;
-      if(!canAppend && PView::list.size() > 1) {
-        std::ostringstream os;
-        os << "_" << i;
-        std::vector<std::string> split = SplitFileName(name);
-        fileName = split[0] + split[1] + os.str() + split[2];
-      }
-      PView::list[i]->writeAdapt(fileName, useDefaultName, isBinary, adaptLev,
-                                 adaptErr, npart, i ? canAppend : false);
-    }
-  }
-}
-
-int pvtuAdaptFileDialog(const char *name)
-{
-  struct _pvtuAdaptFileDialog {
+  struct _vtuFileDialog {
     Fl_Window *window;
-    Fl_Choice *c[2];
-    Fl_Button *ok, *cancel, *push[2];
-    Fl_Value_Input *vi[3];
-    Fl_Check_Button *defautName;
+    Fl_Choice *c, *views;
+    Fl_Check_Button *b, *adapted;
+    Fl_Button *ok, *cancel;
   };
-  static _pvtuAdaptFileDialog *dialog = nullptr;
+  static _vtuFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item viewmenu[] = {{"Current", 0, nullptr, nullptr},
-                                    {"Visible", 0, nullptr, nullptr},
-                                    {"All", 0, nullptr, nullptr},
-                                    {nullptr}};
   static Fl_Menu_Item formatmenu[] = {
-    {"Binary", 0, nullptr, nullptr}, {"ASCII", 0, nullptr, nullptr}, {nullptr}};
+    {"ASCII", 0, nullptr, nullptr}, {"Binary", 0, nullptr, nullptr}, {nullptr}};
+  static Fl_Menu_Item viewsmenu[] = {{"None", 0, nullptr, nullptr},
+                                     {"Visible", 0, nullptr, nullptr},
+                                     {"All", 0, nullptr, nullptr},
+                                     {nullptr}};
 
-  int BBB = BB + 9; // labels too long
+  int BBB = BB + 16; // labels too long
 
   if(!dialog) {
-    dialog = new _pvtuAdaptFileDialog;
-    int h = 7 * BH + 3 * WB, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "Adaptive View Options");
+    dialog = new _vtuFileDialog;
+    int h = 3 * WB + 5 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h, "VTU Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->c[0] = new Fl_Choice(WB, y, BB, BH, "View(s)");
+    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format");
+    dialog->c->tooltip("Mesh.Binary");
     y += BH;
-    dialog->c[0]->menu(viewmenu);
-    dialog->c[0]->align(FL_ALIGN_RIGHT);
-    dialog->c[1] = new Fl_Choice(WB, y, BB, BH, "Format");
+    dialog->c->menu(formatmenu);
+    dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->views = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Views");
+    dialog->views->tooltip("Mesh.SaveViews");
     y += BH;
-    dialog->c[1]->menu(formatmenu);
-    dialog->c[1]->align(FL_ALIGN_RIGHT);
-
-    dialog->vi[0] = new Fl_Value_Input(WB, y, BB, BH, "Recursion level");
+    dialog->views->menu(viewsmenu);
+    dialog->views->align(FL_ALIGN_RIGHT);
+    dialog->b =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
+    dialog->b->tooltip("Mesh.SaveAll");
     y += BH;
-    dialog->vi[0]->align(FL_ALIGN_RIGHT);
-    dialog->vi[0]->minimum(0);
-    dialog->vi[0]->maximum(6);
-    if(CTX::instance()->inputScrolling) dialog->vi[0]->step(1);
-    dialog->vi[0]->value(1);
-    dialog->vi[0]->when(FL_WHEN_RELEASE);
-
-    dialog->vi[1] = new Fl_Value_Input(WB, y, BB, BH, "Target error");
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->adapted = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
+                                          "Save high order views refined");
+    dialog->adapted->tooltip("PostProcessing.SaveAdapted");
     y += BH;
-    dialog->vi[1]->align(FL_ALIGN_RIGHT);
-    dialog->vi[1]->minimum(-1.e-4);
-    dialog->vi[1]->maximum(0.1);
-    if(CTX::instance()->inputScrolling) dialog->vi[1]->step(1.e-4);
-    dialog->vi[1]->value(-1.e-4);
-    dialog->vi[1]->when(FL_WHEN_RELEASE);
-
-    dialog->vi[2] = new Fl_Value_Input(WB, y, BB, BH, "Number of parts");
-    y += BH;
-    dialog->vi[2]->align(FL_ALIGN_RIGHT);
-    dialog->vi[2]->minimum(1);
-    dialog->vi[2]->maximum(262144);
-    if(CTX::instance()->inputScrolling) dialog->vi[2]->step(1);
-    dialog->vi[2]->value(4);
-    dialog->vi[2]->when(FL_WHEN_RELEASE);
-
-    dialog->defautName =
-      new Fl_Check_Button(WB, y, w - 2 * WB, BH, "Use default filename");
-    y += BH;
-    dialog->defautName->value(1);
-
+    dialog->adapted->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
 
+  dialog->c->value(opt_mesh_binary(0, GMSH_GET, 0) ? 1 : 0);
+  dialog->views->value(_viewsToSave());
+  if(PView::list.empty()) {
+    dialog->views->deactivate();
+    dialog->adapted->deactivate();
+  }
+  else {
+    dialog->views->activate();
+    dialog->adapted->activate();
+  }
+  dialog->b->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
+  dialog->adapted->value(opt_post_save_adapted(0, GMSH_GET, 0) ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()) {
@@ -2074,26 +2010,124 @@ int pvtuAdaptFileDialog(const char *name)
       Fl_Widget *o = Fl::readqueue();
       if(!o) break;
       if(o == dialog->ok) {
-        bool isBinary = true;
-        switch(dialog->c[1]->value()) {
-        case 0: isBinary = true; break;
-        case 1: isBinary = false; break;
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+        if(dialog->views->active()) {
+          opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
+          opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
+                                dialog->adapted->value() ? 1 : 0);
         }
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_VTU);
+        dialog->window->hide();
+        return 1;
+      }
+      if(o == dialog->window || o == dialog->cancel) {
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
 
-        // Only one view can currently be saved at a time in a pvtu file set,
-        // with a repetition of the topology structure.  Views/Fields can then
-        // be appended in ParaView using the AppendAttributes filter bool
-        // canAppend = (format == 2) ? true : false;
+// POS format post-processing export dialog
 
-        int adaptLev = dialog->vi[0]->value();
-        double adaptErr = dialog->vi[1]->value();
-        int npart = dialog->vi[2]->value();
-        int useDefaultName = dialog->defautName->value();
-        bool canAppend =
-          false; // Not yet implemented for VTK format here due to a tradeoff
-                 // to limit memory consumption for high levels of adaptation
-        _saveAdaptedViews(name, useDefaultName, dialog->c[0]->value(), isBinary,
-                          adaptLev, adaptErr, npart, canAppend);
+// write the current, visible or all views (which = 0, 1 or 2): in the file, or
+// if the format cannot hold several, in a file for each, name_i.ext
+static void _saveViews(const std::string &name, int which, int format,
+                       bool canAppend)
+{
+  std::vector<PView *> views;
+  if(which == 0 && PView::list.size()) {
+    int iview = FlGui::instance()->options->view.index;
+    if(iview < 0 || iview >= (int)PView::list.size()) {
+      Msg::Info("No or invalid current view: saving View[0]");
+      iview = 0;
+    }
+    views.push_back(PView::list[iview]);
+  }
+  else {
+    for(auto v : PView::list)
+      if(which == 2 || v->getOptions()->visible) views.push_back(v);
+  }
+  if(views.empty()) {
+    Msg::Error((which == 1) ? "No visible view" : "No views to save");
+    return;
+  }
+  std::vector<std::string> split = SplitFileName(name);
+  std::vector<std::pair<std::string, bool> > files;
+  for(std::size_t i = 0; i < views.size(); i++) {
+    std::string fileName = name;
+    if(!canAppend && views.size() > 1)
+      fileName = split[0] + split[1] + "_" +
+                 std::to_string(views[i]->getIndex()) + split[2];
+    views[i]->write(fileName, format, i ? canAppend : false, &files);
+  }
+  CreateReadBackScript(name, files);
+}
+
+int posFileDialog(const char *name)
+{
+  struct _posFileDialog {
+    Fl_Window *window;
+    Fl_Choice *c[2];
+    Fl_Check_Button *adapted;
+    Fl_Button *ok, *cancel;
+  };
+  static _posFileDialog *dialog = nullptr;
+
+  static Fl_Menu_Item viewmenu[] = {{"Current", 0, nullptr, nullptr},
+                                    {"Visible", 0, nullptr, nullptr},
+                                    {"All", 0, nullptr, nullptr},
+                                    {nullptr}};
+  static Fl_Menu_Item formatmenu[] = {{"Parsed", 0, nullptr, nullptr},
+                                      {"Legacy ASCII", 0, nullptr, nullptr},
+                                      {"Legacy Binary", 0, nullptr, nullptr},
+                                      {nullptr}};
+
+  int BBB = BB + 9; // labels too long
+
+  if(!dialog) {
+    dialog = new _posFileDialog;
+    int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h, "POS Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)");
+    y += BH;
+    dialog->c[0]->menu(viewmenu);
+    dialog->c[0]->align(FL_ALIGN_RIGHT);
+    dialog->c[1] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format");
+    y += BH;
+    dialog->c[1]->menu(formatmenu);
+    dialog->c[1]->align(FL_ALIGN_RIGHT);
+    dialog->adapted = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
+                                          "Save high order views refined");
+    dialog->adapted->tooltip("PostProcessing.SaveAdapted");
+    y += BH;
+    dialog->adapted->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+
+  dialog->adapted->value(opt_post_save_adapted(0, GMSH_GET, 0) ? 1 : 0);
+  dialog->window->show();
+
+  while(dialog->window->shown()) {
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(o == dialog->ok) {
+        const int formats[] = {PView::POS_PARSED, PView::POS_ASCII,
+                               PView::POS_BINARY};
+        int format = formats[dialog->c[1]->value()];
+        bool canAppend = (format == PView::POS_PARSED);
+        opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
+                              dialog->adapted->value() ? 1 : 0);
+        _saveViews(name, dialog->c[0]->value(), format, canAppend);
         dialog->window->hide();
         return 1;
       }

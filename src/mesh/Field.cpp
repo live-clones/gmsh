@@ -37,6 +37,7 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
+#include "PViewDataGModel.h"
 #endif
 
 #if defined(WIN32) && !defined(__CYGWIN__)
@@ -1152,25 +1153,25 @@ public:
     options["F"] = new FieldOptionString(
       _f, "Mathematical function to evaluate.", &updateNeeded);
   }
+  void update()
+  {
+    if(!updateNeeded) return;
+    if(!_expr.set_function(_f))
+      Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
+                 _f.c_str());
+    updateNeeded = false;
+  }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-    double ret = 0;
-    // the critical section is necessary for multi-threaded meshing, as the
-    // evaluator is not thread-safe; this should be fixed as it makes the
-    // MathEvalField not reentrant (i.e. a MathEval field cannot reference
-    // another MathEval field)
-#pragma omp critical(MathEvalField)
-    {
-      if(updateNeeded) {
-        if(!_expr.set_function(_f))
-          Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
-                     _f.c_str());
-        updateNeeded = false;
-      }
-      ret = _expr.evaluate(x, y, z, ge);
+    // the expression is parsed before meshing (FieldManager::initialize()),
+    // or else by the first thread that evaluates it; it can then be
+    // evaluated by several threads at once
+    if(updateNeeded) {
+#pragma omp critical(MathEvalFieldUpdate)
+      update();
     }
-    return ret;
+    return _expr.evaluate(x, y, z, ge);
   }
   const char *getName() { return "MathEval"; }
   std::string getDescription()
@@ -1224,37 +1225,30 @@ public:
     options["m23"] =
       new FieldOptionString(_f[5], "[Deprecated]", &updateNeeded, true);
   }
+  void update()
+  {
+    if(!updateNeeded) return;
+    for(int i = 0; i < 6; i++) {
+      if(!_expr.set_function(i, _f[i]))
+        Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
+                   _f[i].c_str());
+    }
+    updateNeeded = false;
+  }
+  // (see MathEvalField)
   void operator()(double x, double y, double z, SMetric3 &metr,
                   GEntity *ge = nullptr)
   {
-#pragma omp critical(MathEvalFieldAnisoMetric)
-    {
-      if(updateNeeded) {
-        for(int i = 0; i < 6; i++) {
-          if(!_expr.set_function(i, _f[i]))
-            Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
-                       _f[i].c_str());
-        }
-        updateNeeded = false;
-      }
-      _expr.evaluate(x, y, z, metr, ge);
+    if(updateNeeded) {
+#pragma omp critical(MathEvalFieldAnisoUpdate)
+      update();
     }
+    _expr.evaluate(x, y, z, metr, ge);
   }
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     SMetric3 metr;
-#pragma omp critical(MathEvalFieldAnisoScalar)
-    {
-      if(updateNeeded) {
-        for(int i = 0; i < 6; i++) {
-          if(!_expr.set_function(i, _f[i]))
-            Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
-                       _f[i].c_str());
-        }
-        updateNeeded = false;
-      }
-      _expr.evaluate(x, y, z, metr, ge);
-    }
+    (*this)(x, y, z, metr, ge);
     return metr(0, 0);
   }
   const char *getName() { return "MathEvalAniso"; }
@@ -1545,22 +1539,25 @@ public:
       Msg::Warning("Unknown Field %i", _inField);
       return MAX_LC;
     }
-    double xx, yy, zz;
-#pragma omp critical(ParametricField)
-    {
-      if(updateNeeded) {
-        for(int i = 0; i < 3; i++) {
-          if(!_expr[i].set_function(_f[i]))
-            Msg::Error("Field %i: invalid matheval expression \"%s\"", id,
-                       _f[i].c_str());
-        }
-        updateNeeded = false;
-      }
-      xx = _expr[0].evaluate(x, y, z, ge);
-      yy = _expr[1].evaluate(x, y, z, ge);
-      zz = _expr[2].evaluate(x, y, z, ge);
+    // (see MathEvalField)
+    if(updateNeeded) {
+#pragma omp critical(ParametricFieldUpdate)
+      update();
     }
+    double xx = _expr[0].evaluate(x, y, z, ge);
+    double yy = _expr[1].evaluate(x, y, z, ge);
+    double zz = _expr[2].evaluate(x, y, z, ge);
     return (*field)(xx, yy, zz, ge);
+  }
+  void update()
+  {
+    if(!updateNeeded) return;
+    for(int i = 0; i < 3; i++) {
+      if(!_expr[i].set_function(_f[i]))
+        Msg::Error("Field %i: invalid matheval expression \"%s\"", id,
+                   _f[i].c_str());
+    }
+    updateNeeded = false;
   }
   const char *getName() { return "Param"; }
 };
@@ -3368,16 +3365,20 @@ void Field::putOnNewView(int viewTag)
 void Field::putOnView(PView *view, int comp)
 {
   PViewData *data = view->getData();
+  // list data has no model entities
+  bool model = dynamic_cast<PViewDataGModel *>(data) != nullptr;
   for(int ent = 0; ent < data->getNumEntities(0); ent++) {
-    GEntity *ge = data->getEntity(0, ent);
+    GEntity *ge = model ? data->getEntity(0, ent) : nullptr;
     for(int ele = 0; ele < data->getNumElements(0, ent); ele++) {
       if(data->skipElement(0, ent, ele)) continue;
+      int numComp = data->getNumComponents(0, ent, ele);
       for(int nod = 0; nod < data->getNumNodes(0, ent, ele); nod++) {
         double x, y, z;
         data->getNode(0, ent, ele, nod, x, y, z);
         double val = (*this)(x, y, z, ge);
-        for(int comp = 0; comp < data->getNumComponents(0, ent, ele); comp++)
-          data->setValue(0, ent, ele, nod, comp, val);
+        // all the components if comp < 0
+        for(int c = 0; c < numComp; c++)
+          if(comp < 0 || c == comp) data->setValue(0, ent, ele, nod, c, val);
       }
     }
   }
@@ -3386,7 +3387,6 @@ void Field::putOnView(PView *view, int comp)
   data->setName(oss.str());
   data->finalize();
   view->setChanged(true);
-  data->destroyAdaptiveData();
 }
 #endif
 

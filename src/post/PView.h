@@ -14,11 +14,12 @@
 #include "SPoint3.h"
 
 class PViewData;
+class PViewDataList;
+class adaptiveData;
 class PViewOptions;
 class VertexArray;
 class smooth_normals;
 class GModel;
-class GMSH_PostPlugin;
 namespace onelab {
   class localNetworkClient;
 }
@@ -41,6 +42,12 @@ private:
   PViewOptions *_options;
   // the data
   PViewData *_data;
+  // for a view whose skin alone is refined, the elements the clipping planes
+  // cut, refined apart (and read in place of its adaptive data while what
+  // the planes add is built)
+  adaptiveData *_clipAdaptive;
+  PViewData *_clipLayer;
+  void _deleteClipAdaptive();
   // initialize private stuff
   void _init(int tag = -1);
 
@@ -83,7 +90,11 @@ public:
 
   // get/set the view data
   PViewData *getData(bool useAdaptiveIfAvailable = false);
-  void setData(PViewData *val) { _data = val; }
+  void setData(PViewData *val)
+  {
+    _deleteClipAdaptive();
+    _data = val;
+  }
 
   // get the view tag (unique and immutable)
   int getTag() { return _tag; }
@@ -102,7 +113,6 @@ public:
   // get/set the eye position (for transparency calculations)
   SPoint3 &getEye() { return _eye; }
   void setEye(SPoint3 &p) { _eye = p; }
-  //  void setDrawContext(drawContext *ctx){_ctx=ctx;}
 
   // get (approx.) memory used by the view, in MB
   double getMemoryInMB();
@@ -135,27 +145,82 @@ public:
   static bool readMSHInterpolationScheme(FILE *fp);
   static bool readMSHViewData(const std::string &fileName, FILE *fp,
                               bool binary, bool swap, const char *dataType,
-                              int partitionToRead = -1);
+                              double version, int partitionToRead = -1);
   static bool readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
                        const std::vector<std::vector<MElement *> > &eltPerZone,
                        const std::string &fileName);
   static bool readMED(const std::string &fileName, int fileIndex = -1);
-  static bool readPCH(const std::string &fileName, int fileIndex = -1);
   static bool writeX3D(const std::string &fileName);
-  static bool writeVTU(const std::string &fileName, bool binary,
-                       const std::vector<PView *> &views);
-  // IO write routine
-  bool write(const std::string &fileName, int format, bool append = false);
+  // (the files to read back, each with a mesh, are added to written)
+  static bool writeVTU(
+    const std::string &fileName, bool binary, const std::vector<PView *> &views,
+    std::vector<std::pair<std::string, bool> > *written = nullptr);
+  // the formats of write(), as in PostProcessing.Format
+  enum Format {
+    POS_ASCII = 0,
+    POS_BINARY = 1,
+    POS_PARSED = 2,
+    STL = 3,
+    TXT = 4,
+    MSH = 5,
+    MED = 6,
+    X3D = 7,
+    VTU = 8,
+    AUTO = 10 // from the extension of the file
+  };
+  // write the view; if it makes several files, a script to read them back
+  // (see CreateReadBackScript()), or else they are added to written, with
+  // true if they have a mesh
+  bool write(const std::string &fileName, int format, bool append = false,
+             std::vector<std::pair<std::string, bool> > *written = nullptr);
 
   // send to ONELAB server
   void sendToServer(const std::string &name);
 
-  // Routines for export of adapted views to pvtu file format for parallel
-  // visualization with paraview
-  bool _writeVTUOrAdapted(const std::string &fileName);
-  bool writeAdapt(const std::string &fileName, int useDefaultName,
-                  bool isBinary, int adaptLev, double adaptErr, int npart,
-                  bool append = false);
+  // The adaptive data of a view drawn adapted (View.AdaptVisualizationGrid),
+  // made when it is first used and again when the data has changed: null if
+  // the view is not adaptive. What uses the view refined calls adapt(), or
+  // adaptWhole(): drawing, plugins, probes, the API; saving the view refined
+  // refines it apart (see getAdaptedSteps()).
+  adaptiveData *initAdaptiveData();
+  // refine the adaptive data as the options say: the time step, the recursion
+  // level, the target error, the range drawn if it is a custom one, which the
+  // error is then relative to, and only the skin of the volumes if nothing else
+  // is drawn of them (View.AdaptSkinOnly), unless the whole view is asked for
+  // (nothing is done if it is already refined so)
+  void adapt(bool whole = false);
+  // for a view whose skin alone is refined, refine apart the elements the
+  // clipping planes cut, which what the planes add is built from (see
+  // useClipLayer); false if the view is not refined so
+  bool refineClipLayer();
+  // read the elements refined apart in place of the adaptive data, or stop
+  void useClipLayer(bool use);
+  // the adaptive data refining them (null if none)
+  adaptiveData *getClipAdaptiveData() { return _clipAdaptive; }
+  // refine the whole view if only its skin is, for what reads the refined data
+  // as a whole (plugins, probes, the API); the next drawing refines the skin
+  // again
+  void adaptWhole();
+  // widen a range of the refined data to the values inside the volumes (those
+  // of the nodes, at the time step drawn) if only the skin is refined
+  void widenAdaptedRange(double &min, double &max);
+  // the range the target error is relative to, as adaptiveData takes it (the
+  // custom range, or else an empty one: that of the data)
+  void getAdaptiveRange(double &min, double &max);
+
+  // Views of high order are saved refined if PostProcessing.SaveAdapted says
+  // so, as adapted views are drawn (with the recursion level and the target
+  // error of the view), each step on a mesh of its own: true if this one is,
+  // and the refined steps, a view of a step each (null if the view has no
+  // such step), until doneSaving()
+  bool savesAdapted();
+  std::vector<PViewDataList *> getAdaptedSteps();
+  static void doneSaving();
+  // true if the view is saved on several meshes: refined with several steps,
+  // or with its steps on the meshes of different models. A file holds one
+  // mesh: such a view is saved in a file for each, name_0000.ext, named after
+  // the first step it holds.
+  bool savesSeveralMeshes();
 
   // vertex arrays to draw the elements efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;

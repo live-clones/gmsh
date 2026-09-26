@@ -181,9 +181,9 @@ public:
     }
   }
   virtual SPoint3 barycenterUVW() const { return SPoint3(0., 0., .2); }
-  virtual bool isInside(double u, double v, double w) const
+  using MElement::isInside;
+  virtual bool isInside(double u, double v, double w, double tol) const
   {
-    double tol = getTolerance();
     if(u < (w - (1. + tol)) || u > ((1. + tol) - w) || v < (w - (1. + tol)) ||
        v > ((1. + tol) - w) || w < (-tol) || w > (1. + tol))
       return false;

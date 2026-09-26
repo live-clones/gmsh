@@ -187,6 +187,9 @@ void GModel::destroy(bool keepName)
   _numPartitions = 0;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
+  // (the mesh edges and faces hold nodes about to be deleted)
+  hashmapMEdge().swap(_mapEdgeNum);
+  hashmapMFace().swap(_mapFaceNum);
 
   for(auto it = firstRegion(); it != lastRegion(); ++it) delete *it;
   regions.clear();
@@ -383,8 +386,7 @@ void GModel::clearOverlaps()
 
 GRegion *GModel::getRegionByTag(int n) const
 {
-  GRegion tmp((GModel *)this, n);
-  auto it = regions.find(&tmp);
+  auto it = regions.find(n);
   if(it != regions.end())
     return *it;
   else
@@ -393,8 +395,7 @@ GRegion *GModel::getRegionByTag(int n) const
 
 GFace *GModel::getFaceByTag(int n) const
 {
-  GFace tmp((GModel *)this, n);
-  auto it = faces.find(&tmp);
+  auto it = faces.find(n);
   if(it != faces.end())
     return *it;
   else
@@ -403,8 +404,7 @@ GFace *GModel::getFaceByTag(int n) const
 
 GEdge *GModel::getEdgeByTag(int n) const
 {
-  GEdge tmp((GModel *)this, n);
-  auto it = edges.find(&tmp);
+  auto it = edges.find(n);
   if(it != edges.end())
     return *it;
   else
@@ -413,8 +413,7 @@ GEdge *GModel::getEdgeByTag(int n) const
 
 GVertex *GModel::getVertexByTag(int n) const
 {
-  GVertex tmp((GModel *)this, n);
-  auto it = vertices.find(&tmp);
+  auto it = vertices.find(n);
   if(it != vertices.end())
     return *it;
   else
@@ -969,21 +968,17 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int>> &inDimTags,
 
 int GModel::getMaxElementaryNumber(int dim)
 {
-  // scan the relevant containers directly, rather than materializing a vector
-  // of every entity in the model on each call
+  // the sets are sorted by tag: the largest in absolute value is at one end
+  auto ends = [](const auto &s) {
+    if(s.empty()) return 0;
+    return std::max(std::abs((*s.begin())->tag()),
+                    std::abs((*s.rbegin())->tag()));
+  };
   int num = 0;
-  if(dim < 0 || dim == 0)
-    for(auto it = vertices.begin(); it != vertices.end(); ++it)
-      num = std::max(num, std::abs((*it)->tag()));
-  if(dim < 0 || dim == 1)
-    for(auto it = edges.begin(); it != edges.end(); ++it)
-      num = std::max(num, std::abs((*it)->tag()));
-  if(dim < 0 || dim == 2)
-    for(auto it = faces.begin(); it != faces.end(); ++it)
-      num = std::max(num, std::abs((*it)->tag()));
-  if(dim < 0 || dim == 3)
-    for(auto it = regions.begin(); it != regions.end(); ++it)
-      num = std::max(num, std::abs((*it)->tag()));
+  if(dim < 0 || dim == 0) num = std::max(num, ends(vertices));
+  if(dim < 0 || dim == 1) num = std::max(num, ends(edges));
+  if(dim < 0 || dim == 2) num = std::max(num, ends(faces));
+  if(dim < 0 || dim == 3) num = std::max(num, ends(regions));
   return num;
 }
 
@@ -2166,8 +2161,7 @@ std::size_t GModel::getNumMeshElements(unsigned c[6])
   return 0;
 }
 
-MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
-                                        bool strict)
+MElementOctree *GModel::_getElementOctree()
 {
   if(!_elementOctree) {
 #pragma omp barrier
@@ -2177,7 +2171,13 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
       _elementOctree = new MElementOctree(this);
     }
   }
-  MElement *e = _elementOctree->find(p.x(), p.y(), p.z(), dim, strict);
+  return _elementOctree;
+}
+
+MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
+                                        bool strict)
+{
+  MElement *e = _getElementOctree()->find(p.x(), p.y(), p.z(), dim, strict);
   if(e) {
     double xyz[3] = {p.x(), p.y(), p.z()}, uvw[3];
     e->xyz2uvw(xyz, uvw);
@@ -2189,18 +2189,16 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
   return e;
 }
 
+MElement *GModel::getMeshElementClosestTo(const SPoint3 &p, int dim,
+                                          double distance)
+{
+  return _getElementOctree()->findClosest(p.x(), p.y(), p.z(), dim, distance);
+}
+
 std::vector<MElement *> GModel::getMeshElementsByCoord(SPoint3 &p, int dim,
                                                        bool strict)
 {
-  if(!_elementOctree) {
-#pragma omp barrier
-#pragma omp single
-    {
-      Msg::Debug("Rebuilding mesh element octree");
-      _elementOctree = new MElementOctree(this);
-    }
-  }
-  return _elementOctree->findAll(p.x(), p.y(), p.z(), dim, strict);
+  return _getElementOctree()->findAll(p.x(), p.y(), p.z(), dim, strict);
 }
 
 void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
@@ -2279,15 +2277,31 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
   }
 }
 
-MVertex *GModel::getMeshVertexByTag(std::size_t n)
+// The OpenMP constructs needed to rebuild the caches from within a parallel
+// region are kept out of the lookups below: a function containing any of them
+// fetches the OpenMP thread number on entry, which costs more than the lookup.
+static void rebuildMeshVertexCacheOnce(GModel *m)
 {
-  if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
 #pragma omp barrier
 #pragma omp single
-    {
-      rebuildMeshVertexCache();
-    }
+  {
+    m->rebuildMeshVertexCache();
   }
+}
+
+static void rebuildMeshElementCacheOnce(GModel *m)
+{
+#pragma omp barrier
+#pragma omp single
+  {
+    m->rebuildMeshElementCache();
+  }
+}
+
+MVertex *GModel::getMeshVertexByTag(std::size_t n)
+{
+  if(_vertexVectorCache.empty() && _vertexMapCache.empty())
+    rebuildMeshVertexCacheOnce(this);
 
   if(n < _vertexVectorCache.size())
     return _vertexVectorCache[n];
@@ -2334,13 +2348,8 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
 
 MElement *GModel::getMeshElementByTag(std::size_t n, int &entityTag)
 {
-  if(_elementVectorCache.empty() && _elementMapCache.empty()) {
-#pragma omp barrier
-#pragma omp single
-    {
-      rebuildMeshElementCache();
-    }
-  }
+  if(_elementVectorCache.empty() && _elementMapCache.empty())
+    rebuildMeshElementCacheOnce(this);
 
   std::pair<MElement *, int> ret;
   if(n < _elementVectorCache.size())

@@ -156,7 +156,7 @@ static void view_remove_cb(Fl_Widget *w, void *data)
 static void view_save_cb(Fl_Widget *w, void *data)
 {
   static const char *formats =
-    "Gmsh Parsed\t*.pos\nGmsh Mesh-based\t*.pos\n"
+    "Gmsh Parsed\t*.pos\nGmsh MSH\t*.msh\n"
     "Gmsh Legacy ASCII\t*.pos\nGmsh Legacy Binary\t*.pos\n"
     "MED\t*.rmed\nSTL Surface\t*.stl\nGeneric TXT\t*.txt\n"
     "VTK XML Unstructured Grid\t*.vtu\n";
@@ -177,18 +177,12 @@ test:
                       "Cancel", "Replace", nullptr, name.c_str()))
           goto test;
     }
-    int format = 0;
-    switch(fileChooserGetFilter()) {
-    case 0: format = 2; break;
-    case 1: format = 5; break;
-    case 2: format = 0; break;
-    case 3: format = 1; break;
-    case 4: format = 6; break;
-    case 5: format = 3; break;
-    case 6: format = 4; break;
-    case 7: format = 8; break;
-    }
-    view->write(name, format);
+    // (in the order of the formats above)
+    const int format[] = {PView::POS_PARSED, PView::MSH, PView::POS_ASCII,
+                          PView::POS_BINARY, PView::MED, PView::STL,
+                          PView::TXT,        PView::VTU};
+    int f = fileChooserGetFilter();
+    view->write(name, (f >= 0 && f < 8) ? format[f] : PView::POS_PARSED);
   }
 }
 

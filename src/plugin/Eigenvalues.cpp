@@ -7,14 +7,9 @@
 #include "Numeric.h"
 #include "GmshDefines.h"
 
-StringXNumber EigenvaluesOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterEigenvaluesPlugin()
+GMSH_EigenvaluesPlugin::GMSH_EigenvaluesPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_EigenvaluesPlugin();
-}
 }
 
 std::string GMSH_EigenvaluesPlugin::getHelp() const
@@ -25,19 +20,9 @@ std::string GMSH_EigenvaluesPlugin::getHelp() const
          "Plugin(Eigenvalues) creates three new list-based scalar views.";
 }
 
-int GMSH_EigenvaluesPlugin::getNbOptions() const
-{
-  return sizeof(EigenvaluesOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_EigenvaluesPlugin::getOption(int iopt)
-{
-  return &EigenvaluesOptions_Number[iopt];
-}
-
 PView *GMSH_EigenvaluesPlugin::execute(PView *v)
 {
-  int iView = (int)EigenvaluesOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -55,51 +40,25 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
   PViewDataList *dmin = getDataList(min);
   PViewDataList *dmid = getDataList(mid);
   PViewDataList *dmax = getDataList(max);
-
-  for(int ent = 0; ent < data1->getNumEntities(0); ent++) {
-    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++) {
-      if(data1->skipElement(0, ent, ele)) continue;
-      int numComp = data1->getNumComponents(0, ent, ele);
-      if(numComp != 9) continue;
-      int type = data1->getType(0, ent, ele);
-      int numNodes = data1->getNumNodes(0, ent, ele);
-      std::vector<double> *outmin = dmin->incrementList(1, type, numNodes);
-      std::vector<double> *outmid = dmid->incrementList(1, type, numNodes);
-      std::vector<double> *outmax = dmax->incrementList(1, type, numNodes);
-      if(!outmin || !outmid || !outmax) continue;
-      double xyz[3][8];
-      for(int nod = 0; nod < numNodes; nod++)
-        data1->getNode(0, ent, ele, nod, xyz[0][nod], xyz[1][nod], xyz[2][nod]);
-      for(int i = 0; i < 3; i++) {
-        for(int nod = 0; nod < numNodes; nod++) {
-          outmin->push_back(xyz[i][nod]);
-          outmid->push_back(xyz[i][nod]);
-          outmax->push_back(xyz[i][nod]);
-        }
+  createListData(
+    data1, {dmin, dmid, dmax},
+    [](const PluginElement &e) { return (e.numComp == 9) ? 1 : 0; },
+    [&](const PluginElement &e, int step,
+        std::vector<std::vector<double> > &res) {
+      std::vector<double> val;
+      e.getValues(data1, step, val);
+      for(int nod = 0; nod < e.numNodes; nod++) {
+        double *v = &val[9 * nod], w[3];
+        double A[3][3] = {
+          {v[0], v[1], v[2]}, {v[3], v[4], v[5]}, {v[6], v[7], v[8]}};
+        eigenvalue(A, w);
+        res[0].push_back(w[2]);
+        res[1].push_back(w[1]);
+        res[2].push_back(w[0]);
       }
-      for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-        for(int nod = 0; nod < numNodes; nod++) {
-          double val[9], w[3];
-          for(int comp = 0; comp < numComp; comp++)
-            data1->getValue(step, ent, ele, nod, comp, val[comp]);
-          double A[3][3] = {{val[0], val[1], val[2]},
-                            {val[3], val[4], val[5]},
-                            {val[6], val[7], val[8]}};
-          eigenvalue(A, w);
-          outmin->push_back(w[2]);
-          outmid->push_back(w[1]);
-          outmax->push_back(w[0]);
-        }
-      }
-    }
-  }
+      return true;
+    });
 
-  for(int i = 0; i < data1->getNumTimeSteps(); i++) {
-    double time = data1->getTime(i);
-    dmin->Time.push_back(time);
-    dmid->Time.push_back(time);
-    dmax->Time.push_back(time);
-  }
   dmin->setName(data1->getName() + "_MinEigenvalues");
   dmin->setFileName(data1->getName() + "_MinEigenvalues.pos");
   dmin->finalize();
@@ -110,5 +69,5 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
   dmax->setFileName(data1->getName() + "_MaxEigenvalues.pos");
   dmax->finalize();
 
-  return nullptr;
+  return max;
 }

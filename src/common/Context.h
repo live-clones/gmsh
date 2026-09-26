@@ -67,7 +67,7 @@ struct contextMeshOptions {
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
-  int saveAll, saveGroupsOfNodes, saveGroupsOfElements;
+  int saveAll, saveViews, saveGroupsOfNodes, saveGroupsOfElements;
   int readGroupsOfElements;
   int binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveBadTriangles, stlOneSolidPerSurface;
@@ -448,7 +448,8 @@ public:
   double arrowRelHeadRadius, arrowRelStemRadius, arrowRelStemLength;
   // dynamic variable tracking if the bbox is currently imposed
   int forcedBBox;
-  // enable selection/hover/picking using the mouse
+  // enable selection/hover using the mouse; pickElements asks a pick to
+  // return the mesh element under the point it hit, instead of the entity
   int mouseSelection, mouseHoverMeshes, mouseHoverHighlight, pickElements;
   // invert sense of mouse wheel zoom
   int mouseInvertZoom;
@@ -473,7 +474,7 @@ public:
     int smooth, animCycle, animStep;
     int combineTime, combineRemoveOrig, combineCopyOptions;
     int fileFormat, plugins, forceNodeData, forceElementData;
-    int saveMesh, saveInterpolationMatrices;
+    int saveMesh, saveInterpolationMatrices, saveAdapted;
     double animDelay;
     std::string doubleClickedGraphPointCommand;
     double doubleClickedGraphPointX, doubleClickedGraphPointY;
@@ -512,6 +513,8 @@ public:
   // color options
   struct {
     unsigned int bg, bgGrad, fg, text, axes, smallAxes;
+    // the box a query leaves on the picture (see drawQuery.cpp)
+    unsigned int query;
     unsigned int ambientLight[6], diffuseLight[6], specularLight[6];
     struct {
       unsigned int point, curve, surface, volume;

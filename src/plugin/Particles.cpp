@@ -12,143 +12,28 @@
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
-#include "glyphList.h"
 #endif
 
-StringXNumber ParticlesOptions_Number[] = {
-  {GMSH_FULLRC, "X0", GMSH_ParticlesPlugin::callbackX0, 0., ""},
-  {GMSH_FULLRC, "Y0", GMSH_ParticlesPlugin::callbackY0, 0., ""},
-  {GMSH_FULLRC, "Z0", GMSH_ParticlesPlugin::callbackZ0, 0., ""},
-  {GMSH_FULLRC, "X1", GMSH_ParticlesPlugin::callbackX1, 1., ""},
-  {GMSH_FULLRC, "Y1", GMSH_ParticlesPlugin::callbackY1, 0., ""},
-  {GMSH_FULLRC, "Z1", GMSH_ParticlesPlugin::callbackZ1, 0., ""},
-  {GMSH_FULLRC, "X2", GMSH_ParticlesPlugin::callbackX2, 0., ""},
-  {GMSH_FULLRC, "Y2", GMSH_ParticlesPlugin::callbackY2, 1., ""},
-  {GMSH_FULLRC, "Z2", GMSH_ParticlesPlugin::callbackZ2, 0., ""},
-  {GMSH_FULLRC, "NumPointsU", GMSH_ParticlesPlugin::callbackU, 10, ""},
-  {GMSH_FULLRC, "NumPointsV", GMSH_ParticlesPlugin::callbackV, 1, ""},
-  {GMSH_FULLRC, "A2", nullptr, 1., ""},
-  {GMSH_FULLRC, "A1", nullptr, 0., ""},
-  {GMSH_FULLRC, "A0", nullptr, 0., ""},
-  {GMSH_FULLRC, "DT", nullptr, .1, ""},
-  {GMSH_FULLRC, "MaxIter", nullptr, 100, ""},
-  {GMSH_FULLRC, "TimeStep", nullptr, 0, ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterParticlesPlugin()
+GMSH_ParticlesPlugin::GMSH_ParticlesPlugin()
+  : GMSH_PointGridPlugin({{GMSH_FULLRC, "X0", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Y0", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Z0", nullptr, 0., ""},
+                          {GMSH_FULLRC, "X1", nullptr, 1., ""},
+                          {GMSH_FULLRC, "Y1", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Z1", nullptr, 0., ""},
+                          {GMSH_FULLRC, "X2", nullptr, 0., ""},
+                          {GMSH_FULLRC, "Y2", nullptr, 1., ""},
+                          {GMSH_FULLRC, "Z2", nullptr, 0., ""},
+                          {GMSH_FULLRC, "NumPointsU", nullptr, 10, ""},
+                          {GMSH_FULLRC, "NumPointsV", nullptr, 1, ""},
+                          {GMSH_FULLRC, "A2", nullptr, 1., ""},
+                          {GMSH_FULLRC, "A1", nullptr, 0., ""},
+                          {GMSH_FULLRC, "A0", nullptr, 0., ""},
+                          {GMSH_FULLRC, "DT", nullptr, .1, ""},
+                          {GMSH_FULLRC, "MaxIter", nullptr, 100, ""},
+                          {GMSH_FULLRC, "TimeStep", nullptr, 0, ""},
+                          {GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_ParticlesPlugin();
-}
-}
-
-void GMSH_ParticlesPlugin::draw(void *context)
-{
-#if defined(HAVE_OPENGL)
-  gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
-  drawContext *ctx = (drawContext *)context;
-  double p[3];
-  glyphList g;
-  unsigned int col = glyphCurrentColor();
-  g.reserve(GLYPH_SPHERE, getNbU() * getNbV());
-  for(int i = 0; i < getNbU(); ++i) {
-    for(int j = 0; j < getNbV(); ++j) {
-      getPoint(i, j, p);
-      g.addSphere(ctx, CTX::instance()->pointSize, p[0], p[1], p[2], col);
-    }
-  }
-  g.draw(ctx, 1);
-#endif
-}
-
-double GMSH_ParticlesPlugin::callback(int num, int action, double value,
-                                      double *opt, double step, double min,
-                                      double max)
-{
-  switch(action) { // configure the input field
-  case 1: return step;
-  case 2: return min;
-  case 3: return max;
-  default: break;
-  }
-  *opt = value;
-  GMSH_Plugin::setDrawFunction(draw);
-  return 0.;
-}
-
-double GMSH_ParticlesPlugin::callbackX0(int num, int action, double value)
-{
-  return callback(num, action, value, &ParticlesOptions_Number[0].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_ParticlesPlugin::callbackY0(int num, int action, double value)
-{
-  return callback(num, action, value, &ParticlesOptions_Number[1].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_ParticlesPlugin::callbackZ0(int num, int action, double value)
-{
-  return callback(num, action, value, &ParticlesOptions_Number[2].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_ParticlesPlugin::callbackX1(int num, int action, double value)
-{
-  return callback(num, action, value, &ParticlesOptions_Number[3].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_ParticlesPlugin::callbackY1(int num, int action, double value)
-{
-  return callback(num, action, value, &ParticlesOptions_Number[4].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_ParticlesPlugin::callbackZ1(int num, int action, double value)
-{
-  return callback(num, action, value, &ParticlesOptions_Number[5].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_ParticlesPlugin::callbackX2(int num, int action, double value)
-{
-  return callback(num, action, value, &ParticlesOptions_Number[6].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_ParticlesPlugin::callbackY2(int num, int action, double value)
-{
-  return callback(num, action, value, &ParticlesOptions_Number[7].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_ParticlesPlugin::callbackZ2(int num, int action, double value)
-{
-  return callback(num, action, value, &ParticlesOptions_Number[8].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
-}
-
-double GMSH_ParticlesPlugin::callbackU(int num, int action, double value)
-{
-  return callback(num, action, value, &ParticlesOptions_Number[9].def, 1, 1,
-                  100);
-}
-
-double GMSH_ParticlesPlugin::callbackV(int num, int action, double value)
-{
-  return callback(num, action, value, &ParticlesOptions_Number[10].def, 1, 1,
-                  100);
 }
 
 std::string GMSH_ParticlesPlugin::getHelp() const
@@ -175,58 +60,24 @@ std::string GMSH_ParticlesPlugin::getHelp() const
          "multi-step vector points.";
 }
 
-int GMSH_ParticlesPlugin::getNbOptions() const
-{
-  return sizeof(ParticlesOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_ParticlesPlugin::getOption(int iopt)
-{
-  return &ParticlesOptions_Number[iopt];
-}
-
-int GMSH_ParticlesPlugin::getNbU()
-{
-  return (int)ParticlesOptions_Number[9].def;
-}
-
-int GMSH_ParticlesPlugin::getNbV()
-{
-  return (int)ParticlesOptions_Number[10].def;
-}
-
-void GMSH_ParticlesPlugin::getPoint(int iU, int iV, double *X)
-{
-  double u = getNbU() > 1 ? (double)iU / (double)(getNbU() - 1.) : 0.;
-  double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
-  X[0] = ParticlesOptions_Number[0].def +
-         u * (ParticlesOptions_Number[3].def - ParticlesOptions_Number[0].def) +
-         v * (ParticlesOptions_Number[6].def - ParticlesOptions_Number[0].def);
-  X[1] = ParticlesOptions_Number[1].def +
-         u * (ParticlesOptions_Number[4].def - ParticlesOptions_Number[1].def) +
-         v * (ParticlesOptions_Number[7].def - ParticlesOptions_Number[1].def);
-  X[2] = ParticlesOptions_Number[2].def +
-         u * (ParticlesOptions_Number[5].def - ParticlesOptions_Number[2].def) +
-         v * (ParticlesOptions_Number[8].def - ParticlesOptions_Number[2].def);
-}
-
 PView *GMSH_ParticlesPlugin::execute(PView *v)
 {
-  double A2 = ParticlesOptions_Number[11].def;
-  double A1 = ParticlesOptions_Number[12].def;
-  double A0 = ParticlesOptions_Number[13].def;
-  double DT = ParticlesOptions_Number[14].def;
-  int maxIter = (int)ParticlesOptions_Number[15].def;
-  int timeStep = (int)ParticlesOptions_Number[16].def;
-  int iView = (int)ParticlesOptions_Number[17].def;
+  double A2 = option(11);
+  double A1 = option(12);
+  double A0 = option(13);
+  double DT = option(14);
+  int maxIter = (int)option(15);
+  int timeStep = (int)option(16);
+  int iView = (int)option(17);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
   PViewData *data1 = getPossiblyAdaptiveData(v1);
 
   // sanity checks
-  if(timeStep > data1->getNumTimeSteps() - 1) {
-    Msg::Error("Invalid time step (%d) in view[%d]: using 0", v1->getIndex());
+  if(timeStep < 0 || timeStep > data1->getNumTimeSteps() - 1) {
+    Msg::Warning("Invalid time step (%d) in View[%d]: using 0", timeStep,
+                 v1->getIndex());
     timeStep = 0;
   }
 
@@ -253,31 +104,34 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
   double c4 =
     DT * DT * (beta + (0.5 + gamma - 2 * beta) + (0.5 - gamma + beta));
 
-  for(int i = 0; i < getNbU(); ++i) {
-    for(int j = 0; j < getNbV(); ++j) {
-      double XINIT[3], X0[3], X1[3];
-      getPoint(i, j, XINIT);
-      getPoint(i, j, X0);
-      getPoint(i, j, X1);
-      data2->NbVP++;
-      data2->VP.push_back(XINIT[0]);
-      data2->VP.push_back(XINIT[1]);
-      data2->VP.push_back(XINIT[2]);
-      for(int iter = 0; iter < maxIter; iter++) {
-        double F[3], X[3];
-        o1.searchVector(X1[0], X1[1], X1[2], F, timeStep);
-        for(int k = 0; k < 3; k++)
-          X[k] = (c2 * X1[k] + c3 * X0[k] + c4 * F[k]) / c1;
-        data2->VP.push_back(X[0] - XINIT[0]);
-        data2->VP.push_back(X[1] - XINIT[1]);
-        data2->VP.push_back(X[2] - XINIT[2]);
-        for(int k = 0; k < 3; k++) {
-          X0[k] = X1[k];
-          X1[k] = X[k];
-        }
+  // the trajectory of each seed, computed in parallel and then written in
+  // the order of the seeds
+  int nbV = getNbV(), numSeeds = getNbU() * nbV;
+  std::vector<std::vector<double>> trajectories(numSeeds);
+  o1.prepareThreads();
+  int nthreads =
+    CTX::instance()->numThreadsFor((std::size_t)numSeeds * maxIter, 10000);
+#pragma omp parallel for num_threads(nthreads) schedule(dynamic, 1)
+  for(int seed = 0; seed < numSeeds; seed++) {
+    std::vector<double> &t = trajectories[seed];
+    double XINIT[3], X0[3], X1[3];
+    getPoint(seed / nbV, seed % nbV, XINIT);
+    getPoint(seed / nbV, seed % nbV, X0);
+    getPoint(seed / nbV, seed % nbV, X1);
+    t.insert(t.end(), XINIT, XINIT + 3);
+    for(int iter = 0; iter < maxIter; iter++) {
+      double F[3], X[3];
+      o1.searchVector(X1[0], X1[1], X1[2], F, timeStep);
+      for(int k = 0; k < 3; k++)
+        X[k] = (c2 * X1[k] + c3 * X0[k] + c4 * F[k]) / c1;
+      for(int k = 0; k < 3; k++) t.push_back(X[k] - XINIT[k]);
+      for(int k = 0; k < 3; k++) {
+        X0[k] = X1[k];
+        X1[k] = X[k];
       }
     }
   }
+  for(auto &t : trajectories) data2->appendList(3, TYPE_PNT, 1, t);
 
   v2->getOptions()->vectorType = PViewOptions::Displacement;
 

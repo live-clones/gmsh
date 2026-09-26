@@ -8,41 +8,34 @@
 #include "MElement.h"
 #include "PView.h"
 
-StringXNumber GaussPointsOptions_Number[] = {
-  {GMSH_FULLRC, "Order", nullptr, 0, ""},
-  {GMSH_FULLRC, "Dimension", nullptr, 2, ""},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, 0, ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterGaussPointsPlugin()
+GMSH_GaussPointsPlugin::GMSH_GaussPointsPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "IntegrationOrder", nullptr, 0, ""},
+                     {GMSH_FULLRC, "Dimension", nullptr, 2, ""},
+                     {GMSH_FULLRC, "PhysicalGroup", nullptr, 0, ""}})
 {
-  return new GMSH_GaussPointsPlugin();
-}
-}
-
-int GMSH_GaussPointsPlugin::getNbOptions() const
-{
-  return sizeof(GaussPointsOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_GaussPointsPlugin::getOption(int iopt)
-{
-  return &GaussPointsOptions_Number[iopt];
+  // its former name, which the parser cannot read (Order is a keyword)
+  addOptionAlias("Order", "IntegrationOrder");
 }
 
 std::string GMSH_GaussPointsPlugin::getHelp() const
 {
   return "Given an input mesh, Plugin(GaussPoints) creates a list-based view "
-         "containing the Gauss points for a given polynomial `Order'.\n\n"
+         "containing the Gauss points integrating exactly the polynomials of "
+         "order `IntegrationOrder'.\n\n"
          "If `PhysicalGroup' is nonzero, the plugin only creates points for "
          "the elements belonging to the group.";
 }
 
 PView *GMSH_GaussPointsPlugin::execute(PView *v)
 {
-  int order = (int)GaussPointsOptions_Number[0].def;
-  int dim = (int)GaussPointsOptions_Number[1].def;
-  int physical = (int)GaussPointsOptions_Number[2].def;
+  int order = (int)option(0);
+  int dim = (int)option(1);
+  int physical = (int)option(2);
+
+  if(dim < 0 || dim > 3) {
+    Msg::Error("Invalid dimension %d", dim);
+    return v;
+  }
 
   GModel *m = GModel::current();
   std::vector<GEntity *> entities;
@@ -75,11 +68,8 @@ PView *GMSH_GaussPointsPlugin::execute(PView *v)
         // double weight = gp[i].weight;
         SPoint3 p;
         e->pnt(u, v, w, p);
-        data2->SP.push_back(p.x());
-        data2->SP.push_back(p.y());
-        data2->SP.push_back(p.z());
-        data2->SP.push_back(e->getNum());
-        data2->NbSP++;
+        std::vector<double> *l = data2->incrementList(1, TYPE_PNT);
+        l->insert(l->end(), {p.x(), p.y(), p.z(), (double)e->getNum()});
       }
     }
   }
@@ -88,5 +78,5 @@ PView *GMSH_GaussPointsPlugin::execute(PView *v)
   data2->setFileName("GaussPoints.pos");
   data2->finalize();
 
-  return v;
+  return v2;
 }

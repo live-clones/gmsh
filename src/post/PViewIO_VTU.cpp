@@ -12,6 +12,7 @@
 #include "PView.h"
 #include "PViewData.h"
 #include "PViewDataGModel.h"
+#include "PViewOptions.h"
 #include "ElementType.h"
 #include "StringUtils.h"
 #include "Context.h"
@@ -87,30 +88,39 @@ static bool writeVTUStep(PViewData *data, int step, const std::string &name,
 }
 
 // The views based on the same model go in the same file, as arrays on its
-// mesh; several steps make a series of files, and a .pvd with their times
+// mesh; several steps make a series of files, and a .pvd with their times.
+// A view whose steps have different meshes has each step on the mesh of its
+// model. The views saved refined (PostProcessing.SaveAdapted) are refined a
+// step and an element at a time as they are written, each step in a file of
+// its own (or in the pieces of a .pvtu).
 
 bool PView::writeVTU(const std::string &fileName, bool binary,
-                     const std::vector<PView *> &views)
+                     const std::vector<PView *> &views,
+                     std::vector<std::pair<std::string, bool> > *written)
 {
   std::map<GModel *, std::vector<PViewDataGModel *> > onModel;
   std::vector<PViewData *> others;
+  std::vector<PViewDataGModel *> multi;
+  std::vector<PView *> adapted;
   int numSteps = 0;
   for(auto v : views) {
     PViewData *data = v->getData();
     if(!data->getNumTimeSteps()) continue;
     numSteps = std::max(numSteps, data->getNumTimeSteps());
-    PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(data);
-    if(d && d->hasMultipleMeshes()) {
-      Msg::Warning("View '%s' not exported: its steps have different meshes",
-                   data->getName().c_str());
+    if(v->savesAdapted()) {
+      adapted.push_back(v);
       continue;
     }
-    if(d)
+    PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(data);
+    if(d && d->hasMultipleMeshes())
+      multi.push_back(d);
+    else if(d)
       onModel[d->getModel(d->getFirstNonEmptyTimeStep())].push_back(d);
     else
       others.push_back(data);
   }
-  std::size_t numParts = onModel.size() + others.size();
+  std::size_t numParts =
+    onModel.size() + others.size() + multi.size() + adapted.size();
   if(!numParts) {
     Msg::Error("No view to export in '%s'", fileName.c_str());
     return false;
@@ -126,7 +136,7 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
   bool parallel = (split[2] == ".pvtu" || split[2] == ".PVTU");
 
   for(int step = 0; step < numSteps; step++) {
-    auto name = [&](bool onModel) {
+    auto name = [&](bool pvtu) {
       std::string n = split[1];
       if(numParts > 1) n += "_" + std::to_string(files[step].size());
       if(series) {
@@ -134,7 +144,7 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
         snprintf(s, sizeof(s), "_%04d", step);
         n += s;
       }
-      n += (parallel && onModel) ? ".pvtu" : ".vtu";
+      n += pvtu ? ".pvtu" : ".vtu";
       files[step].push_back(n);
       return split[0] + n;
     };
@@ -151,7 +161,8 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
         if(d->getNumTimeSteps() == 1 || d->hasTimeStep(step)) any = true;
       }
       if(!any) continue;
-      if(!m.first->writeVTU(name(true), binary, CTX::instance()->mesh.saveAll,
+      if(!m.first->writeVTU(name(parallel), binary,
+                            CTX::instance()->mesh.saveAll,
                             CTX::instance()->mesh.scalingFactor, m.second,
                             step))
         ok = false;
@@ -161,9 +172,36 @@ bool PView::writeVTU(const std::string &fileName, bool binary,
       time(d);
       if(!writeVTUStep(d, step, name(false), binary)) ok = false;
     }
+    for(auto d : multi) {
+      if(!d->hasTimeStep(step)) continue;
+      time(d);
+      if(!d->getModel(step)->writeVTU(name(parallel), binary,
+                                      CTX::instance()->mesh.saveAll,
+                                      CTX::instance()->mesh.scalingFactor, {d},
+                                      step))
+        ok = false;
+    }
+    for(auto v : adapted) {
+      PViewData *d = v->getData();
+      if(!d->hasTimeStep(step)) continue;
+      time(d);
+      PViewOptions *o = v->getOptions();
+      double min, max;
+      v->getAdaptiveRange(min, max);
+      d->saveAdaptedViewForVTK(name(parallel), step, o->maxRecursionLevel,
+                               o->targetError, parallel ? 0 : 1, binary, min,
+                               max);
+    }
   }
 
   if(series && !writePVD(split[0] + split[1] + ".pvd", files, times))
     ok = false;
+  // to read back: the .pvd of a series, or else each file
+  if(written) {
+    if(series)
+      written->push_back({split[0] + split[1] + ".pvd", true});
+    else if(files.size())
+      for(auto &f : files[0]) written->push_back({split[0] + f, true});
+  }
   return ok;
 }

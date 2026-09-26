@@ -214,14 +214,10 @@ private:
   std::vector<float> _vertices;
   std::vector<normal_type> _normals;
   std::vector<unsigned char> _colors;
-  std::vector<MElement *> _elements;
   // elements already added, when the "unique" filter is on: the filter can be
   // shared with other vertex arrays, in which case it is not owned
   UniqueElementFilter *_filter;
   bool _ownsFilter;
-  // whether the element pointers have to be stored: asking the context for
-  // every corner shows up in the profile of a large mesh
-  bool _storeElements;
   // OpenGL buffer objects holding a copy of the arrays (vertices, normals,
   // colors). They are created and filled by the graphics code, which is the
   // only place where a GL context is current
@@ -237,7 +233,6 @@ private:
   void _addNormal(float nx, float ny, float nz);
   void _addColor(unsigned char r, unsigned char g, unsigned char b,
                  unsigned char a);
-  void _addElement(MElement *ele);
 
 public:
   // (numElements is a hint of how many will be added)
@@ -252,8 +247,6 @@ public:
   int getNumVertices() { return (int)_vertices.size() / 3; }
   // return the number of vertices per element
   int getNumVerticesPerElement() { return _numVerticesPerElement; }
-  // return the number of element pointers
-  int getNumElementPointers() { return (int)_elements.size(); }
   // the raw arrays, not range checked (null when empty)
   float *getVertexArray(int i = 0) { return _vertices.data() + i; }
 
@@ -273,19 +266,15 @@ public:
   // return a pointer to the raw color array
   unsigned char *getColorArray(int i = 0) { return _colors.data() + i; }
 
-  // return a pointer to the raw element array
-  MElement **getElementPointerArray(int i = 0) { return _elements.data() + i; }
-
   // add element data in the arrays (if unique is set, only add the element if
   // an identical one has not already been added)
   void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
-           MElement *ele = nullptr, bool unique = true);
+           bool unique = true);
   void add(double *x, double *y, double *z, SVector3 *n, unsigned char *r = nullptr,
-           unsigned char *g = nullptr, unsigned char *b = nullptr, unsigned char *a = nullptr,
-           MElement *ele = nullptr, bool unique = true);
+           unsigned char *g = nullptr, unsigned char *b = nullptr,
+           unsigned char *a = nullptr, bool unique = true);
   // grow the array by n uninitialised vertices and return where they start,
-  // so that several threads can each fill a range; no element pointers are
-  // stored, so such an array cannot be picked element by element
+  // so that several threads can each fill a range
   int addBlock(int n);
   // empty the array but keep its buffer objects (for a scratch array reused
   // every frame)
@@ -294,7 +283,6 @@ public:
     _vertices.clear();
     _normals.clear();
     _colors.clear();
-    _elements.clear();
     _vboDirty = true;
   }
   // finalize the arrays
@@ -319,7 +307,6 @@ public:
   void merge(VertexArray *va, const unsigned char *color = nullptr);
   // the element pointers are only needed for picking, which uses the arrays of
   // the entities themselves
-  void clearElementPointers() { std::vector<MElement *>().swap(_elements); }
 
   // buffer objects whose vertex array has been deleted: they can only be freed
   // when a GL context is current, i.e. at the beginning of the next frame

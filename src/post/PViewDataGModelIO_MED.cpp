@@ -38,6 +38,23 @@
 extern int med2mshElementType(med_geometrie_element med);
 extern int med2mshNodeIndex(med_geometrie_element med, int k);
 
+// a MED file, closed on every way out
+class medFile {
+public:
+  med_idt fid;
+  medFile(med_idt f) : fid(f) {}
+  ~medFile()
+  {
+    if(fid >= 0) MEDfermer(fid);
+  }
+  bool close()
+  {
+    bool ok = (MEDfermer(fid) >= 0);
+    fid = -1;
+    return ok;
+  }
+};
+
 std::vector<std::string> medGetFieldNames(const std::string &fileName)
 {
   std::vector<std::string> fieldNames;
@@ -51,6 +68,7 @@ std::vector<std::string> medGetFieldNames(const std::string &fileName)
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return fieldNames;
   }
+  medFile file(fid);
 
 #if (MED_MAJOR_NUM >= 3)
   med_int numFields = MEDnField(fid);
@@ -85,13 +103,7 @@ std::vector<std::string> medGetFieldNames(const std::string &fileName)
     fieldNames.push_back(name);
   }
 
-#if (MED_MAJOR_NUM >= 3)
-  if(MEDfileClose(fid) < 0) {
-#else
-  if(MEDfermer(fid) < 0) {
-#endif
-    Msg::Error("Unable to close file '%s'", fileName.c_str());
-  }
+  if(!file.close()) Msg::Error("Unable to close file '%s'", fileName.c_str());
   return fieldNames;
 }
 
@@ -102,6 +114,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
+  medFile file(fid);
 
   med_int numComp = MEDnChamp(fid, fileIndex + 1);
   if(numComp <= 0) {
@@ -127,7 +140,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
     return false;
   }
 
-  Msg::Info("Reading %d-component field '%s'", numComp, name);
+  Msg::Info("Reading %d-component field '%s'", (int)numComp, name);
   setName(name);
   setFileName(fileName);
   setFileIndex(fileIndex);
@@ -188,6 +201,12 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
   }
 
   for(int step = 0; step < numSteps; step++) {
+    // the step of the view it goes in: the same, as the file completes the
+    // steps read from others on the same mesh (e.g. a domain decomposition);
+    // or, if that step is on another mesh, the step numbered in the file (a
+    // file per mesh), or the next one
+    int target = step;
+
     // FIXME: in MED3 we might want to loop over all profiles instead
     // of relying of the default one
 
@@ -216,18 +235,21 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       }
       // create step data
       if(!pair) {
-        GModel *m = GModel::findByName(meshName);
+        // (the mesh of the file was read in the current model, whose name
+        // another model might have)
+        GModel *m = GModel::current();
+        if(m->getName() != meshName) m = GModel::findByName(meshName);
         if(!m) {
           Msg::Error("Could not find mesh '%s'", meshName);
           return false;
         }
-        while(step >= (int)_steps.size())
-          _steps.push_back(new stepData<double>(m, numCompMsh));
-        _steps[step]->fillEntities();
-        _steps[step]->computeBoundingBox();
-        _steps[step]->setFileName(fileName);
-        _steps[step]->setFileIndex(fileIndex);
-        _steps[step]->setTime(dt);
+        if(hasTimeStep(step) && _steps[step]->getModel() != m)
+          target = (numdt >= 1 && !hasTimeStep(numdt - 1)) ?
+                     (int)numdt - 1 :
+                     getNumTimeSteps();
+        if(!_getStep(target, m, numCompMsh)) return false;
+        _steps[target]->setFileName(fileName);
+        _steps[target]->setTime(dt);
       }
 
       char locName[MED_TAILLE_NOM + 1], profileName[MED_TAILLE_NOM + 1];
@@ -256,7 +278,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
         mult = ngauss;
         _type = GaussPointData;
       }
-      _steps[step]->resizeData(numVal / mult);
+      _steps[target]->resizeData(numVal / mult);
 
       // read field data
       std::vector<double> val(numVal * numComp);
@@ -282,12 +304,12 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       // read Gauss point data
       if(_type == GaussPointData) {
         std::vector<double> &p(
-          _steps[step]->getGaussPoints(med2mshElementType(ele)));
+          _steps[target]->getGaussPoints(med2mshElementType(ele)));
         if(std::string(locName) == MED_GAUSS_ELNO) {
           // special case: the gauss points are the vertices of the
           // element; in this case no explicit localization has to be
           // created in MED
-          p.resize(ngauss * 3, 1.e22);
+          p.assign(ngauss * 3, 1.e22);
         }
         else {
           int dim = ele / 100;
@@ -295,10 +317,10 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
           std::vector<med_float> gscoo(ngauss * dim);
           std::vector<med_float> wg(ngauss);
 #if (MED_MAJOR_NUM >= 3)
-          if(MEDlocalizationRd(fid, locName, MED_FULL_INTERLACE, &refcoo[0],
-                               &gscoo[0], &wg[0]) < 0) {
+          if(MEDlocalizationRd(fid, locName, MED_FULL_INTERLACE, refcoo.data(),
+                               gscoo.data(), wg.data()) < 0) {
 #else
-          if(MEDgaussLire(fid, &refcoo[0], &gscoo[0], &wg[0],
+          if(MEDgaussLire(fid, refcoo.data(), gscoo.data(), wg.data(),
                           MED_FULL_INTERLACE, locName) < 0) {
 #endif
             Msg::Error("Could not read Gauss points");
@@ -306,6 +328,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
           }
           // FIXME: we should check that refcoo corresponds to our
           // internal reference element
+          p.clear(); // (the same points, if read again from another file)
           for(int i = 0; i < (int)gscoo.size(); i++) {
             p.push_back(gscoo[i]);
             if(i % dim == dim - 1)
@@ -336,6 +359,12 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
         profile.resize(numVal / mult);
         for(std::size_t i = 0; i < profile.size(); i++) profile[i] = i + 1;
       }
+      if(profile.size() * mult > (std::size_t)numVal) {
+        Msg::Error("MED profile '%s' has more entities than field '%s' has "
+                   "values",
+                   profileName, name);
+        return false;
+      }
 
       // get size of full array and tags (if any) of entities
       bool nodal = (ent == MED_NOEUD);
@@ -352,13 +381,15 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
                    nodal ? MED_NOEUD : MED_MAILLE, nodal ? MED_NONE : ele,
                    nodal ? (med_connectivite)0 : MED_NOD);
 #endif
-      std::vector<med_int> tags(numEnt);
+      std::vector<med_int> tags(std::max(numEnt, (med_int)0));
 #if (MED_MAJOR_NUM >= 3)
-      if(MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT,
+      if(tags.empty() ||
+         MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT,
                                nodal ? MED_NODE : MED_CELL,
                                nodal ? MED_NO_GEOTYPE : ele, &tags[0]) < 0)
 #else
-      if(MEDnumLire(fid, meshName, &tags[0], numEnt,
+      if(tags.empty() ||
+         MEDnumLire(fid, meshName, &tags[0], numEnt,
                     nodal ? MED_NOEUD : MED_MAILLE, nodal ? MED_NONE : ele) < 0)
 #endif
         tags.clear();
@@ -368,7 +399,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       std::size_t startIndex = 0;
       if(tags.empty()) {
         std::size_t maxv, maxe;
-        _steps[step]->getModel()->getCheckPointedMaxNumbers(maxv, maxe);
+        _steps[target]->getModel()->getCheckPointedMaxNumbers(maxv, maxe);
         if(nodal) { startIndex += maxv; }
         else {
           for(int i = 1; i < pairs[pair].second; i++) {
@@ -400,7 +431,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
           num = tags[profile[i] - 1];
         }
 
-        double *d = _steps[step]->getData(num, true, mult);
+        double *d = _steps[target]->getData(num, true, mult);
         for(int j = 0; j < mult; j++) {
           // reorder nodes if we have ElementNode data
           int j2 = (ent == MED_NOEUD_MAILLE) ? med2mshNodeIndex(ele, j) : j;
@@ -413,14 +444,14 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
 
   finalize();
 
-  if(MEDfermer(fid) < 0) {
-    Msg::Error("Unable to close file '%s'", (char *)fileName.c_str());
+  if(!file.close()) {
+    Msg::Error("Unable to close file '%s'", fileName.c_str());
     return false;
   }
   return true;
 }
 
-bool PViewDataGModel::writeMED(const std::string &fileName)
+bool PViewDataGModel::writeMED(const std::string &fileName, bool saveMesh)
 {
   if(_steps.empty()) return true;
 
@@ -434,10 +465,12 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     return false;
   }
 
-  GModel *model = _steps[0]->getModel();
+  // (the first steps may have no data)
+  int first = getFirstNonEmptyTimeStep();
+  GModel *model = _steps[first]->getModel();
 
-  // save the mesh
-  if(!model->writeMED(fileName, true)) return false;
+  // save the mesh (its nodes then have their index in the file)
+  if(saveMesh && !model->writeMED(fileName, true)) return false;
 
   std::string meshName(model->getName());
   std::string fieldName(getName());
@@ -450,7 +483,8 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     minor = (int)CTX::instance()->mesh.medFileMinorVersion;
     Msg::Info("Forcing MED file version to %d.%d", major, minor);
   }
-  med_idt fid = MEDfileVersionOpen((char *)fileName.c_str(), MED_ACC_RDEXT,
+  // (read-write: each step updates the field)
+  med_idt fid = MEDfileVersionOpen((char *)fileName.c_str(), MED_ACC_RDWR,
                                    major, minor, release);
 #else
   med_idt fid = MEDouvrir((char *)fileName.c_str(), MED_LECTURE_AJOUT);
@@ -460,21 +494,32 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
+  medFile file(fid);
 
-  // compute profile
-  char *profileName = (char *)"nodeProfile";
+  // compute profile: the nodes with data, in the file
+  std::string profileName = "nodeProfile_" + fieldName;
+  profileName.resize(std::min(profileName.size(), (std::size_t)MED_NAME_SIZE));
   std::vector<med_int> profile, indices;
-  for(std::size_t i = 0; i < _steps[0]->getNumData(); i++) {
-    if(_steps[0]->getData(i)) {
-      MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
+  std::size_t notInFile = 0;
+  for(std::size_t i = 0; i < _steps[first]->getNumData(); i++) {
+    if(_steps[first]->getData(i)) {
+      MVertex *v = model->getMeshVertexByTag(i);
       if(!v) {
-        Msg::Error("Unknown node %d in data (MED)", i);
+        Msg::Error("Unknown node %zu in data (MED)", i);
         return false;
+      }
+      if(v->getIndex() < 1) {
+        notInFile++;
+        continue;
       }
       profile.push_back(v->getIndex());
       indices.push_back(i);
     }
   }
+  if(notInFile)
+    Msg::Warning("Values of view '%s' at %zu nodes not saved in the MED "
+                 "file are skipped",
+                 fieldName.c_str(), notInFile);
 
   if(profile.empty()) {
     Msg::Error("Nothing to save");
@@ -482,18 +527,30 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   }
 
 #if (MED_MAJOR_NUM >= 3)
-  if(MEDprofileWr(fid, profileName, (med_int)profile.size(), &profile[0]) < 0) {
+  if(MEDprofileWr(fid, profileName.c_str(), (med_int)profile.size(),
+                  &profile[0]) < 0) {
 #else
-  if(MEDprofilEcr(fid, &profile[0], (med_int)profile.size(), profileName) < 0) {
+  if(MEDprofilEcr(fid, &profile[0], (med_int)profile.size(),
+                  (char *)profileName.c_str()) < 0) {
 #endif
     Msg::Error("Could not create MED profile");
     return false;
   }
 
-  int numComp = _steps[0]->getNumComponents();
+  int numComp = _steps[first]->getNumComponents();
 #if (MED_MAJOR_NUM >= 3)
+  // the names and units of the components, MED_SNAME_SIZE characters each
+  std::string compNames, compUnits;
+  for(int k = 0; k < numComp; k++) {
+    std::string n = "comp" + std::to_string(k);
+    n.resize(MED_SNAME_SIZE, ' ');
+    compNames += n;
+    std::string u = "unknown";
+    u.resize(MED_SNAME_SIZE, ' ');
+    compUnits += u;
+  }
   if(MEDfieldCr(fid, (char *)fieldName.c_str(), MED_FLOAT64, (med_int)numComp,
-                "unknown", "unknown", "unknown",
+                compNames.c_str(), compUnits.c_str(), "unknown",
                 (char *)meshName.c_str()) < 0) {
 #else
   if(MEDchampCr(fid, (char *)fieldName.c_str(), MED_FLOAT64, (char *)"unknown",
@@ -518,11 +575,19 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     return false;
   }
   for(std::size_t step = 0; step < _steps.size(); step++) {
+    if(!hasTimeStep(step)) continue;
+    // the values of the step at the nodes of the profile (of the first step)
     std::size_t n = 0;
     for(std::size_t i = 0; i < _steps[step]->getNumData(); i++)
       if(_steps[step]->getData(i)) n++;
-    if(n != profile.size() || numComp != _steps[step]->getNumComponents()) {
-      Msg::Error("Skipping incompatible step");
+    bool same =
+      (n == profile.size() && numComp == _steps[step]->getNumComponents());
+    for(std::size_t i = 0; i < indices.size() && same; i++)
+      same = (_steps[step]->getData(indices[i]) != nullptr);
+    if(!same) {
+      Msg::Warning("Skipping step %zu of view '%s': not on the nodes of the "
+                   "first step",
+                   step, getName().c_str());
       continue;
     }
     double time = _steps[step]->getTime();
@@ -533,23 +598,23 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
 #if (MED_MAJOR_NUM >= 3)
     if(MEDfieldValueWithProfileWr(
          fid, (char *)fieldName.c_str(), (med_int)(step + 1), MED_NO_IT, time,
-         MED_NODE, MED_NO_GEOTYPE, MED_COMPACT_STMODE, profileName, "",
+         MED_NODE, MED_NO_GEOTYPE, MED_COMPACT_STMODE, profileName.c_str(), "",
          MED_FULL_INTERLACE, MED_ALL_CONSTITUENT, numNodes,
          (unsigned char *)&val[0]) < 0) {
 #else
     if(MEDchampEcr(fid, (char *)meshName.c_str(), (char *)fieldName.c_str(),
                    (unsigned char *)&val[0], MED_FULL_INTERLACE, numNodes,
-                   (char *)MED_NOGAUSS, MED_ALL, profileName, MED_COMPACT,
-                   MED_NOEUD, MED_NONE, (med_int)step, (char *)"unknown", time,
-                   MED_NONOR) < 0) {
+                   (char *)MED_NOGAUSS, MED_ALL, (char *)profileName.c_str(),
+                   MED_COMPACT, MED_NOEUD, MED_NONE, (med_int)step,
+                   (char *)"unknown", time, MED_NONOR) < 0) {
 #endif
       Msg::Error("Could not write MED field");
       return false;
     }
   }
 
-  if(MEDfermer(fid) < 0) {
-    Msg::Error("Unable to close file '%s'", (char *)fileName.c_str());
+  if(!file.close()) {
+    Msg::Error("Unable to close file '%s'", fileName.c_str());
     return false;
   }
   return true;
@@ -564,7 +629,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
   return false;
 }
 
-bool PViewDataGModel::writeMED(const std::string &fileName)
+bool PViewDataGModel::writeMED(const std::string &fileName, bool saveMesh)
 {
   Msg::Error("Gmsh must be compiled with MED support to write '%s'",
              fileName.c_str());

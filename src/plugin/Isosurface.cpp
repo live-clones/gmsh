@@ -6,74 +6,46 @@
 #include "Isosurface.h"
 #include "Context.h"
 
-StringXNumber IsosurfaceOptions_Number[] = {
-  {GMSH_FULLRC, "Value", GMSH_IsosurfacePlugin::callbackValue, 0., ""},
-  {GMSH_FULLRC, "ExtractVolume", GMSH_IsosurfacePlugin::callbackVol, 0., ""},
-  {GMSH_FULLRC, "RecurLevel", GMSH_IsosurfacePlugin::callbackRecur, 3, ""},
-  {GMSH_FULLRC, "TargetError", GMSH_IsosurfacePlugin::callbackTarget, 1e-3, ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-  {GMSH_FULLRC, "OtherTimeStep", nullptr, -1., ""},
-  {GMSH_FULLRC, "OtherView", nullptr, -1., ""},
-  {GMSH_FULLRC, "Visible", nullptr, 1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterIsosurfacePlugin()
+GMSH_IsosurfacePlugin::GMSH_IsosurfacePlugin()
+  : GMSH_LevelsetPlugin({{GMSH_FULLRC, "Value", nullptr, 0., ""},
+                         {GMSH_FULLRC, "ExtractVolume", nullptr, 0., ""},
+                         {GMSH_FULLRC, "RecurLevel", nullptr, 3, ""},
+                         {GMSH_FULLRC, "TargetError", nullptr, 1e-3, ""},
+                         {GMSH_FULLRC, "View", nullptr, -1., ""},
+                         {GMSH_FULLRC, "OtherTimeStep", nullptr, -1., ""},
+                         {GMSH_FULLRC, "OtherView", nullptr, -1., ""},
+                         {GMSH_FULLRC, "Visible", nullptr, 1., ""}})
 {
-  return new GMSH_IsosurfacePlugin();
-}
 }
 
-double GMSH_IsosurfacePlugin::callbackValue(int num, int action, double value)
+bool GMSH_IsosurfacePlugin::optionCallback(int iopt, int num, int action,
+                                           double &value)
 {
-  double min = 0., max = 1.;
-  if(action > 0) {
-    int iview = (int)IsosurfaceOptions_Number[4].def;
+  double step, min, max;
+  switch(iopt) {
+  case 0: { // between the extrema of the view
+    min = 0.;
+    max = 1.;
+    int iview = (int)option(4);
     if(iview < 0) iview = num;
     if(iview >= 0 && iview < (int)PView::list.size()) {
       min = PView::list[iview]->getData()->getMin();
       max = PView::list[iview]->getData()->getMax();
     }
+    step = (max - min) / 200.;
+  } break;
+  case 1: step = 1., min = -1., max = 1.; break;
+  case 2: step = 1., min = 0., max = 10.; break;
+  case 3: step = 0.01, min = 0., max = 1.; break;
+  default: return false;
   }
-  switch(action) { // configure the input field
-  case 1: return (min - max) / 200.;
-  case 2: return min;
-  case 3: return max;
-  default: break;
+  switch(action) {
+  case 1: value = step; break;
+  case 2: value = min; break;
+  case 3: value = max; break;
+  default: option(iopt) = value; break; // nothing to preview
   }
-  return 0.;
-}
-
-double GMSH_IsosurfacePlugin::callbackVol(int num, int action, double value)
-{
-  switch(action) { // configure the input field
-  case 1: return 1.;
-  case 2: return -1.;
-  case 3: return 1.;
-  default: break;
-  }
-  return 0.;
-}
-
-double GMSH_IsosurfacePlugin::callbackRecur(int num, int action, double value)
-{
-  switch(action) { // configure the input field
-  case 1: return 1.;
-  case 2: return 0.;
-  case 3: return 10.;
-  default: break;
-  }
-  return 0.;
-}
-
-double GMSH_IsosurfacePlugin::callbackTarget(int num, int action, double value)
-{
-  switch(action) { // configure the input field
-  case 1: return 0.01;
-  case 2: return 0.;
-  case 3: return 1.;
-  default: break;
-  }
-  return 0.;
+  return true;
 }
 
 std::string GMSH_IsosurfacePlugin::getHelp() const
@@ -96,36 +68,26 @@ std::string GMSH_IsosurfacePlugin::getHelp() const
          "are time steps in `View'.";
 }
 
-int GMSH_IsosurfacePlugin::getNbOptions() const
-{
-  return sizeof(IsosurfaceOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_IsosurfacePlugin::getOption(int iopt)
-{
-  return &IsosurfaceOptions_Number[iopt];
-}
-
 double GMSH_IsosurfacePlugin::levelset(double x, double y, double z,
                                        double val) const
 {
   // we must look into the map for Map(x,y,z) - Value
   // this is the case when the map is the same as the view,
   // the result is the extraction of isovalue Value
-  return val - IsosurfaceOptions_Number[0].def;
+  return val - option(0);
 }
 
 PView *GMSH_IsosurfacePlugin::execute(PView *v)
 {
-  int iView = (int)IsosurfaceOptions_Number[4].def;
+  int iView = (int)option(4);
   _valueIndependent = 0;
-  _extractVolume = (int)IsosurfaceOptions_Number[1].def;
-  _recurLevel = (int)IsosurfaceOptions_Number[2].def;
-  _targetError = IsosurfaceOptions_Number[3].def;
-  _valueTimeStep = (int)IsosurfaceOptions_Number[5].def;
-  _valueView = (int)IsosurfaceOptions_Number[6].def;
+  _extractVolume = (int)option(1);
+  _recurLevel = (int)option(2);
+  _targetError = option(3);
+  _valueTimeStep = (int)option(5);
+  _valueView = (int)option(6);
   _orientation = GMSH_LevelsetPlugin::MAP;
-  _visible = (int)IsosurfaceOptions_Number[7].def;
+  _visible = (int)option(7);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

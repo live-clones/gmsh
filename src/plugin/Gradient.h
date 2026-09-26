@@ -8,21 +8,15 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterGradientPlugin();
-}
-
 class GMSH_GradientPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_GradientPlugin() {}
+  GMSH_GradientPlugin();
   std::string getName() const { return "Gradient"; }
   std::string getShortHelp() const
   {
     return "Compute the gradient of a scalar view";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

@@ -11,8 +11,6 @@ set(SRC
         PViewDataGModelIO_MSH.cpp PViewDataGModelIO_MED.cpp
         PViewDataGModelIO_CGNS.cpp
     PViewOptions.cpp
-    PViewFactory.cpp
-    PViewAsSimpleFunction.cpp
   adaptiveData.cpp shapeFunctions.cpp
   OctreePost.cpp
   ColorTable.cpp

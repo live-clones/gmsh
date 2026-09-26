@@ -20,12 +20,11 @@
 #include "FaceMatcher.h"
 #include "GModelVertexArrays.h"
 
-StringXNumber SkinOptions_Number[] = {{GMSH_FULLRC, "Visible", nullptr, 1., ""},
-                                      {GMSH_FULLRC, "FromMesh", nullptr, 0., ""},
-                                      {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSkinPlugin() { return new GMSH_SkinPlugin(); }
+GMSH_SkinPlugin::GMSH_SkinPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Visible", nullptr, 1., ""},
+                     {GMSH_FULLRC, "FromMesh", nullptr, 0., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
+{
 }
 
 std::string GMSH_SkinPlugin::getHelp() const
@@ -36,16 +35,6 @@ std::string GMSH_SkinPlugin::getHelp() const
          "the plugin is run on the current view.\n"
          "If `Visible' is set, the plugin only extracts the skin of visible "
          "entities.";
-}
-
-int GMSH_SkinPlugin::getNbOptions() const
-{
-  return sizeof(SkinOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_SkinPlugin::getOption(int iopt)
-{
-  return &SkinOptions_Number[iopt];
 }
 
 // The faces of an element, or the edges of a 2D one, outward as the old
@@ -123,36 +112,6 @@ static void getBoundaryFromMesh(GModel *m, int visible)
   CTX::instance()->meshChanged();
 }
 
-// where the values of an element with numNodes nodes and numComp components
-// go in a list-based view
-static std::vector<double> *getList(PViewDataList *data, int numNodes,
-                                    int numComp, int **num)
-{
-  int c = (numComp == 1) ? 0 : (numComp == 3) ? 1 : (numComp == 9) ? 2 : -1;
-  if(c < 0) return nullptr;
-  switch(numNodes) {
-  case 2: {
-    std::vector<double> *l[3] = {&data->SL, &data->VL, &data->TL};
-    int *n[3] = {&data->NbSL, &data->NbVL, &data->NbTL};
-    *num = n[c];
-    return l[c];
-  }
-  case 3: {
-    std::vector<double> *l[3] = {&data->ST, &data->VT, &data->TT};
-    int *n[3] = {&data->NbST, &data->NbVT, &data->NbTT};
-    *num = n[c];
-    return l[c];
-  }
-  case 4: {
-    std::vector<double> *l[3] = {&data->SQ, &data->VQ, &data->TQ};
-    int *n[3] = {&data->NbSQ, &data->NbVQ, &data->NbTQ};
-    *num = n[c];
-    return l[c];
-  }
-  }
-  return nullptr;
-}
-
 // What stands for a node when the faces of a view are matched: its
 // coordinates, as before (a view need not have a topology, and where it has
 // one, nodes at the same place - both sides of what was cut out of a mesh, an
@@ -174,9 +133,9 @@ static std::uint64_t nodeKey(PViewData *data, int step, int ent, int ele,
 
 PView *GMSH_SkinPlugin::execute(PView *v)
 {
-  int visible = (int)SkinOptions_Number[0].def;
-  int fromMesh = (int)SkinOptions_Number[1].def;
-  int iView = (int)SkinOptions_Number[2].def;
+  int visible = (int)option(0);
+  int fromMesh = (int)option(1);
+  int iView = (int)option(2);
 
   // compute boundary of current mesh
   if(fromMesh) {
@@ -268,10 +227,9 @@ PView *GMSH_SkinPlugin::execute(PView *v)
       if((*boundary)[b.second][c] >= 0)
         nodes[numNodes++] = (*boundary)[b.second][c];
     int numComp = data1->getNumComponents(step0, e.ent, e.ele);
-    int *num = nullptr;
-    std::vector<double> *list = getList(data2, numNodes, numComp, &num);
+    const int types[5] = {0, 0, TYPE_LIN, TYPE_TRI, TYPE_QUA};
+    std::vector<double> *list = data2->incrementList(numComp, types[numNodes]);
     if(!list) continue;
-    (*num)++;
     double xyz[4][3];
     for(int j = 0; j < numNodes; j++)
       data1->getNode(step0, e.ent, e.ele, nodes[j], xyz[j][0], xyz[j][1],
@@ -290,7 +248,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   }
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
-    if(data1->hasTimeStep(i)) data2->Time.push_back(data1->getTime(i));
+    if(data1->hasTimeStep(i)) data2->addTime(data1->getTime(i));
   data2->setName(data1->getName() + "_Skin");
   data2->setFileName(data1->getName() + "_Skin.pos");
   data2->finalize();

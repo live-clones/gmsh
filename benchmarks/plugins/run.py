@@ -1,0 +1,271 @@
+#!/usr/bin/env python3
+# Plugin tests: runs every case (a .geo file that builds a model or a view and
+# runs a plugin on it) in a process of its own, in a directory of its own, and
+# summarizes what it leaves behind: the mesh (nodes, elements of each type,
+# physical groups), every view (its times, and for each kind of list or each
+# step of model data: counts, sum, sum of absolute values, min and max of what
+# it holds, and the sum of the vector areas of the triangles and quadrangles of
+# lists) and the number of lines of the files written. Checks the summaries
+# against ref.json.
+#
+#   python3 run.py [-o dir] [--api dir] [-j jobs] [--update] [cases...]
+#
+# A case fails if its process crashes, if it logs an error, or if its summary
+# differs from the reference; --update writes the summaries of the cases run
+# into ref.json instead of checking them. Exits with 1 if a case failed.
+#
+# The External* cases run the plugin of examples/external_plugin, loaded from a
+# shared library: run.py compiles it with the compiler of $CXX (c++ by default)
+# against the sources and the build directory (--build, by default the bin
+# directory next to the api directory), and skips them if that fails.
+
+import argparse
+import concurrent.futures
+import fnmatch
+import glob
+import json
+import math
+import os
+import subprocess
+import sys
+import time
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REF = os.path.join(HERE, 'ref.json')
+RTOL = 1e-6  # relative to the largest number of a list
+
+
+def stats(values):
+    if not len(values):
+        return [0, 0., 0., 0., 0.]
+    return [len(values), math.fsum(values), math.fsum(abs(v) for v in values),
+            float(min(values)), float(max(values))]
+
+
+def vector_area(t, n, d):
+    # sum of the vector areas of the triangles or quadrangles of a list, which
+    # depends on their orientation (the other sums do not)
+    m = {'T': 3, 'Q': 4}.get(t[1])
+    if not m or not n:
+        return None
+    k = len(d) // n
+    s = [0., 0., 0., 0.]  # and the total area, the scale of the comparison
+    for i in range(n):
+        e = d[i * k:i * k + 3 * m]
+        p = [(e[j], e[m + j], e[2 * m + j]) for j in range(m)]
+        for j in range(1, m - 1):  # fan of triangles
+            a = [p[j][c] - p[0][c] for c in range(3)]
+            b = [p[j + 1][c] - p[0][c] for c in range(3)]
+            c = [0.5 * (a[1] * b[2] - a[2] * b[1]),
+                 0.5 * (a[2] * b[0] - a[0] * b[2]),
+                 0.5 * (a[0] * b[1] - a[1] * b[0])]
+            for i in range(3):
+                s[i] += c[i]
+            s[3] += math.sqrt(sum(x * x for x in c))
+    return s
+
+
+def summarize(gmsh):
+    out = {'mesh': {}, 'views': []}
+    m = out['mesh']
+    m['entities'] = [len(gmsh.model.getEntities(d)) for d in range(4)]
+    tags, coord, _ = gmsh.model.mesh.getNodes()
+    m['nodes'] = stats(list(coord))
+    m['nodes'][0] = len(tags)
+    types, etags, _ = gmsh.model.mesh.getElements()
+    m['elements'] = {gmsh.model.mesh.getElementProperties(t)[0]: len(e)
+                     for t, e in zip(types, etags)}
+    m['physicals'] = len(gmsh.model.getPhysicalGroups())
+    for tag in gmsh.view.getTags():
+        i = gmsh.view.getIndex(tag)
+        v = {'name': gmsh.option.getString('View[%d].Name' % i),
+             'steps': int(gmsh.option.getNumber('View[%d].NbTimeStep' % i))}
+        v['times'] = []
+        for step in range(v['steps']):
+            gmsh.option.setNumber('View[%d].TimeStep' % i, step)
+            v['times'].append(gmsh.option.getNumber('View[%d].Time' % i))
+        nerr = len(gmsh.logger.get())
+        types, nums, data = gmsh.view.getListData(tag)
+        if len(gmsh.logger.get()) == nerr:
+            v['list'] = {t: [int(n)] + stats(d)[1:]
+                         for t, n, d in zip(types, nums, data) if n}
+            for t, n, d in zip(types, nums, data):
+                a = vector_area(t, n, d)
+                if a:
+                    v['list'][t + ' area'] = a
+            for dim in (2, 3):
+                s = gmsh.view.getListDataStrings(tag, dim)[1]
+                if s:
+                    v['strings%d' % dim] = s
+        else:
+            # model data (not asked first: the C function behind
+            # getModelData aborts on list data if errors throw)
+            v['model'] = []
+            for step in range(v['steps']):
+                typ, t, d, time_, nc = gmsh.view.getModelData(tag, step)
+                vals = [x for dd in d for x in dd]
+                v['model'].append([typ, len(t), nc, time_] + stats(vals)[1:])
+        out['views'].append(v)
+    return out
+
+
+def child(case, jsonfile):
+    import gmsh
+    gmsh.initialize(readConfigFiles=False)
+    gmsh.option.setNumber('General.Terminal', 0)
+    gmsh.option.setNumber('General.AbortOnError', 0)
+    gmsh.logger.start()
+    t0 = time.time()
+    gmsh.open(case)
+    wall = time.time() - t0
+    errors = [l for l in gmsh.logger.get() if l.startswith('Error')]
+    out = summarize(gmsh)
+    out['errors'] = errors
+    # the number of lines: the digits of the numbers in them may change
+    out['files'] = {f: sum(1 for _ in open(f, 'rb'))
+                    for f in sorted(os.listdir('.'))
+                    if f not in ('log.txt', 'summary.json')}
+    out['time'] = wall
+    gmsh.finalize()
+    json.dump(out, open(jsonfile, 'w'), indent=1)
+
+
+def build_external(args):
+    # the example plugin, against the headers of the sources and the build
+    src = os.path.join(HERE, '..', '..', 'src')
+    inc = ['-I' + os.path.join(args.build, 'src', 'common')]
+    inc += ['-I' + os.path.join(src, d) for d in sorted(os.listdir(src))
+            if os.path.isdir(os.path.join(src, d))]
+    out = os.path.join(args.o, '_external')
+    os.makedirs(out, exist_ok=True)
+    lib = os.path.join(out, 'libElementAverage.so')
+    cmd = [os.environ.get('CXX', 'c++'), '-std=c++17', '-shared', '-fPIC'] + \
+        inc + [os.path.join(HERE, '..', '..', 'examples', 'external_plugin',
+                            'ElementAverage.cpp'),
+               '-L' + args.build, '-lgmsh', '-Wl,-rpath,' + args.build,
+               '-o', lib]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode:
+        print('could not build the example plugin: External cases skipped')
+        print(r.stderr[:1000])
+        return None
+    return out
+
+
+def run_case(name, args):
+    wdir = os.path.join(args.o, name)
+    os.makedirs(wdir, exist_ok=True)
+    for f in os.listdir(wdir):
+        os.remove(os.path.join(wdir, f))
+    env = dict(os.environ, PYTHONPATH=args.api)
+    if name.startswith('External'):
+        if not args.external:
+            return {'skip': True}
+        env['GMSHPLUGINSHOME'] = args.external
+    cmd = [sys.executable, os.path.abspath(__file__), '--child',
+           os.path.join(HERE, name + '.geo')]
+    with open(os.path.join(wdir, 'log.txt'), 'w') as log:
+        r = subprocess.run(cmd, cwd=wdir, env=env, stdout=log, stderr=log)
+    js = os.path.join(wdir, 'summary.json')
+    if r.returncode or not os.path.exists(js):
+        return {'crash': r.returncode}
+    return json.load(open(js))
+
+
+def differences(a, b, path=''):
+    if isinstance(a, dict) and isinstance(b, dict):
+        d = []
+        for k in sorted(set(a) | set(b)):
+            if k not in a or k not in b:
+                d.append('%s/%s: only in %s' % (path, k,
+                                                 'new' if k in a else 'ref'))
+            else:
+                d += differences(a[k], b[k], path + '/' + str(k))
+        return d
+    if isinstance(a, list) and isinstance(b, list):
+        if len(a) != len(b):
+            return ['%s: length %d, ref %d' % (path, len(a), len(b))]
+        # the numbers of a list (count, sum, sum of absolute values, min, max,
+        # or the 3 components of an area and its total) relative to the
+        # largest of them
+        nums = [abs(x) for x in a + b if isinstance(x, (int, float))]
+        scale = max(nums) if nums else 0
+        d = []
+        for i, (x, y) in enumerate(zip(a, b)):
+            if isinstance(x, float) or isinstance(y, float):
+                tol = RTOL * max(scale, abs(x), abs(y), 1e-300)
+                if abs(x - y) > tol:
+                    d.append('%s[%d]: %.17g, ref %.17g' % (path, i, x, y))
+            else:
+                d += differences(x, y, '%s[%d]' % (path, i))
+        return d
+    return [] if a == b else ['%s: %r, ref %r' % (path, a, b)]
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('-o', default=os.path.join(HERE, 'out'))
+    p.add_argument('--api', default=os.path.join(HERE, '..', '..', 'api'))
+    p.add_argument('--build', default=None)
+    p.add_argument('-j', type=int, default=os.cpu_count())
+    p.add_argument('--update', action='store_true')
+    p.add_argument('--child', nargs=1)
+    p.add_argument('cases', nargs='*')
+    args = p.parse_args()
+    if args.child:
+        return child(args.child[0], 'summary.json')
+    args.o = os.path.abspath(args.o)
+    args.api = os.path.abspath(args.api)
+    args.build = os.path.abspath(args.build or
+                                 os.path.join(args.api, '..', 'bin'))
+
+    names = sorted(os.path.basename(f)[:-4]
+                   for f in glob.glob(os.path.join(HERE, '*.geo')))
+    names = [n for n in names if not n.startswith('_')]
+    if args.cases:
+        names = [n for n in names
+                 if any(fnmatch.fnmatch(n, c) for c in args.cases)]
+    ref = json.load(open(REF)) if os.path.exists(REF) else {}
+    args.external = None
+    if any(n.startswith('External') for n in names):
+        args.external = build_external(args)
+
+    with concurrent.futures.ThreadPoolExecutor(args.j) as ex:
+        results = dict(zip(names, ex.map(lambda n: run_case(n, args), names)))
+
+    failed = 0
+    for n in names:
+        r = results[n]
+        if 'skip' in r:
+            print('skip  %s' % n)
+            continue
+        if 'crash' in r:
+            status, why = 'CRASH', ['exit code %s, see %s' %
+                                    (r['crash'], os.path.join(args.o, n))]
+        elif r['errors']:
+            status, why = 'ERROR', r['errors']
+        elif args.update:
+            status, why = 'ok', []
+        elif n not in ref:
+            status, why = 'NEW', ['no reference']
+        else:
+            r2 = {k: v for k, v in r.items() if k != 'time'}
+            why = differences(r2, ref[n])
+            status = 'DIFF' if why else 'ok'
+        t = r.get('time')
+        print('%-5s %-32s %s' % (status, n, '%.3f s' % t if t else ''))
+        for w in why[:10]:
+            print('      ' + w)
+        failed += status != 'ok'
+
+    if args.update:
+        for n in names:
+            if 'crash' not in results[n] and 'skip' not in results[n]:
+                ref[n] = {k: v for k, v in results[n].items() if k != 'time'}
+        json.dump(ref, open(REF, 'w'), indent=1, sort_keys=True)
+    print('%d cases, %d failed' % (len(names), failed))
+    return 1 if failed else 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

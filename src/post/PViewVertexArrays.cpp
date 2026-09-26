@@ -3,7 +3,6 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <string.h>
 #include <algorithm>
 #include <atomic>
 #include <cmath>
@@ -18,8 +17,6 @@
 #include "MPolyhedron.h"
 #include "onelab.h"
 #include "Iso.h"
-#include "MEdge.h"
-#include "MFace.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
@@ -371,7 +368,7 @@ static void addOutlinePoint(drawTarget *p, double **xyz, unsigned int color,
 {
   if(pre) return;
   SVector3 n = getPointNormal(p, 1.);
-  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &color, nullptr,
+  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &color,
                     true);
 }
 
@@ -394,12 +391,7 @@ static bool skinOutlines(PViewOptions *opt)
 }
 
 // does this element draw its own faces, and only the ones on the skin?
-static bool skinOnly(PViewOptions *opt)
-{
-  return opt->drawSkinOnly && opt->boundary <= 0 &&
-         (opt->intervalsType == PViewOptions::Continuous ||
-          opt->intervalsType == PViewOptions::Discrete);
-}
+static bool skinOnly(PViewOptions *opt) { return opt->skinOnly(); }
 
 // With smoothed normals, the normal at a point is the average of those of
 // the faces through it: gathered by the pass that only collects them (pre),
@@ -414,8 +406,6 @@ static void smoothNormal(drawTarget *p, bool pre, double x, double y, double z,
     p->normals->get(x, y, z, n[0], n[1], n[2]);
 }
 
-// f(k, min, max) for each band of the scale, or f(k, iso) for each iso-value:
-// the middle one only when the range is empty
 // The iso-values of the view (num = NbIso), or the limits of its bands (num =
 // NbIso + 1), computed once for all the elements
 static const std::vector<double> &isoValues(drawTarget *p, int num,
@@ -482,7 +472,7 @@ static void addFan(drawTarget *p, bool pre, int nb, const double *x,
       c3[i] = col[t[i]];
       smoothNormal(p, pre, x3[i], y3[i], z3[i], n[i]);
     }
-    if(!pre) p->va_triangles->add(x3, y3, z3, n, c3, nullptr, unique);
+    if(!pre) p->va_triangles->add(x3, y3, z3, n, c3, unique);
   }
 }
 
@@ -501,7 +491,7 @@ static void addScalarPoint(drawTarget *p, double **xyz, double **val, bool pre,
       val[i0][0], vmin, vmax, false,
       (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
     SVector3 n = getPointNormal(p, val[i0][0]);
-    p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col, nullptr,
+    p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col,
                       unique);
   }
 }
@@ -522,7 +512,7 @@ static void addOutlineLine(drawTarget *p, double **xyz, unsigned int color,
   }
   SVector3 n[2];
   getLineNormal(p, x, y, z, nullptr, n, true);
-  p->va_lines->add(x, y, z, n, col, nullptr, true);
+  p->va_lines->add(x, y, z, n, col, true);
 }
 
 static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
@@ -555,7 +545,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
        val[i1][0] <= vmax) {
       unsigned int col[2];
       for(int i = 0; i < 2; i++) col[i] = opt->getColor(v[i], vmin, vmax);
-      p->va_lines->add(x, y, z, n, col, nullptr, unique);
+      p->va_lines->add(x, y, z, n, col, unique);
     }
     else {
       double x2[2], y2[2], z2[2], v2[2];
@@ -566,7 +556,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
         // the values of the cut segment, which its cylinder is sized by
         SVector3 n2[2];
         getLineNormal(p, x2, y2, z2, v2, n2, true);
-        p->va_lines->add(x2, y2, z2, n2, col, nullptr, unique);
+        p->va_lines->add(x2, y2, z2, n2, col, unique);
       }
     }
   }
@@ -580,7 +570,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
         unsigned int col[2] = {color, color};
         SVector3 n[2];
         getLineNormal(p, x2, y2, z2, v2, n, true);
-        p->va_lines->add(x2, y2, z2, n, col, nullptr, unique);
+        p->va_lines->add(x2, y2, z2, n, col, unique);
       }
     });
   }
@@ -592,7 +582,7 @@ static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
       if(nb == 1) {
         unsigned int color = opt->getColor(k, opt->nbIso);
         SVector3 n = getPointNormal(p, iso);
-        p->va_points->add(x2, y2, z2, &n, &color, nullptr, unique);
+        p->va_points->add(x2, y2, z2, &n, &color, unique);
       }
     });
   }
@@ -613,7 +603,7 @@ static void addOutlineEdge(drawTarget *p, double **xyz, unsigned int color,
   }
   unsigned int col[2] = {color, color};
   getLineNormal(p, x, y, z, nullptr, n, false);
-  if(!pre) p->va_lines->add(x, y, z, n, col, nullptr, true);
+  if(!pre) p->va_lines->add(x, y, z, n, col, true);
 }
 
 // the edges of a face of n corners
@@ -638,7 +628,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
 {
   PViewOptions *opt = p->opt;
 
-  // the pass marking the skin only draws the faces that may be on it
+  // (a face of a volume whose skin is drawn: only if it is on the skin)
   if(skin) {
     const int ii[3] = {i0, i1, i2};
     if(!skinFace(p, ii, 3)) return;
@@ -673,7 +663,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
         smoothNormal(p, pre, x[i], y[i], z[i], n[i]);
         col[i] = opt->getColor(v[i], vmin, vmax);
       }
-      if(!pre) p->va_triangles->add(x, y, z, n, col, nullptr, unique);
+      if(!pre) p->va_triangles->add(x, y, z, n, col, unique);
     }
     else {
       double x2[10], y2[10], z2[10], v2[10];
@@ -705,7 +695,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
         for(int i = 0; i < 2; i++) smoothNormal(p, pre, x2[i], y2[i], z2[i], n[i]);
         double v[2] = {iso, iso};
         getLineNormal(p, x, y, z, v, n, false);
-        if(!pre) p->va_lines->add(x2, y2, z2, n, col, nullptr, unique);
+        if(!pre) p->va_lines->add(x2, y2, z2, n, col, unique);
       }
     });
   }
@@ -997,6 +987,7 @@ static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
   k.push_back(ctx->meshContentStamp);
   k.push_back(ctx->entityVisibilityStamp);
   k.push_back(opt->sampling);
+  k.push_back(opt->drawSkinOnly);
   k.push_back(opt->drawTetrahedra);
   k.push_back(opt->drawHexahedra);
   k.push_back(opt->drawPrisms);
@@ -1108,6 +1099,9 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
   std::vector<chunk> chunks(nthreads);
   std::atomic<bool> bad(false);
   skin.masks.assign(flat.num, 0);
+  // (faces are told apart by entity, see getSkinKeys())
+  std::vector<int> entKey;
+  data->getSkinKeys(step, opt->drawSkinOnly == 2, entKey);
 
 #pragma omp parallel for schedule(static, 1) num_threads(nthreads)
   for(int t = 0; t < nthreads; t++) {
@@ -1211,7 +1205,8 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
           }
           for(int j = 0; j < n; j++) kk[j] = ids[fi[j]];
           hash[nf++] = matcher.share(kk, n, nthreads) == t ?
-                         matcher.hashOf(kk, n, c.ent[e]) : 0;
+                         matcher.hashOf(kk, n, entKey[c.ent[e]]) :
+                         0;
         };
         if(c.shape[e] == 4)
           forFaces(c, e, ip, faces, hashFace);
@@ -1231,6 +1226,20 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
     });
   }
 
+  // (the index of each element among the polyhedra of its chunk, see
+  // forFaces(), if there are any)
+  std::vector<std::vector<std::uint32_t>> polyIndex(nthreads);
+  for(int t = 0; t < nthreads; t++) {
+    const chunk &c = chunks[t];
+    if(std::find(c.shape.begin(), c.shape.end(), 4) == c.shape.end()) continue;
+    polyIndex[t].resize(c.shape.size());
+    std::uint32_t n = 0;
+    for(std::size_t e = 0; e < c.shape.size(); e++) {
+      polyIndex[t][e] = n;
+      if(c.shape[e] == 4) n++;
+    }
+  }
+
   // in whole element mode, is the element on the other side of the face
   // removed?
   auto removed = [&](const face &f) {
@@ -1239,8 +1248,7 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
     const chunk &c = chunks[t];
     std::size_t e = std::lower_bound(c.elem.begin(), c.elem.end(), f.first) -
                     c.elem.begin();
-    std::size_t ip = (c.shape[e] == 4) ?
-      std::count(c.shape.begin(), c.shape.begin() + e, 4) : 0;
+    std::size_t ip = (c.shape[e] == 4) ? polyIndex[t][e] : 0;
     std::uint8_t all = 0xff;
     forFaces(c, e, ip, polyFaces, [&](int i, const int *fi, int n) {
       if(i != f.second) return;
@@ -1384,6 +1392,50 @@ static void addScalarCap(drawTarget *p, double **xyz, double **val, int i0,
       }
       addScalarTriangle(p, cxyz, cval, false, 0, 1, 2, false, false);
     }
+  }
+}
+
+// the outline of the section a clipping plane cuts out of a 3D element,
+// with the outlines of the elements: where the plane crosses its faces
+// (moved towards the kept side, like the section, but less, so that it is
+// drawn over it)
+static void addCapOutline(drawTarget *p, double **xyz, unsigned int color,
+                          const solidShape &s)
+{
+  PViewOptions *opt = p->opt;
+  double eps = 0.5e-5 * CTX::instance()->lc;
+  for(int c = 0; c < 6; c++) {
+    if(!(opt->clip & (1 << c))) continue;
+    const double *pl = CTX::instance()->clipPlane[c];
+    double len = sqrt(pl[0] * pl[0] + pl[1] * pl[1] + pl[2] * pl[2]);
+    if(len < 1.e-15) continue;
+    double n[3] = {pl[0] / len, pl[1] / len, pl[2] / len};
+    auto face = [&](const int *idx, int nn) {
+      double q[4][3];
+      int nq = 0;
+      for(int i = 0; i < nn && nq < 4; i++) {
+        const double *a = xyz[idx[i]], *b = xyz[idx[(i + 1) % nn]];
+        double da = pl[0] * a[0] + pl[1] * a[1] + pl[2] * a[2] + pl[3];
+        double db = pl[0] * b[0] + pl[1] * b[1] + pl[2] * b[2] + pl[3];
+        if((da < 0.) == (db < 0.)) continue;
+        double t = da / (da - db);
+        for(int k = 0; k < 3; k++)
+          q[nq][k] = a[k] + t * (b[k] - a[k]) + eps * n[k];
+        nq++;
+      }
+      // (a face that is not flat can be crossed twice)
+      for(int i = 0; i + 1 < nq; i += 2) {
+        double x[2] = {q[i][0], q[i + 1][0]}, y[2] = {q[i][1], q[i + 1][1]};
+        double z[2] = {q[i][2], q[i + 1][2]};
+        SVector3 nl[2] = {SVector3(n[0], n[1], n[2]),
+                          SVector3(n[0], n[1], n[2])};
+        unsigned int col[2] = {color, color};
+        getLineNormal(p, x, y, z, nullptr, nl, false);
+        p->va_lines->add(x, y, z, nl, col, true);
+      }
+    };
+    for(int i = 0; i < s.numQuads; i++) face(s.quads[i], 4);
+    for(int i = 0; i < s.numTriangles; i++) face(s.triangles[i], 3);
   }
 }
 
@@ -1630,7 +1682,7 @@ static void addArrow(drawTarget *p, const double *x, const double *d,
     dxyz[j][0] = x[j];
     dxyz[j][1] = d[j];
   }
-  p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr, unique);
+  p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, unique);
 }
 
 static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
@@ -1688,7 +1740,7 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
         }
         SVector3 n[2];
         getLineNormal(p, dxyz[0], dxyz[1], dxyz[2], norm, n, true);
-        p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], n, col, nullptr, false);
+        p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], n, col, false);
       }
     }
     return;
@@ -1758,22 +1810,21 @@ static void addTriangle(drawTarget *p, PViewOptions *opt, double *x0,
     double YY[3] = {x0[1], x1[1], x2[1]};
     double ZZ[3] = {x0[2], x1[2], x2[2]};
     SVector3 NN[3] = {N, N, N};
-    p->va_triangles->add(XX, YY, ZZ, NN, col, nullptr, true);
+    p->va_triangles->add(XX, YY, ZZ, NN, col, true);
   }
   else {
     double XX[3] = {x1[0], x0[0], x2[0]};
     double YY[3] = {x1[1], x0[1], x2[1]};
     double ZZ[3] = {x1[2], x0[2], x2[2]};
     SVector3 NN[3] = {-N, -N, -N};
-    p->va_triangles->add(XX, YY, ZZ, NN, col, nullptr, true);
+    p->va_triangles->add(XX, YY, ZZ, NN, col, true);
   }
 }
 
 // Whether a view draws faces, which only the skin of its volumes is kept of:
-// a view of vectors drawn as arrows, or of tensors drawn as glyphs, has
-// none, and the pass locating the skin would walk its elements - computing
-// every eigenvector twice for tensors - for nothing. A view that cannot say
-// what it holds is assumed to.
+// a view of vectors drawn as arrows, or of tensors drawn as glyphs, has none,
+// and finding the skin of its volumes would be for nothing. A view that cannot
+// say what it holds is assumed to.
 static bool viewDrawsFaces(PView *p)
 {
   PViewData *data = p->getData(true);
@@ -1877,7 +1928,7 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
     }
   }
   else if(opt->tensorType == PViewOptions::Frame) {
-    // glyphs: nothing for the passes gathering normals or the skin
+    // glyphs: nothing for the pass gathering normals
     if(pre) return;
     if(opt->glyphLocation == PViewOptions::Vertex) {
       for(int i = 0; i < numNodes; i++) {
@@ -1906,8 +1957,8 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
   }
   else if(opt->tensorType == PViewOptions::Ellipse ||
           opt->tensorType == PViewOptions::Ellipsoid) {
-    // glyphs: added once, by the pass filling the arrays, and not also by
-    // those gathering normals or the skin (va_ellipses keeps duplicates)
+    // glyphs: added once, by the pass filling the arrays, and not also by the
+    // one gathering normals (va_ellipses keeps duplicates)
     if(pre) return;
     // the center and the three axes (the eigenvectors scaled by the
     // eigenvalues), at each node or averaged over the element
@@ -1935,7 +1986,7 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
         det, opt->tmpMin, opt->tmpMax, false,
         (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
       unsigned int col[4] = {color, color, color, color};
-      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr,
+      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col,
                           false);
     }
     if(!vertex) {
@@ -1952,7 +2003,7 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
         lmax, opt->tmpMin, opt->tmpMax, false,
         (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
       unsigned int col[4] = {color, color, color, color};
-      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr,
+      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col,
                           false);
     }
   }
@@ -2145,8 +2196,19 @@ static void addElementRange(drawTarget *p, PViewData *data,
       }
       else if(!isElementVisible(opt, dim, numNodes, xyz))
         continue;
-      // the caps pass wants 3D elements only, and no outlines
+      // the caps pass wants 3D elements only, and no outlines but those of
+      // the sections
       if(p->collect == drawTarget::COLLECT_CAPS && dim < 3) continue;
+      if(p->collect == drawTarget::COLLECT_CAPS && opt->showElement &&
+         !preprocessNormalsOnly && drawsScalarFaces(opt, numComp) &&
+         (opt->intervalsType == PViewOptions::Continuous ||
+          opt->intervalsType == PViewOptions::Discrete)) {
+        int sh = solidShapeIndex(type);
+        const unsigned int colors[4] = {
+          opt->color.tetrahedron, opt->color.hexahedron, opt->color.prism,
+          opt->color.pyramid};
+        if(sh >= 0) addCapOutline(p, xyz, colors[sh], *solidShapes[sh]);
+      }
 
       for(int j = 0; j < numNodes; j++)
         p->bbox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
@@ -2249,8 +2311,6 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
   for(int t = 0; t < nthreads; t++) {
     drawTarget *d = new drawTarget(p);
     opts[t] = new PViewOptions(*opt);
-    // the copy must not delete the shared general raise evaluator
-    opts[t]->genRaiseEvaluator = nullptr;
     d->opt = opts[t];
     d->collect = collect;
     if(normals) d->normals = normals;
@@ -2405,6 +2465,8 @@ public:
     // (not perfect for multi-step adaptive views, which do not know the
     // range of the other steps)
     opt->getRange(data, opt->tmpMin, opt->tmpMax);
+    if(opt->rangeType != PViewOptions::Custom)
+      p->widenAdaptedRange(opt->tmpMin, opt->tmpMax);
 
     p->va_points = new VertexArray(1, _estimateNumPoints(p));
     p->va_lines = new VertexArray(2, _estimateNumLines(p));
@@ -2480,6 +2542,17 @@ bool PView::fillClipVertexArrays()
                !ctx->clipOnlyDrawIntersectingVolume;
   if(!caps && !whole) return true;
 
+  // a view whose skin alone is refined builds this from the elements the
+  // planes cut, refined apart, and read in place of its adaptive data
+  struct layer {
+    PView *p;
+    bool used;
+    layer(PView *v) : p(v), used(v->refineClipLayer()) { p->useClipLayer(used); }
+    ~layer() { p->useClipLayer(false); }
+  } clipLayer(this);
+  // (its spheres are those of the elements refined apart before)
+  if(clipLayer.used) _viewSpheres.erase(this);
+
   PViewData *data = getData(true);
   if(!data || data->getDirty() || !data->getNumTimeSteps()) return true;
 
@@ -2522,6 +2595,8 @@ bool PView::fillClipVertexArrays()
 // They are only built again when setChanged() says the view has changed.
 bool PView::fillVertexArrays()
 {
+  // (a change of the range drawn changes the refinement, see adapt())
+  adapt();
   initPView init;
   return init(this);
 }

@@ -10,13 +10,12 @@
   #undef HAVE_DLOPEN
   #include "GmshConfig.h"
   #include "fullMatrix.h"
+  #include "simpleFunction.h"
 #if defined(HAVE_POST)
   #include "PluginManager.h"
   #include "Plugin.h"
   #include "PView.h"
-  #include "PViewFactory.h"
   #include "PViewData.h"
-  #include "PViewAsSimpleFunction.h"
   #include "PViewDataGModel.h"
 #endif
 %}
@@ -30,14 +29,11 @@ namespace std {
 %include "GmshConfig.h"
 #if defined(HAVE_POST)
 %include "PView.h"
-%include "PViewFactory.h"
 %apply double &OUTPUT { double &val}
 %include "PViewData.h"
 %include "simpleFunction.h"
 %template(simpleFunctionDouble) simpleFunction<double>;
-%include "PViewAsSimpleFunction.h"
 %include "PViewDataGModel.h"
 %include "Plugin.h"
 %include "PluginManager.h"
 #endif
-

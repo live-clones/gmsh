@@ -233,6 +233,16 @@ post_model_o2 elements_o2.msh views_o2.msh view3d.opt
   View[0].Visible = 0; View[2].Visible = 1;
   View[2].Visible = 0; View[3].Visible = 1;
 
+post_adaptive_clip elements_o2.msh views_o2.msh view3d.opt
+  For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
+  View[0].AdaptVisualizationGrid = 1; View[0].MaxRecursionLevel = 2;
+  General.Clip0A = 1; General.Clip0D = -0.5; View[0].Clip = 1;
+  General.ClipCapping = 1;
+  General.ClipCapping = 0; General.ClipWholeElements = 1;
+  General.ClipOnlyVolume = 1;
+  General.ClipOnlyVolume = 0; View[0].ShowElement = 1;
+  General.ClipWholeElements = 0; General.ClipCapping = 1;
+
 post_model_o2i elements_o2i.msh views_o2i.msh view3d.opt
   For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
   View[0].AdaptVisualizationGrid = 1; View[0].MaxRecursionLevel = 2;

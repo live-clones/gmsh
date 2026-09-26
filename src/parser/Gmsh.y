@@ -79,7 +79,8 @@ static PViewDataList *ViewData = 0;
 #endif
 static std::vector<double> ViewCoord;
 static std::vector<double> *ViewValueList = 0;
-static int *ViewNumList = 0;
+static std::vector<std::string> ViewStrings;
+static std::vector<double> ViewTime;
 static ExtrudeParams extr;
 static gmshSurface *myGmshSurface = 0;
 static int statusImbricatedTests[MAX_RECUR_TESTS];
@@ -530,103 +531,18 @@ Element :
     tSTRING
     {
 #if defined(HAVE_POST)
-      if(!strncmp($1, "SP", 2)){
-	ViewValueList = &ViewData->SP; ViewNumList = &ViewData->NbSP;
+      // the list of the element type named by the 2 first letters (e.g. ST
+      // for scalar triangles), of order 2 if followed by 2 (e.g. ST2)
+      ViewValueList = 0;
+      for(int i = 0; i < 24; i++){
+        const PViewDataList::listKind &k = PViewDataList::listKinds[i];
+        if(!strncmp($1, k.name, 2)){
+          ViewValueList = ViewData->incrementList(k.numComp, k.type);
+          if(strlen($1) > 2 && k.type != TYPE_PNT) ViewData->setOrder2(k.type);
+          break;
+        }
       }
-      else if(!strncmp($1, "VP", 2)){
-	ViewValueList = &ViewData->VP; ViewNumList = &ViewData->NbVP;
-      }
-      else if(!strncmp($1, "TP", 2)){
-	ViewValueList = &ViewData->TP; ViewNumList = &ViewData->NbTP;
-      }
-      else if(!strncmp($1, "SL", 2)){
-	ViewValueList = &ViewData->SL; ViewNumList = &ViewData->NbSL;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_LIN);
-      }
-      else if(!strncmp($1, "VL", 2)){
-	ViewValueList = &ViewData->VL; ViewNumList = &ViewData->NbVL;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_LIN);
-      }
-      else if(!strncmp($1, "TL", 2)){
-	ViewValueList = &ViewData->TL; ViewNumList = &ViewData->NbTL;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_LIN);
-      }
-      else if(!strncmp($1, "ST", 2)){
-	ViewValueList = &ViewData->ST; ViewNumList = &ViewData->NbST;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TRI);
-      }
-      else if(!strncmp($1, "VT", 2)){
-	ViewValueList = &ViewData->VT; ViewNumList = &ViewData->NbVT;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TRI);
-      }
-      else if(!strncmp($1, "TT", 2)){
-	ViewValueList = &ViewData->TT; ViewNumList = &ViewData->NbTT;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TRI);
-      }
-      else if(!strncmp($1, "SQ", 2)){
-	ViewValueList = &ViewData->SQ; ViewNumList = &ViewData->NbSQ;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_QUA);
-      }
-      else if(!strncmp($1, "VQ", 2)){
-	ViewValueList = &ViewData->VQ; ViewNumList = &ViewData->NbVQ;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_QUA);
-      }
-      else if(!strncmp($1, "TQ", 2)){
-	ViewValueList = &ViewData->TQ; ViewNumList = &ViewData->NbTQ;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_QUA);
-      }
-      else if(!strncmp($1, "SS", 2)){
-	ViewValueList = &ViewData->SS; ViewNumList = &ViewData->NbSS;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TET);
-      }
-      else if(!strncmp($1, "VS", 2)){
-	ViewValueList = &ViewData->VS; ViewNumList = &ViewData->NbVS;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TET);
-      }
-      else if(!strncmp($1, "TS", 2)){
-	ViewValueList = &ViewData->TS; ViewNumList = &ViewData->NbTS;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TET);
-      }
-      else if(!strncmp($1, "SH", 2)){
-	ViewValueList = &ViewData->SH; ViewNumList = &ViewData->NbSH;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_HEX);
-      }
-      else if(!strncmp($1, "VH", 2)){
-	ViewValueList = &ViewData->VH; ViewNumList = &ViewData->NbVH;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_HEX);
-      }
-      else if(!strncmp($1, "TH", 2)){
-	ViewValueList = &ViewData->TH; ViewNumList = &ViewData->NbTH;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_HEX);
-      }
-      else if(!strncmp($1, "SI", 2)){
-	ViewValueList = &ViewData->SI; ViewNumList = &ViewData->NbSI;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PRI);
-      }
-      else if(!strncmp($1, "VI", 2)){
-	ViewValueList = &ViewData->VI; ViewNumList = &ViewData->NbVI;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PRI);
-      }
-      else if(!strncmp($1, "TI", 2)){
-	ViewValueList = &ViewData->TI; ViewNumList = &ViewData->NbTI;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PRI);
-      }
-      else if(!strncmp($1, "SY", 2)){
-	ViewValueList = &ViewData->SY; ViewNumList = &ViewData->NbSY;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PYR);
-      }
-      else if(!strncmp($1, "VY", 2)){
-	ViewValueList = &ViewData->VY; ViewNumList = &ViewData->NbVY;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PYR);
-      }
-      else if(!strncmp($1, "TY", 2)){
-	ViewValueList = &ViewData->TY; ViewNumList = &ViewData->NbTY;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PYR);
-      }
-      else{
-	yymsg(0, "Unknown element type '%s'", $1);
-	ViewValueList = 0; ViewNumList = 0;
-      }
+      if(!ViewValueList) yymsg(0, "Unknown element type '%s'", $1);
 #endif
       ViewCoord.clear();
       Free($1);
@@ -642,26 +558,17 @@ Element :
 #endif
     }
     '{' ElementValues '}' tEND
-    {
-#if defined(HAVE_POST)
-      if(ViewValueList) (*ViewNumList)++;
-#endif
-    }
 ;
 
 Text2DValues :
     StringExprVar
     {
-#if defined(HAVE_POST)
-      for(int i = 0; i < (int)strlen($1) + 1; i++) ViewData->T2C.push_back($1[i]);
-#endif
+      ViewStrings.push_back($1);
       Free($1);
     }
   | Text2DValues ',' StringExprVar
     {
-#if defined(HAVE_POST)
-      for(int i = 0; i < (int)strlen($3) + 1; i++) ViewData->T2C.push_back($3[i]);
-#endif
+      ViewStrings.push_back($3);
       Free($3);
     }
 ;
@@ -669,17 +576,12 @@ Text2DValues :
 Text2D :
     tText2D '(' FExpr ',' FExpr ',' FExpr ')'
     {
-#if defined(HAVE_POST)
-      ViewData->T2D.push_back($3);
-      ViewData->T2D.push_back($5);
-      ViewData->T2D.push_back($7);
-      ViewData->T2D.push_back(ViewData->T2C.size());
-#endif
+      ViewStrings.clear();
     }
     '{' Text2DValues '}' tEND
     {
 #if defined(HAVE_POST)
-      ViewData->NbT2++;
+      ViewData->addString2D($3, $5, $7, ViewStrings);
 #endif
     }
 ;
@@ -687,16 +589,12 @@ Text2D :
 Text3DValues :
     StringExprVar
     {
-#if defined(HAVE_POST)
-      for(int i = 0; i < (int)strlen($1) + 1; i++) ViewData->T3C.push_back($1[i]);
-#endif
+      ViewStrings.push_back($1);
       Free($1);
     }
   | Text3DValues ',' StringExprVar
     {
-#if defined(HAVE_POST)
-      for(int i = 0; i < (int)strlen($3) + 1; i++) ViewData->T3C.push_back($3[i]);
-#endif
+      ViewStrings.push_back($3);
       Free($3);
     }
 ;
@@ -704,16 +602,12 @@ Text3DValues :
 Text3D :
     tText3D '(' FExpr ',' FExpr ',' FExpr ',' FExpr ')'
     {
-#if defined(HAVE_POST)
-      ViewData->T3D.push_back($3); ViewData->T3D.push_back($5);
-      ViewData->T3D.push_back($7); ViewData->T3D.push_back($9);
-      ViewData->T3D.push_back(ViewData->T3C.size());
-#endif
+      ViewStrings.clear();
     }
     '{' Text3DValues '}' tEND
     {
 #if defined(HAVE_POST)
-      ViewData->NbT3++;
+      ViewData->addString3D($3, $5, $7, $9, ViewStrings);
 #endif
     }
 ;
@@ -724,13 +618,13 @@ InterpolationMatrix :
     {
 #if defined(HAVE_POST)
       int type =
-	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN :
-	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI :
-	(ViewData->NbSQ || ViewData->NbVQ) ? TYPE_QUA :
-	(ViewData->NbSS || ViewData->NbVS) ? TYPE_TET :
-	(ViewData->NbSY || ViewData->NbVY) ? TYPE_PYR :
-	(ViewData->NbSI || ViewData->NbVI) ? TYPE_PRI :
-      	(ViewData->NbSH || ViewData->NbVH) ? TYPE_HEX :
+	ViewData->getNumLines() ? TYPE_LIN :
+	ViewData->getNumTriangles() ? TYPE_TRI :
+	ViewData->getNumQuadrangles() ? TYPE_QUA :
+	ViewData->getNumTetrahedra() ? TYPE_TET :
+	ViewData->getNumPyramids() ? TYPE_PYR :
+	ViewData->getNumPrisms() ? TYPE_PRI :
+      	ViewData->getNumHexahedra() ? TYPE_HEX :
 	0;
       ViewData->setInterpolationMatrices(type, ListOfListOfDouble2Matrix($3),
                                          ListOfListOfDouble2Matrix($6));
@@ -743,11 +637,11 @@ InterpolationMatrix :
     {
 #if defined(HAVE_POST)
       int type =
-	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN :
-	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI :
-	(ViewData->NbSQ || ViewData->NbVQ) ? TYPE_QUA :
-	(ViewData->NbSS || ViewData->NbVS) ? TYPE_TET :
-      	(ViewData->NbSH || ViewData->NbVH) ? TYPE_HEX :
+	ViewData->getNumLines() ? TYPE_LIN :
+	ViewData->getNumTriangles() ? TYPE_TRI :
+	ViewData->getNumQuadrangles() ? TYPE_QUA :
+	ViewData->getNumTetrahedra() ? TYPE_TET :
+      	ViewData->getNumHexahedra() ? TYPE_HEX :
 	0;
       ViewData->setInterpolationMatrices(type, ListOfListOfDouble2Matrix($3),
                                          ListOfListOfDouble2Matrix($6),
@@ -761,11 +655,15 @@ Time :
     tTime
     {
 #if defined(HAVE_POST)
-      ViewValueList = &ViewData->Time;
+      ViewTime.clear();
+      ViewValueList = &ViewTime;
 #endif
     }
    '{' ElementValues '}' tEND
     {
+#if defined(HAVE_POST)
+      for(auto t : ViewTime) ViewData->addTime(t);
+#endif
     }
 ;
 

@@ -21,21 +21,32 @@
 
 bool drawContext::_pickColorActive = false;
 
-// returns the element at a given position in a vertex array (element pointers
-// are not always stored: returning 0 is not an error)
-static MElement *getElement(GEntity *e, int va_type, int index)
+// The mesh element of an entity under the point a pick hit: the identifiers
+// name entities, not elements, so the element is looked up geometrically, in
+// the octree of the model (nullptr is not an error: the mesh may not be there,
+// or the point may have missed it).
+// The mesh element of a picked entity at the point the pick read back: for a
+// curve or a surface, the closest within a few pixels, as the point is off it
+// by the depth a pixel spans when it is seen obliquely; for a volume, one that
+// holds the point, that of the entity if several do (the point lies on a face
+// or an edge they share).
+static MElement *getElement(GEntity *e, const double p[3], bool valid,
+                            double pixel)
 {
-  VertexArray *va = nullptr;
-  switch(va_type) {
-  case 2: va = e->va_lines; break;
-  case 3: va = e->va_triangles; break;
-  // what the clipping planes add (see drawArrays() in drawMesh.cpp)
-  case 12: va = e->va_clip_lines; break;
-  case 13: va = e->va_clip_triangles; break;
+  if(!valid || !e->getNumMeshElements()) return nullptr;
+  SPoint3 pt(p[0], p[1], p[2]);
+  if(e->dim() < 3)
+    return e->model()->getMeshElementClosestTo(pt, e->dim(), 3. * pixel);
+  std::vector<MElement *> candidates =
+    e->model()->getMeshElementsByCoord(pt, e->dim(), false);
+  if(candidates.empty()) return nullptr;
+  if(candidates.size() == 1) return candidates[0];
+  for(std::size_t i = 0; i < e->getNumMeshElements(); i++) {
+    MElement *ele = e->getMeshElement(i);
+    for(auto c : candidates)
+      if(c == ele) return c;
   }
-  if(va && index < va->getNumElementPointers())
-    return *va->getElementPointerArray(index);
-  return nullptr;
+  return candidates[0];
 }
 
 void drawContext::stepPick(int direction)
@@ -199,6 +210,11 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   gmshDepthTest(true);
   gmshLighting(false);
   glDisable(GL_BLEND);
+  // the faces at their true depth, not pushed back behind their edges: the
+  // point read back must lie on them, and the dimensions are told apart by
+  // their depth ranges instead (see setPickColor())
+  int oldOffset = CTX::instance()->polygonOffset;
+  CTX::instance()->polygonOffset = 0;
   // the identifier colour must not be interpolated (the shader gives every
   // fragment the same one)
   if(!glShader::enabled()) glShadeModel(GL_FLAT);
@@ -232,6 +248,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   {
     CTX *c = CTX::instance();
     double zmin = 1., zmax = 0.;
+    bool behind = false; // (a corner behind the eye: no front to speak of)
     for(int i = 0; i < 8; i++) {
       double p[4] = {(i & 1) ? c->max[0] : c->min[0],
                      (i & 2) ? c->max[1] : c->min[1],
@@ -239,6 +256,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
       double e[4], q[4];
       glMatrix::transform(glImmediate::matrix(GMSH_MODELVIEW), p, e);
       glMatrix::transform(glImmediate::matrix(GMSH_PROJECTION), e, q);
+      if(q[3] <= 0.) behind = true;
       if(q[3] == 0.) continue;
       double z = 0.5 * (q[2] / q[3] + 1.);
       zmin = std::min(zmin, z);
@@ -247,10 +265,18 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
     double extent = std::max(zmax - zmin, 0.);
     double zmid = std::max(0.05, 0.5 * (zmin + zmax));
     _pickDepthStep = std::max(0.01 * extent, 4. / 16777215.) / zmid;
+    _pickNearest = (!behind && zmin <= zmax) ? std::max(0., zmin) : 0.;
   }
   drawGeom();
-  if(mesh) drawMesh();
-  if(post) drawPost();
+  // a mesh or views that are not picked still hide what is behind them
+  if(mesh)
+    drawMesh();
+  else
+    drawMeshOccluders();
+  if(post)
+    drawPost();
+  else
+    drawPostOccluders();
   drawGraph2d(true);
 
   // 2D overlay, painted on top in drawing order as in draw2d(): without the
@@ -291,6 +317,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);
   glDepthRange(0., 1.);
+  CTX::instance()->polygonOffset = oldOffset;
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
   if(oldLighting) gmshLighting(true);
   if(oldBlend) glEnable(GL_BLEND);
@@ -304,7 +331,6 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   _pickCacheHeight = fh;
   _pickCacheMesh = mesh;
   _pickCachePost = post;
-  _pickCacheElements = CTX::instance()->pickElements ? true : false;
   _pickCacheValid = true;
   Msg::Debug("Colour picking: drew %d objects into a %dx%d image",
              (int)_pickObjects.size(), fw, fh);
@@ -342,12 +368,10 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   int winW = (int)((viewport[2] - viewport[0]) * hr);
   int winH = (int)((viewport[3] - viewport[1]) * hr);
 
-  bool pickElements = CTX::instance()->pickElements ? true : false;
   bool inside = _pickCacheValid && fx0 >= _pickCacheX && fy0 >= _pickCacheY &&
                 fx0 + fw <= _pickCacheX + _pickCacheWidth &&
                 fy0 + fh <= _pickCacheY + _pickCacheHeight;
-  if(!inside || _pickCacheMesh != mesh || _pickCachePost != post ||
-     _pickCacheElements != pickElements) {
+  if(!inside || _pickCacheMesh != mesh || _pickCachePost != post) {
     // a region around the query, so that the image serves the picks that
     // follow
     int cw = std::min(winW, PICK_CACHE_SIZE), ch = std::min(winH, PICK_CACHE_SIZE);
@@ -376,14 +400,23 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   // front. What lies under the middle of the rectangle is remembered: the
   // rest are only near the cursor.
   std::size_t under = 0;
+  float underDepth = 1.f;
   {
     std::size_t i = (std::size_t)(fy0 + fh / 2) * stride + (fx0 + fw / 2);
     under = (std::size_t)pixels[4 * i] |
             ((std::size_t)pixels[4 * i + 1] << 8) |
             ((std::size_t)pixels[4 * i + 2] << 16);
     if(under >= _pickObjects.size()) under = 0;
+    underDepth = depths[i];
   }
+  // (nearest keeps, for every object, the depth it was drawn at in the pixel
+  // closest to the middle of the rectangle - where the cursor points - so
+  // that a point of the model can be read back for it: the ranking that puts
+  // the views in front throws their depth away, and the nearest depth in the
+  // rectangle can be a pixel in front of the surface under the cursor, which
+  // is enough to fall outside the mesh)
   std::map<std::size_t, float> found;
+  std::map<std::size_t, std::pair<int, float> > nearest;
   for(int r = 0; r < fh; r++) {
     for(int c = 0; c < fw; c++) {
       std::size_t i = (std::size_t)(fy0 + r) * stride + (fx0 + c);
@@ -391,9 +424,23 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
                        ((std::size_t)pixels[4 * i + 1] << 8) |
                        ((std::size_t)pixels[4 * i + 2] << 16);
       if(!id || id >= _pickObjects.size()) continue;
-      float z = (_pickObjects[id].type >= 4) ? -1.f : depths[i];
+      const pickObject &o = _pickObjects[id];
+      // A line gets depths at its ends extrapolated along its slope: seen
+      // nearly end on (the vertical edges of a layered mesh from above), a
+      // fraction of a pixel long but deep, the pixel past its end can be
+      // kilometres in front of it, and in front of everything around. Nothing
+      // of the model is in front of its bounding box, in the depth range of
+      // its type (the glyphs of the views, which can be, are left alone).
+      float depth = depths[i];
+      if(o.type <= 3)
+        depth = std::max(depth, (float)(_pickNearest * _pickFar(o.type, o.front)));
+      float z = (o.type >= 4) ? -1.f : depth;
       auto it = found.find(id);
       if(it == found.end() || z < it->second) found[id] = z;
+      int dx = c - fw / 2, dy = r - fh / 2, d2 = dx * dx + dy * dy;
+      auto it2 = nearest.find(id);
+      if(it2 == nearest.end() || d2 < it2->second.first)
+        nearest[id] = std::make_pair(d2, depth);
     }
   }
   Msg::Debug("Colour picking: %d found in a %dx%d rectangle at (%d,%d) of "
@@ -446,20 +493,29 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   _pickCandidates = (int)candidates.size();
   if(candidates.empty()) return false;
 
-  // where the first candidate was hit: the depth under the middle when it is
-  // what lies there, its nearest depth otherwise, unprojected with the
-  // matrices of the frame (the rectangle is in the viewport's units, the
-  // image in true pixels)
+  // where the first candidate was hit: the depth it was drawn at closest to
+  // where the cursor points, unprojected with the matrices of the frame (the
+  // rectangle is in the viewport's units, the image in true pixels)
   {
-    std::size_t i = (std::size_t)(fy0 + fh / 2) * stride + (fx0 + fw / 2);
     const pickObject &o = _pickObjects[candidates[0]];
-    // (a view's depth is only known under the middle: found ranks it in
-    // front, and a graph of the 2D overlay wrote none)
-    double z = (under == candidates[0]) ? depths[i] : found[candidates[0]];
+    // (a graph of the 2D overlay wrote no depth)
+    double z = nearest[candidates[0]].second;
+    double zfar = _pickFar(o.type, o.front);
+    // An entity of the model is given the point of the model under the cursor
+    // when there is one: what is picked can be a point or a curve a few
+    // pixels away, at another depth altogether when the model is seen
+    // obliquely, and the point must lie on what the cursor points at (a
+    // query looks for the mesh element there). A view keeps the point of its
+    // glyph.
+    if(o.type <= 3 && under && _pickObjects[under].type <= 3) {
+      const pickObject &u = _pickObjects[under];
+      zfar = _pickFar(u.type, u.front);
+      z = std::max(underDepth, (float)(_pickNearest * zfar));
+    }
     _pickPointValid = false;
     if(o.type != 4 && z >= 0. && z < 1.) {
       // undo the depth range setPickColor() drew the dimension in
-      z /= _pickFar(o.type, o.front);
+      z /= zfar;
       double win[3] = {(double)x, (double)(viewport[3] - y), z};
       _pickPointValid =
         glMatrix::unProject(win, model, proj, viewport, _pickPoint) ? true :
@@ -478,13 +534,19 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
     switch(o.type) {
     case 0: {
       GVertex *v = m->getVertexByTag(o.ient);
-      if(v) vertices.push_back(v);
+      if(v) {
+        _pickEntity = v;
+        vertices.push_back(v);
+      }
       break;
     }
     case 1: {
       GEdge *e = m->getEdgeByTag(o.ient);
       if(e) {
-        MElement *ele = getElement(e, o.type2, o.ient2);
+        _pickEntity = e;
+        MElement *ele = getElement(e, _pickPoint, _pickPointValid &&
+                                     CTX::instance()->pickElements,
+                                   pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else
@@ -495,7 +557,10 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
     case 2: {
       GFace *f = m->getFaceByTag(o.ient);
       if(f) {
-        MElement *ele = getElement(f, o.type2, o.ient2);
+        _pickEntity = f;
+        MElement *ele = getElement(f, _pickPoint, _pickPointValid &&
+                                     CTX::instance()->pickElements,
+                                   pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else
@@ -506,7 +571,10 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
     case 3: {
       GRegion *r = m->getRegionByTag(o.ient);
       if(r) {
-        MElement *ele = getElement(r, o.type2, o.ient2);
+        _pickEntity = r;
+        MElement *ele = getElement(r, _pickPoint, _pickPointValid &&
+                                     CTX::instance()->pickElements,
+                                   pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else
@@ -579,6 +647,7 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
 
   _pickLastValid = false;
   _pickPointValid = false;
+  _pickEntity = nullptr;
   if(_selectColor(type, multiple, mesh, post, x, y, w, h, vertices, edges,
                   faces, regions, elements, points, views))
     return true;

@@ -137,7 +137,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.DrawSkinOnly
-Draw only the boundary faces of 3D meshes?@*
+Draw only the boundary faces of 3D meshes, entity by entity (1), or with the partitions of an entity together, without the faces between them (2)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -192,7 +192,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Format
-Mesh output format (1: msh, 2: unv, 10: auto, 16: vtk, 19: vrml, 21: mail, 26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, 33: med, 34: diff, 38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab)@*
+Mesh output format (1: msh, 2: unv, 3: vtu, 10: auto, 16: vtk, 19: vrml, 21: mail, 26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, 33: med, 34: diff, 38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab, 51: key, 55: rad, 57: obj)@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -478,7 +478,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
-Default value: @code{4.1}@*
+Default value: @code{4.2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MedFileMinorVersion
@@ -495,6 +495,16 @@ Saved in: @code{General.OptionsFileName}
 Import MED meshes in the current model, even if several MED mesh names exist@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NbEdges
+Number of edges of the current mesh, when they have been created or read (Mesh.CreateEdges) (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbFaces
+Number of faces of the current mesh, when they have been created or read (Mesh.CreateFaces) (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
 
 @item Mesh.NbHexahedra
 Number of hexahedra in the current mesh (read-only)@*
@@ -876,6 +886,11 @@ Save model topology in MSH2 output files (this is always saved in MSH3 and above
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.SaveViews
+Save post-processing views with the mesh in MSH, MED and VTU files (0: none, 1: visible views, 2: all views): the views based on the model with its mesh, and in MSH and VTU the list-based views (in `name_views.msh' or `name_views.vtu' if the model has a mesh)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item Mesh.ScalingFactor
 Global scaling factor applied to the saved mesh@*
 Default value: @code{1}@*
@@ -998,7 +1013,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.TransparencyMode
 Apply Mesh.Transparency to (0: filled surfaces only; 1: everything)@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Triangles

@@ -8,21 +8,15 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterMeshSizeFieldViewPlugin();
-}
-
 class GMSH_MeshSizeFieldViewPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_MeshSizeFieldViewPlugin() {}
+  GMSH_MeshSizeFieldViewPlugin();
   std::string getName() const { return "MeshSizeFieldView"; }
   std::string getShortHelp() const
   {
     return "Evalue mesh size field on a view";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

@@ -17,6 +17,8 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
+#include "PViewDataList.h"
+#include "PViewOptions.h"
 #endif
 
 #if defined(HAVE_OPENGL)
@@ -71,9 +73,10 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".msh2")     { if(version) *version = 2.2; return FORMAT_MSH; }
   else if(ext == ".msh22")    { if(version) *version = 2.2; return FORMAT_MSH; }
   else if(ext == ".msh3")     { if(version) *version = 3.0; return FORMAT_MSH; }
-  else if(ext == ".msh4")     { if(version) *version = 4.1; return FORMAT_MSH; }
+  else if(ext == ".msh4")     { if(version) *version = 4.2; return FORMAT_MSH; }
   else if(ext == ".msh40")    { if(version) *version = 4.0; return FORMAT_MSH; }
   else if(ext == ".msh41")    { if(version) *version = 4.1; return FORMAT_MSH; }
+  else if(ext == ".msh42")    { if(version) *version = 4.2; return FORMAT_MSH; }
   else if(ext == ".x3d")      return FORMAT_X3D;
   else if(ext == ".pos")      return FORMAT_POS;
   else if(ext == ".pvtu")     return FORMAT_PVTU;
@@ -211,7 +214,7 @@ std::string GetDefaultFileName(int format)
 
 std::string GetKnownFileFormats(bool onlyMeshFormats)
 {
-  std::string all = "auto, msh1, msh2, msh22, msh3, msh4, msh40, msh41";
+  std::string all = "auto, msh1, msh2, msh22, msh3, msh4, msh40, msh41, msh42";
   for(int i = 1; i < 1000; i++){
     std::string ext = GetDefaultFileExtension(i, onlyMeshFormats);
     if(ext.size() > 1){
@@ -382,6 +385,102 @@ static void ChangePrintParameter(int frame)
 }
 #endif
 
+void CreateReadBackScript(const std::string &fileName,
+                          const std::vector<std::pair<std::string, bool> > &files)
+{
+  // (each file once, in the order given)
+  std::vector<std::pair<std::string, bool> > unique;
+  for(auto &f : files) {
+    bool seen = false;
+    for(auto &u : unique) seen |= (u.first == f.first);
+    if(!seen) unique.push_back(f);
+  }
+  if(unique.size() < 2) return;
+  std::string name = fileName + ".geo";
+  FILE *fp = Fopen(name.c_str(), "w");
+  if(!fp) {
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return;
+  }
+  std::vector<std::string> split = SplitFileName(fileName);
+  fprintf(fp, "// Reads back '%s%s', saved by Gmsh in %zu files\n",
+          split[1].c_str(), split[2].c_str(), unique.size());
+  for(std::size_t i = 0; i < unique.size(); i++) {
+    if(i && unique[i].second) fprintf(fp, "NewModel;\n");
+    std::vector<std::string> s = SplitFileName(unique[i].first);
+    fprintf(fp, "Merge \"%s%s\";\n", s[1].c_str(), s[2].c_str());
+  }
+  fclose(fp);
+  Msg::Info("Script to read back the %zu files saved in '%s'", unique.size(),
+            name.c_str());
+}
+
+#if defined(HAVE_POST)
+// the views to save in a mesh file with the mesh of the current model
+// (Mesh.SaveViews): those based on it, those with a mesh of their own
+// (list-based, or saved refined, see PostProcessing.SaveAdapted), and those
+// saved on several meshes, in a file for each
+static void getViewsToSave(std::vector<PView *> &onModel,
+                           std::vector<PView *> &lists,
+                           std::vector<PView *> &several)
+{
+  int which = CTX::instance()->mesh.saveViews;
+  if(!which || PView::list.empty()) return;
+  GModel *m = GModel::current();
+  for(auto v : PView::list) {
+    if(which == 1 && !v->getOptions()->visible) continue;
+    PViewData *d = v->getData();
+    if(v->savesSeveralMeshes())
+      several.push_back(v);
+    else if(dynamic_cast<PViewDataList *>(d) || v->savesAdapted())
+      lists.push_back(v);
+    else if(d->hasModel(m))
+      onModel.push_back(v);
+    else
+      Msg::Info("View '%s' not saved: it is based on another model",
+                d->getName().c_str());
+  }
+}
+
+static bool writeListViewsInMSH(const std::string &name,
+                                const std::vector<PView *> &views)
+{
+  // (those saved refined have a single step)
+  std::vector<PViewDataList *> lists;
+  for(auto v : views) {
+    if(!v->savesAdapted())
+      lists.push_back(static_cast<PViewDataList *>(v->getData()));
+    else
+      for(auto l : v->getAdaptedSteps())
+        if(l) lists.push_back(l);
+  }
+  return PViewDataList::writeMSH(
+    name, lists, CTX::instance()->mesh.mshFileVersion,
+    CTX::instance()->mesh.binary, true, false, 0,
+    CTX::instance()->post.saveInterpolationMatrices,
+    CTX::instance()->post.forceNodeData,
+    CTX::instance()->post.forceElementData);
+}
+
+// the views saved on several meshes, each in files of its own, as in VTU:
+// name_views_0000.ext, name_views_0005.ext... or with the number of the view
+// if there are several, name_views_0_0000.ext...
+static void writeViewsOnSeveralMeshes(
+  const std::string &name, const std::vector<PView *> &views, int format,
+  std::vector<std::pair<std::string, bool> > &files)
+{
+  std::vector<std::string> parts = SplitFileName(name);
+  for(std::size_t i = 0; i < views.size(); i++) {
+    std::string n = parts[0] + parts[1] + "_views";
+    if(views.size() > 1) n += "_" + std::to_string(i);
+    if(views[i]->write(n + parts[2], format, false, &files))
+      Msg::Info("View '%s' saved on its meshes in '%s_*%s'",
+                views[i]->getData()->getName().c_str(), n.c_str(),
+                parts[2].c_str());
+  }
+}
+#endif
+
 void CreateOutputFile(const std::string &fileName, int format,
                       bool status)
 {
@@ -412,24 +511,54 @@ void CreateOutputFile(const std::string &fileName, int format,
     PrintOptions(0, GMSH_FULLRC, 1, 1, name.c_str());
     break;
 
-  case FORMAT_MSH:
-    if(GModel::current()->getNumPartitions() &&
-       CTX::instance()->mesh.partitionSplitMeshFiles){
+  case FORMAT_MSH: {
+    // the files to read back (see CreateReadBackScript()): those of the views
+    // with a mesh of their own, then those of the mesh, whose model is then
+    // the current one
+    std::vector<std::pair<std::string, bool> > files, meshFiles;
+#if defined(HAVE_POST)
+    std::vector<PView *> onModel, lists, several;
+    if(CTX::instance()->mesh.mshFileVersion >= 2.)
+      getViewsToSave(onModel, lists, several);
+    else if(CTX::instance()->mesh.saveViews && PView::list.size())
+      Msg::Warning("Views cannot be saved in MSH %g files",
+                   CTX::instance()->mesh.mshFileVersion);
+    bool mesh = GModel::current()->getNumMeshElements() > 0;
+    writeViewsOnSeveralMeshes(name, several, PView::MSH, files);
+    if(!mesh && lists.size()) {
+      // no mesh: the file holds the list-based views, on a mesh of their
+      // elements
+      if(writeListViewsInMSH(name, lists)) files.push_back({name, true});
+      CreateReadBackScript(name, files);
+      break;
+    }
+#endif
+    double version = CTX::instance()->mesh.mshFileVersion;
+    bool split = GModel::current()->getNumPartitions() &&
+                 CTX::instance()->mesh.partitionSplitMeshFiles;
+    if(split) {
       std::vector<std::string> splitName = SplitFileName(name);
       splitName[0] += splitName[1];
       GModel::current()->writePartitionedMSH
-        (splitName[0], CTX::instance()->mesh.mshFileVersion,
+        (splitName[0], version,
          CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
          CTX::instance()->mesh.saveParametric,
          CTX::instance()->mesh.scalingFactor);
+      // (the partitions, in the same model: read back as they were only in
+      // MSH 4)
+      std::size_t num = GModel::current()->getNumPartitions();
+      for(std::size_t i = 0; i < num && version >= 4.; i++)
+        meshFiles.push_back(
+          {splitName[0] + "_" + std::to_string(i + 1) + ".msh", !i});
     }
     else{
       GModel::current()->writeMSH
-        (name, CTX::instance()->mesh.mshFileVersion,
+        (name, version,
          CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
          CTX::instance()->mesh.saveParametric,
          CTX::instance()->mesh.scalingFactor,
          CTX::instance()->mesh.firstElementTag - 1);
+      meshFiles.push_back({name, true});
     }
     if(GModel::current()->getNumPartitions() &&
        CTX::instance()->mesh.partitionSaveTopologyFile){
@@ -437,7 +566,34 @@ void CreateOutputFile(const std::string &fileName, int format,
       splitName[0] += splitName[1] + "_topology.pro";
       GModel::current()->writePartitionedTopology(splitName[0]);
     }
+#if defined(HAVE_POST)
+    if(split && (onModel.size() || lists.size())) {
+      Msg::Warning("Views not saved: the mesh is split in a file per "
+                   "partition");
+      onModel.clear();
+      lists.clear();
+    }
+    for(auto v : onModel)
+      v->getData()->writeMSH(name, version,
+                  CTX::instance()->mesh.binary, false, true, 0,
+                  CTX::instance()->post.saveInterpolationMatrices,
+                  CTX::instance()->post.forceNodeData,
+                  CTX::instance()->post.forceElementData);
+    if(lists.size()) {
+      // they cannot share the mesh of the model
+      std::vector<std::string> parts = SplitFileName(name);
+      std::string listName = parts[0] + parts[1] + "_views" + parts[2];
+      if(writeListViewsInMSH(listName, lists)) {
+        Msg::Info("Views not based on the mesh saved in '%s', on a mesh of "
+                  "their elements", listName.c_str());
+        files.push_back({listName, true});
+      }
+    }
+#endif
+    files.insert(files.end(), meshFiles.begin(), meshFiles.end());
+    CreateReadBackScript(name, files);
     break;
+  }
 
   case FORMAT_STL:
     GModel::current()->writeSTL
@@ -490,24 +646,45 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_VTU:
   case FORMAT_PVTU: // a .vtu per partition
     {
-      // with the views based on the model, if any; or all the views if
-      // there is no mesh
-      bool withViews = false;
+      // the mesh with the views based on it (Mesh.SaveViews); the list-based
+      // views in the file itself if there is no mesh, or else in files of
+      // their own; the files to read back as in MSH
+      bool binary = CTX::instance()->mesh.binary;
+      std::vector<std::pair<std::string, bool> > files, meshFiles;
 #if defined(HAVE_POST)
-      std::vector<PView *> views;
-      bool mesh = (GModel::current()->getNumMeshElements() > 0);
-      for(auto v : PView::list)
-        if(!mesh || v->getData()->hasModel(GModel::current()))
-          views.push_back(v);
-      if(views.size()) {
-        PView::writeVTU(name, CTX::instance()->mesh.binary, views);
-        withViews = true;
+      std::vector<PView *> onModel, lists, several;
+      getViewsToSave(onModel, lists, several);
+      // (a .vtu holds a step: VTU saves every view in a file per step)
+      lists.insert(lists.end(), several.begin(), several.end());
+      bool mesh = GModel::current()->getNumMeshElements() > 0;
+      if(!mesh && lists.size()) {
+        PView::writeVTU(name, binary, lists, &files);
+        CreateReadBackScript(name, files);
+        break;
+      }
+      if(onModel.size())
+        PView::writeVTU(name, binary, onModel, &meshFiles);
+      else
+#endif
+      {
+        GModel::current()->writeVTU
+          (name, binary, CTX::instance()->mesh.saveAll,
+           CTX::instance()->mesh.scalingFactor);
+        meshFiles.push_back({name, true});
+      }
+#if defined(HAVE_POST)
+      if(lists.size()) {
+        // (not partitioned)
+        std::vector<std::string> parts = SplitFileName(name);
+        std::string ext = (parts[2] == ".pvtu") ? ".vtu" : parts[2];
+        std::string listName = parts[0] + parts[1] + "_views" + ext;
+        if(PView::writeVTU(listName, binary, lists, &files))
+          Msg::Info("Views not based on the mesh saved in '%s'",
+                    listName.c_str());
       }
 #endif
-      if(!withViews)
-        GModel::current()->writeVTU
-          (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
-           CTX::instance()->mesh.scalingFactor);
+      files.insert(files.end(), meshFiles.begin(), meshFiles.end());
+      CreateReadBackScript(name, files);
     }
     break;
 
@@ -598,10 +775,32 @@ void CreateOutputFile(const std::string &fileName, int format,
        CTX::instance()->mesh.cgnsExportStructured);
     break;
 
-  case FORMAT_MED:
-    GModel::current()->writeMED
-      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+  case FORMAT_MED: {
+    if(!GModel::current()->writeMED
+       (name, CTX::instance()->mesh.saveAll,
+        CTX::instance()->mesh.scalingFactor))
+      break;
+#if defined(HAVE_POST)
+    // the views with values at the nodes of the mesh, as fields on it
+    std::vector<PView *> onModel, lists, several;
+    getViewsToSave(onModel, lists, several);
+    lists.insert(lists.end(), several.begin(), several.end());
+    for(auto v : onModel) {
+      PViewData *d = v->getData();
+      if(d->isNodeData())
+        d->writeMED(name, false);
+      else
+        Msg::Warning("View '%s' not saved: MED files only hold values at "
+                     "nodes", d->getName().c_str());
+    }
+    for(auto v : lists)
+      Msg::Warning("View '%s' not saved: MED files only hold views based on "
+                   "the mesh%s", v->getData()->getName().c_str(),
+                   v->savesAdapted() ? ", not refined" :
+                   v->savesSeveralMeshes() ? ", not on several meshes" : "");
+#endif
     break;
+  }
 
   case FORMAT_POS:
     GModel::current()->writePOS
@@ -985,6 +1184,9 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   CTX::instance()->print.fileFormat = oldFormat;
   CTX::instance()->printing = 0;
+#if defined(HAVE_POST)
+  PView::doneSaving();
+#endif
 
   if(status && !error)
     Msg::StatusBar(true, "Done writing '%s'", name.c_str());

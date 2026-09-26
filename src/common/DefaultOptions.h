@@ -1286,7 +1286,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "DrawSkinEdgesOnly" , opt_mesh_draw_skin_edges_only , 0. ,
     "Draw only the edges of the boundary faces of 3D meshes?" },
   { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 1. ,
-    "Draw only the boundary faces of 3D meshes?" },
+    "Draw only the boundary faces of 3D meshes, entity by entity (1), or with "
+    "the partitions of an entity together, without the faces between them (2)" },
   { F|O, "DrawUniqueEdges" , opt_mesh_draw_unique_edges , 1. ,
     "Draw each mesh edge once instead of once per element? (only if "
     "Mesh.Explode is 1)" },
@@ -1319,9 +1320,10 @@ StringXNumber MeshOptions_Number[] = {
     "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
     "by global mesh size factor" },
   { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO ,
-    "Mesh output format (1: msh, 2: unv, 10: auto, 16: vtk, 19: vrml, 21: mail, "
-    "26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, 33: med, 34: diff, "
-    "38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab)" },
+    "Mesh output format (1: msh, 2: unv, 3: vtu, 10: auto, 16: vtk, 19: vrml, "
+    "21: mail, 26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, "
+    "33: med, 34: diff, 38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, "
+    "47: tochnog, 49: neu, 50: matlab, 51: key, 55: rad, 57: obj)"},
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
 
@@ -1479,7 +1481,7 @@ StringXNumber MeshOptions_Number[] = {
     "[Deprecated]"},
   { F|O|D, "MinimumElementsPerTwoPi" , opt_mesh_lc_from_curvature, 0. ,
     "[Deprecated]" },
-  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.1 ,
+  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.2 ,
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
     "Minor version of the MED file format to use (-1: use minor version of the MED library)" },
@@ -1488,6 +1490,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MedSingleModel" , opt_mesh_med_single_model , 0. ,
     "Import MED meshes in the current model, even if several MED mesh names exist" },
 
+  { F, "NbEdges" , opt_mesh_nb_edges , 0. ,
+    "Number of edges of the current mesh, when they have been created or read "
+    "(Mesh.CreateEdges) (read-only)" },
+  { F, "NbFaces" , opt_mesh_nb_faces , 0. ,
+    "Number of faces of the current mesh, when they have been created or read "
+    "(Mesh.CreateFaces) (read-only)" },
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. ,
     "Number of hexahedra in the current mesh (read-only)" },
   { F, "NbNodes" , opt_mesh_nb_nodes , 0. ,
@@ -1703,6 +1711,11 @@ StringXNumber MeshOptions_Number[] = {
     "in the model) in MSH4 files" },
   { F|O, "SaveTopology" , opt_mesh_save_topology, 0. ,
     "Save model topology in MSH2 output files (this is always saved in MSH3 and above)" },
+  { F,   "SaveViews" , opt_mesh_save_views , 0. ,
+    "Save post-processing views with the mesh in MSH, MED and VTU files (0: "
+    "none, 1: visible views, 2: all views): the views based on the model with "
+    "its mesh, and in MSH and VTU the list-based views (in `name_views.msh' "
+    "or `name_views.vtu' if the model has a mesh)" },
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,
@@ -1765,7 +1778,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Transparency" , opt_mesh_transparency , 1. ,
     "Opacity factor applied to all mesh colors (1: opaque, 0: fully "
     "transparent)" },
-  { F|O, "TransparencyMode" , opt_mesh_transparency_mode , 0. ,
+  { F|O, "TransparencyMode" , opt_mesh_transparency_mode , 1. ,
     "Apply Mesh.Transparency to (0: filled surfaces only; 1: everything)" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
@@ -1862,9 +1875,8 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "ForceNodeData" , opt_post_force_node_data , 0. ,
     "Try to force saving datasets as NodeData" },
   { F|O, "Format" , opt_post_file_format , 10. ,
-    "Default file format for post-processing views (0: ASCII view, 1: binary "
-    "view, 2: parsed view, 3: STL triangulation, 4: raw text, 5: Gmsh mesh, 6: MED file, "
-    "10: automatic)" },
+    "Default file format for post-processing views (0: pos ASCII, 1: pos binary, "
+    "2: pos parsed, 3: stl, 4: txt, 5: msh, 6: med, 7: x3d, 8: vtu, 10: auto)" },
 
   { F, "GraphPointX" , opt_post_double_clicked_graph_point_x , 0. ,
     "Synonym for `DoubleClickedGraphPointX'" },
@@ -1884,6 +1896,11 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Plugins" , opt_post_plugins , 1. ,
     "Enable default post-processing plugins?" },
 
+  { F|O, "SaveAdapted" , opt_post_save_adapted , 0. ,
+    "Save the views of high order refined, as adapted views are drawn (with "
+    "View.MaxRecursionLevel and View.TargetError), for readers that cannot "
+    "handle high order elements; each time step then has a mesh of its own, "
+    "and a file of its own, name_0000.ext, name_0001.ext..." },
   { F|O, "SaveInterpolationMatrices" , opt_post_save_interpolation_matrices , 1. ,
     "Save the interpolation matrices when exporting model-based data" },
   { F|O, "SaveMesh" , opt_post_save_mesh , 1. ,
@@ -1897,6 +1914,12 @@ StringXNumber PostProcessingOptions_Number[] = {
 StringXNumber ViewOptions_Number[] = {
   { F|O, "AbscissaRangeType" , opt_view_abscissa_range_type , 1 ,
     "Ascissa scale range type (1: default, 2: custom)" },
+  { F|O, "AdaptSkinOnly" , opt_view_adapt_skin_only , 2. ,
+    "Refine only the skin of the volumes of an adaptive view when only the skin "
+    "is drawn (DrawSkinOnly), and apart the volumes the clipping planes cut "
+    "when they are capped or drawn whole: what reads the refined view as a "
+    "whole (plugins, probes, the API) refines it all (2: the same, with the "
+    "partitions of an entity together, without the faces between them)" },
   { F|O, "AdaptVisualizationGrid" , opt_view_adapt_visualization_grid , 0. ,
     "Use adaptive visualization grid (for high-order elements)?" },
   { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 30.0 ,
@@ -2027,7 +2050,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "DrawSkinEdgesOnly" , opt_view_draw_skin_edges_only , 0. ,
     "Draw only the outlines of the boundary faces of 3D views?" },
   { F|O, "DrawSkinOnly" , opt_view_draw_skin_only , 1. ,
-    "Draw only the boundary faces of 3D views?" },
+    "Draw only the boundary faces of 3D views, entity by entity (1), or with "
+    "the partitions of an entity together, without the faces between them (2)" },
   { F|O, "DrawStrings" , opt_view_draw_strings , 1. ,
     "Display post-processing annotation strings?" },
   { F|O, "DrawTensors" , opt_view_draw_tensors , 1. ,
@@ -2160,7 +2184,9 @@ StringXNumber ViewOptions_Number[] = {
     "Display size of tangent vectors (in pixels)" },
   { F|O, "TargetError" , opt_view_target_error , 1e-3 ,
     "Target error of adaptive views: the largest difference allowed between the "
-    "field and what is drawn of it, as a fraction of the range of the view (the "
+    "field and what is drawn of it, as a fraction of the range of the view: the "
+    "custom range if RangeType is 2 (the elements with values all outside of it "
+    "are then not refined), or else that of the data over all steps (the "
     "elements are refined until it is reached, down to MaxRecursionLevel; a "
     "negative value refines them all)" },
   { F|O, "TensorType" , opt_view_tensor_type , 1. ,
@@ -2318,7 +2344,7 @@ StringXNumber PrintOptions_Number[] = {
     "Produce highly compatible X3D output (no scale bar)" },
   { F|O, "X3dPrecision" , opt_print_x3d_precision , 1.e-9 ,
     "Precision of X3D output" },
-  { F|O, "X3dRemoveInnerBorders" , opt_print_x3d_remove_inner_borders , 0. ,
+  { F|O, "X3dRemoveInnerBorders" , opt_print_x3d_remove_inner_borders , 1. ,
     "Remove inner borders in X3D output" },
   { F|O, "X3dTransparency" , opt_print_x3d_transparency , 0. ,
     "Transparency for X3D output" },
@@ -2378,6 +2404,11 @@ StringXColor GeneralOptions_Color[] = {
   { F|O, "SpecularLight" , opt_general_color_specular_light,
     {255, 255, 255, 255}, {255, 255, 255, 255}, {255, 255, 255, 255}, {255, 255, 255, 255},
     "Specular light color" },
+  { F|O, "Query" , opt_general_color_query ,
+    {255, 232, 70, 255}, {255, 232, 70, 255}, {255, 232, 70, 255}, {255, 232, 70, 255},
+    "Color of what a query leaves on the picture: the mark of the point it "
+    "asked about is drawn in it, and the box that answers on paper of it, "
+    "lightened over a light picture and darkened over a dark one" },
   { 0, nullptr , nullptr ,  {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , nullptr }
 } ;
 

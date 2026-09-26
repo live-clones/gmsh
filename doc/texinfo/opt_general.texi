@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 5.0.0-git-287920452; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260919; Build host: cg.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 5.0.0-git-99ab06703; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260925; Build host: cg.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 4.2.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -183,7 +183,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"5.0.0-git-287920452"}@*
+Default value: @code{"5.0.0-git-99ab06703"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -1344,6 +1344,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.Color.SpecularLight
 Specular light color@*
 Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Color.Query
+Color of what a query leaves on the picture: the mark of the point it asked about is drawn in it, and the box that answers on paper of it, lightened over a light picture and darkened over a dark one@*
+Default value: @code{@{255,232,70@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @end ftable

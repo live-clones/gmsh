@@ -124,6 +124,9 @@ public:
   void setBoundEdges(const std::vector<int> &tagEdges);
   void setBoundEdges(const std::vector<int> &tagEdges,
                      const std::vector<int> &signEdges);
+  // (the curves themselves, for a reader that has found them)
+  void setBoundEdges(const std::vector<GEdge *> &edges,
+                     const std::vector<int> &signEdges);
 
   // check if the surface mesh is planar in which case the normal is given
   bool normalToPlanarMesh(SVector3 &normal, bool orient = true) const;
@@ -355,6 +358,7 @@ public:
   struct {
     mutable GEntity::MeshGenerationStatus status;
     bool refineAllEdges;
+    int nbRefineAllEdges;
     double worst_element_shape, best_element_shape, average_element_shape;
     double smallest_edge_length, longest_edge_length, efficiency_index;
     int nbEdge, nbTriangle;

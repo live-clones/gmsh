@@ -41,7 +41,9 @@ private:
   void _debugParametrization(bool uv);
 
 public:
-  discreteFace(GModel *model, int num);
+  // (geo: also create the surface in the GEO internals, so that scripts can
+  // refer to it)
+  discreteFace(GModel *model, int num, bool geo = true);
   discreteFace(GModel *model);
   virtual ~discreteFace() {}
   using GFace::point;

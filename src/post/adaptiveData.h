@@ -46,9 +46,7 @@ public:
   unsigned char onFaces; // the faces of the reference element it is on, a bit each
   // for the element of the view being adapted, when a plugin looks at it:
   double X, Y, Z; // in the model
-  double val, valy, valz; // the value (a scalar, a vector or a tensor)
-  double valyx, valyy, valyz;
-  double valzx, valzy, valzz;
+  double val; // the value (its first component)
 
 public:
   bool operator<(const adaptiveVertex &other) const
@@ -80,7 +78,7 @@ public:
   // them (the quadrangles first)
   std::vector<std::vector<int> > faces;
   // the diagonal the drawing code cuts quadrangles and hexahedra along (-1 if
-  // none)
+  // none): nodes 0 and 2 of the quadrangles, 1 and 7 of the hexahedra
   int diagonal[2];
   // first order shape functions, for the views that do not provide theirs
   void (*shapeFunctions)(double u, double v, double w, fullVector<double> &sf);
@@ -250,6 +248,41 @@ public:
 
 class adaptiveVTKWriter; // (in adaptiveData.cpp)
 
+// What is refined, besides what the error asks for: the elements, and in
+// them the refined elements, kept from the positions of their nodes in the
+// model (e.g. those the clipping planes cut); called by several threads at
+// once
+class adaptiveSelection {
+public:
+  virtual ~adaptiveSelection() {}
+  virtual bool keeps(int numNodes, const double *x, const double *y,
+                     const double *z) const = 0;
+  // may it keep something of an element within this sphere (centre and
+  // radius)? (asked first, so that the others are not read)
+  virtual bool mayKeep(const float *sphere) const { return true; }
+  // what it depends on: what was selected is refined again when it changes
+  virtual std::vector<double> key() const = 0;
+  // what becomes of the curves and surfaces (the volumes are selected): all
+  // refined, none, or selected as the volumes
+  enum lowerDims { allRefined, noneRefined, selected };
+  virtual lowerDims others() const { return allRefined; }
+};
+
+// The values the target error is relative to: the range of the data (all the
+// steps), or a range given, as the custom range of a view, outside of which
+// the field is drawn as the nearest end of the range, or not at all: an
+// element whose values (at the points the error estimate looks at) are all
+// on the same side of it then has no error
+class adaptiveRange {
+public:
+  double min, max;
+  bool clamp;
+  adaptiveRange(double mn = 0., double mx = -1., bool c = false)
+    : min(mn), max(mx), clamp(c)
+  {
+  }
+};
+
 // What adapting an element needs to remember: the field and the positions at
 // the vertices of the tree where they have been computed (known for the
 // element whose number, the stamp, they carry), and the elements that are kept
@@ -257,10 +290,19 @@ class adaptiveWork {
 public:
   int stamp, numComp;
   const double *inXYZ, *inValues; // the element, as given to adapt()
+  adaptiveRange range; // as given to adapt()
+  // the faces of the element on the skin, a bit each, when only they are
+  // refined (-1: the whole element), and what else selects what is refined
+  int skin;
+  const adaptiveSelection *selection;
   std::vector<int> evaluated, located;
   std::vector<double> values, norm, xyz;
   std::vector<const adaptiveElement *> visible;
-  adaptiveWork() : stamp(0), numComp(0), inXYZ(nullptr), inValues(nullptr) {}
+  adaptiveWork()
+    : stamp(0), numComp(0), inXYZ(nullptr), inValues(nullptr), skin(-1),
+      selection(nullptr)
+  {
+  }
 };
 
 // The elements of one kind of a view
@@ -275,9 +317,27 @@ private:
   std::vector<double> _interpolVal, _interpolGeom; // a row per vertex
   int _numVals, _numNodes; // their numbers of columns
   std::vector<const adaptiveElement *> _leaves; // the last level of the tree
+  // the elements of this kind in the view (entity, element), and the spheres
+  // around their nodes when a selection or a plugin asks for them, kept while
+  // the data, its step and the kind stay
+  int _listStep, _listStamp, _listType;
+  std::vector<std::pair<int, int> > _elements;
+  std::vector<float> _spheres; // centre and radius
+  void _listElements(PViewData *in, int step, int type);
+  void _boundElements(PViewData *in, int step);
   void _evaluate(adaptiveWork &w, const adaptiveVertex *p) const;
   void _locate(adaptiveWork &w, const adaptiveVertex *p) const;
   double _errorOf(adaptiveWork &w, const adaptiveElement *e) const;
+  // does the element have a face on the skin, if only the skin is refined,
+  // and is it selected, if there is a selection?
+  static bool _onSkin(const adaptiveWork &w, const adaptiveElement *e)
+  {
+    if(w.skin < 0) return true;
+    for(int f = 0; f < 6; f++)
+      if(e->onFace[f] >= 0 && (w.skin & (1 << e->onFace[f]))) return true;
+    return false;
+  }
+  bool _kept(adaptiveWork &w, const adaptiveElement *e) const;
   void _error(adaptiveWork &w, const adaptiveElement *e,
               double threshold) const;
   void _askPlugin(adaptiveWork &w, GMSH_PostPlugin *plug);
@@ -295,7 +355,6 @@ public:
 public:
   adaptiveElements(int type,
                    const std::vector<fullMatrix<double> *> &interpolationMatrices);
-  ~adaptiveElements();
   const adaptiveShape &shape() const { return _shape; }
   // build the tree down to the given level, and the _interpolVal and
   // _interpolGeom matrices
@@ -307,21 +366,28 @@ public:
   // faces to outSkin); returns their number. The tree is only read, unless
   // there is a plugin: several threads can adapt elements at the same time,
   // each with its own workspace.
+  // (range: that of the values the target error is relative to; skinOnly:
+  // refine only the faces on the skin, the elements with a face there being
+  // kept, and the error being looked at on them)
   int adapt(adaptiveWork &w, double tol, int numComp, const double *xyz,
-            const double *values, double range, GMSH_PostPlugin *plug,
-            unsigned char onSkin, std::vector<double> &out,
-            std::vector<unsigned char> *outSkin);
+            const double *values, const adaptiveRange &range,
+            GMSH_PostPlugin *plug, unsigned char onSkin,
+            std::vector<double> &out, std::vector<unsigned char> *outSkin,
+            bool skinOnly = false,
+            const adaptiveSelection *selection = nullptr);
   // adapt all the elements of this kind in the input view and add the refined
-  // elements in the output view (we will remove this when we switch to true
-  // on-the-fly local refinement in drawPost()); polygons and polyhedra are
-  // refined through their triangles and tetrahedra (type = TYPE_POLYG or
-  // TYPE_POLYH)
+  // elements in the output view; polygons and polyhedra are refined through
+  // their triangles and tetrahedra (type = TYPE_POLYG or TYPE_POLYH)
   // (inSkin: for each entity and element of the input view, its faces on the
-  // skin of the view; outSkin: the same for the elements added)
+  // skin of the view; outSkin: the same for the elements added; range: the
+  // one given, if its min is not above its max, or else that of the data)
   void addInView(double tol, int step, PViewData *in, PViewDataList *out,
                  GMSH_PostPlugin *plug = nullptr, int level = 0, int type = 0,
                  const std::vector<std::vector<unsigned char> > *inSkin = nullptr,
-                 std::vector<unsigned char> *outSkin = nullptr);
+                 std::vector<unsigned char> *outSkin = nullptr,
+                 const adaptiveRange &range = adaptiveRange(),
+                 bool skinOnly = false,
+                 const adaptiveSelection *selection = nullptr);
 
   // Routines for
   // - export of adapted views to pvtu file format for parallel visualization
@@ -331,7 +397,8 @@ public:
   // addInView for VTK output files and for globalVTKData
   void addInViewForVTK(int step, double tol, PViewData *in,
                        adaptiveVTKWriter *writer, bool buildStaticData,
-                       int &numPoints);
+                       int &numPoints,
+                       const adaptiveRange &range = adaptiveRange());
 
   int countElmLev0(int step, PViewData *in);
 
@@ -346,6 +413,20 @@ class adaptiveData {
 private:
   int _step, _level;
   double _tol;
+  adaptiveRange _range; // (as given)
+  // only the skin refined (as asked, and as done: not without a skin), and
+  // what was refined selected (by the selection with this key)
+  bool _skinAsked, _skinOnly, _selected;
+  std::vector<double> _selectionKey;
+  // the stamp of the data when this was made from it (see getStamp())
+  int _inStamp;
+  // the faces of the elements on the skin of the view (see _findSkin()), kept
+  // while the data and the step stay
+  int _skinStep, _skinStamp;
+  // the partitions of an entity taken together (see PViewData::getSkinKeys())
+  bool _partitionsTogether;
+  bool _skinFound;
+  std::vector<std::vector<unsigned char> > _inSkin;
   PViewData *_inData;
   PViewDataList *_outData;
   adaptiveElements *_points, *_lines, *_triangles, *_quadrangles;
@@ -353,19 +434,12 @@ private:
   // (refined through their triangles and tetrahedra)
   adaptiveElements *_polygons, *_polyhedra;
 
-  // When set to true, this builds a global VTK data structure (connectivity,
-  // coords, etc) for the adaptive views.  This can be very memory consuming for
-  // high adaptation levels. Use with caution.  Useful when GMSH is used as an
-  // external library to provide for instance a GMSH reader in a ParaView
-  // plugin.  By default, set to false in the constructor.
+  // build the global VTK data structure (globalVTKData) of the refined view,
+  // for the ParaView plugin: large at high levels (false by default)
   bool buildStaticData;
 
-  // This variable helps limit memory consumption (no global data structure)
-  // when GMSH is requested to write the data structure of adapted view under
-  // pvtu format In this case, one adapted element is considered at a time so
-  // that it can generate billions of adapted elements on a single core, as long
-  // as disk space allows it.  This variable is set to true by default in the
-  // constructor.
+  // write the refined view to VTK files an element at a time, without keeping
+  // it whole (true by default)
   bool writeVTK;
 
   bool _findSkin(int step, std::vector<std::vector<unsigned char> > &skin);
@@ -374,13 +448,37 @@ public:
   adaptiveData(PViewData *data, bool outDataInit = true);
   ~adaptiveData();
   PViewData *getData() { return (PViewData *)_outData; }
+  // made from the data as it was then: the kinds of elements and their
+  // interpolation are taken from it
+  bool isOutdated() const;
+  // (min and max: the range the target error is relative to, if min is not
+  // above max, e.g. the custom range of the view; see adaptiveRange)
+  // (skinOnly: refine only the faces of the volumes on the skin of the view,
+  // for a view that only draws them; selection: refine only what it keeps)
   void changeResolution(int step, int level, double tol,
-                        GMSH_PostPlugin *plug = nullptr);
+                        GMSH_PostPlugin *plug = nullptr, double min = 0.,
+                        double max = -1., bool skinOnly = false,
+                        const adaptiveSelection *selection = nullptr);
+  bool isSkinOnly() const { return _skinOnly; }
+  // take the skin with the partitions of an entity together (the view is
+  // refined again if it changes)
+  void setPartitionsTogether(bool together)
+  {
+    if(together == _partitionsTogether) return;
+    _partitionsTogether = together;
+    _skinStep = -1;
+    _step = -1;
+  }
+  // take the skin of the data another adaptive data of it has found
+  void copySkinOf(const adaptiveData &other);
+  // is only a part of the view refined (the skin, or a selection)?
+  bool isPartial() const { return _skinOnly || _selected; }
   int countTotElmLev0(int step, PViewData *in);
   void changeResolutionForVTK(int step, int level, double tol, int npart = 1,
                               bool isBinary = true,
                               const std::string &guifileName = "unknown",
-                              int useDefaultName = 1);
+                              int useDefaultName = 1, double min = 0.,
+                              double max = -1.);
   void upBuildStaticData(bool newValue) { buildStaticData = newValue; }
   void upWriteVTK(bool newValue) { writeVTK = newValue; }
 };

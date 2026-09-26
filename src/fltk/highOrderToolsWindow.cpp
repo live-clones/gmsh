@@ -180,7 +180,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.weight = o->value[5]->value();
     p.distanceFactor = o->value[7]->value();
     // should handle periodic case here:
-    p.fixBndNodes = (o->CAD && o->choice[0]->value()) ? 1 : 0;
+    p.fixBndNodes = (o->CAD && o->choice[0]->value() == 0) ? 1 : 0;
     p.strategy = o->choice[3]->value();
     p.maxAdaptBlob = o->value[9]->value();
     p.adaptBlobLayerFact = (int)o->value[10]->value();
@@ -499,7 +499,7 @@ void highOrderToolsWindow::show(bool redrawOnly)
     butt[0]->value(!complete);
     if(CAD) {
       box->label("CAD model is available");
-      choice[0]->value(1);
+      choice[0]->value(CTX::instance()->mesh.hoFixBndNodes ? 0 : 1);
     }
     else {
       box->label("CAD model is not available");

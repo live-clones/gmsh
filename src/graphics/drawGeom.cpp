@@ -292,14 +292,14 @@ static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
       double x = v->x(), y = v->y(), z = v->z();
       unsigned int col = pick ? 0 : v->useColor() ? v->getColor() :
                                                     c->color.geom.point;
-      ka.va->add(&x, &y, &z, nullptr, &col, nullptr, false);
+      ka.va->add(&x, &y, &z, nullptr, &col, false);
     }
     else if(dim == 1) {
       curvePoints(ctx, static_cast<GEdge *>(e), pts);
       unsigned int col[2];
       col[0] = col[1] = pick ? 0 : geomColor(e, false);
       forSegments(pts, [&](double *x, double *y, double *z) {
-        ka.va->add(x, y, z, nullptr, col, nullptr, false);
+        ka.va->add(x, y, z, nullptr, col, false);
       });
     }
     else

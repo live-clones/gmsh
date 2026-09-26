@@ -18,9 +18,11 @@
 #include "GmshDefines.h"
 #endif
 
-discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
+discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1,
+                           bool geo)
   : GEdge(model, num, _v0, _v1)
 {
+  if(!geo) return;
   bool ok;
   Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, nullptr, nullptr, -1, -1,
                          0., 1., ok);
@@ -28,8 +30,10 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   CreateReversedCurve(c);
 }
 
-discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
+discreteEdge::discreteEdge(GModel *model, int num, bool geo)
+  : GEdge(model, num)
 {
+  if(!geo) return;
   bool ok;
   Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, nullptr, nullptr, -1, -1,
                          0., 1., ok);

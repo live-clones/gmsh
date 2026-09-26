@@ -11,15 +11,13 @@
 #include "Bubbles.h"
 #include "OS.h"
 
-StringXNumber BubblesOptions_Number[] = {
-  {GMSH_FULLRC, "ShrinkFactor", nullptr, 0., ""},
-};
-
-StringXString BubblesOptions_String[] = {
-  {GMSH_FULLRC, "OutputFile", nullptr, "bubbles.geo", ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterBubblesPlugin() { return new GMSH_BubblesPlugin(); }
+GMSH_BubblesPlugin::GMSH_BubblesPlugin()
+  : GMSH_PostPlugin(
+      {
+        {GMSH_FULLRC, "ShrinkFactor", nullptr, 0., ""},
+      },
+      {{GMSH_FULLRC, "OutputFile", nullptr, "bubbles.geo", ""}})
+{
 }
 
 std::string GMSH_BubblesPlugin::getHelp() const
@@ -30,26 +28,6 @@ std::string GMSH_BubblesPlugin::getHelp() const
          "The plugin expects a triangulation in the `z = 0' plane to exist "
          "in the current model.\n\n"
          "Plugin(Bubbles) creates one `.geo' file.";
-}
-
-int GMSH_BubblesPlugin::getNbOptions() const
-{
-  return sizeof(BubblesOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_BubblesPlugin::getOption(int iopt)
-{
-  return &BubblesOptions_Number[iopt];
-}
-
-int GMSH_BubblesPlugin::getNbOptionsStr() const
-{
-  return sizeof(BubblesOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_BubblesPlugin::getOptionStr(int iopt)
-{
-  return &BubblesOptions_String[iopt];
 }
 
 static double myangle(double c[3], double p[3])
@@ -80,8 +58,8 @@ public:
 
 PView *GMSH_BubblesPlugin::execute(PView *v)
 {
-  double shrink = (double)BubblesOptions_Number[0].def;
-  std::string fileName = BubblesOptions_String[0].def;
+  double shrink = (double)option(0);
+  std::string fileName = optionStr(0);
 
   FILE *fp = Fopen(fileName.c_str(), "w");
   if(!fp) {
@@ -107,14 +85,21 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
     (*eit)->writeGEO(fp);
 
   for(auto fit = m->firstFace(); fit != m->lastFace(); fit++) {
+    // the cells are cut out of a plane surface written as .geo
+    if((*fit)->geomType() != GEntity::Plane) {
+      Msg::Warning("Plugin(Bubbles) skips surface %d, which is not a plane",
+                   (*fit)->tag());
+      continue;
+    }
     (*fit)->writeGEO(fp);
     fprintf(fp, "Delete { Surface {%d}; }\n", (*fit)->tag());
 
     int sbeg = s;
     int llbeg = ll;
 
-    // compute vertex-to-triangle_barycenter map
-    std::map<MVertex *, std::vector<SPoint3> > v2t;
+    // compute vertex-to-triangle_barycenter map, in the order of the node
+    // tags for the output not to depend on where the nodes are in memory
+    std::map<MVertex *, std::vector<SPoint3>, MVertexPtrLessThan> v2t;
     for(std::size_t i = 0; i < (*fit)->triangles.size(); i++)
       for(int j = 0; j < 3; j++)
         v2t[(*fit)->triangles[i]->getVertex(j)].push_back(

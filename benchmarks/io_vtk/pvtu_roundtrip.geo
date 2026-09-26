@@ -34,6 +34,7 @@ Macro Measure
 Return
 
 nodes0 = Mesh.NbNodes; cells0 = Mesh.NbTetrahedra;
+Mesh.SaveViews = 2; // (with the mesh)
 Mesh.Binary = 0; Save "pvtu_roundtrip_ascii_out.pvtu";
 Mesh.Binary = 1; Save "pvtu_roundtrip_binary_out.pvtu";
 Mesh.Binary = 0;

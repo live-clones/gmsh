@@ -17,15 +17,9 @@
 #include "meshGFaceDelaunay.h"
 #endif
 
-StringXNumber TriangulateOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""}
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterTriangulatePlugin()
+GMSH_TriangulatePlugin::GMSH_TriangulatePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_TriangulatePlugin();
-}
 }
 
 std::string GMSH_TriangulatePlugin::getHelp() const
@@ -36,16 +30,6 @@ std::string GMSH_TriangulatePlugin::getHelp() const
          "onto a plane. \n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "Plugin(Triangulate) creates one new list-based view.";
-}
-
-int GMSH_TriangulatePlugin::getNbOptions() const
-{
-  return sizeof(TriangulateOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_TriangulatePlugin::getOption(int iopt)
-{
-  return &TriangulateOptions_Number[iopt];
 }
 
 #if defined(HAVE_MESH)
@@ -66,7 +50,7 @@ namespace {
 
 PView *GMSH_TriangulatePlugin::execute(PView *v)
 {
-  int iView = (int)TriangulateOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -108,8 +92,8 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   double lc = 10 * norm(SVector3(bbox.max(), bbox.min()));
 
   // project points onto plane
-  discreteFace *s =
-    new discreteFace(GModel::current(), GModel::current()->getNumFaces() + 1);
+  // a temporary face, not added to the model nor to its GEO internals
+  discreteFace *s = new discreteFace(GModel::current());
   s->computeMeanPlane(points);
   double x, y, z, VX[3], VY[3];
   s->getMeanPlaneData(VX, VY, x, y, z);
@@ -144,26 +128,17 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
     p[1] = (PointData *)tris[i]->getVertex(1);
     p[2] = (PointData *)tris[i]->getVertex(2);
     int numComp = 0;
-    std::vector<double> *vec = nullptr;
     if((int)p[0]->v.size() == 3 + 9 * numSteps &&
        (int)p[1]->v.size() == 3 + 9 * numSteps &&
-       (int)p[2]->v.size() == 3 + 9 * numSteps) {
+       (int)p[2]->v.size() == 3 + 9 * numSteps)
       numComp = 9;
-      data2->NbTT++;
-      vec = &data2->TT;
-    }
     else if((int)p[0]->v.size() == 3 + 3 * numSteps &&
             (int)p[1]->v.size() == 3 + 3 * numSteps &&
-            (int)p[2]->v.size() == 3 + 3 * numSteps) {
+            (int)p[2]->v.size() == 3 + 3 * numSteps)
       numComp = 3;
-      data2->NbVT++;
-      vec = &data2->VT;
-    }
-    else {
+    else
       numComp = 1;
-      data2->NbST++;
-      vec = &data2->ST;
-    }
+    std::vector<double> *vec = data2->incrementList(numComp, TYPE_TRI);
     for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[0]);
     for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[1]);
     for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[2]);
@@ -177,7 +152,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   for(std::size_t i = 0; i < points.size(); i++) delete points[i];
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
-    data2->Time.push_back(data1->getTime(i));
+    data2->addTime(data1->getTime(i));
   data2->setName(data1->getName() + "_Triangulate");
   data2->setFileName(data1->getName() + "_Triangulate.pos");
   data2->finalize();

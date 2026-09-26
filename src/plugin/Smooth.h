@@ -8,18 +8,12 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSmoothPlugin();
-}
-
 class GMSH_SmoothPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_SmoothPlugin() {}
+  GMSH_SmoothPlugin();
   std::string getName() const { return "Smooth"; }
   std::string getShortHelp() const { return "Apply nodal smoothing"; }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

@@ -577,16 +577,13 @@ static VertexArray *buildMerged(GModel *m, int dim, bool lines)
       col = CTX::instance()->color.mesh.line;
       c = (const unsigned char *)&col;
     }
-    else if(!(va->hasColors() &&
-              (CTX::instance()->pickElements ||
-               (CTX::instance()->mesh.colorCarousel == 0 ||
-                CTX::instance()->mesh.colorCarousel == 3)))) {
+    else if(!(va->hasColors() && (CTX::instance()->mesh.colorCarousel == 0 ||
+                                  CTX::instance()->mesh.colorCarousel == 3))) {
       col = getColorByEntity(e, false);
       c = (const unsigned char *)&col;
     }
     out->merge(va, c);
   });
-  out->clearElementPointers();
   return out;
 }
 
@@ -613,7 +610,7 @@ static void addNode(GEntity *e, MVertex *v, VertexArray *va)
 {
   double x = v->x(), y = v->y(), z = v->z();
   unsigned int col = getColorByVertex(e, v, false);
-  va->add(&x, &y, &z, nullptr, &col, nullptr, false);
+  va->add(&x, &y, &z, nullptr, &col, false);
 }
 
 // the nodes of the elements of an entity that are visible, once each
@@ -727,30 +724,6 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
 {
   if(!va || !va->getNumVertices()) return;
 
-  // If we want to be enable picking of individual elements we need to
-  // draw each one separately
-  bool select =
-    (ctx->render_mode == drawContext::GMSH_SELECT &&
-     CTX::instance()->pickElements && e->model() == GModel::current());
-  if(select) {
-    if(va->getNumElementPointers() == va->getNumVertices()) {
-      // the number of vertices per element says which array an element is
-      // read back from, ten more for what the clipping planes add
-      int kind = va->getNumVerticesPerElement() +
-                 ((va == e->va_clip_lines || va == e->va_clip_triangles) ? 10 :
-                                                                          0);
-      for(int i = 0; i < va->getNumVertices();
-          i += va->getNumVerticesPerElement()) {
-        ctx->setPickColor(e->dim(), e->tag(), kind, i);
-        gmshBegin(type);
-        for(int j = 0; j < va->getNumVerticesPerElement(); j++)
-          gmshVertex3fv(va->getVertexArray(3 * (i + j)));
-        gmshEnd();
-      }
-      return;
-    }
-  }
-
   // already covered by the merged draw, unless it is selected and has to be
   // drawn again on top of it (what the clipping planes add is never merged)
   bool merged = (va == e->va_lines && _merged.lines) ||
@@ -766,11 +739,9 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
 
   // in picking mode the colour set by setPickColor() is kept; otherwise the
   // colours come from the array unless forced, selected or by carousel
-  bool colors = !forceColor && va->hasColors() &&
-                (CTX::instance()->pickElements ||
-                 (!e->getSelection() &&
-                  (CTX::instance()->mesh.colorCarousel == 0 ||
-                   CTX::instance()->mesh.colorCarousel == 3)));
+  bool colors = !forceColor && va->hasColors() && !e->getSelection() &&
+                (CTX::instance()->mesh.colorCarousel == 0 ||
+                 CTX::instance()->mesh.colorCarousel == 3);
   if(!ctx->inPickColorMode() && !colors) {
     if(!forceColor) color = getColorByEntity(e);
     gmshColor4ubv((const void *)&color);
@@ -1198,5 +1169,41 @@ void drawContext::drawMesh()
     _merged.points = false;
   }
 
+  clipPlanes::on(0);
+}
+
+// The faces of the mesh in a picking pass that does not pick the mesh, so that
+// they hide what is behind them: in the background's identifier, and in the
+// farthest depth range, behind the entities that lie on them (see
+// setPickColor()). The merged arrays drawn by the frame, or the arrays of the
+// entities where there are too few for them; nothing of a transparent mesh.
+void drawContext::drawMeshOccluders()
+{
+  CTX *c = CTX::instance();
+  if(!c->mesh.draw || meshIsTransparent()) return;
+  unsetPickColor();
+  _pickState(false, 1.);
+  // only the volume is clipped, and only its cut elements are drawn in whole
+  // element mode (which the clip arrays hold, left out here)
+  bool volumeOnly = c->clipWholeElements && c->clipOnlyVolume;
+  bool cutOnly =
+    c->clipWholeElements && c->clipOnlyDrawIntersectingVolume && c->mesh.clip;
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
+    GModel *m = GModel::list[i];
+    if(!m->getVisibility() || !isVisible(m)) continue;
+    int status = drawMeshStatus(m);
+    mergedArrays &ma = _models[m];
+    for(int dim = 2; dim <= std::min(status, 3); dim++) {
+      if(dim == 3 && cutOnly) continue;
+      setMeshClipPlanes(!volumeOnly || dim == 3);
+      if(ma.built && ma.triangles[dim])
+        drawVertexArray(ma.triangles[dim], GL_TRIANGLES, 0);
+      else
+        forMeshEntities(m, dim, [&](GEntity *e) {
+          if(e->getVisibility())
+            drawVertexArray(e->va_triangles, GL_TRIANGLES, 0);
+        });
+    }
+  }
   clipPlanes::on(0);
 }

@@ -6974,7 +6974,7 @@ double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->mesh.butt[0]->value(
+    FlGui::instance()->options->mesh.choice[12]->value(
       CTX::instance()->mesh.drawSkinOnly);
 #endif
   return CTX::instance()->mesh.drawSkinOnly;
@@ -6994,6 +6994,15 @@ double opt_mesh_save_all(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.saveAll = (int)val;
   return CTX::instance()->mesh.saveAll;
+}
+
+double opt_mesh_save_views(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    int v = (int)val;
+    CTX::instance()->mesh.saveViews = (v < 0 || v > 2) ? 0 : v;
+  }
+  return CTX::instance()->mesh.saveViews;
 }
 
 double opt_mesh_save_element_tag_type(OPT_ARGS_NUM)
@@ -7044,7 +7053,7 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
     // vertex arrays need to be regenerated only when we color by
     // element type or by partition
     if(CTX::instance()->mesh.colorCarousel != (int)val &&
-       ((val == 0. || val == 3.) || CTX::instance()->pickElements))
+       (val == 0. || val == 3.))
       CTX::instance()->meshOptionsChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     // the other modes colour by entity, which the merged mesh arrays bake in
     if(CTX::instance()->mesh.colorCarousel != (int)val)
@@ -7109,6 +7118,16 @@ double opt_mesh_nb_quadrangles(OPT_ARGS_NUM) { return meshStatistic(8); }
 double opt_mesh_nb_tetrahedra(OPT_ARGS_NUM) { return meshStatistic(9); }
 
 double opt_mesh_nb_hexahedra(OPT_ARGS_NUM) { return meshStatistic(10); }
+
+double opt_mesh_nb_edges(OPT_ARGS_NUM)
+{
+  return (double)GModel::current()->getNumMEdges();
+}
+
+double opt_mesh_nb_faces(OPT_ARGS_NUM)
+{
+  return (double)GModel::current()->getNumMFaces();
+}
 
 double opt_mesh_nb_prisms(OPT_ARGS_NUM) { return meshStatistic(11); }
 
@@ -7532,6 +7551,12 @@ double opt_post_save_interpolation_matrices(OPT_ARGS_NUM)
   return CTX::instance()->post.saveInterpolationMatrices;
 }
 
+double opt_post_save_adapted(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->post.saveAdapted = (int)val;
+  return CTX::instance()->post.saveAdapted;
+}
+
 double opt_post_double_clicked_graph_point_x(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->post.doubleClickedGraphPointX = val;
@@ -7594,9 +7619,6 @@ double opt_view_timestep(OPT_ARGS_NUM)
         opt->timeStep = 0;
       else if(opt->timeStep < 0)
         opt->timeStep = data->getNumTimeSteps() - 1;
-      if(data->getAdaptiveData())
-        data->getAdaptiveData()->changeResolution(
-          opt->timeStep, opt->maxRecursionLevel, opt->targetError);
       opt->currentTime = data->getTime(opt->timeStep);
     }
     if(view) view->setChanged(true);
@@ -7642,8 +7664,11 @@ double opt_view_min(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWd(0.);
   if(!data) return 0.;
-  // use adaptive data if available
-  return view->getData(true)->getMin();
+  // (of the refined data if the view is adaptive)
+  view->adapt();
+  double min = view->getData(true)->getMin(), max = min;
+  view->widenAdaptedRange(min, max);
+  return min;
 #else
   return 0.;
 #endif
@@ -7654,8 +7679,11 @@ double opt_view_max(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWd(0.);
   if(!data) return 0.;
-  // use adaptive data if available
-  return view->getData(true)->getMax();
+  // (of the refined data if the view is adaptive)
+  view->adapt();
+  double max = view->getData(true)->getMax(), min = max;
+  view->widenAdaptedRange(min, max);
+  return max;
 #else
   return 0.;
 #endif
@@ -8268,11 +8296,8 @@ double opt_view_adapt_visualization_grid(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     opt->adaptVisualizationGrid = (int)val;
     if(data) {
-      if(opt->adaptVisualizationGrid)
-        data->initAdaptiveData(opt->timeStep, opt->maxRecursionLevel,
-                               opt->targetError);
-      else
-        data->destroyAdaptiveData();
+      // (refined when used, see PView::adapt())
+      if(!opt->adaptVisualizationGrid) data->destroyAdaptiveData();
       view->setChanged(true);
     }
   }
@@ -8289,17 +8314,31 @@ double opt_view_adapt_visualization_grid(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_adapt_skin_only(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    opt->adaptSkinOnly = (int)val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    FlGui::instance()->options->view.choice[18]->value(opt->adaptSkinOnly);
+#endif
+  return opt->adaptSkinOnly;
+#else
+  return 0.;
+#endif
+}
+
 double opt_view_max_recursion_level(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->maxRecursionLevel = (int)val;
-    if(data && data->getAdaptiveData()) {
-      data->getAdaptiveData()->changeResolution(
-        opt->timeStep, opt->maxRecursionLevel, opt->targetError);
-      view->setChanged(true);
-    }
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
@@ -8318,11 +8357,7 @@ double opt_view_target_error(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->targetError = val;
-    if(data && data->getAdaptiveData()) {
-      data->getAdaptiveData()->changeResolution(
-        opt->timeStep, opt->maxRecursionLevel, opt->targetError);
-      view->setChanged(true);
-    }
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
@@ -10212,6 +10247,16 @@ unsigned int opt_general_color_small_axes(OPT_ARGS_COL)
       FlGui::instance()->options->general.color[5]);
 #endif
   return CTX::instance()->color.smallAxes;
+}
+
+unsigned int opt_general_color_query(OPT_ARGS_COL)
+{
+  if(action & GMSH_SET) { CTX::instance()->color.query = val; }
+#if defined(HAVE_FLTK)
+  CCC(CTX::instance()->color.query,
+      FlGui::instance()->options->general.color[9]);
+#endif
+  return CTX::instance()->color.query;
 }
 
 unsigned int opt_general_color_ambient_light(OPT_ARGS_COL)

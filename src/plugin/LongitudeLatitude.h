@@ -8,18 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterLongituteLatitudePlugin();
-}
-
-class GMSH_LongituteLatitudePlugin : public GMSH_PostPlugin {
+class GMSH_LongitudeLatitudePlugin : public GMSH_PostPlugin {
 public:
+  GMSH_LongitudeLatitudePlugin();
   std::string getName() const { return "LongitudeLatitude"; }
   std::string getShortHelp() const { return "Project in longitude-latitude"; }
   std::string getHelp() const;
   std::string getAuthor() const { return "J. Lambrechts"; }
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

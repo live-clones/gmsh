@@ -8,21 +8,15 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterInvisiblePlugin();
-}
-
 class GMSH_InvisiblePlugin : public GMSH_PostPlugin {
 public:
-  GMSH_InvisiblePlugin() {}
+  GMSH_InvisiblePlugin();
   std::string getName() const { return "Invisible"; }
   std::string getShortHelp() const
   {
     return "Act on invisible elements in the current model";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

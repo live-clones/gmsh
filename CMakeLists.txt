@@ -92,7 +92,6 @@ opt(PRO "Enable PRO extensions" ${DEFAULT})
 opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(QUADMESHINGTOOLS "Enable QuadMeshingTools extensions" ${DEFAULT})
 opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
-opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
 opt(RPATH "Use RPATH in dynamically linked targets" ON)
 opt(SLEPC "Enable SLEPc eigensolvers" OFF)
 opt(SOLVER "Enable built-in finite element solvers (required for reparametrization)" ${DEFAULT})
@@ -1628,17 +1627,6 @@ else()
           "geometric predicates.")
 endif()
 
-# enable Revoropt and set compile flags for the corresponding plugin
-if(ENABLE_REVOROPT)
-  if(HAVE_EIGEN AND HAVE_MESH AND HAVE_PLUGINS AND HAVE_ANN AND HAVE_ALGLIB)
-    list(APPEND EXTERNAL_INCLUDES contrib/Revoropt/include)
-    set_config_option(HAVE_REVOROPT "Revoropt")
-    add_definitions(-DUSE_ANN)
-  else()
-    message(WARNING "Revoropt requires Eigen, Mesh, Plugins, ANN and ALGLIB")
-  endif()
-endif()
-
 if(HAVE_MESH AND NOT HAVE_EIGEN AND NOT HAVE_LAPACK)
   message(WARNING "Most meshing algorithms will not be functional without "
           "Eigen or Lapack")
@@ -1799,6 +1787,11 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     endif()
   endif()
   target_link_libraries(shared ${LINK_LIBRARIES})
+  # plugins loaded from shared libraries link to the shared Gmsh library, which
+  # must export what they use (the private API)
+  if(ENABLE_PRIVATE_API AND DLFCN_H)
+    target_compile_definitions(shared PRIVATE HAVE_PLUGIN_LOADING)
+  endif()
   # don't define LC_RPATH in dylib for development, to not get endless warnings
   # about code signing
   if(APPLE AND NOT GMSH_RELEASE)
@@ -2302,6 +2295,8 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   file(GLOB_RECURSE ALLFILES
        tutorials/*.geo examples/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
        benchmarks/occ/*.geo benchmarks/io_msh/polytopes.geo
+       benchmarks/io_msh/read_back.geo benchmarks/io_msh/faces.geo
+       benchmarks/io_msh/views.geo
        benchmarks/io_vtk/*.geo)
   # (fails on the CI machines, not understood yet)
   list(FILTER ALLFILES EXCLUDE REGEX "io_vtk/vtu_roundtrip.geo$")

@@ -110,7 +110,6 @@ static void select_elements_cb(Fl_Widget *w, void *data)
   else {
     CTX::instance()->pickElements = 1;
     while(1) {
-      CTX::instance()->meshChanged();
       drawContext::global()->draw();
       Msg::StatusGl("Select elements\n"
                     "[Press 'e' to end selection or 'q' to abort]");
@@ -198,7 +197,6 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
   std::vector<MLine *> ele;
 
   while(1) {
-    CTX::instance()->meshChanged();
     drawContext::global()->draw();
 
     Msg::StatusGl("Select elements\n"

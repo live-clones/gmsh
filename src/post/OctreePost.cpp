@@ -3,13 +3,14 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
+#include <set>
 #include "Octree.h"
 #include "OctreePost.h"
 #include "PView.h"
 #include "PViewData.h"
 #include "PViewDataList.h"
 #include "PViewDataGModel.h"
-#include "Numeric.h"
 #include "GmshMessage.h"
 #include "shapeFunctions.h"
 #include "GModel.h"
@@ -58,225 +59,68 @@ static void minmax(int n, double *X, double *Y, double *Z, double *min,
   min[2] = bb.min().z();
 }
 
-static void centroid(int n, double *X, double *Y, double *Z, double *c)
+// the bounding box of an element of N nodes, and whether a point is in it
+template <int N> static void elementBB(void *a, double *min, double *max)
 {
-  const double oc = 1. / (double)n;
-  c[0] = X[0];
-  c[1] = Y[0];
-  c[2] = Z[0];
-  for(int i = 1; i < n; i++) {
-    c[0] += X[i];
-    c[1] += Y[i];
-    c[2] += Z[i];
-  }
-  c[0] *= oc;
-  c[1] *= oc;
-  c[2] *= oc;
+  double *X = (double *)a;
+  minmax(N, X, X + N, X + 2 * N, min, max);
 }
 
-static void pntBB(void *a, double *min, double *max)
+template <class E, int N> static int inElement(void *a, double *x)
 {
-  double *X = (double *)a, *Y = &X[1], *Z = &X[2];
-  minmax(1, X, Y, Z, min, max);
+  double *X = (double *)a, uvw[3];
+  E e(X, X + N, X + 2 * N);
+  e.xyz2uvw(x, uvw);
+  return e.isInside(uvw[0], uvw[1], uvw[2]);
 }
 
-static void linBB(void *a, double *min, double *max)
-{
-  double *X = (double *)a, *Y = &X[2], *Z = &X[4];
-  minmax(2, X, Y, Z, min, max);
-}
+static int inPoint(void *a, double *x) { return 1; }
 
-static void triBB(void *a, double *min, double *max)
-{
-  double *X = (double *)a, *Y = &X[3], *Z = &X[6];
-  minmax(3, X, Y, Z, min, max);
-}
+// the kinds of elements of list data, in the order of their lists in
+// PViewDataList::getListPointers() (3 lists each, for 1, 3 and 9 components)
+static const struct {
+  int numNodes, dim;
+  void (*bb)(void *, double *, double *);
+  int (*in)(void *, double *);
+} listElement[8] = {{1, 0, elementBB<1>, inPoint},
+                    {2, 1, elementBB<2>, inElement<line, 2>},
+                    {3, 2, elementBB<3>, inElement<triangle, 3>},
+                    {4, 2, elementBB<4>, inElement<quadrangle, 4>},
+                    {4, 3, elementBB<4>, inElement<tetrahedron, 4>},
+                    {8, 3, elementBB<8>, inElement<hexahedron, 8>},
+                    {6, 3, elementBB<6>, inElement<prism, 6>},
+                    {5, 3, elementBB<5>, inElement<pyramid, 5>}};
 
-static void quaBB(void *a, double *min, double *max)
-{
-  double *X = (double *)a, *Y = &X[4], *Z = &X[8];
-  minmax(4, X, Y, Z, min, max);
-}
+// the order in which they are searched: volumes first
+static const int searchOrder[8] = {4, 5, 6, 7, 2, 3, 1, 0};
 
-static void tetBB(void *a, double *min, double *max)
-{
-  double *X = (double *)a, *Y = &X[4], *Z = &X[8];
-  minmax(4, X, Y, Z, min, max);
-}
-
-static void hexBB(void *a, double *min, double *max)
-{
-  double *X = (double *)a, *Y = &X[8], *Z = &X[16];
-  minmax(8, X, Y, Z, min, max);
-}
-
-static void priBB(void *a, double *min, double *max)
-{
-  double *X = (double *)a, *Y = &X[6], *Z = &X[12];
-  minmax(6, X, Y, Z, min, max);
-}
-
-static void pyrBB(void *a, double *min, double *max)
-{
-  double *X = (double *)a, *Y = &X[5], *Z = &X[10];
-  minmax(5, X, Y, Z, min, max);
-}
-
-static int pntInEle(void *a, double *x) { return 1; }
-
-static int linInEle(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[2], *Z = &X[4], uvw[3];
-  line lin(X, Y, Z);
-  lin.xyz2uvw(x, uvw);
-  return lin.isInside(uvw[0], uvw[1], uvw[2]);
-}
-
-static int triInEle(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[3], *Z = &X[6], uvw[3];
-  triangle tri(X, Y, Z);
-  tri.xyz2uvw(x, uvw);
-  return tri.isInside(uvw[0], uvw[1], uvw[2]);
-}
-
-static int quaInEle(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[4], *Z = &X[8], uvw[3];
-  quadrangle qua(X, Y, Z);
-  qua.xyz2uvw(x, uvw);
-  return qua.isInside(uvw[0], uvw[1], uvw[2]);
-}
-
-static int tetInEle(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[4], *Z = &X[8], uvw[3];
-  tetrahedron tet(X, Y, Z);
-  tet.xyz2uvw(x, uvw);
-  return tet.isInside(uvw[0], uvw[1], uvw[2]);
-}
-
-static int hexInEle(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[8], *Z = &X[16], uvw[3];
-  hexahedron hex(X, Y, Z);
-  hex.xyz2uvw(x, uvw);
-  return hex.isInside(uvw[0], uvw[1], uvw[2]);
-}
-
-static int priInEle(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[6], *Z = &X[12], uvw[3];
-  prism pri(X, Y, Z);
-  pri.xyz2uvw(x, uvw);
-  return pri.isInside(uvw[0], uvw[1], uvw[2]);
-}
-
-static int pyrInEle(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[5], *Z = &X[10], uvw[3];
-  pyramid pyr(X, Y, Z);
-  pyr.xyz2uvw(x, uvw);
-  return pyr.isInside(uvw[0], uvw[1], uvw[2]);
-}
-
-static void pntCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[1], *Z = &X[2];
-  centroid(1, X, Y, Z, x);
-}
-
-static void linCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[2], *Z = &X[4];
-  centroid(2, X, Y, Z, x);
-}
-
-static void triCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[3], *Z = &X[6];
-  centroid(3, X, Y, Z, x);
-}
-
-static void quaCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[4], *Z = &X[8];
-  centroid(4, X, Y, Z, x);
-}
-
-static void tetCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[4], *Z = &X[8];
-  centroid(4, X, Y, Z, x);
-}
-
-static void hexCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[8], *Z = &X[16];
-  centroid(8, X, Y, Z, x);
-}
-
-static void priCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[6], *Z = &X[12];
-  centroid(6, X, Y, Z, x);
-}
-
-static void pyrCentroid(void *a, double *x)
-{
-  double *X = (double *)a, *Y = &X[5], *Z = &X[10];
-  centroid(5, X, Y, Z, x);
-}
-
-static void addListOfStuff(Octree *o, std::vector<double> &l, int nbelm)
-{
-  for(std::size_t i = 0; i < l.size(); i += nbelm) Octree_Insert(&l[i], o);
-}
+static int componentIndex(int numComp)
+{ return (numComp == 1) ? 0 : (numComp == 3) ? 1 : 2; }
 
 // OctreePost implementation
 
 OctreePost::~OctreePost()
 {
-  Octree_Delete(_sp);
-  Octree_Delete(_vp);
-  Octree_Delete(_tp);
-  Octree_Delete(_sl);
-  Octree_Delete(_vl);
-  Octree_Delete(_tl);
-  Octree_Delete(_st);
-  Octree_Delete(_vt);
-  Octree_Delete(_tt);
-  Octree_Delete(_sq);
-  Octree_Delete(_vq);
-  Octree_Delete(_tq);
-  Octree_Delete(_ss);
-  Octree_Delete(_vs);
-  Octree_Delete(_ts);
-  Octree_Delete(_sh);
-  Octree_Delete(_vh);
-  Octree_Delete(_th);
-  Octree_Delete(_si);
-  Octree_Delete(_vi);
-  Octree_Delete(_ti);
-  Octree_Delete(_sy);
-  Octree_Delete(_vy);
-  Octree_Delete(_ty);
+  for(int c = 0; c < 3; c++)
+    for(int k = 0; k < 8; k++) Octree_Delete(_trees[c][k]);
 }
 
 OctreePost::OctreePost(PView *v)
 {
-  _create(v->getData(true)); // use adaptive data if available
+  // (the adaptive data if available, refined as a whole)
+  v->adaptWhole();
+  _create(v->getData(true));
 }
 
 OctreePost::OctreePost(PViewData *data) { _create(data); }
 
 void OctreePost::_create(PViewData *data)
 {
-  _sp = _vp = _tp = _sl = _vl = _tl = _st = _vt = _tt = nullptr;
-  _sq = _vq = _tq = _ss = _vs = _ts = _sh = _vh = _th = nullptr;
-  _si = _vi = _ti = _sy = _vy = _ty = nullptr;
+  for(int c = 0; c < 3; c++) {
+    _topDim[c] = -1;
+    for(int k = 0; k < 8; k++) _trees[c][k] = nullptr;
+  }
   _theViewDataList = nullptr;
-  _theViewDataGModel = nullptr;
 
   _theViewDataGModel = dynamic_cast<PViewDataGModel *>(data);
 
@@ -294,156 +138,51 @@ void OctreePost::_create(PViewData *data)
       return;
     }
 
-    SBoundingBox3d bb = l->getBoundingBox();
-
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
-       CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
-      /* TODO FIXME: ugly temporary fix, but we need larger bbox for the
-       * guiding field sampling on curved surfaces, thicken is not sufficient */
-      bb *= 1.1;
+    int N[24];
+    std::vector<double> *V[24];
+    l->getListPointers(N, V);
+    for(int k = 0; k < 8; k++) {
+      for(int c = 0; c < 3; c++) {
+        Octree *o = Octree_Create(listElement[k].bb);
+        // an element: its coordinates, then its values at each step (lists
+        // may have more steps than the view)
+        std::vector<double> &list = *V[3 * k + c];
+        int num = N[3 * k + c];
+        std::size_t size = num ? list.size() / num : 1;
+        for(std::size_t i = 0; i < list.size(); i += size)
+          Octree_Insert(&list[i], o);
+        if(list.size()) _topDim[c] = std::max(_topDim[c], listElement[k].dim);
+        Octree_Arrange(o);
+        _trees[c][k] = o;
+      }
     }
-    else {
-      bb.thicken(0.01); // make 1% thicker
-    }
-
-    SPoint3 bbmin = bb.min(), bbmax = bb.max();
-    double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
-    double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
-                      bbmax.z() - bbmin.z()};
-    const int maxElePerBucket = 100; // memory vs. speed trade-off
-
-    _sp =
-      Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
-    addListOfStuff(_sp, l->SP, 3 + 1 * l->getNumTimeSteps());
-    Octree_Arrange(_sp);
-    _vp =
-      Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
-    addListOfStuff(_vp, l->VP, 3 + 3 * l->getNumTimeSteps());
-    Octree_Arrange(_vp);
-    _tp =
-      Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
-    addListOfStuff(_tp, l->TP, 3 + 9 * l->getNumTimeSteps());
-    Octree_Arrange(_tp);
-
-    _sl =
-      Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
-    addListOfStuff(_sl, l->SL, 6 + 2 * l->getNumTimeSteps());
-    Octree_Arrange(_sl);
-    _vl =
-      Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
-    addListOfStuff(_vl, l->VL, 6 + 6 * l->getNumTimeSteps());
-    Octree_Arrange(_vl);
-    _tl =
-      Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
-    addListOfStuff(_tl, l->TL, 6 + 18 * l->getNumTimeSteps());
-    Octree_Arrange(_tl);
-
-    _st =
-      Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
-    addListOfStuff(_st, l->ST, 9 + 3 * l->getNumTimeSteps());
-    Octree_Arrange(_st);
-    _vt =
-      Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
-    addListOfStuff(_vt, l->VT, 9 + 9 * l->getNumTimeSteps());
-    Octree_Arrange(_vt);
-    _tt =
-      Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
-    addListOfStuff(_tt, l->TT, 9 + 27 * l->getNumTimeSteps());
-    Octree_Arrange(_tt);
-
-    _sq =
-      Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
-    addListOfStuff(_sq, l->SQ, 12 + 4 * l->getNumTimeSteps());
-    Octree_Arrange(_sq);
-    _vq =
-      Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
-    addListOfStuff(_vq, l->VQ, 12 + 12 * l->getNumTimeSteps());
-    Octree_Arrange(_vq);
-    _tq =
-      Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
-    addListOfStuff(_tq, l->TQ, 12 + 36 * l->getNumTimeSteps());
-    Octree_Arrange(_tq);
-
-    _ss =
-      Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
-    addListOfStuff(_ss, l->SS, 12 + 4 * l->getNumTimeSteps());
-    Octree_Arrange(_ss);
-    _vs =
-      Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
-    addListOfStuff(_vs, l->VS, 12 + 12 * l->getNumTimeSteps());
-    Octree_Arrange(_vs);
-    _ts =
-      Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
-    addListOfStuff(_ts, l->TS, 12 + 36 * l->getNumTimeSteps());
-    Octree_Arrange(_ts);
-
-    _sh =
-      Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
-    addListOfStuff(_sh, l->SH, 24 + 8 * l->getNumTimeSteps());
-    Octree_Arrange(_sh);
-    _vh =
-      Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
-    addListOfStuff(_vh, l->VH, 24 + 24 * l->getNumTimeSteps());
-    Octree_Arrange(_vh);
-    _th =
-      Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
-    addListOfStuff(_th, l->TH, 24 + 72 * l->getNumTimeSteps());
-    Octree_Arrange(_th);
-
-    _si =
-      Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
-    addListOfStuff(_si, l->SI, 18 + 6 * l->getNumTimeSteps());
-    Octree_Arrange(_si);
-    _vi =
-      Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
-    addListOfStuff(_vi, l->VI, 18 + 18 * l->getNumTimeSteps());
-    Octree_Arrange(_vi);
-    _ti =
-      Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
-    addListOfStuff(_ti, l->TI, 18 + 54 * l->getNumTimeSteps());
-    Octree_Arrange(_ti);
-
-    _sy =
-      Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
-    addListOfStuff(_sy, l->SY, 15 + 5 * l->getNumTimeSteps());
-    Octree_Arrange(_sy);
-    _vy =
-      Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
-    addListOfStuff(_vy, l->VY, 15 + 15 * l->getNumTimeSteps());
-    Octree_Arrange(_vy);
-    _ty =
-      Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
-    addListOfStuff(_ty, l->TY, 15 + 45 * l->getNumTimeSteps());
-    Octree_Arrange(_ty);
   }
 }
 
-static void *getElement(double P[3], Octree *octree, int nbNod, int qn,
-                        double *qx, double *qy, double *qz)
+// The element of a list-based view holding the point: the first inserted among
+// those that hold it, or among those the one with the nodes given in qx/y/z
+// (the same geometrical element) if there is one.
+static void *getElement(double P[3], Octree *octree, int (*in)(void *, double *),
+                        int nbNod, int qn, double *qx, double *qy, double *qz)
 {
-  if(qn && qx && qy && qz) {
-    std::vector<void *> v;
-    Octree_SearchAll(P, octree, &v);
-    if(nbNod == qn) {
-      // try to use the value from the same geometrical element as the one
-      // provided in qx/y/z
-      double eps = CTX::instance()->geom.tolerance;
-      for(std::size_t i = 0; i < v.size(); i++) {
-        double *X = (double *)v[i], *Y = &X[qn], *Z = &X[2 * qn];
-        bool ok = true;
-        for(int j = 0; j < qn; j++) {
-          ok &= (fabs(X[j] - qx[j]) < eps && fabs(Y[j] - qy[j]) < eps &&
-                 fabs(Z[j] - qz[j]) < eps);
-        }
-        if(ok) return v[i];
-      }
+  std::vector<void *> v;
+  Octree_SearchAllNear(P, octree, 0., 0., &v);
+  bool same = (qn && qx && qy && qz && nbNod == qn);
+  void *first = nullptr;
+  double eps = CTX::instance()->geom.tolerance;
+  for(std::size_t i = 0; i < v.size(); i++) {
+    if(!in(v[i], P)) continue;
+    if(!same) return v[i];
+    if(!first) first = v[i];
+    double *X = (double *)v[i], *Y = &X[qn], *Z = &X[2 * qn];
+    bool ok = true;
+    for(int j = 0; j < qn; j++) {
+      ok &= (fabs(X[j] - qx[j]) < eps && fabs(Y[j] - qy[j]) < eps &&
+             fabs(Z[j] - qz[j]) < eps);
     }
-    if(v.size()) return v[0];
+    if(ok) return v[i];
   }
-  else {
-    return Octree_Search(P, octree);
-  }
-  return nullptr;
+  return first;
 }
 
 static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
@@ -467,17 +206,10 @@ static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
         if(ok) return elements[i];
       }
     }
-    if(elements.size()) return elements[0];
   }
-  else {
-    // TODO sort the elements by decreasing dimension and return the first match
-    //- this will be consistent with what we do for list-based datasets
-    //
-    // std::vector<MElement *> elements = m->getMeshElementsByCoord(pt, dim);
-    SPoint3 uvw;
-    return m->getMeshElementByCoord(pt, uvw, dim);
-  }
-  return nullptr;
+  // (the highest dimension first, as for list-based views)
+  SPoint3 uvw;
+  return m->getMeshElementByCoord(pt, uvw, dim);
 }
 
 bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
@@ -535,7 +267,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
 
   MElement *e = (MElement *)in;
 
-  std::vector<int> dataIndex(e->getNumVertices());
+  std::vector<std::size_t> dataIndex(e->getNumVertices());
   if(_theViewDataGModel->getType() == PViewDataGModel::NodeData)
     for(std::size_t i = 0; i < e->getNumVertices(); i++)
       dataIndex[i] = e->getVertex(i)->getNum();
@@ -579,170 +311,131 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
   return true;
 }
 
-bool OctreePost::searchScalar(double x, double y, double z, double *values,
-                              int step, double *size, int qn, double *qx,
-                              double *qy, double *qz, bool grad, int dim)
+void OctreePost::prepareThreads()
+{
+  if(!_theViewDataGModel) return;
+  std::set<GModel *> models;
+  for(int step = 0; step < _theViewDataGModel->getNumTimeSteps(); step++)
+    if(_theViewDataGModel->hasTimeStep(step))
+      models.insert(_theViewDataGModel->getModel(step));
+  for(GModel *m : models) {
+    SPoint3 p(0., 0., 0.), uvw;
+    m->getMeshElementByCoord(p, uvw);
+    std::vector<GEntity *> entities;
+    m->getEntities(entities);
+    std::set<int> types;
+    for(auto ge : entities) {
+      for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+        MElement *e = ge->getMeshElement(i);
+        if(types.insert(e->getTypeForMSH()).second) e->getFunctionSpace();
+      }
+    }
+  }
+}
+
+bool OctreePost::_search(int numComp, double x, double y, double z,
+                         double *values, int step, double *size, int qn,
+                         double *qx, double *qy, double *qz, bool grad, int dim,
+                         Cache *cache)
 {
   double P[3] = {x, y, z};
   int mult = grad ? 3 : 1;
 
+  int numSteps = 1;
   if(step < 0) {
-    int numSteps = 1;
     if(_theViewDataList)
       numSteps = _theViewDataList->getNumTimeSteps();
     else if(_theViewDataGModel)
       numSteps = _theViewDataGModel->getNumTimeSteps();
-    for(int i = 0; i < numSteps * mult; i++) { values[i] = 0.; }
   }
-  else {
-    for(int i = 0; i < mult; i++) values[i] = 0.;
-  }
+  for(int i = 0; i < numComp * numSteps * mult; i++) values[i] = 0.;
 
   if(_theViewDataList) {
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _ss, 4, qn, qx, qy, qz),
-                                          3, 4, 1, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _sh, 8, qn, qx, qy, qz),
-                                          3, 8, 1, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _si, 6, qn, qx, qy, qz),
-                                          3, 6, 1, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _sy, 5, qn, qx, qy, qz),
-                                          3, 5, 1, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 2) && _getValue(getElement(P, _st, 3, qn, qx, qy, qz),
-                                          2, 3, 1, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 2) && _getValue(getElement(P, _sq, 4, qn, qx, qy, qz),
-                                          2, 4, 1, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 1) && _getValue(getElement(P, _sl, 2, qn, qx, qy, qz),
-                                          1, 2, 1, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 0) && _getValue(getElement(P, _sp, 1, qn, qx, qy, qz),
-                                          0, 1, 1, P, step, values, size, grad))
-      return true;
+    if(step >= _theViewDataList->getNumTimeSteps()) return false;
+    int c = componentIndex(numComp);
+    if(cache && cache->element) { // the last element, with the test of
+      // getElement()
+      int k = cache->kind, n = listElement[k].numNodes, d = listElement[k].dim;
+      double min[3], max[3];
+      listElement[k].bb(cache->element, min, max);
+      if((dim < 0 || dim == d) && P[0] >= min[0] && P[0] <= max[0] &&
+         P[1] >= min[1] && P[1] <= max[1] && P[2] >= min[2] && P[2] <= max[2] &&
+         listElement[k].in(cache->element, P) &&
+         _getValue(cache->element, d, n, numComp, P, step, values, size, grad))
+        return true;
+    }
+    for(int k : searchOrder) {
+      int n = listElement[k].numNodes, d = listElement[k].dim;
+      if(dim >= 0 && dim != d) continue;
+      void *e = getElement(P, _trees[c][k], listElement[k].in, n, qn, qx, qy,
+                           qz);
+      if(_getValue(e, d, n, numComp, P, step, values, size, grad)) {
+        if(cache) {
+          cache->element = (d == _topDim[c]) ? e : nullptr;
+          cache->kind = k;
+        }
+        return true;
+      }
+    }
   }
   else if(_theViewDataGModel) {
+    bool multi = _theViewDataGModel->hasMultipleMeshes();
+    if(step < 0 && multi) {
+      // each step in the mesh of its own model
+      bool found = false;
+      int n = numComp * mult;
+      std::vector<double> v(n);
+      for(int s = 0; s < numSteps; s++) {
+        if(!_theViewDataGModel->hasTimeStep(s) ||
+           !_search(numComp, x, y, z, v.data(), s, size, qn, qx, qy, qz, grad,
+                    dim))
+          continue;
+        for(int i = 0; i < n; i++) values[n * s + i] = v[i];
+        found = true;
+      }
+      return found;
+    }
+    if(cache && cache->element && !multi) { // the last element
+      MElement *e = (MElement *)cache->element;
+      double uvw[3];
+      e->xyz2uvw(P, uvw);
+      if((dim < 0 || dim == e->getDim()) &&
+         e->isInside(uvw[0], uvw[1], uvw[2]) &&
+         _getValue(e, numComp, P, step, values, size, grad))
+        return true;
+    }
     GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
     if(m) {
       MElement *e = getElement(P, m, qn, qx, qy, qz, dim);
-      if(_getValue(e, 1, P, step, values, size, grad)) { return true; }
+      if(_getValue(e, numComp, P, step, values, size, grad)) {
+        if(cache)
+          cache->element = (e->getDim() == m->getMeshDim()) ? e : nullptr;
+        return true;
+      }
     }
   }
 
   return false;
 }
 
+bool OctreePost::searchScalar(double x, double y, double z, double *values,
+                              int step, double *size, int qn, double *qx,
+                              double *qy, double *qz, bool grad, int dim)
+{ return _search(1, x, y, z, values, step, size, qn, qx, qy, qz, grad, dim); }
+
 bool OctreePost::searchVector(double x, double y, double z, double *values,
                               int step, double *size, int qn, double *qx,
                               double *qy, double *qz, bool grad, int dim)
+{ return _search(3, x, y, z, values, step, size, qn, qx, qy, qz, grad, dim); }
+
+bool OctreePost::searchVector(double x, double y, double z, double *values,
+                              int step, Cache &cache)
 {
-  double P[3] = {x, y, z};
-  int mult = grad ? 3 : 1;
-
-  if(step < 0) {
-    int numSteps = 1;
-    if(_theViewDataList)
-      numSteps = _theViewDataList->getNumTimeSteps();
-    else if(_theViewDataGModel)
-      numSteps = _theViewDataGModel->getNumTimeSteps();
-    for(int i = 0; i < 3 * numSteps * mult; i++) values[i] = 0.;
-  }
-  else {
-    for(int i = 0; i < 3 * mult; i++) values[i] = 0.;
-  }
-
-  if(_theViewDataList) {
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _vs, 4, qn, qx, qy, qz),
-                                          3, 4, 3, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _vh, 8, qn, qx, qy, qz),
-                                          3, 8, 3, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _vi, 6, qn, qx, qy, qz),
-                                          3, 6, 3, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _vy, 5, qn, qx, qy, qz),
-                                          3, 5, 3, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 2) && _getValue(getElement(P, _vt, 3, qn, qx, qy, qz),
-                                          2, 3, 3, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 2) && _getValue(getElement(P, _vq, 4, qn, qx, qy, qz),
-                                          2, 4, 3, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 1) && _getValue(getElement(P, _vl, 2, qn, qx, qy, qz),
-                                          1, 2, 3, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 0) && _getValue(getElement(P, _vp, 1, qn, qx, qy, qz),
-                                          0, 1, 3, P, step, values, size, grad))
-      return true;
-  }
-  else if(_theViewDataGModel) {
-    GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
-    if(m) {
-      MElement *e = getElement(P, m, qn, qx, qy, qz, dim);
-      if(_getValue(e, 3, P, step, values, size, grad)) { return true; }
-    }
-  }
-
-  return false;
+  return _search(3, x, y, z, values, step, nullptr, 0, nullptr, nullptr,
+                 nullptr, false, -1, &cache);
 }
 
 bool OctreePost::searchTensor(double x, double y, double z, double *values,
                               int step, double *size, int qn, double *qx,
                               double *qy, double *qz, bool grad, int dim)
-{
-  double P[3] = {x, y, z};
-  int mult = grad ? 3 : 1;
-
-  if(step < 0) {
-    int numSteps = 1;
-    if(_theViewDataList)
-      numSteps = _theViewDataList->getNumTimeSteps();
-    else if(_theViewDataGModel)
-      numSteps = _theViewDataGModel->getNumTimeSteps();
-    for(int i = 0; i < 9 * numSteps * mult; i++) values[i] = 0.;
-  }
-  else {
-    for(int i = 0; i < 9 * mult; i++) values[i] = 0.;
-  }
-
-  if(_theViewDataList) {
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _ts, 4, qn, qx, qy, qz),
-                                          3, 4, 9, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _th, 8, qn, qx, qy, qz),
-                                          3, 8, 9, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _ti, 6, qn, qx, qy, qz),
-                                          3, 6, 9, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 3) && _getValue(getElement(P, _ty, 5, qn, qx, qy, qz),
-                                          3, 5, 9, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 2) && _getValue(getElement(P, _tt, 3, qn, qx, qy, qz),
-                                          2, 3, 9, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 2) && _getValue(getElement(P, _tq, 4, qn, qx, qy, qz),
-                                          2, 4, 9, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 1) && _getValue(getElement(P, _tl, 2, qn, qx, qy, qz),
-                                          1, 2, 9, P, step, values, size, grad))
-      return true;
-    if((dim < 0 || dim == 0) && _getValue(getElement(P, _tp, 1, qn, qx, qy, qz),
-                                          0, 1, 9, P, step, values, size, grad))
-      return true;
-  }
-  else if(_theViewDataGModel) {
-    GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
-    if(m) {
-      MElement *e = getElement(P, m, qn, qx, qy, qz, dim);
-      if(_getValue(e, 9, P, step, values, size, grad)) { return true; }
-    }
-  }
-
-  return false;
-}
+{ return _search(9, x, y, z, values, step, size, qn, qx, qy, qz, grad, dim); }
