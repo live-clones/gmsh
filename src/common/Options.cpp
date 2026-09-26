@@ -7613,7 +7613,6 @@ double opt_view_timestep(OPT_ARGS_NUM)
         opt->timeStep = 0;
       else if(opt->timeStep < 0)
         opt->timeStep = data->getNumTimeSteps() - 1;
-      view->adapt();
       opt->currentTime = data->getTime(opt->timeStep);
     }
     if(view) view->setChanged(true);
@@ -7659,7 +7658,8 @@ double opt_view_min(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWd(0.);
   if(!data) return 0.;
-  // use adaptive data if available
+  // (of the refined data if the view is adaptive)
+  view->adapt();
   double min = view->getData(true)->getMin(), max = min;
   view->widenAdaptedRange(min, max);
   return min;
@@ -7673,7 +7673,8 @@ double opt_view_max(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWd(0.);
   if(!data) return 0.;
-  // use adaptive data if available
+  // (of the refined data if the view is adaptive)
+  view->adapt();
   double max = view->getData(true)->getMax(), min = max;
   view->widenAdaptedRange(min, max);
   return max;
@@ -8289,10 +8290,8 @@ double opt_view_adapt_visualization_grid(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     opt->adaptVisualizationGrid = (int)val;
     if(data) {
-      if(opt->adaptVisualizationGrid)
-        view->adapt();
-      else
-        data->destroyAdaptiveData();
+      // (refined when used, see PView::adapt())
+      if(!opt->adaptVisualizationGrid) data->destroyAdaptiveData();
       view->setChanged(true);
     }
   }
@@ -8333,10 +8332,7 @@ double opt_view_max_recursion_level(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->maxRecursionLevel = (int)val;
-    if(view) {
-      view->adapt();
-      view->setChanged(true);
-    }
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
@@ -8355,10 +8351,7 @@ double opt_view_target_error(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->targetError = val;
-    if(view) {
-      view->adapt();
-      view->setChanged(true);
-    }
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {

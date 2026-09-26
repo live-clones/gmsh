@@ -62,7 +62,6 @@ PView::PView(int tag)
   _init(tag);
   _data = new PViewDataList();
   _options = new PViewOptions(*PViewOptions::reference());
-  adapt();
 }
 
 PView::PView(PViewData *data, int tag)
@@ -70,7 +69,6 @@ PView::PView(PViewData *data, int tag)
   _init(tag);
   _data = data;
   _options = new PViewOptions(*PViewOptions::reference());
-  adapt();
 }
 
 PView::PView(PView *ref, bool copyOptions, int tag)
@@ -94,7 +92,6 @@ PView::PView(PView *ref, bool copyOptions, int tag)
     _options = new PViewOptions(*ref->getOptions());
   else
     _options = new PViewOptions(*PViewOptions::reference());
-  adapt();
 }
 
 PView::PView(const std::string &xname, const std::string &yname,
@@ -161,7 +158,6 @@ PView::PView(const std::string &name, const std::string &type, GModel *model,
   d->setFileName(name + ".msh");
   _data = d;
   _options = new PViewOptions(*PViewOptions::reference());
-  adapt();
 }
 
 void PView::addStep(GModel *model,
@@ -301,12 +297,18 @@ public:
   { return CTX::instance()->clipKey(_mask); }
 };
 
-void PView::adapt(bool whole)
+adaptiveData *PView::initAdaptiveData()
 {
-  if(!_options->adaptVisualizationGrid || _data->isRemote()) return;
+  if(!_options->adaptVisualizationGrid || _data->isRemote()) return nullptr;
   if(_data->getAdaptiveData() && _data->getAdaptiveData()->isOutdated())
     _data->destroyAdaptiveData();
   _data->initAdaptiveData();
+  return _data->getAdaptiveData();
+}
+
+void PView::adapt(bool whole)
+{
+  if(!initAdaptiveData()) return;
   double min, max;
   getAdaptiveRange(min, max);
   bool skin = !whole && _options->adaptsSkinOnly();
@@ -502,8 +504,6 @@ void PView::combine(bool time, int how, bool remove, bool copyOptions)
       if(res) {
         for(std::size_t j = 0; j < nds[i].indices.size(); j++)
           rm.insert(list[nds[i].indices[j]]);
-        // (the adaptive data made in PView() is made again: see adapt())
-        if(p->getOptions()->adaptVisualizationGrid) p->adapt();
         if(copyOptions && nds[i].options) p->setOptions(nds[i].options);
       }
       else

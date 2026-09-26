@@ -8372,7 +8372,6 @@ _addModelData(const int tag, const int step, const std::string &modelName,
     Msg::Error("Could not add model data");
     return;
   }
-  view->adapt();
   view->setChanged(true);
 #else
   Msg::Error("Views require the post-processing module");

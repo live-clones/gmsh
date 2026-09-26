@@ -177,12 +177,17 @@ public:
   // send to ONELAB server
   void sendToServer(const std::string &name);
 
-  // create the adaptive data of the view if it is drawn adapted
-  // (View.AdaptVisualizationGrid), and refine it as the options say: the time
-  // step, the recursion level, the target error, the range drawn if it is a
-  // custom one, which the error is then relative to, and only the skin of the
-  // volumes if nothing else is drawn of them (View.AdaptSkinOnly), unless the
-  // whole view is asked for (nothing is done if it is already refined so)
+  // The adaptive data of a view drawn adapted (View.AdaptVisualizationGrid),
+  // made when it is first used and again when the data has changed: null if
+  // the view is not adaptive. What uses the view refined calls adapt(), or
+  // adaptWhole(): drawing, plugins, probes, the API; saving the view refined
+  // refines it apart (see getAdaptedSteps()).
+  adaptiveData *initAdaptiveData();
+  // refine the adaptive data as the options say: the time step, the recursion
+  // level, the target error, the range drawn if it is a custom one, which the
+  // error is then relative to, and only the skin of the volumes if nothing else
+  // is drawn of them (View.AdaptSkinOnly), unless the whole view is asked for
+  // (nothing is done if it is already refined so)
   void adapt(bool whole = false);
   // for a view whose skin alone is refined, refine apart the elements the
   // clipping planes cut, which what the planes add is built from (see

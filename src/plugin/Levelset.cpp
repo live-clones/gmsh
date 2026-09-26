@@ -636,10 +636,9 @@ void GMSH_LevelsetPlugin::_cutPolytope(PViewData *vdata, PViewData *wdata,
 PView *GMSH_LevelsetPlugin::execute(PView *v)
 {
   // for adapted views we can only run the plugin on one step at a time
-  if(v->getData()->getAdaptiveData()) {
+  if(adaptiveData *a = v->initAdaptiveData()) {
     PViewOptions *opt = v->getOptions();
-    v->getData()->getAdaptiveData()->changeResolution(
-      opt->timeStep, _recurLevel, _targetError, this);
+    a->changeResolution(opt->timeStep, _recurLevel, _targetError, this);
     v->setChanged(true);
   }
 
