@@ -18,6 +18,7 @@
 #include "Numeric.h"
 #include "GmshMessage.h"
 #include "Context.h"
+#include <atomic>
 #include "pyramidalBasis.h"
 
 PViewDataGModel::PViewDataGModel(DataType type)
@@ -87,42 +88,63 @@ static MElement *_getOneElementOfGivenType(GModel *m, int type)
   return nullptr;
 }
 
+void PViewDataGModel::_computeMinMax(int step)
+{
+  stepData<double> *s = _steps[step];
+  double min = VAL_INF, max = -VAL_INF;
+  int tensorRep = 0; // Von-Mises: we could/should be able to choose this
+  if(_type == NodeData || _type == ElementData) {
+    // treat these 2 special cases separately for maximum efficiency
+    int numComp = s->getNumComponents();
+    for(std::size_t i = 0; i < s->getNumData(); i++) {
+      double *d = s->getData(i);
+      if(!d) continue;
+      double val =
+        (numComp == 1) ? d[0] : ComputeScalarRep(numComp, d, tensorRep);
+      min = std::min(min, val);
+      max = std::max(max, val);
+    }
+  }
+  else {
+    // general case (slower)
+    for(int ent = 0; ent < getNumEntities(step); ent++) {
+      for(int ele = 0; ele < getNumElements(step, ent); ele++) {
+        if(skipElement(step, ent, ele)) continue;
+        for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++) {
+          double val;
+          getScalarValue(step, ent, ele, nod, val, tensorRep);
+          min = std::min(min, val);
+          max = std::max(max, val);
+        }
+      }
+    }
+  }
+  s->setMin(min);
+  s->setMax(max);
+}
+
+void PViewDataGModel::_finalizeStep(int step, bool computeMinMax)
+{
+  if(computeMinMax) {
+    _computeMinMax(step);
+    _min = VAL_INF;
+    _max = -VAL_INF;
+    for(auto s : _steps) {
+      _min = std::min(_min, s->getMin());
+      _max = std::max(_max, s->getMax());
+    }
+  }
+  finalize(false);
+}
+
 bool PViewDataGModel::finalize(bool computeMinMax,
                                const std::string &interpolationScheme)
 {
   if(computeMinMax) {
     _min = VAL_INF;
     _max = -VAL_INF;
-    int tensorRep = 0; // Von-Mises: we could/should be able to choose this
     for(int step = 0; step < getNumTimeSteps(); step++) {
-      _steps[step]->setMin(VAL_INF);
-      _steps[step]->setMax(-VAL_INF);
-      if(_type == NodeData || _type == ElementData) {
-        // treat these 2 special cases separately for maximum efficiency
-        int numComp = _steps[step]->getNumComponents();
-        for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
-          double *d = _steps[step]->getData(i);
-          if(d) {
-            double val = ComputeScalarRep(numComp, d, tensorRep);
-            _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
-            _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
-          }
-        }
-      }
-      else {
-        // general case (slower)
-        for(int ent = 0; ent < getNumEntities(step); ent++) {
-          for(int ele = 0; ele < getNumElements(step, ent); ele++) {
-            if(skipElement(step, ent, ele)) continue;
-            for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++) {
-              double val;
-              getScalarValue(step, ent, ele, nod, val, tensorRep);
-              _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
-              _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
-            }
-          }
-        }
-      }
+      _computeMinMax(step);
       _min = std::min(_min, _steps[step]->getMin());
       _max = std::max(_max, _steps[step]->getMax());
     }
@@ -482,17 +504,16 @@ int PViewDataGModel::getNumPolyhedra(int step)
 int PViewDataGModel::getNumEntities(int step)
 {
   if(_steps.empty()) return 0;
-  // to generalize
-  if(step < 0) return _steps[0]->getNumEntities();
+  // (step < 0: any step, the first with data, as the steps before it may be
+  // placeholders without entities)
+  if(step < 0) step = getFirstNonEmptyTimeStep();
   return _steps[step]->getNumEntities();
 }
 
 int PViewDataGModel::getNumElements(int step, int ent)
 {
   if(_steps.empty()) return 0;
-  // to generalize
-  if(step < 0 && ent < 0) return _steps[0]->getModel()->getNumMeshElements();
-  if(step < 0) return _steps[0]->getEntity(ent)->getNumMeshElements();
+  if(step < 0) step = getFirstNonEmptyTimeStep(); // (see getNumEntities())
   if(ent < 0) return _steps[step]->getModel()->getNumMeshElements();
   return _steps[step]->getEntity(ent)->getNumMeshElements();
 }
@@ -505,8 +526,7 @@ GEntity *PViewDataGModel::getEntity(int step, int ent)
 MElement *PViewDataGModel::getElement(int step, int ent, int element)
 {
   if(_steps.empty()) return nullptr;
-  // to generalize
-  if(step < 0) return _steps[0]->getEntity(ent)->getMeshElement(element);
+  if(step < 0) step = getFirstNonEmptyTimeStep(); // (see getNumEntities())
   return _steps[step]->getEntity(ent)->getMeshElement(element);
 }
 
@@ -516,8 +536,10 @@ int PViewDataGModel::getDimension(int step, int ent, int ele)
 }
 
 int PViewDataGModel::getNumNodes(int step, int ent, int ele)
+{ return _getNumNodes(step, _getElement(step, ent, ele)); }
+
+int PViewDataGModel::_getNumNodes(int step, MElement *e)
 {
-  MElement *e = _getElement(step, ent, ele);
   if(_type == GaussPointData) {
     return _steps[step]->getGaussPoints(e->getTypeForMSH()).size() / 3;
   }
@@ -641,59 +663,65 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int idx, double &val)
   }
 }
 
-void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp,
-                               double &val)
+// where the value of a component at a node of an element is (element-node and
+// Gauss point data: as many values per element as it has, those of its first
+// node for the nodes beyond them)
+double *PViewDataGModel::_getValue(int step, MElement *e, int nod, int comp)
 {
-  MElement *e = _getElement(step, ent, ele);
+  stepData<double> *s = _steps[step];
   switch(_type) {
-  case NodeData: {
-    int num = _getNode(e, nod)->getNum();
-    val = _steps[step]->getData(num)[comp];
-  } break;
+  case NodeData: return &s->getData(_getNode(e, nod)->getNum())[comp];
   case ElementNodeData:
   case GaussPointData:
-    if(_steps[step]->getMult(e->getNum()) < nod + 1) {
+    if(s->getMult(e->getNum()) < nod + 1) {
       nod = 0;
-      static bool first = true;
-      if(first) {
+      static std::atomic<bool> warned(false);
+      if(!warned.exchange(true))
         Msg::Warning("Some elements in ElementNodeData have less values than "
                      "number of nodes");
-        first = false;
-      }
     }
-    val = _steps[step]->getData(
-      e->getNum())[_steps[step]->getNumComponents() * nod + comp];
-    break;
+    return &s->getData(e->getNum())[s->getNumComponents() * nod + comp];
   case ElementData:
-  default: val = _steps[step]->getData(e->getNum())[comp]; break;
+  default: return &s->getData(e->getNum())[comp];
   }
 }
 
+void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp,
+                               double &val)
+{ val = *_getValue(step, _getElement(step, ent, ele), nod, comp); }
+
 void PViewDataGModel::setValue(int step, int ent, int ele, int nod, int comp,
                                double val)
+{ *_getValue(step, _getElement(step, ent, ele), nod, comp) = val; }
+
+void PViewDataGModel::getElementInfo(int step, int ent, int ele, int &type,
+                                     int &dim, int &numNodes, int &numComp)
 {
   MElement *e = _getElement(step, ent, ele);
-  switch(_type) {
-  case NodeData: {
-    int num = _getNode(e, nod)->getNum();
-    _steps[step]->getData(num)[comp] = val;
-  } break;
-  case ElementNodeData:
-  case GaussPointData:
-    if(_steps[step]->getMult(e->getNum()) < nod + 1) {
-      nod = 0;
-      static bool first = true;
-      if(first) {
-        Msg::Warning("Some elements in ElementNodeData have less values than "
-                     "number of nodes");
-        first = false;
-      }
-    }
-    _steps[step]->getData(
-      e->getNum())[_steps[step]->getNumComponents() * nod + comp] = val;
-    break;
-  case ElementData:
-  default: _steps[step]->getData(e->getNum())[comp] = val; break;
+  type = e->getType();
+  dim = e->getDim();
+  numNodes = _getNumNodes(step, e);
+  numComp = _steps[step]->getNumComponents();
+}
+
+void PViewDataGModel::getNodesAndValues(int step, int ent, int ele,
+                                        int numNodes, int numComp, double **xyz,
+                                        double **val)
+{
+  // (the nodes of Gauss point data are interpolated: see getNode())
+  if(_type == GaussPointData) {
+    PViewData::getNodesAndValues(step, ent, ele, numNodes, numComp, xyz, val);
+    return;
+  }
+  MElement *e = _getElement(step, ent, ele);
+  for(int j = 0; j < numNodes; j++) {
+    MVertex *v = _getNode(e, j);
+    xyz[j][0] = v->x();
+    xyz[j][1] = v->y();
+    xyz[j][2] = v->z();
+    if(!numComp) continue;
+    double *d = _getValue(step, e, j, 0);
+    for(int k = 0; k < numComp; k++) val[j][k] = d[k];
   }
 }
 
@@ -720,8 +748,7 @@ void PViewDataGModel::smooth()
     GModel *m = _steps[step]->getModel();
     int numComp = _steps[step]->getNumComponents();
     _steps2.push_back(new stepData<double>(
-      m, numComp, _steps[step]->getFileName(), _steps[step]->getFileIndex(),
-      _steps[step]->getTime()));
+      m, numComp, _steps[step]->getFileName(), _steps[step]->getTime()));
     _steps2.back()->fillEntities();
     _steps2.back()->computeBoundingBox();
 
@@ -853,7 +880,7 @@ bool PViewDataGModel::forEachMesh(const std::function<bool(int)> &f)
     for(std::size_t step = 0; step < all.size(); step++) {
       if(step >= first && step < last) continue;
       empty.push_back(new stepData<double>(model, all[step]->getNumComponents(),
-                                           "", -1, all[step]->getTime()));
+                                           "", all[step]->getTime()));
       _steps[step] = empty.back();
     }
     if(!f(first)) ok = false;
@@ -877,10 +904,16 @@ stepData<double> *PViewDataGModel::_getStep(int step, GModel *model,
   if(step < 0) return nullptr;
   while(step >= (int)_steps.size())
     _steps.push_back(new stepData<double>(model, numComp));
-  if(_steps[step]->getNumComponents() != numComp) {
+  if(_steps[step]->getNumComponents() != numComp ||
+     _steps[step]->getModel() != model) {
     if(_steps[step]->getNumData()) {
-      Msg::Error("Step %d of view '%s' has %d components, not %d", step,
-                 getName().c_str(), _steps[step]->getNumComponents(), numComp);
+      if(_steps[step]->getModel() != model)
+        Msg::Error("Step %d of view '%s' is on another model", step,
+                   getName().c_str());
+      else
+        Msg::Error("Step %d of view '%s' has %d components, not %d", step,
+                   getName().c_str(), _steps[step]->getNumComponents(),
+                   numComp);
       return nullptr;
     }
     delete _steps[step];
@@ -956,7 +989,7 @@ bool PViewDataGModel::hasModel(GModel *model, int step)
   return (model == _steps[step]->getModel());
 }
 
-bool PViewDataGModel::getValueByIndex(int step, int dataIndex, int nod,
+bool PViewDataGModel::getValueByIndex(int step, std::size_t dataIndex, int nod,
                                       int comp, double &val)
 {
   double *d = _steps[step]->getData(dataIndex);

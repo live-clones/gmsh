@@ -249,7 +249,6 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
                      getNumTimeSteps();
         if(!_getStep(target, m, numCompMsh)) return false;
         _steps[target]->setFileName(fileName);
-        _steps[target]->setFileIndex(fileIndex);
         _steps[target]->setTime(dt);
       }
 

@@ -556,7 +556,6 @@ bool PViewDataGModel::readCGNS(
   // create step if needed
   if(_steps.empty()) {
     _steps.push_back(new stepData<double>(GModel::current(), 1));
-    _steps.back()->setFileIndex(-1);
     _steps.back()->setTime(0.);
   }
 

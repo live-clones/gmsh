@@ -7,15 +7,13 @@
 #include "GmshMessage.h"
 #include "PView.h"
 #include "PViewData.h"
-#include "PViewOptions.h"
 #include "PViewDataList.h"
 #include "PViewDataGModel.h"
-#include "VertexArray.h"
 #include "StringUtils.h"
 #include "Context.h"
 #include "OS.h"
-#include "adaptiveData.h"
 #include "CreateFile.h"
+#include "fullMatrix.h"
 
 bool PView::readPOS(const std::string &fileName, int fileIndex)
 {
@@ -225,8 +223,8 @@ bool PView::readMSHViewData(const std::string &fileName, FILE *fp, bool binary,
                d->canAddData(type, timeStep, numComp);
       };
       auto read = [&](PViewDataGModel *d) {
-        return d->readMSH(viewName, fileName, -1, fp, binary, swap, timeStep,
-                          time, partition, numComp, numEnt, interpolationScheme,
+        return d->readMSH(viewName, fileName, fp, binary, swap, timeStep, time,
+                          partition, numComp, numEnt, interpolationScheme,
                           version);
       };
       if(!PViewDataGModel::readInView(viewName, fileName, type, accept, read)) {
@@ -235,10 +233,9 @@ bool PView::readMSHViewData(const std::string &fileName, FILE *fp, bool binary,
       }
     }
   }
-  else if(blocksize > 0 && partitionToRead != partition) {
-    // if current partition does not correspond to the requested partition
-    // and if its blocksise has been read (5th integer in the header),
-    // jump over it
+  else if(blocksize > 0) {
+    // another partition than the one requested, whose size is given (5th
+    // integer tag): jump over it
     fseek(fp, blocksize, SEEK_CUR);
   }
   return true;

@@ -6,7 +6,6 @@
 #include "GmshMessage.h"
 #include "PViewDataGModel.h"
 #include "MVertex.h"
-#include "Context.h"
 #include "fullMatrix.h"
 #include "StringUtils.h"
 #include "OS.h"
@@ -244,10 +243,9 @@ namespace {
 } // namespace
 
 bool PViewDataGModel::readMSH(const std::string &viewName,
-                              const std::string &fileName, int fileIndex,
-                              FILE *fp, bool binary, bool swap, int step,
-                              double time, int partition, int numComp,
-                              int numEnt,
+                              const std::string &fileName, FILE *fp,
+                              bool binary, bool swap, int step, double time,
+                              int partition, int numComp, int numEnt,
                               const std::string &interpolationScheme,
                               double version)
 {
@@ -257,7 +255,6 @@ bool PViewDataGModel::readMSH(const std::string &viewName,
   stepData<double> *s = _getStep(step, GModel::current(), numComp);
   if(!s) return false;
   s->setFileName(fileName);
-  s->setFileIndex(fileIndex);
   s->setTime(time);
 
   // the min/max are computed here to avoid calling finalize(true) later: this
@@ -266,6 +263,10 @@ bool PViewDataGModel::readMSH(const std::string &viewName,
   // steps/partitions, and thus loop over all the elements many times)
   bool hasMult = (_type == ElementNodeData || _type == GaussPointData);
   double min = VAL_INF, max = -VAL_INF;
+  // (indexed by tag: the records of 4.1 files do not give the largest)
+  GModel *m = s->getModel();
+  s->resizeData((_type == NodeData) ? m->getMaxVertexNumber() + 1 :
+                                      m->getMaxElementNumber() + 1);
   if(version >= 4.2) {
     if(!readBlocks(s, fp, binary, swap, hasMult, min, max)) return false;
   }
@@ -422,6 +423,11 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
 {
   if(_steps.empty()) return true;
 
+  if(_type == GaussPointData) {
+    Msg::Error("Cannot save Gauss point data in MSH files");
+    return false;
+  }
+
   // (a file for each mesh, name_0000.msh, named after its first step)
   if(hasMultipleMeshes()) {
     Msg::Info("Exporting multi-mesh view in separate files");
@@ -550,6 +556,6 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
     fprintf(fp, "$End%s\n", section.c_str());
   }
 
-  fclose(fp);
+  if(fp) fclose(fp);
   return true;
 }

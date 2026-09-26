@@ -8,11 +8,6 @@
 #include "PViewDataGModel.h"
 #include "PViewDataList.h"
 #include "MVertex.h"
-#include "MElement.h"
-#include "Numeric.h"
-#include "fullMatrix.h"
-#include "StringUtils.h"
-#include "OS.h"
 
 bool PViewDataGModel::addData(GModel *model,
                               const std::map<int, std::vector<double> > &data,
@@ -31,9 +26,10 @@ bool PViewDataGModel::addData(GModel *model,
   if(!_getStep(step, model, numComp)) return false;
   _steps[step]->setTime(time);
 
-  int numEnt = (_type == NodeData) ? model->getNumMeshVertices() :
-                                     model->getNumMeshElements();
-  _steps[step]->resizeData(numEnt);
+  // (indexed by tag)
+  _steps[step]->resizeData((_type == NodeData) ?
+                             model->getMaxVertexNumber() + 1 :
+                             model->getMaxElementNumber() + 1);
 
   for(auto it = data.begin(); it != data.end(); it++) {
     int mult = it->second.size() / numComp;
@@ -41,7 +37,7 @@ bool PViewDataGModel::addData(GModel *model,
     for(int j = 0; j < numComp * mult; j++) d[j] = it->second[j];
   }
   if(partition >= 0) _steps[step]->getPartitions().insert(partition);
-  finalize();
+  _finalizeStep(step);
   return true;
 }
 
@@ -68,9 +64,10 @@ bool PViewDataGModel::addData(GModel *model,
   if(!_getStep(step, model, numComp)) return false;
   _steps[step]->setTime(time);
 
-  int numEnt = (_type == NodeData) ? model->getNumMeshVertices() :
-                                     model->getNumMeshElements();
-  _steps[step]->resizeData(numEnt);
+  // (indexed by tag)
+  _steps[step]->resizeData((_type == NodeData) ?
+                             model->getMaxVertexNumber() + 1 :
+                             model->getMaxElementNumber() + 1);
 
   for(std::size_t i = 0; i < data.size(); i++) {
     int mult = data[i].size() / numComp;
@@ -78,7 +75,7 @@ bool PViewDataGModel::addData(GModel *model,
     for(int j = 0; j < numComp * mult; j++) d[j] = data[i][j];
   }
   if(partition >= 0) _steps[step]->getPartitions().insert(partition);
-  finalize(minMax);
+  _finalizeStep(step, minMax);
   return true;
 }
 
@@ -102,12 +99,19 @@ bool PViewDataGModel::addData(GModel *model,
     }
   }
 
+  if(numComp < 1 || stride % numComp) {
+    Msg::Error("%zu values per entity are not a multiple of %d components",
+               stride, numComp);
+    return false;
+  }
+
   if(!_getStep(step, model, numComp)) return false;
   _steps[step]->setTime(time);
 
-  int numEnt = (_type == NodeData) ? model->getNumMeshVertices() :
-                                     model->getNumMeshElements();
-  _steps[step]->resizeData(numEnt);
+  // (indexed by tag)
+  _steps[step]->resizeData((_type == NodeData) ?
+                             model->getMaxVertexNumber() + 1 :
+                             model->getMaxElementNumber() + 1);
 
   int mult = stride / numComp;
   for(std::size_t i = 0; i < tags.size(); i++) {
@@ -116,7 +120,7 @@ bool PViewDataGModel::addData(GModel *model,
     for(std::size_t j = 0; j < stride; j++) d[j] = data[k + j];
   }
   if(partition >= 0) _steps[step]->getPartitions().insert(partition);
-  finalize();
+  _finalizeStep(step);
   return true;
 }
 
