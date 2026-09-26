@@ -47,6 +47,7 @@ GFace::GFace(GModel *model, int tag)
 {
   meshStatistics.status = GFace::PENDING;
   meshStatistics.refineAllEdges = false;
+  meshStatistics.nbRefineAllEdges = 0;
   GFace::resetMeshAttributes();
 }
 

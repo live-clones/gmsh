@@ -2049,10 +2049,15 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     if(debug) debugViews(m, gf, "phase3");
     if(debug) debugViews(m, gf, "phase4");
 
-    if(gf->meshStatistics.status == GFace::FAILED) {
+    // refining the bounding curves does not always help, e.g. near the apex
+    // of a cone, where the circumference always ends up smaller than the mesh
+    // size: stop after a few attempts, as each one doubles the number of nodes
+    if(gf->meshStatistics.status == GFace::FAILED &&
+       gf->meshStatistics.nbRefineAllEdges < 3) {
       // splitall
       gf->meshStatistics.status = GFace::PENDING;
       gf->meshStatistics.refineAllEdges = true;
+      gf->meshStatistics.nbRefineAllEdges++;
       delete m;
       Msg::Info("Serializing surface %d and refining all its bounding edges",
                 gf->tag());

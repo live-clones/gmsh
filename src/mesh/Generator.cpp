@@ -675,8 +675,10 @@ static void Mesh2D(GModel *m)
       nthreads = 1;
   }
 
-  for(auto it = m->firstFace(); it != m->lastFace(); ++it)
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     (*it)->meshStatistics.status = GFace::PENDING;
+    (*it)->meshStatistics.nbRefineAllEdges = 0;
+  }
 
   // boundary layers are special: their generation (including vertices and curve
   // meshes) is global as it depends on a smooth normal field generated from the
