@@ -582,6 +582,7 @@ double opt_mesh_boundary_layer_fan_elements(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
 double opt_mesh_algo2d(OPT_ARGS_NUM);
 double opt_mesh_algo3d(OPT_ARGS_NUM);
+double opt_mesh_mmg3d_combine_domains(OPT_ARGS_NUM);
 double opt_mesh_algo_switch_on_failure(OPT_ARGS_NUM);
 double opt_mesh_algo_recombine(OPT_ARGS_NUM);
 double opt_mesh_max_retries(OPT_ARGS_NUM);
