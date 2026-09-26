@@ -1203,6 +1203,11 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "AlgorithmSwitchOnFailure" , opt_mesh_algo_switch_on_failure , 1 ,
     "Switch meshing algorithm on failure? (Currently only for 2D Delaunay-based "
     "algorithms, switching to MeshAdapt)"},
+  { F|O, "MMG3DCombineDomains" , opt_mesh_mmg3d_combine_domains , 1 ,
+    "When Algorithm3D=7 (MMG3D) is used on connected volumes that share an "
+    "internal interface, run a single combined MMG3D call over the whole group "
+    "with per-region references instead of one independent call per region "
+    "(0: independent per-region calls; 1: single combined call)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,

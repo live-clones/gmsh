@@ -2300,6 +2300,16 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
        benchmarks/io_vtk/*.geo)
   # (fails on the CI machines, not understood yet)
   list(FILTER ALLFILES EXCLUDE REGEX "io_vtk/vtu_roundtrip.geo$")
+  # mmg3d_multidomain_bgmesh.geo meshes itself (two explicit "Mesh 3;" calls,
+  # by design -- see its header comment): the loop below always appends
+  # "-3", which would trigger a redundant *third* meshing pass starting from
+  # the already-adapted mesh left by the script's own two passes, and that
+  # is not something this pipeline supports (fails with an unrelated PLC
+  # boundary-recovery error). Excluded here; it's covered by the dedicated
+  # mmg3d_multidomain_bgmesh_interface test below instead, which runs the
+  # file the way it's meant to be run (open it, let its own script execute).
+  list(REMOVE_ITEM ALLFILES
+      ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/occ/mmg3d_multidomain_bgmesh.geo)
   filter_tests("${ALLFILES}" TESTFILES)
   foreach(TESTFILE ${TESTFILES})
     # use relative path for Cygwin/MinGW (the pure win exe built with the MinGW
@@ -2307,6 +2317,27 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
     add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
   endforeach()
+  # mmg3d_multidomain_bgmesh.geo's correctness check (no hanging nodes on the
+  # combined-MMG3D interface) needs node/element-adjacency introspection that
+  # .geo script syntax can't express, so it can't be a plain add_test(./gmsh
+  # ...) entry like the loop above -- that only catches a crash/error, and
+  # the bug this guards against does not make gmsh exit non-zero. Uses the
+  # gmsh Python module from the install tree (not the generic, disabled
+  # Python-tests block below, which has known unresolved path issues) so
+  # this test requires `make install` to have run first.
+  if(ENABLE_BUILD_DYNAMIC)
+    find_package(PythonInterp)
+    if(PYTHONINTERP_FOUND)
+      add_test(NAME mmg3d_multidomain_bgmesh_interface
+              COMMAND ${PYTHON_EXECUTABLE}
+              ${CMAKE_SOURCE_DIR}/benchmarks/occ/check_mmg3d_multidomain_bgmesh.py)
+      set_property(TEST mmg3d_multidomain_bgmesh_interface APPEND PROPERTY
+                  ENVIRONMENT "PYTHONPATH=${CMAKE_INSTALL_PREFIX}/${GMSH_LIB}")
+      set_property(TEST mmg3d_multidomain_bgmesh_interface APPEND PROPERTY
+                  ENVIRONMENT
+                  "LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/${GMSH_LIB}")
+    endif()
+  endif()
   # test c++ and c api tutorials with dynamic builds
   if(ENABLE_BUILD_DYNAMIC)
     file(GLOB_RECURSE ALLFILES tutorials/c++/*.cpp tutorials/c/*.c)
