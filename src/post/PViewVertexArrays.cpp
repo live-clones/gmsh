@@ -987,6 +987,7 @@ static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
   k.push_back(ctx->meshContentStamp);
   k.push_back(ctx->entityVisibilityStamp);
   k.push_back(opt->sampling);
+  k.push_back(opt->drawSkinOnly);
   k.push_back(opt->drawTetrahedra);
   k.push_back(opt->drawHexahedra);
   k.push_back(opt->drawPrisms);
@@ -1098,6 +1099,9 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
   std::vector<chunk> chunks(nthreads);
   std::atomic<bool> bad(false);
   skin.masks.assign(flat.num, 0);
+  // (faces are told apart by entity, see getSkinKeys())
+  std::vector<int> entKey;
+  data->getSkinKeys(step, opt->drawSkinOnly == 2, entKey);
 
 #pragma omp parallel for schedule(static, 1) num_threads(nthreads)
   for(int t = 0; t < nthreads; t++) {
@@ -1201,7 +1205,8 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
           }
           for(int j = 0; j < n; j++) kk[j] = ids[fi[j]];
           hash[nf++] = matcher.share(kk, n, nthreads) == t ?
-                         matcher.hashOf(kk, n, c.ent[e]) : 0;
+                         matcher.hashOf(kk, n, entKey[c.ent[e]]) :
+                         0;
         };
         if(c.shape[e] == 4)
           forFaces(c, e, ip, faces, hashFace);

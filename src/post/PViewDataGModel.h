@@ -299,6 +299,7 @@ public:
   int getNode(int step, int ent, int ele, int nod, double &x, double &y,
               double &z);
   std::size_t getNodeId(int step, int ent, int ele, int nod);
+  void getSkinKeys(int step, bool partitionsTogether, std::vector<int> &keys);
   void setNode(int step, int ent, int ele, int nod, double x, double y,
                double z);
   int getNumComponents(int step, int ent, int ele);

@@ -1281,7 +1281,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "DrawSkinEdgesOnly" , opt_mesh_draw_skin_edges_only , 0. ,
     "Draw only the edges of the boundary faces of 3D meshes?" },
   { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 1. ,
-    "Draw only the boundary faces of 3D meshes?" },
+    "Draw only the boundary faces of 3D meshes, entity by entity (1), or with "
+    "the partitions of an entity together, without the faces between them (2)" },
   { F|O, "DrawUniqueEdges" , opt_mesh_draw_unique_edges , 1. ,
     "Draw each mesh edge once instead of once per element? (only if "
     "Mesh.Explode is 1)" },
@@ -1912,7 +1913,8 @@ StringXNumber ViewOptions_Number[] = {
     "Refine only the skin of the volumes of an adaptive view when only the skin "
     "is drawn (DrawSkinOnly), and apart the volumes the clipping planes cut "
     "when they are capped or drawn whole: what reads the refined view as a "
-    "whole (plugins, probes, the API) refines it all" },
+    "whole (plugins, probes, the API) refines it all (2: the same, with the "
+    "partitions of an entity together, without the faces between them)" },
   { F|O, "AdaptVisualizationGrid" , opt_view_adapt_visualization_grid , 0. ,
     "Use adaptive visualization grid (for high-order elements)?" },
   { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 30.0 ,
@@ -2043,7 +2045,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "DrawSkinEdgesOnly" , opt_view_draw_skin_edges_only , 0. ,
     "Draw only the outlines of the boundary faces of 3D views?" },
   { F|O, "DrawSkinOnly" , opt_view_draw_skin_only , 1. ,
-    "Draw only the boundary faces of 3D views?" },
+    "Draw only the boundary faces of 3D views, entity by entity (1), or with "
+    "the partitions of an entity together, without the faces between them (2)" },
   { F|O, "DrawStrings" , opt_view_draw_strings , 1. ,
     "Display post-processing annotation strings?" },
   { F|O, "DrawTensors" , opt_view_draw_tensors , 1. ,

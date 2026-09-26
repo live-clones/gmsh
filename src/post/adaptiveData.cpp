@@ -1055,10 +1055,11 @@ int adaptiveElements::_addPolytope(int level, int step, PViewData *in, int ent,
 adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
   : _step(-1), _level(-1), _tol(-1.), _skinAsked(false), _skinOnly(false),
     _selected(false), _inStamp(data->getStamp()), _skinStep(-1), _skinStamp(-1),
-    _skinFound(false), _inData(data), _points(nullptr), _lines(nullptr),
-    _triangles(nullptr), _quadrangles(nullptr), _tetrahedra(nullptr),
-    _hexahedra(nullptr), _prisms(nullptr), _pyramids(nullptr),
-    _polygons(nullptr), _polyhedra(nullptr)
+    _partitionsTogether(false), _skinFound(false), _inData(data),
+    _points(nullptr), _lines(nullptr), _triangles(nullptr),
+    _quadrangles(nullptr), _tetrahedra(nullptr), _hexahedra(nullptr),
+    _prisms(nullptr), _pyramids(nullptr), _polygons(nullptr),
+    _polyhedra(nullptr)
 {
   if(outDataInit ==
      true) { // For visualization of the adapted view in GMSH GUI only
@@ -1142,6 +1143,8 @@ bool adaptiveData::_findSkin(int step,
                    CTX::instance()->numThreadsFor(num, 10000) :
                    1;
   std::atomic<bool> bad(false);
+  std::vector<int> keys;
+  _inData->getSkinKeys(step, _partitionsTogether, keys);
   auto entityOf = [&](std::size_t i) {
     return (int)(std::upper_bound(start.begin(), start.end(), i) -
                  start.begin()) - 1;
@@ -1172,14 +1175,14 @@ bool adaptiveData::_findSkin(int step,
       if(shapeOf[i] < 0) continue;
       const adaptiveShape &shape = *shapes[(int)shapeOf[i]];
       // (entity by entity, as the skin of the views: findSkin())
-      int ent = entityOf(i);
+      int key = keys[entityOf(i)];
       for(std::size_t f = 0; f < shape.faces.size(); f++) {
         std::size_t k[4];
         int n = (int)shape.faces[f].size();
         for(int j = 0; j < n; j++) k[j] = ids[8 * i + shape.faces[f][j]];
         if(FaceMatcher<std::size_t, std::size_t>::share(k, n, nthreads) != t)
           continue;
-        matcher.add(matcher.hashOf(k, n, ent), i, (int)f);
+        matcher.add(matcher.hashOf(k, n, key), i, (int)f);
       }
     }
     matcher.forEachLeft(
@@ -1201,6 +1204,7 @@ void adaptiveData::copySkinOf(const adaptiveData &other)
   _skinFound = other._skinFound;
   _skinStep = other._skinStep;
   _skinStamp = other._skinStamp;
+  _partitionsTogether = other._partitionsTogether;
 }
 
 void adaptiveData::changeResolution(int step, int level, double tol,

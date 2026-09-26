@@ -6968,7 +6968,7 @@ double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->mesh.butt[0]->value(
+    FlGui::instance()->options->mesh.choice[12]->value(
       CTX::instance()->mesh.drawSkinOnly);
 #endif
   return CTX::instance()->mesh.drawSkinOnly;
@@ -8319,7 +8319,7 @@ double opt_view_adapt_skin_only(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    FlGui::instance()->options->view.butt[39]->value(opt->adaptSkinOnly);
+    FlGui::instance()->options->view.choice[18]->value(opt->adaptSkinOnly);
 #endif
   return opt->adaptSkinOnly;
 #else

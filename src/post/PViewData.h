@@ -165,6 +165,17 @@ public:
   // better than a matching of the faces would find them (null otherwise)
   virtual const std::vector<unsigned char> *getSkinMasks() { return nullptr; }
 
+  // what tells the entities apart when the skin of the view is taken entity by
+  // entity (a face shared by two entities is kept): their index, or with
+  // partitions together (View.DrawSkinOnly or View.AdaptSkinOnly = 2) that of
+  // their parent entity for the partition entities
+  virtual void getSkinKeys(int step, bool partitionsTogether,
+                           std::vector<int> &keys)
+  {
+    keys.resize(getNumEntities(step));
+    for(std::size_t i = 0; i < keys.size(); i++) keys[i] = (int)i;
+  }
+
   // a stable identifier for a node of an element, the same for the elements
   // sharing it; 0 if the data has no node topology
   virtual std::size_t getNodeId(int step, int ent, int ele, int nod)

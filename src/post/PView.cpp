@@ -322,6 +322,8 @@ void PView::adapt(bool whole)
   if((cutOnly || apart) && _options->movesNodes()) skin = false;
   planesSelection cut(_options->clip);
   bool select = cutOnly && skin;
+  _data->getAdaptiveData()->setPartitionsTogether(_options->drawSkinOnly == 2 ||
+                                                  _options->adaptSkinOnly == 2);
   _data->getAdaptiveData()->changeResolution(
     _options->timeStep, _options->maxRecursionLevel, _options->targetError,
     nullptr, min, max, skin && !select, select ? &cut : nullptr);

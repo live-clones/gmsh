@@ -586,7 +586,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_volume_edges(0, GMSH_SET, o->mesh.butt[10]->value());
   opt_mesh_volume_faces(0, GMSH_SET, o->mesh.butt[11]->value());
   opt_mesh_draw_skin_edges_only(0, GMSH_SET, o->mesh.butt[1]->value());
-  opt_mesh_draw_skin_only(0, GMSH_SET, o->mesh.butt[0]->value());
+  opt_mesh_draw_skin_only(0, GMSH_SET, o->mesh.choice[12]->value());
   opt_mesh_node_labels(0, GMSH_SET, o->mesh.butt[12]->value());
   opt_mesh_line_labels(0, GMSH_SET, o->mesh.butt[13]->value());
   opt_mesh_surface_labels(0, GMSH_SET, o->mesh.butt[14]->value());
@@ -987,7 +987,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (val != adapt_vis_grid))
         opt_view_adapt_visualization_grid(i, GMSH_SET, val);
 
-      val = o->view.butt[39]->value();
+      val = o->view.choice[18]->value();
       if(force || (val != adapt_skin_only))
         opt_view_adapt_skin_only(i, GMSH_SET, val);
 
@@ -2796,11 +2796,16 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[1]->type(FL_TOGGLE_BUTTON);
       mesh.butt[1]->callback(mesh_options_ok_cb);
 
-      mesh.butt[0] = new Fl_Check_Button(L + width / 2, 2 * WB + 6 * BH,
-                                          BW / 2 - WB, BH, "Hide interior faces");
-      mesh.butt[0]->tooltip("Mesh.DrawSkinOnly");
-      mesh.butt[0]->type(FL_TOGGLE_BUTTON);
-      mesh.butt[0]->callback(mesh_options_ok_cb);
+      static Fl_Menu_Item menu_skin[] = {
+        {"Show interior faces", 0, nullptr, nullptr},
+        {"Hide interior faces", 0, nullptr, nullptr},
+        {"Hide partition faces", 0, nullptr, nullptr},
+        {nullptr}};
+      mesh.choice[12] =
+        new Fl_Choice(L + width / 2, 2 * WB + 6 * BH, BW / 2 - WB, BH);
+      mesh.choice[12]->menu(menu_skin);
+      mesh.choice[12]->tooltip("Mesh.DrawSkinOnly");
+      mesh.choice[12]->callback(mesh_options_ok_cb);
 
       mesh.butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
                                           BW / 2 - WB, BH, "Node labels");
@@ -3356,12 +3361,16 @@ optionWindow::optionWindow(int deltaFontSize)
       view.butt[0]->type(FL_TOGGLE_BUTTON);
       view.butt[0]->callback(view_options_ok_cb, (void *)"view_adaptive");
 
-      view.butt[39] = new Fl_Check_Button(L + width - IW - 2 * WB,
-                                          2 * WB + 9 * BH, IW, BH,
-                                          "Adapt skin only");
-      view.butt[39]->tooltip("View.AdaptSkinOnly");
-      view.butt[39]->type(FL_TOGGLE_BUTTON);
-      view.butt[39]->callback(view_options_ok_cb);
+      static Fl_Menu_Item menu_adapt_skin[] = {
+        {"Adapt everything", 0, nullptr, nullptr},
+        {"Adapt skin only", 0, nullptr, nullptr},
+        {"Skin w/o partitions", 0, nullptr, nullptr},
+        {nullptr}};
+      view.choice[18] =
+        new Fl_Choice(L + width - IW - 2 * WB, 2 * WB + 9 * BH, IW, BH);
+      view.choice[18]->menu(menu_adapt_skin);
+      view.choice[18]->tooltip("View.AdaptSkinOnly");
+      view.choice[18]->callback(view_options_ok_cb);
 
       view.push[5] = new Fl_Button(L + 2 * WB, 2 * WB + 10 * BH, sw, BH, "-");
       view.push[5]->callback(view_options_max_recursion_cb, (void *)"-");

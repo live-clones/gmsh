@@ -577,6 +577,25 @@ std::size_t PViewDataGModel::getNodeId(int step, int ent, int ele, int nod)
   return v ? v->getNum() : 0;
 }
 
+void PViewDataGModel::getSkinKeys(int step, bool partitionsTogether,
+                                  std::vector<int> &keys)
+{
+  int n = getNumEntities(step);
+  keys.resize(n);
+  // (the parents numbered after the entities)
+  std::map<GEntity *, int> parents;
+  for(int ent = 0; ent < n; ent++) {
+    keys[ent] = ent;
+    GEntity *parent =
+      partitionsTogether ? getEntity(step, ent)->getParentEntity() : nullptr;
+    if(!parent) continue;
+    auto it = parents.find(parent);
+    if(it == parents.end())
+      it = parents.emplace(parent, n + (int)parents.size()).first;
+    keys[ent] = it->second;
+  }
+}
+
 int PViewDataGModel::getNode(int step, int ent, int ele, int nod, double &x,
                              double &y, double &z)
 {

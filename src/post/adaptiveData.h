@@ -423,6 +423,8 @@ private:
   // the faces of the elements on the skin of the view (see _findSkin()), kept
   // while the data and the step stay
   int _skinStep, _skinStamp;
+  // the partitions of an entity taken together (see PViewData::getSkinKeys())
+  bool _partitionsTogether;
   bool _skinFound;
   std::vector<std::vector<unsigned char> > _inSkin;
   PViewData *_inData;
@@ -458,6 +460,15 @@ public:
                         double max = -1., bool skinOnly = false,
                         const adaptiveSelection *selection = nullptr);
   bool isSkinOnly() const { return _skinOnly; }
+  // take the skin with the partitions of an entity together (the view is
+  // refined again if it changes)
+  void setPartitionsTogether(bool together)
+  {
+    if(together == _partitionsTogether) return;
+    _partitionsTogether = together;
+    _skinStep = -1;
+    _step = -1;
+  }
   // take the skin of the data another adaptive data of it has found
   void copySkinOf(const adaptiveData &other);
   // is only a part of the view refined (the skin, or a selection)?

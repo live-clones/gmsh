@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <map>
+#include <unordered_map>
 #include "GModelVertexArrays.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
@@ -817,9 +818,56 @@ public:
   }
 };
 
+// the skin of the partitions of a volume taken together (Mesh.DrawSkinOnly =
+// 2), the faces between them left out, and the share of each partition
+struct partitionsSkin {
+  std::vector<double> key;
+  std::map<GRegion *, meshSkin> skins;
+};
+static OwnerCache<partitionsSkin> _partitionsSkin; // (for their parent)
+
+static const meshSkin &getPartitionsSkin(GRegion *r, GEntity *parent)
+{
+  partitionsSkin &kept = _partitionsSkin[parent];
+  // (the partitions may change with the regions of the model)
+  std::vector<double> key = regionKey(r);
+  key.back() = r->model()->getNumRegions();
+  if(kept.key != key) {
+    double t1 = TimeOfDay();
+    std::vector<MElement *> shown;
+    std::unordered_map<MElement *, GRegion *> owner;
+    for(auto it = r->model()->firstRegion(); it != r->model()->lastRegion();
+        ++it) {
+      GRegion *g = *it;
+      if(g->getParentEntity() != parent) continue;
+      forShownRegionElements(g, [&](auto &els) {
+        for(auto e : els) {
+          if(!isElementVisible(e) || e->getDim() != 3) continue;
+          shown.push_back(e);
+          owner[e] = g;
+        }
+      });
+    }
+    meshSkin all;
+    findSkin(shown, all);
+    kept.skins.clear();
+    for(auto &f : all.faces) kept.skins[owner[f.first]].faces.push_back(f);
+    for(auto e : all.whole) kept.skins[owner[e]].whole.push_back(e);
+    kept.key = key;
+    Msg::Debug("Found the skin of the partitions of volume %d in %g s",
+               parent->tag(), TimeOfDay() - t1);
+  }
+  static const meshSkin none;
+  auto it = kept.skins.find(r);
+  return it == kept.skins.end() ? none : it->second;
+}
+
 // the skin of a volume, found from all its element types together and kept
 static const meshSkin &getSkin(GRegion *r)
 {
+  GEntity *parent =
+    (CTX::instance()->mesh.drawSkinOnly == 2) ? r->getParentEntity() : nullptr;
+  if(parent) return getPartitionsSkin(r, parent);
   regionSkin &kept = _regionSkin[r];
   std::vector<double> key = regionKey(r);
   if(kept.key != key) {
