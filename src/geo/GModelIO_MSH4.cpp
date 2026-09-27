@@ -146,61 +146,51 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
   embeddedEntities.clear();
   boundingSign.clear();
 
+  std::vector<int> &brepTags = index.ints;
   if(binary) {
     if(fread(&numBrep, sizeof(std::size_t), 1, fp) != 1) { return false; }
     if(swap) SwapBytes((char *)&numBrep, sizeof(std::size_t), 1);
-
-    std::vector<int> &brepTags = index.ints;
     brepTags.resize(numBrep);
     if(fread(brepTags.data(), sizeof(int), numBrep, fp) != numBrep) {
       return false;
     }
     if(swap) SwapBytes((char *)brepTags.data(), sizeof(int), numBrep);
-
-    for(std::size_t i = 0; i < numBrep; i++) {
-      GEntity *brep =
-        index.get(entity->dim() - 1, std::abs(brepTags[i]));
-      if(!brep) {
-        Msg::Warning("Entity %d not found in the Brep of entity %d",
-                     brepTags[i], entity->tag());
-      }
-      else {
-        boundingEntities.push_back(brep);
-        boundingSign.push_back((std::abs(brepTags[i]) == brepTags[i] ? 1 : -1));
-      }
-    }
   }
   else {
     if(fscanf(fp, "%zu", &numBrep) != 1) { return false; }
+    brepTags.resize(numBrep);
     for(std::size_t i = 0; i < numBrep; i++) {
-      int entityTag = 0;
-      if(fscanf(fp, "%d", &entityTag) != 1) { return false; }
+      if(fscanf(fp, "%d", &brepTags[i]) != 1) { return false; }
+    }
+  }
 
-      // FIXME: temporary hack until we update the MSH4 format - assume entities
-      // with tag > maxTagEmbed are embedded entities of dimension (dim - 1);
-      // this does not work for e.g. points in surfaces (dimension == dim - 2)
-      if(std::abs(entityTag) > maxTagEmbed) {
-        int embeddedTag = std::abs(entityTag) - maxTagEmbed;
-        GEntity *emb = index.get(entity->dim() - 1, embeddedTag);
-        if(!emb) {
-          Msg::Warning("Embedded entity %d not found in the Brep of entity %d",
-                       embeddedTag, entity->tag());
-        }
-        else {
-          embeddedEntities.push_back(emb);
-        }
+  for(std::size_t i = 0; i < numBrep; i++) {
+    int entityTag = brepTags[i];
+    // in MSH 4.0 and 4.1, the embedded curves of a surface are stored with
+    // its bounding curves, with a tag offset by the largest curve tag
+    // (maxTagEmbed); MSH 4.2 stores embedded entities of all dimensions on
+    // their own
+    if(std::abs(entityTag) > maxTagEmbed) {
+      int embeddedTag = std::abs(entityTag) - maxTagEmbed;
+      GEntity *emb = index.get(entity->dim() - 1, embeddedTag);
+      if(!emb) {
+        Msg::Warning("Embedded entity %d not found in the Brep of entity %d",
+                     embeddedTag, entity->tag());
       }
       else {
-        GEntity *brep =
-          index.get(entity->dim() - 1, std::abs(entityTag));
-        if(!brep) {
-          Msg::Warning("Entity %d not found in the Brep of entity %d",
-                       entityTag, entity->tag());
-        }
-        else {
-          boundingEntities.push_back(brep);
-          boundingSign.push_back((std::abs(entityTag) == entityTag ? 1 : -1));
-        }
+        embeddedEntities.push_back(emb);
+      }
+    }
+    else {
+      GEntity *brep =
+        index.get(entity->dim() - 1, std::abs(entityTag));
+      if(!brep) {
+        Msg::Warning("Entity %d not found in the Brep of entity %d",
+                     entityTag, entity->tag());
+      }
+      else {
+        boundingEntities.push_back(brep);
+        boundingSign.push_back((std::abs(entityTag) == entityTag ? 1 : -1));
       }
     }
   }
@@ -241,6 +231,71 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
     reinterpret_cast<GRegion *>(entity)->setBoundFaces(faces, boundingSign);
   } break;
   default: break;
+  }
+  return true;
+}
+
+static bool readMSH4EmbeddedEntities(FILE *fp, GEntity *const entity,
+                                     bool binary, bool swap,
+                                     msh4EntityIndex &index)
+{
+  std::size_t numEmb = 0;
+  std::vector<int> &embTags = index.ints;
+  if(binary) {
+    if(fread(&numEmb, sizeof(std::size_t), 1, fp) != 1) { return false; }
+    if(swap) SwapBytes((char *)&numEmb, sizeof(std::size_t), 1);
+    embTags.resize(2 * numEmb);
+    if(fread(embTags.data(), sizeof(int), 2 * numEmb, fp) != 2 * numEmb) {
+      return false;
+    }
+    if(swap) SwapBytes((char *)embTags.data(), sizeof(int), 2 * numEmb);
+  }
+  else {
+    if(fscanf(fp, "%zu", &numEmb) != 1) { return false; }
+    embTags.resize(2 * numEmb);
+    for(std::size_t i = 0; i < 2 * numEmb; i++) {
+      if(fscanf(fp, "%d", &embTags[i]) != 1) { return false; }
+    }
+  }
+
+  for(std::size_t i = 0; i < numEmb; i++) {
+    int dim = embTags[2 * i], tag = embTags[2 * i + 1];
+    GEntity *emb = (dim >= 0 && dim < entity->dim()) ? index.get(dim, tag) :
+                                                       nullptr;
+    if(!emb) {
+      Msg::Warning("Embedded entity (%d, %d) not found in entity (%d, %d)",
+                   dim, tag, entity->dim(), entity->tag());
+      continue;
+    }
+    // the entity may already exist (and have its embedded entities) when the
+    // file is merged into a model
+    if(entity->dim() == 2) {
+      GFace *gf = static_cast<GFace *>(entity);
+      if(dim == 0) { gf->addEmbeddedVertex(static_cast<GVertex *>(emb)); }
+      else {
+        auto &e = gf->embeddedEdges();
+        if(std::find(e.begin(), e.end(), emb) == e.end())
+          gf->addEmbeddedEdge(static_cast<GEdge *>(emb));
+      }
+    }
+    else if(entity->dim() == 3) {
+      GRegion *gr = static_cast<GRegion *>(entity);
+      if(dim == 0) {
+        auto &v = gr->embeddedVertices();
+        if(std::find(v.begin(), v.end(), emb) == v.end())
+          gr->addEmbeddedVertex(static_cast<GVertex *>(emb));
+      }
+      else if(dim == 1) {
+        auto &e = gr->embeddedEdges();
+        if(std::find(e.begin(), e.end(), emb) == e.end())
+          gr->addEmbeddedEdge(static_cast<GEdge *>(emb));
+      }
+      else {
+        auto &f = gr->embeddedFaces();
+        if(std::find(f.begin(), f.end(), emb) == f.end())
+          gr->addEmbeddedFace(static_cast<GFace *>(emb));
+      }
+    }
   }
   return true;
 }
@@ -421,8 +476,11 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   else
     Msg::Info("%d entit%s", nume, nume > 1 ? "ies" : "y");
 
-  // FIXME: remove this when embedded entities are correctly handled
+  // offsets of the embedded entity tags in MSH 4.0 and 4.1 (see
+  // readMSH4BoundingEntities)
   int maxTags[3] = {0, 0, 0};
+  if(version >= 4.2)
+    maxTags[0] = maxTags[1] = maxTags[2] = std::numeric_limits<int>::max();
 
   // (the partition entities are not created in the GEO internals, as the
   // other discrete entities are so that scripts can refer to them: a
@@ -483,6 +541,9 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
                                     index)) {
           return false;
         }
+        if(version >= 4.2 &&
+           !readMSH4EmbeddedEntities(fp, ge, binary, swap, index))
+          return false;
       } break;
       case 2: {
         GFace *gf = static_cast<GFace *>(index.get(2, tag));
@@ -505,6 +566,9 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
                                     index)) {
           return false;
         }
+        if(version >= 4.2 &&
+           !readMSH4EmbeddedEntities(fp, gf, binary, swap, index))
+          return false;
       } break;
       case 3: {
         GRegion *gr = static_cast<GRegion *>(index.get(3, tag));
@@ -527,12 +591,15 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
                                     index)) {
           return false;
         }
+        if(version >= 4.2 &&
+           !readMSH4EmbeddedEntities(fp, gr, binary, swap, index))
+          return false;
       } break;
       }
     }
 
-    // FIXME: remove this when embedded entities are correctly handled
-    if(dim < 3) maxTags[dim] = model->getMaxElementaryNumber(dim);
+    if(dim < 3 && version < 4.2)
+      maxTags[dim] = model->getMaxElementaryNumber(dim);
   }
   return true;
 }
@@ -2575,6 +2642,36 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
   }
 }
 
+static void writeMSH4EmbeddedEntities(FILE *fp, GEntity *const entity,
+                                      bool binary)
+{
+  std::vector<int> tags; // (dim, tag) pairs
+  auto add = [&tags](GEntity *e) {
+    tags.push_back(e->dim());
+    tags.push_back(e->tag());
+  };
+  if(entity->dim() == 2) {
+    GFace *gf = static_cast<GFace *>(entity);
+    for(auto v : gf->embeddedVertices()) add(v);
+    for(auto e : gf->embeddedEdges()) add(e);
+  }
+  else if(entity->dim() == 3) {
+    GRegion *gr = static_cast<GRegion *>(entity);
+    for(auto v : gr->embeddedVertices()) add(v);
+    for(auto e : gr->embeddedEdges()) add(e);
+    for(auto f : gr->embeddedFaces()) add(f);
+  }
+  std::size_t numEmb = tags.size() / 2;
+  if(binary) {
+    fwrite(&numEmb, sizeof(std::size_t), 1, fp);
+    if(numEmb) fwrite(tags.data(), sizeof(int), tags.size(), fp);
+  }
+  else {
+    fprintf(fp, "%zu ", numEmb);
+    for(auto t : tags) fprintf(fp, "%d ", t);
+  }
+}
+
 static void writeMSH4Entities(
   GModel *const model, FILE *fp, bool partition, bool binary,
   double scalingFactor, double version,
@@ -2587,6 +2684,7 @@ static void writeMSH4Entities(
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
+  const std::vector<GEdge *> noEdges;
 
   const bool acceptAllPartitions =
     partitionsToSave.empty() || !CTX::instance()->mesh.partitionSplitLocalBrep;
@@ -2820,19 +2918,18 @@ static void writeMSH4Entities(
         fwrite(&brepTag, sizeof(int), 1, fp);
         oriI++;
       }
+      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
     }
 
     for(auto it = faces.begin(); it != faces.end(); ++it) {
       std::vector<GEdge *> const &edges = (*it)->edges();
-      // FIXME: temporary hack until we update the MSH4 format to handle
-      // embedded entities - save embedded entities with fake tag > maxTag
-      std::vector<GEdge *> const &embEdges = (*it)->embeddedEdges();
+      // MSH 4.1 stores the embedded curves with the bounding curves, with a
+      // tag offset by the largest curve tag
+      std::vector<GEdge *> const &embEdges =
+        version < 4.2 ? (*it)->embeddedEdges() : noEdges;
 
       std::vector<int> const &ori = (*it)->edgeOrientations();
-      std::size_t edgesSize = edges.size();
-      // FIXME: temporary hack until we update the MSH4 format to handle
-      // embedded entities
-      edgesSize += embEdges.size();
+      std::size_t edgesSize = edges.size() + embEdges.size();
 
       int entityTag = (*it)->tag();
       fwrite(&entityTag, sizeof(int), 1, fp);
@@ -2861,8 +2958,6 @@ static void writeMSH4Entities(
 
       signs.insert(signs.end(), ori.begin(), ori.end());
 
-      // FIXME: temporary hack until we update the MSH4 format to handle
-      // embedded entities
       for(auto ite = embEdges.begin(); ite != embEdges.end(); ite++) {
         tags.push_back((*ite)->tag() + maxEdgeTag);
         signs.push_back(1);
@@ -2876,6 +2971,7 @@ static void writeMSH4Entities(
         int brepTag = tags[i];
         fwrite(&brepTag, sizeof(int), 1, fp);
       }
+      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
     }
 
     for(auto it = regions.begin(); it != regions.end(); ++it) {
@@ -2916,6 +3012,7 @@ static void writeMSH4Entities(
         int brepTag = tags[i];
         fwrite(&brepTag, sizeof(int), 1, fp);
       }
+      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
     }
     fprintf(fp, "\n");
   }
@@ -3015,14 +3112,14 @@ static void writeMSH4Entities(
         fprintf(fp, "%d ", ori[oriI] * (*itv)->tag());
         oriI++;
       }
+      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
       fprintf(fp, "\n");
     }
 
     for(auto it = faces.begin(); it != faces.end(); ++it) {
       std::vector<GEdge *> const &edges = (*it)->edges();
-      // FIXME: temporary hack until we update the MSH4 format to handle
-      // embedded entities
-      std::vector<GEdge *> const &embEdges = (*it)->embeddedEdges();
+      std::vector<GEdge *> const &embEdges =
+        version < 4.2 ? (*it)->embeddedEdges() : noEdges;
 
       std::vector<int> const &ori = (*it)->edgeOrientations();
       fprintf(fp, "%d ", (*it)->tag());
@@ -3043,16 +3140,12 @@ static void writeMSH4Entities(
       SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
       writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 2, version);
       writeMSH4Physicals(fp, *it, binary);
-      // FIXME: temporary hack until we update the MSH4 format to handle
-      // embedded entities
       fprintf(fp, "%zu ", edges.size() + embEdges.size());
       std::vector<int> tags, signs;
       for(auto ite = edges.begin(); ite != edges.end(); ite++)
         tags.push_back((*ite)->tag());
       for(auto ite = ori.begin(); ite != ori.end(); ite++)
         signs.push_back(*ite);
-      // FIXME: temporary hack until we update the MSH4 format to handle
-      // embedded entities
       for(auto ite = embEdges.begin(); ite != embEdges.end(); ite++) {
         tags.push_back((*ite)->tag() + maxEdgeTag);
         signs.push_back(1);
@@ -3062,6 +3155,7 @@ static void writeMSH4Entities(
           tags[i] *= (signs[i] > 0 ? 1 : -1);
       }
       for(std::size_t i = 0; i < tags.size(); i++) fprintf(fp, "%d ", tags[i]);
+      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
       fprintf(fp, "\n");
     }
 
@@ -3101,6 +3195,7 @@ static void writeMSH4Entities(
       }
 
       for(auto const tag : tags) { fprintf(fp, "%d ", tag); }
+      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
       fprintf(fp, "\n");
     }
   }

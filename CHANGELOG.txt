@@ -6,10 +6,11 @@ measurement; improved colorbars and 2D plots; new headless image and movie
 export (replaces deprecated OSMesa); new faster homology solver; improved
 performance of mesh partitioning pipeline and added support for partition
 overlaps; new ability to save only the local partitioned Brep; improved
-performance of high-order element generation; new MSH4.2 format with efficient
-blocked $NodeData, $ElementData, $ElementNodeData and $GhostElements sections,
-and support for $Edges and $Faces sections; new polytope implementation with
-support in the API and MSH4.2 format, which replaces the old polygon/polyhedron
+performance of high-order element generation; new MSH4.2 format with support for
+embedded entities in $Entities and $PartitionedEntities, efficient blocked
+$NodeData, $ElementData, $ElementNodeData and $GhostElements sections, and
+support for $Edges and $Faces sections; new polytope implementation with support
+in the API and MSH4.2 format, which replaces the old polygon/polyhedron
 elements, levelset commands and Plugin(CutMesh); the Extend mesh size field is
 now applied per entity and takes an element growth rate as input; improved XAO
 export that preserves entity tags; new VTK/Paraview IO for meshes and
