@@ -98,9 +98,9 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
   return 0;
 }
 
-// Transparency chooser
+// Opacity chooser
 
-int transparencyChooser(const char *title, const std::string &category,
+int opacityChooser(const char *title, const std::string &category,
                         int index, const std::string &name)
 {
   double val;

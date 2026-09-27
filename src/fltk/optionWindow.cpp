@@ -537,8 +537,8 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
   opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value());
   opt_geometry_volume_type(0, GMSH_SET, o->geo.choice[5]->value());
-  opt_geometry_transparency(0, GMSH_SET, o->geo.value[21]->value());
-  opt_geometry_transparency_mode(0, GMSH_SET, o->geo.choice[6]->value());
+  opt_geometry_opacity(0, GMSH_SET, o->geo.value[21]->value());
+  opt_geometry_opacity_mode(0, GMSH_SET, o->geo.choice[6]->value());
 
 #if defined(HAVE_TOUCHBAR)
   updateTouchBar();
@@ -632,8 +632,8 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
-  opt_mesh_transparency(0, GMSH_SET, o->mesh.value[27]->value());
-  opt_mesh_transparency_mode(0, GMSH_SET, o->mesh.choice[11]->value());
+  opt_mesh_opacity(0, GMSH_SET, o->mesh.value[27]->value());
+  opt_mesh_opacity_mode(0, GMSH_SET, o->mesh.choice[11]->value());
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
   opt_mesh_light_lines(0, GMSH_SET, o->mesh.choice[10]->value());
@@ -831,7 +831,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
   double use_gen_raise = opt_view_use_gen_raise(current, GMSH_GET, 0);
   double use_stipple = opt_view_use_stipple(current, GMSH_GET, 0);
-  double transparency = opt_view_transparency(current, GMSH_GET, 0);
+  double opacity = opt_view_opacity(current, GMSH_GET, 0);
 
   double normals = opt_view_normals(current, GMSH_GET, 0);
   double tangents = opt_view_tangents(current, GMSH_GET, 0);
@@ -1095,7 +1095,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (val != use_stipple)) opt_view_use_stipple(i, GMSH_SET, val);
 
       val = o->view.value[79]->value();
-      if(force || (val != transparency)) opt_view_transparency(i, GMSH_SET, val);
+      if(force || (val != opacity)) opt_view_opacity(i, GMSH_SET, val);
 
       // view_values
 
@@ -2517,7 +2517,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {nullptr}};
       geo.value[21] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH,
                                         w2, BH);
-      geo.value[21]->tooltip("Geometry.Transparency");
+      geo.value[21]->tooltip("Geometry.Opacity");
       geo.value[21]->minimum(0.);
       geo.value[21]->maximum(1.);
       if(CTX::instance()->inputScrolling) geo.value[21]->step(0.01);
@@ -2526,8 +2526,8 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[21]->callback(geometry_options_ok_cb);
 
       geo.choice[6] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 4 * BH,
-                                    w1, BH, "Transparency");
-      geo.choice[6]->tooltip("Geometry.TransparencyMode");
+                                    w1, BH, "Opacity");
+      geo.choice[6]->tooltip("Geometry.OpacityMode");
       geo.choice[6]->menu(menu_transparency_mode);
       geo.choice[6]->align(FL_ALIGN_RIGHT);
       geo.choice[6]->callback(geometry_options_ok_cb);
@@ -3043,7 +3043,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {nullptr}};
       mesh.value[27] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH,
                                           w2, BH);
-      mesh.value[27]->tooltip("Mesh.Transparency");
+      mesh.value[27]->tooltip("Mesh.Opacity");
       mesh.value[27]->minimum(0.);
       mesh.value[27]->maximum(1.);
       if(CTX::instance()->inputScrolling) mesh.value[27]->step(0.01);
@@ -3052,8 +3052,8 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[27]->callback(mesh_options_ok_cb);
 
       mesh.choice[11] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 6 * BH,
-                                      w1, BH, "Transparency");
-      mesh.choice[11]->tooltip("Mesh.TransparencyMode");
+                                      w1, BH, "Opacity");
+      mesh.choice[11]->tooltip("Mesh.OpacityMode");
       mesh.choice[11]->menu(menu_transparency_mode);
       mesh.choice[11]->align(FL_ALIGN_RIGHT);
       mesh.choice[11]->callback(mesh_options_ok_cb);
@@ -4007,8 +4007,8 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[10]->callback(view_options_ok_cb);
 
       view.value[79] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
-                                          "Transparency");
-      view.value[79]->tooltip("View.Transparency");
+                                          "Opacity");
+      view.value[79]->tooltip("View.Opacity");
       view.value[79]->minimum(0.);
       view.value[79]->maximum(1.);
       if(CTX::instance()->inputScrolling) view.value[79]->step(0.01);
@@ -4361,7 +4361,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_tensor_type(index, GMSH_GUI, 0);
 
   opt_view_use_stipple(index, GMSH_GUI, 0);
-  opt_view_transparency(index, GMSH_GUI, 0);
+  opt_view_opacity(index, GMSH_GUI, 0);
   opt_view_color_points(index, GMSH_GUI, 0);
   opt_view_color_lines(index, GMSH_GUI, 0);
   opt_view_color_triangles(index, GMSH_GUI, 0);

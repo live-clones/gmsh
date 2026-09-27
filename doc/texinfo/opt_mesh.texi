@@ -606,6 +606,16 @@ Use old initial 2D Delaunay code@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Opacity
+Opacity factor applied to all mesh colors (1: opaque, 0: fully transparent)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.OpacityMode
+Apply Mesh.Opacity to (0: filled surfaces only; 1: everything)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Optimize
 Optimize the mesh to improve the quality of tetrahedral elements@*
 Default value: @code{1}@*
@@ -1009,16 +1019,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.ToleranceReferenceElement
 Tolerance for classifying a point inside a reference element (of size 1)@*
 Default value: @code{1e-06}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Transparency
-Opacity factor applied to all mesh colors (1: opaque, 0: fully transparent)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.TransparencyMode
-Apply Mesh.Transparency to (0: filled surfaces only; 1: everything)@*
-Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Triangles

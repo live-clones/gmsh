@@ -591,6 +591,11 @@ Translation of the view along Z-axis (in model coordinates)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item View.Opacity
+Opacity factor applied to the colormap (1: unchanged, 0: fully transparent)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.PointSize
 Display size of points (in pixels)@*
 Default value: @code{3}@*
@@ -745,11 +750,6 @@ Saved in: @code{-}
 Element (3,3) of the 3x3 coordinate transformation matrix@*
 Default value: @code{1}@*
 Saved in: @code{-}
-
-@item View.Transparency
-Opacity factor applied to the colormap (1: unchanged, 0: fully transparent)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
 
 @item View.Type
 Type of plot (1: 3D, 2: 2D space, 3: 2D time, 4: 2D)@*

@@ -3201,25 +3201,25 @@ void quick_access_cb(Fl_Widget *w, void *data)
   else if(what == "mesh_size")
     numberOrStringOptionChooser("Mesh", 0, "MeshSizeFactor", true, "Factor",
                                 true, 0.01, 100, 0.01);
-  else if(what == "geometry_transparency") {
-    transparencyChooser("Geometry Transparency", "Geometry", 0, "Transparency");
+  else if(what == "geometry_opacity") {
+    opacityChooser("Geometry Opacity", "Geometry", 0, "Opacity");
   }
-  else if(what == "mesh_transparency") {
-    transparencyChooser("Mesh Transparency", "Mesh", 0, "Transparency");
+  else if(what == "mesh_opacity") {
+    opacityChooser("Mesh Opacity", "Mesh", 0, "Opacity");
   }
-  else if(what == "view_transparency") {
+  else if(what == "view_opacity") {
     double val = 1.;
     for(std::size_t i = 0; i < PView::list.size(); i++) {
       if(opt_view_visible(i, GMSH_GET, 0)) {
-        if(transparencyChooser("View Transparency", "View", i, "Transparency")) {
-          val = opt_view_transparency(i, GMSH_GET, 0);
+        if(opacityChooser("View Opacity", "View", i, "Opacity")) {
+          val = opt_view_opacity(i, GMSH_GET, 0);
           break;
         }
       }
     }
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_transparency(i, GMSH_SET | GMSH_GUI, val);
+        opt_view_opacity(i, GMSH_SET | GMSH_GUI, val);
   }
   else if(what == "view_element_outlines") {
     int set = 0;
@@ -3732,8 +3732,8 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Volumes", FL_ALT + 'v', quick_access_cb, (void*)"geometry_volumes",
            FL_MENU_TOGGLE },
          { nullptr },
-      { "Geometry transparency", 0, quick_access_cb,
-        (void*)"geometry_transparency" },
+      { "Geometry opacity", 0, quick_access_cb,
+        (void*)"geometry_opacity" },
       { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "Mesh visibility", 0, nullptr, nullptr, FL_SUBMENU },
@@ -3751,7 +3751,7 @@ void status_options_cb(Fl_Widget *w, void *data)
            (void*)"mesh_volume_faces", FL_MENU_TOGGLE },
          { nullptr },
       { "Toggle mesh display", FL_ALT + 'm', quick_access_cb, (void*)"mesh_toggle" },
-      { "Mesh transparency", 0, quick_access_cb, (void*)"mesh_transparency" },
+      { "Mesh opacity", 0, quick_access_cb, (void*)"mesh_opacity" },
       { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
       { "All mesh options...", 0, quick_access_cb, (void*)"mesh",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
@@ -3777,7 +3777,7 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
          { "Node", 0, quick_access_cb, (void*)"view_glyph_node"},
          { nullptr },
-      { "View transparency", 0, quick_access_cb, (void*)"view_transparency" },
+      { "View opacity", 0, quick_access_cb, (void*)"view_opacity" },
       { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
       { nullptr }
     };

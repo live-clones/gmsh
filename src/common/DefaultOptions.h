@@ -1116,6 +1116,11 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OldNewReg" , opt_geometry_old_newreg , 1. ,
     "Use old newreg definition for geometrical transformations (compatibility "
     "option for old Gmsh geometries)" },
+  { F|O, "Opacity" , opt_geometry_opacity , 1. ,
+    "Opacity factor applied to all geometry colors (1: opaque, 0: fully "
+    "transparent)" },
+  { F|O, "OpacityMode" , opt_geometry_opacity_mode , 0. ,
+    "Apply Geometry.Opacity to (0: filled surfaces only; 1: everything)" },
   { F|O, "OrientedPhysicals" , opt_geometry_oriented_physicals, 1. ,
     "Use sign of elementary entity in physical definition as orientation indicator" },
 
@@ -1162,11 +1167,6 @@ StringXNumber GeometryOptions_Number[] = {
     "Geometrical tolerance" },
   { F|O, "ToleranceBoolean" , opt_geometry_tolerance_boolean, 0. ,
     "Geometrical tolerance for boolean operations" },
-  { F|O, "Transparency" , opt_geometry_transparency , 1. ,
-    "Opacity factor applied to all geometry colors (1: opaque, 0: fully "
-    "transparent)" },
-  { F|O, "TransparencyMode" , opt_geometry_transparency_mode , 0. ,
-    "Apply Geometry.Transparency to (0: filled surfaces only; 1: everything)" },
   { F,   "Transform" , opt_geometry_transform , 0. ,
     "Transform model display coordinates (0: no, 1: scale)" },
   { F,   "TransformXX" , opt_geometry_transform00 , 1. ,
@@ -1544,6 +1544,11 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "OldInitialDelaunay2D" , opt_mesh_old_initial_delaunay_2d , 0. ,
     "Use old initial 2D Delaunay code" },
+  { F|O, "Opacity" , opt_mesh_opacity , 1. ,
+    "Opacity factor applied to all mesh colors (1: opaque, 0: fully "
+    "transparent)" },
+  { F|O, "OpacityMode" , opt_mesh_opacity_mode , 1. ,
+    "Apply Mesh.Opacity to (0: filled surfaces only; 1: everything)" },
   { F|O, "Optimize" , opt_mesh_optimize , 1. ,
     "Optimize the mesh to improve the quality of tetrahedral elements" },
   { F|O, "OptimizeThreshold" , opt_mesh_optimize_threshold , 0.3 ,
@@ -1783,11 +1788,6 @@ StringXNumber MeshOptions_Number[] = {
     "Tolerance for initial 3D Delaunay mesher" },
   { F|O, "ToleranceReferenceElement" , opt_mesh_tolerance_reference_element , 1e-6,
     "Tolerance for classifying a point inside a reference element (of size 1)" },
-  { F|O, "Transparency" , opt_mesh_transparency , 1. ,
-    "Opacity factor applied to all mesh colors (1: opaque, 0: fully "
-    "transparent)" },
-  { F|O, "TransparencyMode" , opt_mesh_transparency_mode , 1. ,
-    "Apply Mesh.Transparency to (0: filled surfaces only; 1: everything)" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
   { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,
@@ -1984,7 +1984,7 @@ StringXNumber ViewOptions_Number[] = {
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "Closed" , opt_view_closed , 0,
     "Close the subtree containing this view" },
-  { F|O|D, "ColormapAlpha" , opt_view_transparency , 1.0 ,
+  { F|O|D, "ColormapAlpha" , opt_view_opacity , 1.0 ,
     "[Deprecated]" },
   { F|O, "ColormapAlphaPower" , opt_view_colormap_alpha_power , 0.0 ,
     "Colormap alpha channel power" },
@@ -2145,6 +2145,9 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "OffsetZ" , opt_view_offset2 , 0. ,
     "Translation of the view along Z-axis (in model coordinates)" },
 
+  { F|O, "Opacity" , opt_view_opacity , 1. ,
+    "Opacity factor applied to the colormap (1: unchanged, 0: fully "
+    "transparent)" },
   { F|O, "PointSize" , opt_view_point_size , 3. ,
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_view_point_type , 0. ,
@@ -2223,9 +2226,6 @@ StringXNumber ViewOptions_Number[] = {
     "Element (3,2) of the 3x3 coordinate transformation matrix" },
   { F,   "TransformZZ" , opt_view_transform22 , 1. ,
     "Element (3,3) of the 3x3 coordinate transformation matrix" },
-  { F|O, "Transparency" , opt_view_transparency , 1. ,
-    "Opacity factor applied to the colormap (1: unchanged, 0: fully "
-    "transparent)" },
   { F,   "Type" , opt_view_type , 1 ,
     "Type of plot (1: 3D, 2: 2D space, 3: 2D time, 4: 2D)" },
 
