@@ -117,7 +117,6 @@ Fl_Menu_Item menu_font_names[] = {
   {"Courier-Oblique", 0, nullptr, (void *)FL_COURIER_ITALIC},
   {"Courier-BoldOblique", 0, nullptr, (void *)FL_COURIER_BOLD_ITALIC},
   {"Symbol", 0, nullptr, (void *)FL_SYMBOL},
-  {"ZapfDingbats", 0, nullptr, (void *)FL_ZAPF_DINGBATS},
   {"Screen", 0, nullptr, (void *)FL_SCREEN},
   {nullptr}};
 
@@ -1898,13 +1897,8 @@ optionWindow::optionWindow(int deltaFontSize)
 
       static Fl_Menu_Item menu_font_engine[] = {
         {"Native", 0, nullptr, nullptr},
-        {"Cairo", 0, nullptr, nullptr
-#if !defined(HAVE_CAIRO)
-         ,
-         FL_MENU_INACTIVE
-#endif
-        },
         {"StringTexture", 0, nullptr, nullptr},
+        {"Embedded", 0, nullptr, nullptr},
         {nullptr}};
       general.choice[7] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
                                         "Font rendering engine");

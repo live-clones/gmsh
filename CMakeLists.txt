@@ -45,7 +45,6 @@ opt(BUILD_ANDROID "Enable Android NDK library target (experimental)" OFF)
 opt(BUILD_IOS "Enable iOS library target (experimental)" OFF)
 opt(CGNS "Enable CGNS import/export (experimental)" ${DEFAULT})
 opt(CGNS_CPEX0045 "Enable high-order CGNS import/export following CPEX0045 (experimental)" OFF)
-opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
 opt(COVERAGE "Enable code coverage instrumentation (GCC/Clang only)" OFF)
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
@@ -809,16 +808,6 @@ if(ENABLE_ALGLIB)
     add_subdirectory(contrib/ALGLIB)
     include_directories(contrib/ALGLIB)
     set_config_option(HAVE_ALGLIB "ALGLIB[contrib]")
-  endif()
-endif()
-
-if(HAVE_FLTK AND ENABLE_CAIRO)
-  find_library(CAIRO_LIB cairo)
-  find_path(CAIRO_INC "cairo.h" PATH_SUFFIXES include include/cairo)
-  if(CAIRO_INC AND CAIRO_LIB)
-     set_config_option(HAVE_CAIRO "Cairo")
-     list(APPEND EXTERNAL_LIBRARIES ${CAIRO_LIB})
-     list(APPEND EXTERNAL_INCLUDES ${CAIRO_INC})
   endif()
 endif()
 
@@ -2411,7 +2400,7 @@ message(STATUS " * C++ compiler: " ${CMAKE_CXX_COMPILER})
 message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
 
-mark_as_advanced(ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
+mark_as_advanced(ANN_INC ANN_LIB CGNS_INC GMM_INC
                  MMG_INC MMG_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB

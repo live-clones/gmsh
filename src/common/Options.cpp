@@ -60,8 +60,8 @@
 #include "clippingWindow.h"
 #include "onelabGroup.h"
 #include "viewButton.h"
-#include "drawContextFltkCairo.h"
 #include "drawContextFltkStringTexture.h"
+#include "drawContextFltkEmbedded.h"
 #endif
 
 // A colour that strings are drawn in has changed. The native font engine
@@ -1451,36 +1451,40 @@ std::string opt_general_graphics_font_title(OPT_ARGS_STR)
 
 std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
 {
-  if(action & GMSH_SET) CTX::instance()->glFontEngine = val;
+  if(action & GMSH_SET) {
+    CTX::instance()->glFontEngine = val;
+    // the Cairo engine is gone: the embedded fonts replace it
+    if(val == "Cairo") {
+      Msg::Warning("Font engine 'Cairo' is deprecated: using 'Embedded'");
+      CTX::instance()->glFontEngine = "Embedded";
+    }
+  }
 
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET) {
     // the native engine draws at the raster position, which a core profile
     // has none of
     std::string engine = CTX::instance()->glFontEngine;
-    if(CTX::instance()->shaders && engine == "Native")
-      engine = "StringTexture";
+    if(CTX::instance()->shaders && engine == "Native") {
+      Msg::Warning("Font engine 'Native' needs the fixed function pipeline "
+                   "(General.Shaders = 0): using 'Embedded'");
+      engine = "Embedded";
+    }
     drawContextGlobal *old = drawContext::global();
     if(!old || old->getName() != engine) {
-#if defined(HAVE_CAIRO)
-      if(engine == "Cairo")
-        drawContext::setGlobal(new drawContextFltkCairo);
-      else
-#endif
-        if(engine == "StringTexture")
+      if(engine == "StringTexture")
         drawContext::setGlobal(new drawContextFltkStringTexture);
+      else if(engine == "Embedded")
+        drawContext::setGlobal(new drawContextFltkEmbedded);
       else
         drawContext::setGlobal(new drawContextFltk);
       if(old) delete old;
     }
   }
   if(FlGui::available() && (action & GMSH_GUI)) {
-    int index = 0;
-#if defined(HAVE_CAIRO)
-    if(CTX::instance()->glFontEngine == "Cairo") index = 1;
-#endif
-    if(CTX::instance()->glFontEngine == "StringTexture") index = 2;
-    FlGui::instance()->options->general.choice[7]->value(index);
+    Fl_Choice *c = FlGui::instance()->options->general.choice[7];
+    int index = c->find_index(CTX::instance()->glFontEngine.c_str());
+    c->value(index < 0 ? 0 : index);
   }
 #endif
 

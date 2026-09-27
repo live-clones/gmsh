@@ -68,8 +68,11 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
     "Font used in the graphic window" },
-  { F|O, "GraphicsFontEngine" , opt_general_graphics_font_engine , "Native" ,
-    "Set graphics font engine (Native, StringTexture, Cairo)" },
+  { F|O, "GraphicsFontEngine" , opt_general_graphics_font_engine , "Embedded" ,
+    "Set graphics font engine (Embedded: the fonts compiled into Gmsh, as in "
+    "the pictures made without a window; StringTexture: the fonts of the "
+    "system, for scripts the embedded fonts lack; Native: the fonts of the "
+    "system drawn directly, with the fixed function pipeline only)" },
   { F|O, "GraphicsFontTitle" , opt_general_graphics_font_title , "Helvetica" ,
     "Font used in the graphic window for titles" },
 
@@ -408,7 +411,10 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "AlphaBlending" , opt_general_alpha_blending , 1. ,
     "Enable alpha blending (transparency) in post-processing views" },
   { F|O, "Antialiasing" , opt_general_antialiasing , 0. ,
-    "Use multisample antialiasing (will slow down rendering)" },
+    "Use multisample antialiasing in the graphic window (will slow down "
+    "rendering); the pictures drawn apart from it (with Print.Width, "
+    "Print.Height or Print.Supersampling, or without a window) are smoothed "
+    "by Print.Supersampling instead" },
   { F|O, "ArrowHeadRadius" , opt_general_arrow_head_radius , 0.12 ,
     "Relative radius of arrow head" },
   { F|O, "ArrowStemLength" , opt_general_arrow_stem_length , 0.56 ,
@@ -626,7 +632,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "GraphicsFontSizeTitle" , opt_general_graphics_fontsize_title , 18. ,
     "Size of the font in the graphic window for titles, in pixels" },
   { F|S, "GraphicsHeight" , opt_general_graphics_size1 , 600. ,
-    "Height (in pixels) of the graphic window" },
+    "Height (in pixels) of the graphic window, and of the pictures made "
+    "without one (in batch mode, or without the graphical interface)" },
   { F|S, "GraphicsPositionX" , opt_general_graphics_position0 , 50. ,
     "Horizontal position (in pixels) of the upper left corner of the graphic "
     "window" },
@@ -634,7 +641,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Vertical position (in pixels) of the upper left corner of the graphic "
     "window" },
   { F|S, "GraphicsWidth" , opt_general_graphics_size0 , 800. ,
-    "Width (in pixels) of the graphic window" },
+    "Width (in pixels) of the graphic window, and of the pictures made "
+    "without one (in batch mode, or without the graphical interface)" },
 
   { F|S, "HighOrderToolsPositionX" , opt_general_hot_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the high-order "

@@ -13,7 +13,7 @@
 // drawn at its end from an atlas of the strings already rasterised, which is
 // kept from frame to frame; only the strings not in it are rasterised, by the
 // engine, into one image of a single channel. The engines (FLTK's offscreen,
-// Cairo) differ in measure() and rasterise() alone.
+// the embedded fonts) differ in measure() and rasterise() alone.
 class stringQueue {
 public:
   struct element {

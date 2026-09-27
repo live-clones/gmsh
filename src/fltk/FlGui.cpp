@@ -14,7 +14,6 @@
 #include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "drawContextFltk.h"
-#include "drawContextFltkCairo.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
 #include "fieldWindow.h"

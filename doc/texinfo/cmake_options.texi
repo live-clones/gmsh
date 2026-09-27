@@ -28,8 +28,6 @@ Enable iOS library target (experimental) (default: OFF)
 Enable CGNS import/export (experimental) (default: ON)
 @item ENABLE_CGNS_CPEX0045
 Enable high-order CGNS import/export following CPEX0045 (experimental) (default: OFF)
-@item ENABLE_CAIRO
-Enable Cairo to render fonts (experimental) (default: ON)
 @item ENABLE_COVERAGE
 Enable code coverage instrumentation (GCC/Clang only) (default: OFF)
 @item ENABLE_DOMHEX

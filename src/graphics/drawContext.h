@@ -141,8 +141,7 @@ namespace fontEnum {
     times = 8,
     symbol = 12,
     screen = 13,
-    screenBold = 14,
-    zapfDingbats = 15
+    screenBold = 14
   };
 }
 

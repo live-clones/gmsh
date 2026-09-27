@@ -24,7 +24,6 @@ set(SRC
   drawGlyph.cpp
   glyphList.cpp
   stringQueue.cpp
-  cairoStrings.cpp
   stbStrings.cpp
   offscreenContext.cpp
   drawContextOffscreen.cpp

@@ -99,7 +99,6 @@ namespace {
     {"Courier-BoldOblique",
      fontEnum::courier | fontEnum::bold | fontEnum::italic},
     {"Symbol", fontEnum::symbol},
-    {"ZapfDingbats", fontEnum::zapfDingbats},
     {"Screen", fontEnum::screen}};
   const int numFonts = sizeof(fontNames) / sizeof(fontNames[0]);
 } // namespace
@@ -109,6 +108,11 @@ int drawContextGlobal::getFontIndex(const char *fontname)
   if(fontname) {
     for(int i = 0; i < numFonts; i++)
       if(!strcmp(fontNames[i].name, fontname)) return i;
+    // its dingbats had no use in the labels of a model or a view
+    if(!strcmp(fontname, "ZapfDingbats")) {
+      Msg::Warning("Font \"ZapfDingbats\" is deprecated: using \"Helvetica\"");
+      return 4;
+    }
   }
   Msg::Error("Unknown font \"%s\" (using \"Helvetica\" instead)", fontname);
   Msg::Info("Available fonts:");

@@ -9161,9 +9161,9 @@ strings. `style` contains key-value pairs of styling parameters, concatenated.
 Available keys are "Font" (possible values: "Times-Roman", "Times-Bold", "Times-
 Italic", "Times-BoldItalic", "Helvetica", "Helvetica-Bold", "Helvetica-Oblique",
 "Helvetica-BoldOblique", "Courier", "Courier-Bold", "Courier-Oblique", "Courier-
-BoldOblique", "Symbol", "ZapfDingbats", "Screen"), "FontSize" and "Align"
-(possible values: "Left" or "BottomLeft", "Center" or "BottomCenter", "Right" or
-"BottomRight", "TopLeft", "TopCenter", "TopRight", "CenterLeft", "CenterCenter",
+BoldOblique", "Symbol", "Screen"), "FontSize" and "Align" (possible values:
+"Left" or "BottomLeft", "Center" or "BottomCenter", "Right" or "BottomRight",
+"TopLeft", "TopCenter", "TopRight", "CenterLeft", "CenterCenter",
 "CenterRight").
 
 Types:

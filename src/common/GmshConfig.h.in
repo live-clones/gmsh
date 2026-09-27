@@ -15,7 +15,6 @@
 #cmakedefine HAVE_BOUNDARY_LAYERS
 #cmakedefine HAVE_BLAS
 #cmakedefine HAVE_BLOSSOM
-#cmakedefine HAVE_CAIRO
 #cmakedefine HAVE_DLOPEN
 #cmakedefine HAVE_DOMHEX
 #cmakedefine HAVE_EIGEN
