@@ -56,6 +56,29 @@ EMSCRIPTEN_KEEPALIVE int gmshWebOpen(const char *fileName, int merge)
   return 1;
 }
 
+// mesh the model in dimension dim (1, 2 or 3), as the 1, 2 and 3 shortcuts of
+// the graphical interface do
+EMSCRIPTEN_KEEPALIVE int gmshWebMesh(int dim)
+{
+  try {
+    gmsh::model::mesh::generate(dim);
+  } catch(...) {
+    return 0;
+  }
+  return 1;
+}
+
+// the value of an option (e.g. "Mesh.NbNodes"), 0 if there is none
+EMSCRIPTEN_KEEPALIVE double gmshWebGetNumber(const char *name)
+{
+  double value = 0.;
+  try {
+    gmsh::option::getNumber(name, value);
+  } catch(...) {
+  }
+  return value;
+}
+
 // set an option (e.g. "General.Shading", "View[0].IntervalsType")
 EMSCRIPTEN_KEEPALIVE int gmshWebSetNumber(const char *name, double value)
 {
@@ -86,6 +109,18 @@ EMSCRIPTEN_KEEPALIVE int gmshWebDraw(int width, int height, double scale)
   _view->drawCurrentOpenglWindow(true);
   _view->end();
   return 1;
+}
+
+// add the next frames of the studio shading (General.Shading) to what the
+// last draw showed, for about budget seconds: 1 while there are more to add,
+// which the page asks for at its next animation frame
+EMSCRIPTEN_KEEPALIVE int gmshWebDrawStudio(int width, int height, double scale,
+                                           double budget)
+{
+  if(!_view || !_view->begin(width, height, scale, true)) return 0;
+  bool more = _view->drawStudioFrames(budget);
+  _view->end();
+  return more ? 1 : 0;
 }
 
 // turn the model as the mouse moved from (x0, y0) to (x1, y1)

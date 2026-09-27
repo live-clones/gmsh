@@ -41,6 +41,9 @@ public:
   void end();
   // draw the scene into the picture
   void drawCurrentOpenglWindow(bool make_current, bool again = false);
+  // on the screen, add the next frames of the studio shading to the average
+  // shown, for about budget seconds; true while there are more to add
+  bool drawStudioFrames(double budget);
   drawContext *getDrawContext() { return _ctx; }
   int getFontSize();
   void setFont(int fontid, int fontsize);

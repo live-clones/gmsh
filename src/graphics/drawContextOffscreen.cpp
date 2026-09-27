@@ -111,8 +111,10 @@ void drawContextOffscreen::drawCurrentOpenglWindow(bool make_current,
     memcpy(_frameView, _ctx->model, sizeof(_frameView));
   }
   _ctx->draw2d();
-  // all the frames of the studio shading, as a print of a window has them
-  if(glShader::enabled() && ctx->shading >= 1 && ctx->studioSamples >= 2) {
+  // all the frames of the studio shading, as a print of a window has them; on
+  // the screen, they are added a few at a time (see drawStudioFrames())
+  if(!_screen && glShader::enabled() && ctx->shading >= 1 &&
+     ctx->studioSamples >= 2) {
     glImmediate::flush();
     flushString();
     _ctx->drawStudioFrames(1, _width, _height, _frameView);
@@ -120,6 +122,20 @@ void drawContextOffscreen::drawCurrentOpenglWindow(bool make_current,
   }
   glImmediate::flush();
   flushString();
+}
+
+bool drawContextOffscreen::drawStudioFrames(double budget)
+{
+  CTX *ctx = CTX::instance();
+  if(!_ctx || !_screen || !glShader::enabled() || ctx->shading < 1) return false;
+  int n = ctx->studioSamples;
+  if(_ctx->studioSample + 1 >= n) return false;
+  glViewport(0, 0, _width, _height);
+  setPixelFactor(_scale);
+  if(!_ctx->drawStudioFrames(_ctx->studioSample + 1, _width, _height,
+                             _frameView, budget))
+    return false;
+  return _ctx->studioSample + 1 < n;
 }
 
 int drawContextOffscreen::getFontSize()
