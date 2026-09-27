@@ -16,6 +16,11 @@ Switch meshing algorithm on failure? (Currently only for 2D Delaunay-based algor
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MMG3DCombineDomains
+When Algorithm3D=7 (MMG3D) is used on connected volumes that share an internal interface, run a single combined MMG3D call over the whole group with per-region references instead of one independent call per region (0: independent per-region calls; 1: single combined call)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.AngleSmoothNormals
 Threshold angle below which normals are not smoothed@*
 Default value: @code{30}@*
