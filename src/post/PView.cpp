@@ -17,6 +17,7 @@
 #include "OwnerCache.h"
 #include "Context.h"
 #include "ClipPlanes.h"
+#include "Options.h"
 
 int PView::_globalTag = 1;
 std::vector<PView *> PView::list;
@@ -437,6 +438,48 @@ void PView::setChanged(bool val)
   // reset the eye position everytime we change the view so that the
   // arrays get resorted for transparency
   if(_changed) _eye = SPoint3(0., 0., 0.);
+}
+
+void PView::animate(bool time, int incr)
+{
+  static int inCycle = -1;
+  if(time) {
+    for(std::size_t i = 0; i < list.size(); i++) {
+      if(opt_view_visible(i, GMSH_GET, 0)) {
+        // skip empty steps
+        int step = (int)opt_view_timestep(i, GMSH_GET, 0) + incr;
+        int numSteps = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
+        for(int j = 0; j < numSteps; j++) {
+          if(list[i]->getData()->hasTimeStep(step))
+            break;
+          else
+            step += incr;
+          if(step < 0) step = numSteps - 1;
+          if(step > numSteps - 1) step = 0;
+        }
+        opt_view_timestep(i, GMSH_SET | GMSH_GUI, step);
+      }
+    }
+    return;
+  }
+  // hide all views except the one in the cycle
+  int n = (int)list.size();
+  if(incr == 0)
+    inCycle = 0;
+  else if(incr > 0) {
+    if((inCycle += incr) >= n) inCycle = 0;
+  }
+  else {
+    if((inCycle += incr) < 0) inCycle = n - 1;
+  }
+  if(incr >= 0) {
+    for(int i = 0; i < n; i++)
+      opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == inCycle));
+  }
+  else {
+    for(int i = n - 1; i >= 0; i--)
+      opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == inCycle));
+  }
 }
 
 void PView::combine(bool time, int how, bool remove, bool copyOptions)

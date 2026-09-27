@@ -431,7 +431,14 @@ static int _save_jpeg(const char *name)
 {
   return genericBitmapFileDialog(name, "JPEG Options", FORMAT_JPEG);
 }
-static int _save_mpeg(const char *name) { return mpegFileDialog(name); }
+static int _save_mpeg(const char *name)
+{
+  return mpegFileDialog(name, FORMAT_MPEG);
+}
+static int _save_mp4(const char *name)
+{
+  return mpegFileDialog(name, FORMAT_MP4);
+}
 static int _save_tex(const char *name) { return latexFileDialog(name); }
 static int _save_pdf(const char *name)
 {
@@ -534,6 +541,7 @@ static int _save_auto(const char *name)
   case FORMAT_GIF: return _save_gif(name);
   case FORMAT_JPEG: return _save_jpeg(name);
   case FORMAT_MPEG: return _save_mpeg(name);
+  case FORMAT_MP4: return _save_mp4(name);
   case FORMAT_TEX: return _save_tex(name);
   case FORMAT_PDF: return _save_pdf(name);
   case FORMAT_PNG: return _save_png(name);
@@ -628,6 +636,9 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Image - YUV\t*.yuv", _save_yuv},
 #if defined(HAVE_MPEG_ENCODE)
     {"Movie - MPEG\t*.mpg", _save_mpeg},
+#endif
+#if defined(HAVE_FFMPEG)
+    {"Movie - MP4\t*.mp4", _save_mp4},
 #endif
   };
   int nbformats = sizeof(formats) / sizeof(formats[0]);
@@ -3878,7 +3889,7 @@ void status_options_cb(Fl_Widget *w, void *data)
   }
 }
 
-static int stop_anim = 0, view_in_cycle = -1;
+static int stop_anim = 0;
 
 void status_play_manual(int time, int incr, bool redraw)
 {
@@ -3893,41 +3904,7 @@ void status_play_manual(int time, int incr, bool redraw)
   // if we watch some files this is a good time to check for new data
   file_watch_cb(nullptr, nullptr);
 
-  if(time) {
-    for(std::size_t i = 0; i < PView::list.size(); i++) {
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        // skip empty steps
-        int step = (int)opt_view_timestep(i, GMSH_GET, 0) + incr;
-        int numSteps = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
-        for(int j = 0; j < numSteps; j++) {
-          if(PView::list[i]->getData()->hasTimeStep(step))
-            break;
-          else
-            step += incr;
-          if(step < 0) step = numSteps - 1;
-          if(step > numSteps - 1) step = 0;
-        }
-        opt_view_timestep(i, GMSH_SET | GMSH_GUI, step);
-      }
-    }
-  }
-  else { // hide all views except view_in_cycle
-    if(incr == 0) {
-      view_in_cycle = 0;
-      for(int i = 0; i < (int)PView::list.size(); i++)
-        opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
-    }
-    else if(incr > 0) {
-      if((view_in_cycle += incr) >= (int)PView::list.size()) view_in_cycle = 0;
-      for(int i = 0; i < (int)PView::list.size(); i++)
-        opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
-    }
-    else {
-      if((view_in_cycle += incr) < 0) view_in_cycle = PView::list.size() - 1;
-      for(int i = PView::list.size() - 1; i >= 0; i--)
-        opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
-    }
-  }
+  PView::animate(time, incr);
   if(redraw) drawContext::global()->draw();
   busy = false;
 }
@@ -3965,11 +3942,8 @@ static void status_rewind_cb(Fl_Widget *w, void *data)
       opt_view_timestep(i, GMSH_SET | GMSH_GUI, step);
     }
   }
-  else {
-    view_in_cycle = 0;
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      opt_view_visible(i, GMSH_SET | GMSH_GUI, !i);
-  }
+  else
+    PView::animate(false, 0);
   drawContext::global()->draw();
 }
 

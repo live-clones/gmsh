@@ -48,6 +48,7 @@ opt(CGNS_CPEX0045 "Enable high-order CGNS import/export following CPEX0045 (expe
 opt(COVERAGE "Enable code coverage instrumentation (GCC/Clang only)" OFF)
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
+opt(FFMPEG "Enable FFmpeg for MP4 movie export" ${DEFAULT})
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
@@ -748,6 +749,21 @@ if(HAVE_FLTK OR ENABLE_GRAPHICS)
     add_subdirectory(contrib/mpeg_encode)
     include_directories(contrib/mpeg_encode/headers)
     set_config_option(HAVE_MPEG_ENCODE "Mpeg")
+  endif()
+
+  if(ENABLE_FFMPEG)
+    find_path(FFMPEG_INC "libavcodec/avcodec.h" PATH_SUFFIXES include ffmpeg)
+    find_library(AVFORMAT_LIB avformat)
+    find_library(AVCODEC_LIB avcodec)
+    find_library(AVUTIL_LIB avutil)
+    find_library(SWSCALE_LIB swscale)
+    if(FFMPEG_INC AND AVFORMAT_LIB AND AVCODEC_LIB AND AVUTIL_LIB AND
+       SWSCALE_LIB)
+      set_config_option(HAVE_FFMPEG "FFmpeg")
+      list(APPEND EXTERNAL_LIBRARIES ${AVFORMAT_LIB} ${AVCODEC_LIB}
+           ${SWSCALE_LIB} ${AVUTIL_LIB})
+      list(APPEND EXTERNAL_INCLUDES ${FFMPEG_INC})
+    endif()
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/3M AND ENABLE_3M)
@@ -2400,7 +2416,8 @@ message(STATUS " * C++ compiler: " ${CMAKE_CXX_COMPILER})
 message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
 
-mark_as_advanced(ANN_INC ANN_LIB CGNS_INC GMM_INC
+mark_as_advanced(ANN_INC ANN_LIB AVCODEC_LIB AVFORMAT_LIB AVUTIL_LIB
+                 CGNS_INC FFMPEG_INC SWSCALE_LIB GMM_INC
                  MMG_INC MMG_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB

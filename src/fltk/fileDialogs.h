@@ -21,7 +21,8 @@ std::string fileChooserGetName(int num);
 int fileChooserGetFilter();
 void fileChooserGetPosition(int *x, int *y);
 
-int mpegFileDialog(const char *filename);
+// the options of a movie in MPEG (FORMAT_MPEG) or MP4 (FORMAT_MP4)
+int mpegFileDialog(const char *filename, int format);
 int gifFileDialog(const char *filename);
 int geoFileDialog(const char *filename);
 int genericBitmapFileDialog(const char *filename, const char *title,

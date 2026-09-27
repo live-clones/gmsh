@@ -125,6 +125,12 @@ public:
   // combine view
   static void combine(bool time, int how, bool remove, bool copyOptions);
 
+  // the next frame of an animation: with time, each visible view moved by incr
+  // of its time steps (skipping the empty ones); otherwise the views shown one
+  // at a time, the one incr further than the one shown (incr = 0 shows the
+  // first)
+  static void animate(bool time, int incr);
+
   // find view by name, by fileName, or by number. If timeStep >= 0, return view
   // only if it does *not* contain that timestep; if partition >= 0, return view
   // only if it does *not* contain that partition, if fileName is not empty,

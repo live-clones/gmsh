@@ -3,6 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
+#include <functional>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -33,6 +35,8 @@
 #include "gl2ppm.h"
 #include "gl2yuv.h"
 #include "gl2pgf.h"
+#include "gl2mp4.h"
+#include "gl2mpeg.h"
 #endif
 
 #if defined(HAVE_FLTK)
@@ -117,6 +121,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".jpeg")     return FORMAT_JPEG;
   else if(ext == ".mpg")      return FORMAT_MPEG;
   else if(ext == ".mpeg")     return FORMAT_MPEG;
+  else if(ext == ".mp4")      return FORMAT_MP4;
   else if(ext == ".png")      return FORMAT_PNG;
   else if(ext == ".pgf")      return FORMAT_PGF;
   else if(ext == ".ps")       return FORMAT_PS;
@@ -184,6 +189,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_GIF:     name = ".gif"; break;
   case FORMAT_JPEG:    name = ".jpg"; break;
   case FORMAT_MPEG:    name = ".mpg"; break;
+  case FORMAT_MP4:     name = ".mp4"; break;
   case FORMAT_PNG:     name = ".png"; break;
   case FORMAT_PGF:     name = ".pgf"; break;
   case FORMAT_PS:      name = ".ps"; break;
@@ -460,7 +466,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 }
 #endif
 
-#if defined(HAVE_MPEG_ENCODE) && defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL) && defined(HAVE_POST)
 static void ChangePrintParameter(int frame)
 {
   double first = CTX::instance()->print.parameterFirst;
@@ -472,6 +478,60 @@ static void ChangePrintParameter(int frame)
   Msg::Info("Setting Print.Parameter = %g", v);
   opt_print_parameter(0, GMSH_SET | GMSH_GUI, v);
   ParseString(CTX::instance()->print.parameterCommand, true);
+}
+
+// The frames of an animation (PostProcessing.AnimationCycle): the time steps
+// of the visible views, the views one at a time, or the values of
+// Print.Parameter, every PostProcessing.AnimationStep; frame(i) makes the
+// i-th, and false from it stops
+static bool forEachAnimationFrame(const std::function<bool(int)> &frame)
+{
+  int numViews = (int)opt_post_nb_views(0, GMSH_GET, 0);
+  int numSteps = 0;
+  int cycle = CTX::instance()->post.animCycle;
+  if(cycle == 0) {
+    for(int i = 0; i < numViews; i++) {
+      if(opt_view_visible(i, GMSH_GET, 0))
+        numSteps = std::max(
+          numSteps, (int)opt_view_nb_non_empty_timestep(i, GMSH_GET, 0));
+    }
+  }
+  else if(cycle == 1)
+    numSteps = numViews;
+  else
+    numSteps = CTX::instance()->print.parameterSteps;
+  int step = std::max(1, CTX::instance()->post.animStep);
+  int numFrames = (numSteps + step - 1) / step;
+  if(cycle != 2) PView::animate(!cycle, 0);
+  for(int i = 0; i < numFrames; i++) {
+    if(cycle == 2) ChangePrintParameter(i);
+    if(!frame(i)) return false;
+    if(cycle != 2) PView::animate(!cycle, step);
+  }
+  return true;
+}
+
+// a movie (see gl2mpeg.h and gl2mp4.h) of the frames of the animation, one
+// every PostProcessing.AnimationDelay seconds
+template <class movieWriter>
+static bool writeMovie(movieWriter &movie, const std::string &name)
+{
+  double delay = CTX::instance()->post.animDelay;
+  double fps = (delay > 0.) ? 1. / delay : 25.;
+  bool ok = forEachAnimationFrame([&](int i) {
+    PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
+    if(!buffer) return false;
+    bool done =
+      (i || movie.open(name, buffer->getWidth(), buffer->getHeight(), fps)) &&
+      movie.write(buffer);
+    delete buffer;
+    return done;
+  });
+  if(!movie.close() || !ok) {
+    Msg::Error("Could not write the movie '%s'", name.c_str());
+    return false;
+  }
+  return true;
 }
 #endif
 
@@ -1176,101 +1236,27 @@ void CreateOutputFile(const std::string &fileName, int format,
     }
     break;
 
-#if defined(HAVE_MPEG_ENCODE) && defined(HAVE_FLTK)
+#if defined(HAVE_POST)
   case FORMAT_MPEG:
-  case FORMAT_MPEG_PREVIEW:
     {
-      if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
-        break;
-      }
-
-      std::string parFileName = CTX::instance()->homeDir + ".gmsh-mpeg_encode.par";
-      FILE *fp = nullptr;
-      if(format != FORMAT_MPEG_PREVIEW){
-        fp = Fopen(parFileName.c_str(), "w");
-        if(!fp){
-          Msg::Error("Unable to open file '%s'", parFileName.c_str());
-          error = true;
-          break;
-        }
-      }
-
-      int numViews = (int)opt_post_nb_views(0, GMSH_GET, 0);
-      int numSteps = 0;
-      int cycle = CTX::instance()->post.animCycle;
-      if(cycle == 0){
-        for(int i = 0; i < numViews; i++){
-          if(opt_view_visible(i, GMSH_GET, 0))
-            numSteps = std::max(numSteps,
-                                (int)opt_view_nb_non_empty_timestep(i, GMSH_GET, 0));
-        }
-      }
-      else if(cycle == 1){
-        numSteps = numViews;
-      }
-      else{
-        numSteps = CTX::instance()->print.parameterSteps;
-      }
-
-      std::vector<std::string> frames;
-      for(int i = 0; i < numSteps; i += CTX::instance()->post.animStep){
-        char tmp[256];
-        sprintf(tmp, ".gmsh-%06d.ppm", (int)frames.size());
-        frames.push_back(tmp);
-      }
-      if(cycle != 2)
-        status_play_manual(!cycle, 0, false);
-      for(std::size_t i = 0; i < frames.size(); i++){
-        if(cycle == 2)
-          ChangePrintParameter(i);
-        if(fp)
-          CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM,
-                           false);
-        else{
-          drawContext::global()->draw();
-          SleepInSeconds(CTX::instance()->post.animDelay);
-        }
-        if(cycle != 2)
-          status_play_manual(!cycle, CTX::instance()->post.animStep, false);
-      }
-      if(fp){
-        int repeat = (int)(CTX::instance()->post.animDelay * 30);
-        if(repeat < 1) repeat = 1;
-        std::string pattern("I");
-        // including P frames would lead to smaller files, but the quality
-        // degradation is perceptible:
-        // for(int i = 1; i < repeat; i++) pattern += "P";
-        fprintf(fp, "PATTERN %s\nBASE_FILE_FORMAT PPM\nGOP_SIZE %d\n"
-                "SLICES_PER_FRAME 1\nPIXEL FULL\nRANGE 10\n"
-                "PSEARCH_ALG EXHAUSTIVE\nBSEARCH_ALG CROSS2\n"
-                "IQSCALE 1\nPQSCALE 1\nBQSCALE 25\nREFERENCE_FRAME DECODED\n"
-                "OUTPUT %s\nINPUT_CONVERT *\nINPUT_DIR %s\nINPUT\n",
-                pattern.c_str(), repeat, name.c_str(),
-                CTX::instance()->homeDir.c_str());
-        for(std::size_t i = 0; i < frames.size(); i++){
-          fprintf(fp, "%s", frames[i].c_str());
-          if(repeat > 1) fprintf(fp, " [1-%d]", repeat);
-          fprintf(fp, "\n");
-        }
-        fprintf(fp, "END_INPUT\n");
-        fclose(fp);
-        extern int mpeg_encode_main(int, char**);
-        char *args[] = {(char*)"gmsh", (char*)parFileName.c_str()};
-        try{
-          mpeg_encode_main(2, args);
-        }
-        catch (const char *msg){
-          Msg::Error("%s", msg);
-          error = true;
-        }
-        if(opt_print_delete_tmp_files(0, GMSH_GET, 0)){
-          UnlinkFile(parFileName);
-          for(std::size_t i = 0; i < frames.size(); i++)
-            UnlinkFile(CTX::instance()->homeDir + frames[i]);
-        }
-      }
+      mpegWriter movie;
+      error = !writeMovie(movie, name);
     }
+    break;
+
+  case FORMAT_MP4:
+    {
+      mp4Writer movie;
+      error = !writeMovie(movie, name);
+    }
+    break;
+
+  case FORMAT_MPEG_PREVIEW:
+    forEachAnimationFrame([](int i) {
+      drawContext::global()->draw();
+      SleepInSeconds(CTX::instance()->post.animDelay);
+      return true;
+    });
     break;
 #endif
 

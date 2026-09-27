@@ -34,6 +34,8 @@ Enable code coverage instrumentation (GCC/Clang only) (default: OFF)
 Enable experimental DOMHEX code (default: ON)
 @item ENABLE_EIGEN
 Enable Eigen for linear algebra (instead of Blas/Lapack) (default: ON)
+@item ENABLE_FFMPEG
+Enable FFmpeg for MP4 movie export (default: ON)
 @item ENABLE_FLTK
 Enable FLTK graphical user interface (requires mesh/post) (default: ON)
 @item ENABLE_GEOMETRYCENTRAL

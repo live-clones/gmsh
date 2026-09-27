@@ -534,7 +534,7 @@ int latexFileDialog(const char *name)
 
 // Save mpeg dialog
 
-int mpegFileDialog(const char *name)
+int mpegFileDialog(const char *name, int format)
 {
   struct _mpegFileDialog {
     Fl_Window *window;
@@ -552,7 +552,7 @@ int mpegFileDialog(const char *name)
     dialog = new _mpegFileDialog;
     int h = 4 * WB + 11 * BH, w = 3 * BB + 4 * WB, y = WB;
     int ww = w - 2 * WB;
-    dialog->window = new Fl_Double_Window(w, h, "MPEG Options");
+    dialog->window = new Fl_Double_Window(w, h, "Movie Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_non_modal();
     {
@@ -696,9 +696,10 @@ int mpegFileDialog(const char *name)
                                     (int)dialog->c[1]->value());
         opt_print_delete_tmp_files(0, GMSH_SET | GMSH_GUI,
                                    (int)dialog->c[2]->value());
-        int format = (o == dialog->preview) ? FORMAT_MPEG_PREVIEW : FORMAT_MPEG;
         dialog->buttons->deactivate();
-        CreateOutputFile(name, format, o == dialog->ok);
+        CreateOutputFile(name,
+                         (o == dialog->preview) ? FORMAT_MPEG_PREVIEW : format,
+                         o == dialog->ok);
         dialog->buttons->activate();
         if(o == dialog->ok) {
           dialog->window->hide();
