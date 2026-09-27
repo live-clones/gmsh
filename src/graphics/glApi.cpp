@@ -6,8 +6,9 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include "GmshConfig.h"
 
-#if !defined(WIN32)
+#if !defined(WIN32) && defined(HAVE_DLOPEN)
 #include <dlfcn.h>
 #endif
 
@@ -101,10 +102,14 @@ namespace glApi {
     // through a data pointer: casting straight from PROC to the real signature
     // is a cast between incompatible function types, which compilers warn about
     return (void *)p;
-#else
+#elif defined(HAVE_DLOPEN)
     // the GL library the program is linked against exports what the driver
     // implements, whether or not the header declared it
     return dlsym(RTLD_DEFAULT, name);
+#else
+    // nothing to look the entry points up with: OpenGL 1.1 and the fixed
+    // function pipeline alone
+    return nullptr;
 #endif
   }
 

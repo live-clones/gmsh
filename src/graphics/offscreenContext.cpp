@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include "GmshConfig.h"
 #include "offscreenContext.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
@@ -15,7 +16,7 @@
 
 #if defined(__APPLE__)
 #include <OpenGL/OpenGL.h>
-#elif !defined(WIN32)
+#elif !defined(WIN32) && defined(HAVE_DLOPEN)
 #include <dlfcn.h>
 #endif
 
@@ -87,7 +88,7 @@ namespace offscreenContext {
   }
 } // namespace offscreenContext
 
-#elif !defined(WIN32)
+#elif !defined(WIN32) && defined(HAVE_DLOPEN)
 
 namespace {
   // the part of EGL used here, declared rather than included so that neither
@@ -306,7 +307,8 @@ namespace offscreenContext {
 namespace offscreenContext {
   bool makeCurrent(bool shaders)
   {
-    Msg::Error("OpenGL without a window is not available on Windows");
+    Msg::Error("OpenGL without a window needs EGL (loaded with dlopen) or "
+               "CGL (macOS): not available on this system");
     return false;
   }
 } // namespace offscreenContext
