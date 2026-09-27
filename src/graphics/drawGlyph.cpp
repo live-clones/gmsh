@@ -282,11 +282,12 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
 
   // The raster position is only used by the native font engine and by
   // gl2ps; the other engines get the position through win. It is skipped
-  // under the shader pipeline (which never uses the native engine, see
-  // opt_general_graphics_font_engine), as computing it there crashes some
-  // drivers (Mesa/llvmpipe) on gl_VertexID. Only recomputed when the
-  // alignment moved the string.
-  if(!glShader::enabled() || CTX::instance()->printing) {
+  // under the shader pipeline, which uses neither (the native engine is
+  // never picked there, see opt_general_graphics_font_engine, and the files
+  // of gl2ps are written with the fixed function pipeline), as computing it
+  // there crashes some drivers (Mesa/llvmpipe) on gl_VertexID. Only
+  // recomputed when the alignment moved the string.
+  if(!glShader::enabled()) {
     if(moved) {
       double where[3];
       viewport2World(w, where);

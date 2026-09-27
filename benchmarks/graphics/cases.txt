@@ -190,7 +190,8 @@ post_model_scalar elements_o1.msh views_o1.msh view3d.opt
   For i In {0 : PostProcessing.NbViews - 1} View[i].Visible = (i == 0); EndFor
   View[0].IntervalsType = 1;
   View[0].IntervalsType = 2; View[0].ShowElement = 1;
-  View[0].IntervalsType = 4; View[0].ShowElement = 0;
+  View[0].LineWidth = 3;
+  View[0].LineWidth = 1; View[0].IntervalsType = 4; View[0].ShowElement = 0;
   View[0].IntervalsType = 3;
   View[0].Boundary = 1;
   View[0].Boundary = 0; View[0].DrawSkinOnly = 1;

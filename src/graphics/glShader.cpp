@@ -1703,7 +1703,13 @@ void main()
 
     setColorArray(colors != nullptr);
     noTexture();
+    // the polygon offset of the faces does not apply to lines, but it does
+    // to the triangles these are drawn as: offset like the faces they edge,
+    // they would lose half the depth tests against them
+    GLboolean offset = glIsEnabled(GL_POLYGON_OFFSET_FILL);
+    if(offset) glDisable(GL_POLYGON_OFFSET_FILL);
     glApi::DrawArraysInstanced(GL_TRIANGLES, 0, 6, segments);
+    if(offset) glEnable(GL_POLYGON_OFFSET_FILL);
 
     glApi::Uniform1i(_u.wideLine, 0);
     glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
