@@ -917,7 +917,11 @@ if(HAVE_MESH OR HAVE_SOLVER)
       list(APPEND EXTERNAL_INCLUDES ${METIS_INC})
       set_config_option(HAVE_METIS "Metis")
     elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/metis)
-      add_definitions(-DUSE_GKREGEX)
+      # GKlib's own regex, except with Emscripten, whose C library has one
+      # (and is linked whole, see the LINKABLE option below)
+      if(NOT EMSCRIPTEN)
+        add_definitions(-DUSE_GKREGEX)
+      endif()
       add_subdirectory(contrib/metis)
       include_directories(contrib/metis/include contrib/metis/libmetis
                           contrib/metis/GKlib)

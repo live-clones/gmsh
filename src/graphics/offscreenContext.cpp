@@ -16,6 +16,8 @@
 
 #if defined(__APPLE__)
 #include <OpenGL/OpenGL.h>
+#elif defined(__EMSCRIPTEN__)
+#include <emscripten/html5.h>
 #elif !defined(WIN32) && defined(HAVE_DLOPEN)
 #include <dlfcn.h>
 #endif
@@ -84,6 +86,46 @@ namespace offscreenContext {
     }
     if(CGLSetCurrentContext(_contexts[k]) != kCGLNoError) return false;
     switchTo(_contexts[k]);
+    return true;
+  }
+} // namespace offscreenContext
+
+#elif defined(__EMSCRIPTEN__)
+
+namespace {
+  EMSCRIPTEN_WEBGL_CONTEXT_HANDLE _canvas = 0;
+} // namespace
+
+namespace offscreenContext {
+  // the WebGL 2 context of the canvas of the page (#canvas): WebGL has the
+  // shader pipeline alone
+  bool makeCurrent(bool shaders)
+  {
+    if(!shaders) {
+      Msg::Error("WebGL has no fixed function pipeline (General.Shaders = 0)");
+      return false;
+    }
+    if(!_canvas) {
+      EmscriptenWebGLContextAttributes attr;
+      emscripten_webgl_init_context_attributes(&attr);
+      attr.majorVersion = 2;
+      attr.minorVersion = 0;
+      // opaque, or the page shows through the background; kept after each
+      // frame, as the studio frames and the pictures read it back
+      attr.alpha = false;
+      attr.depth = true;
+      attr.antialias = false;
+      attr.preserveDrawingBuffer = true;
+      _canvas = emscripten_webgl_create_context("#canvas", &attr);
+      if(_canvas <= 0) {
+        Msg::Error("Could not create a WebGL 2 context on the canvas");
+        _canvas = 0;
+        return false;
+      }
+    }
+    if(emscripten_webgl_make_context_current(_canvas) != EMSCRIPTEN_RESULT_SUCCESS)
+      return false;
+    switchTo((const void *)(intptr_t)_canvas);
     return true;
   }
 } // namespace offscreenContext

@@ -16,7 +16,7 @@
 
 drawContextOffscreen::drawContextOffscreen()
   : _ctx(nullptr), _strings(nullptr), _fontId(-1), _fontSize(12), _width(0),
-    _height(0), _scale(1.), _previous(nullptr)
+    _height(0), _scale(1.), _screen(false), _previous(nullptr)
 {
   _strings = new stbStrings;
   for(int i = 0; i < 16; i++) _frameView[i] = (i % 5) ? 0. : 1.;
@@ -40,12 +40,13 @@ static void setClearColor()
                  (GLclampf)(ctx->unpackBlue(ctx->color.bg) / 255.), 0.0F);
 }
 
-bool drawContextOffscreen::begin(int width, int height, double scale)
+bool drawContextOffscreen::begin(int width, int height, double scale,
+                                 bool screen)
 {
   if(width < 1 || height < 1) return false;
   if(!offscreenContext::makeCurrent(CTX::instance()->shaders)) return false;
   if(CTX::instance()->shaders) glShader::available();
-  if(!glShader::beginPrintTarget(width, height)) {
+  if(!screen && !glShader::beginPrintTarget(width, height)) {
     Msg::Error("Could not draw a picture of %dx%d pixels without a window",
                width, height);
     return false;
@@ -53,9 +54,12 @@ bool drawContextOffscreen::begin(int width, int height, double scale)
   _width = width;
   _height = height;
   _scale = scale;
+  _screen = screen;
   // the view of the options (a window takes it from them when it is made)
-  delete _ctx;
-  _ctx = new drawContext();
+  if(!screen || !_ctx) {
+    delete _ctx;
+    _ctx = new drawContext();
+  }
   glImmediate::pixelScale(scale);
   _previous = drawContext::global();
   drawContext::setGlobal(this);
@@ -73,7 +77,7 @@ void drawContextOffscreen::read(GLenum format, GLenum type, void *pixels)
 
 void drawContextOffscreen::end()
 {
-  glShader::endPrintTarget();
+  if(!_screen) glShader::endPrintTarget();
   glImmediate::pixelScale(1.);
   if(drawContext::global() == this) drawContext::setGlobal(_previous);
   _previous = nullptr;

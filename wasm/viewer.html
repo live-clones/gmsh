@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gmsh WebGL viewer</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #fff; font: 13px sans-serif; }
+  #canvas { display: block; width: 100%; height: calc(100% - 28px);
+            touch-action: none; }
+  #bar { height: 28px; display: flex; align-items: center; gap: 12px;
+         padding: 0 8px; border-bottom: 1px solid #ddd; box-sizing: border-box; }
+  #status { color: #666; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <strong>Gmsh</strong>
+  <label>File <input id="file" type="file"></label>
+  <span id="status">loading...</span>
+</div>
+<canvas id="canvas"></canvas>
+<script>
+// the file shown first: ?file=<url>, or a tutorial view
+const params = new URLSearchParams(location.search);
+const first = params.get('file') || '../tutorials/view3.pos';
+const canvas = document.getElementById('canvas');
+const status = document.getElementById('status');
+
+var Module = {
+  canvas: canvas,
+  print: (t) => console.log(t),
+  printErr: (t) => console.warn(t),
+  onRuntimeInitialized: start,
+};
+
+let pending = false;
+function draw() {
+  if(pending) return;
+  pending = true;
+  requestAnimationFrame(() => {
+    pending = false;
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.round(canvas.clientWidth * dpr);
+    const h = Math.round(canvas.clientHeight * dpr);
+    if(canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    const t0 = performance.now();
+    Module.ccall('gmshWebDraw', 'number', ['number', 'number', 'number'],
+                 [w, h, dpr]);
+    status.textContent = `${w}x${h}, ${(performance.now() - t0).toFixed(1)} ms`;
+  });
+}
+
+async function openUrl(url) {
+  status.textContent = 'loading ' + url;
+  const data = new Uint8Array(await (await fetch(url)).arrayBuffer());
+  const name = '/' + url.split('/').pop();
+  Module.FS.writeFile(name, data);
+  if(!Module.ccall('gmshWebOpen', 'number', ['string', 'number'], [name, 0]))
+    status.textContent = 'could not open ' + name;
+  draw();
+}
+
+function start() {
+  Module.ccall('gmshWebInitialize', 'number', [], []);
+  openUrl(first);
+  window.addEventListener('resize', draw);
+}
+
+document.getElementById('file').addEventListener('change', async (e) => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const name = '/' + f.name;
+  Module.FS.writeFile(name, new Uint8Array(await f.arrayBuffer()));
+  Module.ccall('gmshWebOpen', 'number', ['string', 'number'], [name, 0]);
+  Module.ccall('gmshWebResetView', null, [], []);
+  draw();
+});
+
+// left drag: rotate; right drag or shift: pan; wheel: zoom at the cursor
+let last = null;
+canvas.addEventListener('pointerdown', (e) => {
+  last = {x: e.offsetX, y: e.offsetY, pan: e.button === 2 || e.shiftKey};
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', (e) => {
+  if(!last) return;
+  const args = [last.x, last.y, e.offsetX, e.offsetY];
+  Module.ccall(last.pan ? 'gmshWebPan' : 'gmshWebRotate', null,
+               ['number', 'number', 'number', 'number'], args);
+  last.x = e.offsetX;
+  last.y = e.offsetY;
+  draw();
+});
+canvas.addEventListener('pointerup', () => { last = null; });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  Module.ccall('gmshWebZoom', null, ['number', 'number', 'number'],
+               [Math.exp(-e.deltaY * 0.002), e.offsetX, e.offsetY]);
+  draw();
+}, {passive: false});
+canvas.addEventListener('dblclick', () => {
+  Module.ccall('gmshWebResetView', null, [], []);
+  draw();
+});
+</script>
+<script src="build/gmsh.js"></script>
+</body>
+</html>

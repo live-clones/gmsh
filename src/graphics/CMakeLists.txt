@@ -8,6 +8,7 @@ set(SRC
   Trackball.cpp
   ReadImg.cpp
   glApi.cpp
+  glLegacy.cpp
   glMatrix.cpp
   glImmediate.cpp
   glShader.cpp
@@ -27,6 +28,7 @@ set(SRC
   stbStrings.cpp
   offscreenContext.cpp
   drawContextOffscreen.cpp
+  webView.cpp
   gl2ps.cpp
   gl2gif.cpp
   gl2jpeg.cpp

@@ -23,6 +23,7 @@ private:
   int _width, _height;
   double _scale;
   double _frameView[16];
+  bool _screen;
   drawContextGlobal *_previous;
 
 public:
@@ -31,8 +32,10 @@ public:
   // a picture of width x height pixels, of the scene of a window scaled by
   // scale (what is sized in pixels follows): the context is made current,
   // the picture bound to be drawn into, and this is the global drawing
-  // context until end()
-  bool begin(int width, int height, double scale);
+  // context until end(). With screen, what is drawn goes to the framebuffer
+  // of the context itself (the canvas of a web page), and the view is kept
+  // from frame to frame instead of being taken from the options each time.
+  bool begin(int width, int height, double scale, bool screen = false);
   // read the picture back
   void read(GLenum format, GLenum type, void *pixels);
   void end();

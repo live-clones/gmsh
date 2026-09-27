@@ -8,7 +8,9 @@
 #include <cstring>
 #include "GmshConfig.h"
 
-#if !defined(WIN32) && defined(HAVE_DLOPEN)
+#if defined(__EMSCRIPTEN__)
+#include <emscripten/html5_webgl.h>
+#elif !defined(WIN32) && defined(HAVE_DLOPEN)
 #include <dlfcn.h>
 #endif
 
@@ -102,6 +104,9 @@ namespace glApi {
     // through a data pointer: casting straight from PROC to the real signature
     // is a cast between incompatible function types, which compilers warn about
     return (void *)p;
+#elif defined(__EMSCRIPTEN__)
+    // WebGL: the entry points are those of the browser, looked up by name
+    return emscripten_webgl_get_proc_address(name);
 #elif defined(HAVE_DLOPEN)
     // the GL library the program is linked against exports what the driver
     // implements, whether or not the header declared it
