@@ -20,13 +20,11 @@
 
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
 #else
 // ask the system headers for the prototypes of what came after OpenGL 1.1, in
 // particular the buffer objects (OpenGL 1.5)
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
-#include <GL/glu.h>
 #endif
 
 #include <cstddef>

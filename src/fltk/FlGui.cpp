@@ -1279,7 +1279,7 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
   // get pixels
   PixelBuffer *buffer =
     new PixelBuffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
-  buffer->fill(0);
+  buffer->fill();
   unsigned char *pixels = (unsigned char *)buffer->getPixels();
 
   // swap R and B since Windows bitmap format is BGR

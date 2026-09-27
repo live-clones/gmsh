@@ -320,7 +320,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
     GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
     buffer = new PixelBuffer(width, height, format, type);
-    buffer->fill(CTX::instance()->batch);
+    buffer->fill();
   }
   else{
     graphicWindow *g = FlGui::instance()->graph[0];
@@ -344,7 +344,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
       openglWindow::setLastHandled(g->gl[i]);
       buffer = new PixelBuffer(g->gl[i]->pixel_w(), g->gl[i]->pixel_h(),
                                format, type);
-      buffer->fill(CTX::instance()->batch);
+      buffer->fill();
       buffers.push_back(buffer);
       double fact = g->gl[i]->getDrawContext()->highResolutionPixelFactor();
       ww = std::max(ww, (int)(fact * (g->gl[i]->x() - xmin)) + g->gl[i]->pixel_w());
@@ -939,7 +939,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
 
       if(CTX::instance()->print.epsQuality == 0)
-        buffer.fill(CTX::instance()->batch);
+        buffer.fill();
 
       int psformat =
         (format == FORMAT_PDF) ? GL2PS_PDF :

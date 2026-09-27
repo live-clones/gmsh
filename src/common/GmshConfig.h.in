@@ -54,7 +54,6 @@
 #cmakedefine HAVE_UDT
 #cmakedefine HAVE_OPENGL
 #cmakedefine HAVE_OPTHOM
-#cmakedefine HAVE_OSMESA
 #cmakedefine HAVE_P4EST
 #cmakedefine HAVE_PARASOLID
 #cmakedefine HAVE_PARASOLID_STEP
