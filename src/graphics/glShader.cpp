@@ -666,6 +666,7 @@ void main()
       GLenum oitDepthFormat = 0;
       GLuint accFbo = 0, accTex = 0, accCopy = 0;
       int accWidth = 0, accHeight = 0;
+      GLenum accCopyFormat = 0;
       GLuint fireFbo = 0, fireDepth = 0, fireFrame = 0;
       int fireWidth = 0, fireHeight = 0;
       GLenum fireDepthFormat = 0;
@@ -740,8 +741,13 @@ void main()
 
     std::string prologue()
     {
+      // OpenGL ES has no default precision for the shadow samplers, and a
+      // low or medium one for integers and samplers in a fragment shader:
+      // the depths read back through them need all their bits
       if(glApi::isES())
-        return "#version 300 es\nprecision highp float;\n";
+        return "#version 300 es\nprecision highp float;\n"
+               "precision highp int;\nprecision highp sampler2D;\n"
+               "precision highp sampler2DShadow;\n";
       return "#version 330 core\n";
     }
 
@@ -1253,7 +1259,17 @@ void main()
     if(!ensure() || !glApi::haveFramebufferObjects() ||
        !glApi::haveFloatColorBuffers() || !buildBlit())
       return false;
-    if(_c->accFbo && (_c->accWidth != width || _c->accHeight != height)) {
+    // the copy of the window has its channels: OpenGL ES cannot copy a
+    // window without alpha (a WebGL canvas) into a texture with it
+    GLenum copyFormat = GL_RGBA;
+    if(glApi::isES()) {
+      GLint alpha = 8;
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+      glGetIntegerv(GL_ALPHA_BITS, &alpha);
+      if(!alpha) copyFormat = GL_RGB;
+    }
+    if(_c->accFbo && (_c->accWidth != width || _c->accHeight != height ||
+                      _c->accCopyFormat != copyFormat)) {
       glApi::DeleteFramebuffers(1, &_c->accFbo);
       glDeleteTextures(1, &_c->accTex);
       glDeleteTextures(1, &_c->accCopy);
@@ -1285,10 +1301,12 @@ void main()
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
-                   GL_UNSIGNED_BYTE, nullptr);
+      glTexImage2D(GL_TEXTURE_2D, 0,
+                   (copyFormat == GL_RGB) ? GL_RGB8 : GL_RGBA8, width, height,
+                   0, copyFormat, GL_UNSIGNED_BYTE, nullptr);
       _c->accWidth = width;
       _c->accHeight = height;
+      _c->accCopyFormat = copyFormat;
       first = true;
     }
 

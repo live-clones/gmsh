@@ -202,7 +202,7 @@ bool mp4Writer::close()
 
 struct mp4Writer::data {};
 mp4Writer::mp4Writer() : _d(nullptr) {}
-mp4Writer::~mp4Writer() {}
+mp4Writer::~mp4Writer() { delete _d; }
 bool mp4Writer::open(const std::string &name, int width, int height,
                      double fps)
 {
