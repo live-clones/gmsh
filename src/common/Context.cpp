@@ -73,11 +73,7 @@ void CTX::init()
 
   geom.autoExtrude = 0; // FIXME: temporary for auto-extrude testing
 
-#if defined(HAVE_FLTK)
-  glFontEnum = FL_HELVETICA;
-#else
-  glFontEnum = -1;
-#endif
+  glFontEnum = 0; // Helvetica
   forcedBBox = 0;
   hideUnselected = 0;
   numWindows = numTiles = 1;

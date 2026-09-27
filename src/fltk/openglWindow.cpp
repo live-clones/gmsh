@@ -573,23 +573,8 @@ void openglWindow::_studioFrame()
   // held anywhere stops it too.
   bool live = !ctx->printing;
   if(!live || (k > 0 && !Fl::pushed())) {
-    double start = TimeOfDay();
-    for(int j = k + 1; j < n; j++) {
-      if(live && TimeOfDay() - start >= 0.02) break;
-      _ctx->studioSample = j;
-      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      if(ctx->camera) _cameraMatrices();
-      _ctx->draw3d();
-      _ctx->draw2d();
-      glImmediate::flush();
-      drawContext::global()->flushString();
-      if(!glShader::accumulate(w, h, j == 1, j)) {
-        _ctx->studioSample = 0;
-        return;
-      }
-      // what is left for the GPU to do counts against the time too
-      if(live) glFinish();
-    }
+    if(!_ctx->drawStudioFrames(k + 1, w, h, _frameView, live ? 0.02 : 0.))
+      return;
   }
   if(!live) {
     // all of them, for the view and the size recorded above

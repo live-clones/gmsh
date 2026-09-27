@@ -23,14 +23,9 @@
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
-#endif
-
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#include "graphicWindow.h"
-#include "openglWindow.h"
+#include "drawContextOffscreen.h"
+#include "PixelBuffer.h"
 #include "glImmediate.h"
-#include "visibilityWindow.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
 #include "gl2jpeg.h"
@@ -41,6 +36,13 @@
 #endif
 
 #if defined(HAVE_FLTK)
+#include "FlGui.h"
+#include "graphicWindow.h"
+#include "openglWindow.h"
+#include "visibilityWindow.h"
+#endif
+
+#if defined(HAVE_OPENGL)
 // gl2ps needs OpenGL feedback mode, which a core profile has none of: draw
 // with the fixed function pipeline while the file is written
 class drawTheOldWayWhileExporting {
@@ -224,13 +226,64 @@ std::string GetKnownFileFormats(bool onlyMeshFormats)
   return all;
 }
 
+#if defined(HAVE_OPENGL)
+// Is there a window to take the pictures of? Otherwise the scene is drawn
+// without one (see drawContextOffscreen), as a window of
+// General.GraphicsWidth x General.GraphicsHeight pixels would draw it.
+static bool haveWindow()
+{
 #if defined(HAVE_FLTK)
+  return FlGui::available();
+#else
+  return false;
+#endif
+}
+
+// the size of that window, in pixels
+static void windowSize(int &width, int &height)
+{
+#if defined(HAVE_FLTK)
+  if(haveWindow()) {
+    width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+    height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+    return;
+  }
+#endif
+  width = CTX::instance()->glSize[0];
+  height = CTX::instance()->glSize[1];
+}
+
+// the context the scene is drawn in without a window, kept from picture to
+// picture with what it holds
+static drawContextOffscreen *offscreen()
+{
+  static drawContextOffscreen *o = new drawContextOffscreen();
+  return o;
+}
+
+// the scene of the window drawn without one, into a picture of width x height
+// pixels, for as long as this lives; nothing when there is a window
+class offscreenPicture {
+private:
+  bool _drawing;
+
+public:
+  offscreenPicture(int width, int height, double scale)
+    : _drawing(!haveWindow() && offscreen()->begin(width, height, scale))
+  {
+  }
+  ~offscreenPicture()
+  {
+    if(_drawing) offscreen()->end();
+  }
+  bool failed() { return !haveWindow() && !_drawing; }
+};
+
 // the size of the picture: Print.Width and Print.Height, with the missing one
 // scaled from the window
 static void printSize(int &width, int &height)
 {
-  width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-  height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+  windowSize(width, height);
   if(CTX::instance()->print.width <= 0 && CTX::instance()->print.height <= 0)
     return;
   if(CTX::instance()->print.width <= 0){
@@ -267,8 +320,42 @@ static void downsample(PixelBuffer *from, PixelBuffer *to, int k)
       }
 }
 
+// the scene drawn without a window, into a picture of Print.Width x
+// Print.Height pixels (see printSize()), possibly drawn at a multiple of its
+// size and averaged down
+static PixelBuffer *getOffscreenPixelBuffer(GLenum format, GLenum type)
+{
+  int width, height, ww, wh;
+  printSize(width, height);
+  windowSize(ww, wh);
+  int ss = std::max(1, CTX::instance()->print.supersampling);
+  if(type != GL_UNSIGNED_BYTE) ss = 1;
+  // what is sized in pixels follows the picture's size, as for a window
+  double ratio = 1.;
+  if(CTX::instance()->print.scalePixelSizes && ww > 0)
+    ratio = (double)width / ww;
+  PixelBuffer *big = new PixelBuffer(width * ss, height * ss, format, type);
+  {
+    offscreenPicture picture(width * ss, height * ss, ss * ratio);
+    if(picture.failed()) {
+      delete big;
+      return nullptr;
+    }
+    offscreen()->drawCurrentOpenglWindow(true);
+    offscreen()->read(format, type, big->getPixels());
+  }
+  if(ss == 1) return big;
+  PixelBuffer *smallBuf = new PixelBuffer(width, height, format, type);
+  downsample(big, smallBuf, ss);
+  delete big;
+  return smallBuf;
+}
+
 static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 {
+  if(!haveWindow()) return getOffscreenPixelBuffer(format, type);
+
+#if defined(HAVE_FLTK)
   openglWindow *newg = nullptr;
 
   // a picture of any size is drawn into a buffer of its own (a window could
@@ -367,10 +454,13 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
   }
 
   return buffer;
+#else
+  return nullptr;
+#endif
 }
 #endif
 
-#if defined(HAVE_MPEG_ENCODE)
+#if defined(HAVE_MPEG_ENCODE) && defined(HAVE_FLTK)
 static void ChangePrintParameter(int frame)
 {
   double first = CTX::instance()->print.parameterFirst;
@@ -868,28 +958,30 @@ void CreateOutputFile(const std::string &fileName, int format,
     UnlinkFile(name);
     visibility_save(name);
     break;
+#endif
 
+#if defined(HAVE_OPENGL)
   case FORMAT_PPM:
   case FORMAT_YUV:
   case FORMAT_GIF:
   case FORMAT_JPEG:
   case FORMAT_PNG:
     {
-      if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context",
-                   name.c_str());
+      PixelBuffer *buffer = GetCompositePixelBuffer
+        ((format == FORMAT_PNG) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE);
+      if(!buffer){
+        Msg::Error("Could not draw the picture for '%s'", name.c_str());
+        error = true;
         break;
       }
 
       FILE *fp = Fopen(name.c_str(), "wb");
       if(!fp){
         Msg::Error("Unable to open file '%s'", name.c_str());
+        delete buffer;
         error = true;
         break;
       }
-
-      PixelBuffer *buffer = GetCompositePixelBuffer
-        ((format == FORMAT_PNG) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE);
 
       if(format == FORMAT_PPM)
         create_ppm(fp, buffer);
@@ -919,11 +1011,6 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_SVG:
   case FORMAT_TIKZ:
     {
-      if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
-        break;
-      }
-
       FILE *fp = Fopen(name.c_str(), "wb");
       if(!fp){
         Msg::Error("Unable to open file '%s'", name.c_str());
@@ -932,8 +1019,14 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
       drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
-      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+      GLint width, height;
+      windowSize(width, height);
+      offscreenPicture picture(width, height, 1.);
+      if(picture.failed()){
+        fclose(fp);
+        error = true;
+        break;
+      }
       GLint pixel_viewport[4] = {0, 0, width, height};
 
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
@@ -996,11 +1089,6 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_TEX:
     {
-      if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
-        break;
-      }
-
       FILE *fp = Fopen(name.c_str(), "w");
       if(!fp){
         Msg::Error("Unable to open file '%s'", name.c_str());
@@ -1009,8 +1097,14 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
       drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
-      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+      GLint width, height;
+      windowSize(width, height);
+      offscreenPicture picture(width, height, 1.);
+      if(picture.failed()){
+        fclose(fp);
+        error = true;
+        break;
+      }
       GLfloat width_desired_in_mm = CTX::instance()->print.texWidthInMm;
       GLfloat scaling = 1.;
       if(width_desired_in_mm > 0) {
@@ -1040,11 +1134,6 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_PGF:
     {
-      if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
-        break;
-      }
-
       drawTheOldWayWhileExporting noShaders;
       // fill pixel buffer without colorbar and axes
       int restoreGeneralAxis = (int) opt_general_axes(0, GMSH_GET, 0);
@@ -1062,11 +1151,22 @@ void CreateOutputFile(const std::string &fileName, int format,
         }
       }
       PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
-      drawContext *ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
-      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+      // the view of the picture just drawn
+      drawContext *ctx = offscreen()->getDrawContext();
+#if defined(HAVE_FLTK)
+      if(haveWindow())
+        ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+#endif
+      GLint width, height;
+      windowSize(width, height);
       GLint pixel_viewport[4] = {0, 0, width, height};
-      print_pgf(name, num, cnt, buffer, ctx->r, pixel_viewport, ctx->proj, ctx->model);
+      if(buffer && ctx)
+        print_pgf(name, num, cnt, buffer, ctx->r, pixel_viewport, ctx->proj,
+                  ctx->model);
+      else{
+        Msg::Error("Could not draw the picture for '%s'", name.c_str());
+        error = true;
+      }
       delete buffer;
       // restore view
       if(restoreGeneralAxis) opt_general_axes(0, GMSH_SET| GMSH_GUI, 1);
@@ -1076,7 +1176,7 @@ void CreateOutputFile(const std::string &fileName, int format,
     }
     break;
 
-#if defined(HAVE_MPEG_ENCODE)
+#if defined(HAVE_MPEG_ENCODE) && defined(HAVE_FLTK)
   case FORMAT_MPEG:
   case FORMAT_MPEG_PREVIEW:
     {

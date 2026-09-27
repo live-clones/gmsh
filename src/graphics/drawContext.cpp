@@ -77,6 +77,57 @@ drawContext::drawContext(drawTransform *transform)
 
 }
 
+namespace {
+  // in the order of the menu of the options window
+  struct fontName {
+    const char *name;
+    int number;
+  };
+  const fontName fontNames[] = {
+    {"Times-Roman", fontEnum::times},
+    {"Times-Bold", fontEnum::times | fontEnum::bold},
+    {"Times-Italic", fontEnum::times | fontEnum::italic},
+    {"Times-BoldItalic", fontEnum::times | fontEnum::bold | fontEnum::italic},
+    {"Helvetica", fontEnum::helvetica},
+    {"Helvetica-Bold", fontEnum::helvetica | fontEnum::bold},
+    {"Helvetica-Oblique", fontEnum::helvetica | fontEnum::italic},
+    {"Helvetica-BoldOblique",
+     fontEnum::helvetica | fontEnum::bold | fontEnum::italic},
+    {"Courier", fontEnum::courier},
+    {"Courier-Bold", fontEnum::courier | fontEnum::bold},
+    {"Courier-Oblique", fontEnum::courier | fontEnum::italic},
+    {"Courier-BoldOblique",
+     fontEnum::courier | fontEnum::bold | fontEnum::italic},
+    {"Symbol", fontEnum::symbol},
+    {"ZapfDingbats", fontEnum::zapfDingbats},
+    {"Screen", fontEnum::screen}};
+  const int numFonts = sizeof(fontNames) / sizeof(fontNames[0]);
+} // namespace
+
+int drawContextGlobal::getFontIndex(const char *fontname)
+{
+  if(fontname) {
+    for(int i = 0; i < numFonts; i++)
+      if(!strcmp(fontNames[i].name, fontname)) return i;
+  }
+  Msg::Error("Unknown font \"%s\" (using \"Helvetica\" instead)", fontname);
+  Msg::Info("Available fonts:");
+  for(int i = 0; i < numFonts; i++) Msg::Info("  \"%s\"", fontNames[i].name);
+  return 4;
+}
+
+int drawContextGlobal::getFontEnum(int index)
+{
+  if(index >= 0 && index < numFonts) return fontNames[index].number;
+  return fontEnum::helvetica;
+}
+
+const char *drawContextGlobal::getFontName(int index)
+{
+  if(index >= 0 && index < numFonts) return fontNames[index].name;
+  return "Helvetica";
+}
+
 int drawContextGlobal::getFontAlign(const char *alignstr)
 {
   if(alignstr) {
@@ -1671,6 +1722,30 @@ void drawContext::initProjection()
       gmshLoadMatrix(_modelBase);
     }
   }
+}
+
+bool drawContext::drawStudioFrames(int from, int width, int height,
+                                   double view[16], double budget)
+{
+  int n = CTX::instance()->studioSamples;
+  double start = TimeOfDay();
+  for(int j = from; j < n; j++) {
+    if(budget > 0. && TimeOfDay() - start >= budget) break;
+    studioSample = j;
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    if(CTX::instance()->camera) initCameraMatrices(view);
+    draw3d();
+    draw2d();
+    glImmediate::flush();
+    global()->flushString();
+    if(!glShader::accumulate(width, height, j == 1, j)) {
+      studioSample = 0;
+      return false;
+    }
+    // what is left for the GPU to do counts against the time too
+    if(budget > 0.) glFinish();
+  }
+  return true;
 }
 
 void drawContext::initCameraMatrices(double view[16])

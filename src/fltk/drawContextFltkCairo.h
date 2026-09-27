@@ -12,26 +12,21 @@
 
 #if defined(HAVE_CAIRO)
 #include "drawContextFltkQueued.h"
+#include "cairoStrings.h"
 
-typedef struct _cairo_surface cairo_surface_t;
-typedef struct _cairo cairo_t;
-
-// the strings rasterised by Cairo
+// the strings rasterised by Cairo, their heights and descents asked of FLTK
+// as the other engines do
 class drawContextFltkCairo : public drawContextFltkQueued {
-  cairo_surface_t *_surface;
-  cairo_t *_cr;
-
-protected:
-  char engine() { return 'C'; }
-  extent measure(const element &e, double f);
-  void rasterise(const std::vector<slot> &slots, double f, int w, int h,
-                 unsigned char *image);
+  cairoStrings *_cairo() { return static_cast<cairoStrings *>(_strings); }
 
 public:
-  drawContextFltkCairo();
-  ~drawContextFltkCairo();
-  double getStringWidth(const char *str);
-  void setFont(int fontid, int fontsize);
+  drawContextFltkCairo() : drawContextFltkQueued(new cairoStrings) {}
+  double getStringWidth(const char *str) { return _cairo()->width(str); }
+  void setFont(int fontid, int fontsize)
+  {
+    drawContextFltkQueued::setFont(fontid, fontsize);
+    _cairo()->setFont(fontid, fontsize);
+  }
   std::string getName() { return "Cairo"; }
 };
 

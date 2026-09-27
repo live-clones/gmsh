@@ -11,14 +11,17 @@
 #include "drawContextFltkQueued.h"
 
 // the strings rasterised by FLTK in an offscreen image
-class drawContextFltkStringTexture : public drawContextFltkQueued {
+class fltkStrings : public stringQueue {
 protected:
   char engine() { return 'T'; }
   extent measure(const element &e, double f);
   void rasterise(const std::vector<slot> &slots, double f, int w, int h,
                  unsigned char *image);
+};
 
+class drawContextFltkStringTexture : public drawContextFltkQueued {
 public:
+  drawContextFltkStringTexture() : drawContextFltkQueued(new fltkStrings) {}
   std::string getName() { return "StringTexture"; }
 };
 

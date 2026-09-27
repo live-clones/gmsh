@@ -44,6 +44,10 @@
 #include "Plugin.h"
 #endif
 
+#if defined(HAVE_OPENGL)
+#include "drawContext.h"
+#endif
+
 #if defined(HAVE_FLTK)
 #include <FL/Fl_Tooltip.H>
 #include "FlGui.h"
@@ -1410,16 +1414,18 @@ std::string opt_general_gui_theme(OPT_ARGS_STR)
 std::string opt_general_graphics_font(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->glFont = val;
-#if defined(HAVE_FLTK)
-  drawContextFltk dc;
+#if defined(HAVE_OPENGL)
+  drawContextGlobal dc;
   int index = dc.getFontIndex(CTX::instance()->glFont.c_str());
   if(action & GMSH_SET) {
     CTX::instance()->glFont = dc.getFontName(index);
     CTX::instance()->glFontEnum = dc.getFontEnum(index);
   }
+#if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->general.choice[1]->value(index);
   }
+#endif
 #endif
   return CTX::instance()->glFont;
 }
@@ -1427,16 +1433,18 @@ std::string opt_general_graphics_font(OPT_ARGS_STR)
 std::string opt_general_graphics_font_title(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->glFontTitle = val;
-#if defined(HAVE_FLTK)
-  drawContextFltk dc;
+#if defined(HAVE_OPENGL)
+  drawContextGlobal dc;
   int index = dc.getFontIndex(CTX::instance()->glFontTitle.c_str());
   if(action & GMSH_SET) {
     CTX::instance()->glFontTitle = dc.getFontName(index);
     CTX::instance()->glFontEnumTitle = dc.getFontEnum(index);
   }
+#if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->general.choice[6]->value(index);
   }
+#endif
 #endif
   return CTX::instance()->glFontTitle;
 }

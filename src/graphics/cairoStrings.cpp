@@ -5,11 +5,12 @@
 //
 // Contributed by Jonathan Lambrechts
 
-#include "drawContextFltkCairo.h"
+#include "cairoStrings.h"
 
 #if defined(HAVE_CAIRO)
 #include <algorithm>
 #include <cairo/cairo.h>
+#include "drawContext.h"
 
 static void setFontOptions(cairo_t *cr)
 {
@@ -21,30 +22,30 @@ static void setFontOptions(cairo_t *cr)
   cairo_font_options_destroy(fontOptions);
 }
 
-// the Cairo face of an FLTK font
+// the Cairo face of a font (see drawContextGlobal::getFontEnum())
 static void selectFontFace(cairo_t *cr, int fontid)
 {
   cairo_font_slant_t slant =
-    (fontid & FL_ITALIC) ? CAIRO_FONT_SLANT_ITALIC : CAIRO_FONT_SLANT_NORMAL;
+    (fontid & fontEnum::italic) ? CAIRO_FONT_SLANT_ITALIC : CAIRO_FONT_SLANT_NORMAL;
   cairo_font_weight_t weight =
-    (fontid & FL_BOLD) ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL;
+    (fontid & fontEnum::bold) ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL;
   switch(fontid) {
-  case FL_HELVETICA:
-  case FL_HELVETICA_BOLD:
-  case FL_HELVETICA_BOLD_ITALIC:
-  case FL_HELVETICA_ITALIC:
+  case fontEnum::helvetica:
+  case fontEnum::helvetica | fontEnum::bold:
+  case fontEnum::helvetica | fontEnum::italic:
+  case fontEnum::helvetica | fontEnum::bold | fontEnum::italic:
     cairo_select_font_face(cr, "sans", slant, weight);
     break;
-  case FL_COURIER:
-  case FL_COURIER_BOLD:
-  case FL_COURIER_BOLD_ITALIC:
-  case FL_COURIER_ITALIC:
+  case fontEnum::courier:
+  case fontEnum::courier | fontEnum::bold:
+  case fontEnum::courier | fontEnum::italic:
+  case fontEnum::courier | fontEnum::bold | fontEnum::italic:
     cairo_select_font_face(cr, "courier", slant, weight);
     break;
-  case FL_TIMES:
-  case FL_TIMES_BOLD:
-  case FL_TIMES_BOLD_ITALIC:
-  case FL_TIMES_ITALIC:
+  case fontEnum::times:
+  case fontEnum::times | fontEnum::bold:
+  case fontEnum::times | fontEnum::italic:
+  case fontEnum::times | fontEnum::bold | fontEnum::italic:
     cairo_select_font_face(cr, "serif", slant, weight);
     break;
   default:
@@ -53,45 +54,55 @@ static void selectFontFace(cairo_t *cr, int fontid)
   }
 }
 
-drawContextFltkCairo::drawContextFltkCairo()
+cairoStrings::cairoStrings()
 {
   _surface = cairo_image_surface_create(CAIRO_FORMAT_A8, 1, 1);
   _cr = cairo_create(_surface);
   setFontOptions(_cr);
 }
 
-drawContextFltkCairo::~drawContextFltkCairo()
+cairoStrings::~cairoStrings()
 {
   cairo_destroy(_cr);
   cairo_surface_destroy(_surface);
 }
 
-void drawContextFltkCairo::setFont(int fontid, int fontsize)
+void cairoStrings::setFont(int fontid, int fontsize)
 {
-  // the heights and descents are asked of FLTK, as the other engines do
-  drawContextFltk::setFont(fontid, fontsize);
-  if(_currentFontId != fontid) selectFontFace(_cr, fontid);
+  if(_fontId != fontid) selectFontFace(_cr, fontid);
   cairo_set_font_size(_cr, fontsize);
-  _currentFontId = fontid;
-  _currentFontSize = fontsize;
+  _fontId = fontid;
 }
 
 // The width the string is laid out with, which is the width of the quad
 // measure() asks for below: the ink of the glyphs is narrower than that, and
 // a label placed by it would not sit where it is drawn.
-double drawContextFltkCairo::getStringWidth(const char *str)
+double cairoStrings::width(const char *str)
 {
   cairo_text_extents_t e;
   cairo_text_extents(_cr, str, &e);
   return std::max(e.x_advance, e.x_bearing + e.width) - std::min(0., e.x_bearing);
 }
 
+double cairoStrings::height()
+{
+  cairo_font_extents_t fe;
+  cairo_font_extents(_cr, &fe);
+  return fe.ascent + fe.descent;
+}
+
+double cairoStrings::descent()
+{
+  cairo_font_extents_t fe;
+  cairo_font_extents(_cr, &fe);
+  return fe.descent;
+}
+
 // The width of the string and the height of its font, with a pixel of margin
 // all around, at the size it is rasterised. The box is the font's, not the
 // ink of this string: the baseline then falls on the anchor whatever the
 // string is, as it does with the other engines.
-drawContextFltkQueued::extent drawContextFltkCairo::measure(const element &e,
-                                                            double f)
+stringQueue::extent cairoStrings::measure(const element &e, double f)
 {
   setFont(e.fontId, e.fontSize);
   cairo_text_extents_t x;
@@ -107,8 +118,8 @@ drawContextFltkQueued::extent drawContextFltkCairo::measure(const element &e,
           (fe.ascent + 1.) * f};
 }
 
-void drawContextFltkCairo::rasterise(const std::vector<slot> &slots, double f,
-                                     int w, int h, unsigned char *image)
+void cairoStrings::rasterise(const std::vector<slot> &slots, double f,
+                             int w, int h, unsigned char *image)
 {
   cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_A8, w, h);
   cairo_t *cr = cairo_create(surface);

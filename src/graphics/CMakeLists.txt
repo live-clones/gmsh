@@ -23,6 +23,11 @@ set(SRC
   axisTicks.cpp
   drawGlyph.cpp
   glyphList.cpp
+  stringQueue.cpp
+  cairoStrings.cpp
+  stbStrings.cpp
+  offscreenContext.cpp
+  drawContextOffscreen.cpp
   gl2ps.cpp
   gl2gif.cpp
   gl2jpeg.cpp

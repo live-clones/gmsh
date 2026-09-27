@@ -18,6 +18,7 @@ their own respective license:
 * blossom: Gmsh License
 * domhex: Gmsh License
 * eigen: BSD License
+* fonts: SIL Open Font License 1.1
 * gmm: GNU Lesser General Public License (LGPL), v. 3 or later
 * hxt: GNU General Public License (GPL) v. 2 or later, with exception for
   linking with Gmsh under Gmsh license
@@ -27,6 +28,7 @@ their own respective license:
   various aspects of the MPEG video standard
 * nii2mesh: BSD License
 * onelab: MIT/X11 License
+* stb: MIT License or public domain (stb_truetype)
 * tinyobjloader: MIT License
 * tinyxml2: Zlib License
 * untangle: No license, freely available for non-commercial purposes

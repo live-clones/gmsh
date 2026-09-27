@@ -5,7 +5,8 @@
 
 #include <cstdio>
 #include <unordered_map>
-#include "drawContextFltkQueued.h"
+#include "stringQueue.h"
+#include "Context.h"
 #include "glImmediate.h"
 #include "glShader.h"
 #include "VertexArray.h"
@@ -150,45 +151,52 @@ namespace {
 
   // a cell to fill from what the engine rasterised
   struct pending {
-    const drawContextFltkQueued::element *e;
-    drawContextFltkQueued::extent ext;
+    const stringQueue::element *e;
+    stringQueue::extent ext;
     cell c;
     int shift;
   };
   std::vector<pending> _pending;
 
+  // Where the copies of a string drawn behind it for its halo go, in the
+  // pixels the strings are drawn in: twelve directions around a circle one
+  // pixel of the window across (in a print, that pixel scaled as the line
+  // widths are). This is the outline the native engine draws with its eight
+  // copies one pixel apart, thin and even; eight copies a whole pixel factor
+  // apart (two pixels on a high resolution screen) gave a thick corona.
+  int haloOffsets(float offsets[12][2])
+  {
+    static const float dir[12][2] = {
+      {1.f, 0.f},         {0.8660254f, 0.5f},   {0.5f, 0.8660254f},
+      {0.f, 1.f},         {-0.5f, 0.8660254f},  {-0.8660254f, 0.5f},
+      {-1.f, 0.f},        {-0.8660254f, -0.5f}, {-0.5f, -0.8660254f},
+      {0.f, -1.f},        {0.5f, -0.8660254f},  {0.8660254f, -0.5f}};
+    float r = (float)glImmediate::pixelScale();
+    for(int k = 0; k < 12; k++) {
+      offsets[k][0] = r * dir[k][0];
+      offsets[k][1] = r * dir[k][1];
+    }
+    return 12;
+  }
+
 } // namespace
-
-void drawContextFltkQueued::setFont(int fontid, int fontsize)
-{
-  drawContextFltk::setFont(fontid, fontsize);
-  _currentFontId = fontid;
-  _currentFontSize = fontsize;
-}
-
-void drawContextFltkQueued::drawString(const char *str)
-{
-  GLfloat pos[4];
-  glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-  double win[3] = {pos[0], pos[1], pos[2]};
-  drawString(str, win);
-}
 
 // the position and colour are passed in, as a core profile has neither a
 // raster position nor a current colour to query
-void drawContextFltkQueued::drawString(const char *str, const double win[3])
+void stringQueue::add(const char *str, const double win[3], int fontId,
+                      int fontSize, bool halo)
 {
   const unsigned char *c = gmshCurrentColor();
   _queue.push_back({str, (float)win[0], (float)win[1], (float)win[2],
                     c[0] / 255.f, c[1] / 255.f, c[2] / 255.f, c[3] / 255.f,
-                    _currentFontId, _currentFontSize, stringHalo(),
+                    fontId, fontSize, halo,
                     glIsEnabled(GL_DEPTH_TEST) ? true : false});
 }
 
 // Rasterise the pending cells, packed in rows of an image of the width of a
 // page, and copy each into its page. The image is drawn and copied in pieces
 // of at most a page.
-void drawContextFltkQueued::_upload(double f)
+void stringQueue::_upload(double f)
 {
   std::size_t i = 0;
   while(i < _pending.size()) {
@@ -231,17 +239,14 @@ void drawContextFltkQueued::_upload(double f)
   _pending.clear();
 }
 
-void drawContextFltkQueued::flushString()
+// everything below is in true pixels, and the strings are rasterised at the
+// scale f so that they are sharp on a high resolution screen: the window's
+// scale, or the picture's being printed
+void stringQueue::flush(double f)
 {
   if(_queue.empty()) return;
 
-  // everything below is in true pixels, and the strings are rasterised at
-  // that scale so that they are sharp on a high resolution screen: the
-  // window's scale, or the picture's being printed
-  double f = drawContext::global()->pixelFactor();
   bool shaders = glShader::enabled();
-  // measuring the strings sets their fonts: the caller's comes back
-  int fontId = _currentFontId, fontSize = _currentFontSize;
   _atlas.check(shaders);
 
   // setup matrices: the whole window, in the true pixels the positions are
@@ -326,7 +331,7 @@ void drawContextFltkQueued::flushString()
           float z = 2.f * e.z - 1.f - 2.e-3f;
           // the string, and before it, if it has a halo, copies of it around
           // it in the background colour
-          int nh = e.halo ? stringHaloOffsets(halo) : 0;
+          int nh = e.halo ? haloOffsets(halo) : 0;
           float x0 = e.x;
           for(const cell &c : en->cells) {
             if(c.page == page) {
@@ -417,8 +422,4 @@ void drawContextFltkQueued::flushString()
   gmshPopMatrix();
   gmshMatrixMode(matrixMode);
   _queue.clear();
-  if(fontId >= 0) {
-    _currentFontId = -1;
-    setFont(fontId, fontSize);
-  }
 }

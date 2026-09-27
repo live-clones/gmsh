@@ -130,6 +130,22 @@ public:
   }
 };
 
+// the fonts, numbered as FLTK numbers them: a family, plus bold and italic
+// for the first three
+namespace fontEnum {
+  enum {
+    helvetica = 0,
+    bold = 1,
+    italic = 2,
+    courier = 4,
+    times = 8,
+    symbol = 12,
+    screen = 13,
+    screenBold = 14,
+    zapfDingbats = 15
+  };
+}
+
 // global drawing functions, which need to be redefined for each widget toolkit
 // (FLTK, Qt, etc.)
 class drawContextGlobal {
@@ -142,11 +158,11 @@ public:
   virtual void drawCurrentOpenglWindow(bool make_current, bool again = false)
   {
   }
-  virtual int getFontIndex(const char *fontname) { return 0; }
-  virtual int getFontEnum(int index) { return 0; }
-  virtual const char *getFontName(int index) { return "Helvetica"; }
-  // the same for every toolkit, so not a hook: implemented once in
-  // drawContext.cpp
+  // the fonts by name (the PostScript ones), their index in the list and
+  // their number (see fontEnum): the same for every toolkit, so not hooks
+  int getFontIndex(const char *fontname);
+  int getFontEnum(int index);
+  const char *getFontName(int index);
   int getFontAlign(const char *alignstr);
   virtual int getFontSize() { return 12; }
   virtual void setFont(int fontid, int fontsize) {}
@@ -259,6 +275,13 @@ public:
   // the frame being accumulated in studio shading: 0 draws the plain frame,
   // higher ones jitter the light, the dome and the projection
   int studioSample;
+  // Draw the frames from `from' to the last of the studio shading into the
+  // target of width x height pixels, adding each to the average put on it;
+  // view is the modelview of camera mode. With a time budget (in seconds),
+  // stop once it is spent. False, with studioSample back to 0, if the frames
+  // cannot be accumulated.
+  bool drawStudioFrames(int from, int width, int height, double view[16],
+                        double budget = 0.);
 
 private:
   // Colour buffer picking: a selection pass draws every pickable object in a
