@@ -18,8 +18,9 @@
 
 #include "Backend.h"
 #include "httpServer.h"
-#include "page.h"
 #include "OS.h"
+// page.html, as bytes: made by src/browser/CMakeLists.txt
+#include "browserPage.h"
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 #include <windows.h>
@@ -656,7 +657,7 @@ namespace {
       std::string path = ask.path.substr(0, ask.path.find('?'));
       if(path == "/") {
         type = "text/html; charset=utf-8";
-        return browserPage;
+        return std::string((const char *)browserPage, sizeof(browserPage));
       }
       // the scene is drawn on this side; what the pointer does over the picture
       // comes back through /pointer

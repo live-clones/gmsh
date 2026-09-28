@@ -781,6 +781,8 @@ if(ENABLE_IMGUI OR ENABLE_BROWSER)
     endif()
     if(ENABLE_BROWSER AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/browser)
       add_subdirectory(src/browser)
+      # for the page, made into a header there
+      include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/browser)
       set_config_option(HAVE_BROWSER "Browser")
     endif()
   else()

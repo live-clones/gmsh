@@ -41,6 +41,11 @@ import sys
 
 ALWAYS = {"OS.h", "GmshConfig.h"}
 
+# the headers of an interface that CMake makes in the build tree
+GENERATED = {
+    "browser": {"browserPage.h"},
+}
+
 # the 3D scene of each interface, which is not held to the rule
 SCENE = {
     "src/imgui/SceneImGui.cpp",
@@ -108,7 +113,7 @@ def check(root):
     problems = []
     for name in ("ui", "browser", "imgui", "fltk"):
         directory = os.path.join(root, "src", name)
-        own = headers_of(directory)
+        own = headers_of(directory) | GENERATED.get(name, set())
         allowed = set(own)
         if name != "ui":
             allowed |= ui | ALWAYS

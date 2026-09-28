@@ -1,18 +1,12 @@
-// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
-//
-// See the LICENSE.txt file in the Gmsh root directory for license information.
-// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+<!doctype html>
+<!-- Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 
-#ifndef BROWSER_PAGE_H
-#define BROWSER_PAGE_H
-
-#include "GmshConfig.h"
-
-#if defined(HAVE_BROWSER)
-
-// The page. It asks for the state, draws it, and posts back what was done.
-
-static const char *const browserPage = R"PAGE(<!doctype html>
+     See the LICENSE.txt file in the Gmsh root directory for license information.
+     Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues. -->
+<!-- The page of the browser interface. It asks for the state, draws it, and
+     posts back what was done. src/browser/CMakeLists.txt hands it to the
+     compiler as an array of bytes: as a string literal it is more than some
+     compilers take. -->
 <meta charset="utf-8">
 <title>Gmsh</title>
 <style>
@@ -1642,8 +1636,3 @@ document.addEventListener('visibilitychange', () => {
   if(document.visibilityState !== 'hidden') frame(true);
 });
 </script>
-)PAGE";
-
-#endif
-
-#endif
