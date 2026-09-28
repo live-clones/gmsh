@@ -303,6 +303,7 @@ function say(where, what) {
 
 let busy = false;
 const was = {};                       // what each part was last drawn from
+const anchors = {};                   // where a Shift click runs from, by list
 function fresh(part, said) {          // has this part changed since last time?
   const key = JSON.stringify(said);
   if(was[part] === key) return false;
@@ -502,7 +503,26 @@ function field(f) {
         });
       }
       else line.textContent = label;
-      line.onclick = () => post('/choose', which(f) + '&i=' + i + '&v=1');
+      line.onclick = e => {
+        if(!f.several) {
+          post('/choose', which(f) + '&i=' + i + '&v=1');
+          return;
+        }
+        // as in a file manager: that line, Ctrl adds or takes one away,
+        // Shift runs from the last one clicked
+        let on = new Set(f.on || []);
+        const from = anchors[f.h];
+        if(e.ctrlKey || e.metaKey) {
+          if(on.has(i)) on.delete(i); else on.add(i);
+        }
+        else if(e.shiftKey && from !== undefined) {
+          on = new Set();
+          for(let k = Math.min(from, i); k <= Math.max(from, i); k++) on.add(k);
+        }
+        else on = new Set([i]);
+        if(!e.shiftKey) anchors[f.h] = i;
+        post('/choose', which(f) + '&i=' + i + '&all=1&set=' + [...on].join(','));
+      };
       box.appendChild(line);
     });
     return box;

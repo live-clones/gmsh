@@ -611,7 +611,7 @@ namespace {
                                {"View", "PositionY", 0.5},
                                {"View", "Sampling", 1.},
                                {"View", "Tangents", 1.},
-                               {"View", "TargetError", 1.e-4},
+                               {"View", "TargetError", 1.e-6},
                                {"View", "TimeStep", 1.},
                                {nullptr, nullptr, 0.}};
 
@@ -679,8 +679,31 @@ namespace {
              (num ? "[" + std::to_string(num) + "]" : "") + "." + name;
     }
 
+    // what is written to the view shown is written to the views chosen with it
+    void _passedOn(Field &f, const char *category, const char *name, int num)
+    {
+      if(strcmp(category, "View")) return;
+      std::string option = name;
+      if(auto write = f.writeNumber)
+        f.writeNumber = [write, option, num](double v) {
+          write(v);
+          Gui::instance().options.passOn(num, 'n', option);
+        };
+      if(auto write = f.writeText)
+        f.writeText = [write, option, num](const std::string &v) {
+          write(v);
+          Gui::instance().options.passOn(num, 't', option);
+        };
+      if(auto write = f.writeColour)
+        f.writeColour = [write, option, num](Ui::Colour v) {
+          write(v);
+          Gui::instance().options.passOn(num, 'c', option);
+        };
+    }
+
     Field _fieldFor(Field f, const char *category, const char *name, int num)
     {
+      _passedOn(f, category, name, num);
       return f.tip(_tooltipFor(category, name))
         .onChanged(_redraw)
         .enabledWhen(_enabledBy(category, name, num))
@@ -895,6 +918,7 @@ namespace {
           if(index >= 0 && index < (int)PView::list.size())
             PView::list[index]->setChanged(true);
 #endif
+          Gui::instance().options.passOn(index, 'm');
           drawContext::global()->draw();
         };
         return f;
@@ -1397,6 +1421,10 @@ Ui::Form GuiOptions::build()
   }
   // a view that has been closed falls back to the first line
   if(category >= _numCategories + _views()) category = 0;
+  std::vector<int> also;
+  for(int i : _alsoViews)
+    if(i < _views()) also.push_back(i);
+  _alsoViews = also;
   optionsOf of = {_categoryName(category),
                   category >= _numCategories ? view : 0};
 
@@ -1425,16 +1453,16 @@ Ui::Form GuiOptions::build()
                    values.push_back(_numCategories + i);
                  }
                },
-               [this](int i) { return i == category; },
-               [this](int i, bool on) {
-                 if(!on) return;
-                 category = i;
-                 if(i >= _numCategories) view = i - _numCategories;
-                 // another line is another set of tabs: built again, not
-                 // refreshed
-                 show();
+               [this](int i) {
+                 if(i == category) return true;
+                 for(int also : _alsoViews)
+                   if(i == _numCategories + also) return true;
+                 return false;
                },
-               false)
+               // the lines are told one by one, and the list says when it
+               // has done
+               [this](int i, bool on) { _picked[i] = on; }, true)
+               .onChanged([this]() { _pickingDone(); })
                .fills()
                .sized(8.),
              // Redraw only when the model drawn while one interacts is a
@@ -1458,7 +1486,162 @@ void GuiOptions::showForView(int view_, const std::string &pane)
 {
   if(view_ < 0) view_ = view;
   if(view_ < 0 || view_ >= _views()) view_ = 0;
-  if(_views()) category = _numCategories + view_;
+  if(_views()) {
+    if(category != _numCategories + view_) _alsoViews.clear();
+    category = _numCategories + view_;
+    view = view_;
+  }
   // the colour map of a view is a tab of this window, not a window of its own
   show(pane);
+}
+
+// the line shown is the one just chosen; when a click chose several (a
+// range), the one shown stays if it still is, and when it was let go, the
+// first left. Only views are chosen beside a view
+void GuiOptions::_pickingDone()
+{
+  std::vector<int> was = _alsoViews;
+  for(int &v : was) v += _numCategories;
+  was.push_back(category);
+  auto wasOn = [&was](int i) {
+    for(int w : was)
+      if(w == i) return true;
+    return false;
+  };
+  std::vector<int> on, fresh;
+  int lines = _numCategories + _views();
+  for(int i = 0; i < lines; i++) {
+    auto it = _picked.find(i);
+    bool now = (it != _picked.end()) ? it->second : wasOn(i);
+    if(!now) continue;
+    on.push_back(i);
+    if(!wasOn(i)) fresh.push_back(i);
+  }
+  _picked.clear();
+  // the last line let go: it stays
+  if(on.empty()) {
+    reload();
+    return;
+  }
+
+  int shown = category;
+  bool still = false;
+  for(int i : on)
+    if(i == category) still = true;
+  if(fresh.size() == 1)
+    shown = fresh[0];
+  else if(!still)
+    shown = fresh.size() ? fresh.back() : on[0];
+
+  std::vector<int> also;
+  if(shown >= _numCategories)
+    for(int i : on)
+      if(i != shown && i >= _numCategories) also.push_back(i - _numCategories);
+  _alsoViews = also;
+  if(shown == category) {
+    reload();
+    return;
+  }
+  category = shown;
+  if(shown >= _numCategories) view = shown - _numCategories;
+  // another line is another set of tabs: built again, not refreshed
+  show();
+}
+
+std::vector<int> GuiOptions::editedViews() const
+{
+  std::vector<int> out;
+  if(category < _numCategories || view < 0 || view >= _views()) return out;
+  out.push_back(view);
+  for(int also : _alsoViews)
+    if(also != view && also >= 0 && also < _views()) out.push_back(also);
+  return out;
+}
+
+namespace {
+
+  // what the view options window of the FLTK interface wrote to every view
+  // chosen with the one shown when PostProcessing.Link forces the same
+  // options on them
+  const char *const _forcedText[] = {
+    "Name", "Format", "AxesFormatX", "AxesFormatY", "AxesFormatZ",
+    "AxesLabelX", "AxesLabelY", "AxesLabelZ", "GeneralizedRaiseX",
+    "GeneralizedRaiseY", "GeneralizedRaiseZ", nullptr};
+  const char *const _forcedNumbers[] = {
+    "AdaptSkinOnly", "AdaptVisualizationGrid", "AngleSmoothNormals",
+    "ArrowSizeMax", "ArrowSizeMin", "AutoPosition", "Axes",
+    "AxesAutoPosition", "AxesMikado", "AxesTicksX", "AxesTicksY", "AxesTicksZ",
+    "AxesMaxX", "AxesMinX", "AxesMaxY", "AxesMinY", "AxesMaxZ", "AxesMinZ",
+    "Boundary", "CenterGlyphs", "ColormapNumber", "ComponentMap0",
+    "ComponentMap1", "ComponentMap2", "ComponentMap3", "ComponentMap4",
+    "ComponentMap5", "ComponentMap6", "ComponentMap7", "ComponentMap8",
+    "CustomMax", "CustomMin", "DisplacementFactor", "DrawHexahedra",
+    "DrawLines", "DrawPoints", "DrawPolygons", "DrawPolyhedra", "DrawPrisms",
+    "DrawPyramids", "DrawQuadrangles", "DrawScalars", "DrawSkinEdgesOnly",
+    "DrawSkinOnly", "DrawStrings", "DrawTensors", "DrawTetrahedra",
+    "DrawTriangles", "DrawTrihedra", "DrawVectors", "Explode", "ExternalView",
+    "ForceNumComponents", "GeneralizedRaiseFactor", "GeneralizedRaiseView",
+    "GlyphLocation", "IntervalsType", "Light", "LightLines", "LightTwoSide",
+    "LineType", "LineWidth", "MaxRecursionLevel", "NbIso", "NormalRaise",
+    "Normals", "OffsetX", "OffsetY", "OffsetZ", "ColormapAlpha", "PointSize",
+    "PointType", "PositionX", "PositionY", "RaiseX", "RaiseY", "RaiseZ",
+    "RangeType", "Sampling", "SaturateValues", "ScaleThreshold", "ScaleType",
+    "ShowElement", "ShowScale", "ShowTime", "Width", "Height", "SmoothNormals",
+    "Tangents", "TargetError", "TensorType", "TimeStep", "TransformXX",
+    "TransformXY", "TransformXZ", "TransformYX", "TransformYY", "TransformYZ",
+    "TransformZX", "TransformZY", "TransformZZ", "Type", "UseGeneralizedRaise",
+    "Stipple", "VectorType", nullptr};
+  // and what it wrote to them whatever the link: every colour, and the map
+  const char *const _sharedColours[] = {
+    "Points", "Lines", "Triangles", "Quadrangles", "Tetrahedra", "Hexahedra",
+    "Prisms", "Pyramids", "Trihedra", "Tangents", "Normals", "Text2D",
+    "Text3D", "Axes", "Background2D", nullptr};
+
+  void _copyNumber(const char *name, int from, int to)
+  {
+    double v = 0.;
+    if(NumberOption(GMSH_GET, "View", from, name, v, false))
+      NumberOption(GMSH_SET, "View", to, name, v, false);
+  }
+
+  void _copyText(const char *name, int from, int to)
+  {
+    std::string v;
+    if(StringOption(GMSH_GET, "View", from, name, v, false))
+      StringOption(GMSH_SET, "View", to, name, v, false);
+  }
+
+  void _copyColour(const char *name, int from, int to)
+  {
+    unsigned int v = 0;
+    if(ColorOption(GMSH_GET, "View", from, name, v, false))
+      ColorOption(GMSH_SET, "View", to, name, v, false);
+  }
+
+} // namespace
+
+void GuiOptions::passOn(int from, char kind, const std::string &option)
+{
+#if defined(HAVE_POST)
+  std::vector<int> to = editedViews();
+  if(to.size() < 2 || from != to[0]) return;
+  bool force = CTX::instance()->post.link != 0;
+  for(std::size_t k = 1; k < to.size(); k++) {
+    int i = to[k];
+    if(force) {
+      for(int j = 0; _forcedText[j]; j++) _copyText(_forcedText[j], from, i);
+      for(int j = 0; _forcedNumbers[j]; j++)
+        _copyNumber(_forcedNumbers[j], from, i);
+    }
+    else if(kind == 'n')
+      _copyNumber(option.c_str(), from, i);
+    else if(kind == 't')
+      _copyText(option.c_str(), from, i);
+    for(int j = 0; _sharedColours[j]; j++) _copyColour(_sharedColours[j], from, i);
+    // once the options are in: some of them make the map again
+    ColorTable_Copy(&PView::list[from]->getOptions()->colorTable);
+    ColorTable_Paste(&PView::list[i]->getOptions()->colorTable);
+    PView::list[i]->setChanged(true);
+  }
+#endif
 }

@@ -511,11 +511,12 @@ void optionsSave(bool toProjectFile)
   Msg::StatusBar(true, "Done writing '%s'", fileName.c_str());
 }
 
+// the view the options show, and the views chosen with it
 static void _forEachEditedView(std::function<void(int)> what)
 {
 #if defined(HAVE_POST)
-  int i = Gui::instance().options.view;
-  if(i >= 0 && i < (int)PView::list.size()) what(i);
+  for(int i : Gui::instance().options.editedViews())
+    if(i >= 0 && i < (int)PView::list.size()) what(i);
 #endif
 }
 
@@ -616,17 +617,24 @@ void optionsAction(const std::string &what)
     });
     drawContext::global()->draw();
   }
+  // the least (or greatest) value shown of all of them, for all of them
   else if(what == "view_range_min") {
-    _forEachEditedView([](int i) {
-      opt_view_custom_min(i, GMSH_SET | GMSH_GUI,
-                          opt_view_min_visible(i, GMSH_GET, 0));
+    double least = 1e200;
+    _forEachEditedView([&least](int i) {
+      least = std::min(least, opt_view_min_visible(i, GMSH_GET, 0));
+    });
+    _forEachEditedView([least](int i) {
+      opt_view_custom_min(i, GMSH_SET | GMSH_GUI, least);
     });
     drawContext::global()->draw();
   }
   else if(what == "view_range_max") {
-    _forEachEditedView([](int i) {
-      opt_view_custom_max(i, GMSH_SET | GMSH_GUI,
-                          opt_view_max_visible(i, GMSH_GET, 0));
+    double most = -1e200;
+    _forEachEditedView([&most](int i) {
+      most = std::max(most, opt_view_max_visible(i, GMSH_GET, 0));
+    });
+    _forEachEditedView([most](int i) {
+      opt_view_custom_max(i, GMSH_SET | GMSH_GUI, most);
     });
     drawContext::global()->draw();
   }

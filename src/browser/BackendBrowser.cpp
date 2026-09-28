@@ -521,6 +521,19 @@ namespace {
       return out;
     }
 
+    // the lines of a list, as the page is told them
+    static std::size_t _lines(const Ui::Field &f)
+    {
+      std::vector<std::string> labels;
+      std::vector<int> values;
+      if(f.dynamicChoices) {
+        f.dynamicChoices(labels, values);
+        return labels.size();
+      }
+      if(f.list && f.itemLabel) return f.list->size();
+      return f.choices.size();
+    }
+
     // FNV-1a over the name
     static unsigned _nameOf(const std::string &what)
     {
@@ -672,10 +685,25 @@ namespace {
       if(path == "/choose") {
         int at = atoi(_valueOf(ask.body, "i").c_str());
         Ui::Field *f = _fieldAsked(ask);
-        if(f) {
-          if(f->choose) f->choose(at, _valueOf(ask.body, "v") != "0");
-          if(f->changed) f->changed();
+        if(f && f->choose) {
+          // a list of several says every line chosen, "set=1,4,5", since a
+          // click may choose some and let others go
+          if(_valueOf(ask.body, "all") == "1") {
+            std::vector<bool> on(_lines(*f), false);
+            std::string set = _valueOf(ask.body, "set");
+            for(std::size_t p = 0; p < set.size();) {
+              std::size_t end = set.find(',', p);
+              int i = atoi(set.substr(p, end - p).c_str());
+              if(i >= 0 && i < (int)on.size()) on[i] = true;
+              if(end == std::string::npos) break;
+              p = end + 1;
+            }
+            for(std::size_t i = 0; i < on.size(); i++) f->choose((int)i, on[i]);
+          }
+          else
+            f->choose(at, _valueOf(ask.body, "v") != "0");
         }
+        if(f && f->changed) f->changed();
         return "{}";
       }
       // never answered: what Gmsh has to say goes down it, from _tell()
@@ -1098,6 +1126,7 @@ namespace {
             first = false;
           }
         out += "]";
+        if(f.multiple) out += ",\"several\":true";
         if(f.isCode) out += ",\"code\":true";
         if(f.columnsEm.size()) {
           out += ",\"cols\":[";

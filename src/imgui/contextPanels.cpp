@@ -562,17 +562,31 @@ namespace {
           std::vector<std::string> labels;
           std::vector<int> values;
           f.dynamicChoices(labels, values);
+          // where a Shift click runs from, the list's own
+          ImGuiID list = ImGui::GetID("##anchor");
           for(std::size_t i = 0; i < labels.size(); i++) {
             bool on = f.chosen ? f.chosen((int)i) : false;
             ImGui::PushID((int)i);
             std::string shown = labels[i];
             if(f.columnsEm.size()) shown = "##" + std::to_string(i);
             if(ImGui::Selectable(shown.c_str(), on) && f.choose) {
-              if(f.multiple)
+              // as in a file manager: that line, Ctrl adds or takes one
+              // away, Shift runs from the last one clicked
+              static std::map<ImGuiID, std::size_t> anchors;
+              const ImGuiIO &io = ImGui::GetIO();
+              auto anchor = anchors.find(list);
+              if(f.multiple && io.KeyCtrl)
                 f.choose((int)i, !on);
+              else if(f.multiple && io.KeyShift && anchor != anchors.end()) {
+                std::size_t a = std::min(anchor->second, i);
+                std::size_t b = std::max(anchor->second, i);
+                for(std::size_t k = 0; k < labels.size(); k++)
+                  f.choose((int)k, k >= a && k <= b);
+              }
               else
                 for(std::size_t k = 0; k < labels.size(); k++)
                   f.choose((int)k, k == i);
+              if(!(f.multiple && io.KeyShift)) anchors[list] = i;
               changed = true;
             }
             if(f.columnsEm.size()) {
