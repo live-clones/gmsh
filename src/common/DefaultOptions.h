@@ -1386,6 +1386,10 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "IgnoreUnknownSections" , opt_mesh_ignore_unknown_sections, 0. ,
     "Skip unknown sections when reading meshes in the MSH4 format (otherwise the "
     "contents of these sections are stored as model attributes)"},
+  { F|O, "IgnoreEdges" , opt_mesh_ignore_edges, 0. ,
+    "Skip the edges section when reading meshes in the MSH4 format" },
+  { F|O, "IgnoreFaces" , opt_mesh_ignore_faces, 0. ,
+    "Skip the faces section when reading meshes in the MSH4 format" },
   { F|O, "IgnoreParametrization" , opt_mesh_ignore_parametrization, 0. ,
     "Skip parametrization section when reading meshes in the MSH4 format" },
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 1. ,

@@ -301,6 +301,16 @@ Skip unknown sections when reading meshes in the MSH4 format (otherwise the cont
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.IgnoreEdges
+Skip the edges section when reading meshes in the MSH4 format@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.IgnoreFaces
+Skip the faces section when reading meshes in the MSH4 format@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.IgnoreParametrization
 Skip parametrization section when reading meshes in the MSH4 format@*
 Default value: @code{0}@*
