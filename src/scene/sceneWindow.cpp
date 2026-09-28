@@ -10,8 +10,6 @@
 #include <string>
 #include <vector>
 
-#include "imgui.h"
-#include "imgui_impl_opengl2.h"
 #include <GLFW/glfw3.h>
 
 #include "sceneView.h"
@@ -29,14 +27,12 @@
 #include "glShader.h"
 
 // The scene in a window of its own, for an interface that holds none: the
-// same sceneView, held by a GLFW window. The Dear ImGui context it makes
-// holds no window; it is there for the font atlas, see drawContextGL.h.
+// same sceneView, held by a GLFW window.
 
 namespace {
 
   struct standalone {
     GLFWwindow *window = nullptr;
-    ImGuiContext *fonts = nullptr;
     sceneView *view = nullptr;
     paneInput input;
     double lastX = 0., lastY = 0., lastPress = 0.;
@@ -214,17 +210,9 @@ namespace {
     glfwMakeContextCurrent(it.window);
     glfwSwapInterval(1);
 
-    // for the atlas the text of the scene comes from
-    IMGUI_CHECKVERSION();
-    it.fonts = ImGui::CreateContext();
-    ImGui::SetCurrentContext(it.fonts);
-    ImGui::GetIO().IniFilename = nullptr;
-    ImGui_ImplOpenGL2_Init();
-
     it.view = new sceneView();
     it.view->contextChanged();
-    if(!drawContext::global() ||
-       drawContext::global()->getName() != "ImGui")
+    if(!dynamic_cast<drawContextGL *>(drawContext::global()))
       drawContext::setGlobal(new drawContextGL);
 
     glfwSetCursorPosCallback(it.window, _cursorPos);
@@ -316,21 +304,13 @@ namespace {
     standalone &it = _it();
     if(!it.window || !it.view) return;
     _handleInput();
-    ImGui::SetCurrentContext(it.fonts);
     int ww = 0, wh = 0;
     double f = 1.;
     if(!_frameSize(ww, wh, f)) return;
 
-    ImGuiIO &io = ImGui::GetIO();
-    io.DisplaySize = ImVec2((float)ww, (float)wh);
-    io.DeltaTime = 1.f / 60.f;
-    ImGui_ImplOpenGL2_NewFrame();
-    ImGui::NewFrame();
-
     it.view->draw(f, wh);
     glShader::release();
 
-    ImGui::EndFrame();
     // never swapped: the picture is read from the buffer a swap would throw
     // away
     if(swap && !it.elsewhere) glfwSwapBuffers(it.window);

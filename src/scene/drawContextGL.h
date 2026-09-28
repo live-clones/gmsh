@@ -13,17 +13,22 @@
 #include <string>
 #include "drawContext.h"
 
-// the drawing functions of the scene in plain OpenGL, except the strings:
-// textured quads from the Dear ImGui font atlas, so a Dear ImGui context has to
-// exist, even one holding no window
+class stbStrings;
+
+// the drawing functions of a scene held by GLFW (the Dear ImGui interface, the
+// window of its own of the browser interface, a canvas of a page): what is
+// drawn goes to the scene host, and the strings are written by the fonts
+// compiled into Gmsh, the Embedded engine of the FLTK interface
+// (drawContextFltkEmbedded)
 
 class drawContextGL : public drawContextGlobal {
 private:
-  int _fontIndex;
-  int _fontSize;
+  stbStrings *_strings;
+  int _fontId, _fontSize;
 
 public:
   drawContextGL();
+  ~drawContextGL();
   void draw(bool rateLimited = true);
   void drawCurrentOpenglWindow(bool make_current, bool again = false);
   int getFontSize();
@@ -33,8 +38,8 @@ public:
   int getStringDescent();
   void drawString(const char *str);
   void drawString(const char *str, const double win[3]);
-  void resetFontTextures();
-  std::string getName() { return "ImGui"; }
+  void flushString();
+  std::string getName() { return "Embedded"; }
 };
 
 #endif

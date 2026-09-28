@@ -13,10 +13,8 @@ set(SRC
 )
 
 # And the part that is held by GLFW rather than by a widget: the window of its
-# own that a interface drawing no scene pairs with, and the text engine that
-# takes its glyphs from the Dear ImGui font atlas. Both want a Dear ImGui
-# context to exist, even one holding no window, which is why they are not the
-# scene itself -- an interface built without them still has one.
+# own that an interface drawing no scene pairs with (a canvas of the page,
+# compiled to WebAssembly), and the drawing functions of such a scene
 if(HAVE_GLFW)
   list(APPEND SRC
     drawContextGL.cpp

@@ -226,8 +226,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
     Scene::setHost(held);
   }
 
-  if(!drawContext::global() ||
-     drawContext::global()->getName() != "ImGui")
+  if(!dynamic_cast<drawContextGL *>(drawContext::global()))
     drawContext::setGlobal(new drawContextGL);
 
   Toolkit::claimThread();

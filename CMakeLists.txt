@@ -706,9 +706,9 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
   endif()
 endif()
 
-# GLFW, Dear ImGui and the 3D scene, wanted by the Dear ImGui interface and by
-# anything else that shows the model in a window of its own -- the browser
-# interface does, since it has no way of drawing one itself
+# GLFW and the 3D scene, wanted by the Dear ImGui interface and by anything
+# else that shows the model in a window of its own -- the browser interface
+# does, since it has no way of drawing one itself
 if(ENABLE_IMGUI OR ENABLE_BROWSER)
   # GLFW provides the window and the OpenGL context; use the upstream
   # CMakeLists, which selects the platform backend (X11, Wayland, Cocoa, Win32)
@@ -770,14 +770,21 @@ if(ENABLE_IMGUI OR ENABLE_BROWSER)
     endif()
   endif()
   if(NOT HAVE_GLFW)
-    message(SEND_ERROR "Could not find GLFW: disabling the Dear ImGui interface")
-  elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/imgui)
-    add_subdirectory(contrib/imgui)
-    include_directories(contrib/imgui contrib/imgui/backends
-                        contrib/imgui/misc/cpp)
-    if(ENABLE_IMGUI AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui)
-      add_subdirectory(src/imgui)
-      set_config_option(HAVE_IMGUI "ImGui[contrib]")
+    message(SEND_ERROR "Could not find GLFW: disabling the Dear ImGui and "
+            "browser interfaces")
+  else()
+    # Dear ImGui is the Dear ImGui interface's alone: the scene writes its
+    # strings with the fonts compiled into Gmsh
+    if(ENABLE_IMGUI AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/imgui)
+      add_subdirectory(contrib/imgui)
+      include_directories(contrib/imgui contrib/imgui/backends
+                          contrib/imgui/misc/cpp)
+      if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui)
+        add_subdirectory(src/imgui)
+        set_config_option(HAVE_IMGUI "ImGui[contrib]")
+      endif()
+    elseif(ENABLE_IMGUI)
+      message(SEND_ERROR "Could not find Dear ImGui in contrib/imgui")
     endif()
     if(ENABLE_BROWSER AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/browser)
       add_subdirectory(src/browser)
@@ -785,8 +792,6 @@ if(ENABLE_IMGUI OR ENABLE_BROWSER)
       include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/browser)
       set_config_option(HAVE_BROWSER "Browser")
     endif()
-  else()
-    message(SEND_ERROR "Could not find Dear ImGui in contrib/imgui")
   endif()
 endif()
 
