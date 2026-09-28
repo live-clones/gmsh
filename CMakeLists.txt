@@ -52,6 +52,7 @@ opt(FFMPEG "Enable FFmpeg for MP4 movie export" ${DEFAULT})
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
 opt(BROWSER "Enable the browser interface: the panels in a web page, the model in\n     a window of its own" OFF)
 opt(GTK "Enable the GTK 4 graphical user interface (requires mesh/post)" OFF)
+opt(QT "Enable the Qt 6 graphical user interface (requires mesh/post)" OFF)
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GLFW_WAYLAND "Enable the native Wayland backend of GLFW (Linux only, used by ENABLE_IMGUI)" ${DEFAULT})
@@ -825,12 +826,26 @@ if(ENABLE_GTK AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/gtk)
   endif()
 endif()
 
+# Qt 6 too draws the scene itself, in a QOpenGLWidget; the files are written
+# without Q_OBJECT, so that nothing has to go through moc
+if(ENABLE_QT AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/qt)
+  find_package(Qt6 QUIET COMPONENTS Widgets OpenGLWidgets)
+  if(Qt6_FOUND)
+    add_subdirectory(src/qt)
+    list(APPEND GMSH_PRIVATE_LIBRARIES Qt6::Widgets Qt6::OpenGLWidgets)
+    set_config_option(HAVE_QT "Qt")
+  else()
+    message(SEND_ERROR "Could not find Qt 6 (Widgets, OpenGLWidgets): "
+            "disabling the Qt interface")
+  endif()
+endif()
+
 # The 3D scene: it draws the model with OpenGL and picks in it, and it belongs
 # to no interface -- whichever one is up holds it, through Scene::Host. So it
 # is added once every interface that could hold it is known, and says so with
 # HAVE_GL_SCENE. Two of its files want more than OpenGL and are picked inside:
 # see src/scene/CMakeLists.txt.
-if((HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK) AND
+if((HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT) AND
    EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scene)
   add_subdirectory(src/scene)
   set(HAVE_GL_SCENE TRUE)
@@ -838,7 +853,7 @@ endif()
 
 # HAVE_GUI is set as soon as one of the graphical user interfaces is compiled in,
 # and brings what they are all made of
-if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK)
+if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT)
   set(HAVE_GUI TRUE)
   add_subdirectory(src/ui)
   add_subdirectory(src/gui)
