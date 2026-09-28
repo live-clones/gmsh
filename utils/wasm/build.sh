@@ -5,10 +5,14 @@
 #
 # Usage: ./build.sh [extra cmake options]
 # EMSDK: where emsdk is installed (default: ~/src/emsdk)
+#
+# Testing:
+#   python3 -m http.server 8000 --bind 127.0.0.1 --directory ~/src/gmsh
+#   browse http://localhost:8000/utils/wasm/viewer.html
 
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
-SRC=$(cd "$HERE/.." && pwd)
+SRC=$(cd "$HERE/../.." && pwd)
 EMSDK=${EMSDK:-$HOME/src/emsdk}
 
 # emsdk needs Python >= 3.10: use the one it installs, as the system one may

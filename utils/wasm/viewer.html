@@ -35,13 +35,13 @@
 <div id="bar">
   <strong>Gmsh</strong>
   <select id="example">
-    <option value="../tutorials/t5.geo" selected>t5.geo (3D)</option>
-    <option value="../tutorials/t1.geo">t1.geo (2D)</option>
-    <option value="../tutorials/t2.geo">t2.geo (3D)</option>
-    <option value="../tutorials/t4.geo">t4.geo (2D)</option>
-    <option value="../tutorials/t6.geo">t6.geo (2D)</option>
-    <option value="../tutorials/t10.geo">t10.geo (2D)</option>
-    <option value="../tutorials/view3.pos">view3.pos</option>
+    <option value="../../tutorials/t5.geo" selected>t5.geo (3D)</option>
+    <option value="../../tutorials/t1.geo">t1.geo (2D)</option>
+    <option value="../../tutorials/t2.geo">t2.geo (3D)</option>
+    <option value="../../tutorials/t4.geo">t4.geo (2D)</option>
+    <option value="../../tutorials/t6.geo">t6.geo (2D)</option>
+    <option value="../../tutorials/t10.geo">t10.geo (2D)</option>
+    <option value="../../tutorials/view3.pos">view3.pos</option>
   </select>
   <label>File <input id="file" type="file"></label>
   <details id="options">
@@ -90,7 +90,7 @@ const example = document.getElementById('example');
 const first = params.get('file') || example.value;
 if([...example.options].some((o) => o.value === first)) example.value = first;
 // the files an example includes, copied next to it
-const includes = {'t2.geo': ['../tutorials/t1.geo']};
+const includes = {'t2.geo': ['../../tutorials/t1.geo']};
 const canvas = document.getElementById('canvas');
 const status = document.getElementById('status');
 
