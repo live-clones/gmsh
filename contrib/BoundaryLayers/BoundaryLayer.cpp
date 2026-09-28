@@ -34,53 +34,25 @@
 #include "highOrderBoundaryLayerUntangler.h"
 #include "winslowUntanglerGMSH.h"
 
-StringXNumber BoundaryLayerOptions_Number[] = {
-  {GMSH_FULLRC, "Thickness", nullptr, 1.e-2},
-  {GMSH_FULLRC, "Size", nullptr, 1.e-3},
-  {GMSH_FULLRC, "Ratio", nullptr, 1.2},
-  {GMSH_FULLRC, "SmoothingLayers", nullptr, 2.},
-  {GMSH_FULLRC, "NumExactLayers", nullptr, -2.},
-  {GMSH_FULLRC, "HighOrder", nullptr, 1.},
-  {GMSH_FULLRC, "HighOrderStrategy", nullptr, 2.},
-  {GMSH_FULLRC, "HighOrderPostSplitUntangle", nullptr, 0.}};
-
-StringXString BoundaryLayerOptions_String[] = {
-  {GMSH_FULLRC, "Volumes", nullptr, ""},
-  {GMSH_FULLRC, "Surfaces", nullptr, ""},
-  {GMSH_FULLRC, "Curves", nullptr, ""},
-  {GMSH_FULLRC, "Points", nullptr, ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterBoundaryLayerPlugin()
+GMSH_BoundaryLayerPlugin::GMSH_BoundaryLayerPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Thickness", nullptr, 1.e-2},
+                     {GMSH_FULLRC, "Size", nullptr, 1.e-3},
+                     {GMSH_FULLRC, "Ratio", nullptr, 1.2},
+                     {GMSH_FULLRC, "SmoothingLayers", nullptr, 2.},
+                     {GMSH_FULLRC, "NumExactLayers", nullptr, -2.},
+                     {GMSH_FULLRC, "HighOrder", nullptr, 1.},
+                     {GMSH_FULLRC, "HighOrderStrategy", nullptr, 2.},
+                     {GMSH_FULLRC, "HighOrderPostSplitUntangle", nullptr, 0.}},
+                    {{GMSH_FULLRC, "Volumes", nullptr, ""},
+                     {GMSH_FULLRC, "Surfaces", nullptr, ""},
+                     {GMSH_FULLRC, "Curves", nullptr, ""},
+                     {GMSH_FULLRC, "Points", nullptr, ""}})
 {
-  return new GMSH_BoundaryLayerPlugin();
-}
 }
 
 std::string GMSH_BoundaryLayerPlugin::getHelp() const
 {
   return "Plugin(BoundaryLayer) performs magic.";
-}
-
-int GMSH_BoundaryLayerPlugin::getNbOptions() const
-{
-  return sizeof(BoundaryLayerOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_BoundaryLayerPlugin::getOption(int iopt)
-{
-  return &BoundaryLayerOptions_Number[iopt];
-}
-
-int GMSH_BoundaryLayerPlugin::getNbOptionsStr() const
-{
-  return sizeof(BoundaryLayerOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_BoundaryLayerPlugin::getOptionStr(int iopt)
-{
-  return &BoundaryLayerOptions_String[iopt];
 }
 
 static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b,
@@ -2591,31 +2563,6 @@ void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
   }
 }
 
-std::string GMSH_BoundaryLayerPlugin::parse(std::string str,
-                                            std::list<int> &physical)
-{
-  // Remove spaces
-  str.erase(remove(str.begin(), str.end(), ' '), str.end());
-
-  // Replace commas by spaces
-  replace(str.begin(), str.end(), ',', ' ');
-
-  // Init string stream
-  std::stringstream stream;
-  stream << str;
-
-  // Parse stream for integers
-  int tag;
-  std::string tmp;
-  while(!stream.eof()) {
-    stream >> tmp; // Take next 'word'
-    if(sscanf(tmp.c_str(), "%d", &tag) > 0) physical.push_back(tag);
-  }
-
-  // Return modified string
-  return str;
-}
-
 void computePerfectShapes(
   std::vector<GFace *> &f,
   std::map<MElement *, std::array<std::array<double, 2>, 4>> &perfectShapes)
@@ -2733,16 +2680,10 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 {
   GModel *m = GModel::current();
 
-  std::string volume = BoundaryLayerOptions_String[0].def;
-  std::string surface = BoundaryLayerOptions_String[1].def;
-  std::string curve = BoundaryLayerOptions_String[2].def;
-  std::string point = BoundaryLayerOptions_String[3].def;
-
-  std::vector<std::list<int>> entities(4);
-  point = parse(point, entities[0]);
-  curve = parse(curve, entities[1]);
-  surface = parse(surface, entities[2]);
-  volume = parse(volume, entities[3]);
+  // the tags of the points, curves, surfaces and volumes
+  std::vector<std::vector<int>> entities(4);
+  for(int dim = 0; dim < 4; dim++)
+    if(!optionIntList(3 - dim, entities[dim])) return v;
 
   std::vector<GVertex *> vv;
   for(auto v : entities[0]) {
@@ -2765,14 +2706,14 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     if(gr) r.push_back(gr);
   }
 
-  double thickness = BoundaryLayerOptions_Number[0].def;
-  double size = BoundaryLayerOptions_Number[1].def;
-  double ratio = BoundaryLayerOptions_Number[2].def;
-  int numLayers = (int)BoundaryLayerOptions_Number[3].def;
-  double numExactLayers = BoundaryLayerOptions_Number[4].def;
-  int highOrder = (int)BoundaryLayerOptions_Number[5].def;
-  int highOrderStrategy = (int)BoundaryLayerOptions_Number[6].def;
-  int highOrderPostSplitUntangle = (int)BoundaryLayerOptions_Number[7].def;
+  double thickness = option(0);
+  double size = option(1);
+  double ratio = option(2);
+  int numLayers = (int)option(3);
+  double numExactLayers = option(4);
+  int highOrder = (int)option(5);
+  int highOrderStrategy = (int)option(6);
+  int highOrderPostSplitUntangle = (int)option(7);
   if(numLayers < 1) {
     Msg::Warning("Hey ! at least one smoothing layer dude ...");
     numLayers = 1;

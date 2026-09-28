@@ -71,11 +71,11 @@ public:
     return "C. Geuzaine, J.-F. Remacle";
   }
 
-  // the options (virtual for plugins that keep their options themselves)
-  virtual int getNbOptions() const { return (int)_numOptions.size(); }
-  virtual StringXNumber *getOption(int iopt) { return &_numOptions[iopt]; }
-  virtual int getNbOptionsStr() const { return (int)_strOptions.size(); }
-  virtual StringXString *getOptionStr(int iopt) { return &_strOptions[iopt]; }
+  // the options
+  int getNbOptions() const { return (int)_numOptions.size(); }
+  StringXNumber *getOption(int iopt) { return &_numOptions[iopt]; }
+  int getNbOptionsStr() const { return (int)_strOptions.size(); }
+  StringXString *getOptionStr(int iopt) { return &_strOptions[iopt]; }
 
   // the option of the given name, or of a former name given to
   // addOptionAlias(); nullptr if there is none

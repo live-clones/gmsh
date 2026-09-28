@@ -230,7 +230,7 @@ void PluginManager::registerDefaultPlugins()
 #endif
     add(new GMSH_SpanningTreePlugin());
 #if defined(HAVE_BOUNDARY_LAYERS)
-    add(GMSH_RegisterBoundaryLayerPlugin());
+    add(new GMSH_BoundaryLayerPlugin());
 #endif
   }
 
