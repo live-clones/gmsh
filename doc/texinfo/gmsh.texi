@@ -252,8 +252,8 @@ post-processing), which can be controlled with the graphical user
 interface (GUI; see @ref{Gmsh graphical user interface}), from the
 command line (@pxref{Gmsh command-line interface}), using text files
 written in Gmsh's own scripting language (@file{.geo} files; see
-@ref{Gmsh scripting language}), or through the C++, C, Python, Julia and
-Fortran application programming interface (API; see @ref{Gmsh
+@ref{Gmsh scripting language}), or through the C++, C, Python, Julia,
+Fortran and JavaScript application programming interface (API; see @ref{Gmsh
 application programming interface}).
 
 A brief description of the four modules is given hereafter, before an
@@ -613,7 +613,7 @@ any per-entity mesh size constraint.
 @end enumerate
 
 Using the Gmsh API, this value can then be further modified using a C++,
-C, Python, Julia or Fortran mesh size callback function provided via
+C, Python, Julia, Fortran or JavaScript mesh size callback function provided via
 @code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
 gmsh/model/mesh}).
 
@@ -697,7 +697,7 @@ with on the client side: the role of ONELAB is limited to data
 centralization, modification and re-dispatching.
 
 Using the Gmsh API, you can directly embed Gmsh in your C++, C, Python,
-Julia or Fortran solver, use ONELAB for interactive parameter definition
+Julia, Fortran or JavaScript solver, use ONELAB for interactive parameter definition
 and modification, and to create post-processing data on the fly. See
 @url{@value{GITLAB-PREFIX}/examples/api/prepro.py,prepro.py},
 @url{@value{GITLAB-PREFIX}/examples/api/custom_gui.py,custom_gui.py} and
@@ -789,10 +789,11 @@ built-in scripting language, thanks to user-defined macros, loops,
 conditionals and includes (see @ref{User-defined macros}, @ref{Loops and
 conditionals}, and @ref{Other general commands}). For more advanced
 geometries, using the Gmsh API (@pxref{Gmsh application programming
-interface}) in the language of your choice (C++, C, Python, Julia or
-Fortran) brings even greater flexibility, the only downside being that
-you need to either compile your code (for C++, C and Fortran) or to
-configure and install an interpreter (Python or Julia) in addition to
+interface}) in the language of your choice (C++, C, Python, Julia,
+Fortran or JavaScript) brings even greater flexibility, the only
+downside being that you need to either compile your code (for C++, C and
+Fortran) or to configure and install an interpreter (Python, Julia or
+JavaScript) in addition to
 Gmsh. A binary Software Development Kit (SDK) is distributed on the Gmsh
 web site to make the process easier (@pxref{Installing and running Gmsh
 on your computer});
@@ -904,7 +905,8 @@ how to compile the Gmsh app from source.
 As a library, Gmsh can still be used in the same way as the standalone
 Gmsh app, but in addition it can also be embedded in external codes
 using the Gmsh API (@pxref{Gmsh application programming interface}).
-The API is available in C++, C, Python, Julia and Fortran.  A binary
+The API is available in C++, C, Python, Julia, Fortran and JavaScript
+(the latter with Gmsh compiled to WebAssembly).  A binary
 Software Development Kit (SDK) for Windows, Linux and macOS, that
 contains the dynamic Gmsh library and the associated header and module
 files, can be downloaded from @url{https://gmsh.info/#Download}. Python
@@ -1918,7 +1920,7 @@ application programming interface}) can thus sometimes be
 preferable. The downside of the API is that, while the scripting
 language is baked into Gmsh and is thus available directly in the
 standalone Gmsh app, the API requires external dependencies (a C++, C or
-Fortran compiler; or a Python or Julia interpreter).
+Fortran compiler; or a Python, Julia or JavaScript interpreter).
 
 This chapter describes the scripting language by detailing general
 commands first (@pxref{General scripting commands}), before detailing
@@ -4473,8 +4475,8 @@ INTERPOLATION_SCHEME
 @cindex Programming, API
 
 The Gmsh application programming interface (API) lets you integrate the
-Gmsh library in external applications written in C++, C, Python, Julia
-or Fortran. By design, the Gmsh API is purely functional, and only uses
+Gmsh library in external applications written in C++, C, Python, Julia,
+Fortran or JavaScript. By design, the Gmsh API is purely functional, and only uses
 elementary types from the target languages. See the
 @url{@value{GITLAB-PREFIX}/tutorials/c++,tutorials/c++},
 @url{@value{GITLAB-PREFIX}/tutorials/c,tutorials/c},
@@ -4495,6 +4497,7 @@ master API definition file
 @item Python API: @url{@value{GITLAB-PREFIX}/api/gmsh.py,gmsh.py}
 @item Julia API: @url{@value{GITLAB-PREFIX}/api/gmsh.jl,gmsh.jl}
 @item Fortran API: @url{@value{GITLAB-PREFIX}/api/gmsh.f90,gmsh.f90}
+@item JavaScript API: @url{@value{GITLAB-PREFIX}/api/gmsh.mjs,gmsh.mjs}
 @end itemize
 
 The additional
@@ -4598,8 +4601,9 @@ header/module file for the exact definition in each supported language:
 in @url{@value{GITLAB-PREFIX}/api/gmsh.h,C++}
 @code{gmsh/model/geo/addPoint} will lead to a namespaced function
 @code{gmsh::model::geo::addPoint}, while in
-@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python} and
-@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia} it will lead to
+@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python},
+@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia} and
+@url{@value{GITLAB-PREFIX}/api/gmsh.mjs,JavaScript} it will lead to
 @code{gmsh.model.geo.addPoint}, in
 @url{@value{GITLAB-PREFIX}/api/gmshc.h,C} to @code{gmshModelGeoAddPoint}
 and in @url{@value{GITLAB-PREFIX}/api/gmsh.f90,Fortran} to
@@ -4608,7 +4612,8 @@ and in @url{@value{GITLAB-PREFIX}/api/gmsh.f90,Fortran} to
 ``snake case'' aliases, i.e. @code{gmsh.model.geo.add_point}, as this is
 the recommended style in these languages.  Output values are passed by
 reference in C++, as pointers in C and directly returned (after the
-return value, if any) in Python and Julia.
+return value, if any) in Python and Julia, and returned in an array in
+JavaScript when there are several.
 
 @include api.texi
 
@@ -6638,7 +6643,7 @@ with built-in pre- and post-processing facilities. With Gmsh you can
 create or import 1D, 2D and 3D geometrical models, mesh them, launch
 external finite element solvers and visualize solutions. Gmsh can be
 used either as a stand-alone program (graphical or not) or as a library
-to integrate in C++, C, Python, Julia or Fortran codes.
+to integrate in C++, C, Python, Julia, Fortran or JavaScript codes.
 
 @item What are the terms and conditions of use?
 
