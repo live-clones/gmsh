@@ -641,6 +641,11 @@ if(ENABLE_VISUDEV)
   set_config_option(HAVE_VISUDEV "VisuDev")
 endif()
 
+# The interfaces are not exclusive: every one that is enabled is compiled in,
+# and which of them comes up is decided when it does -- "gmsh -gui imgui", or
+# GMSH_GUI, or the first there is. Each says it is there at start-up, and each
+# brings the 3D scene that goes with it.
+
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
   # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,
   # where e.g. xft and xinerama options are not dealt with)
@@ -657,6 +662,17 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
                       OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
       string(STRIP "${FLTK_INCLUDE_DIR}" FLTK_INCLUDE_DIR)
       list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
+      # --includedir only gives the prefix; since 1.4 the fltk headers include
+      # those of the libraries fltk was itself built against (Fl.H pulls in
+      # <cairo.h>), which live in the other -I of --cxxflags
+      execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --cxxflags
+                      OUTPUT_VARIABLE FLTK_CXX_FLAGS)
+      string(STRIP "${FLTK_CXX_FLAGS}" FLTK_CXX_FLAGS)
+      string(REGEX MATCHALL "-I[^ ]+" FLTK_INCLUDE_FLAGS "${FLTK_CXX_FLAGS}")
+      foreach(flag ${FLTK_INCLUDE_FLAGS})
+        string(SUBSTRING ${flag} 2 -1 dir)
+        list(APPEND EXTERNAL_INCLUDES ${dir})
+      endforeach()
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --ldflags
                       OUTPUT_VARIABLE FLTK_LIBRARIES)
       string(STRIP ${FLTK_LIBRARIES} FLTK_LIBRARIES)
@@ -685,6 +701,29 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
     endif()
   endif()
 endif()
+
+# The 3D scene: it draws the model with OpenGL and picks in it, and it belongs
+# to no interface -- whichever one is up holds it, through Scene::Host. So it
+# is added once every interface that could hold it is known, and says so with
+# HAVE_GL_SCENE.
+if(HAVE_FLTK AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scene)
+  add_subdirectory(src/scene)
+  set(HAVE_GL_SCENE TRUE)
+endif()
+
+# HAVE_GUI is set as soon as one of the graphical user interfaces is compiled in,
+# and brings what they are all made of
+if(HAVE_FLTK)
+  set(HAVE_GUI TRUE)
+  add_subdirectory(src/ui)
+  add_subdirectory(src/gui)
+endif()
+
+# Which 3D scene runs is decided at the same time as which interface does:
+# each says it is there under the name of the interface it belongs to, and the
+# one in a window of its own serves whichever interface has none. When none of
+# them is compiled in, src/gui/GuiScene.cpp answers for them, so that the scene
+# is never what stops an interface from linking.
 
 if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
   STRING(REGEX MATCH "([0-9]+.[0-9]+)" OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
@@ -716,7 +755,7 @@ if(ENABLE_BUILD_IOS)
   add_definitions(-DBUILD_IOS)
 endif()
 
-if(HAVE_FLTK OR ENABLE_GRAPHICS)
+if(HAVE_GUI OR ENABLE_GRAPHICS)
   if(NOT HAVE_POST OR NOT HAVE_PLUGINS OR NOT HAVE_ONELAB)
     message(SEND_ERROR "Cannot compile GUI without Post, Plugin and ONELAB")
   endif()
@@ -1564,7 +1603,7 @@ set(GMSH_SRC ${GMSH_SRC};api/gmshc.cpp)
 # force full warnings to encourage everybody to write clean(er) code
 check_cxx_compiler_flag("-Wall" WALL)
 if(WALL AND NOT MSVC)
-  file(GLOB_RECURSE WALL_SRC src/common/*.cpp src/fltk/*.cpp FunctionSpace/*.cpp
+  file(GLOB_RECURSE WALL_SRC src/common/*.cpp src/ui/*.cpp src/gui/*.cpp src/fltk/*.cpp FunctionSpace/*.cpp
        src/geo/*.cpp src/graphics/*.cpp src/mesh/*.cpp src/numeric/*.cpp src/parser/*.cpp
        src/plugin/*.cpp src/post/*.cpp src/solver/*.cpp)
   set(WF "-Wall")
@@ -1749,8 +1788,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(src/common src/fltk src/geo src/graphics src/mesh src/solver
-                    src/numeric src/parser src/plugin src/post api
+include_directories(src/ui src/gui src/scene src/common src/fltk src/geo src/graphics src/mesh
+                    src/solver src/numeric src/parser src/plugin src/post api
+                    contrib/stb
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)
 
 # set this for external codes that might include this CMakeList file
@@ -1818,7 +1858,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 endif()
 
 # binary targets
-if(HAVE_FLTK)
+if(HAVE_GUI)
   if(ENABLE_BUILD_DYNAMIC)
     add_executable(gmsh WIN32 src/common/Main.cpp)
     target_link_libraries(gmsh shared)
@@ -1843,11 +1883,11 @@ target_link_libraries(gmsh ${LINK_LIBRARIES})
 # OS specific linker options
 if(WIN32 AND NOT MSVC)
   set(FLAGS "-Wl,--stack,16777216 -Wl,--image-base -Wl,0x10000000 -static")
-  if(HAVE_FLTK)
+  if(HAVE_GUI)
     set(APPFLAGS "${FLAGS} -municode -mwindows")
-    if(HAVE_64BIT_SIZE_T)
+    if(HAVE_FLTK AND HAVE_64BIT_SIZE_T)
       set(APPFLAGS "${APPFLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/Win64Icon.res\"")
-    else()
+    elseif(HAVE_FLTK)
       set(APPFLAGS "${APPFLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/Win32Icon.res\"")
     endif()
   else()
@@ -2058,6 +2098,34 @@ endif()
 if(ENABLE_ONELAB AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
   install(FILES ${ONELAB_PY} DESTINATION ${GMSH_BIN})
 endif()
+
+# Desktop integration. This is what lets the desktop tell which application a
+# Gmsh window belongs to: it matches the Wayland app id, or the X11 WM_CLASS
+# against StartupWMClass, against the entries it has installed. Window rules key
+# on that, and a tiling extension typically skips a window it cannot resolve --
+# so without this the windows behave as if they belonged to no application.
+if(HAVE_GUI AND UNIX AND NOT APPLE)
+  set(GMSH_DESKTOP_ENTRY
+      ${CMAKE_CURRENT_SOURCE_DIR}/utils/freedesktop/info.gmsh.gmsh.desktop)
+  install(FILES ${GMSH_DESKTOP_ENTRY}
+          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+  install(FILES
+          ${CMAKE_CURRENT_SOURCE_DIR}/utils/freedesktop/info.gmsh.gmsh.metainfo.xml
+          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/utils/icons/gmsh.svg
+          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps)
+
+  # Gmsh is usually run straight from the build tree, where none of the above
+  # has happened: "make desktop-entry" installs a hidden copy of the entry for
+  # the current user, pointing at the binary just built, so that its windows are
+  # recognized too. Deleting the file it writes undoes it.
+  add_custom_target(desktop-entry
+    COMMAND ${CMAKE_COMMAND} -DENTRY=${GMSH_DESKTOP_ENTRY}
+            -DEXECUTABLE=$<TARGET_FILE:gmsh>
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/utils/freedesktop/InstallUserDesktopEntry.cmake
+    COMMENT "Registering ${CMAKE_PROJECT_NAME} with the desktop for this user"
+    VERBATIM)
+endif()
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
   install(FILES ${GMSH_PY} DESTINATION ${GMSH_LIB})
@@ -2237,7 +2305,7 @@ if(UNIX)
   set(CPACK_INSTALL_COMMANDS "rm -rf ${CMAKE_CURRENT_BINARY_DIR}/_CPack_Packages")
 endif()
 
-if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL AND HAVE_FLTK)
+if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL AND HAVE_GUI)
   set(CPACK_GENERATOR Bundle)
   set(CPACK_BUNDLE_NAME Gmsh)
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_app.plist F0)
@@ -2334,7 +2402,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       target_link_libraries(${TEST} shared)
       if(WIN32 AND NOT MSVC)
         set(FLAGS "-static")
-        if(HAVE_FLTK)
+        if(HAVE_GUI)
           set(FLAGS "${FLAGS} -mwindows")
         else()
           set(FLAGS "${FLAGS} -mconsole")
@@ -2343,6 +2411,25 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       endif()
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()
+  endif()
+  # What the interfaces may include, as src/ui/Backend.h states it: the
+  # check is a script, and the list of what still breaks the rule is in it.
+  if(HAVE_GUI)
+    find_program(GMSH_PYTHON3 NAMES python3 python)
+    if(GMSH_PYTHON3)
+      add_test(NAME gui_includes COMMAND ${GMSH_PYTHON3}
+               ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/checkGuiIncludes.py
+               ${CMAKE_CURRENT_SOURCE_DIR})
+    endif()
+  endif()
+  # The layout solver of src/ui has neither a toolkit nor Gmsh in it, so it
+  # is the one part of the interfaces a test can hold to its word without a
+  # screen: src/ui/LayoutTest.cpp says what it promises.
+  if(HAVE_GUI)
+    add_executable(gui_layout src/ui/LayoutTest.cpp src/ui/Layout.cpp
+                   src/ui/Form.cpp src/ui/Menu.cpp)
+    target_include_directories(gui_layout PRIVATE src/ui)
+    add_test(NAME gui_layout COMMAND gui_layout)
   endif()
   # enable this once we have worked out the path issues on the build machines
   if(0 AND ENABLE_BUILD_DYNAMIC)

@@ -6,6 +6,7 @@
 #include <set>
 #include <unordered_set>
 #include <algorithm>
+#include <cstring>
 #include "drawContext.h"
 #include "GModelVertexArrays.h"
 #include "OS.h"

@@ -15,12 +15,47 @@
 #include <FL/Fl_Tile.H>
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Progress.H>
+
+#include "Bar.h"
+#include "Backend.h"
+#include "menuFltk.h"
+
+// reads the description at every draw
+class statusButtonFltk : public Fl_Button {
+public:
+  Ui::BarButton what;
+  statusButtonFltk(int x, int y, int w, int h) : Fl_Button(x, y, w, h) {}
+  std::string shown() const
+  {
+    bool on = what.on && what.on();
+    const std::string &glyph = (on && what.glyphOn.size()) ? what.glyphOn :
+                                                             what.glyph;
+    if(glyph.size()) return "@-1" + glyph;
+    return (on && what.labelOn.size()) ? what.labelOn : what.label;
+  }
+  // whether it changed
+  bool refresh();
+  void draw() override
+  {
+    refresh();
+    Fl_Button::draw();
+  }
+  int handle(int event) override
+  {
+    if(event == FL_PUSH && what.menu) {
+      fltkMenuPopup(what.menu(), Fl::event_x(), Fl::event_y(), what.label);
+      return 1;
+    }
+    return Fl_Button::handle(event);
+  }
+};
 #if defined(__APPLE__)
 #include <FL/Fl_Sys_Menu_Bar.H>
 #endif
 #include <FL/Fl_Menu_Bar.H>
 
-class openglWindow;
+class sceneViewFltk;
+class sceneView;
 class onelabGroup;
 class messageBrowser;
 
@@ -36,13 +71,16 @@ private:
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  Fl_Button *_butt[14];
+  std::vector<statusButtonFltk *> _butt;
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   std::vector<std::string> _messages;
+  // what is about to be forgotten is said to the host, and read back from the
+  // settings when shown again
+  void _forgetting(const Ui::Backend::Layout &what);
 
 public:
-  std::vector<openglWindow *> gl;
+  std::vector<sceneViewFltk *> gl;
 
 public:
   graphicWindow(bool main = true, int numTiles = 1, bool detachedMenu = false);
@@ -51,9 +89,7 @@ public:
   Fl_Window *getMenuWindow() { return _menuwin; }
   onelabGroup *getMenu() { return _onelab; }
   Fl_Progress *getProgress() { return _label; }
-  Fl_Button *getSelectionButton() { return _butt[9]; }
-  Fl_Button *getQueryButton() { return _butt[12]; }
-  Fl_Button *getMeasureButton() { return _butt[13]; }
+
   messageBrowser *getMessageBrowser() { return _browser; }
   std::vector<std::string> &getMessages() { return _messages; }
   int getMinWidth() { return _minWidth; }
@@ -71,6 +107,7 @@ public:
   int getMenuHeight();
   int getMenuPositionX();
   int getMenuPositionY();
+  Ui::Backend::Layout layout();
   void showMenu();
   void hideMenu();
   void showHideMenu();
@@ -78,9 +115,8 @@ public:
   void attachMenu();
   void attachDetachMenu();
   bool isMenuDetached() { return _menuwin ? true : false; }
-  bool split(openglWindow *g, char how, double ratio);
-  void setAnimButtons(int mode);
-  void checkAnimButtons();
+  bool split(sceneViewFltk *g, char how, double ratio);
+  void refreshStatusButtons();
   int getMessageHeight();
   void setMessageHeight(int h);
   void showMessages();
@@ -88,7 +124,7 @@ public:
   void showHideMessages();
   void addMessage(const char *msg);
   void clearMessages();
-  void saveMessages(const char *filename);
+  void messageLines(std::vector<std::string> &lines);
   void copySelectedMessagesToClipboard();
   void setMessageFontSize(int size);
   void changeMessageFontSize(int incr);
@@ -96,31 +132,14 @@ public:
 };
 
 void file_quit_cb(Fl_Widget *w, void *data);
-void file_watch_cb(Fl_Widget *w, void *data);
-void mod_geometry_cb(Fl_Widget *w, void *data);
-void mod_mesh_cb(Fl_Widget *w, void *data);
-void mod_solver_cb(Fl_Widget *w, void *data);
-void mod_post_cb(Fl_Widget *w, void *data);
-void mod_back_cb(Fl_Widget *w, void *data);
-void mod_forward_cb(Fl_Widget *w, void *data);
-void geometry_reload_cb(Fl_Widget *w, void *data);
-void onelab_reload_cb(Fl_Widget *w, void *data);
-void mesh_1d_cb(Fl_Widget *w, void *data);
-void mesh_2d_cb(Fl_Widget *w, void *data);
-void mesh_3d_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
-void status_xyz1p_cb(Fl_Widget *w, void *data);
-void status_options_cb(Fl_Widget *w, void *data);
-void status_query_cb(Fl_Widget *w, void *data);
-// whether a query is waiting for a click (see status_query_cb)
-bool queryMode();
-void status_measure_cb(Fl_Widget *w, void *data);
-// whether a measurement is waiting for a click (see status_measure_cb)
-bool measureMode();
-void status_play_manual(int time, int incr, bool redraw = true);
-void quick_access_cb(Fl_Widget *w, void *data);
-void show_hide_message_cb(Fl_Widget *w, void *data);
+void fltkOrientViews(const std::string &what, bool reverse, bool sync);
+void fltkSetMouseSelection(bool on);
+std::vector<sceneView *> fltkViewsBeside(sceneViewFltk *view);
 void show_hide_menu_cb(Fl_Widget *w, void *data);
 void attach_detach_menu_cb(Fl_Widget *w, void *data);
+
+// false for an action it does not know
+bool fltkWindowAction(const std::string &what);
 
 #endif

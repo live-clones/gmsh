@@ -26,11 +26,7 @@
 #include "OS.h"
 #include "gl2ps.h"
 
-// the background image is still read with FLTK
-#if defined(HAVE_FLTK)
-#include <FL/Fl_JPEG_Image.H>
-#include <FL/Fl_PNG_Image.H>
-#endif
+#include "ImageIO.h"
 
 #if defined(HAVE_POPPLER)
 #include "gmshPopplerWrapper.h"
@@ -1454,37 +1450,32 @@ bool drawContext::generateTextureForImage(const std::string &name, int page,
 #endif
   }
   else {
-#if defined(HAVE_FLTK)
     if(!imageTexture) {
-      Fl_RGB_Image *img = nullptr;
-      if(ext == ".jpg" || ext == ".JPG" || ext == ".jpeg" || ext == ".JPEG")
-        img = new Fl_JPEG_Image(name.c_str());
-      else if(ext == ".png" || ext == ".PNG")
-        img = new Fl_PNG_Image(name.c_str());
-      if(!img || img->fail() || img->w() <= 0 || img->h() <= 0) {
-        Msg::Error("Could not load background image '%s'", name.c_str());
-        if(img) delete img;
+      int w = 0, h = 0, comp = 0;
+      std::vector<unsigned char> pixels;
+      if(!ImageIO::read(name, w, h, comp, pixels)) return false;
+      // resample to a fixed power-of-two size, as the original image can have
+      // dimensions that old OpenGL implementations do not accept for textures
+      const int texSize = 2048;
+      std::vector<unsigned char> scaled;
+      if(!ImageIO::resize(pixels, w, h, comp, scaled, texSize, texSize))
         return false;
-      }
-      Fl_RGB_Image *img2 = (Fl_RGB_Image *)img->copy(2048, 2048);
-      glPixelStorei(GL_UNPACK_ROW_LENGTH, img2->w());
+      glPixelStorei(GL_UNPACK_ROW_LENGTH, texSize);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
       glGenTextures(1, &imageTexture);
       glBindTexture(GL_TEXTURE_2D, imageTexture);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img2->w(), img2->h(), 0,
-                   (img2->d() == 4) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE,
-                   img2->array);
+      GLenum format = (comp == 4) ? GL_RGBA :
+                      (comp == 3) ? GL_RGB :
+                      (comp == 2) ? GL_LUMINANCE_ALPHA : GL_LUMINANCE;
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texSize, texSize, 0, format,
+                   GL_UNSIGNED_BYTE, &scaled[0]);
       glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-      imageW = img->w();
-      imageH = img->h();
-      delete img;
-      delete img2;
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+      imageW = w;
+      imageH = h;
     }
-#else
-    Msg::Error("Gmsh must be compiled with FLTK support to load JPEGs or PNGs");
-    return false;
-#endif
   }
   return true;
 }
@@ -1742,7 +1733,8 @@ bool drawContext::drawStudioFrames(int from, int width, int height,
     draw2d();
     glImmediate::flush();
     global()->flushString();
-    if(!glShader::accumulate(width, height, j == 1, j)) {
+    if(!glShader::accumulate(viewportOrigin[0], viewportOrigin[1], width,
+                             height, j == 1, j)) {
       studioSample = 0;
       return false;
     }

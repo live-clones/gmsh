@@ -52,6 +52,8 @@ namespace glShader {
   // the OpenGL context about to be drawn with, when a window has one of its
   // own: the objects a context does not share get kept apart per context
   void setContext(const void *id);
+  // unbound, for the fixed function pipeline drawing next in the same context
+  void release();
   // is there a working program? Compiles it if necessary and says why not
   bool available();
   // is the shader pipeline drawing? Asked for (General.Shaders) and available
@@ -95,17 +97,15 @@ namespace glShader {
   void readPrintTarget(int width, int height, GLenum format, GLenum type,
                        void *pixels);
   void endPrintTarget();
-  // Progressive accumulation of the studio frames: add the window (width x
-  // height pixels) to a sum, cleared when first, and put the average of
-  // count frames back on the window. False if it cannot be done.
-  bool accumulate(int width, int height, bool first, int count);
+  // add the view (width x height from (x, y)) to a sum, cleared when first, and
+  // put the average of count frames back; false if it cannot be done
+  bool accumulate(int x, int y, int width, int height, bool first, int count);
   // put the average of what accumulate() summed (count frames) back on the
-  // window, as it left it; false if there is no such sum at that size
-  bool showAccumulation(int width, int height, int count);
-  // Flames over what is drawn, licking up from every pixel of it, at a
-  // level from 0 to 1 (and taller beyond) and flickering with the time (in
-  // seconds). False if it cannot be done.
-  bool fire(int width, int height, double level, double time);
+  // window, as it left it; false if there is no such sum for that view
+  bool showAccumulation(int x, int y, int width, int height, int count);
+  // flames over the view, at a level from 0 to 1, flickering with the time in
+  // seconds
+  bool fire(int x, int y, int width, int height, double level, double time);
   // is what is drawn next lit, and are its back faces lit as well?
   void setLighting(bool on, bool twoSide);
   // clip plane i, in eye coordinates; setClipPlaneOff() stops clipping with it

@@ -248,6 +248,9 @@ public:
   double t[3], s[3]; // current translation and scale
   double quaternion[4]; // current quaternion used for "trackball" rotation
   int viewport[4]; // current viewport
+  // where the viewport sits in the framebuffer, in pixels: (0, 0) for a
+  // window of its own, elsewhere for a view that shares one with others
+  int viewportOrigin[2] = {0, 0};
   double rot[16]; // current rotation matrix
   double t_init[3]; // initial translation before applying modelview transform
   double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates
@@ -587,6 +590,8 @@ public:
   int fix2dCoordinates(double *x, double *y);
   void draw3d();
   void draw2d();
+  // one entity on its own, as drawGeom() draws it
+  void drawEntity(GEntity *e);
   void drawAxes(int mode, double ticks[3], std::string format[3],
                 std::string label[3], double bb[6], int mikado,
                 double value_bb[6]);

@@ -638,8 +638,8 @@
 #include "drawContext.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
+#if defined(HAVE_GUI)
+#include "Gui.h"
 #endif
 
 #if defined(HAVE_POPPLER)
@@ -10234,18 +10234,18 @@ yyreduce:
         GModel::current()->createOverlaps((yyvsp[(2) - (3)].d));
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "SetCurrentWindow")) {
-#if defined(HAVE_FLTK)
-        FlGui::instance()->setCurrentOpenglWindow((int)(yyvsp[(2) - (3)].d));
+#if defined(HAVE_GUI)
+        Gui::instance().setCurrentOpenglWindow((int)(yyvsp[(2) - (3)].d));
 #endif
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "SplitCurrentWindowHorizontal")) {
-#if defined(HAVE_FLTK)
-        FlGui::instance()->splitCurrentOpenglWindow('h', (yyvsp[(2) - (3)].d));
+#if defined(HAVE_GUI)
+        Gui::instance().splitCurrentOpenglWindow('h', (yyvsp[(2) - (3)].d));
 #endif
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "SplitCurrentWindowVertical")) {
-#if defined(HAVE_FLTK)
-        FlGui::instance()->splitCurrentOpenglWindow('v', (yyvsp[(2) - (3)].d));
+#if defined(HAVE_GUI)
+        Gui::instance().splitCurrentOpenglWindow('v', (yyvsp[(2) - (3)].d));
 #endif
       }
       else {
@@ -10258,8 +10258,8 @@ yyreduce:
   case 266:
 #line 3122 "Gmsh.y"
     {
-#if defined(HAVE_FLTK)
-      FlGui::instance()->splitCurrentOpenglWindow('u');
+#if defined(HAVE_GUI)
+      Gui::instance().splitCurrentOpenglWindow('u');
 #endif
     ;}
     break;

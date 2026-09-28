@@ -47,7 +47,12 @@ int GmshMergePostProcessingFile(const std::string &fileName);
 int GmshWriteFile(const std::string &fileName);
 int GmshFinalize();
 int GmshBatch();
-int GmshFLTK(int argc = 0, char **argv = nullptr);
+int GmshGUI(int argc = 0, char **argv = nullptr);
+// deprecated name kept for compatibility
+inline int GmshFLTK(int argc = 0, char **argv = nullptr)
+{
+  return GmshGUI(argc, argv);
+}
 
 // these two functions are the only functions exported in addition to the
 // functions of the official stable API, so that we can also build the main Gmsh
@@ -66,6 +71,8 @@ int GmshFLTK(int argc = 0, char **argv = nullptr);
 #endif
 
 GMSH_API int GmshMainBatch(int argc, char **argv);
+GMSH_API int GmshMainGUI(int argc, char **argv);
+// deprecated name kept for compatibility
 GMSH_API int GmshMainFLTK(int argc, char **argv);
 
 #endif

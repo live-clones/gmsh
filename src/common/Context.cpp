@@ -11,10 +11,6 @@
 #include "GmshMessage.h"
 #include "GamePad.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/Fl.H>
-#endif
-
 CTX::CTX()
 {
   // Warning: this does not initialize all the variables; for all the options
@@ -73,7 +69,12 @@ void CTX::init()
 
   geom.autoExtrude = 0; // FIXME: temporary for auto-extrude testing
 
-  glFontEnum = 0; // Helvetica
+  glFontEnum = glFontEnumTitle = 0; // Helvetica
+  // General.HeavyVisualization has no entry in DefaultOptions.h, so nothing
+  // else sets it: the option window showed whatever memory held (unchecked
+  // on one machine, checked on another), and the element drawing code reads
+  // it without HAVE_VISUDEV
+  heavyVisu = 0;
   forcedBBox = 0;
   hideUnselected = 0;
   numWindows = numTiles = 1;

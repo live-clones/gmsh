@@ -32,5 +32,5 @@ Usage, from a build with the GUI and the shared library (make gmsh shared):
 
 run.py uses the Python API of ../../api (--api for another tree), which loads
 the library of the build next to it. The timings are those Gmsh reports for
-the draws of its window (debug messages of openglWindow::draw()): the first
+the draws of its window (debug messages of sceneView::draw()): the first
 draw, with what it builds, the frames redrawn after rotations, and the steps.

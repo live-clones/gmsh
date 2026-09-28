@@ -766,3 +766,15 @@ void drawContext::drawGeom()
 
   clipPlanes::on(0);
 }
+
+void drawContext::drawEntity(GEntity *e)
+{
+  int pass = transparencyPass;
+  transparencyPass = TRANSPARENCY_ALL;
+  clipPlanes::on(CTX::instance()->geom.clip);
+  drawGeomEntity(this, e);
+  _geomGlyphs.draw(this, CTX::instance()->geom.light);
+  _geomGlyphs.clear();
+  clipPlanes::on(0);
+  transparencyPass = pass;
+}

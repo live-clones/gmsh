@@ -31,8 +31,9 @@ cxx = cached('CMAKE_CXX_COMPILER') or 'c++'
 fltk = cached('FLTK_CONFIG_SCRIPT') or 'fltk-config'
 flags = ['-std=c++17', '-O1', '-Wno-deprecated-declarations']
 flags += ['-I' + os.path.join(src, d) for d in
-          ('api', 'src/fltk', 'src/common', 'src/graphics', 'src/geo',
-           'src/numeric', 'src/post', 'src/mesh', 'contrib/eigen')]
+          ('api', 'src/fltk', 'src/scene', 'src/gui', 'src/ui', 'src/common',
+           'src/graphics', 'src/geo', 'src/numeric', 'src/post', 'src/mesh',
+           'contrib/eigen')]
 flags += ['-I' + os.path.join(build, 'src', 'common')]
 flags += shlex.split(subprocess.run([fltk, '--use-gl', '--cxxflags'],
                                     capture_output=True, text=True).stdout)

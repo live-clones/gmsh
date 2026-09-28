@@ -17,7 +17,7 @@
 #include <FL/Fl.H>
 #include "gmsh.h"
 #include "FlGui.h"
-#include "openglWindow.h"
+#include "sceneViewFltk.h"
 #include "drawContext.h"
 #include "GModel.h"
 #include "GVertex.h"
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 
   // the window settled (shown, sized and placed) before sweeping: a sweep
   // started while it was not found things where there are none
-  openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+  sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow();
   int W = -1, H = -1, stable = 0;
   for(int i = 0; i < 200 && stable < 5; i++) {
     Fl::wait(0.01);
@@ -166,7 +166,8 @@ int main(int argc, char **argv)
         std::vector<SPoint2> p;
         std::vector<PView *> vw;
         if(pass) ctx->stepPick(1);
-        gl->pick(ENT_ALL, true, true, x, y, 5, 5, v, e, f, r, el, p, vw);
+        gl->scene()->pick(ENT_ALL, true, true, x, y, 5, 5, v, e, f, r, el, p,
+                          vw);
         std::string what = "-";
         if(v.size())
           what = "0:" + std::to_string(v[0]->tag());

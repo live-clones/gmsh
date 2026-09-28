@@ -186,9 +186,10 @@ inline void gmshTexCoord2f(float s, float t)
 }
 
 // what a texture means: the alpha of the current colour (a string, as
-// GL_MODULATE) or the colour itself (an image, as GL_REPLACE)
+// GL_MODULATE), in its one channel or in the alpha of a colour texture (a
+// glyph atlas), or the colour itself (an image, as GL_REPLACE)
 enum gmshTextureMode { GMSH_TEXTURE_NONE = 0, GMSH_TEXTURE_ALPHA = 1,
-                       GMSH_TEXTURE_IMAGE = 2 };
+                       GMSH_TEXTURE_IMAGE = 2, GMSH_TEXTURE_ATLAS = 3 };
 
 // the texture the primitives after this are drawn through, zero for none
 // (the shader pipeline needs it said, not only bound)
