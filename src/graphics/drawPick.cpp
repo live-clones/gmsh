@@ -205,7 +205,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
     glShader::enabled() &&
     glShader::bindPickBuffer((int)((viewport[2] - viewport[0]) * hr),
                              (int)((viewport[3] - viewport[1]) * hr));
-  if(!intoPickBuffer) glDrawBuffer(GL_BACK);
+  if(!intoPickBuffer && !glShader::windowFramebuffer()) glDrawBuffer(GL_BACK);
   // at the origin of its own buffer, or where the view sits in a shared
   // framebuffer; a pass runs from outside a draw
   int ox = intoPickBuffer ? 0 : viewportOrigin[0];
@@ -314,7 +314,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
     glShader::releasePickBuffer();
   }
   else {
-    glReadBuffer(GL_BACK);
+    if(!glShader::windowFramebuffer()) glReadBuffer(GL_BACK);
     glReadPixels(ox + fx, oy + fy, fw, fh, GL_RGBA, GL_UNSIGNED_BYTE,
                  &_pickCache[0]);
     glReadPixels(ox + fx, oy + fy, fw, fh, GL_DEPTH_COMPONENT, GL_FLOAT,

@@ -8,15 +8,16 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GL_SCENE) && defined(HAVE_GLFW)
+#if defined(HAVE_GL_SCENE) && (defined(HAVE_GLFW) || defined(HAVE_GTK))
 
 #include <string>
 #include "drawContext.h"
 
 class stbStrings;
 
-// the drawing functions of a scene held by GLFW (the Dear ImGui interface, the
-// window of its own of the browser interface, a canvas of a page): what is
+// the drawing functions of a scene held by OpenGL alone (the Dear ImGui
+// interface, the window of its own of the browser interface, a canvas of a
+// page, the GtkGLArea of the GTK interface): what is
 // drawn goes to the scene host, and the strings are written by the fonts
 // compiled into Gmsh, the Embedded engine of the FLTK interface
 // (drawContextFltkEmbedded)

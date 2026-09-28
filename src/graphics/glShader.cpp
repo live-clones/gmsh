@@ -627,8 +627,10 @@ void main()
     GLint _shadowViewport[4] = {0, 0, 0, 0};
     GLboolean _shadowScissor = GL_FALSE;
     int _shadowPass = -1;
-    // what stands in for the window: 0, or the print target while there is
-    // one
+    // what stands in for the window: the window's own framebuffer, or the
+    // print target while there is one; the window's is 0 but for a toolkit
+    // drawing its widget into a framebuffer of its own
+    GLuint _screen = 0;
     GLuint _window = 0, _printFbo = 0, _printColor = 0, _printDepth = 0;
     // the program that adds a studio frame to the accumulation and puts the
     // average back
@@ -930,7 +932,8 @@ void main()
     _shadowSize[0] = _shadowSize[1] = 0;
     _noShadow = 0;
     _shadowPass = -1;
-    _window = _printFbo = _printColor = _printDepth = 0;
+    _printFbo = _printColor = _printDepth = 0;
+    _window = _screen;
     _blitProgram = 0;
     _uBlitTex = _uBlitScale = -1;
     _blitTried = false;
@@ -960,6 +963,14 @@ void main()
     _context = id;
     _c = &_contexts[id];
   }
+
+  void setWindowFramebuffer(unsigned int fbo)
+  {
+    _screen = fbo;
+    if(!_printFbo) _window = fbo;
+  }
+
+  unsigned int windowFramebuffer() { return _screen; }
 
   void setMatrices(const double modelview[16], const double projection[16])
   {
@@ -2124,7 +2135,7 @@ void main()
        GL_FRAMEBUFFER_COMPLETE) {
       Msg::Warning("Could not make a buffer of %dx%d pixels to print into",
                    width, height);
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _screen);
       glApi::DeleteFramebuffers(1, &_printFbo);
       glApi::DeleteRenderbuffers(1, &_printColor);
       glApi::DeleteRenderbuffers(1, &_printDepth);
@@ -2156,8 +2167,8 @@ void main()
   void endPrintTarget()
   {
     if(!_printFbo) return;
-    _window = 0;
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    _window = _screen;
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _screen);
     glApi::DeleteFramebuffers(1, &_printFbo);
     glApi::DeleteRenderbuffers(1, &_printColor);
     glApi::DeleteRenderbuffers(1, &_printDepth);

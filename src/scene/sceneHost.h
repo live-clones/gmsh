@@ -54,6 +54,9 @@ namespace Scene {
     // use cannot draw one: an engine that can, used meanwhile (none: the one
     // in use can)
     std::function<drawContextGlobal *()> printFonts;
+    // the height of the screen in its pixels and the scale of the desktop, for
+    // the size of the text of the scene (none: GLFW's primary monitor)
+    std::function<void(int &height, float &scale)> screen;
   };
 
   void setHost(const Host &host);

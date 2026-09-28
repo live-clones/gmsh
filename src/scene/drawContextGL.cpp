@@ -5,12 +5,14 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GL_SCENE) && defined(HAVE_GLFW)
+#if defined(HAVE_GL_SCENE) && (defined(HAVE_GLFW) || defined(HAVE_GTK))
 
 #include <algorithm>
 #include <cmath>
 
+#if defined(HAVE_GLFW)
 #include <GLFW/glfw3.h>
+#endif
 
 #include "drawContextGL.h"
 #include "stbStrings.h"
@@ -43,10 +45,20 @@ int drawContextGL::getFontSize()
 {
   if(CTX::instance()->fontSize > 0) return CTX::instance()->fontSize;
 
+  // the screen as the holder sees it, or as GLFW does
   int h = 0;
-  if(GLFWmonitor *monitor = glfwGetPrimaryMonitor()) {
-    if(const GLFWvidmode *mode = glfwGetVideoMode(monitor)) h = mode->height;
+  float sx = 1.f;
+  if(Scene::host().screen)
+    Scene::host().screen(h, sx);
+#if defined(HAVE_GLFW)
+  else {
+    if(GLFWmonitor *monitor = glfwGetPrimaryMonitor()) {
+      if(const GLFWvidmode *mode = glfwGetVideoMode(monitor)) h = mode->height;
+      float sy = 1.f;
+      glfwGetMonitorContentScale(monitor, &sx, &sy);
+    }
   }
+#endif
   if(h > 0) {
     if(h < 800) return 11;
     else if(h < 1000) return 12;
@@ -55,9 +67,6 @@ int drawContextGL::getFontSize()
     else if(h < 1600) return 15;
     else if(h < 1800) return 16;
   }
-  float sx = 1.f, sy = 1.f;
-  if(GLFWmonitor *monitor = glfwGetPrimaryMonitor())
-    glfwGetMonitorContentScale(monitor, &sx, &sy);
   return std::max(16, (int)(96. * sx / 10.));
 }
 

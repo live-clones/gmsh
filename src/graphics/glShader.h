@@ -52,6 +52,10 @@ namespace glShader {
   // the OpenGL context about to be drawn with, when a window has one of its
   // own: the objects a context does not share get kept apart per context
   void setContext(const void *id);
+  // the framebuffer the window is drawn into: 0, unless the toolkit gives its
+  // widget one of its own (a GtkGLArea)
+  void setWindowFramebuffer(unsigned int fbo);
+  unsigned int windowFramebuffer();
   // unbound, for the fixed function pipeline drawing next in the same context
   void release();
   // is there a working program? Compiles it if necessary and says why not

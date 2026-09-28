@@ -363,8 +363,9 @@ void sceneView::draw(double pixelFactor, int windowHeight)
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   if(CTX::instance()->camera && !CTX::instance()->stereo) {
-    // both eyes' buffers may be left selected by stereo
-    if(!_printW) glDrawBuffer(GL_BACK);
+    // both eyes' buffers may be left selected by stereo; a framebuffer of the
+    // toolkit's has no back buffer to name
+    if(!_printW && !glShader::windowFramebuffer()) glDrawBuffer(GL_BACK);
     _cameraMatrices();
     _ctx->draw3d();
     _burn();
