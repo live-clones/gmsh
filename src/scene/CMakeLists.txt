@@ -12,13 +12,15 @@ set(SRC
   Navigator.cpp
 )
 
-# And the part that comes with GLFW rather than with a widget: the text engine
-# that takes its glyphs from the Dear ImGui font atlas. It wants a Dear ImGui
-# context to exist, which is why it is not the scene itself -- an interface
-# built without it still has one.
+# And the part that is held by GLFW rather than by a widget: the window of its
+# own that a interface drawing no scene pairs with, and the text engine that
+# takes its glyphs from the Dear ImGui font atlas. Both want a Dear ImGui
+# context to exist, even one holding no window, which is why they are not the
+# scene itself -- an interface built without them still has one.
 if(HAVE_GLFW)
   list(APPEND SRC
     drawContextGL.cpp
+    sceneWindow.cpp
   )
 endif()
 

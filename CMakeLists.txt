@@ -50,6 +50,7 @@ opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FFMPEG "Enable FFmpeg for MP4 movie export" ${DEFAULT})
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
+opt(BROWSER "Enable the browser interface: the panels in a web page, the model in\n     a window of its own" OFF)
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GLFW_WAYLAND "Enable the native Wayland backend of GLFW (Linux only, used by ENABLE_IMGUI)" ${DEFAULT})
@@ -705,8 +706,10 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
   endif()
 endif()
 
-# GLFW and Dear ImGui, wanted by the Dear ImGui interface
-if(ENABLE_IMGUI)
+# GLFW, Dear ImGui and the 3D scene, wanted by the Dear ImGui interface and by
+# anything else that shows the model in a window of its own -- the browser
+# interface does, since it has no way of drawing one itself
+if(ENABLE_IMGUI OR ENABLE_BROWSER)
   # GLFW provides the window and the OpenGL context; use the upstream
   # CMakeLists, which selects the platform backend (X11, Wayland, Cocoa, Win32)
   # and sets the corresponding _GLFW_* definitions
@@ -776,6 +779,10 @@ if(ENABLE_IMGUI)
       add_subdirectory(src/imgui)
       set_config_option(HAVE_IMGUI "ImGui[contrib]")
     endif()
+    if(ENABLE_BROWSER AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/browser)
+      add_subdirectory(src/browser)
+      set_config_option(HAVE_BROWSER "Browser")
+    endif()
   else()
     message(SEND_ERROR "Could not find Dear ImGui in contrib/imgui")
   endif()
@@ -784,16 +791,17 @@ endif()
 # The 3D scene: it draws the model with OpenGL and picks in it, and it belongs
 # to no interface -- whichever one is up holds it, through Scene::Host. So it
 # is added once every interface that could hold it is known, and says so with
-# HAVE_GL_SCENE. One of its files wants more than OpenGL and is picked inside:
+# HAVE_GL_SCENE. Two of its files want more than OpenGL and are picked inside:
 # see src/scene/CMakeLists.txt.
-if((HAVE_FLTK OR HAVE_IMGUI) AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scene)
+if((HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER) AND
+   EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scene)
   add_subdirectory(src/scene)
   set(HAVE_GL_SCENE TRUE)
 endif()
 
 # HAVE_GUI is set as soon as one of the graphical user interfaces is compiled in,
 # and brings what they are all made of
-if(HAVE_FLTK OR HAVE_IMGUI)
+if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER)
   set(HAVE_GUI TRUE)
   add_subdirectory(src/ui)
   add_subdirectory(src/gui)
@@ -1880,7 +1888,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(src/ui src/gui src/scene src/common src/fltk src/imgui src/geo src/graphics src/mesh
+include_directories(src/ui src/gui src/scene src/browser src/common src/fltk src/imgui src/geo src/graphics src/mesh
                     src/solver src/numeric src/parser src/plugin src/post api
                     contrib/stb
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)
