@@ -69,7 +69,7 @@ public:
       }
     }
     for(int step = step0; step < data1->getNumTimeSteps(); step++)
-      if(data1->hasTimeStep(step)) data2->Time.push_back(data1->getTime(step));
+      if(data1->hasTimeStep(step)) data2->addTime(data1->getTime(step));
     data2->setName(optionStr(0));
     data2->setFileName(optionStr(0) + ".pos");
     data2->finalize();
