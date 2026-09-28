@@ -222,6 +222,11 @@ namespace Ui {
     bool multiple = false;
     std::function<std::vector<Line>()> prose;
     std::function<void()> changed;
+    // when set, called instead of changed for the change that ends the
+    // choosing of a number -- Enter, the field left, a drag let go -- and on
+    // Enter even with the value as it was: what is redone at every step of a
+    // drag can be kept for the value chosen
+    std::function<void()> done;
     std::function<bool()> enabled;
     // left out rather than greyed
     std::function<bool()> visible;
@@ -266,6 +271,11 @@ namespace Ui {
     Field &onChanged(std::function<void()> what)
     {
       changed = what;
+      return *this;
+    }
+    Field &onDone(std::function<void()> what)
+    {
+      done = what;
       return *this;
     }
     // so that a lambda is never taken for a flag

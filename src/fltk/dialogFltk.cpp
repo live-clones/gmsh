@@ -335,6 +335,20 @@ namespace {
     return s;
   }
 
+  // a drag, the wheel, a letter typed are steps of the choosing; Enter, the
+  // button let go or the field left end it
+  bool _choosingEnds()
+  {
+    switch(Fl::event()) {
+    case FL_DRAG:
+    case FL_MOUSEWHEEL:
+    case FL_PASTE: return false;
+    case FL_KEYBOARD:
+      return Fl::event_key() == FL_Enter || Fl::event_key() == FL_KP_Enter;
+    default: return true;
+    }
+  }
+
 } // namespace
 
 dialogFltk::~dialogFltk()
@@ -441,7 +455,10 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
       }
     } break;
     }
-    if(f.changed) f.changed();
+    if(f.done && _choosingEnds())
+      f.done();
+    else if(f.changed)
+      f.changed();
     break;
   }
   d->reshape();
@@ -540,14 +557,17 @@ void dialogFltk::_addItem(std::size_t index, Fl_Group *into)
       v->textsize(FL_NORMAL_SIZE);
       v->bounds(f.minimum, f.maximum);
       if(f.step > 0.) v->step(f.step);
-      v->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+      v->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE |
+              (f.done ? FL_WHEN_NOT_CHANGED : 0));
       widget = v;
       break;
     }
     Fl_Value_Input *v = new valueInput(fx, fy, fieldW, RH);
-    v->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-    if(f.commitsWhenDone)
-      v->input.when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+    // the input inside is given the valuator's when() at every event: set there
+    // or not at all. With done, Enter says the value is the one even when it
+    // did not change
+    v->when((f.commitsWhenDone ? 0 : FL_WHEN_CHANGED) | FL_WHEN_RELEASE |
+            FL_WHEN_ENTER_KEY | (f.done ? FL_WHEN_NOT_CHANGED : 0));
     if(f.maximum > f.minimum) {
       v->minimum(f.minimum);
       v->maximum(f.maximum);

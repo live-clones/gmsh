@@ -916,7 +916,11 @@ namespace {
       } break;
       default: f.setText(said); break;
       }
-      if(f.changed) f.changed();
+      // the page says a value once it is chosen: Enter, or the field left
+      if(f.done)
+        f.done();
+      else if(f.changed)
+        f.changed();
     }
 
     // --- the state, written down: asked of the description afresh, since what it says is only true at the moment it is read

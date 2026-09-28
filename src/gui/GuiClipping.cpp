@@ -106,12 +106,16 @@ Form GuiClipping::build()
       for(int *mask : _masks()) *mask = (*mask & (1 << plane)) ? 0x3f : 0;
     update(false);
   };
+  // while a value is chosen the scene follows it roughly, and in full once it
+  // is: Enter, the field left, the drag let go
   auto moved = [this]() { update(true); };
+  auto settled = [this]() { update(false); };
   auto coefficient = [&](int j, double bound, double step) {
     return number(std::string(1, "ABCD"[j]), "General." + _name(plane, j))
       .tip("A * X + B * Y + C * Z + D = 0")
       .within(-bound, bound, step)
-      .onChanged(moved);
+      .onChanged(moved)
+      .onDone(settled);
   };
   Item planes = vbox(
     {choice("", &plane,
@@ -135,7 +139,8 @@ Form GuiClipping::build()
                             size ? v : _size(axis));
                   })
       .within(-span, span, coarse)
-      .onChanged(moved);
+      .onChanged(moved)
+      .onDone(settled);
   };
 
   auto changed = [this]() { update(false); };
@@ -196,13 +201,17 @@ void GuiClipping::update(bool still)
   ctx->clipWholeElements = still ? 0 : wholeElements;
   ctx->drawBBox = still ? 1 : 0;
   drawContext::global()->draw();
-  if(still && Scene::host().later) {
-    int token = ++settles;
-    Scene::host().later(0.5, [this, token]() {
-      if(token == settles)
-        update(Scene::host().buttonDown && Scene::host().buttonDown());
+  // a typed or scrolled value settles on its own, a drag as soon as the button
+  // is let go, wherever it is; a value said to be chosen at once, and nothing
+  // left to settle
+  int token = ++settles;
+  auto down = []() {
+    return Scene::host().buttonDown && Scene::host().buttonDown();
+  };
+  if(still && Scene::host().later)
+    Scene::host().later(down() ? 0.1 : 0.5, [this, token, down]() {
+      if(token == settles) update(down());
     });
-  }
 }
 
 void GuiClipping::invert()

@@ -413,6 +413,15 @@ namespace {
         x + (indent > 0.f ? indent : said + ImGui::GetStyle().ItemSpacing.x));
     }
     bool changed = false;
+    // the end of the choosing of a number, for a field with done
+    bool done = false;
+    auto ended = [&f, &done]() {
+      if(f.done && ImGui::IsItemDeactivated() &&
+         (ImGui::IsItemDeactivatedAfterEdit() ||
+          ImGui::IsKeyPressed(ImGuiKey_Enter, false) ||
+          ImGui::IsKeyPressed(ImGuiKey_KeypadEnter, false)))
+        done = true;
+    };
     // a button is red in the face, with its text turned pale
     int painted = 0;
     if(f.alert) {
@@ -672,6 +681,7 @@ namespace {
           const_cast<Ui::Field &>(f).setNumber(said);
           changed = true;
         }
+        ended();
         break;
       }
       // "%g" prints negative zero as "-0"
@@ -709,6 +719,8 @@ namespace {
         const_cast<Ui::Field &>(f).setNumber(clamped(f, value));
         changed = true;
       }
+      // Enter, or the field left after an edit
+      ended();
       if(_wheeled(f, value)) {
         const_cast<Ui::Field &>(f).setNumber(clamped(f, value));
         changed = true;
@@ -1089,7 +1101,9 @@ namespace {
     if(f.tooltip.size() &&
        ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
       ImGui::SetTooltip("%s", f.tooltip.c_str());
-    if(changed && f.changed) {
+    if(done)
+      f.done();
+    else if(changed && f.changed) {
       // what a button does may pick in the 3D view, which pumps frames of its
       // own: it waits for the end of this one
       if(f.kind == Ui::Action || f.kind == Ui::Menu)
