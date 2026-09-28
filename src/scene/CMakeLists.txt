@@ -12,5 +12,15 @@ set(SRC
   Navigator.cpp
 )
 
+# And the part that comes with GLFW rather than with a widget: the text engine
+# that takes its glyphs from the Dear ImGui font atlas. It wants a Dear ImGui
+# context to exist, which is why it is not the scene itself -- an interface
+# built without it still has one.
+if(HAVE_GLFW)
+  list(APPEND SRC
+    drawContextGL.cpp
+  )
+endif()
+
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(src/scene "${SRC};${HDR}")

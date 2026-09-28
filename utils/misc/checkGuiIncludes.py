@@ -43,6 +43,7 @@ ALWAYS = {"OS.h", "GmshConfig.h"}
 
 # the 3D scene of each interface, which is not held to the rule
 SCENE = {
+    "src/imgui/SceneImGui.cpp",
     "src/fltk/SceneFltk.cpp",
     "src/fltk/sceneViewFltk.cpp", "src/fltk/sceneViewFltk.h",
     "src/fltk/drawContextFltk.h",
@@ -55,6 +56,13 @@ SCENE = {
 # What still breaks the rule, and which part of the plan takes it away. The
 # plan is gmsh-imgui-plan.md, beside this tree; its sections are cited.
 TOLERATED = {
+    # --- Dear ImGui: the calls it makes into the facade (1.3)
+    # what is left is the draw context of the scene, which this window
+    # installs and hands to its panes: the scene, not the interface
+    "src/imgui/appWindow.cpp": {"drawContext.h"},
+    "src/imgui/contextPanels.cpp": {
+        "Gui.h", "GuiActions.h", "GmshMessage.h", "GmshDefines.h",
+        "drawContext.h"},
     # --- FLTK: an adapter over the interface that was, until 1.4 makes it a
     # backend like the two others
     "src/fltk/CreateFileFltk.cpp": {"drawContext.h", "PixelBuffer.h",
