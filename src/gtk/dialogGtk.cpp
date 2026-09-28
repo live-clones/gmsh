@@ -862,6 +862,8 @@ void dialogGtk::build()
     gtk_widget_add_controller(win, keys);
     gtkWatchButtons(win);
     GtkWidget *head = gtk_header_bar_new();
+    // no taller than a line of the dialog: see the sheet of BackendGtk.cpp
+    gtk_widget_add_css_class(head, "gmsh-dialog-head");
     gtk_header_bar_pack_end(GTK_HEADER_BAR(head),
                             _small("\u25a4", "Dock it to the side",
                                    G_CALLBACK(_toDock), which));

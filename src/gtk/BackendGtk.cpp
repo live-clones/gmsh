@@ -87,6 +87,14 @@ namespace {
     css += ".gmsh-bar button { padding: 2px 6px; min-height: 0; "
            "min-width: 0; }\n";
     css += ".gmsh-bar { padding: 2px; }\n";
+    // the title bars of the dialogs as small as their title and buttons
+    css += "headerbar.gmsh-dialog-head { min-height: 0; padding: 0 2px; }\n"
+           "headerbar.gmsh-dialog-head .title { font-size: 0.9em; }\n"
+           "headerbar.gmsh-dialog-head button { min-height: 0; min-width: 0; "
+           "padding: 1px 4px; margin: 1px 0; }\n"
+           "headerbar.gmsh-dialog-head windowcontrols button { padding: 1px; }\n"
+           "headerbar.gmsh-dialog-head windowcontrols button image { "
+           "padding: 1px; }\n";
     css += _css;
     gtk_css_provider_load_from_string(_w->sheet, css.c_str());
   }

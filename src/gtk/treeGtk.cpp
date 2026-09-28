@@ -180,12 +180,12 @@ void gtkTree::_branch(GtkWidget *into, const std::string &parent, int depth)
       gtk_widget_set_margin_start(l->children, gtkPx(1.));
       gtk_expander_set_child(GTK_EXPANDER(e), l->children);
       l->expander = e;
-      // as the FLTK tree has it: at the first build the modules folded under
-      // their root, the rest open unless the description folds it; the tree
-      // of a field folded
+      // as the FLTK tree has it: the modules folded under their root -- a
+      // branch is made when first opened, so always -- the rest open unless
+      // the description folds it; the tree of a field folded
       bool open = !node.closed && !(_tree.closed && _tree.closed(path)) &&
                   !_picks &&
-                  !(_firstBuild && path.compare(0, 9, "0Modules/") == 0);
+                  path.compare(0, 9, "0Modules/") != 0;
       for(auto it = _wanted.begin(); it != _wanted.end(); ++it)
         if(it->first == path) {
           open = it->second;
