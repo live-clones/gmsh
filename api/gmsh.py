@@ -18,8 +18,8 @@ light and user-friendly meshing tool with parametric input and flexible
 visualization capabilities. Gmsh is built around four modules (geometry, mesh,
 solver and post-processing), which can be controlled with the graphical user
 interface, from the command line, using text files written in Gmsh's own
-scripting language (.geo files), or through the C++, C, Python, Julia and
-Fortran application programming interface (API).
+scripting language (.geo files), or through the C++, C, Python, Julia, Fortran
+and JavaScript application programming interface (API).
 
 This module defines the Gmsh Python API.
 """

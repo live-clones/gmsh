@@ -1868,15 +1868,30 @@ elseif(APPLE)
   # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind")
   # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-no_compact_unwind")
 elseif(EMSCRIPTEN)
-  # WebAssembly build: enable the virtual filesystem and export the runtime
-  # methods needed to drive Gmsh from JavaScript; memory limits are increased
-  # to handle OpenCASCADE models
+  # WebAssembly build: the virtual filesystem, and memory limits increased to
+  # handle OpenCASCADE models
   set(FLAGS "-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=268435456")
   set(FLAGS "${FLAGS} -sMAXIMUM_MEMORY=4294967296 -sSTACK_SIZE=5242880")
   set(FLAGS "${FLAGS} -sFILESYSTEM=1 -sLINKABLE=1 -sEXPORT_ALL=1")
-  set(FLAGS "${FLAGS} -sEXPORTED_RUNTIME_METHODS=FS,callMain,cwrap,ccall")
   set(FLAGS "${FLAGS} -sENVIRONMENT=web,node")
-  set_target_properties(gmsh PROPERTIES LINK_FLAGS "${FLAGS}")
+  # the program (gmsh.js, gmsh.wasm), whose main() runs when it is loaded,
+  # with the runtime methods needed to drive it from JavaScript
+  set_target_properties(gmsh PROPERTIES LINK_FLAGS
+    "${FLAGS} -sEXPORTED_RUNTIME_METHODS=FS,callMain,cwrap,ccall")
+  # the library (libgmsh.mjs, libgmsh.wasm), as an ES module whose default
+  # export creates the module, next to the JavaScript API (api/gmsh.mjs), which
+  # reads and writes its memory and adds the callbacks to its function table
+  add_executable(libgmsh EXCLUDE_FROM_ALL ${GMSH_SRC})
+  target_link_libraries(libgmsh ${LINK_LIBRARIES})
+  set(LIBFLAGS "${FLAGS} --no-entry -sMODULARIZE=1 -sEXPORT_ES6=1")
+  set(LIBFLAGS "${LIBFLAGS} -sEXPORT_NAME=createLibgmsh -sALLOW_TABLE_GROWTH=1")
+  set(LIBFLAGS "${LIBFLAGS} -sEXPORTED_RUNTIME_METHODS=FS,ccall,cwrap,HEAP32,HEAPU32,HEAPF64,UTF8ToString,stringToUTF8,lengthBytesUTF8,addFunction,removeFunction")
+  set_target_properties(libgmsh PROPERTIES LINK_FLAGS "${LIBFLAGS}"
+    SUFFIX ".mjs")
+  add_custom_command(TARGET libgmsh POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_CURRENT_SOURCE_DIR}/api/gmsh.mjs
+            $<TARGET_FILE_DIR:libgmsh>)
 endif()
 
 # android target
