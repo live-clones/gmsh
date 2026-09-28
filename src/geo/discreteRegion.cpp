@@ -7,9 +7,10 @@
 #include "GModelIO_GEO.h"
 #include "Geo.h"
 
-discreteRegion::discreteRegion(GModel *model, int num)
+discreteRegion::discreteRegion(GModel *model, int num, bool geo)
   : GRegion(model, num), _geometry(false)
 {
+  if(!geo) return;
   ::Volume *v = CreateVolume(num, MSH_VOLUME_DISCRETE);
   Tree_Add(model->getGEOInternals()->Volumes, &v);
 }

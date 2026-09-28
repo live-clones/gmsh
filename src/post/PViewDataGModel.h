@@ -6,6 +6,9 @@
 #ifndef PVIEW_DATA_GMODEL_H
 #define PVIEW_DATA_GMODEL_H
 
+#include <functional>
+#include <memory>
+#include <algorithm>
 #include "PViewData.h"
 #include "GModel.h"
 #include "SBoundingBox3d.h"
@@ -18,29 +21,28 @@ private:
   std::vector<GEntity *> _entities;
   // the bounding box of the view
   SBoundingBox3d _bbox;
+  // the signature of the model the entities and the bounding box were
+  // computed for (see updateModelInfo())
+  std::vector<std::size_t> _modelSignature;
   // the file the data was read from (if empty, refer to PViewData)
   std::string _fileName;
-  // the index in the file (if negative, refer to PViewData)
-  int _fileIndex;
   // the value of the time step and value min/max
   double _time, _min, _max;
   // the number of components in the data (one stepData contains only
   // a single field type)
   int _numComp;
-  // the values, indexed by MVertex or MElement id numbers (If the
-  // numbering is sparse, or if we only have data for high-id
-  // entities, the vector has zero entries and is thus not
-  // optimal. This is the price to pay if we want 1) rapid access to
-  // the data and 2) not to store any additional info in MVertex or
-  // MElement)
-  //
-  // FIXME: we should change this design and store a vector<int> of tags, and do
-  // indirect addressing, even if it's a bit slower...
-  std::vector<Real *> *_data;
-  // a vector containing the multiplying factor allowing to compute
-  // the number of values stored in _data for each index (number of
-  // values = getMult() * getNumComponents()). If _mult is empty, a
-  // default value of "1" is assumed
+  // the values of each node or element, indexed by its tag (null if it has
+  // none): a vector as long as the largest tag, which sparse tags make larger
+  // than needed, but which is fast to read and needs nothing stored in the
+  // nodes or the elements
+  std::vector<Real *> _data;
+  // the memory the values point into: large arrays, each holding the values of
+  // many entities (see allocate())
+  std::vector<std::unique_ptr<Real[]>> _pools;
+  Real *_poolNext;
+  std::size_t _poolLeft, _poolSize;
+  // the number of values of each tag, in units of getNumComponents(): 1 for
+  // the tags past its end (as for node and element data)
   std::vector<int> _mult;
   // a vector, indexed by MSH element type, of Gauss point locations
   // in parametric space
@@ -50,33 +52,29 @@ private:
 
 public:
   stepData(GModel *model, int numComp, const std::string &fileName = "",
-           int fileIndex = -1, double time = 0., double min = VAL_INF,
-           double max = -VAL_INF)
-    : _model(model), _fileName(fileName), _fileIndex(fileIndex), _time(time),
-      _min(min), _max(max), _numComp(numComp), _data(0)
+           double time = 0., double min = VAL_INF, double max = -VAL_INF)
+    : _model(model), _fileName(fileName), _time(time), _min(min), _max(max),
+      _numComp(numComp), _poolNext(0), _poolLeft(0), _poolSize(128)
   {
   }
-  stepData(stepData<Real> &other) : _data(0)
+  stepData(stepData<Real> &other) : _poolNext(0), _poolLeft(0), _poolSize(128)
   {
     _model = other._model;
     _entities = other._entities;
     _bbox = other._bbox;
+    _modelSignature = other._modelSignature;
     _fileName = other._fileName;
-    _fileIndex = other._fileIndex;
     _time = other._time;
     _min = other._min;
     _max = other._max;
     _numComp = other._numComp;
-    if(other._data) {
-      std::size_t n = other.getNumData();
-      _data = new std::vector<Real *>(n, (Real *)0);
-      for(std::size_t i = 0; i < n; i++) {
-        Real *d = other.getData(i);
-        if(d) {
-          int m = other.getMult(i) * _numComp;
-          (*_data)[i] = new Real[m];
-          for(int j = 0; j < m; j++) (*_data)[i][j] = d[j];
-        }
+    _data.assign(other._data.size(), nullptr);
+    for(std::size_t i = 0; i < _data.size(); i++) {
+      Real *d = other._data[i];
+      if(d) {
+        std::size_t m = other.getMult(i) * _numComp;
+        _data[i] = allocate(m);
+        std::copy(d, d + m, _data[i]);
       }
     }
     _mult = other._mult;
@@ -86,79 +84,115 @@ public:
   ~stepData() { destroyData(); }
   void fillEntities() { _model->getEntities(_entities); }
   void computeBoundingBox() { _bbox = _model->bounds(); }
+  // fill the entities and compute the bounding box, unless the signature of
+  // the model (values that change with it and are cheap to get) is the one
+  // they were computed for, here or in another step on the same model (going
+  // over all the nodes for each step, or for each block of data read, is slow)
+  void updateModelInfo(const std::vector<stepData<Real> *> &steps,
+                       const std::vector<std::size_t> &signature)
+  {
+    if(signature == _modelSignature) return;
+    for(auto s : steps) {
+      if(s != this && s->_model == _model && s->_modelSignature == signature) {
+        _entities = s->_entities;
+        _bbox = s->_bbox;
+        _modelSignature = signature;
+        return;
+      }
+    }
+    fillEntities();
+    computeBoundingBox();
+    _modelSignature = signature;
+  }
   GModel *getModel() { return _model; }
   SBoundingBox3d getBoundingBox() { return _bbox; }
   int getNumEntities() { return _entities.size(); }
   GEntity *getEntity(int ent) { return _entities[ent]; }
   int getNumComponents() { return _numComp; }
-  int getMult(int index)
+  int getMult(std::size_t index)
   {
-    if(index < 0 || index >= (int)_mult.size()) return 1;
+    if(index >= _mult.size()) return 1;
     return _mult[index];
   }
   std::string getFileName() { return _fileName; }
   void setFileName(const std::string &name) { _fileName = name; }
-  int getFileIndex() { return _fileIndex; }
-  void setFileIndex(int index) { _fileIndex = index; }
   double getTime() { return _time; }
   void setTime(double time) { _time = time; }
   double getMin() { return _min; }
   void setMin(double min) { _min = min; }
   double getMax() { return _max; }
   void setMax(double max) { _max = max; }
-  std::size_t getNumData()
+  std::size_t getNumData() { return _data.size(); }
+  void resizeData(std::size_t n)
   {
-    if(!_data) return 0;
-    return _data->size();
+    if(n > _data.size()) _data.resize(n, nullptr);
   }
-  void resizeData(int n)
+  // n values owned by the step, uninitialized: taken from the current pool, or
+  // from a new one, twice as large as the last up to 64k values (so that a
+  // step with a few values stays small), or of their own if they are many
+  Real *allocate(std::size_t n)
   {
-    if(!_data) _data = new std::vector<Real *>(n, (Real *)0);
-    if(n > (int)_data->size()) _data->resize(n, (Real *)0);
+    if(n > (1 << 14)) {
+      _pools.emplace_back(new Real[n]);
+      return _pools.back().get();
+    }
+    if(n > _poolLeft) {
+      _poolSize = std::max(n, std::min<std::size_t>(2 * _poolSize, 1 << 16));
+      _pools.emplace_back(new Real[_poolSize]);
+      _poolNext = _pools.back().get();
+      _poolLeft = _poolSize;
+    }
+    Real *d = _poolNext;
+    _poolNext += n;
+    _poolLeft -= n;
+    return d;
   }
-  Real *getData(int index, bool allocIfNeeded = false, int mult = 1)
+  // point the data of entity index to values allocated with allocate()
+  void setData(std::size_t index, Real *d, int mult = 1)
   {
-    if(index < 0) return 0;
+    if(index >= _data.size()) resizeData(index + 1);
+    _data[index] = d;
+    setMult(index, mult);
+  }
+  void setMult(std::size_t index, int mult)
+  {
+    if(mult == getMult(index)) return;
+    if(index >= _mult.size()) _mult.resize(index + 1, 1);
+    _mult[index] = mult;
+  }
+  Real *getData(std::size_t index, bool allocIfNeeded = false, int mult = 1)
+  {
     if(allocIfNeeded) {
-      if(index >= (int)getNumData()) resizeData(index + 100); // optimize this
-      if(!(*_data)[index]) {
-        (*_data)[index] = new Real[_numComp * mult];
-        for(int i = 0; i < _numComp * mult; i++) (*_data)[index][i] = 0.;
+      if(index >= _data.size()) resizeData(index + 1);
+      Real *&d = _data[index];
+      if(!d || mult > getMult(index)) {
+        d = allocate(_numComp * mult);
+        std::fill(d, d + _numComp * mult, (Real)0.);
       }
-      if(mult > 1) {
-        if(index >= (int)_mult.size())
-          _mult.resize(index + 100, 1); // optimize this
-        _mult[index] = mult;
-      }
+      setMult(index, mult);
     }
     else {
-      if(index >= (int)getNumData()) return 0;
+      if(index >= _data.size()) return nullptr;
     }
-    return (*_data)[index];
+    return _data[index];
   }
   void destroyData()
   {
-    if(_data) {
-      for(unsigned int i = 0; i < _data->size(); i++)
-        if((*_data)[i]) delete[](*_data)[i];
-      delete _data;
-      _data = 0;
-    }
+    std::vector<Real *>().swap(_data);
+    _pools.clear();
+    _poolNext = 0;
+    _poolLeft = 0;
+    _poolSize = 128;
   }
   void renumberData(const std::map<std::size_t, std::size_t> &mapping)
   {
-    if(!_data) return;
-    std::size_t imax = 0, imin = 0;
-    for(auto m : mapping) {
-      imax = std::max(imax, m.second);
-      imin = std::min(imin, m.second);
-    }
+    if(_data.empty()) return;
+    std::size_t imax = 0;
+    for(auto m : mapping) imax = std::max(imax, m.second);
     std::vector<Real *> data2(imax + 1, nullptr);
     std::vector<int> mult2(imax + 1, 1);
     for(auto m : mapping) {
-      if(m.first < _data->size()) {
-        data2[m.second] = (*_data)[m.first];
-      }
+      if(m.first < _data.size()) { data2[m.second] = _data[m.first]; }
       else {
         Msg::Warning("Wrong source index %zu in step data renumbering", m.first);
         return;
@@ -166,8 +200,8 @@ public:
       if(m.first < _mult.size())
         mult2[m.second] = _mult[m.first];
     }
-    *_data = data2;
-    _mult = mult2;
+    _data.swap(data2);
+    _mult.swap(mult2);
   }
   std::vector<double> &getGaussPoints(int msh)
   {
@@ -201,9 +235,19 @@ private:
   double _min, _max;
   // the type of the dataset
   DataType _type;
-  // cache last element to speed up loops
+  // the element of an entity of the step's model
   MElement *_getElement(int step, int ent, int ele);
+  // the step, created on the model with numComp components if needed (and
+  // those before it); nullptr if it holds data with another number of
+  // components
+  stepData<double> *_getStep(int step, GModel *model, int numComp);
+  // the min/max of a step; and finalize the view after a step was added,
+  // computing the min/max of that step only
+  void _computeMinMax(int step);
+  void _finalizeStep(int step, bool computeMinMax = true);
   MVertex *_getNode(MElement *e, int nod);
+  int _getNumNodes(int step, MElement *e);
+  double *_getValue(int step, MElement *e, int nod, int comp);
 
 public:
   PViewDataGModel(DataType type = NodeData);
@@ -245,8 +289,9 @@ public:
     if(_steps.empty()) return false;
     // from the end: getEntities() lists the points first and the regions last,
     // and it is the regions that carry the elements of a 3D mesh
-    for(int i = _steps[0]->getNumEntities() - 1; i >= 0; i--)
-      if(_steps[0]->getEntity(i)->getNumMeshElements()) return true;
+    stepData<double> *s = _steps[getFirstNonEmptyTimeStep()];
+    for(int i = s->getNumEntities() - 1; i >= 0; i--)
+      if(s->getEntity(i)->getNumMeshElements()) return true;
     return false;
   }
   int getDimension(int step, int ent, int ele);
@@ -254,13 +299,17 @@ public:
   int getNode(int step, int ent, int ele, int nod, double &x, double &y,
               double &z);
   std::size_t getNodeId(int step, int ent, int ele, int nod);
+  void getSkinKeys(int step, bool partitionsTogether, std::vector<int> &keys);
   void setNode(int step, int ent, int ele, int nod, double x, double y,
                double z);
-  void tagNode(int step, int ent, int ele, int nod, int tag);
   int getNumComponents(int step, int ent, int ele);
   int getNumValues(int step, int ent, int ele);
   void getValue(int step, int ent, int ele, int idx, double &val);
   void getValue(int step, int ent, int ele, int node, int comp, double &val);
+  void getElementInfo(int step, int ent, int ele, int &type, int &dim,
+                      int &numNodes, int &numComp);
+  void getNodesAndValues(int step, int ent, int ele, int numNodes, int numComp,
+                         double **xyz, double **val);
   void setValue(int step, int ent, int ele, int node, int comp, double val);
   int getNumEdges(int step, int ent, int ele);
   int getType(int step, int ent, int ele);
@@ -273,6 +322,20 @@ public:
                    int samplingRate = 1);
   bool isThreadSafe() { return true; }
   bool hasTimeStep(int step);
+  // for a view whose steps are on several meshes: call f for each run of
+  // consecutive steps on the same mesh, with the first of them, the view
+  // holding only those steps while f runs (the others are empty), so that it
+  // can be written as a view on a single mesh
+  bool forEachMesh(const std::function<bool(int)> &f);
+  // read data of a file in the most recent view named name whose data is
+  // model-based and accepted, or else in a new view of the given type, kept if
+  // the reading succeeds; the data gets the name and the file name
+  static bool readInView(const std::string &name, const std::string &fileName,
+                         DataType type,
+                         const std::function<bool(PViewDataGModel *)> &accept,
+                         const std::function<bool(PViewDataGModel *)> &read);
+  // can data of this type, with numComp components, be added to the step?
+  bool canAddData(DataType type, int step, int numComp);
   bool hasPartition(int step, int part);
   bool hasMultipleMeshes();
   bool hasModel(GModel *model, int step = -1);
@@ -285,32 +348,35 @@ public:
   // get the data type
   DataType getType() { return _type; }
   // direct access to value by index
-  bool getValueByIndex(int step, int dataIndex, int node, int comp,
+  bool getValueByIndex(int step, std::size_t dataIndex, int node, int comp,
                        double &val);
 
-  // Add some data "on the fly" (data is stored in a map, indexed by
-  // node or element number depending on the type of dataset)
+  // Add some data "on the fly", given by node or element tag depending on the
+  // type of dataset
   bool addData(GModel *model, const std::map<int, std::vector<double> > &data,
                int step, double time, int partition, int numComp);
 
-  // Add some data "on the fly", without a map
+  // Add some data "on the fly", without a map; without computing the range of
+  // the values if minMax is false
   bool addData(GModel *model, const std::vector<std::size_t> &tags,
-               const std::vector<std::vector<double> > &data, int step,
-               double time, int partition, int numComp);
+               const std::vector<std::vector<double>> &data, int step,
+               double time, int partition, int numComp, bool minMax = true);
 
   // Add homogeneous data "on the fly", without a map
   bool addData(GModel *model, const std::vector<std::size_t> &tags,
                const std::vector<double> &data, int step, double time,
                int partition, int numComp);
 
-  // Allow to destroy the data
+  // free the data of all the steps
   void destroyData();
 
   // I/O routines
+  // read the records of a data section of an MSH file (after its tags), in the
+  // layout of the given version of the format
   bool readMSH(const std::string &viewName, const std::string &fileName,
-               int fileIndex, FILE *fp, bool binary, bool swap, int step,
-               double time, int partition, int numComp, int numNodes,
-               const std::string &interpolationScheme);
+               FILE *fp, bool binary, bool swap, int step, double time,
+               int partition, int numComp, int numEnt,
+               const std::string &interpolationScheme, double version);
   virtual bool writeMSH(const std::string &fileName, double version = 2.2,
                         bool binary = false, bool savemesh = true,
                         bool multipleView = false, int partitionNum = -1,
@@ -318,13 +384,11 @@ public:
                         bool forceNodeData = false,
                         bool forceElementData = false);
   bool readCGNS(const std::pair<std::string, std::string> &solFieldName,
-                const std::string &fileName, int index, int fileIndex,
-                int baseIndex,
-                const std::vector<std::vector<MVertex *> > &vertPerZone,
-                const std::vector<std::vector<MElement *> > &eltPerZone);
+                const std::string &fileName, int fileIndex, int baseIndex,
+                const std::vector<std::vector<MVertex *>> &vertPerZone,
+                const std::vector<std::vector<MElement *>> &eltPerZone);
   bool readMED(const std::string &fileName, int fileIndex);
-  bool writeMED(const std::string &fileName);
-  bool readPCH(const std::string &fileName, int fileIndex);
+  bool writeMED(const std::string &fileName, bool saveMesh = true);
 
   void importLists(int N[24], std::vector<double> *V[24]);
   stepData<double> *getStepData(int step)

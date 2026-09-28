@@ -8,11 +8,13 @@ set(SRC
   Trackball.cpp
   ReadImg.cpp
   glApi.cpp
+  glLegacy.cpp
   glMatrix.cpp
   glImmediate.cpp
   glShader.cpp
   drawContext.cpp
   drawPick.cpp
+  drawQuery.cpp
   drawMesh.cpp
   drawGeom.cpp
   drawPost.cpp
@@ -22,6 +24,11 @@ set(SRC
   axisTicks.cpp
   drawGlyph.cpp
   glyphList.cpp
+  stringQueue.cpp
+  stbStrings.cpp
+  offscreenContext.cpp
+  drawContextOffscreen.cpp
+  webView.cpp
   gl2ps.cpp
   gl2gif.cpp
   gl2jpeg.cpp
@@ -29,6 +36,8 @@ set(SRC
   gl2ppm.cpp
   gl2yuv.cpp
   gl2pgf.cpp
+  gl2mp4.cpp
+  gl2mpeg.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

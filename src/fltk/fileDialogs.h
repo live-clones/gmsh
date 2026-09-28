@@ -21,7 +21,8 @@ std::string fileChooserGetName(int num);
 int fileChooserGetFilter();
 void fileChooserGetPosition(int *x, int *y);
 
-int mpegFileDialog(const char *filename);
+// the options of a movie in MPEG (FORMAT_MPEG) or MP4 (FORMAT_MP4)
+int mpegFileDialog(const char *filename, int format);
 int gifFileDialog(const char *filename);
 int geoFileDialog(const char *filename);
 int genericBitmapFileDialog(const char *filename, const char *title,
@@ -29,9 +30,10 @@ int genericBitmapFileDialog(const char *filename, const char *title,
 int pgfBitmapFileDialog(const char *filename, const char *title, int format);
 int genericMeshFileDialog(const char *filename, const char *title, int format,
                           bool binary_support, bool element_tag_support);
+int medFileDialog(const char *name);
+int vtuFileDialog(const char *name);
 int posFileDialog(const char *name);
 int x3dViewFileDialog(const char *name, const char *title, int format);
-int pvtuAdaptFileDialog(const char *name);
 int genericViewFileDialog(const char *name, const char *title, int format);
 int gl2psFileDialog(const char *filename, const char *title, int format);
 int optionsFileDialog(const char *filename);

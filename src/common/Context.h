@@ -34,6 +34,7 @@ struct contextMeshOptions {
   int lcFromPoints, lcFromParametricPoints, lcFromCurvature, lcFromCurvatureIso;
   int lcExtendFromBoundary, checkSurfaceNormalValidity;
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
+  int mmg3dCombineDomains;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombineNodeRepositioning;
   double recombineMinimumQuality;
@@ -66,7 +67,7 @@ struct contextMeshOptions {
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
-  int saveAll, saveGroupsOfNodes, saveGroupsOfElements;
+  int saveAll, saveViews, saveGroupsOfNodes, saveGroupsOfElements;
   int readGroupsOfElements;
   int binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveBadTriangles, stlOneSolidPerSurface;
@@ -100,7 +101,8 @@ struct contextMeshOptions {
   int nodeLabels, lineLabels, surfaceLabels, volumeLabels, qualityType;
   int labelType;
   double nodeSize, lineWidth;
-  int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
+  int dual, voronoi, drawSkinOnly, drawSkinEdgesOnly, colorCarousel;
+  int labelSampling;
   int drawUniqueEdges;
   int smoothNormals, clip;
   // records cpu times for 1D, 2D and 3D mesh generation
@@ -194,9 +196,18 @@ public:
   int entityColorsStamp, entityVisibilityStamp;
   void meshChanged(int ents = ENT_ALL)
   {
+    meshOptionsChanged(ents);
+    meshContentStamp++;
+  }
+  // an option changed the way the mesh is drawn, not the mesh: what only
+  // depends on the elements (the skin of a volume, which also records the
+  // options it reads) is kept
+  void meshOptionsChanged(int ents = ENT_ALL)
+  {
     for(int d = 0; d < 4; d++)
       if(ents & (1 << d)) mesh.stamp[d]++;
   }
+  int meshContentStamp;
   void geomChanged(int ents = ENT_ALL)
   {
     for(int d = 0; d < 4; d++)
@@ -240,6 +251,9 @@ public:
   int terminal;
   // number of threads (0 == use system default)
   int numThreads;
+  // how many threads a loop over num items runs on: General.NumThreads (all
+  // there are if 0), or 1 if there are fewer items than are worth it
+  int numThreadsFor(std::size_t num, std::size_t worthIt) const;
   // detached processes (WIN32)?
   int detachedProcess;
   // number of graphical windows/tiles
@@ -366,18 +380,33 @@ public:
     key.push_back(mesh.trihedra);
     key.push_back(mesh.polyhedra);
   }
+  std::vector<double> elementTypesKey() const
+  {
+    std::vector<double> key;
+    addElementTypesToKey(key);
+    return key;
+  }
   // What the planes add to the key of an array kept between frames: the modes
   // the clipping window sets directly (they never mark the mesh as changed)
   // and the planes themselves. In one place, so that a mode added to the
   // group is not forgotten by one of the caches.
-  void addClipToKey(std::vector<double> &key) const
+  // (mask: the planes that apply, a bit each, the others being left out)
+  void addClipToKey(std::vector<double> &key, int mask = 63) const
   {
+    key.push_back(mask);
     key.push_back(clipCapping);
     key.push_back(clipWholeElements);
     key.push_back(clipOnlyVolume);
     key.push_back(clipOnlyDrawIntersectingVolume);
     for(int i = 0; i < 6; i++)
-      for(int j = 0; j < 4; j++) key.push_back(clipPlane[i][j]);
+      if(mask & (1 << i))
+        for(int j = 0; j < 4; j++) key.push_back(clipPlane[i][j]);
+  }
+  std::vector<double> clipKey(int mask) const
+  {
+    std::vector<double> key;
+    addClipToKey(key, mask);
+    return key;
   }
   // draw the vertex arrays from OpenGL buffer objects instead of client memory
   int vertexBufferObjects;
@@ -419,7 +448,8 @@ public:
   double arrowRelHeadRadius, arrowRelStemRadius, arrowRelStemLength;
   // dynamic variable tracking if the bbox is currently imposed
   int forcedBBox;
-  // enable selection/hover/picking using the mouse
+  // enable selection/hover using the mouse; pickElements asks a pick to
+  // return the mesh element under the point it hit, instead of the entity
   int mouseSelection, mouseHoverMeshes, mouseHoverHighlight, pickElements;
   // invert sense of mouse wheel zoom
   int mouseInvertZoom;
@@ -444,7 +474,7 @@ public:
     int smooth, animCycle, animStep;
     int combineTime, combineRemoveOrig, combineCopyOptions;
     int fileFormat, plugins, forceNodeData, forceElementData;
-    int saveMesh, saveInterpolationMatrices;
+    int saveMesh, saveInterpolationMatrices, saveAdapted;
     double animDelay;
     std::string doubleClickedGraphPointCommand;
     double doubleClickedGraphPointX, doubleClickedGraphPointY;
@@ -483,6 +513,8 @@ public:
   // color options
   struct {
     unsigned int bg, bgGrad, fg, text, axes, smallAxes;
+    // the box a query leaves on the picture (see drawQuery.cpp)
+    unsigned int query;
     unsigned int ambientLight[6], diffuseLight[6], specularLight[6];
     struct {
       unsigned int point, curve, surface, volume;

@@ -9,33 +9,30 @@
 
 #include <complex>
 #include "NearToFarField.h"
+#include "Context.h"
 #include "OS.h"
 
-StringXNumber NearToFarFieldOptions_Number[] = {
-  {GMSH_FULLRC, "Wavenumber", nullptr, 1., ""},
-  {GMSH_FULLRC, "PhiStart", nullptr, 0., ""},
-  {GMSH_FULLRC, "PhiEnd", nullptr, 2. * M_PI, ""},
-  {GMSH_FULLRC, "NumPointsPhi", nullptr, 60, ""},
-  {GMSH_FULLRC, "ThetaStart", nullptr, 0., ""},
-  {GMSH_FULLRC, "ThetaEnd", nullptr, M_PI, ""},
-  {GMSH_FULLRC, "NumPointsTheta", nullptr, 30, ""},
-  {GMSH_FULLRC, "EView", nullptr, 0, ""},
-  {GMSH_FULLRC, "HView", nullptr, 1, ""},
-  {GMSH_FULLRC, "Normalize", nullptr, 1, ""},
-  {GMSH_FULLRC, "dB", nullptr, 1, ""},
-  {GMSH_FULLRC, "NegativeTime", nullptr, 0., ""},
-  {GMSH_FULLRC, "RFar", nullptr, 0, ""},
-};
-
-StringXString NearToFarFieldOptions_String[] = {
-  {GMSH_FULLRC, "MatlabOutputFile", nullptr, "farfield.m", ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterNearToFarFieldPlugin()
+GMSH_NearToFarFieldPlugin::GMSH_NearToFarFieldPlugin()
+  : GMSH_PostPlugin(
+      {
+        {GMSH_FULLRC, "Wavenumber", nullptr, 1., ""},
+        {GMSH_FULLRC, "PhiStart", nullptr, 0., ""},
+        {GMSH_FULLRC, "PhiEnd", nullptr, 2. * M_PI, ""},
+        {GMSH_FULLRC, "NumPointsPhi", nullptr, 60, ""},
+        {GMSH_FULLRC, "ThetaStart", nullptr, 0., ""},
+        {GMSH_FULLRC, "ThetaEnd", nullptr, M_PI, ""},
+        {GMSH_FULLRC, "NumPointsTheta", nullptr, 30, ""},
+        {GMSH_FULLRC, "EView", nullptr, 0, ""},
+        {GMSH_FULLRC, "HView", nullptr, 1, ""},
+        {GMSH_FULLRC, "Normalize", nullptr, 1, ""},
+        {GMSH_FULLRC, "dB", nullptr, 1, ""},
+        {GMSH_FULLRC, "NegativeTime", nullptr, 0., ""},
+        {GMSH_FULLRC, "RFar", nullptr, 0, ""},
+      },
+      {
+        {GMSH_FULLRC, "MatlabOutputFile", nullptr, "farfield.m", ""},
+      })
 {
-  return new GMSH_NearToFarFieldPlugin();
-}
 }
 
 std::string GMSH_NearToFarFieldPlugin::getHelp() const
@@ -55,33 +52,13 @@ std::string GMSH_NearToFarFieldPlugin::getHelp() const
          "Plugin(NearToFarField) creates one new view.";
 }
 
-int GMSH_NearToFarFieldPlugin::getNbOptions() const
-{
-  return sizeof(NearToFarFieldOptions_Number) / sizeof(StringXNumber);
-}
-
-int GMSH_NearToFarFieldPlugin::getNbOptionsStr() const
-{
-  return sizeof(NearToFarFieldOptions_String) / sizeof(StringXString);
-}
-
-StringXNumber *GMSH_NearToFarFieldPlugin::getOption(int iopt)
-{
-  return &NearToFarFieldOptions_Number[iopt];
-}
-
-StringXString *GMSH_NearToFarFieldPlugin::getOptionStr(int iopt)
-{
-  return &NearToFarFieldOptions_String[iopt];
-}
-
 // Compute field using e^{j\omega t} time dependency, following Jin in "Finite
 // Element Analysis of Antennas and Arrays", p. 176. This is not the usual `far
 // field', as it still contains the e^{ikr}/r factor.
 double GMSH_NearToFarFieldPlugin::getFarFieldJin(
-  std::vector<element *> &allElems, std::vector<std::vector<double> > &js,
-  std::vector<std::vector<double> > &ms, double k0, double rFar, double theta,
-  double phi)
+  const std::vector<SurfaceElement> &elems,
+  std::vector<std::vector<double>> &js, std::vector<std::vector<double>> &ms,
+  double k0, double rFar, double theta, double phi)
 {
   // theta in [0, pi] (elevation/polar angle)
   // phi in [0, 2*pi] (azimuthal angle)
@@ -112,48 +89,34 @@ double GMSH_NearToFarFieldPlugin::getFarFieldJin(
   }
 
   int i = 0;
-  for(std::size_t ele = 0; ele < allElems.size(); ele++) {
-    element *e = allElems[ele];
-    int numNodes = e->getNumNodes();
-
-    std::vector<double> valN0(numNodes * numComps), valN1(numNodes * numComps);
-    std::vector<double> valL0(numNodes * numComps), valL1(numNodes * numComps);
-
-    for(int nod = 0; nod < numNodes; nod++) {
-      double x, y, z;
-      e->getXYZ(nod, x, y, z);
-      double r_nod[3] = {x, y, z};
+  for(auto &e : elems) {
+    // the integrals over the element, added to the sums element by element
+    double n[2][3] = {{0., 0., 0.}, {0., 0., 0.}};
+    double l[2][3] = {{0., 0., 0.}, {0., 0., 0.}};
+    for(std::size_t nod = 0; nod < e.w.size(); nod++) {
+      double r_nod[3] = {e.x[nod], e.y[nod], e.z[nod]};
       double rr = prosca(r_nod, r);
       double e_jk0rr[2] = {cos(k0 * rr), sin(k0 * rr)};
-
       for(int comp = 0; comp < numComps; comp++) {
         if(i < (int)js[0].size()) {
-          valN0[numComps * nod + comp] =
-            js[0][i] * e_jk0rr[0] - js[1][i] * e_jk0rr[1];
-          valN1[numComps * nod + comp] =
-            js[0][i] * e_jk0rr[1] + js[1][i] * e_jk0rr[0];
-          valL0[numComps * nod + comp] =
-            ms[0][i] * e_jk0rr[0] - ms[1][i] * e_jk0rr[1];
-          valL1[numComps * nod + comp] =
-            ms[0][i] * e_jk0rr[1] + ms[1][i] * e_jk0rr[0];
+          n[0][comp] +=
+            e.w[nod] * (js[0][i] * e_jk0rr[0] - js[1][i] * e_jk0rr[1]);
+          n[1][comp] +=
+            e.w[nod] * (js[0][i] * e_jk0rr[1] + js[1][i] * e_jk0rr[0]);
+          l[0][comp] +=
+            e.w[nod] * (ms[0][i] * e_jk0rr[0] - ms[1][i] * e_jk0rr[1]);
+          l[1][comp] +=
+            e.w[nod] * (ms[0][i] * e_jk0rr[1] + ms[1][i] * e_jk0rr[0]);
           i++;
         }
       }
     }
-
-    N[0][0] += e->integrate(&valN0[0], 3);
-    N[1][0] += e->integrate(&valN1[0], 3);
-    N[0][1] += e->integrate(&valN0[1], 3);
-    N[1][1] += e->integrate(&valN1[1], 3);
-    N[0][2] += e->integrate(&valN0[2], 3);
-    N[1][2] += e->integrate(&valN1[2], 3);
-
-    L[0][0] += e->integrate(&valL0[0], 3);
-    L[1][0] += e->integrate(&valL1[0], 3);
-    L[0][1] += e->integrate(&valL0[1], 3);
-    L[1][1] += e->integrate(&valL1[1], 3);
-    L[0][2] += e->integrate(&valL0[2], 3);
-    L[1][2] += e->integrate(&valL1[2], 3);
+    for(int s = 0; s < 2; s++) {
+      for(int comp = 0; comp < numComps; comp++) {
+        N[s][comp] += n[s][comp];
+        L[s][comp] += l[s][comp];
+      }
+    }
   }
 
   // From Cartesian to spherical coordinates
@@ -199,9 +162,9 @@ double GMSH_NearToFarFieldPlugin::getFarFieldJin(
 // Compute far field using e^{-i\omega t} time dependency, following Monk in
 // "Finite Element Methods for Maxwell's equations", p. 233
 double GMSH_NearToFarFieldPlugin::getFarFieldMonk(
-  std::vector<element *> &allElems, std::vector<std::vector<double> > &ffvec,
-  std::vector<std::vector<double> > &js, std::vector<std::vector<double> > &ms,
-  double k0, double theta, double phi)
+  const std::vector<SurfaceElement> &elems,
+  std::vector<std::vector<double>> &ffvec, std::vector<std::vector<double>> &js,
+  std::vector<std::vector<double>> &ms, double k0, double theta, double phi)
 {
   double sTheta = sin(theta);
   double cTheta = cos(theta);
@@ -213,13 +176,11 @@ double GMSH_NearToFarFieldPlugin::getFarFieldMonk(
 
   double integral_r[3] = {0., 0., 0.}, integral_i[3] = {0., 0., 0.};
   int i = 0;
-  for(std::size_t ele = 0; ele < allElems.size(); ele++) {
-    element *e = allElems[ele];
-    int numNodes = e->getNumNodes();
-    std::vector<double> integrand_r(numNodes * 3), integrand_i(numNodes * 3);
-    for(int nod = 0; nod < numNodes; nod++) {
-      double y[3];
-      e->getXYZ(nod, y[0], y[1], y[2]);
+  for(auto &e : elems) {
+    // the integrals over the element, added to the sums element by element
+    double ir[3] = {0., 0., 0.}, ii[3] = {0., 0., 0.};
+    for(std::size_t nod = 0; nod < e.w.size(); nod++) {
+      double y[3] = {e.x[nod], e.y[nod], e.z[nod]};
       double const xHat_dot_y = prosca(xHat, y);
       double n_x_e_r[3] = {-ms[0][i], -ms[0][i + 1], -ms[0][i + 2]};
       double n_x_e_i[3] = {-ms[1][i], -ms[1][i + 1], -ms[1][i + 2]};
@@ -236,14 +197,14 @@ double GMSH_NearToFarFieldPlugin::getFarFieldMonk(
         std::complex<double> integrand =
           (n_x_e + Z0 * n_x_h_x_xHat) *
           (cos(-k0 * xHat_dot_y) + I * sin(-k0 * xHat_dot_y));
-        integrand_r[3 * nod + comp] = integrand.real();
-        integrand_i[3 * nod + comp] = integrand.imag();
+        ir[comp] += e.w[nod] * integrand.real();
+        ii[comp] += e.w[nod] * integrand.imag();
       }
       i += 3;
     }
     for(int comp = 0; comp < 3; comp++) {
-      integral_r[comp] += e->integrate(&integrand_r[comp], 3);
-      integral_i[comp] += e->integrate(&integrand_i[comp], 3);
+      integral_r[comp] += ir[comp];
+      integral_i[comp] += ii[comp];
     }
   }
 
@@ -277,21 +238,27 @@ static void printVector(FILE *fp, const std::string &name,
 
 PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
 {
-  double _k0 = (double)NearToFarFieldOptions_Number[0].def;
-  double _phiStart = (double)NearToFarFieldOptions_Number[1].def;
-  double _phiEnd = (double)NearToFarFieldOptions_Number[2].def;
-  int _nbPhi = (int)NearToFarFieldOptions_Number[3].def;
-  double _thetaStart = (double)NearToFarFieldOptions_Number[4].def;
-  double _thetaEnd = (double)NearToFarFieldOptions_Number[5].def;
-  int _nbThe = (int)NearToFarFieldOptions_Number[6].def;
-  int _eView = (int)NearToFarFieldOptions_Number[7].def;
-  int _hView = (int)NearToFarFieldOptions_Number[8].def;
-  bool _normalize = (bool)NearToFarFieldOptions_Number[9].def;
-  bool _dB = (bool)NearToFarFieldOptions_Number[10].def;
-  int _negativeTime = (int)NearToFarFieldOptions_Number[11].def;
-  double _rfar = (int)NearToFarFieldOptions_Number[12].def;
+  double _k0 = (double)option(0);
+  double _phiStart = (double)option(1);
+  double _phiEnd = (double)option(2);
+  int _nbPhi = (int)option(3);
+  double _thetaStart = (double)option(4);
+  double _thetaEnd = (double)option(5);
+  int _nbThe = (int)option(6);
+  int _eView = (int)option(7);
+  int _hView = (int)option(8);
+  bool _normalize = (bool)option(9);
+  bool _dB = (bool)option(10);
+  int _negativeTime = (int)option(11);
+  double _rfar = option(12);
 
-  std::string _outFile = NearToFarFieldOptions_String[0].def;
+  std::string _outFile = optionStr(0);
+
+  if(_nbPhi < 1 || _nbThe < 1) {
+    Msg::Error("NearToFarField plugin needs at least one interval in phi and "
+               "theta");
+    return v;
+  }
 
   PView *ve = getView(_eView, v);
   if(!ve) {
@@ -334,7 +301,7 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
   }
 
   // compute surface currents on all input elements
-  std::vector<element *> allElems;
+  std::vector<SurfaceElement> allElems;
   std::vector<std::vector<double> > js(2);
   std::vector<std::vector<double> > ms(2);
 
@@ -352,8 +319,20 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
         eData->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
 
       elementFactory factory;
-      allElems.push_back(
-        factory.create(numNodes, dim, &x[0], &y[0], &z[0], true));
+      element *el = factory.create(numNodes, dim, &x[0], &y[0], &z[0]);
+      SurfaceElement se{x, y, z, std::vector<double>(numNodes, 0.)};
+      for(int g = 0; g < el->getNumGaussPoints(); g++) {
+        double u, v, w, weight, jac[3][3];
+        el->getGaussPoint(g, u, v, w, weight);
+        double det = el->getJacobian(u, v, w, jac);
+        for(int nod = 0; nod < numNodes; nod++) {
+          double sf;
+          el->getShapeFunction(nod, u, v, w, sf);
+          se.w[nod] += sf * weight * det;
+        }
+      }
+      delete el;
+      allElems.push_back(se);
 
       double n[3] = {0., 0., 0.};
       if(numNodes > 2)
@@ -399,9 +378,7 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
   std::vector<std::vector<double> > farField3r(_nbPhi + 1);
   std::vector<std::vector<double> > farField1i(_nbPhi + 1);
   std::vector<std::vector<double> > farField2i(_nbPhi + 1);
-  std::vector<std::vector<double> > farField3i(_nbPhi + 1);
-  std::vector<std::vector<double> > farFieldVec(3);
-  for(int comp = 0; comp < 3; comp++) { farFieldVec[comp].resize(2, 0.); }
+  std::vector<std::vector<double>> farField3i(_nbPhi + 1);
 
   for(int i = 0; i <= _nbPhi; i++) {
     phi[i].resize(_nbThe + 1);
@@ -422,33 +399,38 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
   double dPhi = (_phiEnd - _phiStart) / _nbPhi;
   double dTheta = (_thetaEnd - _thetaStart) / _nbThe;
   double ffmin = 1e200, ffmax = -1e200;
-  Msg::StartProgressMeter(_nbPhi);
+  // the directions, in parallel
+  int numDirs = (_nbPhi + 1) * (_nbThe + 1);
+  int nthreads = CTX::instance()->numThreadsFor(
+    (std::size_t)numDirs * allElems.size(), 100000);
+#pragma omp parallel for num_threads(nthreads) schedule(dynamic, 1)
+  for(int d = 0; d < numDirs; d++) {
+    int i = d / (_nbThe + 1), j = d % (_nbThe + 1);
+    phi[i][j] = _phiStart + i * dPhi;
+    theta[i][j] = _thetaStart + j * dTheta;
+    if(_negativeTime) {
+      std::vector<std::vector<double>> ffvec(3, std::vector<double>(2));
+      farField[i][j] =
+        getFarFieldMonk(allElems, ffvec, js, ms, _k0, theta[i][j], phi[i][j]);
+      farField1r[i][j] = ffvec[0][0];
+      farField2r[i][j] = ffvec[1][0];
+      farField3r[i][j] = ffvec[2][0];
+      farField1i[i][j] = ffvec[0][1];
+      farField2i[i][j] = ffvec[1][1];
+      farField3i[i][j] = ffvec[2][1];
+    }
+    else {
+      double rfar = (_rfar ? _rfar : 10 * lc);
+      farField[i][j] =
+        getFarFieldJin(allElems, js, ms, _k0, rfar, theta[i][j], phi[i][j]);
+    }
+  }
   for(int i = 0; i <= _nbPhi; i++) {
     for(int j = 0; j <= _nbThe; j++) {
-      phi[i][j] = _phiStart + i * dPhi;
-      theta[i][j] = _thetaStart + j * dTheta;
-      if(_negativeTime) {
-        farField[i][j] = getFarFieldMonk(allElems, farFieldVec, js, ms, _k0,
-                                         theta[i][j], phi[i][j]);
-        farField1r[i][j] = farFieldVec[0][0];
-        farField2r[i][j] = farFieldVec[1][0];
-        farField3r[i][j] = farFieldVec[2][0];
-        farField1i[i][j] = farFieldVec[0][1];
-        farField2i[i][j] = farFieldVec[1][1];
-        farField3i[i][j] = farFieldVec[2][1];
-      }
-      else {
-        double rfar = (_rfar ? _rfar : 10 * lc);
-        farField[i][j] =
-          getFarFieldJin(allElems, js, ms, _k0, rfar, theta[i][j], phi[i][j]);
-      }
       ffmin = std::min(ffmin, farField[i][j]);
       ffmax = std::max(ffmax, farField[i][j]);
     }
-    Msg::ProgressMeter(i, true, "Computing far field");
   }
-  Msg::StopProgressMeter();
-  for(std::size_t i = 0; i < allElems.size(); i++) delete allElems[i];
 
   if(_normalize) {
     if(!ffmax)
@@ -509,37 +491,25 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
       Msg::Error("Could not open file '%s'", _outFile.c_str());
   }
 
-  for(int i = 0; i < _nbPhi; i++) {
-    for(int j = 0; j < _nbThe; j++) {
-      if(_nbPhi == 1 || _nbThe == 1) {
-        dataFar->NbSP++;
-        dataFar->SP.push_back(x[i][j]);
-        dataFar->SP.push_back(y[i][j]);
-        dataFar->SP.push_back(z[i][j]);
-        dataFar->SP.push_back(farField[i][j]);
+  // points (all of them) if there is a single interval in phi or theta,
+  // quadrangles otherwise
+  int points = (_nbPhi == 1 || _nbThe == 1) ? 1 : 0;
+  for(int i = 0; i < _nbPhi + points; i++) {
+    for(int j = 0; j < _nbThe + points; j++) {
+      if(points) {
+        std::vector<double> *l = dataFar->incrementList(1, TYPE_PNT);
+        l->insert(l->end(), {x[i][j], y[i][j], z[i][j], farField[i][j]});
       }
       else {
         double P1[3] = {x[i][j], y[i][j], z[i][j]};
         double P2[3] = {x[i + 1][j], y[i + 1][j], z[i + 1][j]};
         double P3[3] = {x[i + 1][j + 1], y[i + 1][j + 1], z[i + 1][j + 1]};
         double P4[3] = {x[i][j + 1], y[i][j + 1], z[i][j + 1]};
-        dataFar->NbSQ++;
-        dataFar->SQ.push_back(P1[0]);
-        dataFar->SQ.push_back(P2[0]);
-        dataFar->SQ.push_back(P3[0]);
-        dataFar->SQ.push_back(P4[0]);
-        dataFar->SQ.push_back(P1[1]);
-        dataFar->SQ.push_back(P2[1]);
-        dataFar->SQ.push_back(P3[1]);
-        dataFar->SQ.push_back(P4[1]);
-        dataFar->SQ.push_back(P1[2]);
-        dataFar->SQ.push_back(P2[2]);
-        dataFar->SQ.push_back(P3[2]);
-        dataFar->SQ.push_back(P4[2]);
-        dataFar->SQ.push_back(farField[i][j]);
-        dataFar->SQ.push_back(farField[i + 1][j]);
-        dataFar->SQ.push_back(farField[i + 1][j + 1]);
-        dataFar->SQ.push_back(farField[i][j + 1]);
+        std::vector<double> *l = dataFar->incrementList(1, TYPE_QUA);
+        for(int k = 0; k < 3; k++)
+          l->insert(l->end(), {P1[k], P2[k], P3[k], P4[k]});
+        l->insert(l->end(), {farField[i][j], farField[i + 1][j],
+                             farField[i + 1][j + 1], farField[i][j + 1]});
       }
     }
   }

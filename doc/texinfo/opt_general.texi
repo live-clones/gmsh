@@ -38,12 +38,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 5.0.0-git-287920452; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260919; Build host: cg.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 5.0.0-git-759e219d2; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260927; Build host: cg.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 4.2.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{"64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader"}@*
+Default value: @code{"64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName
@@ -82,8 +82,8 @@ Default value: @code{"Helvetica"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontEngine
-Set graphics font engine (Native, StringTexture, Cairo)@*
-Default value: @code{"Native"}@*
+Set graphics font engine (Embedded: the fonts compiled into Gmsh, as in the pictures made without a window; StringTexture: the fonts of the system, for scripts the embedded fonts lack; Native: the fonts of the system drawn directly, with the fixed function pipeline only)@*
+Default value: @code{"Embedded"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontTitle
@@ -183,7 +183,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"5.0.0-git-287920452"}@*
+Default value: @code{"5.0.0-git-759e219d2"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -202,7 +202,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Antialiasing
-Use multisample antialiasing (will slow down rendering)@*
+Use multisample antialiasing in the graphic window (will slow down rendering); the pictures drawn apart from it (with Print.Width, Print.Height or Print.Supersampling, or without a window) are smoothed by Print.Supersampling instead@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -667,7 +667,7 @@ Default value: @code{18}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsHeight
-Height (in pixels) of the graphic window@*
+Height (in pixels) of the graphic window, and of the pictures made without one (in batch mode, or without the graphical interface)@*
 Default value: @code{600}@*
 Saved in: @code{General.SessionFileName}
 
@@ -682,7 +682,7 @@ Default value: @code{50}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.GraphicsWidth
-Width (in pixels) of the graphic window@*
+Width (in pixels) of the graphic window, and of the pictures made without one (in batch mode, or without the graphical interface)@*
 Default value: @code{800}@*
 Saved in: @code{General.SessionFileName}
 
@@ -1344,6 +1344,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.Color.SpecularLight
 Specular light color@*
 Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Color.Query
+Color of what a query leaves on the picture: the mark of the point it asked about is drawn in it, and the box that answers on paper of it, lightened over a light picture and darkened over a dark one@*
+Default value: @code{@{255,232,70@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @end ftable

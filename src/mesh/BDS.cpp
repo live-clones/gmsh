@@ -18,24 +18,52 @@
 #include "Numeric.h"
 #include "qualityMeasures.h"
 
+// Cosine between the normal of a triangle and the surface normal at its
+// barycenter in the parametric plane. The node normals alone are misleading
+// where the curvature is high on a small area, e.g. a U-shaped trailing edge
+// (#2472), but the barycenter alone is too: a triangle of a thin cone whose
+// parametric image wraps nearly all around the axis has its barycenter on the
+// opposite side of the cone, where the surface normal is reversed, and the
+// triangle, folded over its neighbors, looks valid. So when the surface normals
+// at all the nodes disagree with the one at the barycenter, they decide.
 static double _cos_N(BDS_Point *_p1, BDS_Point *_p2, BDS_Point *_p3, GFace *gf)
 {
   double n[3];
   normal_triangle(_p1, _p2, _p3, n);
-#if 0
-  // average surface normal at 3 triangle nodes; bad for surface with high
-  // curvature on small area, e.g. U-shaped near a boundary
-  SVector3 N1 = gf->normal(SPoint2(_p1->u, _p1->v));
-  SVector3 N2 = gf->normal(SPoint2(_p2->u, _p2->v));
-  SVector3 N3 = gf->normal(SPoint2(_p3->u, _p3->v));
-  SVector3 N = N1 + N2 + N3;
-  N.normalize();
-#else // surface normal at triangle barycenter
-  double u = (_p1->u + _p2->u + _p3->u) / 3.;
-  double v = (_p1->v + _p2->v + _p3->v) / 3.;
+  BDS_Point *p[3] = {_p1, _p2, _p3};
+  // the free coordinate of a degenerated point (u if degenerated == 1, v if
+  // 2) is arbitrary, e.g. anywhere in [0, 2 pi] at the apex of a cone: leave
+  // it out of the barycenter
+  double u = 0., v = 0.;
+  int nu = 0, nv = 0;
+  for(int i = 0; i < 3; i++) {
+    if(p[i]->degenerated != 1) {
+      u += p[i]->u;
+      nu++;
+    }
+    if(p[i]->degenerated != 2) {
+      v += p[i]->v;
+      nv++;
+    }
+  }
+  u = nu ? u / nu : (_p1->u + _p2->u + _p3->u) / 3.;
+  v = nv ? v / nv : (_p1->v + _p2->v + _p3->v) / 3.;
   SVector3 N = gf->normal(SPoint2(u, v));
-#endif
-  return N.x() * n[0] + N.y() * n[1] + N.z() * n[2];
+  double c = N.x() * n[0] + N.y() * n[1] + N.z() * n[2];
+  // the orientation of the mesh is not known here (the caller multiplies the
+  // result by it): compare signs
+  SVector3 A(0., 0., 0.);
+  int k = 0;
+  for(int i = 0; i < 3; i++) {
+    if(p[i]->degenerated) continue; // no surface normal at a singular point
+    SVector3 Ni = gf->normal(SPoint2(p[i]->u, p[i]->v));
+    if((Ni.x() * n[0] + Ni.y() * n[1] + Ni.z() * n[2]) * c >= 0.) return c;
+    A += Ni;
+    k++;
+  }
+  if(!k) return c;
+  A.normalize();
+  return A.x() * n[0] + A.y() * n[1] + A.z() * n[2];
 }
 
 double BDS_Face_Validity(GFace *gf, BDS_Face *f)

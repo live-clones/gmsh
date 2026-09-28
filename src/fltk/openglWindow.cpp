@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "openglWindow.h"
-#include "drawContextFltkStringTexture.h"
+#include "drawContextFltkEmbedded.h"
 #include "graphicWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
@@ -16,6 +16,7 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "PView.h"
+#include "PViewData.h"
 #include "PViewOptions.h"
 #include "Numeric.h"
 #include "FlGui.h"
@@ -121,6 +122,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
+  _addQuery = false;
 
   addPointMode = 0;
   lassoMode = selectionMode = false;
@@ -172,9 +174,51 @@ void openglWindow::_drawScreenMessage()
     _ctx->drawTextBox(msg, _ctx->viewport[2] / 2., _ctx->viewport[3] - 0.5 * h,
                       1);
   }
+  // what the cursor is over, under what a query found: the query answered a
+  // click and stays, the hover follows the cursor and gives way to it
   if(_hoverText.size())
     _ctx->drawTextBox(_hoverText, _hoverAnchor[0],
                       _ctx->viewport[3] - _hoverAnchor[1], 2, _hoverBox);
+  // on paper of its own: the colour of the mark it hangs from
+  // (General.Color.Query, which the mark wears at full strength), lightened
+  // to the paper of a note over a light picture and darkened to the same
+  // note over a dark one, where the full colour would glare
+  CTX *c = CTX::instance();
+  unsigned int q = c->color.query, bg = c->color.bg;
+  double lum = 0.299 * c->unpackRed(bg) + 0.587 * c->unpackGreen(bg) +
+               0.114 * c->unpackBlue(bg);
+  bool dark = (lum < 110.);
+  double paper = dark ? 0. : 255., mix = dark ? 0.32 : 0.45;
+  unsigned int tint =
+    c->packColor((int)(paper * (1. - mix) + mix * c->unpackRed(q)),
+                 (int)(paper * (1. - mix) + mix * c->unpackGreen(q)),
+                 (int)(paper * (1. - mix) + mix * c->unpackBlue(q)), 255);
+  // the boxes the queries pin are drawn by the points they asked about, so
+  // that they travel with the model: each is kept whole in the window while
+  // its point is in it, and leaves the window with that point
+  for(std::size_t i = 0; i < _pinned.size(); i++) {
+    double win[2];
+    if(!_ctx->world2Window(_pinned[i].xyz, win)) continue;
+    bool in = (win[0] >= _ctx->viewport[0] && win[0] <= _ctx->viewport[2] &&
+               win[1] >= _ctx->viewport[1] && win[1] <= _ctx->viewport[3]);
+    _ctx->drawTextBox(_pinned[i].text, win[0], win[1], 2, nullptr, in, tint);
+  }
+  // the length of a measurement, on the same paper, over the middle of the
+  // line it measures: it follows the line while the second point is chosen,
+  // and stays there once it is taken
+  double a[3], b[3], win[2];
+  if(_ctx->segment(a, b)) {
+    double mid[3] = {0.5 * (a[0] + b[0]), 0.5 * (a[1] + b[1]),
+                     0.5 * (a[2] + b[2])};
+    if(_ctx->world2Window(mid, win)) {
+      drawContext::global()->setFont(CTX::instance()->glFontEnum,
+                                     drawContext::global()->getFontSize());
+      double h = drawContext::global()->getStringHeight();
+      // just above the line: a box of one line is two heights tall
+      _ctx->drawTextBox(measurePoints(a, b)[0], win[0], win[1] + 2. * h + 4.,
+                        1, nullptr, false, tint);
+    }
+  }
 }
 
 void openglWindow::_drawBorder()
@@ -233,7 +277,7 @@ void openglWindow::draw()
     VertexArray::invalidateBuffers();
     glApi::reset();
     glShader::reset();
-    gmshResetMatrices();
+    glImmediate::resetMatrices();
     // report what the new context can do
     glApi::describe();
     // report now if the shader pipeline cannot be had
@@ -293,7 +337,7 @@ void openglWindow::draw()
     double x0 = _click.win[0], y0 = _ctx->viewport[3] - _click.win[1];
     double x1 = _curr.win[0], y1 = _ctx->viewport[3] - _curr.win[1];
     // flush before changing the blending, which the collector does not track
-    gmshFlushImmediate();
+    glImmediate::flush();
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -307,7 +351,7 @@ void openglWindow::draw()
     gmshVertex2d(x1, y1);
     gmshVertex2d(x0, y1);
     gmshEnd();
-    gmshFlushImmediate();
+    glImmediate::flush();
     // white blended to one minus the destination: an inversion
     glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     gmshColor3d(1., 1., 1.);
@@ -331,7 +375,7 @@ void openglWindow::draw()
     gmshVertex2d(x1, y0 + sy);
     gmshVertex2d(x1, y1 - sy);
     gmshEnd();
-    gmshFlushImmediate();
+    glImmediate::flush();
     gmshLineStippleOff();
     gmshLineWidth(1.);
     glDisable(GL_BLEND);
@@ -460,7 +504,7 @@ void openglWindow::draw()
       _drawBorder();
     }
   }
-  gmshFlushImmediate();
+  glImmediate::flush();
   drawContext::global()->flushString();
   _lock = false;
   _studioTimer = false;
@@ -481,7 +525,7 @@ void openglWindow::_studioFrame()
   int n = ctx->studioSamples;
   int printed = _studioPrinted;
   _studioPrinted = 0;
-  if(!gmshUseShaders() || ctx->shading < 1 || n < 2 || ctx->stereo) {
+  if(!glShader::enabled() || ctx->shading < 1 || n < 2 || ctx->stereo) {
     _ctx->studioSample = 0;
     return;
   }
@@ -492,7 +536,7 @@ void openglWindow::_studioFrame()
   if(ctx->printing && _again && printed == n && k == 0 && w == _studioW &&
      h == _studioH &&
      !memcmp(_studioModel, _frameView, sizeof(_studioModel))) {
-    gmshFlushImmediate();
+    glImmediate::flush();
     drawContext::global()->flushString();
     if(glShader::showAccumulation(w, h, n - 1)) return;
   }
@@ -506,7 +550,7 @@ void openglWindow::_studioFrame()
     else {
       // the frame has to be complete before it is added: what the overlay
       // collected is still pending
-      gmshFlushImmediate();
+      glImmediate::flush();
       drawContext::global()->flushString();
       if(!glShader::accumulate(w, h, k == 1, k)) {
         _ctx->studioSample = 0;
@@ -529,23 +573,8 @@ void openglWindow::_studioFrame()
   // held anywhere stops it too.
   bool live = !ctx->printing;
   if(!live || (k > 0 && !Fl::pushed())) {
-    double start = TimeOfDay();
-    for(int j = k + 1; j < n; j++) {
-      if(live && TimeOfDay() - start >= 0.02) break;
-      _ctx->studioSample = j;
-      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      if(ctx->camera) _cameraMatrices();
-      _ctx->draw3d();
-      _ctx->draw2d();
-      gmshFlushImmediate();
-      drawContext::global()->flushString();
-      if(!glShader::accumulate(w, h, j == 1, j)) {
-        _ctx->studioSample = 0;
-        return;
-      }
-      // what is left for the GPU to do counts against the time too
-      if(live) glFinish();
-    }
+    if(!_ctx->drawStudioFrames(k + 1, w, h, _frameView, live ? 0.02 : 0.))
+      return;
   }
   if(!live) {
     // all of them, for the view and the size recorded above
@@ -579,13 +608,18 @@ bool openglWindow::printTo(int width, int height, int supersampling,
   if(CTX::instance()->print.scalePixelSizes && pixel_w() > 0)
     ratio = (double)width / (ss * pixel_w());
   _printScale = ss * hr * ratio;
-  gmshPixelScale(ss * ratio);
+  glImmediate::pixelScale(ss * ratio);
   // the native font engine places its strings from the window's size and
-  // scale, which the picture has neither of: strings as textures meanwhile
+  // scale, which the picture has neither of: the embedded fonts meanwhile
   drawContextGlobal *native = nullptr;
   if(drawContext::global()->getName() == "Fltk") {
+    static bool warned = false;
+    if(!warned)
+      Msg::Warning("Font engine 'Native' cannot draw pictures of another size "
+                   "than the window: using 'Embedded' for them");
+    warned = true;
     native = drawContext::global();
-    drawContext::setGlobal(new drawContextFltkStringTexture);
+    drawContext::setGlobal(new drawContextFltkEmbedded);
   }
   draw();
   if(native) {
@@ -594,7 +628,7 @@ bool openglWindow::printTo(int width, int height, int supersampling,
   }
   glShader::readPrintTarget(width, height, format, type, pixels);
   glShader::endPrintTarget();
-  gmshPixelScale(1.);
+  glImmediate::pixelScale(1.);
   _printW = _printH = 0;
   _printScale = 1.;
   // the window itself is drawn again at its own size
@@ -639,7 +673,7 @@ void openglWindow::_burn(bool sameFrame)
     _fire = 0.;
     return;
   }
-  gmshFlushImmediate();
+  glImmediate::flush();
   int w = _printW ? _printW : pixel_w(), h = _printW ? _printH : pixel_h();
   if(!glShader::fire(w, h, _fire, now)) {
     _fire = 0.;
@@ -735,9 +769,14 @@ void openglWindow::_hover()
   // the hover looks at them otherwise: what is highlighted is what a click
   // would take
   bool all = selectionMode || CTX::instance()->mouseHoverMeshes;
+  // the mesh element under the cursor is looked for in the octree of the
+  // model: a query asks for it on a click, a hover would ask on every move
+  int elems = CTX::instance()->pickElements;
+  CTX::instance()->pickElements = 0;
   bool res = _select(_selection, false, all, all, (int)_curr.win[0],
                      (int)_curr.win[1], 5, 5, vertices, edges, faces,
                      regions, elements, points, views);
+  CTX::instance()->pickElements = elems;
   if((_selection == ENT_ALL && res) ||
      (_selection == ENT_POINT && vertices.size()) ||
      (_selection == ENT_CURVE && edges.size()) ||
@@ -774,9 +813,12 @@ void openglWindow::_hover()
     cmd = CTX::instance()->post.doubleClickedGraphPointCommand;
   }
   else if(views.size()) {
+    // named as a query names it
     char tmp[256];
     sprintf(tmp, "View[%d]", views[0]->getIndex());
     text = tmp;
+    if(views[0]->getData() && views[0]->getData()->getName().size())
+      text += " \"" + views[0]->getData()->getName() + "\"";
     cmd = views[0]->getOptions()->doubleClickedCommand;
   }
   // what a double-click and the wheel would do, after the information, in
@@ -805,6 +847,17 @@ void openglWindow::_hover()
   else if(regions.size())
     over = regions[0];
   _highlight(over);
+
+  // while a measurement waits for its second point, the line follows the
+  // cursor over the model, so that its length is seen as it is chosen
+  if(measureMode() && _ctx->numMarks() == 1) {
+    double a[3], p[3];
+    if(_ctx->mark(0, a) && _ctx->pickPoint(p))
+      _ctx->setSegment(a, p);
+    else
+      _ctx->clearSegment();
+    redraw();
+  }
 
   // how far under the cursor this one is and whether there is more, whenever
   // there is something to step to. The image of the pick shows only what is
@@ -945,7 +998,13 @@ int openglWindow::handle(int event)
     _curr.set(_ctx, Fl::event_x(), Fl::event_y());
     if(Fl::event_button() == 1 && !Fl::event_state(FL_SHIFT) &&
        !Fl::event_state(FL_ALT)) {
-      if(!lassoMode && Fl::event_state(FL_CTRL)) { lassoMode = true; }
+      // Ctrl+click adds a query in query mode (when the clicks select), and
+      // starts a lasso otherwise
+      _addQuery = queryMode() && CTX::instance()->mouseSelection &&
+                  Fl::event_state(FL_CTRL);
+      if(!lassoMode && Fl::event_state(FL_CTRL) && !_addQuery) {
+        lassoMode = true;
+      }
       else if(lassoMode) {
         lassoMode = false;
         if(selectionMode && CTX::instance()->mouseSelection) {
@@ -1393,10 +1452,22 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
   }
 }
 
-// The box is pinned where it is first shown rather than dragged along, as
-// moving it redraws the picture (and starts the studio frames over): it
-// moves when the text changes, and when the cursor has strayed far from it or
-// is about to cover it.
+void openglWindow::pinTooltip(const std::string &text, const double *xyz,
+                             bool add)
+{
+  if(!add) {
+    if(_pinned.empty() && text.empty()) return;
+    _pinned.clear();
+  }
+  if(text.size() && xyz) {
+    pinnedNote n;
+    n.text = text;
+    for(int i = 0; i < 3; i++) n.xyz[i] = xyz[i];
+    _pinned.push_back(n);
+  }
+  redraw();
+}
+
 void openglWindow::drawTooltip(const std::string &text)
 {
   if(text.empty()) {
@@ -1405,6 +1476,9 @@ void openglWindow::drawTooltip(const std::string &text)
     redraw();
     return;
   }
+  // it follows the cursor, moving once the cursor has strayed sixty pixels
+  // from where it hangs (or when it is under it, or says something else):
+  // every move of it is a redraw
   double cx = _curr.win[0], cy = _curr.win[1];
   if(text == _hoverText) {
     // the box, from the top left of the window as the cursor is measured

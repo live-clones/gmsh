@@ -13,7 +13,8 @@ private:
   double _invert;
   void _addElement(int np, int numEdges, int numComp, double xp[12],
                    double yp[12], double zp[12], double valp[12][9],
-                   PViewDataList *out, bool firstStep);
+                   PViewDataList *out, bool firstStep,
+                   std::vector<double> *&list);
   // cut the element (ent, ele), or one of the sub-simplices of a polytope if
   // simplexType >= 0: then numNodes, numEdges and nodeMap (the indices of the
   // nodes of the simplex in the polytope) describe the simplex
@@ -34,10 +35,14 @@ protected:
   ORIENTATION _orientation;
 
 public:
-  GMSH_LevelsetPlugin();
+  GMSH_LevelsetPlugin(const std::vector<StringXNumber> &numOptions = {},
+                      const std::vector<StringXString> &strOptions = {});
   virtual double levelset(double x, double y, double z, double val) const = 0;
   virtual PView *execute(PView *);
-  void assignSpecificVisibility() const;
+  void assignSpecificVisibility(adaptiveElement *root) const;
+  bool valuesNeeded() const { return !_valueIndependent; }
+  bool keepsNothing(adaptiveElement *root,
+                    const std::set<adaptiveVertex> &vertices) const;
 };
 
 #endif

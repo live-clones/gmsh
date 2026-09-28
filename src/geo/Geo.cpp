@@ -3779,12 +3779,20 @@ bool SetVolumeSurfaces(Volume *v, List_T *loops)
 
 // the following routines should be renamed and moved elsewhere
 
+// (the entities of a partitioned mesh are in neither the GEO nor the OCC
+// internals: a new entity is given a tag they do not have)
+static int afterPartitionEntities(int dim, int tag)
+{
+  if(!GModel::current()->getNumPartitions()) return tag;
+  return std::max(tag, GModel::current()->getMaxElementaryNumber(dim) + 1);
+}
+
 int NEWPOINT()
 {
   int tag = GModel::current()->getGEOInternals()->getMaxTag(0) + 1;
   if(GModel::current()->getOCCInternals())
     tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(0) + 1);
-  return tag;
+  return afterPartitionEntities(0, tag);
 }
 
 int NEWCURVE()
@@ -3796,7 +3804,7 @@ int NEWCURVE()
     tag = GModel::current()->getGEOInternals()->getMaxTag(1) + 1;
   if(GModel::current()->getOCCInternals())
     tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(1) + 1);
-  return tag;
+  return afterPartitionEntities(1, tag);
 }
 
 int NEWCURVELOOP()
@@ -3821,7 +3829,7 @@ int NEWSURFACE()
     tag = GModel::current()->getGEOInternals()->getMaxTag(2) + 1;
   if(GModel::current()->getOCCInternals())
     tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(2) + 1);
-  return tag;
+  return afterPartitionEntities(2, tag);
 }
 
 int NEWSURFACELOOP()
@@ -3846,7 +3854,7 @@ int NEWVOLUME()
     tag = GModel::current()->getGEOInternals()->getMaxTag(3) + 1;
   if(GModel::current()->getOCCInternals())
     tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(3) + 1);
-  return tag;
+  return afterPartitionEntities(3, tag);
 }
 
 int NEWREG()
@@ -3866,7 +3874,7 @@ int NEWREG()
           tag, GModel::current()->getOCCInternals()->getMaxTag(dim) + 1);
     }
   }
-  return tag;
+  return afterPartitionEntities(-1, tag);
 }
 
 int NEWFIELD()

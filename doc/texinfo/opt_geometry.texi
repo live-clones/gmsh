@@ -351,6 +351,16 @@ Use old newreg definition for geometrical transformations (compatibility option 
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.Opacity
+Opacity factor applied to all geometry colors (1: opaque, 0: fully transparent)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OpacityMode
+Apply Geometry.Opacity to (0: filled surfaces only; 1: everything)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OrientedPhysicals
 Use sign of elementary entity in physical definition as orientation indicator@*
 Default value: @code{1}@*
@@ -438,16 +448,6 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.ToleranceBoolean
 Geometrical tolerance for boolean operations@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.Transparency
-Opacity factor applied to all geometry colors (1: opaque, 0: fully transparent)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.TransparencyMode
-Apply Geometry.Transparency to (0: filled surfaces only; 1: everything)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

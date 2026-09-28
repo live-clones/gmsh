@@ -26,6 +26,10 @@ cmake-build-*
 venv/
 .venv/
 benchmarks/io_msh/polytopes_out.msh
+benchmarks/io_msh/*_out*
+benchmarks/io_vtk/*_out.*
+benchmarks/io_vtk/*_out_*
 
-# output of the graphics tests
+# output of the graphics and plugin tests
 benchmarks/graphics/out/
+benchmarks/plugins/out/

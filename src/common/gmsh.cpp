@@ -2054,6 +2054,8 @@ gmsh::model::mesh::affineTransform(const std::vector<double> &affineTransform,
                    _getEntityName(ge->dim(), ge->tag()).c_str());
     }
   }
+  // the nodes moved: what is drawn of the mesh is built again
+  CTX::instance()->meshChanged();
 }
 
 static void _getAdditionalNodesOnBoundary(GEntity *entity,
@@ -2277,6 +2279,8 @@ gmsh::model::mesh::setNode(const std::size_t nodeTag,
   v->setXYZ(coord[0], coord[1], coord[2]);
   if(parametricCoord.size() >= 1) v->setParameter(0, parametricCoord[0]);
   if(parametricCoord.size() >= 2) v->setParameter(1, parametricCoord[1]);
+  // the node moved: what is drawn of the mesh is built again
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void
@@ -2330,6 +2334,8 @@ gmsh::model::mesh::setNodes(const std::vector<std::size_t> &nodeTags,
     for(std::size_t j = 0; j < numPar; j++)
       v->setParameter(j, parametricCoord[numPar * i + j]);
   }
+  // the nodes moved: what is drawn of the mesh is built again
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::mesh::rebuildNodeCache(bool onlyIfNecessary)
@@ -2423,6 +2429,9 @@ GMSH_API void gmsh::model::mesh::reclassifyNodes()
 {
   if(!_checkInit()) return;
   GModel::current()->pruneMeshVertexAssociations();
+  // the nodes changed entity, whose colours and labels they take: what is
+  // drawn of the mesh is built again
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::mesh::relocateNodes(const int dim, const int tag,
@@ -2444,6 +2453,8 @@ GMSH_API void gmsh::model::mesh::relocateNodes(const int dim, const int tag,
   }
   for(std::size_t i = 0; i < entities.size(); i++)
     entities[i]->relocateMeshVertices(min, max);
+  // the nodes moved: what is drawn of the mesh is built again
+  CTX::instance()->meshChanged();
 }
 
 static void
@@ -6317,6 +6328,9 @@ gmsh::model::mesh::renumberNodes(const std::vector<std::size_t> &oldTags,
   for(std::size_t i = 0; i < oldTags.size(); i++)
     remap[oldTags[i]] = newTags[i];
   GModel::current()->renumberMeshVertices(remap);
+  // the tags changed, which the labels show: what is drawn of the mesh is
+  // built again
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void
@@ -6333,6 +6347,9 @@ gmsh::model::mesh::renumberElements(const std::vector<std::size_t> &oldTags,
   for(std::size_t i = 0; i < oldTags.size(); i++)
     remap[oldTags[i]] = newTags[i];
   GModel::current()->renumberMeshElements(remap);
+  // the tags changed, which the labels show: what is drawn of the mesh is
+  // built again
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void
@@ -8355,10 +8372,6 @@ _addModelData(const int tag, const int step, const std::string &modelName,
     Msg::Error("Could not add model data");
     return;
   }
-  if(view->getOptions()->adaptVisualizationGrid)
-    d->initAdaptiveData(view->getOptions()->timeStep,
-                        view->getOptions()->maxRecursionLevel,
-                        view->getOptions()->targetError);
   view->setChanged(true);
 #else
   Msg::Error("Views require the post-processing module");
@@ -8510,79 +8523,87 @@ GMSH_API void gmsh::view::getHomogeneousModelData(
 #endif
 }
 
-// for better performance, manual C implementation of gmsh::view::getModelData
+// for better performance, manual C implementation of gmsh::view::getModelData;
+// like the generated wrappers in api/gmshc.cpp, it must not let an exception
+// (thrown by Msg::Error when General.AbortOnError is 2) cross the C boundary
 GMSH_API void gmshViewGetModelData(const int tag, const int step,
                                    char **dataType, size_t **tags,
                                    size_t *tags_n, double ***data,
                                    size_t **data_n, size_t *data_nn,
                                    double *time, int *numComponents, int *ierr)
 {
-  if(!_checkInit()) {
-    if(ierr) *ierr = -1;
-    return;
-  }
-#if defined(HAVE_POST)
-  PView *view = PView::getViewByTag(tag);
-  if(!view) {
-    Msg::Error("Unknown view with tag %d", tag);
-    if(ierr) *ierr = 2;
-    return;
-  }
-  PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(view->getData());
-  if(!d) {
-    Msg::Error("View with tag %d does not contain model data", tag);
-    return;
-  }
-  if(d->getType() == PViewDataGModel::NodeData)
-    *dataType = strdup("NodeData");
-  else if(d->getType() == PViewDataGModel::ElementData)
-    *dataType = strdup("ElementData");
-  else if(d->getType() == PViewDataGModel::ElementNodeData)
-    *dataType = strdup("ElementNodeData");
-  else if(d->getType() == PViewDataGModel::GaussPointData)
-    *dataType = strdup("GaussPointData");
-  else if(d->getType() == PViewDataGModel::BeamData)
-    *dataType = strdup("Beam");
-  else
-    *dataType = strdup("Unknown");
-  stepData<double> *s = d->getStepData(step);
-  if(!s) {
-    Msg::Error("View with tag %d does not contain model data for step %d", tag,
-               step);
-    if(ierr) *ierr = 2;
-    return;
-  }
-  *tags_n = 0;
-  *data_nn = 0;
-  *time = s->getTime();
-  *numComponents = s->getNumComponents();
-  int numEnt = 0;
-  for(size_t i = 0; i < s->getNumData(); i++) {
-    if(s->getData(i)) numEnt++;
-  }
-  if(!numEnt) return;
-  *tags_n = numEnt;
-  *tags = (size_t *)Malloc(numEnt * sizeof(size_t));
-  *data_nn = numEnt;
-  *data_n = (size_t *)Malloc(numEnt * sizeof(size_t *));
-  *data = (double **)Malloc(numEnt * sizeof(double *));
-  size_t j = 0;
-  for(size_t i = 0; i < s->getNumData(); i++) {
-    double *dd = s->getData(i);
-    if(dd) {
-      (*tags)[j] = i;
-      int mult = s->getMult(i);
-      (*data_n)[j] = *numComponents * mult;
-      (*data)[j] = (double *)Malloc(*numComponents * mult * sizeof(double));
-      for(int k = 0; k < *numComponents * mult; k++) (*data)[j][k] = dd[k];
-      j++;
-    }
-  }
   if(ierr) *ierr = 0;
+  try {
+    if(!_checkInit()) {
+      if(ierr) *ierr = -1;
+      return;
+    }
+#if defined(HAVE_POST)
+    PView *view = PView::getViewByTag(tag);
+    if(!view) {
+      if(ierr) *ierr = 2;
+      Msg::Error("Unknown view with tag %d", tag);
+      return;
+    }
+    PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(view->getData());
+    if(!d) {
+      if(ierr) *ierr = 2;
+      Msg::Error("View with tag %d does not contain model data", tag);
+      return;
+    }
+    stepData<double> *s = d->getStepData(step);
+    if(!s) {
+      if(ierr) *ierr = 2;
+      Msg::Error("View with tag %d does not contain model data for step %d",
+                 tag, step);
+      return;
+    }
+    if(d->getType() == PViewDataGModel::NodeData)
+      *dataType = strdup("NodeData");
+    else if(d->getType() == PViewDataGModel::ElementData)
+      *dataType = strdup("ElementData");
+    else if(d->getType() == PViewDataGModel::ElementNodeData)
+      *dataType = strdup("ElementNodeData");
+    else if(d->getType() == PViewDataGModel::GaussPointData)
+      *dataType = strdup("GaussPointData");
+    else if(d->getType() == PViewDataGModel::BeamData)
+      *dataType = strdup("Beam");
+    else
+      *dataType = strdup("Unknown");
+    *tags_n = 0;
+    *data_nn = 0;
+    *time = s->getTime();
+    *numComponents = s->getNumComponents();
+    int numEnt = 0;
+    for(size_t i = 0; i < s->getNumData(); i++) {
+      if(s->getData(i)) numEnt++;
+    }
+    if(!numEnt) return;
+    *tags_n = numEnt;
+    *tags = (size_t *)Malloc(numEnt * sizeof(size_t));
+    *data_nn = numEnt;
+    *data_n = (size_t *)Malloc(numEnt * sizeof(size_t *));
+    *data = (double **)Malloc(numEnt * sizeof(double *));
+    size_t j = 0;
+    for(size_t i = 0; i < s->getNumData(); i++) {
+      double *dd = s->getData(i);
+      if(dd) {
+        (*tags)[j] = i;
+        int mult = s->getMult(i);
+        (*data_n)[j] = *numComponents * mult;
+        (*data)[j] = (double *)Malloc(*numComponents * mult * sizeof(double));
+        for(int k = 0; k < *numComponents * mult; k++) (*data)[j][k] = dd[k];
+        j++;
+      }
+    }
 #else
-  Msg::Error("Views require the post-processing module");
-  if(ierr) *ierr = -1;
+    if(ierr) *ierr = -1;
+    Msg::Error("Views require the post-processing module");
 #endif
+  }
+  catch(...) {
+    if(ierr && !*ierr) *ierr = 1;
+  }
 }
 
 GMSH_API void gmsh::view::addListData(const int tag,
@@ -8606,11 +8627,8 @@ GMSH_API void gmsh::view::addListData(const int tag,
     d->setFileName(name + ".pos");
     view->setData(d);
   }
-  const char *types[] = {"SP", "VP", "TP", "SL", "VL", "TL", "ST", "VT",
-                         "TT", "SQ", "VQ", "TQ", "SS", "VS", "TS", "SH",
-                         "VH", "TH", "SI", "VI", "TI", "SY", "VY", "TY"};
   for(int idxtype = 0; idxtype < 24; idxtype++) {
-    if(dataType == types[idxtype]) {
+    if(dataType == PViewDataList::listKinds[idxtype].name) {
       d->importList(idxtype, numElements, data, true);
       view->setChanged(true);
       return;
@@ -8638,21 +8656,19 @@ GMSH_API void gmsh::view::getListData(const int tag,
     Msg::Error("Unknown view with tag %d", tag);
     return;
   }
+  if(returnAdaptive) view->adapt(true);
   PViewDataList *d =
     dynamic_cast<PViewDataList *>(view->getData(returnAdaptive));
   if(!d) {
     Msg::Error("View with tag %d does not contain list data", tag);
     return;
   }
-  const char *types[] = {"SP", "VP", "TP", "SL", "VL", "TL", "ST", "VT",
-                         "TT", "SQ", "VQ", "TQ", "SS", "VS", "TS", "SH",
-                         "VH", "TH", "SI", "VI", "TI", "SY", "VY", "TY"};
   std::vector<int> N(24);
   std::vector<std::vector<double> *> V(24);
   d->getListPointers(&N[0], &V[0]);
   for(int idxtype = 0; idxtype < 24; idxtype++) {
     if(N[idxtype]) {
-      dataTypes.push_back(types[idxtype]);
+      dataTypes.push_back(PViewDataList::listKinds[idxtype].name);
       numElements.push_back(N[idxtype]);
       data.push_back(*V[idxtype]);
     }
@@ -8708,31 +8724,10 @@ gmsh::view::addListDataString(const int tag, const std::vector<double> &coord,
     d->setFileName(name + ".pos");
     view->setData(d);
   }
-  if(coord.size() == 3) {
-    d->T3D.push_back(coord[0]);
-    d->T3D.push_back(coord[1]);
-    d->T3D.push_back(coord[2]);
-    d->T3D.push_back(getStringStyle(style)), d->T3D.push_back(d->T3C.size());
-    d->NbT3++;
-    for(std::size_t i = 0; i < data.size(); i++) {
-      for(std::size_t j = 0; j < data[i].size(); j++) {
-        d->T3C.push_back(data[i][j]);
-      }
-      d->T3C.push_back('\0');
-    }
-  }
-  else if(coord.size() == 2) {
-    d->T2D.push_back(coord[0]);
-    d->T2D.push_back(coord[1]);
-    d->T2D.push_back(getStringStyle(style)), d->T2D.push_back(d->T2C.size());
-    d->NbT2++;
-    for(std::size_t i = 0; i < data.size(); i++) {
-      for(std::size_t j = 0; j < data[i].size(); j++) {
-        d->T2C.push_back(data[i][j]);
-      }
-      d->T2C.push_back('\0');
-    }
-  }
+  if(coord.size() == 3)
+    d->addString3D(coord[0], coord[1], coord[2], getStringStyle(style), data);
+  else if(coord.size() == 2)
+    d->addString2D(coord[0], coord[1], getStringStyle(style), data);
   d->finalize();
   view->setChanged(true);
 #else
@@ -9017,7 +9012,7 @@ GMSH_API void gmsh::view::write(const int tag, const std::string &fileName,
     Msg::Error("Unknown view with tag %d", tag);
     return;
   }
-  view->write(fileName, 10, append);
+  view->write(fileName, PView::AUTO, append);
 #else
   Msg::Error("Views require the post-processing module");
 #endif
@@ -9342,8 +9337,8 @@ GMSH_API void gmsh::plugin::setNumber(const std::string &name,
 #if defined(HAVE_PLUGINS)
   try {
     PluginManager::instance()->setPluginOption(name, option, value);
-  } catch(...) {
-    Msg::Error("Unknown plugin or plugin option");
+  } catch(const std::runtime_error &e) {
+    Msg::Error("%s", e.what());
   }
 #else
   Msg::Error("Views require the post-processing and plugin modules");
@@ -9358,8 +9353,8 @@ GMSH_API void gmsh::plugin::setString(const std::string &name,
 #if defined(HAVE_PLUGINS)
   try {
     PluginManager::instance()->setPluginOption(name, option, value);
-  } catch(...) {
-    Msg::Error("Unknown plugin or plugin option");
+  } catch(const std::runtime_error &e) {
+    Msg::Error("%s", e.what());
   }
 #else
   Msg::Error("Views require the post-processing and plugin modules");
@@ -9370,15 +9365,25 @@ GMSH_API int gmsh::plugin::run(const std::string &name)
 {
   if(!_checkInit()) return 0;
 #if defined(HAVE_PLUGINS)
-  try {
-    return PluginManager::instance()->action(name, "Run", nullptr);
-  } catch(...) {
-    Msg::Error("Unknown plugin or plugin action");
+  // not in a try block: what the plugin throws is not about its name
+  if(!PluginManager::instance()->find(name)) {
+    Msg::Error("Unknown plugin '%s'", name.c_str());
     return 0;
   }
+  return PluginManager::instance()->action(name, "Run", nullptr);
 #else
   Msg::Error("Views require the post-processing and plugin modules");
   return 0;
+#endif
+}
+
+GMSH_API void gmsh::plugin::load(const std::string &fileName)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PLUGINS)
+  PluginManager::instance()->addPlugin(fileName);
+#else
+  Msg::Error("Views require the post-processing and plugin modules");
 #endif
 }
 
@@ -9564,7 +9569,6 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
   _createFltk();
   int old = CTX::instance()->pickElements;
   CTX::instance()->pickElements = 1;
-  CTX::instance()->meshChanged();
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
   CTX::instance()->pickElements = old;
   if(!FlGui::available()) return 0; // GUI closed during selection
@@ -9615,12 +9619,8 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   case 3: type = ENT_VOLUME; break;
   default: break;
   }
-  // the arrays only keep the elements when they can be picked
   int old = CTX::instance()->pickElements;
-  if(elements) {
-    CTX::instance()->pickElements = 1;
-    CTX::instance()->meshChanged();
-  }
+  if(elements) CTX::instance()->pickElements = 1;
   std::vector<GVertex *> vertices;
   std::vector<GEdge *> edges;
   std::vector<GFace *> faces;
@@ -9631,10 +9631,7 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   bool ret =
     gl->pick(type, CTX::instance()->mesh.draw ? true : false, true, (int)x,
              (int)y, w, h, vertices, edges, faces, regions, ele, points, views);
-  if(elements) {
-    CTX::instance()->pickElements = old;
-    CTX::instance()->meshChanged();
-  }
+  if(elements) CTX::instance()->pickElements = old;
   for(std::size_t i = 0; i < vertices.size(); i++)
     dimTags.push_back(std::make_pair(0, vertices[i]->tag()));
   for(std::size_t i = 0; i < edges.size(); i++)

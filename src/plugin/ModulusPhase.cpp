@@ -5,16 +5,11 @@
 
 #include "ModulusPhase.h"
 
-StringXNumber ModulusPhaseOptions_Number[] = {
-  {GMSH_FULLRC, "RealPart", nullptr, 0., ""},
-  {GMSH_FULLRC, "ImaginaryPart", nullptr, 1., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterModulusPhasePlugin()
+GMSH_ModulusPhasePlugin::GMSH_ModulusPhasePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "RealPart", nullptr, 0., ""},
+                     {GMSH_FULLRC, "ImaginaryPart", nullptr, 1., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_ModulusPhasePlugin();
-}
 }
 
 std::string GMSH_ModulusPhasePlugin::getHelp() const
@@ -28,21 +23,11 @@ std::string GMSH_ModulusPhasePlugin::getHelp() const
          "Plugin(ModulusPhase) is executed in-place.";
 }
 
-int GMSH_ModulusPhasePlugin::getNbOptions() const
-{
-  return sizeof(ModulusPhaseOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_ModulusPhasePlugin::getOption(int iopt)
-{
-  return &ModulusPhaseOptions_Number[iopt];
-}
-
 PView *GMSH_ModulusPhasePlugin::execute(PView *v)
 {
-  int rIndex = (int)ModulusPhaseOptions_Number[0].def;
-  int iIndex = (int)ModulusPhaseOptions_Number[1].def;
-  int iView = (int)ModulusPhaseOptions_Number[2].def;
+  int rIndex = (int)option(0);
+  int iIndex = (int)option(1);
+  int iView = (int)option(2);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -59,47 +44,22 @@ PView *GMSH_ModulusPhasePlugin::execute(PView *v)
     return v1;
   }
 
-  if(data1->isNodeData()) {
-    // tag all the nodes with "0" (the default tag)
-    for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-      for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-          if(data1->skipElement(step, ent, ele)) continue;
-          for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-            data1->tagNode(step, ent, ele, nod, 0);
-        }
-      }
-    }
-  }
-
-  // transform all "0" nodes
-  for(int ent = 0; ent < data1->getNumEntities(rIndex); ent++) {
-    for(int ele = 0; ele < data1->getNumElements(rIndex, ent); ele++) {
-      if(data1->skipElement(rIndex, ent, ele)) continue;
-      for(int nod = 0; nod < data1->getNumNodes(rIndex, ent, ele); nod++) {
-        double x, y, z;
-        int tag = data1->getNode(rIndex, ent, ele, nod, x, y, z);
-        if(data1->isNodeData() && tag) continue;
-        for(int comp = 0; comp < data1->getNumComponents(rIndex, ent, ele);
-            comp++) {
-          double vr, vi;
-          data1->getValue(rIndex, ent, ele, nod, comp, vr);
-          data1->getValue(iIndex, ent, ele, nod, comp, vi);
-          double modulus = sqrt(vr * vr + vi * vi);
-          double phase = atan2(vi, vr);
-          data1->setValue(rIndex, ent, ele, nod, comp, modulus);
-          data1->setValue(iIndex, ent, ele, nod, comp, phase);
-          if(data1->isNodeData()) {
-            data1->tagNode(rIndex, ent, ele, nod, 1);
-            data1->tagNode(iIndex, ent, ele, nod, 1);
-          }
-        }
-      }
-    }
-  }
+  // each value once (a node shared by elements, a value per element)
+  forEachValue(data1, rIndex,
+               [&](int ent, int ele, int nod, double x, double y, double z) {
+                 for(int comp = 0;
+                     comp < data1->getNumComponents(rIndex, ent, ele); comp++) {
+                   double vr, vi;
+                   data1->getValue(rIndex, ent, ele, nod, comp, vr);
+                   data1->getValue(iIndex, ent, ele, nod, comp, vi);
+                   data1->setValue(rIndex, ent, ele, nod, comp,
+                                   sqrt(vr * vr + vi * vi));
+                   data1->setValue(iIndex, ent, ele, nod, comp, atan2(vi, vr));
+                 }
+               });
 
   data1->setName(data1->getName() + "_ModulusPhase");
-  data1->setName(data1->getName() + ".pos");
+  data1->setFileName(data1->getName() + ".pos");
   data1->finalize();
 
   v1->setChanged(true);

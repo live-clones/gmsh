@@ -12,6 +12,7 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "MElement.h"
+#include "VTKXML.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -1687,24 +1688,68 @@ void MElement::writeTOCHNOG(FILE *fp, int num)
   fprintf(fp, "\n");
 }
 
+int MElement::getFaceCorners(int num, MVertex *v[4]) const
+{
+  MFace f = getFace(num);
+  int n = std::min((int)f.getNumVertices(), 4);
+  for(int i = 0; i < n; i++) v[i] = f.getVertex(i);
+  return n;
+}
+
+int MElement::getEdgeCorners(int num, MVertex *v[2]) const
+{
+  MEdge e = getEdge(num);
+  v[0] = e.getVertex(0);
+  v[1] = e.getVertex(1);
+  return 2;
+}
+
+int MElement::getTypeForVTK() const
+{
+  return getVTKXMLCell(getTypeForMSH(), false).type;
+}
+
+std::size_t MElement::getNumVerticesVTK() const
+{
+  return getVTKXMLCell(getTypeForMSH(), false).nodes.size();
+}
+
+MVertex *MElement::getVertexVTK(int num)
+{
+  // (ParaView's GmshReader plugin asks for all the nodes of the element,
+  // also when the cell has fewer)
+  const std::vector<int> &nodes = getVTKXMLCell(getTypeForMSH(), false).nodes;
+  return getVertex(num < (int)nodes.size() ? nodes[num] : num);
+}
+
 void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
 {
-  if(!getTypeForVTK()) return;
+  const vtkXMLCell &cell = getVTKXMLCell(getTypeForMSH());
+  if(!cell.type) return;
 
-  int n = getNumVertices();
+  int n = (int)cell.nodes.size();
+  std::vector<int> nodes(cell.nodes);
+  if(cell.type == 72) {
+    // VTK reads the Lagrange hexahedra of the files of this version (as of
+    // the .vtu files older than 2.2) with the last two vertical edges, the
+    // 11th and 12th, swapped
+    int perEdge = getPolynomialOrder() - 1;
+    for(int i = 0; i < perEdge; i++)
+      std::swap(nodes[8 + 10 * perEdge + i], nodes[8 + 11 * perEdge + i]);
+  }
   if(binary) {
-    int verts[60];
+    std::vector<int> verts(n + 1);
     verts[0] = n;
     for(int i = 0; i < n; i++)
-      verts[i + 1] = (int)getVertexVTK(i)->getIndex() - 1;
+      verts[i + 1] = (int)getVertex(nodes[i])->getIndex() - 1;
     // VTK always expects big endian binary data
-    if(!bigEndian) SwapBytes((char *)verts, sizeof(int), n + 1);
-    fwrite(verts, sizeof(int), n + 1, fp);
+    if(!bigEndian) SwapBytes((char *)&verts[0], sizeof(int), n + 1);
+    fwrite(&verts[0], sizeof(int), n + 1, fp);
   }
   else {
     fprintf(fp, "%d", n);
     for(int i = 0; i < n; i++)
-      fprintf(fp, " %ld", getVertexVTK(i)->getIndex() - 1);
+      fprintf(fp, " %ld", getVertex(nodes[i])->getIndex() - 1);
     fprintf(fp, "\n");
   }
 }
@@ -2047,7 +2092,7 @@ void MElement::writeRAD(FILE *fp, int num)
 void MElement::writeSU2(FILE *fp, int num)
 {
   fprintf(fp, "%d ", getTypeForVTK());
-  for(std::size_t i = 0; i < getNumVertices(); i++)
+  for(std::size_t i = 0; i < getNumVerticesVTK(); i++)
     fprintf(fp, "%ld ", getVertexVTK(i)->getIndex() - 1);
   if(num >= 0)
     fprintf(fp, "%d\n", num);

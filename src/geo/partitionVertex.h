@@ -16,12 +16,13 @@ private:
 
 public:
   partitionVertex(GModel *model, int num, const std::vector<int> &partitions)
-    : discreteVertex(model, num), _partitions(partitions),
+    : discreteVertex(model, num, 0., 0., 0., false), _partitions(partitions),
       _parentEntity(nullptr)
   {
   }
   partitionVertex(GModel *model, int num)
-    : discreteVertex(model, num), _partitions(), _parentEntity(nullptr)
+    : discreteVertex(model, num, 0., 0., 0., false), _partitions(),
+      _parentEntity(nullptr)
   {
   }
   partitionVertex(GModel *model, const std::vector<int> &partitions)

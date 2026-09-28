@@ -8,17 +8,9 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterBoundaryAnglesPlugin();
-}
-
 class GMSH_BoundaryAnglesPlugin : public GMSH_PostPlugin {
-  double levelset(double x, double y, double z, double val) const;
-  static double callback(int num, int action, double value, double *opt);
-  static int iview;
-
 public:
-  GMSH_BoundaryAnglesPlugin() {}
+  GMSH_BoundaryAnglesPlugin();
   std::string getName() const { return "BoundaryAngles"; }
   std::string getShortHelp() const
   {
@@ -26,10 +18,6 @@ public:
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "Bertrand Thierry"; }
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
-  int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

@@ -32,6 +32,7 @@ class ACIS_Internals;
 class Parasolid_Internals;
 class smooth_normals;
 class FieldManager;
+class PViewDataGModel;
 class discreteFace;
 class discreteRegion;
 class MElementOctree;
@@ -122,6 +123,8 @@ protected:
 
   // an octree for fast mesh element lookup
   MElementOctree *_elementOctree;
+  // the octree of the mesh elements, built on first use
+  MElementOctree *_getElementOctree();
 
   // global cache storage of discrete curvatures
   std::map<MVertex *, std::pair<SVector3, SVector3>> _curvatures;
@@ -219,6 +222,10 @@ public:
 
   // sets a model to current
   static int setCurrent(GModel *m);
+  // the index of the current model as set (-1 for the last one), to restore it
+  // after using a model temporarily
+  static int getCurrentIndex() { return _current; }
+  static void setCurrentIndex(int index) { _current = index; }
   int setAsCurrent() { return setCurrent(this); }
 
   // find a model by name; if fileName is given, return model only if it does
@@ -234,13 +241,23 @@ public:
   std::size_t getMaxElementNumber() const { return _maxElementNum; }
   void setMaxVertexNumber(std::size_t num)
   {
+    std::size_t max;
+#pragma omp atomic read
+    max = _maxVertexNum;
+    if(num > max) {
 #pragma omp atomic write
-    _maxVertexNum = _maxVertexNum > num ? _maxVertexNum : num;
+      _maxVertexNum = num;
+    }
   }
   void setMaxElementNumber(std::size_t num)
   {
+    std::size_t max;
+#pragma omp atomic read
+    max = _maxElementNum;
+    if(num > max) {
 #pragma omp atomic write
-    _maxElementNum = _maxElementNum > num ? _maxElementNum : num;
+      _maxElementNum = num;
+    }
   }
 
   // increment and get global vertex/element num
@@ -293,6 +310,15 @@ public:
   // or number it (starting at 1) if num == 0
   std::size_t addMEdge(MEdge &&edge, std::size_t num = 0);
   std::size_t addMFace(MFace &&face, std::size_t num = 0);
+  // make room for n more mesh edges or faces, before adding them
+  void reserveMEdges(std::size_t n)
+  {
+    _mapEdgeNum.reserve(_mapEdgeNum.size() + n);
+  }
+  void reserveMFaces(std::size_t n)
+  {
+    _mapFaceNum.reserve(_mapFaceNum.size() + n);
+  }
 
   // get number of edges or faces
   std::size_t getNumMEdges() const { return _mapEdgeNum.size(); };
@@ -579,6 +605,10 @@ public:
                                   bool strict = true);
   std::vector<MElement *> getMeshElementsByCoord(SPoint3 &p, int dim = -1,
                                                  bool strict = true);
+  // the mesh element of dimension dim closest to a point, no farther than the
+  // distance (see MElementOctree::findClosest())
+  MElement *getMeshElementClosestTo(const SPoint3 &p, int dim,
+                                    double distance);
 
   // access a mesh element by tag, using the element cache
   MElement *getMeshElementByTag(std::size_t n)
@@ -605,6 +635,14 @@ public:
 
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(std::size_t n);
+  // the same, without building the caches or adding to them (null if they do
+  // not know the tag): for several threads, once the caches are built
+  MVertex *findMeshVertexByTag(std::size_t n) const
+  {
+    if(n < _vertexVectorCache.size()) return _vertexVectorCache[n];
+    auto it = _vertexMapCache.find(n);
+    return (it == _vertexMapCache.end()) ? nullptr : it->second;
+  }
 
   // add a mesh vertex to the global mesh vertex cache
   void addMVertexToVertexCache(MVertex *v);
@@ -845,7 +883,7 @@ public:
                           double scalingFactor = 1.0);
   int writeMSHPartitions(const std::string &name,
                          const std::vector<int> &partitions,
-                         double version = 4.1, bool binary = false,
+                         double version = 4.2, bool binary = false,
                          bool saveAll = false, bool saveParametric = false,
                          double scalingFactor = 1.0);
 
@@ -938,6 +976,15 @@ public:
   int readMED(const std::string &name, int meshIndex);
   int writeMED(const std::string &name, bool saveAll = false,
                double scalingFactor = 1.0);
+
+  // VTK XML unstructured grid format, with a step of model-based views (the
+  // reader also takes the .pvd of a time series)
+  int readVTU(const std::string &name);
+  int writeVTU(const std::string &name, bool binary = false,
+               bool saveAll = false, double scalingFactor = 1.0,
+               const std::vector<PViewDataGModel *> &views =
+                 std::vector<PViewDataGModel *>(),
+               int step = 0);
 
   // VTK format
   int readVTK(const std::string &name, bool bigEndian = false);

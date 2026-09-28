@@ -742,10 +742,7 @@ double meshMetric::operator()(double x, double y, double z, GEntity *ge)
     return 0.;
   }
   SPoint3 xyz(x, y, z), uvw;
-  double initialTol =  CTX::instance()->mesh.toleranceReferenceElement;
-  CTX::instance()->mesh.toleranceReferenceElement = 1.e-4;
-  MElement *e = _octree->find(x, y, z, _dim);
-  CTX::instance()->mesh.toleranceReferenceElement = initialTol;
+  MElement *e = _octree->find(x, y, z, _dim, false, 1.e-4);
   double value = 0.;
   if(e) {
     e->xyz2uvw(xyz, uvw);
@@ -813,10 +810,7 @@ void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
         // find other metrics here
         SMetric3 metric;
         SPoint3 xyz(x, y, z), uvw;
-        double initialTol =  CTX::instance()->mesh.toleranceReferenceElement;
-        CTX::instance()->mesh.toleranceReferenceElement = 1.e-4;
-        MElement *e = _octree->find(x, y, z, _dim);
-        CTX::instance()->mesh.toleranceReferenceElement = initialTol;
+        MElement *e = _octree->find(x, y, z, _dim, false, 1.e-4);
         if(e) {
           e->xyz2uvw(xyz, uvw);
           SMetric3 m1 = setOfMetrics[iMetric][e->getVertex(0)];
@@ -844,10 +838,7 @@ void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
   // INTERPOLATE DISCRETE MESH METRIC
   else {
     SPoint3 xyz(x, y, z), uvw;
-    double initialTol =  CTX::instance()->mesh.toleranceReferenceElement;
-    CTX::instance()->mesh.toleranceReferenceElement = 1.e-4;
-    MElement *e = _octree->find(x, y, z, _dim);
-    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
+    MElement *e = _octree->find(x, y, z, _dim, false, 1.e-4);
 
     if(e) {
       e->xyz2uvw(xyz, uvw);

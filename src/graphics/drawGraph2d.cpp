@@ -83,6 +83,16 @@ static int graphScaleType(PView *p)
   return PViewOptions::Linear;
 }
 
+// the axis (0, 1 or 2) along which the box is the longest: the abscissa of
+// a space graph
+static int longestAxis(const SBoundingBox3d &bbox)
+{
+  SVector3 d = bbox.max() - bbox.min();
+  if(d.y() > d.x() && d.y() > d.z()) return 1;
+  if(d.z() > d.x() && d.z() > d.y()) return 2;
+  return 0;
+}
+
 static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
                          double &xmax, std::vector<std::vector<double> > &y,
                          double &ymin, double &ymax)
@@ -117,17 +127,8 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
                 opt->type == PViewOptions::Plot2DSpace);
 
   int which2d = 0;
-  if(opt->type == PViewOptions::Plot2D) {
-    SBoundingBox3d bbox = p->getData()->getBoundingBox();
-    SPoint3 min = bbox.min();
-    SPoint3 max = bbox.max();
-    if(fabs(max.y() - min.y()) > fabs(max.x() - min.x()) &&
-       fabs(max.y() - min.y()) > fabs(max.z() - min.z()))
-      which2d = 1;
-    else if(fabs(max.z() - min.z()) > fabs(max.x() - min.x()) &&
-            fabs(max.z() - min.z()) > fabs(max.y() - min.y()))
-      which2d = 2;
-  }
+  if(opt->type == PViewOptions::Plot2D)
+    which2d = longestAxis(p->getData()->getBoundingBox());
 
   SPoint3 p0(0., 0., 0.);
 
@@ -272,20 +273,14 @@ static void getGraphAbscissa(PView *p, double &min, double &max)
     return;
   }
   SBoundingBox3d bbox = p->getData()->getBoundingBox();
-  double d[3] = {bbox.max().x() - bbox.min().x(), bbox.max().y() - bbox.min().y(),
-                 bbox.max().z() - bbox.min().z()};
   if(opt->type == PViewOptions::Plot2DSpace) { // a curvilinear coordinate
     min = 0.;
-    max = sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+    max = bbox.max().distance(bbox.min());
     return;
   }
-  int which = 0;
-  if(d[1] > d[0] && d[1] > d[2])
-    which = 1;
-  else if(d[2] > d[0] && d[2] > d[1])
-    which = 2;
-  min = which ? (which == 1 ? bbox.min().y() : bbox.min().z()) : bbox.min().x();
-  max = which ? (which == 1 ? bbox.max().y() : bbox.max().z()) : bbox.max().x();
+  int which = longestAxis(bbox);
+  min = bbox.min()[which];
+  max = bbox.max()[which];
 }
 
 // The name of the view, with the time step it is drawn at
@@ -732,7 +727,7 @@ static bool addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
       ctx->drawString(label, px + offset, py + offset, 0.);
     }
     else if(singlePoint && (opt->pointType == 1 || opt->pointType == 3)) {
-      double ps = CTX::instance()->pointSize * ctx->highResolutionPixelFactor();
+      double ps = opt->pointSize * ctx->highResolutionPixelFactor();
       if(inModelCoordinates)
         ctx->drawSphere(ps, px, py, 0, opt->light);
       else
@@ -761,7 +756,7 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
 
   PViewOptions *opt = p->getOptions();
 
-  double ps = CTX::instance()->pointSize * ctx->highResolutionPixelFactor();
+  double ps = opt->pointSize * ctx->highResolutionPixelFactor();
 
   gmshPointSize((float)ps);
   gl2psPointSize(

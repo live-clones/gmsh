@@ -11,28 +11,25 @@
 #include "GEntity.h"
 #include <algorithm>
 
-StringXNumber MathEvalOptions_Number[] = {
-  {GMSH_FULLRC, "TimeStep", nullptr, -1., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-  {GMSH_FULLRC, "OtherTimeStep", nullptr, -1., ""},
-  {GMSH_FULLRC, "OtherView", nullptr, -1., ""},
-  {GMSH_FULLRC, "ForceInterpolation", nullptr, 0., ""},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1., ""},
-  {GMSH_FULLRC, "Dimension", nullptr, -1., ""}};
-
-StringXString MathEvalOptions_String[] = {
-  {GMSH_FULLRC, "Expression0", nullptr, "Sqrt(v0^2+v1^2+v2^2)", ""},
-  {GMSH_FULLRC, "Expression1", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression2", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression3", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression4", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression5", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression6", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression7", nullptr, "", ""},
-  {GMSH_FULLRC, "Expression8", nullptr, "", ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterMathEvalPlugin() { return new GMSH_MathEvalPlugin(); }
+GMSH_MathEvalPlugin::GMSH_MathEvalPlugin()
+  : GMSH_PostPlugin(
+      {{GMSH_FULLRC, "TimeStep", nullptr, -1., ""},
+       {GMSH_FULLRC, "View", nullptr, -1., ""},
+       {GMSH_FULLRC, "OtherTimeStep", nullptr, -1., ""},
+       {GMSH_FULLRC, "OtherView", nullptr, -1., ""},
+       {GMSH_FULLRC, "ForceInterpolation", nullptr, 0., ""},
+       {GMSH_FULLRC, "PhysicalGroup", nullptr, -1., ""},
+       {GMSH_FULLRC, "Dimension", nullptr, -1., ""}},
+      {{GMSH_FULLRC, "Expression0", nullptr, "Sqrt(v0^2+v1^2+v2^2)", ""},
+       {GMSH_FULLRC, "Expression1", nullptr, "", ""},
+       {GMSH_FULLRC, "Expression2", nullptr, "", ""},
+       {GMSH_FULLRC, "Expression3", nullptr, "", ""},
+       {GMSH_FULLRC, "Expression4", nullptr, "", ""},
+       {GMSH_FULLRC, "Expression5", nullptr, "", ""},
+       {GMSH_FULLRC, "Expression6", nullptr, "", ""},
+       {GMSH_FULLRC, "Expression7", nullptr, "", ""},
+       {GMSH_FULLRC, "Expression8", nullptr, "", ""}})
+{
 }
 
 std::string GMSH_MathEvalPlugin::getHelp() const
@@ -68,37 +65,17 @@ std::string GMSH_MathEvalPlugin::getHelp() const
          "Plugin(MathEval) creates one new list-based view.";
 }
 
-int GMSH_MathEvalPlugin::getNbOptions() const
-{
-  return sizeof(MathEvalOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_MathEvalPlugin::getOption(int iopt)
-{
-  return &MathEvalOptions_Number[iopt];
-}
-
-int GMSH_MathEvalPlugin::getNbOptionsStr() const
-{
-  return sizeof(MathEvalOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_MathEvalPlugin::getOptionStr(int iopt)
-{
-  return &MathEvalOptions_String[iopt];
-}
-
 PView *GMSH_MathEvalPlugin::execute(PView *view)
 {
-  int timeStep = (int)MathEvalOptions_Number[0].def;
-  int iView = (int)MathEvalOptions_Number[1].def;
-  int otherTimeStep = (int)MathEvalOptions_Number[2].def;
-  int iOtherView = (int)MathEvalOptions_Number[3].def;
-  int forceInterpolation = (int)MathEvalOptions_Number[4].def;
-  int physicalGroup = (int)MathEvalOptions_Number[5].def;
-  int dimension = (int)MathEvalOptions_Number[6].def;
+  int timeStep = (int)option(0);
+  int iView = (int)option(1);
+  int otherTimeStep = (int)option(2);
+  int iOtherView = (int)option(3);
+  int forceInterpolation = (int)option(4);
+  int physicalGroup = (int)option(5);
+  int dimension = (int)option(6);
   std::vector<std::string> expr(9);
-  for(int i = 0; i < 9; i++) expr[i] = MathEvalOptions_String[i].def;
+  for(int i = 0; i < 9; i++) expr[i] = optionStr(i);
 
   PView *v1 = getView(iView, view);
   if(!v1) return view;
@@ -171,6 +148,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   }
 
   PView *v2 = new PView();
+  bool failed = false;
   PViewDataList *data2 = getDataList(v2);
 
   if(timeStep < 0) { timeStep = -data1->getNumTimeSteps(); }
@@ -196,13 +174,15 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
     if(!ok) continue;
     for(int ele = 0; ele < data1->getNumElements(timeBeg, ent); ele++) {
       if(data1->skipElement(timeBeg, ent, ele)) continue;
-      int numNodes = data1->getNumNodes(timeBeg, ent, ele);
+      int numNodes = getNumCornerNodes(data1, timeBeg, ent, ele);
+      if(!numNodes) continue;
       int type = data1->getType(timeBeg, ent, ele);
       int numComp = data1->getNumComponents(timeBeg, ent, ele);
       int otherNumComp = (!otherData || octree) ?
                            9 :
                            otherData->getNumComponents(timeBeg, ent, ele);
       std::vector<double> *out = data2->incrementList(numComp2, type, numNodes);
+      if(!out) continue;
       std::vector<double> v(std::max(9, numComp), 0.);
       std::vector<double> w(std::max(9, otherNumComp), 0.);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
@@ -242,7 +222,8 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
           if(f.eval(values, res)) {
             for(int i = 0; i < numComp2; i++) out->push_back(res[i]);
           }
-          else {
+          else { // the error was reported: do not keep half an element
+            failed = true;
             goto end;
           }
         }
@@ -252,15 +233,19 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
 
 end:
   if(octree) delete octree;
+  if(failed) {
+    delete v2;
+    return view;
+  }
 
   if(timeStep < 0) {
     for(int i = firstNonEmptyStep; i < data1->getNumTimeSteps(); i++) {
       if(!data1->hasTimeStep(i)) continue;
-      data2->Time.push_back(data1->getTime(i));
+      data2->addTime(data1->getTime(i));
     }
   }
   else
-    data2->Time.push_back(data1->getTime(timeStep));
+    data2->addTime(data1->getTime(timeStep));
 
   data2->setName(data1->getName() + "_MathEval");
   data2->setFileName(data1->getName() + "_MathEval.pos");

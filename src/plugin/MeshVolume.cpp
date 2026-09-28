@@ -7,15 +7,10 @@
 #include "GModel.h"
 #include "PViewOptions.h"
 
-StringXNumber MeshVolumeOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1, ""},
-  {GMSH_FULLRC, "Dimension", nullptr, 3, ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterMeshVolumePlugin()
+GMSH_MeshVolumePlugin::GMSH_MeshVolumePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "PhysicalGroup", nullptr, -1, ""},
+                     {GMSH_FULLRC, "Dimension", nullptr, 3, ""}})
 {
-  return new GMSH_MeshVolumePlugin();
-}
 }
 
 std::string GMSH_MeshVolumePlugin::getHelp() const
@@ -29,20 +24,10 @@ std::string GMSH_MeshVolumePlugin::getHelp() const
          "Plugin(MeshVolume) creates one new list-based view.";
 }
 
-int GMSH_MeshVolumePlugin::getNbOptions() const
-{
-  return sizeof(MeshVolumeOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_MeshVolumePlugin::getOption(int iopt)
-{
-  return &MeshVolumeOptions_Number[iopt];
-}
-
 PView *GMSH_MeshVolumePlugin::execute(PView *v)
 {
-  int physical = (int)MeshVolumeOptions_Number[0].def;
-  int dim = (int)MeshVolumeOptions_Number[1].def;
+  int physical = (int)option(0);
+  int dim = (int)option(1);
 
   GModel *model = GModel::current();
   if(!model->getNumMeshVertices()) {
@@ -51,7 +36,7 @@ PView *GMSH_MeshVolumePlugin::execute(PView *v)
   }
 
   std::vector<GEntity *> entities;
-  if(physical == -1) { model->getEntities(entities, dim); }
+  if(physical < 0) { model->getEntities(entities, dim); }
   else {
     std::map<int, std::vector<GEntity *> > groups;
     model->getPhysicalGroups(dim, groups);
@@ -70,11 +55,9 @@ PView *GMSH_MeshVolumePlugin::execute(PView *v)
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
   SBoundingBox3d bbox = model->bounds();
-  data2->SP.push_back(bbox.center().x());
-  data2->SP.push_back(bbox.center().y());
-  data2->SP.push_back(bbox.center().z());
-  data2->SP.push_back(vol);
-  data2->NbSP = 1;
+  std::vector<double> *l = data2->incrementList(1, TYPE_PNT);
+  l->insert(l->end(),
+            {bbox.center().x(), bbox.center().y(), bbox.center().z(), vol});
   v2->getOptions()->intervalsType = PViewOptions::Numeric;
   data2->setName("MeshVolume");
   data2->setFileName("MeshVolume.pos");

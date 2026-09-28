@@ -54,6 +54,8 @@ namespace glShader {
   void setContext(const void *id);
   // is there a working program? Compiles it if necessary and says why not
   bool available();
+  // is the shader pipeline drawing? Asked for (General.Shaders) and available
+  bool enabled();
 
   // the two matrices, in the column major layout glMatrix uses
   void setMatrices(const double modelview[16], const double projection[16]);

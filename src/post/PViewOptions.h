@@ -14,6 +14,26 @@ class mathEvaluator;
 class PViewData;
 
 // The display options of a post-processing view.
+// The evaluator of the general raise, built from its expressions when the view
+// is drawn: owned by the options, and not copied with them
+class raiseEvaluator {
+private:
+  mathEvaluator *_e = nullptr;
+
+public:
+  raiseEvaluator() = default;
+  raiseEvaluator(const raiseEvaluator &) {}
+  raiseEvaluator &operator=(const raiseEvaluator &)
+  {
+    reset();
+    return *this;
+  }
+  ~raiseEvaluator() { reset(); }
+  void reset(mathEvaluator *e = nullptr);
+  mathEvaluator *operator->() const { return _e; }
+  explicit operator bool() const { return _e != nullptr; }
+};
+
 class PViewOptions {
 public:
   enum PlotType { Plot3D = 1, Plot2DSpace = 2, Plot2DTime = 3, Plot2D = 4 };
@@ -88,7 +108,7 @@ public:
   int drawTetrahedra, drawHexahedra, drawPrisms, drawPyramids, drawTrihedra,
     drawPolyhedra;
   int drawScalars, drawVectors, drawTensors;
-  int boundary, pointType, lineType, drawSkinOnly;
+  int boundary, pointType, lineType, drawSkinOnly, drawSkinEdgesOnly;
   double pointSize, lineWidth;
   GmshColorTable colorTable;
   // multiplies the alpha of the colormap (applied by the shader)
@@ -99,8 +119,8 @@ public:
   int useGenRaise;
   double genRaiseFactor;
   std::string genRaiseX, genRaiseY, genRaiseZ;
-  mathEvaluator *genRaiseEvaluator;
-  int adaptVisualizationGrid, maxRecursionLevel;
+  raiseEvaluator genRaiseEvaluator;
+  int adaptVisualizationGrid, maxRecursionLevel, adaptSkinOnly;
   double targetError;
   int clip; // status of clip planes (bit array)
   int forceNumComponents, componentMap[9];
@@ -120,7 +140,6 @@ private:
 
 public:
   PViewOptions();
-  ~PViewOptions();
   static PViewOptions *reference();
   // return a floating point value in [min, max] corresponding to the
   // integer iso in [0, numIso - 1]
@@ -138,6 +157,29 @@ public:
   // the range of the values of data the options ask for: the custom one, that
   // of the current time step, or that of all the steps
   void getRange(PViewData *data, double &min, double &max);
+  // are the faces drawn only those on the skin (DrawSkinOnly, with the values
+  // drawn on them)? and is nothing else drawn of the volumes, so that they can
+  // be refined only there (AdaptSkinOnly)?
+  bool skinOnly() const
+  {
+    return drawSkinOnly && boundary <= 0 &&
+           (intervalsType == Continuous || intervalsType == Discrete);
+  }
+  bool adaptsSkinOnly() const
+  {
+    return adaptSkinOnly && skinOnly() && (!showElement || drawSkinEdgesOnly);
+  }
+  // do the options move the nodes drawn from where the data puts them?
+  bool movesNodes() const
+  {
+    for(int i = 0; i < 3; i++) {
+      if(offset[i] || raise[i]) return true;
+      for(int j = 0; j < 3; j++)
+        if(transform[i][j] != (i == j ? 1. : 0.)) return true;
+    }
+    return explode != 1. || normalRaise || useGenRaise ||
+           vectorType == Displacement;
+  }
   // create math evaluator for general raise option
   void createGeneralRaise();
   // return true if one should not draw elements with type type

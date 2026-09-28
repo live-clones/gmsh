@@ -15,6 +15,9 @@
 #include "GmshMessage.h"
 #include "GmshConfig.h"
 #include "OwnerCache.h"
+#include "Context.h"
+#include "ClipPlanes.h"
+#include "Options.h"
 
 int PView::_globalTag = 1;
 std::vector<PView *> PView::list;
@@ -37,6 +40,8 @@ void PView::_init(int tag)
   va_points = va_lines = va_triangles = va_vectors = va_ellipses = nullptr;
   va_clip_lines = va_clip_triangles = nullptr;
   normals = nullptr;
+  _clipAdaptive = nullptr;
+  _clipLayer = nullptr;
 
   for(std::size_t i = 0; i < list.size(); i++) {
     if(list[i]->getTag() == _tag) {
@@ -58,9 +63,6 @@ PView::PView(int tag)
   _init(tag);
   _data = new PViewDataList();
   _options = new PViewOptions(*PViewOptions::reference());
-  if(_options->adaptVisualizationGrid)
-    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
-                            _options->targetError);
 }
 
 PView::PView(PViewData *data, int tag)
@@ -68,9 +70,6 @@ PView::PView(PViewData *data, int tag)
   _init(tag);
   _data = data;
   _options = new PViewOptions(*PViewOptions::reference());
-  if(_options->adaptVisualizationGrid)
-    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
-                            _options->targetError);
 }
 
 PView::PView(PView *ref, bool copyOptions, int tag)
@@ -94,9 +93,6 @@ PView::PView(PView *ref, bool copyOptions, int tag)
     _options = new PViewOptions(*ref->getOptions());
   else
     _options = new PViewOptions(*PViewOptions::reference());
-  if(_options->adaptVisualizationGrid)
-    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
-                            _options->targetError);
 }
 
 PView::PView(const std::string &xname, const std::string &yname,
@@ -163,9 +159,6 @@ PView::PView(const std::string &name, const std::string &type, GModel *model,
   d->setFileName(name + ".msh");
   _data = d;
   _options = new PViewOptions(*PViewOptions::reference());
-  if(_options->adaptVisualizationGrid)
-    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
-                            _options->targetError);
 }
 
 void PView::addStep(GModel *model,
@@ -182,6 +175,7 @@ void PView::addStep(GModel *model,
 PView::~PView()
 {
   deleteVertexArrays();
+  _deleteClipAdaptive();
   // what the drawing keeps for this view (its glyphs, its clip token) goes
   // with it
   OwnerCacheBase::release(this);
@@ -250,10 +244,192 @@ void PView::setOptions(PViewOptions *val)
 
 PViewData *PView::getData(bool useAdaptiveIfAvailable)
 {
-  if(useAdaptiveIfAvailable && _data->getAdaptiveData() && !_data->isRemote())
+  if(useAdaptiveIfAvailable && _clipLayer) return _clipLayer;
+  // (the adaptive data refining a view to save it has no data of its own)
+  if(useAdaptiveIfAvailable && _data->getAdaptiveData() && !_data->isRemote() &&
+     _data->getAdaptiveData()->getData())
     return _data->getAdaptiveData()->getData();
-  else
-    return _data;
+  return _data;
+}
+
+void PView::getAdaptiveRange(double &min, double &max)
+{
+  min = 0.;
+  max = -1.;
+  if(_options->rangeType == PViewOptions::Custom) {
+    min = _options->customMin;
+    max = _options->customMax;
+  }
+}
+
+void PView::_deleteClipAdaptive()
+{
+  if(_clipAdaptive) delete _clipAdaptive;
+  _clipAdaptive = nullptr;
+  _clipLayer = nullptr;
+}
+
+// the elements the clipping planes of a view cut
+class planesSelection : public adaptiveSelection {
+private:
+  int _mask;
+  activePlanes _planes;
+  lowerDims _others;
+
+public:
+  planesSelection(int mask, lowerDims others = allRefined)
+    : _mask(mask), _planes(mask), _others(others)
+  {
+  }
+  lowerDims others() const override { return _others; }
+  bool mayKeep(const float *sphere) const override
+  {
+    return _planes.gap(sphere) <= 0.;
+  }
+  bool keeps(int n, const double *x, const double *y,
+             const double *z) const override
+  {
+    // (as the clipping code tells them)
+    return clipPlanes::cuts(_mask, n, [&](int j, int k) {
+      return k == 0 ? x[j] : k == 1 ? y[j] : z[j];
+    });
+  }
+  std::vector<double> key() const override
+  { return CTX::instance()->clipKey(_mask); }
+};
+
+adaptiveData *PView::initAdaptiveData()
+{
+  if(!_options->adaptVisualizationGrid || _data->isRemote()) return nullptr;
+  if(_data->getAdaptiveData() && _data->getAdaptiveData()->isOutdated())
+    _data->destroyAdaptiveData();
+  _data->initAdaptiveData();
+  return _data->getAdaptiveData();
+}
+
+void PView::adapt(bool whole)
+{
+  if(!initAdaptiveData()) return;
+  double min, max;
+  getAdaptiveRange(min, max);
+  bool skin = !whole && _options->adaptsSkinOnly();
+  // Where the clipping planes cut, what is drawn is refined apart (see
+  // refineClipLayer()); where they only leave the cut elements, these are
+  // what is refined. Not if the options move the nodes, which the planes are
+  // compared with: everything is then refined.
+  CTX *ctx = CTX::instance();
+  bool clipped = skin && _options->clip && activePlanes(_options->clip).num();
+  bool cutOnly = clipped && ctx->clipWholeElements &&
+                 ctx->clipOnlyDrawIntersectingVolume;
+  bool apart = clipped && (ctx->clipCapping || ctx->clipWholeElements);
+  if((cutOnly || apart) && _options->movesNodes()) skin = false;
+  planesSelection cut(_options->clip);
+  bool select = cutOnly && skin;
+  _data->getAdaptiveData()->setPartitionsTogether(_options->drawSkinOnly == 2 ||
+                                                  _options->adaptSkinOnly == 2);
+  _data->getAdaptiveData()->changeResolution(
+    _options->timeStep, _options->maxRecursionLevel, _options->targetError,
+    nullptr, min, max, skin && !select, select ? &cut : nullptr);
+}
+
+void PView::useClipLayer(bool use)
+{
+  _clipLayer = (use && _clipAdaptive) ? _clipAdaptive->getData() : nullptr;
+}
+
+bool PView::refineClipLayer()
+{
+  adaptiveData *a = _data->getAdaptiveData();
+  if(!a || !a->isSkinOnly()) {
+    _deleteClipAdaptive();
+    return false;
+  }
+  if(_clipAdaptive && _clipAdaptive->isOutdated()) _deleteClipAdaptive();
+  if(!_clipAdaptive) _clipAdaptive = new adaptiveData(_data);
+  _clipAdaptive->copySkinOf(*a);
+  double min, max;
+  getAdaptiveRange(min, max);
+  // (the curves and surfaces the clip arrays take from it: none for the caps,
+  // the cut ones for the whole elements, or all if the planes only cut the
+  // volumes; see fillClipVertexArrays())
+  CTX *ctx = CTX::instance();
+  planesSelection cut(_options->clip,
+                      !ctx->clipWholeElements ? adaptiveSelection::noneRefined :
+                      ctx->clipOnlyVolume     ? adaptiveSelection::allRefined :
+                                                adaptiveSelection::selected);
+  _clipAdaptive->changeResolution(_options->timeStep,
+                                  _options->maxRecursionLevel,
+                                  _options->targetError, nullptr, min, max,
+                                  false, &cut);
+  return true;
+}
+
+void PView::widenAdaptedRange(double &min, double &max)
+{
+  adaptiveData *a = _data->getAdaptiveData();
+  if(!a || !a->isPartial()) return;
+  min = std::min(min, _data->getMin(_options->timeStep));
+  max = std::max(max, _data->getMax(_options->timeStep));
+}
+
+void PView::adaptWhole()
+{
+  adaptiveData *a = _data->getAdaptiveData();
+  if(a && a->isPartial()) adapt(true);
+}
+
+bool PView::savesAdapted()
+{
+  return CTX::instance()->post.saveAdapted && !_data->isRemote() &&
+         _data->haveHighOrderInterpolation();
+}
+
+// the steps refined to be saved (apart from what the view draws), and the
+// data given adaptive data for it
+static std::vector<adaptiveData *> refinedToSave;
+static std::vector<PViewData *> madeAdaptiveToSave;
+
+std::vector<PViewDataList *> PView::getAdaptedSteps()
+{
+  // (model-based data gives all the nodes of its elements, which refining
+  // needs, only if it has adaptive data)
+  if(!_data->getAdaptiveData()) {
+    _data->initAdaptiveDataLight(0, 0, 0.);
+    madeAdaptiveToSave.push_back(_data);
+  }
+  std::vector<PViewDataList *> steps(_data->getNumTimeSteps(), nullptr);
+  for(std::size_t step = 0; step < steps.size(); step++) {
+    if(!_data->hasTimeStep(step)) continue;
+    adaptiveData *a = new adaptiveData(_data);
+    refinedToSave.push_back(a);
+    double min, max;
+    getAdaptiveRange(min, max);
+    a->changeResolution(step, _options->maxRecursionLevel,
+                        _options->targetError, nullptr, min, max);
+    PViewDataList *l = static_cast<PViewDataList *>(a->getData());
+    l->setName(_data->getName());
+    l->setTimes({_data->getTime(step)});
+    l->setFirstStep(step);
+    steps[step] = l;
+  }
+  return steps;
+}
+
+bool PView::savesSeveralMeshes()
+{
+  if(!savesAdapted()) return _data->hasMultipleMeshes();
+  int numSteps = 0;
+  for(int step = 0; step < _data->getNumTimeSteps(); step++)
+    if(_data->hasTimeStep(step)) numSteps++;
+  return numSteps > 1;
+}
+
+void PView::doneSaving()
+{
+  for(auto a : refinedToSave) delete a;
+  refinedToSave.clear();
+  for(auto d : madeAdaptiveToSave) d->destroyAdaptiveData();
+  madeAdaptiveToSave.clear();
 }
 
 void PView::setChanged(bool val)
@@ -264,9 +440,51 @@ void PView::setChanged(bool val)
   if(_changed) _eye = SPoint3(0., 0., 0.);
 }
 
+void PView::animate(bool time, int incr)
+{
+  static int inCycle = -1;
+  if(time) {
+    for(std::size_t i = 0; i < list.size(); i++) {
+      if(opt_view_visible(i, GMSH_GET, 0)) {
+        // skip empty steps
+        int step = (int)opt_view_timestep(i, GMSH_GET, 0) + incr;
+        int numSteps = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
+        for(int j = 0; j < numSteps; j++) {
+          if(list[i]->getData()->hasTimeStep(step))
+            break;
+          else
+            step += incr;
+          if(step < 0) step = numSteps - 1;
+          if(step > numSteps - 1) step = 0;
+        }
+        opt_view_timestep(i, GMSH_SET | GMSH_GUI, step);
+      }
+    }
+    return;
+  }
+  // hide all views except the one in the cycle
+  int n = (int)list.size();
+  if(incr == 0)
+    inCycle = 0;
+  else if(incr > 0) {
+    if((inCycle += incr) >= n) inCycle = 0;
+  }
+  else {
+    if((inCycle += incr) < 0) inCycle = n - 1;
+  }
+  if(incr >= 0) {
+    for(int i = 0; i < n; i++)
+      opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == inCycle));
+  }
+  else {
+    for(int i = n - 1; i >= 0; i--)
+      opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == inCycle));
+  }
+}
+
 void PView::combine(bool time, int how, bool remove, bool copyOptions)
 {
-  // time == true: combine the timesteps (oherwise combine the elements)
+  // time == true: combine the timesteps (otherwise combine the elements)
   // how == 0: try to combine all visible views
   //        1: try to combine all views
   //        2: try to combine all views having identical names
@@ -329,16 +547,7 @@ void PView::combine(bool time, int how, bool remove, bool copyOptions)
       if(res) {
         for(std::size_t j = 0; j < nds[i].indices.size(); j++)
           rm.insert(list[nds[i].indices[j]]);
-        PViewOptions *opt = p->getOptions();
-        if(opt->adaptVisualizationGrid) {
-          // the (empty) adaptive data created in PView() must be recreated,
-          // since we added some data
-          data->destroyAdaptiveData();
-          data->initAdaptiveData(opt->timeStep, opt->maxRecursionLevel,
-                                 opt->targetError);
-        }
-        if(copyOptions && nds[i].options)
-          p->setOptions(new PViewOptions(*nds[i].options));
+        if(copyOptions && nds[i].options) p->setOptions(nds[i].options);
       }
       else
         delete p;

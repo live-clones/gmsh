@@ -59,29 +59,6 @@ public:
     FlGui::check();
     gl->setAgain(false);
   }
-  int getFontIndex(const char *fontname)
-  {
-    if(fontname) {
-      for(int i = 0; i < NUM_FONTS; i++)
-        if(!strcmp(menu_font_names[i].label(), fontname)) return i;
-    }
-    Msg::Error("Unknown font \"%s\" (using \"Helvetica\" instead)", fontname);
-    Msg::Info("Available fonts:");
-    for(int i = 0; i < NUM_FONTS; i++)
-      Msg::Info("  \"%s\"", menu_font_names[i].label());
-    return 4;
-  }
-  int getFontEnum(int index)
-  {
-    if(index >= 0 && index < NUM_FONTS)
-      return (intptr_t)menu_font_names[index].user_data();
-    return FL_HELVETICA;
-  }
-  const char *getFontName(int index)
-  {
-    if(index >= 0 && index < NUM_FONTS) return menu_font_names[index].label();
-    return "Helvetica";
-  }
   int getFontSize()
   {
     if(CTX::instance()->fontSize > 0) { return CTX::instance()->fontSize; }

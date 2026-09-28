@@ -3470,9 +3470,9 @@ GMSH_API void gmshViewGetListData(const int tag,
  * "Times-Roman", "Times-Bold", "Times-Italic", "Times-BoldItalic",
  * "Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Helvetica-
  * BoldOblique", "Courier", "Courier-Bold", "Courier-Oblique", "Courier-
- * BoldOblique", "Symbol", "ZapfDingbats", "Screen"), "FontSize" and "Align"
- * (possible values: "Left" or "BottomLeft", "Center" or "BottomCenter",
- * "Right" or "BottomRight", "TopLeft", "TopCenter", "TopRight", "CenterLeft",
+ * BoldOblique", "Symbol", "Screen"), "FontSize" and "Align" (possible values:
+ * "Left" or "BottomLeft", "Center" or "BottomCenter", "Right" or
+ * "BottomRight", "TopLeft", "TopCenter", "TopRight", "CenterLeft",
  * "CenterCenter", "CenterRight"). */
 GMSH_API void gmshViewAddListDataString(const int tag,
                                         const double * coord, const size_t coord_n,
@@ -3682,6 +3682,16 @@ GMSH_API void gmshPluginSetString(const char * name,
  * (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins). */
 GMSH_API int gmshPluginRun(const char * name,
                            int * ierr);
+
+/* Load a plugin from the shared library `fileName'. Such a plugin is a class
+ * derived from GMSH_PostPlugin or GMSH_MeshPlugin, defined with the
+ * GMSH_PLUGIN() macro of the private API header Plugin.h, and built against
+ * the headers of the private API and the shared Gmsh library (see
+ * "examples/external_plugin"). The plugins in the directories listed in the
+ * environment variable GMSHPLUGINSHOME (separated like in PATH) are loaded
+ * when Gmsh is initialized. */
+GMSH_API void gmshPluginLoad(const char * fileName,
+                             int * ierr);
 
 /* Draw all the OpenGL scenes. */
 GMSH_API void gmshGraphicsDraw(int * ierr);

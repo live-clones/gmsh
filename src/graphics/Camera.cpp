@@ -13,10 +13,7 @@
 #include "Camera.h"
 #include "GmshGlobal.h"
 #include "GmshConfig.h"
-#include "GmshMessage.h"
-#include "Trackball.h"
 #include "Context.h"
-#include "drawContext.h"
 
 Camera::Camera()
   : on(false), stereoEnable(false), Lc(1.), glFnear(0.0001), glFfar(10000)
@@ -275,23 +272,6 @@ double length(Quaternion &q)
 
 double length(XYZ &p) { return sqrt(p.x * p.x + p.y * p.y + p.z * p.z); }
 
-void normalize_axe(Quaternion &q)
-{
-  double sina = sin(acos(q.w));
-  double l;
-  if(sina != 0.) {
-    l = (q.x * q.x + q.y * q.y + q.z * q.z) / (sina * sina);
-    l = sqrt(l);
-  }
-  else {
-    l = 0.;
-  }
-  if(l != 0.) {
-    q.x /= l;
-    q.y /= l;
-    q.z /= l;
-  }
-}
 void normalize(Quaternion &q)
 {
   double L = length(q);
@@ -318,20 +298,6 @@ void XYZ::set(const double &_x, const double &_y, const double &_z)
   x = _x;
   y = _y;
   z = _z;
-}
-
-void rotate(const Quaternion &omega, XYZ axe)
-{
-  XYZ new_axe;
-  Quaternion qaxe, new_qaxe;
-  qaxe.x = axe.x;
-  qaxe.y = axe.y;
-  qaxe.z = axe.z;
-  qaxe.w = 0.;
-  new_qaxe = mult(mult(omega, qaxe), conjugate(omega));
-  axe.x = new_qaxe.x;
-  axe.y = new_qaxe.y;
-  axe.z = new_qaxe.z;
 }
 
 XYZ operator*(const double &a, const XYZ &T)

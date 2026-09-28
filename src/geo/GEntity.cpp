@@ -95,8 +95,7 @@ void GEntity::deleteClipVertexArrays()
 
 char GEntity::getVisibility()
 {
-  if(CTX::instance()->hideUnselected && !CTX::instance()->pickElements &&
-     !getSelection())
+  if(CTX::instance()->hideUnselected && !getSelection())
     return false;
   return _visible;
 }

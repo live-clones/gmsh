@@ -4,14 +4,12 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdio.h>
-#include <string.h>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "Numeric.h"
 #include "PViewData.h"
 #include "MPolygon.h"
 #include "MPolyhedron.h"
-#include "adaptiveData.h"
 #include "OS.h"
 
 bool PViewData::writeSTL(const std::string &fileName)
@@ -40,28 +38,13 @@ bool PViewData::writeSTL(const std::string &fileName)
       double x[4], y[4], z[4], n[3];
       for(int i = 0; i < N; i++) getNode(step, ent, ele, i, x[i], y[i], z[i]);
       normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n);
-      if(N == 3) {
+      // a quadrangle as two triangles
+      for(int t = 0; t < N - 2; t++) {
+        int v[3] = {0, t + 1, t + 2};
         fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
         fprintf(fp, "  outer loop\n");
-        fprintf(fp, "    vertex %g %g %g\n", x[0], y[0], z[0]);
-        fprintf(fp, "    vertex %g %g %g\n", x[1], y[1], z[1]);
-        fprintf(fp, "    vertex %g %g %g\n", x[2], y[2], z[2]);
-        fprintf(fp, "  endloop\n");
-        fprintf(fp, "endfacet\n");
-      }
-      else {
-        fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
-        fprintf(fp, "  outer loop\n");
-        fprintf(fp, "    vertex %g %g %g\n", x[0], y[0], z[0]);
-        fprintf(fp, "    vertex %g %g %g\n", x[1], y[1], z[1]);
-        fprintf(fp, "    vertex %g %g %g\n", x[2], y[2], z[2]);
-        fprintf(fp, "  endloop\n");
-        fprintf(fp, "endfacet\n");
-        fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
-        fprintf(fp, "  outer loop\n");
-        fprintf(fp, "    vertex %g %g %g\n", x[0], y[0], z[0]);
-        fprintf(fp, "    vertex %g %g %g\n", x[2], y[2], z[2]);
-        fprintf(fp, "    vertex %g %g %g\n", x[3], y[3], z[3]);
+        for(int i : v)
+          fprintf(fp, "    vertex %.16g %.16g %.16g\n", x[i], y[i], z[i]);
         fprintf(fp, "  endloop\n");
         fprintf(fp, "endfacet\n");
       }
@@ -82,14 +65,15 @@ bool PViewData::writeTXT(const std::string &fileName)
   }
 
   for(int step = 0; step < getNumTimeSteps(); step++) {
+    if(!hasTimeStep(step)) continue;
     for(int ent = 0; ent < getNumEntities(step); ent++) {
       for(int ele = 0; ele < getNumElements(step, ent); ele++) {
         if(skipElement(step, ent, ele)) continue;
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++) {
           double x, y, z;
           getNode(step, ent, ele, nod, x, y, z);
-          fprintf(fp, "%d %.16g %d %d %.16g %.16g %.16g ", step, getTime(step),
-                  ent, ele, x, y, z);
+          fprintf(fp, "%d %.16g %d %d %.16g %.16g %.16g ",
+                  getFirstStep() + step, getTime(step), ent, ele, x, y, z);
           for(int comp = 0; comp < getNumComponents(step, ent, ele); comp++) {
             double val;
             getValue(step, ent, ele, nod, comp, val);
@@ -108,11 +92,6 @@ bool PViewData::writeTXT(const std::string &fileName)
 bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
                          bool append)
 {
-  if(_adaptive) {
-    Msg::Warning(
-      "Writing adapted dataset (will only export current time step)");
-    return _adaptive->getData()->writePOS(fileName, binary, parsed, append);
-  }
   if(hasMultipleMeshes()) {
     Msg::Error("Cannot export multi-mesh datasets in .pos format");
     return false;
@@ -138,7 +117,9 @@ bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
       int type = getType(firstNonEmptyStep, ent, ele);
       int numComp = getNumComponents(firstNonEmptyStep, ent, ele);
       const char *s = nullptr;
-      switch(type) {
+      // the data at Gauss points is written at points
+      bool gauss = useGaussPoints();
+      switch(gauss ? TYPE_PNT : type) {
       case TYPE_PNT:
         s = (numComp == 9) ? "TP" : (numComp == 3) ? "VP" : "SP";
         break;
@@ -173,7 +154,11 @@ bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
       if(!s) continue;
       // polytopes are written as their sub-simplices, on which the data is P1
       std::vector<std::vector<int>> simplices;
-      if(type == TYPE_POLYG || type == TYPE_POLYH) {
+      if(gauss) {
+        for(int nod = 0; nod < getNumNodes(firstNonEmptyStep, ent, ele); nod++)
+          simplices.push_back({nod});
+      }
+      else if(type == TYPE_POLYG || type == TYPE_POLYH) {
         MElement *e = getElement(firstNonEmptyStep, ent, ele);
         if(!e) continue;
         if(type == TYPE_POLYG) {
@@ -242,7 +227,7 @@ bool PViewData::writeMSH(const std::string &fileName, double version,
   return false;
 }
 
-bool PViewData::writeMED(const std::string &fileName)
+bool PViewData::writeMED(const std::string &fileName, bool saveMesh)
 {
   Msg::Error("MED export only available for mesh-based post-processing views");
   return false;
@@ -320,21 +305,11 @@ void PViewData::getListPointers(int N[24], std::vector<double> *V[24])
 
 void PViewData::sendToServer(const std::string &name)
 {
-  // Vectorize
+  // a single value
   std::vector<std::vector<double> > vec;
-  bool ok = toVector(vec);
-
-  // Success ?
-  if(!ok) Msg::Error("sendToServer: cannot vectorize PView");
-
-  // Only one step ?
-  if(vec.size() != 1)
-    Msg::Error("sendToServer: cannot send a PView with more than one step");
-
-  // Only one data ?
-  if(vec[0].size() != 1)
-    Msg::Error("sendToServer: cannot send a PView with more than one data");
-
-  // Send data
+  if(!toVector(vec) || vec.size() != 1 || vec[0].size() != 1) {
+    Msg::Error("Cannot send a view with more than one value to ONELAB");
+    return;
+  }
   Msg::SetOnelabNumber(name, vec[0][0]);
 }

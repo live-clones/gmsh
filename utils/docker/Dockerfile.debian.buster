@@ -1,4 +1,6 @@
-FROM amd64/debian:buster
+FROM debian:buster # generic: choose platform with e.g. --platform linux/amd64
+# FROM amd64/debian:buster
+# FROM arm64v8/debian:buster
 
 ENV DEBIAN_FRONTEND noninteractive
 

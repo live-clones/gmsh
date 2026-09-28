@@ -67,7 +67,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.Format
-Default file format for post-processing views (0: ASCII view, 1: binary view, 2: parsed view, 3: STL triangulation, 4: raw text, 5: Gmsh mesh, 6: MED file, 10: automatic)@*
+Default file format for post-processing views (0: pos ASCII, 1: pos binary, 2: pos parsed, 3: stl, 4: txt, 5: msh, 6: med, 7: x3d, 8: vtu, 10: auto)@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -99,6 +99,11 @@ Saved in: @code{-}
 @item PostProcessing.Plugins
 Enable default post-processing plugins?@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.SaveAdapted
+Save the views of high order refined, as adapted views are drawn (with View.MaxRecursionLevel and View.TargetError), for readers that cannot handle high order elements; each time step then has a mesh of its own, and a file of its own, name_0000.ext, name_0001.ext...@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.SaveInterpolationMatrices

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gmsh WebGL viewer</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #fff; font: 13px sans-serif; }
+  body { display: flex; flex-direction: column; }
+  /* the bar wraps on a narrow window; the canvas takes what is left */
+  #bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
+         padding: 4px 8px; border-bottom: 1px solid #ddd; }
+  #canvas { display: block; flex: 1; min-height: 0; width: 100%;
+            touch-action: none; }
+  #status { color: #666; }
+  /* the options: a panel that drops down from the bar, over the canvas */
+  #options { position: relative; }
+  #options summary { cursor: pointer; }
+  #panel { position: fixed; top: 40px; right: 8px; z-index: 1; background: #fff;
+           border: 1px solid #ccc; border-radius: 4px; padding: 8px 10px;
+           box-shadow: 0 2px 8px rgba(0,0,0,.15); display: grid;
+           grid-template-columns: auto auto; gap: 6px 12px; align-items: center;
+           white-space: nowrap; }
+  #panel .head { grid-column: 1 / 3; font-weight: bold; margin-top: 4px; }
+  /* an opacity: a row of its own, the sliders of all the groups aligned */
+  #panel .slider { grid-column: 1 / 3; display: flex; align-items: center;
+                   justify-content: space-between; gap: 12px; }
+  #panel .slider input { width: 160px; margin: 0; }
+  #panel .wide { grid-column: 1 / 3; }
+  #panel label:has(:disabled) { color: #aaa; }
+  #help { color: #999; margin-left: auto; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <strong>Gmsh</strong>
+  <select id="example">
+    <option value="../../tutorials/t5.geo" selected>t5.geo (3D)</option>
+    <option value="../../tutorials/t1.geo">t1.geo (2D)</option>
+    <option value="../../tutorials/t2.geo">t2.geo (3D)</option>
+    <option value="../../tutorials/t4.geo">t4.geo (2D)</option>
+    <option value="../../tutorials/t6.geo">t6.geo (2D)</option>
+    <option value="../../tutorials/t10.geo">t10.geo (2D)</option>
+    <option value="../../tutorials/view3.pos">view3.pos</option>
+  </select>
+  <label>File <input id="file" type="file"></label>
+  <details id="options">
+    <summary>Options</summary>
+    <div id="panel">
+      <div class="head">Geometry</div>
+      <label><input type="checkbox" data-opt="Geometry.Points"> points</label>
+      <label><input type="checkbox" data-opt="Geometry.Curves"> curves</label>
+      <label><input type="checkbox" data-opt="Geometry.Surfaces"> surfaces</label>
+      <label><input type="checkbox" data-opt="Geometry.Volumes"> volumes</label>
+      <label class="slider">opacity <input type="range" min="0" max="1"
+             step="0.05" data-opt="Geometry.Opacity"></label>
+      <div class="head">Mesh</div>
+      <label><input type="checkbox" data-opt="Mesh.SurfaceEdges"> 2D edges</label>
+      <label><input type="checkbox" data-opt="Mesh.SurfaceFaces"> 2D faces</label>
+      <label><input type="checkbox" data-opt="Mesh.VolumeEdges"> 3D edges</label>
+      <label><input type="checkbox" data-opt="Mesh.VolumeFaces"> 3D faces</label>
+      <label class="slider">opacity <input type="range" min="0" max="1"
+             step="0.05" data-opt="Mesh.Opacity"></label>
+      <div class="head">Views</div>
+      <select data-view="IntervalsType">
+        <option value="1">iso-values</option>
+        <option value="2">continuous</option>
+        <option value="3">discrete</option>
+      </select>
+      <label><input type="checkbox" data-view="ShowElement"> element outlines</label>
+      <label class="slider">opacity <input type="range" min="0" max="1"
+             step="0.05" data-view="Opacity"></label>
+      <div class="head">Shading</div>
+      <select class="wide" data-opt="General.Shading">
+        <option value="0">classic</option>
+        <option value="1">studio (X floor)</option>
+        <option value="2">studio (Y floor)</option>
+        <option value="3">studio (Z floor)</option>
+      </select>
+    </div>
+  </details>
+  <span id="status">loading...</span>
+  <span id="help">keys 1, 2, 3: mesh in 1D, 2D, 3D</span>
+</div>
+<canvas id="canvas"></canvas>
+<script>
+// the file shown first: ?file=<url>, or the example selected
+const params = new URLSearchParams(location.search);
+const example = document.getElementById('example');
+const first = params.get('file') || example.value;
+if([...example.options].some((o) => o.value === first)) example.value = first;
+// the files an example includes, copied next to it
+const includes = {'t2.geo': ['../../tutorials/t1.geo']};
+const canvas = document.getElementById('canvas');
+const status = document.getElementById('status');
+
+var Module = {
+  canvas: canvas,
+  print: (t) => console.log(t),
+  printErr: (t) => console.warn(t),
+  onRuntimeInitialized: start,
+};
+
+let pending = false, studio = 0;
+function draw() {
+  if(pending) return;
+  pending = true;
+  studio++; // any studio frames still to come belong to the previous draw
+  requestAnimationFrame(() => {
+    pending = false;
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.round(canvas.clientWidth * dpr);
+    const h = Math.round(canvas.clientHeight * dpr);
+    if(canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    const t0 = performance.now();
+    Module.ccall('gmshWebDraw', 'number', ['number', 'number', 'number'],
+                 [w, h, dpr]);
+    status.textContent = `${w}x${h}, ${(performance.now() - t0).toFixed(1)} ms`;
+    // the studio shading converges while the view is still, a few of its
+    // frames at each animation frame
+    const run = studio;
+    const more = () => {
+      if(run !== studio || pending) return;
+      if(Module.ccall('gmshWebDrawStudio', 'number',
+                      ['number', 'number', 'number', 'number'],
+                      [w, h, dpr, 0.03]))
+        requestAnimationFrame(more);
+    };
+    requestAnimationFrame(more);
+  });
+}
+
+async function fetchFile(url) {
+  const data = new Uint8Array(await (await fetch(url)).arrayBuffer());
+  const name = '/' + url.split('/').pop();
+  Module.FS.writeFile(name, data);
+  return name;
+}
+
+async function openUrl(url) {
+  status.textContent = 'loading ' + url;
+  const name = await fetchFile(url);
+  for(const inc of includes[name.slice(1)] || []) await fetchFile(inc);
+  if(!Module.ccall('gmshWebOpen', 'number', ['string', 'number'], [name, 0]))
+    status.textContent = 'could not open ' + name;
+  Module.ccall('gmshWebResetView', null, [], []);
+  readOptions();
+  draw();
+}
+
+example.addEventListener('change', () => {
+  example.blur();
+  openUrl(example.value);
+});
+
+// the 1, 2 and 3 shortcuts of the graphical interface: mesh in that dimension
+const num = (n) => Module.ccall('gmshWebGetNumber', 'number', ['string'], [n]);
+window.addEventListener('keydown', (e) => {
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  const dim = {'1': 1, '2': 2, '3': 3}[e.key];
+  if(!dim) return;
+  status.textContent = `meshing in ${dim}D...`;
+  // let the status show before the (synchronous) meshing
+  setTimeout(() => {
+    const t0 = performance.now();
+    const ok = Module.ccall('gmshWebMesh', 'number', ['number'], [dim]);
+    const ms = (performance.now() - t0).toFixed(0);
+    const surf = num('Mesh.NbTriangles') + num('Mesh.NbQuadrangles');
+    const vol = num('Mesh.NbTetrahedra') + num('Mesh.NbHexahedra') +
+                num('Mesh.NbPrisms') + num('Mesh.NbPyramids');
+    draw();
+    // after the draw, which shows its own timing in the status
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      status.textContent = ok ?
+        `${dim}D mesh in ${ms} ms: ${num('Mesh.NbNodes')} nodes, ` +
+        `${surf} surface and ${vol} volume elements` : 'meshing failed';
+    }));
+  }, 0);
+});
+
+// the options of the panel: data-opt names an option, data-view an option of
+// every view; they show the values of the model opened last
+const setNum = (n, v) =>
+  Module.ccall('gmshWebSetNumber', 'number', ['string', 'number'], [n, v]);
+function views() { return num('PostProcessing.NbViews'); }
+function readOptions() {
+  for(const el of document.querySelectorAll('#panel [data-opt], #panel [data-view]')) {
+    // the view controls are greyed out when there is no view
+    if(el.dataset.view) el.disabled = !views();
+    const name = el.dataset.opt || (views() ? 'View[0].' + el.dataset.view : null);
+    if(!name) continue;
+    const v = num(name);
+    if(el.type === 'checkbox') el.checked = !!v;
+    else el.value = String(v);
+  }
+}
+for(const el of document.querySelectorAll('#panel [data-opt], #panel [data-view]')) {
+  el.addEventListener('input', () => {
+    const v = (el.type === 'checkbox') ? (el.checked ? 1 : 0) : Number(el.value);
+    if(el.dataset.opt) setNum(el.dataset.opt, v);
+    else for(let i = 0; i < views(); i++) setNum(`View[${i}].${el.dataset.view}`, v);
+    draw();
+  });
+}
+
+function start() {
+  Module.ccall('gmshWebInitialize', 'number', [], []);
+  openUrl(first);
+  window.addEventListener('resize', draw);
+}
+
+document.getElementById('file').addEventListener('change', async (e) => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const name = '/' + f.name;
+  Module.FS.writeFile(name, new Uint8Array(await f.arrayBuffer()));
+  Module.ccall('gmshWebOpen', 'number', ['string', 'number'], [name, 0]);
+  Module.ccall('gmshWebResetView', null, [], []);
+  readOptions();
+  draw();
+});
+
+// left drag: rotate; right drag or shift: pan; wheel: zoom at the cursor
+let last = null;
+canvas.addEventListener('pointerdown', (e) => {
+  last = {x: e.offsetX, y: e.offsetY, pan: e.button === 2 || e.shiftKey};
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', (e) => {
+  if(!last) return;
+  const args = [last.x, last.y, e.offsetX, e.offsetY];
+  Module.ccall(last.pan ? 'gmshWebPan' : 'gmshWebRotate', null,
+               ['number', 'number', 'number', 'number'], args);
+  last.x = e.offsetX;
+  last.y = e.offsetY;
+  draw();
+});
+canvas.addEventListener('pointerup', () => { last = null; });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  Module.ccall('gmshWebZoom', null, ['number', 'number', 'number'],
+               [Math.exp(-e.deltaY * 0.002), e.offsetX, e.offsetY]);
+  draw();
+}, {passive: false});
+canvas.addEventListener('dblclick', () => {
+  Module.ccall('gmshWebResetView', null, [], []);
+  draw();
+});
+</script>
+<script src="build/gmsh.js"></script>
+</body>
+</html>

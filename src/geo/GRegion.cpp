@@ -320,6 +320,19 @@ void GRegion::setBoundFaces(const std::vector<int> &tagFaces,
   }
 }
 
+void GRegion::setBoundFaces(const std::vector<GFace *> &faces,
+                            const std::vector<int> &signFaces)
+{
+  for(std::size_t i = 0; i < faces.size(); i++) {
+    GFace *gf = faces[i];
+    if(std::find(l_faces.begin(), l_faces.end(), gf) != l_faces.end())
+      continue;
+    l_faces.push_back(gf);
+    gf->addRegion(this);
+    l_dirs.push_back(i < signFaces.size() ? signFaces[i] : 1);
+  }
+}
+
 std::string GRegion::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;

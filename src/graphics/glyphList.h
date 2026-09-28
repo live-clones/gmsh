@@ -35,6 +35,10 @@ private:
 
 public:
   void add(double v) { _v.push_back(v); }
+  void add(const std::vector<double> &v)
+  {
+    _v.insert(_v.end(), v.begin(), v.end());
+  }
   bool operator==(const glyphToken &o) const { return _v == o._v; }
 };
 
@@ -62,7 +66,7 @@ private:
   std::vector<unsigned char> _gpu[GLYPH_NUMKINDS];
   // what is drawn a primitive at a time rather than as glyphs (flat arrows,
   // pyramids, segments, comets), recorded once as points, lines and
-  // triangles (see gmshRecordBegin())
+  // triangles (see glImmediate::recordBegin())
   VertexArray *_rec[3];
   glyphToken _token;
   // has the list been filled with this token? (a filled list can be empty)

@@ -4,12 +4,8 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string>
-#include <iostream>
-#include "GmshGlobal.h"
-#include <string.h>
 #include "drawContext.h"
 #include "glMatrix.h"
-#include "Trackball.h"
 #include "GModel.h"
 #include "Context.h"
 #include "glyphList.h"
@@ -20,7 +16,7 @@
 
 static int drawTicks(drawContext *ctx, int comp, double n, std::string &format,
                     std::string &label, double p1[3], double p2[3],
-                    double perp[3], int mikado, double pixelfact,
+                    double perp[3], double pixelfact,
                     double value_p1[3], double value_p2[3])
 {
   // draws n tick marks (in direction perp) and labels along the line p1->p2
@@ -219,8 +215,8 @@ void drawContext::drawAxes(int mode, double ticks[3], std::string format[3],
       perp[2] = -dir[1];
     }
     double value_end[3] = {value_xmax, value_ymax, value_zmax};
-    drawTicks(this, -1, ticks[0], format[0], label[0], orig, end, perp, mikado,
-             pixelfact, value_orig, value_end);
+    drawTicks(this, -1, ticks[0], format[0], label[0], orig, end, perp, pixelfact,
+             value_orig, value_end);
     drawAxis(xmin, ymin, zmin, xmax, ymax, zmax, ticks[0], mikado);
     return;
   }
@@ -236,15 +232,15 @@ void drawContext::drawAxes(int mode, double ticks[3], std::string format[3],
 
   int nx = (xmin != xmax) ?
              drawTicks(this, 0, ticks[0], format[0], label[0], orig, xx, dxm,
-                      mikado, pixelfact, value_orig, value_xx) :
+                      pixelfact, value_orig, value_xx) :
              0;
   int ny = (ymin != ymax) ?
              drawTicks(this, 1, ticks[1], format[1], label[1], orig, yy, dym,
-                      mikado, pixelfact, value_orig, value_yy) :
+                      pixelfact, value_orig, value_yy) :
              0;
   int nz = (zmin != zmax) ?
              drawTicks(this, 2, ticks[2], format[2], label[2], orig, zz, dzm,
-                      mikado, pixelfact, value_orig, value_zz) :
+                      pixelfact, value_orig, value_zz) :
              0;
 
   drawAxis(xmin, ymin, zmin, xmax, ymin, zmin, nx, mikado);

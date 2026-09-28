@@ -22,7 +22,6 @@ public:
 
 double length(XYZ &p);
 void normalize(XYZ &p);
-void rotate(const Quaternion &omega, XYZ axe);
 XYZ operator*(const double &a, const XYZ &T);
 XYZ operator+(const XYZ &L, const XYZ &R);
 XYZ operator-(const XYZ &L, const XYZ &R);
@@ -89,17 +88,6 @@ public:
   void upZ() { upAxis(2); }
   void tiltHeadLeft();
   void tiltHeadRight();
-};
-
-class mouseAndKeyboard {
-public:
-  bool button_left_down;
-  bool button_middle_down;
-  bool button_right_down;
-  int key;
-  int mode;
-  mouseAndKeyboard(){};
-  ~mouseAndKeyboard(){};
 };
 
 #endif

@@ -3880,10 +3880,10 @@ namespace gmsh { // Top-level functions
     // concatenated. Available keys are "Font" (possible values: "Times-Roman",
     // "Times-Bold", "Times-Italic", "Times-BoldItalic", "Helvetica", "Helvetica-
     // Bold", "Helvetica-Oblique", "Helvetica-BoldOblique", "Courier", "Courier-
-    // Bold", "Courier-Oblique", "Courier-BoldOblique", "Symbol", "ZapfDingbats",
-    // "Screen"), "FontSize" and "Align" (possible values: "Left" or "BottomLeft",
-    // "Center" or "BottomCenter", "Right" or "BottomRight", "TopLeft",
-    // "TopCenter", "TopRight", "CenterLeft", "CenterCenter", "CenterRight").
+    // Bold", "Courier-Oblique", "Courier-BoldOblique", "Symbol", "Screen"),
+    // "FontSize" and "Align" (possible values: "Left" or "BottomLeft", "Center" or
+    // "BottomCenter", "Right" or "BottomRight", "TopLeft", "TopCenter",
+    // "TopRight", "CenterLeft", "CenterCenter", "CenterRight").
     GMSH_API void addListDataString(const int tag,
                                     const std::vector<double> & coord,
                                     const std::vector<std::string> & data,
@@ -4124,6 +4124,17 @@ namespace gmsh { // Top-level functions
     // chapter of the Gmsh reference manual
     // (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).
     GMSH_API int run(const std::string & name);
+
+    // gmsh::plugin::load
+    //
+    // Load a plugin from the shared library `fileName'. Such a plugin is a class
+    // derived from GMSH_PostPlugin or GMSH_MeshPlugin, defined with the
+    // GMSH_PLUGIN() macro of the private API header Plugin.h, and built against
+    // the headers of the private API and the shared Gmsh library (see
+    // "examples/external_plugin"). The plugins in the directories listed in the
+    // environment variable GMSHPLUGINSHOME (separated like in PATH) are loaded
+    // when Gmsh is initialized.
+    GMSH_API void load(const std::string & fileName);
 
   } // namespace plugin
 

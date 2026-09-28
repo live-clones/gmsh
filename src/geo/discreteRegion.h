@@ -15,7 +15,9 @@ private:
   bool _geometry;
 
 public:
-  discreteRegion(GModel *model, int num);
+  // (geo: also create the volume in the GEO internals, so that scripts can
+  // refer to it)
+  discreteRegion(GModel *model, int num, bool geo = true);
   discreteRegion(GModel *model);
   virtual ~discreteRegion() {}
   virtual GeomType geomType() const { return DiscreteVolume; }

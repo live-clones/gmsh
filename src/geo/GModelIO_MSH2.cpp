@@ -607,7 +607,7 @@ int GModel::_readMSH2(const std::string &name)
         else
           _vertexMapCache = vertexMap;
       }
-      if(!PView::readMSHViewData(name, fp, binary, swap, &str[1])) {
+      if(!PView::readMSHViewData(name, fp, binary, swap, &str[1], version)) {
         fclose(fp);
         return 0;
       }

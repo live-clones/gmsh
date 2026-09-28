@@ -8,13 +8,9 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSummationPlugin();
-}
-
 class GMSH_SummationPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_SummationPlugin() {}
+  GMSH_SummationPlugin();
   std::string getName() const { return "Summation"; }
   std::string getShortHelp() const
   {
@@ -22,10 +18,6 @@ public:
            "and Component by Component)";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
-  int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

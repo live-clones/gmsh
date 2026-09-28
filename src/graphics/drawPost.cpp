@@ -16,7 +16,7 @@
 #include "Numeric.h"
 #include "VertexArray.h"
 #include "Context.h"
-#include <map>
+#include "ClipPlanes.h"
 #include <vector>
 #include <cstring>
 #include "gl2ps.h"
@@ -29,8 +29,7 @@ void clearGlyphArrays(PView *p) { glyphCache::clear(p); }
 // element mode and the glyphs are drawn with them off)
 static void setViewClipPlanes(PViewOptions *opt, bool on)
 {
-  for(int i = 0; i < 6; i++)
-    gmshClipPlaneOn(i, on && (opt->clip & (1 << i)));
+  clipPlanes::on(on ? opt->clip : 0);
 }
 
 // The cut elements of whole element mode, with the shader pipeline, are
@@ -39,8 +38,8 @@ static void setViewClipPlanes(PViewOptions *opt, bool on)
 // overlap); the fixed function pipeline draws them whole with the planes off.
 static void setViewClipOutside(PViewOptions *opt, bool on)
 {
-  if(gmshUseShaders())
-    gmshClipOutside(on);
+  if(glShader::enabled())
+    clipPlanes::outside(on);
   else
     setViewClipPlanes(opt, !on);
 }
@@ -62,49 +61,23 @@ static bool glyphIsKept(PViewOptions *opt, const float *p0,
                         const float *p1 = nullptr)
 {
   if(!clipGlyphs(opt)) return true;
-  CTX *ctx = CTX::instance();
-  for(int clip = 0; clip < 6; clip++) {
-    if(!(opt->clip & (1 << clip))) continue;
-    const double *e = ctx->clipPlane[clip];
-    double d0 = e[0] * p0[0] + e[1] * p0[1] + e[2] * p0[2] + e[3];
-    if(p1) {
-      double d1 = e[0] * p1[0] + e[1] * p1[1] + e[2] * p1[2] + e[3];
-      if(d0 < 0. && d1 < 0.) return false;
-    }
-    else if(d0 < 0.)
-      return false;
-  }
-  return true;
+  const float *ends[2] = {p0, p1};
+  return !clipPlanes::removesAll(opt->clip, p1 ? 2 : 1,
+                                 [&](int j, int k) { return ends[j][k]; });
 }
 
 // what the kept glyphs depend on
 static void addClipToken(glyphToken &tok, PViewOptions *opt)
 {
   tok.add(clipGlyphs(opt) ? opt->clip : 0);
-  if(!clipGlyphs(opt)) return;
   // what the planes keep of the elements
-  tok.add(CTX::instance()->clipOnlyVolume);
-  tok.add(CTX::instance()->clipOnlyDrawIntersectingVolume);
-  for(int i = 0; i < 6; i++)
-    if(opt->clip & (1 << i))
-      for(int j = 0; j < 4; j++) tok.add(CTX::instance()->clipPlane[i][j]);
+  if(clipGlyphs(opt)) tok.add(CTX::instance()->clipKey(opt->clip));
 }
 
 // the clipping planes off while the glyphs are drawn, and back on after
-class glyphClip {
-private:
-  PViewOptions *_opt;
-  bool _off;
-
+class glyphClip : public clipPlanes::off {
 public:
-  glyphClip(PViewOptions *opt) : _opt(opt), _off(clipGlyphs(opt))
-  {
-    if(_off) setViewClipPlanes(_opt, false);
-  }
-  ~glyphClip()
-  {
-    if(_off) setViewClipPlanes(_opt, true);
-  }
+  glyphClip(PViewOptions *opt) : clipPlanes::off(clipGlyphs(opt)) {}
 };
 
 // the value a point or a line of a view carries in its normal (what its
@@ -248,15 +221,15 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
     }
     // points sized by the value, one at a time
     for(int i = 0; i < va->getNumVertices(); i++) {
-      float *p = va->getVertexArray(3 * i);
-      if(!glyphIsKept(opt, p)) continue;
+      float *pt = va->getVertexArray(3 * i);
+      if(!glyphIsKept(opt, pt)) continue;
       gmshColor4ubv((const void *)va->getColorArray(4 * i));
       int s = (int)(opt->pointSize * normalValue(va, i));
       if(s) {
         gmshPointSize((float)s);
         gl2psPointSize((float)(s * CTX::instance()->print.epsPointSizeFactor));
         gmshBegin(GL_POINTS);
-        gmshVertex3d(p[0], p[1], p[2]);
+        gmshVertex3d(pt[0], pt[1], pt[2]);
         gmshEnd();
       }
     }
@@ -274,7 +247,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       gl2psEnable(GL2PS_LINE_STIPPLE);
     }
 
-    gmshDrawVertexArray(va, type,
+    drawVertexArray(va, type,
                         (useNormalArray ? GMSH_DRAW_LIGHT : 0) |
                           GMSH_DRAW_COLORS);
 
@@ -554,7 +527,7 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
 }
 
 static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
-                                   double **xyz, double **val)
+                                   double **xyz)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -578,7 +551,7 @@ static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
 }
 
 static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
-                                    double **xyz, double **val)
+                                    double **xyz)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -661,9 +634,9 @@ static void drawGlyphs(drawContext *ctx, PView *p)
         if(numbersNow)
           drawNumberGlyphs(ctx, p, el.numNodes, el.numComp, el.xyz, el.val);
         if(normal)
-          drawNormalVectorGlyphs(ctx, p, el.numNodes, el.xyz, el.val);
+          drawNormalVectorGlyphs(ctx, p, el.numNodes, el.xyz);
         else if(tangent)
-          drawTangentVectorGlyphs(ctx, p, el.numNodes, el.xyz, el.val);
+          drawTangentVectorGlyphs(ctx, p, el.numNodes, el.xyz);
       }
     }
   };
@@ -691,13 +664,13 @@ static bool eyeChanged(drawContext *ctx, PView *p)
 
 // does this view have to be blended with what is behind it? (a "fake"
 // transparency view is additive and unordered already)
-bool gmshViewIsTransparent(PView *p)
+bool viewIsTransparent(PView *p)
 {
   PViewOptions *opt = p->getOptions();
   if(!CTX::instance()->alpha) return false;
   // an alpha in the colormap, or the factor the shader applies
   return ColorTable_IsAlpha(&opt->colorTable) ||
-         (gmshUseShaders() && opt->transparency < 1.);
+         (glShader::enabled() && opt->transparency < 1.);
 }
 
 class drawPView {
@@ -725,7 +698,7 @@ public:
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
     if(!_ctx->isVisible(p)) return;
     if(_which != ALL_VIEWS &&
-       (gmshViewIsTransparent(p) != (_which == TRANSPARENT_VIEWS)))
+       (viewIsTransparent(p) != (_which == TRANSPARENT_VIEWS)))
       return;
 
     if(_ctx->render_mode == drawContext::GMSH_SELECT) {
@@ -762,12 +735,12 @@ public:
     CTX *c = CTX::instance();
     bool cutOnly = c->clipWholeElements && opt->clip &&
                    c->clipOnlyDrawIntersectingVolume;
-    bool whole = c->clipWholeElements && opt->clip && !cutOnly;
+    bool whole = clipGlyphs(opt); // whole element mode, other than cutOnly
     setViewClipPlanes(opt, !cutOnly);
 
     // a transparent view is blended back to front, unless the transparency
     // pass sums it in any order with its own blending
-    bool blend = gmshViewIsTransparent(p) && !glShader::transparentPass();
+    bool blend = viewIsTransparent(p) && !glShader::transparentPass();
     if(blend) {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glEnable(GL_BLEND);
@@ -785,18 +758,18 @@ public:
 
     // draw all the vertex arrays
     gmshLightTwoSide(false);
-    gmshAlphaScale(_ctx->inPickColorMode() ? 1. : opt->transparency, false);
+    glImmediate::alphaScale(_ctx->inPickColorMode() ? 1. : opt->transparency,
+                            false);
 
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
 
-    // the outlines of the cut elements, on the side the planes cut off
-    if(whole) {
-      setViewClipOutside(opt, true);
-      drawArrays(_ctx, p, p->va_clip_lines, GL_LINES,
-                 opt->light && opt->lightLines, true);
-      setViewClipOutside(opt, false);
-    }
+    // the outlines of the cut elements, on the side the planes cut off; in
+    // capping mode those of the section, clipped like everything else
+    if(whole) setViewClipOutside(opt, true);
+    drawArrays(_ctx, p, p->va_clip_lines, GL_LINES,
+               opt->light && opt->lightLines, true);
+    if(whole) setViewClipOutside(opt, false);
 
     if(opt->lightTwoSide) gmshLightTwoSide(true);
 
@@ -832,9 +805,9 @@ public:
       gmshDepthTest(true);
     }
 
-    gmshAlphaScale(1., false);
+    glImmediate::alphaScale(1., false);
 
-    for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
+    clipPlanes::on(0);
 
     if(_ctx->render_mode == drawContext::GMSH_SELECT) _ctx->unsetPickColor();
   }
@@ -884,7 +857,7 @@ public:
 void drawContext::drawPost()
 {
   // draw any plugin-specific stuff
-  if(GMSH_Plugin::draw) (*GMSH_Plugin::draw)(this);
+  if(GMSH_Plugin::preview) GMSH_Plugin::preview->drawPreview(this);
 
   if(PView::list.empty()) return;
 
@@ -916,10 +889,34 @@ void drawContext::drawPost()
   std::for_each(PView::list.begin(), PView::list.end(), drawPView(this, which));
 }
 
+// The surfaces of the opaque views in a picking pass that does not pick the
+// views, so that they hide what is behind them, as the mesh does (see
+// drawMeshOccluders()); nothing of a transparent view.
+void drawContext::drawPostOccluders()
+{
+  CTX *c = CTX::instance();
+  if(!c->post.draw) return;
+  unsetPickColor();
+  _pickState(false, 1.);
+  for(auto p : PView::list) {
+    PViewData *data = p->getData(true);
+    PViewOptions *opt = p->getOptions();
+    if(data->getDirty() || !data->getNumTimeSteps()) continue;
+    if(!opt->visible || opt->type != PViewOptions::Plot3D || !isVisible(p) ||
+       viewIsTransparent(p))
+      continue;
+    bool cutOnly = c->clipWholeElements && opt->clip &&
+                   c->clipOnlyDrawIntersectingVolume;
+    setViewClipPlanes(opt, !cutOnly);
+    drawVertexArray(p->va_triangles, GL_TRIANGLES, 0);
+  }
+  clipPlanes::on(0);
+}
+
 // whether any view would be drawn in the transparent pass
-bool gmshAnyViewIsTransparent()
+bool anyViewIsTransparent()
 {
   for(std::size_t i = 0; i < PView::list.size(); i++)
-    if(gmshViewIsTransparent(PView::list[i])) return true;
+    if(viewIsTransparent(PView::list[i])) return true;
   return false;
 }

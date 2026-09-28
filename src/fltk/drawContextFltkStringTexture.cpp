@@ -11,8 +11,7 @@
 // other engines do, and the baseline its descent (at the rasterised size)
 // above the bottom: the quad is lowered by as much, so that the anchor is on
 // the baseline
-drawContextFltkQueued::extent
-drawContextFltkStringTexture::measure(const element &e, double f)
+stringQueue::extent fltkStrings::measure(const element &e, double f)
 {
   gl_font(e.fontId, e.fontSize);
   double width = gl_width(e.text.c_str()) + 1;
@@ -23,9 +22,8 @@ drawContextFltkStringTexture::measure(const element &e, double f)
   return {(int)(width * f), h, descent, 0., (double)(h - descent)};
 }
 
-void drawContextFltkStringTexture::rasterise(const std::vector<slot> &slots,
-                                             double f, int w, int h,
-                                             unsigned char *image)
+void fltkStrings::rasterise(const std::vector<slot> &slots, double f, int w,
+                            int h, unsigned char *image)
 {
   Fl_Offscreen offscreen = fl_create_offscreen(w, h);
   fl_begin_offscreen(offscreen);

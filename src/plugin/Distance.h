@@ -10,10 +10,6 @@
 #include "Plugin.h"
 #include "MVertex.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterDistancePlugin();
-}
-
 class GMSH_DistancePlugin : public GMSH_PostPlugin {
 private:
   int _maxDim;
@@ -25,8 +21,6 @@ public:
   std::string getShortHelp() const { return "Compute distance to boundaries"; }
   std::string getHelp() const;
   std::string getAuthor() const { return "E. Marchandise"; }
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
   void printView(std::vector<GEntity *> &entities,
                  std::map<MVertex *, double> &distance_map);

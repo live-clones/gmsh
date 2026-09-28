@@ -3,6 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <array>
+#include <functional>
 #include "GmshConfig.h"
 #include "OctreePost.h"
 #include "CutBox.h"
@@ -13,31 +15,29 @@
 #include "drawContext.h"
 #endif
 
-StringXNumber CutBoxOptions_Number[] = {
-  {GMSH_FULLRC, "X0", GMSH_CutBoxPlugin::callbackX0, 0., ""},
-  {GMSH_FULLRC, "Y0", GMSH_CutBoxPlugin::callbackY0, 0., ""},
-  {GMSH_FULLRC, "Z0", GMSH_CutBoxPlugin::callbackZ0, 0., ""},
-  {GMSH_FULLRC, "X1", GMSH_CutBoxPlugin::callbackX1, 1., ""},
-  {GMSH_FULLRC, "Y1", GMSH_CutBoxPlugin::callbackY1, 0., ""},
-  {GMSH_FULLRC, "Z1", GMSH_CutBoxPlugin::callbackZ1, 0., ""},
-  {GMSH_FULLRC, "X2", GMSH_CutBoxPlugin::callbackX2, 0., ""},
-  {GMSH_FULLRC, "Y2", GMSH_CutBoxPlugin::callbackY2, 1., ""},
-  {GMSH_FULLRC, "Z2", GMSH_CutBoxPlugin::callbackZ2, 0., ""},
-  {GMSH_FULLRC, "X3", GMSH_CutBoxPlugin::callbackX3, 0., ""},
-  {GMSH_FULLRC, "Y3", GMSH_CutBoxPlugin::callbackY3, 0., ""},
-  {GMSH_FULLRC, "Z3", GMSH_CutBoxPlugin::callbackZ3, 1., ""},
-  {GMSH_FULLRC, "NumPointsU", GMSH_CutBoxPlugin::callbackU, 20, ""},
-  {GMSH_FULLRC, "NumPointsV", GMSH_CutBoxPlugin::callbackV, 20, ""},
-  {GMSH_FULLRC, "NumPointsW", GMSH_CutBoxPlugin::callbackW, 20, ""},
-  {GMSH_FULLRC, "ConnectPoints", GMSH_CutBoxPlugin::callbackConnect, 1, ""},
-  {GMSH_FULLRC, "Boundary", GMSH_CutBoxPlugin::callbackBoundary, 1, ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterCutBoxPlugin() { return new GMSH_CutBoxPlugin(); }
+GMSH_CutBoxPlugin::GMSH_CutBoxPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "X0", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Y0", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Z0", nullptr, 0., ""},
+                     {GMSH_FULLRC, "X1", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Y1", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Z1", nullptr, 0., ""},
+                     {GMSH_FULLRC, "X2", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Y2", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Z2", nullptr, 0., ""},
+                     {GMSH_FULLRC, "X3", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Y3", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Z3", nullptr, 1., ""},
+                     {GMSH_FULLRC, "NumPointsU", nullptr, 20, ""},
+                     {GMSH_FULLRC, "NumPointsV", nullptr, 20, ""},
+                     {GMSH_FULLRC, "NumPointsW", nullptr, 20, ""},
+                     {GMSH_FULLRC, "ConnectPoints", nullptr, 1, ""},
+                     {GMSH_FULLRC, "Boundary", nullptr, 1, ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
+{
 }
 
-void GMSH_CutBoxPlugin::draw(void *context)
+void GMSH_CutBoxPlugin::drawPreview(void *context)
 {
 #if defined(HAVE_OPENGL)
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
@@ -59,7 +59,7 @@ void GMSH_CutBoxPlugin::draw(void *context)
     ctx->drawString("(X3, Y3, Z3)", p[0], p[1], p[2]);
   }
 
-  if(CutBoxOptions_Number[15].def) {
+  if(option(15)) {
     gmshBegin(GL_LINES);
     // UV
     for(int i = 0; i < getNbU(); ++i) {
@@ -168,128 +168,23 @@ void GMSH_CutBoxPlugin::draw(void *context)
 #endif
 }
 
-double GMSH_CutBoxPlugin::callback(int num, int action, double value,
-                                   double *opt, double step, double min,
-                                   double max)
+bool GMSH_CutBoxPlugin::optionCallback(int iopt, int num, int action,
+                                       double &value)
 {
-  switch(action) { // configure the input field
-  case 1: return step;
-  case 2: return min;
-  case 3: return max;
-  default: break;
+  CTX *c = CTX::instance();
+  if(iopt < 12) { // coordinates of the 4 points
+    int d = iopt % 3;
+    return sliderOption(iopt, action, value, c->lc / 100., c->min[d],
+                        c->max[d]);
   }
-  *opt = value;
-  GMSH_Plugin::setDrawFunction(draw);
-  return 0.;
-}
-
-double GMSH_CutBoxPlugin::callbackX0(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[0].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[0],
-                  CTX::instance()->max[0]);
-}
-
-double GMSH_CutBoxPlugin::callbackY0(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[1].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[1],
-                  CTX::instance()->max[1]);
-}
-
-double GMSH_CutBoxPlugin::callbackZ0(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[2].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[2],
-                  CTX::instance()->max[2]);
-}
-
-double GMSH_CutBoxPlugin::callbackX1(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[3].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[0],
-                  CTX::instance()->max[0]);
-}
-
-double GMSH_CutBoxPlugin::callbackY1(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[4].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[1],
-                  CTX::instance()->max[1]);
-}
-
-double GMSH_CutBoxPlugin::callbackZ1(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[5].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[2],
-                  CTX::instance()->max[2]);
-}
-
-double GMSH_CutBoxPlugin::callbackX2(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[6].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[0],
-                  CTX::instance()->max[0]);
-}
-
-double GMSH_CutBoxPlugin::callbackY2(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[7].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[1],
-                  CTX::instance()->max[1]);
-}
-
-double GMSH_CutBoxPlugin::callbackZ2(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[8].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[2],
-                  CTX::instance()->max[2]);
-}
-
-double GMSH_CutBoxPlugin::callbackX3(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[9].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[0],
-                  CTX::instance()->max[0]);
-}
-
-double GMSH_CutBoxPlugin::callbackY3(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[10].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[1],
-                  CTX::instance()->max[1]);
-}
-
-double GMSH_CutBoxPlugin::callbackZ3(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[11].def,
-                  CTX::instance()->lc / 100., CTX::instance()->min[2],
-                  CTX::instance()->max[2]);
-}
-
-double GMSH_CutBoxPlugin::callbackU(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[12].def, 1, 1, 200);
-}
-
-double GMSH_CutBoxPlugin::callbackV(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[13].def, 1, 1, 200);
-}
-
-double GMSH_CutBoxPlugin::callbackW(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[14].def, 1, 1, 200);
-}
-
-double GMSH_CutBoxPlugin::callbackConnect(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[15].def, 1, 0, 1);
-}
-
-double GMSH_CutBoxPlugin::callbackBoundary(int num, int action, double value)
-{
-  return callback(num, action, value, &CutBoxOptions_Number[16].def, 1, 0, 1);
+  switch(iopt) {
+  case 12:
+  case 13:
+  case 14: return sliderOption(iopt, action, value, 1, 1, 200);
+  case 15:
+  case 16: return sliderOption(iopt, action, value, 1, 0, 1);
+  default: return false;
+  }
 }
 
 std::string GMSH_CutBoxPlugin::getHelp() const
@@ -311,21 +206,11 @@ std::string GMSH_CutBoxPlugin::getHelp() const
          "Plugin(CutBox) creates one new list-based view.";
 }
 
-int GMSH_CutBoxPlugin::getNbOptions() const
-{
-  return sizeof(CutBoxOptions_Number) / sizeof(StringXNumber);
-}
+int GMSH_CutBoxPlugin::getNbU() { return (int)option(12); }
 
-StringXNumber *GMSH_CutBoxPlugin::getOption(int iopt)
-{
-  return &CutBoxOptions_Number[iopt];
-}
+int GMSH_CutBoxPlugin::getNbV() { return (int)option(13); }
 
-int GMSH_CutBoxPlugin::getNbU() { return (int)CutBoxOptions_Number[12].def; }
-
-int GMSH_CutBoxPlugin::getNbV() { return (int)CutBoxOptions_Number[13].def; }
-
-int GMSH_CutBoxPlugin::getNbW() { return (int)CutBoxOptions_Number[14].def; }
+int GMSH_CutBoxPlugin::getNbW() { return (int)option(14); }
 
 void GMSH_CutBoxPlugin::getPoint(int iU, int iV, int iW, double *X)
 {
@@ -333,689 +218,133 @@ void GMSH_CutBoxPlugin::getPoint(int iU, int iV, int iW, double *X)
   double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
   double w = getNbW() > 1 ? (double)iW / (double)(getNbW() - 1.) : 0.;
 
-  X[0] = CutBoxOptions_Number[0].def +
-         u * (CutBoxOptions_Number[3].def - CutBoxOptions_Number[0].def) +
-         v * (CutBoxOptions_Number[6].def - CutBoxOptions_Number[0].def) +
-         w * (CutBoxOptions_Number[9].def - CutBoxOptions_Number[0].def);
-  X[1] = CutBoxOptions_Number[1].def +
-         u * (CutBoxOptions_Number[4].def - CutBoxOptions_Number[1].def) +
-         v * (CutBoxOptions_Number[7].def - CutBoxOptions_Number[1].def) +
-         w * (CutBoxOptions_Number[10].def - CutBoxOptions_Number[1].def);
-  X[2] = CutBoxOptions_Number[2].def +
-         u * (CutBoxOptions_Number[5].def - CutBoxOptions_Number[2].def) +
-         v * (CutBoxOptions_Number[8].def - CutBoxOptions_Number[2].def) +
-         w * (CutBoxOptions_Number[11].def - CutBoxOptions_Number[2].def);
+  X[0] = option(0) + u * (option(3) - option(0)) + v * (option(6) - option(0)) +
+         w * (option(9) - option(0));
+  X[1] = option(1) + u * (option(4) - option(1)) + v * (option(7) - option(1)) +
+         w * (option(10) - option(1));
+  X[2] = option(2) + u * (option(5) - option(2)) + v * (option(8) - option(2)) +
+         w * (option(11) - option(2));
 }
 
 void GMSH_CutBoxPlugin::addInView(int connect, int boundary, int numsteps,
                                   int nbcomp, double ****pnts, double ****vals,
-                                  std::vector<double> &P, int *nP,
-                                  std::vector<double> &L, int *nL,
-                                  std::vector<double> &Q, int *nQ,
-                                  std::vector<double> &H, int *nH)
+                                  PViewDataList *data)
 {
-  if(!connect ||
-     (getNbU() == 1 && getNbV() == 1 && getNbW() == 1)) { // generate points
-    if(!boundary)
-      for(int i = 0; i < getNbU(); ++i) {
-        for(int j = 0; j < getNbV(); ++j) {
-          for(int m = 0; m < getNbW(); ++m) {
-            P.push_back(pnts[i][j][m][0]);
-            P.push_back(pnts[i][j][m][1]);
-            P.push_back(pnts[i][j][m][2]);
-            (*nP)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                P.push_back(vals[i][j][m][nbcomp * k + l]);
-            }
-          }
-        }
+  typedef std::array<int, 3> ijk;
+  // an element on the grid points p: all the x, the y, the z, then the values
+  // of each step, node after node
+  auto add = [&](int type, const std::vector<ijk> &p) {
+    std::vector<double> &list = *data->incrementList(nbcomp, type);
+    for(int c = 0; c < 3; c++)
+      for(auto &q : p) list.push_back(pnts[q[0]][q[1]][q[2]][c]);
+    for(int k = 0; k < numsteps; ++k)
+      for(auto &q : p)
+        for(int l = 0; l < nbcomp; ++l)
+          list.push_back(vals[q[0]][q[1]][q[2]][nbcomp * k + l]);
+  };
+  int nu = getNbU(), nv = getNbV(), nw = getNbW();
+  int u = nu - 1, v = nv - 1, w = nw - 1; // the last points
+
+  if(!connect || (nu == 1 && nv == 1 && nw == 1)) { // points
+    if(!boundary) {
+      for(int i = 0; i < nu; ++i)
+        for(int j = 0; j < nv; ++j)
+          for(int m = 0; m < nw; ++m) add(TYPE_PNT, {{i, j, m}});
+      return;
+    }
+    for(int i = 0; i < nu; ++i) {
+      for(int j = 0; j < nv; ++j) {
+        add(TYPE_PNT, {{i, j, 0}});
+        add(TYPE_PNT, {{i, j, w}});
       }
+    }
+    for(int i = 0; i < nu; ++i) {
+      for(int j = 0; j < nw; ++j) {
+        add(TYPE_PNT, {{i, 0, j}});
+        add(TYPE_PNT, {{i, v, j}});
+      }
+    }
+    for(int i = 0; i < nv; ++i) {
+      for(int j = 0; j < nw; ++j) {
+        add(TYPE_PNT, {{0, i, j}});
+        add(TYPE_PNT, {{u, i, j}});
+      }
+    }
+    return;
+  }
+
+  // a line of points along one direction: lines, or its 2 ends
+  auto line = [&](int n, const std::function<ijk(int)> &q) {
+    if(!boundary)
+      for(int i = 0; i < n - 1; ++i) add(TYPE_LIN, {q(i), q(i + 1)});
     else {
-      for(int i = 0; i < getNbU(); ++i) {
-        for(int j = 0; j < getNbV(); ++j) {
-          P.push_back(pnts[i][j][0][0]);
-          P.push_back(pnts[i][j][0][1]);
-          P.push_back(pnts[i][j][0][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[i][j][0][nbcomp * k + l]);
-          }
-          P.push_back(pnts[i][j][getNbW() - 1][0]);
-          P.push_back(pnts[i][j][getNbW() - 1][1]);
-          P.push_back(pnts[i][j][getNbW() - 1][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[i][j][getNbW() - 1][nbcomp * k + l]);
-          }
-        }
-      } // end UV planes
-      for(int i = 0; i < getNbU(); ++i) {
-        for(int j = 0; j < getNbW(); ++j) {
-          P.push_back(pnts[i][0][j][0]);
-          P.push_back(pnts[i][0][j][1]);
-          P.push_back(pnts[i][0][j][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[i][0][j][nbcomp * k + l]);
-          }
-          P.push_back(pnts[i][getNbV() - 1][j][0]);
-          P.push_back(pnts[i][getNbV() - 1][j][1]);
-          P.push_back(pnts[i][getNbV() - 1][j][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[i][getNbV() - 1][j][nbcomp * k + l]);
-          }
-        }
-      } // end UW planes
-      for(int i = 0; i < getNbV(); ++i) {
-        for(int j = 0; j < getNbW(); ++j) {
-          P.push_back(pnts[0][i][j][0]);
-          P.push_back(pnts[0][i][j][1]);
-          P.push_back(pnts[0][i][j][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[0][i][j][nbcomp * k + l]);
-          }
-          P.push_back(pnts[getNbU() - 1][i][j][0]);
-          P.push_back(pnts[getNbU() - 1][i][j][1]);
-          P.push_back(pnts[getNbU() - 1][i][j][2]);
-          (*nP)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              P.push_back(vals[getNbU() - 1][i][j][nbcomp * k + l]);
-          }
-        }
-      } // end VW planes
+      add(TYPE_PNT, {q(0)});
+      add(TYPE_PNT, {q(n - 1)});
+    }
+  };
+  if(nu == 1 && nv == 1) return line(nw, [](int i) { return ijk{0, 0, i}; });
+  if(nu == 1 && nw == 1) return line(nv, [](int i) { return ijk{0, i, 0}; });
+  if(nv == 1 && nw == 1) return line(nu, [](int i) { return ijk{i, 0, 0}; });
+
+  // a plane of points along two directions (a, b): quadrangles, or the lines
+  // of its boundary
+  auto plane = [&](int na, int nb, const std::function<ijk(int, int)> &q) {
+    if(!boundary) {
+      for(int i = 0; i < na - 1; ++i)
+        for(int j = 0; j < nb - 1; ++j)
+          add(TYPE_QUA, {q(i, j), q(i + 1, j), q(i + 1, j + 1), q(i, j + 1)});
+      return;
+    }
+    for(int i = 0; i < na - 1; ++i) {
+      add(TYPE_LIN, {q(i, 0), q(i + 1, 0)});
+      add(TYPE_LIN, {q(i, nb - 1), q(i + 1, nb - 1)});
+    }
+    for(int i = 0; i < nb - 1; ++i) {
+      add(TYPE_LIN, {q(0, i), q(0, i + 1)});
+      add(TYPE_LIN, {q(na - 1, i), q(na - 1, i + 1)});
+    }
+  };
+  if(nu == 1) return plane(nv, nw, [](int i, int j) { return ijk{0, i, j}; });
+  if(nv == 1) return plane(nu, nw, [](int i, int j) { return ijk{i, 0, j}; });
+  if(nw == 1) return plane(nu, nv, [](int i, int j) { return ijk{i, j, 0}; });
+
+  if(!boundary) { // hexahedra in the box
+    for(int i = 0; i < u; ++i)
+      for(int j = 0; j < v; ++j)
+        for(int m = 0; m < w; ++m)
+          add(TYPE_HEX, {{i, j, m},
+                         {i + 1, j, m},
+                         {i + 1, j + 1, m},
+                         {i, j + 1, m},
+                         {i, j, m + 1},
+                         {i + 1, j, m + 1},
+                         {i + 1, j + 1, m + 1},
+                         {i, j + 1, m + 1}});
+    return;
+  }
+  // quadrangles on the boundary of the box, with exterior normals
+  for(int i = 0; i < u; ++i) {
+    for(int j = 0; j < v; ++j) {
+      add(TYPE_QUA,
+          {{i, j, 0}, {i, j + 1, 0}, {i + 1, j + 1, 0}, {i + 1, j, 0}});
+      add(TYPE_QUA,
+          {{i, j, w}, {i + 1, j, w}, {i + 1, j + 1, w}, {i, j + 1, w}});
     }
   }
-  else { // generate lines or quads
-    if(getNbU() == 1 && getNbV() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbW() - 1; ++i) {
-          L.push_back(pnts[0][0][i][0]);
-          L.push_back(pnts[0][0][i + 1][0]);
-          L.push_back(pnts[0][0][i][1]);
-          L.push_back(pnts[0][0][i + 1][1]);
-          L.push_back(pnts[0][0][i][2]);
-          L.push_back(pnts[0][0][i + 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i + 1][nbcomp * k + l]);
-          }
-        }
-      else {
-        P.push_back(pnts[0][0][0][0]);
-        P.push_back(pnts[0][0][0][1]);
-        P.push_back(pnts[0][0][0][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[0][0][0][nbcomp * k + l]);
-        }
-        P.push_back(pnts[0][0][getNbW() - 1][0]);
-        P.push_back(pnts[0][0][getNbW() - 1][1]);
-        P.push_back(pnts[0][0][getNbW() - 1][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[0][0][getNbW() - 1][nbcomp * k + l]);
-        }
-      }
+  for(int i = 0; i < u; ++i) {
+    for(int j = 0; j < w; ++j) {
+      add(TYPE_QUA,
+          {{i, 0, j}, {i + 1, 0, j}, {i + 1, 0, j + 1}, {i, 0, j + 1}});
+      add(TYPE_QUA,
+          {{i, v, j}, {i, v, j + 1}, {i + 1, v, j + 1}, {i + 1, v, j}});
     }
-    else if(getNbU() == 1 && getNbW() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbV() - 1; ++i) {
-          L.push_back(pnts[0][i][0][0]);
-          L.push_back(pnts[0][i + 1][0][0]);
-          L.push_back(pnts[0][i][0][1]);
-          L.push_back(pnts[0][i + 1][0][1]);
-          L.push_back(pnts[0][i][0][2]);
-          L.push_back(pnts[0][i + 1][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i + 1][0][nbcomp * k + l]);
-          }
-        }
-      else {
-        P.push_back(pnts[0][0][0][0]);
-        P.push_back(pnts[0][0][0][1]);
-        P.push_back(pnts[0][0][0][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[0][0][0][nbcomp * k + l]);
-        }
-        P.push_back(pnts[0][getNbV() - 1][0][0]);
-        P.push_back(pnts[0][getNbV() - 1][0][1]);
-        P.push_back(pnts[0][getNbV() - 1][0][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[0][getNbV() - 1][0][nbcomp * k + l]);
-        }
-      }
-    }
-    else if(getNbV() == 1 && getNbW() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          L.push_back(pnts[i][0][0][0]);
-          L.push_back(pnts[i + 1][0][0][0]);
-          L.push_back(pnts[i][0][0][1]);
-          L.push_back(pnts[i + 1][0][0][1]);
-          L.push_back(pnts[i][0][0][2]);
-          L.push_back(pnts[i + 1][0][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i][0][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i + 1][0][0][nbcomp * k + l]);
-          }
-        }
-      else {
-        P.push_back(pnts[0][0][0][0]);
-        P.push_back(pnts[0][0][0][1]);
-        P.push_back(pnts[0][0][0][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[0][0][0][nbcomp * k + l]);
-        }
-        P.push_back(pnts[getNbU() - 1][0][0][0]);
-        P.push_back(pnts[getNbU() - 1][0][0][1]);
-        P.push_back(pnts[getNbU() - 1][0][0][2]);
-        (*nP)++;
-        for(int k = 0; k < numsteps; ++k) {
-          for(int l = 0; l < nbcomp; ++l)
-            P.push_back(vals[getNbU() - 1][0][0][nbcomp * k + l]);
-        }
-      }
-    }
-    else if(getNbU() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbV() - 1; ++i) {
-          for(int j = 0; j < getNbW() - 1; ++j) {
-            Q.push_back(pnts[0][i][j][0]);
-            Q.push_back(pnts[0][i + 1][j][0]);
-            Q.push_back(pnts[0][i + 1][j + 1][0]);
-            Q.push_back(pnts[0][i][j + 1][0]);
-            Q.push_back(pnts[0][i][j][1]);
-            Q.push_back(pnts[0][i + 1][j][1]);
-            Q.push_back(pnts[0][i + 1][j + 1][1]);
-            Q.push_back(pnts[0][i][j + 1][1]);
-            Q.push_back(pnts[0][i][j][2]);
-            Q.push_back(pnts[0][i + 1][j][2]);
-            Q.push_back(pnts[0][i + 1][j + 1][2]);
-            Q.push_back(pnts[0][i][j + 1][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i + 1][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i + 1][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i][j + 1][nbcomp * k + l]);
-            }
-          }
-        }
-      else {
-        for(int i = 0; i < getNbV() - 1; ++i) {
-          L.push_back(pnts[0][i][0][0]);
-          L.push_back(pnts[0][i + 1][0][0]);
-          L.push_back(pnts[0][i][0][1]);
-          L.push_back(pnts[0][i + 1][0][1]);
-          L.push_back(pnts[0][i][0][2]);
-          L.push_back(pnts[0][i + 1][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i + 1][0][nbcomp * k + l]);
-          }
-          L.push_back(pnts[0][i][getNbW() - 1][0]);
-          L.push_back(pnts[0][i + 1][getNbW() - 1][0]);
-          L.push_back(pnts[0][i][getNbW() - 1][1]);
-          L.push_back(pnts[0][i + 1][getNbW() - 1][1]);
-          L.push_back(pnts[0][i][getNbW() - 1][2]);
-          L.push_back(pnts[0][i + 1][getNbW() - 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i][getNbW()][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i + 1][getNbW()][nbcomp * k + l]);
-          }
-        }
-        for(int i = 0; i < getNbW() - 1; ++i) {
-          L.push_back(pnts[0][0][i][0]);
-          L.push_back(pnts[0][0][i + 1][0]);
-          L.push_back(pnts[0][0][i][1]);
-          L.push_back(pnts[0][0][i + 1][1]);
-          L.push_back(pnts[0][0][i][2]);
-          L.push_back(pnts[0][0][i + 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i + 1][nbcomp * k + l]);
-          }
-          L.push_back(pnts[0][getNbV() - 1][i][0]);
-          L.push_back(pnts[0][getNbV() - 1][i + 1][0]);
-          L.push_back(pnts[0][getNbV() - 1][i][1]);
-          L.push_back(pnts[0][getNbV() - 1][i + 1][1]);
-          L.push_back(pnts[0][getNbV() - 1][i][2]);
-          L.push_back(pnts[0][getNbV() - 1][i + 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][getNbV() - 1][i][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][getNbV() - 1][i + 1][nbcomp * k + l]);
-          }
-        }
-      }
-    }
-    else if(getNbV() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          for(int j = 0; j < getNbW() - 1; ++j) {
-            Q.push_back(pnts[i][0][j][0]);
-            Q.push_back(pnts[i + 1][0][j][0]);
-            Q.push_back(pnts[i + 1][0][j + 1][0]);
-            Q.push_back(pnts[i][0][j + 1][0]);
-            Q.push_back(pnts[i][0][j][1]);
-            Q.push_back(pnts[i + 1][0][j][1]);
-            Q.push_back(pnts[i + 1][0][j + 1][1]);
-            Q.push_back(pnts[i][0][j + 1][1]);
-            Q.push_back(pnts[i][0][j][2]);
-            Q.push_back(pnts[i + 1][0][j][2]);
-            Q.push_back(pnts[i + 1][0][j + 1][2]);
-            Q.push_back(pnts[i][0][j + 1][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][0][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][0][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][0][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][0][j + 1][nbcomp * k + l]);
-            }
-          }
-        }
-      else {
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          L.push_back(pnts[i][0][0][0]);
-          L.push_back(pnts[i + 1][0][0][0]);
-          L.push_back(pnts[i][0][0][1]);
-          L.push_back(pnts[i + 1][0][0][1]);
-          L.push_back(pnts[i][0][0][2]);
-          L.push_back(pnts[i + 1][0][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i][0][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i + 1][0][0][nbcomp * k + l]);
-          }
-          L.push_back(pnts[i][0][getNbW() - 1][0]);
-          L.push_back(pnts[i + 1][0][getNbW() - 1][0]);
-          L.push_back(pnts[i][0][getNbW() - 1][1]);
-          L.push_back(pnts[i + 1][0][getNbW() - 1][1]);
-          L.push_back(pnts[i][0][getNbW() - 1][2]);
-          L.push_back(pnts[i + 1][0][getNbW() - 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i][0][getNbW() - 1][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i + 1][0][getNbW() - 1][nbcomp * k + l]);
-          }
-        }
-        for(int i = 0; i < getNbW() - 1; ++i) {
-          L.push_back(pnts[0][0][i][0]);
-          L.push_back(pnts[0][0][i + 1][0]);
-          L.push_back(pnts[0][0][i][1]);
-          L.push_back(pnts[0][0][i + 1][1]);
-          L.push_back(pnts[0][0][i][2]);
-          L.push_back(pnts[0][0][i + 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][0][i + 1][nbcomp * k + l]);
-          }
-          L.push_back(pnts[getNbU() - 1][0][i][0]);
-          L.push_back(pnts[getNbU() - 1][0][i + 1][0]);
-          L.push_back(pnts[getNbU() - 1][0][i][1]);
-          L.push_back(pnts[getNbU() - 1][0][i + 1][1]);
-          L.push_back(pnts[getNbU() - 1][0][i][2]);
-          L.push_back(pnts[getNbU() - 1][0][i + 1][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[getNbU() - 1][0][i][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[getNbU() - 1][0][i + 1][nbcomp * k + l]);
-          }
-        }
-      }
-    }
-    else if(getNbW() == 1) {
-      if(!boundary)
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          for(int j = 0; j < getNbV() - 1; ++j) {
-            Q.push_back(pnts[i][j][0][0]);
-            Q.push_back(pnts[i + 1][j][0][0]);
-            Q.push_back(pnts[i + 1][j + 1][0][0]);
-            Q.push_back(pnts[i][j + 1][0][0]);
-            Q.push_back(pnts[i][j][0][1]);
-            Q.push_back(pnts[i + 1][j][0][1]);
-            Q.push_back(pnts[i + 1][j + 1][0][1]);
-            Q.push_back(pnts[i][j + 1][0][1]);
-            Q.push_back(pnts[i][j][0][2]);
-            Q.push_back(pnts[i + 1][j][0][2]);
-            Q.push_back(pnts[i + 1][j + 1][0][2]);
-            Q.push_back(pnts[i][j + 1][0][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j + 1][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j + 1][0][nbcomp * k + l]);
-            }
-          }
-        }
-      else {
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          L.push_back(pnts[i][0][0][0]);
-          L.push_back(pnts[i + 1][0][0][0]);
-          L.push_back(pnts[i][0][0][1]);
-          L.push_back(pnts[i + 1][0][0][1]);
-          L.push_back(pnts[i][0][0][2]);
-          L.push_back(pnts[i + 1][0][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i][0][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i + 1][0][0][nbcomp * k + l]);
-          }
-          L.push_back(pnts[i][getNbV() - 1][0][0]);
-          L.push_back(pnts[i + 1][getNbV() - 1][0][0]);
-          L.push_back(pnts[i][getNbV() - 1][0][1]);
-          L.push_back(pnts[i + 1][getNbV() - 1][0][1]);
-          L.push_back(pnts[i][getNbV() - 1][0][2]);
-          L.push_back(pnts[i + 1][getNbV() - 1][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i][getNbV() - 1][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[i + 1][getNbV() - 1][0][nbcomp * k + l]);
-          }
-        }
-        for(int i = 0; i < getNbV() - 1; ++i) {
-          L.push_back(pnts[0][i][0][0]);
-          L.push_back(pnts[0][i + 1][0][0]);
-          L.push_back(pnts[0][i][0][1]);
-          L.push_back(pnts[0][i + 1][0][1]);
-          L.push_back(pnts[0][i][0][2]);
-          L.push_back(pnts[0][i + 1][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[0][i + 1][0][nbcomp * k + l]);
-          }
-          L.push_back(pnts[getNbU() - 1][i][0][0]);
-          L.push_back(pnts[getNbU() - 1][i + 1][0][0]);
-          L.push_back(pnts[getNbU() - 1][i][0][1]);
-          L.push_back(pnts[getNbU() - 1][i + 1][0][1]);
-          L.push_back(pnts[getNbU() - 1][i][0][2]);
-          L.push_back(pnts[getNbU() - 1][i + 1][0][2]);
-          (*nL)++;
-          for(int k = 0; k < numsteps; ++k) {
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[getNbU() - 1][i][0][nbcomp * k + l]);
-            for(int l = 0; l < nbcomp; ++l)
-              L.push_back(vals[getNbU() - 1][i + 1][0][nbcomp * k + l]);
-          }
-        }
-      }
-    }
-    // from here, general case
-    else {
-      if(!boundary) { // Hexaedra in the box
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          for(int j = 0; j < getNbV() - 1; ++j) {
-            for(int m = 0; m < getNbW() - 1; ++m) {
-              H.push_back(pnts[i][j][m][0]);
-              H.push_back(pnts[i + 1][j][m][0]);
-              H.push_back(pnts[i + 1][j + 1][m][0]);
-              H.push_back(pnts[i][j + 1][m][0]);
-              H.push_back(pnts[i][j][m + 1][0]);
-              H.push_back(pnts[i + 1][j][m + 1][0]);
-              H.push_back(pnts[i + 1][j + 1][m + 1][0]);
-              H.push_back(pnts[i][j + 1][m + 1][0]);
-
-              H.push_back(pnts[i][j][m][1]);
-              H.push_back(pnts[i + 1][j][m][1]);
-              H.push_back(pnts[i + 1][j + 1][m][1]);
-              H.push_back(pnts[i][j + 1][m][1]);
-              H.push_back(pnts[i][j][m + 1][1]);
-              H.push_back(pnts[i + 1][j][m + 1][1]);
-              H.push_back(pnts[i + 1][j + 1][m + 1][1]);
-              H.push_back(pnts[i][j + 1][m + 1][1]);
-
-              H.push_back(pnts[i][j][m][2]);
-              H.push_back(pnts[i + 1][j][m][2]);
-              H.push_back(pnts[i + 1][j + 1][m][2]);
-              H.push_back(pnts[i][j + 1][m][2]);
-              H.push_back(pnts[i][j][m + 1][2]);
-              H.push_back(pnts[i + 1][j][m + 1][2]);
-              H.push_back(pnts[i + 1][j + 1][m + 1][2]);
-              H.push_back(pnts[i][j + 1][m + 1][2]);
-              (*nH)++;
-
-              for(int k = 0; k < numsteps; ++k) {
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i][j][m][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i + 1][j][m][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i + 1][j + 1][m][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i][j + 1][m][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i][j][m + 1][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i + 1][j][m + 1][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i + 1][j + 1][m + 1][nbcomp * k + l]);
-                for(int l = 0; l < nbcomp; ++l)
-                  H.push_back(vals[i][j + 1][m + 1][nbcomp * k + l]);
-              }
-            }
-          }
-        }
-      }
-      else { // Quadrangles at boundary of the box + forcing exterior normals
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          for(int j = 0; j < getNbV() - 1; ++j) {
-            Q.push_back(pnts[i][j][0][0]);
-            Q.push_back(pnts[i][j + 1][0][0]);
-            Q.push_back(pnts[i + 1][j + 1][0][0]);
-            Q.push_back(pnts[i + 1][j][0][0]);
-            Q.push_back(pnts[i][j][0][1]);
-            Q.push_back(pnts[i][j + 1][0][1]);
-            Q.push_back(pnts[i + 1][j + 1][0][1]);
-            Q.push_back(pnts[i + 1][j][0][1]);
-            Q.push_back(pnts[i][j][0][2]);
-            Q.push_back(pnts[i][j + 1][0][2]);
-            Q.push_back(pnts[i + 1][j + 1][0][2]);
-            Q.push_back(pnts[i + 1][j][0][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j + 1][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j + 1][0][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j][0][nbcomp * k + l]);
-            }
-            Q.push_back(pnts[i][j][getNbW() - 1][0]);
-            Q.push_back(pnts[i + 1][j][getNbW() - 1][0]);
-            Q.push_back(pnts[i + 1][j + 1][getNbW() - 1][0]);
-            Q.push_back(pnts[i][j + 1][getNbW() - 1][0]);
-            Q.push_back(pnts[i][j][getNbW() - 1][1]);
-            Q.push_back(pnts[i + 1][j][getNbW() - 1][1]);
-            Q.push_back(pnts[i + 1][j + 1][getNbW() - 1][1]);
-            Q.push_back(pnts[i][j + 1][getNbW() - 1][1]);
-            Q.push_back(pnts[i][j][getNbW() - 1][2]);
-            Q.push_back(pnts[i + 1][j][getNbW() - 1][2]);
-            Q.push_back(pnts[i + 1][j + 1][getNbW() - 1][2]);
-            Q.push_back(pnts[i][j + 1][getNbW() - 1][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j][getNbW() - 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j][getNbW() - 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][j + 1][getNbW() - 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][j + 1][getNbW() - 1][nbcomp * k + l]);
-            }
-          }
-        }
-        for(int i = 0; i < getNbU() - 1; ++i) {
-          for(int j = 0; j < getNbW() - 1; ++j) {
-            Q.push_back(pnts[i][0][j][0]);
-            Q.push_back(pnts[i + 1][0][j][0]);
-            Q.push_back(pnts[i + 1][0][j + 1][0]);
-            Q.push_back(pnts[i][0][j + 1][0]);
-            Q.push_back(pnts[i][0][j][1]);
-            Q.push_back(pnts[i + 1][0][j][1]);
-            Q.push_back(pnts[i + 1][0][j + 1][1]);
-            Q.push_back(pnts[i][0][j + 1][1]);
-            Q.push_back(pnts[i][0][j][2]);
-            Q.push_back(pnts[i + 1][0][j][2]);
-            Q.push_back(pnts[i + 1][0][j + 1][2]);
-            Q.push_back(pnts[i][0][j + 1][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][0][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][0][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][0][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][0][j + 1][nbcomp * k + l]);
-            }
-            Q.push_back(pnts[i][getNbV() - 1][j][0]);
-            Q.push_back(pnts[i][getNbV() - 1][j + 1][0]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j + 1][0]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j][0]);
-            Q.push_back(pnts[i][getNbV() - 1][j][1]);
-            Q.push_back(pnts[i][getNbV() - 1][j + 1][1]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j + 1][1]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j][1]);
-            Q.push_back(pnts[i][getNbV() - 1][j][2]);
-            Q.push_back(pnts[i][getNbV() - 1][j + 1][2]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j + 1][2]);
-            Q.push_back(pnts[i + 1][getNbV() - 1][j][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][getNbV() - 1][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i][getNbV() - 1][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][getNbV() - 1][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[i + 1][getNbV() - 1][j][nbcomp * k + l]);
-            }
-          }
-        }
-
-        for(int i = 0; i < getNbV() - 1; ++i) {
-          for(int j = 0; j < getNbW() - 1; ++j) {
-            Q.push_back(pnts[0][i][j][0]);
-            Q.push_back(pnts[0][i][j + 1][0]);
-            Q.push_back(pnts[0][i + 1][j + 1][0]);
-            Q.push_back(pnts[0][i + 1][j][0]);
-            Q.push_back(pnts[0][i][j][1]);
-            Q.push_back(pnts[0][i][j + 1][1]);
-            Q.push_back(pnts[0][i + 1][j + 1][1]);
-            Q.push_back(pnts[0][i + 1][j][1]);
-            Q.push_back(pnts[0][i][j][2]);
-            Q.push_back(pnts[0][i][j + 1][2]);
-            Q.push_back(pnts[0][i + 1][j + 1][2]);
-            Q.push_back(pnts[0][i + 1][j][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i + 1][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[0][i + 1][j][nbcomp * k + l]);
-            }
-            Q.push_back(pnts[getNbU() - 1][i][j][0]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j][0]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j + 1][0]);
-            Q.push_back(pnts[getNbU() - 1][i][j + 1][0]);
-            Q.push_back(pnts[getNbU() - 1][i][j][1]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j][1]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j + 1][1]);
-            Q.push_back(pnts[getNbU() - 1][i][j + 1][1]);
-            Q.push_back(pnts[getNbU() - 1][i][j][2]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j][2]);
-            Q.push_back(pnts[getNbU() - 1][i + 1][j + 1][2]);
-            Q.push_back(pnts[getNbU() - 1][i][j + 1][2]);
-            (*nQ)++;
-            for(int k = 0; k < numsteps; ++k) {
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[getNbU() - 1][i][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[getNbU() - 1][i + 1][j][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[getNbU() - 1][i + 1][j + 1][nbcomp * k + l]);
-              for(int l = 0; l < nbcomp; ++l)
-                Q.push_back(vals[getNbU() - 1][i][j + 1][nbcomp * k + l]);
-            }
-          }
-        }
-      }
+  }
+  for(int i = 0; i < v; ++i) {
+    for(int j = 0; j < w; ++j) {
+      add(TYPE_QUA,
+          {{0, i, j}, {0, i, j + 1}, {0, i + 1, j + 1}, {0, i + 1, j}});
+      add(TYPE_QUA,
+          {{u, i, j}, {u, i + 1, j}, {u, i + 1, j + 1}, {u, i, j + 1}});
     }
   }
 }
@@ -1053,37 +382,39 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
     }
   }
 
+  // the values at the points: only those on the boundary of the grid are
+  // used with Boundary; searched in parallel
+  int nu = getNbU(), nv = getNbV(), nw = getNbW();
+  auto search = [&](int numComp) {
+    o.prepareThreads();
+    int n = nu * nv * nw;
+    int nthreads = CTX::instance()->numThreadsFor(n, 1000);
+#pragma omp parallel for num_threads(nthreads) schedule(dynamic, 256)
+    for(int p = 0; p < n; p++) {
+      int i = p / (nv * nw), j = (p / nw) % nv, k = p % nw;
+      if(boundary && i > 0 && i < nu - 1 && j > 0 && j < nv - 1 && k > 0 &&
+         k < nw - 1)
+        continue;
+      double *x = pnts[i][j][k], *val = vals[i][j][k];
+      if(numComp == 1)
+        o.searchScalar(x[0], x[1], x[2], val);
+      else if(numComp == 3)
+        o.searchVector(x[0], x[1], x[2], val);
+      else
+        o.searchTensor(x[0], x[1], x[2], val);
+    }
+  };
   if(nbs) {
-    for(int i = 0; i < getNbU(); i++)
-      for(int j = 0; j < getNbV(); j++)
-        for(int k = 0; k < getNbW(); k++)
-          o.searchScalar(pnts[i][j][k][0], pnts[i][j][k][1], pnts[i][j][k][2],
-                         vals[i][j][k]);
-    addInView(connect, boundary, numsteps, 1, pnts, vals, data2->SP,
-              &data2->NbSP, data2->SL, &data2->NbSL, data2->SQ, &data2->NbSQ,
-              data2->SH, &data2->NbSH);
+    search(1);
+    addInView(connect, boundary, numsteps, 1, pnts, vals, data2);
   }
-
   if(nbv) {
-    for(int i = 0; i < getNbU(); i++)
-      for(int j = 0; j < getNbV(); j++)
-        for(int k = 0; k < getNbW(); k++)
-          o.searchVector(pnts[i][j][k][0], pnts[i][j][k][1], pnts[i][j][k][2],
-                         vals[i][j][k]);
-    addInView(connect, boundary, numsteps, 3, pnts, vals, data2->VP,
-              &data2->NbVP, data2->VL, &data2->NbVL, data2->VQ, &data2->NbVQ,
-              data2->VH, &data2->NbVH);
+    search(3);
+    addInView(connect, boundary, numsteps, 3, pnts, vals, data2);
   }
-
   if(nbt) {
-    for(int i = 0; i < getNbU(); i++)
-      for(int j = 0; j < getNbV(); j++)
-        for(int k = 0; k < getNbW(); k++)
-          o.searchTensor(pnts[i][j][k][0], pnts[i][j][k][1], pnts[i][j][k][2],
-                         vals[i][j][k]);
-    addInView(connect, boundary, numsteps, 9, pnts, vals, data2->TP,
-              &data2->NbTP, data2->TL, &data2->NbTL, data2->TQ, &data2->NbTQ,
-              data2->TH, &data2->NbTH);
+    search(9);
+    addInView(connect, boundary, numsteps, 9, pnts, vals, data2);
   }
 
   for(int i = 0; i < getNbU(); i++) {
@@ -1101,6 +432,7 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
   delete[] pnts;
   delete[] vals;
 
+  for(int i = 0; i < numsteps; i++) data2->addTime(data1->getTime(i));
   data2->setName(data1->getName() + "_CutBox");
   data2->setFileName(data1->getName() + "_CutBox.pos");
   data2->finalize();
@@ -1110,9 +442,9 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
 
 PView *GMSH_CutBoxPlugin::execute(PView *v)
 {
-  int connectPoints = (int)CutBoxOptions_Number[15].def;
-  int boundary = (int)CutBoxOptions_Number[16].def;
-  int iView = (int)CutBoxOptions_Number[17].def;
+  int connectPoints = (int)option(15);
+  int boundary = (int)option(16);
+  int iView = (int)option(17);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

@@ -195,7 +195,8 @@ public:
   }
   virtual double getJacobian(double u, double v, double w,
                              double jac[3][3]) const;
-  virtual bool isInside(double u, double v, double w) const;
+  using MElement::isInside;
+  virtual bool isInside(double u, double v, double w, double tol) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 
   // no nodal basis: the shape functions are P1 on the tetrahedron holding the

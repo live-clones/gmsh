@@ -17,20 +17,15 @@
 #include "MEdge.h"
 #include "Context.h"
 
-#include "FlGui.h"
-
 #include <algorithm>
 
 constexpr uint64_t SHIFT = 32LL;
 
-StringXNumber DuplicateNodesOption_Number[] = {
-  {GMSH_FULLRC, "InsertMode", nullptr, 0.0},
-  {GMSH_FULLRC, "ShrinkFactor", nullptr, 0.0},
-  {GMSH_FULLRC, "Insert1DElement", nullptr, 0.0}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterDuplicateNodesPlugin()
-{ return new GMSH_DuplicateNodesPlugin(); }
+GMSH_DuplicateNodesPlugin::GMSH_DuplicateNodesPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "InsertMode", nullptr, 0.0, ""},
+                     {GMSH_FULLRC, "ShrinkFactor", nullptr, 0.0, ""},
+                     {GMSH_FULLRC, "Insert1DElement", nullptr, 0.0, ""}})
+{
 }
 
 std::string GMSH_DuplicateNodesPlugin::getHelp() const
@@ -64,12 +59,6 @@ std::string GMSH_DuplicateNodesPlugin::getHelp() const
          "specified whether the dummy elements should also be included in 1D "
          "entities.";
 }
-
-int GMSH_DuplicateNodesPlugin::getNbOptions() const
-{ return sizeof(DuplicateNodesOption_Number) / sizeof(StringXNumber); }
-
-StringXNumber *GMSH_DuplicateNodesPlugin::getOption(int iopt)
-{ return &DuplicateNodesOption_Number[iopt]; }
 
 class EdgeData {
 public:
@@ -197,11 +186,11 @@ ELEMENT TYPE:
 
 PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
 {
-  const size_t DNPP_ELTYPETOINSERT = (size_t)DuplicateNodesOption_Number[0].def;
-  const double DNPP_SHRINK = DuplicateNodesOption_Number[1].def;
-  const bool DNPP_MESH1DENT = (bool)DuplicateNodesOption_Number[2].def;
+  const size_t DNPP_ELTYPETOINSERT = (size_t)option(0);
+  const double DNPP_SHRINK = option(1);
+  const bool DNPP_MESH1DENT = (bool)option(2);
 
-  Msg::Info("InsertMode (1 = triangle, 0 = quads): %d", DNPP_ELTYPETOINSERT);
+  Msg::Info("InsertMode (1 = triangle, 0 = quads): %zu", DNPP_ELTYPETOINSERT);
   Msg::Info("ShrinkFactor: %f", DNPP_SHRINK);
   Msg::Info("Insert1DElement: %s", DNPP_MESH1DENT ? "true" : "false");
 
@@ -209,6 +198,18 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
 
   std::vector<GEntity *> entities;
   m->getEntities(entities);
+
+  // the mesh of every entity is rebuilt from its surface elements and their
+  // corners: volumes would be lost, and higher order nodes taken for corners
+  for(auto e : entities) {
+    for(std::size_t i = 0; i < e->getNumMeshElements(); i++) {
+      MElement *el = e->getMeshElement(i);
+      if(el->getDim() == 3 || el->getPolynomialOrder() > 1) {
+        Msg::Error("Plugin(DuplicateNodes) only handles first order 2D meshes");
+        return view;
+      }
+    }
+  }
 
   std::vector<MVertex *> newNodes;
   std::vector<size_t> newNodesEntity;

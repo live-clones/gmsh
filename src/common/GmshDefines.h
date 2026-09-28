@@ -9,6 +9,7 @@
 // IO file formats (numbers should not be changed)
 #define FORMAT_MSH          1
 #define FORMAT_UNV          2
+#define FORMAT_VTU          3
 #define FORMAT_XPM          4
 #define FORMAT_PS           5
 #define FORMAT_BMP          6
@@ -62,6 +63,7 @@
 #define FORMAT_RAD          55
 #define FORMAT_XAO          56
 #define FORMAT_OBJ          57
+#define FORMAT_MP4          58
 
 // Element types
 #define TYPE_PNT     1
