@@ -12,6 +12,11 @@
 
 #include <GLFW/glfw3.h>
 
+// GLFW 3.3, that of Emscripten, names the hand after itself
+#if !defined(GLFW_POINTING_HAND_CURSOR)
+#define GLFW_POINTING_HAND_CURSOR GLFW_HAND_CURSOR
+#endif
+
 #include "sceneView.h"
 #include "sceneHost.h"
 #include "drawContextGL.h"
@@ -27,7 +32,8 @@
 #include "glShader.h"
 
 // The scene in a window of its own, for an interface that holds none: the
-// same sceneView, held by a GLFW window.
+// same sceneView, held by a GLFW window -- compiled to WebAssembly, a canvas
+// of the page.
 
 namespace {
 
@@ -425,10 +431,11 @@ namespace WindowScene {
       getCurrentPixelSize(it.pictureW, it.pictureH);
       if(it.pictureW < 1 || it.pictureH < 1) return "";
       glfwMakeContextCurrent(it.window);
-      it.picture.resize((std::size_t)3 * it.pictureW * it.pictureH);
+      // RGBA: the one format every implementation reads back, WebGL included
+      it.picture.resize((std::size_t)4 * it.pictureW * it.pictureH);
       glFinish();
       glPixelStorei(GL_PACK_ALIGNMENT, 1);
-      glReadPixels(0, 0, it.pictureW, it.pictureH, GL_RGB, GL_UNSIGNED_BYTE,
+      glReadPixels(0, 0, it.pictureW, it.pictureH, GL_RGBA, GL_UNSIGNED_BYTE,
                    &it.picture[0]);
     }
     width = it.pictureW;
@@ -457,11 +464,11 @@ namespace WindowScene {
     put32(at + 34, bytes - 54);
     for(int y = 0; y < height; y++) {
       char *row = at + 54 + (std::size_t)stride * y;
-      const unsigned char *from = pixels + (std::size_t)width * 3 * y;
+      const unsigned char *from = pixels + (std::size_t)width * 4 * y;
       for(int x = 0; x < width; x++) {
-        row[3 * x + 0] = (char)from[3 * x + 2];
-        row[3 * x + 1] = (char)from[3 * x + 1];
-        row[3 * x + 2] = (char)from[3 * x + 0];
+        row[3 * x + 0] = (char)from[4 * x + 2];
+        row[3 * x + 1] = (char)from[4 * x + 1];
+        row[3 * x + 2] = (char)from[4 * x + 0];
       }
     }
     return out;

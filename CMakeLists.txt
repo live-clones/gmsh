@@ -706,10 +706,24 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
   endif()
 endif()
 
+# Compiled to WebAssembly, the browser interface runs inside the page it
+# draws: the page talks to Gmsh through JavaScript rather than HTTP, and the
+# scene has its window of its own from the GLFW of Emscripten, on a canvas.
+# No contrib/glfw then
+if(EMSCRIPTEN AND (ENABLE_IMGUI OR ENABLE_BROWSER))
+  if(ENABLE_IMGUI)
+    message(WARNING "The Dear ImGui interface is not compiled to WebAssembly")
+  endif()
+  if(ENABLE_BROWSER AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/browser)
+    set(HAVE_GLFW TRUE)
+    add_subdirectory(src/browser)
+    include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/browser)
+    set_config_option(HAVE_BROWSER "Browser")
+  endif()
 # GLFW and the 3D scene, wanted by the Dear ImGui interface and by anything
 # else that shows the model in a window of its own -- the browser interface
 # does, since it has no way of drawing one itself
-if(ENABLE_IMGUI OR ENABLE_BROWSER)
+elseif(ENABLE_IMGUI OR ENABLE_BROWSER)
   # GLFW provides the window and the OpenGL context; use the upstream
   # CMakeLists, which selects the platform backend (X11, Wayland, Cocoa, Win32)
   # and sets the corresponding _GLFW_* definitions
@@ -2044,6 +2058,19 @@ elseif(EMSCRIPTEN)
   set(FLAGS "${FLAGS} -sFILESYSTEM=1 -sLINKABLE=1 -sEXPORT_ALL=1")
   set(FLAGS "${FLAGS} -sEXPORTED_RUNTIME_METHODS=FS,callMain,cwrap,ccall")
   set(FLAGS "${FLAGS} -sENVIRONMENT=web,node")
+  if(HAVE_BROWSER)
+    # the interface in the page (gmsh.html): main() runs its loop, handing the
+    # page back to the browser at every turn (JavaScript Promise Integration),
+    # the scene is drawn with WebGL 2 through the GLFW of Emscripten, and the
+    # models of the tutorials are there to open
+    set(FLAGS "${FLAGS} -sJSPI=1 -sUSE_GLFW=3")
+    set(FLAGS "${FLAGS} -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2")
+    set(FLAGS "${FLAGS} -sGL_ENABLE_GET_PROC_ADDRESS=1")
+    set(FLAGS "${FLAGS} --preload-file ${CMAKE_CURRENT_SOURCE_DIR}/tutorials@/tutorials")
+    foreach(LANG c c++ fortran julia python)
+      set(FLAGS "${FLAGS} --exclude-file ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/${LANG}")
+    endforeach()
+  endif()
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "${FLAGS}")
 endif()
 

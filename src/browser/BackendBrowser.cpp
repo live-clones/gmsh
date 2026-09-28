@@ -22,6 +22,10 @@
 // page.html, as bytes: made by src/browser/CMakeLists.txt
 #include "browserPage.h"
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#endif
+
 #if defined(WIN32) && !defined(__CYGWIN__)
 #include <windows.h>
 #else
@@ -63,6 +67,17 @@ namespace {
     return 0;
   }
 
+  // a wait hands the page back to the browser when Gmsh runs inside it, or
+  // nothing would be drawn nor clicked meanwhile
+  void _pause(double seconds)
+  {
+#if defined(__EMSCRIPTEN__)
+    emscripten_sleep((unsigned int)(seconds * 1000.));
+#else
+    SleepInSeconds(seconds);
+#endif
+  }
+
   // --- writing a description down: everything a page is told is text, and everything it may do is a number, its place in a table here
 
   std::string _quoted(const std::string &say)
@@ -97,6 +112,12 @@ namespace {
 
     bool create(int argc, char **argv, bool quitShouldExit) override
     {
+#if defined(__EMSCRIPTEN__)
+      // inside the page, which alone can ask: no address, and no word to guard
+      // it with
+      _port = Browser::listen(0);
+      return true;
+#else
       // looked for from 8010 up, so that two of these do not fight; the bench
       // says which it wants
       int wanted = 8010;
@@ -113,6 +134,7 @@ namespace {
       printf("Gmsh is at http://127.0.0.1:%d/?k=%s\n", _port, _token.c_str());
       fflush(stdout);
       return true;
+#endif
     }
 
     void destroy() override
@@ -125,7 +147,7 @@ namespace {
     {
       while(_going) {
         _turn();
-        SleepInSeconds(0.01);
+        _pause(0.01);
       }
       return 0;
     }
@@ -135,7 +157,7 @@ namespace {
     void wait(double seconds, bool force) override
     {
       _turn();
-      SleepInSeconds(seconds < 0. || seconds > 0.05 ? 0.05 : seconds);
+      _pause(seconds < 0. || seconds > 0.05 ? 0.05 : seconds);
     }
 
     void postFromThread(const std::function<void()> &what) override
@@ -351,7 +373,7 @@ namespace {
           seen = TimeOfDay();
         else if(TimeOfDay() - seen > 20.)
           break;
-        SleepInSeconds(0.02);
+        _pause(0.02);
       }
       _asking.open = false;
       _lastTold = 0.;

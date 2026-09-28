@@ -46,6 +46,9 @@ void glMaterialf(GLenum face, GLenum pname, GLfloat param) {}
 void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params) {}
 void glShadeModel(GLenum mode) {}
 void glPolygonMode(GLenum face, GLenum mode) {}
+// the canvas has one colour buffer, the back one, and no stereo pair: there is
+// nothing to choose
+void glDrawBuffer(GLenum mode) {}
 void glClipPlane(GLenum plane, const GLdouble *equation) {}
 void glLineStipple(GLint factor, GLushort pattern) {}
 void glLoadMatrixd(const GLdouble *m) {}
