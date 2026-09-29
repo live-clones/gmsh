@@ -717,6 +717,21 @@ void cocoaShowForm(const Ui::Form &form, bool show)
   _dialog(form)->show();
 }
 
+bool cocoaFormPosition(int &x, int &y)
+{
+  for(auto &it : _dialogs())
+    if(it.second->shown()) {
+      // from the top left of the screen, as the options say it
+      NSWindow *win = it.second->win;
+      NSRect all = [([win screen] ?: [NSScreen mainScreen]) visibleFrame];
+      NSRect f = [win frame];
+      x = (int)(f.origin.x - all.origin.x);
+      y = (int)(NSMaxY(all) - NSMaxY(f));
+      return true;
+    }
+  return false;
+}
+
 bool cocoaFormVisible(const Ui::Form &form)
 {
   dialogCocoa *d = _find(&form);

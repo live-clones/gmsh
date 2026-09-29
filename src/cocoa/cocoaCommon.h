@@ -163,6 +163,8 @@ private:
 
 void cocoaShowForm(const Ui::Form &form, bool show);
 bool cocoaFormVisible(const Ui::Form &form);
+// where the first form shown is, for the layout; false with none
+bool cocoaFormPosition(int &x, int &y);
 std::string cocoaFormPane(const Ui::Form &form);
 void cocoaSetFormPane(const Ui::Form &form, const std::string &pane);
 void cocoaReloadForm(const Ui::Form &form);

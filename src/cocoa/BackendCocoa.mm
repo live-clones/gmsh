@@ -1060,6 +1060,14 @@ namespace {
         l.treeWidth = (int)[_w->treeBox frame].size.width;
       if(![_w->consoleBox isHidden])
         l.consoleHeight = (int)[_w->consoleBox frame].size.height;
+      {
+        // from the top left of the screen, as the options say it
+        NSRect all = [[NSScreen mainScreen] visibleFrame];
+        NSRect f = [_w->window frame];
+        l.sceneX = (int)(f.origin.x - all.origin.x);
+        l.sceneY = (int)(NSMaxY(all) - NSMaxY(f));
+      }
+      cocoaFormPosition(l.dialogX, l.dialogY);
       l.treeDetached = _w->treePanel ? 1 : 0;
       if(_w->treePanel) {
         NSRect all = [[NSScreen mainScreen] visibleFrame];
