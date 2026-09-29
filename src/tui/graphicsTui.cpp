@@ -27,7 +27,8 @@
 
 // The picture of the scene at the resolution of the terminal, where the
 // terminal can show one: the graphics protocol of kitty (kitty, WezTerm,
-// Ghostty, Konsole), or sixel (foot, WezTerm, xterm, mlterm); in half blocks
+// Ghostty, Konsole), or sixel (foot, WezTerm, xterm, mlterm, iTerm2); in half
+// blocks
 // otherwise, two pixels a cell, which any terminal with 24-bit colours shows.
 // Written after FTXUI's frame, the cursor saved and put back around it, so
 // that FTXUI finds it where it left it.
@@ -53,7 +54,7 @@ namespace {
       return Tui::Kitty;
     if(term.find("foot") != std::string::npos ||
        term.find("mlterm") != std::string::npos ||
-       term.find("sixel") != std::string::npos)
+       term.find("sixel") != std::string::npos || program == "iTerm.app")
       return Tui::Sixel;
     return Tui::Blocks;
   }
