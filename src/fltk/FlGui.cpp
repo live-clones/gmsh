@@ -16,6 +16,7 @@
 #include "FlGui.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
+#include "sceneViewFltk.h"
 #include "Gui.h"
 #include "dialogFltk.h"
 #include "uiSources.h"

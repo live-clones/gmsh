@@ -16,65 +16,14 @@ typedef unsigned long intptr_t;
 #include <FL/x.H>
 #include <FL/gl.h>
 #include "GmshMessage.h"
-#include "FlGui.h"
 #include "drawContext.h"
-#include "graphicWindow.h"
-#include "sceneViewFltk.h"
+#include "drawContextGL.h"
 #include "Context.h"
 
-class drawContextFltk : public drawContextGlobal {
+// the Native engine: the strings drawn by FLTK at the raster position, which
+// only the fixed function pipeline has; what is drawn is the scene host's
+class drawContextFltk : public drawContextHosted {
 public:
-  void draw(bool rateLimited = true)
-  {
-    if(!FlGui::available()) return;
-    sceneView::changed();
-    // every view, the one full screen among them while it is shown
-    for(GuiPanes::Pane *p : GuiPanes::instance().panes()) {
-      sceneViewFltk *gl = static_cast<sceneViewFltk *>(p);
-      if(!gl->shown()) continue;
-      gl->make_current();
-      gl->redraw();
-      glFlush();
-      // FIXME: I don't think this should be done here
-      gl->getDrawContext()->camera.update();
-    }
-    FlGui::check(rateLimited);
-  }
-  void drawCurrentOpenglWindow(bool make_current, bool again = false)
-  {
-    if(!FlGui::available()) return;
-    sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow();
-    sceneView::changed();
-    if(make_current) gl->make_current();
-    gl->scene()->setAgain(again);
-    gl->redraw();
-    glFlush();
-    FlGui::check();
-    gl->scene()->setAgain(false);
-  }
-  int getFontSize()
-  {
-    if(CTX::instance()->fontSize > 0) { return CTX::instance()->fontSize; }
-    else {
-      int h = Fl::h(); // main (first) screen
-      if(h < 800)
-        return 11;
-      else if(h < 1000)
-        return 12;
-      else if(h < 1200)
-        return 13;
-      else if(h < 1400)
-        return 14;
-      else if(h < 1600)
-        return 15;
-      else if(h < 1800)
-        return 16;
-      float dpih, dpiv;
-      Fl::screen_dpi(dpih, dpiv); // main (first) screen
-      int s = std::max(16, (int)(dpih / 10.));
-      return s;
-    }
-  }
   void setFont(int fontid, int fontsize) { gl_font(fontid, fontsize); }
   double getStringWidth(const char *str) { return gl_width(str); }
   int getStringHeight() { return gl_height(); }
@@ -136,7 +85,6 @@ public:
     (void)n;
 #endif
   }
-  bool mouseIsPressed() { return Fl::pushed() ? true : false; }
   std::string getName() { return "Fltk"; }
 };
 

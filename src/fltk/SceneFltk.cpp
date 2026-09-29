@@ -30,7 +30,7 @@
 #include "drawContext.h"
 #include "drawContextFltk.h"
 #include "drawContextFltkStringTexture.h"
-#include "drawContextFltkEmbedded.h"
+#include "drawContextGL.h"
 
 namespace {
 
@@ -185,7 +185,25 @@ namespace {
       sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow();
       return gl ? (void *)gl->context() : nullptr;
     };
-    t.redrawAll = []() { drawContext::global()->draw(); };
+    // every view, the one full screen among them while it is shown
+    t.redrawAll = []() {
+      for(GuiPanes::Pane *p : _all().panes()) {
+        sceneViewFltk *gl = _view(p);
+        if(!gl->shown()) continue;
+        gl->make_current();
+        gl->redraw();
+        glFlush();
+        // FIXME: I don't think this should be done here
+        gl->getDrawContext()->camera.update();
+      }
+    };
+    t.screen = [](int &height, float &scale) {
+      // the main (first) screen
+      float dpih = 96.f, dpiv = 96.f;
+      Fl::screen_dpi(dpih, dpiv);
+      height = Fl::h();
+      scale = dpih / 96.f;
+    };
     // the native font engine places its strings from the window's size and
     // scale, which a picture of another size has neither of: the embedded
     // fonts meanwhile
@@ -196,7 +214,7 @@ namespace {
         Msg::Warning("Font engine 'Native' cannot draw pictures of another "
                      "size than the window: using 'Embedded' for them");
       warned = true;
-      return new drawContextFltkEmbedded;
+      return new drawContextGL;
     };
     t.surfaceFonts = []() { return drawContext::global()->getName() == "Fltk"; };
     t.setting = [](const std::string &what) {
@@ -238,7 +256,7 @@ void fltkFontEngine()
     if(engine == "StringTexture")
       drawContext::setGlobal(new drawContextFltkStringTexture);
     else if(engine == "Embedded")
-      drawContext::setGlobal(new drawContextFltkEmbedded);
+      drawContext::setGlobal(new drawContextGL);
     else
       drawContext::setGlobal(new drawContextFltk);
     if(old) delete old;

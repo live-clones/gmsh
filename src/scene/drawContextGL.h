@@ -13,14 +13,22 @@
 
 class stbStrings;
 
-// the drawing functions of a scene held by OpenGL alone (the Dear ImGui
-// interface, the window of its own of the browser interface, a canvas of a
-// page, the GtkGLArea of the GTK interface): what is
-// drawn goes to the scene host, and the strings are written by the fonts
-// compiled into Gmsh, the Embedded engine of the FLTK interface
-// (drawContextFltkEmbedded)
+// the drawing functions of a scene whose holder answers the scene host (see
+// sceneHost.h): what is drawn is asked of the host, the size of the fonts is
+// that of the screen it says; the strings are the engine's
 
-class drawContextGL : public drawContextGlobal {
+class drawContextHosted : public drawContextGlobal {
+public:
+  void draw(bool rateLimited = true);
+  void drawCurrentOpenglWindow(bool make_current, bool again = false);
+  int getFontSize();
+  bool mouseIsPressed();
+};
+
+// the strings written by the fonts compiled into Gmsh, the Embedded engine:
+// the same in every interface, and in a picture drawn without a window
+
+class drawContextGL : public drawContextHosted {
 private:
   stbStrings *_strings;
   int _fontId, _fontSize;
@@ -28,9 +36,6 @@ private:
 public:
   drawContextGL();
   ~drawContextGL();
-  void draw(bool rateLimited = true);
-  void drawCurrentOpenglWindow(bool make_current, bool again = false);
-  int getFontSize();
   void setFont(int fontid, int fontsize);
   double getStringWidth(const char *str);
   int getStringHeight();

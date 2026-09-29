@@ -21,14 +21,15 @@ drawContextGL::drawContextGL()
 
 drawContextGL::~drawContextGL() { delete _strings; }
 
-void drawContextGL::draw(bool rateLimited)
+void drawContextHosted::draw(bool rateLimited)
 {
   sceneView::changed();
   if(Scene::host().redraw) Scene::host().redraw();
   if(Scene::host().check) Scene::host().check(rateLimited);
 }
 
-void drawContextGL::drawCurrentOpenglWindow(bool make_current, bool again)
+void drawContextHosted::drawCurrentOpenglWindow(bool make_current,
+                                                 bool again)
 {
   sceneView::changed();
   sceneView *view = Scene::host().current ? Scene::host().current() : nullptr;
@@ -37,7 +38,7 @@ void drawContextGL::drawCurrentOpenglWindow(bool make_current, bool again)
   if(view) view->setAgain(false);
 }
 
-int drawContextGL::getFontSize()
+int drawContextHosted::getFontSize()
 {
   if(CTX::instance()->fontSize > 0) return CTX::instance()->fontSize;
 
@@ -54,6 +55,12 @@ int drawContextGL::getFontSize()
     else if(h < 1800) return 16;
   }
   return std::max(16, (int)(96. * sx / 10.));
+}
+
+// while dragging, the fast representation
+bool drawContextHosted::mouseIsPressed()
+{
+  return Scene::host().buttonDown ? Scene::host().buttonDown() : false;
 }
 
 void drawContextGL::setFont(int fontid, int fontsize)
