@@ -28,7 +28,7 @@
 namespace {
 
   struct mainWindow {
-    HWND win = nullptr, treeBox = nullptr, editor = nullptr, footer = nullptr,
+    HWND win = nullptr, treeBox = nullptr, footer = nullptr,
          scene = nullptr, console = nullptr, bar = nullptr, message = nullptr,
          progress = nullptr;
     // the tree taken out of the main window into one of its own
@@ -63,18 +63,14 @@ namespace {
 
   // --- the parts of the main window where they go
 
-  // what the box of the tree holds: the tree, the field of the line picked,
-  // the buttons of the solver
+  // what the box of the tree holds: the tree, the buttons of the solver
   void _layoutTree(int tw, int th)
   {
     int row = win32Row(), pad = win32Px(.3);
     int footerH = _w->footerButtons.empty() ? 0 : row + 2 * pad;
-    int editorH = row + 2 * pad;
-    bool editing = IsWindowVisible(_w->editor) != 0;
-    int treeH = th - footerH - (editing ? editorH : 0);
+    int treeH = th - footerH;
     MoveWindow(win32TreeWindow(_w->tree), 0, 0, tw, std::max(10, treeH), TRUE);
-    MoveWindow(_w->editor, 0, treeH, tw, editorH, TRUE);
-    MoveWindow(_w->footer, 0, treeH + (editing ? editorH : 0), tw, footerH, TRUE);
+    MoveWindow(_w->footer, 0, treeH, tw, footerH, TRUE);
     int n = (int)_w->footerButtons.size();
     for(int i = 0; i < n; i++) {
       int bw = (tw - (n + 1) * pad) / std::max(1, n);
@@ -553,7 +549,7 @@ namespace {
                             &dark, sizeof(dark));
     }
 
-    // the tree, the field of the line picked, the buttons of the solver
+    // the tree and the buttons of the solver
     _w->treeBox = win32Panel(_w->win, 0, 0, 10, 10);
     _w->tree = win32MakeTree(_w->treeBox, _sources.tree, false, []() {
       win32Later([]() {
@@ -561,8 +557,6 @@ namespace {
         _layout();
       });
     });
-    _w->editor = win32Panel(_w->treeBox, 0, 0, 10, 10);
-    win32SetTreeEditor(_w->tree, _w->editor);
     _w->footer = win32Panel(_w->treeBox, 0, 0, 10, 10);
     win32SetPanelHook(_w->footer, _footerHook);
 

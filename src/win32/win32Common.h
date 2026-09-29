@@ -108,12 +108,16 @@ void win32PlaceField(fieldWin32 *f, const RECT &widget, const RECT &label,
 void win32RefreshField(fieldWin32 *f);
 void win32RebindField(fieldWin32 *f, const Ui::Field &field);
 HWND win32FieldWindow(fieldWin32 *f);
+// its name, when it is written apart; null otherwise
+HWND win32FieldLabel(fieldWin32 *f);
+const Ui::Field &win32FieldOf(fieldWin32 *f);
 // the messages a panel hands over; true when it was the field's
 bool win32FieldMessage(HWND panel, UINT msg, WPARAM wp, LPARAM lp,
                        LRESULT &result);
 
 // --- a tree whose lines are fields (Tree.h), as a tree view: the modules,
-// and a Hierarchy field, whose lines have boxes to check
+// whose lines carry the controls of their fields, and a Hierarchy field,
+// whose lines have boxes to check
 class treeWin32;
 treeWin32 *win32MakeTree(HWND parent, const Ui::Tree &tree, bool picks,
                          const std::function<void()> &after);
@@ -125,8 +129,6 @@ void win32OpenTreeItem(treeWin32 *t, const std::string &path, bool open);
 bool win32TreeItemOpen(treeWin32 *t, const std::string &path);
 // the WM_NOTIFY of the tree view: true when it was
 bool win32TreeNotify(treeWin32 *t, NMHDR *n, LRESULT &result);
-// the field of the line picked is edited under the tree, in this panel
-void win32SetTreeEditor(treeWin32 *t, HWND panel);
 
 // --- the described forms, see dialogWin32.cpp
 void win32ShowForm(const Ui::Form &form, bool show);

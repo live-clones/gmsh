@@ -587,6 +587,10 @@ void win32DropField(fieldWin32 *f)
 
 HWND win32FieldWindow(fieldWin32 *f) { return f ? f->widget : nullptr; }
 
+HWND win32FieldLabel(fieldWin32 *f) { return f ? f->label : nullptr; }
+
+const Ui::Field &win32FieldOf(fieldWin32 *f) { return f->field; }
+
 void win32PlaceField(fieldWin32 *f, const RECT &widget, const RECT &label,
                      const std::vector<RECT> &trailing, bool shown)
 {
