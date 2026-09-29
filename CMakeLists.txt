@@ -108,7 +108,6 @@ opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF
 opt(TESTS "Enable tests" ${DEFAULT})
 opt(TINYOBJLOADER "Enable TibyObjLoader for reading Wavefront files)" ON)
 opt(TINYXML2 "Enable TinyXML2 parser (used by XAO reader)" ${DEFAULT})
-opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(UNTANGLE "Enable 2D and 3D UNTANGLER" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
@@ -990,16 +989,6 @@ endif()
 # one in a window of its own serves whichever interface has none. When none of
 # them is compiled in, src/gui/GuiScene.cpp answers for them, so that the scene
 # is never what stops an interface from linking.
-
-if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
-  STRING(REGEX MATCH "([0-9]+.[0-9]+)" OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
-  if(OSX_SDK_VERSION)
-    if(${OSX_SDK_VERSION} VERSION_GREATER 10.11)
-      set(GMSH_SRC ${GMSH_SRC};src/fltk/touchBar.mm)
-      set_config_option(HAVE_TOUCHBAR "TouchBar")
-    endif()
-  endif()
-endif()
 
 if(ENABLE_ONELAB)
   set_config_option(HAVE_ONELAB "ONELAB")

@@ -136,8 +136,6 @@ Enable tests (default: ON)
 Enable TibyObjLoader for reading Wavefront files) (default: ON)
 @item ENABLE_TINYXML2
 Enable TinyXML2 parser (used by XAO reader) (default: ON)
-@item ENABLE_TOUCHBAR
-Enable Apple Touch bar (default: ON)
 @item ENABLE_UNTANGLE
 Enable 2D and 3D UNTANGLER (default: ON)
 @item ENABLE_VISUDEV

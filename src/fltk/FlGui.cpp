@@ -31,9 +31,6 @@
 #include "Context.h"
 #include "PixelBuffer.h"
 
-#if defined(HAVE_TOUCHBAR)
-#include "touchBar.h"
-#endif
 
 #if defined(HAVE_3M)
 #include "3M.h"
@@ -565,9 +562,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
       graph[i]->gl[j]->redraw();
 
 
-#if defined(HAVE_TOUCHBAR)
-  showTouchBar();
-#endif
 }
 
 FlGui::~FlGui()
@@ -670,9 +664,6 @@ int FlGui::runKeys()
     status = 1;
     if(k.spent) break;
   }
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
   return status;
 }
 

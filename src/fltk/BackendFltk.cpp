@@ -31,9 +31,6 @@
 #include "sceneViewFltk.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
-#if defined(HAVE_TOUCHBAR)
-#include "touchBar.h"
-#endif
 
 
 namespace {
@@ -69,9 +66,6 @@ namespace {
 
     int runLoop() override
     {
-#if defined(HAVE_TOUCHBAR)
-      updateTouchBar();
-#endif
       return Fl::run();
     }
 

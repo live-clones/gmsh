@@ -38,9 +38,6 @@ typedef unsigned long intptr_t;
 #include "3M.h"
 #endif
 
-#if defined(HAVE_TOUCHBAR)
-#include "touchBar.h"
-#endif
 
 
 
