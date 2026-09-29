@@ -669,7 +669,7 @@ void main()
       GLuint oitFbo = 0, oitAccum = 0, oitReveal = 0, oitDepthRb = 0;
       int oitWidth = 0, oitHeight = 0;
       GLenum oitDepthFormat = 0;
-      GLuint accFbo = 0, accTex = 0, accCopy = 0;
+      GLuint accFbo = 0, accTex = 0, accCopy = 0, accCopyFbo = 0;
       int accWidth = 0, accHeight = 0;
       GLenum accCopyFormat = 0;
       GLuint fireFbo = 0, fireDepth = 0, fireFrame = 0;
@@ -1301,7 +1301,8 @@ void main()
       glApi::DeleteFramebuffers(1, &_c->accFbo);
       glDeleteTextures(1, &_c->accTex);
       glDeleteTextures(1, &_c->accCopy);
-      _c->accFbo = _c->accTex = _c->accCopy = 0;
+      if(_c->accCopyFbo) glApi::DeleteFramebuffers(1, &_c->accCopyFbo);
+      _c->accFbo = _c->accTex = _c->accCopy = _c->accCopyFbo = 0;
     }
     glApi::ActiveTexture(GL_TEXTURE0);
     if(!_c->accFbo) {
@@ -1340,9 +1341,29 @@ void main()
 
     // the view into the copy
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
-    glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : GL_BACK);
+    GLint multisampled = 0;
+    if(_window) glGetIntegerv(GL_SAMPLE_BUFFERS, &multisampled);
+    if(multisampled && glApi::BlitFramebuffer) {
+      // a multisampled framebuffer (a window has its samples resolved for
+      // it) cannot be copied from: it is resolved into the copy
+      if(!_c->accCopyFbo) {
+        glApi::GenFramebuffers(1, &_c->accCopyFbo);
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->accCopyFbo);
+        glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                    GL_TEXTURE_2D, _c->accCopy, 0);
+      }
+      glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, _window);
+      glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _c->accCopyFbo);
+      glApi::BlitFramebuffer(x, y, x + width, y + height, x, y, x + width,
+                             y + height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+    }
+    else {
+      glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : GL_BACK);
+      glBindTexture(GL_TEXTURE_2D, _c->accCopy);
+      glCopyTexSubImage2D(GL_TEXTURE_2D, 0, x, y, x, y, width, height);
+    }
     glBindTexture(GL_TEXTURE_2D, _c->accCopy);
-    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, x, y, x, y, width, height);
 
     // this runs in the middle of a frame, and what is drawn afterwards
     // expects the state it left
@@ -1415,7 +1436,8 @@ void main()
       if(_c->accFbo) glApi::DeleteFramebuffers(1, &_c->accFbo);
       if(_c->accTex) glDeleteTextures(1, &_c->accTex);
       if(_c->accCopy) glDeleteTextures(1, &_c->accCopy);
-      _c->accFbo = _c->accTex = _c->accCopy = 0;
+      if(_c->accCopyFbo) glApi::DeleteFramebuffers(1, &_c->accCopyFbo);
+      _c->accFbo = _c->accTex = _c->accCopy = _c->accCopyFbo = 0;
       _c->accWidth = _c->accHeight = 0;
     }
 
