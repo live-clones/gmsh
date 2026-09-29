@@ -745,6 +745,8 @@ elseif(ENABLE_IMGUI OR ENABLE_BROWSER)
     message(STATUS "Using system version of GLFW")
     list(APPEND GMSH_PRIVATE_LIBRARIES glfw)
     set(HAVE_GLFW TRUE)
+    # built for Wayland or not, it cannot say: assume it is
+    set(GMSH_GLFW_LIBDECOR TRUE)
   elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/glfw)
     set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -801,6 +803,7 @@ elseif(ENABLE_IMGUI OR ENABLE_BROWSER)
       set(GLFW_BUILD_X11 ${GMSH_GLFW_X11} CACHE BOOL "" FORCE)
       if(GMSH_GLFW_WAYLAND)
         set_config_option(HAVE_GLFW_WAYLAND "Wayland")
+        set(GMSH_GLFW_LIBDECOR TRUE)
       endif()
     endif()
     add_subdirectory(contrib/glfw)
@@ -927,6 +930,46 @@ if(ENABLE_TUI AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/tui AND
   set_config_option(HAVE_TUI "Tui[contrib:FTXUI]")
   list(APPEND GMSH_INTERFACES Tui)
   list(APPEND GMSH_GL_HOLDERS Tui)
+endif()
+
+# GTK 3 and GTK 4 cannot live in one process: their functions have the same
+# names, and GObject has one register of types. On Linux under Wayland, the
+# frames of the windows are drawn by the application, through libdecor,
+# whose GTK plugin loads GTK 3: an FLTK built for Wayland and a GLFW built
+# for Wayland (Dear ImGui, the window of the browser interface) cannot then
+# be built with the GTK interface. Qt's GTK theme, which loads GTK 3 too, is
+# kept out of the way when Qt starts (src/qt/BackendQt.cpp).
+if(HAVE_GTK AND UNIX AND NOT APPLE)
+  set(GMSH_LIBDECOR_USERS)
+  if(HAVE_FLTK)
+    # FLTK 1.3 has no Wayland, and no fl_config.h either
+    find_file(GMSH_FLTK_CONFIG_H FL/fl_config.h PATHS ${FLTK_INCLUDE_DIR}
+              NO_DEFAULT_PATH)
+    if(GMSH_FLTK_CONFIG_H)
+      file(STRINGS ${GMSH_FLTK_CONFIG_H} GMSH_FLTK_WAYLAND
+           REGEX "^#define FLTK_USE_WAYLAND 1")
+      if(GMSH_FLTK_WAYLAND)
+        list(APPEND GMSH_LIBDECOR_USERS "ENABLE_FLTK (an FLTK built for Wayland)")
+      endif()
+    endif()
+  endif()
+  if(HAVE_GLFW AND GMSH_GLFW_LIBDECOR)
+    set(GMSH_GLFW_USERS)
+    foreach(I IMGUI BROWSER)
+      if(HAVE_${I})
+        list(APPEND GMSH_GLFW_USERS ENABLE_${I})
+      endif()
+    endforeach()
+    string(REPLACE ";" ", " GMSH_GLFW_USERS "${GMSH_GLFW_USERS}")
+    list(APPEND GMSH_LIBDECOR_USERS
+         "${GMSH_GLFW_USERS} (a GLFW built for Wayland: ENABLE_GLFW_WAYLAND)")
+  endif()
+  if(GMSH_LIBDECOR_USERS)
+    string(REPLACE ";" "; " GMSH_LIBDECOR_USERS "${GMSH_LIBDECOR_USERS}")
+    message(SEND_ERROR "The GTK 4 interface cannot be built with what loads "
+            "GTK 3 through libdecor under Wayland: ${GMSH_LIBDECOR_USERS}. "
+            "GTK 3 and GTK 4 cannot live in one process")
+  endif()
 endif()
 
 # The 3D scene: it draws the model with OpenGL and picks in it, and it belongs
