@@ -28,23 +28,15 @@ public:
   {
     if(!FlGui::available()) return;
     sceneView::changed();
-    if(FlGui::instance()->fullscreen->shown()) {
-      FlGui::instance()->fullscreen->make_current();
-      FlGui::instance()->fullscreen->redraw();
-    }
-    else {
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size();
-            j++) {
-          FlGui::instance()->graph[i]->gl[j]->make_current();
-          FlGui::instance()->graph[i]->gl[j]->redraw();
-          glFlush();
-          // FIXME: I don't think this should be done here
-          drawContext *ctx =
-            FlGui::instance()->graph[i]->gl[j]->getDrawContext();
-          ctx->camera.update();
-        }
-      }
+    // every view, the one full screen among them while it is shown
+    for(GuiPanes::Pane *p : GuiPanes::instance().panes()) {
+      sceneViewFltk *gl = static_cast<sceneViewFltk *>(p);
+      if(!gl->shown()) continue;
+      gl->make_current();
+      gl->redraw();
+      glFlush();
+      // FIXME: I don't think this should be done here
+      gl->getDrawContext()->camera.update();
     }
     FlGui::check(rateLimited);
   }
@@ -54,11 +46,11 @@ public:
     sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow();
     sceneView::changed();
     if(make_current) gl->make_current();
-    gl->setAgain(again);
+    gl->scene()->setAgain(again);
     gl->redraw();
     glFlush();
     FlGui::check();
-    gl->setAgain(false);
+    gl->scene()->setAgain(false);
   }
   int getFontSize()
   {

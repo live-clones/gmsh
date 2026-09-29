@@ -16,6 +16,8 @@
 
 #include "sceneView.h"
 
+class drawContextGlobal;
+
 // The views of the 3D scene for an interface that gives each of them an
 // OpenGL surface of its own -- a GtkGLArea, a QOpenGLWidget, a WGL child
 // window, an NSOpenGLView: which view is current, the tiling kept apart from
@@ -33,6 +35,9 @@ public:
     sceneView *view = nullptr;
     // a graphic window of its own, not tiled in the main one
     bool window = false;
+    // the window holding it, 0 the main one: split, unsplit, the composite
+    // pictures and the orientation keep to the views of one window
+    int room = 0;
     Pane();
     virtual ~Pane();
     // --- the pointer on the surface, in its logical pixels; each call
@@ -93,6 +98,20 @@ public:
     // the scale of the interface, when it is not the framebuffer pixels of
     // a logical one
     std::function<float()> uiScale;
+    // the views of a graphic window of its own split too
+    bool splitsWindows = false;
+    // every view drawn again, when the toolkit does more than redraw() each
+    std::function<void()> redrawAll;
+    // as Scene::Host has it: the fonts a picture is drawn with, when the
+    // surface's cannot; a picture the size of the surface is then read off it
+    std::function<drawContextGlobal *()> printFonts;
+    std::function<bool()> surfaceFonts;
+    // a setting of the scene changed (sceneSettingChanged), before what is
+    // done for every toolkit
+    std::function<void(const std::string &what)> setting;
+    // the animation started or stopped, the mouse selection switched: what
+    // shows it
+    std::function<void()> statusChanged;
   };
 
   static GuiPanes &instance();
@@ -111,6 +130,9 @@ public:
   Pane *paneOf(sceneView *view) const;
   // the surface is going: its view goes with it
   void dropped(Pane *p);
+  // a view whose surface the toolkit made itself: in the window of `beside`,
+  // or in a window of its own with none
+  void adopt(Pane *p, Pane *beside);
   void redrawAll();
   bool drawing() const { return _drawing; }
 
@@ -133,6 +155,7 @@ private:
   std::vector<Pane *> _panes;
   Pane *_current = nullptr;
   int _captureW = 0, _captureH = 0;
+  int _rooms = 0;
   bool _drawing = false, _animating = false;
   bool _animationArmed = false, _gamepadArmed = false;
   std::vector<GVertex *> _vertices;
@@ -146,6 +169,11 @@ private:
   void _setHost();
   void _clearSelected();
   void _pixelSize(Pane *p, int &width, int &height);
+  // the views in the window of p
+  std::vector<Pane *> _beside(Pane *p) const;
+  // off the surface, as it shows the view
+  bool _readSurface(Pane *p, int width, int height, unsigned int format,
+                    unsigned int type, void *pixels);
   bool _print(int width, int height, int supersampling, unsigned int format,
               unsigned int type, void *pixels, bool composite);
   friend struct GuiPanesOps;

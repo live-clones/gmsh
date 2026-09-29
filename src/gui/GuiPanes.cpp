@@ -156,6 +156,30 @@ void GuiPanes::dropped(Pane *p)
   if(_current == p) _current = _panes.empty() ? nullptr : _panes[0];
 }
 
+void GuiPanes::adopt(Pane *p, Pane *beside)
+{
+  if(!p || std::find(_panes.begin(), _panes.end(), p) != _panes.end()) return;
+  if(beside) {
+    p->room = beside->room;
+    p->window = beside->window;
+  }
+  else if(!_panes.empty()) {
+    p->room = ++_rooms;
+    p->window = true;
+  }
+  _panes.push_back(p);
+  if(!_current) _current = p;
+}
+
+std::vector<GuiPanes::Pane *> GuiPanes::_beside(Pane *p) const
+{
+  std::vector<Pane *> in;
+  if(!p) return in;
+  for(Pane *q : _panes)
+    if(q->room == p->room) in.push_back(q);
+  return in;
+}
+
 void GuiPanes::redrawAll()
 {
   if(!_tk.redraw) return;
@@ -224,14 +248,16 @@ void GuiPanes::putBackState()
 void GuiPanes::split(char how, double ratio)
 {
   if(!_current) return;
+  bool here = !_current->window || _tk.splitsWindows;
   if(how == 'u') {
-    Pane *keep = !_current->window ? _current : nullptr;
+    // in the window of the current view, or else in the main one
+    Pane *keep = here ? _current : nullptr;
     for(Pane *p : _panes)
       if(!keep && !p->window) keep = p;
     if(!keep) return;
     std::vector<Pane *> gone;
-    for(Pane *p : _panes)
-      if(p != keep && !p->window) gone.push_back(p);
+    for(Pane *p : _beside(keep))
+      if(p != keep) gone.push_back(p);
     for(Pane *p : gone) _panes.erase(std::find(_panes.begin(), _panes.end(), p));
     _current = keep;
     if(_tk.unsplit) _tk.unsplit(keep, gone);
@@ -242,7 +268,7 @@ void GuiPanes::split(char how, double ratio)
     Msg::Error("Unknown window splitting method '%c'", how);
     return;
   }
-  if(_current->window) {
+  if(!here) {
     Msg::Error("Only the graphic windows of the main window can be split");
     return;
   }
@@ -250,6 +276,8 @@ void GuiPanes::split(char how, double ratio)
   Pane *was = _current;
   Pane *fresh = _make(was);
   if(!fresh) return;
+  fresh->room = was->room;
+  fresh->window = was->window;
   if(ratio <= 0. || ratio >= 1.) ratio = .5;
   _tk.split(was, fresh, how, ratio);
   _current = fresh;
@@ -262,6 +290,7 @@ void GuiPanes::newWindow()
   Pane *fresh = _make(_current);
   if(!fresh) return;
   fresh->window = true;
+  fresh->room = ++_rooms;
   _current = fresh;
   _tk.newWindow(fresh);
 }
@@ -324,10 +353,13 @@ bool GuiPanes::_print(int width, int height, int supersampling,
   if(!_current || width < 1 || height < 1 || !_tk.prepare || !_tk.size)
     return false;
   std::vector<Pane *> tiled;
-  if(composite && _tk.origin)
-    for(Pane *p : _panes)
-      if(!p->window) tiled.push_back(p);
+  if(composite && _tk.origin) tiled = _beside(_current);
   if(tiled.size() < 2) {
+    int w = 0, h = 0;
+    _pixelSize(_current, w, h);
+    if(_tk.surfaceFonts && _tk.surfaceFonts() && w == width && h == height &&
+       supersampling <= 1)
+      return _readSurface(_current, width, height, format, type, pixels);
     if(!_tk.prepare(_current)) return false;
     place(_current);
     bool ok = _current->view->printTo(width, height, supersampling, format,
@@ -364,13 +396,21 @@ bool GuiPanes::_print(int width, int height, int supersampling,
     int px1 = std::min(width, (int)((b.x + b.w - x0) * sx + 0.5));
     int py0 = (int)((y1 - b.y - b.h) * sy + 0.5);
     int py1 = std::min(height, (int)((y1 - b.y) * sy + 0.5));
-    if(px1 - px0 < 1 || py1 - py0 < 1 || !_tk.prepare(b.p)) continue;
-    place(b.p);
+    if(px1 - px0 < 1 || py1 - py0 < 1) continue;
     PixelBuffer one(px1 - px0, py1 - py0, (GLenum)format, (GLenum)type);
-    if(b.p->view->printTo(px1 - px0, py1 - py0, supersampling, format, type,
-                          one.getPixels()))
-      all.copyPixels(px0, py0, &one);
-    if(_tk.redraw) _tk.redraw(b.p);
+    int w = 0, h = 0;
+    _pixelSize(b.p, w, h);
+    bool read = false;
+    if(_tk.surfaceFonts && _tk.surfaceFonts() && w == px1 - px0 &&
+       h == py1 - py0 && supersampling <= 1)
+      read = _readSurface(b.p, w, h, format, type, one.getPixels());
+    else if(_tk.prepare(b.p)) {
+      place(b.p);
+      read = b.p->view->printTo(px1 - px0, py1 - py0, supersampling, format,
+                                type, one.getPixels());
+      if(_tk.redraw) _tk.redraw(b.p);
+    }
+    if(read) all.copyPixels(px0, py0, &one);
   }
   std::memcpy(pixels, all.getPixels(),
               (std::size_t)width * height * all.getNumComp() *
@@ -378,10 +418,33 @@ bool GuiPanes::_print(int width, int height, int supersampling,
   return true;
 }
 
+bool GuiPanes::_readSurface(Pane *p, int width, int height,
+                            unsigned int format, unsigned int type,
+                            void *pixels)
+{
+  Pane *was = _current;
+  _current = p;
+  // drawContextGlobal::drawCurrentOpenglWindow(), through the toolkit
+  PixelBuffer buffer(width, height, (GLenum)format, (GLenum)type);
+  buffer.fill();
+  _current = was;
+  std::memcpy(pixels, buffer.getPixels(),
+              (std::size_t)width * height * buffer.getNumComp() *
+                buffer.getDataSize());
+  return true;
+}
+
 void GuiPanes::_setHost()
 {
   Scene::Host held;
-  held.redraw = []() { instance().redrawAll(); };
+  held.redraw = []() {
+    GuiPanes &all = instance();
+    if(all._tk.redrawAll)
+      all._tk.redrawAll();
+    else
+      all.redrawAll();
+  };
+  held.printFonts = _tk.printFonts;
   held.redrawView = [](sceneView *view) {
     GuiPanes &all = instance();
     if(Pane *p = all.paneOf(view))
@@ -580,20 +643,26 @@ struct GuiPanesOps {
 
   static void orientViews(const std::string &what, bool reverse, bool sync)
   {
+    // those of the window of the current one
     std::vector<sceneView *> views;
-    for(GuiPanes::Pane *p : all()._panes)
-      if(!p->window) views.push_back(p->view);
-    if(views.empty() && all()._current) views.push_back(all()._current->view);
+    for(GuiPanes::Pane *p : all()._beside(all()._current))
+      views.push_back(p->view);
     Scene::orientViews(views, what, reverse, sync);
     all().redrawAll();
   }
 
-  static void setMouseSelection(bool on) {}
+  static void setMouseSelection(bool on)
+  {
+    // turning it off puts the pointer back
+    if(!on && all()._tk.cursor) all()._tk.cursor(false);
+    if(all()._tk.statusChanged) all()._tk.statusChanged();
+  }
 
   static void toggleAnimation()
   {
     all()._animating = !all()._animating;
     all().startTimers();
+    if(all()._tk.statusChanged) all()._tk.statusChanged();
   }
 
   static bool animating() { return all()._animating; }
@@ -613,6 +682,7 @@ struct GuiPanesOps {
 
   static void sceneSettingChanged(const std::string &what)
   {
+    if(all()._tk.setting) all()._tk.setting(what);
     if(what == "background_image")
       for(GuiPanes::Pane *p : all()._panes)
         if(p->view->getDrawContext())

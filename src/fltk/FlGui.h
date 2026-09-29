@@ -19,8 +19,12 @@
 class graphicWindow;
 class sceneViewFltk;
 
-// defined in SceneFltk.cpp
-void fltkInstallSceneHost();
+// defined in SceneFltk.cpp: the scene's views on GuiPanes, from before the
+// first window is made to after the last is gone; the text engine the
+// options say
+void fltkSceneStart();
+void fltkSceneStop();
+void fltkFontEngine();
 class onelabWindow;
 class onelabGroup;
 class Fl_Widget;
@@ -37,15 +41,6 @@ class FlGui {
 private:
   static FlGui *_instance;
   static std::atomic<int> _locked;
-
-public:
-  std::vector<GVertex *> selectedVertices;
-  std::vector<GEdge *> selectedEdges;
-  std::vector<GFace *> selectedFaces;
-  std::vector<GRegion *> selectedRegions;
-  std::vector<MElement *> selectedElements;
-  std::vector<SPoint2> selectedPoints;
-  std::vector<PView *> selectedViews;
 
 public:
   std::vector<graphicWindow *> graph;
@@ -88,16 +83,6 @@ public:
   sceneViewFltk *getCurrentOpenglWindow();
   // get the draw context from the last opengl window that received an event
   drawContext *getCurrentDrawContext();
-  // override which opengl window should be considered as current, by given an
-  // absolute index amongst all the existing opengl windows
-  void setCurrentOpenglWindow(int which);
-  // split the current opengl window
-  void splitCurrentOpenglWindow(char how, double ratio = 0.5);
-  // copy the current opengl window to the clipboard
-  void copyCurrentOpenglWindowToClipboard();
-  // select an entity in the most recent graphic window
-  char selectEntity(int type);
-  bool pickAt(int type, bool mesh, bool post, int x, int y, int w, int h);
   // add line in message console
   void addMessage(const char *msg);
   // save messages to file

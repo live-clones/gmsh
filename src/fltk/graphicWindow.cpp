@@ -63,16 +63,16 @@ static void file_window_cb(Fl_Widget *w, void *data)
     g2->getWindow()->show();
   }
   else if(str == "split_h") {
-    FlGui::instance()->splitCurrentOpenglWindow('h', 0.5);
+    Gui::instance().splitCurrentOpenglWindow('h', 0.5);
   }
   else if(str == "split_v") {
-    FlGui::instance()->splitCurrentOpenglWindow('v', 0.5);
+    Gui::instance().splitCurrentOpenglWindow('v', 0.5);
   }
   else if(str == "split_u") {
-    FlGui::instance()->splitCurrentOpenglWindow('u');
+    Gui::instance().splitCurrentOpenglWindow('u', 0.);
   }
   else if(str == "copy") {
-    FlGui::instance()->copyCurrentOpenglWindowToClipboard();
+    Gui::instance().copyCurrentOpenglWindowToClipboard();
   }
   drawContext::global()->draw();
 }
@@ -123,38 +123,7 @@ static graphicWindow *getGraphicWindow(Fl_Widget *w)
   return FlGui::instance()->graph[0];
 }
 
-std::vector<sceneView *> fltkViewsBeside(sceneViewFltk *view)
-{
-  std::vector<sceneView *> views;
-  if(!view) return views;
-  if(view->parent())
-    for(auto *gl : getGraphicWindow(view->parent())->gl)
-      views.push_back(gl->scene());
-  else
-    views.push_back(view->scene());
-  return views;
-}
-
 // the panes of the window the pointer is over
-void fltkOrientViews(const std::string &what, bool reverse, bool sync)
-{
-  Scene::orientViews(
-    fltkViewsBeside(FlGui::instance()->getCurrentOpenglWindow()), what,
-    reverse, sync);
-}
-
-// turning it off puts the pointer back
-void fltkSetMouseSelection(bool on)
-{
-  if(!on)
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-        FlGui::instance()->graph[i]->gl[j]->cursor(FL_CURSOR_DEFAULT, FL_BLACK,
-                                                   FL_WHITE);
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-    FlGui::instance()->graph[i]->refreshStatusButtons();
-}
-
 static void remove_graphic_window_cb(Fl_Widget *w, void *data)
 {
   std::vector<graphicWindow *> graph2;
@@ -166,7 +135,6 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
       graph2.push_back(FlGui::instance()->graph[i]);
   }
   if(deleteMe) {
-    sceneViewFltk::setLastHandled(nullptr);
     FlGui::instance()->graph = graph2;
     delete deleteMe;
   }
@@ -426,6 +394,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   int mode = sceneViewFltk::glMode();
   for(std::size_t i = 0; i < gl.size(); i++) gl[i]->mode(mode);
+  // the views of a window of their own, the first one made the main one
+  for(std::size_t i = 0; i < gl.size(); i++)
+    GuiPanes::instance().adopt(gl[i], i ? gl[0] : nullptr);
 
   if(main) {
     _browser = new messageBrowser(twidth, mh + glheight, glwidth, mheight);
@@ -540,7 +511,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
 graphicWindow::~graphicWindow()
 {
-  sceneViewFltk::setLastHandled(nullptr);
+  // the widgets are deleted later: the views go now
+  for(sceneViewFltk *g : gl) GuiPanes::instance().dropped(g);
   _tile->clear();
   _win->clear();
   Fl::delete_widget(_win);
@@ -708,60 +680,48 @@ Ui::Backend::Layout graphicWindow::layout()
   return l;
 }
 
-bool graphicWindow::split(sceneViewFltk *g, char how, double ratio)
+void graphicWindow::split(sceneViewFltk *g, sceneViewFltk *fresh, char how,
+                          double ratio)
 {
-  if(_tile->find(g) == _tile->children()) return false; // not found
+  double fact = (ratio <= 0.) ? 0.01 : (ratio >= 1.) ? 0.99 : ratio;
+  // make sure browser is not zero-size when adding children
+  if(_browser && _browser->h() == 0) setMessageHeight(1);
+  int x1 = g->x();
+  int y1 = g->y();
+  int w1 = (how == 'h') ? (int)(g->w() * fact) : g->w();
+  int h1 = (how == 'h') ? g->h() : (int)(g->h() * fact);
 
-  if(how == 'u') {
-    // after many tries I cannot figure out how to do this cleanly, so let's be
-    // brutal :-)
-    int mode = g->mode();
-    sceneViewFltk::setLastHandled(nullptr);
-    for(std::size_t i = 0; i < gl.size(); i++) {
-      _tile->remove(gl[i]);
-      delete gl[i];
-    }
-    gl.clear();
-    sceneViewFltk *g2 = new sceneViewFltk(
-      _tile->x() + (_onelab && !_menuwin ? _onelab->w() : 0), _tile->y(),
-      _tile->w() - (_onelab && !_menuwin ? _onelab->w() : 0),
-      _tile->h() - (_browser ? _browser->h() : 0));
-    g2->end();
-    g2->mode(mode);
-    gl.push_back(g2);
-    _tile->add(g2);
-    g2->show();
-    sceneViewFltk::setLastHandled(g2);
+  int x2 = (how == 'h') ? (g->x() + w1) : g->x();
+  int y2 = (how == 'h') ? g->y() : (g->y() + h1);
+  int w2 = (how == 'h') ? (g->w() - w1) : g->w();
+  int h2 = (how == 'h') ? g->h() : (g->h() - h1);
+
+  g->resize(x1, y1, w1, h1);
+  fresh->resize(x2, y2, w2, h2);
+  gl.push_back(fresh);
+  _tile->add(fresh);
+  fresh->show();
+}
+
+void graphicWindow::unsplit(sceneViewFltk *keep,
+                            const std::vector<sceneViewFltk *> &gone)
+{
+  for(sceneViewFltk *g : gone) {
+    _tile->remove(g);
+    gl.erase(std::remove(gl.begin(), gl.end(), g), gl.end());
+    Fl::delete_widget(g);
   }
-  else {
-    double fact = (ratio <= 0.) ? 0.01 : (ratio >= 1.) ? 0.99 : ratio;
-    // make sure browser is not zero-size when adding children
-    if(_browser && _browser->h() == 0) setMessageHeight(1);
-    int x1 = g->x();
-    int y1 = g->y();
-    int w1 = (how == 'h') ? (int)(g->w() * fact) : g->w();
-    int h1 = (how == 'h') ? g->h() : (int)(g->h() * fact);
-
-    int x2 = (how == 'h') ? (g->x() + w1) : g->x();
-    int y2 = (how == 'h') ? g->y() : (g->y() + h1);
-    int w2 = (how == 'h') ? (g->w() - w1) : g->w();
-    int h2 = (how == 'h') ? g->h() : (g->h() - h1);
-
-    g->resize(x1, y1, w1, h1);
-    sceneViewFltk *g2 = new sceneViewFltk(x2, y2, w2, h2);
-    g2->end();
-    g2->mode(g->mode());
-    gl.push_back(g2);
-    _tile->add(g2);
-    g2->show();
-    sceneViewFltk::setLastHandled(g2);
-  }
-  return true;
+  // the room the views had
+  keep->resize(_tile->x() + (_onelab && !_menuwin ? _onelab->w() : 0),
+               _tile->y(),
+               _tile->w() - (_onelab && !_menuwin ? _onelab->w() : 0),
+               _tile->h() - (_browser ? _browser->h() : 0));
+  _tile->init_sizes();
+  _tile->redraw();
 }
 
 void graphicWindow::setStereo(bool st)
 {
-  sceneViewFltk::setLastHandled(nullptr);
   for(std::size_t i = 0; i < gl.size(); i++) {
     if(st) { gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO); }
     else {

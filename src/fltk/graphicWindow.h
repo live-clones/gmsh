@@ -115,7 +115,10 @@ public:
   void attachMenu();
   void attachDetachMenu();
   bool isMenuDetached() { return _menuwin ? true : false; }
-  bool split(sceneViewFltk *g, char how, double ratio);
+  // fresh beside g, across ('h') or down ('v'), g keeping the ratio
+  void split(sceneViewFltk *g, sceneViewFltk *fresh, char how, double ratio);
+  // the views gone, keep filling the room
+  void unsplit(sceneViewFltk *keep, const std::vector<sceneViewFltk *> &gone);
   void refreshStatusButtons();
   int getMessageHeight();
   void setMessageHeight(int h);
@@ -133,9 +136,6 @@ public:
 
 void file_quit_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
-void fltkOrientViews(const std::string &what, bool reverse, bool sync);
-void fltkSetMouseSelection(bool on);
-std::vector<sceneView *> fltkViewsBeside(sceneViewFltk *view);
 void show_hide_menu_cb(Fl_Widget *w, void *data);
 void attach_detach_menu_cb(Fl_Widget *w, void *data);
 
