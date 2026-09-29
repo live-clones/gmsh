@@ -2693,11 +2693,10 @@ static void writeMSH4Entities(
     auto isInPartition = [&](GEntity *entity) {
       if(acceptAllPartitions) return true;
       auto parts = getEntityPartition(entity, false);
-      return std::any_of(partitionsToSave.begin(), partitionsToSave.end(),
-                         [&](int p) {
-                           return std::find(parts.begin(), parts.end(), p) !=
-                                  parts.end();
-                         });
+      return std::any_of(parts.begin(), parts.end(), [&](int p) {
+        return std::binary_search(partitionsToSave.begin(),
+                                  partitionsToSave.end(), p);
+      });
     };
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
@@ -3426,16 +3425,14 @@ static void getEntitiesToSave(GModel *const model, bool partitioned,
   auto matchesPartition = [&](const std::vector<int> &entityPartitions) {
     // if no partition is specified, save all partitions
     if(partitionsToSave.empty()) return true;
-    for(int p : partitionsToSave)
-      if(std::find(entityPartitions.begin(), entityPartitions.end(), p) !=
-         entityPartitions.end())
+    for(int p : entityPartitions)
+      if(std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), p))
         return true;
     return false;
   };
   auto matchesGhost = [&](int ghostPartition) {
     if(partitionsToSave.empty()) return false;
-    return std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                     ghostPartition) != partitionsToSave.end();
+    return std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), ghostPartition);
   };
   if(partitioned) {
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
@@ -3841,8 +3838,7 @@ static void writeMSH4Elements(
         if(partitions.size() != 1)
           Msg::Error("Overlap boundary with more than one partition.");
         int partition = *partitions.begin();
-        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                     partition) != partitionsToSave.end()) {
+        if(std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), partition)) {
           if constexpr(std::is_same_v<ContainerType,
                                       std::unordered_set<GEdge *>>) {
             auto cast = static_cast<GEdge *>(entity);
@@ -4161,13 +4157,11 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
     for(auto region : regions) { addEdgesFromEntity(region); }
     for(const auto &mgr : model->getOverlapManagers()) {
       for(const auto &of : std::get<0>(mgr.getAllOverlaps())) {
-        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                     of->owningPartition()) != partitionsToSave.end())
+        if(std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), of->owningPartition()))
           addEdgesFromEntity(of);
       }
       for(const auto &or_ : std::get<1>(mgr.getAllOverlaps())) {
-        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                     or_->owningPartition()) != partitionsToSave.end())
+        if(std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), or_->owningPartition()))
           addEdgesFromEntity(or_);
       }
     }
@@ -4265,13 +4259,11 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
   for(auto region : regions) { addFacesFromEntity(region); }
   for(const auto &mgr : model->getOverlapManagers()) {
     for(const auto &of : std::get<0>(mgr.getAllOverlaps())) {
-      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   of->owningPartition()) != partitionsToSave.end())
+      if(std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), of->owningPartition()))
         addFacesFromEntity(of);
     }
     for(const auto &or_ : std::get<1>(mgr.getAllOverlaps())) {
-      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   or_->owningPartition()) != partitionsToSave.end())
+      if(std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), or_->owningPartition()))
         addFacesFromEntity(or_);
     }
   }
@@ -4409,8 +4401,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp,
       partition = static_cast<ghostRegion *>(entities[i])->getPartition();
     }
     if(partitionsToSave.empty() ||
-       std::find(partitionsToSave.begin(), partitionsToSave.end(), partition) !=
-         partitionsToSave.end()) {
+       std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), partition)) {
       for(auto it = ghostElements.begin(); it != ghostElements.end(); ++it) {
         blocks[std::make_pair(it->second, partition)].push_back(
           it->first->getNum());
@@ -4557,8 +4548,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
     std::vector<typename EntityTraits<dim>::OverlapEntity *> overlapsToSave;
     for(const auto &overlap : allOverlaps) {
       if(partitionsToSave.empty() ||
-         std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   overlap->owningPartition()) != partitionsToSave.end()) {
+         std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), overlap->owningPartition())) {
         overlapsToSave.push_back(overlap);
       }
     }
@@ -4665,11 +4655,10 @@ static void writeMSH4EntityOverlapPairs(FILE *fp, bool binary,
     for(const auto &boundary : boundaries) {
       auto partitions = boundary->getPartitions();
       if(partitionsToSave.empty() ||
-         std::any_of(partitionsToSave.begin(), partitionsToSave.end(),
-                     [&](int p) {
-                       return std::find(partitions.begin(), partitions.end(),
-                                        p) != partitions.end();
-                     })) {
+         std::any_of(partitions.begin(), partitions.end(), [&](int p) {
+           return std::binary_search(partitionsToSave.begin(),
+                                     partitionsToSave.end(), p);
+         })) {
         boundariesToSave.push_back(boundary);
       }
     }
@@ -4791,7 +4780,7 @@ writeMSH4OverlapInterfaceBoundaries(GModel *const model, FILE *fp,
 
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
-                       bool append, const std::vector<int> &partitionsToSave,
+                       bool append, const std::vector<int> &partitionsToSaveIn,
                        std::map<GEntity *, SBoundingBox3d> *entityBounds)
 {
   FILE *fp = nullptr;
@@ -4843,7 +4832,10 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // check if the mesh is partitioned... and if we actually have elements in the
   // partitioned entities
   bool partitioned = getNumPartitions() > 0;
+  // Sort to enable binary search instead of std::find (faster for large lists)
+  std::vector<int> partitionsToSave(partitionsToSaveIn);
   if(partitioned) {
+    std::sort(partitionsToSave.begin(), partitionsToSave.end());
     std::vector<GEntity *> entities;
     getEntities(entities);
     std::size_t partEnt = 0;
