@@ -30,15 +30,15 @@
 
   } // namespace
 
-  void Gui::offerScene(const char *interface, const GuiSceneOps &ops)
+  void Gui::offerScene(const char *name, const GuiSceneOps &ops)
   {
-    if(interface) _offered()[interface] = ops;
+    if(name) _offered()[name] = ops;
   }
 
-  void Gui::useScene(const std::string &interface)
+  void Gui::useScene(const std::string &name)
   {
     // the one of this interface, or the one serving any, or nothing
-    auto it = _offered().find(interface);
+    auto it = _offered().find(name);
     if(it == _offered().end()) it = _offered().find("*");
     _ops() = (it != _offered().end()) ? it->second : GuiSceneOps();
   }

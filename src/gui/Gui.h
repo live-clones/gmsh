@@ -249,8 +249,8 @@ public:
 
   // --- the 3D scene
 
-  static void offerScene(const char *interface, const GuiSceneOps &ops);
-  static void useScene(const std::string &interface);
+  static void offerScene(const char *name, const GuiSceneOps &ops);
+  static void useScene(const std::string &name);
 
   // for a scene in a window of its own, pumped from the loop of the interface
   void pumpScene(bool rateLimited);
