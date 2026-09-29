@@ -5,7 +5,8 @@
 
 // The tree of the modules, read from Ui::Tree: it knows the tree only as
 // Tree.h says it, and puts a widget on every line the description gives one
-// to (fltkTreeField(), see fieldFltk.cpp); the buttons of the footer under it.
+// to (fltkFieldWidget(), see fieldFltk.cpp); the buttons of the footer under
+// it.
 
 #include "GmshConfig.h"
 
@@ -77,6 +78,59 @@ namespace {
   {
     std::function<void()> what = ((Ui::Button *)data)->action;
     if(what) what();
+  }
+
+  // the field of a line: the value itself, then the little buttons hung after
+  // it, then its name; a switch and a button take the whole line, the name
+  // inside, the rest the share labelRatio gives
+  Fl_Group *_fieldLine(const Ui::Field &f, int x, int y, int w, int h,
+                       double labelRatio, const Ui::Colour &highlight,
+                       Fl_Color background)
+  {
+    bool nameInside = f.kind == Ui::Check || f.kind == Ui::Action;
+    int lineW = nameInside ? w : (int)(w * labelRatio);
+    Fl_Group *line = new Fl_Group(x, y, lineW, h);
+
+    // a narrow one for the range, two wider for the loop and the plots
+    int room = 0;
+    std::vector<int> widths;
+    for(const auto &b : f.trailing) {
+      int wide = b.label == ":" ? FL_NORMAL_SIZE - 2 : FL_NORMAL_SIZE + 6;
+      widths.push_back(wide);
+      room += wide;
+    }
+    int valueW = lineW - room;
+    if(valueW < FL_NORMAL_SIZE) valueW = FL_NORMAL_SIZE;
+
+    Fl_Widget *widget = fltkFieldWidget(f, x, y, valueW, h, nullptr);
+    if(nameInside) {
+      Fl_Button *b = (Fl_Button *)widget;
+      b->box(FL_FLAT_BOX);
+      b->color(background);
+      if(f.kind == Ui::Action) b->selection_color(background);
+      b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    }
+    else {
+      // the little buttons sit between the widget and its name
+      widget->label(nullptr);
+      if(f.label.size()) line->copy_label(fltkEscaped(f.label).c_str());
+      line->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
+    }
+    if(highlight.a) {
+      Fl_Color paint = fl_rgb_color(highlight.r, highlight.g, highlight.b);
+      widget->color(paint);
+      widget->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, paint));
+    }
+
+    int at = x + valueW;
+    for(std::size_t i = 0; i < f.trailing.size(); i++) {
+      fltkButtonWidget(f.trailing[i], at, y, widths[i], h, "tree");
+      at += widths[i];
+    }
+
+    line->end();
+    line->resizable(nullptr);
+    return line;
   }
 
 #if !defined(__APPLE__)
@@ -172,8 +226,8 @@ void treeFltk::_addLine(const std::string &path, const Ui::Node &node,
     Ui::Field f = node.field;
     if(f.label.empty() && (f.kind == Ui::Check || f.kind == Ui::Action))
       f.label = label;
-    grp = fltkTreeField(f, 1, 1, ww - popw, hh, _widgetLabelRatio,
-                        node.highlight, _tree->color());
+    grp = _fieldLine(f, 1, 1, ww - popw, hh, _widgetLabelRatio,
+                     node.highlight, _tree->color());
   }
   else {
     grp = new Fl_Group(1, 1, ww, hh);

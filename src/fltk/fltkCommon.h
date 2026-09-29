@@ -22,13 +22,11 @@
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Menu_Item.H>
 #include <FL/Fl_Tree.H>
-#include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Window.H>
 
 #include "Backend.h"
 #include "Form.h"
 #include "Layout.h"
-#include "MapEditor.h"
 #include "Menu.h"
 #include "Tree.h"
 
@@ -126,58 +124,27 @@ public:
   }
 };
 
-// --- the widgets of a field, see fieldFltk.cpp
-
-// a number as every interface shows it (Ui::numberText): with the decimals
-// of its step, the step being set when values are dragged
-class numberFltk : public Fl_Value_Input {
-public:
-  numberFltk(int x, int y, int w, int h) : Fl_Value_Input(x, y, w, h) {}
-  int format(char *buffer) override
-  {
-    return snprintf(buffer, 128, "%s", Ui::numberText(value(), step()).c_str());
-  }
-};
-
-// a point on the unit sphere, dragged in a disc
-class discFltk : public Fl_Widget {
-  double _x, _y, _z;
-  void draw() override;
-
-public:
-  discFltk(int x, int y, int w, const char *l = nullptr);
-  int handle(int event) override;
-  void setValue(double x, double y, double z);
-  void getValue(double &x, double &y, double &z) const;
-};
-
-// the colour map of a view, edited with the mouse and the keys: the editor
-// is Ui::MapEditor, what it edits described by Ui::ColourMap
-class colourMapFltk : public Fl_Window {
-  Ui::MapEditor _edit;
-  Ui::ColourMap _map;
-  std::string _name;
-  double _min, _max;
-  bool *_changed;
-  // the entry, the intensity and the part of the picture under x, y
-  void _at(int x, int y, int &entry, int &value, bool &onWedge);
-
-public:
-  colourMapFltk(int x, int y, int w, int h, const char *l = nullptr);
-  void draw() override;
-  int handle(int event) override;
-  void update(const char *name, double min, double max,
-              const Ui::ColourMap &map, bool *changed);
-};
-
-// the widget one line of the tree carries: the value itself, then the little
-// buttons hung after it. The field is copied and kept: FLTK hands a widget a
-// pointer when it calls back, and what it points at has to outlive the line
-Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
-                        double labelRatio, const Ui::Colour &highlight,
-                        Fl_Color background);
-// the tree is being built again: what was kept for the old lines may go
-void fltkForgetTreeFields();
+// --- the widget of one field, see fieldFltk.cpp, for the forms and the lines
+// of the tree: bound to the place its value lives, and carrying the binding,
+// which goes with it; `after` is what the holder does once the user changed
+// something. Its name as the form writes it: after it, or before it with
+// labelBefore; inside for a switch, a button or a menu
+Fl_Widget *fltkFieldWidget(const Ui::Field &field, int x, int y, int w, int h,
+                           const std::function<void()> &after);
+// the value read again and put back, and whether it may be used
+void fltkRefreshField(Fl_Widget *widget);
+// only whether it may be used
+void fltkEnableField(Fl_Widget *widget);
+// the same field from a description made again
+void fltkRebindField(Fl_Widget *widget, const Ui::Field &field);
+// one of the little buttons after a field; key names the menu it drops, see
+// fltkPopupMenu()
+Fl_Button *fltkButtonWidget(const Ui::Button &button, int x, int y, int w,
+                            int h, const std::string &key);
+// FLTK reads "&" in a label as a shortcut mark
+std::string fltkEscaped(const std::string &label);
+// how tall a page of prose `width` wide is
+int fltkProseHeight(const std::vector<Ui::Line> &page, int width);
 
 // --- a tree whose lines are fields (Tree.h): the modules, with the buttons
 // the description puts under it

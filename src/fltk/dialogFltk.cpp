@@ -13,7 +13,6 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <deque>
 #include <map>
 #include <string>
 #include <vector>
@@ -21,22 +20,8 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Window.H>
-#include <FL/Fl_Input.H>
-#include <FL/Fl_Output.H>
-#include <FL/Fl_Select_Browser.H>
-#include <FL/Fl_Multi_Browser.H>
-#include <FL/Fl_Hold_Browser.H>
-#include <FL/Fl_Input_Choice.H>
-#include <FL/Fl_Value_Input.H>
-#include <FL/Fl_Value_Slider.H>
-#include <FL/Fl_Check_Button.H>
-#include <FL/Fl_Color_Chooser.H>
 #include <FL/Fl_Scroll.H>
-#include <FL/Fl_Choice.H>
-#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Button.H>
-#include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Box.H>
 #include <FL/fl_draw.H> // fl_font, fl_width
 
@@ -102,14 +87,9 @@ namespace {
       // which placed item, so that a reload reads the field again from a form
       // of the same shape
       std::size_t index = 0;
-      // set by the colour map widget when it has been drawn on
-      bool changed = false;
-      // so that a tree is only built again when its lines changed
-      std::string was;
     };
     std::vector<bound> _fields;
     std::multimap<std::string, std::size_t> _byOption;
-    void _refreshField(bound &b);
     // keeps the widest width asked for, so that it sits still
     int _widestSeen = 0;
     // forced only when just asked for, or it would undo the tab the user clicked
@@ -117,8 +97,6 @@ namespace {
     void _addItem(std::size_t index, Fl_Group *into);
     void _place(bound &b, const Ui::PlacedItem &p);
     static void _tabCallback(Fl_Widget *w, void *data);
-    static void _fieldCallback(Fl_Widget *w, void *data);
-    static void _buttonCallback(Fl_Widget *w, void *data);
     static void _tick(void *data);
   };
 
@@ -157,166 +135,6 @@ namespace {
 
     Ui::Metrics _metrics();
 
-    // FLTK reads "&" in a label as a shortcut mark, in the menus, the buttons and
-    // the inputs only
-    std::string _escaped(const std::string &label);
-    const std::string &_plain(const std::string &label) { return label; }
-
-    std::string _escaped(const std::string &label)
-    {
-      std::string out;
-      for(char c : label) {
-        out += c;
-        if(c == '&') out += c;
-      }
-      return out;
-    }
-
-    // "/" opens a submenu, "\\" escapes the next character
-    std::string _escapedMenu(const std::string &label)
-    {
-      std::string out;
-      for(char c : label) {
-        if(c == '&' || c == '/' || c == '\\') out += '\\';
-        out += c;
-      }
-      return out;
-    }
-
-    // a choice gets the same width as an input rather than that of its longest
-    // entry, so that the labels line up
-    struct proseSpot {
-      int x, y, w, h;
-      std::function<void()> follow;
-    };
-
-    // measuring and drawing a page of prose are the same walk; by hand rather
-    // than through an Fl_Help_View, which cannot be given its page before its
-    // window is shown
-    int _layProse(const std::vector<Ui::Line> &page, int x, int y, int w,
-                  bool paint, std::vector<proseSpot> *spots)
-    {
-      if(spots) spots->clear();
-      // the room about it is that of its line
-      const int margin = 0;
-      const int left = x + margin, right = x + w - margin;
-      int at = y + margin;
-      struct piece {
-        std::string text;
-        Fl_Font font;
-        int size;
-        bool link;
-        int width;
-        std::function<void()> follow;
-      };
-      for(const Ui::Line &l : page) {
-        int size = l.heading ? FL_NORMAL_SIZE + 6 : FL_NORMAL_SIZE;
-        int indent = l.bullet ? 2 * WB : 0;
-        fl_font(FL_HELVETICA, size);
-        int lead = fl_height();
-        if(l.words.empty()) {
-          at += lead;
-          continue;
-        }
-        int room = right - left - indent;
-        std::vector<piece> row;
-        int rowWidth = 0;
-        bool first = true;
-        auto flush = [&]() {
-          if(row.empty()) return;
-          int put = l.centred ? left + indent + (room - rowWidth) / 2 :
-                                left + indent;
-          if(paint && first && l.bullet) {
-            fl_font(FL_HELVETICA, size);
-            fl_color(FL_FOREGROUND_COLOR);
-            fl_draw("\xe2\x80\xa2", left, at + fl_height() - fl_descent());
-          }
-          for(const piece &q : row) {
-            if(paint) {
-              fl_font(q.font, q.size);
-              fl_color(q.link ? FL_BLUE : FL_FOREGROUND_COLOR);
-              int base = at + fl_height() - fl_descent();
-              fl_draw(q.text.c_str(), put, base);
-              if(q.link) fl_line(put, base + 1, put + q.width, base + 1);
-            }
-            if(q.follow && spots)
-              spots->push_back({put, at, q.width, lead, q.follow});
-            put += q.width;
-          }
-          at += lead;
-          row.clear();
-          rowWidth = 0;
-          first = false;
-        };
-        for(const Ui::Words &word : l.words) {
-          Fl_Font font = l.heading ? FL_HELVETICA_BOLD :
-                         word.italic ? FL_HELVETICA_ITALIC :
-                                       FL_HELVETICA;
-          fl_font(font, size);
-          std::string held;
-          std::size_t i = 0;
-          while(i < word.text.size()) {
-            std::size_t j = word.text.find(' ', i);
-            std::string next =
-              word.text.substr(i, j == std::string::npos ? j : j - i + 1);
-            int wide = (int)fl_width((held + next).c_str());
-            if(rowWidth + wide > room && (rowWidth || held.size())) {
-              if(held.size()) {
-                row.push_back({held, font, size, (bool)word.follow,
-                               (int)fl_width(held.c_str()), word.follow});
-                rowWidth += (int)fl_width(held.c_str());
-                held.clear();
-              }
-              flush();
-              fl_font(font, size);
-              while(next.size() && next[0] == ' ') next = next.substr(1);
-            }
-            held += next;
-            if(j == std::string::npos) break;
-            i = j + 1;
-          }
-          if(held.size()) {
-            fl_font(font, size);
-            int wide = (int)fl_width(held.c_str());
-            row.push_back({held, font, size, (bool)word.follow, wide,
-                           word.follow});
-            rowWidth += wide;
-          }
-        }
-        flush();
-      }
-      return at - y + margin;
-    }
-
-    class proseView : public Fl_Widget {
-    public:
-      std::vector<Ui::Line> page;
-      std::vector<proseSpot> spots;
-      // on the colour of the window, as in the other interfaces
-      proseView(int x, int y, int w, int h) : Fl_Widget(x, y, w, h)
-      {
-        box(FL_FLAT_BOX);
-        color(FL_BACKGROUND_COLOR);
-      }
-      void draw() override
-      {
-        draw_box();
-        _layProse(page, x(), y(), w(), true, &spots);
-      }
-      int handle(int event) override
-      {
-        if(event == FL_PUSH) {
-          for(const auto &s : spots)
-            if(Fl::event_x() >= s.x && Fl::event_x() < s.x + s.w &&
-               Fl::event_y() >= s.y && Fl::event_y() < s.y + s.h) {
-              if(s.follow) s.follow();
-              return 1;
-            }
-        }
-        return Fl_Widget::handle(event);
-      }
-    };
-
     const double _linePad = .15;
 
     // a line of widgets and the room about it are as tall as a button of the
@@ -345,11 +163,11 @@ namespace {
       // a box FLTK writes a name on keeps three pixels at each end
       m.textWidth = [em](const std::string &s) {
         fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
-        return (fl_width(_escaped(s).c_str()) + 6) / em;
+        return (fl_width(fltkEscaped(s).c_str()) + 6) / em;
       };
       m.widget = [em, RH](const Ui::Field &f) -> Ui::Size {
         fl_font(f.heading ? FL_HELVETICA_BOLD : FL_HELVETICA, FL_NORMAL_SIZE);
-        double text = fl_width(_escaped(f.label).c_str()) / em;
+        double text = fl_width(fltkEscaped(f.label).c_str()) / em;
         switch(f.kind) {
         case Ui::Check:
           return Ui::Size(text + (f.disclosure ? 2.5 : 1.8), RH / em);
@@ -371,24 +189,9 @@ namespace {
       };
       m.proseHeight = [em, RH](const Ui::Field &f, double width) -> double {
         if(!f.prose) return RH / em;
-        return _layProse(f.prose(), 0, 0, (int)(width * em), false, nullptr) /
-               em;
+        return fltkProseHeight(f.prose(), (int)(width * em)) / em;
       };
       return m;
-    }
-
-    // a drag, the wheel, a letter typed are steps of the choosing; Enter, the
-    // button let go or the field left end it
-    bool _choosingEnds()
-    {
-      switch(Fl::event()) {
-      case FL_DRAG:
-      case FL_MOUSEWHEEL:
-      case FL_PASTE: return false;
-      case FL_KEYBOARD:
-        return Fl::event_key() == FL_Enter || Fl::event_key() == FL_KP_Enter;
-      default: return true;
-      }
     }
 
   } // namespace
@@ -397,150 +200,6 @@ namespace {
   {
     if(_win) Fl::delete_widget(_win);
   }
-
-  void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
-  {
-    dialogFltk *d = (dialogFltk *)data;
-    for(auto &b : d->_fields) {
-      if(b.widget != w) continue;
-      // a copy: what the field does may build the dialog again, ending the list
-      // this walks
-      Ui::Field f = b.field;
-      switch(f.kind) {
-      case Ui::Text:
-        if(Fl_Input_Choice *c = dynamic_cast<Fl_Input_Choice *>(w))
-          f.setText(c->value() ? c->value() : "");
-        else
-          f.setText(((Fl_Input *)w)->value());
-        break;
-      case Ui::Integer:
-      case Ui::Number:
-        f.setNumber(((Fl_Valuator *)w)->value());
-        break;
-      case Ui::Check:
-        f.setFlag(((Fl_Button *)w)->value() ? true : false);
-        break;
-      case Ui::Color: {
-        Ui::Colour c = f.getColour();
-        uchar r = c.r, g = c.g, b = c.b;
-        if(fl_color_chooser("Color Chooser", r, g, b))
-          f.setColour(Ui::Colour(r, g, b, c.a));
-      } break;
-      case Ui::Direction: {
-        double x = 0., y = 0., z = 0.;
-        ((discFltk *)w)->getValue(x, y, z);
-        f.setVector(x, y, z);
-      } break;
-      case Ui::Hierarchy: {
-        // which line, by where it is in the list the description gave
-        Fl_Tree *tree = (Fl_Tree *)w;
-        Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
-        if(!item || !f.hierarchy) break;
-        const std::string *path = (const std::string *)item->user_data();
-        if(!path) break;
-        Ui::Node node = f.hierarchy->node(*path);
-        if(!node.pick) break;
-        if(tree->callback_reason() == FL_TREE_REASON_SELECTED)
-          node.pick(true);
-        else if(tree->callback_reason() == FL_TREE_REASON_DESELECTED)
-          node.pick(false);
-      } break;
-      case Ui::ColorMap: break; // it edits the table itself
-      case Ui::Menu: {
-        Fl_Menu_Button *m = (Fl_Menu_Button *)w;
-        const Fl_Menu_Item *item = m->mvalue();
-        if(item && f.choose)
-          for(int k = 0; k < m->size() - 1; k++)
-            if(&m->menu()[k] == item) f.choose(k, true);
-      } break;
-      case Ui::Label:
-      case Ui::Prose:
-      case Ui::Output:
-      case Ui::Action:
-      case Ui::Spacer: break;
-      case Ui::List: {
-        Fl_Browser *br = (Fl_Browser *)w;
-        if(f.choose) {
-          for(int line = 1; line <= br->size(); line++)
-            f.choose(line - 1, br->selected(line) ? true : false);
-        }
-        else {
-          // a line one clicks is one to be rid of
-          int line = br->value();
-          if(line > 0 && f.removeItem) f.removeItem(line - 1);
-        }
-      } break;
-      case Ui::Choice: {
-        if(f.multiple) {
-          Fl_Menu_Button *m = (Fl_Menu_Button *)w;
-          const Fl_Menu_Item *item = m->mvalue();
-          if(item && f.choose) {
-            for(int k = 0; k < m->size() - 1; k++)
-              if(&m->menu()[k] == item) f.choose(k, item->value() ? true : false);
-          }
-          break;
-        }
-        int i = ((Fl_Choice *)w)->value();
-        std::vector<std::string> labels;
-        std::vector<int> values;
-        Ui::choices(f, labels, values);
-        if(i >= 0 && i < (int)labels.size()) {
-          if(values.empty())
-            f.setText(labels[i]);
-          else if(i < (int)values.size())
-            f.setNumber(values[i]);
-        }
-      } break;
-      }
-      if(f.done && _choosingEnds())
-        f.done();
-      else if(f.changed)
-        f.changed();
-      break;
-    }
-    d->reshape();
-  }
-
-  // the description must follow the tab clicked, or the next refresh puts the
-  // pane it remembers back
-  struct buttonAction {
-    dialogFltk *dialog;
-    std::function<void()> what;
-  };
-
-  void dialogFltk::_buttonCallback(Fl_Widget *w, void *data)
-  {
-    buttonAction *a = (buttonAction *)data;
-    if(!a) return;
-    if(a->what) a->what();
-    if(a->dialog) a->dialog->reshape();
-  }
-
-  namespace {
-
-    // kept while the widgets that point at them are alive: FLTK hands a widget a
-    // void*
-    std::deque<Ui::Button> &_kept()
-    {
-      static std::deque<Ui::Button> kept;
-      return kept;
-    }
-
-    void _trailingPressed(Fl_Widget *w, void *data)
-    {
-      Ui::Button *b = (Ui::Button *)data;
-      if(b->action) b->action();
-    }
-
-    void _trailingMenu(Fl_Widget *w, void *data)
-    {
-      Ui::Button *b = (Ui::Button *)data;
-      if(b->menu)
-        fltkPopupMenu(b->menu(), Fl::event_x_root(), Fl::event_y_root(),
-                      "field");
-    }
-
-  } // namespace
 
   // the widgets of one placed field, in the group it is placed in; where they
   // go is _place()'s
@@ -553,190 +212,29 @@ namespace {
     const Ui::Field &f = p.field;
     int fx = WB + px(p.box.x), fy = WB + px(p.box.y);
     int fieldW = px(p.box.w), fieldH = px(p.box.h);
-    Fl_Widget *widget = nullptr;
-    switch(f.kind) {
-    case Ui::Text:
-      if(f.dynamicChoices) {
-        Fl_Input_Choice *c = new Fl_Input_Choice(fx, fy, fieldW, RH);
-        // picking from the menu goes through the group
-        c->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-        if(f.commitsWhenDone)
-          c->input()->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-        widget = c;
-      }
-      else {
-        Fl_Input *in = new Fl_Input(fx, fy, fieldW, RH);
-        in->when(f.commitsWhenDone ? (FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY) :
-                                     FL_WHEN_CHANGED);
-        widget = in;
-      }
-      break;
-    case Ui::Integer:
-    case Ui::Number: {
-      if(f.slider && f.maximum > f.minimum) {
-        Fl_Value_Slider *v = new Fl_Value_Slider(fx, fy, fieldW, RH);
-        v->type(FL_HOR_SLIDER);
-        v->textsize(FL_NORMAL_SIZE);
-        v->bounds(f.minimum, f.maximum);
-        if(f.step > 0.) v->step(f.step);
-        v->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE |
-                (f.done ? FL_WHEN_NOT_CHANGED : 0));
-        widget = v;
-        break;
-      }
-      Fl_Value_Input *v = new numberFltk(fx, fy, fieldW, RH);
-      // the input inside is given the valuator's when() at every event: set there
-      // or not at all. With done, Enter says the value is the one even when it
-      // did not change
-      v->when((f.commitsWhenDone ? 0 : FL_WHEN_CHANGED) | FL_WHEN_RELEASE |
-              FL_WHEN_ENTER_KEY | (f.done ? FL_WHEN_NOT_CHANGED : 0));
-      if(f.maximum > f.minimum) {
-        v->minimum(f.minimum);
-        v->maximum(f.maximum);
-      }
-      if(f.step > 0. && fltkSources().settings().inputScrolling)
-        v->step(f.step);
-      widget = v;
-    } break;
-    case Ui::Check:
-      if(f.disclosure)
-        widget = new Fl_Toggle_Button(fx, fy, fieldW, RH);
-      else
-        widget = new Fl_Check_Button(fx, fy, fieldW, RH, nullptr);
-      break;
-    case Ui::Choice:
-      if(f.multiple) {
-        Fl_Menu_Button *mb = new Fl_Menu_Button(fx, fy, fieldW, RH);
-        widget = mb;
-      }
-      else
-        widget = new Fl_Choice(fx, fy, fieldW, RH);
-      break;
-    case Ui::Label: {
-      Fl_Box *b = new Fl_Box(fx, fy, fieldW, fieldH);
-      b->align((f.align == Ui::Centre ? FL_ALIGN_CENTER :
-                f.align == Ui::Right  ? FL_ALIGN_RIGHT :
-                                        FL_ALIGN_LEFT) |
-               FL_ALIGN_INSIDE | (f.wraps ? FL_ALIGN_WRAP | FL_ALIGN_TOP : 0));
-      if(f.heading) b->labelfont(FL_HELVETICA_BOLD);
-      widget = b;
-    } break;
-    case Ui::Output: {
-      Fl_Output *o = new Fl_Output(fx, fy, fieldW, RH);
-      widget = o;
-    } break;
-    case Ui::Prose: {
-      widget = new proseView(fx, fy, fieldW, fieldH);
-    } break;
-    case Ui::List: {
-      Fl_Browser_ *br;
-      if(!f.choose)
-        br = new Fl_Select_Browser(fx, fy, fieldW, fieldH);
-      else if(f.multiple)
-        br = new Fl_Multi_Browser(fx, fy, fieldW, fieldH);
-      else
-        br = new Fl_Hold_Browser(fx, fy, fieldW, fieldH);
-      // the widths have to outlive this call: the browser keeps the array
-      if(f.columnsEm.size()) {
-        std::vector<int> *widths = new std::vector<int>;
-        for(double wide : f.columnsEm)
-          widths->push_back((int)(wide * FL_NORMAL_SIZE));
-        widths->push_back(0); // the last column takes what is left
-        ((Fl_Browser *)br)->column_widths(widths->data());
-        ((Fl_Browser *)br)->column_char('\t');
-      }
-      if(f.isCode) {
-  #if defined(WIN32) // FL_SCREEN is too small there
-        br->textfont(FL_COURIER);
-  #else
-        br->textfont(FL_SCREEN);
-  #endif
-        br->textsize(FL_NORMAL_SIZE - 2);
-      }
-      br->callback(_fieldCallback, this);
-      widget = br;
-    } break;
-    case Ui::Color: {
-      Fl_Button *b = new Fl_Button(fx, fy, fieldW, RH);
-      b->box(FL_DOWN_BOX);
-      widget = b;
-    } break;
-    case Ui::Action: {
-      Fl_Button *b;
-      if(f.isDefault)
-        b = new Fl_Return_Button(fx, fy, fieldW, RH);
-      else
-        b = new Fl_Button(fx, fy, fieldW, f.hangs ? fieldH : RH);
-      b->callback(_buttonCallback, new buttonAction{this, f.changed});
-      widget = b;
-    } break;
-    case Ui::Menu: {
-      Fl_Menu_Button *mb = new Fl_Menu_Button(fx, fy, fieldW, RH);
-      widget = mb;
-    } break;
-    case Ui::Direction:
-      widget = new discFltk(fx, fy, fieldH);
-      break;
-    case Ui::Hierarchy: {
-      Fl_Tree *tree = new Fl_Tree(fx, fy, fieldW, fieldH);
-      tree->selectmode(FL_TREE_SELECT_MULTI);
-      tree->callback(_fieldCallback, this);
-      tree->when(FL_WHEN_CHANGED);
-      widget = tree;
-    } break;
-    case Ui::ColorMap: {
-      colourMapFltk *bar = new colourMapFltk(fx, fy, fieldW, fieldH);
-      bar->end();
-      widget = bar;
-    } break;
-    case Ui::Spacer: break;
-    }
+    bool tall = f.kind == Ui::Label || f.kind == Ui::Prose ||
+                f.kind == Ui::List || f.kind == Ui::Hierarchy ||
+                f.kind == Ui::ColorMap || f.kind == Ui::Direction ||
+                (f.kind == Ui::Action && f.hangs && !f.isDefault);
+    Fl_Widget *widget = fltkFieldWidget(f, fx, fy, fieldW, tall ? fieldH : RH,
+                                        [this]() { reshape(); });
     if(!widget) return;
-    // copy_label(): a widget keeps the pointer it is given
-    if(f.label.size() && f.kind != Ui::Label)
-      widget->copy_label(_escaped(f.label).c_str());
-    // a check button and a menu of switches draw their label inside:
-    // FL_ALIGN_RIGHT would throw it off
-    if(f.kind != Ui::Check && f.kind != Ui::Label && f.kind != Ui::Action &&
-       f.kind != Ui::Menu && f.kind != Ui::Direction &&
-       f.kind != Ui::ColorMap && f.kind != Ui::Hierarchy &&
-       !(f.kind == Ui::Choice && f.multiple))
-      widget->align(f.labelBefore ? FL_ALIGN_LEFT : FL_ALIGN_RIGHT);
-    // on a dark face the face is coloured, on a light one the text
-    if(f.alert) {
-      if(f.kind == Ui::Action && fltkSources().settings().darkScheme)
-        widget->color(FL_DARK_RED);
-      else
-        widget->labelcolor(FL_DARK_RED);
-    }
-    if(f.tooltip.size()) widget->copy_tooltip(f.tooltip.c_str());
-    widget->callback(_fieldCallback, this);
     into->add(widget);
     bound b;
     for(std::size_t t = 0; t < f.trailing.size() && t < p.trailing.size();
         t++) {
-      _kept().push_back(f.trailing[t]);
-      Ui::Button *button = &_kept().back();
       Fl_Button *made =
-        new Fl_Button(WB + px(p.trailing[t].x), fy, px(p.trailing[t].w), RH);
+        fltkButtonWidget(f.trailing[t], WB + px(p.trailing[t].x), fy,
+                         px(p.trailing[t].w), RH, "field");
       into->add(made);
       b.trailing.push_back(made);
-      if(button->glyph.size())
-        made->copy_label(("@-1gmsh_" + button->glyph).c_str());
-      else if(button->label.size())
-        made->copy_label(button->label.c_str());
-      else if(button->menu)
-        made->copy_label("@2>");
-      if(button->tooltip.size()) made->copy_tooltip(button->tooltip.c_str());
-      made->callback(button->menu ? _trailingMenu : _trailingPressed, button);
-      if(button->on && button->on()) made->color(FL_GREEN);
     }
     // FLTK draws a name to the right of the widget it belongs to: after the
     // buttons, a box of its own
     if(p.label.w > 0. && !f.labelBefore) {
       widget->label(nullptr);
       Fl_Box *say = new Fl_Box(WB + px(p.label.x), fy, px(p.label.w), RH);
-      say->copy_label(_escaped(f.label).c_str());
+      say->copy_label(fltkEscaped(f.label).c_str());
       say->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       into->add(say);
       b.labelBox = say;
@@ -838,7 +336,10 @@ namespace {
     }
     for(auto &b : _fields) {
       const Ui::PlacedItem &p = _placed[b.index];
-      if(p.field.kind == b.field.kind) b.field = p.field;
+      if(p.field.kind == b.field.kind) {
+        b.field = p.field;
+        fltkRebindField(b.widget, p.field);
+      }
       _place(b, p);
     }
     for(std::size_t i = 0; i < _placed.size(); i++)
@@ -969,7 +470,7 @@ namespace {
         for(const auto &t : p.item->tabs->tabs) {
           Fl_Group *pg = new Fl_Group(x, y + BH, w, h - BH);
           pg->end();
-          pg->copy_label(_plain(t.first).c_str());
+          pg->copy_label(t.first.c_str());
           tabs->add(pg);
           paneOf[i].push_back(pg);
           _panes.push_back({t.first, pg, tabs, i});
@@ -1051,224 +552,6 @@ namespace {
     Fl::repeat_timeout(d->_panel.refreshEvery, _tick, data);
   }
 
-  namespace {
-
-    // kept while the tree points at them: an Fl_Tree item carries a void*
-    std::deque<std::string> _treePaths;
-
-    void _addBranch(Fl_Tree *tree, Fl_Tree_Item *parent, const Ui::Tree &said,
-                    const std::string &path)
-    {
-      if(!said.children) return;
-      for(const auto &child : said.children(path)) {
-        Ui::Node node = said.node(child);
-        Fl_Tree_Item *item = tree->add(parent, _plain(node.label).c_str());
-        if(!item) continue;
-        _treePaths.push_back(child);
-        item->user_data((void *)&_treePaths.back());
-        item->close();
-        _addBranch(tree, item, said, child);
-      }
-    }
-
-  } // namespace
-
-  void dialogFltk::_refreshField(bound &b)
-  {
-    const Ui::Field &f = b.field;
-    switch(f.kind) {
-    case Ui::Label: {
-      std::string value = f.getText();
-      if(!b.widget->label() || value != b.widget->label())
-        b.widget->copy_label(_plain(value).c_str());
-    } break;
-    case Ui::Output: {
-      std::string value = f.getText();
-      Fl_Output *o = (Fl_Output *)b.widget;
-      if(!o->value() || value != o->value()) o->value(value.c_str());
-    } break;
-    case Ui::Prose: {
-      proseView *v = (proseView *)b.widget;
-      std::vector<Ui::Line> page =
-        f.prose ? f.prose() : std::vector<Ui::Line>();
-      std::string said;
-      for(const Ui::Line &l : page)
-        for(const Ui::Words &word : l.words) said += word.text + "\n";
-      if(said != b.was) {
-        b.was = said;
-        v->page = page;
-        v->redraw();
-      }
-    } break;
-    case Ui::List: {
-      Fl_Browser *br = (Fl_Browser *)b.widget;
-      // not while the pointer is down on it: what it picks would be lost
-      if(Fl::pushed() == br) break;
-      int keep = br->value();
-      if(f.dynamicChoices) {
-        std::vector<std::string> labels;
-        std::vector<int> values;
-        f.dynamicChoices(labels, values);
-        // the lines only when they changed, so that the list does not blink
-        bool same = br->size() == (int)labels.size();
-        for(int k = 0; same && k < br->size(); k++)
-          if(!br->text(k + 1) || labels[(std::size_t)k] != br->text(k + 1))
-            same = false;
-        if(!same) {
-          br->clear();
-          for(auto &l : labels) br->add(l.c_str());
-        }
-        for(int k = 0; f.chosen && k < (int)labels.size(); k++)
-          br->select(k + 1, f.chosen(k) ? 1 : 0);
-        break;
-      }
-      br->clear();
-      if(f.list) {
-        for(std::size_t k = 0; k < f.list->size(); k++)
-          br->add(f.itemLabel ? f.itemLabel((int)k).c_str()
-                              : std::to_string((*f.list)[k]).c_str());
-        if(keep > 0 && keep <= br->size()) br->select(keep);
-      }
-    } break;
-    case Ui::Color: {
-      Ui::Colour c = f.getColour();
-      Fl_Color shown = fl_rgb_color(c.r, c.g, c.b);
-      if(b.widget->color() != shown) {
-        b.widget->color(shown);
-        b.widget->redraw();
-      }
-    } break;
-    case Ui::Direction: {
-      double x = 0., y = 0., z = 0.;
-      f.getVector(x, y, z);
-      ((discFltk *)b.widget)->setValue(x, y, z);
-    } break;
-    case Ui::Hierarchy: {
-      Fl_Tree *tree = (Fl_Tree *)b.widget;
-      if(!f.hierarchy) break;
-      const Ui::Tree &said = *f.hierarchy;
-      // an Fl_Tree built again forgets what was open
-      std::string signature = std::to_string(said.generation ?
-                                               said.generation() : 0);
-      if(signature != b.was) {
-        b.was = signature;
-        tree->clear();
-  #if FL_API_VERSION >= 10400
-        Fl_Tree_Item *root = new Fl_Tree_Item(tree);
-  #else
-        Fl_Tree_Item *root = new Fl_Tree_Item(tree->prefs());
-  #endif
-        root->label(_plain(f.label.size() ? f.label : "Gmsh").c_str());
-        tree->root(root);
-        _addBranch(tree, root, said, "");
-      }
-      for(Fl_Tree_Item *item = tree->first(); item; item = tree->next(item)) {
-        const std::string *path = (const std::string *)item->user_data();
-        if(!path) continue;
-        Ui::Node node = said.node(*path);
-        bool on = node.picked ? node.picked() : false;
-        if(on != (item->is_selected() ? true : false))
-          item->select(on ? 1 : 0);
-      }
-      tree->redraw();
-    } break;
-    case Ui::ColorMap: {
-      std::string name;
-      double least = 0., most = 0.;
-      if(f.map.empty()) break;
-      f.map.about(name, least, most);
-      ((colourMapFltk *)b.widget)
-        ->update(name.c_str(), least, most, f.map, &b.changed);
-    } break;
-    case Ui::Menu: {
-      Fl_Menu_Button *m = (Fl_Menu_Button *)b.widget;
-      std::vector<std::string> labels;
-      std::vector<int> values;
-      Ui::choices(f, labels, values);
-      m->clear();
-      for(auto &l : labels) m->add(_escapedMenu(l).c_str());
-      if(!m->label() || f.label != m->label())
-        m->copy_label(_escaped(f.label).c_str());
-    } break;
-    case Ui::Action:
-    case Ui::Spacer: break;
-    case Ui::Text: {
-      std::string value = f.getText();
-      if(Fl_Input_Choice *c = dynamic_cast<Fl_Input_Choice *>(b.widget)) {
-        std::vector<std::string> labels;
-        std::vector<int> values;
-        Ui::choices(f, labels, values);
-        c->menubutton()->clear();
-        for(auto &l : labels) c->menubutton()->add(_escapedMenu(l).c_str());
-        if(!c->value() || value != c->value()) c->value(value.c_str());
-      }
-      else {
-        Fl_Input *in = (Fl_Input *)b.widget;
-        if(value != in->value()) in->value(value.c_str());
-      }
-    } break;
-    case Ui::Integer:
-    case Ui::Number: {
-      Fl_Valuator *v = (Fl_Valuator *)b.widget;
-      if(f.maximum > f.minimum) {
-        v->minimum(f.minimum);
-        v->maximum(f.maximum);
-      }
-      if(f.step > 0. && fltkSources().settings().inputScrolling) v->step(f.step);
-      v->value(f.getNumber());
-    } break;
-    case Ui::Check: {
-      bool on = f.getFlag();
-      ((Fl_Button *)b.widget)->value(on ? 1 : 0);
-      if(f.disclosure) {
-        std::string label = _escaped(f.label) + (on ? " @-28->" : " @-22->");
-        if(!b.widget->label() || label != b.widget->label())
-          b.widget->copy_label(label.c_str());
-      }
-    } break;
-    case Ui::Choice: {
-      if(f.multiple) {
-        Fl_Menu_Button *m = (Fl_Menu_Button *)b.widget;
-        std::vector<std::string> labels;
-        std::vector<int> values;
-        Ui::choices(f, labels, values);
-        m->clear();
-        for(std::size_t k = 0; k < labels.size(); k++) {
-          int index = m->add(_escapedMenu(labels[k]).c_str(), 0, nullptr,
-                             nullptr, FL_MENU_TOGGLE);
-          if(f.chosen && f.chosen((int)k))
-            ((Fl_Menu_Item *)&m->menu()[index])->set();
-        }
-        break;
-      }
-      Fl_Choice *c = (Fl_Choice *)b.widget;
-      std::vector<std::string> labels;
-      std::vector<int> values;
-      Ui::choices(f, labels, values);
-      c->clear();
-      for(auto &l : labels) c->add(_escapedMenu(l).c_str());
-      int which = 0;
-      bool byText = values.empty();
-      std::string current = byText ? f.getText() : "";
-      for(std::size_t k = 0; k < labels.size(); k++) {
-        if(byText) {
-          if(labels[k] == current) which = (int)k;
-        }
-        else if(k < values.size() && values[k] == (int)f.getNumber())
-          which = (int)k;
-      }
-      if(labels.size()) c->value(which);
-    } break;
-    }
-    if(f.enabled) {
-      if(f.enabled())
-        b.widget->activate();
-      else
-        b.widget->deactivate();
-    }
-  }
-
-
   void dialogFltk::refresh()
   {
     _relayout(false);
@@ -1297,7 +580,7 @@ namespace {
     // a window inside a pane -- the colour map -- is one of the X server's,
     // which hiding its pane does not take off the screen
     if(_win) _showWindows(_win);
-    for(auto &b : _fields) _refreshField(b);
+    for(auto &b : _fields) fltkRefreshField(b.widget);
     if(_win) _win->redraw();
   }
 
@@ -1321,14 +604,8 @@ namespace {
     auto range = _byOption.equal_range(name);
     if(range.first == range.second) return;
     for(auto it = range.first; it != range.second; ++it)
-      _refreshField(_fields[it->second]);
-    for(auto &b : _fields)
-      if(b.field.enabled) {
-        if(b.field.enabled())
-          b.widget->activate();
-        else
-          b.widget->deactivate();
-      }
+      fltkRefreshField(_fields[it->second].widget);
+    for(auto &b : _fields) fltkEnableField(b.widget);
     if(_win) _win->redraw();
   }
 
