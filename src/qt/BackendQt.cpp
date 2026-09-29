@@ -21,6 +21,7 @@
 #include <QCloseEvent>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QDockWidget>
 #include <QDropEvent>
 #include <QElapsedTimer>
 #include <QFileDialog>
@@ -115,7 +116,10 @@ namespace {
 
   class mainWindow : public QMainWindow {
   public:
-    QSplitter *side = nullptr, *split = nullptr;
+    QSplitter *split = nullptr;
+    // the tree and the buttons under it, in a dock of its own: docked on the
+    // left, or floating -- detached -- as a window of its own
+    QDockWidget *treeDock = nullptr;
     QWidget *treeBox = nullptr, *footer = nullptr;
     console *messages = nullptr;
     // the bar over the lines, and the lines as a whole
@@ -287,12 +291,37 @@ namespace {
     _w->footer->setVisible(!row.empty());
   }
 
+  // the tree floating as a window of its own, where it was last, or docked
+  // again on the left
+  void _detachTree(bool detached)
+  {
+    if(!_w || detached == _w->treeDock->isFloating()) return;
+    if(!detached) {
+      _w->treeDock->setFloating(false);
+      return;
+    }
+    const Ui::Backend::Settings set = qtSources().settings();
+    int width = _w->treeDock->width();
+    int h = set.treeHeight > 0 ? set.treeHeight : 600;
+    int x = set.treeX, y = set.treeY;
+    _w->treeDock->setFloating(true);
+    _w->treeDock->show();
+    // once it is a window: Qt gives a floating dock the size it had
+    qtLater([width, h, x, y]() {
+      if(!_w || !_w->treeDock->isFloating()) return;
+      if(x > 0 || y > 0)
+        _w->treeDock->setGeometry(x, y, width, h);
+      else
+        _w->treeDock->resize(width, h);
+    });
+  }
+
   void _fullscreen(bool on)
   {
     if(!_w || on == _w->fullscreen) return;
     _w->fullscreen = on;
     if(on) {
-      _w->treeWas = _w->treeBox->isVisible();
+      _w->treeWas = _w->treeDock->isVisible();
       _w->consoleWas = _w->consoleBox->isVisible();
       _w->showFullScreen();
     }
@@ -301,7 +330,7 @@ namespace {
     // nothing but the scene
     _w->menuBar()->setVisible(!on);
     _w->statusBar()->setVisible(!on);
-    _w->treeBox->setVisible(!on && _w->treeWas);
+    _w->treeDock->setVisible(!on && _w->treeWas);
     _w->consoleBox->setVisible(!on && _w->consoleWas);
   }
 
@@ -625,7 +654,7 @@ namespace {
 
     void showTree() override
     {
-      if(_w) _w->treeBox->setVisible(true);
+      if(_w) _w->treeDock->setVisible(true);
     }
 
     void setSolverButtonMode(const std::string &, const std::string &) override
@@ -665,26 +694,32 @@ namespace {
         _w->activateWindow();
       }
       else if(what == "show_hide_tree")
-        _w->treeBox->setVisible(!_w->treeBox->isVisible());
+        _w->treeDock->setVisible(!_w->treeDock->isVisible());
+      else if(what == "attach_detach")
+        _detachTree(!_w->treeDock->isFloating());
       else if(_host.error)
         _host.error("Unknown window action '" + what + "'");
     }
 
-    bool supports(const std::string &what) override
-    {
-      // the tree is a pane of the main window, never a window of its own
-      return what != "attach_detach";
-    }
+    void detachTree(bool detached) override { _detachTree(detached); }
 
     Layout windowLayout() override
     {
       Layout l;
       if(!_w || _w->fullscreen) return l;
       qtSceneSize(l.sceneWidth, l.sceneHeight);
-      if(_w->treeBox->isVisible()) l.treeWidth = _w->treeBox->width();
+      bool floating = _w->treeDock->isFloating();
+      if(_w->treeDock->isVisible() && !floating)
+        l.treeWidth = _w->treeDock->width();
       if(_w->consoleBox->isVisible())
         l.consoleHeight = _w->consoleBox->height();
-      l.treeDetached = 0;
+      l.treeDetached = floating ? 1 : 0;
+      if(floating) {
+        QRect g = _w->treeDock->geometry();
+        l.treeX = g.x();
+        l.treeY = g.y();
+        l.treeHeight = g.height();
+      }
       return l;
     }
 
@@ -703,12 +738,8 @@ namespace {
 
     void setTreeWidth(int width) override
     {
-      if(!_w || width < 0) return;
-      QList<int> sizes = _w->side->sizes();
-      if(sizes.size() == 2) {
-        int all = sizes[0] + sizes[1];
-        _w->side->setSizes({width, std::max(1, all - width)});
-      }
+      if(!_w || width < 0 || _w->treeDock->isFloating()) return;
+      _w->resizeDocks({_w->treeDock}, {width}, Qt::Horizontal);
     }
 
     void enableTooltips(bool on) override {}
@@ -749,7 +780,6 @@ namespace {
       QHBoxLayout *fh = new QHBoxLayout(_w->footer);
       fh->setContentsMargins(4, 2, 4, 4);
       tv->addWidget(_w->footer);
-      _w->treeBox->setVisible(set.showModuleMenu);
 
       // the scene over the console
       _w->messages = new console;
@@ -764,12 +794,28 @@ namespace {
       _w->split->setStretchFactor(1, 0);
       _w->split->setChildrenCollapsible(false);
 
-      _w->side = new QSplitter(Qt::Horizontal);
-      _w->side->addWidget(_w->treeBox);
-      _w->side->addWidget(_w->split);
-      _w->side->setStretchFactor(0, 0);
-      _w->side->setStretchFactor(1, 1);
-      _w->setCentralWidget(_w->side);
+      _w->setCentralWidget(_w->split);
+      _w->treeDock = new QDockWidget("Gmsh", _w);
+      _w->treeDock->setObjectName("gmshTree");
+      // it goes back with the menu or a double click on its title; closed, it
+      // could not be had back
+      _w->treeDock->setFeatures(QDockWidget::DockWidgetMovable |
+                                QDockWidget::DockWidgetFloatable);
+      _w->treeDock->setAllowedAreas(Qt::LeftDockWidgetArea |
+                                    Qt::RightDockWidgetArea);
+      _w->treeDock->setWidget(_w->treeBox);
+      // docked, a pane beside the scene with nothing over it
+      _w->treeDock->setTitleBarWidget(new QWidget);
+      QObject::connect(_w->treeDock, &QDockWidget::topLevelChanged,
+                       [](bool floating) {
+                         if(!_w) return;
+                         QWidget *was = _w->treeDock->titleBarWidget();
+                         _w->treeDock->setTitleBarWidget(floating ? nullptr :
+                                                                    new QWidget);
+                         if(was) was->deleteLater();
+                       });
+      _w->addDockWidget(Qt::LeftDockWidgetArea, _w->treeDock);
+      _w->treeDock->setVisible(set.showModuleMenu);
 
       // the bar: the buttons, the message one presses to show the messages,
       // the progress of what runs
@@ -804,9 +850,10 @@ namespace {
       int sceneHeight = set.sceneHeight > 100 ? set.sceneHeight : 600;
       int consoleHeight = set.consoleHeight > 0 ? set.consoleHeight : 150;
       _w->resize(w, sceneHeight + consoleHeight + 60);
-      _w->side->setSizes({treeWidth, w - treeWidth});
+      _w->resizeDocks({_w->treeDock}, {treeWidth}, Qt::Horizontal);
       _w->split->setSizes({sceneHeight, consoleHeight});
       _w->show();
+      if(set.detachedTree) _detachTree(true);
     }
   };
 
