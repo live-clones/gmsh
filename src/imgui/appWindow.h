@@ -43,7 +43,6 @@ void imguiSceneDraw();
 void imguiSceneWindows();
 void imguiSceneRedraw();
 sceneView *imguiSceneCurrent();
-void imguiSceneSplit(char how, double ratio);
 void imguiSceneNewWindow();
 
 // from another thread, drained by the frame loop

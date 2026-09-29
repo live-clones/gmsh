@@ -19,7 +19,7 @@
 
 @interface GmshTreeItem : NSObject {
 @public
-  cocoaTree::line *line;
+  treeCocoa::line *line;
 }
 @end
 @implementation GmshTreeItem
@@ -27,14 +27,14 @@
 
 @interface GmshOutlineView : NSOutlineView {
 @public
-  cocoaTree *tree;
+  treeCocoa *tree;
 }
 @end
 
 @interface GmshTreeSource
   : NSObject <NSOutlineViewDataSource, NSOutlineViewDelegate> {
 @public
-  cocoaTree *tree;
+  treeCocoa *tree;
 }
 - (void)clicked:(id)sender;
 - (void)picked:(id)sender;
@@ -98,7 +98,7 @@ namespace {
   NSPoint p = [self convertPoint:[e locationInWindow] fromView:nil];
   NSInteger row = [self rowAtPoint:p];
   if(row < 0 || !tree) return nil;
-  cocoaTree::line *l = tree->lineOf([self itemAtRow:row]);
+  treeCocoa::line *l = tree->lineOf([self itemAtRow:row]);
   if(!l || !tree->tree().node) return nil;
   Ui::Node node = tree->tree().node(l->path);
   if(node.menu) {
@@ -129,7 +129,7 @@ namespace {
 {
   if(!tree) return 0;
   if(!item) return (NSInteger)tree->top().size();
-  cocoaTree::line *l = tree->lineOf(item);
+  treeCocoa::line *l = tree->lineOf(item);
   if(!l) return 0;
   tree->fill(l);
   return (NSInteger)l->kids.size();
@@ -137,9 +137,9 @@ namespace {
 
 - (id)outlineView:(NSOutlineView *)o child:(NSInteger)index ofItem:(id)item
 {
-  std::vector<cocoaTree::line *> *kids = &tree->top();
+  std::vector<treeCocoa::line *> *kids = &tree->top();
   if(item) {
-    cocoaTree::line *l = tree->lineOf(item);
+    treeCocoa::line *l = tree->lineOf(item);
     tree->fill(l);
     kids = &l->kids;
   }
@@ -149,7 +149,7 @@ namespace {
 
 - (BOOL)outlineView:(NSOutlineView *)o isItemExpandable:(id)item
 {
-  cocoaTree::line *l = tree ? tree->lineOf(item) : nullptr;
+  treeCocoa::line *l = tree ? tree->lineOf(item) : nullptr;
   return l && l->branch;
 }
 
@@ -157,13 +157,13 @@ namespace {
      viewForTableColumn:(NSTableColumn *)column
                    item:(id)item
 {
-  cocoaTree::line *l = tree ? tree->lineOf(item) : nullptr;
+  treeCocoa::line *l = tree ? tree->lineOf(item) : nullptr;
   return l ? tree->viewFor(l) : nil;
 }
 
 - (CGFloat)outlineView:(NSOutlineView *)o heightOfRowByItem:(id)item
 {
-  cocoaTree::line *l = tree ? tree->lineOf(item) : nullptr;
+  treeCocoa::line *l = tree ? tree->lineOf(item) : nullptr;
   if(l && l->node.hasField && !l->branch && !tree->picks())
     return cocoaRowHeight() + 2.;
   return std::ceil(cocoaEm() * 1.55);
@@ -172,7 +172,7 @@ namespace {
 - (NSTableRowView *)outlineView:(NSOutlineView *)o rowViewForItem:(id)item
 {
   NSTableRowView *r = [[NSTableRowView alloc] init];
-  cocoaTree::line *l = tree ? tree->lineOf(item) : nullptr;
+  treeCocoa::line *l = tree ? tree->lineOf(item) : nullptr;
   if(l && l->node.highlight.a)
     [r setBackgroundColor:_colour(l->node.highlight)];
   return r;
@@ -185,13 +185,13 @@ namespace {
 
 - (void)outlineViewItemDidExpand:(NSNotification *)n
 {
-  cocoaTree::line *l = tree ? tree->lineOf([n userInfo][@"NSObject"]) : nullptr;
+  treeCocoa::line *l = tree ? tree->lineOf([n userInfo][@"NSObject"]) : nullptr;
   if(l) tree->expanded(l, true);
 }
 
 - (void)outlineViewItemDidCollapse:(NSNotification *)n
 {
-  cocoaTree::line *l = tree ? tree->lineOf([n userInfo][@"NSObject"]) : nullptr;
+  treeCocoa::line *l = tree ? tree->lineOf([n userInfo][@"NSObject"]) : nullptr;
   if(l) tree->expanded(l, false);
 }
 
@@ -202,7 +202,7 @@ namespace {
   NSOutlineView *o = sender;
   NSInteger row = [o clickedRow];
   if(row < 0) return;
-  cocoaTree::line *l = tree->lineOf([o itemAtRow:row]);
+  treeCocoa::line *l = tree->lineOf([o itemAtRow:row]);
   if(!l || l->field) return;
   Ui::Node node = tree->tree().node(l->path);
   if(!node.pressed || (node.enabled && !node.enabled())) return;
@@ -220,7 +220,7 @@ namespace {
   NSButton *b = sender;
   NSInteger row = [tree->outline() rowForView:b];
   if(row < 0) return;
-  cocoaTree::line *l = tree->lineOf([tree->outline() itemAtRow:row]);
+  treeCocoa::line *l = tree->lineOf([tree->outline() itemAtRow:row]);
   if(!l) return;
   Ui::Node node = tree->tree().node(l->path);
   if(node.pick) node.pick([b state] == NSControlStateValueOn);
@@ -234,7 +234,7 @@ namespace {
   if(!tree || !tree->tree().node) return;
   NSInteger row = [tree->outline() rowForView:sender];
   if(row < 0) return;
-  cocoaTree::line *l = tree->lineOf([tree->outline() itemAtRow:row]);
+  treeCocoa::line *l = tree->lineOf([tree->outline() itemAtRow:row]);
   if(!l) return;
   Ui::Node node = tree->tree().node(l->path);
   if(!node.pressed) return;
@@ -247,7 +247,7 @@ namespace {
 
 @end
 
-cocoaTree::cocoaTree(const Ui::Tree &tree, bool picks,
+treeCocoa::treeCocoa(const Ui::Tree &tree, bool picks,
                      const std::function<void()> &after)
   : _tree(tree), _picks(picks), _after(after), _built(0), _everBuilt(false),
     _quiet(false)
@@ -285,7 +285,7 @@ cocoaTree::cocoaTree(const Ui::Tree &tree, bool picks,
   refresh(true);
 }
 
-cocoaTree::~cocoaTree()
+treeCocoa::~treeCocoa()
 {
   // the scroll view is its holder's; the outline stops asking
   _source->tree = nullptr;
@@ -295,7 +295,7 @@ cocoaTree::~cocoaTree()
   _clear(_top);
 }
 
-void cocoaTree::_clear(std::vector<line *> &lines)
+void treeCocoa::_clear(std::vector<line *> &lines)
 {
   for(line *l : lines) {
     _clear(l->kids);
@@ -305,13 +305,13 @@ void cocoaTree::_clear(std::vector<line *> &lines)
   lines.clear();
 }
 
-cocoaTree::line *cocoaTree::lineOf(id item)
+treeCocoa::line *treeCocoa::lineOf(id item)
 {
   if(!item || ![item isKindOfClass:[GmshTreeItem class]]) return nullptr;
   return ((GmshTreeItem *)item)->line;
 }
 
-void cocoaTree::_branch(std::vector<line *> &into, const std::string &path)
+void treeCocoa::_branch(std::vector<line *> &into, const std::string &path)
 {
   if(!_tree.children || !_tree.node) return;
   bool commands = cocoaSources().settings().showModuleMenu;
@@ -328,14 +328,14 @@ void cocoaTree::_branch(std::vector<line *> &into, const std::string &path)
   }
 }
 
-void cocoaTree::fill(line *l)
+void treeCocoa::fill(line *l)
 {
   if(!l || l->filled) return;
   l->filled = true;
   _branch(l->kids, l->path);
 }
 
-NSView *cocoaTree::viewFor(line *l)
+NSView *treeCocoa::viewFor(line *l)
 {
   // made once: the outline may ask again as the row comes back into view
   static const char viewKey = 0;
@@ -402,13 +402,13 @@ NSView *cocoaTree::viewFor(line *l)
   return row;
 }
 
-void cocoaTree::expanded(line *l, bool open)
+void treeCocoa::expanded(line *l, bool open)
 {
   if(_quiet || !_tree.setClosed) return;
   _tree.setClosed(l->path, !open);
 }
 
-void cocoaTree::_expandWanted(const std::vector<line *> &lines)
+void treeCocoa::_expandWanted(const std::vector<line *> &lines)
 {
   for(line *l : lines) {
     if(!l->branch) continue;
@@ -430,7 +430,7 @@ void cocoaTree::_expandWanted(const std::vector<line *> &lines)
   }
 }
 
-void cocoaTree::_build()
+void treeCocoa::_build()
 {
   // what was open stays open
   std::vector<line *> todo = _top;
@@ -459,7 +459,7 @@ void cocoaTree::_build()
   _wanted.clear();
 }
 
-void cocoaTree::refresh(bool rebuild)
+void treeCocoa::refresh(bool rebuild)
 {
   unsigned generation = _tree.generation ? _tree.generation() : 0;
   if(rebuild || !_everBuilt || generation != _built) {
@@ -495,7 +495,7 @@ void cocoaTree::refresh(bool rebuild)
   _quiet = false;
 }
 
-cocoaTree::line *cocoaTree::_find(const std::string &path) const
+treeCocoa::line *treeCocoa::_find(const std::string &path) const
 {
   std::vector<line *> todo = _top;
   while(!todo.empty()) {
@@ -507,7 +507,7 @@ cocoaTree::line *cocoaTree::_find(const std::string &path) const
   return nullptr;
 }
 
-void cocoaTree::open(const std::string &path, bool open)
+void treeCocoa::open(const std::string &path, bool open)
 {
   if(open) {
     std::size_t at = 0;
@@ -529,7 +529,7 @@ void cocoaTree::open(const std::string &path, bool open)
   _wanted.push_back(std::make_pair(path, open));
 }
 
-bool cocoaTree::isOpen(const std::string &path) const
+bool treeCocoa::isOpen(const std::string &path) const
 {
   if(line *l = _find(path))
     return [_outline isItemExpanded:l->item] ? true : false;

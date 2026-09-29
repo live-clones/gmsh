@@ -454,8 +454,6 @@ void gtkSceneRedraw() { _all().redrawAll(); }
 
 bool gtkSceneDrawing() { return _all().drawing(); }
 
-void gtkSceneCopy() { Gui::instance().copyCurrentOpenglWindowToClipboard(); }
-
 void gtkSceneSize(int &width, int &height)
 {
   width = height = 0;
@@ -467,8 +465,6 @@ void gtkSceneSize(int &width, int &height)
       return;
     }
 }
-
-void gtkSceneSplit(char how, double ratio) { _all().split(how, ratio); }
 
 void gtkSceneNewWindow() { _all().newWindow(); }
 

@@ -101,11 +101,11 @@ CGFloat cocoaProseHeight(const Ui::Field &field, CGFloat width);
 
 @class GmshTreeSource;
 
-class cocoaTree {
+class treeCocoa {
 public:
-  cocoaTree(const Ui::Tree &tree, bool picks,
+  treeCocoa(const Ui::Tree &tree, bool picks,
             const std::function<void()> &after);
-  ~cocoaTree();
+  ~treeCocoa();
   // the scroll view holding the outline
   NSScrollView *widget() { return _scroll; }
   void setTree(const Ui::Tree &tree) { _tree = tree; }
@@ -168,9 +168,7 @@ NSWindow *cocoaMainWindow();
 NSView *cocoaSceneWidget();
 void cocoaSceneRedraw();
 void cocoaSceneSize(int &width, int &height);
-void cocoaSceneSplit(char how, double ratio);
 void cocoaSceneNewWindow();
-void cocoaSceneCopy();
 void cocoaSceneDestroy();
 void cocoaSceneStartTimers();
 bool cocoaSceneDrawing();

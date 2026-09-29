@@ -62,18 +62,6 @@ static void file_window_cb(Fl_Widget *w, void *data)
                  std::to_string(FlGui::instance()->graph.size() - 1) + "]");
     g2->getWindow()->show();
   }
-  else if(str == "split_h") {
-    Gui::instance().splitCurrentOpenglWindow('h', 0.5);
-  }
-  else if(str == "split_v") {
-    Gui::instance().splitCurrentOpenglWindow('v', 0.5);
-  }
-  else if(str == "split_u") {
-    Gui::instance().splitCurrentOpenglWindow('u', 0.);
-  }
-  else if(str == "copy") {
-    Gui::instance().copyCurrentOpenglWindowToClipboard();
-  }
   drawContext::global()->draw();
 }
 
@@ -95,8 +83,7 @@ void help_about_cb(Fl_Widget *w, void *data)
 
 bool fltkWindowAction(const std::string &what)
 {
-  if(what == "new" || what == "split_h" || what == "split_v" ||
-     what == "split_u" || what == "copy")
+  if(what == "new")
     file_window_cb(nullptr, (void *)what.c_str());
   else if(what == "attach_detach")
     attach_detach_menu_cb(nullptr, nullptr);

@@ -782,7 +782,17 @@ namespace Declare {
 
   void Gui::windowAction(const std::string &what)
   {
-    if(_backend) _backend->windowAction(what);
+    // what the views do is the scene's, the same for every interface
+    if(what == "split_h")
+      splitCurrentOpenglWindow('h', 0.5);
+    else if(what == "split_v")
+      splitCurrentOpenglWindow('v', 0.5);
+    else if(what == "split_u")
+      splitCurrentOpenglWindow('u', 0.);
+    else if(what == "copy")
+      copyCurrentOpenglWindowToClipboard();
+    else if(_backend)
+      _backend->windowAction(what);
   }
 
   void Gui::setSceneSize(int width, int height)

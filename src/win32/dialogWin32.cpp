@@ -57,7 +57,7 @@ public:
   };
   std::vector<scroller> scrollers;
   struct bound {
-    win32Field *field;
+    fieldWin32 *field;
     std::size_t index;
   };
   std::vector<bound> fields;
@@ -438,7 +438,7 @@ void dialogWin32::build()
       groups[i] = line;
       continue;
     }
-    win32Field *f = win32MakeField(into, p.field, [form]() { _askReshape(form); });
+    fieldWin32 *f = win32MakeField(into, p.field, [form]() { _askReshape(form); });
     bound b = {f, i};
     fields.push_back(b);
     if(p.field.option.size()) options.insert(p.field.option);

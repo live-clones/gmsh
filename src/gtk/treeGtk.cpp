@@ -17,8 +17,8 @@
 // it is opened, so that what is asked of the description is what is shown.
 // A node is its path, which is what survives a rebuild.
 
-struct gtkTree::line {
-  gtkTree *tree = nullptr;
+struct treeGtk::line {
+  treeGtk *tree = nullptr;
   std::string path;
   int depth = 0;
   // a branch, and the box of its children, filled when first opened
@@ -83,7 +83,7 @@ namespace {
 
   void _picked(GtkCheckButton *c, gpointer data)
   {
-    gtkTree::line *l = (gtkTree::line *)data;
+    treeGtk::line *l = (treeGtk::line *)data;
     if(l->quiet) return;
     // the node asked now: the one the line was made from may be stale
     Ui::Node node = l->tree->nodeOf(l->path);
@@ -107,7 +107,7 @@ namespace {
 
 } // namespace
 
-gtkTree::gtkTree(const Ui::Tree &tree, bool picks,
+treeGtk::treeGtk(const Ui::Tree &tree, bool picks,
                  const std::function<void()> &after)
   : _tree(tree), _picks(picks), _after(after), _built(0), _everBuilt(false),
     _firstBuild(true)
@@ -125,18 +125,18 @@ gtkTree::gtkTree(const Ui::Tree &tree, bool picks,
   refresh(true);
 }
 
-gtkTree::~gtkTree()
+treeGtk::~treeGtk()
 {
   for(line *l : _lines) delete l;
   _lines.clear();
   g_object_unref(_scroll);
 }
 
-void gtkTree::_expanded(GObject *expander, GParamSpec *, gpointer data)
+void treeGtk::_expanded(GObject *expander, GParamSpec *, gpointer data)
 {
   line *l = (line *)data;
   if(l->quiet) return;
-  gtkTree *t = l->tree;
+  treeGtk *t = l->tree;
   bool open = gtk_expander_get_expanded(GTK_EXPANDER(expander));
   if(open && !l->filled) {
     l->filled = true;
@@ -145,14 +145,14 @@ void gtkTree::_expanded(GObject *expander, GParamSpec *, gpointer data)
   if(t->_tree.setClosed) t->_tree.setClosed(l->path, !open);
 }
 
-gtkTree::line *gtkTree::_find(const std::string &path) const
+treeGtk::line *treeGtk::_find(const std::string &path) const
 {
   for(line *l : _lines)
     if(l->path == path) return l;
   return nullptr;
 }
 
-void gtkTree::_branch(GtkWidget *into, const std::string &parent, int depth)
+void treeGtk::_branch(GtkWidget *into, const std::string &parent, int depth)
 {
   if(!_tree.children || !_tree.node) return;
   bool commands = gtkSources().settings().showModuleMenu;
@@ -259,7 +259,7 @@ void gtkTree::_branch(GtkWidget *into, const std::string &parent, int depth)
   }
 }
 
-void gtkTree::_build()
+void treeGtk::_build()
 {
   // what was open stays open
   for(line *l : _lines)
@@ -280,7 +280,7 @@ void gtkTree::_build()
   _wanted.clear();
 }
 
-void gtkTree::refresh(bool rebuild)
+void treeGtk::refresh(bool rebuild)
 {
   unsigned generation = _tree.generation ? _tree.generation() : 0;
   if(rebuild || !_everBuilt || generation != _built) {
@@ -307,7 +307,7 @@ void gtkTree::refresh(bool rebuild)
   }
 }
 
-void gtkTree::open(const std::string &path, bool open)
+void treeGtk::open(const std::string &path, bool open)
 {
   // the branches on the way are opened first, which fills them
   if(open) {
@@ -331,7 +331,7 @@ void gtkTree::open(const std::string &path, bool open)
   _wanted.push_back(std::make_pair(path, open));
 }
 
-bool gtkTree::isOpen(const std::string &path) const
+bool treeGtk::isOpen(const std::string &path) const
 {
   line *l = _find(path);
   if(l && l->expander) return gtk_expander_get_expanded(GTK_EXPANDER(l->expander));

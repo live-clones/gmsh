@@ -90,36 +90,36 @@ HWND win32Panel(HWND parent, int x, int y, int w, int h, bool border = false);
 
 // --- the controls of one field, children of `parent`, bound to the place
 // its value lives; after runs once the user changed something
-struct win32Field;
-win32Field *win32MakeField(HWND parent, const Ui::Field &field,
+struct fieldWin32;
+fieldWin32 *win32MakeField(HWND parent, const Ui::Field &field,
                            const std::function<void()> &after);
-void win32DropField(win32Field *f);
+void win32DropField(fieldWin32 *f);
 // where they go, in the pixels of the parent: the widget, its name (w == 0:
 // none apart), the buttons after it
-void win32PlaceField(win32Field *f, const RECT &widget, const RECT &label,
+void win32PlaceField(fieldWin32 *f, const RECT &widget, const RECT &label,
                      const std::vector<RECT> &trailing, bool shown);
-void win32RefreshField(win32Field *f);
-void win32RebindField(win32Field *f, const Ui::Field &field);
-HWND win32FieldWindow(win32Field *f);
+void win32RefreshField(fieldWin32 *f);
+void win32RebindField(fieldWin32 *f, const Ui::Field &field);
+HWND win32FieldWindow(fieldWin32 *f);
 // the messages a panel hands over; true when it was the field's
 bool win32FieldMessage(HWND panel, UINT msg, WPARAM wp, LPARAM lp,
                        LRESULT &result);
 
 // --- a tree whose lines are fields (Tree.h), as a tree view: the modules,
 // and a Hierarchy field, whose lines have boxes to check
-class win32Tree;
-win32Tree *win32MakeTree(HWND parent, const Ui::Tree &tree, bool picks,
+class treeWin32;
+treeWin32 *win32MakeTree(HWND parent, const Ui::Tree &tree, bool picks,
                          const std::function<void()> &after);
-void win32DropTree(win32Tree *t);
-HWND win32TreeWindow(win32Tree *t);
-void win32SetTree(win32Tree *t, const Ui::Tree &tree);
-void win32RefreshTree(win32Tree *t, bool rebuild);
-void win32OpenTreeItem(win32Tree *t, const std::string &path, bool open);
-bool win32TreeItemOpen(win32Tree *t, const std::string &path);
+void win32DropTree(treeWin32 *t);
+HWND win32TreeWindow(treeWin32 *t);
+void win32SetTree(treeWin32 *t, const Ui::Tree &tree);
+void win32RefreshTree(treeWin32 *t, bool rebuild);
+void win32OpenTreeItem(treeWin32 *t, const std::string &path, bool open);
+bool win32TreeItemOpen(treeWin32 *t, const std::string &path);
 // the WM_NOTIFY of the tree view: true when it was
-bool win32TreeNotify(win32Tree *t, NMHDR *n, LRESULT &result);
+bool win32TreeNotify(treeWin32 *t, NMHDR *n, LRESULT &result);
 // the field of the line picked is edited under the tree, in this panel
-void win32SetTreeEditor(win32Tree *t, HWND panel);
+void win32SetTreeEditor(treeWin32 *t, HWND panel);
 
 // --- the described forms, see dialogWin32.cpp
 void win32ShowForm(const Ui::Form &form, bool show);
@@ -139,10 +139,7 @@ bool win32FormDialogMessage(MSG &m);
 HWND win32SceneWindow(HWND parent);
 void win32SceneRedraw();
 void win32SceneSize(int &width, int &height);
-void win32SceneSplit(char how, double ratio);
 void win32SceneNewWindow();
-// the picture of the current view, to the clipboard
-void win32SceneCopy();
 void win32SceneDestroy();
 bool win32SceneDrawing();
 // once a turn of the loop: the timers of the scene, the animation, the pad

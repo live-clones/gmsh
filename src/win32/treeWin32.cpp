@@ -17,13 +17,13 @@
 // after its name, and the field of the line picked is edited in a panel under
 // the tree. A node is its path, which is what survives a rebuild.
 
-class win32Tree {
+class treeWin32 {
 public:
   Ui::Tree tree;
   bool picks = false;
   std::function<void()> after;
   HWND view = nullptr, editor = nullptr;
-  win32Field *editing = nullptr;
+  fieldWin32 *editing = nullptr;
   std::string editingPath;
   unsigned built = 0;
   bool everBuilt = false, quiet = false;
@@ -78,7 +78,7 @@ namespace {
     }
   }
 
-  std::string _pathOf(win32Tree *t, HTREEITEM item)
+  std::string _pathOf(treeWin32 *t, HTREEITEM item)
   {
     TVITEMW it;
     memset(&it, 0, sizeof(it));
@@ -89,10 +89,10 @@ namespace {
     return k < t->paths.size() ? t->paths[k] : "";
   }
 
-  void _branch(win32Tree *t, HTREEITEM parent, const std::string &path);
+  void _branch(treeWin32 *t, HTREEITEM parent, const std::string &path);
 
   // the lines of a branch, the first time it opens
-  void _fill(win32Tree *t, HTREEITEM item, const std::string &path)
+  void _fill(treeWin32 *t, HTREEITEM item, const std::string &path)
   {
     if(t->filled.count(path)) return;
     t->filled.insert(path);
@@ -106,7 +106,7 @@ namespace {
     _branch(t, item, path);
   }
 
-  void _branch(win32Tree *t, HTREEITEM parent, const std::string &path)
+  void _branch(treeWin32 *t, HTREEITEM parent, const std::string &path)
   {
     if(!t->tree.children || !t->tree.node) return;
     bool commands = win32Sources().settings().showModuleMenu;
@@ -156,7 +156,7 @@ namespace {
     }
   }
 
-  void _build(win32Tree *t)
+  void _build(treeWin32 *t)
   {
     // what was open stays open
     for(const auto &it : t->items) {
@@ -184,7 +184,7 @@ namespace {
   }
 
   // the field of the line picked, in the panel under the tree
-  void _edit(win32Tree *t, const std::string &path)
+  void _edit(treeWin32 *t, const std::string &path)
   {
     if(!t->editor) return;
     if(t->editing && path == t->editingPath) return;
@@ -196,7 +196,7 @@ namespace {
       ShowWindow(t->editor, SW_HIDE);
       return;
     }
-    win32Tree *self = t;
+    treeWin32 *self = t;
     t->editing = win32MakeField(t->editor, node.field, [self]() {
       if(self->after) self->after();
     });
@@ -215,10 +215,10 @@ namespace {
 
 } // namespace
 
-win32Tree *win32MakeTree(HWND parent, const Ui::Tree &tree, bool picks,
+treeWin32 *win32MakeTree(HWND parent, const Ui::Tree &tree, bool picks,
                          const std::function<void()> &after)
 {
-  win32Tree *t = new win32Tree;
+  treeWin32 *t = new treeWin32;
   t->tree = tree;
   t->picks = picks;
   t->after = after;
@@ -233,7 +233,7 @@ win32Tree *win32MakeTree(HWND parent, const Ui::Tree &tree, bool picks,
   return t;
 }
 
-void win32DropTree(win32Tree *t)
+void win32DropTree(treeWin32 *t)
 {
   if(!t) return;
   if(t->editing) win32DropField(t->editing);
@@ -241,21 +241,21 @@ void win32DropTree(win32Tree *t)
   delete t;
 }
 
-HWND win32TreeWindow(win32Tree *t) { return t ? t->view : nullptr; }
+HWND win32TreeWindow(treeWin32 *t) { return t ? t->view : nullptr; }
 
-void win32SetTree(win32Tree *t, const Ui::Tree &tree)
+void win32SetTree(treeWin32 *t, const Ui::Tree &tree)
 {
   if(t) t->tree = tree;
 }
 
-void win32SetTreeEditor(win32Tree *t, HWND panel)
+void win32SetTreeEditor(treeWin32 *t, HWND panel)
 {
   if(!t) return;
   t->editor = panel;
   ShowWindow(panel, SW_HIDE);
 }
 
-void win32RefreshTree(win32Tree *t, bool rebuild)
+void win32RefreshTree(treeWin32 *t, bool rebuild)
 {
   if(!t) return;
   unsigned generation = t->tree.generation ? t->tree.generation() : 0;
@@ -293,7 +293,7 @@ void win32RefreshTree(win32Tree *t, bool rebuild)
   InvalidateRect(t->view, nullptr, FALSE);
 }
 
-void win32OpenTreeItem(win32Tree *t, const std::string &path, bool open)
+void win32OpenTreeItem(treeWin32 *t, const std::string &path, bool open)
 {
   if(!t) return;
   // the branches on the way are opened first, which fills them
@@ -317,7 +317,7 @@ void win32OpenTreeItem(win32Tree *t, const std::string &path, bool open)
   TreeView_Expand(t->view, it->second, open ? TVE_EXPAND : TVE_COLLAPSE);
 }
 
-bool win32TreeItemOpen(win32Tree *t, const std::string &path)
+bool win32TreeItemOpen(treeWin32 *t, const std::string &path)
 {
   if(!t) return false;
   auto it = t->items.find(path);
@@ -329,7 +329,7 @@ bool win32TreeItemOpen(win32Tree *t, const std::string &path)
           TVIS_EXPANDED) != 0;
 }
 
-bool win32TreeNotify(win32Tree *t, NMHDR *n, LRESULT &result)
+bool win32TreeNotify(treeWin32 *t, NMHDR *n, LRESULT &result)
 {
   result = 0;
   if(!t || n->hwndFrom != t->view) return false;
@@ -372,7 +372,7 @@ bool win32TreeNotify(win32Tree *t, NMHDR *n, LRESULT &result)
     }
     if(t->picks && (hit.flags & TVHT_ONITEMSTATEICON)) {
       // the box changes once the click is over: read then
-      win32Tree *self = t;
+      treeWin32 *self = t;
       win32Later([self, path, item]() {
         if(!self->tree.node) return;
         Ui::Node now = self->tree.node(path);

@@ -33,7 +33,7 @@ namespace {
     GtkWidget *console = nullptr, *consoleScroll = nullptr;
     GtkWidget *bar = nullptr, *buttons = nullptr, *message = nullptr,
               *messageLabel = nullptr, *progress = nullptr;
-    gtkTree *tree = nullptr;
+    treeGtk *tree = nullptr;
     GtkCssProvider *sheet = nullptr;
     std::string barBuilt, footerBuilt;
     std::vector<std::string> lines;
@@ -354,7 +354,7 @@ namespace {
 
     // the tree, and the buttons of the solver under it
     _w->treeBox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    _w->tree = new gtkTree(gtkSources().tree, false, []() {
+    _w->tree = new treeGtk(gtkSources().tree, false, []() {
       gtkLater([]() {
         if(_w && _w->tree) _w->tree->refresh(false);
       });
@@ -1077,12 +1077,6 @@ namespace {
       GtkWindow *win = GTK_WINDOW(_w->win);
       if(what == "new")
         gtkSceneNewWindow();
-      else if(what == "split_h")
-        gtkSceneSplit('h', .5);
-      else if(what == "split_v")
-        gtkSceneSplit('v', .5);
-      else if(what == "split_u")
-        gtkSceneSplit('u', 0.);
       else if(what == "minimize")
         gtk_window_minimize(win);
       else if(what == "zoom") {
@@ -1098,8 +1092,6 @@ namespace {
       else if(what == "show_hide_tree")
         gtk_widget_set_visible(_w->treeBox,
                                !gtk_widget_get_visible(_w->treeBox));
-      else if(what == "copy")
-        gtkSceneCopy();
       else if(_host.error)
         _host.error("Unknown window action '" + what + "'");
     }

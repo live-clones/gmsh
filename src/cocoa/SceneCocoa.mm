@@ -522,8 +522,6 @@ void cocoaSceneSize(int &width, int &height)
   height = _root ? (int)[_root bounds].size.height : 0;
 }
 
-void cocoaSceneSplit(char how, double ratio) { _all().split(how, ratio); }
-
 void cocoaSceneNewWindow() { _all().newWindow(); }
 
 void cocoaSceneDestroy()
@@ -547,4 +545,3 @@ void cocoaSceneDestroy()
 
 void cocoaSceneStartTimers() { _all().startTimers(); }
 
-void cocoaSceneCopy() { Gui::instance().copyCurrentOpenglWindowToClipboard(); }

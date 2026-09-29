@@ -285,8 +285,6 @@ void qtSceneSize(int &width, int &height)
   height = _root ? _root->height() : 0;
 }
 
-void qtSceneSplit(char how, double ratio) { _all().split(how, ratio); }
-
 void qtSceneNewWindow() { _all().newWindow(); }
 
 void qtSceneDestroy()
@@ -304,4 +302,3 @@ void qtSceneDestroy()
 
 void qtSceneStartTimers() { _all().startTimers(); }
 
-void qtSceneCopy() { Gui::instance().copyCurrentOpenglWindowToClipboard(); }

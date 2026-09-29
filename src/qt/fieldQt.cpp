@@ -63,7 +63,7 @@ namespace {
     std::vector<int> values;
     bool dragging = false;
     Ui::MapEditor mapEdit;
-    qtTree *tree = nullptr;
+    treeQt *tree = nullptr;
     binding(QWidget *parent) : QObject(parent) {}
     ~binding() { delete tree; }
   };
@@ -666,7 +666,7 @@ QWidget *qtFieldWidget(const Ui::Field &f, const std::function<void()> &after)
   } break;
   case Ui::Hierarchy: {
     Ui::Tree none;
-    qtTree *t = new qtTree(f.hierarchy ? *f.hierarchy : none, true, after);
+    treeQt *t = new treeQt(f.hierarchy ? *f.hierarchy : none, true, after);
     QWidget *view = (QWidget *)t->widget();
     if(f.rows) view->setMinimumHeight(qtPx(1.45 * f.rows));
     bind(view, view);

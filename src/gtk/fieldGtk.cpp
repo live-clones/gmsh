@@ -80,7 +80,7 @@ namespace {
     // the colour map
     Ui::MapEditor mapEdit;
     // the tree of a Hierarchy
-    gtkTree *tree = nullptr;
+    treeGtk *tree = nullptr;
     ~binding() { delete tree; }
   };
 
@@ -931,7 +931,7 @@ GtkWidget *gtkFieldWidget(const Ui::Field &f, const std::function<void()> &after
   } break;
   case Ui::Hierarchy: {
     Ui::Tree none;
-    b->tree = new gtkTree(f.hierarchy ? *f.hierarchy : none, true, after);
+    b->tree = new treeGtk(f.hierarchy ? *f.hierarchy : none, true, after);
     outer = b->inner = b->tree->widget();
     gtk_widget_add_css_class(outer, "frame");
     if(f.rows)

@@ -77,11 +77,11 @@ GtkWidget *gtkButtonWidget(const Ui::Button &button,
 // --- a tree whose lines are fields (Tree.h): the modules, and a Hierarchy
 // field; one that picks draws a switch in front of each line
 
-class gtkTree {
+class treeGtk {
 public:
-  gtkTree(const Ui::Tree &tree, bool picks,
+  treeGtk(const Ui::Tree &tree, bool picks,
           const std::function<void()> &after);
-  ~gtkTree();
+  ~treeGtk();
   GtkWidget *widget() { return _scroll; }
   void setTree(const Ui::Tree &tree) { _tree = tree; }
   // built again when the shape changed, or when asked; the values read again
@@ -144,10 +144,7 @@ GtkWidget *gtkSceneWidget();
 void gtkSceneRedraw();
 // in the pixels of the widget
 void gtkSceneSize(int &width, int &height);
-void gtkSceneSplit(char how, double ratio);
 void gtkSceneNewWindow();
-// the picture of the current view, to the clipboard
-void gtkSceneCopy();
 // a view is being drawn: the loop is not to be pumped from inside
 bool gtkSceneDrawing();
 void gtkSceneDestroy();

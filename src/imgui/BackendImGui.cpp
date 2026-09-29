@@ -282,12 +282,6 @@ namespace {
       appWindow *a = appWindow::instance();
       if(what == "new")
         imguiSceneNewWindow();
-      else if(what == "split_h")
-        imguiSceneSplit('h', 0.5);
-      else if(what == "split_v")
-        imguiSceneSplit('v', 0.5);
-      else if(what == "split_u")
-        imguiSceneSplit('u', 0.);
       else
         a->windowAction(what);
     }

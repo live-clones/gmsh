@@ -6,7 +6,7 @@
 # gmsh.rc goes into the executable alone: see the top-level CMakeLists.txt
 set(SRC
   BackendWin32.cpp
-  commonWin32.cpp
+  win32Common.cpp
   SceneWin32.cpp
   dialogWin32.cpp
   fieldWin32.cpp

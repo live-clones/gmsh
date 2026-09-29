@@ -22,7 +22,7 @@
 // told, then `after` runs; a refresh reads the field and puts the value back,
 // quietly.
 
-struct win32Field {
+struct fieldWin32 {
   Ui::Field field;
   std::function<void()> after;
   HWND parent = nullptr, widget = nullptr, label = nullptr;
@@ -35,7 +35,7 @@ struct win32Field {
   std::vector<std::string> labels;
   std::vector<int> values;
   Ui::MapEditor mapEdit;
-  win32Tree *tree = nullptr;
+  treeWin32 *tree = nullptr;
   // the links of a page of prose
   std::vector<std::function<void()> > follow;
 };
@@ -44,19 +44,19 @@ namespace {
 
   const wchar_t *Prop = L"gmshField";
 
-  win32Field *_of(HWND w)
+  fieldWin32 *_of(HWND w)
   {
-    return w ? (win32Field *)GetPropW(w, Prop) : nullptr;
+    return w ? (fieldWin32 *)GetPropW(w, Prop) : nullptr;
   }
 
-  void _bind(HWND w, win32Field *f)
+  void _bind(HWND w, fieldWin32 *f)
   {
     if(w) SetPropW(w, Prop, (HANDLE)f);
   }
 
   // a change the user made: the done() of a choosing that ended, the
   // changed() of a step, then what the holder does, once the message is over
-  void _told(win32Field *f, bool ends)
+  void _told(fieldWin32 *f, bool ends)
   {
     if(f->quiet) return;
     Ui::Field g = f->field;
@@ -90,7 +90,7 @@ namespace {
 
   // what is typed, written through the field; ends says Return or the field
   // left
-  void _commit(win32Field *f, bool ends)
+  void _commit(fieldWin32 *f, bool ends)
   {
     if(f->quiet) return;
     HWND e = f->number ? f->number : f->widget;
@@ -122,7 +122,7 @@ namespace {
   LRESULT CALLBACK _editProc(HWND w, UINT msg, WPARAM wp, LPARAM lp,
                              UINT_PTR, DWORD_PTR data)
   {
-    win32Field *f = (win32Field *)data;
+    fieldWin32 *f = (fieldWin32 *)data;
     switch(msg) {
     case WM_GETDLGCODE:
       // Return is the field's, not the window's default button
@@ -177,7 +177,7 @@ namespace {
     return w;
   }
 
-  HWND _edit(win32Field *f, HWND parent, bool readOnly)
+  HWND _edit(fieldWin32 *f, HWND parent, bool readOnly)
   {
     HWND e = _make(L"EDIT", WS_TABSTOP | ES_AUTOHSCROLL | (readOnly ? ES_READONLY : 0),
                    parent, WS_EX_CLIENTEDGE);
@@ -188,7 +188,7 @@ namespace {
 
   // --- the disc of a direction and the colour map: drawn with GDI
 
-  void _discAt(win32Field *f, HWND w, int px, int py)
+  void _discAt(fieldWin32 *f, HWND w, int px, int py)
   {
     if(!IsWindowEnabled(w)) return;
     RECT r;
@@ -209,7 +209,7 @@ namespace {
 
   LRESULT CALLBACK _discProc(HWND w, UINT msg, WPARAM wp, LPARAM lp)
   {
-    win32Field *f = _of(w);
+    fieldWin32 *f = _of(w);
     switch(msg) {
     case WM_PAINT: {
       PAINTSTRUCT ps;
@@ -262,7 +262,7 @@ namespace {
 
   LRESULT CALLBACK _mapProc(HWND w, UINT msg, WPARAM wp, LPARAM lp)
   {
-    win32Field *f = _of(w);
+    fieldWin32 *f = _of(w);
     if(!f) return DefWindowProcW(w, msg, wp, lp);
     const Ui::ColourMap &map = f->field.map;
     int line = (int)(win32Em() * 1.4);
@@ -387,7 +387,7 @@ namespace {
 
   // --- a page of prose, as a SysLink: its links are numbered
 
-  void _prose(win32Field *f)
+  void _prose(fieldWin32 *f)
   {
     std::vector<Ui::Line> page =
       f->field.prose ? f->field.prose() : std::vector<Ui::Line>();
@@ -428,10 +428,10 @@ namespace {
 
 // --- making the controls
 
-win32Field *win32MakeField(HWND parent, const Ui::Field &field,
+fieldWin32 *win32MakeField(HWND parent, const Ui::Field &field,
                            const std::function<void()> &after)
 {
-  win32Field *f = new win32Field;
+  fieldWin32 *f = new fieldWin32;
   f->field = field;
   f->after = after;
   f->parent = parent;
@@ -573,7 +573,7 @@ win32Field *win32MakeField(HWND parent, const Ui::Field &field,
   return f;
 }
 
-void win32DropField(win32Field *f)
+void win32DropField(fieldWin32 *f)
 {
   if(!f) return;
   if(f->tree) win32DropTree(f->tree);
@@ -584,9 +584,9 @@ void win32DropField(win32Field *f)
   delete f;
 }
 
-HWND win32FieldWindow(win32Field *f) { return f ? f->widget : nullptr; }
+HWND win32FieldWindow(fieldWin32 *f) { return f ? f->widget : nullptr; }
 
-void win32PlaceField(win32Field *f, const RECT &widget, const RECT &label,
+void win32PlaceField(fieldWin32 *f, const RECT &widget, const RECT &label,
                      const std::vector<RECT> &trailing, bool shown)
 {
   int show = shown ? SW_SHOWNA : SW_HIDE;
@@ -631,14 +631,14 @@ void win32PlaceField(win32Field *f, const RECT &widget, const RECT &label,
   }
 }
 
-void win32RebindField(win32Field *f, const Ui::Field &field)
+void win32RebindField(fieldWin32 *f, const Ui::Field &field)
 {
   if(!f || f->field.kind != field.kind) return;
   f->field = field;
   if(f->tree && field.hierarchy) win32SetTree(f->tree, *field.hierarchy);
 }
 
-void win32RefreshField(win32Field *f)
+void win32RefreshField(fieldWin32 *f)
 {
   if(!f) return;
   const Ui::Field &g = f->field;
@@ -769,7 +769,7 @@ bool win32FieldMessage(HWND panel, UINT msg, WPARAM wp, LPARAM lp,
   result = 0;
   if(msg == WM_DRAWITEM) {
     DRAWITEMSTRUCT *d = (DRAWITEMSTRUCT *)lp;
-    win32Field *f = _of(d->hwndItem);
+    fieldWin32 *f = _of(d->hwndItem);
     if(!f || f->field.kind != Ui::Color) return false;
     // the swatch, in a sunken frame
     RECT r = d->rcItem;
@@ -783,7 +783,7 @@ bool win32FieldMessage(HWND panel, UINT msg, WPARAM wp, LPARAM lp,
     return true;
   }
   if(msg == WM_CTLCOLORSTATIC) {
-    win32Field *f = _of((HWND)lp);
+    fieldWin32 *f = _of((HWND)lp);
     if(!f || !f->field.alert) return false;
     SetTextColor((HDC)wp, RGB(176, 0, 0));
     SetBkMode((HDC)wp, TRANSPARENT);
@@ -792,9 +792,9 @@ bool win32FieldMessage(HWND panel, UINT msg, WPARAM wp, LPARAM lp,
   }
   if(msg == WM_NOTIFY) {
     NMHDR *n = (NMHDR *)lp;
-    if(win32Tree *t = (win32Tree *)GetPropW(n->hwndFrom, L"gmshTree"))
+    if(treeWin32 *t = (treeWin32 *)GetPropW(n->hwndFrom, L"gmshTree"))
       return win32TreeNotify(t, n, result);
-    win32Field *f = _of(n->hwndFrom);
+    fieldWin32 *f = _of(n->hwndFrom);
     if(!f) return false;
     if(f->tree) return win32TreeNotify(f->tree, n, result);
     if(f->field.kind == Ui::Prose && (n->code == NM_CLICK || n->code == NM_RETURN)) {
@@ -807,7 +807,7 @@ bool win32FieldMessage(HWND panel, UINT msg, WPARAM wp, LPARAM lp,
     return false;
   }
   if(msg == WM_HSCROLL) {
-    win32Field *f = _of((HWND)lp);
+    fieldWin32 *f = _of((HWND)lp);
     if(!f || !f->number || f->quiet) return false;
     int code = LOWORD(wp);
     int k = (int)SendMessageW(f->widget, TBM_GETPOS, 0, 0);
@@ -826,7 +826,7 @@ bool win32FieldMessage(HWND panel, UINT msg, WPARAM wp, LPARAM lp,
   }
   if(msg != WM_COMMAND) return false;
   HWND ctl = (HWND)lp;
-  win32Field *f = _of(ctl);
+  fieldWin32 *f = _of(ctl);
   if(!f || f->quiet) return false;
   int code = HIWORD(wp);
   const Ui::Field &g = f->field;

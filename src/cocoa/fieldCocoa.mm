@@ -86,7 +86,7 @@ namespace {
     Ui::MapEditor mapEdit;
     double wheel = 0.;
     bool dragging = false;
-    cocoaTree *tree = nullptr;
+    treeCocoa *tree = nullptr;
     std::vector<std::function<void()>> follow;
     ~binding() { delete tree; }
   };
@@ -1105,8 +1105,8 @@ NSView *cocoaFieldWidget(const Ui::Field &f, const std::function<void()> &after)
   } break;
   case Ui::Hierarchy: {
     Ui::Tree none;
-    cocoaTree *t =
-      new cocoaTree(f.hierarchy ? *f.hierarchy : none, true, after);
+    treeCocoa *t =
+      new treeCocoa(f.hierarchy ? *f.hierarchy : none, true, after);
     NSView *view = t->widget();
     bind(view, view);
     g->b.tree = t;

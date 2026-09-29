@@ -86,7 +86,7 @@ namespace {
     NSScrollView *consoleScroll = nil;
     GmshConsole *messages = nil;
     GmshBar *bar = nil;
-    cocoaTree *tree = nullptr;
+    treeCocoa *tree = nullptr;
     std::string barBuilt, footerBuilt;
     std::vector<std::string> lines;
     bool fullscreen = false, treeWas = true, consoleWas = true;
@@ -841,12 +841,6 @@ namespace {
       NSWindow *win = _w->window;
       if(what == "new")
         cocoaSceneNewWindow();
-      else if(what == "split_h")
-        cocoaSceneSplit('h', .5);
-      else if(what == "split_v")
-        cocoaSceneSplit('v', .5);
-      else if(what == "split_u")
-        cocoaSceneSplit('u', 0.);
       else if(what == "minimize")
         [([NSApp keyWindow] ?: win) miniaturize:nil];
       else if(what == "zoom")
@@ -860,8 +854,6 @@ namespace {
       }
       else if(what == "show_hide_tree")
         _showTree([_w->treeBox isHidden]);
-      else if(what == "copy")
-        cocoaSceneCopy();
       else if(_host.error)
         _host.error("Unknown window action '" + what + "'");
     }
@@ -951,7 +943,7 @@ namespace {
       // the tree, and the buttons of the solver under it
       _w->treeBox =
         [[GmshTreeBox alloc] initWithFrame:NSMakeRect(0, 0, treeWidth, 400)];
-      _w->tree = new cocoaTree(_sources.tree, false, []() {
+      _w->tree = new treeCocoa(_sources.tree, false, []() {
         cocoaLater([]() {
           if(_w && _w->tree) _w->tree->refresh(false);
         });

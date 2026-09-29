@@ -653,6 +653,4 @@ sceneView *imguiSceneCurrent()
   return p ? p->view : nullptr;
 }
 
-void imguiSceneSplit(char how, double ratio) { _all().split(how, ratio); }
-
 void imguiSceneNewWindow() { _all().newWindow(); }

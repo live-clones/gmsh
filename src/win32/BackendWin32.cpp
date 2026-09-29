@@ -30,7 +30,7 @@ namespace {
     HWND win = nullptr, treeBox = nullptr, editor = nullptr, footer = nullptr,
          scene = nullptr, console = nullptr, bar = nullptr, message = nullptr,
          progress = nullptr;
-    win32Tree *tree = nullptr;
+    treeWin32 *tree = nullptr;
     std::vector<HWND> buttons, footerButtons;
     std::vector<Ui::Button> footerSaid;
     std::string barBuilt, footerBuilt;
@@ -959,12 +959,6 @@ namespace {
       if(!_w) return;
       if(what == "new")
         win32SceneNewWindow();
-      else if(what == "split_h")
-        win32SceneSplit('h', .5);
-      else if(what == "split_v")
-        win32SceneSplit('v', .5);
-      else if(what == "split_u")
-        win32SceneSplit('u', 0.);
       else if(what == "minimize")
         ShowWindow(_w->win, SW_MINIMIZE);
       else if(what == "zoom")
@@ -977,8 +971,6 @@ namespace {
         _w->treeShown = !_w->treeShown;
         _layout();
       }
-      else if(what == "copy")
-        win32SceneCopy();
       else if(_host.error)
         _host.error("Unknown window action '" + what + "'");
     }

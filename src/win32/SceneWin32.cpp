@@ -492,11 +492,7 @@ void win32SceneSize(int &width, int &height)
   height = r.bottom;
 }
 
-void win32SceneSplit(char how, double ratio) { _all().split(how, ratio); }
-
 void win32SceneNewWindow() { _all().newWindow(); }
-
-void win32SceneCopy() { Gui::instance().copyCurrentOpenglWindowToClipboard(); }
 
 void win32SceneDestroy()
 {

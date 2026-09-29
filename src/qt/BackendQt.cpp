@@ -121,7 +121,7 @@ namespace {
     QWidget *buttons = nullptr;
     QPushButton *message = nullptr;
     QProgressBar *progress = nullptr;
-    qtTree *tree = nullptr;
+    treeQt *tree = nullptr;
     std::string barBuilt, footerBuilt;
     std::vector<std::string> lines;
     bool fullscreen = false, treeWas = true, consoleWas = true;
@@ -576,12 +576,6 @@ namespace {
       if(!_w) return;
       if(what == "new")
         qtSceneNewWindow();
-      else if(what == "split_h")
-        qtSceneSplit('h', .5);
-      else if(what == "split_v")
-        qtSceneSplit('v', .5);
-      else if(what == "split_u")
-        qtSceneSplit('u', 0.);
       else if(what == "minimize")
         _w->showMinimized();
       else if(what == "zoom") {
@@ -598,8 +592,6 @@ namespace {
       }
       else if(what == "show_hide_tree")
         _w->treeBox->setVisible(!_w->treeBox->isVisible());
-      else if(what == "copy")
-        qtSceneCopy();
       else if(_host.error)
         _host.error("Unknown window action '" + what + "'");
     }
@@ -672,7 +664,7 @@ namespace {
       QVBoxLayout *tv = new QVBoxLayout(_w->treeBox);
       tv->setContentsMargins(0, 0, 0, 0);
       tv->setSpacing(2);
-      _w->tree = new qtTree(_sources.tree, false, []() {
+      _w->tree = new treeQt(_sources.tree, false, []() {
         qtLater([]() {
           if(_w && _w->tree) _w->tree->refresh(false);
         });

@@ -380,7 +380,7 @@ namespace {
 
     bool supports(const std::string &what) override
     {
-#if !defined(WIN32)
+#if !defined(WIN32) && FL_API_VERSION < 10400
       if(what == "copy") return false;
 #endif
       return true;

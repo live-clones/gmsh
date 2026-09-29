@@ -36,7 +36,7 @@ namespace {
 
 } // namespace
 
-qtTree::qtTree(const Ui::Tree &tree, bool picks,
+treeQt::treeQt(const Ui::Tree &tree, bool picks,
                const std::function<void()> &after)
   : _tree(tree), _picks(picks), _after(after), _built(0), _everBuilt(false),
     _firstBuild(true), _quiet(false)
@@ -88,12 +88,12 @@ qtTree::qtTree(const Ui::Tree &tree, bool picks,
   refresh(true);
 }
 
-qtTree::~qtTree()
+treeQt::~treeQt()
 {
   // the view is its holder's, which deletes it
 }
 
-QTreeWidgetItem *qtTree::_find(const std::string &path) const
+QTreeWidgetItem *treeQt::_find(const std::string &path) const
 {
   QString p = qtString(path);
   std::vector<QTreeWidgetItem *> todo;
@@ -108,14 +108,14 @@ QTreeWidgetItem *qtTree::_find(const std::string &path) const
   return nullptr;
 }
 
-void qtTree::_fill(QTreeWidgetItem *item)
+void treeQt::_fill(QTreeWidgetItem *item)
 {
   if(item->data(0, FilledRole).toBool()) return;
   item->setData(0, FilledRole, true);
   _branch(item, _path(item));
 }
 
-void qtTree::_branch(QTreeWidgetItem *parent, const std::string &path)
+void treeQt::_branch(QTreeWidgetItem *parent, const std::string &path)
 {
   if(!_tree.children || !_tree.node) return;
   bool commands = qtSources().settings().showModuleMenu;
@@ -200,7 +200,7 @@ void qtTree::_branch(QTreeWidgetItem *parent, const std::string &path)
   _quiet = was;
 }
 
-void qtTree::_build()
+void treeQt::_build()
 {
   // what was open stays open
   std::vector<QTreeWidgetItem *> todo;
@@ -226,7 +226,7 @@ void qtTree::_build()
   _wanted.clear();
 }
 
-void qtTree::refresh(bool rebuild)
+void treeQt::refresh(bool rebuild)
 {
   unsigned generation = _tree.generation ? _tree.generation() : 0;
   if(rebuild || !_everBuilt || generation != _built) {
@@ -259,7 +259,7 @@ void qtTree::refresh(bool rebuild)
   _quiet = false;
 }
 
-void qtTree::open(const std::string &path, bool open)
+void treeQt::open(const std::string &path, bool open)
 {
   if(open) {
     std::size_t at = 0;
@@ -278,7 +278,7 @@ void qtTree::open(const std::string &path, bool open)
   _wanted.push_back(std::make_pair(path, open));
 }
 
-bool qtTree::isOpen(const std::string &path) const
+bool treeQt::isOpen(const std::string &path) const
 {
   if(QTreeWidgetItem *it = _find(path)) return it->isExpanded();
   for(auto &w : _wanted)

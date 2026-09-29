@@ -79,10 +79,10 @@ QWidget *qtButtonWidget(const Ui::Button &button,
 // --- a tree whose lines are fields (Tree.h): the modules, and a Hierarchy
 // field, whose lines are switches
 
-class qtTree {
+class treeQt {
 public:
-  qtTree(const Ui::Tree &tree, bool picks, const std::function<void()> &after);
-  ~qtTree();
+  treeQt(const Ui::Tree &tree, bool picks, const std::function<void()> &after);
+  ~treeQt();
   QTreeWidget *widget() { return _view; }
   void setTree(const Ui::Tree &tree) { _tree = tree; }
   void refresh(bool rebuild);
@@ -122,9 +122,7 @@ QMainWindow *qtMainWindow();
 QWidget *qtSceneWidget();
 void qtSceneRedraw();
 void qtSceneSize(int &width, int &height);
-void qtSceneSplit(char how, double ratio);
 void qtSceneNewWindow();
-void qtSceneCopy();
 void qtSceneDestroy();
 void qtSceneStartTimers();
 bool qtSceneDrawing();

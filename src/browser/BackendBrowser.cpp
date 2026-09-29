@@ -101,7 +101,7 @@ namespace {
     return out + "\"";
   }
 
-  class browserBackend : public Ui::Backend {
+  class backendBrowser : public Ui::Backend {
   public:
     std::string name() override { return "a web page"; }
 
@@ -1426,7 +1426,7 @@ namespace {
     }
   };
 
-  browserBackend *_the = nullptr;
+  backendBrowser *_the = nullptr;
 
 } // namespace
 
@@ -1436,7 +1436,7 @@ namespace {
     offeringBrowser()
     {
       Ui::offer("browser", []() -> Ui::Backend * {
-        if(!_the) _the = new browserBackend();
+        if(!_the) _the = new backendBrowser();
         return _the;
       });
     }
