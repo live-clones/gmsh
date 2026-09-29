@@ -192,52 +192,99 @@ namespace {
     return m;
   }
 
+  // what Ui::MapEditor::picture() says, in half blocks: a column of the
+  // terminal a pixel wide, a line two pixels tall and a line of text tall;
+  // the help, which cannot be made smaller there, in lines of its own above
   Element _map(const Ui::Field &f, const std::string &id,
                const std::function<void()> &after)
   {
     const Ui::ColourMap &map = f.map;
     if(map.empty()) return text("");
-    std::string name;
-    double least = 0., most = 0.;
-    map.about(name, least, most);
-    int size = map.size(), width = 40;
-    Elements wedge;
-    for(int x = 0; x < width; x++) {
-      int i = std::min(size - 1, x * size / width);
-      Ui::Colour c = map.colour(i);
-      wedge.push_back(text("█") | color(Color::RGB(c.r, c.g, c.b)));
-    }
+    const int width = 40, rows = 10;
     Ui::MapEditor &edit = _mapEditors()[id];
-    char hi[32];
-    snprintf(hi, sizeof(hi), "%g", most);
+    Ui::MapEditor plain = edit;
+    plain.setHelp(false);
+    // with the margin of the last line (.3 of a line) added, the wedge, the
+    // marker and the values fall on whole lines
+    const double tall = 2. * rows + .6;
+    Ui::MapEditor::Picture pic = plain.picture(map, width, tall, 2.);
+    // over what is behind the model, as master has it
+    Ui::Colour bg = Tui::sources().settings().background;
+    bool dark = bg.r * 299 + bg.g * 587 + bg.b * 114 < 128000;
+    Ui::Colour ink = dark ? Ui::Colour(255, 255, 255) : Ui::Colour(0, 0, 0);
+    std::vector<unsigned char> px =
+      Ui::MapEditor::raster(pic, width, 2 * rows, bg, ink);
+    auto rgb = [&](int x, int y) {
+      const unsigned char *p = &px[((std::size_t)y * width + x) * 4];
+      return Color::RGB(p[0], p[1], p[2]);
+    };
+    // the characters of the texts over the cells they fall in
+    std::vector<std::string> said((std::size_t)rows * width);
+    for(const auto &t : pic.texts) {
+      int row = std::min(rows - 1, std::max(0, (int)(t.y / 2. + .5)));
+      int col = (int)(t.right ? t.x - t.text.size() : t.x);
+      for(std::size_t k = 0; k < t.text.size(); k++)
+        if(col + (int)k >= 0 && col + (int)k < width)
+          said[(std::size_t)row * width + col + k] = std::string(1, t.text[k]);
+    }
     bool on = Tui::focused(id);
-    Elements lines = {text(Ui::MapEditor::title(map)) | (on ? inverted : nothing)};
+    Elements lines;
     if(edit.help())
       for(const auto &k : Ui::MapEditor::helpLines())
         lines.push_back(hbox({text(k.first) | ftxui::size(WIDTH, EQUAL, 24),
                               text(k.second)}) | dim);
-    lines.push_back(hbox(wedge));
-    // the marker under the wedge, clicked into place, and the value there
-    int at = size > 1 ? edit.marker() * (width - 1) / (size - 1) : 0;
-    lines.push_back(text(std::string((std::size_t)at, ' ') + "▲"));
-    lines.push_back(hbox({text(Ui::MapEditor::markerText(map, edit.marker())),
-                          filler(), text(hi)}));
+    for(int r = 0; r < rows; r++) {
+      Elements cells;
+      for(int x = 0; x < width; x++) {
+        const std::string &c = said[(std::size_t)r * width + x];
+        if(c.size())
+          cells.push_back(text(c) | color(Color::RGB(ink.r, ink.g, ink.b)) |
+                          bgcolor(rgb(x, 2 * r + 1)) | (on ? bold : nothing));
+        else
+          cells.push_back(text("▀") | color(rgb(x, 2 * r)) |
+                          bgcolor(rgb(x, 2 * r + 1)));
+      }
+      lines.push_back(hbox(std::move(cells)));
+    }
     Element e = vbox(std::move(lines));
     Ui::Field g = f;
     Tui::Hot h;
     h.id = id;
-    // the wedge is the line after the title and the help
-    int wedgeRow = 1 + (edit.help() ? (int)Ui::MapEditor::helpLines().size() : 0);
-    h.mouse = [id, g, width, wedgeRow](Mouse &m, int x, int y) {
-      if(m.button != Mouse::Left || m.motion != Mouse::Pressed) return false;
-      Tui::focus(id);
+    // the picture starts after the help
+    int top = edit.help() ? (int)Ui::MapEditor::helpLines().size() : 0;
+    h.mouse = [id, g, after, top](Mouse &m, int x, int y) {
+      Ui::MapEditor &edit = _mapEditors()[id];
       const Ui::ColourMap &map = g.map;
-      if(y == wedgeRow || y == wedgeRow + 1) {
-        Ui::MapEditor &edit = _mapEditors()[id];
-        edit.press(map, Ui::MapEditor::entryAt(map, x + .5, width), 0, 0, 0,
-                   true);
-        edit.release();
+      int entry = 0, value = 0;
+      bool onWedge = false;
+      Ui::MapEditor::at(map, x + .5, 2. * (y - top) + 1., width,
+                        2. * rows + .6, 2., entry, value, onWedge);
+      Ui::MapEditor::Answer answer = Ui::MapEditor::NotMine;
+      if(m.motion == Mouse::Pressed &&
+         (m.button == Mouse::Left || m.button == Mouse::Middle ||
+          m.button == Mouse::Right)) {
+        Tui::focus(id);
+        if(y < top) return true;
+        unsigned mods = (m.control ? Ui::ModCommand : 0u) |
+                        (m.shift ? Ui::ModShift : 0u) |
+                        (m.meta ? Ui::ModAlt : 0u);
+        answer = edit.press(map, entry, value,
+                            m.button == Mouse::Right  ? 2 :
+                            m.button == Mouse::Middle ? 1 :
+                                                        0,
+                            mods, onWedge);
       }
+      else if(m.motion == Mouse::Released) {
+        bool was = edit.drawing();
+        edit.release();
+        return was;
+      }
+      else if(edit.drawing())
+        answer = edit.drag(map, entry, value);
+      else
+        return false;
+      if(answer == Ui::MapEditor::Changed) _told(g, false, after);
+      Tui::dirty();
       return true;
     };
     h.key = [g, after, id](const Event &e) {
@@ -247,6 +294,7 @@ namespace {
       if(!Tui::uiKey(e, key, mods)) return false;
       Ui::MapEditor::Answer said = _mapEditors()[id].key(map, key, mods);
       if(said == Ui::MapEditor::Changed) _told(g, true, after);
+      if(said != Ui::MapEditor::NotMine) Tui::dirty();
       return said != Ui::MapEditor::NotMine;
     };
     return Tui::hot(e, h);

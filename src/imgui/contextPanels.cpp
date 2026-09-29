@@ -715,85 +715,39 @@ namespace {
                                ImGuiButtonFlags_MouseButtonMiddle);
       bool active = ImGui::IsItemActive(), hovered = ImGui::IsItemHovered();
       float lineHeight = ImGui::GetTextLineHeight();
-      float labelY = tall - 5.f;
-      float markerY = labelY - 2.f * lineHeight;
-      float wedgeY = markerY - lineHeight;
-      int size = entries;
-      auto indexToX = [&](int i) {
-        return at.x + wide * (float)i / (float)(size - 1);
-      };
-      auto xToIndex = [&](float x) {
-        int i = (int)((x - at.x) * (float)size / wide);
-        return i < 0 ? 0 : (i >= size ? size - 1 : i);
-      };
-      auto valueToY = [&](int v) { return at.y + wedgeY * (1.f - v / 255.f); };
+      // what Ui::MapEditor::picture() says, drawn
+      Ui::MapEditor::Picture pic = _mapEdit.picture(map, wide, tall, lineHeight);
       ImDrawList *into = ImGui::GetWindowDrawList();
       into->AddRectFilled(at, ImVec2(at.x + wide, at.y + tall),
                           ImGui::GetColorU32(ImGuiCol_FrameBg));
-      const ImU32 inks[4] = {IM_COL32(255, 0, 0, 255), IM_COL32(0, 255, 0, 255),
-                             IM_COL32(0, 0, 255, 255),
-                             ImGui::GetColorU32(ImGuiCol_Text)};
-      bool hsv = map.hsv();
-      for(int channel = 0; channel < 4; channel++) {
-        for(int i = 1; i < size; i++) {
-          int was = Ui::mapChannel(map, i - 1, channel, hsv);
-          int now = Ui::mapChannel(map, i, channel, hsv);
-          into->AddLine(ImVec2(indexToX(i - 1), valueToY(was)),
-                        ImVec2(indexToX(i), valueToY(now)), inks[channel]);
-        }
+      ImU32 ink = ImGui::GetColorU32(ImGuiCol_Text);
+      for(const auto &x : pic.boxes)
+        into->AddRectFilled(ImVec2(at.x + x.x, at.y + x.y),
+                            ImVec2(at.x + x.x + x.w, at.y + x.y + x.h),
+                            IM_COL32(x.colour.r, x.colour.g, x.colour.b, 255));
+      for(const auto &x : pic.segments)
+        into->AddLine(ImVec2(at.x + x.x0, at.y + x.y0),
+                      ImVec2(at.x + x.x1, at.y + x.y1),
+                      x.ink ? ink :
+                              IM_COL32(x.colour.r, x.colour.g, x.colour.b, 255));
+      for(const auto &x : pic.texts) {
+        float size = ImGui::GetFontSize() * (float)x.scale;
+        float left = (float)x.x;
+        if(x.right)
+          left -= ImGui::GetFont()
+                    ->CalcTextSizeA(size, FLT_MAX, 0.f, x.text.c_str())
+                    .x;
+        into->AddText(ImGui::GetFont(), size, ImVec2(at.x + left, at.y + x.y),
+                      ink, x.text.c_str());
       }
-      for(float x = 0.f; x < wide; x += 1.f) {
-        Ui::Colour c = map.colour(xToIndex(at.x + x));
-        into->AddRectFilled(ImVec2(at.x + x, at.y + wedgeY),
-                            ImVec2(at.x + x + 1.f, at.y + wedgeY + lineHeight),
-                            IM_COL32(c.r, c.g, c.b, 255));
-      }
-      if(_mapEdit.help()) {
-        const auto &keys = Ui::MapEditor::helpLines();
-        const int lines = (int)keys.size();
-        // smaller, so that the lines stand clear of the wedge
-        ImU32 ink = ImGui::GetColorU32(ImGuiCol_Text);
-        float small = std::min(ImGui::GetFontSize() * .85f,
-                               (wedgeY - 12.f) / (lines + 1));
-        float step = small + 1.f;
-        for(int i = 0; i < lines; i++) {
-          into->AddText(ImGui::GetFont(), small,
-                        ImVec2(at.x + 6.f, at.y + 8.f + i * step), ink,
-                        keys[i].first.c_str());
-          into->AddText(ImGui::GetFont(), small,
-                        ImVec2(at.x + 12.f * step, at.y + 8.f + i * step), ink,
-                        keys[i].second.c_str());
-        }
-      }
-      else {
-        // the map and the mode, as the released Gmsh has them
-        into->AddText(ImVec2(at.x + 6.f, at.y + 6.f),
-                      ImGui::GetColorU32(ImGuiCol_Text),
-                      Ui::MapEditor::title(map).c_str());
-      }
-      // the marker below the wedge, and the value of the map there
-      {
-        ImU32 ink = ImGui::GetColorU32(ImGuiCol_Text);
-        float mx = indexToX(_mapEdit.marker()), my = at.y + markerY;
-        into->AddLine(ImVec2(mx, my), ImVec2(mx, my + lineHeight * .6f), ink);
-        into->AddLine(ImVec2(mx, my), ImVec2(mx - 3.f, my + 6.f), ink);
-        into->AddLine(ImVec2(mx, my), ImVec2(mx + 3.f, my + 6.f), ink);
-      }
-      char says[64];
-      into->AddText(ImVec2(at.x + 10.f, at.y + labelY - lineHeight),
-                    ImGui::GetColorU32(ImGuiCol_Text),
-                    Ui::MapEditor::markerText(map, _mapEdit.marker()).c_str());
-      snprintf(says, sizeof(says), "%g", most);
-      ImVec2 wide2 = ImGui::CalcTextSize(says);
-      into->AddText(ImVec2(at.x + wide - wide2.x - 10.f,
-                           at.y + labelY - lineHeight),
-                    ImGui::GetColorU32(ImGuiCol_Text), says);
       // the entries between the last stroke and this one are all given the
       // value
       if(active) {
         ImVec2 mouse = ImGui::GetIO().MousePos;
-        int entry = xToIndex(mouse.x);
-        int value = Ui::MapEditor::valueAt(mouse.y - at.y, wedgeY);
+        int entry = 0, value = 0;
+        bool onWedge = false;
+        Ui::MapEditor::at(map, mouse.x - at.x, mouse.y - at.y, wide, tall,
+                          lineHeight, entry, value, onWedge);
         if(ImGui::IsItemActivated()) {
           ImGuiIO &io = ImGui::GetIO();
           unsigned mods = (io.KeyCtrl ? Ui::ModCommand : 0u) |
@@ -802,8 +756,8 @@ namespace {
           int button = ImGui::IsMouseDown(ImGuiMouseButton_Right)  ? 2 :
                        ImGui::IsMouseDown(ImGuiMouseButton_Middle) ? 1 :
                                                                      0;
-          if(_mapEdit.press(map, entry, value, button, mods,
-                            mouse.y - at.y >= wedgeY) == Ui::MapEditor::Changed)
+          if(_mapEdit.press(map, entry, value, button, mods, onWedge) ==
+             Ui::MapEditor::Changed)
             changed = true;
         }
         else if(_mapEdit.drawing()) {

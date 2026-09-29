@@ -643,92 +643,54 @@ namespace {
     g_object_unref(l);
   }
 
+  // what Ui::MapEditor::picture() says, drawn
   void _mapDraw(GtkDrawingArea *, cairo_t *cr, int w, int h, gpointer data)
   {
     binding *b = (binding *)data;
     const Ui::ColourMap &map = b->field.map;
     if(map.empty()) return;
-    std::string name;
-    double least = 0., most = 0.;
-    map.about(name, least, most);
-    int size = map.size();
     GdkRGBA ink;
     gtk_widget_get_color(b->inner, &ink);
-    double line = _lineHeight(b->inner);
-    double labelY = h - 5., markerY = labelY - 2. * line,
-           wedgeY = markerY - line;
-    if(size < 2 || wedgeY < 4.) return;
+    Ui::MapEditor::Picture pic =
+      b->mapEdit.picture(map, w, h, _lineHeight(b->inner));
     cairo_set_source_rgba(cr, ink.red, ink.green, ink.blue, .06);
     cairo_paint(cr);
-    bool hsv = map.hsv ? map.hsv() : false;
-    const double inks[4][3] = {{1., 0., 0.}, {0., .8, 0.}, {0., 0., 1.}, {0., 0., 0.}};
-    auto xOf = [&](int i) { return w * (double)i / (double)(size - 1); };
-    auto yOf = [&](int v) { return wedgeY * (1. - v / 255.); };
-    cairo_set_line_width(cr, 1.);
-    for(int channel = 0; channel < 4; channel++) {
-      if(channel == 3)
-        gdk_cairo_set_source_rgba(cr, &ink);
-      else
-        cairo_set_source_rgb(cr, inks[channel][0], inks[channel][1],
-                             inks[channel][2]);
-      cairo_move_to(cr, xOf(0), yOf(Ui::mapChannel(map, 0, channel, hsv)));
-      for(int i = 1; i < size; i++)
-        cairo_line_to(cr, xOf(i), yOf(Ui::mapChannel(map, i, channel, hsv)));
-      cairo_stroke(cr);
-    }
-    for(int x = 0; x < w; x++) {
-      int i = std::min(size - 1, (int)(x * (double)size / w));
-      Ui::Colour c = map.colour(i);
-      cairo_set_source_rgb(cr, c.r / 255., c.g / 255., c.b / 255.);
-      cairo_rectangle(cr, x, wedgeY, 1., line);
+    for(const auto &x : pic.boxes) {
+      cairo_set_source_rgb(cr, x.colour.r / 255., x.colour.g / 255.,
+                           x.colour.b / 255.);
+      cairo_rectangle(cr, x.x, x.y, x.w, x.h);
       cairo_fill(cr);
     }
-    gdk_cairo_set_source_rgba(cr, &ink);
-    if(b->mapEdit.help()) {
-      const auto &keys = Ui::MapEditor::helpLines();
-      const int lines = (int)keys.size();
-      double scale = std::min(.85, (wedgeY - 12.) / (lines + 1) / line);
-      double step = line * scale + 1.;
-      for(int i = 0; i < lines; i++) {
-        _text(cr, b->inner, 6., 6. + i * step, keys[i].first.c_str(), false,
-              scale);
-        _text(cr, b->inner, 12. * step, 6. + i * step, keys[i].second.c_str(),
-              false, scale);
-      }
-    }
-    else {
-      _text(cr, b->inner, 6., 4., Ui::MapEditor::title(map).c_str());
-    }
-    char says[64];
-    // the marker below the wedge, and the value of the map there
-    double mx = xOf(b->mapEdit.marker());
     cairo_set_line_width(cr, 1.);
-    cairo_move_to(cr, mx + .5, markerY);
-    cairo_line_to(cr, mx + .5, markerY + line * .6);
-    cairo_move_to(cr, mx - 2.5, markerY + 6.);
-    cairo_line_to(cr, mx + .5, markerY);
-    cairo_line_to(cr, mx + 3.5, markerY + 6.);
-    cairo_stroke(cr);
-    _text(cr, b->inner, 10., labelY - line,
-          Ui::MapEditor::markerText(map, b->mapEdit.marker()).c_str());
-    snprintf(says, sizeof(says), "%g", most);
-    _text(cr, b->inner, w - 10., labelY - line, says, true);
+    for(const auto &x : pic.segments) {
+      if(x.ink)
+        gdk_cairo_set_source_rgba(cr, &ink);
+      else
+        cairo_set_source_rgb(cr, x.colour.r / 255., x.colour.g / 255.,
+                             x.colour.b / 255.);
+      cairo_move_to(cr, x.x0 + .5, x.y0 + .5);
+      cairo_line_to(cr, x.x1 + .5, x.y1 + .5);
+      cairo_stroke(cr);
+    }
+    gdk_cairo_set_source_rgba(cr, &ink);
+    for(const auto &x : pic.texts)
+      _text(cr, b->inner, x.x, x.y, x.text, x.right, x.scale);
   }
 
   // button: 0, 1, 2 for a button that went down, -1 for a drag
   void _mapPaint(binding *b, double px, double py, int button, unsigned mods)
   {
     const Ui::ColourMap &map = b->field.map;
-    if(map.empty()) return;
+    if(map.empty() || map.size() < 2) return;
     int w = gtk_widget_get_width(b->inner), h = gtk_widget_get_height(b->inner);
-    double line = _lineHeight(b->inner);
-    double wedgeY = h - 5. - 3. * line;
-    if(map.size() < 2 || w < 1 || wedgeY < 1.) return;
-    int entry = Ui::MapEditor::entryAt(map, px, w);
-    int value = Ui::MapEditor::valueAt(py, wedgeY);
+    if(w < 1) return;
+    int entry = 0, value = 0;
+    bool onWedge = false;
+    Ui::MapEditor::at(map, px, py, w, h, _lineHeight(b->inner), entry, value,
+                      onWedge);
     Ui::MapEditor::Answer said;
     if(button >= 0)
-      said = b->mapEdit.press(map, entry, value, button, mods, py >= wedgeY);
+      said = b->mapEdit.press(map, entry, value, button, mods, onWedge);
     else if(b->mapEdit.drawing())
       said = b->mapEdit.drag(map, entry, value);
     else

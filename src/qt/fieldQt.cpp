@@ -19,6 +19,7 @@
 #include <QColorDialog>
 #include <QComboBox>
 #include <QFontDatabase>
+#include <QFontMetricsF>
 #include <QFontInfo>
 #include <QHBoxLayout>
 #include <QKeyEvent>
@@ -242,84 +243,48 @@ namespace {
       setMinimumSize(qtPx(10.), qtPx(8.));
     }
     double line() const { return fontMetrics().height(); }
-    double wedgeY() const { return height() - 5. - 3. * line(); }
+    // what Ui::MapEditor::picture() says, drawn
     void paintEvent(QPaintEvent *) override
     {
       const Ui::ColourMap &map = b->field.map;
       if(map.empty()) return;
-      std::string name;
-      double least = 0., most = 0.;
-      map.about(name, least, most);
-      int size = map.size();
-      double w = width(), wy = wedgeY(), lh = line();
-      if(size < 2 || wy < 4.) return;
+      Ui::MapEditor::Picture pic =
+        b->mapEdit.picture(map, width(), height(), line());
       QPainter p(this);
       QColor ink = palette().color(QPalette::WindowText);
       p.fillRect(rect(), palette().color(QPalette::Base));
-      bool hsv = map.hsv ? map.hsv() : false;
-      const QColor inks[4] = {QColor(255, 0, 0), QColor(0, 200, 0),
-                              QColor(0, 0, 255), ink};
-      auto xOf = [&](int i) { return w * i / (double)(size - 1); };
-      auto yOf = [&](int v) { return wy * (1. - v / 255.); };
-      for(int channel = 0; channel < 4; channel++) {
-        p.setPen(inks[channel]);
-        for(int i = 1; i < size; i++)
-          p.drawLine(QPointF(xOf(i - 1), yOf(Ui::mapChannel(map, i - 1, channel, hsv))),
-                     QPointF(xOf(i), yOf(Ui::mapChannel(map, i, channel, hsv))));
-      }
-      for(int x = 0; x < (int)w; x++) {
-        int i = std::min(size - 1, (int)(x * (double)size / w));
-        Ui::Colour c = map.colour(i);
-        p.fillRect(QRectF(x, wy, 1., lh), QColor(c.r, c.g, c.b));
+      for(const auto &x : pic.boxes)
+        p.fillRect(QRectF(x.x, x.y, x.w, x.h),
+                   QColor(x.colour.r, x.colour.g, x.colour.b));
+      for(const auto &x : pic.segments) {
+        p.setPen(x.ink ? ink : QColor(x.colour.r, x.colour.g, x.colour.b));
+        p.drawLine(QPointF(x.x0, x.y0), QPointF(x.x1, x.y1));
       }
       p.setPen(ink);
-      if(b->mapEdit.help()) {
-        const auto &keys = Ui::MapEditor::helpLines();
-        const int lines = (int)keys.size();
-        QFont small = font();
-        double scale = std::min(.85, (wy - 12.) / (lines + 1) / lh);
-        small.setPointSizeF(small.pointSizeF() * scale);
-        p.setFont(small);
-        double step = lh * scale + 1.;
-        for(int i = 0; i < lines; i++) {
-          p.drawText(QPointF(6., 6. + (i + 1) * step), keys[i].first.c_str());
-          p.drawText(QPointF(12. * step, 6. + (i + 1) * step),
-                     keys[i].second.c_str());
-        }
-        p.setFont(font());
+      for(const auto &x : pic.texts) {
+        QFont f = font();
+        f.setPointSizeF(f.pointSizeF() * x.scale);
+        p.setFont(f);
+        QFontMetricsF m(f);
+        double left = x.right ? x.x - m.horizontalAdvance(x.text.c_str()) : x.x;
+        p.drawText(QPointF(left, x.y + m.ascent()), x.text.c_str());
       }
-      else {
-        p.drawText(QPointF(6., 4. + fontMetrics().ascent()),
-                   Ui::MapEditor::title(map).c_str());
-      }
-      // the marker below the wedge, and the value of the map there
-      double mx = xOf(b->mapEdit.marker()), my = wy + lh;
-      p.drawLine(QPointF(mx, my), QPointF(mx, my + lh * .6));
-      p.drawLine(QPointF(mx, my), QPointF(mx - 3., my + 6.));
-      p.drawLine(QPointF(mx, my), QPointF(mx + 3., my + 6.));
-      char says[64];
-      // the wedge, the marker under it, the values on the last line
-      double base = height() - 5. - lh + fontMetrics().ascent();
-      p.drawText(QPointF(10., base),
-                 Ui::MapEditor::markerText(map, b->mapEdit.marker()).c_str());
-      snprintf(says, sizeof(says), "%g", most);
-      p.drawText(QPointF(w - 10. - fontMetrics().horizontalAdvance(says), base),
-                 says);
     }
     void paint(QPointF pos, int button, Qt::KeyboardModifiers m = {})
     {
       const Ui::ColourMap &map = b->field.map;
-      double wy = wedgeY();
-      if(map.empty() || map.size() < 2 || width() < 1 || wy < 1.) return;
-      int entry = Ui::MapEditor::entryAt(map, pos.x(), width());
-      int value = Ui::MapEditor::valueAt(pos.y(), wy);
+      if(map.empty() || map.size() < 2 || width() < 1) return;
+      int entry = 0, value = 0;
+      bool onWedge = false;
+      Ui::MapEditor::at(map, pos.x(), pos.y(), width(), height(), line(), entry,
+                        value, onWedge);
       Ui::MapEditor::Answer said;
       if(button >= 0) {
         unsigned mods = 0;
         if(m & Qt::ControlModifier) mods |= Ui::ModCommand;
         if(m & Qt::ShiftModifier) mods |= Ui::ModShift;
         if(m & Qt::AltModifier) mods |= Ui::ModAlt;
-        said = b->mapEdit.press(map, entry, value, button, mods, pos.y() >= wy);
+        said = b->mapEdit.press(map, entry, value, button, mods, onWedge);
       }
       else
         said = b->mapEdit.drag(map, entry, value);

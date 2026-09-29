@@ -352,10 +352,7 @@ namespace {
 {
   return std::ceil(cocoaEm() * 1.3);
 }
-- (CGFloat)wedgeY
-{
-  return [self bounds].size.height - 5. - 3. * [self line];
-}
+// what Ui::MapEditor::picture() says, drawn
 - (void)drawRect:(NSRect)dirty
 {
   binding *b = _of(self);
@@ -365,78 +362,36 @@ namespace {
   [[NSColor textBackgroundColor] set];
   NSRectFill(all);
   if(map.empty()) return;
-  std::string name;
-  double least = 0., most = 0.;
-  map.about(name, least, most);
-  int size = map.size();
-  double w = all.size.width, wy = [self wedgeY], lh = [self line];
-  if(size < 2 || wy < 4.) return;
+  Ui::MapEditor::Picture pic = b->mapEdit.picture(
+    map, all.size.width, all.size.height, [self line]);
   NSColor *ink = [NSColor textColor];
-  bool hsv = map.hsv ? map.hsv() : false;
-  NSColor *inks[4] = {[NSColor colorWithSRGBRed:1. green:0. blue:0. alpha:1.],
-                      [NSColor colorWithSRGBRed:0. green:.78 blue:0. alpha:1.],
-                      [NSColor colorWithSRGBRed:0. green:0. blue:1. alpha:1.],
-                      ink};
-  auto xOf = [&](int i) { return w * i / (double)(size - 1); };
-  auto yOf = [&](int v) { return wy * (1. - v / 255.); };
-  for(int channel = 0; channel < 4; channel++) {
-    [inks[channel] set];
-    NSBezierPath *path = [NSBezierPath bezierPath];
-    [path setLineWidth:1.];
-    for(int i = 0; i < size; i++) {
-      NSPoint p = NSMakePoint(xOf(i), yOf(Ui::mapChannel(map, i, channel, hsv)));
-      if(i == 0)
-        [path moveToPoint:p];
-      else
-        [path lineToPoint:p];
-    }
-    [path stroke];
+  auto colour = [](const Ui::Colour &c) {
+    return [NSColor colorWithSRGBRed:c.r / 255.
+                               green:c.g / 255.
+                                blue:c.b / 255.
+                               alpha:1.];
+  };
+  for(const auto &x : pic.boxes) {
+    [colour(x.colour) set];
+    NSRectFill(NSMakeRect(x.x, x.y, x.w, x.h));
   }
-  for(int x = 0; x < (int)w; x++) {
-    int i = std::min(size - 1, (int)(x * (double)size / w));
-    Ui::Colour c = map.colour(i);
-    [[NSColor colorWithSRGBRed:c.r / 255.
-                         green:c.g / 255.
-                          blue:c.b / 255.
-                         alpha:1.] set];
-    NSRectFill(NSMakeRect(x, wy, 1., lh));
+  for(const auto &x : pic.segments) {
+    [(x.ink ? ink : colour(x.colour)) set];
+    NSBezierPath *line = [NSBezierPath bezierPath];
+    [line setLineWidth:1.];
+    [line moveToPoint:NSMakePoint(x.x0, x.y0)];
+    [line lineToPoint:NSMakePoint(x.x1, x.y1)];
+    [line stroke];
   }
-  NSFont *font = cocoaFont();
-  if(b->mapEdit.help()) {
-    const auto &keys = Ui::MapEditor::helpLines();
-    const int lines = (int)keys.size();
-    double scale = std::min(.85, (wy - 12.) / (lines + 1) / lh);
-    NSFont *small = [NSFont systemFontOfSize:cocoaEm() * scale];
-    double step = lh * scale + 1.;
-    for(int i = 0; i < lines; i++) {
-      _say(keys[i].first.c_str(), NSMakePoint(6., 4. + i * step), small, ink);
-      _say(keys[i].second.c_str(), NSMakePoint(12. * step, 4. + i * step), small,
-           ink);
-    }
+  for(const auto &x : pic.texts) {
+    NSFont *font = [NSFont systemFontOfSize:cocoaEm() * x.scale];
+    double left = x.x;
+    if(x.right)
+      left -= [[NSString stringWithUTF8String:x.text.c_str()]
+                sizeWithAttributes:@{NSFontAttributeName : font}]
+                .width;
+    _say(x.text.c_str(), NSMakePoint(left, x.y), font, ink);
   }
-  else {
-    _say(Ui::MapEditor::title(map).c_str(), NSMakePoint(6., 4.), font, ink);
-  }
-  // the marker below the wedge, and the value of the map there; the values
-  // on the last line
-  double mx = size > 1 ? w * b->mapEdit.marker() / (double)(size - 1) : 0.;
-  double my = wy + lh;
-  NSBezierPath *arrow = [NSBezierPath bezierPath];
-  [arrow moveToPoint:NSMakePoint(mx, my + lh * .6)];
-  [arrow lineToPoint:NSMakePoint(mx, my)];
-  [arrow lineToPoint:NSMakePoint(mx - 3., my + 6.)];
-  [arrow moveToPoint:NSMakePoint(mx, my)];
-  [arrow lineToPoint:NSMakePoint(mx + 3., my + 6.)];
-  [ink set];
-  [arrow stroke];
-  char says[64];
-  double base = wy + 2. * lh + 2.;
-  _say(Ui::MapEditor::markerText(map, b->mapEdit.marker()).c_str(),
-       NSMakePoint(10., base), font, ink);
-  snprintf(says, sizeof(says), "%g", most);
-  NSSize wide = [[NSString stringWithUTF8String:says]
-    sizeWithAttributes:@{NSFontAttributeName : font}];
-  _say(says, NSMakePoint(w - 10. - wide.width, base), font, ink);
 }
 // button: 0, 1, 2 for a button that went down, -1 for a drag
 - (void)paint:(NSEvent *)e button:(int)button
@@ -445,11 +400,13 @@ namespace {
   if(!b) return;
   const Ui::ColourMap &map = b->field.map;
   int size = map.empty() ? 0 : map.size();
-  double wy = [self wedgeY], width = [self bounds].size.width;
+  NSRect all = [self bounds];
   NSPoint pos = [self convertPoint:[e locationInWindow] fromView:nil];
-  if(size < 2 || width < 1. || wy < 1.) return;
-  int entry = Ui::MapEditor::entryAt(map, pos.x, width);
-  int value = Ui::MapEditor::valueAt(pos.y, wy);
+  if(size < 2 || all.size.width < 1.) return;
+  int entry = 0, value = 0;
+  bool onWedge = false;
+  Ui::MapEditor::at(map, pos.x, pos.y, all.size.width, all.size.height,
+                    [self line], entry, value, onWedge);
   Ui::MapEditor::Answer said;
   if(button >= 0) {
     NSEventModifierFlags flags = [e modifierFlags];
@@ -458,7 +415,7 @@ namespace {
       mods |= Ui::ModCommand;
     if(flags & NSEventModifierFlagShift) mods |= Ui::ModShift;
     if(flags & NSEventModifierFlagOption) mods |= Ui::ModAlt;
-    said = b->mapEdit.press(map, entry, value, button, mods, pos.y >= wy);
+    said = b->mapEdit.press(map, entry, value, button, mods, onWedge);
   }
   else if(b->mapEdit.drawing())
     said = b->mapEdit.drag(map, entry, value);

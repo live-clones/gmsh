@@ -268,86 +268,47 @@ namespace {
     int line = (int)(win32Em() * 1.4);
     RECT r;
     GetClientRect(w, &r);
-    int wedgeY = r.bottom - 5 - 3 * line;
     switch(msg) {
     case WM_PAINT: {
+      // what Ui::MapEditor::picture() says, drawn
       PAINTSTRUCT ps;
       HDC dc = BeginPaint(w, &ps);
       FillRect(dc, &r, GetSysColorBrush(COLOR_WINDOW));
-      if(!map.empty() && map.size() >= 2 && wedgeY > 4) {
-        int size = map.size();
-        bool hsv = map.hsv ? map.hsv() : false;
-        COLORREF inks[4] = {RGB(255, 0, 0), RGB(0, 200, 0), RGB(0, 0, 255),
-                            GetSysColor(COLOR_WINDOWTEXT)};
-        for(int channel = 0; channel < 4; channel++) {
-          HPEN pen = CreatePen(PS_SOLID, 1, inks[channel]);
+      if(!map.empty()) {
+        Ui::MapEditor::Picture pic =
+          f->mapEdit.picture(map, r.right, r.bottom, line);
+        COLORREF ink = GetSysColor(COLOR_WINDOWTEXT);
+        for(const auto &x : pic.boxes) {
+          HBRUSH brush = CreateSolidBrush(RGB(x.colour.r, x.colour.g, x.colour.b));
+          RECT one = {(int)x.x, (int)x.y, (int)(x.x + x.w), (int)(x.y + x.h)};
+          FillRect(dc, &one, brush);
+          DeleteObject(brush);
+        }
+        for(const auto &x : pic.segments) {
+          HPEN pen = CreatePen(PS_SOLID, 1,
+                               x.ink ? ink : RGB(x.colour.r, x.colour.g, x.colour.b));
           HGDIOBJ was = SelectObject(dc, pen);
-          for(int i = 0; i < size; i++) {
-            int x = (int)((double)r.right * i / (size - 1));
-            int y = (int)(wedgeY * (1. - Ui::mapChannel(map, i, channel, hsv) / 255.));
-            if(i == 0)
-              MoveToEx(dc, x, y, nullptr);
-            else
-              LineTo(dc, x, y);
-          }
+          MoveToEx(dc, (int)x.x0, (int)x.y0, nullptr);
+          LineTo(dc, (int)x.x1, (int)x.y1);
           SelectObject(dc, was);
           DeleteObject(pen);
         }
-        for(int x = 0; x < r.right; x++) {
-          Ui::Colour c = map.colour(std::min(size - 1, x * size / std::max(1, (int)r.right)));
-          HBRUSH b = CreateSolidBrush(RGB(c.r, c.g, c.b));
-          RECT one = {x, wedgeY, x + 1, wedgeY + line};
-          FillRect(dc, &one, b);
-          DeleteObject(b);
-        }
-        std::string name;
-        double least = 0., most = 0.;
-        map.about(name, least, most);
-        HGDIOBJ was = SelectObject(dc, win32Font());
         SetBkMode(dc, TRANSPARENT);
-        SetTextColor(dc, GetSysColor(COLOR_WINDOWTEXT));
-        std::wstring s;
-        if(f->mapEdit.help()) {
-          // what the keys and the buttons do, as tall as the curves allow
-          const auto &keys = Ui::MapEditor::helpLines();
-          int step = std::max(1, (wedgeY - 8) / ((int)keys.size() + 1));
-          for(std::size_t i = 0; i < keys.size(); i++) {
-            int y = 4 + (int)i * step;
-            s = win32Wide(keys[i].first);
-            TextOutW(dc, 6, y, s.c_str(), (int)s.size());
-            s = win32Wide(keys[i].second);
-            TextOutW(dc, 6 + win32Px(12.), y, s.c_str(), (int)s.size());
-          }
+        SetTextColor(dc, ink);
+        for(const auto &x : pic.texts) {
+          LOGFONTW lf;
+          GetObjectW(win32Font(), sizeof(lf), &lf);
+          lf.lfHeight = (LONG)(lf.lfHeight * x.scale);
+          HFONT font = CreateFontIndirectW(&lf);
+          HGDIOBJ was = SelectObject(dc, font);
+          std::wstring t = win32Wide(x.text);
+          SIZE sz = {0, 0};
+          GetTextExtentPoint32W(dc, t.c_str(), (int)t.size(), &sz);
+          TextOutW(dc, (int)(x.right ? x.x - sz.cx : x.x), (int)x.y, t.c_str(),
+                   (int)t.size());
+          SelectObject(dc, was);
+          DeleteObject(font);
         }
-        else {
-          s = win32Wide(Ui::MapEditor::title(map));
-          TextOutW(dc, 6, 4, s.c_str(), (int)s.size());
-        }
-        // the marker below the wedge, and the value of the map there
-        int size = map.empty() ? 0 : map.size();
-        if(size > 1) {
-          int mx = (int)(r.right * (double)f->mapEdit.marker() / (size - 1));
-          int my = wedgeY + line;
-          HPEN pen = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_WINDOWTEXT));
-          HGDIOBJ old = SelectObject(dc, pen);
-          MoveToEx(dc, mx, my + line * 6 / 10, nullptr);
-          LineTo(dc, mx, my);
-          LineTo(dc, mx - 3, my + 6);
-          MoveToEx(dc, mx, my, nullptr);
-          LineTo(dc, mx + 3, my + 6);
-          SelectObject(dc, old);
-          DeleteObject(pen);
-        }
-        char said[64];
-        s = win32Wide(Ui::MapEditor::markerText(map, f->mapEdit.marker()));
-        TextOutW(dc, 10, r.bottom - 5 - line, s.c_str(), (int)s.size());
-        snprintf(said, sizeof(said), "%g", most);
-        s = win32Wide(said);
-        SIZE sz;
-        GetTextExtentPoint32W(dc, s.c_str(), (int)s.size(), &sz);
-        TextOutW(dc, r.right - 10 - sz.cx, r.bottom - 5 - line, s.c_str(),
-                 (int)s.size());
-        SelectObject(dc, was);
       }
       EndPaint(w, &ps);
       return 0;
@@ -359,28 +320,31 @@ namespace {
       SetCapture(w);
       {
         if(map.empty() || r.right < 1) return 0;
-        int px = GET_X_LPARAM(lp), py = GET_Y_LPARAM(lp);
+        int entry = 0, value = 0;
+        bool onWedge = false;
+        Ui::MapEditor::at(map, GET_X_LPARAM(lp), GET_Y_LPARAM(lp), r.right,
+                          r.bottom, line, entry, value, onWedge);
         unsigned mods = 0;
         if(wp & MK_CONTROL) mods |= Ui::ModCommand;
         if(wp & MK_SHIFT) mods |= Ui::ModShift;
         if(GetKeyState(VK_MENU) < 0) mods |= Ui::ModAlt;
         Ui::MapEditor::Answer said = f->mapEdit.press(
-          map, Ui::MapEditor::entryAt(map, px, r.right),
-          Ui::MapEditor::valueAt(py, wedgeY),
+          map, entry, value,
           msg == WM_RBUTTONDOWN ? 2 :
           msg == WM_MBUTTONDOWN ? 1 :
                                   0,
-          mods, py >= wedgeY);
+          mods, onWedge);
         InvalidateRect(w, nullptr, FALSE);
         if(said == Ui::MapEditor::Changed) _told(f, false);
         return 0;
       }
     case WM_MOUSEMOVE: {
       if(!f->mapEdit.drawing() || map.empty() || r.right < 1) return 0;
-      int px = GET_X_LPARAM(lp), py = GET_Y_LPARAM(lp);
-      Ui::MapEditor::Answer said =
-        f->mapEdit.drag(map, Ui::MapEditor::entryAt(map, px, r.right),
-                        Ui::MapEditor::valueAt(py, wedgeY));
+      int entry = 0, value = 0;
+      bool onWedge = false;
+      Ui::MapEditor::at(map, GET_X_LPARAM(lp), GET_Y_LPARAM(lp), r.right,
+                        r.bottom, line, entry, value, onWedge);
+      Ui::MapEditor::Answer said = f->mapEdit.drag(map, entry, value);
       InvalidateRect(w, nullptr, FALSE);
       if(said == Ui::MapEditor::Changed) _told(f, false);
       return 0;
