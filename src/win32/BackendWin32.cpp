@@ -31,6 +31,8 @@ namespace {
     HWND win = nullptr, treeBox = nullptr, editor = nullptr, footer = nullptr,
          scene = nullptr, console = nullptr, bar = nullptr, message = nullptr,
          progress = nullptr;
+    // the tree taken out of the main window into one of its own
+    HWND treeWin = nullptr;
     // the bar over the lines: the filter, Save, Clear, Autoscroll
     HWND consoleBar = nullptr, look = nullptr, filter = nullptr, save = nullptr,
          clear = nullptr, follow = nullptr;
@@ -61,6 +63,26 @@ namespace {
 
   // --- the parts of the main window where they go
 
+  // what the box of the tree holds: the tree, the field of the line picked,
+  // the buttons of the solver
+  void _layoutTree(int tw, int th)
+  {
+    int row = win32Row(), pad = win32Px(.3);
+    int footerH = _w->footerButtons.empty() ? 0 : row + 2 * pad;
+    int editorH = row + 2 * pad;
+    bool editing = IsWindowVisible(_w->editor) != 0;
+    int treeH = th - footerH - (editing ? editorH : 0);
+    MoveWindow(win32TreeWindow(_w->tree), 0, 0, tw, std::max(10, treeH), TRUE);
+    MoveWindow(_w->editor, 0, treeH, tw, editorH, TRUE);
+    MoveWindow(_w->footer, 0, treeH + (editing ? editorH : 0), tw, footerH, TRUE);
+    int n = (int)_w->footerButtons.size();
+    for(int i = 0; i < n; i++) {
+      int bw = (tw - (n + 1) * pad) / std::max(1, n);
+      MoveWindow(_w->footerButtons[(std::size_t)i], pad + i * (bw + pad), pad,
+                 bw, row, TRUE);
+    }
+  }
+
   void _layout()
   {
     if(!_w) return;
@@ -69,29 +91,22 @@ namespace {
     int bh = _w->fullscreen ? 0 : _barHeight();
     int top = 0, bottom = r.bottom - bh;
     int left = 0;
-    bool tree = _w->treeShown && !_w->fullscreen;
+    // the tree is the main window's when it is not in one of its own
+    bool tree = _w->treeShown && !_w->fullscreen && !_w->treeWin;
     bool console = _w->consoleShown && !_w->fullscreen;
     if(tree) {
       int tw = std::max(80, std::min(_w->treeWidth, (int)r.right - 100));
       MoveWindow(_w->treeBox, 0, top, tw, bottom - top, TRUE);
+      _layoutTree(tw, bottom - top);
       left = tw + Gap;
-      // the tree, the field of the line picked, the buttons of the solver
-      int row = win32Row(), pad = win32Px(.3);
-      int footerH = _w->footerButtons.empty() ? 0 : row + 2 * pad;
-      int editorH = row + 2 * pad;
-      bool editing = IsWindowVisible(_w->editor) != 0;
-      int treeH = (bottom - top) - footerH - (editing ? editorH : 0);
-      MoveWindow(win32TreeWindow(_w->tree), 0, 0, tw, std::max(10, treeH), TRUE);
-      MoveWindow(_w->editor, 0, treeH, tw, editorH, TRUE);
-      MoveWindow(_w->footer, 0, treeH + (editing ? editorH : 0), tw, footerH, TRUE);
-      int n = (int)_w->footerButtons.size();
-      for(int i = 0; i < n; i++) {
-        int bw = (tw - (n + 1) * pad) / std::max(1, n);
-        MoveWindow(_w->footerButtons[(std::size_t)i], pad + i * (bw + pad), pad,
-                   bw, row, TRUE);
-      }
     }
-    ShowWindow(_w->treeBox, tree ? SW_SHOWNA : SW_HIDE);
+    if(!_w->treeWin)
+      ShowWindow(_w->treeBox, tree ? SW_SHOWNA : SW_HIDE);
+    else {
+      RECT c;
+      GetClientRect(_w->treeWin, &c);
+      _layoutTree(c.right, c.bottom);
+    }
     int ch = console ? std::max(20, std::min(_w->consoleHeight,
                                              bottom - top - 100)) :
                        0;
@@ -138,13 +153,13 @@ namespace {
     RECT r;
     GetClientRect(_w->win, &r);
     int bottom = r.bottom - _barHeight();
-    if(_w->treeShown && x >= _w->treeWidth && x < _w->treeWidth + Gap &&
-       y < bottom)
+    bool tree = _w->treeShown && !_w->treeWin;
+    if(tree && x >= _w->treeWidth && x < _w->treeWidth + Gap && y < bottom)
       return 1;
     if(_w->consoleShown) {
       int ch = std::max(20, std::min(_w->consoleHeight, bottom - 100));
       int at = bottom - ch - Gap;
-      int left = _w->treeShown ? _w->treeWidth + Gap : 0;
+      int left = tree ? _w->treeWidth + Gap : 0;
       if(x >= left && y >= at && y < at + Gap) return 2;
     }
     return 0;
@@ -465,6 +480,91 @@ namespace {
     return DefWindowProcW(w, msg, wp, lp);
   }
 
+  // --- the tree in a window of its own
+
+  void _detachTree(bool detached);
+
+  LRESULT CALLBACK _treeProc(HWND w, UINT msg, WPARAM wp, LPARAM lp)
+  {
+    switch(msg) {
+    case WM_GMSH_LATER: win32RunLater(); return 0;
+    case WM_SIZE:
+      if(_w && _w->treeWin == w) {
+        RECT r;
+        GetClientRect(w, &r);
+        MoveWindow(_w->treeBox, 0, 0, r.right, r.bottom, TRUE);
+        _layoutTree(r.right, r.bottom);
+      }
+      return 0;
+    case WM_COMMAND:
+      if(HIWORD(wp) == 0 && !lp && win32MenuCommand(LOWORD(wp))) return 0;
+      break;
+    case WM_INITMENUPOPUP: win32MenuOpens((HMENU)wp); return 0;
+    case WM_CLOSE:
+      // closed from its frame, it goes back in the main window: closed, it
+      // could not be had back
+      win32Later([]() { _detachTree(false); });
+      return 0;
+    default: break;
+    }
+    return DefWindowProcW(w, msg, wp, lp);
+  }
+
+  void _detachTree(bool detached)
+  {
+    if(!_w || detached == (_w->treeWin != nullptr)) return;
+    if(detached) {
+      static bool registered = false;
+      if(!registered) {
+        registered = true;
+        WNDCLASSEXW wc;
+        memset(&wc, 0, sizeof(wc));
+        wc.cbSize = sizeof(wc);
+        wc.lpfnWndProc = _treeProc;
+        wc.hInstance = GetModuleHandleW(nullptr);
+        wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+        wc.hbrBackground = GetSysColorBrush(COLOR_BTNFACE);
+        wc.hIcon = LoadIconW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(1));
+        wc.lpszClassName = L"GmshTree";
+        RegisterClassExW(&wc);
+      }
+      const Ui::Backend::Settings set = _sources.settings();
+      RECT want = {0, 0, _w->treeWidth, set.treeHeight > 0 ? set.treeHeight : 600};
+      AdjustWindowRectEx(&want, WS_OVERLAPPEDWINDOW, FALSE, 0);
+      bool placed = set.treeX > 0 || set.treeY > 0;
+      _w->treeWin = CreateWindowExW(
+        0, L"GmshTree", L"Gmsh", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+        placed ? set.treeX : CW_USEDEFAULT, placed ? set.treeY : CW_USEDEFAULT,
+        want.right - want.left, want.bottom - want.top, nullptr, nullptr,
+        GetModuleHandleW(nullptr), nullptr);
+      if(!_w->treeWin) return;
+      SetParent(_w->treeBox, _w->treeWin);
+      ShowWindow(_w->treeBox, SW_SHOWNA);
+      ShowWindow(_w->treeWin, SW_SHOWNORMAL);
+      RECT r;
+      GetClientRect(_w->treeWin, &r);
+      MoveWindow(_w->treeBox, 0, 0, r.right, r.bottom, TRUE);
+      _layoutTree(r.right, r.bottom);
+      _layout();
+      return;
+    }
+    RECT r;
+    if(GetWindowRect(_w->treeWin, &r) && _host.layoutChanged) {
+      Ui::Backend::Layout l;
+      l.treeX = r.left;
+      l.treeY = r.top;
+      RECT c;
+      GetClientRect(_w->treeWin, &c);
+      l.treeHeight = c.bottom;
+      _host.layoutChanged(l);
+    }
+    SetParent(_w->treeBox, _w->win);
+    HWND was = _w->treeWin;
+    _w->treeWin = nullptr;
+    DestroyWindow(was);
+    _layout();
+  }
+
   bool _build()
   {
     const Ui::Backend::Settings set = _sources.settings();
@@ -545,6 +645,7 @@ namespace {
     ShowWindow(_w->win, SW_SHOW);
     UpdateWindow(_w->win);
     _layout();
+    if(set.detachedTree) _detachTree(true);
     return true;
   }
 
@@ -685,11 +786,12 @@ namespace {
       win32DropTree(_w->tree);
       _w->tree = nullptr;
       win32SceneDestroy();
-      HWND win = _w->win;
+      HWND win = _w->win, treeWin = _w->treeWin;
       delete _w;
       _w = nullptr;
       win32SetMainWindow(nullptr);
       DestroyWindow(win);
+      if(treeWin) DestroyWindow(treeWin);
     }
 
     int runLoop() override
@@ -1077,26 +1179,34 @@ namespace {
         SetForegroundWindow(_w->win);
       else if(what == "show_hide_tree") {
         _w->treeShown = !_w->treeShown;
+        if(_w->treeWin)
+          ShowWindow(_w->treeWin, _w->treeShown ? SW_SHOWNA : SW_HIDE);
         _layout();
       }
+      else if(what == "attach_detach")
+        _detachTree(!_w->treeWin);
       else if(_host.error)
         _host.error("Unknown window action '" + what + "'");
     }
 
-    bool supports(const std::string &what) override
-    {
-      // the tree is a pane of the main window, never a window of its own
-      return what != "attach_detach";
-    }
+    void detachTree(bool detached) override { _detachTree(detached); }
 
     Layout windowLayout() override
     {
       Layout l;
       if(!_w || _w->fullscreen) return l;
       win32SceneSize(l.sceneWidth, l.sceneHeight);
-      if(_w->treeShown) l.treeWidth = _w->treeWidth;
+      if(_w->treeShown && !_w->treeWin) l.treeWidth = _w->treeWidth;
       if(_w->consoleShown) l.consoleHeight = _w->consoleHeight;
-      l.treeDetached = 0;
+      l.treeDetached = _w->treeWin ? 1 : 0;
+      RECT t;
+      if(_w->treeWin && GetWindowRect(_w->treeWin, &t)) {
+        l.treeX = t.left;
+        l.treeY = t.top;
+        RECT c;
+        GetClientRect(_w->treeWin, &c);
+        l.treeHeight = c.bottom;
+      }
       RECT r;
       if(GetWindowRect(_w->win, &r)) {
         l.sceneX = r.left;
@@ -1124,6 +1234,15 @@ namespace {
     {
       if(!_w || width < 0) return;
       _w->treeWidth = width;
+      if(_w->treeWin) {
+        RECT r;
+        GetWindowRect(_w->treeWin, &r);
+        RECT c;
+        GetClientRect(_w->treeWin, &c);
+        SetWindowPos(_w->treeWin, nullptr, 0, 0,
+                     (r.right - r.left) - c.right + width, r.bottom - r.top,
+                     SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+      }
       _layout();
     }
 
