@@ -536,9 +536,12 @@ namespace {
     int width = (set.sceneWidth > 100 ? set.sceneWidth : 700) + _w->treeWidth;
     int height = (set.sceneHeight > 100 ? set.sceneHeight : 600) +
                  _w->consoleHeight + 80;
+    // where the options say, or where Windows puts it
+    bool placed = set.sceneX > 0 || set.sceneY > 0;
     _w->win = CreateWindowExW(WS_EX_ACCEPTFILES, L"GmshMain", L"Gmsh",
                               WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
-                              CW_USEDEFAULT, CW_USEDEFAULT, width, height,
+                              placed ? set.sceneX : CW_USEDEFAULT,
+                              placed ? set.sceneY : CW_USEDEFAULT, width, height,
                               nullptr, nullptr, GetModuleHandleW(nullptr),
                               nullptr);
     if(!_w->win) return false;
@@ -1149,6 +1152,7 @@ namespace {
         l.sceneX = r.left;
         l.sceneY = r.top;
       }
+      win32FormPosition(l.dialogX, l.dialogY);
       return l;
     }
 

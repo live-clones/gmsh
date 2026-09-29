@@ -133,6 +133,8 @@ bool win32TreeNotify(treeWin32 *t, NMHDR *n, LRESULT &result);
 // --- the described forms, see dialogWin32.cpp
 void win32ShowForm(const Ui::Form &form, bool show);
 bool win32FormVisible(const Ui::Form &form);
+// where the first form shown is, for the layout; false with none
+bool win32FormPosition(int &x, int &y);
 std::string win32FormPane(const Ui::Form &form);
 void win32SetFormPane(const Ui::Form &form, const std::string &pane);
 void win32ReloadForm(const Ui::Form &form);

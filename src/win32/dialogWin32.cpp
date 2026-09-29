@@ -598,6 +598,19 @@ void win32ShowForm(const Ui::Form &form, bool show)
   _dialog(form)->show();
 }
 
+bool win32FormPosition(int &x, int &y)
+{
+  for(auto &it : _dialogs()) {
+    RECT r;
+    if(it.second->shown() && GetWindowRect(it.second->win, &r)) {
+      x = r.left;
+      y = r.top;
+      return true;
+    }
+  }
+  return false;
+}
+
 bool win32FormVisible(const Ui::Form &form)
 {
   dialogWin32 *d = _find(&form);
