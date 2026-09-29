@@ -154,6 +154,13 @@ void win32ScenePump();
 // in seconds, below zero for nothing pending
 double win32SceneNextTimer();
 
+// --- the bar along the bottom of the main window and of every graphic window
+// of its own, see BackendWin32.cpp: its buttons, the message, which one
+// presses to show the messages, and the progress of what runs; a child of
+// parent, destroyed with it
+HWND win32MakeBar(HWND parent);
+void win32PlaceBar(HWND bar, int x, int y, int w, int h);
+int win32BarHeight();
 void win32RefreshBar();
 
 #endif

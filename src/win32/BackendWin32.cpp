@@ -39,7 +39,7 @@ namespace {
     treeWin32 *tree = nullptr;
     std::vector<HWND> buttons, footerButtons;
     std::vector<Ui::Button> footerSaid;
-    std::string barBuilt, footerBuilt;
+    std::string footerBuilt;
     // the lines, what the filter lets through, whether the last is kept in
     // view
     Ui::Console said;
@@ -59,7 +59,7 @@ namespace {
   Ui::Backend::Host _host;
   const int Gap = 5;
 
-  int _barHeight() { return win32Row() + 6; }
+  int _barHeight() { return win32BarHeight(); }
 
   // --- the parts of the main window where they go
 
@@ -131,19 +131,8 @@ namespace {
     }
     ShowWindow(_w->consoleBar, console ? SW_SHOWNA : SW_HIDE);
     ShowWindow(_w->console, console ? SW_SHOWNA : SW_HIDE);
-    MoveWindow(_w->bar, 0, bottom, r.right, bh, TRUE);
+    win32PlaceBar(_w->bar, 0, bottom, r.right, bh);
     ShowWindow(_w->bar, bh ? SW_SHOWNA : SW_HIDE);
-    // the bar: its buttons, the message, the progress
-    int x = 2, row = win32Row();
-    for(HWND b : _w->buttons) {
-      int bw = (int)(INT_PTR)GetPropW(b, L"gmshWidth");
-      MoveWindow(b, x, 3, bw, row, TRUE);
-      x += bw + ((INT_PTR)GetPropW(b, L"gmshGapAfter") ? win32Px(.6) : 0);
-    }
-    int pw = IsWindowVisible(_w->progress) ? 200 : 0;
-    MoveWindow(_w->message, x + win32Px(.6), 3,
-               std::max(10, (int)r.right - x - win32Px(1.2) - pw), row, TRUE);
-    MoveWindow(_w->progress, r.right - pw - 4, 5, pw, row - 4, TRUE);
   }
 
   // the gap under the pointer: 1 by the tree, 2 over the console
@@ -272,40 +261,6 @@ namespace {
   }
 
   // --- the bar along the bottom
-
-  LRESULT _barHook(HWND w, UINT msg, WPARAM wp, LPARAM lp, bool &taken)
-  {
-    taken = false;
-    if(msg != WM_COMMAND || !_w) return 0;
-    HWND ctl = (HWND)lp;
-    if(ctl == _w->message && HIWORD(wp) == STN_CLICKED) {
-      taken = true;
-      if(_sources.barPressed) win32Later(_sources.barPressed);
-      return 0;
-    }
-    INT_PTR k = (INT_PTR)GetPropW(ctl, L"gmshBar");
-    if(!k || HIWORD(wp) != BN_CLICKED) return 0;
-    taken = true;
-    std::vector<Ui::BarButton> bar = _sources.barButtons();
-    if((std::size_t)k > bar.size()) return 0;
-    const Ui::BarButton &b = bar[(std::size_t)k - 1];
-    // what shows it on or off is the refresh's to say
-    SendMessageW(ctl, BM_SETCHECK, b.on && b.on() ? BST_CHECKED : BST_UNCHECKED, 0);
-    if(b.menu) {
-      RECT r;
-      GetWindowRect(ctl, &r);
-      std::vector<Ui::MenuItem> items = b.menu();
-      win32PopupMenu(items, _w->win, r.left, r.top);
-      return 0;
-    }
-    bool reverse = GetKeyState(VK_SHIFT) < 0, sync = GetKeyState(VK_CONTROL) < 0;
-    std::function<void(bool, bool)> what = b.action;
-    win32Later([what, reverse, sync]() {
-      if(what) what(reverse, sync);
-      win32RefreshBar();
-    });
-    return 0;
-  }
 
   // --- the buttons under the tree
 
@@ -625,19 +580,7 @@ namespace {
     _makeConsoleBar();
 
     // the bar
-    _w->bar = win32Panel(_w->win, 0, 0, 10, 10);
-    win32SetPanelHook(_w->bar, _barHook);
-    _w->message = CreateWindowExW(0, L"STATIC", L"",
-                                  WS_CHILD | WS_VISIBLE | SS_NOTIFY |
-                                    SS_NOPREFIX | SS_LEFTNOWORDWRAP |
-                                    SS_ENDELLIPSIS | SS_CENTERIMAGE,
-                                  0, 0, 10, 10, _w->bar, nullptr,
-                                  GetModuleHandleW(nullptr), nullptr);
-    SendMessageW(_w->message, WM_SETFONT, (WPARAM)win32Font(), TRUE);
-    _w->progress = CreateWindowExW(0, PROGRESS_CLASSW, L"", WS_CHILD, 0, 0, 10,
-                                   10, _w->bar, nullptr,
-                                   GetModuleHandleW(nullptr), nullptr);
-    SendMessageW(_w->progress, PBM_SETRANGE32, 0, 1000);
+    _w->bar = win32MakeBar(_w->win);
 
     win32RefreshMenuBar(_w->win);
     _refreshFooter();
@@ -1253,58 +1196,180 @@ namespace {
 
 } // namespace
 
+namespace {
+
+  // a bar, of the main window or of a graphic window of its own
+  struct barWin32 {
+    HWND panel = nullptr, message = nullptr, progress = nullptr;
+    std::vector<HWND> buttons;
+    std::string built;
+  };
+
+  std::vector<barWin32 *> &_bars()
+  {
+    static std::vector<barWin32 *> bars;
+    return bars;
+  }
+
+  barWin32 *_barOf(HWND panel)
+  {
+    return (barWin32 *)GetPropW(panel, L"gmshBarState");
+  }
+
+  // its buttons, the message, the progress, in the room it has
+  void _placeInBar(barWin32 *said)
+  {
+    RECT r;
+    GetClientRect(said->panel, &r);
+    int x = 2, row = win32Row();
+    for(HWND b : said->buttons) {
+      int bw = (int)(INT_PTR)GetPropW(b, L"gmshWidth");
+      MoveWindow(b, x, 3, bw, row, TRUE);
+      x += bw + ((INT_PTR)GetPropW(b, L"gmshGapAfter") ? win32Px(.6) : 0);
+    }
+    int pw = IsWindowVisible(said->progress) ? 200 : 0;
+    MoveWindow(said->message, x + win32Px(.6), 3,
+               std::max(10, (int)r.right - x - win32Px(1.2) - pw), row, TRUE);
+    MoveWindow(said->progress, r.right - pw - 4, 5, pw, row - 4, TRUE);
+  }
+
+  LRESULT _barHook(HWND w, UINT msg, WPARAM wp, LPARAM lp, bool &taken)
+  {
+    taken = false;
+    barWin32 *said = _barOf(w);
+    if(!said) return 0;
+    if(msg == WM_DESTROY) {
+      // forgotten with the window it is in
+      RemovePropW(w, L"gmshBarState");
+      std::vector<barWin32 *> &all = _bars();
+      all.erase(std::remove(all.begin(), all.end(), said), all.end());
+      delete said;
+      return 0;
+    }
+    if(msg != WM_COMMAND) return 0;
+    HWND ctl = (HWND)lp;
+    if(ctl == said->message && HIWORD(wp) == STN_CLICKED) {
+      taken = true;
+      if(_sources.barPressed) win32Later(_sources.barPressed);
+      return 0;
+    }
+    INT_PTR k = (INT_PTR)GetPropW(ctl, L"gmshBar");
+    if(!k || HIWORD(wp) != BN_CLICKED) return 0;
+    taken = true;
+    std::vector<Ui::BarButton> bar = _sources.barButtons();
+    if((std::size_t)k > bar.size()) return 0;
+    const Ui::BarButton &b = bar[(std::size_t)k - 1];
+    // what shows it on or off is the refresh's to say
+    SendMessageW(ctl, BM_SETCHECK, b.on && b.on() ? BST_CHECKED : BST_UNCHECKED, 0);
+    if(b.menu) {
+      RECT r;
+      GetWindowRect(ctl, &r);
+      std::vector<Ui::MenuItem> items = b.menu();
+      win32PopupMenu(items, GetAncestor(w, GA_ROOT), r.left, r.top);
+      return 0;
+    }
+    bool reverse = GetKeyState(VK_SHIFT) < 0, sync = GetKeyState(VK_CONTROL) < 0;
+    std::function<void(bool, bool)> what = b.action;
+    win32Later([what, reverse, sync]() {
+      if(what) what(reverse, sync);
+      win32RefreshBar();
+    });
+    return 0;
+  }
+
+  void _refreshBar(barWin32 *said, const std::vector<Ui::BarButton> &bar)
+  {
+    std::string shape = Ui::signature(bar);
+    if(shape != said->built) {
+      said->built = shape;
+      for(HWND b : said->buttons) DestroyWindow(b);
+      said->buttons.clear();
+      for(std::size_t i = 0; i < bar.size(); i++) {
+        // pushed in while it is on
+        HWND b = CreateWindowExW(0, L"BUTTON", win32Wide(bar[i].label).c_str(),
+                                 WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX |
+                                   BS_PUSHLIKE,
+                                 0, 0, 10, 10, said->panel, nullptr,
+                                 GetModuleHandleW(nullptr), nullptr);
+        SendMessageW(b, WM_SETFONT, (WPARAM)win32Font(), TRUE);
+        SetPropW(b, L"gmshBar", (HANDLE)(INT_PTR)(i + 1));
+        int width =
+          std::max(win32Px(bar[i].widthEm > 0. ? bar[i].widthEm : 1.6),
+                   win32Px(.8) + (int)(win32Em() * .6 *
+                                       std::max(bar[i].label.size(),
+                                                bar[i].labelOn.size())));
+        SetPropW(b, L"gmshWidth", (HANDLE)(INT_PTR)width);
+        if(i + 1 < bar.size() && bar[i + 1].gapBefore)
+          SetPropW(b, L"gmshGapAfter", (HANDLE)(INT_PTR)1);
+        said->buttons.push_back(b);
+      }
+      _placeInBar(said);
+    }
+    for(std::size_t i = 0; i < bar.size() && i < said->buttons.size(); i++) {
+      const Ui::BarButton &b = bar[i];
+      HWND w = said->buttons[i];
+      bool on = b.on && b.on();
+      std::string label = (on && b.labelOn.size()) ? b.labelOn : b.label;
+      std::string glyph = (on && b.glyphOn.size()) ? b.glyphOn : b.glyph;
+      // what warns is said so, the button being unable to take a colour
+      if(b.alert && b.alert()) label = "!" + label;
+      win32ButtonShows(w, label, glyph);
+      SendMessageW(w, BM_SETCHECK, on ? BST_CHECKED : BST_UNCHECKED, 0);
+      EnableWindow(w, b.enabled ? b.enabled() : TRUE);
+    }
+    if(_sources.barMessage) {
+      Ui::BarMessage m = _sources.barMessage();
+      if(win32Text(said->message) != m.text)
+        SetWindowTextW(said->message, win32Wide(m.text).c_str());
+      // the progress of what has finished stays said, at nought or at the end
+      bool going = m.running && m.fraction > 0. && m.fraction < 1.;
+      if(going != (IsWindowVisible(said->progress) != 0)) {
+        ShowWindow(said->progress, going ? SW_SHOWNA : SW_HIDE);
+        _placeInBar(said);
+      }
+      if(going)
+        SendMessageW(said->progress, PBM_SETPOS, (WPARAM)(1000. * m.fraction),
+                     0);
+    }
+  }
+
+} // namespace
+
+int win32BarHeight() { return win32Row() + 6; }
+
+HWND win32MakeBar(HWND parent)
+{
+  barWin32 *said = new barWin32;
+  said->panel = win32Panel(parent, 0, 0, 10, 10);
+  SetPropW(said->panel, L"gmshBarState", (HANDLE)said);
+  win32SetPanelHook(said->panel, _barHook);
+  said->message = CreateWindowExW(0, L"STATIC", L"",
+                                  WS_CHILD | WS_VISIBLE | SS_NOTIFY |
+                                    SS_NOPREFIX | SS_LEFTNOWORDWRAP |
+                                    SS_ENDELLIPSIS | SS_CENTERIMAGE,
+                                  0, 0, 10, 10, said->panel, nullptr,
+                                  GetModuleHandleW(nullptr), nullptr);
+  SendMessageW(said->message, WM_SETFONT, (WPARAM)win32Font(), TRUE);
+  said->progress = CreateWindowExW(0, PROGRESS_CLASSW, L"", WS_CHILD, 0, 0, 10,
+                                   10, said->panel, nullptr,
+                                   GetModuleHandleW(nullptr), nullptr);
+  SendMessageW(said->progress, PBM_SETRANGE32, 0, 1000);
+  _bars().push_back(said);
+  if(_sources.barButtons) _refreshBar(said, _sources.barButtons());
+  return said->panel;
+}
+
+void win32PlaceBar(HWND bar, int x, int y, int w, int h)
+{
+  MoveWindow(bar, x, y, w, h, TRUE);
+  if(barWin32 *said = _barOf(bar)) _placeInBar(said);
+}
+
 void win32RefreshBar()
 {
   if(!_w || !_sources.barButtons) return;
   std::vector<Ui::BarButton> bar = _sources.barButtons();
-  std::string shape = Ui::signature(bar);
-  if(shape != _w->barBuilt) {
-    _w->barBuilt = shape;
-    for(HWND b : _w->buttons) DestroyWindow(b);
-    _w->buttons.clear();
-    for(std::size_t i = 0; i < bar.size(); i++) {
-      // pushed in while it is on
-      HWND b = CreateWindowExW(0, L"BUTTON", win32Wide(bar[i].label).c_str(),
-                               WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX |
-                                 BS_PUSHLIKE,
-                               0, 0, 10, 10, _w->bar, nullptr,
-                               GetModuleHandleW(nullptr), nullptr);
-      SendMessageW(b, WM_SETFONT, (WPARAM)win32Font(), TRUE);
-      SetPropW(b, L"gmshBar", (HANDLE)(INT_PTR)(i + 1));
-      int width = std::max(win32Px(bar[i].widthEm > 0. ? bar[i].widthEm : 1.6),
-                           win32Px(.8) + (int)(win32Em() * .6 *
-                                               std::max(bar[i].label.size(),
-                                                        bar[i].labelOn.size())));
-      SetPropW(b, L"gmshWidth", (HANDLE)(INT_PTR)width);
-      if(i + 1 < bar.size() && bar[i + 1].gapBefore)
-        SetPropW(b, L"gmshGapAfter", (HANDLE)(INT_PTR)1);
-      _w->buttons.push_back(b);
-    }
-  }
-  for(std::size_t i = 0; i < bar.size() && i < _w->buttons.size(); i++) {
-    const Ui::BarButton &b = bar[i];
-    HWND w = _w->buttons[i];
-    bool on = b.on && b.on();
-    std::string label = (on && b.labelOn.size()) ? b.labelOn : b.label;
-    std::string glyph = (on && b.glyphOn.size()) ? b.glyphOn : b.glyph;
-    // what warns is said so, the button being unable to take a colour
-    if(b.alert && b.alert()) label = "!" + label;
-    win32ButtonShows(w, label, glyph);
-    SendMessageW(w, BM_SETCHECK, on ? BST_CHECKED : BST_UNCHECKED, 0);
-    EnableWindow(w, b.enabled ? b.enabled() : TRUE);
-  }
-  if(_sources.barMessage) {
-    Ui::BarMessage m = _sources.barMessage();
-    if(win32Text(_w->message) != m.text)
-      SetWindowTextW(_w->message, win32Wide(m.text).c_str());
-    // the progress of what has finished stays said, at nought or at the end
-    bool going = m.running && m.fraction > 0. && m.fraction < 1.;
-    if(going != (IsWindowVisible(_w->progress) != 0)) {
-      ShowWindow(_w->progress, going ? SW_SHOWNA : SW_HIDE);
-      _layout();
-    }
-    if(going) SendMessageW(_w->progress, PBM_SETPOS, (WPARAM)(1000. * m.fraction), 0);
-  }
+  for(barWin32 *said : _bars()) _refreshBar(said, bar);
 }
 
 bool win32MainKey(const MSG &m)

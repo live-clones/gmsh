@@ -302,11 +302,19 @@ namespace {
     switch(msg) {
     case WM_SIZE:
       if(p) {
+        // the view over the bar of the main window
         RECT r;
         GetClientRect(w, &r);
-        MoveWindow(p->hwnd, 0, 0, r.right, r.bottom, TRUE);
+        int bh = win32BarHeight();
+        MoveWindow(p->hwnd, 0, 0, r.right, std::max(1, (int)r.bottom - bh),
+                   TRUE);
+        if(HWND bar = (HWND)GetPropW(w, L"gmshBar"))
+          win32PlaceBar(bar, 0, r.bottom - bh, r.right, bh);
       }
       return 0;
+    case WM_COMMAND:
+      if(HIWORD(wp) == 0 && !lp && win32MenuCommand(LOWORD(wp))) return 0;
+      break;
     case WM_CLOSE:
       // its view goes with it
       if(p) {
@@ -393,9 +401,8 @@ namespace {
       p->top = w;
       SetParent(p->hwnd, w);
       SetPropW(w, L"gmshHeld", (HANDLE)p);
-      RECT r;
-      GetClientRect(w, &r);
-      MoveWindow(p->hwnd, 0, 0, r.right, r.bottom, TRUE);
+      SetPropW(w, L"gmshBar", (HANDLE)win32MakeBar(w));
+      SendMessageW(w, WM_SIZE, 0, 0);
       ShowWindow(w, SW_SHOW);
     };
     t.cursor = [](bool picking) {
