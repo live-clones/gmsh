@@ -13,6 +13,7 @@ set(SRC
   OS.cpp
   OpenFile.cpp
   CreateFile.cpp
+  ImageIO.cpp
   VertexArray.cpp
   SmoothData.cpp
   Octree.cpp

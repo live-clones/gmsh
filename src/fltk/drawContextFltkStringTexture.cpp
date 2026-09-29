@@ -5,6 +5,7 @@
 //
 // Contributed by Jonathan Lambrechts
 
+#include <FL/fl_draw.H>
 #include "drawContextFltkStringTexture.h"
 
 // the size of the string, measured at its size in the window's units as the

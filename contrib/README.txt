@@ -19,16 +19,19 @@ their own respective license:
 * domhex: Gmsh License
 * eigen: BSD License
 * fonts: SIL Open Font License 1.1
+* ftxui: MIT License
+* glfw: Zlib/libpng License
 * gmm: GNU Lesser General Public License (LGPL), v. 3 or later
 * hxt: GNU General Public License (GPL) v. 2 or later, with exception for
   linking with Gmsh under Gmsh license
+* imgui: MIT License
 * metis: Apache License (APL), v. 2.0
 * mobile: GNU General Public License (GPL), v. 2 or later
 * mpeg_encode: freely distributed, but patents are held by several companies on
   various aspects of the MPEG video standard
 * nii2mesh: BSD License
 * onelab: MIT/X11 License
-* stb: MIT License or public domain (stb_truetype)
+* stb: MIT License or public domain (stb_image, stb_truetype)
 * tinyobjloader: MIT License
 * tinyxml2: Zlib License
 * untangle: No license, freely available for non-commercial purposes
@@ -39,3 +42,10 @@ See each subdirectory for the detailed license terms.
 
 Set the ENABLE_SYSTEM_CONTRIB cmake option to use system versions of these
 libraries, when possible.
+
+Two of these copies carry a local change, marked with a "[GMSH]" comment so it
+can be found again when the library is updated:
+
+* glfw: cmake_minimum_required() raised, the version shipped upstream being
+  refused by recent CMake.
+* ftxui: a frame writes only the cells that changed on the alternate screen.

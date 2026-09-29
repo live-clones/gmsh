@@ -8,14 +8,8 @@
 
 #include <string>
 
-int arrowEditor(const char *title, double &a, double &b, double &c);
-int opacityChooser(const char *title, const std::string &category,
-                        int index, const std::string &name);
-
-std::string connectionChooser();
-std::string patternChooser();
-
-int cgnsImport();
+// the two little windows the ONELAB range widgets of the module tree
+// open
 
 int simpleTextDisplay(const char *title, const std::string &text);
 int simpleTextEditor(const char *title, const std::string &help,

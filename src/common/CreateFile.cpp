@@ -39,11 +39,9 @@
 #include "gl2mpeg.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#include "graphicWindow.h"
-#include "openglWindow.h"
-#include "visibilityWindow.h"
+#if defined(HAVE_GUI)
+#include "Gui.h"
+#include "GuiActions.h"
 #endif
 
 #if defined(HAVE_OPENGL)
@@ -238,8 +236,8 @@ std::string GetKnownFileFormats(bool onlyMeshFormats)
 // General.GraphicsWidth x General.GraphicsHeight pixels would draw it.
 static bool haveWindow()
 {
-#if defined(HAVE_FLTK)
-  return FlGui::available();
+#if defined(HAVE_GUI)
+  return Gui::instance().available();
 #else
   return false;
 #endif
@@ -248,10 +246,9 @@ static bool haveWindow()
 // the size of that window, in pixels
 static void windowSize(int &width, int &height)
 {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   if(haveWindow()) {
-    width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-    height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+    Gui::instance().getCurrentPixelSize(width, height);
     return;
   }
 #endif
@@ -283,6 +280,33 @@ public:
     if(_drawing) offscreen()->end();
   }
   bool failed() { return !haveWindow() && !_drawing; }
+};
+
+// where gl2ps reads the scene for as long as this lives: the window, in the
+// bottom-left corner of its frame buffer (width and height are then what
+// could be had), or a picture drawn without one
+class graphicCapture {
+private:
+  offscreenPicture _picture;
+  bool _window;
+
+public:
+  graphicCapture(int &width, int &height, bool composite)
+    : _picture(width, height, 1.), _window(haveWindow())
+  {
+#if defined(HAVE_GUI)
+    if(_window) Gui::instance().beginGraphicCapture(width, height, composite);
+#endif
+  }
+  ~graphicCapture() { end(); }
+  void end()
+  {
+#if defined(HAVE_GUI)
+    if(_window) Gui::instance().endGraphicCapture();
+#endif
+    _window = false;
+  }
+  bool failed() { return _picture.failed(); }
 };
 
 // the size of the picture: Print.Width and Print.Height, with the missing one
@@ -357,16 +381,15 @@ static PixelBuffer *getOffscreenPixelBuffer(GLenum format, GLenum type)
   return smallBuf;
 }
 
+// A picture of any size is drawn into a buffer of its own (a window could
+// not be larger than the screen), and possibly at a multiple of its size,
+// averaged down; when the interface cannot do that, it composes one from
+// its windows.
 static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 {
   if(!haveWindow()) return getOffscreenPixelBuffer(format, type);
 
-#if defined(HAVE_FLTK)
-  openglWindow *newg = nullptr;
-
-  // a picture of any size is drawn into a buffer of its own (a window could
-  // not be larger than the screen), and possibly at a multiple of its size,
-  // averaged down
+#if defined(HAVE_GUI)
   int ss = std::max(1, CTX::instance()->print.supersampling);
   if(type != GL_UNSIGNED_BYTE) ss = 1;
   if(!CTX::instance()->batch &&
@@ -375,8 +398,8 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     int width, height;
     printSize(width, height);
     PixelBuffer *big = new PixelBuffer(width * ss, height * ss, format, type);
-    if(FlGui::instance()->getCurrentOpenglWindow()->printTo(
-         width * ss, height * ss, ss, format, type, big->getPixels())) {
+    if(Gui::instance().printView(width * ss, height * ss, ss, format, type,
+                                 big->getPixels())) {
       if(ss == 1) return big;
       PixelBuffer *smallBuf = new PixelBuffer(width, height, format, type);
       downsample(big, smallBuf, ss);
@@ -385,81 +408,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     }
     delete big;
   }
-
-  if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0){
-    int width, height;
-    printSize(width, height);
-    // the size is in pixels, the window's in the units of the widget toolkit,
-    // which a high resolution display scales
-    double hr = FlGui::instance()->getCurrentOpenglWindow()
-                  ->getDrawContext()->highResolutionPixelFactor();
-    newg = new openglWindow(100, 100, (int)(width / hr + 0.5),
-                            (int)(height / hr + 0.5));
-    // the same visual (hence pipeline) as the windows on screen
-    newg->mode(openglWindowMode());
-    newg->end();
-    newg->getDrawContext()->copyViewAttributes
-      (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
-    newg->show();
-    openglWindow::setLastHandled(newg);
-    // waiting for the OS to really make the window visible and to call the
-    // draw() function on (some ?) linux; if we do not wait here, the window is
-    // not ready and the picture cannot be generated
-    while(!newg->valid()) Fl::wait();
-  }
-
-  PixelBuffer *buffer;
-  if(newg || !CTX::instance()->print.compositeWindows){
-    GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-    GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
-    buffer = new PixelBuffer(width, height, format, type);
-    buffer->fill();
-  }
-  else{
-    graphicWindow *g = FlGui::instance()->graph[0];
-    for(std::size_t i = 1; i < FlGui::instance()->graph.size(); i++){
-      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
-        if(FlGui::instance()->graph[i]->gl[j] ==
-           FlGui::instance()->getCurrentOpenglWindow()){
-          g = FlGui::instance()->graph[i];
-          break;
-        }
-      }
-    }
-    int xmin = 10000000, ymin = 10000000;
-    for(std::size_t i = 0; i < g->gl.size(); i++){
-      xmin = std::min(xmin, g->gl[i]->x());
-      ymin = std::min(ymin, g->gl[i]->y());
-    }
-    int ww = 0, hh = 0;
-    std::vector<PixelBuffer*> buffers;
-    for(std::size_t i = 0; i < g->gl.size(); i++){
-      openglWindow::setLastHandled(g->gl[i]);
-      buffer = new PixelBuffer(g->gl[i]->pixel_w(), g->gl[i]->pixel_h(),
-                               format, type);
-      buffer->fill();
-      buffers.push_back(buffer);
-      double fact = g->gl[i]->getDrawContext()->highResolutionPixelFactor();
-      ww = std::max(ww, (int)(fact * (g->gl[i]->x() - xmin)) + g->gl[i]->pixel_w());
-      hh = std::max(hh, (int)(fact * (g->gl[i]->y() - ymin)) + g->gl[i]->pixel_h());
-    }
-    buffer = new PixelBuffer(ww, hh, format, type);
-    for(std::size_t i = 0; i < g->gl.size(); i++){
-      double fact = g->gl[i]->getDrawContext()->highResolutionPixelFactor();
-      buffer->copyPixels(fact * (g->gl[i]->x() - xmin),
-                         hh - g->gl[i]->pixel_h() - fact * (g->gl[i]->y() - ymin),
-                         buffers[i]);
-      delete buffers[i];
-    }
-  }
-
-  if(newg){
-    openglWindow::setLastHandled(nullptr);
-    newg->hide();
-    delete newg;
-  }
-
-  return buffer;
+  return Gui::instance().createCompositePixelBuffer(format, type);
 #else
   return nullptr;
 #endif
@@ -1013,7 +962,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       Msg::Error("No Parasolid CAD data found for XMT export");
     break;
 
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   case FORMAT_VIS:
     UnlinkFile(name);
     visibility_save(name);
@@ -1081,8 +1030,9 @@ void CreateOutputFile(const std::string &fileName, int format,
       std::string base = SplitFileName(name)[1];
       GLint width, height;
       windowSize(width, height);
-      offscreenPicture picture(width, height, 1.);
-      if(picture.failed()){
+      graphicCapture capture(width, height,
+                             CTX::instance()->print.compositeWindows);
+      if(capture.failed()){
         fclose(fp);
         error = true;
         break;
@@ -1142,6 +1092,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         res = gl2psEndPage();
       }
 
+      capture.end();
       fclose(fp);
       drawContext::global()->draw();
     }
@@ -1159,8 +1110,8 @@ void CreateOutputFile(const std::string &fileName, int format,
       std::string base = SplitFileName(name)[1];
       GLint width, height;
       windowSize(width, height);
-      offscreenPicture picture(width, height, 1.);
-      if(picture.failed()){
+      graphicCapture capture(width, height, false);
+      if(capture.failed()){
         fclose(fp);
         error = true;
         break;
@@ -1188,6 +1139,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         CTX::instance()->print.text = oldtext;
         res = gl2psEndPage();
       }
+      capture.end();
       fclose(fp);
     }
     break;
@@ -1213,9 +1165,8 @@ void CreateOutputFile(const std::string &fileName, int format,
       PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
       // the view of the picture just drawn
       drawContext *ctx = offscreen()->getDrawContext();
-#if defined(HAVE_FLTK)
-      if(haveWindow())
-        ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+#if defined(HAVE_GUI)
+      if(haveWindow()) ctx = Gui::instance().getCurrentDrawContext();
 #endif
       GLint width, height;
       windowSize(width, height);

@@ -19,8 +19,7 @@ typedef unsigned long intptr_t;
 #include "FlGui.h"
 #include "drawContext.h"
 #include "graphicWindow.h"
-#include "optionWindow.h"
-#include "openglWindow.h"
+#include "sceneViewFltk.h"
 #include "Context.h"
 
 class drawContextFltk : public drawContextGlobal {
@@ -28,6 +27,7 @@ public:
   void draw(bool rateLimited = true)
   {
     if(!FlGui::available()) return;
+    sceneView::changed();
     if(FlGui::instance()->fullscreen->shown()) {
       FlGui::instance()->fullscreen->make_current();
       FlGui::instance()->fullscreen->redraw();
@@ -51,7 +51,8 @@ public:
   void drawCurrentOpenglWindow(bool make_current, bool again = false)
   {
     if(!FlGui::available()) return;
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow();
+    sceneView::changed();
     if(make_current) gl->make_current();
     gl->setAgain(again);
     gl->redraw();

@@ -6,6 +6,7 @@
 #include "GmshConfig.h"
 #include <sstream>
 #include <string.h>
+#include <cctype>
 #include <FL/Fl.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Shared_Image.H>
@@ -15,41 +16,19 @@
 #include "FlGui.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
-#include "optionWindow.h"
-#include "fieldWindow.h"
-#include "pluginWindow.h"
-#include "statisticsWindow.h"
-#include "visibilityWindow.h"
-#include "highOrderToolsWindow.h"
-#include "clippingWindow.h"
-#include "manipWindow.h"
-#include "contextWindow.h"
-#include "onelabContextWindow.h"
+#include "Gui.h"
+#include "dialogFltk.h"
+#include "uiSources.h"
 #include "onelabGroup.h"
-#include "helpWindow.h"
 #include "colorbarWindow.h"
 #include "fileDialogs.h"
-#include "GmshDefines.h"
 #include "GmshMessage.h"
-#include "GModel.h"
 #include "OS.h"
-#include "MElement.h"
-#include "PView.h"
-#include "Plugin.h"
-#include "PluginManager.h"
 #include "OpenFile.h"
 #include "XpmIcon.h"
 #include "Options.h"
-#include "CommandLine.h"
 #include "Context.h"
-#include "StringUtils.h"
-#include "gl2ps.h"
-#include "gmshPopplerWrapper.h"
 #include "PixelBuffer.h"
-
-#if defined(HAVE_MESH)
-#include "Field.h"
-#endif
 
 #if defined(HAVE_TOUCHBAR)
 #include "touchBar.h"
@@ -60,8 +39,6 @@
 #endif
 
 FlGui *FlGui::_instance = nullptr;
-std::string FlGui::_openedThroughMacFinder = "";
-bool FlGui::_finishedProcessingCommandLine = false;
 std::atomic<int> FlGui::_locked(0);
 
 // check (now!) if there are any pending events, and process them
@@ -111,43 +88,11 @@ void FlGui::unlock()
 
 int FlGui::locked() { return _locked; }
 
-static void awake_cb(void *data)
-{
-  if(data) FlGui::instance()->updateViews(true, false);
-}
-
-void FlGui::awake(const std::string &action)
-{
-  if(action.empty())
-    Fl::awake(awake_cb, nullptr);
-  else
-    Fl::awake(awake_cb, (void *)"update");
-}
-
-void FlGui::setOpenedThroughMacFinder(const std::string &name)
-{
-  _openedThroughMacFinder = name;
-}
-
-std::string FlGui::getOpenedThroughMacFinder()
-{
-  return _openedThroughMacFinder;
-}
-
-void FlGui::setFinishedProcessingCommandLine()
-{
-  _finishedProcessingCommandLine = true;
-}
-
-bool FlGui::getFinishedProcessingCommandLine()
-{
-  return _finishedProcessingCommandLine;
-}
-
 static int globalShortcut(int event)
 {
-  if(!FlGui::available()) return 0;
-  return FlGui::instance()->testGlobalShortcuts(event);
+  // we only handle shortcuts here
+  if(!FlGui::available() || event != FL_SHORTCUT) return 0;
+  return FlGui::instance()->runKeys();
 }
 
 static void simple_right_box_draw(int x, int y, int w, int h, Fl_Color c)
@@ -395,18 +340,6 @@ static void gmsh_colormap(Fl_Color col)
 #undef bl
 #undef el
 
-// question presence of gamepad every 3. seconds
-static void gamepad_handler(void *data)
-{
-  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
-    CTX::instance()->gamepad->read_event();
-    Fl::add_timeout(CTX::instance()->gamepad->frequency, gamepad_handler, data);
-  }
-  else {
-    Fl::add_timeout(.5, gamepad_handler, data);
-  }
-}
-
 void FlGui::applyColorScheme(bool redraw)
 {
   static int first = true;
@@ -460,7 +393,7 @@ void FlGui::applyColorScheme(bool redraw)
   Fl::scrollbar_size(std::max(10, FL_NORMAL_SIZE));
 
   if(redraw && available()) {
-    updateViews(true, true);
+    Gui::instance().updateViews(true, true);
     for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
       win->redraw();
     }
@@ -498,7 +431,6 @@ static void default_fatal_error_handler(const char *fmt, ...)
 
 FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
              void (*error_handler)(const char *fmt, ...))
-  : _quitShouldExit(quitShouldExit), lastContextWindow(0)
 {
   if(error_handler) {
     Fl::error = error_handler;
@@ -517,6 +449,10 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   Fl_Mac_App_Menu::print = ""; // this sometimes crashes
 #endif
 
+  // the X11 class, which window rules key on; matches the StartupWMClass of
+  // utils/freedesktop/info.gmsh.gmsh.desktop
+  Fl_Window::default_xclass("Gmsh");
+
   // tell fltk we're (potentially) in multi-threaded mode
   Fl::lock();
 
@@ -532,15 +468,12 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // selected), so that there's no color "flashing"
   applyColorScheme();
 
-  // add gamepad handler
-  if(CTX::instance()->gamepad)
-    Fl::add_timeout(5., gamepad_handler, (void *)nullptr);
-
   // add global shortcuts
   Fl::add_handler(globalShortcut);
 
-  // make sure a global drawing context is setup
-  if(!drawContext::global()) drawContext::setGlobal(new drawContextFltk);
+  Gui::instance().sceneSettingChanged("font_engine");
+  if(drawContext::global()->getName() == "None")
+    drawContext::setGlobal(new drawContextFltk);
 
   // set default font size
   FL_NORMAL_SIZE = drawContext::global()->getFontSize();
@@ -591,6 +524,9 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // don't move input dialogs to follow mouse
   fl_message_hotspot(0);
 
+  // the scene is told who holds it before the first window is made
+  fltkInstallSceneHost();
+
   // create main graphic window (note that we create all the windows even if
   // some are not displayed, since the shortcuts should be valid even for hidden
   // windows, and we don't want to test for widget existence every time)
@@ -626,36 +562,17 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     g->getWindow()->show();
     graph.push_back(g);
   }
-  setGraphicTitle(GModel::current()->getFileName());
-
   // create window that will be used for fullscreen display
-  fullscreen = new openglWindow(100, 100, 100, 100);
-  fullscreen->mode(openglWindowMode());
+  fullscreen = new sceneViewFltk(100, 100, 100, 100);
+  fullscreen->mode(sceneViewFltk::glMode());
   fullscreen->end();
-
-  // create all other windows
-  options = new optionWindow(CTX::instance()->deltaFontSize);
-  fields = new fieldWindow(CTX::instance()->deltaFontSize);
-  plugins = new pluginWindow(CTX::instance()->deltaFontSize);
-  stats = new statisticsWindow(CTX::instance()->deltaFontSize);
-  visibility = new visibilityWindow(CTX::instance()->deltaFontSize);
-  highordertools = new highOrderToolsWindow(CTX::instance()->deltaFontSize);
-  clipping = new clippingWindow(CTX::instance()->deltaFontSize);
-  manip = new manipWindow(CTX::instance()->deltaFontSize);
-  elementaryContext =
-    new elementaryContextWindow(CTX::instance()->deltaFontSize);
-  transformContext = new transformContextWindow(CTX::instance()->deltaFontSize);
-  meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
-  physicalContext = new physicalContextWindow(CTX::instance()->deltaFontSize);
-  onelabContext = new onelabContextWindow(CTX::instance()->deltaFontSize);
-  help = new helpWindow();
 
   // draw
   for(std::size_t i = 0; i < graph.size(); i++)
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
 
-  if(CTX::instance()->showOptionsOnStartup) options->win->show();
+  if(CTX::instance()->showOptionsOnStartup) Gui::instance().options.show();
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
 
 #if defined(HAVE_TOUCHBAR)
@@ -680,20 +597,6 @@ FlGui::~FlGui()
   }
 
   for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
-  delete options;
-  delete fields;
-  delete plugins;
-  delete stats;
-  delete visibility;
-  delete highordertools;
-  delete clipping;
-  delete manip;
-  delete elementaryContext;
-  delete transformContext;
-  delete physicalContext;
-  delete onelabContext;
-  delete meshContext;
-  delete help;
   delete fullscreen;
 }
 
@@ -702,23 +605,7 @@ bool FlGui::available() { return _instance != nullptr; }
 FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
                        void (*error_handler)(const char *fmt, ...))
 {
-  if(!_instance) {
-    _instance = new FlGui(argc, argv, quitShouldExit, error_handler);
-    // set all options in the new GUI
-    InitOptionsGUI(0);
-    // say welcome!
-    Msg::ResetErrorCounter();
-    Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
-    // log the following for bug reports
-    Msg::Direct("-------------------------------------------------------");
-    PrintBuildInfo();
-    Msg::Direct("-------------------------------------------------------");
-    // update views (in case the GUI is created after some data has been loaded)
-    _instance->updateViews(true, true);
-    // set global bounding box in CTX (necessary if we run the gui without any
-    // model/post-processing data)
-    SetBoundingBox();
-  }
+  if(!_instance) _instance = new FlGui(argc, argv, quitShouldExit, error_handler);
   return _instance;
 }
 
@@ -726,7 +613,8 @@ void FlGui::destroy()
 {
   if(!_instance) return;
 
-  _instance->onelabContext->disableRedraw();
+  // hiding a dialog is now the interface going away
+  fltkDialogsClosingDown();
 
   // hide all windows (in case they are not tracked by FlGui)...
   std::vector<Fl_Window *> wins;
@@ -741,505 +629,75 @@ void FlGui::destroy()
   _instance = nullptr;
 }
 
-int FlGui::run(const std::string &optionFileName)
-{
-  // if optionFileName is given, we load the file before entering the event
-  // loop, and we automatically save the options when it ends
-  if(optionFileName.size()) {
-    MergeFile(optionFileName, false);
-  }
+namespace {
 
-  // draw the scene
-  drawContext::global()->draw(false);
-
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
-
-  int ret = Fl::run();
-
-  if(optionFileName.size()) {
-    PrintOptions(0, GMSH_FULLRC, 1, 0, optionFileName.c_str());
-    int old = CTX::instance()->expertMode;
-    CTX::instance()->expertMode = 1; // disable warning if non-geo file
-    visibility_save(optionFileName);
-    CTX::instance()->expertMode = old;
-  }
-
-  return ret;
-}
-
-int FlGui::testGlobalShortcuts(int event)
-{
-  // we only handle shortcuts here
-  if(event != FL_SHORTCUT) return 0;
-
-  int status = 0;
-
-  if(Fl::test_shortcut('0')) {
-    geometry_reload_cb(nullptr, nullptr);
-    status = 1;
-  }
-  if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0') ||
-     Fl::test_shortcut('9')) { // for Bruno
-    onelab_reload_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F + 1)) {
-    mesh_1d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('2') || Fl::test_shortcut(FL_F + 2)) {
-    mesh_2d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('3') || Fl::test_shortcut(FL_F + 3)) {
-    mesh_3d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + 'q') ||
-          Fl::test_shortcut(FL_META + 'q')) {
-    // only necessary when using the system menu bar, but hey, it cannot hurt...
-    file_quit_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + 't') ||
-          Fl::test_shortcut(FL_META + 't')) {
-    onelab_cb(nullptr,  (void *)"compute");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + FL_ALT + 't') ||
-          Fl::test_shortcut(FL_META + FL_ALT + 't')) {
-    show_hide_menu_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('g')) {
-    FlGui::toggleModule("Geometry");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('m')) {
-    FlGui::toggleModule("Mesh");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('s')) {
-    FlGui::toggleModule("Solver");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('p')) {
-    FlGui::toggleModule("Post-processing");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('w')) {
-    file_watch_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('e')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->endSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('u')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->undoSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('i')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->invertSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('q')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->quitSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('-')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->invertSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('x')) {
-    elementaryContext->butt[0]->value(!elementaryContext->butt[0]->value());
-    status = 1;
-  }
-  else if(Fl::test_shortcut('y')) {
-    elementaryContext->butt[1]->value(!elementaryContext->butt[1]->value());
-    status = 1;
-  }
-  else if(Fl::test_shortcut('z')) {
-    elementaryContext->butt[2]->value(!elementaryContext->butt[2]->value());
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'x')) {
-    elementaryContext->butt[0]->value(0);
-    elementaryContext->butt[1]->value(1);
-    elementaryContext->butt[2]->value(1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'y')) {
-    elementaryContext->butt[0]->value(1);
-    elementaryContext->butt[1]->value(0);
-    elementaryContext->butt[2]->value(1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'z')) {
-    elementaryContext->butt[0]->value(1);
-    elementaryContext->butt[1]->value(1);
-    elementaryContext->butt[2]->value(0);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_Escape) ||
-          Fl::test_shortcut(FL_META + FL_Escape) ||
-          Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
-          Fl::test_shortcut(FL_CTRL + FL_Escape) ||
-          Fl::test_shortcut(FL_ALT + FL_Escape)) {
-    if(fullscreen->shown()) {
-      window_cb(nullptr, (void *)"fullscreen");
-      status = 1;
+  // as Ui::Shortcut says it; 0 for a key no shortcut could name
+  int _uiKey(int key)
+  {
+    if(key >= 'a' && key <= 'z') return toupper(key);
+    if(key >= FL_F + 1 && key <= FL_F + 12) return Ui::KeyF1 + key - FL_F - 1;
+    switch(key) {
+    case FL_Left: return Ui::KeyLeft;
+    case FL_Right: return Ui::KeyRight;
+    case FL_Up: return Ui::KeyUp;
+    case FL_Down: return Ui::KeyDown;
+    case FL_Escape: return Ui::KeyEscape;
+    case FL_Home: return Ui::KeyHome;
+    case FL_Page_Up: return Ui::KeyPageUp;
+    case FL_Page_Down: return Ui::KeyPageDown;
+    case FL_Delete: return Ui::KeyDelete;
+    default: break;
     }
-    else {
-      bool lasso = false;
-      for(std::size_t i = 0; i < graph.size(); i++)
-        for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-          if(graph[i]->gl[j]->lassoMode) lasso = true;
-      if(lasso) {
-        for(std::size_t i = 0; i < graph.size(); i++)
-          for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-            graph[i]->gl[j]->lassoMode = false;
-        status = 2;
-      }
-      else {
-        status_options_cb(nullptr, (void *)"S");
-        status = 1;
-      }
-    }
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'a')) {
-    window_cb(nullptr, (void *)"front");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'o')) {
-    general_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'g')) {
-    geometry_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'm')) {
-    mesh_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 's')) {
-    solver_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'p')) {
-    post_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
-    view_options_cb(nullptr, (void *)-1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
-    if(PView::list.size()) {
-      if(options->view.index >= 0 &&
-         options->view.index < (int)PView::list.size())
-        plugins->show(options->view.index);
-      else
-        plugins->show(0);
-    }
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'f')) {
-    opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
-                            !opt_general_fast_redraw(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'b')) {
-    opt_general_draw_bounding_box(
-      0, GMSH_SET | GMSH_GUI, !opt_general_draw_bounding_box(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'i')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
-                            !opt_view_show_scale(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'c')) {
-    opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
-                             opt_general_color_scheme(0, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'c')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_colormap_number(i, GMSH_SET | GMSH_GUI,
-                                 opt_view_colormap_number(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'w')) {
-    opt_geometry_light(0, GMSH_SET | GMSH_GUI,
-                       !opt_geometry_light(0, GMSH_GET, 0));
-    opt_mesh_light(0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_light(i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'x') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
-    status_xyz1p_cb(nullptr, (void *)"x");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'y') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'y')) {
-    status_xyz1p_cb(nullptr, (void *)"y");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'z') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'z')) {
-    status_xyz1p_cb(nullptr, (void *)"z");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_CTRL + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_META + '1')) {
-    status_xyz1p_cb(nullptr, (void *)"1:1");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'o')) {
-    status_options_cb(nullptr, (void *)"p");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'a')) {
-    opt_general_axes(0, GMSH_SET | GMSH_GUI,
-                     opt_general_axes(0, GMSH_GET, 0) + 1);
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_axes(i, GMSH_SET | GMSH_GUI,
-                      opt_view_axes(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'a')) {
-    opt_general_small_axes(0, GMSH_SET | GMSH_GUI,
-                           !opt_general_small_axes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'p')) {
-    opt_geometry_points(0, GMSH_SET | GMSH_GUI,
-                        !opt_geometry_points(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'l')) {
-    opt_geometry_curves(0, GMSH_SET | GMSH_GUI,
-                        !opt_geometry_curves(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 's')) {
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI,
-                          !opt_geometry_surfaces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'v')) {
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI,
-                         !opt_geometry_volumes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'p')) {
-    opt_mesh_nodes(0, GMSH_SET | GMSH_GUI, !opt_mesh_nodes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'l')) {
-    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 's')) {
-    opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_surface_edges(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'v')) {
-    opt_mesh_volume_edges(0, GMSH_SET | GMSH_GUI,
-                          !opt_mesh_volume_edges(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'd')) {
-    opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
-                              opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'd')) {
-    opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_surface_faces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'b')) {
-    opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI,
-                          !opt_mesh_volume_faces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'm')) {
-    quick_access_cb(nullptr, (void *)"mesh_toggle");
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 't')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        int t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
-        if(t == 4) t = 1; // skip numeric display
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, t);
-      }
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 't')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI,
-                                opt_view_intervals_type(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'r')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_range_type(i, GMSH_SET | GMSH_GUI,
-                            opt_view_range_type(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'n')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_draw_strings(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'e') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'e')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_element(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_show_element(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'h')) {
-    static int show = 0;
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
-    show = !show;
-    status = 2;
-  }
-  else if(testArrowShortcuts()) {
-    status = 1;
-  }
-
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
-
-  if(status == 2) {
-    drawContext::global()->draw();
-    return 1;
-  }
-  else if(status == 1)
-    return 1;
-  else
+    if(key > ' ' && key < 127) return key;
     return 0;
-}
+  }
 
-int FlGui::testArrowShortcuts()
+  // FL_COMMAND is what Ui::ModCommand means
+  unsigned _uiMods()
+  {
+    unsigned mods = 0;
+    if(Fl::event_state(FL_COMMAND)) mods |= Ui::ModCommand;
+    if(Fl::event_state(FL_SHIFT)) mods |= Ui::ModShift;
+    if(Fl::event_state(FL_ALT)) mods |= Ui::ModAlt;
+    return mods;
+  }
+
+} // namespace
+
+// the keys of Menu::keys()
+int FlGui::runKeys()
 {
-  if(Fl::test_shortcut(FL_Left)) {
-    status_play_manual(1, -CTX::instance()->post.animStep);
+  if(Fl::event_key() == FL_Escape && fullscreen && fullscreen->shown()) {
+    window_cb(nullptr, (void *)"fullscreen");
     return 1;
   }
-  else if(Fl::test_shortcut(FL_Right)) {
-    status_play_manual(1, CTX::instance()->post.animStep);
-    return 1;
+  int key = _uiKey(Fl::event_key());
+  unsigned mods = _uiMods();
+  // a digit or a mark is the one typed, whatever key gives it on this
+  // keyboard (Shift, on a French one)
+  const char *text = Fl::event_text();
+  if(text && text[0] > ' ' && text[0] < 127 && !text[1] && !isalpha(text[0])) {
+    key = text[0];
+    mods &= ~Ui::ModShift;
   }
-  else if(Fl::test_shortcut(FL_Up)) {
-    status_play_manual(0, -CTX::instance()->post.animStep);
-    return 1;
+  if(!key || !fltkSources().keys) return 0;
+  int status = 0;
+  for(const Ui::KeyBinding &k : fltkSources().keys()) {
+    if(!k.shortcut.matches(key, mods)) continue;
+    if(k.action) k.action();
+    status = 1;
+    if(k.spent) break;
   }
-  else if(Fl::test_shortcut(FL_Down)) {
-    status_play_manual(0, CTX::instance()->post.animStep);
-    return 1;
-  }
-#if defined(HAVE_POPPLER)
-  else if(Fl::test_shortcut('u') || Fl::test_shortcut(FL_Page_Up)) {
-    gmshPopplerWrapper::setCurrentPageDown();
-    drawContext::global()->draw();
-    return 1;
-  }
-  else if(Fl::test_shortcut('d') || Fl::test_shortcut(FL_Page_Down)) {
-    gmshPopplerWrapper::setCurrentPageUp();
-    drawContext::global()->draw();
-    return 1;
-  }
+#if defined(HAVE_TOUCHBAR)
+  updateTouchBar();
 #endif
-  return 0;
+  return status;
 }
 
-void FlGui::setGraphicTitle(const std::string &title)
+sceneViewFltk *FlGui::getCurrentOpenglWindow()
 {
-  for(std::size_t i = 0; i < graph.size(); i++) {
-    std::ostringstream sstream;
-    if(title.empty())
-      sstream << "Gmsh";
-    else if(!i)
-      sstream << "Gmsh - " << title;
-    else
-      sstream << "Gmsh - " << title << " [" << i << "]";
-    graph[i]->setTitle(sstream.str());
-  }
-}
-
-void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
-{
-  for(std::size_t i = 0; i < graph.size(); i++) graph[i]->checkAnimButtons();
-  if(numberOfViewsHasChanged) {
-    if(onelab) onelab->rebuildTree(deleteWidgets);
-    if(onelabContext) onelabContext->rebuild(deleteWidgets);
-    options->resetBrowser();
-    options->resetExternalViewList();
-    fields->loadFieldViewList();
-    plugins->resetViewBrowser();
-    clipping->resetBrowser();
-    updateStatistics(false);
-  }
-}
-
-void FlGui::updateFields()
-{
-#if defined(HAVE_MESH)
-  fields->editField(GModel::current()->getFields()->get(fields->selected_id));
-#endif
-}
-
-void FlGui::resetVisibility()
-{
-  if(visibility->win->shown()) visibility_cb(nullptr, nullptr);
-  if(help->options->shown()) help_options_cb(nullptr, nullptr);
-  updateStatistics(false);
-}
-
-void FlGui::updateStatistics(bool qualities)
-{
-  if(stats->win->shown()) stats->compute(qualities);
-}
-
-openglWindow *FlGui::getCurrentOpenglWindow()
-{
-  if(openglWindow::getLastHandled())
-    return openglWindow::getLastHandled();
+  if(sceneViewFltk::lastHandled())
+    return sceneViewFltk::lastHandled();
   else
     return graph[0]->gl[0];
 }
@@ -1250,17 +708,17 @@ void FlGui::setCurrentOpenglWindow(int which)
   for(std::size_t i = 0; i < graph.size(); i++) {
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++) {
       if(which == ii++) {
-        openglWindow::setLastHandled(graph[i]->gl[j]);
+        sceneViewFltk::setLastHandled(graph[i]->gl[j]);
         return;
       }
     }
   }
-  openglWindow::setLastHandled(graph[0]->gl[0]);
+  sceneViewFltk::setLastHandled(graph[0]->gl[0]);
 }
 
 void FlGui::splitCurrentOpenglWindow(char how, double ratio)
 {
-  openglWindow *g = getCurrentOpenglWindow();
+  sceneViewFltk *g = getCurrentOpenglWindow();
   for(std::size_t i = 0; i < graph.size(); i++) {
     if(graph[i]->split(g, how, ratio)) break;
   }
@@ -1332,151 +790,44 @@ drawContext *FlGui::getCurrentDrawContext()
 
 char FlGui::selectEntity(int type)
 {
-  return getCurrentOpenglWindow()->selectEntity(
+  return getCurrentOpenglWindow()->scene()->selectEntity(
     type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
     selectedElements, selectedPoints, selectedViews);
 }
 
-void FlGui::setStatus(const std::string &msg, bool opengl)
+bool FlGui::pickAt(int type, bool mesh, bool post, int x, int y, int w, int h)
 {
-  if(Msg::GetThreadNum() > 0) return;
-  if(!opengl) {
-    _lastStatus = msg;
-    static char buff[1024];
-    std::string tmp = std::string(" ") + msg;
-    int ne = Msg::GetErrorCount(), nw = Msg::GetWarningCount();
-    if((ne || nw) && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
-      tmp += "  -  ";
-      char n[128];
-      sprintf(n, "%d", ne ? ne : nw);
-      tmp += n;
-      tmp += (ne > 1) ? " Errors" :
-             ne       ? " Error" :
-             (nw > 1) ? " Warnings" :
-                        " Warning";
-      tmp += " : Click to show messages [ ... ";
-      tmp += (ne ? Msg::GetFirstError() : Msg::GetFirstWarning());
-      tmp += " ... ]";
-    }
-    strncpy(buff, tmp.c_str(), sizeof(buff) - 1);
-    buff[sizeof(buff) - 1] = '\0';
-    for(std::size_t i = 0; i < graph.size(); i++) {
-      graph[i]->getProgress()->label(buff);
-      graph[i]->getProgress()->redraw();
-    }
-  }
-  else {
-    openglWindow *gl = getCurrentOpenglWindow();
-    std::vector<std::string> m = SplitString(msg, '\n');
-    if(m.size() > 0)
-      gl->screenMessage[0] = m[0];
-    else
-      gl->screenMessage[0].clear();
-    if(m.size() > 1)
-      gl->screenMessage[1] = m[1];
-    else
-      gl->screenMessage[1].clear();
-    drawContext::global()->draw();
-  }
+  selectedVertices.clear();
+  selectedEdges.clear();
+  selectedFaces.clear();
+  selectedRegions.clear();
+  selectedElements.clear();
+  selectedPoints.clear();
+  selectedViews.clear();
+  sceneViewFltk *gl = getCurrentOpenglWindow();
+  if(!gl || !gl->scene()) return false;
+  return gl->scene()->pick(type, mesh, post, x, y, w, h, selectedVertices,
+                           selectedEdges, selectedFaces, selectedRegions,
+                           selectedElements, selectedPoints, selectedViews);
 }
 
-void FlGui::setLastStatus(int col)
+Ui::Backend::Layout FlGui::windowLayout()
 {
-  if(Msg::GetThreadNum() > 0) return;
-  for(std::size_t i = 0; i < graph.size(); i++) {
-    if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
-      if(CTX::instance()->guiColorScheme) // dark
-        graph[i]->getProgress()->color(col);
-      else
-        graph[i]->getProgress()->labelcolor(col);
-    }
-    else {
-      graph[i]->getProgress()->color(FL_BACKGROUND_COLOR);
-      graph[i]->getProgress()->labelcolor(FL_FOREGROUND_COLOR);
-    }
-  }
-  setStatus(_lastStatus);
-}
-
-void FlGui::setProgress(const std::string &msg, double val, double min,
-                        double max)
-{
-  if(Msg::GetThreadNum() > 0) return;
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
-    if(FlGui::instance()->graph[i]->getProgress()->value() != val)
-      FlGui::instance()->graph[i]->getProgress()->value(val);
-    if(FlGui::instance()->graph[i]->getProgress()->minimum() != min)
-      FlGui::instance()->graph[i]->getProgress()->minimum(min);
-    if(FlGui::instance()->graph[i]->getProgress()->maximum() != max)
-      FlGui::instance()->graph[i]->getProgress()->maximum(max);
-  }
-  setStatus(msg);
-}
-
-void FlGui::storeCurrentWindowsInfo()
-{
-  CTX::instance()->glPosition[0] = graph[0]->getWindow()->x();
-  CTX::instance()->glPosition[1] = graph[0]->getWindow()->y();
-  CTX::instance()->glSize[0] = graph[0]->getGlWidth();
-  CTX::instance()->glSize[1] = graph[0]->getGlHeight();
-  CTX::instance()->msgSize = graph[0]->getMessageHeight() ?
-                               graph[0]->getMessageHeight() :
-                               CTX::instance()->msgSize;
-  CTX::instance()->menuSize[0] = graph[0]->getMenuWidth();
-  if(graph[0]->isMenuDetached()) {
-    CTX::instance()->detachedMenu = 1;
-    CTX::instance()->menuSize[1] = graph[0]->getMenuHeight();
-    CTX::instance()->menuPosition[0] = graph[0]->getMenuPositionX();
-    CTX::instance()->menuPosition[1] = graph[0]->getMenuPositionY();
-  }
-  else
-    CTX::instance()->detachedMenu = 0;
-  CTX::instance()->optPosition[0] = options->win->x();
-  CTX::instance()->optPosition[1] = options->win->y();
-  CTX::instance()->pluginPosition[0] = plugins->win->x();
-  CTX::instance()->pluginPosition[1] = plugins->win->y();
-  CTX::instance()->pluginSize[0] = plugins->win->w();
-  CTX::instance()->pluginSize[1] = plugins->win->h();
-  CTX::instance()->fieldPosition[0] = fields->win->x();
-  CTX::instance()->fieldPosition[1] = fields->win->y();
-  CTX::instance()->fieldSize[0] = fields->win->w();
-  CTX::instance()->fieldSize[1] = fields->win->h();
-  CTX::instance()->statPosition[0] = stats->win->x();
-  CTX::instance()->statPosition[1] = stats->win->y();
-  CTX::instance()->visPosition[0] = visibility->win->x();
-  CTX::instance()->visPosition[1] = visibility->win->y();
-  CTX::instance()->hotPosition[0] = highordertools->win->x();
-  CTX::instance()->hotPosition[1] = highordertools->win->y();
-  CTX::instance()->clipPosition[0] = clipping->win->x();
-  CTX::instance()->clipPosition[1] = clipping->win->y();
-  CTX::instance()->manipPosition[0] = manip->win->x();
-  CTX::instance()->manipPosition[1] = manip->win->y();
-  if(lastContextWindow == 4) {
-    CTX::instance()->ctxPosition[0] = onelabContext->win->x();
-    CTX::instance()->ctxPosition[1] = onelabContext->win->y();
-  }
-  else if(lastContextWindow == 3) {
-    CTX::instance()->ctxPosition[0] = physicalContext->win->x();
-    CTX::instance()->ctxPosition[1] = physicalContext->win->y();
-  }
-  else if(lastContextWindow == 2) {
-    CTX::instance()->ctxPosition[0] = meshContext->win->x();
-    CTX::instance()->ctxPosition[1] = meshContext->win->y();
-  }
-  else if(lastContextWindow == 1) {
-    CTX::instance()->ctxPosition[0] = transformContext->win->x();
-    CTX::instance()->ctxPosition[1] = transformContext->win->y();
-  }
-  else {
-    CTX::instance()->ctxPosition[0] = elementaryContext->win->x();
-    CTX::instance()->ctxPosition[1] = elementaryContext->win->y();
-  }
+  Ui::Backend::Layout l;
+  if(graph.empty()) return l;
+  l = graph[0]->layout();
+  bool placed = false;
+  fltkEachDialog([&placed, &l](dialogFltk *d) {
+    if(placed || !d->shown()) return;
+    l.dialogX = d->window()->x();
+    l.dialogY = d->window()->y();
+    placed = true;
+  });
 #if defined(HAVE_3M)
   storeWindowPosition3M();
 #endif
-
-  fileChooserGetPosition(&CTX::instance()->fileChooserPosition[0],
-                         &CTX::instance()->fileChooserPosition[1]);
+  fileChooserGetPosition(&l.chooserX, &l.chooserY);
+  return l;
 }
 
 // Callbacks
@@ -1493,22 +844,6 @@ void window_cb(Fl_Widget *w, void *data)
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       if(FlGui::instance()->graph[i]->getWindow()->shown())
         FlGui::instance()->graph[i]->getWindow()->iconize();
-    if(FlGui::instance()->options->win->shown())
-      FlGui::instance()->options->win->iconize();
-    if(FlGui::instance()->plugins->win->shown())
-      FlGui::instance()->plugins->win->iconize();
-    if(FlGui::instance()->fields->win->shown())
-      FlGui::instance()->fields->win->iconize();
-    if(FlGui::instance()->visibility->win->shown())
-      FlGui::instance()->visibility->win->iconize();
-    if(FlGui::instance()->highordertools->win->shown())
-      FlGui::instance()->highordertools->win->iconize();
-    if(FlGui::instance()->clipping->win->shown())
-      FlGui::instance()->clipping->win->iconize();
-    if(FlGui::instance()->manip->win->shown())
-      FlGui::instance()->manip->win->iconize();
-    if(FlGui::instance()->stats->win->shown())
-      FlGui::instance()->stats->win->iconize();
   }
   else if(str == "zoom") {
     if(!zoom) {
@@ -1539,7 +874,7 @@ void window_cb(Fl_Widget *w, void *data)
       while(!FlGui::instance()->fullscreen->valid()) FlGui::wait();
       FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
-      openglWindow::setLastHandled(FlGui::instance()->fullscreen);
+      sceneViewFltk::setLastHandled(FlGui::instance()->fullscreen);
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->hide();
       drawContext::global()->draw();
@@ -1554,7 +889,7 @@ void window_cb(Fl_Widget *w, void *data)
         while(!FlGui::instance()->graph[i]->gl[0]->valid()) FlGui::wait();
       FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
-      openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
+      sceneViewFltk::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
       FlGui::instance()->fullscreen->fullscreen_off();
       FlGui::instance()->fullscreen->hide();
       drawContext::global()->draw();
@@ -1565,32 +900,9 @@ void window_cb(Fl_Widget *w, void *data)
     // the order is important!
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->getWindow()->show();
-    if(FlGui::instance()->options->win->shown())
-      FlGui::instance()->options->win->show();
-    if(FlGui::instance()->plugins->win->shown())
-      FlGui::instance()->plugins->win->show();
-    if(FlGui::instance()->fields->win->shown())
-      FlGui::instance()->fields->win->show();
-    if(FlGui::instance()->elementaryContext->win->shown())
-      FlGui::instance()->elementaryContext->win->show();
-    if(FlGui::instance()->transformContext->win->shown())
-      FlGui::instance()->transformContext->win->show();
-    if(FlGui::instance()->physicalContext->win->shown())
-      FlGui::instance()->physicalContext->win->show();
-    if(FlGui::instance()->onelabContext->win->shown())
-      FlGui::instance()->onelabContext->win->show();
-    if(FlGui::instance()->meshContext->win->shown())
-      FlGui::instance()->meshContext->win->show();
-    if(FlGui::instance()->visibility->win->shown())
-      FlGui::instance()->visibility->win->show();
-    if(FlGui::instance()->highordertools->win->shown())
-      FlGui::instance()->highordertools->win->show();
-    if(FlGui::instance()->clipping->win->shown())
-      FlGui::instance()->clipping->win->show();
-    if(FlGui::instance()->manip->win->shown())
-      FlGui::instance()->manip->win->show();
-    if(FlGui::instance()->stats->win->shown())
-      FlGui::instance()->stats->win->show();
+    fltkEachDialog([](dialogFltk *d) {
+      if(d->shown()) d->window()->show();
+    });
   }
 }
 
@@ -1601,49 +913,12 @@ void FlGui::addMessage(const char *msg)
   }
 }
 
-void FlGui::saveMessages(const char *fileName)
+void FlGui::messageLines(std::vector<std::string> &lines)
 {
-  FlGui::instance()->graph[0]->saveMessages(fileName);
+  FlGui::instance()->graph[0]->messageLines(lines);
 }
 
 void FlGui::rebuildTree(bool deleteWidgets)
 {
   if(onelab) onelab->rebuildTree(deleteWidgets);
-  if(onelabContext) onelabContext->rebuild(deleteWidgets);
-}
-
-void FlGui::toggleModule(const std::string &name)
-{
-  if(FlGui::instance()->onelab){
-    if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/" + name)){
-      FlGui::instance()->onelab->closeTreeItem("0Modules/" + name);
-    } else {
-      FlGui::instance()->onelab->openTreeItem("0Modules/" + name);
-    }
-  }
-}
-
-void FlGui::openModule(const std::string &name)
-{
-  if(!onelab) return;
-  if(!onelab->isManuallyClosed("0Modules/" + name))
-    onelab->openTreeItem("0Modules/" + name);
-}
-
-void FlGui::openTreeItem(const std::string &name)
-{
-  if(!onelab) return;
-  onelab->openTreeItem(name);
-}
-
-void FlGui::closeTreeItem(const std::string &name)
-{
-  if(!onelab) return;
-  onelab->closeTreeItem(name);
-}
-
-void FlGui::showOnelabContext(int dim, int tag)
-{
-  if(!onelabContext) return;
-  onelabContext->show(dim, tag);
 }

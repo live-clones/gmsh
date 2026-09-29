@@ -133,7 +133,7 @@ def worker(case, shaders, upto, out, data, pick):
         finish()
         wall = time.perf_counter() - t
         own = [float(l.split()[-2]) for l in gmsh.logger.get()
-               if 'openglWindow::draw() done in' in l]
+               if 'sceneView::draw() done in' in l]
         return sum(own) if own else wall
 
     res = {'steps': []}

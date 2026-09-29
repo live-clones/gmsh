@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y git make autoconf python3 curl wget bzip2 gcc g++ texlive texinfo valgrind libgl1-mesa-dev libxi-dev libxmu-dev libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev mesa-common-dev libglu1-mesa-dev zlib1g-dev cmake emacs-nox && apt-get clean
 
 # packages that we recompile ourselves for the official builds (so that we can link to them statically), or that we install for the continuous integration tests (valgrind, ...) or the website (cargo, ...)
-RUN apt-get install -y clang gfortran python3-numpy python3-scipy python3-pip python3-dev swig clang-tidy valgrind texlive-latex-recommended texlive-latex-extra libreoffice fonts-cmu libpetsc-complex-dev libslepc-complex-dev libopenblas-dev libfltk1.3-dev libfreetype6-dev tcl-dev tk-dev libhdf5-dev libcgns-dev libxft-dev libocct-foundation-dev libocct-data-exchange-dev libocct-ocaf-dev libopenmpi-dev libboost-dev cargo gcovr ftp twine && apt-get clean
+RUN apt-get install -y clang gfortran python3-numpy python3-scipy python3-pip python3-dev swig clang-tidy valgrind texlive-latex-recommended texlive-latex-extra libreoffice fonts-cmu libpetsc-complex-dev libslepc-complex-dev libopenblas-dev libfltk1.3-dev libfreetype6-dev tcl-dev tk-dev libhdf5-dev libcgns-dev libxft-dev libxrandr-dev libwayland-dev libxkbcommon-dev libocct-foundation-dev libocct-data-exchange-dev libocct-ocaf-dev libopenmpi-dev libboost-dev cargo gcovr ftp twine && apt-get clean
 
 # for the Gmsh cookbook
 RUN cargo install --root /opt/cargo mdbook --version 0.4.52

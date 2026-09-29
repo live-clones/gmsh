@@ -205,7 +205,15 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
     glShader::enabled() &&
     glShader::bindPickBuffer((int)((viewport[2] - viewport[0]) * hr),
                              (int)((viewport[3] - viewport[1]) * hr));
-  if(!intoPickBuffer) glDrawBuffer(GL_BACK);
+  if(!intoPickBuffer && !glShader::windowFramebuffer()) glDrawBuffer(GL_BACK);
+  // at the origin of its own buffer, or where the view sits in a shared
+  // framebuffer; a pass runs from outside a draw
+  int ox = intoPickBuffer ? 0 : viewportOrigin[0];
+  int oy = intoPickBuffer ? 0 : viewportOrigin[1];
+  GLint oldViewport[4];
+  glGetIntegerv(GL_VIEWPORT, oldViewport);
+  glViewport(ox, oy, (GLsizei)((viewport[2] - viewport[0]) * hr),
+             (GLsizei)((viewport[3] - viewport[1]) * hr));
   glDepthFunc(GL_LESS);
   gmshDepthTest(true);
   gmshLighting(false);
@@ -220,7 +228,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   if(!glShader::enabled()) glShadeModel(GL_FLAT);
   // only rasterise the region the image covers
   glEnable(GL_SCISSOR_TEST);
-  glScissor(fx, fy, fw, fh);
+  glScissor(ox + fx, oy + fy, fw, fh);
   glClearColor(0., 0., 0., 0.);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -306,13 +314,15 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
     glShader::releasePickBuffer();
   }
   else {
-    glReadBuffer(GL_BACK);
-    glReadPixels(fx, fy, fw, fh, GL_RGBA, GL_UNSIGNED_BYTE, &_pickCache[0]);
-    glReadPixels(fx, fy, fw, fh, GL_DEPTH_COMPONENT, GL_FLOAT,
+    if(!glShader::windowFramebuffer()) glReadBuffer(GL_BACK);
+    glReadPixels(ox + fx, oy + fy, fw, fh, GL_RGBA, GL_UNSIGNED_BYTE,
+                 &_pickCache[0]);
+    glReadPixels(ox + fx, oy + fy, fw, fh, GL_DEPTH_COMPONENT, GL_FLOAT,
                  &_pickCacheDepth[0]);
   }
 
   glDisable(GL_SCISSOR_TEST);
+  glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
   glImmediate::flush();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);

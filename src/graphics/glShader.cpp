@@ -311,9 +311,11 @@ void main()
     return;
   }
 
-  // a string is a picture of itself: the texture is the alpha of the colour
+  // a string is a picture of itself: the texture is the alpha of the colour,
+  // in its one channel or in the alpha of a glyph atlas
   float alpha = vColor.a;
   if(uTextured == 1) alpha *= texture(uTexture, vTexCoord).r;
+  if(uTextured == 3) alpha *= texture(uTexture, vTexCoord).a;
 
   if(uShading == 2) {
     // the shadow catcher: a tint as opaque as the shade it is in, from the
@@ -623,9 +625,12 @@ void main()
     GLuint _shadowTex[2] = {0, 0}, _noShadow = 0;
     int _shadowSize[2] = {0, 0};
     GLint _shadowViewport[4] = {0, 0, 0, 0};
+    GLboolean _shadowScissor = GL_FALSE;
     int _shadowPass = -1;
-    // what stands in for the window: 0, or the print target while there is
-    // one
+    // what stands in for the window: the window's own framebuffer, or the
+    // print target while there is one; the window's is 0 but for a toolkit
+    // drawing its widget into a framebuffer of its own
+    GLuint _screen = 0;
     GLuint _window = 0, _printFbo = 0, _printColor = 0, _printDepth = 0;
     // the program that adds a studio frame to the accumulation and puts the
     // average back
@@ -927,7 +932,8 @@ void main()
     _shadowSize[0] = _shadowSize[1] = 0;
     _noShadow = 0;
     _shadowPass = -1;
-    _window = _printFbo = _printColor = _printDepth = 0;
+    _printFbo = _printColor = _printDepth = 0;
+    _window = _screen;
     _blitProgram = 0;
     _uBlitTex = _uBlitScale = -1;
     _blitTried = false;
@@ -945,12 +951,26 @@ void main()
     _c = &_contexts[nullptr];
   }
 
+  void release()
+  {
+    if(glApi::BindVertexArray) glApi::BindVertexArray(0);
+    if(glApi::UseProgram) glApi::UseProgram(0);
+  }
+
   void setContext(const void *id)
   {
     if(id == _context) return;
     _context = id;
     _c = &_contexts[id];
   }
+
+  void setWindowFramebuffer(unsigned int fbo)
+  {
+    _screen = fbo;
+    if(!_printFbo) _window = fbo;
+  }
+
+  unsigned int windowFramebuffer() { return _screen; }
 
   void setMatrices(const double modelview[16], const double projection[16])
   {
@@ -1103,6 +1123,9 @@ void main()
     glApi::Uniform1f(_u.seed, sample > 0 ? 0.7318f * sample : -1.f);
     glGetIntegerv(GL_VIEWPORT, _shadowViewport);
     glViewport(0, 0, size, size);
+    // the scissor box is the view's, and the map is not the view
+    _shadowScissor = glIsEnabled(GL_SCISSOR_TEST);
+    glDisable(GL_SCISSOR_TEST);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
@@ -1119,6 +1142,7 @@ void main()
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     glViewport(_shadowViewport[0], _shadowViewport[1], _shadowViewport[2],
                _shadowViewport[3]);
+    if(_shadowScissor) glEnable(GL_SCISSOR_TEST);
     if(!fromEye) {
       if(which)
         setDomeOff();
@@ -1155,14 +1179,15 @@ void main()
       return t;
     }
 
-    // A pass that covers the window: the state it needs, and every piece of
-    // state it is allowed to change, put back when it ends. The pass itself
+    // A pass that covers the view (width x height from (x, y)): the state it
+    // needs, and every piece of state it is allowed to change, put back when
+    // it ends. The pass itself
     // binds its textures, sets its uniforms and calls draw(). It exists
     // because three passes each saved and restored their own selection of
     // this, and each forgot a different piece.
     class fullscreenPass {
     public:
-      fullscreenPass(int width, int height, GLuint program)
+      fullscreenPass(int x, int y, int width, int height, GLuint program)
       {
         _depth = glIsEnabled(GL_DEPTH_TEST);
         _blend = glIsEnabled(GL_BLEND);
@@ -1172,7 +1197,7 @@ void main()
         glGetIntegerv(GL_BLEND_DST_RGB, &_func[1]);
         glGetIntegerv(GL_BLEND_SRC_ALPHA, &_func[2]);
         glGetIntegerv(GL_BLEND_DST_ALPHA, &_func[3]);
-        glViewport(0, 0, width, height);
+        glViewport(x, y, width, height);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
         glApi::UseProgram(program);
@@ -1253,7 +1278,7 @@ void main()
     }
   } // namespace
 
-  bool accumulate(int width, int height, bool first, int count)
+  bool accumulate(int x, int y, int width, int height, bool first, int count)
   {
     if(width < 1 || height < 1 || count < 1) return false;
     if(!ensure() || !glApi::haveFramebufferObjects() ||
@@ -1268,7 +1293,10 @@ void main()
       glGetIntegerv(GL_ALPHA_BITS, &alpha);
       if(!alpha) copyFormat = GL_RGB;
     }
-    if(_c->accFbo && (_c->accWidth != width || _c->accHeight != height ||
+    // the buffers reach to the far corner of the view, so that the shaders
+    // address them in window coordinates, as the transparency ones are
+    int W = x + width, H = y + height;
+    if(_c->accFbo && (_c->accWidth != W || _c->accHeight != H ||
                       _c->accCopyFormat != copyFormat)) {
       glApi::DeleteFramebuffers(1, &_c->accFbo);
       glDeleteTextures(1, &_c->accTex);
@@ -1281,7 +1309,7 @@ void main()
       glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->accFbo);
       // 32 bits: the same 8 bit value added many times over rounds the same
       // way each time in a half float, which bands a smooth gradient
-      _c->accTex = floatTarget(width, height, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+      _c->accTex = floatTarget(W, H, GL_RGBA32F, GL_RGBA, GL_FLOAT);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                   GL_TEXTURE_2D, _c->accTex, 0);
       const GLenum buf = GL_COLOR_ATTACHMENT0;
@@ -1302,24 +1330,24 @@ void main()
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
       glTexImage2D(GL_TEXTURE_2D, 0,
-                   (copyFormat == GL_RGB) ? GL_RGB8 : GL_RGBA8, width, height,
-                   0, copyFormat, GL_UNSIGNED_BYTE, nullptr);
-      _c->accWidth = width;
-      _c->accHeight = height;
+                   (copyFormat == GL_RGB) ? GL_RGB8 : GL_RGBA8, W, H, 0,
+                   copyFormat, GL_UNSIGNED_BYTE, nullptr);
+      _c->accWidth = W;
+      _c->accHeight = H;
       _c->accCopyFormat = copyFormat;
       first = true;
     }
 
-    // the window into the copy
+    // the view into the copy
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : GL_BACK);
     glBindTexture(GL_TEXTURE_2D, _c->accCopy);
-    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, x, y, x, y, width, height);
 
     // this runs in the middle of a frame, and what is drawn afterwards
     // expects the state it left
     {
-      fullscreenPass pass(width, height, _blitProgram);
+      fullscreenPass pass(x, y, width, height, _blitProgram);
       glApi::Uniform1i(_uBlitTex, 0);
 
       // added to the sum
@@ -1344,13 +1372,13 @@ void main()
     return true;
   }
 
-  bool showAccumulation(int width, int height, int count)
+  bool showAccumulation(int x, int y, int width, int height, int count)
   {
-    if(count < 1 || !ensure() || !_c->accFbo || _c->accWidth != width ||
-       _c->accHeight != height || !buildBlit())
+    if(count < 1 || !ensure() || !_c->accFbo || _c->accWidth != x + width ||
+       _c->accHeight != y + height || !buildBlit())
       return false;
     {
-      fullscreenPass pass(width, height, _blitProgram);
+      fullscreenPass pass(x, y, width, height, _blitProgram);
       glApi::ActiveTexture(GL_TEXTURE0);
       glApi::Uniform1i(_uBlitTex, 0);
       glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
@@ -1484,16 +1512,19 @@ void main()
     }
   } // namespace
 
-  bool fire(int width, int height, double level, double time)
+  bool fire(int x, int y, int width, int height, double level, double time)
   {
     if(width < 1 || height < 1 || level <= 0.) return false;
     if(!ensure() || !glApi::haveFramebufferObjects() ||
        !glApi::BlitFramebuffer || !buildFire())
       return false;
-    if(_c->fireFbo && (_c->fireWidth != width || _c->fireHeight != height))
+    // the buffers reach to the far corner of the view, so that the shader
+    // addresses them in window coordinates, as the transparency ones are
+    int W = x + width, H = y + height;
+    if(_c->fireFbo && (_c->fireWidth != W || _c->fireHeight != H))
       dropFireBuffers();
     bool ok = withDepthFormat(_c->fireDepthFormat, [&](GLenum format) {
-      return copyDepthToTexture(width, height, format);
+      return copyDepthToTexture(W, H, format);
     });
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     if(!ok) return false;
@@ -1506,12 +1537,12 @@ void main()
     glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : (GLenum)drawBuf);
     glApi::ActiveTexture(GL_TEXTURE0 + 1);
     glBindTexture(GL_TEXTURE_2D, _c->fireFrame);
-    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, x, y, x, y, width, height);
 
-    // the window drawn over, wherever the fire reaches; what is changed is
-    // put back afterwards
+    // the view drawn over, wherever the fire reaches; what is changed is put
+    // back afterwards
     {
-      fullscreenPass pass(width, height, _fireProgram);
+      fullscreenPass pass(x, y, width, height, _fireProgram);
       glApi::ActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, _c->fireDepth);
       glApi::Uniform1i(_uFireDepth, 0);
@@ -1519,8 +1550,8 @@ void main()
       // the transparent things drawn this frame, from the summing buffers; on
       // unit 4, as units 2 and 3 hold the shadow maps of the main program for
       // the whole frame and a texture bound over one of them is read as black
-      bool reveal = _oitUsed && _c->oitReveal && _c->oitWidth == width &&
-                    _c->oitHeight == height;
+      bool reveal =
+        _oitUsed && _c->oitReveal && _c->oitWidth == W && _c->oitHeight == H;
       _oitUsed = false;
       glApi::ActiveTexture(GL_TEXTURE0 + 4);
       glBindTexture(GL_TEXTURE_2D, reveal ? _c->oitReveal : 0);
@@ -2104,7 +2135,7 @@ void main()
        GL_FRAMEBUFFER_COMPLETE) {
       Msg::Warning("Could not make a buffer of %dx%d pixels to print into",
                    width, height);
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _screen);
       glApi::DeleteFramebuffers(1, &_printFbo);
       glApi::DeleteRenderbuffers(1, &_printColor);
       glApi::DeleteRenderbuffers(1, &_printDepth);
@@ -2136,8 +2167,8 @@ void main()
   void endPrintTarget()
   {
     if(!_printFbo) return;
-    _window = 0;
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    _window = _screen;
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _screen);
     glApi::DeleteFramebuffers(1, &_printFbo);
     glApi::DeleteRenderbuffers(1, &_printColor);
     glApi::DeleteRenderbuffers(1, &_printDepth);

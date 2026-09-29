@@ -249,8 +249,9 @@ void stringQueue::flush(double f)
   bool shaders = glShader::enabled();
   _atlas.check(shaders);
 
-  // setup matrices: the whole window, in the true pixels the positions are
-  // given in
+  // setup matrices: the viewport, in the true pixels of the window the
+  // positions are given in -- the viewport sits away from its corner when
+  // several views share one framebuffer
   int matrixMode = gmshMatrixMode();
   gmshMatrixMode(GMSH_PROJECTION);
   gmshPushMatrix();
@@ -261,7 +262,7 @@ void stringQueue::flush(double f)
   GLint vp[4];
   glGetIntegerv(GL_VIEWPORT, vp);
   gmshScale(2. / vp[2], 2. / vp[3], 1.);
-  gmshTranslate(-vp[2] / 2., -vp[3] / 2., 0.);
+  gmshTranslate(-vp[0] - vp[2] / 2., -vp[1] - vp[3] / 2., 0.);
 
   bool wasLit = gmshLightingEnabled();
   // the colour is set per string below: what the caller had comes back
