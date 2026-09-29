@@ -726,8 +726,18 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
              std::set<MTri3 *, compareTri3Ptr> &AllTris,
              std::set<MTri3 *, compareTri3Ptr> *ActiveTris = nullptr,
              MTri3 *worst = nullptr, MTri3 **oneNewTriangle = nullptr,
-             bool testStarShapeness = false, bool forceInsertion = false)
+             bool testStarShapeness = false, bool forceInsertion = false,
+             const SPoint3 *physicalPoint = nullptr)
 {
+  // PACK already projected this candidate onto the physical surface. Keep
+  // that position through the UV triangulation instead of evaluating the
+  // inverse chart again, which can be singular in a compressed discrete map.
+  if(physicalPoint &&
+     (!std::isfinite(physicalPoint->x()) ||
+      !std::isfinite(physicalPoint->y()) ||
+      !std::isfinite(physicalPoint->z())))
+    return false;
+
   if(worst) {
     it = AllTris.find(worst);
     if(worst != *it) {
@@ -790,9 +800,10 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
   }
 
   if(ptin) {
-    // we use here local coordinates as real coordinates x,y and z will be
-    // computed hereafter
-    GPoint p = gf->point(center[0], center[1]);
+    GPoint p = physicalPoint ?
+      GPoint(physicalPoint->x(), physicalPoint->y(), physicalPoint->z(), gf,
+             center) :
+      gf->point(center[0], center[1]);
 
     MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
 
@@ -1718,6 +1729,7 @@ void bowyerWatsonParallelograms(
   const bool forceAllPackedPoints =
     CTX::instance()->mesh.packForceAllPoints;
   std::size_t rejectedPackedPoints = 0;
+  std::size_t singularPackedMetrics = 0;
   for(std::size_t i = 0; i < packed.size();) {
     MTri3 *worst = *AllTris.begin();
     if(worst->isDeleted()) {
@@ -1726,17 +1738,43 @@ void bowyerWatsonParallelograms(
       AllTris.erase(AllTris.begin());
     }
     else {
-      double newPoint[2];
-      packed[i]->getParameter(0, newPoint[0]);
-      packed[i]->getParameter(1, newPoint[1]);
+      double newPoint[2] = {0., 0.};
+      const bool haveParameters =
+        packed[i]->getParameter(0, newPoint[0]) &&
+        packed[i]->getParameter(1, newPoint[1]);
+      const SPoint3 physicalPoint = packed[i]->point();
       delete packed[i];
+      if(!haveParameters || !std::isfinite(newPoint[0]) ||
+         !std::isfinite(newPoint[1]) || !std::isfinite(physicalPoint.x()) ||
+         !std::isfinite(physicalPoint.y()) ||
+         !std::isfinite(physicalPoint.z())) {
+        oneNewTriangle = nullptr;
+        ++rejectedPackedPoints;
+        ++i;
+        continue;
+      }
       double metric[3];
       buildMetric(gf, newPoint, metric);
+      if(gf->geomType() == GEntity::DiscreteSurface) {
+        const double determinant =
+          metric[0] * metric[2] - metric[1] * metric[1];
+        if(!std::isfinite(metric[0]) || !std::isfinite(metric[1]) ||
+           !std::isfinite(metric[2]) || !std::isfinite(determinant) ||
+           !(metric[0] > 0.) || !(determinant > 0.)) {
+          // This metric selects a UV Delaunay cavity; it does not place or
+          // space the points. PACK has already done that in XYZ, and the
+          // following intrinsic pass uses physical edge lengths. A singular
+          // inverse chart must not replace the known finite XYZ candidate.
+          metric[0] = metric[2] = 1.;
+          metric[1] = 0.;
+          ++singularPackedMetrics;
+        }
+      }
 
       bool success =
         insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA, AllTris,
                      nullptr, oneNewTriangle, &oneNewTriangle, false,
-                     forceAllPackedPoints);
+                     forceAllPackedPoints, &physicalPoint);
       if(!success) {
         oneNewTriangle = nullptr;
         ++rejectedPackedPoints;
@@ -1756,6 +1794,13 @@ void bowyerWatsonParallelograms(
       }
     }
   }
+
+  if(singularPackedMetrics)
+    Msg::Warning("3D packing used an identity UV insertion metric for %zu "
+                 "candidate%s with a singular discrete metric on face %d; "
+                 "physical candidate positions were preserved",
+                 singularPackedMetrics, singularPackedMetrics == 1 ? "" : "s",
+                 gf->tag());
 
   if(forceAllPackedPoints && rejectedPackedPoints) {
     // Rejection of a packed candidate does not invalidate the triangulation:

@@ -1382,6 +1382,11 @@ StringXNumber MeshOptions_Number[] = {
     "Maximum number of times meshing is retried on curves and surfaces with a "
     "pending mesh; also controls maximum number of recursive subdivisions when "
     "self-intersecting 1D meshes are detected"},
+  { F|O, "RepairSelfIntersecting1DMesh" ,
+    opt_mesh_repair_self_intersecting_1d_mesh, 1 ,
+    "Allow surface meshers to subdivide the boundary mesh and retry when "
+    "recovering boundary edges fails (0: mark the surface as failed and "
+    "preserve the existing curve mesh without subdivision or retries)" },
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental)" },
   { F|O, "MeshOnlyEmpty" , opt_mesh_mesh_only_empty, 0. ,

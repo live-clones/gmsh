@@ -5767,6 +5767,11 @@ void OCC_Internals::synchronize(GModel *model)
       occr = new OCCRegion(model, region, tag);
       model->add(occr);
     }
+    // Native CAD edits become visible at synchronization. Do not retain any
+    // solid-classifier acceleration data across this boundary, even if the
+    // OCCRegion itself was reused (e.g. unchanged tags or shared subshapes).
+    if(OCCRegion *regionEntity = dynamic_cast<OCCRegion *>(occr))
+      regionEntity->invalidateSolidClassifier();
     _copyExtrudedAttributes(region, occr);
     std::vector<std::string> labels;
     _attributes->getLabels(3, region, labels);

@@ -19,6 +19,7 @@
 #include "MElement.h"
 #include "MLine.h"
 #include "BackgroundMesh.h"
+#include "discreteFace.h"
 
 static bool inParametricDomain(GFace *gf, const SPoint2 &p)
 {
@@ -135,9 +136,23 @@ static surfacePointWithExclusionCube3D *makeSurfaceCubePoint3D(
   if(!(size > 0.0) || !std::isfinite(size) || size > 1.e10)
     return nullptr;
 
-  const std::pair<SVector3, SVector3> derivatives = gf->firstDer(uv);
-  SVector3 normal = crossprod(derivatives.first, derivatives.second);
-  if(!(normal.norm() > 0.0)) return nullptr;
+  SVector3 normal;
+  if(gf->geomType() == GEntity::DiscreteSurface) {
+    // The point is on the physical MAT. Its normal is determined by that
+    // source triangle, even when the corresponding UV triangle is compressed
+    // or singular. Do not recover it by differentiating the inverse chart.
+    const double guess[2] = {uv.x(), uv.y()};
+    discreteFace *discrete = static_cast<discreteFace *>(gf);
+    const GPoint projected =
+      discrete->closestPointLibOL(vertex->point(), &normal, guess);
+    if(!projected.succeeded()) return nullptr;
+  }
+  else {
+    const std::pair<SVector3, SVector3> derivatives = gf->firstDer(uv);
+    normal = crossprod(derivatives.first, derivatives.second);
+  }
+  const double normalLength = normal.norm();
+  if(!(normalLength > 0.0) || !std::isfinite(normalLength)) return nullptr;
   normal.normalize();
   t1 -= normal * dot(t1, normal);
   if(!(t1.norm() > 0.0)) return nullptr;
@@ -164,6 +179,10 @@ static MFaceVertex *projectSurfaceCandidate3D(
 
   const SPoint2 uv(projected.u(), projected.v());
   const SPoint3 point(projected.x(), projected.y(), projected.z());
+  if(!std::isfinite(point.x()) || !std::isfinite(point.y()) ||
+     !std::isfinite(point.z()) || !std::isfinite(uv.x()) ||
+     !std::isfinite(uv.y()))
+    return nullptr;
   const SVector3 displacement = point - center;
   const double length = displacement.norm();
   if(!(length > 0.25 * parent->_size) ||
@@ -233,10 +252,15 @@ static void packingOfOrientedCubes3D(GFace *gf,
       double u = 0., v = 0.;
       if(!candidate->getParameter(0, u) ||
          !candidate->getParameter(1, v) ||
-         !inParametricDomain(gf, SPoint2(u, v))) {
+         !std::isfinite(u) || !std::isfinite(v) ||
+         (gf->geomType() != GEntity::DiscreteSurface &&
+          !inParametricDomain(gf, SPoint2(u, v)))) {
         delete candidate;
         continue;
       }
+      // For a discrete face, successful finite projection already proves
+      // physical support. Rechecking that fact by UV inversion would discard
+      // points on source facets whose chart happens to be singular.
       surfacePointWithExclusionCube3D *point = makeSurfaceCubePoint3D(
         gf, candidate, crossField, globalMultiplier, parent);
       if(!point) {

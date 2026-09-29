@@ -6279,6 +6279,13 @@ double opt_mesh_max_retries(OPT_ARGS_NUM)
   return CTX::instance()->mesh.maxRetries;
 }
 
+double opt_mesh_repair_self_intersecting_1d_mesh(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.repairSelfIntersecting1dMesh = (int)val;
+  return CTX::instance()->mesh.repairSelfIntersecting1dMesh;
+}
+
 double opt_mesh_algo_recombine(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

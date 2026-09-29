@@ -497,24 +497,11 @@ discreteFace::discreteFace(GModel *model) : GFace(model, 0)
   // the corresponding entity in GEO internals
 }
 
-int discreteFace::trianglePosition(double par1, double par2, double &u,
-                                   double &v) const
+static bool checkedUvTriangleCoordinates(const MElement *t, const double xyz[3],
+                                          double uvw[3])
 {
-  if(_param.empty()) return 0;
-
-  double xy[3] = {par1, par2, 0};
-  double uv[3];
-  const MElement *e = _param.oct->find(par1, par2, 0.0, -1, true);
-  if(!e) return -1;
-  e->xyz2uvw(xy, uv);
-  int position = (int)((MTriangle *)e - &_param.t2d[0]);
-  u = uv[0];
-  v = uv[1];
-  return position;
-}
-
-static void MYxyz2uvw(const MElement *t, double xyz[3], double uvw[3])
-{
+  uvw[0] = uvw[1] = uvw[2] = 0.;
+  if(!t || !std::isfinite(xyz[0]) || !std::isfinite(xyz[1])) return false;
   double M[2][2], R[2];
   const SPoint2 p0(t->getVertex(0)->x(), t->getVertex(0)->y());
   const SPoint2 p1(t->getVertex(1)->x(), t->getVertex(1)->y());
@@ -526,27 +513,53 @@ static void MYxyz2uvw(const MElement *t, double xyz[3], double uvw[3])
   R[0] = (xyz[0] - p0.x());
   R[1] = (xyz[1] - p0.y());
   double const det = M[0][0] * M[1][1] - M[1][0] * M[0][1];
-  uvw[0] = R[0] * M[1][1] - M[0][1] * R[1];
-  uvw[1] = M[0][0] * R[1] - M[1][0] * R[0];
-  uvw[0] /= det;
-  uvw[1] /= det;
-  return;
+  // A signed, arbitrarily small nonzero determinant is still invertible.
+  // Do not substitute another support triangle when this one is singular.
+  if(det == 0. || !std::isfinite(det)) return false;
+  const double u = (R[0] * M[1][1] - M[0][1] * R[1]) / det;
+  const double v = (M[0][0] * R[1] - M[1][0] * R[0]) / det;
+  if(!std::isfinite(u) || !std::isfinite(v)) return false;
+  uvw[0] = u;
+  uvw[1] = v;
+  return true;
 }
 
-GPoint discreteFace::point(double par1, double par2) const
+int discreteFace::trianglePosition(double par1, double par2, double &u,
+                                   double &v) const
 {
-  if(_param.empty()) return GPoint();
+  u = v = 0.;
+  if(_param.empty() || !std::isfinite(par1) || !std::isfinite(par2))
+    return -1;
 
   double xy[3] = {par1, par2, 0};
   double uv[3];
   const MElement *e = _param.oct->find(par1, par2, 0.0, -1, true);
-  if(!e) {
-    GPoint gp = GPoint(1.e21, 1.e21, 1.e21, this, xy);
+  if(!checkedUvTriangleCoordinates(e, xy, uv)) return -1;
+  int position = (int)(static_cast<const MTriangle *>(e) - &_param.t2d[0]);
+  if(position < 0 || static_cast<std::size_t>(position) >= _param.t3d.size())
+    return -1;
+  u = uv[0];
+  v = uv[1];
+  return position;
+}
+
+GPoint discreteFace::point(double par1, double par2) const
+{
+  double xy[3] = {std::isfinite(par1) ? par1 : 0.,
+                  std::isfinite(par2) ? par2 : 0., 0.};
+  const auto failed = [&]() {
+    GPoint gp(1.e21, 1.e21, 1.e21, this, xy);
     gp.setNoSuccess();
     return gp;
-  }
-  MYxyz2uvw(e, xy, uv);
-  int position = (int)((MTriangle *)e - &_param.t2d[0]);
+  };
+  if(_param.empty() || !std::isfinite(par1) || !std::isfinite(par2))
+    return failed();
+  double uv[3];
+  const MElement *e = _param.oct->find(par1, par2, 0.0, -1, true);
+  if(!checkedUvTriangleCoordinates(e, xy, uv)) return failed();
+  int position = (int)(static_cast<const MTriangle *>(e) - &_param.t2d[0]);
+  if(position < 0 || static_cast<std::size_t>(position) >= _param.t3d.size())
+    return failed();
   const MTriangle &t3d = _param.t3d[position];
   double X = 0, Y = 0, Z = 0;
   double eval[3] = {1. - uv[0] - uv[1], uv[0], uv[1]};
@@ -555,6 +568,8 @@ GPoint discreteFace::point(double par1, double par2) const
     Y += t3d.getVertex(io)->y() * eval[io];
     Z += t3d.getVertex(io)->z() * eval[io];
   }
+  if(!std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z))
+    return failed();
   return GPoint(X, Y, Z, this, xy);
 }
 
@@ -1114,17 +1129,27 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 
 std::pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
-  if(_param.empty()) return std::make_pair(SVector3(), SVector3());
+  if(_param.empty() || !std::isfinite(param.x()) || !std::isfinite(param.y()))
+    return std::make_pair(SVector3(), SVector3());
 
   MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
-  if(!e) {
-    Msg::Info("Triangle not found for first derivative at uv=(%g,%g) on "
-              "discrete surface %d",
-              param.x(), param.y(), tag());
-    return std::make_pair(SVector3(1, 0, 0), SVector3(0, 1, 0));
+  const double xy[3] = {param.x(), param.y(), 0.};
+  double uv[3];
+  if(!checkedUvTriangleCoordinates(e, xy, uv)) {
+    if(e)
+      Msg::Debug("Singular triangle for first derivative at uv=(%g,%g) on "
+                 "discrete surface %d",
+                 param.x(), param.y(), tag());
+    else
+      Msg::Info("Triangle not found for first derivative at uv=(%g,%g) on "
+                "discrete surface %d",
+                param.x(), param.y(), tag());
+    return std::make_pair(SVector3(), SVector3());
   }
 
-  int position = (int)((MTriangle *)e - &_param.t2d[0]);
+  int position = (int)(static_cast<const MTriangle *>(e) - &_param.t2d[0]);
+  if(position < 0 || static_cast<std::size_t>(position) >= _param.t3d.size())
+    return std::make_pair(SVector3(), SVector3());
 
   const MTriangle &t3d = _param.t3d[position];
   const MVertex *v1 = t3d.getVertex(0);
@@ -1141,14 +1166,19 @@ std::pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
   double M2D[2][2] = {{(v3->y() - v1->y()), -(v3->x() - v1->x())},
                       {-(v2->y() - v1->y()), (v2->x() - v1->x())}};
 
-  double det = 1. / (M2D[0][0] * M2D[1][1] - M2D[1][0] * M2D[0][1]);
+  const double det = M2D[0][0] * M2D[1][1] - M2D[1][0] * M2D[0][1];
+  if(det == 0. || !std::isfinite(det))
+    return std::make_pair(SVector3(), SVector3());
 
   double dxdu[3][2];
 
   for(int i = 0; i < 3; i++) {
     for(int j = 0; j < 2; j++) {
       dxdu[i][j] = 0.;
-      for(int k = 0; k < 2; k++) { dxdu[i][j] += det * M3D[i][k] * M2D[k][j]; }
+      for(int k = 0; k < 2; k++) { dxdu[i][j] += M3D[i][k] * M2D[k][j]; }
+      dxdu[i][j] /= det;
+      if(!std::isfinite(dxdu[i][j]))
+        return std::make_pair(SVector3(), SVector3());
     }
   }
 

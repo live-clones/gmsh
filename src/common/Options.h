@@ -574,6 +574,7 @@ double opt_mesh_algo3d(OPT_ARGS_NUM);
 double opt_mesh_algo_switch_on_failure(OPT_ARGS_NUM);
 double opt_mesh_algo_recombine(OPT_ARGS_NUM);
 double opt_mesh_max_retries(OPT_ARGS_NUM);
+double opt_mesh_repair_self_intersecting_1d_mesh(OPT_ARGS_NUM);
 double opt_mesh_recombine_all(OPT_ARGS_NUM);
 double opt_mesh_recombine_optimize_topology(OPT_ARGS_NUM);
 double opt_mesh_recombine_node_repositioning(OPT_ARGS_NUM);
