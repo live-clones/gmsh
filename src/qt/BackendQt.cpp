@@ -126,11 +126,8 @@ namespace {
     QWidget *consoleBox = nullptr;
     QLineEdit *filter = nullptr;
     QCheckBox *follow = nullptr;
-    QWidget *buttons = nullptr;
-    QPushButton *message = nullptr;
-    QProgressBar *progress = nullptr;
     treeQt *tree = nullptr;
-    std::string barBuilt, footerBuilt;
+    std::string footerBuilt;
     // the lines, what the filter lets through, whether the last is kept in
     // view
     Ui::Console said;
@@ -821,25 +818,7 @@ namespace {
       // the progress of what runs
       QStatusBar *bar = _w->statusBar();
       bar->setSizeGripEnabled(true);
-      _w->buttons = new QWidget;
-      QHBoxLayout *bh = new QHBoxLayout(_w->buttons);
-      bh->setContentsMargins(0, 0, 0, 0);
-      bh->setSpacing(0);
-      bar->addWidget(_w->buttons);
-      _w->message = new QPushButton;
-      _w->message->setFlat(true);
-      _w->message->setStyleSheet("text-align: left; padding: 0 6px;");
-      _w->message->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-      QObject::connect(_w->message, &QPushButton::clicked, []() {
-        if(qtSources().barPressed) qtLater(qtSources().barPressed);
-      });
-      bar->addWidget(_w->message, 1);
-      _w->progress = new QProgressBar;
-      _w->progress->setRange(0, 1000);
-      _w->progress->setFixedWidth(200);
-      _w->progress->setTextVisible(true);
-      _w->progress->hide();
-      bar->addPermanentWidget(_w->progress);
+      bar->addWidget(qtMakeBar(), 1);
 
       qtRefreshMenuBar(_w);
       _refreshFooter();
@@ -870,108 +849,169 @@ void qtClearConsole()
 
 bool qtButtonDown() { return _buttonsDown > 0; }
 
+namespace {
+
+  // a bar, of the main window or of a graphic window of its own
+  struct barQt {
+    QWidget *box = nullptr, *buttons = nullptr;
+    QPushButton *message = nullptr;
+    QProgressBar *progress = nullptr;
+    std::string built;
+  };
+
+  std::vector<barQt *> &_bars()
+  {
+    static std::vector<barQt *> bars;
+    return bars;
+  }
+
+  void _refreshBar(barQt *said, const std::vector<Ui::BarButton> &bar)
+  {
+    std::string shape = Ui::signature(bar);
+    QHBoxLayout *h = (QHBoxLayout *)said->buttons->layout();
+    if(shape != said->built) {
+      said->built = shape;
+      while(QLayoutItem *it = h->takeAt(0)) {
+        if(it->widget()) it->widget()->deleteLater();
+        delete it;
+      }
+      for(std::size_t i = 0; i < bar.size(); i++) {
+        if(bar[i].gapBefore && i) h->addSpacing(qtPx(.6));
+        QToolButton *b = new QToolButton;
+        b->setAutoRaise(true);
+        b->setText(qtString(bar[i].label));
+        if(bar[i].widthEm > 0.) b->setMinimumWidth(qtPx(bar[i].widthEm));
+        std::size_t k = i;
+        QObject::connect(b, &QToolButton::clicked, [k]() {
+          std::vector<Ui::BarButton> now = qtSources().barButtons();
+          if(k >= now.size()) return;
+          const Ui::BarButton &one = now[k];
+          if(one.menu) {
+            qtPopupMenu(one.menu());
+            return;
+          }
+          Qt::KeyboardModifiers m = QGuiApplication::keyboardModifiers();
+          bool reverse = (m & Qt::ShiftModifier) != 0;
+          bool sync = (m & Qt::ControlModifier) != 0;
+          std::function<void(bool, bool)> what = one.action;
+          qtLater([what, reverse, sync]() {
+            if(what) what(reverse, sync);
+            qtRefreshBar();
+          });
+        });
+        h->addWidget(b);
+      }
+    }
+    std::size_t i = 0;
+    for(int k = 0; k < h->count() && i < bar.size(); k++) {
+      QToolButton *b = dynamic_cast<QToolButton *>(h->itemAt(k)->widget());
+      if(!b) continue;
+      const Ui::BarButton &one = bar[i++];
+      bool on = one.on && one.on();
+      std::string label = (on && one.labelOn.size()) ? one.labelOn : one.label;
+      std::string glyph = (on && one.glyphOn.size()) ? one.glyphOn : one.glyph;
+      b->setEnabled(one.enabled ? one.enabled() : true);
+      if(one.tooltip.size() && qtSources().settings().tooltips)
+        b->setToolTip(qtString(one.tooltip));
+      QString style;
+      QColor ink = b->palette().buttonText().color();
+      if(one.alert && one.alert()) {
+        style = "QToolButton { background: #b02020; color: white; }";
+        ink = Qt::white;
+      }
+      else if(on && one.onColour) {
+        Ui::Colour c = one.onColour();
+        bool light = (c.r * 299 + c.g * 587 + c.b * 114) / 1000 > 140;
+        style = QString("QToolButton { background: rgb(%1,%2,%3); color: %4; }")
+                  .arg(c.r)
+                  .arg(c.g)
+                  .arg(c.b)
+                  .arg(light ? "black" : "white");
+        ink = light ? Qt::black : Qt::white;
+      }
+      else if(on)
+        style = "QToolButton { font-weight: bold; }";
+      if(b->styleSheet() != style) b->setStyleSheet(style);
+      // the picture when there is one, the label otherwise
+      QIcon picture = qtGlyph(glyph, ink);
+      std::string shown = label + "|" + glyph + "|" + qtString(ink.name());
+      if(b->property("gmshShown").toString() != qtString(shown)) {
+        b->setProperty("gmshShown", qtString(shown));
+        if(picture.isNull()) {
+          b->setIcon(QIcon());
+          b->setText(qtString(label));
+        }
+        else {
+          b->setText("");
+          b->setIcon(picture);
+          b->setIconSize(QSize(qtPx(1.), qtPx(1.)));
+        }
+      }
+    }
+    if(qtSources().barMessage) {
+      Ui::BarMessage m = qtSources().barMessage();
+      said->message->setText(qtString(m.text));
+      QString colour = m.weight == Ui::MessageError   ? "color: #c03030;" :
+                       m.weight == Ui::MessageWarning ? "color: #b07000;" :
+                                                        "";
+      said->message->setStyleSheet("text-align: left; padding: 0 6px;" +
+                                   colour);
+      // the progress of what has finished stays said, at nought or at the end
+      bool going = m.running && m.fraction > 0. && m.fraction < 1.;
+      said->progress->setVisible(going);
+      if(going) {
+        said->progress->setValue((int)(1000. * m.fraction));
+        said->progress->setFormat(qtString(m.progressText));
+      }
+    }
+    if(qtSources().barTooltip && qtSources().settings().tooltips)
+      said->message->setToolTip(qtString(qtSources().barTooltip()));
+  }
+
+} // namespace
+
+QWidget *qtMakeBar()
+{
+  barQt *said = new barQt;
+  said->box = new QWidget;
+  QHBoxLayout *row = new QHBoxLayout(said->box);
+  row->setContentsMargins(0, 0, 0, 0);
+  row->setSpacing(0);
+  said->buttons = new QWidget;
+  QHBoxLayout *bh = new QHBoxLayout(said->buttons);
+  bh->setContentsMargins(0, 0, 0, 0);
+  bh->setSpacing(0);
+  row->addWidget(said->buttons);
+  said->message = new QPushButton;
+  said->message->setFlat(true);
+  said->message->setStyleSheet("text-align: left; padding: 0 6px;");
+  said->message->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+  QObject::connect(said->message, &QPushButton::clicked, []() {
+    if(qtSources().barPressed) qtLater(qtSources().barPressed);
+  });
+  row->addWidget(said->message, 1);
+  said->progress = new QProgressBar;
+  said->progress->setRange(0, 1000);
+  said->progress->setFixedWidth(200);
+  said->progress->setTextVisible(true);
+  said->progress->hide();
+  row->addWidget(said->progress);
+  _bars().push_back(said);
+  // forgotten with the window it is in
+  QObject::connect(said->box, &QObject::destroyed, [said]() {
+    std::vector<barQt *> &all = _bars();
+    all.erase(std::remove(all.begin(), all.end(), said), all.end());
+    delete said;
+  });
+  if(qtSources().barButtons) _refreshBar(said, qtSources().barButtons());
+  return said->box;
+}
+
 void qtRefreshBar()
 {
   if(!_w || !qtSources().barButtons) return;
   std::vector<Ui::BarButton> bar = qtSources().barButtons();
-  std::string shape = Ui::signature(bar);
-  QHBoxLayout *h = (QHBoxLayout *)_w->buttons->layout();
-  if(shape != _w->barBuilt) {
-    _w->barBuilt = shape;
-    while(QLayoutItem *it = h->takeAt(0)) {
-      if(it->widget()) it->widget()->deleteLater();
-      delete it;
-    }
-    for(std::size_t i = 0; i < bar.size(); i++) {
-      if(bar[i].gapBefore && i) h->addSpacing(qtPx(.6));
-      QToolButton *b = new QToolButton;
-      b->setAutoRaise(true);
-      b->setText(qtString(bar[i].label));
-      if(bar[i].widthEm > 0.) b->setMinimumWidth(qtPx(bar[i].widthEm));
-      std::size_t k = i;
-      QObject::connect(b, &QToolButton::clicked, [k]() {
-        std::vector<Ui::BarButton> now = qtSources().barButtons();
-        if(k >= now.size()) return;
-        const Ui::BarButton &one = now[k];
-        if(one.menu) {
-          qtPopupMenu(one.menu());
-          return;
-        }
-        Qt::KeyboardModifiers m = QGuiApplication::keyboardModifiers();
-        bool reverse = (m & Qt::ShiftModifier) != 0;
-        bool sync = (m & Qt::ControlModifier) != 0;
-        std::function<void(bool, bool)> what = one.action;
-        qtLater([what, reverse, sync]() {
-          if(what) what(reverse, sync);
-          qtRefreshBar();
-        });
-      });
-      h->addWidget(b);
-    }
-  }
-  std::size_t i = 0;
-  for(int k = 0; k < h->count() && i < bar.size(); k++) {
-    QToolButton *b = dynamic_cast<QToolButton *>(h->itemAt(k)->widget());
-    if(!b) continue;
-    const Ui::BarButton &one = bar[i++];
-    bool on = one.on && one.on();
-    std::string label = (on && one.labelOn.size()) ? one.labelOn : one.label;
-    std::string glyph = (on && one.glyphOn.size()) ? one.glyphOn : one.glyph;
-    b->setEnabled(one.enabled ? one.enabled() : true);
-    if(one.tooltip.size() && qtSources().settings().tooltips)
-      b->setToolTip(qtString(one.tooltip));
-    QString style;
-    QColor ink = b->palette().buttonText().color();
-    if(one.alert && one.alert()) {
-      style = "QToolButton { background: #b02020; color: white; }";
-      ink = Qt::white;
-    }
-    else if(on && one.onColour) {
-      Ui::Colour c = one.onColour();
-      bool light = (c.r * 299 + c.g * 587 + c.b * 114) / 1000 > 140;
-      style = QString("QToolButton { background: rgb(%1,%2,%3); color: %4; }")
-                .arg(c.r)
-                .arg(c.g)
-                .arg(c.b)
-                .arg(light ? "black" : "white");
-      ink = light ? Qt::black : Qt::white;
-    }
-    else if(on)
-      style = "QToolButton { font-weight: bold; }";
-    if(b->styleSheet() != style) b->setStyleSheet(style);
-    // the picture when there is one, the label otherwise
-    QIcon picture = qtGlyph(glyph, ink);
-    std::string shown = label + "|" + glyph + "|" + qtString(ink.name());
-    if(b->property("gmshShown").toString() != qtString(shown)) {
-      b->setProperty("gmshShown", qtString(shown));
-      if(picture.isNull()) {
-        b->setIcon(QIcon());
-        b->setText(qtString(label));
-      }
-      else {
-        b->setText("");
-        b->setIcon(picture);
-        b->setIconSize(QSize(qtPx(1.), qtPx(1.)));
-      }
-    }
-  }
-  if(qtSources().barMessage) {
-    Ui::BarMessage m = qtSources().barMessage();
-    _w->message->setText(qtString(m.text));
-    QString colour = m.weight == Ui::MessageError   ? "color: #c03030;" :
-                     m.weight == Ui::MessageWarning ? "color: #b07000;" :
-                                                      "";
-    _w->message->setStyleSheet("text-align: left; padding: 0 6px;" + colour);
-    // the progress of what has finished stays said, at nought or at the end
-    bool going = m.running && m.fraction > 0. && m.fraction < 1.;
-    _w->progress->setVisible(going);
-    if(going) {
-      _w->progress->setValue((int)(1000. * m.fraction));
-      _w->progress->setFormat(qtString(m.progressText));
-    }
-  }
-  if(qtSources().barTooltip && qtSources().settings().tooltips)
-    _w->message->setToolTip(qtString(qtSources().barTooltip()));
+  for(barQt *said : _bars()) _refreshBar(said, bar);
 }
 
 bool qtMainKey(int qtKey, Qt::KeyboardModifiers qtMods, const QString &text)

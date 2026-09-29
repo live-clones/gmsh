@@ -5,7 +5,7 @@
 
 // the scene of the Qt interface, see GuiPanes.h: each view in a QOpenGLWidget
 // of its own, the views of the main window split with QSplitter, a new
-// graphic window a top-level widget holding one more
+// graphic window a top-level widget holding one more and a bar
 
 #include "GmshConfig.h"
 
@@ -220,7 +220,10 @@ namespace {
         QString("Gmsh - Graphic window %1").arg(_all().panes().size()));
       QVBoxLayout *v = new QVBoxLayout(w);
       v->setContentsMargins(0, 0, 0, 0);
-      v->addWidget(_pane(fresh));
+      v->setSpacing(0);
+      v->addWidget(_pane(fresh), 1);
+      // the bar of the main window, without the console
+      v->addWidget(qtMakeBar());
       w->resize(600, 500);
       w->show();
     };
