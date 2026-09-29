@@ -7,6 +7,7 @@ set(SRC
   Gui.cpp
   GuiDialog.cpp
   GuiScene.cpp
+  GuiPanes.cpp
   GuiModules.cpp
   GuiActions.cpp
   GuiActionsGeo.cpp
