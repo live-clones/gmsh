@@ -19,6 +19,7 @@ their own respective license:
 * domhex: Gmsh License
 * eigen: BSD License
 * fonts: SIL Open Font License 1.1
+* ftxui: MIT License
 * glfw: Zlib/libpng License
 * gmm: GNU Lesser General Public License (LGPL), v. 3 or later
 * hxt: GNU General Public License (GPL) v. 2 or later, with exception for

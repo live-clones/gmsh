@@ -1,0 +1,85 @@
+// Copyright 2020 Arthur Sonzogni. All rights reserved.
+// Use of this source code is governed by the MIT license that can be found in
+// the LICENSE file.
+#include <algorithm>
+#include <sstream>  // IWYU pragma: keep
+#include <string>
+#include <vector>
+
+#include "ftxui/screen/cell.hpp"
+#include "ftxui/screen/surface.hpp"
+
+namespace ftxui {
+
+namespace {
+Cell& dev_null_cell() {
+  static Cell cell;
+  return cell;
+}
+}  // namespace
+
+Surface::Surface(int dimx, int dimy)
+    : stencil{0, std::max(0, dimx) - 1, 0, std::max(0, dimy) - 1},
+      dimx_(std::max(0, dimx)),
+      dimy_(std::max(0, dimy)),
+      cells_(static_cast<size_t>(dimx_) * static_cast<size_t>(dimy_)) {}
+
+/// @brief Access a character in a cell at a given position.
+/// @param x The cell position along the x-axis.
+/// @param y The cell position along the y-axis.
+std::string& Surface::at(int x, int y) {
+  return CellAt(x, y).character;
+}
+
+/// @brief Access a character in a cell at a given position.
+/// @param x The cell position along the x-axis.
+/// @param y The cell position along the y-axis.
+const std::string& Surface::at(int x, int y) const {
+  return CellAt(x, y).character;
+}
+
+/// @brief Access a cell (Cell) at a given position.
+/// @param x The cell position along the x-axis.
+/// @param y The cell position along the y-axis.
+Cell& Surface::CellAt(int x, int y) {
+  return stencil.Contain(x, y) ? FastCellAt(x, y) : dev_null_cell();
+}
+
+/// @brief Access a cell (Cell) at a given position.
+/// @param x The cell position along the x-axis.
+/// @param y The cell position along the y-axis.
+const Cell& Surface::CellAt(int x, int y) const {
+  return stencil.Contain(x, y) ? FastCellAt(x, y) : dev_null_cell();
+}
+
+/// @brief Access a cell (Cell) at a given position, without stencil check.
+/// @param x The cell position along the x-axis.
+/// @param y The cell position along the y-axis.
+Cell& Surface::FastCellAt(int x, int y) {
+  return cells_[static_cast<size_t>(y) * static_cast<size_t>(dimx_) +
+                static_cast<size_t>(x)];
+}
+
+/// @brief Access a cell (Cell) at a given position, without stencil check.
+/// @param x The cell position along the x-axis.
+/// @param y The cell position along the y-axis.
+const Cell& Surface::FastCellAt(int x, int y) const {
+  return cells_[static_cast<size_t>(y) * static_cast<size_t>(dimx_) +
+                static_cast<size_t>(x)];
+}
+
+/// @brief Clear all the cells from the surface.
+void Surface::Clear() {
+  std::fill(cells_.begin(), cells_.end(), Cell());
+}
+
+void Surface::Reserved1() {}
+void Surface::Reserved2() {}
+void Surface::Reserved3() {}
+void Surface::Reserved4() {}
+void Surface::Reserved5() {}
+void Surface::Reserved6() {}
+void Surface::Reserved7() {}
+void Surface::Reserved8() {}
+
+}  // namespace ftxui
