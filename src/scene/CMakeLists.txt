@@ -5,20 +5,15 @@
 
 # The scene proper: OpenGL and Gmsh, and no toolkit at all. Whichever
 # interface is up holds it through Scene::Host.
+# drawContextGL.cpp: the drawing functions of a scene asked of its holder,
+# and the Embedded font engine, which every interface uses
 set(SRC
   sceneHost.cpp
   sceneView.cpp
   sceneGamepad.cpp
   Navigator.cpp
+  drawContextGL.cpp
 )
-
-# The drawing functions of a scene held by OpenGL alone -- GLFW's, a
-# GtkGLArea's, a QOpenGLWidget's, an NSOpenGLView's, a WGL window's or a
-# framebuffer off screen: wanted by the interfaces that said so in
-# GMSH_GL_HOLDERS
-if(GMSH_GL_HOLDERS)
-  list(APPEND SRC drawContextGL.cpp)
-endif()
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(src/scene "${SRC};${HDR}")

@@ -727,7 +727,6 @@ if(EMSCRIPTEN AND (ENABLE_IMGUI OR ENABLE_BROWSER))
     include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/browser)
     set_config_option(HAVE_BROWSER "Browser")
     list(APPEND GMSH_INTERFACES Browser)
-    list(APPEND GMSH_GL_HOLDERS Browser)
   endif()
 # GLFW and the 3D scene, wanted by the Dear ImGui interface and by anything
 # else that shows the model in a window of its own -- the browser interface
@@ -846,7 +845,6 @@ elseif(ENABLE_IMGUI OR ENABLE_BROWSER)
         add_subdirectory(src/imgui)
         set_config_option(HAVE_IMGUI "ImGui[contrib]")
         list(APPEND GMSH_INTERFACES ImGui)
-        list(APPEND GMSH_GL_HOLDERS ImGui)
       endif()
     elseif(ENABLE_IMGUI)
       message(SEND_ERROR "Could not find Dear ImGui in contrib/imgui")
@@ -857,7 +855,6 @@ elseif(ENABLE_IMGUI OR ENABLE_BROWSER)
       include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/browser)
       set_config_option(HAVE_BROWSER "Browser")
       list(APPEND GMSH_INTERFACES Browser)
-      list(APPEND GMSH_GL_HOLDERS Browser)
     endif()
   endif()
 endif()
@@ -872,7 +869,6 @@ if(ENABLE_GTK AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/gtk)
     list(APPEND EXTERNAL_LIBRARIES ${GTK4_LINK_LIBRARIES})
     set_config_option(HAVE_GTK "Gtk")
     list(APPEND GMSH_INTERFACES Gtk)
-    list(APPEND GMSH_GL_HOLDERS Gtk)
   else()
     message(SEND_ERROR "Could not find GTK 4 (4.10 or later): disabling the "
             "GTK interface")
@@ -888,7 +884,6 @@ if(ENABLE_QT AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/qt)
     list(APPEND GMSH_PRIVATE_LIBRARIES Qt6::Widgets Qt6::OpenGLWidgets)
     set_config_option(HAVE_QT "Qt")
     list(APPEND GMSH_INTERFACES Qt)
-    list(APPEND GMSH_GL_HOLDERS Qt)
   else()
     message(SEND_ERROR "Could not find Qt 6 (Widgets, OpenGLWidgets): "
             "disabling the Qt interface")
@@ -903,7 +898,6 @@ if(ENABLE_WIN32 AND WIN32 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/win32)
        dwmapi uxtheme)
   set_config_option(HAVE_WIN32_GUI "Win32")
   list(APPEND GMSH_INTERFACES Win32)
-  list(APPEND GMSH_GL_HOLDERS Win32)
 endif()
 
 # Cocoa, on macOS, draws the scene itself too, in an NSOpenGLView; its files
@@ -915,7 +909,6 @@ if(ENABLE_COCOA AND APPLE AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/cocoa)
   list(APPEND EXTERNAL_LIBRARIES "-framework Cocoa" "-framework QuartzCore")
   set_config_option(HAVE_COCOA "Cocoa")
   list(APPEND GMSH_INTERFACES Cocoa)
-  list(APPEND GMSH_GL_HOLDERS Cocoa)
 elseif(ENABLE_COCOA)
   message(SEND_ERROR "The Cocoa interface is only available on macOS")
 endif()
@@ -929,7 +922,6 @@ if(ENABLE_TUI AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/tui AND
   add_subdirectory(src/tui)
   set_config_option(HAVE_TUI "Tui[contrib:FTXUI]")
   list(APPEND GMSH_INTERFACES Tui)
-  list(APPEND GMSH_GL_HOLDERS Tui)
 endif()
 
 # GTK 3 and GTK 4 cannot live in one process: their functions have the same
@@ -975,9 +967,8 @@ endif()
 # The 3D scene: it draws the model with OpenGL and picks in it, and it belongs
 # to no interface -- whichever one is up holds it, through Scene::Host. So it
 # is added once every interface that could hold it is known, and says so with
-# HAVE_GL_SCENE. Each interface above said it was one in GMSH_INTERFACES, and
-# in GMSH_GL_HOLDERS if it holds the scene by OpenGL alone (see
-# src/scene/CMakeLists.txt); what GLFW holds of it is in src/glfw.
+# HAVE_GL_SCENE. Each interface above said it was one in GMSH_INTERFACES; what
+# GLFW holds of it is in src/glfw.
 if(GMSH_INTERFACES AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scene)
   add_subdirectory(src/scene)
   set(HAVE_GL_SCENE TRUE)
