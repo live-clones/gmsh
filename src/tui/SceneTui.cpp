@@ -32,6 +32,9 @@
 
 namespace {
 
+  float _uiScale = .6f;
+  int _screenHeight = 700;
+
   struct offscreen {
     bool tried = false, ok = false;
     sceneView *view = nullptr;
@@ -158,7 +161,7 @@ namespace {
     };
     // a pixel of the picture is a quarter of a character: the text is drawn
     // as small as it can be read
-    held.uiScale = []() { return .6f; };
+    held.uiScale = []() { return _uiScale; };
     held.numViews = []() { return 1; };
     held.cursor = [](Scene::Cursor) {};
     held.current = []() { return _it().view; };
@@ -173,7 +176,7 @@ namespace {
     held.screen = [](int &height, float &scale) {
       // what matters is the picture the terminal shows, which is small: the
       // fonts are those of a small screen
-      height = 700;
+      height = _screenHeight;
       scale = 1.f;
     };
     Scene::setHost(held);
@@ -205,6 +208,12 @@ namespace {
   }
 
 } // namespace
+
+void tuiSceneScale(float uiScale, int screenHeight)
+{
+  _uiScale = uiScale;
+  _screenHeight = screenHeight;
+}
 
 namespace TuiScene {
 

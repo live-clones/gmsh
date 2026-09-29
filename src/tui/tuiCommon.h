@@ -81,6 +81,19 @@ namespace Tui {
   // Return
   bool editKey(const ftxui::Event &e, bool &enter);
 
+  // --- how the picture of the scene is shown, see graphicsTui.cpp: in half
+  // blocks, or at the resolution of the terminal through the graphics
+  // protocol of kitty or sixel
+  enum Graphics { Blocks, Kitty, Sixel };
+  Graphics graphics();
+  // the pixels of a cell, when the terminal says
+  bool cellPixels(int &width, int &height);
+  // the bitmap the scene hands over, at cell x, y of the terminal, cols by
+  // rows cells
+  void showPicture(const unsigned char *bmp, int w, int h, int x, int y,
+                   int cols, int rows);
+  void clearPictures();
+
   // --- fields, forms and trees, see formTui.cpp
 
   // the widget of a field, `width` cells wide (0: its own); after runs once
@@ -106,5 +119,9 @@ namespace Tui {
   ftxui::Element form(const Ui::Form &f, FormState &state);
 
 } // namespace Tui
+
+// how big the scene writes its text, see SceneTui.cpp: a pixel of the picture
+// is a quarter of a character in half blocks, a pixel of the screen otherwise
+void tuiSceneScale(float uiScale, int screenHeight);
 
 #endif

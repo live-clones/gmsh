@@ -53,9 +53,6 @@ namespace {
     Component root;
     bool running = false, inTurn = false;
     std::atomic<int> locked{0};
-    // the thread that wakes the loop, for what moves with time
-    std::thread ticker;
-    std::atomic<bool> ticking{false};
 
     std::vector<Tui::Hot> hots, drawn;
     // where the overlays start in the list: what is under them takes nothing
@@ -111,6 +108,14 @@ namespace {
     int pictureW = 0, pictureH = 0, askedW = 0, askedH = 0;
     std::vector<unsigned char> picture;
     int pointerButton = -1;
+    // what was put on the terminal last, when it is not half blocks: shown
+    // again when it changed or moved, and, in sixel, after every frame, as
+    // the frame writes over it
+    unsigned version = 0, shownVersion = (unsigned)-1;
+    Box shownBox;
+    bool drew = false;
+    int cellW = 1, cellH = 1;
+    double lastRefresh = 0.;
   };
 
   state &_s()
@@ -132,18 +137,68 @@ namespace {
     }
   }
 
+  // a menu, a question or the chooser over the scene: the picture of the
+  // terminal is taken away meanwhile, the half blocks show under them
+  bool _covered()
+  {
+    const state &s = _s();
+    return !s.popups.empty() || s.asking || s.files.open;
+  }
+
+  void _showPicture()
+  {
+    state &s = _s();
+    if(Tui::graphics() == Tui::Blocks || !s.drew) return;
+    s.drew = false;
+    if(_covered()) {
+      if(s.shownVersion != (unsigned)-1) Tui::clearPictures();
+      s.shownVersion = (unsigned)-1;
+      return;
+    }
+    const Box &b = *s.sceneBox;
+    bool moved = b.x_min != s.shownBox.x_min || b.x_max != s.shownBox.x_max ||
+                 b.y_min != s.shownBox.y_min || b.y_max != s.shownBox.y_max;
+    if(Tui::graphics() == Tui::Kitty && !moved && s.version == s.shownVersion)
+      return;
+    if(s.picture.size() <= 54) return;
+    s.shownBox = b;
+    s.shownVersion = s.version;
+    Tui::showPicture(&s.picture[0], s.pictureW, s.pictureH, b.x_min, b.y_min,
+                     b.x_max - b.x_min + 1, b.y_max - b.y_min + 1);
+  }
+
+  double _clock()
+  {
+    return std::chrono::duration<double>(
+             std::chrono::steady_clock::now().time_since_epoch())
+      .count();
+  }
+
+  // one turn: what arrived, the timers of the scene, what the user asked
+  // for; blocking waits until something happened, as long as a frame at
+  // most, the scene asking for a new picture being something
   void _turn(bool blocking)
   {
     state &s = _s();
     if(!s.loop || s.inTurn) return;
-    s.inTurn = true;
-    if(blocking)
-      s.loop->RunOnceBlocking();
-    else
+    for(int k = 0;; k++) {
+      s.inTurn = true;
       s.loop->RunOnce();
-    s.inTurn = false;
-    if(s.host.tick) s.host.tick();
-    _runLater();
+      s.inTurn = false;
+      _showPicture();
+      if(s.host.tick) s.host.tick();
+      bool acted = !s.later.empty();
+      _runLater();
+      if(s.host.sceneMoved && s.host.sceneMoved()) Tui::dirty();
+      // what watches something, and the progress, looked at now and then
+      double now = _clock();
+      if(now - s.lastRefresh > 1.) {
+        s.lastRefresh = now;
+        Tui::dirty();
+      }
+      if(!blocking || acted || !s.loop || s.loop->HasQuitted() || k > 30) break;
+      std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    }
   }
 
 } // namespace
@@ -386,15 +441,30 @@ namespace {
     void Render(Screen &screen) override
     {
       state &s = _s();
+      s.drew = true;
+      if(Tui::graphics() != Tui::Blocks && !_covered()) {
+        // the picture goes over these, which say nothing
+        for(int y = box_.y_min; y <= box_.y_max; y++)
+          for(int x = box_.x_min; x <= box_.x_max; x++) {
+            Cell &c = screen.CellAt(x, y);
+            c.character = " ";
+            c.foreground_color = c.background_color = Color::Default;
+          }
+        return;
+      }
       int w = s.pictureW, h = s.pictureH;
       int stride = (w * 3 + 3) & ~3;
-      // the picture is drawn at twice the pixels there are, each way: a
-      // pixel of the terminal is the average of four
+      // a pixel of the half blocks is the average of the pixels of the
+      // picture it covers, at most four each way
+      int cols = box_.x_max - box_.x_min + 1, rows = 2 * (box_.y_max - box_.y_min + 1);
       auto rgb = [&](int x, int y) {
-        if(s.picture.empty()) return Color::RGB(0, 0, 0);
+        if(s.picture.empty() || cols < 1 || rows < 1) return Color::RGB(0, 0, 0);
         int sum[3] = {0, 0, 0}, n = 0;
-        for(int j = 2 * y; j < 2 * y + 2; j++)
-          for(int i = 2 * x; i < 2 * x + 2; i++) {
+        int i0 = x * w / cols, i1 = std::max(i0 + 1, (x + 1) * w / cols);
+        int j0 = y * h / rows, j1 = std::max(j0 + 1, (y + 1) * h / rows);
+        int si = std::max(1, (i1 - i0) / 4), sj = std::max(1, (j1 - j0) / 4);
+        for(int j = j0; j < j1; j += sj)
+          for(int i = i0; i < i1; i += si) {
             if(i < 0 || j < 0 || i >= w || j >= h) continue;
             // the rows go bottom up
             const unsigned char *p =
@@ -424,8 +494,14 @@ namespace {
   {
     state &s = _s();
     const Box &b = *s.sceneBox;
-    // two pixels a cell down, then twice as many each way, averaged
-    int w = 2 * (b.x_max - b.x_min + 1), h = 4 * (b.y_max - b.y_min + 1);
+    // at the resolution of the terminal; in half blocks two pixels a cell
+    // down, then twice as many each way, averaged
+    int cols = b.x_max - b.x_min + 1, rows = b.y_max - b.y_min + 1;
+    int w = 2 * cols, h = 4 * rows;
+    if(Tui::graphics() != Tui::Blocks) {
+      w = cols * s.cellW;
+      h = rows * s.cellH;
+    }
     if(w < 4 || h < 4) return;
     if(w != s.askedW || h != s.askedH) {
       s.askedW = w;
@@ -439,6 +515,7 @@ namespace {
       s.picture.assign(bmp.begin(), bmp.end());
       s.pictureW = pw;
       s.pictureH = ph;
+      s.version++;
     }
   }
 
@@ -471,6 +548,10 @@ namespace {
       else
         button = std::max(0, s.pointerButton);
       double px = 2. * x + 1., py = 4. * y + 1.;
+      if(Tui::graphics() != Tui::Blocks) {
+        px = (x + .5) * s.cellW;
+        py = (y + .5) * s.cellH;
+      }
       bool shift = m.shift, ctrl = m.control, alt = m.meta;
       std::function<void(double, double, int, int, double, bool, bool, bool)>
         pointer = s.host.scenePointer;
@@ -603,7 +684,9 @@ namespace {
       int from = std::max(0, std::min(p.selected - room / 2, (int)rows.size() - room));
       rows = Elements(rows.begin() + from, rows.begin() + from + room);
     }
-    Element box = vbox(rows) | border | clear_under;
+    // a background of its own: a picture shown under the cells that have one
+    Element box = vbox(rows) | border | clear_under | bgcolor(Color::RGB(40, 40, 40)) |
+                  color(Color::White);
     return vbox({text("") | size(HEIGHT, EQUAL, std::max(0, p.y)),
                  hbox({text("") | size(WIDTH, EQUAL, std::max(0, p.x)), box})});
   }
@@ -907,7 +990,8 @@ namespace {
       row.push_back(Tui::hot(b, h));
     }
     body.push_back(hbox(row));
-    return window(text(" Gmsh "), vbox(body)) | clear_under | center;
+    return window(text(" Gmsh "), vbox(body)) | clear_under |
+           bgcolor(Color::RGB(40, 40, 40)) | color(Color::White) | center;
   }
 
   bool _questionKey(const Event &e)
@@ -1094,7 +1178,8 @@ namespace {
     });
     return window(text(" " + f.title + " "), body) |
            size(WIDTH, EQUAL, std::min(90, Terminal::Size().dimx - 4)) |
-           clear_under | center;
+           clear_under | bgcolor(Color::RGB(40, 40, 40)) | color(Color::White) |
+           center;
   }
 
   bool _chooserKey(const Event &e)
@@ -1297,19 +1382,11 @@ namespace {
     return taken;
   }
 
-  void _stopTicker()
-  {
-    state &s = _s();
-    if(!s.ticking) return;
-    s.ticking = false;
-    if(s.ticker.joinable()) s.ticker.join();
-  }
-
   // the terminal back as it was, however Gmsh leaves
   void _restoreTerminal()
   {
     state &s = _s();
-    _stopTicker();
+    if(s.loop) Tui::clearPictures();
     s.loop.reset();
   }
 
@@ -1352,13 +1429,11 @@ namespace {
       // the numbers are read and written the C way, whatever FTXUI set
       setlocale(LC_NUMERIC, "C");
       std::atexit(_restoreTerminal);
-      s.ticking = true;
-      s.ticker = std::thread([]() {
-        while(_s().ticking) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(150));
-          if(_s().ticking && _s().app) _s().app->PostEvent(Event::Custom);
-        }
-      });
+      // the text of the scene as big as it can be read
+      if(Tui::graphics() != Tui::Blocks && Tui::cellPixels(s.cellW, s.cellH))
+        tuiSceneScale(1.f, Terminal::Size().dimy * s.cellH);
+      else
+        tuiSceneScale(.6f, 700);
       const Settings set = s.sources.settings();
       s.treeShown = set.showModuleMenu;
       return true;
@@ -1396,7 +1471,7 @@ namespace {
       state &s = _s();
       if(!s.loop || s.inTurn) return;
       if(!force && s.locked > 0) return;
-      // the ticker wakes the loop up at its own rate
+      // a turn waits a frame at most
       _turn(seconds != 0.);
     }
 

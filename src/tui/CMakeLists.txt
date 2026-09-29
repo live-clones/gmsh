@@ -7,6 +7,7 @@ set(SRC
   BackendTui.cpp
   SceneTui.cpp
   formTui.cpp
+  graphicsTui.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
