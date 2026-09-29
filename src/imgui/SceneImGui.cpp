@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 
 #include <cstdio>
+#include <cstring>
 #include <set>
 #include <string>
 
@@ -254,9 +255,22 @@ namespace ImGuiScene {
                  unsigned int type, void *pixels)
   {
     if(!Gui::instance().available()) return false;
-    sceneView *p = appWindow::instance()->currentPane();
+    appWindow *app = appWindow::instance();
+    sceneView *p = app->currentPane();
     if(!p) return false;
-    return p->printTo(width, height, supersampling, format, type, pixels);
+    if(!CTX::instance()->print.compositeWindows || app->numPanes() < 2)
+      return p->printTo(width, height, supersampling, format, type, pixels);
+    // all the panes, as they are tiled, in a framebuffer of that size
+    int w = width, h = height;
+    app->beginCapture(w, h, true);
+    PixelBuffer buffer(w, h, (GLenum)format, (GLenum)type);
+    buffer.fill();
+    app->endCapture();
+    if(w != width || h != height) return false;
+    std::memcpy(pixels, buffer.getPixels(),
+                (std::size_t)width * height * buffer.getNumComp() *
+                  buffer.getDataSize());
+    return true;
   }
 
   bool pickAt(int type, bool mesh, bool post, int x, int y, int w, int h)

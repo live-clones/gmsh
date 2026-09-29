@@ -21,14 +21,14 @@ appWindow::frame() runs, in this order:
   3. the dock space and the panels are built; the central node of the dock
      space is left empty ("pass-through"), and its rectangle becomes the
      rectangle of the 3D scene;
-  4. the scene is rendered by scenePane::draw(), with glViewport()/glScissor()
-     set to that rectangle, i.e. directly into the main frame buffer;
+  4. each view of the scene that asked for it (or changed size) is drawn by
+     sceneView::draw() into a frame buffer object of its own, at the origin,
+     as it would be into a window of its own; every view is then put on the
+     window as a textured quad at its place in that rectangle;
   5. the Dear ImGui draw lists are submitted on top.
 
-There is deliberately no frame buffer object: the whole rendering path stays in
-plain OpenGL 1.x + GLU, which is what the Gmsh drawing routines and the
-imgui_impl_opengl2 backend both expect. It also means the picture of the scene
-cannot be rendered larger than the window (see appWindow::beginCapture()).
+A frame that only moves a widget therefore does not draw the scene again, and
+a picture of the scene can be of any size (see appWindow::beginCapture()).
 
 Deferred actions
 ----------------
@@ -610,17 +610,14 @@ carries text, not images. Use "File > Save Model As" with a picture format
 instead.
 
 Grabbing the scene. glReadPixels() and gl2ps both expect the scene to sit at the
-origin of the frame buffer, which it does not when it only occupies the central
-node of the dock space. Gui::beginGraphicCapture() therefore redraws the panes
-into the bottom-left corner at the requested size, and endGraphicCapture()
-restores the on-screen layout; in the FLTK interface, where the graphic window
-is a window of its own, both do nothing. Without a frame buffer object the
-picture cannot be larger than the window, and Gmsh warns and clamps when asked
-for more.
+origin of the frame buffer. Gui::beginGraphicCapture() therefore has the panes
+drawn into a frame buffer object of the requested size, left bound until
+endGraphicCapture(); in the FLTK interface, where the graphic window is a
+window of its own, both do nothing.
 
 One consequence is worth knowing: with General.PrintCompositeWindows set and the
 view split, a vector output (PS, PDF, SVG, TeX) contains all the panes here,
-because they share one frame buffer, whereas the FLTK interface writes an almost
+because they are drawn into one frame buffer, whereas the FLTK interface writes an almost
 empty file, gl2ps being able to record only one window at a time.
 
 Known limitations:

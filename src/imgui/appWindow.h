@@ -55,11 +55,30 @@ private:
   // when nothing moves
   int _frames;
   bool _keepDrawing;
-  // the frames nobody asked the scene for show what it drew last, copied out of
-  // the framebuffer
+  // each view is drawn into a framebuffer of its own, at its own origin, and
+  // put on the window as a texture: the frames nobody asked the scene for put
+  // back what it drew last
   bool _sceneWanted;
-  unsigned int _sceneCopy;
-  int _sceneCopyRect[4];
+  struct paneTarget {
+    // the texture shown, and the multisampled buffer drawn into when there is
+    // antialiasing, resolved into the texture
+    unsigned int fbo = 0, colour = 0, depth = 0;
+    unsigned int msFbo = 0, msColour = 0, msDepth = 0;
+    int w = 0, h = 0, samples = 0;
+  };
+  std::map<sceneView *, paneTarget> _targets;
+  // the picture being captured, of the size asked for
+  paneTarget _capture;
+  bool _capturing = false;
+  // made or remade at that size in pixels, and bound as the window of the
+  // scene; false when it cannot be
+  bool _bindTarget(paneTarget &t, int w, int h);
+  void _resolveTarget(paneTarget &t);
+  void _dropTarget(paneTarget &t);
+  // the view drawn into its framebuffer, as if it were the whole window
+  void _drawIntoTarget(sceneView *p);
+  // its texture where the view is on the window
+  void _showTarget(sceneView *p);
 
   // _panes is what SetCurrentWindow and gmsh::fltk::setCurrentWindow index
   // into; _paneRoot says how they share the rectangle
@@ -273,8 +292,6 @@ public:
   }
   void requestFrame();
   void requestRedraw();
-  void _keepSceneCopy(const int rect[4]);
-  void _showSceneCopy();
   // the one part that is not a described form
   void showConsole(bool show) { _showConsole = show; }
   bool consoleVisible() const { return _showConsole; }

@@ -79,6 +79,9 @@ typedef char GLchar;
 #if !defined(GL_STREAM_DRAW)
 #define GL_STREAM_DRAW 0x88E0
 #endif
+#if !defined(GL_SAMPLE_BUFFERS)
+#define GL_SAMPLE_BUFFERS 0x80A8
+#endif
 #if !defined(GL_FRAMEBUFFER)
 #define GL_FRAMEBUFFER 0x8D40
 #define GL_READ_FRAMEBUFFER 0x8CA8
@@ -234,6 +237,9 @@ namespace glApi {
   extern void(APIENTRY *RenderbufferStorage)(GLenum target,
                                              GLenum internalformat,
                                              GLsizei width, GLsizei height);
+  extern void(APIENTRY *RenderbufferStorageMultisample)(
+    GLenum target, GLsizei samples, GLenum internalformat, GLsizei width,
+    GLsizei height);
   extern void(APIENTRY *FramebufferRenderbuffer)(GLenum target,
                                                  GLenum attachment,
                                                  GLenum renderbuffertarget,

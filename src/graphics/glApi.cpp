@@ -74,6 +74,8 @@ namespace glApi {
   void(APIENTRY *BindRenderbuffer)(GLenum, GLuint) = nullptr;
   void(APIENTRY *RenderbufferStorage)(GLenum, GLenum, GLsizei,
                                       GLsizei) = nullptr;
+  void(APIENTRY *RenderbufferStorageMultisample)(GLenum, GLsizei, GLenum,
+                                                 GLsizei, GLsizei) = nullptr;
   void(APIENTRY *FramebufferRenderbuffer)(GLenum, GLenum, GLenum,
                                           GLuint) = nullptr;
   void(APIENTRY *DrawBuffers)(GLsizei, const GLenum *) = nullptr;
@@ -250,6 +252,9 @@ namespace glApi {
       (void(APIENTRY *)(GLenum, GLuint))address("glBindRenderbuffer");
     RenderbufferStorage = (void(APIENTRY *)(GLenum, GLenum, GLsizei, GLsizei))
       address("glRenderbufferStorage");
+    RenderbufferStorageMultisample =
+      (void(APIENTRY *)(GLenum, GLsizei, GLenum, GLsizei,
+                        GLsizei))address("glRenderbufferStorageMultisample");
     FramebufferRenderbuffer =
       (void(APIENTRY *)(GLenum, GLenum, GLenum,
                         GLuint))address("glFramebufferRenderbuffer");
@@ -351,6 +356,7 @@ namespace glApi {
     DeleteRenderbuffers = nullptr;
     BindRenderbuffer = nullptr;
     RenderbufferStorage = nullptr;
+    RenderbufferStorageMultisample = nullptr;
     FramebufferRenderbuffer = nullptr;
     DrawBuffers = nullptr;
     BlitFramebuffer = nullptr;

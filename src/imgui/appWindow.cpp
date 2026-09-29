@@ -111,7 +111,7 @@ static bool _initGlfw()
 
 appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   : _window(nullptr), _inFrame(false),
-    _frames(3), _keepDrawing(false), _sceneWanted(true), _sceneCopy(0),
+    _frames(3), _keepDrawing(false), _sceneWanted(true),
     _lastRefresh(0.), _currentPane(nullptr), _console(nullptr),
     _showConsole(true),
     _showModules(true),
@@ -274,6 +274,10 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
 
 appWindow::~appWindow()
 {
+  if(_window) glfwMakeContextCurrent(_window);
+  for(auto &t : _targets) _dropTarget(t.second);
+  _targets.clear();
+  _dropTarget(_capture);
   _deletePaneTree(_paneRoot);
   _paneRoot = nullptr;
   for(auto p : _panes) delete p;
@@ -590,8 +594,14 @@ void appWindow::splitCurrentPane(char how, double ratio)
         std::find(tiled.begin(), tiled.end(), p) != tiled.end();
       if(p == keep || !isTiled)
         left.push_back(p);
-      else
+      else {
+        auto t = _targets.find(p);
+        if(t != _targets.end()) {
+          _dropTarget(t->second);
+          _targets.erase(t);
+        }
         delete p;
+      }
     }
     _panes = left;
     _paneRoot = new paneNode(keep);
@@ -851,49 +861,159 @@ void appWindow::_buildDockSpace(int &sceneX, int &sceneY, int &sceneW,
 // the environment set to GL_MODULATE
 void appWindow::_drawScene()
 {
-  _resetGLState();
-  double f = pixelFactor();
-  int wh = 0, ww = 0;
-  glfwGetWindowSize(_window, &ww, &wh);
+  // what is on the window: the current view alone in full screen
+  std::vector<sceneView *> shown;
   if(_fullscreen) {
-    sceneView *p = _fullScreenPane();
-    if(p) p->draw(f, wh);
-    return;
+    if(sceneView *p = _fullScreenPane()) shown.push_back(p);
   }
-  for(auto p : _panes)
-    if(_isTiled(p)) p->draw(f, wh);
+  else
+    for(auto p : _panes)
+      if(_isTiled(p)) shown.push_back(p);
+  // drawn again when the scene asked for it, or when the view changed size;
+  // put back otherwise
+  double f = pixelFactor();
+  for(auto p : shown) {
+    auto it = _targets.find(p);
+    bool resized = it == _targets.end() ||
+                   it->second.w != (int)(p->w() * f + 0.5) ||
+                   it->second.h != (int)(p->h() * f + 0.5);
+    if(_sceneWanted || resized) _drawIntoTarget(p);
+  }
+  _sceneWanted = false;
+  if(glApi::BindFramebuffer) glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+  glShader::setWindowFramebuffer(0);
+  for(auto p : shown) _showTarget(p);
 }
 
-void appWindow::_keepSceneCopy(const int rect[4])
+// --- the framebuffer each view is drawn into
+
+void appWindow::_dropTarget(paneTarget &t)
 {
-  if(rect[2] < 1 || rect[3] < 1) {
-    if(_sceneCopy) glDeleteTextures(1, &_sceneCopy);
-    _sceneCopy = 0;
-    return;
+  if(t.fbo && glApi::DeleteFramebuffers) glApi::DeleteFramebuffers(1, &t.fbo);
+  if(t.msFbo && glApi::DeleteFramebuffers) glApi::DeleteFramebuffers(1, &t.msFbo);
+  if(t.colour) glDeleteTextures(1, &t.colour);
+  if(glApi::DeleteRenderbuffers) {
+    if(t.depth) glApi::DeleteRenderbuffers(1, &t.depth);
+    if(t.msColour) glApi::DeleteRenderbuffers(1, &t.msColour);
+    if(t.msDepth) glApi::DeleteRenderbuffers(1, &t.msDepth);
   }
-  if(!_sceneCopy) {
-    glGenTextures(1, &_sceneCopy);
-    glBindTexture(GL_TEXTURE_2D, _sceneCopy);
+  t = paneTarget();
+}
+
+bool appWindow::_bindTarget(paneTarget &t, int w, int h)
+{
+  if(w < 1 || h < 1 || !glApi::GenFramebuffers || !glApi::BindFramebuffer ||
+     !glApi::GenRenderbuffers || !glApi::RenderbufferStorage)
+    return false;
+  // what the window had through GLFW_SAMPLES, the framebuffer has
+  int samples = (imguiSources().settings().antialiasing &&
+                 glApi::RenderbufferStorageMultisample && glApi::BlitFramebuffer) ?
+                  4 :
+                  0;
+  if(t.fbo && (t.w != w || t.h != h || t.samples != samples)) _dropTarget(t);
+  if(!t.fbo) {
+    glGenTextures(1, &t.colour);
+    glBindTexture(GL_TEXTURE_2D, t.colour);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                 nullptr);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glApi::GenRenderbuffers(1, &t.depth);
+    glApi::BindRenderbuffer(GL_RENDERBUFFER, t.depth);
+    glApi::RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+    glApi::GenFramebuffers(1, &t.fbo);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, t.fbo);
+    glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                GL_TEXTURE_2D, t.colour, 0);
+    glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                                   GL_RENDERBUFFER, t.depth);
+    bool ok = glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) ==
+              GL_FRAMEBUFFER_COMPLETE;
+    if(ok && samples) {
+      glApi::GenRenderbuffers(1, &t.msColour);
+      glApi::BindRenderbuffer(GL_RENDERBUFFER, t.msColour);
+      glApi::RenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_RGBA8,
+                                            w, h);
+      glApi::GenRenderbuffers(1, &t.msDepth);
+      glApi::BindRenderbuffer(GL_RENDERBUFFER, t.msDepth);
+      glApi::RenderbufferStorageMultisample(GL_RENDERBUFFER, samples,
+                                            GL_DEPTH24_STENCIL8, w, h);
+      glApi::GenFramebuffers(1, &t.msFbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, t.msFbo);
+      glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                     GL_RENDERBUFFER, t.msColour);
+      glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                                     GL_RENDERBUFFER, t.msDepth);
+      // no multisampling rather than no picture
+      if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        glApi::DeleteFramebuffers(1, &t.msFbo);
+        glApi::DeleteRenderbuffers(1, &t.msColour);
+        glApi::DeleteRenderbuffers(1, &t.msDepth);
+        t.msFbo = t.msColour = t.msDepth = 0;
+        samples = 0;
+      }
+    }
+    glApi::BindRenderbuffer(GL_RENDERBUFFER, 0);
+    if(!ok) {
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+      _dropTarget(t);
+      return false;
+    }
+    t.w = w;
+    t.h = h;
+    t.samples = samples;
   }
-  else
-    glBindTexture(GL_TEXTURE_2D, _sceneCopy);
-  glReadBuffer(GL_BACK);
-  glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, rect[0], rect[1], rect[2], rect[3],
-                   0);
-  glBindTexture(GL_TEXTURE_2D, 0);
-  memcpy(_sceneCopyRect, rect, sizeof(_sceneCopyRect));
+  unsigned int into = t.msFbo ? t.msFbo : t.fbo;
+  glApi::BindFramebuffer(GL_FRAMEBUFFER, into);
+  glShader::setWindowFramebuffer(into);
+  return true;
 }
 
-void appWindow::_showSceneCopy()
+void appWindow::_resolveTarget(paneTarget &t)
 {
-  const int *r = _sceneCopyRect;
-  int fw = 0, fh = 0;
+  if(!t.msFbo) return;
+  glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, t.msFbo);
+  glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, t.fbo);
+  glApi::BlitFramebuffer(0, 0, t.w, t.h, 0, 0, t.w, t.h, GL_COLOR_BUFFER_BIT,
+                         GL_NEAREST);
+  glApi::BindFramebuffer(GL_FRAMEBUFFER, t.fbo);
+}
+
+void appWindow::_drawIntoTarget(sceneView *p)
+{
+  double f = pixelFactor();
+  int x = p->x(), y = p->y(), w = p->w(), h = p->h();
+  if(w < 1 || h < 1) return;
+  paneTarget &t = _targets[p];
+  if(!_bindTarget(t, (int)(w * f + 0.5), (int)(h * f + 0.5))) return;
+  _resetGLState();
+  glDisable(GL_SCISSOR_TEST);
+  glViewport(0, 0, t.w, t.h);
+  glClearColor(0.f, 0.f, 0.f, 1.f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  // at the origin of its framebuffer, which is the whole of its window; where
+  // it is on the window, which the pointer is read against, comes back
+  p->setRect(0, 0, w, h);
+  p->draw(f, h);
+  p->setRect(x, y, w, h);
+  _resolveTarget(t);
+}
+
+void appWindow::_showTarget(sceneView *p)
+{
+  auto it = _targets.find(p);
+  if(it == _targets.end() || !it->second.colour) return;
+  int fw = 0, fh = 0, ww = 0, wh = 0;
   glfwGetFramebufferSize(_window, &fw, &fh);
+  glfwGetWindowSize(_window, &ww, &wh);
+  double f = pixelFactor();
+  float x0 = (float)(p->x() * f), x1 = (float)((p->x() + p->w()) * f);
+  float y0 = (float)((wh - p->y() - p->h()) * f), y1 = (float)((wh - p->y()) * f);
   Scene::plainPipeline();
+  glViewport(0, 0, fw, fh);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho(0., fw, 0., fh, -1., 1.);
@@ -903,18 +1023,18 @@ void appWindow::_showSceneCopy()
   glDisable(GL_LIGHTING);
   glDisable(GL_BLEND);
   glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, _sceneCopy);
+  glBindTexture(GL_TEXTURE_2D, it->second.colour);
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   glColor4f(1.f, 1.f, 1.f, 1.f);
   glBegin(GL_QUADS);
   glTexCoord2f(0.f, 0.f);
-  glVertex2f((float)r[0], (float)r[1]);
+  glVertex2f(x0, y0);
   glTexCoord2f(1.f, 0.f);
-  glVertex2f((float)(r[0] + r[2]), (float)r[1]);
+  glVertex2f(x1, y0);
   glTexCoord2f(1.f, 1.f);
-  glVertex2f((float)(r[0] + r[2]), (float)(r[1] + r[3]));
+  glVertex2f(x1, y1);
   glTexCoord2f(0.f, 1.f);
-  glVertex2f((float)r[0], (float)(r[1] + r[3]));
+  glVertex2f(x0, y1);
   glEnd();
   glBindTexture(GL_TEXTURE_2D, 0);
   glDisable(GL_TEXTURE_2D);
@@ -1099,17 +1219,7 @@ void appWindow::frame()
   glClearColor(0.f, 0.f, 0.f, 1.f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  double f = pixelFactor();
-  int rect[4] = {(int)(sx * f + 0.5), (int)((wh - sy - sh) * f + 0.5),
-                 (int)(sw * f + 0.5), (int)(sh * f + 0.5)};
-  bool kept = _sceneCopy && !_sceneWanted && !memcmp(rect, _sceneCopyRect, sizeof(rect));
-  if(kept)
-    _showSceneCopy();
-  else {
-    _drawScene();
-    _keepSceneCopy(rect);
-    _sceneWanted = false;
-  }
+  _drawScene();
   Scene::plainPipeline();
 
   ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
@@ -1324,21 +1434,19 @@ void appWindow::drawCurrentPane()
 {
   if(!_window || !_currentPane) return;
   glfwMakeContextCurrent(_window);
-  int wh = 0, ww = 0;
-  glfwGetWindowSize(_window, &ww, &wh);
   double f = pixelFactor();
 
   if(_captureW > 0 && _captureH > 0) {
-    // in the bottom-left corner, everything else cleared so that no widget ends
-    // up in it
+    // into a framebuffer of the size asked for, left bound for what reads it
+    // (PixelBuffer::fill()) until endCapture()
+    if(!_bindTarget(_capture, _captureW, _captureH)) return;
+    _capturing = true;
     int lw = (int)(_captureW / f + 0.5), lh = (int)(_captureH / f + 0.5);
-    int fw = 0, fh = 0;
-    glfwGetFramebufferSize(_window, &fw, &fh);
+    _resetGLState();
     glDisable(GL_SCISSOR_TEST);
-    glViewport(0, 0, fw, fh);
+    glViewport(0, 0, _capture.w, _capture.h);
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     std::vector<int> saved(_panes.size() * 4);
     for(std::size_t i = 0; i < _panes.size(); i++) {
       saved[4 * i + 0] = _panes[i]->x();
@@ -1348,34 +1456,31 @@ void appWindow::drawCurrentPane()
     }
     if(_captureComposite && _panes.size() > 1) {
       // General.PrintCompositeWindows: keep the tiling of the panes
-      _layoutPanes(_paneRoot, 0, wh - lh, lw, lh);
-      for(auto p : _panes) p->draw(f, wh);
+      _layoutPanes(_paneRoot, 0, 0, lw, lh);
+      for(auto p : _panes)
+        if(_isTiled(p)) p->draw(f, lh);
     }
     else {
-      _currentPane->setRect(0, wh - lh, lw, lh);
-      _currentPane->draw(f, wh);
+      _currentPane->setRect(0, 0, lw, lh);
+      _currentPane->draw(f, lh);
     }
     for(std::size_t i = 0; i < _panes.size(); i++)
       _panes[i]->setRect(saved[4 * i + 0], saved[4 * i + 1], saved[4 * i + 2],
                          saved[4 * i + 3]);
+    _resolveTarget(_capture);
   }
-  else {
-    _currentPane->draw(f, wh);
+  else if(_isTiled(_currentPane)) {
+    _drawIntoTarget(_currentPane);
+    if(glApi::BindFramebuffer) glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glShader::setWindowFramebuffer(0);
   }
   glFlush();
 }
 
 void appWindow::beginCapture(int &width, int &height, bool composite)
 {
+  // any size: the picture is drawn into a framebuffer of its own
   _captureComposite = composite;
-  int fw = 0, fh = 0;
-  if(_window) glfwGetFramebufferSize(_window, &fw, &fh);
-  if(width > fw || height > fh) {
-    Toolkit::report(Toolkit::Warning, "The ImGui interface cannot render a picture larger than the "
-                 "window (%d x %d): clamping", fw, fh);
-    width = std::min(width, fw);
-    height = std::min(height, fh);
-  }
   if(width < 1) width = 1;
   if(height < 1) height = 1;
   _captureW = width;
@@ -1386,6 +1491,13 @@ void appWindow::endCapture()
 {
   _captureW = _captureH = 0;
   _captureComposite = false;
+  if(_capturing) {
+    _capturing = false;
+    if(glApi::BindFramebuffer) glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glShader::setWindowFramebuffer(0);
+    _dropTarget(_capture);
+    requestRedraw();
+  }
 }
 
 int appWindow::runLoop()
