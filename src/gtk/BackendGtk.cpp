@@ -31,6 +31,8 @@ namespace {
     GtkWidget *win = nullptr;
     GtkWidget *menuBar = nullptr, *side = nullptr, *split = nullptr;
     GtkWidget *treeBox = nullptr, *footer = nullptr;
+    // the tree taken out of the main window into one of its own
+    GtkWidget *treeWin = nullptr;
     GtkWidget *console = nullptr, *consoleScroll = nullptr;
     // the bar over the lines, and the lines as a whole
     GtkWidget *consoleBox = nullptr, *filter = nullptr;
@@ -377,6 +379,68 @@ namespace {
     gtk_widget_set_visible(_w->footer, !row.empty());
   }
 
+  // --- the tree: a pane beside the scene, or detached in a window of its own
+
+  bool _treeShown()
+  {
+    return _w->treeWin ? gtk_widget_get_visible(_w->treeWin) :
+                         gtk_widget_get_visible(_w->treeBox);
+  }
+
+  void _showTree(bool show)
+  {
+    gtk_widget_set_visible(_w->treeBox, show);
+    if(_w->treeWin) gtk_widget_set_visible(_w->treeWin, show);
+  }
+
+  void _detachTree(bool detached);
+  gboolean _windowKey(GtkEventControllerKey *, guint keyval, guint,
+                      GdkModifierType state, gpointer);
+
+  // closed from its frame, it goes back in the main window: closed, it
+  // could not be had back
+  gboolean _treeCloseRequest(GtkWindow *, gpointer)
+  {
+    _detachTree(false);
+    return TRUE;
+  }
+
+  void _detachTree(bool detached)
+  {
+    if(!_w || detached == (_w->treeWin != nullptr)) return;
+    if(detached) {
+      const Ui::Backend::Settings set = gtkSources().settings();
+      int width = gtk_paned_get_position(GTK_PANED(_w->side));
+      g_object_ref(_w->treeBox);
+      gtk_paned_set_start_child(GTK_PANED(_w->side), nullptr);
+      _w->treeWin = gtk_window_new();
+      gtk_window_set_title(GTK_WINDOW(_w->treeWin), "Gmsh");
+      gtk_window_set_default_size(GTK_WINDOW(_w->treeWin),
+                                  width > 50 ? width : 300,
+                                  set.treeHeight > 0 ? set.treeHeight : 600);
+      gtk_window_set_child(GTK_WINDOW(_w->treeWin), _w->treeBox);
+      g_object_unref(_w->treeBox);
+      g_signal_connect(_w->treeWin, "close-request",
+                       G_CALLBACK(_treeCloseRequest), nullptr);
+      // the keys of the main window work in it too
+      GtkEventController *keys = gtk_event_controller_key_new();
+      g_signal_connect(keys, "key-pressed", G_CALLBACK(_windowKey), nullptr);
+      gtk_widget_add_controller(_w->treeWin, keys);
+      gtk_widget_set_visible(_w->treeBox, TRUE);
+      gtk_window_present(GTK_WINDOW(_w->treeWin));
+      return;
+    }
+    Ui::Backend::Layout l;
+    l.treeHeight = gtk_widget_get_height(_w->treeWin);
+    if(gtkHost().layoutChanged) gtkHost().layoutChanged(l);
+    g_object_ref(_w->treeBox);
+    gtk_window_set_child(GTK_WINDOW(_w->treeWin), nullptr);
+    gtk_window_destroy(GTK_WINDOW(_w->treeWin));
+    _w->treeWin = nullptr;
+    gtk_paned_set_start_child(GTK_PANED(_w->side), _w->treeBox);
+    g_object_unref(_w->treeBox);
+  }
+
   // --- the window as a whole
 
   void _fullscreen(bool on)
@@ -384,7 +448,7 @@ namespace {
     if(!_w || on == _w->fullscreen) return;
     _w->fullscreen = on;
     if(on) {
-      _w->treeWas = gtk_widget_get_visible(_w->treeBox);
+      _w->treeWas = _treeShown();
       _w->consoleWas = gtk_widget_get_visible(_w->consoleBox);
       gtk_window_fullscreen(GTK_WINDOW(_w->win));
     }
@@ -393,7 +457,7 @@ namespace {
     // nothing but the scene
     gtk_widget_set_visible(_w->menuBar, !on);
     gtk_widget_set_visible(_w->bar, !on);
-    gtk_widget_set_visible(_w->treeBox, !on && _w->treeWas);
+    _showTree(!on && _w->treeWas);
     gtk_widget_set_visible(_w->consoleBox, !on && _w->consoleWas);
   }
 
@@ -576,6 +640,7 @@ namespace {
     _refreshFooter();
     gtkRefreshBar();
     gtk_window_present(GTK_WINDOW(_w->win));
+    if(set.detachedTree) _detachTree(true);
     // the console as tall as the options say, once the window has a height
     int consoleHeight = set.consoleHeight > 0 ? set.consoleHeight : 150;
     int sceneHeight = h - 80;
@@ -738,13 +803,14 @@ namespace {
       gtkFormsClosingDown();
       delete _w->tree;
       _w->tree = nullptr;
-      GtkWidget *win = _w->win;
+      GtkWidget *win = _w->win, *treeWin = _w->treeWin;
       mainWindow *w = _w;
       _w = nullptr;
       gtkSetMainWindow(nullptr);
       gtkSetDock(nullptr);
       gtkSceneDestroy();
       gtk_window_destroy(GTK_WINDOW(win));
+      if(treeWin) gtk_window_destroy(GTK_WINDOW(treeWin));
       if(w->sheet) {
         gtk_style_context_remove_provider_for_display(
           gdk_display_get_default(), GTK_STYLE_PROVIDER(w->sheet));
@@ -1131,7 +1197,7 @@ namespace {
 
     void showTree() override
     {
-      if(_w) gtk_widget_set_visible(_w->treeBox, TRUE);
+      if(_w) _showTree(true);
     }
 
     void setSolverButtonMode(const std::string &, const std::string &) override
@@ -1170,28 +1236,27 @@ namespace {
       else if(what == "front")
         gtk_window_present(win);
       else if(what == "show_hide_tree")
-        gtk_widget_set_visible(_w->treeBox,
-                               !gtk_widget_get_visible(_w->treeBox));
+        _showTree(!_treeShown());
+      else if(what == "attach_detach")
+        _detachTree(!_w->treeWin);
       else if(_host.error)
         _host.error("Unknown window action '" + what + "'");
     }
 
-    bool supports(const std::string &what) override
-    {
-      // the tree is a pane of the main window, never a window of its own
-      return what != "attach_detach";
-    }
+    void detachTree(bool detached) override { _detachTree(detached); }
 
     Layout windowLayout() override
     {
       Layout l;
       if(!_w || _w->fullscreen) return l;
       gtkSceneSize(l.sceneWidth, l.sceneHeight);
-      if(gtk_widget_get_visible(_w->treeBox))
+      if(!_w->treeWin && gtk_widget_get_visible(_w->treeBox))
         l.treeWidth = gtk_paned_get_position(GTK_PANED(_w->side));
       if(gtk_widget_get_visible(_w->consoleBox))
         l.consoleHeight = gtk_widget_get_height(_w->consoleBox);
-      l.treeDetached = 0;
+      // GTK 4 does not say where a window is
+      l.treeDetached = _w->treeWin ? 1 : 0;
+      if(_w->treeWin) l.treeHeight = gtk_widget_get_height(_w->treeWin);
       return l;
     }
 
@@ -1217,7 +1282,12 @@ namespace {
 
     void setTreeWidth(int width) override
     {
-      if(_w && width >= 0) gtk_paned_set_position(GTK_PANED(_w->side), width);
+      if(!_w || width < 0) return;
+      if(_w->treeWin)
+        gtk_window_set_default_size(GTK_WINDOW(_w->treeWin), width,
+                                    gtk_widget_get_height(_w->treeWin));
+      else
+        gtk_paned_set_position(GTK_PANED(_w->side), width);
     }
 
     void enableTooltips(bool on) override {}
