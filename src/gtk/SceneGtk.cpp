@@ -9,8 +9,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GTK) && defined(HAVE_GL_SCENE)
-
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -920,5 +918,3 @@ namespace GtkScene {
   } // namespace
 
 } // namespace GtkScene
-
-#endif

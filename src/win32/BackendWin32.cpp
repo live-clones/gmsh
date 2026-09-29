@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_WIN32_GUI)
-
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
@@ -1188,5 +1186,3 @@ namespace {
   };
   offeringWin32 _offeringWin32;
 } // namespace
-
-#endif

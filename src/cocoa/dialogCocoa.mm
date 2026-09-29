@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_COCOA)
-
 #include <algorithm>
 #include <cmath>
 #include <map>
@@ -830,5 +828,3 @@ void cocoaFormsClosingDown()
   _dialogs().clear();
   _pending.clear();
 }
-
-#endif

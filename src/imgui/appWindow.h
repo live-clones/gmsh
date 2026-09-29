@@ -8,8 +8,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <atomic>
 #include <functional>
 #include <mutex>
@@ -330,7 +328,5 @@ public:
   std::string dialogPane(const Ui::Form &which) const;
   void setDialogPane(const Ui::Form &which, const std::string &pane);
 };
-
-#endif
 
 #endif

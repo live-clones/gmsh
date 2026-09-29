@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_QT)
-
 #include "qtCommon.h"
 
 #include <QHBoxLayout>
@@ -287,5 +285,3 @@ bool qtTree::isOpen(const std::string &path) const
     if(w.first == path) return w.second;
   return false;
 }
-
-#endif

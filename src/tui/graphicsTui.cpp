@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_TUI)
-
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
@@ -328,5 +326,3 @@ bool Tui::placeAgain(int x, int y, int cols, int rows)
             << "\x1b" "8" << std::flush;
   return true;
 }
-
-#endif

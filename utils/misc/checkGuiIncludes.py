@@ -17,8 +17,9 @@ What a directory may see:
 
   src/ui        its own headers, and nothing else;
   src/browser    its own, src/ui, OS.h and GmshConfig.h;
-  src/imgui      the same, the Dear ImGui headers, and src/scene, which is
-                 the contract of the 3D scene and a chantier of its own;
+  src/imgui      the same, the Dear ImGui headers, and src/scene (with
+                 src/glfw, what GLFW holds of it), which is the contract of
+                 the 3D scene and a chantier of its own;
   src/fltk       the same as the browser (FLTK's own headers come in angle
                  brackets and are not looked at).
 
@@ -109,7 +110,9 @@ def sources_of(directory):
 
 def check(root):
     ui = headers_of(os.path.join(root, "src", "ui"))
-    scene = headers_of(os.path.join(root, "src", "scene"))
+    # the scene, and what GLFW holds of it
+    scene = headers_of(os.path.join(root, "src", "scene")) | \
+        headers_of(os.path.join(root, "src", "glfw"))
     problems = []
     for name in ("ui", "browser", "imgui", "fltk"):
         directory = os.path.join(root, "src", name)

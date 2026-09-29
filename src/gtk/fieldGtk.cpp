@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GTK)
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -1351,5 +1349,3 @@ GtkWidget *gtkButtonWidget(const Ui::Button &button,
   if(button.enabled) gtk_widget_set_sensitive(w, button.enabled());
   return w;
 }
-
-#endif

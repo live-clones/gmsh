@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GTK)
-
 #include <cstdio>
 #include <set>
 #include <string>
@@ -341,5 +339,3 @@ bool gtkTree::isOpen(const std::string &path) const
     if(w.first == path) return w.second;
   return false;
 }
-
-#endif

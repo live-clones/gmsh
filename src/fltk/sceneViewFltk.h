@@ -8,8 +8,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_FLTK) && defined(HAVE_GL_SCENE)
-
 #include <string>
 
 #include <FL/Fl_Gl_Window.H>
@@ -71,7 +69,5 @@ private:
   paneInput _input(int event) const;
   void _place();
 };
-
-#endif
 
 #endif

@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <mutex>
 #include <vector>
 
@@ -364,6 +362,3 @@ namespace {
   };
   offeringImGui _offeringImGui;
 }
-
-
-#endif

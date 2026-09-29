@@ -9,8 +9,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_QT) && defined(HAVE_GL_SCENE)
-
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -759,5 +757,3 @@ namespace QtScene {
 } // namespace QtScene
 
 void qtSceneCopy() { QtScene::copyCurrentOpenglWindowToClipboard(); }
-
-#endif

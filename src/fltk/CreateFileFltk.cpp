@@ -9,8 +9,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_FLTK)
-
 #include <algorithm>
 #include <vector>
 
@@ -112,5 +110,3 @@ PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type)
 
   return buffer;
 }
-
-#endif

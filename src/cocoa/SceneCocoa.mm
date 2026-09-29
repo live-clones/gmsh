@@ -10,8 +10,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_COCOA) && defined(HAVE_GL_SCENE)
-
 #define GL_SILENCE_DEPRECATION
 
 #include <algorithm>
@@ -937,5 +935,3 @@ namespace CocoaScene {
 } // namespace CocoaScene
 
 void cocoaSceneCopy() { CocoaScene::copyCurrentOpenglWindowToClipboard(); }
-
-#endif

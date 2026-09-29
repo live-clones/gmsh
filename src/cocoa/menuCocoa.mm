@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_COCOA)
-
 #include <cctype>
 
 #include "cocoaCommon.h"
@@ -427,5 +425,3 @@ void cocoaPopupMenu(const std::vector<Ui::MenuItem> &items)
                       atLocation:[NSEvent mouseLocation]
                           inView:nil];
 }
-
-#endif

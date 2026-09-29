@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_COCOA)
-
 #include <algorithm>
 
 #import <objc/runtime.h>
@@ -539,5 +537,3 @@ bool cocoaTree::isOpen(const std::string &path) const
     if(w.first == path) return w.second;
   return false;
 }
-
-#endif

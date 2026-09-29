@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_WIN32_GUI)
-
 #include <algorithm>
 #include <cmath>
 #include <mutex>
@@ -388,5 +386,3 @@ HWND win32Panel(HWND parent, int x, int y, int w, int h, bool border)
                          x, y, w, h, parent, nullptr, GetModuleHandleW(nullptr),
                          nullptr);
 }
-
-#endif

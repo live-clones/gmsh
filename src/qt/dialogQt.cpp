@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_QT)
-
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -808,5 +806,3 @@ void qtFormsClosingDown()
 void qtSetMainWindow(QMainWindow *window) { _main = window; }
 
 QMainWindow *qtMainWindow() { return _main; }
-
-#endif

@@ -7,8 +7,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <cstdio>
 #include <set>
 #include <string>
@@ -331,6 +329,3 @@ void appWindow::_stepAnimation()
 {
   if(_animating) animationTick();
 }
-
-
-#endif

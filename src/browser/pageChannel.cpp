@@ -5,7 +5,7 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_BROWSER) && defined(__EMSCRIPTEN__)
+#if defined(__EMSCRIPTEN__)
 
 #include <cstdlib>
 #include <emscripten.h>

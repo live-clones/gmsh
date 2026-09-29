@@ -8,8 +8,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_FLTK)
-
 #include <FL/Fl_Group.H>
 
 #include "Form.h"
@@ -25,7 +23,5 @@ Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
 
 // the tree is being built again: what was kept for the old lines may go
 void fltkTreeForget();
-
-#endif
 
 #endif

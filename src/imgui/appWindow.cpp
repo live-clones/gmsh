@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -20,6 +18,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl2.h"
 #include <GLFW/glfw3.h>
+#include "glfwScreen.h"
 
 #include "appWindow.h"
 #include "uiSources.h"
@@ -199,6 +198,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
     held.uiScale = []() {
       return appWindow::available() ? appWindow::instance()->uiScale() : 1.f;
     };
+    held.screen = glfwScreen;
     held.numViews = []() {
       return appWindow::available() ? appWindow::instance()->numPanes() : 0;
     };
@@ -1411,5 +1411,3 @@ void appWindow::wake()
 {
   if(_instance && _instance->_window) glfwPostEmptyEvent();
 }
-
-#endif

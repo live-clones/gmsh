@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_WIN32_GUI)
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -1148,5 +1146,3 @@ bool win32FieldMessage(HWND panel, UINT msg, WPARAM wp, LPARAM lp,
   default: return false;
   }
 }
-
-#endif

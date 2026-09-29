@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GTK)
-
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -1049,5 +1047,3 @@ void gtkSetDock(GtkWidget *box)
 }
 
 GtkWindow *gtkMainWindow() { return _main; }
-
-#endif

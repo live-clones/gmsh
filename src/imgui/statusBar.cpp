@@ -6,8 +6,6 @@
 #include "uiSources.h"
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <string>
 #include <vector>
 
@@ -114,5 +112,3 @@ void appWindow::_drawStatusBar()
   }
   ImGui::End();
 }
-
-#endif

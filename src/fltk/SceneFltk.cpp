@@ -6,8 +6,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_FLTK)
-
 #include <FL/Fl.H>
 #include <FL/fl_ask.H>
 
@@ -371,6 +369,3 @@ namespace {
 
 // see FltkScene::installHost()
 void fltkInstallSceneHost() { FltkScene::installHost(); }
-
-
-#endif

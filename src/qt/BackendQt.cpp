@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_QT)
-
 #include <algorithm>
 #include <atomic>
 #include <clocale>
@@ -47,6 +45,10 @@
 #include <QTreeWidget>
 #include <QVBoxLayout>
 
+#if defined(HAVE_DLOPEN)
+#include <dlfcn.h>
+#endif
+
 // The Qt 6 interface: one QMainWindow -- the menu bar, the tree down the left,
 // the scene and the console under it, the bar along the bottom -- and a dock
 // widget for each described form (dialogQt.cpp). The loop is Qt's, turned by
@@ -57,6 +59,18 @@
 void qtForgetMessages();
 
 namespace {
+
+  // GTK 4 in the process already: whoever brought it, it is there before Qt
+  bool _gtk4Loaded()
+  {
+#if defined(HAVE_DLOPEN)
+    typedef unsigned (*version)();
+    version major = (version)dlsym(RTLD_DEFAULT, "gtk_get_major_version");
+    return major && major() == 4;
+#else
+    return false;
+#endif
+  }
 
   // --- the buttons held, counted for the whole application
 
@@ -261,23 +275,22 @@ namespace {
         format.setStencilBufferSize(8);
         QSurfaceFormat::setDefaultFormat(format);
         QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-#if defined(HAVE_GTK)
         // Qt's GTK theme loads GTK 3, which cannot live in a process GTK 4
-        // is linked into: the portal's reads the same desktop settings. It
-        // is chosen from the name of the desktop, which the portal's falls
-        // back on too: that name is kept from Qt while it starts
+        // is already in (the GTK interface, for one): the portal's reads the
+        // same desktop settings. It is chosen from the name of the desktop,
+        // which the portal's falls back on too: that name is kept from Qt
+        // while it starts
         QByteArray theme = qgetenv("QT_QPA_PLATFORMTHEME");
         static const char *names[] = {"XDG_CURRENT_DESKTOP", "DESKTOP_SESSION",
                                       "XDG_SESSION_DESKTOP", "GDMSESSION",
                                       "GNOME_DESKTOP_SESSION_ID"};
         std::vector<QByteArray> desktop;
-        bool hide = theme.isEmpty() || theme.contains("gtk");
+        bool hide = _gtk4Loaded() && (theme.isEmpty() || theme.contains("gtk"));
         for(const char *n : names) desktop.push_back(qgetenv(n));
         if(hide) {
           qputenv("QT_QPA_PLATFORMTHEME", "xdgdesktopportal");
           for(const char *n : names) qunsetenv(n);
         }
-#endif
         QCoreApplication::setApplicationName("Gmsh");
         QGuiApplication::setDesktopFileName("info.gmsh.gmsh");
         // Qt keeps them: they have to live as long as it does
@@ -285,10 +298,8 @@ namespace {
         static char name[] = "gmsh";
         static char *args[] = {name, nullptr};
         new QApplication(count, args);
-#if defined(HAVE_GTK)
         for(std::size_t i = 0; hide && i < desktop.size(); i++)
           if(desktop[i].size()) qputenv(names[i], desktop[i]);
-#endif
         // the numbers are read and written the C way: Qt took the locale of
         // the environment, and a decimal comma with it
         setlocale(LC_NUMERIC, "C");
@@ -919,5 +930,3 @@ namespace {
   };
   offeringQt _offeringQt;
 } // namespace
-
-#endif

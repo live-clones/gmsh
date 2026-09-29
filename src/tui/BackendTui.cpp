@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_TUI)
-
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -1767,5 +1765,3 @@ namespace {
   offeringTui _offeringTui;
 
 } // namespace
-
-#endif

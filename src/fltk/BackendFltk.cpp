@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_FLTK)
-
 #include <cstdio>
 #include <map>
 
@@ -453,6 +451,3 @@ namespace {
   };
   offeringFltk _offeringFltk;
 }
-
-
-#endif

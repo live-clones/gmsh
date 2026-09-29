@@ -5,16 +5,8 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GL_SCENE) &&                                                  \
-  (defined(HAVE_GLFW) || defined(HAVE_GTK) || defined(HAVE_QT) ||             \
-   defined(HAVE_COCOA) || defined(HAVE_TUI) || defined(HAVE_WIN32_GUI))
-
 #include <algorithm>
 #include <cmath>
-
-#if defined(HAVE_GLFW)
-#include <GLFW/glfw3.h>
-#endif
 
 #include "drawContextGL.h"
 #include "stbStrings.h"
@@ -47,20 +39,10 @@ int drawContextGL::getFontSize()
 {
   if(CTX::instance()->fontSize > 0) return CTX::instance()->fontSize;
 
-  // the screen as the holder sees it, or as GLFW does
+  // the screen as the holder sees it
   int h = 0;
   float sx = 1.f;
-  if(Scene::host().screen)
-    Scene::host().screen(h, sx);
-#if defined(HAVE_GLFW)
-  else {
-    if(GLFWmonitor *monitor = glfwGetPrimaryMonitor()) {
-      if(const GLFWvidmode *mode = glfwGetVideoMode(monitor)) h = mode->height;
-      float sy = 1.f;
-      glfwGetMonitorContentScale(monitor, &sx, &sy);
-    }
-  }
-#endif
+  if(Scene::host().screen) Scene::host().screen(h, sx);
   if(h > 0) {
     if(h < 800) return 11;
     else if(h < 1000) return 12;
@@ -121,5 +103,3 @@ void drawContextGL::flushString()
   _strings->flush(pixelFactor());
   if(_fontId >= 0) _strings->setFont(_fontId, _fontSize);
 }
-
-#endif

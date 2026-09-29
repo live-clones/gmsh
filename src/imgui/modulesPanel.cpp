@@ -7,8 +7,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <cstdio>
 #include <functional>
 #include <cstring>
@@ -151,5 +149,3 @@ void appWindow::_drawModulesPanel()
 
   ImGui::End();
 }
-
-#endif

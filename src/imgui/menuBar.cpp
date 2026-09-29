@@ -9,8 +9,6 @@
 #include "uiSources.h"
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <functional>
 #include <string>
 #include <vector>
@@ -173,5 +171,3 @@ void appWindow::windowAction(const std::string &what)
   else
     Toolkit::report(Toolkit::Error, "Unknown window action '%s'", what.c_str());
 }
-
-#endif

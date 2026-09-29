@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_FLTK) && defined(HAVE_GL_SCENE)
-
 #include <algorithm>
 #include <vector>
 
@@ -216,5 +214,3 @@ int sceneViewFltk::handle(int event)
   }
   return Fl_Gl_Window::handle(event);
 }
-
-#endif

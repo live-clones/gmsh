@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <cstdarg>
 #include <cstdio>
 #include <thread>
@@ -59,5 +57,3 @@ namespace Toolkit {
   }
 
 } // namespace Toolkit
-
-#endif

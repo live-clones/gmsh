@@ -8,8 +8,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <string>
 #include <vector>
 
@@ -20,7 +18,5 @@ class appWindow;
 // the menu bar and the quick access menu; every entry queues its action with
 // postAction()
 void menuWalk(const std::vector<Ui::MenuItem> &items, appWindow *app);
-
-#endif
 
 #endif

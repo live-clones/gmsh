@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
@@ -285,5 +283,3 @@ void fileBrowser::draw()
   if(_done) ImGui::CloseCurrentPopup();
   ImGui::EndPopup();
 }
-
-#endif

@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_COCOA)
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -1257,5 +1255,3 @@ namespace {
   };
   offeringCocoa _offeringCocoa;
 } // namespace
-
-#endif

@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <cstring>
 #include <regex>
 
@@ -94,5 +92,3 @@ void messageConsole::draw()
   }
   ImGui::EndChild();
 }
-
-#endif

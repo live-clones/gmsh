@@ -9,8 +9,6 @@
 #include "uiSources.h"
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <cctype>
 #include "imgui.h"
 
@@ -85,5 +83,3 @@ void appWindow::_handleShortcuts()
     if(k.spent) break;
   }
 }
-
-#endif

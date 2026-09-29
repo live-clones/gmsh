@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GTK)
-
 #include <cctype>
 #include <string>
 #include <vector>
@@ -391,5 +389,3 @@ void gtkPopupMenu(const std::vector<Ui::MenuItem> &items, GtkWidget *over,
   g_signal_connect(pop, "closed", G_CALLBACK(_popupClosed), nullptr);
   gtk_popover_popup(GTK_POPOVER(pop));
 }
-
-#endif

@@ -17,8 +17,6 @@
 #include "menuActions.h"
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <string>
 #include <vector>
 
@@ -1505,5 +1503,3 @@ void appWindow::setDialogPane(const Ui::Form &which, const std::string &pane)
   state.pane = pane;
   if(state.show) state.forcePane = true;
 }
-
-#endif

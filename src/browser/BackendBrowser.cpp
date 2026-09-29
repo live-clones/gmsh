@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_BROWSER)
-
 #include <cstdio>
 #include <cctype>
 #include <cstdlib>
@@ -1461,6 +1459,3 @@ namespace {
   };
   offeringBrowser _offeringBrowser;
 }
-
-
-#endif

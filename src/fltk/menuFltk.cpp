@@ -6,8 +6,6 @@
 #include "uiSources.h"
 #include "GmshConfig.h"
 
-#if defined(HAVE_FLTK)
-
 #include <cctype>
 #include <cstdint>
 #include <cstring>
@@ -224,5 +222,3 @@ void fltkMenuRefresh()
     }
   }
 }
-
-#endif

@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_QT)
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -1089,5 +1087,3 @@ QWidget *qtButtonWidget(const Ui::Button &button,
   });
   return w;
 }
-
-#endif

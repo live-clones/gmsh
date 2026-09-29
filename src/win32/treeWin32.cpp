@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_WIN32_GUI)
-
 #include <cstdio>
 #include <map>
 #include <set>
@@ -427,5 +425,3 @@ bool win32TreeNotify(win32Tree *t, NMHDR *n, LRESULT &result)
   default: return false;
   }
 }
-
-#endif

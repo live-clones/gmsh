@@ -6,8 +6,6 @@
 #include "uiSources.h"
 #include "GmshConfig.h"
 
-#if defined(HAVE_FLTK)
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -1412,5 +1410,3 @@ void fltkEachDialog(const std::function<void(dialogFltk *)> &what)
 {
   for(auto &it : _dialogs()) what(&it.second);
 }
-
-#endif

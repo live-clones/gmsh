@@ -8,8 +8,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <string>
 #include <vector>
 
@@ -65,7 +63,5 @@ public:
   void finish() { _active = false; }
   void draw();
 };
-
-#endif
 
 #endif

@@ -666,6 +666,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
     if(FLTK_VERSION VERSION_GREATER_EQUAL "1.3.0")
       add_subdirectory(src/fltk)
       set_config_option(HAVE_FLTK "Fltk")
+      list(APPEND GMSH_INTERFACES Fltk)
       message(STATUS "Using fltk-config script for Fltk " ${FLTK_VERSION})
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
                       OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
@@ -695,6 +696,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
     if(FLTK_FOUND)
       add_subdirectory(src/fltk)
       set_config_option(HAVE_FLTK "Fltk")
+      list(APPEND GMSH_INTERFACES Fltk)
       list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
     endif()
   endif()
@@ -724,6 +726,8 @@ if(EMSCRIPTEN AND (ENABLE_IMGUI OR ENABLE_BROWSER))
     add_subdirectory(src/browser)
     include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/browser)
     set_config_option(HAVE_BROWSER "Browser")
+    list(APPEND GMSH_INTERFACES Browser)
+    list(APPEND GMSH_GL_HOLDERS Browser)
   endif()
 # GLFW and the 3D scene, wanted by the Dear ImGui interface and by anything
 # else that shows the model in a window of its own -- the browser interface
@@ -838,6 +842,8 @@ elseif(ENABLE_IMGUI OR ENABLE_BROWSER)
       if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui)
         add_subdirectory(src/imgui)
         set_config_option(HAVE_IMGUI "ImGui[contrib]")
+        list(APPEND GMSH_INTERFACES ImGui)
+        list(APPEND GMSH_GL_HOLDERS ImGui)
       endif()
     elseif(ENABLE_IMGUI)
       message(SEND_ERROR "Could not find Dear ImGui in contrib/imgui")
@@ -847,6 +853,8 @@ elseif(ENABLE_IMGUI OR ENABLE_BROWSER)
       # for the page, made into a header there
       include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/browser)
       set_config_option(HAVE_BROWSER "Browser")
+      list(APPEND GMSH_INTERFACES Browser)
+      list(APPEND GMSH_GL_HOLDERS Browser)
     endif()
   endif()
 endif()
@@ -860,6 +868,8 @@ if(ENABLE_GTK AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/gtk)
     list(APPEND EXTERNAL_INCLUDES ${GTK4_INCLUDE_DIRS})
     list(APPEND EXTERNAL_LIBRARIES ${GTK4_LINK_LIBRARIES})
     set_config_option(HAVE_GTK "Gtk")
+    list(APPEND GMSH_INTERFACES Gtk)
+    list(APPEND GMSH_GL_HOLDERS Gtk)
   else()
     message(SEND_ERROR "Could not find GTK 4 (4.10 or later): disabling the "
             "GTK interface")
@@ -874,6 +884,8 @@ if(ENABLE_QT AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/qt)
     add_subdirectory(src/qt)
     list(APPEND GMSH_PRIVATE_LIBRARIES Qt6::Widgets Qt6::OpenGLWidgets)
     set_config_option(HAVE_QT "Qt")
+    list(APPEND GMSH_INTERFACES Qt)
+    list(APPEND GMSH_GL_HOLDERS Qt)
   else()
     message(SEND_ERROR "Could not find Qt 6 (Widgets, OpenGLWidgets): "
             "disabling the Qt interface")
@@ -887,6 +899,8 @@ if(ENABLE_WIN32 AND WIN32 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/win32)
   list(APPEND EXTERNAL_LIBRARIES comctl32 comdlg32 ole32 uuid shell32 gdi32
        dwmapi uxtheme)
   set_config_option(HAVE_WIN32_GUI "Win32")
+  list(APPEND GMSH_INTERFACES Win32)
+  list(APPEND GMSH_GL_HOLDERS Win32)
 endif()
 
 # Cocoa, on macOS, draws the scene itself too, in an NSOpenGLView; its files
@@ -897,6 +911,8 @@ if(ENABLE_COCOA AND APPLE AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/cocoa)
   set_source_files_properties(${COCOA_SRC} PROPERTIES COMPILE_FLAGS "-fobjc-arc")
   list(APPEND EXTERNAL_LIBRARIES "-framework Cocoa" "-framework QuartzCore")
   set_config_option(HAVE_COCOA "Cocoa")
+  list(APPEND GMSH_INTERFACES Cocoa)
+  list(APPEND GMSH_GL_HOLDERS Cocoa)
 elseif(ENABLE_COCOA)
   message(SEND_ERROR "The Cocoa interface is only available on macOS")
 endif()
@@ -909,24 +925,27 @@ if(ENABLE_TUI AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/tui AND
   list(APPEND GMSH_PRIVATE_LIBRARIES ftxui)
   add_subdirectory(src/tui)
   set_config_option(HAVE_TUI "Tui[contrib:FTXUI]")
+  list(APPEND GMSH_INTERFACES Tui)
+  list(APPEND GMSH_GL_HOLDERS Tui)
 endif()
 
 # The 3D scene: it draws the model with OpenGL and picks in it, and it belongs
 # to no interface -- whichever one is up holds it, through Scene::Host. So it
 # is added once every interface that could hold it is known, and says so with
-# HAVE_GL_SCENE. Two of its files want more than OpenGL and are picked inside:
-# see src/scene/CMakeLists.txt.
-if((HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT OR HAVE_COCOA OR
-    HAVE_TUI OR HAVE_WIN32_GUI) AND
-   EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scene)
+# HAVE_GL_SCENE. Each interface above said it was one in GMSH_INTERFACES, and
+# in GMSH_GL_HOLDERS if it holds the scene by OpenGL alone (see
+# src/scene/CMakeLists.txt); what GLFW holds of it is in src/glfw.
+if(GMSH_INTERFACES AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scene)
   add_subdirectory(src/scene)
   set(HAVE_GL_SCENE TRUE)
+  if(HAVE_GLFW)
+    add_subdirectory(src/glfw)
+  endif()
 endif()
 
 # HAVE_GUI is set as soon as one of the graphical user interfaces is compiled in,
 # and brings what they are all made of
-if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT OR HAVE_COCOA OR
-   HAVE_TUI OR HAVE_WIN32_GUI)
+if(GMSH_INTERFACES)
   set(HAVE_GUI TRUE)
   add_subdirectory(src/ui)
   add_subdirectory(src/gui)
@@ -2013,7 +2032,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(src/ui src/gui src/scene src/browser src/common src/fltk src/imgui src/geo src/graphics src/mesh
+include_directories(src/ui src/gui src/scene src/glfw src/browser src/common src/fltk src/imgui src/geo src/graphics src/mesh
                     src/solver src/numeric src/parser src/plugin src/post api
                     contrib/stb
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)

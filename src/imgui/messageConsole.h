@@ -8,8 +8,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <deque>
 #include <string>
 #include <vector>
@@ -38,7 +36,5 @@ public:
   std::size_t size() const { return _lines.size(); }
   void draw();
 };
-
-#endif
 
 #endif

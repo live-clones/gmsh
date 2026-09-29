@@ -10,8 +10,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_TUI) && defined(HAVE_GL_SCENE)
-
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -498,5 +496,3 @@ namespace TuiScene {
   } // namespace
 
 } // namespace TuiScene
-
-#endif

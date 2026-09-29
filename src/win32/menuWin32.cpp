@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_WIN32_GUI)
-
 #include <cctype>
 
 #include "win32Common.h"
@@ -152,5 +150,3 @@ void win32PopupMenu(const std::vector<Ui::MenuItem> &items, HWND owner, int x,
     });
   }
 }
-
-#endif

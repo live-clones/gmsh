@@ -5,12 +5,11 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GL_SCENE) && defined(HAVE_GLFW)
-
 #include <string>
 #include <vector>
 
 #include <GLFW/glfw3.h>
+#include "glfwScreen.h"
 
 // GLFW 3.3, that of Emscripten, names the hand after itself
 #if !defined(GLFW_POINTING_HAND_CURSOR)
@@ -238,6 +237,7 @@ namespace {
     // away
     held.drawCurrent = []() { _drawFrame(false); };
     held.uiScale = []() { return 1.f; };
+    held.screen = glfwScreen;
     held.numViews = []() { return 1; };
     held.cursor = [](Scene::Cursor kind) {
       standalone &one = _it();
@@ -680,6 +680,3 @@ namespace {
   offering _offering;
 }
 } // namespace WindowScene
-
-
-#endif

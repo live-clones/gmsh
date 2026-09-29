@@ -8,8 +8,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -248,5 +246,3 @@ void appWindow::_loadFont()
   io.Fonts->AddFontDefault();
   _fontFile.clear();
 }
-
-#endif

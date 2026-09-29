@@ -8,8 +8,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_BROWSER)
-
 #include <functional>
 #include <string>
 
@@ -42,7 +40,5 @@ namespace Browser {
   bool listeners();
 
 } // namespace Browser
-
-#endif
 
 #endif

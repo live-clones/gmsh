@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_TUI)
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -1209,5 +1207,3 @@ Element Tui::form(const Ui::Form &f, FormState &state)
   m.widest(f.content);
   return m.render(f.content);
 }
-
-#endif

@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_WIN32_GUI)
-
 #include <algorithm>
 #include <cmath>
 #include <map>
@@ -720,5 +718,3 @@ bool win32FormDialogMessage(MSG &m)
   if(!root || !GetPropW(root, L"gmshDialog")) return false;
   return IsDialogMessageW(root, &m) != 0;
 }
-
-#endif

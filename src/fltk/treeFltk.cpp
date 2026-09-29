@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_FLTK)
-
 #include <deque>
 #include <string>
 #include <vector>
@@ -230,5 +228,3 @@ Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
   line->resizable(nullptr);
   return line;
 }
-
-#endif

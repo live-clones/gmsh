@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_BROWSER)
-
 #include <cstring>
 #include <string>
 #include <vector>
@@ -229,5 +227,3 @@ namespace Browser {
   }
 
 } // namespace Browser
-
-#endif

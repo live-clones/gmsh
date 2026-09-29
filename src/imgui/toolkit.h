@@ -8,8 +8,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <functional>
 #include <string>
 
@@ -34,7 +32,5 @@ namespace Toolkit {
   bool onThread();
 
 } // namespace Toolkit
-
-#endif
 
 #endif

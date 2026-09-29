@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_QT)
-
 #include <cctype>
 
 #include "qtCommon.h"
@@ -181,5 +179,3 @@ void qtPopupMenu(const std::vector<Ui::MenuItem> &items)
   qtFillMenu(menu, items);
   menu->popup(QCursor::pos());
 }
-
-#endif

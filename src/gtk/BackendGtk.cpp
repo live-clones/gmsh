@@ -5,8 +5,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GTK)
-
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
@@ -1264,5 +1262,3 @@ namespace {
   };
   offeringGtk _offeringGtk;
 } // namespace
-
-#endif

@@ -10,8 +10,6 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_WIN32_GUI) && defined(HAVE_GL_SCENE)
-
 #include <algorithm>
 #include <cstring>
 
@@ -892,5 +890,3 @@ namespace Win32Scene {
 } // namespace Win32Scene
 
 void win32SceneCopy() { Win32Scene::copyCurrentOpenglWindowToClipboard(); }
-
-#endif
