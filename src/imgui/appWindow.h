@@ -27,8 +27,24 @@ class drawContext;
 
 // the main window: the GLFW window and its context, the Dear ImGui context, and
 // everything drawn inside. One frame(): poll the events, build the widgets,
-// render the scene into the central node, submit the draw lists on top; the
-// scene goes straight into the main framebuffer
+// draw the views of the scene that asked for it into their framebuffers, put
+// them in the central node, submit the draw lists on top
+
+// the scene (SceneImGui.cpp): its views on GuiPanes, started with the main
+// window; placed in the central node, or alone in it in full screen
+void imguiSceneStart(GLFWwindow *main);
+void imguiSceneStop();
+void imguiScenePlace(int x, int y, int w, int h, bool fullscreen);
+// the pointer, unless outside the scene, from the state of Dear ImGui
+void imguiScenePointer(bool outside);
+// the views asked for drawn, all of them put on the window
+void imguiSceneDraw();
+// the graphic windows of their own
+void imguiSceneWindows();
+void imguiSceneRedraw();
+sceneView *imguiSceneCurrent();
+void imguiSceneSplit(char how, double ratio);
+void imguiSceneNewWindow();
 
 // from another thread, drained by the frame loop
 void drainPostedFromThread();
@@ -55,72 +71,6 @@ private:
   // when nothing moves
   int _frames;
   bool _keepDrawing;
-  // each view is drawn into a framebuffer of its own, at its own origin, and
-  // put on the window as a texture: the frames nobody asked the scene for put
-  // back what it drew last
-  bool _sceneWanted;
-  struct paneTarget {
-    // the texture shown, and the multisampled buffer drawn into when there is
-    // antialiasing, resolved into the texture
-    unsigned int fbo = 0, colour = 0, depth = 0;
-    unsigned int msFbo = 0, msColour = 0, msDepth = 0;
-    int w = 0, h = 0, samples = 0;
-  };
-  std::map<sceneView *, paneTarget> _targets;
-  // the picture being captured, of the size asked for
-  paneTarget _capture;
-  bool _capturing = false;
-  // made or remade at that size in pixels, and bound as the window of the
-  // scene; false when it cannot be
-  bool _bindTarget(paneTarget &t, int w, int h);
-  void _resolveTarget(paneTarget &t);
-  void _dropTarget(paneTarget &t);
-  // the view drawn into its framebuffer, as if it were the whole window
-  void _drawIntoTarget(sceneView *p);
-  // its texture where the view is on the window
-  void _showTarget(sceneView *p);
-
-  // _panes is what SetCurrentWindow and gmsh::fltk::setCurrentWindow index
-  // into; _paneRoot says how they share the rectangle
-  std::vector<sceneView *> _panes;
-  struct paneNode {
-    sceneView *pane; // non-null for a leaf
-    char split; // 'h' (side by side) or 'v' (one above the other)
-    double ratio;
-    paneNode *child[2];
-    paneNode(sceneView *p)
-      : pane(p), split(0), ratio(0.5)
-    {
-      child[0] = child[1] = nullptr;
-    }
-  };
-  paneNode *_paneRoot;
-  sceneView *_currentPane;
-
-  // a GLFW window sharing the context, with no Dear ImGui inside: an
-  // application may open toplevel windows on Wayland, it may not place them; in
-  // _panes but not in _paneRoot
-public:
-  struct extraView {
-    GLFWwindow *window;
-    sceneView *pane;
-    int number;
-    paneInput input;
-    double lastX, lastY, lastPress;
-    bool everMoved;
-  };
-  extraView *findExtraView(GLFWwindow *w);
-
-private:
-  std::vector<extraView> _extraViews;
-  void _drawExtraViews();
-  void _closeExtraView(std::size_t i);
-  bool _isTiled(sceneView *p) const;
-  sceneView *_fullScreenPane();
-
-  paneNode *_findPaneNode(paneNode *node, sceneView *pane);
-  void _layoutPanes(paneNode *node, int x, int y, int w, int h);
-  void _deletePaneTree(paneNode *node);
   messageConsole *_console;
 
   // only what is written into the 3D view is ours
@@ -155,9 +105,6 @@ private:
   float _uiScaleOverride;
   // what is left once the framebuffer scale of the backend is taken out
   float _styleScale;
-
-  int _captureW, _captureH;
-  bool _captureComposite;
 
   std::vector<std::string> _awakeActions;
   std::mutex _awakeMutex;
@@ -194,9 +141,6 @@ private:
   float _framebufferScale() const;
   static bool _detachablePanels();
   bool _reportedDetachable;
-  bool _animating;
-  // the pane the pointer was last over
-  sceneView *_pointerPane = nullptr;
   void _loadFont();
   std::string _fontFile;
   // the line of the font over its em, see _lineOverEm
@@ -234,9 +178,6 @@ private:
   void _windowFullScreen();
   bool _zoomed, _fullscreen;
   int _savedX, _savedY, _savedW, _savedH;
-  void _stepAnimation();
-  void _drawScene();
-  void _handleInput();
   void _processAwakeActions();
 
 public:
@@ -278,10 +219,6 @@ public:
   // at most time seconds if time > 0
   void wait(bool force);
   void wait(double time, bool force);
-  // sync makes the others follow the first
-  void orientPanes(const std::string &what, bool reverse, bool sync);
-  void toggleAnimation() { _animating = !_animating; }
-  bool animating() const { return _animating; }
 
   // what cannot happen inside a frame has to be posted
   bool inFrame() const { return _inFrame; }
@@ -296,28 +233,11 @@ public:
   void showConsole(bool show) { _showConsole = show; }
   bool consoleVisible() const { return _showConsole; }
   void showModulesPanel() { _showModules = true; }
-  // for vector output and for grabbing the pixels
-  void drawCurrentPane();
-  void makeCurrent(sceneView *view);
-  // into the bottom-left corner, where PixelBuffer::fill() reads; returns the
-  // size that could be used, no larger than the window
-  void beginCapture(int &width, int &height, bool composite = false);
-  void endCapture();
 
   float uiScale() const { return _uiScale; }
   void applyStyle();
 
-  sceneView *currentPane() { return _currentPane; }
-  void setCurrentPane(sceneView *p);
-  void setCurrentPane(int index);
-  void splitCurrentPane(char how, double ratio);
-  void newGraphicWindow();
   void windowAction(const std::string &what);
-  int numPanes() const { return (int)_panes.size(); }
-  sceneView *pane(int i);
-  drawContext *currentDrawContext();
-  void currentPixelSize(int &w, int &h);
-  double pixelFactor();
 
   messageConsole *console() { return _console; }
   void addMessage(const std::string &msg, int level);

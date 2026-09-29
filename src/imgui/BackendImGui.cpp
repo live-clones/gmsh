@@ -281,13 +281,13 @@ namespace {
       if(!appWindow::available()) return;
       appWindow *a = appWindow::instance();
       if(what == "new")
-        a->newGraphicWindow();
+        imguiSceneNewWindow();
       else if(what == "split_h")
-        a->splitCurrentPane('h', 0.5);
+        imguiSceneSplit('h', 0.5);
       else if(what == "split_v")
-        a->splitCurrentPane('v', 0.5);
+        imguiSceneSplit('v', 0.5);
       else if(what == "split_u")
-        a->splitCurrentPane('u', 0.);
+        imguiSceneSplit('u', 0.);
       else
         a->windowAction(what);
     }

@@ -90,6 +90,9 @@ public:
     std::function<bool()> buttonDown;
     std::function<void *()> context;
     std::function<void(int &height, float &scale)> screen;
+    // the scale of the interface, when it is not the framebuffer pixels of
+    // a logical one
+    std::function<float()> uiScale;
   };
 
   static GuiPanes &instance();

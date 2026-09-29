@@ -400,6 +400,7 @@ void GuiPanes::_setHost()
   };
   held.uiScale = []() {
     GuiPanes &all = instance();
+    if(all._tk.uiScale) return all._tk.uiScale();
     int w = 0, h = 0;
     double f = 1.;
     if(all._current && all._tk.size) all._tk.size(all._current, w, h, f);

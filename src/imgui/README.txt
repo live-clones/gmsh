@@ -27,8 +27,12 @@ appWindow::frame() runs, in this order:
      window as a textured quad at its place in that rectangle;
   5. the Dear ImGui draw lists are submitted on top.
 
-A frame that only moves a widget therefore does not draw the scene again, and
-a picture of the scene can be of any size (see appWindow::beginCapture()).
+A frame that only moves a widget therefore does not draw the scene again. The
+views are those of src/gui/GuiPanes, as in the Qt, GTK, Win32 and Cocoa
+interfaces: SceneImGui.cpp is the toolkit that gives each one its surface (its
+frame buffer object, or its window, below), keeps how they are tiled, and hands
+them the pointer read from Dear ImGui; which view is current, the selection, the
+pictures, the animation and the gamepad are GuiPanes'.
 
 Deferred actions
 ----------------
@@ -519,17 +523,14 @@ may not place them, which a window carrying nothing but a 3D view never needs to
 do. Going through Dear ImGui's viewports instead would have inherited the
 limitation described above and given a window that cannot leave the main one.
 
-Its pane is in _panes like any other, so the API and the status bar count it,
-but it is not in _paneRoot: it is not tiled, and Split/Unsplit leave it alone.
-It is rendered after the main window has been swapped, with its own context made
-current, and closed when GLFW says the user asked for it.
+Its view is one of GuiPanes like any other, so the API and the status bar count
+it, but it is not tiled, and Split/Unsplit leave it alone. It is rendered after
+the main window has been swapped, with its own context made current, and closed
+when GLFW says the user asked for it.
 
-Its events come from GLFW callbacks rather than from Dear ImGui, which is why
-scenePane::handleMouse() takes a paneInput instead of reading the Dear ImGui io:
-the panes of the main window get that structure filled in from Dear ImGui, an
-extra window from its own callbacks. The events it carries are one-shot -- a
-click, a release, a wheel notch -- so they are cleared once the pane has seen
-them, which is what Dear ImGui does for the main window anyway.
+Its events come from GLFW callbacks rather than from Dear ImGui: they reach its
+view through GuiPanes::Pane, as those of the views of the main window do from
+what Dear ImGui says of the pointer at each frame.
 
 The window is identified with a Wayland app id and an X11 WM_CLASS of "gmsh".
 GLFW leaves the app id empty and derives WM_CLASS from the window title
@@ -609,16 +610,11 @@ interface only does on Windows anyway, and which GLFW cannot do: its clipboard
 carries text, not images. Use "File > Save Model As" with a picture format
 instead.
 
-Grabbing the scene. glReadPixels() and gl2ps both expect the scene to sit at the
-origin of the frame buffer. Gui::beginGraphicCapture() therefore has the panes
-drawn into a frame buffer object of the requested size, left bound until
-endGraphicCapture(); in the FLTK interface, where the graphic window is a
-window of its own, both do nothing.
-
-One consequence is worth knowing: with General.PrintCompositeWindows set and the
-view split, a vector output (PS, PDF, SVG, TeX) contains all the panes here,
-because they are drawn into one frame buffer, whereas the FLTK interface writes an almost
-empty file, gl2ps being able to record only one window at a time.
+Grabbing the scene. A picture is drawn by each view into a frame buffer object
+of the requested size (sceneView::printTo()), any size; with
+General.PrintCompositeWindows the tiled views each draw their share and
+GuiPanes puts the pieces together as they are tiled. A vector output (gl2ps)
+records the current view, drawn in the bottom-left corner of its frame buffer.
 
 Known limitations:
 

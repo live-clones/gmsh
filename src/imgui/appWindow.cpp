@@ -18,7 +18,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl2.h"
 #include <GLFW/glfw3.h>
-#include "glfwScreen.h"
 
 #include "appWindow.h"
 #include "uiSources.h"
@@ -111,13 +110,13 @@ static bool _initGlfw()
 
 appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   : _window(nullptr), _inFrame(false),
-    _frames(3), _keepDrawing(false), _sceneWanted(true),
-    _lastRefresh(0.), _currentPane(nullptr), _console(nullptr),
+    _frames(3), _keepDrawing(false),
+    _lastRefresh(0.), _console(nullptr),
     _showConsole(true),
     _showModules(true),
-    _paneRoot(nullptr), _uiScale(0.f),
+    _uiScale(0.f),
     _uiScaleOverride(0.f), _styleScale(0.f), _reportedDetachable(false),
-    _animating(false), _zoomed(false), _fullscreen(false), _savedX(0), _savedY(0), _savedW(0), _savedH(0), _captureW(0), _captureH(0), _captureComposite(false), _modalDepth(0),
+    _zoomed(false), _fullscreen(false), _savedX(0), _savedY(0), _savedW(0), _savedH(0), _modalDepth(0),
     _browser(nullptr)
 {
   glfwSetErrorCallback(_glfwErrorCallback);
@@ -177,65 +176,14 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   ImGui_ImplGlfw_InitForOpenGL(_window, true);
   ImGui_ImplOpenGL2_Init();
 
-  {
-    Scene::Host held;
-    held.redraw = []() {
-      if(appWindow::available()) appWindow::instance()->requestRedraw();
-    };
-    held.check = [](bool rateLimited) {
-      if(appWindow::available()) appWindow::instance()->check(rateLimited);
-    };
-    held.wait = [](double seconds, bool force) {
-      if(!appWindow::available()) return;
-      if(seconds < 0.)
-        appWindow::instance()->wait(force);
-      else
-        appWindow::instance()->wait(seconds, force);
-    };
-    held.drawCurrent = []() {
-      if(appWindow::available()) appWindow::instance()->drawCurrentPane();
-    };
-    held.uiScale = []() {
-      return appWindow::available() ? appWindow::instance()->uiScale() : 1.f;
-    };
-    held.screen = glfwScreen;
-    held.numViews = []() {
-      return appWindow::available() ? appWindow::instance()->numPanes() : 0;
-    };
-    held.cursor = [](Scene::Cursor kind) {
-      if(kind == Scene::Picking) ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-    };
-    held.current = []() -> sceneView * {
-      return appWindow::available() ? appWindow::instance()->currentPane() :
-                                      nullptr;
-    };
-    held.setCurrent = [](sceneView *view) {
-      if(appWindow::available()) appWindow::instance()->setCurrentPane(view);
-    };
-    held.later = Scene::later;
-    held.buttonDown = []() {
-      return ImGui::GetCurrentContext() &&
-             (ImGui::IsMouseDown(ImGuiMouseButton_Left) ||
-              ImGui::IsMouseDown(ImGuiMouseButton_Right) ||
-              ImGui::IsMouseDown(ImGuiMouseButton_Middle));
-    };
-    held.context = []() -> void * { return glfwGetCurrentContext(); };
-    held.makeCurrent = [](sceneView *view) {
-      if(appWindow::available()) appWindow::instance()->makeCurrent(view);
-    };
-    Scene::setHost(held);
-  }
-
   if(!dynamic_cast<drawContextGL *>(drawContext::global()))
     drawContext::setGlobal(new drawContextGL);
 
   Toolkit::claimThread();
   _console = new messageConsole();
   _browser = new fileBrowser();
-  _panes.push_back(new sceneView());
-  _currentPane = _panes[0];
-  _paneRoot = new paneNode(_panes[0]);
-  _panes[0]->contextChanged();
+  // the scene, its host and its first view
+  imguiSceneStart(_window);
 
   _instance = this;
 
@@ -274,14 +222,10 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
 
 appWindow::~appWindow()
 {
-  if(_window) glfwMakeContextCurrent(_window);
-  for(auto &t : _targets) _dropTarget(t.second);
-  _targets.clear();
-  _dropTarget(_capture);
-  _deletePaneTree(_paneRoot);
-  _paneRoot = nullptr;
-  for(auto p : _panes) delete p;
-  _panes.clear();
+  if(_window) {
+    glfwMakeContextCurrent(_window);
+    imguiSceneStop();
+  }
   delete _console;
   delete _browser;
 
@@ -315,370 +259,6 @@ void appWindow::destroy()
   delete w;
 }
 
-void appWindow::_deletePaneTree(paneNode *node)
-{
-  if(!node) return;
-  _deletePaneTree(node->child[0]);
-  _deletePaneTree(node->child[1]);
-  delete node;
-}
-
-appWindow::paneNode *appWindow::_findPaneNode(paneNode *node, sceneView *pane)
-{
-  if(!node) return nullptr;
-  if(node->pane == pane) return node;
-  if(paneNode *n = _findPaneNode(node->child[0], pane)) return n;
-  return _findPaneNode(node->child[1], pane);
-}
-
-void appWindow::_layoutPanes(paneNode *node, int x, int y, int w, int h)
-{
-  if(!node) return;
-  if(node->pane) {
-    node->pane->setRect(x, y, w, h);
-    return;
-  }
-  double f = node->ratio;
-  if(f < 0.01) f = 0.01;
-  if(f > 0.99) f = 0.99;
-  if(node->split == 'h') {
-    int w1 = (int)(w * f);
-    _layoutPanes(node->child[0], x, y, w1, h);
-    _layoutPanes(node->child[1], x + w1, y, w - w1, h);
-  }
-  else {
-    int h1 = (int)(h * f);
-    _layoutPanes(node->child[0], x, y, w, h1);
-    _layoutPanes(node->child[1], x, y + h1, w, h - h1);
-  }
-}
-
-bool appWindow::_isTiled(sceneView *p) const
-{
-  return p && _paneRoot &&
-         const_cast<appWindow *>(this)->_findPaneNode(_paneRoot, p) != nullptr;
-}
-
-static void _resetGLState()
-{
-  glDisable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_NORMAL_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
-  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  glDisable(GL_BLEND);
-  glDisable(GL_LIGHTING);
-  glDisable(GL_COLOR_MATERIAL);
-  glDisable(GL_LINE_STIPPLE);
-  glDisable(GL_POLYGON_STIPPLE);
-  glShadeModel(GL_SMOOTH);
-  glColor4f(1.f, 1.f, 1.f, 1.f);
-  glLineWidth(1.f);
-  glPointSize(1.f);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-}
-
-// --- the extra graphic windows: a window of its own, sharing the OpenGL context of the main one, with no Dear ImGui in it -- which is what works on Wayland, where Dear ImGui cannot place a viewport
-
-appWindow::extraView *appWindow::findExtraView(GLFWwindow *w)
-{
-  for(auto &v : _extraViews)
-    if(v.window == w) return &v;
-  return nullptr;
-}
-
-static void _extraCursorPos(GLFWwindow *w, double x, double y)
-{
-  if(!appWindow::available()) return;
-  appWindow::extraView *v = appWindow::instance()->findExtraView(w);
-  if(!v) return;
-  v->input.dx = v->everMoved ? x - v->lastX : 0.;
-  v->input.dy = v->everMoved ? y - v->lastY : 0.;
-  v->lastX = x;
-  v->lastY = y;
-  v->everMoved = true;
-  v->input.x = x;
-  v->input.y = y;
-  appWindow::instance()->requestRedraw();
-}
-
-static void _extraModifiers(paneInput &in, int mods)
-{
-  in.shift = (mods & GLFW_MOD_SHIFT) != 0;
-  in.ctrl = (mods & GLFW_MOD_CONTROL) != 0;
-  in.alt = (mods & GLFW_MOD_ALT) != 0;
-  in.super = (mods & GLFW_MOD_SUPER) != 0;
-}
-
-static int _extraButton(int glfwButton)
-{
-  switch(glfwButton) {
-  case GLFW_MOUSE_BUTTON_LEFT: return 0;
-  case GLFW_MOUSE_BUTTON_RIGHT: return 1;
-  case GLFW_MOUSE_BUTTON_MIDDLE: return 2;
-  default: return -1;
-  }
-}
-
-static void _extraMouseButton(GLFWwindow *w, int button, int action, int mods)
-{
-  if(!appWindow::available()) return;
-  appWindow::extraView *v = appWindow::instance()->findExtraView(w);
-  if(!v) return;
-  int b = _extraButton(button);
-  if(b < 0) return;
-  _extraModifiers(v->input, mods);
-  if(action == GLFW_PRESS) {
-    v->input.clicked[b] = true;
-    v->input.dragging[b] = true;
-    double now = TimeOfDay();
-    v->input.doubleClicked = (b == 0 && now - v->lastPress < 0.25);
-    v->lastPress = now;
-  }
-  else {
-    v->input.released[b] = true;
-    v->input.dragging[b] = false;
-  }
-  appWindow::instance()->requestRedraw();
-}
-
-static void _extraScroll(GLFWwindow *w, double, double dy)
-{
-  if(!appWindow::available()) return;
-  appWindow::extraView *v = appWindow::instance()->findExtraView(w);
-  if(!v) return;
-  v->input.wheel = dy;
-  appWindow::instance()->requestRedraw();
-}
-
-static void _extraKey(GLFWwindow *w, int key, int, int action, int mods)
-{
-  if(action != GLFW_PRESS || !appWindow::available()) return;
-  appWindow::extraView *v = appWindow::instance()->findExtraView(w);
-  if(!v) return;
-  _extraModifiers(v->input, mods);
-  if(!v->pane->selectionMode) return;
-  switch(key) {
-  case GLFW_KEY_E: v->pane->endSelection = 1; break;
-  case GLFW_KEY_U: v->pane->undoSelection = 1; break;
-  case GLFW_KEY_I:
-  case GLFW_KEY_MINUS: v->pane->invertSelection = 1; break;
-  case GLFW_KEY_Q:
-  case GLFW_KEY_ESCAPE: v->pane->quitSelection = 1; break;
-  default: break;
-  }
-  appWindow::instance()->requestRedraw();
-}
-
-void appWindow::_closeExtraView(std::size_t i)
-{
-  sceneView *dead = _extraViews[i].pane;
-  GLFWwindow *w = _extraViews[i].window;
-  _extraViews.erase(_extraViews.begin() + i);
-  for(auto it = _panes.begin(); it != _panes.end(); it++)
-    if(*it == dead) {
-      _panes.erase(it);
-      break;
-    }
-  if(_currentPane == dead) _currentPane = _panes.empty() ? nullptr : _panes[0];
-  delete dead;
-  glfwDestroyWindow(w);
-  requestRedraw();
-}
-
-void appWindow::_drawExtraViews()
-{
-  if(_extraViews.empty()) return;
-
-  GLFWwindow *main = glfwGetCurrentContext();
-  for(std::size_t i = 0; i < _extraViews.size();) {
-    extraView &v = _extraViews[i];
-    if(glfwWindowShouldClose(v.window)) {
-      _closeExtraView(i);
-      continue;
-    }
-
-    glfwMakeContextCurrent(v.window);
-    int ww = 0, wh = 0, fw = 0, fh = 0;
-    glfwGetWindowSize(v.window, &ww, &wh);
-    glfwGetFramebufferSize(v.window, &fw, &fh);
-    if(ww > 0 && wh > 0) {
-      double f = (double)fw / (double)ww;
-      v.pane->setRect(0, 0, ww, wh);
-      v.pane->setOrigin(0., 0., wh, f);
-      _resetGLState();
-      v.pane->handleMouse(v.input);
-      for(int b = 0; b < 3; b++)
-        v.input.clicked[b] = v.input.released[b] = false;
-      v.input.doubleClicked = false;
-      v.input.wheel = 0.;
-      v.input.dx = v.input.dy = 0.;
-
-      v.pane->draw(f, wh);
-
-    }
-    glfwSwapBuffers(v.window);
-    i++;
-  }
-  glfwMakeContextCurrent(main);
-}
-
-void appWindow::newGraphicWindow()
-{
-  if(!_window) return;
-
-  // sharing the context: the same textures, the atlas in particular
-  glfwDefaultWindowHints();
-  GLFWwindow *w = glfwCreateWindow(600, 500, "Gmsh", nullptr, _window);
-  if(!w) {
-    Toolkit::report(Toolkit::Error, "Could not open a new graphic window");
-    return;
-  }
-
-  sceneView *fresh = new sceneView();
-  if(_currentPane)
-    fresh->getDrawContext()->copyViewAttributes(_currentPane->getDrawContext());
-  _panes.push_back(fresh);
-  glfwMakeContextCurrent(w);
-  fresh->contextChanged();
-  glfwMakeContextCurrent(_window);
-
-  extraView v;
-  v.window = w;
-  v.pane = fresh;
-  v.number = (int)_extraViews.size() + 2; // window 1 is the main one
-  v.lastX = v.lastY = 0.;
-  v.lastPress = 0.;
-  v.everMoved = false;
-  _extraViews.push_back(v);
-
-  char title[64];
-  snprintf(title, sizeof(title), "Gmsh - Graphic window %d", v.number);
-  glfwSetWindowTitle(w, title);
-
-  glfwSetCursorPosCallback(w, _extraCursorPos);
-  glfwSetMouseButtonCallback(w, _extraMouseButton);
-  glfwSetScrollCallback(w, _extraScroll);
-  glfwSetKeyCallback(w, _extraKey);
-
-  _currentPane = fresh;
-  requestRedraw();
-}
-
-void appWindow::splitCurrentPane(char how, double ratio)
-{
-  if(!_currentPane || !_paneRoot) return;
-
-  // the extra windows are not part of the tiling
-  sceneView *current = _isTiled(_currentPane) ? _currentPane : nullptr;
-
-  if(how == 'u') {
-    sceneView *keep = current;
-    if(!keep) { // find any tiled pane to keep
-      for(auto p : _panes)
-        if(_isTiled(p)) {
-          keep = p;
-          break;
-        }
-    }
-    if(!keep) return;
-    std::vector<sceneView *> tiled;
-    for(auto p : _panes)
-      if(_isTiled(p)) tiled.push_back(p);
-    _deletePaneTree(_paneRoot);
-    std::vector<sceneView *> left;
-    for(auto p : _panes) {
-      bool isTiled =
-        std::find(tiled.begin(), tiled.end(), p) != tiled.end();
-      if(p == keep || !isTiled)
-        left.push_back(p);
-      else {
-        auto t = _targets.find(p);
-        if(t != _targets.end()) {
-          _dropTarget(t->second);
-          _targets.erase(t);
-        }
-        delete p;
-      }
-    }
-    _panes = left;
-    _paneRoot = new paneNode(keep);
-    if(!_currentPane || _currentPane == keep) _currentPane = keep;
-    requestRedraw();
-    return;
-  }
-
-  if(!current) {
-    Toolkit::report(Toolkit::Error, "Only the graphic windows of the main window can be split");
-    return;
-  }
-
-  if(how != 'h' && how != 'v') {
-    Toolkit::report(Toolkit::Error, "Unknown window splitting method '%c'", how);
-    return;
-  }
-
-  paneNode *node = _findPaneNode(_paneRoot, current);
-  if(!node) return;
-
-  sceneView *fresh = new sceneView();
-  fresh->getDrawContext()->copyViewAttributes(current->getDrawContext());
-  _panes.push_back(fresh);
-
-  node->child[0] = new paneNode(node->pane);
-  node->child[1] = new paneNode(fresh);
-  node->pane = nullptr;
-  node->split = how;
-  node->ratio = (ratio <= 0. || ratio >= 1.) ? 0.5 : ratio;
-
-  _currentPane = fresh;
-  requestRedraw();
-}
-
-sceneView *appWindow::pane(int i)
-{
-  if(i >= 0 && i < (int)_panes.size()) return _panes[i];
-  return nullptr;
-}
-
-void appWindow::setCurrentPane(sceneView *p)
-{
-  if(p) _currentPane = p;
-}
-
-void appWindow::setCurrentPane(int index)
-{
-  if(index >= 0 && index < (int)_panes.size()) _currentPane = _panes[index];
-}
-
-drawContext *appWindow::currentDrawContext()
-{
-  return _currentPane ? _currentPane->getDrawContext() : nullptr;
-}
-
-double appWindow::pixelFactor()
-{
-  if(!_window) return 1.;
-  int ww = 0, wh = 0, fw = 0, fh = 0;
-  glfwGetWindowSize(_window, &ww, &wh);
-  glfwGetFramebufferSize(_window, &fw, &fh);
-  return (ww > 0) ? (double)fw / (double)ww : 1.;
-}
-
-void appWindow::currentPixelSize(int &w, int &h)
-{
-  double f = pixelFactor();
-  if(_currentPane) {
-    w = (int)(_currentPane->w() * f + 0.5);
-    h = (int)(_currentPane->h() * f + 0.5);
-  }
-  else {
-    w = h = 0;
-  }
-}
-
 void appWindow::requestFrame()
 {
   // a few frames rather than one: what changed often takes another to settle;
@@ -690,7 +270,7 @@ void appWindow::requestFrame()
 void appWindow::requestRedraw()
 {
   requestFrame();
-  _sceneWanted = true;
+  imguiSceneRedraw();
 }
 
 void appWindow::addMessage(const std::string &msg, int level)
@@ -857,239 +437,6 @@ void appWindow::_buildDockSpace(int &sceneX, int &sceneY, int &sceneW,
   }
 }
 
-// imgui_impl_opengl2 does not push GL_TEXTURE_BIT: the atlas stays bound and
-// the environment set to GL_MODULATE
-void appWindow::_drawScene()
-{
-  // what is on the window: the current view alone in full screen
-  std::vector<sceneView *> shown;
-  if(_fullscreen) {
-    if(sceneView *p = _fullScreenPane()) shown.push_back(p);
-  }
-  else
-    for(auto p : _panes)
-      if(_isTiled(p)) shown.push_back(p);
-  // drawn again when the scene asked for it, or when the view changed size;
-  // put back otherwise
-  double f = pixelFactor();
-  for(auto p : shown) {
-    auto it = _targets.find(p);
-    bool resized = it == _targets.end() ||
-                   it->second.w != (int)(p->w() * f + 0.5) ||
-                   it->second.h != (int)(p->h() * f + 0.5);
-    if(_sceneWanted || resized) _drawIntoTarget(p);
-  }
-  _sceneWanted = false;
-  if(glApi::BindFramebuffer) glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
-  glShader::setWindowFramebuffer(0);
-  for(auto p : shown) _showTarget(p);
-}
-
-// --- the framebuffer each view is drawn into
-
-void appWindow::_dropTarget(paneTarget &t)
-{
-  if(t.fbo && glApi::DeleteFramebuffers) glApi::DeleteFramebuffers(1, &t.fbo);
-  if(t.msFbo && glApi::DeleteFramebuffers) glApi::DeleteFramebuffers(1, &t.msFbo);
-  if(t.colour) glDeleteTextures(1, &t.colour);
-  if(glApi::DeleteRenderbuffers) {
-    if(t.depth) glApi::DeleteRenderbuffers(1, &t.depth);
-    if(t.msColour) glApi::DeleteRenderbuffers(1, &t.msColour);
-    if(t.msDepth) glApi::DeleteRenderbuffers(1, &t.msDepth);
-  }
-  t = paneTarget();
-}
-
-bool appWindow::_bindTarget(paneTarget &t, int w, int h)
-{
-  if(w < 1 || h < 1 || !glApi::GenFramebuffers || !glApi::BindFramebuffer ||
-     !glApi::GenRenderbuffers || !glApi::RenderbufferStorage)
-    return false;
-  // what the window had through GLFW_SAMPLES, the framebuffer has
-  int samples = (imguiSources().settings().antialiasing &&
-                 glApi::RenderbufferStorageMultisample && glApi::BlitFramebuffer) ?
-                  4 :
-                  0;
-  if(t.fbo && (t.w != w || t.h != h || t.samples != samples)) _dropTarget(t);
-  if(!t.fbo) {
-    glGenTextures(1, &t.colour);
-    glBindTexture(GL_TEXTURE_2D, t.colour);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                 nullptr);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glApi::GenRenderbuffers(1, &t.depth);
-    glApi::BindRenderbuffer(GL_RENDERBUFFER, t.depth);
-    glApi::RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
-    glApi::GenFramebuffers(1, &t.fbo);
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, t.fbo);
-    glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                GL_TEXTURE_2D, t.colour, 0);
-    glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-                                   GL_RENDERBUFFER, t.depth);
-    bool ok = glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) ==
-              GL_FRAMEBUFFER_COMPLETE;
-    if(ok && samples) {
-      glApi::GenRenderbuffers(1, &t.msColour);
-      glApi::BindRenderbuffer(GL_RENDERBUFFER, t.msColour);
-      glApi::RenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_RGBA8,
-                                            w, h);
-      glApi::GenRenderbuffers(1, &t.msDepth);
-      glApi::BindRenderbuffer(GL_RENDERBUFFER, t.msDepth);
-      glApi::RenderbufferStorageMultisample(GL_RENDERBUFFER, samples,
-                                            GL_DEPTH24_STENCIL8, w, h);
-      glApi::GenFramebuffers(1, &t.msFbo);
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, t.msFbo);
-      glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                     GL_RENDERBUFFER, t.msColour);
-      glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-                                     GL_RENDERBUFFER, t.msDepth);
-      // no multisampling rather than no picture
-      if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        glApi::DeleteFramebuffers(1, &t.msFbo);
-        glApi::DeleteRenderbuffers(1, &t.msColour);
-        glApi::DeleteRenderbuffers(1, &t.msDepth);
-        t.msFbo = t.msColour = t.msDepth = 0;
-        samples = 0;
-      }
-    }
-    glApi::BindRenderbuffer(GL_RENDERBUFFER, 0);
-    if(!ok) {
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
-      _dropTarget(t);
-      return false;
-    }
-    t.w = w;
-    t.h = h;
-    t.samples = samples;
-  }
-  unsigned int into = t.msFbo ? t.msFbo : t.fbo;
-  glApi::BindFramebuffer(GL_FRAMEBUFFER, into);
-  glShader::setWindowFramebuffer(into);
-  return true;
-}
-
-void appWindow::_resolveTarget(paneTarget &t)
-{
-  if(!t.msFbo) return;
-  glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, t.msFbo);
-  glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, t.fbo);
-  glApi::BlitFramebuffer(0, 0, t.w, t.h, 0, 0, t.w, t.h, GL_COLOR_BUFFER_BIT,
-                         GL_NEAREST);
-  glApi::BindFramebuffer(GL_FRAMEBUFFER, t.fbo);
-}
-
-void appWindow::_drawIntoTarget(sceneView *p)
-{
-  double f = pixelFactor();
-  int x = p->x(), y = p->y(), w = p->w(), h = p->h();
-  if(w < 1 || h < 1) return;
-  paneTarget &t = _targets[p];
-  if(!_bindTarget(t, (int)(w * f + 0.5), (int)(h * f + 0.5))) return;
-  _resetGLState();
-  glDisable(GL_SCISSOR_TEST);
-  glViewport(0, 0, t.w, t.h);
-  glClearColor(0.f, 0.f, 0.f, 1.f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  // at the origin of its framebuffer, which is the whole of its window; where
-  // it is on the window, which the pointer is read against, comes back
-  p->setRect(0, 0, w, h);
-  p->draw(f, h);
-  p->setRect(x, y, w, h);
-  _resolveTarget(t);
-}
-
-void appWindow::_showTarget(sceneView *p)
-{
-  auto it = _targets.find(p);
-  if(it == _targets.end() || !it->second.colour) return;
-  int fw = 0, fh = 0, ww = 0, wh = 0;
-  glfwGetFramebufferSize(_window, &fw, &fh);
-  glfwGetWindowSize(_window, &ww, &wh);
-  double f = pixelFactor();
-  float x0 = (float)(p->x() * f), x1 = (float)((p->x() + p->w()) * f);
-  float y0 = (float)((wh - p->y() - p->h()) * f), y1 = (float)((wh - p->y()) * f);
-  Scene::plainPipeline();
-  glViewport(0, 0, fw, fh);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(0., fw, 0., fh, -1., 1.);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_LIGHTING);
-  glDisable(GL_BLEND);
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, it->second.colour);
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-  glColor4f(1.f, 1.f, 1.f, 1.f);
-  glBegin(GL_QUADS);
-  glTexCoord2f(0.f, 0.f);
-  glVertex2f(x0, y0);
-  glTexCoord2f(1.f, 0.f);
-  glVertex2f(x1, y0);
-  glTexCoord2f(1.f, 1.f);
-  glVertex2f(x1, y1);
-  glTexCoord2f(0.f, 1.f);
-  glVertex2f(x0, y1);
-  glEnd();
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glDisable(GL_TEXTURE_2D);
-}
-
-// the current view, unless it belongs to an extra window, which stays as it is
-sceneView *appWindow::_fullScreenPane()
-{
-  if(_isTiled(_currentPane)) return _currentPane;
-  for(auto p : _panes)
-    if(_isTiled(p)) return p;
-  return nullptr;
-}
-
-void appWindow::_handleInput()
-{
-  ImGuiIO &io = ImGui::GetIO();
-  // the scene gets its events over the pass-through central node
-  bool outside = io.WantCaptureMouse || _modalDepth > 0 ||
-                 io.MousePos.x == -FLT_MAX || io.MousePos.y == -FLT_MAX;
-  // the pane the pointer left forgets what it was over
-  sceneView *over = nullptr;
-  for(auto p : _panes)
-    if(!outside && _isTiled(p) && p->contains(io.MousePos.x, io.MousePos.y))
-      over = p;
-  if(over != _pointerPane) {
-    if(std::find(_panes.begin(), _panes.end(), _pointerPane) != _panes.end())
-      _pointerPane->pointerLeft();
-    _pointerPane = over;
-  }
-  if(outside) return;
-
-  paneInput in;
-  in.x = io.MousePos.x;
-  in.y = io.MousePos.y;
-  in.dx = io.MouseDelta.x;
-  in.dy = io.MouseDelta.y;
-  in.wheel = io.MouseWheel;
-  in.shift = io.KeyShift;
-  in.ctrl = io.KeyCtrl;
-  in.alt = io.KeyAlt;
-  in.super = io.KeySuper;
-  for(int b = 0; b < 3; b++) {
-    in.clicked[b] = ImGui::IsMouseClicked(b);
-    in.released[b] = ImGui::IsMouseReleased(b);
-    in.dragging[b] = ImGui::IsMouseDragging(b, 0.f);
-  }
-  in.doubleClicked = ImGui::IsMouseDoubleClicked(0);
-
-  for(auto p : _panes) {
-    if(!_isTiled(p)) continue;
-    if(p->contains(in.x, in.y) || p == _currentPane) p->handleMouse(in);
-  }
-}
-
 void appWindow::_runPendingActions()
 {
   if(_pendingActions.empty()) return;
@@ -1177,29 +524,13 @@ void appWindow::frame()
   else
     _drawPanels(sx, sy, sw, sh);
 
-  _stepAnimation();
   _drawModal();
   _browser->draw();
 
-  if(_fullscreen) {
-    sceneView *p = _fullScreenPane();
-    if(p) p->setRect(sx, sy, sw, sh);
-  }
-  else
-    _layoutPanes(_paneRoot, sx, sy, sw, sh);
-  int wh = 0, ww = 0;
-  glfwGetWindowSize(_window, &ww, &wh);
-  {
-    // where the main window is on the screen turns io.MousePos into pane
-    // coordinates
-    const ImGuiViewport *vp = ImGui::GetMainViewport();
-    for(auto p : _panes)
-      if(_isTiled(p)) p->setOrigin(vp->Pos.x, vp->Pos.y, wh, pixelFactor());
-  }
-  _handleInput();
+  imguiScenePlace(sx, sy, sw, sh, _fullscreen);
+  // the scene gets its events over the pass-through central node
+  imguiScenePointer(ImGui::GetIO().WantCaptureMouse || _modalDepth > 0);
   _handleShortcuts();
-  // the frame that follows is the picture the gamepad asked for
-  Scene::gamepadTurn(currentPane());
 
   // whatever the user is in the middle of needs the next frame now
   {
@@ -1219,7 +550,7 @@ void appWindow::frame()
   glClearColor(0.f, 0.f, 0.f, 1.f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  _drawScene();
+  imguiSceneDraw();
   Scene::plainPipeline();
 
   ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
@@ -1236,7 +567,7 @@ void appWindow::frame()
   glfwSwapBuffers(_window);
 
   // rendered once the main window is done, each with its own context
-  _drawExtraViews();
+  imguiSceneWindows();
 
   // settled during the first frame only
   if(!_reportedDetachable) {
@@ -1418,86 +749,6 @@ void appWindow::wait(double time, bool force)
   else
     glfwPollEvents();
   frame();
-}
-
-void appWindow::makeCurrent(sceneView *view)
-{
-  for(const auto &v : _extraViews)
-    if(v.pane == view && v.window) {
-      glfwMakeContextCurrent(v.window);
-      return;
-    }
-  if(_window) glfwMakeContextCurrent(_window);
-}
-
-void appWindow::drawCurrentPane()
-{
-  if(!_window || !_currentPane) return;
-  glfwMakeContextCurrent(_window);
-  double f = pixelFactor();
-
-  if(_captureW > 0 && _captureH > 0) {
-    // into a framebuffer of the size asked for, left bound for what reads it
-    // (PixelBuffer::fill()) until endCapture()
-    if(!_bindTarget(_capture, _captureW, _captureH)) return;
-    _capturing = true;
-    int lw = (int)(_captureW / f + 0.5), lh = (int)(_captureH / f + 0.5);
-    _resetGLState();
-    glDisable(GL_SCISSOR_TEST);
-    glViewport(0, 0, _capture.w, _capture.h);
-    glClearColor(0.f, 0.f, 0.f, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    std::vector<int> saved(_panes.size() * 4);
-    for(std::size_t i = 0; i < _panes.size(); i++) {
-      saved[4 * i + 0] = _panes[i]->x();
-      saved[4 * i + 1] = _panes[i]->y();
-      saved[4 * i + 2] = _panes[i]->w();
-      saved[4 * i + 3] = _panes[i]->h();
-    }
-    if(_captureComposite && _panes.size() > 1) {
-      // General.PrintCompositeWindows: keep the tiling of the panes
-      _layoutPanes(_paneRoot, 0, 0, lw, lh);
-      for(auto p : _panes)
-        if(_isTiled(p)) p->draw(f, lh);
-    }
-    else {
-      _currentPane->setRect(0, 0, lw, lh);
-      _currentPane->draw(f, lh);
-    }
-    for(std::size_t i = 0; i < _panes.size(); i++)
-      _panes[i]->setRect(saved[4 * i + 0], saved[4 * i + 1], saved[4 * i + 2],
-                         saved[4 * i + 3]);
-    _resolveTarget(_capture);
-  }
-  else if(_isTiled(_currentPane)) {
-    _drawIntoTarget(_currentPane);
-    if(glApi::BindFramebuffer) glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
-    glShader::setWindowFramebuffer(0);
-  }
-  glFlush();
-}
-
-void appWindow::beginCapture(int &width, int &height, bool composite)
-{
-  // any size: the picture is drawn into a framebuffer of its own
-  _captureComposite = composite;
-  if(width < 1) width = 1;
-  if(height < 1) height = 1;
-  _captureW = width;
-  _captureH = height;
-}
-
-void appWindow::endCapture()
-{
-  _captureW = _captureH = 0;
-  _captureComposite = false;
-  if(_capturing) {
-    _capturing = false;
-    if(glApi::BindFramebuffer) glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
-    glShader::setWindowFramebuffer(0);
-    _dropTarget(_capture);
-    requestRedraw();
-  }
 }
 
 int appWindow::runLoop()
