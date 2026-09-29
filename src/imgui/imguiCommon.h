@@ -47,6 +47,9 @@ float imguiUiScale();
 float imguiStyleScale();
 // a question or a file chooser being answered: the rest is disabled
 bool imguiModal();
+// whether the windowing system lets a panel be put anywhere on the screen,
+// and says where it is: panels that can be windows of their own, not Wayland
+bool imguiPlacesWindows();
 
 // --- the fonts, see fontsImGui.cpp: the one of the interface, and the line
 // of the font over its em; the bold face for the headings, the slanted one
@@ -81,7 +84,8 @@ void imguiShowTree(bool show);
 // out of the dock space, a window of its own, or back where it was docked
 void imguiDetachTree(bool detached);
 bool imguiTreeDetached();
-// where it floats, from the top left of the main window; false when docked
+// where it floats, on the screen (nothing said where that cannot be known);
+// false when docked
 bool imguiTreeFloating(int &x, int &y, int &height);
 // the node of the dock space it goes back to when it was never docked
 void imguiSetTreeHome(unsigned dockNode);
@@ -101,6 +105,8 @@ std::string imguiFormPane(const Ui::Form &form);
 void imguiSetFormPane(const Ui::Form &form, const std::string &pane);
 void imguiDropForm(const Ui::Form &form);
 void imguiDrawForms();
+// where the first form floating is, on the screen; false with none
+bool imguiFormPosition(int &x, int &y);
 
 // --- a file chooser on std::filesystem, the same on every platform; shown by
 // the main window, which pumps frames until the user has chosen: from an

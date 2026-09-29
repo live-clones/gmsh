@@ -113,12 +113,10 @@ void imguiDrawTree()
     float w = _floatSize.x > 0.f ? _floatSize.x : 300.f;
     float h = set.treeHeight > 0 ? (float)set.treeHeight : 600.f;
     ImGui::SetNextWindowSize(ImVec2(w, h), ImGuiCond_Always);
-    if(set.treeX > 0 || set.treeY > 0) {
-      const ImGuiViewport *main = ImGui::GetMainViewport();
-      ImGui::SetNextWindowPos(ImVec2(main->Pos.x + set.treeX,
-                                     main->Pos.y + set.treeY),
+    // on the screen, as the options say it
+    if(imguiPlacesWindows() && (set.treeX > 0 || set.treeY > 0))
+      ImGui::SetNextWindowPos(ImVec2((float)set.treeX, (float)set.treeY),
                               ImGuiCond_Always);
-    }
   }
   else if(_detachWanted == 0 && _home &&
           ImGui::DockBuilderGetNode(_home))
@@ -240,10 +238,11 @@ void imguiSetTreeHomeNow(unsigned dockNode)
 bool imguiTreeFloating(int &x, int &y, int &height)
 {
   if(!_detached) return false;
-  const ImGuiViewport *main = ImGui::GetMainViewport();
-  x = (int)(_floatAt.x - main->Pos.x);
-  y = (int)(_floatAt.y - main->Pos.y);
   height = (int)_floatSize.y;
+  if(imguiPlacesWindows()) {
+    x = (int)_floatAt.x;
+    y = (int)_floatAt.y;
+  }
   return true;
 }
 

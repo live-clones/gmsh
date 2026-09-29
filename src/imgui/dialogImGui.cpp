@@ -45,6 +45,9 @@ namespace {
     // the user picks
     std::string pane;
     bool forcePane = false;
+    // where it was last drawn, when it floats
+    ImVec2 at = ImVec2(0.f, 0.f);
+    bool floating = false;
   };
   std::map<const Ui::Form *, dialogState> _dialogs;
 
@@ -339,6 +342,12 @@ namespace {
       state.height = size.y;
     }
     ImGui::SetNextWindowSizeConstraints(size, ImVec2(FLT_MAX, FLT_MAX));
+    // the first time, where the options say; Dear ImGui keeps where it was
+    // afterwards
+    const Ui::Backend::Settings set = imguiSources().settings();
+    if(imguiPlacesWindows() && (set.dialogX > 0 || set.dialogY > 0))
+      ImGui::SetNextWindowPos(ImVec2((float)set.dialogX, (float)set.dialogY),
+                              ImGuiCond_FirstUseEver);
     if(!ImGui::Begin(title.c_str(), &state.show,
                      ImGuiWindowFlags_NoScrollbar |
                        ImGuiWindowFlags_NoScrollWithMouse)) {
@@ -348,6 +357,12 @@ namespace {
       return;
     }
 
+    if(!ImGui::IsWindowDocked()) {
+      state.at = ImGui::GetWindowPos();
+      state.floating = true;
+    }
+    else
+      state.floating = false;
     // placed in what the window offers, which is at least what it needs
     ImVec2 avail = ImGui::GetContentRegionAvail();
     Ui::Placement placed =
@@ -415,6 +430,18 @@ void imguiShowForm(const Ui::Form &form, bool show)
 void imguiDropForm(const Ui::Form &which)
 {
   _dialogs.erase(&which);
+}
+
+bool imguiFormPosition(int &x, int &y)
+{
+  if(!imguiPlacesWindows()) return false;
+  for(auto &it : _dialogs)
+    if(it.second.show && it.second.floating) {
+      x = (int)it.second.at.x;
+      y = (int)it.second.at.y;
+      return true;
+    }
+  return false;
 }
 
 bool imguiFormVisible(const Ui::Form &which)

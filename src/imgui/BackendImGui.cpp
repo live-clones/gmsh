@@ -301,6 +301,7 @@ public:
   void windowAction(const std::string &what);
 
   console *messages() { return _console; }
+  GLFWwindow *glfwWindow() { return _window; }
   void addMessage(const std::string &msg, int level);
   void setGraphicTitle(const std::string &title);
 
@@ -430,6 +431,10 @@ mainWindow::mainWindow(int argc, char **argv, bool quitShouldExit)
   }
   glfwMakeContextCurrent(_window);
   glfwSwapInterval(1);
+  // where the options say, where the windowing system lets it be put
+  if(glfwGetPlatform() != GLFW_PLATFORM_WAYLAND &&
+     (set.sceneX > 0 || set.sceneY > 0))
+    glfwSetWindowPos(_window, set.sceneX, set.sceneY);
 
   glfwSetDropCallback(_window, _glfwDropCallback);
 
@@ -1584,6 +1589,12 @@ void mainWindow::windowAction(const std::string &what)
     Layout windowLayout() override
     {
       Layout l;
+      GLFWwindow *main = mainWindow::available() ?
+                           mainWindow::instance()->glfwWindow() :
+                           nullptr;
+      if(main && glfwGetPlatform() != GLFW_PLATFORM_WAYLAND)
+        glfwGetWindowPos(main, &l.sceneX, &l.sceneY);
+      imguiFormPosition(l.dialogX, l.dialogY);
       l.treeDetached = imguiTreeDetached() ? 1 : 0;
       imguiTreeFloating(l.treeX, l.treeY, l.treeHeight);
       return l;
@@ -1662,6 +1673,15 @@ void imguiReport(int level, const char *format, ...)
 void imguiLater(const std::function<void()> &what)
 {
   if(mainWindow::available()) mainWindow::instance()->postAction(what);
+}
+
+bool imguiPlacesWindows()
+{
+  // the positions are on the screen once panels can be windows of their own;
+  // Wayland does not say where a window is
+  return glfwGetPlatform() != GLFW_PLATFORM_WAYLAND &&
+         ImGui::GetCurrentContext() &&
+         (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) != 0;
 }
 
 bool imguiInFrame()
