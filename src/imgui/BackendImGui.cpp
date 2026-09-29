@@ -35,6 +35,7 @@
 #include <GLFW/glfw3.h>
 
 #include "imguiCommon.h"
+#include "Glyph.h"
 #include "sceneView.h"
 #include "sceneHost.h"
 #include "sceneGamepad.h"
@@ -1106,20 +1107,36 @@ void mainWindow::_drawStatusBar()
                                        1.f));
           painted = 1;
         }
+        std::string glyph = (on && b.glyphOn.size()) ? b.glyphOn : b.glyph;
+        bool pictured = Ui::glyph(glyph) != nullptr;
+        ImU32 ink = ImGui::GetColorU32(ImGuiCol_Text);
         ImGui::PushID((int)i);
         if(b.menu) {
-          if(ImGui::BeginMenu(label.c_str(), enabled)) {
+          // the picture over a name of blanks as wide as it
+          if(ImGui::BeginMenu(pictured ? "   ##m" : label.c_str(), enabled)) {
             static std::vector<Ui::MenuItem> menu;
             menu = b.menu();
             imguiMenu(menu);
             ImGui::EndMenu();
           }
+          if(pictured)
+            imguiGlyph(glyph, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+                       ink);
         }
-        else if(ImGui::Button(label.c_str())) {
-          std::function<void(bool, bool)> what = b.action;
-          bool reverse = ImGui::GetIO().KeyShift;
-          bool sync = ImGui::GetIO().KeyCtrl;
-          if(what) postAction([what, reverse, sync]() { what(reverse, sync); });
+        else {
+          float side = ImGui::GetFrameHeight();
+          bool pressed = pictured ? ImGui::Button("##g", ImVec2(side, side)) :
+                                    ImGui::Button(label.c_str());
+          if(pictured)
+            imguiGlyph(glyph, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+                       ink);
+          if(pressed) {
+            std::function<void(bool, bool)> what = b.action;
+            bool reverse = ImGui::GetIO().KeyShift;
+            bool sync = ImGui::GetIO().KeyCtrl;
+            if(what)
+              postAction([what, reverse, sync]() { what(reverse, sync); });
+          }
         }
         ImGui::PopID();
         if(painted) ImGui::PopStyleColor(painted);

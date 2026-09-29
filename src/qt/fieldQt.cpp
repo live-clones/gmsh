@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "qtCommon.h"
+#include "Glyph.h"
 #include "MapEditor.h"
 
 #include <QApplication>
@@ -29,6 +30,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPushButton>
 #include <QSlider>
 #include <QToolButton>
@@ -48,6 +50,39 @@ double qtEm()
 }
 
 int qtPx(double em) { return (int)std::floor(em * qtEm() + 0.5); }
+
+QIcon qtGlyph(const std::string &name, const QColor &ink)
+{
+  const Ui::Glyph *g = Ui::glyph(name);
+  if(!g) return QIcon();
+  double ratio = qApp->devicePixelRatio();
+  int side = qtPx(1.);
+  QPixmap pixmap((int)std::ceil(side * ratio), (int)std::ceil(side * ratio));
+  pixmap.setDevicePixelRatio(ratio);
+  pixmap.fill(Qt::transparent);
+  QPainter p(&pixmap);
+  p.setRenderHint(QPainter::Antialiasing);
+  // the square -1..1 over the pixmap, less the half line at the edge
+  p.translate(side / 2., side / 2.);
+  p.scale(side / 2.2, side / 2.2);
+  for(const Ui::Stroke &k : g->strokes) {
+    QColor c = k.colour.a ? QColor(k.colour.r, k.colour.g, k.colour.b) : ink;
+    QPainterPath path;
+    for(std::size_t i = 0; i + 1 < k.points.size(); i += 2) {
+      if(!i)
+        path.moveTo(k.points[i], k.points[i + 1]);
+      else
+        path.lineTo(k.points[i], k.points[i + 1]);
+    }
+    if(k.kind != Ui::Stroke::Line) path.closeSubpath();
+    if(k.kind == Ui::Stroke::Fill) p.fillPath(path, c);
+    QPen pen(c, k.width);
+    pen.setCosmetic(true);
+    p.strokePath(path, pen);
+  }
+  p.end();
+  return QIcon(pixmap);
+}
 
 namespace {
 
@@ -898,9 +933,14 @@ QWidget *qtButtonWidget(const Ui::Button &button,
                         const std::function<void()> &after)
 {
   std::string label = button.label;
-  if(label.empty() && button.menu) label = "▾";
-  if(label.empty()) label = button.glyph;
+  QIcon picture = qtGlyph(button.glyph, QApplication::palette().buttonText().color());
+  if(!picture.isNull()) label.clear();
+  else if(label.empty() && button.menu) label = "▾";
   QPushButton *w = new QPushButton(qtString(label));
+  if(!picture.isNull()) {
+    w->setIcon(picture);
+    w->setIconSize(QSize(qtPx(1.), qtPx(1.)));
+  }
   w->setAutoDefault(false);
   if(button.tooltip.size() && qtSources().settings().tooltips)
     w->setToolTip(qtString(button.tooltip));

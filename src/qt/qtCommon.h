@@ -15,6 +15,8 @@
 #include <string>
 #include <vector>
 
+#include <QColor>
+#include <QIcon>
 #include <QString>
 #include <QtCore/qnamespace.h>
 
@@ -66,6 +68,10 @@ void qtPopupMenu(const std::vector<Ui::MenuItem> &items);
 // descriptions give are in
 double qtEm();
 int qtPx(double em);
+
+// --- a picture of Glyph.h in the colour of the text, a square one em wide;
+// null for a name no glyph has
+QIcon qtGlyph(const std::string &name, const QColor &ink);
 
 // --- the widget of one field, bound to the place its value lives; `after`
 // is what the holder does once the user changed something

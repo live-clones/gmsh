@@ -561,9 +561,10 @@ fieldWin32 *win32MakeField(HWND parent, const Ui::Field &field,
   }
   for(std::size_t t = 0; t < g.trailing.size(); t++) {
     const Ui::Button &b = g.trailing[t];
-    std::string label = b.label.size() ? b.label : b.menu ? "▾" : b.glyph;
+    std::string label = b.label.size() ? b.label : b.menu ? "▾" : "";
     HWND w = _make(L"BUTTON", WS_TABSTOP | BS_PUSHBUTTON, parent, 0,
                    win32Wide(label));
+    win32ButtonShows(w, label, b.glyph);
     _bind(w, f);
     SetPropW(w, L"gmshButton", (HANDLE)(INT_PTR)(t + 1));
     f->trailing.push_back(w);

@@ -42,6 +42,7 @@
 #include <FL/fl_draw.H>
 
 #include "fltkCommon.h"
+#include "Glyph.h"
 #include "MapEditor.h"
 
 // --- the widgets FLTK has none for
@@ -781,7 +782,7 @@ Fl_Button *fltkButtonWidget(const Ui::Button &button, int x, int y, int w,
   made->button = button;
   made->key = key;
   // the picture, for the two that have one, in the way FLTK draws a symbol
-  if(button.glyph.size())
+  if(Ui::glyph(button.glyph))
     made->copy_label(("@-1gmsh_" + button.glyph).c_str());
   else if(button.label.size())
     made->copy_label(button.label.c_str());

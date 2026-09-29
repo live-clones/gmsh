@@ -208,8 +208,8 @@ void gtkRefreshBar()
     const Ui::BarButton &b = bar[i++];
     bool on = b.on && b.on();
     std::string label = (on && b.labelOn.size()) ? b.labelOn : b.label;
-    if(label != gtk_button_get_label(GTK_BUTTON(c)))
-      gtk_button_set_label(GTK_BUTTON(c), label.c_str());
+    std::string glyph = (on && b.glyphOn.size()) ? b.glyphOn : b.glyph;
+    gtkButtonShows(c, label, glyph);
     gtk_widget_set_sensitive(c, b.enabled ? b.enabled() : TRUE);
     if(b.tooltip.size() && gtkSources().settings().tooltips)
       gtk_widget_set_tooltip_text(c, b.tooltip.c_str());

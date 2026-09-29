@@ -82,6 +82,14 @@ void cocoaPlace(NSView *view, NSRect room, bool tall);
 @interface GmshFlippedView : NSView
 @end
 
+// --- a picture of Glyph.h one em square, a template image AppKit draws in
+// the colour of the button's text (the colour map, whose strokes have their
+// own colours, as it is); nil for a name no glyph has
+NSImage *cocoaGlyph(const std::string &name);
+// a button shows the picture when there is one, the label otherwise
+void cocoaButtonShows(NSButton *button, const std::string &label,
+                      const std::string &glyph);
+
 // --- the widget of one field, bound to the place its value lives; `after`
 // is what the holder does once the user changed something
 

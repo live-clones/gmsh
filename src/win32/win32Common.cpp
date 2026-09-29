@@ -7,9 +7,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <map>
 #include <mutex>
 
 #include "win32Common.h"
+#include "Glyph.h"
 
 // What every file of the interface uses: the strings of Windows, the queue of
 // what runs once the message is over, the keys, the font and the metrics, and
@@ -308,6 +310,136 @@ void win32ForgetMetrics()
   if(_bold) DeleteObject(_bold);
   if(_fixed) DeleteObject(_fixed);
   _font = _bold = _fixed = nullptr;
+}
+
+// --- the pictures of Glyph.h: drawn four times as large with GDI, which does
+// not smooth, and brought down to their size, what each pixel covers giving
+// its alpha
+
+HICON win32Glyph(const std::string &name, int side)
+{
+  const Ui::Glyph *g = Ui::glyph(name);
+  if(!g || side < 4) return nullptr;
+  COLORREF ink = GetSysColor(COLOR_BTNTEXT);
+  static std::map<std::string, HICON> made;
+  std::string key = name + " " + std::to_string(side) + " " + std::to_string(ink);
+  auto it = made.find(key);
+  if(it != made.end()) return it->second;
+
+  const int k = 4, big = side * k;
+  BITMAPINFO bi;
+  memset(&bi, 0, sizeof(bi));
+  bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+  bi.bmiHeader.biWidth = big;
+  bi.bmiHeader.biHeight = -big;
+  bi.bmiHeader.biPlanes = 1;
+  bi.bmiHeader.biBitCount = 32;
+  bi.bmiHeader.biCompression = BI_RGB;
+  HDC screen = GetDC(nullptr);
+  HDC dc = CreateCompatibleDC(screen);
+  // what is covered, white on black, then the colours on black
+  void *bits[2] = {nullptr, nullptr};
+  HBITMAP drawn[2];
+  for(int pass = 0; pass < 2; pass++) {
+    drawn[pass] = CreateDIBSection(screen, &bi, DIB_RGB_COLORS, &bits[pass],
+                                   nullptr, 0);
+    HGDIOBJ was = SelectObject(dc, drawn[pass]);
+    RECT all = {0, 0, big, big};
+    FillRect(dc, &all, (HBRUSH)GetStockObject(BLACK_BRUSH));
+    // the square -1..1, less the half line at the edge
+    double scale = big / 2.2, middle = big / 2.;
+    for(const Ui::Stroke &s : g->strokes) {
+      COLORREF c = pass == 0 ? RGB(255, 255, 255) :
+                   s.colour.a ? RGB(s.colour.r, s.colour.g, s.colour.b) :
+                                ink;
+      std::vector<POINT> at;
+      for(std::size_t i = 0; i + 1 < s.points.size(); i += 2)
+        at.push_back({(LONG)std::lround(middle + scale * s.points[i]),
+                      (LONG)std::lround(middle + scale * s.points[i + 1])});
+      if(at.empty()) continue;
+      HPEN pen = CreatePen(PS_SOLID, (int)std::lround(k * s.width), c);
+      HBRUSH brush = CreateSolidBrush(c);
+      HGDIOBJ oldPen = SelectObject(dc, pen);
+      HGDIOBJ oldBrush = SelectObject(dc, brush);
+      if(s.kind == Ui::Stroke::Fill)
+        Polygon(dc, at.data(), (int)at.size());
+      else {
+        if(s.kind == Ui::Stroke::Loop) at.push_back(at[0]);
+        Polyline(dc, at.data(), (int)at.size());
+      }
+      SelectObject(dc, oldPen);
+      SelectObject(dc, oldBrush);
+      DeleteObject(pen);
+      DeleteObject(brush);
+    }
+    GdiFlush();
+    SelectObject(dc, was);
+  }
+  // premultiplied: the colours on black are already what alpha keeps of them
+  bi.bmiHeader.biWidth = side;
+  bi.bmiHeader.biHeight = -side;
+  void *out = nullptr;
+  HBITMAP colour =
+    CreateDIBSection(screen, &bi, DIB_RGB_COLORS, &out, nullptr, 0);
+  const unsigned char *mask = (const unsigned char *)bits[0];
+  const unsigned char *paint = (const unsigned char *)bits[1];
+  unsigned char *o = (unsigned char *)out;
+  for(int y = 0; y < side; y++)
+    for(int x = 0; x < side; x++) {
+      int sum[4] = {0, 0, 0, 0};
+      for(int j = 0; j < k; j++)
+        for(int i = 0; i < k; i++) {
+          std::size_t at = 4 * ((std::size_t)(y * k + j) * big + (x * k + i));
+          for(int c = 0; c < 3; c++) sum[c] += paint[at + c];
+          sum[3] += mask[at];
+        }
+      unsigned char *p = o + 4 * ((std::size_t)y * side + x);
+      int a = sum[3] / (k * k);
+      for(int c = 0; c < 3; c++) p[c] = (unsigned char)std::min(a, sum[c] / (k * k));
+      p[3] = (unsigned char)a;
+    }
+  // the mask a greyed button is drawn from: set where nothing is covered
+  int stride = ((side + 15) / 16) * 2;
+  std::vector<unsigned char> bitsOff((std::size_t)stride * side, 0);
+  for(int y = 0; y < side; y++)
+    for(int x = 0; x < side; x++)
+      if(o[4 * ((std::size_t)y * side + x) + 3] < 96)
+        bitsOff[(std::size_t)y * stride + x / 8] |= (unsigned char)(0x80 >> (x % 8));
+  HBITMAP none = CreateBitmap(side, side, 1, 1, bitsOff.data());
+  ICONINFO ii;
+  memset(&ii, 0, sizeof(ii));
+  ii.fIcon = TRUE;
+  ii.hbmColor = colour;
+  ii.hbmMask = none;
+  HICON icon = CreateIconIndirect(&ii);
+  DeleteObject(none);
+  DeleteObject(colour);
+  DeleteObject(drawn[0]);
+  DeleteObject(drawn[1]);
+  DeleteDC(dc);
+  ReleaseDC(nullptr, screen);
+  made[key] = icon;
+  return icon;
+}
+
+void win32ButtonShows(HWND button, const std::string &label,
+                      const std::string &glyph)
+{
+  LONG style = GetWindowLongW(button, GWL_STYLE);
+  HICON icon = win32Glyph(glyph, win32Px(1.));
+  if(icon) {
+    if(!(style & BS_ICON)) SetWindowLongW(button, GWL_STYLE, style | BS_ICON);
+    if((HICON)SendMessageW(button, BM_GETIMAGE, IMAGE_ICON, 0) != icon) {
+      SendMessageW(button, BM_SETIMAGE, IMAGE_ICON, (LPARAM)icon);
+      InvalidateRect(button, nullptr, TRUE);
+    }
+    return;
+  }
+  if(style & BS_ICON) {
+    SetWindowLongW(button, GWL_STYLE, style & ~BS_ICON);
+    SendMessageW(button, BM_SETIMAGE, IMAGE_ICON, 0);
+  }
+  if(win32Text(button) != label) SetWindowTextW(button, win32Wide(label).c_str());
 }
 
 // --- the window that holds controls

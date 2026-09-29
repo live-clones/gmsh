@@ -169,7 +169,7 @@ namespace Ui {
 
   struct Button {
     std::string label;
-    // the interfaces without the picture fall back on the label
+    // the name of a picture of Glyph.h, shown instead of the label
     std::string glyph;
     std::string tooltip;
     std::function<void()> action;

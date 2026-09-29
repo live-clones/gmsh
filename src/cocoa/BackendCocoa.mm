@@ -1097,9 +1097,8 @@ void cocoaRefreshBar()
     const Ui::BarButton &one = bar[i];
     bool on = one.on && one.on();
     std::string label = (on && one.labelOn.size()) ? one.labelOn : one.label;
-    if(label.empty())
-      label = (on && one.glyphOn.size()) ? one.glyphOn : one.glyph;
-    [b setTitle:cocoaString(label)];
+    std::string glyph = (on && one.glyphOn.size()) ? one.glyphOn : one.glyph;
+    cocoaButtonShows(b, label, glyph);
     [b setEnabled:(one.enabled ? one.enabled() : true) ? YES : NO];
     if(one.tooltip.size() && tips) [b setToolTip:cocoaString(one.tooltip)];
     if(one.alert && one.alert()) {

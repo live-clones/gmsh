@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "gtkCommon.h"
+#include "Glyph.h"
 #include "MapEditor.h"
 #include "Tree.h"
 
@@ -1163,13 +1164,88 @@ namespace {
 
 } // namespace
 
+namespace {
+
+  void _drawGlyph(GtkDrawingArea *area, cairo_t *cr, int width, int height,
+                  gpointer)
+  {
+    const char *name =
+      (const char *)g_object_get_data(G_OBJECT(area), "gmsh-glyph");
+    const Ui::Glyph *g = name ? Ui::glyph(name) : nullptr;
+    if(!g) return;
+    GdkRGBA ink;
+    gtk_widget_get_color(GTK_WIDGET(area), &ink);
+    double side = std::min(width, height);
+    cairo_save(cr);
+    cairo_translate(cr, width / 2., height / 2.);
+    // the square -1..1, less the half line at the edge
+    double scale = side / 2.2;
+    cairo_scale(cr, scale, scale);
+    for(const Ui::Stroke &k : g->strokes) {
+      if(k.colour.a)
+        cairo_set_source_rgb(cr, k.colour.r / 255., k.colour.g / 255.,
+                             k.colour.b / 255.);
+      else
+        gdk_cairo_set_source_rgba(cr, &ink);
+      cairo_new_path(cr);
+      for(std::size_t i = 0; i + 1 < k.points.size(); i += 2) {
+        if(!i)
+          cairo_move_to(cr, k.points[i], k.points[i + 1]);
+        else
+          cairo_line_to(cr, k.points[i], k.points[i + 1]);
+      }
+      if(k.kind != Ui::Stroke::Line) cairo_close_path(cr);
+      if(k.kind == Ui::Stroke::Fill) cairo_fill_preserve(cr);
+      cairo_set_line_width(cr, k.width / scale);
+      cairo_stroke(cr);
+    }
+    cairo_restore(cr);
+  }
+
+} // namespace
+
+GtkWidget *gtkGlyph(const std::string &name)
+{
+  if(!Ui::glyph(name)) return nullptr;
+  GtkWidget *area = gtk_drawing_area_new();
+  gtk_widget_set_size_request(area, gtkPx(1.), gtkPx(1.));
+  gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(area), _drawGlyph, nullptr,
+                                 nullptr);
+  gtkSetGlyph(area, name);
+  return area;
+}
+
+void gtkSetGlyph(GtkWidget *glyph, const std::string &name)
+{
+  const char *was = (const char *)g_object_get_data(G_OBJECT(glyph), "gmsh-glyph");
+  if(was && name == was) return;
+  g_object_set_data_full(G_OBJECT(glyph), "gmsh-glyph", g_strdup(name.c_str()),
+                         g_free);
+  gtk_widget_queue_draw(glyph);
+}
+
+void gtkButtonShows(GtkWidget *button, const std::string &label,
+                    const std::string &glyph)
+{
+  GtkWidget *child = gtk_button_get_child(GTK_BUTTON(button));
+  if(Ui::glyph(glyph)) {
+    if(child && GTK_IS_DRAWING_AREA(child))
+      gtkSetGlyph(child, glyph);
+    else
+      gtk_button_set_child(GTK_BUTTON(button), gtkGlyph(glyph));
+    return;
+  }
+  const char *now = gtk_button_get_label(GTK_BUTTON(button));
+  if(!now || label != now) gtk_button_set_label(GTK_BUTTON(button), label.c_str());
+}
+
 GtkWidget *gtkButtonWidget(const Ui::Button &button,
                            const std::function<void()> &after)
 {
   std::string label = button.label;
   if(label.empty() && button.menu) label = "▾";
-  if(label.empty()) label = button.glyph;
-  GtkWidget *w = gtk_button_new_with_label(label.c_str());
+  GtkWidget *w = gtk_button_new();
+  gtkButtonShows(w, label, button.glyph);
   buttonBinding *b = new buttonBinding{button, after};
   g_object_set_data_full(G_OBJECT(w), "gmsh-button", b, _dropButton);
   g_signal_connect(w, "clicked", G_CALLBACK(_buttonClicked), b);

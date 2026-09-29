@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "Backend.h"
+#include "Glyph.h"
 #include "httpServer.h"
 #include "OS.h"
 // page.html, as bytes: made by src/browser/CMakeLists.txt
@@ -99,6 +100,38 @@ namespace {
         out += c;
     }
     return out + "\"";
+  }
+
+  // a picture of Glyph.h as the page draws it, in the colour of the text of
+  // the button it is put in; empty for a name no glyph has
+  std::string _svg(const std::string &name)
+  {
+    const Ui::Glyph *g = Ui::glyph(name);
+    if(!g) return "";
+    std::string out = "<svg viewBox='-1.1 -1.1 2.2 2.2' width='1em' "
+                      "height='1em' style='vertical-align:-0.15em'>";
+    for(const Ui::Stroke &k : g->strokes) {
+      std::string d;
+      char at[64];
+      for(std::size_t i = 0; i + 1 < k.points.size(); i += 2) {
+        snprintf(at, sizeof(at), "%s%.3f %.3f", i ? " L" : "M", k.points[i],
+                 k.points[i + 1]);
+        d += at;
+      }
+      if(k.kind != Ui::Stroke::Line) d += " Z";
+      std::string ink = "currentColor";
+      if(k.colour.a) {
+        snprintf(at, sizeof(at), "rgb(%d,%d,%d)", k.colour.r, k.colour.g,
+                 k.colour.b);
+        ink = at;
+      }
+      snprintf(at, sizeof(at), "%g", k.width);
+      out += "<path d='" + d + "' fill='" +
+             (k.kind == Ui::Stroke::Fill ? ink : std::string("none")) +
+             "' stroke='" + ink + "' stroke-width='" + at +
+             "' vector-effect='non-scaling-stroke' stroke-linejoin='round'/>";
+    }
+    return out + "</svg>";
   }
 
   class backendBrowser : public Ui::Backend {
@@ -1364,6 +1397,8 @@ namespace {
         out += "{\"label\":" + _quoted(b.label.size() ? b.label : b.glyph);
         out += ",\"help\":" + _quoted(b.tooltip);
         bool on = b.on && b.on();
+        std::string picture = _svg((on && b.glyphOn.size()) ? b.glyphOn : b.glyph);
+        if(picture.size()) out += ",\"glyph\":" + _quoted(picture);
         out += ",\"on\":";
         out += on ? "true" : "false";
         if(on && b.onColour) {

@@ -18,6 +18,7 @@
 #include "imgui_stdlib.h"
 
 #include "imguiCommon.h"
+#include "Glyph.h"
 #include "Tree.h"
 
 namespace {
@@ -128,8 +129,19 @@ void imguiDrawTree()
     for(std::size_t i = 0; i < row.size(); i++) {
       if(i) ImGui::SameLine();
       ImGui::PushID((int)i);
+      // the picture when there is one, the label otherwise
+      bool pictured = Ui::glyph(row[i].glyph) != nullptr;
+      float side = ImGui::GetFrameHeight();
+      auto pressed = [&]() {
+        bool p = pictured ? ImGui::Button("##g", ImVec2(1.5f * side, side)) :
+                            ImGui::Button(row[i].label.c_str());
+        if(pictured)
+          imguiGlyph(row[i].glyph, ImGui::GetItemRectMin(),
+                     ImGui::GetItemRectMax(), ImGui::GetColorU32(ImGuiCol_Text));
+        return p;
+      };
       if(row[i].menu) {
-        if(ImGui::Button(row[i].label.c_str())) ImGui::OpenPopup("##drop");
+        if(pressed()) ImGui::OpenPopup("##drop");
         if(ImGui::BeginPopup("##drop")) {
           static std::vector<Ui::MenuItem> menu;
           menu = row[i].menu();
@@ -137,7 +149,7 @@ void imguiDrawTree()
           ImGui::EndPopup();
         }
       }
-      else if(ImGui::Button(row[i].label.c_str())) {
+      else if(pressed()) {
         std::function<void()> what = row[i].action;
         if(what) imguiLater(what);
       }

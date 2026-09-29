@@ -791,25 +791,44 @@ void qtRefreshBar()
     const Ui::BarButton &one = bar[i++];
     bool on = one.on && one.on();
     std::string label = (on && one.labelOn.size()) ? one.labelOn : one.label;
-    b->setText(qtString(label));
+    std::string glyph = (on && one.glyphOn.size()) ? one.glyphOn : one.glyph;
     b->setEnabled(one.enabled ? one.enabled() : true);
     if(one.tooltip.size() && qtSources().settings().tooltips)
       b->setToolTip(qtString(one.tooltip));
     QString style;
-    if(one.alert && one.alert())
+    QColor ink = b->palette().buttonText().color();
+    if(one.alert && one.alert()) {
       style = "QToolButton { background: #b02020; color: white; }";
+      ink = Qt::white;
+    }
     else if(on && one.onColour) {
       Ui::Colour c = one.onColour();
+      bool light = (c.r * 299 + c.g * 587 + c.b * 114) / 1000 > 140;
       style = QString("QToolButton { background: rgb(%1,%2,%3); color: %4; }")
                 .arg(c.r)
                 .arg(c.g)
                 .arg(c.b)
-                .arg((c.r * 299 + c.g * 587 + c.b * 114) / 1000 > 140 ? "black" :
-                                                                      "white");
+                .arg(light ? "black" : "white");
+      ink = light ? Qt::black : Qt::white;
     }
     else if(on)
       style = "QToolButton { font-weight: bold; }";
     if(b->styleSheet() != style) b->setStyleSheet(style);
+    // the picture when there is one, the label otherwise
+    QIcon picture = qtGlyph(glyph, ink);
+    std::string shown = label + "|" + glyph + "|" + qtString(ink.name());
+    if(b->property("gmshShown").toString() != qtString(shown)) {
+      b->setProperty("gmshShown", qtString(shown));
+      if(picture.isNull()) {
+        b->setIcon(QIcon());
+        b->setText(qtString(label));
+      }
+      else {
+        b->setText("");
+        b->setIcon(picture);
+        b->setIconSize(QSize(qtPx(1.), qtPx(1.)));
+      }
+    }
   }
   if(qtSources().barMessage) {
     Ui::BarMessage m = qtSources().barMessage();

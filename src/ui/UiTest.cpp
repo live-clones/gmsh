@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "Backend.h"
+#include "Glyph.h"
 #include "MapEditor.h"
 
 using namespace Ui;
@@ -212,6 +213,25 @@ int main()
   same(std::to_string(MapEditor::entryAt(edited, 99., 100.)) + " " +
          std::to_string(MapEditor::valueAt(0., 10.)),
        "7 255", "the entry and the intensity under the pointer");
+
+  // --- the glyphs: every one the descriptions name, in the square, with a
+  // character for the terminal
+  std::string missing, outside;
+  for(const char *name : {"play", "pause", "rewind", "back", "forward", "rotate",
+                          "query", "measure", "models", "gear", "graph",
+                          "search", "colormap"}) {
+    const Glyph *g = glyph(name);
+    if(!g || g->strokes.empty() || g->text.empty()) {
+      missing += std::string(" ") + name;
+      continue;
+    }
+    for(const Stroke &k : g->strokes)
+      for(double v : k.points)
+        if(v < -1.25 || v > 1.25) outside = name;
+  }
+  same(missing, "", "the glyphs the descriptions name");
+  same(outside, "", "the glyphs stay about their square");
+  same(glyph("nothing") ? "a glyph" : "none", "none", "an unknown name");
 
   if(failed) {
     std::printf("%d failed\n", failed);

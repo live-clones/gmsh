@@ -87,7 +87,7 @@ namespace StatusBar {
     std::vector<BarButton> buttons;
 
     buttons.push_back(drops("M", "Set the current (active) model",
-                            Menu::models, "gmsh_models"));
+                            Menu::models, "models"));
     buttons.push_back(
       drops("O",
             "Open the quick access menu (also available by double-clicking in "
@@ -103,7 +103,7 @@ namespace StatusBar {
     buttons.push_back(
       turns("R", "r",
             "Rotate +90 or -90 (Shift) degrees, or sync rotations (Ctrl)",
-            "gmsh_rotate"));
+            "rotate"));
     {
       BarButton unit =
         turns("1:1", "1:1",
@@ -124,14 +124,14 @@ namespace StatusBar {
       buttons.push_back(select);
     }
     {
-      BarButton query = does("Q", "gmsh_query",
+      BarButton query = does("Q", "query",
                              "Query the model where you click ('q' to stop)",
                              queryModel);
       query.on = queryMode;
       query.onColour = queryColour;
       buttons.push_back(query);
       BarButton measure =
-        does("D", "gmsh_measure",
+        does("D", "measure",
              "Measure the distance between two points you click ('q' to stop)",
              measureModel);
       measure.on = measureMode;
@@ -140,23 +140,23 @@ namespace StatusBar {
     }
 
     {
-      BarButton rewind = animates(does("|<", "gmsh_rewind", "Rewind animation",
+      BarButton rewind = animates(does("|<", "rewind", "Rewind animation",
                                     animationRewind));
       rewind.gapBefore = true;
       buttons.push_back(rewind);
     }
-    buttons.push_back(animates(does("<", "gmsh_back",
+    buttons.push_back(animates(does("<", "back",
                                     "Step backward (Left arrow)",
                                     []() { animationStepBy(false); })));
     {
-      BarButton play = animates(does(">", "gmsh_play", "Play/pause animation",
+      BarButton play = animates(does(">", "play", "Play/pause animation",
                                   []() { Gui::instance().toggleAnimation(); }));
       play.labelOn = "||";
-      play.glyphOn = "gmsh_pause";
+      play.glyphOn = "pause";
       play.on = []() { return Gui::instance().animating(); };
       buttons.push_back(play);
     }
-    buttons.push_back(animates(does(">|", "gmsh_forward",
+    buttons.push_back(animates(does(">|", "forward",
                                     "Step forward (Right arrow)",
                                     []() { animationStepBy(true); })));
 

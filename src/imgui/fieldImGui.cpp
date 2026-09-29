@@ -21,41 +21,42 @@
 #include "imgui_stdlib.h"
 
 #include "imguiCommon.h"
+#include "Glyph.h"
 #include "Layout.h"
 #include "MapEditor.h"
 #include "Tree.h"
 
-namespace {
-
-  // the pictures FLTK draws on the little buttons after a value, in the
-  // same square of -1 to 1, y down; false for one it does not know
-  bool _glyph(const std::string &name, ImVec2 lo, ImVec2 hi, ImU32 ink)
-  {
-    ImVec2 mid(.5f * (lo.x + hi.x), .5f * (lo.y + hi.y));
-    float half = .3f * std::min(hi.x - lo.x, hi.y - lo.y);
-    auto at = [&](float u, float v) {
-      return ImVec2(mid.x + u * half, mid.y + v * half);
-    };
-    ImDrawList *into = ImGui::GetWindowDrawList();
-    if(name == "rotate") {
-      for(int k = 0; k <= 24; k++) {
-        float a = (float)k / 24.f * 1.5f * 3.14159265f;
-        into->PathLineTo(at(.7f * std::cos(a), -.1f - .7f * std::sin(a)));
-      }
-      into->PathStroke(ink, 0, 1.5f);
-      into->AddTriangleFilled(at(.5f, .6f), at(-.1f, .9f), at(-.1f, .3f), ink);
-      return true;
+bool imguiGlyph(const std::string &name, ImVec2 lo, ImVec2 hi, ImU32 ink)
+{
+  const Ui::Glyph *g = Ui::glyph(name);
+  if(!g) return false;
+  ImVec2 mid(.5f * (lo.x + hi.x), .5f * (lo.y + hi.y));
+  // the square -1..1 set in the middle, a margin about it
+  float half = .32f * std::min(hi.x - lo.x, hi.y - lo.y);
+  ImDrawList *into = ImGui::GetWindowDrawList();
+  for(const Ui::Stroke &k : g->strokes) {
+    ImU32 c = k.colour.a ? IM_COL32(k.colour.r, k.colour.g, k.colour.b, 255) :
+                           ink;
+    std::vector<ImVec2> at;
+    for(std::size_t i = 0; i + 1 < k.points.size(); i += 2)
+      at.push_back(ImVec2(mid.x + (float)k.points[i] * half,
+                          mid.y + (float)k.points[i + 1] * half));
+    if(at.empty()) continue;
+    if(k.kind == Ui::Stroke::Fill) {
+      // the shapes are convex but for none
+      into->AddConvexPolyFilled(at.data(), (int)at.size(), c);
+      continue;
     }
-    if(name == "graph") {
-      ImVec2 axes[] = {at(-.8f, -.8f), at(-.8f, .8f), at(.8f, .8f)};
-      into->AddPolyline(axes, 3, ink, 0, 1.f);
-      ImVec2 curve[] = {at(-.8f, .3f), at(-.2f, -.2f), at(.3f, .1f),
-                        at(.8f, -.4f)};
-      into->AddPolyline(curve, 4, ink, 0, 1.5f);
-      return true;
-    }
-    return false;
+    // a closed line of two points goes there and back, which Dear ImGui's
+    // smoothing takes for nothing: open, it is the same line
+    bool closed = k.kind == Ui::Stroke::Loop && at.size() > 2;
+    into->AddPolyline(at.data(), (int)at.size(), c,
+                      closed ? ImDrawFlags_Closed : 0, (float)k.width);
   }
+  return true;
+}
+
+namespace {
 
   // a check box is smaller than a field, as in the other toolkits
   float _checkPad()
@@ -919,7 +920,7 @@ namespace {
                       ImGui::Button("##drop", ImVec2(side, side)) :
                       ImGui::ArrowButton("##drop", ImGuiDir_Down);
         if(b.glyph.size() && b.label.empty())
-          _glyph(b.glyph, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+          imguiGlyph(b.glyph, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
                  ink);
         if(open) ImGui::OpenPopup("##m");
         if(ImGui::BeginPopup("##m")) {
@@ -937,7 +938,7 @@ namespace {
             ImGui::Button("##b", ImVec2(side, side)) :
             ImGui::SmallButton(b.label.size() ? b.label.c_str() : "##b");
         if(b.label.empty() && b.glyph.size())
-          _glyph(b.glyph, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+          imguiGlyph(b.glyph, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
                  ink);
         if(pressed) {
           std::function<void()> what = b.action;

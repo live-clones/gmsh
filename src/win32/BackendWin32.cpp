@@ -207,6 +207,7 @@ namespace {
                                GetModuleHandleW(nullptr), nullptr);
       SendMessageW(b, WM_SETFONT, (WPARAM)win32Font(), TRUE);
       SetPropW(b, L"gmshFooter", (HANDLE)(INT_PTR)(i + 1));
+      win32ButtonShows(b, label, row[i].glyph);
       if(row[i].enabled) EnableWindow(b, row[i].enabled());
       _w->footerButtons.push_back(b);
     }
@@ -1059,9 +1060,10 @@ void win32RefreshBar()
     HWND w = _w->buttons[i];
     bool on = b.on && b.on();
     std::string label = (on && b.labelOn.size()) ? b.labelOn : b.label;
+    std::string glyph = (on && b.glyphOn.size()) ? b.glyphOn : b.glyph;
     // what warns is said so, the button being unable to take a colour
     if(b.alert && b.alert()) label = "!" + label;
-    if(win32Text(w) != label) SetWindowTextW(w, win32Wide(label).c_str());
+    win32ButtonShows(w, label, glyph);
     SendMessageW(w, BM_SETCHECK, on ? BST_CHECKED : BST_UNCHECKED, 0);
     EnableWindow(w, b.enabled ? b.enabled() : TRUE);
   }

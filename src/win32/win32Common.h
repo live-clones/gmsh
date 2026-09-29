@@ -79,6 +79,13 @@ int win32Row();
 // the fonts or the DPI changed
 void win32ForgetMetrics();
 
+// --- a picture of Glyph.h in the colour of the text of a button, `side`
+// pixels square; null for a name no glyph has. Kept: never to be destroyed
+HICON win32Glyph(const std::string &name, int side);
+// a button shows the picture when there is one (BS_ICON), the label otherwise
+void win32ButtonShows(HWND button, const std::string &label,
+                      const std::string &glyph);
+
 // --- the window class every holder of controls is: it hands what its
 // controls tell (WM_COMMAND, WM_NOTIFY, WM_HSCROLL, WM_DRAWITEM,
 // WM_CTLCOLOR...) to the binding of the control

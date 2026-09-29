@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "tuiCommon.h"
+#include "Glyph.h"
 #include "Layout.h" // Ui::fills()
 #include "MapEditor.h"
 
@@ -713,7 +714,8 @@ Element tuiFieldWidget(const Ui::Field &f, const std::string &id, int width,
 Element tuiButtonWidget(const Ui::Button &b, const std::string &id,
                     const std::function<void()> &after)
 {
-  std::string label = b.label.size() ? b.label : b.menu ? "▾" : b.glyph;
+  const Ui::Glyph *g = Ui::glyph(b.glyph);
+  std::string label = g ? g->text : b.label.size() ? b.label : b.menu ? "▾" : "";
   Ui::Button c = b;
   Element e = text("[" + label + "]");
   if(b.on && b.on()) e = e | bold | color(Color::Green);

@@ -1275,7 +1275,9 @@ function drawButtons(buttons) {
   bars.length = 0;
   for(const b of buttons) {
     const button = document.createElement('button');
-    button.textContent = b.label;
+    // the picture, drawn by the interface, when there is one
+    if(b.glyph) button.innerHTML = b.glyph;
+    else button.textContent = b.label;
     if(b.help) button.title = b.help;
     if(b.on) button.className = 'on';
     if(b.tint) button.style.background = b.tint;

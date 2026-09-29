@@ -61,6 +61,10 @@ ImFont *imguiFixedFont();
 void imguiMenu(const std::vector<Ui::MenuItem> &items);
 void imguiDrawMenuBar();
 
+// --- a picture of Glyph.h drawn over the box lo..hi, in the middle of it;
+// false for a name no glyph has
+bool imguiGlyph(const std::string &name, ImVec2 lo, ImVec2 hi, ImU32 ink);
+
 // --- one described field, drawn where the cursor is: for the forms and for
 // the lines of the tree; tall and indent as the form placed it
 void imguiField(const Ui::Field &f, float width, float tall = 0.f,

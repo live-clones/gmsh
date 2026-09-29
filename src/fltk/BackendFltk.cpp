@@ -21,6 +21,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <deque>
 #include <map>
 #include <mutex>
 #include <regex>
@@ -60,6 +61,7 @@
 
 #include "fltkCommon.h"
 #include "Bar.h"
+#include "Glyph.h"
 #include "XpmIcon.h"
 
 #if defined(HAVE_3M)
@@ -117,232 +119,54 @@ namespace {
     fl_line(x, y, x + w, y);
   }
 
-  // Icons for the satus bar
-#define vv(x, y) fl_vertex(x, y)
-#define bl fl_begin_loop()
-#define el fl_end_loop()
+  // --- the pictures of Glyph.h as FLTK symbols, "gmsh_" and their name: a
+  // symbol is drawn by a function that is told only its colour, one per
+  // glyph
 
-  static void gmsh_play(Fl_Color c)
+  void _drawGlyph(const Ui::Glyph &g, Fl_Color ink)
   {
-    fl_color(c);
-    bl;
-    vv(-0.3, 0.8);
-    vv(0.5, 0.0);
-    vv(-0.3, -0.8);
-    el;
-  }
-
-  static void gmsh_pause(Fl_Color c)
-  {
-    fl_color(c);
-    bl;
-    vv(-0.8, -0.8);
-    vv(-0.3, -0.8);
-    vv(-0.3, 0.8);
-    vv(-0.8, 0.8);
-    el;
-    bl;
-    vv(0.0, -0.8);
-    vv(0.5, -0.8);
-    vv(0.5, 0.8);
-    vv(0.0, 0.8);
-    el;
-  }
-
-  static void gmsh_rewind(Fl_Color c)
-  {
-    fl_color(c);
-    bl;
-    vv(-0.8, -0.8);
-    vv(-0.3, -0.8);
-    vv(-0.3, 0.8);
-    vv(-0.8, 0.8);
-    el;
-    bl;
-    vv(-0.3, 0.0);
-    vv(0.5, -0.8);
-    vv(0.5, 0.8);
-    el;
-  }
-
-  static void gmsh_forward(Fl_Color c)
-  {
-    fl_color(c);
-    bl;
-    vv(0.0, 0.8);
-    vv(0.8, 0.0);
-    vv(0.0, -0.8);
-    el;
-    bl;
-    vv(-0.8, 0.8);
-    vv(-0.3, 0.8);
-    vv(-0.3, -0.8);
-    vv(-0.8, -0.8);
-    el;
-  }
-
-  static void gmsh_back(Fl_Color c)
-  {
-    fl_rotate(180);
-    gmsh_forward(c);
-  }
-
-  static void gmsh_rotate(Fl_Color c)
-  {
-    fl_color(c);
-    fl_begin_line();
-    fl_arc(0.0, -0.1, 0.7, 0.0, 270.0);
-    fl_end_line();
-    fl_begin_polygon();
-    vv(0.5, 0.6);
-    vv(-0.1, 0.9);
-    vv(-0.1, 0.3);
-    fl_end_polygon();
-  }
-
-  // a crosshair over a target: the point of the model a query asks about
-  static void gmsh_query(Fl_Color c)
-  {
-    fl_color(c);
-    fl_begin_line();
-    fl_arc(0.0, 0.0, 0.45, 0.0, 360.0);
-    fl_end_line();
-    bl;
-    vv(-0.9, 0.0);
-    vv(-0.2, 0.0);
-    el;
-    bl;
-    vv(0.2, 0.0);
-    vv(0.9, 0.0);
-    el;
-    bl;
-    vv(0.0, -0.9);
-    vv(0.0, -0.2);
-    el;
-    bl;
-    vv(0.0, 0.2);
-    vv(0.0, 0.9);
-    el;
-  }
-
-  // a ruler: the line a measurement draws between the two points it is given
-  static void gmsh_measure(Fl_Color c)
-  {
-    fl_color(c);
-    bl; vv(-0.75, 0.55); vv(0.75, -0.55); el;   // the line
-    bl; vv(-0.90, 0.35); vv(-0.60, 0.75); el;   // its ends
-    bl; vv(0.60, -0.75); vv(0.90, -0.35); el;
-    bl; vv(-0.38, 0.28); vv(-0.29, 0.40); el;   // graduations
-    bl; vv(0.00, 0.00); vv(0.09, 0.12); el;
-    bl; vv(0.38, -0.28); vv(0.46, -0.15); el;
-  }
-
-  static void gmsh_models(Fl_Color c)
-  {
-    fl_color(c);
-    bl;
-    vv(-0.8, -0.7);
-    vv(0.8, -0.7);
-    el;
-    bl;
-    vv(-0.8, -0.2);
-    vv(0.8, -0.2);
-    el;
-    bl;
-    vv(-0.8, 0.3);
-    vv(0.8, 0.3);
-    el;
-    bl;
-    vv(-0.8, 0.8);
-    vv(0.8, 0.8);
-    el;
-  }
-
-  static void gmsh_gear(Fl_Color c)
-  {
-    fl_color(c);
-    double w = 0.12;
-    double h1 = 0.5;
-#if defined(WIN32)
-    double h2 = 1.0;
-#else
-    double h2 = 1.05;
-#endif
-    fl_line_style(FL_SOLID, 3);
-    fl_begin_line();
-    fl_circle(0, 0, 0.5);
-    fl_end_line();
-    fl_line_style(FL_SOLID);
-    for(int i = 0; i < 8; i++) {
-      fl_rotate(45);
-      fl_begin_polygon();
-      fl_vertex(h1, -w);
-      fl_vertex(h2, -w);
-      fl_vertex(h2, w);
-      fl_vertex(h1, w);
-      fl_end_polygon();
+    for(const Ui::Stroke &k : g.strokes) {
+      fl_color(k.colour.a ? fl_rgb_color(k.colour.r, k.colour.g, k.colour.b) :
+                            ink);
+      if(k.width != 1.) fl_line_style(FL_SOLID, (int)k.width);
+      switch(k.kind) {
+      case Ui::Stroke::Line: fl_begin_line(); break;
+      case Ui::Stroke::Loop: fl_begin_loop(); break;
+      case Ui::Stroke::Fill: fl_begin_polygon(); break;
+      }
+      for(std::size_t i = 0; i + 1 < k.points.size(); i += 2)
+        fl_vertex(k.points[i], k.points[i + 1]);
+      switch(k.kind) {
+      case Ui::Stroke::Line: fl_end_line(); break;
+      case Ui::Stroke::Loop: fl_end_loop(); break;
+      case Ui::Stroke::Fill: fl_end_polygon(); break;
+      }
+      if(k.width != 1.) fl_line_style(FL_SOLID);
     }
   }
 
-  static void gmsh_graph(Fl_Color c)
+  template <int I> void _glyphSymbol(Fl_Color ink)
   {
-    fl_color(c);
-    fl_begin_line();
-    vv(-0.8, -0.8);
-    vv(-0.8, 0.8);
-    vv(0.8, 0.8);
-    fl_end_line();
-    fl_begin_line();
-    vv(-0.8, 0.3);
-    vv(-0.2, -0.2);
-    vv(0.3, 0.1);
-    vv(0.8, -0.4);
-    fl_end_line();
+    if(I < (int)Ui::glyphs().size()) _drawGlyph(Ui::glyphs()[I], ink);
   }
 
-  static void gmsh_search(Fl_Color col)
+  void _addGlyphSymbols()
   {
-    double e = 0.5;
-    fl_color(col);
-    fl_begin_polygon();
-    vv(.6 - e, .33);
-    vv(1.2 - e, .93);
-    vv(.93 - e, 1.2);
-    vv(.33 - e, .6);
-    fl_end_polygon();
-    fl_line_style(FL_SOLID, 2);
-    fl_begin_loop();
-    fl_circle(0 - e, 0, .6);
-    fl_end_loop();
-    fl_line_style(FL_SOLID);
+    typedef void (*symbol)(Fl_Color);
+    static const symbol drawn[] = {
+      _glyphSymbol<0>,  _glyphSymbol<1>,  _glyphSymbol<2>,  _glyphSymbol<3>,
+      _glyphSymbol<4>,  _glyphSymbol<5>,  _glyphSymbol<6>,  _glyphSymbol<7>,
+      _glyphSymbol<8>,  _glyphSymbol<9>,  _glyphSymbol<10>, _glyphSymbol<11>,
+      _glyphSymbol<12>, _glyphSymbol<13>, _glyphSymbol<14>, _glyphSymbol<15>,
+      _glyphSymbol<16>, _glyphSymbol<17>, _glyphSymbol<18>, _glyphSymbol<19>};
+    // FLTK keeps the name it is given
+    static std::deque<std::string> names;
+    const std::vector<Ui::Glyph> &all = Ui::glyphs();
+    for(std::size_t i = 0; i < all.size() && i < sizeof(drawn) / sizeof(drawn[0]); i++) {
+      names.push_back("gmsh_" + all[i].name);
+      fl_add_symbol(names.back().c_str(), drawn[i], 1);
+    }
   }
-
-  static void gmsh_colormap(Fl_Color col)
-  {
-    fl_color(FL_RED);
-    fl_begin_polygon();
-    vv(-0.8, -0.8);
-    vv(-0.3, -0.8);
-    vv(-0.3, 0.8);
-    vv(-0.8, 0.8);
-    fl_end_polygon();
-    fl_color(FL_GREEN);
-    fl_begin_polygon();
-    vv(-0.3, -0.8);
-    vv(0.2, -0.8);
-    vv(0.2, 0.8);
-    vv(-0.3, 0.8);
-    fl_end_polygon();
-    fl_color(FL_BLUE);
-    fl_begin_polygon();
-    vv(0.2, -0.8);
-    vv(0.7, -0.8);
-    vv(0.7, 0.8);
-    vv(0.2, 0.8);
-    fl_end_polygon();
-  }
-
-#undef vv
 #undef bl
 #undef el
 
@@ -570,7 +394,7 @@ namespace {
       bool on = what.on && what.on();
       const std::string &glyph = (on && what.glyphOn.size()) ? what.glyphOn :
                                                                what.glyph;
-      if(glyph.size()) return "@-1" + glyph;
+      if(Ui::glyph(glyph)) return "@-1gmsh_" + glyph;
       return (on && what.labelOn.size()) ? what.labelOn : what.label;
     }
     // whether it changed
@@ -1538,19 +1362,7 @@ namespace {
       Fl::add_handler(_globalShortcut);
       fltkFontEngine();
       fl_register_images();
-      fl_add_symbol("gmsh_rewind", gmsh_rewind, 1);
-      fl_add_symbol("gmsh_back", gmsh_back, 1);
-      fl_add_symbol("gmsh_play", gmsh_play, 1);
-      fl_add_symbol("gmsh_pause", gmsh_pause, 1);
-      fl_add_symbol("gmsh_forward", gmsh_forward, 1);
-      fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
-      fl_add_symbol("gmsh_models", gmsh_models, 1);
-      fl_add_symbol("gmsh_query", gmsh_query, 1);
-      fl_add_symbol("gmsh_measure", gmsh_measure, 1);
-      fl_add_symbol("gmsh_gear", gmsh_gear, 1);
-      fl_add_symbol("gmsh_graph", gmsh_graph, 1);
-      fl_add_symbol("gmsh_search", gmsh_search, 1);
-      fl_add_symbol("gmsh_colormap", gmsh_colormap, 1);
+      _addGlyphSymbols();
       // the icons of the file chooser
       Fl_File_Icon::load_system_icons();
       static Fl_RGB_Image icon(&gmsh_icon_pixmap);

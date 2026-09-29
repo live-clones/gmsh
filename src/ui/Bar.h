@@ -17,6 +17,7 @@
 namespace Ui {
 
   struct BarButton {
+    // glyph names a picture of Glyph.h, shown instead of the label
     std::string label, glyph;
     // the play button says pause while it plays
     std::string labelOn, glyphOn;

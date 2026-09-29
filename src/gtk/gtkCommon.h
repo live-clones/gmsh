@@ -59,6 +59,15 @@ int gtkPx(double em);
 // the fonts changed: measured again
 void gtkForgetMetrics();
 
+// --- a picture of Glyph.h, drawn in the colour of the text of the button it
+// is put in, one em square; null for a name no glyph has. gtkSetGlyph changes
+// the one it draws
+GtkWidget *gtkGlyph(const std::string &name);
+void gtkSetGlyph(GtkWidget *glyph, const std::string &name);
+// a button shows the picture when there is one, the label otherwise
+void gtkButtonShows(GtkWidget *button, const std::string &label,
+                    const std::string &glyph);
+
 // --- the widget of one field, bound to the place its value lives. `after` is
 // what the holder does once the user changed something: a dialog looks at the
 // whole form again

@@ -25,6 +25,7 @@
 #include <ftxui/screen/terminal.hpp>
 
 #include "tuiCommon.h"
+#include "Glyph.h"
 
 using namespace ftxui;
 
@@ -893,6 +894,10 @@ namespace {
         if(b.gapBefore) row.push_back(text(" "));
         bool on = b.on && b.on();
         std::string label = (on && b.labelOn.size()) ? b.labelOn : b.label;
+        // the character that looks most like the picture, when there is one
+        const Ui::Glyph *g =
+          Ui::glyph((on && b.glyphOn.size()) ? b.glyphOn : b.glyph);
+        if(g) label = g->text;
         Element e = text("[" + label + "]");
         if(b.alert && b.alert())
           e = e | bgcolor(Color::Red) | color(Color::White);

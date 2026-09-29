@@ -469,6 +469,7 @@ namespace Modules {
       row.push_back(reset);
       Ui::Button gear;
       gear.label = "Options";
+      gear.glyph = "gear";
       gear.tooltip = "What the solver may do by itself";
       gear.menu = []() { return Menu::solverOptions(); };
       row.push_back(gear);

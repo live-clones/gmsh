@@ -15,6 +15,7 @@
 #import <objc/runtime.h>
 
 #include "cocoaCommon.h"
+#include "Glyph.h"
 #include "MapEditor.h"
 
 // The widget of one field. Each carries its binding -- a copy of the field,
@@ -1346,13 +1347,78 @@ void cocoaRefreshField(NSView *widget)
 }
 @end
 
+NSImage *cocoaGlyph(const std::string &name)
+{
+  const Ui::Glyph *g = Ui::glyph(name);
+  if(!g) return nil;
+  static std::map<std::string, NSImage *> made;
+  auto it = made.find(name);
+  if(it != made.end()) return it->second;
+  bool own = false;
+  for(const Ui::Stroke &k : g->strokes)
+    if(k.colour.a) own = true;
+  CGFloat side = cocoaPx(1.);
+  // drawn from the top down, as the glyph is described
+  NSImage *image = [NSImage
+     imageWithSize:NSMakeSize(side, side)
+           flipped:YES
+    drawingHandler:^BOOL(NSRect r) {
+      // the square -1..1, less the half line at the edge
+      CGFloat scale = r.size.width / 2.2;
+      CGFloat mx = NSMidX(r), my = NSMidY(r);
+      for(const Ui::Stroke &k : g->strokes) {
+        NSBezierPath *path = [NSBezierPath bezierPath];
+        for(std::size_t i = 0; i + 1 < k.points.size(); i += 2) {
+          NSPoint p = NSMakePoint(mx + scale * k.points[i],
+                                  my + scale * k.points[i + 1]);
+          if(!i)
+            [path moveToPoint:p];
+          else
+            [path lineToPoint:p];
+        }
+        if(k.kind != Ui::Stroke::Line) [path closePath];
+        NSColor *c = k.colour.a ? [NSColor colorWithSRGBRed:k.colour.r / 255.
+                                                      green:k.colour.g / 255.
+                                                       blue:k.colour.b / 255.
+                                                      alpha:1.] :
+                                  [NSColor blackColor];
+        [c set];
+        if(k.kind == Ui::Stroke::Fill) [path fill];
+        [path setLineWidth:k.width];
+        [path stroke];
+      }
+      return YES;
+    }];
+  [image setTemplate:own ? NO : YES];
+  made[name] = image;
+  return image;
+}
+
+void cocoaButtonShows(NSButton *button, const std::string &label,
+                      const std::string &glyph)
+{
+  NSImage *image = cocoaGlyph(glyph);
+  if(image) {
+    if([button image] != image) {
+      [button setImage:image];
+      [button setImagePosition:NSImageOnly];
+    }
+    return;
+  }
+  if([button image]) {
+    [button setImage:nil];
+    [button setImagePosition:NSNoImage];
+  }
+  if(cocoaString([button title]) != label) [button setTitle:cocoaString(label)];
+}
+
 NSView *cocoaButtonWidget(const Ui::Button &button,
                           const std::function<void()> &after)
 {
   std::string label = button.label;
   if(label.empty() && button.menu) label = "▾";
-  if(label.empty()) label = button.glyph;
   NSButton *w = _button(label);
+  cocoaButtonShows(w, label, button.glyph);
   if(button.tooltip.size() && cocoaSources().settings().tooltips)
     [w setToolTip:cocoaString(button.tooltip)];
   if(button.on && button.on())
