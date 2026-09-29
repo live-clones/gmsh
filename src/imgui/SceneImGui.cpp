@@ -20,8 +20,7 @@
 #include "imgui.h"
 #include <GLFW/glfw3.h>
 
-#include "appWindow.h"
-#include "uiSources.h"
+#include "imguiCommon.h"
 #include "GuiPanes.h"
 #include "glfwScreen.h"
 #include "sceneHost.h"
@@ -405,7 +404,7 @@ namespace {
     case GLFW_KEY_ESCAPE: v->quitSelection = 1; break;
     default: break;
     }
-    appWindow::wake();
+    imguiWake();
   }
 
   void _windowFocus(GLFWwindow *w, int focused)
@@ -422,7 +421,7 @@ namespace {
     t.makePane = [](GuiPanes::Pane *) -> GuiPanes::Pane * { return new pane; };
     t.redraw = [](GuiPanes::Pane *p) {
       _pane(p)->wanted = true;
-      if(appWindow::available()) appWindow::instance()->requestFrame();
+      imguiRequestFrame();
     };
     t.prepare = [](GuiPanes::Pane *p) { return _prepare(_pane(p)); };
     t.size = [](GuiPanes::Pane *p, int &w, int &h, double &f) {
@@ -506,7 +505,7 @@ namespace {
     t.context = []() -> void * { return glfwGetCurrentContext(); };
     t.screen = glfwScreen;
     t.uiScale = []() {
-      return appWindow::available() ? appWindow::instance()->uiScale() : 1.f;
+      return imguiUiScale();
     };
     return t;
   }
@@ -646,11 +645,5 @@ void imguiSceneWindows()
 }
 
 void imguiSceneRedraw() { _all().redrawAll(); }
-
-sceneView *imguiSceneCurrent()
-{
-  GuiPanes::Pane *p = _all().current();
-  return p ? p->view : nullptr;
-}
 
 void imguiSceneNewWindow() { _all().newWindow(); }

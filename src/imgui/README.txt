@@ -13,7 +13,7 @@ build).
 How a frame is drawn
 --------------------
 
-appWindow::frame() runs, in this order:
+The frame (mainWindow::frame(), in BackendImGui.cpp) runs, in this order:
 
   1. actions queued by widgets are run, outside of any Dear ImGui frame (see
      "Deferred actions" below);
@@ -41,14 +41,14 @@ Dear ImGui frames are not re-entrant, so an action triggered by a widget cannot
 run while the frame is being built: it would deadlock as soon as it opens a
 blocking dialog (Msg::GetAnswer()) or starts an interactive selection, both of
 which pump frames of their own. Widgets must therefore queue their work with
-appWindow::postAction(), which runs it at the beginning of the next frame,
+imguiLater(), which runs it at the beginning of the next frame,
 outside of NewFrame()/Render().
 
 Pumping events from the mesher
 ------------------------------
 
 Msg::Info() and friends call Gui::check() while a mesh is being generated, so
-that the interface stays alive. appWindow::check() reproduces the semantics of
+that the interface stays alive. mainWindow::check() reproduces the semantics of
 FlGui::check(): it returns immediately when called from a worker thread
 (Msg::GetThreadNum() > 0) or while the GUI is locked, and it draws at most
 General.GuiRefreshRate frames per second. frame() additionally guards against
@@ -111,7 +111,7 @@ like it should. Detaching a panel on Wayland is worth revisiting when the
 platform, or GLFW, offers something better than a position the client has to
 invent.
 
-statusBar.cpp draws the bar along the bottom, the counterpart of the one the
+BackendImGui.cpp draws the bar along the bottom, the counterpart of the one the
 FLTK interface builds out of Fl_Buttons: the current model, a menu of the
 options one reaches for most often, the view orientation (Shift gives the
 opposite direction, as in FLTK), the mouse selection toggle, the animation
@@ -127,7 +127,7 @@ the blocking loop the FLTK interface runs, since an immediate-mode frame is not
 re-entrant and a frame is going by anyway.
 
 The modules tree is not written here either. Like the menu bar, it is declared
-once -- Menu::modules() -- and both interfaces walk it: modulesPanel.cpp draws
+once -- Menu::modules() -- and both interfaces walk it: treeImGui.cpp draws
 it as Dear ImGui tree nodes, and src/fltk/menuFltk.cpp flattens it into the
 "0Modules/..." paths onelabGroup wants, which is what static_modules[] used to
 be by hand.
@@ -161,7 +161,7 @@ both interfaces.
 
 The four context dialogs are declared once as well, in src/gui/GuiElementary,
 GuiPhysical, GuiTransform and GuiMeshContext, and built by both interfaces:
-contextPanels.cpp turns the
+dialogImGui.cpp and fieldImGui.cpp turn the
 description into Dear ImGui windows, src/fltk/dialogFltk.cpp into the windows
 contextWindow.cpp used to build by hand.
 
@@ -308,7 +308,7 @@ sliders, as every bounded option of the option window is a value input here.
 The bar along the bottom is described in GuiStatus.cpp. It was twelve buttons
 built by hand in src/fltk/graphicWindow.cpp, indexed in the order they happened
 to be declared rather than the order they are drawn in (`_butt[5]` first,
-`_butt[3]` seventh), and a second row written out again in statusBar.cpp -- with
+`_butt[3]` seventh), and a second row written out again in BackendImGui.cpp -- with
 different labels, different tooltips, and, for the button that says whether the
 mouse picks, the opposite meaning: FLTK paints it red when picking is *off*, and
 the Dear ImGui bar was highlighting it when it was on.
@@ -331,7 +331,7 @@ immediate-mode frame not being re-entrant.
 
 What takes the rest of the bar -- the last message and the progress of whatever
 is running -- is shared as well. It was held in the widgets on one side
-(Fl_Progress carries a label, a value and a range) and in members of appWindow
+(Fl_Progress carries a label, a value and a range) and in members of its main window
 on the other, and that is why the sentence the FLTK bar appends when something
 has gone wrong, "1 Error : Click to show messages [ ... ]", was in one bar and
 not the other. There is one copy of it now, worked out in StatusBar::message()
@@ -453,7 +453,7 @@ live in GuiActionsGeo.cpp, so the two interfaces show the same thing.
 
 The menu bar is not written here at all. It is declared once, in
 src/gui/GuiMenus.h and GuiMenus.cpp, and both interfaces build it from that
-one description: menuBar.cpp walks it every frame, and src/fltk/menuFltk.cpp
+one description: menuImGui.cpp walks it every frame, and src/fltk/menuFltk.cpp
 flattens it into the Fl_Menu_Item[] that Fl_Menu_Bar wants, which is what
 bar_table[] and sysbar_table[] used to be by hand.
 
@@ -486,7 +486,7 @@ read while it is built; Gui::fillRecentHistoryMenu() only bumps a generation
 counter, and both interfaces build again when they notice. That is also the
 answer for anything else dynamic that ends up in a menu.
 
-The accelerators are read from the same description in shortcuts.cpp: Dear ImGui
+The accelerators are read from the same description in BackendImGui.cpp: Dear ImGui
 draws the menus but never acts on the shortcut it displays, so each one has to
 be tested by hand -- from the description rather than from a second hand-written
 list. Doing so turned up that they had never worked at all: the handler bailed
@@ -541,7 +541,7 @@ Fonts
 -----
 
 Dear ImGui embeds a single bitmap font, crisp at its native size but blurry as
-soon as the display scale is not 1. src/imgui/fonts.cpp therefore looks for a
+soon as the display scale is not 1. src/imgui/fontsImGui.cpp therefore looks for a
 real TrueType font: GMSH_GUI_FONT if it is set, then the usual system paths,
 then the directories that fontconfig lists in /etc/fonts (which is what finds
 the fonts on the distributions that keep them out of the usual places). It falls
@@ -555,7 +555,7 @@ Implemented: the window and its event loop, the dock space, the 3D scene with
 mouse navigation (rotate, pan, zoom, lasso zoom), entity selection, the string
 rendering used by the 3D scene, the message console, the status bar and its
 progress meter, the blocking input and question dialogs, the file chooser
-(fileBrowser.cpp, on std::filesystem), the menu bar and the actions it triggers,
+(fileChooserImGui.cpp, on std::filesystem), the menu bar and the actions it triggers,
 the keyboard shortcuts, the option editor
 (optionsPanel.cpp) and the raster graphic output files (PNG, JPEG, PPM, GIF,
 YUV).

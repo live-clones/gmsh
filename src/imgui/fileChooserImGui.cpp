@@ -14,11 +14,11 @@
 
 #include "imgui.h"
 
-#include "fileBrowser.h"
+#include "imguiCommon.h"
 
 namespace fs = std::filesystem;
 
-fileBrowser::fileBrowser()
+fileChooserImGui::fileChooserImGui()
   : _mode(Open), _selected(-1), _active(false), _done(false), _accepted(false),
     _needRescan(true), _hidden(false)
 {
@@ -27,7 +27,7 @@ fileBrowser::fileBrowser()
   _filter[0] = '\0';
 }
 
-void fileBrowser::begin(Mode mode, const std::string &title,
+void fileChooserImGui::begin(Mode mode, const std::string &title,
                         const std::vector<format> &formats,
                         const std::string &initialName)
 {
@@ -60,7 +60,7 @@ void fileBrowser::begin(Mode mode, const std::string &title,
   _fileName[sizeof(_fileName) - 1] = '\0';
 }
 
-std::string fileBrowser::result() const
+std::string fileChooserImGui::result() const
 {
   if(!_fileName[0]) return "";
   std::error_code ec;
@@ -98,7 +98,7 @@ static bool _matches(const std::string &name, const char *filter)
   return false;
 }
 
-void fileBrowser::_rescan()
+void fileChooserImGui::_rescan()
 {
   _entries.clear();
   _selected = -1;
@@ -125,7 +125,7 @@ void fileBrowser::_rescan()
   _needRescan = false;
 }
 
-void fileBrowser::draw()
+void fileChooserImGui::draw()
 {
   if(!_active) return;
   if(_needRescan) _rescan();

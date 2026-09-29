@@ -17,8 +17,7 @@
 
 #include "imgui.h"
 
-#include "appWindow.h"
-#include "toolkit.h"
+#include "imguiCommon.h"
 #include "OS.h"
 
 namespace {
@@ -149,7 +148,7 @@ namespace {
   {
     if(const char *env = getenv("GMSH_GUI_FONT")) {
       if(!StatFile(env)) return env;
-      Toolkit::report(Toolkit::Warning, "GMSH_GUI_FONT='%s' does not exist: ignoring it", env);
+      imguiReport(imguiWarning, "GMSH_GUI_FONT='%s' does not exist: ignoring it", env);
     }
     for(int i = 0; _fontFiles[i]; i++)
       if(!StatFile(_fontFiles[i])) return _fontFiles[i];
@@ -210,7 +209,7 @@ ImFont *imguiBoldFont() { return _bold; }
 ImFont *imguiItalicFont() { return _italic; }
 ImFont *imguiFixedFont() { return _fixed; }
 
-void appWindow::_loadFont()
+std::string imguiLoadFont(float &line)
 {
   ImGuiIO &io = ImGui::GetIO();
 
@@ -221,8 +220,7 @@ void appWindow::_loadFont()
     ImFont *font = io.Fonts->AddFontFromFileTTF(file.c_str(), 16.f);
     if(font) {
       io.FontDefault = font;
-      _fontFile = file;
-      _fontLine = _lineOverEm(file);
+      line = _lineOverEm(file);
       // the headings are bold, some words of prose slanted: the files beside
       // it, where there are
       std::size_t at = file.find("Regular");
@@ -238,11 +236,11 @@ void appWindow::_loadFont()
       std::string fixed = _fixedBeside(file);
       if(fixed.size() && !StatFile(fixed))
         _fixed = io.Fonts->AddFontFromFileTTF(fixed.c_str(), 16.f);
-      return;
+      return file;
     }
-    Toolkit::report(Toolkit::Warning, "Could not load the font '%s'", file.c_str());
+    imguiReport(imguiWarning, "Could not load the font '%s'", file.c_str());
   }
 
   io.Fonts->AddFontDefault();
-  _fontFile.clear();
+  return "";
 }

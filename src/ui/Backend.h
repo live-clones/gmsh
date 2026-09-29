@@ -248,6 +248,9 @@ namespace Ui {
       std::function<void()> consoleWasClosed;
       std::function<void(const std::vector<std::string> &paths)> filesDropped;
       std::function<void(const std::string &text)> error;
+      // what the interface says of itself (the windowing system, the fonts,
+      // the scale), to the console as any message is
+      std::function<void(const std::string &text)> warning, info, debug;
       std::function<void()> quitting;
       // said as the interface is about to forget it; only the fields about to
       // be lost are filled

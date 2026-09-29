@@ -142,6 +142,11 @@ namespace Declare {
       host.error = [this](const std::string &text) {
         Msg::Error("%s (GUI internal error)", text.c_str());
       };
+    host.warning = [](const std::string &text) {
+      Msg::Warning("%s", text.c_str());
+    };
+    host.info = [](const std::string &text) { Msg::Info("%s", text.c_str()); };
+    host.debug = [](const std::string &text) { Msg::Debug("%s", text.c_str()); };
     host.filesDropped = [this](const std::vector<std::string> &paths) {
       for(std::size_t i = 0; i < paths.size(); i++) {
         if(i == 0)
