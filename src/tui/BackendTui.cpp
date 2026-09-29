@@ -115,7 +115,15 @@ namespace {
     Box shownBox;
     bool drew = false;
     int cellW = 1, cellH = 1;
-    double lastRefresh = 0.;
+    double lastRefresh = 0., lastPicture = 0.;
+    // the pointer moved: only where it went last is told, once a turn
+    struct move {
+      double x = 0., y = 0.;
+      int button = 0;
+      bool shift = false, ctrl = false, alt = false;
+    };
+    move pendingMove;
+    bool movePending = false;
   };
 
   state &_s()
@@ -135,6 +143,13 @@ namespace {
       for(auto &w : now)
         if(w) w();
     }
+  }
+
+  double _clock()
+  {
+    return std::chrono::duration<double>(
+             std::chrono::steady_clock::now().time_since_epoch())
+      .count();
   }
 
   // a menu, a question or the chooser over the scene: the picture of the
@@ -160,18 +175,19 @@ namespace {
                  b.y_min != s.shownBox.y_min || b.y_max != s.shownBox.y_max;
     if(Tui::graphics() == Tui::Kitty && !moved && s.version == s.shownVersion)
       return;
+    // at most so many pictures a second; the one held back goes at a later
+    // turn
+    double now = _clock();
+    if(!moved && now - s.lastPicture < 1. / 30.) {
+      s.drew = true;
+      return;
+    }
+    s.lastPicture = now;
     if(s.picture.size() <= 54) return;
     s.shownBox = b;
     s.shownVersion = s.version;
     Tui::showPicture(&s.picture[0], s.pictureW, s.pictureH, b.x_min, b.y_min,
                      b.x_max - b.x_min + 1, b.y_max - b.y_min + 1);
-  }
-
-  double _clock()
-  {
-    return std::chrono::duration<double>(
-             std::chrono::steady_clock::now().time_since_epoch())
-      .count();
   }
 
   // one turn: what arrived, the timers of the scene, what the user asked
@@ -555,8 +571,32 @@ namespace {
       bool shift = m.shift, ctrl = m.control, alt = m.meta;
       std::function<void(double, double, int, int, double, bool, bool, bool)>
         pointer = s.host.scenePointer;
-      if(pointer)
-        Tui::later([pointer, px, py, button, what, wheel, shift, ctrl, alt]() {
+      if(!pointer) return true;
+      // a move says where the pointer is now: only the last of those that
+      // arrive together is told, which is what the scene draws for
+      auto tellMove = []() {
+        state &s = _s();
+        if(!s.movePending) return;
+        s.movePending = false;
+        const state::move &m = s.pendingMove;
+        if(s.host.scenePointer)
+          s.host.scenePointer(m.x, m.y, m.button, 0, 0., m.shift, m.ctrl, m.alt);
+      };
+      if(what == 0) {
+        bool queued = s.movePending;
+        s.pendingMove.x = px;
+        s.pendingMove.y = py;
+        s.pendingMove.button = button;
+        s.pendingMove.shift = shift;
+        s.pendingMove.ctrl = ctrl;
+        s.pendingMove.alt = alt;
+        s.movePending = true;
+        if(!queued) Tui::later(tellMove);
+      }
+      else
+        Tui::later([tellMove, pointer, px, py, button, what, wheel, shift, ctrl,
+                    alt]() {
+          tellMove();
           pointer(px, py, button, what, wheel, shift, ctrl, alt);
         });
       Tui::focus("");

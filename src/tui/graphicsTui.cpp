@@ -14,7 +14,9 @@
 #include <string>
 #include <vector>
 
+#include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 #if defined(HAVE_LIBZ)
@@ -98,6 +100,70 @@ namespace {
   // two images taken in turn: the new one is put up before the old one is
   // taken down, or the terminal shows nothing in between
   int _kittyId = 31;
+
+  // kitty itself, on this machine: the picture can go through shared memory,
+  // which kitty reads and unlinks, rather than through the terminal
+  bool _sharedMemory()
+  {
+    static int said = -1;
+    if(said < 0) {
+      const char *no = getenv("GMSH_TUI_KITTY_SHM");
+      said = getenv("KITTY_WINDOW_ID") && !getenv("SSH_CONNECTION") &&
+             !getenv("SSH_TTY") && !(no && std::string(no) == "0");
+    }
+    return said == 1;
+  }
+
+  // the bitmap into shared memory, top down as RGB; its name, or nothing
+  std::string _toShared(const unsigned char *bmp, int w, int h)
+  {
+    static unsigned count = 0;
+    std::string name = "/gmsh-tui-" + std::to_string(getpid()) + "-" +
+                       std::to_string(count++);
+    std::size_t bytes = (std::size_t)3 * w * h;
+    int fd = shm_open(name.c_str(), O_CREAT | O_RDWR | O_EXCL, 0600);
+    if(fd < 0) return "";
+    if(ftruncate(fd, (off_t)bytes)) {
+      close(fd);
+      shm_unlink(name.c_str());
+      return "";
+    }
+    void *at = mmap(nullptr, bytes, PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    if(at == MAP_FAILED) {
+      shm_unlink(name.c_str());
+      return "";
+    }
+    unsigned char *to = (unsigned char *)at;
+    int stride = (w * 3 + 3) & ~3;
+    for(int y = 0; y < h; y++) {
+      const unsigned char *from = bmp + 54 + (std::size_t)stride * (h - 1 - y);
+      unsigned char *row = to + (std::size_t)3 * w * y;
+      for(int x = 0; x < w; x++) {
+        row[3 * x + 0] = from[3 * x + 2];
+        row[3 * x + 1] = from[3 * x + 1];
+        row[3 * x + 2] = from[3 * x + 0];
+      }
+    }
+    munmap(at, bytes);
+    return name;
+  }
+
+  std::string _kittyShared(const std::string &name, int w, int h, int cols,
+                           int rows)
+  {
+    int was = _kittyId;
+    _kittyId = _kittyId == 31 ? 32 : 31;
+    std::string out = "\x1b_Ga=T,f=24,t=s,s=" + std::to_string(w) +
+                      ",v=" + std::to_string(h) + ",i=" +
+                      std::to_string(_kittyId) + ",p=1,c=" +
+                      std::to_string(cols) + ",r=" + std::to_string(rows) +
+                      ",C=1,q=2,z=" + _kittyUnder + ";" +
+                      _base64((const unsigned char *)name.data(), name.size()) +
+                      "\x1b\\";
+    out += "\x1b_Ga=d,d=I,i=" + std::to_string(was) + ",q=2\x1b\\";
+    return out;
+  }
 
   std::string _kitty(const std::vector<unsigned char> &rgb, int w, int h,
                      int cols, int rows)
@@ -225,10 +291,17 @@ void Tui::showPicture(const unsigned char *bmp, int w, int h, int x, int y,
                       int cols, int rows)
 {
   if(!bmp || w < 1 || h < 1 || cols < 1 || rows < 1) return;
-  std::vector<unsigned char> rgb = _rgb(bmp, w, h);
   std::string out = "\x1b" "7\x1b[" + std::to_string(y + 1) + ";" +
                     std::to_string(x + 1) + "H";
-  out += graphics() == Kitty ? _kitty(rgb, w, h, cols, rows) : _sixel(rgb, w, h);
+  std::string shared;
+  if(graphics() == Kitty && _sharedMemory()) shared = _toShared(bmp, w, h);
+  if(shared.size())
+    out += _kittyShared(shared, w, h, cols, rows);
+  else {
+    std::vector<unsigned char> rgb = _rgb(bmp, w, h);
+    out += graphics() == Kitty ? _kitty(rgb, w, h, cols, rows) :
+                                 _sixel(rgb, w, h);
+  }
   out += "\x1b" "8";
   std::cout << out << std::flush;
 }
