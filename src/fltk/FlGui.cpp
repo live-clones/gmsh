@@ -664,6 +664,18 @@ namespace {
 
 } // namespace
 
+bool FlGui::eventKey(int &key, unsigned &mods)
+{
+  key = _uiKey(Fl::event_key());
+  mods = _uiMods();
+  const char *text = Fl::event_text();
+  if(text && text[0] > ' ' && text[0] < 127 && !text[1] && !isalpha(text[0])) {
+    key = text[0];
+    mods &= ~Ui::ModShift;
+  }
+  return key != 0;
+}
+
 // the keys of Menu::keys()
 int FlGui::runKeys()
 {
@@ -671,16 +683,9 @@ int FlGui::runKeys()
     window_cb(nullptr, (void *)"fullscreen");
     return 1;
   }
-  int key = _uiKey(Fl::event_key());
-  unsigned mods = _uiMods();
-  // a digit or a mark is the one typed, whatever key gives it on this
-  // keyboard (Shift, on a French one)
-  const char *text = Fl::event_text();
-  if(text && text[0] > ' ' && text[0] < 127 && !text[1] && !isalpha(text[0])) {
-    key = text[0];
-    mods &= ~Ui::ModShift;
-  }
-  if(!key || !fltkSources().keys) return 0;
+  int key = 0;
+  unsigned mods = 0;
+  if(!eventKey(key, mods) || !fltkSources().keys) return 0;
   int status = 0;
   for(const Ui::KeyBinding &k : fltkSources().keys()) {
     if(!k.shortcut.matches(key, mods)) continue;

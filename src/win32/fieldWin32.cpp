@@ -11,6 +11,7 @@
 #include <cstdlib>
 
 #include "win32Common.h"
+#include "MapEditor.h"
 
 #include <commdlg.h>
 #include <windowsx.h>
@@ -33,8 +34,7 @@ struct win32Field {
   std::string was, shown;
   std::vector<std::string> labels;
   std::vector<int> values;
-  int mapFrom = -1, mapChannel = 0;
-  bool mapHelp = false;
+  Ui::MapEditor mapEdit;
   win32Tree *tree = nullptr;
   // the links of a page of prose
   std::vector<std::function<void()> > follow;
@@ -70,25 +70,6 @@ namespace {
     });
   }
 
-  void _choicesOf(const Ui::Field &f, std::vector<std::string> &labels,
-                  std::vector<int> &values)
-  {
-    labels.clear();
-    values.clear();
-    if(f.dynamicChoices)
-      f.dynamicChoices(labels, values);
-    else if(f.list && f.itemLabel)
-      for(std::size_t i = 0; i < f.list->size(); i++)
-        labels.push_back(f.itemLabel((int)i));
-    else if(f.list)
-      for(std::size_t i = 0; i < f.list->size(); i++)
-        labels.push_back(std::to_string((*f.list)[i]));
-    else {
-      labels = f.choices;
-      values = f.values;
-    }
-  }
-
   std::string _joined(const std::vector<std::string> &labels)
   {
     std::string s;
@@ -96,29 +77,10 @@ namespace {
     return s;
   }
 
+  // with the decimals of its step when values are dragged
   std::string _number(const Ui::Field &f, double v)
   {
-    char s[64];
-    if(f.step > 0. && win32Sources().settings().inputScrolling) {
-      int decimals = 0;
-      while(decimals < 10 &&
-            std::fabs(f.step * std::pow(10., decimals) -
-                      std::floor(f.step * std::pow(10., decimals) + .5)) > 1e-9)
-        decimals++;
-      snprintf(s, sizeof(s), "%.*f", decimals, v);
-      if(v != 0. && std::fabs(atof(s) - v) > 1e-9 * std::fabs(v))
-        snprintf(s, sizeof(s), "%g", v);
-    }
-    else
-      snprintf(s, sizeof(s), "%g", v);
-    return s;
-  }
-
-  double _bounded(const Ui::Field &f, double v)
-  {
-    if(f.maximum > f.minimum) v = std::max(f.minimum, std::min(f.maximum, v));
-    if(f.kind == Ui::Integer) v = std::floor(v + .5);
-    return v;
+    return Ui::numberText(v, win32Sources().settings().inputScrolling ? f.step : 0.);
   }
 
   bool _isNumber(const Ui::Field &f)
@@ -139,13 +101,12 @@ namespace {
         if(ends && f->field.done) _told(f, true);
         return;
       }
-      char *end = nullptr;
-      double v = strtod(now.c_str(), &end);
-      if(end == now.c_str()) {
+      double v = 0.;
+      if(!Ui::readNumber(now, v)) {
         win32RefreshField(f);
         return;
       }
-      v = _bounded(f->field, v);
+      v = Ui::bounded(f->field, v);
       f->field.setNumber(v);
       f->shown = _number(f->field, v);
       _told(f, true);
@@ -175,7 +136,7 @@ namespace {
       }
       if(_isNumber(f->field) && f->field.step > 0. &&
          (wp == VK_UP || wp == VK_DOWN)) {
-        double v = _bounded(f->field, f->field.getNumber() +
+        double v = Ui::bounded(f->field, f->field.getNumber() +
                                         (wp == VK_UP ? f->field.step :
                                                        -f->field.step));
         f->field.setNumber(v);
@@ -192,7 +153,7 @@ namespace {
       if(_isNumber(f->field) && f->field.step > 0. &&
          win32Sources().settings().inputScrolling && IsWindowEnabled(w)) {
         int dz = GET_WHEEL_DELTA_WPARAM(wp);
-        double v = _bounded(f->field, f->field.getNumber() +
+        double v = Ui::bounded(f->field, f->field.getNumber() +
                                         (dz > 0 ? f->field.step :
                                                   -f->field.step));
         f->field.setNumber(v);
@@ -226,44 +187,6 @@ namespace {
   }
 
   // --- the disc of a direction and the colour map: drawn with GDI
-
-  int _mapChannel(const Ui::ColourMap &map, int i, int channel, bool hsv)
-  {
-    Ui::Colour c = map.colour(i);
-    if(channel == 3) return c.a;
-    if(!hsv) return channel == 0 ? c.r : (channel == 1 ? c.g : c.b);
-    int h, s, v;
-    Ui::toHsv(c, h, s, v);
-    return channel == 0 ? h : (channel == 1 ? s : v);
-  }
-
-  void _setMapChannel(const Ui::ColourMap &map, int i, int channel, int value,
-                      bool hsv)
-  {
-    Ui::Colour c = map.colour(i);
-    if(channel == 3)
-      c.a = (unsigned char)value;
-    else if(!hsv) {
-      if(channel == 0)
-        c.r = (unsigned char)value;
-      else if(channel == 1)
-        c.g = (unsigned char)value;
-      else
-        c.b = (unsigned char)value;
-    }
-    else {
-      int h, s, v;
-      Ui::toHsv(c, h, s, v);
-      if(channel == 0)
-        h = value;
-      else if(channel == 1)
-        s = value;
-      else
-        v = value;
-      c = Ui::fromHsv(h, s, v, c.a);
-    }
-    map.setColour(i, c);
-  }
 
   void _discAt(win32Field *f, HWND w, int px, int py)
   {
@@ -361,7 +284,7 @@ namespace {
           HGDIOBJ was = SelectObject(dc, pen);
           for(int i = 0; i < size; i++) {
             int x = (int)((double)r.right * i / (size - 1));
-            int y = (int)(wedgeY * (1. - _mapChannel(map, i, channel, hsv) / 255.));
+            int y = (int)(wedgeY * (1. - Ui::mapChannel(map, i, channel, hsv) / 255.));
             if(i == 0)
               MoveToEx(dc, x, y, nullptr);
             else
@@ -383,14 +306,24 @@ namespace {
         HGDIOBJ was = SelectObject(dc, win32Font());
         SetBkMode(dc, TRANSPARENT);
         SetTextColor(dc, GetSysColor(COLOR_WINDOWTEXT));
-        char said[128];
-        snprintf(said, sizeof(said),
-                 f->mapHelp ? "0-9, F1-F7: colormap; mouse: draw (Ctrl: alpha); "
-                              "m: RGB/HSV; r: reset; Ctrl+c/v: copy/paste" :
-                              "Colormap %d (%s) - Press h for help",
-                 map.preset ? map.preset() : 0, hsv ? "HSV" : "RGB");
-        std::wstring s = win32Wide(said);
-        TextOutW(dc, 6, 4, s.c_str(), (int)s.size());
+        std::wstring s;
+        if(f->mapEdit.help()) {
+          // what the keys and the buttons do, as tall as the curves allow
+          const auto &keys = Ui::MapEditor::helpLines();
+          int step = std::max(1, (wedgeY - 8) / ((int)keys.size() + 1));
+          for(std::size_t i = 0; i < keys.size(); i++) {
+            int y = 4 + (int)i * step;
+            s = win32Wide(keys[i].first);
+            TextOutW(dc, 6, y, s.c_str(), (int)s.size());
+            s = win32Wide(keys[i].second);
+            TextOutW(dc, 6 + win32Px(12.), y, s.c_str(), (int)s.size());
+          }
+        }
+        else {
+          s = win32Wide(Ui::MapEditor::title(map));
+          TextOutW(dc, 6, 4, s.c_str(), (int)s.size());
+        }
+        char said[64];
         snprintf(said, sizeof(said), "%g", least);
         s = win32Wide(said);
         TextOutW(dc, 10, r.bottom - 5 - line, s.c_str(), (int)s.size());
@@ -410,27 +343,29 @@ namespace {
     case WM_MBUTTONDOWN:
       SetFocus(w);
       SetCapture(w);
-      f->mapHelp = false;
-      f->mapFrom = -1;
-      f->mapChannel = (wp & MK_CONTROL)          ? 3 :
-                      msg == WM_RBUTTONDOWN      ? 2 :
-                      msg == WM_MBUTTONDOWN      ? 1 :
-                                                   0;
-      // fall through: the first point is painted too
-    case WM_MOUSEMOVE: {
-      if(msg == WM_MOUSEMOVE && !(wp & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
+      {
+        if(map.empty() || r.right < 1) return 0;
+        int px = GET_X_LPARAM(lp), py = GET_Y_LPARAM(lp);
+        if(py >= wedgeY) return 0;
+        unsigned mods = 0;
+        if(wp & MK_CONTROL) mods |= Ui::ModCommand;
+        if(wp & MK_SHIFT) mods |= Ui::ModShift;
+        if(GetKeyState(VK_MENU) < 0) mods |= Ui::ModAlt;
+        f->mapEdit.press(map, Ui::MapEditor::entryAt(map, px, r.right),
+                         Ui::MapEditor::valueAt(py, wedgeY),
+                         msg == WM_RBUTTONDOWN ? 2 :
+                         msg == WM_MBUTTONDOWN ? 1 :
+                                                 0,
+                         mods);
+        InvalidateRect(w, nullptr, FALSE);
+        _told(f, false);
         return 0;
-      if(map.empty() || r.right < 1) return 0;
+      }
+    case WM_MOUSEMOVE: {
+      if(!f->mapEdit.drawing() || map.empty() || r.right < 1) return 0;
       int px = GET_X_LPARAM(lp), py = GET_Y_LPARAM(lp);
-      if(py >= wedgeY) return 0;
-      int size = map.size();
-      int to = std::max(0, std::min(size - 1, px * size / (int)r.right));
-      int from = f->mapFrom < 0 ? to : f->mapFrom;
-      f->mapFrom = to;
-      int value = std::max(0, std::min(255, (wedgeY - py) * 255 / std::max(1, wedgeY)));
-      bool hsv = map.hsv ? map.hsv() : false;
-      for(int i = std::min(from, to); i <= std::max(from, to); i++)
-        _setMapChannel(map, i, f->mapChannel, value, hsv);
+      f->mapEdit.drag(map, Ui::MapEditor::entryAt(map, px, r.right),
+                      Ui::MapEditor::valueAt(py, wedgeY));
       InvalidateRect(w, nullptr, FALSE);
       _told(f, false);
       return 0;
@@ -439,59 +374,17 @@ namespace {
     case WM_RBUTTONUP:
     case WM_MBUTTONUP:
       ReleaseCapture();
-      f->mapFrom = -1;
+      f->mapEdit.release();
       return 0;
     case WM_GETDLGCODE: return DLGC_WANTALLKEYS;
     case WM_KEYDOWN: {
       int key = 0;
       unsigned mods = 0;
       if(map.empty() || !win32UiKey(wp, lp, key, mods)) break;
-      bool ctrl = (mods & Ui::ModCommand) != 0, changed = false;
-      int presets = map.numPresets ? map.numPresets() : 0, preset = -1;
-      if(key >= '0' && key <= '9') preset = (key - '0') + (ctrl ? 10 : 0);
-      if(key >= Ui::KeyF1 && key < Ui::KeyF1 + 7) preset = 20 + key - Ui::KeyF1;
-      if(preset >= 0 && preset < presets) {
-        map.choosePreset(preset);
-        changed = true;
-      }
-      else if(key == 'M' && !ctrl && map.setHsv) {
-        map.setHsv(!map.hsv());
-        changed = true;
-      }
-      else if(key == 'H' && !ctrl) {
-        f->mapHelp = !f->mapHelp;
-        InvalidateRect(w, nullptr, FALSE);
-        return 0;
-      }
-      else if(key == 'R' && !ctrl) {
-        if(map.preset) map.choosePreset(map.preset());
-        changed = true;
-      }
-      else if(key == 'C' && ctrl) {
-        if(map.copy) map.copy();
-        return 0;
-      }
-      else if(key == 'V' && ctrl) {
-        if(map.paste) map.paste();
-        changed = true;
-      }
-      else if(map.parameters) {
-        for(const auto &p : map.parameters()) {
-          if(!p.up.empty() && p.up.matches(key, mods)) {
-            map.adjust(p, true);
-            changed = true;
-            break;
-          }
-          if(!p.down.empty() && p.down.matches(key, mods)) {
-            map.adjust(p, false);
-            changed = true;
-            break;
-          }
-        }
-      }
-      if(!changed) break;
+      Ui::MapEditor::Answer said = f->mapEdit.key(map, key, mods);
+      if(said == Ui::MapEditor::NotMine) break;
       InvalidateRect(w, nullptr, FALSE);
-      _told(f, true);
+      if(said == Ui::MapEditor::Changed) _told(f, true);
       return 0;
     }
     default: break;
@@ -822,7 +715,7 @@ void win32RefreshField(win32Field *f)
     if(g.multiple) break; // its menu is made when it drops
     std::vector<std::string> labels;
     std::vector<int> values;
-    _choicesOf(g, labels, values);
+    Ui::choices(g, labels, values);
     if(_joined(labels) != f->was) {
       f->was = _joined(labels);
       _setChoiceItems(f->widget, labels, CB_RESETCONTENT, CB_ADDSTRING);
@@ -862,7 +755,7 @@ void win32RefreshField(win32Field *f)
   case Ui::List: {
     std::vector<std::string> labels;
     std::vector<int> values;
-    _choicesOf(g, labels, values);
+    Ui::choices(g, labels, values);
     if(_joined(labels) != f->was) {
       f->was = _joined(labels);
       _setChoiceItems(f->widget, labels, LB_RESETCONTENT, LB_ADDSTRING);
@@ -942,7 +835,7 @@ bool win32FieldMessage(HWND panel, UINT msg, WPARAM wp, LPARAM lp,
     const Ui::Field &g = f->field;
     double v = g.minimum + (g.maximum - g.minimum) * k / 1000.;
     if(g.step > 0.) v = g.minimum + std::floor((v - g.minimum) / g.step + .5) * g.step;
-    v = _bounded(g, v);
+    v = Ui::bounded(g, v);
     f->dragging = code == TB_THUMBTRACK;
     f->field.setNumber(v);
     f->shown = _number(g, v);
@@ -1026,7 +919,7 @@ bool win32FieldMessage(HWND panel, UINT msg, WPARAM wp, LPARAM lp,
       // switches in the menu it drops
       std::vector<std::string> labels;
       std::vector<int> values;
-      _choicesOf(g, labels, values);
+      Ui::choices(g, labels, values);
       std::vector<Ui::MenuItem> items;
       std::function<void()> after = f->after;
       for(std::size_t k = 0; k < labels.size(); k++) {
@@ -1097,7 +990,7 @@ bool win32FieldMessage(HWND panel, UINT msg, WPARAM wp, LPARAM lp,
       // the list is made when the button is pressed
       std::vector<std::string> labels;
       std::vector<int> values;
-      _choicesOf(g, labels, values);
+      Ui::choices(g, labels, values);
       std::vector<Ui::MenuItem> items;
       std::function<void()> after = f->after;
       for(std::size_t k = 0; k < labels.size(); k++) {

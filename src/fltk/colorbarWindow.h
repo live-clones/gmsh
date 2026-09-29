@@ -9,6 +9,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include "Form.h"
+#include "MapEditor.h"
 
 class colorbarWindow : public Fl_Window {
 private:
@@ -18,7 +19,9 @@ private:
   int wedge_y; // top coord of color wedge
   int marker_y; // top coord of marker arrow
   int label_y; // y coord of text labels
-  int help_flag; // if nonzero, print help message
+  // the keys, the help and the stroke being drawn, as every interface has
+  // them
+  Ui::MapEditor _edit;
   int marker_pos; // position of marker as index into table
   // what it edits, described rather than handed over: see Ui::ColourMap
   Ui::ColourMap _map;
@@ -40,10 +43,6 @@ private:
   // and value
   int _channel(int i, int channel);
   void _channels(int i, double &H, double &S, double &V);
-  // one of the numbers the map is computed from, when the event is one of the
-  // keys the description gives them
-  bool _adjust();
-  static bool _pressed(const Ui::Shortcut &s);
 
 public:
   colorbarWindow(int x, int y, int w, int h, const char *l = nullptr);

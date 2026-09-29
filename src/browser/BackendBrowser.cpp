@@ -949,12 +949,7 @@ namespace {
       case Ui::Choice: {
         std::vector<std::string> labels;
         std::vector<int> values;
-        if(f.dynamicChoices)
-          f.dynamicChoices(labels, values);
-        else {
-          labels = f.choices;
-          values = f.values;
-        }
+        Ui::choices(f, labels, values);
         int at = -1;
         for(std::size_t i = 0; i < labels.size(); i++)
           if(labels[i] == said) at = (int)i;
@@ -1129,13 +1124,7 @@ namespace {
       if(f.kind == Ui::List || f.kind == Ui::Menu) {
         std::vector<std::string> labels;
         std::vector<int> values;
-        if(f.dynamicChoices)
-          f.dynamicChoices(labels, values);
-        else if(f.list && f.itemLabel)
-          for(std::size_t i = 0; i < f.list->size(); i++)
-            labels.push_back(f.itemLabel((int)i));
-        else
-          labels = f.choices;
+        Ui::choices(f, labels, values);
         out += ",\"items\":[";
         for(std::size_t i = 0; i < labels.size(); i++)
           out += (i ? "," : "") + _quoted(labels[i]);
@@ -1178,12 +1167,7 @@ namespace {
       if(f.kind == Ui::Choice) {
         std::vector<std::string> labels;
         std::vector<int> values;
-        if(f.dynamicChoices)
-          f.dynamicChoices(labels, values);
-        else {
-          labels = f.choices;
-          values = f.values;
-        }
+        Ui::choices(f, labels, values);
         // on the entry whose value it holds; the page shows and reads back the
         // text
         if(values.size()) {

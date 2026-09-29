@@ -15,6 +15,7 @@
 #import <objc/runtime.h>
 
 #include "cocoaCommon.h"
+#include "MapEditor.h"
 
 // The widget of one field. Each carries its binding -- a copy of the field,
 // and what the holder does after a change -- as an object associated with
@@ -82,8 +83,7 @@ namespace {
     std::string was, shown;
     std::vector<std::string> labels;
     std::vector<int> values;
-    bool mapHelp = false;
-    int mapFrom = -1, mapChannel = 0;
+    Ui::MapEditor mapEdit;
     double wheel = 0.;
     bool dragging = false;
     cocoaTree *tree = nullptr;
@@ -136,25 +136,6 @@ namespace {
     if(after) after();
   }
 
-  void _choicesOf(const Ui::Field &f, std::vector<std::string> &labels,
-                  std::vector<int> &values)
-  {
-    labels.clear();
-    values.clear();
-    if(f.dynamicChoices)
-      f.dynamicChoices(labels, values);
-    else if(f.list && f.itemLabel)
-      for(std::size_t i = 0; i < f.list->size(); i++)
-        labels.push_back(f.itemLabel((int)i));
-    else if(f.list)
-      for(std::size_t i = 0; i < f.list->size(); i++)
-        labels.push_back(std::to_string((*f.list)[i]));
-    else {
-      labels = f.choices;
-      values = f.values;
-    }
-  }
-
   std::string _joined(const std::vector<std::string> &labels)
   {
     std::string s;
@@ -162,42 +143,20 @@ namespace {
     return s;
   }
 
-  // with the decimals of its step when it scrolls, as FLTK has it, unless
-  // the value is off the grid of the step
+  // with the decimals of its step when values are dragged
   std::string _number(const Ui::Field &f, double v)
   {
-    char s[64];
-    if(f.step > 0. && cocoaSources().settings().inputScrolling) {
-      int decimals = 0;
-      while(decimals < 10 &&
-            std::fabs(f.step * std::pow(10., decimals) -
-                      std::floor(f.step * std::pow(10., decimals) + .5)) > 1e-9)
-        decimals++;
-      snprintf(s, sizeof(s), "%.*f", decimals, v);
-      if(v != 0. && std::fabs(atof(s) - v) > 1e-9 * std::fabs(v))
-        snprintf(s, sizeof(s), "%g", v);
-    }
-    else
-      snprintf(s, sizeof(s), "%g", v);
-    return s;
-  }
-
-  double _bounded(const Ui::Field &f, double v)
-  {
-    if(f.maximum > f.minimum) v = std::max(f.minimum, std::min(f.maximum, v));
-    if(f.kind == Ui::Integer) v = std::floor(v + .5);
-    return v;
+    return Ui::numberText(v, cocoaSources().settings().inputScrolling ? f.step : 0.);
   }
 
   void _numberWrite(binding *b, const std::string &said, bool ends)
   {
-    char *end = nullptr;
-    double v = strtod(said.c_str(), &end);
-    if(end == said.c_str()) {
+    double v = 0.;
+    if(!Ui::readNumber(said, v)) {
       cocoaRefreshField(b->outer);
       return;
     }
-    v = _bounded(b->field, v);
+    v = Ui::bounded(b->field, v);
     b->field.setNumber(v);
     b->shown = _number(b->field, v);
     _told(b, ends);
@@ -251,7 +210,7 @@ namespace {
   }
   if(dy == 0.) return;
   const Ui::Field &f = b->field;
-  double v = _bounded(f, f.getNumber() + (dy > 0 ? 1. : -1.) * f.step);
+  double v = Ui::bounded(f, f.getNumber() + (dy > 0 ? 1. : -1.) * f.step);
   b->field.setNumber(v);
   cocoaRefreshField(b->outer);
   _told(b, false);
@@ -356,44 +315,6 @@ namespace {
 
 namespace {
 
-  int _mapChannel(const Ui::ColourMap &map, int i, int channel, bool hsv)
-  {
-    Ui::Colour c = map.colour(i);
-    if(channel == 3) return c.a;
-    if(!hsv) return channel == 0 ? c.r : (channel == 1 ? c.g : c.b);
-    int h, s, v;
-    Ui::toHsv(c, h, s, v);
-    return channel == 0 ? h : (channel == 1 ? s : v);
-  }
-
-  void _setMapChannel(const Ui::ColourMap &map, int i, int channel, int value,
-                      bool hsv)
-  {
-    Ui::Colour c = map.colour(i);
-    if(channel == 3)
-      c.a = (unsigned char)value;
-    else if(!hsv) {
-      if(channel == 0)
-        c.r = (unsigned char)value;
-      else if(channel == 1)
-        c.g = (unsigned char)value;
-      else
-        c.b = (unsigned char)value;
-    }
-    else {
-      int h, s, v;
-      Ui::toHsv(c, h, s, v);
-      if(channel == 0)
-        h = value;
-      else if(channel == 1)
-        s = value;
-      else
-        v = value;
-      c = Ui::fromHsv(h, s, v, c.a);
-    }
-    map.setColour(i, c);
-  }
-
   void _say(const char *text, NSPoint at, NSFont *font, NSColor *ink)
   {
     NSDictionary *a =
@@ -463,7 +384,7 @@ namespace {
     NSBezierPath *path = [NSBezierPath bezierPath];
     [path setLineWidth:1.];
     for(int i = 0; i < size; i++) {
-      NSPoint p = NSMakePoint(xOf(i), yOf(_mapChannel(map, i, channel, hsv)));
+      NSPoint p = NSMakePoint(xOf(i), yOf(Ui::mapChannel(map, i, channel, hsv)));
       if(i == 0)
         [path moveToPoint:p];
       else
@@ -481,37 +402,20 @@ namespace {
     NSRectFill(NSMakeRect(x, wy, 1., lh));
   }
   NSFont *font = cocoaFont();
-  if(b->mapHelp) {
-    static const char *const keys[][2] = {
-      {"0-9, Ctrl+0-9, F1-F7", "Select predefined colormap"},
-      {"mouse1", "Draw red or hue channel"},
-      {"mouse2", "Draw green or saturation channel"},
-      {"mouse3", "Draw blue or value channel"},
-      {"Ctrl+mouse1", "Draw alpha channel"},
-      {"Ctrl+c, Ctrl+v, r", "Copy, paste or reset colormap"},
-      {"m", "Toggle RGB/HSV mode"},
-      {"left, right", "Translate abscissa"},
-      {"Ctrl+left, Ctrl+right", "Rotate abscissa"},
-      {"i, Ctrl+i", "Invert abscissa or ordinate"},
-      {"up, down", "Modify color channel curvature"},
-      {"a, Ctrl+a", "Modify alpha coefficient"},
-      {"p, Ctrl+p", "Modify alpha channel power law"},
-      {"b, Ctrl+b", "Modify gamma correction"},
-      {"h", "Show this help message"}};
-    const int lines = sizeof(keys) / sizeof(keys[0]);
+  if(b->mapEdit.help()) {
+    const auto &keys = Ui::MapEditor::helpLines();
+    const int lines = (int)keys.size();
     double scale = std::min(.85, (wy - 12.) / (lines + 1) / lh);
     NSFont *small = [NSFont systemFontOfSize:cocoaEm() * scale];
     double step = lh * scale + 1.;
     for(int i = 0; i < lines; i++) {
-      _say(keys[i][0], NSMakePoint(6., 4. + i * step), small, ink);
-      _say(keys[i][1], NSMakePoint(12. * step, 4. + i * step), small, ink);
+      _say(keys[i].first.c_str(), NSMakePoint(6., 4. + i * step), small, ink);
+      _say(keys[i].second.c_str(), NSMakePoint(12. * step, 4. + i * step), small,
+           ink);
     }
   }
   else {
-    char said[128];
-    snprintf(said, sizeof(said), "Colormap %d (%s) - Press h for help",
-             map.preset ? map.preset() : 0, hsv ? "HSV" : "RGB");
-    _say(said, NSMakePoint(6., 4.), font, ink);
+    _say(Ui::MapEditor::title(map).c_str(), NSMakePoint(6., 4.), font, ink);
   }
   char says[64];
   double base = wy + lh + 2.;
@@ -522,7 +426,8 @@ namespace {
     sizeWithAttributes:@{NSFontAttributeName : font}];
   _say(says, NSMakePoint(w - 10. - wide.width, base), font, ink);
 }
-- (void)paint:(NSEvent *)e first:(bool)first
+// button: 0, 1, 2 for a button that went down, -1 for a drag
+- (void)paint:(NSEvent *)e button:(int)button
 {
   binding *b = _of(self);
   if(!b) return;
@@ -530,28 +435,31 @@ namespace {
   int size = map.empty() ? 0 : map.size();
   double wy = [self wedgeY], width = [self bounds].size.width;
   NSPoint pos = [self convertPoint:[e locationInWindow] fromView:nil];
-  if(size < 2 || width < 1. || pos.y >= wy) return;
-  int to = std::max(0, std::min(size - 1, (int)(pos.x * size / width)));
-  int from = (first || b->mapFrom < 0) ? to : b->mapFrom;
-  b->mapFrom = to;
-  int value = std::max(0, std::min(255, (int)((wy - pos.y) * 255. / wy)));
-  bool hsv = map.hsv ? map.hsv() : false;
-  for(int i = std::min(from, to); i <= std::max(from, to); i++)
-    _setMapChannel(map, i, b->mapChannel, value, hsv);
+  if(size < 2 || width < 1. || wy < 1.) return;
+  int entry = Ui::MapEditor::entryAt(map, pos.x, width);
+  int value = Ui::MapEditor::valueAt(pos.y, wy);
+  if(button >= 0) {
+    if(pos.y >= wy) return;
+    NSEventModifierFlags flags = [e modifierFlags];
+    unsigned mods = 0;
+    if(flags & (NSEventModifierFlagControl | NSEventModifierFlagCommand))
+      mods |= Ui::ModCommand;
+    if(flags & NSEventModifierFlagShift) mods |= Ui::ModShift;
+    if(flags & NSEventModifierFlagOption) mods |= Ui::ModAlt;
+    b->mapEdit.press(map, entry, value, button, mods);
+  }
+  else if(b->mapEdit.drawing())
+    b->mapEdit.drag(map, entry, value);
+  else
+    return;
   [self setNeedsDisplay:YES];
   _told(b, false);
 }
-- (void)press:(NSEvent *)e channel:(int)channel
+- (void)press:(NSEvent *)e channel:(int)button
 {
-  binding *b = _of(self);
-  if(!b) return;
+  if(!_of(self)) return;
   [[self window] makeFirstResponder:self];
-  b->mapHelp = false;
-  b->mapChannel = ([e modifierFlags] &
-                   (NSEventModifierFlagControl | NSEventModifierFlagCommand)) ?
-                    3 :
-                    channel;
-  [self paint:e first:true];
+  [self paint:e button:button];
 }
 - (void)mouseDown:(NSEvent *)e
 {
@@ -567,19 +475,19 @@ namespace {
 }
 - (void)mouseDragged:(NSEvent *)e
 {
-  [self paint:e first:false];
+  [self paint:e button:-1];
 }
 - (void)rightMouseDragged:(NSEvent *)e
 {
-  [self paint:e first:false];
+  [self paint:e button:-1];
 }
 - (void)otherMouseDragged:(NSEvent *)e
 {
-  [self paint:e first:false];
+  [self paint:e button:-1];
 }
 - (void)mouseUp:(NSEvent *)e
 {
-  if(binding *b = _of(self)) b->mapFrom = -1;
+  if(binding *b = _of(self)) b->mapEdit.release();
 }
 - (void)rightMouseUp:(NSEvent *)e
 {
@@ -599,55 +507,13 @@ namespace {
     return;
   }
   const Ui::ColourMap &map = b->field.map;
-  bool ctrl = (mods & Ui::ModCommand) != 0, changed = false;
-  int presets = map.numPresets ? map.numPresets() : 0, preset = -1;
-  if(key >= '0' && key <= '9') preset = (key - '0') + (ctrl ? 10 : 0);
-  if(key >= Ui::KeyF1 && key < Ui::KeyF1 + 7) preset = 20 + key - Ui::KeyF1;
-  if(preset >= 0 && preset < presets) {
-    map.choosePreset(preset);
-    changed = true;
-  }
-  else if(key == 'M' && !ctrl && map.setHsv) {
-    map.setHsv(!map.hsv());
-    changed = true;
-  }
-  else if(key == 'H' && !ctrl) {
-    b->mapHelp = !b->mapHelp;
-    [self setNeedsDisplay:YES];
-    return;
-  }
-  else if(key == 'R' && !ctrl) {
-    if(map.preset) map.choosePreset(map.preset());
-    changed = true;
-  }
-  else if(key == 'C' && ctrl) {
-    if(map.copy) map.copy();
-    return;
-  }
-  else if(key == 'V' && ctrl) {
-    if(map.paste) map.paste();
-    changed = true;
-  }
-  else if(map.parameters) {
-    for(const auto &p : map.parameters()) {
-      if(!p.up.empty() && p.up.matches(key, mods)) {
-        map.adjust(p, true);
-        changed = true;
-        break;
-      }
-      if(!p.down.empty() && p.down.matches(key, mods)) {
-        map.adjust(p, false);
-        changed = true;
-        break;
-      }
-    }
-  }
-  if(!changed) {
+  Ui::MapEditor::Answer said = b->mapEdit.key(map, key, mods);
+  if(said == Ui::MapEditor::NotMine) {
     [super keyDown:e];
     return;
   }
   [self setNeedsDisplay:YES];
-  _told(b, true);
+  if(said == Ui::MapEditor::Changed) _told(b, true);
 }
 // Command and the digits or the letters are the map's while the pointer is
 // on it, not the menus'
@@ -865,7 +731,7 @@ namespace {
   double v = g.minimum + (g.maximum - g.minimum) * [s doubleValue] / 1000.;
   if(g.step > 0.)
     v = g.minimum + std::floor((v - g.minimum) / g.step + .5) * g.step;
-  v = _bounded(g, v);
+  v = Ui::bounded(g, v);
   b.field.setNumber(v);
   b.shown = _number(g, v);
   b.quiet = true;
@@ -924,7 +790,7 @@ namespace {
   while([menu numberOfItems] > 1) [menu removeItemAtIndex:1];
   std::vector<std::string> labels;
   std::vector<int> values;
-  _choicesOf(b.field, labels, values);
+  Ui::choices(b.field, labels, values);
   for(std::size_t i = 0; i < labels.size(); i++) {
     NSMenuItem *it = [menu addItemWithTitle:cocoaString(labels[i])
                                      action:@selector(picked:)
@@ -1397,7 +1263,7 @@ void cocoaRefreshField(NSView *widget)
   case Ui::Choice: {
     std::vector<std::string> labels;
     std::vector<int> values;
-    _choicesOf(f, labels, values);
+    Ui::choices(f, labels, values);
     NSPopUpButton *p = (NSPopUpButton *)b->inner;
     if(f.multiple) {
       if(_joined(labels) != b->was) {
@@ -1460,7 +1326,7 @@ void cocoaRefreshField(NSView *widget)
   case Ui::List: {
     std::vector<std::string> labels;
     std::vector<int> values;
-    _choicesOf(f, labels, values);
+    Ui::choices(f, labels, values);
     NSTableView *t = (NSTableView *)b->inner;
     if(_joined(labels) != b->was) {
       b->was = _joined(labels);

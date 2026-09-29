@@ -6,6 +6,7 @@
 #ifndef DIALOG_FLTK_H
 #define DIALOG_FLTK_H
 
+#include <cstdio>
 #include <functional>
 #include <map>
 #include <string>
@@ -15,9 +16,21 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Widget.H>
+#include <FL/Fl_Value_Input.H>
 
 #include "Form.h"
 #include "Layout.h"
+
+// a number as every interface shows it (Ui::numberText): with the decimals
+// of its step, the step being set when values are dragged
+class fltkValueInput : public Fl_Value_Input {
+public:
+  fltkValueInput(int x, int y, int w, int h) : Fl_Value_Input(x, y, w, h) {}
+  int format(char *buffer) override
+  {
+    return snprintf(buffer, 128, "%s", Ui::numberText(value(), step()).c_str());
+  }
+};
 
 // the FLTK side of a described form: one widget per field, bound to the
 // variable the description points at

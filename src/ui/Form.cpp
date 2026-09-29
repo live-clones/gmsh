@@ -5,6 +5,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "Form.h"
 
@@ -190,6 +192,104 @@ namespace Ui {
       s += b.label + (b.on && b.on() ? "+" : "") +
            (b.enabled && !b.enabled() ? "-" : "") + ";";
     return s;
+  }
+
+  void choices(const Field &f, std::vector<std::string> &labels,
+               std::vector<int> &values)
+  {
+    labels.clear();
+    values.clear();
+    if(f.dynamicChoices)
+      f.dynamicChoices(labels, values);
+    else if(f.list && f.itemLabel)
+      for(std::size_t i = 0; i < f.list->size(); i++)
+        labels.push_back(f.itemLabel((int)i));
+    else if(f.list)
+      for(std::size_t i = 0; i < f.list->size(); i++)
+        labels.push_back(std::to_string((*f.list)[i]));
+    else {
+      labels = f.choices;
+      values = f.values;
+    }
+  }
+
+  double bounded(const Field &f, double v)
+  {
+    if(f.maximum > f.minimum) v = std::max(f.minimum, std::min(f.maximum, v));
+    if(f.kind == Integer) v = std::floor(v + .5);
+    return v;
+  }
+
+  int decimals(double step)
+  {
+    int d = 0;
+    while(d < 10 && std::fabs(step * std::pow(10., d) -
+                              std::floor(step * std::pow(10., d) + .5)) > 1e-9)
+      d++;
+    return d;
+  }
+
+  std::string numberText(double v, double step)
+  {
+    // "%g" says negative zero "-0"
+    if(v == 0.) v = 0.;
+    char s[64];
+    if(step > 0.) {
+      snprintf(s, sizeof(s), "%.*f", decimals(step), v);
+      if(v != 0. && std::fabs(atof(s) - v) > 1e-9 * std::fabs(v))
+        snprintf(s, sizeof(s), "%g", v);
+    }
+    else
+      snprintf(s, sizeof(s), "%g", v);
+    return s;
+  }
+
+  bool readNumber(const std::string &said, double &v)
+  {
+    const char *start = said.c_str();
+    char *end = nullptr;
+    double read = strtod(start, &end);
+    if(end == start) return false;
+    v = read;
+    return true;
+  }
+
+  int mapChannel(const ColourMap &map, int i, int channel, bool hsv)
+  {
+    Colour c = map.colour(i);
+    if(channel == 3) return c.a;
+    if(!hsv) return channel == 0 ? c.r : (channel == 1 ? c.g : c.b);
+    int h, s, v;
+    toHsv(c, h, s, v);
+    return channel == 0 ? h : (channel == 1 ? s : v);
+  }
+
+  void setMapChannel(const ColourMap &map, int i, int channel, int value,
+                     bool hsv)
+  {
+    Colour c = map.colour(i);
+    if(channel == 3)
+      c.a = (unsigned char)value;
+    else if(!hsv) {
+      if(channel == 0)
+        c.r = (unsigned char)value;
+      else if(channel == 1)
+        c.g = (unsigned char)value;
+      else
+        c.b = (unsigned char)value;
+    }
+    else {
+      int h, s, v;
+      toHsv(c, h, s, v);
+      if(channel == 0)
+        h = value;
+      else if(channel == 1)
+        s = value;
+      else
+        v = value;
+      c = fromHsv(h, s, v, c.a);
+    }
+    map.setColour(i, c);
   }
 
 } // namespace Ui

@@ -11,6 +11,7 @@
 #include <FL/fl_draw.H>
 #include "colorbarWindow.h"
 #include "uiSources.h"
+#include "FlGui.h"
 
 #define EPS 1.e-10
 
@@ -18,7 +19,6 @@ colorbarWindow::colorbarWindow(int x, int y, int w, int h, const char *l)
   : Fl_Window(x, y, w, h, l)
 {
   label = nullptr;
-  help_flag = 0;
   font_height = FL_NORMAL_SIZE - 1; // use slightly smaller font
   marker_height = font_height;
   wedge_height = marker_height;
@@ -189,64 +189,15 @@ void colorbarWindow::redraw_range(int a, int b)
 
   int fh = font_height + 1;
   int xx0 = 6, xx1 = 11 * fh, yy0 = 6;
-  if(help_flag) {
-    i = 0;
-    fl_draw("0-9, Ctrl+0-9, F1-F7", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Select predefined colormap", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Left button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw red or hue channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Middle button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw green or saturation channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Right button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw blue or value channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Ctrl+Left button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw alpha channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Ctrl+c, Ctrl+v, r", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Copy, paste or reset colormap", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("m", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Toggle RGB/HSV mode", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Left/Right arrow", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Translate abscissa", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Ctrl+left, Ctrl+right", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Rotate abscissa", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("i, Ctrl+i", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Invert abscissa or ordinate", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Up/Down arrow", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify color channel curvature", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("a, Ctrl+a", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify alpha coefficient", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("p, Ctrl+p", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify alpha channel power law", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("b, Ctrl+b", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify gamma correction", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("r", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Reset colormap modifications", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("h", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Toggle help message", xx1, yy0 + (i + 1) * fh);
-    i++;
+  if(_edit.help()) {
+    const auto &keys = Ui::MapEditor::helpLines();
+    for(std::size_t k = 0; k < keys.size(); k++) {
+      fl_draw(keys[k].first.c_str(), xx0, yy0 + ((int)k + 1) * fh);
+      fl_draw(keys[k].second.c_str(), xx1, yy0 + ((int)k + 1) * fh);
+    }
   }
-  else {
-    // the map and the mode, as the released Gmsh has them
-    char str[128];
-    snprintf(str, sizeof(str), "Colormap %d (%s) - Press h for help",
-             _map.preset ? _map.preset() : 0, _map.hsv() ? "HSV" : "RGB");
-    fl_draw(str, xx0, yy0 + font_height);
-  }
+  else
+    fl_draw(Ui::MapEditor::title(_map).c_str(), xx0, yy0 + font_height);
 }
 
 void colorbarWindow::redraw_marker()
@@ -303,59 +254,15 @@ void colorbarWindow::update(const char *name, double min, double max,
   redraw();
 }
 
-// every key that changes a value goes through the description, so that it
-// cannot differ from another interface
-bool colorbarWindow::_adjust()
-{
-  if(!_map.parameters) return false;
-  std::vector<Ui::ColourMap::Parameter> ps = _map.parameters();
-  for(std::size_t i = 0; i < ps.size(); i++) {
-    if(_pressed(ps[i].up)) {
-      _map.adjust(ps[i], true);
-      return true;
-    }
-    if(!ps[i].down.empty() && _pressed(ps[i].down)) {
-      _map.adjust(ps[i], false);
-      return true;
-    }
-  }
-  return false;
-}
-
-bool colorbarWindow::_pressed(const Ui::Shortcut &s)
-{
-  if(s.empty()) return false;
-  int key;
-  switch(s.key) {
-  case Ui::KeyLeft: key = FL_Left; break;
-  case Ui::KeyRight: key = FL_Right; break;
-  case Ui::KeyUp: key = FL_Up; break;
-  case Ui::KeyDown: key = FL_Down; break;
-  default:
-    key = (s.key >= 'A' && s.key <= 'Z') ? s.key - 'A' + 'a' : s.key;
-    break;
-  }
-  int mods = 0;
-  if(s.mods & Ui::ModShift) mods |= FL_SHIFT;
-  if(s.mods & Ui::ModAlt) mods |= FL_ALT;
-  if(s.mods & Ui::ModCommand)
-    return Fl::test_shortcut(FL_CTRL + mods + key) ||
-           Fl::test_shortcut(FL_META + mods + key);
-  return Fl::test_shortcut(mods + key) ? true : false;
-}
-
 int colorbarWindow::handle(int event)
 {
   if(_map.empty()) return Fl_Window::handle(event);
 
-  static int p1 = 0, p2 = 0, p3 = 0, p4 = 0;
-  static int pentry, move_marker;
-  int i, ibut, xpos, ypos, modify, entry, compute;
-  // a case label may not be jumped over an initialisation
-  int presets = 0, preset = -1;
-
-  modify = 0;
-  compute = 0;
+  // the marker, moved along the wedge, is FLTK's own; the curves are drawn
+  // as in every interface
+  static bool moveMarker = false;
+  int key = 0;
+  unsigned mods = 0;
 
   switch(event) {
   case FL_FOCUS: // accept focus events when asked
@@ -369,159 +276,56 @@ int colorbarWindow::handle(int event)
 
   case FL_SHORTCUT:
   case FL_KEYBOARD:
-    // the digits, the digits with Control and the first seven function keys, in
-    // that order
-    presets = _map.numPresets ? _map.numPresets() : 0;
-    for(int k = 0; k <= 9; k++) {
-      if(Fl::test_shortcut('0' + k)) preset = k;
-      if(Fl::test_shortcut(FL_CTRL + '0' + k) ||
-         Fl::test_shortcut(FL_META + '0' + k))
-        preset = k + 10;
-    }
-    for(int k = 0; k < 7; k++)
-      if(Fl::test_shortcut(FL_F + 1 + k)) preset = k + 20;
-    if(preset >= 0 && preset < presets) {
-      _map.choosePreset(preset);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + 'c') ||
-            Fl::test_shortcut(FL_META + 'c')) {
-      if(_map.copy) _map.copy();
-    }
-    else if(Fl::test_shortcut(FL_CTRL + 'v') ||
-            Fl::test_shortcut(FL_META + 'v')) {
-      if(_map.paste) _map.paste();
-      redraw();
-      *viewchanged = true;
-    }
-    else if(Fl::test_shortcut('h')) {
-      help_flag = !help_flag;
-      redraw();
-    }
-    else if(Fl::test_shortcut('r')) {
-      if(_map.preset) _map.choosePreset(_map.preset());
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('m')) {
-      _map.setHsv(!_map.hsv());
-      redraw();
-    }
-    else if(_adjust()) {
-      // setting it recomputes: nothing more to do than draw
+    if(!FlGui::eventKey(key, mods)) return Fl_Window::handle(event);
+    switch(_edit.key(_map, key, mods)) {
+    case Ui::MapEditor::NotMine: return Fl_Window::handle(event);
+    case Ui::MapEditor::Redraw: redraw(); return 1;
+    case Ui::MapEditor::Changed:
       redraw();
       *viewchanged = true;
       do_callback();
       return 1;
     }
-    else {
-      return Fl_Window::handle(event);
-    }
-
-    if(compute) {
-      redraw();
-      *viewchanged = true;
-      do_callback();
-    }
     return 1;
 
-  case FL_PUSH:
-    ibut = Fl::event_button();
-    xpos = Fl::event_x();
-    ypos = Fl::event_y();
-    if(help_flag) {
-      help_flag = 0;
-      redraw();
-    }
-    // change color function or marker position
-    if(ypos < wedge_y)
-      move_marker = 0;
-    else
-      move_marker = 1;
-
-    // determine which curve to modify
+  case FL_PUSH: {
+    int button = Fl::event_button() == 3 ? 2 : Fl::event_button() == 2 ? 1 : 0;
     if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META))
-      p4 = 1;
-    else if(ibut == 1 && !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT))
-      p1 = 1;
-    else if(ibut == 2 || (ibut == 1 && Fl::event_state(FL_SHIFT)))
-      p2 = 1;
-    else
-      p3 = 1;
-    pentry = x_to_index(xpos);
-    modify = 1;
-    break;
-
-  case FL_RELEASE:
-    ibut = Fl::event_button();
-    xpos = Fl::event_x();
-    ypos = Fl::event_y();
-    p1 = 0;
-    p2 = 0;
-    p3 = 0;
-    p4 = 0;
-    if(*viewchanged) do_callback();
-    break;
-
-  case FL_DRAG:
-    ibut = Fl::event_button();
-    xpos = Fl::event_x();
-    ypos = Fl::event_y();
-    modify = 1;
-    break;
-
-  default:
-    // don't know what to do with the event: passing it to parent
-    return Fl_Window::handle(event);
-  }
-
-  // Modify one or more of the color curves
-
-  if(modify && (p1 || p2 || p3 || p4)) {
-    // calculate which entry in color table to change
-    entry = x_to_index(xpos);
-    // update
-    if(move_marker) {
-      // changing marker position
-      marker_pos = entry;
+      mods |= Ui::ModCommand;
+    if(Fl::event_state(FL_SHIFT)) mods |= Ui::ModShift;
+    if(Fl::event_state(FL_ALT)) mods |= Ui::ModAlt;
+    moveMarker = Fl::event_y() >= wedge_y;
+    if(moveMarker) {
+      _edit.setHelp(false);
+      marker_pos = x_to_index(Fl::event_x());
     }
     else {
-      // changing color graph
-      int a, b, value;
-      value = y_to_intensity(ypos);
-      if(pentry <= entry) {
-        a = pentry;
-        b = entry;
-      }
-      else {
-        a = entry;
-        b = pentry;
-      }
-      // update entries from 'pentry' to 'entry'
-      for(i = a; i <= b; i++) {
-        Ui::Colour c = _map.colour(i);
-        if(!_map.hsv()) {
-          if(p1) c.r = (unsigned char)value;
-          if(p2) c.g = (unsigned char)value;
-          if(p3) c.b = (unsigned char)value;
-          if(p4) c.a = (unsigned char)value;
-        }
-        else {
-          int H, S, V;
-          Ui::toHsv(c, H, S, V);
-          if(p1) H = value;
-          if(p2) S = value;
-          if(p3) V = value;
-          unsigned char alpha = p4 ? (unsigned char)value : c.a;
-          c = Ui::fromHsv(H, S, V, alpha);
-        }
-        _map.setColour(i, c);
-      }
-      pentry = entry;
+      _edit.press(_map, x_to_index(Fl::event_x()), y_to_intensity(Fl::event_y()),
+                  button, mods);
       *viewchanged = true;
     }
     redraw();
     return 1;
   }
 
-  return 1;
+  case FL_DRAG:
+    if(moveMarker)
+      marker_pos = x_to_index(Fl::event_x());
+    else if(_edit.drawing()) {
+      _edit.drag(_map, x_to_index(Fl::event_x()), y_to_intensity(Fl::event_y()));
+      *viewchanged = true;
+    }
+    redraw();
+    return 1;
+
+  case FL_RELEASE:
+    _edit.release();
+    moveMarker = false;
+    if(*viewchanged) do_callback();
+    return 1;
+
+  default:
+    // don't know what to do with the event: passing it to parent
+    return Fl_Window::handle(event);
+  }
 }

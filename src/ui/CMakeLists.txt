@@ -8,6 +8,7 @@ set(SRC
   Bar.cpp
   Form.cpp
   Layout.cpp
+  MapEditor.cpp
   Menu.cpp
 )
 

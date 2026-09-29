@@ -2762,7 +2762,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
     add_test(NAME gui_layout COMMAND gui_layout)
     # and the helpers it gives every interface: src/ui/UiTest.cpp
     add_executable(gui_ui src/ui/UiTest.cpp src/ui/Backend.cpp src/ui/Bar.cpp
-                   src/ui/Form.cpp src/ui/Menu.cpp)
+                   src/ui/Form.cpp src/ui/MapEditor.cpp src/ui/Menu.cpp)
     target_include_directories(gui_ui PRIVATE src/ui)
     add_test(NAME gui_ui COMMAND gui_ui)
   endif()

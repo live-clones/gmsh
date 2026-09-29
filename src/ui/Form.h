@@ -478,6 +478,29 @@ namespace Ui {
   // again only when this changes
   std::string folding(const Form &form);
 
+  // --- the value of a field, as every interface shows and reads it
+
+  // the entries of a choice, a menu or a list, and the values they stand for
+  // (none: they are their places, or their texts)
+  void choices(const Field &f, std::vector<std::string> &labels,
+               std::vector<int> &values);
+  // within the bounds, and whole for an Integer
+  double bounded(const Field &f, double v);
+  // the decimals of a step: 0.25 has 2, 5 has none; at most 10
+  int decimals(double step);
+  // with the decimals of the step (none, or 0: as "%g"), unless the value is
+  // off the grid of the step (1e-6 on a step of 1e-4): then as it is. An
+  // interface passes the step of the field when values are dragged
+  // (Backend::Settings::inputScrolling), none otherwise
+  std::string numberText(double v, double step);
+  // what was typed, if it is a number
+  bool readNumber(const std::string &said, double &v);
+  // a channel of the colour i of a map: 0, 1, 2 red, green, blue, or hue,
+  // saturation, value; 3 alpha; all from 0 to 255
+  int mapChannel(const ColourMap &map, int i, int channel, bool hsv);
+  void setMapChannel(const ColourMap &map, int i, int channel, int value,
+                     bool hsv);
+
 } // namespace Ui
 
 #endif

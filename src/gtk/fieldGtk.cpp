@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "gtkCommon.h"
+#include "MapEditor.h"
 #include "Tree.h"
 
 // The widget of one field. Each carries its binding -- a copy of the field,
@@ -77,8 +78,7 @@ namespace {
     // a slider dragged
     bool dragging = false;
     // the colour map
-    int mapFrom = -1, mapChannel = 0;
-    bool mapHelp = false;
+    Ui::MapEditor mapEdit;
     // the tree of a Hierarchy
     gtkTree *tree = nullptr;
     ~binding() { delete tree; }
@@ -107,25 +107,6 @@ namespace {
     if(after) after();
   }
 
-  void _choicesOf(const Ui::Field &f, std::vector<std::string> &labels,
-                  std::vector<int> &values)
-  {
-    labels.clear();
-    values.clear();
-    if(f.dynamicChoices)
-      f.dynamicChoices(labels, values);
-    else if(f.list && f.itemLabel)
-      for(std::size_t i = 0; i < f.list->size(); i++)
-        labels.push_back(f.itemLabel((int)i));
-    else if(f.list)
-      for(std::size_t i = 0; i < f.list->size(); i++)
-        labels.push_back(std::to_string((*f.list)[i]));
-    else {
-      labels = f.choices;
-      values = f.values;
-    }
-  }
-
   std::string _joined(const std::vector<std::string> &labels)
   {
     std::string s;
@@ -139,32 +120,10 @@ namespace {
       gtk_box_remove(GTK_BOX(box), c);
   }
 
-  // with the decimals of its step when it scrolls, as FLTK has it, unless the
-  // value is off the grid of the step: then as it is
+  // with the decimals of its step when values are dragged
   std::string _number(const Ui::Field &f, double v)
   {
-    char s[64];
-    double step = f.step;
-    if(step > 0. && gtkSources().settings().inputScrolling) {
-      int decimals = 0;
-      while(decimals < 10 &&
-            std::fabs(step * std::pow(10., decimals) -
-                      std::floor(step * std::pow(10., decimals) + .5)) > 1e-9)
-        decimals++;
-      snprintf(s, sizeof(s), "%.*f", decimals, v);
-      if(v != 0. && std::fabs(atof(s) - v) > 1e-9 * std::fabs(v))
-        snprintf(s, sizeof(s), "%g", v);
-    }
-    else
-      snprintf(s, sizeof(s), "%g", v);
-    return s;
-  }
-
-  double _bounded(const Ui::Field &f, double v)
-  {
-    if(f.maximum > f.minimum) v = std::max(f.minimum, std::min(f.maximum, v));
-    if(f.kind == Ui::Integer) v = std::floor(v + .5);
-    return v;
+    return Ui::numberText(v, gtkSources().settings().inputScrolling ? f.step : 0.);
   }
 
   // --- a line of text
@@ -276,14 +235,13 @@ namespace {
 
   void _numberWrite(binding *b, const std::string &said, bool ends)
   {
-    char *end = nullptr;
-    double v = strtod(said.c_str(), &end);
-    if(end == said.c_str()) {
+    double v = 0.;
+    if(!Ui::readNumber(said, v)) {
       // not a number: what it was comes back
       gtkRefreshField(b->outer);
       return;
     }
-    v = _bounded(b->field, v);
+    v = Ui::bounded(b->field, v);
     b->field.setNumber(v);
     b->shown = _number(b->field, v);
     _told(b, ends);
@@ -322,7 +280,7 @@ namespace {
     const Ui::Field &f = b->field;
     if(!(f.step > 0.) || !gtkSources().settings().inputScrolling) return FALSE;
     if(!gtk_widget_is_sensitive(b->outer)) return FALSE;
-    double v = _bounded(f, f.getNumber() - (dy > 0. ? 1. : dy < 0. ? -1. : 0.) *
+    double v = Ui::bounded(f, f.getNumber() - (dy > 0. ? 1. : dy < 0. ? -1. : 0.) *
                                              f.step);
     b->field.setNumber(v);
     gtkRefreshField(b->outer);
@@ -334,7 +292,7 @@ namespace {
   {
     binding *b = (binding *)data;
     if(b->quiet) return;
-    double v = _bounded(b->field, gtk_range_get_value(range));
+    double v = Ui::bounded(b->field, gtk_range_get_value(range));
     b->field.setNumber(v);
     b->shown = _number(b->field, v);
     b->quiet = true;
@@ -429,7 +387,7 @@ namespace {
     binding *b = (binding *)data;
     std::vector<std::string> labels;
     std::vector<int> values;
-    _choicesOf(b->field, labels, values);
+    Ui::choices(b->field, labels, values);
     gtk_menu_button_set_popover(mb, _listPopover(b, labels,
                                                  G_CALLBACK(_menuPicked)));
   }
@@ -657,44 +615,6 @@ namespace {
 
   // --- the colour map, drawn into the table itself
 
-  int _mapChannel(const Ui::ColourMap &map, int i, int channel, bool hsv)
-  {
-    Ui::Colour c = map.colour(i);
-    if(channel == 3) return c.a;
-    if(!hsv) return channel == 0 ? c.r : (channel == 1 ? c.g : c.b);
-    int h, s, v;
-    Ui::toHsv(c, h, s, v);
-    return channel == 0 ? h : (channel == 1 ? s : v);
-  }
-
-  void _setMapChannel(const Ui::ColourMap &map, int i, int channel, int value,
-                      bool hsv)
-  {
-    Ui::Colour c = map.colour(i);
-    if(channel == 3)
-      c.a = (unsigned char)value;
-    else if(!hsv) {
-      if(channel == 0)
-        c.r = (unsigned char)value;
-      else if(channel == 1)
-        c.g = (unsigned char)value;
-      else
-        c.b = (unsigned char)value;
-    }
-    else {
-      int h, s, v;
-      Ui::toHsv(c, h, s, v);
-      if(channel == 0)
-        h = value;
-      else if(channel == 1)
-        s = value;
-      else
-        v = value;
-      c = Ui::fromHsv(h, s, v, c.a);
-    }
-    map.setColour(i, c);
-  }
-
   double _lineHeight(GtkWidget *w)
   {
     PangoLayout *l = gtk_widget_create_pango_layout(w, "Mg");
@@ -751,9 +671,9 @@ namespace {
       else
         cairo_set_source_rgb(cr, inks[channel][0], inks[channel][1],
                              inks[channel][2]);
-      cairo_move_to(cr, xOf(0), yOf(_mapChannel(map, 0, channel, hsv)));
+      cairo_move_to(cr, xOf(0), yOf(Ui::mapChannel(map, 0, channel, hsv)));
       for(int i = 1; i < size; i++)
-        cairo_line_to(cr, xOf(i), yOf(_mapChannel(map, i, channel, hsv)));
+        cairo_line_to(cr, xOf(i), yOf(Ui::mapChannel(map, i, channel, hsv)));
       cairo_stroke(cr);
     }
     for(int x = 0; x < w; x++) {
@@ -764,37 +684,20 @@ namespace {
       cairo_fill(cr);
     }
     gdk_cairo_set_source_rgba(cr, &ink);
-    if(b->mapHelp) {
-      static const char *const keys[][2] = {
-        {"0-9, Ctrl+0-9, F1-F7", "Select predefined colormap"},
-        {"mouse1", "Draw red or hue channel"},
-        {"mouse2", "Draw green or saturation channel"},
-        {"mouse3", "Draw blue or value channel"},
-        {"Ctrl+mouse1", "Draw alpha channel"},
-        {"Ctrl+c, Ctrl+v, r", "Copy, paste or reset colormap"},
-        {"m", "Toggle RGB/HSV mode"},
-        {"left, right", "Translate abscissa"},
-        {"Ctrl+left, Ctrl+right", "Rotate abscissa"},
-        {"i, Ctrl+i", "Invert abscissa or ordinate"},
-        {"up, down", "Modify color channel curvature"},
-        {"a, Ctrl+a", "Modify alpha coefficient"},
-        {"p, Ctrl+p", "Modify alpha channel power law"},
-        {"b, Ctrl+b", "Modify gamma correction"},
-        {"h", "Show this help message"}};
-      const int lines = sizeof(keys) / sizeof(keys[0]);
+    if(b->mapEdit.help()) {
+      const auto &keys = Ui::MapEditor::helpLines();
+      const int lines = (int)keys.size();
       double scale = std::min(.85, (wedgeY - 12.) / (lines + 1) / line);
       double step = line * scale + 1.;
       for(int i = 0; i < lines; i++) {
-        _text(cr, b->inner, 6., 6. + i * step, keys[i][0], false, scale);
-        _text(cr, b->inner, 12. * step, 6. + i * step, keys[i][1], false,
+        _text(cr, b->inner, 6., 6. + i * step, keys[i].first.c_str(), false,
               scale);
+        _text(cr, b->inner, 12. * step, 6. + i * step, keys[i].second.c_str(),
+              false, scale);
       }
     }
     else {
-      char said[128];
-      snprintf(said, sizeof(said), "Colormap %d (%s) - Press h for help",
-               map.preset ? map.preset() : 0, hsv ? "HSV" : "RGB");
-      _text(cr, b->inner, 6., 4., said);
+      _text(cr, b->inner, 6., 4., Ui::MapEditor::title(map).c_str());
     }
     char says[64];
     snprintf(says, sizeof(says), "%g", least);
@@ -803,23 +706,25 @@ namespace {
     _text(cr, b->inner, w - 10., labelY - line, says, true);
   }
 
-  void _mapPaint(binding *b, double px, double py, bool first)
+  // button: 0, 1, 2 for a button that went down, -1 for a drag
+  void _mapPaint(binding *b, double px, double py, int button, unsigned mods)
   {
     const Ui::ColourMap &map = b->field.map;
     if(map.empty()) return;
     int w = gtk_widget_get_width(b->inner), h = gtk_widget_get_height(b->inner);
-    int size = map.size();
     double line = _lineHeight(b->inner);
     double wedgeY = h - 5. - 3. * line;
-    if(size < 2 || w < 1 || py >= wedgeY) return;
-    int to = std::max(0, std::min(size - 1, (int)(px * size / w)));
-    int from = (first || b->mapFrom < 0) ? to : b->mapFrom;
-    b->mapFrom = to;
-    int value = (int)((wedgeY - py) * 255. / wedgeY);
-    value = std::max(0, std::min(255, value));
-    bool hsv = map.hsv ? map.hsv() : false;
-    for(int i = std::min(from, to); i <= std::max(from, to); i++)
-      _setMapChannel(map, i, b->mapChannel, value, hsv);
+    if(map.size() < 2 || w < 1 || wedgeY < 1.) return;
+    int entry = Ui::MapEditor::entryAt(map, px, w);
+    int value = Ui::MapEditor::valueAt(py, wedgeY);
+    if(button >= 0) {
+      if(py >= wedgeY) return;
+      b->mapEdit.press(map, entry, value, button, mods);
+    }
+    else if(b->mapEdit.drawing())
+      b->mapEdit.drag(map, entry, value);
+    else
+      return;
     gtk_widget_queue_draw(b->inner);
     _told(b, false);
   }
@@ -828,27 +733,26 @@ namespace {
   {
     binding *b = (binding *)data;
     gtk_widget_grab_focus(b->inner);
-    b->mapHelp = false;
     guint button = gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(g));
     GdkModifierType state = gtk_event_controller_get_current_event_state(
       GTK_EVENT_CONTROLLER(g));
-    b->mapChannel = (state & GDK_CONTROL_MASK) ? 3 :
-                    button == 3                ? 2 :
-                    button == 2                ? 1 :
-                                                 0;
-    _mapPaint(b, x, y, true);
+    unsigned mods = 0;
+    if(state & GDK_CONTROL_MASK) mods |= Ui::ModCommand;
+    if(state & GDK_SHIFT_MASK) mods |= Ui::ModShift;
+    if(state & GDK_ALT_MASK) mods |= Ui::ModAlt;
+    _mapPaint(b, x, y, button == 3 ? 2 : button == 2 ? 1 : 0, mods);
   }
 
   void _mapUpdate(GtkGestureDrag *g, double dx, double dy, gpointer data)
   {
     double x = 0., y = 0.;
     gtk_gesture_drag_get_start_point(g, &x, &y);
-    _mapPaint((binding *)data, x + dx, y + dy, false);
+    _mapPaint((binding *)data, x + dx, y + dy, -1, 0);
   }
 
   void _mapEnd(GtkGestureDrag *, double, double, gpointer data)
   {
-    ((binding *)data)->mapFrom = -1;
+    ((binding *)data)->mapEdit.release();
   }
 
   void _mapEnter(GtkEventControllerMotion *, double, double, gpointer data)
@@ -865,54 +769,10 @@ namespace {
     int key = 0;
     unsigned mods = 0;
     if(!gtkUiKey(keyval, state, key, mods)) return FALSE;
-    bool ctrl = (mods & Ui::ModCommand) != 0;
-    bool changed = false;
-    int presets = map.numPresets ? map.numPresets() : 0;
-    int preset = -1;
-    if(key >= '0' && key <= '9') preset = (key - '0') + (ctrl ? 10 : 0);
-    if(key >= Ui::KeyF1 && key < Ui::KeyF1 + 7) preset = 20 + key - Ui::KeyF1;
-    if(preset >= 0 && preset < presets) {
-      map.choosePreset(preset);
-      changed = true;
-    }
-    else if(key == 'M' && !ctrl && map.setHsv) {
-      map.setHsv(!map.hsv());
-      changed = true;
-    }
-    else if(key == 'H' && !ctrl) {
-      b->mapHelp = !b->mapHelp;
-      gtk_widget_queue_draw(b->inner);
-      return TRUE;
-    }
-    else if(key == 'R' && !ctrl) {
-      if(map.preset) map.choosePreset(map.preset());
-      changed = true;
-    }
-    else if(key == 'C' && ctrl) {
-      if(map.copy) map.copy();
-      return TRUE;
-    }
-    else if(key == 'V' && ctrl) {
-      if(map.paste) map.paste();
-      changed = true;
-    }
-    else if(map.parameters) {
-      for(const auto &p : map.parameters()) {
-        if(!p.up.empty() && p.up.matches(key, mods)) {
-          map.adjust(p, true);
-          changed = true;
-          break;
-        }
-        if(!p.down.empty() && p.down.matches(key, mods)) {
-          map.adjust(p, false);
-          changed = true;
-          break;
-        }
-      }
-    }
-    if(!changed) return FALSE;
+    Ui::MapEditor::Answer said = b->mapEdit.key(map, key, mods);
+    if(said == Ui::MapEditor::NotMine) return FALSE;
     gtk_widget_queue_draw(b->inner);
-    _told(b, true);
+    if(said == Ui::MapEditor::Changed) _told(b, true);
     return TRUE;
   }
 
@@ -1208,7 +1068,7 @@ void gtkRefreshField(GtkWidget *widget)
   case Ui::Choice: {
     std::vector<std::string> labels;
     std::vector<int> values;
-    _choicesOf(f, labels, values);
+    Ui::choices(f, labels, values);
     if(f.multiple) {
       if(_joined(labels) != b->was) {
         b->was = _joined(labels);
@@ -1280,7 +1140,7 @@ void gtkRefreshField(GtkWidget *widget)
   case Ui::List: {
     std::vector<std::string> labels;
     std::vector<int> values;
-    _choicesOf(f, labels, values);
+    Ui::choices(f, labels, values);
     GtkListBox *list = GTK_LIST_BOX(b->inner);
     if(_joined(labels) != b->was) {
       b->was = _joined(labels);

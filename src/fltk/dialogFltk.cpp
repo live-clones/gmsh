@@ -406,12 +406,7 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
       int i = ((Fl_Choice *)w)->value();
       std::vector<std::string> labels;
       std::vector<int> values;
-      if(f.dynamicChoices)
-        f.dynamicChoices(labels, values);
-      else {
-        labels = f.choices;
-        values = f.values;
-      }
+      Ui::choices(f, labels, values);
       if(i >= 0 && i < (int)labels.size()) {
         if(values.empty())
           f.setText(labels[i]);
@@ -445,21 +440,6 @@ void dialogFltk::_buttonCallback(Fl_Widget *w, void *data)
 }
 
 namespace {
-
-  // with the decimals of its step, unless it is off the grid of the step (1e-6
-  // on a step of 1e-4): then as it is set
-  class valueInput : public Fl_Value_Input {
-  public:
-    valueInput(int x, int y, int w, int h) : Fl_Value_Input(x, y, w, h) {}
-    int format(char *buffer) override
-    {
-      int n = Fl_Value_Input::format(buffer);
-      double v = value();
-      if(v != 0. && std::fabs(atof(buffer) - v) > 1e-9 * std::fabs(v))
-        return snprintf(buffer, 128, "%g", v);
-      return n;
-    }
-  };
 
   // kept while the widgets that point at them are alive: FLTK hands a widget a
   // void*
@@ -527,7 +507,7 @@ void dialogFltk::_addItem(std::size_t index, Fl_Group *into)
       widget = v;
       break;
     }
-    Fl_Value_Input *v = new valueInput(fx, fy, fieldW, RH);
+    Fl_Value_Input *v = new fltkValueInput(fx, fy, fieldW, RH);
     // the input inside is given the valuator's when() at every event: set there
     // or not at all. With done, Enter says the value is the one even when it
     // did not change
@@ -1127,7 +1107,7 @@ void dialogFltk::_refreshField(bound &b)
     Fl_Menu_Button *m = (Fl_Menu_Button *)b.widget;
     std::vector<std::string> labels;
     std::vector<int> values;
-    if(f.dynamicChoices) f.dynamicChoices(labels, values);
+    Ui::choices(f, labels, values);
     m->clear();
     for(auto &l : labels) m->add(_escapedMenu(l).c_str());
     if(!m->label() || f.label != m->label())
@@ -1140,7 +1120,7 @@ void dialogFltk::_refreshField(bound &b)
     if(Fl_Input_Choice *c = dynamic_cast<Fl_Input_Choice *>(b.widget)) {
       std::vector<std::string> labels;
       std::vector<int> values;
-      f.dynamicChoices(labels, values);
+      Ui::choices(f, labels, values);
       c->menubutton()->clear();
       for(auto &l : labels) c->menubutton()->add(_escapedMenu(l).c_str());
       if(!c->value() || value != c->value()) c->value(value.c_str());
@@ -1174,7 +1154,7 @@ void dialogFltk::_refreshField(bound &b)
       Fl_Menu_Button *m = (Fl_Menu_Button *)b.widget;
       std::vector<std::string> labels;
       std::vector<int> values;
-      if(f.dynamicChoices) f.dynamicChoices(labels, values);
+      Ui::choices(f, labels, values);
       m->clear();
       for(std::size_t k = 0; k < labels.size(); k++) {
         int index = m->add(_escapedMenu(labels[k]).c_str(), 0, nullptr,
@@ -1187,12 +1167,7 @@ void dialogFltk::_refreshField(bound &b)
     Fl_Choice *c = (Fl_Choice *)b.widget;
     std::vector<std::string> labels;
     std::vector<int> values;
-    if(f.dynamicChoices)
-      f.dynamicChoices(labels, values);
-    else {
-      labels = f.choices;
-      values = f.values;
-    }
+    Ui::choices(f, labels, values);
     c->clear();
     for(auto &l : labels) c->add(_escapedMenu(l).c_str());
     int which = 0;

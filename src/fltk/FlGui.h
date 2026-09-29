@@ -79,6 +79,10 @@ public:
   // the 3D view calls it on its own key events, so that the arrows step the
   // animation rather than move the focus
   int runKeys();
+  // the key of the event being handled as Ui::Shortcut says it: false for
+  // one no shortcut could name. A digit or a mark is the one typed, whatever
+  // key gives it on this keyboard (Shift, on a French one)
+  static bool eventKey(int &key, unsigned &mods);
   Ui::Backend::Layout windowLayout();
   // get the last opengl window that received an event
   sceneViewFltk *getCurrentOpenglWindow();

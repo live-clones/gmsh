@@ -13,6 +13,7 @@
 #include "uiSources.h"
 #include "Tree.h"
 #include "Layout.h"
+#include "MapEditor.h"
 #include "fieldWidget.h"
 #include "menuActions.h"
 #include "GmshConfig.h"
@@ -32,17 +33,6 @@
 #include "drawContext.h"
 
 namespace {
-
-  void _dynamic(const Ui::Field &f, std::vector<std::string> &labels,
-                std::vector<int> &values)
-  {
-    if(f.dynamicChoices)
-      f.dynamicChoices(labels, values);
-    else {
-      labels = f.choices;
-      values = f.values;
-    }
-  }
 
   // the pictures FLTK draws on the little buttons after a value, in the
   // same square of -1 to 1, y down; false for one it does not know
@@ -139,86 +129,35 @@ namespace {
     return true;
   }
 
-  // red, green and blue, or hue, saturation and value, and the alpha over both
-  bool _pressed(const Ui::Shortcut &s)
+  // the keys pressed in this frame, as Ui::Shortcut says them: the letters,
+  // the digits, the function keys and the arrows
+  std::vector<std::pair<int, unsigned>> _keysPressed()
   {
-    if(s.empty()) return false;
-    ImGuiKey key;
-    switch(s.key) {
-    case Ui::KeyLeft: key = ImGuiKey_LeftArrow; break;
-    case Ui::KeyRight: key = ImGuiKey_RightArrow; break;
-    case Ui::KeyUp: key = ImGuiKey_UpArrow; break;
-    case Ui::KeyDown: key = ImGuiKey_DownArrow; break;
-    default:
-      if(s.key >= 'A' && s.key <= 'Z')
-        key = (ImGuiKey)(ImGuiKey_A + s.key - 'A');
-      else if(s.key >= '0' && s.key <= '9')
-        key = (ImGuiKey)(ImGuiKey_0 + s.key - '0');
-      else
-        return false;
-      break;
-    }
+    std::vector<std::pair<int, unsigned>> out;
     ImGuiIO &io = ImGui::GetIO();
-    if(io.KeyCtrl != ((s.mods & Ui::ModCommand) != 0)) return false;
-    if(io.KeyShift != ((s.mods & Ui::ModShift) != 0)) return false;
-    if(io.KeyAlt != ((s.mods & Ui::ModAlt) != 0)) return false;
-    return ImGui::IsKeyPressed(key);
+    unsigned mods = (io.KeyCtrl ? Ui::ModCommand : 0u) |
+                    (io.KeyShift ? Ui::ModShift : 0u) |
+                    (io.KeyAlt ? Ui::ModAlt : 0u);
+    for(int k = 0; k < 26; k++)
+      if(ImGui::IsKeyPressed((ImGuiKey)(ImGuiKey_A + k)))
+        out.push_back({'A' + k, mods});
+    for(int k = 0; k <= 9; k++)
+      if(ImGui::IsKeyPressed((ImGuiKey)(ImGuiKey_0 + k)))
+        out.push_back({'0' + k, mods});
+    for(int k = 0; k < 12; k++)
+      if(ImGui::IsKeyPressed((ImGuiKey)(ImGuiKey_F1 + k)))
+        out.push_back({Ui::KeyF1 + k, mods});
+    const std::pair<ImGuiKey, int> arrows[] = {{ImGuiKey_LeftArrow, Ui::KeyLeft},
+                                               {ImGuiKey_RightArrow, Ui::KeyRight},
+                                               {ImGuiKey_UpArrow, Ui::KeyUp},
+                                               {ImGuiKey_DownArrow, Ui::KeyDown}};
+    for(const auto &a : arrows)
+      if(ImGui::IsKeyPressed(a.first)) out.push_back({a.second, mods});
+    return out;
   }
 
-  int _mapChannel(const Ui::ColourMap &map, int i, int channel, bool hsv)
-  {
-    Ui::Colour c = map.colour(i);
-    if(channel == 3) return c.a;
-    if(!hsv) return channel == 0 ? c.r : (channel == 1 ? c.g : c.b);
-    int h, s, v;
-    Ui::toHsv(c, h, s, v);
-    return channel == 0 ? h : (channel == 1 ? s : v);
-  }
-
-  void _setMapChannel(const Ui::ColourMap &map, int i, int channel,
-                      int value, bool hsv)
-  {
-    Ui::Colour c = map.colour(i);
-    if(channel == 3) {
-      c.a = (unsigned char)value;
-    }
-    else if(!hsv) {
-      if(channel == 0)
-        c.r = (unsigned char)value;
-      else if(channel == 1)
-        c.g = (unsigned char)value;
-      else
-        c.b = (unsigned char)value;
-    }
-    else {
-      int h, s, v;
-      Ui::toHsv(c, h, s, v);
-      if(channel == 0)
-        h = value;
-      else if(channel == 1)
-        s = value;
-      else
-        v = value;
-      c = Ui::fromHsv(h, s, v, c.a);
-    }
-    map.setColour(i, c);
-  }
-
-  // shown until the first click
-  bool _mapHelp = false;
-
-  // so that a drag fills in the entries it passed over
-  int _mapFrom(int now)
-  {
-    static int was = -1;
-    if(now < 0) {
-      was = -1;
-      return -1;
-    }
-    int from = (was < 0) ? now : was;
-    was = now;
-    return from;
-  }
+  // the one map being edited: the help it shows, the stroke being drawn
+  Ui::MapEditor _mapEdit;
 
   float _discSide(const Ui::Field &f)
   {
@@ -535,7 +474,7 @@ namespace {
       if(ImGui::BeginPopup(id.c_str())) {
         std::vector<std::string> labels;
         std::vector<int> values;
-        if(f.dynamicChoices) f.dynamicChoices(labels, values);
+        Ui::choices(f, labels, values);
         for(std::size_t k = 0; k < labels.size(); k++)
           if(ImGui::Selectable(labels[k].c_str())) {
             if(f.choose) f.choose((int)k, true);
@@ -649,7 +588,7 @@ namespace {
       if(f.dynamicChoices) {
         std::vector<std::string> labels;
         std::vector<int> values;
-        _dynamic(f, labels, values);
+        Ui::choices(f, labels, values);
         if(labels.size()) {
           ImGui::SameLine(0.f, ImGui::GetStyle().ItemInnerSpacing.x);
           std::string id = "##pick" + f.label;
@@ -698,15 +637,15 @@ namespace {
       }
       // "%g" prints negative zero as "-0"
       if(value == 0.) value = 0.;
-      // as many decimals as the step, unless it is off the grid of the step
-      // (1e-6 on a step of 1e-4): then as it is set; a plain "0" for nothing
-      char how[8] = "%g";
-      if(value != 0. && f.step > 0. && f.step < 1. && _sliding()) {
-        int digits = 0;
-        for(double d = f.step; d < 1. && digits < 6; d *= 10.) digits++;
-        double scale = std::pow(10., digits);
-        if(std::fabs(std::round(value * scale) / scale - value) <=
-           1e-9 * std::fabs(value))
+      // as the other interfaces show it (Ui::numberText): the decimals of
+      // the step, unless it is off the grid of the step; a plain "0" for
+      // nothing
+      char how[16] = "%g";
+      if(value != 0. && f.step > 0. && _sliding()) {
+        int digits = Ui::decimals(f.step);
+        char fixed[64];
+        snprintf(fixed, sizeof(fixed), "%.*f", digits, value);
+        if(Ui::numberText(value, f.step) == fixed)
           snprintf(how, sizeof(how), "%%.%df", digits);
       }
       ImGui::SetNextItemWidth(width);
@@ -793,8 +732,8 @@ namespace {
       bool hsv = map.hsv();
       for(int channel = 0; channel < 4; channel++) {
         for(int i = 1; i < size; i++) {
-          int was = _mapChannel(map, i - 1, channel, hsv);
-          int now = _mapChannel(map, i, channel, hsv);
+          int was = Ui::mapChannel(map, i - 1, channel, hsv);
+          int now = Ui::mapChannel(map, i, channel, hsv);
           into->AddLine(ImVec2(indexToX(i - 1), valueToY(was)),
                         ImVec2(indexToX(i), valueToY(now)), inks[channel]);
         }
@@ -805,24 +744,9 @@ namespace {
                             ImVec2(at.x + x + 1.f, at.y + wedgeY + lineHeight),
                             IM_COL32(c.r, c.g, c.b, 255));
       }
-      if(_mapHelp) {
-        static const char *const keys[][2] = {
-          {"0-9, Ctrl+0-9, F1-F7", "Select predefined colormap"},
-          {"mouse1", "Draw red or hue channel"},
-          {"mouse2", "Draw green or saturation channel"},
-          {"mouse3", "Draw blue or value channel"},
-          {"Ctrl+mouse1", "Draw alpha channel"},
-          {"Ctrl+c, Ctrl+v, r", "Copy, paste or reset colormap"},
-          {"m", "Toggle RGB/HSV mode"},
-          {"left, right", "Translate abscissa"},
-          {"Ctrl+left, Ctrl+right", "Rotate abscissa"},
-          {"i, Ctrl+i", "Invert abscissa or ordinate"},
-          {"up, down", "Modify color channel curvature"},
-          {"a, Ctrl+a", "Modify alpha coefficient"},
-          {"p, Ctrl+p", "Modify alpha channel power law"},
-          {"b, Ctrl+b", "Modify gamma correction"},
-          {"h", "Show this help message"}};
-        const int lines = sizeof(keys) / sizeof(keys[0]);
+      if(_mapEdit.help()) {
+        const auto &keys = Ui::MapEditor::helpLines();
+        const int lines = (int)keys.size();
         // smaller, so that the lines stand clear of the wedge
         ImU32 ink = ImGui::GetColorU32(ImGuiCol_Text);
         float small = std::min(ImGui::GetFontSize() * .85f,
@@ -831,19 +755,17 @@ namespace {
         for(int i = 0; i < lines; i++) {
           into->AddText(ImGui::GetFont(), small,
                         ImVec2(at.x + 6.f, at.y + 8.f + i * step), ink,
-                        keys[i][0]);
+                        keys[i].first.c_str());
           into->AddText(ImGui::GetFont(), small,
                         ImVec2(at.x + 12.f * step, at.y + 8.f + i * step), ink,
-                        keys[i][1]);
+                        keys[i].second.c_str());
         }
       }
       else {
         // the map and the mode, as the released Gmsh has them
-        char said[128];
-        snprintf(said, sizeof(said), "Colormap %d (%s) - Press h for help",
-                 map.preset ? map.preset() : 0, hsv ? "HSV" : "RGB");
         into->AddText(ImVec2(at.x + 6.f, at.y + 6.f),
-                      ImGui::GetColorU32(ImGuiCol_Text), said);
+                      ImGui::GetColorU32(ImGuiCol_Text),
+                      Ui::MapEditor::title(map).c_str());
       }
       char says[64];
       snprintf(says, sizeof(says), "%g", least);
@@ -857,54 +779,30 @@ namespace {
       // the entries between the last stroke and this one are all given the
       // value
       if(active) {
-        _mapHelp = false;
         ImVec2 mouse = ImGui::GetIO().MousePos;
-        int channel = ImGui::GetIO().KeyCtrl ? 3 :
-                      ImGui::IsMouseDown(ImGuiMouseButton_Right) ? 2 :
-                      ImGui::IsMouseDown(ImGuiMouseButton_Middle) ? 1 : 0;
-        int value = (int)((wedgeY - (mouse.y - at.y)) * 255.f / wedgeY);
-        value = value < 0 ? 0 : (value > 255 ? 255 : value);
-        if(mouse.y - at.y < wedgeY) {
-          int to = xToIndex(mouse.x);
-          int from = _mapFrom(to);
-          for(int i = std::min(from, to); i <= std::max(from, to); i++)
-            _setMapChannel(map, i, channel, value, hsv);
+        int entry = xToIndex(mouse.x);
+        int value = Ui::MapEditor::valueAt(mouse.y - at.y, wedgeY);
+        if(ImGui::IsItemActivated()) {
+          if(mouse.y - at.y < wedgeY) {
+            ImGuiIO &io = ImGui::GetIO();
+            unsigned mods = (io.KeyCtrl ? Ui::ModCommand : 0u) |
+                            (io.KeyShift ? Ui::ModShift : 0u) |
+                            (io.KeyAlt ? Ui::ModAlt : 0u);
+            int button = ImGui::IsMouseDown(ImGuiMouseButton_Right)  ? 2 :
+                         ImGui::IsMouseDown(ImGuiMouseButton_Middle) ? 1 :
+                                                                       0;
+            _mapEdit.press(map, entry, value, button, mods);
+            changed = true;
+          }
+        }
+        else if(_mapEdit.drawing()) {
+          _mapEdit.drag(map, entry, value);
           changed = true;
         }
       }
       else
-        _mapFrom(-1);
+        _mapEdit.release();
       if(hovered) {
-        // the digits, the digits with Control, then the first seven function
-        // keys
-        int presets = map.numPresets ? map.numPresets() : 0;
-        int preset = -1;
-        for(int i = 0; i <= 9; i++)
-          if(ImGui::IsKeyPressed((ImGuiKey)(ImGuiKey_0 + i)))
-            preset = ImGui::GetIO().KeyCtrl ? i + 10 : i;
-        for(int i = 0; i < 7; i++)
-          if(ImGui::IsKeyPressed((ImGuiKey)(ImGuiKey_F1 + i)))
-            preset = i + 20;
-        if(preset >= 0 && preset < presets) {
-          map.choosePreset(preset);
-          changed = true;
-        }
-        if(ImGui::IsKeyPressed(ImGuiKey_M)) {
-          map.setHsv(!hsv);
-          changed = true;
-        }
-        if(ImGui::IsKeyPressed(ImGuiKey_H)) _mapHelp = !_mapHelp;
-        if(ImGui::IsKeyPressed(ImGuiKey_R)) {
-          if(map.preset) map.choosePreset(map.preset());
-          changed = true;
-        }
-        if(ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C)) {
-          if(map.copy) map.copy();
-        }
-        if(ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_V)) {
-          if(map.paste) map.paste();
-          changed = true;
-        }
         // the map owns the arrows while the pointer is over it, or Dear ImGui
         // also walks its keyboard focus with them
         ImGuiID owner = ImGui::GetItemID();
@@ -912,19 +810,9 @@ namespace {
         ImGui::SetKeyOwner(ImGuiKey_RightArrow, owner);
         ImGui::SetKeyOwner(ImGuiKey_UpArrow, owner);
         ImGui::SetKeyOwner(ImGuiKey_DownArrow, owner);
-        if(map.parameters) {
-          std::vector<Ui::ColourMap::Parameter> ps = map.parameters();
-          for(std::size_t i = 0; i < ps.size(); i++) {
-            if(_pressed(ps[i].up)) {
-              map.adjust(ps[i], true);
-              changed = true;
-            }
-            else if(_pressed(ps[i].down)) {
-              map.adjust(ps[i], false);
-              changed = true;
-            }
-          }
-        }
+        for(const auto &k : _keysPressed())
+          if(_mapEdit.key(map, k.first, k.second) == Ui::MapEditor::Changed)
+            changed = true;
       }
     } break;
     case Ui::Hierarchy: {
@@ -1015,7 +903,7 @@ namespace {
         // for a value it does not have
         std::vector<std::string> labels;
         std::vector<int> values;
-        _dynamic(f, labels, values);
+        Ui::choices(f, labels, values);
         std::string id = "##menu" + f.label;
         if(ImGui::Button(name.c_str(), ImVec2(width, 0.f)))
           ImGui::OpenPopup(id.c_str());
@@ -1033,7 +921,7 @@ namespace {
       }
       std::vector<std::string> labels;
       std::vector<int> values;
-      _dynamic(f, labels, values);
+      Ui::choices(f, labels, values);
       bool byText = values.empty();
       std::string current = byText ? f.getText() : "";
       double value = byText ? 0. : f.getNumber();

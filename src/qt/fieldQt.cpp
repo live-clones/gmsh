@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "qtCommon.h"
+#include "MapEditor.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -60,8 +61,7 @@ namespace {
     std::vector<std::string> labels;
     std::vector<int> values;
     bool dragging = false;
-    int mapFrom = -1, mapChannel = 0;
-    bool mapHelp = false;
+    Ui::MapEditor mapEdit;
     qtTree *tree = nullptr;
     binding(QWidget *parent) : QObject(parent) {}
     ~binding() { delete tree; }
@@ -96,25 +96,6 @@ namespace {
     if(after) after();
   }
 
-  void _choicesOf(const Ui::Field &f, std::vector<std::string> &labels,
-                  std::vector<int> &values)
-  {
-    labels.clear();
-    values.clear();
-    if(f.dynamicChoices)
-      f.dynamicChoices(labels, values);
-    else if(f.list && f.itemLabel)
-      for(std::size_t i = 0; i < f.list->size(); i++)
-        labels.push_back(f.itemLabel((int)i));
-    else if(f.list)
-      for(std::size_t i = 0; i < f.list->size(); i++)
-        labels.push_back(std::to_string((*f.list)[i]));
-    else {
-      labels = f.choices;
-      values = f.values;
-    }
-  }
-
   std::string _joined(const std::vector<std::string> &labels)
   {
     std::string s;
@@ -122,42 +103,20 @@ namespace {
     return s;
   }
 
-  // with the decimals of its step when it scrolls, as FLTK has it, unless
-  // the value is off the grid of the step
+  // with the decimals of its step when values are dragged
   std::string _number(const Ui::Field &f, double v)
   {
-    char s[64];
-    if(f.step > 0. && qtSources().settings().inputScrolling) {
-      int decimals = 0;
-      while(decimals < 10 &&
-            std::fabs(f.step * std::pow(10., decimals) -
-                      std::floor(f.step * std::pow(10., decimals) + .5)) > 1e-9)
-        decimals++;
-      snprintf(s, sizeof(s), "%.*f", decimals, v);
-      if(v != 0. && std::fabs(atof(s) - v) > 1e-9 * std::fabs(v))
-        snprintf(s, sizeof(s), "%g", v);
-    }
-    else
-      snprintf(s, sizeof(s), "%g", v);
-    return s;
-  }
-
-  double _bounded(const Ui::Field &f, double v)
-  {
-    if(f.maximum > f.minimum) v = std::max(f.minimum, std::min(f.maximum, v));
-    if(f.kind == Ui::Integer) v = std::floor(v + .5);
-    return v;
+    return Ui::numberText(v, qtSources().settings().inputScrolling ? f.step : 0.);
   }
 
   void _numberWrite(binding *b, const std::string &said, bool ends)
   {
-    char *end = nullptr;
-    double v = strtod(said.c_str(), &end);
-    if(end == said.c_str()) {
+    double v = 0.;
+    if(!Ui::readNumber(said, v)) {
       qtRefreshField(b->outer);
       return;
     }
-    v = _bounded(b->field, v);
+    v = Ui::bounded(b->field, v);
     b->field.setNumber(v);
     b->shown = _number(b->field, v);
     _told(b, ends);
@@ -177,7 +136,7 @@ namespace {
       }
       int dy = e->angleDelta().y();
       if(!dy) return;
-      double v = _bounded(f, f.getNumber() + (dy > 0 ? 1. : -1.) * f.step);
+      double v = Ui::bounded(f, f.getNumber() + (dy > 0 ? 1. : -1.) * f.step);
       b->field.setNumber(v);
       qtRefreshField(b->outer);
       _told(b, false);
@@ -273,44 +232,6 @@ namespace {
 
   // --- the colour map, drawn into the table itself
 
-  int _mapChannel(const Ui::ColourMap &map, int i, int channel, bool hsv)
-  {
-    Ui::Colour c = map.colour(i);
-    if(channel == 3) return c.a;
-    if(!hsv) return channel == 0 ? c.r : (channel == 1 ? c.g : c.b);
-    int h, s, v;
-    Ui::toHsv(c, h, s, v);
-    return channel == 0 ? h : (channel == 1 ? s : v);
-  }
-
-  void _setMapChannel(const Ui::ColourMap &map, int i, int channel, int value,
-                      bool hsv)
-  {
-    Ui::Colour c = map.colour(i);
-    if(channel == 3)
-      c.a = (unsigned char)value;
-    else if(!hsv) {
-      if(channel == 0)
-        c.r = (unsigned char)value;
-      else if(channel == 1)
-        c.g = (unsigned char)value;
-      else
-        c.b = (unsigned char)value;
-    }
-    else {
-      int h, s, v;
-      Ui::toHsv(c, h, s, v);
-      if(channel == 0)
-        h = value;
-      else if(channel == 1)
-        s = value;
-      else
-        v = value;
-      c = Ui::fromHsv(h, s, v, c.a);
-    }
-    map.setColour(i, c);
-  }
-
   class mapWidget : public QWidget {
   public:
     binding *b = nullptr;
@@ -343,8 +264,8 @@ namespace {
       for(int channel = 0; channel < 4; channel++) {
         p.setPen(inks[channel]);
         for(int i = 1; i < size; i++)
-          p.drawLine(QPointF(xOf(i - 1), yOf(_mapChannel(map, i - 1, channel, hsv))),
-                     QPointF(xOf(i), yOf(_mapChannel(map, i, channel, hsv))));
+          p.drawLine(QPointF(xOf(i - 1), yOf(Ui::mapChannel(map, i - 1, channel, hsv))),
+                     QPointF(xOf(i), yOf(Ui::mapChannel(map, i, channel, hsv))));
       }
       for(int x = 0; x < (int)w; x++) {
         int i = std::min(size - 1, (int)(x * (double)size / w));
@@ -352,40 +273,24 @@ namespace {
         p.fillRect(QRectF(x, wy, 1., lh), QColor(c.r, c.g, c.b));
       }
       p.setPen(ink);
-      if(b->mapHelp) {
-        static const char *const keys[][2] = {
-          {"0-9, Ctrl+0-9, F1-F7", "Select predefined colormap"},
-          {"mouse1", "Draw red or hue channel"},
-          {"mouse2", "Draw green or saturation channel"},
-          {"mouse3", "Draw blue or value channel"},
-          {"Ctrl+mouse1", "Draw alpha channel"},
-          {"Ctrl+c, Ctrl+v, r", "Copy, paste or reset colormap"},
-          {"m", "Toggle RGB/HSV mode"},
-          {"left, right", "Translate abscissa"},
-          {"Ctrl+left, Ctrl+right", "Rotate abscissa"},
-          {"i, Ctrl+i", "Invert abscissa or ordinate"},
-          {"up, down", "Modify color channel curvature"},
-          {"a, Ctrl+a", "Modify alpha coefficient"},
-          {"p, Ctrl+p", "Modify alpha channel power law"},
-          {"b, Ctrl+b", "Modify gamma correction"},
-          {"h", "Show this help message"}};
-        const int lines = sizeof(keys) / sizeof(keys[0]);
+      if(b->mapEdit.help()) {
+        const auto &keys = Ui::MapEditor::helpLines();
+        const int lines = (int)keys.size();
         QFont small = font();
         double scale = std::min(.85, (wy - 12.) / (lines + 1) / lh);
         small.setPointSizeF(small.pointSizeF() * scale);
         p.setFont(small);
         double step = lh * scale + 1.;
         for(int i = 0; i < lines; i++) {
-          p.drawText(QPointF(6., 6. + (i + 1) * step), keys[i][0]);
-          p.drawText(QPointF(12. * step, 6. + (i + 1) * step), keys[i][1]);
+          p.drawText(QPointF(6., 6. + (i + 1) * step), keys[i].first.c_str());
+          p.drawText(QPointF(12. * step, 6. + (i + 1) * step),
+                     keys[i].second.c_str());
         }
         p.setFont(font());
       }
       else {
-        char said[128];
-        snprintf(said, sizeof(said), "Colormap %d (%s) - Press h for help",
-                 map.preset ? map.preset() : 0, hsv ? "HSV" : "RGB");
-        p.drawText(QPointF(6., 4. + fontMetrics().ascent()), said);
+        p.drawText(QPointF(6., 4. + fontMetrics().ascent()),
+                   Ui::MapEditor::title(map).c_str());
       }
       char says[64];
       double base = height() - 5. - lh + fontMetrics().ascent() - lh;
@@ -395,36 +300,39 @@ namespace {
       p.drawText(QPointF(w - 10. - fontMetrics().horizontalAdvance(says), base),
                  says);
     }
-    void paint(QPointF pos, bool first)
+    void paint(QPointF pos, int button, Qt::KeyboardModifiers m = {})
     {
       const Ui::ColourMap &map = b->field.map;
-      int size = map.empty() ? 0 : map.size();
       double wy = wedgeY();
-      if(size < 2 || width() < 1 || pos.y() >= wy) return;
-      int to = std::max(0, std::min(size - 1, (int)(pos.x() * size / width())));
-      int from = (first || b->mapFrom < 0) ? to : b->mapFrom;
-      b->mapFrom = to;
-      int value = std::max(0, std::min(255, (int)((wy - pos.y()) * 255. / wy)));
-      bool hsv = map.hsv ? map.hsv() : false;
-      for(int i = std::min(from, to); i <= std::max(from, to); i++)
-        _setMapChannel(map, i, b->mapChannel, value, hsv);
+      if(map.empty() || map.size() < 2 || width() < 1 || wy < 1.) return;
+      int entry = Ui::MapEditor::entryAt(map, pos.x(), width());
+      int value = Ui::MapEditor::valueAt(pos.y(), wy);
+      if(button >= 0) {
+        if(pos.y() >= wy) return;
+        unsigned mods = 0;
+        if(m & Qt::ControlModifier) mods |= Ui::ModCommand;
+        if(m & Qt::ShiftModifier) mods |= Ui::ModShift;
+        if(m & Qt::AltModifier) mods |= Ui::ModAlt;
+        b->mapEdit.press(map, entry, value, button, mods);
+      }
+      else
+        b->mapEdit.drag(map, entry, value);
       update();
       _told(b, false);
     }
     void mousePressEvent(QMouseEvent *e) override
     {
-      b->mapHelp = false;
-      b->mapChannel = (e->modifiers() & Qt::ControlModifier) ? 3 :
-                      e->button() == Qt::RightButton         ? 2 :
-                      e->button() == Qt::MiddleButton        ? 1 :
-                                                               0;
-      paint(e->position(), true);
+      paint(e->position(),
+            e->button() == Qt::RightButton  ? 2 :
+            e->button() == Qt::MiddleButton ? 1 :
+                                              0,
+            e->modifiers());
     }
     void mouseMoveEvent(QMouseEvent *e) override
     {
-      if(e->buttons()) paint(e->position(), false);
+      if(e->buttons() && b->mapEdit.drawing()) paint(e->position(), -1);
     }
-    void mouseReleaseEvent(QMouseEvent *) override { b->mapFrom = -1; }
+    void mouseReleaseEvent(QMouseEvent *) override { b->mapEdit.release(); }
     void enterEvent(QEnterEvent *) override { setFocus(); }
     void keyPressEvent(QKeyEvent *e) override
     {
@@ -435,55 +343,13 @@ namespace {
         QWidget::keyPressEvent(e);
         return;
       }
-      bool ctrl = (mods & Ui::ModCommand) != 0, changed = false;
-      int presets = map.numPresets ? map.numPresets() : 0, preset = -1;
-      if(key >= '0' && key <= '9') preset = (key - '0') + (ctrl ? 10 : 0);
-      if(key >= Ui::KeyF1 && key < Ui::KeyF1 + 7) preset = 20 + key - Ui::KeyF1;
-      if(preset >= 0 && preset < presets) {
-        map.choosePreset(preset);
-        changed = true;
-      }
-      else if(key == 'M' && !ctrl && map.setHsv) {
-        map.setHsv(!map.hsv());
-        changed = true;
-      }
-      else if(key == 'H' && !ctrl) {
-        b->mapHelp = !b->mapHelp;
-        update();
-        return;
-      }
-      else if(key == 'R' && !ctrl) {
-        if(map.preset) map.choosePreset(map.preset());
-        changed = true;
-      }
-      else if(key == 'C' && ctrl) {
-        if(map.copy) map.copy();
-        return;
-      }
-      else if(key == 'V' && ctrl) {
-        if(map.paste) map.paste();
-        changed = true;
-      }
-      else if(map.parameters) {
-        for(const auto &p : map.parameters()) {
-          if(!p.up.empty() && p.up.matches(key, mods)) {
-            map.adjust(p, true);
-            changed = true;
-            break;
-          }
-          if(!p.down.empty() && p.down.matches(key, mods)) {
-            map.adjust(p, false);
-            changed = true;
-            break;
-          }
-        }
-      }
-      if(!changed) {
+      Ui::MapEditor::Answer said = b->mapEdit.key(map, key, mods);
+      if(said == Ui::MapEditor::NotMine) {
         QWidget::keyPressEvent(e);
         return;
       }
       update();
-      _told(b, true);
+      if(said == Ui::MapEditor::Changed) _told(b, true);
     }
   };
 
@@ -671,7 +537,7 @@ QWidget *qtFieldWidget(const Ui::Field &f, const std::function<void()> &after)
         const Ui::Field &g = bb->field;
         double v = g.minimum + (g.maximum - g.minimum) * k / 1000.;
         if(g.step > 0.) v = g.minimum + std::floor((v - g.minimum) / g.step + .5) * g.step;
-        v = _bounded(g, v);
+        v = Ui::bounded(g, v);
         bb->field.setNumber(v);
         bb->shown = _number(g, v);
         bb->quiet = true;
@@ -848,7 +714,7 @@ QWidget *qtFieldWidget(const Ui::Field &f, const std::function<void()> &after)
       m->clear();
       std::vector<std::string> labels;
       std::vector<int> values;
-      _choicesOf(bb->field, labels, values);
+      Ui::choices(bb->field, labels, values);
       for(std::size_t i = 0; i < labels.size(); i++) {
         QAction *a = m->addAction(qtString(labels[i]));
         int k = (int)i;
@@ -971,7 +837,7 @@ void qtRefreshField(QWidget *widget)
   case Ui::Choice: {
     std::vector<std::string> labels;
     std::vector<int> values;
-    _choicesOf(f, labels, values);
+    Ui::choices(f, labels, values);
     if(f.multiple) {
       QMenu *m = ((QToolButton *)b->inner)->menu();
       if(_joined(labels) != b->was) {
@@ -1032,7 +898,7 @@ void qtRefreshField(QWidget *widget)
   case Ui::List: {
     std::vector<std::string> labels;
     std::vector<int> values;
-    _choicesOf(f, labels, values);
+    Ui::choices(f, labels, values);
     QListWidget *l = (QListWidget *)b->inner;
     if(_joined(labels) != b->was) {
       b->was = _joined(labels);

@@ -21,6 +21,7 @@
 #include <FL/Fl_Value_Input.H>
 
 #include "treeFltk.h"
+#include "dialogFltk.h"
 #include "menuFltk.h"
 #include "uiSources.h"
 
@@ -121,7 +122,7 @@ Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
     Fl_Choice *c = new Fl_Choice(x, y, valueW, h);
     std::vector<std::string> labels;
     std::vector<int> values;
-    if(f.dynamicChoices) f.dynamicChoices(labels, values);
+    Ui::choices(f, labels, values);
     for(auto &l : labels) c->add(_keep(l), 0, nullptr, nullptr, 0);
     c->value((int)f.getNumber());
     c->callback(_choiceChanged, bound);
@@ -152,7 +153,7 @@ Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
   } break;
   case Ui::Number:
   case Ui::Integer: {
-    Fl_Value_Input *v = new Fl_Value_Input(x, y, valueW, h);
+    Fl_Value_Input *v = new fltkValueInput(x, y, valueW, h);
     if(f.maximum > f.minimum) {
       v->minimum(f.minimum);
       v->maximum(f.maximum);
@@ -167,7 +168,7 @@ Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
   default: {
     std::vector<std::string> labels;
     std::vector<int> values;
-    if(f.dynamicChoices) f.dynamicChoices(labels, values);
+    Ui::choices(f, labels, values);
     if(labels.size()) {
       Fl_Input_Choice *c = new Fl_Input_Choice(x, y, valueW, h);
       for(auto &l : labels) c->add(_keep(l));

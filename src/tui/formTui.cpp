@@ -14,6 +14,7 @@
 
 #include "tuiCommon.h"
 #include "Layout.h" // Ui::fills()
+#include "MapEditor.h"
 
 using namespace ftxui;
 
@@ -42,29 +43,10 @@ namespace {
 
   // --- numbers
 
+  // with the decimals of its step when values are dragged
   std::string _number(const Ui::Field &f, double v)
   {
-    char s[64];
-    if(f.step > 0. && Tui::sources().settings().inputScrolling) {
-      int decimals = 0;
-      while(decimals < 10 &&
-            std::fabs(f.step * std::pow(10., decimals) -
-                      std::floor(f.step * std::pow(10., decimals) + .5)) > 1e-9)
-        decimals++;
-      snprintf(s, sizeof(s), "%.*f", decimals, v);
-      if(v != 0. && std::fabs(atof(s) - v) > 1e-9 * std::fabs(v))
-        snprintf(s, sizeof(s), "%g", v);
-    }
-    else
-      snprintf(s, sizeof(s), "%g", v);
-    return s;
-  }
-
-  double _bounded(const Ui::Field &f, double v)
-  {
-    if(f.maximum > f.minimum) v = std::max(f.minimum, std::min(f.maximum, v));
-    if(f.kind == Ui::Integer) v = std::floor(v + .5);
-    return v;
+    return Ui::numberText(v, Tui::sources().settings().inputScrolling ? f.step : 0.);
   }
 
   // a change the user made: the done() of a choosing that ended, the
@@ -79,25 +61,6 @@ namespace {
         g.changed();
       if(after) after();
     });
-  }
-
-  void _choicesOf(const Ui::Field &f, std::vector<std::string> &labels,
-                  std::vector<int> &values)
-  {
-    labels.clear();
-    values.clear();
-    if(f.dynamicChoices)
-      f.dynamicChoices(labels, values);
-    else if(f.list && f.itemLabel)
-      for(std::size_t i = 0; i < f.list->size(); i++)
-        labels.push_back(f.itemLabel((int)i));
-    else if(f.list)
-      for(std::size_t i = 0; i < f.list->size(); i++)
-        labels.push_back(std::to_string((*f.list)[i]));
-    else {
-      labels = f.choices;
-      values = f.values;
-    }
   }
 
   // --- a line one types in: the text of the field, or what is being typed
@@ -140,10 +103,9 @@ namespace {
         std::string now = Tui::edit().text;
         if(now == was && !enter) return;
         if(number) {
-          char *end = nullptr;
-          double v = strtod(now.c_str(), &end);
-          if(end == now.c_str()) return;
-          const_cast<Ui::Field &>(g).setNumber(_bounded(g, v));
+          double v = 0.;
+          if(!Ui::readNumber(now, v)) return;
+          const_cast<Ui::Field &>(g).setNumber(Ui::bounded(g, v));
         }
         else if(now != was || !g.commitsWhenDone)
           const_cast<Ui::Field &>(g).setText(now);
@@ -159,7 +121,7 @@ namespace {
       // the wheel steps a number that has a step
       if(number && g.step > 0. && Tui::sources().settings().inputScrolling &&
          (m.button == Mouse::WheelUp || m.button == Mouse::WheelDown)) {
-        double v = _bounded(g, g.getNumber() + (m.button == Mouse::WheelUp ?
+        double v = Ui::bounded(g, g.getNumber() + (m.button == Mouse::WheelUp ?
                                                   g.step : -g.step));
         const_cast<Ui::Field &>(g).setNumber(v);
         Tui::edit().id.clear();
@@ -172,7 +134,7 @@ namespace {
       begin();
       if(number && g.step > 0. &&
          (e == Event::ArrowUp || e == Event::ArrowDown)) {
-        double v = _bounded(g, g.getNumber() +
+        double v = Ui::bounded(g, g.getNumber() +
                                  (e == Event::ArrowUp ? g.step : -g.step));
         const_cast<Ui::Field &>(g).setNumber(v);
         Tui::edit().text = _number(g, v);
@@ -223,6 +185,13 @@ namespace {
 
   // the colour map: the wedge as a row of blocks, the channels over it as
   // bars of half blocks, and the keys of the other interfaces
+  // what editing each map shows: its help, by the id of the map
+  std::map<std::string, Ui::MapEditor> &_mapEditors()
+  {
+    static std::map<std::string, Ui::MapEditor> m;
+    return m;
+  }
+
   Element _map(const Ui::Field &f, const std::string &id,
                const std::function<void()> &after)
   {
@@ -238,16 +207,18 @@ namespace {
       Ui::Colour c = map.colour(i);
       wedge.push_back(text("█") | color(Color::RGB(c.r, c.g, c.b)));
     }
-    char said[64];
-    bool hsv = map.hsv ? map.hsv() : false;
-    snprintf(said, sizeof(said), "Colormap %d (%s)", map.preset ? map.preset() : 0,
-             hsv ? "HSV" : "RGB");
     char lo[32], hi[32];
     snprintf(lo, sizeof(lo), "%g", least);
     snprintf(hi, sizeof(hi), "%g", most);
     bool on = Tui::focused(id);
-    Element e = vbox({text(said) | (on ? inverted : nothing), hbox(wedge),
-                      hbox({text(lo), filler(), text(hi)})});
+    Elements lines = {text(Ui::MapEditor::title(map)) | (on ? inverted : nothing)};
+    if(_mapEditors()[id].help())
+      for(const auto &k : Ui::MapEditor::helpLines())
+        lines.push_back(hbox({text(k.first) | ftxui::size(WIDTH, EQUAL, 24),
+                              text(k.second)}) | dim);
+    lines.push_back(hbox(wedge));
+    lines.push_back(hbox({text(lo), filler(), text(hi)}));
+    Element e = vbox(std::move(lines));
     Ui::Field g = f;
     Tui::Hot h;
     h.id = id;
@@ -256,51 +227,14 @@ namespace {
       Tui::focus(id);
       return true;
     };
-    h.key = [g, after](const Event &e) {
+    h.key = [g, after, id](const Event &e) {
       const Ui::ColourMap &map = g.map;
       int key = 0;
       unsigned mods = 0;
       if(!Tui::uiKey(e, key, mods)) return false;
-      bool ctrl = (mods & Ui::ModCommand) != 0, changed = false;
-      int presets = map.numPresets ? map.numPresets() : 0, preset = -1;
-      if(key >= '0' && key <= '9') preset = (key - '0') + (ctrl ? 10 : 0);
-      if(key >= Ui::KeyF1 && key < Ui::KeyF1 + 7) preset = 20 + key - Ui::KeyF1;
-      if(preset >= 0 && preset < presets) {
-        map.choosePreset(preset);
-        changed = true;
-      }
-      else if(key == 'M' && !ctrl && map.setHsv) {
-        map.setHsv(!map.hsv());
-        changed = true;
-      }
-      else if(key == 'R' && !ctrl) {
-        if(map.preset) map.choosePreset(map.preset());
-        changed = true;
-      }
-      else if(key == 'C' && ctrl) {
-        if(map.copy) map.copy();
-        return true;
-      }
-      else if(key == 'V' && ctrl) {
-        if(map.paste) map.paste();
-        changed = true;
-      }
-      else if(map.parameters) {
-        for(const auto &p : map.parameters()) {
-          if(!p.up.empty() && p.up.matches(key, mods)) {
-            map.adjust(p, true);
-            changed = true;
-            break;
-          }
-          if(!p.down.empty() && p.down.matches(key, mods)) {
-            map.adjust(p, false);
-            changed = true;
-            break;
-          }
-        }
-      }
-      if(changed) _told(g, true, after);
-      return changed;
+      Ui::MapEditor::Answer said = _mapEditors()[id].key(map, key, mods);
+      if(said == Ui::MapEditor::Changed) _told(g, true, after);
+      return said != Ui::MapEditor::NotMine;
     };
     return Tui::hot(e, h);
   }
@@ -322,7 +256,7 @@ namespace {
   {
     std::vector<std::string> labels;
     std::vector<int> values;
-    _choicesOf(f, labels, values);
+    Ui::choices(f, labels, values);
     int rows = f.rows ? f.rows : 8;
     int &scroll = _scrolls()[id];
     scroll = std::max(0, std::min(scroll, (int)labels.size() - rows));
@@ -474,7 +408,7 @@ Element Tui::field(const Ui::Field &f, const std::string &id, int width,
   case Ui::Choice: {
     std::vector<std::string> labels;
     std::vector<int> values;
-    _choicesOf(f, labels, values);
+    Ui::choices(f, labels, values);
     if(f.multiple) {
       // switches in the menu it drops
       std::vector<Ui::MenuItem> items;
@@ -696,7 +630,7 @@ Element Tui::field(const Ui::Field &f, const std::string &id, int width,
       focus(id);
       std::vector<std::string> labels;
       std::vector<int> values;
-      _choicesOf(g, labels, values);
+      Ui::choices(g, labels, values);
       choose(labels, -1, m.x, m.y + 1, [g, after](int i) {
         if(g.choose) g.choose(i, true);
         if(g.done)
