@@ -311,4 +311,21 @@ void Tui::clearPictures()
   if(graphics() == Kitty) std::cout << "\x1b_Ga=d,d=A,q=2\x1b\\" << std::flush;
 }
 
+void Tui::hidePicture()
+{
+  // the placement goes, the image stays, to be placed again
+  if(graphics() == Kitty)
+    std::cout << "\x1b_Ga=d,d=i,i=" << _kittyId << ",q=2\x1b\\" << std::flush;
+}
+
+bool Tui::placeAgain(int x, int y, int cols, int rows)
+{
+  if(graphics() != Kitty) return false;
+  std::cout << "\x1b" "7\x1b[" << y + 1 << ";" << x + 1 << "H"
+            << "\x1b_Ga=p,i=" << _kittyId << ",p=1,c=" << cols << ",r=" << rows
+            << ",C=1,q=2,z=" << _kittyUnder << "\x1b\\"
+            << "\x1b" "8" << std::flush;
+  return true;
+}
+
 #endif

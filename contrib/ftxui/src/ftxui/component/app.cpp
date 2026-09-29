@@ -103,6 +103,8 @@ struct App::Internal {
 
   std::string set_cursor_position_;
   std::string reset_cursor_position_;
+  // [GMSH] the cells of the frame drawn last
+  std::vector<Cell> previous_cells_;
 
   std::atomic<bool> quit_{false};
   bool installed_ = false;
@@ -1025,7 +1027,12 @@ void App::Internal::Draw(Component component) {
       frame_count_ == 0 || (dimx != public_->dimx_) || (dimy != public_->dimy_);
   TerminalSend(ResetCursorPosition());
 
-  if (frame_count_ != 0) {
+  // [GMSH] on the alternate screen, what changed only, written at absolute
+  // positions: no need to go back to the start of the frame
+  const bool changes_only = use_alternative_screen_ && !resized &&
+                            frame_count_ != 0 &&
+                            previous_cells_.size() == public_->cells_.size();
+  if (frame_count_ != 0 && !changes_only) {
     // Reset the cursor position to the lower left corner to start drawing the
     // new frame.
     public_->ResetPosition(output_buffer, resized);
@@ -1091,10 +1098,18 @@ void App::Internal::Draw(Component component) {
     }
   }
 
-  public_->ToString(output_buffer);
+  if (changes_only) {
+    public_->ToStringChanged(output_buffer, previous_cells_);
+    // where the whole frame would have left the cursor
+    output_buffer += "\x1B[" + std::to_string(public_->dimy_) + ";" +
+                     std::to_string(public_->dimx_) + "H";
+  } else {
+    public_->ToString(output_buffer);
+  }
   TerminalSend(set_cursor_position_);
   TerminalFlush();
 
+  previous_cells_ = public_->cells_;  // [GMSH]
   public_->Clear();
   frame_valid_ = true;
   frame_count_++;

@@ -93,6 +93,10 @@ namespace Tui {
   void showPicture(const unsigned char *bmp, int w, int h, int x, int y,
                    int cols, int rows);
   void clearPictures();
+  // kitty keeps the image of a placement taken away, to be placed again
+  // without sending it: false where it cannot be
+  void hidePicture();
+  bool placeAgain(int x, int y, int cols, int rows);
 
   // --- fields, forms and trees, see formTui.cpp
 

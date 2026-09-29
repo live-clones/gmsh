@@ -43,8 +43,9 @@ See each subdirectory for the detailed license terms.
 Set the ENABLE_SYSTEM_CONTRIB cmake option to use system versions of these
 libraries, when possible.
 
-One of these copies carries a local change, marked with a "[GMSH]" comment so it
+Two of these copies carry a local change, marked with a "[GMSH]" comment so it
 can be found again when the library is updated:
 
 * glfw: cmake_minimum_required() raised, the version shipped upstream being
   refused by recent CMake.
+* ftxui: a frame writes only the cells that changed on the alternate screen.

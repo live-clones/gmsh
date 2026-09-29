@@ -9,4 +9,9 @@ documentation and the C++20 modules, is replaced by the CMakeLists.txt here,
 which compiles the same sources as its screen, dom and component libraries,
 into one static library named ftxui.
 
+Local modification, marked "[GMSH]": on the alternate screen, a frame writes
+only the cells that changed since the previous one (Screen::ToStringChanged(),
+used by App::Internal::Draw()), rather than the whole screen: the pictures a
+terminal shows over the cells stay, and less is sent to the terminal.
+
 FTXUI is distributed under the MIT license (see LICENSE).

@@ -109,11 +109,10 @@ namespace {
     std::vector<unsigned char> picture;
     int pointerButton = -1;
     // what was put on the terminal last, when it is not half blocks: shown
-    // again when it changed or moved, and, in sixel, after every frame, as
-    // the frame writes over it
+    // again when it changed or moved
     unsigned version = 0, shownVersion = (unsigned)-1;
     Box shownBox;
-    bool drew = false;
+    bool drew = false, hidden = false;
     int cellW = 1, cellH = 1;
     double lastRefresh = 0., lastPicture = 0.;
     // the pointer moved: only where it went last is told, once a turn
@@ -166,15 +165,28 @@ namespace {
     if(Tui::graphics() == Tui::Blocks || !s.drew) return;
     s.drew = false;
     if(_covered()) {
-      if(s.shownVersion != (unsigned)-1) Tui::clearPictures();
-      s.shownVersion = (unsigned)-1;
+      if(!s.hidden) Tui::hidePicture();
+      s.hidden = true;
       return;
+    }
+    const Box &at = *s.sceneBox;
+    if(s.hidden) {
+      s.hidden = false;
+      // the same picture where it was: placed again, not sent again
+      bool same = s.version == s.shownVersion && at.x_min == s.shownBox.x_min &&
+                  at.x_max == s.shownBox.x_max && at.y_min == s.shownBox.y_min &&
+                  at.y_max == s.shownBox.y_max;
+      if(same && Tui::placeAgain(at.x_min, at.y_min, at.x_max - at.x_min + 1,
+                                 at.y_max - at.y_min + 1))
+        return;
+      s.shownVersion = (unsigned)-1;
     }
     const Box &b = *s.sceneBox;
     bool moved = b.x_min != s.shownBox.x_min || b.x_max != s.shownBox.x_max ||
                  b.y_min != s.shownBox.y_min || b.y_max != s.shownBox.y_max;
-    if(Tui::graphics() == Tui::Kitty && !moved && s.version == s.shownVersion)
-      return;
+    // the frame writes only the cells that changed, never those of the
+    // scene: the picture stays until there is another
+    if(!moved && s.version == s.shownVersion) return;
     // at most so many pictures a second; the one held back goes at a later
     // turn
     double now = _clock();

@@ -40,6 +40,9 @@ class FTXUI_EXPORT(SCREEN) Screen : public Surface {
 
   std::string ToString() const;
   void ToString(std::string& ss) const;
+  // [GMSH] only the cells that differ from those given, each run of them
+  // after an absolute move of the cursor; false if the sizes differ
+  bool ToStringChanged(std::string& ss, const std::vector<Cell>& previous) const;
 
   // Print the Screen on to the terminal.
   void Print() const;

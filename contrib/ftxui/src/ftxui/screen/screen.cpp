@@ -482,6 +482,57 @@ void Screen::ToString(std::string& ss) const {
   UpdateCellStyle(this, ss, *previous_cell_ref, default_cell);
 }
 
+// [GMSH] what changed since the previous frame, rather than the whole screen
+namespace {
+bool SameCell(const Cell& a, const Cell& b) {
+  return a.character == b.character &&
+         a.foreground_color == b.foreground_color &&
+         a.background_color == b.background_color && a.bold == b.bold &&
+         a.dim == b.dim && a.italic == b.italic && a.inverted == b.inverted &&
+         a.underlined == b.underlined &&
+         a.underlined_double == b.underlined_double &&
+         a.strikethrough == b.strikethrough && a.blink == b.blink &&
+         a.hyperlink == b.hyperlink;
+}
+bool FullWidth(const Cell& c) {
+  return c.character.size() > 1 && string_width(c.character) == 2;
+}
+}  // namespace
+
+bool Screen::ToStringChanged(std::string& ss,
+                             const std::vector<Cell>& previous) const {
+  if (previous.size() != cells_.size()) {
+    return false;
+  }
+  const Cell default_cell;
+  for (int y = 0; y < dimy_; ++y) {
+    const Cell* row = &FastCellAt(0, y);
+    const Cell* was = &previous[static_cast<size_t>(y) * dimx_];
+    int x = 0;
+    while (x < dimx_) {
+      if (SameCell(row[x], was[x])) {
+        ++x;
+        continue;
+      }
+      // the half of a wide character is written with its first half
+      if (x > 0 && FullWidth(row[x - 1])) {
+        --x;
+      }
+      ss += "\x1B[" + std::to_string(y + 1) + ";" + std::to_string(x + 1) + "H";
+      const Cell* style = &default_cell;
+      while (x < dimx_ && !SameCell(row[x], was[x])) {
+        const Cell& cell = row[x];
+        UpdateCellStyle(this, ss, *style, cell);
+        style = &cell;
+        ss += cell.character.empty() ? std::string(" ") : cell.character;
+        x += FullWidth(cell) ? 2 : 1;
+      }
+      UpdateCellStyle(this, ss, *style, default_cell);
+    }
+  }
+  return true;
+}
+
 // Print the Screen to the terminal.
 void Screen::Print() const {
   std::cout << ToString() << '\0' << std::flush;
