@@ -186,13 +186,73 @@ void GuiPanes::redrawAll()
   for(Pane *p : _panes) _tk.redraw(p);
 }
 
+namespace {
+
+  // General.HighResolutionGraphics off: one pixel a point, whatever the
+  // surface has
+  double _drawnFactor(double f)
+  {
+    return CTX::instance()->highResolutionGraphics ? f : 1.;
+  }
+
+  // the framebuffer of one pixel a point, made again at that size, bound;
+  // false when it cannot be
+  bool _bindLow(GuiPanes::Pane *p, int w, int h, void *context)
+  {
+    auto &b = p->low;
+    if(!glApi::GenFramebuffers || !glApi::BindFramebuffer ||
+       !glApi::GenRenderbuffers || !glApi::RenderbufferStorage ||
+       !glApi::FramebufferRenderbuffer || !glApi::BlitFramebuffer)
+      return false;
+    if(b.fbo && (b.w != w || b.h != h || b.context != context)) {
+      // what another context made is gone with it, or is not this one's
+      if(b.context == context) {
+        glApi::DeleteFramebuffers(1, &b.fbo);
+        glApi::DeleteRenderbuffers(1, &b.colour);
+        glApi::DeleteRenderbuffers(1, &b.depth);
+      }
+      b = GuiPanes::Pane::lowResolution();
+    }
+    if(!b.fbo) {
+      glApi::GenRenderbuffers(1, &b.colour);
+      glApi::BindRenderbuffer(GL_RENDERBUFFER, b.colour);
+      glApi::RenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, w, h);
+      glApi::GenRenderbuffers(1, &b.depth);
+      glApi::BindRenderbuffer(GL_RENDERBUFFER, b.depth);
+      glApi::RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+      glApi::BindRenderbuffer(GL_RENDERBUFFER, 0);
+      glApi::GenFramebuffers(1, &b.fbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, b.fbo);
+      glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                     GL_RENDERBUFFER, b.colour);
+      glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                                     GL_RENDERBUFFER, b.depth);
+      b.w = w;
+      b.h = h;
+      b.context = context;
+      if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+         GL_FRAMEBUFFER_COMPLETE) {
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, glShader::windowFramebuffer());
+        glApi::DeleteFramebuffers(1, &b.fbo);
+        glApi::DeleteRenderbuffers(1, &b.colour);
+        glApi::DeleteRenderbuffers(1, &b.depth);
+        b = GuiPanes::Pane::lowResolution();
+        return false;
+      }
+    }
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, b.fbo);
+    return true;
+  }
+
+} // namespace
+
 void GuiPanes::place(Pane *p)
 {
   int w = 0, h = 0;
   double f = 1.;
   if(_tk.size) _tk.size(p, w, h, f);
   p->view->setRect(0, 0, w, h);
-  p->view->setOrigin(0., 0., h, f);
+  p->view->setOrigin(0., 0., h, _drawnFactor(f));
 }
 
 void GuiPanes::draw(Pane *p)
@@ -202,6 +262,28 @@ void GuiPanes::draw(Pane *p)
   if(_tk.size) _tk.size(p, w, h, f);
   if(w < 1 || h < 1) return;
   _drawing = true;
+  // one pixel a point on a surface that has more: drawn so, then stretched
+  // over it
+  if(!(_captureW > 0 && _captureH > 0) && _drawnFactor(f) != f && f > 1.01) {
+    unsigned int window = glShader::windowFramebuffer();
+    void *context = _tk.context ? _tk.context() : nullptr;
+    if(_bindLow(p, w, h, context)) {
+      glShader::setWindowFramebuffer(p->low.fbo);
+      place(p);
+      p->view->draw(1., h);
+      glShader::release();
+      glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, p->low.fbo);
+      glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, window);
+      glDisable(GL_SCISSOR_TEST);
+      glApi::BlitFramebuffer(0, 0, w, h, 0, 0, (int)(w * f + .5),
+                             (int)(h * f + .5), GL_COLOR_BUFFER_BIT, GL_LINEAR);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, window);
+      glShader::setWindowFramebuffer(window);
+      putBackState();
+      _drawing = false;
+      return;
+    }
+  }
   if(_captureW > 0 && _captureH > 0) {
     // in the bottom-left corner, where PixelBuffer::fill() reads, the rest
     // cleared

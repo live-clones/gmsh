@@ -38,6 +38,14 @@ public:
     // the window holding it, 0 the main one: split, unsplit, the composite
     // pictures and the orientation keep to the views of one window
     int room = 0;
+    // what the view is drawn into when General.HighResolutionGraphics is
+    // off on a surface of several pixels a point: one pixel a point, then
+    // stretched over the surface; in the context it was made in
+    struct lowResolution {
+      unsigned int fbo = 0, colour = 0, depth = 0;
+      int w = 0, h = 0;
+      void *context = nullptr;
+    } low;
     Pane();
     virtual ~Pane();
     // --- the pointer on the surface, in its logical pixels; each call

@@ -116,6 +116,14 @@ namespace {
     return (ww > 0) ? (double)fw / (double)ww : 1.;
   }
 
+  // the pixels a point the views of the main window are drawn at: those of
+  // the window, or one when General.HighResolutionGraphics is off, the
+  // texture then stretched over the view
+  double _drawnFactor()
+  {
+    return imguiSources().settings().highResolution ? _mainFactor() : 1.;
+  }
+
   // imgui_impl_opengl2 does not push GL_TEXTURE_BIT: the atlas stays bound
   // and the environment set to GL_MODULATE
   void _plainState()
@@ -178,8 +186,9 @@ namespace {
     if(!t.fbo) {
       glGenTextures(1, &t.colour);
       glBindTexture(GL_TEXTURE_2D, t.colour);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      // stretched when drawn at one pixel a point
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA,
@@ -296,7 +305,7 @@ namespace {
       return true;
     }
     glfwMakeContextCurrent(_main);
-    double f = _mainFactor();
+    double f = _drawnFactor();
     return _bind(p->t, (int)(p->w * f + 0.5), (int)(p->h * f + 0.5));
   }
 
@@ -435,7 +444,7 @@ namespace {
       }
       w = q->w;
       h = q->h;
-      f = _mainFactor();
+      f = _drawnFactor();
     };
     t.origin = [](GuiPanes::Pane *p, int &x, int &y) {
       x = _pane(p)->x;
@@ -616,7 +625,7 @@ void imguiSceneDraw()
 {
   // drawn again when asked for, or when the view changed size; put back
   // otherwise
-  double f = _mainFactor();
+  double f = _drawnFactor();
   std::vector<pane *> shown = _shown();
   for(pane *p : shown)
     if(p->wanted || p->t.w != (int)(p->w * f + 0.5) ||
