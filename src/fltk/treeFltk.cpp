@@ -3,6 +3,10 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+// The tree of the modules, read from Ui::Tree: it knows the tree only as
+// Tree.h says it, and puts a widget on every line the description gives one
+// to (fltkTreeField(), see fieldFltk.cpp); the buttons of the footer under it.
+
 #include "GmshConfig.h"
 
 #include <deque>
@@ -10,222 +14,380 @@
 #include <vector>
 
 #include <FL/Fl.H>
+#include <FL/Fl_Bitmap.H>
+#include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
-#include <FL/Fl_Check_Button.H>
-#include <FL/Fl_Choice.H>
-#include <FL/Fl_Input.H>
-#include <FL/Fl_Input_Choice.H>
-#include <FL/Fl_Menu_Button.H>
-#include <FL/Fl_Output.H>
-#include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Value_Input.H>
+#include <FL/Fl_Pixmap.H>
+#include <FL/fl_draw.H>
 
-#include "treeFltk.h"
-#include "dialogFltk.h"
-#include "menuFltk.h"
-#include "uiSources.h"
+#include "fltkCommon.h"
+
+// the arrows of a branch, light and dark
+#define TREE_ICON_RIGHT(col)                                                   \
+  "11 11 2 1", ". c None", col, "...@.......", "...@@......", "...@@@.....",   \
+    "...@@@@....", "...@@@@@...", "...@@@@@@..", "...@@@@@...", "...@@@@....", \
+    "...@@@.....", "...@@......", "...@......."
+
+#define TREE_ICON_DOWN(col)                                                    \
+  "11 11 2 1", ".  c None", col, "...........", "...........", "...........",  \
+    "@@@@@@@@@@@", ".@@@@@@@@@.", "..@@@@@@@..", "...@@@@@...", "....@@@....", \
+    ".....@.....", "...........", "..........."
+
+#define TREE_ICON_PLUS(col)                                                    \
+  "11 11 3 1", col, "# c #323232", "@ c #000000", "###########",               \
+    "#.........#", "#.........#", "#....@....#", "#....@....#", "#..@@@@@..#", \
+    "#....@....#", "#....@....#", "#.........#", "#.........#", "###########"
+
+#define TREE_ICON_MINUS(col)                                                   \
+  "11 11 3 1", col, "#	c #323232", "@	c #000000", "###########",             \
+    "#.........#", "#.........#", "#.........#", "#.........#", "#..@@@@@..#", \
+    "#.........#", "#.........#", "#.........#", "#.........#", "###########"
+
+#if defined(__APPLE__)
+static const char *const open_xpm_light[] = {TREE_ICON_RIGHT("@ c #444444")};
+static const char *const close_xpm_light[] = {TREE_ICON_DOWN("@ c #444444")};
+static const char *const open_xpm_dark[] = {TREE_ICON_RIGHT("@ c #222222")};
+static const char *const close_xpm_dark[] = {TREE_ICON_DOWN("@ c #222222")};
+#else
+static const char *const open_xpm_light[] = {TREE_ICON_PLUS(". c #fefefe")};
+static const char *const close_xpm_light[] = {TREE_ICON_MINUS(". c #fefefe")};
+static const char *const open_xpm_dark[] = {TREE_ICON_PLUS(". c #bbbbbb")};
+static const char *const close_xpm_dark[] = {TREE_ICON_MINUS(". c #bbbbbb")};
+#endif
+
+static Fl_Pixmap open_pixmap_light(open_xpm_light);
+static Fl_Pixmap close_pixmap_light(close_xpm_light);
+static Fl_Pixmap open_pixmap_dark(open_xpm_dark);
+static Fl_Pixmap close_pixmap_dark(close_xpm_dark);
 
 namespace {
 
-  // a widget is given a pointer when it calls back: the field has to outlive
-  // the line
-  std::deque<Ui::Field> _bound;
-  std::deque<std::string> _labels;
+  // FLTK hands a widget a void*: a deque keeps the addresses steady
+  std::deque<std::function<void()> > _pressed;
   std::deque<Ui::Button> _buttons;
 
-  Ui::Field *_field(void *data) { return (Ui::Field *)data; }
-
-  void _numberChanged(Fl_Widget *w, void *data)
+  // copied: what it does may build the tree again, and the list this is in
+  void _press(Fl_Widget *w, void *data)
   {
-    _field(data)->setNumber(((Fl_Value_Input *)w)->value());
-    if(_field(data)->changed) _field(data)->changed();
+    std::function<void()> what = *(std::function<void()> *)data;
+    if(what) what();
   }
 
-  void _flagChanged(Fl_Widget *w, void *data)
+  void _pressButton(Fl_Widget *w, void *data)
   {
-    _field(data)->setFlag(((Fl_Button *)w)->value() ? true : false);
-    if(_field(data)->changed) _field(data)->changed();
+    std::function<void()> what = ((Ui::Button *)data)->action;
+    if(what) what();
   }
 
-  void _choiceChanged(Fl_Widget *w, void *data)
-  {
-    _field(data)->setNumber(((Fl_Choice *)w)->value());
-    if(_field(data)->changed) _field(data)->changed();
-  }
-
-  void _textChanged(Fl_Widget *w, void *data)
-  {
-    Fl_Input_Choice *c = dynamic_cast<Fl_Input_Choice *>(w);
-    _field(data)->setText(c ? c->value() : ((Fl_Input *)w)->value());
-    if(_field(data)->changed) _field(data)->changed();
-  }
-
-  void _pressed(Fl_Widget *w, void *data)
-  {
-    if(_field(data)->changed) _field(data)->changed();
-  }
-
-  void _buttonPressed(Fl_Widget *w, void *data)
-  {
-    Ui::Button *b = (Ui::Button *)data;
-    if(b->action) b->action();
-  }
-
-  void _buttonMenu(Fl_Widget *w, void *data)
-  {
-    Ui::Button *b = (Ui::Button *)data;
-    if(!b->menu) return;
-    fltkMenuPopup(b->menu(), Fl::event_x_root(), Fl::event_y_root(), "tree");
-  }
-
-  const char *_keep(const std::string &say)
-  {
-    _labels.push_back(say);
-    return _labels.back().c_str();
-  }
+#if !defined(__APPLE__)
+#define gear_width 16
+#define gear_height 16
+  unsigned char gear_bits[] = {
+    0x80, 0x01, 0x80, 0x01, 0x8c, 0x31, 0xfc, 0x3f, 0xf8, 0x1f, 0xf8,
+    0x1f, 0x38, 0x1c, 0x3f, 0xfc, 0x3f, 0xfc, 0x38, 0x1c, 0xf8, 0x1f,
+    0xf8, 0x1f, 0xfc, 0x3f, 0x8c, 0x31, 0x80, 0x01, 0x80, 0x01};
+#endif
 
 } // namespace
 
-void fltkTreeForget()
+void treeFltk::_treeCallback(Fl_Widget *w, void *data)
 {
-  _bound.clear();
-  _labels.clear();
-  _buttons.clear();
+  treeFltk *self = (treeFltk *)data;
+  Fl_Tree *tree = (Fl_Tree *)w;
+  Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
+  if(!item) return;
+  int reason = tree->callback_reason();
+  if(reason != FL_TREE_REASON_OPENED && reason != FL_TREE_REASON_CLOSED)
+    return;
+  const Ui::Tree &said = fltkSources().tree;
+  if(said.setClosed)
+    said.setClosed(self->pathOf(item), reason == FL_TREE_REASON_CLOSED);
 }
 
-Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
-                        double labelRatio, const Ui::Colour &highlight,
-                        Fl_Color background)
+void treeFltk::_computeWidths()
 {
-  // a switch and a button take the whole line; the rest the share labelRatio
-  // gives
-  bool nameInside = f.kind == Ui::Check || f.kind == Ui::Action;
-  int lineW = nameInside ? w : (int)(w * labelRatio);
-  Fl_Group *line = new Fl_Group(x, y, lineW, h);
-  _bound.push_back(f);
-  Ui::Field *bound = &_bound.back();
+  // "- 1.1 * FL_NORMAL_SIZE" to have space for a scrollbar to the right
+  _baseWidth = _tree->w() - _tree->marginleft() - 1.1 * FL_NORMAL_SIZE;
+  // not sure why we need the "-2" correction at the end, but this is what is
+  // needed to make things pixel-correct.
+  _indent = _tree->connectorwidth() / 2. + _tree->openicon()->w() / 2. - 2.;
+}
 
-  // a narrow one for the range, two wider for the loop and the plots
-  int room = 0;
-  std::vector<int> widths;
-  for(const auto &b : f.trailing) {
-    int wide = b.label == ":" ? FL_NORMAL_SIZE - 2 : FL_NORMAL_SIZE + 6;
-    widths.push_back(wide);
-    room += wide;
+treeFltk::treeFltk(int x, int y, int w, int h, const char *l)
+  : Fl_Group(x, y, w, h, l), _enableTreeWidgetResize(false), _firstBuild(true)
+{
+  int col = FL_BACKGROUND2_COLOR;
+  color(col);
+
+  box(GMSH_SIMPLE_RIGHT_BOX);
+  int dx = Fl::box_dx(box());
+  int dy = Fl::box_dy(box());
+  int dw = Fl::box_dw(box());
+  int dh = Fl::box_dh(box());
+
+  _tree = new Fl_Tree(x + dx, y + dy, w - dw, h - dh - BH - 2 * WB);
+  _tree->color(col);
+  _tree->callback(_treeCallback, this);
+  _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
+  _tree->showroot(0);
+  _tree->box(FL_FLAT_BOX);
+  _tree->end();
+
+  _widgetLabelRatio = 0.5;
+
+  // dummy values for now; will be updated with _computeWidths()
+  _baseWidth = _tree->w() - _tree->marginleft();
+  _indent = _tree->connectorwidth();
+
+  int BB2 = BB / 2 + 4;
+  _minWindowWidth = 3 * BB2 + 4 * WB;
+  _minWindowHeight = 2 * BH + 3 * WB;
+
+  end();
+
+  Fl_Box *resbox = new Fl_Box(x + WB, y + WB, WB, WB);
+  resizable(resbox);
+
+  rebuild(true);
+}
+
+// a branch is its name, a leaf the field the description gives it or a button;
+// either may drop a menu on the arrow at the right
+void treeFltk::_addLine(const std::string &path, const Ui::Node &node,
+                           bool branch)
+{
+  Fl_Tree_Item *n = _tree->add(path.c_str());
+  if(!n) return;
+  std::string label = node.label.size() ?
+                        node.label :
+                        path.substr(path.find_last_of('/') + 1);
+  if(node.hasField) n->labelsize(FL_NORMAL_SIZE + 4);
+  int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
+  int hh = n->labelsize() + 4;
+  int popw = node.menu ? FL_NORMAL_SIZE + 2 : 0;
+  _tree->begin();
+  Fl_Group *grp = nullptr;
+  if(node.hasField) {
+    // a switch that says nothing itself is named by the line
+    Ui::Field f = node.field;
+    if(f.label.empty() && (f.kind == Ui::Check || f.kind == Ui::Action))
+      f.label = label;
+    grp = fltkTreeField(f, 1, 1, ww - popw, hh, _widgetLabelRatio,
+                        node.highlight, _tree->color());
   }
-  int valueW = lineW - room;
-  if(valueW < FL_NORMAL_SIZE) valueW = FL_NORMAL_SIZE;
-
-  Fl_Widget *widget = nullptr;
-  switch(f.kind) {
-  case Ui::Choice: {
-    Fl_Choice *c = new Fl_Choice(x, y, valueW, h);
-    std::vector<std::string> labels;
-    std::vector<int> values;
-    Ui::choices(f, labels, values);
-    for(auto &l : labels) c->add(_keep(l), 0, nullptr, nullptr, 0);
-    c->value((int)f.getNumber());
-    c->callback(_choiceChanged, bound);
-    widget = c;
-  } break;
-  case Ui::Check: {
-    Fl_Check_Button *b = new Fl_Check_Button(x, y, valueW, h);
-    b->box(FL_FLAT_BOX);
-    b->color(background);
-    b->value(f.getFlag() ? 1 : 0);
-    b->callback(_flagChanged, bound);
-    b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-    widget = b;
-  } break;
-  case Ui::Action: {
-    Fl_Button *b = new Fl_Button(x, y, valueW, h);
-    b->box(FL_FLAT_BOX);
-    b->color(background);
-    b->selection_color(background);
-    b->callback(_pressed, bound);
-    b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-    widget = b;
-  } break;
-  case Ui::Output: {
-    Fl_Output *o = new Fl_Output(x, y, valueW, h);
-    o->value(f.getText().c_str());
-    widget = o;
-  } break;
-  case Ui::Number:
-  case Ui::Integer: {
-    Fl_Value_Input *v = new fltkValueInput(x, y, valueW, h);
-    if(f.maximum > f.minimum) {
-      v->minimum(f.minimum);
-      v->maximum(f.maximum);
+  else {
+    grp = new Fl_Group(1, 1, ww, hh);
+    Fl_Widget *say;
+    if(node.pressed) {
+      _pressed.push_back(node.pressed);
+      Fl_Button *but = new Fl_Button(1, 1, ww - popw, hh);
+      but->box(FL_FLAT_BOX);
+      but->color(_tree->color());
+      but->selection_color(_tree->color());
+      but->callback(_press, &_pressed.back());
+      say = but;
     }
-    if(f.step > 0. && fltkSources().settings().inputScrolling)
-      v->step(f.step);
-    v->value(f.getNumber());
-    v->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-    v->callback(_numberChanged, bound);
-    widget = v;
-  } break;
-  default: {
-    std::vector<std::string> labels;
-    std::vector<int> values;
-    Ui::choices(f, labels, values);
-    if(labels.size()) {
-      Fl_Input_Choice *c = new Fl_Input_Choice(x, y, valueW, h);
-      for(auto &l : labels) c->add(_keep(l));
-      c->value(f.getText().c_str());
-      c->input()->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-      c->callback(_textChanged, bound);
-      widget = c;
+    else
+      say = new Fl_Box(1, 1, ww - popw, hh);
+    say->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    say->copy_label(label.c_str());
+    if(node.enabled && !node.enabled()) say->deactivate();
+    grp->end();
+  }
+  if(node.menu) {
+    grp->begin();
+    Fl_Button *arrow = new Fl_Button(1 + ww - popw, 1, popw, hh, "@>");
+    arrow->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    arrow->box(FL_FLAT_BOX);
+    arrow->color(_tree->color());
+    arrow->selection_color(_tree->color());
+    popupButtonFltk *popup = new popupButtonFltk(1 + ww - popw, 1, popw, hh);
+    popup->box(FL_NO_BOX);
+    popup->key = branch ? "branch" : "line";
+    popup->what = node.menu;
+    grp->end();
+    grp->resize(grp->x(), grp->y(), ww, hh);
+  }
+  if(!_enableTreeWidgetResize) grp->resizable(nullptr);
+  if(node.tooltip.size()) {
+    std::string help;
+    for(char c : node.tooltip)
+      if(c != '\r') help += c;
+    grp->copy_tooltip(help.c_str());
+  }
+  _treeWidgets.push_back(grp);
+  n->widget(grp);
+  _tree->end();
+}
+
+void treeFltk::_addFooter()
+{
+  for(Fl_Widget *w : _footer) Fl::delete_widget(w);
+  _footer.clear();
+  _buttons.clear();
+  const Ui::Tree &said = fltkSources().tree;
+  std::vector<Ui::Button> row =
+    said.footer ? said.footer() : std::vector<Ui::Button>();
+  int BB2 = BB / 2 + 4;
+  begin();
+  int at = x() + w() - WB;
+  for(std::size_t k = row.size(); k-- > 0;) {
+    _buttons.push_back(row[k]);
+    Ui::Button *b = &_buttons.back();
+    int wide = BB2;
+    if(!b->menu && b->label.size()) {
+      fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+      int tw = 0, th = 0;
+      fl_measure(b->label.c_str(), tw, th);
+      if(tw + 2 * WB > wide) wide = tw + 2 * WB;
+    }
+    at -= wide;
+    Fl_Widget *made;
+    if(b->menu) {
+      popupButtonFltk *gear =
+        new popupButtonFltk(at, y() + h() - WB - BH, wide, BH);
+#if defined(__APPLE__)
+      gear->label("@-1gmsh_gear");
+#else
+      gear->image(new Fl_Bitmap(gear_bits, gear_width, gear_height));
+#endif
+      gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+      gear->key = "gear";
+      gear->what = b->menu;
+      made = gear;
     }
     else {
-      Fl_Input *in = new Fl_Input(x, y, valueW, h);
-      in->value(f.getText().c_str());
-      in->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-      in->callback(_textChanged, bound);
-      widget = in;
+      Fl_Button *but = new Fl_Button(at, y() + h() - WB - BH, wide, BH);
+      but->copy_label(b->label.c_str());
+      but->callback(_pressButton, b);
+      made = but;
     }
-  } break;
+    if(b->tooltip.size()) made->copy_tooltip(b->tooltip.c_str());
+    _footer.push_back(made);
+    at -= WB;
+  }
+  end();
+}
+
+void treeFltk::rebuildFooter()
+{
+  if(fltkLocked()) return;
+  _addFooter();
+  redraw();
+}
+
+void treeFltk::rebuild(bool deleteWidgets)
+{
+  // rebuilding the tree does not work in a child thread (it should, as we
+  // don't show/hide windows, but it crashes - at least on macOS)
+  if(fltkLocked()) return;
+
+  FL_NORMAL_SIZE -= fltkSources().settings().deltaFontSize;
+
+  // a tree built again from nothing opens every branch
+  std::vector<std::string> wasClosed;
+  for(Fl_Tree_Item *n = _tree->first(); n; n = n->next())
+    if(!n->is_root() && n->has_children() && n->is_close())
+      wasClosed.push_back(pathOf(n));
+
+  _tree->clear();
+
+  if(fltkSources().settings().darkScheme) {
+    _tree->openicon(&open_pixmap_dark);
+    _tree->closeicon(&close_pixmap_dark);
+  }
+  else {
+    _tree->openicon(&open_pixmap_light);
+    _tree->closeicon(&close_pixmap_light);
+  }
+  _tree->sortorder(FL_TREE_SORT_NONE);
+  _tree->selectmode(FL_TREE_SELECT_NONE);
+  _computeWidths();
+
+  // hide all the widgets we have added in the tree to make sure they don't
+  // get spurious events (until they are deleted)
+  for(std::size_t i = 0; i < _treeWidgets.size(); i++) _treeWidgets[i]->hide();
+
+  // we don't delete widgets everytime the tree is rebuilt to minimize
+  // potential race conditions (e.g. during heavy user interaction with
+  // autoCheck, with risks to call handle() or focus() on deleted widgets)
+  std::vector<Fl_Widget *> delWidgets;
+  if(deleteWidgets) {
+    delWidgets = _treeWidgets;
+    _treeWidgets.clear();
+    _pressed.clear();
   }
 
-  // the little buttons sit between the widget and its name
-  if(f.label.size()) {
-    if(nameInside)
-      widget->copy_label(f.label.c_str());
+  // what is folded is asked once the children are there to fold
+  const Ui::Tree &said = fltkSources().tree;
+  std::vector<std::string> fold;
+  std::function<void(const std::string &)> walk =
+    [&](const std::string &path) {
+      for(const auto &child : said.children(path)) {
+        Ui::Node node = said.node(child);
+        bool branch = !said.children(child).empty();
+        _addLine(child, node, branch);
+        if(!branch) continue;
+        walk(child);
+        if(node.closed || (said.closed && said.closed(child)))
+          fold.push_back(child);
+      }
+    };
+  bool commands = fltkSources().settings().showModuleMenu;
+  for(const auto &root : said.children("")) {
+    if(root == "0Modules" && !commands) continue;
+    Ui::Node node = said.node(root);
+    _addLine(root, node, true);
+    walk(root);
+  }
+
+  if(_firstBuild) {
+    _firstBuild = false;
+    Fl_Tree_Item *n0 = _tree->find_item("0Modules");
+    for(Fl_Tree_Item *n = n0; n; n = n->next()) {
+      if(!n->is_root() && n->has_children() && n->depth() > 1) n->close();
+    }
+  }
+  for(const auto &path : wasClosed) _tree->close(path.c_str(), 0);
+  for(const auto &path : fold) _tree->close(path.c_str(), 0);
+
+  _addFooter();
+
+  _tree->redraw();
+
+  FL_NORMAL_SIZE += fltkSources().settings().deltaFontSize;
+
+  fltkCheck(true); // necessary e.g. on windows to avoid "ghosting"
+
+  if(deleteWidgets) {
+    // after fltkCheck(), which may still reach them
+    for(std::size_t i = 0; i < delWidgets.size(); i++)
+      Fl::delete_widget(delWidgets[i]);
+  }
+}
+
+void treeFltk::open(const std::string &name, bool open)
+{
+  Fl_Tree_Item *n = _tree->find_item(name.c_str());
+  if(n && n->has_children()) {
+    if(open)
+      n->open();
     else
-      line->copy_label(f.label.c_str());
+      n->close();
+    _tree->redraw();
   }
-  if(!nameInside) line->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
-  if(highlight.a) {
-    Fl_Color paint = fl_rgb_color(highlight.r, highlight.g, highlight.b);
-    widget->color(paint);
-    widget->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, paint));
-  }
-  if(f.enabled && !f.enabled()) widget->deactivate();
+}
 
-  int at = x + valueW;
-  for(std::size_t i = 0; i < f.trailing.size(); i++) {
-    _buttons.push_back(f.trailing[i]);
-    Ui::Button *b = &_buttons.back();
-    Fl_Button *button = new Fl_Button(at, y, widths[i], h);
-    at += widths[i];
-    // the picture, for the two that have one, in the way FLTK draws a symbol
-    if(b->glyph.size())
-      button->copy_label(("@-1gmsh_" + b->glyph).c_str());
-    else if(b->label.size())
-      button->copy_label(b->label.c_str());
-    else if(b->menu)
-      // one that only drops a list says so with the arrow FLTK draws on a
-      // menu button
-      button->copy_label("@2>");
-    if(b->tooltip.size()) button->copy_tooltip(b->tooltip.c_str());
-    if(b->menu)
-      button->callback(_buttonMenu, b);
-    else
-      button->callback(_buttonPressed, b);
-    if(b->on && b->on()) button->color(FL_GREEN);
-  }
+bool treeFltk::isOpen(const std::string &name)
+{
+  Fl_Tree_Item *n = _tree->find_item(name.c_str());
+  return n && n->is_open();
+}
 
-  line->end();
-  line->resizable(nullptr);
-  return line;
+std::string treeFltk::pathOf(Fl_Tree_Item *item)
+{
+  if(!item) return "";
+  char path[1024];
+  if(_tree->item_pathname(path, sizeof(path), item)) return "";
+  return std::string(path);
 }

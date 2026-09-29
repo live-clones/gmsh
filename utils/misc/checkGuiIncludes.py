@@ -51,12 +51,6 @@ GENERATED = {
 SCENE = {
     "src/imgui/SceneImGui.cpp",
     "src/fltk/SceneFltk.cpp",
-    "src/fltk/sceneViewFltk.cpp", "src/fltk/sceneViewFltk.h",
-    "src/fltk/drawContextFltk.h",
-    "src/fltk/drawContextFltkQueued.h",
-    "src/fltk/drawContextFltkEmbedded.h",
-    "src/fltk/drawContextFltkStringTexture.cpp",
-    "src/fltk/drawContextFltkStringTexture.h",
 }
 
 # What still breaks the rule, and which part of the plan takes it away. The
@@ -66,25 +60,9 @@ TOLERATED = {
     # what is left is the draw context of the scene, which this window
     # installs and hands to its panes: the scene, not the interface
     "src/imgui/BackendImGui.cpp": {"drawContext.h"},
-    # --- FLTK: an adapter over the interface that was, until 1.4 makes it a
-    # backend like the two others
-    "src/fltk/CreateFileFltk.cpp": {"drawContext.h", "PixelBuffer.h",
-                                    "Context.h"},
-    "src/fltk/FlGui.cpp": {
-        "Gui.h", "GmshMessage.h", "OpenFile.h", "Options.h",
-        "Context.h", "PixelBuffer.h", "3M.h"},
-    "src/fltk/FlGui.h": {"SPoint2.h"},
-    "src/fltk/extraDialogs.cpp": {
-        "GmshDefines.h", "OpenFile.h", "CreateFile.h", "Options.h",
-        "drawContext.h", "GModel.h", "Context.h", "PView.h"},
-    # the file chooser: where to start, and the position it is remembered at
-    "src/fltk/fileDialogs.cpp": {
-        "GmshMessage.h", "StringUtils.h", "Context.h", "GModel.h"},
-    "src/fltk/graphicWindow.cpp": {"Gui.h", "3M.h"},
-    "src/fltk/menuFltk.cpp": {"GuiMenus.h"},
-    "src/fltk/menuFltk.h": {"GuiMenus.h"},
-    "src/fltk/touchBar.mm": {"GuiActions.h", "drawContext.h", "Options.h",
-                             "PView.h"},
+    # --- FLTK: the window of the proprietary 3M extension, which is FLTK code
+    # outside this tree
+    "src/fltk/BackendFltk.cpp": {"3M.h"},
 }
 
 INCLUDE = re.compile(r'\s*#\s*include\s+"([^"]+)"')

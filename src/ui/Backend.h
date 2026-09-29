@@ -47,7 +47,18 @@ namespace Ui {
       int consoleFontSize;
       int treeX, treeY, treeHeight;
       int dialogX, dialogY;
+      // where the file chooser of the interface opens, for one that has its
+      // own
+      int chooserX, chooserY;
       bool stereo;
+      // the scene drawn at the pixels of the screen rather than at one pixel
+      // a point, on a screen that has more
+      bool highResolution;
+      // for an interface that has a chooser of its own beside the system's
+      bool nativeFileChooser;
+      // the look of an interface that has several of its own (FLTK's schemes),
+      // and the display it opens on (X11); empty for its default
+      std::string theme, display;
       bool systemMenuBar;
       bool darkScheme;
       bool showModuleMenu;
@@ -68,7 +79,8 @@ namespace Ui {
         : fontSize(0), sceneX(0), sceneY(0), sceneWidth(0), sceneHeight(0),
           treeWidth(0), consoleHeight(0), consoleFontSize(0),
           treeX(0), treeY(0), treeHeight(0), dialogX(0), dialogY(0),
-          stereo(false), systemMenuBar(false),
+          chooserX(0), chooserY(0), stereo(false), highResolution(true),
+          nativeFileChooser(true), systemMenuBar(false),
           darkScheme(false), showModuleMenu(true), deltaFontSize(0),
           antialiasing(false), tooltips(true),
           detachedTree(false), inputScrolling(true), nonModalWindows(false),

@@ -190,7 +190,13 @@ namespace Declare {
       s.consoleFontSize = c->msgFontSize;
       s.dialogX = c->ctxPosition[0];
       s.dialogY = c->ctxPosition[1];
+      s.chooserX = c->fileChooserPosition[0];
+      s.chooserY = c->fileChooserPosition[1];
       s.stereo = c->stereo ? true : false;
+      s.highResolution = c->highResolutionGraphics ? true : false;
+      s.nativeFileChooser = c->nativeFileChooser ? true : false;
+      s.theme = c->guiTheme;
+      s.display = c->display;
       s.systemMenuBar = c->systemMenuBar ? true : false;
       s.darkScheme = c->guiColorScheme ? true : false;
       s.showModuleMenu = c->showModuleMenu ? true : false;

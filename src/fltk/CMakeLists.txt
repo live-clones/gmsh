@@ -4,18 +4,12 @@
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
-  FlGui.cpp
-  SceneFltk.cpp
   BackendFltk.cpp
-    graphicWindow.cpp menuFltk.cpp treeFltk.cpp dialogFltk.cpp
-      sceneViewFltk.cpp
-      colorbarWindow.cpp
-    drawContextFltkStringTexture.cpp
-
-    onelabGroup.cpp
-    fileDialogs.cpp
-    extraDialogs.cpp
-
+  SceneFltk.cpp
+  dialogFltk.cpp
+  fieldFltk.cpp
+  menuFltk.cpp
+  treeFltk.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

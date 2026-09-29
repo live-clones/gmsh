@@ -3,7 +3,9 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "uiSources.h"
+// The menus are Fl_Menu_Item tables flattened from the description: the bar
+// of the main window, or the system's on macOS, and the menus that drop.
+
 #include "GmshConfig.h"
 
 #include <cctype>
@@ -16,8 +18,7 @@
 
 #include <FL/Fl.H>
 
-#include "menuFltk.h"
-#include "GuiMenus.h"
+#include "fltkCommon.h"
 
 namespace {
 
@@ -150,7 +151,7 @@ namespace {
 
 } // namespace
 
-void fltkMenuPopup(const std::vector<Ui::MenuItem> &tree, int x, int y,
+void fltkPopupMenu(const std::vector<Ui::MenuItem> &tree, int x, int y,
                    const std::string &key)
 {
   std::string &last = _popup.last[key];
@@ -183,7 +184,7 @@ void fltkMenuPopup(const std::vector<Ui::MenuItem> &tree, int x, int y,
   if(item && item->action) item->action();
 }
 
-Fl_Menu_Item *fltkMenuBuild(bool systemBar)
+Fl_Menu_Item *fltkMenuBar(bool systemBar)
 {
   _menu.labels.clear();
   _menu.items.clear();
@@ -195,12 +196,12 @@ Fl_Menu_Item *fltkMenuBuild(bool systemBar)
   _blank(end);
   _menu.items.push_back(end);
 
-  fltkMenuRefresh();
+  fltkRefreshMenus();
 
   return &_menu.items[0];
 }
 
-void fltkMenuRefresh()
+void fltkRefreshMenus()
 {
   for(auto &m : _menu.items) {
     if(!m.user_data_) continue;
