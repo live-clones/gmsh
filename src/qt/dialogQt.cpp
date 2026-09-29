@@ -141,6 +141,8 @@ public:
   std::string built;
   std::string pane;
   bool forcePane = false, building = false, dropping = false;
+  // put where the options say the first time it floats
+  bool placed = false;
   struct tabsMade {
     QTabWidget *tabs;
     std::vector<std::string> labels;
@@ -661,6 +663,12 @@ void dialogQt::show()
   bool first = !dock->isVisible();
   dock->show();
   if(first && dock->isFloating()) dock->adjustSize();
+  if(first && dock->isFloating() && !placed) {
+    placed = true;
+    const Ui::Backend::Settings set = qtSources().settings();
+    if(qtPlacesWindows() && (set.dialogX > 0 || set.dialogY > 0))
+      dock->move(set.dialogX, set.dialogY);
+  }
   dock->raise();
   if(dock->isFloating()) dock->activateWindow();
   if(panel.refreshEvery > 0. && !tick) {
@@ -702,6 +710,18 @@ void qtShowForm(const Ui::Form &form, bool show)
     return;
   }
   _dialog(form)->show();
+}
+
+bool qtFormPosition(int &x, int &y)
+{
+  for(auto &it : _dialogs())
+    if(it.second->shown() && it.second->dock->isFloating()) {
+      QPoint at = it.second->dock->pos();
+      x = at.x();
+      y = at.y();
+      return true;
+    }
+  return false;
 }
 
 bool qtFormVisible(const Ui::Form &form)

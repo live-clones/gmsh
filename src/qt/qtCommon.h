@@ -43,6 +43,10 @@ inline QString qtString(const std::string &s)
 }
 inline std::string qtString(const QString &s) { return s.toUtf8().toStdString(); }
 
+// whether the windowing system lets a window be put somewhere, and says
+// where it is: not Wayland
+bool qtPlacesWindows();
+
 // run once the event being handled is over: what it does may open a window,
 // start a picking or build the widget it came from again
 void qtLater(const std::function<void()> &what);
@@ -120,6 +124,8 @@ void qtReloadForm(const Ui::Form &form);
 void qtDropForm(const Ui::Form &form);
 void qtFormOptionChanged(const std::string &name);
 void qtFormsClosingDown();
+// where the first form floating is, for the layout; false with none
+bool qtFormPosition(int &x, int &y);
 void qtSetMainWindow(QMainWindow *window);
 QMainWindow *qtMainWindow();
 

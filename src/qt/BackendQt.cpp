@@ -306,7 +306,7 @@ namespace {
     // once it is a window: Qt gives a floating dock the size it had
     qtLater([width, h, x, y]() {
       if(!_w || !_w->treeDock->isFloating()) return;
-      if(x > 0 || y > 0)
+      if(qtPlacesWindows() && (x > 0 || y > 0))
         _w->treeDock->setGeometry(x, y, width, h);
       else
         _w->treeDock->resize(width, h);
@@ -705,13 +705,19 @@ namespace {
       Layout l;
       if(!_w || _w->fullscreen) return l;
       qtSceneSize(l.sceneWidth, l.sceneHeight);
+      if(qtPlacesWindows()) {
+        QPoint at = _w->pos();
+        l.sceneX = at.x();
+        l.sceneY = at.y();
+        qtFormPosition(l.dialogX, l.dialogY);
+      }
       bool floating = _w->treeDock->isFloating();
       if(_w->treeDock->isVisible() && !floating)
         l.treeWidth = _w->treeDock->width();
       if(_w->consoleBox->isVisible())
         l.consoleHeight = _w->consoleBox->height();
       l.treeDetached = floating ? 1 : 0;
-      if(floating) {
+      if(floating && qtPlacesWindows()) {
         QRect g = _w->treeDock->geometry();
         l.treeX = g.x();
         l.treeY = g.y();
@@ -831,6 +837,8 @@ namespace {
       _w->resize(w, sceneHeight + consoleHeight + 60);
       _w->resizeDocks({_w->treeDock}, {treeWidth}, Qt::Horizontal);
       _w->split->setSizes({sceneHeight, consoleHeight});
+      if(qtPlacesWindows() && (set.sceneX > 0 || set.sceneY > 0))
+        _w->move(set.sceneX, set.sceneY);
       _w->show();
       if(set.detachedTree) _detachTree(true);
     }
@@ -848,6 +856,11 @@ void qtClearConsole()
 }
 
 bool qtButtonDown() { return _buttonsDown > 0; }
+
+bool qtPlacesWindows()
+{
+  return !QGuiApplication::platformName().startsWith("wayland");
+}
 
 namespace {
 
