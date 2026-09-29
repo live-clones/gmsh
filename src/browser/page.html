@@ -211,8 +211,13 @@
  .prose a{color:#0645ad}
  h3.heading{font-size:12px;margin:4px 2px 2px;color:#444;font-weight:600}
  /* the lines of the footer are lines: three switches are three of them */
+ #consolebar{flex:none;background:#eee;border-top:1px solid #ccc;
+             padding:2px 6px;display:flex;align-items:center;gap:6px;
+             font:11px system-ui}
+ #consolebar input[type=text]{width:15em;font:11px system-ui}
+ #consolebar button{font:11px system-ui;padding:1px 6px}
  #console{flex:none;height:150px;overflow:auto;margin:0;padding:6px 8px;
-          background:#fff;border-top:1px solid #ccc;
+          background:#fff;
           font:11px ui-monospace,monospace;white-space:pre-wrap}
  #foot{flex:none;background:#e3e3e3;border-top:1px solid #bbb;padding:2px 6px;
        display:flex;align-items:center;gap:4px}
@@ -273,6 +278,7 @@
 <div id="bar"></div>
 <div id="middle"><div id="tree"></div><div id="scene"><img id="view"></div>
  <div id="dock"></div><div id="desk"></div></div>
+<div id="consolebar"></div>
 <pre id="console"></pre>
 <div id="foot"><span id="buttons"></span><span id="status"></span></div>
 <div id="ask"></div>
@@ -1268,6 +1274,47 @@ function square(card) {
   }
 }
 
+// --- the bar over the messages: the filter, Save, Clear, Autoscroll, as
+// Ui::Console says them; the filter being typed in is not written again
+function drawConsoleBar(c) {
+  const box = document.getElementById('consolebar');
+  let filter = box.querySelector('input[type=text]');
+  let follow = box.querySelector('input[type=checkbox]');
+  if(!filter) {
+    box.textContent = '';
+    const look = document.createElement('span');
+    look.innerHTML = c.look;
+    box.appendChild(look);
+    filter = document.createElement('input');
+    filter.type = 'text';
+    filter.title = c.tip;
+    filter.oninput = () =>
+      post('/console', 'filter=' + encodeURIComponent(filter.value));
+    box.appendChild(filter);
+    const save = document.createElement('button');
+    save.textContent = c.save.label;
+    save.title = c.save.help;
+    save.onclick = () => post('/do', which(box.saveSaid));
+    box.appendChild(save);
+    const clear = document.createElement('button');
+    clear.textContent = c.clear.label;
+    clear.title = c.clear.help;
+    clear.onclick = () => post('/console', 'clear=1');
+    box.appendChild(clear);
+    const label = document.createElement('label');
+    follow = document.createElement('input');
+    follow.type = 'checkbox';
+    follow.onchange = () =>
+      post('/console', 'follow=' + (follow.checked ? 1 : 0));
+    label.appendChild(follow);
+    label.appendChild(document.createTextNode(' ' + c.autoScroll));
+    box.appendChild(label);
+  }
+  box.saveSaid = c.save;
+  if(document.activeElement !== filter) filter.value = c.filter;
+  follow.checked = c.follow;
+}
+
 // --- the row of little buttons along the bottom
 function drawButtons(buttons) {
   const box = document.getElementById('buttons');
@@ -1491,11 +1538,19 @@ function draw(state) {
   if(fresh('bar', state.bar)) drawButtons(state.bar);
   if(!typing() && !dragging && fresh('forms', state.forms))
     drawForms(state.forms);
+  if(state.console && fresh('consolebar', state.console))
+    drawConsoleBar(state.console);
   if(fresh('log', state.messages)) {
     const log = document.getElementById('console');
     const atEnd = log.scrollTop + log.clientHeight >= log.scrollHeight - 4;
+    const was = log.scrollTop;
     log.textContent = state.messages.join('\n');
-    if(atEnd) log.scrollTop = log.scrollHeight;
+    // the last line kept in view when the switch says so, the view left
+    // where it was otherwise
+    if(state.console ? state.console.follow : atEnd)
+      log.scrollTop = log.scrollHeight;
+    else
+      log.scrollTop = was;
   }
   if(fresh('font', state.font))
     document.body.style.fontSize = state.font + 'px';

@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "gtkCommon.h"
+#include "Console.h"
 
 // The GTK 4 interface: one main window -- the menu bar, the tree down the
 // left, the scene and the console under it, the bar along the bottom -- and a
@@ -31,12 +32,16 @@ namespace {
     GtkWidget *menuBar = nullptr, *side = nullptr, *split = nullptr;
     GtkWidget *treeBox = nullptr, *footer = nullptr;
     GtkWidget *console = nullptr, *consoleScroll = nullptr;
+    // the bar over the lines, and the lines as a whole
+    GtkWidget *consoleBox = nullptr, *filter = nullptr;
     GtkWidget *bar = nullptr, *buttons = nullptr, *message = nullptr,
               *messageLabel = nullptr, *progress = nullptr;
     treeGtk *tree = nullptr;
     GtkCssProvider *sheet = nullptr;
     std::string barBuilt, footerBuilt;
-    std::vector<std::string> lines;
+    // the lines, what the filter lets through, whether the last is kept in
+    // view
+    Ui::Console said;
     bool fullscreen = false;
     // what the full screen hid, to put back
     bool treeWas = true, consoleWas = true;
@@ -141,9 +146,101 @@ namespace {
   void _consoleClear(GSimpleAction *, GVariant *, gpointer)
   {
     if(!_w) return;
-    _w->lines.clear();
+    _w->said.clear();
     gtk_text_buffer_set_text(
       gtk_text_view_get_buffer(GTK_TEXT_VIEW(_w->console)), "", 0);
+  }
+
+  void _consoleFollow()
+  {
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(_w->console));
+    GtkTextIter end;
+    gtk_text_buffer_get_end_iter(buffer, &end);
+    GtkTextMark *mark = gtk_text_buffer_get_mark(buffer, "gmsh-end");
+    if(!mark)
+      mark = gtk_text_buffer_create_mark(buffer, "gmsh-end", &end, FALSE);
+    else
+      gtk_text_buffer_move_mark(buffer, mark, &end);
+    gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(_w->console), mark);
+  }
+
+  void _consoleLine(const std::string &text, int level)
+  {
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(_w->console));
+    GtkTextIter end;
+    gtk_text_buffer_get_end_iter(buffer, &end);
+    const char *tag = level == Ui::Backend::Direct  ? "direct" :
+                      level == Ui::Backend::Warning ? "warning" :
+                      level == Ui::Backend::Error   ? "error" :
+                      level == Ui::Backend::Debug   ? "debug" :
+                                                      nullptr;
+    std::string line = text + "\n";
+    if(tag)
+      gtk_text_buffer_insert_with_tags_by_name(buffer, &end, line.c_str(), -1,
+                                               tag, nullptr);
+    else
+      gtk_text_buffer_insert(buffer, &end, line.c_str(), -1);
+  }
+
+  void _consoleFiltered(GtkEditable *entry, gpointer)
+  {
+    if(!_w || !_w->said.setFilter(gtk_editable_get_text(entry))) return;
+    gtk_text_buffer_set_text(
+      gtk_text_view_get_buffer(GTK_TEXT_VIEW(_w->console)), "", 0);
+    for(const Ui::Console::Line *l : _w->said.shown())
+      _consoleLine(l->text, l->level);
+    if(_w->said.autoScroll()) _consoleFollow();
+  }
+
+  void _consoleSaveClicked(GtkButton *, gpointer)
+  {
+    _consoleSave(nullptr, nullptr, nullptr);
+  }
+
+  void _consoleClearClicked(GtkButton *, gpointer)
+  {
+    _consoleClear(nullptr, nullptr, nullptr);
+  }
+
+  void _consoleFollowToggled(GtkCheckButton *b, gpointer)
+  {
+    if(!_w) return;
+    _w->said.setAutoScroll(gtk_check_button_get_active(b));
+    if(_w->said.autoScroll()) _consoleFollow();
+  }
+
+  // the bar over the lines: the filter, Save, Clear, Autoscroll
+  GtkWidget *_consoleBar()
+  {
+    bool tips = gtkSources().settings().tooltips;
+    GtkWidget *bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+    gtk_widget_set_margin_start(bar, 2);
+    gtk_widget_set_margin_top(bar, 2);
+    gtk_widget_set_margin_bottom(bar, 2);
+    if(GtkWidget *look = gtkGlyph(Ui::Console::filterGlyph()))
+      gtk_box_append(GTK_BOX(bar), look);
+    _w->filter = gtk_entry_new();
+    gtk_widget_set_size_request(_w->filter, gtkPx(15.), -1);
+    if(tips) gtk_widget_set_tooltip_text(_w->filter, Ui::Console::filterTip());
+    g_signal_connect(_w->filter, "changed", G_CALLBACK(_consoleFiltered),
+                     nullptr);
+    gtk_box_append(GTK_BOX(bar), _w->filter);
+    GtkWidget *save = gtk_button_new_with_label(Ui::Console::saveLabel());
+    if(tips) gtk_widget_set_tooltip_text(save, Ui::Console::saveTip());
+    g_signal_connect(save, "clicked", G_CALLBACK(_consoleSaveClicked), nullptr);
+    gtk_box_append(GTK_BOX(bar), save);
+    GtkWidget *clear = gtk_button_new_with_label(Ui::Console::clearLabel());
+    if(tips) gtk_widget_set_tooltip_text(clear, Ui::Console::clearTip());
+    g_signal_connect(clear, "clicked", G_CALLBACK(_consoleClearClicked),
+                     nullptr);
+    gtk_box_append(GTK_BOX(bar), clear);
+    GtkWidget *follow =
+      gtk_check_button_new_with_label(Ui::Console::autoScrollLabel());
+    gtk_check_button_set_active(GTK_CHECK_BUTTON(follow), _w->said.autoScroll());
+    g_signal_connect(follow, "toggled", G_CALLBACK(_consoleFollowToggled),
+                     nullptr);
+    gtk_box_append(GTK_BOX(bar), follow);
+    return bar;
   }
 
   // --- the bar along the bottom
@@ -288,7 +385,7 @@ namespace {
     _w->fullscreen = on;
     if(on) {
       _w->treeWas = gtk_widget_get_visible(_w->treeBox);
-      _w->consoleWas = gtk_widget_get_visible(_w->consoleScroll);
+      _w->consoleWas = gtk_widget_get_visible(_w->consoleBox);
       gtk_window_fullscreen(GTK_WINDOW(_w->win));
     }
     else
@@ -297,7 +394,7 @@ namespace {
     gtk_widget_set_visible(_w->menuBar, !on);
     gtk_widget_set_visible(_w->bar, !on);
     gtk_widget_set_visible(_w->treeBox, !on && _w->treeWas);
-    gtk_widget_set_visible(_w->consoleScroll, !on && _w->consoleWas);
+    gtk_widget_set_visible(_w->consoleBox, !on && _w->consoleWas);
   }
 
   gboolean _closeRequest(GtkWindow *, gpointer)
@@ -403,8 +500,12 @@ namespace {
     _w->consoleScroll = gtk_scrolled_window_new();
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(_w->consoleScroll),
                                   _w->console);
-    gtk_widget_set_size_request(_w->consoleScroll, -1, 40);
-    gtk_paned_set_end_child(GTK_PANED(_w->split), _w->consoleScroll);
+    gtk_widget_set_vexpand(_w->consoleScroll, TRUE);
+    _w->consoleBox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_box_append(GTK_BOX(_w->consoleBox), _consoleBar());
+    gtk_box_append(GTK_BOX(_w->consoleBox), _w->consoleScroll);
+    gtk_widget_set_size_request(_w->consoleBox, -1, 40);
+    gtk_paned_set_end_child(GTK_PANED(_w->split), _w->consoleBox);
     gtk_paned_set_resize_end_child(GTK_PANED(_w->split), FALSE);
 
     // the dialogs docked down the right, as the page has them
@@ -735,35 +836,14 @@ namespace {
 
     void addMessage(const std::string &text, int level) override
     {
-      if(!_w) return;
-      _w->lines.push_back(text);
-      GtkTextBuffer *buffer =
-        gtk_text_view_get_buffer(GTK_TEXT_VIEW(_w->console));
-      GtkTextIter end;
-      gtk_text_buffer_get_end_iter(buffer, &end);
-      const char *tag = level == Direct  ? "direct" :
-                        level == Warning ? "warning" :
-                        level == Error   ? "error" :
-                        level == Debug   ? "debug" :
-                                           nullptr;
-      std::string line = text + "\n";
-      if(tag)
-        gtk_text_buffer_insert_with_tags_by_name(buffer, &end, line.c_str(), -1,
-                                                 tag, nullptr);
-      else
-        gtk_text_buffer_insert(buffer, &end, line.c_str(), -1);
-      gtk_text_buffer_get_end_iter(buffer, &end);
-      GtkTextMark *mark = gtk_text_buffer_get_mark(buffer, "gmsh-end");
-      if(!mark)
-        mark = gtk_text_buffer_create_mark(buffer, "gmsh-end", &end, FALSE);
-      else
-        gtk_text_buffer_move_mark(buffer, mark, &end);
-      gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(_w->console), mark);
+      if(!_w || !_w->said.add(text, level)) return;
+      _consoleLine(text, level);
+      if(_w->said.autoScroll()) _consoleFollow();
     }
 
     void messageLines(std::vector<std::string> &lines) override
     {
-      if(_w) lines = _w->lines;
+      if(_w) lines = _w->said.texts();
     }
 
     void refreshBar() override { gtkRefreshBar(); }
@@ -1061,12 +1141,12 @@ namespace {
 
     void showConsole(bool show) override
     {
-      if(_w) gtk_widget_set_visible(_w->consoleScroll, show);
+      if(_w) gtk_widget_set_visible(_w->consoleBox, show);
     }
 
     bool consoleVisible() override
     {
-      return _w && gtk_widget_get_visible(_w->consoleScroll);
+      return _w && gtk_widget_get_visible(_w->consoleBox);
     }
 
     // --- the interface as a whole
@@ -1109,8 +1189,8 @@ namespace {
       gtkSceneSize(l.sceneWidth, l.sceneHeight);
       if(gtk_widget_get_visible(_w->treeBox))
         l.treeWidth = gtk_paned_get_position(GTK_PANED(_w->side));
-      if(gtk_widget_get_visible(_w->consoleScroll))
-        l.consoleHeight = gtk_widget_get_height(_w->consoleScroll);
+      if(gtk_widget_get_visible(_w->consoleBox))
+        l.consoleHeight = gtk_widget_get_height(_w->consoleBox);
       l.treeDetached = 0;
       return l;
     }

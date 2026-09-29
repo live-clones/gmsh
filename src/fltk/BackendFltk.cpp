@@ -61,6 +61,7 @@
 
 #include "fltkCommon.h"
 #include "Bar.h"
+#include "Console.h"
 #include "Glyph.h"
 #include "XpmIcon.h"
 
@@ -309,27 +310,32 @@ namespace {
       _box->box(GMSH_SIMPLE_TOP_BOX);
 
       Fl_Group *o = new Fl_Group(x + wb, y + wb, sw, bh);
-      o->tooltip("Filter messages using regular expression");
+      o->tooltip(Ui::Console::filterTip());
       o->box(FL_THIN_DOWN_BOX);
       o->color(FL_BACKGROUND2_COLOR);
-      _search = new Fl_Input(x + wb + bh, y + wb + 2, sw - bh - 2, bh - 4,
-                             "@-1gmsh_search");
+      _search = new Fl_Input(x + wb + bh, y + wb + 2, sw - bh - 2, bh - 4);
+      _search->copy_label(
+        (std::string("@-1gmsh_") + Ui::Console::filterGlyph()).c_str());
       _search->box(FL_FLAT_BOX);
       _search->when(FL_WHEN_CHANGED);
       _search->textsize(FL_NORMAL_SIZE - 1);
       o->resizable(_search);
       o->end();
 
-      _save = new Fl_Button(x + wb + sw + WB, y + wb, bb, bh, "Save");
+      _save = new Fl_Button(x + wb + sw + WB, y + wb, bb, bh,
+                            Ui::Console::saveLabel());
+      _save->tooltip(Ui::Console::saveTip());
       _save->labelsize(FL_NORMAL_SIZE - 1);
       _save->box(FL_THIN_UP_BOX);
 
-      _clear = new Fl_Button(x + sw + bb + 2 * WB, y + wb, bb, bh, "Clear");
+      _clear = new Fl_Button(x + sw + bb + 2 * WB, y + wb, bb, bh,
+                             Ui::Console::clearLabel());
+      _clear->tooltip(Ui::Console::clearTip());
       _clear->labelsize(FL_NORMAL_SIZE - 1);
       _clear->box(FL_THIN_UP_BOX);
 
       _autoscroll = new Fl_Check_Button(x + sw + 2 * bb + 3 * WB, y + wb, 2 * bb,
-                                        bh, "Autoscroll messages");
+                                        bh, Ui::Console::autoScrollLabel());
       _autoscroll->labelsize(FL_NORMAL_SIZE - 1);
       _autoscroll->type(FL_TOGGLE_BUTTON);
       _autoscroll->value(1);
@@ -364,21 +370,9 @@ namespace {
     void clear_callback(Fl_Callback *cb, void *p) { _clear->callback(cb, p); }
     void bottomline(int line) { _browser->bottomline(line); }
     int size() { return _browser->size(); }
-    void add(const char *newtext)
-    {
-      std::string search = _search->value();
-      if(search.empty()) { _browser->add(newtext); }
-      else {
-        std::string tmp(newtext);
-        try {
-          // icase for case-insensitive search
-          if(std::regex_search(tmp,
-                               std::regex(search, std::regex_constants::icase)))
-            _browser->add(newtext);
-        } catch(...) {
-        }
-      }
-    }
+    void add(const char *line) { _browser->add(line); }
+    const char *filter() const { return _search->value(); }
+    bool autoScrolling() const { return _autoscroll->value() != 0; }
     void clear() { _browser->clear(); }
     const char *text(int line) const { return _browser->text(line); }
     int selected(int line) const { return _browser->selected(line); }
@@ -797,8 +791,9 @@ namespace {
     // the tree in a window of its own
     topWindow *treeWin = nullptr;
     console *messages = nullptr;
-    std::vector<std::string> lines;
-    bool autoScroll = true;
+    // the lines, what the filter lets through, whether the last is kept in
+    // view
+    Ui::Console said;
     int minWidth = 100, minHeight = 100;
     // what full screen hides, and what "Zoom" puts back
     bool fullscreen = false, zoomed = false;
@@ -855,7 +850,7 @@ namespace {
       if(height > most) height = most / 2;
       _setConsoleHeight(height);
     }
-    if(_w->autoScroll) _w->messages->bottomline(_w->messages->size());
+    if(_w->said.autoScroll()) _w->messages->bottomline(_w->messages->size());
   }
 
   void _hideConsole()
@@ -867,25 +862,46 @@ namespace {
     _setConsoleHeight(0);
   }
 
-  void _addLine(const char *msg)
+  // Fl_Browser colour codes; a dark scheme wants lighter ones
+  std::string _linePrefix(int level)
+  {
+    switch(level) {
+    case Ui::Backend::Direct: return _dark ? "@B136@." : "@C4@.";
+    case Ui::Backend::Error: return _dark ? "@B72@." : "@C1@.";
+    case Ui::Backend::Warning: return _dark ? "@B152@." : "@C5@.";
+    // a line that starts with "@" would be read as a code
+    default: return "@.";
+    }
+  }
+
+  void _addLine(const std::string &text, int level)
   {
     if(!_w) return;
     // Msg::Info can be called from the threads of the mesher
 #pragma omp critical(addMessage)
     {
-      _w->lines.push_back(msg);
-      _w->messages->add(msg);
-      if(_w->autoScroll && _w->win->shown() && _consoleHeight() >= FL_NORMAL_SIZE)
-        _w->messages->bottomline(_w->messages->size());
+      if(_w->said.add(text, level)) {
+        _w->messages->add((_linePrefix(level) + text).c_str());
+        if(_w->said.autoScroll() && _w->win->shown() &&
+           _consoleHeight() >= FL_NORMAL_SIZE)
+          _w->messages->bottomline(_w->messages->size());
+      }
     }
   }
 
   // the lines again, filtered as the field says
-  void _filterConsole(Fl_Widget *, void *)
+  void _refillConsole()
   {
     if(!_w) return;
     _w->messages->clear();
-    for(const std::string &l : _w->lines) _w->messages->add(l.c_str());
+    for(const Ui::Console::Line *l : _w->said.shown())
+      _w->messages->add((_linePrefix(l->level) + l->text).c_str());
+    if(_w->said.autoScroll()) _w->messages->bottomline(_w->messages->size());
+  }
+
+  void _filterConsole(Fl_Widget *, void *)
+  {
+    if(_w && _w->said.setFilter(_w->messages->filter())) _refillConsole();
   }
 
   void _copySelectedLines(Fl_Widget *, void *)
@@ -895,8 +911,9 @@ namespace {
     for(int i = 1; i <= _w->messages->size(); i++) {
       if(!_w->messages->selected(i)) continue;
       const char *c = _w->messages->text(i);
-      // the first five characters carry the colour
-      buff += (strlen(c) > 5 && c[0] == '@') ? std::string(&c[5]) : c;
+      // the colour code, up to "@."
+      const char *text = c[0] == '@' ? strstr(c, "@.") : nullptr;
+      buff += text ? text + 2 : c;
       buff += "\n";
     }
     Fl::copy(buff.c_str(), (int)buff.size(), 0);
@@ -1254,7 +1271,10 @@ namespace {
     _w->messages->callback(_copySelectedLines, nullptr);
     _w->messages->search_callback(_filterConsole, nullptr);
     _w->messages->autoscroll_callback(
-      [](Fl_Widget *, void *) { _w->autoScroll = !_w->autoScroll; }, nullptr);
+      [](Fl_Widget *, void *) {
+        _w->said.setAutoScroll(_w->messages->autoScrolling());
+      },
+      nullptr);
     _w->messages->save_callback(
       [](Fl_Widget *, void *) {
         if(fltkSources().saveMessages) fltkSources().saveMessages();
@@ -1262,7 +1282,7 @@ namespace {
       nullptr);
     _w->messages->clear_callback(
       [](Fl_Widget *, void *) {
-        _w->lines.clear();
+        _w->said.clear();
         _w->messages->clear();
       },
       nullptr);
@@ -1450,15 +1470,13 @@ namespace {
 
     void addMessage(const std::string &text, int level) override
     {
-      _addLine((_colourPrefix(level) + text).c_str());
+      _addLine(text, level);
     }
 
     void messageLines(std::vector<std::string> &lines) override
     {
       lines.clear();
-      if(!_w) return;
-      for(const std::string &l : _w->lines)
-        lines.push_back((l.size() > 5 && l[0] == '@') ? l.substr(5) : l);
+      if(_w) lines = _w->said.texts();
     }
 
     void refreshBar() override { fltkRefreshBar(); }
@@ -1721,17 +1739,6 @@ namespace {
     void leaveFullscreen() { _fullscreen(false); }
 
   private:
-    // Fl_Browser colour codes; a dark scheme wants lighter ones
-    std::string _colourPrefix(int level) const
-    {
-      switch(level) {
-      case Direct: return _dark ? "@B136@." : "@C4@.";
-      case Error: return _dark ? "@B72@." : "@C1@.";
-      case Warning: return _dark ? "@B152@." : "@C5@.";
-      default: return "";
-      }
-    }
-
     Sources _sources;
     Host _host;
     std::mutex _mutex;

@@ -25,6 +25,7 @@
 #include <ftxui/screen/terminal.hpp>
 
 #include "tuiCommon.h"
+#include "Console.h"
 #include "Glyph.h"
 
 using namespace ftxui;
@@ -96,7 +97,9 @@ namespace {
     treeTui tree;
     bool treeShown = true, consoleShown = true, fullscreen = false;
     int treeWidth = 34, consoleHeight = 8;
-    std::vector<std::pair<std::string, int> > lines;
+    // the lines, what the filter lets through, whether the last is kept in
+    // view; how far up from the last line the view is
+    Ui::Console said{20000};
     int consoleScroll = 0;
     std::vector<const Ui::Form *> forms;
     std::map<const Ui::Form *, dialogTui> formStates;
@@ -957,13 +960,29 @@ namespace {
   Element _console(int height)
   {
     state &s = _s();
+    // the bar over the lines: the filter, Save, Clear, Autoscroll
+    std::vector<Ui::Field> said = s.said.bar(s.sources.saveMessages, []() {
+      _s().consoleScroll = 0;
+      tuiDirty();
+    });
+    Elements bar = {text(std::string(Ui::glyph(Ui::Console::filterGlyph()) ?
+                                       Ui::glyph(Ui::Console::filterGlyph())->text :
+                                       "") +
+                         " ")};
+    for(std::size_t i = 0; i < said.size(); i++) {
+      if(i) bar.push_back(text(" "));
+      bar.push_back(tuiFieldWidget(said[i], "console." + std::to_string(i),
+                                   i ? 0 : 24, nullptr));
+    }
+    int room = std::max(0, height - 1);
+    std::vector<const Ui::Console::Line *> shown = s.said.shown();
     Elements rows;
-    int n = (int)s.lines.size();
-    s.consoleScroll = std::max(0, std::min(s.consoleScroll, n - height));
+    int n = (int)shown.size();
+    s.consoleScroll = std::max(0, std::min(s.consoleScroll, n - room));
     int last = n - s.consoleScroll;
-    for(int i = std::max(0, last - height); i < last; i++) {
-      Element e = text(s.lines[(std::size_t)i].first);
-      switch(s.lines[(std::size_t)i].second) {
+    for(int i = std::max(0, last - room); i < last; i++) {
+      Element e = text(shown[(std::size_t)i]->text);
+      switch(shown[(std::size_t)i]->level) {
       case Ui::Backend::Direct: e = e | color(Color::Cyan); break;
       case Ui::Backend::Warning: e = e | color(Color::Yellow); break;
       case Ui::Backend::Error: e = e | color(Color::Red); break;
@@ -980,7 +999,8 @@ namespace {
       tuiDirty();
       return true;
     };
-    return tuiHot(vbox(rows) | size(HEIGHT, EQUAL, height), h);
+    return vbox({hbox(bar),
+                 tuiHot(vbox(rows) | size(HEIGHT, EQUAL, room), h)});
   }
 
   // --- the forms, docked down the right as on the page
@@ -1517,20 +1537,23 @@ namespace {
       std::size_t at = 0;
       while(at <= text.size()) {
         std::size_t nl = text.find('\n', at);
-        s.lines.push_back(std::make_pair(
-          text.substr(at, nl == std::string::npos ? std::string::npos : nl - at),
-          level));
+        // a line kept out of view by the filter moves nothing; one let
+        // through keeps the view where it is unless it follows the last
+        if(s.said.add(text.substr(at, nl == std::string::npos ?
+                                        std::string::npos :
+                                        nl - at),
+                      level) &&
+           !s.said.autoScroll())
+          s.consoleScroll++;
         if(nl == std::string::npos) break;
         at = nl + 1;
       }
-      if(s.lines.size() > 20000) s.lines.erase(s.lines.begin(), s.lines.begin() + 5000);
       tuiDirty();
     }
 
     void messageLines(std::vector<std::string> &lines) override
     {
-      lines.clear();
-      for(const auto &l : _s().lines) lines.push_back(l.first);
+      lines = _s().said.texts();
     }
 
     void refreshBar() override { tuiDirty(); }

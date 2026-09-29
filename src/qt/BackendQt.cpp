@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "qtCommon.h"
+#include "Console.h"
 
 #include <QAbstractEventDispatcher>
 #include <QApplication>
@@ -35,6 +36,8 @@
 #include <QPlainTextEdit>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QLineEdit>
+#include <QCheckBox>
 #include <QScrollBar>
 #include <QSplitter>
 #include <QStatusBar>
@@ -56,7 +59,7 @@
 // question can run a loop of its own.
 
 // the lines the console said, which it forgets when it is cleared
-void qtForgetMessages();
+void qtClearConsole();
 
 namespace {
 
@@ -102,10 +105,7 @@ namespace {
                            qtLater(qtSources().saveMessages);
                        });
       QObject::connect(menu->addAction("Clear Messages"), &QAction::triggered,
-                       [this]() {
-                         clear();
-                         qtForgetMessages();
-                       });
+                       []() { qtClearConsole(); });
       menu->exec(e->globalPos());
       delete menu;
     }
@@ -118,12 +118,18 @@ namespace {
     QSplitter *side = nullptr, *split = nullptr;
     QWidget *treeBox = nullptr, *footer = nullptr;
     console *messages = nullptr;
+    // the bar over the lines, and the lines as a whole
+    QWidget *consoleBox = nullptr;
+    QLineEdit *filter = nullptr;
+    QCheckBox *follow = nullptr;
     QWidget *buttons = nullptr;
     QPushButton *message = nullptr;
     QProgressBar *progress = nullptr;
     treeQt *tree = nullptr;
     std::string barBuilt, footerBuilt;
-    std::vector<std::string> lines;
+    // the lines, what the filter lets through, whether the last is kept in
+    // view
+    Ui::Console said;
     bool fullscreen = false, treeWas = true, consoleWas = true;
     bool closing = false;
 
@@ -172,6 +178,91 @@ namespace {
     _w->messages->setFont(f);
   }
 
+  // --- the console: a line in its colour, the lines again when the filter
+  // changed, the bar over them
+
+  void _consoleLine(const std::string &text, int level, bool follow)
+  {
+    static const char *light[] = {"#1a4fa0", nullptr, "#a05a00", "#b00000",
+                                  "#707070"};
+    static const char *dark[] = {"#8ab4f8", nullptr, "#f0b060", "#ff7070",
+                                 "#a0a0a0"};
+    // on the colour the console is drawn on, whatever the option says
+    bool onDark = _w->messages->palette().color(QPalette::Base).lightness() < 128;
+    const char *ink = (level >= 0 && level <= 4) ?
+                        (onDark ? dark[level] : light[level]) :
+                        nullptr;
+    QTextCharFormat format;
+    if(ink) format.setForeground(QColor(ink));
+    QTextCursor cursor(_w->messages->document());
+    cursor.movePosition(QTextCursor::End);
+    if(!_w->messages->document()->isEmpty()) cursor.insertBlock();
+    cursor.insertText(qtString(text), format);
+    if(follow && _w->said.autoScroll())
+      _w->messages->verticalScrollBar()->setValue(
+        _w->messages->verticalScrollBar()->maximum());
+  }
+
+  void _refillConsole()
+  {
+    _w->messages->clear();
+    for(const Ui::Console::Line *l : _w->said.shown())
+      _consoleLine(l->text, l->level, false);
+    if(_w->said.autoScroll())
+      _w->messages->verticalScrollBar()->setValue(
+        _w->messages->verticalScrollBar()->maximum());
+  }
+
+  QWidget *_consoleBox()
+  {
+    QWidget *box = new QWidget;
+    QVBoxLayout *v = new QVBoxLayout(box);
+    v->setContentsMargins(0, 0, 0, 0);
+    v->setSpacing(0);
+    QWidget *bar = new QWidget;
+    QHBoxLayout *h = new QHBoxLayout(bar);
+    h->setContentsMargins(2, 2, 2, 2);
+    h->setSpacing(4);
+    bool tips = qtSources().settings().tooltips;
+    _w->filter = new QLineEdit;
+    _w->filter->setClearButtonEnabled(true);
+    _w->filter->setFixedWidth(qtPx(15.));
+    QIcon look = qtGlyph(Ui::Console::filterGlyph(),
+                         box->palette().text().color());
+    if(!look.isNull()) _w->filter->addAction(look, QLineEdit::LeadingPosition);
+    if(tips) _w->filter->setToolTip(Ui::Console::filterTip());
+    QObject::connect(_w->filter, &QLineEdit::textChanged, [](const QString &t) {
+      if(_w && _w->said.setFilter(qtString(t))) _refillConsole();
+    });
+    h->addWidget(_w->filter);
+    QPushButton *save = new QPushButton(Ui::Console::saveLabel());
+    save->setAutoDefault(false);
+    if(tips) save->setToolTip(Ui::Console::saveTip());
+    QObject::connect(save, &QPushButton::clicked, []() {
+      if(qtSources().saveMessages) qtLater(qtSources().saveMessages);
+    });
+    h->addWidget(save);
+    QPushButton *clear = new QPushButton(Ui::Console::clearLabel());
+    clear->setAutoDefault(false);
+    if(tips) clear->setToolTip(Ui::Console::clearTip());
+    QObject::connect(clear, &QPushButton::clicked, []() { qtClearConsole(); });
+    h->addWidget(clear);
+    _w->follow = new QCheckBox(Ui::Console::autoScrollLabel());
+    _w->follow->setChecked(_w->said.autoScroll());
+    QObject::connect(_w->follow, &QCheckBox::toggled, [](bool on) {
+      if(!_w) return;
+      _w->said.setAutoScroll(on);
+      if(on)
+        _w->messages->verticalScrollBar()->setValue(
+          _w->messages->verticalScrollBar()->maximum());
+    });
+    h->addWidget(_w->follow);
+    h->addStretch(1);
+    v->addWidget(bar);
+    v->addWidget(_w->messages, 1);
+    return box;
+  }
+
   void _refreshFooter()
   {
     if(!_w) return;
@@ -202,7 +293,7 @@ namespace {
     _w->fullscreen = on;
     if(on) {
       _w->treeWas = _w->treeBox->isVisible();
-      _w->consoleWas = _w->messages->isVisible();
+      _w->consoleWas = _w->consoleBox->isVisible();
       _w->showFullScreen();
     }
     else
@@ -211,7 +302,7 @@ namespace {
     _w->menuBar()->setVisible(!on);
     _w->statusBar()->setVisible(!on);
     _w->treeBox->setVisible(!on && _w->treeWas);
-    _w->messages->setVisible(!on && _w->consoleWas);
+    _w->consoleBox->setVisible(!on && _w->consoleWas);
   }
 
   // as Qt writes a filter: the patterns separated by blanks
@@ -358,29 +449,12 @@ namespace {
     void addMessage(const std::string &text, int level) override
     {
       if(!_w) return;
-      _w->lines.push_back(text);
-      static const char *light[] = {"#1a4fa0", nullptr, "#a05a00", "#b00000",
-                                    "#707070"};
-      static const char *dark[] = {"#8ab4f8", nullptr, "#f0b060", "#ff7070",
-                                   "#a0a0a0"};
-      // on the colour the console is drawn on, whatever the option says
-      bool onDark = _w->messages->palette().color(QPalette::Base).lightness() < 128;
-      const char *ink = (level >= 0 && level <= 4) ?
-                          (onDark ? dark[level] : light[level]) :
-                          nullptr;
-      QTextCharFormat format;
-      if(ink) format.setForeground(QColor(ink));
-      QTextCursor cursor(_w->messages->document());
-      cursor.movePosition(QTextCursor::End);
-      if(!_w->messages->document()->isEmpty()) cursor.insertBlock();
-      cursor.insertText(qtString(text), format);
-      _w->messages->verticalScrollBar()->setValue(
-        _w->messages->verticalScrollBar()->maximum());
+      if(_w->said.add(text, level)) _consoleLine(text, level, true);
     }
 
     void messageLines(std::vector<std::string> &lines) override
     {
-      if(_w) lines = _w->lines;
+      if(_w) lines = _w->said.texts();
     }
 
     void refreshBar() override { qtRefreshBar(); }
@@ -561,12 +635,12 @@ namespace {
 
     void showConsole(bool show) override
     {
-      if(_w) _w->messages->setVisible(show);
+      if(_w) _w->consoleBox->setVisible(show);
     }
 
     bool consoleVisible() override
     {
-      return _w && _w->messages->isVisible();
+      return _w && _w->consoleBox->isVisible();
     }
 
     // --- the interface as a whole
@@ -608,7 +682,8 @@ namespace {
       if(!_w || _w->fullscreen) return l;
       qtSceneSize(l.sceneWidth, l.sceneHeight);
       if(_w->treeBox->isVisible()) l.treeWidth = _w->treeBox->width();
-      if(_w->messages->isVisible()) l.consoleHeight = _w->messages->height();
+      if(_w->consoleBox->isVisible())
+        l.consoleHeight = _w->consoleBox->height();
       l.treeDetached = 0;
       return l;
     }
@@ -681,9 +756,10 @@ namespace {
       _w->messages->setReadOnly(true);
       _w->messages->setLineWrapMode(QPlainTextEdit::NoWrap);
       _consoleFont(set.consoleFontSize);
+      _w->consoleBox = _consoleBox();
       _w->split = new QSplitter(Qt::Vertical);
       _w->split->addWidget(qtSceneWidget());
-      _w->split->addWidget(_w->messages);
+      _w->split->addWidget(_w->consoleBox);
       _w->split->setStretchFactor(0, 1);
       _w->split->setStretchFactor(1, 0);
       _w->split->setChildrenCollapsible(false);
@@ -738,9 +814,11 @@ namespace {
 
 } // namespace
 
-void qtForgetMessages()
+void qtClearConsole()
 {
-  if(_w) _w->lines.clear();
+  if(!_w) return;
+  _w->said.clear();
+  _w->messages->clear();
 }
 
 bool qtButtonDown() { return _buttonsDown > 0; }

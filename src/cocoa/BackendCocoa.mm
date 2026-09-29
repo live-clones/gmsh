@@ -15,6 +15,7 @@
 #import <objc/runtime.h>
 
 #include "cocoaCommon.h"
+#include "Console.h"
 
 // The Cocoa interface: one window -- the tree down the left, the scene and
 // the console under it, the bar along the bottom -- the menus in the bar at
@@ -30,6 +31,23 @@
 @end
 
 @interface GmshConsole : NSTextView
+@end
+
+// the console with the bar over its lines: the filter, Save, Clear,
+// Autoscroll, as Ui::Console says them
+@interface GmshConsoleBox : GmshFlippedView {
+@public
+  NSImageView *look;
+  NSTextField *filter;
+  NSButton *save, *clear, *follow;
+  NSScrollView *lines;
+}
+@end
+
+@interface GmshConsoleTarget : NSObject <NSTextFieldDelegate>
+- (void)save:(id)sender;
+- (void)clear:(id)sender;
+- (void)follow:(id)sender;
 @end
 
 @interface GmshMainView : NSView
@@ -84,11 +102,14 @@ namespace {
     NSSplitView *side = nil, *split = nil;
     GmshTreeBox *treeBox = nil;
     NSScrollView *consoleScroll = nil;
+    GmshConsoleBox *consoleBox = nil;
     GmshConsole *messages = nil;
     GmshBar *bar = nil;
     treeCocoa *tree = nullptr;
     std::string barBuilt, footerBuilt;
-    std::vector<std::string> lines;
+    // the lines, what the filter lets through, whether the last is kept in
+    // view
+    Ui::Console said;
     bool fullscreen = false, treeWas = true, consoleWas = true;
     CGFloat consoleHeight = 150., treeWidth = 300.;
   };
@@ -179,7 +200,7 @@ namespace {
   void _showConsole(bool show)
   {
     if(!_w) return;
-    NSView *c = _w->consoleScroll;
+    NSView *c = _w->consoleBox;
     if(show == ![c isHidden]) return;
     if(!show) _w->consoleHeight = std::max((CGFloat)40., [c frame].size.height);
     [c setHidden:!show];
@@ -211,7 +232,7 @@ namespace {
     _w->fullscreen = on;
     if(on) {
       _w->treeWas = ![_w->treeBox isHidden];
-      _w->consoleWas = ![_w->consoleScroll isHidden];
+      _w->consoleWas = ![_w->consoleBox isHidden];
     }
     _showTree(!on && _w->treeWas);
     _showConsole(!on && _w->consoleWas);
@@ -283,8 +304,100 @@ namespace {
 
 void cocoaForgetMessages()
 {
-  if(_w) _w->lines.clear();
+  if(_w) _w->said.clear();
 }
+
+namespace {
+
+  // a line in its colour, at the end
+  void _consoleLine(const std::string &text, int level)
+  {
+    static const unsigned light[] = {0x1a4fa0, 0, 0xa05a00, 0xb00000,
+                                     0x707070};
+    static const unsigned dark[] = {0x8ab4f8, 0, 0xf0b060, 0xff7070, 0xa0a0a0};
+    // on the colour the console is drawn on, whatever the option says
+    unsigned ink =
+      (level >= 0 && level <= 4) ? (_dark() ? dark[level] : light[level]) : 0;
+    NSColor *colour = ink ? [NSColor colorWithSRGBRed:((ink >> 16) & 255) / 255.
+                                                green:((ink >> 8) & 255) / 255.
+                                                 blue:(ink & 255) / 255.
+                                                alpha:1.] :
+                            [NSColor textColor];
+    NSTextStorage *all = [_w->messages textStorage];
+    NSString *line = cocoaString(text);
+    if([all length]) line = [@"\n" stringByAppendingString:line];
+    NSFont *font = [_w->messages font] ?: cocoaFixedFont(0.);
+    [all appendAttributedString:[[NSAttributedString alloc]
+                                  initWithString:line
+                                      attributes:@{
+                                        NSForegroundColorAttributeName : colour,
+                                        NSFontAttributeName : font
+                                      }]];
+  }
+
+  void _consoleFollow()
+  {
+    [_w->messages
+      scrollRangeToVisible:NSMakeRange([[_w->messages textStorage] length], 0)];
+  }
+
+  // the lines again, the filter having changed
+  void _consoleRefill()
+  {
+    [[_w->messages textStorage]
+      setAttributedString:[[NSAttributedString alloc] init]];
+    for(const Ui::Console::Line *l : _w->said.shown())
+      _consoleLine(l->text, l->level);
+    if(_w->said.autoScroll()) _consoleFollow();
+  }
+
+} // namespace
+
+@implementation GmshConsoleBox
+- (void)resizeSubviewsWithOldSize:(NSSize)old
+{
+  NSRect b = [self bounds];
+  CGFloat row = cocoaRowHeight(), pad = 2., x = pad, side = cocoaPx(1.);
+  [look setFrame:NSMakeRect(x, pad + (row - side) / 2., side, side)];
+  x += side + pad;
+  CGFloat fw = cocoaPx(15.);
+  [filter setFrame:NSMakeRect(x, pad, fw, row)];
+  x += fw + 2. * pad;
+  for(NSButton *c in @[ save, clear, follow ]) {
+    CGFloat w = std::ceil([c intrinsicContentSize].width);
+    [c setFrame:NSMakeRect(x, pad, w, row)];
+    x += w + pad;
+  }
+  CGFloat top = row + 2. * pad;
+  [lines setFrame:NSMakeRect(0, top, b.size.width,
+                             std::max((CGFloat)0., b.size.height - top))];
+}
+@end
+
+@implementation GmshConsoleTarget
+- (void)controlTextDidChange:(NSNotification *)n
+{
+  if(_w && _w->said.setFilter(cocoaString([_w->consoleBox->filter stringValue])))
+    _consoleRefill();
+}
+- (void)save:(id)sender
+{
+  if(cocoaSources().saveMessages) cocoaLater(cocoaSources().saveMessages);
+}
+- (void)clear:(id)sender
+{
+  if(!_w) return;
+  [[_w->messages textStorage]
+    setAttributedString:[[NSAttributedString alloc] init]];
+  cocoaForgetMessages();
+}
+- (void)follow:(id)sender
+{
+  if(!_w) return;
+  _w->said.setAutoScroll([_w->consoleBox->follow state] == NSControlStateValueOn);
+  if(_w->said.autoScroll()) _consoleFollow();
+}
+@end
 
 @implementation GmshConsole
 - (NSMenu *)menuForEvent:(NSEvent *)e
@@ -581,38 +694,14 @@ namespace {
 
     void addMessage(const std::string &text, int level) override
     {
-      if(!_w) return;
-      _w->lines.push_back(text);
-      static const unsigned light[] = {0x1a4fa0, 0, 0xa05a00, 0xb00000,
-                                       0x707070};
-      static const unsigned dark[] = {0x8ab4f8, 0, 0xf0b060, 0xff7070,
-                                      0xa0a0a0};
-      // on the colour the console is drawn on, whatever the option says
-      unsigned ink =
-        (level >= 0 && level <= 4) ? (_dark() ? dark[level] : light[level]) : 0;
-      NSColor *colour = ink ?
-                          [NSColor colorWithSRGBRed:((ink >> 16) & 255) / 255.
-                                              green:((ink >> 8) & 255) / 255.
-                                               blue:(ink & 255) / 255.
-                                              alpha:1.] :
-                          [NSColor textColor];
-      NSTextStorage *all = [_w->messages textStorage];
-      NSString *line = cocoaString(text);
-      if([all length]) line = [@"\n" stringByAppendingString:line];
-      NSFont *font = [_w->messages font] ?: cocoaFixedFont(0.);
-      [all
-        appendAttributedString:[[NSAttributedString alloc]
-                                 initWithString:line
-                                     attributes:@{
-                                       NSForegroundColorAttributeName : colour,
-                                       NSFontAttributeName : font
-                                     }]];
-      [_w->messages scrollRangeToVisible:NSMakeRange([all length], 0)];
+      if(!_w || !_w->said.add(text, level)) return;
+      _consoleLine(text, level);
+      if(_w->said.autoScroll()) _consoleFollow();
     }
 
     void messageLines(std::vector<std::string> &lines) override
     {
-      if(_w) lines = _w->lines;
+      if(_w) lines = _w->said.texts();
     }
 
     void refreshBar() override { cocoaRefreshBar(); }
@@ -831,7 +920,7 @@ namespace {
     void showConsole(bool show) override { _showConsole(show); }
 
     bool consoleVisible() override
-    { return _w && ![_w->consoleScroll isHidden]; }
+    { return _w && ![_w->consoleBox isHidden]; }
 
     // --- the interface as a whole
 
@@ -871,8 +960,8 @@ namespace {
       cocoaSceneSize(l.sceneWidth, l.sceneHeight);
       if(![_w->treeBox isHidden])
         l.treeWidth = (int)[_w->treeBox frame].size.width;
-      if(![_w->consoleScroll isHidden])
-        l.consoleHeight = (int)[_w->consoleScroll frame].size.height;
+      if(![_w->consoleBox isHidden])
+        l.consoleHeight = (int)[_w->consoleBox frame].size.height;
       l.treeDetached = 0;
       return l;
     }
@@ -975,13 +1064,51 @@ namespace {
         setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
       [_w->consoleScroll setDocumentView:_w->messages];
       _consoleFont(set.consoleFontSize);
+      {
+        // the bar over the lines
+        static GmshConsoleTarget *consoleTarget =
+          [[GmshConsoleTarget alloc] init];
+        GmshConsoleBox *box = [[GmshConsoleBox alloc]
+          initWithFrame:NSMakeRect(0, 0, sceneWidth, consoleHeight)];
+        box->look = [NSImageView
+          imageViewWithImage:cocoaGlyph(Ui::Console::filterGlyph())];
+        box->filter = [NSTextField textFieldWithString:@""];
+        [box->filter setDelegate:consoleTarget];
+        box->save = [NSButton buttonWithTitle:cocoaString(Ui::Console::saveLabel())
+                                       target:consoleTarget
+                                       action:@selector(save:)];
+        box->clear =
+          [NSButton buttonWithTitle:cocoaString(Ui::Console::clearLabel())
+                             target:consoleTarget
+                             action:@selector(clear:)];
+        box->follow = [NSButton
+          checkboxWithTitle:cocoaString(Ui::Console::autoScrollLabel())
+                     target:consoleTarget
+                     action:@selector(follow:)];
+        [box->follow setState:_w->said.autoScroll() ? NSControlStateValueOn :
+                                                      NSControlStateValueOff];
+        if(set.tooltips) {
+          [box->filter setToolTip:cocoaString(Ui::Console::filterTip())];
+          [box->save setToolTip:cocoaString(Ui::Console::saveTip())];
+          [box->clear setToolTip:cocoaString(Ui::Console::clearTip())];
+        }
+        for(NSButton *b in @[ box->save, box->clear ]) {
+          [b setBezelStyle:NSBezelStyleRounded];
+          [b setControlSize:NSControlSizeSmall];
+        }
+        box->lines = _w->consoleScroll;
+        for(NSView *v in @[ box->look, box->filter, box->save, box->clear,
+                            box->follow, box->lines ])
+          [box addSubview:v];
+        _w->consoleBox = box;
+      }
 
       _w->split =
         [[NSSplitView alloc] initWithFrame:NSMakeRect(0, 0, sceneWidth, 400)];
       [_w->split setVertical:NO];
       [_w->split setDividerStyle:NSSplitViewDividerStyleThin];
       [_w->split addSubview:cocoaSceneWidget()];
-      [_w->split addSubview:_w->consoleScroll];
+      [_w->split addSubview:_w->consoleBox];
       [_w->split setHoldingPriority:NSLayoutPriorityDefaultLow
                   forSubviewAtIndex:0];
       [_w->split setHoldingPriority:NSLayoutPriorityDefaultHigh

@@ -6,6 +6,7 @@
 set(SRC
   Backend.cpp
   Bar.cpp
+  Console.cpp
   Glyph.cpp
   Form.cpp
   Layout.cpp

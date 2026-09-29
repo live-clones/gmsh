@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "Backend.h"
+#include "Console.h"
 #include "Glyph.h"
 #include "MapEditor.h"
 
@@ -213,6 +214,22 @@ int main()
   same(std::to_string(MapEditor::entryAt(edited, 99., 100.)) + " " +
          std::to_string(MapEditor::valueAt(0., 10.)),
        "7 255", "the entry and the intensity under the pointer");
+
+  // --- the console: what the filter lets through, how many lines are kept
+  Console console(3);
+  console.add("Info    : Reading 'a.geo'", 1);
+  console.add("Warning : Unknown option", 2);
+  bool through = console.setFilter("warn") && !console.add("Info    : Done", 1);
+  same(std::to_string(console.shown().size()) + " " +
+         std::to_string(console.lines().size()) + (through ? " yes" : " no"),
+       "1 3 yes", "a filter, case ignored, and a line it keeps out");
+  console.setFilter("(");
+  same(std::to_string(console.shown().size()), "0",
+       "an expression that does not parse lets nothing through");
+  console.setFilter("");
+  console.add("Info    : Four", 1);
+  same(console.lines().front().text + " " + std::to_string(console.shown().size()),
+       "Warning : Unknown option 3", "the oldest forgotten, all shown");
 
   // --- the glyphs: every one the descriptions name, in the square, with a
   // character for the terminal

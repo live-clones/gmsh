@@ -34,7 +34,9 @@
 #include "imgui_impl_opengl2.h"
 #include <GLFW/glfw3.h>
 
+#include "imgui_stdlib.h"
 #include "imguiCommon.h"
+#include "Console.h"
 #include "Glyph.h"
 #include "sceneView.h"
 #include "sceneHost.h"
@@ -70,55 +72,26 @@ namespace {
   void _drainPosted();
   void _dropped(const std::vector<std::string> &paths);
 
-  // --- the console, with a regular expression filter
+  // --- the console: the lines Ui::Console keeps, the bar over them
 
   class console {
   private:
-    struct line {
-      std::string text;
-      int level;
-      line(const std::string &t, int l) : text(t), level(l) {}
-    };
-    std::deque<line> _lines;
-    std::size_t _maxLines;
-    char _filter[256];
-    bool _autoScroll;
+    Ui::Console _said;
+    std::string _filter;
     bool _scrollToBottom;
 
   public:
-    console();
-    void add(const std::string &msg, int level);
-    void clear();
+    console() : _said(50000), _scrollToBottom(false) {}
+    void add(const std::string &msg, int level)
+    {
+      if(_said.add(msg, level) && _said.autoScroll()) _scrollToBottom = true;
+    }
+    void clear() { _said.clear(); }
     // writing it to a file is the caller's
-    void lines(std::vector<std::string> &out) const;
-    std::size_t size() const { return _lines.size(); }
+    void lines(std::vector<std::string> &out) const { out = _said.texts(); }
+    std::size_t size() const { return _said.lines().size(); }
     void draw();
   };
-
-
-console::console()
-  : _maxLines(50000), _autoScroll(true), _scrollToBottom(false)
-{
-  _filter[0] = '\0';
-}
-
-void console::add(const std::string &msg, int level)
-{
-  _lines.push_back(line(msg, level));
-  while(_lines.size() > _maxLines) _lines.pop_front();
-  if(_autoScroll) _scrollToBottom = true;
-}
-
-void console::clear()
-{
-  _lines.clear();
-}
-
-void console::lines(std::vector<std::string> &out) const
-{
-  out.clear();
-  for(const auto &l : _lines) out.push_back(l.text);
-}
 
 static ImVec4 _colorForLevel(int level)
 {
@@ -132,39 +105,48 @@ static ImVec4 _colorForLevel(int level)
 
 void console::draw()
 {
-  if(ImGui::Button("Clear")) clear();
+  // the filter, Save, Clear, Copy, Autoscroll
+  float side = ImGui::GetFrameHeight();
+  ImGui::Dummy(ImVec2(side, side));
+  imguiGlyph(Ui::Console::filterGlyph(), ImGui::GetItemRectMin(),
+             ImGui::GetItemRectMax(), ImGui::GetColorU32(ImGuiCol_Text));
+  ImGui::SameLine(0.f, 2.f);
+  ImGui::SetNextItemWidth(15.f * ImGui::GetFontSize());
+  if(ImGui::InputText("##filter", &_filter)) _said.setFilter(_filter);
+  if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    ImGui::SetTooltip("%s", Ui::Console::filterTip());
+  ImGui::SameLine();
+  if(ImGui::Button(Ui::Console::saveLabel()) && imguiSources().saveMessages)
+    imguiLater(imguiSources().saveMessages);
+  if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    ImGui::SetTooltip("%s", Ui::Console::saveTip());
+  ImGui::SameLine();
+  if(ImGui::Button(Ui::Console::clearLabel())) clear();
+  if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    ImGui::SetTooltip("%s", Ui::Console::clearTip());
   ImGui::SameLine();
   if(ImGui::Button("Copy")) {
     std::string all;
-    for(auto &l : _lines) { all += l.text; all += "\n"; }
+    for(const Ui::Console::Line &l : _said.lines()) {
+      all += l.text;
+      all += "\n";
+    }
     ImGui::SetClipboardText(all.c_str());
   }
   ImGui::SameLine();
-  ImGui::Checkbox("Auto-scroll", &_autoScroll);
-  ImGui::SameLine();
-  ImGui::SetNextItemWidth(-1.f);
-  ImGui::InputTextWithHint("##filter", "Filter (regular expression)", _filter,
-                           sizeof(_filter));
-  ImGui::Separator();
-
-  // an invalid regular expression should not throw out of the frame
-  bool useFilter = (_filter[0] != '\0');
-  std::regex re;
-  if(useFilter) {
-    try {
-      re = std::regex(_filter, std::regex::icase);
-    } catch(...) {
-      useFilter = false;
-    }
+  bool follow = _said.autoScroll();
+  if(ImGui::Checkbox(Ui::Console::autoScrollLabel(), &follow)) {
+    _said.setAutoScroll(follow);
+    if(follow) _scrollToBottom = true;
   }
+  ImGui::Separator();
 
   if(ImGui::BeginChild("##messages", ImVec2(0, 0), ImGuiChildFlags_None,
                        ImGuiWindowFlags_HorizontalScrollbar)) {
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
-    for(auto &l : _lines) {
-      if(useFilter && !std::regex_search(l.text, re)) continue;
-      ImGui::PushStyleColor(ImGuiCol_Text, _colorForLevel(l.level));
-      ImGui::TextUnformatted(l.text.c_str());
+    for(const Ui::Console::Line *l : _said.shown()) {
+      ImGui::PushStyleColor(ImGuiCol_Text, _colorForLevel(l->level));
+      ImGui::TextUnformatted(l->text.c_str());
       ImGui::PopStyleColor();
     }
     ImGui::PopStyleVar();

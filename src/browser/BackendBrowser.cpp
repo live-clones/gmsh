@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "Backend.h"
+#include "Console.h"
 #include "Glyph.h"
 #include "httpServer.h"
 #include "OS.h"
@@ -246,14 +247,12 @@ namespace {
 
     void addMessage(const std::string &text, int level) override
     {
-      _dirty = true;
-      _messages.push_back(text);
-      if(_messages.size() > 500) _messages.erase(_messages.begin());
+      if(_said.add(text, level)) _dirty = true;
     }
 
     void messageLines(std::vector<std::string> &lines) override
     {
-      lines = _messages;
+      lines = _said.texts();
     }
 
     void refreshBar() override { _dirty = true; }
@@ -355,7 +354,9 @@ namespace {
       state.form = &which;
       return state;
     }
-    std::vector<std::string> _messages;
+    // the lines, what the filter lets through, whether the last is kept in
+    // view
+    Ui::Console _said{500};
     // rebuilt every time the state is written: a number is a place in these
     // lists, so each carries what it stood for, and one that no longer stands
     // for that is refused
@@ -798,6 +799,16 @@ namespace {
             if(k.spent) break;
           }
         }
+        return "{}";
+      }
+      if(path == "/console") {
+        // the bar over the lines: the filter, Clear, Autoscroll
+        if(ask.body.find("filter=") != std::string::npos)
+          _said.setFilter(_valueOf(ask.body, "filter"));
+        if(_valueOf(ask.body, "clear") == "1") _said.clear();
+        std::string follow = _valueOf(ask.body, "follow");
+        if(follow.size()) _said.setAutoScroll(follow == "1");
+        _dirty = true;
         return "{}";
       }
       if(path == "/size") {
@@ -1453,10 +1464,23 @@ namespace {
       if(_sources.barMessage) said = _sources.barMessage();
       out += _quoted(said.text);
       out += ",\"messages\":[";
-      std::size_t from = _messages.size() > 200 ? _messages.size() - 200 : 0;
-      for(std::size_t i = from; i < _messages.size(); i++)
-        out += (i > from ? "," : "") + _quoted(_messages[i]);
-      out += "]";
+      std::vector<const Ui::Console::Line *> shown = _said.shown();
+      std::size_t from = shown.size() > 200 ? shown.size() - 200 : 0;
+      for(std::size_t i = from; i < shown.size(); i++)
+        out += (i > from ? "," : "") + _quoted(shown[i]->text);
+      out += "],\"console\":{\"filter\":" + _quoted(_said.filter());
+      out += ",\"follow\":";
+      out += _said.autoScroll() ? "true" : "false";
+      out += ",\"look\":" + _quoted(_svg(Ui::Console::filterGlyph()));
+      out += ",\"tip\":" + _quoted(Ui::Console::filterTip());
+      out += ",\"save\":{\"label\":" + _quoted(Ui::Console::saveLabel());
+      out += ",\"help\":" + _quoted(Ui::Console::saveTip());
+      std::function<void()> save = _sources.saveMessages;
+      out += _actionId([save]() { if(save) save(); }, "console:save") + "}";
+      out += ",\"clear\":{\"label\":" + _quoted(Ui::Console::clearLabel());
+      out += ",\"help\":" + _quoted(Ui::Console::clearTip()) + "}";
+      out += ",\"autoScroll\":" + _quoted(Ui::Console::autoScrollLabel());
+      out += "}";
       return out + "}";
     }
   };

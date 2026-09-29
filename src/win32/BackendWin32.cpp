@@ -10,6 +10,7 @@
 #include <cstdio>
 
 #include "win32Common.h"
+#include "Console.h"
 
 #include <dwmapi.h>
 #include <richedit.h>
@@ -30,11 +31,16 @@ namespace {
     HWND win = nullptr, treeBox = nullptr, editor = nullptr, footer = nullptr,
          scene = nullptr, console = nullptr, bar = nullptr, message = nullptr,
          progress = nullptr;
+    // the bar over the lines: the filter, Save, Clear, Autoscroll
+    HWND consoleBar = nullptr, look = nullptr, filter = nullptr, save = nullptr,
+         clear = nullptr, follow = nullptr;
     treeWin32 *tree = nullptr;
     std::vector<HWND> buttons, footerButtons;
     std::vector<Ui::Button> footerSaid;
     std::string barBuilt, footerBuilt;
-    std::vector<std::string> lines;
+    // the lines, what the filter lets through, whether the last is kept in
+    // view
+    Ui::Console said;
     int treeWidth = 300, consoleHeight = 150;
     bool treeShown = true, consoleShown = true, fullscreen = false;
     // the gap being dragged: 1 the one by the tree, 2 the one over the console
@@ -91,8 +97,24 @@ namespace {
                        0;
     int sceneBottom = console ? bottom - ch - Gap : bottom;
     MoveWindow(_w->scene, left, top, r.right - left, sceneBottom - top, TRUE);
-    if(console)
-      MoveWindow(_w->console, left, bottom - ch, r.right - left, ch, TRUE);
+    if(console) {
+      int row = win32Row(), pad = 2, bar = std::min(ch, row + 2 * pad);
+      MoveWindow(_w->consoleBar, left, bottom - ch, r.right - left, bar, TRUE);
+      int x = pad, side = win32Px(1.);
+      MoveWindow(_w->look, x, pad + (row - side) / 2, side, side, TRUE);
+      x += side + pad;
+      int fw = win32Px(15.), bw = win32Px(4.5);
+      MoveWindow(_w->filter, x, pad, fw, row, TRUE);
+      x += fw + 2 * pad;
+      MoveWindow(_w->save, x, pad, bw, row, TRUE);
+      x += bw + pad;
+      MoveWindow(_w->clear, x, pad, bw, row, TRUE);
+      x += bw + 2 * pad;
+      MoveWindow(_w->follow, x, pad, win32Px(12.), row, TRUE);
+      MoveWindow(_w->console, left, bottom - ch + bar, r.right - left, ch - bar,
+                 TRUE);
+    }
+    ShowWindow(_w->consoleBar, console ? SW_SHOWNA : SW_HIDE);
     ShowWindow(_w->console, console ? SW_SHOWNA : SW_HIDE);
     MoveWindow(_w->bar, 0, bottom, r.right, bh, TRUE);
     ShowWindow(_w->bar, bh ? SW_SHOWNA : SW_HIDE);
@@ -126,6 +148,112 @@ namespace {
       if(x >= left && y >= at && y < at + Gap) return 2;
     }
     return 0;
+  }
+
+  // --- the console: a line in its colour, the lines again when the filter
+  // changed, what the bar over them tells
+
+  void _consoleLine(const std::string &text, int level)
+  {
+    static const COLORREF ink[] = {RGB(26, 79, 160), 0, RGB(160, 90, 0),
+                                   RGB(176, 0, 0), RGB(112, 112, 112)};
+    // where the view is, when it is not to follow the last line
+    int first = _w->said.autoScroll() ?
+                  0 :
+                  (int)SendMessageW(_w->console, EM_GETFIRSTVISIBLELINE, 0, 0);
+    CHARFORMAT2W cf;
+    memset(&cf, 0, sizeof(cf));
+    cf.cbSize = sizeof(cf);
+    cf.dwMask = CFM_COLOR;
+    if(level >= 0 && level <= 4 && level != Ui::Backend::Info)
+      cf.crTextColor = ink[level];
+    else
+      cf.dwEffects = CFE_AUTOCOLOR;
+    SendMessageW(_w->console, EM_SETSEL, (WPARAM)-1, (LPARAM)-1);
+    SendMessageW(_w->console, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+    std::wstring line = win32Wide(text + "\r\n");
+    SendMessageW(_w->console, EM_REPLACESEL, FALSE, (LPARAM)line.c_str());
+    // the caret after the last line break: at the bottom, on the left
+    SendMessageW(_w->console, EM_SETSEL, (WPARAM)-1, (LPARAM)-1);
+    if(_w->said.autoScroll())
+      SendMessageW(_w->console, EM_SCROLLCARET, 0, 0);
+    else {
+      int now = (int)SendMessageW(_w->console, EM_GETFIRSTVISIBLELINE, 0, 0);
+      SendMessageW(_w->console, EM_LINESCROLL, 0, first - now);
+    }
+  }
+
+  void _consoleRefill()
+  {
+    SendMessageW(_w->console, WM_SETREDRAW, FALSE, 0);
+    SetWindowTextW(_w->console, L"");
+    for(const Ui::Console::Line *l : _w->said.shown())
+      _consoleLine(l->text, l->level);
+    SendMessageW(_w->console, WM_SETREDRAW, TRUE, 0);
+    InvalidateRect(_w->console, nullptr, TRUE);
+  }
+
+  void _consoleClear()
+  {
+    if(!_w) return;
+    _w->said.clear();
+    SetWindowTextW(_w->console, L"");
+  }
+
+  LRESULT _consoleBarHook(HWND w, UINT msg, WPARAM wp, LPARAM lp, bool &taken)
+  {
+    taken = false;
+    if(msg != WM_COMMAND || !_w) return 0;
+    HWND from = (HWND)lp;
+    if(from == _w->filter && HIWORD(wp) == EN_CHANGE) {
+      if(_w->said.setFilter(win32Text(_w->filter))) _consoleRefill();
+      taken = true;
+    }
+    else if(HIWORD(wp) == BN_CLICKED) {
+      if(from == _w->save) {
+        if(_sources.saveMessages) win32Later(_sources.saveMessages);
+      }
+      else if(from == _w->clear)
+        _consoleClear();
+      else if(from == _w->follow) {
+        _w->said.setAutoScroll(
+          SendMessageW(_w->follow, BM_GETCHECK, 0, 0) == BST_CHECKED);
+        if(_w->said.autoScroll()) {
+          SendMessageW(_w->console, EM_SETSEL, (WPARAM)-1, (LPARAM)-1);
+          SendMessageW(_w->console, EM_SCROLLCARET, 0, 0);
+        }
+      }
+      else
+        return 0;
+      taken = true;
+    }
+    return 0;
+  }
+
+  void _makeConsoleBar()
+  {
+    _w->consoleBar = win32Panel(_w->win, 0, 0, 10, 10);
+    win32SetPanelHook(_w->consoleBar, _consoleBarHook);
+    HINSTANCE app = GetModuleHandleW(nullptr);
+    auto make = [app](const wchar_t *cls, DWORD style, const char *text) {
+      HWND c = CreateWindowExW(0, cls, win32Wide(text).c_str(),
+                               WS_CHILD | WS_VISIBLE | style, 0, 0, 10, 10,
+                               _w->consoleBar, nullptr, app, nullptr);
+      SendMessageW(c, WM_SETFONT, (WPARAM)win32Font(), TRUE);
+      return c;
+    };
+    _w->look = make(L"STATIC", SS_ICON | SS_CENTERIMAGE | SS_REALSIZEIMAGE, "");
+    if(HICON icon = win32Glyph(Ui::Console::filterGlyph(), win32Px(1.)))
+      SendMessageW(_w->look, STM_SETICON, (WPARAM)icon, 0);
+    _w->filter = make(L"EDIT", WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, "");
+    _w->save = make(L"BUTTON", WS_TABSTOP | BS_PUSHBUTTON,
+                    Ui::Console::saveLabel());
+    _w->clear = make(L"BUTTON", WS_TABSTOP | BS_PUSHBUTTON,
+                     Ui::Console::clearLabel());
+    _w->follow = make(L"BUTTON", WS_TABSTOP | BS_AUTOCHECKBOX,
+                      Ui::Console::autoScrollLabel());
+    SendMessageW(_w->follow, BM_SETCHECK,
+                 _w->said.autoScroll() ? BST_CHECKED : BST_UNCHECKED, 0);
   }
 
   // --- the bar along the bottom
@@ -271,11 +399,7 @@ namespace {
           if(_sources.saveMessages) _sources.saveMessages();
         };
         items[1].label = "Clear Messages";
-        items[1].action = []() {
-          if(!_w) return;
-          _w->lines.clear();
-          SetWindowTextW(_w->console, L"");
-        };
+        items[1].action = []() { _consoleClear(); };
         win32PopupMenu(items, w, GET_X_LPARAM(lp), GET_Y_LPARAM(lp));
         return 0;
       }
@@ -398,6 +522,7 @@ namespace {
       0, 0, 10, 10, _w->win, nullptr, GetModuleHandleW(nullptr), nullptr);
     SendMessageW(_w->console, WM_SETFONT, (WPARAM)win32FixedFont(), TRUE);
     SendMessageW(_w->console, EM_EXLIMITTEXT, 0, 64 * 1024 * 1024);
+    _makeConsoleBar();
 
     // the bar
     _w->bar = win32Panel(_w->win, 0, 0, 10, 10);
@@ -619,30 +744,12 @@ namespace {
 
     void addMessage(const std::string &text, int level) override
     {
-      if(!_w) return;
-      _w->lines.push_back(text);
-      static const COLORREF ink[] = {RGB(26, 79, 160), 0, RGB(160, 90, 0),
-                                     RGB(176, 0, 0), RGB(112, 112, 112)};
-      CHARFORMAT2W cf;
-      memset(&cf, 0, sizeof(cf));
-      cf.cbSize = sizeof(cf);
-      cf.dwMask = CFM_COLOR;
-      if(level >= 0 && level <= 4 && level != Info)
-        cf.crTextColor = ink[level];
-      else
-        cf.dwEffects = CFE_AUTOCOLOR;
-      SendMessageW(_w->console, EM_SETSEL, (WPARAM)-1, (LPARAM)-1);
-      SendMessageW(_w->console, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
-      std::wstring line = win32Wide(text + "\r\n");
-      SendMessageW(_w->console, EM_REPLACESEL, FALSE, (LPARAM)line.c_str());
-      // the caret after the last line break: at the bottom, on the left
-      SendMessageW(_w->console, EM_SETSEL, (WPARAM)-1, (LPARAM)-1);
-      SendMessageW(_w->console, EM_SCROLLCARET, 0, 0);
+      if(_w && _w->said.add(text, level)) _consoleLine(text, level);
     }
 
     void messageLines(std::vector<std::string> &lines) override
     {
-      if(_w) lines = _w->lines;
+      if(_w) lines = _w->said.texts();
     }
 
     void refreshBar() override { win32RefreshBar(); }
