@@ -52,7 +52,7 @@ static void file_window_cb(Fl_Widget *w, void *data)
   if(str == "new") {
     graphicWindow *g1 = FlGui::instance()->graph.back();
     graphicWindow *g2 =
-      new graphicWindow(false, fltkSources().settings().sceneTiles);
+      new graphicWindow(false, 1);
     FlGui::instance()->graph.push_back(g2);
     g2->getWindow()->resize(g1->getWindow()->x() + 10,
                             g1->getWindow()->y() + 10, g1->getWindow()->w(),

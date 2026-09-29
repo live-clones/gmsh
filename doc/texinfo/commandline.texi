@@ -122,7 +122,7 @@ Run ONELAB solver(s)
 @item -n
 Hide all meshes and post-processing views on startup (View.Visible, Mesh.[Points,Lines,SurfaceEdges,...])
 @item -nodb
-Disable double buffering (General.DoubleBuffer)
+No effect: the graphic windows are always double buffered
 @item -numsubedges
 Set num of subdivisions for high order element display (Mesh.NumSubEdges)
 @item -fontsize int

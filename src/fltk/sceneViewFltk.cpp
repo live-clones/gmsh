@@ -43,12 +43,9 @@ void sceneViewFltk::setCursor(Scene::Cursor kind)
 
 int sceneViewFltk::glMode()
 {
-  int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
+  int mode = FL_RGB | FL_DEPTH | FL_DOUBLE;
   if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-  if(CTX::instance()->stereo) {
-    mode |= FL_DOUBLE;
-    mode |= FL_STEREO;
-  }
+  if(CTX::instance()->stereo) mode |= FL_STEREO;
   if(CTX::instance()->shaders) mode |= FL_OPENGL3;
   return mode;
 }

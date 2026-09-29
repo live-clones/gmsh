@@ -3249,16 +3249,9 @@ double opt_general_graphics_cache_size(OPT_ARGS_NUM)
   return CTX::instance()->graphicsCacheSize;
 }
 
-double opt_general_double_buffer(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    CTX::instance()->db = (int)val;
-#if defined(HAVE_GUI)
-    if(Gui::instance().available()) Gui::instance().sceneSettingChanged("buffering");
-#endif
-  }
-  return CTX::instance()->db;
-}
+// the views are always double buffered: the option is still read, from the
+// option files saved with it, and does nothing
+double opt_general_double_buffer(OPT_ARGS_NUM) { return 1.; }
 
 double opt_general_antialiasing(OPT_ARGS_NUM)
 {

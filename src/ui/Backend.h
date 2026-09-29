@@ -45,10 +45,9 @@ namespace Ui {
       // in pixels
       int sceneX, sceneY, sceneWidth, sceneHeight, treeWidth, consoleHeight;
       int consoleFontSize;
-      int sceneTiles;
       int treeX, treeY, treeHeight;
       int dialogX, dialogY;
-      bool doubleBuffer, stereo;
+      bool stereo;
       bool systemMenuBar;
       bool darkScheme;
       bool showModuleMenu;
@@ -67,9 +66,9 @@ namespace Ui {
       std::string homeDir;
       Settings()
         : fontSize(0), sceneX(0), sceneY(0), sceneWidth(0), sceneHeight(0),
-          treeWidth(0), consoleHeight(0), consoleFontSize(0), sceneTiles(1),
+          treeWidth(0), consoleHeight(0), consoleFontSize(0),
           treeX(0), treeY(0), treeHeight(0), dialogX(0), dialogY(0),
-          doubleBuffer(true), stereo(false), systemMenuBar(false),
+          stereo(false), systemMenuBar(false),
           darkScheme(false), showModuleMenu(true), deltaFontSize(0),
           antialiasing(false), tooltips(true),
           detachedTree(false), inputScrolling(true), nonModalWindows(false),

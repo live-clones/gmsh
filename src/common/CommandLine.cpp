@@ -1446,7 +1446,7 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
     i++;
   }
   else if(argv[i] == "-nodb") {
-    opt_general_double_buffer(0, GMSH_SET, 0.);
+    // the views are always double buffered
     i++;
   }
   else if(argv[i] == "-camera") {

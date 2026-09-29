@@ -315,7 +315,7 @@ public:
   bool printView(int width, int height, int supersampling,
                  unsigned int format, unsigned int type, void *pixels);
   void abortSelection();
-  // "background_image", "buffering" (double buffering and antialiasing) or
+  // "background_image", "buffering" (antialiasing) or
   // "font_engine"; the scene reads the option itself
   void sceneSettingChanged(const std::string &what);
   // the pointer drives the coordinates of the entity being placed instead of

@@ -182,7 +182,6 @@ namespace Declare {
       s.sceneY = c->glPosition[1];
       s.sceneWidth = c->glSize[0];
       s.sceneHeight = c->glSize[1];
-      s.sceneTiles = c->numTiles;
       s.treeWidth = c->menuSize[0];
       s.treeX = c->menuPosition[0];
       s.treeY = c->menuPosition[1];
@@ -191,7 +190,6 @@ namespace Declare {
       s.consoleFontSize = c->msgFontSize;
       s.dialogX = c->ctxPosition[0];
       s.dialogY = c->ctxPosition[1];
-      s.doubleBuffer = c->db ? true : false;
       s.stereo = c->stereo ? true : false;
       s.systemMenuBar = c->systemMenuBar ? true : false;
       s.darkScheme = c->guiColorScheme ? true : false;
@@ -241,11 +239,43 @@ namespace Declare {
     updateViews(true, true);
     setGraphicTitle(GModel::current()->getFileName());
     SetBoundingBox();
+
+    // what the command line and the options ask for at start, the same for
+    // every interface: the views tiled (-tiles), graphic windows of their
+    // own (-windows), the options and the messages shown
+    CTX *c = CTX::instance();
+    if(c->numTiles >= 2 && c->numTiles <= 4) {
+      // as the FLTK interface always laid them out: side by side, the right
+      // one halved, both halved
+      splitCurrentOpenglWindow('h', 0.5);
+      if(c->numTiles == 3) splitCurrentOpenglWindow('v', 0.5);
+      if(c->numTiles == 4) {
+        setCurrentOpenglWindow(0);
+        splitCurrentOpenglWindow('v', 0.5);
+        setCurrentOpenglWindow(1);
+        splitCurrentOpenglWindow('v', 0.5);
+      }
+      setCurrentOpenglWindow(0);
+    }
+    for(int i = 1; i < c->numWindows; i++) windowAction("new");
+    if(c->showOptionsOnStartup) showPanel(PanelOptions, true);
+    if(c->showMessagesOnStartup) showPanel(PanelMessageConsole, true);
   }
 
   void Gui::destroy()
   {
     if(!_backend) return;
+    // the view is kept, for an interface made again (gmsh::fltk::initialize()
+    // after finalize())
+    if(drawContext *ctx = getCurrentDrawContext()) {
+      for(int i = 0; i < 3; i++) {
+        CTX::instance()->tmpRotation[i] = ctx->r[i];
+        CTX::instance()->tmpTranslation[i] = ctx->t[i];
+        CTX::instance()->tmpScale[i] = ctx->s[i];
+      }
+      for(int i = 0; i < 4; i++)
+        CTX::instance()->tmpQuaternion[i] = ctx->quaternion[i];
+    }
     Ui::Backend *was = _backend;
     // deleted once its loop has unwound: see _retired
     _backend = nullptr;

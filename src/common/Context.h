@@ -325,7 +325,7 @@ public:
   // box (used to set tolerances relative to the overall model size)
   double lc;
   // double buffer/antialias/stereo graphics?
-  int db, antialiasing, stereo, camera;
+  int antialiasing, stereo, camera;
   bool fileread;
   double eye_sep_ratio, focallength_ratio, camera_aperture;
   // orthogonal projection?

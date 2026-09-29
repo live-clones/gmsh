@@ -572,7 +572,7 @@ Default value: @code{0.2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.DoubleBuffer
-Use a double buffered graphic window (on Unix, should be set to 0 when working on a remote host without GLX)@*
+No effect: the graphic windows are always double buffered@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

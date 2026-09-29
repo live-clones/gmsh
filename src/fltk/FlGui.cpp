@@ -532,7 +532,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // some are not displayed, since the shortcuts should be valid even for hidden
   // windows, and we don't want to test for widget existence every time)
   graph.push_back(
-    new graphicWindow(true, CTX::instance()->numTiles,
+    new graphicWindow(true, 1,
                       CTX::instance()->detachedMenu ? true : false));
 
   if (argc > 0 && argv && argv[0]) {
@@ -554,15 +554,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // get onelab tree group (FIXME: should clean this up)
   onelab = graph.back()->getMenu();
 
-  // create additional graphic windows
-  for(int i = 1; i < CTX::instance()->numWindows; i++) {
-    graphicWindow *g = new graphicWindow(false, CTX::instance()->numTiles);
-    g->getWindow()->resize(
-      graph.back()->getWindow()->x() + 10, graph.back()->getWindow()->y() + 10,
-      graph.back()->getWindow()->w(), graph.back()->getWindow()->h());
-    g->getWindow()->show();
-    graph.push_back(g);
-  }
   // create window that will be used for fullscreen display
   fullscreen = new sceneViewFltk(100, 100, 100, 100);
   fullscreen->mode(sceneViewFltk::glMode());
@@ -573,8 +564,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
 
-  if(CTX::instance()->showOptionsOnStartup) Gui::instance().options.show();
-  if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
 
 #if defined(HAVE_TOUCHBAR)
   showTouchBar();
@@ -583,20 +572,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
 FlGui::~FlGui()
 {
-  // copy back to temp values, in case we'd like to retrieve them after the GUI
-  // has been closed
-  drawContext *c = getCurrentDrawContext();
-  if(c) {
-    for(int i = 0; i < 3; i++) {
-      CTX::instance()->tmpRotation[i] = c->r[i];
-      CTX::instance()->tmpTranslation[i] = c->t[i];
-      CTX::instance()->tmpScale[i] = c->s[i];
-    }
-    for(int i = 0; i < 4; i++) {
-      CTX::instance()->tmpQuaternion[i] = c->quaternion[i];
-    }
-  }
-
   for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
   delete fullscreen;
   fltkSceneStop();

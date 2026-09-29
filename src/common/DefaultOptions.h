@@ -587,8 +587,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "DisplayBorderFactor" , opt_general_display_border_factor , 0.2 ,
     "Border factor for model display (0: model fits window size exactly)" },
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
-    "Use a double buffered graphic window (on Unix, should be set to 0 when "
-    "working on a remote host without GLX)" },
+    "No effect: the graphic windows are always double buffered" },
   { F|O, "DrawBoundingBoxes" , opt_general_draw_bounding_box, 0. ,
     "Draw bounding boxes" },
 
