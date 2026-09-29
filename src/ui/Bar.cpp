@@ -1,0 +1,19 @@
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+#include "Bar.h"
+
+namespace Ui {
+
+  std::string signature(const std::vector<BarButton> &buttons)
+  {
+    std::string s;
+    for(const auto &b : buttons)
+      s += b.label + "|" + b.labelOn + (b.gapBefore ? "^" : "") +
+           (b.menu ? "v" : "") + ";";
+    return s;
+  }
+
+} // namespace Ui

@@ -178,10 +178,7 @@ namespace {
     std::vector<Ui::Button> row = qtSources().tree.footer ?
                                     qtSources().tree.footer() :
                                     std::vector<Ui::Button>();
-    std::string shape;
-    for(const auto &b : row)
-      shape += b.label + (b.on && b.on() ? "+" : "") +
-               (b.enabled && !b.enabled() ? "-" : "") + ";";
+    std::string shape = Ui::signature(row);
     if(shape == _w->footerBuilt) return;
     _w->footerBuilt = shape;
     QLayout *h = _w->footer->layout();
@@ -217,37 +214,11 @@ namespace {
     _w->messages->setVisible(!on && _w->consoleWas);
   }
 
-  // "*.geo", "*.{geo,msh}", "*.*" as Qt writes a filter
-  QString _patterns(const std::string &said)
+  // as Qt writes a filter: the patterns separated by blanks
+  QString _patterns(const Ui::Backend::FileFormat &f)
   {
-    std::string all = said, out;
-    for(char &c : all)
-      if(c == ';' || c == '\t') c = ' ';
-    std::size_t at = 0;
-    while(at < all.size()) {
-      std::size_t end = all.find(' ', at);
-      std::string one = all.substr(at, end == std::string::npos ? end : end - at);
-      at = end == std::string::npos ? all.size() : end + 1;
-      if(one.empty()) continue;
-      if(one == "*.*") one = "*";
-      std::size_t open = one.find('{'), close = one.find('}');
-      if(open != std::string::npos && close != std::string::npos && close > open) {
-        std::string head = one.substr(0, open), tail = one.substr(close + 1);
-        std::string inside = one.substr(open + 1, close - open - 1);
-        std::size_t k = 0;
-        while(k <= inside.size()) {
-          std::size_t comma = inside.find(',', k);
-          std::string part =
-            inside.substr(k, comma == std::string::npos ? std::string::npos :
-                                                          comma - k);
-          out += (out.size() ? " " : "") + head + part + tail;
-          if(comma == std::string::npos) break;
-          k = comma + 1;
-        }
-      }
-      else
-        out += (out.size() ? " " : "") + one;
-    }
+    std::string out;
+    for(const auto &p : f.patterns()) out += (out.size() ? " " : "") + p;
     return qtString(out);
   }
 
@@ -494,7 +465,7 @@ namespace {
     {
       QStringList filters;
       for(const auto &f : formats) {
-        QString p = _patterns(f.pattern);
+        QString p = _patterns(f);
         filters << (f.name.size() ? qtString(f.name) + " (" + p + ")" : p);
       }
       QString joined = filters.join(";;");
@@ -786,10 +757,7 @@ void qtRefreshBar()
 {
   if(!_w || !qtSources().barButtons) return;
   std::vector<Ui::BarButton> bar = qtSources().barButtons();
-  std::string shape;
-  for(const auto &b : bar)
-    shape += b.label + "|" + b.labelOn + (b.gapBefore ? "^" : "") +
-             (b.menu ? "v" : "") + ";";
+  std::string shape = Ui::signature(bar);
   QHBoxLayout *h = (QHBoxLayout *)_w->buttons->layout();
   if(shape != _w->barBuilt) {
     _w->barBuilt = shape;

@@ -207,6 +207,9 @@ namespace Ui {
         : name(n), pattern(p)
       {
       }
+      // the pattern as plain patterns, one per extension: "*.{geo,msh}" is
+      // "*.geo", "*.msh"; "*.*" is "*"; separated by blanks or ';'
+      std::vector<std::string> patterns() const;
     };
     // mode 0 opens, 1 creates, 2 opens several; names comes in with what to
     // start from; chosenFormat is the place in formats, -1 when the chooser

@@ -160,10 +160,7 @@ namespace {
     std::vector<Ui::Button> row = cocoaSources().tree.footer ?
                                     cocoaSources().tree.footer() :
                                     std::vector<Ui::Button>();
-    std::string shape;
-    for(const auto &b : row)
-      shape += b.label + (b.on && b.on() ? "+" : "") +
-               (b.enabled && !b.enabled() ? "-" : "") + ";";
+    std::string shape = Ui::signature(row);
     if(shape == _w->footerBuilt) return;
     _w->footerBuilt = shape;
     NSView *footer = _w->treeBox->footer;
@@ -222,47 +219,11 @@ namespace {
     [[_w->window contentView] resizeSubviewsWithOldSize:NSZeroSize];
   }
 
-  // "*.geo", "*.{geo,msh}", "*.*" as the extensions a panel allows; none
-  // for anything
-  std::vector<std::string> _extensions(const std::string &said)
+  // the extensions a panel allows; none for anything
+  std::vector<std::string> _extensions(const Ui::Backend::FileFormat &f)
   {
-    // the braces first: "*.{geo,msh}" is "*.geo *.msh"
-    std::string flat;
-    std::size_t i = 0;
-    while(i < said.size()) {
-      std::size_t open = said.find('{', i), close = said.find('}', open);
-      if(open == std::string::npos || close == std::string::npos) {
-        flat += said.substr(i);
-        break;
-      }
-      std::size_t word = said.find_last_of(" ;\t", open);
-      word = word == std::string::npos || word < i ? i : word + 1;
-      flat += said.substr(i, word - i);
-      std::string head = said.substr(word, open - word);
-      std::string inside = said.substr(open + 1, close - open - 1);
-      std::size_t k = 0;
-      while(true) {
-        std::size_t comma = inside.find(',', k);
-        flat +=
-          " " + head +
-          inside.substr(k, comma == std::string::npos ? std::string::npos :
-                                                        comma - k);
-        if(comma == std::string::npos) break;
-        k = comma + 1;
-      }
-      flat += " ";
-      i = close + 1;
-    }
-    for(char &c : flat)
-      if(c == ';' || c == '\t') c = ' ';
     std::vector<std::string> out;
-    std::size_t at = 0;
-    while(at < flat.size()) {
-      std::size_t end = flat.find(' ', at);
-      std::string one =
-        flat.substr(at, end == std::string::npos ? end : end - at);
-      at = end == std::string::npos ? flat.size() : end + 1;
-      if(one.empty()) continue;
+    for(const auto &one : f.patterns()) {
       std::size_t dot = one.rfind('.');
       std::string ext = dot == std::string::npos ? one : one.substr(dot + 1);
       if(ext.empty() || ext.find('*') != std::string::npos) return {};
@@ -767,7 +728,7 @@ namespace {
       // several formats may share an extension: the one picked is said, from
       // a menu under the panel
       std::vector<std::vector<std::string>> allowed;
-      for(const auto &f : formats) allowed.push_back(_extensions(f.pattern));
+      for(const auto &f : formats) allowed.push_back(_extensions(f));
       NSPopUpButton *which = nil;
       if(formats.size() > 1) {
         which = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 320, 26)
@@ -1112,10 +1073,7 @@ void cocoaRefreshBar()
   if(!_w || !cocoaSources().barButtons) return;
   GmshBar *barView = _w->bar;
   std::vector<Ui::BarButton> bar = cocoaSources().barButtons();
-  std::string shape;
-  for(const auto &b : bar)
-    shape += b.label + "|" + b.labelOn + (b.gapBefore ? "^" : "") +
-             (b.menu ? "v" : "") + ";";
+  std::string shape = Ui::signature(bar);
   NSView *row = barView->buttons;
   bool tips = cocoaSources().settings().tooltips;
   if(shape != _w->barBuilt) {

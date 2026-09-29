@@ -461,6 +461,23 @@ namespace Ui {
     int leastRows = 0;
   };
 
+  // --- what the interfaces that keep widgets ask of a description
+
+  // whether it is to be shown now: a field or a box whose visibleWhen says
+  // so, anything else that is something
+  bool shown(const Item &it);
+  // what makes the widgets of a form be built again when it changes: the
+  // fields, their kinds and buttons, the boxes, tabs, headings and rules.
+  // shownOnly: what is hidden is not built at all (the interfaces made of
+  // boxes), so that showing it changes the shape; placing interfaces give
+  // it no room instead, and keep its widgets
+  std::string signature(const Form &form, bool shownOnly = false);
+  // the same for a row of buttons, whose labels and states they show
+  std::string signature(const std::vector<Button> &buttons);
+  // what is folded away now, as a word: a placing interface places the form
+  // again only when this changes
+  std::string folding(const Form &form);
+
 } // namespace Ui
 
 #endif

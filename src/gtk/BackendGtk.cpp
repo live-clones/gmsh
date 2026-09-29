@@ -181,10 +181,7 @@ void gtkRefreshBar()
   if(!_w || !gtkSources().barButtons) return;
   std::vector<Ui::BarButton> bar = gtkSources().barButtons();
   // made again when the buttons are not the same ones
-  std::string shape;
-  for(const auto &b : bar)
-    shape += b.label + "|" + b.labelOn + (b.gapBefore ? "^" : "") +
-             (b.menu ? "v" : "") + ";";
+  std::string shape = Ui::signature(bar);
   if(shape != _w->barBuilt) {
     _w->barBuilt = shape;
     while(GtkWidget *c = gtk_widget_get_first_child(_w->buttons))
@@ -265,10 +262,7 @@ namespace {
     std::vector<Ui::Button> row = gtkSources().tree.footer ?
                                     gtkSources().tree.footer() :
                                     std::vector<Ui::Button>();
-    std::string shape;
-    for(const auto &b : row)
-      shape += b.label + (b.on && b.on() ? "+" : "") +
-               (b.enabled && !b.enabled() ? "-" : "") + ";";
+    std::string shape = Ui::signature(row);
     if(shape == _w->footerBuilt) return;
     _w->footerBuilt = shape;
     while(GtkWidget *c = gtk_widget_get_first_child(_w->footer))
@@ -553,37 +547,10 @@ namespace {
     return w;
   }
 
-  // "*.geo", "*.{geo,msh}", "*.*" as GTK has patterns
-  void _patterns(GtkFileFilter *filter, const std::string &said)
+  void _patterns(GtkFileFilter *filter, const Ui::Backend::FileFormat &f)
   {
-    std::string all = said;
-    for(char &c : all)
-      if(c == ';' || c == '\t') c = ' ';
-    std::size_t at = 0;
-    while(at < all.size()) {
-      std::size_t end = all.find(' ', at);
-      std::string one = all.substr(at, end == std::string::npos ? end : end - at);
-      at = end == std::string::npos ? all.size() : end + 1;
-      if(one.empty()) continue;
-      if(one == "*.*") one = "*";
-      std::size_t open = one.find('{'), close = one.find('}');
-      if(open != std::string::npos && close != std::string::npos && close > open) {
-        std::string head = one.substr(0, open), tail = one.substr(close + 1);
-        std::string inside = one.substr(open + 1, close - open - 1);
-        std::size_t k = 0;
-        while(k <= inside.size()) {
-          std::size_t comma = inside.find(',', k);
-          std::string part = inside.substr(k, comma == std::string::npos ?
-                                                std::string::npos :
-                                                comma - k);
-          gtk_file_filter_add_pattern(filter, (head + part + tail).c_str());
-          if(comma == std::string::npos) break;
-          k = comma + 1;
-        }
-      }
-      else
-        gtk_file_filter_add_pattern(filter, one.c_str());
-    }
+    for(const auto &p : f.patterns())
+      gtk_file_filter_add_pattern(filter, p.c_str());
   }
 
   struct choosing {
@@ -944,7 +911,7 @@ namespace {
           std::string name = f.name.size() ? f.name + " (" + f.pattern + ")" :
                                              f.pattern;
           gtk_file_filter_set_name(filter, name.c_str());
-          _patterns(filter, f.pattern);
+          _patterns(filter, f);
           g_list_store_append(filters, filter);
           g_object_unref(filter);
         }

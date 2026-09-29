@@ -1063,42 +1063,6 @@ namespace {
     return true;
   }
 
-  // the patterns of a format: "*.geo", "*.{geo,msh}", "*.*"
-  std::vector<std::string> _patterns(const std::string &said)
-  {
-    std::vector<std::string> out;
-    std::string all = said;
-    for(char &c : all)
-      if(c == ';' || c == '\t') c = ' ';
-    std::size_t at = 0;
-    while(at < all.size()) {
-      std::size_t end = all.find(' ', at);
-      std::string one = all.substr(at, end == std::string::npos ? end : end - at);
-      at = end == std::string::npos ? all.size() : end + 1;
-      if(one.empty()) continue;
-      if(one == "*.*") one = "*";
-      std::size_t open = one.find('{'), close = one.find('}');
-      if(open != std::string::npos && close != std::string::npos && close > open) {
-        std::string head = one.substr(0, open), tail = one.substr(close + 1);
-        std::string inside = one.substr(open + 1, close - open - 1);
-        std::size_t k = 0;
-        while(k <= inside.size()) {
-          std::size_t comma = inside.find(',', k);
-          out.push_back(head +
-                        inside.substr(k, comma == std::string::npos ?
-                                           std::string::npos :
-                                           comma - k) +
-                        tail);
-          if(comma == std::string::npos) break;
-          k = comma + 1;
-        }
-      }
-      else
-        out.push_back(one);
-    }
-    return out;
-  }
-
   void _listFiles()
   {
     state::chooser &f = _s().files;
@@ -1106,7 +1070,7 @@ namespace {
     std::vector<std::string> dirs, files;
     std::vector<std::string> patterns;
     if(f.format >= 0 && f.format < (int)f.formats.size())
-      patterns = _patterns(f.formats[(std::size_t)f.format].pattern);
+      patterns = f.formats[(std::size_t)f.format].patterns();
     std::error_code ec;
     for(const auto &e : std::filesystem::directory_iterator(f.dir, ec)) {
       std::string name = e.path().filename().string();

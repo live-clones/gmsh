@@ -929,14 +929,6 @@ Element Tui::tree(const Ui::Tree &t, TreeState &state, bool picks,
 
 namespace {
 
-  bool _shown(const Ui::Item &it)
-  {
-    if(it.kind == Ui::Item::AField)
-      return !it.field.visible || it.field.visible();
-    if(it.kind == Ui::Item::ABox) return !it.box->visible || it.box->visible();
-    return it.kind != Ui::Item::Nothing;
-  }
-
   bool _gap(const Ui::Item &it)
   {
     return it.kind == Ui::Item::AField && it.field.kind == Ui::Spacer;
@@ -955,7 +947,7 @@ namespace {
 
     void widest(const Ui::Item &it)
     {
-      if(!_shown(it)) return;
+      if(!Ui::shown(it)) return;
       if(it.kind == Ui::Item::AField && it.field.labelBefore)
         before = std::max(before, (int)it.field.label.size());
       if(it.kind == Ui::Item::ABox)
@@ -1113,7 +1105,7 @@ namespace {
 
     Element render(const Ui::Item &item)
     {
-      if(!_shown(item)) return text("");
+      if(!Ui::shown(item)) return text("");
       switch(item.kind) {
       case Ui::Item::ATabs: {
         const Ui::Tabs &t = *item.tabs;
@@ -1161,17 +1153,17 @@ namespace {
           if(b.direction == Ui::Box::Across) {
             rows.emplace_back();
             for(const auto &i : b.items)
-              if(_shown(i)) rows.back().push_back(&i);
+              if(Ui::shown(i)) rows.back().push_back(&i);
           }
           else
             for(const auto &i : b.items) {
-              if(!_shown(i)) continue;
+              if(!Ui::shown(i)) continue;
               if(i.kind == Ui::Item::ABox &&
                  i.box->direction == Ui::Box::Across && !i.box->grid &&
                  !i.box->scrolling) {
                 rows.emplace_back();
                 for(const auto &j : i.box->items)
-                  if(_shown(j)) rows.back().push_back(&j);
+                  if(Ui::shown(j)) rows.back().push_back(&j);
               }
               else
                 rows.push_back({&i});
@@ -1184,7 +1176,7 @@ namespace {
         }
         Elements down;
         for(const auto &i : b.items) {
-          if(!_shown(i)) continue;
+          if(!Ui::shown(i)) continue;
           Element one = render(i);
           down.push_back(Ui::fills(i) || _gap(i) ? (one | flex) : one);
         }

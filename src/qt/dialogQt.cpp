@@ -41,14 +41,6 @@ namespace {
   const double LineGap = 8. / 13., CellGap = 6. / 13., LinePad = 2. / 13.,
                GridRowGap = 4. / 13., PanePad = 6. / 13.;
 
-  bool _shown(const Ui::Item &it)
-  {
-    if(it.kind == Ui::Item::AField)
-      return !it.field.visible || it.field.visible();
-    if(it.kind == Ui::Item::ABox) return !it.box->visible || it.box->visible();
-    return it.kind != Ui::Item::Nothing;
-  }
-
   bool _gap(const Ui::Item &it)
   {
     return it.kind == Ui::Item::AField && it.field.kind == Ui::Spacer;
@@ -56,48 +48,9 @@ namespace {
 
   int _leastPx(int rows) { return rows * (qtPx(1.15) + 12); }
 
-  void _sign(const Ui::Item &it, std::string &s)
-  {
-    if(!_shown(it)) {
-      s += "|-";
-      return;
-    }
-    switch(it.kind) {
-    case Ui::Item::AField:
-      s += "/" + it.field.label + (char)('a' + it.field.kind);
-      if(it.field.kind == Ui::Choice && it.field.multiple) s += '*';
-      break;
-    case Ui::Item::ABox:
-      s += it.box->direction == Ui::Box::Down ? "|v" : "|h";
-      if(it.box->grid) s += 'g';
-      if(it.box->scrolling) s += 's';
-      for(const auto &i : it.box->items) _sign(i, s);
-      s += "|.";
-      break;
-    case Ui::Item::ATabs:
-      s += "|t";
-      for(const auto &t : it.tabs->tabs) {
-        s += "|" + t.first;
-        _sign(t.second, s);
-      }
-      s += "|.";
-      break;
-    case Ui::Item::AHeading: s += "|=" + it.text; break;
-    case Ui::Item::ARule: s += "|_"; break;
-    default: break;
-    }
-  }
-
-  std::string _signature(const Ui::Form &f)
-  {
-    std::string s = f.title;
-    _sign(f.content, s);
-    return s;
-  }
-
   void _fieldsOf(const Ui::Item &it, std::vector<const Ui::Field *> &out)
   {
-    if(!_shown(it)) return;
+    if(!Ui::shown(it)) return;
     if(it.kind == Ui::Item::AField) {
       if(it.field.kind != Ui::Spacer) out.push_back(&it.field);
     }
@@ -109,7 +62,7 @@ namespace {
 
   void _tabsOf(const Ui::Item &it, std::vector<const Ui::Tabs *> &out)
   {
-    if(!_shown(it)) return;
+    if(!Ui::shown(it)) return;
     if(it.kind == Ui::Item::ABox)
       for(const auto &i : it.box->items) _tabsOf(i, out);
     else if(it.kind == Ui::Item::ATabs) {
@@ -120,7 +73,7 @@ namespace {
 
   double _widestEm(const Ui::Item &it)
   {
-    if(!_shown(it)) return 0.;
+    if(!Ui::shown(it)) return 0.;
     if(it.kind == Ui::Item::ATabs) {
       double most = 0.;
       for(const auto &t : it.tabs->tabs)
@@ -134,7 +87,7 @@ namespace {
     }
     std::vector<double> each;
     for(const auto &i : it.box->items)
-      if(_shown(i)) each.push_back(_widestEm(i));
+      if(Ui::shown(i)) each.push_back(_widestEm(i));
     if(it.box->direction == Ui::Box::Down) {
       double most = 0.;
       for(double w : each) most = std::max(most, w);
@@ -497,7 +450,7 @@ void dialogQt::_lines(const std::vector<std::vector<const Ui::Item *> > &rows,
 
 void dialogQt::_render(const Ui::Item &item, QVBoxLayout *into, bool inside)
 {
-  if(!_shown(item)) return;
+  if(!Ui::shown(item)) return;
   switch(item.kind) {
   case Ui::Item::ATabs: {
     QTabWidget *t = new QTabWidget;
@@ -581,16 +534,16 @@ void dialogQt::_render(const Ui::Item &item, QVBoxLayout *into, bool inside)
       if(b.direction == Ui::Box::Across) {
         rows.emplace_back();
         for(const auto &i : b.items)
-          if(_shown(i)) rows.back().push_back(&i);
+          if(Ui::shown(i)) rows.back().push_back(&i);
       }
       else
         for(const auto &i : b.items) {
-          if(!_shown(i)) continue;
+          if(!Ui::shown(i)) continue;
           if(i.kind == Ui::Item::ABox && i.box->direction == Ui::Box::Across &&
              !i.box->grid && !i.box->scrolling) {
             rows.emplace_back();
             for(const auto &j : i.box->items)
-              if(_shown(j)) rows.back().push_back(&j);
+              if(Ui::shown(j)) rows.back().push_back(&j);
           }
           else
             rows.push_back({&i});
@@ -630,7 +583,7 @@ void dialogQt::build()
 {
   building = true;
   panel = *which;
-  built = _signature(panel);
+  built = Ui::signature(panel, true);
   if(!dock) {
     dock = new formDock(qtString(panel.title), _main);
     dock->setObjectName(qtString("gmsh-" + panel.id));
@@ -689,7 +642,7 @@ void dialogQt::reshape()
 {
   if(!which) return;
   Ui::Form now = *which;
-  if(!dock || _signature(now) != built) {
+  if(!dock || Ui::signature(now, true) != built) {
     build();
     refresh();
     return;
@@ -701,7 +654,7 @@ void dialogQt::reshape()
 void dialogQt::show()
 {
   Ui::Form now = *which;
-  if(!dock || _signature(now) != built) build();
+  if(!dock || Ui::signature(now, true) != built) build();
   panel = now;
   forcePane = true;
   refresh();

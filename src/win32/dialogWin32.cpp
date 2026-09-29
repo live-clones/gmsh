@@ -21,60 +21,6 @@
 
 namespace {
 
-  // what the window is made of: built again only when this changes
-  void _sign(const Ui::Item &it, std::string &s)
-  {
-    switch(it.kind) {
-    case Ui::Item::AField:
-      s += "/" + it.field.label + (char)('a' + it.field.kind);
-      if(it.field.kind == Ui::Choice && it.field.multiple) s += '*';
-      break;
-    case Ui::Item::ABox:
-      s += it.box->direction == Ui::Box::Down ? "|v" : "|h";
-      if(it.box->scrolling) s += 's';
-      for(const auto &i : it.box->items) _sign(i, s);
-      s += "|.";
-      break;
-    case Ui::Item::ATabs:
-      s += "|t";
-      for(const auto &t : it.tabs->tabs) {
-        s += "|" + t.first;
-        _sign(t.second, s);
-      }
-      s += "|.";
-      break;
-    case Ui::Item::AHeading: s += "|=" + it.text; break;
-    case Ui::Item::ARule: s += "|_"; break;
-    default: break;
-    }
-  }
-
-  std::string _signature(const Ui::Form &p)
-  {
-    std::string s = p.title;
-    _sign(p.content, s);
-    return s;
-  }
-
-  // what is folded away: placing the form again is only worth it when this
-  // changes
-  void _folded(const Ui::Item &it, std::string &s)
-  {
-    switch(it.kind) {
-    case Ui::Item::AField:
-      if(it.field.visible) s += it.field.visible() ? '+' : '-';
-      break;
-    case Ui::Item::ABox:
-      if(it.box->visible) s += it.box->visible() ? '+' : '-';
-      for(const auto &i : it.box->items) _folded(i, s);
-      break;
-    case Ui::Item::ATabs:
-      for(const auto &t : it.tabs->tabs) _folded(t.second, s);
-      break;
-    default: break;
-    }
-  }
-
   const int ScrollStep = 30;
 
 } // namespace
@@ -362,9 +308,8 @@ void dialogWin32::build()
   bool again = win != nullptr;
   _clear();
   panel = *which;
-  built = _signature(panel);
-  folding.clear();
-  _folded(panel.content, folding);
+  built = Ui::signature(panel);
+  folding = Ui::folding(panel);
   forcePane = true;
 
   Ui::Placement placement = _placement(panel);
@@ -525,8 +470,7 @@ void dialogWin32::scroll(HWND view, int to)
 bool dialogWin32::relayout(bool always)
 {
   if(!win) return true;
-  std::string folded;
-  _folded(panel.content, folded);
+  std::string folded = Ui::folding(panel);
   if(!always && folded == folding) return true;
   folding = folded;
   Ui::Placement placement = _placement(panel);
@@ -593,7 +537,7 @@ void dialogWin32::reshape()
 {
   if(!which) return;
   Ui::Form now = *which;
-  if(win && _signature(now) == built) {
+  if(win && Ui::signature(now) == built) {
     panel = now;
     if(relayout(true)) {
       refresh();
@@ -607,7 +551,7 @@ void dialogWin32::reshape()
 void dialogWin32::show()
 {
   Ui::Form now = *which;
-  if(!win || _signature(now) != built)
+  if(!win || Ui::signature(now) != built)
     build();
   else
     panel = now;

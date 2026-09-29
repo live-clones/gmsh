@@ -300,40 +300,6 @@ namespace {
     return m;
   }
 
-  // what the window is made of: the dialog is only built again when this
-  // changes
-  void _sign(const Ui::Item &it, std::string &s)
-  {
-    switch(it.kind) {
-    case Ui::Item::AField:
-      s += "/" + it.field.label + (char)('0' + it.field.kind);
-      break;
-    case Ui::Item::ABox:
-      s += it.box->direction == Ui::Box::Down ? "|v" : "|h";
-      for(const auto &i : it.box->items) _sign(i, s);
-      s += "|.";
-      break;
-    case Ui::Item::ATabs:
-      s += "|t";
-      for(const auto &t : it.tabs->tabs) {
-        s += "|" + t.first;
-        _sign(t.second, s);
-      }
-      s += "|.";
-      break;
-    case Ui::Item::AHeading: s += "|=" + it.text; break;
-    case Ui::Item::ARule: s += "|_"; break;
-    default: break;
-    }
-  }
-
-  std::string _signature(const Ui::Form &p)
-  {
-    std::string s = p.title;
-    _sign(p.content, s);
-    return s;
-  }
-
   // a drag, the wheel, a letter typed are steps of the choosing; Enter, the
   // button let go or the field left end it
   bool _choosingEnds()
@@ -730,7 +696,7 @@ void dialogFltk::reshape()
 {
   if(!_which) return;
   Ui::Form now = *_which;
-  if(_win && _signature(now) == _signatureBuilt) {
+  if(_win && Ui::signature(now) == _signatureBuilt) {
     _panel = now;
     if(_relayout(true)) {
       refresh();
@@ -764,25 +730,6 @@ Ui::Placement dialogFltk::_placement(const Ui::Form &p)
 }
 
 namespace {
-  // what is folded away, as a word: placing the form again is only worth it
-  // when this changes
-  void _folded(const Ui::Item &it, std::string &s)
-  {
-    switch(it.kind) {
-    case Ui::Item::AField:
-      if(it.field.visible) s += it.field.visible() ? '+' : '-';
-      break;
-    case Ui::Item::ABox:
-      if(it.box->visible) s += it.box->visible() ? '+' : '-';
-      for(const auto &i : it.box->items) _folded(i, s);
-      break;
-    case Ui::Item::ATabs:
-      for(const auto &t : it.tabs->tabs) _folded(t.second, s);
-      break;
-    default: break;
-    }
-  }
-
   void _show(Fl_Widget *w, bool shown)
   {
     if(!w) return;
@@ -798,8 +745,7 @@ namespace {
 bool dialogFltk::_relayout(bool always)
 {
   if(!_win) return true;
-  std::string folded;
-  _folded(_panel.content, folded);
+  std::string folded = Ui::folding(_panel);
   if(!always && folded == _folding) return true;
   _folding = folded;
   Ui::Placement placement = _placement(_panel);
@@ -907,9 +853,8 @@ void dialogFltk::build(const Ui::Form &form)
 
   _which = &form;
   _panel = form;
-  _signatureBuilt = _signature(_panel);
-  _folding.clear();
-  _folded(_panel.content, _folding);
+  _signatureBuilt = Ui::signature(_panel);
+  _folding = Ui::folding(_panel);
   _forcePane = true;
 
   const double em = FL_NORMAL_SIZE;
@@ -1340,7 +1285,7 @@ void dialogFltk::show()
   // rebuilding a window that is up makes it blink and come back elsewhere
   if(!_which) return;
   Ui::Form now = *_which;
-  if(!_win || _signature(now) != _signatureBuilt)
+  if(!_win || Ui::signature(now) != _signatureBuilt)
     build(*_which);
   else
     _panel = now;

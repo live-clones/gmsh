@@ -43,63 +43,6 @@ namespace {
                       r.size.width, r.size.height);
   }
 
-  // what the panel is made of: the widgets are only made again when this
-  // changes
-  void _sign(const Ui::Item &it, std::string &s)
-  {
-    switch(it.kind) {
-    case Ui::Item::AField:
-      s += "/" + it.field.label + (char)('a' + it.field.kind);
-      if(it.field.kind == Ui::Choice && it.field.multiple) s += '*';
-      s += std::to_string(it.field.trailing.size());
-      break;
-    case Ui::Item::ABox:
-      s += it.box->direction == Ui::Box::Down ? "|v" : "|h";
-      if(it.box->grid) s += 'g';
-      if(it.box->scrolling) s += 's';
-      for(const auto &i : it.box->items) _sign(i, s);
-      s += "|.";
-      break;
-    case Ui::Item::ATabs:
-      s += "|t";
-      for(const auto &t : it.tabs->tabs) {
-        s += "|" + t.first;
-        _sign(t.second, s);
-      }
-      s += "|.";
-      break;
-    case Ui::Item::AHeading: s += "|=" + it.text; break;
-    case Ui::Item::ARule: s += "|_"; break;
-    default: break;
-    }
-  }
-
-  std::string _signature(const Ui::Form &f)
-  {
-    std::string s = f.title;
-    _sign(f.content, s);
-    return s;
-  }
-
-  // what is folded away, as a word: placing the form again is only worth it
-  // when this changes
-  void _folded(const Ui::Item &it, std::string &s)
-  {
-    switch(it.kind) {
-    case Ui::Item::AField:
-      if(it.field.visible) s += it.field.visible() ? '+' : '-';
-      break;
-    case Ui::Item::ABox:
-      if(it.box->visible) s += it.box->visible() ? '+' : '-';
-      for(const auto &i : it.box->items) _folded(i, s);
-      break;
-    case Ui::Item::ATabs:
-      for(const auto &t : it.tabs->tabs) _folded(t.second, s);
-      break;
-    default: break;
-    }
-  }
-
   bool _tall(const Ui::Field &f)
   {
     return f.kind == Ui::Prose || f.kind == Ui::List ||
@@ -559,9 +502,8 @@ void dialogCocoa::build()
 {
   building = true;
   panel = *which;
-  built = _signature(panel);
-  folding.clear();
-  _folded(panel.content, folding);
+  built = Ui::signature(panel);
+  folding = Ui::folding(panel);
   if(!win) {
     win = [[GmshFormPanel alloc]
       initWithContentRect:NSMakeRect(0, 0, 300, 200)
@@ -655,8 +597,7 @@ void dialogCocoa::tabChosen(std::size_t index, NSInteger segment)
 void dialogCocoa::refresh()
 {
   // what folded away takes no room: the widgets are moved
-  std::string now;
-  _folded(panel.content, now);
+  std::string now = Ui::folding(panel);
   if(now != folding) {
     folding = now;
     Ui::Placement p = _placement(_room());
@@ -684,8 +625,7 @@ void dialogCocoa::_take(const Ui::Form &now)
     build();
     return;
   }
-  folding.clear();
-  _folded(panel.content, folding);
+  folding = Ui::folding(panel);
   bool moved = false;
   for(std::size_t i = 0; i < placed.size() && !moved; i++) {
     const Ui::Rect &a = placed[i].box, &b = p.items[i].box;
@@ -701,7 +641,7 @@ void dialogCocoa::reshape()
 {
   if(!which) return;
   Ui::Form now = *which;
-  if(!win || _signature(now) != built)
+  if(!win || Ui::signature(now) != built)
     build();
   else
     _take(now);
@@ -711,7 +651,7 @@ void dialogCocoa::reshape()
 void dialogCocoa::show()
 {
   Ui::Form now = *which;
-  if(!win || _signature(now) != built)
+  if(!win || Ui::signature(now) != built)
     build();
   else
     _take(now);

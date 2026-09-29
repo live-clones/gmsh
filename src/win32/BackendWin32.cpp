@@ -193,10 +193,7 @@ namespace {
     if(!_w) return;
     std::vector<Ui::Button> row =
       _sources.tree.footer ? _sources.tree.footer() : std::vector<Ui::Button>();
-    std::string shape;
-    for(const auto &b : row)
-      shape += b.label + (b.on && b.on() ? "+" : "") +
-               (b.enabled && !b.enabled() ? "-" : "") + ";";
+    std::string shape = Ui::signature(row);
     if(shape == _w->footerBuilt) return;
     _w->footerBuilt = shape;
     for(HWND b : _w->footerButtons) DestroyWindow(b);
@@ -507,37 +504,12 @@ namespace {
     return a.answer == 1;
   }
 
-  // "*.geo", "*.{geo,msh}", "*.*" as Windows writes a filter
-  std::wstring _patterns(const std::string &said)
+  // as Windows writes a filter: the patterns separated by ';'
+  std::wstring _patterns(const Ui::Backend::FileFormat &f)
   {
-    std::string all = said, out;
-    for(char &c : all)
-      if(c == ';' || c == '\t') c = ' ';
-    std::size_t at = 0;
-    while(at < all.size()) {
-      std::size_t end = all.find(' ', at);
-      std::string one = all.substr(at, end == std::string::npos ? end : end - at);
-      at = end == std::string::npos ? all.size() : end + 1;
-      if(one.empty()) continue;
-      std::size_t open = one.find('{'), close = one.find('}');
-      if(open != std::string::npos && close != std::string::npos && close > open) {
-        std::string head = one.substr(0, open), tail = one.substr(close + 1);
-        std::string inside = one.substr(open + 1, close - open - 1);
-        std::size_t k = 0;
-        while(k <= inside.size()) {
-          std::size_t comma = inside.find(',', k);
-          out += (out.size() ? ";" : "") + head +
-                 inside.substr(k, comma == std::string::npos ? std::string::npos :
-                                                               comma - k) +
-                 tail;
-          if(comma == std::string::npos) break;
-          k = comma + 1;
-        }
-      }
-      else
-        out += (out.size() ? ";" : "") + one;
-    }
-    return win32Wide(out.empty() ? "*.*" : out);
+    std::string out;
+    for(const auto &p : f.patterns()) out += (out.size() ? ";" : "") + p;
+    return win32Wide(out.empty() ? "*" : out);
   }
 
   std::string _path(IShellItem *item)
@@ -830,7 +802,7 @@ namespace {
       keep.reserve(2 * formats.size());
       for(const auto &f : formats) {
         keep.push_back(win32Wide(f.name.size() ? f.name : f.pattern));
-        keep.push_back(_patterns(f.pattern));
+        keep.push_back(_patterns(f));
       }
       for(std::size_t i = 0; i < formats.size(); i++)
         specs.push_back({keep[2 * i].c_str(), keep[2 * i + 1].c_str()});
@@ -1066,10 +1038,7 @@ void win32RefreshBar()
 {
   if(!_w || !_sources.barButtons) return;
   std::vector<Ui::BarButton> bar = _sources.barButtons();
-  std::string shape;
-  for(const auto &b : bar)
-    shape += b.label + "|" + b.labelOn + (b.gapBefore ? "^" : "") +
-             (b.menu ? "v" : "") + ";";
+  std::string shape = Ui::signature(bar);
   if(shape != _w->barBuilt) {
     _w->barBuilt = shape;
     for(HWND b : _w->buttons) DestroyWindow(b);

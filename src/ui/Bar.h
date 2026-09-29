@@ -46,6 +46,10 @@ namespace Ui {
     std::string progressText;
   };
 
+  // what makes the buttons of the bar be made again: their labels, their
+  // gaps and which have a menu (what is on and enabled is only refreshed)
+  std::string signature(const std::vector<BarButton> &buttons);
+
 } // namespace Ui
 
 #endif

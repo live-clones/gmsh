@@ -108,5 +108,88 @@ namespace Ui {
                   (unsigned char)(b * 255. + .5), alpha);
   }
 
+  bool shown(const Item &it)
+  {
+    if(it.kind == Item::AField) return !it.field.visible || it.field.visible();
+    if(it.kind == Item::ABox) return !it.box->visible || it.box->visible();
+    return it.kind != Item::Nothing;
+  }
+
+  namespace {
+    void _sign(const Item &it, bool shownOnly, std::string &s)
+    {
+      if(shownOnly && !shown(it)) {
+        s += "|-";
+        return;
+      }
+      switch(it.kind) {
+      case Item::AField:
+        s += "/" + it.field.label + (char)('a' + it.field.kind);
+        if(it.field.kind == Choice && it.field.multiple) s += '*';
+        s += std::to_string(it.field.trailing.size());
+        break;
+      case Item::ABox:
+        s += it.box->direction == Box::Down ? "|v" : "|h";
+        if(it.box->grid) s += 'g';
+        if(it.box->scrolling) s += 's';
+        for(const auto &i : it.box->items) _sign(i, shownOnly, s);
+        s += "|.";
+        break;
+      case Item::ATabs:
+        s += "|t";
+        for(const auto &t : it.tabs->tabs) {
+          s += "|" + t.first;
+          _sign(t.second, shownOnly, s);
+        }
+        s += "|.";
+        break;
+      case Item::AHeading: s += "|=" + it.text; break;
+      case Item::ARule: s += "|_"; break;
+      default: break;
+      }
+    }
+  } // namespace
+
+  std::string signature(const Form &form, bool shownOnly)
+  {
+    std::string s = form.title;
+    _sign(form.content, shownOnly, s);
+    return s;
+  }
+
+  namespace {
+    void _folded(const Item &it, std::string &s)
+    {
+      switch(it.kind) {
+      case Item::AField:
+        if(it.field.visible) s += it.field.visible() ? '+' : '-';
+        break;
+      case Item::ABox:
+        if(it.box->visible) s += it.box->visible() ? '+' : '-';
+        for(const auto &i : it.box->items) _folded(i, s);
+        break;
+      case Item::ATabs:
+        for(const auto &t : it.tabs->tabs) _folded(t.second, s);
+        break;
+      default: break;
+      }
+    }
+  } // namespace
+
+  std::string folding(const Form &form)
+  {
+    std::string s;
+    _folded(form.content, s);
+    return s;
+  }
+
+  std::string signature(const std::vector<Button> &buttons)
+  {
+    std::string s;
+    for(const auto &b : buttons)
+      s += b.label + (b.on && b.on() ? "+" : "") +
+           (b.enabled && !b.enabled() ? "-" : "") + ";";
+    return s;
+  }
 
 } // namespace Ui
