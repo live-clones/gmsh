@@ -33,28 +33,28 @@
 
 namespace {
 
-  Tui::Graphics _detect()
+  graphicsTui _detect()
   {
     // what one asks for comes first
     if(const char *said = getenv("GMSH_TUI_GRAPHICS")) {
       std::string s = said;
-      if(s == "kitty") return Tui::Kitty;
-      if(s == "sixel") return Tui::Sixel;
-      if(s == "blocks") return Tui::Blocks;
+      if(s == "kitty") return graphicsTui::Kitty;
+      if(s == "sixel") return graphicsTui::Sixel;
+      if(s == "blocks") return graphicsTui::Blocks;
     }
     int w = 0, h = 0;
-    if(!Tui::cellPixels(w, h)) return Tui::Blocks;
+    if(!tuiCellPixels(w, h)) return graphicsTui::Blocks;
     std::string term = getenv("TERM") ? getenv("TERM") : "";
     std::string program = getenv("TERM_PROGRAM") ? getenv("TERM_PROGRAM") : "";
     if(getenv("KITTY_WINDOW_ID") || term.find("kitty") != std::string::npos ||
        program == "WezTerm" || program == "ghostty" ||
        term.find("ghostty") != std::string::npos || getenv("KONSOLE_VERSION"))
-      return Tui::Kitty;
+      return graphicsTui::Kitty;
     if(term.find("foot") != std::string::npos ||
        term.find("mlterm") != std::string::npos ||
        term.find("sixel") != std::string::npos || program == "iTerm.app")
-      return Tui::Sixel;
-    return Tui::Blocks;
+      return graphicsTui::Sixel;
+    return graphicsTui::Blocks;
   }
 
   std::string _base64(const unsigned char *data, std::size_t n)
@@ -269,13 +269,13 @@ namespace {
 
 } // namespace
 
-Tui::Graphics Tui::graphics()
+graphicsTui tuiGraphics()
 {
-  static Graphics said = _detect();
+  static graphicsTui said = _detect();
   return said;
 }
 
-bool Tui::cellPixels(int &width, int &height)
+bool tuiCellPixels(int &width, int &height)
 {
   struct winsize ws;
   width = height = 0;
@@ -286,40 +286,40 @@ bool Tui::cellPixels(int &width, int &height)
   return width > 0 && height > 0;
 }
 
-void Tui::showPicture(const unsigned char *bmp, int w, int h, int x, int y,
+void tuiShowPicture(const unsigned char *bmp, int w, int h, int x, int y,
                       int cols, int rows)
 {
   if(!bmp || w < 1 || h < 1 || cols < 1 || rows < 1) return;
   std::string out = "\x1b" "7\x1b[" + std::to_string(y + 1) + ";" +
                     std::to_string(x + 1) + "H";
   std::string shared;
-  if(graphics() == Kitty && _sharedMemory()) shared = _toShared(bmp, w, h);
+  if(tuiGraphics() == graphicsTui::Kitty && _sharedMemory()) shared = _toShared(bmp, w, h);
   if(shared.size())
     out += _kittyShared(shared, w, h, cols, rows);
   else {
     std::vector<unsigned char> rgb = _rgb(bmp, w, h);
-    out += graphics() == Kitty ? _kitty(rgb, w, h, cols, rows) :
+    out += tuiGraphics() == graphicsTui::Kitty ? _kitty(rgb, w, h, cols, rows) :
                                  _sixel(rgb, w, h);
   }
   out += "\x1b" "8";
   std::cout << out << std::flush;
 }
 
-void Tui::clearPictures()
+void tuiClearPictures()
 {
-  if(graphics() == Kitty) std::cout << "\x1b_Ga=d,d=A,q=2\x1b\\" << std::flush;
+  if(tuiGraphics() == graphicsTui::Kitty) std::cout << "\x1b_Ga=d,d=A,q=2\x1b\\" << std::flush;
 }
 
-void Tui::hidePicture()
+void tuiHidePicture()
 {
   // the placement goes, the image stays, to be placed again
-  if(graphics() == Kitty)
+  if(tuiGraphics() == graphicsTui::Kitty)
     std::cout << "\x1b_Ga=d,d=i,i=" << _kittyId << ",q=2\x1b\\" << std::flush;
 }
 
-bool Tui::placeAgain(int x, int y, int cols, int rows)
+bool tuiPlaceAgain(int x, int y, int cols, int rows)
 {
-  if(graphics() != Kitty) return false;
+  if(tuiGraphics() != graphicsTui::Kitty) return false;
   std::cout << "\x1b" "7\x1b[" << y + 1 << ";" << x + 1 << "H"
             << "\x1b_Ga=p,i=" << _kittyId << ",p=1,c=" << cols << ",r=" << rows
             << ",C=1,q=2,z=" << _kittyUnder << "\x1b\\"

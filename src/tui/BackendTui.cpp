@@ -33,7 +33,7 @@ using namespace ftxui;
 // with the console under it, the forms docked down the right as on the page,
 // the bar along the bottom. Drawn afresh at every turn of FTXUI's loop, which
 // is turned by hand, so that check() and wait() can turn it from inside the
-// mesher; what the user does runs between two turns (Tui::later).
+// mesher; what the user does runs between two turns (tuiLater).
 
 // the menu of the bar dropped, and a form put away, from the handlers below
 void tuiOpenBarMenu(int i);
@@ -52,11 +52,11 @@ namespace {
     bool running = false, inTurn = false;
     std::atomic<int> locked{0};
 
-    std::vector<Tui::Hot> hots, drawn;
+    std::vector<hotTui> hots, drawn;
     // where the overlays start in the list: what is under them takes nothing
     std::size_t overlayStart = (std::size_t)-1, drawnOverlayStart = (std::size_t)-1;
     std::string focus;
-    Tui::Edit edit;
+    editTui edit;
     std::vector<std::function<void()> > later;
 
     // the menus open, the first one dropped from the bar or at a point
@@ -92,13 +92,13 @@ namespace {
     chooser files;
 
     // the main window
-    Tui::TreeState tree;
+    treeTui tree;
     bool treeShown = true, consoleShown = true, fullscreen = false;
     int treeWidth = 34, consoleHeight = 8;
     std::vector<std::pair<std::string, int> > lines;
     int consoleScroll = 0;
     std::vector<const Ui::Form *> forms;
-    std::map<const Ui::Form *, Tui::FormState> formStates;
+    std::map<const Ui::Form *, dialogTui> formStates;
     std::string title = "Gmsh";
 
     // the scene: the box it was given, and the picture shown in it
@@ -160,10 +160,10 @@ namespace {
   void _showPicture()
   {
     state &s = _s();
-    if(Tui::graphics() == Tui::Blocks || !s.drew) return;
+    if(tuiGraphics() == graphicsTui::Blocks || !s.drew) return;
     s.drew = false;
     if(_covered()) {
-      if(!s.hidden) Tui::hidePicture();
+      if(!s.hidden) tuiHidePicture();
       s.hidden = true;
       return;
     }
@@ -174,7 +174,7 @@ namespace {
       bool same = s.version == s.shownVersion && at.x_min == s.shownBox.x_min &&
                   at.x_max == s.shownBox.x_max && at.y_min == s.shownBox.y_min &&
                   at.y_max == s.shownBox.y_max;
-      if(same && Tui::placeAgain(at.x_min, at.y_min, at.x_max - at.x_min + 1,
+      if(same && tuiPlaceAgain(at.x_min, at.y_min, at.x_max - at.x_min + 1,
                                  at.y_max - at.y_min + 1))
         return;
       s.shownVersion = (unsigned)-1;
@@ -196,7 +196,7 @@ namespace {
     if(s.picture.size() <= 54) return;
     s.shownBox = b;
     s.shownVersion = s.version;
-    Tui::showPicture(&s.picture[0], s.pictureW, s.pictureH, b.x_min, b.y_min,
+    tuiShowPicture(&s.picture[0], s.pictureW, s.pictureH, b.x_min, b.y_min,
                      b.x_max - b.x_min + 1, b.y_max - b.y_min + 1);
   }
 
@@ -215,12 +215,12 @@ namespace {
       if(s.host.tick) s.host.tick();
       bool acted = !s.later.empty();
       _runLater();
-      if(s.host.sceneMoved && s.host.sceneMoved()) Tui::dirty();
+      if(s.host.sceneMoved && s.host.sceneMoved()) tuiDirty();
       // what watches something, and the progress, looked at now and then
       double now = _clock();
       if(now - s.lastRefresh > 1.) {
         s.lastRefresh = now;
-        Tui::dirty();
+        tuiDirty();
       }
       if(!blocking || acted || !s.loop || s.loop->HasQuitted() || k > 30) break;
       std::this_thread::sleep_for(std::chrono::milliseconds(16));
@@ -231,21 +231,21 @@ namespace {
 
 // --- what the other file asks
 
-const Ui::Backend::Sources &Tui::sources() { return _s().sources; }
-const Ui::Backend::Host &Tui::host() { return _s().host; }
+const Ui::Backend::Sources &tuiSources() { return _s().sources; }
+const Ui::Backend::Host &tuiHost() { return _s().host; }
 
-void Tui::later(const std::function<void()> &what)
+void tuiLater(const std::function<void()> &what)
 {
   _s().later.push_back(what);
-  dirty();
+  tuiDirty();
 }
 
-void Tui::dirty()
+void tuiDirty()
 {
   if(_s().app) _s().app->PostEvent(Event::Custom);
 }
 
-Element Tui::hot(Element e, Hot h)
+Element tuiHot(Element e, hotTui h)
 {
   if(!h.box) h.box = std::make_shared<Box>();
   std::shared_ptr<Box> b = h.box;
@@ -253,9 +253,9 @@ Element Tui::hot(Element e, Hot h)
   return e | reflect(*b);
 }
 
-bool Tui::focused(const std::string &id) { return !id.empty() && _s().focus == id; }
+bool tuiFocused(const std::string &id) { return !id.empty() && _s().focus == id; }
 
-void Tui::focus(const std::string &id)
+void tuiFocus(const std::string &id)
 {
   state &s = _s();
   if(s.focus == id) return;
@@ -267,16 +267,16 @@ void Tui::focus(const std::string &id)
     if(commit) commit(false);
   }
   s.focus = id;
-  dirty();
+  tuiDirty();
 }
 
-Tui::Edit &Tui::edit() { return _s().edit; }
+editTui &tuiEdit() { return _s().edit; }
 
-int Tui::cells(double em) { return std::max(1, (int)(em * 1.2 + .5)); }
+int tuiCells(double em) { return std::max(1, (int)(em * 1.2 + .5)); }
 
-bool Tui::editKey(const Event &e, bool &enter)
+bool tuiEditKey(const Event &e, bool &enter)
 {
-  Edit &ed = edit();
+  editTui &ed = tuiEdit();
   enter = false;
   std::string &t = ed.text;
   ed.cursor = std::min(ed.cursor, t.size());
@@ -320,7 +320,7 @@ bool Tui::editKey(const Event &e, bool &enter)
   return false;
 }
 
-bool Tui::uiKey(const Event &e, int &key, unsigned &mods)
+bool tuiUiKey(const Event &e, int &key, unsigned &mods)
 {
   key = 0;
   mods = 0;
@@ -395,7 +395,7 @@ bool Tui::uiKey(const Event &e, int &key, unsigned &mods)
   return false;
 }
 
-void Tui::popup(const std::vector<Ui::MenuItem> &items, int x, int y)
+void tuiPopupMenu(const std::vector<Ui::MenuItem> &items, int x, int y)
 {
   if(items.empty()) return;
   state::popupState p;
@@ -404,10 +404,10 @@ void Tui::popup(const std::vector<Ui::MenuItem> &items, int x, int y)
   p.y = y;
   _s().popups.clear();
   _s().popups.push_back(p);
-  dirty();
+  tuiDirty();
 }
 
-void Tui::choose(const std::vector<std::string> &labels, int current, int x,
+void tuiChoose(const std::vector<std::string> &labels, int current, int x,
                  int y, const std::function<void(int)> &picked)
 {
   if(labels.empty()) return;
@@ -419,10 +419,10 @@ void Tui::choose(const std::vector<std::string> &labels, int current, int x,
   p.y = y;
   _s().popups.clear();
   _s().popups.push_back(p);
-  dirty();
+  tuiDirty();
 }
 
-bool Tui::ask(const std::string &question, std::string &value)
+bool tuiAsk(const std::string &question, std::string &value)
 {
   state &s = _s();
   if(!s.loop || s.asking) return false;
@@ -442,7 +442,7 @@ bool Tui::ask(const std::string &question, std::string &value)
   if(ok) value = s.edit.text;
   s.edit.id.clear();
   s.focus.clear();
-  Tui::dirty();
+  tuiDirty();
   return ok;
 }
 
@@ -468,7 +468,7 @@ namespace {
     {
       state &s = _s();
       s.drew = true;
-      if(Tui::graphics() != Tui::Blocks && !_covered()) {
+      if(tuiGraphics() != graphicsTui::Blocks && !_covered()) {
         // the picture goes over these, which say nothing
         for(int y = box_.y_min; y <= box_.y_max; y++)
           for(int x = box_.x_min; x <= box_.x_max; x++) {
@@ -524,7 +524,7 @@ namespace {
     // down, then twice as many each way, averaged
     int cols = b.x_max - b.x_min + 1, rows = b.y_max - b.y_min + 1;
     int w = 2 * cols, h = 4 * rows;
-    if(Tui::graphics() != Tui::Blocks) {
+    if(tuiGraphics() != graphicsTui::Blocks) {
       w = cols * s.cellW;
       h = rows * s.cellH;
     }
@@ -547,7 +547,7 @@ namespace {
 
   Element _scene()
   {
-    Tui::Hot h;
+    hotTui h;
     h.box = std::make_shared<Box>();
     h.mouse = [](Mouse &m, int x, int y) {
       state &s = _s();
@@ -574,7 +574,7 @@ namespace {
       else
         button = std::max(0, s.pointerButton);
       double px = 2. * x + 1., py = 4. * y + 1.;
-      if(Tui::graphics() != Tui::Blocks) {
+      if(tuiGraphics() != graphicsTui::Blocks) {
         px = (x + .5) * s.cellW;
         py = (y + .5) * s.cellH;
       }
@@ -601,18 +601,18 @@ namespace {
         s.pendingMove.ctrl = ctrl;
         s.pendingMove.alt = alt;
         s.movePending = true;
-        if(!queued) Tui::later(tellMove);
+        if(!queued) tuiLater(tellMove);
       }
       else
-        Tui::later([tellMove, pointer, px, py, button, what, wheel, shift, ctrl,
+        tuiLater([tellMove, pointer, px, py, button, what, wheel, shift, ctrl,
                     alt]() {
           tellMove();
           pointer(px, py, button, what, wheel, shift, ctrl, alt);
         });
-      Tui::focus("");
+      tuiFocus("");
       return true;
     };
-    return Tui::hot(std::make_shared<sceneNode>(), h);
+    return tuiHot(std::make_shared<sceneNode>(), h);
   }
 
   // --- the menus
@@ -670,7 +670,7 @@ namespace {
       int i = p.selected;
       std::function<void(int)> picked = p.picked;
       s.popups.clear();
-      if(picked && i >= 0) Tui::later([picked, i]() { picked(i); });
+      if(picked && i >= 0) tuiLater([picked, i]() { picked(i); });
       return;
     }
     if(p.selected < 0 || p.selected >= (int)p.items.size()) return;
@@ -682,7 +682,7 @@ namespace {
     }
     std::function<void()> what = it.action;
     s.popups.clear();
-    Tui::later(what);
+    tuiLater(what);
   }
 
   Element _popupElement(std::size_t level)
@@ -710,7 +710,7 @@ namespace {
       row = row | size(WIDTH, EQUAL, width);
       if((int)i == p.selected) row = row | inverted;
       if(!enabled) row = row | dim;
-      Tui::Hot h;
+      hotTui h;
       int k = (int)i;
       h.mouse = [level, k](Mouse &m, int, int) {
         state &s = _s();
@@ -721,10 +721,10 @@ namespace {
           s.popups.resize(level + 1);
           _openSub(level);
         }
-        Tui::dirty();
+        tuiDirty();
         return true;
       };
-      rows.push_back(Tui::hot(row, h));
+      rows.push_back(tuiHot(row, h));
       if(p.labels.empty() && p.items[i].dividerAfter && i + 1 < n)
         rows.push_back(separator());
     }
@@ -837,7 +837,7 @@ void tuiOpenBarMenu(int i)
   p.barIndex = i;
   _s().popups.clear();
   _s().popups.push_back(p);
-  Tui::dirty();
+  tuiDirty();
 }
 
 namespace {
@@ -856,7 +856,7 @@ namespace {
       state &s = _s();
       if(s.popups.size() && s.popups[0].fromBar && s.popups[0].barIndex == (int)i)
         e = e | inverted;
-      Tui::Hot h;
+      hotTui h;
       int k = (int)i;
       h.mouse = [k](Mouse &m, int, int) {
         state &s = _s();
@@ -873,7 +873,7 @@ namespace {
           tuiOpenBarMenu(k);
         return open;
       };
-      row.push_back(Tui::hot(e, h));
+      row.push_back(tuiHot(e, h));
     }
     row.push_back(filler());
     row.push_back(text(" " + _s().title + " ") | dim);
@@ -907,24 +907,24 @@ namespace {
           row.push_back(e | dim);
           continue;
         }
-        Tui::Hot h;
+        hotTui h;
         std::size_t k = i;
         h.mouse = [k](Mouse &m, int, int) {
           if(m.button != Mouse::Left || m.motion != Mouse::Pressed) return false;
           std::vector<Ui::BarButton> now = _s().sources.barButtons();
           if(k >= now.size()) return true;
           if(now[k].menu) {
-            Tui::popup(now[k].menu(), m.x, std::max(0, m.y - 12));
+            tuiPopupMenu(now[k].menu(), m.x, std::max(0, m.y - 12));
             return true;
           }
           std::function<void(bool, bool)> what = now[k].action;
           bool reverse = m.shift, sync = m.control;
-          Tui::later([what, reverse, sync]() {
+          tuiLater([what, reverse, sync]() {
             if(what) what(reverse, sync);
           });
           return true;
         };
-        row.push_back(Tui::hot(e, h));
+        row.push_back(tuiHot(e, h));
       }
     }
     row.push_back(text(" "));
@@ -933,13 +933,13 @@ namespace {
       Element say = text(m.text);
       if(m.weight == Ui::MessageError) say = say | color(Color::Red);
       if(m.weight == Ui::MessageWarning) say = say | color(Color::Yellow);
-      Tui::Hot h;
+      hotTui h;
       h.mouse = [](Mouse &m, int, int) {
         if(m.button != Mouse::Left || m.motion != Mouse::Pressed) return false;
-        if(_s().sources.barPressed) Tui::later(_s().sources.barPressed);
+        if(_s().sources.barPressed) tuiLater(_s().sources.barPressed);
         return true;
       };
-      row.push_back(Tui::hot(say, h) | flex);
+      row.push_back(tuiHot(say, h) | flex);
       // the progress of what has finished stays said, at nought or at the end
       if(m.running && m.fraction > 0. && m.fraction < 1.)
         row.push_back(gauge((float)m.fraction) | size(WIDTH, EQUAL, 20));
@@ -967,15 +967,15 @@ namespace {
       }
       rows.push_back(e);
     }
-    Tui::Hot h;
+    hotTui h;
     h.mouse = [](Mouse &m, int, int) {
       if(m.button != Mouse::WheelUp && m.button != Mouse::WheelDown) return false;
       _s().consoleScroll += m.button == Mouse::WheelUp ? 3 : -3;
       if(_s().consoleScroll < 0) _s().consoleScroll = 0;
-      Tui::dirty();
+      tuiDirty();
       return true;
     };
-    return Tui::hot(vbox(rows) | size(HEIGHT, EQUAL, height), h);
+    return tuiHot(vbox(rows) | size(HEIGHT, EQUAL, height), h);
   }
 
   // --- the forms, docked down the right as on the page
@@ -985,15 +985,15 @@ namespace {
     state &s = _s();
     Elements cards;
     for(const Ui::Form *f : s.forms) {
-      Tui::Hot h;
+      hotTui h;
       h.mouse = [f](Mouse &m, int, int) {
         if(m.button != Mouse::Left || m.motion != Mouse::Pressed) return false;
-        Tui::later([f]() { tuiHideForm(f); });
+        tuiLater([f]() { tuiHideForm(f); });
         return true;
       };
       Element head = hbox({text(" " + f->title + " ") | bold, filler(),
-                           Tui::hot(text("[x]"), h)});
-      cards.push_back(window(head, Tui::form(*f, s.formStates[f])));
+                           tuiHot(text("[x]"), h)});
+      cards.push_back(window(head, tuiForm(*f, s.formStates[f])));
     }
     if(cards.empty()) return text("");
     return vbox(cards) | size(WIDTH, LESS_THAN, 90);
@@ -1008,7 +1008,7 @@ namespace {
     Elements body;
     body.push_back(paragraph(q.text) | size(WIDTH, LESS_THAN, 70));
     if(q.input) {
-      Tui::Edit &ed = s.edit;
+      editTui &ed = s.edit;
       std::string t = ed.text;
       std::size_t c = std::min(ed.cursor, t.size());
       body.push_back(hbox({text(t.substr(0, c)),
@@ -1025,7 +1025,7 @@ namespace {
       // Return presses the second, or the only one, as fl_choice() has it
       bool preferred = (int)i == (q.buttons.size() > 1 && q.buttons[1].size() ? 1 : 0);
       if(preferred) b = b | bold | inverted;
-      Tui::Hot h;
+      hotTui h;
       int k = (int)i;
       h.mouse = [k](Mouse &m, int, int) {
         if(m.button != Mouse::Left || m.motion != Mouse::Released) return false;
@@ -1037,7 +1037,7 @@ namespace {
         return true;
       };
       row.push_back(text(" "));
-      row.push_back(Tui::hot(b, h));
+      row.push_back(tuiHot(b, h));
     }
     body.push_back(hbox(row));
     return window(text(" Gmsh "), vbox(body)) | clear_under |
@@ -1059,7 +1059,7 @@ namespace {
       return true;
     }
     bool enter = false;
-    if(q.input) Tui::editKey(e, enter);
+    if(q.input) tuiEditKey(e, enter);
     return true;
   }
 
@@ -1125,25 +1125,25 @@ namespace {
       Element e = text(" " + f.entries[(std::size_t)i] + " ");
       if(f.entries[(std::size_t)i].back() == '/') e = e | bold;
       if(i == f.selected) e = e | inverted;
-      Tui::Hot h;
+      hotTui h;
       h.mouse = [i](Mouse &m, int, int) {
         if(m.button != Mouse::Left || m.motion != Mouse::Pressed) return false;
         bool again = _s().files.selected == i;
         _pickEntry(i, again);
-        Tui::dirty();
+        tuiDirty();
         return true;
       };
-      list.push_back(Tui::hot(e, h));
+      list.push_back(tuiHot(e, h));
     }
     while((int)list.size() < rows) list.push_back(text(""));
-    Tui::Hot wheel;
+    hotTui wheel;
     wheel.mouse = [](Mouse &m, int, int) {
       if(m.button != Mouse::WheelUp && m.button != Mouse::WheelDown) return false;
       _s().files.scroll += m.button == Mouse::WheelUp ? -3 : 3;
-      Tui::dirty();
+      tuiDirty();
       return true;
     };
-    Tui::Edit &ed = s.edit;
+    editTui &ed = s.edit;
     std::string t = ed.text;
     std::size_t c = std::min(ed.cursor, t.size());
     Element name = hbox({text(t.substr(0, c)),
@@ -1157,7 +1157,7 @@ namespace {
              f.formats[(std::size_t)f.format].pattern + ")" :
            f.formats[(std::size_t)f.format].pattern) :
         "*";
-    Tui::Hot formats;
+    hotTui formats;
     formats.mouse = [](Mouse &m, int, int) {
       if(m.button != Mouse::Left || m.motion != Mouse::Pressed) return false;
       state::chooser &f = _s().files;
@@ -1165,7 +1165,7 @@ namespace {
       for(const auto &one : f.formats)
         labels.push_back(one.name.size() ? one.name + " (" + one.pattern + ")" :
                                            one.pattern);
-      Tui::choose(labels, f.format, m.x, m.y + 1, [](int i) {
+      tuiChoose(labels, f.format, m.x, m.y + 1, [](int i) {
         _s().files.format = i;
         _listFiles();
       });
@@ -1179,16 +1179,16 @@ namespace {
         return true;
       };
     };
-    Tui::Hot cancel, accept;
+    hotTui cancel, accept;
     cancel.mouse = answer(false);
     accept.mouse = answer(true);
     Element body = vbox({
       text(f.dir.string()) | dim,
-      Tui::hot(vbox(list) | border, wheel),
+      tuiHot(vbox(list) | border, wheel),
       hbox({text("Name:   "), name | flex}),
-      hbox({text("Format: "), Tui::hot(text(format + " ▾"), formats), filler()}),
-      hbox({filler(), Tui::hot(text("[Cancel]"), cancel), text(" "),
-            Tui::hot(text(f.create ? "[Save]" : "[Open]") | bold | inverted, accept)}),
+      hbox({text("Format: "), tuiHot(text(format + " ▾"), formats), filler()}),
+      hbox({filler(), tuiHot(text("[Cancel]"), cancel), text(" "),
+            tuiHot(text(f.create ? "[Save]" : "[Open]") | bold | inverted, accept)}),
     });
     return window(text(" " + f.title + " "), body) |
            size(WIDTH, EQUAL, std::min(90, Terminal::Size().dimx - 4)) |
@@ -1239,7 +1239,7 @@ namespace {
       return true;
     }
     bool enter = false;
-    Tui::editKey(e, enter);
+    tuiEditKey(e, enter);
     return true;
   }
 
@@ -1263,12 +1263,12 @@ namespace {
         Elements footer;
         if(s.sources.tree.footer)
           for(const auto &b : s.sources.tree.footer()) {
-            footer.push_back(Tui::button(b, "footer." + b.label, nullptr));
+            footer.push_back(tuiButtonWidget(b, "footer." + b.label, nullptr));
             footer.push_back(text(" "));
           }
-        Element t = Tui::tree(s.sources.tree, s.tree, false, "tree",
+        Element t = tuiTree(s.sources.tree, s.tree, false, "tree",
                               treeHeight - (footer.empty() ? 0 : 1), []() {
-                                Tui::dirty();
+                                tuiDirty();
                               });
         side.push_back(vbox({t | flex, hbox(footer)}) |
                        size(WIDTH, EQUAL, s.treeWidth));
@@ -1317,9 +1317,9 @@ namespace {
       return a > b;
     });
     for(std::size_t i : under) {
-      Tui::Hot h = s.drawn[i];
+      hotTui h = s.drawn[i];
       if(h.mouse && h.mouse(m, m.x - h.box->x_min, m.y - h.box->y_min)) {
-        if(h.id.size() && m.motion == Mouse::Pressed) Tui::focus(h.id);
+        if(h.id.size() && m.motion == Mouse::Pressed) tuiFocus(h.id);
         return true;
       }
     }
@@ -1343,7 +1343,7 @@ namespace {
     for(const auto &h : s.drawn)
       if(h.id.size() && h.id == s.focus && h.key) {
         if(h.key(e)) {
-          Tui::dirty();
+          tuiDirty();
           return true;
         }
         break;
@@ -1357,11 +1357,11 @@ namespace {
       std::size_t i = at == ids.end() ? 0 : (std::size_t)(at - ids.begin());
       if(at != ids.end())
         i = e == Event::Tab ? (i + 1) % ids.size() : (i + ids.size() - 1) % ids.size();
-      Tui::focus(ids[i]);
+      tuiFocus(ids[i]);
       return true;
     }
     if(e == Event::Escape && s.focus.size()) {
-      Tui::focus("");
+      tuiFocus("");
       return true;
     }
     if(e == Event::Escape && s.fullscreen) {
@@ -1374,7 +1374,7 @@ namespace {
     }
     int key = 0;
     unsigned mods = 0;
-    if(!Tui::uiKey(e, key, mods)) return false;
+    if(!tuiUiKey(e, key, mods)) return false;
     // Alt and a letter drops the menu of the bar it marks
     if(mods == Ui::ModAlt && key >= 'A' && key <= 'Z') {
       std::vector<Ui::MenuItem> &menus = _barMenus();
@@ -1390,7 +1390,7 @@ namespace {
     for(const Ui::KeyBinding &k : s.sources.keys()) {
       if(!k.shortcut.matches(key, mods)) continue;
       taken = true;
-      if(k.action) Tui::later(k.action);
+      if(k.action) tuiLater(k.action);
       if(k.spent) break;
     }
     return taken;
@@ -1400,7 +1400,7 @@ namespace {
   void _restoreTerminal()
   {
     state &s = _s();
-    if(s.loop) Tui::clearPictures();
+    if(s.loop) tuiClearPictures();
     s.loop.reset();
   }
 
@@ -1415,7 +1415,7 @@ void tuiHideForm(const Ui::Form *f)
   // closing a dialog undoes what it leaves behind
   if(f->closed) f->closed();
   if(s.host.formWasClosed) s.host.formWasClosed(*f);
-  Tui::dirty();
+  tuiDirty();
 }
 
 namespace {
@@ -1444,7 +1444,7 @@ namespace {
       setlocale(LC_NUMERIC, "C");
       std::atexit(_restoreTerminal);
       // the text of the scene as big as it can be read
-      if(Tui::graphics() != Tui::Blocks && Tui::cellPixels(s.cellW, s.cellH))
+      if(tuiGraphics() != graphicsTui::Blocks && tuiCellPixels(s.cellW, s.cellH))
         tuiSceneScale(1.f, Terminal::Size().dimy * s.cellH);
       else
         tuiSceneScale(.6f, 700);
@@ -1493,13 +1493,13 @@ namespace {
     void unlock() override { _s().locked--; }
     int locked() override { return _s().locked; }
 
-    void post(const std::function<void()> &what) override { Tui::later(what); }
+    void post(const std::function<void()> &what) override { tuiLater(what); }
 
     void postFromThread(const std::function<void()> &what) override
     {
       if(!_s().app) return;
       std::function<void()> w = what;
-      _s().app->Post([w]() { Tui::later(w); });
+      _s().app->Post([w]() { tuiLater(w); });
     }
 
     void copyText(const std::string &text) override {}
@@ -1519,7 +1519,7 @@ namespace {
         at = nl + 1;
       }
       if(s.lines.size() > 20000) s.lines.erase(s.lines.begin(), s.lines.begin() + 5000);
-      Tui::dirty();
+      tuiDirty();
     }
 
     void messageLines(std::vector<std::string> &lines) override
@@ -1528,12 +1528,12 @@ namespace {
       for(const auto &l : _s().lines) lines.push_back(l.first);
     }
 
-    void refreshBar() override { Tui::dirty(); }
-    void refreshMenus() override { Tui::dirty(); }
+    void refreshBar() override { tuiDirty(); }
+    void refreshMenus() override { tuiDirty(); }
     void setWindowTitle(int which, const std::string &title) override
     {
       if(which == 0) _s().title = title;
-      Tui::dirty();
+      tuiDirty();
     }
 
     bool inputDialog(const std::string &question, std::string &value,
@@ -1544,7 +1544,7 @@ namespace {
         questionDialog(q + "\n\n" + value, "Close", "", "");
         return false;
       }
-      return Tui::ask(q, value);
+      return tuiAsk(q, value);
     }
 
     int questionDialog(const std::string &question, const std::string &zero,
@@ -1559,7 +1559,7 @@ namespace {
       s.asking = &q;
       while(!q.done && s.loop && !s.loop->HasQuitted()) _turn(true);
       s.asking = nullptr;
-      Tui::dirty();
+      tuiDirty();
       return q.answer < 0 ? 0 : q.answer;
     }
 
@@ -1598,7 +1598,7 @@ namespace {
       f.open = false;
       std::string name = s.edit.text;
       s.edit.id.clear();
-      Tui::dirty();
+      tuiDirty();
       if(!f.ok || name.empty()) return false;
       std::filesystem::path chosen = std::filesystem::path(name).is_absolute() ?
                                        std::filesystem::path(name) :
@@ -1619,7 +1619,7 @@ namespace {
       }
       else if(it != s.forms.end())
         tuiHideForm(&form);
-      Tui::dirty();
+      tuiDirty();
     }
 
     bool formVisible(const Ui::Form &form) override
@@ -1636,7 +1636,7 @@ namespace {
     void setFormPane(const Ui::Form &form, const std::string &pane) override
     {
       _s().formStates[&form].pane = pane;
-      Tui::dirty();
+      tuiDirty();
     }
 
     void dropForm(const Ui::Form &form) override
@@ -1651,13 +1651,13 @@ namespace {
                    const std::string &) override
     {
       const Box &b = *_s().sceneBox;
-      Tui::popup(items, (b.x_min + b.x_max) / 2, (b.y_min + b.y_max) / 2);
+      tuiPopupMenu(items, (b.x_min + b.x_max) / 2, (b.y_min + b.y_max) / 2);
     }
 
     void refreshTree(bool rebuild) override
     {
       if(rebuild) _s().tree.open.erase(std::string());
-      Tui::dirty();
+      tuiDirty();
     }
 
     void openTreeItem(const std::string &name, bool open) override
@@ -1670,7 +1670,7 @@ namespace {
           s.tree.open[name.substr(0, at)] = true;
       }
       s.tree.open[name] = open;
-      Tui::dirty();
+      tuiDirty();
     }
 
     bool treeItemOpen(const std::string &name) override
@@ -1682,18 +1682,18 @@ namespace {
     void showTree() override
     {
       _s().treeShown = true;
-      Tui::dirty();
+      tuiDirty();
     }
 
     void setSolverButtonMode(const std::string &, const std::string &) override
     {
-      Tui::dirty();
+      tuiDirty();
     }
 
     void showConsole(bool show) override
     {
       _s().consoleShown = show;
-      Tui::dirty();
+      tuiDirty();
     }
 
     bool consoleVisible() override { return _s().consoleShown; }
@@ -1705,7 +1705,7 @@ namespace {
         s.fullscreen = !s.fullscreen;
       else if(what == "show_hide_tree")
         s.treeShown = !s.treeShown;
-      Tui::dirty();
+      tuiDirty();
     }
 
     bool supports(const std::string &what) override

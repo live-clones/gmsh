@@ -6,7 +6,9 @@
 set(SRC
   BackendTui.cpp
   SceneTui.cpp
-  formTui.cpp
+  fieldTui.cpp
+  treeTui.cpp
+  dialogTui.cpp
   graphicsTui.cpp
 )
 
