@@ -750,13 +750,44 @@ elseif(ENABLE_IMGUI OR ENABLE_BROWSER)
       # display is available, X11 otherwise), and can be forced with the
       # GLFW_PLATFORM window hint. Building the Wayland backend requires
       # wayland-scanner, the wayland protocol files and libxkbcommon.
-      if(NOT ENABLE_GLFW_WAYLAND AND NOT ENABLE_GLFW_X11)
-        message(SEND_ERROR "ENABLE_IMGUI needs at least one of ENABLE_GLFW_WAYLAND "
-                "and ENABLE_GLFW_X11")
+      # GLFW stops the configuration on the first header or tool it misses:
+      # a backend whose dependencies are not all there is left out instead.
+      set(GMSH_GLFW_WAYLAND ${ENABLE_GLFW_WAYLAND})
+      set(GMSH_GLFW_X11 ${ENABLE_GLFW_X11})
+      if(GMSH_GLFW_WAYLAND)
+        include(FindPkgConfig)
+        find_program(WAYLAND_SCANNER_EXECUTABLE NAMES wayland-scanner)
+        if(PKG_CONFIG_FOUND)
+          pkg_check_modules(GMSH_GLFW_WL QUIET wayland-client>=0.2.7
+                            wayland-cursor>=0.2.7 wayland-egl>=0.2.7
+                            xkbcommon>=0.5.0)
+        endif()
+        if(NOT WAYLAND_SCANNER_EXECUTABLE OR NOT GMSH_GLFW_WL_FOUND)
+          message(WARNING "wayland-scanner, wayland-client, wayland-cursor, "
+                  "wayland-egl or xkbcommon not found: GLFW is built without "
+                  "its Wayland backend")
+          set(GMSH_GLFW_WAYLAND OFF)
+        endif()
       endif()
-      set(GLFW_BUILD_WAYLAND ${ENABLE_GLFW_WAYLAND} CACHE BOOL "" FORCE)
-      set(GLFW_BUILD_X11 ${ENABLE_GLFW_X11} CACHE BOOL "" FORCE)
-      if(ENABLE_GLFW_WAYLAND)
+      if(GMSH_GLFW_X11)
+        find_package(X11 QUIET)
+        if(NOT X11_FOUND OR NOT X11_Xrandr_INCLUDE_PATH OR
+           NOT X11_Xinerama_INCLUDE_PATH OR NOT X11_Xkb_INCLUDE_PATH OR
+           NOT X11_Xcursor_INCLUDE_PATH OR NOT X11_Xi_INCLUDE_PATH OR
+           NOT X11_Xshape_INCLUDE_PATH)
+          message(WARNING "X11, Xrandr, Xinerama, Xkb, Xcursor, Xi or Xext "
+                  "headers not found: GLFW is built without its X11 backend")
+          set(GMSH_GLFW_X11 OFF)
+        endif()
+      endif()
+      if(NOT GMSH_GLFW_WAYLAND AND NOT GMSH_GLFW_X11)
+        message(SEND_ERROR "ENABLE_IMGUI needs at least one of the Wayland "
+                "and X11 backends of GLFW (ENABLE_GLFW_WAYLAND, ENABLE_GLFW_X11) "
+                "with its dependencies")
+      endif()
+      set(GLFW_BUILD_WAYLAND ${GMSH_GLFW_WAYLAND} CACHE BOOL "" FORCE)
+      set(GLFW_BUILD_X11 ${GMSH_GLFW_X11} CACHE BOOL "" FORCE)
+      if(GMSH_GLFW_WAYLAND)
         set_config_option(HAVE_GLFW_WAYLAND "Wayland")
       endif()
     endif()
