@@ -5,7 +5,9 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GL_SCENE) && (defined(HAVE_GLFW) || defined(HAVE_GTK) || defined(HAVE_QT))
+#if defined(HAVE_GL_SCENE) &&                                                  \
+  (defined(HAVE_GLFW) || defined(HAVE_GTK) || defined(HAVE_QT) ||             \
+   defined(HAVE_TUI))
 
 #include <algorithm>
 #include <cmath>

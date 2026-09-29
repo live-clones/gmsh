@@ -26,6 +26,7 @@
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GTK
 #cmakedefine HAVE_QT
+#cmakedefine HAVE_TUI
 #cmakedefine HAVE_GUI
 #cmakedefine HAVE_GL_SCENE
 #cmakedefine HAVE_BROWSER
