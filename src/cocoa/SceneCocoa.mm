@@ -429,7 +429,18 @@ namespace {
       _pane(fresh)->top = w;
       [w setTitle:[NSString stringWithFormat:@"Gmsh - Graphic window %d",
                                              (int)_all().panes().size()]];
-      [_pane(fresh)->ns setFrame:[[w contentView] bounds]];
+      // the view over the bar of the main window, without the console
+      NSRect all = [[w contentView] bounds];
+      CGFloat bh = cocoaBarHeight();
+      NSView *bar = cocoaMakeBar();
+      [bar setFrame:NSMakeRect(0, 0, all.size.width, bh)];
+      [bar setAutoresizingMask:NSViewWidthSizable | NSViewMaxYMargin];
+      [[w contentView] addSubview:bar];
+      [bar resizeSubviewsWithOldSize:NSZeroSize];
+      [_pane(fresh)->ns
+        setFrame:NSMakeRect(0, bh, all.size.width, all.size.height - bh)];
+      [_pane(fresh)->ns
+        setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
       [[w contentView] addSubview:_pane(fresh)->ns];
       [w cascadeTopLeftFromPoint:NSMakePoint(
                                    NSMinX([cocoaMainWindow() frame]) + 40.,

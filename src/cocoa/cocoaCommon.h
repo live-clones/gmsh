@@ -181,6 +181,11 @@ void cocoaSceneDestroy();
 void cocoaSceneStartTimers();
 bool cocoaSceneDrawing();
 
+// the bar along the bottom of the main window and of every graphic window of
+// its own: its buttons, the message, which one presses to show the messages,
+// and the progress of what runs, as tall as cocoaBarHeight()
+NSView *cocoaMakeBar();
+CGFloat cocoaBarHeight();
 void cocoaRefreshBar();
 
 #endif

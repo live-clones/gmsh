@@ -63,12 +63,15 @@
 }
 @end
 
+// the bar of the main window or of a graphic window of its own
 @interface GmshBar : NSView {
 @public
   NSView *buttons;
   NSButton *message;
   NSTextField *progressText;
   NSProgressIndicator *progress;
+  // what makes its buttons be made again
+  std::string built;
 }
 @end
 
@@ -112,7 +115,7 @@ namespace {
     GmshConsole *messages = nil;
     GmshBar *bar = nil;
     treeCocoa *tree = nullptr;
-    std::string barBuilt, footerBuilt;
+    std::string footerBuilt;
     // the lines, what the filter lets through, whether the last is kept in
     // view
     Ui::Console said;
@@ -1233,29 +1236,8 @@ namespace {
 
       // the bar: the buttons, the message one presses to show the messages,
       // the progress of what runs
-      GmshBar *bar = [[GmshBar alloc] initWithFrame:NSZeroRect];
+      GmshBar *bar = (GmshBar *)cocoaMakeBar();
       _w->bar = bar;
-      bar->buttons = [[GmshFlippedView alloc] initWithFrame:NSZeroRect];
-      [bar addSubview:bar->buttons];
-      bar->message = [NSButton buttonWithTitle:@"" target:nil action:nil];
-      [bar->message setBordered:NO];
-      [bar->message setAlignment:NSTextAlignmentLeft];
-      [[bar->message cell] setLineBreakMode:NSLineBreakByTruncatingTail];
-      static GmshBarTarget *messageTarget = [[GmshBarTarget alloc] init];
-      [bar->message setTarget:messageTarget];
-      [bar->message setAction:@selector(messagePressed:)];
-      [bar addSubview:bar->message];
-      bar->progressText = [NSTextField labelWithString:@""];
-      [bar->progressText setFont:[NSFont systemFontOfSize:cocoaEm() - 2.]];
-      [bar->progressText setHidden:YES];
-      [bar addSubview:bar->progressText];
-      bar->progress = [[NSProgressIndicator alloc] initWithFrame:NSZeroRect];
-      [bar->progress setStyle:NSProgressIndicatorStyleBar];
-      [bar->progress setIndeterminate:NO];
-      [bar->progress setMinValue:0.];
-      [bar->progress setMaxValue:1000.];
-      [bar->progress setHidden:YES];
-      [bar addSubview:bar->progress];
       [main addSubview:bar];
 
       cocoaRefreshMenuBar();
@@ -1294,98 +1276,144 @@ NSWindow *cocoaMainWindow() { return _w ? _w->window : nil; }
 
 bool cocoaButtonDown() { return [NSEvent pressedMouseButtons] != 0; }
 
+namespace {
+
+  // the bars made, forgotten with their window
+  NSHashTable *_bars()
+  {
+    static NSHashTable *bars = [NSHashTable weakObjectsHashTable];
+    return bars;
+  }
+
+  void _refreshBar(GmshBar *barView, const std::vector<Ui::BarButton> &bar)
+  {
+    std::string shape = Ui::signature(bar);
+    NSView *row = barView->buttons;
+    bool tips = cocoaSources().settings().tooltips;
+    if(shape != barView->built) {
+      barView->built = shape;
+      for(NSView *v in [[row subviews] copy]) [v removeFromSuperview];
+      for(std::size_t i = 0; i < bar.size(); i++) {
+        NSButton *b = [NSButton buttonWithTitle:cocoaString(bar[i].label)
+                                         target:nil
+                                         action:nil];
+        [b setBezelStyle:NSBezelStyleRounded];
+        [b setControlSize:NSControlSizeSmall];
+        [b setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
+        GmshBarTarget *t = [[GmshBarTarget alloc] init];
+        t->index = i;
+        [b setTarget:t];
+        [b setAction:@selector(pressed:)];
+        // a control does not keep its target
+        objc_setAssociatedObject(b, &_targetKey, t,
+                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        if(bar[i].gapBefore && i)
+          objc_setAssociatedObject(b, &_gapKey, @(cocoaPx(.6)),
+                                   OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        [row addSubview:b];
+      }
+    }
+    NSArray *made = [row subviews];
+    for(std::size_t i = 0; i < bar.size() && i < [made count]; i++) {
+      NSButton *b = made[i];
+      const Ui::BarButton &one = bar[i];
+      bool on = one.on && one.on();
+      std::string label = (on && one.labelOn.size()) ? one.labelOn : one.label;
+      std::string glyph = (on && one.glyphOn.size()) ? one.glyphOn : one.glyph;
+      cocoaButtonShows(b, label, glyph);
+      [b setEnabled:(one.enabled ? one.enabled() : true) ? YES : NO];
+      if(one.tooltip.size() && tips) [b setToolTip:cocoaString(one.tooltip)];
+      if(one.alert && one.alert()) {
+        [b setBezelColor:[NSColor systemRedColor]];
+        [b setFont:[NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]]];
+      }
+      else if(on && one.onColour) {
+        Ui::Colour c = one.onColour();
+        [b setBezelColor:[NSColor colorWithSRGBRed:c.r / 255.
+                                             green:c.g / 255.
+                                              blue:c.b / 255.
+                                             alpha:1.]];
+        [b setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
+      }
+      else {
+        [b setBezelColor:nil];
+        [b setFont:on ?
+                     [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]] :
+                     [NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
+      }
+      CGFloat w = std::ceil([b intrinsicContentSize].width);
+      if(one.widthEm > 0.) w = std::max(w, cocoaPx(one.widthEm));
+      objc_setAssociatedObject(b, &_widthKey, @(w),
+                               OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    if(cocoaSources().barMessage) {
+      Ui::BarMessage m = cocoaSources().barMessage();
+      NSColor *ink = m.weight == Ui::MessageError ? [NSColor systemRedColor] :
+                     m.weight == Ui::MessageWarning ?
+                                                    [NSColor systemOrangeColor] :
+                                                    [NSColor labelColor];
+      NSMutableParagraphStyle *p = [[NSMutableParagraphStyle alloc] init];
+      [p setLineBreakMode:NSLineBreakByTruncatingTail];
+      [barView->message
+        setAttributedTitle:[[NSAttributedString alloc]
+                             initWithString:cocoaString(m.text)
+                                 attributes:@{
+                                   NSForegroundColorAttributeName : ink,
+                                   NSFontAttributeName : cocoaFont(),
+                                   NSParagraphStyleAttributeName : p
+                                 }]];
+      // the progress of what has finished stays said, at nought or at the end
+      bool going = m.running && m.fraction > 0. && m.fraction < 1.;
+      [barView->progress setHidden:!going];
+      [barView->progressText setHidden:!going];
+      if(going) {
+        [barView->progress setDoubleValue:1000. * m.fraction];
+        [barView->progressText setStringValue:cocoaString(m.progressText)];
+      }
+    }
+    if(cocoaSources().barTooltip && tips)
+      [barView->message setToolTip:cocoaString(cocoaSources().barTooltip())];
+    [barView resizeSubviewsWithOldSize:NSZeroSize];
+  }
+
+} // namespace
+
+CGFloat cocoaBarHeight() { return _barHeight(); }
+
+NSView *cocoaMakeBar()
+{
+  GmshBar *bar = [[GmshBar alloc] initWithFrame:NSZeroRect];
+  bar->buttons = [[GmshFlippedView alloc] initWithFrame:NSZeroRect];
+  [bar addSubview:bar->buttons];
+  bar->message = [NSButton buttonWithTitle:@"" target:nil action:nil];
+  [bar->message setBordered:NO];
+  [bar->message setAlignment:NSTextAlignmentLeft];
+  [[bar->message cell] setLineBreakMode:NSLineBreakByTruncatingTail];
+  static GmshBarTarget *messageTarget = [[GmshBarTarget alloc] init];
+  [bar->message setTarget:messageTarget];
+  [bar->message setAction:@selector(messagePressed:)];
+  [bar addSubview:bar->message];
+  bar->progressText = [NSTextField labelWithString:@""];
+  [bar->progressText setFont:[NSFont systemFontOfSize:cocoaEm() - 2.]];
+  [bar->progressText setHidden:YES];
+  [bar addSubview:bar->progressText];
+  bar->progress = [[NSProgressIndicator alloc] initWithFrame:NSZeroRect];
+  [bar->progress setStyle:NSProgressIndicatorStyleBar];
+  [bar->progress setIndeterminate:NO];
+  [bar->progress setMinValue:0.];
+  [bar->progress setMaxValue:1000.];
+  [bar->progress setHidden:YES];
+  [bar addSubview:bar->progress];
+  [_bars() addObject:bar];
+  if(cocoaSources().barButtons) _refreshBar(bar, cocoaSources().barButtons());
+  return bar;
+}
+
 void cocoaRefreshBar()
 {
   if(!_w || !cocoaSources().barButtons) return;
-  GmshBar *barView = _w->bar;
   std::vector<Ui::BarButton> bar = cocoaSources().barButtons();
-  std::string shape = Ui::signature(bar);
-  NSView *row = barView->buttons;
-  bool tips = cocoaSources().settings().tooltips;
-  if(shape != _w->barBuilt) {
-    _w->barBuilt = shape;
-    for(NSView *v in [[row subviews] copy]) [v removeFromSuperview];
-    for(std::size_t i = 0; i < bar.size(); i++) {
-      NSButton *b = [NSButton buttonWithTitle:cocoaString(bar[i].label)
-                                       target:nil
-                                       action:nil];
-      [b setBezelStyle:NSBezelStyleRounded];
-      [b setControlSize:NSControlSizeSmall];
-      [b setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
-      GmshBarTarget *t = [[GmshBarTarget alloc] init];
-      t->index = i;
-      [b setTarget:t];
-      [b setAction:@selector(pressed:)];
-      // a control does not keep its target
-      objc_setAssociatedObject(b, &_targetKey, t,
-                               OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-      if(bar[i].gapBefore && i)
-        objc_setAssociatedObject(b, &_gapKey, @(cocoaPx(.6)),
-                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-      [row addSubview:b];
-    }
-  }
-  NSArray *made = [row subviews];
-  for(std::size_t i = 0; i < bar.size() && i < [made count]; i++) {
-    NSButton *b = made[i];
-    const Ui::BarButton &one = bar[i];
-    bool on = one.on && one.on();
-    std::string label = (on && one.labelOn.size()) ? one.labelOn : one.label;
-    std::string glyph = (on && one.glyphOn.size()) ? one.glyphOn : one.glyph;
-    cocoaButtonShows(b, label, glyph);
-    [b setEnabled:(one.enabled ? one.enabled() : true) ? YES : NO];
-    if(one.tooltip.size() && tips) [b setToolTip:cocoaString(one.tooltip)];
-    if(one.alert && one.alert()) {
-      [b setBezelColor:[NSColor systemRedColor]];
-      [b setFont:[NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]]];
-    }
-    else if(on && one.onColour) {
-      Ui::Colour c = one.onColour();
-      [b setBezelColor:[NSColor colorWithSRGBRed:c.r / 255.
-                                           green:c.g / 255.
-                                            blue:c.b / 255.
-                                           alpha:1.]];
-      [b setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
-    }
-    else {
-      [b setBezelColor:nil];
-      [b setFont:on ?
-                   [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]] :
-                   [NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
-    }
-    CGFloat w = std::ceil([b intrinsicContentSize].width);
-    if(one.widthEm > 0.) w = std::max(w, cocoaPx(one.widthEm));
-    objc_setAssociatedObject(b, &_widthKey, @(w),
-                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-  }
-  if(cocoaSources().barMessage) {
-    Ui::BarMessage m = cocoaSources().barMessage();
-    NSColor *ink = m.weight == Ui::MessageError ? [NSColor systemRedColor] :
-                   m.weight == Ui::MessageWarning ?
-                                                  [NSColor systemOrangeColor] :
-                                                  [NSColor labelColor];
-    NSMutableParagraphStyle *p = [[NSMutableParagraphStyle alloc] init];
-    [p setLineBreakMode:NSLineBreakByTruncatingTail];
-    [barView->message
-      setAttributedTitle:[[NSAttributedString alloc]
-                           initWithString:cocoaString(m.text)
-                               attributes:@{
-                                 NSForegroundColorAttributeName : ink,
-                                 NSFontAttributeName : cocoaFont(),
-                                 NSParagraphStyleAttributeName : p
-                               }]];
-    // the progress of what has finished stays said, at nought or at the end
-    bool going = m.running && m.fraction > 0. && m.fraction < 1.;
-    [barView->progress setHidden:!going];
-    [barView->progressText setHidden:!going];
-    if(going) {
-      [barView->progress setDoubleValue:1000. * m.fraction];
-      [barView->progressText setStringValue:cocoaString(m.progressText)];
-    }
-  }
-  if(cocoaSources().barTooltip && tips)
-    [barView->message setToolTip:cocoaString(cocoaSources().barTooltip())];
-  [barView resizeSubviewsWithOldSize:NSZeroSize];
+  for(GmshBar *b in [[_bars() allObjects] copy]) _refreshBar(b, bar);
 }
 
 bool cocoaMainKey(NSEvent *e)
