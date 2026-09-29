@@ -84,7 +84,6 @@ TOLERATED = {
     "src/fltk/fileDialogs.cpp": {
         "GmshMessage.h", "StringUtils.h", "Context.h", "GModel.h"},
     "src/fltk/graphicWindow.cpp": {"Gui.h", "3M.h"},
-    "src/fltk/inputRange.h": {"Context.h"},
     "src/fltk/menuFltk.cpp": {"GuiMenus.h"},
     "src/fltk/menuFltk.h": {"GuiMenus.h"},
     "src/fltk/touchBar.mm": {"GuiActions.h", "drawContext.h", "Options.h",

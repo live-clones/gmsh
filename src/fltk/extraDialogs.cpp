@@ -26,7 +26,6 @@
 #include <FL/fl_ask.H>
 #include <FL/Fl_Preferences.H>
 #include "fltkMetrics.h"
-#include "inputValue.h"
 #include "paletteWindow.h"
 #include "GmshDefines.h"
 #include "OpenFile.h"
