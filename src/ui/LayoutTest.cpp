@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <list>
 #include <string>
 #include <vector>
 
@@ -116,8 +117,14 @@ namespace {
     return p.items.back();
   }
 
-  Placement place(const Item &root, const Metrics &m, int leastRows = 0)
+  // a placement points into the tree it placed, and the trees below are
+  // mostly temporaries: each is kept here as long as the test runs
+  std::list<Item> trees;
+
+  Placement place(const Item &tree, const Metrics &m, int leastRows = 0)
   {
+    trees.push_back(tree);
+    const Item &root = trees.back();
     Size need = treeSize(root, m, leastRows);
     return placeTree(root, m, need.w, need.h, leastRows);
   }
