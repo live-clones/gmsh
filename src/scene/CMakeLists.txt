@@ -13,11 +13,11 @@ set(SRC
 )
 
 # The drawing functions of a scene held by OpenGL alone -- GLFW's, a
-# GtkGLArea's, a QOpenGLWidget's, a WGL window's or a framebuffer off screen;
-# and the part that is held by GLFW rather than by a widget: the window of its
-# own that an interface drawing no scene pairs with (a canvas of the page,
-# compiled to WebAssembly)
-if(HAVE_GLFW OR HAVE_GTK OR HAVE_QT OR HAVE_TUI OR HAVE_WIN32_GUI)
+# GtkGLArea's, a QOpenGLWidget's, an NSOpenGLView's, a WGL window's or a
+# framebuffer off screen; and the part that is held by GLFW rather than by a
+# widget: the window of its own that an interface drawing no scene pairs with
+# (a canvas of the page, compiled to WebAssembly)
+if(HAVE_GLFW OR HAVE_GTK OR HAVE_QT OR HAVE_COCOA OR HAVE_TUI OR HAVE_WIN32_GUI)
   list(APPEND SRC drawContextGL.cpp)
 endif()
 if(HAVE_GLFW)

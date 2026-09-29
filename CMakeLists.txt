@@ -53,6 +53,7 @@ opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
 opt(BROWSER "Enable the browser interface: the panels in a web page, the model in\n     a window of its own" OFF)
 opt(GTK "Enable the GTK 4 graphical user interface (requires mesh/post)" OFF)
 opt(QT "Enable the Qt 6 graphical user interface (requires mesh/post)" OFF)
+opt(COCOA "Enable the Cocoa graphical user interface (macOS only, requires mesh/post)" OFF)
 opt(TUI "Enable the terminal user interface (FTXUI, requires mesh/post)" OFF)
 opt(WIN32 "Enable the native Windows (Win32) user interface (requires mesh/post)" OFF)
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
@@ -882,6 +883,18 @@ if(ENABLE_WIN32 AND WIN32 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/win32)
   set_config_option(HAVE_WIN32_GUI "Win32")
 endif()
 
+# Cocoa, on macOS, draws the scene itself too, in an NSOpenGLView; its files
+# are Objective-C++ with ARC
+if(ENABLE_COCOA AND APPLE AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/cocoa)
+  add_subdirectory(src/cocoa)
+  file(GLOB COCOA_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/cocoa/*.mm)
+  set_source_files_properties(${COCOA_SRC} PROPERTIES COMPILE_FLAGS "-fobjc-arc")
+  list(APPEND EXTERNAL_LIBRARIES "-framework Cocoa" "-framework QuartzCore")
+  set_config_option(HAVE_COCOA "Cocoa")
+elseif(ENABLE_COCOA)
+  message(SEND_ERROR "The Cocoa interface is only available on macOS")
+endif()
+
 # The terminal interface: FTXUI from contrib, the scene drawn off screen and
 # shown as pictures made of characters
 if(ENABLE_TUI AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/tui AND
@@ -897,8 +910,8 @@ endif()
 # is added once every interface that could hold it is known, and says so with
 # HAVE_GL_SCENE. Two of its files want more than OpenGL and are picked inside:
 # see src/scene/CMakeLists.txt.
-if((HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT OR HAVE_TUI OR
-    HAVE_WIN32_GUI) AND
+if((HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT OR HAVE_COCOA OR
+    HAVE_TUI OR HAVE_WIN32_GUI) AND
    EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scene)
   add_subdirectory(src/scene)
   set(HAVE_GL_SCENE TRUE)
@@ -906,8 +919,8 @@ endif()
 
 # HAVE_GUI is set as soon as one of the graphical user interfaces is compiled in,
 # and brings what they are all made of
-if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT OR HAVE_TUI OR
-   HAVE_WIN32_GUI)
+if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT OR HAVE_COCOA OR
+   HAVE_TUI OR HAVE_WIN32_GUI)
   set(HAVE_GUI TRUE)
   add_subdirectory(src/ui)
   add_subdirectory(src/gui)
