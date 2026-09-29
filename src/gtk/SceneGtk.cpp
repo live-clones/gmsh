@@ -306,6 +306,16 @@ namespace {
       h = gtk_widget_get_height(_pane(p)->area);
       f = _factor(_pane(p));
     };
+    t.origin = [](GuiPanes::Pane *p, int &x, int &y) {
+      GtkWidget *area = _pane(p)->area;
+      graphene_point_t in = GRAPHENE_POINT_INIT(0.f, 0.f), out;
+      x = y = 0;
+      if(gtk_widget_compute_point(area, GTK_WIDGET(gtk_widget_get_root(area)),
+                                  &in, &out)) {
+        x = (int)(out.x + 0.5f);
+        y = (int)(out.y + 0.5f);
+      }
+    };
     t.drawNow = [](GuiPanes::Pane *p) {
       if(!_prepare(_pane(p))) return;
       _all().draw(p);

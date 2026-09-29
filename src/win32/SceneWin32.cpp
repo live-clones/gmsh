@@ -337,6 +337,13 @@ namespace {
       h = r.bottom;
       f = 1.;
     };
+    t.origin = [](GuiPanes::Pane *p, int &x, int &y) {
+      POINT o = {0, 0};
+      HWND w = _pane(p)->hwnd;
+      MapWindowPoints(w, GetAncestor(w, GA_ROOT), &o, 1);
+      x = o.x;
+      y = o.y;
+    };
     t.drawNow = [](GuiPanes::Pane *p) {
       // into the back buffer, which glReadPixels() reads
       if(!_prepare(_pane(p))) return;

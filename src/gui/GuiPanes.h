@@ -66,6 +66,9 @@ public:
     // the size of the surface in logical pixels, and the framebuffer pixels
     // of a logical one
     std::function<void(Pane *, int &width, int &height, double &factor)> size;
+    // where the surface is in its window, in logical pixels from the top
+    // left: the composite pictures keep the tiling
+    std::function<void(Pane *, int &x, int &y)> origin;
     // drawn and shown now, not when the toolkit next draws (the progress of
     // a mesher): prepare(), draw(), and what shows the picture
     std::function<void(Pane *)> drawNow;
@@ -140,6 +143,8 @@ private:
   void _setHost();
   void _clearSelected();
   void _pixelSize(Pane *p, int &width, int &height);
+  bool _print(int width, int height, int supersampling, unsigned int format,
+              unsigned int type, void *pixels, bool composite);
   friend struct GuiPanesOps;
 };
 

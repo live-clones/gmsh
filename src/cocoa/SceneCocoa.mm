@@ -368,6 +368,14 @@ namespace {
       h = (int)s.height;
       f = [_pane(p)->ns factor];
     };
+    t.origin = [](GuiPanes::Pane *p, int &x, int &y) {
+      // the top left corner, in the window counted upwards
+      GmshScenePane *v = _pane(p)->ns;
+      NSPoint o = [v convertPoint:NSMakePoint(0, [v bounds].size.height)
+                           toView:nil];
+      x = (int)o.x;
+      y = (int)-o.y;
+    };
     t.drawNow = [](GuiPanes::Pane *p) {
       if(![_pane(p)->ns prepare]) return;
       _all().draw(p);

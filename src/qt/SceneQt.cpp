@@ -173,6 +173,12 @@ namespace {
       h = _pane(p)->height();
       f = _pane(p)->devicePixelRatioF();
     };
+    t.origin = [](GuiPanes::Pane *p, int &x, int &y) {
+      QWidget *w = _pane(p);
+      QPoint o = w->mapTo(w->window(), QPoint(0, 0));
+      x = o.x();
+      y = o.y();
+    };
     t.drawNow = [](GuiPanes::Pane *p) {
       if(!_pane(p)->prepare()) return;
       _all().draw(p);

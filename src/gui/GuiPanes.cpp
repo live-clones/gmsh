@@ -8,6 +8,8 @@
 #if defined(HAVE_GL_SCENE)
 
 #include <algorithm>
+#include <climits>
+#include <cstring>
 
 #include "GuiPanes.h"
 #include "Gui.h"
@@ -312,6 +314,70 @@ void GuiPanes::_pixelSize(Pane *p, int &width, int &height)
   height = (int)(h * f + 0.5);
 }
 
+// the picture of the current view, or all the tiled ones as they sit in the
+// main window: each drawn by its view at its share of the size, in its own
+// context, whatever the size of its surface
+bool GuiPanes::_print(int width, int height, int supersampling,
+                      unsigned int format, unsigned int type, void *pixels,
+                      bool composite)
+{
+  if(!_current || width < 1 || height < 1 || !_tk.prepare || !_tk.size)
+    return false;
+  std::vector<Pane *> tiled;
+  if(composite && _tk.origin)
+    for(Pane *p : _panes)
+      if(!p->window) tiled.push_back(p);
+  if(tiled.size() < 2) {
+    if(!_tk.prepare(_current)) return false;
+    place(_current);
+    bool ok = _current->view->printTo(width, height, supersampling, format,
+                                      type, pixels);
+    if(_tk.redraw) _tk.redraw(_current);
+    return ok;
+  }
+
+  // the room the views share, in logical pixels
+  struct box {
+    Pane *p;
+    int x, y, w, h;
+  };
+  std::vector<box> boxes;
+  int x0 = INT_MAX, y0 = INT_MAX, x1 = INT_MIN, y1 = INT_MIN;
+  for(Pane *p : tiled) {
+    box b = {p, 0, 0, 0, 0};
+    double f = 1.;
+    _tk.origin(p, b.x, b.y);
+    _tk.size(p, b.w, b.h, f);
+    if(b.w < 1 || b.h < 1) continue;
+    boxes.push_back(b);
+    x0 = std::min(x0, b.x);
+    y0 = std::min(y0, b.y);
+    x1 = std::max(x1, b.x + b.w);
+    y1 = std::max(y1, b.y + b.h);
+  }
+  if(boxes.empty()) return false;
+  double sx = width / (double)(x1 - x0), sy = height / (double)(y1 - y0);
+  PixelBuffer all(width, height, (GLenum)format, (GLenum)type);
+  for(const box &b : boxes) {
+    // rows from the bottom
+    int px0 = (int)((b.x - x0) * sx + 0.5);
+    int px1 = std::min(width, (int)((b.x + b.w - x0) * sx + 0.5));
+    int py0 = (int)((y1 - b.y - b.h) * sy + 0.5);
+    int py1 = std::min(height, (int)((y1 - b.y) * sy + 0.5));
+    if(px1 - px0 < 1 || py1 - py0 < 1 || !_tk.prepare(b.p)) continue;
+    place(b.p);
+    PixelBuffer one(px1 - px0, py1 - py0, (GLenum)format, (GLenum)type);
+    if(b.p->view->printTo(px1 - px0, py1 - py0, supersampling, format, type,
+                          one.getPixels()))
+      all.copyPixels(px0, py0, &one);
+    if(_tk.redraw) _tk.redraw(b.p);
+  }
+  std::memcpy(pixels, all.getPixels(),
+              (std::size_t)width * height * all.getNumComp() *
+                all.getDataSize());
+  return true;
+}
+
 void GuiPanes::_setHost()
 {
   Scene::Host held;
@@ -450,6 +516,7 @@ struct GuiPanesOps {
     if(a._tk.redraw) a._tk.redraw(p);
   }
 
+  // a vector output (gl2ps), from the draw of the surface
   static void beginGraphicCapture(int &width, int &height, bool composite)
   {
     int w = 0, h = 0;
@@ -495,9 +562,16 @@ struct GuiPanesOps {
         height = c->print.height;
       }
     }
-    beginGraphicCapture(width, height, c->print.compositeWindows ? true : false);
     PixelBuffer *buffer =
       new PixelBuffer(width, height, (GLenum)format, (GLenum)type);
+    if(all()._print(width, height, 1, format, type, buffer->getPixels(),
+                    c->print.compositeWindows ? true : false))
+      return buffer;
+    // without framebuffer objects: what the surface shows, which may be
+    // smaller
+    delete buffer;
+    beginGraphicCapture(width, height, false);
+    buffer = new PixelBuffer(width, height, (GLenum)format, (GLenum)type);
     buffer->fill();
     endGraphicCapture();
     return buffer;
@@ -571,13 +645,8 @@ struct GuiPanesOps {
   static bool printView(int width, int height, int supersampling,
                         unsigned int format, unsigned int type, void *pixels)
   {
-    GuiPanes &a = all();
-    if(!a._current || !a._tk.prepare || !a._tk.prepare(a._current))
-      return false;
-    bool ok = a._current->view->printTo(width, height, supersampling, format,
-                                        type, pixels);
-    if(a._tk.redraw) a._tk.redraw(a._current);
-    return ok;
+    return all()._print(width, height, supersampling, format, type, pixels,
+                        CTX::instance()->print.compositeWindows ? true : false);
   }
 
   static const std::vector<GVertex *> &selectedVertices()
