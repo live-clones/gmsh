@@ -125,7 +125,10 @@ private:
   static void _expanded(GObject *expander, GParamSpec *, gpointer data);
 };
 
-// the buttons and the message of the bar along the bottom, as they are now
+// the bar along the bottom of the main window and of every graphic window of
+// its own: its buttons, the message, which one presses to show the messages,
+// and the progress of what runs; refreshed, they say what they say now
+GtkWidget *gtkMakeBar();
 void gtkRefreshBar();
 
 // --- the described forms, see dialogGtk.cpp

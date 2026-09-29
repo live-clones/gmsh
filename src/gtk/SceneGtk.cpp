@@ -330,6 +330,8 @@ namespace {
       gtk_paned_set_wide_handle(GTK_PANED(paned), TRUE);
       bool start = GTK_IS_PANED(parent) &&
                    gtk_paned_get_start_child(GTK_PANED(parent)) == area;
+      // in a box, where the view was: over the bar of a window of its own
+      GtkWidget *before = gtk_widget_get_prev_sibling(area);
       _detach(_pane(was));
       gtk_paned_set_start_child(GTK_PANED(paned), area);
       gtk_paned_set_end_child(GTK_PANED(paned), _pane(fresh)->area);
@@ -343,8 +345,10 @@ namespace {
         else
           gtk_paned_set_end_child(GTK_PANED(parent), paned);
       }
-      else
-        gtk_box_append(GTK_BOX(parent), paned);
+      else {
+        gtk_widget_set_vexpand(paned, TRUE);
+        gtk_box_insert_child_after(GTK_BOX(parent), paned, before);
+      }
     };
     t.unsplit = [](GuiPanes::Pane *keep,
                    const std::vector<GuiPanes::Pane *> &gone) {
@@ -361,7 +365,12 @@ namespace {
                (int)_all().panes().size());
       gtk_window_set_title(GTK_WINDOW(w), title);
       gtk_window_set_default_size(GTK_WINDOW(w), 600, 500);
-      gtk_window_set_child(GTK_WINDOW(w), _pane(fresh)->area);
+      // the view over the bar of the main window, without the console
+      GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+      gtk_widget_set_vexpand(_pane(fresh)->area, TRUE);
+      gtk_box_append(GTK_BOX(box), _pane(fresh)->area);
+      gtk_box_append(GTK_BOX(box), gtkMakeBar());
+      gtk_window_set_child(GTK_WINDOW(w), box);
       g_signal_connect(w, "close-request", G_CALLBACK(_windowClosed), nullptr);
       gtkWatchButtons(w);
       // the keys the view does not take are Gmsh's

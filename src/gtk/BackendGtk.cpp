@@ -36,11 +36,10 @@ namespace {
     GtkWidget *console = nullptr, *consoleScroll = nullptr;
     // the bar over the lines, and the lines as a whole
     GtkWidget *consoleBox = nullptr, *filter = nullptr;
-    GtkWidget *bar = nullptr, *buttons = nullptr, *message = nullptr,
-              *messageLabel = nullptr, *progress = nullptr;
+    GtkWidget *bar = nullptr;
     treeGtk *tree = nullptr;
     GtkCssProvider *sheet = nullptr;
-    std::string barBuilt, footerBuilt;
+    std::string footerBuilt;
     // the lines, what the filter lets through, whether the last is kept in
     // view
     Ui::Console said;
@@ -275,80 +274,143 @@ namespace {
 
 } // namespace
 
+namespace {
+
+  // a bar, of the main window or of a graphic window of its own
+  struct barGtk {
+    GtkWidget *box = nullptr, *buttons = nullptr, *message = nullptr,
+              *messageLabel = nullptr, *progress = nullptr;
+    std::string built;
+  };
+
+  std::vector<barGtk *> &_bars()
+  {
+    static std::vector<barGtk *> bars;
+    return bars;
+  }
+
+  void _barGone(GtkWidget *, gpointer data)
+  {
+    barGtk *said = (barGtk *)data;
+    std::vector<barGtk *> &all = _bars();
+    all.erase(std::remove(all.begin(), all.end(), said), all.end());
+    delete said;
+  }
+
+  void _refreshBar(barGtk *said, const std::vector<Ui::BarButton> &bar)
+  {
+    // made again when the buttons are not the same ones
+    std::string shape = Ui::signature(bar);
+    if(shape != said->built) {
+      said->built = shape;
+      while(GtkWidget *c = gtk_widget_get_first_child(said->buttons))
+        gtk_box_remove(GTK_BOX(said->buttons), c);
+      for(std::size_t i = 0; i < bar.size(); i++) {
+        if(bar[i].gapBefore && i)
+          gtk_box_append(GTK_BOX(said->buttons),
+                         gtk_separator_new(GTK_ORIENTATION_VERTICAL));
+        GtkWidget *b = gtk_button_new_with_label(bar[i].label.c_str());
+        gtk_widget_add_css_class(b, "flat");
+        if(bar[i].widthEm > 0.)
+          gtk_widget_set_size_request(b, gtkPx(bar[i].widthEm), -1);
+        g_signal_connect(b, "clicked", G_CALLBACK(_barClicked),
+                         GINT_TO_POINTER((int)i));
+        gtk_box_append(GTK_BOX(said->buttons), b);
+      }
+    }
+    // what each says, and how it looks, now
+    std::size_t i = 0;
+    for(GtkWidget *c = gtk_widget_get_first_child(said->buttons); c;
+        c = gtk_widget_get_next_sibling(c)) {
+      if(!GTK_IS_BUTTON(c)) continue;
+      if(i >= bar.size()) break;
+      const Ui::BarButton &b = bar[i++];
+      bool on = b.on && b.on();
+      std::string label = (on && b.labelOn.size()) ? b.labelOn : b.label;
+      std::string glyph = (on && b.glyphOn.size()) ? b.glyphOn : b.glyph;
+      gtkButtonShows(c, label, glyph);
+      gtk_widget_set_sensitive(c, b.enabled ? b.enabled() : TRUE);
+      if(b.tooltip.size() && gtkSources().settings().tooltips)
+        gtk_widget_set_tooltip_text(c, b.tooltip.c_str());
+      // the classes it had are taken off before the ones it has now go on
+      for(const char *k : {"destructive-action", "suggested-action"})
+        gtk_widget_remove_css_class(c, k);
+      char **classes = gtk_widget_get_css_classes(c);
+      for(char **k = classes; k && *k; k++)
+        if(!strncmp(*k, "gmsh-on-", 8)) gtk_widget_remove_css_class(c, *k);
+      g_strfreev(classes);
+      if(b.alert && b.alert())
+        gtk_widget_add_css_class(c, "destructive-action");
+      else if(on && b.onColour)
+        gtk_widget_add_css_class(c, _colourClass(b.onColour()).c_str());
+      else if(on)
+        gtk_widget_add_css_class(c, "suggested-action");
+    }
+    if(gtkSources().barMessage) {
+      Ui::BarMessage m = gtkSources().barMessage();
+      if(m.text != gtk_label_get_text(GTK_LABEL(said->messageLabel)))
+        gtk_label_set_text(GTK_LABEL(said->messageLabel), m.text.c_str());
+      gtk_widget_remove_css_class(said->messageLabel, "error");
+      gtk_widget_remove_css_class(said->messageLabel, "warning");
+      if(m.weight == Ui::MessageError)
+        gtk_widget_add_css_class(said->messageLabel, "error");
+      else if(m.weight == Ui::MessageWarning)
+        gtk_widget_add_css_class(said->messageLabel, "warning");
+      // the progress of what has finished stays said, at nought or at the end
+      bool going = m.running && m.fraction > 0. && m.fraction < 1.;
+      gtk_widget_set_visible(said->progress, going);
+      if(going) {
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(said->progress),
+                                      std::max(0., std::min(1., m.fraction)));
+        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(said->progress),
+                                  m.progressText.c_str());
+      }
+    }
+    if(gtkSources().barTooltip && gtkSources().settings().tooltips)
+      gtk_widget_set_tooltip_text(said->message,
+                                  gtkSources().barTooltip().c_str());
+  }
+
+} // namespace
+
+GtkWidget *gtkMakeBar()
+{
+  barGtk *said = new barGtk;
+  said->box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+  gtk_widget_add_css_class(said->box, "gmsh-bar");
+  said->buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_box_append(GTK_BOX(said->box), said->buttons);
+  gtk_box_append(GTK_BOX(said->box),
+                 gtk_separator_new(GTK_ORIENTATION_VERTICAL));
+  said->message = gtk_button_new();
+  gtk_widget_add_css_class(said->message, "flat");
+  said->messageLabel = gtk_label_new("");
+  gtk_label_set_xalign(GTK_LABEL(said->messageLabel), 0.f);
+  gtk_label_set_ellipsize(GTK_LABEL(said->messageLabel), PANGO_ELLIPSIZE_END);
+  gtk_label_set_width_chars(GTK_LABEL(said->messageLabel), 1);
+  gtk_button_set_child(GTK_BUTTON(said->message), said->messageLabel);
+  gtk_widget_set_hexpand(said->message, TRUE);
+  g_signal_connect(said->message, "clicked", G_CALLBACK(_messagePressed),
+                   nullptr);
+  gtk_box_append(GTK_BOX(said->box), said->message);
+  said->progress = gtk_progress_bar_new();
+  gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(said->progress), TRUE);
+  gtk_widget_set_size_request(said->progress, 200, -1);
+  gtk_widget_set_valign(said->progress, GTK_ALIGN_CENTER);
+  gtk_widget_set_visible(said->progress, FALSE);
+  gtk_box_append(GTK_BOX(said->box), said->progress);
+  _bars().push_back(said);
+  // forgotten with the window it is in
+  g_signal_connect(said->box, "destroy", G_CALLBACK(_barGone), said);
+  if(gtkSources().barButtons) _refreshBar(said, gtkSources().barButtons());
+  return said->box;
+}
+
 void gtkRefreshBar()
 {
   if(!_w || !gtkSources().barButtons) return;
   std::vector<Ui::BarButton> bar = gtkSources().barButtons();
-  // made again when the buttons are not the same ones
-  std::string shape = Ui::signature(bar);
-  if(shape != _w->barBuilt) {
-    _w->barBuilt = shape;
-    while(GtkWidget *c = gtk_widget_get_first_child(_w->buttons))
-      gtk_box_remove(GTK_BOX(_w->buttons), c);
-    for(std::size_t i = 0; i < bar.size(); i++) {
-      if(bar[i].gapBefore && i)
-        gtk_box_append(GTK_BOX(_w->buttons),
-                       gtk_separator_new(GTK_ORIENTATION_VERTICAL));
-      GtkWidget *b = gtk_button_new_with_label(bar[i].label.c_str());
-      gtk_widget_add_css_class(b, "flat");
-      if(bar[i].widthEm > 0.)
-        gtk_widget_set_size_request(b, gtkPx(bar[i].widthEm), -1);
-      g_signal_connect(b, "clicked", G_CALLBACK(_barClicked),
-                       GINT_TO_POINTER((int)i));
-      gtk_box_append(GTK_BOX(_w->buttons), b);
-    }
-  }
-  // what each says, and how it looks, now
-  std::size_t i = 0;
-  for(GtkWidget *c = gtk_widget_get_first_child(_w->buttons); c;
-      c = gtk_widget_get_next_sibling(c)) {
-    if(!GTK_IS_BUTTON(c)) continue;
-    if(i >= bar.size()) break;
-    const Ui::BarButton &b = bar[i++];
-    bool on = b.on && b.on();
-    std::string label = (on && b.labelOn.size()) ? b.labelOn : b.label;
-    std::string glyph = (on && b.glyphOn.size()) ? b.glyphOn : b.glyph;
-    gtkButtonShows(c, label, glyph);
-    gtk_widget_set_sensitive(c, b.enabled ? b.enabled() : TRUE);
-    if(b.tooltip.size() && gtkSources().settings().tooltips)
-      gtk_widget_set_tooltip_text(c, b.tooltip.c_str());
-    // the classes it had are taken off before the ones it has now go on
-    for(const char *k : {"destructive-action", "suggested-action"})
-      gtk_widget_remove_css_class(c, k);
-    char **classes = gtk_widget_get_css_classes(c);
-    for(char **k = classes; k && *k; k++)
-      if(!strncmp(*k, "gmsh-on-", 8)) gtk_widget_remove_css_class(c, *k);
-    g_strfreev(classes);
-    if(b.alert && b.alert())
-      gtk_widget_add_css_class(c, "destructive-action");
-    else if(on && b.onColour)
-      gtk_widget_add_css_class(c, _colourClass(b.onColour()).c_str());
-    else if(on)
-      gtk_widget_add_css_class(c, "suggested-action");
-  }
-  if(gtkSources().barMessage) {
-    Ui::BarMessage m = gtkSources().barMessage();
-    if(m.text != gtk_label_get_text(GTK_LABEL(_w->messageLabel)))
-      gtk_label_set_text(GTK_LABEL(_w->messageLabel), m.text.c_str());
-    gtk_widget_remove_css_class(_w->messageLabel, "error");
-    gtk_widget_remove_css_class(_w->messageLabel, "warning");
-    if(m.weight == Ui::MessageError)
-      gtk_widget_add_css_class(_w->messageLabel, "error");
-    else if(m.weight == Ui::MessageWarning)
-      gtk_widget_add_css_class(_w->messageLabel, "warning");
-    // a progress that has come to its end stays said: not shown then
-    // the progress of what has finished stays said, at nought or at the end
-    bool going = m.running && m.fraction > 0. && m.fraction < 1.;
-    gtk_widget_set_visible(_w->progress, going);
-    if(going) {
-      gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(_w->progress),
-                                    std::max(0., std::min(1., m.fraction)));
-      gtk_progress_bar_set_text(GTK_PROGRESS_BAR(_w->progress),
-                                m.progressText.c_str());
-    }
-  }
-  if(gtkSources().barTooltip && gtkSources().settings().tooltips)
-    gtk_widget_set_tooltip_text(_w->message, gtkSources().barTooltip().c_str());
+  for(barGtk *said : _bars()) _refreshBar(said, bar);
 }
 
 namespace {
@@ -601,28 +663,7 @@ namespace {
 
     // the bar: the buttons, the message one presses to show the messages,
     // the progress of what runs
-    _w->bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
-    gtk_widget_add_css_class(_w->bar, "gmsh-bar");
-    _w->buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_box_append(GTK_BOX(_w->bar), _w->buttons);
-    gtk_box_append(GTK_BOX(_w->bar), gtk_separator_new(GTK_ORIENTATION_VERTICAL));
-    _w->message = gtk_button_new();
-    gtk_widget_add_css_class(_w->message, "flat");
-    _w->messageLabel = gtk_label_new("");
-    gtk_label_set_xalign(GTK_LABEL(_w->messageLabel), 0.f);
-    gtk_label_set_ellipsize(GTK_LABEL(_w->messageLabel), PANGO_ELLIPSIZE_END);
-    gtk_label_set_width_chars(GTK_LABEL(_w->messageLabel), 1);
-    gtk_button_set_child(GTK_BUTTON(_w->message), _w->messageLabel);
-    gtk_widget_set_hexpand(_w->message, TRUE);
-    g_signal_connect(_w->message, "clicked", G_CALLBACK(_messagePressed),
-                     nullptr);
-    gtk_box_append(GTK_BOX(_w->bar), _w->message);
-    _w->progress = gtk_progress_bar_new();
-    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(_w->progress), TRUE);
-    gtk_widget_set_size_request(_w->progress, 200, -1);
-    gtk_widget_set_valign(_w->progress, GTK_ALIGN_CENTER);
-    gtk_widget_set_visible(_w->progress, FALSE);
-    gtk_box_append(GTK_BOX(_w->bar), _w->progress);
+    _w->bar = gtkMakeBar();
     gtk_box_append(GTK_BOX(all), _w->bar);
 
     gtk_window_set_child(GTK_WINDOW(_w->win), all);
