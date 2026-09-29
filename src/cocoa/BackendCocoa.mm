@@ -33,6 +33,10 @@
 @interface GmshConsole : NSTextView
 @end
 
+// the tree taken out of the main window: closed from its frame, it goes back
+@interface GmshTreePanel : NSPanel <NSWindowDelegate>
+@end
+
 // the console with the bar over its lines: the filter, Save, Clear,
 // Autoscroll, as Ui::Console says them
 @interface GmshConsoleBox : GmshFlippedView {
@@ -101,6 +105,8 @@ namespace {
     GmshMainWindow *window = nil;
     NSSplitView *side = nil, *split = nil;
     GmshTreeBox *treeBox = nil;
+    // the tree in a window of its own, when it is detached
+    GmshTreePanel *treePanel = nil;
     NSScrollView *consoleScroll = nil;
     GmshConsoleBox *consoleBox = nil;
     GmshConsole *messages = nil;
@@ -214,9 +220,21 @@ namespace {
     }
   }
 
+  bool _treeShown()
+  {
+    return _w->treePanel ? [_w->treePanel isVisible] : ![_w->treeBox isHidden];
+  }
+
   void _showTree(bool show)
   {
     if(!_w) return;
+    if(_w->treePanel) {
+      if(show)
+        [_w->treePanel orderFront:nil];
+      else
+        [_w->treePanel orderOut:nil];
+      return;
+    }
     NSView *t = _w->treeBox;
     if(show == ![t isHidden]) return;
     if(!show) _w->treeWidth = std::max((CGFloat)50., [t frame].size.width);
@@ -225,13 +243,75 @@ namespace {
     if(show) [_w->side setPosition:_w->treeWidth ofDividerAtIndex:0];
   }
 
+  // from the top left of the screen, as the other interfaces have it
+  NSPoint _topLeft(int x, int y)
+  {
+    NSRect all = [[NSScreen mainScreen] visibleFrame];
+    return NSMakePoint(all.origin.x + x, NSMaxY(all) - y);
+  }
+
+  // the tree taken out of the main window into a panel of its own, and put
+  // back
+  void _detachTree(bool detached)
+  {
+    if(!_w || detached == (_w->treePanel != nil)) return;
+    if(detached) {
+      const Ui::Backend::Settings set = cocoaSources().settings();
+      if(![_w->treeBox isHidden])
+        _w->treeWidth = std::max((CGFloat)50., [_w->treeBox frame].size.width);
+      [_w->treeBox removeFromSuperview];
+      [_w->side adjustSubviews];
+      CGFloat h = set.treeHeight > 0 ? set.treeHeight : 600.;
+      GmshTreePanel *panel = [[GmshTreePanel alloc]
+        initWithContentRect:NSMakeRect(0, 0, _w->treeWidth, h)
+                  styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
+                            NSWindowStyleMaskResizable |
+                            NSWindowStyleMaskMiniaturizable
+                    backing:NSBackingStoreBuffered
+                      defer:NO];
+      [panel setTitle:@"Gmsh"];
+      [panel setFloatingPanel:NO];
+      [panel setHidesOnDeactivate:NO];
+      [panel setReleasedWhenClosed:NO];
+      [panel setDelegate:panel];
+      [_w->treeBox setHidden:NO];
+      [panel setContentView:_w->treeBox];
+      [_w->treeBox resizeSubviewsWithOldSize:NSZeroSize];
+      if(set.treeX > 0 || set.treeY > 0)
+        [panel setFrameTopLeftPoint:_topLeft(set.treeX, set.treeY)];
+      else
+        [panel center];
+      _w->treePanel = panel;
+      [panel makeKeyAndOrderFront:nil];
+      return;
+    }
+    if(cocoaHost().layoutChanged) {
+      NSRect all = [[NSScreen mainScreen] visibleFrame];
+      NSRect f = [_w->treePanel frame];
+      Ui::Backend::Layout l;
+      l.treeX = (int)(f.origin.x - all.origin.x);
+      l.treeY = (int)(NSMaxY(all) - NSMaxY(f));
+      l.treeHeight = (int)[[_w->treePanel contentView] frame].size.height;
+      cocoaHost().layoutChanged(l);
+    }
+    GmshTreePanel *panel = _w->treePanel;
+    _w->treePanel = nil;
+    [panel setContentView:[[NSView alloc] initWithFrame:NSZeroRect]];
+    [panel orderOut:nil];
+    [_w->side addSubview:_w->treeBox positioned:NSWindowBelow
+              relativeTo:_w->split];
+    [_w->side adjustSubviews];
+    [_w->side setPosition:_w->treeWidth ofDividerAtIndex:0];
+    [_w->treeBox resizeSubviewsWithOldSize:NSZeroSize];
+  }
+
   // nothing but the scene
   void _fullscreenParts(bool on)
   {
     if(!_w || on == _w->fullscreen) return;
     _w->fullscreen = on;
     if(on) {
-      _w->treeWas = ![_w->treeBox isHidden];
+      _w->treeWas = _treeShown();
       _w->consoleWas = ![_w->consoleBox isHidden];
     }
     _showTree(!on && _w->treeWas);
@@ -277,6 +357,18 @@ namespace {
 } // namespace
 
 // --- the pieces of the main window
+
+@implementation GmshTreePanel
+- (void)keyDown:(NSEvent *)e
+{
+  cocoaMainKey(e);
+}
+- (BOOL)windowShouldClose:(NSWindow *)sender
+{
+  cocoaLater([]() { _detachTree(false); });
+  return NO;
+}
+@end
 
 @implementation GmshMainWindow
 // what nothing took is Gmsh's, or nothing: a key Gmsh has no use for does not
@@ -631,6 +723,11 @@ namespace {
       _w = nullptr;
       delete w->tree;
       w->tree = nullptr;
+      if(w->treePanel) {
+        [w->treePanel setDelegate:nil];
+        [w->treePanel orderOut:nil];
+        w->treePanel = nil;
+      }
       w->window->closing = true;
       [w->window setDelegate:nil];
       [w->window close];
@@ -942,27 +1039,32 @@ namespace {
         [win makeKeyAndOrderFront:nil];
       }
       else if(what == "show_hide_tree")
-        _showTree([_w->treeBox isHidden]);
+        _showTree(!_treeShown());
+      else if(what == "attach_detach")
+        _detachTree(_w->treePanel == nil);
       else if(_host.error)
         _host.error("Unknown window action '" + what + "'");
     }
 
-    bool supports(const std::string &what) override
-    {
-      // the tree is a pane of the main window, never a window of its own
-      return what != "attach_detach";
-    }
+    void detachTree(bool detached) override { _detachTree(detached); }
 
     Layout windowLayout() override
     {
       Layout l;
       if(!_w || _w->fullscreen) return l;
       cocoaSceneSize(l.sceneWidth, l.sceneHeight);
-      if(![_w->treeBox isHidden])
+      if(!_w->treePanel && ![_w->treeBox isHidden])
         l.treeWidth = (int)[_w->treeBox frame].size.width;
       if(![_w->consoleBox isHidden])
         l.consoleHeight = (int)[_w->consoleBox frame].size.height;
-      l.treeDetached = 0;
+      l.treeDetached = _w->treePanel ? 1 : 0;
+      if(_w->treePanel) {
+        NSRect all = [[NSScreen mainScreen] visibleFrame];
+        NSRect f = [_w->treePanel frame];
+        l.treeX = (int)(f.origin.x - all.origin.x);
+        l.treeY = (int)(NSMaxY(all) - NSMaxY(f));
+        l.treeHeight = (int)[[_w->treePanel contentView] frame].size.height;
+      }
       return l;
     }
 
@@ -987,7 +1089,11 @@ namespace {
     {
       if(!_w || width < 0) return;
       _w->treeWidth = width;
-      if(![_w->treeBox isHidden])
+      if(_w->treePanel) {
+        NSSize c = [[_w->treePanel contentView] frame].size;
+        [_w->treePanel setContentSize:NSMakeSize(width, c.height)];
+      }
+      else if(![_w->treeBox isHidden])
         [_w->side setPosition:width ofDividerAtIndex:0];
     }
 
@@ -1176,6 +1282,7 @@ namespace {
         [win center];
       [win makeKeyAndOrderFront:nil];
       [win makeFirstResponder:cocoaSceneWidget().subviews.firstObject];
+      if(set.detachedTree) _detachTree(true);
     }
   };
 
