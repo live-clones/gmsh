@@ -69,15 +69,16 @@ public:
 };
 
 namespace {
-  // tabs wider than their window drop the rest in a menu, where FLTK can
-  void _overflowsInMenu(Fl_Tabs *tabs)
+  // tabs wider than their window drop the rest in a menu, where FLTK can:
+  // the snapshots of 1.4 before 1.4.0 say 10400 without handle_overflow()
+  template <class T>
+  auto _overflowsInMenu(T *tabs, int)
+    -> decltype(tabs->handle_overflow(T::OVERFLOW_PULLDOWN), void())
   {
-#if FL_API_VERSION >= 10400
-    tabs->handle_overflow(Fl_Tabs::OVERFLOW_PULLDOWN);
-#else
-    (void)tabs;
-#endif
+    tabs->handle_overflow(T::OVERFLOW_PULLDOWN);
   }
+  template <class T> void _overflowsInMenu(T *, long) {}
+  void _overflowsInMenu(Fl_Tabs *tabs) { _overflowsInMenu(tabs, 0); }
 
   Ui::Metrics _metrics();
 
