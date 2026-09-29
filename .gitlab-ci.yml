@@ -58,7 +58,9 @@ linux_imgui_ci:
   script:
     # contrib/glfw is built from source: the image needs the X11 and Wayland
     # development headers (libx11, libxrandr, libxinerama, libxcursor, libxi,
-    # xorgproto, wayland, wayland-scanner, wayland-protocols, libxkbcommon)
+    # xorgproto, wayland, wayland-scanner, wayland-protocols, libxkbcommon);
+    # installed here until the image has them (utils/docker/Dockerfile.ci)
+    - apt-get update -qq && apt-get install -y -qq libxrandr-dev libwayland-dev libxkbcommon-dev
     - mkdir build_imgui
     - cd build_imgui
     - cmake -DENABLE_IMGUI=1 ..

@@ -773,12 +773,18 @@ elseif(ENABLE_IMGUI OR ENABLE_BROWSER)
       endif()
       if(GMSH_GLFW_X11)
         find_package(X11 QUIET)
-        if(NOT X11_FOUND OR NOT X11_Xrandr_INCLUDE_PATH OR
-           NOT X11_Xinerama_INCLUDE_PATH OR NOT X11_Xkb_INCLUDE_PATH OR
-           NOT X11_Xcursor_INCLUDE_PATH OR NOT X11_Xi_INCLUDE_PATH OR
-           NOT X11_Xshape_INCLUDE_PATH)
-          message(WARNING "X11, Xrandr, Xinerama, Xkb, Xcursor, Xi or Xext "
-                  "headers not found: GLFW is built without its X11 backend")
+        set(GMSH_GLFW_X11_MISSING)
+        if(NOT X11_FOUND)
+          list(APPEND GMSH_GLFW_X11_MISSING X11)
+        endif()
+        foreach(PART Xrandr Xinerama Xkb Xcursor Xi Xshape)
+          if(NOT X11_${PART}_INCLUDE_PATH)
+            list(APPEND GMSH_GLFW_X11_MISSING ${PART})
+          endif()
+        endforeach()
+        if(GMSH_GLFW_X11_MISSING)
+          message(WARNING "headers not found (${GMSH_GLFW_X11_MISSING}): GLFW "
+                  "is built without its X11 backend")
           set(GMSH_GLFW_X11 OFF)
         endif()
       endif()
