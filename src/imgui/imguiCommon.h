@@ -78,6 +78,17 @@ float imguiProseHeight(const Ui::Field &f, float room);
 // --- the tree of the modules, in a panel of its own
 void imguiDrawTree();
 void imguiShowTree(bool show);
+// out of the dock space, a window of its own, or back where it was docked
+void imguiDetachTree(bool detached);
+bool imguiTreeDetached();
+// where it floats, from the top left of the main window; false when docked
+bool imguiTreeFloating(int &x, int &y, int &height);
+// the node of the dock space it goes back to when it was never docked
+void imguiSetTreeHome(unsigned dockNode);
+// asked to go back when the node it came from is gone: the dock space makes
+// it one again
+bool imguiTreeNeedsHome();
+void imguiSetTreeHomeNow(unsigned dockNode);
 bool imguiTreeShown();
 void imguiOpenTreeItem(const std::string &path, bool open);
 bool imguiTreeItemOpen(const std::string &path);

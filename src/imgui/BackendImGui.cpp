@@ -464,6 +464,7 @@ mainWindow::mainWindow(int argc, char **argv, bool quitShouldExit)
   _claimThread();
   _console = new console();
   _browser = new fileChooserImGui();
+  if(imguiSources().settings().detachedTree) imguiDetachTree(true);
   // the scene, its host and its first view
   imguiSceneStart(_window);
 
@@ -699,6 +700,22 @@ void mainWindow::_buildDockSpace(int &sceneX, int &sceneY, int &sceneW,
       ImGui::DockBuilderDockWindow("Messages", bottom);
       ImGui::DockBuilderDockWindow("Modules", left);
       ImGui::DockBuilderFinish(rootId);
+      imguiSetTreeHome(left);
+    }
+  }
+
+  // the tree attached again where it was, left of the scene, its node gone
+  // when it was taken out
+  if(imguiTreeNeedsHome()) {
+    if(ImGuiDockNode *central = ImGui::DockBuilderGetCentralNode(rootId)) {
+      ImGuiID centre = central->ID;
+      float wide = std::max(1.f, central->Size.x);
+      float ratio = std::min(.5f, std::max(.1f, 300.f / wide));
+      ImGuiID left = ImGui::DockBuilderSplitNode(centre, ImGuiDir_Left, ratio,
+                                                 nullptr, &centre);
+      ImGui::DockBuilderDockWindow("Modules", left);
+      ImGui::DockBuilderFinish(rootId);
+      imguiSetTreeHomeNow(left);
     }
   }
 
@@ -1297,6 +1314,8 @@ void mainWindow::windowAction(const std::string &what)
     _windowFullScreen();
   else if(what == "show_hide_tree")
     imguiShowTree(!imguiTreeShown());
+  else if(what == "attach_detach")
+    imguiDetachTree(!imguiTreeDetached());
   else
     imguiReport(imguiError, "Unknown window action '%s'", what.c_str());
 }
@@ -1555,12 +1574,19 @@ void mainWindow::windowAction(const std::string &what)
 
     bool supports(const std::string &what) override
     {
-      // the panels are not windows of their own; no image clipboard in GLFW;
-      // every panel is already dragged in and out by hand
-      if(what == "front" || what == "copy" || what == "attach_detach" ||
-         what == "3m")
-        return false;
+      // the panels are not windows of their own; no image clipboard in GLFW
+      if(what == "front" || what == "copy" || what == "3m") return false;
       return true;
+    }
+
+    void detachTree(bool detached) override { imguiDetachTree(detached); }
+
+    Layout windowLayout() override
+    {
+      Layout l;
+      l.treeDetached = imguiTreeDetached() ? 1 : 0;
+      imguiTreeFloating(l.treeX, l.treeY, l.treeHeight);
+      return l;
     }
 
     void dropped(const std::vector<std::string> &paths)

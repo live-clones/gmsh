@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "imgui.h"
+#include "imgui_internal.h" // DockBuilder
 #include "imgui_stdlib.h"
 
 #include "imguiCommon.h"
@@ -24,6 +25,16 @@
 namespace {
 
   bool _shown = true;
+  // detached: a window of its own, out of the dock space (outside the main
+  // window where the windowing system allows); -1 when nothing was asked
+  int _detachWanted = -1;
+  bool _detached = false;
+  // the node it was docked in, to go back to; where it floats
+  ImGuiID _home = 0;
+  ImVec2 _floatAt(-1.f, -1.f), _floatSize(0.f, 0.f);
+  // the frames after it moved, when the scene, whose size changed, is drawn
+  // again: the size settles a frame or two later
+  int _settling = 0;
   // by path, "0Modules/Geometry/..."; a request waits until the branch is
   // drawn, so that a chain unfolds in one go
   std::map<std::string, bool> _treeWanted;
@@ -96,7 +107,38 @@ void imguiDrawTree()
   if(!_shown) return;
 
   ImGui::SetNextWindowSize(ImVec2(300, 500), ImGuiCond_FirstUseEver);
-  if(!ImGui::Begin("Modules", &_shown)) {
+  if(_detachWanted == 1) {
+    const Ui::Backend::Settings set = imguiSources().settings();
+    ImGui::SetNextWindowDockID(0, ImGuiCond_Always);
+    float w = _floatSize.x > 0.f ? _floatSize.x : 300.f;
+    float h = set.treeHeight > 0 ? (float)set.treeHeight : 600.f;
+    ImGui::SetNextWindowSize(ImVec2(w, h), ImGuiCond_Always);
+    if(set.treeX > 0 || set.treeY > 0) {
+      const ImGuiViewport *main = ImGui::GetMainViewport();
+      ImGui::SetNextWindowPos(ImVec2(main->Pos.x + set.treeX,
+                                     main->Pos.y + set.treeY),
+                              ImGuiCond_Always);
+    }
+  }
+  else if(_detachWanted == 0 && _home &&
+          ImGui::DockBuilderGetNode(_home))
+    ImGui::SetNextWindowDockID(_home, ImGuiCond_Always);
+  if(_detachWanted >= 0) _settling = 4;
+  if(_settling > 0) {
+    _settling--;
+    imguiRequestRedraw();
+  }
+  _detachWanted = -1;
+  bool open = ImGui::Begin("Modules", &_shown);
+  // dragged out or in by hand as well
+  _detached = !ImGui::IsWindowDocked();
+  if(!_detached)
+    _home = ImGui::GetWindowDockID();
+  else {
+    _floatAt = ImGui::GetWindowPos();
+    _floatSize = ImGui::GetWindowSize();
+  }
+  if(!open) {
     ImGui::End();
     return;
   }
@@ -164,6 +206,46 @@ void imguiDrawTree()
 }
 
 void imguiShowTree(bool show) { _shown = show; }
+
+void imguiDetachTree(bool detached)
+{
+  if(detached == _detached) return;
+  // the size it has docked is the one it floats at
+  _detachWanted = detached ? 1 : 0;
+  imguiRequestFrame();
+}
+
+bool imguiTreeDetached() { return _detached; }
+
+void imguiSetTreeHome(unsigned dockNode)
+{
+  if(!_home) _home = dockNode;
+}
+
+bool imguiTreeNeedsHome()
+{
+  // the node it left is gone once nothing is docked in it
+  return _detachWanted == 0 && !(_home && ImGui::DockBuilderGetNode(_home));
+}
+
+void imguiSetTreeHomeNow(unsigned dockNode)
+{
+  // docked there by the dock space itself
+  _home = dockNode;
+  _detachWanted = -1;
+  _settling = 4;
+  imguiRequestRedraw();
+}
+
+bool imguiTreeFloating(int &x, int &y, int &height)
+{
+  if(!_detached) return false;
+  const ImGuiViewport *main = ImGui::GetMainViewport();
+  x = (int)(_floatAt.x - main->Pos.x);
+  y = (int)(_floatAt.y - main->Pos.y);
+  height = (int)_floatSize.y;
+  return true;
+}
 
 bool imguiTreeShown() { return _shown; }
 
