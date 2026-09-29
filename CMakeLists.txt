@@ -54,6 +54,7 @@ opt(BROWSER "Enable the browser interface: the panels in a web page, the model i
 opt(GTK "Enable the GTK 4 graphical user interface (requires mesh/post)" OFF)
 opt(QT "Enable the Qt 6 graphical user interface (requires mesh/post)" OFF)
 opt(TUI "Enable the terminal user interface (FTXUI, requires mesh/post)" OFF)
+opt(WIN32 "Enable the native Windows (Win32) user interface (requires mesh/post)" OFF)
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GLFW_WAYLAND "Enable the native Wayland backend of GLFW (Linux only, used by ENABLE_IMGUI)" ${DEFAULT})
@@ -872,6 +873,15 @@ if(ENABLE_QT AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/qt)
   endif()
 endif()
 
+# The native Windows interface: Win32 and its common controls, the scene in
+# an OpenGL child window of its own (WGL)
+if(ENABLE_WIN32 AND WIN32 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/win32)
+  add_subdirectory(src/win32)
+  list(APPEND EXTERNAL_LIBRARIES comctl32 comdlg32 ole32 uuid shell32 gdi32
+       dwmapi uxtheme)
+  set_config_option(HAVE_WIN32_GUI "Win32")
+endif()
+
 # The terminal interface: FTXUI from contrib, the scene drawn off screen and
 # shown as pictures made of characters
 if(ENABLE_TUI AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/tui AND
@@ -887,7 +897,8 @@ endif()
 # is added once every interface that could hold it is known, and says so with
 # HAVE_GL_SCENE. Two of its files want more than OpenGL and are picked inside:
 # see src/scene/CMakeLists.txt.
-if((HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT OR HAVE_TUI) AND
+if((HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT OR HAVE_TUI OR
+    HAVE_WIN32_GUI) AND
    EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scene)
   add_subdirectory(src/scene)
   set(HAVE_GL_SCENE TRUE)
@@ -895,7 +906,8 @@ endif()
 
 # HAVE_GUI is set as soon as one of the graphical user interfaces is compiled in,
 # and brings what they are all made of
-if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT OR HAVE_TUI)
+if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER OR HAVE_GTK OR HAVE_QT OR HAVE_TUI OR
+   HAVE_WIN32_GUI)
   set(HAVE_GUI TRUE)
   add_subdirectory(src/ui)
   add_subdirectory(src/gui)
@@ -2076,6 +2088,15 @@ else()
   endif()
 endif()
 target_link_libraries(gmsh PRIVATE ${LINK_LIBRARIES})
+# the manifest that asks for the common controls of the system theme and for
+# the DPI of each screen, and the icon
+if(HAVE_WIN32_GUI)
+  enable_language(RC)
+  target_sources(gmsh PRIVATE src/win32/gmsh.rc)
+  if(MSVC)
+    set_property(TARGET gmsh APPEND_STRING PROPERTY LINK_FLAGS " /MANIFEST:NO")
+  endif()
+endif()
 if(NOT ENABLE_BUILD_DYNAMIC)
   # a dynamic build gets them through the shared library
   target_link_libraries(gmsh PRIVATE ${GMSH_PRIVATE_LIBRARIES})
