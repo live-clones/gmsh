@@ -148,7 +148,8 @@ namespace {
     p->input.doubleClicked = false;
     p->input.wheel = 0.;
     p->input.dx = p->input.dy = 0.;
-    InvalidateRect(p->hwnd, nullptr, FALSE);
+    // the view asks for the draws it needs: one it did not ask for would
+    // start the studio frames over
   }
 
   void _modifiers(pane *p, WPARAM wp)
@@ -201,7 +202,6 @@ namespace {
       p->tracking = false;
       p->moved = false;
       p->view->pointerLeft();
-      InvalidateRect(w, nullptr, FALSE);
       return 0;
     case WM_LBUTTONDOWN:
     case WM_RBUTTONDOWN:
@@ -250,7 +250,6 @@ namespace {
          CTX::instance()->mouseSelection && !p->view->lasso() &&
          !p->view->addPointMode) {
         if(_prepare(p)) p->view->stepPick(wp == VK_DOWN ? 1 : -1);
-        InvalidateRect(w, nullptr, FALSE);
         return 0;
       }
       break;

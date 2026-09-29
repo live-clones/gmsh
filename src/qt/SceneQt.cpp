@@ -188,8 +188,9 @@ namespace {
       input.doubleClicked = false;
       input.wheel = 0.;
       input.dx = input.dy = 0.;
+      // the view asks for the draws it needs: one it did not ask for would
+      // start the studio frames over
       doneCurrent();
-      update();
     }
 
     void modifiers(Qt::KeyboardModifiers m)
@@ -268,7 +269,6 @@ namespace {
     {
       moved = false;
       view->pointerLeft();
-      update();
     }
 
     // Alt and the arrows step through what is stacked under the pointer; the
@@ -279,7 +279,6 @@ namespace {
          (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down) &&
          CTX::instance()->mouseSelection && !view->lasso() && !view->addPointMode) {
         if(prepare()) view->stepPick(e->key() == Qt::Key_Down ? 1 : -1);
-        update();
         return;
       }
       e->ignore();

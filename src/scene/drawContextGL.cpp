@@ -23,12 +23,14 @@ drawContextGL::~drawContextGL() { delete _strings; }
 
 void drawContextGL::draw(bool rateLimited)
 {
+  sceneView::changed();
   if(Scene::host().redraw) Scene::host().redraw();
   if(Scene::host().check) Scene::host().check(rateLimited);
 }
 
 void drawContextGL::drawCurrentOpenglWindow(bool make_current, bool again)
 {
+  sceneView::changed();
   sceneView *view = Scene::host().current ? Scene::host().current() : nullptr;
   if(view) view->setAgain(again);
   if(Scene::host().drawCurrent) Scene::host().drawCurrent();

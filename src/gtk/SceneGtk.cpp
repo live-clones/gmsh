@@ -244,7 +244,8 @@ namespace {
     p->input.doubleClicked = false;
     p->input.wheel = 0.;
     p->input.dx = p->input.dy = 0.;
-    gtk_gl_area_queue_render(GTK_GL_AREA(p->area));
+    // the view asks for the draws it needs: one it did not ask for would
+    // start the studio frames over
   }
 
   gboolean _event(GtkEventControllerLegacy *c, GdkEvent *e, gpointer)
@@ -322,7 +323,6 @@ namespace {
     if(!p) return;
     p->moved = false;
     p->view->pointerLeft();
-    gtk_gl_area_queue_render(GTK_GL_AREA(p->area));
   }
 
   // Alt and the arrows step through what is stacked under the pointer; the
@@ -337,7 +337,6 @@ namespace {
        CTX::instance()->mouseSelection && !p->view->lasso() &&
        !p->view->addPointMode) {
       if(_prepare(p)) p->view->stepPick(keyval == GDK_KEY_Down ? 1 : -1);
-      gtk_gl_area_queue_render(GTK_GL_AREA(p->area));
       return TRUE;
     }
     return FALSE;

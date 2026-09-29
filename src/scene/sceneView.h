@@ -94,6 +94,10 @@ private:
   // whether the timer asked for the frame being drawn, and the view and size
   // the frames so far were drawn for
   bool _studioAsked, _studioTimer, _accumulating;
+  static unsigned _changes;
+  unsigned _changesSeen;
+  // changed(), and a frame asked for
+  void _redraw();
   int _studioArmed;
   double _frameView[16], _studioModel[16];
   int _studioX, _studioY, _studioW, _studioH;
@@ -202,6 +206,10 @@ public:
   void contextChanged();
   // a frame anyone asked for starts the studio accumulation over
   void redrawAsked() { _studioAsked = _highlightAsked = false; }
+  // what the views show changed: their next frames start the studio
+  // accumulation over. A frame the holder draws of its own accord -- an
+  // expose, an event it redraws after -- shows what was accumulated instead
+  static void changed() { ++_changes; }
   // the second draw of a print: what was accumulated may be put back
   void setAgain(bool again) { _again = again; }
   // at supersampling times the scale of the view; false if it cannot be done

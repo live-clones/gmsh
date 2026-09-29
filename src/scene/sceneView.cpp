@@ -69,6 +69,7 @@ sceneView::sceneView()
   _stepping = false;
   _stepAnchor[0] = _stepAnchor[1] = 0.;
   _studioAsked = _studioTimer = _accumulating = false;
+  _changesSeen = _changes - 1;
   _studioArmed = 0;
   _studioX = _studioY = _studioW = _studioH = 0;
   _studioPrinted = 0;
@@ -295,6 +296,14 @@ void sceneView::contextChanged()
   if(CTX::instance()->shaders) glShader::available();
 }
 
+unsigned sceneView::_changes = 0;
+
+void sceneView::_redraw()
+{
+  changed();
+  if(Scene::host().redraw) Scene::host().redraw();
+}
+
 void sceneView::draw(double pixelFactor, int windowHeight)
 {
   double start = TimeOfDay();
@@ -304,11 +313,17 @@ void sceneView::draw(double pixelFactor, int windowHeight)
   // what was accumulated, which this frame -- the same as the last -- is not
   // added to. The sample the timer asked for in the same frame is not drawn
   // either.
+  bool changed = _changesSeen != _changes;
+  _changesSeen = _changes;
   bool highlightOnly = _highlightAsked;
   if(_studioAsked && _highlightAsked) _ctx->studioSample--;
-  _studioTimer = _studioAsked && !_highlightAsked;
+  _studioTimer = _studioAsked && !_highlightAsked && !changed;
   _studioAsked = _highlightAsked = false;
-  if(!_studioTimer && !highlightOnly) _ctx->studioSample = 0;
+  if(changed)
+    _ctx->studioSample = 0;
+  // asked for by no one: the same frame as the last
+  else if(!_studioTimer)
+    highlightOnly = true;
   _ctx->invalidatePickCache();
   glShader::setContext(Scene::host().context ? Scene::host().context() :
                                                  nullptr);
@@ -601,7 +616,7 @@ bool sceneView::printTo(int width, int height, int supersampling,
   glImmediate::pixelScale(1.);
   _printW = _printH = 0;
   _printScale = 1.;
-  if(Scene::host().redraw) Scene::host().redraw();
+  _redraw();
   return true;
 }
 
@@ -630,7 +645,7 @@ void sceneView::_burn(bool sameFrame)
   _ctx->studioSample = 0;
   if(!_printW && !sameFrame && Scene::host().later)
     Scene::host().later(0.03, [this]() {
-      if(Scene::host().redraw) Scene::host().redraw();
+      _redraw();
     });
 }
 
@@ -962,6 +977,7 @@ void sceneView::pinTooltip(const std::string &text, const double *xyz,
     for(int i = 0; i < 3; i++) n.xyz[i] = xyz[i];
     _pinned.push_back(n);
   }
+  changed();
   if(Scene::host().redrawView)
     Scene::host().redrawView(this);
   else if(Scene::host().redraw)
@@ -1004,7 +1020,7 @@ bool sceneView::key(char what)
 {
   if(what == 'q' && _lassoMode) {
     _lassoMode = false;
-    Scene::host().redraw();
+    _redraw();
     return true;
   }
   if(!selectionMode) return false;
@@ -1053,7 +1069,7 @@ void sceneView::handleMouse(const paneInput &in)
       _ctx->s[2] = _ctx->s[0];
       _prev.recenter(_ctx);
     }
-    if(Scene::host().redraw) Scene::host().redraw();
+    _redraw();
     Gui::instance().manipulator.reload();
   }
 
@@ -1071,7 +1087,7 @@ void sceneView::handleMouse(const paneInput &in)
         if(dialog.shape >= 1 && dialog.shape <= 11)
           dialog.value[dialog.shape][i] = str;
       }
-      if(Scene::host().redraw) Scene::host().redraw();
+      _redraw();
     }
     return;
   }
@@ -1152,7 +1168,7 @@ void sceneView::handleMouse(const paneInput &in)
       if(!CTX::instance()->camera) {
         _ctx->t[0] = _ctx->t[1] = _ctx->t[2] = 0.;
         _ctx->s[0] = _ctx->s[1] = _ctx->s[2] = 1.;
-        if(Scene::host().redraw) Scene::host().redraw();
+        _redraw();
       }
       _lassoMode = false;
     }
@@ -1171,7 +1187,7 @@ void sceneView::handleMouse(const paneInput &in)
     if(!_lassoMode) {
       CTX::instance()->mesh.draw = 1;
       CTX::instance()->post.draw = 1;
-      if(Scene::host().redraw) Scene::host().redraw();
+      _redraw();
     }
     _prev.set(_ctx, (int)lx, (int)ly);
     return;
@@ -1189,7 +1205,7 @@ void sceneView::handleMouse(const paneInput &in)
   double dy = _curr.win[1] - _prev.win[1];
 
   if(_lassoMode) {
-    if(Scene::host().redraw) Scene::host().redraw();
+    _redraw();
     _prev.set(_ctx, (int)lx, (int)ly);
     return;
   }
@@ -1281,7 +1297,7 @@ void sceneView::handleMouse(const paneInput &in)
     CTX::instance()->mesh.draw = 0;
     CTX::instance()->post.draw = 0;
   }
-  if(Scene::host().redraw) Scene::host().redraw();
+  _redraw();
   Gui::instance().manipulator.reload();
   _prev.set(_ctx, (int)lx, (int)ly);
 }

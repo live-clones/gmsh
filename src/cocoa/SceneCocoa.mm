@@ -270,7 +270,8 @@ namespace {
   input.doubleClicked = false;
   input.wheel = 0.;
   input.dx = input.dy = 0.;
-  [self setNeedsDisplay:YES];
+  // the view asks for the draws it needs: one it did not ask for would start
+  // the studio frames over
 }
 
 - (void)modifiers:(NSEventModifierFlags)m
@@ -406,7 +407,6 @@ namespace {
 {
   moved = false;
   view->pointerLeft();
-  [self setNeedsDisplay:YES];
 }
 
 // Option and the arrows step through what is stacked under the pointer; the
@@ -419,7 +419,6 @@ namespace {
      (k == NSUpArrowFunctionKey || k == NSDownArrowFunctionKey) &&
      CTX::instance()->mouseSelection && !view->lasso() && !view->addPointMode) {
     if([self prepare]) view->stepPick(k == NSDownArrowFunctionKey ? 1 : -1);
-    [self setNeedsDisplay:YES];
     return;
   }
   cocoaMainKey(e);
