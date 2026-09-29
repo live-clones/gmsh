@@ -27,14 +27,24 @@ namespace Ui {
 
     // a button down on an entry (0 to size - 1) at an intensity (0 to
     // 255); button 0 is the left one, 1 the middle one, 2 the right one.
-    // Left draws red or hue, middle or Shift+left green or saturation,
-    // right or Alt+left blue or value, any with Command alpha
-    void press(const ColourMap &map, int entry, int value, int button,
-               unsigned mods);
-    // the entries between the last one and this one take the intensity
-    void drag(const ColourMap &map, int entry, int value);
-    void release() { _from = -1; }
-    bool drawing() const { return _from >= 0; }
+    // Over the curves, left draws red or hue, middle or Shift+left green or
+    // saturation, right or Alt+left blue or value, any with Command alpha;
+    // on the wedge (onWedge), any moves the marker. Redraw or Changed
+    Answer press(const ColourMap &map, int entry, int value, int button,
+                 unsigned mods, bool onWedge = false);
+    // the entries between the last one and this one take the intensity, or
+    // the marker follows
+    Answer drag(const ColourMap &map, int entry, int value);
+    void release()
+    {
+      _from = -1;
+      _marking = false;
+    }
+    bool drawing() const { return _from >= 0 || _marking; }
+
+    // the entry the marker is on, and the value of the map there
+    int marker() const { return _marker; }
+    static std::string markerText(const ColourMap &map, int entry);
 
     bool help() const { return _help; }
     void setHelp(bool on) { _help = on; }
@@ -49,8 +59,8 @@ namespace Ui {
     static int valueAt(double y, double height);
 
   private:
-    bool _help = false;
-    int _from = -1, _channel = 0;
+    bool _help = false, _marking = false;
+    int _from = -1, _channel = 0, _marker = 0;
   };
 
 } // namespace Ui

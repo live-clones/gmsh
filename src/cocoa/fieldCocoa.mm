@@ -417,10 +417,22 @@ namespace {
   else {
     _say(Ui::MapEditor::title(map).c_str(), NSMakePoint(6., 4.), font, ink);
   }
+  // the marker below the wedge, and the value of the map there; the values
+  // on the last line
+  double mx = size > 1 ? w * b->mapEdit.marker() / (double)(size - 1) : 0.;
+  double my = wy + lh;
+  NSBezierPath *arrow = [NSBezierPath bezierPath];
+  [arrow moveToPoint:NSMakePoint(mx, my + lh * .6)];
+  [arrow lineToPoint:NSMakePoint(mx, my)];
+  [arrow lineToPoint:NSMakePoint(mx - 3., my + 6.)];
+  [arrow moveToPoint:NSMakePoint(mx, my)];
+  [arrow lineToPoint:NSMakePoint(mx + 3., my + 6.)];
+  [ink set];
+  [arrow stroke];
   char says[64];
-  double base = wy + lh + 2.;
-  snprintf(says, sizeof(says), "%g", least);
-  _say(says, NSMakePoint(10., base), font, ink);
+  double base = wy + 2. * lh + 2.;
+  _say(Ui::MapEditor::markerText(map, b->mapEdit.marker()).c_str(),
+       NSMakePoint(10., base), font, ink);
   snprintf(says, sizeof(says), "%g", most);
   NSSize wide = [[NSString stringWithUTF8String:says]
     sizeWithAttributes:@{NSFontAttributeName : font}];
@@ -438,22 +450,22 @@ namespace {
   if(size < 2 || width < 1. || wy < 1.) return;
   int entry = Ui::MapEditor::entryAt(map, pos.x, width);
   int value = Ui::MapEditor::valueAt(pos.y, wy);
+  Ui::MapEditor::Answer said;
   if(button >= 0) {
-    if(pos.y >= wy) return;
     NSEventModifierFlags flags = [e modifierFlags];
     unsigned mods = 0;
     if(flags & (NSEventModifierFlagControl | NSEventModifierFlagCommand))
       mods |= Ui::ModCommand;
     if(flags & NSEventModifierFlagShift) mods |= Ui::ModShift;
     if(flags & NSEventModifierFlagOption) mods |= Ui::ModAlt;
-    b->mapEdit.press(map, entry, value, button, mods);
+    said = b->mapEdit.press(map, entry, value, button, mods, pos.y >= wy);
   }
   else if(b->mapEdit.drawing())
-    b->mapEdit.drag(map, entry, value);
+    said = b->mapEdit.drag(map, entry, value);
   else
     return;
   [self setNeedsDisplay:YES];
-  _told(b, false);
+  if(said == Ui::MapEditor::Changed) _told(b, false);
 }
 - (void)press:(NSEvent *)e channel:(int)button
 {

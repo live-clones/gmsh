@@ -22,7 +22,6 @@ private:
   // the keys, the help and the stroke being drawn, as every interface has
   // them
   Ui::MapEditor _edit;
-  int marker_pos; // position of marker as index into table
   // what it edits, described rather than handed over: see Ui::ColourMap
   Ui::ColourMap _map;
   bool *viewchanged; // pointer to changed bit in view

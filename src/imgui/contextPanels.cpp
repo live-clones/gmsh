@@ -708,7 +708,11 @@ namespace {
                                  avail.y;
       if(tall < 4.f * ImGui::GetTextLineHeight()) tall = 4.f * ImGui::GetTextLineHeight();
       ImVec2 at = ImGui::GetCursorScreenPos();
-      ImGui::InvisibleButton("##map", ImVec2(wide, tall));
+      // the three buttons draw, each its channel
+      ImGui::InvisibleButton("##map", ImVec2(wide, tall),
+                             ImGuiButtonFlags_MouseButtonLeft |
+                               ImGuiButtonFlags_MouseButtonRight |
+                               ImGuiButtonFlags_MouseButtonMiddle);
       bool active = ImGui::IsItemActive(), hovered = ImGui::IsItemHovered();
       float lineHeight = ImGui::GetTextLineHeight();
       float labelY = tall - 5.f;
@@ -767,10 +771,18 @@ namespace {
                       ImGui::GetColorU32(ImGuiCol_Text),
                       Ui::MapEditor::title(map).c_str());
       }
+      // the marker below the wedge, and the value of the map there
+      {
+        ImU32 ink = ImGui::GetColorU32(ImGuiCol_Text);
+        float mx = indexToX(_mapEdit.marker()), my = at.y + markerY;
+        into->AddLine(ImVec2(mx, my), ImVec2(mx, my + lineHeight * .6f), ink);
+        into->AddLine(ImVec2(mx, my), ImVec2(mx - 3.f, my + 6.f), ink);
+        into->AddLine(ImVec2(mx, my), ImVec2(mx + 3.f, my + 6.f), ink);
+      }
       char says[64];
-      snprintf(says, sizeof(says), "%g", least);
       into->AddText(ImVec2(at.x + 10.f, at.y + labelY - lineHeight),
-                    ImGui::GetColorU32(ImGuiCol_Text), says);
+                    ImGui::GetColorU32(ImGuiCol_Text),
+                    Ui::MapEditor::markerText(map, _mapEdit.marker()).c_str());
       snprintf(says, sizeof(says), "%g", most);
       ImVec2 wide2 = ImGui::CalcTextSize(says);
       into->AddText(ImVec2(at.x + wide - wide2.x - 10.f,
@@ -783,21 +795,20 @@ namespace {
         int entry = xToIndex(mouse.x);
         int value = Ui::MapEditor::valueAt(mouse.y - at.y, wedgeY);
         if(ImGui::IsItemActivated()) {
-          if(mouse.y - at.y < wedgeY) {
-            ImGuiIO &io = ImGui::GetIO();
-            unsigned mods = (io.KeyCtrl ? Ui::ModCommand : 0u) |
-                            (io.KeyShift ? Ui::ModShift : 0u) |
-                            (io.KeyAlt ? Ui::ModAlt : 0u);
-            int button = ImGui::IsMouseDown(ImGuiMouseButton_Right)  ? 2 :
-                         ImGui::IsMouseDown(ImGuiMouseButton_Middle) ? 1 :
-                                                                       0;
-            _mapEdit.press(map, entry, value, button, mods);
+          ImGuiIO &io = ImGui::GetIO();
+          unsigned mods = (io.KeyCtrl ? Ui::ModCommand : 0u) |
+                          (io.KeyShift ? Ui::ModShift : 0u) |
+                          (io.KeyAlt ? Ui::ModAlt : 0u);
+          int button = ImGui::IsMouseDown(ImGuiMouseButton_Right)  ? 2 :
+                       ImGui::IsMouseDown(ImGuiMouseButton_Middle) ? 1 :
+                                                                     0;
+          if(_mapEdit.press(map, entry, value, button, mods,
+                            mouse.y - at.y >= wedgeY) == Ui::MapEditor::Changed)
             changed = true;
-          }
         }
         else if(_mapEdit.drawing()) {
-          _mapEdit.drag(map, entry, value);
-          changed = true;
+          if(_mapEdit.drag(map, entry, value) == Ui::MapEditor::Changed)
+            changed = true;
         }
       }
       else

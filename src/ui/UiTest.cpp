@@ -196,6 +196,19 @@ int main()
        "Shift+left draws green, a drag fills what it passed, from where it was");
   editor.press(edited, 6, 50, 2, ModCommand);
   same(std::to_string(table[6].a), "50", "Command draws alpha");
+  edited.about = [](std::string &name, double &least, double &most) {
+    least = 0.;
+    most = 7.;
+  };
+  int before = table[2].r;
+  answer = editor.press(edited, 2, 255, 0, 0, true);
+  editor.drag(edited, 3, 255);
+  editor.release();
+  same(std::to_string(answer) + " " + std::to_string(editor.marker()) + " " +
+         MapEditor::markerText(edited, editor.marker()) + " " +
+         std::to_string(table[2].r - before),
+       std::to_string(MapEditor::Redraw) + " 3 3 0",
+       "on the wedge, the marker follows and the colours stay");
   same(std::to_string(MapEditor::entryAt(edited, 99., 100.)) + " " +
          std::to_string(MapEditor::valueAt(0., 10.)),
        "7 255", "the entry and the intensity under the pointer");

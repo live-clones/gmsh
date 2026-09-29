@@ -292,10 +292,16 @@ namespace {
         p.drawText(QPointF(6., 4. + fontMetrics().ascent()),
                    Ui::MapEditor::title(map).c_str());
       }
+      // the marker below the wedge, and the value of the map there
+      double mx = xOf(b->mapEdit.marker()), my = wy + lh;
+      p.drawLine(QPointF(mx, my), QPointF(mx, my + lh * .6));
+      p.drawLine(QPointF(mx, my), QPointF(mx - 3., my + 6.));
+      p.drawLine(QPointF(mx, my), QPointF(mx + 3., my + 6.));
       char says[64];
-      double base = height() - 5. - lh + fontMetrics().ascent() - lh;
-      snprintf(says, sizeof(says), "%g", least);
-      p.drawText(QPointF(10., base), says);
+      // the wedge, the marker under it, the values on the last line
+      double base = height() - 5. - lh + fontMetrics().ascent();
+      p.drawText(QPointF(10., base),
+                 Ui::MapEditor::markerText(map, b->mapEdit.marker()).c_str());
       snprintf(says, sizeof(says), "%g", most);
       p.drawText(QPointF(w - 10. - fontMetrics().horizontalAdvance(says), base),
                  says);
@@ -307,18 +313,18 @@ namespace {
       if(map.empty() || map.size() < 2 || width() < 1 || wy < 1.) return;
       int entry = Ui::MapEditor::entryAt(map, pos.x(), width());
       int value = Ui::MapEditor::valueAt(pos.y(), wy);
+      Ui::MapEditor::Answer said;
       if(button >= 0) {
-        if(pos.y() >= wy) return;
         unsigned mods = 0;
         if(m & Qt::ControlModifier) mods |= Ui::ModCommand;
         if(m & Qt::ShiftModifier) mods |= Ui::ModShift;
         if(m & Qt::AltModifier) mods |= Ui::ModAlt;
-        b->mapEdit.press(map, entry, value, button, mods);
+        said = b->mapEdit.press(map, entry, value, button, mods, pos.y() >= wy);
       }
       else
-        b->mapEdit.drag(map, entry, value);
+        said = b->mapEdit.drag(map, entry, value);
       update();
-      _told(b, false);
+      if(said == Ui::MapEditor::Changed) _told(b, false);
     }
     void mousePressEvent(QMouseEvent *e) override
     {

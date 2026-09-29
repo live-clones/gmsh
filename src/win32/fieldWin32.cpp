@@ -323,9 +323,23 @@ namespace {
           s = win32Wide(Ui::MapEditor::title(map));
           TextOutW(dc, 6, 4, s.c_str(), (int)s.size());
         }
+        // the marker below the wedge, and the value of the map there
+        int size = map.empty() ? 0 : map.size();
+        if(size > 1) {
+          int mx = (int)(r.right * (double)f->mapEdit.marker() / (size - 1));
+          int my = wedgeY + line;
+          HPEN pen = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_WINDOWTEXT));
+          HGDIOBJ old = SelectObject(dc, pen);
+          MoveToEx(dc, mx, my + line * 6 / 10, nullptr);
+          LineTo(dc, mx, my);
+          LineTo(dc, mx - 3, my + 6);
+          MoveToEx(dc, mx, my, nullptr);
+          LineTo(dc, mx + 3, my + 6);
+          SelectObject(dc, old);
+          DeleteObject(pen);
+        }
         char said[64];
-        snprintf(said, sizeof(said), "%g", least);
-        s = win32Wide(said);
+        s = win32Wide(Ui::MapEditor::markerText(map, f->mapEdit.marker()));
         TextOutW(dc, 10, r.bottom - 5 - line, s.c_str(), (int)s.size());
         snprintf(said, sizeof(said), "%g", most);
         s = win32Wide(said);
@@ -346,28 +360,29 @@ namespace {
       {
         if(map.empty() || r.right < 1) return 0;
         int px = GET_X_LPARAM(lp), py = GET_Y_LPARAM(lp);
-        if(py >= wedgeY) return 0;
         unsigned mods = 0;
         if(wp & MK_CONTROL) mods |= Ui::ModCommand;
         if(wp & MK_SHIFT) mods |= Ui::ModShift;
         if(GetKeyState(VK_MENU) < 0) mods |= Ui::ModAlt;
-        f->mapEdit.press(map, Ui::MapEditor::entryAt(map, px, r.right),
-                         Ui::MapEditor::valueAt(py, wedgeY),
-                         msg == WM_RBUTTONDOWN ? 2 :
-                         msg == WM_MBUTTONDOWN ? 1 :
-                                                 0,
-                         mods);
+        Ui::MapEditor::Answer said = f->mapEdit.press(
+          map, Ui::MapEditor::entryAt(map, px, r.right),
+          Ui::MapEditor::valueAt(py, wedgeY),
+          msg == WM_RBUTTONDOWN ? 2 :
+          msg == WM_MBUTTONDOWN ? 1 :
+                                  0,
+          mods, py >= wedgeY);
         InvalidateRect(w, nullptr, FALSE);
-        _told(f, false);
+        if(said == Ui::MapEditor::Changed) _told(f, false);
         return 0;
       }
     case WM_MOUSEMOVE: {
       if(!f->mapEdit.drawing() || map.empty() || r.right < 1) return 0;
       int px = GET_X_LPARAM(lp), py = GET_Y_LPARAM(lp);
-      f->mapEdit.drag(map, Ui::MapEditor::entryAt(map, px, r.right),
-                      Ui::MapEditor::valueAt(py, wedgeY));
+      Ui::MapEditor::Answer said =
+        f->mapEdit.drag(map, Ui::MapEditor::entryAt(map, px, r.right),
+                        Ui::MapEditor::valueAt(py, wedgeY));
       InvalidateRect(w, nullptr, FALSE);
-      _told(f, false);
+      if(said == Ui::MapEditor::Changed) _told(f, false);
       return 0;
     }
     case WM_LBUTTONUP:

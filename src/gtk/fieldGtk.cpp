@@ -700,8 +700,17 @@ namespace {
       _text(cr, b->inner, 6., 4., Ui::MapEditor::title(map).c_str());
     }
     char says[64];
-    snprintf(says, sizeof(says), "%g", least);
-    _text(cr, b->inner, 10., labelY - line, says);
+    // the marker below the wedge, and the value of the map there
+    double mx = xOf(b->mapEdit.marker());
+    cairo_set_line_width(cr, 1.);
+    cairo_move_to(cr, mx + .5, markerY);
+    cairo_line_to(cr, mx + .5, markerY + line * .6);
+    cairo_move_to(cr, mx - 2.5, markerY + 6.);
+    cairo_line_to(cr, mx + .5, markerY);
+    cairo_line_to(cr, mx + 3.5, markerY + 6.);
+    cairo_stroke(cr);
+    _text(cr, b->inner, 10., labelY - line,
+          Ui::MapEditor::markerText(map, b->mapEdit.marker()).c_str());
     snprintf(says, sizeof(says), "%g", most);
     _text(cr, b->inner, w - 10., labelY - line, says, true);
   }
@@ -717,16 +726,15 @@ namespace {
     if(map.size() < 2 || w < 1 || wedgeY < 1.) return;
     int entry = Ui::MapEditor::entryAt(map, px, w);
     int value = Ui::MapEditor::valueAt(py, wedgeY);
-    if(button >= 0) {
-      if(py >= wedgeY) return;
-      b->mapEdit.press(map, entry, value, button, mods);
-    }
+    Ui::MapEditor::Answer said;
+    if(button >= 0)
+      said = b->mapEdit.press(map, entry, value, button, mods, py >= wedgeY);
     else if(b->mapEdit.drawing())
-      b->mapEdit.drag(map, entry, value);
+      said = b->mapEdit.drag(map, entry, value);
     else
       return;
     gtk_widget_queue_draw(b->inner);
-    _told(b, false);
+    if(said == Ui::MapEditor::Changed) _told(b, false);
   }
 
   void _mapBegin(GtkGestureDrag *g, double x, double y, gpointer data)

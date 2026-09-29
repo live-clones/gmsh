@@ -207,24 +207,37 @@ namespace {
       Ui::Colour c = map.colour(i);
       wedge.push_back(text("█") | color(Color::RGB(c.r, c.g, c.b)));
     }
-    char lo[32], hi[32];
-    snprintf(lo, sizeof(lo), "%g", least);
+    Ui::MapEditor &edit = _mapEditors()[id];
+    char hi[32];
     snprintf(hi, sizeof(hi), "%g", most);
     bool on = Tui::focused(id);
     Elements lines = {text(Ui::MapEditor::title(map)) | (on ? inverted : nothing)};
-    if(_mapEditors()[id].help())
+    if(edit.help())
       for(const auto &k : Ui::MapEditor::helpLines())
         lines.push_back(hbox({text(k.first) | ftxui::size(WIDTH, EQUAL, 24),
                               text(k.second)}) | dim);
     lines.push_back(hbox(wedge));
-    lines.push_back(hbox({text(lo), filler(), text(hi)}));
+    // the marker under the wedge, clicked into place, and the value there
+    int at = size > 1 ? edit.marker() * (width - 1) / (size - 1) : 0;
+    lines.push_back(text(std::string((std::size_t)at, ' ') + "▲"));
+    lines.push_back(hbox({text(Ui::MapEditor::markerText(map, edit.marker())),
+                          filler(), text(hi)}));
     Element e = vbox(std::move(lines));
     Ui::Field g = f;
     Tui::Hot h;
     h.id = id;
-    h.mouse = [id](Mouse &m, int, int) {
+    // the wedge is the line after the title and the help
+    int wedgeRow = 1 + (edit.help() ? (int)Ui::MapEditor::helpLines().size() : 0);
+    h.mouse = [id, g, width, wedgeRow](Mouse &m, int x, int y) {
       if(m.button != Mouse::Left || m.motion != Mouse::Pressed) return false;
       Tui::focus(id);
+      const Ui::ColourMap &map = g.map;
+      if(y == wedgeRow || y == wedgeRow + 1) {
+        Ui::MapEditor &edit = _mapEditors()[id];
+        edit.press(map, Ui::MapEditor::entryAt(map, x + .5, width), 0, 0, 0,
+                   true);
+        edit.release();
+      }
       return true;
     };
     h.key = [g, after, id](const Event &e) {

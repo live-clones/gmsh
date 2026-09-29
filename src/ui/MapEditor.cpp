@@ -59,10 +59,17 @@ namespace Ui {
     return NotMine;
   }
 
-  void MapEditor::press(const ColourMap &map, int entry, int value, int button,
-                        unsigned mods)
+  MapEditor::Answer MapEditor::press(const ColourMap &map, int entry,
+                                     int value, int button, unsigned mods,
+                                     bool onWedge)
   {
     _help = false;
+    if(map.empty()) return Redraw;
+    if(onWedge) {
+      _marking = true;
+      _marker = std::max(0, std::min(map.size() - 1, entry));
+      return Redraw;
+    }
     if(mods & ModCommand)
       _channel = 3;
     else if(button == 0 && !(mods & (ModShift | ModAlt)))
@@ -72,19 +79,39 @@ namespace Ui {
     else
       _channel = 2;
     _from = entry;
-    drag(map, entry, value);
+    return drag(map, entry, value);
   }
 
-  void MapEditor::drag(const ColourMap &map, int entry, int value)
+  MapEditor::Answer MapEditor::drag(const ColourMap &map, int entry, int value)
   {
-    if(map.empty() || _from < 0) return;
+    if(map.empty()) return NotMine;
     int size = map.size();
     entry = std::max(0, std::min(size - 1, entry));
+    if(_marking) {
+      _marker = entry;
+      return Redraw;
+    }
+    if(_from < 0) return NotMine;
     value = std::max(0, std::min(255, value));
     bool hsv = map.hsv && map.hsv();
     for(int i = std::min(_from, entry); i <= std::max(_from, entry); i++)
       setMapChannel(map, i, _channel, value, hsv);
     _from = entry;
+    return Changed;
+  }
+
+  std::string MapEditor::markerText(const ColourMap &map, int entry)
+  {
+    if(map.empty() || !map.about) return "";
+    std::string name;
+    double least = 0., most = 0.;
+    map.about(name, least, most);
+    int size = map.size();
+    double v = size > 1 ? least + (most - least) * entry / (double)(size - 1) :
+                          least;
+    char s[64];
+    snprintf(s, sizeof(s), "%g", v);
+    return s;
   }
 
   std::string MapEditor::title(const ColourMap &map)

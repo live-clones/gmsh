@@ -22,7 +22,6 @@ colorbarWindow::colorbarWindow(int x, int y, int w, int h, const char *l)
   font_height = FL_NORMAL_SIZE - 1; // use slightly smaller font
   marker_height = font_height;
   wedge_height = marker_height;
-  marker_pos = 0;
   minval = maxval = 0.0;
 }
 
@@ -203,8 +202,6 @@ void colorbarWindow::redraw_range(int a, int b)
 void colorbarWindow::redraw_marker()
 {
   int x, y0, y1;
-  char str[50];
-  double val;
 
   y0 = marker_y;
   y1 = h() - 1;
@@ -213,7 +210,7 @@ void colorbarWindow::redraw_marker()
   fl_rectf(0, y0, w(), y1 - y0 + 1);
 
   // draw marker below color wedge
-  x = index_to_x(marker_pos);
+  x = index_to_x(_edit.marker());
   fl_color(fl_contrast(FL_BLACK, color_bg));
   fl_line(x, marker_y, x, marker_y + marker_height);
   fl_line(x, marker_y, x - 3, marker_y + 6);
@@ -221,10 +218,7 @@ void colorbarWindow::redraw_marker()
 
   // draw marker value
   fl_font(FL_HELVETICA, font_height);
-  val =
-    minval + (maxval - minval) * ((double)marker_pos / (double)(_map.size() - 1));
-  sprintf(str, "%g", val);
-  fl_draw(str, 10, label_y);
+  fl_draw(Ui::MapEditor::markerText(_map, _edit.marker()).c_str(), 10, label_y);
 }
 
 void colorbarWindow::draw()
@@ -258,9 +252,6 @@ int colorbarWindow::handle(int event)
 {
   if(_map.empty()) return Fl_Window::handle(event);
 
-  // the marker, moved along the wedge, is FLTK's own; the curves are drawn
-  // as in every interface
-  static bool moveMarker = false;
   int key = 0;
   unsigned mods = 0;
 
@@ -294,33 +285,25 @@ int colorbarWindow::handle(int event)
       mods |= Ui::ModCommand;
     if(Fl::event_state(FL_SHIFT)) mods |= Ui::ModShift;
     if(Fl::event_state(FL_ALT)) mods |= Ui::ModAlt;
-    moveMarker = Fl::event_y() >= wedge_y;
-    if(moveMarker) {
-      _edit.setHelp(false);
-      marker_pos = x_to_index(Fl::event_x());
-    }
-    else {
-      _edit.press(_map, x_to_index(Fl::event_x()), y_to_intensity(Fl::event_y()),
-                  button, mods);
+    // on the wedge or below it: the marker
+    if(_edit.press(_map, x_to_index(Fl::event_x()),
+                   y_to_intensity(Fl::event_y()), button, mods,
+                   Fl::event_y() >= wedge_y) == Ui::MapEditor::Changed)
       *viewchanged = true;
-    }
     redraw();
     return 1;
   }
 
   case FL_DRAG:
-    if(moveMarker)
-      marker_pos = x_to_index(Fl::event_x());
-    else if(_edit.drawing()) {
-      _edit.drag(_map, x_to_index(Fl::event_x()), y_to_intensity(Fl::event_y()));
+    if(_edit.drawing() &&
+       _edit.drag(_map, x_to_index(Fl::event_x()),
+                  y_to_intensity(Fl::event_y())) == Ui::MapEditor::Changed)
       *viewchanged = true;
-    }
     redraw();
     return 1;
 
   case FL_RELEASE:
     _edit.release();
-    moveMarker = false;
     if(*viewchanged) do_callback();
     return 1;
 
