@@ -57,6 +57,8 @@
 #include <FL/fl_draw.H>
 #if defined(__APPLE__)
 #include <FL/Fl_Sys_Menu_Bar.H>
+// Fl_Mac_App_Menu, fl_open_callback(), fl_mac_set_about()
+#include <FL/x.H>
 #endif
 
 #include "fltkCommon.h"
@@ -422,14 +424,6 @@ namespace {
       return Fl_Button::handle(event);
     }
   };
-#if defined(__APPLE__)
-#include <FL/Fl_Sys_Menu_Bar.H>
-#endif
-#include <FL/Fl_Menu_Bar.H>
-
-  class sceneViewFltk;
-  class sceneView;
-  class onelabGroup;
 
   // asked of the description rather than remembered
   bool statusButtonFltk::refresh()
