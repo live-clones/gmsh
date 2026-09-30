@@ -16,12 +16,12 @@ private:
 
 public:
   partitionRegion(GModel *model, int num, const std::vector<int> &partitions)
-    : discreteRegion(model, num), _partitions(partitions),
+    : discreteRegion(model, num, false), _partitions(partitions),
       _parentEntity(nullptr)
   {
   }
   partitionRegion(GModel *model, int num)
-    : discreteRegion(model, num), _partitions(), _parentEntity(nullptr)
+    : discreteRegion(model, num, false), _partitions(), _parentEntity(nullptr)
   {
   }
   partitionRegion(GModel *model, const std::vector<int> &partitions)

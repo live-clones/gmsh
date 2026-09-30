@@ -3,70 +3,61 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <string.h>
-#include <set>
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <unordered_map>
 #include "PViewDataList.h"
+#include "PViewDataGModel.h"
+#include "GModel.h"
+#include "discreteVertex.h"
+#include "discreteEdge.h"
+#include "discreteFace.h"
+#include "discreteRegion.h"
 #include "MElement.h"
+#include "ElementType.h"
 #include "Numeric.h"
 #include "StringUtils.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
-#include "MVertexRTree.h"
 #include "Context.h"
-#include "adaptiveData.h"
 #include "OS.h"
 
-static void dVecRead(std::vector<double> &v, int n, FILE *fp, bool binary,
+// read n values, false if the file ends before
+static bool dVecRead(std::vector<double> &v, int n, FILE *fp, bool binary,
                      int swap)
 {
-  if(n <= 0) return;
+  if(n <= 0) return true;
   v.resize(n);
   if(binary) {
-    if(!fread(&v[0], sizeof(double), n, fp)) Msg::Error("Read error");
+    if((int)fread(&v[0], sizeof(double), n, fp) != n) return false;
     if(swap) SwapBytes((char *)&v[0], sizeof(double), n);
   }
   else {
-    for(int i = 0; i < n; i++) {
-      if(fscanf(fp, "%lf", &v[i]) != 1) {
-        Msg::Error("Read error");
-        break;
-      }
-    }
+    for(int i = 0; i < n; i++)
+      if(fscanf(fp, "%lf", &v[i]) != 1) return false;
   }
+  return true;
 }
 
-static void cVecRead(std::vector<char> &v, int n, FILE *fp, bool binary,
-                     int swap, bool oldStyle)
+static bool cVecRead(std::vector<char> &v, int n, FILE *fp, bool binary,
+                     bool oldStyle)
 {
-  if(n <= 0) return;
+  if(n <= 0) return true;
   v.resize(n);
   if(binary) {
-    if(!fread(&v[0], sizeof(char), n, fp)) Msg::Error("Read error");
-    if(swap) SwapBytes((char *)&v[0], sizeof(char), n);
+    if((int)fread(&v[0], sizeof(char), n, fp) != n) return false;
   }
   else {
-    if(oldStyle) {
-      for(int i = 0; i < n; i++) {
-        if(fscanf(fp, "%c", &v[i]) != 1) {
-          Msg::Error("Read error");
-          break;
-        }
-        if(v[i] == '^') v[i] = '\0';
-      }
-    }
-    else {
-      for(int i = 0; i < n; i++) {
-        char c = (char)fgetc(fp);
-        if(c == EOF) {
-          Msg::Error("Read error");
-          break;
-        }
-        else {
-          v[i] = c;
-        }
-      }
+    for(int i = 0; i < n; i++) {
+      int c = fgetc(fp);
+      if(c == EOF) return false;
+      v[i] = (oldStyle && c == '^') ? '\0' : (char)c;
     }
   }
+  return true;
 }
 
 static void dVecWrite(std::vector<double> &v, FILE *fp, bool binary)
@@ -96,27 +87,23 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   int NbSQ2 = 0, NbVQ2 = 0, NbTQ2 = 0, NbSS2 = 0, NbVS2 = 0, NbTS2 = 0;
   int NbSH2 = 0, NbVH2 = 0, NbTH2 = 0, NbSI2 = 0, NbVI2 = 0, NbTI2 = 0;
   int NbSY2 = 0, NbVY2 = 0, NbTY2 = 0;
-  std::vector<double> SL2, VL2, TL2, ST2, VT2, TT2;
-  std::vector<double> SQ2, VQ2, TQ2, SS2, VS2, TS2;
-  std::vector<double> SH2, VH2, TH2, SI2, VI2, TI2;
-  std::vector<double> SY2, VY2, TY2;
 
   if(version <= 1.0) {
     Msg::Debug("Detected post-processing view format <= 1.0");
-    if(fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", name,
-              &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL, &NbST,
-              &NbVT, &NbTT, &NbSS, &NbVS, &NbTS) != 14) {
+    if(fscanf(fp, "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", name,
+              &_nbTimeStep, &_nbSP, &_nbVP, &_nbTP, &_nbSL, &_nbVL, &_nbTL,
+              &_nbST, &_nbVT, &_nbTT, &_nbSS, &_nbVS, &_nbTS) != 14) {
       Msg::Error("Read error");
       return false;
     }
-    NbT2 = t2l = NbT3 = t3l = 0;
+    _nbT2 = t2l = _nbT3 = t3l = 0;
   }
   else if(version == 1.1) {
     Msg::Debug("Detected post-processing view format 1.1");
-    if(fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-              name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-              &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS, &NbT2, &t2l, &NbT3,
-              &t3l) != 18) {
+    if(fscanf(fp, "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+              name, &_nbTimeStep, &_nbSP, &_nbVP, &_nbTP, &_nbSL, &_nbVL,
+              &_nbTL, &_nbST, &_nbVT, &_nbTT, &_nbSS, &_nbVS, &_nbTS, &_nbT2,
+              &t2l, &_nbT3, &t3l) != 18) {
       Msg::Error("Read error");
       return false;
     }
@@ -124,12 +111,12 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   else if(version == 1.2 || version == 1.3) {
     Msg::Debug("Detected post-processing view format %g", version);
     if(fscanf(fp,
-              "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+              "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
               "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-              name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-              &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS,
-              &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
-              &NbT2, &t2l, &NbT3, &t3l) != 30) {
+              name, &_nbTimeStep, &_nbSP, &_nbVP, &_nbTP, &_nbSL, &_nbVL,
+              &_nbTL, &_nbST, &_nbVT, &_nbTT, &_nbSQ, &_nbVQ, &_nbTQ, &_nbSS,
+              &_nbVS, &_nbTS, &_nbSH, &_nbVH, &_nbTH, &_nbSI, &_nbVI, &_nbTI,
+              &_nbSY, &_nbVY, &_nbTY, &_nbT2, &t2l, &_nbT3, &t3l) != 30) {
       Msg::Error("Read error");
       return false;
     }
@@ -137,16 +124,16 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   else if(version == 1.4) {
     Msg::Debug("Detected post-processing view format 1.4");
     if(fscanf(fp,
-              "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+              "%255s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-              name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-              &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS,
-              &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
-              &NbSL2, &NbVL2, &NbTL2, &NbST2, &NbVT2, &NbTT2, &NbSQ2, &NbVQ2,
-              &NbTQ2, &NbSS2, &NbVS2, &NbTS2, &NbSH2, &NbVH2, &NbTH2, &NbSI2,
-              &NbVI2, &NbTI2, &NbSY2, &NbVY2, &NbTY2, &NbT2, &t2l, &NbT3,
-              &t3l) != 51) {
+              name, &_nbTimeStep, &_nbSP, &_nbVP, &_nbTP, &_nbSL, &_nbVL,
+              &_nbTL, &_nbST, &_nbVT, &_nbTT, &_nbSQ, &_nbVQ, &_nbTQ, &_nbSS,
+              &_nbVS, &_nbTS, &_nbSH, &_nbVH, &_nbTH, &_nbSI, &_nbVI, &_nbTI,
+              &_nbSY, &_nbVY, &_nbTY, &NbSL2, &NbVL2, &NbTL2, &NbST2, &NbVT2,
+              &NbTT2, &NbSQ2, &NbVQ2, &NbTQ2, &NbSS2, &NbVS2, &NbTS2, &NbSH2,
+              &NbVH2, &NbTH2, &NbSI2, &NbVI2, &NbTI2, &NbSY2, &NbVY2, &NbTY2,
+              &_nbT2, &t2l, &_nbT3, &t3l) != 51) {
       Msg::Error("Read error");
       return false;
     }
@@ -172,162 +159,46 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
     }
   }
 
-  dVecRead(Time, NbTimeStep, fp, binary, swap);
-  dVecRead(SP, NbSP * (NbTimeStep * 1 + 3), fp, binary, swap);
-  dVecRead(VP, NbVP * (NbTimeStep * 3 + 3), fp, binary, swap);
-  dVecRead(TP, NbTP * (NbTimeStep * 9 + 3), fp, binary, swap);
-  dVecRead(SL, NbSL * (NbTimeStep * 2 * 1 + 6), fp, binary, swap);
-  dVecRead(VL, NbVL * (NbTimeStep * 2 * 3 + 6), fp, binary, swap);
-  dVecRead(TL, NbTL * (NbTimeStep * 2 * 9 + 6), fp, binary, swap);
-  dVecRead(ST, NbST * (NbTimeStep * 3 * 1 + 9), fp, binary, swap);
-  dVecRead(VT, NbVT * (NbTimeStep * 3 * 3 + 9), fp, binary, swap);
-  dVecRead(TT, NbTT * (NbTimeStep * 3 * 9 + 9), fp, binary, swap);
-  dVecRead(SQ, NbSQ * (NbTimeStep * 4 * 1 + 12), fp, binary, swap);
-  dVecRead(VQ, NbVQ * (NbTimeStep * 4 * 3 + 12), fp, binary, swap);
-  dVecRead(TQ, NbTQ * (NbTimeStep * 4 * 9 + 12), fp, binary, swap);
-  dVecRead(SS, NbSS * (NbTimeStep * 4 * 1 + 12), fp, binary, swap);
-  dVecRead(VS, NbVS * (NbTimeStep * 4 * 3 + 12), fp, binary, swap);
-  dVecRead(TS, NbTS * (NbTimeStep * 4 * 9 + 12), fp, binary, swap);
-  dVecRead(SH, NbSH * (NbTimeStep * 8 * 1 + 24), fp, binary, swap);
-  dVecRead(VH, NbVH * (NbTimeStep * 8 * 3 + 24), fp, binary, swap);
-  dVecRead(TH, NbTH * (NbTimeStep * 8 * 9 + 24), fp, binary, swap);
-  dVecRead(SI, NbSI * (NbTimeStep * 6 * 1 + 18), fp, binary, swap);
-  dVecRead(VI, NbVI * (NbTimeStep * 6 * 3 + 18), fp, binary, swap);
-  dVecRead(TI, NbTI * (NbTimeStep * 6 * 9 + 18), fp, binary, swap);
-  dVecRead(SY, NbSY * (NbTimeStep * 5 * 1 + 15), fp, binary, swap);
-  dVecRead(VY, NbVY * (NbTimeStep * 5 * 3 + 15), fp, binary, swap);
-  dVecRead(TY, NbTY * (NbTimeStep * 5 * 9 + 15), fp, binary, swap);
-
-  // overwrite first order data with second order data (if any)
-  dVecRead(SL, NbSL2 * (NbTimeStep * 3 * 1 + 9), fp, binary, swap);
-  dVecRead(VL, NbVL2 * (NbTimeStep * 3 * 3 + 9), fp, binary, swap);
-  dVecRead(TL, NbTL2 * (NbTimeStep * 3 * 9 + 9), fp, binary, swap);
-  dVecRead(ST, NbST2 * (NbTimeStep * 6 * 1 + 18), fp, binary, swap);
-  dVecRead(VT, NbVT2 * (NbTimeStep * 6 * 3 + 18), fp, binary, swap);
-  dVecRead(TT, NbTT2 * (NbTimeStep * 6 * 9 + 18), fp, binary, swap);
-  dVecRead(SQ, NbSQ2 * (NbTimeStep * 9 * 1 + 27), fp, binary, swap);
-  dVecRead(VQ, NbVQ2 * (NbTimeStep * 9 * 3 + 27), fp, binary, swap);
-  dVecRead(TQ, NbTQ2 * (NbTimeStep * 9 * 9 + 27), fp, binary, swap);
-  dVecRead(SS, NbSS2 * (NbTimeStep * 10 * 1 + 30), fp, binary, swap);
-  dVecRead(VS, NbVS2 * (NbTimeStep * 10 * 3 + 30), fp, binary, swap);
-  dVecRead(TS, NbTS2 * (NbTimeStep * 10 * 9 + 30), fp, binary, swap);
-  dVecRead(SH, NbSH2 * (NbTimeStep * 27 * 1 + 81), fp, binary, swap);
-  dVecRead(VH, NbVH2 * (NbTimeStep * 27 * 3 + 81), fp, binary, swap);
-  dVecRead(TH, NbTH2 * (NbTimeStep * 27 * 9 + 81), fp, binary, swap);
-  dVecRead(SI, NbSI2 * (NbTimeStep * 18 * 1 + 54), fp, binary, swap);
-  dVecRead(VI, NbVI2 * (NbTimeStep * 18 * 3 + 54), fp, binary, swap);
-  dVecRead(TI, NbTI2 * (NbTimeStep * 18 * 9 + 54), fp, binary, swap);
-  dVecRead(SY, NbSY2 * (NbTimeStep * 14 * 1 + 42), fp, binary, swap);
-  dVecRead(VY, NbVY2 * (NbTimeStep * 14 * 3 + 42), fp, binary, swap);
-  dVecRead(TY, NbTY2 * (NbTimeStep * 14 * 9 + 42), fp, binary, swap);
-  if(NbSL2) {
-    NbSL = NbSL2;
-    setOrder2(TYPE_LIN);
+  // the lists, in the order of the file (as in listKinds), then their
+  // second order versions, which replace them
+  const int numNodes2[8] = {1, 3, 6, 9, 10, 27, 18, 14};
+  const int num2[24] = {0,     0,     0,     NbSL2, NbVL2, NbTL2, NbST2, NbVT2,
+                        NbTT2, NbSQ2, NbVQ2, NbTQ2, NbSS2, NbVS2, NbTS2, NbSH2,
+                        NbVH2, NbTH2, NbSI2, NbVI2, NbTI2, NbSY2, NbVY2, NbTY2};
+  bool ok = dVecRead(_time, _nbTimeStep, fp, binary, swap);
+  for(int i = 0; i < 24 && ok; i++) {
+    std::vector<double> *list;
+    int *num, numComp, n;
+    _getRawData(i, &list, &num, &numComp, &n);
+    int nn = listKinds[i].numNodes;
+    ok = dVecRead(*list, *num * (_nbTimeStep * nn * numComp + 3 * nn), fp,
+                  binary, swap);
   }
-  if(NbVL2) {
-    NbVL = NbVL2;
-    setOrder2(TYPE_LIN);
+  for(int i = 0; i < 24 && ok; i++) {
+    if(!num2[i]) continue;
+    std::vector<double> *list;
+    int *num, numComp, n;
+    int type = _getRawData(i, &list, &num, &numComp, &n);
+    if(*num)
+      Msg::Warning("Replacing the first order elements of view '%s' by second "
+                   "order ones of the same type",
+                   name);
+    int nn = numNodes2[i / 3];
+    ok = dVecRead(*list, num2[i] * (_nbTimeStep * nn * numComp + 3 * nn), fp,
+                  binary, swap);
+    *num = num2[i];
+    setOrder2(type);
   }
-  if(NbTL2) {
-    NbTL = NbTL2;
-    setOrder2(TYPE_LIN);
-  }
-  if(NbST2) {
-    NbST = NbST2;
-    setOrder2(TYPE_TRI);
-  }
-  if(NbVT2) {
-    NbVT = NbVT2;
-    setOrder2(TYPE_TRI);
-  }
-  if(NbTT2) {
-    NbTT = NbTT2;
-    setOrder2(TYPE_TRI);
-  }
-  if(NbSQ2) {
-    NbSQ = NbSQ2;
-    setOrder2(TYPE_QUA);
-  }
-  if(NbVQ2) {
-    NbVQ = NbVQ2;
-    setOrder2(TYPE_QUA);
-  }
-  if(NbTQ2) {
-    NbTQ = NbTQ2;
-    setOrder2(TYPE_QUA);
-  }
-  if(NbSS2) {
-    NbSS = NbSS2;
-    setOrder2(TYPE_TET);
-  }
-  if(NbVS2) {
-    NbVS = NbVS2;
-    setOrder2(TYPE_TET);
-  }
-  if(NbTS2) {
-    NbTS = NbTS2;
-    setOrder2(TYPE_TET);
-  }
-  if(NbSH2) {
-    NbSH = NbSH2;
-    setOrder2(TYPE_HEX);
-  }
-  if(NbVH2) {
-    NbVH = NbVH2;
-    setOrder2(TYPE_HEX);
-  }
-  if(NbTH2) {
-    NbTH = NbTH2;
-    setOrder2(TYPE_HEX);
-  }
-  if(NbSI2) {
-    NbSI = NbSI2;
-    setOrder2(TYPE_PRI);
-  }
-  if(NbVI2) {
-    NbVI = NbVI2;
-    setOrder2(TYPE_PRI);
-  }
-  if(NbTI2) {
-    NbTI = NbTI2;
-    setOrder2(TYPE_PRI);
-  }
-  if(NbSY2) {
-    NbSY = NbSY2;
-    setOrder2(TYPE_PYR);
-  }
-  if(NbVY2) {
-    NbVY = NbVY2;
-    setOrder2(TYPE_PYR);
-  }
-  if(NbTY2) {
-    NbTY = NbTY2;
-    setOrder2(TYPE_PYR);
+  ok = ok && dVecRead(_t2d, _nbT2 * 4, fp, binary, swap) &&
+       cVecRead(_t2c, t2l, fp, binary, (version <= 1.2)) &&
+       dVecRead(_t3d, _nbT3 * 5, fp, binary, swap) &&
+       cVecRead(_t3c, t3l, fp, binary, (version <= 1.2));
+  if(!ok) {
+    Msg::Error("Unexpected end of data of view '%s'", name);
+    return false;
   }
 
-  dVecRead(T2D, NbT2 * 4, fp, binary, swap);
-  cVecRead(T2C, t2l, fp, binary, swap, (version <= 1.2));
-  dVecRead(T3D, NbT3 * 5, fp, binary, swap);
-  cVecRead(T3C, t3l, fp, binary, swap, (version <= 1.2));
-
-  Msg::Debug("Read View '%s' (%d TimeSteps): "
-             "SP(%d/%d) VP(%d/%d) TP(%d/%d) "
-             "SL(%d/%d) VL(%d/%d) TL(%d/%d) "
-             "ST(%d/%d) VT(%d/%d) TT(%d/%d) "
-             "SQ(%d/%d) VQ(%d/%d) TQ(%d/%d) "
-             "SS(%d/%d) VS(%d/%d) TS(%d/%d) "
-             "SH(%d/%d) VH(%d/%d) TH(%d/%d) "
-             "SI(%d/%d) VI(%d/%d) TI(%d/%d) "
-             "SY(%d/%d) VY(%d/%d) TY(%d/%d) "
-             "T2(%d/%d/%d) T3(%d/%d/%d) ",
-             name, NbTimeStep, NbSP, SP.size(), NbVP, VP.size(), NbTP,
-             TP.size(), NbSL, SL.size(), NbVL, VL.size(), NbTL, TL.size(), NbST,
-             ST.size(), NbVT, VT.size(), NbTT, TT.size(), NbSQ, SQ.size(), NbVQ,
-             VQ.size(), NbTQ, TQ.size(), NbSS, SS.size(), NbVS, VS.size(), NbTS,
-             TS.size(), NbSH, SH.size(), NbVH, VH.size(), NbTH, TH.size(), NbSI,
-             SI.size(), NbVI, VI.size(), NbTI, TI.size(), NbSY, SY.size(), NbVY,
-             VY.size(), NbTY, TY.size(), NbT2, T2D.size(), T2C.size(), NbT3,
-             T3D.size(), T3C.size());
+  Msg::Debug("Read view '%s' (%d steps)", name, _nbTimeStep);
 
   setName(name);
   finalize();
@@ -403,17 +274,11 @@ static void writeTextPOS(FILE *fp, int nbc, int nb, std::vector<double> &TD,
 bool PViewDataList::writePOS(const std::string &fileName, bool binary,
                              bool parsed, bool append)
 {
-  if(_adaptive) {
-    Msg::Warning(
-      "Writing adapted dataset (will only export current time step)");
-    return _adaptive->getData()->writePOS(fileName, binary, parsed, append);
-  }
-
   if(haveInterpolationMatrices()) {
     Msg::Error(
       "Cannot export datasets with interpolation matrices in old POS format: "
-      "consider using the new mesh-based format instead, or select 'Adapt "
-      "post-processing data' before exporting");
+      "consider using the new mesh-based format instead, or saving the view "
+      "refined (PostProcessing.SaveAdapted)");
     return false;
   }
 
@@ -441,13 +306,11 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
       fprintf(fp, "noname ");
     else
       fprintf(fp, "%s ", str.c_str());
-    fprintf(fp,
-            "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-            "%d %d %d %d %d %d %d %d %d %d %d %d\n",
-            (int)Time.size(), NbSP, NbVP, NbTP, NbSL, NbVL, NbTL, NbST, NbVT,
-            NbTT, NbSQ, NbVQ, NbTQ, NbSS, NbVS, NbTS, NbSH, NbVH, NbTH, NbSI,
-            NbVI, NbTI, NbSY, NbVY, NbTY, NbT2, (int)T2C.size(), NbT3,
-            (int)T3C.size());
+    // (the format has no trihedra)
+    fprintf(fp, "%d", (int)_time.size());
+    for(int i = 0; i < 24; i++) fprintf(fp, " %d", this->*listKinds[i].num);
+    fprintf(fp, " %d %d %d %d\n", _nbT2, (int)_t2c.size(), _nbT3,
+            (int)_t3c.size());
     if(binary) {
       int one = 1;
       if(!fwrite(&one, sizeof(int), 1, fp)) {
@@ -456,67 +319,24 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
         return false;
       }
     }
-    dVecWrite(Time, fp, binary);
-    dVecWrite(SP, fp, binary);
-    dVecWrite(VP, fp, binary);
-    dVecWrite(TP, fp, binary);
-    dVecWrite(SL, fp, binary);
-    dVecWrite(VL, fp, binary);
-    dVecWrite(TL, fp, binary);
-    dVecWrite(ST, fp, binary);
-    dVecWrite(VT, fp, binary);
-    dVecWrite(TT, fp, binary);
-    dVecWrite(SQ, fp, binary);
-    dVecWrite(VQ, fp, binary);
-    dVecWrite(TQ, fp, binary);
-    dVecWrite(SS, fp, binary);
-    dVecWrite(VS, fp, binary);
-    dVecWrite(TS, fp, binary);
-    dVecWrite(SH, fp, binary);
-    dVecWrite(VH, fp, binary);
-    dVecWrite(TH, fp, binary);
-    dVecWrite(SI, fp, binary);
-    dVecWrite(VI, fp, binary);
-    dVecWrite(TI, fp, binary);
-    dVecWrite(SY, fp, binary);
-    dVecWrite(VY, fp, binary);
-    dVecWrite(TY, fp, binary);
-    dVecWrite(T2D, fp, binary);
-    cVecWrite(T2C, fp, binary);
-    dVecWrite(T3D, fp, binary);
-    cVecWrite(T3C, fp, binary);
+    dVecWrite(_time, fp, binary);
+    for(int i = 0; i < 24; i++) dVecWrite(this->*listKinds[i].list, fp, binary);
+    dVecWrite(_t2d, fp, binary);
+    cVecWrite(_t2c, fp, binary);
+    dVecWrite(_t3d, fp, binary);
+    cVecWrite(_t3c, fp, binary);
     fprintf(fp, "\n");
     fprintf(fp, "$EndView\n");
   }
   else {
     fprintf(fp, "View \"%s\" {\n", getName().c_str());
-    writeTimePOS(fp, Time);
-    writeElementPOS(fp, "SP", 1, NbSP, SP);
-    writeElementPOS(fp, "VP", 1, NbVP, VP);
-    writeElementPOS(fp, "TP", 1, NbTP, TP);
-    writeElementPOS(fp, "SL", 2, NbSL, SL);
-    writeElementPOS(fp, "VL", 2, NbVL, VL);
-    writeElementPOS(fp, "TL", 2, NbTL, TL);
-    writeElementPOS(fp, "ST", 3, NbST, ST);
-    writeElementPOS(fp, "VT", 3, NbVT, VT);
-    writeElementPOS(fp, "TT", 3, NbTT, TT);
-    writeElementPOS(fp, "SQ", 4, NbSQ, SQ);
-    writeElementPOS(fp, "VQ", 4, NbVQ, VQ);
-    writeElementPOS(fp, "TQ", 4, NbTQ, TQ);
-    writeElementPOS(fp, "SS", 4, NbSS, SS);
-    writeElementPOS(fp, "VS", 4, NbVS, VS);
-    writeElementPOS(fp, "TS", 4, NbTS, TS);
-    writeElementPOS(fp, "SH", 8, NbSH, SH);
-    writeElementPOS(fp, "VH", 8, NbVH, VH);
-    writeElementPOS(fp, "TH", 8, NbTH, TH);
-    writeElementPOS(fp, "SI", 6, NbSI, SI);
-    writeElementPOS(fp, "VI", 6, NbVI, VI);
-    writeElementPOS(fp, "TI", 6, NbTI, TI);
-    writeElementPOS(fp, "SY", 5, NbSY, SY);
-    writeElementPOS(fp, "VY", 5, NbVY, VY);
-    writeElementPOS(fp, "TY", 5, NbTY, TY);
-    writeTextPOS(fp, 4, NbT2, T2D, T2C);
-    writeTextPOS(fp, 5, NbT3, T3D, T3C);
+    writeTimePOS(fp, _time);
+    for(int i = 0; i < 24; i++) {
+      const listKind &k = listKinds[i];
+      writeElementPOS(fp, k.name, k.numNodes, this->*k.num, this->*k.list);
+    }
+    writeTextPOS(fp, 4, _nbT2, _t2d, _t2c);
+    writeTextPOS(fp, 5, _nbT3, _t3d, _t3c);
     fprintf(fp, "};\n");
   }
 
@@ -524,109 +344,71 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
   return true;
 }
 
-static void createVertices(std::vector<double> &list, int nbelm, int nbnod,
-                           std::vector<MVertex *> &nodes)
+// The points closer than eps in each direction are merged, the merged points
+// numbered in the order in which they first appear
+std::vector<std::size_t>
+PViewDataList::_mergePoints(const std::vector<double> &xyz, double eps,
+                            std::size_t &num)
 {
-  if(!nbelm) return;
-  int nb = list.size() / nbelm;
-  for(std::size_t i = 0; i < list.size(); i += nb) {
-    double *x = &list[i];
-    double *y = &list[i + nbnod];
-    double *z = &list[i + 2 * nbnod];
-    for(int j = 0; j < nbnod; j++)
-      nodes.push_back(new MVertex(x[j], y[j], z[j]));
-  }
-}
+  std::size_t n = xyz.size() / 3;
+  const double *p = xyz.data();
 
-class nodeData {
-public:
-  int nbnod;
-  int nod;
-  double *data;
-  nodeData() : nbnod(0), nod(0), data(nullptr) {}
-  nodeData(int _nbnod, int _nod, double *_data)
-    : nbnod(_nbnod), nod(_nod), data(_data)
-  {
-  }
-};
+  // the points kept, in cells of size eps (two points closer than eps are in
+  // the same cell or in neighbors), or at their exact place if eps is too
+  // small for the coordinates
+  bool exact = !(eps > 0.);
+  for(std::size_t i = 0; i < 3 * n && !exact; i++)
+    if(std::abs(p[i] / eps) > 1.e15) exact = true;
+  struct cellHash {
+    std::size_t operator()(const std::array<int64_t, 3> &c) const
+    {
+      return (std::size_t)(c[0] * 73856093) ^ (std::size_t)(c[1] * 19349663) ^
+             (std::size_t)(c[2] * 83492791);
+    }
+  };
+  std::unordered_map<std::array<int64_t, 3>, std::vector<std::size_t>, cellHash>
+    grid;
+  auto close = [&](std::size_t i, std::size_t j) {
+    for(int k = 0; k < 3; k++) {
+      double d = std::abs(p[3 * i + k] - p[3 * j + k]);
+      if(exact ? (d != 0.) : (d > eps)) return false;
+    }
+    return true;
+  };
 
-static void createElements(std::vector<double> &list, int nbelm, int nbnod,
-                           MVertexRTree &pos, std::vector<MElement *> &elements,
-                           int type, std::map<MVertex *, nodeData> *vertexData)
-{
-  if(!nbelm) return;
-  int t = 0;
-  // reverse-engineer geometrical element type according to the number
-  // of nodes (this should be completed, but is likely enough for most
-  // legacy .pos files out there...)
-  switch(type) {
-  case TYPE_PNT: t = MSH_PNT; break;
-  case TYPE_LIN:
-    switch(nbnod) {
-    case 2: t = MSH_LIN_2; break;
-    case 3: t = MSH_LIN_3; break;
+  std::vector<std::size_t> merged(n);
+  num = 0;
+  for(std::size_t i = 0; i < n; i++) {
+    std::array<int64_t, 3> c;
+    for(int k = 0; k < 3; k++) {
+      double x = p[3 * i + k] + 0.; // (-0. is 0.)
+      if(exact)
+        std::memcpy(&c[k], &x, sizeof(double));
+      else
+        c[k] = (int64_t)std::floor(x / eps);
     }
-    break;
-  case TYPE_TRI:
-    switch(nbnod) {
-    case 3: t = MSH_TRI_3; break;
-    case 6: t = MSH_TRI_6; break;
+    // the cell of the point first, then its neighbors
+    bool found = false;
+    for(int nb = 0; nb < (exact ? 1 : 27) && !found; nb++) {
+      int d[3] = {nb % 3, (nb / 3) % 3, nb / 9}; // 0, then +1, then -1
+      std::array<int64_t, 3> cn;
+      for(int k = 0; k < 3; k++) cn[k] = c[k] + (d[k] == 2 ? -1 : d[k]);
+      auto it = grid.find(cn);
+      if(it == grid.end()) continue;
+      for(auto j : it->second) {
+        if(close(i, j)) {
+          merged[i] = merged[j];
+          found = true;
+          break;
+        }
+      }
     }
-    break;
-  case TYPE_QUA:
-    switch(nbnod) {
-    case 4: t = MSH_QUA_4; break;
-    case 8: t = MSH_QUA_8; break;
-    case 9: t = MSH_QUA_9; break;
+    if(!found) {
+      merged[i] = num++;
+      grid[c].push_back(i);
     }
-    break;
-  case TYPE_TET:
-    switch(nbnod) {
-    case 4: t = MSH_TET_4; break;
-    case 10: t = MSH_TET_10; break;
-    }
-    break;
-  case TYPE_HEX:
-    switch(nbnod) {
-    case 8: t = MSH_HEX_8; break;
-    case 20: t = MSH_HEX_20; break;
-    case 27: t = MSH_HEX_27; break;
-    }
-    break;
-  case TYPE_PRI:
-    switch(nbnod) {
-    case 6: t = MSH_PRI_6; break;
-    case 15: t = MSH_PRI_15; break;
-    case 18: t = MSH_PRI_18; break;
-    }
-    break;
-  case TYPE_PYR:
-    switch(nbnod) {
-    case 5: t = MSH_PYR_5; break;
-    case 13: t = MSH_PYR_13; break;
-    case 14: t = MSH_PYR_14; break;
-    }
-    break;
   }
-  if(!t) {
-    Msg::Warning("Discarding elements of type (%d nodes)", nbnod);
-    return;
-  }
-  MElementFactory factory;
-  int nb = list.size() / nbelm;
-  for(std::size_t i = 0; i < list.size(); i += nb) {
-    double *x = &list[i];
-    double *y = &list[i + nbnod];
-    double *z = &list[i + 2 * nbnod];
-    std::vector<MVertex *> verts(nbnod);
-    for(int j = 0; j < nbnod; j++) {
-      verts[j] = pos.find(x[j], y[j], z[j]);
-      if(vertexData)
-        (*vertexData)[verts[j]] = nodeData(nbnod, j, &list[i + 3 * nbnod]);
-    }
-    MElement *e = factory.create(t, verts);
-    elements.push_back(e);
-  }
+  return merged;
 }
 
 bool PViewDataList::writeMSH(const std::string &fileName, double version,
@@ -634,167 +416,288 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
                              int partitionNum, bool saveInterpolationMatrices,
                              bool forceNodeData, bool forceElementData)
 {
-  if(_adaptive) {
-    Msg::Warning(
-      "Writing adapted dataset (will only export current time step)");
-    return _adaptive->getData()->writeMSH(fileName, version, binary);
-  }
+  return writeMSH(fileName, {this}, version, binary, saveMesh, multipleView,
+                  partitionNum, saveInterpolationMatrices, forceNodeData,
+                  forceElementData);
+}
 
-  FILE *fp = Fopen(fileName.c_str(), "w");
-  if(!fp) {
-    Msg::Error("Unable to open file '%s'", fileName.c_str());
-    return false;
-  }
-
-  double tol = CTX::instance()->geom.tolerance;
-  double eps = norm(SVector3(BBox.max(), BBox.min())) * tol;
-
-  std::vector<MVertex *> vertices;
-  std::vector<MElement *> elements;
-
-  int numComponents = 9;
-  for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = nullptr;
-    int *numEle = nullptr, numNodes, numComp;
-    _getRawData(i, &list, &numEle, &numComp, &numNodes);
-    if(*numEle) numComponents = std::min(numComponents, numComp);
-    createVertices(*list, *numEle, numNodes, vertices);
-  }
-  MVertexRTree pos(eps);
-  std::vector<MVertex *> unique;
-  for(std::size_t i = 0; i < vertices.size(); i++) {
-    if(!pos.insert(vertices[i])) unique.push_back(vertices[i]);
-  }
-  vertices.clear();
-
-  std::map<MVertex *, nodeData> vertexData;
-
-  for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = nullptr;
-    int *numEle = nullptr, numComp, numNodes;
-    int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
-    createElements(*list, *numEle, numNodes, pos, elements, typ,
-                   forceNodeData ? &vertexData : nullptr);
-  }
-
-  int num = 0;
-  for(std::size_t i = 0; i < unique.size(); i++) unique[i]->setIndex(++num);
-
-  if(version > 2.2)
-    Msg::Warning("Mesh-based export of list-based datasets not available with "
-                 "MSH %g: using MSH 2.2",
-                 version);
-
-  fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
-
-  if(saveMesh) {
-    fprintf(fp, "$Nodes\n");
-    fprintf(fp, "%d\n", (int)unique.size());
-    for(std::size_t i = 0; i < unique.size(); i++) {
-      MVertex *v = unique[i];
-      fprintf(fp, "%ld %.16g %.16g %.16g\n", v->getIndex(), v->x(), v->y(),
-              v->z());
-    }
-    fprintf(fp, "$EndNodes\n");
-
-    fprintf(fp, "$Elements\n");
-    fprintf(fp, "%d\n", (int)elements.size());
-    for(std::size_t i = 0; i < elements.size(); i++) {
-      elements[i]->writeMSH2(fp, 2.2, false, i + 1);
-    }
-    fprintf(fp, "$EndElements\n");
-  }
-
-  if(saveInterpolationMatrices && haveInterpolationMatrices() &&
-     !forceNodeData && !forceElementData) {
-    fprintf(fp, "$InterpolationScheme\n");
-    fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
-    fprintf(fp, "%d\n", (int)_interpolation.size());
-    for(auto it = _interpolation.begin(); it != _interpolation.end(); it++) {
-      if(it->second.size() >= 2) {
-        fprintf(fp, "%d\n2\n", it->first);
-        for(int mat = 0; mat < 2; mat++) {
-          int m = it->second[mat]->size1(), n = it->second[mat]->size2();
-          fprintf(fp, "%d %d\n", m, n);
-          for(int i = 0; i < m; i++) {
-            for(int j = 0; j < n; j++)
-              fprintf(fp, "%.16g ", it->second[mat]->get(i, j));
-            fprintf(fp, "\n");
-          }
+// The elements of the lists of the views become the mesh of a temporary model,
+// their nodes merged within the geometrical tolerance and the elements of
+// different views with the same nodes merged, and their values the data of
+// model-based views on it (one per view and number of components), which
+// write the file
+bool PViewDataList::writeMSH(const std::string &fileName,
+                             const std::vector<PViewDataList *> &views,
+                             double version, bool binary, bool saveMesh,
+                             bool multipleView, int partitionNum,
+                             bool saveInterpolationMatrices, bool forceNodeData,
+                             bool forceElementData)
+{
+  // the lists with elements, with the type of their elements in the mesh, and
+  // the coordinates of the nodes of all the elements
+  struct elementList {
+    PViewDataList *view;
+    std::vector<double> *list;
+    int numEle, numNodes, numComp, mshType, mult;
+  };
+  std::vector<elementList> lists;
+  std::vector<double> xyz;
+  SBoundingBox3d bbox;
+  for(auto view : views) {
+    for(int i = 0; i < 24; i++) {
+      std::vector<double> *list = nullptr;
+      int *numEle = nullptr, numComp, numNodes;
+      int type = view->_getRawData(i, &list, &numEle, &numComp, &numNodes);
+      if(!*numEle) continue;
+      int mshType = 0;
+      for(int order = 0; order <= 10 && !mshType; order++) {
+        for(int serendip = 0; serendip < 2 && !mshType; serendip++) {
+          int t = ElementType::getType(type, order, serendip);
+          if(t > 0 && ElementType::getNumVertices(t) == numNodes) mshType = t;
+        }
+      }
+      if(!mshType) {
+        Msg::Warning("Skipping elements with %d nodes of view '%s': no such "
+                     "element in MSH",
+                     numNodes, view->getName().c_str());
+        continue;
+      }
+      int nb = list->size() / *numEle;
+      // the number of values per component of an element at each step
+      int mult = (nb - 3 * numNodes) / (view->_nbTimeStep * numComp);
+      lists.push_back({view, list, *numEle, numNodes, numComp, mshType, mult});
+      for(std::size_t e = 0; e < list->size(); e += nb) {
+        double *x = &(*list)[e];
+        for(int j = 0; j < numNodes; j++) {
+          xyz.push_back(x[j]);
+          xyz.push_back(x[numNodes + j]);
+          xyz.push_back(x[2 * numNodes + j]);
         }
       }
     }
-    fprintf(fp, "$EndInterpolationScheme\n");
+    if(view->_nbT2 || view->_nbT3)
+      Msg::Warning("Strings of view '%s' are not written in MSH",
+                   view->getName().c_str());
+    bbox += view->_bbox;
+  }
+  if(lists.empty()) {
+    Msg::Warning("No elements to write in MSH");
+    return true;
   }
 
-  for(int ts = 0; ts < NbTimeStep; ts++) {
-    if(forceNodeData)
-      fprintf(fp, "$NodeData\n");
-    else if(forceElementData)
-      fprintf(fp, "$ElementData\n");
-    else
-      fprintf(fp, "$ElementNodeData\n");
-    if(saveInterpolationMatrices && haveInterpolationMatrices() &&
-       !forceNodeData && !forceElementData)
-      fprintf(fp, "2\n\"%s\"\n\"INTERPOLATION_SCHEME\"\n", getName().c_str());
-    else
-      fprintf(fp, "1\n\"%s\"\n", getName().c_str());
-    fprintf(fp, "1\n%.16g\n", getTime(ts));
-    int size = forceNodeData ? (int)unique.size() : (int)elements.size();
-    if(partitionNum > 0)
-      fprintf(fp, "4\n%d\n%d\n%d\n%d\n", ts, numComponents, size, partitionNum);
-    else
-      fprintf(fp, "3\n%d\n%d\n%d\n", ts, numComponents, size);
+  double eps = bbox.empty() ? 0. :
+                              norm(SVector3(bbox.max(), bbox.min())) *
+                                CTX::instance()->geom.tolerance;
+  std::size_t numVertices;
+  std::vector<std::size_t> merged = _mergePoints(xyz, eps, numVertices);
 
-    if(forceNodeData) {
-      for(std::size_t i = 0; i < unique.size(); i++) {
-        MVertex *v = unique[i];
-        fprintf(fp, "%ld", v->getIndex());
-        int nbnod = vertexData[v].nbnod;
-        int nod = vertexData[v].nod;
-        double *d = vertexData[v].data;
-        for(int j = 0; j < numComponents; j++)
-          fprintf(fp, " %.16g",
-                  d[numComponents * nbnod * ts + numComponents * nod + j]);
-        fprintf(fp, "\n");
+  // the tag of each element: those of different views with the same type and
+  // nodes are the same element (the n-th such element of a view is the n-th of
+  // another)
+  std::vector<std::size_t> tags;
+  std::vector<int> tagType; // the type of each element, by tag - 1
+  std::vector<std::size_t> tagNodes; // the index of its first node
+  {
+    std::unordered_map<std::size_t, std::vector<std::size_t>> same;
+    std::unordered_map<std::size_t, std::size_t> used; // in the current view
+    PViewDataList *view = nullptr;
+    std::size_t node = 0;
+    for(auto &l : lists) {
+      if(l.view != view) {
+        view = l.view;
+        used.clear();
       }
-      fprintf(fp, "$EndNodeData\n");
-    }
-    else {
-      int n = 0;
-      for(int i = 0; i < 24; i++) {
-        std::vector<double> *list = nullptr;
-        int *numEle = nullptr, numComp, numNodes;
-        int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
-        if(*numEle) {
-          int mult = numNodes;
-          if(_interpolation.count(typ)) mult = _interpolation[typ][0]->size1();
-          int nb = list->size() / *numEle;
-          for(std::size_t i = 0; i < list->size(); i += nb) {
-            double *v = &(*list)[i + 3 * numNodes];
-            if(forceElementData) { // just keep first vertex value
-              fprintf(fp, "%d", ++n);
-              for(int j = 0; j < numComponents; j++)
-                fprintf(fp, " %.16g", v[numComponents * mult * ts + j]);
-            }
-            else {
-              fprintf(fp, "%d %d", ++n, mult);
-              for(int j = 0; j < numComponents * mult; j++)
-                fprintf(fp, " %.16g", v[numComponents * mult * ts + j]);
-            }
-            fprintf(fp, "\n");
+      for(int e = 0; e < l.numEle; e++, node += l.numNodes) {
+        if(lists.front().view == lists.back().view) { // a single view
+          tagType.push_back(l.mshType);
+          tagNodes.push_back(node);
+          tags.push_back(tagType.size());
+          continue;
+        }
+        std::size_t h = l.mshType;
+        for(int j = 0; j < l.numNodes; j++) h = h * 1000003 ^ merged[node + j];
+        auto &candidates = same[h];
+        std::size_t &n = used[h], tag = 0;
+        // the n-th element of the same type and nodes in the previous views
+        for(std::size_t k = 0, found = 0; k < candidates.size(); k++) {
+          std::size_t t = candidates[k];
+          bool eq = (tagType[t - 1] == l.mshType);
+          for(int j = 0; j < l.numNodes && eq; j++)
+            eq = (merged[tagNodes[t - 1] + j] == merged[node + j]);
+          if(eq && found++ == n) {
+            tag = t;
+            break;
           }
         }
+        if(!tag) {
+          tag = tagType.size() + 1;
+          tagType.push_back(l.mshType);
+          tagNodes.push_back(node);
+          candidates.push_back(tag);
+        }
+        n++;
+        tags.push_back(tag);
       }
-      if(forceElementData)
-        fprintf(fp, "$EndElementData\n");
-      else
-        fprintf(fp, "$EndElementNodeData\n");
     }
   }
 
-  fclose(fp);
-  return true;
+  // the temporary model is current while its mesh is created, so that the
+  // numbering of the nodes and elements of the current one is left alone;
+  // creating it hides the others
+  int current = GModel::getCurrentIndex();
+  std::vector<int> visible;
+  for(auto m : GModel::list) visible.push_back(m->getVisibility());
+  GModel *model = new GModel();
+  GModel::setCurrent(model);
+
+  // an entity of each dimension, holding the elements of that dimension, and
+  // the nodes of the elements of lowest dimension among those they belong to
+  GEntity *entities[4] = {nullptr, nullptr, nullptr, nullptr};
+  for(auto &l : lists) {
+    int dim = ElementType::getDimension(l.mshType);
+    if(entities[dim]) continue;
+    switch(dim) {
+    case 0: {
+      GVertex *v = new discreteVertex(model, 1);
+      model->add(v);
+      entities[0] = v;
+    } break;
+    case 1: {
+      GEdge *e = new discreteEdge(model, 1);
+      model->add(e);
+      entities[1] = e;
+    } break;
+    case 2: {
+      GFace *f = new discreteFace(model, 1);
+      model->add(f);
+      entities[2] = f;
+    } break;
+    case 3: {
+      GRegion *r = new discreteRegion(model, 1);
+      model->add(r);
+      entities[3] = r;
+    } break;
+    }
+  }
+  std::vector<char> nodeDim(numVertices, 3);
+  for(std::size_t t = 0; t < tagType.size(); t++) {
+    int n = ElementType::getNumVertices(tagType[t]);
+    char dim = ElementType::getDimension(tagType[t]);
+    for(int j = 0; j < n; j++) {
+      char &d = nodeDim[merged[tagNodes[t] + j]];
+      d = std::min(d, dim);
+    }
+  }
+  std::vector<MVertex *> vertices(numVertices, nullptr);
+  for(std::size_t i = 0; i < merged.size(); i++) {
+    std::size_t m = merged[i];
+    if(vertices[m]) continue;
+    GEntity *ge = entities[(int)nodeDim[m]];
+    vertices[m] =
+      new MVertex(xyz[3 * i], xyz[3 * i + 1], xyz[3 * i + 2], ge, m + 1);
+    ge->addMeshVertex(vertices[m]);
+  }
+  MElementFactory factory;
+  for(std::size_t t = 0; t < tagType.size(); t++) {
+    int n = ElementType::getNumVertices(tagType[t]);
+    std::vector<MVertex *> v(n);
+    for(int j = 0; j < n; j++) v[j] = vertices[merged[tagNodes[t] + j]];
+    entities[ElementType::getDimension(tagType[t])]->addElement(
+      factory.create(tagType[t], v, t + 1));
+  }
+
+  GModel::list.erase(
+    std::find(GModel::list.begin(), GModel::list.end(), model));
+  GModel::setCurrentIndex(current);
+  model->setVisibility(0);
+  for(std::size_t i = 0; i < visible.size(); i++)
+    GModel::list[i]->setVisibility(visible[i]);
+
+  // the data of the elements of each view with each number of components
+  PViewDataGModel::DataType type =
+    forceNodeData    ? PViewDataGModel::NodeData :
+    forceElementData ? PViewDataGModel::ElementData :
+                       PViewDataGModel::ElementNodeData;
+  std::vector<PViewDataGModel *> data;
+  for(std::size_t first = 0; first < lists.size();) {
+    PViewDataList *view = lists[first].view;
+    std::size_t last = first;
+    while(last < lists.size() && lists[last].view == view) last++;
+    // the index of the first node and element of the view
+    std::size_t node0 = 0, ele0 = 0;
+    for(std::size_t k = 0; k < first; k++) {
+      node0 += lists[k].numEle * lists[k].numNodes;
+      ele0 += lists[k].numEle;
+    }
+    for(int numComp : {1, 3, 9}) {
+      bool any = false, other = false;
+      for(std::size_t k = first; k < last; k++) {
+        any |= (lists[k].numComp == numComp);
+        other |= (lists[k].numComp != numComp);
+      }
+      if(!any) continue;
+      PViewDataGModel *d = new PViewDataGModel(type);
+      std::string name = view->getName();
+      if(other)
+        name += (numComp == 1) ? " (scalar)" :
+                (numComp == 3) ? " (vector)" :
+                                 " (tensor)";
+      d->setName(name);
+      if(type == PViewDataGModel::ElementNodeData) {
+        for(auto &it : view->_interpolation) {
+          if(it.second.size() >= 4)
+            d->setInterpolationMatrices(it.first, *it.second[0], *it.second[1],
+                                        *it.second[2], *it.second[3]);
+          else if(it.second.size() >= 2)
+            d->setInterpolationMatrices(it.first, *it.second[0], *it.second[1]);
+        }
+      }
+      for(int step = 0; step < view->_nbTimeStep; step++) {
+        std::vector<std::size_t> dataTags;
+        std::vector<std::vector<double>> values;
+        // the value of the last element at each node (NodeData)
+        std::vector<const double *> nodeValues;
+        if(type == PViewDataGModel::NodeData)
+          nodeValues.resize(numVertices, nullptr);
+        std::size_t node = node0, ele = ele0;
+        for(std::size_t k = first; k < last; k++) {
+          auto &l = lists[k];
+          std::size_t nb = l.list->size() / l.numEle;
+          for(int e = 0; e < l.numEle; e++, node += l.numNodes, ele++) {
+            if(l.numComp != numComp) continue;
+            const double *v =
+              &(*l.list)[e * nb + 3 * l.numNodes] + numComp * l.mult * step;
+            if(type == PViewDataGModel::NodeData) {
+              for(int j = 0; j < std::min(l.numNodes, l.mult); j++)
+                nodeValues[merged[node + j]] = v + numComp * j;
+              continue;
+            }
+            dataTags.push_back(tags[ele]);
+            int n = (type == PViewDataGModel::ElementData) ? 1 : l.mult;
+            values.emplace_back(v, v + numComp * n);
+          }
+        }
+        for(std::size_t i = 0; i < nodeValues.size(); i++) {
+          if(!nodeValues[i]) continue;
+          dataTags.push_back(i + 1);
+          values.emplace_back(nodeValues[i], nodeValues[i] + numComp);
+        }
+        d->addData(model, dataTags, values, view->getFirstStep() + step,
+                   view->getTime(step), -1, numComp, false);
+      }
+      data.push_back(d);
+    }
+    first = last;
+  }
+
+  bool ok = true;
+  for(std::size_t i = 0; i < data.size() && ok; i++)
+    ok = data[i]->writeMSH(fileName, version, binary, i ? false : saveMesh,
+                           i ? true : multipleView, partitionNum,
+                           saveInterpolationMatrices);
+  for(auto d : data) delete d;
+  delete model;
+  return ok;
 }
 
 void PViewDataList::importLists(int N[24], std::vector<double> *V[24])

@@ -5,6 +5,8 @@
 
 #include <cmath>
 #include <map>
+#include <unordered_map>
+#include "GModelVertexArrays.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "GModel.h"
@@ -16,24 +18,46 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "MTrihedron.h"
-#include "MElementCut.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "Context.h"
+#include "OwnerCache.h"
+#include "ElementSpheres.h"
+#include "FaceMatcher.h"
 #include "VertexArray.h"
 #include "OS.h"
 #include "SmoothData.h"
 #include "Iso.h"
+#include <set>
 
-// how many edges or faces of one element are hashed and prefetched together
-// before being looked up; elements with more than this fall back on looking
-// them up one at a time
-enum { MAX_BATCHED_EDGES = 32, MAX_BATCHED_FACES = 8 };
+// the edges of an element that are drawn, a bit each, and whether it is curved
+// (an element with more edges, or whose edges are not drawn one to one, has no
+// mask)
+enum {
+  MAX_MASKED_EDGES = 14,
+  EDGES_CURVED = 1 << 14,
+  EDGES_NOT_MASKED = 0xffff
+};
 
 static const double curvedRepTol = 1.e-5;
 
-unsigned int getColorByEntity(GEntity *e)
+// The colour of a selected entity: the cursor merely resting on one is not
+// the same as having chosen it, so what is hovered is drawn in the highlight
+// colour instead (Geometry.Color.HighlightTwo, which nothing else uses).
+unsigned int getSelectionColor(GEntity *e)
 {
-  if(e->getSelection()) { // selection
-    return CTX::instance()->color.geom.selection;
+  return (e && e->getSelection() == GEntity::SelectHover) ?
+           CTX::instance()->color.geom.highlight[2] :
+           CTX::instance()->color.geom.selection;
+}
+
+// (what is merged across entities and kept takes the colour an entity has
+// unselected: a selected one is drawn again on top, and the selection
+// changes without anything being rebuilt)
+unsigned int getColorByEntity(GEntity *e, bool withSelection)
+{
+  if(withSelection && e->getSelection()) { // selection
+    return getSelectionColor(e);
   }
   else if(e->useColor()) { // forced from a script
     return e->getColor();
@@ -51,67 +75,60 @@ unsigned int getColorByEntity(GEntity *e)
   }
 }
 
-static unsigned int getColorByElement(MElement *ele)
-{
-  // CTX::instance() is not inlined across translation units: look it up once,
-  // as this is called for every element
-  CTX *ctx = CTX::instance();
-  if(ele->getVisibility() > 1) { // selection
-    return ctx->color.geom.selection;
-  }
-  else if(ctx->mesh.colorCarousel == 0) { // by element type
-    switch(ele->getType()) {
-    case TYPE_LIN: return ctx->color.mesh.line;
-    case TYPE_TRI: return ctx->color.mesh.triangle;
-    case TYPE_QUA: return ctx->color.mesh.quadrangle;
-    case TYPE_TET: return ctx->color.mesh.tetrahedron;
-    case TYPE_HEX: return ctx->color.mesh.hexahedron;
-    case TYPE_PRI: return ctx->color.mesh.prism;
-    case TYPE_PYR: return ctx->color.mesh.pyramid;
-    case TYPE_TRIH: return ctx->color.mesh.trihedron;
-    default: return ctx->color.mesh.node;
-    }
-  }
-  else if(ctx->mesh.colorCarousel == 3) { // by partition
-    return ctx->color.mesh.carousel[std::abs(ele->getPartition() % 20)];
-  }
-  else {
-    // by elementary or physical entity (this is not perfect (since
-    // e.g. a triangle can have no vertices categorized on a surface),
-    // but it's the best we can do "fast" since we don't store the
-    // associated entity in the element
-    for(std::size_t i = 0; i < ele->getNumVertices(); i++) {
-      GEntity *e = ele->getVertex(i)->onWhat();
-      if(e && (e->dim() == ele->getDim())) return getColorByEntity(e);
-    }
-  }
-  return CTX::instance()->color.fg;
-}
+// The colour of the elements of an entity. It is that of the entity unless
+// elements are coloured by type or by partition, so that it is worked out once
+// and not for each element. (The entity is the one the elements are drawn
+// for: looking for it through the nodes, as was done, gave the foreground
+// colour to the elements that only have nodes on the boundary.)
+class elementColor {
+private:
+  int _carousel;
+  unsigned int _entity, _selection;
+  const CTX *_ctx;
 
-static double evalClipPlane(int clip, double x, double y, double z)
-{
-  return CTX::instance()->clipPlane[clip][0] * x +
-         CTX::instance()->clipPlane[clip][1] * y +
-         CTX::instance()->clipPlane[clip][2] * z +
-         CTX::instance()->clipPlane[clip][3];
-}
-
-static double intersectClipPlane(int clip, MElement *ele)
-{
-  MVertex *v = ele->getVertex(0);
-  double val = evalClipPlane(clip, v->x(), v->y(), v->z());
-  for(std::size_t i = 1; i < ele->getNumVertices(); i++) {
-    v = ele->getVertex(i);
-    if(val * evalClipPlane(clip, v->x(), v->y(), v->z()) <= 0)
-      return 0.; // the element intersects the cut plane
+public:
+  elementColor(GEntity *e)
+    : _carousel(CTX::instance()->mesh.colorCarousel),
+      _entity(getColorByEntity(e, true)),
+      _selection(CTX::instance()->color.geom.selection), _ctx(CTX::instance())
+  {
   }
-  return val;
+  unsigned int operator()(MElement *ele) const
+  {
+    if(ele->getVisibility() > 1) return _selection;
+    if(_carousel == 0) { // by element type
+      switch(ele->getType()) {
+      case TYPE_LIN: return _ctx->color.mesh.line;
+      case TYPE_TRI: return _ctx->color.mesh.triangle;
+      case TYPE_QUA: return _ctx->color.mesh.quadrangle;
+      case TYPE_TET: return _ctx->color.mesh.tetrahedron;
+      case TYPE_HEX: return _ctx->color.mesh.hexahedron;
+      case TYPE_PRI: return _ctx->color.mesh.prism;
+      case TYPE_PYR: return _ctx->color.mesh.pyramid;
+      case TYPE_TRIH: return _ctx->color.mesh.trihedron;
+      default: return _ctx->color.mesh.node;
+      }
+    }
+    if(_carousel == 3) // by partition
+      return _ctx->color.mesh.carousel[std::abs(ele->getPartition() % 20)];
+    return _entity; // by elementary or physical entity
+  }
+};
+
+// the nodes of an element, as the clipping planes are asked about them (see
+// ClipPlanes.h)
+static auto nodesOf(MElement *ele)
+{
+  return [ele](int j, int k) {
+    MVertex *v = ele->getVertex(j);
+    return k == 0 ? v->x() : k == 1 ? v->y() : v->z();
+  };
 }
 
 bool isElementVisible(MElement *ele)
 {
   if(!ele->getVisibility()) return false;
-  // as in getColorByElement(), look the context up only once
+  // (CTX::instance() is not inlined across translation units: once only)
   CTX *ctx = CTX::instance();
   if(ctx->mesh.qualitySup) {
     double q;
@@ -129,10 +146,8 @@ bool isElementVisible(MElement *ele)
     double r = ele->maxEdge();
     if(r < ctx->mesh.radiusInf || r > ctx->mesh.radiusSup) return false;
   }
-  // Nothing about the clipping planes here on purpose: the arrays are built
-  // once and OpenGL applies the planes, so that moving one costs nothing but a
-  // redraw. What whole element mode used to leave out is drawn back from
-  // va_clip_*, and what capping used to add is built there too.
+  // nothing about the clipping planes here: OpenGL applies them, and what
+  // they add is built into va_clip_*
   return true;
 }
 
@@ -148,24 +163,36 @@ template <class T> static bool areOnlySomeElementsVisible(std::vector<T *> &elem
   return false;
 }
 
-static bool useCurvedRepresentation(MElement *element)
+// is the element drawn with its curved representation?
+static bool isCurved(MElement *ele)
 {
-  // A four-node quadrangle is bilinear, not planar in general.  Subdivide it
+  // A four-node quadrangle is bilinear, not planar in general. Subdivide it
   // through its reference-space mapping whenever the user requests more than
   // one display sub-edge, just like a higher-order element.
-  if(element->getType() == TYPE_QUA &&
-     CTX::instance()->mesh.numSubEdges > 1)
+  if(ele->getType() == TYPE_QUA && CTX::instance()->mesh.numSubEdges > 1)
     return true;
-  return (element->getPolynomialOrder() > 1) &&
-         (element->maxDistToStraight() >
-          curvedRepTol * element->getInnerRadius());
+  return (ele->getPolynomialOrder() > 1) &&
+         (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
 }
 
 template <class T> static bool areSomeElementsCurved(std::vector<T *> &elements)
 {
   for(std::size_t i = 0; i < elements.size(); i++)
-    if(useCurvedRepresentation(elements[i])) return true;
+    if(isCurved(elements[i])) return true;
   return false;
+}
+
+// Mesh.Explode: the n points of an element moved towards its barycentre pc
+// (or away from it) by the factor
+static void explodeAbout(const SPoint3 &pc, double factor, int n, double *x,
+                         double *y, double *z)
+{
+  if(factor == 1.) return;
+  for(int k = 0; k < n; k++) {
+    x[k] = pc[0] + factor * (x[k] - pc[0]);
+    y[k] = pc[1] + factor * (y[k] - pc[1]);
+    z[k] = pc[2] + factor * (z[k] - pc[2]);
+  }
 }
 
 template <class T>
@@ -173,36 +200,32 @@ static void addSmoothNormals(GEntity *e, std::vector<T *> &elements)
 {
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
-    const bool curved = useCurvedRepresentation(ele);
+    const bool curved = isCurved(ele);
     SPoint3 pc(0., 0., 0.);
     if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
     for(int j = 0; j < ele->getNumFacesRep(curved); j++) {
       double x[3], y[3], z[3];
       SVector3 n[3];
       ele->getFaceRep(curved, j, x, y, z, n);
+      explodeAbout(pc, CTX::instance()->mesh.explode, 3, x, y, z);
       for(int k = 0; k < 3; k++) {
-        if(CTX::instance()->mesh.explode != 1.) {
-          x[k] = pc[0] + CTX::instance()->mesh.explode * (x[k] - pc[0]);
-          y[k] = pc[1] + CTX::instance()->mesh.explode * (y[k] - pc[1]);
-          z[k] = pc[2] + CTX::instance()->mesh.explode * (z[k] - pc[2]);
-        }
         e->model()->normals->add(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
       }
     }
   }
 }
 
-// Drop the faces interior to a 3D mesh, i.e. those shared by two elements of
-// the same entity, when the user asked for the skin only. They are gone, not
-// merely hidden, whatever else is going on: clipping, exploding or drawing the
-// mesh with transparency will show what is left, which is what the option is
-// for. The one thing that is not a matter of taste is picking, which cannot
-// reach an element that is not in the arrays.
+// same for the edges: only those of the boundary faces are drawn
+static bool removeInteriorEdges()
+{
+  return CTX::instance()->mesh.drawSkinEdgesOnly ? true : false;
+}
+
+// drop the faces interior to a 3D mesh (shared by two elements of the same
+// entity) when only the skin is asked for
 static bool removeInteriorFaces()
 {
-  if(!CTX::instance()->mesh.drawSkinOnly) return false;
-  if(CTX::instance()->pickElements) return false;
-  return true;
+  return CTX::instance()->mesh.drawSkinOnly ? true : false;
 }
 
 // number of face representations per topological face, or 0 if they do not map
@@ -214,50 +237,88 @@ static int repPerFace(MElement *ele, bool curved)
   return numRep / numFaces;
 }
 
-// First pass: a face shared by two visible elements is interior, and is hidden
-// by the skin of the mesh. Insert each face and cancel it when it is seen a
-// second time, so that the filter is left holding exactly the faces that bound
-// the mesh - far fewer than the interior ones, so the table stays small and hot
-// instead of growing to the total number of faces.
-template <class T>
-static void markBoundaryFaces(std::vector<T *> &elements,
-                              UniqueElementFilter *boundary, int nthreads)
+// The skin of a set of 3D elements: their faces that no other element of the
+// set shares, in the order of the elements, and apart the elements whose
+// faces cannot be told from what draws them, which are drawn whole.
+struct meshSkin {
+  std::vector<std::pair<MElement *, int> > faces;
+  std::vector<MElement *> whole;
+};
+
+// The faces (the edges, if in 2D) of a set of elements that no other element
+// of the set shares, as (index of the element, face), in the order of the
+// elements; the elements with a 0 in `use', if given, are left out. Each
+// thread matches its share of the faces, in a table of its own (see
+// FaceMatcher.h).
+void findBoundaryOfElements(const std::vector<MElement *> &elements,
+                            bool in2D, const std::vector<std::uint8_t> *use,
+                            std::vector<std::pair<std::uint32_t, int> > &left)
 {
-#pragma omp parallel for schedule(static) num_threads(nthreads)
-  for(std::size_t i = 0; i < elements.size(); i++) {
-    MElement *ele = elements[i];
-    if(!isElementVisible(ele) || ele->getDim() < 3) continue;
-    const bool curved =
-      (ele->getPolynomialOrder() > 1) &&
-      (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
-    if(!repPerFace(ele, curved)) continue;
-    // as when the edges are filtered: hash the faces of the element and ask
-    // for their table entries before touching any of them
-    MVertex *fv[4];
-    int nf = ele->getNumFaces();
-    std::uint64_t hash[MAX_BATCHED_FACES];
-    for(int j0 = 0; j0 < nf; j0 += MAX_BATCHED_FACES) {
-      int n = std::min(nf - j0, (int)MAX_BATCHED_FACES);
-      for(int j = 0; j < n; j++) {
-        int nc = ele->getFaceCorners(j0 + j, fv);
-        if(!nc) { // no corner accessor: fall back on the sorted face
-          MFace fa = ele->getFace(j0 + j);
-          nc = (int)fa.getNumVertices();
-          for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
+  left.clear();
+  std::size_t num = elements.size();
+  int nthreads = CTX::instance()->numThreadsFor(num, 1000);
+  std::vector<std::vector<std::pair<std::uint32_t, int> > > found(nthreads);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    FaceMatcher<std::uintptr_t, std::uint32_t> matcher;
+    for(std::size_t i = 0; i < num; i++) {
+      if(use && !(*use)[i]) continue;
+      MElement *ele = elements[i];
+      // (the faces of an element are hashed together, then added)
+      int nf = in2D ? ele->getNumEdges() : ele->getNumFaces();
+      std::uint64_t hash[8];
+      for(int j0 = 0; j0 < nf; j0 += 8) {
+        int n = std::min(nf - j0, 8);
+        for(int j = 0; j < n; j++) {
+          MVertex *v[4];
+          int nc = in2D ? ele->getEdgeCorners(j0 + j, v) :
+                          ele->getFaceCorners(j0 + j, v);
+          std::uintptr_t k[4] = {0, 0, 0, 0};
+          for(int c = 0; c < nc; c++) k[c] = (std::uintptr_t)v[c];
+          hash[j] = (nc >= 2 && matcher.share(k, nc, nthreads) == t) ?
+                      matcher.hashOf(k, nc, 0) : 0;
         }
-        hash[j] =
-          boundary->hashOf(0, fv[0], fv[1], fv[2], nc > 3 ? fv[3] : nullptr);
-        boundary->prefetch(hash[j]);
+        for(int j = 0; j < n; j++)
+          if(hash[j]) matcher.add(hash[j], (std::uint32_t)i, j0 + j);
       }
-      for(int j = 0; j < n; j++) boundary->insertOrErase(hash[j]);
     }
+    matcher.forEachLeft([&](std::uint32_t i, int j) {
+      found[t].push_back(std::make_pair(i, j));
+    });
   }
+  for(auto &f : found) left.insert(left.end(), f.begin(), f.end());
+  std::sort(left.begin(), left.end());
 }
 
-// Add the section a clipping plane cuts out of an element to the array. The
-// section is moved by a fraction of the model size towards the side the plane
-// keeps, so that the plane that produced it does not clip it away again; the
-// other planes still do, which is what makes several planes work together
+static void findSkin(const std::vector<MElement *> &elements, meshSkin &skin)
+{
+  skin.faces.clear();
+  skin.whole.clear();
+  std::size_t num = elements.size();
+  if(num >= 0xffffffffu) { // (they are numbered on 32 bits)
+    skin.whole = elements;
+    return;
+  }
+
+  // (what decides it is not cheap for curved elements: once, not per thread)
+  std::vector<std::uint8_t> mapped(num);
+  int nthreads = CTX::instance()->numThreadsFor(num, 1000);
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+  for(std::size_t i = 0; i < num; i++)
+    mapped[i] = repPerFace(elements[i], isCurved(elements[i])) ? 1 : 0;
+  for(std::size_t i = 0; i < num; i++)
+    if(!mapped[i]) skin.whole.push_back(elements[i]);
+
+  std::vector<std::pair<std::uint32_t, int> > left;
+  findBoundaryOfElements(elements, false, &mapped, left);
+  skin.faces.reserve(left.size());
+  for(auto &f : left)
+    skin.faces.push_back(std::make_pair(elements[f.first], f.second));
+}
+
+// add the section a clipping plane cuts out of an element, moved slightly
+// towards the kept side so that the plane does not clip it away (the other
+// planes still do)
 static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
 {
   int nv = ele->getNumPrimaryVertices();
@@ -270,7 +331,7 @@ static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
     int neg = 0, pos = 0;
     for(int i = 0; i < nv; i++) {
       MVertex *v = ele->getVertex(i);
-      if(evalClipPlane(c, v->x(), v->y(), v->z()) < 0.)
+      if(clipPlanes::eval(c, v->x(), v->y(), v->z()) < 0.)
         neg++;
       else
         pos++;
@@ -287,8 +348,8 @@ static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
     for(int j = 0; j < ne && nb < 12; j++) {
       MEdge ed = ele->getEdge(j);
       MVertex *a = ed.getVertex(0), *b = ed.getVertex(1);
-      double da = evalClipPlane(c, a->x(), a->y(), a->z());
-      double db = evalClipPlane(c, b->x(), b->y(), b->z());
+      double da = clipPlanes::eval(c, a->x(), a->y(), a->z());
+      double db = clipPlanes::eval(c, b->x(), b->y(), b->z());
       if((da < 0. && db < 0.) || (da >= 0. && db >= 0.)) continue;
       double t = (da == db) ? 0. : da / (da - db);
       double x = a->x() + t * (b->x() - a->x());
@@ -325,297 +386,337 @@ static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
       double x[3] = {xp[0], xp[j - 1], xp[j]};
       double y[3] = {yp[0], yp[j - 1], yp[j]};
       double z[3] = {zp[0], zp[j - 1], zp[j]};
-      va->add(x, y, z, nn, col, ele, false);
+      va->add(x, y, z, nn, col, false);
     }
   }
 }
 
-// The section the clipping planes cut out of the 3D elements. This is the one
-// thing about the arrays that moving a plane changes, so it is built on its
-// own and the rest is left exactly as it is: a plane can then be moved without
-// the mesh being built again. Only the elements a plane actually cuts produce
-// anything, so this is a slice through the model however big the model is.
-// Does a plane cut through this element? Those are the ones whole element mode
-// draws entire, and they are the only elements whose faces can lie between
-// what is kept and what is removed: a fully visible element and a fully
-// removed one cannot share a face, as its vertices would have to be on both
-// sides at once.
+// does a plane cut through this element? Those are the elements whole
+// element mode draws whole, and the only ones whose faces can lie between
+// what is kept and what is removed.
 static bool elementIsCut(MElement *ele)
 {
-  CTX *ctx = CTX::instance();
-  for(int clip = 0; clip < 6; clip++) {
-    if(!(ctx->mesh.clip & (1 << clip))) continue;
-    if(ele->getDim() < 3 && ctx->clipOnlyVolume) continue;
-    if(intersectClipPlane(clip, ele) == 0.) return true;
-  }
-  return false;
+  if(ele->getDim() < 3 && CTX::instance()->clipOnlyVolume) return false;
+  return clipPlanes::cuts(CTX::instance()->mesh.clip,
+                          (int)ele->getNumVertices(), nodesOf(ele));
 }
 
-// Is this element kept by whole element mode? The elements a plane cuts are,
-// and so are the ones entirely on the visible side; only those entirely beyond
-// a plane are dropped. This is the test isElementVisible() used to make.
-static bool elementIsKept(MElement *ele)
+// is this element kept by whole element mode?
+bool elementIsKept(MElement *ele)
 {
-  CTX *ctx = CTX::instance();
-  for(int clip = 0; clip < 6; clip++) {
-    if(!(ctx->mesh.clip & (1 << clip))) continue;
-    if(ele->getDim() < 3 && ctx->clipOnlyVolume) continue;
-    double d = intersectClipPlane(clip, ele);
-    if(ele->getDim() == 3 && ctx->clipOnlyDrawIntersectingVolume && d)
-      return false;
-    if(d < 0.) return false;
-  }
-  return true;
+  return clipPlanes::keeps(CTX::instance()->mesh.clip, ele->getDim(),
+                           (int)ele->getNumVertices(), nodesOf(ele));
 }
 
-// The faces on the boundary of what whole element mode keeps. What is drawn is
-// that boundary, so the faces between a kept element and a removed one count
-// while those between two kept elements do not - which is why the boundary has
-// to be worked out over the kept elements rather than over the whole mesh.
-template <class T>
-static void markKeptBoundaryFaces(std::vector<T *> &elements,
-                                  UniqueElementFilter *bnd, int nthreads)
-{
-  std::vector<T *> kept;
-  kept.reserve(elements.size());
-  for(std::size_t i = 0; i < elements.size(); i++)
-    if(isElementVisible(elements[i]) && elementIsKept(elements[i]))
-      kept.push_back(elements[i]);
-  markBoundaryFaces(kept, bnd, nthreads);
-}
-
-// The elements a plane cuts, gathered so that they can be drawn whole while
-// OpenGL clips everything else.
+// the elements a plane cuts, to be drawn whole while OpenGL clips the rest
 template <class T>
 static void gatherCutElements(std::vector<T *> &elements,
                               std::vector<T *> &cut)
 {
   for(std::size_t i = 0; i < elements.size(); i++) {
     if(!isElementVisible(elements[i])) continue;
-    // an element one plane cuts can still be entirely beyond another, and is
-    // then not drawn at all: what is drawn whole here is not clipped again
+    // an element cut by one plane can be entirely beyond another
     if(!elementIsKept(elements[i])) continue;
     if(!elementIsCut(elements[i])) continue;
     cut.push_back(elements[i]);
   }
 }
 
-template <class T>
-static void addCapsInArray(GEntity *e, std::vector<T *> &elements)
+// one line of what represents the edges of an element (or one triangle of what
+// represents its faces), exploded about pc and with the smoothed normals of a
+// surface if asked
+static void addEdgeRep(GEntity *e, VertexArray *va, MElement *ele, bool curved,
+                       int j, const SPoint3 &pc, unsigned int *col,
+                       bool unique)
 {
-  for(std::size_t i = 0; i < elements.size(); i++) {
-    MElement *ele = elements[i];
-    if(ele->getDim() != 3 || !isElementVisible(ele)) continue;
-    unsigned int c = getColorByElement(ele);
-    unsigned int col[4] = {c, c, c, c};
-    addCapInArray(e->va_clip_triangles, ele, col);
-  }
+  double x[2], y[2], z[2];
+  SVector3 n[2];
+  ele->getEdgeRep(curved, j, x, y, z, n);
+  explodeAbout(pc, CTX::instance()->mesh.explode, 2, x, y, z);
+  if(e->dim() == 2 && CTX::instance()->mesh.smoothNormals)
+    for(int k = 0; k < 2; k++)
+      e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
+  va->add(x, y, z, n, col, unique);
 }
 
-// vaL and vaT are where the lines and the triangles go: the entity's own
-// arrays, or the ones held apart for what the clipping planes add.
-template <class T>
-static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
-                                std::vector<T *> &elements, bool edges,
-                                bool faces,
-                                UniqueElementFilter *interior = nullptr)
+static void addFaceRep(GEntity *e, VertexArray *va, MElement *ele, bool curved,
+                       int j, const SPoint3 &pc, unsigned int *col)
 {
-  int nthreads = CTX::instance()->numThreads;
-  if(!nthreads) nthreads = Msg::GetMaxThreads();
-  if(elements.size() < 1000) nthreads = 1;
+  double x[3], y[3], z[3];
+  SVector3 n[3];
+  ele->getFaceRep(curved, j, x, y, z, n);
+  explodeAbout(pc, CTX::instance()->mesh.explode, 3, x, y, z);
+  if(e->dim() == 2 && CTX::instance()->mesh.smoothNormals)
+    for(int k = 0; k < 3; k++)
+      e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
+  va->add(x, y, z, n, col, false);
+}
 
-  // each thread fills its own vertex arrays, which are merged below: this
-  // avoids the critical sections that used to serialize the whole loop
-  std::vector<VertexArray *> vaLines(nthreads, nullptr);
-  std::vector<VertexArray *> vaTriangles(nthreads, nullptr);
-  if(nthreads == 1) {
-    vaLines[0] = vaL;
-    vaTriangles[0] = vaT;
-  }
-  else {
-    int n = (int)(elements.size() / nthreads) + 100;
-    // the threads share the filter of the entity's own arrays, so that an
-    // element is dropped whichever thread sees it first, and so that the filter
-    // survives across the successive calls made for each element type
-    UniqueElementFilter *fl = vaL ? vaL->getUniqueFilter(true) : nullptr;
-    UniqueElementFilter *ft = vaT ? vaT->getUniqueFilter(true) : nullptr;
-    for(int t = 0; t < nthreads; t++) {
-      if(edges) {
-        vaLines[t] = new VertexArray(2, 6 * n);
-        vaLines[t]->setUniqueFilter(fl);
-      }
-      if(faces) {
-        vaTriangles[t] = new VertexArray(3, 4 * n);
-        vaTriangles[t]->setUniqueFilter(ft);
-      }
+// An array for each thread that fills `va`, put together in the order of the
+// threads at the end, which with a static schedule is the order of a serial
+// run (one thread fills `va` itself). The threads share the filter of `va`,
+// which also lives across the calls made for each type of element.
+class arraysPerThread {
+private:
+  VertexArray *_va;
+  std::vector<VertexArray *> _own;
+
+public:
+  arraysPerThread(VertexArray *va, bool used, int nthreads, int numVertices,
+                  std::size_t numElements)
+    : _va(va), _own(nthreads, va)
+  {
+    if(nthreads == 1 || !used) return;
+    UniqueElementFilter *filter = va->getUniqueFilter(true);
+    for(auto &own : _own) {
+      own = new VertexArray(numVertices, numElements / nthreads + 100);
+      own->setUniqueFilter(filter);
     }
   }
+  VertexArray *mine() { return _own[_own.size() == 1 ? 0 : Msg::GetThreadNum()]; }
+  ~arraysPerThread()
+  {
+    for(auto own : _own) {
+      if(own == _va) continue;
+      _va->merge(own);
+      delete own;
+    }
+  }
+};
 
-  // static scheduling, merged in thread order, keeps the arrays in the same
-  // order as in a serial run
-  const double explode = CTX::instance()->mesh.explode;
-  const bool smooth = CTX::instance()->mesh.smoothNormals;
-  const bool pick = CTX::instance()->pickElements;
-  // the filter is only worth it on edges, which are shared by many elements; it
-  // finds nothing at all when the elements are exploded, since no two of them
-  // then share any coordinate
-  const bool filtering =
-    CTX::instance()->mesh.drawUniqueEdges && (explode == 1.) && !pick;
-  const bool uniqueEdges = (e->dim() > 1 && filtering);
-
-  // when the elements have a topology, identify a duplicated edge by its two
-  // vertices rather than by the coordinates of its corners: this is both
-  // cheaper and exact, and it lets us skip getEdgeRep() altogether for the
-  // edges that have already been drawn
-  UniqueElementFilter *filter =
-    (uniqueEdges && vaL) ? vaL->getUniqueFilter(nthreads > 1) : nullptr;
+// The edges each element is the first to meet, a bit each (see
+// MAX_MASKED_EDGES), found in a loop that does nothing else: the table of the
+// filter does not fit in the caches, and its misses overlap far better than
+// when edges are drawn between them. With a topology an edge is told by its
+// two nodes rather than by its coordinates: cheaper, exact, and what
+// represents it need not be asked for.
+template <class T>
+static void findNewEdges(std::vector<T *> &elements, UniqueElementFilter *filter,
+                         const elementColor &color, int nthreads,
+                         std::vector<std::uint16_t> &mask)
+{
+  long int numIn = 0, numKept = 0;
+  mask.assign(elements.size(), 0);
   // size the tables up front: growing them by successive doublings costs about
   // as much as the lookups themselves
-  if(filter) filter->reserve(2 * elements.size());
-
-  long int numIn = 0, numKept = 0;
-
+  filter->reserve(2 * elements.size());
 #pragma omp parallel for schedule(static) num_threads(nthreads) \
   reduction(+ : numIn, numKept)
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
+    if(!isElementVisible(ele) || ele->getDim() < 1) continue;
+    const bool curved = isCurved(ele);
+    int numRep = ele->getNumEdgesRep(curved);
+    // the representation of a curved edge is subdivided, and does not map
+    // one to one onto the topological edges: left to the coordinates
+    if(numRep != ele->getNumEdges() || numRep > MAX_MASKED_EDGES) {
+      mask[i] = EDGES_NOT_MASKED;
+      continue;
+    }
+    // (the edges are hashed together, then looked up)
+    unsigned int c = color(ele);
+    std::uint64_t hash[MAX_MASKED_EDGES];
+    for(int j = 0; j < numRep; j++) {
+      MVertex *ev[2];
+      ele->getEdgeCorners(j, ev);
+      hash[j] = filter->hashOf(c, ev[0], ev[1]);
+      filter->prefetch(hash[j]);
+    }
+    std::uint16_t m = curved ? EDGES_CURVED : 0;
+    for(int j = 0; j < numRep; j++) {
+      numIn += 2;
+      if(filter->isDuplicate(hash[j])) continue;
+      numKept += 2;
+      m |= (std::uint16_t)(1 << j);
+    }
+    mask[i] = m;
+  }
+  VertexArray::statUniqueIn += numIn;
+  VertexArray::statUniqueKept += numKept;
+}
 
+// The edges and the faces of the elements of an entity. vaL and vaT are where
+// the lines and triangles go: the entity's own arrays, or the ones holding
+// what the clipping planes add. The caller can keep the edges each element
+// draws (newEdges): they are not looked for again while they are there.
+template <class T>
+static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
+                                std::vector<T *> &elements, bool edges,
+                                bool faces,
+                                std::vector<std::uint16_t> *newEdges = nullptr)
+{
+  int nthreads = CTX::instance()->numThreadsFor(elements.size(), 1000);
+  const double explode = CTX::instance()->mesh.explode;
+  const elementColor color(e);
+
+  // an edge shared by several elements is drawn once (the filter finds
+  // nothing when the elements are exploded)
+  const bool uniqueEdges = e->dim() > 1 && explode == 1. &&
+                           CTX::instance()->mesh.drawUniqueEdges;
+  UniqueElementFilter *filter =
+    (uniqueEdges && edges) ? vaL->getUniqueFilter(nthreads > 1) : nullptr;
+  std::vector<std::uint16_t> local;
+  std::vector<std::uint16_t> &mask = newEdges ? *newEdges : local;
+  if(filter && mask.size() != elements.size())
+    findNewEdges(elements, filter, color, nthreads, mask);
+  const bool masked = (filter && mask.size() == elements.size());
+
+  arraysPerThread lines(vaL, edges, nthreads, 2, 6 * elements.size());
+  arraysPerThread triangles(vaT, faces, nthreads, 3, 4 * elements.size());
+
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+  for(std::size_t i = 0; i < elements.size(); i++) {
+    // none of its edges is its own to draw (nothing of it is even read)
+    if(masked && !faces && !(mask[i] & ~EDGES_CURVED)) continue;
+
+    MElement *ele = elements[i];
     if(!isElementVisible(ele) || ele->getDim() < 1) continue;
 
-    const int tnum = (nthreads == 1) ? 0 : Msg::GetThreadNum();
-    VertexArray *vaLine = vaLines[tnum];
-    VertexArray *vaTriangle = vaTriangles[tnum];
-
-    unsigned int c = getColorByElement(ele);
+    unsigned int c = color(ele);
     unsigned int col[4] = {c, c, c, c};
-
-    const bool curved = useCurvedRepresentation(ele);
-
+    // (what decides it is not cheap, and the mask has it)
+    const bool known = masked && mask[i] != EDGES_NOT_MASKED;
+    const bool curved = known ? (mask[i] & EDGES_CURVED) != 0 : isCurved(ele);
     SPoint3 pc(0., 0., 0.);
     if(explode != 1.) pc = ele->barycenter();
 
     if(edges) {
+      // an edge that is not in a mask is told from the others by its
+      // coordinates
+      bool unique = uniqueEdges && !known;
       int numRep = ele->getNumEdgesRep(curved);
-      // the representation of a curved edge is subdivided, and does not map one
-      // to one onto the topological edges: fall back on the coordinates
-      bool topo = (filter && numRep == ele->getNumEdges() &&
-                   numRep <= MAX_BATCHED_EDGES);
-      bool unique = uniqueEdges && !topo;
-      // hash the edges of the element and ask for their table entries before
-      // looking any of them up: the lookups are spread over a table far larger
-      // than the caches, and would otherwise stall one after the other
-      std::uint64_t hash[MAX_BATCHED_EDGES];
-      if(topo) {
-        for(int j = 0; j < numRep; j++) {
-          MEdge ed = ele->getEdge(j);
-          hash[j] = filter->hashOf(c, ed.getMinVertex(), ed.getMaxVertex());
-          filter->prefetch(hash[j]);
-        }
-      }
-      for(int j = 0; j < numRep; j++) {
-        if(topo) {
-          numIn += 2;
-          if(filter->isDuplicate(hash[j])) continue;
-          numKept += 2;
-        }
-        double x[2], y[2], z[2];
-        SVector3 n[2];
-        ele->getEdgeRep(curved, j, x, y, z, n);
-        if(explode != 1.) {
-          for(int k = 0; k < 2; k++) {
-            x[k] = pc[0] + explode * (x[k] - pc[0]);
-            y[k] = pc[1] + explode * (y[k] - pc[1]);
-            z[k] = pc[2] + explode * (z[k] - pc[2]);
-          }
-        }
-        if(e->dim() == 2 && smooth)
-          for(int k = 0; k < 2; k++)
-            e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
-                                     n[k][2]);
-        vaLine->add(x, y, z, n, col, ele, unique);
-      }
+      for(int j = 0; j < numRep; j++)
+        if(!known || (mask[i] & (1 << j)))
+          addEdgeRep(e, lines.mine(), ele, curved, j, pc, col, unique);
     }
-
     if(faces) {
       int numRep = ele->getNumFacesRep(curved);
-      int perFace = interior ? repPerFace(ele, curved) : 0;
-      // hash the faces of the element and ask for their table entries before
-      // looking any of them up
-      std::uint64_t interiorHash[MAX_BATCHED_FACES];
-      int nf = perFace ? ele->getNumFaces() : 0;
-      bool batched = (nf > 0 && nf <= MAX_BATCHED_FACES);
-      for(int j = 0; batched && j < nf; j++) {
-        MVertex *fv[4];
-        int nc = ele->getFaceCorners(j, fv);
-        if(!nc) {
-          MFace fa = ele->getFace(j);
-          nc = (int)fa.getNumVertices();
-          for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
-        }
-        interiorHash[j] =
-          interior->hashOf(0, fv[0], fv[1], fv[2], nc > 3 ? fv[3] : nullptr);
-        interior->prefetch(interiorHash[j]);
-      }
-      for(int j = 0; j < numRep; j++) {
-        // only the faces that bound the mesh are drawn
-        if(perFace) {
-          bool bnd;
-          if(batched)
-            bnd = interior->contains(interiorHash[j / perFace]);
-          else {
-            MVertex *fv[4];
-            int nc = ele->getFaceCorners(j / perFace, fv);
-            if(!nc) {
-              MFace fa = ele->getFace(j / perFace);
-              nc = (int)fa.getNumVertices();
-              for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
-            }
-            bnd = interior->contains(0, fv[0], fv[1], fv[2],
-                                     nc > 3 ? fv[3] : nullptr);
-          }
-          if(!bnd) continue;
-        }
-        double x[3], y[3], z[3];
-        SVector3 n[3];
-        ele->getFaceRep(curved, j, x, y, z, n);
-        if(explode != 1.) {
-          for(int k = 0; k < 3; k++) {
-            x[k] = pc[0] + explode * (x[k] - pc[0]);
-            y[k] = pc[1] + explode * (y[k] - pc[1]);
-            z[k] = pc[2] + explode * (z[k] - pc[2]);
-          }
-        }
-        if(e->dim() == 2 && smooth)
-          for(int k = 0; k < 3; k++)
-            e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
-                                     n[k][2]);
-        vaTriangle->add(x, y, z, n, col, ele, false);
-      }
-    }
-  }
-
-  VertexArray::statUniqueIn += numIn;
-  VertexArray::statUniqueKept += numKept;
-
-  if(nthreads == 1) return;
-
-  for(int t = 0; t < nthreads; t++) {
-    if(vaLines[t]) {
-      vaL->merge(vaLines[t]);
-      delete vaLines[t];
-    }
-    if(vaTriangles[t]) {
-      vaT->merge(vaTriangles[t]);
-      delete vaTriangles[t];
+      for(int j = 0; j < numRep; j++)
+        addFaceRep(e, triangles.mine(), ele, curved, j, pc, col);
     }
   }
 }
 
+// the faces of a skin, each drawn by what represents it in its element
+static void addSkinInArray(GEntity *e, VertexArray *va, const meshSkin &skin)
+{
+  const elementColor color(e);
+  const double explode = CTX::instance()->mesh.explode;
+  MElement *last = nullptr;
+  bool curved = false;
+  int perFace = 0;
+  unsigned int col[4];
+  SPoint3 pc(0., 0., 0.);
+  for(auto &f : skin.faces) {
+    MElement *ele = f.first;
+    if(ele != last) {
+      last = ele;
+      curved = isCurved(ele);
+      perFace = repPerFace(ele, curved);
+      col[0] = col[1] = col[2] = col[3] = color(ele);
+      if(explode != 1.) pc = ele->barycenter();
+    }
+    for(int j = f.second * perFace; j < (f.second + 1) * perFace; j++)
+      addFaceRep(e, va, ele, curved, j, pc, col);
+  }
+}
+
+// the edges of the faces of a skin, each once
+static void addSkinEdgesInArray(GEntity *e, VertexArray *va,
+                                const meshSkin &skin)
+{
+  const double explode = CTX::instance()->mesh.explode;
+  const elementColor color(e);
+  UniqueElementFilter *filter =
+    (CTX::instance()->mesh.drawUniqueEdges && explode == 1.) ?
+      va->getUniqueFilter(false) : nullptr;
+  MElement *last = nullptr;
+  bool curved = false;
+  int numEdges = 0, perEdge = 0;
+  unsigned int c = 0;
+  SPoint3 pc(0., 0., 0.);
+  for(auto &f : skin.faces) {
+    MElement *ele = f.first;
+    if(ele != last) {
+      last = ele;
+      curved = isCurved(ele);
+      numEdges = ele->getNumEdges();
+      int numRep = ele->getNumEdgesRep(curved);
+      // how many segments draw an edge (0: they do not map onto the edges,
+      // which are then drawn straight)
+      perEdge = (numEdges > 0 && numRep % numEdges == 0) ? numRep / numEdges : 0;
+      c = color(ele);
+      if(explode != 1.) pc = ele->barycenter();
+    }
+    MVertex *fv[4];
+    int nc = ele->getFaceCorners(f.second, fv);
+    unsigned int col[4] = {c, c, c, c};
+    for(int j = 0; j < numEdges; j++) {
+      // the edges of the element that join two corners of the face
+      MVertex *ev[2];
+      ele->getEdgeCorners(j, ev);
+      int in = 0;
+      for(int k = 0; k < nc; k++)
+        if(fv[k] == ev[0] || fv[k] == ev[1]) in++;
+      if(in != 2) continue;
+      if(filter && filter->isDuplicate(filter->hashOf(c, ev[0], ev[1])))
+        continue;
+      for(int r = 0; r < perEdge; r++)
+        addEdgeRep(e, va, ele, curved, j * perEdge + r, pc, col, false);
+      if(!perEdge) { // straight from one end to the other
+        double x[2] = {ev[0]->x(), ev[1]->x()}, y[2] = {ev[0]->y(), ev[1]->y()};
+        double z[2] = {ev[0]->z(), ev[1]->z()};
+        SVector3 n[2];
+        explodeAbout(pc, explode, 2, x, y, z);
+        va->add(x, y, z, n, col, false);
+      }
+    }
+  }
+}
+
+// What is kept for a volume from one filling of its arrays to the next, as
+// long as its mesh stays (CTX::meshChanged(), not the options that change the
+// way it is drawn) along with the options choosing the elements: its skin,
+// and the spheres around its elements, built when the planes first need them.
+static std::vector<double> regionKey(GRegion *r)
+{
+  CTX *ctx = CTX::instance();
+  std::vector<double> k = {
+    (double)ctx->meshContentStamp,  (double)ctx->entityVisibilityStamp,
+    (double)ctx->mesh.tetrahedra,   (double)ctx->mesh.hexahedra,
+    (double)ctx->mesh.prisms,       (double)ctx->mesh.pyramids,
+    (double)ctx->mesh.trihedra,     (double)ctx->mesh.polyhedra,
+    ctx->mesh.qualitySup,           ctx->mesh.qualityInf,
+    (double)ctx->mesh.qualityType,  ctx->mesh.radiusSup,
+    ctx->mesh.radiusInf,            (double)r->getNumMeshElements()};
+  return k;
+}
+
+struct regionSkin {
+  std::vector<double> key;
+  meshSkin skin;
+};
+static OwnerCache<regionSkin> _regionSkin;
+
+// the edges each element draws, for each of the lists of elements of a volume
+// (they also depend on the colours, which tell edges apart)
+struct regionEdges {
+  std::vector<double> key;
+  std::vector<std::vector<std::uint16_t> > masks;
+};
+static OwnerCache<regionEdges> _regionEdges;
+
+struct regionSpheres {
+  std::vector<double> key;
+  elementSpheres spheres;
+};
+static OwnerCache<regionSpheres> _regionSpheres;
+
 class initMeshGEdge {
 private:
-  int _estimateNumLines(GEdge *e)
+  std::size_t _estimateNumLines(GEdge *e)
   {
-    int num = 0;
+    std::size_t num = 0;
     if(CTX::instance()->mesh.lines) {
       num += e->lines.size();
       if(areSomeElementsCurved(e->lines)) num *= 2;
@@ -648,12 +749,34 @@ public:
   }
 };
 
+// The element lists of a surface or a volume, each passed to f when its own
+// option shows it, always in the same order: what goes into an array in
+// which order decides what is drawn over what, and what a pick returns.
+template <class F> static void forShownFaceElements(GFace *f, F fun)
+{
+  CTX *c = CTX::instance();
+  if(c->mesh.triangles) fun(f->triangles);
+  if(c->mesh.quadrangles) fun(f->quadrangles);
+  if(c->mesh.polygons) fun(f->polygons);
+}
+
+template <class F> static void forShownRegionElements(GRegion *r, F fun)
+{
+  CTX *c = CTX::instance();
+  if(c->mesh.tetrahedra) fun(r->tetrahedra);
+  if(c->mesh.hexahedra) fun(r->hexahedra);
+  if(c->mesh.prisms) fun(r->prisms);
+  if(c->mesh.pyramids) fun(r->pyramids);
+  if(c->mesh.trihedra) fun(r->trihedra);
+  if(c->mesh.polyhedra) fun(r->polyhedra);
+}
+
 class initMeshGFace {
 private:
   bool _curved;
-  int _estimateNumLines(GFace *f)
+  std::size_t _estimateNumLines(GFace *f)
   {
-    int num = 0;
+    std::size_t num = 0;
     if(CTX::instance()->mesh.surfaceEdges) {
       num += (3 * f->triangles.size() + 4 * f->quadrangles.size() +
               4 * f->polygons.size()) /
@@ -663,9 +786,9 @@ private:
     }
     return num + 100;
   }
-  int _estimateNumTriangles(GFace *f)
+  std::size_t _estimateNumTriangles(GFace *f)
   {
-    int num = 0;
+    std::size_t num = 0;
     if(CTX::instance()->mesh.surfaceFaces) {
       num += (f->triangles.size() + 2 * f->quadrangles.size() +
               2 * f->polygons.size());
@@ -680,7 +803,8 @@ public:
     f->deleteVertexArrays();
     if(!f->getVisibility()) return;
     f->setOnlySomeElementsVisible(areOnlySomeElementsVisible(f->triangles) ||
-                                  areOnlySomeElementsVisible(f->quadrangles));
+                                  areOnlySomeElementsVisible(f->quadrangles) ||
+                                  areOnlySomeElementsVisible(f->polygons));
 
     bool edg = CTX::instance()->mesh.surfaceEdges;
     bool fac = CTX::instance()->mesh.surfaceFaces;
@@ -690,26 +814,91 @@ public:
       f->va_lines = new VertexArray(2, edg ? _estimateNumLines(f) : 100);
       f->va_triangles =
         new VertexArray(3, fac ? _estimateNumTriangles(f) : 100);
-      if(CTX::instance()->mesh.triangles)
-        addElementsInArrays(f, f->va_lines, f->va_triangles, f->triangles, edg, fac);
-      if(CTX::instance()->mesh.quadrangles)
-        addElementsInArrays(f, f->va_lines, f->va_triangles, f->quadrangles, edg, fac);
-      addElementsInArrays(f, f->va_lines, f->va_triangles, f->polygons, edg, fac);
+      forShownFaceElements(f, [&](auto &els) {
+        addElementsInArrays(f, f->va_lines, f->va_triangles, els, edg, fac);
+      });
       f->va_lines->finalize();
       f->va_triangles->finalize();
     }
   }
 };
 
+// the skin of the partitions of a volume taken together (Mesh.DrawSkinOnly =
+// 2), the faces between them left out, and the share of each partition
+struct partitionsSkin {
+  std::vector<double> key;
+  std::map<GRegion *, meshSkin> skins;
+};
+static OwnerCache<partitionsSkin> _partitionsSkin; // (for their parent)
+
+static const meshSkin &getPartitionsSkin(GRegion *r, GEntity *parent)
+{
+  partitionsSkin &kept = _partitionsSkin[parent];
+  // (the partitions may change with the regions of the model)
+  std::vector<double> key = regionKey(r);
+  key.back() = r->model()->getNumRegions();
+  if(kept.key != key) {
+    double t1 = TimeOfDay();
+    std::vector<MElement *> shown;
+    std::unordered_map<MElement *, GRegion *> owner;
+    for(auto it = r->model()->firstRegion(); it != r->model()->lastRegion();
+        ++it) {
+      GRegion *g = *it;
+      if(g->getParentEntity() != parent) continue;
+      forShownRegionElements(g, [&](auto &els) {
+        for(auto e : els) {
+          if(!isElementVisible(e) || e->getDim() != 3) continue;
+          shown.push_back(e);
+          owner[e] = g;
+        }
+      });
+    }
+    meshSkin all;
+    findSkin(shown, all);
+    kept.skins.clear();
+    for(auto &f : all.faces) kept.skins[owner[f.first]].faces.push_back(f);
+    for(auto e : all.whole) kept.skins[owner[e]].whole.push_back(e);
+    kept.key = key;
+    Msg::Debug("Found the skin of the partitions of volume %d in %g s",
+               parent->tag(), TimeOfDay() - t1);
+  }
+  static const meshSkin none;
+  auto it = kept.skins.find(r);
+  return it == kept.skins.end() ? none : it->second;
+}
+
+// the skin of a volume, found from all its element types together and kept
+static const meshSkin &getSkin(GRegion *r)
+{
+  GEntity *parent =
+    (CTX::instance()->mesh.drawSkinOnly == 2) ? r->getParentEntity() : nullptr;
+  if(parent) return getPartitionsSkin(r, parent);
+  regionSkin &kept = _regionSkin[r];
+  std::vector<double> key = regionKey(r);
+  if(kept.key != key) {
+    double t1 = TimeOfDay();
+    std::vector<MElement *> shown;
+    forShownRegionElements(r, [&](auto &els) {
+      for(auto e : els)
+        if(isElementVisible(e) && e->getDim() == 3) shown.push_back(e);
+    });
+    findSkin(shown, kept.skin);
+    kept.key = key;
+    Msg::Debug("Found the skin of volume %d in %g s", r->tag(),
+               TimeOfDay() - t1);
+  }
+  return kept.skin;
+}
+
 class initMeshGRegion {
 private:
   bool _curved;
-  int _estimateNumLines(GRegion *r)
+  std::size_t _estimateNumLines(GRegion *r)
   {
-    int num = 0;
+    std::size_t num = 0;
     if(CTX::instance()->mesh.volumeEdges) {
       // suppose edge shared by 4 elements on averge (pessmistic)
-      int numLP = 0;
+      std::size_t numLP = 0;
       for(std::size_t i = 0; i < r->polyhedra.size(); i++)
         numLP += 2 * r->polyhedra[i]->getNumEdges();
       num += (12 * r->tetrahedra.size() + 24 * r->hexahedra.size() +
@@ -721,11 +910,11 @@ private:
     }
     return num + 100;
   }
-  int _estimateNumTriangles(GRegion *r)
+  std::size_t _estimateNumTriangles(GRegion *r)
   {
-    int num = 0;
+    std::size_t num = 0;
     if(CTX::instance()->mesh.volumeFaces) {
-      int numFP = 0;
+      std::size_t numFP = 0;
       for(std::size_t i = 0; i < r->polyhedra.size(); i++)
         numFP += r->polyhedra[i]->getNumFaces();
       num += (4 * r->tetrahedra.size() + 12 * r->hexahedra.size() +
@@ -739,12 +928,33 @@ private:
   }
 
 public:
-  int _estimateNumCaps(GRegion *r)
+  std::size_t _estimateNumCaps(GRegion *r)
   {
-    // the elements a plane cuts form a surface through the volume: there are
-    // about as many of them as the 2/3 power of the number of elements
+    // the cut elements form a surface: about the 2/3 power of the elements
     std::size_t n = r->getNumMeshElements();
     return (int)(2. * pow((double)n, 2. / 3.)) + 100;
+  }
+
+  // the elements with their edges (the ones each element draws are kept from
+  // one filling to the next), and with their faces if asked
+  void addEdges(GRegion *r, bool edg, bool faces)
+  {
+    CTX *ctx = CTX::instance();
+    regionEdges &kept = _regionEdges[r];
+    std::vector<double> key = regionKey(r);
+    key.push_back(ctx->mesh.colorCarousel);
+    key.push_back(ctx->mesh.drawUniqueEdges);
+    key.push_back(ctx->mesh.explode);
+    key.push_back(ctx->entityColorsStamp);
+    if(kept.key != key || !edg) kept.masks.clear();
+    kept.key = key;
+    std::size_t num = 0;
+    forShownRegionElements(r, [&](auto &els) {
+      if(kept.masks.size() <= num) kept.masks.resize(num + 1);
+      addElementsInArrays(r, r->va_lines, r->va_triangles, els, edg, faces,
+                          &kept.masks[num]);
+      num++;
+    });
   }
 
   void operator()(GRegion *r)
@@ -755,7 +965,8 @@ public:
                                   areOnlySomeElementsVisible(r->hexahedra) ||
                                   areOnlySomeElementsVisible(r->prisms) ||
                                   areOnlySomeElementsVisible(r->pyramids) ||
-                                  areOnlySomeElementsVisible(r->trihedra));
+                                  areOnlySomeElementsVisible(r->trihedra) ||
+                                  areOnlySomeElementsVisible(r->polyhedra));
 
     bool edg = CTX::instance()->mesh.volumeEdges;
     bool fac = CTX::instance()->mesh.volumeFaces;
@@ -765,104 +976,231 @@ public:
                  areSomeElementsCurved(r->prisms) ||
                  areSomeElementsCurved(r->pyramids) ||
                  areSomeElementsCurved(r->trihedra));
-      r->va_lines = new VertexArray(2, edg ? _estimateNumLines(r) : 100);
-      r->va_triangles =
-        new VertexArray(3, fac ? _estimateNumTriangles(r) : 100);
 
-      // locate the interior faces before filling the arrays: all the element
-      // types have to be seen before any of them can be drawn
-      UniqueElementFilter *interior = nullptr;
-      if(fac && removeInteriorFaces()) {
-        int nth = CTX::instance()->numThreads;
-        if(!nth) nth = Msg::GetMaxThreads();
-        double t1 = TimeOfDay();
-        interior = new UniqueElementFilter(nth > 1);
-        if(CTX::instance()->mesh.tetrahedra)
-          markBoundaryFaces(r->tetrahedra, interior, nth);
-        if(CTX::instance()->mesh.hexahedra)
-          markBoundaryFaces(r->hexahedra, interior, nth);
-        if(CTX::instance()->mesh.prisms)
-          markBoundaryFaces(r->prisms, interior, nth);
-        if(CTX::instance()->mesh.pyramids)
-          markBoundaryFaces(r->pyramids, interior, nth);
-        if(CTX::instance()->mesh.trihedra)
-          markBoundaryFaces(r->trihedra, interior, nth);
-        markBoundaryFaces(r->polyhedra, interior, nth);
-        Msg::Debug("Located the boundary faces of volume %d in %g s", r->tag(),
-                   TimeOfDay() - t1);
+      bool skinFaces = fac && removeInteriorFaces();
+      bool skinEdges = edg && removeInteriorEdges();
+      if(skinFaces || skinEdges) {
+        // the skin, found from all the element types before any is drawn
+        const meshSkin &found = getSkin(r);
+        // (what comes from the skin is known: a few times its faces)
+        std::size_t ns = found.faces.size();
+        r->va_lines = new VertexArray(
+          2, !edg ? 100 : skinEdges ? 2 * ns + 100 : _estimateNumLines(r));
+        r->va_triangles = new VertexArray(
+          3, !fac ? 100 : skinFaces ? 2 * ns + 100 : _estimateNumTriangles(r));
+        // what is not taken from the skin is taken from all the elements
+        if((edg && !skinEdges) || (fac && !skinFaces))
+          addEdges(r, edg && !skinEdges, fac && !skinFaces);
+        if(skinEdges) addSkinEdgesInArray(r, r->va_lines, found);
+        if(skinFaces) addSkinInArray(r, r->va_triangles, found);
+        // (not const: the elements are only read)
+        std::vector<MElement *> whole(found.whole);
+        addElementsInArrays(r, r->va_lines, r->va_triangles, whole,
+                            skinEdges, skinFaces);
       }
-
-      if(CTX::instance()->mesh.tetrahedra)
-        addElementsInArrays(r, r->va_lines, r->va_triangles, r->tetrahedra, edg, fac, interior);
-      if(CTX::instance()->mesh.hexahedra)
-        addElementsInArrays(r, r->va_lines, r->va_triangles, r->hexahedra, edg, fac, interior);
-      if(CTX::instance()->mesh.prisms)
-        addElementsInArrays(r, r->va_lines, r->va_triangles, r->prisms, edg, fac, interior);
-      if(CTX::instance()->mesh.pyramids)
-        addElementsInArrays(r, r->va_lines, r->va_triangles, r->pyramids, edg, fac, interior);
-      if(CTX::instance()->mesh.trihedra)
-        addElementsInArrays(r, r->va_lines, r->va_triangles, r->trihedra, edg, fac, interior);
-      addElementsInArrays(r, r->va_lines, r->va_triangles, r->polyhedra, edg, fac, interior);
-      delete interior;
+      else {
+        r->va_lines = new VertexArray(2, edg ? _estimateNumLines(r) : 100);
+        r->va_triangles =
+          new VertexArray(3, fac ? _estimateNumTriangles(r) : 100);
+        addEdges(r, edg, fac);
+      }
       r->va_lines->finalize();
       r->va_triangles->finalize();
     }
   }
 };
 
-// What each model's caps were last built for. Rebuilding them when none of this
-// has changed would be work at every frame for nothing; keyed by model, as
-// several of them can be drawn one after the other in the same frame.
-static std::map<GModel *, std::vector<double> > _clipToken;
+// what each model's clip arrays were last built for: only what changes them
+// without marking the mesh as changed (the planes and the clipping options);
+// everything else changes the mesh (CTX::meshChanged()), and drawMesh()
+// then invalidates them
+static OwnerCache<std::vector<double> > _clipToken;
 
 static std::vector<double> clipToken()
 {
   CTX *ctx = CTX::instance();
   std::vector<double> t;
-  t.push_back(ctx->meshClipCaps() ? 1. : 0.);
-  t.push_back(ctx->clipWholeElements);
-  t.push_back(ctx->clipOnlyDrawIntersectingVolume);
-  t.push_back(ctx->mesh.volumeEdges);
-  t.push_back(ctx->mesh.volumeFaces);
-  t.push_back(ctx->mesh.clip);
-  t.push_back(ctx->clipOnlyVolume);
-  for(int i = 0; i < 6; i++)
-    for(int j = 0; j < 4; j++) t.push_back(ctx->clipPlane[i][j]);
+  ctx->addClipToKey(t, ctx->mesh.clip);
   return t;
 }
 
 void GModel::invalidateClipVertexArrays() { _clipToken.erase(this); }
 
 // The elements of one entity that a plane cuts, drawn whole into its clip
-// arrays. bnd, when given, is the boundary of what is kept, so that only the
-// faces facing the removed side come out.
+// arrays
 template <class T>
 static void addCutElements(GEntity *e, std::vector<T *> &elements, bool edges,
-                           bool faces, UniqueElementFilter *bnd)
+                           bool faces)
 {
   std::vector<T *> cut;
   gatherCutElements(elements, cut);
   if(cut.empty()) return;
   addElementsInArrays(e, e->va_clip_lines, e->va_clip_triangles, cut, edges,
-                      faces, bnd);
+                      faces);
+}
+
+// The spheres around the elements of a volume, numbered as
+// forShownRegionElements() goes through them (none around the elements that
+// are not drawn), if there are enough of them to be worth their memory
+static const elementSpheres *getSpheres(GRegion *r)
+{
+  std::size_t num = 0;
+  forShownRegionElements(r, [&](auto &els) { num += els.size(); });
+  if(num < 50000) return nullptr;
+  regionSpheres &kept = _regionSpheres[r];
+  std::vector<double> key = regionKey(r);
+  if(kept.key == key && kept.spheres.size() == num) return &kept.spheres;
+  double t1 = TimeOfDay();
+  kept.key = key;
+  kept.spheres.assign(num);
+  std::size_t first = 0;
+  forShownRegionElements(r, [&](auto &els) {
+    int nthreads = CTX::instance()->numThreadsFor(els.size(), 1000);
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+    for(std::size_t i = 0; i < els.size(); i++) {
+      MElement *ele = els[i];
+      if(ele->getDim() != 3 || !isElementVisible(ele)) continue;
+      kept.spheres.set(first + i, 3, (int)ele->getNumVertices(), nodesOf(ele));
+    }
+    first += els.size();
+  });
+  Msg::Debug("Bounded the elements of volume %d in %g s (%g MB)", r->tag(),
+             TimeOfDay() - t1, kept.spheres.getMemoryInMB());
+  return &kept.spheres;
+}
+
+// the elements of a volume that are drawn and that a plane may cut
+// (the spheres are gone through by several threads, each with its share of
+// the elements, put together in order)
+static void gatherCloseElements(GRegion *r, const elementSpheres *spheres,
+                                const activePlanes &planes,
+                                std::vector<MElement *> &close)
+{
+  std::size_t first = 0;
+  forShownRegionElements(r, [&](auto &els) {
+    int nthreads = CTX::instance()->numThreadsFor(els.size(), 100000);
+    std::vector<std::vector<MElement *> > found(nthreads);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+    for(int t = 0; t < nthreads; t++) {
+      std::size_t i0 = els.size() * t / nthreads;
+      std::size_t i1 = els.size() * (t + 1) / nthreads;
+      for(std::size_t i = i0; i < i1; i++) {
+        if(spheres) {
+          if(!spheres->drawn(first + i) ||
+             planes.gap(spheres->sphere(first + i)) > 0.)
+            continue;
+        }
+        else if(els[i]->getDim() != 3 || !isElementVisible(els[i]))
+          continue;
+        found[t].push_back(els[i]);
+      }
+    }
+    for(int t = 0; t < nthreads; t++)
+      close.insert(close.end(), found[t].begin(), found[t].end());
+    first += els.size();
+  });
+}
+
+void getElementsNearClipPlanes(GRegion *r, std::vector<MElement *> &elements)
+{
+  gatherCloseElements(r, getSpheres(r),
+                      activePlanes(CTX::instance()->mesh.clip), elements);
+}
+
+// What the planes add to a volume: the section they cut, or the elements
+// they cut drawn whole. Only the elements close enough to a plane are looked
+// at, when there are spheres to tell.
+static void fillCutRegion(GRegion *r, bool caps, std::size_t est)
+{
+  CTX *ctx = CTX::instance();
+  const elementSpheres *spheres = getSpheres(r);
+  activePlanes planes(ctx->mesh.clip);
+
+  // the elements a plane may cut
+  std::vector<MElement *> close;
+  gatherCloseElements(r, spheres, planes, close);
+
+  if(caps) {
+    r->va_clip_triangles = new VertexArray(3, est);
+    const elementColor color(r);
+    for(auto ele : close) {
+      unsigned int c = color(ele);
+      unsigned int col[4] = {c, c, c, c};
+      addCapInArray(r->va_clip_triangles, ele, col);
+    }
+    r->va_clip_triangles->finalize();
+    return;
+  }
+
+  // whole element mode: the cut elements, drawn whole
+  bool edg = ctx->mesh.volumeEdges, fac = ctx->mesh.volumeFaces;
+  if(!edg && !fac) return;
+  r->va_clip_lines = new VertexArray(2, edg ? 6 * est : 100);
+  r->va_clip_triangles = new VertexArray(3, fac ? 4 * est : 100);
+  std::vector<MElement *> cut;
+  gatherCutElements(close, cut);
+  bool skinFaces = fac && removeInteriorFaces();
+  bool skinEdges = edg && removeInteriorEdges();
+  if(skinFaces || skinEdges) {
+    // Only the boundary of what is kept is drawn: a face between two kept
+    // elements is interior, one facing a removed element is not. It is found
+    // from the cut elements alone. A face two of them share is interior. The
+    // element on the other side of any other face is not cut, so that it is
+    // wholly kept or wholly removed, and the face tells which: removed if
+    // the corners of the face are all beyond one of the planes. And there is
+    // no element on the other side of a face of the skin of the volume.
+    meshSkin skin, ofCut;
+    findSkin(cut, skin);
+    const meshSkin &whole = getSkin(r);
+    std::vector<std::pair<MElement *, int> > outer;
+    {
+      std::set<MElement *> isCut(cut.begin(), cut.end());
+      for(auto &f : whole.faces)
+        if(isCut.count(f.first)) outer.push_back(f);
+      std::sort(outer.begin(), outer.end());
+    }
+    bool onlyCut = ctx->clipOnlyDrawIntersectingVolume;
+    for(auto &f : skin.faces) {
+      bool drawn = onlyCut || std::binary_search(outer.begin(), outer.end(), f);
+      if(!drawn) {
+        MVertex *fv[4];
+        int nc = f.first->getFaceCorners(f.second, fv);
+        drawn = clipPlanes::removesAll(ctx->mesh.clip, nc, [&](int j, int k) {
+          return k == 0 ? fv[j]->x() : k == 1 ? fv[j]->y() : fv[j]->z();
+        });
+      }
+      if(drawn) ofCut.faces.push_back(f);
+    }
+    ofCut.whole = skin.whole;
+    if((edg && !skinEdges) || (fac && !skinFaces))
+      addElementsInArrays(r, r->va_clip_lines, r->va_clip_triangles, cut,
+                          edg && !skinEdges, fac && !skinFaces);
+    if(skinEdges) addSkinEdgesInArray(r, r->va_clip_lines, ofCut);
+    if(skinFaces) addSkinInArray(r, r->va_clip_triangles, ofCut);
+    addElementsInArrays(r, r->va_clip_lines, r->va_clip_triangles, ofCut.whole,
+                        skinEdges, skinFaces);
+  }
+  else
+    addElementsInArrays(r, r->va_clip_lines, r->va_clip_triangles, cut, edg,
+                        fac);
+  r->va_clip_lines->finalize();
+  r->va_clip_triangles->finalize();
 }
 
 // What the planes cut out of a curve or a surface. There is no interior to
 // hide here, so the elements go in as they are.
-static void fillCutEntity(GEntity *e, bool edges, bool faces, int est)
+static void fillCutEntity(GEntity *e, bool edges, bool faces,
+                          std::size_t est)
 {
   e->va_clip_lines = new VertexArray(2, edges ? 6 * est : 100);
   e->va_clip_triangles = new VertexArray(3, faces ? 4 * est : 100);
   if(e->dim() == 1) {
-    addCutElements(e, ((GEdge *)e)->lines, edges, false, nullptr);
+    addCutElements(e, ((GEdge *)e)->lines, edges, false);
   }
   else if(e->dim() == 2) {
     GFace *f = (GFace *)e;
-    if(CTX::instance()->mesh.triangles)
-      addCutElements(e, f->triangles, edges, faces, nullptr);
-    if(CTX::instance()->mesh.quadrangles)
-      addCutElements(e, f->quadrangles, edges, faces, nullptr);
-    addCutElements(e, f->polygons, edges, faces, nullptr);
+    forShownFaceElements(
+      f, [&](auto &els) { addCutElements(e, els, edges, faces); });
   }
   e->va_clip_lines->finalize();
   e->va_clip_triangles->finalize();
@@ -871,12 +1209,16 @@ static void fillCutEntity(GEntity *e, bool edges, bool faces, int est)
 bool GModel::fillClipVertexArrays()
 {
   std::vector<double> tok = clipToken();
-  auto found = _clipToken.find(this);
-  if(found != _clipToken.end() && found->second == tok) return false;
+  std::vector<double> *found = _clipToken.find(this);
+  if(found && *found == tok) return false;
   _clipToken[this] = tok;
 
   CTX *ctx = CTX::instance();
-  bool caps = ctx->meshClipCaps();
+  // The caps are worth computing only where the mesh is drawn as a surface,
+  // and only when the planes are applied by OpenGL: in whole element mode the
+  // elements a plane cuts are removed entire and there is no hole to fill.
+  bool caps = ctx->clipCapping && !ctx->clipWholeElements && ctx->mesh.clip &&
+              (ctx->mesh.volumeFaces || ctx->mesh.surfaceFaces);
   bool whole = ctx->clipWholeElements && ctx->mesh.clip;
   double t1 = TimeOfDay();
   std::size_t n = 0;
@@ -888,86 +1230,17 @@ bool GModel::fillClipVertexArrays()
     GRegion *r = *it;
     r->deleteClipVertexArrays();
     if(!r->getVisibility() || (!caps && !whole)) continue;
-    // A plane cuts a surface through the volume: there are about as many
-    // elements on it as the 2/3 power of the ones in the volume, however many
-    // that is. This is what makes holding it apart worth doing.
+    // the cut elements form a surface: about the 2/3 power of the elements
     std::size_t ne = r->getNumMeshElements();
-    int est = (int)(2. * pow((double)ne, 2. / 3.)) + 100;
+    std::size_t est = (std::size_t)(2. * pow((double)ne, 2. / 3.)) + 100;
 
-    if(caps) {
-      r->va_clip_triangles = new VertexArray(3, est);
-      if(ctx->mesh.tetrahedra) addCapsInArray(r, r->tetrahedra);
-      if(ctx->mesh.hexahedra) addCapsInArray(r, r->hexahedra);
-      if(ctx->mesh.prisms) addCapsInArray(r, r->prisms);
-      if(ctx->mesh.pyramids) addCapsInArray(r, r->pyramids);
-      if(ctx->mesh.trihedra) addCapsInArray(r, r->trihedra);
-      addCapsInArray(r, r->polyhedra);
-      r->va_clip_triangles->finalize();
-    }
-    else {
-      // whole element mode: the elements a plane cuts, drawn entire while
-      // OpenGL clips the rest
-      bool edg = ctx->mesh.volumeEdges, fac = ctx->mesh.volumeFaces;
-      if(!edg && !fac) continue;
-      r->va_clip_lines = new VertexArray(2, edg ? 6 * est : 100);
-      r->va_clip_triangles = new VertexArray(3, fac ? 4 * est : 100);
-      VertexArray *vl = r->va_clip_lines, *vt = r->va_clip_triangles;
-
-      // what is drawn is the boundary of what is kept, so that a face between
-      // two kept elements stays hidden and one facing the removed side does not
-      UniqueElementFilter *bnd = nullptr;
-      int nth = ctx->numThreads;
-      if(!nth) nth = Msg::GetMaxThreads();
-      if(fac && removeInteriorFaces()) {
-        bnd = new UniqueElementFilter(nth > 1);
-        if(ctx->mesh.tetrahedra) markKeptBoundaryFaces(r->tetrahedra, bnd, nth);
-        if(ctx->mesh.hexahedra) markKeptBoundaryFaces(r->hexahedra, bnd, nth);
-        if(ctx->mesh.prisms) markKeptBoundaryFaces(r->prisms, bnd, nth);
-        if(ctx->mesh.pyramids) markKeptBoundaryFaces(r->pyramids, bnd, nth);
-        if(ctx->mesh.trihedra) markKeptBoundaryFaces(r->trihedra, bnd, nth);
-        markKeptBoundaryFaces(r->polyhedra, bnd, nth);
-      }
-      if(ctx->mesh.tetrahedra) {
-        std::vector<MTetrahedron *> cut;
-        gatherCutElements(r->tetrahedra, cut);
-        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
-      }
-      if(ctx->mesh.hexahedra) {
-        std::vector<MHexahedron *> cut;
-        gatherCutElements(r->hexahedra, cut);
-        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
-      }
-      if(ctx->mesh.prisms) {
-        std::vector<MPrism *> cut;
-        gatherCutElements(r->prisms, cut);
-        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
-      }
-      if(ctx->mesh.pyramids) {
-        std::vector<MPyramid *> cut;
-        gatherCutElements(r->pyramids, cut);
-        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
-      }
-      if(ctx->mesh.trihedra) {
-        std::vector<MTrihedron *> cut;
-        gatherCutElements(r->trihedra, cut);
-        addElementsInArrays(r, vl, vt, cut, edg, fac, bnd);
-      }
-      std::vector<MPolyhedron *> cutp;
-      gatherCutElements(r->polyhedra, cutp);
-      addElementsInArrays(r, vl, vt, cutp, edg, fac, bnd);
-      delete bnd;
-      r->va_clip_lines->finalize();
-      r->va_clip_triangles->finalize();
-      n += r->va_clip_lines->getNumVertices();
-    }
+    fillCutRegion(r, caps, est);
+    if(r->va_clip_lines) n += r->va_clip_lines->getNumVertices();
     if(r->va_clip_triangles) n += r->va_clip_triangles->getNumVertices();
   }
 
-  // Curves and surfaces are cut by OpenGL like everything else, so whole
-  // element mode has to give their cut elements back too - otherwise the skin
-  // ends flat at the plane instead of following the elements. Not when only
-  // the volume is meant to be clipped: they are then left alone entirely, and
-  // drawn with the planes off.
+  // curves and surfaces get their cut elements back too, unless only the
+  // volume is clipped (they are then drawn whole with the planes off)
   if(whole && !ctx->clipOnlyVolume) {
     if(ctx->mesh.lines) {
       for(auto it = firstEdge(); it != lastEdge(); it++) {
@@ -1000,17 +1273,32 @@ bool GModel::fillClipVertexArrays()
 
 bool GModel::fillVertexArrays()
 {
-  if(!getVisibility() || !CTX::instance()->mesh.changed) return false;
+  // the dimensions whose mesh changed since the arrays were filled; a model
+  // hidden meanwhile is brought up to date when it is shown again
+  CTX *ctx = CTX::instance();
+  if(!getVisibility()) return false;
+  // hidden entities get no arrays: showing one again (the API does not flag
+  // the mesh as the visibility window does) needs them filled
+  bool visibility = (ctx->entityVisibilityStamp != visibilityStampBuilt);
+  visibilityStampBuilt = ctx->entityVisibilityStamp;
+  bool changed[4];
+  bool any = false;
+  for(int d = 0; d < 4; d++) {
+    changed[d] = visibility || (ctx->mesh.stamp[d] != meshStampBuilt[d]);
+    if(changed[d]) any = true;
+    meshStampBuilt[d] = ctx->mesh.stamp[d];
+  }
+  if(!any) return false;
 
   Msg::Debug("Mesh has changed: reinitializing vertex arrays");
 
   double tStart = TimeOfDay();
   int status = getMeshStatus();
 
-  if(status >= 1 && CTX::instance()->mesh.changed & ENT_CURVE)
+  if(status >= 1 && changed[1])
     std::for_each(firstEdge(), lastEdge(), initMeshGEdge());
 
-  if(status >= 2 && CTX::instance()->mesh.changed & ENT_SURFACE) {
+  if(status >= 2 && changed[2]) {
     if(normals) delete normals;
     normals = new smooth_normals(CTX::instance()->mesh.angleSmoothNormals);
     if(CTX::instance()->mesh.smoothNormals)
@@ -1018,7 +1306,7 @@ bool GModel::fillVertexArrays()
     std::for_each(firstFace(), lastFace(), initMeshGFace());
   }
 
-  if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME)
+  if(status >= 3 && changed[3])
     std::for_each(firstRegion(), lastRegion(), initMeshGRegion());
 
   Msg::Debug("Vertex arrays built in %g s", TimeOfDay() - tStart);

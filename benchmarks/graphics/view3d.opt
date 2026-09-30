@@ -1,0 +1,3 @@
+// the view of the mesh and post-processing cases
+General.Trackball = 0;
+General.RotationX = 300; General.RotationY = 0; General.RotationZ = 30;

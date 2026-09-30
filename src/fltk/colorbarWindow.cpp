@@ -20,7 +20,7 @@ colorbarWindow::colorbarWindow(int x, int y, int w, int h, const char *l)
 {
   ct = nullptr;
   label = nullptr;
-  help_flag = 1;
+  help_flag = 0;
   font_height = FL_NORMAL_SIZE - 1; // use slightly smaller font
   marker_height = font_height;
   wedge_height = marker_height;
@@ -184,28 +184,22 @@ void colorbarWindow::redraw_range(int a, int b)
   fl_color(fl_contrast(FL_BLACK, color_bg));
 
   int fh = font_height + 1;
-  int xx0 = 6, xx1 = 11 * fh, yy0 = 10;
+  int xx0 = 6, xx1 = 11 * fh, yy0 = 6;
   if(help_flag) {
     i = 0;
-    fl_draw("0, 1, 2, 3, ..., 9", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Select predefined colormap 0...9", xx1, yy0 + (i + 1) * fh);
+    fl_draw("0-9, Ctrl+0-9, F1-F7", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Select predefined colormap", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("Ctrl+0, ..., Ctrl+9", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Select predefined colormap 10...19", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("F1, ..., F5", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Select predefined colormap 20...24", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("mouse1", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Left button", xx0, yy0 + (i + 1) * fh);
     fl_draw("Draw red or hue channel", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("mouse2", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Middle button", xx0, yy0 + (i + 1) * fh);
     fl_draw("Draw green or saturation channel", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("mouse3", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Right button", xx0, yy0 + (i + 1) * fh);
     fl_draw("Draw blue or value channel", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("Ctrl+mouse1", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Ctrl+Left button", xx0, yy0 + (i + 1) * fh);
     fl_draw("Draw alpha channel", xx1, yy0 + (i + 1) * fh);
     i++;
     fl_draw("Ctrl+c, Ctrl+v, r", xx0, yy0 + (i + 1) * fh);
@@ -214,7 +208,7 @@ void colorbarWindow::redraw_range(int a, int b)
     fl_draw("m", xx0, yy0 + (i + 1) * fh);
     fl_draw("Toggle RGB/HSV mode", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("left, right", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Left/Right arrow", xx0, yy0 + (i + 1) * fh);
     fl_draw("Translate abscissa", xx1, yy0 + (i + 1) * fh);
     i++;
     fl_draw("Ctrl+left, Ctrl+right", xx0, yy0 + (i + 1) * fh);
@@ -223,7 +217,7 @@ void colorbarWindow::redraw_range(int a, int b)
     fl_draw("i, Ctrl+i", xx0, yy0 + (i + 1) * fh);
     fl_draw("Invert abscissa or ordinate", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("up, down", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Up/Down arrow", xx0, yy0 + (i + 1) * fh);
     fl_draw("Modify color channel curvature", xx1, yy0 + (i + 1) * fh);
     i++;
     fl_draw("a, Ctrl+a", xx0, yy0 + (i + 1) * fh);
@@ -235,14 +229,21 @@ void colorbarWindow::redraw_range(int a, int b)
     fl_draw("b, Ctrl+b", xx0, yy0 + (i + 1) * fh);
     fl_draw("Modify gamma correction", xx1, yy0 + (i + 1) * fh);
     i++;
+    fl_draw("r", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Reset colormap modifications", xx1, yy0 + (i + 1) * fh);
+    i++;
     fl_draw("h", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Show this help message", xx1, yy0 + (i + 1) * fh);
+    fl_draw("Toggle help message", xx1, yy0 + (i + 1) * fh);
     i++;
   }
-  else if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_RGB)
-    fl_draw("RGB", xx0, yy0 + font_height);
-  else if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_HSV)
-    fl_draw("HSV", xx0, yy0 + font_height);
+  else {
+    // the map and the mode
+    char str[128];
+    sprintf(str, "Colormap %d (%s) - Press h for help",
+            ct->ipar[COLORTABLE_NUMBER],
+            (ct->ipar[COLORTABLE_MODE] == COLORTABLE_HSV) ? "HSV" : "RGB");
+    fl_draw(str, xx0, yy0 + font_height);
+  }
 }
 
 void colorbarWindow::redraw_marker()
@@ -430,6 +431,14 @@ int colorbarWindow::handle(int event)
     }
     else if(Fl::test_shortcut(FL_F + 5)) {
       ColorTable_InitParam(24, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_F + 6)) {
+      ColorTable_InitParam(25, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_F + 7)) {
+      ColorTable_InitParam(26, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + 'c') ||

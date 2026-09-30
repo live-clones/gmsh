@@ -14,7 +14,6 @@
 #include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "drawContextFltk.h"
-#include "drawContextFltkCairo.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
 #include "fieldWindow.h"
@@ -248,6 +247,43 @@ static void gmsh_rotate(Fl_Color c)
   vv(-0.1, 0.9);
   vv(-0.1, 0.3);
   fl_end_polygon();
+}
+
+// a crosshair over a target: the point of the model a query asks about
+static void gmsh_query(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_line();
+  fl_arc(0.0, 0.0, 0.45, 0.0, 360.0);
+  fl_end_line();
+  bl;
+  vv(-0.9, 0.0);
+  vv(-0.2, 0.0);
+  el;
+  bl;
+  vv(0.2, 0.0);
+  vv(0.9, 0.0);
+  el;
+  bl;
+  vv(0.0, -0.9);
+  vv(0.0, -0.2);
+  el;
+  bl;
+  vv(0.0, 0.2);
+  vv(0.0, 0.9);
+  el;
+}
+
+// a ruler: the line a measurement draws between the two points it is given
+static void gmsh_measure(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.75, 0.55); vv(0.75, -0.55); el;   // the line
+  bl; vv(-0.90, 0.35); vv(-0.60, 0.75); el;   // its ends
+  bl; vv(0.60, -0.75); vv(0.90, -0.35); el;
+  bl; vv(-0.38, 0.28); vv(-0.29, 0.40); el;   // graduations
+  bl; vv(0.00, 0.00); vv(0.09, 0.12); el;
+  bl; vv(0.38, -0.28); vv(0.46, -0.15); el;
 }
 
 static void gmsh_models(Fl_Color c)
@@ -532,6 +568,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fl_add_symbol("gmsh_forward", gmsh_forward, 1);
   fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
   fl_add_symbol("gmsh_models", gmsh_models, 1);
+  fl_add_symbol("gmsh_query", gmsh_query, 1);
+  fl_add_symbol("gmsh_measure", gmsh_measure, 1);
   fl_add_symbol("gmsh_gear", gmsh_gear, 1);
   fl_add_symbol("gmsh_graph", gmsh_graph, 1);
   fl_add_symbol("gmsh_search", gmsh_search, 1);
@@ -1240,7 +1278,7 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
   // get pixels
   PixelBuffer *buffer =
     new PixelBuffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
-  buffer->fill(0);
+  buffer->fill();
   unsigned char *pixels = (unsigned char *)buffer->getPixels();
 
   // swap R and B since Windows bitmap format is BGR

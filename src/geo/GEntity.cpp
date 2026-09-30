@@ -16,19 +16,52 @@
 #include "GRegion.h"
 #include "closestVertex.h"
 #include "GmshConfig.h"
-#if defined(HAVE_OPENGL)
-#include "glyphList.h"
-#endif
+#include "OwnerCache.h"
 
 int GEntity::numSelected = 0;
-int GEntity::colorChanges = 0;
+std::set<GEntity *> GEntity::selected;
+
+void GEntity::setSelection(char val)
+{
+  if(!_selection != !val) {
+    numSelected += val ? 1 : -1;
+    if(val)
+      selected.insert(this);
+    else
+      selected.erase(this);
+  }
+  _selection = val;
+}
+// The flags are raised only on an actual change.
+void GEntity::setVisibility(char val, bool recursive)
+{
+  if(_visible != val) CTX::instance()->entityVisibilityChanged();
+  _visible = val;
+}
+
+// Derived from the visibility of the elements when the mesh arrays are
+// filled, and what depends on it is filled again with them: raising the flag
+// here asked for the arrays to be filled again once more.
+void GEntity::setOnlySomeElementsVisible(bool val)
+{
+  _onlySomeElementsVisible = val ? 1 : 0;
+}
+
+void GEntity::setColor(unsigned color, bool recursive)
+{
+  if(_color != color) CTX::instance()->entityColorsChanged();
+  _color = color;
+}
 
 GEntity::~GEntity()
 {
-#if defined(HAVE_OPENGL)
-  // the glyphs kept for this entity go with it
-  glyphCache::clear(this);
-#endif
+  // a selected entity that goes is no longer selected
+  if(_selection) {
+    numSelected--;
+    selected.erase(this);
+  }
+  // what the drawing keeps for this entity goes with it
+  OwnerCacheBase::release(this);
 }
 
 GEntity::GEntity(GModel *m, int t)
@@ -62,8 +95,7 @@ void GEntity::deleteClipVertexArrays()
 
 char GEntity::getVisibility()
 {
-  if(CTX::instance()->hideUnselected && !CTX::instance()->pickElements &&
-     !getSelection())
+  if(CTX::instance()->hideUnselected && !getSelection())
     return false;
   return _visible;
 }

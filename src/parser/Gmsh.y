@@ -32,7 +32,6 @@
 #include "OS.h"
 #include "CreateFile.h"
 #include "gmshSurface.h"
-#include "gmshLevelset.h"
 #include "fullMatrix.h"
 
 #if defined(HAVE_MESH)
@@ -80,7 +79,8 @@ static PViewDataList *ViewData = 0;
 #endif
 static std::vector<double> ViewCoord;
 static std::vector<double> *ViewValueList = 0;
-static int *ViewNumList = 0;
+static std::vector<std::string> ViewStrings;
+static std::vector<double> ViewTime;
 static ExtrudeParams extr;
 static gmshSurface *myGmshSurface = 0;
 static int statusImbricatedTests[MAX_RECUR_TESTS];
@@ -206,7 +206,7 @@ struct doubleXstring{
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
 %token tUsing tPlugin tDegenerated tRecursive tSewing
-%token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine tClosest
+%token tRotate tTranslate tSymmetry tDilate tExtrude tAffine tClosest
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
 %token tRecombine tSmoother tSplit tDelete tCoherence tHealShapes
@@ -330,7 +330,6 @@ GeoFormatItem :
   | Loop        { return 1; }
   | Slide       { return 1; }
   | Command     { return 1; }
-  | LevelSet    { return 1; }
   | Homology    { return 1; }
 ;
 
@@ -532,103 +531,18 @@ Element :
     tSTRING
     {
 #if defined(HAVE_POST)
-      if(!strncmp($1, "SP", 2)){
-	ViewValueList = &ViewData->SP; ViewNumList = &ViewData->NbSP;
+      // the list of the element type named by the 2 first letters (e.g. ST
+      // for scalar triangles), of order 2 if followed by 2 (e.g. ST2)
+      ViewValueList = 0;
+      for(int i = 0; i < 24; i++){
+        const PViewDataList::listKind &k = PViewDataList::listKinds[i];
+        if(!strncmp($1, k.name, 2)){
+          ViewValueList = ViewData->incrementList(k.numComp, k.type);
+          if(strlen($1) > 2 && k.type != TYPE_PNT) ViewData->setOrder2(k.type);
+          break;
+        }
       }
-      else if(!strncmp($1, "VP", 2)){
-	ViewValueList = &ViewData->VP; ViewNumList = &ViewData->NbVP;
-      }
-      else if(!strncmp($1, "TP", 2)){
-	ViewValueList = &ViewData->TP; ViewNumList = &ViewData->NbTP;
-      }
-      else if(!strncmp($1, "SL", 2)){
-	ViewValueList = &ViewData->SL; ViewNumList = &ViewData->NbSL;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_LIN);
-      }
-      else if(!strncmp($1, "VL", 2)){
-	ViewValueList = &ViewData->VL; ViewNumList = &ViewData->NbVL;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_LIN);
-      }
-      else if(!strncmp($1, "TL", 2)){
-	ViewValueList = &ViewData->TL; ViewNumList = &ViewData->NbTL;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_LIN);
-      }
-      else if(!strncmp($1, "ST", 2)){
-	ViewValueList = &ViewData->ST; ViewNumList = &ViewData->NbST;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TRI);
-      }
-      else if(!strncmp($1, "VT", 2)){
-	ViewValueList = &ViewData->VT; ViewNumList = &ViewData->NbVT;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TRI);
-      }
-      else if(!strncmp($1, "TT", 2)){
-	ViewValueList = &ViewData->TT; ViewNumList = &ViewData->NbTT;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TRI);
-      }
-      else if(!strncmp($1, "SQ", 2)){
-	ViewValueList = &ViewData->SQ; ViewNumList = &ViewData->NbSQ;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_QUA);
-      }
-      else if(!strncmp($1, "VQ", 2)){
-	ViewValueList = &ViewData->VQ; ViewNumList = &ViewData->NbVQ;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_QUA);
-      }
-      else if(!strncmp($1, "TQ", 2)){
-	ViewValueList = &ViewData->TQ; ViewNumList = &ViewData->NbTQ;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_QUA);
-      }
-      else if(!strncmp($1, "SS", 2)){
-	ViewValueList = &ViewData->SS; ViewNumList = &ViewData->NbSS;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TET);
-      }
-      else if(!strncmp($1, "VS", 2)){
-	ViewValueList = &ViewData->VS; ViewNumList = &ViewData->NbVS;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TET);
-      }
-      else if(!strncmp($1, "TS", 2)){
-	ViewValueList = &ViewData->TS; ViewNumList = &ViewData->NbTS;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TET);
-      }
-      else if(!strncmp($1, "SH", 2)){
-	ViewValueList = &ViewData->SH; ViewNumList = &ViewData->NbSH;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_HEX);
-      }
-      else if(!strncmp($1, "VH", 2)){
-	ViewValueList = &ViewData->VH; ViewNumList = &ViewData->NbVH;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_HEX);
-      }
-      else if(!strncmp($1, "TH", 2)){
-	ViewValueList = &ViewData->TH; ViewNumList = &ViewData->NbTH;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_HEX);
-      }
-      else if(!strncmp($1, "SI", 2)){
-	ViewValueList = &ViewData->SI; ViewNumList = &ViewData->NbSI;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PRI);
-      }
-      else if(!strncmp($1, "VI", 2)){
-	ViewValueList = &ViewData->VI; ViewNumList = &ViewData->NbVI;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PRI);
-      }
-      else if(!strncmp($1, "TI", 2)){
-	ViewValueList = &ViewData->TI; ViewNumList = &ViewData->NbTI;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PRI);
-      }
-      else if(!strncmp($1, "SY", 2)){
-	ViewValueList = &ViewData->SY; ViewNumList = &ViewData->NbSY;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PYR);
-      }
-      else if(!strncmp($1, "VY", 2)){
-	ViewValueList = &ViewData->VY; ViewNumList = &ViewData->NbVY;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PYR);
-      }
-      else if(!strncmp($1, "TY", 2)){
-	ViewValueList = &ViewData->TY; ViewNumList = &ViewData->NbTY;
-        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PYR);
-      }
-      else{
-	yymsg(0, "Unknown element type '%s'", $1);
-	ViewValueList = 0; ViewNumList = 0;
-      }
+      if(!ViewValueList) yymsg(0, "Unknown element type '%s'", $1);
 #endif
       ViewCoord.clear();
       Free($1);
@@ -644,26 +558,17 @@ Element :
 #endif
     }
     '{' ElementValues '}' tEND
-    {
-#if defined(HAVE_POST)
-      if(ViewValueList) (*ViewNumList)++;
-#endif
-    }
 ;
 
 Text2DValues :
     StringExprVar
     {
-#if defined(HAVE_POST)
-      for(int i = 0; i < (int)strlen($1) + 1; i++) ViewData->T2C.push_back($1[i]);
-#endif
+      ViewStrings.push_back($1);
       Free($1);
     }
   | Text2DValues ',' StringExprVar
     {
-#if defined(HAVE_POST)
-      for(int i = 0; i < (int)strlen($3) + 1; i++) ViewData->T2C.push_back($3[i]);
-#endif
+      ViewStrings.push_back($3);
       Free($3);
     }
 ;
@@ -671,17 +576,12 @@ Text2DValues :
 Text2D :
     tText2D '(' FExpr ',' FExpr ',' FExpr ')'
     {
-#if defined(HAVE_POST)
-      ViewData->T2D.push_back($3);
-      ViewData->T2D.push_back($5);
-      ViewData->T2D.push_back($7);
-      ViewData->T2D.push_back(ViewData->T2C.size());
-#endif
+      ViewStrings.clear();
     }
     '{' Text2DValues '}' tEND
     {
 #if defined(HAVE_POST)
-      ViewData->NbT2++;
+      ViewData->addString2D($3, $5, $7, ViewStrings);
 #endif
     }
 ;
@@ -689,16 +589,12 @@ Text2D :
 Text3DValues :
     StringExprVar
     {
-#if defined(HAVE_POST)
-      for(int i = 0; i < (int)strlen($1) + 1; i++) ViewData->T3C.push_back($1[i]);
-#endif
+      ViewStrings.push_back($1);
       Free($1);
     }
   | Text3DValues ',' StringExprVar
     {
-#if defined(HAVE_POST)
-      for(int i = 0; i < (int)strlen($3) + 1; i++) ViewData->T3C.push_back($3[i]);
-#endif
+      ViewStrings.push_back($3);
       Free($3);
     }
 ;
@@ -706,16 +602,12 @@ Text3DValues :
 Text3D :
     tText3D '(' FExpr ',' FExpr ',' FExpr ',' FExpr ')'
     {
-#if defined(HAVE_POST)
-      ViewData->T3D.push_back($3); ViewData->T3D.push_back($5);
-      ViewData->T3D.push_back($7); ViewData->T3D.push_back($9);
-      ViewData->T3D.push_back(ViewData->T3C.size());
-#endif
+      ViewStrings.clear();
     }
     '{' Text3DValues '}' tEND
     {
 #if defined(HAVE_POST)
-      ViewData->NbT3++;
+      ViewData->addString3D($3, $5, $7, $9, ViewStrings);
 #endif
     }
 ;
@@ -726,13 +618,13 @@ InterpolationMatrix :
     {
 #if defined(HAVE_POST)
       int type =
-	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN :
-	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI :
-	(ViewData->NbSQ || ViewData->NbVQ) ? TYPE_QUA :
-	(ViewData->NbSS || ViewData->NbVS) ? TYPE_TET :
-	(ViewData->NbSY || ViewData->NbVY) ? TYPE_PYR :
-	(ViewData->NbSI || ViewData->NbVI) ? TYPE_PRI :
-      	(ViewData->NbSH || ViewData->NbVH) ? TYPE_HEX :
+	ViewData->getNumLines() ? TYPE_LIN :
+	ViewData->getNumTriangles() ? TYPE_TRI :
+	ViewData->getNumQuadrangles() ? TYPE_QUA :
+	ViewData->getNumTetrahedra() ? TYPE_TET :
+	ViewData->getNumPyramids() ? TYPE_PYR :
+	ViewData->getNumPrisms() ? TYPE_PRI :
+      	ViewData->getNumHexahedra() ? TYPE_HEX :
 	0;
       ViewData->setInterpolationMatrices(type, ListOfListOfDouble2Matrix($3),
                                          ListOfListOfDouble2Matrix($6));
@@ -745,11 +637,11 @@ InterpolationMatrix :
     {
 #if defined(HAVE_POST)
       int type =
-	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN :
-	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI :
-	(ViewData->NbSQ || ViewData->NbVQ) ? TYPE_QUA :
-	(ViewData->NbSS || ViewData->NbVS) ? TYPE_TET :
-      	(ViewData->NbSH || ViewData->NbVH) ? TYPE_HEX :
+	ViewData->getNumLines() ? TYPE_LIN :
+	ViewData->getNumTriangles() ? TYPE_TRI :
+	ViewData->getNumQuadrangles() ? TYPE_QUA :
+	ViewData->getNumTetrahedra() ? TYPE_TET :
+      	ViewData->getNumHexahedra() ? TYPE_HEX :
 	0;
       ViewData->setInterpolationMatrices(type, ListOfListOfDouble2Matrix($3),
                                          ListOfListOfDouble2Matrix($6),
@@ -763,11 +655,15 @@ Time :
     tTime
     {
 #if defined(HAVE_POST)
-      ViewValueList = &ViewData->Time;
+      ViewTime.clear();
+      ViewValueList = &ViewTime;
 #endif
     }
    '{' ElementValues '}' tEND
     {
+#if defined(HAVE_POST)
+      for(auto t : ViewTime) ViewData->addTime(t);
+#endif
     }
 ;
 
@@ -2811,368 +2707,6 @@ ListOfShapes :
     }
 ;
 
-//  L E V E L S E T S
-
-LevelSet :
-    tLevelset tPlane '(' FExpr ')' tAFFECT ListOfDouble tEND
-    {
-      if(List_Nbr($7) == 4){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d[4];
-          for(int i = 0; i < 4; i++)
-            List_Read($7, i, &d[i]);
-          gLevelset *ls = new gLevelsetPlane(d[0], d[1], d[2], d[3], t);
-          gLevelset::add(ls);
-        }
-      }
-      else
-        yymsg(0, "Wrong number of arguments for levelset definition");
-      List_Delete($7);
-    }
-  | tLevelset tPoint '(' FExpr ')' tAFFECT '{' RecursiveListOfListOfDouble '}' tEND
-    {
-      int t = (int)$4;
-      if(gLevelset::find(t)){
-	yymsg(0, "Levelset %d already exists", t);
-      }
-      else {
-	fullMatrix<double> centers(List_Nbr($8),3);
-	for(int i = 0; i < List_Nbr($8); i++){
-	  List_T *l = *(List_T**)List_Pointer($8, i);
-	  for(int j = 0; j < List_Nbr(l); j++){
-	    centers(i,j) = (double)(*(double*)List_Pointer(l, j));
-	  }
-	}
-        gLevelset *ls = new gLevelsetPoints(centers, t);
-        gLevelset::add(ls);
-      }
-      for(int i = 0; i < List_Nbr($8); i++)
-        List_Delete(*(List_T**)List_Pointer($8, i));
-      List_Delete($8);
-    }
-  | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
-                                               RecursiveListOfDouble '}' tEND
-    {
-      int t = (int)$4;
-      if(gLevelset::find(t)){
-        yymsg(0, "Levelset %d already exists", t);
-      }
-      else {
-        double pt[3] = {$8[0], $8[1], $8[2]};
-        double n[3] = {$10[0], $10[1], $10[2]};
-        gLevelset *ls = new gLevelsetPlane(pt, n, t);
-        gLevelset::add(ls);
-      }
-      List_Delete($12);
-    }
-  | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' VExpr ','
-                                               RecursiveListOfDouble '}' tEND
-    {
-      int t = (int)$4;
-      if(gLevelset::find(t)){
-        yymsg(0, "Levelset %d already exists", t);
-      }
-      else {
-        double pt1[3] = {$8[0], $8[1], $8[2]};
-        double pt2[3] = {$10[0], $10[1], $10[2]};
-        double pt3[3] = {$12[0], $12[1], $12[2]};
-        gLevelset *ls = new gLevelsetPlane(pt1, pt2, pt3, t);
-        gLevelset::add(ls);
-      }
-      List_Delete($14);
-    }
-  | tLevelset tSphere '(' FExpr ')' tAFFECT '{' VExpr ',' RecursiveListOfDouble '}' tEND
-    {
-      if(List_Nbr($10) == 1){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d;
-          List_Read($10, 0, &d);
-          gLevelset *ls = new gLevelsetSphere($8[0], $8[1], $8[2], d, t);
-          gLevelset::add(ls);
-        }
-      }
-      else
-        yymsg(0, "Wrong number of arguments for levelset definition");
-      List_Delete($10);
-    }
-  | tLevelset tCylinder '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
-                                                RecursiveListOfDouble '}' tEND
-    {
-      if(List_Nbr($12) == 1){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d;
-          List_Read($12, 0, &d);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetGenCylinder(pt, dir, d, t);
-          gLevelset::add(ls);
-        }
-      }
-      else if(List_Nbr($12) == 2){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d[2];
-          for(int i = 0; i < 2; i++)
-            List_Read($12, i, &d[i]);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetCylinder(pt, dir, d[0], d[1], t);
-          gLevelset::add(ls);
-        }
-      }
-      else if(List_Nbr($12) == 3){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d[3];
-          for(int i = 0; i < 3; i++)
-            List_Read($12, i, &d[i]);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetCylinder(pt, dir, d[0], d[1], d[2], t);
-          gLevelset::add(ls);
-        }
-      }
-      else
-        yymsg(0, "Wrong number of arguments for levelset definition");
-      List_Delete($12);
-    }
-  | tLevelset tCone '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
-                                                RecursiveListOfDouble '}' tEND
-    {
-      if(List_Nbr($12) == 1){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d;
-          List_Read($12, 0, &d);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetCone(pt, dir, d, t);
-          gLevelset::add(ls);
-        }
-      }
-      else
-        yymsg(0, "Wrong number of arguments for levelset definition");
-      List_Delete($12);
-    }
-  | tLevelset tEllipsoid '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
-                                                RecursiveListOfDouble '}' tEND
-    {
-      if(List_Nbr($12) == 3){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d[3];
-          for(int i = 0; i < 3; i++)
-            List_Read($12, i, &d[i]);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetEllipsoid(pt, dir, d[0], d[1], d[2], t);
-          gLevelset::add(ls);
-        }
-      }
-      else
-        yymsg(0, "Wrong number of arguments for levelset definition");
-      List_Delete($12);
-    }
-  | tLevelset tQuadric '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
-                                                RecursiveListOfDouble '}' tEND
-    {
-      if(List_Nbr($12) == 5){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d[5];
-          for(int i = 0; i < 5; i++)
-            List_Read($12, i, &d[i]);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetGeneralQuadric(pt, dir, d[0], d[1],
-                                                      d[2], d[3], d[4], t);
-          gLevelset::add(ls);
-        }
-      }
-      else
-        yymsg(0, "Wrong number of arguments for levelset definition");
-      List_Delete($12);
-    }
-  | tLevelset tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
-    {
-      if(!strcmp($2, "Union")){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          std::vector<gLevelset *> vl;
-          for(int i = 0; i < List_Nbr($7); i++) {
-            double d; List_Read($7, i, &d);
-            gLevelset *pl = gLevelset::find((int)d);
-	    if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
-            else vl.push_back(pl);
-          }
-          gLevelset *ls = new gLevelsetUnion(vl, true, t);
-          gLevelset::add(ls);
-        }
-      }
-      else if(!strcmp($2, "Intersection")){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          std::vector<gLevelset *> vl;
-          for(int i = 0; i < List_Nbr($7); i++) {
-            double d; List_Read($7, i, &d);
-            gLevelset *pl = gLevelset::find((int)d);
-	    if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
-            else vl.push_back(pl);
-          }
-          gLevelset *ls = new gLevelsetIntersection(vl, true, t);
-          gLevelset::add(ls);
-        }
-      }
-      else if(!strcmp($2, "Cut")){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          std::vector<gLevelset *> vl;
-          for(int i = 0; i < List_Nbr($7); i++) {
-            double d; List_Read($7, i, &d);
-            gLevelset *pl = gLevelset::find((int)d);
-	    if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
-            else vl.push_back(pl);
-          }
-          gLevelset *ls = new gLevelsetCut(vl, true, t);
-          gLevelset::add(ls);
-        }
-      }
-      else if(!strcmp($2, "Crack")){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          std::vector<gLevelset *> vl;
-          for(int i = 0; i < List_Nbr($7); i++) {
-            double d; List_Read($7, i, &d);
-            gLevelset *pl = gLevelset::find((int)d);
-	    if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
-            else vl.push_back(pl);
-          }
-          gLevelset *ls = new gLevelsetCrack(vl, false, t);
-          gLevelset::add(ls);
-        }
-      }
-      else if(!strcmp($2, "Reverse")){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d;
-          List_Read($7, 0, &d);
-          gLevelset *pl = gLevelset::find((int)d);
-          gLevelset *ls = nullptr;
-          if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
-          else ls = new gLevelsetReverse(pl, t);
-          if(ls) gLevelset::add(ls);
-        }
-      }
-#if defined(HAVE_POST)
-      else if(!strcmp($2, "PostView")){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          if(List_Nbr($7) > 0){
-            double d; List_Read($7, 0, &d);
-            gLevelset *ls = new gLevelsetPostView((int)d, t);
-            gLevelset::add(ls);
-          }
-        }
-      }
-#endif
-      else
-        yymsg(0, "Wrong number of arguments for levelset definition");
-      Free($2);
-      List_Delete($7);
-    }
-  | tLevelset tSTRING '(' FExpr ')' tAFFECT tBIGSTR tEND
-    {
-      if(!strcmp($2, "MathEval")){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          gLevelset *ls = new gLevelsetMathEval($7, t);
-          gLevelset::add(ls);
-        }
-      }
-      else
-        yymsg(0, "Unknown levelset '%s'", $2);
-      Free($2); Free($7);
-    }
-  | tLevelset tSTRING '{' FExpr '}' tEND
-    {
-      if(!strcmp($2, "CutMesh")){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-          GModel::current()->buildCutGModel(gLevelset::find(t), true, false);
-        }
-        else
-          yymsg(0, "Unknown levelset %d", t);
-      }
-      else if(!strcmp($2, "CutMeshTri")){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-          GModel::current()->buildCutGModel(gLevelset::find(t), true, true);
-        }
-        else
-          yymsg(0, "Unknown levelset %d", t);
-      }
-      else if(!strcmp($2, "SplitMesh")){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-          GModel::current()->buildCutGModel(gLevelset::find(t), false, true);
-        }
-        else
-          yymsg(0, "Unknown levelset %d", t);
-      }
-      else
-        yymsg(0, "Unknown levelset '%s'", $2);
-      Free($2);
-    }
-  ;
-
 //  D E L E T E
 
 Delete :
@@ -3683,7 +3217,7 @@ Command :
   | tSetChanged tEND
     {
 #if defined(HAVE_OPENGL)
-     CTX::instance()->mesh.changed = ENT_ALL;
+     CTX::instance()->meshChanged();
      for(std::size_t index = 0; index < PView::list.size(); index++)
        PView::list[index]->setChanged(true);
 #endif
@@ -3762,65 +3296,6 @@ Command :
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       GModel::current()->recombineMesh();
-    }
-  | tAdaptMesh '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}'
-               '{' RecursiveListOfListOfDouble '}' '{' FExpr ',' FExpr '}' tEND
-    {
-      int lock = CTX::instance()->lock;
-      CTX::instance()->lock = 0;
-      std::vector<int> technique;
-      for(int i = 0; i < List_Nbr($3); i++){
-        double d;
-        List_Read($3, i, &d);
-        technique.push_back((int)d);
-      }
-      if(technique.empty()){
-        yymsg(0, "Need at least one adaptation technique");
-      }
-      else{
-        std::vector<simpleFunction<double>*> f;
-        for(int i = 0; i < List_Nbr($6); i++){
-          double d;
-          List_Read($6, i, &d);
-          gLevelset *l = gLevelset::find((int)d);
-          if(l) f.push_back(l);
-          else yymsg(0, "Unknown levelset %d", (int)d);
-        }
-        if(technique.size() != f.size()){
-          yymsg(0, "Number of techniques != number of levelsets");
-        }
-        else{
-          if(List_Nbr($9) != (int)f.size()){
-            yymsg(0, "Number of parameters != number of levelsets");
-          }
-          else{
-            std::vector<std::vector<double> > parameters;
-            parameters.resize(List_Nbr($9));
-            for(int i = 0; i < List_Nbr($9); i++){
-              List_T *l = *(List_T**)List_Pointer($9, i);
-              for(int j = 0; j < List_Nbr(l); j++){
-                double d;
-                List_Read(l, j, &d);
-                parameters[i].push_back(d);
-              }
-            }
-            int niter = (int)$12;
-            bool meshAll = ($14 == 0) ? false : true;
-            if(GModel::current()->getOCCInternals() &&
-               GModel::current()->getOCCInternals()->getChanged())
-              GModel::current()->getOCCInternals()->synchronize(GModel::current());
-            if(GModel::current()->getGEOInternals()->getChanged())
-              GModel::current()->getGEOInternals()->synchronize(GModel::current());
-            GModel::current()->adaptMesh(technique, f, parameters, niter, meshAll);
-          }
-        }
-      }
-      List_Delete($3);
-      List_Delete($6);
-      for(int i = 0; i < List_Nbr($9); i++)
-        List_Delete(*(List_T**)List_Pointer($9, i));
-      List_Delete($9);
-      CTX::instance()->lock = lock;
     }
   | tTransformMesh '{' RecursiveListOfDouble '}' tEND
     {

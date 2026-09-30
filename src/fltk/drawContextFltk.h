@@ -48,37 +48,16 @@ public:
     }
     FlGui::check(rateLimited);
   }
-  void drawCurrentOpenglWindow(bool make_current)
+  void drawCurrentOpenglWindow(bool make_current, bool again = false)
   {
     if(!FlGui::available()) return;
     openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(make_current) gl->make_current();
+    gl->setAgain(again);
     gl->redraw();
     glFlush();
     FlGui::check();
-  }
-  int getFontIndex(const char *fontname)
-  {
-    if(fontname) {
-      for(int i = 0; i < NUM_FONTS; i++)
-        if(!strcmp(menu_font_names[i].label(), fontname)) return i;
-    }
-    Msg::Error("Unknown font \"%s\" (using \"Helvetica\" instead)", fontname);
-    Msg::Info("Available fonts:");
-    for(int i = 0; i < NUM_FONTS; i++)
-      Msg::Info("  \"%s\"", menu_font_names[i].label());
-    return 4;
-  }
-  int getFontEnum(int index)
-  {
-    if(index >= 0 && index < NUM_FONTS)
-      return (intptr_t)menu_font_names[index].user_data();
-    return FL_HELVETICA;
-  }
-  const char *getFontName(int index)
-  {
-    if(index >= 0 && index < NUM_FONTS) return menu_font_names[index].label();
-    return "Helvetica";
+    gl->setAgain(false);
   }
   int getFontSize()
   {
@@ -107,20 +86,61 @@ public:
   double getStringWidth(const char *str) { return gl_width(str); }
   int getStringHeight() { return gl_height(); }
   int getStringDescent() { return gl_descent(); }
-  void drawString(const char *str) { gl_draw(str); }
+  void drawString(const char *str)
+  {
+    if(!stringHalo()) {
+      gl_draw(str);
+      return;
+    }
+    // eight copies around it in the background colour first, the raster
+    // position moved by a pixel each time (an empty bitmap moves it) and
+    // brought back after each, as drawing advances it
+    GLfloat pos[4], color[4];
+    glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+    glGetFloatv(GL_CURRENT_COLOR, color);
+    unsigned int bg = CTX::instance()->color.bg;
+    glColor4ub(CTX::instance()->unpackRed(bg), CTX::instance()->unpackGreen(bg),
+               CTX::instance()->unpackBlue(bg), 255);
+    for(int i = -1; i <= 1; i++)
+      for(int j = -1; j <= 1; j++) {
+        if(!i && !j) continue;
+        glBitmap(0, 0, 0.f, 0.f, (GLfloat)i, (GLfloat)j, nullptr);
+        gl_draw(str);
+        GLfloat now[4];
+        glGetFloatv(GL_CURRENT_RASTER_POSITION, now);
+        glBitmap(0, 0, 0.f, 0.f, pos[0] - now[0], pos[1] - now[1], nullptr);
+      }
+    glColor4fv(color);
+    gl_draw(str);
+  }
+// FLTK draws a string as a texture, kept in a pile of a fixed height, from
+// 1.4 on and on macOS before that; the pile is where the three calls below
+// go, and where they do nothing at all otherwise
+#if((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
+#define GMSH_FLTK_STRING_TEXTURES 1
+#endif
+
+  bool keepsStringTextures()
+  {
+#if defined(GMSH_FLTK_STRING_TEXTURES)
+    return true;
+#else
+    return false;
+#endif
+  }
   void resetFontTextures()
   {
-#if((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
-    // force font texture recomputation
+#if defined(GMSH_FLTK_STRING_TEXTURES)
+    // the strings are drawn again: their textures are made again with them
     gl_texture_pile_height(gl_texture_pile_height());
 #endif
   }
   void reserveStringTextures(std::size_t n)
   {
-#if((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
+#if defined(GMSH_FLTK_STRING_TEXTURES)
     if(gl_texture_pile_height() < (int)n) gl_texture_pile_height((int)n);
 #else
-    (void)n; // this FLTK has no pile to ask about
+    (void)n;
 #endif
   }
   bool mouseIsPressed() { return Fl::pushed() ? true : false; }

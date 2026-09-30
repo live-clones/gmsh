@@ -40,64 +40,37 @@
 #include "winslowParametric.h"
 #include "winslowUntanglerGMSH.h"
 
-StringXNumber BoundaryLayerOptions_Number[] = {
-  {GMSH_FULLRC, "Thickness", nullptr, 1.e-2},
-  {GMSH_FULLRC, "Size", nullptr, 1.e-3},
-  {GMSH_FULLRC, "Ratio", nullptr, 1.2},
-  {GMSH_FULLRC, "SmoothingLayers", nullptr, 2.},
-  {GMSH_FULLRC, "NumExactLayers", nullptr, -2.},
-  {GMSH_FULLRC, "HighOrder", nullptr, 1.},
-  {GMSH_FULLRC, "HighOrderStrategy", nullptr, 2.},
-  {GMSH_FULLRC, "HighOrderPostSplitUntangle", nullptr, 0.},
-  {GMSH_FULLRC, "HighOrderPostSplitSurfaceUntangle", nullptr, 0.},
-  {GMSH_FULLRC, "SurfaceUntangler", nullptr, 1.},
-  {GMSH_FULLRC, "MeanPlaneTolerance", nullptr, 5.e-2},
-  {GMSH_FULLRC, "MeanPlaneExtensionTolerance", nullptr, 1.e-3},
-  {GMSH_FULLRC, "MeanPlanePatchRings", nullptr, 2.},
-  {GMSH_FULLRC, "MeanPlaneSweeps", nullptr, 100.},
-  {GMSH_FULLRC, "MeanPlaneMoveTolerance", nullptr, 1.e-4},
-  {GMSH_FULLRC, "MeanPlaneDebugPatches", nullptr, 0.},
-  {GMSH_FULLRC, "ParametricQuadraturePoints", nullptr, 3.}};
-
-StringXString BoundaryLayerOptions_String[] = {
-  {GMSH_FULLRC, "Volumes", nullptr, ""},
-  {GMSH_FULLRC, "Surfaces", nullptr, ""},
-  {GMSH_FULLRC, "Curves", nullptr, ""},
-  {GMSH_FULLRC, "Points", nullptr, ""},
-  {GMSH_FULLRC, "IntersectPoints", nullptr, ""},
-  {GMSH_FULLRC, "IntersectEdges", nullptr, ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterBoundaryLayerPlugin()
+GMSH_BoundaryLayerPlugin::GMSH_BoundaryLayerPlugin()
+  : GMSH_PostPlugin(
+      {{GMSH_FULLRC, "Thickness", nullptr, 1.e-2},
+       {GMSH_FULLRC, "Size", nullptr, 1.e-3},
+       {GMSH_FULLRC, "Ratio", nullptr, 1.2},
+       {GMSH_FULLRC, "SmoothingLayers", nullptr, 2.},
+       {GMSH_FULLRC, "NumExactLayers", nullptr, -2.},
+       {GMSH_FULLRC, "HighOrder", nullptr, 1.},
+       {GMSH_FULLRC, "HighOrderStrategy", nullptr, 2.},
+       {GMSH_FULLRC, "HighOrderPostSplitUntangle", nullptr, 0.},
+       {GMSH_FULLRC, "HighOrderPostSplitSurfaceUntangle", nullptr, 0.},
+       {GMSH_FULLRC, "SurfaceUntangler", nullptr, 1.},
+       {GMSH_FULLRC, "MeanPlaneTolerance", nullptr, 5.e-2},
+       {GMSH_FULLRC, "MeanPlaneExtensionTolerance", nullptr, 1.e-3},
+       {GMSH_FULLRC, "MeanPlanePatchRings", nullptr, 2.},
+       {GMSH_FULLRC, "MeanPlaneSweeps", nullptr, 100.},
+       {GMSH_FULLRC, "MeanPlaneMoveTolerance", nullptr, 1.e-4},
+       {GMSH_FULLRC, "MeanPlaneDebugPatches", nullptr, 0.},
+       {GMSH_FULLRC, "ParametricQuadraturePoints", nullptr, 3.}},
+      {{GMSH_FULLRC, "Volumes", nullptr, ""},
+       {GMSH_FULLRC, "Surfaces", nullptr, ""},
+       {GMSH_FULLRC, "Curves", nullptr, ""},
+       {GMSH_FULLRC, "Points", nullptr, ""},
+       {GMSH_FULLRC, "IntersectPoints", nullptr, ""},
+       {GMSH_FULLRC, "IntersectEdges", nullptr, ""}})
 {
-  return new GMSH_BoundaryLayerPlugin();
-}
 }
 
 std::string GMSH_BoundaryLayerPlugin::getHelp() const
 {
   return "Plugin(BoundaryLayer) performs magic.";
-}
-
-int GMSH_BoundaryLayerPlugin::getNbOptions() const
-{
-  return sizeof(BoundaryLayerOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_BoundaryLayerPlugin::getOption(int iopt)
-{
-  return &BoundaryLayerOptions_Number[iopt];
-}
-
-int GMSH_BoundaryLayerPlugin::getNbOptionsStr() const
-{
-  return sizeof(BoundaryLayerOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_BoundaryLayerPlugin::getOptionStr(int iopt)
-{
-  return &BoundaryLayerOptions_String[iopt];
 }
 
 static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b,
@@ -4961,31 +4934,6 @@ void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
   }
 }
 
-std::string GMSH_BoundaryLayerPlugin::parse(std::string str,
-                                            std::list<int> &physical)
-{
-  // Remove spaces
-  str.erase(remove(str.begin(), str.end(), ' '), str.end());
-
-  // Replace commas by spaces
-  replace(str.begin(), str.end(), ',', ' ');
-
-  // Init string stream
-  std::stringstream stream;
-  stream << str;
-
-  // Parse stream for integers
-  int tag;
-  std::string tmp;
-  while(!stream.eof()) {
-    stream >> tmp; // Take next 'word'
-    if(sscanf(tmp.c_str(), "%d", &tag) > 0) physical.push_back(tag);
-  }
-
-  // Return modified string
-  return str;
-}
-
 template <class T>
 static void removeDuplicatePointers(std::vector<T *> &entities,
                                     const char *what)
@@ -5123,20 +5071,11 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 {
   GModel *m = GModel::current();
 
-  std::string volume = BoundaryLayerOptions_String[0].def;
-  std::string surface = BoundaryLayerOptions_String[1].def;
-  std::string curve = BoundaryLayerOptions_String[2].def;
-  std::string point = BoundaryLayerOptions_String[3].def;
-  std::string intersectPoint = BoundaryLayerOptions_String[4].def;
-  std::string intersectEdge = BoundaryLayerOptions_String[5].def;
-
-  std::vector<std::list<int>> entities(6);
-  point = parse(point, entities[0]);
-  curve = parse(curve, entities[1]);
-  surface = parse(surface, entities[2]);
-  volume = parse(volume, entities[3]);
-  intersectPoint = parse(intersectPoint, entities[4]);
-  intersectEdge = parse(intersectEdge, entities[5]);
+  // The tags of the points, curves, surfaces, volumes and intersections.
+  std::vector<std::vector<int>> entities(6);
+  for(int dim = 0; dim < 4; dim++)
+    if(!optionIntList(3 - dim, entities[dim])) return v;
+  if(!optionIntList(4, entities[4]) || !optionIntList(5, entities[5])) return v;
 
   std::vector<GVertex *> vv;
   for(auto v : entities[0]) {
@@ -5173,25 +5112,25 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   removeDuplicatePointers(f, "surface");
   removeDuplicatePointers(r, "volume");
 
-  double thickness = BoundaryLayerOptions_Number[0].def;
-  double size = BoundaryLayerOptions_Number[1].def;
-  double ratio = BoundaryLayerOptions_Number[2].def;
-  int numLayers = (int)BoundaryLayerOptions_Number[3].def;
-  double numExactLayers = BoundaryLayerOptions_Number[4].def;
-  int highOrder = (int)BoundaryLayerOptions_Number[5].def;
-  int highOrderStrategy = (int)BoundaryLayerOptions_Number[6].def;
-  int highOrderPostSplitUntangle = (int)BoundaryLayerOptions_Number[7].def;
+  double thickness = option(0);
+  double size = option(1);
+  double ratio = option(2);
+  int numLayers = (int)option(3);
+  double numExactLayers = option(4);
+  int highOrder = (int)option(5);
+  int highOrderStrategy = (int)option(6);
+  int highOrderPostSplitUntangle = (int)option(7);
   int highOrderPostSplitSurfaceUntangle =
-    (int)BoundaryLayerOptions_Number[8].def;
-  int surfaceUntangler = (int)BoundaryLayerOptions_Number[9].def;
-  double meanPlaneTolerance = BoundaryLayerOptions_Number[10].def;
-  double meanPlaneExtensionTolerance = BoundaryLayerOptions_Number[11].def;
-  int meanPlanePatchRings = (int)BoundaryLayerOptions_Number[12].def;
-  int meanPlaneSweeps = (int)BoundaryLayerOptions_Number[13].def;
-  double meanPlaneMoveTolerance = BoundaryLayerOptions_Number[14].def;
+    (int)option(8);
+  int surfaceUntangler = (int)option(9);
+  double meanPlaneTolerance = option(10);
+  double meanPlaneExtensionTolerance = option(11);
+  int meanPlanePatchRings = (int)option(12);
+  int meanPlaneSweeps = (int)option(13);
+  double meanPlaneMoveTolerance = option(14);
   bool meanPlaneDebugPatches =
-    (int)BoundaryLayerOptions_Number[15].def != 0;
-  int parametricQuadraturePoints = (int)BoundaryLayerOptions_Number[16].def;
+    (int)option(15) != 0;
+  int parametricQuadraturePoints = (int)option(16);
   if(numLayers < 1) {
     Msg::Warning("Hey ! at least one smoothing layer dude ...");
     numLayers = 1;
@@ -5358,7 +5297,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   //  for (auto gf : f)
   //    expandL(gf, perfectShapes, layers, f);
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 
   return v;
 }

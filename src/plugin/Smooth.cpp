@@ -5,10 +5,9 @@
 
 #include "Smooth.h"
 
-StringXNumber SmoothOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSmoothPlugin() { return new GMSH_SmoothPlugin(); }
+GMSH_SmoothPlugin::GMSH_SmoothPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
+{
 }
 
 std::string GMSH_SmoothPlugin::getHelp() const
@@ -19,19 +18,9 @@ std::string GMSH_SmoothPlugin::getHelp() const
          "Plugin(Smooth) is executed in-place.";
 }
 
-int GMSH_SmoothPlugin::getNbOptions() const
-{
-  return sizeof(SmoothOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_SmoothPlugin::getOption(int iopt)
-{
-  return &SmoothOptions_Number[iopt];
-}
-
 PView *GMSH_SmoothPlugin::execute(PView *v)
 {
-  int iView = (int)SmoothOptions_Number[0].def;
+  int iView = (int)option(0);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

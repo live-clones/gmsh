@@ -6,17 +6,15 @@
 #include "SphericalRaise.h"
 #include "Numeric.h"
 
-StringXNumber SphericalRaiseOptions_Number[] = {
-  {GMSH_FULLRC, "Xc", nullptr, 0., ""},     {GMSH_FULLRC, "Yc", nullptr, 0., ""},
-  {GMSH_FULLRC, "Zc", nullptr, 0., ""},     {GMSH_FULLRC, "Raise", nullptr, 1., ""},
-  {GMSH_FULLRC, "Offset", nullptr, 0., ""}, {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSphericalRaisePlugin()
+GMSH_SphericalRaisePlugin::GMSH_SphericalRaisePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Xc", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Yc", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Zc", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Raise", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Offset", nullptr, 0., ""},
+                     {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_SphericalRaisePlugin();
-}
 }
 
 std::string GMSH_SphericalRaisePlugin::getHelp() const
@@ -37,26 +35,16 @@ std::string GMSH_SphericalRaisePlugin::getHelp() const
          "Plugin(SphericalRaise) is executed in-place.";
 }
 
-int GMSH_SphericalRaisePlugin::getNbOptions() const
-{
-  return sizeof(SphericalRaiseOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_SphericalRaisePlugin::getOption(int iopt)
-{
-  return &SphericalRaiseOptions_Number[iopt];
-}
-
 PView *GMSH_SphericalRaisePlugin::execute(PView *v)
 {
   double center[3];
-  center[0] = SphericalRaiseOptions_Number[0].def;
-  center[1] = SphericalRaiseOptions_Number[1].def;
-  center[2] = SphericalRaiseOptions_Number[2].def;
-  double raise = SphericalRaiseOptions_Number[3].def;
-  double offset = SphericalRaiseOptions_Number[4].def;
-  int timeStep = (int)SphericalRaiseOptions_Number[5].def;
-  int iView = (int)SphericalRaiseOptions_Number[6].def;
+  center[0] = option(0);
+  center[1] = option(1);
+  center[2] = option(2);
+  double raise = option(3);
+  double offset = option(4);
+  int timeStep = (int)option(5);
+  int iView = (int)option(6);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -69,44 +57,19 @@ PView *GMSH_SphericalRaisePlugin::execute(PView *v)
     return v;
   }
 
-  if(data1->isNodeData()) {
-    // tag all the nodes with "0" (the default tag)
-    for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-      for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-          if(data1->skipElement(step, ent, ele)) continue;
-          for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-            data1->tagNode(step, ent, ele, nod, 0);
-        }
-      }
-    }
-  }
-
-  // transform all "0" nodes
-  for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-    for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
-      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
-        if(data1->skipElement(step, ent, ele)) continue;
-        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++) {
-          double x, y, z;
-          int tag = data1->getNode(step, ent, ele, nod, x, y, z);
-          if(data1->isNodeData() && tag) continue;
-          double r[3], val;
-          r[0] = x - center[0];
-          r[1] = y - center[1];
-          r[2] = z - center[2];
-          norme(r);
-          data1->getScalarValue(step, ent, ele, nod, val);
-          double coef = offset + raise * val;
-          x += coef * r[0];
-          y += coef * r[1];
-          z += coef * r[2];
-          data1->setNode(step, ent, ele, nod, x, y, z);
-          if(data1->isNodeData()) data1->tagNode(step, ent, ele, nod, 1);
-        }
-      }
-    }
-  }
+  forEachNode(data1, [&](int step, int ent, int ele, int nod) {
+    double x, y, z, val;
+    data1->getNode(step, ent, ele, nod, x, y, z);
+    double r[3] = {x - center[0], y - center[1], z - center[2]};
+    norme(r);
+    if(!data1->hasTimeStep(timeStep) ||
+       data1->skipElement(timeStep, ent, ele))
+      return;
+    data1->getScalarValue(timeStep, ent, ele, nod, val);
+    double coef = offset + raise * val;
+    data1->setNode(step, ent, ele, nod, x + coef * r[0], y + coef * r[1],
+                   z + coef * r[2]);
+  });
 
   data1->finalize();
   v1->setChanged(true);

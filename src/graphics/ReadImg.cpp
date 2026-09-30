@@ -57,51 +57,15 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads = 1,
       double val3 = (double)a1[(j + 1) * dim] / 255.;
       double val4 = (double)a[(j + 1) * dim] / 255.;
       if(quads) { // generate quads
-        d->SQ.push_back(x);
-        d->SQ.push_back(x);
-        d->SQ.push_back(x1);
-        d->SQ.push_back(x1);
-        d->SQ.push_back(y);
-        d->SQ.push_back(y1);
-        d->SQ.push_back(y1);
-        d->SQ.push_back(y);
-        d->SQ.push_back(z);
-        d->SQ.push_back(z);
-        d->SQ.push_back(z);
-        d->SQ.push_back(z);
-        d->SQ.push_back(val1);
-        d->SQ.push_back(val2);
-        d->SQ.push_back(val3);
-        d->SQ.push_back(val4);
-        d->NbSQ++;
+        std::vector<double> *l = d->incrementList(1, TYPE_QUA);
+        l->insert(l->end(), {x, x, x1, x1, y, y1, y1, y, z, z, z, z, val1, val2,
+                             val3, val4});
       }
       else { // generate triangles
-        d->ST.push_back(x);
-        d->ST.push_back(x);
-        d->ST.push_back(x1);
-        d->ST.push_back(y);
-        d->ST.push_back(y1);
-        d->ST.push_back(y1);
-        d->ST.push_back(z);
-        d->ST.push_back(z);
-        d->ST.push_back(z);
-        d->ST.push_back(val1);
-        d->ST.push_back(val2);
-        d->ST.push_back(val3);
-        d->NbST++;
-        d->ST.push_back(x);
-        d->ST.push_back(x1);
-        d->ST.push_back(x1);
-        d->ST.push_back(y);
-        d->ST.push_back(y1);
-        d->ST.push_back(y);
-        d->ST.push_back(z);
-        d->ST.push_back(z);
-        d->ST.push_back(z);
-        d->ST.push_back(val1);
-        d->ST.push_back(val3);
-        d->ST.push_back(val4);
-        d->NbST++;
+        std::vector<double> *l = d->incrementList(1, TYPE_TRI);
+        l->insert(l->end(), {x, x, x1, y, y1, y1, z, z, z, val1, val2, val3});
+        l = d->incrementList(1, TYPE_TRI);
+        l->insert(l->end(), {x, x1, x1, y, y1, y, z, z, z, val1, val3, val4});
       }
     }
   }

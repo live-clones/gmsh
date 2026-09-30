@@ -76,4 +76,3 @@ build_rotmatrix(double m[16], double q[4]);
 void
 axis_to_quat(double a[3], double phi, double q[4]);
 
-double trackballsize() ;

@@ -13,10 +13,7 @@
 #include "Camera.h"
 #include "GmshGlobal.h"
 #include "GmshConfig.h"
-#include "GmshMessage.h"
-#include "Trackball.h"
 #include "Context.h"
-#include "drawContext.h"
 
 Camera::Camera()
   : on(false), stereoEnable(false), Lc(1.), glFnear(0.0001), glFfar(10000)
@@ -42,109 +39,39 @@ void Camera::init()
   this->update();
 }
 
-void Camera::alongX()
+// The camera moved to look along an axis, from the side the model is seen
+// from: 0, 1, 2 for x, y, z. Up is the next axis round.
+void Camera::alongAxis(int axis)
 {
-  front.set(-1., 0., 0.);
-  up.set(0., 0., 1);
+  double f[3] = {0., 0., 0.}, u[3] = {0., 0., 0.};
+  f[axis] = -1.;
+  u[(axis + 2) % 3] = 1.;
+  front.set(f[0], f[1], f[2]);
+  up.set(u[0], u[1], u[2]);
   position = target - distance * front;
-  this->update();
+  update();
 }
 
-void Camera::alongY()
+// Up turned to an axis: to its positive end, unless it is already exactly
+// there, in which case it turns over and takes the right hand with it. The
+// camera then looks along what the two span.
+void Camera::upAxis(int axis)
 {
-  front.set(0., -1., 0.);
-  up.set(1., 0., 0);
-  position = target - distance * front;
-  this->update();
-}
-
-void Camera::alongZ()
-{
-  front.set(0., 0., -1.);
-  up.set(0., 1., 0);
-  position = target - distance * front;
-  this->update();
-}
-
-void Camera::upX()
-{
-  if(up.x > 0.) {
-    if(up.x != 1.) {
-      up.set(1., 0., 0.);
-    }
-    else {
-      up.set(-1., 0., 0.);
-      right = -right;
-    }
+  const double u[3] = {up.x, up.y, up.z};
+  double sign = (u[axis] > 0.) ? 1. : -1.;
+  bool over = (u[axis] == sign);
+  if(over) {
+    sign = -sign;
+    right = -right;
   }
-  else {
-    if(up.x != -1.) {
-      up.set(-1., 0., 0.);
-    }
-    else {
-      up.set(1., 0., 0.);
-      right = -right;
-    }
-  }
+  double n[3] = {0., 0., 0.};
+  n[axis] = sign;
+  up.set(n[0], n[1], n[2]);
   front.x = up.y * right.z - up.z * right.y;
   front.y = up.z * right.x - up.x * right.z;
   front.z = up.x * right.y - up.y * right.x;
   target = position + distance * front;
-  this->update();
-}
-
-void Camera::upY()
-{
-  if(up.y > 0.) {
-    if(up.y != 1.) {
-      up.set(0., 1., 0.);
-    }
-    else {
-      up.set(0., -1., 0.);
-      right = -right;
-    }
-  }
-  else {
-    if(up.y != -1.) {
-      up.set(0., -1., 0.);
-    }
-    else {
-      up.set(0., 1., 0.);
-      right = -right;
-    }
-  }
-  front.x = up.y * right.z - up.z * right.y;
-  front.y = up.z * right.x - up.x * right.z;
-  front.z = up.x * right.y - up.y * right.x;
-  target = position + distance * front;
-  this->update();
-}
-
-void Camera::upZ()
-{
-  if(up.z > 0.) {
-    if(up.z != 1.) {
-      up.set(0., 0., 1.);
-    }
-    else {
-      up.set(0., 0., -1.);
-      right = -right;
-    }
-  }
-  else {
-    if(up.z != -1.) {
-      up.set(0., 0., -1.);
-    }
-    else {
-      up.set(0., 0., 1.);
-      right = -right;
-    }
-  }
-  front.x = up.y * right.z - up.z * right.y;
-  front.y = up.z * right.x - up.x * right.z;
-  front.z = up.x * right.y - up.y * right.x;
-  target = position + distance * front;
-  this->update();
+  update();
 }
 
 void Camera::tiltHeadLeft()
@@ -211,6 +138,7 @@ void Camera::update()
   ndfl = glFnear / focallength;
 }
 
+// the whole state of the camera, for debugging
 void Camera::affiche()
 {
   std::cout << "  ------------ GENERAL PARAMETERS ------------" << std::endl;
@@ -296,31 +224,25 @@ void Camera::rotate(double *q)
   this->update();
 }
 
+// the turn of an angle about an axis, as a quaternion
+static Quaternion turn(double theta, const XYZ &axis)
+{
+  Quaternion q;
+  q.x = sin(theta) * axis.x;
+  q.y = sin(theta) * axis.y;
+  q.z = sin(theta) * axis.z;
+  q.w = cos(theta);
+  normalize(q);
+  return q;
+}
+
 void Camera::move_and_look(double _movfront, double _movright, double _movup,
                            double _thetafront, double _thetaright,
                            double _thetaup, double _azimut, double _elevation)
 {
   position = position + _movfront * front + _movright * right + _movup * up;
-  Quaternion omega_up;
-  omega_up.x = sin(_thetaup) * up.x;
-  omega_up.y = sin(_thetaup) * up.y;
-  omega_up.z = sin(_thetaup) * up.z;
-  omega_up.w = cos(_thetaup);
-  normalize(omega_up);
-  Quaternion omega_right;
-  omega_right.x = sin(_thetaright) * right.x;
-  omega_right.y = sin(_thetaright) * right.y;
-  omega_right.z = sin(_thetaright) * right.z;
-  omega_right.w = cos(_thetaright);
-  normalize(omega_right);
-  Quaternion omega_front;
-  omega_front.x = sin(_thetafront) * front.x;
-  omega_front.y = sin(_thetafront) * front.y;
-  omega_front.z = sin(_thetafront) * front.z;
-  omega_front.w = cos(_thetafront);
-  normalize(omega_front);
-  Quaternion omega;
-  omega = omega_up * omega_right * omega_front;
+  Quaternion omega = turn(_thetaup, up) * turn(_thetaright, right) *
+                     turn(_thetafront, front);
   normalize(omega);
   Quaternion conj = conjugate(omega);
   front = omega * front * conj;
@@ -350,23 +272,6 @@ double length(Quaternion &q)
 
 double length(XYZ &p) { return sqrt(p.x * p.x + p.y * p.y + p.z * p.z); }
 
-void normalize_axe(Quaternion &q)
-{
-  double sina = sin(acos(q.w));
-  double l;
-  if(sina != 0.) {
-    l = (q.x * q.x + q.y * q.y + q.z * q.z) / (sina * sina);
-    l = sqrt(l);
-  }
-  else {
-    l = 0.;
-  }
-  if(l != 0.) {
-    q.x /= l;
-    q.y /= l;
-    q.z /= l;
-  }
-}
 void normalize(Quaternion &q)
 {
   double L = length(q);
@@ -393,20 +298,6 @@ void XYZ::set(const double &_x, const double &_y, const double &_z)
   x = _x;
   y = _y;
   z = _z;
-}
-
-void rotate(const Quaternion &omega, XYZ axe)
-{
-  XYZ new_axe;
-  Quaternion qaxe, new_qaxe;
-  qaxe.x = axe.x;
-  qaxe.y = axe.y;
-  qaxe.z = axe.z;
-  qaxe.w = 0.;
-  new_qaxe = mult(mult(omega, qaxe), conjugate(omega));
-  axe.x = new_qaxe.x;
-  axe.y = new_qaxe.y;
-  axe.z = new_qaxe.z;
 }
 
 XYZ operator*(const double &a, const XYZ &T)

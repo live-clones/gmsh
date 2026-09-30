@@ -81,7 +81,7 @@ Physical Volume(101) = {1, 2, out[1]};
 
 Geometry.PointNumbers = 1;
 Geometry.Color.Points = Orange;
-General.Color.Text = White;
+General.Color.Text = Blue;
 Mesh.Color.Points = {255, 0, 0};
 
 // Note that all colors can be defined literally or numerically, i.e.

@@ -4,6 +4,8 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <limits>
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "qualityMeasuresJacobian.h"
 #include "FuncSpaceData.h"
 #include "MElement.h"
@@ -19,6 +21,9 @@
 static const double cTri = 2 / std::sqrt(3);
 static const double cTet = std::sqrt(2);
 static const double cPyr = 4 * std::sqrt(2);
+
+// (not pow_int, which the compiler does not always inline)
+static inline double sq(double x) { return x * x; }
 
 static void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
                                        fullMatrix<double> &coeff, int type,
@@ -41,62 +46,57 @@ static void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
 
   if(type != TYPE_PYR) {
     for(int i = 0; i < sz1; i++) {
-      coeff(i, 0) = std::sqrt(pow_int(mat(i, 0), 2) + pow_int(mat(i, 1), 2) +
-                              pow_int(mat(i, 2), 2));
-      coeff(i, 1) = std::sqrt(pow_int(mat(i, 3), 2) + pow_int(mat(i, 4), 2) +
-                              pow_int(mat(i, 5), 2));
+      coeff(i, 0) = std::sqrt(sq(mat(i, 0)) + sq(mat(i, 1)) + sq(mat(i, 2)));
+      coeff(i, 1) = std::sqrt(sq(mat(i, 3)) + sq(mat(i, 4)) + sq(mat(i, 5)));
     }
     if(type == TYPE_TRI) {
       for(int i = 0; i < sz1; i++) {
-        coeff(i, 2) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
-                                pow_int(mat(i, 4) - mat(i, 1), 2) +
-                                pow_int(mat(i, 5) - mat(i, 2), 2));
+        coeff(i, 2) =
+          std::sqrt(sq(mat(i, 3) - mat(i, 0)) + sq(mat(i, 4) - mat(i, 1)) +
+                    sq(mat(i, 5) - mat(i, 2)));
       }
     }
     else if(type != TYPE_QUA) { // if 3D
       for(int i = 0; i < sz1; i++) {
-        coeff(i, 2) = std::sqrt(pow_int(mat(i, 6), 2) + pow_int(mat(i, 7), 2) +
-                                pow_int(mat(i, 8), 2));
+        coeff(i, 2) = std::sqrt(sq(mat(i, 6)) + sq(mat(i, 7)) + sq(mat(i, 8)));
       }
     }
     if(type == TYPE_TET || type == TYPE_PRI) {
       for(int i = 0; i < sz1; i++) {
-        coeff(i, 3) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
-                                pow_int(mat(i, 4) - mat(i, 1), 2) +
-                                pow_int(mat(i, 5) - mat(i, 2), 2));
+        coeff(i, 3) =
+          std::sqrt(sq(mat(i, 3) - mat(i, 0)) + sq(mat(i, 4) - mat(i, 1)) +
+                    sq(mat(i, 5) - mat(i, 2)));
       }
     }
     if(type == TYPE_TET) {
       for(int i = 0; i < sz1; i++) {
-        coeff(i, 4) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0), 2) +
-                                pow_int(mat(i, 7) - mat(i, 1), 2) +
-                                pow_int(mat(i, 8) - mat(i, 2), 2));
-        coeff(i, 5) = std::sqrt(pow_int(mat(i, 6) - mat(i, 3), 2) +
-                                pow_int(mat(i, 7) - mat(i, 4), 2) +
-                                pow_int(mat(i, 8) - mat(i, 5), 2));
+        coeff(i, 4) =
+          std::sqrt(sq(mat(i, 6) - mat(i, 0)) + sq(mat(i, 7) - mat(i, 1)) +
+                    sq(mat(i, 8) - mat(i, 2)));
+        coeff(i, 5) =
+          std::sqrt(sq(mat(i, 6) - mat(i, 3)) + sq(mat(i, 7) - mat(i, 4)) +
+                    sq(mat(i, 8) - mat(i, 5)));
       }
     }
   }
   else {
     for(int i = 0; i < sz1; i++) {
       coeff(i, 0) =
-        std::sqrt(pow_int(2 * mat(i, 0), 2) + pow_int(2 * mat(i, 1), 2) +
-                  pow_int(2 * mat(i, 2), 2));
+        std::sqrt(sq(2 * mat(i, 0)) + sq(2 * mat(i, 1)) + sq(2 * mat(i, 2)));
       coeff(i, 1) =
-        std::sqrt(pow_int(2 * mat(i, 3), 2) + pow_int(2 * mat(i, 4), 2) +
-                  pow_int(2 * mat(i, 5), 2));
-      coeff(i, 2) = std::sqrt(pow_int(mat(i, 6) + mat(i, 0) + mat(i, 3), 2) +
-                              pow_int(mat(i, 7) + mat(i, 1) + mat(i, 4), 2) +
-                              pow_int(mat(i, 8) + mat(i, 2) + mat(i, 5), 2));
-      coeff(i, 3) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0) + mat(i, 3), 2) +
-                              pow_int(mat(i, 7) - mat(i, 1) + mat(i, 4), 2) +
-                              pow_int(mat(i, 8) - mat(i, 2) + mat(i, 5), 2));
-      coeff(i, 4) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0) - mat(i, 3), 2) +
-                              pow_int(mat(i, 7) - mat(i, 1) - mat(i, 4), 2) +
-                              pow_int(mat(i, 8) - mat(i, 2) - mat(i, 5), 2));
-      coeff(i, 5) = std::sqrt(pow_int(mat(i, 6) + mat(i, 0) - mat(i, 3), 2) +
-                              pow_int(mat(i, 7) + mat(i, 1) - mat(i, 4), 2) +
-                              pow_int(mat(i, 8) + mat(i, 2) - mat(i, 5), 2));
+        std::sqrt(sq(2 * mat(i, 3)) + sq(2 * mat(i, 4)) + sq(2 * mat(i, 5)));
+      coeff(i, 2) = std::sqrt(sq(mat(i, 6) + mat(i, 0) + mat(i, 3)) +
+                              sq(mat(i, 7) + mat(i, 1) + mat(i, 4)) +
+                              sq(mat(i, 8) + mat(i, 2) + mat(i, 5)));
+      coeff(i, 3) = std::sqrt(sq(mat(i, 6) - mat(i, 0) + mat(i, 3)) +
+                              sq(mat(i, 7) - mat(i, 1) + mat(i, 4)) +
+                              sq(mat(i, 8) - mat(i, 2) + mat(i, 5)));
+      coeff(i, 4) = std::sqrt(sq(mat(i, 6) - mat(i, 0) - mat(i, 3)) +
+                              sq(mat(i, 7) - mat(i, 1) - mat(i, 4)) +
+                              sq(mat(i, 8) - mat(i, 2) - mat(i, 5)));
+      coeff(i, 5) = std::sqrt(sq(mat(i, 6) + mat(i, 0) - mat(i, 3)) +
+                              sq(mat(i, 7) + mat(i, 1) - mat(i, 4)) +
+                              sq(mat(i, 8) + mat(i, 2) - mat(i, 5)));
     }
   }
 }
@@ -242,6 +242,30 @@ namespace jacobianBasedQuality {
   void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
                                  const fullMatrix<double> *normals, bool debug)
   {
+    // polytopes: the extrema over their sub-simplices
+    if(el->getType() == TYPE_POLYG || el->getType() == TYPE_POLYH) {
+      min = 1e300;
+      max = -1e300;
+      int n = (el->getType() == TYPE_POLYG) ?
+                static_cast<MPolygon *>(el)->getNumTriangles() :
+                static_cast<MPolyhedron *>(el)->getNumTetrahedra();
+      for(int i = 0; i < n; i++) {
+        double a, b;
+        if(el->getType() == TYPE_POLYG) {
+          MTriangle t = static_cast<MPolygon *>(el)->getTriangle(i);
+          minMaxJacobianDeterminant(&t, a, b, normals, debug);
+        }
+        else {
+          MTetrahedron t = static_cast<MPolyhedron *>(el)->getTetrahedron(i);
+          minMaxJacobianDeterminant(&t, a, b, normals, debug);
+        }
+        min = std::min(min, a);
+        max = std::max(max, b);
+      }
+      if(min > max) min = max = 0.;
+      return;
+    }
+
     // Get Jacobian basis
     const JacobianBasis *jfs = el->getJacobianFuncSpace();
     if(!jfs) {
@@ -280,6 +304,25 @@ namespace jacobianBasedQuality {
   double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk,
                        const fullMatrix<double> *normals, bool debug)
   {
+    // polytopes: the worst of their sub-simplices
+    if(el->getType() == TYPE_POLYG || el->getType() == TYPE_POLYH) {
+      double m = 1e300;
+      int n = (el->getType() == TYPE_POLYG) ?
+                static_cast<MPolygon *>(el)->getNumTriangles() :
+                static_cast<MPolyhedron *>(el)->getNumTetrahedra();
+      for(int i = 0; i < n; i++) {
+        if(el->getType() == TYPE_POLYG) {
+          MTriangle t = static_cast<MPolygon *>(el)->getTriangle(i);
+          m = std::min(m, minIGEMeasure(&t, knownValid, reversedOk, normals, debug));
+        }
+        else {
+          MTetrahedron t = static_cast<MPolyhedron *>(el)->getTetrahedron(i);
+          m = std::min(m, minIGEMeasure(&t, knownValid, reversedOk, normals, debug));
+        }
+      }
+      return n ? m : 0.;
+    }
+
     if(!knownValid) {
       // Computation of the measure should never be performed to invalid
       // elements (for which the measure is 0).
@@ -326,6 +369,25 @@ namespace jacobianBasedQuality {
   double minICNMeasure(MElement *el, bool knownValid, bool reversedOk,
                        const fullMatrix<double> *normals, bool debug)
   {
+    // polytopes: the worst of their sub-simplices
+    if(el->getType() == TYPE_POLYG || el->getType() == TYPE_POLYH) {
+      double m = 1e300;
+      int n = (el->getType() == TYPE_POLYG) ?
+                static_cast<MPolygon *>(el)->getNumTriangles() :
+                static_cast<MPolyhedron *>(el)->getNumTetrahedra();
+      for(int i = 0; i < n; i++) {
+        if(el->getType() == TYPE_POLYG) {
+          MTriangle t = static_cast<MPolygon *>(el)->getTriangle(i);
+          m = std::min(m, minICNMeasure(&t, knownValid, reversedOk, normals, debug));
+        }
+        else {
+          MTetrahedron t = static_cast<MPolyhedron *>(el)->getTetrahedron(i);
+          m = std::min(m, minICNMeasure(&t, knownValid, reversedOk, normals, debug));
+        }
+      }
+      return n ? m : 0.;
+    }
+
     if(!knownValid) {
       // Computation of the measure should never
       // be performed to invalid elements (for which the measure is 0).

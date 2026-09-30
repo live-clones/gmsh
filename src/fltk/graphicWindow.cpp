@@ -144,6 +144,7 @@ static const char *input_formats =
   "Mesh - Plot3D Structured Mesh\t*.p3d\n"
   "Mesh - STL Surface\t*.stl\n"
   "Mesh - VTK\t*.vtk\n"
+  "Mesh - VTK XML Unstructured Grid\t*.{vtu,pvtu,pvd}\n"
   "Mesh - VRML Surface\t*.{wrl,vrml}\n"
   "Mesh - PLY2 Surface\t*.ply2\n"
   "Post-processing - Gmsh POS\t*.pos\n"
@@ -338,6 +339,10 @@ static int _save_vtk(const char *name)
 {
   return genericMeshFileDialog(name, "VTK Options", FORMAT_VTK, true, false);
 }
+static int _save_vtu(const char *name)
+{
+  return vtuFileDialog(name);
+}
 static int _save_tochnog(const char *name)
 {
   return genericMeshFileDialog(name, "Tochnog Options", FORMAT_TOCHNOG, true,
@@ -371,7 +376,7 @@ static int _save_su2(const char *name)
 }
 static int _save_med(const char *name)
 {
-  return genericMeshFileDialog(name, "MED Options", FORMAT_MED, false, false);
+  return medFileDialog(name);
 }
 static int _save_mesh(const char *name)
 {
@@ -426,7 +431,14 @@ static int _save_jpeg(const char *name)
 {
   return genericBitmapFileDialog(name, "JPEG Options", FORMAT_JPEG);
 }
-static int _save_mpeg(const char *name) { return mpegFileDialog(name); }
+static int _save_mpeg(const char *name)
+{
+  return mpegFileDialog(name, FORMAT_MPEG);
+}
+static int _save_mp4(const char *name)
+{
+  return mpegFileDialog(name, FORMAT_MP4);
+}
 static int _save_tex(const char *name) { return latexFileDialog(name); }
 static int _save_pdf(const char *name)
 {
@@ -461,17 +473,13 @@ static int _save_yuv(const char *name)
   return genericBitmapFileDialog(name, "YUV Options", FORMAT_YUV);
 }
 static int _save_view_pos(const char *name) { return posFileDialog(name); }
-static int _save_view_adapt_pvtu(const char *name)
-{
-  return pvtuAdaptFileDialog(name);
-}
 static int _save_view_med(const char *name)
 {
-  return genericViewFileDialog(name, "MED Options", 6);
+  return genericViewFileDialog(name, "MED Options", PView::MED);
 }
 static int _save_view_txt(const char *name)
 {
-  return genericViewFileDialog(name, "TXT Options", 4);
+  return genericViewFileDialog(name, "TXT Options", PView::TXT);
 }
 static int _save_mesh_x3d(const char *name)
 {
@@ -495,7 +503,7 @@ static int _save_auto(const char *name)
   case FORMAT_MSH: return _save_msh(name);
   case FORMAT_POS: return _save_view_pos(name);
   case FORMAT_X3D: return _save_x3d(name);
-  case FORMAT_PVTU: return _save_view_adapt_pvtu(name);
+  case FORMAT_PVTU: return _save_vtu(name);
   case FORMAT_TXT: return _save_view_txt(name);
   case FORMAT_OPT: return _save_options(name);
   case FORMAT_VIS: return _save_visibility(name);
@@ -507,6 +515,7 @@ static int _save_auto(const char *name)
   case FORMAT_CGNS: return _save_cgns(name);
   case FORMAT_UNV: return _save_unv(name);
   case FORMAT_VTK: return _save_vtk(name);
+  case FORMAT_VTU: return _save_vtu(name);
   case FORMAT_TOCHNOG: return _save_tochnog(name);
   case FORMAT_MED: return _save_med(name);
   case FORMAT_RMED: return _save_view_med(name);
@@ -532,6 +541,7 @@ static int _save_auto(const char *name)
   case FORMAT_GIF: return _save_gif(name);
   case FORMAT_JPEG: return _save_jpeg(name);
   case FORMAT_MPEG: return _save_mpeg(name);
+  case FORMAT_MP4: return _save_mp4(name);
   case FORMAT_TEX: return _save_tex(name);
   case FORMAT_PDF: return _save_pdf(name);
   case FORMAT_PNG: return _save_png(name);
@@ -595,6 +605,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Mesh - STL Surface\t*.stl", _save_stl},
     {"Mesh - VRML Surface\t*.wrl", _save_vrml},
     {"Mesh - VTK\t*.vtk", _save_vtk},
+    {"Mesh - VTK XML Unstructured Grid\t*.vtu", _save_vtu},
     {"Mesh - Tochnog\t*.dat", _save_tochnog},
     {"Mesh - PLY2 Surface\t*.ply2", _save_ply2},
     {"Mesh - SU2\t*.su2", _save_su2},
@@ -607,7 +618,6 @@ static void file_export_cb(Fl_Widget *w, void *data)
 #endif
     {"Post-processing - Generic TXT\t*.txt", _save_view_txt},
     {"Post-processing - Mesh Statistics\t*.pos", _save_mesh_stat},
-    {"Post-processing - Adapted data\t*.pvtu", _save_view_adapt_pvtu},
     {"Image - Encapsulated PostScript\t*.eps", _save_eps},
     {"Image - GIF\t*.gif", _save_gif},
 #if defined(HAVE_LIBJPEG)
@@ -626,6 +636,9 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Image - YUV\t*.yuv", _save_yuv},
 #if defined(HAVE_MPEG_ENCODE)
     {"Movie - MPEG\t*.mpg", _save_mpeg},
+#endif
+#if defined(HAVE_FFMPEG)
+    {"Movie - MP4\t*.mp4", _save_mp4},
 #endif
   };
   int nbformats = sizeof(formats) / sizeof(formats[0]);
@@ -2251,7 +2264,7 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
   while(1) {
     if(!FlGui::available()) return;
 
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
     drawContext::global()->draw();
 
     if(ele.size() || ent.size())
@@ -2358,7 +2371,7 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
     }
   }
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
   FlGui::instance()->updateStatistics();
@@ -2373,48 +2386,6 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
 static void mesh_reverse_parts_cb(Fl_Widget *w, void *data)
 {
   mesh_modify_parts(w, data, "reverse");
-}
-
-static void mesh_inspect_cb(Fl_Widget *w, void *data)
-{
-  CTX::instance()->pickElements = 1;
-  CTX::instance()->mesh.changed = ENT_ALL;
-  drawContext::global()->draw();
-
-  while(1) {
-    if(!FlGui::available()) return;
-
-    Msg::StatusGl("Select element\n[Press 'q' to abort]");
-    char ib = FlGui::instance()->selectEntity(ENT_ALL);
-    if(!FlGui::available()) return;
-    if(ib == 'l') {
-      if(FlGui::instance()->selectedElements.size()) {
-        MElement *ele = FlGui::instance()->selectedElements[0];
-        GModel::current()->setSelection(0);
-        ele->setVisibility(2);
-        CTX::instance()->mesh.changed = ENT_ALL;
-        drawContext::global()->draw();
-        std::vector<std::string> info =
-          SplitString(ele->getInfoString(true), '\n');
-        for(std::size_t i = 0; i < info.size(); i++)
-          Msg::Direct("%s", info[i].c_str());
-        if(CTX::instance()->tooltips) {
-          std::string str;
-          for(std::size_t i = 0; i < info.size(); i++) str += info[i] + "\n";
-          FlGui::instance()->getCurrentOpenglWindow()->drawTooltip(str);
-        }
-      }
-    }
-    if(ib == 'q') {
-      GModel::current()->setSelection(0);
-      break;
-    }
-  }
-
-  CTX::instance()->pickElements = 0;
-  CTX::instance()->mesh.changed = ENT_ALL;
-  drawContext::global()->draw();
-  Msg::StatusGl("");
 }
 
 static void mesh_degree_cb(Fl_Widget *w, void *data)
@@ -2514,7 +2485,7 @@ static void mesh_unpartition_cb(Fl_Widget *w, void *data)
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 0.);
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 1.);
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
     FlGui::instance()->resetVisibility();
     drawContext::global()->draw();
   }
@@ -2528,7 +2499,7 @@ static void mesh_convert_old_partitioning_cb(Fl_Widget *w, void *data)
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 0.);
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 1.);
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
     drawContext::global()->draw();
   }
 }
@@ -3159,6 +3130,12 @@ void quick_access_cb(Fl_Widget *w, void *data)
     status_xyz1p_cb(nullptr, (void *)"1:1");
     status_xyz1p_cb(nullptr, (void *)"z");
   }
+  else if(what == "measure") {
+    status_measure_cb(nullptr, nullptr);
+  }
+  else if(what == "query") {
+    status_query_cb(nullptr, nullptr);
+  }
   else if(what == "select_center") {
     opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
     general_options_ok_cb(nullptr, (void *)"rotation_center");
@@ -3224,25 +3201,25 @@ void quick_access_cb(Fl_Widget *w, void *data)
   else if(what == "mesh_size")
     numberOrStringOptionChooser("Mesh", 0, "MeshSizeFactor", true, "Factor",
                                 true, 0.01, 100, 0.01);
-  else if(what == "geometry_transparency") {
-    transparencyChooser("Geometry Transparency", "Geometry", 0, "Transparency");
+  else if(what == "geometry_opacity") {
+    opacityChooser("Geometry Opacity", "Geometry", 0, "Opacity");
   }
-  else if(what == "mesh_transparency") {
-    transparencyChooser("Mesh Transparency", "Mesh", 0, "Transparency");
+  else if(what == "mesh_opacity") {
+    opacityChooser("Mesh Opacity", "Mesh", 0, "Opacity");
   }
-  else if(what == "view_transparency") {
+  else if(what == "view_opacity") {
     double val = 1.;
     for(std::size_t i = 0; i < PView::list.size(); i++) {
       if(opt_view_visible(i, GMSH_GET, 0)) {
-        if(transparencyChooser("View Transparency", "View", i, "Transparency")) {
-          val = opt_view_transparency(i, GMSH_GET, 0);
+        if(opacityChooser("View Opacity", "View", i, "Opacity")) {
+          val = opt_view_opacity(i, GMSH_GET, 0);
           break;
         }
       }
     }
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_transparency(i, GMSH_SET | GMSH_GUI, val);
+        opt_view_opacity(i, GMSH_SET | GMSH_GUI, val);
   }
   else if(what == "view_element_outlines") {
     int set = 0;
@@ -3416,10 +3393,269 @@ static void model_switch_cb(Fl_Widget *w, void *data)
   for(std::size_t i = 0; i < GModel::list.size(); i++)
     GModel::list[i]->setVisibility(0);
   GModel::current()->setVisibility(1);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   Msg::SetWindowTitle(GModel::current()->getFileName());
   FlGui::instance()->resetVisibility();
   drawContext::global()->draw();
+}
+
+// Query and measure both wait for a click: starting one stops the other,
+// which is only over once its loop has returned, so the one taking over is
+// started from the event loop rather than from here.
+static int _pendingMode = 0; // 1: query, 2: measure
+
+static void _startPendingMode(void *)
+{
+  int what = _pendingMode;
+  _pendingMode = 0;
+  if(what == 1) status_query_cb(nullptr, nullptr);
+  else if(what == 2) status_measure_cb(nullptr, nullptr);
+}
+
+// Query mode: every click says what the model holds where it hit - the
+// entity, the mesh element and the node there, and the value of every visible
+// view. A click replaces what the queries before it left on the picture, a
+// Ctrl+click adds to it. It stays on until it is asked to stop (the button
+// again or 'q'), as the first query of a large mesh or view builds a search
+// structure that the ones after it reuse.
+static bool _queryMode = false;
+
+bool queryMode() { return _queryMode; }
+
+static void setQueryButtons(bool on, bool measure = false)
+{
+  if(!FlGui::available()) return;
+  // in the colour of what a query leaves on the picture, so that the button
+  // and the note it sticks there are read as one thing
+  CTX *c = CTX::instance();
+  Fl_Color col = fl_rgb_color((uchar)c->unpackRed(c->color.query),
+                              (uchar)c->unpackGreen(c->color.query),
+                              (uchar)c->unpackBlue(c->color.query));
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
+    Fl_Button *b = measure ?
+                     FlGui::instance()->graph[i]->getMeasureButton() :
+                     FlGui::instance()->graph[i]->getQueryButton();
+    b->color(on ? col : FL_BACKGROUND_COLOR);
+    b->redraw();
+  }
+}
+
+void status_query_cb(Fl_Widget *w, void *data)
+{
+  if(!FlGui::available()) return;
+
+  if(_queryMode) { // asked to stop while a query is waiting for a click
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+        FlGui::instance()->graph[i]->gl[j]->quitSelection = 1;
+    return;
+  }
+  if(measureMode()) { // stop the measurement, and take over when it is over
+    _pendingMode = 1;
+    status_measure_cb(nullptr, nullptr);
+    return;
+  }
+
+  _queryMode = true;
+  setQueryButtons(true);
+  int old = CTX::instance()->pickElements;
+  CTX::instance()->pickElements = 1;
+  // a query is a pick: it needs the mouse selection the "S" button switches
+  if(!CTX::instance()->mouseSelection)
+    opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
+
+  while(1) {
+    if(!FlGui::available()) break;
+    Msg::StatusGl("Click to query the model, Ctrl+click to add a query\n"
+                  "[Press 'q' to abort]");
+    char ib = FlGui::instance()->selectEntity(ENT_ALL);
+    if(!FlGui::available()) break;
+    if(ib == 'q') break;
+    if(ib != 'l') continue;
+
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    if(!gl) break;
+    double xyz[3];
+    if(!gl->getDrawContext()->pickPoint(xyz)) continue;
+
+    GEntity *entity = nullptr;
+    if(FlGui::instance()->selectedVertices.size())
+      entity = FlGui::instance()->selectedVertices[0];
+    else if(FlGui::instance()->selectedEdges.size())
+      entity = FlGui::instance()->selectedEdges[0];
+    else if(FlGui::instance()->selectedFaces.size())
+      entity = FlGui::instance()->selectedFaces[0];
+    else if(FlGui::instance()->selectedRegions.size())
+      entity = FlGui::instance()->selectedRegions[0];
+    MElement *element = FlGui::instance()->selectedElements.size() ?
+                          FlGui::instance()->selectedElements[0] :
+                          nullptr;
+    // a pick that found a mesh element returns it instead of the entity it
+    // belongs to, which the query names as well
+    if(!entity) entity = gl->getDrawContext()->pickEntity();
+    PView *view = FlGui::instance()->selectedViews.size() ?
+                    FlGui::instance()->selectedViews[0] :
+                    nullptr;
+
+    // A view drawn as glyphs hides the model behind them: the arrow clicked
+    // on hangs off the data it stands for, so the query asks about the point
+    // of the model under it, where the views can be interpolated, and keeps
+    // the point on the glyph only when there is nothing behind it.
+    if(view) {
+      std::vector<GVertex *> v; std::vector<GEdge *> e;
+      std::vector<GFace *> f; std::vector<GRegion *> r;
+      std::vector<MElement *> el; std::vector<SPoint2> p;
+      std::vector<PView *> vw;
+      double behind[3];
+      int at[4];
+      gl->lastSelection(at); // where the click looked, not where the mouse is
+      double px = gl->getDrawContext()->pixel_equiv_x / gl->getDrawContext()->s[0];
+      if(gl->pick(ENT_ALL, true, false, at[0], at[1], at[2], at[3], v, e, f, r,
+                  el, p, vw) &&
+         gl->getDrawContext()->pickPoint(behind)) {
+        GEntity *under = v.size() ? (GEntity *)v[0] :
+                         e.size() ? (GEntity *)e[0] :
+                         f.size() ? (GEntity *)f[0] :
+                         r.size() ? (GEntity *)r[0] :
+                                    nullptr;
+        if(queryBehind(view, xyz, behind, px)) {
+          for(int k = 0; k < 3; k++) xyz[k] = behind[k];
+          entity = under;
+          element = el.size() ? el[0] : nullptr;
+        }
+        else if(!entity) {
+          // the glyph is over something else than what it stands for: name
+          // it, as the query is about a point of the view itself
+          entity = under;
+        }
+      }
+    }
+
+    drawContext *ctx = gl->getDrawContext();
+    double pixel = ctx->pixel_equiv_x / ctx->s[0];
+    // what was hit may hold no element there (a point or a curve of the
+    // geometry, drawn over the mesh and picked before it), or the point read
+    // back may be off its surface: the element is then the one of the mesh
+    // drawn under the point
+    if(!element) element = queryElement(xyz, pixel);
+
+    std::vector<std::string> info =
+      queryPoint(xyz, entity, element, view, pixel);
+    // the messages keep everything, the box over the picture the lines that
+    // do not begin with a space, i.e. all but the detail of an element
+    std::string text;
+    for(std::size_t i = 0; i < info.size(); i++) {
+      if(info[i].size()) Msg::Direct("%s", info[i].c_str());
+      if(info[i].size() && info[i][0] == ' ') continue;
+      text += (text.size() ? "\n" : "") + info[i];
+    }
+    GModel::current()->setSelection(0);
+    bool add = gl->addQuery();
+    if(!add) ctx->clearMarks();
+    ctx->addMark(xyz);
+    drawContext::global()->draw();
+    if(CTX::instance()->tooltips) gl->pinTooltip(text, xyz, add);
+  }
+
+  CTX::instance()->pickElements = old;
+  _queryMode = false;
+  setQueryButtons(false);
+  if(FlGui::available()) {
+    GModel::current()->setSelection(0);
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++) {
+        FlGui::instance()->graph[i]->gl[j]->getDrawContext()->clearMarks();
+        FlGui::instance()->graph[i]->gl[j]->pinTooltip("");
+      }
+    drawContext::global()->draw();
+    Msg::StatusGl("");
+  }
+  if(_pendingMode) Fl::add_timeout(0., _startPendingMode);
+}
+
+// Measure mode: two clicks on the model, and the distance between the points
+// they hit is drawn on the picture and printed. It stays on until it is asked
+// to stop (the button again, Escape, or 'q'), so that distances can be taken
+// one after the other.
+static bool _measureMode = false;
+
+bool measureMode() { return _measureMode; }
+
+void status_measure_cb(Fl_Widget *w, void *data)
+{
+  if(!FlGui::available()) return;
+
+  if(_measureMode) { // asked to stop while a measurement waits for a click
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+        FlGui::instance()->graph[i]->gl[j]->quitSelection = 1;
+    return;
+  }
+  if(queryMode()) { // stop the query, and take over when it is over
+    _pendingMode = 2;
+    status_query_cb(nullptr, nullptr);
+    return;
+  }
+
+  _measureMode = true;
+  setQueryButtons(true, true);
+  // a measurement is a pick: it needs the mouse selection the "S" button
+  // switches, but not the mesh elements, only where the click hits
+  if(!CTX::instance()->mouseSelection)
+    opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
+
+  double first[3] = {0., 0., 0.};
+  bool half = false; // the first point is taken, the second one is awaited
+
+  while(1) {
+    if(!FlGui::available()) break;
+    Msg::StatusGl(half ? "Click the second point\n[Press 'q' to abort]" :
+                         "Click the first point\n[Press 'q' to abort]");
+    char ib = FlGui::instance()->selectEntity(ENT_ALL);
+    if(!FlGui::available()) break;
+    if(ib == 'q') break;
+    if(ib != 'l') continue;
+
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    if(!gl) break;
+    drawContext *ctx = gl->getDrawContext();
+    double xyz[3];
+    if(!ctx->pickPoint(xyz)) continue;
+    GModel::current()->setSelection(0);
+
+    if(!half) { // start a new measurement
+      ctx->clearMarks();
+      ctx->addMark(xyz);
+      for(int k = 0; k < 3; k++) first[k] = xyz[k];
+      half = true;
+      gl->pinTooltip("");
+    }
+    else {
+      ctx->addMark(xyz);
+      ctx->setSegment(first, xyz);
+      half = false;
+      // the messages keep everything; the length stays on the picture, in a
+      // box over the middle of the line (see drawContext::drawMarks)
+      std::vector<std::string> info = measurePoints(first, xyz);
+      for(std::size_t i = 0; i < info.size(); i++)
+        if(info[i].size()) Msg::Direct("%s", info[i].c_str());
+    }
+    drawContext::global()->draw();
+  }
+
+  _measureMode = false;
+  setQueryButtons(false, true);
+  if(FlGui::available()) {
+    GModel::current()->setSelection(0);
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++) {
+        FlGui::instance()->graph[i]->gl[j]->getDrawContext()->clearMarks();
+        FlGui::instance()->graph[i]->gl[j]->pinTooltip("");
+      }
+    drawContext::global()->draw();
+    Msg::StatusGl("");
+  }
+  if(_pendingMode) Fl::add_timeout(0., _startPendingMode);
 }
 
 void status_options_cb(Fl_Widget *w, void *data)
@@ -3469,6 +3705,8 @@ void status_options_cb(Fl_Widget *w, void *data)
     static Fl_Menu_Item menu[] = {
       { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport" },
       { "Select rotation center", 0, quick_access_cb, (void*)"select_center" },
+      { "Query", 0, quick_access_cb, (void*)"query" },
+      { "Measure", 0, quick_access_cb, (void*)"measure" },
       { "Split window", 0, nullptr, nullptr, FL_SUBMENU | FL_MENU_DIVIDER },
          { "Horizontally", 0, quick_access_cb, (void*)"split_hor"},
          { "Vertically", 0, quick_access_cb, (void*)"split_ver"},
@@ -3476,7 +3714,7 @@ void status_options_cb(Fl_Widget *w, void *data)
          { nullptr },
       { "Axes", FL_ALT + 'a', quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
-      { "Mouse hover over meshes", 0, quick_access_cb, (void*)"hover_meshes",
+      { "Hover mesh and views", 0, quick_access_cb, (void*)"hover_meshes",
         FL_MENU_TOGGLE },
       { "Projection mode", 0, nullptr, nullptr, FL_SUBMENU },
          { "Orthographic", FL_ALT + 'o', quick_access_cb, (void*)"orthographic"},
@@ -3494,8 +3732,8 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Volumes", FL_ALT + 'v', quick_access_cb, (void*)"geometry_volumes",
            FL_MENU_TOGGLE },
          { nullptr },
-      { "Geometry transparency", 0, quick_access_cb,
-        (void*)"geometry_transparency" },
+      { "Geometry opacity", 0, quick_access_cb,
+        (void*)"geometry_opacity" },
       { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "Mesh visibility", 0, nullptr, nullptr, FL_SUBMENU },
@@ -3513,7 +3751,7 @@ void status_options_cb(Fl_Widget *w, void *data)
            (void*)"mesh_volume_faces", FL_MENU_TOGGLE },
          { nullptr },
       { "Toggle mesh display", FL_ALT + 'm', quick_access_cb, (void*)"mesh_toggle" },
-      { "Mesh transparency", 0, quick_access_cb, (void*)"mesh_transparency" },
+      { "Mesh opacity", 0, quick_access_cb, (void*)"mesh_opacity" },
       { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
       { "All mesh options...", 0, quick_access_cb, (void*)"mesh",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
@@ -3539,13 +3777,13 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
          { "Node", 0, quick_access_cb, (void*)"view_glyph_node"},
          { nullptr },
-      { "View transparency", 0, quick_access_cb, (void*)"view_transparency" },
+      { "View opacity", 0, quick_access_cb, (void*)"view_opacity" },
       { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
       { nullptr }
     };
     // clang-format on
     // one item was added to each of the geometry, mesh and view sections
-    const int gen = 7, geo = 14, msh = 22, pos = 34, end = 57;
+    const int gen = 9, geo = 16, msh = 24, pos = 36, end = 59;
     if(opt_general_axes(0, GMSH_GET, 0))
       menu[gen + 0].set();
     else
@@ -3616,9 +3854,7 @@ void status_options_cb(Fl_Widget *w, void *data)
         }
       }
     }
-    // The transparency multipliers are applied by the shader: with the fixed
-    // function pipeline they would do nothing, so they are not offered at all.
-    // This comes after the view entries above, which show() the whole range.
+    // the transparency factors are only applied by the shader pipeline
     if(opt_general_shaders(0, GMSH_GET, 0)) {
       menu[geo + 6].show();
       menu[msh + 9].show();
@@ -3653,7 +3889,7 @@ void status_options_cb(Fl_Widget *w, void *data)
   }
 }
 
-static int stop_anim = 0, view_in_cycle = -1;
+static int stop_anim = 0;
 
 void status_play_manual(int time, int incr, bool redraw)
 {
@@ -3668,41 +3904,7 @@ void status_play_manual(int time, int incr, bool redraw)
   // if we watch some files this is a good time to check for new data
   file_watch_cb(nullptr, nullptr);
 
-  if(time) {
-    for(std::size_t i = 0; i < PView::list.size(); i++) {
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        // skip empty steps
-        int step = (int)opt_view_timestep(i, GMSH_GET, 0) + incr;
-        int numSteps = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
-        for(int j = 0; j < numSteps; j++) {
-          if(PView::list[i]->getData()->hasTimeStep(step))
-            break;
-          else
-            step += incr;
-          if(step < 0) step = numSteps - 1;
-          if(step > numSteps - 1) step = 0;
-        }
-        opt_view_timestep(i, GMSH_SET | GMSH_GUI, step);
-      }
-    }
-  }
-  else { // hide all views except view_in_cycle
-    if(incr == 0) {
-      view_in_cycle = 0;
-      for(int i = 0; i < (int)PView::list.size(); i++)
-        opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
-    }
-    else if(incr > 0) {
-      if((view_in_cycle += incr) >= (int)PView::list.size()) view_in_cycle = 0;
-      for(int i = 0; i < (int)PView::list.size(); i++)
-        opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
-    }
-    else {
-      if((view_in_cycle += incr) < 0) view_in_cycle = PView::list.size() - 1;
-      for(int i = PView::list.size() - 1; i >= 0; i--)
-        opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
-    }
-  }
+  PView::animate(time, incr);
   if(redraw) drawContext::global()->draw();
   busy = false;
 }
@@ -3740,11 +3942,8 @@ static void status_rewind_cb(Fl_Widget *w, void *data)
       opt_view_timestep(i, GMSH_SET | GMSH_GUI, step);
     }
   }
-  else {
-    view_in_cycle = 0;
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      opt_view_visible(i, GMSH_SET | GMSH_GUI, !i);
-  }
+  else
+    PView::animate(false, 0);
   drawContext::global()->draw();
 }
 
@@ -4097,6 +4296,17 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[9]->callback(status_options_cb, (void *)"S");
   _butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
   x += sw;
+  _butt[12] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_query");
+  _butt[12]->callback(status_query_cb);
+  _butt[12]->tooltip("Query the model where you click ('q' to stop)");
+  x += sw;
+  _butt[13] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_measure");
+  _butt[13]->callback(status_measure_cb);
+  _butt[13]->tooltip("Measure the distance between two points you click "
+                     "('q' to stop)");
+  x += sw;
   x += 4;
   _butt[6] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
@@ -4123,7 +4333,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[11]->deactivate();
   x += sw;
 
-  for(int i = 0; i < 12; i++) {
+  for(int i = 0; i < 14; i++) {
     _butt[i]->box(FL_FLAT_BOX);
     _butt[i]->selection_color(FL_WHITE);
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -4814,7 +5024,6 @@ static menuItem static_modules[] = {
    (void *)"surfaces"},
   {"0Modules/Mesh/Delete/Volumes", (Fl_Callback *)mesh_delete_parts_cb,
    (void *)"volumes"},
-  {"0Modules/Mesh/Inspect", (Fl_Callback *)mesh_inspect_cb},
   {"0Modules/Mesh/Save", (Fl_Callback *)mesh_save_cb},
 #endif
 };

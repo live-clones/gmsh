@@ -227,10 +227,6 @@ std::string getMATLABName(int type)
   case MSH_LIN_9: return "LINES9";
   case MSH_LIN_10: return "LINES10";
   case MSH_LIN_11: return "LINES11";
-  case MSH_LIN_B: return "LINESB";
-  case MSH_TRI_B: return "TRIANGLESB";
-  case MSH_POLYG_B: return "POLYG_B";
-  case MSH_LIN_C: return "LINESC";
   case MSH_TET_84: return "TETS84";
   case MSH_TET_120: return "TETS120";
   case MSH_TET_165: return "TETS165";

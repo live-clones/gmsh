@@ -224,7 +224,6 @@ Knots			return tNurbsKnots;
 
 Layers                  return tLayers;
 Length                  return tLength;
-Levelset                return tLevelset;
 LinSpace                return tLinSpace;
 Line                    return tCurve;
 List                    return tList;

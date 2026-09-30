@@ -9,7 +9,6 @@
 %{
   #undef HAVE_DLOPEN
   #include "GmshConfig.h"
-
   #include "GaussIntegration.h"
   #include "JacobianBasis.h"
   #include "fullMatrix.h"

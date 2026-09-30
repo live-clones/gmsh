@@ -116,7 +116,7 @@ static void scriptAddCommand(const std::string &text,
   if(GModel::current()->getOCCInternals())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
   GModel::current()->setName(split[1]);
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 
   FILE *fp = Fopen(fileName.c_str(), "a");
   if(!fp) {

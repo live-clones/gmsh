@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include "MeshSubEntities.h"
 #include "GModel.h"
 #include "discreteVertex.h"
@@ -17,18 +18,15 @@
 #include "MFace.h"
 #include "Context.h"
 
-StringXNumber MeshSubEntitiesOptions_Number[] = {
-  {GMSH_FULLRC, "InputDimension", nullptr, 1., ""},
-  {GMSH_FULLRC, "InputPhysicalGroup", nullptr, 1., ""},
-  {GMSH_FULLRC, "OuputDimension", nullptr, 0., ""},
-  {GMSH_FULLRC, "OuputPhysicalGroup", nullptr, 2000., ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterMeshSubEntitiesPlugin()
+GMSH_MeshSubEntitiesPlugin::GMSH_MeshSubEntitiesPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "InputDimension", nullptr, 1., ""},
+                     {GMSH_FULLRC, "InputPhysicalGroup", nullptr, 1., ""},
+                     {GMSH_FULLRC, "OutputDimension", nullptr, 0., ""},
+                     {GMSH_FULLRC, "OutputPhysicalGroup", nullptr, 2000., ""}})
 {
-  return new GMSH_MeshSubEntitiesPlugin();
-}
+  // their former, misspelled names
+  addOptionAlias("OuputDimension", "OutputDimension");
+  addOptionAlias("OuputPhysicalGroup", "OutputPhysicalGroup");
 }
 
 std::string GMSH_MeshSubEntitiesPlugin::getHelp() const
@@ -40,22 +38,12 @@ std::string GMSH_MeshSubEntitiesPlugin::getHelp() const
          "belonging to `OutputPhysicalGroup'.";
 }
 
-int GMSH_MeshSubEntitiesPlugin::getNbOptions() const
-{
-  return sizeof(MeshSubEntitiesOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_MeshSubEntitiesPlugin::getOption(int iopt)
-{
-  return &MeshSubEntitiesOptions_Number[iopt];
-}
-
 PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
 {
-  int inputdim = (int)MeshSubEntitiesOptions_Number[0].def;
-  int inputphysical = (int)MeshSubEntitiesOptions_Number[1].def;
-  int outputdim = (int)MeshSubEntitiesOptions_Number[2].def;
-  int outphysical = (int)MeshSubEntitiesOptions_Number[3].def;
+  int inputdim = (int)option(0);
+  int inputphysical = (int)option(1);
+  int outputdim = (int)option(2);
+  int outphysical = (int)option(3);
 
   if(inputdim < 0 || inputdim > 3 || outputdim < 0 || outputdim > 3 ||
      outputdim > inputdim) {
@@ -80,69 +68,54 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
       elements.push_back(entities[i]->getMeshElement(j));
 
+  auto addPhysical = [&](GEntity *ge) {
+    auto &p = ge->physicals;
+    if(std::find(p.begin(), p.end(), outphysical) == p.end())
+      p.push_back(outphysical);
+  };
+
   if(outputdim == 0) { // create point elements for mesh vertices
-    std::set<MVertex *> vertices;
-    for(std::size_t i = 0; i < elements.size(); i++) {
-      for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++) {
-        MVertex *v = elements[i]->getVertex(j);
-        vertices.insert(v);
-      }
-    }
-    for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-      MVertex *v = *it;
+    // in the order of their tags, for the tags of the new entities not to
+    // depend on where the nodes are in memory
+    std::set<MVertex *, MVertexPtrLessThan> vertices;
+    for(std::size_t i = 0; i < elements.size(); i++)
+      for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++)
+        vertices.insert(elements[i]->getVertex(j));
+    for(auto v : vertices) {
       GVertex *gv = nullptr;
       if(v->onWhat() && v->onWhat()->dim() == 0) {
         gv = (GVertex *)v->onWhat();
       }
       else {
         gv = new discreteVertex(m, m->getMaxElementaryNumber(0) + 1);
-        v->setEntity(gv);
         m->add(gv);
       }
-      gv->physicals.push_back(outphysical);
+      addPhysical(gv);
       if(gv->points.empty()) gv->points.push_back(new MPoint(v));
     }
+    // move the nodes to the lowest dimensional entity they are used in
     m->pruneMeshVertexAssociations();
   }
   else if(outputdim == 1) { // create line elements for mesh edges
     std::set<MEdge, MEdgeLessThan> edges;
-    for(std::size_t i = 0; i < elements.size(); i++) {
-      for(int j = 0; j < elements[i]->getNumEdges(); j++) {
-        MEdge e = elements[i]->getEdge(j);
-        edges.insert(e);
-      }
-    }
-    for(auto it = edges.begin(); it != edges.end(); ++it) {
-      const MEdge &e = *it;
-      GEdge *ge = nullptr;
-      MVertex *v0 = e.getVertex(0), *v1 = e.getVertex(1);
-      if(v0->onWhat() && v1->onWhat()) {
-        if(v0->onWhat()->dim() == 1 &&
-           ((v1->onWhat()->dim() == 1 && v0->onWhat() == v1->onWhat()) ||
-            v1->onWhat()->dim() == 0))
-          ge = (GEdge *)v0->onWhat();
-        else if(v1->onWhat()->dim() == 1 &&
-                ((v0->onWhat()->dim() == 1 && v0->onWhat() == v1->onWhat()) ||
-                 v0->onWhat()->dim() == 0))
-          ge = (GEdge *)v1->onWhat();
-      }
-      if(!ge) {
-        ge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr,
-                              nullptr);
-        v0->setEntity(ge);
-        v1->setEntity(ge);
-        m->add(ge);
-      }
-      ge->physicals.push_back(outphysical);
-      if(ge->lines.empty()) ge->lines.push_back(new MLine(v0, v1));
-    }
+    for(std::size_t i = 0; i < elements.size(); i++)
+      for(int j = 0; j < elements[i]->getNumEdges(); j++)
+        edges.insert(elements[i]->getEdge(j));
+    // all the lines in one new curve
+    GEdge *ge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr,
+                                 nullptr);
+    m->add(ge);
+    for(auto &e : edges)
+      ge->lines.push_back(new MLine(e.getVertex(0), e.getVertex(1)));
+    addPhysical(ge);
+    m->pruneMeshVertexAssociations();
   }
   else {
     Msg::Error("Plugin(MeshSubEntities) not coded yet for output dim %d",
                outputdim);
   }
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 
   return view;
 }

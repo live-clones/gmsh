@@ -6,19 +6,14 @@
 #include "ExtractElements.h"
 #include "Numeric.h"
 
-StringXNumber ExtractElementsOptions_Number[] = {
-  {GMSH_FULLRC, "MinVal", nullptr, 0., ""},
-  {GMSH_FULLRC, "MaxVal", nullptr, 0., ""},
-  {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
-  {GMSH_FULLRC, "Visible", nullptr, 1., ""},
-  {GMSH_FULLRC, "Dimension", nullptr, -1., ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterExtractElementsPlugin()
+GMSH_ExtractElementsPlugin::GMSH_ExtractElementsPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "MinVal", nullptr, 0., ""},
+                     {GMSH_FULLRC, "MaxVal", nullptr, 0., ""},
+                     {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
+                     {GMSH_FULLRC, "Visible", nullptr, 1., ""},
+                     {GMSH_FULLRC, "Dimension", nullptr, -1., ""},
+                     {GMSH_FULLRC, "View", nullptr, -1., ""}})
 {
-  return new GMSH_ExtractElementsPlugin();
-}
 }
 
 std::string GMSH_ExtractElementsPlugin::getHelp() const
@@ -33,24 +28,14 @@ std::string GMSH_ExtractElementsPlugin::getHelp() const
          "Plugin(ExtractElements) creates one new list-based view.";
 }
 
-int GMSH_ExtractElementsPlugin::getNbOptions() const
-{
-  return sizeof(ExtractElementsOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_ExtractElementsPlugin::getOption(int iopt)
-{
-  return &ExtractElementsOptions_Number[iopt];
-}
-
 PView *GMSH_ExtractElementsPlugin::execute(PView *v)
 {
-  double MinVal = ExtractElementsOptions_Number[0].def;
-  double MaxVal = ExtractElementsOptions_Number[1].def;
-  int thisStep = (int)ExtractElementsOptions_Number[2].def;
-  int visible = (int)ExtractElementsOptions_Number[3].def;
-  int dimension = (int)ExtractElementsOptions_Number[4].def;
-  int iView = (int)ExtractElementsOptions_Number[5].def;
+  double MinVal = option(0);
+  double MaxVal = option(1);
+  int thisStep = (int)option(2);
+  int visible = (int)option(3);
+  int dimension = (int)option(4);
+  int iView = (int)option(5);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -59,9 +44,9 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
 
   int step = (thisStep < 0) ? 0 : thisStep;
   if(thisStep > data1->getNumTimeSteps() - 1) {
-    Msg::Error("Invalid time step (%d) in View[%d]: using first step instead",
+    Msg::Warning("Invalid time step (%d) in View[%d]: using first step instead",
                thisStep, v1->getIndex());
-    step = 0;
+    step = thisStep = 0;
   }
 
   PView *v2 = new PView();
@@ -75,7 +60,8 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
       int dim = data1->getDimension(step, ent, ele);
       if((dimension > 0) && (dim != dimension)) continue;
 
-      int numNodes = data1->getNumNodes(step, ent, ele);
+      int numNodes = getNumCornerNodes(data1, step, ent, ele);
+      if(!numNodes) continue;
       if(checkMinMax) {
         double d = 0.;
         for(int nod = 0; nod < numNodes; nod++) {
@@ -92,6 +78,7 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
       int type = data1->getType(step, ent, ele);
       int numComp = data1->getNumComponents(step, ent, ele);
       std::vector<double> *out = data2->incrementList(numComp, type, numNodes);
+      if(!out) continue;
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       std::vector<double> v(numNodes * numComp);
       for(int nod = 0; nod < numNodes; nod++)
@@ -116,10 +103,10 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
   }
 
   if(thisStep >= 0)
-    data2->Time.push_back(data1->getTime(thisStep));
+    data2->addTime(data1->getTime(thisStep));
   else {
     for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-      data2->Time.push_back(data1->getTime(step));
+      if(data1->hasTimeStep(step)) data2->addTime(data1->getTime(step));
     }
   }
 

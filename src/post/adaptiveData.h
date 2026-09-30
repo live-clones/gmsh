@@ -6,28 +6,14 @@
 #ifndef ADAPTIVE_DATA_H
 #define ADAPTIVE_DATA_H
 
-#include <list>
+#include <array>
+#include <deque>
 #include <set>
 #include <vector>
-#include <cstdlib>
 #include <algorithm>
-#include <sys/stat.h>
-#include <assert.h>
-#include <fstream>
-#include <stdio.h>
 #include <string>
 #include <sstream>
 #include "fullMatrix.h"
-
-#if defined(WIN32)
-typedef unsigned __int8 uint8_t; // Valid for _MSC_VER >= 1300
-typedef unsigned __int64 uint64_t;
-#define PRIu8 "u"
-#define PRIu64 "I64u"
-#else
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-#endif
 
 typedef std::vector<int> vectInt;
 
@@ -35,7 +21,7 @@ class PViewData;
 class PViewDataList;
 class GMSH_PostPlugin;
 
-// For old compilers that do not support yet std::to_string()
+// (used by ParaView's GmshReader plugin)
 template <class T> std::string ToString(const T &val)
 {
   std::stringstream stream;
@@ -43,17 +29,26 @@ template <class T> std::string ToString(const T &val)
   return stream.str();
 }
 
+// Adaptive views. A high-order element is shown through first order
+// elements, obtained by subdividing its reference element recursively and
+// interpolating the coordinates and the values at the points of the
+// subdivision. The subdivision of a reference element is a tree, built once
+// per view and kind of element down to the maximum level (adaptiveElements::
+// init()); for each element of the view the fields are evaluated at all the
+// points of the tree, and an error estimate chooses which elements of the tree
+// are kept (adaptiveElements::adapt()).
+
+// A point of the subdivision of a reference element
 class adaptiveVertex {
 public:
-  float x, y, z; //!< parametric coordinates
-  double X, Y, Z; //!< cartesian coordinates
-  double val, valy, valz; //!< maximal three values
-  double valyx, valyy, valyz;
-  double valzx, valzy, valzz;
+  float x, y, z; // in the reference element (halves of halves: exact)
+  int index; // in adaptiveElements::vertices, and in the interpolation matrices
+  unsigned char onFaces; // the faces of the reference element it is on, a bit each
+  // for the element of the view being adapted, when a plugin looks at it:
+  double X, Y, Z; // in the model
+  double val; // the value (its first component)
 
 public:
-  static adaptiveVertex *add(double x, double y, double z,
-                             std::set<adaptiveVertex> &allVertice);
   bool operator<(const adaptiveVertex &other) const
   {
     if(other.x < x) return true;
@@ -65,310 +60,56 @@ public:
   }
 };
 
-template <class T> class nodMap {
+// What tells one kind of element from another: its reference element, how it
+// is cut in children
+class adaptiveShape {
+public:
+  int type; // TYPE_TRI, ...
+  int numNodes, numEdges, numChildren;
+  double nodes[8][3]; // of the reference element
+  // The points of one subdivision: each is the mean of some nodes of the
+  // element (one node: the node itself, two: the middle of an edge, ...)
+  std::vector<std::vector<int> > points;
+  // the nodes of each child, as indices in points
+  std::vector<std::vector<int> > children;
+  // a child and its node at each of the points
+  std::vector<std::array<int, 2> > where;
+  // the faces of a volume by their nodes, ordered as the drawing code orders
+  // them (the quadrangles first)
+  std::vector<std::vector<int> > faces;
+  // the diagonal the drawing code cuts quadrangles and hexahedra along (-1 if
+  // none): nodes 0 and 2 of the quadrangles, 1 and 7 of the hexahedra
+  int diagonal[2];
+  // first order shape functions, for the views that do not provide theirs
+  void (*shapeFunctions)(double u, double v, double w, fullVector<double> &sf);
+  // the functions a view provides are given by monomials, which are not the
+  // same in a pyramid
+  bool pyramid;
+
+  // (TYPE_PNT, TYPE_LIN, TYPE_TRI, TYPE_QUA, TYPE_TET, TYPE_HEX, TYPE_PRI or
+  // TYPE_PYR)
+  static const adaptiveShape &get(int type);
+};
+
+// An element of the tree of subdivisions
+class adaptiveElement {
+public:
+  const adaptiveShape *shape;
+  bool visible; // kept for the element of the view being adapted?
+  adaptiveVertex *p[8]; // its nodes
+  adaptiveElement *e[10]; // its children (null at the last level)
+  // for each face, the face of the reference element it lies on (-1 if none)
+  signed char onFace[6];
+
+};
+
+class nodMap {
 public:
   std::vector<int> mapping;
 
 public:
   void cleanMapping() { mapping.clear(); }
-  ~nodMap() { cleanMapping(); }
   int getSize() { return (int)mapping.size(); }
-};
-
-class adaptivePoint {
-public:
-  bool visible;
-  adaptiveVertex *p[1];
-  adaptivePoint *e[1];
-  static std::list<adaptivePoint *> all;
-  static std::set<adaptiveVertex> allVertices;
-  static int numNodes, numEdges;
-
-public:
-  adaptivePoint(adaptiveVertex *p1) : visible(false)
-  {
-    p[0] = p1;
-    e[0] = nullptr;
-  }
-  inline double V() const { return p[0]->val; }
-  inline static void GSF(double u, double v, double w, fullVector<double> &sf)
-  {
-    sf(0) = 1;
-  }
-  static void create(int maxlevel);
-  static void recurCreate(adaptivePoint *e, int maxlevel, int level);
-  static void error(double AVG, double tol);
-  static void recurError(adaptivePoint *e, double AVG, double tol);
-};
-
-class adaptiveLine {
-public:
-  bool visible;
-  adaptiveVertex *p[2];
-  adaptiveLine *e[2];
-  static std::list<adaptiveLine *> all;
-  static std::set<adaptiveVertex> allVertices;
-  static int numNodes, numEdges;
-
-public:
-  adaptiveLine(adaptiveVertex *p1, adaptiveVertex *p2) : visible(false)
-  {
-    p[0] = p1;
-    p[1] = p2;
-    e[0] = e[1] = nullptr;
-  }
-  inline double V() const { return (p[0]->val + p[1]->val) / 2.; }
-  inline static void GSF(double u, double v, double w, fullVector<double> &sf)
-  {
-    sf(0) = (1 - u) / 2.;
-    sf(1) = (1 + u) / 2.;
-  }
-  static void create(int maxlevel);
-  static void recurCreate(adaptiveLine *e, int maxlevel, int level);
-  static void error(double AVG, double tol);
-  static void recurError(adaptiveLine *e, double AVG, double tol);
-};
-
-class adaptiveTriangle {
-public:
-  bool visible;
-  adaptiveVertex *p[3];
-  adaptiveTriangle *e[4];
-  static std::list<adaptiveTriangle *> all;
-  static std::set<adaptiveVertex> allVertices;
-  static int numNodes, numEdges;
-
-public:
-  adaptiveTriangle(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3)
-    : visible(false)
-  {
-    p[0] = p1;
-    p[1] = p2;
-    p[2] = p3;
-    e[0] = e[1] = e[2] = e[3] = nullptr;
-  }
-  inline double V() const { return (p[0]->val + p[1]->val + p[2]->val) / 3.; }
-  inline static void GSF(double u, double v, double w, fullVector<double> &sf)
-  {
-    sf(0) = 1. - u - v;
-    sf(1) = u;
-    sf(2) = v;
-  }
-  static void create(int maxlevel);
-  static void recurCreate(adaptiveTriangle *t, int maxlevel, int level);
-  static void error(double AVG, double tol);
-  static void recurError(adaptiveTriangle *t, double AVG, double tol);
-};
-
-class adaptiveQuadrangle {
-public:
-  bool visible;
-  adaptiveVertex *p[4];
-  adaptiveQuadrangle *e[4];
-  static std::list<adaptiveQuadrangle *> all;
-  static std::set<adaptiveVertex> allVertices;
-  static int numNodes, numEdges;
-
-public:
-  adaptiveQuadrangle(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3,
-                     adaptiveVertex *p4)
-    : visible(false)
-  {
-    p[0] = p1;
-    p[1] = p2;
-    p[2] = p3;
-    p[3] = p4;
-    e[0] = e[1] = e[2] = e[3] = nullptr;
-  }
-  inline double V() const
-  {
-    return (p[0]->val + p[1]->val + p[2]->val + p[3]->val) / 4.;
-  }
-  inline static void GSF(double u, double v, double w, fullVector<double> &sf)
-  {
-    sf(0) = 0.25 * (1. - u) * (1. - v);
-    sf(1) = 0.25 * (1. + u) * (1. - v);
-    sf(2) = 0.25 * (1. + u) * (1. + v);
-    sf(3) = 0.25 * (1. - u) * (1. + v);
-  }
-  static void create(int maxlevel);
-  static void recurCreate(adaptiveQuadrangle *q, int maxlevel, int level);
-  static void error(double AVG, double tol);
-  static void recurError(adaptiveQuadrangle *q, double AVG, double tol);
-};
-
-class adaptivePrism {
-public:
-  bool visible;
-  adaptiveVertex *p[6];
-  adaptivePrism *e[8];
-  static std::list<adaptivePrism *> all;
-  static std::set<adaptiveVertex> allVertices;
-  static int numNodes, numEdges;
-
-public:
-  adaptivePrism(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3,
-                adaptiveVertex *p4, adaptiveVertex *p5, adaptiveVertex *p6)
-    : visible(false)
-  {
-    p[0] = p1;
-    p[1] = p2;
-    p[2] = p3;
-    p[3] = p4;
-    p[4] = p5;
-    p[5] = p6;
-    e[0] = e[1] = e[2] = e[3] = nullptr;
-    e[4] = e[5] = e[6] = e[7] = nullptr;
-  }
-  inline double V() const
-  {
-    return (p[0]->val + p[1]->val + p[2]->val + p[3]->val + p[4]->val +
-            p[5]->val) /
-           6.;
-  }
-  inline static void GSF(double u, double v, double w, fullVector<double> &sf)
-  {
-    sf(0) = (1. - u - v) * (1 - w) / 2;
-    sf(1) = u * (1 - w) / 2;
-    sf(2) = v * (1 - w) / 2;
-    sf(3) = (1. - u - v) * (1 + w) / 2;
-    sf(4) = u * (1 + w) / 2;
-    sf(5) = v * (1 + w) / 2;
-  }
-  static void create(int maxlevel);
-  static void recurCreate(adaptivePrism *p, int maxlevel, int level);
-  static void error(double AVG, double tol);
-  static void recurError(adaptivePrism *p, double AVG, double tol);
-};
-
-class adaptiveTetrahedron {
-public:
-  bool visible;
-  adaptiveVertex *p[4];
-  adaptiveTetrahedron *e[8];
-  static std::list<adaptiveTetrahedron *> all;
-  static std::set<adaptiveVertex> allVertices;
-  static int numNodes, numEdges;
-
-public:
-  adaptiveTetrahedron(adaptiveVertex *p1, adaptiveVertex *p2,
-                      adaptiveVertex *p3, adaptiveVertex *p4)
-    : visible(false)
-  {
-    p[0] = p1;
-    p[1] = p2;
-    p[2] = p3;
-    p[3] = p4;
-    e[0] = e[1] = e[2] = e[3] = nullptr;
-    e[4] = e[5] = e[6] = e[7] = nullptr;
-  }
-  inline double V() const
-  {
-    return (p[0]->val + p[1]->val + p[2]->val + p[3]->val) / 4.;
-  }
-  inline static void GSF(double u, double v, double w, fullVector<double> &sf)
-  {
-    sf(0) = 1. - u - v - w;
-    sf(1) = u;
-    sf(2) = v;
-    sf(3) = w;
-  }
-  static void create(int maxlevel);
-  static void recurCreate(adaptiveTetrahedron *t, int maxlevel, int level);
-  static void error(double AVG, double tol);
-  static void recurError(adaptiveTetrahedron *t, double AVG, double tol);
-};
-
-class adaptiveHexahedron {
-public:
-  bool visible;
-  adaptiveVertex *p[8];
-  adaptiveHexahedron *e[8];
-  static std::list<adaptiveHexahedron *> all;
-  static std::set<adaptiveVertex> allVertices;
-  static int numNodes, numEdges;
-
-public:
-  adaptiveHexahedron(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3,
-                     adaptiveVertex *p4, adaptiveVertex *p5, adaptiveVertex *p6,
-                     adaptiveVertex *p7, adaptiveVertex *p8)
-    : visible(false)
-  {
-    p[0] = p1;
-    p[1] = p2;
-    p[2] = p3;
-    p[3] = p4;
-    p[4] = p5;
-    p[5] = p6;
-    p[6] = p7;
-    p[7] = p8;
-    e[0] = e[1] = e[2] = e[3] = nullptr;
-    e[4] = e[5] = e[6] = e[7] = nullptr;
-  }
-  inline double V() const
-  {
-    return (p[0]->val + p[1]->val + p[2]->val + p[3]->val + p[4]->val +
-            p[5]->val + p[6]->val + p[7]->val) /
-           8.;
-  }
-  inline static void GSF(double u, double v, double w, fullVector<double> &sf)
-  {
-    sf(0) = 0.125 * (1 - u) * (1 - v) * (1 - w);
-    sf(1) = 0.125 * (1 + u) * (1 - v) * (1 - w);
-    sf(2) = 0.125 * (1 + u) * (1 + v) * (1 - w);
-    sf(3) = 0.125 * (1 - u) * (1 + v) * (1 - w);
-    sf(4) = 0.125 * (1 - u) * (1 - v) * (1 + w);
-    sf(5) = 0.125 * (1 + u) * (1 - v) * (1 + w);
-    sf(6) = 0.125 * (1 + u) * (1 + v) * (1 + w);
-    sf(7) = 0.125 * (1 - u) * (1 + v) * (1 + w);
-  }
-  static void create(int maxlevel);
-  static void recurCreate(adaptiveHexahedron *h, int maxlevel, int level);
-  static void error(double AVG, double tol);
-  static void recurError(adaptiveHexahedron *h, double AVG, double tol);
-};
-
-// modif koen.hillewaert@cenaero.be, 31/07/2014
-
-class adaptivePyramid {
-public:
-  bool visible;
-  adaptiveVertex *p[5];
-  adaptivePyramid *e[10];
-  static std::list<adaptivePyramid *> all;
-  static std::set<adaptiveVertex> allVertices;
-  static int numNodes, numEdges;
-
-public:
-  adaptivePyramid(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3,
-                  adaptiveVertex *p4, adaptiveVertex *p5)
-    : visible(false)
-  {
-    p[0] = p1;
-    p[1] = p2;
-    p[2] = p3;
-    p[3] = p4;
-    p[4] = p5;
-    for(int i = 0; i < 10; i++) e[i] = nullptr;
-  }
-  inline double V() const
-  {
-    return (p[0]->val + p[1]->val + p[2]->val + p[3]->val + p[4]->val) / 5.;
-  }
-  // barycentric coordinates ?
-  inline static void GSF(double u, double v, double w, fullVector<double> &sf)
-  {
-    double ww = 0.25 / std::max(1e-14, 1. - w);
-    sf(0) = (1 - u - w) * (1 - v - w) * ww;
-    sf(1) = (1 + u - w) * (1 - v - w) * ww;
-    sf(2) = (1 + u - w) * (1 + v - w) * ww;
-    sf(3) = (1 - u - w) * (1 + v - w) * ww;
-    sf(4) = w;
-  }
-  static void create(int maxlevel);
-  static void recurCreate(adaptivePyramid *h, int maxlevel, int level);
-  static void error(double AVG, double tol);
-  static void recurError(adaptivePyramid *h, double AVG, double tol);
 };
 
 class PCoords {
@@ -382,32 +123,52 @@ public:
   }
 };
 
+// The value at a point: 1 (scalar), 3 (vector) or 9 (tensor) numbers. Scalars
+// and vectors are stored in the object itself: a memory allocation per value
+// made adapting a view twice as slow.
 class PValues {
+private:
+  double _small[3];
+  void _allocate(int size)
+  {
+    sizev = size;
+    v = (sizev <= 3) ? _small : new double[sizev];
+  }
+
 public:
   short int sizev; // acceptable values: 1 (scalar), 3 (vector), 9 (tensor)
   double *v;
   PValues(const PValues &obj)
   {
+    _allocate(obj.sizev);
+    for(int i = 0; i < sizev; i++) v[i] = obj.v[i];
+  }
+  PValues(PValues &&obj) noexcept
+  {
     sizev = obj.sizev;
-    v = new double[sizev];
-    for(int i = 0; i < sizev; i++) { v[i] = obj.v[i]; }
+    if(obj.v == obj._small) {
+      v = _small;
+      for(int i = 0; i < sizev; i++) v[i] = obj.v[i];
+    }
+    else { // take the array over
+      v = obj.v;
+      obj.v = obj._small;
+      obj.sizev = 0;
+    }
   }
   PValues(int size)
   {
-    sizev = size;
-    v = new double[sizev];
-    for(int i = 0; i < sizev; i++) { v[i] = 0.0; }
+    _allocate(size);
+    for(int i = 0; i < sizev; i++) v[i] = 0.0;
   }
   PValues(double vx)
   {
-    sizev = 1;
-    v = new double[sizev];
+    _allocate(1);
     v[0] = vx;
   }
   PValues(double vx, double vy, double vz)
   {
-    sizev = 3;
-    v = new double[sizev];
+    _allocate(3);
     v[0] = vx;
     v[1] = vy;
     v[2] = vz;
@@ -415,8 +176,7 @@ public:
   PValues(double vxx, double vxy, double vxz, double vyx, double vyy,
           double vyz, double vzx, double vzy, double vzz)
   {
-    sizev = 9;
-    v = new double[sizev];
+    _allocate(9);
     v[0] = vxx;
     v[1] = vxy;
     v[2] = vxz;
@@ -427,15 +187,19 @@ public:
     v[7] = vzy;
     v[8] = vzz;
   }
-  ~PValues() { delete[] v; }
-  void operator=(const PValues &obj)
+  ~PValues()
   {
-    // Assume PValues object has already been generated
-    // and v allocated when the operator = is called
-    if(sizev != obj.sizev)
-      Msg::Error("In PValues overlodaing operator: size mistmatch %d %d",
-                 sizev);
-    for(int i = 0; i < sizev; i++) { v[i] = obj.v[i]; }
+    if(v != _small) delete[] v;
+  }
+  PValues &operator=(const PValues &obj)
+  {
+    if(this == &obj) return *this;
+    if(sizev != obj.sizev) {
+      if(v != _small) delete[] v;
+      _allocate(obj.sizev);
+    }
+    for(int i = 0; i < sizev; i++) v[i] = obj.v[i];
+    return *this;
   }
 };
 
@@ -482,203 +246,239 @@ public:
   ~globalVTKData() { clearGlobalData(); }
 };
 
-class VTKData {
+class adaptiveVTKWriter; // (in adaptiveData.cpp)
+
+// What is refined, besides what the error asks for: the elements, and in
+// them the refined elements, kept from the positions of their nodes in the
+// model (e.g. those the clipping planes cut); called by several threads at
+// once
+class adaptiveSelection {
 public:
-  // Data container to write output files readable for ParaView
-  // vtk legacy and vtu for now
-  std::string vtkFieldName;
-  std::string vtkFileName;
-  std::string vtkFormat;
-  std::string vtkDirName;
+  virtual ~adaptiveSelection() {}
+  virtual bool keeps(int numNodes, const double *x, const double *y,
+                     const double *z) const = 0;
+  // may it keep something of an element within this sphere (centre and
+  // radius)? (asked first, so that the others are not read)
+  virtual bool mayKeep(const float *sphere) const { return true; }
+  // what it depends on: what was selected is refined again when it changes
+  virtual std::vector<double> key() const = 0;
+  // what becomes of the curves and surfaces (the volumes are selected): all
+  // refined, none, or selected as the volumes
+  enum lowerDims { allRefined, noneRefined, selected };
+  virtual lowerDims others() const { return allRefined; }
+};
 
-  int vtkStep;
-  int vtkLevel;
-  int vtkNumComp;
-  double vtkTol;
-  int vtkNpart;
-
-  bool vtkIsBinary;
-  int vtkUseDefaultName;
-  int minElmPerPart, maxElmPerPart, numPartMinElm, numPartMaxElm;
-
-  // File variables
-  FILE *vtkFile;
-  FILE *vtkFileCoord;
-  FILE *vtkFileConnect;
-  FILE *vtkFileCellOffset;
-  FILE *vtkFileCellType;
-  FILE *vtkFileNodVal;
-  int vtkCountFile;
-
-  int vtkTotNumElmLev0;
-  int vtkCountTotElmLev0;
-  int vtkCountTotNod;
-  int vtkCountTotElm;
-  int vtkCountCoord;
-  int vtkCountTotNodConnect;
-  int vtkCountTotVal;
-  int vtkCountCellOffset; // used only for ascii output
-  int vtkCountCellType; // used only for ascii output
-
-  std::vector<vectInt> vtkLocalConnectivity; // conectivity (vector of vector)
-  std::vector<int> vtkLocalCellType; // topology
-  std::vector<PCoords> vtkLocalCoords; // coordinates
-  std::vector<PValues> vtkLocalValues; // nodal values (either scalar or vector)
-
+// The values the target error is relative to: the range of the data (all the
+// steps), or a range given, as the custom range of a view, outside of which
+// the field is drawn as the nearest end of the range, or not at all: an
+// element whose values (at the points the error estimate looks at) are all
+// on the same side of it then has no error
+class adaptiveRange {
 public:
-  VTKData(std::string fieldName = "unknown", int numComp = -1, int step = -1,
-          int level = -1, double tol = 0.0, std::string filename = "unknown",
-          int useDefaultName = 1, int npart = -1, bool isBinary = true)
+  double min, max;
+  bool clamp;
+  adaptiveRange(double mn = 0., double mx = -1., bool c = false)
+    : min(mn), max(mx), clamp(c)
   {
-    vtkIsBinary = isBinary; // choice: true, false
-    vtkFormat =
-      std::string("vtu"); // choice: vtk (VTK legacy), vtu (XML appended)
-
-    vtkFieldName = fieldName;
-    vtkFileName = filename;
-    vtkUseDefaultName = useDefaultName;
-    vtkNumComp = numComp;
-    vtkStep = step;
-    vtkLevel = level;
-    vtkTol = tol;
-    vtkNpart = npart;
-
-    vtkCountFile = 0;
-    vtkTotNumElmLev0 = 0;
-    vtkCountTotElmLev0 = 0;
-    vtkCountTotNod = 0;
-    vtkCountTotElm = 0;
-    vtkCountCoord = 0;
-    vtkCountTotNodConnect = 0;
-    vtkCountTotVal = 0;
-    vtkCountCellOffset = 0; // used only for ascii output
-    vtkCountCellType = 0;
-  }
-  void clearLocalData()
-  {
-    for(auto it = vtkLocalConnectivity.begin();
-        it != vtkLocalConnectivity.end(); ++it) {
-      it->clear();
-    }
-    vtkLocalConnectivity.clear();
-    vtkLocalCellType.clear();
-    vtkLocalCoords.clear();
-    vtkLocalValues.clear();
-  }
-  ~VTKData() { clearLocalData(); }
-  void incrementTotNod(int increment) { vtkCountTotNod += increment; }
-  void incrementTotElm(int increment) { vtkCountTotElm += increment; }
-  void incrementTotElmLev0(int increment) { vtkCountTotElmLev0 += increment; }
-  bool isLittleEndian();
-  void SwapArrayByteOrder(void *array, int nbytes,
-                          int nItems); // used only for VTK
-  int getPVCellType(int numEdges);
-  // void writeParaViewData();
-  void writeVTKElmData();
-  void initVTKFile();
-  void finalizeVTKFile();
-  void setFileDistribution()
-  {
-    int tmpmod = vtkTotNumElmLev0 % vtkNpart;
-    minElmPerPart = (vtkTotNumElmLev0 - tmpmod) / vtkNpart;
-    numPartMinElm = vtkNpart - tmpmod;
-
-    if(tmpmod == 0)
-      maxElmPerPart = minElmPerPart;
-    else
-      maxElmPerPart = minElmPerPart + 1;
-    numPartMaxElm = tmpmod;
-    assert(vtkTotNumElmLev0 ==
-           minElmPerPart * numPartMinElm + maxElmPerPart * numPartMaxElm);
   }
 };
 
-template <class T> class adaptiveElements {
+// What adapting an element needs to remember: the field and the positions at
+// the vertices of the tree where they have been computed (known for the
+// element whose number, the stamp, they carry), and the elements that are kept
+class adaptiveWork {
+public:
+  int stamp, numComp;
+  const double *inXYZ, *inValues; // the element, as given to adapt()
+  adaptiveRange range; // as given to adapt()
+  // the faces of the element on the skin, a bit each, when only they are
+  // refined (-1: the whole element), and what else selects what is refined
+  int skin;
+  const adaptiveSelection *selection;
+  std::vector<int> evaluated, located;
+  std::vector<double> values, norm, xyz;
+  std::vector<const adaptiveElement *> visible;
+  adaptiveWork()
+    : stamp(0), numComp(0), inXYZ(nullptr), inValues(nullptr), skin(-1),
+      selection(nullptr)
+  {
+  }
+};
+
+// The elements of one kind of a view
+class adaptiveElements {
 private:
-  fullMatrix<double> *_coeffsVal, *_eexpsVal, *_interpolVal;
-  fullMatrix<double> *_coeffsGeom, *_eexpsGeom, *_interpolGeom;
+  const adaptiveShape &_shape;
+  // the shape functions of the view (monomials and coefficients) for the
+  // values and for the geometry, if it provides them, and their values at the
+  // vertices of the tree
+  fullMatrix<double> *_coeffsVal, *_eexpsVal;
+  fullMatrix<double> *_coeffsGeom, *_eexpsGeom;
+  std::vector<double> _interpolVal, _interpolGeom; // a row per vertex
+  int _numVals, _numNodes; // their numbers of columns
+  std::vector<const adaptiveElement *> _leaves; // the last level of the tree
+  // the elements of this kind in the view (entity, element), and the spheres
+  // around their nodes when a selection or a plugin asks for them, kept while
+  // the data, its step and the kind stay
+  int _listStep, _listStamp, _listType;
+  std::vector<std::pair<int, int> > _elements;
+  std::vector<float> _spheres; // centre and radius
+  void _listElements(PViewData *in, int step, int type);
+  void _boundElements(PViewData *in, int step);
+  void _evaluate(adaptiveWork &w, const adaptiveVertex *p) const;
+  void _locate(adaptiveWork &w, const adaptiveVertex *p) const;
+  double _errorOf(adaptiveWork &w, const adaptiveElement *e) const;
+  // does the element have a face on the skin, if only the skin is refined,
+  // and is it selected, if there is a selection?
+  static bool _onSkin(const adaptiveWork &w, const adaptiveElement *e)
+  {
+    if(w.skin < 0) return true;
+    for(int f = 0; f < 6; f++)
+      if(e->onFace[f] >= 0 && (w.skin & (1 << e->onFace[f]))) return true;
+    return false;
+  }
+  bool _kept(adaptiveWork &w, const adaptiveElement *e) const;
+  void _error(adaptiveWork &w, const adaptiveElement *e,
+              double threshold) const;
+  void _askPlugin(adaptiveWork &w, GMSH_PostPlugin *plug);
+  int _addPolytope(int level, int step, PViewData *in, int ent, int ele,
+                   int numComp, std::vector<double> &list);
+  adaptiveElement *_create(const std::vector<adaptiveVertex *> &nodes,
+                           int maxLevel, int level);
+  adaptiveVertex *_vertex(double x, double y, double z);
 
 public:
-  adaptiveElements(std::vector<fullMatrix<double> *> &interpolationMatrices);
-  ~adaptiveElements();
-  // create the _interpolVal and _interpolGeom matrices at the given
-  // refinement level
+  // the tree: its root first
+  std::deque<adaptiveElement> all;
+  std::set<adaptiveVertex> allVertices;
+
+public:
+  adaptiveElements(int type,
+                   const std::vector<fullMatrix<double> *> &interpolationMatrices);
+  const adaptiveShape &shape() const { return _shape; }
+  // build the tree down to the given level, and the _interpolVal and
+  // _interpolGeom matrices
   void init(int level);
-  // process the element data in coords/values and return the refined
-  // elements in coords/values
-  bool adapt(double tol, int numComp, std::vector<PCoords> &coords,
-             std::vector<PValues> &values, double &minVal, double &maxVal,
-             GMSH_PostPlugin *plug = nullptr, bool onlyComputeMinMax = false);
-  // adapt all the T-type elements in the input view and add the
-  // refined elements in the output view (we will remove this when we
-  // switch to true on-the-fly local refinement in drawPost())
+  // Refine an element of the view, given as the x, then the y, then the z
+  // of its nodes and its values a component after the other, and as the bits
+  // of its faces that are on the skin of the view. The elements that are kept
+  // are added to out as the lists of a view hold them (and the bits of their
+  // faces to outSkin); returns their number. The tree is only read, unless
+  // there is a plugin: several threads can adapt elements at the same time,
+  // each with its own workspace.
+  // (range: that of the values the target error is relative to; skinOnly:
+  // refine only the faces on the skin, the elements with a face there being
+  // kept, and the error being looked at on them)
+  int adapt(adaptiveWork &w, double tol, int numComp, const double *xyz,
+            const double *values, const adaptiveRange &range,
+            GMSH_PostPlugin *plug, unsigned char onSkin,
+            std::vector<double> &out, std::vector<unsigned char> *outSkin,
+            bool skinOnly = false,
+            const adaptiveSelection *selection = nullptr);
+  // adapt all the elements of this kind in the input view and add the refined
+  // elements in the output view; polygons and polyhedra are refined through
+  // their triangles and tetrahedra (type = TYPE_POLYG or TYPE_POLYH)
+  // (inSkin: for each entity and element of the input view, its faces on the
+  // skin of the view; outSkin: the same for the elements added; range: the
+  // one given, if its min is not above its max, or else that of the data)
   void addInView(double tol, int step, PViewData *in, PViewDataList *out,
-                 GMSH_PostPlugin *plug = nullptr);
+                 GMSH_PostPlugin *plug = nullptr, int level = 0, int type = 0,
+                 const std::vector<std::vector<unsigned char> > *inSkin = nullptr,
+                 std::vector<unsigned char> *outSkin = nullptr,
+                 const adaptiveRange &range = adaptiveRange(),
+                 bool skinOnly = false,
+                 const adaptiveSelection *selection = nullptr);
 
   // Routines for
   // - export of adapted views to pvtu file format for parallel visualization
   //   with paraview,
   // - and/or generation of VTK data structure for ParaView plugin.
 
-  // Clone of adapt for VTK output files
-  void adaptForVTK(double tol, int numComp, std::vector<PCoords> &coords,
-                   std::vector<PValues> &values, double &minVal,
-                   double &maxVal);
-
-  // Clone of addInView for VTK output files
-  void addInViewForVTK(int step, PViewData *in, VTKData &myVTKData,
-                       bool writeVtk = true, bool buildStaticData = false);
+  // addInView for VTK output files and for globalVTKData
+  void addInViewForVTK(int step, double tol, PViewData *in,
+                       adaptiveVTKWriter *writer, bool buildStaticData,
+                       int &numPoints,
+                       const adaptiveRange &range = adaptiveRange());
 
   int countElmLev0(int step, PViewData *in);
 
   // Build a mapping between all the nodes of the refined element
   // and the node of the canonical refined element in order to
   // generate a connectivity related to the canonical element
-  void buildMapping(nodMap<T> &myNodMap, double tol, int &numNodInsert);
+  void buildMapping(const adaptiveWork &w, nodMap &myNodMap, double tol,
+                    int &numNodInsert);
 };
 
 class adaptiveData {
 private:
   int _step, _level;
   double _tol;
+  adaptiveRange _range; // (as given)
+  // only the skin refined (as asked, and as done: not without a skin), and
+  // what was refined selected (by the selection with this key)
+  bool _skinAsked, _skinOnly, _selected;
+  std::vector<double> _selectionKey;
+  // the stamp of the data when this was made from it (see getStamp())
+  int _inStamp;
+  // the faces of the elements on the skin of the view (see _findSkin()), kept
+  // while the data and the step stay
+  int _skinStep, _skinStamp;
+  // the partitions of an entity taken together (see PViewData::getSkinKeys())
+  bool _partitionsTogether;
+  bool _skinFound;
+  std::vector<std::vector<unsigned char> > _inSkin;
   PViewData *_inData;
   PViewDataList *_outData;
-  adaptiveElements<adaptivePoint> *_points;
-  adaptiveElements<adaptiveLine> *_lines;
-  adaptiveElements<adaptiveTriangle> *_triangles;
-  adaptiveElements<adaptiveQuadrangle> *_quadrangles;
-  adaptiveElements<adaptiveTetrahedron> *_tetrahedra;
-  adaptiveElements<adaptiveHexahedron> *_hexahedra;
-  adaptiveElements<adaptivePrism> *_prisms;
-  adaptiveElements<adaptivePyramid> *_pyramids;
+  adaptiveElements *_points, *_lines, *_triangles, *_quadrangles;
+  adaptiveElements *_tetrahedra, *_hexahedra, *_prisms, *_pyramids;
+  // (refined through their triangles and tetrahedra)
+  adaptiveElements *_polygons, *_polyhedra;
 
-  // When set to true, this builds a global VTK data structure (connectivity,
-  // coords, etc) for the adaptive views.  This can be very memory consuming for
-  // high adaptation levels. Use with caution.  Useful when GMSH is used as an
-  // external library to provide for instance a GMSH reader in a ParaView
-  // plugin.  By default, set to false in the constructor.
+  // build the global VTK data structure (globalVTKData) of the refined view,
+  // for the ParaView plugin: large at high levels (false by default)
   bool buildStaticData;
 
-  // This variable helps limit memory consumption (no global data structure)
-  // when GMSH is requested to write the data structure of adapted view under
-  // pvtu format In this case, one adapted element is considered at a time so
-  // that it can generate billions of adapted elements on a single core, as long
-  // as disk space allows it.  This variable is set to true by default in the
-  // constructor.
+  // write the refined view to VTK files an element at a time, without keeping
+  // it whole (true by default)
   bool writeVTK;
 
+  bool _findSkin(int step, std::vector<std::vector<unsigned char> > &skin);
+
 public:
-  static double timerInit, timerAdapt;
   adaptiveData(PViewData *data, bool outDataInit = true);
   ~adaptiveData();
   PViewData *getData() { return (PViewData *)_outData; }
+  // made from the data as it was then: the kinds of elements and their
+  // interpolation are taken from it
+  bool isOutdated() const;
+  // (min and max: the range the target error is relative to, if min is not
+  // above max, e.g. the custom range of the view; see adaptiveRange)
+  // (skinOnly: refine only the faces of the volumes on the skin of the view,
+  // for a view that only draws them; selection: refine only what it keeps)
   void changeResolution(int step, int level, double tol,
-                        GMSH_PostPlugin *plug = nullptr);
+                        GMSH_PostPlugin *plug = nullptr, double min = 0.,
+                        double max = -1., bool skinOnly = false,
+                        const adaptiveSelection *selection = nullptr);
+  bool isSkinOnly() const { return _skinOnly; }
+  // take the skin with the partitions of an entity together (the view is
+  // refined again if it changes)
+  void setPartitionsTogether(bool together)
+  {
+    if(together == _partitionsTogether) return;
+    _partitionsTogether = together;
+    _skinStep = -1;
+    _step = -1;
+  }
+  // take the skin of the data another adaptive data of it has found
+  void copySkinOf(const adaptiveData &other);
+  // is only a part of the view refined (the skin, or a selection)?
+  bool isPartial() const { return _skinOnly || _selected; }
   int countTotElmLev0(int step, PViewData *in);
   void changeResolutionForVTK(int step, int level, double tol, int npart = 1,
                               bool isBinary = true,
                               const std::string &guifileName = "unknown",
-                              int useDefaultName = 1);
+                              int useDefaultName = 1, double min = 0.,
+                              double max = -1.);
   void upBuildStaticData(bool newValue) { buildStaticData = newValue; }
   void upWriteVTK(bool newValue) { writeVTK = newValue; }
 };

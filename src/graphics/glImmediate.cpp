@@ -11,53 +11,97 @@
 #include "glShader.h"
 #include "drawContext.h"
 #include "Context.h"
+#include "VertexArray.h"
 
-bool gmshCollecting = false;
-
-bool gmshUseShaders()
-{
-  return CTX::instance()->shaders && glShader::available();
-}
+bool glImmediate::collecting = false;
 
 namespace {
-  // The vertices of the primitive being collected, with the colour and the
-  // normal that were current at each of them. A shader pipeline has no
-  // immediate mode: the run between gmshBegin() and gmshEnd() is gathered here
-  // and drawn in one call.
-  std::vector<float> _imPos, _imNrm, _imTex;
+  // A growable array whose appends are a few inline instructions: the
+  // primitives collected here come a number at a time, millions to a frame,
+  // and std::vector's push_back() is a call of its own in some builds (with
+  // the checks of a hardened library), which made most of the cost of
+  // drawing a curve or a glyph this way. The storage only grows.
+  template <class T> class growBuf {
+  private:
+    std::vector<T> _v;
+    T *_p = nullptr;
+    std::size_t _n = 0, _cap = 0;
+    // the rare case, kept out of the way of the common one
+    void _reserve(std::size_t n)
+    {
+      _v.resize(std::max(n, 2 * _cap + 64));
+      _p = _v.data();
+      _cap = _v.size();
+    }
+
+  public:
+    std::size_t size() const { return _n; }
+    bool empty() const { return !_n; }
+    void clear() { _n = 0; }
+    T &operator[](std::size_t i) { return _p[i]; }
+    const T &operator[](std::size_t i) const { return _p[i]; }
+    T *data() { return _p; }
+    // k more elements at the end, to be written through the pointer
+    inline T *grow(std::size_t k)
+    {
+      if(_n + k > _cap) _reserve(_n + k);
+      T *p = _p + _n;
+      _n += k;
+      return p;
+    }
+    void push_back(const T &t) { *grow(1) = t; }
+    // shrink, or grow with the value given
+    void resize(std::size_t n, const T &t = T())
+    {
+      if(n > _n) {
+        std::size_t k = n - _n;
+        T *p = grow(k);
+        for(std::size_t i = 0; i < k; i++) p[i] = t;
+      }
+      else
+        _n = n;
+    }
+    // append the whole of another one
+    void append(const growBuf<T> &o)
+    {
+      T *p = grow(o._n);
+      std::copy(o._p, o._p + o._n, p);
+    }
+  };
+
+  // the vertices of the primitive being collected, with the colour and
+  // normal current at each of them
+  growBuf<float> _imPos, _imNrm, _imTex;
   // how far along its line each vertex of the batch is, in pixels
-  std::vector<float> _batchDash;
-  std::vector<unsigned char> _imCol;
+  growBuf<float> _batchDash;
+  growBuf<unsigned char> _imCol;
   float _imNormal[3] = {0.f, 0.f, 1.f};
   float _imTexCoord[2] = {0.f, 0.f};
   GLenum _imMode = GL_POINTS;
 
-  // The primitives that have been collected and not drawn yet. Everything is
-  // turned into points, lines or triangles, so that primitives that follow one
-  // another with the same state can go into one draw: what the decorations are
-  // made of is thousands of two-vertex runs, and a draw each would cost far
-  // more than the drawing does. Anything that changes how they would be drawn
-  // flushes what is waiting first.
+  // The collected primitives not drawn yet, turned into points, lines or
+  // triangles so that consecutive primitives with the same state go into one
+  // draw (the decorations are thousands of two-vertex runs). Anything that
+  // changes how they would be drawn flushes them first.
   GLenum _batchMode = GL_POINTS;
-  std::vector<float> _batchPos, _batchNrm, _batchTex;
-  std::vector<unsigned char> _batchCol;
+  growBuf<float> _batchPos, _batchNrm, _batchTex;
+  growBuf<unsigned char> _batchCol;
 
-  // What the primitives in the batch were asked to be drawn with. A call that
-  // sets one of these does not end the batch: only a primitive that does not
-  // match does, so that the toggling a glyph does around itself - lighting on
-  // for its faces, off again afterwards - costs nothing when the next glyph
-  // asks for the same thing again.
+  // the state the batch is drawn with; setting one of these does not end
+  // the batch, only a primitive that does not match does
   struct BatchState {
     double modelview[16], projection[16];
     double clip[6][4];
-    bool clipOn[6];
+    bool clipOn[6], clipOutside;
+    // the blending, which the callers switch with plain OpenGL calls around
+    // the primitives they hand over: it is read back rather than set here
+    bool blend;
+    GLint blendSrc[2], blendDst[2]; // colour, then alpha
     bool lighting, twoSide;
     double pointSize;
     double alphaScale;
     bool alphaScaleFilledOnly;
-    // the texture the primitives are drawn through, zero for none: what a
-    // string drawn as a picture of itself needs, and the one piece of this
-    // state that a batch cannot span
+    // the texture, zero for none
     unsigned int texture;
   int textureMode;
     // how wide the lines are and what dash pattern they carry
@@ -67,7 +111,13 @@ namespace {
     unsigned short stipplePattern;
     bool operator!=(const BatchState &o) const
     {
+      if(blend != o.blend) return true;
+      if(blend)
+        for(int i = 0; i < 2; i++)
+          if(blendSrc[i] != o.blendSrc[i] || blendDst[i] != o.blendDst[i])
+            return true;
       if(lighting != o.lighting || twoSide != o.twoSide ||
+         clipOutside != o.clipOutside ||
          pointSize != o.pointSize || texture != o.texture ||
          alphaScale != o.alphaScale ||
          alphaScaleFilledOnly != o.alphaScaleFilledOnly ||
@@ -91,10 +141,14 @@ namespace {
 } // namespace
 
 namespace {
-  // The pieces of state that a shader is handed as uniforms, and that a core
-  // profile therefore cannot be asked for. They are remembered here as they
-  // are set, and are what glShader is given before a draw.
+  // the state a shader is handed as uniforms, which a core profile cannot
+  // be asked for
   unsigned char _color[4] = {255, 255, 255, 255};
+  // recording (glImmediate::recordBegin()): into which arrays, and the colour
+  // to put back afterwards
+  bool _recording = false;
+  VertexArray *_recTo[3] = {nullptr, nullptr, nullptr};
+  unsigned char _recColor[4];
   bool _lighting = false, _twoSide = false;
   double _pointSize = 1.;
   unsigned int _texture = 0;
@@ -102,11 +156,13 @@ namespace {
   bool _alphaScaleFilledOnly = false;
   int _textureMode = GMSH_TEXTURE_NONE;
   double _lineWidth = 1.;
+  double _pixelScale = 1.;
   bool _stipple = false;
   int _stippleFactor = 1;
   unsigned short _stipplePattern = 0xffff;
   double _clipPlane[6][4] = {{0.}}, _clipEye[6][4] = {{0.}};
   bool _clipOn[6] = {false, false, false, false, false, false};
+  bool _clipOutside = false;
 } // namespace
 
 void gmshColor4ub(unsigned char r, unsigned char g, unsigned char b,
@@ -117,22 +173,27 @@ void gmshColor4ub(unsigned char r, unsigned char g, unsigned char b,
   _color[2] = b;
   _color[3] = a;
   // a core profile has no current colour: the shader is handed the one above
-  if(!gmshUseShaders()) glColor4ub(r, g, b, a);
+  if(!glShader::enabled()) glColor4ub(r, g, b, a);
 }
 
 const unsigned char *gmshCurrentColor() { return _color; }
 
 void gmshColor4ubv(const void *col)
 {
-  if(drawContext::pickColorActive()) return;
+  if(drawContext::pickColorActive() && !_recording) return;
   const GLubyte *c = (const GLubyte *)col;
   gmshColor4ub(c[0], c[1], c[2], c[3]);
 }
 
 void gmshLighting(bool on)
 {
+  // A picking pass writes identifiers as colours: shading one would spread
+  // it over the identifiers around it, so a lit glyph came back as a
+  // handful of other entities, or as the background. Colours are ignored
+  // there for the same reason (see gmshColor4ubv).
+  if(on && drawContext::pickColorActive()) on = false;
   _lighting = on;
-  if(gmshUseShaders()) return;
+  if(glShader::enabled()) return;
   if(on)
     glEnable(GL_LIGHTING);
   else
@@ -144,17 +205,25 @@ bool gmshLightingEnabled() { return _lighting; }
 void gmshLightTwoSide(bool on)
 {
   _twoSide = on;
-  if(gmshUseShaders()) return;
+  if(glShader::enabled()) return;
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, on ? GL_TRUE : GL_FALSE);
 }
 
 bool gmshLightTwoSideEnabled() { return _twoSide; }
 
+void glImmediate::pixelScale(double scale)
+{
+  _pixelScale = (scale > 0.) ? scale : 1.;
+}
+
+double glImmediate::pixelScale() { return _pixelScale; }
+
 void gmshPointSize(double s)
 {
+  s *= _pixelScale;
   _pointSize = s;
   // the shader writes gl_PointSize instead
-  if(!gmshUseShaders()) glPointSize((float)s);
+  if(!glShader::enabled()) glPointSize((float)s);
 }
 
 double gmshCurrentPointSize() { return _pointSize; }
@@ -163,11 +232,10 @@ void gmshClipPlane(int i, const double plane[4])
 {
   if(i < 0 || i > 5) return;
   for(int j = 0; j < 4; j++) _clipPlane[i][j] = plane[j];
-  // OpenGL keeps the plane in eye coordinates: the equation is transformed by
-  // the inverse of the modelview matrix that is current when it is given,
-  // which for a plane - a row vector - is the transpose of that inverse
+  // OpenGL keeps the plane in eye coordinates: the equation (a row vector)
+  // is transformed by the inverse transpose of the current modelview
   double inv[16];
-  if(glMatrix::invert(gmshMatrix(GMSH_MODELVIEW), inv)) {
+  if(glMatrix::invert(glImmediate::matrix(GMSH_MODELVIEW), inv)) {
     for(int r = 0; r < 4; r++) {
       double v = 0.;
       for(int c = 0; c < 4; c++) v += inv[4 * r + c] * plane[c];
@@ -177,18 +245,23 @@ void gmshClipPlane(int i, const double plane[4])
   else {
     for(int j = 0; j < 4; j++) _clipEye[i][j] = plane[j];
   }
-  if(!gmshUseShaders()) glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), plane);
+  if(!glShader::enabled()) glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), plane);
 }
 
 void gmshClipPlaneOn(int i, bool on)
 {
   if(i < 0 || i > 5) return;
   _clipOn[i] = on;
-  if(gmshUseShaders()) return;
+  if(glShader::enabled()) return;
   if(on)
     glEnable((GLenum)(GL_CLIP_PLANE0 + i));
   else
     glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+}
+
+void clipPlanes::on(int mask)
+{
+  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, (mask >> i) & 1);
 }
 
 bool gmshClipPlaneEnabled(int i)
@@ -196,9 +269,9 @@ bool gmshClipPlaneEnabled(int i)
   return (i >= 0 && i <= 5) ? _clipOn[i] : false;
 }
 
-const double *gmshClipPlaneEye(int i)
+void clipPlanes::outside(bool outside)
 {
-  return _clipEye[(i >= 0 && i <= 5) ? i : 0];
+  _clipOutside = outside;
 }
 
 namespace {
@@ -217,13 +290,11 @@ namespace {
   MatrixStack _stack[2];
   int _mode = GMSH_MODELVIEW;
 
-  // hand the current matrix to OpenGL, which is where the fixed function
-  // pipeline reads it
+  // hand the current matrix to the fixed function pipeline
   void _apply(int kind)
   {
-    // the shader is handed the matrices as uniforms; a core profile has no
-    // matrix stack of its own to load them into
-    if(gmshUseShaders()) return;
+    // the shader gets the matrices as uniforms
+    if(glShader::enabled()) return;
     glMatrixMode(kind == GMSH_PROJECTION ? GL_PROJECTION : GL_MODELVIEW);
     glLoadMatrixd(_stack[kind].top());
     if(kind != _mode)
@@ -234,7 +305,7 @@ namespace {
 void gmshMatrixMode(int kind)
 {
   _mode = (kind == GMSH_PROJECTION) ? GMSH_PROJECTION : GMSH_MODELVIEW;
-  if(gmshUseShaders()) return;
+  if(glShader::enabled()) return;
   glMatrixMode(_mode == GMSH_PROJECTION ? GL_PROJECTION : GL_MODELVIEW);
 }
 
@@ -288,16 +359,15 @@ void gmshRotate(double angle, double x, double y, double z)
   gmshMultMatrix(r);
 }
 
-const double *gmshMatrix(int kind)
+const double *glImmediate::matrix(int kind)
 {
   return _stack[(kind == GMSH_PROJECTION) ? GMSH_PROJECTION : GMSH_MODELVIEW]
     .top();
 }
 
-void gmshResetMatrices()
+void glImmediate::resetMatrices()
 {
-  // whatever was waiting to be drawn was collected to be drawn in the context
-  // that is gone, with a texture of its own that went with it
+  // what was pending belonged to the context that is gone
   _batchPos.clear();
   _batchNrm.clear();
   _batchCol.clear();
@@ -319,6 +389,7 @@ void gmshResetMatrices()
     _clipOn[i] = false;
     for(int j = 0; j < 4; j++) _clipPlane[i][j] = _clipEye[i][j] = 0.;
   }
+  _clipOutside = false;
 
   for(int i = 0; i < 2; i++) {
     _stack[i].m.resize(16);
@@ -327,63 +398,108 @@ void gmshResetMatrices()
   _mode = GMSH_MODELVIEW;
 }
 
-void gmshPushShaderState()
+static int _shadingModel = 0;
+
+void gmshShadingModel(int model)
 {
-  glShader::setMatrices(gmshMatrix(GMSH_MODELVIEW), gmshMatrix(GMSH_PROJECTION));
+  if(model == _shadingModel) return;
+  if(glShader::enabled()) glImmediate::flush();
+  _shadingModel = model;
+}
+
+int gmshShadingModel() { return _shadingModel; }
+
+// what the shader is handed alike by the vertex arrays and by the collected
+// primitives: the material, the shading and the clipping planes (on[i] says
+// which are on); nothing is cut off when no plane is on, whatever outside
+// says (the glyphs of the cut elements are drawn whole, with the planes off)
+static void setShaderCommon(const bool on[6], const double eye[6][4],
+                            bool outside)
+{
+  glShader::setMaterial(CTX::instance()->shine,
+                        CTX::instance()->shineExponent);
+  glShader::setShading(gmshShadingModel(), CTX::instance()->brightness,
+                       CTX::instance()->studioShadowStrength);
+  bool anyPlane = false;
+  for(int i = 0; i < 6; i++) {
+    if(on[i]) {
+      glShader::setClipPlane(i, eye[i]);
+      anyPlane = true;
+    }
+    else
+      glShader::setClipPlaneOff(i);
+  }
+  glShader::setClipOutside(outside && anyPlane);
+}
+
+void glImmediate::pushShaderState()
+{
+  glShader::setMatrices(glImmediate::matrix(GMSH_MODELVIEW),
+                        glImmediate::matrix(GMSH_PROJECTION));
   glShader::setLighting(gmshLightingEnabled(), gmshLightTwoSideEnabled());
   glShader::setColor(gmshCurrentColor());
   glShader::setPointSize(gmshCurrentPointSize());
   glShader::setAlphaScale(_alphaScale);
-  glShader::setMaterial(CTX::instance()->shine,
-                        CTX::instance()->shineExponent);
-  // Everything that draws by another route than the collected lines draws
-  // undashed: the vertex arrays carry no distance along the line for the
-  // pattern to be measured against, and a glyph is not a line at all. Without
-  // this, a dashed line left the pattern on and everything after it came out
-  // full of holes.
+  // everything but the collected lines draws undashed: the vertex arrays
+  // carry no distance along the line, and a glyph is not a line
   glShader::setStipple(false, 1, 0xffff);
-  for(int i = 0; i < 6; i++) {
-    if(gmshClipPlaneEnabled(i))
-      glShader::setClipPlane(i, gmshClipPlaneEye(i));
-    else
-      glShader::setClipPlaneOff(i);
-  }
+  setShaderCommon(_clipOn, _clipEye, _clipOutside);
 }
 
-bool gmshImBegin(GLenum mode)
+void glImmediate::recordBegin(VertexArray *points, VertexArray *lines,
+                     VertexArray *triangles)
 {
-  if(!gmshUseShaders()) return false;
-  gmshCollecting = true;
+  // what is waiting belongs to what was drawn before
+  glImmediate::flush();
+  _recTo[0] = points;
+  _recTo[1] = lines;
+  _recTo[2] = triangles;
+  for(int i = 0; i < 4; i++) _recColor[i] = _color[i];
+  _recording = true;
+}
+
+void glImmediate::recordEnd()
+{
+  _recording = false;
+  gmshColor4ub(_recColor[0], _recColor[1], _recColor[2], _recColor[3]);
+}
+
+bool glImmediate::begin(GLenum mode)
+{
+  if(!glShader::enabled() && !_recording) return false;
+  glImmediate::collecting = true;
   _imPos.clear();
   _imNrm.clear();
   _imCol.clear();
   _imTex.clear();
-  // the primitive is turned into independent points, lines or triangles when
-  // it ends: a core profile has neither quads nor polygons, and only
-  // independent primitives can share a draw with the ones around them
+  // the primitive is turned into independent points, lines or triangles
+  // when it ends: a core profile has neither quads nor polygons, and only
+  // independent primitives can share a draw
   _imMode = mode;
   return true;
 }
 
-void gmshImVertex(float x, float y, float z)
+void glImmediate::vertex(float x, float y, float z)
 {
-  _imPos.push_back(x);
-  _imPos.push_back(y);
-  _imPos.push_back(z);
-  for(int i = 0; i < 3; i++) _imNrm.push_back(_imNormal[i]);
-  for(int i = 0; i < 4; i++) _imCol.push_back(gmshCurrentColor()[i]);
-  for(int i = 0; i < 2; i++) _imTex.push_back(_imTexCoord[i]);
+  float *p = _imPos.grow(3), *n = _imNrm.grow(3), *t = _imTex.grow(2);
+  unsigned char *c = _imCol.grow(4);
+  p[0] = x;
+  p[1] = y;
+  p[2] = z;
+  for(int i = 0; i < 3; i++) n[i] = _imNormal[i];
+  for(int i = 0; i < 4; i++) c[i] = _color[i];
+  for(int i = 0; i < 2; i++) t[i] = _imTexCoord[i];
 }
 
 void gmshLineWidth(double w)
 {
-  if(gmshUseShaders()) {
+  w *= _pixelScale;
+  if(glShader::enabled()) {
     if(_lineWidth == w) return;
     // what is waiting was collected to be drawn at the old width
-    gmshFlushImmediate();
+    glImmediate::flush();
     _lineWidth = w;
-    // a core profile draws every line one pixel wide and a wider one is made
-    // of triangles: there is nothing to tell OpenGL
+    // a wider line is made of triangles: nothing to tell OpenGL
     return;
   }
   _lineWidth = w;
@@ -392,20 +508,18 @@ void gmshLineWidth(double w)
 
 double gmshCurrentLineWidth() { return _lineWidth; }
 
-void gmshAlphaScale(double s, bool filledOnly)
+void glImmediate::alphaScale(double s, bool filledOnly)
 {
   if(s < 0.) s = 0.;
   if(s > 1.) s = 1.;
   if(s == _alphaScale && filledOnly == _alphaScaleFilledOnly) return;
   // what is waiting was collected to be drawn with the old one
-  if(gmshUseShaders()) gmshFlushImmediate();
+  if(glShader::enabled()) glImmediate::flush();
   _alphaScale = s;
   _alphaScaleFilledOnly = filledOnly;
 }
 
-double gmshCurrentAlphaScale() { return _alphaScale; }
-
-double gmshAlphaScaleFor(unsigned int primitive)
+double glImmediate::alphaScaleFor(unsigned int primitive)
 {
   if(_alphaScaleFilledOnly && primitive != GL_TRIANGLES) return 1.;
   return _alphaScale;
@@ -413,11 +527,11 @@ double gmshAlphaScaleFor(unsigned int primitive)
 
 void gmshLineStipple(int factor, unsigned short pattern)
 {
-  if(gmshUseShaders()) {
+  if(glShader::enabled()) {
     if(_stipple && _stippleFactor == factor && _stipplePattern == pattern)
       return;
     // what is waiting was collected to be drawn with the old pattern
-    gmshFlushImmediate();
+    glImmediate::flush();
     _stipple = true;
     _stippleFactor = (factor > 0) ? factor : 1;
     _stipplePattern = pattern;
@@ -429,9 +543,9 @@ void gmshLineStipple(int factor, unsigned short pattern)
 
 void gmshLineStippleOff()
 {
-  if(gmshUseShaders()) {
+  if(glShader::enabled()) {
     if(!_stipple) return;
-    gmshFlushImmediate();
+    glImmediate::flush();
     _stipple = false;
     return;
   }
@@ -446,10 +560,10 @@ void gmshTexture(unsigned int id, int mode)
 {
   if(id == _texture && (!id || mode == _textureMode)) return;
   // what is waiting was collected to be drawn through the old one
-  if(gmshUseShaders()) gmshFlushImmediate();
+  if(glShader::enabled()) glImmediate::flush();
   _texture = id;
   _textureMode = id ? mode : GMSH_TEXTURE_NONE;
-  if(!gmshUseShaders()) {
+  if(!glShader::enabled()) {
     if(id) {
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, id);
@@ -462,15 +576,13 @@ void gmshTexture(unsigned int id, int mode)
   }
 }
 
-unsigned int gmshCurrentTexture() { return _texture; }
-
-void gmshImTexCoord(float s, float t)
+void glImmediate::texCoord(float s, float t)
 {
   _imTexCoord[0] = s;
   _imTexCoord[1] = t;
 }
 
-void gmshImNormal(float x, float y, float z)
+void glImmediate::normal(float x, float y, float z)
 {
   _imNormal[0] = x;
   _imNormal[1] = y;
@@ -479,20 +591,34 @@ void gmshImNormal(float x, float y, float z)
 
 namespace {
   // copy vertex i of what has been collected to the end of what will be drawn
-  void _emit(std::size_t i)
+  // the vertices of the primitive being converted, in the order they go
+  // into the batch: gathered first, so that the batch grows once
+  growBuf<std::size_t> _emitted;
+  inline void _emit(std::size_t i) { _emitted.push_back(i); }
+  void _emitFlush()
   {
-    for(int k = 0; k < 3; k++) _batchPos.push_back(_imPos[3 * i + k]);
-    for(int k = 0; k < 3; k++) _batchNrm.push_back(_imNrm[3 * i + k]);
-    for(int k = 0; k < 4; k++) _batchCol.push_back(_imCol[4 * i + k]);
-    for(int k = 0; k < 2; k++) _batchTex.push_back(_imTex[2 * i + k]);
-    _batchDash.push_back(0.f);
+    std::size_t m = _emitted.size();
+    if(!m) return;
+    float *p = _batchPos.grow(3 * m), *n = _batchNrm.grow(3 * m);
+    float *t = _batchTex.grow(2 * m);
+    unsigned char *c = _batchCol.grow(4 * m);
+    float *d = _batchDash.grow(m);
+    const float *ip = _imPos.data(), *in = _imNrm.data(), *it = _imTex.data();
+    const unsigned char *ic = _imCol.data();
+    for(std::size_t j = 0; j < m; j++) {
+      std::size_t i = _emitted[j];
+      for(int k = 0; k < 3; k++) p[3 * j + k] = ip[3 * i + k];
+      for(int k = 0; k < 3; k++) n[3 * j + k] = in[3 * i + k];
+      for(int k = 0; k < 4; k++) c[4 * j + k] = ic[4 * i + k];
+      for(int k = 0; k < 2; k++) t[2 * j + k] = it[2 * i + k];
+      d[j] = 0.f;
+    }
+    _emitted.clear();
   }
 
-  // How far along its line each vertex of the segments just added is, in
-  // pixels of the window: this is what the dash pattern is measured in, and
-  // the projection is done here because the shader is only handed the number.
-  // The counter starts again at every segment of an independent line and
-  // carries on along a strip, which is what OpenGL's stipple did.
+  // distance along its line of each vertex of the segments just added, in
+  // pixels, for the dash pattern; restarts at every independent segment and
+  // carries on along a strip, as OpenGL's stipple did
   void _dashDistances(std::size_t first, bool carry)
   {
     GLint vp[4];
@@ -521,36 +647,68 @@ namespace {
   }
 } // namespace
 
-void gmshFlushImmediate()
+namespace {
+  // switch the blending, colour and alpha factors together
+  // the blend function in force; the colour's and the alpha's are the same
+  // one when the driver has no separate blending (OpenGL 1.4), whose enums
+  // it would reject
+  void _getBlend(GLint src[2], GLint dst[2])
+  {
+    src[0] = src[1] = GL_ONE;
+    dst[0] = dst[1] = GL_ZERO;
+    if(glApi::BlendFuncSeparate) {
+      glGetIntegerv(GL_BLEND_SRC_RGB, &src[0]);
+      glGetIntegerv(GL_BLEND_DST_RGB, &dst[0]);
+      glGetIntegerv(GL_BLEND_SRC_ALPHA, &src[1]);
+      glGetIntegerv(GL_BLEND_DST_ALPHA, &dst[1]);
+    }
+    else {
+      glGetIntegerv(GL_BLEND_SRC, &src[0]);
+      glGetIntegerv(GL_BLEND_DST, &dst[0]);
+      src[1] = src[0];
+      dst[1] = dst[0];
+    }
+  }
+
+  void _setBlend(bool on, const GLint src[2], const GLint dst[2])
+  {
+    if(!on) {
+      glDisable(GL_BLEND);
+      return;
+    }
+    glEnable(GL_BLEND);
+    if(glApi::BlendFuncSeparate)
+      glApi::BlendFuncSeparate(src[0], dst[0], src[1], dst[1]);
+    else
+      glBlendFunc(src[0], dst[0]);
+  }
+} // namespace
+
+void glImmediate::flush()
 {
   if(_batchPos.empty()) return;
   int count = (int)(_batchPos.size() / 3);
   if(glShader::use()) {
-    // the state the primitives were collected under, not whatever is current:
-    // a batch that is still waiting when the matrices change - the 2D overlay
-    // sets its own - would otherwise be drawn in the wrong place
+    // the state the primitives were collected under, not the current one:
+    // the blending is OpenGL's own, so it is set here and the caller's put
+    // back afterwards
+    GLboolean wasBlend = glIsEnabled(GL_BLEND);
+    GLint wasSrc[2], wasDst[2];
+    _getBlend(wasSrc, wasDst);
+    _setBlend(_batchState.blend, _batchState.blendSrc, _batchState.blendDst);
     glShader::setMatrices(_batchState.modelview, _batchState.projection);
     glShader::setLighting(_batchState.lighting, _batchState.twoSide);
     glShader::setPointSize(_batchState.pointSize);
     glShader::setAlphaScale(
       (_batchState.alphaScaleFilledOnly && _batchMode != GL_TRIANGLES) ?
         1. : _batchState.alphaScale);
-    glShader::setMaterial(CTX::instance()->shine,
-                          CTX::instance()->shineExponent);
-    for(int i = 0; i < 6; i++) {
-      if(_batchState.clipOn[i])
-        glShader::setClipPlane(i, _batchState.clip[i]);
-      else
-        glShader::setClipPlaneOff(i);
-    }
-    // the pattern runs along a line and means nothing on anything else, which
-    // is what OpenGL's stipple did with it too
+    setShaderCommon(_batchState.clipOn, _batchState.clip,
+                    _batchState.clipOutside);
+    // the pattern only applies to lines
     glShader::setStipple(_batchState.stipple && _batchMode == GL_LINES,
                          _batchState.stippleFactor,
                          _batchState.stipplePattern);
-    // a line wider than a pixel is not something a core profile draws: it is
-    // made of triangles instead, and the shader is handed both ends of every
-    // segment so that it can work out which way to widen it
+    // a core profile draws no wide lines: make triangles out of them
     bool wide = (_batchMode == GL_LINES && _batchState.lineWidth > 1.);
     if(!wide ||
        !glShader::drawWideLines(&_batchPos[0], &_batchNrm[0], GL_FLOAT,
@@ -560,6 +718,7 @@ void gmshFlushImmediate()
                               &_batchCol[0], &_batchTex[0], &_batchDash[0],
                               _batchState.texture, _batchState.textureMode,
                               count);
+    _setBlend(wasBlend ? true : false, wasSrc, wasDst);
   }
   _batchPos.clear();
   _batchNrm.clear();
@@ -569,12 +728,12 @@ void gmshFlushImmediate()
 }
 
 namespace {
-  // what the state is right now, to be compared with the one the batch holds
+  // the current state, to compare with the batch's
   BatchState _currentState()
   {
     BatchState b;
-    const double *m = gmshMatrix(GMSH_MODELVIEW);
-    const double *p = gmshMatrix(GMSH_PROJECTION);
+    const double *m = glImmediate::matrix(GMSH_MODELVIEW);
+    const double *p = glImmediate::matrix(GMSH_PROJECTION);
     for(int i = 0; i < 16; i++) {
       b.modelview[i] = m[i];
       b.projection[i] = p[i];
@@ -583,6 +742,11 @@ namespace {
       b.clipOn[i] = _clipOn[i];
       for(int j = 0; j < 4; j++) b.clip[i][j] = _clipEye[i][j];
     }
+    b.clipOutside = _clipOutside;
+    b.blend = glIsEnabled(GL_BLEND) ? true : false;
+    b.blendSrc[0] = b.blendSrc[1] = GL_ONE;
+    b.blendDst[0] = b.blendDst[1] = GL_ZERO;
+    if(b.blend) _getBlend(b.blendSrc, b.blendDst);
     b.lighting = _lighting;
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;
@@ -598,18 +762,19 @@ namespace {
   }
 } // namespace
 
-void gmshImEnd()
+void glImmediate::end()
 {
-  gmshCollecting = false;
+  glImmediate::collecting = false;
   std::size_t num = _imPos.size() / 3;
   if(!num) return;
 
-  BatchState now = _currentState();
-  if(!_batchPos.empty() && now != _batchState) gmshFlushImmediate();
-  _batchState = now;
+  if(!_recording) {
+    BatchState now = _currentState();
+    if(!_batchPos.empty() && now != _batchState) glImmediate::flush();
+    _batchState = now;
+  }
 
-  // what the primitive becomes once it is made of independent points, lines or
-  // triangles, which is what lets one draw hold several of them
+  // what the primitive becomes as independent points, lines or triangles
   GLenum mode = GL_TRIANGLES;
   if(_imMode == GL_POINTS)
     mode = GL_POINTS;
@@ -617,8 +782,10 @@ void gmshImEnd()
           _imMode == GL_LINE_LOOP)
     mode = GL_LINES;
 
-  if(!_batchPos.empty() && mode != _batchMode) gmshFlushImmediate();
-  _batchMode = mode;
+  if(!_recording) {
+    if(!_batchPos.empty() && mode != _batchMode) glImmediate::flush();
+    _batchMode = mode;
+  }
 
   std::size_t firstEmitted = _batchPos.size() / 3;
 
@@ -626,7 +793,13 @@ void gmshImEnd()
   case GL_POINTS:
   case GL_LINES:
   case GL_TRIANGLES:
-    for(std::size_t i = 0; i < num; i++) _emit(i);
+    // already independent primitives: appended as they are, in one go (the
+    // nodes of a large mesh come through here, millions to a frame)
+    _batchPos.append(_imPos);
+    _batchNrm.append(_imNrm);
+    _batchCol.append(_imCol);
+    _batchTex.append(_imTex);
+    _batchDash.resize(_batchDash.size() + num, 0.f);
     break;
   case GL_LINE_STRIP:
     for(std::size_t i = 0; i + 1 < num; i++) {
@@ -660,8 +833,7 @@ void gmshImEnd()
     break;
   case GL_TRIANGLE_FAN:
   case GL_POLYGON:
-    // a fan around the first corner, which is what GL_POLYGON drew and what
-    // its convexity allowed
+    // a fan around the first corner (GL_POLYGON is convex)
     for(std::size_t t = 1; t + 1 < num; t++) {
       _emit(0);
       _emit(t);
@@ -676,11 +848,46 @@ void gmshImEnd()
     break;
   default:
     // an unknown primitive is drawn on its own rather than guessed at
-    gmshFlushImmediate();
+    if(_recording) break;
+    glImmediate::flush();
     for(std::size_t i = 0; i < num; i++) _emit(i);
+    _emitFlush();
     _batchMode = _imMode;
-    gmshFlushImmediate();
+    glImmediate::flush();
     break;
+  }
+
+  _emitFlush();
+
+  if(_recording) {
+    // into the array of the primitive, and out of the batch
+    int npe = (mode == GL_POINTS) ? 1 : (mode == GL_LINES) ? 2 : 3;
+    VertexArray *va = _recTo[npe - 1];
+    std::size_t last = _batchPos.size() / 3;
+    for(std::size_t i = firstEmitted; va && i + npe <= last; i += npe) {
+      double x[3], y[3], z[3];
+      unsigned char r[3], g[3], b[3], a[3];
+      SVector3 n[3];
+      for(int k = 0; k < npe; k++) {
+        std::size_t j = i + k;
+        x[k] = _batchPos[3 * j];
+        y[k] = _batchPos[3 * j + 1];
+        z[k] = _batchPos[3 * j + 2];
+        n[k] = SVector3(_batchNrm[3 * j], _batchNrm[3 * j + 1],
+                        _batchNrm[3 * j + 2]);
+        r[k] = _batchCol[4 * j];
+        g[k] = _batchCol[4 * j + 1];
+        b[k] = _batchCol[4 * j + 2];
+        a[k] = _batchCol[4 * j + 3];
+      }
+      va->add(x, y, z, (npe == 3) ? n : nullptr, r, g, b, a, false);
+    }
+    _batchPos.resize(3 * firstEmitted);
+    _batchNrm.resize(3 * firstEmitted);
+    _batchCol.resize(4 * firstEmitted);
+    _batchTex.resize(2 * firstEmitted);
+    _batchDash.resize(firstEmitted);
+    return;
   }
 
   if(mode == GL_LINES && _stipple)

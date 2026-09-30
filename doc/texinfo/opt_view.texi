@@ -7,18 +7,18 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesFormatX
-Number format for X-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for X-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesFormatY
-Number format for Y-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for Y-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesFormatZ
-Number format for Z-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for Z-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesLabelX
@@ -72,8 +72,8 @@ Default value: @code{""}@*
 Saved in: @code{-}
 
 @item View.NumberFormat
-Number format (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Stipple0
@@ -129,6 +129,11 @@ Saved in: @code{General.OptionsFileName}
 @item View.AbscissaRangeType
 Ascissa scale range type (1: default, 2: custom)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.AdaptSkinOnly
+Refine only the skin of the volumes of an adaptive view when only the skin is drawn (DrawSkinOnly), and apart the volumes the clipping planes cut when they are capped or drawn whole: what reads the refined view as a whole (plugins, probes, the API) refines it all (2: the same, with the partitions of an entity together, without the faces between them)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AdaptVisualizationGrid
@@ -201,18 +206,18 @@ Minimum Z-axis coordinate@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.AxesTicsX
-Number of tics on the X-axis@*
+@item View.AxesTicksX
+Number of ticks on the X-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.AxesTicsY
-Number of tics on the Y-axis@*
+@item View.AxesTicksY
+Number of ticks on the Y-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.AxesTicsZ
-Number of tics on the Z-axis@*
+@item View.AxesTicksZ
+Number of ticks on the Z-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -262,7 +267,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ColormapNumber
-Default colormap number (0: black, 1: vis5d, 2: jet, 3: lucie, 4: rainbow, 5: emc2000, 6: incadescent, 7: hot, 8: pink, 9: grayscale, 10: french, 11: hsv, 12: spectrum, 13: bone, 14: spring, 15: summer, 16: autumm, 17: winter, 18: cool, 19: copper, 20: magma, 21: inferno, 22: plasma, 23: viridis, 24: turbo)@*
+Default colormap number (0: black, 1: vis5d, 2: jet, 3: lucie, 4: rainbow, 5: emc2000, 6: incadescent, 7: hot, 8: pink, 9: grayscale, 10: french, 11: hsv, 12: spectrum, 13: bone, 14: spring, 15: summer, 16: autumm, 17: winter, 18: cool, 19: copper, 20: magma, 21: inferno, 22: plasma, 23: viridis, 24: turbo, 25: cool to warm, 26: fast)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -376,6 +381,16 @@ Display post-processing trihedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.DrawPolygons
+Display post-processing polygons?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawPolyhedra
+Display post-processing polyhedra?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.DrawQuadrangles
 Display post-processing quadrangles?@*
 Default value: @code{1}@*
@@ -386,8 +401,13 @@ Display scalar values?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.DrawSkinEdgesOnly
+Draw only the outlines of the boundary faces of 3D views?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.DrawSkinOnly
-Draw only the faces that bound a 3D view, dropping those shared by two volume elements.@*
+Draw only the boundary faces of 3D views, entity by entity (1), or with the partitions of an entity together, without the faces between them (2)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -571,6 +591,11 @@ Translation of the view along Z-axis (in model coordinates)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item View.Opacity
+Opacity factor applied to the colormap (1: unchanged, 0: fully transparent)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.PointSize
 Display size of points (in pixels)@*
 Default value: @code{3}@*
@@ -621,8 +646,13 @@ Saturate the view values to custom min and max (1: true, 0: false)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.ScaleThreshold
+Value below which a symmetric logarithmic scale is linear (0: automatic, four decades below the largest value)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.ScaleType
-Value scale type (1: linear, 2: logarithmic, 3: double logarithmic)@*
+Value scale type (1: linear, 2: logarithmic, 3: symmetric logarithmic, logarithmic on both sides of zero and linear in between)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -657,8 +687,8 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.TargetError
-Target representation error for adaptive views@*
-Default value: @code{0.0001}@*
+Target error of adaptive views: the largest difference allowed between the field and what is drawn of it, as a fraction of the range of the view: the custom range if RangeType is 2 (the elements with values all outside of it are then not refined), or else that of the data over all steps (the elements are refined until it is reached, down to MaxRecursionLevel; a negative value refines them all)@*
+Default value: @code{0.001}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.TensorType
@@ -720,11 +750,6 @@ Saved in: @code{-}
 Element (3,3) of the 3x3 coordinate transformation matrix@*
 Default value: @code{1}@*
 Saved in: @code{-}
-
-@item View.Transparency
-Multiply the alpha (opacity) the colormap gives by this factor (1: as the colormap says, 0: fully transparent)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
 
 @item View.Type
 Type of plot (1: 3D, 2: 2D space, 3: 2D time, 4: 2D)@*

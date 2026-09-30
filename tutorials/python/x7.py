@@ -24,14 +24,18 @@ gmsh.option.setNumber("Mesh.MeshSizeMin", 2.)
 gmsh.model.mesh.generate(3)
 
 # Like elements, mesh edges and faces are described by (an ordered list of)
-# their nodes. Let us retrieve the edges and the (triangular) faces of all the
-# first order tetrahedra in the mesh:
+# their nodes. Let us retrieve the edges and the faces of all the first order
+# tetrahedra in the mesh:
 elementType = gmsh.model.mesh.getElementType("tetrahedron", 1)
 edgeNodes = gmsh.model.mesh.getElementEdgeNodes(elementType)
-faceNodes = gmsh.model.mesh.getElementFaceNodes(elementType, 3)
+faceNodes, faceSizes = gmsh.model.mesh.getElementFaceNodes(elementType)
 
 # Edges and faces are returned for each element as a list of nodes corresponding
 # to the canonical orientation of the edges and faces for a given element type.
+# As faces can have a different number of nodes (e.g. in prisms, or in
+# polyhedra), the number of nodes of each face is returned as well. To get only
+# the faces with a given number of nodes, as a flat list, use e.g.
+# gmsh.model.mesh.getElementFaceNodesByType(elementType, 3) for the triangles.
 
 # Gmsh can also identify unique edges and faces (a single edge or face whatever
 # the ordering of their nodes) and assign them a unique tag. This identification
@@ -42,7 +46,7 @@ gmsh.model.mesh.createFaces()
 
 # Edge and face tags can then be retrieved by providing their nodes:
 edgeTags, edgeOrientations = gmsh.model.mesh.getEdges(edgeNodes)
-faceTags, faceOrientations = gmsh.model.mesh.getFaces(3, faceNodes)
+faceTags, faceOrientations = gmsh.model.mesh.getFaces(faceNodes, faceSizes)
 
 # Since element edge and face nodes are returned in the same order as the
 # elements, one can easily keep track of which element(s) each edge or face is
@@ -96,7 +100,7 @@ for t in tagsForTriangles:
 # If all you need is the list of all edges or faces in terms of their nodes, you
 # can also directly call:
 edgeTags, edgeNodes = gmsh.model.mesh.getAllEdges()
-faceTags, faceNodes = gmsh.model.mesh.getAllFaces(3)
+faceTags, faceNodes, faceSizes = gmsh.model.mesh.getAllFaces()
 
 # Launch the GUI to see the results:
 if '-nopopup' not in sys.argv:

@@ -100,7 +100,6 @@ public:
                    t * _v[1]->y() + (1. - t) * _v[0]->y(),
                    t * _v[1]->z() + (1. - t) * _v[0]->z());
   }
-  bool isInside(MVertex *v) const;
 };
 
 inline bool operator==(const MEdge &e1, const MEdge &e2)

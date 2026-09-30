@@ -681,7 +681,7 @@ void GModel::createTopologyFromMesh()
 
   pruneMeshVertexAssociations();
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::Info("Done creating topology from mesh (Wall %gs, CPU %gs)", w2 - w1,

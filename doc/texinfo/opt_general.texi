@@ -38,12 +38,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 5.0.0-git-4a13a5e28; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260906; Build host: cg.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 5.0.0-git-759e219d2; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260927; Build host: cg.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 4.2.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{"64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader"}@*
+Default value: @code{"64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName
@@ -82,8 +82,8 @@ Default value: @code{"Helvetica"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontEngine
-Set graphics font engine (Native, StringTexture, Cairo)@*
-Default value: @code{"Native"}@*
+Set graphics font engine (Embedded: the fonts compiled into Gmsh, as in the pictures made without a window; StringTexture: the fonts of the system, for scripts the embedded fonts lack; Native: the fonts of the system drawn directly, with the fixed function pipeline only)@*
+Default value: @code{"Embedded"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontTitle
@@ -183,7 +183,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"5.0.0-git-4a13a5e28"}@*
+Default value: @code{"5.0.0-git-759e219d2"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -202,7 +202,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Antialiasing
-Use multisample antialiasing (will slow down rendering)@*
+Use multisample antialiasing in the graphic window (will slow down rendering); the pictures drawn apart from it (with Print.Width, Print.Height or Print.Supersampling, or without a window) are smoothed by Print.Supersampling instead@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -271,18 +271,18 @@ Minimum Z-axis coordinate@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.AxesTicsX
-Number of tics on the X-axis@*
+@item General.AxesTicksX
+Number of ticks on the X-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.AxesTicsY
-Number of tics on the Y-axis@*
+@item General.AxesTicksY
+Number of ticks on the Y-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.AxesTicsZ
-Number of tics on the Z-axis@*
+@item General.AxesTicksZ
+Number of ticks on the Z-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -353,6 +353,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BoundingBoxSize
 Overall bounding box size (read-only)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Brightness
+Brightness of the lit surfaces, a factor on the light (applied in linear light in studio shading, and so that a factor looks the same in classic shading)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -497,7 +502,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.ClipCapping
-Fill the hole a clipping plane opens in a 3D mesh or view with the section where the plane cuts the elements@*
+Fill the section cut by the clipping planes in 3D meshes and views?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -662,7 +667,7 @@ Default value: @code{18}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsHeight
-Height (in pixels) of the graphic window@*
+Height (in pixels) of the graphic window, and of the pictures made without one (in batch mode, or without the graphical interface)@*
 Default value: @code{600}@*
 Saved in: @code{General.SessionFileName}
 
@@ -677,7 +682,7 @@ Default value: @code{50}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.GraphicsWidth
-Width (in pixels) of the graphic window@*
+Width (in pixels) of the graphic window, and of the pictures made without one (in batch mode, or without the graphical interface)@*
 Default value: @code{800}@*
 Saved in: @code{General.SessionFileName}
 
@@ -727,7 +732,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Light0W
-Divisor of the X, Y and Z coordinates of light source 0 (W=0 means infinitely far source)@*
+Proximity of light source 0, its W coordinate: 0 for a directional light (infinitely far), 1 for a point light at (X, Y, Z), in between for a point light at (X, Y, Z) / W (not used by studio shading)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -752,7 +757,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Light1W
-Divisor of the X, Y and Z coordinates of light source 1 (W=0 means infinitely far source)@*
+W coordinate of light source 1: 0 for a directional light, 1 for a point light at (X, Y, Z), in between for a point light at (X, Y, Z) / W@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -777,7 +782,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Light2W
-Divisor of the X, Y and Z coordinates of light source 2 (W=0 means infinitely far source)@*
+W coordinate of light source 2: 0 for a directional light, 1 for a point light at (X, Y, Z), in between for a point light at (X, Y, Z) / W@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -802,7 +807,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Light3W
-Divisor of the X, Y and Z coordinates of light source 3 (W=0 means infinitely far source)@*
+W coordinate of light source 3: 0 for a directional light, 1 for a point light at (X, Y, Z), in between for a point light at (X, Y, Z) / W@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -827,7 +832,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Light4W
-Divisor of the X, Y and Z coordinates of light source 4 (W=0 means infinitely far source)@*
+W coordinate of light source 4: 0 for a directional light, 1 for a point light at (X, Y, Z), in between for a point light at (X, Y, Z) / W@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -852,7 +857,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Light5W
-Divisor of the X, Y and Z coordinates of light source 5 (W=0 means infinitely far source)@*
+W coordinate of light source 5: 0 for a directional light, 1 for a point light at (X, Y, Z), in between for a point light at (X, Y, Z) / W@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -931,6 +936,11 @@ Minimum model coordinate along the Z-axis (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item General.MouseHoverHighlight
+Highlight the entity the mouse is over@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.MouseHoverMeshes
 Enable mouse hover on meshes@*
 Default value: @code{0}@*
@@ -977,12 +987,17 @@ Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.OrderIndependentTransparency
-Draw transparent objects by summing them into buffers of their own and compositing afterwards, instead of sorting them back to front? (only used with the shader pipeline, and ignored if the OpenGL implementation cannot draw into floating point buffers)@*
+Use order-independent (weighted blended) transparency instead of back-to-front sorting? (shader pipeline only)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Orthographic
 Orthographic projection mode (0: perspective projection)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Phlogiston
+Phlogiston (0: none)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -1036,8 +1051,8 @@ Number of subdivisions used to draw points or lines as spheres or cylinders@*
 Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.GlyphCacheSize
-Maximum amount of memory (in MB) used to keep the triangles that the glyphs (spheres, arrows, cylinders, ...) are made of between frames; past it they are rebuilt for every frame, which is slower but takes no memory (0: automatic). Unused when the shader pipeline draws them, as it is handed the shape and where every glyph goes instead of their triangles@*
+@item General.GraphicsCacheSize
+Maximum memory (in MB) used by each of the caches kept between frames: glyphs (spheres, arrows, ...; fixed function pipeline only) and strings (0: automatic)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -1102,7 +1117,12 @@ Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Shaders
-Draw with the OpenGL shader pipeline instead of the fixed function one? (changing this recreates the OpenGL context; ignored if the OpenGL implementation does not provide shaders)@*
+Use the OpenGL shader pipeline instead of the fixed function one?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Shading
+Shading model (0: classic; 1, 2 or 3: studio, with soft lighting and a shadow cast by light 0 on a floor normal to the X, Y or Z axis; shader pipeline only)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -1166,6 +1186,31 @@ Use stereo rendering@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.StudioFloorOffset
+Offset of the floor in studio shading from the bottom of the model, along the floor's normal, relative to the largest dimension of the bounding box@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.StudioFloorSize
+Largest half-size of the floor in studio shading, relative to the largest dimension of the bounding box: the floor grows to catch the shadow of a low light up to this@*
+Default value: @code{6}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.StudioLightSpread
+Angular radius (in degrees) of the light in studio shading, which sets the softness of its shadow@*
+Default value: @code{12}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.StudioSamples
+Number of frames accumulated in studio shading while the view is still, for soft shadows, ambient occlusion and antialiasing@*
+Default value: @code{128}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.StudioShadowStrength
+Darkness of the shadows in studio shading, on the floor and on the model (0: no shadow; 1: default; 2: twice as dark)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.SystemMenuBar
 Use the system menu bar on macOS?@*
 Default value: @code{1}@*
@@ -1177,7 +1222,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Tooltips
-Show tooltips in the user interface@*
+Show tooltips in the user interface, and what the cursor is over in a box in the graphic window rather than in the status bar@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -1237,7 +1282,7 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.VertexBufferObjects
-Keep the vertex arrays in OpenGL buffer objects instead of sending them from client memory at each frame? (ignored if the OpenGL implementation does not provide buffer objects)@*
+Store vertex arrays in OpenGL buffer objects?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -1299,6 +1344,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.Color.SpecularLight
 Specular light color@*
 Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Color.Query
+Color of what a query leaves on the picture: the mark of the point it asked about is drawn in it, and the box that answers on paper of it, lightened over a light picture and darkened over a dark one@*
+Default value: @code{@{255,232,70@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @end ftable

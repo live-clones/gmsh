@@ -41,7 +41,6 @@
 #include "BDS.h"
 #include "qualityMeasures.h"
 #include "OS.h"
-#include "MElementOctree.h"
 #include "HighOrder.h"
 #include "Context.h"
 #include "boundaryLayersData.h"
@@ -2079,17 +2078,24 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     if(debug) debugViews(m, gf, "phase3");
     if(debug) debugViews(m, gf, "phase4");
 
-    if(gf->meshStatistics.status == GFace::FAILED) {
-      if(!CTX::instance()->mesh.repairSelfIntersecting1dMesh) {
-        Msg::Warning("Surface %d: meshing failed; keeping the 1D mesh without "
-                     "subdivision (Mesh.RepairSelfIntersecting1DMesh=0)",
-                     gf->tag());
-        delete m;
-        return false;
-      }
+    if(gf->meshStatistics.status == GFace::FAILED &&
+       !CTX::instance()->mesh.repairSelfIntersecting1dMesh) {
+      Msg::Warning("Surface %d: meshing failed; keeping the 1D mesh without "
+                   "subdivision (Mesh.RepairSelfIntersecting1DMesh=0)",
+                   gf->tag());
+      delete m;
+      return false;
+    }
+
+    // refining the bounding curves does not always help, e.g. near the apex
+    // of a cone, where the circumference always ends up smaller than the mesh
+    // size: stop after a few attempts, as each one doubles the number of nodes
+    if(gf->meshStatistics.status == GFace::FAILED &&
+       gf->meshStatistics.nbRefineAllEdges < 3) {
       // splitall
       gf->meshStatistics.status = GFace::PENDING;
       gf->meshStatistics.refineAllEdges = true;
+      gf->meshStatistics.nbRefineAllEdges++;
       delete m;
       Msg::Info("Serializing surface %d and refining all its bounding edges",
                 gf->tag());

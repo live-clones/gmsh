@@ -6,8 +6,11 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include "GmshConfig.h"
 
-#if !defined(WIN32)
+#if defined(__EMSCRIPTEN__)
+#include <emscripten/html5_webgl.h>
+#elif !defined(WIN32) && defined(HAVE_DLOPEN)
 #include <dlfcn.h>
 #endif
 
@@ -20,8 +23,6 @@ namespace glApi {
   void(APIENTRY *BindBuffer)(GLenum, GLuint) = nullptr;
   void(APIENTRY *BufferData)(GLenum, GLsizeiptr, const GLvoid *,
                              GLenum) = nullptr;
-  void(APIENTRY *BufferSubData)(GLenum, GLintptr, GLsizeiptr,
-                                const GLvoid *) = nullptr;
 
   GLuint(APIENTRY *CreateShader)(GLenum) = nullptr;
   void(APIENTRY *ShaderSource)(GLuint, GLsizei, const GLchar *const *,
@@ -43,8 +44,6 @@ namespace glApi {
   GLint(APIENTRY *GetUniformLocation)(GLuint, const GLchar *) = nullptr;
   void(APIENTRY *Uniform1i)(GLint, GLint) = nullptr;
   void(APIENTRY *Uniform1f)(GLint, GLfloat) = nullptr;
-  void(APIENTRY *Uniform1iv)(GLint, GLsizei, const GLint *) = nullptr;
-  void(APIENTRY *Uniform1fv)(GLint, GLsizei, const GLfloat *) = nullptr;
   void(APIENTRY *Uniform2fv)(GLint, GLsizei, const GLfloat *) = nullptr;
   void(APIENTRY *Uniform3fv)(GLint, GLsizei, const GLfloat *) = nullptr;
   void(APIENTRY *Uniform4fv)(GLint, GLsizei, const GLfloat *) = nullptr;
@@ -59,7 +58,6 @@ namespace glApi {
                                       const GLvoid *) = nullptr;
 
   void(APIENTRY *GenVertexArrays)(GLsizei, GLuint *) = nullptr;
-  void(APIENTRY *DeleteVertexArrays)(GLsizei, const GLuint *) = nullptr;
   void(APIENTRY *BindVertexArray)(GLuint) = nullptr;
   void(APIENTRY *VertexAttribDivisor)(GLuint, GLuint) = nullptr;
   void(APIENTRY *DrawArraysInstanced)(GLenum, GLint, GLsizei, GLsizei) =
@@ -86,12 +84,9 @@ namespace glApi {
   const GLubyte *(APIENTRY *GetStringi)(GLenum, GLuint) = nullptr;
   void(APIENTRY *BlendFuncSeparate)(GLenum, GLenum, GLenum, GLenum) = nullptr;
 
-  void(APIENTRY *BlendFunci)(GLuint, GLenum, GLenum) = nullptr;
-  void(APIENTRY *BlendEquationi)(GLuint, GLenum) = nullptr;
-
   static bool _loaded = false, _buffers = false, _shaders = false;
-  static bool _framebuffers = false, _clipDistance = false;
-  static bool _indexedBlend = false, _es = false;
+  static bool _framebuffers = false;
+  static bool _es = false;
   static bool _instancing = false, _floatColorBuffers = false;
   static int _major = 0, _minor = 0;
 
@@ -109,10 +104,17 @@ namespace glApi {
     // through a data pointer: casting straight from PROC to the real signature
     // is a cast between incompatible function types, which compilers warn about
     return (void *)p;
-#else
+#elif defined(__EMSCRIPTEN__)
+    // WebGL: the entry points are those of the browser, looked up by name
+    return emscripten_webgl_get_proc_address(name);
+#elif defined(HAVE_DLOPEN)
     // the GL library the program is linked against exports what the driver
     // implements, whether or not the header declared it
     return dlsym(RTLD_DEFAULT, name);
+#else
+    // nothing to look the entry points up with: OpenGL 1.1 and the fixed
+    // function pipeline alone
+    return nullptr;
 #endif
   }
 
@@ -132,9 +134,7 @@ namespace glApi {
 
   static bool haveExtension(const char *name)
   {
-    // OpenGL 3 hands the extensions out one at a time, and a core profile only
-    // that way: the one string that listed them all is gone there, and asking
-    // for it is an error
+    // a core profile only lists the extensions one at a time
     if(_major >= 3 && GetStringi) {
       GLint n = 0;
       glGetIntegerv(GL_NUM_EXTENSIONS, &n);
@@ -175,8 +175,6 @@ namespace glApi {
     BindBuffer = (void(APIENTRY *)(GLenum, GLuint))address("glBindBuffer");
     BufferData = (void(APIENTRY *)(GLenum, GLsizeiptr, const GLvoid *,
                                    GLenum))address("glBufferData");
-    BufferSubData = (void(APIENTRY *)(GLenum, GLintptr, GLsizeiptr,
-                                      const GLvoid *))address("glBufferSubData");
 
     CreateShader = (GLuint(APIENTRY *)(GLenum))address("glCreateShader");
     ShaderSource =
@@ -204,10 +202,6 @@ namespace glApi {
       address("glGetUniformLocation");
     Uniform1i = (void(APIENTRY *)(GLint, GLint))address("glUniform1i");
     Uniform1f = (void(APIENTRY *)(GLint, GLfloat))address("glUniform1f");
-    Uniform1iv =
-      (void(APIENTRY *)(GLint, GLsizei, const GLint *))address("glUniform1iv");
-    Uniform1fv =
-      (void(APIENTRY *)(GLint, GLsizei, const GLfloat *))address("glUniform1fv");
     Uniform2fv =
       (void(APIENTRY *)(GLint, GLsizei, const GLfloat *))address("glUniform2fv");
     Uniform3fv =
@@ -231,8 +225,6 @@ namespace glApi {
 
     GenVertexArrays =
       (void(APIENTRY *)(GLsizei, GLuint *))address("glGenVertexArrays");
-    DeleteVertexArrays = (void(APIENTRY *)(GLsizei, const GLuint *))
-      address("glDeleteVertexArrays");
     BindVertexArray = (void(APIENTRY *)(GLuint))address("glBindVertexArray");
     VertexAttribDivisor =
       (void(APIENTRY *)(GLuint, GLuint))address("glVertexAttribDivisor");
@@ -273,47 +265,32 @@ namespace glApi {
     BlendFuncSeparate = (void(APIENTRY *)(GLenum, GLenum, GLenum, GLenum))
       address("glBlendFuncSeparate");
 
-    BlendFunci =
-      (void(APIENTRY *)(GLuint, GLenum, GLenum))address("glBlendFunci");
-    BlendEquationi = (void(APIENTRY *)(GLuint, GLenum))address("glBlendEquationi");
-
     parseVersion((const char *)glGetString(GL_VERSION), _major, _minor, _es);
 
-    // An entry point being there says nothing about the context being able to
-    // run it: the macOS framework exports the whole of the core profile
-    // whatever version the current context is, so every capability below is
-    // the version the feature became core in, and the pointers on top of it.
+    // an entry point being there says nothing about the context (macOS
+    // exports the whole core profile whatever the context version), so each
+    // capability also checks the version the feature became core in
     _buffers = GenBuffers && DeleteBuffers && BindBuffer && BufferData &&
                atLeast(1, 5);
-    // what it takes to draw a frame with shaders: the programs themselves
-    // (OpenGL 2.0), the vertex attributes they read (2.0), and the vertex
-    // array objects a core profile makes compulsory (3.0). Asking for 3.2
-    // rather than 3.0 is asking for the profile macOS gives, which is the
-    // oldest one it has with shaders in it
+    // programs (OpenGL 2.0), vertex attributes (2.0) and the vertex array
+    // objects a core profile requires (3.0); 3.2 is the oldest profile macOS
+    // provides with shaders
     _shaders = CreateShader && ShaderSource && CompileShader && CreateProgram &&
                AttachShader && LinkProgram && UseProgram &&
                GetUniformLocation && VertexAttribPointer &&
                EnableVertexAttribArray && GenVertexArrays && BindVertexArray &&
                _buffers && (_es ? atLeast(3, 0) : atLeast(3, 2));
+    // core from 3.0, and the same entry points as an extension on the
+    // fixed function contexts before (the 2.1 one of macOS)
     _framebuffers = GenFramebuffers && BindFramebuffer &&
                     FramebufferTexture2D && CheckFramebufferStatus &&
-                    DrawBuffers && atLeast(3, 0);
-    // gl_ClipDistance is core desktop OpenGL from 3.0, and only an extension on
-    // OpenGL ES, where it arrived in 3.2
-    _clipDistance = _es ? (atLeast(3, 2) ||
-                           haveExtension("GL_EXT_clip_cull_distance")) :
-                          atLeast(3, 0);
+                    DrawBuffers &&
+                    (atLeast(3, 0) || haveExtension("GL_ARB_framebuffer_object"));
     // instanced drawing is OpenGL 3.3 and OpenGL ES 3.0
     _instancing = VertexAttribDivisor && DrawArraysInstanced && _shaders &&
                   (_es ? atLeast(3, 0) : atLeast(3, 3));
-    // per target blending is OpenGL 4.0, and OpenGL ES 3.2
-    _indexedBlend = BlendFunci && BlendEquationi &&
-                    (_es ? (atLeast(3, 2) ||
-                            haveExtension("GL_EXT_draw_buffers_indexed")) :
-                           atLeast(4, 0));
-    // A floating point colour buffer is core desktop OpenGL from 3.0. OpenGL
-    // ES 3.0 can hold half floats in a texture but not draw into one, which
-    // takes an extension until ES 3.2.
+    // floating point colour buffers are core from OpenGL 3.0; OpenGL ES 3.0
+    // needs an extension to draw into one, until ES 3.2
     _floatColorBuffers =
       _framebuffers &&
       (_es ? (atLeast(3, 2) || haveExtension("GL_EXT_color_buffer_float") ||
@@ -324,7 +301,7 @@ namespace glApi {
   void reset()
   {
     _loaded = _buffers = _shaders = false;
-    _framebuffers = _clipDistance = _indexedBlend = _es = false;
+    _framebuffers = _es = false;
     _instancing = _floatColorBuffers = false;
     _major = _minor = 0;
 
@@ -332,7 +309,6 @@ namespace glApi {
     DeleteBuffers = nullptr;
     BindBuffer = nullptr;
     BufferData = nullptr;
-    BufferSubData = nullptr;
 
     CreateShader = nullptr;
     ShaderSource = nullptr;
@@ -351,8 +327,6 @@ namespace glApi {
     GetUniformLocation = nullptr;
     Uniform1i = nullptr;
     Uniform1f = nullptr;
-    Uniform1iv = nullptr;
-    Uniform1fv = nullptr;
     Uniform2fv = nullptr;
     Uniform3fv = nullptr;
     Uniform4fv = nullptr;
@@ -364,7 +338,6 @@ namespace glApi {
     VertexAttribPointer = nullptr;
 
     GenVertexArrays = nullptr;
-    DeleteVertexArrays = nullptr;
     BindVertexArray = nullptr;
     VertexAttribDivisor = nullptr;
     DrawArraysInstanced = nullptr;
@@ -385,9 +358,6 @@ namespace glApi {
     ActiveTexture = nullptr;
     GetStringi = nullptr;
     BlendFuncSeparate = nullptr;
-
-    BlendFunci = nullptr;
-    BlendEquationi = nullptr;
   }
 
   bool haveBufferObjects()
@@ -406,18 +376,6 @@ namespace glApi {
   {
     load();
     return _framebuffers;
-  }
-
-  bool haveClipDistance()
-  {
-    load();
-    return _clipDistance;
-  }
-
-  bool haveIndexedBlend()
-  {
-    load();
-    return _indexedBlend;
   }
 
   bool haveInstancing()
@@ -456,14 +414,12 @@ namespace glApi {
     const char *v = (const char *)glGetString(GL_VERSION);
     const char *r = (const char *)glGetString(GL_RENDERER);
     const char *s = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
-    Msg::Debug("OpenGL %s on %s", v ? v : "?", r ? r : "?");
-    Msg::Debug("OpenGL shading language %s", s ? s : "none");
-    Msg::Debug("OpenGL has buffer objects: %s, shaders: %s, framebuffer "
-               "objects: %s, clip distances: %s, per target blending: %s, "
-               "instancing: %s, floating point colour buffers: %s",
-               _buffers ? "yes" : "no", _shaders ? "yes" : "no",
-               _framebuffers ? "yes" : "no", _clipDistance ? "yes" : "no",
-               _indexedBlend ? "yes" : "no", _instancing ? "yes" : "no",
-               _floatColorBuffers ? "yes" : "no");
+    Msg::Info("OpenGL %s on %s", v ? v : "?", r ? r : "?");
+    Msg::Info("OpenGL shading language %s", s ? s : "none");
+    Msg::Info("OpenGL has buffer objects: %s, shaders: %s, framebuffer "
+              "objects: %s, instancing: %s, floating point colour buffers: %s",
+              _buffers ? "yes" : "no", _shaders ? "yes" : "no",
+              _framebuffers ? "yes" : "no", _instancing ? "yes" : "no",
+              _floatColorBuffers ? "yes" : "no");
   }
 } // namespace glApi

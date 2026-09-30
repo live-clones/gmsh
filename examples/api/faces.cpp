@@ -53,9 +53,10 @@ int main(int argc, char **argv)
     gmsh::logger::write("- " + std::to_string(elementTags.size()) +
                         " elements in volume " + std::to_string(v));
 
-    // get the nodes on the triangular faces of the 3D elements
+    // get the nodes on the (triangular) faces of the 3D elements
     std::vector<std::size_t> nodes;
-    gmsh::model::mesh::getElementFaceNodes(eleType3D, 3, nodes, v);
+    std::vector<int> sizes;
+    gmsh::model::mesh::getElementFaceNodes(eleType3D, nodes, sizes, v);
 
     // create a new discrete entity of dimension 2
     int s = gmsh::model::addDiscreteEntity(2);

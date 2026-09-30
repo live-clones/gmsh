@@ -261,12 +261,23 @@ void help_options_cb(Fl_Widget *w, void *data)
   int diff = FlGui::instance()->help->modified->value();
   int help = FlGui::instance()->help->showhelp->value();
   std::string search = FlGui::instance()->help->search->value();
-  std::transform(search.begin(), search.end(), search.begin(), ::tolower);
 
   PrintOptions(0, GMSH_FULLRC, diff, help, nullptr, &s0);
 #if defined(HAVE_PARSER)
   PrintParserSymbols(help, s0);
 #endif
+
+  // the search, compiled once for all the lines (case-insensitive); a pattern
+  // that is not a valid regular expression matches nothing
+  std::regex pattern;
+  bool valid = true;
+  if(!search.empty()) {
+    try {
+      pattern = std::regex(search, std::regex_constants::icase);
+    } catch(...) {
+      valid = false;
+    }
+  }
 
   int top = FlGui::instance()->help->browser->topline();
   FlGui::instance()->help->browser->clear();
@@ -285,18 +296,8 @@ void help_options_cb(Fl_Widget *w, void *data)
     if(s0[i].size() > 256)
       s0[i].resize(256);
 
-    if(search.empty()) {
+    if(search.empty() || (valid && std::regex_search(s0[i], pattern)))
       FlGui::instance()->help->browser->add(s0[i].c_str(), d);
-    }
-    else {
-      try {
-        // icase for case-insensitive search
-        if(std::regex_search(s0[i],
-                             std::regex(search, std::regex_constants::icase)))
-          FlGui::instance()->help->browser->add(s0[i].c_str(), d);
-      } catch(...) {
-      }
-    }
   }
   FlGui::instance()->help->browser->topline(top);
 }

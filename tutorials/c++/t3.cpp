@@ -89,7 +89,7 @@ int main(int argc, char **argv)
   // redefine some colors:
   gmsh::option::setNumber("Geometry.PointNumbers", 1);
   gmsh::option::setColor("Geometry.Color.Points", 255, 165, 0);
-  gmsh::option::setColor("General.Color.Text", 255, 255, 255);
+  gmsh::option::setColor("General.Color.Text", 0, 0, 255);
   gmsh::option::setColor("Mesh.Color.Points", 255, 0, 0);
 
   // Note that for conciseness "Color." can be ommitted in color options:

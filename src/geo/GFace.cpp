@@ -11,7 +11,7 @@
 #include "GEdge.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
-#include "MElementCut.h"
+#include "MPolygon.h"
 #include "VertexArray.h"
 #include "fullMatrix.h"
 #include "Numeric.h"
@@ -47,6 +47,7 @@ GFace::GFace(GModel *model, int tag)
 {
   meshStatistics.status = GFace::PENDING;
   meshStatistics.refineAllEdges = false;
+  meshStatistics.nbRefineAllEdges = 0;
   GFace::resetMeshAttributes();
 }
 
@@ -142,6 +143,19 @@ void GFace::setBoundEdges(const std::vector<int> &tagEdges,
   }
 }
 
+void GFace::setBoundEdges(const std::vector<GEdge *> &edges,
+                          const std::vector<int> &signEdges)
+{
+  for(std::size_t i = 0; i < edges.size(); i++) {
+    GEdge *ge = edges[i];
+    if(std::find(l_edges.begin(), l_edges.end(), ge) != l_edges.end())
+      continue;
+    l_edges.push_back(ge);
+    l_dirs.push_back(i < signEdges.size() ? signEdges[i] : 1);
+    ge->addFace(this);
+  }
+}
+
 void GFace::deleteMesh()
 {
   if(getNumMeshVertices() || getNumMeshElements())
@@ -160,6 +174,8 @@ void GFace::deleteGeometryVertexArrays()
   if(!va_geom_triangles) return;
   delete va_geom_triangles;
   va_geom_triangles = nullptr;
+  // what the surfaces of the model are drawn from is merged from these
+  CTX::instance()->geomChanged(ENT_SURFACE);
 }
 
 std::size_t GFace::getNumMeshElements() const
@@ -177,14 +193,6 @@ std::size_t GFace::getNumMeshElementsByType(const int familyType) const
     return polygons.size();
 
   return 0;
-}
-
-std::size_t GFace::getNumMeshParentElements()
-{
-  std::size_t n = 0;
-  for(std::size_t i = 0; i < polygons.size(); i++)
-    if(polygons[i]->ownsParent()) n++;
-  return n;
 }
 
 void GFace::getNumMeshElements(unsigned *const c) const
@@ -1625,7 +1633,7 @@ bool GFace::fillVertexArray(bool force)
 {
   if(va_geom_triangles) {
     if(force)
-      delete va_geom_triangles;
+      deleteGeometryVertexArrays();
     else
       return true;
   }

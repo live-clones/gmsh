@@ -162,6 +162,12 @@ void eigenvalue2x2(double mat[2][2], double v[2]);
 void eigenvalue(double mat[3][3], double re[3]);
 void FindCubicRoots(const double coeff[4], double re[3], double im[3]);
 void eigsort(double d[3]);
+// the eigenvalues (ascending) and unit eigenvectors (the columns of v, each
+// with its largest component positive) of the 3x3 matrix a (row major), if
+// it is symmetric - false otherwise, and nothing is computed
+bool eigenSymmetric3x3(const double a[9], double w[3], double v[3][3]);
+// the same without the eigenvectors, in closed form
+bool eigenvaluesSymmetric3x3(const double a[9], double w[3]);
 void gradSimplex(double *x, double *y, double *z, double *v, double *grad);
 double ComputeVonMises(double *val);
 double ComputeScalarRep(int numComp, double *val, int tensorRep = 0);

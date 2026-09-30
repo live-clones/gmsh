@@ -6,18 +6,11 @@
 #ifndef GL_API_H
 #define GL_API_H
 
-// The OpenGL headers, together with the entry points that came after OpenGL
-// 1.1. Windows only exports OpenGL 1.1 from opengl32.dll, so anything newer has
-// to be asked for at runtime, once a context is current; the other platforms
-// declare and export them, and the pointers below are simply set to the linked
-// symbols. Going through pointers on all platforms keeps the call sites
-// identical, and gives one place to ask whether a feature is really there.
-//
-// The entry points of OpenGL 2.0 and later are looked up at runtime everywhere,
-// not only on Windows: the macOS header is that of OpenGL 2.1 and declares
-// neither the shader nor the framebuffer calls of a core profile, although the
-// framework exports them. The prototypes and the enums they need are therefore
-// spelled out below rather than taken from the system headers.
+// The OpenGL headers and the entry points that came after OpenGL 1.1, looked
+// up at runtime: Windows only exports OpenGL 1.1, and the macOS header (2.1)
+// declares neither the shader nor the framebuffer calls, although the
+// framework exports them. The prototypes and enums are spelled out here
+// rather than taken from the system headers.
 
 #if defined(WIN32)
 #include <windows.h>
@@ -27,13 +20,11 @@
 
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
 #else
 // ask the system headers for the prototypes of what came after OpenGL 1.1, in
 // particular the buffer objects (OpenGL 1.5)
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
-#include <GL/glu.h>
 #endif
 
 #include <cstddef>
@@ -101,10 +92,11 @@ typedef char GLchar;
 #if !defined(GL_MAX_DRAW_BUFFERS)
 #define GL_MAX_DRAW_BUFFERS 0x8824
 #endif
-// the texture wrapping of OpenGL 1.2, the single channel and half float
-// formats of OpenGL 3.0, and the packed depth and stencil of the framebuffer
-// objects: the shader pipeline draws the strings and sums the transparency
-// through these, and the Windows header knows none of them
+#if !defined(GL_MAX_RENDERBUFFER_SIZE)
+#define GL_MAX_RENDERBUFFER_SIZE 0x84E8
+#endif
+// texture wrapping (OpenGL 1.2), single channel and half float formats
+// (OpenGL 3.0) and packed depth and stencil, which the Windows header lacks
 #if !defined(GL_CLAMP_TO_EDGE)
 #define GL_CLAMP_TO_EDGE 0x812F
 #endif
@@ -133,8 +125,32 @@ typedef char GLchar;
 #if !defined(GL_NUM_EXTENSIONS)
 #define GL_NUM_EXTENSIONS 0x821D
 #endif
-#if !defined(GL_CLIP_DISTANCE0)
-#define GL_CLIP_DISTANCE0 0x3000
+
+// the two halves of the blend function (OpenGL 1.4), to read back what the
+// caller set: the Windows header stops at 1.1, which has GL_BLEND_SRC and
+// GL_BLEND_DST alone
+#if !defined(GL_BLEND_SRC_RGB)
+#define GL_BLEND_DST_RGB 0x80C8
+#define GL_BLEND_SRC_RGB 0x80C9
+#define GL_BLEND_DST_ALPHA 0x80CA
+#define GL_BLEND_SRC_ALPHA 0x80CB
+#endif
+
+// a depth and stencil texture image (OpenGL 3.0)
+#if !defined(GL_DEPTH_STENCIL)
+#define GL_DEPTH_STENCIL 0x84F9
+#endif
+#if !defined(GL_UNSIGNED_INT_24_8)
+#define GL_UNSIGNED_INT_24_8 0x84FA
+#endif
+
+// depth texture comparison (OpenGL 1.4, OpenGL ES 3.0), for the shadow map
+#if !defined(GL_TEXTURE_COMPARE_MODE)
+#define GL_TEXTURE_COMPARE_MODE 0x884C
+#define GL_TEXTURE_COMPARE_FUNC 0x884D
+#endif
+#if !defined(GL_COMPARE_REF_TO_TEXTURE)
+#define GL_COMPARE_REF_TO_TEXTURE 0x884E
 #endif
 
 namespace glApi {
@@ -144,8 +160,6 @@ namespace glApi {
   extern void(APIENTRY *BindBuffer)(GLenum target, GLuint buffer);
   extern void(APIENTRY *BufferData)(GLenum target, GLsizeiptr size,
                                     const GLvoid *data, GLenum usage);
-  extern void(APIENTRY *BufferSubData)(GLenum target, GLintptr offset,
-                                       GLsizeiptr size, const GLvoid *data);
 
   // shaders and programs (OpenGL 2.0)
   extern GLuint(APIENTRY *CreateShader)(GLenum type);
@@ -173,10 +187,6 @@ namespace glApi {
                                              const GLchar *name);
   extern void(APIENTRY *Uniform1i)(GLint location, GLint v0);
   extern void(APIENTRY *Uniform1f)(GLint location, GLfloat v0);
-  extern void(APIENTRY *Uniform1iv)(GLint location, GLsizei count,
-                                    const GLint *value);
-  extern void(APIENTRY *Uniform1fv)(GLint location, GLsizei count,
-                                    const GLfloat *value);
   extern void(APIENTRY *Uniform2fv)(GLint location, GLsizei count,
                                     const GLfloat *value);
   extern void(APIENTRY *Uniform3fv)(GLint location, GLsizei count,
@@ -198,8 +208,7 @@ namespace glApi {
                                              GLsizei stride,
                                              const GLvoid *pointer);
 
-  // drawing the same shape many times over, each with attributes of its own
-  // (OpenGL 3.3, OpenGL ES 3.0)
+  // instanced drawing (OpenGL 3.3, OpenGL ES 3.0)
   extern void(APIENTRY *VertexAttribDivisor)(GLuint index, GLuint divisor);
   extern void(APIENTRY *DrawArraysInstanced)(GLenum mode, GLint first,
                                              GLsizei count,
@@ -207,7 +216,6 @@ namespace glApi {
 
   // vertex array objects (OpenGL 3.0)
   extern void(APIENTRY *GenVertexArrays)(GLsizei n, GLuint *arrays);
-  extern void(APIENTRY *DeleteVertexArrays)(GLsizei n, const GLuint *arrays);
   extern void(APIENTRY *BindVertexArray)(GLuint array);
 
   // framebuffer objects and multiple render targets (OpenGL 3.0)
@@ -239,51 +247,30 @@ namespace glApi {
   // textures (OpenGL 1.3)
   extern void(APIENTRY *ActiveTexture)(GLenum texture);
 
-  // the extensions one at a time (OpenGL 3.0): a core profile has no other way
-  // of listing them
+  // the extensions one at a time (OpenGL 3.0), the only way in a core profile
   extern const GLubyte *(APIENTRY *GetStringi)(GLenum name, GLuint index);
 
-  // separate blending for colour and alpha (OpenGL 1.4): what keeps the
-  // window's own alpha sensible when the transparency buffers are put on it
+  // separate blending for colour and alpha (OpenGL 1.4)
   extern void(APIENTRY *BlendFuncSeparate)(GLenum srcRGB, GLenum dstRGB,
                                            GLenum srcAlpha, GLenum dstAlpha);
 
-  // per target blending (OpenGL 4.0, OpenGL ES 3.2): what dual depth peeling
-  // needs, and what it has to do without on plain ES 3.0
-  extern void(APIENTRY *BlendFunci)(GLuint buf, GLenum src, GLenum dst);
-  extern void(APIENTRY *BlendEquationi)(GLuint buf, GLenum mode);
-
-  // Resolve the entry points. An OpenGL context must be current. Does nothing
-  // once it has run, until reset() is called.
+  // resolve the entry points (a context must be current); does nothing once
+  // it has run, until reset()
   void load();
-  // Forget the resolved entry points, e.g. because the context was recreated.
+  // forget the entry points (e.g. after the context was recreated)
   void reset();
 
-  // What the context that is current can do. Each of these calls load(), so
-  // they may be asked at any time inside a frame.
-  //
-  // Are buffer objects usable in the current context?
+  // what the current context can do; each of these calls load()
   bool haveBufferObjects();
-  // Can it compile and run shaders, feed them vertex attributes, and keep them
-  // in vertex array objects? This is the whole of what the shader pipeline
-  // needs to draw a frame.
+  // shaders, vertex attributes and vertex array objects: what the shader
+  // pipeline needs
   bool haveShaders();
-  // Can it render to a texture, with several targets at once? This is what
-  // depth peeling and the picking pass need.
+  // render to texture with several targets (the picking pass)
   bool haveFramebufferObjects();
-  // Can the vertex shader clip geometrically, with gl_ClipDistance? OpenGL ES
-  // 3.0 cannot, and the fragment shader has to discard instead.
-  bool haveClipDistance();
-  // Can each draw buffer have its own blend function? Dual depth peeling needs
-  // this; without it the passes are those of plain depth peeling.
-  bool haveIndexedBlend();
-  // Can a buffer of floating point colours be drawn into? Order independent
-  // transparency sums colours in one, and the sum runs well past what eight
-  // bits a channel could hold.
+  // drawing into floating point colour buffers (order independent
+  // transparency)
   bool haveFloatColorBuffers();
-  // Can the same shape be drawn many times over in one call, each of them with
-  // attributes of its own? This is what the glyphs want: one sphere and a
-  // buffer saying where every one of them goes.
+  // instanced drawing (the glyphs)
   bool haveInstancing();
   // the version of the current context, and whether it is an OpenGL ES one
   int versionMajor();

@@ -22,7 +22,7 @@ set(SRC
     GModelParametrize.cpp GModelAutoExtrude.cpp
     GModelIO_GEO.cpp GModelIO_OCC.cpp
     GModelIO_MSH.cpp GModelIO_MSH2.cpp GModelIO_MSH3.cpp GModelIO_MSH4.cpp
-    GModelIO_VTK.cpp GModelIO_CGNS.cpp GModelIO_MED.cpp GModelIO_MESH.cpp
+    GModelIO_VTK.cpp GModelIO_VTU.cpp GModelIO_CGNS.cpp GModelIO_MED.cpp GModelIO_MESH.cpp
     GModelIO_STL.cpp  GModelIO_TOCHNOG.cpp GModelIO_PLY.cpp GModelIO_VRML.cpp
     GModelIO_UNV.cpp GModelIO_BDF.cpp GModelIO_IR3.cpp GModelIO_DIFF.cpp
     GModelIO_GEOM.cpp GModelIO_INP.cpp GModelIO_KEY.cpp GModelIO_MAIL.cpp GModelIO_P3D.cpp
@@ -32,7 +32,6 @@ set(SRC
   ExtrudeParams.cpp
   Geo.cpp GeoInterpolation.cpp
   scriptStringInterface.cpp
-  gmshLevelset.cpp
   findLinks.cpp
   SOrientedBoundingBox.cpp
   GeomMeshMatcher.cpp
@@ -41,7 +40,8 @@ set(SRC
   MFace.cpp
   MElement.cpp MElementOctree.cpp
     MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp
-    MHexahedron.cpp MPrism.cpp MPyramid.cpp MTrihedron.cpp MElementCut.cpp MSubElement.cpp
+    MHexahedron.cpp MPrism.cpp MPyramid.cpp MTrihedron.cpp MSubElement.cpp
+    MPolygon.cpp MPolyhedron.cpp
   Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp Chain.cpp
   MVertexBoundaryLayerData.cpp
   CGNSCommon.cpp

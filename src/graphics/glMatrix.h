@@ -24,23 +24,24 @@ namespace glMatrix {
   void transform(const double m[16], const double in[4], double out[4]);
   // Gauss-Jordan with partial pivoting; false if m is singular
   bool invert(const double m[16], double out[16]);
+  // The cofactors of a 3x3 matrix, laid out as its inverse transpose is (which
+  // they are once divided by the determinant, returned): what transforms the
+  // normals when a transforms the points.
+  double cofactors(const double a[9], double c[9]);
 
   void translate(double x, double y, double z, double m[16]);
   void scale(double x, double y, double z, double m[16]);
   // the rotation of angle degrees about the axis (x, y, z), which does not
   // have to be a unit vector
   void rotate(double angle, double x, double y, double z, double m[16]);
+  // the rotation taking the z axis to the unit vector v
+  void rotateZTo(const double v[3], double m[16]);
   void ortho(double left, double right, double bottom, double top, double zNear,
              double zFar, double m[16]);
   void frustum(double left, double right, double bottom, double top,
                double zNear, double zFar, double m[16]);
   void lookAt(const double eye[3], const double center[3], const double up[3],
               double m[16]);
-  // the projection of the region of width w and height h centred on (x, y),
-  // in window coordinates, onto the whole viewport
-  void pickRegion(double x, double y, double w, double h, const int viewport[4],
-                  double m[16]);
-
   // object coordinates to window coordinates and back; false if the point
   // cannot be mapped
   bool project(const double xyz[3], const double model[16],

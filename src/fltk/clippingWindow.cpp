@@ -24,27 +24,35 @@ static void clip_num_cb(Fl_Widget *w, void *data)
   FlGui::instance()->clipping->resetBrowser();
 }
 
-// adjusting says the user is still choosing the value - dragging a plane,
-// typing a number into one of the fields, scrolling over one - and that the
-// fast representation is what should be drawn
+// adjusting says the user is still choosing the value (dragging, typing,
+// scrolling) and that the fast representation should be drawn
 static void clip_update(bool adjusting);
 
-// There is no event to say that typing a value is over: Enter does not reach
-// the callback, and the field only says so when the focus leaves it. So the
-// full representation is put back a moment after the last change instead.
+// no event says that typing a value is over: the full representation is put
+// back a moment after the last change (or at once with Enter)
 static void clip_settle_cb(void *) { clip_update(false); }
 
-// Is the user still choosing the value this callback carries? A drag of a
-// plane or of a value input, a scroll over one, and every keystroke as a
-// number is typed in - the callback fires on each one, and building the
-// section or the cut elements at every character is far too slow.
+// a drag ends with a release, which the input does not get when the button
+// comes up outside the window: the full representation comes back as soon as
+// no button is down any more
+static void clip_drag_cb(void *)
+{
+  if(Fl::pushed())
+    Fl::repeat_timeout(0.1, clip_drag_cb);
+  else
+    clip_update(false);
+}
+
+// is the user still choosing the value (a drag, a scroll, a keystroke other
+// than Enter)?
 static bool clip_adjusting()
 {
   switch(Fl::event()) {
   case FL_DRAG:
   case FL_MOUSEWHEEL:
-  case FL_KEYBOARD:
   case FL_PASTE: return true;
+  case FL_KEYBOARD:
+    return Fl::event_key() != FL_Enter && Fl::event_key() != FL_KP_Enter;
   default: return false;
   }
 }
@@ -137,44 +145,39 @@ static void clip_update(bool adjusting)
         CTX::instance()->clipPlane[idx][j]);
   }
 
-  // What the user is asking for. It is read here rather than from the context
-  // because while a value is being chosen the context holds what is being drawn
-  // with, which is not the same thing.
+  // what the user asks for (the context holds what is being drawn with,
+  // which differs while a value is chosen)
   int wantCapping = FlGui::instance()->clipping->butt[0]->value();
   int wantWhole =
     wantCapping ? 0 : FlGui::instance()->clipping->butt[1]->value();
   int wantIntersecting = FlGui::instance()->clipping->butt[2]->value();
+  int wantOnlyVolume = FlGui::instance()->clipping->butt[3]->value();
 
   CTX::instance()->clipCapping = wantCapping;
   CTX::instance()->clipWholeElements = wantWhole;
   CTX::instance()->clipOnlyDrawIntersectingVolume = wantIntersecting;
+  CTX::instance()->clipOnlyVolume = wantOnlyVolume;
 
-  // Nothing has to be built again from here: neither the mesh arrays nor the
-  // view arrays depend on where the planes are or on which of these modes is
-  // on, and what the modes add is held in arrays of their own, rebuilt from
-  // their own token. The one thing that does - a view drawn with only the
-  // volumes a plane cuts - is looked after by checkClipPlanesChanged().
+  // nothing to rebuild from here: what the planes add is rebuilt from its
+  // own token, and checkClipPlanesChanged() handles the one exception
 
-  // said while the toggles still hold what was asked for, so that the buttons
-  // do not follow what the drag below draws with
+  // while the toggles still hold what was asked for
   FlGui::instance()->clipping->activateButtons();
 
-  // While the value is being chosen, OpenGL alone does the clipping: no array
-  // is built, so an event costs a redraw however big the mesh is. Whole element
-  // mode is put aside because it is what keeps the planes from being applied at
-  // all, and capping because the section it cuts is worked out by walking every
-  // 3D element - cheap next to rebuilding the mesh, but far too much to do at
-  // every keystroke or motion event. Both are obeyed again, and everything they
-  // add built once, as soon as the value is settled.
+  // while the value is chosen OpenGL alone clips: whole element mode and
+  // capping (which walk every 3D element) are put aside until it settles
   if(adjusting) {
     CTX::instance()->clipWholeElements = 0;
     CTX::instance()->clipCapping = 0;
   }
 
-  // A drag says when it is over, so it is left to say so; a value being typed
-  // or scrolled does not, and settles on its own.
+  // a typed or scrolled value settles on its own; a drag when the button is
+  // released, wherever it is
   Fl::remove_timeout(clip_settle_cb);
-  if(adjusting && Fl::event() != FL_DRAG) Fl::add_timeout(0.5, clip_settle_cb);
+  Fl::remove_timeout(clip_drag_cb);
+  if(adjusting)
+    Fl::add_timeout(Fl::event() == FL_DRAG ? 0.1 : 0.5,
+                    Fl::event() == FL_DRAG ? clip_drag_cb : clip_settle_cb);
 
   CTX::instance()->drawBBox = adjusting ? 1 : 0;
   drawContext::global()->draw();
@@ -226,7 +229,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
                                         {nullptr}};
 
   int width = 26 * FL_NORMAL_SIZE;
-  int height = 10 * BH + 5 * WB;
+  int height = 11 * BH + 5 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow(
@@ -238,10 +241,10 @@ clippingWindow::clippingWindow(int deltaFontSize)
   browser->box(GMSH_SIMPLE_RIGHT_BOX);
 
   Fl_Tabs *o =
-    new Fl_Tabs(L + WB, WB, width - L - 2 * WB, height - 3 * WB - 4 * BH);
+    new Fl_Tabs(L + WB, WB, width - L - 2 * WB, height - 3 * WB - 5 * BH);
   {
     group[0] = new Fl_Group(L + WB, WB + BH, width - L - 2 * WB,
-                            height - 3 * WB - 5 * BH, "Planes");
+                            height - 3 * WB - 6 * BH, "Planes");
 
     int BW = width - L - 4 * WB - 4 * FL_NORMAL_SIZE;
 
@@ -266,10 +269,10 @@ clippingWindow::clippingWindow(int deltaFontSize)
     for(int j = 0; j < 4; j++) {
       plane[j]->align(FL_ALIGN_RIGHT);
       plane[j]->callback(clip_update_cb);
-      // the drag draws the fast representation: ask to be called on release as
-      // well, so that the full scene comes back even if the value settled on
-      // the one it already had
-      plane[j]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+      // also called on release and on Enter, changed or not, so that the full
+      // scene comes back even if the value did not change
+      plane[j]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY |
+                     FL_WHEN_NOT_CHANGED);
       plane[j]->tooltip("A * X + B * Y + C * Z + D = 0");
     }
 
@@ -277,7 +280,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
   }
   {
     group[1] = new Fl_Group(L + WB, WB + BH, width - L - 2 * WB,
-                            height - 3 * WB - 5 * BH, "Box");
+                            height - 3 * WB - 6 * BH, "Box");
     group[1]->hide();
 
     int w2 = (width - L - 4 * WB) / 2;
@@ -291,7 +294,8 @@ clippingWindow::clippingWindow(int deltaFontSize)
     for(int i = 0; i < 6; i++) {
       box[i]->align(FL_ALIGN_RIGHT);
       box[i]->callback(clip_update_cb);
-      box[i]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+      box[i]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY |
+                   FL_WHEN_NOT_CHANGED);
     }
 
     group[1]->end();
@@ -308,8 +312,11 @@ clippingWindow::clippingWindow(int deltaFontSize)
   butt[2] = new Fl_Check_Button(L + WB, 3 * WB + 8 * BH, width - L - 2 * WB, BH,
                                 "Only draw volume layer");
   butt[2]->tooltip("General.ClipOnlyDrawIntersectingVolume");
+  butt[3] = new Fl_Check_Button(L + WB, 3 * WB + 9 * BH, width - L - 2 * WB, BH,
+                                "Only clip volume elements");
+  butt[3]->tooltip("General.ClipOnlyVolume");
 
-  for(int i = 0; i < 3; i++) {
+  for(int i = 0; i < 4; i++) {
     butt[i]->type(FL_TOGGLE_BUTTON);
     butt[i]->callback(clip_update_cb);
   }
@@ -335,13 +342,18 @@ void clippingWindow::activateButtons()
   if(CTX::instance()->clipCapping) {
     butt[1]->deactivate();
     butt[2]->deactivate();
+    butt[3]->deactivate();
   }
   else {
     butt[1]->activate();
-    if(CTX::instance()->clipWholeElements)
+    if(CTX::instance()->clipWholeElements) {
       butt[2]->activate();
-    else
+      butt[3]->activate();
+    }
+    else {
       butt[2]->deactivate();
+      butt[3]->deactivate();
+    }
   }
 }
 

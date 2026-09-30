@@ -19,7 +19,6 @@
 #include "meshGFaceDelaunay.h"
 #include "Options.h"
 #include "meshGFace.h"
-#include "MElementOctree.h"
 #include "fullMatrix.h"
 
 #if defined(HAVE_BAMG)
@@ -157,8 +156,6 @@ void meshGFaceBamg(GFace *gf)
   Mesh2 *bamgMesh = new Mesh2(all.size(), gf->triangles.size(), numEdges,
                               bamgVertices, bamgTriangles, bamgBoundary);
 
-  MElementOctree *_octree = nullptr;
-
   Mesh2 *refinedBamgMesh = nullptr;
   int iterMax = 41;
   for(int k = 0; k < iterMax; k++) {
@@ -203,8 +200,6 @@ void meshGFaceBamg(GFace *gf)
       //  printf("wrong vertex index=%d %g %g %g (%g %g)\n",
       //         i, gp.x(), gp.y(), gp.z(), v[0], v[1]);
       // }
-      // If point not found because compound edges have been remeshed and
-      // boundary triangles have changed then we call our new octree
       MFaceVertex *x = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, v[0], v[1]);
       yetAnother[i] = x;
       gf->mesh_vertices.push_back(x);
@@ -231,7 +226,6 @@ void meshGFaceBamg(GFace *gf)
 
   // delete pointers
   if(refinedBamgMesh) delete refinedBamgMesh;
-  if(_octree) delete _octree;
   for(auto it = myParamElems.begin(); it != myParamElems.end(); it++)
     delete *it;
   for(auto it = newVert.begin(); it != newVert.end(); it++) delete *it;

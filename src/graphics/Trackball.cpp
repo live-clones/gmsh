@@ -73,7 +73,7 @@ static double tb_project_to_sphere(double, double, double);
 static void normalize_quat(double [4]);
 using namespace std ;
 
-void
+static void
 vzero(double *v)
 {
     v[0] = 0.0;
@@ -81,7 +81,7 @@ vzero(double *v)
     v[2] = 0.0;
 }
 
-void
+static void
 vset(double *v, double x, double y, double z)
 {
     v[0] = x;
@@ -89,7 +89,7 @@ vset(double *v, double x, double y, double z)
     v[2] = z;
 }
 
-void
+static void
 vsub(const double *src1, const double *src2, double *dst)
 {
     dst[0] = src1[0] - src2[0];
@@ -97,7 +97,7 @@ vsub(const double *src1, const double *src2, double *dst)
     dst[2] = src1[2] - src2[2];
 }
 
-void
+static void
 vcopy(const double *v1, double *v2)
 {
     int i;
@@ -105,7 +105,7 @@ vcopy(const double *v1, double *v2)
         v2[i] = v1[i];
 }
 
-void
+static void
 vcross(const double *v1, const double *v2, double *cross)
 {
     double temp[3];
@@ -116,13 +116,13 @@ vcross(const double *v1, const double *v2, double *cross)
     vcopy(temp, cross);
 }
 
-double
+static double
 vlength(const double *v)
 {
     return sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
-void
+static void
 vscale(double *v, double div)
 {
     v[0] *= div;
@@ -130,19 +130,19 @@ vscale(double *v, double div)
     v[2] *= div;
 }
 
-void
+static void
 vnormal(double *v)
 {
     vscale(v,1.0/vlength(v));
 }
 
-double
+static double
 vdot(const double *v1, const double *v2)
 {
     return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
 
-void
+static void
 vadd(const double *src1, const double *src2, double *dst)
 {
     dst[0] = src1[0] + src2[0];
@@ -212,6 +212,13 @@ trackball(double q[4], double p1x, double p1y, double p2x, double p2y)
  */
 void axis_to_quat(double a[3], double phi, double q[4])
 {
+    /* a drag straight towards the centre gives no axis to turn about: the
+       rotation is then the identity, not a quaternion of NaNs */
+    if(vlength(a) == 0.0) {
+      vzero(q);
+      q[3] = 1.0;
+      return;
+    }
     vnormal(a);
     vcopy(a,q);
     vscale(q,sin(phi/2.0));
@@ -311,7 +318,9 @@ normalize_quat(double q[4])
     int i;
     double mag;
 
-    mag = (q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
+    /* the length of the quaternion, not its square */
+    mag = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
+    if (mag == 0.0) return;
     for (i = 0; i < 4; i++) q[i] /= mag;
 }
 

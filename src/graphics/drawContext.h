@@ -6,72 +6,21 @@
 #ifndef DRAW_CONTEXT_H
 #define DRAW_CONTEXT_H
 
-#include <string>
-#include <vector>
+#include <map>
 #include <set>
+#include <string>
+#include <utility>
+#include <vector>
 #include "SBoundingBox3d.h"
 #include "SPoint2.h"
 #include "Camera.h"
-
-// the OpenGL headers, and the entry points that came after OpenGL 1.1
 #include "glApi.h"
-// the immediate mode drawing the decorations of the scene are made of
 #include "glImmediate.h"
-
 #include "GmshConfig.h"
 #include "VertexArray.h"
 
-#if defined(HAVE_VISUDEV)
-#define NORMAL_GLTYPE GL_FLOAT
-#else
-#define NORMAL_GLTYPE GL_BYTE
-#endif
-
-// Bind the vertex, normal and color arrays and return the pointer to be passed
-// to glVertexPointer(), glNormalPointer() and glColorPointer(). When buffer
-// objects are enabled the arrays are uploaded to the GPU on first use, the
-// corresponding buffer is bound and the returned offset is null; otherwise the
-// client-side pointer is returned.
-const GLvoid *vaVertexPointer(VertexArray *va);
-const GLvoid *vaNormalPointer(VertexArray *va);
-const GLvoid *vaColorPointer(VertexArray *va);
-
-// Bind the arrays of a vertex array so that it can be drawn: the vertices
-// always, the normals and the colours when they are asked for. What is not
-// bound is not used - the colour is then whichever one is current - and
-// gmshUnbindArrays() puts that back for whatever is drawn next. A shader
-// pipeline binds the same data as vertex attributes instead of as the client
-// arrays of the fixed function pipeline, which is why this goes through here.
-void gmshBindVertexArray(VertexArray *va, bool normals, bool colors);
-// same, for arrays the caller holds itself rather than in a VertexArray
-void gmshBindArrays(const float *vertices, const unsigned char *colors);
-void gmshUnbindArrays();
-
-// draw what the last bind left, handing the shader pipeline the state the
-// fixed function one kept for itself
-void gmshDrawArrays(GLenum type, int count, const float *dashes = nullptr);
-// Which half of the scene a pass draws. What is transparent is drawn after
-// everything else, all of it together, so that one pass can sum it whatever
-// order it arrives in.
-enum gmshTransparencyPass {
-  TRANSPARENCY_ALL = 0,
-  TRANSPARENCY_OPAQUE = 1,
-  TRANSPARENCY_TRANSPARENT = 2
-};
-// Whether the geometry and the mesh are drawn see-through, which is what the
-// Transparency options say and what any colour of theirs that is not opaque
-// says too.
-bool gmshGeometryIsTransparent();
-bool gmshMeshIsTransparent();
-
-// draw a vertex array, using its index array if it has one
-void drawVertexArray(VertexArray *va, GLenum type);
-// delete the buffer objects of the vertex arrays that have been destroyed since
-// the last frame: this requires a current GL context
-void deleteOrphanVertexArrayBuffers();
-
-class PView;
 class GModel;
+class GEntity;
 class GVertex;
 class GEdge;
 class GFace;
@@ -79,14 +28,71 @@ class GRegion;
 class MElement;
 class PView;
 
+#if defined(HAVE_VISUDEV)
+#define NORMAL_GLTYPE GL_FLOAT
+#else
+#define NORMAL_GLTYPE GL_BYTE
+#endif
+
+// Draw a vertex array as primitives of the given type, all of it or the runs
+// [first, last) of its vertices: lit with its normals (GMSH_DRAW_LIGHT, when
+// it has some), in its colours (GMSH_DRAW_COLORS, when it has some) or else
+// in the current colour, and with its polygons pushed behind the lines drawn
+// over them (GMSH_DRAW_OFFSET). A picking pass draws it unlit, in the colour
+// of the identifier it has set, unless the colours of the array are the
+// identifiers (GMSH_DRAW_IDENTIFIERS). The shader pipeline makes quads of the
+// lines wider than a pixel, and dashes the lines if stippling is on. Leaves
+// the lighting off.
+enum {
+  GMSH_DRAW_LIGHT = 1,
+  GMSH_DRAW_COLORS = 2,
+  GMSH_DRAW_OFFSET = 4,
+  GMSH_DRAW_IDENTIFIERS = 8
+};
+
+void drawVertexArray(VertexArray *va, GLenum type, int flags,
+                     const std::vector<std::pair<int, int> > *runs =
+                     nullptr);
+
+// which part of the scene a pass draws: everything transparent is drawn after
+// everything else, in one pass
+enum TransparencyPass {
+  TRANSPARENCY_ALL = 0,
+  TRANSPARENCY_OPAQUE = 1,
+  TRANSPARENCY_TRANSPARENT = 2
+};
+
+// Is anything in the scene transparent, through the Transparency options, the
+// colours of the options, or the colour of an entity? The geometry and the
+// mesh are transparent entire when the options' colours are; otherwise only
+// the entities whose own colour is, which a pass asks about one by one. A
+// view is transparent through the alpha of its colormap or its own factor.
+bool geometryIsTransparent();
+bool geometryColorsAreTransparent();
+bool geometryEntityIsTransparent(GEntity *e);
+bool meshIsTransparent();
+bool meshColorsAreTransparent();
+bool meshEntityIsTransparent(GEntity *e);
+bool anyViewIsTransparent();
+bool viewIsTransparent(PView *p);
+
+// The points of the 2D graphs a picking pass can return: numbered as they are
+// drawn into it (drawGraph2d.cpp), forgotten with it, and looked up by the
+// pass that read the identifiers back (drawPick.cpp).
+void clearGraph2dDataPointTags();
+SPoint2 getGraph2dDataPointForTag(unsigned int tag);
+
+// GModel::getMeshStatus() for the drawing, which asks it several times a
+// frame: computed again only when the mesh, the geometry or the visibilities
+// have changed (see CTX::meshChanged())
+int drawMeshStatus(GModel *m);
+
 class drawTransform {
 public:
   drawTransform() {}
   virtual ~drawTransform() {}
   virtual void transform(double &x, double &y, double &z) {}
-  virtual void transformOneForm(double &x, double &y, double &z) {}
-  virtual void transformTwoForm(double &x, double &y, double &z) {}
-  virtual void setMatrix(double mat[3][3], double tra[3]) {}
+  virtual void setMatrix(double mat[3][3], double tra[3] = nullptr) {}
 };
 
 class drawTransformScaled : public drawTransform {
@@ -124,6 +130,21 @@ public:
   }
 };
 
+// the fonts, numbered as FLTK numbers them: a family, plus bold and italic
+// for the first three
+namespace fontEnum {
+  enum {
+    helvetica = 0,
+    bold = 1,
+    italic = 2,
+    courier = 4,
+    times = 8,
+    symbol = 12,
+    screen = 13,
+    screenBold = 14
+  };
+}
+
 // global drawing functions, which need to be redefined for each widget toolkit
 // (FLTK, Qt, etc.)
 class drawContextGlobal {
@@ -131,48 +152,86 @@ public:
   drawContextGlobal() {}
   virtual ~drawContextGlobal() {}
   virtual void draw(bool rateLimited = true) {}
-  virtual void drawCurrentOpenglWindow(bool make_current) {}
-  virtual int getFontIndex(const char *fontname) { return 0; }
-  virtual int getFontEnum(int index) { return 0; }
-  virtual const char *getFontName(int index) { return "Helvetica"; }
-  // the alignment names are the same whatever the widget toolkit, so this one
-  // is implemented once and for all in drawContext.cpp
-  virtual int getFontAlign(const char *alignstr);
+  // again: the same picture as the draw just before it (the second of the
+  // two a print makes), whose studio frames need not be drawn a second time
+  virtual void drawCurrentOpenglWindow(bool make_current, bool again = false)
+  {
+  }
+  // the fonts by name (the PostScript ones), their index in the list and
+  // their number (see fontEnum): the same for every toolkit, so not hooks
+  int getFontIndex(const char *fontname);
+  int getFontEnum(int index);
+  const char *getFontName(int index);
+  int getFontAlign(const char *alignstr);
   virtual int getFontSize() { return 12; }
   virtual void setFont(int fontid, int fontsize) {}
   virtual double getStringWidth(const char *str) { return 1.; }
   virtual int getStringHeight() { return 12; }
   virtual int getStringDescent() { return 3; }
   virtual void drawString(const char *str) {}
-  // Draw a string where the window coordinates win say, in the colour that is
-  // current. What used to say where a string goes was the raster position,
-  // which a core profile has none of, so it is worked out and handed over
-  // instead. A backend that still wants the raster position gets it set for
-  // it as well, and can go on ignoring this.
+  // draw a string at window coordinates win in the current colour (a core
+  // profile has no raster position, so the position is computed and passed;
+  // the raster position is also set for backends that still use it)
   virtual void drawString(const char *str, const double win[3])
   {
     drawString(str);
   }
+  // Does this engine keep a pile of string textures, one per string, that has
+  // to be sized for the frame? Only the native one does, and only where FLTK
+  // draws its strings as textures; the others hold their strings in an atlas
+  // that grows by itself. The count is only worth making when the answer is
+  // yes (see stringsInFrame()).
+  virtual bool keepsStringTextures() { return false; }
   virtual void resetFontTextures() {}
-  // ask for the toolkit's cache of string textures to be able to hold n of
-  // them: drawing more strings than it can keep makes it recompute them one by
-  // one, which is what makes labels slow on macOS
+  // make the pile able to hold n strings: past its capacity the textures are
+  // recomputed one by one, which is slow
   virtual void reserveStringTextures(std::size_t n) {}
   virtual void flushString() {}
-  // is a mouse button currently held down? While it is, the user is dragging
-  // something and the vertex arrays are left alone
+  // draw the strings with a one pixel halo in the background colour, so
+  // that they read over the data
+  void setStringHalo(bool halo) { _stringHalo = halo; }
+  bool stringHalo() { return _stringHalo; }
+  // the pixels per unit of the drawing of what is being drawn (a window, or
+  // a picture being printed), which the strings are rasterised at: said by
+  // the window at the beginning of its draw, as a window that has not drawn
+  // yet (a tile just split off) knows nothing of its own
+  void setPixelFactor(double f) { _pixelFactor = (f > 0.) ? f : 1.; }
+  double pixelFactor() { return _pixelFactor; }
+protected:
+  bool _stringHalo = false;
+  double _pixelFactor = 1.;
+public:
+  // is a mouse button held down? The vertex arrays are left alone while
+  // dragging.
   virtual bool mouseIsPressed() { return false; }
   virtual std::string getName() { return "None"; }
 };
 
-class imgtex {
-public:
-  GLuint tex, w, h;
-  imgtex() : tex(0), w(0), h(0) {}
-};
+// What the model holds at a point (see drawQuery.cpp): the entity, the mesh
+// element and node there, and the value of every visible view that covers it,
+// one line of text per item. view is the view the point was picked on, which
+// is read at its closest node when the point itself holds nothing; pixel is
+// the size of a pixel in the units of the model.
+std::vector<std::string> queryPoint(const double xyz[3], GEntity *entity,
+                                    MElement *element, PView *view,
+                                    double pixel);
+// The mesh element a query reports at a point when the pick found none there,
+// in the mesh that is drawn (see drawQuery.cpp)
+MElement *queryElement(const double xyz[3], double pixel);
+// What a measurement says of the two points it was given (see drawQuery.cpp)
+std::vector<std::string> measurePoints(const double a[3], const double b[3]);
+// Whether the point of the model behind what was drawn of a view at xyz is
+// the place that view stands for there: it is what a glyph hangs off, but a
+// surface drawn deeper down is somewhere else (see drawQuery.cpp)
+bool queryBehind(PView *view, const double xyz[3], const double behind[3],
+                 double pixel);
 
 class drawContext {
 private:
+  // a picture drawn in the scene, kept as a texture with its size
+  struct imgtex {
+    GLuint tex = 0, w = 0, h = 0;
+  };
   static drawContextGlobal *_global;
   drawTransform *_transform;
   std::set<GModel *> _hiddenModels;
@@ -196,45 +255,140 @@ public:
   double model[16],
     proj[16]; // the modelview and projection matrix as they were
               // at the time of the last InitPosition() call
-  enum RenderMode { GMSH_RENDER = 1, GMSH_SELECT = 2, GMSH_FEEDBACK = 3 };
+  // a pass either draws the scene or draws it in picking colours
+  enum RenderMode { GMSH_RENDER = 1, GMSH_SELECT = 2 };
   int render_mode; // current rendering mode
-  // which half of the scene is being drawn, see gmshTransparencyPass
+  // which half of the scene is being drawn, see TransparencyPass
   int transparencyPass;
+  // does this pass draw something that is (or is not) transparent? A mixed
+  // mesh or geometry draws its opaque entities in the opaque pass and the
+  // others in the transparent one.
+  bool passWants(bool transparent) const
+  {
+    return transparencyPass == TRANSPARENCY_ALL ||
+           (transparencyPass == TRANSPARENCY_TRANSPARENT) == transparent;
+  }
+  // true while the scene is drawn into the shadow map of the studio shading:
+  // only the model is drawn then, no strings or images
+  bool shadowPass;
+  // the frame being accumulated in studio shading: 0 draws the plain frame,
+  // higher ones jitter the light, the dome and the projection
+  int studioSample;
+  // Draw the frames from `from' to the last of the studio shading into the
+  // target of width x height pixels, adding each to the average put on it;
+  // view is the modelview of camera mode. With a time budget (in seconds),
+  // stop once it is spent. False, with studioSample back to 0, if the frames
+  // cannot be accumulated.
+  bool drawStudioFrames(int from, int width, int height, double view[16],
+                        double budget = 0.);
 
 private:
-  // Colour buffer picking. During a selection pass every pickable object is
-  // drawn in a flat colour that encodes its position in _pickObjects, and the
-  // colours are then read back from the framebuffer. This replaces GL_SELECT,
-  // which current drivers implement on the CPU.
+  // Colour buffer picking: a selection pass draws every pickable object in a
+  // flat colour encoding its position in _pickObjects, then reads the colours
+  // back. This replaces GL_SELECT, which drivers implement on the CPU.
   struct pickObject {
     int type, ient, type2, ient2;
-    pickObject(int t = -1, int i = -1, int t2 = -1, int i2 = -1)
-      : type(t), ient(i), type2(t2), ient2(i2)
+    // a marker standing for an entity rather than showing its shape, drawn
+    // in front of everything (the sphere of a volume)
+    bool front;
+    pickObject(int t = -1, int i = -1, int t2 = -1, int i2 = -1, bool f = false)
+      : type(t), ient(i), type2(t2), ient2(i2), front(f)
     {
     }
   };
   std::vector<pickObject> _pickObjects;
   bool _pickColor;
-  // Last identifier image read back from a picking pass, together with its
-  // depths. Hovering asks what is under the cursor on every mouse move: with
-  // the image kept, all but the first of those cost a lookup instead of
-  // drawing every entity again. openglWindow::draw() drops it on every
-  // redraw, which covers camera moves, visibility and mesh changes; the flags
-  // record what the image was drawn with, as a pick that asks for something
-  // else has to be drawn again.
+  // the scale of the depth range per dimension in a picking pass
+  double _pickDepthStep = 0.;
+  // the depth of the front of the model's bounding box in a picking pass
+  double _pickNearest = 0.;
+  // the masks and the depth range the pass is drawing with (-1: not known)
+  int _pickStateSkip = -1;
+  double _pickStateFar = -1.;
+  // the far end of the depth range an object of a type is drawn into (see
+  // setPickColor()), and a change of the masks and of that range
+  double _pickFar(int type, bool front) const
+  {
+    return front ? 0.2 :
+           (type >= 0 && type <= 3) ? 1. - (3 - type) * _pickDepthStep :
+                                      1.;
+  }
+  void _pickState(bool skip, double zfar);
+  // The last identifier image and depths read back from a picking pass, so
+  // that hovering costs a lookup instead of a redraw per mouse move. Dropped
+  // by openglWindow::draw() on every redraw; the flags record what it was
+  // drawn with, as a pick asking for something else has to redraw.
   std::vector<unsigned char> _pickCache;
   std::vector<float> _pickCacheDepth;
-  bool _pickCacheValid, _pickCacheMesh, _pickCachePost, _pickCacheElements;
-  // the part of the window the image covers, in real pixels. Not the whole
-  // window: rasterising it all costs several times what a small region does,
-  // and the pointer stays in one place long enough for a region around it to
-  // answer the queries that follow
+  bool _pickCacheValid, _pickCacheMesh, _pickCachePost;
+  void _pickCheckLimit();
+  // what names an object of a picking pass from one pass to the next: the
+  // identifiers are indices into a list rebuilt every time, the tags are not
+  struct pickKey {
+    int type = -1, ient = 0, type2 = -1, ient2 = -1;
+    bool operator==(const pickKey &o) const
+    {
+      return type == o.type && ient == o.ient && type2 == o.type2 &&
+             ient2 == o.ient2;
+    }
+  };
+  // the entities stepped past, and the last one a pick chose
+  std::vector<pickKey> _pickSkip;
+  pickKey _pickLast;
+  bool _pickLastValid = false;
+  int _pickCandidates = 0;
+  // the point of the model under the middle of the last pick, from the depth
+  // the pass read back
+  double _pickPoint[3] = {0., 0., 0.};
+  bool _pickPointValid = false;
+  // What a query or a measurement leaves on the picture, until it is
+  // cleared: the points it asked about, each marked; and the segment of a
+  // measurement, drawn with its length
+  std::vector<double> _marks; // three numbers each
+  double _segment[6] = {0., 0., 0., 0., 0., 0.};
+  bool _segmentValid = false;
+  // the entity the last pick was on, which it gives away when it returns the
+  // mesh element it found there instead (see pickEntity())
+  GEntity *_pickEntity = nullptr;
+  // the region of the window the image covers, in real pixels (a region
+  // around the pointer is much cheaper to draw than the whole window)
   int _pickCacheX, _pickCacheY, _pickCacheWidth, _pickCacheHeight;
   // draw a region of the window in picking colours and keep the result
   bool _fillPickCache(bool mesh, bool post, int fx, int fy, int fw, int fh);
-  // the projection built by initProjection(), and the modelview it leaves for
-  // initPosition() to apply the position transform to
+  // the projection built by initProjection(), and the modelview it leaves
+  // for initPosition()
   double _projection[16], _modelBase[16];
+  void drawAxis(double xmin, double ymin, double zmin, double xmax, double ymax,
+                double zmax, int nticks, int mikado);
+  bool generateTextureForImage(const std::string &name, int page,
+                               GLuint &imageTexture, GLuint &imageW,
+                               GLuint &imageH);
+  // The steps of a frame, called by draw3d(), draw2d() and the picking pass
+  // and by nothing outside this class: the order they go in is what a frame
+  // is, and is not something a caller picks.
+  // (the shift of the projection of the frame being accumulated, a fraction
+  // of a pixel, which antialiases the average: identity on the plain frame
+  // and when picking)
+  void studioJitter(double m[16]);
+  void initProjection();
+  void drawGeom();
+  void drawMesh();
+  void drawMeshOccluders();
+  void drawPost();
+  void drawPostOccluders();
+  void drawBackgroundGradient();
+  void drawBackgroundImage(bool threeD);
+  void drawText2d();
+  void drawGraph2d(bool inModelCoordinates);
+  void drawAxes();
+  void drawSmallAxes();
+  void drawScales();
+  void buildRotationMatrix();
+  void setEulerAnglesFromRotationMatrix();
+  void initRenderModel();
+  void drawShadowMap();
+  bool drawOneShadowMap(int which, const double dir[3]);
+  void drawStudioFloor();
   // same as _pickColor, but reachable from the free drawing functions
   static bool _pickColorActive;
   bool _selectColor(int type, bool multiple, bool mesh, bool post, int x, int y,
@@ -245,25 +399,116 @@ private:
                     std::vector<SPoint2> &points,
                     std::vector<PView *> &views);
 public:
-  // true while drawing a colour buffer picking pass: the drawing code then has
-  // to use the flat colour set by setPickColor() instead of its own colours
+  // true during a colour buffer picking pass, where the drawing code must
+  // use the colour set by setPickColor() instead of its own
   bool inPickColorMode() const { return _pickColor; }
-  // register a pickable object and set the colour that encodes it
-  void setPickColor(int type, int ient, int type2 = -1, int ient2 = -1);
-  // forget the identifier image kept by the picking pass: anything that
-  // changes what a redraw would show has to call this
+  // Register a pickable object and set the colour that encodes it. Each
+  // dimension is drawn into a depth range of its own, lower dimensions in
+  // front, so that a point or a curve can be picked through a surface;
+  // `front' puts what follows in the front-most range whatever its
+  // dimension, for a marker that stands for an entity rather than showing
+  // its shape (the sphere of a volume, which floats inside it).
+  void setPickColor(int type, int ient, int type2 = -1, int ient2 = -1,
+                    bool front = false);
+  // For what is drawn from a kept array with the identifiers as its vertex
+  // colours (see drawGeom.cpp): register the entities of a type as
+  // setPickColor() would, returning the identifier of the first (the others
+  // follow), or 0 outside a picking pass; say whether one has been stepped
+  // past with the wheel; and set the masks and the depth range setPickColor()
+  // gives the type
+  std::size_t pickRegister(int type, const std::vector<int> &tags);
+  bool pickSkipped(int type, int ient);
+  void pickStateFor(int type);
+  // the colour of an identifier: 24 bits, 0 being the background; beyond,
+  // the background (what cannot be told apart is not pickable, rather than
+  // taken for something else)
+  static void pickIdColor(std::size_t id, unsigned char c[4])
+  {
+    if(id >= (std::size_t)1 << 24) id = 0;
+    c[0] = (unsigned char)(id & 0xff);
+    c[1] = (unsigned char)((id >> 8) & 0xff);
+    c[2] = (unsigned char)((id >> 16) & 0xff);
+    c[3] = 255;
+  }
+  // forget the identifier image: anything that changes what a redraw would
+  // show must call this
   void invalidatePickCache() { _pickCacheValid = false; }
-  // stop attributing what is drawn next to the object the last setPickColor()
-  // registered: the decorations drawn between two pickable objects (frames,
-  // axes, labels) would otherwise be picked as that object
+  // Step through the entities under the cursor instead of the drawing order
+  // deciding which one wins: what a pick returned is set aside, a pass draws
+  // nothing at all for it (setPickColor()), and the next pick finds what was
+  // behind it. stepPick() goes one deeper (or back) and stops at the furthest
+  // and the nearest rather than coming round, resetPick() returns to the
+  // entity in front, pickDepth() says how deep the last pick went and
+  // pickCandidates() how many entities its image held around the cursor.
+  void stepPick(int direction);
+  void resetPick();
+  int pickDepth() const { return (int)_pickSkip.size(); }
+  int pickCandidates() const { return _pickCandidates; }
+  // whether a step from what the last pick returned would find something:
+  // the identifier image holds only what is in front, so this draws it
+  // again without that entity, and leaves the stepping as it was
+  bool pickBehind(int type, bool mesh, bool post, int x, int y, int w, int h);
+  // The points a query or a measurement asked about, marked in the picture
+  // until they are cleared, and the segment a measurement spans (see
+  // drawQuery.cpp)
+  void addMark(const double xyz[3])
+  {
+    for(int i = 0; i < 3; i++) _marks.push_back(xyz[i]);
+  }
+  void setSegment(const double a[3], const double b[3])
+  {
+    for(int i = 0; i < 3; i++) {
+      _segment[i] = a[i];
+      _segment[3 + i] = b[i];
+    }
+    _segmentValid = true;
+  }
+  void clearSegment() { _segmentValid = false; }
+  void clearMarks()
+  {
+    _marks.clear();
+    _segmentValid = false;
+  }
+  std::size_t numMarks() const { return _marks.size() / 3; }
+  bool mark(std::size_t i, double xyz[3]) const
+  {
+    if(3 * i + 2 >= _marks.size()) return false;
+    for(int k = 0; k < 3; k++) xyz[k] = _marks[3 * i + k];
+    return true;
+  }
+  bool segment(double a[3], double b[3]) const
+  {
+    if(!_segmentValid) return false;
+    for(int k = 0; k < 3; k++) { a[k] = _segment[k]; b[k] = _segment[3 + k]; }
+    return true;
+  }
+  void drawMarks();
+  void drawMark(const double xyz[3], bool sphere = true);
+  // the entity of the model the last pick was on, whether it returned it or
+  // the mesh element it holds there (null when it was on neither)
+  GEntity *pickEntity() const { return _pickEntity; }
+  // the point of the model the last pick hit, from the depth under the middle
+  // of its rectangle (or the nearest depth of what it returned): false when
+  // it hit nothing of the 3D scene
+  bool pickPoint(double xyz[3]) const
+  {
+    if(!_pickPointValid) return false;
+    for(int i = 0; i < 3; i++) xyz[i] = _pickPoint[i];
+    return true;
+  }
+  // stop attributing what is drawn next to the last registered object, so
+  // that decorations (frames, axes, labels) are not picked as it
   void unsetPickColor();
+  // the identifier of an entity for a picking pass - or the background for
+  // an entity of another model than the current one, as a pick looks the
+  // tags up in the current model (drawn with whatever identifier was set
+  // last, it was taken for the entity that had set it)
+  void setPickColorFor(GEntity *e, bool front = false);
   static bool pickColorActive() { return _pickColorActive; }
   drawContext(drawTransform *transform = nullptr);
-  ~drawContext();
-  // factor between the (true) size in pixels and the size reported by OSes
-  // (e.g. 2 on an Apple "retina" display); this must be dynamic, as the high
-  // resolution can change when a window is moved across displays, so the GUI
-  // refreshes it before each draw
+  // factor between the true size in pixels and the size reported by the OS
+  // (e.g. 2 on an Apple "retina" display); refreshed by the GUI before each
+  // draw, as it changes when a window moves across displays
   double highResolutionPixelFactor() { return _highResolutionPixelFactor; }
   void setHighResolutionPixelFactor(double factor)
   {
@@ -293,26 +538,10 @@ public:
   {
     if(_transform) _transform->transform(x, y, z);
   }
-  void transformOneForm(double &x, double &y, double &z)
-  {
-    if(_transform) _transform->transformOneForm(x, y, z);
-  }
-  void transformTwoForm(double &x, double &y, double &z)
-  {
-    if(_transform) _transform->transformTwoForm(x, y, z);
-  }
   void hide(GModel *m) { _hiddenModels.insert(m); }
   void hide(PView *v) { _hiddenViews.insert(v); }
-  void show(GModel *m)
-  {
-    auto it = _hiddenModels.find(m);
-    if(it != _hiddenModels.end()) _hiddenModels.erase(it);
-  }
-  void show(PView *v)
-  {
-    auto it = _hiddenViews.find(v);
-    if(it != _hiddenViews.end()) _hiddenViews.erase(it);
-  }
+  void show(GModel *m) { _hiddenModels.erase(m); }
+  void show(PView *v) { _hiddenViews.erase(v); }
   void showAll()
   {
     _hiddenModels.clear();
@@ -326,23 +555,26 @@ public:
   {
     return (_hiddenViews.find(v) == _hiddenViews.end());
   }
-  void createQuadricsAndDisplayLists();
-  void invalidateQuadricsAndDisplayLists();
-  bool generateTextureForImage(const std::string &name, int page,
-                               GLuint &imageTexture, GLuint &imageW,
-                               GLuint &imageH);
   void invalidateBgImageTexture();
-  void buildRotationMatrix();
-  void setQuaternion(double p1x, double p1y, double p2x, double p2y);
+  void setQuaternion(double q0, double q1, double q2, double q3);
   void addQuaternion(double p1x, double p1y, double p2x, double p2y);
   void addQuaternionFromAxisAndAngle(double axis[3], double angle);
   void setQuaternionFromEulerAngles();
-  void setEulerAnglesFromRotationMatrix();
-  void initProjection(int xpick = 0, int ypick = 0, int wpick = 0,
-                      int hpick = 0);
-  void initRenderModel();
+  // the matrices of camera mode: the projection (the camera's frustum,
+  // shifted for a studio frame) and the modelview (the camera looking at
+  // its target), which `view' comes back with
+  void initCameraMatrices(double view[16]);
   void initPosition(bool saveMatrices);
   void unproject(double winx, double winy, double p[3], double d[3]);
+  // where a point of the model is in the window, in its units and with the
+  // matrices of the frame, as unproject() reads them back: false when the
+  // point is not in the picture (behind the camera, or outside the depth
+  // range). world2Viewport() below answers in true pixels and with the
+  // matrices that are current, which are those of the overlay once the scene
+  // has been drawn
+  bool world2Window(const double xyz[3], double win[2]);
+  // in true pixels, with the matrices that are current: only inside the draw
+  // that set them (see world2Window() above)
   void viewport2World(double vp[3], double xyz[3]);
   void world2Viewport(double xyz[3], double vp[3]);
   bool select(int type, bool multiple, bool mesh, bool post, int x, int y,
@@ -355,26 +587,23 @@ public:
   int fix2dCoordinates(double *x, double *y);
   void draw3d();
   void draw2d();
-  void drawGeom();
-  void drawMesh();
-  void drawPost();
-  bool anyViewIsTransparent();
-  void drawBackgroundGradient();
-  void drawBackgroundImage(bool moving);
-  void drawText2d();
-  void drawGraph2d(bool inModelCoordinates);
-  void drawAxis(double xmin, double ymin, double zmin, double xmax, double ymax,
-                double zmax, int nticks, int mikado);
-  void drawAxes(int mode, double tics[3], std::string format[3],
+  void drawAxes(int mode, double ticks[3], std::string format[3],
                 std::string label[3], double bb[6], int mikado,
                 double value_bb[6]);
-  void drawAxes(int mode, double tics[3], std::string format[3],
+  void drawAxes(int mode, double ticks[3], std::string format[3],
                 std::string label[3], SBoundingBox3d &bb, int mikado,
                 SBoundingBox3d &value_bb);
-  void drawAxes();
-  void drawSmallAxes();
-  void drawTrackball();
-  void drawScales();
+  // a box of text over the picture, in the pixel coordinates of draw2d: the
+  // lines are split on newlines and wrapped; (x, y) is the top left corner
+  // of the box (align 0), the top centre (1), or the cursor, which the box
+  // hangs below and to the right of, or above or to the left of when there
+  // is no room (2); it is kept whole inside the window unless inside is
+  // false, box gets where it was drawn (left, bottom, width, height), and
+  // tint, when it is not zero, is the colour of its background instead of
+  // that of the picture, telling one box from another
+  void drawTextBox(const std::string &text, double x, double y, int align,
+                   double box[4] = nullptr, bool inside = true,
+                   unsigned int tint = 0);
   void drawString(const std::string &s, double x, double y, double z,
                   const std::string &font_name, int font_enum, int font_size,
                   int align, int line_num = 0);
@@ -390,32 +619,19 @@ public:
                  int align = 0);
   void drawSphere(double R, double x, double y, double z, int n1, int n2,
                   int light);
-  void drawCube(double x, double y, double z, float v0[3], float v1[3],
-		float v2[3], int light);
-  void drawEllipsoid(double x, double y, double z, float v0[3], float v1[3],
-                     float v2[3], int light);
-  void drawEllipse(double x, double y, double z, float v0[3], float v1[3],
-                   int light);
   void drawSphere(double size, double x, double y, double z, int light);
   void drawCylinder(double width, double *x, double *y, double *z, int light);
-  void drawTaperedCylinder(double width, double val1, double val2,
-                           double ValMin, double ValMax, double *x, double *y,
-                           double *z, int light);
-  // make sure the shapes the glyphs are made of match the options; they are
-  // only read afterwards, so several threads may then use them at once
+  // update the glyph shapes to the options; they are only read afterwards,
+  // possibly by several threads at once
   void updateGlyphTemplates();
-  // The shape a glyph of a kind is made of: the triangle corners, their
-  // normals, and the same normals encoded the way a vertex array stores them,
-  // which is what a glyph that nothing turns is handed. Only valid after
-  // updateGlyphTemplates(), and only read - several threads expand glyphs
-  // from it at once. Null when the shape has no triangles.
+  // the version of the templates, which changes when they are built again
+  // (in any window)
+  int glyphTemplatesVersion();
+  // the shape of a kind of glyph: triangle corners, normals, and the normals
+  // encoded as a vertex array stores them; valid after
+  // updateGlyphTemplates(), null if the shape has no triangles
   const float *glyphTemplate(int kind, const float *&normals,
                              const normal_type *&encoded, int &numVertices);
-  // draw one glyph placed by the transform m, with the parameters its shape
-  // needs, which is what is left to do when there are too many of them to be
-  // worth keeping their triangles
-  void drawGlyph(int kind, const double m[16], const float *param,
-                 unsigned int color);
   void drawArrow3d(double x, double y, double z, double dx, double dy,
                    double dz, double length, int light);
   void drawVector(int Type, int Fill, double x, double y, double z, double dx,
@@ -425,8 +641,11 @@ public:
   void drawPlaneInBoundingBox(double xmin, double ymin, double zmin,
                               double xmax, double ymax, double zmax, double a,
                               double b, double c, double d, int shade = 0);
-  // dynamic pointer to a transient geometry drawing function
+  // a function drawing transient geometry, called by drawGeom(): set by the
+  // dialogs that show a shape while it is being defined
   static void setDrawGeomTransientFunction(void (*fct)(void *));
+
+private:
   static void (*drawGeomTransient)(void *);
 };
 
@@ -439,15 +658,6 @@ public:
   mousePosition()
   {
     for(int i = 0; i < 3; i++) win[i] = wnr[i] = s[i] = t[i] = 0.;
-  }
-  mousePosition(const mousePosition &instance)
-  {
-    for(int i = 0; i < 3; i++) {
-      win[i] = instance.win[i];
-      wnr[i] = instance.wnr[i];
-      s[i] = instance.s[i];
-      t[i] = instance.t[i];
-    }
   }
   void set(drawContext *ctx, int x, int y)
   {

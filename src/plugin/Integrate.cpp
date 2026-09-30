@@ -4,20 +4,16 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "Integrate.h"
+#include "MElement.h"
 #include "shapeFunctions.h"
 #include "PViewOptions.h"
 
-StringXNumber IntegrateOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1., ""},
-  {GMSH_FULLRC, "OverTime", nullptr, -1., ""},
-  {GMSH_FULLRC, "Dimension", nullptr, -1., ""},
-  {GMSH_FULLRC, "Visible", nullptr, 1., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterIntegratePlugin()
+GMSH_IntegratePlugin::GMSH_IntegratePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""},
+                     {GMSH_FULLRC, "OverTime", nullptr, -1., ""},
+                     {GMSH_FULLRC, "Dimension", nullptr, -1., ""},
+                     {GMSH_FULLRC, "Visible", nullptr, 1., ""}})
 {
-  return new GMSH_IntegratePlugin();
-}
 }
 
 std::string GMSH_IntegratePlugin::getHelp() const
@@ -35,22 +31,12 @@ std::string GMSH_IntegratePlugin::getHelp() const
          "Plugin(Integrate) creates one new list-based view.";
 }
 
-int GMSH_IntegratePlugin::getNbOptions() const
-{
-  return sizeof(IntegrateOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_IntegratePlugin::getOption(int iopt)
-{
-  return &IntegrateOptions_Number[iopt];
-}
-
 PView *GMSH_IntegratePlugin::execute(PView *v)
 {
-  int iView = (int)IntegrateOptions_Number[0].def;
-  int overTime = (int)IntegrateOptions_Number[1].def;
-  int dimension = (int)IntegrateOptions_Number[2].def;
-  bool visible = (bool)IntegrateOptions_Number[3].def;
+  int iView = (int)option(0);
+  int overTime = (int)option(1);
+  int dimension = (int)option(2);
+  bool visible = (bool)option(3);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -60,12 +46,10 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
   PViewDataList *data2 = getDataList(v2);
 
   if(overTime == -1) {
-    double x = data1->getBoundingBox().center().x();
-    double y = data1->getBoundingBox().center().y();
-    double z = data1->getBoundingBox().center().z();
-    data2->SP.push_back(x);
-    data2->SP.push_back(y);
-    data2->SP.push_back(z);
+    bool skipped = false;
+    SPoint3 c = data1->getBoundingBox().center();
+    std::vector<double> *l = data2->incrementList(1, TYPE_PNT);
+    l->insert(l->end(), {c.x(), c.y(), c.z()});
     for(int step = 0; step < data1->getNumTimeSteps(); step++) {
       double res = 0, resv[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
       bool simpleSum = false;
@@ -78,9 +62,25 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
           bool scalar = (numComp == 1);
           bool circulation = (numComp == 3 && numEdges == 1);
           bool flux = (numComp == 3 && (numEdges == 3 || numEdges == 4));
-          int numNodes = data1->getNumNodes(step, ent, ele);
+          int numNodes = getNumCornerNodes(data1, step, ent, ele);
+          if(!numNodes) continue;
           int dim = data1->getDimension(step, ent, ele);
           if((dimension > 0) && (dim != dimension)) continue;
+          int type = data1->getType(step, ent, ele);
+          if(type == TYPE_POLYG || type == TYPE_POLYH) {
+            // integrate on the element itself (P1 on its sub-simplices)
+            MElement *e = data1->getElement(step, ent, ele);
+            if(!e) continue;
+            if(!scalar) {
+              Msg::Warning("Only scalar views are integrated on polytopes");
+              continue;
+            }
+            std::vector<double> v(numNodes);
+            for(int nod = 0; nod < numNodes; nod++)
+              data1->getValue(step, ent, ele, nod, 0, v[nod]);
+            res += e->integrate(&v[0], 1);
+            continue;
+          }
           double x[8], y[8], z[8], val[8 * 3] = {0.};
           for(int nod = 0; nod < numNodes; nod++) {
             data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
@@ -103,6 +103,12 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
               res += element->integrateCirculation(val);
             else if(flux)
               res += element->integrateFlux(val);
+            else if(!skipped) {
+              Msg::Warning("Only scalars, and the circulation along lines "
+                           "and the flux through surfaces of vectors, are "
+                           "integrated: skipping the other elements");
+              skipped = true;
+            }
             delete element;
           }
         }
@@ -113,32 +119,35 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
                   resv[8]);
       else
         Msg::Info("Step %d: integral = %.16g", step, res);
-      data2->SP.push_back(res);
+      l->push_back(res);
     }
-    data2->NbSP = 1;
     v2->getOptions()->intervalsType = PViewOptions::Numeric;
 
     for(int i = 0; i < data1->getNumTimeSteps(); i++) {
       double time = data1->getTime(i);
-      data2->Time.push_back(time);
+      data2->addTime(time);
     }
   }
   else {
     int firstStep = data1->getFirstNonEmptyTimeStep();
     int numSteps = data1->getNumTimeSteps();
+    bool warned = false;
     for(int ent = 0; ent < data1->getNumEntities(firstStep); ent++) {
       for(int ele = 0; ele < data1->getNumElements(firstStep, ent); ele++) {
         if(data1->skipElement(firstStep, ent, ele)) continue;
         int dim = data1->getDimension(firstStep, ent, ele);
         if((dimension > 0) && (dim != dimension)) continue;
 
-        int numNodes = data1->getNumNodes(firstStep, ent, ele);
+        if(data1->getNumComponents(firstStep, ent, ele) != 1) {
+          if(!warned) Msg::Warning("Can only integrate scalar views over time");
+          warned = true;
+          continue;
+        }
+        int numNodes = getNumCornerNodes(data1, firstStep, ent, ele);
+        if(!numNodes) continue;
         int type = data1->getType(firstStep, ent, ele);
-        int numComp = data1->getNumComponents(firstStep, ent, ele);
-        if(numComp != 1)
-          Msg::Error("Can only integrate scalar views over time");
-        std::vector<double> *out =
-          data2->incrementList(numComp, type, numNodes);
+        std::vector<double> *out = data2->incrementList(1, type, numNodes);
+        if(!out) continue;
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
         for(int nod = 0; nod < numNodes; nod++)
           data1->getNode(firstStep, ent, ele, nod, x[nod], y[nod], z[nod]);
@@ -147,7 +156,7 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
         for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
 
         std::vector<double> val, t;
-        for(int step = firstStep + overTime; step < numSteps - 1; step++) {
+        for(int step = firstStep + overTime; step < numSteps; step++) {
           if(!data1->hasTimeStep(step)) continue;
           t.push_back(data1->getTime(step));
           for(int nod = 0; nod < numNodes; nod++) {
@@ -157,7 +166,7 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
           }
         }
         std::vector<double> timeIntegral(numNodes, 0.);
-        for(std::size_t step = 0; step < t.size() - 1; step++) {
+        for(std::size_t step = 0; step + 1 < t.size(); step++) {
           double dt = t[step + 1] - t[step];
           for(int nod = 0; nod < numNodes; nod++) {
             timeIntegral[nod] += 0.5 *

@@ -3,23 +3,27 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
+#include <cmath>
 #include <string.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "PViewOptions.h"
 #include "mathEvaluator.h"
+#include "PViewData.h"
 
-PViewOptions::PViewOptions() : genRaiseEvaluator(nullptr)
+void raiseEvaluator::reset(mathEvaluator *e)
+{
+  delete _e;
+  _e = e;
+}
+
+PViewOptions::PViewOptions()
 {
   ColorTable_InitParam(2, &colorTable);
   ColorTable_Recompute(&colorTable);
   currentTime = 0.;
-}
-
-PViewOptions::~PViewOptions()
-{
-  if(genRaiseEvaluator) delete genRaiseEvaluator;
 }
 
 PViewOptions *PViewOptions::_reference = nullptr;
@@ -30,35 +34,48 @@ PViewOptions *PViewOptions::reference()
   return _reference;
 }
 
+double PViewOptions::getScaleThreshold(double min, double max) const
+{
+  if(scaleThreshold > 0.) return scaleThreshold;
+  double m = std::max(fabs(min), fabs(max));
+  return (m > 0.) ? m * 1.e-4 : 1.;
+}
+
+double PViewOptions::scaleForward(double v, double min, double max) const
+{
+  int type = getScaleType(min, max);
+  if(type == Logarithmic) return log10(v);
+  if(type == SymmetricLogarithmic) {
+    // logarithmic beyond the threshold, linear inside it, and smooth where
+    // they meet: a field that changes sign has both of its tails readable
+    double s = getScaleThreshold(min, max);
+    return (v < 0. ? -1. : 1.) * log10(1. + fabs(v) / s);
+  }
+  return v;
+}
+
+double PViewOptions::scaleInverse(double u, double min, double max) const
+{
+  int type = getScaleType(min, max);
+  if(type == Logarithmic) return pow(10., u);
+  if(type == SymmetricLogarithmic) {
+    double s = getScaleThreshold(min, max);
+    return (u < 0. ? -1. : 1.) * s * (pow(10., fabs(u)) - 1.);
+  }
+  return u;
+}
+
 double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
 {
   if(numIso == 1) return (min + max) / 2.;
 
-  if(scaleType == Linear) {
-    // treat min/max separately to avoid numerical errors (important
-    // not to miss first/last discrete iso on piece-wise constant
-    // datasets)
-    if(iso == 0)
-      return min;
-    else if(iso == numIso - 1)
-      return max;
-    else
-      return min + iso * (max - min) / (numIso - 1.);
-  }
-  else if(scaleType == Logarithmic) {
-    // should translate scale instead, with smallest val an option!
-    if(min <= 0.) return 0;
-    return pow(10.,
-               log10(min) + iso * (log10(max) - log10(min)) / (numIso - 1.));
-  }
-  else if(scaleType == DoubleLogarithmic) {
-    if(min <= 0.) return 0;
-    double iso2 = iso / 2.;
-    double numIso2 = numIso / 2.;
-    return pow(10.,
-               log10(min) + iso2 * (log10(max) - log10(min)) / (numIso2 - 1.));
-  }
-  return 0.;
+  // treat min/max separately to avoid numerical errors (important not to
+  // miss first/last discrete iso on piece-wise constant datasets)
+  if(iso <= 0) return min;
+  if(iso >= numIso - 1) return max;
+
+  double a = scaleForward(min, min, max), b = scaleForward(max, min, max);
+  return scaleInverse(a + iso * (b - a) / (numIso - 1.), min, max);
 }
 
 int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
@@ -66,21 +83,14 @@ int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
 {
   if(min == max) return numIso / 2;
 
-  if(forceLinear || scaleType == Linear) {
+  if(forceLinear || getScaleType(min, max) == Linear)
     return (int)((val - min) * (numIso - 1) / (max - min));
-  }
-  else if(scaleType == Logarithmic) {
-    if(min <= 0.) return 0;
-    return (int)((log10(val) - log10(min)) * (numIso - 1) /
-                 (log10(max) - log10(min)));
-  }
-  else if(scaleType == DoubleLogarithmic) {
-    // FIXME
-    if(min <= 0.) return 0;
-    return (int)((log10(val) - log10(min)) * (numIso - 1) /
-                 (log10(max) - log10(min)));
-  }
-  return 0;
+
+  // a value with no logarithm is off the end of a logarithmic scale
+  if(scaleType == Logarithmic && val <= 0.) return 0;
+
+  double a = scaleForward(min, min, max), b = scaleForward(max, min, max);
+  return (int)((scaleForward(val, min, max) - a) * (numIso - 1) / (b - a));
 }
 
 unsigned int PViewOptions::getColor(double val, double min, double max,
@@ -117,6 +127,22 @@ unsigned int PViewOptions::getColor(int i, int nb)
   return colorTable.table[index];
 }
 
+void PViewOptions::getRange(PViewData *data, double &min, double &max)
+{
+  if(rangeType == Custom) {
+    min = customMin;
+    max = customMax;
+  }
+  else if(rangeType == PerTimeStep) {
+    min = data->getMin(timeStep);
+    max = data->getMax(timeStep);
+  }
+  else {
+    min = data->getMin();
+    max = data->getMax();
+  }
+}
+
 void PViewOptions::createGeneralRaise()
 {
   const char *names[] = {"x",  "y",  "z",  "v0", "v1", "v2", "v3",
@@ -128,12 +154,9 @@ void PViewOptions::createGeneralRaise()
   expressions[2] = genRaiseZ;
   for(std::size_t i = 0; i < numVariables; i++) variables[i] = names[i];
 
-  if(genRaiseEvaluator) delete genRaiseEvaluator;
-  genRaiseEvaluator = new mathEvaluator(expressions, variables);
-  if(expressions.empty()) {
-    delete genRaiseEvaluator;
-    genRaiseEvaluator = nullptr;
-  }
+  genRaiseEvaluator.reset(new mathEvaluator(expressions, variables));
+  // (the evaluator empties the expressions if they cannot be parsed)
+  if(expressions.empty()) genRaiseEvaluator.reset();
 }
 
 bool PViewOptions::skipElement(int type)
@@ -143,13 +166,13 @@ bool PViewOptions::skipElement(int type)
   case TYPE_LIN: return !drawLines;
   case TYPE_TRI: return !drawTriangles;
   case TYPE_QUA: return !drawQuadrangles;
-  case TYPE_POLYG: return false;
+  case TYPE_POLYG: return !drawPolygons;
   case TYPE_TET: return !drawTetrahedra;
   case TYPE_HEX: return !drawHexahedra;
   case TYPE_PRI: return !drawPrisms;
   case TYPE_PYR: return !drawPyramids;
   case TYPE_TRIH: return !drawTrihedra;
-  case TYPE_POLYH: return false;
+  case TYPE_POLYH: return !drawPolyhedra;
   default: return true;
   }
 }

@@ -75,7 +75,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(BoundaryAngles)
-Plugin(BoundaryAngles) computes the (interior) angles between the line elements on the boundary of all surfaces. The angles, computed modulo 2*Pi, are stored in a new post-processing view, one for each surface. The plugin currently only works for planar surfaces.Available options:- Visible (1=True, 0 = False, Default = 1): Visibility of the Views in the GUI - Save (1=True, 0 = False, Default = 0): Save the Views on disk ?- Remove (1=True, 0 = False, Default = 0): Remove the View from the memory after execution?- Filename (Default = 'Angles_Surface'): Root name for the Views (in case of save / Visibility)- Dir (Default = ''): Output directory (possibly nested)
+Plugin(BoundaryAngles) computes the (interior) angles between the line elements on the boundary of all surfaces. The angles, computed modulo 2*Pi, are stored in a new post-processing view, one for each surface. The plugin currently only works for planar surfaces.Available options:- Visible (1=True, 0 = False, Default = 0): Visibility of the Views in the GUI - Save (1=True, 0 = False, Default = 0): Save the Views on disk ?- Remove (1=True, 0 = False, Default = 0): Remove the View from the memory after execution?- Filename (Default = 'Angles_Surface'): Root name for the Views (in case of save / Visibility)- Dir (Default = ''): Output directory (possibly nested)
 String options:
 @table @code
 @item Filename
@@ -179,9 +179,6 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
-@item Plugin(CurvedBndDist)
-Plugin(CurvedBndDist) ...
-
 @item Plugin(CutBox)
 Plugin(CutBox) cuts the view `View' with a rectangular box defined by the 4 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U), (`X2',`Y2',`Z2') (axis of V) and (`X3',`Y3',`Z3') (axis of W).@*
 @*
@@ -274,24 +271,6 @@ Default value: @code{1}
 Default value: @code{-1}
 @end table
 
-@item Plugin(CutMesh)
-Plugin(CutMesh) cuts the mesh of the current GModel with the zero value of the levelset defined with the view 'View'.Sub-elements are created in the new model (polygons in 2D and polyhedra in 3D) and border elements are created on the zero-levelset.@*
-@*
-If `Split' is nonzero, the plugin splits the meshalong the edges of the cut elements in the positive side.@*
-@*
-If 'SaveTri' is nonzero, the sub-elements are saved as simplices.@*
-@*
-Plugin(CutMesh) creates one new GModel.
-Numeric options:
-@table @code
-@item View
-Default value: @code{-1}
-@item Split
-Default value: @code{0}
-@item SaveTri
-Default value: @code{0}
-@end table
-
 @item Plugin(CutParametric)
 Plugin(CutParametric) cuts the view `View' with the parametric function (`X'(u,v), `Y'(u,v), `Z'(u,v)), using `NumPointsU' values of the parameter u in [`MinU', `MaxU'] and `NumPointsV' values of the parameter v in [`MinV', `MaxV'].@*
 @*
@@ -352,7 +331,7 @@ Default value: @code{0}
 @item RecurLevel
 Default value: @code{3}
 @item TargetError
-Default value: @code{0.0001}
+Default value: @code{0.001}
 @item View
 Default value: @code{-1}
 @item Visible
@@ -382,7 +361,7 @@ Default value: @code{0}
 @item RecurLevel
 Default value: @code{3}
 @item TargetError
-Default value: @code{0.0001}
+Default value: @code{0.001}
 @item View
 Default value: @code{-1}
 @item Visible
@@ -536,12 +515,12 @@ Default value: @code{1}
 @end table
 
 @item Plugin(GaussPoints)
-Given an input mesh, Plugin(GaussPoints) creates a list-based view containing the Gauss points for a given polynomial `Order'.@*
+Given an input mesh, Plugin(GaussPoints) creates a list-based view containing the Gauss points integrating exactly the polynomials of order `IntegrationOrder'.@*
 @*
 If `PhysicalGroup' is nonzero, the plugin only creates points for the elements belonging to the group.
 Numeric options:
 @table @code
-@item Order
+@item IntegrationOrder
 Default value: @code{0}
 @item Dimension
 Default value: @code{2}
@@ -742,7 +721,7 @@ Default value: @code{0}
 @item RecurLevel
 Default value: @code{3}
 @item TargetError
-Default value: @code{0.0001}
+Default value: @code{0.001}
 @item View
 Default value: @code{-1}
 @item OtherTimeStep
@@ -772,11 +751,11 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(LongitudeLatitude)
-Plugin(LongituteLatitude) projects the view `View' in longitude-latitude.@*
+Plugin(LongitudeLatitude) projects the view `View' in longitude-latitude.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(LongituteLatitude) is executed in place.
+Plugin(LongitudeLatitude) is executed in place.
 Numeric options:
 @table @code
 @item View
@@ -855,7 +834,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(MeshSizeFieldView)
-Plugin(MeshSizeFieldView) evaluates the mesh size field `MeshSizeField' on specified `Component` (0 for scalar) of the post-processing view `View'.
+Plugin(MeshSizeFieldView) evaluates the mesh size field `MeshSizeField' on the component `Component' (0 for scalar data, all the components if negative) of the post-processing view `View'.
 Numeric options:
 @table @code
 @item MeshSizeField
@@ -874,9 +853,9 @@ Numeric options:
 Default value: @code{1}
 @item InputPhysicalGroup
 Default value: @code{1}
-@item OuputDimension
+@item OutputDimension
 Default value: @code{0}
-@item OuputPhysicalGroup
+@item OutputPhysicalGroup
 Default value: @code{2000}
 @end table
 
@@ -1174,7 +1153,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Scal2Tens)
-Plugin(Scal2Tens) converts some scalar fields into a tensor field. The number of components must be given (max. 9). The new view 'NameNewView' contains the new tensor field. If the number of a view is -1, the value of the corresponding component is 0.
+Plugin(Scal2Tens) converts some scalar fields into a tensor field. The number of components must be given (max. 9): a view has 1, 3 or 9, the components beyond `NumberOfComponents' being 0. The new view 'NameNewView' contains the new tensor field. If the number of a view is -1, the value of the corresponding component is 0.
 String options:
 @table @code
 @item NameNewView
@@ -1222,7 +1201,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(ShowNeighborElements)
-Plugin(ShowNeighborElements) sets visible some elements and a layer of elements around them, the other being set invisible.
+Plugin(ShowNeighborElements) sets visible the surface and volume elements `Element1', ..., `Element5' (numbers of elements, 0 for none) and `NumLayers' layers of elements around them: the elements of the same dimension that share a node with them, then those that share a node with these, and so on. The other surface and volume elements are set invisible.
 Numeric options:
 @table @code
 @item NumLayers
@@ -1351,9 +1330,9 @@ dX(t)/dt = V(x,y,z)@*
 @*
 is then solved with the initial condition X(t=0) chosen as the grid and with V(x,y,z) interpolated on the vector view.@*
 @*
-The time stepping scheme is a RK44 with step size `DT' and `MaxIter' maximum number of iterations.@*
+The lines are computed over `MaxIter' steps of size `DT', forward if `Direction' = 1, backward if `Direction' = -1, or both ways from the seeds if `Direction' = 0 (with `OtherView' only). If `Tolerance' = 0, each step is a step of the classical fourth order Runge-Kutta scheme; otherwise it is made of the steps of an embedded Runge-Kutta 5(4) scheme (Dormand-Prince), whose sizes adapt to keep the estimated error of each below `Tolerance' times the size of the model. A line stops where it leaves the domain, or where the speed falls below `MinSpeed'.@*
 @*
-If `TimeStep' < 0, the plugin tries to compute streamlines of the unsteady flow.@*
+If `TimeStep' < 0, the plugin tries to compute streamlines of the unsteady flow (forward only), with the time step closest to the time of each step.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
@@ -1392,36 +1371,44 @@ Default value: @code{0}
 Default value: @code{-1}
 @item OtherView
 Default value: @code{-1}
+@item Tolerance
+Default value: @code{0}
+@item Direction
+Default value: @code{1}
+@item MinSpeed
+Default value: @code{0}
 @end table
 
 @item Plugin(Summation)
-Plugin(Summation) sums every time steps of 'Reference View' and (every) 'Other View X'and store the result in a new view.@*
-If 'View 0' < 0 then the current view is selected.@*
-If 'View 1...8' < 0 then this view is skipped.@*
-Views can have different number of time steps@*
-Warning: the Plugin assume that every views sharethe same mesh and that meshes do not move between time steps!
+Plugin(Summation) sums every time step of the views `View0', ..., `View7' and stores the result in a new view, named `ResultingViewName' (unless it is `default').@*
+@*
+If `View0' < 0, the current view is used; views `View1' to `View7' < 0 are skipped.@*
+@*
+The views can have different numbers of time steps, but they must share the same mesh, and the mesh must not move between time steps.@*
+@*
+Plugin(Summation) creates one new list-based view.
 String options:
 @table @code
-@item Resuling View Name
+@item ResultingViewName
 Default value: @code{"default"}
 @end table
 Numeric options:
 @table @code
-@item View 0
+@item View0
 Default value: @code{-1}
-@item View 1
+@item View1
 Default value: @code{-1}
-@item View 2
+@item View2
 Default value: @code{-1}
-@item View 3
+@item View3
 Default value: @code{-1}
-@item View 4
+@item View4
 Default value: @code{-1}
-@item View 5
+@item View5
 Default value: @code{-1}
-@item View 6
+@item View6
 Default value: @code{-1}
-@item View 7
+@item View7
 Default value: @code{-1}
 @end table
 

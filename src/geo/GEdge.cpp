@@ -551,7 +551,10 @@ double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1,
 
 GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 {
-  if(geomType() == BoundaryLayerCurve) return GPoint();
+  if(geomType() == BoundaryLayerCurve) {
+    t = 0.;
+    return GPoint();
+  }
 
   // printf("looking for closest point in curve %d to point %g
   // %g\n",tag(),q.x(),q.y());

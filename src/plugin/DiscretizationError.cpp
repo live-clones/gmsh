@@ -13,14 +13,9 @@
 #include <MQuadrangle.h>
 #include <MTriangle.h>
 
-StringXNumber DiscretizationErrorOptions_Number[] = {
-  {GMSH_FULLRC, "SuperSamplingNodes", nullptr, 10., ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterDiscretizationErrorPlugin()
+GMSH_DiscretizationErrorPlugin::GMSH_DiscretizationErrorPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "SuperSamplingNodes", nullptr, 10., ""}})
 {
-  return new GMSH_DiscretizationErrorPlugin();
-}
 }
 
 std::string GMSH_DiscretizationErrorPlugin::getHelp() const
@@ -33,25 +28,20 @@ std::string GMSH_DiscretizationErrorPlugin::getHelp() const
          "the geometry.";
 }
 
-int GMSH_DiscretizationErrorPlugin::getNbOptions() const
-{
-  return sizeof(DiscretizationErrorOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_DiscretizationErrorPlugin::getOption(int iopt)
-{
-  return &DiscretizationErrorOptions_Number[iopt];
-}
-
 PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
 {
   double tol = CTX::instance()->geom.tolerance;
-  int nEdgeNodes = (int)DiscretizationErrorOptions_Number[0].def;
+  int nEdgeNodes = (int)option(0);
+  if(nEdgeNodes < 2) {
+    Msg::Error("SuperSamplingNodes should be at least 2");
+    return v;
+  }
   double paramQuandt = 1.0 / (nEdgeNodes - 1) - 10 * tol;
   double paramQuandtQuad = 2.0 / (nEdgeNodes - 1) - 10 * tol;
   int i, j, k, counter;
-  // used as a start estimate for u,v when performing an orthogonal projection
-  double startEstimate[2] = {0.5, 0.5};
+  // the start estimate of u,v when projecting a point: the center of the
+  // parameter range of the surface
+  double startEstimate[2];
   double dx, dy, dz;
 
   std::vector<std::pair<SPoint3, double> > quadDist(nEdgeNodes * nEdgeNodes);
@@ -63,6 +53,9 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
 
   for(auto itFace = GModel::current()->firstFace();
       itFace != GModel::current()->lastFace(); ++itFace) {
+    for(int d = 0; d < 2; d++)
+      startEstimate[d] = 0.5 * ((*itFace)->parBounds(d).low() +
+                                (*itFace)->parBounds(d).high());
     // sample quadrangles
     /* 13 14 15 16
      * 9  10 11 12

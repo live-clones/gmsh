@@ -67,12 +67,9 @@ public: // these will become protected at some point
 
   // the vertex arrays to draw the mesh of the entity efficiently
   VertexArray *va_lines, *va_triangles;
-  // What the clipping planes add to what is drawn, kept apart from the arrays
-  // above: the section they cut out of the 3D elements when capping is on, or
-  // the elements they cut drawn whole when whole element mode is. It is the
-  // only thing about the arrays that a plane moving changes, so holding it
-  // separately means a plane can be moved without the mesh being built again.
-  // Only 3D entities have them.
+  // what the clipping planes add, kept apart so that moving a plane does not
+  // rebuild the arrays above: the section they cut (capping), or the cut
+  // elements drawn whole (whole element mode)
   VertexArray *va_clip_lines, *va_clip_triangles;
 
   // the set of high-order elements fixed by the "fast curving" boundary layer
@@ -331,32 +328,32 @@ public:
 
   // get/set the visibility flag
   virtual char getVisibility();
-  virtual void setVisibility(char val, bool recursive = false)
-  {
-    _visible = val;
-  }
+  // (sets CTX::entityVisibilityChanged)
+  virtual void setVisibility(char val, bool recursive = false);
+
+  // What the selection flag holds: nothing, an entity the user has chosen,
+  // one chosen and drawn with its marker and label, or one the cursor is
+  // merely resting on, which is drawn in the highlight colour and undone by
+  // a move of the mouse (General.MouseHoverHighlight).
+  enum SelectionState {
+    SelectNone = 0,
+    SelectOn = 1,
+    SelectShow = 2,
+    SelectHover = 3
+  };
 
   // get/set the selection flag
   virtual char getSelection() { return _selection; }
-  virtual void setSelection(char val)
-  {
-    if(!_selection != !val) numSelected += val ? 1 : -1;
-    _selection = val;
-  }
-  // how many entities are selected, so that the drawing code can ask without
-  // walking them all
+  virtual void setSelection(char val);
+  // how many entities are selected, and which, so that the drawing code can
+  // ask, and draw them, without walking them all
   static int numSelected;
+  static std::set<GEntity *> selected;
 
   // get/set the color
   virtual unsigned int getColor() { return _color; }
-  virtual void setColor(unsigned color, bool recursive = false)
-  {
-    _color = color;
-    // whoever bakes the colours of the entities into something they keep -
-    // the merged mesh arrays do - can tell by this that they have changed
-    colorChanges++;
-  }
-  static int colorChanges;
+  // (sets CTX::entityColorsChanged)
+  virtual void setColor(unsigned color, bool recursive = false);
 
   // return true if we should use this color to represent the entity
   virtual bool useColor();
@@ -410,10 +407,7 @@ public:
   {
     return _onlySomeElementsVisible ? true : false;
   }
-  void setOnlySomeElementsVisible(bool val)
-  {
-    _onlySomeElementsVisible = val ? 1 : 0;
-  }
+  void setOnlySomeElementsVisible(bool val);
 
   // get the number of mesh vertices in the entity
   std::size_t getNumMeshVertices() { return mesh_vertices.size(); }
@@ -481,6 +475,10 @@ struct GEntityPtrLessThan {
   {
     return ent1->tag() < ent2->tag();
   }
+  // lookup by tag, without creating a temporary entity
+  using is_transparent = void;
+  bool operator()(const GEntity *ent, int tag) const { return ent->tag() < tag; }
+  bool operator()(int tag, const GEntity *ent) const { return tag < ent->tag(); }
 };
 
 struct GEntityPtrFullLessThan {

@@ -5,6 +5,8 @@
 //
 // Contributed by Sebastian Eiser
 
+#include <algorithm>
+#include <cmath>
 #include <stdlib.h>
 #include <stdio.h>
 #include "GmshConfig.h"
@@ -13,6 +15,7 @@
 #include "Context.h"
 #include "PView.h"
 #include "PViewData.h"
+#include "PViewOptions.h"
 #include "Numeric.h"
 #include "Options.h"
 #include "StringUtils.h"
@@ -105,9 +108,46 @@ static int assembleColbarStr(const int num, const int intType,
 
   int scaleType = (int)opt_view_scale_type(num, GMSH_GET, 0);
   int horizontal = (int)opt_print_pgf_horiz_bar(0, GMSH_GET, 0);
+  PViewOptions *opt = PView::list[num]->getOptions();
   // 1 linear
   // 2 log
-  // 3 double log ???
+  // 3 symmetric log
+  if(scaleType == 3 && cbmin < cbmax) {
+    // pgfplots has no symmetric logarithmic axis: the bar runs over the
+    // transformed values (see below) and its ticks are written out one by
+    // one, at zero and at the powers of ten on either side of it
+    double thr = opt->getScaleThreshold(cbmin, cbmax);
+    std::string pos, lab;
+    int k0 = (int)ceil(log10(thr));
+    int k1 = (int)floor(log10(std::max(fabs(cbmin), fabs(cbmax))));
+    for(int sign = -1; sign <= 1; sign += 2) {
+      // the ticks go up the bar: down the powers of ten under zero, then up
+      // the ones over it
+      for(int i = k0; i <= k1; i++) {
+        int k = (sign < 0) ? k1 - (i - k0) : i;
+        double v = sign * pow(10., k);
+        if(v < cbmin || v > cbmax) continue;
+        sprintf(tmp, "%s%.16g", pos.empty() ? "" : ",",
+                opt->scaleForward(v, cbmin, cbmax));
+        pos.append(tmp);
+        sprintf(tmp, "%s{$%s10^{%d}$}", lab.empty() ? "" : ",",
+                sign < 0 ? "-" : "", k);
+        lab.append(tmp);
+      }
+      if(sign < 0 && cbmin <= 0. && cbmax >= 0.) {
+        sprintf(tmp, "%s0", pos.empty() ? "" : ",");
+        pos.append(tmp);
+        sprintf(tmp, "%s{$0$}", lab.empty() ? "" : ",");
+        lab.append(tmp);
+      }
+    }
+    if(pos.size()) {
+      ret.append(std::string("\t\t") + (horizontal ? "x" : "y") + "tick={" +
+                 pos + "},\n");
+      ret.append(std::string("\t\t") + (horizontal ? "x" : "y") +
+                 "ticklabels={" + lab + "},\n");
+    }
+  }
   if(scaleType == 2) { // log
     // see
     // http://tex.stackexchange.com/questions/23750/log-color-bar-meta-data-in-pgfplot
@@ -124,6 +164,12 @@ static int assembleColbarStr(const int num, const int intType,
   if(scaleType == 2) { // log
     cbmin = log10(cbmin);
     cbmax = log10(cbmax);
+  }
+  else if(scaleType == 3) { // symmetric log
+    double a = opt->scaleForward(cbmin, cbmin, cbmax);
+    double b = opt->scaleForward(cbmax, cbmin, cbmax);
+    cbmin = a;
+    cbmax = b;
   }
   sprintf(
     tmp,

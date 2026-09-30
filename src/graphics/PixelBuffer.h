@@ -19,14 +19,8 @@
 
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
 #else
 #include <GL/gl.h>
-#include <GL/glu.h>
-#endif
-
-#if defined(HAVE_OSMESA)
-#include <GL/osmesa.h>
 #endif
 
 class PixelBuffer {
@@ -92,41 +86,17 @@ public:
                  (j * buffer->getWidth() + i) * _dataSize * _numComp,
                _dataSize * _numComp);
   }
-  void fill(int offscreen)
+  void fill()
   {
-    if(!offscreen) {
-      // workaround double buffering issues by redrawing twice
-      drawContext::global()->drawCurrentOpenglWindow(true);
-      drawContext::global()->drawCurrentOpenglWindow(true);
-      glFinish();
-      glPixelStorei(GL_PACK_ALIGNMENT, 1);
-      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-      glReadPixels(0, 0, _width, _height, _format, _type, (void *)_pixels);
-    }
-    else {
-#if defined(HAVE_OSMESA)
-      if(_format != GL_RGB && _type != GL_UNSIGNED_BYTE) {
-        Msg::Error(
-          "Offscreen rendering only implemented for GL_RGB/GL_UNSIGNED_BYTE");
-        return;
-      }
-      OSMesaContext ctx = OSMesaCreateContextExt(OSMESA_RGB, 16, 0, 0, nullptr);
-      if(!ctx) {
-        Msg::Error("OSMesaCreateContext failed");
-        return;
-      }
-      if(!OSMesaMakeCurrent(ctx, (void *)_pixels, GL_UNSIGNED_BYTE, _width,
-                            _height)) {
-        Msg::Error("OSMesaMakeCurrent failed");
-      }
-      drawContext::global()->drawCurrentOpenglWindow(false);
-      glFinish();
-      OSMesaDestroyContext(ctx);
-#else
-      Msg::Warning(
-        "Gmsh must be compiled with OSMesa to support offscreen rendering");
-#endif
-    }
+    // workaround double buffering issues by redrawing twice: what is read
+    // may be either frame, so both have to be the picture - the second
+    // puts back the studio frames the first accumulated
+    drawContext::global()->drawCurrentOpenglWindow(true);
+    drawContext::global()->drawCurrentOpenglWindow(true, true);
+    glFinish();
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, _width, _height, _format, _type, (void *)_pixels);
   }
 };
 

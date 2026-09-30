@@ -49,7 +49,6 @@ public:
   }
   virtual int getType() const { return TYPE_PNT; }
   virtual int getTypeForMSH() const { return MSH_PNT; }
-  virtual int getTypeForVTK() const { return 1; }
   virtual const char *getStringForPOS() const { return "SP"; }
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
@@ -70,9 +69,9 @@ public:
   {
     return BasisFactory::getJacobianBasis(MSH_PNT);
   }
-  virtual bool isInside(double u, double v, double w) const
+  using MElement::isInside;
+  virtual bool isInside(double u, double v, double w, double tol) const
   {
-    double tol = getTolerance();
     if(fabs(u) > tol || fabs(v) > tol || fabs(w) > tol) return false;
     return true;
   }

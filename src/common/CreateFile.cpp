@@ -3,6 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
+#include <functional>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -14,15 +16,18 @@
 #include "CreateFile.h"
 #include "OS.h"
 
-#if defined(HAVE_OPENGL)
-#include "drawContext.h"
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewData.h"
+#include "PViewDataList.h"
+#include "PViewOptions.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#include "graphicWindow.h"
-#include "openglWindow.h"
-#include "visibilityWindow.h"
+#if defined(HAVE_OPENGL)
+#include "drawContext.h"
+#include "drawContextOffscreen.h"
+#include "PixelBuffer.h"
+#include "glImmediate.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
 #include "gl2jpeg.h"
@@ -30,14 +35,20 @@
 #include "gl2ppm.h"
 #include "gl2yuv.h"
 #include "gl2pgf.h"
+#include "gl2mp4.h"
+#include "gl2mpeg.h"
 #endif
 
 #if defined(HAVE_FLTK)
-// gl2ps writes a vector file by putting OpenGL into feedback mode and reading
-// back the primitives it was handed, and a core profile has no feedback mode at
-// all - a scene drawn by the shader pipeline reaches it as nothing. So the old
-// pipeline is put back for as long as the file is being written, and the one
-// that was asked for is restored afterwards.
+#include "FlGui.h"
+#include "graphicWindow.h"
+#include "openglWindow.h"
+#include "visibilityWindow.h"
+#endif
+
+#if defined(HAVE_OPENGL)
+// gl2ps needs OpenGL feedback mode, which a core profile has none of: draw
+// with the fixed function pipeline while the file is written
 class drawTheOldWayWhileExporting {
 private:
   bool _switched;
@@ -48,8 +59,7 @@ public:
     if(!CTX::instance()->shaders) return;
     _switched = true;
     opt_general_shaders(0, GMSH_SET, 0.);
-    // the context is only made again when it is next drawn into, and feedback
-    // mode has to be asked of the one that will do the drawing
+    // the context is only recreated when next drawn into
     drawContext::global()->drawCurrentOpenglWindow(true);
   }
   ~drawTheOldWayWhileExporting()
@@ -69,9 +79,10 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".msh2")     { if(version) *version = 2.2; return FORMAT_MSH; }
   else if(ext == ".msh22")    { if(version) *version = 2.2; return FORMAT_MSH; }
   else if(ext == ".msh3")     { if(version) *version = 3.0; return FORMAT_MSH; }
-  else if(ext == ".msh4")     { if(version) *version = 4.1; return FORMAT_MSH; }
+  else if(ext == ".msh4")     { if(version) *version = 4.2; return FORMAT_MSH; }
   else if(ext == ".msh40")    { if(version) *version = 4.0; return FORMAT_MSH; }
   else if(ext == ".msh41")    { if(version) *version = 4.1; return FORMAT_MSH; }
+  else if(ext == ".msh42")    { if(version) *version = 4.2; return FORMAT_MSH; }
   else if(ext == ".x3d")      return FORMAT_X3D;
   else if(ext == ".pos")      return FORMAT_POS;
   else if(ext == ".pvtu")     return FORMAT_PVTU;
@@ -79,6 +90,8 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".vis")      return FORMAT_VIS;
   else if(ext == ".unv")      return FORMAT_UNV;
   else if(ext == ".vtk")      return FORMAT_VTK;
+  else if(ext == ".vtu")      return FORMAT_VTU;
+  else if(ext == ".pvd")      return FORMAT_VTU;
   else if(ext == ".m")        return FORMAT_MATLAB;
   else if(ext == ".dat")      return FORMAT_TOCHNOG;
   else if(ext == ".txt")      return FORMAT_TXT;
@@ -108,6 +121,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".jpeg")     return FORMAT_JPEG;
   else if(ext == ".mpg")      return FORMAT_MPEG;
   else if(ext == ".mpeg")     return FORMAT_MPEG;
+  else if(ext == ".mp4")      return FORMAT_MP4;
   else if(ext == ".png")      return FORMAT_PNG;
   else if(ext == ".pgf")      return FORMAT_PGF;
   else if(ext == ".ps")       return FORMAT_PS;
@@ -150,6 +164,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_VIS:     name = ".vis"; break;
   case FORMAT_UNV:     name = ".unv"; mesh = true; break;
   case FORMAT_VTK:     name = ".vtk"; mesh = true; break;
+  case FORMAT_VTU:     name = ".vtu"; mesh = true; break;
   case FORMAT_MATLAB:  name = ".m"; mesh = true; break;
   case FORMAT_TOCHNOG: name = ".dat"; mesh = true; break;
   case FORMAT_STL:     name = ".stl"; mesh = true; break;
@@ -174,6 +189,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_GIF:     name = ".gif"; break;
   case FORMAT_JPEG:    name = ".jpg"; break;
   case FORMAT_MPEG:    name = ".mpg"; break;
+  case FORMAT_MP4:     name = ".mp4"; break;
   case FORMAT_PNG:     name = ".png"; break;
   case FORMAT_PGF:     name = ".pgf"; break;
   case FORMAT_PS:      name = ".ps"; break;
@@ -206,7 +222,7 @@ std::string GetDefaultFileName(int format)
 
 std::string GetKnownFileFormats(bool onlyMeshFormats)
 {
-  std::string all = "auto, msh1, msh2, msh22, msh3, msh4, msh40, msh41";
+  std::string all = "auto, msh1, msh2, msh22, msh3, msh4, msh40, msh41, msh42";
   for(int i = 1; i < 1000; i++){
     std::string ext = GetDefaultFileExtension(i, onlyMeshFormats);
     if(ext.size() > 1){
@@ -216,32 +232,170 @@ std::string GetKnownFileFormats(bool onlyMeshFormats)
   return all;
 }
 
+#if defined(HAVE_OPENGL)
+// Is there a window to take the pictures of? Otherwise the scene is drawn
+// without one (see drawContextOffscreen), as a window of
+// General.GraphicsWidth x General.GraphicsHeight pixels would draw it.
+static bool haveWindow()
+{
 #if defined(HAVE_FLTK)
+  return FlGui::available();
+#else
+  return false;
+#endif
+}
+
+// the size of that window, in pixels
+static void windowSize(int &width, int &height)
+{
+#if defined(HAVE_FLTK)
+  if(haveWindow()) {
+    width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+    height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+    return;
+  }
+#endif
+  width = CTX::instance()->glSize[0];
+  height = CTX::instance()->glSize[1];
+}
+
+// the context the scene is drawn in without a window, kept from picture to
+// picture with what it holds
+static drawContextOffscreen *offscreen()
+{
+  static drawContextOffscreen *o = new drawContextOffscreen();
+  return o;
+}
+
+// the scene of the window drawn without one, into a picture of width x height
+// pixels, for as long as this lives; nothing when there is a window
+class offscreenPicture {
+private:
+  bool _drawing;
+
+public:
+  offscreenPicture(int width, int height, double scale)
+    : _drawing(!haveWindow() && offscreen()->begin(width, height, scale))
+  {
+  }
+  ~offscreenPicture()
+  {
+    if(_drawing) offscreen()->end();
+  }
+  bool failed() { return !haveWindow() && !_drawing; }
+};
+
+// the size of the picture: Print.Width and Print.Height, with the missing one
+// scaled from the window
+static void printSize(int &width, int &height)
+{
+  windowSize(width, height);
+  if(CTX::instance()->print.width <= 0 && CTX::instance()->print.height <= 0)
+    return;
+  if(CTX::instance()->print.width <= 0){
+    double w = width * CTX::instance()->print.height / (double)height;
+    width = (int)w;
+    height = CTX::instance()->print.height;
+  }
+  else if(CTX::instance()->print.height <= 0){
+    double h = height * CTX::instance()->print.width / (double)width;
+    height = (int)h;
+    width = CTX::instance()->print.width;
+  }
+  else{
+    width = CTX::instance()->print.width;
+    height = CTX::instance()->print.height;
+  }
+}
+
+// average blocks of k x k pixels of `from' into `to', k times smaller
+static void downsample(PixelBuffer *from, PixelBuffer *to, int k)
+{
+  int nc = to->getNumComp(), w = to->getWidth(), h = to->getHeight();
+  int fw = from->getWidth();
+  const unsigned char *src = (const unsigned char *)from->getPixels();
+  unsigned char *dst = (unsigned char *)to->getPixels();
+  for(int j = 0; j < h; j++)
+    for(int i = 0; i < w; i++)
+      for(int c = 0; c < nc; c++) {
+        unsigned int sum = 0;
+        for(int jj = 0; jj < k; jj++)
+          for(int ii = 0; ii < k; ii++)
+            sum += src[((j * k + jj) * fw + i * k + ii) * nc + c];
+        dst[(j * w + i) * nc + c] = (unsigned char)((sum + k * k / 2) / (k * k));
+      }
+}
+
+// the scene drawn without a window, into a picture of Print.Width x
+// Print.Height pixels (see printSize()), possibly drawn at a multiple of its
+// size and averaged down
+static PixelBuffer *getOffscreenPixelBuffer(GLenum format, GLenum type)
+{
+  int width, height, ww, wh;
+  printSize(width, height);
+  windowSize(ww, wh);
+  int ss = std::max(1, CTX::instance()->print.supersampling);
+  if(type != GL_UNSIGNED_BYTE) ss = 1;
+  // what is sized in pixels follows the picture's size, as for a window
+  double ratio = 1.;
+  if(CTX::instance()->print.scalePixelSizes && ww > 0)
+    ratio = (double)width / ww;
+  PixelBuffer *big = new PixelBuffer(width * ss, height * ss, format, type);
+  {
+    offscreenPicture picture(width * ss, height * ss, ss * ratio);
+    if(picture.failed()) {
+      delete big;
+      return nullptr;
+    }
+    offscreen()->drawCurrentOpenglWindow(true);
+    offscreen()->read(format, type, big->getPixels());
+  }
+  if(ss == 1) return big;
+  PixelBuffer *smallBuf = new PixelBuffer(width, height, format, type);
+  downsample(big, smallBuf, ss);
+  delete big;
+  return smallBuf;
+}
+
 static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 {
+  if(!haveWindow()) return getOffscreenPixelBuffer(format, type);
+
+#if defined(HAVE_FLTK)
   openglWindow *newg = nullptr;
 
+  // a picture of any size is drawn into a buffer of its own (a window could
+  // not be larger than the screen), and possibly at a multiple of its size,
+  // averaged down
+  int ss = std::max(1, CTX::instance()->print.supersampling);
+  if(type != GL_UNSIGNED_BYTE) ss = 1;
+  if(!CTX::instance()->batch &&
+     (CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0 ||
+      ss > 1)) {
+    int width, height;
+    printSize(width, height);
+    PixelBuffer *big = new PixelBuffer(width * ss, height * ss, format, type);
+    if(FlGui::instance()->getCurrentOpenglWindow()->printTo(
+         width * ss, height * ss, ss, format, type, big->getPixels())) {
+      if(ss == 1) return big;
+      PixelBuffer *smallBuf = new PixelBuffer(width, height, format, type);
+      downsample(big, smallBuf, ss);
+      delete big;
+      return smallBuf;
+    }
+    delete big;
+  }
+
   if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0){
-    GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-    GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
-    if(CTX::instance()->print.width <= 0){
-      double w = width * CTX::instance()->print.height / (double)height;
-      width = (int)w;
-      height = CTX::instance()->print.height;
-    }
-    else if(CTX::instance()->print.height <= 0){
-      double h = height * CTX::instance()->print.width / (double)width;
-      height = (int)h;
-      width = CTX::instance()->print.width;
-    }
-    else{
-      width = CTX::instance()->print.width;
-      height = CTX::instance()->print.height;
-    }
-    newg = new openglWindow(100, 100, width, height);
-    // the same visual as the windows this one stands in for: a picture taken
-    // with a different pipeline than the one on screen is not a picture of
-    // what is on screen
+    int width, height;
+    printSize(width, height);
+    // the size is in pixels, the window's in the units of the widget toolkit,
+    // which a high resolution display scales
+    double hr = FlGui::instance()->getCurrentOpenglWindow()
+                  ->getDrawContext()->highResolutionPixelFactor();
+    newg = new openglWindow(100, 100, (int)(width / hr + 0.5),
+                            (int)(height / hr + 0.5));
+    // the same visual (hence pipeline) as the windows on screen
     newg->mode(openglWindowMode());
     newg->end();
     newg->getDrawContext()->copyViewAttributes
@@ -259,7 +413,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
     GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
     buffer = new PixelBuffer(width, height, format, type);
-    buffer->fill(CTX::instance()->batch);
+    buffer->fill();
   }
   else{
     graphicWindow *g = FlGui::instance()->graph[0];
@@ -283,7 +437,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
       openglWindow::setLastHandled(g->gl[i]);
       buffer = new PixelBuffer(g->gl[i]->pixel_w(), g->gl[i]->pixel_h(),
                                format, type);
-      buffer->fill(CTX::instance()->batch);
+      buffer->fill();
       buffers.push_back(buffer);
       double fact = g->gl[i]->getDrawContext()->highResolutionPixelFactor();
       ww = std::max(ww, (int)(fact * (g->gl[i]->x() - xmin)) + g->gl[i]->pixel_w());
@@ -306,10 +460,13 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
   }
 
   return buffer;
+#else
+  return nullptr;
+#endif
 }
 #endif
 
-#if defined(HAVE_MPEG_ENCODE)
+#if defined(HAVE_OPENGL) && defined(HAVE_POST)
 static void ChangePrintParameter(int frame)
 {
   double first = CTX::instance()->print.parameterFirst;
@@ -321,6 +478,156 @@ static void ChangePrintParameter(int frame)
   Msg::Info("Setting Print.Parameter = %g", v);
   opt_print_parameter(0, GMSH_SET | GMSH_GUI, v);
   ParseString(CTX::instance()->print.parameterCommand, true);
+}
+
+// The frames of an animation (PostProcessing.AnimationCycle): the time steps
+// of the visible views, the views one at a time, or the values of
+// Print.Parameter, every PostProcessing.AnimationStep; frame(i) makes the
+// i-th, and false from it stops
+static bool forEachAnimationFrame(const std::function<bool(int)> &frame)
+{
+  int numViews = (int)opt_post_nb_views(0, GMSH_GET, 0);
+  int numSteps = 0;
+  int cycle = CTX::instance()->post.animCycle;
+  if(cycle == 0) {
+    for(int i = 0; i < numViews; i++) {
+      if(opt_view_visible(i, GMSH_GET, 0))
+        numSteps = std::max(
+          numSteps, (int)opt_view_nb_non_empty_timestep(i, GMSH_GET, 0));
+    }
+  }
+  else if(cycle == 1)
+    numSteps = numViews;
+  else
+    numSteps = CTX::instance()->print.parameterSteps;
+  int step = std::max(1, CTX::instance()->post.animStep);
+  int numFrames = (numSteps + step - 1) / step;
+  if(cycle != 2) PView::animate(!cycle, 0);
+  for(int i = 0; i < numFrames; i++) {
+    if(cycle == 2) ChangePrintParameter(i);
+    if(!frame(i)) return false;
+    if(cycle != 2) PView::animate(!cycle, step);
+  }
+  return true;
+}
+
+// a movie (see gl2mpeg.h and gl2mp4.h) of the frames of the animation, one
+// every PostProcessing.AnimationDelay seconds
+template <class movieWriter>
+static bool writeMovie(movieWriter &movie, const std::string &name)
+{
+  double delay = CTX::instance()->post.animDelay;
+  double fps = (delay > 0.) ? 1. / delay : 25.;
+  bool ok = forEachAnimationFrame([&](int i) {
+    PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
+    if(!buffer) return false;
+    bool done =
+      (i || movie.open(name, buffer->getWidth(), buffer->getHeight(), fps)) &&
+      movie.write(buffer);
+    delete buffer;
+    return done;
+  });
+  if(!movie.close() || !ok) {
+    Msg::Error("Could not write the movie '%s'", name.c_str());
+    return false;
+  }
+  return true;
+}
+#endif
+
+void CreateReadBackScript(const std::string &fileName,
+                          const std::vector<std::pair<std::string, bool> > &files)
+{
+  // (each file once, in the order given)
+  std::vector<std::pair<std::string, bool> > unique;
+  for(auto &f : files) {
+    bool seen = false;
+    for(auto &u : unique) seen |= (u.first == f.first);
+    if(!seen) unique.push_back(f);
+  }
+  if(unique.size() < 2) return;
+  std::string name = fileName + ".geo";
+  FILE *fp = Fopen(name.c_str(), "w");
+  if(!fp) {
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return;
+  }
+  std::vector<std::string> split = SplitFileName(fileName);
+  fprintf(fp, "// Reads back '%s%s', saved by Gmsh in %zu files\n",
+          split[1].c_str(), split[2].c_str(), unique.size());
+  for(std::size_t i = 0; i < unique.size(); i++) {
+    if(i && unique[i].second) fprintf(fp, "NewModel;\n");
+    std::vector<std::string> s = SplitFileName(unique[i].first);
+    fprintf(fp, "Merge \"%s%s\";\n", s[1].c_str(), s[2].c_str());
+  }
+  fclose(fp);
+  Msg::Info("Script to read back the %zu files saved in '%s'", unique.size(),
+            name.c_str());
+}
+
+#if defined(HAVE_POST)
+// the views to save in a mesh file with the mesh of the current model
+// (Mesh.SaveViews): those based on it, those with a mesh of their own
+// (list-based, or saved refined, see PostProcessing.SaveAdapted), and those
+// saved on several meshes, in a file for each
+static void getViewsToSave(std::vector<PView *> &onModel,
+                           std::vector<PView *> &lists,
+                           std::vector<PView *> &several)
+{
+  int which = CTX::instance()->mesh.saveViews;
+  if(!which || PView::list.empty()) return;
+  GModel *m = GModel::current();
+  for(auto v : PView::list) {
+    if(which == 1 && !v->getOptions()->visible) continue;
+    PViewData *d = v->getData();
+    if(v->savesSeveralMeshes())
+      several.push_back(v);
+    else if(dynamic_cast<PViewDataList *>(d) || v->savesAdapted())
+      lists.push_back(v);
+    else if(d->hasModel(m))
+      onModel.push_back(v);
+    else
+      Msg::Info("View '%s' not saved: it is based on another model",
+                d->getName().c_str());
+  }
+}
+
+static bool writeListViewsInMSH(const std::string &name,
+                                const std::vector<PView *> &views)
+{
+  // (those saved refined have a single step)
+  std::vector<PViewDataList *> lists;
+  for(auto v : views) {
+    if(!v->savesAdapted())
+      lists.push_back(static_cast<PViewDataList *>(v->getData()));
+    else
+      for(auto l : v->getAdaptedSteps())
+        if(l) lists.push_back(l);
+  }
+  return PViewDataList::writeMSH(
+    name, lists, CTX::instance()->mesh.mshFileVersion,
+    CTX::instance()->mesh.binary, true, false, 0,
+    CTX::instance()->post.saveInterpolationMatrices,
+    CTX::instance()->post.forceNodeData,
+    CTX::instance()->post.forceElementData);
+}
+
+// the views saved on several meshes, each in files of its own, as in VTU:
+// name_views_0000.ext, name_views_0005.ext... or with the number of the view
+// if there are several, name_views_0_0000.ext...
+static void writeViewsOnSeveralMeshes(
+  const std::string &name, const std::vector<PView *> &views, int format,
+  std::vector<std::pair<std::string, bool> > &files)
+{
+  std::vector<std::string> parts = SplitFileName(name);
+  for(std::size_t i = 0; i < views.size(); i++) {
+    std::string n = parts[0] + parts[1] + "_views";
+    if(views.size() > 1) n += "_" + std::to_string(i);
+    if(views[i]->write(n + parts[2], format, false, &files))
+      Msg::Info("View '%s' saved on its meshes in '%s_*%s'",
+                views[i]->getData()->getName().c_str(), n.c_str(),
+                parts[2].c_str());
+  }
 }
 #endif
 
@@ -354,24 +661,54 @@ void CreateOutputFile(const std::string &fileName, int format,
     PrintOptions(0, GMSH_FULLRC, 1, 1, name.c_str());
     break;
 
-  case FORMAT_MSH:
-    if(GModel::current()->getNumPartitions() &&
-       CTX::instance()->mesh.partitionSplitMeshFiles){
+  case FORMAT_MSH: {
+    // the files to read back (see CreateReadBackScript()): those of the views
+    // with a mesh of their own, then those of the mesh, whose model is then
+    // the current one
+    std::vector<std::pair<std::string, bool> > files, meshFiles;
+#if defined(HAVE_POST)
+    std::vector<PView *> onModel, lists, several;
+    if(CTX::instance()->mesh.mshFileVersion >= 2.)
+      getViewsToSave(onModel, lists, several);
+    else if(CTX::instance()->mesh.saveViews && PView::list.size())
+      Msg::Warning("Views cannot be saved in MSH %g files",
+                   CTX::instance()->mesh.mshFileVersion);
+    bool mesh = GModel::current()->getNumMeshElements() > 0;
+    writeViewsOnSeveralMeshes(name, several, PView::MSH, files);
+    if(!mesh && lists.size()) {
+      // no mesh: the file holds the list-based views, on a mesh of their
+      // elements
+      if(writeListViewsInMSH(name, lists)) files.push_back({name, true});
+      CreateReadBackScript(name, files);
+      break;
+    }
+#endif
+    double version = CTX::instance()->mesh.mshFileVersion;
+    bool split = GModel::current()->getNumPartitions() &&
+                 CTX::instance()->mesh.partitionSplitMeshFiles;
+    if(split) {
       std::vector<std::string> splitName = SplitFileName(name);
       splitName[0] += splitName[1];
       GModel::current()->writePartitionedMSH
-        (splitName[0], CTX::instance()->mesh.mshFileVersion,
+        (splitName[0], version,
          CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
          CTX::instance()->mesh.saveParametric,
          CTX::instance()->mesh.scalingFactor);
+      // (the partitions, in the same model: read back as they were only in
+      // MSH 4)
+      std::size_t num = GModel::current()->getNumPartitions();
+      for(std::size_t i = 0; i < num && version >= 4.; i++)
+        meshFiles.push_back(
+          {splitName[0] + "_" + std::to_string(i + 1) + ".msh", !i});
     }
     else{
       GModel::current()->writeMSH
-        (name, CTX::instance()->mesh.mshFileVersion,
+        (name, version,
          CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
          CTX::instance()->mesh.saveParametric,
          CTX::instance()->mesh.scalingFactor,
          CTX::instance()->mesh.firstElementTag - 1);
+      meshFiles.push_back({name, true});
     }
     if(GModel::current()->getNumPartitions() &&
        CTX::instance()->mesh.partitionSaveTopologyFile){
@@ -379,7 +716,34 @@ void CreateOutputFile(const std::string &fileName, int format,
       splitName[0] += splitName[1] + "_topology.pro";
       GModel::current()->writePartitionedTopology(splitName[0]);
     }
+#if defined(HAVE_POST)
+    if(split && (onModel.size() || lists.size())) {
+      Msg::Warning("Views not saved: the mesh is split in a file per "
+                   "partition");
+      onModel.clear();
+      lists.clear();
+    }
+    for(auto v : onModel)
+      v->getData()->writeMSH(name, version,
+                  CTX::instance()->mesh.binary, false, true, 0,
+                  CTX::instance()->post.saveInterpolationMatrices,
+                  CTX::instance()->post.forceNodeData,
+                  CTX::instance()->post.forceElementData);
+    if(lists.size()) {
+      // they cannot share the mesh of the model
+      std::vector<std::string> parts = SplitFileName(name);
+      std::string listName = parts[0] + parts[1] + "_views" + parts[2];
+      if(writeListViewsInMSH(listName, lists)) {
+        Msg::Info("Views not based on the mesh saved in '%s', on a mesh of "
+                  "their elements", listName.c_str());
+        files.push_back({listName, true});
+      }
+    }
+#endif
+    files.insert(files.end(), meshFiles.begin(), meshFiles.end());
+    CreateReadBackScript(name, files);
     break;
+  }
 
   case FORMAT_STL:
     GModel::current()->writeSTL
@@ -427,6 +791,51 @@ void CreateOutputFile(const std::string &fileName, int format,
       (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.scalingFactor,
        CTX::instance()->bigEndian);
+    break;
+
+  case FORMAT_VTU:
+  case FORMAT_PVTU: // a .vtu per partition
+    {
+      // the mesh with the views based on it (Mesh.SaveViews); the list-based
+      // views in the file itself if there is no mesh, or else in files of
+      // their own; the files to read back as in MSH
+      bool binary = CTX::instance()->mesh.binary;
+      std::vector<std::pair<std::string, bool> > files, meshFiles;
+#if defined(HAVE_POST)
+      std::vector<PView *> onModel, lists, several;
+      getViewsToSave(onModel, lists, several);
+      // (a .vtu holds a step: VTU saves every view in a file per step)
+      lists.insert(lists.end(), several.begin(), several.end());
+      bool mesh = GModel::current()->getNumMeshElements() > 0;
+      if(!mesh && lists.size()) {
+        PView::writeVTU(name, binary, lists, &files);
+        CreateReadBackScript(name, files);
+        break;
+      }
+      if(onModel.size())
+        PView::writeVTU(name, binary, onModel, &meshFiles);
+      else
+#endif
+      {
+        GModel::current()->writeVTU
+          (name, binary, CTX::instance()->mesh.saveAll,
+           CTX::instance()->mesh.scalingFactor);
+        meshFiles.push_back({name, true});
+      }
+#if defined(HAVE_POST)
+      if(lists.size()) {
+        // (not partitioned)
+        std::vector<std::string> parts = SplitFileName(name);
+        std::string ext = (parts[2] == ".pvtu") ? ".vtu" : parts[2];
+        std::string listName = parts[0] + parts[1] + "_views" + ext;
+        if(PView::writeVTU(listName, binary, lists, &files))
+          Msg::Info("Views not based on the mesh saved in '%s'",
+                    listName.c_str());
+      }
+#endif
+      files.insert(files.end(), meshFiles.begin(), meshFiles.end());
+      CreateReadBackScript(name, files);
+    }
     break;
 
   case FORMAT_MATLAB:
@@ -516,10 +925,32 @@ void CreateOutputFile(const std::string &fileName, int format,
        CTX::instance()->mesh.cgnsExportStructured);
     break;
 
-  case FORMAT_MED:
-    GModel::current()->writeMED
-      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+  case FORMAT_MED: {
+    if(!GModel::current()->writeMED
+       (name, CTX::instance()->mesh.saveAll,
+        CTX::instance()->mesh.scalingFactor))
+      break;
+#if defined(HAVE_POST)
+    // the views with values at the nodes of the mesh, as fields on it
+    std::vector<PView *> onModel, lists, several;
+    getViewsToSave(onModel, lists, several);
+    lists.insert(lists.end(), several.begin(), several.end());
+    for(auto v : onModel) {
+      PViewData *d = v->getData();
+      if(d->isNodeData())
+        d->writeMED(name, false);
+      else
+        Msg::Warning("View '%s' not saved: MED files only hold values at "
+                     "nodes", d->getName().c_str());
+    }
+    for(auto v : lists)
+      Msg::Warning("View '%s' not saved: MED files only hold views based on "
+                   "the mesh%s", v->getData()->getName().c_str(),
+                   v->savesAdapted() ? ", not refined" :
+                   v->savesSeveralMeshes() ? ", not on several meshes" : "");
+#endif
     break;
+  }
 
   case FORMAT_POS:
     GModel::current()->writePOS
@@ -587,28 +1018,30 @@ void CreateOutputFile(const std::string &fileName, int format,
     UnlinkFile(name);
     visibility_save(name);
     break;
+#endif
 
+#if defined(HAVE_OPENGL)
   case FORMAT_PPM:
   case FORMAT_YUV:
   case FORMAT_GIF:
   case FORMAT_JPEG:
   case FORMAT_PNG:
     {
-      if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context",
-                   name.c_str());
+      PixelBuffer *buffer = GetCompositePixelBuffer
+        ((format == FORMAT_PNG) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE);
+      if(!buffer){
+        Msg::Error("Could not draw the picture for '%s'", name.c_str());
+        error = true;
         break;
       }
 
       FILE *fp = Fopen(name.c_str(), "wb");
       if(!fp){
         Msg::Error("Unable to open file '%s'", name.c_str());
+        delete buffer;
         error = true;
         break;
       }
-
-      PixelBuffer *buffer = GetCompositePixelBuffer
-        ((format == FORMAT_PNG) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE);
 
       if(format == FORMAT_PPM)
         create_ppm(fp, buffer);
@@ -638,11 +1071,6 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_SVG:
   case FORMAT_TIKZ:
     {
-      if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
-        break;
-      }
-
       FILE *fp = Fopen(name.c_str(), "wb");
       if(!fp){
         Msg::Error("Unable to open file '%s'", name.c_str());
@@ -651,14 +1079,20 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
       drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
-      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+      GLint width, height;
+      windowSize(width, height);
+      offscreenPicture picture(width, height, 1.);
+      if(picture.failed()){
+        fclose(fp);
+        error = true;
+        break;
+      }
       GLint pixel_viewport[4] = {0, 0, width, height};
 
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
 
       if(CTX::instance()->print.epsQuality == 0)
-        buffer.fill(CTX::instance()->batch);
+        buffer.fill();
 
       int psformat =
         (format == FORMAT_PDF) ? GL2PS_PDF :
@@ -715,11 +1149,6 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_TEX:
     {
-      if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
-        break;
-      }
-
       FILE *fp = Fopen(name.c_str(), "w");
       if(!fp){
         Msg::Error("Unable to open file '%s'", name.c_str());
@@ -728,8 +1157,14 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
       drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
-      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+      GLint width, height;
+      windowSize(width, height);
+      offscreenPicture picture(width, height, 1.);
+      if(picture.failed()){
+        fclose(fp);
+        error = true;
+        break;
+      }
       GLfloat width_desired_in_mm = CTX::instance()->print.texWidthInMm;
       GLfloat scaling = 1.;
       if(width_desired_in_mm > 0) {
@@ -759,11 +1194,6 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_PGF:
     {
-      if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
-        break;
-      }
-
       drawTheOldWayWhileExporting noShaders;
       // fill pixel buffer without colorbar and axes
       int restoreGeneralAxis = (int) opt_general_axes(0, GMSH_GET, 0);
@@ -781,11 +1211,22 @@ void CreateOutputFile(const std::string &fileName, int format,
         }
       }
       PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
-      drawContext *ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
-      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+      // the view of the picture just drawn
+      drawContext *ctx = offscreen()->getDrawContext();
+#if defined(HAVE_FLTK)
+      if(haveWindow())
+        ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+#endif
+      GLint width, height;
+      windowSize(width, height);
       GLint pixel_viewport[4] = {0, 0, width, height};
-      print_pgf(name, num, cnt, buffer, ctx->r, pixel_viewport, ctx->proj, ctx->model);
+      if(buffer && ctx)
+        print_pgf(name, num, cnt, buffer, ctx->r, pixel_viewport, ctx->proj,
+                  ctx->model);
+      else{
+        Msg::Error("Could not draw the picture for '%s'", name.c_str());
+        error = true;
+      }
       delete buffer;
       // restore view
       if(restoreGeneralAxis) opt_general_axes(0, GMSH_SET| GMSH_GUI, 1);
@@ -795,101 +1236,27 @@ void CreateOutputFile(const std::string &fileName, int format,
     }
     break;
 
-#if defined(HAVE_MPEG_ENCODE)
+#if defined(HAVE_POST)
   case FORMAT_MPEG:
-  case FORMAT_MPEG_PREVIEW:
     {
-      if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
-        break;
-      }
-
-      std::string parFileName = CTX::instance()->homeDir + ".gmsh-mpeg_encode.par";
-      FILE *fp = nullptr;
-      if(format != FORMAT_MPEG_PREVIEW){
-        fp = Fopen(parFileName.c_str(), "w");
-        if(!fp){
-          Msg::Error("Unable to open file '%s'", parFileName.c_str());
-          error = true;
-          break;
-        }
-      }
-
-      int numViews = (int)opt_post_nb_views(0, GMSH_GET, 0);
-      int numSteps = 0;
-      int cycle = CTX::instance()->post.animCycle;
-      if(cycle == 0){
-        for(int i = 0; i < numViews; i++){
-          if(opt_view_visible(i, GMSH_GET, 0))
-            numSteps = std::max(numSteps,
-                                (int)opt_view_nb_non_empty_timestep(i, GMSH_GET, 0));
-        }
-      }
-      else if(cycle == 1){
-        numSteps = numViews;
-      }
-      else{
-        numSteps = CTX::instance()->print.parameterSteps;
-      }
-
-      std::vector<std::string> frames;
-      for(int i = 0; i < numSteps; i += CTX::instance()->post.animStep){
-        char tmp[256];
-        sprintf(tmp, ".gmsh-%06d.ppm", (int)frames.size());
-        frames.push_back(tmp);
-      }
-      if(cycle != 2)
-        status_play_manual(!cycle, 0, false);
-      for(std::size_t i = 0; i < frames.size(); i++){
-        if(cycle == 2)
-          ChangePrintParameter(i);
-        if(fp)
-          CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM,
-                           false);
-        else{
-          drawContext::global()->draw();
-          SleepInSeconds(CTX::instance()->post.animDelay);
-        }
-        if(cycle != 2)
-          status_play_manual(!cycle, CTX::instance()->post.animStep, false);
-      }
-      if(fp){
-        int repeat = (int)(CTX::instance()->post.animDelay * 30);
-        if(repeat < 1) repeat = 1;
-        std::string pattern("I");
-        // including P frames would lead to smaller files, but the quality
-        // degradation is perceptible:
-        // for(int i = 1; i < repeat; i++) pattern += "P";
-        fprintf(fp, "PATTERN %s\nBASE_FILE_FORMAT PPM\nGOP_SIZE %d\n"
-                "SLICES_PER_FRAME 1\nPIXEL FULL\nRANGE 10\n"
-                "PSEARCH_ALG EXHAUSTIVE\nBSEARCH_ALG CROSS2\n"
-                "IQSCALE 1\nPQSCALE 1\nBQSCALE 25\nREFERENCE_FRAME DECODED\n"
-                "OUTPUT %s\nINPUT_CONVERT *\nINPUT_DIR %s\nINPUT\n",
-                pattern.c_str(), repeat, name.c_str(),
-                CTX::instance()->homeDir.c_str());
-        for(std::size_t i = 0; i < frames.size(); i++){
-          fprintf(fp, "%s", frames[i].c_str());
-          if(repeat > 1) fprintf(fp, " [1-%d]", repeat);
-          fprintf(fp, "\n");
-        }
-        fprintf(fp, "END_INPUT\n");
-        fclose(fp);
-        extern int mpeg_encode_main(int, char**);
-        char *args[] = {(char*)"gmsh", (char*)parFileName.c_str()};
-        try{
-          mpeg_encode_main(2, args);
-        }
-        catch (const char *msg){
-          Msg::Error("%s", msg);
-          error = true;
-        }
-        if(opt_print_delete_tmp_files(0, GMSH_GET, 0)){
-          UnlinkFile(parFileName);
-          for(std::size_t i = 0; i < frames.size(); i++)
-            UnlinkFile(CTX::instance()->homeDir + frames[i]);
-        }
-      }
+      mpegWriter movie;
+      error = !writeMovie(movie, name);
     }
+    break;
+
+  case FORMAT_MP4:
+    {
+      mp4Writer movie;
+      error = !writeMovie(movie, name);
+    }
+    break;
+
+  case FORMAT_MPEG_PREVIEW:
+    forEachAnimationFrame([](int i) {
+      drawContext::global()->draw();
+      SleepInSeconds(CTX::instance()->post.animDelay);
+      return true;
+    });
     break;
 #endif
 
@@ -903,6 +1270,9 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   CTX::instance()->print.fileFormat = oldFormat;
   CTX::instance()->printing = 0;
+#if defined(HAVE_POST)
+  PView::doneSaving();
+#endif
 
   if(status && !error)
     Msg::StatusBar(true, "Done writing '%s'", name.c_str());

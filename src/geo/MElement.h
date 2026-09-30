@@ -120,8 +120,13 @@ public:
   // get the vertex using the I-deas UNV ordering
   virtual MVertex *getVertexUNV(int num) { return getVertex(num); }
 
-  // get the vertex using the VTK ordering
-  virtual MVertex *getVertexVTK(int num) { return getVertex(num); }
+  // The element as a VTK cell (see getVTKXMLCell(), shared by the .vtk, .vtu
+  // and .su2 writers): its type (0 if none), its number of nodes and its
+  // nodes in the VTK ordering. An element of an order VTK has no cell for is
+  // a first order cell.
+  int getTypeForVTK() const;
+  std::size_t getNumVerticesVTK() const;
+  MVertex *getVertexVTK(int num);
 
   // get the vertex using the MATLAB ordering
   virtual MVertex *getVertexMATLAB(int num) { return getVertex(num); }
@@ -193,12 +198,15 @@ public:
   // get the faces
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) const = 0;
-  // Fill v[] with the corner vertices of face `num' and return how many there
-  // are, or return 0 if the element does not implement it. Unlike getFace()
-  // this does not sort the vertices, which requires dereferencing them: use it
-  // when only the identity of the face is needed, e.g. to detect the faces
-  // shared by two elements.
-  virtual int getFaceCorners(int num, MVertex *v[4]) const { return 0; }
+  // fill v[] with the corner vertices of face `num' and return how many
+  // there are (the first 4 of a face that has more); unlike getFace() this
+  // does not sort them, which is cheaper when only the identity of the face
+  // is needed (the elements that have no faster way go through getFace())
+  virtual int getFaceCorners(int num, MVertex *v[4]) const;
+  // same for the two ends of an edge (an MEdge reads the numbers of its
+  // nodes to order them, which is two cache misses when all that is wanted
+  // is to tell edges apart)
+  virtual int getEdgeCorners(int num, MVertex *v[2]) const;
   virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   MFaceN getHighOrderFace(const MFace &face)
   {
@@ -246,8 +254,6 @@ public:
   virtual MElement *getBaseElement() { return this; }
 
   // get and set domain for borders
-  virtual MElement *getDomain(int i) const { return nullptr; }
-  virtual void setDomain(MElement *e, int i) {}
 
   // get the type of the element
   virtual int getType() const = 0;
@@ -429,8 +435,14 @@ public:
   virtual void movePointFromElementSpaceToParentSpace(double &u, double &v,
                                                       double &w) const;
 
-  // test if a point, given in parametric coordinates, belongs to the element
-  virtual bool isInside(double u, double v, double w) const = 0;
+  // test if a point, given in parametric coordinates, belongs to the element,
+  // enlarged by tol in parametric coordinates (by default,
+  // Mesh.ToleranceReferenceElement)
+  virtual bool isInside(double u, double v, double w, double tol) const = 0;
+  bool isInside(double u, double v, double w) const
+  {
+    return isInside(u, v, w, getTolerance());
+  }
 
   // interpolate the given nodal data (resp. its gradient, curl and divergence)
   // at point (u,v,w) in parametric coordinates
@@ -461,8 +473,7 @@ public:
   // IO routines
   virtual void writeMSH2(FILE *fp, double version = 1.0, bool binary = false,
                          int num = 0, int elementary = 1, int physical = 1,
-                         int parentNum = 0, int dom1Num = 0, int dom2Num = 0,
-                         std::vector<short> *ghosts = nullptr);
+                         int parentNum = 0,                          std::vector<short> *ghosts = nullptr);
   virtual void writeMSH3(FILE *fp, bool binary = false, int elementary = 1,
                          std::vector<short> *ghosts = nullptr);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
@@ -499,7 +510,6 @@ public:
   // implemented in that format)
   virtual int getTypeForMSH() const { return 0; }
   virtual int getTypeForUNV() const { return 0; }
-  virtual int getTypeForVTK() const { return 0; }
   virtual const char *getStringForTOCHNOG() const { return nullptr; }
   virtual const char *getStringForPOS() const { return nullptr; }
   virtual const char *getStringForBDF() const { return nullptr; }
@@ -517,8 +527,7 @@ public:
 
   // copy element and parent if any, vertexMap contains the new vertices
   virtual MElement *copy(std::map<std::size_t, MVertex *> &vertexMap,
-                         std::map<MElement *, MElement *> &newParents,
-                         std::map<MElement *, MElement *> &newDomains);
+                         std::map<MElement *, MElement *> &newParents);
 
   // Return the number of nodes that this element must have with the other in
   // order to put an edge between them in the dual graph used during the
@@ -530,8 +539,7 @@ class MElementFactory {
 public:
   MElement *create(int type, std::vector<MVertex *> &v, std::size_t num = 0,
                    int part = 0, bool owner = false, int parent = 0,
-                   MElement *parent_ptr = nullptr, MElement *d1 = nullptr,
-                   MElement *d2 = nullptr);
+                   MElement *parent_ptr = nullptr);
   MElement *create(int num, int type, const std::vector<int> &data,
                    GModel *model);
 };

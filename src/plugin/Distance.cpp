@@ -11,6 +11,8 @@
 #include "Distance.h"
 #include "Context.h"
 #include "Numeric.h"
+#include <algorithm>
+#include <array>
 
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
@@ -20,25 +22,19 @@
 #include "distanceTerm.h"
 #endif
 
-template <class scalar> class simpleFunction;
-
-StringXNumber DistanceOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalPoint", nullptr, 0., ""},
-  {GMSH_FULLRC, "PhysicalLine", nullptr, 0., ""},
-  {GMSH_FULLRC, "PhysicalSurface", nullptr, 0., ""},
-  {GMSH_FULLRC, "DistanceType", nullptr, 0, ""},
-  {GMSH_FULLRC, "MinScale", nullptr, 0, ""},
-  {GMSH_FULLRC, "MaxScale", nullptr, 0, ""}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterDistancePlugin() { return new GMSH_DistancePlugin(); }
-}
-
 GMSH_DistancePlugin::GMSH_DistancePlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "PhysicalPoint", nullptr, 0., ""},
+                     {GMSH_FULLRC, "PhysicalLine", nullptr, 0., ""},
+                     {GMSH_FULLRC, "PhysicalSurface", nullptr, 0., ""},
+                     {GMSH_FULLRC, "DistanceType", nullptr, 0, ""},
+                     {GMSH_FULLRC, "MinScale", nullptr, 0, ""},
+                     {GMSH_FULLRC, "MaxScale", nullptr, 0, ""}})
 {
   _maxDim = 0;
   _data = nullptr;
 }
+
+template <class scalar> class simpleFunction;
 
 std::string GMSH_DistancePlugin::getHelp() const
 {
@@ -56,21 +52,133 @@ std::string GMSH_DistancePlugin::getHelp() const
          "Plugin(Distance) creates one new list-based view.";
 }
 
-int GMSH_DistancePlugin::getNbOptions() const
-{
-  return sizeof(DistanceOptions_Number) / sizeof(StringXNumber);
-}
+namespace {
+  // a piece of the entities the distance is computed to: a point, a segment
+  // or a triangle (quadrangles are cut in two)
+  struct Piece {
+    int n;
+    SPoint3 p[3];
+    double center(int d) const
+    {
+      double c = 0.;
+      for(int i = 0; i < n; i++) c += p[i][d] / n;
+      return c;
+    }
+    // the unsigned distance to a point, 1e22 for degenerate triangles
+    double distance(const SPoint3 &x) const
+    {
+      double d = 1.e22;
+      SPoint3 cp;
+      if(n == 1)
+        d = x.distance(p[0]);
+      else if(n == 2)
+        signedDistancePointLine(p[0], p[1], x, d, cp);
+      else
+        signedDistancePointTriangle(p[0], p[1], p[2], x, d, cp);
+      return std::abs(d);
+    }
+  };
 
-StringXNumber *GMSH_DistancePlugin::getOption(int iopt)
-{
-  return &DistanceOptions_Number[iopt];
-}
+  // a bounding volume hierarchy of the pieces, to find the closest to a
+  // point without computing the distance to each
+  class PieceTree {
+  private:
+    struct Node {
+      double min[3], max[3];
+      int left, right; // children, or -1 for a leaf
+      int beg, end; // its pieces, in a leaf
+    };
+    std::vector<Piece> _pieces;
+    std::vector<Node> _nodes;
+    int _build(int beg, int end)
+    {
+      Node n;
+      for(int d = 0; d < 3; d++) {
+        n.min[d] = 1.e300;
+        n.max[d] = -1.e300;
+      }
+      for(int i = beg; i < end; i++) {
+        for(int j = 0; j < _pieces[i].n; j++) {
+          for(int d = 0; d < 3; d++) {
+            n.min[d] = std::min(n.min[d], _pieces[i].p[j][d]);
+            n.max[d] = std::max(n.max[d], _pieces[i].p[j][d]);
+          }
+        }
+      }
+      n.left = n.right = -1;
+      n.beg = beg;
+      n.end = end;
+      int index = _nodes.size();
+      _nodes.push_back(n);
+      if(end - beg > 4) { // split at the median along the longest side
+        int d = 0;
+        for(int k = 1; k < 3; k++)
+          if(n.max[k] - n.min[k] > n.max[d] - n.min[d]) d = k;
+        int mid = (beg + end) / 2;
+        std::nth_element(_pieces.begin() + beg, _pieces.begin() + mid,
+                         _pieces.begin() + end,
+                         [d](const Piece &a, const Piece &b) {
+                           return a.center(d) < b.center(d);
+                         });
+        int left = _build(beg, mid);
+        int right = _build(mid, end);
+        _nodes[index].left = left;
+        _nodes[index].right = right;
+      }
+      return index;
+    }
+    double _boxDistance2(const Node &n, const SPoint3 &x) const
+    {
+      double d2 = 0.;
+      for(int d = 0; d < 3; d++) {
+        double e = std::max(0., std::max(n.min[d] - x[d], x[d] - n.max[d]));
+        d2 += e * e;
+      }
+      return d2;
+    }
+
+  public:
+    PieceTree(std::vector<Piece> &pieces) : _pieces(pieces)
+    {
+      if(_pieces.size()) _build(0, _pieces.size());
+    }
+    // the distance to the closest piece, 1e22 if there is none
+    double closest(const SPoint3 &x) const
+    {
+      double best = 1.e22;
+      if(_nodes.empty()) return best;
+      std::vector<int> stack(1, 0);
+      while(stack.size()) {
+        const Node &n = _nodes[stack.back()];
+        stack.pop_back();
+        if(_boxDistance2(n, x) >= best * best) continue;
+        if(n.left < 0) {
+          for(int i = n.beg; i < n.end; i++)
+            best = std::min(best, _pieces[i].distance(x));
+          continue;
+        }
+        // the closer child last, to be visited first
+        double dl = _boxDistance2(_nodes[n.left], x);
+        double dr = _boxDistance2(_nodes[n.right], x);
+        if(dl < dr) {
+          stack.push_back(n.right);
+          stack.push_back(n.left);
+        }
+        else {
+          stack.push_back(n.left);
+          stack.push_back(n.right);
+        }
+      }
+      return best;
+    }
+  };
+} // namespace
 
 void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
                                     std::map<MVertex *, double> &distanceMap)
 {
-  double minScale = (double)DistanceOptions_Number[4].def;
-  double maxScale = (double)DistanceOptions_Number[5].def;
+  double minScale = (double)option(4);
+  double maxScale = (double)option(5);
 
   double minDist = 1.e22;
   double maxDist = 0.0;
@@ -91,6 +199,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
         std::vector<double> *out =
           _data->incrementList(1, e->getType(), numNodes);
+        if(!out) continue;
         std::vector<MVertex *> nods;
 
         if(!e->getNumChildren())
@@ -112,7 +221,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
         for(std::size_t j = 0; j < numNodes; j++) {
           MVertex *v = nods[j];
           auto it = distanceMap.find(v);
-          dist.push_back(it->second);
+          dist.push_back(it != distanceMap.end() ? it->second : 0.);
         }
 
         for(std::size_t i = 0; i < dist.size(); i++) {
@@ -130,10 +239,10 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
 
 PView *GMSH_DistancePlugin::execute(PView *v)
 {
-  int id_point = (int)DistanceOptions_Number[0].def;
-  int id_line = (int)DistanceOptions_Number[1].def;
-  int id_face = (int)DistanceOptions_Number[2].def;
-  double type = (double)DistanceOptions_Number[3].def;
+  int id_point = (int)option(0);
+  int id_line = (int)option(1);
+  int id_face = (int)option(2);
+  double type = (double)option(3);
 
   GModel *m = GModel::current();
   int totNumNodes = m->getNumMeshVertices();
@@ -149,6 +258,18 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 
   std::vector<GEntity *> entities;
   m->getEntities(entities);
+
+  // the entities the distance is computed to: the boundaries (of highest
+  // dimension) if no physical group is given, the groups given otherwise
+  auto isTarget = [&](GEntity *ge) {
+    int d = ge->dim();
+    if(!id_point && !id_line && !id_face) return d == _maxDim - 1;
+    for(int p : ge->getPhysicalEntities())
+      if((p == id_point && d == 0) || (p == id_line && d == 1) ||
+         (p == id_face && d == 2))
+        return true;
+    return false;
+  };
 
   std::vector<SPoint3> pts(totNumNodes);
   std::vector<double> distances(totNumNodes, 1.e22);
@@ -169,54 +290,35 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 
   if(type <= 0.0) { // Compute geometrical distance to mesh boundaries
     bool existEntity = false;
+    std::vector<Piece> pieces;
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *g2 = entities[i];
-      int gDim = g2->dim();
-      bool computeForEntity = false;
-      if(!id_point && !id_line && !id_face && gDim == _maxDim - 1) {
-        computeForEntity = true;
-      }
-      else {
-        std::vector<int> phys = g2->getPhysicalEntities();
-        for(std::size_t k = 0; k < phys.size(); k++) {
-          if((phys[k] == id_point && gDim == 0) ||
-             (phys[k] == id_line && gDim == 1) ||
-             (phys[k] == id_face && gDim == 2)) {
-            computeForEntity = true;
-            break;
-          }
-        }
-      }
-      if(computeForEntity) {
-        existEntity = true;
-        for(std::size_t k = 0; k < g2->getNumMeshElements(); k++) {
-          std::vector<double> iDistances;
-          std::vector<SPoint3> iClosePts;
-          std::vector<double> iDistancesE;
-          MElement *e = g2->getMeshElement(k);
-          MVertex *v1 = e->getVertex(0);
-          MVertex *v2 = e->getVertex(1);
-          SPoint3 p1(v1->x(), v1->y(), v1->z());
-          SPoint3 p2(v2->x(), v2->y(), v2->z());
-          if(e->getType() == TYPE_LIN) {
-            signedDistancesPointsLine(iDistances, iClosePts, pts, p1, p2);
-          }
-          else if(e->getType() == TYPE_TRI) {
-            MVertex *v3 = e->getVertex(2);
-            SPoint3 p3(v3->x(), v3->y(), v3->z());
-            signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2,
-                                          p3);
-          }
-          for(std::size_t kk = 0; kk < pts.size(); kk++) {
-            if(std::abs(iDistances[kk]) < distances[kk]) {
-              distances[kk] = std::abs(iDistances[kk]);
-              MVertex *v = pt2Vertex[kk];
-              distanceMap[v] = distances[kk];
-            }
-          }
+      if(!isTarget(g2)) continue;
+      existEntity = true;
+      for(std::size_t k = 0; k < g2->getNumMeshElements(); k++) {
+        MElement *e = g2->getMeshElement(k);
+        std::vector<SPoint3> p(e->getNumPrimaryVertices());
+        for(std::size_t i = 0; i < p.size(); i++)
+          p[i] = e->getVertex(i)->point();
+        if(e->getType() == TYPE_PNT)
+          pieces.push_back({1, {p[0]}});
+        else if(e->getType() == TYPE_LIN)
+          pieces.push_back({2, {p[0], p[1]}});
+        else if(e->getType() == TYPE_TRI)
+          pieces.push_back({3, {p[0], p[1], p[2]}});
+        else if(e->getType() == TYPE_QUA) {
+          pieces.push_back({3, {p[0], p[1], p[2]}});
+          pieces.push_back({3, {p[0], p[2], p[3]}});
         }
       }
     }
+    PieceTree tree(pieces);
+    int nthreads = CTX::instance()->numThreadsFor(pts.size(), 1000);
+#pragma omp parallel for num_threads(nthreads) schedule(dynamic, 256)
+    for(std::size_t kk = 0; kk < pts.size(); kk++)
+      distances[kk] = tree.closest(pts[kk]);
+    for(std::size_t kk = 0; kk < pts.size(); kk++)
+      if(distances[kk] < 1.e22) distanceMap[pt2Vertex[kk]] = distances[kk];
     if(!existEntity) {
       if(id_point) Msg::Warning("Physical Point %d does not exist", id_point);
       if(id_line) Msg::Warning("Physical Curve %d does not exist", id_line);
@@ -241,23 +343,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     SBoundingBox3d bbox;
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      int gDim = ge->dim();
-      bool fixForEntity = false;
-      if(!id_point && !id_line && !id_face && gDim == _maxDim - 1) {
-        fixForEntity = true;
-      }
-      else {
-        std::vector<int> phys = ge->getPhysicalEntities();
-        for(std::size_t k = 0; k < phys.size(); k++) {
-          if((phys[k] == id_point && gDim == 0) ||
-             (phys[k] == id_line && gDim == 1) ||
-             (phys[k] == id_face && gDim == 2)) {
-            fixForEntity = true;
-            break;
-          }
-        }
-      }
-      if(fixForEntity) {
+      if(isTarget(ge)) {
         existEntity = true;
         for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
           MElement *t = ge->getMeshElement(i);
@@ -314,7 +400,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   }
 
   _data->setName("distance");
-  _data->Time.push_back(0);
+  _data->addTime(0);
   _data->setFileName("distance.pos");
   _data->finalize();
   return view;

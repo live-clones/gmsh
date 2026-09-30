@@ -187,7 +187,7 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 #endif
   }
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 
   return 0;
 }

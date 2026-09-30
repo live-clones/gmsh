@@ -8,21 +8,15 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterNearestNeighborPlugin();
-}
-
 class GMSH_NearestNeighborPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_NearestNeighborPlugin() {}
+  GMSH_NearestNeighborPlugin();
   std::string getName() const { return "NearestNeighbor"; }
   std::string getShortHelp() const
   {
     return "Compute distance to the nearest neighbor";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

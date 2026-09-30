@@ -14,9 +14,7 @@
 #include "MLine.h"
 #include "rtree.h"
 #include "robustPredicates.h"
-
-void MElementBB(void *a, double *min, double *max);
-int MElementInEle(void *a, double *x);
+#include "MElementOctree.h"
 
 struct MElement_Wrapper {
   bool _overlap;

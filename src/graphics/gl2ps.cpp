@@ -62,6 +62,7 @@
 #define GL2PS_ZOFFSET       5.0e-2F
 #define GL2PS_ZOFFSET_LARGE 20.0F
 #define GL2PS_ZERO(arg)     (fabs(arg) < 1.e-20)
+#define GL2PS_SVG_TRIANGLE_MAX_DEPTH 24
 
 /* BSP tree primitive comparison */
 
@@ -4433,7 +4434,7 @@ static int gl2psPrintPDFShaderStreamDataCoord(GL2PSvertex *vertex,
   int offs = 0;
   unsigned long imap;
   GLfloat diff;
-  double dmax = ~1UL;
+  double dmax = (double)~1UL;
   char edgeflag = 0;
 
   /* FIXME: temp bux fix for 64 bit archs: */
@@ -4476,7 +4477,7 @@ static int gl2psPrintPDFShaderStreamDataRGB(GL2PSvertex *vertex,
 {
   int offs = 0;
   unsigned long imap;
-  double dmax = ~1UL;
+  double dmax = (double)~1UL;
   GLfloat tmp;
 
   /* FIXME: temp bux fix for 64 bit archs: */
@@ -4517,7 +4518,7 @@ static int gl2psPrintPDFShaderStreamDataAlpha(GL2PSvertex *vertex,
 {
   int offs = 0;
   unsigned long imap;
-  double dmax = ~1UL;
+  double dmax = (double)~1UL;
   GLfloat tmp;
 
   /* FIXME: temp bux fix for 64 bit archs: */
@@ -5115,20 +5116,29 @@ static void gl2psSVGGetCoordsAndColors(int n, GL2PSvertex *verts,
     xyz[i][0] = verts[i].xyz[0];
     xyz[i][1] = gl2ps->viewport[3] - verts[i].xyz[1];
     xyz[i][2] = 0.0F;
-    for(j = 0; j < 4; j++)
-      rgba[i][j] = verts[i].rgba[j];
+    for(j = 0; j < 4; j++){
+      if(!(verts[i].rgba[j] >= 0.0F))
+        rgba[i][j] = 0.0F;
+      else if(verts[i].rgba[j] > 1.0F)
+        rgba[i][j] = 1.0F;
+      else
+        rgba[i][j] = verts[i].rgba[j];
+    }
   }
 }
 
 static void gl2psSVGGetColorString(GL2PSrgba rgba, char str[32])
 {
-  int r = (int)(255. * rgba[0]);
-  int g = (int)(255. * rgba[1]);
-  int b = (int)(255. * rgba[2]);
-  int rc = (r < 0) ? 0 : (r > 255) ? 255 : r;
-  int gc = (g < 0) ? 0 : (g > 255) ? 255 : g;
-  int bc = (b < 0) ? 0 : (b > 255) ? 255 : b;
-  sprintf(str, "#%2.2x%2.2x%2.2x", rc, gc, bc);
+  int rgb[3], i;
+  for(i = 0; i < 3; i++){
+    if(!(rgba[i] >= 0.0F))
+      rgb[i] = 0;
+    else if(rgba[i] > 1.0F)
+      rgb[i] = 255;
+    else
+      rgb[i] = (int)(255. * rgba[i]);
+  }
+  sprintf(str, "#%2.2x%2.2x%2.2x", rgb[0], rgb[1], rgb[2]);
 }
 
 static void gl2psPrintSVGHeader(void)
@@ -5184,24 +5194,37 @@ static void gl2psPrintSVGHeader(void)
   gl2psPrintf("<g>\n");
 }
 
-static void gl2psPrintSVGSmoothTriangle(GL2PSxyz xyz[3], GL2PSrgba rgba[3])
+static void gl2psPrintSVGFlatTriangle(GL2PSxyz xyz[3], GL2PSrgba rgba)
+{
+  char col[32];
+
+  gl2psSVGGetColorString(rgba, col);
+  gl2psPrintf("<polygon fill=\"%s\" ", col);
+  if(rgba[3] < 1.0F) gl2psPrintf("fill-opacity=\"%g\" ", rgba[3]);
+  gl2psPrintf("shape-rendering=\"crispEdges\" ");
+  gl2psPrintf("points=\"%g,%g %g,%g %g,%g\"/>\n", xyz[0][0], xyz[0][1],
+              xyz[1][0], xyz[1][1], xyz[2][0], xyz[2][1]);
+}
+
+static void gl2psPrintSVGSmoothTriangle(GL2PSxyz xyz[3], GL2PSrgba rgba[3],
+                                        GLint depth)
 {
   int i;
   GL2PSxyz xyz2[3];
   GL2PSrgba rgba2[3];
-  char col[32];
 
   /* Apparently there is no easy way to do Gouraud shading in SVG
      without explicitly pre-defining gradients, so for now we just do
      recursive subdivision */
 
   if(gl2psSameColorThreshold(3, rgba, gl2ps->threshold)){
-    gl2psSVGGetColorString(rgba[0], col);
-    gl2psPrintf("<polygon fill=\"%s\" ", col);
-    if(rgba[0][3] < 1.0F) gl2psPrintf("fill-opacity=\"%g\" ", rgba[0][3]);
-    gl2psPrintf("shape-rendering=\"crispEdges\" ");
-    gl2psPrintf("points=\"%g,%g %g,%g %g,%g\"/>\n", xyz[0][0], xyz[0][1],
-                xyz[1][0], xyz[1][1], xyz[2][0], xyz[2][1]);
+    gl2psPrintSVGFlatTriangle(xyz, rgba[0]);
+  }
+  else if(depth >= GL2PS_SVG_TRIANGLE_MAX_DEPTH){
+    GL2PSrgba avg;
+    for(i = 0; i < 4; i++)
+      avg[i] = (rgba[0][i] + rgba[1][i] + rgba[2][i]) / 3.0F;
+    gl2psPrintSVGFlatTriangle(xyz, avg);
   }
   else{
     /* subdivide into 4 subtriangles */
@@ -5215,7 +5238,7 @@ static void gl2psPrintSVGSmoothTriangle(GL2PSxyz xyz[3], GL2PSrgba rgba[3])
       rgba2[1][i] = 0.5F * (rgba[0][i] + rgba[1][i]);
       rgba2[2][i] = 0.5F * (rgba[0][i] + rgba[2][i]);
     }
-    gl2psPrintSVGSmoothTriangle(xyz2, rgba2);
+    gl2psPrintSVGSmoothTriangle(xyz2, rgba2, depth + 1);
     for(i = 0; i < 3; i++){
       xyz2[0][i] = 0.5F * (xyz[0][i] + xyz[1][i]);
       xyz2[1][i] = xyz[1][i];
@@ -5226,7 +5249,7 @@ static void gl2psPrintSVGSmoothTriangle(GL2PSxyz xyz[3], GL2PSrgba rgba[3])
       rgba2[1][i] = rgba[1][i];
       rgba2[2][i] = 0.5F * (rgba[1][i] + rgba[2][i]);
     }
-    gl2psPrintSVGSmoothTriangle(xyz2, rgba2);
+    gl2psPrintSVGSmoothTriangle(xyz2, rgba2, depth + 1);
     for(i = 0; i < 3; i++){
       xyz2[0][i] = 0.5F * (xyz[0][i] + xyz[2][i]);
       xyz2[1][i] = xyz[2][i];
@@ -5237,7 +5260,7 @@ static void gl2psPrintSVGSmoothTriangle(GL2PSxyz xyz[3], GL2PSrgba rgba[3])
       rgba2[1][i] = rgba[2][i];
       rgba2[2][i] = 0.5F * (rgba[1][i] + rgba[2][i]);
     }
-    gl2psPrintSVGSmoothTriangle(xyz2, rgba2);
+    gl2psPrintSVGSmoothTriangle(xyz2, rgba2, depth + 1);
     for(i = 0; i < 3; i++){
       xyz2[0][i] = 0.5F * (xyz[0][i] + xyz[1][i]);
       xyz2[1][i] = 0.5F * (xyz[1][i] + xyz[2][i]);
@@ -5248,7 +5271,7 @@ static void gl2psPrintSVGSmoothTriangle(GL2PSxyz xyz[3], GL2PSrgba rgba[3])
       rgba2[1][i] = 0.5F * (rgba[1][i] + rgba[2][i]);
       rgba2[2][i] = 0.5F * (rgba[0][i] + rgba[2][i]);
     }
-    gl2psPrintSVGSmoothTriangle(xyz2, rgba2);
+    gl2psPrintSVGSmoothTriangle(xyz2, rgba2, depth + 1);
   }
 }
 
@@ -5418,7 +5441,7 @@ static void gl2psPrintSVGPrimitive(void *data)
     }
     break;
   case GL2PS_TRIANGLE :
-    gl2psPrintSVGSmoothTriangle(xyz, rgba);
+    gl2psPrintSVGSmoothTriangle(xyz, rgba, 0);
     break;
   case GL2PS_QUADRANGLE :
     gl2psMsg(GL2PS_WARNING, "There should not be any quad left to print");
@@ -6108,9 +6131,9 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
     return GL2PS_ERROR;
   }
 
-  gl2ps->threshold[0] = nr ? 1.0F / (GLfloat)nr : 0.064F;
-  gl2ps->threshold[1] = ng ? 1.0F / (GLfloat)ng : 0.034F;
-  gl2ps->threshold[2] = nb ? 1.0F / (GLfloat)nb : 0.100F;
+  gl2ps->threshold[0] = nr > 0 ? 1.0F / (GLfloat)nr : 0.064F;
+  gl2ps->threshold[1] = ng > 0 ? 1.0F / (GLfloat)ng : 0.034F;
+  gl2ps->threshold[2] = nb > 0 ? 1.0F / (GLfloat)nb : 0.100F;
   gl2ps->colormode = colormode;
   gl2ps->buffersize = buffersize > 0 ? buffersize : 2048 * 2048;
   for(i = 0; i < 3; i++){

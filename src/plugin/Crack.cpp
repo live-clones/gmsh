@@ -7,6 +7,7 @@
 //   Erik Schnaubelt
 //   Louis Denis
 
+#include <unordered_map>
 #include "Crack.h"
 #include "GModel.h"
 #include "discreteEdge.h"
@@ -18,20 +19,17 @@
 #include "MEdge.h"
 #include "Context.h"
 
-StringXNumber CrackOptions_Number[] = {
-  {GMSH_FULLRC, "Dimension", nullptr, 1.},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, 1.},
-  {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
-  {GMSH_FULLRC, "NormalX", nullptr, 0.},
-  {GMSH_FULLRC, "NormalY", nullptr, 0.},
-  {GMSH_FULLRC, "NormalZ", nullptr, 1.},
-  {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0},
-  {GMSH_FULLRC, "DebugView", nullptr, 0},
-  {GMSH_FULLRC, "SwapOrientation", nullptr, 0}
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterCrackPlugin() { return new GMSH_CrackPlugin(); }
+GMSH_CrackPlugin::GMSH_CrackPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "Dimension", nullptr, 1.},
+                     {GMSH_FULLRC, "PhysicalGroup", nullptr, 1.},
+                     {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
+                     {GMSH_FULLRC, "NormalX", nullptr, 0.},
+                     {GMSH_FULLRC, "NormalY", nullptr, 0.},
+                     {GMSH_FULLRC, "NormalZ", nullptr, 1.},
+                     {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0},
+                     {GMSH_FULLRC, "DebugView", nullptr, 0},
+                     {GMSH_FULLRC, "SwapOrientation", nullptr, 0}})
+{
 }
 
 std::string GMSH_CrackPlugin::getHelp() const
@@ -59,16 +57,6 @@ std::string GMSH_CrackPlugin::getHelp() const
          "crack is reversed.";
 }
 
-int GMSH_CrackPlugin::getNbOptions() const
-{
-  return sizeof(CrackOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_CrackPlugin::getOption(int iopt)
-{
-  return &CrackOptions_Number[iopt];
-}
-
 class EdgeData {
 public:
   EdgeData(MEdge e) : edge(e) {}
@@ -89,14 +77,13 @@ struct MEdgeDataLessThan
 
 PView *GMSH_CrackPlugin::execute(PView *view)
 {
-  int dim = (int)CrackOptions_Number[0].def;
-  int physical = (int)CrackOptions_Number[1].def;
-  int open = (int)CrackOptions_Number[2].def;
-  SVector3 normal1d(CrackOptions_Number[3].def, CrackOptions_Number[4].def,
-                    CrackOptions_Number[5].def);
-  int newPhysical = (int)CrackOptions_Number[6].def;
-  int debug = (int)CrackOptions_Number[7].def;
-  int swapOrientation = (int)CrackOptions_Number[8].def;
+  int dim = (int)option(0);
+  int physical = (int)option(1);
+  int open = (int)option(2);
+  SVector3 normal1d(option(3), option(4), option(5));
+  int newPhysical = (int)option(6);
+  int debug = (int)option(7);
+  int swapOrientation = (int)option(8);
 
   if(dim != 1 && dim != 2) {
     Msg::Error("Crack dimension should be 1 or 2");
@@ -210,7 +197,18 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   for(auto it = bndVertices.begin(); it != bndVertices.end(); it++)
     crackVertices.erase(*it);
 
-  // compute elements on the positive side of the crack
+  // the crack elements around each node, with their barycenters
+  std::unordered_map<MVertex *, std::vector<std::size_t> > crackAround;
+  std::vector<SPoint3> crackBary(crackElements.size());
+  for(std::size_t k = 0; k < crackElements.size(); k++) {
+    crackBary[k] = crackElements[k]->barycenter();
+    for(std::size_t j = 0; j < crackElements[k]->getNumVertices(); j++)
+      crackAround[crackElements[k]->getVertex(j)].push_back(k);
+  }
+
+  // compute elements on the positive side of the crack: the side of the
+  // closest crack element among those touching the element (the closest crack
+  // element overall can be on another sheet of a curved crack)
   std::set<MElement *, MElementPtrLessThan> oneside;
   std::vector<GEntity *> allentities;
   m->getEntities(allentities);
@@ -218,28 +216,28 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     if(crackEntities.find(allentities[ent]) != crackEntities.end()) continue;
     for(std::size_t i = 0; i < allentities[ent]->getNumMeshElements(); i++) {
       MElement *e = allentities[ent]->getMeshElement(i);
+      SPoint3 b = e->barycenter();
+      double d = 1e200;
+      std::size_t ce = crackElements.size();
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        if(crackVertices.find(e->getVertex(j)) != crackVertices.end()) {
-          // element touches the crack: find the closest crack element
-          SPoint3 b = e->barycenter();
-          double d = 1e200;
-          MElement *ce = nullptr;
-          for(std::size_t k = 0; k < crackElements.size(); k++) {
-            double d2 = b.distance(crackElements[k]->barycenter());
-            if(d2 < d) {
-              d = d2;
-              ce = crackElements[k];
-            }
+        if(crackVertices.find(e->getVertex(j)) == crackVertices.end())
+          continue;
+        for(auto k : crackAround[e->getVertex(j)]) {
+          double d2 = b.distance(crackBary[k]);
+          if(d2 < d) {
+            d = d2;
+            ce = k;
           }
-          SVector3 dv = SVector3(ce->barycenter(), e->barycenter());
-          SVector3 n;
-          if(dim == 1)
-            n = crossprod(normal1d, ce->getEdge(0).tangent());
-          else
-            n = ce->getFace(0).normal();
-          if(dot(n, dv) > 0) { oneside.insert(e); }
         }
       }
+      if(ce == crackElements.size()) continue; // does not touch the crack
+      SVector3 dv = SVector3(crackBary[ce], b);
+      SVector3 n;
+      if(dim == 1)
+        n = crossprod(normal1d, crackElements[ce]->getEdge(0).tangent());
+      else
+        n = crackElements[ce]->getFace(0).normal();
+      if(dot(n, dv) > 0) oneside.insert(e);
     }
   }
 
@@ -328,7 +326,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
 
   m->destroyMeshCaches();
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
 
   return view;
 }

@@ -13,7 +13,7 @@ gmsh.model.mesh.generate(3)
 
 print("--- getting tets and face nodes")
 tets, _ = gmsh.model.mesh.getElementsByType(4)
-fnodes = gmsh.model.mesh.getElementFaceNodes(4, 3)
+fnodes, _ = gmsh.model.mesh.getElementFaceNodes(4)
 
 print("--- computing face x tet incidence")
 faces = []

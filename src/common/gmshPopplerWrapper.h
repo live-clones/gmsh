@@ -41,6 +41,16 @@ public:
   static int loadFromFile(const std::string &file_name,
                           const std::string &owner_password = std::string(),
                           const std::string &user_password = std::string());
+#if defined(HAVE_OPENGL)
+  // a page is rasterised once and its texture kept: whoever draws it must not
+  // delete it
+  static bool ownsTexture(GLuint t)
+  {
+    for(auto &p : _pages2textures)
+      if(p.second == t) return true;
+    return false;
+  }
+#endif
   static int width() { return _w; }
   static int height() { return _h; }
   static int getNumPages();

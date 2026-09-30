@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "glMatrix.h"
+#include "Numeric.h"
 
 namespace glMatrix {
   static void normalize(double v[3])
@@ -49,6 +50,20 @@ namespace glMatrix {
       for(int k = 0; k < 4; k++) s += m[4 * k + j] * in[k];
       out[j] = s;
     }
+  }
+
+  double cofactors(const double a[9], double c[9])
+  {
+    c[0] = a[4] * a[8] - a[5] * a[7];
+    c[1] = a[6] * a[5] - a[3] * a[8];
+    c[2] = a[3] * a[7] - a[6] * a[4];
+    c[3] = a[7] * a[2] - a[1] * a[8];
+    c[4] = a[0] * a[8] - a[6] * a[2];
+    c[5] = a[6] * a[1] - a[0] * a[7];
+    c[6] = a[1] * a[5] - a[4] * a[2];
+    c[7] = a[3] * a[2] - a[0] * a[5];
+    c[8] = a[0] * a[4] - a[3] * a[1];
+    return a[0] * c[0] + a[3] * c[3] + a[6] * c[6];
   }
 
   bool invert(const double m[16], double out[16])
@@ -120,6 +135,20 @@ namespace glMatrix {
     m[10] = z * z * c1 + c;
   }
 
+  void rotateZTo(const double v[3], double m[16])
+  {
+    double zdir[3] = {0., 0., 1.}, vdir[3] = {v[0], v[1], v[2]};
+    double axis[3];
+    prodve(zdir, vdir, axis);
+    double const cosphi = prosca(zdir, vdir);
+    if(!norme(axis)) {
+      axis[0] = 0.;
+      axis[1] = 1.;
+      axis[2] = 0.;
+    }
+    rotate(180. * myacos(cosphi) / M_PI, axis[0], axis[1], axis[2], m);
+  }
+
   void ortho(double left, double right, double bottom, double top,
              double zNear, double zFar, double m[16])
   {
@@ -166,20 +195,6 @@ namespace glMatrix {
     double t[16];
     translate(-eye[0], -eye[1], -eye[2], t);
     multiply(r, t, m);
-  }
-
-  void pickRegion(double x, double y, double w, double h, const int viewport[4],
-                  double m[16])
-  {
-    if(w <= 0. || h <= 0.) {
-      identity(m);
-      return;
-    }
-    double t[16], s[16];
-    translate((viewport[2] - 2. * (x - viewport[0])) / w,
-              (viewport[3] - 2. * (y - viewport[1])) / h, 0., t);
-    scale(viewport[2] / w, viewport[3] / h, 1., s);
-    multiply(t, s, m);
   }
 
   bool project(const double xyz[3], const double model[16],

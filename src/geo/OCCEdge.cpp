@@ -102,7 +102,9 @@ SBoundingBox3d OCCEdge::bounds(bool fast)
 
   Bnd_Box b;
   try {
-    BRepBndLib::Add(_c, b);
+    // not from a triangulation the shape may carry (e.g. made to draw it):
+    // the box would change once the shape has been drawn
+    BRepBndLib::Add(_c, b, false);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return SBoundingBox3d();
@@ -249,8 +251,10 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
   if(CTX::instance()->geom.occUseGenericClosestPoint)
     return GEdge::closestPoint(qp, param);
   double u, xyz[3];
-  if(_project(qp.data(), u, xyz))
+  if(_project(qp.data(), u, xyz)) {
+    param = u;
     return GPoint(xyz[0], xyz[1], xyz[2], this, u);
+  }
   else
     return GEdge::closestPoint(qp, param);
 }

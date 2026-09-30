@@ -48,7 +48,7 @@ mathEvaluator::~mathEvaluator()
 }
 
 bool mathEvaluator::eval(const std::vector<double> &values,
-                         std::vector<double> &res)
+                         std::vector<double> &res) const
 {
   if(values.size() != _variables.size()) {
     Msg::Error("Given %d value(s) for %d variable(s)", values.size(),
@@ -62,18 +62,17 @@ bool mathEvaluator::eval(const std::vector<double> &values,
     return false;
   }
 
-  for(std::size_t i = 0; i < values.size(); i++) _variables[i] = values[i];
-
+  // (a stack for each thread: the expressions are only read)
+  static thread_local std::vector<double> stack;
   for(std::size_t i = 0; i < _expressions.size(); i++) {
     try {
-      res[i] = _expressions[i]->eval();
+      res[i] = _expressions[i]->eval(values.data(), stack);
     } catch(smlib::mathex::error &e) {
       Msg::Error(e.what());
-      double eps = 1.e-20;
-      for(std::size_t j = 0; j < values.size(); j++)
-        _variables[j] = values[j] + eps;
+      std::vector<double> shifted(values);
+      for(auto &v : shifted) v += 1.e-20;
       try {
-        res[i] = _expressions[i]->eval();
+        res[i] = _expressions[i]->eval(shifted.data(), stack);
       } catch(smlib::mathex::error &e2) {
         Msg::Error(e2.what());
         return false;

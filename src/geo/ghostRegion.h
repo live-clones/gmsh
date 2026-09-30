@@ -13,7 +13,7 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "MTrihedron.h"
-#include "MElementCut.h"
+#include "MPolyhedron.h"
 
 class ghostRegion : public discreteRegion {
 private:

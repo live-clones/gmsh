@@ -11,10 +11,6 @@
 #include <vector>
 class MElement;
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterAnalyseMeshQualityPlugin();
-}
-
 class data_elementMinMax {
 private:
   MElement *_el;
@@ -37,7 +33,9 @@ public:
 
 class GMSH_AnalyseMeshQualityPlugin : public GMSH_PostPlugin {
 private:
+  // the model and the version of its mesh the kept measures are for
   GModel *_m;
+  int _meshStamp;
 
 #if defined(HAVE_VISUDEV)
   // Pointwise data
@@ -57,18 +55,7 @@ private:
   std::vector<data_elementMinMax> _data;
 
 public:
-  GMSH_AnalyseMeshQualityPlugin()
-  {
-    _m = nullptr;
-    for(int i = 0; i < 3; ++i) {
-      _computedJac[i] = false;
-      _computedIGE[i] = false;
-      _computedICN[i] = false;
-      _pviewJac[i] = false;
-      _pviewIGE[i] = false;
-      _pviewICN[i] = false;
-    }
-  }
+  GMSH_AnalyseMeshQualityPlugin();
   std::string getName() const { return "AnalyseMeshQuality"; }
   std::string getShortHelp() const
   {
@@ -76,8 +63,6 @@ public:
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "Amaury Johnen"; }
-  int getNbOptions() const;
-  StringXNumber *getOption(int);
   PView *execute(PView *);
 
 private:
@@ -87,9 +72,9 @@ private:
   int _hideWithThreshold(int askedDim, int whichMeasure, double threshold,
                          bool greater);
   void _printStatJacobian();
-  void _printStatIGE();
-  void _printStatICN();
-  void _clear(int askedDim);
+  // the worst, average and best of a measure of the elements
+  void _printStat(const char *name, double (data_elementMinMax::*measure)());
+  void _clear();
 
 #if defined(HAVE_VISUDEV)
   void _computePointwiseQuantities(MElement *,

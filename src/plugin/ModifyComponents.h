@@ -8,23 +8,15 @@
 
 #include "Plugin.h"
 
-extern "C" {
-GMSH_Plugin *GMSH_RegisterModifyComponentsPlugin();
-}
-
 class GMSH_ModifyComponentsPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_ModifyComponentsPlugin() {}
+  GMSH_ModifyComponentsPlugin();
   std::string getName() const { return "ModifyComponents"; }
   std::string getShortHelp() const
   {
     return "Modify components in a view using mathematical expressions";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
-  StringXNumber *getOption(int iopt);
-  int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

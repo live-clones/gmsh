@@ -11,27 +11,17 @@
 #include "GModel.h"
 #include "MLine.h"
 #include "OS.h"
+#include "Context.h"
+
+GMSH_SpanningTreePlugin::GMSH_SpanningTreePlugin()
+  : GMSH_MeshPlugin({{GMSH_FULLRC, "OutputPhysical", nullptr, -1, ""}},
+                    {{GMSH_FULLRC, "PhysicalVolumes", nullptr, "", ""},
+                     {GMSH_FULLRC, "PhysicalSurfaces", nullptr, "", ""},
+                     {GMSH_FULLRC, "PhysicalCurves", nullptr, "", ""}})
+{
+}
 
 using namespace std;
-
-StringXNumber SpanningTreeOptions_Number[] = {
-  {GMSH_FULLRC, "OutputPhysical", nullptr, -1, ""},
-};
-
-StringXString SpanningTreeOptions_String[] = {
-  {GMSH_FULLRC, "PhysicalVolumes", nullptr, "", ""},
-  {GMSH_FULLRC, "PhysicalSurfaces", nullptr, "", ""},
-  {GMSH_FULLRC, "PhysicalCurves", nullptr, "", ""},
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterSpanningTreePlugin()
-{
-  return new GMSH_SpanningTreePlugin();
-}
-}
-
-GMSH_SpanningTreePlugin::GMSH_SpanningTreePlugin() {}
 
 string GMSH_SpanningTreePlugin::getName() const { return "SpanningTree"; }
 
@@ -66,34 +56,14 @@ string GMSH_SpanningTreePlugin::getHelp() const
 
 string GMSH_SpanningTreePlugin::getAuthor() const { return "N. Marsic"; }
 
-int GMSH_SpanningTreePlugin::getNbOptions() const
-{
-  return sizeof(SpanningTreeOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_SpanningTreePlugin::getOption(int iopt)
-{
-  return &SpanningTreeOptions_Number[iopt];
-}
-
-int GMSH_SpanningTreePlugin::getNbOptionsStr() const
-{
-  return sizeof(SpanningTreeOptions_String) / sizeof(StringXString);
-}
-
-StringXString *GMSH_SpanningTreePlugin::getOptionStr(int iopt)
-{
-  return &SpanningTreeOptions_String[iopt];
-}
-
 int GMSH_SpanningTreePlugin::run()
 {
   // Get data
   double time = Cpu(), w = TimeOfDay();
-  int output = (int)SpanningTreeOptions_Number[0].def;
-  string volume = SpanningTreeOptions_String[0].def;
-  string surface = SpanningTreeOptions_String[1].def;
-  string curve = SpanningTreeOptions_String[2].def;
+  int output = (int)option(0);
+  string volume = optionStr(0);
+  string surface = optionStr(1);
+  string curve = optionStr(2);
 
   // Parse physical tags
   vector<list<int> > physical(3);
@@ -130,7 +100,7 @@ int GMSH_SpanningTreePlugin::run()
   for(int i = 0; i < 3; i++) getAllMEdge(element[i], edge[i]);
 
   // Build spanning tree (in ascending dimension order) and save into the model
-  DSU vertex(model->getNumMeshVertices());
+  DSU vertex(model->getMaxVertexNumber()); // indexed by node tag - 1
   Tree tree;
   for(int i = 0; i < 3; i++) spanningTree(edge[i], vertex, tree);
 
@@ -260,6 +230,7 @@ void GMSH_SpanningTreePlugin::addToModel(GModel &model, Tree &tree, int tag)
   // Add in GModel
   model.storeChain(1, entityMap, physicalMap);
   model.setPhysicalName(name, 1, physicalNum);
+  CTX::instance()->meshChanged();
 }
 
 std::pair<int, int>

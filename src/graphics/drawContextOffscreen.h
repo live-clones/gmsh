@@ -1,0 +1,63 @@
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+#ifndef DRAW_CONTEXT_OFFSCREEN_H
+#define DRAW_CONTEXT_OFFSCREEN_H
+
+#include "drawContext.h"
+
+class stbStrings;
+
+// The pictures drawn without a window (see offscreenContext): the scene of
+// a window of General.GraphicsWidth x General.GraphicsHeight pixels, drawn
+// as a window draws it, into a picture of its own size. It stands in for
+// the global drawing context between begin() and end(), and draws its
+// strings with the fonts compiled into Gmsh (see stbStrings).
+class drawContextOffscreen : public drawContextGlobal {
+private:
+  drawContext *_ctx;
+  stbStrings *_strings;
+  int _fontId, _fontSize;
+  int _width, _height;
+  double _scale;
+  double _frameView[16];
+  bool _screen, _viewFromOptions;
+  drawContextGlobal *_previous;
+
+public:
+  drawContextOffscreen();
+  ~drawContextOffscreen();
+  // a picture of width x height pixels, of the scene of a window scaled by
+  // scale (what is sized in pixels follows): the context is made current,
+  // the picture bound to be drawn into, and this is the global drawing
+  // context until end(). With screen, what is drawn goes to the framebuffer
+  // of the context itself (the canvas of a web page), and the view is kept
+  // from frame to frame instead of being taken from the options each time.
+  bool begin(int width, int height, double scale, bool screen = false);
+  // read the picture back
+  void read(GLenum format, GLenum type, void *pixels);
+  void end();
+  // draw the scene into the picture
+  void drawCurrentOpenglWindow(bool make_current, bool again = false);
+  // on the screen, add the next frames of the studio shading to the average
+  // shown, for about budget seconds; true while there are more to add
+  bool drawStudioFrames(double budget);
+  // on the screen, take the view from the options again at the next begin()
+  // (General.RotationX, General.TrackballQuaternion0, ...), as a window does
+  // when it is made
+  void resetView() { _viewFromOptions = true; }
+  drawContext *getDrawContext() { return _ctx; }
+  int getFontSize();
+  void setFont(int fontid, int fontsize);
+  double getStringWidth(const char *str);
+  int getStringHeight();
+  int getStringDescent();
+  void drawString(const char *str);
+  void drawString(const char *str, const double win[3]);
+  void flushString();
+  std::string getName() { return "Offscreen"; }
+};
+
+#endif

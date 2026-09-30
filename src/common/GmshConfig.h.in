@@ -15,11 +15,10 @@
 #cmakedefine HAVE_BOUNDARY_LAYERS
 #cmakedefine HAVE_BLAS
 #cmakedefine HAVE_BLOSSOM
-#cmakedefine HAVE_CAIRO
 #cmakedefine HAVE_DLOPEN
-#cmakedefine HAVE_DINTEGRATION
 #cmakedefine HAVE_DOMHEX
 #cmakedefine HAVE_EIGEN
+#cmakedefine HAVE_FFMPEG
 #cmakedefine HAVE_FLTK
 #cmakedefine HAVE_GEOMETRYCENTRAL
 #cmakedefine HAVE_GMM
@@ -55,7 +54,6 @@
 #cmakedefine HAVE_UDT
 #cmakedefine HAVE_OPENGL
 #cmakedefine HAVE_OPTHOM
-#cmakedefine HAVE_OSMESA
 #cmakedefine HAVE_P4EST
 #cmakedefine HAVE_PARASOLID
 #cmakedefine HAVE_PARASOLID_STEP
@@ -68,7 +66,6 @@
 #cmakedefine HAVE_QUADTRI
 #cmakedefine HAVE_QUADMESHINGTOOLS
 #cmakedefine HAVE_QUADOPTIMIZER
-#cmakedefine HAVE_REVOROPT
 #cmakedefine HAVE_SALOME
 #cmakedefine HAVE_SGEOM
 #cmakedefine HAVE_SLEPC

@@ -135,13 +135,6 @@ public:
   virtual void f(MElement *ele, double u, double v, double w,
                  std::vector<ValType> &vals) const
   {
-    if(ele->getParent()) {
-      if(ele->getTypeForMSH() == MSH_LIN_B ||
-         ele->getTypeForMSH() == MSH_TRI_B ||
-         ele->getTypeForMSH() == MSH_POLYG_B) { // FIXME MPolygonBorders...
-        ele->movePointFromParentSpaceToElementSpace(u, v, w);
-      }
-    }
     int ndofs = ele->getNumShapeFunctions();
     int curpos = vals.size();
     vals.resize(curpos + ndofs);
@@ -151,13 +144,6 @@ public:
   virtual void gradf(MElement *ele, double u, double v, double w,
                      std::vector<GradType> &grads) const
   {
-    if(ele->getParent()) {
-      if(ele->getTypeForMSH() == MSH_LIN_B ||
-         ele->getTypeForMSH() == MSH_TRI_B ||
-         ele->getTypeForMSH() == MSH_POLYG_B) { // FIXME MPolygonBorders...
-        ele->movePointFromParentSpaceToElementSpace(u, v, w);
-      }
-    }
     int ndofs = ele->getNumShapeFunctions();
     grads.reserve(grads.size() + ndofs);
     double gradsuvw[256][3];
@@ -181,13 +167,6 @@ public:
   virtual void hessfuvw(MElement *ele, double u, double v, double w,
                         std::vector<HessType> &hess) const
   {
-    if(ele->getParent()) {
-      if(ele->getTypeForMSH() == MSH_LIN_B ||
-         ele->getTypeForMSH() == MSH_TRI_B ||
-         ele->getTypeForMSH() == MSH_POLYG_B) { // FIXME MPolygonBorders...
-        ele->movePointFromParentSpaceToElementSpace(u, v, w);
-      }
-    }
     int ndofs = ele->getNumShapeFunctions();
     hess.reserve(hess.size() + ndofs); // permet de mettre les composantes
                                        // suivantes à la suite du vecteur
@@ -210,13 +189,6 @@ public:
   virtual void gradfuvw(MElement *ele, double u, double v, double w,
                         std::vector<GradType> &grads) const
   {
-    if(ele->getParent()) {
-      if(ele->getTypeForMSH() == MSH_LIN_B ||
-         ele->getTypeForMSH() == MSH_TRI_B ||
-         ele->getTypeForMSH() == MSH_POLYG_B) { // FIXME MPolygonBorders...
-        ele->movePointFromParentSpaceToElementSpace(u, v, w);
-      }
-    }
     int ndofs = ele->getNumShapeFunctions();
     grads.reserve(grads.size() + ndofs);
     double gradsuvw[256][3];

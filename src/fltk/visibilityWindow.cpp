@@ -190,9 +190,8 @@ public:
   }
 };
 
-// The partitions an entity belongs to, without copying the vector: this is
-// asked for every entity of the model, and an overlap entity stores a single
-// partition, so it needs somewhere to put it.
+// the partitions of an entity without copying the vector (an overlap entity
+// stores a single partition, hence the scratch argument)
 static const std::vector<int> *partitionsOf(GEntity *ge, std::vector<int> &tmp)
 {
   switch(ge->geomType()) {
@@ -216,11 +215,8 @@ static const std::vector<int> *partitionsOf(GEntity *ge, std::vector<int> &tmp)
   }
 }
 
-// Which entities belong to which partition, built once when the browser is
-// filled. Without it, showing or hiding one partition walks every entity of
-// the model, and applying a selection does that once per partition: with
-// 16000 partitions over 384000 entities that is six billion visits, each
-// copying a vector.
+// which entities belong to which partition, built once when the browser is
+// filled: without it applying a selection walks the model once per partition
 static std::map<int, std::vector<GEntity *> > _partitionIndex;
 static GModel *_partitionIndexModel = nullptr;
 
@@ -250,9 +246,7 @@ public:
   int getTag() const { return _tag; }
   std::string getType() const { return "Partition"; }
   char getVisibility() const { return _visible; }
-  // only mark the partition as shown or hidden in the browser, without
-  // touching the entities: used when they have all just been hidden in one
-  // pass, where walking the model again for each partition is the whole cost
+  // only mark the partition in the browser, without touching the entities
   void setListVisibility(char val) { _visible = val; }
   void setVisibility(char val, bool recursive = false, bool allmodels = false)
   {
@@ -428,10 +422,8 @@ public:
       }
     }
     if(type == MeshPartitions) {
-      // hide everything that belongs to a partition in one pass, and only
-      // mark the partitions themselves as hidden: asking each of them to walk
-      // the model in turn is what made applying a selection take minutes.
-      // Entities that belong to no partition are left alone, as before.
+      // hide everything belonging to a partition in one pass, rather than
+      // once per partition; entities in no partition are left alone
       for(std::size_t i = 0; i < GModel::list.size(); i++) {
         GModel *m = GModel::list[i];
         if(!allmodels && m != GModel::current()) continue;
@@ -499,7 +491,7 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
   // if the browser is not empty, get the selections made in the
   // browser and apply them into the model
   if(VisibilityList::instance()->getNumEntities()) {
-    CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+    CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     bool recursive =
       FlGui::instance()->visibility->butt[0]->value() ? true : false;
     bool allmodels =
@@ -832,7 +824,7 @@ static void _recur_update_selected(Fl_Tree_Item *n)
 
 static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   bool recursive =
     FlGui::instance()->visibility->butt[0]->value() ? true : false;
 
@@ -1104,7 +1096,7 @@ static void _apply_visibility(char mode, bool physical,
 
 static void visibility_number_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
 
   // what = 0 for nodes, 1 for elements, 2 for points, 3 for lines, 4
   // for surfaces, 5 for volumes, 6 for physical points, 7 for
@@ -1209,7 +1201,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
       FlGui::instance()->visibility->butt[1]->value() ? true : false;
     for(int i = 1; i <= 5; i++) // elements, points, curves, surfaces, volumes
       _set_visibility_by_number(i, -1, 1, false, allmodels);
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
     drawContext::global()->draw();
     return;
   }
@@ -1223,7 +1215,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   std::vector<MElement *> elements;
 
   while(1) {
-    if(what == ENT_ALL) CTX::instance()->mesh.changed = ENT_ALL;
+    if(what == ENT_ALL) CTX::instance()->meshChanged();
     drawContext::global()->draw();
     Msg::StatusGl("Select %s\n[Press %s'q' to abort]", str.c_str(),
                   mode ? "" : "'u' to undo or ");
@@ -1245,7 +1237,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     if(ib == 'q') { break; }
   }
 
-  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->meshChanged();
   CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
   Msg::StatusGl("");

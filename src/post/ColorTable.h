@@ -41,6 +41,9 @@ typedef struct {
 #define COLORTABLE_BETA 3 // beta coeff for brighten
 #define COLORTABLE_ALPHAPOW 4 // alpha channel power value
 
+// the predefined maps: how many, and the name of one
+int ColorTable_NumPredefined();
+const char *ColorTable_Name(int number);
 void ColorTable_InitParam(int number, GmshColorTable *ct);
 void ColorTable_Recompute(GmshColorTable *ct);
 void ColorTable_Copy(GmshColorTable *ct);

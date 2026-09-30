@@ -39,6 +39,16 @@ bool gmshFace::degenerate(int dim) const
 void gmshFace::resetNativePtr(Surface *s)
 {
   _s = s;
+  // the geometry may have changed (e.g. translated): what is drawn of it is
+  // made again when needed
+  cross[0].clear();
+  cross[1].clear();
+  stl_vertices_uv.clear();
+  stl_vertices_xyz.clear();
+  stl_normals.clear();
+  stl_curvatures.clear();
+  stl_triangles.clear();
+  deleteGeometryVertexArrays();
   l_edges.clear();
   l_dirs.clear();
   edgeLoops.clear();

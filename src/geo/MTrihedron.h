@@ -77,6 +77,12 @@ public:
   {
     return MEdge(_v[edges_trihedron(num, 0)], _v[edges_trihedron(num, 1)]);
   }
+  virtual int getEdgeCorners(int num, MVertex *v[2]) const
+  {
+    v[0] = _v[edges_trihedron(num, 0)];
+    v[1] = _v[edges_trihedron(num, 1)];
+    return 2;
+  }
   virtual int getNumEdgesRep(bool curved) { return 5; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n)
@@ -160,9 +166,9 @@ public:
     }
   }
   virtual SPoint3 barycenterUVW() const { return SPoint3(0., 0., 0.); }
-  virtual bool isInside(double u, double v, double w) const
+  using MElement::isInside;
+  virtual bool isInside(double u, double v, double w, double tol) const
   {
-    double tol = getTolerance();
     if(u < -(1. + tol) || v < -(1. + tol) || u > (1. + tol) || v > (1. + tol) ||
        fabs(w) > tol)
       return false;

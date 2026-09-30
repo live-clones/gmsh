@@ -6,20 +6,16 @@
 #include "HarmonicToTime.h"
 #include "GmshDefines.h"
 
-StringXNumber HarmonicToTimeOptions_Number[] = {
-  {GMSH_FULLRC, "RealPart", nullptr, 0., "RealPart"},
-  {GMSH_FULLRC, "ImaginaryPart", nullptr, 1., "ImaginaryPart"},
-  {GMSH_FULLRC, "NumSteps", nullptr, 20., "NumSteps"},
-  {GMSH_FULLRC, "TimeSign", nullptr, -1., "TimeSign"},
-  {GMSH_FULLRC, "Frequency", nullptr, 1, "Frequency"},
-  {GMSH_FULLRC, "NumPeriods", nullptr, 1, "NumPeriods"},
-  {GMSH_FULLRC, "View", nullptr, -1., "View"}};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterHarmonicToTimePlugin()
+GMSH_HarmonicToTimePlugin::GMSH_HarmonicToTimePlugin()
+  : GMSH_PostPlugin(
+      {{GMSH_FULLRC, "RealPart", nullptr, 0., "RealPart"},
+       {GMSH_FULLRC, "ImaginaryPart", nullptr, 1., "ImaginaryPart"},
+       {GMSH_FULLRC, "NumSteps", nullptr, 20., "NumSteps"},
+       {GMSH_FULLRC, "TimeSign", nullptr, -1., "TimeSign"},
+       {GMSH_FULLRC, "Frequency", nullptr, 1, "Frequency"},
+       {GMSH_FULLRC, "NumPeriods", nullptr, 1, "NumPeriods"},
+       {GMSH_FULLRC, "View", nullptr, -1., "View"}})
 {
-  return new GMSH_HarmonicToTimePlugin();
-}
 }
 
 std::string GMSH_HarmonicToTimePlugin::getHelp() const
@@ -37,29 +33,19 @@ std::string GMSH_HarmonicToTimePlugin::getHelp() const
          "Plugin(HarmonicToTime) creates one new list-based view.";
 }
 
-int GMSH_HarmonicToTimePlugin::getNbOptions() const
-{
-  return sizeof(HarmonicToTimeOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_HarmonicToTimePlugin::getOption(int iopt)
-{
-  return &HarmonicToTimeOptions_Number[iopt];
-}
-
 PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
 {
-  int rIndex = (int)HarmonicToTimeOptions_Number[0].def;
-  int iIndex = (int)HarmonicToTimeOptions_Number[1].def;
-  int nSteps = (int)HarmonicToTimeOptions_Number[2].def;
-  double tsign = HarmonicToTimeOptions_Number[3].def > 0 ? 1. : -1.;
-  double frequency = HarmonicToTimeOptions_Number[4].def;
-  int nPeriods = (int)HarmonicToTimeOptions_Number[5].def;
-  int iView = (int)HarmonicToTimeOptions_Number[6].def;
+  int rIndex = (int)option(0);
+  int iIndex = (int)option(1);
+  int nSteps = (int)option(2);
+  double tsign = option(3) > 0 ? 1. : -1.;
+  double frequency = option(4);
+  int nPeriods = (int)option(5);
+  int iView = (int)option(6);
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
-  PViewData *data1 = v1->getData(true);
+  PViewData *data1 = getPossiblyAdaptiveData(v1);
 
   if(data1->hasMultipleMeshes()) {
     Msg::Error("HarmonicToTime plugin cannot be applied to multi-mesh views");
@@ -80,17 +66,22 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
-  for(int ent = 0; ent < data1->getNumEntities(0); ent++) {
-    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++) {
-      if(data1->skipElement(0, ent, ele)) continue;
-      int numNodes = data1->getNumNodes(0, ent, ele);
-      int type = data1->getType(0, ent, ele);
-      int numComp = data1->getNumComponents(0, ent, ele);
+  // the elements of the real part step, with values in both steps
+  int s0 = rIndex;
+  for(int ent = 0; ent < data1->getNumEntities(s0); ent++) {
+    for(int ele = 0; ele < data1->getNumElements(s0, ent); ele++) {
+      if(data1->skipElement(s0, ent, ele) || data1->skipElement(iIndex, ent, ele))
+        continue;
+      int numNodes = getNumCornerNodes(data1, s0, ent, ele);
+      if(!numNodes) continue;
+      int type = data1->getType(s0, ent, ele);
+      int numComp = data1->getNumComponents(s0, ent, ele);
       std::vector<double> *out = data2->incrementList(numComp, type, numNodes);
+      if(!out) continue;
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       std::vector<double> vr(numNodes * numComp), vi(numNodes * numComp);
       for(int nod = 0; nod < numNodes; nod++) {
-        data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+        data1->getNode(s0, ent, ele, nod, x[nod], y[nod], z[nod]);
         for(int comp = 0; comp < numComp; comp++) {
           data1->getValue(rIndex, ent, ele, nod, comp,
                           vr[numComp * nod + comp]);
@@ -116,9 +107,8 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
   }
 
   for(int k = 0; k < nSteps; k++) {
-    double t =
-      frequency ? (2. * M_PI * nPeriods * k / frequency / (double)nSteps) : 0.;
-    data2->Time.push_back(t);
+    double t = frequency ? (nPeriods * k / frequency / (double)nSteps) : 0.;
+    data2->addTime(t);
   }
   data2->setName(data1->getName() + "_HarmonicToTime");
   data2->setFileName(data1->getName() + "_HarmonicToTime.pos");

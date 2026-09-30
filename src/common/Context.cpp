@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "Context.h"
 #include "OS.h"
+#include "GmshMessage.h"
 #include "GamePad.h"
 
 #if defined(HAVE_FLTK)
@@ -72,11 +73,7 @@ void CTX::init()
 
   geom.autoExtrude = 0; // FIXME: temporary for auto-extrude testing
 
-#if defined(HAVE_FLTK)
-  glFontEnum = FL_HELVETICA;
-#else
-  glFontEnum = -1;
-#endif
+  glFontEnum = 0; // Helvetica
   forcedBBox = 0;
   hideUnselected = 0;
   numWindows = numTiles = 1;
@@ -89,7 +86,9 @@ void CTX::init()
 
   // need to initialize these too, since the corresponding opt_XXX routines use
   // the current value to detect changes
-  mesh.changed = 0;
+  for(int d = 0; d < 4; d++) mesh.stamp[d] = 0;
+  for(int d = 0; d < 4; d++) geom.stamp[d] = 0;
+  entityColorsStamp = entityVisibilityStamp = meshContentStamp = 0;
   mesh.qualityInf = mesh.qualitySup = mesh.qualityType = 0;
   mesh.radiusInf = mesh.radiusSup = 0;
   mesh.lines = mesh.triangles = mesh.tetrahedra = mesh.quadrangles = 0;
@@ -99,7 +98,6 @@ void CTX::init()
   mesh.explode = mesh.angleSmoothNormals = 0.;
   mesh.numSubEdges = 0;
   mesh.colorCarousel = 0;
-  mesh.saveTri = 0;
   color.mesh.tangents = color.mesh.tetrahedron = color.mesh.triangle = 0;
   color.mesh.prism = color.mesh.pyramid = color.mesh.hexahedron = color.mesh.trihedron = 0;
   color.mesh.tangents = color.mesh.line = color.mesh.quadrangle = 0;
@@ -124,6 +122,17 @@ CTX *CTX::_create()
 {
   if(!_instance) _instance = new CTX();
   return _instance;
+}
+
+double CTX::graphicsCacheMB()
+{
+  double mb = graphicsCacheSize;
+  if(mb <= 0.) {
+    mb = TotalRam() / 32.;
+    if(mb > 1024.) mb = 1024.;
+    if(mb < 64.) mb = 64.;
+  }
+  return mb;
 }
 
 unsigned int CTX::packColor(int R, int G, int B, int A)
@@ -164,4 +173,10 @@ int CTX::unpackAlpha(unsigned int X)
     return ( (X) & 0xff );
   else
     return ( ( (X) >> 24 ) & 0xff );
+}
+
+int CTX::numThreadsFor(std::size_t num, std::size_t worthIt) const
+{
+  if(num < worthIt) return 1;
+  return numThreads ? numThreads : Msg::GetMaxThreads();
 }

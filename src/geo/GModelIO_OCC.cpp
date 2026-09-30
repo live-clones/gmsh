@@ -171,6 +171,7 @@
 
 #if defined(HAVE_TINYXML2)
 #include "tinyxml2.h"
+#include "GmshDefines.h"
 #endif
 
 OCC_Internals::OCC_Internals()
@@ -5348,7 +5349,9 @@ bool OCC_Internals::_getBoundingBox(const TopoDS_Shape &shape, double &xmin,
   }
   Bnd_Box b;
   try {
-    BRepBndLib::Add(shape, b);
+    // not from a triangulation the shape may carry (e.g. made to draw it):
+    // the box would change once the shape has been drawn
+    BRepBndLib::Add(shape, b, false);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -5633,6 +5636,8 @@ bool const sortByInvDim(std::pair<int, int> const &lhs,
 
 void OCC_Internals::synchronize(GModel *model)
 {
+  // existing entities can be given new geometry
+  CTX::instance()->geomChanged();
   Msg::Debug("Syncing OCC_Internals with GModel");
 
   // make sure to remove from GModel all entities that have been deleted in

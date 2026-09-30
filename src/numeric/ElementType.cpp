@@ -21,8 +21,6 @@ int ElementType::getParentType(int mshtype)
   case(MSH_LIN_9):
   case(MSH_LIN_10):
   case(MSH_LIN_11):
-  case(MSH_LIN_B):
-  case(MSH_LIN_C):
   case(MSH_LIN_1): return TYPE_LIN;
   case(MSH_TRI_3):
   case(MSH_TRI_6):
@@ -42,7 +40,6 @@ int ElementType::getParentType(int mshtype)
   case(MSH_TRI_24):
   case(MSH_TRI_27):
   case(MSH_TRI_30):
-  case(MSH_TRI_B):
   case(MSH_TRI_1): return TYPE_TRI;
   case(MSH_QUA_4):
   case(MSH_QUA_9):
@@ -137,8 +134,7 @@ int ElementType::getParentType(int mshtype)
   case(MSH_HEX_80):
   case(MSH_HEX_92):
   case(MSH_HEX_104): return TYPE_HEX;
-  case(MSH_POLYG_):
-  case(MSH_POLYG_B): return TYPE_POLYG;
+  case(MSH_POLYG_): return TYPE_POLYG;
   case(MSH_POLYH_): return TYPE_POLYH;
   case(MSH_PNT_SUB):
   case(MSH_LIN_SUB):
@@ -191,7 +187,6 @@ int ElementType::getOrder(int mshtype)
   case MSH_TRI_30: return 10;
   case MSH_TRI_MINI: return 1;
   case MSH_POLYG_: return 1;
-  case MSH_POLYG_B: return 1;
   case MSH_TET_1: return 0;
   case MSH_TET_4: return 1;
   case MSH_TET_10: return 2;
@@ -310,8 +305,6 @@ int ElementType::getDimension(int mshtype)
   case(MSH_LIN_9):
   case(MSH_LIN_10):
   case(MSH_LIN_11):
-  case(MSH_LIN_B):
-  case(MSH_LIN_C):
   case(MSH_LIN_1):
   case(MSH_LIN_SUB): return 1;
 
@@ -333,7 +326,6 @@ int ElementType::getDimension(int mshtype)
   case(MSH_TRI_24):
   case(MSH_TRI_27):
   case(MSH_TRI_30):
-  case(MSH_TRI_B):
   case(MSH_TRI_1):
   case(MSH_TRI_SUB):
   case(MSH_TRI_MINI):
@@ -359,8 +351,7 @@ int ElementType::getDimension(int mshtype)
   case(MSH_QUA_40):
   case(MSH_QUA_1):
 
-  case(MSH_POLYG_):
-  case(MSH_POLYG_B): return 2;
+  case(MSH_POLYG_): return 2;
 
   case(MSH_TET_4):
   case(MSH_TET_10):
@@ -487,9 +478,6 @@ int ElementType::getNumVertices(int mshtype)
   case MSH_TRI_24: return 24;
   case MSH_TRI_27: return 27;
   case MSH_TRI_30: return 30;
-  // case MSH_TRI_MINI  : return 0;
-  // case MSH_POLYG_  : return 0;
-  // case MSH_POLYG_B : return 0;
   case MSH_TET_1: return 1;
   case MSH_TET_4: return 4;
   case MSH_TET_10: return 10;
@@ -585,7 +573,8 @@ int ElementType::getNumVertices(int mshtype)
   case MSH_PYR_61: return 61;
   case MSH_PYR_69: return 69;
   case MSH_TRIH_4: return 4;
-  // case MSH_POLYH_ : return 0;
+  case MSH_POLYG_:
+  case MSH_POLYH_: return 0; // varies from one element to the other
   default: Msg::Warning("Unknown element MSH type %d", mshtype); return 0;
   }
 
@@ -632,7 +621,6 @@ int ElementType::getSerendipity(int mshtype)
   case MSH_PYR_5:
 
   case MSH_POLYG_:
-  case MSH_POLYG_B:
   case MSH_POLYH_: return 1; // Serendipity or not
 
   case MSH_TRI_10:
@@ -868,6 +856,8 @@ int ElementType::getType(int parentType, int order, bool serendip)
     }
     break;
   case TYPE_TRIH: return MSH_TRIH_4;
+  case TYPE_POLYG: return MSH_POLYG_;
+  case TYPE_POLYH: return MSH_POLYH_;
   default:
     Msg::Warning("Unknown element parent type %i, returning 0", parentType);
     return 0;

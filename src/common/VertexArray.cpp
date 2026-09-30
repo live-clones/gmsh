@@ -19,46 +19,48 @@ unsigned int VertexArray::vboContext = 1;
 long int VertexArray::statUniqueIn = 0;
 long int VertexArray::statUniqueKept = 0;
 
-// fill a corner key with the N corners sorted lexicographically, so that an
-// element added with its corners in any order maps to the same key
+// fill a corner key with the N corners sorted lexicographically, each with its
+// color, so that an element added with its corners in any order maps to the
+// same key (with the color of its first corner only, a face shared by two
+// elements that list its corners in another order was drawn twice)
 template <int N>
 static inline void fillCornerKey(CornerKey<N> &k, double *x, double *y,
                                  double *z, unsigned char *r, unsigned char *g,
                                  unsigned char *b, unsigned char *a)
 {
   memset(&k, 0, sizeof(CornerKey<N>));
-  float px[N], py[N], pz[N];
+  float p[N][3];
+  unsigned char c[N][4] = {};
   for(int i = 0; i < N; i++) {
-    px[i] = (float)x[i];
-    py[i] = (float)y[i];
-    pz[i] = (float)z[i];
+    p[i][0] = (float)x[i];
+    p[i][1] = (float)y[i];
+    p[i][2] = (float)z[i];
+    if(r && g && b && a) {
+      c[i][0] = r[i];
+      c[i][1] = g[i];
+      c[i][2] = b[i];
+      c[i][3] = a[i];
+    }
   }
-  // sorting network: one comparison for a line, three for a triangle
+  // insertion sort: one comparison for a line, three at most for a triangle
+  auto before = [&](int i, int j) {
+    for(int d = 0; d < 3; d++)
+      if(p[i][d] != p[j][d]) return p[i][d] < p[j][d];
+    return false;
+  };
   for(int i = 1; i < N; i++) {
-    for(int j = i; j > 0; j--) {
-      if(px[j] > px[j - 1] ||
-         (px[j] == px[j - 1] &&
-          (py[j] > py[j - 1] || (py[j] == py[j - 1] && pz[j] >= pz[j - 1]))))
-        break;
-      std::swap(px[j], px[j - 1]);
-      std::swap(py[j], py[j - 1]);
-      std::swap(pz[j], pz[j - 1]);
+    for(int j = i; j > 0 && before(j, j - 1); j--) {
+      std::swap(p[j], p[j - 1]);
+      std::swap(c[j], c[j - 1]);
     }
   }
   for(int i = 0; i < N; i++) {
-    k.p[3 * i] = px[i];
-    k.p[3 * i + 1] = py[i];
-    k.p[3 * i + 2] = pz[i];
-  }
-  if(r && g && b && a) {
-    k.c[0] = r[0];
-    k.c[1] = g[0];
-    k.c[2] = b[0];
-    k.c[3] = a[0];
+    for(int d = 0; d < 3; d++) k.p[3 * i + d] = p[i][d];
+    for(int d = 0; d < 4; d++) k.c[4 * i + d] = c[i][d];
   }
 }
 
-// hash a key word by word; never returns 0, which marks an empty slot
+// room for n keys at most half full, the keys already there hashed again
 void UniqueElementFilter::Shard::reserve(std::size_t n)
 {
   std::size_t want = 16;
@@ -78,82 +80,9 @@ void UniqueElementFilter::Shard::reserve(std::size_t n)
   }
 }
 
-// Knuth's algorithm R: after removing the entry at i, shift back the following
-// entries that probed past it, so that the table stays free of tombstones
-void UniqueElementFilter::Shard::erase(std::size_t i)
-{
-  std::size_t j = i;
-  table[i] = 0;
-  num--;
-  for(;;) {
-    j = (j + 1) & mask;
-    if(!table[j]) break;
-    std::size_t k = table[j] & mask;
-    if(i <= j) {
-      if(i < k && k <= j) continue;
-    }
-    else {
-      if(i < k || k <= j) continue;
-    }
-    table[i] = table[j];
-    table[j] = 0;
-    i = j;
-  }
-}
-
 void UniqueElementFilter::reserve(std::size_t n)
 {
   for(int i = 0; i < NUM_SHARDS; i++) _shard[i].reserve(n / NUM_SHARDS + 16);
-}
-
-bool UniqueElementFilter::contains(const std::uint64_t *key, int n)
-{
-  std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
-  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
-  if(!_threaded) return _shard[sh].contains(h);
-  ShardGuard lock(_mutex[sh]);
-  return _shard[sh].contains(h);
-}
-
-void UniqueElementFilter::insertOrErase(const std::uint64_t *key, int n)
-{
-  std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
-  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
-  if(!_threaded) {
-    _shard[sh].insertOrErase(h);
-    return;
-  }
-  ShardGuard lock(_mutex[sh]);
-  _shard[sh].insertOrErase(h);
-}
-
-void UniqueElementFilter::insertOrErase(unsigned int col, const void *v0,
-                                       const void *v1, const void *v2,
-                                       const void *v3)
-{
-  std::uint64_t k[5];
-  int n = vaVertexKey(col, v0, v1, v2, v3, k);
-  std::uint64_t h = vaHashKey(k, n * sizeof(std::uint64_t));
-  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
-  if(!_threaded) {
-    _shard[sh].insertOrErase(h);
-    return;
-  }
-  ShardGuard lock(_mutex[sh]);
-  _shard[sh].insertOrErase(h);
-}
-
-bool UniqueElementFilter::contains(unsigned int col, const void *v0,
-                                    const void *v1, const void *v2,
-                                    const void *v3)
-{
-  std::uint64_t k[5];
-  int n = vaVertexKey(col, v0, v1, v2, v3, k);
-  std::uint64_t h = vaHashKey(k, n * sizeof(std::uint64_t));
-  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
-  if(!_threaded) return _shard[sh].contains(h);
-  ShardGuard lock(_mutex[sh]);
-  return _shard[sh].contains(h);
 }
 
 bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
@@ -174,19 +103,14 @@ bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
   else
     return false;
 
-  // the top bits pick the shard, the low bits index inside it
-  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
-  if(!_threaded) return !_shard[sh].insert(h);
-  ShardGuard lock(_mutex[sh]);
-  return !_shard[sh].insert(h);
+  return isDuplicate(h);
 }
 
 VertexArray::~VertexArray()
 {
   if(_ownsFilter) delete _filter;
-  // only the names of the current context designate anything: the buffers of a
-  // context that has been recreated are already gone, and deleting their names
-  // would hit whatever the new context has since given them to
+  // only delete names of the current context: those of a recreated context
+  // are gone and may have been reused
   if(getVboValid())
     for(int i = 0; i < 3; i++)
       if(_vbo[i]) vboToDelete.push_back(_vbo[i]);
@@ -210,22 +134,23 @@ void VertexArray::setUniqueFilter(UniqueElementFilter *f)
   _ownsFilter = false;
 }
 
-VertexArray::VertexArray(int numVerticesPerElement, int numElements)
+VertexArray::VertexArray(int numVerticesPerElement, std::size_t numElements)
   : _numVerticesPerElement(numVerticesPerElement), _filter(nullptr),
-    _ownsFilter(false), _storeElements(CTX::instance()->pickElements ? true :
-                                                                       false),
+    _ownsFilter(false),
     _vboDirty(true), _vboContext(0), _statUniqueIn(0), _statUniqueKept(0)
 {
   _vbo[0] = _vbo[1] = _vbo[2] = 0;
 
-  int nb = (numElements ? numElements : 1) * _numVerticesPerElement;
+  // (counted on 64 bits: the elements of a large mesh, times their vertices,
+  // times their coordinates, do not fit in an int)
+  std::size_t nb = (numElements ? numElements : 1) * _numVerticesPerElement;
 
   double memv = (nb * 3. * sizeof(float)) / 1024. / 1024.;
   double memmax = TotalRam() / 3.;
   if(memv > memmax){
-    int old = nb;
-    nb = memmax / (3. * sizeof(float)) * 1024 * 1024;
-    Msg::Debug("Reduce preallocation of vertex array (%d -> %d)", old, nb);
+    std::size_t old = nb;
+    nb = (std::size_t)(memmax / (3. * sizeof(float)) * 1024 * 1024);
+    Msg::Debug("Reduce preallocation of vertex array (%zu -> %zu)", old, nb);
   }
   _vertices.reserve(nb * 3);
   _normals.reserve(nb * 3);
@@ -274,33 +199,30 @@ void VertexArray::_addColor(unsigned char r, unsigned char g, unsigned char b,
   _colors.push_back(a);
 }
 
-void VertexArray::_addElement(MElement *ele)
-{
-  if(ele && _storeElements) _elements.push_back(ele);
-}
-
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
-                      unsigned int *col, MElement *ele, bool unique)
+                      unsigned int *col, bool unique)
 {
   if(col){
     unsigned char r[100], g[100], b[100], a[100];
     int npe = getNumVerticesPerElement();
-    CTX *ctx = CTX::instance();
+    // (as CTX::unpackRed() and the others do, without a call for each)
+    const bool big = CTX::instance()->bigEndian;
     for(int i = 0; i < npe; i++){
-      r[i] = ctx->unpackRed(col[i]);
-      g[i] = ctx->unpackGreen(col[i]);
-      b[i] = ctx->unpackBlue(col[i]);
-      a[i] = ctx->unpackAlpha(col[i]);
+      unsigned int c = col[i];
+      r[i] = big ? (c >> 24) & 0xff : c & 0xff;
+      g[i] = big ? (c >> 16) & 0xff : (c >> 8) & 0xff;
+      b[i] = big ? (c >> 8) & 0xff : (c >> 16) & 0xff;
+      a[i] = big ? c & 0xff : (c >> 24) & 0xff;
     }
-    add(x, y, z, n, r, g, b, a, ele, unique);
+    add(x, y, z, n, r, g, b, a, unique);
   }
   else
-    add(x, y, z, n, nullptr, nullptr, nullptr, nullptr, ele, unique);
+    add(x, y, z, n, nullptr, nullptr, nullptr, nullptr, unique);
 }
 
-void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned char *r,
-                      unsigned char *g, unsigned char *b, unsigned char *a,
-                      MElement *ele, bool unique)
+void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
+                      unsigned char *r, unsigned char *g, unsigned char *b,
+                      unsigned char *a, bool unique)
 {
   int npe = getNumVerticesPerElement();
 
@@ -313,11 +235,41 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
     _statUniqueKept += npe;
   }
 
-  for(int i = 0; i < npe; i++){
-    _addVertex((float)x[i], (float)y[i], (float)z[i]);
-    if(n) _addNormal((float)n[i].x(), (float)n[i].y(), (float)n[i].z());
-    if(r && g && b && a) _addColor(r[i], g[i], b[i], a[i]);
-    _addElement(ele);
+  // the arrays grow once for the element, not once for each number
+  std::size_t nv = _vertices.size();
+  _vertices.resize(nv + 3 * npe);
+  float *pv = &_vertices[nv];
+  for(int i = 0; i < npe; i++) {
+    *pv++ = (float)x[i];
+    *pv++ = (float)y[i];
+    *pv++ = (float)z[i];
+  }
+  if(n) {
+    std::size_t nn = _normals.size();
+    _normals.resize(nn + 3 * npe);
+    normal_type *pn = &_normals[nn];
+    for(int i = 0; i < npe; i++) {
+#if defined(HAVE_VISUDEV)
+      *pn++ = (float)n[i].x();
+      *pn++ = (float)n[i].y();
+      *pn++ = (float)n[i].z();
+#else
+      *pn++ = float2char((float)n[i].x());
+      *pn++ = float2char((float)n[i].y());
+      *pn++ = float2char((float)n[i].z());
+#endif
+    }
+  }
+  if(r && g && b && a) {
+    std::size_t nc = _colors.size();
+    _colors.resize(nc + 4 * npe);
+    unsigned char *pc = &_colors[nc];
+    for(int i = 0; i < npe; i++) {
+      *pc++ = r[i];
+      *pc++ = g[i];
+      *pc++ = b[i];
+      *pc++ = a[i];
+    }
   }
 }
 
@@ -352,10 +304,8 @@ void VertexArray::finalize()
   }
 }
 
-// How far along the direction of view the barycentre of an element lies. The
-// elements are put in that order so that what is behind is drawn first, which
-// is what blending needs; only the order matters, so the barycentre is left as
-// the sum of the vertices rather than their average.
+// depth of the barycentre of an element along the view direction (left as
+// the sum of the vertices, as only the order matters)
 static double alphaKey(const float *v, int numVertices, const double eye[3])
 {
   double cg[3] = {0., 0., 0.};
@@ -376,15 +326,12 @@ void VertexArray::sort(double x, double y, double z)
   int n = getNumVertices() / npe;
   if(n < 2) return;
 
-  // Where each element falls, worked out once per element. Asking for it
-  // inside the comparison instead means working it out about log2(n) times
-  // over for each of them, reading all over the vertices every time.
+  // the key of each element, computed once rather than in the comparison
   double eye[3] = {x, y, z};
   std::vector<std::pair<double, int> > order(n);
   for(int i = 0; i < n; i++)
     order[i] = std::make_pair(alphaKey(&_vertices[3 * npe * i], npe, eye), i);
-  // on the key alone, as comparing the pairs would order those that fall in
-  // the same place by their index and give a different answer than before
+  // on the key alone, to keep the order of equal keys as before
   std::sort(order.begin(), order.end(),
             [](const std::pair<double, int> &a, const std::pair<double, int> &b) {
               return a.first < b.first;
@@ -523,20 +470,17 @@ void VertexArray::merge(VertexArray* va, const unsigned char *color)
   _statUniqueIn += va->_statUniqueIn;
   _statUniqueKept += va->_statUniqueKept;
   if(va->getNumVertices() != 0) {
-    _vertices.insert(_vertices.end(), va->firstVertex(), va->lastVertex());
-    _normals.insert(_normals.end(), va->firstNormal(), va->lastNormal());
+    _vertices.insert(_vertices.end(), va->_vertices.begin(),
+                     va->_vertices.end());
+    _normals.insert(_normals.end(), va->_normals.begin(), va->_normals.end());
     if(color) {
-      // the merged data is drawn in a single color: repeat it. Do not reserve
-      // the exact size here: reserve() allocates precisely what is asked for,
-      // so calling it once per merged array would reallocate and copy the whole
-      // array every time, which is quadratic in the number of entities
+      // the merged data is drawn in a single color: repeat it (no reserve()
+      // here, which would be quadratic over the merged arrays)
       for(int i = 0; i < va->getNumVertices(); i++)
         for(int j = 0; j < 4; j++) _colors.push_back(color[j]);
     }
     else
-      _colors.insert(_colors.end(), va->firstColor(), va->lastColor());
-    _elements.insert(_elements.end(), va->firstElementPointer(),
-                     va->lastElementPointer());
+      _colors.insert(_colors.end(), va->_colors.begin(), va->_colors.end());
   }
   _vboDirty = true;
 }

@@ -7,6 +7,7 @@
 
 #if defined(HAVE_MESH)
 
+#include <functional>
 #include "AnalyseMeshQuality.h"
 #include "OS.h"
 #include "Context.h"
@@ -24,36 +25,24 @@
 #include "BasisFactory.h"
 #endif
 
-StringXNumber CurvedMeshOptions_Number[] = {
-  {GMSH_FULLRC, "JacobianDeterminant", nullptr, 0, ""},
-  {GMSH_FULLRC, "IGEMeasure", nullptr, 0, ""},
-  {GMSH_FULLRC, "ICNMeasure", nullptr, 0, ""},
-  {GMSH_FULLRC, "HidingThreshold", nullptr, 99, ""},
-  {GMSH_FULLRC, "ThresholdGreater", nullptr, 1, ""},
-  {GMSH_FULLRC, "CreateView", nullptr, 0, ""},
-  {GMSH_FULLRC, "Recompute", nullptr, 0, ""},
-  {GMSH_FULLRC, "DimensionOfElements", nullptr, -1, ""}
+GMSH_AnalyseMeshQualityPlugin::GMSH_AnalyseMeshQualityPlugin()
+  : GMSH_PostPlugin({{GMSH_FULLRC, "JacobianDeterminant", nullptr, 0, ""},
+                     {GMSH_FULLRC, "IGEMeasure", nullptr, 0, ""},
+                     {GMSH_FULLRC, "ICNMeasure", nullptr, 0, ""},
+                     {GMSH_FULLRC, "HidingThreshold", nullptr, 99, ""},
+                     {GMSH_FULLRC, "ThresholdGreater", nullptr, 1, ""},
+                     {GMSH_FULLRC, "CreateView", nullptr, 0, ""},
+                     {GMSH_FULLRC, "Recompute", nullptr, 0, ""},
+                     {GMSH_FULLRC, "DimensionOfElements", nullptr, -1, ""}
 #if defined(HAVE_VISUDEV)
-  ,
-  {GMSH_FULLRC, "Element to draw quality", nullptr, 0}
+                     ,
+                     {GMSH_FULLRC, "Element to draw quality", nullptr, 0, ""}
 #endif
-};
-
-extern "C" {
-GMSH_Plugin *GMSH_RegisterAnalyseMeshQualityPlugin()
+    })
 {
-  return new GMSH_AnalyseMeshQualityPlugin();
-}
-}
-
-int GMSH_AnalyseMeshQualityPlugin::getNbOptions() const
-{
-  return sizeof(CurvedMeshOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_AnalyseMeshQualityPlugin::getOption(int iopt)
-{
-  return &CurvedMeshOptions_Number[iopt];
+  _m = nullptr;
+  _meshStamp = -1;
+  _clear();
 }
 
 std::string GMSH_AnalyseMeshQualityPlugin::getHelp() const
@@ -104,31 +93,39 @@ std::string GMSH_AnalyseMeshQualityPlugin::getHelp() const
 
 PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
 {
-  _m = GModel::current();
-  int computeJac = static_cast<int>(CurvedMeshOptions_Number[0].def);
-  int computeIGE = static_cast<int>(CurvedMeshOptions_Number[1].def);
-  int computeICN = static_cast<int>(CurvedMeshOptions_Number[2].def);
-  double threshold = CurvedMeshOptions_Number[3].def;
-  bool thresholdGreater = static_cast<bool>(CurvedMeshOptions_Number[4].def);
-  bool createView = static_cast<bool>(CurvedMeshOptions_Number[5].def);
-  bool recompute = static_cast<bool>(CurvedMeshOptions_Number[6].def);
-  int askedDim = static_cast<int>(CurvedMeshOptions_Number[7].def);
+  int computeJac = static_cast<int>(option(0));
+  int computeIGE = static_cast<int>(option(1));
+  int computeICN = static_cast<int>(option(2));
+  double threshold = option(3);
+  bool thresholdGreater = static_cast<bool>(option(4));
+  bool createView = static_cast<bool>(option(5));
+  bool recompute = static_cast<bool>(option(6));
+  int askedDim = static_cast<int>(option(7));
 
 #if defined(HAVE_VISUDEV)
   _pwJac = computeJac / 2;
   _pwIGE = computeIGE / 2;
   _pwICN = computeICN / 2;
 
-  _numElementToScan = static_cast<int>(CurvedMeshOptions_Number[8].def);
+  _numElementToScan = static_cast<int>(option(8));
   _viewOrder = 0;
   _dataPViewJac.clear();
   _dataPViewIGE.clear();
   _dataPViewICN.clear();
 #endif
 
-  if(askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
+  // the measures kept from a previous run point to elements that are gone if
+  // the mesh has changed since
+  if(recompute || _m != GModel::current() ||
+     _meshStamp != CTX::instance()->meshContentStamp)
+    _clear();
+  _m = GModel::current();
 
-  if(recompute) _clear(askedDim);
+  if(askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
+  if(askedDim < 1) {
+    Msg::Warning("No elements to analyse");
+    return v;
+  }
 
   // Compute what have to
   bool printStatJ = false;
@@ -169,8 +166,8 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
     }
   }
   if(printStatJ) _printStatJacobian();
-  if(printStatS) _printStatIGE();
-  if(printStatI) _printStatICN();
+  if(printStatS) _printStat("IGE", &data_elementMinMax::minS);
+  if(printStatI) _printStat("ICN", &data_elementMinMax::minI);
 
 #if defined(HAVE_VISUDEV)
   _createPViewPointwise();
@@ -178,57 +175,33 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
 
   // Create PView
   PView *view = nullptr;
+  // a view of a measure of the elements of dimension dim, if not already made
+  auto addView = [&](bool compute, bool &made, int dim, const char *name,
+                     const std::function<double(data_elementMinMax &)> &q) {
+    if(!compute || made) return;
+    made = true;
+    std::map<int, std::vector<double>> dataPV;
+    for(auto &d : _data)
+      if(d.element()->getDim() == dim)
+        dataPV[d.element()->getNum()].push_back(q(d));
+    if(dataPV.empty()) return;
+    std::stringstream n;
+    n << name << " " << dim << "D";
+    view = new PView(n.str().c_str(), "ElementData", _m, dataPV);
+  };
   if(createView) {
     for(int dim = 1; dim <= 3; ++dim) {
       if((askedDim == 4 && dim > 1) || dim == askedDim) {
-        if(!_pviewJac[dim - 1] && computeJac) {
-          _pviewJac[dim - 1] = true;
-          std::map<int, std::vector<double> > dataPV;
-          for(std::size_t i = 0; i < _data.size(); ++i) {
-            MElement *const el = _data[i].element();
-            if(el->getDim() == dim) {
-              double q = 0;
-              if(_data[i].maxJ() > 0)
-                q = _data[i].minJ() / _data[i].maxJ();
-              else if(_data[i].maxJ() < 0)
-                q = _data[i].maxJ() / _data[i].minJ();
-              dataPV[el->getNum()].push_back(q);
-            }
-          }
-          if(dataPV.size()) {
-            std::stringstream name;
-            name << "minJ/maxJ " << dim << "D";
-            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
-          }
-        }
-        if(!_pviewIGE[dim - 1] && computeIGE) {
-          _pviewIGE[dim - 1] = true;
-          std::map<int, std::vector<double> > dataPV;
-          for(std::size_t i = 0; i < _data.size(); ++i) {
-            MElement *const el = _data[i].element();
-            if(el->getDim() == dim)
-              dataPV[el->getNum()].push_back(_data[i].minS());
-          }
-          if(dataPV.size()) {
-            std::stringstream name;
-            name << "IGE " << dim << "D";
-            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
-          }
-        }
-        if(!_pviewICN[dim - 1] && computeICN) {
-          _pviewICN[dim - 1] = true;
-          std::map<int, std::vector<double> > dataPV;
-          for(std::size_t i = 0; i < _data.size(); ++i) {
-            MElement *const el = _data[i].element();
-            if(el->getDim() == dim)
-              dataPV[el->getNum()].push_back(_data[i].minI());
-          }
-          if(dataPV.size()) {
-            std::stringstream name;
-            name << "ICN " << dim << "D";
-            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
-          }
-        }
+        addView(computeJac, _pviewJac[dim - 1], dim, "minJ/maxJ",
+                [](data_elementMinMax &d) {
+                  if(d.maxJ() > 0) return d.minJ() / d.maxJ();
+                  if(d.maxJ() < 0) return d.maxJ() / d.minJ();
+                  return 0.;
+                });
+        addView(computeIGE, _pviewIGE[dim - 1], dim, "IGE",
+                [](data_elementMinMax &d) { return d.minS(); });
+        addView(computeICN, _pviewICN[dim - 1], dim, "ICN",
+                [](data_elementMinMax &d) { return d.minI(); });
       }
     }
   }
@@ -237,12 +210,13 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
   int whichMeasure = computeICN ? 2 : computeIGE ? 1 : computeJac ? 0 : -1;
   if(threshold < 99 && whichMeasure >= 0) {
     _hideWithThreshold(askedDim, whichMeasure, threshold, thresholdGreater);
-    CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->meshChanged();
 #if defined(HAVE_OPENGL)
     drawContext::global()->draw();
 #endif
   }
 
+  _meshStamp = CTX::instance()->meshContentStamp;
   return view;
 }
 
@@ -441,64 +415,31 @@ void GMSH_AnalyseMeshQualityPlugin::_printStatJacobian()
             avgratJ, supratJ);
 }
 
-void GMSH_AnalyseMeshQualityPlugin::_printStatIGE()
+void GMSH_AnalyseMeshQualityPlugin::_printStat(
+  const char *name, double (data_elementMinMax::*measure)())
 {
   if(_data.empty()) {
     Msg::Info("No stat to print");
     return;
   }
-  double infminS, supminS, avgminS;
-  infminS = supminS = avgminS = _data[0].minS();
-
-  for(std::size_t i = 1; i < _data.size(); ++i) {
-    infminS = std::min(infminS, _data[i].minS());
-    supminS = std::max(supminS, _data[i].minS());
-    avgminS += _data[i].minS();
+  double inf = (_data[0].*measure)(), sup = inf, avg = 0.;
+  for(auto &d : _data) {
+    double m = (d.*measure)();
+    inf = std::min(inf, m);
+    sup = std::max(sup, m);
+    avg += m;
   }
-  avgminS /= _data.size();
-
-  Msg::Info("IGE       = %8.3g, %8.3g, %8.3g (worst, avg, best)", infminS,
-            avgminS, supminS);
+  avg /= _data.size();
+  Msg::Info("%-9s = %8.3g, %8.3g, %8.3g (worst, avg, best)", name, inf, avg,
+            sup);
 }
 
-void GMSH_AnalyseMeshQualityPlugin::_printStatICN()
-{
-  if(_data.empty()) {
-    Msg::Info("No stat to print");
-    return;
-  }
-  double infminI, supminI, avgminI;
-  infminI = supminI = avgminI = _data[0].minI();
-
-  for(std::size_t i = 1; i < _data.size(); ++i) {
-    infminI = std::min(infminI, _data[i].minI());
-    supminI = std::max(supminI, _data[i].minI());
-    avgminI += _data[i].minI();
-  }
-  avgminI /= _data.size();
-
-  Msg::Info("ICN       = %8.3g, %8.3g, %8.3g (worst, avg, best)", infminI,
-            avgminI, supminI);
-}
-
-void GMSH_AnalyseMeshQualityPlugin::_clear(int askedDim)
+void GMSH_AnalyseMeshQualityPlugin::_clear()
 {
   _data.clear();
-  if(askedDim < 4) {
-    _computedJac[askedDim - 1] = false;
-    _computedIGE[askedDim - 1] = false;
-    _computedICN[askedDim - 1] = false;
-    _pviewJac[askedDim - 1] = false;
-    _pviewIGE[askedDim - 1] = false;
-    _pviewICN[askedDim - 1] = false;
-  }
-  else {
-    _computedJac[1] = _computedJac[2] = false;
-    _computedIGE[1] = _computedIGE[2] = false;
-    _computedICN[1] = _computedICN[2] = false;
-    _pviewJac[1] = _pviewJac[2] = false;
-    _pviewIGE[1] = _pviewIGE[2] = false;
-    _pviewICN[1] = _pviewICN[2] = false;
+  for(int i = 0; i < 3; ++i) {
+    _computedJac[i] = _computedIGE[i] = _computedICN[i] = false;
+    _pviewJac[i] = _pviewIGE[i] = _pviewICN[i] = false;
   }
 }
 
