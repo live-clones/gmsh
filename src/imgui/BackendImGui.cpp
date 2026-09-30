@@ -764,6 +764,7 @@ void mainWindow::_drawPanels(int &sceneX, int &sceneY, int &sceneW, int &sceneH)
   imguiDrawMenuBar();
   imguiDrawTree();
   imguiDrawForms();
+  imguiScenePanels();
   _drawStatusBar();
 }
 
@@ -1077,6 +1078,128 @@ void mainWindow::wake()
 }
 
 
+// the buttons of the bar, the message one presses to show the messages and
+// the progress: in the menu bar along the bottom of the main window, or on a
+// line of a graphic window of its own
+void _drawBar(bool menuBar)
+{
+  std::vector<Ui::BarButton> bar = imguiSources().barButtons();
+  for(std::size_t i = 0; i < bar.size(); i++) {
+    const Ui::BarButton &b = bar[i];
+    if(!menuBar && i) ImGui::SameLine(0.f, b.gapBefore ? ImGui::GetFontSize() : 2.f);
+    else if(b.gapBefore) ImGui::Separator();
+    bool enabled = b.enabled ? b.enabled() : true;
+    ImGui::BeginDisabled(!enabled);
+    bool on = b.on && b.on();
+    std::string label = (on && b.labelOn.size()) ? b.labelOn : b.label;
+    int painted = 0;
+    if(b.alert && b.alert()) {
+      ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.62f, .13f, .13f, 1.f));
+      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.98f, .94f, .94f, 1.f));
+      painted = 2;
+    }
+    else if(on && b.onColour) {
+      Ui::Colour c = b.onColour();
+      ImGui::PushStyleColor(ImGuiCol_Button,
+                            ImVec4(c.r / 255.f, c.g / 255.f, c.b / 255.f,
+                                   1.f));
+      painted = 1;
+    }
+    std::string glyph = (on && b.glyphOn.size()) ? b.glyphOn : b.glyph;
+    bool pictured = Ui::glyph(glyph) != nullptr;
+    ImU32 ink = ImGui::GetColorU32(ImGuiCol_Text);
+    ImGui::PushID((int)i);
+    if(b.menu && menuBar) {
+      // the picture over a name of blanks as wide as it
+      if(ImGui::BeginMenu(pictured ? "   ##m" : label.c_str(), enabled)) {
+        static std::vector<Ui::MenuItem> menu;
+        menu = b.menu();
+        imguiMenu(menu);
+        ImGui::EndMenu();
+      }
+      if(pictured)
+        imguiGlyph(glyph, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+                   ink);
+    }
+    else if(b.menu) {
+      // out of a menu bar, a button that drops it
+      float side = ImGui::GetFrameHeight();
+      bool open = pictured ? ImGui::Button("##g", ImVec2(side, side)) :
+                             ImGui::Button(label.c_str());
+      if(pictured)
+        imguiGlyph(glyph, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+                   ink);
+      if(open) ImGui::OpenPopup("##m");
+      if(ImGui::BeginPopup("##m")) {
+        static std::vector<Ui::MenuItem> menu;
+        menu = b.menu();
+        imguiMenu(menu);
+        ImGui::EndPopup();
+      }
+    }
+    else {
+      float side = ImGui::GetFrameHeight();
+      bool pressed = pictured ? ImGui::Button("##g", ImVec2(side, side)) :
+                                ImGui::Button(label.c_str());
+      if(pictured)
+        imguiGlyph(glyph, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+                   ink);
+      if(pressed) {
+        std::function<void(bool, bool)> what = b.action;
+        bool reverse = ImGui::GetIO().KeyShift;
+        bool sync = ImGui::GetIO().KeyCtrl;
+        if(what)
+          imguiLater([what, reverse, sync]() { what(reverse, sync); });
+      }
+    }
+    ImGui::PopID();
+    if(painted) ImGui::PopStyleColor(painted);
+    ImGui::EndDisabled();
+    if(b.tooltip.size() &&
+       ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal |
+                            ImGuiHoveredFlags_AllowWhenDisabled))
+      ImGui::SetTooltip("%s", b.tooltip.c_str());
+  }
+
+  if(menuBar)
+    ImGui::Separator();
+  else
+    ImGui::SameLine(0.f, ImGui::GetFontSize());
+
+  // --- the message and the progress; clicking the whole strip shows or hides the console
+  Ui::BarMessage m = imguiSources().barMessage();
+  ImVec2 textPos = ImGui::GetCursorScreenPos();
+  float avail = ImGui::GetContentRegionAvail().x;
+  if(m.running) avail -= 15.f * ImGui::GetFontSize();
+  if(avail < 1.f) avail = 1.f;
+  if(ImGui::InvisibleButton("##statusMessage",
+                            ImVec2(avail, ImGui::GetFrameHeight())) &&
+     imguiSources().barPressed)
+    imguiLater(imguiSources().barPressed);
+  if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    ImGui::SetTooltip("%s", imguiSources().barTooltip().c_str());
+  ImGui::SetCursorScreenPos(textPos);
+
+  if(m.weight == Ui::MessageError)
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.90f, 0.30f, 0.30f, 1.f));
+  else if(m.weight == Ui::MessageWarning)
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.95f, 0.75f, 0.25f, 1.f));
+  else
+    ImGui::PushStyleColor(ImGuiCol_Text,
+                          ImGui::GetStyleColorVec4(ImGuiCol_Text));
+  ImGui::AlignTextToFramePadding();
+  ImGui::TextUnformatted(m.text.c_str());
+  ImGui::PopStyleColor();
+
+  if(m.running) {
+    float w = 15.f * ImGui::GetFontSize();
+    ImGui::SameLine(ImGui::GetWindowWidth() - w -
+                    ImGui::GetStyle().ItemSpacing.x);
+    ImGui::ProgressBar((float)m.fraction, ImVec2(w, 0.f),
+                       m.progressText.c_str());
+  }
+}
+
 void mainWindow::_drawStatusBar()
 {
   const ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -1089,101 +1212,7 @@ void mainWindow::_drawStatusBar()
   if(ImGui::BeginViewportSideBar("##gmshStatusBar", (ImGuiViewport *)viewport,
                                  ImGuiDir_Down, height, flags)) {
     if(ImGui::BeginMenuBar()) {
-      static std::vector<Ui::BarButton> bar;
-      bar = imguiSources().barButtons();
-      for(std::size_t i = 0; i < bar.size(); i++) {
-        const Ui::BarButton &b = bar[i];
-        if(b.gapBefore) ImGui::Separator();
-        bool enabled = b.enabled ? b.enabled() : true;
-        ImGui::BeginDisabled(!enabled);
-        bool on = b.on && b.on();
-        std::string label = (on && b.labelOn.size()) ? b.labelOn : b.label;
-        int painted = 0;
-        if(b.alert && b.alert()) {
-          ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.62f, .13f, .13f, 1.f));
-          ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.98f, .94f, .94f, 1.f));
-          painted = 2;
-        }
-        else if(on && b.onColour) {
-          Ui::Colour c = b.onColour();
-          ImGui::PushStyleColor(ImGuiCol_Button,
-                                ImVec4(c.r / 255.f, c.g / 255.f, c.b / 255.f,
-                                       1.f));
-          painted = 1;
-        }
-        std::string glyph = (on && b.glyphOn.size()) ? b.glyphOn : b.glyph;
-        bool pictured = Ui::glyph(glyph) != nullptr;
-        ImU32 ink = ImGui::GetColorU32(ImGuiCol_Text);
-        ImGui::PushID((int)i);
-        if(b.menu) {
-          // the picture over a name of blanks as wide as it
-          if(ImGui::BeginMenu(pictured ? "   ##m" : label.c_str(), enabled)) {
-            static std::vector<Ui::MenuItem> menu;
-            menu = b.menu();
-            imguiMenu(menu);
-            ImGui::EndMenu();
-          }
-          if(pictured)
-            imguiGlyph(glyph, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
-                       ink);
-        }
-        else {
-          float side = ImGui::GetFrameHeight();
-          bool pressed = pictured ? ImGui::Button("##g", ImVec2(side, side)) :
-                                    ImGui::Button(label.c_str());
-          if(pictured)
-            imguiGlyph(glyph, ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
-                       ink);
-          if(pressed) {
-            std::function<void(bool, bool)> what = b.action;
-            bool reverse = ImGui::GetIO().KeyShift;
-            bool sync = ImGui::GetIO().KeyCtrl;
-            if(what)
-              postAction([what, reverse, sync]() { what(reverse, sync); });
-          }
-        }
-        ImGui::PopID();
-        if(painted) ImGui::PopStyleColor(painted);
-        ImGui::EndDisabled();
-        if(b.tooltip.size() &&
-           ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal |
-                                ImGuiHoveredFlags_AllowWhenDisabled))
-          ImGui::SetTooltip("%s", b.tooltip.c_str());
-      }
-
-      ImGui::Separator();
-
-      // --- the message and the progress; clicking the whole strip shows or hides the console
-      Ui::BarMessage m = imguiSources().barMessage();
-      ImVec2 textPos = ImGui::GetCursorScreenPos();
-      float avail = ImGui::GetContentRegionAvail().x;
-      if(m.running) avail -= 200.f * _styleScale;
-      if(avail < 1.f) avail = 1.f;
-      if(ImGui::InvisibleButton("##statusMessage",
-                                ImVec2(avail, ImGui::GetFrameHeight())))
-        postAction(imguiSources().barPressed);
-      if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-        ImGui::SetTooltip("%s", imguiSources().barTooltip().c_str());
-      ImGui::SetCursorScreenPos(textPos);
-
-      if(m.weight == Ui::MessageError)
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.90f, 0.30f, 0.30f, 1.f));
-      else if(m.weight == Ui::MessageWarning)
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.95f, 0.75f, 0.25f, 1.f));
-      else
-        ImGui::PushStyleColor(ImGuiCol_Text,
-                              ImGui::GetStyleColorVec4(ImGuiCol_Text));
-      ImGui::AlignTextToFramePadding();
-      ImGui::TextUnformatted(m.text.c_str());
-      ImGui::PopStyleColor();
-
-      if(m.running) {
-        float w = 200.f * _styleScale;
-        ImGui::SameLine(ImGui::GetWindowWidth() - w -
-                        ImGui::GetStyle().ItemSpacing.x);
-        ImGui::ProgressBar((float)m.fraction, ImVec2(w, 0.f),
-                           m.progressText.c_str());
-      }
+      imguiDrawBar(true);
       ImGui::EndMenuBar();
     }
   }
@@ -1669,6 +1698,8 @@ void imguiReport(int level, const char *format, ...)
   va_end(args);
   say(text);
 }
+
+void imguiDrawBar(bool menuBar) { _drawBar(menuBar); }
 
 void imguiLater(const std::function<void()> &what)
 {

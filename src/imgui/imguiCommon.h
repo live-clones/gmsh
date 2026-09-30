@@ -63,6 +63,9 @@ ImFont *imguiFixedFont();
 // --- menus: an entry runs its action with imguiLater()
 void imguiMenu(const std::vector<Ui::MenuItem> &items);
 void imguiDrawMenuBar();
+// the bar: in the menu bar along the bottom of the main window, or on a line
+// of a graphic window of its own
+void imguiDrawBar(bool menuBar);
 
 // --- a picture of Glyph.h drawn over the box lo..hi, in the middle of it;
 // false for a name no glyph has
@@ -172,6 +175,9 @@ void imguiSceneDraw();
 // the graphic windows of their own
 void imguiSceneWindows();
 void imguiSceneRedraw();
+// the graphic windows of their own that are panels, with their bar: drawn
+// with the panels of the main window, before imguiScenePointer()
+void imguiScenePanels();
 void imguiSceneNewWindow();
 
 #endif

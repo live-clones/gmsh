@@ -5,19 +5,23 @@
 
 // the scene of the Dear ImGui interface, see GuiPanes.h: the views tiled in
 // the central node of the dock space, each drawn into a framebuffer of its
-// own and put on the window as a texture; a new graphic window a GLFW window
-// of its own, sharing the context of the main one, with no Dear ImGui in it --
-// which is what works on Wayland, where Dear ImGui cannot place a viewport
+// own and put on the window as a texture. A new graphic window is a panel of
+// Dear ImGui, a window of its own, holding its views, tiled as those of the
+// main window, and the bar; under Wayland, where Dear ImGui cannot place a
+// window, a GLFW window of its own, sharing the context of the main one, with
+// no Dear ImGui in it, and no bar
 
 #include "GmshConfig.h"
 
 #include <algorithm>
+#include <map>
 #include <cfloat>
 #include <cstdio>
 #include <string>
 #include <vector>
 
 #include "imgui.h"
+#include "imgui_internal.h" // ImGuiWindowClass
 #include <GLFW/glfw3.h>
 
 #include "imguiCommon.h"
@@ -46,8 +50,10 @@ namespace {
     // where it is in the main window, in its logical pixels from the top left;
     // nothing while another fills the window
     int x = 0, y = 0, w = 0, h = 0;
-    // the window of a graphic window of its own
+    // the window of a graphic window of its own, under Wayland
     GLFWwindow *glfw = nullptr;
+    // the panel of a graphic window of its own, elsewhere; 0 the main window
+    int panel = 0;
   };
 
   // how the tiled panes share the room
@@ -60,6 +66,11 @@ namespace {
 
   GLFWwindow *_main = nullptr;
   node *_root = nullptr;
+  // how the views of each panel of its own share it, by its number
+  std::map<int, node *> _panels;
+  int _lastPanel = 0;
+  // the panel the pointer is over or holds, this frame
+  int _panelPointer = 0;
   // the pane a button went down in has the pointer until they are all up;
   // the one it was over last forgets it when it leaves
   pane *_grab = nullptr, *_over = nullptr;
@@ -76,6 +87,8 @@ namespace {
     if(node *m = _nodeOf(n->child[0], p)) return m;
     return _nodeOf(n->child[1], p);
   }
+
+  node *&_rootOf(pane *p) { return p->panel ? _panels[p->panel] : _root; }
 
   void _deleteNodes(node *n)
   {
@@ -453,7 +466,9 @@ namespace {
     t.drawNow = [](GuiPanes::Pane *p) { _drawNow(_pane(p)); };
     t.split = [](GuiPanes::Pane *was, GuiPanes::Pane *fresh, char how,
                  double ratio) {
-      node *n = _nodeOf(_root, _pane(was));
+      // in the panel of the view it is split from
+      _pane(fresh)->panel = _pane(was)->panel;
+      node *n = _nodeOf(_rootOf(_pane(was)), _pane(was));
       if(!n) return;
       n->child[0] = new node;
       n->child[0]->leaf = n->leaf;
@@ -466,12 +481,22 @@ namespace {
     t.unsplit = [](GuiPanes::Pane *keep,
                    const std::vector<GuiPanes::Pane *> &gone) {
       for(GuiPanes::Pane *p : gone) _destroy(_pane(p));
-      _deleteNodes(_root);
-      _root = new node;
-      _root->leaf = _pane(keep);
+      node *&root = _rootOf(_pane(keep));
+      _deleteNodes(root);
+      root = new node;
+      root->leaf = _pane(keep);
+      imguiRequestFrame();
     };
     t.newWindow = [](GuiPanes::Pane *fresh) {
       pane *p = _pane(fresh);
+      // a panel where Dear ImGui can make it a window of its own
+      if(glfwGetPlatform() != GLFW_PLATFORM_WAYLAND) {
+        p->panel = ++_lastPanel;
+        _panels[p->panel] = new node;
+        _panels[p->panel]->leaf = p;
+        imguiRequestFrame();
+        return;
+      }
       // sharing the context: the same textures, the atlas in particular
       glfwDefaultWindowHints();
       p->glfw = glfwCreateWindow(600, 500, "Gmsh", nullptr, _main);
@@ -495,6 +520,8 @@ namespace {
       p->view->contextChanged();
       glfwMakeContextCurrent(_main);
     };
+    // the views of a panel split; a GLFW window holds one
+    t.splitsWindows = glfwGetPlatform() != GLFW_PLATFORM_WAYLAND;
     t.cursor = [](bool picking) { _picking = picking; };
     t.clipboard = [](int, int, const std::vector<unsigned char> &) {
       // GLFW carries text, not pictures
@@ -529,9 +556,40 @@ namespace {
   {
     std::vector<pane *> shown;
     for(GuiPanes::Pane *p : _all().panes())
-      if(!p->window && _pane(p)->w > 0 && _pane(p)->h > 0)
+      if(!_pane(p)->panel && !_pane(p)->glfw && _pane(p)->w > 0 &&
+         _pane(p)->h > 0)
         shown.push_back(_pane(p));
     return shown;
+  }
+
+  // and those of the panels, drawn into their framebuffers as well
+  std::vector<pane *> _drawn()
+  {
+    std::vector<pane *> drawn = _shown();
+    for(GuiPanes::Pane *p : _all().panes())
+      if(_pane(p)->panel && _pane(p)->w > 0 && _pane(p)->h > 0)
+        drawn.push_back(_pane(p));
+    return drawn;
+  }
+
+  // the texture of each view of a node, where it is laid out
+  void _image(node *n)
+  {
+    if(!n) return;
+    if(!n->leaf) {
+      _image(n->child[0]);
+      _image(n->child[1]);
+      return;
+    }
+    pane *p = n->leaf;
+    if(!p->t.colour || p->w < 1 || p->h < 1) return;
+    const ImGuiViewport *main = ImGui::GetMainViewport();
+    ImVec2 lo(main->Pos.x + p->x, main->Pos.y + p->y);
+    ImVec2 hi(lo.x + p->w, lo.y + p->h);
+    // the framebuffer is upside down
+    ImGui::GetWindowDrawList()->AddImage(
+      (ImTextureID)(intptr_t)p->t.colour, lo, hi, ImVec2(0.f, 1.f),
+      ImVec2(1.f, 0.f));
   }
 
 } // namespace
@@ -551,6 +609,8 @@ void imguiSceneStop()
   for(GuiPanes::Pane *p : panes) _destroy(_pane(p));
   _deleteNodes(_root);
   _root = nullptr;
+  for(auto &it : _panels) _deleteNodes(it.second);
+  _panels.clear();
   _grab = _over = nullptr;
   _main = nullptr;
 }
@@ -566,7 +626,7 @@ void imguiScenePlace(int x, int y, int w, int h, bool fullscreen)
   GuiPanes::Pane *current = _all().current();
   pane *alone = (current && !current->window) ? _pane(current) : nullptr;
   for(GuiPanes::Pane *p : _all().panes())
-    if(!p->window) {
+    if(!p->window && !_pane(p)->panel) {
       if(!alone) alone = _pane(p);
       _pane(p)->w = _pane(p)->h = 0;
     }
@@ -586,10 +646,15 @@ void imguiScenePointer(bool outside)
   bool nowhere = io.MousePos.x == -FLT_MAX || io.MousePos.y == -FLT_MAX;
   double mx = io.MousePos.x - vp->Pos.x, my = io.MousePos.y - vp->Pos.y;
   pane *at = nullptr;
-  if(!outside && !nowhere)
-    for(pane *p : _shown())
-      if(mx >= p->x && mx < p->x + p->w && my >= p->y && my < p->y + p->h)
+  // a view of the main window where Dear ImGui does not want the pointer; one
+  // of a panel where its views are
+  if(!nowhere)
+    for(pane *p : _drawn()) {
+      bool reached = p->panel ? p->panel == _panelPointer : !outside;
+      if(reached && mx >= p->x && mx < p->x + p->w && my >= p->y &&
+         my < p->y + p->h)
         at = p;
+    }
   bool entered = false;
   if(!_grab && at != _over) {
     if(_over) _over->left();
@@ -626,14 +691,13 @@ void imguiSceneDraw()
   // drawn again when asked for, or when the view changed size; put back
   // otherwise
   double f = _drawnFactor();
-  std::vector<pane *> shown = _shown();
-  for(pane *p : shown)
+  for(pane *p : _drawn())
     if(p->wanted || p->t.w != (int)(p->w * f + 0.5) ||
        p->t.h != (int)(p->h * f + 0.5))
       _drawNow(p);
   glfwMakeContextCurrent(_main);
   _unbind();
-  for(pane *p : shown) _show(p);
+  for(pane *p : _shown()) _show(p);
 }
 
 void imguiSceneWindows()
@@ -651,6 +715,67 @@ void imguiSceneWindows()
     _drawNow(q);
   }
   glfwMakeContextCurrent(_main);
+}
+
+void imguiScenePanels()
+{
+  _panelPointer = 0;
+  std::vector<int> closed;
+  for(auto &it : _panels) {
+    int id = it.first;
+    char title[96];
+    snprintf(title, sizeof(title), "Gmsh - Graphic window %d###gmshScene%d",
+             id + 1, id);
+    // always a window of its own, not merged into the main one
+    ImGuiWindowClass own;
+    own.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoAutoMerge;
+    ImGui::SetNextWindowClass(&own);
+    ImGui::SetNextWindowSize(ImVec2(600.f, 500.f), ImGuiCond_FirstUseEver);
+    bool open = true;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
+    bool shown = ImGui::Begin(title, &open,
+                              ImGuiWindowFlags_NoDocking |
+                                ImGuiWindowFlags_NoScrollbar |
+                                ImGuiWindowFlags_NoScrollWithMouse |
+                                ImGuiWindowFlags_NoSavedSettings);
+    ImGui::PopStyleVar();
+    if(!open) closed.push_back(id);
+    if(shown) {
+      // the views over the bar
+      const ImGuiViewport *main = ImGui::GetMainViewport();
+      ImVec2 at = ImGui::GetCursorScreenPos();
+      ImVec2 room = ImGui::GetContentRegionAvail();
+      float bar = ImGui::GetFrameHeightWithSpacing() +
+                  ImGui::GetStyle().WindowPadding.y;
+      int w = (int)room.x, h = (int)std::max(1.f, room.y - bar);
+      _layout(it.second, (int)(at.x - main->Pos.x), (int)(at.y - main->Pos.y),
+              w, h);
+      _image(it.second);
+      // what the pointer does over them is theirs, not a drag of the window
+      ImGui::InvisibleButton("##views", ImVec2((float)w, (float)h),
+                             ImGuiButtonFlags_MouseButtonLeft |
+                               ImGuiButtonFlags_MouseButtonRight |
+                               ImGuiButtonFlags_MouseButtonMiddle);
+      if(ImGui::IsItemHovered() || ImGui::IsItemActive()) _panelPointer = id;
+      ImGui::SetCursorScreenPos(ImVec2(at.x + ImGui::GetStyle().ItemSpacing.x,
+                                       at.y + h + 2.f));
+      imguiDrawBar(false);
+    }
+    else
+      _layout(it.second, 0, 0, 0, 0);
+    ImGui::End();
+  }
+  // closed: its views go with it
+  for(int id : closed) {
+    std::vector<GuiPanes::Pane *> all = _all().panes();
+    for(GuiPanes::Pane *p : all)
+      if(_pane(p)->panel == id) {
+        _all().dropped(p);
+        _destroy(_pane(p));
+      }
+    _deleteNodes(_panels[id]);
+    _panels.erase(id);
+  }
 }
 
 void imguiSceneRedraw() { _all().redrawAll(); }
