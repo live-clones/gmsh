@@ -33,8 +33,6 @@ cd "$HERE/build"
 # WebGL 2 (OpenGL ES 3.0), whose entry points glApi looks up by name
 LINK="-sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2"
 LINK="$LINK -sGL_ENABLE_GET_PROC_ADDRESS=1"
-# the page initializes Gmsh itself (see viewer.html), main() is not run
-LINK="$LINK -sINVOKE_RUN=0"
 # C++ exceptions caught (Gmsh reports errors through them), with the native
 # exception handling of WebAssembly
 EXC="-fwasm-exceptions"
@@ -43,4 +41,6 @@ emcmake cmake "$SRC" -DCMAKE_BUILD_TYPE=Release \
   -DENABLE_FLTK=0 -DENABLE_GRAPHICS=1 -DENABLE_OCC=0 -DENABLE_OPENMP=0 \
   -DENABLE_BUILD_DYNAMIC=0 -DENABLE_FFMPEG=0 \
   -DCMAKE_EXE_LINKER_FLAGS="$EXC $LINK -Wl,--error-limit=0" "$@"
-emmake make -j"$(sysctl -n hw.ncpu 2>/dev/null || nproc)" gmsh
+# the library and its JavaScript API (the gmsh target is the program,
+# build/gmsh.js)
+emmake make -j"$(sysctl -n hw.ncpu 2>/dev/null || nproc)" libgmsh

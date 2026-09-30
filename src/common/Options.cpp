@@ -7304,6 +7304,18 @@ double opt_mesh_ignore_parametrization(OPT_ARGS_NUM)
   return CTX::instance()->mesh.ignoreParametrizationMsh4;
 }
 
+double opt_mesh_ignore_edges(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.ignoreEdges = (int)val;
+  return CTX::instance()->mesh.ignoreEdges;
+}
+
+double opt_mesh_ignore_faces(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.ignoreFaces = (int)val;
+  return CTX::instance()->mesh.ignoreFaces;
+}
+
 double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.quadqsSizemapMethod = (int)val;

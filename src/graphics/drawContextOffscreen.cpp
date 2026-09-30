@@ -16,7 +16,8 @@
 
 drawContextOffscreen::drawContextOffscreen()
   : _ctx(nullptr), _strings(nullptr), _fontId(-1), _fontSize(12), _width(0),
-    _height(0), _scale(1.), _screen(false), _previous(nullptr)
+    _height(0), _scale(1.), _screen(false), _viewFromOptions(false),
+    _previous(nullptr)
 {
   _strings = new stbStrings;
   for(int i = 0; i < 16; i++) _frameView[i] = (i % 5) ? 0. : 1.;
@@ -55,10 +56,13 @@ bool drawContextOffscreen::begin(int width, int height, double scale,
   _height = height;
   _scale = scale;
   _screen = screen;
-  // the view of the options (a window takes it from them when it is made)
-  if(!screen || !_ctx) {
+  // the view of the options (a window takes it from them when it is made);
+  // with the context current, as what the previous view holds (images) goes
+  // with it
+  if(!screen || !_ctx || _viewFromOptions) {
     delete _ctx;
     _ctx = new drawContext();
+    _viewFromOptions = false;
   }
   glImmediate::pixelScale(scale);
   _previous = drawContext::global();

@@ -23,7 +23,7 @@ private:
   int _width, _height;
   double _scale;
   double _frameView[16];
-  bool _screen;
+  bool _screen, _viewFromOptions;
   drawContextGlobal *_previous;
 
 public:
@@ -44,6 +44,10 @@ public:
   // on the screen, add the next frames of the studio shading to the average
   // shown, for about budget seconds; true while there are more to add
   bool drawStudioFrames(double budget);
+  // on the screen, take the view from the options again at the next begin()
+  // (General.RotationX, General.TrackballQuaternion0, ...), as a window does
+  // when it is made
+  void resetView() { _viewFromOptions = true; }
   drawContext *getDrawContext() { return _ctx; }
   int getFontSize();
   void setFont(int fontid, int fontsize);

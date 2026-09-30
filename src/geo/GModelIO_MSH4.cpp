@@ -2082,18 +2082,34 @@ static bool readMSH4OverlapInterfaceBoundaries(GModel *const model, FILE *fp,
   return true;
 }
 
-static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
+// skip n bytes of binary data (by steps that fit in the long of fseek)
+static bool skipMSH4Bytes(FILE *fp, std::size_t n)
+{
+  const std::size_t step = 1 << 30;
+  for(; n > step; n -= step)
+    if(fseek(fp, (long)step, SEEK_CUR)) return false;
+  return !fseek(fp, (long)n, SEEK_CUR);
+}
+
+static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary,
+                          bool swap)
 {
   std::vector<std::size_t> header;
-  if(!readMSH4SizeTs(fp, binary, false, 1, header)) return false;
+  if(!readMSH4SizeTs(fp, binary, swap, 1, header)) return false;
   std::size_t numEdges = header[0];
+
+  // (ASCII data is skipped with the rest of the section)
+  if(CTX::instance()->mesh.ignoreEdges) {
+    Msg::Info("Skipping %zu edge%s", numEdges, numEdges > 1 ? "s" : "");
+    return !binary || skipMSH4Bytes(fp, 3 * numEdges * sizeof(std::size_t));
+  }
 
   Msg::Info("%zu edge%s", numEdges, numEdges > 1 ? "s" : "");
   Msg::StartProgressMeter(numEdges);
 
   // each edge is its tag followed by its 2 node tags
   std::vector<std::size_t> data;
-  if(!readMSH4SizeTs(fp, binary, false, 3 * numEdges, data)) return false;
+  if(!readMSH4SizeTs(fp, binary, swap, 3 * numEdges, data)) return false;
   model->reserveMEdges(numEdges);
   for(std::size_t k = 0; k < numEdges; k++) {
     const std::size_t *edgeData = &data[3 * k];
@@ -2137,6 +2153,21 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
     return true;
   };
   if(numBlocks > numFaces || (!numBlocks && numFaces)) return invalid();
+
+  // (ASCII data is skipped with the rest of the section)
+  if(CTX::instance()->mesh.ignoreFaces) {
+    Msg::Info("Skipping %zu face%s", numFaces, numFaces > 1 ? "s" : "");
+    if(!binary) return true;
+    for(std::size_t block = 0; block < numBlocks; block++) {
+      if(version < 4.2)
+        header = {blocks41[2 * block], blocks41[2 * block + 1]};
+      else if(!readMSH4SizeTs(fp, binary, swap, 2, header))
+        return false;
+      if(!skipMSH4Bytes(fp, (header[0] + 1) * header[1] * sizeof(std::size_t)))
+        return false;
+    }
+    return true;
+  }
 
   // faces are added to the model once the whole section is read, and records
   // are read by chunks so that an invalid count is not allocated
@@ -2428,7 +2459,7 @@ int GModel::_readMSH4(const std::string &name)
       delete[] elementsRead;
     }
     else if(!strncmp(&str[1], "Edges", 5)) {
-      bool ok = readMSH4Edges(this, fp, binary);
+      bool ok = readMSH4Edges(this, fp, binary, swap);
       Msg::StopProgressMeter();
       if(!ok) {
         Msg::Error("Could not read edges");

@@ -1,35 +1,56 @@
-5.0.0 (Work-in-progress): improved performance of default 2D and 3D meshing
-algorithms; improved graphics performance and entity selection; new shader
-rendering pipeline with order-independent transparency and studio shading; new
-capping visualization mode in clipping tool; new interactive model query and
-measurement; improved colorbars and 2D plots; new headless image and movie
-export (replaces deprecated OSMesa); new faster homology solver; improved
-performance of mesh partitioning pipeline and added support for partition
-overlaps; new ability to save only the local partitioned Brep; improved
-performance of high-order element generation; new MSH4.2 revision of the MSH
-file format with support for embedded entities in $Entities and
-$PartitionedEntities, efficient blocked $NodeData, $ElementData,
+5.0.0 (Work-in-progress): improved performance of default meshing algorithms;
+improved graphics performance and entity selection; new shader rendering
+pipeline with order-independent transparency and studio shading; new capping
+visualization mode in clipping tool; new interactive model query and
+measurement; improved colorbars and 2D plots; new symmetric log scale; new
+built-in fonts are used by default (removed ZapfDingbats); new headless image
+and movie export (replaces deprecated OSMesa); export MP4 movies with FFmpeg;
+new experimental JavaScript API and WebGL viewer; new faster homology solver
+(with periodicity connection handling); improved performance of mesh
+partitioning pipeline and added support for partition overlaps; new ability to
+save only the local partitioned Brep; improved performance of high-order element
+generation and adaptive view visualization (with target error relative to
+range); Thread-safe MathEval/MathEvalAniso/Param mesh size fields; new MSH4.2
+revision of the MSH file format with support for embedded entities in $Entities
+and $PartitionedEntities, efficient blocked $NodeData, $ElementData,
 $ElementNodeData and $GhostElements sections, and support for $Edges and $Faces
 sections (see the reference manual for detailed changes); new polytope
 implementation with support in the API and MSH4.2 format, which replaces the old
-polygon/polyhedron elements, levelset commands and Plugin(CutMesh); the Extend
-mesh size field is now applied per entity and takes an element growth rate as
-input; improved XAO export that preserves entity tags; new VTK/Paraview IO for
-meshes and post-processing views; new Curvature Curve|Surface parser functions;
-new Plugin(DuplicateNodes); new predefined colormaps; Gmsh now requires C++17
-and CMake 3.10, and uses Eigen 5.0 by default; bug fixes.
+polygon/polyhedron elements, levelset commands and Plugin(CutMesh); improved
+export of views on several meshes (one file per mesh, plus a name.ext.geo script
+to read them back); the Extend mesh size field is now applied per entity and
+takes an element growth rate as input; improved XAO export that preserves entity
+tags; new VTK/Paraview IO for meshes and post-processing views; new predefined
+colormaps; new Curvature Curve/Surface, CreateMeshEdges/Faces and CreateOverlaps
+parser functions; new Plugin(DuplicateNodes), removed Plugin(CVTRemesh) and
+Plugin(CurvedBndDist); Gmsh now requires C++17 and CMake 3.10, and uses Eigen
+5.0 by default; added support for OCC 8; fix MeshAdapt regression introduced in
+4.12 on thin cones/cylinders; bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
-  mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent, mesh/setNodes, mesh/
-  algorithm/refineTetrahedra, mesh/addPolygons, mesh/getPolygons,
+  mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,
+  mesh/getBoundaryOverlapParent, mesh/getOverlapOverlappedEntity,
+  mesh/writePartitions, mesh/setNodes, mesh/addPolygons, mesh/getPolygons,
   mesh/addPolyhedra, mesh/getPolyhedra, mesh/getPolytopeSimplices,
-  mesh/setPolytopeSimplices, mesh/createPolytopeSimplices, fltk/pick
+  mesh/setPolytopeSimplices, mesh/createPolytopeSimplices,
+  mesh/getFacesByType, mesh/getElementFaceNodesByType,
+  algorithm/refineTetrahedra, plugin/load, fltk/pick
 
-* Incompatible API changes: new optional argument to mesh/optimize and
+* Incompatible API changes: new optional arguments to mesh/optimize and
   mesh/relocateNodes; new arguments to mesh/classifySurfaces; new and/or
   modified arguments to mesh/getFaces and mesh/getElementFaceNodes (use
   getFacesByType and getElementFaceNodesByType for the old behavior),
-  mesh/getAllFaces, mesh/addFaces;
+  mesh/getAllFaces, mesh/addFaces
+
+* New or modified options: Geometry/Mesh/View.Opacity/OpacityMode,
+  General.Shaders, General.Brightness, General.GraphicsCacheSize,
+  Print.Supersampling, Print.ScalePixelSizes; Mesh/View.DrawSkinOnly,
+  Mesh/View.DrawSkinEdgesOnly, View.AdaptSkinOnly, PostProcessing.SaveAdapted
+  (replacing the adapted .pvtu export dialog); Mesh.SaveViews (to save views
+  with the mesh in MSH/VTU/MED), Mesh.FlatRefineDelaunay2D/3D,
+  Mesh.FlatOptimize3D, Negative Mesh.OptimizePyramids places the pyramid apex
+  along the face normal, Mesh.PartitionSplitLocalBrep,
+  Mesh.CreateEdges/CreateFaces, Mesh.NbEdges/NbFaces/NbPolygons/NbPolyhedra
 
 4.15.2 (March 24, 2026): fixed issue in 3D structured CGNS output.
 

@@ -10,8 +10,8 @@
 ! visualization capabilities. Gmsh is built around four modules (geometry, mesh,
 ! solver and post-processing), which can be controlled with the graphical user
 ! interface, from the command line, using text files written in Gmsh's own
-! scripting language (.geo files), or through the C++, C, Python, Julia and
-! Fortran application programming interface (API).
+! scripting language (.geo files), or through the C++, C, Python, Julia, Fortran
+! and JavaScript application programming interface (API).
 !
 ! This file defines the Gmsh Fortran API (v5.0.0).
 !

@@ -52,6 +52,7 @@ struct contextMeshOptions {
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int flatRefine2D, flatRefine3D, flatOptimize3D;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, ignoreUnknownSections;
+  int ignoreEdges, ignoreFaces;
   int boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap, toleranceReferenceElement;

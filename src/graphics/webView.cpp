@@ -4,18 +4,16 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 // What a web page calls (through ccall) to show Gmsh's scene on its canvas,
-// with Emscripten: the scene drawn as a window would draw it (see
-// drawContextOffscreen), turned, zoomed and moved by the mouse the way the
-// graphical interface does it. Positions are in the CSS pixels of the canvas,
-// from its top left corner.
+// with Emscripten, besides the Gmsh API (api/gmsh.mjs): the scene drawn as a
+// window would draw it (see drawContextOffscreen), turned, zoomed and moved by
+// the mouse the way the graphical interface does it. Positions are in the CSS
+// pixels of the canvas, from its top left corner.
 
 #if defined(__EMSCRIPTEN__)
 
 #include <cmath>
 #include <emscripten.h>
-#include "gmsh.h"
 #include "Context.h"
-#include "GmshMessage.h"
 #include "drawContextOffscreen.h"
 
 namespace {
@@ -30,78 +28,8 @@ namespace {
 
 extern "C" {
 
-EMSCRIPTEN_KEEPALIVE int gmshWebInitialize()
-{
-  try {
-    gmsh::initialize(0, nullptr, false, false);
-    gmsh::option::setNumber("General.Terminal", 1);
-  } catch(...) {
-    return 0;
-  }
-  return 1;
-}
-
-// open (or, with merge, add to what is there) a file of the virtual file
-// system
-EMSCRIPTEN_KEEPALIVE int gmshWebOpen(const char *fileName, int merge)
-{
-  try {
-    if(merge)
-      gmsh::merge(fileName);
-    else
-      gmsh::open(fileName);
-  } catch(...) {
-    return 0;
-  }
-  return 1;
-}
-
-// mesh the model in dimension dim (1, 2 or 3), as the 1, 2 and 3 shortcuts of
-// the graphical interface do
-EMSCRIPTEN_KEEPALIVE int gmshWebMesh(int dim)
-{
-  try {
-    gmsh::model::mesh::generate(dim);
-  } catch(...) {
-    return 0;
-  }
-  return 1;
-}
-
-// the value of an option (e.g. "Mesh.NbNodes"), 0 if there is none
-EMSCRIPTEN_KEEPALIVE double gmshWebGetNumber(const char *name)
-{
-  double value = 0.;
-  try {
-    gmsh::option::getNumber(name, value);
-  } catch(...) {
-  }
-  return value;
-}
-
-// set an option (e.g. "General.Shading", "View[0].IntervalsType")
-EMSCRIPTEN_KEEPALIVE int gmshWebSetNumber(const char *name, double value)
-{
-  try {
-    gmsh::option::setNumber(name, value);
-  } catch(...) {
-    return 0;
-  }
-  return 1;
-}
-
-EMSCRIPTEN_KEEPALIVE int gmshWebSetString(const char *name, const char *value)
-{
-  try {
-    gmsh::option::setString(name, value);
-  } catch(...) {
-    return 0;
-  }
-  return 1;
-}
-
-// draw on the canvas of width x height device pixels, scale of them to a CSS
-// pixel (the devicePixelRatio of the page)
+// draw on the canvas of width x height device pixels, scale being the number
+// of them per CSS pixel (the devicePixelRatio of the page)
 EMSCRIPTEN_KEEPALIVE int gmshWebDraw(int width, int height, double scale)
 {
   if(!_view) _view = new drawContextOffscreen();
@@ -164,16 +92,12 @@ EMSCRIPTEN_KEEPALIVE void gmshWebPan(double x0, double y0, double x1,
   ctx->t[1] += b.wnr[1] - a.wnr[1];
 }
 
-// back to the view the scene opened with
+// back to the view of the options (General.RotationX, General.ScaleX,
+// General.TrackballQuaternion0, ...), as set by the files opened, at the next
+// draw
 EMSCRIPTEN_KEEPALIVE void gmshWebResetView()
 {
-  drawContext *ctx = view();
-  if(!ctx) return;
-  for(int i = 0; i < 3; i++) {
-    ctx->r[i] = ctx->t[i] = 0.;
-    ctx->s[i] = 1.;
-  }
-  ctx->setQuaternion(0., 0., 0., 1.);
+  if(_view) _view->resetView();
 }
 
 } // extern "C"
