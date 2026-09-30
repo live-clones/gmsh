@@ -10,6 +10,7 @@
 #include "GmshConfig.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -155,7 +156,8 @@ namespace {
       pane *p = held;
       held = nullptr;
       if(!p) return;
-      _all().dropped(p);
+      // its views go with it, those it was split into too
+      for(GuiPanes::Pane *q : _all().beside(p)) _all().dropped(q);
       deleteLater();
     }
   };
@@ -188,11 +190,13 @@ namespace {
                  double ratio) {
       QSplitter *split =
         new QSplitter(how == 'h' ? Qt::Horizontal : Qt::Vertical);
+      // in the window of the view it is split from
+      _pane(fresh)->top = _pane(was)->top;
       QWidget *parent = _pane(was)->parentWidget();
       if(QSplitter *up = dynamic_cast<QSplitter *>(parent))
         up->replaceWidget(up->indexOf(_pane(was)), split);
       else
-        _root->layout()->replaceWidget(_pane(was), split);
+        parent->layout()->replaceWidget(_pane(was), split);
       split->addWidget(_pane(was));
       split->addWidget(_pane(fresh));
       int size = how == 'h' ? split->width() : split->height();
@@ -201,15 +205,20 @@ namespace {
     };
     t.unsplit = [](GuiPanes::Pane *keep,
                    const std::vector<GuiPanes::Pane *> &gone) {
-      QLayout *layout = _root->layout();
-      _pane(keep)->setParent(nullptr);
-      while(QLayoutItem *it = layout->takeAt(0)) {
-        if(it->widget()) it->widget()->deleteLater();
-        delete it;
-      }
-      // the other views, in the splitters just taken away, go with them
+      // what holds the views of its window: the main one's, or the window of
+      // its own
+      QWidget *holder = _pane(keep)->top ? _pane(keep)->top : _root;
+      QWidget *outer = _pane(keep);
+      while(outer->parentWidget() && outer->parentWidget() != holder)
+        outer = outer->parentWidget();
+      if(outer == _pane(keep)) return;
+      holder->layout()->replaceWidget(outer, _pane(keep));
+      // the other views, in the splitters taken away, go with them
       for(GuiPanes::Pane *p : gone) _pane(p)->deleteLater();
-      layout->addWidget(_pane(keep));
+      outer->deleteLater();
+      // the view the window lets go of when it closes
+      if(paneWindow *w = dynamic_cast<paneWindow *>(holder))
+        w->held = _pane(keep);
       _pane(keep)->show();
     };
     t.newWindow = [](GuiPanes::Pane *fresh) {
@@ -227,6 +236,7 @@ namespace {
       w->resize(600, 500);
       w->show();
     };
+    t.splitsWindows = true;
     t.cursor = [](bool picking) {
       for(GuiPanes::Pane *p : _all().panes()) {
         if(picking)
@@ -292,12 +302,17 @@ void qtSceneNewWindow() { _all().newWindow(); }
 
 void qtSceneDestroy()
 {
+  // each window of its own once, whichever of its views holds it
+  std::vector<QWidget *> tops;
   for(GuiPanes::Pane *p : _all().panes())
-    if(_pane(p)->top) {
-      paneWindow *w = (paneWindow *)_pane(p)->top;
-      w->held = nullptr;
-      delete w;
-    }
+    if(_pane(p)->top &&
+       std::find(tops.begin(), tops.end(), _pane(p)->top) == tops.end())
+      tops.push_back(_pane(p)->top);
+  for(QWidget *t : tops) {
+    paneWindow *w = (paneWindow *)t;
+    w->held = nullptr;
+    delete w;
+  }
   _all().stop();
   // the tiled views are in the main window, which goes with them
   _root = nullptr;

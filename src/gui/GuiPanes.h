@@ -153,6 +153,8 @@ public:
   // surface in the same context expects it
   static void putBackState();
 
+  // the views in the same window as p, p among them
+  std::vector<Pane *> beside(Pane *p) const { return _beside(p); }
   void split(char how, double ratio);
   void newWindow();
   // the timers of the animation and of the gamepad, started when wanted

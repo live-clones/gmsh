@@ -35,7 +35,7 @@ namespace {
   // the C++ side of a pane: what GuiPanes knows, and the view that shows it
   struct pane : public GuiPanes::Pane {
     GmshScenePane *ns = nil;
-    // the window of a graphic window of its own
+    // the window of a graphic window of its own, of every view in it
     NSWindow *top = nil;
   };
 } // namespace
@@ -329,9 +329,13 @@ namespace {
   pane *p = held;
   held = nullptr;
   if(!p) return;
-  p->top = nil;
-  _all().dropped(p);
-  _destroy(p);
+  // its views go with it, those it was split into too
+  for(GuiPanes::Pane *q : _all().beside(p)) {
+    pane *r = static_cast<pane *>(q);
+    r->top = nil;
+    _all().dropped(r);
+    _destroy(r);
+  }
 }
 @end
 
@@ -383,6 +387,8 @@ namespace {
     };
     t.split = [](GuiPanes::Pane *was, GuiPanes::Pane *fresh, char how,
                  double ratio) {
+      // in the window of the view it is split from
+      _pane(fresh)->top = _pane(was)->top;
       GmshScenePane *w = _pane(was)->ns;
       NSView *parent = [w superview];
       NSRect room = [w frame];
@@ -409,11 +415,24 @@ namespace {
     t.unsplit = [](GuiPanes::Pane *keep,
                    const std::vector<GuiPanes::Pane *> &gone) {
       GmshScenePane *k = _pane(keep)->ns;
+      // what holds the views of its window: the main one's, or the content
+      // of the window of its own, over its bar
+      NSWindow *top = _pane(keep)->top;
+      NSView *holder = top ? [top contentView] : _root;
+      NSView *outer = k;
+      while([outer superview] && [outer superview] != holder)
+        outer = [outer superview];
+      if(outer == k) return;
+      NSRect room = [outer frame];
       [k removeFromSuperview];
       for(GuiPanes::Pane *p : gone) _destroy(_pane(p));
-      for(NSView *v in [[_root subviews] copy]) [v removeFromSuperview];
-      [k setFrame:[_root bounds]];
-      [_root addSubview:k];
+      [outer removeFromSuperview];
+      [k setFrame:room];
+      [k setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+      [holder addSubview:k];
+      // the view the window lets go of when it closes
+      if([top isKindOfClass:[GmshPaneWindow class]])
+        ((GmshPaneWindow *)top)->held = _pane(keep);
     };
     t.newWindow = [](GuiPanes::Pane *fresh) {
       GmshPaneWindow *w = [[GmshPaneWindow alloc]
@@ -447,6 +466,7 @@ namespace {
                                    NSMaxY([cocoaMainWindow() frame]) - 40.)];
       [w makeKeyAndOrderFront:nil];
     };
+    t.splitsWindows = true;
     t.cursor = [](bool picking) {
       for(GuiPanes::Pane *q : _all().panes()) {
         GmshScenePane *p = _pane(q)->ns;

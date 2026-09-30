@@ -31,8 +31,11 @@ namespace {
 
   struct pane : public GuiPanes::Pane {
     GtkWidget *area = nullptr;
-    // the window of a graphic window of its own
+    // the window of a graphic window of its own, for the view that holds it
     GtkWidget *top = nullptr;
+    // the box the views of that window are in, whichever holds it; null for
+    // the main window's, _root
+    GtkWidget *holder = nullptr;
     // the framebuffer, in its pixels, as the area said when it was resized
     int fbW = 0, fbH = 0;
   };
@@ -270,15 +273,18 @@ namespace {
     delete p;
   }
 
-  // a window of its own closed: its view goes with it
+  // a window of its own closed: its views go with it, those it was split
+  // into too
   gboolean _windowClosed(GtkWindow *w, gpointer)
   {
     for(GuiPanes::Pane *q : _all().panes())
       if(_pane(q)->top == (GtkWidget *)w) {
-        pane *p = _pane(q);
-        p->top = nullptr;
-        _all().dropped(p);
-        _destroy(p);
+        for(GuiPanes::Pane *r : _all().beside(q)) {
+          pane *p = _pane(r);
+          p->top = nullptr;
+          _all().dropped(p);
+          _destroy(p);
+        }
         break;
       }
     return FALSE;
@@ -323,6 +329,8 @@ namespace {
     };
     t.split = [](GuiPanes::Pane *was, GuiPanes::Pane *fresh, char how,
                  double ratio) {
+      // in the window of the view it is split from
+      _pane(fresh)->holder = _pane(was)->holder;
       GtkWidget *area = _pane(was)->area;
       GtkWidget *parent = gtk_widget_get_parent(area);
       GtkWidget *paned = gtk_paned_new(how == 'h' ? GTK_ORIENTATION_HORIZONTAL :
@@ -352,11 +360,27 @@ namespace {
     };
     t.unsplit = [](GuiPanes::Pane *keep,
                    const std::vector<GuiPanes::Pane *> &gone) {
-      for(GuiPanes::Pane *p : gone) _destroy(_pane(p));
-      _detach(_pane(keep));
-      while(GtkWidget *c = gtk_widget_get_first_child(_root))
-        gtk_box_remove(GTK_BOX(_root), c);
-      gtk_box_append(GTK_BOX(_root), _pane(keep)->area);
+      pane *k = _pane(keep);
+      GtkWidget *box = k->holder ? k->holder : _root;
+      // the window stays, held by the view kept
+      for(GuiPanes::Pane *p : gone) {
+        if(_pane(p)->top) {
+          k->top = _pane(p)->top;
+          _pane(p)->top = nullptr;
+        }
+        _destroy(_pane(p));
+      }
+      // what holds the views in the box goes, the view kept in its place:
+      // over the bar of a window of its own
+      GtkWidget *outer = k->area;
+      while(gtk_widget_get_parent(outer) && gtk_widget_get_parent(outer) != box)
+        outer = gtk_widget_get_parent(outer);
+      if(outer == k->area) return;
+      GtkWidget *before = gtk_widget_get_prev_sibling(outer);
+      _detach(k);
+      gtk_box_remove(GTK_BOX(box), outer);
+      gtk_widget_set_vexpand(k->area, TRUE);
+      gtk_box_insert_child_after(GTK_BOX(box), k->area, before);
     };
     t.newWindow = [](GuiPanes::Pane *fresh) {
       GtkWidget *w = gtk_window_new();
@@ -370,6 +394,7 @@ namespace {
       gtk_widget_set_vexpand(_pane(fresh)->area, TRUE);
       gtk_box_append(GTK_BOX(box), _pane(fresh)->area);
       gtk_box_append(GTK_BOX(box), gtkMakeBar());
+      _pane(fresh)->holder = box;
       gtk_window_set_child(GTK_WINDOW(w), box);
       g_signal_connect(w, "close-request", G_CALLBACK(_windowClosed), nullptr);
       gtkWatchButtons(w);
@@ -386,6 +411,7 @@ namespace {
       _pane(fresh)->top = w;
       gtk_window_present(GTK_WINDOW(w));
     };
+    t.splitsWindows = true;
     t.cursor = [](bool picking) {
       for(GuiPanes::Pane *p : _all().panes())
         gtk_widget_set_cursor_from_name(_pane(p)->area,

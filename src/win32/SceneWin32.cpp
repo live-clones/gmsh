@@ -11,6 +11,7 @@
 #include "GmshConfig.h"
 
 #include <algorithm>
+#include <map>
 #include <cstring>
 
 #include "win32Common.h"
@@ -30,7 +31,7 @@ namespace {
     HWND hwnd = nullptr;
     HDC dc = nullptr;
     HGLRC gl = nullptr;
-    // the window of a graphic window of its own
+    // the window of a graphic window of its own, of every view in it
     HWND top = nullptr;
     bool tracking = false;
   };
@@ -45,6 +46,8 @@ namespace {
 
   node *_root = nullptr;
   HWND _box = nullptr;
+  // how the views of each window of its own share it
+  std::map<HWND, node *> _windowRoots;
   HGLRC _shared = nullptr;
 
   GuiPanes &_all() { return GuiPanes::instance(); }
@@ -228,10 +231,6 @@ namespace {
     }
     RemovePropW(p->hwnd, L"gmshPane");
     DestroyWindow(p->hwnd);
-    if(p->top) {
-      RemovePropW(p->top, L"gmshHeld");
-      DestroyWindow(p->top);
-    }
     delete p;
   }
 
@@ -281,6 +280,21 @@ namespace {
     _layout(_root, 0, 0, r.right, r.bottom);
   }
 
+  // the views of a window of its own over its bar
+  void _relayoutWindow(HWND w)
+  {
+    auto it = _windowRoots.find(w);
+    if(it == _windowRoots.end()) return;
+    RECT r;
+    GetClientRect(w, &r);
+    int bh = win32BarHeight();
+    _layout(it->second, 0, 0, r.right, std::max(1, (int)r.bottom - bh));
+    if(HWND bar = (HWND)GetPropW(w, L"gmshBar"))
+      win32PlaceBar(bar, 0, r.bottom - bh, r.right, bh);
+  }
+
+  node *&_rootOf(pane *p) { return p->top ? _windowRoots[p->top] : _root; }
+
   LRESULT CALLBACK _boxProc(HWND w, UINT msg, WPARAM wp, LPARAM lp)
   {
     switch(msg) {
@@ -298,33 +312,27 @@ namespace {
 
   LRESULT CALLBACK _windowProc(HWND w, UINT msg, WPARAM wp, LPARAM lp)
   {
-    pane *p = (pane *)GetPropW(w, L"gmshHeld");
     switch(msg) {
-    case WM_SIZE:
-      if(p) {
-        // the view over the bar of the main window
-        RECT r;
-        GetClientRect(w, &r);
-        int bh = win32BarHeight();
-        MoveWindow(p->hwnd, 0, 0, r.right, std::max(1, (int)r.bottom - bh),
-                   TRUE);
-        if(HWND bar = (HWND)GetPropW(w, L"gmshBar"))
-          win32PlaceBar(bar, 0, r.bottom - bh, r.right, bh);
-      }
-      return 0;
+    case WM_SIZE: _relayoutWindow(w); return 0;
     case WM_COMMAND:
       if(HIWORD(wp) == 0 && !lp && win32MenuCommand(LOWORD(wp))) return 0;
       break;
-    case WM_CLOSE:
-      // its view goes with it
-      if(p) {
-        RemovePropW(w, L"gmshHeld");
-        p->top = nullptr;
-        _all().dropped(p);
-        _destroy(p);
+    case WM_CLOSE: {
+      // its views go with it, those it was split into too
+      std::vector<GuiPanes::Pane *> all = _all().panes();
+      for(GuiPanes::Pane *q : all)
+        if(_pane(q)->top == w) {
+          _all().dropped(q);
+          _destroy(_pane(q));
+        }
+      auto it = _windowRoots.find(w);
+      if(it != _windowRoots.end()) {
+        _deleteNodes(it->second);
+        _windowRoots.erase(it);
       }
       DestroyWindow(w);
       return 0;
+    }
     default: break;
     }
     return DefWindowProcW(w, msg, wp, lp);
@@ -360,7 +368,11 @@ namespace {
     };
     t.split = [](GuiPanes::Pane *was, GuiPanes::Pane *fresh, char how,
                  double ratio) {
-      node *n = _nodeOf(_root, _pane(was));
+      // in the window of the view it is split from
+      pane *f = _pane(fresh);
+      f->top = _pane(was)->top;
+      if(f->top) SetParent(f->hwnd, f->top);
+      node *n = _nodeOf(_rootOf(_pane(was)), _pane(was));
       if(!n) return;
       n->child[0] = new node;
       n->child[0]->leaf = n->leaf;
@@ -369,15 +381,22 @@ namespace {
       n->leaf = nullptr;
       n->split = how;
       n->ratio = ratio;
-      _relayout();
+      if(f->top)
+        _relayoutWindow(f->top);
+      else
+        _relayout();
     };
     t.unsplit = [](GuiPanes::Pane *keep,
                    const std::vector<GuiPanes::Pane *> &gone) {
       for(GuiPanes::Pane *p : gone) _destroy(_pane(p));
-      _deleteNodes(_root);
-      _root = new node;
-      _root->leaf = _pane(keep);
-      _relayout();
+      node *&root = _rootOf(_pane(keep));
+      _deleteNodes(root);
+      root = new node;
+      root->leaf = _pane(keep);
+      if(_pane(keep)->top)
+        _relayoutWindow(_pane(keep)->top);
+      else
+        _relayout();
     };
     t.newWindow = [](GuiPanes::Pane *fresh) {
       WNDCLASSEXW wc;
@@ -400,11 +419,13 @@ namespace {
       pane *p = _pane(fresh);
       p->top = w;
       SetParent(p->hwnd, w);
-      SetPropW(w, L"gmshHeld", (HANDLE)p);
+      _windowRoots[w] = new node;
+      _windowRoots[w]->leaf = p;
       SetPropW(w, L"gmshBar", (HANDLE)win32MakeBar(w));
       SendMessageW(w, WM_SIZE, 0, 0);
       ShowWindow(w, SW_SHOW);
     };
+    t.splitsWindows = true;
     t.cursor = [](bool picking) {
       HCURSOR c = picking ? LoadCursor(nullptr, IDC_HAND) : nullptr;
       for(GuiPanes::Pane *p : _all().panes())
@@ -506,6 +527,12 @@ void win32SceneDestroy()
   std::vector<GuiPanes::Pane *> panes = _all().panes();
   _all().stop();
   for(GuiPanes::Pane *p : panes) _destroy(_pane(p));
+  // the windows of their own, once each
+  for(auto &it : _windowRoots) {
+    _deleteNodes(it.second);
+    DestroyWindow(it.first);
+  }
+  _windowRoots.clear();
   if(_shared) {
     wglMakeCurrent(nullptr, nullptr);
     wglDeleteContext(_shared);
