@@ -127,7 +127,13 @@ void imguiDrawTree()
     imguiRequestRedraw();
   }
   _detachWanted = -1;
+  bool wasDetached = _detached;
   bool open = ImGui::Begin("Modules", &_shown);
+  // closed while it floats, it goes back where it was docked
+  if(!_shown && wasDetached) {
+    _shown = true;
+    imguiDetachTree(false);
+  }
   // dragged out or in by hand as well
   _detached = !ImGui::IsWindowDocked();
   if(!_detached)

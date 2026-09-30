@@ -979,6 +979,15 @@ namespace {
     if(fltkHost().quitting) fltkHost().quitting();
   }
 
+  void _attachTree();
+
+  // closed from its frame, the tree goes back in the main window, once the
+  // event is over: the window is deleted
+  void _treeClosed(Fl_Widget *, void *)
+  {
+    fltkLater([]() { _attachTree(); });
+  }
+
   // the tree taken out of the main window into one of its own, and put back
   void _detachTree()
   {
@@ -999,7 +1008,7 @@ namespace {
     _w->treeWin = new topWindow(w, set.treeHeight > 0 ? set.treeHeight : 600,
                                 set.nonModalWindows, "Gmsh");
     Fl_Group::current(current);
-    _w->treeWin->callback(_quit);
+    _w->treeWin->callback(_treeClosed);
     _w->treeWin->box(GMSH_WINDOW_BOX);
     _w->tree->box(FL_FLAT_BOX);
     _w->treeWin->add(_w->tree);
@@ -1314,7 +1323,7 @@ namespace {
       _w->treeWin = new topWindow(set.treeWidth > minw ? set.treeWidth : minw,
                                   set.treeHeight > 0 ? set.treeHeight : 600,
                                   set.nonModalWindows, "Gmsh");
-      _w->treeWin->callback(_quit);
+      _w->treeWin->callback(_treeClosed);
       _w->treeWin->box(GMSH_WINDOW_BOX);
       _w->tree = new treeFltk(0, 0, _w->treeWin->w(), _w->treeWin->h());
       _w->tree->enableTreeWidgetResize(true);

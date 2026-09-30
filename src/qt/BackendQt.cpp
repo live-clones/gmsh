@@ -112,6 +112,21 @@ namespace {
     }
   };
 
+  // --- the dock of the tree: closed while it floats, it goes back in the
+  // main window
+
+  class treeDock : public QDockWidget {
+  public:
+    treeDock(const QString &title, QWidget *parent) : QDockWidget(title, parent)
+    {
+    }
+    void closeEvent(QCloseEvent *e) override
+    {
+      e->ignore();
+      if(isFloating()) setFloating(false);
+    }
+  };
+
   // --- the main window
 
   class mainWindow : public QMainWindow {
@@ -798,12 +813,13 @@ namespace {
       _w->split->setChildrenCollapsible(false);
 
       _w->setCentralWidget(_w->split);
-      _w->treeDock = new QDockWidget("Gmsh", _w);
+      _w->treeDock = new treeDock("Gmsh", _w);
       _w->treeDock->setObjectName("gmshTree");
-      // it goes back with the menu or a double click on its title; closed, it
-      // could not be had back
+      // it goes back with the menu, a double click on its title or its close
+      // button
       _w->treeDock->setFeatures(QDockWidget::DockWidgetMovable |
-                                QDockWidget::DockWidgetFloatable);
+                                QDockWidget::DockWidgetFloatable |
+                                QDockWidget::DockWidgetClosable);
       _w->treeDock->setAllowedAreas(Qt::LeftDockWidgetArea |
                                     Qt::RightDockWidgetArea);
       _w->treeDock->setWidget(_w->treeBox);
