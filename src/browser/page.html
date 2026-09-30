@@ -216,9 +216,13 @@
              font:11px system-ui}
  #consolebar input[type=text]{width:15em;font:11px system-ui}
  #consolebar button{font:11px system-ui;padding:1px 6px}
- #console{flex:none;height:150px;overflow:auto;margin:0;padding:6px 8px;
-          background:#fff;
-          font:11px ui-monospace,monospace;white-space:pre-wrap}
+ #console{flex:none;height:150px;overflow:auto;margin:0;padding:0 8px;
+          background:#fff;font:11px ui-monospace,monospace}
+ /* one line a message, as tall as every other: the lines are laid out by
+    their number, only those in view drawn */
+ #console .line{white-space:pre;height:1.4em;line-height:1.4em}
+ #console .l0{color:#1a4fa0} #console .l2{color:#a05a00}
+ #console .l3{color:#b00000} #console .l4{color:#707070}
  #foot{flex:none;background:#e3e3e3;border-top:1px solid #bbb;padding:2px 6px;
        display:flex;align-items:center;gap:4px}
  #foot button{font:11px system-ui;padding:1px 6px}
@@ -279,7 +283,7 @@
 <div id="middle"><div id="tree"></div><div id="scene"><img id="view"></div>
  <div id="dock"></div><div id="desk"></div></div>
 <div id="consolebar"></div>
-<pre id="console"></pre>
+<div id="console"></div>
 <div id="foot"><span id="buttons"></span><span id="status"></span></div>
 <div id="ask"></div>
 <script>
@@ -1301,6 +1305,18 @@ function drawConsoleBar(c) {
     clear.title = c.clear.help;
     clear.onclick = () => post('/console', 'clear=1');
     box.appendChild(clear);
+    const copy = document.createElement('button');
+    copy.textContent = c.copy.label;
+    copy.title = c.copy.help;
+    // the lines shown, all of them, asked for at once
+    copy.onclick = async () => {
+      try {
+        const j = await (await say('/lines', 'from=0&to=' + log.count)).json();
+        await navigator.clipboard.writeText(
+          j.lines.map(l => l[1]).join('\n') + '\n');
+      } catch(e) {}
+    };
+    box.appendChild(copy);
     const label = document.createElement('label');
     follow = document.createElement('input');
     follow.type = 'checkbox';
@@ -1312,7 +1328,80 @@ function drawConsoleBar(c) {
   }
   box.saveSaid = c.save;
   if(document.activeElement !== filter) filter.value = c.filter;
+  // what does not parse is said in red
+  filter.style.color = c.valid ? '' : '#c03030';
   follow.checked = c.follow;
+}
+
+// --- the messages: as many lines as the console shows, each asked for as it
+// comes into view; what was asked is kept until the lines shown change other
+// than by new ones after them (the generation)
+const log = {gen: -1, count: 0, cache: new Map(), asking: false, lh: 0};
+
+function drawLog(c) {
+  const box = document.getElementById('console');
+  if(c.gen !== log.gen) {
+    log.cache.clear();
+    log.gen = c.gen;
+  }
+  log.count = c.count;
+  let inner = box.firstElementChild;
+  if(!inner) {
+    inner = document.createElement('div');
+    inner.style.position = 'relative';
+    const rows = document.createElement('div');
+    rows.style.position = 'absolute';
+    rows.style.left = '0';
+    rows.style.right = '0';
+    inner.appendChild(rows);
+    box.appendChild(inner);
+    box.onscroll = () => showLog();
+  }
+  if(!log.lh) {
+    const probe = document.createElement('div');
+    probe.className = 'line';
+    probe.textContent = ' ';
+    inner.firstElementChild.appendChild(probe);
+    log.lh = probe.offsetHeight || 15;
+    probe.remove();
+  }
+  inner.style.height = (log.count * log.lh) + 'px';
+  if(c.follow) box.scrollTop = box.scrollHeight;
+  showLog();
+}
+
+function showLog() {
+  const box = document.getElementById('console');
+  const inner = box.firstElementChild;
+  if(!inner || !log.lh) return;
+  const rows = inner.firstElementChild;
+  const first = Math.max(0, Math.floor(box.scrollTop / log.lh) - 20);
+  const last = Math.min(log.count,
+                        Math.ceil((box.scrollTop + box.clientHeight) / log.lh) + 20);
+  let missing = false;
+  for(let k = first; k < last && !missing; k++)
+    if(!log.cache.has(k)) missing = true;
+  if(missing && !log.asking) {
+    log.asking = true;
+    say('/lines', 'from=' + first + '&to=' + last)
+      .then(r => r.json())
+      .then(j => {
+        log.asking = false;
+        if(j.gen !== log.gen) return;
+        j.lines.forEach((l, i) => log.cache.set(j.from + i, l));
+        showLog();
+      })
+      .catch(() => { log.asking = false; });
+  }
+  rows.style.top = (first * log.lh) + 'px';
+  rows.textContent = '';
+  for(let k = first; k < last; k++) {
+    const l = log.cache.get(k);
+    const line = document.createElement('div');
+    line.className = 'line' + (l ? ' l' + l[0] : '');
+    line.textContent = l ? l[1] : ' ';
+    rows.appendChild(line);
+  }
 }
 
 // --- the row of little buttons along the bottom
@@ -1540,18 +1629,11 @@ function draw(state) {
     drawForms(state.forms);
   if(state.console && fresh('consolebar', state.console))
     drawConsoleBar(state.console);
-  if(fresh('log', state.messages)) {
-    const log = document.getElementById('console');
-    const atEnd = log.scrollTop + log.clientHeight >= log.scrollHeight - 4;
-    const was = log.scrollTop;
-    log.textContent = state.messages.join('\n');
-    // the last line kept in view when the switch says so, the view left
-    // where it was otherwise
-    if(state.console ? state.console.follow : atEnd)
-      log.scrollTop = log.scrollHeight;
-    else
-      log.scrollTop = was;
-  }
+  // the last line kept in view when the switch says so, the view left where
+  // it was otherwise
+  if(state.console &&
+     fresh('log', [state.console.count, state.console.gen, state.console.follow]))
+    drawLog(state.console);
   if(fresh('font', state.font))
     document.body.style.fontSize = state.font + 'px';
   if(fresh('status', state.status))

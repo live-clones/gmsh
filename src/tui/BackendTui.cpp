@@ -99,7 +99,7 @@ namespace {
     int treeWidth = 34, consoleHeight = 8;
     // the lines, what the filter lets through, whether the last is kept in
     // view; how far up from the last line the view is
-    Ui::Console said{20000};
+    Ui::Console said;
     int consoleScroll = 0;
     std::vector<const Ui::Form *> forms;
     std::map<const Ui::Form *, dialogTui> formStates;
@@ -242,6 +242,30 @@ void tuiLater(const std::function<void()> &what)
 {
   _s().later.push_back(what);
   tuiDirty();
+}
+
+void tuiCopy(const std::string &text)
+{
+  // OSC 52: the terminal puts it on the clipboard, in base 64
+  static const char *digits =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  std::string out;
+  std::size_t i = 0;
+  for(; i + 2 < text.size(); i += 3) {
+    unsigned v = ((unsigned char)text[i] << 16) |
+                 ((unsigned char)text[i + 1] << 8) | (unsigned char)text[i + 2];
+    for(int k = 3; k >= 0; k--) out += digits[(v >> (6 * k)) & 63];
+  }
+  if(i < text.size()) {
+    unsigned v = (unsigned char)text[i] << 16;
+    if(i + 1 < text.size()) v |= (unsigned char)text[i + 1] << 8;
+    out += digits[(v >> 18) & 63];
+    out += digits[(v >> 12) & 63];
+    out += i + 1 < text.size() ? digits[(v >> 6) & 63] : '=';
+    out += '=';
+  }
+  std::fputs(("\x1b]52;c;" + out + "\x07").c_str(), stdout);
+  std::fflush(stdout);
 }
 
 void tuiDirty()
@@ -961,10 +985,13 @@ namespace {
   {
     state &s = _s();
     // the bar over the lines: the filter, Save, Clear, Autoscroll
-    std::vector<Ui::Field> said = s.said.bar(s.sources.saveMessages, []() {
-      _s().consoleScroll = 0;
-      tuiDirty();
-    });
+    std::vector<Ui::Field> said = s.said.bar(
+      s.sources.saveMessages,
+      [](const std::string &text) { tuiCopy(text); },
+      []() {
+        _s().consoleScroll = 0;
+        tuiDirty();
+      });
     Elements bar = {text(std::string(Ui::glyph(Ui::Console::filterGlyph()) ?
                                        Ui::glyph(Ui::Console::filterGlyph())->text :
                                        "") +
@@ -1527,7 +1554,7 @@ namespace {
       _s().app->Post([w]() { tuiLater(w); });
     }
 
-    void copyText(const std::string &text) override {}
+    void copyText(const std::string &text) override { tuiCopy(text); }
     void beep() override {}
 
     void addMessage(const std::string &text, int level) override

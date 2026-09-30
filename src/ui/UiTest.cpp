@@ -224,8 +224,10 @@ int main()
          std::to_string(console.lines().size()) + (through ? " yes" : " no"),
        "1 3 yes", "a filter, case ignored, and a line it keeps out");
   console.setFilter("(");
-  same(std::to_string(console.shown().size()), "0",
-       "an expression that does not parse lets nothing through");
+  same(std::to_string(console.shown().size()) +
+         (console.filterValid() ? " valid" : " invalid"),
+       "3 invalid",
+       "an expression that does not parse lets everything through, and says so");
   console.setFilter("");
   console.add("Info    : Four", 1);
   same(console.lines().front().text + " " + std::to_string(console.shown().size()),

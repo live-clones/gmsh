@@ -35,6 +35,8 @@ const Ui::Backend::Host &tuiHost();
 void tuiLater(const std::function<void()> &what);
 // something changed that the next frame must show
 void tuiDirty();
+// on the clipboard, through the terminal (OSC 52)
+void tuiCopy(const std::string &text);
 
 // --- what can be clicked or focused this frame
 

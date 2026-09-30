@@ -356,7 +356,7 @@ namespace {
     }
     // the lines, what the filter lets through, whether the last is kept in
     // view
-    Ui::Console _said{500};
+    Ui::Console _said;
     // rebuilt every time the state is written: a number is a place in these
     // lists, so each carries what it stood for, and one that no longer stands
     // for that is refused
@@ -800,6 +800,21 @@ namespace {
           }
         }
         return "{}";
+      }
+      if(path == "/lines") {
+        // the lines shown from `from` to `to`, asked as the page scrolls
+        std::size_t n = _said.shownCount();
+        std::size_t from = (std::size_t)std::max(0L, atol(_valueOf(ask.body, "from").c_str()));
+        std::size_t to = (std::size_t)std::max(0L, atol(_valueOf(ask.body, "to").c_str()));
+        to = std::min(to, n);
+        std::string out = "{\"gen\":" + std::to_string(_said.generation()) +
+                          ",\"from\":" + std::to_string(from) + ",\"lines\":[";
+        for(std::size_t k = from; k < to; k++) {
+          const Ui::Console::Line &l = _said.shownAt(k);
+          out += (k > from ? ",[" : "[") + std::to_string(l.level) + "," +
+                 _quoted(l.text) + "]";
+        }
+        return out + "]}";
       }
       if(path == "/console") {
         // the bar over the lines: the filter, Clear, Autoscroll
@@ -1463,12 +1478,12 @@ namespace {
       Ui::BarMessage said;
       if(_sources.barMessage) said = _sources.barMessage();
       out += _quoted(said.text);
-      out += ",\"messages\":[";
-      std::vector<const Ui::Console::Line *> shown = _said.shown();
-      std::size_t from = shown.size() > 200 ? shown.size() - 200 : 0;
-      for(std::size_t i = from; i < shown.size(); i++)
-        out += (i > from ? "," : "") + _quoted(shown[i]->text);
-      out += "],\"console\":{\"filter\":" + _quoted(_said.filter());
+      // the lines themselves are asked for as the page scrolls
+      out += ",\"console\":{\"count\":" + std::to_string(_said.shownCount());
+      out += ",\"gen\":" + std::to_string(_said.generation());
+      out += ",\"valid\":";
+      out += _said.filterValid() ? "true" : "false";
+      out += ",\"filter\":" + _quoted(_said.filter());
       out += ",\"follow\":";
       out += _said.autoScroll() ? "true" : "false";
       out += ",\"look\":" + _quoted(_svg(Ui::Console::filterGlyph()));
@@ -1479,6 +1494,8 @@ namespace {
       out += _actionId([save]() { if(save) save(); }, "console:save") + "}";
       out += ",\"clear\":{\"label\":" + _quoted(Ui::Console::clearLabel());
       out += ",\"help\":" + _quoted(Ui::Console::clearTip()) + "}";
+      out += ",\"copy\":{\"label\":" + _quoted(Ui::Console::copyLabel());
+      out += ",\"help\":" + _quoted(Ui::Console::copyTip()) + "}";
       out += ",\"autoScroll\":" + _quoted(Ui::Console::autoScrollLabel());
       out += "}";
       return out + "}";

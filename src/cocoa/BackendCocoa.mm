@@ -43,7 +43,7 @@
 @public
   NSImageView *look;
   NSTextField *filter;
-  NSButton *save, *clear, *follow;
+  NSButton *save, *clear, *copy, *follow;
   NSScrollView *lines;
 }
 @end
@@ -51,6 +51,7 @@
 @interface GmshConsoleTarget : NSObject <NSTextFieldDelegate>
 - (void)save:(id)sender;
 - (void)clear:(id)sender;
+- (void)copy:(id)sender;
 - (void)follow:(id)sender;
 @end
 
@@ -458,7 +459,7 @@ namespace {
   CGFloat fw = cocoaPx(15.);
   [filter setFrame:NSMakeRect(x, pad, fw, row)];
   x += fw + 2. * pad;
-  for(NSButton *c in @[ save, clear, follow ]) {
+  for(NSButton *c in @[ save, clear, copy, follow ]) {
     CGFloat w = std::ceil([c intrinsicContentSize].width);
     [c setFrame:NSMakeRect(x, pad, w, row)];
     x += w + pad;
@@ -472,8 +473,22 @@ namespace {
 @implementation GmshConsoleTarget
 - (void)controlTextDidChange:(NSNotification *)n
 {
-  if(_w && _w->said.setFilter(cocoaString([_w->consoleBox->filter stringValue])))
-    _consoleRefill();
+  if(!_w ||
+     !_w->said.setFilter(cocoaString([_w->consoleBox->filter stringValue])))
+    return;
+  // what does not parse is said in red
+  [_w->consoleBox->filter setTextColor:_w->said.filterValid() ?
+                                         [NSColor controlTextColor] :
+                                         [NSColor systemRedColor]];
+  _consoleRefill();
+}
+- (void)copy:(id)sender
+{
+  if(!_w) return;
+  NSPasteboard *board = [NSPasteboard generalPasteboard];
+  [board clearContents];
+  [board setString:cocoaString(_w->said.shownText())
+           forType:NSPasteboardTypeString];
 }
 - (void)save:(id)sender
 {
@@ -495,30 +510,6 @@ namespace {
 @end
 
 @implementation GmshConsole
-- (NSMenu *)menuForEvent:(NSEvent *)e
-{
-  NSMenu *menu = [super menuForEvent:e];
-  if(!menu) menu = [[NSMenu alloc] initWithTitle:@""];
-  [menu addItem:[NSMenuItem separatorItem]];
-  NSMenuItem *save = [menu addItemWithTitle:@"Save Messages As..."
-                                     action:@selector(saveMessages:)
-                              keyEquivalent:@""];
-  [save setTarget:self];
-  NSMenuItem *clear = [menu addItemWithTitle:@"Clear Messages"
-                                      action:@selector(clearMessages:)
-                               keyEquivalent:@""];
-  [clear setTarget:self];
-  return menu;
-}
-- (void)saveMessages:(id)sender
-{
-  if(cocoaSources().saveMessages) cocoaLater(cocoaSources().saveMessages);
-}
-- (void)clearMessages:(id)sender
-{
-  [[self textStorage] setAttributedString:[[NSAttributedString alloc] init]];
-  cocoaForgetMessages();
-}
 // the keys the text does not take are Gmsh's
 - (void)keyDown:(NSEvent *)e
 {
@@ -1198,6 +1189,10 @@ namespace {
           [NSButton buttonWithTitle:cocoaString(Ui::Console::clearLabel())
                              target:consoleTarget
                              action:@selector(clear:)];
+        box->copy =
+          [NSButton buttonWithTitle:cocoaString(Ui::Console::copyLabel())
+                             target:consoleTarget
+                             action:@selector(copy:)];
         box->follow = [NSButton
           checkboxWithTitle:cocoaString(Ui::Console::autoScrollLabel())
                      target:consoleTarget
@@ -1208,14 +1203,15 @@ namespace {
           [box->filter setToolTip:cocoaString(Ui::Console::filterTip())];
           [box->save setToolTip:cocoaString(Ui::Console::saveTip())];
           [box->clear setToolTip:cocoaString(Ui::Console::clearTip())];
+          [box->copy setToolTip:cocoaString(Ui::Console::copyTip())];
         }
-        for(NSButton *b in @[ box->save, box->clear ]) {
+        for(NSButton *b in @[ box->save, box->clear, box->copy ]) {
           [b setBezelStyle:NSBezelStyleRounded];
           [b setControlSize:NSControlSizeSmall];
         }
         box->lines = _w->consoleScroll;
         for(NSView *v in @[ box->look, box->filter, box->save, box->clear,
-                            box->follow, box->lines ])
+                            box->copy, box->follow, box->lines ])
           [box addSubview:v];
         _w->consoleBox = box;
       }

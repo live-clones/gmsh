@@ -92,25 +92,9 @@ namespace {
     }
   };
 
-  // --- the console, with what to do with its lines
+  // --- the console: what to do with its lines is its bar's
 
-  class console : public QPlainTextEdit {
-  public:
-    void contextMenuEvent(QContextMenuEvent *e) override
-    {
-      QMenu *menu = createStandardContextMenu();
-      menu->addSeparator();
-      QObject::connect(menu->addAction("Save Messages As..."),
-                       &QAction::triggered, []() {
-                         if(qtSources().saveMessages)
-                           qtLater(qtSources().saveMessages);
-                       });
-      QObject::connect(menu->addAction("Clear Messages"), &QAction::triggered,
-                       []() { qtClearConsole(); });
-      menu->exec(e->globalPos());
-      delete menu;
-    }
-  };
+  class console : public QPlainTextEdit {};
 
   // --- the dock of the tree: closed while it floats, it goes back in the
   // main window
@@ -248,7 +232,10 @@ namespace {
     if(!look.isNull()) _w->filter->addAction(look, QLineEdit::LeadingPosition);
     if(tips) _w->filter->setToolTip(Ui::Console::filterTip());
     QObject::connect(_w->filter, &QLineEdit::textChanged, [](const QString &t) {
-      if(_w && _w->said.setFilter(qtString(t))) _refillConsole();
+      if(!_w || !_w->said.setFilter(qtString(t))) return;
+      // what does not parse is said in red
+      _w->filter->setStyleSheet(_w->said.filterValid() ? "" : "color: #c03030;");
+      _refillConsole();
     });
     h->addWidget(_w->filter);
     QPushButton *save = new QPushButton(Ui::Console::saveLabel());
@@ -263,6 +250,16 @@ namespace {
     if(tips) clear->setToolTip(Ui::Console::clearTip());
     QObject::connect(clear, &QPushButton::clicked, []() { qtClearConsole(); });
     h->addWidget(clear);
+    QPushButton *copy = new QPushButton(Ui::Console::copyLabel());
+    copy->setAutoDefault(false);
+    if(tips) copy->setToolTip(Ui::Console::copyTip());
+    QObject::connect(copy, &QPushButton::clicked, []() {
+      if(!_w) return;
+      QString all = qtString(_w->said.shownText());
+      QApplication::clipboard()->setText(all);
+      QApplication::clipboard()->setText(all, QClipboard::Selection);
+    });
+    h->addWidget(copy);
     _w->follow = new QCheckBox(Ui::Console::autoScrollLabel());
     _w->follow->setChecked(_w->said.autoScroll());
     QObject::connect(_w->follow, &QCheckBox::toggled, [](bool on) {

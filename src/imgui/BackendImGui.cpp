@@ -81,7 +81,7 @@ namespace {
     bool _scrollToBottom;
 
   public:
-    console() : _said(50000), _scrollToBottom(false) {}
+    console() : _scrollToBottom(false) {}
     void add(const std::string &msg, int level)
     {
       if(_said.add(msg, level) && _said.autoScroll()) _scrollToBottom = true;
@@ -112,7 +112,11 @@ void console::draw()
              ImGui::GetItemRectMax(), ImGui::GetColorU32(ImGuiCol_Text));
   ImGui::SameLine(0.f, 2.f);
   ImGui::SetNextItemWidth(15.f * ImGui::GetFontSize());
+  // what does not parse is said in red
+  bool invalid = !_said.filterValid();
+  if(invalid) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.9f, .3f, .3f, 1.f));
   if(ImGui::InputText("##filter", &_filter)) _said.setFilter(_filter);
+  if(invalid) ImGui::PopStyleColor();
   if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
     ImGui::SetTooltip("%s", Ui::Console::filterTip());
   ImGui::SameLine();
@@ -125,14 +129,10 @@ void console::draw()
   if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
     ImGui::SetTooltip("%s", Ui::Console::clearTip());
   ImGui::SameLine();
-  if(ImGui::Button("Copy")) {
-    std::string all;
-    for(const Ui::Console::Line &l : _said.lines()) {
-      all += l.text;
-      all += "\n";
-    }
-    ImGui::SetClipboardText(all.c_str());
-  }
+  if(ImGui::Button(Ui::Console::copyLabel()))
+    ImGui::SetClipboardText(_said.shownText().c_str());
+  if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    ImGui::SetTooltip("%s", Ui::Console::copyTip());
   ImGui::SameLine();
   bool follow = _said.autoScroll();
   if(ImGui::Checkbox(Ui::Console::autoScrollLabel(), &follow)) {

@@ -33,10 +33,12 @@ namespace {
     return s + std::string(width - s.size(), ' ');
   }
 
-  Decorator _valueStyle(bool on)
+  // what warns is written in red
+  Decorator _valueStyle(bool on, bool alert = false)
   {
-    return on ? (bgcolor(Color::Blue) | color(Color::White)) :
-                (bgcolor(Color::GrayDark) | color(Color::White));
+    Color ink = alert ? Color::RedLight : Color::White;
+    return on ? (bgcolor(Color::Blue) | color(ink)) :
+                (bgcolor(Color::GrayDark) | color(ink));
   }
 
   // --- numbers
@@ -81,11 +83,11 @@ namespace {
       int left = std::max(0, w - (int)head.size() - 1 - (int)tail.size());
       shown = hbox({text(head), text(at) | inverted, text(tail),
                     text(std::string(left, ' '))}) |
-              size(WIDTH, EQUAL, w) | _valueStyle(true);
+              size(WIDTH, EQUAL, w) | _valueStyle(true, f.alert);
     }
     else
       shown = text(_fit(value, width > 0 ? width : (int)value.size())) |
-              _valueStyle(on);
+              _valueStyle(on, f.alert);
     if(!editable) return shown | dim;
     Ui::Field g = f;
     hotTui h;

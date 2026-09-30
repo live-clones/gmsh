@@ -294,7 +294,7 @@ namespace {
     Fl_Browser *_browser;
     Fl_Group *_box;
     Fl_Check_Button *_autoscroll;
-    Fl_Button *_clear, *_save;
+    Fl_Button *_clear, *_save, *_copy;
     Fl_Input *_search;
 
   public:
@@ -334,7 +334,13 @@ namespace {
       _clear->labelsize(FL_NORMAL_SIZE - 1);
       _clear->box(FL_THIN_UP_BOX);
 
-      _autoscroll = new Fl_Check_Button(x + sw + 2 * bb + 3 * WB, y + wb, 2 * bb,
+      _copy = new Fl_Button(x + sw + 2 * bb + 3 * WB, y + wb, bb, bh,
+                            Ui::Console::copyLabel());
+      _copy->tooltip(Ui::Console::copyTip());
+      _copy->labelsize(FL_NORMAL_SIZE - 1);
+      _copy->box(FL_THIN_UP_BOX);
+
+      _autoscroll = new Fl_Check_Button(x + sw + 3 * bb + 4 * WB, y + wb, 2 * bb,
                                         bh, Ui::Console::autoScrollLabel());
       _autoscroll->labelsize(FL_NORMAL_SIZE - 1);
       _autoscroll->type(FL_TOGGLE_BUTTON);
@@ -368,6 +374,15 @@ namespace {
     }
     void save_callback(Fl_Callback *cb, void *p) { _save->callback(cb, p); }
     void clear_callback(Fl_Callback *cb, void *p) { _clear->callback(cb, p); }
+    void copy_callback(Fl_Callback *cb, void *p) { _copy->callback(cb, p); }
+    // the filter that does not parse is said in red
+    void filterValid(bool valid)
+    {
+      Fl_Color want = valid ? FL_FOREGROUND_COLOR : FL_RED;
+      if(_search->textcolor() == want) return;
+      _search->textcolor(want);
+      _search->redraw();
+    }
     void bottomline(int line) { _browser->bottomline(line); }
     int size() { return _browser->size(); }
     void add(const char *line) { _browser->add(line); }
@@ -901,7 +916,9 @@ namespace {
 
   void _filterConsole(Fl_Widget *, void *)
   {
-    if(_w && _w->said.setFilter(_w->messages->filter())) _refillConsole();
+    if(!_w || !_w->said.setFilter(_w->messages->filter())) return;
+    _w->messages->filterValid(_w->said.filterValid());
+    _refillConsole();
   }
 
   void _copySelectedLines(Fl_Widget *, void *)
@@ -1293,6 +1310,13 @@ namespace {
       [](Fl_Widget *, void *) {
         _w->said.clear();
         _w->messages->clear();
+      },
+      nullptr);
+    _w->messages->copy_callback(
+      [](Fl_Widget *, void *) {
+        std::string all = _w->said.shownText();
+        Fl::copy(all.c_str(), (int)all.size(), 0);
+        Fl::copy(all.c_str(), (int)all.size(), 1);
       },
       nullptr);
     if(!detached) {

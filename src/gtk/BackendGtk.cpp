@@ -186,6 +186,11 @@ namespace {
   void _consoleFiltered(GtkEditable *entry, gpointer)
   {
     if(!_w || !_w->said.setFilter(gtk_editable_get_text(entry))) return;
+    // what does not parse is said in red
+    if(_w->said.filterValid())
+      gtk_widget_remove_css_class(GTK_WIDGET(entry), "error");
+    else
+      gtk_widget_add_css_class(GTK_WIDGET(entry), "error");
     gtk_text_buffer_set_text(
       gtk_text_view_get_buffer(GTK_TEXT_VIEW(_w->console)), "", 0);
     for(const Ui::Console::Line *l : _w->said.shown())
@@ -201,6 +206,15 @@ namespace {
   void _consoleClearClicked(GtkButton *, gpointer)
   {
     _consoleClear(nullptr, nullptr, nullptr);
+  }
+
+  void _consoleCopyClicked(GtkButton *, gpointer)
+  {
+    if(!_w) return;
+    std::string all = _w->said.shownText();
+    gdk_clipboard_set_text(gtk_widget_get_clipboard(_w->console), all.c_str());
+    gdk_clipboard_set_text(gtk_widget_get_primary_clipboard(_w->console),
+                           all.c_str());
   }
 
   void _consoleFollowToggled(GtkCheckButton *b, gpointer)
@@ -235,6 +249,10 @@ namespace {
     g_signal_connect(clear, "clicked", G_CALLBACK(_consoleClearClicked),
                      nullptr);
     gtk_box_append(GTK_BOX(bar), clear);
+    GtkWidget *copy = gtk_button_new_with_label(Ui::Console::copyLabel());
+    if(tips) gtk_widget_set_tooltip_text(copy, Ui::Console::copyTip());
+    g_signal_connect(copy, "clicked", G_CALLBACK(_consoleCopyClicked), nullptr);
+    gtk_box_append(GTK_BOX(bar), copy);
     GtkWidget *follow =
       gtk_check_button_new_with_label(Ui::Console::autoScrollLabel());
     gtk_check_button_set_active(GTK_CHECK_BUTTON(follow), _w->said.autoScroll());
@@ -603,26 +621,7 @@ namespace {
     gtk_widget_add_css_class(_w->console, "gmsh-console");
     _consoleTags(gtk_text_view_get_buffer(GTK_TEXT_VIEW(_w->console)),
                  set.darkScheme);
-    {
-      GSimpleActionGroup *group = g_simple_action_group_new();
-      GSimpleAction *save = g_simple_action_new("save", nullptr);
-      g_signal_connect(save, "activate", G_CALLBACK(_consoleSave), nullptr);
-      g_action_map_add_action(G_ACTION_MAP(group), G_ACTION(save));
-      g_object_unref(save);
-      GSimpleAction *clear = g_simple_action_new("clear", nullptr);
-      g_signal_connect(clear, "activate", G_CALLBACK(_consoleClear), nullptr);
-      g_action_map_add_action(G_ACTION_MAP(group), G_ACTION(clear));
-      g_object_unref(clear);
-      gtk_widget_insert_action_group(_w->console, "console",
-                                     G_ACTION_GROUP(group));
-      g_object_unref(group);
-      GMenu *more = g_menu_new();
-      g_menu_append(more, "Save Messages As…", "console.save");
-      g_menu_append(more, "Clear Messages", "console.clear");
-      gtk_text_view_set_extra_menu(GTK_TEXT_VIEW(_w->console),
-                                   G_MENU_MODEL(more));
-      g_object_unref(more);
-    }
+
     _w->consoleScroll = gtk_scrolled_window_new();
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(_w->consoleScroll),
                                   _w->console);

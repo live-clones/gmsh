@@ -35,7 +35,7 @@ namespace {
     HWND treeWin = nullptr;
     // the bar over the lines: the filter, Save, Clear, Autoscroll
     HWND consoleBar = nullptr, look = nullptr, filter = nullptr, save = nullptr,
-         clear = nullptr, follow = nullptr;
+         clear = nullptr, copy = nullptr, follow = nullptr;
     treeWin32 *tree = nullptr;
     std::vector<HWND> buttons, footerButtons;
     std::vector<Ui::Button> footerSaid;
@@ -120,6 +120,8 @@ namespace {
       MoveWindow(_w->save, x, pad, bw, row, TRUE);
       x += bw + pad;
       MoveWindow(_w->clear, x, pad, bw, row, TRUE);
+      x += bw + pad;
+      MoveWindow(_w->copy, x, pad, bw, row, TRUE);
       x += bw + 2 * pad;
       MoveWindow(_w->follow, x, pad, win32Px(12.), row, TRUE);
       MoveWindow(_w->console, left, bottom - ch + bar, r.right - left, ch - bar,
@@ -148,6 +150,21 @@ namespace {
       if(x >= left && y >= at && y < at + Gap) return 2;
     }
     return 0;
+  }
+
+  // the text on the clipboard
+  void _copyText(const std::string &text)
+  {
+    if(!_w || !OpenClipboard(_w->win)) return;
+    std::wstring w = win32Wide(text);
+    HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE, (w.size() + 1) * sizeof(wchar_t));
+    if(mem) {
+      memcpy(GlobalLock(mem), w.c_str(), (w.size() + 1) * sizeof(wchar_t));
+      GlobalUnlock(mem);
+      EmptyClipboard();
+      SetClipboardData(CF_UNICODETEXT, mem);
+    }
+    CloseClipboard();
   }
 
   // --- the console: a line in its colour, the lines again when the filter
@@ -203,10 +220,22 @@ namespace {
   LRESULT _consoleBarHook(HWND w, UINT msg, WPARAM wp, LPARAM lp, bool &taken)
   {
     taken = false;
-    if(msg != WM_COMMAND || !_w) return 0;
+    if(!_w) return 0;
+    // what does not parse is said in red
+    if(msg == WM_CTLCOLOREDIT && (HWND)lp == _w->filter) {
+      SetTextColor((HDC)wp, _w->said.filterValid() ? GetSysColor(COLOR_WINDOWTEXT) :
+                                                     RGB(192, 48, 48));
+      SetBkColor((HDC)wp, GetSysColor(COLOR_WINDOW));
+      taken = true;
+      return (LRESULT)GetSysColorBrush(COLOR_WINDOW);
+    }
+    if(msg != WM_COMMAND) return 0;
     HWND from = (HWND)lp;
     if(from == _w->filter && HIWORD(wp) == EN_CHANGE) {
-      if(_w->said.setFilter(win32Text(_w->filter))) _consoleRefill();
+      if(_w->said.setFilter(win32Text(_w->filter))) {
+        _consoleRefill();
+        InvalidateRect(_w->filter, nullptr, TRUE);
+      }
       taken = true;
     }
     else if(HIWORD(wp) == BN_CLICKED) {
@@ -215,6 +244,8 @@ namespace {
       }
       else if(from == _w->clear)
         _consoleClear();
+      else if(from == _w->copy)
+        _copyText(_w->said.shownText());
       else if(from == _w->follow) {
         _w->said.setAutoScroll(
           SendMessageW(_w->follow, BM_GETCHECK, 0, 0) == BST_CHECKED);
@@ -250,6 +281,8 @@ namespace {
                     Ui::Console::saveLabel());
     _w->clear = make(L"BUTTON", WS_TABSTOP | BS_PUSHBUTTON,
                      Ui::Console::clearLabel());
+    _w->copy = make(L"BUTTON", WS_TABSTOP | BS_PUSHBUTTON,
+                    Ui::Console::copyLabel());
     _w->follow = make(L"BUTTON", WS_TABSTOP | BS_AUTOCHECKBOX,
                       Ui::Console::autoScrollLabel());
     SendMessageW(_w->follow, BM_SETCHECK,
@@ -356,20 +389,6 @@ namespace {
       if(_w && _w->tree && win32TreeNotify(_w->tree, n, result)) return result;
       break;
     }
-    case WM_CONTEXTMENU:
-      // the messages: saved, or forgotten
-      if(_w && (HWND)wp == _w->console) {
-        std::vector<Ui::MenuItem> items(2);
-        items[0].label = "Save Messages As...";
-        items[0].action = []() {
-          if(_sources.saveMessages) _sources.saveMessages();
-        };
-        items[1].label = "Clear Messages";
-        items[1].action = []() { _consoleClear(); };
-        win32PopupMenu(items, w, GET_X_LPARAM(lp), GET_Y_LPARAM(lp));
-        return 0;
-      }
-      break;
     case WM_SETCURSOR:
       if(LOWORD(lp) == HTCLIENT && _w) {
         POINT p;
@@ -766,19 +785,7 @@ namespace {
       win32Later(what);
     }
 
-    void copyText(const std::string &text) override
-    {
-      if(!_w || !OpenClipboard(_w->win)) return;
-      std::wstring w = win32Wide(text);
-      HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE, (w.size() + 1) * sizeof(wchar_t));
-      if(mem) {
-        memcpy(GlobalLock(mem), w.c_str(), (w.size() + 1) * sizeof(wchar_t));
-        GlobalUnlock(mem);
-        EmptyClipboard();
-        SetClipboardData(CF_UNICODETEXT, mem);
-      }
-      CloseClipboard();
-    }
+    void copyText(const std::string &text) override { _copyText(text); }
 
     void beep() override { MessageBeep(MB_OK); }
 
