@@ -29,6 +29,12 @@
  button.menu::after{content:' \25be';font-size:.85em}
  .drops>.drop{bottom:100%;top:auto}
  .drops.open>.drop{display:block}
+ /* the buttons after a field and under the tree: their menus go down */
+ .drops.down>.drop{top:100%;bottom:auto}
+ .after{display:inline-flex;flex:none}
+ .after button{font:inherit;padding:0 4px;min-width:1.6em}
+ .after button.on{background:#cfd8ff}
+ #footer{display:flex;gap:4px;justify-content:flex-end;padding:4px 6px}
  .item{padding:3px 10px;white-space:nowrap;display:flex;justify-content:space-between;
        gap:24px;position:relative}
  .item:hover,.item.open{background:#cfd8ff}
@@ -403,6 +409,39 @@ function drawMenus(menus) {
     };
     bar.appendChild(t);
   }
+}
+
+// --- the little buttons after a field, or under the tree: the picture the
+// interface drew or the label, a menu that drops down or something to do
+function buttons(row, className) {
+  const box = document.createElement('span');
+  box.className = className;
+  for(const b of row || []) {
+    const button = document.createElement('button');
+    if(b.glyph) button.innerHTML = b.glyph;
+    else button.textContent = b.label || (b.children ? '\u25be' : '');
+    if(b.help) button.title = b.help;
+    if(b.on) button.className = 'on';
+    button.disabled = !!b.off;
+    if(!b.children) {
+      if(b.id >= 0) button.onclick = () => post('/do', which(b));
+      box.appendChild(button);
+      continue;
+    }
+    const holder = document.createElement('span');
+    holder.className = 'drops down';
+    button.onclick = e => {
+      e.stopPropagation();
+      const was = holder.classList.contains('open');
+      for(const other of document.querySelectorAll('.drops.open'))
+        other.classList.remove('open');
+      if(!was) holder.classList.add('open');
+    };
+    holder.appendChild(button);
+    holder.appendChild(menu(b.children));
+    box.appendChild(holder);
+  }
+  return box;
 }
 
 // --- one field of a form, or of a line of the tree
@@ -883,6 +922,8 @@ function cell(f) {
   }
   else {
     box.appendChild(what);
+    // the buttons after it, between the value and its name
+    if(f.trailing) box.appendChild(buttons(f.trailing, 'after'));
     // an empty label would still take the space that separates two halves of a
     // value meant to touch
     if(f.label) box.appendChild(say);
@@ -1108,10 +1149,16 @@ function render(item, into, form) {
 }
 
 // --- the tree down the left side
-function drawTree(lines) {
+function drawTree(lines, footer) {
   const box = document.getElementById('tree');
   box.textContent = '';
   treeLines(lines, box);
+  // the buttons under it
+  if(footer && footer.length) {
+    const under = buttons(footer, '');
+    under.id = 'footer';
+    box.appendChild(under);
+  }
 }
 
 // the lines of a tree, down the left of the window or inside one
@@ -1138,9 +1185,13 @@ function treeLines(lines, box) {
                                  (tick.checked ? 1 : 0));
       line.appendChild(tick);
     }
-    if(n.field) line.appendChild(field(n.field));
+    // the widget, the buttons after it, then its name
+    if(n.field) {
+      line.appendChild(field(n.field));
+      if(n.field.trailing) line.appendChild(buttons(n.field.trailing, 'after'));
+    }
     const name = document.createElement('span');
-    name.textContent = n.field ? n.field.label : n.label;
+    name.textContent = n.field ? n.name : n.label;
     if(n.id >= 0) {
       name.className = 'leaf';
       name.onclick = () => post('/do', which(n));
@@ -1623,7 +1674,8 @@ function drawAsk(ask) {
 function draw(state) {
   if(fresh('ask', state.ask)) drawAsk(state.ask);
   if(!menusOpen() && fresh('menus', state.menus)) drawMenus(state.menus);
-  if(fresh('tree', state.tree)) drawTree(state.tree);
+  if(fresh('tree', [state.tree, state.footer]))
+    drawTree(state.tree, state.footer);
   if(fresh('bar', state.bar)) drawButtons(state.bar);
   if(!typing() && !dragging && fresh('forms', state.forms))
     drawForms(state.forms);

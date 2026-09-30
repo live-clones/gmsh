@@ -17,6 +17,7 @@
 #include "Backend.h"
 #include "Console.h"
 #include "Glyph.h"
+#include "Tree.h"
 #include "httpServer.h"
 #include "OS.h"
 // page.html, as bytes: made by src/browser/CMakeLists.txt
@@ -1074,7 +1075,42 @@ namespace {
       }
     }
 
+    // the little buttons after a field, or under the tree: a picture or a
+    // label, on or not, a menu or something to do
+    std::string _buttons(const std::vector<Ui::Button> &row,
+                         const std::string &called)
+    {
+      std::string out = "[";
+      for(std::size_t i = 0; i < row.size(); i++) {
+        const Ui::Button &b = row[i];
+        out += i ? ",{" : "{";
+        out += "\"label\":" + _quoted(b.label);
+        std::string picture = _svg(b.glyph);
+        if(picture.size()) out += ",\"glyph\":" + _quoted(picture);
+        if(b.tooltip.size()) out += ",\"help\":" + _quoted(b.tooltip);
+        if(b.on && b.on()) out += ",\"on\":true";
+        if(b.enabled && !b.enabled()) out += ",\"off\":true";
+        if(b.menu)
+          out += ",\"children\":" + _menu(b.menu()) + ",\"id\":-1";
+        else
+          out += _actionId(b.action, called + ":" + std::to_string(i) + ":" +
+                                       b.label + b.glyph);
+        out += "}";
+      }
+      return out + "]";
+    }
+
     std::string _field(const Ui::Field &f)
+    {
+      std::string out = _fieldBody(f);
+      // the buttons after it, whatever it is
+      if(f.trailing.size())
+        out.insert(out.size() - 1,
+                   ",\"trailing\":" + _buttons(f.trailing, "after:" + f.label));
+      return out;
+    }
+
+    std::string _fieldBody(const Ui::Field &f)
     {
       std::string out = "{\"label\":" + _quoted(f.label);
       out += ",\"kind\":\"" + std::string(_kindOf(f)) + "\"";
@@ -1388,7 +1424,13 @@ namespace {
       if(node.tooltip.size()) out += ",\"help\":" + _quoted(node.tooltip);
       if(node.picked)
         out += ",\"picked\":" + std::string(node.picked() ? "true" : "false");
-      if(node.hasField) out += ",\"field\":" + _field(node.field);
+      if(node.hasField) {
+        // the widget, the buttons after it, then its name (Ui::lineField)
+        std::string name;
+        Ui::Field f = Ui::lineField(node, path, name);
+        out += ",\"field\":" + _field(f);
+        out += ",\"name\":" + _quoted(name);
+      }
       if(node.pressed) out += _actionId(node.pressed, "tree:" + path);
       out += "}";
       if(branch && open)
@@ -1465,6 +1507,10 @@ namespace {
       out += std::to_string(points > 0 ? points : 13);
       out += ",\"ask\":" + _ask();
       out += ",\"tree\":" + _tree();
+      out += ",\"footer\":" +
+             _buttons(_sources.tree.footer ? _sources.tree.footer() :
+                                             std::vector<Ui::Button>(),
+                      "footer");
       out += ",\"bar\":" + _bar();
       out += ",\"forms\":[";
       bool first = true;

@@ -67,6 +67,8 @@ namespace {
 @interface GmshTreeRow : NSTableCellView {
 @public
   NSView *widget;
+  // the buttons after the value, then its name
+  NSMutableArray<NSView *> *trailing;
   NSView *name;
 }
 @end
@@ -86,6 +88,12 @@ namespace {
     cocoaPlace(widget, NSMakeRect(x, 0., wide, h), false);
     x += wide + cocoaPx(.45);
   }
+  for(NSView *b in trailing) {
+    CGFloat wide = std::ceil([b intrinsicContentSize].width);
+    cocoaPlace(b, NSMakeRect(x, 0., wide, h), false);
+    x += wide + 1.;
+  }
+  if([trailing count]) x += cocoaPx(.45);
   if(name)
     cocoaPlace(name, NSMakeRect(x, 0., std::max(10., all.size.width - x), h),
                false);
@@ -360,16 +368,25 @@ NSView *treeCocoa::viewFor(line *l)
     [row addSubview:b];
   }
   else if(!l->branch && node.hasField) {
-    NSView *w = cocoaFieldWidget(node.field, _after);
+    // the widget, the buttons after it, then its name (Ui::lineField)
+    std::string said;
+    Ui::Field f = Ui::lineField(node, l->path, said);
+    NSView *w = cocoaFieldWidget(f, _after);
     if(w) {
       row->widget = w;
       [row addSubview:w];
       l->field = w;
     }
-    if(node.label.size()) {
+    row->trailing = [NSMutableArray array];
+    for(const Ui::Button &b : f.trailing) {
+      NSView *made = cocoaButtonWidget(b, _after);
+      [row->trailing addObject:made];
+      [row addSubview:made];
+    }
+    if(said.size()) {
       NSView *name;
       if(node.pressed) {
-        NSButton *b = [NSButton buttonWithTitle:cocoaString(label)
+        NSButton *b = [NSButton buttonWithTitle:cocoaString(said)
                                          target:_source
                                          action:@selector(named:)];
         [b setBordered:NO];
@@ -378,7 +395,7 @@ NSView *treeCocoa::viewFor(line *l)
         name = b;
       }
       else
-        name = cocoaLabel(label, false);
+        name = cocoaLabel(said, false);
       row->name = name;
       [row addSubview:name];
     }
@@ -483,7 +500,8 @@ void treeCocoa::refresh(bool rebuild)
                                          NSControlStateValueOn :
                                          NSControlStateValueOff];
       else {
-        cocoaRebindField(l->field, node.field);
+        std::string said;
+        cocoaRebindField(l->field, Ui::lineField(node, l->path, said));
         cocoaRefreshField(l->field);
       }
       NSView *row = [l->field superview];

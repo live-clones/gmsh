@@ -91,6 +91,9 @@ namespace {
     css += ".gmsh-bar button { padding: 2px 6px; min-height: 0; "
            "min-width: 0; }\n";
     css += ".gmsh-bar { padding: 2px; }\n";
+    // the buttons after a field, on a line of the tree: as small as they say
+    css += ".gmsh-after button { padding: 0 3px; min-height: 0; "
+           "min-width: 0; }\n";
     // the title bars of the dialogs as small as their title and buttons
     css += "headerbar.gmsh-dialog-head { min-height: 0; padding: 0 2px; }\n"
            "headerbar.gmsh-dialog-head .title { font-size: 0.9em; }\n"

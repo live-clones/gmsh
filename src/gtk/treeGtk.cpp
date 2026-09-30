@@ -7,6 +7,7 @@
 
 #include <cstdio>
 #include <set>
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -210,19 +211,33 @@ void treeGtk::_branch(GtkWidget *into, const std::string &parent, int depth)
         gtk_box_append(GTK_BOX(row), l->pick);
       }
       else {
+        // the widget, the buttons after it, then its name (Ui::lineField)
+        std::string said = label;
         if(node.hasField) {
           std::function<void()> after = _after;
-          l->field = gtkFieldWidget(node.field, after);
+          Ui::Field f = Ui::lineField(node, path, said);
+          l->field = gtkFieldWidget(f, after);
           if(l->field) {
-            if(node.field.kind != Ui::Check && node.field.kind != Ui::Action)
-              gtk_widget_set_size_request(l->field, gtkPx(8.), -1);
+            // the value and its buttons as wide as a value without any
+            if(f.kind != Ui::Check && f.kind != Ui::Action)
+              gtk_widget_set_size_request(
+                l->field, gtkPx(std::max(4., 8. - 1.6 * f.trailing.size())),
+                -1);
             gtk_box_append(GTK_BOX(row), l->field);
           }
+          if(f.trailing.size()) {
+            GtkWidget *buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+            gtk_widget_add_css_class(buttons, "linked");
+            gtk_widget_add_css_class(buttons, "gmsh-after");
+            for(const Ui::Button &b : f.trailing)
+              gtk_box_append(GTK_BOX(buttons), gtkButtonWidget(b, after));
+            gtk_box_append(GTK_BOX(row), buttons);
+          }
         }
-        if(!node.hasField || node.label.size()) {
+        if(said.size()) {
           GtkWidget *name;
           if(node.pressed) {
-            name = gtk_button_new_with_label(label.c_str());
+            name = gtk_button_new_with_label(said.c_str());
             gtk_widget_add_css_class(name, "flat");
             gtk_widget_set_halign(gtk_button_get_child(GTK_BUTTON(name)),
                                   GTK_ALIGN_START);
@@ -233,7 +248,7 @@ void treeGtk::_branch(GtkWidget *into, const std::string &parent, int depth)
                              g_object_get_data(G_OBJECT(name), "gmsh-action"));
           }
           else {
-            name = gtk_label_new(label.c_str());
+            name = gtk_label_new(said.c_str());
             gtk_label_set_xalign(GTK_LABEL(name), 0.f);
           }
           gtk_widget_set_hexpand(name, TRUE);
@@ -293,7 +308,8 @@ void treeGtk::refresh(bool rebuild)
     // a line under a folded branch is still there, and still up to date
     Ui::Node node = _tree.node(l->path);
     if(l->field) {
-      gtkRebindField(l->field, node.field);
+      std::string name;
+      gtkRebindField(l->field, Ui::lineField(node, l->path, name));
       gtkRefreshField(l->field);
     }
     if(l->pick) {

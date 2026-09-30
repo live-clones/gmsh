@@ -86,14 +86,17 @@ namespace {
         row.push_back(tuiHot(text(std::string(on ? "[x] " : "[ ] ") + label), h));
       }
       else if(!branch && node.hasField) {
-        std::string fid = id + ":" + path;
-        int width = node.field.kind == Ui::Check || node.field.kind == Ui::Action ?
-                      0 :
-                      tuiCells(8.);
-        row.push_back(tuiFieldWidget(node.field, fid, width, after));
-        if(node.label.size()) {
+        // the widget, the buttons after it, then its name (Ui::lineField)
+        std::string fid = id + ":" + path, said;
+        Ui::Field f = Ui::lineField(node, path, said);
+        int width = f.kind == Ui::Check || f.kind == Ui::Action ? 0 : tuiCells(8.);
+        row.push_back(tuiFieldWidget(f, fid, width, after));
+        for(std::size_t k = 0; k < f.trailing.size(); k++)
+          row.push_back(tuiButtonWidget(f.trailing[k],
+                                        fid + ".b" + std::to_string(k), after));
+        if(said.size()) {
           row.push_back(text(" "));
-          Element name = text(label);
+          Element name = text(said);
           if(node.pressed) {
             hotTui h;
             std::function<void()> what = node.pressed;

@@ -55,6 +55,39 @@ namespace Ui {
     std::function<std::vector<Button>()> footer;
   };
 
+  // --- a line with a field, as every interface lays it out, as FLTK had it:
+  // the widget, the buttons after it (Field::trailing), then its name
+
+  // the name of a line: its label, or the last part of its path
+  inline std::string lineLabel(const Node &node, const std::string &path)
+  {
+    if(node.label.size()) return node.label;
+    std::size_t slash = path.find_last_of('/');
+    return slash == std::string::npos ? path : path.substr(slash + 1);
+  }
+
+  // the field the widget is made of, and the name written after the buttons
+  // (empty for none). A switch or a button says its name itself -- that of
+  // the line when it has none, unless pressing the line does something of
+  // its own, which its name, written apart, then does; anything else has
+  // its name after it, its own or the line's
+  inline Field lineField(const Node &node, const std::string &path,
+                         std::string &name)
+  {
+    Field f = node.field;
+    name.clear();
+    if(f.kind == Check || f.kind == Action) {
+      if(f.label.empty()) {
+        if(node.pressed)
+          name = lineLabel(node, path);
+        else
+          f.label = lineLabel(node, path);
+      }
+      return f;
+    }
+    name = f.label.size() ? f.label : node.label;
+    return f;
+  }
 
 } // namespace Ui
 

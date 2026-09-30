@@ -141,33 +141,46 @@ void treeQt::_branch(QTreeWidgetItem *parent, const std::string &path)
                                                           Qt::Unchecked);
     }
     else if(!branch && node.hasField) {
-      // the widget, and the name one presses after it
+      // the widget, the buttons after it, then its name (Ui::lineField)
       QWidget *row = new QWidget;
       QHBoxLayout *h = new QHBoxLayout(row);
       h->setContentsMargins(0, 1, 0, 1);
       h->setSpacing(qtPx(.45));
-      QWidget *w = qtFieldWidget(node.field, _after);
+      std::string name;
+      Ui::Field f = Ui::lineField(node, child, name);
+      QWidget *w = qtFieldWidget(f, _after);
       if(w) {
-        if(node.field.kind != Ui::Check && node.field.kind != Ui::Action)
+        if(f.kind != Ui::Check && f.kind != Ui::Action)
           w->setFixedWidth(qtPx(8.));
         h->addWidget(w);
       }
-      if(node.label.size()) {
+      if(f.trailing.size()) {
+        // touching one another, and the value
+        QHBoxLayout *after = new QHBoxLayout;
+        after->setSpacing(0);
+        for(const Ui::Button &b : f.trailing) {
+          QWidget *bw = qtButtonWidget(b, _after);
+          bw->setFixedWidth(qtPx(b.label == ":" ? 1.1 : 1.8));
+          after->addWidget(bw);
+        }
+        h->addLayout(after);
+      }
+      if(name.size()) {
         if(node.pressed) {
-          QPushButton *name = new QPushButton(qtString(label));
-          name->setFlat(true);
-          name->setStyleSheet("text-align: left;");
+          QPushButton *say = new QPushButton(qtString(name));
+          say->setFlat(true);
+          say->setStyleSheet("text-align: left;");
           std::function<void()> what = node.pressed, after = _after;
-          QObject::connect(name, &QPushButton::clicked, [what, after]() {
+          QObject::connect(say, &QPushButton::clicked, [what, after]() {
             qtLater([what, after]() {
               what();
               if(after) after();
             });
           });
-          h->addWidget(name, 1);
+          h->addWidget(say, 1);
         }
         else
-          h->addWidget(new QLabel(qtString(label)), 1);
+          h->addWidget(new QLabel(qtString(name)), 1);
       }
       else
         h->addStretch(1);
@@ -247,7 +260,8 @@ void treeQt::refresh(bool rebuild)
     if(QWidget *row = _view->itemWidget(it, 0)) {
       QWidget *w = (QWidget *)row->property("gmshTreeField").value<void *>();
       if(w) {
-        qtRebindField(w, node.field);
+        std::string name;
+        qtRebindField(w, Ui::lineField(node, _path(it), name));
         qtRefreshField(w);
       }
     }
