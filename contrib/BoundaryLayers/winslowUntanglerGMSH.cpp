@@ -1208,6 +1208,15 @@ bool untangle_tetrahedra_GMSH(
     x[3 * i + 1] = points[i][1];
     x[3 * i + 2] = points[i][2];
   }
+  if(getenv("GMSH_WINSLOW_DEBUG_ITER1")) {
+    UntanglerDataGMSH probe;
+    probe.lambda = lambda;
+    prepareData3D(points, locked, tets, tetIdealShapes, probe);
+    initializeEnergy(probe, x);
+    Msg::Info("- debug: BEFORE initial Laplacian smoothing: JDetMin=%.6g, "
+              "nbInvalid=%zu / %zu sub-tets",
+              probe.JDetMin, probe.nbInvalid, tets.size());
+  }
   initialLaplacianSmooth3D(x, locked, tets);
   for(size_t i = 0; i < points.size(); ++i) {
     points[i][0] = x[3 * i + 0];
@@ -1215,6 +1224,11 @@ bool untangle_tetrahedra_GMSH(
     points[i][2] = x[3 * i + 2];
   }
   initializeEnergy(data, x);
+  if(getenv("GMSH_WINSLOW_DEBUG_ITER1")) {
+    Msg::Info("- debug: AFTER initial Laplacian smoothing: JDetMin=%.6g, "
+              "nbInvalid=%zu / %zu sub-tets",
+              data.JDetMin, data.nbInvalid, tets.size());
+  }
   const bool converged =
     optimize(data, x, points.front().data(), points.size(), iterMaxInner,
              iterMaxOuter, iterFailMax, timeMax);

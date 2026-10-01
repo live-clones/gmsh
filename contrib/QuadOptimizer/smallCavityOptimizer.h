@@ -15,6 +15,8 @@
 
 class GFace;
 class GModel;
+class MQuadrangle;
+class SPoint2;
 
 namespace QuadOptimizer {
 
@@ -467,6 +469,13 @@ namespace QuadOptimizer {
     double maximumSampledCadChordDistance = 0.;
     double rmsCadChordDistance = 0.;
   };
+
+  // Validity of a final surface quad, as counted by summarizeQuadMeshQuality:
+  // topologically valid, physically non-concave, positive SICN and eta, and
+  // not opposed to the CAD normal (parameters: its known UV, if any)
+  GMSH_API bool isValidFinalQuadrangle(
+    GFace *face, MQuadrangle *quadrangle,
+    const std::vector<SPoint2> *parameters = nullptr);
 
   GMSH_API QuadMeshQualitySummary summarizeQuadMeshQuality(
     GModel *model,

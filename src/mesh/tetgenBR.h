@@ -2573,6 +2573,13 @@ inline bool tetgenmesh::issteinerpoint(point pt)
 inline void tetgenmesh::point2tetorg(point pa, triface &searchtet)
 {
   decode(point2tet(pa), searchtet);
+  if(searchtet.tet == NULL) {
+    // stale/invalid point-to-tet reference (seen during boundary recovery
+    // on strongly graded inputs) -- leave searchtet decoded as null/ver=0
+    // rather than dereferencing it, callers must check for this.
+    searchtet.ver = 0;
+    return;
+  }
   if((point)searchtet.tet[4] == pa) { searchtet.ver = 11; }
   else if((point)searchtet.tet[5] == pa) {
     searchtet.ver = 3;

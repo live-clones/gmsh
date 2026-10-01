@@ -59,4 +59,5 @@ bool buildTetrahedraFromElements(
     const std::vector<std::vector<std::array<double,3> > > &elementTargetShapes,
     std::vector<std::array<uint32_t, 4> > &tets,
     std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes,
-    int dcpHex = 32);
+    int dcpHex = 32,
+    std::vector<size_t> *tetElementIndex = nullptr);

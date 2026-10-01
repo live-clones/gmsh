@@ -5063,8 +5063,8 @@ namespace QuadOptimizer {
          face->model()) {
         FieldManager *fields = face->model()->getFields();
         if(fields) {
-          Field *field = fields->get(fields->getBackgroundField());
-          if(field && field->numComponents() == 3) {
+          Field *field = fields->getDirectionField();
+          if(field) {
             SVector3 value(0., 0., 0.);
             (*field)(xyz[0], xyz[1], xyz[2], value, face);
             const double size = value.norm();
@@ -5484,9 +5484,8 @@ namespace QuadOptimizer {
       else if((options.enforceSizeMap || options.auditSizeMap) && face &&
               face->model()) {
         FieldManager *fields = face->model()->getFields();
-        Field *field = fields ?
-          fields->get(fields->getBackgroundField()) : nullptr;
-        if(field && field->numComponents() == 3)
+        Field *field = fields ? fields->getDirectionField() : nullptr;
+        if(field)
           targetNeedsParameters = false;
       }
       for(MElement *element : elements) {
@@ -16889,6 +16888,26 @@ namespace QuadOptimizer {
     return result;
   }
 
+  bool isValidFinalQuadrangle(GFace *face, MQuadrangle *quadrangle,
+                              const std::vector<SPoint2> *parameters)
+  {
+    if(!face || !quadrangle) return false;
+    if(!evaluateElementQuality(quadrangle).topologicallyValid) return false;
+    std::vector<Point> xyz(4);
+    for(std::size_t i = 0; i < 4; ++i) {
+      MVertex *vertex = quadrangle->getVertex(static_cast<int>(i));
+      xyz[i] = {vertex->x(), vertex->y(), vertex->z()};
+    }
+    const Pattern singleQuadrangle = {{{0, 1, 2, 3}}};
+    const double eta = quadrangle->etaShapeMeasure();
+    const double sicn = quadrangle->minSICNShapeMeasure();
+    return candidateQuadranglesArePhysicallyNonConcave(singleQuadrangle,
+                                                       xyz) &&
+           std::isfinite(sicn) && sicn > 0. && std::isfinite(eta) &&
+           eta > 0. &&
+           surfaceElementCadNormalSign(face, quadrangle, parameters) != -1;
+  }
+
   QuadMeshQualitySummary summarizeQuadMeshQuality(
     GModel *model, const SmallCavityOptimizerOptions &options)
   {
@@ -17049,21 +17068,9 @@ namespace QuadOptimizer {
         const std::vector<SPoint2> &parameters =
           foundParameters == parametersByElement.end() ?
             noParameters : foundParameters->second;
-        std::vector<Point> xyz(4);
-        for(std::size_t i = 0; i < 4; ++i) {
-          MVertex *vertex = quadrangle->getVertex(static_cast<int>(i));
-          xyz[i] = {vertex->x(), vertex->y(), vertex->z()};
-        }
-        const Pattern singleQuadrangle = {{{0, 1, 2, 3}}};
-        const double eta = quadrangle->etaShapeMeasure();
         const double sicn = quadrangle->minSICNShapeMeasure();
-        const bool validQuadrangle = quality.topologicallyValid &&
-          candidateQuadranglesArePhysicallyNonConcave(
-            singleQuadrangle, xyz) &&
-          std::isfinite(sicn) && sicn > 0. &&
-          std::isfinite(eta) && eta > 0. &&
-          surfaceElementCadNormalSign(
-            face, quadrangle, &parameters) != -1;
+        const bool validQuadrangle =
+          isValidFinalQuadrangle(face, quadrangle, &parameters);
         if(!validQuadrangle)
           ++summary.invalidQuadrangles;
         if(validQuadrangle && quality.passesAbsoluteSpecifications)

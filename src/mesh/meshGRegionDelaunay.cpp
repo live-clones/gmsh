@@ -1038,6 +1038,61 @@ void classifyTetrahedraInRegions(std::vector<GRegion *> &regions,
   }
 }
 
+// Mesh size at the boundary (and embedded) nodes of a region, extended
+// from the surrounding lower-dimensional meshes; interior nodes of the
+// current tets get a size from their tet edges.
+void computeMeshSizesFromBoundary(GRegion *gr,
+                                  std::unordered_map<MVertex *, double> &vSizesMap)
+{
+  std::unordered_set<MVertex *> bndVertices;
+
+  for(auto rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion();
+      ++rit) {
+    std::vector<GEdge *> const &e = (*rit)->embeddedEdges();
+    for(auto it = e.begin(); it != e.end(); ++it) {
+      for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
+        MVertex *vi = (*it)->lines[i]->getVertex(0);
+        MVertex *vj = (*it)->lines[i]->getVertex(1);
+        double dx = vi->x() - vj->x();
+        double dy = vi->y() - vj->y();
+        double dz = vi->z() - vj->z();
+        double l = std::sqrt(dx * dx + dy * dy + dz * dz);
+
+        auto iti = vSizesMap.find(vi);
+        auto itj = vSizesMap.find(vj);
+
+        // smallest tet edge
+        if(iti == vSizesMap.end() || iti->second > l) vSizesMap[vi] = l;
+        if(itj == vSizesMap.end() || itj->second > l) vSizesMap[vj] = l;
+      }
+    }
+  }
+
+  for(auto rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion();
+      ++rit) {
+    std::vector<GVertex *> const &vertices = (*rit)->embeddedVertices();
+    for(auto it = vertices.begin(); it != vertices.end(); ++it) {
+      MVertex *v = (*it)->getMeshVertex(0);
+      double l = (*it)->prescribedMeshSizeAtVertex();
+      auto itv = vSizesMap.find(v);
+      if(itv == vSizesMap.end() || itv->second > l) vSizesMap[v] = l;
+    }
+  }
+
+  for(auto it = gr->model()->firstFace(); it != gr->model()->lastFace();
+      ++it) {
+    GFace *gf = *it;
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+      setLcs(gf->triangles[i], vSizesMap, bndVertices);
+    }
+    for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
+      setLcs(gf->quadrangles[i], vSizesMap, bndVertices);
+    }
+  }
+  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++)
+    setLcs(gr->tetrahedra[i], vSizesMap, bndVertices);
+}
+
 void insertVerticesInRegion(GRegion *gr, int maxIter,
                             double worstTetRadiusTarget, bool _classify,
                             splitQuadRecovery *sqr)
@@ -1057,57 +1112,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
   // leave this in a block so the map gets deallocated directly
   {
     std::unordered_map<MVertex *, double> vSizesMap;
-    std::unordered_set<MVertex *> bndVertices;
-
-    for(auto rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion();
-        ++rit) {
-      std::vector<GEdge *> const &e = (*rit)->embeddedEdges();
-      for(auto it = e.begin(); it != e.end(); ++it) {
-        for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
-          MVertex *vi = (*it)->lines[i]->getVertex(0);
-          MVertex *vj = (*it)->lines[i]->getVertex(1);
-          double dx = vi->x() - vj->x();
-          double dy = vi->y() - vj->y();
-          double dz = vi->z() - vj->z();
-          double l = std::sqrt(dx * dx + dy * dy + dz * dz);
-
-          auto iti = vSizesMap.find(vi);
-          auto itj = vSizesMap.find(vj);
-
-          // smallest tet edge
-          if(iti == vSizesMap.end() || iti->second > l) vSizesMap[vi] = l;
-          if(itj == vSizesMap.end() || itj->second > l) vSizesMap[vj] = l;
-        }
-      }
-    }
-
-    for(auto rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion();
-        ++rit) {
-      std::vector<GVertex *> const &vertices = (*rit)->embeddedVertices();
-      for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-        MVertex *v = (*it)->getMeshVertex(0);
-        double l = (*it)->prescribedMeshSizeAtVertex();
-        auto itv = vSizesMap.find(v);
-        if(itv == vSizesMap.end() || itv->second > l) vSizesMap[v] = l;
-      }
-    }
-
-    for(auto it = gr->model()->firstFace(); it != gr->model()->lastFace();
-        ++it) {
-      GFace *gf = *it;
-      for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-        setLcs(gf->triangles[i], vSizesMap, bndVertices);
-      }
-      for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
-        setLcs(gf->quadrangles[i], vSizesMap, bndVertices);
-      }
-    }
-    //if(sqr) {
-//      for(auto it = sqr->getTri().begin(); it != sqr->getTri().end(); ++it)
-  //      setLcs(it->first, vSizesMap, bndVertices);
-    //}
-    for(std::size_t i = 0; i < gr->tetrahedra.size(); i++)
-      setLcs(gr->tetrahedra[i], vSizesMap, bndVertices);
+    computeMeshSizesFromBoundary(gr, vSizesMap);
 
     // assign the vertex indices in the same order (by vertex number) as the
     // former MVertexPtrLessThan-sorted map

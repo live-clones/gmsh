@@ -338,7 +338,8 @@ namespace QuadOptimizer {
     bool debug = CTX::instance()->mesh.saveDebugFiles;
 
     transferSeamGEdgesVerticesToGFace(m);
-    quadMeshingOfSimpleFacesWithPatterns(m, .02);
+    if(CTX::instance()->mesh.packPatterns)
+      quadMeshingOfSimpleFacesWithPatterns(m, .02);
 
     if(Msg::GetVerbosity() == 99) {
       std::vector<std::pair<SPoint3, int>> singularities;
@@ -672,12 +673,38 @@ namespace QuadOptimizer {
          CTX::instance()->mesh.packCleanupMethod != 1)
         closeFinalPatterns(finalSplitFaces, "post-fallback");
 
-      // V2 owns the final topology cleanup and nodal Winslow sweeps. Run it
-      // after PACK's validity fallbacks so no later split can invalidate the
-      // final smoothing, and the file written by Gmsh is the optimized mesh.
+      // V2 owns topology cleanup and nodal Winslow sweeps. Run it after PACK's
+      // legacy validity fallbacks; only the final validity repair below may
+      // change connectivity afterward, without moving the optimized nodes.
       if(CTX::instance()->mesh.packCleanupMethod == 1) {
         Msg::Info("PACK final cleanup: V2 with final nodal Winslow");
         optimizeQuads(m, "OptimizeQuadsFast", false);
+
+        // The final nodal sweeps above can still leave a concave or
+        // degenerate quad; splitting it along a valid diagonal cannot undo
+        // the smoothing, so the validity split has the last word.
+        std::size_t postNonConvexOrInvalid = 0, postSplit = 0,
+                    postRejected = 0;
+        for(GFace *gf : m->getFaces()) {
+          if(keepRawMatchedQuads ||
+             terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
+            continue;
+          const WarpedQuadrangleSplitResult split =
+            splitExcessivelyWarpedQuadrangles(
+              gf, std::numeric_limits<double>::max(), {}, {}, {},
+              [](GFace *face, MQuadrangle *quad) {
+                return !QuadOptimizer::isValidFinalQuadrangle(face, quad);
+              },
+              {}, true);
+          postNonConvexOrInvalid +=
+            split.nonConvexOrInvalid + split.selectedByRequirement;
+          postSplit += split.split;
+          postRejected += split.rejectedInvalid + split.rejectedUnsupportedOrder;
+        }
+        if(postSplit) m->deleteVertexArrays();
+        Msg::Info("PACK post-V2 quad validity: concaveOrInvalid=%zu split=%zu "
+                  "rejected=%zu",
+                  postNonConvexOrInvalid, postSplit, postRejected);
       }
 
       if(Msg::GetVerbosity() >= 4) {
@@ -703,11 +730,13 @@ namespace QuadOptimizer {
 
   // Mesh.PackTargetSize is the single physical-size control for PACK. Also
   // recognize the historical uniform `-clmin h -clmax h` spelling: it must
-  // drive the same bounded 3D pipeline on native CAD faces. Keep legacy
-  // variable-size behavior otherwise. The scope restores the public context
-  // after generation so a subsequent operation can use other settings.
+  // drive the same bounded 3D pipeline on native CAD faces. With variable
+  // sizes (e.g. a size field), only the implicit recombination applies. The
+  // scope restores the public context after generation so a subsequent
+  // operation can use other settings.
   struct PackTargetSizeScope::State {
     bool active = false;
+    bool packing = false;
     int recombineAll = 0;
     int minCurveNodes = 0;
     int smoothingPasses = 0;
@@ -760,13 +789,18 @@ namespace QuadOptimizer {
         std::isfinite(mesh.lcMin) && std::isfinite(mesh.lcMax) &&
         std::abs(mesh.lcMax - mesh.lcMin) <=
           1.e-12 * std::max({1., mesh.lcMin, mesh.lcMax});
-      active = mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
-               (mesh.packTargetSize > 0. || uniformLegacySize) &&
+      packing = mesh.algo2d == ALGO_2D_PACK_PRLGRMS;
+      active = packing && (mesh.packTargetSize > 0. || uniformLegacySize) &&
                !(mesh.optimizeQuadsMinimumEdgeLength > 0.) &&
                !(mesh.optimizeQuadsMaximumEdgeLength > 0.);
+      // PACK is a quad mesher: recombine its triangulation of the packed
+      // points whatever the size specification (uniform or a size field)
+      if(packing) {
+        recombineAll = mesh.recombineAll;
+        mesh.recombineAll = 1;
+      }
       if(!active) return;
 
-      recombineAll = mesh.recombineAll;
       minCurveNodes = mesh.minCurveNodes;
       smoothingPasses = mesh.nbSmoothing;
       forceAllPackedPoints = mesh.packForceAllPoints;
@@ -780,7 +814,6 @@ namespace QuadOptimizer {
       const double h = mesh.packTargetSize > 0. ?
                          mesh.packTargetSize :
                          .5 * (mesh.lcMin + mesh.lcMax);
-      mesh.recombineAll = 1;
       preserveDiscreteBoundaryLoops();
       mesh.minCurveNodes = 1;
       mesh.nbSmoothing =
@@ -801,9 +834,9 @@ namespace QuadOptimizer {
 
     ~State()
     {
-      if(!active) return;
       contextMeshOptions &mesh = CTX::instance()->mesh;
-      mesh.recombineAll = recombineAll;
+      if(packing) mesh.recombineAll = recombineAll;
+      if(!active) return;
       mesh.minCurveNodes = minCurveNodes;
       mesh.nbSmoothing = smoothingPasses;
       mesh.packForceAllPoints = forceAllPackedPoints;

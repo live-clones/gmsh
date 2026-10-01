@@ -113,6 +113,37 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
     _triangles.push_back(T2D);
   }
 
+  // A quad-dominant/quad-only face (e.g. from Mesh.Algorithm=9 with
+  // Recombine3DAll, or Mesh.Pack3D) would otherwise leave this local
+  // parametric-space background mesh nearly empty, since it was only ever
+  // built from _gf->triangles: the octree/ANN structures built from it
+  // below would then fail to locate almost every query point. Split each
+  // quadrangle into two triangles for this purpose, same deduplicated
+  // vertex map as above.
+  for(std::size_t i = 0; i < _gf->quadrangles.size(); i++) {
+    MQuadrangle *e = _gf->quadrangles[i];
+    MVertex *news[4];
+    for(int j = 0; j < 4; j++) {
+      MVertex *v = e->getVertex(j);
+      auto it = _3Dto2D.find(v);
+      MVertex *newv = nullptr;
+      if(it == _3Dto2D.end()) {
+        SPoint2 p;
+        reparamMeshVertexOnFace(v, _gf, p);
+        newv = new MVertex(p.x(), p.y(), 0.0);
+        _vertices.push_back(newv);
+        _3Dto2D[v] = newv;
+        _2Dto3D[newv] = v;
+        if(v->onWhat()->dim() < 2) myBCNodes.insert(p);
+      }
+      else
+        newv = it->second;
+      news[j] = newv;
+    }
+    _triangles.push_back(new MTriangle(news[0], news[1], news[2]));
+    _triangles.push_back(new MTriangle(news[0], news[2], news[3]));
+  }
+
 #if defined(HAVE_ANN)
   index = new ANNidx[2];
   dist = new ANNdist[2];
@@ -213,6 +244,18 @@ static void propagateValuesOnFace(GFace *_gf,
   for(std::size_t k = 0; k < _gf->triangles.size(); k++) {
     MTriangle *t = _gf->triangles[k];
     SElement se(t);
+    l.addToMatrix(myAssembler, &se);
+  }
+  // Vertices are numbered from both triangles and quadrangles above (see
+  // vs, populated from _gf->quadrangles too): a quad-dominant/quad-only
+  // face (e.g. from Mesh.Algorithm=9/Recombine3DAll) would otherwise leave
+  // most of its vertices with an empty matrix row -- a degenerate system
+  // that has been seen to hang the CSR solver's column-sort step
+  // (linearSystemCSR.cpp:sortColumns_ following a chain that never
+  // reaches its 0 sentinel) instead of just solving a trivial system.
+  for(std::size_t k = 0; k < _gf->quadrangles.size(); k++) {
+    MQuadrangle *q = _gf->quadrangles[k];
+    SElement se(q);
     l.addToMatrix(myAssembler, &se);
   }
 
@@ -578,10 +621,19 @@ double backgroundMesh::operator()(double u, double v, double w) const
 #if defined(HAVE_ANN)
     if(uv_kdtree->nPoints() < 2) return -1000.;
     double pt[3] = {u, v, 0.0};
-#pragma omp critical(backgroundMeshANN) // just to avoid crash (still incorrect) - should use nanoflann
-    uv_kdtree->annkSearch(pt, 2, index, dist);
-    SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
-    SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
+    // index/dist are shared mutable members: a search result read here
+    // could otherwise be clobbered by another thread's search between the
+    // write below and the read that follows, so use call-local (hence
+    // thread-local) buffers instead -- only the ANN call itself, whose own
+    // thread-safety is unclear, still needs to be serialized.
+    ANNidx localIdx[2];
+    ANNdist localDist[2];
+#pragma omp critical(backgroundMeshANN)
+    uv_kdtree->annkSearch(pt, 2, localIdx, localDist);
+    SPoint3 p1(nodes[localIdx[0]][0], nodes[localIdx[0]][1],
+              nodes[localIdx[0]][2]);
+    SPoint3 p2(nodes[localIdx[1]][0], nodes[localIdx[1]][1],
+              nodes[localIdx[1]][2]);
     SPoint3 pnew;
     double d;
     signedDistancePointLine(p1, p2, SPoint3(u, v, 0.), d, pnew);
@@ -609,12 +661,17 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     double angle = 0.;
     if(angle_kdtree->nPoints() >= NBANN) {
       double pt[3] = {u, v, 0.0};
-#pragma omp critical(getAngleANN1) // just to avoid crash (still incorrect) - should use nanoflann
-      angle_kdtree->annkSearch(pt, NBANN, index, dist);
+      // see the comment in operator() above: call-local buffers, not the
+      // shared index/dist members, so concurrent calls can't clobber each
+      // other's results between the search and the read below
+      ANNidx localIdx[NBANN];
+      ANNdist localDist[NBANN];
+#pragma omp critical(getAngleANN1)
+      angle_kdtree->annkSearch(pt, NBANN, localIdx, localDist);
       double SINE = 0.0, COSINE = 0.0;
       for(int i = 0; i < NBANN; i++) {
-        SINE += _sin[index[i]];
-        COSINE += _cos[index[i]];
+        SINE += _sin[localIdx[i]];
+        COSINE += _cos[localIdx[i]];
       }
       angle = atan2(SINE, COSINE) / 4.0;
     }
@@ -640,10 +697,15 @@ double backgroundMesh::getAngle(double u, double v, double w) const
 #if defined(HAVE_ANN)
     if(uv_kdtree->nPoints() < 2) return -1000.0;
     double pt[3] = {u, v, 0.0};
-#pragma omp critical(getAngleANN2) // just to avoid crash (still incorrect) - should use nanoflann
-    uv_kdtree->annkSearch(pt, 2, index, dist);
-    SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
-    SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
+    // see the comment in operator() above: call-local, not shared, buffers
+    ANNidx localIdx[2];
+    ANNdist localDist[2];
+#pragma omp critical(getAngleANN2)
+    uv_kdtree->annkSearch(pt, 2, localIdx, localDist);
+    SPoint3 p1(nodes[localIdx[0]][0], nodes[localIdx[0]][1],
+              nodes[localIdx[0]][2]);
+    SPoint3 p2(nodes[localIdx[1]][0], nodes[localIdx[1]][1],
+              nodes[localIdx[1]][2]);
     SPoint3 pnew;
     double d;
     signedDistancePointLine(p1, p2, SPoint3(u, v, 0.), d, pnew);

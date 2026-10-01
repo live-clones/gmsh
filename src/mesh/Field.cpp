@@ -27,10 +27,13 @@
 #include "BackgroundMeshTools.h"
 #include "STensor3.h"
 #include "ExtrudeParams.h"
-#include "automaticMeshSizeField.h"
+#if defined(HAVE_OCTREE_SIZE_FIELD)
+#include "OctreeSizeField.h"
+#endif
 #include "fullMatrix.h"
 #include "SPoint3KDTree.h"
 #include "MVertex.h"
+#include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 
@@ -72,6 +75,7 @@ void FieldManager::reset()
 {
   for(auto it = begin(); it != end(); it++) { delete it->second; }
   clear();
+  _guidingField = 0;
 }
 
 Field *FieldManager::get(int id)
@@ -127,6 +131,7 @@ void FieldManager::deleteField(int id)
   }
   delete it->second;
   erase(it);
+  if(id == _guidingField) _guidingField = 0;
 }
 
 // StructuredField
@@ -3313,9 +3318,11 @@ FieldManager::FieldManager()
     new FieldFactoryT<AttractorAnisoCurveField>();
 #endif
   mapTypeName["MaxEigenHessian"] = new FieldFactoryT<MaxEigenHessianField>();
-  mapTypeName["AutomaticMeshSizeField"] =
-    new FieldFactoryT<automaticMeshSizeField>();
+#if defined(HAVE_OCTREE_SIZE_FIELD)
+  mapTypeName["AutomaticMeshSizeField"] = new FieldFactoryT<OctreeSizeField>();
+#endif
   _backgroundField = -1;
+  _guidingField = 0;
 }
 
 void FieldManager::initialize()
@@ -3389,6 +3396,36 @@ void Field::putOnView(PView *view, int comp)
   view->setChanged(true);
 }
 #endif
+
+void FieldManager::setGuidingField(int iView)
+{
+  Field *f = get(_guidingField);
+  if(!f) {
+    const int reservedId = 1000000;
+    int id = std::max(maxId() + 1, reservedId);
+    f = newField(id, "PostView");
+    if(!f) return;
+    _guidingField = id;
+  }
+  f->options["ViewIndex"]->numericalValue(iView);
+}
+
+void FieldManager::clearGuidingField()
+{
+  if(get(_guidingField)) deleteField(_guidingField);
+  _guidingField = 0;
+}
+
+Field *FieldManager::getDirectionField()
+{
+  Field *f = get(_guidingField);
+  if(f) return f;
+  if(_backgroundField > 0) {
+    f = get(_backgroundField);
+    if(f && f->numComponents() == 3) return f;
+  }
+  return nullptr;
+}
 
 void FieldManager::setBackgroundMesh(int iView)
 {

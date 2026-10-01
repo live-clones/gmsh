@@ -7419,6 +7419,12 @@ double opt_mesh_pack_force_all_points(OPT_ARGS_NUM)
   return CTX::instance()->mesh.packForceAllPoints;
 }
 
+double opt_mesh_pack_patterns(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.packPatterns = (int)val;
+  return CTX::instance()->mesh.packPatterns;
+}
+
 double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

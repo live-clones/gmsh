@@ -44,7 +44,7 @@ public:
   void computePyramids(double minQuality);
 
   void selectCellsGreedy(std::array<bool,nbCellTypes> cellType);
-  
+
   unsigned int nbSelectedHexes() const;
   unsigned int nbSelectedPrisms() const;
   unsigned int nbSelectedPyramids() const;

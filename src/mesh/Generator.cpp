@@ -54,6 +54,7 @@
 #include "simple3D.h"
 // #include "yamakawa.h"
 #include "pointInsertion.h"
+#include "pointInsertionFlat.h"
 #endif
 
 #if defined(HAVE_OPTHOM)
@@ -762,7 +763,12 @@ static void Mesh2D(GModel *m)
   }
 
 #if defined(HAVE_QUADOPTIMIZER)
-  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS)
+  // Skip the pattern-based/cleanup quad finalization pass when a 3D
+  // hex-combine (RTREE) is requested: it re-touches surface mesh sizes
+  // and point positions that Pack3D placed in 3D specifically for the
+  // combine step, breaking them.
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_RTREE)
     QuadOptimizer::finishPackMesh(m);
 #else
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) {
@@ -965,15 +971,8 @@ static void Mesh3D(GModel *m)
       GRegion *gr = connected[i][j];
       bool treat_region_ok = false;
       if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
-        if(old_algo_hexa()) {
-          Filler f;
-          f.treat_region(gr);
-          treat_region_ok = true;
-        }
-        else {
-          Filler3D f;
-          treat_region_ok = f.treat_region(gr);
-        }
+        fillRegionFlat(gr);
+        treat_region_ok = true;
       }
 
       if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
@@ -1637,6 +1636,15 @@ void GenerateMesh(GModel *m, int ask)
     }
     if(old == 2 && ask == 1 && exists) doIt = true;
     if(old == 2 && ask == 2 && exists) doIt = true;
+    if(getenv("GMSH_DEBUG_BGMESH")) {
+      std::size_t nTri = 0;
+      for(GFace *gf : m->getFaces()) nTri += gf->getNumMeshElements();
+      Msg::Info("- debug: before BuildBackgroundMeshAndGuidingField: old=%d "
+                "ask=%d exists=%d overwriteGModelMesh=%d doIt=%d "
+                "faceTriangles=%zu",
+                old, ask, (int)exists, (int)overwriteGModelMesh, (int)doIt,
+                nTri);
+    }
     if(doIt) {
       bool deleteGModelMeshAfter =
         true; // mesh saved in background, no longer needed

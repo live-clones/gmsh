@@ -145,9 +145,12 @@ struct Solution {
     double cost = 0.0; // sum w_i z_i
 };
 
-// decreasing weights in N; lock if N<=1 by returning +inf
+// decreasing weights in N; only unmeshed (degenerate) curves are locked: a
+// single-segment curve can still be flipped up to 2 segments, and must be
+// allowed to, or a face bounded only by such curves stays odd forever (and,
+// since odd faces always come in pairs, forces another odd face elsewhere)
 static inline double weight_from_N(int Ni) {
-    if (Ni <= 1) return std::numeric_limits<double>::infinity(); // locked
+    if (Ni <= 0) return std::numeric_limits<double>::infinity(); // locked
     return 1.0 / double(Ni); // simple decreasing rule
 }
 
@@ -235,8 +238,8 @@ Solution compute_weighted_even_faces(const vector<int>& N,
     for (int i = 0; i < m; ++i) {
         if (!z[i]) continue;
         ++flips;
-        if (N[i] > 0) n[i] = N[i] - 1;   // prefer flipping down if possible
-        else          n[i] = 1;          // N[i]==0 -> flip up to 1
+        if (N[i] > 1) n[i] = N[i] - 1;   // prefer flipping down if possible
+        else          n[i] = N[i] + 1;   // never down to 0 segments
     }
 
     return {n, true, flips, bestCost};
@@ -313,6 +316,11 @@ void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<in
   //  }
 
   auto sol = compute_weighted_even_faces(N, faces);
+  if(!sol.ok) {
+    Msg::Warning("Curve quantization for even surface subdivision failed, "
+                 "keeping the current curve meshes");
+    return;
+  }
   Msg::Debug("Curve quantization: flips=%d, weighted cost=%g",
              sol.flips, sol.cost);
   N = sol.n;

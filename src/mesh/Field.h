@@ -145,6 +145,7 @@ public:
 class FieldManager : public std::map<int, Field *> {
 private:
   int _backgroundField;
+  int _guidingField;
   std::vector<int> _boundaryLayerFields;
 
 public:
@@ -176,6 +177,14 @@ public:
       addBoundaryLayerFieldId(tags[i]);
   }
   inline int getBackgroundField() { return _backgroundField; }
+  // scaled cross field of the PACK/QuadQS meshers, kept apart from the
+  // background (size) field, under an id no user field is expected to use
+  void setGuidingField(int iView);
+  void clearGuidingField();
+  inline int getGuidingField() { return _guidingField; }
+  // the guiding field if any, else the background field if it is a vector
+  // field, else nullptr
+  Field *getDirectionField();
   inline int getNumBoundaryLayerFields()
   {
     return (int)_boundaryLayerFields.size();

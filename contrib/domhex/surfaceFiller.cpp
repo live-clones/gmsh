@@ -198,12 +198,8 @@ static void packingOfOrientedCubes3D(GFace *gf,
                                      std::vector<SMetric3> &metrics)
 {
   FieldManager *fields = gf->model()->getFields();
-  if(fields->getBackgroundField() <= 0) {
-    Msg::Error("3D surface packing requires a scaled cross field");
-    return;
-  }
-  Field *crossField = fields->get(fields->getBackgroundField());
-  if(!crossField || crossField->numComponents() != 3) {
+  Field *crossField = fields->getDirectionField();
+  if(!crossField) {
     Msg::Error("3D surface packing requires a three-component scaled cross "
                "field");
     return;
