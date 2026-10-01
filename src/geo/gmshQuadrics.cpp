@@ -14,7 +14,7 @@
 #include "GFace.h"
 #include "MTriangle.h"
 #include "robustPredicates.h"
-#include "gmshLBFGS.h"
+#include "LBFGS.h"
 
 static double _tetcircumcenter(double a[3], double b[3], double c[3],
                                double d[3], double circumcenter[3])
@@ -138,36 +138,23 @@ void computeGradient(const std::vector<SPoint3> &points, const double params[6],
   }
 }
 
-static void bfgs_callback_cyl(const std::vector<double> &x, double &func,
-                              std::vector<double> &grad, void *ptr)
-{
-  std::vector<SPoint3> *points = (std::vector<SPoint3> *)ptr;
-  double p[6] = {x[0], x[1], x[2], x[3], x[4], x[5]};
-  func = costFunction(*points, p);
-  double g[6];
-  computeGradient(*points, p, g);
-  for(int i = 0; i < 6; i++) grad[i] = g[i];
-}
-
 void fitCylinder(std::vector<SPoint3> &points, double params[6])
 {
-  const int corr = 2;
-  GmshLBFGS::State state;
+  LBFGS::Options options;
+  options.memory = 2;
+  options.maxIterations = 500;
+  options.gradientTolerance = 1.e-12;
+  options.functionTolerance = 0.;
+  options.stepTolerance = 0.;
+  options.maxStepNorm = 0.;
   std::vector<double> x = {0., 0., 0., 0., 0., 1.};
-  GmshLBFGS::create(6, corr, x, state);
-  // Set stopping criteria
-  const double epsg = 1.e-12;
-  const double epsf = 0.;
-  const double epsx = 0.;
-  const int maxits = 500;
-  GmshLBFGS::setCond(state, epsg, epsf, epsx, maxits);
-
-  // Solve problem
-  GmshLBFGS::optimize(state, bfgs_callback_cyl, nullptr, &points);
-
-  // Get results
-  GmshLBFGS::Report rep;
-  GmshLBFGS::results(state, x, rep);
+  LBFGS::minimize(
+    x,
+    [&points](const std::vector<double> &p, std::vector<double> &grad) {
+      computeGradient(points, p.data(), grad.data());
+      return costFunction(points, p.data());
+    },
+    options);
   for(int i = 0; i < 6; i++) params[i] = x[i];
 }
 
