@@ -29,7 +29,6 @@ their own respective license:
 * stb: MIT License or public domain (stb_truetype)
 * tinyobjloader: MIT License
 * tinyxml2: Zlib License
-* untangle: No license, freely available for non-commercial purposes
 * voro++: BSD-type License
 * zipper: Zlib License
 
