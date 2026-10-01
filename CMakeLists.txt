@@ -33,7 +33,6 @@ endmacro()
 
 opt(3M "Enable proprietary 3M extension" OFF)
 opt(ALGLIB "Enable ALGLIB (used by some mesh optimizers)" ${DEFAULT})
-opt(ANN "Enable ANN (used for fast point search in mesh/post)" ${DEFAULT})
 opt(BAMG "Enable Bamg 2D anisotropic mesh generator" ${DEFAULT})
 opt(BOUNDARY_LAYERS "Enable boundary layer plugin" ${DEFAULT})
 opt(BLAS_LAPACK "Enable BLAS/Lapack for linear algebra (if Eigen if disabled)" OFF)
@@ -795,21 +794,6 @@ if(HAVE_FLTK OR ENABLE_GRAPHICS)
       include_directories(contrib/stb contrib/fonts)
       set_config_option(HAVE_OPENGL "OpenGL")
     endif()
-  endif()
-endif()
-
-if(ENABLE_ANN)
-  find_library(ANN_LIB ANN PATH_SUFFIXES lib)
-  find_path(ANN_INC "ANN.h" PATH_SUFFIXES src include ANN)
-  if(ENABLE_SYSTEM_CONTRIB AND ANN_LIB AND ANN_INC)
-    message(STATUS "Using system version of ANN")
-    list(APPEND EXTERNAL_LIBRARIES ${ANN_LIB})
-    list(APPEND EXTERNAL_INCLUDES ${ANN_INC})
-    set_config_option(HAVE_ANN "ANN")
-  elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/ANN)
-    add_subdirectory(contrib/ANN)
-    include_directories(contrib/ANN/include)
-    set_config_option(HAVE_ANN "ANN[contrib]")
   endif()
 endif()
 
@@ -2435,7 +2419,7 @@ message(STATUS " * C++ compiler: " ${CMAKE_CXX_COMPILER})
 message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
 
-mark_as_advanced(ANN_INC ANN_LIB AVCODEC_LIB AVFORMAT_LIB AVUTIL_LIB
+mark_as_advanced(AVCODEC_LIB AVFORMAT_LIB AVUTIL_LIB
                  CGNS_INC FFMPEG_INC SWSCALE_LIB GMM_INC
                  MMG_INC MMG_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB

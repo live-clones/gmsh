@@ -47,10 +47,6 @@
 #include <unistd.h>
 #endif
 
-#if defined(HAVE_ANN)
-#include "ANN/ANN.h"
-#endif
-
 Field::~Field()
 {
   for(auto it = options.begin(); it != options.end(); ++it) delete it->second;
@@ -2140,24 +2136,17 @@ struct AttractorInfo {
   double u, v;
 };
 
-#if defined(HAVE_ANN)
-
 class AttractorAnisoCurveField : public Field {
 private:
-  ANNkd_tree *_kdTree;
-  ANNpointArray _zeroNodes;
-  ANNidxArray _index;
-  ANNdistArray _dist;
+  SPoint3Search _search;
   std::list<int> _curveTags;
   double _dMin, _dMax, _lMinTangent, _lMaxTangent, _lMinNormal, _lMaxNormal;
   int _sampling;
   std::vector<SVector3> _tg;
 
 public:
-  AttractorAnisoCurveField() : _kdTree(nullptr), _zeroNodes(nullptr)
+  AttractorAnisoCurveField()
   {
-    _index = new ANNidx[1];
-    _dist = new ANNdist[1];
     _sampling = 20;
     updateNeeded = true;
     _dMin = 0.1;
@@ -2215,13 +2204,6 @@ public:
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
   }
   virtual bool isotropic() const { return false; }
-  ~AttractorAnisoCurveField()
-  {
-    if(_kdTree) delete _kdTree;
-    if(_zeroNodes) annDeallocPts(_zeroNodes);
-    delete[] _index;
-    delete[] _dist;
-  }
   const char *getName() { return "AttractorAnisoCurve"; }
   std::string getDescription()
   {
@@ -2232,14 +2214,8 @@ public:
   }
   void update()
   {
-    if(_zeroNodes) {
-      annDeallocPts(_zeroNodes);
-      delete _kdTree;
-    }
-    int totpoints = _sampling * _curveTags.size();
-    if(totpoints) { _zeroNodes = annAllocPts(totpoints, 3); }
-    _tg.resize(totpoints);
-    int k = 0;
+    _search.clear();
+    _tg.clear();
     for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
       GEdge *e = GModel::current()->getEdgeByTag(*it);
       if(e) {
@@ -2248,31 +2224,29 @@ public:
           Range<double> b = e->parBounds(0);
           double t = b.low() + u * (b.high() - b.low());
           GPoint gp = e->point(t);
-          SVector3 d = e->firstDer(t);
-          _zeroNodes[k][0] = gp.x();
-          _zeroNodes[k][1] = gp.y();
-          _zeroNodes[k][2] = gp.z();
-          _tg[k] = d;
-          _tg[k].normalize();
-          k++;
+          _search.points().push_back(SPoint3(gp.x(), gp.y(), gp.z()));
+          _tg.push_back(e->firstDer(t));
+          _tg.back().normalize();
         }
       }
       else {
         Msg::Warning("Unknown curve %d", *it);
       }
     }
-    _kdTree = new ANNkd_tree(_zeroNodes, totpoints, 3);
+    _search.build();
     updateNeeded = false;
   }
   void operator()(double x, double y, double z, SMetric3 &metr,
                   GEntity *ge = nullptr)
   {
     if(updateNeeded) update();
-    double xyz[3] = {x, y, z};
-    // critical section to avoid crash (still incorrect) - use Distance instead
-#pragma omp critical(AttractorAnisoCurveFieldMetric)
-    _kdTree->annkSearch(xyz, 1, _index, _dist);
-    double d = sqrt(_dist[0]);
+    double d2;
+    std::size_t i = _search.nearest(SPoint3(x, y, z), &d2);
+    if(i == _search.size()) {
+      metr = SMetric3(1. / (MAX_LC * MAX_LC));
+      return;
+    }
+    double d = sqrt(d2);
     double lTg = d < _dMin ? _lMinTangent :
                  d > _dMax ? _lMaxTangent :
                              _lMinTangent + (_lMaxTangent - _lMinTangent) *
@@ -2281,7 +2255,7 @@ public:
                 d > _dMax ? _lMaxNormal :
                             _lMinNormal + (_lMaxNormal - _lMinNormal) *
                                             (d - _dMin) / (_dMax - _dMin);
-    SVector3 t = _tg[_index[0]];
+    SVector3 t = _tg[i];
     SVector3 n0 = crossprod(t, fabs(t(0)) > fabs(t(1)) ? SVector3(0, 1, 0) :
                                                          SVector3(1, 0, 0));
     SVector3 n1 = crossprod(t, n0);
@@ -2290,16 +2264,11 @@ public:
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
     if(updateNeeded) update();
-    double xyz[3] = {X, Y, Z};
-    // critical section to avoid crash (still incorrect) - use Distance instead
-#pragma omp critical(AttractorAnisoCurveFieldScalar)
-    _kdTree->annkSearch(xyz, 1, _index, _dist);
-    double d = sqrt(_dist[0]);
-    return std::max(d, 0.05);
+    double d2;
+    if(_search.nearest(SPoint3(X, Y, Z), &d2) == _search.size()) return MAX_LC;
+    return std::max(sqrt(d2), 0.05);
   }
 };
-
-#endif // ANN
 
 class OctreeField : public Field {
 private:
@@ -3308,10 +3277,8 @@ FieldManager::FieldManager()
   mapTypeName["ExternalProcess"] = new FieldFactoryT<ExternalProcessField>();
   mapTypeName["MathEval"] = new FieldFactoryT<MathEvalField>();
   mapTypeName["MathEvalAniso"] = new FieldFactoryT<MathEvalFieldAniso>();
-#if defined(HAVE_ANN)
   mapTypeName["AttractorAnisoCurve"] =
     new FieldFactoryT<AttractorAnisoCurveField>();
-#endif
   mapTypeName["MaxEigenHessian"] = new FieldFactoryT<MaxEigenHessianField>();
   mapTypeName["AutomaticMeshSizeField"] =
     new FieldFactoryT<automaticMeshSizeField>();

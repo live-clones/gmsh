@@ -7,78 +7,31 @@
 #include "GEntity.h"
 #include "GEdge.h"
 #include "GFace.h"
-#include <vector>
+#include "MVertex.h"
 
-closestVertexFinder::closestVertexFinder(GEntity *ge, bool closure) : nbVtcs(0)
+closestVertexFinder::closestVertexFinder(GEntity *ge, bool closure)
 {
-#if defined(HAVE_ANN)
   std::set<MVertex *> vtcs;
   ge->addVerticesInSet(vtcs, closure);
-  nbVtcs = vtcs.size();
-  if(nbVtcs) {
-    vertex = new MVertex *[nbVtcs];
-    index = new ANNidx[1];
-    dist = new ANNdist[1];
-    vCoord = annAllocPts(nbVtcs, 3);
-    int k = 0;
-    auto vIter = vtcs.begin();
-    for(; vIter != vtcs.end(); ++vIter, ++k) {
-      MVertex *mv = *vIter;
-      vCoord[k][0] = mv->x();
-      vCoord[k][1] = mv->y();
-      vCoord[k][2] = mv->z();
-      vertex[k] = mv;
-    }
-    kdtree = new ANNkd_tree(vCoord, nbVtcs, 3);
-  }
-#else
-  Msg::Warning(
-    "Gmsh must be compiled with ANN support for finding closest nodes");
-#endif
-}
-
-closestVertexFinder::~closestVertexFinder()
-{
-#if defined(HAVE_ANN)
-  if(nbVtcs) {
-    delete kdtree;
-    annDeallocPts(vCoord);
-    delete[] vertex;
-    delete[] index;
-    delete[] dist;
-  }
-#endif
+  _vertices.assign(vtcs.begin(), vtcs.end());
+  for(auto v : _vertices) _search.points().push_back(v->point());
+  _search.build();
 }
 
 MVertex *closestVertexFinder::operator()(const SPoint3 &p)
 {
-#if defined(HAVE_ANN)
-  if(nbVtcs == 0) return nullptr;
-  double xyz[3] = {p.x(), p.y(), p.z()};
-  kdtree->annkSearch(xyz, 1, index, dist);
-  return vertex[index[0]];
-#else
-  return nullptr;
-#endif
+  std::size_t i = _search.nearest(p);
+  return i < _vertices.size() ? _vertices[i] : nullptr;
 }
 
 MVertex *closestVertexFinder::operator()(const SPoint3 &p,
                                          const std::vector<double> &tfo)
 {
-#if defined(HAVE_ANN)
-  if(nbVtcs == 0) return nullptr;
+  if(tfo.size() != 16) return (*this)(p);
   double ori[4] = {p.x(), p.y(), p.z(), 1};
-  double xyz[4] = {0, 0, 0, 0};
-  if(tfo.size() == 16) {
-    int idx = 0;
-    for(int i = 0; i < 4; i++)
-      for(int j = 0; j < 4; j++) xyz[i] += tfo[idx++] * ori[j];
-  }
-  else
-    std::memcpy(xyz, ori, 3 * sizeof(double));
-  kdtree->annkSearch(xyz, 1, index, dist);
-  return vertex[index[0]];
-#else
-  return nullptr;
-#endif
+  double xyz[3] = {0, 0, 0};
+  int idx = 0;
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 4; j++) xyz[i] += tfo[idx++] * ori[j];
+  return (*this)(SPoint3(xyz));
 }
