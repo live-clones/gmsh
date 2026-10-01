@@ -34,12 +34,6 @@ public:
 
 
 // Optimize the mesh of the region using gmsh's algo
-class untangleMeshGRegion {
-public:
-  void operator()(GRegion *, bool always = false);
-};
-
-// Optimize the mesh of the region using gmsh's algo
 class optimizeMeshGRegion {
 public:
   void operator()(GRegion *, bool always = false);
