@@ -294,7 +294,7 @@ public:
   void checkPointMaxNumbers()
   {
     _checkPointedMaxVertexNum = _maxVertexNum;
-    _checkPointedMaxVertexNum = _maxVertexNum;
+    _checkPointedMaxElementNum = _maxElementNum;
   }
   void getCheckPointedMaxNumbers(std::size_t &maxv, std::size_t &maxe) const
   {

@@ -35,7 +35,7 @@
 #include "MeshOptCommon.h"
 #include "MeshOpt.h"
 
-#include "gmshLBFGS.h"
+#include "LBFGS.h"
 
 MeshOpt::MeshOpt(const std::map<MElement *, GEntity *> &element2entity,
                  const std::map<MElement *, GEntity *> &bndEl2Ent,
@@ -159,47 +159,37 @@ void MeshOpt::calcScale(std::vector<double> &scale)
 
 void MeshOpt::updateResults() { _objFunc->updateResults(); }
 
-static void evalObjGradFunc(const std::vector<double> &x, double &Obj,
-                            std::vector<double> &gradObj, void *MOInst)
-{
-  std::fill(gradObj.begin(), gradObj.end(), 0.);
-  (static_cast<MeshOpt *>(MOInst))->evalObjGrad(x, Obj, gradObj);
-}
-
-static void printProgressFunc(const std::vector<double> &x, double Obj,
-                              void *MOInst)
-{
-  (static_cast<MeshOpt *>(MOInst))->printProgress(x, Obj);
-}
-
 void MeshOpt::runOptim(std::vector<double> &x,
                        const std::vector<double> &initGradObj, int itMax,
                        int iBar)
 {
-  static const double EPSG = 0.;
-  static const double EPSF = 0.;
-  static const double EPSX = 0.;
-
   _iter = 0;
 
-  std::vector<double> s;
-  calcScale(s);
+  LBFGS::Options options;
+  options.maxIterations = itMax;
+  options.gradientTolerance = 0.;
+  options.functionTolerance = 0.;
+  options.stepTolerance = 0.;
+  options.maxStepNorm = 0.;
+  calcScale(options.scale);
+  options.scalePreconditioner = true;
+  options.progress = [this](int, const std::vector<double> &xp, double f,
+                            double, double) { printProgress(xp, f); };
 
   int iterationscount = 0, nfev = 0, terminationtype = -1;
-
-  GmshLBFGS::State state;
-  GmshLBFGS::Report rep;
   try {
-    GmshLBFGS::create((int)std::min<size_t>(15, x.size()), x, state);
-    GmshLBFGS::setScale(state, s);
-    GmshLBFGS::setPrecScale(state);
-    GmshLBFGS::setCond(state, EPSG, EPSF, EPSX, itMax);
-    GmshLBFGS::setXRep(state, true);
-    GmshLBFGS::optimize(state, evalObjGradFunc, printProgressFunc, this);
-    GmshLBFGS::results(state, x, rep);
-    iterationscount = rep.iterationscount;
-    nfev = rep.nfev;
-    terminationtype = rep.terminationtype;
+    LBFGS::Result result = LBFGS::minimize(
+      x,
+      [this](const std::vector<double> &xe, std::vector<double> &gradObj) {
+        double obj = 0.;
+        std::fill(gradObj.begin(), gradObj.end(), 0.);
+        evalObjGrad(xe, obj, gradObj);
+        return obj;
+      },
+      options);
+    iterationscount = result.iterations;
+    nfev = result.functionEvaluations;
+    terminationtype = result.terminationType;
   } catch(const std::exception &e) {
     Msg::Error("%s", e.what());
   }

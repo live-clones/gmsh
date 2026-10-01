@@ -2149,7 +2149,7 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
   }
 
   auto invalid = [&]() {
-    Msg::Warning("Skipping invalid face data in MSH4 file");
+    Msg::Warning("Skipping invalid face data in MSH%g file", version);
     return true;
   };
   if(numBlocks > numFaces || (!numBlocks && numFaces)) return invalid();
@@ -2208,6 +2208,24 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
     if(numFaces > 100000 && progressDue(k + 1, numFaces))
       Msg::ProgressMeter(k + 1, true, "Reading faces");
   }
+  return true;
+}
+
+// a node or an element read in a model where its tag is already taken: the
+// one there if the same (merged files can share them, e.g. the partitions of
+// a mesh), or a conflict
+static bool sameNode(MVertex *v, MVertex *w)
+{
+  double tol =
+    1e-12 * (1. + std::abs(w->x()) + std::abs(w->y()) + std::abs(w->z()));
+  return v->distance(w) <= tol;
+}
+
+static bool sameElement(MElement *e, MElement *f)
+{
+  if(e->getTypeForMSH() != f->getTypeForMSH()) return false;
+  for(std::size_t i = 0; i < e->getNumVertices(); i++)
+    if(e->getVertex(i) != f->getVertex(i)) return false;
   return true;
 }
 
@@ -2316,6 +2334,7 @@ int GModel::_readMSH4(const std::string &name)
       partitioned = true;
     }
     else if(!strncmp(&str[1], "Nodes", 5)) {
+      std::size_t conflicts = 0; // tags of other nodes already there
       bool hadNodesBefore =
         !_vertexVectorCache.empty() || !_vertexMapCache.empty();
       bool dense = false;
@@ -2359,6 +2378,8 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadNodesBefore) // should not happen
               Msg::Warning("Skipping duplicate node %zu", v->getNum());
+            else if(!sameNode(v, _vertexVectorCache[v->getNum()]))
+              conflicts++;
             delete v;
           }
         }
@@ -2376,14 +2397,20 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadNodesBefore) // should not happen
               Msg::Warning("Skipping duplicate node %zu", v->getNum());
+            else if(!sameNode(v, _vertexMapCache[v->getNum()]))
+              conflicts++;
             delete v;
           }
         }
       }
       delete[] verticesRead;
+      if(conflicts)
+        Msg::Warning("Skipping %zu nodes whose tags are those of other nodes "
+                     "in the model", conflicts);
     }
     else if(!strncmp(&str[1], "Elements", 8) ||
             !strncmp(&str[1], "Polytopes", 9)) {
+      std::size_t conflicts = 0; // (as for the nodes)
       bool hadElementsBefore =
         !_elementVectorCache.empty() || !_elementMapCache.empty();
       bool dense = false;
@@ -2433,6 +2460,8 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadElementsBefore) // should not happen
               Msg::Warning("Skipping duplicate element %zu", e->getNum());
+            else if(!sameElement(e, _elementVectorCache[e->getNum()].first))
+              conflicts++;
             delete e;
           }
         }
@@ -2452,11 +2481,16 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadElementsBefore) // should not happen
               Msg::Warning("Skipping duplicate element %zu", e->getNum());
+            else if(!sameElement(e, _elementMapCache[e->getNum()].first))
+              conflicts++;
             delete e;
           }
         }
       }
       delete[] elementsRead;
+      if(conflicts)
+        Msg::Warning("Skipping %zu elements whose tags are those of other "
+                     "elements in the model", conflicts);
     }
     else if(!strncmp(&str[1], "Edges", 5)) {
       bool ok = readMSH4Edges(this, fp, binary, swap);

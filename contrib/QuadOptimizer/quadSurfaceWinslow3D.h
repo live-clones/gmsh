@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 // Coupled Winslow proposals in nodal mean planes. CAD acceptance stays in V2.
 #pragma once
-#include "gmshLBFGS.h"
+#include "LBFGS.h"
 #include <array>
 #include <algorithm>
 #include <cmath>
@@ -137,12 +137,12 @@ public:
     }
     return energy;
   }
-  GmshLBFGS::Result solve(std::vector<double> &x,int iterations=60) const {
-    x.assign(_variables,0.); GmshLBFGS::Options options;
+  LBFGS::Result solve(std::vector<double> &x,int iterations=60) const {
+    x.assign(_variables,0.); LBFGS::Options options;
     options.maxIterations=iterations; options.memory=10;
     options.gradientTolerance=1.e-6; options.functionTolerance=1.e-10;
     options.maxLineSearchSteps=20; options.verbose=0;
-    return GmshLBFGS::minimize(x,[&](const std::vector<double>&q,std::vector<double>&g){return evaluate(q,g);},options);
+    return LBFGS::minimize(x,[&](const std::vector<double>&q,std::vector<double>&g){return evaluate(q,g);},options);
   }
 };
 }} // namespace QuadOptimizer::SurfaceWinslow3D

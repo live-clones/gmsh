@@ -4,7 +4,7 @@
 
 #include "smallCavityWinslow.h"
 
-#include "gmshLBFGS.h"
+#include "LBFGS.h"
 
 #include <algorithm>
 #include <cmath>
@@ -441,7 +441,7 @@ namespace QuadOptimizer {
         data.epsilon = std::hypot(1.e-6,
                                   .2 * std::min(data.minimumJacobian, 0.));
 
-        GmshLBFGS::Options lbfgs;
+        LBFGS::Options lbfgs;
         lbfgs.maxIterations = options.maxInnerIterations;
         lbfgs.memory = static_cast<int>(std::min<std::size_t>(15, x.size()));
         lbfgs.gradientTolerance = options.gradientTolerance;
@@ -453,7 +453,7 @@ namespace QuadOptimizer {
                           std::vector<double> &g) {
           return energyAndGradient(data, coordinates, g);
         };
-        const GmshLBFGS::Result result = GmshLBFGS::minimize(x, fg, lbfgs);
+        const LBFGS::Result result = LBFGS::minimize(x, fg, lbfgs);
         output.lbfgsIterations += result.iterations;
         output.functionEvaluations += result.functionEvaluations;
         output.outerIterations = outer + 1;

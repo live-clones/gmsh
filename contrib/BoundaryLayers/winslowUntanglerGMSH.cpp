@@ -17,7 +17,7 @@
 
 #include "GmshMessage.h"
 #include "OS.h"
-#include "gmshLBFGS.h"
+#include "LBFGS.h"
 
 #include <algorithm>
 #include <array>
@@ -780,137 +780,6 @@ namespace {
     return w.energy;
   }
 
-  static double computeEnergyOnly2D(UntanglerDataGMSH &w,
-                                    const std::vector<double> &X)
-  {
-    const size_t nElements = w.triangles.size();
-    const double eps2 = w.eps * w.eps;
-    const int nthreads = numElementThreads(nElements);
-    std::vector<double> threadEnergy(nthreads, 0.);
-
-#if defined(_OPENMP)
-#pragma omp parallel num_threads(nthreads)
-#endif
-    {
-      int threadNum = 0;
-      int actualThreads = 1;
-#if defined(_OPENMP)
-      threadNum = omp_get_thread_num();
-      actualThreads = omp_get_num_threads();
-#endif
-      const size_t tBegin =
-        nElements * (size_t)threadNum / (size_t)actualThreads;
-      const size_t tEnd =
-        nElements * (size_t)(threadNum + 1) / (size_t)actualThreads;
-      double energyLocal = 0.;
-      for(size_t t = tBegin; t < tEnd; ++t) {
-        const auto &tri = w.triangles[t];
-        const auto &N = w.triNormals[t];
-        const double x0 = X[2 * tri[0] + 0], y0 = X[2 * tri[0] + 1];
-        const double x1 = X[2 * tri[1] + 0], y1 = X[2 * tri[1] + 1];
-        const double x2 = X[2 * tri[2] + 0], y2 = X[2 * tri[2] + 1];
-        const double J00 = x0 * N[0][0] + x1 * N[1][0] + x2 * N[2][0];
-        const double J10 = x0 * N[0][1] + x1 * N[1][1] + x2 * N[2][1];
-        const double J01 = y0 * N[0][0] + y1 * N[1][0] + y2 * N[2][0];
-        const double J11 = y0 * N[0][1] + y1 * N[1][1] + y2 * N[2][1];
-        const double det = J00 * J11 - J01 * J10;
-
-        const double chi = coefChi(det, eps2);
-        const double invChi = 1. / chi;
-        const double traceJtJ = J00 * J00 + J10 * J10 + J01 * J01 + J11 * J11;
-        const double fEps = traceJtJ * invChi;
-        const double gEps = (det * det + 1.) * invChi;
-        energyLocal += fEps + w.lambda * gEps;
-      }
-      threadEnergy[threadNum] = energyLocal;
-    }
-    w.profileThreadsMin = std::min(w.profileThreadsMin, nthreads);
-    w.profileThreadsMax = std::max(w.profileThreadsMax, nthreads);
-
-    double energy = 0.;
-    for(double e : threadEnergy) energy += e;
-    if(std::isnan(energy)) energy = std::numeric_limits<double>::max();
-    return energy;
-  }
-
-  static double computeEnergyOnly3D(UntanglerDataGMSH &w,
-                                    const std::vector<double> &X)
-  {
-    const size_t nElements = w.tetrahedra.size();
-    const double eps2 = w.eps * w.eps;
-    const int nthreads = numElementThreads(nElements);
-    std::vector<double> threadEnergy(nthreads, 0.);
-
-#if defined(_OPENMP)
-#pragma omp parallel num_threads(nthreads)
-#endif
-    {
-      int threadNum = 0;
-      int actualThreads = 1;
-#if defined(_OPENMP)
-      threadNum = omp_get_thread_num();
-      actualThreads = omp_get_num_threads();
-#endif
-      const size_t tBegin =
-        nElements * (size_t)threadNum / (size_t)actualThreads;
-      const size_t tEnd =
-        nElements * (size_t)(threadNum + 1) / (size_t)actualThreads;
-      double energyLocal = 0.;
-      for(size_t t = tBegin; t < tEnd; ++t) {
-        const TetKernelGMSH &K = w.tetKernels[t];
-        const double *N = K.n;
-        const double x0 = X[K.o[0] + 0], y0 = X[K.o[0] + 1],
-                     z0 = X[K.o[0] + 2];
-        const double x1 = X[K.o[1] + 0], y1 = X[K.o[1] + 1],
-                     z1 = X[K.o[1] + 2];
-        const double x2 = X[K.o[2] + 0], y2 = X[K.o[2] + 1],
-                     z2 = X[K.o[2] + 2];
-        const double x3 = X[K.o[3] + 0], y3 = X[K.o[3] + 1],
-                     z3 = X[K.o[3] + 2];
-        const double J00 =
-          x0 * N[0] + x1 * N[3] + x2 * N[6] + x3 * N[9];
-        const double J10 =
-          x0 * N[1] + x1 * N[4] + x2 * N[7] + x3 * N[10];
-        const double J20 =
-          x0 * N[2] + x1 * N[5] + x2 * N[8] + x3 * N[11];
-        const double J01 =
-          y0 * N[0] + y1 * N[3] + y2 * N[6] + y3 * N[9];
-        const double J11 =
-          y0 * N[1] + y1 * N[4] + y2 * N[7] + y3 * N[10];
-        const double J21 =
-          y0 * N[2] + y1 * N[5] + y2 * N[8] + y3 * N[11];
-        const double J02 =
-          z0 * N[0] + z1 * N[3] + z2 * N[6] + z3 * N[9];
-        const double J12 =
-          z0 * N[1] + z1 * N[4] + z2 * N[7] + z3 * N[10];
-        const double J22 =
-          z0 * N[2] + z1 * N[5] + z2 * N[8] + z3 * N[11];
-        const double det = J00 * (J11 * J22 - J12 * J21) -
-                           J01 * (J10 * J22 - J12 * J20) +
-                           J02 * (J10 * J21 - J11 * J20);
-
-        const double chi = coefChi(det, eps2);
-        const double invChi = 1. / chi;
-        const double chi13 = std::cbrt(chi);
-        const double invChi23 = 1. / (chi13 * chi13);
-        const double traceJtJ = J00 * J00 + J10 * J10 + J20 * J20 + J01 * J01 +
-                                J11 * J11 + J21 * J21 + J02 * J02 + J12 * J12 +
-                                J22 * J22;
-        const double fEps = traceJtJ * invChi23;
-        const double gEps = (det * det + 1.) * invChi;
-        energyLocal += fEps + w.lambda * gEps;
-      }
-      threadEnergy[threadNum] = energyLocal;
-    }
-    w.profileThreadsMin = std::min(w.profileThreadsMin, nthreads);
-    w.profileThreadsMax = std::max(w.profileThreadsMax, nthreads);
-
-    double energy = 0.;
-    for(double e : threadEnergy) energy += e;
-    if(std::isnan(energy)) energy = std::numeric_limits<double>::max();
-    return energy;
-  }
-
   static bool initializeEnergy(UntanglerDataGMSH &data,
                                const std::vector<double> &x)
   {
@@ -1003,7 +872,7 @@ namespace {
       data.eps =
         std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.JDetMin, 0.), 2));
 
-      GmshLBFGS::Options options;
+      LBFGS::Options options;
       options.maxIterations = iterMaxInner;
       options.memory = (int)std::min<size_t>(requestedLBFGSMemory(), x.size());
       options.gradientTolerance = 1.e-4;
@@ -1011,18 +880,17 @@ namespace {
       options.stepTolerance = 1.e-12;
       options.maxLineSearchSteps = 80;
       options.verbose = 0;
-      options.numThreads = requestedNumThreads();
       int lastInner = 0;
       double lastGradNorm = 0.;
       double lastStep = 0.;
       if(data.dim == 3) {
-        options.iterationCallback =
-          [&lastInner, &lastGradNorm,
-           &lastStep](int inner, double /*f*/, double gradNorm, double step) {
-            lastInner = inner;
-            lastGradNorm = gradNorm;
-            lastStep = step;
-          };
+        options.progress = [&lastInner, &lastGradNorm, &lastStep](
+                             int inner, const std::vector<double> & /*x*/,
+                             double /*f*/, double gradNorm, double step) {
+          lastInner = inner;
+          lastGradNorm = gradNorm;
+          lastStep = step;
+        };
       }
 
       auto fg = [&data](const std::vector<double> &xin,
@@ -1035,17 +903,9 @@ namespace {
         data.profileCallbackCalls++;
         return f;
       };
-      auto fOnly = [&data](const std::vector<double> &xin) {
-        const double t1 = TimeOfDay();
-        const double f = (data.dim == 2) ? computeEnergyOnly2D(data, xin) :
-                                           computeEnergyOnly3D(data, xin);
-        data.profileCallback += TimeOfDay() - t1;
-        data.profileCallbackCalls++;
-        return f;
-      };
 
       const double tLBFGS = TimeOfDay();
-      GmshLBFGS::Result result = GmshLBFGS::minimize(x, fg, fOnly, options);
+      LBFGS::Result result = LBFGS::minimize(x, fg, options);
       data.profileLBFGS += TimeOfDay() - tLBFGS;
       data.profileLBFGSFunction += result.timeFunction;
       data.profileLBFGSDirection += result.timeDirection;
