@@ -24,7 +24,7 @@ namespace netgen
   protected:
     const CSGeometry & geom;
     // identified faces, index sorted
-    INDEX_2_HASHTABLE<int> identfaces;
+    ClosedHashTable<IVec<2>, int> identfaces;
     int nr;
 
   public:
@@ -38,13 +38,13 @@ namespace netgen
 
     /// can identify both special points (fixed direction)
     /// (identified points, same tangent)
-    virtual int Identifyable (const SpecialPoint & sp1, const SpecialPoint & sp2,
-			      const TABLE<int> & specpoint2solid,			  
-			      const TABLE<int> & specpoint2surface) const;
+    virtual int Identifiable (const SpecialPoint & sp1, const SpecialPoint & sp2,
+                              const DynamicTable<int> & specpoint2solid,                         
+                              const DynamicTable<int> & specpoint2surface) const;
     ///
-    virtual int Identifyable (const Point<3> & p1, const Point<3> & sp2) const;
+    virtual int Identifiable (const Point<3> & p1, const Point<3> & sp2) const;
     /// is it possible to identify sp1 with some other ?
-    virtual int IdentifyableCandidate (const SpecialPoint & sp1) const;
+    virtual int IdentifiableCandidate (const SpecialPoint & sp1) const;
   
     /// are points (if connected) by a short edge (direction anyhow) ?
     virtual int ShortEdge (const SpecialPoint & sp1, const SpecialPoint & sp2) const;
@@ -56,19 +56,19 @@ namespace netgen
     virtual void IdentifyFaces (class Mesh & mesh);
 
     /// get point on other surface, add entry in mesh identifications
-    virtual int GetIdentifiedPoint (class Mesh & mesh, int pi1);
+    virtual PointIndex GetIdentifiedPoint (class Mesh & mesh, PointIndex pi1);
 
     /// copy surfaces, or fill rectangles
     virtual void BuildSurfaceElements (Array<class Segment> & segs,
-				       class Mesh & mesh,
-				       const Surface * surf);
+                                       class Mesh & mesh,
+                                       const Surface * surf);
 
     /// insert volume elements in thin layers
     virtual void BuildVolumeElements (Array<class Element2d> & surfels,
-				      class Mesh & mesh);
+                                      class Mesh & mesh);
 
     /// get list of identified faces
-    virtual void GetIdentifiedFaces (Array<INDEX_2> & idfaces) const;
+    virtual void GetIdentifiedFaces (Array<IVec<2>> & idfaces) const;
 
     friend ostream & operator<< (ostream & ost, Identification & ident);
   };
@@ -78,28 +78,31 @@ namespace netgen
   {
     const Surface * s1;
     const Surface * s2;
+    Transformation<3> trafo; // from s1 to s2
+    Transformation<3> inv_trafo; // from s2 to s1
   public:
     PeriodicIdentification (int anr,
-			    const CSGeometry & ageom,
-			    const Surface * as1,
-			    const Surface * as2);
-    virtual ~PeriodicIdentification ();
-    virtual void Print (ostream & ost) const;
-    virtual void GetData (ostream & ost) const;
+                            const CSGeometry & ageom,
+                            const Surface * as1,
+                            const Surface * as2,
+                            Transformation<3> atrafo = Vec<3>(0,0,0));
+    virtual ~PeriodicIdentification () override;
+    virtual void Print (ostream & ost) const override;
+    virtual void GetData (ostream & ost) const override;
 
 
     //  virtual void IdentifySpecialPoints (Array<class SpecialPoint> & points);
-    virtual int Identifyable (const SpecialPoint & sp1, const SpecialPoint & sp2,
-			      const TABLE<int> & specpoint2solid,
-			      const TABLE<int> & specpoint2surface) const;
+    virtual int Identifiable (const SpecialPoint & sp1, const SpecialPoint & sp2,
+                              const DynamicTable<int> & specpoint2solid,
+                              const DynamicTable<int> & specpoint2surface) const override;
 
-    virtual int Identifyable (const Point<3> & p1, const Point<3> & sp2) const;
-    virtual int GetIdentifiedPoint (class Mesh & mesh, int pi1);
-    virtual void IdentifyPoints (class Mesh & mesh);
-    virtual void IdentifyFaces (class Mesh & mesh);
+    virtual int Identifiable (const Point<3> & p1, const Point<3> & sp2) const override;
+    virtual PointIndex GetIdentifiedPoint (class Mesh & mesh, PointIndex pi1) override;
+    virtual void IdentifyPoints (class Mesh & mesh) override;
+    virtual void IdentifyFaces (class Mesh & mesh) override;
     virtual void BuildSurfaceElements (Array<class Segment> & segs,
-				       class Mesh & mesh,
-				       const Surface * surf);
+                                       class Mesh & mesh,
+                                       const Surface * surf) override;
   };
 
 
@@ -132,11 +135,11 @@ namespace netgen
     bool usedirection;
   public:
     CloseSurfaceIdentification (int anr, 
-				const CSGeometry & ageom,
-				const Surface * as1,
-				const Surface * as2,
-				const TopLevelObject * adomain,
-				const Flags & flags);
+                                const CSGeometry & ageom,
+                                const Surface * as1,
+                                const Surface * as2,
+                                const TopLevelObject * adomain,
+                                const Flags & flags);
     virtual ~CloseSurfaceIdentification ();
 
     virtual void Print (ostream & ost) const;
@@ -144,25 +147,25 @@ namespace netgen
 
 
     //  virtual void IdentifySpecialPoints (Array<class SpecialPoint> & points);
-    virtual int Identifyable (const SpecialPoint & sp1, const SpecialPoint & sp2,
-			      const TABLE<int> & specpoint2solid,
-			      const TABLE<int> & specpoint2surface) const;
-    virtual int Identifyable (const Point<3> & p1, const Point<3> & sp2) const;
-    virtual int IdentifyableCandidate (const SpecialPoint & sp1) const;
+    virtual int Identifiable (const SpecialPoint & sp1, const SpecialPoint & sp2,
+                              const DynamicTable<int> & specpoint2solid,
+                              const DynamicTable<int> & specpoint2surface) const;
+    virtual int Identifiable (const Point<3> & p1, const Point<3> & sp2) const;
+    virtual int IdentifiableCandidate (const SpecialPoint & sp1) const;
     virtual int ShortEdge (const SpecialPoint & sp1, const SpecialPoint & sp2) const;
-    virtual int GetIdentifiedPoint (class Mesh & mesh, int pi1);
+    virtual PointIndex GetIdentifiedPoint (class Mesh & mesh, PointIndex pi1);
     const Array<double> & GetSlices () const { return slices; }
     virtual void IdentifyPoints (class Mesh & mesh);
     virtual void IdentifyFaces (class Mesh & mesh);
     virtual void BuildSurfaceElements (Array<class Segment> & segs,
-				       class Mesh & mesh,
-				       const Surface * surf);
+                                       class Mesh & mesh,
+                                       const Surface * surf);
     void BuildSurfaceElements2 (Array<class Segment> & segs,
-				class Mesh & mesh,
-				const Surface * surf);
+                                class Mesh & mesh,
+                                const Surface * surf);
 
     virtual void BuildVolumeElements (Array<class Element2d> & surfels,
-				      class Mesh & mesh);
+                                      class Mesh & mesh);
 
     int RefLevels () const { return ref_levels; }
     int RefLevels1 () const { return ref_levels_s1; }
@@ -185,24 +188,24 @@ namespace netgen
     const Surface * s2;
   public:
     CloseEdgesIdentification (int anr,
-			      const CSGeometry & ageom,
-			      const Surface * afacet,
-			      const Surface * as1,
-			      const Surface * as2);
+                              const CSGeometry & ageom,
+                              const Surface * afacet,
+                              const Surface * as1,
+                              const Surface * as2);
     virtual ~CloseEdgesIdentification ();
     virtual void Print (ostream & ost) const;
     virtual void GetData (ostream & ost) const;
 
     //  virtual void IdentifySpecialPoints (Array<class SpecialPoint> & points);
-    virtual int Identifyable (const SpecialPoint & sp1, const SpecialPoint & sp2,
-			      const TABLE<int> & specpoint2solid,
-			      const TABLE<int> & specpoint2surface) const;
+    virtual int Identifiable (const SpecialPoint & sp1, const SpecialPoint & sp2,
+                              const DynamicTable<int> & specpoint2solid,
+                              const DynamicTable<int> & specpoint2surface) const;
 
 
     virtual void IdentifyPoints (class Mesh & mesh);
     virtual void BuildSurfaceElements (Array<class Segment> & segs,
-				       class Mesh & mesh,
-				       const Surface * surf);
+                                       class Mesh & mesh,
+                                       const Surface * surf);
   };
 
 }

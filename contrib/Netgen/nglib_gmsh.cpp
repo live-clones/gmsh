@@ -1,402 +1,141 @@
-// Interface to the Netgen meshing kernel for Gmsh. This file replaces
-// the original nglib.cpp file from the Netgen distribution.
+// Interface to the Netgen meshing kernel for Gmsh. This file replaces the
+// original nglib/nglib.cpp file from the Netgen distribution.
 
-#include <GmshMessage.h>
-#include <linalg.hpp>
+#include <string>
+#include "GmshMessage.h"
 #include <meshing.hpp>
-#include <nginterface.h>
+#include <../geom2d/csg2d.hpp>
 
-namespace netgen
-{
-   int id, ntasks;
-   MeshingParameters mparam;
-}
+namespace netgen {
+  extern void (*ng_print_dest_callback)(const char *);
+
+  // only used by 2D boundary layers (in basegeom.cpp), which Gmsh never
+  // calls: this avoids compiling the 2D CSG and spline geometry
+  IntersectionType intersect(const Point<2> P1, const Point<2> P2,
+                             const Point<2> Q1, const Point<2> Q2,
+                             double &alpha, double &beta)
+  { throw NgException("2D boundary layers are not available in Gmsh"); }
+} // namespace netgen
 
 namespace nglib {
-#include "nglib.h"
+#include "nglib_gmsh.h"
 }
 
 using namespace netgen;
 
-namespace nglib
-{
-  class mystreambuf : public streambuf {
-    int index;
-    char txt[1024];
-  public:
-    mystreambuf() : index(0) {}
-    int sync()
-    {
-      txt[index] = '\0';
-      if(!index || (index == 1 && (txt[0] == '.' || txt[0] == '+' ||
-                                   txt[0] == ' ' || txt[0] == '*'))){
-        // ignore these messages
-      }
-      else{
-        if(!strncmp(txt, "ERROR", 5)) { Msg::Error(txt); }
-        else if(!strncmp(txt, "WARNING", 7)) { Msg::Warning(txt); }
-        else { Msg::Info(txt); }
-      }
-      index = 0;
-      return 0;
-    }
-    int overflow(int ch)
-    {
-      if(index < 1023){
-        txt[index] = ch;
-        if(txt[index] == '\n' || txt[index] == '\r') txt[index] = ' ';
-        if(!index && txt[0] == ' '){
-          // skip initial spaces
+namespace nglib {
+
+  static void printDest(const char *s)
+  {
+    std::string str(s);
+    while(!str.empty() &&
+          (str.back() == '\n' || str.back() == '\r' || str.back() == ' '))
+      str.pop_back();
+    std::size_t first = str.find_first_not_of(' ');
+    if(first == std::string::npos) return;
+    str = str.substr(first);
+    if(str.size() == 1) return; // progress dots
+    if(!str.compare(0, 6, "ERROR:"))
+      Msg::Error("Netgen: %s", str.substr(7).c_str());
+    else if(!str.compare(0, 8, "WARNING:"))
+      Msg::Warning("Netgen: %s", str.substr(9).c_str());
+    else
+      Msg::Debug("Netgen: %s", str.c_str());
+  }
+
+  void Ng_Init()
+  {
+    ng_print_dest_callback = printDest;
+    printmessage_importance = (Msg::GetVerbosity() > 5) ? 3 : 0;
+  }
+
+  void Ng_Exit() {}
+
+  Ng_Mesh *Ng_NewMesh()
+  {
+    Mesh *mesh = new Mesh;
+    mesh->AddFaceDescriptor(FaceDescriptor(1, 1, 0, 1));
+    return (Ng_Mesh *)(void *)mesh;
+  }
+
+  void Ng_DeleteMesh(Ng_Mesh *mesh)
+  {
+    if(!mesh) return;
+    ((Mesh *)mesh)->DeleteMesh();
+    delete(Mesh *)mesh;
+  }
+
+  void Ng_AddPoint(Ng_Mesh *mesh, double *x)
+  { ((Mesh *)mesh)->AddPoint(Point<3>(x[0], x[1], x[2])); }
+
+  void Ng_AddSurfaceElement(Ng_Mesh *mesh, int *pi)
+  {
+    Element2d el(3);
+    el.SetIndex(FaceRegionIndex::FromNr1(1));
+    for(int i = 0; i < 3; i++) el[i] = PointIndex::FromNr1(pi[i]);
+    ((Mesh *)mesh)->AddSurfaceElement(el);
+  }
+
+  void Ng_AddVolumeElement(Ng_Mesh *mesh, int *pi)
+  {
+    Element el(4);
+    el.SetIndex(VolumeRegionIndex::FromNr1(1));
+    for(int i = 0; i < 4; i++) el[i] = PointIndex::FromNr1(pi[i]);
+    ((Mesh *)mesh)->AddVolumeElement(el);
+  }
+
+  int Ng_GetNP(Ng_Mesh *mesh) { return ((Mesh *)mesh)->GetNP(); }
+
+  int Ng_GetNE(Ng_Mesh *mesh) { return ((Mesh *)mesh)->GetNE(); }
+
+  void Ng_GetPoint(Ng_Mesh *mesh, int num, double *x)
+  {
+    const Point<3> &p = ((Mesh *)mesh)->Point(PointIndex::FromNr1(num));
+    x[0] = p(0);
+    x[1] = p(1);
+    x[2] = p(2);
+  }
+
+  void Ng_GetVolumeElement(Ng_Mesh *mesh, int num, int *pi)
+  {
+    auto el = ((Mesh *)mesh)->VolumeElement(ElementIndex::FromNr1(num));
+    for(int i = 0; i < 4; i++) pi[i] = el.PNum(i + 1).Nr1();
+  }
+
+  static Ng_Result run(Ng_Mesh *mesh, double maxh, bool generate)
+  {
+    Mesh *m = (Mesh *)mesh;
+    MeshingParameters mp;
+    mp.uselocalh = true;
+    mp.maxh = maxh;
+    mp.parallel_meshing = false;
+    try {
+      m->CalcLocalH(mp.grading);
+      if(generate) {
+        if(MeshVolume(mp, *m) != MESHING3_OK) {
+          Msg::Error("Netgen could not mesh the volume");
+          return NG_VOLUME_FAILURE;
         }
-        else{
-          index++;
-        }
       }
-      return 0;
-    }
-  };
-
-   // initialize, deconstruct Netgen library:
-   void Ng_Init ()
-   {
-     // mycout = &cout;
-     // myerr = &cerr;
-     // netgen::testout->SetOutStream (new ofstream ("test.out"));
-     // testout = new ofstream ("test.out");
-     static bool first = true;
-     if(first){
-       first = false;
-       //mycout = &cout;
-       //myerr = &cout;
-       //testout = &cout;
-       mycout = new ostream(new mystreambuf());
-       myerr = new ostream(new mystreambuf());
-       testout = new ofstream("/dev/null");
-       //testout = new ostream(new mystreambuf());
-     }
-   }
-
-   // Clean-up functions before ending usage of nglib
-  void Ng_Exit ()
-   {
-      ;
-   }
-
-   // Create a new netgen mesh object
-  Ng_Mesh * Ng_NewMesh ()
-  {
-    Mesh * mesh = new Mesh;
-    mesh->AddFaceDescriptor (FaceDescriptor (1, 1, 0, 1));
-    return (Ng_Mesh*)(void*)mesh;
-  }
-
-  // Delete an existing netgen mesh object
-  void Ng_DeleteMesh (Ng_Mesh * mesh)
-  {
-    if(mesh != NULL)
-      {
-        // Delete the Mesh structures
-        ((Mesh*)mesh)->DeleteMesh();
-
-        // Now delete the Mesh class itself
-        delete (Mesh*)mesh;
-
-        // Set the Ng_Mesh pointer to NULL
-        mesh = NULL;
+      else {
+        RemoveIllegalElements(*m);
+        OptimizeVolume(mp, *m);
       }
-  }
-
-  // Manually add a point to an existing mesh object
-  void Ng_AddPoint (Ng_Mesh * mesh, double * x)
-  {
-    Mesh * m = (Mesh*)mesh;
-    m->AddPoint (Point3d (x[0], x[1], x[2]));
-  }
-
-  // Manually add a surface element of a given type to an existing mesh object
-  void Ng_AddSurfaceElement (Ng_Mesh * mesh, Ng_Surface_Element_Type et,
-                             int * pi)
-  {
-    Mesh * m = (Mesh*)mesh;
-    Element2d el (3);
-    el.SetIndex (1);
-    el.PNum(1) = pi[0];
-    el.PNum(2) = pi[1];
-    el.PNum(3) = pi[2];
-    m->AddSurfaceElement (el);
-  }
-
-  // Manually add a volume element of a given type to an existing mesh object
-  void Ng_AddVolumeElement (Ng_Mesh * mesh, Ng_Volume_Element_Type et,
-                            int * pi)
-  {
-    Mesh * m = (Mesh*)mesh;
-    Element el (4);
-    el.SetIndex (1);
-    el.PNum(1) = pi[0];
-    el.PNum(2) = pi[1];
-    el.PNum(3) = pi[2];
-    el.PNum(4) = pi[3];
-    m->AddVolumeElement (el);
-  }
-
-  // Obtain the number of points in the mesh
-  int Ng_GetNP (Ng_Mesh * mesh)
-  {
-    return ((Mesh*)mesh) -> GetNP();
-  }
-
-  // Obtain the number of volume elements in the mesh
-  int Ng_GetNE (Ng_Mesh * mesh)
-  {
-    return ((Mesh*)mesh) -> GetNE();
-  }
-
-  //  Return point coordinates of a given point index in the mesh
-  void Ng_GetPoint (Ng_Mesh * mesh, int num, double * x)
-  {
-    const Point3d & p = ((Mesh*)mesh)->Point(num);
-    x[0] = p.X();
-    x[1] = p.Y();
-    x[2] = p.Z();
-  }
-
-  // Return the volume element at a given index "pi"
-  Ng_Volume_Element_Type
-  Ng_GetVolumeElement (Ng_Mesh * mesh, int num, int * pi)
-  {
-    const Element & el = ((Mesh*)mesh)->VolumeElement(num);
-    for (int i = 1; i <= el.GetNP(); i++)
-      pi[i-1] = el.PNum(i);
-    Ng_Volume_Element_Type et;
-    switch (el.GetNP())
-      {
-      case 4: et = NG_TET; break;
-      case 5: et = NG_PYRAMID; break;
-      case 6: et = NG_PRISM; break;
-      case 10: et = NG_TET10; break;
-      default:
-        et = NG_TET; break; // for the compiler
-      }
-    return et;
-  }
-
-  // Generates volume mesh from an existing surface mesh
-  Ng_Result Ng_GenerateVolumeMesh (Ng_Mesh * mesh, Ng_Meshing_Parameters * mp)
-  {
-    Mesh * m = (Mesh*)mesh;
-
-    // Philippose - 30/08/2009
-    // Do not locally re-define "mparam" here... "mparam" is a global
-    // object
-    //MeshingParameters mparam;
-    mp->Transfer_Parameters();
-
-    m->CalcLocalH(mparam.grading);
-
-    MeshVolume (mparam, *m);
-    RemoveIllegalElements (*m);
-    OptimizeVolume (mparam, *m);
-
-    return NG_OK;
-  }
-
-  // Generates volume mesh from an existing surface mesh
-  Ng_Result Ng_GenerateVolumeMesh (Ng_Mesh * mesh, double maxh)
-  {
-    Mesh *m = (Mesh*)mesh;
-
-    MeshingParameters mparam;
-    mparam.uselocalh = 1;
-    mparam.maxh = maxh;
-
-    try{
-      m->CalcLocalH(mparam.grading);
-      MeshVolume(mparam, *m);
-      //RemoveIllegalElements(*m);
-      //OptimizeVolume(mparam, *m);
-    }
-    catch(netgen::NgException& error){
+    } catch(std::exception &e) {
+      Msg::Error("Netgen: %s", e.what());
       return NG_VOLUME_FAILURE;
     }
     return NG_OK;
   }
 
-// optimizes an existing 3D mesh
+  Ng_Result Ng_GenerateVolumeMesh(Ng_Mesh *mesh, double maxh)
+  {
+    return run(mesh, maxh, true);
+  }
+
   Ng_Result Ng_OptimizeVolumeMesh(Ng_Mesh *mesh, double maxh)
   {
-    Mesh *m = (Mesh*)mesh;
-
-    MeshingParameters mparam;
-    mparam.uselocalh = 1;
-    mparam.maxh = maxh;
-
-    try{
-      m->CalcLocalH(mparam.grading);
-      //MeshVolume(mparam, *m);
-      RemoveIllegalElements(*m);
-      OptimizeVolume(mparam, *m);
-    }
-    catch(netgen::NgException& error){
-      return NG_VOLUME_FAILURE;
-    }
-    return NG_OK;
+    return run(mesh, maxh, false);
   }
 
-  // ------------------ Begin - Meshing Parameters related functions ------------------
-  // Constructor for the local nglib meshing parameters class
-  Ng_Meshing_Parameters :: Ng_Meshing_Parameters()
-  {
-    uselocalh = 1;
-
-    maxh = 1000;
-    minh = 0.0;
-
-    fineness = 0.5;
-    grading = 0.3;
-
-    elementsperedge = 2.0;
-    elementspercurve = 2.0;
-
-    closeedgeenable = 0;
-    closeedgefact = 2.0;
-
-    second_order = 0;
-    quad_dominated = 0;
-
-    meshsize_filename = 0;
-
-    optsurfmeshenable = 1;
-    optvolmeshenable = 1;
-
-    optsteps_2d = 3;
-    optsteps_3d = 3;
-
-    invert_tets = 0;
-    invert_trigs = 0;
-
-    check_overlap = 1;
-    check_overlapping_boundary = 1;
-  }
-
-  // Reset the local meshing parameters to the default values
-  void Ng_Meshing_Parameters :: Reset_Parameters()
-  {
-    uselocalh = 1;
-
-    maxh = 1000;
-    minh = 0;
-
-    fineness = 0.5;
-    grading = 0.3;
-
-    elementsperedge = 2.0;
-    elementspercurve = 2.0;
-
-    closeedgeenable = 0;
-    closeedgefact = 2.0;
-
-    second_order = 0;
-    quad_dominated = 0;
-
-    meshsize_filename = 0;
-
-    optsurfmeshenable = 1;
-    optvolmeshenable = 1;
-
-    optsteps_2d = 3;
-    optsteps_3d = 3;
-
-    invert_tets = 0;
-    invert_trigs = 0;
-
-    check_overlap = 1;
-    check_overlapping_boundary = 1;
-  }
-
-  //
-  void Ng_Meshing_Parameters :: Transfer_Parameters()
-  {
-    mparam.uselocalh = uselocalh;
-
-    mparam.maxh = maxh;
-    mparam.minh = minh;
-
-    mparam.grading = grading;
-    mparam.curvaturesafety = elementspercurve;
-    mparam.segmentsperedge = elementsperedge;
-
-    mparam.secondorder = second_order;
-    mparam.quad = quad_dominated;
-
-    mparam.meshsizefilename = meshsize_filename;
-
-    mparam.optsteps2d = optsteps_2d;
-    mparam.optsteps3d = optsteps_3d;
-
-    mparam.inverttets = invert_tets;
-    mparam.inverttrigs = invert_trigs;
-
-    mparam.checkoverlap = check_overlap;
-    mparam.checkoverlappingboundary = check_overlapping_boundary;
-  }
-
-} // End of namespace nglib
-
-// compatibility functions:
-namespace netgen
-{
-   char geomfilename[255];
-
-   void MyError (const char * ch)
-   {
-     (*myerr) << ch;
-   }
-
-
-
-
-   //Destination for messages, errors, ...
-   void Ng_PrintDest(const char * s)
-   {
-      (*mycout) << s << flush;
-   }
-
-
-
-
-   double GetTime ()
-   {
-      return 0;
-   }
-
-
-
-
-   void ResetTime ()
-   {
-      ;
-   }
-
-
-
-
-   void MyBeep (int i)
-   {
-      ;
-   }
-
-
-
-
-   void Render()
-   {
-      ;
-   }
-} // End of namespace netgen
-
-
-void Ng_Redraw () { ; }
-void Ng_ClearSolutionData () { ; }
-void Ng_SetSolutionData (Ng_SolutionData * soldata) { ; }
-void Ng_InitSolutionData (Ng_SolutionData * soldata) { ; }
+} // namespace nglib

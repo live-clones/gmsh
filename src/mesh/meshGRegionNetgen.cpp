@@ -85,7 +85,7 @@ static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
       tmp[0] = t->getVertex(0)->getIndex();
       tmp[1] = t->getVertex(1)->getIndex();
       tmp[2] = t->getVertex(2)->getIndex();
-      Ng_AddSurfaceElement(ngmesh, NG_TRIG, tmp);
+      Ng_AddSurfaceElement(ngmesh, tmp);
     }
     ++it;
   }
@@ -100,7 +100,7 @@ static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
       tmp[1] = t->getVertex(1)->getIndex();
       tmp[2] = t->getVertex(2)->getIndex();
       tmp[3] = t->getVertex(3)->getIndex();
-      Ng_AddVolumeElement(ngmesh, NG_TET, tmp);
+      Ng_AddVolumeElement(ngmesh, tmp);
     }
   }
 

@@ -27,13 +27,13 @@ void LoadMatrixLine (istream & ist, DenseMatrix & m, int line)
       ist >> pnum;
 
       if (ch == 'x' || ch == 'X')
-	m.Elem(line, 2 * pnum - 1) = f;
+        m.Elem(line, 2 * pnum - 1) = f;
       if (ch == 'y' || ch == 'Y')
-	m.Elem(line, 2 * pnum) = f;
+        m.Elem(line, 2 * pnum) = f;
 
       ist >> ch;
       if (ch == COMMASIGN)
-	ist >> ch;
+        ist >> ch;
     }
 }
 
@@ -42,8 +42,8 @@ void netrule :: LoadRule (istream & ist)
 {
   char buf[256];
   char ch;
-  Point2d p;
-  INDEX_2 lin;
+  Point<2> p;
+  IVec<2,RulePointIndex> lin;
   int i, j;
   DenseMatrix tempoldutonewu(20, 20), tempoldutofreearea(20, 20),
     tempoldutofreearealimit(20, 20);
@@ -60,10 +60,13 @@ void netrule :: LoadRule (istream & ist)
   ist.get (buf, sizeof(buf), '"');
   ist.get (ch);
 
-  // if(name != NULL) 
+  // if(name != NULL)
+  /*
   delete [] name;
   name = new char[strlen (buf) + 1];
   strcpy (name, buf);
+  */
+  name = string(buf);
   //(*testout) << "name " << name << endl;
   //  (*mycout) << "Rule " << name << " found." << endl;
 
@@ -75,335 +78,336 @@ void netrule :: LoadRule (istream & ist)
 
       if (strcmp (buf, "quality") == 0)
 
-	{
-	  ist >> quality;
-	}
+        {
+          ist >> quality;
+        }
 
       else if (strcmp (buf, "mappoints") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      ist >> p.X();
-	      ist >> ch;    // ','
-	      ist >> p.Y();
-	      ist >> ch;    // ')'
+          while (ch == '(')
+            {
+              ist >> p[0];
+              ist >> ch;    // ','
+              ist >> p[1];
+              ist >> ch;    // ')'
 
-	      points.Append (p);
-	      noldp++;
+              points.Append (p);
+              noldp++;
 
-	      tolerances.SetSize (noldp);
-	      tolerances.Elem(noldp).f1 = 1.0;
-	      tolerances.Elem(noldp).f2 = 0;
-	      tolerances.Elem(noldp).f3 = 1.0;
+              tolerances.SetSize (noldp);
+              auto & tol = tolerances[tolerances.Range().Next()-1];
+              tol.f1 = 1.0;
+              tol.f2 = 0;
+              tol.f3 = 1.0;
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  if (ch == '{')
-		    {
-		      ist >> tolerances.Elem(noldp).f1;
-		      ist >> ch;  // ','
-		      ist >> tolerances.Elem(noldp).f2;
-		      ist >> ch;  // ','
-		      ist >> tolerances.Elem(noldp).f3;
-		      ist >> ch;  // '}'
-		    }
-		  else if (ch == 'd')
-		    {
-		      //            delpoints.Append (noldp);
-		      ist >> ch; // 'e'
-		      ist >> ch; // 'l'
-		    }
+              ist >> ch;
+              while (ch != ';')
+                {
+                  if (ch == '{')
+                    {
+                      ist >> tol.f1;
+                      ist >> ch;  // ','
+                      ist >> tol.f2;
+                      ist >> ch;  // ','
+                      ist >> tol.f3;
+                      ist >> ch;  // '}'
+                    }
+                  else if (ch == 'd')
+                    {
+                      //            delpoints.Append (noldp);
+                      ist >> ch; // 'e'
+                      ist >> ch; // 'l'
+                    }
 
-		  ist >> ch;
-		}
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
 
       else if (strcmp (buf, "maplines") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      ist >> lin.I1();
-	      ist >> ch;    // ','
-	      ist >> lin.I2();
-	      ist >> ch;    // ')'
+          while (ch == '(')
+            {
+              ist >> lin[0];
+              ist >> ch;    // ','
+              ist >> lin[1];
+              ist >> ch;    // ')'
 
 
-	      //(*testout) << "read line " << lin.I1() << " " << lin.I2() << endl;
-	      lines.Append (lin);
-	      linevecs.Append (points.Get(lin.I2()) - points.Get(lin.I1()));
-	      noldl++;
-	      linetolerances.SetSize (noldl);
-	      linetolerances.Elem(noldl).f1 = 0;
-	      linetolerances.Elem(noldl).f2 = 0;
-	      linetolerances.Elem(noldl).f3 = 0;
+              //(*testout) << "read line " << lin.I1() << " " << lin.I2() << endl;
+              lines.Append (lin);
+              linevecs.Append (points[lin[1]] - points[lin[0]]);
+              noldl++;
+              linetolerances.SetSize (noldl);
+              linetolerances[noldl-1].f1 = 0;
+              linetolerances[noldl-1].f2 = 0;
+              linetolerances[noldl-1].f3 = 0;
 
-	      //(*testout) << "mapl1" << endl; 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  //(*testout) << "working on character \""<<ch<<"\""<< endl;
-		  if (ch == '{')
-		    {
-		      ist >> linetolerances.Elem(noldl).f1;
-		      ist >> ch;  // ','
-		      ist >> linetolerances.Elem(noldl).f2;
-		      ist >> ch;  // ','
-		      ist >> linetolerances.Elem(noldl).f3;
-		      ist >> ch;  // '}'
-		    }
-		  else if (ch == 'd')
-		    {
-		      dellines.Append (noldl);
-		      ist >> ch; // 'e'
-		      ist >> ch; // 'l'
-		      //(*testout) << "read del" << endl;
-		    }
+              //(*testout) << "mapl1" << endl; 
+              ist >> ch;
+              while (ch != ';')
+                {
+                  //(*testout) << "working on character \""<<ch<<"\""<< endl;
+                  if (ch == '{')
+                    {
+                      ist >> linetolerances[noldl-1].f1;
+                      ist >> ch;  // ','
+                      ist >> linetolerances[noldl-1].f2;
+                      ist >> ch;  // ','
+                      ist >> linetolerances[noldl-1].f3;
+                      ist >> ch;  // '}'
+                    }
+                  else if (ch == 'd')
+                    {
+                      dellines.Append (noldl);
+                      ist >> ch; // 'e'
+                      ist >> ch; // 'l'
+                      //(*testout) << "read del" << endl;
+                    }
 
-		  ist >> ch;
-		  //(*testout) << "read character \""<<ch<<"\""<< endl;
-		}
+                  ist >> ch;
+                  //(*testout) << "read character \""<<ch<<"\""<< endl;
+                }
 
-	      ist >> ch;
-	      //(*testout) << "read next character \""<<ch<<"\""<< endl;
-	    }
-	  
+              ist >> ch;
+              //(*testout) << "read next character \""<<ch<<"\""<< endl;
+            }
+          
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
       else if (strcmp (buf, "newpoints") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      ist >> p.X();
-	      ist >> ch;    // ','
-	      ist >> p.Y();
-	      ist >> ch;    // ')'
+          while (ch == '(')
+            {
+              ist >> p[0];
+              ist >> ch;    // ','
+              ist >> p[1];
+              ist >> ch;    // ')'
 
-	      points.Append (p);
+              points.Append (p);
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  if (ch == '{')
-		    {
-		      LoadMatrixLine (ist, tempoldutonewu,
-				      2 * (points.Size()-noldp) - 1);
+              ist >> ch;
+              while (ch != ';')
+                {
+                  if (ch == '{')
+                    {
+                      LoadMatrixLine (ist, tempoldutonewu,
+                                      2 * (points.Size()-noldp) - 1);
 
-		      ist >> ch; // '{'
-		      LoadMatrixLine (ist, tempoldutonewu,
-				      2 * (points.Size()-noldp));
-		    }
+                      ist >> ch; // '{'
+                      LoadMatrixLine (ist, tempoldutonewu,
+                                      2 * (points.Size()-noldp));
+                    }
 
-		  ist >> ch;
-		}
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
       else if (strcmp (buf, "newlines") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      ist >> lin.I1();
-	      ist >> ch;    // ','
-	      ist >> lin.I2();
-	      ist >> ch;    // ')'
+          while (ch == '(')
+            {
+              ist >> lin[0];
+              ist >> ch;    // ','
+              ist >> lin[1];
+              ist >> ch;    // ')'
 
-	      lines.Append (lin);
-	      linevecs.Append (points.Get(lin.I2()) - points.Get(lin.I1()));
+              lines.Append (lin);
+              linevecs.Append (points[lin[1]] - points[lin[0]]);
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  ist >> ch;
-		}
+              ist >> ch;
+              while (ch != ';')
+                {
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
       else if (strcmp (buf, "freearea") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      ist >> p.X();
-	      ist >> ch;    // ','
-	      ist >> p.Y();
-	      ist >> ch;    // ')'
+          while (ch == '(')
+            {
+              ist >> p[0];
+              ist >> ch;    // ','
+              ist >> p[1];
+              ist >> ch;    // ')'
 
-	      freezone.Append (p);
-	      freezonelimit.Append (p);
+              freezone.Append (p);
+              freezonelimit.Append (p);
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  if (ch == '{')
-		    {
-		      LoadMatrixLine (ist, tempoldutofreearea,
-				      2 * freezone.Size() - 1);
+              ist >> ch;
+              while (ch != ';')
+                {
+                  if (ch == '{')
+                    {
+                      LoadMatrixLine (ist, tempoldutofreearea,
+                                      2 * freezone.Size() - 1);
 
-		      ist >> ch; // '{'
-		      LoadMatrixLine (ist, tempoldutofreearea,
-				      2 * freezone.Size());
-		    }
+                      ist >> ch; // '{'
+                      LoadMatrixLine (ist, tempoldutofreearea,
+                                      2 * freezone.Size());
+                    }
 
-		  ist >> ch;
-		}
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  for (i = 1; i <= tempoldutofreearealimit.Height(); i++)
-	    for (j = 1; j <= tempoldutofreearealimit.Width(); j++)
-	      tempoldutofreearealimit.Elem(i,j) =
-		tempoldutofreearea.Elem(i,j);
+          for (i = 1; i <= tempoldutofreearealimit.Height(); i++)
+            for (j = 1; j <= tempoldutofreearealimit.Width(); j++)
+              tempoldutofreearealimit.Elem(i,j) =
+                tempoldutofreearea.Elem(i,j);
 
 
-	  ist.putback (ch);
-	}    
+          ist.putback (ch);
+        }    
       else if (strcmp (buf, "freearea2") == 0)
-	{
-	  ist >> ch;
-	  int freepi = 0;
-	  tempoldutofreearealimit = 0;
+        {
+          ist >> ch;
+          int freepi = 0;
+          tempoldutofreearealimit = 0;
 
-	  while (ch == '(')
-	    {
-	      freepi++;
+          while (ch == '(')
+            {
+              freepi++;
 
-	      ist >> p.X();
-	      ist >> ch;    // ','
-	      ist >> p.Y();
-	      ist >> ch;    // ')'
+              ist >> p[0];
+              ist >> ch;    // ','
+              ist >> p[1];
+              ist >> ch;    // ')'
 
-	      freezonelimit.Elem(freepi) = p;
-	  
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  if (ch == '{')
-		    {
-		      LoadMatrixLine (ist, tempoldutofreearealimit,
-				      2 * freepi - 1);
+              freezonelimit[freepi-1] = p;
+          
+              ist >> ch;
+              while (ch != ';')
+                {
+                  if (ch == '{')
+                    {
+                      LoadMatrixLine (ist, tempoldutofreearealimit,
+                                      2 * freepi - 1);
 
-		      ist >> ch; // '{'
-		      LoadMatrixLine (ist, tempoldutofreearealimit,
-				      2 * freepi);
-		    }
+                      ist >> ch; // '{'
+                      LoadMatrixLine (ist, tempoldutofreearealimit,
+                                      2 * freepi);
+                    }
 
-		  ist >> ch;
-		}
-	  
-	      ist >> ch;
-	    }
+                  ist >> ch;
+                }
+          
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
       else if (strcmp (buf, "elements") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      elements.Append (Element2d());
+          while (ch == '(')
+            {
+              elements.Append (RuleElement2d(3));
 
-	      ist >> elements.Last().PNum(1);
-	      ist >> ch;    // ','
-	  
-	      if (ch == COMMASIGN)
-		{
-		  ist >> elements.Last().PNum(2);
-		  ist >> ch;    // ','
-		}
-	      if (ch == COMMASIGN)
-		{
-		  ist >> elements.Last().PNum(3);
-		  ist >> ch;    // ','
-		}
-	      if (ch == COMMASIGN)
-		{
-		  elements.Last().SetType (QUAD);
-		  ist >> elements.Last().PNum(4);
-		  ist >> ch;    // ','
-		  
-		  // const Element2d & el = elements.Last();
-		  /*
-		  orientations.Append (threeint(el.PNum(1), el.PNum(2), el.PNum(3)));
-		  orientations.Append (threeint(el.PNum(2), el.PNum(3), el.PNum(4)));
-		  orientations.Append (threeint(el.PNum(3), el.PNum(4), el.PNum(1)));
-		  orientations.Append (threeint(el.PNum(4), el.PNum(1), el.PNum(2)));
-		  */
-		}
+              ist >> elements.Last()[0];
+              ist >> ch;    // ','
+          
+              if (ch == COMMASIGN)
+                {
+                  ist >> elements.Last()[1];
+                  ist >> ch;    // ','
+                }
+              if (ch == COMMASIGN)
+                {
+                  ist >> elements.Last()[2];
+                  ist >> ch;    // ','
+                }
+              if (ch == COMMASIGN)
+                {
+                  elements.Last().SetNP (4);
+                  ist >> elements.Last()[3];
+                  ist >> ch;    // ','
+                  
+                  // const Element2dRef & el = elements.Last();
+                  /*
+                  orientations.Append (IVec<3,RulePointIndex>(el[0], el[1], el[2]));
+                  orientations.Append (IVec<3,RulePointIndex>(el[1], el[2], el[3]));
+                  orientations.Append (IVec<3,RulePointIndex>(el[2], el[3], el[0]));
+                  orientations.Append (IVec<3,RulePointIndex>(el[3], el[0], el[1]));
+                  */
+                }
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  ist >> ch;
-		}
+              ist >> ch;
+              while (ch != ';')
+                {
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
       else if (strcmp (buf, "orientations") == 0)
 
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      //        threeint a = threeint();
-	      orientations.Append (threeint());
+          while (ch == '(')
+            {
+              //        IVec<3,RulePointIndex> a = IVec<3,RulePointIndex>();
+              orientations.Append (IVec<3,RulePointIndex>());
 
-	      ist >> orientations.Last().i1;
-	      ist >> ch;    // ','
-	      ist >> orientations.Last().i2;
-	      ist >> ch;    // ','
-	      ist >> orientations.Last().i3;
-	      ist >> ch;    // ','
+              ist >> orientations.Last()[0];
+              ist >> ch;    // ','
+              ist >> orientations.Last()[1];
+              ist >> ch;    // ','
+              ist >> orientations.Last()[2];
+              ist >> ch;    // ','
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  ist >> ch;
-		}
+              ist >> ch;
+              while (ch != ';')
+                {
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
       else if (strcmp (buf, "endrule") != 0)
-	{
-	  PrintSysError ("Parser error, unknown token ", buf);
-	}
+        {
+          PrintSysError ("Parser error, unknown token ", buf);
+        }
     }
   while (!ist.eof() && strcmp (buf, "endrule") != 0);
 
@@ -429,31 +433,30 @@ void netrule :: LoadRule (istream & ist)
   {
     char ok;
     int minn;
-    Array<int> pnearness (noldp);
+    Array<int,RulePointIndex> pnearness (noldp);
 
-    for (i = 1; i <= pnearness.Size(); i++)
-      pnearness.Elem(i) = 1000;
+    pnearness = 1000;
 
     for (j = 1; j <= 2; j++)
-      pnearness.Elem(GetPointNr (1, j)) = 0;
+      pnearness[GetPointNr (1, j)] = 0;
 
     do
       {
-	ok = 1;
+        ok = 1;
 
-	for (i = 1; i <= noldl; i++)
-	  {
-	    minn = 1000;
-	    for (j = 1; j <= 2; j++)
-	      minn = min2 (minn, pnearness.Get(GetPointNr (i, j)));
+        for (i = 1; i <= noldl; i++)
+          {
+            minn = 1000;
+            for (j = 1; j <= 2; j++)
+              minn = min2 (minn, pnearness[GetPointNr (i, j)]);
 
-	    for (j = 1; j <= 2; j++)
-	      if (pnearness.Get(GetPointNr (i, j)) > minn+1)
-		{
-		  ok = 0;
-		  pnearness.Elem(GetPointNr (i, j)) = minn+1;
-		}
-	  }
+            for (j = 1; j <= 2; j++)
+              if (pnearness[GetPointNr (i, j)] > minn+1)
+                {
+                  ok = 0;
+                  pnearness[GetPointNr (i, j)] = minn+1;
+                }
+          }
       }
     while (!ok);
 
@@ -461,9 +464,9 @@ void netrule :: LoadRule (istream & ist)
 
     for (i = 1; i <= noldl; i++)
       {
-	lnearness.Elem(i) = 0;
-	for (j = 1; j <= 2; j++)
-	  lnearness.Elem(i) += pnearness.Get(GetPointNr (i, j));
+        lnearness[i-1] = 0;
+        for (j = 1; j <= 2; j++)
+          lnearness[i-1] += pnearness[GetPointNr (i, j)];
       }
   }
 
@@ -474,16 +477,16 @@ void netrule :: LoadRule (istream & ist)
     {
       double lam1 = 1.0/(i+1);
 
-      oldutofreearea_i[i] = new DenseMatrix (oldutofreearea.Height(), oldutofreearea.Width());
-      DenseMatrix & mati = *oldutofreearea_i[i];
+      oldutofreearea_i[i] = std::move(DenseMatrix (oldutofreearea.Height(), oldutofreearea.Width()));
+      DenseMatrix & mati = oldutofreearea_i[i];
       for (j = 0; j < oldutofreearea.Height(); j++)
-	for (int k = 0; k < oldutofreearea.Width(); k++)
-	  mati(j,k) = lam1 * oldutofreearea(j,k) + (1 - lam1) * oldutofreearealimit(j,k);
+        for (int k = 0; k < oldutofreearea.Width(); k++)
+          mati(j,k) = lam1 * oldutofreearea(j,k) + (1 - lam1) * oldutofreearealimit(j,k);
 
-      freezone_i[i] = new Array<Point2d> (freezone.Size());
-      Array<Point2d> & fzi = *freezone_i[i];
+      freezone_i[i] = Array<Point<2>> (freezone.Size());
+      auto& fzi = freezone_i[i];
       for (int j = 0; j < freezone.Size(); j++)
-	fzi[j] = freezonelimit[j] + lam1 * (freezone[j] - freezonelimit[j]);
+        fzi[j] = freezonelimit[j] + lam1 * (freezone[j] - freezonelimit[j]);
     }
 }
 
@@ -522,24 +525,24 @@ void Meshing2 :: LoadRules (const char * filename, bool quad)
 
       // if (!mparam.quad)
       if (!quad)
-	{
-	  hcp = triarules;
-	  PrintMessage (3, "load internal triangle rules");
-	}
+        {
+          hcp = triarules;
+          PrintMessage (3, "load internal triangle rules");
+        }
       else
-	{
-	  hcp = quadrules;
-	  PrintMessage (3, "load internal quad rules");
-	  // LoadRules ("rules/quad.rls");
-	}
+        {
+          hcp = quadrules;
+          PrintMessage (3, "load internal quad rules");
+          // LoadRules ("rules/quad.rls");
+        }
 
       size_t len = 0;
       while (*hcp)
-	{
-	  //	  (*testout) << "POS2 *hcp " << *hcp << endl;
-	  len += strlen (*hcp);
-	  hcp++;
-	}
+        {
+          //      (*testout) << "POS2 *hcp " << *hcp << endl;
+          len += strlen (*hcp);
+          hcp++;
+        }
       //tr1 = new char[len+1];
       //tr1[0] = 0;
       tr1.reserve(len+1);
@@ -547,25 +550,25 @@ void Meshing2 :: LoadRules (const char * filename, bool quad)
 
       // if (!mparam.quad)
       if (!quad)
-	hcp = triarules;
+        hcp = triarules;
       else
-	hcp = quadrules;
+        hcp = quadrules;
 
 
       //char * tt1 = tr1;
       while (*hcp)
-	{
-	  //strcat (tt1, *hcp);
-	  //tt1 += strlen (*hcp);
-	  tr1.append(*hcp);
-	  hcp++;
-	}
+        {
+          //strcat (tt1, *hcp);
+          //tt1 += strlen (*hcp);
+          tr1.append(*hcp);
+          hcp++;
+        }
       
 #ifdef WIN32
       // VC++ 2005 workaround
-	  for(string::size_type i=0; i<tr1.size(); i++)
-	if(tr1[i] == ',')
-	  tr1[i] = ':';
+          for(string::size_type i=0; i<tr1.size(); i++)
+        if(tr1[i] == ',')
+          tr1[i] = ':';
 #endif
 
       ist = new istringstream (tr1);
@@ -578,26 +581,29 @@ void Meshing2 :: LoadRules (const char * filename, bool quad)
       delete ist;
       exit (1);
     }
-    
+
+  Timer t("Parsing rules");
+  t.Start();
   while (!ist->eof())
     {
       buf[0] = 0;
       (*ist) >> buf;
 
       if (strcmp (buf, "rule") == 0)
-	{
-	  //(*testout) << "found rule" << endl;
-	  netrule * rule = new netrule;
-	  //(*testout) << "fr1" << endl;
-	  rule -> LoadRule(*ist);
-	  //(*testout) << "fr2" << endl;
-	  
-	  rules.Append (rule);
-	}
+        {
+          //(*testout) << "found rule" << endl;
+          auto rule = make_unique<netrule>();
+          //(*testout) << "fr1" << endl;
+          rule -> LoadRule(*ist);
+          //(*testout) << "fr2" << endl;
+          
+          rules.Append (std::move(rule));
+        }
       //(*testout) << "loop" << endl;
     }
   //(*testout) << "POS3" << endl;
-
+  t.Stop();
+  
   delete ist;
   //delete [] tr1;
 }
