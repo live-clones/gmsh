@@ -17,7 +17,7 @@
 
 #include "GmshMessage.h"
 #include "OS.h"
-#include "gmshLBFGS.h"
+#include "LBFGS.h"
 
 #include <algorithm>
 #include <cfloat>
@@ -646,26 +646,24 @@ namespace {
       data.eps =
         std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.JDetMin, 0.), 2));
 
-      GmshLBFGS::Options options;
+      LBFGS::Options options;
       options.maxIterations = iterMaxInner;
-      options.memory = (int)std::min<size_t>(15, x.size());
       options.gradientTolerance = 1.e-4;
       options.functionTolerance = 1.e-12;
       options.stepTolerance = 1.e-12;
       options.maxLineSearchSteps = 80;
       options.verbose = 0;
-      options.numThreads = requestedNumThreads();
       int lastInner = 0;
       double lastGradNorm = 0.;
       double lastStep = 0.;
       if(data.dim == 3) {
-        options.iterationCallback =
-          [&lastInner, &lastGradNorm,
-           &lastStep](int inner, double /*f*/, double gradNorm, double step) {
-            lastInner = inner;
-            lastGradNorm = gradNorm;
-            lastStep = step;
-          };
+        options.progress = [&lastInner, &lastGradNorm, &lastStep](
+                             int inner, const std::vector<double> & /*x*/,
+                             double /*f*/, double gradNorm, double step) {
+          lastInner = inner;
+          lastGradNorm = gradNorm;
+          lastStep = step;
+        };
       }
 
       auto fg = [&data](const std::vector<double> &xin,
@@ -680,7 +678,7 @@ namespace {
       };
 
       const double tLBFGS = TimeOfDay();
-      GmshLBFGS::Result result = GmshLBFGS::minimize(x, fg, options);
+      LBFGS::Result result = LBFGS::minimize(x, fg, options);
       data.profileLBFGS += TimeOfDay() - tLBFGS;
       data.profileLBFGSFunction += result.timeFunction;
       data.profileLBFGSDirection += result.timeDirection;

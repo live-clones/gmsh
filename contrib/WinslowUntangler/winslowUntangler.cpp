@@ -26,7 +26,7 @@
 #include "GmshMessage.h"
 #include "OS.h"
 
-#include "gmshLBFGS.h"
+#include "LBFGS.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -841,25 +841,28 @@ namespace WinslowUntangler {
 
       //      printf("eps %g %d %d\n",data.eps,  iterMaxOuter, iterMaxInner);
 
-      double epsg = 1.e-4;
-      double epsf = 1.e-12;
-      double epsx = 1.e-12;
       int lbfgsIter = 0;
       try {
-        GmshLBFGS::State state;
-        GmshLBFGS::Report rep;
-        GmshLBFGS::create((int)std::min<size_t>(15, x.size()), x, state);
-        GmshLBFGS::setCond(state, epsg, epsf, epsx, iterMaxInner);
-        GmshLBFGS::setStpMax(state, 1.);
-        state.options.maxLineSearchSteps = 80;
-        state.options.numThreads = 8;
+        LBFGS::Options options;
+        options.maxIterations = iterMaxInner;
+        options.gradientTolerance = 1.e-4;
+        options.functionTolerance = 1.e-12;
+        options.stepTolerance = 1.e-12;
+        options.maxStepNorm = 1.;
+        options.maxLineSearchSteps = 80;
 
         double tLbfgs = TimeOfDay();
-        GmshLBFGS::optimize(state, lbfgs_callback, nullptr, &data);
+        LBFGS::Result result = LBFGS::minimize(
+          x,
+          [&data](const std::vector<double> &xe, std::vector<double> &grad) {
+            double f;
+            lbfgs_callback(xe, f, grad, &data);
+            return f;
+          },
+          options);
         data.profile_lbfgs += TimeOfDay() - tLbfgs;
-        GmshLBFGS::results(state, x, rep);
-        lbfgsIter = rep.iterationscount;
-        const int terminationType = rep.terminationtype;
+        lbfgsIter = result.iterations;
+        const int terminationType = result.terminationType;
 
         // Rejected trials update data too. After a failed line search, restore
         // the energy and Jacobian determinants at the accepted coordinates.
@@ -869,8 +872,7 @@ namespace WinslowUntangler {
           lbfgs_callback(x, f, grad, &data);
         }
 
-        const GmshLBFGS::Result &result = state.result;
-        Msg::Info("GmshLBFGS profiling: total %g s, function %g s, "
+        Msg::Info("LBFGS profiling: total %g s, function %g s, "
                   "direction %g s, line-search %g s, update %g s, "
                   "unaccounted %g s, evaluations %d",
                   result.timeTotal, result.timeFunction, result.timeDirection,

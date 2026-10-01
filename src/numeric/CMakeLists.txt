@@ -39,7 +39,7 @@ set(SRC
   Iso.cpp
   approximationError.cpp
   ConjugateGradients.cpp
-  gmshLBFGS.cpp
+  LBFGS.cpp
   OrthogonalPoly.cpp
   HierarchicalBasisH1.cpp
   HierarchicalBasisH1Quad.cpp
