@@ -8040,9 +8040,11 @@ module gmsh
   !> Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
   !! `entityKeyMaster') corresponding to the entity `tag' and the key pairs
   !! (`typeKey', `entityKey') for the elements of type `elementType' and
-  !! function space type `functionSpaceType'. If `returnCoord' is set, the
-  !! `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
-  !! basis functions for sorting purposes.
+  !! function space type `functionSpaceType'. `orientationSign' contains the
+  !! correction between each key and keyMaster to match basisFunction
+  !! evaluation. If `returnCoord' is set, the `coord' and `coordMaster' vectors
+  !! contain the x, y, z coordinates locating basis functions for sorting
+  !! purposes.
   subroutine gmshModelMeshGetPeriodicKeys(elementType, &
                                           functionSpaceType, &
                                           tag, &
@@ -8053,6 +8055,7 @@ module gmsh
                                           entityKeysMaster, &
                                           coord, &
                                           coordMaster, &
+                                          orientationSign, &
                                           returnCoord, &
                                           ierr)
     interface
@@ -8072,6 +8075,8 @@ module gmsh
                      api_coord_n_, &
                      api_coordMaster_, &
                      api_coordMaster_n_, &
+                     api_orientationSign_, &
+                     api_orientationSign_n_, &
                      returnCoord, &
                      ierr_) &
       bind(C, name="gmshModelMeshGetPeriodicKeys")
@@ -8092,6 +8097,8 @@ module gmsh
       integer(c_size_t) :: api_coord_n_
       type(c_ptr), intent(out) :: api_coordMaster_
       integer(c_size_t) :: api_coordMaster_n_
+      type(c_ptr), intent(out) :: api_orientationSign_
+      integer(c_size_t), intent(out) :: api_orientationSign_n_
       integer(c_int), value, intent(in) :: returnCoord
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
@@ -8106,6 +8113,7 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: entityKeysMaster
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     real(c_double), dimension(:), allocatable, intent(out) :: coordMaster
+    integer(c_int), dimension(:), allocatable, intent(out) :: orientationSign
     logical, intent(in), optional :: returnCoord
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_typeKeys_
@@ -8120,6 +8128,8 @@ module gmsh
     integer(c_size_t) :: api_coord_n_
     type(c_ptr) :: api_coordMaster_
     integer(c_size_t) :: api_coordMaster_n_
+    type(c_ptr) :: api_orientationSign_
+    integer(c_size_t) :: api_orientationSign_n_
     call C_API(elementType=int(elementType, c_int), &
          functionSpaceType=istring_(functionSpaceType), &
          tag=int(tag, c_int), &
@@ -8136,6 +8146,8 @@ module gmsh
          api_coord_n_=api_coord_n_, &
          api_coordMaster_=api_coordMaster_, &
          api_coordMaster_n_=api_coordMaster_n_, &
+         api_orientationSign_=api_orientationSign_, &
+         api_orientationSign_n_=api_orientationSign_n_, &
          returnCoord=optval_c_bool(.true., returnCoord), &
          ierr_=ierr)
     typeKeys = ovectorint_(api_typeKeys_, &
@@ -8150,6 +8162,8 @@ module gmsh
       api_coord_n_)
     coordMaster = ovectordouble_(api_coordMaster_, &
       api_coordMaster_n_)
+    orientationSign = ovectorint_(api_orientationSign_, &
+      api_orientationSign_n_)
   end subroutine gmshModelMeshGetPeriodicKeys
 
   !> Import the model STL representation (if available) as the current mesh.

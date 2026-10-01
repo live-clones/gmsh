@@ -51,20 +51,27 @@
 #include "OS.h"
 #include "Options.h"
 #include "OpenFile.h"
-#include "HierarchicalBasisH1Quad.h"
-#include "HierarchicalBasisH1Tria.h"
-#include "HierarchicalBasisH1Line.h"
-#include "HierarchicalBasisH1Brick.h"
-#include "HierarchicalBasisH1Tetra.h"
-#include "HierarchicalBasisH1Pri.h"
-#include "HierarchicalBasisH1Point.h"
-#include "HierarchicalBasisHcurlLine.h"
-#include "HierarchicalBasisHcurlQuad.h"
-#include "HierarchicalBasisHcurlBrick.h"
-#include "HierarchicalBasisHcurlTria.h"
-#include "HierarchicalBasisHcurlTetra.h"
-#include "HierarchicalBasisHcurlPri.h"
+
+#if defined(HAVE_HIERARCHICAL_BASIS)
+#include "CreateHierarchicalBasis.h"
+#include "Utils.h"
+#include "Quadrilateral/HierarchicalBasisH1Quad.h"
+#include "Triangle/HierarchicalBasisH1Tria.h"
+#include "Line/HierarchicalBasisH1Line.h"
+#include "Hexahedron/HierarchicalBasisH1Brick.h"
+#include "Tetrahedron/HierarchicalBasisH1Tetra.h"
+#include "Prism/HierarchicalBasisH1Pri.h"
+#include "Point/HierarchicalBasisH1Point.h"
+#include "Line/HierarchicalBasisHcurlLine.h"
+#include "Quadrilateral/HierarchicalBasisHcurlQuad.h"
+#include "Hexahedron/HierarchicalBasisHcurlBrick.h"
+#include "Triangle/HierarchicalBasisHcurlTria.h"
+#include "Tetrahedron/HierarchicalBasisHcurlTetra.h"
+#include "Prism/HierarchicalBasisHcurlPri.h"
+#endif
+
 #include "Overlap.h"
+#include "rtree.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -767,9 +774,7 @@ GMSH_API void gmsh::model::getEntityType(const int dim, const int tag,
 // will be deprecated
 GMSH_API void gmsh::model::getType(const int dim, const int tag,
                                    std::string &entityType)
-{
-  gmsh::model::getEntityType(dim, tag, entityType);
-}
+{ gmsh::model::getEntityType(dim, tag, entityType); }
 
 GMSH_API void gmsh::model::getEntityProperties(const int dim, const int tag,
                                                std::vector<int> &integers,
@@ -1393,7 +1398,7 @@ gmsh::model::mesh::partition(const int numPart,
 }
 
 GMSH_API int gmsh::model::mesh::createOverlaps(const int layers,
-                                                const bool createBoundaries)
+                                               const bool createBoundaries)
 {
   if(!_checkInit()) return -1;
   return GModel::current()->createOverlaps(layers, createBoundaries);
@@ -1473,7 +1478,6 @@ static const auto &_getOverlapOfBoundaries(const OverlapManager &mgr)
                   "Unsupported dimension for boundary overlaps");
   }
 }
-
 
 // dim is model dimension, so we look for entities of dimension dim-1
 template <int dim>
@@ -1685,10 +1689,8 @@ GMSH_API void gmsh::model::mesh::getOverlapInterfaceBoundary(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(const int dim,
-                                                          const int tag,
-                                                          int &parentTag,
-                                                          const int overlapIndex)
+GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(
+  const int dim, const int tag, int &parentTag, const int overlapIndex)
 {
   if(!_checkInit()) return;
   GModel *model = GModel::current();
@@ -1798,8 +1800,8 @@ GMSH_API void gmsh::model::mesh::getOverlapOverlappedEntity(
     }
   }
   // Check for boundary overlaps (partitionEdge / partitionFace stored in
-  // _overlapOfBoundaries maps). These are partition entities at dim = modelDim-1
-  // that overlap a boundary entity.
+  // _overlapOfBoundaries maps). These are partition entities at dim =
+  // modelDim-1 that overlap a boundary entity.
   if(dim == 1) {
     partitionEdge *pe = dynamic_cast<partitionEdge *>(entity);
     if(pe) {
@@ -1856,15 +1858,14 @@ GMSH_API void gmsh::model::mesh::unpartition()
   CTX::instance()->meshChanged();
 }
 
-GMSH_API void gmsh::model::mesh::writePartitions(
-  const std::string &fileName, const std::vector<int> &partitions)
+GMSH_API void
+gmsh::model::mesh::writePartitions(const std::string &fileName,
+                                   const std::vector<int> &partitions)
 {
   if(!_checkInit()) return;
   if(!GModel::current()->writeMSHPartitions(
-       fileName, partitions,
-       CTX::instance()->mesh.mshFileVersion,
-       CTX::instance()->mesh.binary,
-       CTX::instance()->mesh.saveAll,
+       fileName, partitions, CTX::instance()->mesh.mshFileVersion,
+       CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.saveParametric,
        CTX::instance()->mesh.scalingFactor))
     Msg::Error("Could not write partitions to file '%s'", fileName.c_str());
@@ -1889,7 +1890,8 @@ GMSH_API void gmsh::model::mesh::recombine()
 
 GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
                                           const bool force, const int niter,
-                                          const vectorpair &dimTags, double quality)
+                                          const vectorpair &dimTags,
+                                          double quality)
 {
   if(!_checkInit()) return;
   if(dimTags.size()) {
@@ -2283,11 +2285,9 @@ gmsh::model::mesh::setNode(const std::size_t nodeTag,
   CTX::instance()->meshChanged();
 }
 
-GMSH_API void
-gmsh::model::mesh::setNodes(const std::vector<std::size_t> &nodeTags,
-                            const std::vector<double> &coord,
-                            const std::vector<double> &parametricCoord,
-                            const int dim, const int tag)
+GMSH_API void gmsh::model::mesh::setNodes(
+  const std::vector<std::size_t> &nodeTags, const std::vector<double> &coord,
+  const std::vector<double> &parametricCoord, const int dim, const int tag)
 {
   if(!_checkInit()) return;
   if(coord.size() != 3 * nodeTags.size()) {
@@ -2310,7 +2310,8 @@ gmsh::model::mesh::setNodes(const std::vector<std::size_t> &nodeTags,
   else if(parametricCoord.size()) {
     if(parametricCoord.size() != (std::size_t)dim * nodeTags.size()) {
       Msg::Error("Wrong number of parametric coordinates (%d, expected 0 or "
-                 "%d x %d)", parametricCoord.size(), dim, nodeTags.size());
+                 "%d x %d)",
+                 parametricCoord.size(), dim, nodeTags.size());
       return;
     }
     numPar = dim;
@@ -3676,11 +3677,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   std::vector<double> &basisFunctions, int &numOrientations,
   const std::vector<int> &wantedOrientations)
 {
-  if(!_checkInit()) return;
+  if(!_checkInit()) { return; }
   numComponents = 0;
   basisFunctions.clear();
-  std::string fsName = "";
-  int fsOrder = 0;
+  std::string fsName = ""; // Name of function Space
+  int fsOrder = 0; // Order of function Space
   if(!_getFunctionSpaceInfo(functionSpaceType, fsName, fsOrder,
                             numComponents)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
@@ -3688,26 +3689,12 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   }
 
   const std::size_t numberOfGaussPoints = localCoord.size() / 3;
-  const int familyType = ElementType::getParentType(elementType);
+  const int familyType =
+    ElementType::getParentType(elementType); // TYPE_PNT ....
 
   if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
-    // Check if there is no error in wantedOrientations
-    if(wantedOrientations.size() != 0) {
-      if(wantedOrientations.size() > 1) {
-        Msg::Error("Asking for more orientation that there exist");
-        return;
-      }
-
-      if(wantedOrientations[0] != 0) {
-        Msg::Error(
-          "Orientation %i does not exist for function stace named '%s' on %s",
-          wantedOrientations[0], fsName.c_str(),
-          ElementType::nameOfParentType(familyType, true).c_str());
-        return;
-      }
-    }
-
     const nodalBasis *basis = nullptr;
+
     if(numComponents) {
       if(fsOrder == -1) { // isoparametric
         basis = BasisFactory::getNodalBasis(elementType);
@@ -3728,7 +3715,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
         switch(numComponents) {
         case 1:
           basis->f(u, v, w, s);
-          for(std::size_t j = 0; j < n; j++) basisFunctions[n * i + j] = s[j];
+          for(std::size_t j = 0; j < n; j++) {
+            basisFunctions[n * i + j] = s[j];
+          }
           break;
         case 3:
           basis->df(u, v, w, ds);
@@ -3743,73 +3732,25 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     }
     numOrientations = 1;
   }
+
+#if defined(HAVE_HIERARCHICAL_BASIS)
+
   else { // Hierarchical type
-    HierarchicalBasis *basis(nullptr);
-    if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-      switch(familyType) {
-      case TYPE_HEX: {
-        basis = new HierarchicalBasisH1Brick(fsOrder);
-      } break;
-      case TYPE_PRI: {
-        basis = new HierarchicalBasisH1Pri(fsOrder);
-      } break;
-      case TYPE_TET: {
-        basis = new HierarchicalBasisH1Tetra(fsOrder);
-      } break;
-      case TYPE_QUA: {
-        basis = new HierarchicalBasisH1Quad(fsOrder);
-      } break;
-      case TYPE_TRI: {
-        basis = new HierarchicalBasisH1Tria(fsOrder);
-      } break;
-      case TYPE_LIN: {
-        basis = new HierarchicalBasisH1Line(fsOrder);
-      } break;
-      case TYPE_PNT: {
-        basis = new HierarchicalBasisH1Point();
-      } break;
-      default:
-        Msg::Error("Unknown familyType %i for basis function type %s",
-                   familyType, fsName.c_str());
-        return;
-      }
-    }
-    else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-      switch(familyType) {
-      case TYPE_QUA: {
-        basis = new HierarchicalBasisHcurlQuad(fsOrder);
-      } break;
-      case TYPE_HEX: {
-        basis = new HierarchicalBasisHcurlBrick(fsOrder);
-      } break;
-      case TYPE_TRI: {
-        basis = new HierarchicalBasisHcurlTria(fsOrder);
-      } break;
-      case TYPE_TET: {
-        basis = new HierarchicalBasisHcurlTetra(fsOrder);
-      } break;
-      case TYPE_PRI: {
-        basis = new HierarchicalBasisHcurlPri(fsOrder);
-      } break;
-      case TYPE_LIN: {
-        basis = new HierarchicalBasisHcurlLine(fsOrder);
-      } break;
-      default:
-        Msg::Error("Unknown familyType %i for basis function type %s",
-                   familyType, fsName.c_str());
-        return;
-      }
-    }
-    else {
-      Msg::Error("Unknown function space named '%s'", fsName.c_str());
+
+    HierarchicalBasis *basis =
+      CreateHierarchicalBasis(fsName, familyType, fsOrder);
+    if(!basis) {
+      Msg::Error("Unable to create hierarchical basis for function space '%s' "
+                 "with element type %d",
+                 fsName.c_str(), familyType);
       return;
     }
-
-    const std::size_t vSize = basis->getnVertexFunction();
-    const std::size_t bSize = basis->getnBubbleFunction();
-    const std::size_t eSize = basis->getnEdgeFunction();
-    const std::size_t fSize =
-      basis->getnTriFaceFunction() + basis->getnQuadFaceFunction();
+    const std::size_t vSize = basis->getNumVertexFunction();
+    const std::size_t bSize = basis->getNumBubbleFunction();
+    const std::size_t eSize = basis->getNumEdgeFunction();
+    const std::size_t quadfSize = basis->getNumQuadFaceFunction();
+    const std::size_t trifSize = basis->getNumTriFaceFunction();
+    const std::size_t fSize = trifSize + quadfSize;
     const std::size_t maxOrientation = basis->getNumberOfOrientations();
     numOrientations = maxOrientation;
     const std::size_t numFunctionsPerElement = vSize + bSize + eSize + fSize;
@@ -3822,33 +3763,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       numberOfGaussPoints * numFunctionsPerElement * numComponents);
 
     // Check if there is no error in wantedOrientations
-    if(wantedOrientations.size() != 0) {
-      if(wantedOrientations.size() > maxOrientation) {
-        Msg::Error("Asking for more orientation that there exist");
-        return;
-      }
-      for(unsigned int i = 0; i < wantedOrientations.size(); ++i) {
-        if(wantedOrientations[i] >= static_cast<int>(maxOrientation) ||
-           wantedOrientations[i] < 0) {
-          Msg::Error("Orientation %i does not exist for function stace named "
-                     "'%s' on %s",
-                     wantedOrientations[i], fsName.c_str(),
-                     ElementType::nameOfParentType(familyType, true).c_str());
-          return;
-        }
-      }
-      std::vector<int> sortedWantedOrientations = wantedOrientations;
-      std::sort(sortedWantedOrientations.begin(),
-                sortedWantedOrientations.end());
-      int previousInt = sortedWantedOrientations[0];
-      for(unsigned int i = 1; i < sortedWantedOrientations.size(); ++i) {
-        if(previousInt == sortedWantedOrientations[i]) {
-          Msg::Error("Duplicate wanted orientation found");
-          return;
-        }
-        previousInt = sortedWantedOrientations[i];
-      }
-    }
+    validateWantedOrientations(wantedOrientations, maxOrientation, fsName,
+                               familyType);
 
     std::vector<MVertex *> vertices(numVertices);
     for(unsigned int i = 0; i < numVertices; ++i) {
@@ -3856,27 +3772,13 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     }
     MElement *element = nullptr;
     switch(familyType) {
-    case TYPE_HEX: {
-      element = new MHexahedron(vertices);
-    } break;
-    case TYPE_PRI: {
-      element = new MPrism(vertices);
-    } break;
-    case TYPE_TET: {
-      element = new MTetrahedron(vertices);
-    } break;
-    case TYPE_QUA: {
-      element = new MQuadrangle(vertices);
-    } break;
-    case TYPE_TRI: {
-      element = new MTriangle(vertices);
-    } break;
-    case TYPE_LIN: {
-      element = new MLine(vertices);
-    } break;
-    case TYPE_PNT: {
-      element = new MPoint(vertices);
-    } break;
+    case TYPE_HEX: element = new MHexahedron(vertices); break;
+    case TYPE_PRI: element = new MPrism(vertices); break;
+    case TYPE_TET: element = new MTetrahedron(vertices); break;
+    case TYPE_QUA: element = new MQuadrangle(vertices); break;
+    case TYPE_TRI: element = new MTriangle(vertices); break;
+    case TYPE_LIN: element = new MLine(vertices); break;
+    case TYPE_PNT: element = new MPoint(vertices); break;
     default:
       Msg::Error("Unknown familyType %i for basis function type %s", familyType,
                  fsName.c_str());
@@ -3885,29 +3787,28 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
 
     switch(numComponents) {
     case 1: {
-      std::vector<std::vector<double>> vTable(
-        numberOfGaussPoints,
-        std::vector<double>(vSize)); // Vertex functions of one element
-      std::vector<std::vector<double>> bTable(
-        numberOfGaussPoints,
-        std::vector<double>(bSize)); // bubble functions of one element
-      std::vector<std::vector<double>> fTable(
-        numberOfGaussPoints,
-        std::vector<double>(fSize)); // face functions of one element
-      std::vector<std::vector<double>> eTable(
-        numberOfGaussPoints,
-        std::vector<double>(eSize)); // edge functions of one element
+      // Vertex functions of one element
+      std::vector<std::vector<double>> vTable(numberOfGaussPoints,
+                                              std::vector<double>(vSize));
+      // edge functions of one element
+      std::vector<std::vector<double>> eTable(numberOfGaussPoints,
+                                              std::vector<double>(eSize));
+      // face functions of one element
+      std::vector<std::vector<double>> fTable(numberOfGaussPoints,
+                                              std::vector<double>(fSize));
+      // bubble functions of one element
+      std::vector<std::vector<double>> bTable(numberOfGaussPoints,
+                                              std::vector<double>(bSize));
 
       for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
         const double u = localCoord[3 * q];
         const double v = localCoord[3 * q + 1];
         const double w = localCoord[3 * q + 2];
-
         basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q],
-                             bTable[q]);
+                             bTable[q], fsName);
       }
-      // compute only one time the value of the edge basis functions for
-      // each possible orientations
+      // compute only one time the value of the edge basis functions for each
+      // possible orientations
       std::vector<std::vector<double>> eTableNegativeFlag(eTable);
       if(eSize != 0) {
         for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
@@ -3915,23 +3816,20 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
         }
       }
 
-      // compute only one time the value of the face basis functions for
-      // each possible orientations
+      // compute only one time the value of the face basis functions for each
+      // possible orientations
       std::vector<std::vector<double>> quadFaceFunctionsAllOrientations(
-        numberOfGaussPoints,
-        std::vector<double>(basis->getnQuadFaceFunction() * 8, 0));
+        numberOfGaussPoints, std::vector<double>(quadfSize * 8, 0));
       std::vector<std::vector<double>> triFaceFunctionsAllOrientations(
-        numberOfGaussPoints,
-        std::vector<double>(basis->getnTriFaceFunction() * 6, 0));
+        numberOfGaussPoints, std::vector<double>(trifSize * 6, 0));
       if(fSize != 0) {
         for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
           const double u = localCoord[3 * q];
           const double v = localCoord[3 * q + 1];
           const double w = localCoord[3 * q + 2];
-
           basis->addAllOrientedFaceFunctions(
             u, v, w, fTable[q], quadFaceFunctionsAllOrientations[q],
-            triFaceFunctionsAllOrientations[q]);
+            triFaceFunctionsAllOrientations[q], fsName);
         }
       }
 
@@ -3945,6 +3843,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       unsigned int iOrientationIndex = 0;
       for(unsigned int iOrientation = 0; iOrientation < maxOrientation;
           ++iOrientation) {
+        // To obtain "iOrientationIndex" begin :
         if(wantedOrientations.size() != 0) {
           auto it = std::find(wantedOrientations.begin(),
                               wantedOrientations.end(), iOrientation);
@@ -3952,11 +3851,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
             iOrientationIndex = &(*it) - &wantedOrientations[0];
           }
           else {
-            MVertexPtrLessThan comp;
-            std::next_permutation(vertices.begin(), vertices.end(), comp);
-            for(unsigned int i = 0; i < numVertices; ++i) {
-              element->setVertex(i, vertices[i]);
-            }
+            updateElementVerticesWithNextPermutation(vertices, element);
             continue;
           }
         }
@@ -3969,7 +3864,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
             MEdge edge = element->getEdge(iEdge);
             MEdge edgeSolin = element->getEdgeSolin(iEdge);
             const int orientationFlag =
-              (edge.getMinVertex() != edgeSolin.getVertex(0)) ? -1 : 1;
+              (edge.getMinVertex() != edgeSolin.getVertex(0) ? -1 : 1);
             for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
               basis->orientEdge(orientationFlag, iEdge, eTableCopy[q],
                                 eTable[q], eTableNegativeFlag[q]);
@@ -3998,7 +3893,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
           iOrientationIndex * numberOfGaussPoints * numFunctionsPerElement;
         for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
           const std::size_t offsetGP = q * numFunctionsPerElement;
-
           for(unsigned int i = 0; i < vSize; ++i) {
             basisFunctions[offsetOrientation + offsetGP + i] = vTable[q][i];
           }
@@ -4018,70 +3912,61 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
               bTable[q][i];
           }
         }
-
-        MVertexPtrLessThan comp;
-        std::next_permutation(vertices.begin(), vertices.end(), comp);
-        for(unsigned int i = 0; i < numVertices; ++i) {
-          element->setVertex(i, vertices[i]);
-        }
+        updateElementVerticesWithNextPermutation(vertices, element);
       }
       break;
     }
+
     case 3: {
       std::vector<std::vector<std::vector<double>>> vTable(
         numberOfGaussPoints,
         std::vector<std::vector<double>>(
           vSize,
           std::vector<double>(3, 0.))); // Vertex functions of one element
+      std::vector<std::vector<std::vector<double>>> eTable(
+        numberOfGaussPoints,
+        std::vector<std::vector<double>>(
+          eSize, std::vector<double>(3, 0.))); // edge functions of one element
+      std::vector<std::vector<std::vector<double>>> fTable(
+        numberOfGaussPoints,
+        std::vector<std::vector<double>>(
+          fSize, std::vector<double>(3, 0.))); // face functions of one element
       std::vector<std::vector<std::vector<double>>> bTable(
         numberOfGaussPoints,
         std::vector<std::vector<double>>(
           bSize,
           std::vector<double>(3, 0.))); // bubble functions of one element
-      std::vector<std::vector<std::vector<double>>> fTable(
-        numberOfGaussPoints,
-        std::vector<std::vector<double>>(
-          fSize, std::vector<double>(3, 0.))); // face functions of one element
-      std::vector<std::vector<std::vector<double>>> eTable(
-        numberOfGaussPoints,
-        std::vector<std::vector<double>>(
-          eSize, std::vector<double>(3, 0.))); // edge functions of one element
 
       for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
         const double u = localCoord[3 * q];
         const double v = localCoord[3 * q + 1];
         const double w = localCoord[3 * q + 2];
-
         basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q],
                              bTable[q], fsName);
       }
-      // compute only one time the value of the edge basis functions for
-      // each possible orientations
+      // compute only one time the value of the edge basis functions for each
+      // possible orientations
       std::vector<std::vector<std::vector<double>>> eTableNegativeFlag(eTable);
       if(eSize != 0) {
         for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
           basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag[q]);
         }
       }
-
-      // compute only one time the value of the face basis functions for
-      // each possible orientations
+      // compute only one time the value of the face basis functions for each
+      // possible orientations
       std::vector<std::vector<std::vector<double>>>
         quadFaceFunctionsAllOrientations(
-          numberOfGaussPoints,
-          std::vector<std::vector<double>>(basis->getnQuadFaceFunction() * 8,
-                                           std::vector<double>(3, 0.)));
+          numberOfGaussPoints, std::vector<std::vector<double>>(
+                                 quadfSize * 8, std::vector<double>(3, 0.)));
       std::vector<std::vector<std::vector<double>>>
         triFaceFunctionsAllOrientations(
-          numberOfGaussPoints,
-          std::vector<std::vector<double>>(basis->getnTriFaceFunction() * 6,
-                                           std::vector<double>(3, 0.)));
+          numberOfGaussPoints, std::vector<std::vector<double>>(
+                                 trifSize * 6, std::vector<double>(3, 0.)));
       if(fSize != 0) {
         for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
           const double u = localCoord[3 * q];
           const double v = localCoord[3 * q + 1];
           const double w = localCoord[3 * q + 2];
-
           basis->addAllOrientedFaceFunctions(
             u, v, w, fTable[q], quadFaceFunctionsAllOrientations[q],
             triFaceFunctionsAllOrientations[q], fsName);
@@ -4109,11 +3994,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
             iOrientationIndex = &(*it) - &wantedOrientations[0];
           }
           else {
-            MVertexPtrLessThan comp;
-            std::next_permutation(vertices.begin(), vertices.end(), comp);
-            for(unsigned int i = 0; i < numVertices; ++i) {
-              element->setVertex(i, vertices[i]);
-            }
+            updateElementVerticesWithNextPermutation(vertices, element);
             continue;
           }
         }
@@ -4155,7 +4036,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
           iOrientationIndex * numberOfGaussPoints * numFunctionsPerElement * 3;
         for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
           const std::size_t offsetGP = q * numFunctionsPerElement * 3;
-
           for(unsigned int i = 0; i < vSize; ++i) {
             basisFunctions[offsetOrientation + offsetGP + 3 * i] =
               vTable[q][i][0];
@@ -4192,23 +4072,16 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
               bTable[q][i][2];
           }
         }
-
-        MVertexPtrLessThan comp;
-        std::next_permutation(vertices.begin(), vertices.end(), comp);
-        for(unsigned int i = 0; i < numVertices; ++i) {
-          element->setVertex(i, vertices[i]);
-        }
+        updateElementVerticesWithNextPermutation(vertices, element);
       }
       break;
     }
     }
-
     for(unsigned int i = 0; i < numVertices; ++i) { delete vertices[i]; }
     delete element;
     delete basis;
   }
-
-  return;
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
@@ -4609,6 +4482,47 @@ gmsh::model::mesh::addFaces(const std::vector<std::size_t> &faceTags,
   }
 }
 
+#if defined(HAVE_HIERARCHICAL_BASIS)
+namespace {
+
+HierarchicalBasis *createH1Basis(int familyType, int order, const std::string &fsName)
+{
+  switch(familyType) {
+  case TYPE_HEX: return new HierarchicalBasisH1Brick(order);
+  case TYPE_PRI: return new HierarchicalBasisH1Pri(order);
+  case TYPE_TET: return new HierarchicalBasisH1Tetra(order);
+  case TYPE_QUA: return new HierarchicalBasisH1Quad(order);
+  case TYPE_TRI: return new HierarchicalBasisH1Tria(order);
+  case TYPE_LIN: return new HierarchicalBasisH1Line(order);
+  case TYPE_PNT: return new HierarchicalBasisH1Point();
+  default: 
+    Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
+    return nullptr;
+  }
+}
+
+HierarchicalBasis *createHcurlBasis(int familyType, int order, const std::string &fsName)
+{
+  switch(familyType) {
+  case TYPE_HEX: return new HierarchicalBasisHcurlBrick(order);
+  case TYPE_PRI: return new HierarchicalBasisHcurlPri(order);
+  case TYPE_TET: return new HierarchicalBasisHcurlTetra(order);
+  case TYPE_QUA: return new HierarchicalBasisHcurlQuad(order);
+  case TYPE_TRI: return new HierarchicalBasisHcurlTria(order);
+  case TYPE_LIN: return new HierarchicalBasisHcurlLine(order);
+  default: 
+    Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
+    return nullptr;
+  }
+}
+
+} // namespace
+#endif
+
+
+
 GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
                                          const std::string &functionSpaceType,
                                          std::vector<int> &typeKeys,
@@ -4633,64 +4547,25 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
 
-  HierarchicalBasis *basis(nullptr);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(order);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(order);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+#if defined(HAVE_HIERARCHICAL_BASIS)
+
+  HierarchicalBasis *basis = nullptr;
+  if(fsName == "H1Legendre" || fsName == "GradH1Legendre")
+  {
+    basis = createH1Basis(familyType, order, fsName);
+    if(!basis) return;
   }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(order);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(order);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre")
+  {
+    basis = createHcurlBasis(familyType, order, fsName);
+    if(!basis) return;
   }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+  else
+#endif
+
+
+    if(fsName == "IsoParametric" || fsName == "Lagrange" ||
+       fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     const nodalBasis *nodalB(nullptr);
     if(order == -1) { // isoparametric
       nodalB = BasisFactory::getNodalBasis(elementType);
@@ -4734,11 +4609,12 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
     return;
   }
 
-  int vSize = basis->getnVertexFunction();
-  int bSize = basis->getnBubbleFunction();
-  int eSize = basis->getnEdgeFunction();
-  int quadFSize = basis->getnQuadFaceFunction();
-  int triFSize = basis->getnTriFaceFunction();
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  int vSize = basis->getNumVertexFunction();
+  int bSize = basis->getNumBubbleFunction();
+  int eSize = basis->getNumEdgeFunction();
+  int quadFSize = basis->getNumQuadFaceFunction();
+  int triFSize = basis->getNumTriFaceFunction();
   int fSize = quadFSize + triFSize;
   int numDofsPerElement = vSize + bSize + eSize + fSize;
   int numberQuadFaces = basis->getNumQuadFace();
@@ -4873,6 +4749,7 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
       }
     }
   }
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::getKeysForElement(
@@ -4896,67 +4773,26 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     Msg::Error("Unknown element %zu", elementTag);
     return;
   }
+#if defined(HAVE_HIERARCHICAL_BASIS)
   int elementType = e->getTypeForMSH();
   int familyType = ElementType::getParentType(elementType);
 
-  HierarchicalBasis *basis(nullptr);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(order);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(order);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+  HierarchicalBasis *basis = nullptr;
+  if(fsName == "H1Legendre" || fsName == "GradH1Legendre")
+  {
+    basis = createH1Basis(familyType, order, fsName);
+    if(!basis) return;
   }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(order);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(order);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre")
+  {
+    basis = createHcurlBasis(familyType, order, fsName);
+    if(!basis) return;
   }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+  else
+#endif
+
+  if(fsName == "IsoParametric" || fsName == "Lagrange" ||
+     fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     typeKeys.reserve(e->getNumVertices());
     entityKeys.reserve(e->getNumVertices());
     if(returnCoord) { coord.reserve(3 * e->getNumVertices()); }
@@ -4976,11 +4812,12 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     return;
   }
 
-  int vSize = basis->getnVertexFunction();
-  int bSize = basis->getnBubbleFunction();
-  int eSize = basis->getnEdgeFunction();
-  int quadFSize = basis->getnQuadFaceFunction();
-  int triFSize = basis->getnTriFaceFunction();
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  int vSize = basis->getNumVertexFunction();
+  int bSize = basis->getNumBubbleFunction();
+  int eSize = basis->getNumEdgeFunction();
+  int quadFSize = basis->getNumQuadFaceFunction();
+  int triFSize = basis->getNumTriFaceFunction();
   int fSize = quadFSize + triFSize;
   int numberQuadFaces = basis->getNumQuadFace();
   int numberTriFaces = basis->getNumTriFace();
@@ -5102,7 +4939,20 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       }
     }
   }
+#endif
 }
+
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  int _getNumberOfKeysForHierarchicalBasis(HierarchicalBasis *basis){
+    int vSize = basis->getNumVertexFunction();
+    int bSize = basis->getNumBubbleFunction();
+    int eSize = basis->getNumEdgeFunction();
+    int quadFSize = basis->getNumQuadFaceFunction();
+    int triFSize = basis->getNumTriFaceFunction();
+    int numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
+    return numberOfKeys;
+  }
+#endif
 
 GMSH_API int
 gmsh::model::mesh::getNumberOfKeys(const int elementType,
@@ -5117,80 +4967,29 @@ gmsh::model::mesh::getNumberOfKeys(const int elementType,
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return 0;
   }
+
+#if defined(HAVE_HIERARCHICAL_BASIS)
   int familyType = ElementType::getParentType(elementType);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    HierarchicalBasis *basis(nullptr);
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(basisOrder);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(basisOrder);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return 0;
-    }
-    int vSize = basis->getnVertexFunction();
-    int bSize = basis->getnBubbleFunction();
-    int eSize = basis->getnEdgeFunction();
-    int quadFSize = basis->getnQuadFaceFunction();
-    int triFSize = basis->getnTriFaceFunction();
-    numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
+
+  HierarchicalBasis *basis = nullptr;
+  if(fsName == "H1Legendre" || fsName == "GradH1Legendre")
+  {
+    basis = createH1Basis(familyType, basisOrder, fsName);
+    if(!basis) return 0;
+    numberOfKeys=_getNumberOfKeysForHierarchicalBasis(basis);
     delete basis;
   }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    HierarchicalBasis *basis(nullptr);
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(basisOrder);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(basisOrder);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return 0;
-    }
-    int vSize = basis->getnVertexFunction();
-    int bSize = basis->getnBubbleFunction();
-    int eSize = basis->getnEdgeFunction();
-    int quadFSize = basis->getnQuadFaceFunction();
-    int triFSize = basis->getnTriFaceFunction();
-    numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
+  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre")
+  {
+    basis = createHcurlBasis(familyType, basisOrder, fsName);
+    if(!basis) return 0;
+    numberOfKeys=_getNumberOfKeysForHierarchicalBasis(basis);
     delete basis;
   }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+  else
+#endif
+    if(fsName == "IsoParametric" || fsName == "Lagrange" ||
+       fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     const nodalBasis *basis(nullptr);
     if(basisOrder == -1) { // isoparametric
       basis = BasisFactory::getNodalBasis(elementType);
@@ -5232,65 +5031,25 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
     return;
   }
 
-  HierarchicalBasis *basis(nullptr);
+#if defined(HAVE_HIERARCHICAL_BASIS)
   int familyType = ElementType::getParentType(elementType);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(basisOrder);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(basisOrder);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+
+  HierarchicalBasis *basis = nullptr;
+  if(fsName == "H1Legendre" || fsName == "GradH1Legendre")
+  {
+    basis = createH1Basis(familyType, basisOrder, fsName);
+    if(!basis) return;
   }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(basisOrder);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(basisOrder);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre")
+  {
+    basis = createHcurlBasis(familyType, basisOrder, fsName);
+    if(!basis) return;
   }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+  else
+#endif
+
+    if(fsName == "IsoParametric" || fsName == "Lagrange" ||
+       fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     const nodalBasis *basis(nullptr);
     if(basisOrder == -1) { // isoparametric
       basis = BasisFactory::getNodalBasis(elementType);
@@ -5324,12 +5083,12 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
     Msg::Error("Unknown function space named '%s'", fsName.c_str());
     return;
   }
-
-  int vSize = basis->getnVertexFunction();
-  int bSize = basis->getnBubbleFunction();
-  int eSize = basis->getnEdgeFunction();
-  int quadFSize = basis->getnQuadFaceFunction();
-  int triFSize = basis->getnTriFaceFunction();
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  int vSize = basis->getNumVertexFunction();
+  int bSize = basis->getNumBubbleFunction();
+  int eSize = basis->getNumEdgeFunction();
+  int quadFSize = basis->getNumQuadFaceFunction();
+  int triFSize = basis->getNumTriFaceFunction();
   int numDofsPerElement = vSize + bSize + eSize + quadFSize + triFSize;
   std::vector<int> functionTypeInfo(numDofsPerElement);
   std::vector<int> orderInfo(numDofsPerElement);
@@ -5345,6 +5104,7 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
       infoKeys[const1 + j] = std::make_pair(functionTypeInfo[j], orderInfo[j]);
     }
   }
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::getBarycenters(
@@ -6451,14 +6211,25 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   }
 }
 
+#include "getPeriodicKeys.hpp"
+
 GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   const int elementType, const std::string &functionSpaceType, const int tag,
   int &tagMaster, std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
   std::vector<std::size_t> &entityKeys,
   std::vector<std::size_t> &entityKeysMaster, std::vector<double> &coord,
-  std::vector<double> &coordMaster, const bool returnCoord)
+  std::vector<double> &coordMaster, std::vector<int> &orientationSign,
+  const bool returnCoord)
 {
   if(!_checkInit()) return;
+  int order = 0;
+  int numComponents = 0;
+  std::string fsName = "";
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, order, numComponents)) {
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    return;
+  }
+
   int dim = ElementType::getDimension(elementType);
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) {
@@ -6471,56 +6242,16 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
     typeKeysMaster.clear();
     entityKeys.clear();
     entityKeysMaster.clear();
+    orientationSign.clear();
     return;
   }
 
   tagMaster = ge->getMeshMaster()->tag();
-  getKeys(elementType, functionSpaceType, typeKeys, entityKeys, coord, tag,
-          returnCoord);
-  typeKeysMaster = typeKeys;
-  entityKeysMaster = entityKeys;
-  coordMaster = coord;
 
-  int nthreads = CTX::instance()->numThreads;
-  if(!nthreads) nthreads = Msg::GetMaxThreads();
-
-  if(functionSpaceType == "IsoParametric" || functionSpaceType == "Lagrange") {
-#pragma omp parallel for num_threads(nthreads)
-    for(std::size_t i = 0; i < entityKeys.size(); i++) {
-      MVertex *v = GModel::current()->getMeshVertexByTag(entityKeys[i]);
-      if(!v) { Msg::Warning("Unknown node %d", entityKeys[i]); }
-      else {
-        auto mv = ge->correspondingVertices.find(v);
-        if(mv != ge->correspondingVertices.end()) {
-          entityKeysMaster[i] = mv->second->getNum();
-          if(returnCoord) {
-            coord[3 * i] = mv->second->x();
-            coord[3 * i + 1] = mv->second->y();
-            coord[3 * i + 2] = mv->second->z();
-          }
-        }
-        else {
-          auto mv2 = ge->correspondingHighOrderVertices.find(v);
-          if(mv2 != ge->correspondingHighOrderVertices.end()) {
-            entityKeysMaster[i] = mv2->second->getNum();
-            if(returnCoord) {
-              coord[3 * i] = mv2->second->x();
-              coord[3 * i + 1] = mv2->second->y();
-              coord[3 * i + 2] = mv2->second->z();
-            }
-          }
-          else {
-            Msg::Warning("Unknown master node corresponding to node %d",
-                         entityKeys[i]);
-          }
-        }
-      }
-    }
-  }
-  else {
-    Msg::Error("Periodic key generation currently only available for "
-               "\"IsoParametric\" and \"Lagrange\" function spaces");
-  }
+  _getFullPeriodicKeys(ge, elementType, fsName, order, numComponents, tag,
+                       tagMaster, dim, typeKeys, typeKeysMaster, entityKeys,
+                       entityKeysMaster, coord, coordMaster, orientationSign,
+                       returnCoord);
 }
 
 GMSH_API void
@@ -6605,10 +6336,11 @@ GMSH_API void gmsh::model::mesh::importStl()
   }
 }
 
-GMSH_API void gmsh::model::mesh::classifySurfaces(const double angle,
-  std::vector<int> &oldSurfaceTags, std::vector<int> &newSurfaceTags,
-  const bool boundary, const bool forReparametrization,
-  const double curveAngle, const bool exportDiscrete)
+GMSH_API void gmsh::model::mesh::classifySurfaces(
+  const double angle, std::vector<int> &oldSurfaceTags,
+  std::vector<int> &newSurfaceTags, const bool boundary,
+  const bool forReparametrization, const double curveAngle,
+  const bool exportDiscrete)
 {
   if(!_checkInit()) return;
   std::map<int, std::vector<int>> splitMap;
@@ -7244,9 +6976,7 @@ GMSH_API void gmsh::model::geo::mirror(const vectorpair &dimTags,
 GMSH_API void gmsh::model::geo::symmetrize(const vectorpair &dimTags,
                                            const double a, const double b,
                                            const double c, const double d)
-{
-  gmsh::model::geo::mirror(dimTags, a, b, c, d);
-}
+{ gmsh::model::geo::mirror(dimTags, a, b, c, d); }
 
 GMSH_API void gmsh::model::geo::copy(const vectorpair &dimTags,
                                      vectorpair &outDimTags)
@@ -8061,9 +7791,7 @@ GMSH_API void gmsh::model::occ::mirror(const vectorpair &dimTags,
 GMSH_API void gmsh::model::occ::symmetrize(const vectorpair &dimTags,
                                            const double a, const double b,
                                            const double c, const double d)
-{
-  gmsh::model::occ::mirror(dimTags, a, b, c, d);
-}
+{ gmsh::model::occ::mirror(dimTags, a, b, c, d); }
 
 GMSH_API void
 gmsh::model::occ::affineTransform(const vectorpair &dimTags,
@@ -9317,8 +9045,7 @@ GMSH_API void gmsh::algorithm::refineTetrahedra(
   const std::vector<std::size_t> &tetraIn, std::vector<double> &steiner,
   std::vector<std::size_t> &tetraOut)
 {
-  if(!_checkInit())
-    return;
+  if(!_checkInit()) return;
 
 #if defined(HAVE_MESH)
   refineTetrahedraHxt(coord, sizeAtNode, tetraIn, steiner, tetraOut);
