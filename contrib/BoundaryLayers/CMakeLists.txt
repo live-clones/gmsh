@@ -1,6 +1,5 @@
 set(SRC
   BoundaryLayer.cpp
-  gmshLBFGS.cpp
   highOrderBoundaryLayerUntangler.cpp
   winslowUntanglerGMSH.cpp
 )
