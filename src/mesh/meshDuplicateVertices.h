@@ -8,12 +8,17 @@
 #include <unordered_map>
 #include <vector>
 #include <algorithm>
+#include <mutex>
 
 int getAppetiteForMotion(MVertex *v);
 
 #include <unordered_map>
 #include <algorithm>
 
+// This is a global singleton (see instance() below) queried from the
+// parallel per-face 2D meshing (one thread per GFace). Every public method
+// locks mutex_ for its whole body; the private helpers below are only ever
+// called while that lock is already held by the calling public method.
 class degeneratedVertices {
   // Union-Find
   std::unordered_map<MVertex *, MVertex *> parent;
@@ -24,6 +29,8 @@ class degeneratedVertices {
     best; // root -> vertex au max appétit
   std::unordered_map<MVertex *, int>
     bestAppetite; // root -> valeur d’appétit max
+
+  std::mutex mutex_;
 
   degeneratedVertices() = default;
 
@@ -58,6 +65,7 @@ public:
 
   void initialize()
   {
+    std::lock_guard<std::mutex> lock(mutex_);
     parent.clear();
     ufRank.clear();
     best.clear();
@@ -67,6 +75,7 @@ public:
   // Union avec priorité = max(appétit) sur la composante
   void add(MVertex *a, MVertex *b)
   {
+    std::lock_guard<std::mutex> lock(mutex_);
     MVertex *ra = findRoot(a);
     MVertex *rb = findRoot(b);
     if(ra == rb) return;
@@ -99,11 +108,16 @@ public:
   }
 
   // Racine UF (technique)
-  MVertex *find(MVertex *x) { return findRoot(x); }
+  MVertex *find(MVertex *x)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return findRoot(x);
+  }
 
   // Représentant "prioritaire" (celui au plus grand appétit) de la famille de x
   MVertex *representative(MVertex *x)
   {
+    std::lock_guard<std::mutex> lock(mutex_);
     MVertex *r = findRoot(x);
     return best[r];
   }
@@ -111,6 +125,7 @@ public:
   // Appétit du représentant (utile si tu veux le comparer)
   int representativeAppetite(MVertex *x)
   {
+    std::lock_guard<std::mutex> lock(mutex_);
     MVertex *r = findRoot(x);
     return bestAppetite[r];
   }
@@ -119,6 +134,7 @@ public:
   // paresseuse)
   void seed(const std::vector<MVertex *> &vs)
   {
+    std::lock_guard<std::mutex> lock(mutex_);
     for(auto *v : vs) make_set(v);
   }
 };

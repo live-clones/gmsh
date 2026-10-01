@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <algorithm>
 #include <cstdio>
 #include <set>
 #include <stack>
@@ -506,6 +507,30 @@ static void Mesh0D(GModel *m)
   }
 }
 
+// Curves meshed in parallel draw vertex numbers from a shared counter, so the
+// numbers of different curves interleave depending on thread scheduling. The
+// 2D meshers order boundary vertices by number (MVertexPtrLessThan), which made
+// surface meshes depend on the number of threads. Reassign the same set of
+// numbers in curve order; this is the identity when curves are meshed in
+// sequence.
+static void RenumberCurveVerticesInCurveOrder(GModel *m)
+{
+  std::vector<MVertex *> verts;
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it)
+    verts.insert(verts.end(), (*it)->mesh_vertices.begin(),
+                 (*it)->mesh_vertices.end());
+  std::vector<std::size_t> nums(verts.size());
+  for(std::size_t i = 0; i < verts.size(); i++) nums[i] = verts[i]->getNum();
+  std::sort(nums.begin(), nums.end());
+  bool changed = false;
+  for(std::size_t i = 0; i < verts.size(); i++) {
+    if(verts[i]->getNum() == nums[i]) continue;
+    verts[i]->forceNum(nums[i]);
+    changed = true;
+  }
+  if(changed) m->destroyMeshCaches();
+}
+
 static void Mesh1D(GModel *m)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
@@ -575,6 +600,8 @@ static void Mesh1D(GModel *m)
   }
 
   Msg::StopProgressMeter();
+
+  RenumberCurveVerticesInCurveOrder(m);
 
   CheckEmptyMesh(m, 1);
   double t2 = Cpu(), w2 = TimeOfDay();

@@ -49,6 +49,27 @@
 #include "meshTriangulation.h"
 #include "meshDuplicateVertices.h"
 #include "meshGFaceParamBoundary.h"
+#include <random>
+
+// Faces are meshed in parallel, so perturbing points with rand() made each
+// face's result depend on how the threads interleaved their draws. Seed a
+// generator per face and per retry instead.
+class FacePerturbation {
+  std::mt19937 _generator;
+
+public:
+  FacePerturbation(const GFace *gf, int recurIter)
+  {
+    std::seed_seq seed{(unsigned)CTX::instance()->mesh.randomSeed,
+                       (unsigned)gf->tag(), (unsigned)recurIter};
+    _generator.seed(seed);
+  }
+  // uniform in [0, 1]
+  double operator()()
+  {
+    return (double)_generator() / (double)std::mt19937::max();
+  }
+};
 
 static void remeshUnrecoveredEdges(
   std::multimap<MVertex *, BDS_Point *> &recoverMultiMapInv,
@@ -801,9 +822,9 @@ static bool collectBoundaryNodes(
       if(fdeb != nullptr) fclose(fdeb);
       return false;
     }
-    // degeneratedVertices is a global singleton with no locking of its own,
-    // so this loop is a serialization point for the parallel meshing of faces
-#pragma omp critical
+    // degeneratedVertices is a global singleton locked internally (see
+    // meshDuplicateVertices.h), so it is safe to query directly from the
+    // parallel meshing of faces without an external critical section here.
     for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
       MVertex *v1 = (*ite)->lines[i]->getVertex(0);
       MVertex *v2 = (*ite)->lines[i]->getVertex(1);
@@ -911,21 +932,20 @@ initialTriangulation(GFace *gf, BDS_Mesh *m, std::vector<BDS_Point *> &points,
                      SBoundingBox3d &bbox,
                      std::set<MVertex *, MVertexPtrLessThan> &all_vertices,
                      std::map<MVertex *, BDS_Point *> &recoverMapInv,
-                     std::vector<GEdge *> *replacementEdges)
+                     std::vector<GEdge *> *replacementEdges, int recurIter)
 {
   // use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
   if(CTX::instance()->mesh.oldInitialDelaunay2D) {
+    FacePerturbation perturbation(gf, recurIter);
     // compute the bounding box in parametric space
     SVector3 dd(bbox.max(), bbox.min());
     double LC2D = norm(dd);
     DocRecord doc(points.size() + 4);
     for(std::size_t i = 0; i < points.size(); i++) {
-      double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                  (double)RAND_MAX;
-      double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                  (double)RAND_MAX;
+      double XX = CTX::instance()->mesh.randFactor * LC2D * perturbation();
+      double YY = CTX::instance()->mesh.randFactor * LC2D * perturbation();
       doc.points[i].where.h = points[i]->u + XX;
       doc.points[i].where.v = points[i]->v + YY;
       doc.points[i].data = points[i];
@@ -1142,8 +1162,9 @@ static void initialTriangulationPeriodic(
   std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap,
   std::vector<std::vector<BDS_Point *>> &edgeLoops_BDS,
   std::vector<int> &edgesEmbedded, SBoundingBox3d &bbox, int &nbPointsTotal,
-  double du, double dv, double LC2D)
+  double du, double dv, double LC2D, int recurIter)
 {
+  FacePerturbation perturbation(gf, recurIter);
   int count = 0;
 
   // Embedded Vertices
@@ -1188,10 +1209,8 @@ static void initialTriangulationPeriodic(
     pp->lcBGM() = BGM_MeshSize(*itvx, 0, 0, v->x(), v->y(), v->z());
     pp->lc() = pp->lcBGM();
     recoverMap[pp] = v;
-    double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                (double)RAND_MAX;
-    double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                (double)RAND_MAX;
+    double XX = CTX::instance()->mesh.randFactor * LC2D * perturbation();
+    double YY = CTX::instance()->mesh.randFactor * LC2D * perturbation();
     doc.points[count].where.h = pp->u + XX;
     doc.points[count].where.v = pp->v + YY;
     doc.points[count].adjacent = nullptr;
@@ -1269,10 +1288,8 @@ static void initialTriangulationPeriodic(
           pp->lc() = pp->lcBGM();
           recoverMap[pp] = v;
           facile[v] = pp;
-          double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                      (double)RAND_MAX;
-          double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                      (double)RAND_MAX;
+          double XX = CTX::instance()->mesh.randFactor * LC2D * perturbation();
+          double YY = CTX::instance()->mesh.randFactor * LC2D * perturbation();
           doc.points[count].where.h = pp->u + XX;
           doc.points[count].where.v = pp->v + YY;
           doc.points[count].adjacent = nullptr;
@@ -1296,10 +1313,8 @@ static void initialTriangulationPeriodic(
     std::vector<BDS_Point *> &edgeLoop_BDS = edgeLoops_BDS[i];
     for(std::size_t j = 0; j < edgeLoop_BDS.size(); j++) {
       BDS_Point *pp = edgeLoop_BDS[j];
-      double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                  (double)RAND_MAX;
-      double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                  (double)RAND_MAX;
+      double XX = CTX::instance()->mesh.randFactor * LC2D * perturbation();
+      double YY = CTX::instance()->mesh.randFactor * LC2D * perturbation();
       doc.points[count].where.h = pp->u + XX;
       doc.points[count].where.v = pp->v + YY;
       doc.points[count].adjacent = nullptr;
@@ -1416,7 +1431,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   buildBDSPoints(gf, all_vertices, m, points, bbox, recoverMap, recoverMapInv);
 
   initialTriangulation(gf, m, points, bbox, all_vertices, recoverMapInv,
-                       replacementEdges);
+                       replacementEdges, RECUR_ITER);
 
   if(debug && RECUR_ITER == 0) debugViews(m, gf, "initial");
 
@@ -1916,7 +1931,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   std::vector<int> edgesEmbedded;
 
   initialTriangulationPeriodic(gf, m, recoverMap, edgeLoops_BDS, edgesEmbedded,
-                               bbox, nbPointsTotal, du, dv, LC2D);
+                               bbox, nbPointsTotal, du, dv, LC2D, RECUR_ITER);
 
   // Recover the boundary edges and compute characteristic lenghts using mesh
   // edge spacing
@@ -2253,7 +2268,12 @@ namespace {
     RestoreOptionAtEndOfScope(int *option) : _option(option), _initial(*option)
     {
     }
-    ~RestoreOptionAtEndOfScope() { *_option = _initial; }
+    // write only when changed: faces meshed in parallel run this destructor
+    // concurrently, and an unconditional write races with their reads
+    ~RestoreOptionAtEndOfScope()
+    {
+      if(*_option != _initial) *_option = _initial;
+    }
   };
 } // namespace
 
