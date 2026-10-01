@@ -38,12 +38,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 5.0.0-git-759e219d2; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260927; Build host: cg.local; Build options: 64Bit ALGLIB[contrib] Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 4.2.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 5.0.0-git-759e219d2; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260927; Build host: cg.local; Build options: 64Bit ANN[contrib] Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 4.2.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{"64Bit ALGLIB[contrib] Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader"}@*
+Default value: @code{"64Bit ANN[contrib] Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Voro++[contrib] WinslowUntangler Zlib tinyobjloader"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName

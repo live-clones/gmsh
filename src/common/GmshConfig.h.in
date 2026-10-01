@@ -9,7 +9,6 @@
 #cmakedefine HAVE_3M
 #cmakedefine HAVE_64BIT_SIZE_T
 #cmakedefine HAVE_ACIS
-#cmakedefine HAVE_ALGLIB
 #cmakedefine HAVE_BAMG
 #cmakedefine HAVE_BOUNDARY_LAYERS
 #cmakedefine HAVE_BLAS
@@ -68,7 +67,6 @@
 #cmakedefine HAVE_SGEOM
 #cmakedefine HAVE_SLEPC
 #cmakedefine HAVE_SOLVER
-#cmakedefine HAVE_UNTANGLE
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGENBR
 #cmakedefine HAVE_TINYXML2

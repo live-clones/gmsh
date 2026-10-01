@@ -19,14 +19,14 @@
 #include <math.h>
 #include <algorithm>
 #include <cfloat>
+#include <exception>
+#include <limits>
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "OS.h"
 
-#if defined(HAVE_BOUNDARY_LAYERS)
-#include "gmshLBFGS.h"
-#endif
+#include "LBFGS.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -37,11 +37,6 @@
 #include <Eigen/Dense>
 #endif
 
-#if defined(HAVE_ALGLIB)
-#include <stdafx.h>
-#include <optimization.h>
-#endif
-
 #if defined(HAVE_QUADMESHINGTOOLS)
 #include "arrayGeometry.h"
 #include "cppUtils.h"
@@ -49,8 +44,7 @@
 
 size_t perTriangleP2 = 19;
 
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&                             \
-  defined(HAVE_QUADMESHINGTOOLS)
+#if defined(HAVE_EIGEN) && defined(HAVE_QUADMESHINGTOOLS)
 
 using namespace ArrayGeometry;
 
@@ -471,27 +465,15 @@ namespace WinslowUntangler {
     return w.energy;
   }
 
-  struct AlglibLBFGSData {
-    UntanglerData *data = nullptr;
-    std::vector<double> x;
-    std::vector<double> grad;
-  };
-
-  static void lbfgs_callback(const alglib::real_1d_array &x, double &f,
-                             alglib::real_1d_array &grad, void *ptr)
+  static void lbfgs_callback(const std::vector<double> &x, double &f,
+                             std::vector<double> &grad, void *ptr)
   {
-    AlglibLBFGSData *callbackData = static_cast<AlglibLBFGSData *>(ptr);
-    UntanglerData &w = *callbackData->data;
+    UntanglerData &w = *static_cast<UntanglerData *>(ptr);
     double t1 = TimeOfDay();
-    callbackData->x.resize(x.length());
-    callbackData->grad.resize(x.length());
-    for(size_t i = 0; i < x.length(); ++i) callbackData->x[i] = x[i];
     f =
       (w.dim == 3) ?
-        compute_energy_and_gradient3D_scalarized(w, callbackData->x,
-                                                 callbackData->grad) :
-        compute_energy_and_gradient_2D(w, callbackData->x, callbackData->grad);
-    for(size_t i = 0; i < x.length(); ++i) grad[i] = callbackData->grad[i];
+        compute_energy_and_gradient3D_scalarized(w, x, grad) :
+        compute_energy_and_gradient_2D(w, x, grad);
     w.profile_callback += TimeOfDay() - t1;
     w.profile_callback_calls++;
   }
@@ -776,14 +758,6 @@ namespace WinslowUntangler {
     return true;
   }
 
-  static void optional_lbfgs_callback(const alglib::real_1d_array &x,
-                                      double func, void *ptr)
-  {
-    (void)x;
-    (void)ptr;
-    printf("F = %12.5E\n", func);
-  }
-
   // same function for 2D and 3D to avoid redundant code
   // only the structs of the appropriate dimension are used
   static bool untangle_simplex_elements(
@@ -867,86 +841,46 @@ namespace WinslowUntangler {
 
       //      printf("eps %g %d %d\n",data.eps,  iterMaxOuter, iterMaxInner);
 
-      double epsg = 1.e-4;
-      double epsf = 1.e-12;
-      double epsx = 1.e-12;
-      // LBFGS solver: 0 = ALGLIB, 1 = GmshLBFGS
-#if defined(HAVE_BOUNDARY_LAYERS)
-      static int lbfgsSolver = 1;
-#else
-      static int lbfgsSolver = 0;
-#endif
       int lbfgsIter = 0;
       try {
-        int terminationType = 0;
-        if(lbfgsSolver == 0) {
-          alglib::real_1d_array xAlg;
-          xAlg.setcontent((alglib::ae_int_t)x.size(), x.data());
-          AlglibLBFGSData callbackData;
-          callbackData.data = &data;
-          // Setup of the LBFGS solver
-          alglib::ae_int_t N = dim * NV;
-          alglib::ae_int_t corr =
-            N < 15 ? N : 15; // Num of corrections in the scheme in [3,7]
-          alglib::minlbfgsstate state;
-          alglib::minlbfgsreport rep;
-          minlbfgscreate(N, corr, xAlg, state);
-          // LBFGS stopping criteria
-          minlbfgssetcond(state, epsg, epsf, epsx,
-                          (alglib::ae_int_t)iterMaxInner);
-          // Run LBFGS
-          double tLbfgs = TimeOfDay();
-          minlbfgsoptimize(state, lbfgs_callback, optional_lbfgs_callback,
-                           &callbackData);
-          data.profile_lbfgs += TimeOfDay() - tLbfgs;
+        LBFGS::Options options;
+        options.maxIterations = iterMaxInner;
+        options.gradientTolerance = 1.e-4;
+        options.functionTolerance = 1.e-12;
+        options.stepTolerance = 1.e-12;
+        options.maxStepNorm = 1.;
+        options.maxLineSearchSteps = 80;
 
-          // Extract coordinates
-          minlbfgsresults(state, xAlg, rep);
-          for(size_t i = 0; i < x.size(); ++i) x[i] = xAlg[i];
-          lbfgsIter = rep.iterationscount;
-          terminationType = rep.terminationtype;
-        }
-#if defined(HAVE_BOUNDARY_LAYERS)
-        else {
-          GmshLBFGS::Options options;
-          options.maxIterations = iterMaxInner;
-          options.memory = (int)std::min<size_t>(15, x.size());
-          options.gradientTolerance = epsg;
-          options.functionTolerance = epsf;
-          options.stepTolerance = epsx;
-          options.maxLineSearchSteps = 80;
-          options.verbose = 0;
-          options.numThreads = 8;
-
-          auto fg = [&data](const std::vector<double> &xin,
-                            std::vector<double> &gout) {
-            double t1 = TimeOfDay();
-            double f =
-              (data.dim == 3) ?
-                compute_energy_and_gradient3D_scalarized(data, xin, gout) :
-                compute_energy_and_gradient_2D(data, xin, gout);
-            data.profile_callback += TimeOfDay() - t1;
-            data.profile_callback_calls++;
+        double tLbfgs = TimeOfDay();
+        LBFGS::Result result = LBFGS::minimize(
+          x,
+          [&data](const std::vector<double> &xe, std::vector<double> &grad) {
+            double f;
+            lbfgs_callback(xe, f, grad, &data);
             return f;
-          };
+          },
+          options);
+        data.profile_lbfgs += TimeOfDay() - tLbfgs;
+        lbfgsIter = result.iterations;
+        const int terminationType = result.terminationType;
 
-          double tLbfgs = TimeOfDay();
-          GmshLBFGS::Result result = GmshLBFGS::minimize(x, fg, options);
-          data.profile_lbfgs += TimeOfDay() - tLbfgs;
-
-          lbfgsIter = result.iterations;
-          terminationType = result.converged ? 4 : result.terminationType;
-          Msg::Info("GmshLBFGS profiling: total %g s, function %g s, "
-                    "direction %g s, line-search %g s, update %g s, "
-                    "unaccounted %g s, evaluations %d",
-                    result.timeTotal, result.timeFunction, result.timeDirection,
-                    result.timeLineSearch, result.timeUpdate,
-                    result.timeTotal - result.timeFunction -
-                      result.timeDirection - result.timeLineSearch -
-                      result.timeUpdate,
-                    result.functionEvaluations);
+        // Rejected trials update data too. After a failed line search, restore
+        // the energy and Jacobian determinants at the accepted coordinates.
+        if(terminationType == -2) {
+          std::vector<double> grad(x.size());
+          double f;
+          lbfgs_callback(x, f, grad, &data);
         }
-#endif
+
+        Msg::Info("LBFGS profiling: total %g s, function %g s, "
+                  "direction %g s, line-search %g s, update %g s, "
+                  "unaccounted %g s, evaluations %d",
+                  result.timeTotal, result.timeFunction, result.timeDirection,
+                  result.timeLineSearch, result.timeUpdate,
+                  result.timeTotal - result.timeFunction -
+                    result.timeDirection - result.timeLineSearch -
+                    result.timeUpdate,
+                  result.functionEvaluations);
 
         for(size_t v = 0; v < NV; ++v) {
           for(size_t d = 0; d < dim; ++d) {
@@ -960,20 +894,22 @@ namespace WinslowUntangler {
           prepareData2D(points2D, locked, triangles, triIdealShapesS, data);
         }
 
-        if(terminationType != 4 && terminationType != 5) { nFail += 1; }
+        if(terminationType != 1 && terminationType != 2 &&
+           terminationType != 4 && terminationType != 5)
+          nFail += 1;
         Msg::Debug(" detmin = %22.15E eps= %22.15E %i iter term %i",
                    data.J_det_min, data.eps, lbfgsIter, terminationType);
-      } catch(alglib::ap_error e) {
-        Msg::Warning("Winslow untangler, iter %i: Alglib exception thrown in "
+      } catch(const std::exception &e) {
+        Msg::Warning("Winslow untangler, iter %i: exception thrown in "
                      "LBFGS step, error: %s",
-                     iter, e.msg.c_str());
+                     iter, e.what());
         restore = true;
         converged = false;
         nFail += 1;
         break;
       } catch(...) {
         Msg::Warning(
-          "Winslow untangler, iter %i: Alglib exception thrown in LBFGS step",
+          "Winslow untangler, iter %i: exception thrown in LBFGS step",
           iter);
         restore = true;
         converged = false;
@@ -1063,8 +999,7 @@ bool untangle_triangles_2D(
          std::vector<std::array<std::array<double, 2>, 3>> &triIdealShapes)>
     &updateIdealTriangularShapes)
 {
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&                             \
-  defined(HAVE_QUADMESHINGTOOLS)
+#if defined(HAVE_EIGEN) && defined(HAVE_QUADMESHINGTOOLS)
   std::vector<std::array<double, 3>> points3D;
   const std::vector<std::array<uint32_t, 4>> tetrahedra;
   const std::vector<std::array<std::array<double, 3>, 4>> tetIdealShapes;
@@ -1074,7 +1009,7 @@ bool untangle_triangles_2D(
     sizeField, updateIdealTriangularShapes);
 #else
   Msg::Error(
-    "Winslow untangler requires modules Eigen, Alglib and QuadMeshingTools");
+    "Winslow untangler requires modules Eigen and QuadMeshingTools");
   return false;
 #endif
 }
@@ -1086,8 +1021,7 @@ bool untangle_tetrahedra(
   double lambda, int iterMaxInner, int iterMaxOuter, int iterFailMax,
   double timeMax)
 {
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&                             \
-  defined(HAVE_QUADMESHINGTOOLS)
+#if defined(HAVE_EIGEN) && defined(HAVE_QUADMESHINGTOOLS)
   std::vector<std::array<double, 2>> points2D;
   const std::vector<std::array<uint32_t, 3>> tris;
   const std::vector<std::array<std::array<double, 2>, 3>> triIdealShapes;
@@ -1096,7 +1030,7 @@ bool untangle_tetrahedra(
     lambda, iterMaxInner, iterMaxOuter, iterFailMax, timeMax, nullptr, nullptr);
 #else
   Msg::Error(
-    "Winslow untangler requires modules Eigen, Alglib and QuadMeshingTools");
+    "Winslow untangler requires modules Eigen and QuadMeshingTools");
   return false;
 #endif
 }
