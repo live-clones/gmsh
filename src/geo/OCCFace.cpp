@@ -453,11 +453,9 @@ bool OCCFace::_project(const double p[3], double uv[2], double xyz[3],
 GPoint OCCFace::closestPoint(const SPoint3 &qp,
                              const double initialGuess[2]) const
 {
-#if defined(HAVE_ALGLIB)
   // less robust but can be much faster
   if(CTX::instance()->geom.occUseGenericClosestPoint)
     return GFace::closestPoint(qp, initialGuess);
-#endif
   double uv[2], xyz[3];
   if(_project(qp.data(), uv, xyz, initialGuess))
     return GPoint(xyz[0], xyz[1], xyz[2], this, uv);
@@ -469,10 +467,8 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
 GPoint OCCFace::closestPointFromTrustedGuess(
   const SPoint3 &qp, const double initialGuess[2]) const
 {
-#if defined(HAVE_ALGLIB)
   if(CTX::instance()->geom.occUseGenericClosestPoint)
     return GFace::closestPoint(qp, initialGuess);
-#endif
   double uv[2], xyz[3];
   if(_project(qp.data(), uv, xyz, initialGuess, true))
     return GPoint(xyz[0], xyz[1], xyz[2], this, uv);

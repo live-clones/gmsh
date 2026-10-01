@@ -1,17 +1,7 @@
-// Gmsh Boundary Layer Plugin - Copyright (C) 2026 C. Geuzaine and J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
-// This program is free software: you can redistribute it and/or modify it under
-// the terms of the GNU Affero General Public License as published by the Free
-// Software Foundation, either version 3 of the License, or (at your option) any
-// later version.
-//
-// This program is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
-// details.
-//
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "gmshLBFGS.h"
 
@@ -22,6 +12,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 #if defined(HAVE_EIGEN)
 #include <Eigen/Dense>
@@ -75,6 +66,18 @@ namespace GmshLBFGS {
     static double norm(const std::vector<double> &a)
     {
       return std::sqrt(dot(a, a));
+    }
+
+    static double scaledNorm(const std::vector<double> &a,
+                             const std::vector<double> &s, bool inverse = false)
+    {
+      if(s.empty()) return norm(a);
+      double squaredNorm = 0.;
+      for(size_t i = 0; i < a.size(); ++i) {
+        double value = inverse ? a[i] / s[i] : a[i] * s[i];
+        squaredNorm += value * value;
+      }
+      return std::sqrt(squaredNorm);
     }
 
     static void axpy(double a, const std::vector<double> &x,
@@ -162,14 +165,11 @@ namespace GmshLBFGS {
 
   } // namespace
 
-  Result minimize(std::vector<double> &x, const FunctionGradient &fg,
-                  const Options &options)
-  {
-    return minimize(x, fg, Function(), options);
-  }
-
-  Result minimize(std::vector<double> &x, const FunctionGradient &fg,
-                  const Function &fOnly, const Options &options)
+  static Result minimizeImpl(std::vector<double> &x, const FunctionGradient &fg,
+                             const Function &fOnly, const Options &options,
+                             bool alglibStoppingCriteria,
+                             const std::vector<double> &variableScale = {},
+                             bool scalePreconditioner = false)
   {
     Result result;
     if(!fg || x.empty()) {
@@ -196,9 +196,11 @@ namespace GmshLBFGS {
     result.functionEvaluations++;
     result.initialValue = f;
 
-    for(int iter = 0; iter < options.maxIterations; ++iter) {
+    for(int iter = 0; iter < options.maxIterations ||
+                      (alglibStoppingCriteria && options.maxIterations == 0);
+        ++iter) {
       result.iterations = iter;
-      result.gradientNorm = norm(g);
+      result.gradientNorm = scaledNorm(g, variableScale);
       if(options.verbose) {
         Msg::Info("GmshLBFGS iter %d: f %.16g, |g| %.6g", iter, f,
                   result.gradientNorm);
@@ -222,11 +224,21 @@ namespace GmshLBFGS {
       double gamma = 1.;
       if(hist > 0) {
         const double ys = dot(yList.back(), sList.back());
-        const double yy = dot(yList.back(), yList.back());
+        double yy = dot(yList.back(), yList.back());
+        if(scalePreconditioner && !variableScale.empty()) {
+          double ynorm = scaledNorm(yList.back(), variableScale);
+          yy = ynorm * ynorm;
+        }
         if(yy > 0.) gamma = ys / yy;
       }
 
       assignScaled(q, gamma, direction);
+      if(scalePreconditioner && !variableScale.empty()) {
+        for(size_t i = 0; i < n; ++i) {
+          direction[i] *= variableScale[i];
+          direction[i] *= variableScale[i];
+        }
+      }
       for(int i = 0; i < hist; ++i) {
         const double beta = rhoList[i] * dot(yList[i], direction);
         axpy(alpha[i] - beta, sList[i], direction);
@@ -236,6 +248,12 @@ namespace GmshLBFGS {
       double descent = dot(g, direction);
       if(!(descent < 0.)) {
         assignScaled(g, -1., direction);
+        if(scalePreconditioner && !variableScale.empty()) {
+          for(size_t i = 0; i < n; ++i) {
+            direction[i] *= variableScale[i];
+            direction[i] *= variableScale[i];
+          }
+        }
         descent = dot(g, direction);
         if(options.verbose)
           Msg::Info("GmshLBFGS iter %d: fallback to steepest descent", iter);
@@ -299,7 +317,7 @@ namespace GmshLBFGS {
           f = fNew;
           accepted = true;
           result.iterations = iter + 1;
-          result.gradientNorm = norm(g);
+          result.gradientNorm = scaledNorm(g, variableScale);
           result.timeUpdate += TimeOfDay() - t;
 
           if(options.verbose) {
@@ -309,6 +327,26 @@ namespace GmshLBFGS {
           }
           if(options.iterationCallback)
             options.iterationCallback(iter + 1, f, result.gradientNorm, step);
+
+          if(alglibStoppingCriteria) {
+            // Match the stopping conventions of the ALGLIB-style interface
+            // without changing the existing minimize() interface.
+            if(options.maxIterations > 0 &&
+               result.iterations >= options.maxIterations)
+              result.terminationType = 5;
+            else if(result.gradientNorm <= options.gradientTolerance)
+              result.terminationType = 4;
+            else if(std::abs(fOld - f) <=
+                    options.functionTolerance *
+                      std::max({1., std::abs(fOld), std::abs(f)}))
+              result.terminationType = 1;
+            else if(scaledNorm(s, variableScale, true) <= options.stepTolerance)
+              result.terminationType = 2;
+            result.converged = result.terminationType == 1 ||
+                               result.terminationType == 2 ||
+                               result.terminationType == 4;
+            break;
+          }
 
           if(std::abs(fOld - f) <=
              options.functionTolerance * std::max(1., std::abs(f))) {
@@ -334,14 +372,14 @@ namespace GmshLBFGS {
           Msg::Info("GmshLBFGS iter %d failed line search", iter);
         break;
       }
-      if(result.converged) break;
+      if(result.terminationType != 0) break;
     }
 
     if(!result.converged && result.terminationType == 0)
       result.terminationType = 5;
 
     result.finalValue = f;
-    result.gradientNorm = norm(g);
+    result.gradientNorm = scaledNorm(g, variableScale);
     result.timeTotal = TimeOfDay() - tTotal;
     if(options.verbose) {
       Msg::Info("GmshLBFGS done: converged %d, term %d, iter %d, eval %d, f "
@@ -354,6 +392,172 @@ namespace GmshLBFGS {
                 result.timeLineSearch, result.timeUpdate);
     }
     return result;
+  }
+
+  Result minimize(std::vector<double> &x, const FunctionGradient &fg,
+                  const Options &options)
+  {
+    return minimizeImpl(x, fg, Function(), options, false);
+  }
+
+  Result minimize(std::vector<double> &x, const FunctionGradient &fg,
+                  const Function &fOnly, const Options &options)
+  {
+    return minimizeImpl(x, fg, fOnly, options, false);
+  }
+
+  namespace {
+    void checkInitialized(const std::vector<double> &x)
+    {
+      if(x.empty())
+        throw std::invalid_argument("GmshLBFGS: call create first");
+    }
+
+    bool validTolerance(double value)
+    {
+      return std::isfinite(value) && value >= 0.;
+    }
+
+    void checkPoint(const std::vector<double> &x, size_t n)
+    {
+      if(x.size() < n)
+        throw std::invalid_argument("GmshLBFGS: starting point is too small");
+      for(size_t i = 0; i < n; ++i) {
+        if(!std::isfinite(x[i]))
+          throw std::invalid_argument("GmshLBFGS: starting point is not finite");
+      }
+    }
+  } // namespace
+
+  void create(int n, int m, const std::vector<double> &x, State &state)
+  {
+    if(n <= 0 || m <= 0 || m > n)
+      throw std::invalid_argument("GmshLBFGS: require n > 0 and 1 <= m <= n");
+    checkPoint(x, n);
+    std::vector<double> initial(x.begin(), x.begin() + n);
+    state = State();
+    state.x.swap(initial);
+    state.options.memory = m;
+    state.options.maxStepNorm = 0.;
+    setCond(state, 0., 0., 0., 0);
+  }
+
+  void create(int m, const std::vector<double> &x, State &state)
+  {
+    if(x.size() > (size_t)std::numeric_limits<int>::max())
+      throw std::invalid_argument("GmshLBFGS: too many variables");
+    create((int)x.size(), m, x, state);
+  }
+
+  void setCond(State &state, double epsg, double epsf, double epsx, int maxits)
+  {
+    checkInitialized(state.x);
+    if(!validTolerance(epsg) || !validTolerance(epsf) ||
+       !validTolerance(epsx) || maxits < 0)
+      throw std::invalid_argument(
+        "GmshLBFGS: tolerances must be finite and nonnegative, maxits >= 0");
+    if(epsg == 0. && epsf == 0. && epsx == 0. && maxits == 0) epsx = 1.e-6;
+    state.options.gradientTolerance = epsg;
+    state.options.functionTolerance = epsf;
+    state.options.stepTolerance = epsx;
+    state.options.maxIterations = maxits;
+  }
+
+  void setXRep(State &state, bool needxrep)
+  {
+    checkInitialized(state.x);
+    state.xrep = needxrep;
+  }
+
+  void setStpMax(State &state, double stpmax)
+  {
+    checkInitialized(state.x);
+    if(!validTolerance(stpmax))
+      throw std::invalid_argument(
+        "GmshLBFGS: maximum step must be finite and nonnegative");
+    state.options.maxStepNorm = stpmax;
+  }
+
+  void restartFrom(State &state, const std::vector<double> &x)
+  {
+    checkInitialized(state.x);
+    checkPoint(x, state.x.size());
+    std::copy_n(x.begin(), state.x.size(), state.x.begin());
+    state.result = Result();
+  }
+
+  void setScale(State &state, const std::vector<double> &scale)
+  {
+    checkInitialized(state.x);
+    checkPoint(scale, state.x.size());
+    for(size_t i = 0; i < state.x.size(); ++i) {
+      if(scale[i] == 0.)
+        throw std::invalid_argument("GmshLBFGS: scales must be nonzero");
+    }
+    state.scale.assign(scale.begin(), scale.begin() + state.x.size());
+    for(double &value : state.scale) value = std::abs(value);
+  }
+
+  void setPrecScale(State &state)
+  {
+    checkInitialized(state.x);
+    state.scalePreconditioner = true;
+  }
+
+  void optimize(State &state, const GradientCallback &grad,
+                const ReportCallback &rep, void *ptr)
+  {
+    checkInitialized(state.x);
+    if(!grad)
+      throw std::invalid_argument("GmshLBFGS: gradient callback is required");
+    if(!state.scale.empty()) {
+      if(state.scale.size() != state.x.size())
+        throw std::invalid_argument("GmshLBFGS: scale has the wrong size");
+      for(double value : state.scale) {
+        if(!std::isfinite(value) || value <= 0.)
+          throw std::invalid_argument(
+            "GmshLBFGS: scales must be positive and finite");
+      }
+    }
+    state.result = Result();
+    bool initial = true;
+    const FunctionGradient fg = [&](const std::vector<double> &x,
+                                    std::vector<double> &g) {
+      double f = std::numeric_limits<double>::quiet_NaN();
+      grad(x, f, g, ptr);
+      if(g.size() != x.size())
+        throw std::runtime_error("GmshLBFGS: gradient has the wrong size");
+      if(!std::isfinite(f) ||
+         !std::all_of(g.begin(), g.end(),
+                      [](double value) { return std::isfinite(value); })) {
+        if(initial)
+          throw std::runtime_error(
+            "GmshLBFGS: initial function or gradient is not finite");
+        return std::numeric_limits<double>::infinity();
+      }
+      if(initial) {
+        initial = false;
+        if(state.xrep && rep) rep(x, f, ptr);
+      }
+      return f;
+    };
+    Options options = state.options;
+    if(state.xrep && rep) {
+      options.iterationCallback = [&](int, double f, double, double) {
+        rep(state.x, f, ptr);
+      };
+    }
+    state.result = minimizeImpl(state.x, fg, Function(), options, true,
+                                state.scale, state.scalePreconditioner);
+  }
+
+  void results(const State &state, std::vector<double> &x, Report &rep)
+  {
+    checkInitialized(state.x);
+    x = state.x;
+    rep.iterationscount = state.result.iterations;
+    rep.nfev = state.result.functionEvaluations;
+    rep.terminationtype = state.result.terminationType;
   }
 
 } // namespace GmshLBFGS

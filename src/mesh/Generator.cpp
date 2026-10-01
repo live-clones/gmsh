@@ -1057,10 +1057,8 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
       untangleGRegionMeshConstrained(gr, nIterWinslow, timeMax);
     }
 #else
-    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
-      untangleMeshGRegion opt;
-      opt(*it, force);
-    }
+    Msg::Error("Tet untangling requires Gmsh to be compiled with "
+               "WinslowUntangler");
 #endif
     m->setAllVolumesPositive();
   }
