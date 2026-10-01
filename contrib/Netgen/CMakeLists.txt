@@ -12,10 +12,10 @@ set(mes libsrc/meshing)
 set(SRC
   nglib_gmsh.cpp
   ${cor}/archive.cpp ${cor}/bitarray.cpp ${cor}/blockallocator.cpp
-    ${cor}/exception.cpp ${cor}/flags.cpp ${cor}/logging.cpp
-    ${cor}/paje_trace.cpp ${cor}/profiler.cpp ${cor}/statushandler.cpp
-    ${cor}/table.cpp ${cor}/taskmanager.cpp ${cor}/utils.cpp
-    ${cor}/version.cpp
+    ${cor}/exception.cpp ${cor}/flags.cpp ${cor}/localheap.cpp
+    ${cor}/logging.cpp ${cor}/paje_trace.cpp ${cor}/profiler.cpp
+    ${cor}/statushandler.cpp ${cor}/table.cpp ${cor}/taskmanager.cpp
+    ${cor}/utils.cpp ${cor}/version.cpp
   ${gen}/gzstream.cpp ${gen}/table.cpp
   ${gpr}/geom3d.cpp ${gpr}/geomfuncs.cpp ${gpr}/geomtest3d.cpp
   ${lin}/bfgs.cpp ${lin}/densemat.cpp ${lin}/linsearch.cpp

@@ -28,7 +28,10 @@ nglib_gmsh.cpp needs; the headers are the ones they include (including all
 the simd_*.hpp, used on other architectures). To update, copy the same files
 from a new upstream version, regenerate the rules, reapply the three patches
 above, update the version in netgen_version.hpp, then check for new
-dependencies by linking (add a .cpp file for each undefined symbol).
+dependencies by linking (add a .cpp file for each undefined symbol). Link
+with both gcc and clang, at -O0 and -O2: the references differ with the
+compiler and the optimization level (e.g. gcc -O2 keeps a copy of
+LocalHeap::Alloc, which needs localheap.cpp, while clang -O2 inlines it).
 
 Netgen needs zlib (libsrc/general/gzstream.cpp).
 
