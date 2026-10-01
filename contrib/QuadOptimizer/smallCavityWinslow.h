@@ -55,7 +55,7 @@ namespace QuadOptimizer {
   // Optimize a quadrangulated topological disk in a two-dimensional surface
   // parameterization. Vertices [0, boundaryVertexCount) are fixed. Only the
   // 2 coordinates of the remaining (small number of) interior vertices are
-  // passed to GmshLBFGS. Quads must be coherently oriented and reference the
+  // passed to LBFGS. Quads must be coherently oriented and reference the
   // boundary first, followed by the interior vertices.
   GMSH_API SmallCavityWinslowResult optimizeSmallQuadCavityWinslow(
     std::vector<std::array<double, 2> > &parametricPoints,

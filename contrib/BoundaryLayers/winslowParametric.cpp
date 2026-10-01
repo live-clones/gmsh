@@ -21,7 +21,7 @@
 #include "OS.h"
 #include "SPoint2.h"
 #include "SVector3.h"
-#include "gmshLBFGS.h"
+#include "LBFGS.h"
 
 #include <algorithm>
 #include <array>
@@ -185,43 +185,6 @@ namespace {
     return true;
   }
 
-  static double energyOnly(const ParametricWinslowData &data,
-                           const std::vector<double> &X)
-  {
-    const double eps2 = data.eps * data.eps;
-    double energy = 0.;
-    for(const ParametricTriangle &t : data.triangles) {
-      const auto &tri = t.v;
-      const double u0 = X[2 * tri[0] + 0], v0 = X[2 * tri[0] + 1];
-      const double u1 = X[2 * tri[1] + 0], v1 = X[2 * tri[1] + 1];
-      const double u2 = X[2 * tri[2] + 0], v2 = X[2 * tri[2] + 1];
-
-      const double A00 = u0 * t.dShape[0][0] + u1 * t.dShape[1][0] +
-                         u2 * t.dShape[2][0];
-      const double A10 = u0 * t.dShape[0][1] + u1 * t.dShape[1][1] +
-                         u2 * t.dShape[2][1];
-      const double A01 = v0 * t.dShape[0][0] + v1 * t.dShape[1][0] +
-                         v2 * t.dShape[2][0];
-      const double A11 = v0 * t.dShape[0][1] + v1 * t.dShape[1][1] +
-                         v2 * t.dShape[2][1];
-
-      const double detA = A00 * A11 - A01 * A10;
-      for(const ParametricMetric &m : t.metric) {
-        const double det = m.sqrtDetG * detA;
-        const double chi = coefChi(det, eps2);
-        const double invChi = 1. / chi;
-        const double trace =
-          m.g00 * (A00 * A00 + A10 * A10) +
-          2. * m.g01 * (A00 * A01 + A10 * A11) +
-          m.g11 * (A01 * A01 + A11 * A11);
-        energy +=
-          m.weight *
-          (trace * invChi + data.lambda * (det * det + 1.) * invChi);
-      }
-    }
-    return energy;
-  }
-
   static double energyAndGradient(ParametricWinslowData &data,
                                   const std::vector<double> &X,
                                   std::vector<double> &grad)
@@ -339,7 +302,7 @@ bool untangle_triangles_parametric_GMSH(
   std::vector<double> grad(x.size());
   const double initialEnergy = energyAndGradient(data, x, grad);
 
-  GmshLBFGS::Options options;
+  LBFGS::Options options;
   options.maxIterations = std::max(1, iterMax);
   options.memory = 10;
   options.gradientTolerance = 1.e-8;
@@ -353,8 +316,7 @@ bool untangle_triangles_parametric_GMSH(
   auto fg = [&](const std::vector<double> &X, std::vector<double> &G) {
     return energyAndGradient(data, X, G);
   };
-  auto f = [&](const std::vector<double> &X) { return energyOnly(data, X); };
-  GmshLBFGS::Result result = GmshLBFGS::minimize(x, fg, f, options);
+  LBFGS::Result result = LBFGS::minimize(x, fg, options);
   const double total = TimeOfDay() - t0;
 
   for(std::size_t i = 0; i < parametricPoints.size(); ++i) {
