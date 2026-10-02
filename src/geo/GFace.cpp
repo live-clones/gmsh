@@ -1230,12 +1230,6 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint,
   }
 }
 
-GPoint GFace::closestPointFromTrustedGuess(
-  const SPoint3 &queryPoint, const double initialGuess[2]) const
-{
-  return closestPoint(queryPoint, initialGuess);
-}
-
 bool GFace::containsParam(const SPoint2 &pt)
 {
   if(geomType() == BoundaryLayerSurface) return false;

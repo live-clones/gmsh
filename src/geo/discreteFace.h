@@ -128,9 +128,6 @@ public:
   GPoint closestPointLibOL(const SPoint3 &queryPoint,
                            SVector3 *normal = nullptr,
                            const double initialGuess[2] = nullptr) const;
-  GPoint closestPointFromTrustedGuess(
-    const SPoint3 &queryPoint,
-    const double initialGuess[2]) const override;
   SVector3 normal(const SPoint2 &param) const;
   double curvatureMax(const SPoint2 &param) const;
   double curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,

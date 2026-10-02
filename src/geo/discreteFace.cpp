@@ -909,16 +909,6 @@ GPoint discreteFace::closestPointLibOL(const SPoint3 &queryPoint,
                 parameter);
 }
 
-GPoint discreteFace::closestPointFromTrustedGuess(
-  const SPoint3 &queryPoint, const double initialGuess[2]) const
-{
-  const GPoint result = closestPointLibOL(queryPoint, nullptr, initialGuess);
-  if(result.succeeded() || !std::isfinite(queryPoint.x()) ||
-     !std::isfinite(queryPoint.y()) || !std::isfinite(queryPoint.z()))
-    return result;
-  return closestPoint(queryPoint, 1e-1);
-}
-
 SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface,
                                    bool convTestXYZ) const
 {
