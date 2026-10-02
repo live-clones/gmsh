@@ -92,12 +92,7 @@ private:
     bool checkPlanar();
   };
   param _param;
-  // Distinct boundary nodes can be exactly coincident in 3D, making
-  // parFromPoint() ambiguous. Keep their face-local UV values by vertex
-  // identity so mesh node renumbering preserves the discrete topology.
-  std::unordered_map<const MVertex *, SPoint2> _coincidentVertexParameters;
   void _createGeometryFromSTL();
-  void _buildCoincidentVertexParameters();
   void _buildUvTriangleGrid();
   void _buildTriangleBvh();
   const MTriangle *_findUniqueInteriorUvTriangle(double u, double v) const;
@@ -114,8 +109,6 @@ public:
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true,
                        bool convTestXYZ = false) const;
-  bool parFromCoincidentMeshVertex(const MVertex *vertex,
-                                   SPoint2 &param) const;
   Range<double> parBounds(int i) const;
   bool containsParam(const SPoint2 &pt);
   SBoundingBox3d bounds(bool fast = false);
