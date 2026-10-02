@@ -64,6 +64,7 @@
 #define FORMAT_XAO          56
 #define FORMAT_OBJ          57
 #define FORMAT_MP4          58
+#define FORMAT_GLTF         59
 
 // Element types
 #define TYPE_PNT     1

@@ -172,6 +172,7 @@ public:
     MED = 6,
     X3D = 7,
     VTU = 8,
+    GLTF = 9,
     AUTO = 10 // from the extension of the file
   };
   // write the view; if it makes several files, a script to read them back

@@ -14,6 +14,7 @@
 #include "OS.h"
 #include "CreateFile.h"
 #include "fullMatrix.h"
+#include "GModelIO_GLTF.h"
 
 bool PView::readPOS(const std::string &fileName, int fileIndex)
 {
@@ -317,6 +318,8 @@ bool PView::write(const std::string &fileName, int format, bool append,
       format = X3D;
     else if(ext == ".vtu" || ext == ".pvtu" || ext == ".pvd")
       format = VTU;
+    else if(ext == ".gltf")
+      format = GLTF;
     else
       format = TXT;
   }
@@ -345,6 +348,8 @@ bool PView::write(const std::string &fileName, int format, bool append,
     ret = writeVTU(fileName, CTX::instance()->post.binary, {this}, &files);
   else if(format == X3D)
     ret = writeX3D(fileName);
+  else if(format == GLTF)
+    ret = gltf::writeView(this, fileName);
   else if(savesAdapted()) {
     // refined, each step on a mesh of its own
     std::vector<PViewDataList *> steps = getAdaptedSteps();

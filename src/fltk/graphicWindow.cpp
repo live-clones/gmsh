@@ -496,6 +496,23 @@ static int _save_x3d(const char *name)
   else
     return _save_view_x3d(name);
 }
+static int _save_gltf(const char *name)
+{
+  CreateOutputFile(name, FORMAT_GLTF);
+  return 1;
+}
+static int _save_view_gltf(const char *name)
+{
+  // a glTF file holds a single view: save the current one
+  if(PView::list.empty()) {
+    Msg::Error("No views to save");
+    return 0;
+  }
+  int iview = FlGui::instance()->options->view.index;
+  if(iview < 0 || iview >= (int)PView::list.size()) iview = 0;
+  PView::list[iview]->write(name, PView::GLTF);
+  return 1;
+}
 
 static int _save_auto(const char *name)
 {
@@ -503,6 +520,7 @@ static int _save_auto(const char *name)
   case FORMAT_MSH: return _save_msh(name);
   case FORMAT_POS: return _save_view_pos(name);
   case FORMAT_X3D: return _save_x3d(name);
+  case FORMAT_GLTF: return _save_gltf(name);
   case FORMAT_PVTU: return _save_vtu(name);
   case FORMAT_TXT: return _save_view_txt(name);
   case FORMAT_OPT: return _save_options(name);
@@ -613,6 +631,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Mesh - X3D\t*.x3d", _save_mesh_x3d},
     {"Post-processing - Gmsh POS\t*.pos", _save_view_pos},
     {"Post-processing - X3D\t*.x3d", _save_view_x3d},
+    {"Post-processing - glTF\t*.gltf", _save_view_gltf},
 #if defined(HAVE_MED)
     {"Post-processing - MED\t*.rmed", _save_view_med},
 #endif

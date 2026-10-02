@@ -15,6 +15,7 @@
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "OS.h"
+#include "GModelIO_GLTF.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -103,6 +104,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".mesh")     return FORMAT_MESH;
   else if(ext == ".off")      return FORMAT_OFF;
   else if(ext == ".obj")      return FORMAT_OBJ;
+  else if(ext == ".gltf")     return FORMAT_GLTF;
   else if(ext == ".mail")     return FORMAT_MAIL;
   else if(ext == ".bdf")      return FORMAT_BDF;
   else if(ext == ".diff")     return FORMAT_DIFF;
@@ -175,6 +177,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_MESH:    name = ".mesh"; mesh = true; break;
   case FORMAT_OFF:     name = ".off"; mesh = true; break;
   case FORMAT_OBJ:     name = ".obj"; mesh = true; break;
+  case FORMAT_GLTF:    name = ".gltf"; mesh = true; break;
   case FORMAT_MAIL:    name = ".mail"; mesh = true; break;
   case FORMAT_BDF:     name = ".bdf"; mesh = true; break;
   case FORMAT_DIFF:    name = ".diff"; mesh = true; break;
@@ -858,6 +861,12 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_OBJ:
     GModel::current()->writeOBJ
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+    break;
+
+  case FORMAT_GLTF:
+    gltf::writeMesh
+      (GModel::current(), name, CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_MAIL:

@@ -159,7 +159,7 @@ static void view_save_cb(Fl_Widget *w, void *data)
     "Gmsh Parsed\t*.pos\nGmsh MSH\t*.msh\n"
     "Gmsh Legacy ASCII\t*.pos\nGmsh Legacy Binary\t*.pos\n"
     "MED\t*.rmed\nSTL Surface\t*.stl\nGeneric TXT\t*.txt\n"
-    "VTK XML Unstructured Grid\t*.vtu\n";
+    "VTK XML Unstructured Grid\t*.vtu\nglTF\t*.gltf\n";
 
   PView *view = PView::list[(intptr_t)data];
 test:
@@ -180,9 +180,9 @@ test:
     // (in the order of the formats above)
     const int format[] = {PView::POS_PARSED, PView::MSH, PView::POS_ASCII,
                           PView::POS_BINARY, PView::MED, PView::STL,
-                          PView::TXT,        PView::VTU};
+                          PView::TXT,        PView::VTU, PView::GLTF};
     int f = fileChooserGetFilter();
-    view->write(name, (f >= 0 && f < 8) ? format[f] : PView::POS_PARSED);
+    view->write(name, (f >= 0 && f < 9) ? format[f] : PView::POS_PARSED);
   }
 }
 
