@@ -33,12 +33,6 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid s, int num)
 
 OCCRegion::~OCCRegion() = default;
 
-void OCCRegion::invalidateSolidClassifier()
-{
-  std::lock_guard<std::mutex> lock(_solidClassifierMutex);
-  _solidClassifier.reset();
-}
-
 void OCCRegion::_setup()
 {
   l_faces.clear();
@@ -133,30 +127,13 @@ GEntity::GeomType OCCRegion::geomType() const { return Volume; }
 
 bool OCCRegion::containsPoint(const SPoint3 &pt) const
 {
-  return containsPoints({pt.x(), pt.y(), pt.z()}) == 1;
-}
-
-int OCCRegion::containsPoints(const std::vector<double> &coord) const
-{
-  if(coord.empty()) return 0;
-  if(coord.size() % 3) {
-    Msg::Error("Number of coordinates should be a multiple of 3");
-    return 0;
-  }
-  // Perform resets the point classification. Keep only the expensive
-  // shape-dependent setup, owned by this region and invalidated at every OCC
-  // synchronization. Serialize access to the classifier's mutable query state.
-  std::lock_guard<std::mutex> lock(_solidClassifierMutex);
+  // the classifier setup is expensive: build it once (the shape never changes)
   if(!_solidClassifier)
     _solidClassifier.reset(new BRepClass3d_SolidClassifier(_s));
-  int num = 0;
-  for(std::size_t i = 0; i < coord.size(); i += 3) {
-    _solidClassifier->Perform(gp_Pnt{coord[i], coord[i + 1], coord[i + 2]},
+  _solidClassifier->Perform(gp_Pnt{pt.x(), pt.y(), pt.z()},
                             CTX::instance()->geom.tolerance);
-    const TopAbs_State state = _solidClassifier->State();
-    if(state == TopAbs_IN || state == TopAbs_ON) num++;
-  }
-  return num;
+  const TopAbs_State state = _solidClassifier->State();
+  return (state == TopAbs_IN || state == TopAbs_ON);
 }
 
 void OCCRegion::writeBREP(const char *filename)

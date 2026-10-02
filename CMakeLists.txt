@@ -2319,7 +2319,6 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()
   endif()
-  add_subdirectory(benchmarks/core)
   # enable this once we have worked out the path issues on the build machines
   if(0 AND ENABLE_BUILD_DYNAMIC)
     find_package(PythonInterp)

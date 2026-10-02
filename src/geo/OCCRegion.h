@@ -13,7 +13,6 @@
 
 #include <TopoDS_Solid.hxx>
 #include <memory>
-#include <mutex>
 
 class BRepClass3d_SolidClassifier;
 
@@ -21,7 +20,6 @@ class OCCRegion : public GRegion {
 private:
   TopoDS_Solid _s;
   mutable std::unique_ptr<BRepClass3d_SolidClassifier> _solidClassifier;
-  mutable std::mutex _solidClassifierMutex;
   void _setup();
 
 public:
@@ -32,8 +30,6 @@ public:
   virtual ModelType getNativeType() const { return OpenCascadeModel; }
   virtual void *getNativePtr() const { return (void *)&_s; }
   virtual bool containsPoint(const SPoint3 &pt) const;
-  int containsPoints(const std::vector<double> &coord) const;
-  void invalidateSolidClassifier();
   void writeBREP(const char *filename);
 };
 
