@@ -28,6 +28,7 @@ set(SRC
   meshGRegionBoundaryLayer.cpp
   meshQuantize2.cpp
   meshRelocateVertex.cpp
+  meshUntangling.cpp
   meshRenumber.cpp
   meshTriangulation.cpp
   meshMetric.cpp

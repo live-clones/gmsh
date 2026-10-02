@@ -138,8 +138,6 @@ Enable Apple Touch bar (default: ON)
 Enable additional visualization capabilities for development purposes (default: OFF)
 @item ENABLE_VOROPP
 Enable voro++ (for hex meshing, experimental) (default: ON)
-@item ENABLE_WINSLOWUNTANGLER
-Enable WinslowUntangler extensions (requires Eigen and QuadMeshingTools) (default: ON)
 @item ENABLE_WRAP_JAVA
 Generate SWIG Java wrappers for private API (default: OFF)
 @item ENABLE_WRAP_PYTHON
