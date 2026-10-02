@@ -32,7 +32,7 @@
 #include "OS.h"
 
 #include "highOrderBoundaryLayerUntangler.h"
-#include "winslowUntanglerGMSH.h"
+#include "WinslowUntangler.h"
 
 GMSH_BoundaryLayerPlugin::GMSH_BoundaryLayerPlugin()
   : GMSH_PostPlugin({{GMSH_FULLRC, "Thickness", nullptr, 1.e-2},
@@ -1890,11 +1890,10 @@ static void expandBL(
   }
   printf("face %d: %zu vertices, %zu triangles\n", gf->tag(), points.size(),
          triangles.size());
-#if 1
-  untangle_triangles_2D_GMSH(points, locked, triangles, sh, 1.e+0);
-#else
-  untangle_triangles_2D(points, locked, triangles, sh, 1.e+0);
-#endif
+  WinslowUntangler::Options options;
+  options.strictFailures = true;
+  options.numThreads = CTX::instance()->numThreadsFor(triangles.size(), 5000);
+  WinslowUntangler::untangle2D(points, locked, triangles, sh, options);
 
   for(auto v : verts) {
     int i = v->getIndex();
@@ -2132,11 +2131,11 @@ static void expandBL3D(
     }
   }
   double tUntangle = TimeOfDay();
-#if 1
-  untangle_tetrahedra_GMSH(points, locked, tets, sh, 1.e+0);
-#else
-  untangle_tetrahedra(points, locked, tets, sh, 1.e+0);
-#endif
+  WinslowUntangler::Options options;
+  options.strictFailures = true;
+  options.laplacianPresmoothing = true;
+  options.numThreads = CTX::instance()->numThreadsFor(tets.size(), 5000);
+  WinslowUntangler::untangle3D(points, locked, tets, sh, options);
   Msg::Info("Boundary layer 3D untangling done in %g s",
             TimeOfDay() - tUntangle);
 
