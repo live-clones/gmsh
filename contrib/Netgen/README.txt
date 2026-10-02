@@ -7,8 +7,11 @@ The files in libsrc/ are unmodified copies of the upstream files, except:
 
 * libsrc/core/ngcore_api.hpp: NGCORE_API_EXPORT and NGCORE_API_IMPORT are
   empty, so that Netgen symbols are not exported (or imported) from Gmsh
-* libsrc/core/simd.hpp: simd_arm64.hpp is only used with clang (it does not
-  compile with gcc without -flax-vector-conversions)
+* libsrc/core/simd.hpp: simd_arm64.hpp is only used with clang and the ARMv8.3
+  complex instructions (it does not compile with gcc without
+  -flax-vector-conversions, nor without vcmla); MakeSimd() gives the template
+  arguments of MakeSimdCl explicitly (older Apple clang)
+* libsrc/core/utils.cpp: cast the result of GetProcAddress() to void* (MinGW)
 * libsrc/meshing/global.cpp: Ng_PrintDest() calls ng_print_dest_callback()
   if it is set, so that Gmsh can redirect Netgen's messages
 
@@ -26,7 +29,7 @@ The other files are:
 The .cpp files listed in CMakeLists.txt are the ones the link of
 nglib_gmsh.cpp needs; the headers are the ones they include (including all
 the simd_*.hpp, used on other architectures). To update, copy the same files
-from a new upstream version, regenerate the rules, reapply the three patches
+from a new upstream version, regenerate the rules, reapply the patches
 above, update the version in netgen_version.hpp, then check for new
 dependencies by linking (add a .cpp file for each undefined symbol). Link
 with both gcc and clang, at -O0 and -O2: the references differ with the

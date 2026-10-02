@@ -30,8 +30,9 @@
 #include "simd_avx512.hpp"
 #endif
 
-// Gmsh: simd_arm64.hpp needs -flax-vector-conversions with gcc
-#if defined(__aarch64__) && defined(__clang__)
+// Gmsh: simd_arm64.hpp needs -flax-vector-conversions with gcc, and the
+// ARMv8.3 complex instructions (vcmla)
+#if defined(__aarch64__) && defined(__clang__) && defined(__ARM_FEATURE_COMPLEX)
 #include "simd_arm64.hpp"
 #endif
 
@@ -96,7 +97,7 @@ namespace ngcore
   template <typename T, size_t S> class MakeSimdCl;
   
   template <typename T, size_t S>
-  auto MakeSimd (std::array<T,S> aa)  { return MakeSimdCl(aa).Get(); }
+  auto MakeSimd (std::array<T,S> aa)  { return MakeSimdCl<T,S>(aa).Get(); }
 
   
   template <typename T, size_t S>

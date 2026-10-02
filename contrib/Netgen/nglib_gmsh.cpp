@@ -4,7 +4,7 @@
 #include <string>
 #include "GmshMessage.h"
 #include <meshing.hpp>
-#include <../geom2d/csg2d.hpp>
+#include "geom2d/csg2d.hpp" // for intersect() below
 
 namespace netgen {
   extern void (*ng_print_dest_callback)(const char *);
