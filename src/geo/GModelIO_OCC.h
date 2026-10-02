@@ -68,7 +68,8 @@ private:
   std::set<std::pair<int, int> > _toRemove;
 
   // cache of <dim,tag> pairs corresponding to entities that should not be
-  // unbound during boolean operations
+  // unbound during boolean operations, and that _multiBind returns if they are
+  // part of their result although they already exist
   std::set<std::pair<int, int> > _toPreserve;
 
   // mesh attributes
@@ -103,7 +104,7 @@ private:
   // outTags. If tag > 0 and a single entity if found, use that; if
   // highestDimOnly is true, only bind the entities (and sub-entities, if
   // recursive is set) of the highest dimension; if returnNewOnly is set, only
-  // return newly bound entities in outDimTags.
+  // return newly bound entities and those in _toPreserve in outDimTags.
   void _multiBind(const TopoDS_Shape &shape, int tag,
                   std::vector<std::pair<int, int> > &outDimTags,
                   bool returnHighestDimOnly, bool recursive = false,
