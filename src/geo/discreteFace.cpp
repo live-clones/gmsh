@@ -4,7 +4,6 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
-#include <array>
 #include <cmath>
 #include <limits>
 #include <queue>
@@ -24,139 +23,95 @@
 
 
 namespace {
-
-struct ExactTriangleProjection {
-  SPoint3 point = SPoint3(0., 0., 0.);
-  std::array<double, 3> weights{{0., 0., 0.}};
-  double squaredDistance = std::numeric_limits<double>::max();
-};
-
-static bool finishTriangleProjection(const SPoint3 &query,
-                                     const SPoint3 &point,
-                                     const std::array<double, 3> &weights,
-                                     ExactTriangleProjection &projection)
-{
-  const SVector3 difference = query - point;
-  const double squaredDistance = dot(difference, difference);
-  if(!std::isfinite(point.x()) || !std::isfinite(point.y()) ||
-     !std::isfinite(point.z()) || !std::isfinite(squaredDistance) ||
-     squaredDistance < 0.)
-    return false;
-  projection.point = point;
-  projection.weights = weights;
-  projection.squaredDistance = squaredDistance;
-  return true;
-}
-
-static bool projectPointOnTriangleEdges(const SPoint3 &query,
-                                        const SPoint3 &a, const SPoint3 &b,
-                                        const SPoint3 &c,
-                                        ExactTriangleProjection &projection)
-{
-  bool found = false;
-  const auto consider = [&](const SPoint3 &first, const SPoint3 &second,
-                            int firstIndex, int secondIndex) {
-    const SVector3 edge = second - first;
-    const double squaredLength = dot(edge, edge);
-    double parameter = 0.;
-    if(std::isfinite(squaredLength) && squaredLength > 0.) {
-      parameter = dot(query - first, edge) / squaredLength;
-      parameter = std::max(0., std::min(1., parameter));
-    }
-    const SPoint3 point = first + parameter * edge;
-    std::array<double, 3> weights{{0., 0., 0.}};
-    weights[firstIndex] = 1. - parameter;
-    weights[secondIndex] = parameter;
-    ExactTriangleProjection candidate;
-    if(!finishTriangleProjection(query, point, weights, candidate)) return;
-    if(!found || candidate.squaredDistance < projection.squaredDistance) {
-      projection = candidate;
-      found = true;
-    }
+  // the closest point on a triangle, its barycentric weights and its squared
+  // distance
+  struct triangleProjection {
+    SPoint3 point;
+    double w[3] = {0., 0., 0.};
+    double d2 = std::numeric_limits<double>::max();
   };
-  consider(a, b, 0, 1);
-  consider(b, c, 1, 2);
-  consider(c, a, 2, 0);
-  return found;
+} // namespace
+
+static void setProjection(const SPoint3 &p, const SPoint3 &q, double w0,
+                          double w1, double w2, triangleProjection &r)
+{
+  const SVector3 pq = p - q;
+  r.point = q;
+  r.w[0] = w0;
+  r.w[1] = w1;
+  r.w[2] = w2;
+  r.d2 = dot(pq, pq);
 }
 
-// Exact Euclidean point-triangle projection (Ericson's Voronoi-region test).
-// The edge fallback also gives a well-defined result on degenerate STL facets.
-static bool projectPointOnTriangle(const SPoint3 &query,
-                                   const MTriangle &triangle,
-                                   ExactTriangleProjection &projection)
+// the closest point on the edges, for flat triangles
+static void projectPointOnEdges(const SPoint3 &p, const SPoint3 x[3],
+                                triangleProjection &r)
 {
-  const SPoint3 a = triangle.getVertex(0)->point();
-  const SPoint3 b = triangle.getVertex(1)->point();
-  const SPoint3 c = triangle.getVertex(2)->point();
-  const SVector3 ab = b - a;
-  const SVector3 ac = c - a;
-  const SVector3 normal = crossprod(ab, ac);
-  const double squaredArea = dot(normal, normal);
-  if(!std::isfinite(squaredArea) || squaredArea == 0.)
-    return projectPointOnTriangleEdges(query, a, b, c, projection);
+  for(int i = 0; i < 3; i++) {
+    int j = (i + 1) % 3;
+    const SVector3 e = x[j] - x[i];
+    const double l2 = dot(e, e);
+    double t = 0.;
+    if(l2 > 0.) t = std::max(0., std::min(1., dot(p - x[i], e) / l2));
+    double w[3] = {0., 0., 0.};
+    w[i] = 1. - t;
+    w[j] = t;
+    triangleProjection c;
+    setProjection(p, x[i] + t * e, w[0], w[1], w[2], c);
+    if(c.d2 < r.d2) r = c;
+  }
+}
 
-  const SVector3 ap = query - a;
-  const double d1 = dot(ab, ap);
-  const double d2 = dot(ac, ap);
-  if(d1 <= 0. && d2 <= 0.)
-    return finishTriangleProjection(query, a, {{1., 0., 0.}}, projection);
+// the exact closest point on a triangle (Ericson, Real-Time Collision
+// Detection, 5.1.5)
+static void projectPointOnTriangle(const SPoint3 &p, const MTriangle &t,
+                                   triangleProjection &r)
+{
+  const SPoint3 x[3] = {t.getVertex(0)->point(), t.getVertex(1)->point(),
+                        t.getVertex(2)->point()};
+  const SPoint3 &a = x[0], &b = x[1], &c = x[2];
+  const SVector3 ab = b - a, ac = c - a;
+  const SVector3 n = crossprod(ab, ac);
+  if(dot(n, n) == 0.) return projectPointOnEdges(p, x, r);
 
-  const SVector3 bp = query - b;
-  const double d3 = dot(ab, bp);
-  const double d4 = dot(ac, bp);
-  if(d3 >= 0. && d4 <= d3)
-    return finishTriangleProjection(query, b, {{0., 1., 0.}}, projection);
+  const SVector3 ap = p - a;
+  const double d1 = dot(ab, ap), d2 = dot(ac, ap);
+  if(d1 <= 0. && d2 <= 0.) return setProjection(p, a, 1., 0., 0., r);
+
+  const SVector3 bp = p - b;
+  const double d3 = dot(ab, bp), d4 = dot(ac, bp);
+  if(d3 >= 0. && d4 <= d3) return setProjection(p, b, 0., 1., 0., r);
 
   const double vc = d1 * d4 - d3 * d2;
   if(vc <= 0. && d1 >= 0. && d3 <= 0.) {
-    const double denominator = d1 - d3;
-    if(denominator > 0.) {
-      const double v = d1 / denominator;
-      return finishTriangleProjection(query, a + v * ab, {{1. - v, v, 0.}},
-                                      projection);
-    }
-    return projectPointOnTriangleEdges(query, a, b, c, projection);
+    if(!(d1 - d3 > 0.)) return projectPointOnEdges(p, x, r);
+    const double v = d1 / (d1 - d3);
+    return setProjection(p, a + v * ab, 1. - v, v, 0., r);
   }
 
-  const SVector3 cp = query - c;
-  const double d5 = dot(ab, cp);
-  const double d6 = dot(ac, cp);
-  if(d6 >= 0. && d5 <= d6)
-    return finishTriangleProjection(query, c, {{0., 0., 1.}}, projection);
+  const SVector3 cp = p - c;
+  const double d5 = dot(ab, cp), d6 = dot(ac, cp);
+  if(d6 >= 0. && d5 <= d6) return setProjection(p, c, 0., 0., 1., r);
 
   const double vb = d5 * d2 - d1 * d6;
   if(vb <= 0. && d2 >= 0. && d6 <= 0.) {
-    const double denominator = d2 - d6;
-    if(denominator > 0.) {
-      const double w = d2 / denominator;
-      return finishTriangleProjection(query, a + w * ac, {{1. - w, 0., w}},
-                                      projection);
-    }
-    return projectPointOnTriangleEdges(query, a, b, c, projection);
+    if(!(d2 - d6 > 0.)) return projectPointOnEdges(p, x, r);
+    const double w = d2 / (d2 - d6);
+    return setProjection(p, a + w * ac, 1. - w, 0., w, r);
   }
 
   const double va = d3 * d6 - d5 * d4;
   if(va <= 0. && d4 - d3 >= 0. && d5 - d6 >= 0.) {
-    const double denominator = d4 - d3 + d5 - d6;
-    if(denominator > 0.) {
-      const double w = (d4 - d3) / denominator;
-      return finishTriangleProjection(query, b + w * (c - b),
-                                      {{0., 1. - w, w}}, projection);
-    }
-    return projectPointOnTriangleEdges(query, a, b, c, projection);
+    if(!(d4 - d3 + d5 - d6 > 0.)) return projectPointOnEdges(p, x, r);
+    const double w = (d4 - d3) / (d4 - d3 + d5 - d6);
+    return setProjection(p, b + w * (c - b), 0., 1. - w, w, r);
   }
 
-  const double denominator = va + vb + vc;
-  if(!(denominator > 0.) || !std::isfinite(denominator))
-    return projectPointOnTriangleEdges(query, a, b, c, projection);
-  const double v = vb / denominator;
-  const double w = vc / denominator;
-  return finishTriangleProjection(query, a + v * ab + w * ac,
-                                  {{1. - v - w, v, w}}, projection);
+  const double den = va + vb + vc;
+  if(!(den > 0.)) return projectPointOnEdges(p, x, r);
+  const double v = vb / den, w = vc / den;
+  setProjection(p, a + v * ab + w * ac, 1. - v - w, v, w, r);
 }
-
-} // namespace
 
 #if defined(HAVE_EIGEN) && defined(HAVE_GEOMETRYCENTRAL)
 #include <Eigen/Core>
@@ -182,7 +137,6 @@ void discreteFace::param::clear()
   bbox = SBoundingBox3d();
   t2d.clear();
   t3d.clear();
-  triangleUnitNormals.clear();
   CURV.clear();
 }
 
@@ -252,79 +206,62 @@ discreteFace::discreteFace(GModel *model) : GFace(model, 0)
   // the corresponding entity in GEO internals
 }
 
-static bool checkedUvTriangleCoordinates(const MElement *t, const double xyz[3],
-                                          double uvw[3])
+int discreteFace::_locate(double u, double v, double bary[2]) const
 {
-  uvw[0] = uvw[1] = uvw[2] = 0.;
-  if(!t || !std::isfinite(xyz[0]) || !std::isfinite(xyz[1])) return false;
-  double M[2][2], R[2];
-  const SPoint2 p0(t->getVertex(0)->x(), t->getVertex(0)->y());
-  const SPoint2 p1(t->getVertex(1)->x(), t->getVertex(1)->y());
-  const SPoint2 p2(t->getVertex(2)->x(), t->getVertex(2)->y());
-  M[0][0] = p1.x() - p0.x();
-  M[0][1] = p2.x() - p0.x();
-  M[1][0] = p1.y() - p0.y();
-  M[1][1] = p2.y() - p0.y();
-  R[0] = (xyz[0] - p0.x());
-  R[1] = (xyz[1] - p0.y());
-  double const det = M[0][0] * M[1][1] - M[1][0] * M[0][1];
-  // A signed, arbitrarily small nonzero determinant is still invertible.
-  // Do not substitute another support triangle when this one is singular.
-  if(det == 0. || !std::isfinite(det)) return false;
-  const double u = (R[0] * M[1][1] - M[0][1] * R[1]) / det;
-  const double v = (M[0][0] * R[1] - M[1][0] * R[0]) / det;
-  if(!std::isfinite(u) || !std::isfinite(v)) return false;
-  uvw[0] = u;
-  uvw[1] = v;
-  return true;
+  if(_param.empty()) return -1;
+  MElement *e = _param.oct->find(u, v, 0., -1, true);
+  if(!e) return -1;
+  if(bary) { // (not with xyz2uvw, which does not fail on a flat triangle)
+    const MVertex *p0 = e->getVertex(0), *p1 = e->getVertex(1),
+                  *p2 = e->getVertex(2);
+    double a = p1->x() - p0->x(), b = p2->x() - p0->x();
+    double c = p1->y() - p0->y(), d = p2->y() - p0->y();
+    double det = a * d - b * c;
+    if(det == 0.) return -1;
+    bary[0] = ((u - p0->x()) * d - b * (v - p0->y())) / det;
+    bary[1] = (a * (v - p0->y()) - c * (u - p0->x())) / det;
+    if(!std::isfinite(bary[0]) || !std::isfinite(bary[1])) return -1;
+  }
+  return static_cast<MTriangle *>(e) - &_param.t2d[0];
+}
+
+SVector3 discreteFace::_normal(int position) const
+{
+  const MTriangle &t = _param.t3d[position];
+  SVector3 n = crossprod(t.getVertex(1)->point() - t.getVertex(0)->point(),
+                         t.getVertex(2)->point() - t.getVertex(0)->point());
+  n.normalize();
+  return n;
 }
 
 int discreteFace::trianglePosition(double par1, double par2, double &u,
                                    double &v) const
 {
-  u = v = 0.;
-  if(_param.empty() || !std::isfinite(par1) || !std::isfinite(par2))
-    return -1;
-
-  double xy[3] = {par1, par2, 0};
-  double uv[3];
-  const MElement *e = _param.oct->find(par1, par2, 0.0, -1, true);
-  if(!checkedUvTriangleCoordinates(e, xy, uv)) return -1;
-  int position = (int)(static_cast<const MTriangle *>(e) - &_param.t2d[0]);
-  if(position < 0 || static_cast<std::size_t>(position) >= _param.t3d.size())
-    return -1;
-  u = uv[0];
-  v = uv[1];
+  double bary[2] = {0., 0.};
+  int position = _locate(par1, par2, bary);
+  u = bary[0];
+  v = bary[1];
   return position;
 }
 
 GPoint discreteFace::point(double par1, double par2) const
 {
-  double xy[3] = {std::isfinite(par1) ? par1 : 0.,
-                  std::isfinite(par2) ? par2 : 0., 0.};
-  const auto failed = [&]() {
+  double xy[3] = {par1, par2, 0};
+  double bary[2];
+  int position = _locate(par1, par2, bary);
+  if(position < 0) {
     GPoint gp(1.e21, 1.e21, 1.e21, this, xy);
     gp.setNoSuccess();
     return gp;
-  };
-  if(_param.empty() || !std::isfinite(par1) || !std::isfinite(par2))
-    return failed();
-  double uv[3];
-  const MElement *e = _param.oct->find(par1, par2, 0.0, -1, true);
-  if(!checkedUvTriangleCoordinates(e, xy, uv)) return failed();
-  int position = (int)(static_cast<const MTriangle *>(e) - &_param.t2d[0]);
-  if(position < 0 || static_cast<std::size_t>(position) >= _param.t3d.size())
-    return failed();
+  }
   const MTriangle &t3d = _param.t3d[position];
   double X = 0, Y = 0, Z = 0;
-  double eval[3] = {1. - uv[0] - uv[1], uv[0], uv[1]};
+  double eval[3] = {1. - bary[0] - bary[1], bary[0], bary[1]};
   for(int io = 0; io < 3; io++) {
     X += t3d.getVertex(io)->x() * eval[io];
     Y += t3d.getVertex(io)->y() * eval[io];
     Z += t3d.getVertex(io)->z() * eval[io];
   }
-  if(!std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z))
-    return failed();
   return GPoint(X, Y, Z, this, xy);
 }
 
@@ -345,7 +282,7 @@ namespace {
     const std::vector<MTriangle> *t3d;
     SPoint3 p;
     std::size_t best = std::numeric_limits<std::size_t>::max();
-    ExactTriangleProjection proj;
+    triangleProjection proj;
     void consider(std::size_t i)
     {
       // skip the triangles whose bounding box is farther than the best one
@@ -360,10 +297,10 @@ namespace {
         double e = std::max(0., std::max(lo - p[j], p[j] - hi));
         d2 += e * e;
       }
-      if(d2 >= proj.squaredDistance) return;
-      ExactTriangleProjection candidate;
-      if(projectPointOnTriangle(p, (*t3d)[i], candidate) &&
-         candidate.squaredDistance < proj.squaredDistance) {
+      if(d2 >= proj.d2) return;
+      triangleProjection candidate;
+      projectPointOnTriangle(p, (*t3d)[i], candidate);
+      if(candidate.d2 < proj.d2) {
         best = i;
         proj = candidate;
       }
@@ -394,10 +331,10 @@ GPoint discreteFace::_closestPoint(const SPoint3 &p,
   // of ties (e.g. on seams)
   double d = 1.e-3 * _param.bbox.diag();
   if(guess) {
-    MElement *e = _param.oct->find(guess[0], guess[1], 0., -1, true);
-    if(e) {
-      s.consider(static_cast<MTriangle *>(e) - &_param.t2d[0]);
-      d = std::min(d, std::sqrt(s.proj.squaredDistance));
+    int position = _locate(guess[0], guess[1]);
+    if(position >= 0) {
+      s.consider(position);
+      d = std::min(d, std::sqrt(s.proj.d2));
     }
   }
   // grow the search box until it contains the closest triangle found so far:
@@ -409,7 +346,7 @@ GPoint discreteFace::_closestPoint(const SPoint3 &p,
     double MAX[3] = {p.x() + r, p.y() + r, p.z() + r};
     _param.rtree3d.Search(MIN, MAX, closestPointCallback, &s);
     if(s.best != std::numeric_limits<std::size_t>::max()) {
-      double dbest = std::sqrt(s.proj.squaredDistance);
+      double dbest = std::sqrt(s.proj.d2);
       if(dbest <= d) break;
       d = std::min(2. * d, dbest);
     }
@@ -420,8 +357,8 @@ GPoint discreteFace::_closestPoint(const SPoint3 &p,
   const MTriangle &t2d = _param.t2d[s.best];
   SPoint2 uv;
   for(int i = 0; i < 3; ++i) {
-    uv[0] += s.proj.weights[i] * t2d.getVertex(i)->x();
-    uv[1] += s.proj.weights[i] * t2d.getVertex(i)->y();
+    uv[0] += s.proj.w[i] * t2d.getVertex(i)->x();
+    uv[1] += s.proj.w[i] * t2d.getVertex(i)->y();
   }
   return GPoint(s.proj.point.x(), s.proj.point.y(), s.proj.point.z(), this,
                 uv);
@@ -450,9 +387,7 @@ Range<double> discreteFace::parBounds(int i) const
 
 bool discreteFace::containsParam(const SPoint2 &pt)
 {
-  if(_param.empty()) return false;
-  if(_param.oct->find(pt.x(), pt.y(), 0.0, -1, true)) return true;
-  return false;
+  return _locate(pt.x(), pt.y()) >= 0;
 }
 
 SBoundingBox3d discreteFace::bounds(bool fast)
@@ -464,57 +399,21 @@ SBoundingBox3d discreteFace::bounds(bool fast)
 SVector3 discreteFace::normal(const SPoint2 &param) const
 {
   if(_param.empty()) return SVector3();
-
-  MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
-  if(!e) {
+  int position = _locate(param.x(), param.y());
+  if(position < 0) {
     Msg::Debug("Triangle not found at uv=(%g,%g) on discrete surface %d",
-              param.x(), param.y(), tag());
+               param.x(), param.y(), tag());
     return SVector3(0, 0, 1);
   }
-  int position = (int)((MTriangle *)e - &_param.t2d[0]);
-  if(position >= 0 &&
-     static_cast<std::size_t>(position) <
-       _param.triangleUnitNormals.size())
-    return _param.triangleUnitNormals[static_cast<std::size_t>(position)];
-  const MTriangle &t3d = _param.t3d[position];
-  SVector3 v31(t3d.getVertex(2)->x() - t3d.getVertex(0)->x(),
-               t3d.getVertex(2)->y() - t3d.getVertex(0)->y(),
-               t3d.getVertex(2)->z() - t3d.getVertex(0)->z());
-  SVector3 v21(t3d.getVertex(1)->x() - t3d.getVertex(0)->x(),
-               t3d.getVertex(1)->y() - t3d.getVertex(0)->y(),
-               t3d.getVertex(1)->z() - t3d.getVertex(0)->z());
-  SVector3 n = crossprod(v21, v31);
-  n.normalize();
-  return n;
+  return _normal(position);
 }
 
 bool discreteFace::normalIfContainsParam(const SPoint2 &param,
                                          SVector3 &result) const
 {
-  if(_param.empty()) return false;
-  MElement *element = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
-  if(!element) return false;
-  std::ptrdiff_t position =
-    static_cast<MTriangle *>(element) - _param.t2d.data();
-  if(position < 0 ||
-     static_cast<std::size_t>(position) >= _param.t3d.size())
-    return false;
-  if(static_cast<std::size_t>(position) <
-     _param.triangleUnitNormals.size()) {
-    result = _param.triangleUnitNormals[static_cast<std::size_t>(position)];
-    return true;
-  }
-  const MTriangle &triangle = _param.t3d[position];
-  const SVector3 first(
-    triangle.getVertex(1)->x() - triangle.getVertex(0)->x(),
-    triangle.getVertex(1)->y() - triangle.getVertex(0)->y(),
-    triangle.getVertex(1)->z() - triangle.getVertex(0)->z());
-  const SVector3 second(
-    triangle.getVertex(2)->x() - triangle.getVertex(0)->x(),
-    triangle.getVertex(2)->y() - triangle.getVertex(0)->y(),
-    triangle.getVertex(2)->z() - triangle.getVertex(0)->z());
-  result = crossprod(first, second);
-  result.normalize();
+  int position = _locate(param.x(), param.y());
+  if(position < 0) return false;
+  result = _normal(position);
   return true;
 }
 
@@ -536,15 +435,13 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
   if(_param.empty()) return 0.;
   if(_param.CURV.empty()) return 0.0;
 
-  MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
-  if(!e) {
+  int position = _locate(param.x(), param.y());
+  if(position < 0) {
     Msg::Info("Triangle not found for curvatures at uv=(%g,%g) on "
               "discrete surface %d",
               param.x(), param.y(), tag());
     return 0.0;
   }
-
-  int position = (int)((MTriangle *)e - &_param.t2d[0]);
 
   SVector3 c0max = _param.CURV[6 * position + 0];
   SVector3 c1max = _param.CURV[6 * position + 1];
@@ -564,61 +461,27 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 
 std::pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
-  if(_param.empty() || !std::isfinite(param.x()) || !std::isfinite(param.y()))
-    return std::make_pair(SVector3(), SVector3());
-
-  MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
-  const double xy[3] = {param.x(), param.y(), 0.};
-  double uv[3];
-  if(!checkedUvTriangleCoordinates(e, xy, uv)) {
-    if(e)
-      Msg::Debug("Singular triangle for first derivative at uv=(%g,%g) on "
-                 "discrete surface %d",
-                 param.x(), param.y(), tag());
-    else
+  // the triangle in space times the inverse of the triangle in the chart
+  int position = _locate(param.x(), param.y());
+  if(position < 0) {
+    if(!_param.empty())
       Msg::Info("Triangle not found for first derivative at uv=(%g,%g) on "
                 "discrete surface %d",
                 param.x(), param.y(), tag());
     return std::make_pair(SVector3(), SVector3());
   }
-
-  int position = (int)(static_cast<const MTriangle *>(e) - &_param.t2d[0]);
-  if(position < 0 || static_cast<std::size_t>(position) >= _param.t3d.size())
-    return std::make_pair(SVector3(), SVector3());
-
-  const MTriangle &t3d = _param.t3d[position];
-  const MVertex *v1 = t3d.getVertex(0);
-  const MVertex *v2 = t3d.getVertex(1);
-  const MVertex *v3 = t3d.getVertex(2);
-
-  double M3D[3][2] = {{v2->x() - v1->x(), v3->x() - v1->x()},
-                      {v2->y() - v1->y(), v3->y() - v1->y()},
-                      {v2->z() - v1->z(), v3->z() - v1->z()}};
-  v1 = e->getVertex(0);
-  v2 = e->getVertex(1);
-  v3 = e->getVertex(2);
-
-  double M2D[2][2] = {{(v3->y() - v1->y()), -(v3->x() - v1->x())},
-                      {-(v2->y() - v1->y()), (v2->x() - v1->x())}};
-
-  const double det = M2D[0][0] * M2D[1][1] - M2D[1][0] * M2D[0][1];
-  if(det == 0. || !std::isfinite(det))
-    return std::make_pair(SVector3(), SVector3());
-
-  double dxdu[3][2];
-
-  for(int i = 0; i < 3; i++) {
-    for(int j = 0; j < 2; j++) {
-      dxdu[i][j] = 0.;
-      for(int k = 0; k < 2; k++) { dxdu[i][j] += M3D[i][k] * M2D[k][j]; }
-      dxdu[i][j] /= det;
-      if(!std::isfinite(dxdu[i][j]))
-        return std::make_pair(SVector3(), SVector3());
-    }
-  }
-
-  return std::make_pair(SVector3(dxdu[0][0], dxdu[1][0], dxdu[2][0]),
-                        SVector3(dxdu[0][1], dxdu[1][1], dxdu[2][1]));
+  const MTriangle &t3d = _param.t3d[position], &t2d = _param.t2d[position];
+  SVector3 x1 = t3d.getVertex(1)->point() - t3d.getVertex(0)->point();
+  SVector3 x2 = t3d.getVertex(2)->point() - t3d.getVertex(0)->point();
+  double a = t2d.getVertex(1)->x() - t2d.getVertex(0)->x();
+  double b = t2d.getVertex(2)->x() - t2d.getVertex(0)->x();
+  double c = t2d.getVertex(1)->y() - t2d.getVertex(0)->y();
+  double d = t2d.getVertex(2)->y() - t2d.getVertex(0)->y();
+  double det = a * d - b * c;
+  if(det == 0.) return std::make_pair(SVector3(), SVector3());
+  SVector3 du = d * x1 - c * x2, dv = a * x2 - b * x1;
+  return std::make_pair(SVector3(du.x() / det, du.y() / det, du.z() / det),
+                        SVector3(dv.x() / det, dv.y() / det, dv.z() / det));
 }
 
 void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
@@ -868,20 +731,6 @@ void discreteFace::_createGeometryFromSTL()
       _param.CURV.push_back(stl_curvatures[2 * c]);
       _param.CURV.push_back(stl_curvatures[2 * c + 1]);
     }
-  }
-  _param.triangleUnitNormals.reserve(_param.t3d.size());
-  for(const MTriangle &triangle : _param.t3d) {
-    const SVector3 first(
-      triangle.getVertex(1)->x() - triangle.getVertex(0)->x(),
-      triangle.getVertex(1)->y() - triangle.getVertex(0)->y(),
-      triangle.getVertex(1)->z() - triangle.getVertex(0)->z());
-    const SVector3 second(
-      triangle.getVertex(2)->x() - triangle.getVertex(0)->x(),
-      triangle.getVertex(2)->y() - triangle.getVertex(0)->y(),
-      triangle.getVertex(2)->z() - triangle.getVertex(0)->z());
-    SVector3 normal = crossprod(first, second);
-    normal.normalize();
-    _param.triangleUnitNormals.push_back(normal);
   }
   if(_param.checkPlanar())
     Msg::Info("Discrete surface %d is planar, simplifying parametrization",

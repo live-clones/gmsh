@@ -26,10 +26,6 @@ private:
     std::vector<MVertex> v3d;
     std::vector<MTriangle> t2d;
     std::vector<MTriangle> t3d;
-    // Flat unit normal of each immutable source triangle. Unlike
-    // stl_normals (which are smoothed per vertex), this is the exact normal
-    // historically returned by normal() for the corresponding t3d entry.
-    std::vector<SVector3> triangleUnitNormals;
     std::vector<SVector3> CURV;
     double umin, umax, vmin, vmax;
     SBoundingBox3d bbox;
@@ -42,6 +38,10 @@ private:
   param _param;
   void _createGeometryFromSTL();
   GPoint _closestPoint(const SPoint3 &p, const double guess[2]) const;
+  // the chart triangle containing (u, v), and the barycentric coordinates of
+  // (u, v) in it if bary is given; -1 if none
+  int _locate(double u, double v, double bary[2] = nullptr) const;
+  SVector3 _normal(int position) const;
   void _computeSTLNormals();
   void _debugParametrization(bool uv);
 
