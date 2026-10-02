@@ -78,6 +78,15 @@ static double orientationTestFast(double *pa, double *pb, double *pc,
          cdx * (ady * bdz - adz * bdy);
 }
 
+// Total order on vertices for the symbolic perturbation and the face keys.
+// Comparing pointers made both depend on where the allocator put each vertex,
+// so cospherical configurations were resolved differently from run to run.
+// Every vertex has a unique number (see initialCube for the box corners).
+static inline bool vertLess(const Vert *a, const Vert *b)
+{
+  return a->getNum() < b->getNum();
+}
+
 static bool inSphereTest_s(Vert *va, Vert *vb, Vert *vc, Vert *vd, Vert *ve)
 {
   double val = robustPredicates::insphere(
@@ -95,7 +104,7 @@ static bool inSphereTest_s(Vert *va, Vert *vb, Vert *vc, Vert *vd, Vert *ve)
       count = 0;
       n = n - 1;
       for(int i = 0; i < n; i++) {
-        if(pt[i] > pt[i + 1]) {
+        if(vertLess(pt[i + 1], pt[i])) {
           Vert *swappt = pt[i];
           pt[i] = pt[i + 1];
           pt[i + 1] = swappt;
@@ -135,7 +144,7 @@ struct Face {
     V[2] = v[2] = v3;
 #define cswap(a, b)                                                            \
   do {                                                                         \
-    if(a > b) {                                                                \
+    if(vertLess(b, a)) {                                                       \
       Vert *tmp = a;                                                           \
       a = b;                                                                   \
       b = tmp;                                                                 \
@@ -153,12 +162,11 @@ struct Face {
 
   bool operator<(const Face &other) const
   {
-    if(v[0] < other.v[0]) return true;
-    if(v[0] > other.v[0]) return false;
-    if(v[1] < other.v[1]) return true;
-    if(v[1] > other.v[1]) return false;
-    if(v[2] < other.v[2]) return true;
-    return false;
+    if(vertLess(v[0], other.v[0])) return true;
+    if(vertLess(other.v[0], v[0])) return false;
+    if(vertLess(v[1], other.v[1])) return true;
+    if(vertLess(other.v[1], v[1])) return false;
+    return vertLess(v[2], other.v[2]);
   }
 };
 
@@ -1019,6 +1027,8 @@ static void initialCube(std::vector<Vert *> &v, Vert *box[8],
     new Vert(bbox.max().x(), bbox.max().y(), bbox.max().z(), bbox.diag());
   box[7] =
     new Vert(bbox.min().x(), bbox.max().y(), bbox.max().z(), bbox.diag());
+  // unique numbers after the input vertices (1..N), for vertLess
+  for(int i = 0; i < 8; i++) box[i]->setNum(v.size() + i + 1);
 
   Tet *t0 = allocator.newTet();
   t0->setVertices(box[7], box[2], box[3], box[1]);
