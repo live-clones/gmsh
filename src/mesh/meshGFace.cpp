@@ -816,9 +816,9 @@ static bool collectBoundaryNodes(
       if(fdeb != nullptr) fclose(fdeb);
       return false;
     }
-    // degeneratedVertices is a global singleton locked internally (see
-    // meshDuplicateVertices.h), so it is safe to query directly from the
-    // parallel meshing of faces without an external critical section here.
+    // degeneratedVertices is a global singleton with no locking of its own,
+    // so this loop is a serialization point for the parallel meshing of faces
+#pragma omp critical
     for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
       MVertex *v1 = (*ite)->lines[i]->getVertex(0);
       MVertex *v2 = (*ite)->lines[i]->getVertex(1);
