@@ -627,9 +627,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "FontSize" , opt_general_fontsize , -1. ,
     "Size of the font in the user interface, in pixels (-1: automatic)" },
 
-  { F|O, "GraphicsFontSize" , opt_general_graphics_fontsize , 15. ,
+  { F|O, "GraphicsFontSize" , opt_general_graphics_fontsize , 16. ,
     "Size of the font in the graphic window, in pixels" },
-  { F|O, "GraphicsFontSizeTitle" , opt_general_graphics_fontsize_title , 18. ,
+  { F|O, "GraphicsFontSizeTitle" , opt_general_graphics_fontsize_title , 19. ,
     "Size of the font in the graphic window for titles, in pixels" },
   { F|S, "GraphicsHeight" , opt_general_graphics_size1 , 600. ,
     "Height (in pixels) of the graphic window, and of the pictures made "
