@@ -28,9 +28,7 @@
 #include "linearSystemPETSc.h"
 #endif
 
-#if defined(HAVE_ANN)
-static const int NBANN = 2;
-#endif
+static const int NB_NEIGHBORS = 2;
 
 static const int MAX_THREADS = 256;
 
@@ -72,11 +70,7 @@ backgroundMesh *backgroundMesh::current()
   return _current[t];
 }
 
-backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
-#if defined(HAVE_ANN)
-  : _octree(nullptr), uv_kdtree(nullptr), nodes(nullptr), angle_nodes(nullptr),
-    angle_kdtree(nullptr)
-#endif
+backgroundMesh::backgroundMesh(GFace *_gf, bool cfd) : _octree(nullptr)
 {
   if(cfd) {
     Msg::Debug("Building cross field using closest distance");
@@ -113,22 +107,9 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
     _triangles.push_back(T2D);
   }
 
-#if defined(HAVE_ANN)
-  index = new ANNidx[2];
-  dist = new ANNdist[2];
-  nodes = annAllocPts(myBCNodes.size(), 3);
-  auto itp = myBCNodes.begin();
-  int ind = 0;
-  while(itp != myBCNodes.end()) {
-    SPoint2 pt = *itp;
-    nodes[ind][0] = pt.x();
-    nodes[ind][1] = pt.y();
-    nodes[ind][2] = 0.0;
-    itp++;
-    ind++;
-  }
-  uv_kdtree = new ANNkd_tree(nodes, myBCNodes.size(), 3);
-#endif
+  for(auto &p : myBCNodes)
+    _uvSearch.points().push_back(SPoint3(p.x(), p.y(), 0.));
+  _uvSearch.build();
 
   // build a search structure
   _octree = new MElementOctree(_triangles);
@@ -156,14 +137,6 @@ backgroundMesh::~backgroundMesh()
   for(std::size_t i = 0; i < _vertices.size(); i++) delete _vertices[i];
   for(std::size_t i = 0; i < _triangles.size(); i++) delete _triangles[i];
   if(_octree) delete _octree;
-#if defined(HAVE_ANN)
-  if(uv_kdtree) delete uv_kdtree;
-  if(angle_kdtree) delete angle_kdtree;
-  if(nodes) annDeallocPts(nodes);
-  if(angle_nodes) annDeallocPts(angle_nodes);
-  delete[] index;
-  delete[] dist;
-#endif
 }
 
 static void propagateValuesOnFace(GFace *_gf,
@@ -330,29 +303,16 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
     }
   }
 
-#if defined(HAVE_ANN)
-  index = new ANNidx[NBANN];
-  dist = new ANNdist[NBANN];
-  angle_nodes = annAllocPts(_cosines4.size(), 3);
-  auto itp = _cosines4.begin();
-  int ind = 0;
+  _angleSearch.clear();
   _sin.clear();
   _cos.clear();
-  while(itp != _cosines4.end()) {
-    MVertex *v = itp->first;
-    double c = itp->second;
-    SPoint2 pt = _param[v];
-    double s = _sines4[v];
-    angle_nodes[ind][0] = pt.x();
-    angle_nodes[ind][1] = pt.y();
-    angle_nodes[ind][2] = 0.0;
-    _cos.push_back(c);
-    _sin.push_back(s);
-    itp++;
-    ind++;
+  for(auto &c : _cosines4) {
+    SPoint2 pt = _param[c.first];
+    _angleSearch.points().push_back(SPoint3(pt.x(), pt.y(), 0.));
+    _cos.push_back(c.second);
+    _sin.push_back(_sines4[c.first]);
   }
-  angle_kdtree = new ANNkd_tree(angle_nodes, _cosines4.size(), 3);
-#endif
+  _angleSearch.build();
 }
 
 inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
@@ -575,18 +535,16 @@ double backgroundMesh::operator()(double u, double v, double w) const
   double uv2[3];
   MElement *e = _octree->find(u, v, w, 2, true);
   if(!e) {
-#if defined(HAVE_ANN)
-    if(uv_kdtree->nPoints() < 2) return -1000.;
-    double pt[3] = {u, v, 0.0};
-#pragma omp critical(backgroundMeshANN) // just to avoid crash (still incorrect) - should use nanoflann
-    uv_kdtree->annkSearch(pt, 2, index, dist);
-    SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
-    SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
+    std::size_t index[2];
+    double dist[2];
+    if(_uvSearch.nearest(SPoint3(u, v, 0.), 2, index, dist) < 2)
+      return -1000.;
     SPoint3 pnew;
     double d;
-    signedDistancePointLine(p1, p2, SPoint3(u, v, 0.), d, pnew);
+    signedDistancePointLine(_uvSearch.point(index[0]),
+                            _uvSearch.point(index[1]), SPoint3(u, v, 0.), d,
+                            pnew);
     e = _octree->find(pnew.x(), pnew.y(), 0.0, 2, true);
-#endif
     if(!e) {
       Msg::Error("BGM octree: cannot find UVW=%g %g %g", u, v, w);
       return -1000.0; // 0.4;
@@ -605,14 +563,13 @@ double backgroundMesh::getAngle(double u, double v, double w) const
   // use closest point for computing cross field angles: this allows NOT to
   // generate a spurious mesh and solve a PDE
   if(!_octree) {
-#if defined(HAVE_ANN)
     double angle = 0.;
-    if(angle_kdtree->nPoints() >= NBANN) {
-      double pt[3] = {u, v, 0.0};
-#pragma omp critical(getAngleANN1) // just to avoid crash (still incorrect) - should use nanoflann
-      angle_kdtree->annkSearch(pt, NBANN, index, dist);
+    std::size_t index[NB_NEIGHBORS];
+    double dist[NB_NEIGHBORS];
+    if(_angleSearch.nearest(SPoint3(u, v, 0.), NB_NEIGHBORS, index, dist) ==
+       NB_NEIGHBORS) {
       double SINE = 0.0, COSINE = 0.0;
-      for(int i = 0; i < NBANN; i++) {
+      for(int i = 0; i < NB_NEIGHBORS; i++) {
         SINE += _sin[index[i]];
         COSINE += _cos[index[i]];
       }
@@ -620,7 +577,6 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     }
     crossField2d::normalizeAngle(angle);
     return angle;
-#endif
   }
 
   // HACK FOR LEWIS
@@ -637,18 +593,16 @@ double backgroundMesh::getAngle(double u, double v, double w) const
   double uv2[3];
   MElement *e = _octree->find(u, v, w, 2, true);
   if(!e) {
-#if defined(HAVE_ANN)
-    if(uv_kdtree->nPoints() < 2) return -1000.0;
-    double pt[3] = {u, v, 0.0};
-#pragma omp critical(getAngleANN2) // just to avoid crash (still incorrect) - should use nanoflann
-    uv_kdtree->annkSearch(pt, 2, index, dist);
-    SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
-    SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
+    std::size_t index[2];
+    double dist[2];
+    if(_uvSearch.nearest(SPoint3(u, v, 0.), 2, index, dist) < 2)
+      return -1000.0;
     SPoint3 pnew;
     double d;
-    signedDistancePointLine(p1, p2, SPoint3(u, v, 0.), d, pnew);
+    signedDistancePointLine(_uvSearch.point(index[0]),
+                            _uvSearch.point(index[1]), SPoint3(u, v, 0.), d,
+                            pnew);
     e = _octree->find(pnew.x(), pnew.y(), 0., 2, true);
-#endif
     if(!e) {
       Msg::Error("BGM octree angle: cannot find UVW=%g %g %g", u, v, w);
       return -1000.0;

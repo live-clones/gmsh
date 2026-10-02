@@ -231,7 +231,7 @@ MElementOctree *backgroundMesh3D::getOctree()
 MVertex *backgroundMesh3D::get_nearest_neighbor(const double *xyz,
                                                 double &distance)
 {
-  // using the octree instead of ANN, faster.
+  // using the octree instead of a kd-tree, faster.
   MElement *elem = const_cast<MElement *>(findElement(xyz[0], xyz[1], xyz[2]));
 
   if(!elem) return NULL;
@@ -286,7 +286,7 @@ frameFieldBackgroundMesh3D::frameFieldBackgroundMesh3D(GRegion *_gr)
   if((max_recursion_level > 3) || (max_recursion_level < 1)) throw;
   build_neighbors(max_recursion_level);
 
-  initiate_ANN_research();
+  build_boundary_search();
   initiate_crossfield();
 
   if(smooth_the_crossfield) {
@@ -297,31 +297,14 @@ frameFieldBackgroundMesh3D::frameFieldBackgroundMesh3D(GRegion *_gr)
   }
 }
 
-frameFieldBackgroundMesh3D::~frameFieldBackgroundMesh3D()
-{
-#if defined(HAVE_ANN)
-  if(annTreeBnd) delete annTreeBnd;
-  if(dataPtsBnd) annDeallocPts(dataPtsBnd);
-#endif
-}
+frameFieldBackgroundMesh3D::~frameFieldBackgroundMesh3D() {}
 
-void frameFieldBackgroundMesh3D::initiate_ANN_research()
+void frameFieldBackgroundMesh3D::build_boundary_search()
 {
-#ifdef HAVE_ANN
-  // ANN research for 2D !!!
-  int maxPts = listOfBndVertices.size();
-  dataPtsBnd = annAllocPts(maxPts, 3);
-  int i = 0;
-  MVertex *v;
-  for(std::set<MVertex *>::iterator it = listOfBndVertices.begin();
-      it != listOfBndVertices.end(); it++) {
-    v = *it;
-    for(int k = 0; k < 3; ++k) dataPtsBnd[i][k] = (v->point())[k];
-    ++i;
-  }
-  annTreeBnd = new ANNkd_tree(dataPtsBnd, maxPts, 3);
-#endif
-  return;
+  bndVertices.assign(listOfBndVertices.begin(), listOfBndVertices.end());
+  bndSearch.clear();
+  for(auto v : bndVertices) bndSearch.points().push_back(v->point());
+  bndSearch.build();
 }
 
 void frameFieldBackgroundMesh3D::computeSmoothnessOnlyFromBoundaries()
@@ -677,7 +660,7 @@ void frameFieldBackgroundMesh3D::initiate_crossfield()
       if(itfind != crossField.end()) continue;
       MVertex *closer_on_bnd = get_nearest_neighbor_on_boundary(v);
       crossField[v] =
-        crossField[closer_on_bnd]; // prend l'info Bnd (ANN) la plus proche...
+        crossField[closer_on_bnd]; // prend l'info Bnd la plus proche...
     }
   }
 }
@@ -693,24 +676,11 @@ MVertex *
 frameFieldBackgroundMesh3D::get_nearest_neighbor_on_boundary(MVertex *v,
                                                              double &distance)
 {
-#ifdef HAVE_ANN
-  ANNpoint q = annAllocPt(3);
-  for(int k = 0; k < 3; ++k) q[k] = v->point()[k];
-  ANNidxArray nn_idx = new ANNidx[1];
-  ANNdistArray dists = new ANNdist[1];
-  annTreeBnd->annkSearch(q, 1, nn_idx, dists);
-  distance = std::sqrt(dists[0]);
-  int i = nn_idx[0];
-  delete[] nn_idx;
-  delete[] dists;
-  annDeallocPt(q);
-
-  std::set<MVertex *>::iterator it = listOfBndVertices.begin();
-  std::advance(it, i);
-  return (*it);
-#else
-  return NULL;
-#endif
+  double d2;
+  std::size_t i = bndSearch.nearest(v->point(), &d2);
+  if(i == bndVertices.size()) return NULL;
+  distance = std::sqrt(d2);
+  return bndVertices[i];
 }
 
 double frameFieldBackgroundMesh3D::get_smoothness(double x, double y, double z)

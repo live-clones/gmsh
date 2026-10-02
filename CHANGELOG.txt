@@ -24,11 +24,12 @@ tags; new VTK/Paraview IO for meshes and post-processing views; new predefined
 colormaps; new Curvature Curve/Surface, CreateMeshEdges/Faces and CreateOverlaps
 parser functions; new Plugin(DuplicateNodes), removed Plugin(CVTRemesh) and
 Plugin(CurvedBndDist); Gmsh now requires C++17 and CMake 3.10, and uses Eigen
-5.0 by default; added support for OCC 8; fix MeshAdapt regression introduced in
-4.12 on thin cones/cylinders; the AutomaticMeshSizeField now uses a
-self-contained octree implementation (contrib/OctreeSizeField) instead of the
-external p4est library, removing the p4est/sc dependency (ENABLE_P4EST is gone;
-loading a previously saved .p4est size field is no longer supported); bug fixes.
+5.0 by default; added support for OCC 8; upgraded bundled contrib/Netgen to
+v6.2.2608; fix MeshAdapt regression introduced in 4.12 on thin cones/cylinders;
+the AutomaticMeshSizeField now uses a self-contained octree implementation
+(contrib/OctreeSizeField) instead of the external p4est library, removing the
+p4est/sc dependency (ENABLE_P4EST is gone; loading a previously saved .p4est
+size field is no longer supported); bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,

@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <vector>
 
 #include <cmath>
@@ -527,6 +528,8 @@ double glImmediate::alphaScaleFor(unsigned int primitive)
 
 void gmshLineStipple(int factor, unsigned short pattern)
 {
+  // the dashes are in pixels, as the widths
+  factor = std::max(1, (int)(factor * _pixelScale + 0.5));
   if(glShader::enabled()) {
     if(_stipple && _stippleFactor == factor && _stipplePattern == pattern)
       return;
@@ -537,7 +540,7 @@ void gmshLineStipple(int factor, unsigned short pattern)
     _stipplePattern = pattern;
     return;
   }
-  glLineStipple(factor, pattern);
+  glLineStipple(std::min(factor, 256), pattern);
   glEnable(GL_LINE_STIPPLE);
 }
 

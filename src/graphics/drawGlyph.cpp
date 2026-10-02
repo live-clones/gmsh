@@ -528,7 +528,8 @@ void drawContext::drawSphere(double R, double x, double y, double z, int n1,
 void drawContext::drawSphere(double size, double x, double y, double z,
                              int light)
 {
-  double ss = size * pixel_equiv_x / s[0]; // size is in pixels
+  // size is a point size: a diameter
+  double ss = 0.5 * size * pointPixelFactor() * pixel_equiv_x / s[0];
   double t[16], sc[16], m[16];
   glMatrix::translate(x, y, z, t);
   glMatrix::scale(ss, ss, ss, sc);
@@ -548,7 +549,7 @@ void drawContext::drawCylinder(double width, double *x, double *y, double *z,
   double dy = y[1] - y[0];
   double dz = z[1] - z[0];
   double const length = std::sqrt(dx * dx + dy * dy + dz * dz);
-  double radius = width * pixel_equiv_x / s[0];
+  double radius = 0.5 * width * pointPixelFactor() * pixel_equiv_x / s[0];
   double vdir[3] = {dx / length, dy / length, dz / length};
 
   Tessellation t;

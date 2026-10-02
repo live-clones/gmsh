@@ -61,10 +61,7 @@
 #include "HighOrderMeshFastCurving.h"
 #endif
 
-#if defined(HAVE_WINSLOWUNTANGLER)
-#include "meshSurfaceUntangling.h"
-#include "meshVolumeUntangling.h"
-#endif
+#include "meshUntangling.h"
 
 #include "meshMesquite.h"
 
@@ -1028,36 +1025,15 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
     }
   }
   else if(how == "UntangleTets") {
-#if defined(HAVE_WINSLOWUNTANGLER)
     double timeMax = 100.;
     int nIterWinslow = 10;
     for(GRegion *gr : m->getRegions()) {
       untangleGRegionMeshConstrained(gr, nIterWinslow, timeMax);
     }
-#else
-    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
-      untangleMeshGRegion opt;
-      opt(*it, force);
-    }
-#endif
     m->setAllVolumesPositive();
   }
   else if(how == "UntangleTris") {
-#if defined(HAVE_WINSLOWUNTANGLER)
-    int nIterWinslow = 10;
-    double timeMax = 100.;
-    for(GFace *gf : m->getFaces()) {
-      //      if(gf->geomType() == GFace::Plane || gf->geomType() ==
-      //      GFace::DiscreteSurface) {
-      untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
-      //      }
-      //      else {
-      //        Msg::Debug("- Surface %i: not planar, do not apply Winslow
-      //        untangling",
-      //                   gf->tag());
-      //      }
-    }
-#endif
+    for(GFace *gf : m->getFaces()) untangleGFaceMeshConstrained(gf);
   }
   else if(how == "MesquiteImprove2D") {
     for(auto it = m->firstFace(); it != m->lastFace(); it++) {
@@ -1167,15 +1143,11 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
     }
   }
   else if(how == "UntangleMeshGeometry") {
-#if defined(HAVE_WINSLOWUNTANGLER)
     int nIterWinslow = 10;
     for(GFace *gf : m->getFaces()) {
       if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility())
         continue;
-      if(gf->geomType() == GFace::Plane) {
-        double timeMax = 100.;
-        untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
-      }
+      if(gf->geomType() == GFace::Plane) { untangleGFaceMeshConstrained(gf); }
       else {
         Msg::Debug("- Surface %i: not planar, do not apply Winslow untangling",
                    gf->tag());
@@ -1187,10 +1159,6 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
       double timeMax = 100.;
       untangleGRegionMeshConstrained(gr, nIterWinslow, timeMax);
     }
-#else
-    Msg::Error("Untangle mesh geometry optimization requires the "
-               "WinslowUntangler module");
-#endif
   }
   else if(how == "HXT" || how =="HXT_FlipOnly") {
 #ifndef HAVE_HXT

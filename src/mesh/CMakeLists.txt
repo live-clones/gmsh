@@ -28,10 +28,10 @@ set(SRC
   meshGRegionBoundaryLayer.cpp
   meshQuantize2.cpp
   meshRelocateVertex.cpp
+  meshUntangling.cpp
   meshRenumber.cpp
   meshTriangulation.cpp
   meshMetric.cpp
-  meshUntangle.cpp
   meshMesquite.cpp
   BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp

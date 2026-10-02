@@ -7,6 +7,50 @@
 /* Date:   01. Oct. 94                                                     */
 /* *************************************************************************/
 
+namespace netgen
+{
+
+template <typename T>
+class TFlatVector
+{
+protected:
+  int s;
+  T * data;
+public:
+  TFlatVector () { ; }
+  TFlatVector (int as, T * adata)
+  { s = as; data = adata; }
+    
+  int Size () const
+  { return s; }
+
+  TFlatVector & operator= (const TFlatVector & v) 
+  { memcpy (data, v.data, s*sizeof(T)); return *this; }
+
+  TFlatVector & operator= (T scal) 
+  {
+    for (int i = 0; i < s; i++) data[i] = scal; 
+    return *this;
+  }
+
+  T & operator[] (int i) { return data[i]; }
+  const T & operator[] (int i) const { return data[i]; }
+  T & operator() (int i) { return data[i]; }
+  const T & operator() (int i) const { return data[i]; }
+
+  // double & Elem (int i) { return data[i-1]; }
+  // const double & Get (int i) const { return data[i-1]; }
+  // void Set (int i, double val) { data[i-1] = val; }
+
+  TFlatVector & operator*= (T scal)
+  {
+    for (int i = 0; i < s; i++) data[i] *= scal;
+    return *this;
+  }
+};
+
+
+
 
 class FlatVector
 {
@@ -60,7 +104,7 @@ public:
   }
 
   FlatVector & Set2 (double scal1, const FlatVector & v1,
-		 double scal2, const FlatVector & v2)
+                 double scal2, const FlatVector & v2)
   {
     for (int i = 0; i < s; i++) 
       data[i] = scal1 * v1[i] + scal2 * v2[i];
@@ -75,8 +119,10 @@ public:
     return sqrt (sum);
   }
 
+  operator TFlatVector<double> () const { return TFlatVector<double> (s, data); } 
   friend double operator* (const FlatVector & v1, const FlatVector & v2);
 };
+
 
 
 
@@ -93,6 +139,15 @@ public:
   ~Vector ()
   { if (ownmem) delete [] data; }
 
+  template<typename ARCHIVE>
+  void DoArchive(ARCHIVE& ar)
+  {
+    auto size = s;
+    ar & ownmem & size;
+    if(!ar.Output())
+      SetSize(size);
+    ar.Do(data, size);
+  }
   Vector & operator= (const FlatVector & v) 
   { memcpy (data, &v(0), s*sizeof(double)); return *this; }
 
@@ -106,13 +161,14 @@ public:
   {
     if (s != as)
       {
-	s = as;
-	if (ownmem) delete [] data;
-	data = new double [s];
+        s = as;
+        if (ownmem) delete [] data;
+        data = new double [s];
         ownmem = true;
       }
   }
 
+  operator TFlatVector<double> () const { return TFlatVector<double> (s, data); } 
 };
 
 template <int S>
@@ -154,7 +210,7 @@ inline ostream & operator<< (ostream & ost, const FlatVector & v)
   return ost;
 }
 
-
+} //namespace netgen
 
 #endif
 
