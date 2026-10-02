@@ -50,7 +50,10 @@ static int drawTicks(drawContext *ctx, int comp, double n, std::string &format,
     }
   }
 
-  // reduce number of ticks depending on font size and length of axis on screen
+  // reduce number of ticks depending on font size and length of axis on
+  // screen; world2Viewport is in true pixels, the font metrics in those of the
+  // window
+  double hr = ctx->highResolutionPixelFactor();
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   char tmp[256];
@@ -59,7 +62,7 @@ static int drawTicks(drawContext *ctx, int comp, double n, std::string &format,
   ctx->world2Viewport(p1, win1);
   ctx->world2Viewport(p2, win2);
   double winl = sqrt(SQU(win2[0] - win1[0]) + SQU(win2[1] - win1[1]));
-  double strl = drawContext::global()->getStringWidth(tmp);
+  double strl = hr * drawContext::global()->getStringWidth(tmp);
   if((n - 1) * strl > winl) n = (int)(winl / strl) + 1;
   if(n <= 1) {
     if(comp < 0) // ruler
@@ -98,13 +101,13 @@ static int drawTicks(drawContext *ctx, int comp, double n, std::string &format,
     ctx->world2Viewport(p, winp);
     ctx->world2Viewport(r, winr);
     if(fabs(winr[0] - winp[0]) < 2.) // center align
-      winr[0] -= drawContext::global()->getStringWidth(tmp) / 2.;
+      winr[0] -= hr * drawContext::global()->getStringWidth(tmp) / 2.;
     else if(winr[0] < winp[0]) // right align
-      winr[0] -= drawContext::global()->getStringWidth(tmp);
+      winr[0] -= hr * drawContext::global()->getStringWidth(tmp);
     if(fabs(winr[1] - winp[1]) < 2.) // center align
-      winr[1] -= drawContext::global()->getStringHeight() / 3.;
+      winr[1] -= hr * drawContext::global()->getStringHeight() / 3.;
     else if(winr[1] < winp[1]) // top align
-      winr[1] -= drawContext::global()->getStringHeight();
+      winr[1] -= hr * drawContext::global()->getStringHeight();
     ctx->viewport2World(winr, r);
     ctx->drawString(tmp, r[0], r[1], r[2]);
   }
