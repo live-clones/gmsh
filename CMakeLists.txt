@@ -965,11 +965,22 @@ if(HAVE_MESH)
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Netgen AND ENABLE_NETGEN)
-    add_subdirectory(contrib/Netgen)
-    include_directories(contrib/Netgen contrib/Netgen/libsrc/include
-                        contrib/Netgen/nglib)
-    set_config_option(HAVE_NETGEN "Netgen")
-    add_definitions(-DNO_PARALLEL_THREADS -DNOTCL)
+    if(NOT HAVE_LIBZ) # Netgen needs zlib
+      find_package(ZLIB)
+      if(ZLIB_FOUND)
+        set_config_option(HAVE_LIBZ "Zlib")
+        list(APPEND EXTERNAL_LIBRARIES ${ZLIB_LIBRARIES})
+        list(APPEND EXTERNAL_INCLUDES ${ZLIB_INCLUDE_DIR})
+      endif()
+    endif()
+    if(HAVE_LIBZ)
+      add_subdirectory(contrib/Netgen)
+      include_directories(contrib/Netgen contrib/Netgen/libsrc
+                          contrib/Netgen/libsrc/include)
+      set_config_option(HAVE_NETGEN "Netgen")
+    else()
+      message(WARNING "Disabling Netgen (zlib not found)")
+    endif()
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/bamg AND ENABLE_BAMG)

@@ -9,11 +9,11 @@
 
 #include <myadt.hpp>
 #include <gprim.hpp>
+#include <meshing.hpp>
 
 
 // #include "../gprim/spline.hpp"
 // #include "../gprim/splinegeometry.hpp"
-#include "geom2dmesh.hpp"
 
 namespace netgen
 {
@@ -21,7 +21,7 @@ namespace netgen
   class SplineSegExt : public SplineSeg<2>
   {
   public:
-    const SplineSeg<2> & seg;
+    SplineSeg<2>* seg;
     
     /// left domain
     int leftdom;
@@ -35,66 +35,92 @@ namespace netgen
     int bc;
     /// copy spline mesh from other spline (-1.. do not copy)
     int copyfrom;
-    /// perfrom anisotropic refinement (hp-refinement) to edge
-    bool hpref_left;
-    /// perfrom anisotropic refinement (hp-refinement) to edge
-    bool hpref_right;
+    /// perform anisotropic refinement (hp-refinement) to edge
+    double hpref_left;
+    /// perform anisotropic refinement (hp-refinement) to edge
+    double hpref_right;
     ///
     int layer;
 
-    SplineSegExt (const SplineSeg<2> & hseg) 
-      : seg(hseg)
+    SplineSegExt (SplineSeg<2> & hseg)
+      : seg(&hseg)
     {
       layer = 1;
     }
+    // default constructor for archive
+    SplineSegExt() {}
 
+    ~SplineSegExt ()
+    {
+      delete seg;
+    }
+
+    virtual void DoArchive(Archive& ar)
+    {
+      ar & seg & leftdom & rightdom & reffak & hmax & bc & copyfrom
+        & hpref_left & hpref_right & layer;
+    }
     
     virtual const GeomPoint<2> & StartPI () const 
     { 
-      return seg.StartPI(); 
+      return seg->StartPI();
     }
 
     virtual const GeomPoint<2> & EndPI () const 
     {
-      return seg.EndPI();
+      return seg->EndPI();
     }
 
     virtual Point<2> GetPoint (double t) const 
     {
-      return seg.GetPoint(t);
+      return seg->GetPoint(t);
     }
 
     virtual Vec<2> GetTangent (const double t) const
     {
-      return seg.GetTangent(t);
+      return seg->GetTangent(t);
     }
 
     virtual void GetDerivatives (const double t,  
-				 Point<2> & point,
-				 Vec<2> & first,
-				 Vec<2> & second) const
+                                 Point<2> & point,
+                                 Vec<2> & first,
+                                 Vec<2> & second) const
     {
-      seg.GetDerivatives (t, point, first, second);
+      seg->GetDerivatives (t, point, first, second);
     }
 
     virtual void GetCoeff (Vector & coeffs) const 
     {
-      seg.GetCoeff (coeffs);
+      seg->GetCoeff (coeffs);
     }
 
     virtual void GetPoints (int n, Array<Point<2> > & points) const
     {
-      seg.GetPoints (n, points);
+      seg->GetPoints (n, points);
     }
 
     virtual double MaxCurvature () const 
     {
-      return seg.MaxCurvature();
+      return seg->MaxCurvature();
     }
 
     virtual string GetType () const
     {
-      return seg.GetType();
+      return seg->GetType();
+    }
+
+    virtual double CalcCurvature (double t) const
+    {
+      Point<2> point;
+      Vec<2> first, second;
+      GetDerivatives (t, point, first, second);
+      double curv = fabs(first(0)*second(1)-first(1)*second(0)) / (first.Length() * first.Length() * first.Length());
+      return curv;
+    }
+
+    virtual bool InConvexHull (Point<2> p, double eps) const
+    {
+      return seg->InConvexHull (p, eps);
     }
 
   };
@@ -102,7 +128,7 @@ namespace netgen
 
 
 
-  class SplineGeometry2d : public SplineGeometry<2>, public NetgenGeometry
+  class DLL_HEADER SplineGeometry2d : public SplineGeometry<2>, public NetgenGeometry
   {
   protected:
     Array<char*> materials;
@@ -111,21 +137,58 @@ namespace netgen
     Array<bool> tensormeshing;
     Array<int> layer;
     Array<string*> bcnames;
-    double elto0;
+    double elto0 = 1.0;
 
 
   public:
-    DLL_HEADER virtual ~SplineGeometry2d();
+    virtual ~SplineGeometry2d();
 
-    DLL_HEADER void Load (const char * filename);
+    void Load (const filesystem::path & filename);
 
-    DLL_HEADER void LoadData( ifstream & infile );
-    DLL_HEADER void LoadDataNew ( ifstream & infile );
-    DLL_HEADER void LoadDataV2 ( ifstream & infile );
+    void LoadData( ifstream & infile );
+    void LoadDataNew ( ifstream & infile );
+    void LoadDataV2 ( ifstream & infile );
 
     void TestComment ( ifstream & infile ) ;
 
-    
+    void DoArchive(Archive& ar) override
+    {
+      SplineGeometry<2>::DoArchive(ar);
+      ar & materials & maxh & quadmeshing & tensormeshing & layer & bcnames & elto0;
+    }
+
+    bool ProjectPointGI (int surfind, Point<3> & p, PointGeomInfo & gi) const override
+    {
+      p(2) = 0.0;
+      return true;
+    }
+
+    void ProjectPointEdge (int surfind, int surfind2, Point<3> & p, EdgePointGeomInfo* gi = nullptr, int edgenr = -1) const override;
+
+
+    void PointBetween(const Point<3> & p1, const Point<3> & p2, double secpoint,
+                      int surfi,
+                      const PointGeomInfo & gi1,
+                      const PointGeomInfo & gi2,
+                      Point<3> & newp, PointGeomInfo & newgi) const override
+    {
+      newp = p1+secpoint*(p2-p1);
+      newgi.trignum = 1;
+    }
+
+    void PointBetweenEdge(const Point<3> & p1, const Point<3> & p2, double secpoint,
+                          int surfi1, int surfi2,
+                          const EdgePointGeomInfo & ap1,
+                          const EdgePointGeomInfo & ap2,
+                          Point<3> & newp, EdgePointGeomInfo & newgi,
+                          int edgenr) const override;
+
+
+    Vec<3> GetTangent (const Point<3> & p, int surfi1, int surfi2,
+                       const EdgePointGeomInfo & ap1,
+                       int edgenr = -1) const override;
+    Vec<3> GetNormal(int surfi1, const Point<3> & p,
+                     const PointGeomInfo* gi) const override;
 
     const SplineSegExt & GetSpline (const int i) const 
     { 
@@ -138,40 +201,78 @@ namespace netgen
     }
 
     
-    DLL_HEADER virtual int GenerateMesh (Mesh*& mesh, MeshingParameters & mparam,
-			      int perfstepsstart, int perfstepsend);
+    int GenerateMesh (shared_ptr<Mesh> & mesh, MeshingParameters & mparam) override;
     
-    void PartitionBoundary (double h, Mesh & mesh2d);
+    void PartitionBoundary (MeshingParameters & mp, double h, Mesh & mesh2d);
 
-    void CopyEdgeMesh (int from, int to, Mesh & mesh2d, Point3dTree & searchtree);
+    void CopyEdgeMesh (int from, int to, Mesh & mesh2d, Point3dTree<PointIndex> & searchtree);
 
 
-    void GetMaterial( const int  domnr, char* & material );
+    size_t GetNDomains() const { return materials.Size(); }
+    void GetMaterial (int  domnr, char* & material );
+    void SetMaterial (int  domnr, const string & material);
 
     double GetDomainMaxh ( const int domnr );
+    void SetDomainMaxh ( const int domnr, double maxh );
+    
     bool GetDomainQuadMeshing ( int domnr ) 
     { 
       if ( quadmeshing.Size() ) return quadmeshing[domnr-1]; 
       else return false;
     }
+    void SetDomainQuadMeshing ( int domnr, bool quad_meshing )
+    {
+      auto oldsize = quadmeshing.Size();
+
+      if ( oldsize<domnr )
+        {
+          quadmeshing.SetSize(domnr);
+          for(auto dom : IntRange(oldsize, domnr-1))
+              quadmeshing[dom] = false;
+        }
+
+      quadmeshing[domnr-1] = quad_meshing;
+    }
+
     bool GetDomainTensorMeshing ( int domnr ) 
     { 
-      if ( tensormeshing.Size() ) return tensormeshing[domnr-1]; 
+      if ( tensormeshing.Size()>=domnr ) return tensormeshing[domnr-1];
       else return false;
+    }
+    void SetDomainTensorMeshing ( int domnr, bool tm )
+    {
+      if ( tensormeshing.Size()<domnr )
+      {
+        auto oldsize = tensormeshing.Size();
+        tensormeshing.SetSize(domnr);
+        for(auto i : IntRange(oldsize, domnr-1))
+          tensormeshing[i] = false;
+      }
+      tensormeshing[domnr-1] = tm;
     }
     int GetDomainLayer ( int domnr ) 
     { 
       if ( layer.Size() ) return layer[domnr-1]; 
       else return 1;
     }
+    void SetDomainLayer (int domnr, int layernr)
+    {
+      auto old_size = layer.Size();
+      if(domnr > old_size)
+        {
+          layer.SetSize(domnr);
+          for(size_t i = old_size; i < domnr; i++)
+            layer[i] = 1;
+        }
+      layer[domnr-1] = layernr;
+    }
 
-
-    string GetBCName ( const int bcnr ) const;
+    string GetBCName (int bcnr) const;
+    void SetBCName (int bcnr, string name);
+    int GetBCNumber (string name) const; // 0 if not exists
+    int AddBCName (string name);
 
     string * BCNamePtr ( const int bcnr );
-
-    
-    DLL_HEADER virtual Refinement & GetRefinement () const; 
   };
 }
 
