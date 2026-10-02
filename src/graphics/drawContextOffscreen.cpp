@@ -64,7 +64,9 @@ bool drawContextOffscreen::begin(int width, int height, double scale,
     _ctx = new drawContext();
     _viewFromOptions = false;
   }
-  glImmediate::pixelScale(scale);
+  // line widths and point sizes in pixels of the screen, as on the desktop;
+  // scaled in a picture
+  glImmediate::pixelScale(screen ? 1. : scale);
   _previous = drawContext::global();
   drawContext::setGlobal(this);
   setPixelFactor(scale);

@@ -510,9 +510,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     }
   }
 
-  double ps = CTX::instance()->pointSize * ctx->highResolutionPixelFactor();
-
-  gmshPointSize((float)ps);
+  gmshPointSize((float)CTX::instance()->pointSize);
   gl2psPointSize((float)(CTX::instance()->pointSize *
                          CTX::instance()->print.epsPointSizeFactor));
 
@@ -727,11 +725,11 @@ static bool addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
       ctx->drawString(label, px + offset, py + offset, 0.);
     }
     else if(singlePoint && (opt->pointType == 1 || opt->pointType == 3)) {
-      double ps = opt->pointSize * ctx->highResolutionPixelFactor();
       if(inModelCoordinates)
-        ctx->drawSphere(ps, px, py, 0, opt->light);
-      else
-        ctx->drawSphere(ps, px, py, 0, 10, 10, opt->light);
+        ctx->drawSphere(opt->pointSize, px, py, 0, opt->light);
+      else // a radius, in pixels of the window
+        ctx->drawSphere(0.5 * opt->pointSize * ctx->pointPixelFactor(), px, py,
+                        0, 10, 10, opt->light);
     }
     else {
       if(singlePoint) gmshBegin(GL_POINTS);
@@ -756,9 +754,7 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
 
   PViewOptions *opt = p->getOptions();
 
-  double ps = opt->pointSize * ctx->highResolutionPixelFactor();
-
-  gmshPointSize((float)ps);
+  gmshPointSize((float)opt->pointSize);
   gl2psPointSize(
     (float)(opt->pointSize * CTX::instance()->print.epsPointSizeFactor));
 

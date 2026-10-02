@@ -99,7 +99,9 @@ void glyphList::add(glyphKind kind, const double m[16], unsigned int color)
 void glyphList::addSphere(drawContext *ctx, double size, double x, double y,
                           double z, unsigned int color)
 {
-  double r = size * ctx->pixel_equiv_x / ctx->s[0]; // the size is in pixels
+  // the size is a point size: a diameter
+  double r =
+    0.5 * size * ctx->pointPixelFactor() * ctx->pixel_equiv_x / ctx->s[0];
   instance i;
   i.m[0] = r;
   i.m[1] = 0.;
