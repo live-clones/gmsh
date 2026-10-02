@@ -408,15 +408,6 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
   return _normal(position);
 }
 
-bool discreteFace::normalIfContainsParam(const SPoint2 &param,
-                                         SVector3 &result) const
-{
-  int position = _locate(param.x(), param.y());
-  if(position < 0) return false;
-  result = _normal(position);
-  return true;
-}
-
 double discreteFace::curvatureMax(const SPoint2 &param) const
 {
   if(_param.empty()) return 0.;

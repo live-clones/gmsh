@@ -70,11 +70,6 @@ public:
                          SVector3 &dudv) const;
   int createGeometry();
   virtual bool haveParametrization() { return !_param.empty(); }
-  // Resolve containment and the piecewise-linear surface normal with one
-  // parameter-octree lookup. This is exactly equivalent to containsParam()
-  // followed by normal() for the same parameter, but avoids searching the
-  // immutable discrete support twice in orientation-heavy callers.
-  bool normalIfContainsParam(const SPoint2 &param, SVector3 &normal) const;
   virtual void mesh(bool verbose);
   int trianglePosition(double par1, double par2, double &u, double &v) const;
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
