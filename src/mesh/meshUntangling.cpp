@@ -91,7 +91,7 @@ static void getVertices(std::vector<MElement *> &es,
       if(std::find(vall.begin(), vall.end(), v) == vall.end())
         vall.push_back(v);
     }
-    for(size_t i = 0; i < e->getNumEdges(); i++) {
+    for(int i = 0; i < e->getNumEdges(); i++) {
       MEdge ed = e->getEdge(i);
       if(edges.find(ed) == edges.end())
         edges.insert(ed);
