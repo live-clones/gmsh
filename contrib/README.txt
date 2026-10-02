@@ -11,7 +11,6 @@ their own respective license:
 * Netgen: GNU Lesser General Public License (LGPL) v. 2.1
 * QuadMeshingTools: Gmsh License
 * QuadTri: Gmsh License
-* WinslowUntangler: Gmsh license
 * bamg: GNU Lesser General Public License (LGPL) v. 2.1 or later
 * blossom: Gmsh License
 * domhex: Gmsh License

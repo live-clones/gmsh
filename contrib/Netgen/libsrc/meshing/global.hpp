@@ -1,5 +1,5 @@
-#ifndef FILE_GLOBAL
-#define FILE_GLOBAL
+#ifndef NETGEN_GLOBAL_HPP
+#define NETGEN_GLOBAL_HPP
 
 
 /**************************************************************************/
@@ -12,43 +12,45 @@
   global functions and variables
 */
 
+#include <mydefs.hpp>
+
 namespace netgen
 {
-
+  using namespace ngcore;
   ///
   DLL_HEADER extern double GetTime ();
-  extern void ResetTime ();
+  DLL_HEADER extern void ResetTime ();
 
   ///
-  extern int testmode;
+  DLL_HEADER extern int testmode;
 
   /// calling parameters
   // extern Flags parameters;
 
   // extern DLL_HEADER MeshingParameters mparam;
 
-  extern Array<int> tets_in_qualclass;
+  DLL_HEADER extern mutex tcl_todo_mutex;
 
-  class multithreadt
-  {
-  public:
-    int pause;
-    int testmode;
-    int redraw;
-    int drawing;
-    int terminate;
-    int running;
-    double percent;
-    const char * task;
-    bool demorunning;
-    multithreadt();
-  };
 
-  extern volatile multithreadt multithread;
+  class DebugParameters;
+  class Mesh;
 
-  extern string ngdir;
-  extern DebugParameters debugparam;
-  extern bool verbose;  
-}
+  DLL_HEADER extern string ngdir;
+  DLL_HEADER extern DebugParameters debugparam;
+  DLL_HEADER extern bool verbose;
 
-#endif
+  DLL_HEADER extern int h_argc;
+  DLL_HEADER extern char ** h_argv;
+
+
+  DLL_HEADER extern void(*on_set_global_mesh)(shared_ptr<Mesh>);
+  DLL_HEADER extern weak_ptr<Mesh> global_mesh;
+  DLL_HEADER void SetGlobalMesh (shared_ptr<Mesh> m);
+  DLL_HEADER shared_ptr<Mesh> GetGlobalMesh ();
+
+  // global communicator for netgen (dummy if no MPI)
+  // extern DLL_HEADER NgMPI_Comm ng_comm;
+  
+} // namespace netgen
+
+#endif // NETGEN_GLOBAL_HPP
