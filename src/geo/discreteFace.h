@@ -136,15 +136,6 @@ public:
   // followed by normal() for the same parameter, but avoids searching the
   // immutable discrete support twice in orientation-heavy callers.
   bool normalIfContainsParam(const SPoint2 &param, SVector3 &normal) const;
-  // Conservative component bounds for every immutable source-triangle
-  // normal whose UV triangle intersects the requested triangle. These bounds
-  // let a coarser mesh certify a normal sign without locating the exact MAT
-  // triangle; ambiguous signs still fall back to normalIfContainsParam().
-  bool normalBoundsForParametricTriangle(const SPoint2 &first,
-                                         const SPoint2 &second,
-                                         const SPoint2 &third,
-                                         SVector3 &minimumNormal,
-                                         SVector3 &maximumNormal) const;
   virtual void mesh(bool verbose);
   int trianglePosition(double par1, double par2, double &u, double &v) const;
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
