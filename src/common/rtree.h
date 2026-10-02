@@ -47,6 +47,9 @@ o Minor updates for MSVC 2005/08 compilers
 #ifndef RTREE_H
 #define RTREE_H
 #include <algorithm>
+#include <queue>
+#include <utility>
+#include <vector>
 
 // NOTE This file compiles under MSVC 6 SP5 and MSVC .Net 2003 it may not work on other compilers without modification.
 
@@ -137,6 +140,12 @@ public:
   /// \param a_context User context to pass as parameter to a_resultCallback
   /// \return Returns the number of entries found
   int Search(const ELEMTYPE a_min[NUMDIMS], const ELEMTYPE a_max[NUMDIMS], bool a_resultCallback(DATATYPE a_data, void* a_context), void* a_context);
+
+  /// Visit the entries in order of increasing distance from a_point to their
+  /// rectangle (by node), skipping those farther than sqrt(*a_bound2), a squared
+  /// distance that the callback can lower: e.g. to find the nearest entry
+  void SearchNearest(const ELEMTYPE a_point[NUMDIMS], const ELEMTYPEREAL *a_bound2,
+                     void a_callback(DATATYPE a_data, void* a_context), void* a_context);
 
   /// Remove all entries from tree
   void RemoveAll();
@@ -1647,6 +1656,38 @@ void RTREE_QUAL::ReInsert(Node* a_node, ListNode** a_listNode)
 
 
 // Search in an index tree or subtree for all data retangles that overlap the argument rectangle.
+RTREE_TEMPLATE
+void RTREE_QUAL::SearchNearest(const ELEMTYPE a_point[NUMDIMS], const ELEMTYPEREAL *a_bound2,
+                               void a_callback(DATATYPE a_data, void* a_context), void* a_context)
+{
+  auto dist2 = [&](const Rect &r) {
+    ELEMTYPEREAL d2 = 0;
+    for(int k = 0; k < NUMDIMS; ++k) {
+      ELEMTYPEREAL e = std::max((ELEMTYPEREAL)0, (ELEMTYPEREAL)std::max(r.m_min[k] - a_point[k], a_point[k] - r.m_max[k]));
+      d2 += e * e;
+    }
+    return d2;
+  };
+  typedef std::pair<ELEMTYPEREAL, Node*> Entry;
+  std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry> > queue;
+  if(m_root) queue.push(Entry(0, m_root));
+  while(!queue.empty()) {
+    Entry e = queue.top();
+    queue.pop();
+    if(e.first >= *a_bound2) break; // (all the others are farther)
+    Node* node = e.second;
+    for(int index = 0; index < node->m_count; ++index) {
+      ELEMTYPEREAL d2 = dist2(node->m_branch[index].m_rect);
+      if(d2 >= *a_bound2) continue;
+      if(node->IsInternalNode())
+        queue.push(Entry(d2, node->m_branch[index].m_child));
+      else
+        a_callback(node->m_branch[index].m_data, a_context);
+    }
+  }
+}
+
+
 RTREE_TEMPLATE
 bool RTREE_QUAL::Search(Node* a_node, Rect* a_rect, int& a_foundCount, bool a_resultCallback(DATATYPE a_data, void* a_context), void* a_context)
 {

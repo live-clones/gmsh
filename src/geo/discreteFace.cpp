@@ -285,19 +285,6 @@ namespace {
     triangleProjection proj;
     void consider(std::size_t i)
     {
-      // skip the triangles whose bounding box is farther than the best one
-      const MTriangle &t = (*t3d)[i];
-      double d2 = 0.;
-      for(int j = 0; j < 3; j++) {
-        double lo = t.getVertex(0)->point()[j], hi = lo;
-        for(int k = 1; k < 3; k++) {
-          lo = std::min(lo, t.getVertex(k)->point()[j]);
-          hi = std::max(hi, t.getVertex(k)->point()[j]);
-        }
-        double e = std::max(0., std::max(lo - p[j], p[j] - hi));
-        d2 += e * e;
-      }
-      if(d2 >= proj.d2) return;
       triangleProjection candidate;
       projectPointOnTriangle(p, (*t3d)[i], candidate);
       if(candidate.d2 < proj.d2) {
@@ -308,12 +295,11 @@ namespace {
   };
 } // namespace
 
-static bool closestPointCallback(std::pair<MTriangle *, MTriangle *> *t,
+static void closestPointCallback(std::pair<MTriangle *, MTriangle *> *t,
                                  void *ctx)
 {
   closestPointSearch *s = static_cast<closestPointSearch *>(ctx);
   s->consider(t->first - s->t3d->data());
-  return true;
 }
 
 GPoint discreteFace::_closestPoint(const SPoint3 &p, const double guess[2],
@@ -328,30 +314,18 @@ GPoint discreteFace::_closestPoint(const SPoint3 &p, const double guess[2],
   s.t3d = &_param.t3d;
   s.p = p;
   // the triangle containing the guess bounds the distance, and is kept in case
-  // of ties (e.g. on seams)
-  double d = 1.e-3 * _param.bbox.diag();
+  // of ties (e.g. on seams); then visit the triangles from the nearest box on,
+  // as long as they can be closer
   if(guess) {
     int position = _locate(guess[0], guess[1]);
-    if(position >= 0) {
-      s.consider(position);
-      d = std::min(d, std::sqrt(s.proj.d2));
-    }
+    if(position >= 0) s.consider(position);
   }
-  // grow the search box until it contains the closest triangle found so far:
-  // all the triangles closer than that one are then in the box
-  double eps = 1.e-12 * _param.bbox.diag();
-  while(true) {
-    double r = d + eps;
-    double MIN[3] = {p.x() - r, p.y() - r, p.z() - r};
-    double MAX[3] = {p.x() + r, p.y() + r, p.z() + r};
-    _param.rtree3d.Search(MIN, MAX, closestPointCallback, &s);
-    if(s.best != std::numeric_limits<std::size_t>::max()) {
-      double dbest = std::sqrt(s.proj.d2);
-      if(dbest <= d) break;
-      d = std::min(2. * d, dbest);
-    }
-    else
-      d = 2. * d;
+  double P[3] = {p.x(), p.y(), p.z()};
+  _param.rtree3d.SearchNearest(P, &s.proj.d2, closestPointCallback, &s);
+  if(s.best == std::numeric_limits<std::size_t>::max()) {
+    GPoint gp;
+    gp.setNoSuccess();
+    return gp;
   }
 
   if(normal) *normal = _normal(s.best);
