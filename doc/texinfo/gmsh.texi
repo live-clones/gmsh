@@ -2155,6 +2155,7 @@ with
   MatrixOfInertia Curve|Surface|Volume @{ @var{expression} @} |
   Point @{ @var{expression} @} |
   Physical Point|Curve|Surface|Volume @{ @var{expression-list} @} |
+  Physical Point|Curve|Surface|Volume @{ @var{string-expression-list} @} |
   <Physical> Point|Curve|Surface|Volume @{ : @} |
 @c  @var{duplicata} - already implemented: should we explain this?
 @end example
@@ -2195,7 +2196,7 @@ coordinates.
 The last cases retrieve the mass, the center of mass or the
 matrix of inertia of an entity, the coordinates of a given geometry
 point (@pxref{Points}), the elementary entities making up physical
-groups, and the tags of all (physical or elementary) points, curves,
+groups (given by their tags or by their names), and the tags of all (physical or elementary) points, curves,
 surfaces or volumes in the model. @value{SYNCS}
 
 To see the practical use of such expressions, have a look at the first

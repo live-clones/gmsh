@@ -13,11 +13,9 @@
 #include "GFace.h"
 #include "MEdge.h"
 #include "MElementOctree.h"
-#if defined(HAVE_ANN)
-class ANNkd_tree;
-#endif
 #include "yamakawa.h"
 #include "STensor3.h"
+#include "SPoint3KDTree.h"
 
 struct lowerThan {
   bool operator()(const std::pair<int, STensor3> &lhs,
@@ -35,10 +33,8 @@ private:
   static std::map<MVertex *, double> crossFieldSmoothness;
   static std::map<MEdge, double, MEdgeLessThan> crossDist;
   static std::vector<MVertex *> listVertices;
-#if defined(HAVE_ANN)
-  static ANNkd_tree *kd_tree;
-  static ANNkd_tree *annTree;
-#endif
+  static SPoint3Search fieldSearch;
+  static SPoint3Search vertexSearch;
   Frame_field();
   static std::map<MVertex *, std::set<MVertex *> > vertex_to_vertices;
   static std::map<MVertex *, std::set<MElement *> > vertex_to_elements;
@@ -56,9 +52,9 @@ public:
                                       bool initialize = true);
   static int build_vertex_to_elements(GEntity *gr, bool initialize = true);
   static void build_listVertices(GEntity *gr, int dim, bool initialize = true);
-  static int buildAnnData(GEntity *ge, int dim);
-  static void deleteAnnData();
-  static int findAnnIndex(const SPoint3 &p);
+  static int buildSearchData(GEntity *ge, int dim);
+  static void deleteSearchData();
+  static int findNearestIndex(const SPoint3 &p);
   static STensor3 findCross(double x, double y, double z);
   static void initFace(GFace *gf);
   static void initRegion(GRegion *gr, int n);
@@ -80,7 +76,7 @@ public:
                                  std::set<MVertex *> &touched);
   static void save_energy(GRegion *gr, const std::string &filename);
   static void save_dist(const std::string &filename);
-  static void checkAnnData(GEntity *ge, const std::string &filename);
+  static void checkSearchData(GEntity *ge, const std::string &filename);
   static GRegion *test();
   static void clear();
 };
@@ -90,9 +86,7 @@ private:
   static std::vector<std::pair<SPoint3, double> > field;
   static std::map<MVertex *, double> boundary;
   static MElementOctree *octree;
-#if defined(HAVE_ANN)
-  static ANNkd_tree *kd_tree;
-#endif
+  static SPoint3Search fieldSearch;
   Size_field();
 
 public:
@@ -108,9 +102,7 @@ class Nearest_point {
 private:
   static std::vector<SPoint3> field;
   static std::vector<MElement *> vicinity;
-#if defined(HAVE_ANN)
-  static ANNkd_tree *kd_tree;
-#endif
+  static SPoint3Search fieldSearch;
   Nearest_point();
 
 public:

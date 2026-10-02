@@ -16,10 +16,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 
-#if defined(HAVE_ANN)
-#include "ANN/ANN.h"
-class ANNkd_tree;
-#endif
+#include "SPoint3KDTree.h"
 
 class GEntity;
 class GModel;
@@ -55,15 +52,9 @@ class backgroundMesh : public simpleFunction<double> {
   static std::vector<backgroundMesh *> _current;
   backgroundMesh(GFace *, bool dist = false);
   ~backgroundMesh();
-#if defined(HAVE_ANN)
-  mutable ANNkd_tree *uv_kdtree;
-  mutable ANNpointArray nodes;
-  ANNidxArray index;
-  ANNdistArray dist;
-  mutable ANNpointArray angle_nodes;
-  mutable ANNkd_tree *angle_kdtree;
+  // boundary nodes and cross field samples in the parametric plane
+  SPoint3Search _uvSearch, _angleSearch;
   std::vector<double> _cos, _sin;
-#endif
 public:
   static void set(GFace *);
   static void setCrossFieldsByDistance(GFace *);

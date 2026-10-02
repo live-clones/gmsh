@@ -45,4 +45,53 @@ typedef nanoflann::KDTreeSingleIndexAdaptor
   <nanoflann::L2_Simple_Adaptor<double, SPoint3CloudAdaptor<SPoint3Cloud> >,
    SPoint3CloudAdaptor<SPoint3Cloud>, 3> SPoint3KDTree;
 
+// exact nearest neighbor search in a set of points: fill points(), call
+// build(), then query (concurrent queries are safe)
+class SPoint3Search {
+private:
+  SPoint3Cloud _pc;
+  SPoint3CloudAdaptor<SPoint3Cloud> _adaptor;
+  SPoint3KDTree *_tree;
+
+public:
+  SPoint3Search() : _adaptor(_pc), _tree(nullptr) {}
+  SPoint3Search(const SPoint3Search &) = delete;
+  SPoint3Search &operator=(const SPoint3Search &) = delete;
+  ~SPoint3Search() { delete _tree; }
+  std::vector<SPoint3> &points() { return _pc.pts; }
+  const SPoint3 &point(std::size_t i) const { return _pc.pts[i]; }
+  std::size_t size() const { return _pc.pts.size(); }
+  void build()
+  {
+    delete _tree;
+    _tree = new SPoint3KDTree(3, _adaptor,
+                              nanoflann::KDTreeSingleIndexAdaptorParams(10));
+    _tree->buildIndex();
+  }
+  void clear()
+  {
+    delete _tree;
+    _tree = nullptr;
+    _pc.pts.clear();
+  }
+  // the (at most) k closest points by increasing distance, with their squared
+  // distances; returns how many were found
+  std::size_t nearest(const SPoint3 &p, std::size_t k, std::size_t *idx,
+                      double *dist2) const
+  {
+    if(!_tree) return 0;
+    double xyz[3] = {p.x(), p.y(), p.z()};
+    return _tree->knnSearch(xyz, k, idx, dist2);
+  }
+  // the closest point, or size() if there is none
+  std::size_t nearest(const SPoint3 &p, double *dist2 = nullptr) const
+  {
+    std::size_t idx;
+    double d2;
+    if(!nearest(p, 1, &idx, &d2)) return size();
+    if(dist2) *dist2 = d2;
+    return idx;
+  }
+};
+
 #endif
