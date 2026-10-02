@@ -10,6 +10,7 @@
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
+#include "discreteFace.h"
 #include "GmshMessage.h"
 #include "StringUtils.h"
 
@@ -530,12 +531,18 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
 
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||
      v->onWhat()->geomType() == GEntity::BoundaryLayerCurve) {
+    if(gf->geomType() == GEntity::DiscreteSurface) {
+      const discreteFace *df = dynamic_cast<const discreteFace *>(gf);
+      if(df && df->parFromCoincidentMeshVertex(v, param)) return true;
+    }
     param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
     return true;
   }
 
   if(v->onWhat()->dim() == 0) {
     if(gf->geomType() == GEntity::DiscreteSurface) {
+      const discreteFace *df = dynamic_cast<const discreteFace *>(gf);
+      if(df && df->parFromCoincidentMeshVertex(v, param)) return true;
       param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
       return true;
     }
@@ -556,6 +563,8 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
   }
   else if(v->onWhat()->dim() == 1) {
     if(gf->geomType() == GEntity::DiscreteSurface) {
+      const discreteFace *df = dynamic_cast<const discreteFace *>(gf);
+      if(df && df->parFromCoincidentMeshVertex(v, param)) return true;
       param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
       return true;
     }

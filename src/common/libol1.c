@@ -73,7 +73,8 @@
 #define MaxOctLvl 10
 #define MinGrdLvl 5
 #define ItmPerBuc 100
-#define MemBlkSiz 100000
+#define MinMemBlkSiz 256
+#define MaxMemBlkSiz 100000
 #define TngFlg    1
 #define AniFlg    2
 #define MaxThr    256
@@ -180,7 +181,7 @@ typedef struct
 
 typedef struct
 {
-   MshThrSct thr[ MaxThr ];
+   MshThrSct *thr;
    size_t   UsrSiz[ LolNmbTyp ], NmbItm[ LolNmbTyp ];
    fpn      aniso, eps;
    itg      BasIdx;
@@ -214,8 +215,8 @@ typedef struct
 
 typedef struct
 {
-   OctThrSct thr[ MaxThr ];
-   itg      MaxLvl, NmbFreOct, NmbOct, GrdLvl, NmbBuc, NmbThr;
+   OctThrSct *thr;
+   itg      MaxLvl, NmbFreOct, NmbOct, GrdLvl, NmbBuc, NmbThr, BlkSiz;
    size_t   MemUse;
    fpn      eps, MaxSiz, MinSiz, BucSiz, bnd[2][3];
    OctSct   oct, *CurOctBlk;
@@ -265,6 +266,7 @@ static void    RstMshItm   (MshSct *);
 
 static itg     EdgIntEdg   (EdgSct *, EdgSct *, VerSct *, fpn);
 static fpn     DisVerTri   (MshSct *, fpn [3], TriSct *);
+static fpn     DisVerTriItm(MshSct *, fpn [3], itg);
 static fpn     DisVerQad   (MshSct *, fpn [3], QadSct *);
 static fpn     DisVerTet   (MshSct *, fpn *, TetSct *);
 static fpn     GetTriSrf   (TriSct *);
@@ -372,6 +374,11 @@ int64_t LolNewOctree(itg NmbVer, fpn *PtrCrd1, fpn *PtrCrd2,
 
    // Setup the mesh structure
    msh = NewMem(tre, sizeof(MshSct));
+   memset(msh, 0, sizeof(MshSct));
+   msh->thr = NewMem(tre, NmbThr * sizeof(MshThrSct));
+   memset(msh->thr, 0, NmbThr * sizeof(MshThrSct));
+   tre->thr = NewMem(tre, NmbThr * sizeof(OctThrSct));
+   memset(tre->thr, 0, NmbThr * sizeof(OctThrSct));
    msh->BasIdx = BasIdx;
 
    msh->NmbItm[ LolTypVer ] = NmbVer;
@@ -420,6 +427,7 @@ int64_t LolNewOctree(itg NmbVer, fpn *PtrCrd1, fpn *PtrCrd2,
    SetMshBox(tre, msh);
    tre->msh = msh;
    msh->eps = tre->eps;
+   tre->BlkSiz = MIN(MaxMemBlkSiz, MAX(MinMemBlkSiz, TotItmCnt));
 
    // Set the grid size depending on the number of entities in the mesh
    tre->GrdLvl = MAX(MinGrdLvl, log((TotItmCnt) / ItmPerBuc) / (3 * log(2)));
@@ -434,6 +442,7 @@ int64_t LolNewOctree(itg NmbVer, fpn *PtrCrd1, fpn *PtrCrd2,
 
       OctThr->ThrStk = NewMem(tre, CUB(tre->NmbBuc) * sizeof(void *));
       OctThr->ThrTag = NewMem(tre, CUB(tre->NmbBuc) * sizeof(itg));
+      memset(OctThr->ThrTag, 0, CUB(tre->NmbBuc) * sizeof(itg));
 
       // Setup the temporary edge for local geometric calculations
       for(i=0;i<2;i++)
@@ -626,7 +635,7 @@ size_t LolFreeOctree(int64_t OctIdx)
    size_t   MemUse = tre->MemUse;
 
    FreAllMem(tre);
-   memset(tre, 0, sizeof(TreSct));
+   free(tre);
 
    return(MemUse);
 }
@@ -1193,8 +1202,10 @@ static void GetOctLnk(  MshSct *msh, itg typ, fpn VerCrd[3], itg *MinItm,
             if(UsrPrc && !UsrPrc(UsrDat, lnk->idx))
                continue;
 
-            SetItm(msh, LolTypTri, lnk->idx, 0, ThrIdx);
-            CurDis = DisVerTri(msh, VerCrd, &ThrMsh->tri);
+            // The nearest-distance kernel only needs the three coordinates.
+            // Avoid filling the temporary triangle and computing a normal
+            // that DisVerTri does not use.
+            CurDis = DisVerTriItm(msh, VerCrd, lnk->idx);
          }
          else if(lnk->typ == LolTypQad)
          {
@@ -1653,12 +1664,12 @@ static void SubOct(  MshSct *msh, TreSct *tre, OctSct *oct,
    // If there is no more free octants, allocate a new bloc
    if(!tre->NmbFreOct)
    {
-      tre->CurOctBlk = NewMem(tre, MemBlkSiz * 8 * sizeof(OctSct));
-      tre->NmbFreOct = MemBlkSiz;
+      tre->CurOctBlk = NewMem(tre, tre->BlkSiz * 8 * sizeof(OctSct));
+      tre->NmbFreOct = tre->BlkSiz;
    }
 
    // The octant points on its first son, the other are consectutive in memory
-   oct->son = &tre->CurOctBlk[ (MemBlkSiz - tre->NmbFreOct--) * 8 ];
+   oct->son = &tre->CurOctBlk[ (tre->BlkSiz - tre->NmbFreOct--) * 8 ];
    oct->sub = 1;
    tre->NmbOct+=8;
 
@@ -1788,12 +1799,12 @@ static void LnkItm(TreSct *tre, OctSct *oct, itg typ, itg idx, char ani)
    // In case nore more link container are availbable, allocate a new bloc
    if(!tre->NexFreLnk)
    {
-      tre->NexFreLnk = NewMem(tre, MemBlkSiz * sizeof(LnkSct));
+      tre->NexFreLnk = NewMem(tre, tre->BlkSiz * sizeof(LnkSct));
 
-      for(i=0;i<MemBlkSiz;i++)
+      for(i=0;i<tre->BlkSiz;i++)
          tre->NexFreLnk[i].nex = &tre->NexFreLnk[ i+1 ];
 
-      tre->NexFreLnk[ MemBlkSiz - 1 ].nex = NULL;
+      tre->NexFreLnk[ tre->BlkSiz - 1 ].nex = NULL;
    }
 
    // Get the next free link container and set it with the given item
@@ -2052,72 +2063,97 @@ static itg EdgIntHex(EdgSct *edg, HexSct *hex, fpn eps)
 /* Test if an octant is intersected by a triangle                             */
 /*----------------------------------------------------------------------------*/
 
+static itg TriHexSepAxis(fpn axis[3], fpn ver[3][3], fpn half[3])
+{
+   itg i;
+   fpn MinPrj, MaxPrj, Prj, Rad;
+
+   MinPrj = MaxPrj = DotPrd(axis, ver[0]);
+
+   for(i=1;i<3;i++)
+   {
+      Prj = DotPrd(axis, ver[i]);
+      MinPrj = MIN(MinPrj, Prj);
+      MaxPrj = MAX(MaxPrj, Prj);
+   }
+
+   Rad = half[0] * fabs(axis[0])
+       + half[1] * fabs(axis[1])
+       + half[2] * fabs(axis[2]);
+
+   return((MinPrj > Rad) || (MaxPrj < -Rad));
+}
+
 static itg TriIntHex(TriSct *tri, HexSct *hex, fpn eps)
 {
-   itg i, j, pos, neg;
-   fpn CurDis;
-   VerSct IntVer;
+   itg i, j;
+   fpn Ctr[3], Half[3], Ver[3][3], Edg[3][3], Axis[3], MinCrd[3], MaxCrd[3];
 
-   // If there is no intersection between the bounding box
-   // of the triangle and the octant it is no use to test,
-   // the triangle doesn't intersect the octant
-   if((  (tri->ver[0]->crd[0] < hex->ver[3]->crd[0])
-      && (tri->ver[1]->crd[0] < hex->ver[3]->crd[0])
-      && (tri->ver[2]->crd[0] < hex->ver[3]->crd[0]) )
-   || (  (tri->ver[0]->crd[0] > hex->ver[5]->crd[0])
-      && (tri->ver[1]->crd[0] > hex->ver[5]->crd[0])
-      && (tri->ver[2]->crd[0] > hex->ver[5]->crd[0]) )
-   || (  (tri->ver[0]->crd[1] < hex->ver[3]->crd[1])
-      && (tri->ver[1]->crd[1] < hex->ver[3]->crd[1])
-      && (tri->ver[2]->crd[1] < hex->ver[3]->crd[1]) )
-   || (  (tri->ver[0]->crd[1] > hex->ver[5]->crd[1])
-      && (tri->ver[1]->crd[1] > hex->ver[5]->crd[1])
-      && (tri->ver[2]->crd[1] > hex->ver[5]->crd[1]) )
-   || (  (tri->ver[0]->crd[2] < hex->ver[3]->crd[2])
-      && (tri->ver[1]->crd[2] < hex->ver[3]->crd[2])
-      && (tri->ver[2]->crd[2] < hex->ver[3]->crd[2]) )
-   || (  (tri->ver[0]->crd[2] > hex->ver[5]->crd[2])
-      && (tri->ver[1]->crd[2] > hex->ver[5]->crd[2])
-      && (tri->ver[2]->crd[2] > hex->ver[5]->crd[2]) ) )
+   for(j=0;j<3;j++)
    {
-      return(0);
+      MinCrd[j] = hex->ver[3]->crd[j];
+      MaxCrd[j] = hex->ver[5]->crd[j];
+      Ctr[j] = (MinCrd[j] + MaxCrd[j]) / 2.;
+      Half[j] = (MaxCrd[j] - MinCrd[j]) / 2. + eps;
+
+      for(i=0;i<3;i++)
+         Ver[i][j] = tri->ver[i]->crd[j] - Ctr[j];
    }
 
-   // Test if a triangle's vertex is included in the octant
+   // The three box axes.
+   for(j=0;j<3;j++)
+   {
+      fpn MinPrj = Ver[0][j], MaxPrj = Ver[0][j];
+
+      for(i=1;i<3;i++)
+      {
+         MinPrj = MIN(MinPrj, Ver[i][j]);
+         MaxPrj = MAX(MaxPrj, Ver[i][j]);
+      }
+
+      if((MinPrj > Half[j]) || (MaxPrj < -Half[j]))
+         return(0);
+   }
+
+   for(j=0;j<3;j++)
+   {
+      Edg[0][j] = Ver[1][j] - Ver[0][j];
+      Edg[1][j] = Ver[2][j] - Ver[1][j];
+      Edg[2][j] = Ver[0][j] - Ver[2][j];
+   }
+
+   // The triangle normal.
+   CrsPrd(Edg[0], Edg[1], Axis);
+
+   if(TriHexSepAxis(Axis, Ver, Half))
+      return(0);
+
+   // The nine axes built from triangle edges crossed with box axes.
    for(i=0;i<3;i++)
-      if(VerInsHex(tri->ver[i], hex))
-         return(1);
-
-   // Check whether the triangle plane intersects the octant
-   pos = neg = 0;
-
-   for(i=0;i<8;i++)
    {
-      CurDis = DisVerPla(hex->ver[i]->crd, tri->ver[0]->crd, tri->nrm);
+      Axis[0] = 0.;
+      Axis[1] = Edg[i][2];
+      Axis[2] = -Edg[i][1];
 
-      if(CurDis < -eps)
-         neg = 1;
-      else if(CurDis > eps)
-         pos = 1;
-      else
-         pos = neg = 1;
+      if(TriHexSepAxis(Axis, Ver, Half))
+         return(0);
+
+      Axis[0] = -Edg[i][2];
+      Axis[1] = 0.;
+      Axis[2] = Edg[i][0];
+
+      if(TriHexSepAxis(Axis, Ver, Half))
+         return(0);
+
+      Axis[0] = Edg[i][1];
+      Axis[1] = -Edg[i][0];
+      Axis[2] = 0.;
+
+      if(TriHexSepAxis(Axis, Ver, Half))
+         return(0);
    }
 
-   if(!pos || !neg)
-      return(0);
-
-   // Compute the intersections between the triangle edges and the hex faces
-   for(i=0;i<6;i++)
-      for(j=0;j<3;j++)
-         if(EdgIntQad(hex, i, &tri->edg[j], &IntVer, eps))
-            return(1);
-
-   // Compute the intersections between the triangle and the hex edges
-   for(i=0;i<12;i++)
-      if(EdgIntTri(tri, &hex->edg[i], &IntVer, eps))
-         return(1);
-
-   return(0);
+   return(1);
 }
 
 
@@ -2545,41 +2581,110 @@ static itg VerInsEdg(EdgSct *edg, VerSct *ver, fpn eps)
 /* Compute the distance between a vertex and a triangle                       */
 /*----------------------------------------------------------------------------*/
 
+static fpn DisVerSegCrd(fpn VerCrd[3], fpn Pnt1[3], fpn Pnt2[3])
+{
+   itg i;
+   fpn T, Len2, Edg[3], Dif[3], Img[3];
+
+   SubVec3(Pnt2, Pnt1, Edg);
+   SubVec3(VerCrd, Pnt1, Dif);
+   Len2 = DotPrd(Edg, Edg);
+
+   if(!(Len2 > 0.))
+      return(DisPow(VerCrd, Pnt1));
+
+   T = DotPrd(Dif, Edg) / Len2;
+   T = MAX(0., MIN(1., T));
+
+   for(i=0;i<3;i++)
+      Img[i] = Pnt1[i] + T * Edg[i];
+
+   return(DisPow(VerCrd, Img));
+}
+
+static fpn DisVerTriCrd(fpn VerCrd[3], fpn *A, fpn *B, fpn *C)
+{
+   itg i;
+   fpn D1, D2, D3, D4, D5, D6, Va, Vb, Vc, Den, S, T;
+   fpn Ab[3], Ac[3], Ap[3], Bp[3], Cp[3], Img[3], Nrm[3];
+
+   SubVec3(B, A, Ab);
+   SubVec3(C, A, Ac);
+   CrsPrd(Ab, Ac, Nrm);
+
+   if(!(DotPrd(Nrm, Nrm) > 0.))
+      return(MIN(DisVerSegCrd(VerCrd, A, B),
+             MIN(DisVerSegCrd(VerCrd, B, C),
+                 DisVerSegCrd(VerCrd, C, A))));
+
+   SubVec3(VerCrd, A, Ap);
+   D1 = DotPrd(Ab, Ap);
+   D2 = DotPrd(Ac, Ap);
+
+   if((D1 <= 0.) && (D2 <= 0.))
+      return(DisPow(VerCrd, A));
+
+   SubVec3(VerCrd, B, Bp);
+   D3 = DotPrd(Ab, Bp);
+   D4 = DotPrd(Ac, Bp);
+
+   if((D3 >= 0.) && (D4 <= D3))
+      return(DisPow(VerCrd, B));
+
+   Vc = D1 * D4 - D3 * D2;
+
+   if((Vc <= 0.) && (D1 >= 0.) && (D3 <= 0.))
+      return(DisVerSegCrd(VerCrd, A, B));
+
+   SubVec3(VerCrd, C, Cp);
+   D5 = DotPrd(Ab, Cp);
+   D6 = DotPrd(Ac, Cp);
+
+   if((D6 >= 0.) && (D5 <= D6))
+      return(DisPow(VerCrd, C));
+
+   Vb = D5 * D2 - D1 * D6;
+
+   if((Vb <= 0.) && (D2 >= 0.) && (D6 <= 0.))
+      return(DisVerSegCrd(VerCrd, A, C));
+
+   Va = D3 * D6 - D5 * D4;
+
+   if((Va <= 0.) && (D4 - D3 >= 0.) && (D5 - D6 >= 0.))
+      return(DisVerSegCrd(VerCrd, B, C));
+
+   Den = Va + Vb + Vc;
+
+   if(!(Den > 0.) || !isfinite(Den))
+      return(MIN(DisVerSegCrd(VerCrd, A, B),
+             MIN(DisVerSegCrd(VerCrd, B, C),
+                 DisVerSegCrd(VerCrd, C, A))));
+
+   S = Vb / Den;
+   T = Vc / Den;
+
+   for(i=0;i<3;i++)
+      Img[i] = A[i] + S * Ab[i] + T * Ac[i];
+
+   return(DisPow(VerCrd, Img));
+}
+
 static fpn DisVerTri(MshSct *msh, fpn VerCrd[3], TriSct *tri)
 {
-   fpn ImgCrd[3], TmpCrd[3], u[3], v[3], w[3], nrm[3], SubVol[3], TotVol;
+   (void)msh;
+   return(DisVerTriCrd(VerCrd, tri->ver[0]->crd,
+                       tri->ver[1]->crd, tri->ver[2]->crd));
+}
 
-   // Project the vertex on the triangle's plane
-   PrjVerPla(VerCrd, tri->ver[0]->crd, tri->nrm, ImgCrd);
+static fpn DisVerTriItm(MshSct *msh, fpn VerCrd[3], itg TriIdx)
+{
+   itg *IdxTab = (itg *)GetPtrItm(msh, LolTypTri, TriIdx);
 
-   // Compute the vectors stemming from the projection to the triangle's nodes
-   SubVec3(tri->ver[0]->crd, ImgCrd, u);
-   SubVec3(tri->ver[1]->crd, ImgCrd, v);
-   SubVec3(tri->ver[2]->crd, ImgCrd, w);
-
-   // Compute the three tets' volumes
-   CrsPrd(v, w, nrm);
-   SubVol[0] = -DotPrd(nrm, tri->nrm);
-   SubVol[0] = MAX(SubVol[0], 0.);
-
-   CrsPrd(w, u, nrm);
-   SubVol[1] = -DotPrd(nrm, tri->nrm);
-   SubVol[1] = MAX(SubVol[1], 0.);
-
-   CrsPrd(u, v, nrm);
-   SubVol[2] = -DotPrd(nrm, tri->nrm);
-   SubVol[2] = MAX(SubVol[2], 0.);
-
-   // Compute the closest position with the barycentric coordinates
-   TotVol = SubVol[0] + SubVol[1] + SubVol[2];
-   MulVec2(SubVol[0] / TotVol, tri->ver[0]->crd, ImgCrd);
-   MulVec2(SubVol[1] / TotVol, tri->ver[1]->crd, TmpCrd);
-   AddVec2(TmpCrd, ImgCrd);
-   MulVec2(SubVol[2] / TotVol, tri->ver[2]->crd, TmpCrd);
-   AddVec2(TmpCrd, ImgCrd);
-
-   // Return the square of the distance
-   return(DisPow(VerCrd, ImgCrd));
+   return(DisVerTriCrd(
+      VerCrd,
+      (fpn *)GetPtrItm(msh, LolTypVer, IdxTab[0]),
+      (fpn *)GetPtrItm(msh, LolTypVer, IdxTab[1]),
+      (fpn *)GetPtrItm(msh, LolTypVer, IdxTab[2])));
 }
 
 
