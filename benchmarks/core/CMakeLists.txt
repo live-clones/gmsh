@@ -7,7 +7,7 @@ if(HAVE_MESH AND TARGET shared)
   target_include_directories(mesh_core_api PRIVATE ${CMAKE_SOURCE_DIR}/api)
   target_link_libraries(mesh_core_api shared)
 
-  set(MESH_CORE_CASES mesh_caches)
+  set(MESH_CORE_CASES mesh_caches delaunay3d_ordering)
   if(HAVE_OCC)
     list(APPEND MESH_CORE_CASES occ_classification)
   endif()

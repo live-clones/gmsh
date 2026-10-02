@@ -4,7 +4,10 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <gmsh.h>
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -179,6 +182,67 @@ static void discreteProjection()
   }
 }
 
+static void delaunay3dOrdering()
+{
+  gmsh::option::setNumber("Mesh.Algorithm3D", 1);
+  gmsh::option::setNumber("Mesh.RandomFactor3D", 0);
+  // All vertices of each polyhedron lie on one sphere: Delaunay ties must be
+  // resolved from the input ordering, independently of heap allocation.
+  const std::vector<std::vector<double>> shapes = {
+    {0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0,
+     0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1},
+    {1, 0, 0, -1, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 1, 0, 0, -1}};
+  const double volumes[] = {1., 4. / 3.};
+  using Tet = std::array<std::size_t, 4>;
+  for(std::size_t shape = 0; shape < shapes.size(); ++shape) {
+    const auto &points = shapes[shape];
+    std::vector<Tet> reference;
+    for(int repeat = 0; repeat < 16; ++repeat) {
+      // Keep allocations alive across the call, with holes of varied sizes.
+      std::vector<std::vector<double>> scratch(32 + repeat);
+      for(std::size_t i = 0; i < scratch.size(); ++i)
+        scratch[i].resize(1 + (i + repeat) % 17);
+      for(std::size_t i = 0; i < scratch.size(); i += 2)
+        std::vector<double>().swap(scratch[i]);
+      std::srand(1);
+      std::vector<std::size_t> elements;
+      std::vector<double> steiner;
+      gmsh::algorithm::tetrahedralize(points, elements, steiner);
+      require(!elements.empty() && elements.size() % 4 == 0 && steiner.empty(),
+              "invalid unconstrained Delaunay output");
+      std::vector<Tet> canonical;
+      double volume = 0.;
+      for(std::size_t i = 0; i < elements.size(); i += 4) {
+        Tet tet = {{elements[i], elements[i + 1], elements[i + 2],
+                    elements[i + 3]}};
+        for(std::size_t node : tet)
+          require(node > 0 && node <= points.size() / 3, "invalid Delaunay node");
+        double edge[3][3];
+        for(int j = 0; j < 3; ++j)
+          for(int k = 0; k < 3; ++k)
+            edge[j][k] = points[3 * (tet[j + 1] - 1) + k] -
+                         points[3 * (tet[0] - 1) + k];
+        const double determinant =
+          edge[0][0] * (edge[1][1] * edge[2][2] - edge[1][2] * edge[2][1]) -
+          edge[0][1] * (edge[1][0] * edge[2][2] - edge[1][2] * edge[2][0]) +
+          edge[0][2] * (edge[1][0] * edge[2][1] - edge[1][1] * edge[2][0]);
+        require(std::abs(determinant) > 1.e-12, "degenerate Delaunay tetrahedron");
+        volume += std::abs(determinant) / 6.;
+        std::sort(tet.begin(), tet.end());
+        canonical.push_back(tet);
+      }
+      require(std::abs(volume - volumes[shape]) < 1.e-12,
+              "Delaunay tetrahedra do not fill the polyhedron");
+      std::sort(canonical.begin(), canonical.end());
+      if(!repeat) reference = canonical;
+      require(canonical == reference,
+              "cospherical Delaunay connectivity depends on allocations "
+              "(shape " + std::to_string(shape) + ", repeat " +
+              std::to_string(repeat) + ")");
+    }
+  }
+}
+
 int main(int argc, char **argv)
 {
   try {
@@ -186,6 +250,7 @@ int main(int argc, char **argv)
     gmsh::initialize(0, nullptr, false);
     const std::string test = argv[1];
     if(test == "mesh_caches") meshCaches();
+    else if(test == "delaunay3d_ordering") delaunay3dOrdering();
     else if(test == "occ_classification") occClassification();
     else if(test == "discrete_projection") discreteProjection();
 #if defined(MESH_CORE_EXTEND_FIELD_TEST)
