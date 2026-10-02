@@ -20,17 +20,16 @@ set(SRC
   ${gpr}/geom3d.cpp ${gpr}/geomfuncs.cpp ${gpr}/geomtest3d.cpp
   ${lin}/bfgs.cpp ${lin}/densemat.cpp ${lin}/linsearch.cpp
   ${mes}/adfront2.cpp ${mes}/adfront3.cpp ${mes}/basegeom.cpp
-    ${mes}/bisect.cpp ${mes}/boundarylayer.cpp ${mes}/boundarylayer2d.cpp
-    ${mes}/boundarylayer_interpolate.cpp ${mes}/clusters.cpp
-    ${mes}/curvedelems.cpp ${mes}/debugging.cpp ${mes}/delaunay.cpp
-    ${mes}/geomsearch.cpp ${mes}/global.cpp ${mes}/improve2.cpp
-    ${mes}/improve2gen.cpp ${mes}/improve3.cpp ${mes}/localh.cpp
-    ${mes}/meshclass.cpp ${mes}/meshfunc.cpp ${mes}/meshing2.cpp
-    ${mes}/meshing3.cpp ${mes}/meshtool.cpp ${mes}/meshtype.cpp
-    ${mes}/msghandler.cpp ${mes}/netrule2.cpp ${mes}/netrule3.cpp
-    ${mes}/parser2.cpp ${mes}/parser3.cpp ${mes}/ruler2.cpp
-    ${mes}/ruler3.cpp ${mes}/smoothing2.cpp ${mes}/smoothing3.cpp
-    ${mes}/topology.cpp ${mes}/validate.cpp ${mes}/visual_interface.cpp
+    ${mes}/bisect.cpp ${mes}/clusters.cpp ${mes}/curvedelems.cpp
+    ${mes}/debugging.cpp ${mes}/delaunay.cpp ${mes}/geomsearch.cpp
+    ${mes}/global.cpp ${mes}/improve2.cpp ${mes}/improve2gen.cpp
+    ${mes}/improve3.cpp ${mes}/localh.cpp ${mes}/meshclass.cpp
+    ${mes}/meshfunc.cpp ${mes}/meshing2.cpp ${mes}/meshing3.cpp
+    ${mes}/meshtool.cpp ${mes}/meshtype.cpp ${mes}/msghandler.cpp
+    ${mes}/netrule2.cpp ${mes}/netrule3.cpp ${mes}/parser2.cpp
+    ${mes}/parser3.cpp ${mes}/ruler2.cpp ${mes}/ruler3.cpp
+    ${mes}/smoothing2.cpp ${mes}/smoothing3.cpp ${mes}/topology.cpp
+    ${mes}/validate.cpp ${mes}/visual_interface.cpp
   rules/rule_hexrules.cpp rules/rule_prismrules2.cpp
     rules/rule_pyramidrules.cpp rules/rule_pyramidrules2.cpp
     rules/rule_quadrules.cpp rules/rule_tetrules.cpp rules/rule_triarules.cpp

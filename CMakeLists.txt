@@ -973,6 +973,8 @@ if(HAVE_MESH)
       endif()
     endif()
     if(HAVE_LIBZ)
+      find_package(Threads)
+      list(APPEND EXTERNAL_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
       add_subdirectory(contrib/Netgen)
       include_directories(contrib/Netgen contrib/Netgen/libsrc
                           contrib/Netgen/libsrc/include)
