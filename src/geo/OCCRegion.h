@@ -12,20 +12,28 @@
 #if defined(HAVE_OCC)
 
 #include <TopoDS_Solid.hxx>
+#include <memory>
+#include <mutex>
+
+class BRepClass3d_SolidClassifier;
 
 class OCCRegion : public GRegion {
 private:
   TopoDS_Solid _s;
+  mutable std::unique_ptr<BRepClass3d_SolidClassifier> _solidClassifier;
+  mutable std::mutex _solidClassifierMutex;
   void _setup();
 
 public:
   OCCRegion(GModel *m, TopoDS_Solid s, int num);
-  virtual ~OCCRegion() {}
+  virtual ~OCCRegion();
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual GeomType geomType() const;
   virtual ModelType getNativeType() const { return OpenCascadeModel; }
   virtual void *getNativePtr() const { return (void *)&_s; }
   virtual bool containsPoint(const SPoint3 &pt) const;
+  int containsPoints(const std::vector<double> &coord) const;
+  void invalidateSolidClassifier();
   void writeBREP(const char *filename);
 };
 

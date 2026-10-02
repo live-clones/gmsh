@@ -66,6 +66,10 @@
 #include "HierarchicalBasisHcurlPri.h"
 #include "Overlap.h"
 
+#if defined(HAVE_OCC)
+#include "OCCRegion.h"
+#endif
+
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshGFace.h"
@@ -1143,6 +1147,11 @@ GMSH_API int gmsh::model::isInside(const int dim, const int tag,
       Msg::Error("Number of coordinates should be a multiple of 3");
       return 0;
     }
+#if defined(HAVE_OCC)
+    if(dim == 3 && coord.size() > 3 &&
+       entity->getNativeType() == GEntity::OpenCascadeModel)
+      return static_cast<OCCRegion *>(entity)->containsPoints(coord);
+#endif
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 pt(coord[i], coord[i + 1], coord[i + 2]);
       if(entity->isFullyDiscrete()) { // query the mesh
@@ -2759,7 +2768,11 @@ GMSH_API void gmsh::model::mesh::addElements(
 
   for(std::size_t i = 0; i < elementTypes.size(); i++)
     _addElements(dim, tag, ge, elementTypes[i], elementTags[i], nodeTags[i]);
-  GModel::current()->destroyMeshCaches();
+  // Adding elements does not change existing mesh vertices. Keep their
+  // lookup cache across entity batches, but invalidate all element caches.
+  GModel::current()->destroyMeshElementCaches();
+  ge->deleteVertexArrays();
+  CTX::instance()->meshChanged(ENT_ALL);
 }
 
 GMSH_API void gmsh::model::mesh::addElementsByType(
@@ -2775,7 +2788,11 @@ GMSH_API void gmsh::model::mesh::addElementsByType(
     return;
   }
   _addElements(dim, tag, ge, elementType, elementTags, nodeTags);
-  GModel::current()->destroyMeshCaches();
+  // Adding elements does not change existing mesh vertices. Keep their
+  // lookup cache across entity batches, but invalidate all element caches.
+  GModel::current()->destroyMeshElementCaches();
+  ge->deleteVertexArrays();
+  CTX::instance()->meshChanged(ENT_ALL);
 }
 
 // the polytopes of the given type (34 or 35) classified on the entity of tag
