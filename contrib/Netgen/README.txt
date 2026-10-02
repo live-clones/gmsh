@@ -38,6 +38,6 @@ with both gcc and clang, at -O0 and -O2: the references differ with the
 compiler and the optimization level (e.g. gcc -O2 keeps a copy of
 LocalHeap::Alloc, which needs localheap.cpp, while clang -O2 inlines it).
 
-Netgen needs zlib (libsrc/general/gzstream.cpp) and threads.
+Netgen needs zlib (libsrc/general/gzstream.cpp).
 
 See the LICENSE file for license information.
