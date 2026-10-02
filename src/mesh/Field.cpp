@@ -16,6 +16,8 @@
 #include <string.h>
 #include <sstream>
 #include <algorithm>
+#include <mutex>
+#include <shared_mutex>
 #include "GmshConfig.h"
 #include "Context.h"
 #include "Field.h"
@@ -2634,6 +2636,12 @@ class ExtendField : public Field {
   std::map<GEntity*, search> _searchCurves, _searchSurfaces;
   double _sizeMax, _ratio;
   bool _embedded;
+  // operator() is called once per candidate point insertion from every
+  // concurrently-meshed GFace thread. The rare (re)build of _entities/
+  // _searchCurves/_searchSurfaces takes an exclusive lock; the frequent
+  // per-point KD-tree lookups only need a shared (read) lock, so they can
+  // still run concurrently with each other.
+  std::shared_mutex mutex_;
 public:
   ExtendField()
   {
@@ -2736,50 +2744,68 @@ public:
     if(!ge) return MAX_LC;
     if(ge->dim() != 2 && ge->dim() != 3) return MAX_LC;
 
-#pragma omp critical(ExtendField)
-    if(updateNeeded) {
-      _entities.clear();
-      for(auto t : _surfaceTags) {
-        GFace *gf = GModel::current()->getFaceByTag(t);
-        if(gf) {
-          _entities.insert(gf);
+    // A single exclusive lock covers the whole lazy-rebuild sequence (entity
+    // list, then curve/surface search trees) plus the membership check, so
+    // no other thread can observe or mutate _entities/_searchCurves/
+    // _searchSurfaces half-built. The previous version used three separate
+    // `#pragma omp critical` sections with no lock held between them, and
+    // the first one never reset updateNeeded, so concurrent callers could
+    // re-enter it and race on _entities while another thread was already
+    // inside recomputeCurves()/recomputeSurfaces(). recomputeCurves()/
+    // recomputeSurfaces() can each run more than once over the lifetime of
+    // the field (e.g. the cross-invalidation between curves and surfaces),
+    // so the per-point KD-tree lookups below also need to take mutex_ (as a
+    // shared/read lock, since they never mutate the maps) rather than being
+    // safe once the first build completes.
+    bool known = false;
+    {
+      std::unique_lock<std::shared_mutex> lock(mutex_);
+      if(updateNeeded) {
+        _entities.clear();
+        _searchCurves.clear();
+        _searchSurfaces.clear();
+        for(auto t : _surfaceTags) {
+          GFace *gf = GModel::current()->getFaceByTag(t);
+          if(gf) {
+            _entities.insert(gf);
+          }
+          else {
+            Msg::Warning("Unknown surface %d", t);
+          }
         }
-        else {
-          Msg::Warning("Unknown surface %d", t);
+        for(auto t : _volumeTags) {
+          GRegion *gr = GModel::current()->getRegionByTag(t);
+          if(gr) {
+            _entities.insert(gr);
+          }
+          else {
+            Msg::Warning("Unknown volume %d", t);
+          }
         }
       }
-      for(auto t : _volumeTags) {
-        GRegion *gr = GModel::current()->getRegionByTag(t);
-        if(gr) {
-          _entities.insert(gr);
+      known = _entities.find(ge) != _entities.end();
+      if(known) {
+        if(ge->dim() == 2 &&
+           (updateNeeded || (_surfaceTags.size() && _searchCurves.empty()))) {
+          // we are meshing our first surface; recompute distance to the
+          // elements on curves, and invalidate the distance to surfaces
+          recomputeCurves();
+          _searchSurfaces.clear();
         }
-        else {
-          Msg::Warning("Unknown volume %d", t);
+        else if(ge->dim() == 3 &&
+                (updateNeeded ||
+                 (_volumeTags.size() && _searchSurfaces.empty()))) {
+          // we are meshing our first volume; recompute distance to the
+          // elements on surfaces, and invalidate the distance to curves (to
+          // be ready for a subsequent surface meshing pass)
+          recomputeSurfaces();
+          _searchCurves.clear();
         }
       }
-    }
-
-    if(_entities.find(ge) == _entities.end()) return MAX_LC;
-
-#pragma omp critical(ExtendField)
-    if(updateNeeded ||
-       (ge->dim() == 2 && _surfaceTags.size() && _searchCurves.empty())) {
-      // we are meshing our first surface; recompute distance to the elements on
-      // curves, and invalidate the distance to surfaces
-      recomputeCurves();
-      _searchSurfaces.clear();
       updateNeeded = false;
     }
-#pragma omp critical(ExtendField)
-    if(updateNeeded ||
-       (ge->dim() == 3 && _volumeTags.size() && _searchSurfaces.empty())) {
-      // we are meshing our first volume; recompute distance to the elements on
-      // surfaces, and invalidate the distance to curves (to be ready for
-      // subsequent surface meshing pass)
-      recomputeSurfaces();
-      _searchCurves.clear();
-      updateNeeded = false;
-    }
+
+    if(!known) return MAX_LC;
 
     double pt[3] = {X, Y, Z};
     std::vector<GEntity *> bnd = ge->boundaryEntities();
@@ -2792,32 +2818,40 @@ public:
       for(auto e : emb) bnd.push_back(e);
     }
     std::vector<double> sbnd(bnd.size(), 0.), dbnd(bnd.size(), 0.);
-    for(std::size_t i = 0; i < bnd.size(); i++) {
-      nanoflann::KNNResultSet<double> res(1);
-      std::size_t index = 0;
-      double dist2 = 0.;
-      res.init(&index, &dist2);
-      if(ge->dim() == 2) {
-        auto &s = _searchCurves[bnd[i]];
-        if(s.kdtree) {
-          s.kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
-          sbnd[i] = s.sizes[index];
+    {
+      // Shared (read) lock: find() never mutates _searchCurves/
+      // _searchSurfaces, and the KD-trees themselves are only queried here,
+      // never rebuilt, so concurrent readers across faces are safe. The
+      // lock still excludes a concurrent rebuild under the exclusive lock
+      // above.
+      std::shared_lock<std::shared_mutex> lock(mutex_);
+      for(std::size_t i = 0; i < bnd.size(); i++) {
+        nanoflann::KNNResultSet<double> res(1);
+        std::size_t index = 0;
+        double dist2 = 0.;
+        res.init(&index, &dist2);
+        if(ge->dim() == 2) {
+          auto it = _searchCurves.find(bnd[i]);
+          if(it != _searchCurves.end() && it->second.kdtree) {
+            it->second.kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
+            sbnd[i] = it->second.sizes[index];
+          }
         }
-      }
-      else {
-        auto &s = _searchSurfaces[bnd[i]];
-        if(s.kdtree) {
-          s.kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
-          sbnd[i] = s.sizes[index];
+        else {
+          auto it = _searchSurfaces.find(bnd[i]);
+          if(it != _searchSurfaces.end() && it->second.kdtree) {
+            it->second.kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
+            sbnd[i] = it->second.sizes[index];
+          }
         }
+        // "unscale" the boundary size according to the per-entity and/or the
+        // global mesh size factor, so that, if a factor is applied, it will
+        // be on the interpolated "specified" mesh size values
+        if(ge && ge->getMeshSizeFactor() != 1.0)
+          sbnd[i] /= ge->getMeshSizeFactor();
+        sbnd[i] /= CTX::instance()->mesh.lcFactor;
+        dbnd[i] = sqrt(dist2);
       }
-      // "unscale" the boundary size according to the per-entity and/or the
-      // global mesh size factor, so that, if a factor is applied, it will be on
-      // the interpolated "specified" mesh size values
-      if(ge && ge->getMeshSizeFactor() != 1.0)
-        sbnd[i] /= ge->getMeshSizeFactor();
-      sbnd[i] /= CTX::instance()->mesh.lcFactor;
-      dbnd[i] = sqrt(dist2);
     }
 
     const int p = 2;

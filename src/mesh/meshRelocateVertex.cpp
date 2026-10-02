@@ -71,7 +71,12 @@ static double objective_function(double xi, MVertex *ver, double xTarget,
       minQual = std::min(Q, minQual);
     }
     else if(!onlytet) {
-      minQual = std::min(std::abs(lt[i]->minSICNShapeMeasure()) * .2, minQual);
+      // Do not take abs(): an inverted hex/prism/pyramid has a negative
+      // SICN and must stay penalized, exactly like the tet branch above
+      // (which flips Q negative for inverted volume). abs() previously
+      // masked the sign, so the golden-section search could reward
+      // flipping a valid element inside-out if that increased |SICN|.
+      minQual = std::min(lt[i]->minSICNShapeMeasure() * .2, minQual);
     }
   }
   ver->x() = x;
