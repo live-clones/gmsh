@@ -514,6 +514,11 @@ public:
   {
     _highResolutionPixelFactor = (factor > 0.) ? factor : 1.;
   }
+  // what a point size or a line width is multiplied by to be in pixels of the
+  // window: they are in pixels of the screen, as OpenGL draws them (half a
+  // pixel of the window on an Apple "retina" display), scaled in a picture as
+  // the rest; for the spheres and cylinders that stand for points and lines
+  double pointPixelFactor();
   void copyViewAttributes(drawContext *other)
   {
     camera = other->camera;

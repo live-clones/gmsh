@@ -4,17 +4,28 @@
 #include <string>
 #include "GmshMessage.h"
 #include <meshing.hpp>
-#include "geom2d/csg2d.hpp" // for intersect() below
+#include "meshing/boundarylayer.hpp"
 
 namespace netgen {
   extern void (*ng_print_dest_callback)(const char *);
 
-  // only used by 2D boundary layers (in basegeom.cpp), which Gmsh never
-  // calls: this avoids compiling the 2D CSG and spline geometry
-  IntersectionType intersect(const Point<2> P1, const Point<2> P2,
-                             const Point<2> Q1, const Point<2> Q2,
-                             double &alpha, double &beta)
-  { throw NgException("2D boundary layers are not available in Gmsh"); }
+  // Gmsh never asks Netgen for boundary layers: these replace the
+  // boundarylayer*.cpp files, which some compilers cannot compile (Apple
+  // clang 11 crashes on boundarylayer.cpp)
+  void GenerateBoundaryLayer(Mesh &mesh, const BoundaryLayerParameters &blp)
+  {
+    throw NgException("Netgen boundary layers are not available in Gmsh");
+  }
+  Array<BoundaryLayer2dInfo> InsertBoundaryLayers2d(Mesh &mesh,
+                                                    const MeshingParameters &mp)
+  {
+    throw NgException("Netgen boundary layers are not available in Gmsh");
+  }
+  void FinalizeBoundaryLayers2d(Mesh &mesh,
+                                FlatArray<BoundaryLayer2dInfo> infos)
+  {
+    throw NgException("Netgen boundary layers are not available in Gmsh");
+  }
 } // namespace netgen
 
 namespace nglib {

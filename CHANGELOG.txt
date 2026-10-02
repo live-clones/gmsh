@@ -19,7 +19,8 @@ implementation with support in the API and MSH4.2 format, which replaces the old
 polygon/polyhedron elements, levelset commands and Plugin(CutMesh); improved
 export of views on several meshes (one file per mesh, plus a name.ext.geo script
 to read them back); the Extend mesh size field is now applied per entity and
-takes an element growth rate as input; improved XAO export that preserves entity
+takes an element growth rate as input; rewritten AutomaticMeshSizeField using a
+self-contained octree implementation; improved XAO export that preserves entity
 tags; new VTK/Paraview IO for meshes and post-processing views; new predefined
 colormaps; new Curvature Curve/Surface, CreateMeshEdges/Faces and CreateOverlaps
 parser functions; new Plugin(DuplicateNodes), removed Plugin(CVTRemesh) and
