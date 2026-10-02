@@ -765,6 +765,9 @@ void PViewDataGModel::smooth()
   for(std::size_t i = 0; i < _steps.size(); i++) delete _steps[i];
   _steps = _steps2;
   _type = NodeData;
+  // (the values now at the nodes: the interpolation of the element data, e.g.
+  // constant for ElementData, no longer holds)
+  deleteInterpolationMatrices();
   finalize();
 }
 
