@@ -19,18 +19,18 @@ namespace netgen
 
   /**
      Singular Face.
-     Causes a bounday layer mesh refinement.
+     Causes a boundary layer mesh refinement.
      All elements in subdomain domnr will get a boundary layer
      on faces sharing the solid sol
   */
-  class SingularFace 
+  class DLL_HEADER SingularFace 
   {
   public:
     int domnr;
     const Solid *sol;
     double factor; 
     // Array<Point<3> > points;
-    // Array<INDEX_2> segms;
+    // Array<IVec<2>> segms;
   public:
     SingularFace (int adomnr, const Solid * asol, double sf)
       : domnr(adomnr), sol(asol), factor(sf) { ; }
@@ -40,7 +40,7 @@ namespace netgen
 
 
   ///
-  class SingularEdge 
+  class DLL_HEADER SingularEdge
   {
   public:
     double beta;
@@ -48,22 +48,22 @@ namespace netgen
     const CSGeometry& geom;
     const Solid *sol1, *sol2;
     Array<Point<3> > points;
-    Array<INDEX_2> segms;
+    Array<PointIndices<2>> segms;
     double factor; 
 
     double maxhinit;
   public:
     SingularEdge (double abeta, int adomnr, 
-		  const CSGeometry & ageom,
-		  const Solid * asol1, const Solid * asol2, double sf,
-		  const double maxh_at_initialization = -1);
+                  const CSGeometry & ageom,
+                  const Solid * asol1, const Solid * asol2, double sf,
+                  const double maxh_at_initialization = -1);
     void FindPointsOnEdge (class Mesh & mesh);
     void SetMeshSize (class Mesh & mesh, double globalh);
   };
 
 
   ///
-  class SingularPoint
+  class DLL_HEADER SingularPoint
   {
   public:
     double beta;
@@ -73,7 +73,7 @@ namespace netgen
  
   public:
     SingularPoint (double abeta, const Solid * asol1, const Solid * asol2,
-		   const Solid * asol3, double sf);
+                   const Solid * asol3, double sf);
     void FindPoints (class Mesh & mesh);
     void SetMeshSize (class Mesh & mesh, double globalh);
   };
