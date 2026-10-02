@@ -51,8 +51,6 @@ public:
     std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>;
 
 private:
-  void _destroyMeshCaches(bool destroyVertexCaches);
-
   std::multimap<std::pair<const std::vector<int>, const std::vector<int>>,
                 std::pair<const std::string, const std::vector<int>>>
     _homologyRequests;
@@ -347,10 +345,8 @@ public:
                               std::map<std::size_t, std::size_t>());
 
   // delete all the mesh-related caches (this must be called when the
-  // mesh is changed)
-  void destroyMeshCaches();
-  // invalidate element lookup/index/spatial caches without changing nodes
-  void destroyMeshElementCaches();
+  // mesh is changed), except the node caches if only elements were added
+  void destroyMeshCaches(bool keepVertexCaches = false);
   // delete the mesh stored in entities and call destroMeshCaches
   void deleteMesh();
   void deleteMesh(const std::vector<GEntity *> &entities);

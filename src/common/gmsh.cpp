@@ -2759,11 +2759,9 @@ GMSH_API void gmsh::model::mesh::addElements(
 
   for(std::size_t i = 0; i < elementTypes.size(); i++)
     _addElements(dim, tag, ge, elementTypes[i], elementTags[i], nodeTags[i]);
-  // Adding elements does not change existing mesh vertices. Keep their
-  // lookup cache across entity batches, but invalidate all element caches.
-  GModel::current()->destroyMeshElementCaches();
   ge->deleteVertexArrays();
-  CTX::instance()->meshChanged(ENT_ALL);
+  GModel::current()->destroyMeshCaches(true); // nodes are unchanged
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::mesh::addElementsByType(
@@ -2779,11 +2777,9 @@ GMSH_API void gmsh::model::mesh::addElementsByType(
     return;
   }
   _addElements(dim, tag, ge, elementType, elementTags, nodeTags);
-  // Adding elements does not change existing mesh vertices. Keep their
-  // lookup cache across entity batches, but invalidate all element caches.
-  GModel::current()->destroyMeshElementCaches();
   ge->deleteVertexArrays();
-  CTX::instance()->meshChanged(ENT_ALL);
+  GModel::current()->destroyMeshCaches(true); // nodes are unchanged
+  CTX::instance()->meshChanged();
 }
 
 // the polytopes of the given type (34 or 35) classified on the entity of tag
