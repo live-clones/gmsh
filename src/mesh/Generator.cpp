@@ -77,6 +77,10 @@
 #include "geolog.h"
 #endif
 
+#if defined(HAVE_QUADOPTIMIZER)
+#include "quadOptimizerIntegration.h"
+#endif
+
 #include "meshDuplicateVertices.h"
 
 class EmbeddedCompatibilityTest {
@@ -663,6 +667,15 @@ static void Mesh2D(GModel *m)
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
       nthreads = 1;
 
+#if defined(HAVE_QUADMESHINGTOOLS)
+    // Compound surfaces can compute a fresh cross field inside GFace::mesh.
+    // PETSc/MUMPS must run on the host thread that initialized MPI.
+    if(crossFieldHeatSolverUsesMumps() && !(*it)->compound.empty() &&
+       ((*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+        (*it)->getMeshingAlgo() == ALGO_2D_QUAD_QUASI_STRUCT))
+      nthreads = 1;
+#endif
+
     // Periodic meshing is not yet thread-safe
     if((*it)->getMeshMaster() != *it) nthreads = 1;
 
@@ -744,13 +757,22 @@ static void Mesh2D(GModel *m)
     OptimizeMesh(m, "QuadQuasiStructured");
   }
 
+#if defined(HAVE_QUADOPTIMIZER)
+  // Skip the pattern-based/cleanup quad finalization pass when a 3D
+  // hex-combine (RTREE) is requested: it re-touches surface mesh sizes
+  // and point positions that Pack3D placed in 3D specifically for the
+  // combine step, breaking them.
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_RTREE)
+    QuadOptimizer::finishPackMesh(m);
+#else
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) {
     for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
       }
     }
-    bool debug = (Msg::GetVerbosity() == 99);
+    bool debug = CTX::instance()->mesh.saveDebugFiles;
 
     transferSeamGEdgesVerticesToGFace(m);
     //quadMeshingOfSimpleFacesWithPatterns(m, .02);
@@ -776,6 +798,8 @@ static void Mesh2D(GModel *m)
       }
     }
   }
+
+#endif
 
   CheckEmptyMesh(m, 2);
 
@@ -995,6 +1019,8 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
+     how != "OptimizeQuads" && how != "OptimizeQuadsFast" &&
+     how != "OptimizeQuadHoleRings" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
      how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
@@ -1034,6 +1060,14 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
   }
   else if(how == "UntangleTris") {
     for(GFace *gf : m->getFaces()) untangleGFaceMeshConstrained(gf);
+  }
+  else if(how == "OptimizeQuads" || how == "OptimizeQuadsFast" ||
+          how == "OptimizeQuadHoleRings") {
+#if defined(HAVE_QUADOPTIMIZER)
+    QuadOptimizer::optimizeQuads(m, how);
+#else
+    Msg::Error("%s requires QUADOPTIMIZER", how.c_str());
+#endif
   }
   else if(how == "MesquiteImprove2D") {
     for(auto it = m->firstFace(); it != m->lastFace(); it++) {
@@ -1545,6 +1579,10 @@ void GenerateMesh(GModel *m, int ask)
   // Initialize pseudo random mesh generator with the same seed
   srand(CTX::instance()->mesh.randomSeed);
 
+#if defined(HAVE_QUADOPTIMIZER)
+  QuadOptimizer::PackMeshScope packMeshScope;
+#endif
+
   // Change any high order elements back into first order ones (but skip
   // discrete entities)
   SetOrder1(m, false, true);
@@ -1573,8 +1611,13 @@ void GenerateMesh(GModel *m, int ask)
     if(doIt) {
       bool deleteGModelMeshAfter =
         true; // mesh saved in background, no longer needed
-      BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
-                                         deleteGModelMeshAfter, overwriteField);
+      if(BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
+                                           deleteGModelMeshAfter,
+                                           overwriteField) != 0) {
+        CTX::instance()->lock = 0;
+        Msg::Error("Could not build background guiding field; meshing aborted");
+        return;
+      }
     }
 
     if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT && old == 2 &&

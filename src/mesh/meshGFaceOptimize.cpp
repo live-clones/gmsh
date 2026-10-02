@@ -3,9 +3,16 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <set>
 #include <stack>
 #include "GmshConfig.h"
 #include "meshGFaceOptimize.h"
+#if defined(HAVE_QUADOPTIMIZER)
+#include "quadFinalRepair.h"
+#endif
 #include "meshGFaceDelaunay.h"
 #include "qualityMeasures.h"
 #include "GFace.h"
@@ -22,6 +29,7 @@
 #include "Context.h"
 #include "OS.h"
 #include "SVector3.h"
+#include "SPoint2.h"
 #include "SPoint3.h"
 #include "meshRelocateVertex.h"
 #include "Field.h"
@@ -1015,7 +1023,8 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
   }
 }
 
-static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
+static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
+                                bool acceptAllQualities = false)
 {
   if(gf->triangles.empty()) return;
   if(gf->compound.size()) return;
@@ -1038,15 +1047,8 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   buildEdgeToElement(gf->triangles, adj);
 
   FieldManager *fields = gf->model()->getFields();
-  Field *cross_field = NULL;
+  Field *cross_field = fields->getDirectionField();
   SVector3 t1;
-
-  if(fields->getBackgroundField() > 0) {
-    cross_field = fields->get(fields->getBackgroundField());
-    if(cross_field->numComponents() != 3) { // we hae a true scaled cross fiel
-      cross_field = NULL;
-    }
-  }
 
   std::vector<RecombineTriangle> pairs;
 
@@ -1144,9 +1146,12 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
           "Perfect Match failed in quadrangulation, try something else");
         free(elist);
         pairs.clear();
-        _recombineIntoQuads(gf, false, cubicGraph);
+        _recombineIntoQuads(gf, false, cubicGraph, acceptAllQualities);
       }
       else {
+        std::size_t rejectedInvertedPairs = 0, retainedInvalidQuads = 0;
+        double minimumRejectedEta = std::numeric_limits<double>::infinity();
+        double maximumRejectedEta = -std::numeric_limits<double>::infinity();
         // TEST
         for(int k = 0; k < elist[0]; k++) {
           int i1 = elist[1 + 3 * k], i2 = elist[1 + 3 * k + 1],
@@ -1161,8 +1166,6 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
           else {
             MElement *t1 = n2t[i1];
             MElement *t2 = n2t[i2];
-            touched.insert(t1);
-            touched.insert(t2);
             MVertex *other = nullptr;
             for(int i = 0; i < 3; i++) {
               if(t1->getVertex(0) != t2->getVertex(i) &&
@@ -1187,23 +1190,56 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
             MEdge e1(vs[0], vs[2]);
             MEdge e2(vs[1], vs[3]);
             if(embedges.find(e1) != embedges.end()) {
+              touched.insert(t1);
+              touched.insert(t2);
               MTriangle *t1 = new MTriangle(vs[0], vs[1], vs[2]);
               MTriangle *t2 = new MTriangle(vs[2], vs[3], vs[0]);
               gf->triangles.push_back(t1);
               gf->triangles.push_back(t2);
             }
             else if(embedges.find(e2) != embedges.end()) {
+              touched.insert(t1);
+              touched.insert(t2);
               MTriangle *t1 = new MTriangle(vs[1], vs[2], vs[3]);
               MTriangle *t2 = new MTriangle(vs[3], vs[0], vs[1]);
               gf->triangles.push_back(t1);
               gf->triangles.push_back(t2);
             }
             else {
-              MQuadrangle *q = new MQuadrangle(vs[0], vs[1], vs[2], vs[3]);
+              // Blossom solves a purely combinatorial perfect matching. On
+              // a sharply folded discrete surface it can consequently pair
+              // two individually valid triangles into a physically inverted
+              // bilinear quadrangle. Keep the original pair in that case:
+              // the mixed cleanup catalog can still reconnect it later, but
+              // a negative RecombineMinimumQuality explicitly retains raw
+              // matched quads for an optimizer-repair experiment.
+              MQuadrangle *q =
+                new MQuadrangle(vs[0], vs[1], vs[2], vs[3]);
+              const double eta = q->etaShapeMeasure();
+              const bool invalid = !std::isfinite(eta) || !(eta > 0.);
+              if(invalid && !acceptAllQualities) {
+                ++rejectedInvertedPairs;
+                minimumRejectedEta = std::min(minimumRejectedEta, eta);
+                maximumRejectedEta = std::max(maximumRejectedEta, eta);
+                delete q;
+                continue;
+              }
+              if(invalid) ++retainedInvalidQuads;
+              touched.insert(t1);
+              touched.insert(t2);
               gf->quadrangles.push_back(q);
             }
           }
         }
+        if(rejectedInvertedPairs)
+          Msg::Info("Blossom: kept %zu inverted matched triangle pair%s "
+                    "unrecombined (eta range [%g,%g])",
+                    rejectedInvertedPairs,
+                    rejectedInvertedPairs == 1 ? "" : "s",
+                    minimumRejectedEta, maximumRejectedEta);
+        if(retainedInvalidQuads)
+          Msg::Info("Blossom: retained %zu non-positive-quality quads "
+                    "(RecombineMinimumQuality < 0)", retainedInvalidQuads);
         free(elist);
         pairs.clear();
         Msg::Debug("Perfect Match Succeeded in Quadrangulation (%g sec)",
@@ -1224,8 +1260,6 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
       MElement *t2 = itp->t2;
       if(touched.find(t1) == touched.end() &&
          touched.find(t2) == touched.end()) {
-        touched.insert(t1);
-        touched.insert(t2);
         int orientation = 0;
         for(int i = 0; i < 3; i++) {
           if(t1->getVertex(i) == itp->n1) {
@@ -1236,9 +1270,18 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
             break;
           }
         }
-        gf->quadrangles.push_back(
-          new MQuadrangle(itp->n1, orientation < 0 ? itp->n3 : itp->n4, itp->n2,
-                          orientation < 0 ? itp->n4 : itp->n3));
+        MQuadrangle *quadrangle = new MQuadrangle(
+          itp->n1, orientation < 0 ? itp->n3 : itp->n4, itp->n2,
+          orientation < 0 ? itp->n4 : itp->n3);
+        const double eta = quadrangle->etaShapeMeasure();
+        if(acceptAllQualities || (std::isfinite(eta) && eta > 0.)) {
+          touched.insert(t1);
+          touched.insert(t2);
+          gf->quadrangles.push_back(quadrangle);
+        }
+        else {
+          delete quadrangle;
+        }
       }
     }
     ++itp;
@@ -1305,11 +1348,11 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   double t1 = Cpu(), w1 = TimeOfDay();
 
   bool haveParam = (gf->geomType() != GEntity::DiscreteSurface);
-  bool debug = (Msg::GetVerbosity() == 99);
+  bool debug = CTX::instance()->mesh.saveDebugFiles;
 
   if(debug) gf->model()->writeMSH("recombine_0before.msh");
 
-  _recombineIntoQuads(gf, blossom);
+  _recombineIntoQuads(gf, blossom, true, minqual < 0.);
 
   if(debug) gf->model()->writeMSH("recombine_1raw.msh");
 
@@ -1363,6 +1406,9 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
 
 void quadsToTriangles(GFace *gf, double minqual)
 {
+#if defined(HAVE_QUADOPTIMIZER)
+  QuadOptimizer::splitLowQualityQuads(gf, minqual);
+#else
   std::vector<MQuadrangle *> qds;
   std::map<MElement *, std::pair<MElement *, MElement *>> change;
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
@@ -1441,6 +1487,7 @@ void quadsToTriangles(GFace *gf, double minqual)
     }
   }
   _columns->_elemColumns = newElemColumns;
+#endif
 }
 
 void splitElementsInBoundaryLayerIfNeeded(GFace *gf)

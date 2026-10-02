@@ -114,6 +114,8 @@ Enable PRO extensions (default: ON)
 Enable profiling compiler flags (default: OFF)
 @item ENABLE_QUADMESHINGTOOLS
 Enable QuadMeshingTools extensions (default: ON)
+@item ENABLE_QUADOPTIMIZER
+Enable local quadrilateral cavity optimizer (requires QuadMeshingTools) (default: ON)
 @item ENABLE_QUADTRI
 Enable QuadTri structured meshing extensions (default: ON)
 @item ENABLE_RPATH

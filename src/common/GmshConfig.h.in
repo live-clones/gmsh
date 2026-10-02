@@ -63,6 +63,7 @@
 #cmakedefine HAVE_POPPLER
 #cmakedefine HAVE_QUADTRI
 #cmakedefine HAVE_QUADMESHINGTOOLS
+#cmakedefine HAVE_QUADOPTIMIZER
 #cmakedefine HAVE_SALOME
 #cmakedefine HAVE_SGEOM
 #cmakedefine HAVE_SLEPC

@@ -2831,7 +2831,6 @@ bool patchIsRemeshableWithQuadPattern(
       
       int rot = 0;
       double score = checkPatternMatchingWithRotations(P, sideSizes, rot);
-      printf("%d %d\n",i,score);
       if(score > 0.) {
         double irreg = patternIrregularity(P);
         if(irreg < irreg_min) {
@@ -3336,8 +3335,6 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   double irreg;
   bool meshable = patchIsRemeshableWithQuadPattern(
     patternsToCheck, Ncorners, sideSizes, patternNoAndRot, irreg);
-
-  printf("%d %d %lu %d\n",gf->tag(),okf,sides.size(),meshable);
 
   if(!meshable) {
     //    gf->set(oldEdges);

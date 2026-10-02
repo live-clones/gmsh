@@ -27,6 +27,9 @@
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
 #include "fullMatrix.h"
+#if defined(HAVE_QUADOPTIMIZER)
+#include "intrinsicTriangulation.h"
+#endif
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertion.h"
@@ -492,7 +495,7 @@ static int insertVertexB(std::vector<edgeXface> &shell,
                          MTri3 **oneNewTriangle,
                          bool verifyStarShapeness = true)
 {
-  if(cavity.size() == 1) return -1;
+  if(cavity.size() == 1 && !force) return -1;
 
   if(shell.size() != cavity.size() + 2) return -2;
 
@@ -723,8 +726,18 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
              std::set<MTri3 *, compareTri3Ptr> &AllTris,
              std::set<MTri3 *, compareTri3Ptr> *ActiveTris = nullptr,
              MTri3 *worst = nullptr, MTri3 **oneNewTriangle = nullptr,
-             bool testStarShapeness = false)
+             bool testStarShapeness = false, bool forceInsertion = false,
+             const SPoint3 *physicalPoint = nullptr)
 {
+  // PACK already projected this candidate onto the physical surface. Keep
+  // that position through the UV triangulation instead of evaluating the
+  // inverse chart again, which can be singular in a compressed discrete map.
+  if(physicalPoint &&
+     (!std::isfinite(physicalPoint->x()) ||
+      !std::isfinite(physicalPoint->y()) ||
+      !std::isfinite(physicalPoint->z())))
+    return false;
+
   if(worst) {
     it = AllTris.find(worst);
     if(worst != *it) {
@@ -763,10 +776,34 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
     }
   }
 
+  if(!ptin && forceInsertion) {
+    // A cavity grown from the heap's current worst triangle need not contain
+    // the candidate, even though the candidate is inside another live
+    // triangle. Restore that speculative cavity and perform a global,
+    // tolerance-controlled location before declaring the point lost.
+    for(MTri3 *triangle : cavity) triangle->setDeleted(false);
+    cavity.clear();
+    shell.clear();
+    const double tolerances[2] = {1.e-8, 1.e-6};
+    for(double tolerance : tolerances) {
+      for(MTri3 *triangle : AllTris) {
+        if(!triangle->isDeleted() &&
+           invMapUV(triangle->tri(), center, data, uv, tolerance)) {
+          ptin = triangle;
+          break;
+        }
+      }
+      if(ptin) break;
+    }
+    if(ptin)
+      recurFindCavityAniso(gf, shell, cavity, metric, center, ptin, data);
+  }
+
   if(ptin) {
-    // we use here local coordinates as real coordinates x,y and z will be
-    // computed hereafter
-    GPoint p = gf->point(center[0], center[1]);
+    GPoint p = physicalPoint ?
+      GPoint(physicalPoint->x(), physicalPoint->y(), physicalPoint->z(), gf,
+             center) :
+      gf->point(center[0], center[1]);
 
     MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
 
@@ -785,8 +822,9 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
 
     int result = -9;
     if(p.succeeded()) {
-      result = insertVertexB(shell, cavity, false, gf, v, center, ptin, AllTris,
-                             ActiveTris, data, metric, oneNewTriangle,
+      result = insertVertexB(shell, cavity, forceInsertion, gf, v, center,
+                             ptin, AllTris, ActiveTris, data, metric,
+                             oneNewTriangle,
                              testStarShapeness);
     }
     if(result != 1) {
@@ -1514,7 +1552,7 @@ void buildBackgroundMesh(GFace *gf, bool crossFieldClosestPoint,
       backgroundMesh::setCrossFieldsByDistance(gf); // faster for delquad
     else
       backgroundMesh::set(gf); // will solve PDE
-    if(Msg::GetVerbosity() == 99) {
+    if(CTX::instance()->mesh.saveDebugFiles) {
       char name[256];
       sprintf(name, "bgm-%d.pos", gf->tag());
       backgroundMesh::current()->print(name, gf);
@@ -1668,15 +1706,8 @@ void bowyerWatsonParallelograms(
 
 
 #if defined(HAVE_DOMHEX)
-  if(old_algo_hexa()) {
-    Msg::Debug("bowyerWatsonParallelograms: call packingOfParallelograms()");
-    packingOfParallelograms(gf, packed, metrics);
-  }
-  else {
-    Msg::Debug("bowyerWatsonParallelograms: call Filler2D::pointInsertion2D()");
-    Filler2D f;
-    f.pointInsertion2D(gf, packed, metrics);
-  }
+  Msg::Debug("bowyerWatsonParallelograms: 3D point placement and exclusion");
+  packingOfParallelograms(gf, packed, metrics);
 #else
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
@@ -1695,6 +1726,10 @@ void bowyerWatsonParallelograms(
              packed.size());
 
   MTri3 *oneNewTriangle = nullptr;
+  const bool forceAllPackedPoints =
+    CTX::instance()->mesh.packForceAllPoints;
+  std::size_t rejectedPackedPoints = 0;
+  std::size_t singularPackedMetrics = 0;
   for(std::size_t i = 0; i < packed.size();) {
     MTri3 *worst = *AllTris.begin();
     if(worst->isDeleted()) {
@@ -1703,17 +1738,47 @@ void bowyerWatsonParallelograms(
       AllTris.erase(AllTris.begin());
     }
     else {
-      double newPoint[2];
-      packed[i]->getParameter(0, newPoint[0]);
-      packed[i]->getParameter(1, newPoint[1]);
+      double newPoint[2] = {0., 0.};
+      const bool haveParameters =
+        packed[i]->getParameter(0, newPoint[0]) &&
+        packed[i]->getParameter(1, newPoint[1]);
+      const SPoint3 physicalPoint = packed[i]->point();
       delete packed[i];
+      if(!haveParameters || !std::isfinite(newPoint[0]) ||
+         !std::isfinite(newPoint[1]) || !std::isfinite(physicalPoint.x()) ||
+         !std::isfinite(physicalPoint.y()) ||
+         !std::isfinite(physicalPoint.z())) {
+        oneNewTriangle = nullptr;
+        ++rejectedPackedPoints;
+        ++i;
+        continue;
+      }
       double metric[3];
       buildMetric(gf, newPoint, metric);
+      if(gf->geomType() == GEntity::DiscreteSurface) {
+        const double determinant =
+          metric[0] * metric[2] - metric[1] * metric[1];
+        if(!std::isfinite(metric[0]) || !std::isfinite(metric[1]) ||
+           !std::isfinite(metric[2]) || !std::isfinite(determinant) ||
+           !(metric[0] > 0.) || !(determinant > 0.)) {
+          // This metric selects a UV Delaunay cavity; it does not place or
+          // space the points. PACK has already done that in XYZ, and the
+          // following intrinsic pass uses physical edge lengths. A singular
+          // inverse chart must not replace the known finite XYZ candidate.
+          metric[0] = metric[2] = 1.;
+          metric[1] = 0.;
+          ++singularPackedMetrics;
+        }
+      }
 
       bool success =
         insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA, AllTris,
-                     nullptr, oneNewTriangle, &oneNewTriangle);
-      if(!success) oneNewTriangle = nullptr;
+                     nullptr, oneNewTriangle, &oneNewTriangle, false,
+                     forceAllPackedPoints, &physicalPoint);
+      if(!success) {
+        oneNewTriangle = nullptr;
+        ++rejectedPackedPoints;
+      }
       i++;
     }
 
@@ -1730,13 +1795,56 @@ void bowyerWatsonParallelograms(
     }
   }
 
-#if 0
-   char name[256];
-   sprintf(name,"RawTriangulation%d.pos",gf->tag());
-   _printTris (name, AllTris.begin(), AllTris.end(),nullptr);
+  if(singularPackedMetrics)
+    Msg::Warning("3D packing used an identity UV insertion metric for %zu "
+                 "candidate%s with a singular discrete metric on face %d; "
+                 "physical candidate positions were preserved",
+                 singularPackedMetrics, singularPackedMetrics == 1 ? "" : "s",
+                 gf->tag());
+
+  if(forceAllPackedPoints && rejectedPackedPoints) {
+    // Rejection of a packed candidate does not invalidate the triangulation:
+    // insertion is transactional and the remaining mesh is still usable.
+    // Report the loss, but do not make the complete meshing operation fail.
+    Msg::Warning("3D packing lost %zu of %zu points during triangulation of "
+                 "face %d; continuing with the resulting triangulation",
+                 rejectedPackedPoints, packed.size(), gf->tag());
+  }
+
+  if(CTX::instance()->mesh.saveDebugFiles) {
+    char name[256];
+    sprintf(name, "ParametricTriangulation3D%d.pos", gf->tag());
+    // Keep the UV-Delaunay connectivity for direct comparison with the
+    // intrinsic result produced below.
+    std::vector<MTriangle *> triangles;
+    for(MTri3 *triangle : AllTris)
+      if(!triangle->isDeleted()) triangles.push_back(triangle->tri());
+#if defined(HAVE_QUADOPTIMIZER)
+    QuadOptimizer::printTrianglesXYZ(name, triangles);
 #endif
+  }
 
   transferDataStructure(gf, AllTris, DATA);
+
+  // The intrinsic metric belongs to the progressive/MVC chart of a discrete
+  // face. Native CAD faces already have their own valid parametrization: a
+  // UV midpoint there is generally not the geometric midpoint of an edge and
+  // repeatedly splitting it can refine away from the intended location.
+#if defined(HAVE_QUADOPTIMIZER)
+  if(gf->geomType() == GEntity::DiscreteSurface)
+    QuadOptimizer::intrinsicDelaunayizePackedSurface(gf, DATA);
+#endif
+
+  if(CTX::instance()->mesh.saveDebugFiles) {
+    char name[256];
+    sprintf(name, "RawTriangulation3D%d.pos", gf->tag());
+    // This is the actual 3D triangulation sent to Blossom, after intrinsic
+    // Delaunay flips and before any recombination or quad cleanup.
+#if defined(HAVE_QUADOPTIMIZER)
+    QuadOptimizer::printTrianglesXYZ(name, gf->triangles);
+#endif
+  }
+
   backgroundMesh::unset();
 
   Msg::Debug(
