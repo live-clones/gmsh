@@ -266,7 +266,6 @@ static void    RstMshItm   (MshSct *);
 
 static itg     EdgIntEdg   (EdgSct *, EdgSct *, VerSct *, fpn);
 static fpn     DisVerTri   (MshSct *, fpn [3], TriSct *);
-static fpn     DisVerTriItm(MshSct *, fpn [3], itg);
 static fpn     DisVerQad   (MshSct *, fpn [3], QadSct *);
 static fpn     DisVerTet   (MshSct *, fpn *, TetSct *);
 static fpn     GetTriSrf   (TriSct *);
@@ -1202,10 +1201,8 @@ static void GetOctLnk(  MshSct *msh, itg typ, fpn VerCrd[3], itg *MinItm,
             if(UsrPrc && !UsrPrc(UsrDat, lnk->idx))
                continue;
 
-            // The nearest-distance kernel only needs the three coordinates.
-            // Avoid filling the temporary triangle and computing a normal
-            // that DisVerTri does not use.
-            CurDis = DisVerTriItm(msh, VerCrd, lnk->idx);
+            SetItm(msh, LolTypTri, lnk->idx, 0, ThrIdx);
+            CurDis = DisVerTri(msh, VerCrd, &ThrMsh->tri);
          }
          else if(lnk->typ == LolTypQad)
          {
@@ -2063,97 +2060,72 @@ static itg EdgIntHex(EdgSct *edg, HexSct *hex, fpn eps)
 /* Test if an octant is intersected by a triangle                             */
 /*----------------------------------------------------------------------------*/
 
-static itg TriHexSepAxis(fpn axis[3], fpn ver[3][3], fpn half[3])
-{
-   itg i;
-   fpn MinPrj, MaxPrj, Prj, Rad;
-
-   MinPrj = MaxPrj = DotPrd(axis, ver[0]);
-
-   for(i=1;i<3;i++)
-   {
-      Prj = DotPrd(axis, ver[i]);
-      MinPrj = MIN(MinPrj, Prj);
-      MaxPrj = MAX(MaxPrj, Prj);
-   }
-
-   Rad = half[0] * fabs(axis[0])
-       + half[1] * fabs(axis[1])
-       + half[2] * fabs(axis[2]);
-
-   return((MinPrj > Rad) || (MaxPrj < -Rad));
-}
-
 static itg TriIntHex(TriSct *tri, HexSct *hex, fpn eps)
 {
-   itg i, j;
-   fpn Ctr[3], Half[3], Ver[3][3], Edg[3][3], Axis[3], MinCrd[3], MaxCrd[3];
+   itg i, j, pos, neg;
+   fpn CurDis;
+   VerSct IntVer;
 
-   for(j=0;j<3;j++)
+   // If there is no intersection between the bounding box
+   // of the triangle and the octant it is no use to test,
+   // the triangle doesn't intersect the octant
+   if((  (tri->ver[0]->crd[0] < hex->ver[3]->crd[0])
+      && (tri->ver[1]->crd[0] < hex->ver[3]->crd[0])
+      && (tri->ver[2]->crd[0] < hex->ver[3]->crd[0]) )
+   || (  (tri->ver[0]->crd[0] > hex->ver[5]->crd[0])
+      && (tri->ver[1]->crd[0] > hex->ver[5]->crd[0])
+      && (tri->ver[2]->crd[0] > hex->ver[5]->crd[0]) )
+   || (  (tri->ver[0]->crd[1] < hex->ver[3]->crd[1])
+      && (tri->ver[1]->crd[1] < hex->ver[3]->crd[1])
+      && (tri->ver[2]->crd[1] < hex->ver[3]->crd[1]) )
+   || (  (tri->ver[0]->crd[1] > hex->ver[5]->crd[1])
+      && (tri->ver[1]->crd[1] > hex->ver[5]->crd[1])
+      && (tri->ver[2]->crd[1] > hex->ver[5]->crd[1]) )
+   || (  (tri->ver[0]->crd[2] < hex->ver[3]->crd[2])
+      && (tri->ver[1]->crd[2] < hex->ver[3]->crd[2])
+      && (tri->ver[2]->crd[2] < hex->ver[3]->crd[2]) )
+   || (  (tri->ver[0]->crd[2] > hex->ver[5]->crd[2])
+      && (tri->ver[1]->crd[2] > hex->ver[5]->crd[2])
+      && (tri->ver[2]->crd[2] > hex->ver[5]->crd[2]) ) )
    {
-      MinCrd[j] = hex->ver[3]->crd[j];
-      MaxCrd[j] = hex->ver[5]->crd[j];
-      Ctr[j] = (MinCrd[j] + MaxCrd[j]) / 2.;
-      Half[j] = (MaxCrd[j] - MinCrd[j]) / 2. + eps;
-
-      for(i=0;i<3;i++)
-         Ver[i][j] = tri->ver[i]->crd[j] - Ctr[j];
+      return(0);
    }
 
-   // The three box axes.
-   for(j=0;j<3;j++)
+   // Test if a triangle's vertex is included in the octant
+   for(i=0;i<3;i++)
+      if(VerInsHex(tri->ver[i], hex))
+         return(1);
+
+   // Check whether the triangle plane intersects the octant
+   pos = neg = 0;
+
+   for(i=0;i<8;i++)
    {
-      fpn MinPrj = Ver[0][j], MaxPrj = Ver[0][j];
+      CurDis = DisVerPla(hex->ver[i]->crd, tri->ver[0]->crd, tri->nrm);
 
-      for(i=1;i<3;i++)
-      {
-         MinPrj = MIN(MinPrj, Ver[i][j]);
-         MaxPrj = MAX(MaxPrj, Ver[i][j]);
-      }
-
-      if((MinPrj > Half[j]) || (MaxPrj < -Half[j]))
-         return(0);
+      if(CurDis < -eps)
+         neg = 1;
+      else if(CurDis > eps)
+         pos = 1;
+      else
+         pos = neg = 1;
    }
 
-   for(j=0;j<3;j++)
-   {
-      Edg[0][j] = Ver[1][j] - Ver[0][j];
-      Edg[1][j] = Ver[2][j] - Ver[1][j];
-      Edg[2][j] = Ver[0][j] - Ver[2][j];
-   }
-
-   // The triangle normal.
-   CrsPrd(Edg[0], Edg[1], Axis);
-
-   if(TriHexSepAxis(Axis, Ver, Half))
+   if(!pos || !neg)
       return(0);
 
-   // The nine axes built from triangle edges crossed with box axes.
-   for(i=0;i<3;i++)
-   {
-      Axis[0] = 0.;
-      Axis[1] = Edg[i][2];
-      Axis[2] = -Edg[i][1];
+   // Compute the intersections between the triangle edges and the hex faces
+   for(i=0;i<6;i++)
+      for(j=0;j<3;j++)
+         if(EdgIntQad(hex, i, &tri->edg[j], &IntVer, eps))
+            return(1);
 
-      if(TriHexSepAxis(Axis, Ver, Half))
-         return(0);
+   // Compute the intersections between the triangle and the hex edges
+   for(i=0;i<12;i++)
+      if(EdgIntTri(tri, &hex->edg[i], &IntVer, eps))
+         return(1);
 
-      Axis[0] = -Edg[i][2];
-      Axis[1] = 0.;
-      Axis[2] = Edg[i][0];
-
-      if(TriHexSepAxis(Axis, Ver, Half))
-         return(0);
-
-      Axis[0] = Edg[i][1];
-      Axis[1] = -Edg[i][0];
-      Axis[2] = 0.;
-
-      if(TriHexSepAxis(Axis, Ver, Half))
-         return(0);
-   }
-
-   return(1);
+   return(0);
 }
 
 
@@ -2671,20 +2643,8 @@ static fpn DisVerTriCrd(fpn VerCrd[3], fpn *A, fpn *B, fpn *C)
 
 static fpn DisVerTri(MshSct *msh, fpn VerCrd[3], TriSct *tri)
 {
-   (void)msh;
    return(DisVerTriCrd(VerCrd, tri->ver[0]->crd,
                        tri->ver[1]->crd, tri->ver[2]->crd));
-}
-
-static fpn DisVerTriItm(MshSct *msh, fpn VerCrd[3], itg TriIdx)
-{
-   itg *IdxTab = (itg *)GetPtrItm(msh, LolTypTri, TriIdx);
-
-   return(DisVerTriCrd(
-      VerCrd,
-      (fpn *)GetPtrItm(msh, LolTypVer, IdxTab[0]),
-      (fpn *)GetPtrItm(msh, LolTypVer, IdxTab[1]),
-      (fpn *)GetPtrItm(msh, LolTypVer, IdxTab[2])));
 }
 
 
