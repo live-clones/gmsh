@@ -316,8 +316,8 @@ static bool closestPointCallback(std::pair<MTriangle *, MTriangle *> *t,
   return true;
 }
 
-GPoint discreteFace::_closestPoint(const SPoint3 &p,
-                                   const double guess[2]) const
+GPoint discreteFace::_closestPoint(const SPoint3 &p, const double guess[2],
+                                   SVector3 *normal) const
 {
   if(_param.empty()) {
     GPoint gp;
@@ -354,6 +354,7 @@ GPoint discreteFace::_closestPoint(const SPoint3 &p,
       d = 2. * d;
   }
 
+  if(normal) *normal = _normal(s.best);
   const MTriangle &t2d = _param.t2d[s.best];
   SPoint2 uv;
   for(int i = 0; i < 3; ++i) {
@@ -368,6 +369,13 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,
                                   const double initialGuess[2]) const
 {
   return _closestPoint(queryPoint, initialGuess);
+}
+
+GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,
+                                  const double initialGuess[2],
+                                  SVector3 *normal) const
+{
+  return _closestPoint(queryPoint, initialGuess, normal);
 }
 
 SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface,
@@ -406,6 +414,43 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
     return SVector3(0, 0, 1);
   }
   return _normal(position);
+}
+
+bool discreteFace::normalIfContainsParam(const SPoint2 &param,
+                                         SVector3 &normal) const
+{
+  int position = _locate(param.x(), param.y());
+  if(position < 0) return false;
+  normal = _normal(position);
+  return true;
+}
+
+bool discreteFace::normalBoundsForParametricTriangle(
+  const SPoint2 &p0, const SPoint2 &p1, const SPoint2 &p2, SVector3 &nmin,
+  SVector3 &nmax) const
+{
+  // the normals of all the chart triangles whose box overlaps the box of the
+  // given triangle
+  SBoundingBox3d box;
+  box += SPoint3(p0.x(), p0.y(), 0.);
+  box += SPoint3(p1.x(), p1.y(), 0.);
+  box += SPoint3(p2.x(), p2.y(), 0.);
+  bool found = false;
+  for(std::size_t i = 0; i < _param.t2d.size(); i++) {
+    SBoundingBox3d b;
+    for(int j = 0; j < 3; j++) b += _param.t2d[i].getVertex(j)->point();
+    if(b.max().x() < box.min().x() || b.min().x() > box.max().x() ||
+       b.max().y() < box.min().y() || b.min().y() > box.max().y())
+      continue;
+    SVector3 n = _normal(i);
+    if(!(n.norm() > 0.)) continue; // (a flat triangle)
+    for(int k = 0; k < 3; k++) {
+      if(!found || n[k] < nmin[k]) nmin[k] = n[k];
+      if(!found || n[k] > nmax[k]) nmax[k] = n[k];
+    }
+    found = true;
+  }
+  return found;
 }
 
 double discreteFace::curvatureMax(const SPoint2 &param) const

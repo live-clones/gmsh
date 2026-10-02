@@ -37,7 +37,8 @@ private:
   };
   param _param;
   void _createGeometryFromSTL();
-  GPoint _closestPoint(const SPoint3 &p, const double guess[2]) const;
+  GPoint _closestPoint(const SPoint3 &p, const double guess[2],
+                       SVector3 *normal = nullptr) const;
   // the chart triangle containing (u, v), and the barycentric coordinates of
   // (u, v) in it if bary is given; -1 if none
   int _locate(double u, double v, double bary[2] = nullptr) const;
@@ -60,7 +61,17 @@ public:
   SBoundingBox3d bounds(bool fast = false);
   GPoint closestPoint(const SPoint3 &queryPoint,
                       const double initialGuess[2]) const;
+  // also returns the normal of the triangle on which the point lies
+  GPoint closestPoint(const SPoint3 &queryPoint, const double initialGuess[2],
+                      SVector3 *normal) const;
   SVector3 normal(const SPoint2 &param) const;
+  // the normal, if the point is in the chart
+  bool normalIfContainsParam(const SPoint2 &param, SVector3 &normal) const;
+  // the bounds of the components of the normals of the chart triangles that
+  // can overlap the given triangle of the chart
+  bool normalBoundsForParametricTriangle(const SPoint2 &p0, const SPoint2 &p1,
+                                         const SPoint2 &p2, SVector3 &nmin,
+                                         SVector3 &nmax) const;
   double curvatureMax(const SPoint2 &param) const;
   double curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
                     double &curvMax, double &curvMin) const;
