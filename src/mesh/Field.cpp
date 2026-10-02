@@ -27,10 +27,13 @@
 #include "BackgroundMeshTools.h"
 #include "STensor3.h"
 #include "ExtrudeParams.h"
-#include "automaticMeshSizeField.h"
+#if defined(HAVE_OCTREE_SIZE_FIELD)
+#include "OctreeSizeField.h"
+#endif
 #include "fullMatrix.h"
 #include "SPoint3KDTree.h"
 #include "MVertex.h"
+#include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 
@@ -3313,8 +3316,9 @@ FieldManager::FieldManager()
     new FieldFactoryT<AttractorAnisoCurveField>();
 #endif
   mapTypeName["MaxEigenHessian"] = new FieldFactoryT<MaxEigenHessianField>();
-  mapTypeName["AutomaticMeshSizeField"] =
-    new FieldFactoryT<automaticMeshSizeField>();
+#if defined(HAVE_OCTREE_SIZE_FIELD)
+  mapTypeName["AutomaticMeshSizeField"] = new FieldFactoryT<OctreeSizeField>();
+#endif
   _backgroundField = -1;
 }
 
