@@ -3,9 +3,11 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <atomic>
 #include <map>
 #include <set>
 #include <stdexcept>
+#include <unordered_map>
 
 #include "GmshConfig.h"
 #include "meshGRegionHxt.h"
@@ -64,10 +66,10 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
            useInterpolatedSize ? "interpolated " : "");
 
   int nthreads = getNumThreads();
-  bool exceptions = false;
+  std::atomic<bool> exceptions{false};
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t i = 0; i < numPts; i++) {
-    if(exceptions) continue;
+    if(exceptions.load(std::memory_order_relaxed)) continue;
     if(volume[i] >= allGR->size()) {
       Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);
       continue;
@@ -81,7 +83,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
       else
         pts[4 * i + 3] = std::min(lcGlob, lc);
     } catch(...) {
-      exceptions = true;
+      exceptions.store(true, std::memory_order_relaxed);
     }
   }
 
