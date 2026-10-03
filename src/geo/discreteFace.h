@@ -7,10 +7,6 @@
 #define DISCRETE_FACE_H
 
 #include <algorithm>
-#include <cstdint>
-#include <functional>
-#include <mutex>
-#include <unordered_map>
 #include "GModel.h"
 #include "GFace.h"
 #include "MTriangle.h"
@@ -23,84 +19,30 @@ class discreteFace : public GFace {
 private:
   class param {
   public:
-    struct TriangleBvhNode {
-      double minimum[3] = {0., 0., 0.};
-      double maximum[3] = {0., 0., 0.};
-      std::size_t begin = 0;
-      std::size_t end = 0;
-      std::size_t left = 0;
-      std::size_t right = 0;
-      bool leaf = true;
-    };
-    struct uvKey {
-      double u, v;
-      uvKey(double u_, double v_) : u(u_), v(v_) {}
-      bool operator==(const uvKey &other) const
-      {
-        return u == other.u && v == other.v;
-      }
-    };
-    struct uvKeyHash {
-      std::size_t operator()(const uvKey &key) const
-      {
-        const std::size_t first = std::hash<double>()(key.u);
-        const std::size_t second = std::hash<double>()(key.v);
-        return first ^
-          (second + static_cast<std::size_t>(0x9e3779b9U) + (first << 6) +
-           (first >> 2));
-      }
-    };
     MElementOctree *oct;
     mutable RTree<std::pair<MTriangle *, MTriangle *> *, double, 3> rtree3d;
     std::vector<std::pair<MTriangle *, MTriangle *> *> rtree3dData;
-    int64_t libolOctree;
-    std::vector<double> libolVertexCoordinates;
-    std::vector<int32_t> libolTriangles;
-    std::vector<std::size_t> libolTriangleToParam;
-    std::vector<std::size_t> libolDegenerateTrianglePositions;
-    std::vector<std::size_t> triangleBvhPositions;
-    std::vector<TriangleBvhNode> triangleBvhNodes;
-    mutable std::unordered_map<uvKey, std::size_t, uvKeyHash>
-      libolUvTriangleCache;
-    mutable std::mutex libolMutex;
     std::vector<MVertex> v2d;
     std::vector<MVertex> v3d;
     std::vector<MTriangle> t2d;
     std::vector<MTriangle> t3d;
-    // Flat unit normal of each immutable source triangle. Unlike
-    // stl_normals (which are smoothed per vertex), this is the exact normal
-    // historically returned by normal() for the corresponding t3d entry.
-    std::vector<SVector3> triangleUnitNormals;
-    // Immutable uniform accelerator for unambiguous interior UV queries.
-    // Boundary/overlap cases deliberately fall back to MElementOctree so
-    // the historical triangle-selection semantics remain unchanged.
-    std::vector<std::vector<std::size_t> > uvTriangleGrid;
-    std::size_t uvTriangleGridResolution = 0;
-    double uvTriangleGridMin[2] = {0., 0.};
-    double uvTriangleGridMax[2] = {0., 0.};
-    double uvTriangleGridTolerance = 0.;
     std::vector<SVector3> CURV;
     double umin, umax, vmin, vmax;
     SBoundingBox3d bbox;
-    param()
-      : oct(nullptr), libolOctree(0), umin(-1), umax(1), vmin(-1), vmax(1)
-    {
-    }
+    param() : oct(nullptr), umin(-1), umax(1), vmin(-1), vmax(1) {}
     ~param();
     bool empty() const { return t2d.empty(); }
     void clear();
     bool checkPlanar();
   };
   param _param;
-  // Distinct boundary nodes can be exactly coincident in 3D, making
-  // parFromPoint() ambiguous. Keep their face-local UV values by vertex
-  // identity so mesh node renumbering preserves the discrete topology.
-  std::unordered_map<const MVertex *, SPoint2> _coincidentVertexParameters;
   void _createGeometryFromSTL();
-  void _buildCoincidentVertexParameters();
-  void _buildUvTriangleGrid();
-  void _buildTriangleBvh();
-  const MTriangle *_findUniqueInteriorUvTriangle(double u, double v) const;
+  GPoint _closestPoint(const SPoint3 &p, const double guess[2],
+                       SVector3 *normal = nullptr) const;
+  // the chart triangle containing (u, v), and the barycentric coordinates of
+  // (u, v) in it if bary is given; -1 if none
+  int _locate(double u, double v, double bary[2] = nullptr) const;
+  SVector3 _normal(int position) const;
   void _computeSTLNormals();
   void _debugParametrization(bool uv);
 
@@ -114,21 +56,22 @@ public:
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true,
                        bool convTestXYZ = false) const;
-  bool parFromCoincidentMeshVertex(const MVertex *vertex,
-                                   SPoint2 &param) const;
   Range<double> parBounds(int i) const;
   bool containsParam(const SPoint2 &pt);
   SBoundingBox3d bounds(bool fast = false);
-  GPoint closestPoint(const SPoint3 &queryPoint, double maxDistance,
-                      SVector3 *normal = nullptr) const;
   GPoint closestPoint(const SPoint3 &queryPoint,
                       const double initialGuess[2]) const;
-  // Exact nearest-triangle implementation backed by LibOL. The historical
-  // R-tree overload above remains available for controlled A/B comparisons.
-  GPoint closestPointLibOL(const SPoint3 &queryPoint,
-                           SVector3 *normal = nullptr,
-                           const double initialGuess[2] = nullptr) const;
+  // also returns the normal of the triangle on which the point lies
+  GPoint closestPoint(const SPoint3 &queryPoint, const double initialGuess[2],
+                      SVector3 *normal) const;
   SVector3 normal(const SPoint2 &param) const;
+  // the normal, if the point is in the chart
+  bool normalIfContainsParam(const SPoint2 &param, SVector3 &normal) const;
+  // the bounds of the components of the normals of the chart triangles that
+  // can overlap the given triangle of the chart
+  bool normalBoundsForParametricTriangle(const SPoint2 &p0, const SPoint2 &p1,
+                                         const SPoint2 &p2, SVector3 &nmin,
+                                         SVector3 &nmax) const;
   double curvatureMax(const SPoint2 &param) const;
   double curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
                     double &curvMax, double &curvMin) const;
@@ -138,20 +81,6 @@ public:
                          SVector3 &dudv) const;
   int createGeometry();
   virtual bool haveParametrization() { return !_param.empty(); }
-  // Resolve containment and the piecewise-linear surface normal with one
-  // parameter-octree lookup. This is exactly equivalent to containsParam()
-  // followed by normal() for the same parameter, but avoids searching the
-  // immutable discrete support twice in orientation-heavy callers.
-  bool normalIfContainsParam(const SPoint2 &param, SVector3 &normal) const;
-  // Conservative component bounds for every immutable source-triangle
-  // normal whose UV triangle intersects the requested triangle. These bounds
-  // let a coarser mesh certify a normal sign without locating the exact MAT
-  // triangle; ambiguous signs still fall back to normalIfContainsParam().
-  bool normalBoundsForParametricTriangle(const SPoint2 &first,
-                                         const SPoint2 &second,
-                                         const SPoint2 &third,
-                                         SVector3 &minimumNormal,
-                                         SVector3 &maximumNormal) const;
   virtual void mesh(bool verbose);
   int trianglePosition(double par1, double par2, double &u, double &v) const;
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,

@@ -13056,9 +13056,8 @@ namespace QuadOptimizer {
               try {
                 SVector3 normal;
                 const GPoint projected = static_cast<discreteFace *>(face)->
-                  closestPointLibOL(SPoint3(sampleXyz[0], sampleXyz[1],
-                                            sampleXyz[2]),
-                                    &normal, parameter.data());
+                  closestPoint(SPoint3(sampleXyz[0], sampleXyz[1], sampleXyz[2]),
+                               parameter.data(), &normal);
                 const double h = ringGuard->target(sampleXyz, parameter);
                 const double normalNorm = normal.norm();
                 const double distance = std::hypot(

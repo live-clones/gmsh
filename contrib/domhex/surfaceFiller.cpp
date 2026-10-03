@@ -144,7 +144,7 @@ static surfacePointWithExclusionCube3D *makeSurfaceCubePoint3D(
     const double guess[2] = {uv.x(), uv.y()};
     discreteFace *discrete = static_cast<discreteFace *>(gf);
     const GPoint projected =
-      discrete->closestPointLibOL(vertex->point(), &normal, guess);
+      discrete->closestPoint(vertex->point(), guess, &normal);
     if(!projected.succeeded()) return nullptr;
   }
   else {
