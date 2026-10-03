@@ -10,7 +10,10 @@ of the plugin and runs it:
   data/      small meshes of a square (triangles, quadrangles) and of a cube
              (tetrahedra, hexahedra) with physical groups, and the same four
              views on each as model data (.msh) and list data (.pos): scalar
-             and vector node data (3 steps), tensor node data, element data
+             and vector node data (3 steps), tensor node data, element data;
+             the same views at second order as list data (order2.pos); a
+             hexagonal prism polyhedron and a hexagon polygon with a hanging
+             node, with a scalar view (polytopes.msh)
   data.py    writes data/ (the files are committed: run it only to change them)
   run.py     runs the cases, one process and one directory per case, and
              checks what each leaves behind against ref.json: the mesh (nodes,
