@@ -747,7 +747,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PackCleanupMethod
-Cleanup after packing of parallelograms. 0: legacy OptimizeQuads, 1: OptimizeQuadsFast with topology convergence and final 3D smoothing, 2: disabled@*
+V2 cleanup after packing of parallelograms. 1: enabled (0 is also accepted for compatibility), 2: disabled@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -792,7 +792,7 @@ Default value: @code{0.}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeQuadsPillowLayers
-Attempt a complete quadrilateral ring around holes after quad optimization and open an admissible new ring with local Winslow smoothing; 1 optimizes the complete affected stars and larger values add neighboring element layers (0: disabled)@*
+Attempt a complete quadrilateral ring around holes with OptimizeQuadHoleRings and open it with local Winslow smoothing; 1 optimizes the complete affected stars and larger values add neighboring element layers (0: disabled). The dedicated ring pass permits shape/size specification failures while preserving physical validity and CAD fit@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

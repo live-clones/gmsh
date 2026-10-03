@@ -1624,9 +1624,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SaveDebugFiles", opt_mesh_save_debug_files, 0,
     "Write optional meshing and optimization debug meshes, background fields, point views and statistics JSON (independent of verbosity)" },
   { F|O, "PackCleanupMethod" , opt_mesh_pack_cleanup_method, 1 ,
-    "Cleanup after packing of parallelograms. 0: legacy OptimizeQuads, "
-      "1: OptimizeQuadsFast with topology convergence and final 3D smoothing, "
-      "2: disabled" },
+    "V2 cleanup after packing of parallelograms. 1: enabled (0 is also "
+      "accepted for compatibility), 2: disabled" },
   { F|O, "OptimizeQuadsFinalSplitCadDistanceRatio", opt_mesh_optimize_quads_final_split_cad_distance_ratio, 0.2,
     "Final V2 quad splitting: trigger distance to CAD divided by local target size; insert the other diagonal only if within tolerance and at least twice closer (negative disables CAD trigger; invalid or absolutely unacceptable quads are still split when possible)" },
   { F|O, "OptimizeQuadsSmartLaplacian", opt_mesh_optimize_quads_smart_laplacian, 2,
@@ -1652,7 +1651,7 @@ StringXNumber MeshOptions_Number[] = {
       "(non-positive: preserve packed points, no intrinsic long-edge splitting)" },
   { F|O, "OptimizeQuadsPillowLayers" , opt_mesh_optimize_quads_pillow_layers, 0 ,
     "Attempt a complete quadrilateral ring around holes with OptimizeQuadHoleRings "
-      "(or legacy OptimizeQuads) and open it with local Winslow smoothing; "
+      "and open it with local Winslow smoothing; "
       "1 optimizes the complete affected stars and larger values add neighboring "
       "element layers (0: disabled). The dedicated ring pass permits shape/size "
       "specification failures while preserving physical validity and CAD fit" },

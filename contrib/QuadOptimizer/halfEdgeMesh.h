@@ -21,9 +21,8 @@ namespace QuadOptimizer {
 
     // This is the persistent topology owned by one face optimizer. It is
     // deliberately independent of Gmsh objects: every stored field is an
-    // integer identifier or a double coordinate. The Gmsh adapter in
-    // smallCavityOptimizer.cpp is the only place that translates identifiers
-    // to MVertex/MElement handles.
+    // integer identifier or a double coordinate. FaceHalfEdge in halfEdge.cpp
+    // translates identifiers to MVertex/MElement handles.
     using Index = std::int64_t;
     constexpr Index invalid = -1;
 
@@ -86,47 +85,14 @@ namespace QuadOptimizer {
       std::vector<Index> faces;
     };
 
-    enum class CavityAnchor : std::int64_t {
-      ExplicitFaces = 0,
-      Vertex = 1,
-      VertexSet = 2,
-      Edge = 3,
-      SingleQuadrangle = 4
-    };
-
-    // One representation for every local rewrite domain. `coreFaces` is C;
-    // `faces` is the current support and becomes C+C' after an extension by
-    // vertex stars. All identities are stable numeric mesh identifiers.
+    // A local cell patch and its boundary, using stable numeric identifiers.
     struct Cavity {
-      CavityAnchor anchor = CavityAnchor::ExplicitFaces;
-      Index anchorFirst = invalid;
-      Index anchorSecond = invalid;
-      Index anchorOnBoundary = 0;
-      // Complete numeric identity of a vertex or vertex-set anchor.  The
-      // scalar fields above remain convenient for the common one-vertex and
-      // one-edge cases; this vector is what makes three- and four-vertex
-      // cavity anchors lossless.
-      std::vector<Index> anchorVertices;
-      // Ordered incidences of the anchor in the persistent mesh. For a
-      // vertex this is its cyclic interior ring or its open boundary chain;
-      // for an edge or a single quadrangle it is the complete incident set.
-      // Pattern matchers therefore read TTQ, T-Q-Q-T-Q-Q, ... directly from
-      // integer face identifiers without rebuilding adjacency from handles.
-      std::vector<Index> anchorFaces;
-      std::vector<Index> coreFaces;
       std::vector<Index> faces;
       std::vector<Index> boundaryVertices;
       std::vector<Index> interiorVertices;
 
       void clear()
       {
-        anchor = CavityAnchor::ExplicitFaces;
-        anchorFirst = invalid;
-        anchorSecond = invalid;
-        anchorOnBoundary = 0;
-        anchorVertices.clear();
-        anchorFaces.clear();
-        coreFaces.clear();
         faces.clear();
         boundaryVertices.clear();
         interiorVertices.clear();
@@ -294,7 +260,6 @@ namespace QuadOptimizer {
         if(euler != 1) return false;
 
         result.faces.assign(selected.begin(), selected.end());
-        result.coreFaces = result.faces;
         for(const Index vertex : localVertices)
           if(reachedBoundaryVertices.find(vertex) ==
              reachedBoundaryVertices.end())
@@ -314,20 +279,6 @@ namespace QuadOptimizer {
                          }),
           halfEdges.end());
         if(halfEdges.empty()) _edgeHalfEdges.erase(found);
-      }
-
-      void compactOutgoing(Index vertex)
-      {
-        if(vertex < 0 || static_cast<std::size_t>(vertex) >= _outgoing.size())
-          return;
-        std::vector<Index> &halfEdges =
-          _outgoing[static_cast<std::size_t>(vertex)];
-        halfEdges.erase(
-          std::remove_if(halfEdges.begin(), halfEdges.end(),
-                         [&](Index halfEdge) {
-                           return !validHalfEdge(halfEdge);
-                         }),
-          halfEdges.end());
       }
 
       bool vertexLinksAreManifold() const
@@ -540,44 +491,6 @@ namespace QuadOptimizer {
         return faceIndex;
       }
 
-      bool removeFace(Index faceIndex)
-      {
-        if(!validFace(faceIndex)) return false;
-        Face &face = _faces[static_cast<std::size_t>(faceIndex)];
-        std::vector<Edge> touchedEdges;
-        std::vector<Index> touchedVertices;
-        for(Index i = 0; i < face.cornerCount; ++i) {
-          const Index origin = face.vertices[static_cast<std::size_t>(i)];
-          const Index next = face.vertices[static_cast<std::size_t>(
-            (i + 1) % face.cornerCount)];
-          touchedEdges.push_back(canonicalEdge(origin, next));
-          touchedVertices.push_back(origin);
-        }
-        for(Index i = 0; i < face.cornerCount; ++i) {
-          const Index halfEdgeIndex = face.firstHalfEdge + i;
-          if(!validHalfEdge(halfEdgeIndex)) continue;
-          HalfEdge &halfEdge =
-            _halfEdges[static_cast<std::size_t>(halfEdgeIndex)];
-          if(validHalfEdge(halfEdge.twin))
-            _halfEdges[static_cast<std::size_t>(halfEdge.twin)].twin =
-              invalid;
-          halfEdge.twin = invalid;
-          halfEdge.active = 0;
-        }
-        --_faceCounts[static_cast<std::size_t>(face.cornerCount)];
-        face.active = 0;
-        _activeFaces.erase(faceIndex);
-        for(const Edge &edge : touchedEdges) compactEdge(edge);
-        for(const Index vertex : touchedVertices) {
-          compactOutgoing(vertex);
-          if(_outgoing[static_cast<std::size_t>(vertex)].empty())
-            _activeVertices.erase(vertex);
-        }
-        _vertexLinksDirty = 1;
-        ++_topologyRevision;
-        return true;
-      }
-
       bool prepareReplacement(
         const std::vector<Index> &removed,
         const std::vector<std::vector<Index> > &inserted,
@@ -592,16 +505,6 @@ namespace QuadOptimizer {
         prepared._inserted = inserted;
         result = std::move(prepared);
         return true;
-      }
-
-      bool replace(const std::vector<Index> &removed,
-                   const std::vector<std::vector<Index> > &inserted,
-                   std::vector<Index> *insertedFaces = nullptr)
-      {
-        if(insertedFaces) insertedFaces->clear();
-        PreparedReplacement prepared;
-        return prepareReplacement(removed, inserted, prepared) &&
-          replace(prepared, insertedFaces);
       }
 
       bool replace(PreparedReplacement &prepared,
@@ -1090,242 +993,6 @@ namespace QuadOptimizer {
           _faces[static_cast<std::size_t>(faceIndex)].cornerCount : 0;
       }
 
-      // Extract the two boundary rails of an ordered T-Q^k-T strip.  The
-      // first and last entries are triangle apexes; every intermediate pair
-      // is an edge shared by two consecutive strip faces.  The first rail is
-      // rooted at the smaller vertex of the first shared edge, making the
-      // side choice independent of face roots and orientations.
-      bool triangleQuadStripRails(
-        const std::vector<Index> &orderedFaces,
-        std::vector<Index> &firstRail,
-        std::vector<Index> &secondRail) const
-      {
-        firstRail.clear();
-        secondRail.clear();
-        if(orderedFaces.size() < 2 || !manifold()) return false;
-
-        const std::set<Index> uniqueFaces(
-          orderedFaces.begin(), orderedFaces.end());
-        if(uniqueFaces.size() != orderedFaces.size()) return false;
-
-        std::vector<std::vector<Index> > corners(orderedFaces.size());
-        std::vector<std::vector<Edge> > faceEdges(orderedFaces.size());
-        for(std::size_t i = 0; i < orderedFaces.size(); ++i) {
-          const Index expectedCorners =
-            (i == 0 || i + 1 == orderedFaces.size()) ? 3 : 4;
-          if(faceCornerCount(orderedFaces[i]) != expectedCorners)
-            return false;
-          corners[i] = faceVertices(orderedFaces[i]);
-          faceEdges[i].reserve(corners[i].size());
-          for(std::size_t j = 0; j < corners[i].size(); ++j)
-            faceEdges[i].push_back(canonicalEdge(
-              corners[i][j], corners[i][(j + 1) % corners[i].size()]));
-        }
-
-        // The selected cells must themselves form an unpinched disk with no
-        // interior vertex.  More specific chain checks below reject a disk
-        // whose dual graph is not exactly the requested path.
-        Cavity disk;
-        if(!buildDiskCavity(orderedFaces, disk) ||
-           !disk.interiorVertices.empty())
-          return false;
-
-        std::vector<Edge> passageEdges;
-        passageEdges.reserve(orderedFaces.size() - 1);
-        for(std::size_t i = 0; i + 1 < orderedFaces.size(); ++i) {
-          std::vector<Edge> sharedEdges;
-          for(const Edge &edge : faceEdges[i])
-            if(std::find(faceEdges[i + 1].begin(), faceEdges[i + 1].end(),
-                         edge) != faceEdges[i + 1].end())
-              sharedEdges.push_back(edge);
-
-          std::vector<Index> sharedVertices;
-          for(const Index vertex : corners[i])
-            if(std::find(corners[i + 1].begin(), corners[i + 1].end(),
-                         vertex) != corners[i + 1].end())
-              sharedVertices.push_back(vertex);
-          if(sharedEdges.size() != 1 || sharedVertices.size() != 2 ||
-             !(canonicalEdge(sharedVertices[0], sharedVertices[1]) ==
-               sharedEdges.front()))
-            return false;
-
-          std::vector<Index> incidences = incidentFaces(sharedEdges.front());
-          std::vector<Index> expected =
-            {orderedFaces[i], orderedFaces[i + 1]};
-          std::sort(expected.begin(), expected.end());
-          if(incidences != expected) return false;
-          passageEdges.push_back(sharedEdges.front());
-        }
-
-        // Non-neighboring cells of a strip are disjoint, even at vertices.
-        // This rejects wrapped fans and paths with a hidden shortcut.
-        for(std::size_t i = 0; i < corners.size(); ++i)
-          for(std::size_t j = i + 2; j < corners.size(); ++j)
-            for(const Index vertex : corners[i])
-              if(std::find(corners[j].begin(), corners[j].end(), vertex) !=
-                 corners[j].end())
-                return false;
-
-        // In every intermediate quadrangle the entering and leaving edges
-        // must be opposite. Adjacent passage edges describe a fan, not a
-        // two-rail strip.
-        for(std::size_t i = 1; i + 1 < orderedFaces.size(); ++i) {
-          Index previousPosition = invalid;
-          Index nextPosition = invalid;
-          for(std::size_t j = 0; j < faceEdges[i].size(); ++j) {
-            if(faceEdges[i][j] == passageEdges[i - 1])
-              previousPosition = static_cast<Index>(j);
-            if(faceEdges[i][j] == passageEdges[i])
-              nextPosition = static_cast<Index>(j);
-          }
-          if(previousPosition == invalid || nextPosition == invalid ||
-             (previousPosition + 2) % 4 != nextPosition)
-            return false;
-        }
-
-        const auto apexOutsideEdge = [](const std::vector<Index> &triangle,
-                                        const Edge &edge) {
-          Index apex = invalid;
-          for(const Index vertex : triangle)
-            if(vertex != edge.first && vertex != edge.second) {
-              if(apex != invalid) return invalid;
-              apex = vertex;
-            }
-          return apex;
-        };
-        const Index firstApex =
-          apexOutsideEdge(corners.front(), passageEdges.front());
-        const Index lastApex =
-          apexOutsideEdge(corners.back(), passageEdges.back());
-        if(firstApex == invalid || lastApex == invalid) return false;
-
-        std::vector<Index> first =
-          {firstApex, passageEdges.front().first};
-        std::vector<Index> second =
-          {firstApex, passageEdges.front().second};
-        for(std::size_t i = 1; i + 1 < orderedFaces.size(); ++i) {
-          const Edge &entering = passageEdges[i - 1];
-          const Edge &leaving = passageEdges[i];
-          const auto continuation = [&](Index vertex) {
-            const auto found = std::find(
-              corners[i].begin(), corners[i].end(), vertex);
-            if(found == corners[i].end()) return invalid;
-            const std::size_t position = static_cast<std::size_t>(
-              found - corners[i].begin());
-            const Index previous = corners[i][
-              (position + corners[i].size() - 1) % corners[i].size()];
-            const Index next =
-              corners[i][(position + 1) % corners[i].size()];
-            const Index otherEntering = vertex == entering.first ?
-              entering.second : vertex == entering.second ?
-              entering.first : invalid;
-            if(otherEntering == invalid) return invalid;
-            const Index candidate = previous == otherEntering ? next :
-              next == otherEntering ? previous : invalid;
-            return candidate == leaving.first || candidate == leaving.second ?
-              candidate : invalid;
-          };
-          const Index nextFirst = continuation(first.back());
-          const Index nextSecond = continuation(second.back());
-          if(nextFirst == invalid || nextSecond == invalid ||
-             nextFirst == nextSecond)
-            return false;
-          first.push_back(nextFirst);
-          second.push_back(nextSecond);
-        }
-        first.push_back(lastApex);
-        second.push_back(lastApex);
-
-        // The two rails may only meet at their apexes and must reproduce the
-        // complete disk boundary.
-        std::vector<Index> railBoundary = first;
-        railBoundary.insert(railBoundary.end(), second.begin() + 1,
-                            second.end() - 1);
-        std::sort(railBoundary.begin(), railBoundary.end());
-        if(std::adjacent_find(railBoundary.begin(), railBoundary.end()) !=
-           railBoundary.end())
-          return false;
-        std::vector<Index> diskBoundary = disk.boundaryVertices;
-        std::sort(diskBoundary.begin(), diskBoundary.end());
-        if(railBoundary != diskBoundary) return false;
-
-        firstRail = std::move(first);
-        secondRail = std::move(second);
-        return true;
-      }
-
-      // Recognize the other useful T-Q^k-T path: an open fan whose cells
-      // all meet at one boundary vertex.  This is intentionally distinct
-      // from triangleQuadStripRails(); accepting every bent dual path here
-      // would turn the local rewrite into a generic polygon remesher again.
-      Index triangleQuadBoundaryFanCenter(
-        const std::vector<Index> &orderedFaces) const
-      {
-        if(orderedFaces.size() < 3 || !manifold()) return invalid;
-
-        const std::set<Index> uniqueFaces(
-          orderedFaces.begin(), orderedFaces.end());
-        if(uniqueFaces.size() != orderedFaces.size()) return invalid;
-
-        std::vector<std::vector<Index> > corners(orderedFaces.size());
-        std::vector<std::vector<Edge> > faceEdges(orderedFaces.size());
-        for(std::size_t i = 0; i < orderedFaces.size(); ++i) {
-          const Index expectedCorners =
-            (i == 0 || i + 1 == orderedFaces.size()) ? 3 : 4;
-          if(faceCornerCount(orderedFaces[i]) != expectedCorners)
-            return invalid;
-          corners[i] = faceVertices(orderedFaces[i]);
-          for(std::size_t j = 0; j < corners[i].size(); ++j)
-            faceEdges[i].push_back(canonicalEdge(
-              corners[i][j], corners[i][(j + 1) % corners[i].size()]));
-        }
-
-        Cavity disk;
-        if(!buildDiskCavity(orderedFaces, disk) ||
-           !disk.interiorVertices.empty())
-          return invalid;
-
-        std::set<Index> common(corners.front().begin(),
-                               corners.front().end());
-        for(std::size_t i = 1; i < corners.size(); ++i) {
-          std::set<Index> next;
-          for(const Index vertex : corners[i])
-            if(common.find(vertex) != common.end()) next.insert(vertex);
-          common.swap(next);
-        }
-        if(common.size() != 1) return invalid;
-        const Index center = *common.begin();
-        if(!isBoundaryVertex(center)) return invalid;
-
-        for(std::size_t i = 0; i + 1 < orderedFaces.size(); ++i) {
-          std::vector<Edge> sharedEdges;
-          for(const Edge &edge : faceEdges[i])
-            if(std::find(faceEdges[i + 1].begin(),
-                         faceEdges[i + 1].end(), edge) !=
-               faceEdges[i + 1].end())
-              sharedEdges.push_back(edge);
-          if(sharedEdges.size() != 1 ||
-             (sharedEdges.front().first != center &&
-              sharedEdges.front().second != center))
-            return invalid;
-          std::vector<Index> incidences = incidentFaces(sharedEdges.front());
-          std::vector<Index> expected =
-            {orderedFaces[i], orderedFaces[i + 1]};
-          std::sort(expected.begin(), expected.end());
-          if(incidences != expected) return invalid;
-        }
-
-        // Non-neighbors may meet at the fan center, and nowhere else.
-        for(std::size_t i = 0; i < corners.size(); ++i)
-          for(std::size_t j = i + 2; j < corners.size(); ++j)
-            for(const Index vertex : corners[i])
-              if(vertex != center &&
-                 std::find(corners[j].begin(), corners[j].end(), vertex) !=
-                   corners[j].end())
-                return invalid;
-        return center;
-      }
-
       std::vector<Index> incidentFaces(const Edge &edge) const
       {
         std::vector<Index> result;
@@ -1422,46 +1089,10 @@ namespace QuadOptimizer {
         if(!validVertex(center)) return false;
         const std::vector<Index> star = incidentFaces(center);
         if(!buildDiskCavity(star, result)) return false;
-        result.anchorFaces = incidentFaceRing(center);
-        if(result.anchorFaces.size() != star.size()) {
+        if(incidentFaceRing(center).size() != star.size()) {
           result.clear();
           return false;
         }
-        result.anchor = CavityAnchor::Vertex;
-        result.anchorFirst = center;
-        result.anchorOnBoundary = isBoundaryVertex(center) ? 1 : 0;
-        result.anchorVertices = {center};
-        return true;
-      }
-
-      bool vertexStarsCavity(const std::vector<Index> &centers,
-                             Cavity &result) const
-      {
-        result.clear();
-        if(centers.empty()) return false;
-        std::set<Index> uniqueCenters;
-        std::set<Index> faces;
-        bool boundary = false;
-        for(const Index center : centers) {
-          if(!validVertex(center) || !uniqueCenters.insert(center).second)
-            return false;
-          const std::vector<Index> star = incidentFaces(center);
-          if(star.empty()) return false;
-          faces.insert(star.begin(), star.end());
-          boundary = boundary || isBoundaryVertex(center);
-        }
-        const std::vector<Index> support(faces.begin(), faces.end());
-        if(!buildDiskCavity(support, result)) return false;
-        result.anchor = centers.size() == 1 ?
-          CavityAnchor::Vertex : CavityAnchor::VertexSet;
-        result.anchorVertices.assign(uniqueCenters.begin(),
-                                     uniqueCenters.end());
-        result.anchorFirst = result.anchorVertices.front();
-        result.anchorSecond = result.anchorVertices.size() == 2 ?
-          result.anchorVertices.back() : invalid;
-        result.anchorOnBoundary = boundary ? 1 : 0;
-        if(result.anchorVertices.size() == 1)
-          result.anchorFaces = incidentFaceRing(result.anchorFirst);
         return true;
       }
 
@@ -1474,90 +1105,10 @@ namespace QuadOptimizer {
         const std::vector<Index> incident = incidentFaces(edge);
         if(incident.size() != 2 || !buildDiskCavity(incident, result))
           return false;
-        result.anchor = CavityAnchor::Edge;
-        result.anchorFirst = edge.first;
-        result.anchorSecond = edge.second;
-        result.anchorOnBoundary = 0;
-        result.anchorVertices = {edge.first, edge.second};
-        result.anchorFaces = incident;
         return true;
-      }
-
-      bool singleQuadCavity(Index quadrangle, Cavity &result) const
-      {
-        result.clear();
-        if(faceVertices(quadrangle).size() != 4 ||
-           !buildDiskCavity({quadrangle}, result))
-          return false;
-        result.anchor = CavityAnchor::SingleQuadrangle;
-        result.anchorFirst = quadrangle;
-        result.anchorFaces = {quadrangle};
-        return true;
-      }
-
-      bool extendByVertexStars(const Cavity &core,
-                               const std::vector<Index> &vertices,
-                               Cavity &result) const
-      {
-        result.clear();
-        if(core.faces.empty() || core.coreFaces.empty() || vertices.empty())
-          return false;
-        std::set<Index> support(core.faces.begin(), core.faces.end());
-        for(const Index vertex : vertices) {
-          if(!validVertex(vertex)) return false;
-          const std::vector<Index> star = incidentFaces(vertex);
-          if(star.empty()) return false;
-          support.insert(star.begin(), star.end());
-        }
-        const std::vector<Index> faces(support.begin(), support.end());
-        Cavity extended;
-        if(!buildDiskCavity(faces, extended)) return false;
-        extended.anchor = core.anchor;
-        extended.anchorFirst = core.anchorFirst;
-        extended.anchorSecond = core.anchorSecond;
-        extended.anchorOnBoundary = core.anchorOnBoundary;
-        extended.anchorVertices = core.anchorVertices;
-        extended.anchorFaces = core.anchorFaces;
-        extended.coreFaces = core.coreFaces;
-        result = std::move(extended);
-        return true;
-      }
-
-      // Turn an already constructed support disk into a rewrite core while
-      // retaining the numeric anchor that selected it.  Collectors use this
-      // after adding rings (or C' temporarily) around a vertex, edge or
-      // quadrangle; a CavitySeed must always describe the exact cells that a
-      // transaction will replace, i.e. coreFaces == faces.
-      bool promoteSupportToCore(const Cavity &support, Cavity &result) const
-      {
-        Cavity promoted;
-        if(!buildDiskCavity(support.faces, promoted)) return false;
-        promoted.anchor = support.anchor;
-        promoted.anchorFirst = support.anchorFirst;
-        promoted.anchorSecond = support.anchorSecond;
-        promoted.anchorOnBoundary = support.anchorOnBoundary;
-        promoted.anchorVertices = support.anchorVertices;
-        promoted.anchorFaces = support.anchorFaces;
-        result = std::move(promoted);
-        return true;
-      }
-
-      // Cell-corner sequence attached to the cavity anchor. Values are 3 or
-      // 4 for the mixed surface meshes supported by this optimizer.
-      std::vector<Index> anchorFacePattern(const Cavity &cavity) const
-      {
-        std::vector<Index> result;
-        result.reserve(cavity.anchorFaces.size());
-        for(const Index face : cavity.anchorFaces) {
-          const Index corners = faceCornerCount(face);
-          if(corners != 3 && corners != 4) return {};
-          result.push_back(corners);
-        }
-        return result;
       }
 
       std::size_t vertexStorageSize() const { return _vertices.size(); }
-      std::size_t faceStorageSize() const { return _faces.size(); }
     };
 
   } // namespace HalfEdgeMesh

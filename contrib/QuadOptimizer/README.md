@@ -16,8 +16,8 @@ algorithms.
 - `quadFinalRepair.cpp`: quality-based and transactional terminal quad splitting.
 - `smallCavityOptimizerV2.cpp`: V2 improvement rounds and final physical smoothing.
 - `halfEdge.cpp`: shared topology, handle maps and mesh replacement transactions
-  for both optimizers and HoleRings. The legacy cavity context only adds sorted
-  views, cached queries and rewrite policy.
+  for V2 and HoleRings.
+- `quadMeshUtils.cpp`: HoleRings, mesh validity checks and quality summaries.
 
 The core keeps small dispatch calls. `Generator.h` and `meshGFaceOptimize.h`
 retain their original interfaces. Projection accelerators and the MSH4 embedded
@@ -48,8 +48,9 @@ optimizer; non-positive values use the local sizes from Gmsh's size field.
 of Quadqs. PACK uses the same sizing for its background triangulation and point
 packing, with no intermediate size scaling.
 The default intrinsic split factor remains zero: no extra midpoint insertion.
-`Mesh.OptimizeQuadsPillowLayers` enables the separate
-`gmsh::model::mesh::optimize("OptimizeQuadHoleRings")` pass after Fast cleanup.
+`Mesh.OptimizeQuadsPillowLayers` sets the smoothing neighborhood for the separate
+`gmsh::model::mesh::optimize("OptimizeQuadHoleRings")` pass. Invoke this pass
+explicitly after quad optimization.
 Zero disables it; one includes each affected vertex star in the local Winslow
 solve, and larger values add neighboring element layers. This number controls
 the smoothing support, not the number of rings. Each hole receives at most one
@@ -69,7 +70,7 @@ the local target size. A reliable opposed UV normal is never replaced by this
 fallback. Its attempted/covered query counts are reported for candidate trials.
 It deliberately permits shape and edge-size specification failures, including
 large aspect ratios in thin rings. These failures remain visible in its final
-quality report. It runs no legacy rewrites, global smoothing or final splitting
+quality report. It runs no global smoothing or final splitting
 that could immediately remove the requested ring.
 For example, surface quads with target size 4:
 
@@ -81,8 +82,9 @@ Debug files and JSON reports require explicit opt-in.
 
 ## Improvement rounds
 
-`OptimizeQuadsFast` uses the persistent half-edge V2 optimizer. PACK delegates
-mesh generation to Gmsh. V2 then runs the following model-wide schedule:
+`OptimizeQuads` and `OptimizeQuadsFast` both use the persistent half-edge V2
+optimizer. PACK delegates mesh generation to Gmsh. V2 then runs the following
+model-wide schedule:
 
 1. Smooth all eligible nodes: by default up to three projected Smart Laplacian
    sweeps, followed by one physical 3D mean-plane Winslow sweep.
@@ -156,7 +158,8 @@ pass the full orientation/connectivity check; otherwise the splits roll back.
 
 ## Options
 
-- `Mesh.PackCleanupMethod = 1`: V2 cleanup (default).
+- `Mesh.PackCleanupMethod = 1`: V2 cleanup (default); `2` disables cleanup.
+  The former value `0` also selects V2 for compatibility.
 - `Mesh.OptimizeQuadsSmartLaplacian = 2`: Smart Laplacian followed by one
   Winslow sweep per batch (default). `1` selects Smart Laplacian in the batches;
   `0` retains projected centroid/Winslow fallback. All modes finish with four

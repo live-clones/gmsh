@@ -149,13 +149,6 @@ namespace QuadOptimizer {
     return _face && _valid && _mesh.manifold();
   }
 
-  std::uint64_t FaceHalfEdge::vertexRevision(Id vertex) const
-  {
-    return vertex >= 0 && static_cast<std::size_t>(vertex) <
-                            _vertexRevisions.size() ?
-      _vertexRevisions[static_cast<std::size_t>(vertex)] : 0;
-  }
-
   FaceHalfEdge::Id FaceHalfEdge::addVertex(MVertex *vertex)
   {
     if(!vertex) return HalfEdgeMesh::invalid;

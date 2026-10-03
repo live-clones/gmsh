@@ -35,7 +35,7 @@ Mesh.RecombineAll = 1;
 Mesh.RecombinationAlgorithm = 1;
 // Impose no positive recombination quality threshold; validity checks remain.
 Mesh.RecombineMinimumQuality = 0;
-// Run OptimizeQuadsFast/V2 (1); alternatives: legacy cleanup (0), disabled (2).
+// Run V2 cleanup (1); use 2 to disable cleanup.
 Mesh.PackCleanupMethod = 1;
 // Use Smart Laplacian smoothing followed by one 3D Winslow sweep per batch.
 Mesh.OptimizeQuadsSmartLaplacian = 2;

@@ -31,53 +31,15 @@ namespace QuadOptimizer {
 
   struct SmallCavityOptimizerOptions {
     bool optimizeOneInteriorVertexCavities = true;
-    bool optimizeThreeInteriorVertexCavities = true;
-    bool optimizeFourInteriorVertexCavities = true;
     bool eliminateDiamonds = true;
     bool splitValenceSixVertices = true;
     bool convertBoundaryTriangleQuadTriangleFans = true;
-    // Kinney CleanUp stages. The implementation detects generic cavities
-    // around the configurations described in the paper and enumerates all
-    // stored disk quadrangulations instead of relying on the paper's
-    // non-enumerated set of 64 implementation cases.
-    bool cleanUpConnectivity = true;
-    bool cleanUpBoundary = true;
-    bool cleanUpShape = true;
-    bool cleanUpSize = true;
-    // Paper-style path used by OptimizeQuadsFast: constant-size local
-    // decisions, harmonic candidate placement and bounded local Winslow
-    // relaxation.
-    bool fastInteractiveCleanUp = false;
-    // Simpler Fast schedule: first apply monotone structural reductions
-    // (including valid TT -> Q and diamond collapses), then accept QQ/QT/TT
-    // swaps only when the unchanged vertex geometry strictly improves the
-    // element-quality objective, and finally smooth the resulting topology
-    // once.
-    bool stagedTopologyThenQuality = false;
-    // Internal candidate-evaluation contracts used by the staged schedule.
-    // They remain public to keep copied option sets explicit and testable,
-    // but normal callers should select stagedTopologyThenQuality instead.
-    bool evaluateCandidatesWithoutLocalSmoothing = false;
-    bool requireStrictElementQualityImprovement = false;
-    // Internal contract for mandatory acyclic reductions selected by the
-    // staged topology pass (QTT -> Q, T-Q^k-T, TT -> Q and diamonds).
-    // The replacement must remain topologically valid, oriented and
-    // non-degenerate, but quality/size/CAD improvement is deferred to the
-    // single global smoothing pass.
-    bool acceptValidTopologyReduction = false;
-    // Run only the final fixed-point closure of the complete local rewrite
-    // catalog. PACK uses this after its terminal operations, which can expose
-    // swaps, triangle strips, boundary fans or diamonds after the ordinary
-    // Fast optimization.
-    bool finalPatternClosureOnly = false;
-    bool topologyOnlyIfCavityHasSpecificationFailure = true;
     // Optional post-processing: attempt to establish one complete quad ring
     // around every hole, opening a newly inserted infinitesimal ring with
-    // local Winslow when all quality and size gates accept it. Zero disables
+    // local Winslow when physical and CAD guards accept it. Zero disables
     // the operator. One optimizes the complete affected vertex stars; larger
     // values add neighboring element layers to that patch.
     int pillowNeighborLayers = 0;
-    int smoothingPasses = 2;
     // Freitag (1997) Smart Laplacian, adapted to projected surface quads.
     // Strict local minimum-sine improvement; no optimization fallback.
     bool smartLaplacian = false;
@@ -98,18 +60,8 @@ namespace QuadOptimizer {
     // must pass the complete physical orientation check.
     double finalSplitCadDistanceRatio = .2;
     bool finalPairCleanup = true; // V2: enable the TT merge phase.
-    int postTopologyNeighborSmoothingPasses = 2;
     int maximumOptimizationPasses = 3; // V2: -1 runs until a topology-idle pass.
     int maximumAcceptedCavities = 100;
-    int maximumTopologyCandidatesPerCavity = 24;
-    // Connectivity candidates are screened with a short Winslow solve; only
-    // the best shortlist receives the fully converged solve.
-    int maximumCleanUpCandidatesPerCavity = 128;
-    int maximumCleanUpWinslowCandidatesPerCavity = 12;
-    int maximumCleanUpCavityRings = 2;
-    int maximumCleanUpCavityElements = 12;
-    int maximumCleanUpInteriorVertices = 4;
-    double cleanUpLongEdgeRatio = 2.5;
 
     // Optional size-map filter. It is disabled by default: cavity boundaries
     // are fixed, so size variations remain local.
@@ -153,9 +105,7 @@ namespace QuadOptimizer {
     bool success = true;
     bool skippedInvalidInputCellComplex = false;
     std::size_t passes = 0;
-    // Number of committed local topology transactions on this face. The V2
-    // engine records this directly; legacy callers can continue using the
-    // individual rule counters below.
+    // Number of committed local topology transactions on this face.
     std::size_t acceptedCavities = 0;
     std::size_t acceptedTerminalMandatoryCavities = 0;
     std::size_t finalInvalidQuadsSplit = 0;
@@ -173,7 +123,6 @@ namespace QuadOptimizer {
     std::size_t rejectedBySize = 0;
     std::size_t rejectedByQuality = 0;
     std::size_t reorientedElements = 0;
-    std::size_t skippedSpecificationCompliant = 0;
     std::size_t diamondsVisited = 0;
     std::size_t acceptedDiamonds = 0;
     std::size_t valenceSixVerticesVisited = 0;
@@ -202,56 +151,9 @@ namespace QuadOptimizer {
     // quads. Triangle count is the strict improvement for this operator.
     std::size_t quadTwoTriangleCavitiesVisited = 0;
     std::size_t acceptedQuadTwoTriangleReductions = 0;
-    // Simultaneous B=6 mixed rewrite for T-Q-T on opposite quad edges. It
-    // preserves 1Q+2T while choosing among all 21 labelled planar fillings.
-    std::size_t oppositeEdgeTriangleQuadSwapsVisited = 0;
-    std::size_t acceptedOppositeEdgeTriangleQuadSwaps = 0;
-    // Fallback for an opposite-edge T-Q-T disk when none of its direct 2Q
-    // fillings is admissible: insert one face vertex and build three quads.
-    std::size_t oppositeEdgeTriangleQuadFansVisited = 0;
-    std::size_t acceptedOppositeEdgeTriangleQuadFans = 0;
     std::size_t acceptedFinalSmoothingCavities = 0;
     std::size_t acceptedEdgeSwaps = 0;
-    // Subset of acceptedEdgeSwaps found by the generic CleanUp cavity stage;
-    // these are already included in one of the four CleanUp family counters.
-    std::size_t acceptedCleanUpEdgeSwaps = 0;
-    std::size_t rejectedEdgeSwapsNoIntersection = 0;
-    std::size_t rejectedEdgeSwapsNonConvex = 0;
     std::size_t acceptedOneInteriorVertexCavities = 0;
-    std::size_t acceptedThreeInteriorVertexCavities = 0;
-    std::size_t acceptedFourInteriorVertexCavities = 0;
-    std::size_t cleanUpCavitiesVisited = 0;
-    std::size_t cleanUpConnectivityAccepted = 0;
-    std::size_t cleanUpBoundaryAccepted = 0;
-    std::size_t cleanUpShapeAccepted = 0;
-    std::size_t cleanUpSizeAccepted = 0;
-    // Per-round attempts; a successful hole is visited again to confirm the
-    // composed pillow/CleanUp fixed point.
-    std::size_t pillowHolesVisited = 0;
-    std::size_t pillowHolesAlreadyPresent = 0;
-    std::size_t pillowHolesAccepted = 0;
-    std::size_t pillowQuadranglesInserted = 0;
-    std::size_t excessiveWarpingQuadrangles = 0;
-    std::size_t nonConvexOrInvalidQuadrangles = 0;
-    std::size_t warpedQuadranglesSplit = 0;
-    std::size_t warpedQuadranglesRejected = 0;
-    std::size_t catastrophicAngleQuadranglesSelectedForSplit = 0;
-    std::size_t catastrophicAngleQuadranglesSplit = 0;
-    std::size_t catastrophicAngleQuadranglesRejectedBySize = 0;
-    std::size_t catastrophicAngleQuadranglesRejectedByGeometry = 0;
-    std::size_t catastrophicAngleQuadranglesRejectedOther = 0;
-    std::size_t terminalTrianglePairsVisited = 0;
-    std::size_t terminalTrianglePairsAccepted = 0;
-    std::size_t terminalTrianglePairsRejectedInvalid = 0;
-    std::size_t terminalTrianglePairsRejectedTopology = 0;
-    std::size_t terminalTrianglePairsRejectedQuality = 0;
-    std::size_t terminalTrianglePairsRejectedSize = 0;
-    std::size_t terminalTrianglePairsRejectedGeometry = 0;
-    double cleanUpCriticalSeconds = 0.;
-    double cleanUpConnectivitySeconds = 0.;
-    double cleanUpBoundarySeconds = 0.;
-    double cleanUpShapeSeconds = 0.;
-    double cleanUpSizeSeconds = 0.;
     bool sizeRequirementsMet = true;
     std::size_t initialEdgesBelowMinimum = 0;
     std::size_t initialEdgesAboveMaximum = 0;
@@ -281,17 +183,6 @@ namespace QuadOptimizer {
     SmallCavityOptimizerResult optimizer;
   };
 
-  struct TerminalTriangleRecombinationResult {
-    bool success = true;
-    std::size_t pairsVisited = 0;
-    std::size_t accepted = 0;
-    std::size_t rejectedInvalid = 0;
-    std::size_t rejectedTopology = 0;
-    std::size_t rejectedQuality = 0;
-    std::size_t rejectedSize = 0;
-    std::size_t rejectedGeometry = 0;
-  };
-
   struct AllFacesOptimizerResult {
     bool success = true;
     std::size_t facesVisited = 0;
@@ -312,8 +203,6 @@ namespace QuadOptimizer {
     std::size_t acceptedDiamonds = 0;
     std::size_t acceptedValenceSixSplits = 0;
     std::size_t acceptedQuadTwoTriangleReductions = 0;
-    std::size_t acceptedOppositeEdgeTriangleQuadSwaps = 0;
-    std::size_t acceptedOppositeEdgeTriangleQuadFans = 0;
     std::size_t acceptedInteriorTriangleTriangleQuadReductions = 0;
     std::size_t acceptedInteriorFourTriangleFanReductions = 0;
     std::size_t acceptedInteriorAlternatingQuadTriangleReductions = 0;
@@ -328,39 +217,10 @@ namespace QuadOptimizer {
     std::size_t rejectedBySize = 0;
     std::size_t rejectedByQuality = 0;
     std::size_t reorientedElements = 0;
-    std::size_t pillowHolesVisited = 0;
-    std::size_t pillowHolesAlreadyPresent = 0;
-    std::size_t acceptedPillows = 0;
-    std::size_t insertedPillowQuadrangles = 0;
-    std::size_t excessiveWarpingQuadrangles = 0;
-    std::size_t nonConvexOrInvalidQuadrangles = 0;
-    std::size_t warpedQuadranglesSplit = 0;
-    std::size_t warpedQuadranglesRejected = 0;
-    std::size_t catastrophicAngleQuadranglesSelectedForSplit = 0;
-    std::size_t catastrophicAngleQuadranglesSplit = 0;
-    std::size_t catastrophicAngleQuadranglesRejectedBySize = 0;
-    std::size_t catastrophicAngleQuadranglesRejectedByGeometry = 0;
-    std::size_t catastrophicAngleQuadranglesRejectedOther = 0;
-    std::size_t terminalTrianglePairsVisited = 0;
-    std::size_t terminalTrianglePairsAccepted = 0;
-    std::size_t terminalTrianglePairsRejectedInvalid = 0;
-    std::size_t terminalTrianglePairsRejectedTopology = 0;
-    std::size_t terminalTrianglePairsRejectedQuality = 0;
-    std::size_t terminalTrianglePairsRejectedSize = 0;
-    std::size_t terminalTrianglePairsRejectedGeometry = 0;
     bool sizeRequirementsMet = true;
-    std::size_t initialEdgesBelowMinimum = 0;
-    std::size_t initialEdgesAboveMaximum = 0;
-    std::size_t initialInvalidSizeEdges = 0;
     std::size_t finalEdgesBelowMinimum = 0;
     std::size_t finalEdgesAboveMaximum = 0;
     std::size_t finalInvalidSizeEdges = 0;
-    double initialMinimumEdgeLength =
-      std::numeric_limits<double>::infinity();
-    double initialMaximumEdgeLength = 0.;
-    double finalMinimumEdgeLength =
-      std::numeric_limits<double>::infinity();
-    double finalMaximumEdgeLength = 0.;
     SpecificationObjective initialObjective;
     SpecificationObjective finalObjective;
     std::vector<FaceOptimizerResult> faces;
@@ -449,31 +309,6 @@ namespace QuadOptimizer {
   // half-edge complex.
   GMSH_API bool isRegularOrientedSurfaceCellComplex(GFace *face);
 
-  // Replace adjacent triangle pairs by quadrangles only when the complete
-  // local transaction strictly improves the same additive global quality as
-  // Fast cleanup. Candidates must satisfy every absolute shape
-  // specification, remain strictly convex in UV and physical space, preserve
-  // the surface cell complex and not increase hard edge-size violations. The
-  // integrated distance to the CAD participates in the compromise.
-  GMSH_API TerminalTriangleRecombinationResult
-  recombineRemainingTrianglePairs(
-    GFace *face,
-    const SmallCavityOptimizerOptions &options =
-      SmallCavityOptimizerOptions());
-
-  // Maintain a half-edge index of the manifold face, rank local cavities, try
-  // the best disk-quadrangulation patterns and execute improving mesh diffs in
-  // vertex-disjoint waves. Boundary vertices are never moved.
-  GMSH_API SmallCavityOptimizerResult optimizeSmallQuadCavities(
-    GFace *face,
-    const SmallCavityOptimizerOptions &options = SmallCavityOptimizerOptions());
-
-  // Optimize every face containing quadrangles. Faces are independent and
-  // processed in parallel; model-wide vertex caches are invalidated once.
-  GMSH_API AllFacesOptimizerResult optimizeSmallQuadCavitiesAllFaces(
-    const SmallCavityOptimizerOptions &options = SmallCavityOptimizerOptions(),
-    int maximumThreads = 0);
-
   struct QuadHoleRingResult {
     bool success = true;
     bool skippedInvalidInputCellComplex = false;
@@ -486,8 +321,8 @@ namespace QuadOptimizer {
     std::size_t physicalNormalQueries = 0, physicalNormalCovered = 0;
   };
 
-  // Insert at most one complete ring per hole, without running the legacy
-  // rewrite catalog. Boundary/embedded vertices stay fixed. Every changed
+  // Insert at most one complete ring per hole. Boundary/embedded vertices
+  // stay fixed. Every changed
   // patch passes complete physical-normal sampling, non-folding and bounded
   // local/cumulative CAD-distance checks before its transaction. Shape and
   // edge-size specifications are reported but do not veto structural rings.

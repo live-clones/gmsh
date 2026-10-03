@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "smallCavityOptimizer.h"
+#include "quadMeshUtils.h"
 
 namespace QuadOptimizer {
 

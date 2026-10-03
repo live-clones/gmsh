@@ -24,7 +24,7 @@
 #include "SPoint2.h"
 #include "SVector3.h"
 #include "halfEdge.h"
-#include "halfEdgeRewriteCatalog.h"
+#include "halfEdgeRewrites.h"
 
 #include <algorithm>
 #include <array>
@@ -3917,18 +3917,9 @@ namespace QuadOptimizer {
         face.acceptedGeometryDrivenTriangleTriangleSwaps;
       all.acceptedGeometryDrivenMixedTriangleQuadSwaps +=
         face.acceptedGeometryDrivenMixedTriangleQuadSwaps;
-      all.terminalTrianglePairsVisited += face.terminalTrianglePairsVisited;
-      all.terminalTrianglePairsAccepted += face.terminalTrianglePairsAccepted;
       all.acceptedSmoothingCavities +=
         face.acceptedFinalSmoothingCavities;
       all.reorientedElements += face.reorientedElements;
-      all.excessiveWarpingQuadrangles += face.excessiveWarpingQuadrangles;
-      all.nonConvexOrInvalidQuadrangles += face.nonConvexOrInvalidQuadrangles;
-      all.warpedQuadranglesSplit += face.warpedQuadranglesSplit;
-      all.warpedQuadranglesRejected += face.warpedQuadranglesRejected;
-      all.catastrophicAngleQuadranglesSelectedForSplit += face.catastrophicAngleQuadranglesSelectedForSplit;
-      all.catastrophicAngleQuadranglesSplit += face.catastrophicAngleQuadranglesSplit;
-      all.catastrophicAngleQuadranglesRejectedOther += face.catastrophicAngleQuadranglesRejectedOther;
       all.sizeRequirementsMet = all.sizeRequirementsMet && face.sizeRequirementsMet;
       all.finalEdgesBelowMinimum += face.finalEdgesBelowMinimum;
       all.finalEdgesAboveMaximum += face.finalEdgesAboveMaximum;

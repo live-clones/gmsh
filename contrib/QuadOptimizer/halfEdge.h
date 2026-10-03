@@ -93,7 +93,6 @@ namespace QuadOptimizer {
 
     bool valid() const;
     const HalfEdgeMesh::Mesh &numericMesh() const { return _mesh; }
-    std::uint64_t vertexRevision(Id vertex) const;
 
     std::vector<Id> cells() const;
     std::vector<Id> vertices() const;

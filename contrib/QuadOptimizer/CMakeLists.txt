@@ -4,7 +4,7 @@ set(QUAD_OPTIMIZER_SRC
   quadOptimizerIntegration.cpp
   halfEdge.cpp
   quadQuality.cpp
-  smallCavityOptimizer.cpp
+  quadMeshUtils.cpp
   smallCavityOptimizerV2.cpp
   smallCavityWinslow.cpp
 )
