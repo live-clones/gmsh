@@ -22,9 +22,11 @@ The other files are:
 * netgen_config.hpp and netgen_version.hpp: written by hand from upstream
   cmake/generate_version_file.cmake (no Python, MPI, OCC or GUI)
 * nglib_gmsh.h and nglib_gmsh.cpp: Gmsh's interface to Netgen, modelled after
-  upstream nglib/nglib.h and nglib/nglib.cpp. It also defines intersect(),
-  which is only needed for 2D boundary layers and would otherwise require
-  the 2D CSG and spline geometry (libsrc/geom2d)
+  upstream nglib/nglib.h and nglib/nglib.cpp. It also replaces the boundary
+  layer entry points (GenerateBoundaryLayer, InsertBoundaryLayers2d and
+  FinalizeBoundaryLayers2d) by functions that throw: Gmsh never uses them,
+  and this avoids compiling meshing/boundarylayer*.cpp (Apple clang 11
+  crashes on boundarylayer.cpp) and the 2D CSG and spline geometry
 
 The .cpp files listed in CMakeLists.txt are the ones the link of
 nglib_gmsh.cpp needs; the headers are the ones they include (including all

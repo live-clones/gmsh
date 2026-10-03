@@ -10995,6 +10995,44 @@ unsigned int opt_view_color_trihedra(OPT_ARGS_COL)
 #endif
 }
 
+unsigned int opt_view_color_polygons(OPT_ARGS_COL)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0);
+  if(action & GMSH_SET) {
+    opt->color.polygon = val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    CCC(opt->color.polygon, FlGui::instance()->options->view.color[9]);
+  }
+#endif
+  return opt->color.polygon;
+#else
+  return 0;
+#endif
+}
+
+unsigned int opt_view_color_polyhedra(OPT_ARGS_COL)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0);
+  if(action & GMSH_SET) {
+    opt->color.polyhedron = val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    CCC(opt->color.polyhedron, FlGui::instance()->options->view.color[10]);
+  }
+#endif
+  return opt->color.polyhedron;
+#else
+  return 0;
+#endif
+}
+
 unsigned int opt_view_color_tangents(OPT_ARGS_COL)
 {
 #if defined(HAVE_POST)
@@ -11005,7 +11043,7 @@ unsigned int opt_view_color_tangents(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    CCC(opt->color.tangents, FlGui::instance()->options->view.color[9]);
+    CCC(opt->color.tangents, FlGui::instance()->options->view.color[11]);
   }
 #endif
   return opt->color.tangents;
@@ -11024,7 +11062,7 @@ unsigned int opt_view_color_normals(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    CCC(opt->color.normals, FlGui::instance()->options->view.color[10]);
+    CCC(opt->color.normals, FlGui::instance()->options->view.color[12]);
   }
 #endif
   return opt->color.normals;
@@ -11043,7 +11081,7 @@ unsigned int opt_view_color_text2d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    CCC(opt->color.text2d, FlGui::instance()->options->view.color[11]);
+    CCC(opt->color.text2d, FlGui::instance()->options->view.color[13]);
 #endif
   return opt->color.text2d;
 #else
@@ -11061,7 +11099,7 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    CCC(opt->color.text3d, FlGui::instance()->options->view.color[12]);
+    CCC(opt->color.text3d, FlGui::instance()->options->view.color[14]);
 #endif
   return opt->color.text3d;
 #else
@@ -11079,7 +11117,7 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    CCC(opt->color.axes, FlGui::instance()->options->view.color[13]);
+    CCC(opt->color.axes, FlGui::instance()->options->view.color[15]);
 #endif
   return opt->color.axes;
 #else
@@ -11097,7 +11135,7 @@ unsigned int opt_view_color_background2d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    CCC(opt->color.background2d, FlGui::instance()->options->view.color[14]);
+    CCC(opt->color.background2d, FlGui::instance()->options->view.color[16]);
 #endif
   return opt->color.background2d;
 #else

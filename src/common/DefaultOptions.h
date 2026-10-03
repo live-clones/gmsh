@@ -627,9 +627,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "FontSize" , opt_general_fontsize , -1. ,
     "Size of the font in the user interface, in pixels (-1: automatic)" },
 
-  { F|O, "GraphicsFontSize" , opt_general_graphics_fontsize , 15. ,
+  { F|O, "GraphicsFontSize" , opt_general_graphics_fontsize , 16. ,
     "Size of the font in the graphic window, in pixels" },
-  { F|O, "GraphicsFontSizeTitle" , opt_general_graphics_fontsize_title , 18. ,
+  { F|O, "GraphicsFontSizeTitle" , opt_general_graphics_fontsize_title , 19. ,
     "Size of the font in the graphic window for titles, in pixels" },
   { F|S, "GraphicsHeight" , opt_general_graphics_size1 , 600. ,
     "Height (in pixels) of the graphic window, and of the pictures made "
@@ -727,7 +727,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light5W" , opt_general_light53 , 0.0 ,
     "W coordinate of light source 5: 0 for a directional light, 1 for a point "
     "light at (X, Y, Z), in between for a point light at (X, Y, Z) / W" },
-  { F|O, "LineWidth" , opt_general_line_width , 1.0 ,
+  { F|O, "LineWidth" , opt_general_line_width , 1.5 ,
     "Display width of lines (in pixels)" },
 
   { F|S, "ManipulatorPositionX" , opt_general_manip_position0 , 650. ,
@@ -809,7 +809,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Height (in pixels) of the plugin window" },
   { F|S, "PluginWidth" , opt_general_plugin_size0 , 420. ,
     "Width (in pixels) of the plugin window" },
-  { F|O, "PointSize" , opt_general_point_size , 3. ,
+  { F|O, "PointSize" , opt_general_point_size , 6. ,
     "Display size of points (in pixels)" },
   { F|O, "PolygonOffsetAlwaysOn" , opt_general_polygon_offset_always , 0. ,
     "Always apply polygon offset, instead of trying to detect when it is required" },
@@ -1130,9 +1130,9 @@ StringXNumber GeometryOptions_Number[] = {
     "Display points labels?" },
   { F|O|D, "PointNumbers" , opt_geometry_point_labels , 0. ,
     "[Deprecated]" },
-  { F|O, "PointSelectSize" , opt_geometry_point_sel_size , 6. ,
+  { F|O, "PointSelectSize" , opt_geometry_point_sel_size , 10. ,
     "Display size of selected points (in pixels)" },
-  { F|O, "PointSize" , opt_geometry_point_size , 4. ,
+  { F|O, "PointSize" , opt_geometry_point_size , 8. ,
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_geometry_point_type , 0. ,
     "Display points as solid color dots (0) or 3D spheres (1)" },
@@ -2152,7 +2152,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "LineType" , opt_view_line_type , 0. ,
     "Display lines as solid color segments (0), 3D cylinders (1) or tapered "
     "cylinders (2)" },
-  { F|O, "LineWidth" , opt_view_line_width , 1.0 ,
+  { F|O, "LineWidth" , opt_view_line_width , 2.0 ,
     "Display width of lines (in pixels)" },
 
   { F|O,   "MaxRecursionLevel" , opt_view_max_recursion_level , 0. ,
@@ -2199,7 +2199,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Opacity" , opt_view_opacity , 1. ,
     "Opacity factor applied to the colormap (1: unchanged, 0: fully "
     "transparent)" },
-  { F|O, "PointSize" , opt_view_point_size , 3. ,
+  { F|O, "PointSize" , opt_view_point_size , 6. ,
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_view_point_type , 0. ,
     "Display points as solid color dots (0), 3D spheres (1), scaled dots "
@@ -2651,6 +2651,8 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Prisms" , opt_view_color_prisms , ELECOL, "Prism color" },
   { F|O, "Pyramids" , opt_view_color_pyramids , ELECOL, "Pyramid color" },
   { F|O, "Trihedra" , opt_view_color_trihedra , ELECOL, "Trihedron color" },
+  { F|O, "Polygons" , opt_view_color_polygons , ELECOL, "Polygon color" },
+  { F|O, "Polyhedra" , opt_view_color_polyhedra , ELECOL, "Polyhedron color" },
   { F|O, "Tangents" , opt_view_color_tangents ,
     {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255}, {255, 255, 0, 255},
     "Tangent vector color" },

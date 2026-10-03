@@ -1354,6 +1354,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
                                 opt_view_color_pyramids(current, GMSH_GET, 0));
         opt_view_color_trihedra(i, GMSH_SET,
                                 opt_view_color_trihedra(current, GMSH_GET, 0));
+        opt_view_color_polygons(i, GMSH_SET,
+                                opt_view_color_polygons(current, GMSH_GET, 0));
+        opt_view_color_polyhedra(
+          i, GMSH_SET, opt_view_color_polyhedra(current, GMSH_GET, 0));
         opt_view_color_tangents(i, GMSH_SET,
                                 opt_view_color_tangents(current, GMSH_GET, 0));
         opt_view_color_normals(i, GMSH_SET,
@@ -1863,6 +1867,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.value[6] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Point size");
+      general.value[6]->tooltip("General.PointSize");
       general.value[6]->minimum(0.1);
       general.value[6]->maximum(50);
       if(CTX::instance()->inputScrolling) general.value[6]->step(0.1);
@@ -1871,7 +1876,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.value[7] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width");
-      general.value[7]->tooltip("General.PointSize");
+      general.value[7]->tooltip("General.LineWidth");
       general.value[7]->minimum(0.1);
       general.value[7]->maximum(50);
       if(CTX::instance()->inputScrolling) general.value[7]->step(0.1);
@@ -4371,6 +4376,8 @@ void optionWindow::updateViewGroup(int index)
   opt_view_color_prisms(index, GMSH_GUI, 0);
   opt_view_color_pyramids(index, GMSH_GUI, 0);
   opt_view_color_trihedra(index, GMSH_GUI, 0);
+  opt_view_color_polygons(index, GMSH_GUI, 0);
+  opt_view_color_polyhedra(index, GMSH_GUI, 0);
   opt_view_color_tangents(index, GMSH_GUI, 0);
   opt_view_color_normals(index, GMSH_GUI, 0);
   opt_view_color_text2d(index, GMSH_GUI, 0);

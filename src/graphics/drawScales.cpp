@@ -382,17 +382,8 @@ static void drawScale(drawContext *ctx, PView *p, double xmin, double ymin,
     opt->tmpMin = opt->externalMin;
     opt->tmpMax = opt->externalMax;
   }
-  else if(opt->rangeType == PViewOptions::Custom) {
-    opt->tmpMin = opt->customMin;
-    opt->tmpMax = opt->customMax;
-  }
-  else if(opt->rangeType == PViewOptions::PerTimeStep) {
-    opt->tmpMin = data->getMin(opt->timeStep);
-    opt->tmpMax = data->getMax(opt->timeStep);
-  }
   else {
-    opt->tmpMin = data->getMin();
-    opt->tmpMax = data->getMax();
+    opt->getRange(data, opt->tmpMin, opt->tmpMax);
   }
 
   if(opt->scaleType != PViewOptions::Linear &&
