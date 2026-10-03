@@ -340,7 +340,16 @@ void statisticsWindow::compute(bool elementQuality)
     value[num]->value(label[num]);
     num++;
   }
-  sprintf(label[num], "%.4g / %.4g / %.4g", s[14], s[15], s[16]);
+  // (the three times must fit in one field: no more than three significant
+  // digits each)
+  auto time = [](double t) {
+    static char str[3][32];
+    static int i = 0;
+    char *c = str[i++ % 3];
+    sprintf(c, t < 10. ? "%.2f" : t < 100. ? "%.1f" : "%.0f", t);
+    return c;
+  };
+  sprintf(label[num], "%s / %s / %s", time(s[14]), time(s[15]), time(s[16]));
   value[num]->value(label[num]);
   num++;
 
