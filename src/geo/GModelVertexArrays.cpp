@@ -256,22 +256,37 @@ void findBoundaryOfElements(const std::vector<MElement *> &elements,
 #pragma omp parallel for schedule(static, 1) num_threads(nthreads)
   for(int t = 0; t < nthreads; t++) {
     FaceMatcher<std::uintptr_t, std::uint32_t> matcher;
+    std::vector<MVertex *> fv;
+    std::vector<std::uintptr_t> many;
     for(std::size_t i = 0; i < num; i++) {
       if(use && !(*use)[i]) continue;
       MElement *ele = elements[i];
       // (the faces of an element are hashed together, then added)
       int nf = in2D ? ele->getNumEdges() : ele->getNumFaces();
+      if(nf > 255) continue; // (faces are numbered on 8 bits in the matcher)
+      bool polyhedron = !in2D && ele->getType() == TYPE_POLYH;
       std::uint64_t hash[8];
       for(int j0 = 0; j0 < nf; j0 += 8) {
         int n = std::min(nf - j0, 8);
         for(int j = 0; j < n; j++) {
-          MVertex *v[4];
-          int nc = in2D ? ele->getEdgeCorners(j0 + j, v) :
-                          ele->getFaceCorners(j0 + j, v);
-          std::uintptr_t k[4] = {0, 0, 0, 0};
-          for(int c = 0; c < nc; c++) k[c] = (std::uintptr_t)v[c];
-          hash[j] = (nc >= 2 && matcher.share(k, nc, nthreads) == t) ?
-                      matcher.hashOf(k, nc, 0) : 0;
+          std::uintptr_t k[4] = {0, 0, 0, 0}, *kk = k;
+          int nc;
+          if(polyhedron) { // (a face can have any number of corners)
+            ele->getFaceVertices(j0 + j, fv);
+            nc = (int)fv.size();
+            many.resize(nc);
+            for(int c = 0; c < nc; c++) many[c] = (std::uintptr_t)fv[c];
+            kk = many.data();
+          }
+          else {
+            MVertex *v[4];
+            nc = in2D ? ele->getEdgeCorners(j0 + j, v) :
+                        ele->getFaceCorners(j0 + j, v);
+            for(int c = 0; c < nc; c++) k[c] = (std::uintptr_t)v[c];
+          }
+          hash[j] = (nc >= 2 && matcher.share(kk, nc, nthreads) == t) ?
+                      matcher.hashOf(kk, nc, 0) :
+                      0;
         }
         for(int j = 0; j < n; j++)
           if(hash[j]) matcher.add(hash[j], (std::uint32_t)i, j0 + j);
