@@ -117,12 +117,20 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
     {
       group[0] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                               height - 3 * WB - 2 * BH, "Geometry");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Points");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Curves");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Surfaces");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Volumes");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 5 * BH, IW, BH, "Physical groups");
+      // the elementary entities, and the physical groups, by dimension
+      int cw = 8 * FL_NORMAL_SIZE;
+      new Fl_Box(2 * WB, 2 * WB + 1 * BH, cw, 2 * BH, "Elementary\nentities");
+      new Fl_Box(3 * WB + cw, 2 * WB + 1 * BH, cw, 2 * BH, "Physical\ngroups");
+      const char *rows[4] = {"Points", "Curves", "Surfaces", "Volumes"};
+      for(int r = 0; r < 4; r++)
+        value[num++] = new Fl_Output(2 * WB, 2 * WB + (r + 3) * BH, cw, BH);
+      for(int r = 0; r < 4; r++) {
+        value[num++] =
+          new Fl_Output(3 * WB + cw, 2 * WB + (r + 3) * BH, cw, BH);
+        Fl_Box *b = new Fl_Box(3 * WB + 2 * cw, 2 * WB + (r + 3) * BH,
+                               width - 5 * WB - 2 * cw, BH, rows[r]);
+        b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+      }
       group[0]->end();
     }
     {
@@ -286,7 +294,7 @@ void statisticsWindow::compute(bool elementQuality)
 {
   int num = 0;
   static double s[50];
-  static char label[50][256];
+  static char label[64][256];
 
 #if defined(HAVE_MESH)
   bool visibleOnly = visible->value() ? true : false;
@@ -316,22 +324,19 @@ void statisticsWindow::compute(bool elementQuality)
       quality[i][j] = 0;
 #endif
 
-  // geom
-  sprintf(label[num], "%g", s[0]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[1]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[2]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[3]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[45]);
-  value[num]->value(label[num]);
-  num++;
+  // geometry: the elementary entities, then the physical groups, by dimension
+  for(int dim = 0; dim < 4; dim++) {
+    sprintf(label[num], "%g", s[dim]);
+    value[num]->value(label[num]);
+    num++;
+  }
+  std::map<int, std::vector<GEntity *>> physicals[4];
+  GModel::current()->getPhysicalGroups(physicals);
+  for(int dim = 0; dim < 4; dim++) {
+    sprintf(label[num], "%d", (int)physicals[dim].size());
+    value[num]->value(label[num]);
+    num++;
+  }
 
   // mesh: nodes, then the elements by dimension
   const int meshStat[12] = {4, 5, 6, 7, 8, 46, 9, 10, 11, 12, 13, 47};
