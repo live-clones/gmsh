@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <cstring>
 #include <exception>
+#include <functional>
 #include <limits>
 #include <map>
 #include <memory>
@@ -3635,71 +3636,6 @@ namespace QuadOptimizer {
                               reference.absolutePenalty});
     }
 
-    bool improvesCleanUpAction(
-      const SpecificationObjective &candidateQuality,
-      const SpecificationObjective &referenceQuality,
-      const ValenceObjective &candidateValence,
-      const ValenceObjective &referenceValence,
-      std::size_t candidateSizeViolations,
-      std::size_t referenceSizeViolations, double candidateSizeError,
-      double referenceSizeError, double tolerance)
-    {
-      if(!noWorseAbsoluteSpecifications(
-           candidateQuality, referenceQuality, tolerance))
-        return false;
-
-      // Absolute quality requirements are the first priority. As the
-      // component-wise no-worse gate above is already satisfied, any strict
-      // decrease in one of them is globally monotone.
-      if(candidateQuality.invalidElementCount <
-           referenceQuality.invalidElementCount ||
-         candidateQuality.absoluteBadElementCount <
-           referenceQuality.absoluteBadElementCount ||
-         candidateQuality.worstAbsoluteViolation + tolerance * std::max(
-           {1., candidateQuality.worstAbsoluteViolation,
-            referenceQuality.worstAbsoluteViolation}) <
-           referenceQuality.worstAbsoluteViolation ||
-         candidateQuality.absoluteViolationCount <
-           referenceQuality.absoluteViolationCount ||
-         candidateQuality.absolutePenalty + tolerance * std::max(
-           {1., candidateQuality.absolutePenalty,
-            referenceQuality.absolutePenalty}) <
-           referenceQuality.absolutePenalty)
-        return true;
-
-      const bool comparableSizeCounts =
-        candidateSizeViolations != std::numeric_limits<std::size_t>::max() &&
-        referenceSizeViolations != std::numeric_limits<std::size_t>::max();
-      if(comparableSizeCounts &&
-         candidateSizeViolations != referenceSizeViolations)
-        return candidateSizeViolations < referenceSizeViolations;
-      if(candidateValence.severeCount != referenceValence.severeCount)
-        return candidateValence.severeCount < referenceValence.severeCount;
-      if(candidateValence.irregularCount != referenceValence.irregularCount)
-        return candidateValence.irregularCount <
-               referenceValence.irregularCount;
-
-      if(improvesSpecificationObjective(
-           candidateQuality, referenceQuality, tolerance))
-        return true;
-      if(improvesSpecificationObjective(
-           referenceQuality, candidateQuality, tolerance))
-        return false;
-
-      if(std::isfinite(candidateSizeError) &&
-         std::isfinite(referenceSizeError)) {
-        const double sizeTolerance = tolerance *
-          std::max({1., candidateSizeError, referenceSizeError});
-        if(candidateSizeError + sizeTolerance < referenceSizeError)
-          return true;
-        if(referenceSizeError + sizeTolerance < candidateSizeError)
-          return false;
-      }
-      return candidateValence.penalty + tolerance * std::max(
-        {1., candidateValence.penalty, referenceValence.penalty}) <
-        referenceValence.penalty;
-    }
-
     bool improvesCleanUpSmoothing(
       const SpecificationObjective &candidateQuality,
       const SpecificationObjective &referenceQuality,
@@ -3713,7 +3649,7 @@ namespace QuadOptimizer {
       // neighboring one-rings. Hard size-violation counts remain the first
       // geometric priority after the absolute specification gate.
       constexpr double noWorseTolerance = 1.e-12;
-      auto noWorse = [noWorseTolerance](double candidate, double reference) {
+      auto noWorse = [](double candidate, double reference) {
         return candidate <= reference + noWorseTolerance *
           std::max({1., std::abs(candidate), std::abs(reference)});
       };
@@ -5083,10 +5019,6 @@ namespace QuadOptimizer {
       GFace *face, const UV &uv, const Point &xyz,
       const SmallCavityOptimizerOptions &options)
     {
-      if(options.edgeLengthCriteriaAt)
-        return options.edgeLengthCriteriaAt(
-          face, uv[0], uv[1], xyz[0], xyz[1], xyz[2]);
-
       EdgeLengthCriteria criteria;
       criteria.target = prescribedTargetSize(face, uv, xyz, options);
       criteria.minimum = options.enforceSizeMap &&
@@ -5132,8 +5064,6 @@ namespace QuadOptimizer {
          (options.minimumEdgeLength > 0. &&
           options.maximumEdgeLength > 0. &&
           options.maximumEdgeLength <= options.minimumEdgeLength) ||
-         !std::isfinite(options.maximumRelativeSizeErrorIncrease) ||
-         options.maximumRelativeSizeErrorIncrease < 0. ||
          !std::isfinite(options.edgeMidpointCadSwapTriggerRatio) ||
          options.edgeMidpointCadSwapTriggerRatio < 0. ||
          !std::isfinite(
@@ -5148,7 +5078,7 @@ namespace QuadOptimizer {
          options.minimumRecombinationQuality < 0.)
         return false;
 
-      if(options.targetSize > 0. && !options.edgeLengthCriteriaAt) {
+      if(options.targetSize > 0.) {
         double minimum = options.minimumEdgeLength;
         double maximum = options.maximumEdgeLength > 0. ?
           options.maximumEdgeLength : std::numeric_limits<double>::infinity();
@@ -5403,21 +5333,6 @@ namespace QuadOptimizer {
         score.meanSquaredLogRatio =
           error / static_cast<double>(score.edgeCount);
       return score;
-    }
-
-    bool admissibleSizeChange(
-      const SizeScore &before, const SizeScore &after,
-      const SmallCavityOptimizerOptions &options)
-    {
-      if(!after.admissible) return false;
-      if(!options.enforceRelativeSizeErrorIncrease ||
-         !std::isfinite(before.meanSquaredLogRatio))
-        return true;
-      const double allowed = before.meanSquaredLogRatio *
-                               (1. + options.maximumRelativeSizeErrorIncrease) +
-                             1.e-14;
-      return std::isfinite(after.meanSquaredLogRatio) &&
-             after.meanSquaredLogRatio <= allowed;
     }
 
     bool betterByQualityThenSize(
@@ -5986,16 +5901,6 @@ namespace QuadOptimizer {
       return maximum;
     }
 
-    std::size_t topologicallyInvalidElementCount(
-      const std::vector<MElement *> &elements)
-    {
-      std::size_t invalid = 0;
-      for(MElement *element : elements)
-        if(!element || !evaluateElementQuality(element).topologicallyValid)
-          ++invalid;
-      return invalid;
-    }
-
     bool edgeMidpointCadDistance(
       GFace *face, const UV &aUv, const UV &bUv, const Point &aXyz,
       const Point &bXyz, double &deviation)
@@ -6286,36 +6191,6 @@ namespace QuadOptimizer {
       return true;
     }
 
-    GeometryDeviation candidateGeometryDeviation(
-      GFace *face, const std::vector<UV> &uv,
-      const std::vector<Point> &xyz, const Pattern &quadrangles)
-    {
-      GeometryDeviation deviation;
-      deviation.maximumDistance = 0.;
-      deviation.squaredDistanceIntegral = 0.;
-      for(const auto &quad : quadrangles) {
-        std::array<UV, 4> parameters;
-        std::array<Point, 4> vertices;
-        for(std::size_t i = 0; i < 4; ++i) {
-          if(quad[i] >= uv.size() || quad[i] >= xyz.size()) return deviation;
-          parameters[i] = uv[quad[i]];
-          vertices[i] = xyz[quad[i]];
-        }
-        if(!accumulateQuadrangleGeometryDeviation(
-             face, parameters, vertices, deviation))
-          return deviation;
-      }
-      if(!deviation.elementCount || !(deviation.sampledArea > 0.))
-        return deviation;
-      deviation.meanSquaredDistance = deviation.squaredDistanceIntegral /
-        deviation.sampledArea;
-      deviation.valid = deviation.invalidSampleCount == 0 &&
-        std::isfinite(deviation.maximumDistance) &&
-        std::isfinite(deviation.squaredDistanceIntegral) &&
-        std::isfinite(deviation.meanSquaredDistance);
-      return deviation;
-    }
-
     GeometryDeviation candidateMixedGeometryDeviation(
       GFace *face, const std::vector<UV> &uv,
       const std::vector<Point> &xyz,
@@ -6496,21 +6371,6 @@ namespace QuadOptimizer {
     {
       if(!candidateQuadsAreStrictlyConvex(quadrangles, uv)) return false;
       return candidateQuadranglesArePhysicallyNonConcave(quadrangles, xyz);
-    }
-
-    bool hasConcaveQuadrangle(const std::vector<MElement *> &elements)
-    {
-      constexpr double concavityToleranceDegrees = 1.e-8;
-      for(MElement *element : elements) {
-        if(!element || element->getNumPrimaryVertices() != 4) continue;
-        const ElementQuality quality = evaluateElementQuality(element);
-        if(!quality.topologicallyValid ||
-           !std::isfinite(quality.maximumAngleDegrees) ||
-           quality.maximumAngleDegrees >=
-             180. - concavityToleranceDegrees)
-          return true;
-      }
-      return false;
     }
 
     bool replacementElementsPreserveSurfaceOrientation(
@@ -7058,21 +6918,6 @@ namespace QuadOptimizer {
       return cavities;
     }
 
-    bool fourInteriorVertexCavity(
-      GFace *face, MQuadrangle *quadrangle,
-      const FaceHalfEdgeTopology &topology, CavitySeed &seed)
-    {
-      std::vector<MVertex *> interior(4);
-      for(int i = 0; i < 4; ++i) {
-        interior[static_cast<std::size_t>(i)] = quadrangle->getVertex(i);
-        if(!interior[static_cast<std::size_t>(i)] ||
-           interior[static_cast<std::size_t>(i)]->onWhat() != face)
-          return false;
-      }
-      return interiorVertexCavity(face, interior, topology, seed) &&
-        seed.patch.bdrVertices.front().size() <= 20;
-    }
-
     bool currentParametrization(const GFaceMeshPatch &patch,
                                 std::vector<UV> &points)
     {
@@ -7358,7 +7203,7 @@ namespace QuadOptimizer {
           afterSize.invalid;
         if(options.enforceSizeMap &&
            (trialSizeViolations > beforeSizeViolations ||
-            !admissibleSizeChange(beforeSize, afterSize, options))) {
+            !afterSize.admissible)) {
           rejectedBySize = true;
           return false;
         }
@@ -7584,7 +7429,6 @@ namespace QuadOptimizer {
       SizeScore size;
       mutable GeometryDeviation geometry;
       mutable bool geometryEvaluated = false;
-      bool sizeReusable = false;
       bool useBeforeOrientation = false;
       bool valid = false;
     };
@@ -7701,11 +7545,8 @@ namespace QuadOptimizer {
       }
       reference.objective =
         specificationObjective(reference.beforePatch.elements);
-      if(!options.edgeLengthCriteriaAt) {
-        reference.size =
-          existingSizeScore(reference.beforePatch, options, false);
-        reference.sizeReusable = true;
-      }
+      reference.size =
+        existingSizeScore(reference.beforePatch, options, false);
       reference.valid = true;
       return true;
     }
@@ -7838,8 +7679,7 @@ namespace QuadOptimizer {
         metrics.referenceObjective = reference->objective;
         metrics.candidateObjective = candidateMixedObjective(
           evaluation.triangles, evaluation.quadrangles, evaluation.xyz);
-        metrics.referenceSize = reference->sizeReusable ? reference->size :
-          existingSizeScore(evaluation.beforePatch, options, false);
+        metrics.referenceSize = reference->size;
         metrics.candidateSize = surfacePatchSizeScore(
           face, evaluation.uv, evaluation.xyz, evaluation.triangles,
           evaluation.quadrangles, evaluation.fixed, options);
@@ -7886,9 +7726,7 @@ namespace QuadOptimizer {
             metrics.candidateSize.aboveMaximum +
             metrics.candidateSize.invalid;
           if(!metrics.candidateSize.admissible ||
-             candidateViolations > referenceViolations ||
-             !admissibleSizeChange(
-               metrics.referenceSize, metrics.candidateSize, options)) {
+             candidateViolations > referenceViolations) {
             if(options.verbose > 2)
               Msg::Info("QuadOptimizer C+C': face=%d size regression "
                         "admissible=%d violations=%zu->%zu rmsLog2=%g->%g",
@@ -8087,12 +7925,6 @@ namespace QuadOptimizer {
     }
 
     void applySmoothedReplacementGeometry(
-      const SmoothedCavityEvaluation &evaluation)
-    {
-      applySmoothedReplacementGeometry(evaluation.movedVertices);
-    }
-
-    void applySmoothedReplacementGeometry(
       const std::vector<Candidate::VertexGeometry> &movedVertices,
       FaceHalfEdgeTopology &topology)
     {
@@ -8227,6 +8059,19 @@ namespace QuadOptimizer {
       return true;
     }
 
+    struct ExistingTopologyWinslowResult {
+      bool success = true;
+      // True only when the last requested sweep accepted no bitwise geometry
+      // change, which certifies that repeating the same deterministic sweep on
+      // the same topology is idle.
+      bool reachedFixedPoint = false;
+      std::size_t passes = 0;
+      std::size_t acceptedCavities = 0;
+      std::size_t rejectedByWinslow = 0;
+      std::size_t rejectedBySize = 0;
+      std::size_t rejectedByQuality = 0;
+    };
+
     ExistingTopologyWinslowResult smoothAllInteriorVertexCavities(
       GFace *face, const SmallCavityOptimizerOptions &options,
       const FaceHalfEdgeTopology &topology,
@@ -8238,7 +8083,6 @@ namespace QuadOptimizer {
         result.success = false;
         return result;
       }
-      result.initialObjective = specificationObjective(topology.elements());
       const std::set<MVertex *> &protectedVertices =
         topology.protectedVertices(face);
       for(int pass = 0; pass < options.smoothingPasses; ++pass) {
@@ -8255,7 +8099,6 @@ namespace QuadOptimizer {
              (additionallyProtected &&
               !smoothAdditionalProtectedWithCadGuard))
             continue;
-          ++result.quadsVisited;
           CavitySeed seed;
           ExistingSmoothingStatus status = ExistingSmoothingStatus::Invalid;
           if(interiorVertexCavity(
@@ -8266,11 +8109,8 @@ namespace QuadOptimizer {
           if(status == ExistingSmoothingStatus::Invalid) continue;
           if(status ==
              ExistingSmoothingStatus::SkippedSpecificationCompliant) {
-            ++result.skippedSpecificationCompliant;
             continue;
           }
-          ++result.admissibleCavities;
-          ++result.cavitiesOptimized;
           switch(status) {
           case ExistingSmoothingStatus::SkippedSpecificationCompliant: break;
           case ExistingSmoothingStatus::RejectedWinslow:
@@ -8299,7 +8139,6 @@ namespace QuadOptimizer {
           break;
         }
       }
-      result.finalObjective = specificationObjective(topology.elements());
       if(options.invalidateVertexArrays) face->model()->deleteVertexArrays();
       return result;
     }
@@ -9753,9 +9592,6 @@ namespace QuadOptimizer {
            evaluationReference))
         return false;
       std::set<ConnectivitySignature> triedConnectivity;
-      const std::size_t createdMarker =
-        std::numeric_limits<std::size_t>::max();
-
       auto candidateFastQuality = [&](const Candidate &candidate) {
         const double cadChange = candidate.hasEdgeSwapCad ?
           (candidate.edgeSwapCadDistance * candidate.edgeSwapCadDistance -
@@ -10050,10 +9886,8 @@ namespace QuadOptimizer {
           const SizeScore &size = metrics.candidateSize;
           const bool checkSize = options.enforceSizeMap ||
                                  seed.kind == CavityPurpose::CleanUpSize;
-          const bool preservesTarget = !options.enforceSizeMap ||
-            admissibleSizeChange(metrics.referenceSize, size, options);
           if(checkSize && !options.acceptValidTopologyReduction &&
-             (!size.admissible || !preservesTarget)) {
+             !size.admissible) {
             ++result.rejectedBySize;
             continue;
           }
@@ -11350,8 +11184,7 @@ namespace QuadOptimizer {
         }
         if(options.enforceSizeMap &&
            (!afterSize.admissible || !chordSize.admissible ||
-            afterSizeViolations > beforeSizeViolations ||
-            !admissibleSizeChange(beforeSize, afterSize, options))) {
+            afterSizeViolations > beforeSizeViolations)) {
           for(MElement *element : replacement) delete element;
           ++result.rejectedBySize;
           continue;
@@ -11784,8 +11617,7 @@ namespace QuadOptimizer {
         distance(evaluation.xyz[newA], evaluation.xyz[newB]), true);
       if(options.enforceSizeMap &&
          (!newDiagonalSize.admissible || !afterSize.admissible ||
-          afterSizeViolations > beforeSizeViolations ||
-          !admissibleSizeChange(beforeSize, afterSize, options))) {
+          afterSizeViolations > beforeSizeViolations)) {
         if(options.verbose > 1)
           Msg::Info("TT reject edge=(%lu,%lu) new=(%lu,%lu): size",
                     seed.shared.first->getNum(), seed.shared.second->getNum(),
@@ -12476,8 +12308,7 @@ namespace QuadOptimizer {
           distance(evaluation.xyz[a], evaluation.xyz[b]), true);
         if(options.enforceSizeMap &&
            (!afterSize.admissible || !diagonalSize.admissible ||
-            afterSizeViolations > beforeSizeViolations ||
-            !admissibleSizeChange(beforeSize, afterSize, options))) {
+            afterSizeViolations > beforeSizeViolations)) {
           ++result.rejectedBySize;
           continue;
         }
@@ -12677,8 +12508,7 @@ namespace QuadOptimizer {
       return true;
     }
 
-    bool collectBoundaryLoops(GFace *face,
-                              const FaceHalfEdgeTopology &topology,
+    bool collectBoundaryLoops(const FaceHalfEdgeTopology &topology,
                               std::vector<BoundaryLoop> &loops)
     {
       std::map<MVertex *, std::vector<MVertex *> > adjacency;
@@ -13461,8 +13291,6 @@ namespace QuadOptimizer {
           return false;
         beforeOrientationPointer = &beforeOrientation;
       }
-      const SizeScore beforePillowSize =
-        existingSizeScore(originalPatch, options, false);
       CadDistance::Contribution beforeCad, acceptedCad;
       if(ringGuard) {
         for(MElement *element : originalPatch.elements) {
@@ -13702,8 +13530,7 @@ namespace QuadOptimizer {
           size = surfacePatchSizeScore(
             face, trialPoints, trialXyz, triangles, quadrangles, fixed,
             options);
-          if(!size.admissible ||
-             !admissibleSizeChange(beforePillowSize, size, options)) {
+          if(!size.admissible) {
             rejectedBySize = true;
             continue;
           }
@@ -13810,7 +13637,7 @@ namespace QuadOptimizer {
     {
       if(!topology.manifold()) return;
       std::vector<BoundaryLoop> loops;
-      if(!collectBoundaryLoops(face, topology, loops) || loops.size() < 2)
+      if(!collectBoundaryLoops(topology, loops) || loops.size() < 2)
         return;
       // Classify each component from its domain-left orientation in the GFace
       // parameter plane: outer components have positive signed area, holes
@@ -14022,7 +13849,7 @@ namespace QuadOptimizer {
       QuadHoleRingResult &result)
     {
       std::vector<BoundaryLoop> loops;
-      if(!collectBoundaryLoops(face, topology, loops)) return;
+      if(!collectBoundaryLoops(topology, loops)) return;
       std::map<Edge, std::vector<MElement *>> edgeElements;
       for(const auto &entry : topology.edges()) edgeElements[entry.first] = entry.second;
       std::set<MElement *> ringElements;
@@ -14147,7 +13974,7 @@ namespace QuadOptimizer {
     }
     FaceHalfEdgeTopology topology(elements);
     std::vector<BoundaryLoop> loops;
-    if(!collectBoundaryLoops(face, topology, loops) || loops.size() < 2)
+    if(!collectBoundaryLoops(topology, loops) || loops.size() < 2)
       return result;
     HoleRingCadGuard cad(face, options, elements);
     SmallCavityOptimizerResult local;
@@ -14400,8 +14227,7 @@ namespace QuadOptimizer {
         if(options.enforceSizeMap &&
            !options.acceptValidTopologyReduction &&
            (!createdQuadSize.admissible || !afterSize.admissible ||
-            afterSizeViolations > beforeSizeViolations ||
-            !admissibleSizeChange(beforeSize, afterSize, options))) {
+            afterSizeViolations > beforeSizeViolations)) {
           ++result.rejectedSize;
           rememberRejected();
           continue;
@@ -14640,7 +14466,6 @@ namespace QuadOptimizer {
         options.stagedTopologyThenQuality;
       if(!cacheableRule ||
          !useFastInteractiveCleanUp(options) ||
-         options.edgeLengthCriteriaAt ||
          face->geomType() != GEntity::DiscreteSurface ||
          !topology.cavityEvaluationStateSignature(
            face, halfEdgeCavity, &permanentlyProtectedVertices,
@@ -16568,94 +16393,6 @@ namespace QuadOptimizer {
     return result;
   }
 
-  SmallCavityOptimizerResult optimizeSmallQuadCavities(
-    int faceTag, const SmallCavityOptimizerOptions &options)
-  {
-    return optimizeSmallQuadCavities(
-      GModel::current()->getFaceByTag(faceTag), options);
-  }
-
-  ExistingTopologyWinslowResult smoothExistingQuadCavities(
-    GFace *face, const SmallCavityOptimizerOptions &options)
-  {
-    ExistingTopologyWinslowResult result;
-    if(!face || options.smoothingPasses < 0 ||
-       !validSizeOptions(options)) {
-      result.success = false;
-      Msg::Error("QuadOptimizer: invalid existing-topology smoothing options");
-      return result;
-    }
-    const FaceHalfEdgeTopology topology(surfaceElements(face));
-    if(!topology.manifold()) {
-      result.success = false;
-      Msg::Warning("QuadOptimizer: refusing to smooth a non-manifold "
-                   "surface cell complex on face %d", face->tag());
-      return result;
-    }
-    result.initialObjective = specificationObjective(topology.elements());
-    for(int pass = 0; pass < options.smoothingPasses; ++pass) {
-      ++result.passes;
-
-      auto smooth = [&](CavitySeed &seed) {
-        const ExistingSmoothingStatus status =
-          smoothExistingCavity(face, seed, options);
-        if(status == ExistingSmoothingStatus::Invalid) return;
-        if(status ==
-           ExistingSmoothingStatus::SkippedSpecificationCompliant) {
-          ++result.skippedSpecificationCompliant;
-          return;
-        }
-        ++result.admissibleCavities;
-        ++result.cavitiesOptimized;
-        switch(status) {
-        case ExistingSmoothingStatus::SkippedSpecificationCompliant: break;
-        case ExistingSmoothingStatus::RejectedWinslow:
-          ++result.rejectedByWinslow;
-          break;
-        case ExistingSmoothingStatus::RejectedSize:
-          ++result.rejectedBySize;
-          break;
-        case ExistingSmoothingStatus::RejectedQuality:
-          ++result.rejectedByQuality;
-          break;
-        case ExistingSmoothingStatus::Accepted:
-          if(topology.synchronizeGeometry(seed.patch.intVertices))
-            ++result.acceptedCavities;
-          break;
-        case ExistingSmoothingStatus::Invalid: break;
-        }
-      };
-
-      for(MElement *element : topology.elements()) {
-        MQuadrangle *quadrangle = dynamic_cast<MQuadrangle *>(element);
-        if(!quadrangle) continue;
-        ++result.quadsVisited;
-        CavitySeed core;
-        if(!fourInteriorVertexCavity(face, quadrangle, topology, core))
-          continue;
-        const std::vector<MVertex *> boundary =
-          core.patch.bdrVertices.front();
-        smooth(core);
-        for(MVertex *vertex : boundary) {
-          CavitySeed neighbor;
-          if(interiorVertexCavity(
-               face, {vertex}, topology, neighbor, true, false))
-            smooth(neighbor);
-        }
-      }
-    }
-    result.finalObjective = specificationObjective(topology.elements());
-    if(options.invalidateVertexArrays) face->model()->deleteVertexArrays();
-    return result;
-  }
-
-  ExistingTopologyWinslowResult smoothExistingQuadCavities(
-    int faceTag, const SmallCavityOptimizerOptions &options)
-  {
-    return smoothExistingQuadCavities(
-      GModel::current()->getFaceByTag(faceTag), options);
-  }
-
   bool isRegularOrientedSurfaceCellComplex(GFace *face)
   {
     if(!face) return false;
@@ -16696,8 +16433,7 @@ namespace QuadOptimizer {
     // that initialization on the calling thread before the dynamic OpenMP
     // face loop; constructing it from inside that worksharing region would
     // enter the barriers used by PViewData with only a subset of the team.
-    if(options.enforceSizeMap && options.targetSize <= 0. &&
-       !options.edgeLengthCriteriaAt) {
+    if(options.enforceSizeMap && options.targetSize <= 0.) {
       GFace *sampleFace = nullptr;
       MVertex *sampleVertex = nullptr;
       for(GFace *face : faces) {

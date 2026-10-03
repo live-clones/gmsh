@@ -5,15 +5,9 @@
 #include "quadQuality.h"
 
 #include "MElement.h"
-#include "GFace.h"
-#include "GModel.h"
-#include "MQuadrangle.h"
-#include "MTriangle.h"
 
 #include <algorithm>
 #include <cmath>
-#include <fstream>
-#include <iomanip>
 #include <limits>
 
 namespace QuadOptimizer {
@@ -197,50 +191,6 @@ namespace QuadOptimizer {
         points.push_back({vertex->x(), vertex->y(), vertex->z()});
       }
       return points;
-    }
-
-    enum class Criterion {
-      Warping,
-      EdgeRatio,
-      MinimumQuadAngle,
-      MaximumQuadAngle,
-      MinimumTriangleAngle,
-      MaximumTriangleAngle,
-      Skewing
-    };
-
-    double value(const ElementQuality &quality, Criterion criterion)
-    {
-      switch(criterion) {
-      case Criterion::Warping: return quality.warpingDegrees;
-      case Criterion::EdgeRatio: return quality.edgeRatio;
-      case Criterion::MinimumQuadAngle:
-      case Criterion::MinimumTriangleAngle:
-        return quality.minimumAngleDegrees;
-      case Criterion::MaximumQuadAngle:
-      case Criterion::MaximumTriangleAngle:
-        return quality.maximumAngleDegrees;
-      case Criterion::Skewing: return quality.skewingDegrees;
-      }
-      return 0.;
-    }
-
-    void writeElement(std::ostream &out, const MElement *element,
-                      double scalar)
-    {
-      const std::size_t count = element->getNumPrimaryVertices();
-      out << (count == 3 ? "ST(" : "SQ(");
-      for(std::size_t i = 0; i < count; ++i) {
-        if(i) out << ',';
-        const MVertex *vertex = element->getVertex(static_cast<int>(i));
-        out << vertex->x() << ',' << vertex->y() << ',' << vertex->z();
-      }
-      out << "){";
-      for(std::size_t i = 0; i < count; ++i) {
-        if(i) out << ',';
-        out << scalar;
-      }
-      out << "};\n";
     }
 
   } // namespace
@@ -446,73 +396,6 @@ namespace QuadOptimizer {
     if(less(reference.preferredPenalty, candidate.preferredPenalty, tolerance))
       return false;
     return less(candidate.shapePenalty, reference.shapePenalty, tolerance);
-  }
-
-  bool writeQualityPos(const std::vector<MElement *> &elements,
-                       const std::string &filename)
-  {
-    struct View {
-      const char *name;
-      Criterion criterion;
-      bool triangles;
-      bool quadrangles;
-    };
-    const std::array<View, 7> views = {{{"Warping (deg)", Criterion::Warping, false, true},
-      {"Edge ratio", Criterion::EdgeRatio, true, true},
-      {"Minimum angle - quads (deg)", Criterion::MinimumQuadAngle, false, true},
-      {"Maximum angle - quads (deg)", Criterion::MaximumQuadAngle, false, true},
-      {"Minimum angle - triangles (deg)", Criterion::MinimumTriangleAngle, true, false},
-      {"Maximum angle - triangles (deg)", Criterion::MaximumTriangleAngle, true, false},
-      {"Skewing I-DEAS (deg)", Criterion::Skewing, true, true}}};
-    std::ofstream out(filename);
-    if(!out) return false;
-    out << std::setprecision(17);
-    for(const View &view : views) {
-      out << "View \"" << view.name << "\" {\n";
-      for(const MElement *element : elements) {
-        if(!element) continue;
-        const std::size_t count = element->getNumPrimaryVertices();
-        if((count == 3 && !view.triangles) ||
-           (count == 4 && !view.quadrangles) || (count != 3 && count != 4))
-          continue;
-        const ElementQuality quality = evaluateElementQuality(element);
-        writeElement(out, element, value(quality, view.criterion));
-      }
-      out << "};\n";
-    }
-    out << "View \"Passes absolute specifications\" {\n";
-    for(const MElement *element : elements) {
-      if(!element) continue;
-      const std::size_t count = element->getNumPrimaryVertices();
-      if(count != 3 && count != 4) continue;
-      writeElement(out, element,
-        evaluateElementQuality(element).passesAbsoluteSpecifications ? 1. : 0.);
-    }
-    out << "};\n";
-    return static_cast<bool>(out);
-  }
-
-  bool writeFaceQualityPos(int faceTag, const std::string &filename)
-  {
-    GFace *face = GModel::current()->getFaceByTag(faceTag);
-    if(!face) return false;
-    std::vector<MElement *> elements;
-    elements.reserve(face->triangles.size() + face->quadrangles.size());
-    for(MTriangle *triangle : face->triangles) elements.push_back(triangle);
-    for(MQuadrangle *quadrangle : face->quadrangles)
-      elements.push_back(quadrangle);
-    return writeQualityPos(elements, filename);
-  }
-
-  bool writeModelQualityPos(const std::string &filename)
-  {
-    std::vector<MElement *> elements;
-    for(GFace *face : GModel::current()->getFaces()) {
-      for(MTriangle *triangle : face->triangles) elements.push_back(triangle);
-      for(MQuadrangle *quadrangle : face->quadrangles)
-        elements.push_back(quadrangle);
-    }
-    return writeQualityPos(elements, filename);
   }
 
 } // namespace QuadOptimizer

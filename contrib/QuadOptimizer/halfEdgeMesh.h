@@ -1410,14 +1410,6 @@ namespace QuadOptimizer {
         return false;
       }
 
-      bool isInternalEdge(const Edge &input) const
-      {
-        const Edge edge = canonicalEdge(input.first, input.second);
-        if(!validVertex(edge.first) || !validVertex(edge.second))
-          return false;
-        return incidentFaces(edge).size() == 2;
-      }
-
       bool diskCavity(const std::vector<Index> &faces,
                       Cavity &result) const
       {
@@ -1478,8 +1470,7 @@ namespace QuadOptimizer {
         result.clear();
         const Edge edge = canonicalEdge(input.first, input.second);
         // Edge-anchored rewrite patterns are defined only on an internal
-        // edge. The predicate is public as this is part of the pattern
-        // contract, not an incidental consequence of disk construction.
+        // edge.
         const std::vector<Index> incident = incidentFaces(edge);
         if(incident.size() != 2 || !buildDiskCavity(incident, result))
           return false;
@@ -1567,7 +1558,6 @@ namespace QuadOptimizer {
 
       std::size_t vertexStorageSize() const { return _vertices.size(); }
       std::size_t faceStorageSize() const { return _faces.size(); }
-      std::size_t halfEdgeStorageSize() const { return _halfEdges.size(); }
     };
 
   } // namespace HalfEdgeMesh

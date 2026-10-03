@@ -1694,7 +1694,6 @@ void bowyerWatsonParallelograms(
   std::set<MTri3 *, compareTri3Ptr> AllTris;
   bidimMeshData DATA(equivalence, parametricCoordinates);
   std::vector<MVertex *> packed;
-  std::vector<SMetric3> metrics;
 
   Msg::Debug("- Face %i: bowyerWatsonParallelograms ...", gf->tag());
   if(!gf->haveParametrization()) {
@@ -1707,7 +1706,7 @@ void bowyerWatsonParallelograms(
 
 #if defined(HAVE_DOMHEX)
   Msg::Debug("bowyerWatsonParallelograms: 3D point placement and exclusion");
-  packingOfParallelograms(gf, packed, metrics);
+  packingOfParallelograms(gf, packed);
 #else
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif

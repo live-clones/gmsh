@@ -73,8 +73,6 @@ namespace QuadOptimizer {
     FaceHalfEdge &operator=(const FaceHalfEdge &) = delete;
 
     bool valid() const;
-    GFace *face() const { return _face; }
-    std::uint64_t revision() const { return _revision; }
 
     std::vector<Id> cells() const;
     std::vector<Id> vertices() const;
@@ -84,7 +82,6 @@ namespace QuadOptimizer {
     std::vector<Id> neighbors(Id cell) const;
     std::vector<Id> cellVertices(Id cell) const;
     std::size_t cornerCount(Id cell) const;
-    std::size_t quadDegree(Id vertex) const;
     bool isBoundaryVertex(Id vertex) const;
 
     Id id(MVertex *vertex) const;
@@ -101,8 +98,6 @@ namespace QuadOptimizer {
     // on failure and transfers it on success. New vertices are discovered
     // directly in the inserted cells; obsolete interior face vertices are
     // retired automatically.
-    bool canReplace(const Cavity &cavity,
-                    const std::vector<MElement *> &inserted) const;
     // The caller keeps the candidate alive and unchanged while holding its
     // proof. Commit consumes the proof and transfers those exact elements;
     // any intervening topology/geometry synchronization invalidates it.
@@ -112,10 +107,6 @@ namespace QuadOptimizer {
     bool replace(PreparedReplacement &prepared,
                  std::vector<MVertex *> *created = nullptr,
                  std::vector<MVertex *> *retired = nullptr);
-    bool replace(const Cavity &cavity,
-                 const std::vector<MElement *> &inserted,
-                 std::vector<MVertex *> *created = nullptr,
-                 std::vector<MVertex *> *retired = nullptr);
 
     // Geometry changes do not rebuild connectivity. They only update the
     // numeric point and revision stamps used by the rejected-cavity cache.
@@ -123,8 +114,6 @@ namespace QuadOptimizer {
     std::uint64_t state(const Cavity &cavity) const;
     const std::vector<Id> &lastTouchedVertices() const
     { return _lastTouchedVertices; }
-    const std::vector<Id> &lastCreatedCells() const
-    { return _lastCreatedCells; }
 
   private:
     GFace *_face = nullptr;
@@ -137,7 +126,6 @@ namespace QuadOptimizer {
     std::unordered_map<MVertex *, std::size_t> _meshVertexPositions;
     std::vector<std::uint64_t> _vertexRevisions;
     std::vector<Id> _lastTouchedVertices;
-    std::vector<Id> _lastCreatedCells;
     std::uint64_t _revision = 0;
     bool _valid = true;
 

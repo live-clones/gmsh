@@ -28,7 +28,6 @@ options have been renamed; the old names are not aliases:
 | Previous suffix after `Mesh.` | Replacement |
 | --- | --- |
 | `QuadqsCleanupMethod` | `PackCleanupMethod` |
-| `QuadqsPacking3D` | `Pack3D` |
 | `QuadqsPacking3DForceAllPoints` | `PackForceAllPoints` |
 | `QuadqsIntrinsicEdgeLengthFactor` | `PackIntrinsicEdgeLengthFactor` |
 | `QuadqsSmartLaplacian` | `OptimizeQuadsSmartLaplacian` |
@@ -116,7 +115,7 @@ stars whose elements changed through a topology rewrite or a neighboring move.
 Smart and Winslow maintain separate active sets, so rejection by one proposal
 never suppresses the other. A successful move reactivates every free corner of
 its incident cells, including opposite quad corners. Deterministic coloring is
-cached until connectivity changes. `activeNodalSmoothing` defaults to true.
+cached until connectivity changes.
 
 Topological queues are seeded once, then updated around changed connectivity
 and moved nodes. Valence queues, QQ/QT swap edges and TT merge edges persist
@@ -221,8 +220,7 @@ gmsh background_h1.msh -2 -algo pack -clmin 1 -clmax 1 \
 ```
 
 `-2` meshes surfaces; PACK always places points and evaluates exclusion in
-physical 3D space. `Mesh.Pack3D` is retained only for compatibility and always
-returns 1; setting it to 0 warns and cannot enable UV packing.
+physical 3D space.
 
 Fixed CAD valence-two preparation checks physical separation across both
 shared segments before any cut, so overlapping T/Q or Q/Q input is rejected

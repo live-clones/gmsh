@@ -159,9 +159,6 @@ namespace QuadOptimizer {
     if(options.fastInteractiveCleanUp) {
       // Complete topology before the final physical mean-plane smoothing.
       // Mesh.Smoothing controls the terminal sweep budget, once per model.
-      // Use the validated V2 budgets. The historical adapter capped the
-      // old cleanup at two passes and inherited only 100 accepted cavities,
-      // prematurely stopping V2 compared with the standalone benchmark.
       options.maximumOptimizationPasses =
         -1; // V2 stops after a topology-idle round.
       options.maximumAcceptedCavities = 10000;

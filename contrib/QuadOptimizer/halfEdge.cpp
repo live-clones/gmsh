@@ -238,11 +238,6 @@ namespace QuadOptimizer {
     return static_cast<std::size_t>(_mesh.faceCornerCount(cell));
   }
 
-  std::size_t FaceHalfEdge::quadDegree(Id vertex) const
-  {
-    return _mesh.quadDegree(vertex);
-  }
-
   bool FaceHalfEdge::isBoundaryVertex(Id vertex) const
   {
     return _mesh.isBoundaryVertex(vertex);
@@ -322,14 +317,6 @@ namespace QuadOptimizer {
     return !before.empty() && before == after;
   }
 
-  bool FaceHalfEdge::canReplace(
-    const Cavity &cavity,
-    const std::vector<MElement *> &insertedElements) const
-  {
-    PreparedReplacement prepared;
-    return prepareReplacement(cavity, insertedElements, prepared);
-  }
-
   bool FaceHalfEdge::prepareReplacement(
     const Cavity &cavity,
     const std::vector<MElement *> &insertedElements,
@@ -391,18 +378,6 @@ namespace QuadOptimizer {
     prepared._elements = insertedElements;
     result = std::move(prepared);
     return true;
-  }
-
-  bool FaceHalfEdge::replace(const Cavity &cavity,
-                             const std::vector<MElement *> &insertedElements,
-                             std::vector<MVertex *> *createdResult,
-                             std::vector<MVertex *> *retiredResult)
-  {
-    if(createdResult) createdResult->clear();
-    if(retiredResult) retiredResult->clear();
-    PreparedReplacement prepared;
-    return prepareReplacement(cavity, insertedElements, prepared) &&
-      replace(prepared, createdResult, retiredResult);
   }
 
   bool FaceHalfEdge::replace(PreparedReplacement &prepared,
@@ -581,7 +556,6 @@ namespace QuadOptimizer {
       _vertexRevisions[static_cast<std::size_t>(vertexId)] = ++_revision;
     ++_revision;
     _lastTouchedVertices = std::move(touched);
-    _lastCreatedCells = std::move(insertedIds);
     prepared._owner = nullptr;
     for(MElement *handle : removedElements) delete handle;
     for(MVertex *handle : retired) delete handle;
@@ -609,7 +583,6 @@ namespace QuadOptimizer {
       _vertexRevisions[static_cast<std::size_t>(vertexId)] = ++_revision;
     }
     _lastTouchedVertices = std::move(touched);
-    _lastCreatedCells.clear();
     return true;
   }
 

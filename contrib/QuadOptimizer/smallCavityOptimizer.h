@@ -9,7 +9,6 @@
 #include "smallCavityWinslow.h"
 
 #include <cstddef>
-#include <functional>
 #include <limits>
 #include <vector>
 
@@ -29,9 +28,6 @@ namespace QuadOptimizer {
     double minimum = 0.;
     double maximum = std::numeric_limits<double>::infinity();
   };
-
-  using EdgeLengthCriteriaAt = std::function<EdgeLengthCriteria(
-    GFace *, double, double, double, double, double)>;
 
   struct SmallCavityOptimizerOptions {
     bool optimizeOneInteriorVertexCavities = true;
@@ -85,8 +81,6 @@ namespace QuadOptimizer {
     // Freitag (1997) Smart Laplacian, adapted to projected surface quads.
     // Strict local minimum-sine improvement; no optimization fallback.
     bool smartLaplacian = false;
-    // V2: only revisit stars touched by connectivity or coordinate changes.
-    bool activeNodalSmoothing = true;
     int finalSmoothingPasses = 2;
     // In V2, each initial/round batch uses these two nodal sweep budgets.
     // Winslow proposes mean-plane 3D moves with the same quality gate as Smart.
@@ -124,10 +118,6 @@ namespace QuadOptimizer {
     // values into hard optimization bounds. This is used by PACK when a
     // spatially varying guiding field is active.
     bool auditSizeMap = false;
-    // If set, this callback supplies the complete physical specification and
-    // takes precedence over the scalar settings below. It must be thread-safe
-    // when optimizeSmallQuadCavitiesAllFaces() is used.
-    EdgeLengthCriteriaAt edgeLengthCriteriaAt;
     // Positive: constant target size. Non-positive: use the active scaled
     // vector field when enforcing constraints, then fall back to BGM_MeshSize.
     double targetSize = -1.;
@@ -137,8 +127,6 @@ namespace QuadOptimizer {
     double maximumEdgeLength = 0.;
     double minimumEdgeSizeRatio = .35;
     double maximumEdgeSizeRatio = 2.5;
-    bool enforceRelativeSizeErrorIncrease = false;
-    double maximumRelativeSizeErrorIncrease = .02;
     double objectiveRelativeTolerance = 1.e-12;
     // Geometry-driven T+T and T+Q edge swaps. A separating chord becomes a
     // repair target when its midpoint is farther than this fraction of the
@@ -159,14 +147,6 @@ namespace QuadOptimizer {
     SmallCavityWinslowOptions winslow;
     bool invalidateVertexArrays = true;
     int verbose = 0;
-    // Deterministic V2 structural schedules, followed by swaps and Winslow.
-    // 0: stars/diamonds/strips/boundary; 1: strips/stars/boundary/diamonds;
-    // 2: diamonds/boundary/stars/strips. All use identical acceptance guards.
-    int v2Schedule = 0;
-    // Bounded V2 searches after ordinary local operators reach a fixed point.
-    // Bit 1: repair a defective patch; bit 2: compose triangle reductions.
-    int v2SearchMode = 0;
-    int v2SearchCandidateLimit = 32;
   };
 
   struct SmallCavityOptimizerResult {
@@ -294,25 +274,6 @@ namespace QuadOptimizer {
     std::size_t rejectedByOrientation = 0;
     std::size_t rejectedByTopology = 0;
     std::size_t rejectedCacheHits = 0;
-  };
-
-  struct ExistingTopologyWinslowResult {
-    bool success = true;
-    // True only when the last requested sweep accepted no bitwise geometry
-    // change, which certifies that repeating the same deterministic sweep on
-    // the same topology is idle.
-    bool reachedFixedPoint = false;
-    std::size_t passes = 0;
-    std::size_t quadsVisited = 0;
-    std::size_t admissibleCavities = 0;
-    std::size_t cavitiesOptimized = 0;
-    std::size_t acceptedCavities = 0;
-    std::size_t rejectedByWinslow = 0;
-    std::size_t rejectedBySize = 0;
-    std::size_t rejectedByQuality = 0;
-    std::size_t skippedSpecificationCompliant = 0;
-    SpecificationObjective initialObjective;
-    SpecificationObjective finalObjective;
   };
 
   struct FaceOptimizerResult {
@@ -505,22 +466,6 @@ namespace QuadOptimizer {
   // vertex-disjoint waves. Boundary vertices are never moved.
   GMSH_API SmallCavityOptimizerResult optimizeSmallQuadCavities(
     GFace *face,
-    const SmallCavityOptimizerOptions &options = SmallCavityOptimizerOptions());
-
-  GMSH_API SmallCavityOptimizerResult optimizeSmallQuadCavities(
-    int faceTag,
-    const SmallCavityOptimizerOptions &options = SmallCavityOptimizerOptions());
-
-  // Visit every quadrangle whose four vertices are interior to the face. The
-  // union of the four vertex stars defines the cavity. Its existing
-  // connectivity and boundary are kept unchanged; only the four interior
-  // vertices are optimized with the Winslow functional in parameter space.
-  GMSH_API ExistingTopologyWinslowResult smoothExistingQuadCavities(
-    GFace *face,
-    const SmallCavityOptimizerOptions &options = SmallCavityOptimizerOptions());
-
-  GMSH_API ExistingTopologyWinslowResult smoothExistingQuadCavities(
-    int faceTag,
     const SmallCavityOptimizerOptions &options = SmallCavityOptimizerOptions());
 
   // Optimize every face containing quadrangles. Faces are independent and

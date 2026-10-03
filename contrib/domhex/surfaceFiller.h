@@ -7,13 +7,10 @@
 #define SURFACEFILLER_H
 
 #include <vector>
-#include <set>
-#include "STensor3.h"
 
 class GFace;
 class MVertex;
 
-void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
-                             std::vector<SMetric3> &metrics);
+void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed);
 
 #endif

@@ -63,8 +63,7 @@ struct contextMeshOptions {
   double gradation;
   int quadqsSizemapMethod, quadqsTopoOptimMethods;
   double quadqsRemeshingBoldness, quadqsScalingOnTriangulation;
-  int packCleanupMethod, pack3D, packForceAllPoints, packSizemapMethod,
-    packPatterns;
+  int packCleanupMethod, packForceAllPoints, packSizemapMethod, packPatterns;
   double packIntrinsicEdgeLengthFactor;
   int optimizeQuadsPillowLayers, optimizeQuadsSmartLaplacian;
   double optimizeQuadsTargetSize, optimizeQuadsMinimumEdgeLength,

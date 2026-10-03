@@ -7383,16 +7383,6 @@ double opt_mesh_optimize_quads_pillow_layers(OPT_ARGS_NUM)
   return CTX::instance()->mesh.optimizeQuadsPillowLayers;
 }
 
-double opt_mesh_pack_3d(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    if(val != 1.)
-      Msg::Warning("Mesh.Pack3D is fixed to 1: PACK only supports 3D packing");
-    CTX::instance()->mesh.pack3D = 1;
-  }
-  return 1.;
-}
-
 double opt_mesh_pack_force_all_points(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

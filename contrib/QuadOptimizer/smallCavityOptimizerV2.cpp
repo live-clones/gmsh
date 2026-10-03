@@ -25,7 +25,6 @@
 #include "SVector3.h"
 #include "halfEdge.h"
 #include "halfEdgeRewriteCatalog.h"
-#include "quadPatchSearch.h"
 
 #include <algorithm>
 #include <array>
@@ -62,8 +61,6 @@ namespace QuadOptimizer {
       QuadQuad,
       QuadTriangle,
       TriangleTriangle,
-      RepairPatch,
-      ComposedTriangleReduction,
       InteriorTQTQQ,
       InvalidPatch
     };
@@ -861,9 +858,6 @@ namespace QuadOptimizer {
             }
             cad += CadDistance::sampleElement(face, element, uv,
               [&](const Point &xyz, const UV &parameter) {
-                if(options.edgeLengthCriteriaAt)
-                  return options.edgeLengthCriteriaAt(face, xyz[0], xyz[1], xyz[2],
-                                                      parameter[0], parameter[1]).target;
                 if(options.targetSize > 0.) return options.targetSize;
                 return BGM_MeshSize(face, parameter[0], parameter[1], xyz[0], xyz[1], xyz[2]);
               }, &distances);
@@ -1009,7 +1003,6 @@ namespace QuadOptimizer {
       };
       std::unordered_map<Id, ElementCache> _elementCache;
       std::set<Id> _stars, _diamonds, _strips, _fans;
-      std::set<Id> _repairCells, _composedTriangles;
       std::set<std::pair<Id, Id> > _swaps, _merges;
       struct RuleStats {
         std::size_t applicable = 0, cache = 0, candidates = 0;
@@ -1077,10 +1070,7 @@ namespace QuadOptimizer {
       double localTarget(const Point &xyz, const UV &uv) const
       {
         double h = _options.targetSize;
-        if(_options.edgeLengthCriteriaAt)
-          h = _options.edgeLengthCriteriaAt(
-            _face, xyz[0], xyz[1], xyz[2], uv[0], uv[1]).target;
-        else if(!(h > 0.))
+        if(!(h > 0.))
           h = BGM_MeshSize(_face, uv[0], uv[1], xyz[0], xyz[1], xyz[2]);
         return h > 0. && std::isfinite(h) ? h : 0.;
       }
@@ -1088,12 +1078,6 @@ namespace QuadOptimizer {
       EdgeLengthCriteria edgeCriteria(MVertex *a, MVertex *b,
                                        const UV &middle) const
       {
-        if(_options.edgeLengthCriteriaAt) {
-          const Point pa = point(a), pb = point(b);
-          return _options.edgeLengthCriteriaAt(
-            _face, .5 * (pa[0] + pb[0]), .5 * (pa[1] + pb[1]),
-            .5 * (pa[2] + pb[2]), middle[0], middle[1]);
-        }
         EdgeLengthCriteria result;
         const Point pa = point(a), pb = point(b);
         result.target = localTarget(
@@ -1967,10 +1951,8 @@ namespace QuadOptimizer {
         for(int depth = 0; depth <= 6 && !frontier.empty(); ++depth) {
           std::set<Id> next;
           for(const Id cell : frontier) {
-            if((_options.v2SearchMode & 1) && depth <= 3) _repairCells.insert(cell);
             if(_topology.cornerCount(cell) == 3) {
               _strips.insert(cell);
-              if(_options.v2SearchMode & 2) _composedTriangles.insert(cell);
             }
             for(const Id neighbor : _topology.neighbors(cell))
               if(reached.insert(neighbor).second) next.insert(neighbor);
@@ -3258,7 +3240,7 @@ namespace QuadOptimizer {
           std::vector<NodeSmoothingJob> jobs;
           jobs.reserve(colors[color].size());
           for(Id center : colors[color]) {
-            if(!terminalPolish && _options.activeNodalSmoothing && !active.erase(center)) continue;
+            if(!terminalPolish && !active.erase(center)) continue;
             NodeSmoothingJob job;
             job.center = center;
             const auto prepareStarted = std::chrono::steady_clock::now();
@@ -3320,74 +3302,6 @@ namespace QuadOptimizer {
         return _nodeSweep.accepted != 0;
       }
 
-      std::size_t searchLimit() const
-      {
-        return static_cast<std::size_t>(std::max(0,
-          std::min(64, _options.v2SearchCandidateLimit)));
-      }
-
-      PatchSearch::Cells localPatch(const FaceHalfEdge::Cavity &cavity,
-                                     std::vector<Id> &vertices) const
-      {
-        vertices = cavity.boundary;
-        vertices.insert(vertices.end(), cavity.interior.begin(), cavity.interior.end());
-        PatchSearch::Cells cells;
-        for(const Id cell : cavity.cells) {
-          PatchSearch::Cell local;
-          for(const Id vertex : _topology.cellVertices(cell)) {
-            const auto found = std::find(vertices.begin(), vertices.end(), vertex);
-            if(found == vertices.end()) return {};
-            local.push_back(static_cast<Id>(found - vertices.begin()));
-          }
-          cells.push_back(std::move(local));
-        }
-        return cells;
-      }
-
-      Candidate searchCandidate(const std::vector<Id> &vertices,
-                                 const PatchSearch::Cells &cells,
-                                 const char *name)
-      {
-        Candidate candidate;
-        candidate.name = name;
-        std::vector<UV> parameters;
-        for(const Id vertexId : vertices) {
-          MVertex *vertex = _topology.vertex(vertexId);
-          UV uv;
-          if(!vertex || !parameter(vertex, uv)) return {};
-          candidate.vertices.push_back({vertex, uv, point(vertex)});
-          parameters.push_back(uv);
-        }
-        unwrap(parameters);
-        for(std::size_t i = 0; i < parameters.size(); ++i)
-          candidate.vertices[i].uv = parameters[i];
-        for(const auto &cell : cells) {
-          Cell mapped;
-          for(const Id vertex : cell) {
-            if(vertex < 0 || static_cast<std::size_t>(vertex) >= vertices.size()) return {};
-            mapped.push_back(static_cast<std::size_t>(vertex));
-          }
-          candidate.cells.push_back(std::move(mapped));
-        }
-        return candidate;
-      }
-
-      bool reliableDefect(Id cell)
-      {
-        MElement *element = _topology.element(cell);
-        if(!element) return false;
-        const auto quality = evaluateElementQuality(element);
-        if(!quality.topologicallyValid ||
-           (quality.kind == SurfaceElementKind::Quadrangle &&
-            std::isfinite(quality.warpingDegrees) &&
-            quality.warpingDegrees >= absoluteMaximumQuadWarpingDegrees)) return true;
-        std::vector<UV> uv;
-        if(!elementParameters(element, nullptr, uv)) return false;
-        bool opposed = false;
-        followsFace(element, uv, &opposed);
-        return opposed; // An unavailable CAD/UV sample alone is not a seed.
-      }
-
       std::vector<Candidate> invalidPatchCandidates(
         const FaceHalfEdge::Cavity &cavity)
       {
@@ -3411,7 +3325,7 @@ namespace QuadOptimizer {
         if(!std::isfinite(area) || !std::isfinite(scale2) || !(scale2 > 0.) ||
            std::abs(area) <= 1.e-12 * scale2) return result;
         const double sign = area > 0. ? 1. : -1.;
-        using Fillings = std::vector<PatchSearch::Cells>;
+        using Fillings = std::vector<std::vector<Cell> >;
         std::vector<std::vector<Fillings> > fillings(count,
           std::vector<Fillings>(count));
         for(std::size_t i = 0; i + 1 < count; ++i)
@@ -3439,8 +3353,7 @@ namespace QuadOptimizer {
                 for(const auto &b : right) {
                   auto filling = a;
                   filling.insert(filling.end(), b.begin(), b.end());
-                  filling.push_back({static_cast<Id>(first),
-                    static_cast<Id>(middle), static_cast<Id>(last)});
+                  filling.push_back({first, middle, last});
                   out.push_back(std::move(filling));
                   if(out.size() == limit) break;
                 }
@@ -3493,134 +3406,12 @@ namespace QuadOptimizer {
         return false;
       }
 
-      bool repairPatch()
-      {
-        while(!_repairCells.empty()) {
-          const Id seed = *_repairCells.begin(); _repairCells.erase(_repairCells.begin());
-          if(!reliableDefect(seed)) continue;
-          std::size_t expanded = 0;
-          std::queue<std::vector<Id> > pending;
-          std::set<std::vector<Id> > discovered;
-          pending.push({seed}); discovered.insert({seed});
-          while(!pending.empty() && expanded++ < 64) {
-            const auto cells = pending.front(); pending.pop();
-            if(cells.size() >= 3) {
-              FaceHalfEdge::Cavity cavity;
-              if(_topology.cavity(cells, cavity) && cavity.boundary.size() <= 10 &&
-                 !cached(Rule::RepairPatch, cavity)) {
-                std::vector<Id> vertices;
-                const auto before = localPatch(cavity, vertices);
-                PatchSearch::Cell boundary;
-                for(std::size_t i = 0; i < cavity.boundary.size(); ++i)
-                  boundary.push_back(static_cast<Id>(i));
-                std::vector<Candidate> candidates;
-                for(const auto &filling : PatchSearch::minimalTriangleFillings(boundary, searchLimit())) {
-                  if(PatchSearch::changesEveryCell(before, filling))
-                    candidates.push_back(searchCandidate(vertices, filling, "targeted patch repair"));
-                }
-                if(attempt(Rule::RepairPatch, cavity, std::move(candidates), false)) return true;
-              }
-            }
-            if(cells.size() == 4) continue;
-            for(const Id cell : cells)
-              for(const Id neighbor : _topology.neighbors(cell)) {
-                if(std::find(cells.begin(), cells.end(), neighbor) != cells.end()) continue;
-                auto extended = cells;
-                extended.push_back(neighbor);
-                std::sort(extended.begin(), extended.end());
-                if(discovered.insert(extended).second) pending.push(std::move(extended));
-              }
-          }
-        }
-        return false;
-      }
-
-      bool hardValidIntermediate(const FaceHalfEdge::Cavity &support,
-                                  const std::vector<Id> &vertices,
-                                  const std::vector<Id> &removed,
-                                  const PatchSearch::Cells &inserted)
-      {
-        std::vector<Id> cells;
-        for(const Id local : removed) cells.push_back(support.cells[static_cast<std::size_t>(local)]);
-        FaceHalfEdge::Cavity pair;
-        if(!_topology.cavity(cells, pair)) return false;
-        Candidate candidate = searchCandidate(vertices, inserted, "speculative QT");
-        BuiltCandidate built;
-        _buildingCavity = &pair;
-        const bool ready = build(candidate, built) &&
-          _topology.prepareReplacement(pair, built.elementPointers, built.replacement);
-        _buildingCavity = nullptr;
-        if(!ready) return false;
-        const Score before = score(cavityElements(pair));
-        const Score after = score(built.elementPointers, &built.parameters);
-        return !after.invalid && boundedSize(after, before) && boundedLocalCad(after, before);
-      }
-
-      bool composedTriangleReduction()
-      {
-        while(!_composedTriangles.empty()) {
-          const Id start = *_composedTriangles.begin(); _composedTriangles.erase(_composedTriangles.begin());
-          if(_topology.cornerCount(start) != 3) continue;
-          std::size_t expanded = 0;
-          std::vector<std::vector<Id> > pending(1, {start});
-          while(!pending.empty() && expanded++ < 64) {
-            auto path = std::move(pending.back()); pending.pop_back();
-            for(const Id next : _topology.neighbors(path.back())) {
-              if(std::find(path.begin(), path.end(), next) != path.end()) continue;
-              if(_topology.cornerCount(next) == 4 && path.size() < 4) {
-                auto longer = path; longer.push_back(next); pending.push_back(std::move(longer));
-                continue;
-              }
-              // Three/four-cell unions are already exhaustively covered by
-              // the ordinary TQT/TQQT reductions. Spend this budget only on
-              // the five-cell cases absent from the two long-strip zippers.
-              if(_topology.cornerCount(next) != 3 || path.size() != 4) continue;
-              auto complete = path; complete.push_back(next);
-              FaceHalfEdge::Cavity cavity;
-              if(!_topology.cavity(complete, cavity) ||
-                 cached(Rule::ComposedTriangleReduction, cavity)) continue;
-              std::vector<Id> vertices;
-              const auto before = localPatch(cavity, vertices);
-              const auto search = PatchSearch::composeTriangleReduction(before, searchLimit(),
-                [&](const std::vector<Id> &removed, const PatchSearch::Cells &inserted) {
-                  return hardValidIntermediate(cavity, vertices, removed, inserted);
-                });
-              std::vector<Candidate> candidates;
-              for(const auto &filling : search.candidates)
-                candidates.push_back(searchCandidate(vertices, filling, "composed QT strip reduction"));
-              if(attempt(Rule::ComposedTriangleReduction, cavity, std::move(candidates), false)) return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      bool experimentalSearch()
-      {
-        if(!searchLimit()) return false;
-        if((_options.v2SearchMode & 1) && repairPatch()) return true;
-        return (_options.v2SearchMode & 2) && composedTriangleReduction();
-      }
-
       bool mandatoryPass()
       {
-        switch(_options.v2Schedule) {
-        case 1:
-          if(triangleStrip()) return true;
-          if(interiorStar()) return true;
-          if(boundaryFan()) return true;
-          return diamond();
-        case 2:
-          if(diamond()) return true;
-          if(boundaryFan()) return true;
-          if(interiorStar()) return true;
-          return triangleStrip();
-        default:
-          if(interiorStar()) return true;
-          if(diamond()) return true;
-          if(triangleStrip()) return true;
-          return boundaryFan();
-        }
+        if(interiorStar()) return true;
+        if(diamond()) return true;
+        if(triangleStrip()) return true;
+        return boundaryFan();
       }
 
       void auditSize(const Score &score, bool initial)
@@ -3685,7 +3476,7 @@ namespace QuadOptimizer {
         const auto searchStarted = std::chrono::steady_clock::now();
         const auto before = _accepted;
         while(_accepted < limit && (phase == 0 ? mandatoryPass() :
-          phase == 1 ? (swaps(false) || experimentalSearch()) : swaps(true))) {}
+          phase == 1 ? swaps(false) : swaps(true))) {}
         _terminalMandatory = _terminalPairs = false;
         if(_options.verbose)
           Msg::Info("QuadOptimizerV2 face=%d topologyTiming phase=%d accepted=%zu queueSeconds=%.9g searchSeconds=%.9g",
@@ -4149,35 +3940,6 @@ namespace QuadOptimizer {
       all.finalObjective += face.finalObjective;
     }
   } // namespace
-
-  SmallCavityOptimizerResult optimizeSmallQuadCavitiesV2(
-    GFace *face, const SmallCavityOptimizerOptions &options)
-  {
-    const OrientationRepair orientation = prepareFaceComponents(face);
-    if(!orientation.regular) {
-      SmallCavityOptimizerResult result;
-      result.skippedInvalidInputCellComplex = true;
-      Msg::Warning("QuadOptimizer: face %d is not a regular oriented "
-                   "surface cell complex", face ? face->tag() : -1);
-      return result;
-    }
-    OptimizationContext context;
-    if(face) context.initialize({face}, options);
-    Optimizer engine(face, options, context);
-    improveModel({&engine}, options);
-    SmallCavityOptimizerResult result = engine.finalResult();
-    result.reorientedElements += orientation.reversed;
-    result.initialValenceTwoQuadsSplit += orientation.valenceTwoQuadsSplit;
-    return result;
-  }
-
-  SmallCavityOptimizerResult optimizeSmallQuadCavitiesV2(
-    int faceTag, const SmallCavityOptimizerOptions &options)
-  {
-    GModel *model = GModel::current();
-    GFace *face = model ? model->getFaceByTag(faceTag) : nullptr;
-    return optimizeSmallQuadCavitiesV2(face, options);
-  }
 
   AllFacesOptimizerResult optimizeSmallQuadCavitiesAllFacesV2(
     const SmallCavityOptimizerOptions &options)

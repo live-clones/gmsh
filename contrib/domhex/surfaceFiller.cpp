@@ -8,6 +8,7 @@
 
 #include <queue>
 #include <cmath>
+#include <set>
 #include "GmshConfig.h"
 #include "Context.h"
 #include "surfaceFiller.h"
@@ -52,15 +53,13 @@ public:
   SVector3 _t2;
   SVector3 _normal;
   double _size;
-  SMetric3 _meshMetric;
 
   surfacePointWithExclusionCube3D(
     MVertex *v, const SPoint2 &uv, const SVector3 &t1,
     const SVector3 &t2, const SVector3 &normal, double size,
-    const SMetric3 &meshMetric,
     surfacePointWithExclusionCube3D *father = nullptr)
     : _v(v), _father(father ? father->_v : nullptr), _uv(uv), _t1(t1),
-      _t2(t2), _normal(normal), _size(size), _meshMetric(meshMetric)
+      _t2(t2), _normal(normal), _size(size)
   {
   }
 
@@ -124,7 +123,7 @@ static bool inExclusionCube3D(
 }
 
 static surfacePointWithExclusionCube3D *makeSurfaceCubePoint3D(
-  GFace *gf, MVertex *vertex, Field *crossField, double multiplier,
+  GFace *gf, MVertex *vertex, Field *crossField,
   surfacePointWithExclusionCube3D *father = nullptr)
 {
   SPoint2 uv;
@@ -132,7 +131,7 @@ static surfacePointWithExclusionCube3D *makeSurfaceCubePoint3D(
 
   SVector3 t1;
   (*crossField)(vertex->x(), vertex->y(), vertex->z(), t1, gf);
-  const double size = multiplier * t1.norm();
+  const double size = t1.norm();
   if(!(size > 0.0) || !std::isfinite(size) || size > 1.e10)
     return nullptr;
 
@@ -161,9 +160,8 @@ static surfacePointWithExclusionCube3D *makeSurfaceCubePoint3D(
   if(!(t2.norm() > 0.0)) return nullptr;
   t2.normalize();
 
-  const SMetric3 metric(1.0 / (size * size));
   return new surfacePointWithExclusionCube3D(
-    vertex, uv, t1, t2, normal, size, metric, father);
+    vertex, uv, t1, t2, normal, size, father);
 }
 
 static MFaceVertex *projectSurfaceCandidate3D(
@@ -193,9 +191,7 @@ static MFaceVertex *projectSurfaceCandidate3D(
   return new MFaceVertex(point.x(), point.y(), point.z(), gf, uv.x(), uv.y());
 }
 
-static void packingOfOrientedCubes3D(GFace *gf,
-                                     std::vector<MVertex *> &packed,
-                                     std::vector<SMetric3> &metrics)
+void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed)
 {
   FieldManager *fields = gf->model()->getFields();
   Field *crossField = fields->getDirectionField();
@@ -217,10 +213,9 @@ static void packingOfOrientedCubes3D(GFace *gf,
   std::queue<surfacePointWithExclusionCube3D *> fifo;
   std::vector<surfacePointWithExclusionCube3D *> points;
   RTree<surfacePointWithExclusionCube3D *, double, 3, double> rtree;
-  const double globalMultiplier = 1.0;
   for(MVertex *vertex : boundaryVertices) {
     surfacePointWithExclusionCube3D *point = makeSurfaceCubePoint3D(
-      gf, vertex, crossField, globalMultiplier);
+      gf, vertex, crossField);
     if(!point) continue;
     points.push_back(point);
     fifo.push(point);
@@ -258,7 +253,7 @@ static void packingOfOrientedCubes3D(GFace *gf,
       // physical support. Rechecking that fact by UV inversion would discard
       // points on source facets whose chart happens to be singular.
       surfacePointWithExclusionCube3D *point = makeSurfaceCubePoint3D(
-        gf, candidate, crossField, globalMultiplier, parent);
+        gf, candidate, crossField, parent);
       if(!point) {
         delete candidate;
         continue;
@@ -282,10 +277,7 @@ static void packingOfOrientedCubes3D(GFace *gf,
     if(debug)
       fprintf(debug, "SP(%g,%g,%g){1};\n", point->_v->x(), point->_v->y(),
               point->_v->z());
-    if(point->_v->onWhat() == gf) {
-      packed.push_back(point->_v);
-      metrics.push_back(point->_meshMetric);
-    }
+    if(point->_v->onWhat() == gf) packed.push_back(point->_v);
     delete point;
   }
   if(debug) {
@@ -294,12 +286,4 @@ static void packingOfOrientedCubes3D(GFace *gf,
   }
   Msg::Info("3D oriented-cube packing created %zu points on face %d",
             packed.size(), gf->tag());
-}
-
-
-void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
-                            std::vector<SMetric3> &metrics)
-{
-  // PACK has one placement/exclusion algorithm, in physical space.
-  packingOfOrientedCubes3D(gf, packed, metrics);
 }

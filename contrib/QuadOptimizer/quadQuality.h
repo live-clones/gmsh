@@ -8,7 +8,6 @@
 
 #include <array>
 #include <cstddef>
-#include <string>
 #include <vector>
 
 class MElement;
@@ -67,15 +66,5 @@ namespace QuadOptimizer {
     const SpecificationObjective &candidate,
     const SpecificationObjective &reference,
     double relativeTolerance = 1.e-12);
-
-  // Write the seven requested scalar element views plus a final absolute-pass
-  // view. Only linear triangle and quadrangle corner vertices are used.
-  GMSH_API bool writeQualityPos(const std::vector<MElement *> &elements,
-                                const std::string &filename);
-
-  GMSH_API bool writeFaceQualityPos(int faceTag,
-                                    const std::string &filename);
-
-  GMSH_API bool writeModelQualityPos(const std::string &filename);
 
 } // namespace QuadOptimizer

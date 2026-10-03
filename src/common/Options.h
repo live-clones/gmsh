@@ -695,7 +695,6 @@ double opt_mesh_optimize_quads_minimum_edge_length(OPT_ARGS_NUM);
 double opt_mesh_optimize_quads_maximum_edge_length(OPT_ARGS_NUM);
 double opt_mesh_pack_intrinsic_edge_length_factor(OPT_ARGS_NUM);
 double opt_mesh_optimize_quads_pillow_layers(OPT_ARGS_NUM);
-double opt_mesh_pack_3d(OPT_ARGS_NUM);
 double opt_mesh_pack_force_all_points(OPT_ARGS_NUM);
 double opt_mesh_pack_patterns(OPT_ARGS_NUM);
 double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM);
