@@ -128,28 +128,19 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
     {
       group[1] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                               height - 3 * WB - 2 * BH, "Mesh");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Nodes");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Points");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Lines");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Triangles");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 5 * BH, IW, BH, "Quadrangles");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 6 * BH, IW, BH, "Tetrahedra");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 7 * BH, IW, BH, "Hexahedra");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 8 * BH, IW, BH, "Prisms");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 9 * BH, IW, BH, "Pyramids");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Trihedra");
+      const char *rows[12] = {"Nodes",      "Points",      "Lines",
+                              "Triangles",  "Quadrangles", "Polygons",
+                              "Tetrahedra", "Hexahedra",   "Prisms",
+                              "Pyramids",   "Trihedra",    "Polyhedra"};
+      for(int r = 0; r < 12; r++)
+        value[num++] =
+          new Fl_Output(2 * WB, 2 * WB + (r + 1) * BH, IW, BH, rows[r]);
 
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Time for 1D mesh");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 2D mesh");
-      value[num++] =
-        new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Time for 3D mesh");
+      value[num] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH,
+                                 "Time for 1D / 2D / 3D mesh");
+      value[num]->tooltip("Time spent meshing the curves, the surfaces and "
+                          "the volumes, in seconds");
+      num++;
 
       value[num] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "SICN");
       value[num]->tooltip("~ signed inverse condition number");
@@ -195,13 +186,13 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       int cw = 8 * FL_NORMAL_SIZE;
       new Fl_Box(2 * WB, 2 * WB + 1 * BH, cw, BH, "Data");
       new Fl_Box(3 * WB + cw, 2 * WB + 1 * BH, cw, BH, "Adapted");
-      const char *rows[11] = {"Views",     "Points",      "Lines",
-                              "Triangles", "Quadrangles", "Tetrahedra",
-                              "Hexahedra", "Prisms",      "Pyramids",
-                              "Trihedra",  "Strings"};
-      for(int r = 0; r < 11; r++)
+      const char *rows[13] = {
+        "Views",    "Points",     "Lines",     "Triangles", "Quadrangles",
+        "Polygons", "Tetrahedra", "Hexahedra", "Prisms",    "Pyramids",
+        "Trihedra", "Polyhedra",  "Strings"};
+      for(int r = 0; r < 13; r++)
         value[num++] = new Fl_Output(2 * WB, 2 * WB + (r + 2) * BH, cw, BH);
-      for(int r = 0; r < 11; r++) {
+      for(int r = 0; r < 13; r++) {
         value[num] = new Fl_Output(3 * WB + cw, 2 * WB + (r + 2) * BH, cw, BH);
         value[num++]->tooltip("The elements of the adaptive views as last "
                               "refined (they are refined when drawn), with "
@@ -238,26 +229,27 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 }
 
 #if defined(HAVE_POST)
-// the points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms,
-// pyramids and trihedra of a view; for model-based data, those that have data
-// at the step shown (the model may have more: e.g. a view of the part of a
-// partitioned mesh a process computed, in the model of all the parts)
-static void countViewElements(PView *p, double count[9])
+// the points, lines, triangles, quadrangles, polygons, tetrahedra, hexahedra,
+// prisms, pyramids, trihedra and polyhedra of a view; for model-based data,
+// those that have data at the step shown (the model may have more: e.g. a view
+// of the part of a partitioned mesh a process computed, in the model of all
+// the parts)
+static void countViewElements(PViewData *data, int step, double count[11])
 {
-  PViewData *data = p->getData();
-  if(!dynamic_cast<PViewDataGModel *>(data)) {
+  if(step < 0) {
     count[0] += data->getNumPoints();
     count[1] += data->getNumLines();
     count[2] += data->getNumTriangles();
     count[3] += data->getNumQuadrangles();
-    count[4] += data->getNumTetrahedra();
-    count[5] += data->getNumHexahedra();
-    count[6] += data->getNumPrisms();
-    count[7] += data->getNumPyramids();
-    count[8] += data->getNumTrihedra();
+    count[4] += data->getNumPolygons();
+    count[5] += data->getNumTetrahedra();
+    count[6] += data->getNumHexahedra();
+    count[7] += data->getNumPrisms();
+    count[8] += data->getNumPyramids();
+    count[9] += data->getNumTrihedra();
+    count[10] += data->getNumPolyhedra();
     return;
   }
-  int step = p->getOptions()->timeStep;
   if(!data->hasTimeStep(step)) step = data->getFirstNonEmptyTimeStep();
   if(!data->hasTimeStep(step)) return;
   for(int ent = 0; ent < data->getNumEntities(step); ent++) {
@@ -268,14 +260,25 @@ static void countViewElements(PView *p, double count[9])
       case TYPE_LIN: count[1]++; break;
       case TYPE_TRI: count[2]++; break;
       case TYPE_QUA: count[3]++; break;
-      case TYPE_TET: count[4]++; break;
-      case TYPE_HEX: count[5]++; break;
-      case TYPE_PRI: count[6]++; break;
-      case TYPE_PYR: count[7]++; break;
-      case TYPE_TRIH: count[8]++; break;
+      case TYPE_POLYG: count[4]++; break;
+      case TYPE_TET: count[5]++; break;
+      case TYPE_HEX: count[6]++; break;
+      case TYPE_PRI: count[7]++; break;
+      case TYPE_PYR: count[8]++; break;
+      case TYPE_TRIH: count[9]++; break;
+      case TYPE_POLYH: count[10]++; break;
       }
     }
   }
+}
+
+// the elements of a view (see countViewElements())
+static void countViewElements(PView *p, double count[11])
+{
+  PViewData *data = p->getData();
+  int step =
+    dynamic_cast<PViewDataGModel *>(data) ? p->getOptions()->timeStep : -1;
+  countViewElements(data, step, count);
 }
 #endif
 
@@ -295,6 +298,8 @@ void statisticsWindow::compute(bool elementQuality)
     (std::size_t)GModel::current(), (std::size_t)ctx->meshContentStamp,
     visibleOnly, visibleOnly ? (std::size_t)ctx->entityVisibilityStamp : 0};
   for(int i = 4; i < 14; i++) key.push_back((std::size_t)s[i]);
+  key.push_back((std::size_t)s[46]);
+  key.push_back((std::size_t)s[47]);
   if(elementQuality) {
     _qualityKey = key;
     for(int i = 0; i < 9; i++) _qualityStats[i] = s[18 + i];
@@ -328,45 +333,14 @@ void statisticsWindow::compute(bool elementQuality)
   value[num]->value(label[num]);
   num++;
 
-  // mesh
-  sprintf(label[num], "%g", s[4]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[5]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[6]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[7]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[8]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[9]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[10]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[11]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[12]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[13]);
-  value[num]->value(label[num]);
-  num++;
-
-  sprintf(label[num], "%g", s[14]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[15]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[16]);
+  // mesh: nodes, then the elements by dimension
+  const int meshStat[12] = {4, 5, 6, 7, 8, 46, 9, 10, 11, 12, 13, 47};
+  for(int r = 0; r < 12; r++) {
+    sprintf(label[num], "%g", s[meshStat[r]]);
+    value[num]->value(label[num]);
+    num++;
+  }
+  sprintf(label[num], "%.4g / %.4g / %.4g", s[14], s[15], s[16]);
   value[num]->value(label[num]);
   num++;
 
@@ -401,54 +375,28 @@ void statisticsWindow::compute(bool elementQuality)
     num++;
   }
 
-  // post (the views here, not in GetStatistics(), which the options reading
-  // the numbers of mesh elements call)
+  // post: the views, their elements by dimension and their strings (counted
+  // here, not in GetStatistics(), which the options reading the numbers of
+  // mesh elements call)
+  double v[13] = {0.};
 #if defined(HAVE_POST)
-  s[27] = PView::list.size();
+  v[0] = PView::list.size();
   for(auto p : PView::list) {
-    countViewElements(p, &s[28]);
-    s[37] += p->getData()->getNumStrings2D() + p->getData()->getNumStrings3D();
+    countViewElements(p, &v[1]);
+    v[12] += p->getData()->getNumStrings2D() + p->getData()->getNumStrings3D();
   }
 #endif
-  sprintf(label[num], "%g", s[27]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[28]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[29]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[30]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[31]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[32]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[33]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[34]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[35]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[36]);
-  value[num]->value(label[num]);
-  num++;
-  sprintf(label[num], "%g", s[37]);
-  value[num]->value(label[num]);
-  num++;
+  for(int r = 0; r < 13; r++) {
+    sprintf(label[num], "%g", v[r]);
+    value[num]->value(label[num]);
+    num++;
+  }
 
 #if defined(HAVE_POST)
   // the elements of the adaptive views, as last refined (they are refined
   // when they are used, as drawn, not here), with those refined apart where
   // the clipping planes cut them (see PView::refineClipLayer())
-  double a[10] = {0.};
+  double a[12] = {0.};
   for(auto p : PView::list) {
     bool refined = false;
     for(adaptiveData *ad :
@@ -456,20 +404,12 @@ void statisticsWindow::compute(bool elementQuality)
       PViewData *d = ad ? ad->getData() : nullptr;
       if(!d) continue;
       refined = true;
-      a[1] += d->getNumPoints();
-      a[2] += d->getNumLines();
-      a[3] += d->getNumTriangles();
-      a[4] += d->getNumQuadrangles();
-      a[5] += d->getNumTetrahedra();
-      a[6] += d->getNumHexahedra();
-      a[7] += d->getNumPrisms();
-      a[8] += d->getNumPyramids();
-      a[9] += d->getNumTrihedra();
+      countViewElements(d, -1, &a[1]);
     }
     if(refined) a[0] += 1;
   }
   // (empty and greyed out if no view is refined)
-  for(int r = 0; r < 10; r++) {
+  for(int r = 0; r < 12; r++) {
     sprintf(label[num], "%g", a[r]);
     value[num]->value(a[0] ? label[num] : nullptr);
     if(a[0])
@@ -479,7 +419,7 @@ void statisticsWindow::compute(bool elementQuality)
     num++;
   }
 #else
-  num += 10;
+  num += 12;
 #endif
   value[num]->value(nullptr); // (no strings in the refined data)
   value[num]->deactivate();
