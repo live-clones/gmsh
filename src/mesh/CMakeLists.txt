@@ -20,6 +20,7 @@ set(SRC
   meshGRegion.cpp
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
+    meshGRegionPDel3d.cpp pdel3d.cpp pdel3dMoore.cpp
     meshGRegionDelaunay.cpp meshGRegionTet4.cpp
     meshGRegionDelaunayFlat.cpp meshGRegionOptimize.cpp meshGRegionOptimizeFlat.cpp meshGRegionAdapt.cpp
     meshGRegionTransfinite.cpp

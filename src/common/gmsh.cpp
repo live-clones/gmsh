@@ -73,6 +73,7 @@
 #include "meshGFaceOptimize.h"
 #include "meshGRegionDelaunay.h"
 #include "meshGRegionHxt.h"
+#include "meshGRegionPDel3d.h"
 #include "gmshCrossFields.h"
 #include "qualityMeasuresJacobian.h"
 #include "meshRenumber.h"
@@ -9281,6 +9282,12 @@ GMSH_API void gmsh::algorithm::tetrahedralize(
   std::vector<MTetrahedron *> tets;
   if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
     delaunayMeshIn3DHxt(verts, tets, trianglesToRecover);
+  }
+  else if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D) {
+    if(triangles.size() > 0)
+      Msg::Error("3D constrained delaunay tetrahedralization is currently only "
+                 "available using HXT");
+    delaunayMeshIn3DPDel3d(verts, tets);
   }
   else {
     if(triangles.size() > 0)

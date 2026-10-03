@@ -1021,6 +1021,8 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
         opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_RTREE);
       else if(argv[i] == "hxt")
         opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_HXT);
+      else if(argv[i] == "pdel3d")
+        opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_PDEL3D);
       else if(argv[i] == "initial3d")
         opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_INITIAL_ONLY);
       else {
