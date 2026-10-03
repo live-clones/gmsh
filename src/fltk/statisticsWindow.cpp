@@ -297,10 +297,12 @@ void statisticsWindow::compute(bool elementQuality)
   static char label[64][256];
 
 #if defined(HAVE_MESH)
+  // the counts (cheap), then the qualities of the elements (not: they are
+  // asked for on the mesh tab only, and the ones computed last are kept, e.g.
+  // when the histogram adds a view or when the other tabs are updated, as
+  // long as neither the mesh nor the entities counted change)
   bool visibleOnly = visible->value() ? true : false;
-  GetStatistics(s, elementQuality ? quality : nullptr, visibleOnly);
-  // the qualities computed last are kept (e.g. when the histogram adds a view)
-  // as long as neither the mesh nor the entities counted change
+  GetStatistics(s, nullptr, visibleOnly);
   CTX *ctx = CTX::instance();
   std::vector<std::size_t> key = {
     (std::size_t)GModel::current(), (std::size_t)ctx->meshContentStamp,
@@ -308,16 +310,19 @@ void statisticsWindow::compute(bool elementQuality)
   for(int i = 4; i < 14; i++) key.push_back((std::size_t)s[i]);
   key.push_back((std::size_t)s[46]);
   key.push_back((std::size_t)s[47]);
-  if(elementQuality) {
-    _qualityKey = key;
-    for(int i = 0; i < 9; i++) _qualityStats[i] = s[18 + i];
-  }
-  else if(!_qualityKey.empty() && key == _qualityKey) {
+  if(!_qualityKey.empty() && key == _qualityKey) {
     elementQuality = true;
     for(int i = 0; i < 9; i++) s[18 + i] = _qualityStats[i];
   }
-  else
+  else if(elementQuality && group[1]->visible()) {
+    GetStatistics(s, quality, visibleOnly);
+    _qualityKey = key;
+    for(int i = 0; i < 9; i++) _qualityStats[i] = s[18 + i];
+  }
+  else {
+    elementQuality = false;
     _qualityKey.clear();
+  }
 #else
   for(int i = 0; i < 3; i++)
     for(int j = 0; j < 100; j++)
