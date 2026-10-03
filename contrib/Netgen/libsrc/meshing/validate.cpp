@@ -5,52 +5,46 @@
 
 namespace netgen
 {
-  void GetPureBadness(Mesh & mesh, Array<double> & pure_badness,
-		      const BitArray & isnewpoint)
+  void GetPureBadness(Mesh & mesh, Array<double, PointIndex> & pure_badness,
+                      const TBitArray<PointIndex> & isnewpoint)
   {
     //const int ne = mesh.GetNE();
     const int np = mesh.GetNP();
 
-    pure_badness.SetSize(np+PointIndex::BASE+1);
+    pure_badness.SetSize(np+1);   // one extra slot for the maximum
     pure_badness = -1;
 
-    Array< Point<3>* > backup(np);
+    Array<Point<3>, PointIndex> backup(np);
 
-    for(int i=0; i<np; i++)
+    for (PointIndex pi : mesh.Points().Range())
       {
-	backup[i] = new Point<3>(mesh.Point(i+1));
+        backup[pi] = mesh.Point(pi);
 
-	if(isnewpoint.Test(i+PointIndex::BASE) &&
-	   mesh.mlbetweennodes[i+PointIndex::BASE][0] > 0)
-	  {
-	    mesh.Point(i+1) = Center(mesh.Point(mesh.mlbetweennodes[i+PointIndex::BASE][0]),
-				     mesh.Point(mesh.mlbetweennodes[i+PointIndex::BASE][1]));
-	  }
+        if (isnewpoint.Test(pi) && mesh.mlbetweennodes[pi][0].IsValid())
+          mesh.Point(pi) = Center (mesh.Point(mesh.mlbetweennodes[pi][0]),
+                                   mesh.Point(mesh.mlbetweennodes[pi][1]));
       }
-    for (ElementIndex i = 0; i < mesh.GetNE(); i++)
+    for (auto el : mesh.VolumeElements())
       {
-	double bad = mesh[i].CalcJacobianBadness (mesh.Points());
-	for(int j=0; j<mesh[i].GetNP(); j++)
-	  if(bad > pure_badness[mesh[i][j]])
-	    pure_badness[mesh[i][j]] = bad;
+        double bad = el.CalcJacobianBadness (mesh.Points());
+        for(int j=0; j<el.GetNP(); j++)
+          if(bad > pure_badness[el[j]])
+            pure_badness[el[j]] = bad;
 
-	// save maximum
-	if(bad > pure_badness.Last())
-	  pure_badness.Last() = bad; 
+        // save maximum
+        if(bad > pure_badness.Last())
+          pure_badness.Last() = bad; 
       }
     
-    for(int i=0; i<np; i++)
-      {
-	mesh.Point(i+1) = *backup[i];
-	delete backup[i];
-      }
+    for (PointIndex pi : mesh.Points().Range())
+      mesh.Point(pi) = backup[pi];
   }
 
 
   double Validate(const Mesh & mesh, Array<ElementIndex> & bad_elements,
-		  const Array<double> & pure_badness,
-		  double max_worsening, const bool uselocalworsening,
-		  Array<double> * quality_loss)
+                  const Array<double, PointIndex> & pure_badness,
+                  double max_worsening, const bool uselocalworsening,
+                  Array<double, ElementIndex> * quality_loss)
   {
     PrintMessage(3,"!!!! Validating !!!!");
     //if(max_worsening > 0)
@@ -70,92 +64,92 @@ namespace netgen
     if(quality_loss != NULL)
       quality_loss->SetSize(mesh.GetNE());
 
-    for (ElementIndex i = 0; i < mesh.GetNE(); i++)
+    for (ElementIndex i : mesh.VolumeElements().Range())
       {
-	if(uselocalworsening)
-	  {
-	    loc_pure_badness = -1;
-	    for(int j=0; j<mesh[i].GetNP(); j++)
-	      if(pure_badness[mesh[i][j]] > loc_pure_badness)
-		loc_pure_badness = pure_badness[mesh[i][j]];
-	  }
+        if(uselocalworsening)
+          {
+            loc_pure_badness = -1;
+            for(int j=0; j<mesh[i].GetNP(); j++)
+              if(pure_badness[mesh[i][j]] > loc_pure_badness)
+                loc_pure_badness = pure_badness[mesh[i][j]];
+          }
 
 
-	double bad = mesh[i].CalcJacobianBadness (mesh.Points());
-	if (bad > 1e10 || 
-	    (max_worsening > 0 && bad > loc_pure_badness*max_worsening))
-	  bad_elements.Append(i);
-	  
+        double bad = mesh[i].CalcJacobianBadness (mesh.Points());
+        if (bad > 1e10 || 
+            (max_worsening > 0 && bad > loc_pure_badness*max_worsening))
+          bad_elements.Append(i);
+          
 
-	if(max_worsening > 0)
-	  {
-	    double actw = bad/loc_pure_badness;
-	    if(quality_loss != NULL)
-	      (*quality_loss)[i] = actw;
+        if(max_worsening > 0)
+          {
+            double actw = bad/loc_pure_badness;
+            if(quality_loss != NULL)
+              (*quality_loss)[i] = actw;
 
-	    if(actw > worsening)
-	      {
-		worsening = actw;
-		ind = i;
-	      }
-	  }
+            if(actw > worsening)
+              {
+                worsening = actw;
+                ind = i;
+              }
+          }
       }
     return worsening;
   }
 
 
-  void GetWorkingArea(BitArray & working_elements, BitArray & working_points,
-		      const Mesh & mesh, const Array<ElementIndex> & bad_elements,
-		      const int width)
+  void GetWorkingArea(TBitArray<ElementIndex> & working_elements, TBitArray<PointIndex> & working_points,
+                      const Mesh & mesh, const Array<ElementIndex> & bad_elements,
+                      const int width)
   {
     working_elements.Clear();
     working_points.Clear();
 
     for(int i=0; i<bad_elements.Size(); i++)
       {
-	working_elements.Set(bad_elements[i]);
-	const Element & el = mesh[bad_elements[i]];
-	for(int j=1; j<=el.GetNP(); j++)
-	  working_points.Set(el.PNum(j));
+        working_elements.SetBit(bad_elements[i]);
+        auto el = mesh[bad_elements[i]];
+        for (int j = 0; j < el.GetNP(); j++)
+          working_points.SetBit(el[j]);
       }
     
 
     for(int i=0; i<width; i++)
       {
-	for(ElementIndex j=0; j<mesh.GetNE(); j++)
-	  {
-	    if(!working_elements.Test(j))
-	      {  
-		const Element & el = mesh[j];
-		bool set_active = false;
-		
-		for(int k=1; !set_active && k<=el.GetNP(); k++)
-		  set_active = working_points.Test(el.PNum(k));
-		
-		if(set_active)
-		  working_elements.Set(j);
-	      }
-	  }
+        for (ElementIndex j : mesh.VolumeElements().Range())
+          {
+            if(!working_elements.Test(j))
+              {  
+                auto el = mesh[j];
+                bool set_active = false;
+                
+                for(int k=1; !set_active && k<=el.GetNP(); k++)
+                  set_active = working_points.Test(el.PNum(k));
+                
+                if(set_active)
+                  working_elements.SetBit(j);
+              }
+          }
 
-	for(ElementIndex j=0; j<mesh.GetNE(); j++)
-	  {
-	    if(working_elements.Test(j))
-	      {
-		const Element & el = mesh[j];
-		for(int k=1; k<=el.GetNP(); k++)
-		  working_points.Set(el.PNum(k));
-	      }
-	  }
+        for (ElementIndex j : mesh.VolumeElements().Range())
+          {
+            if(working_elements.Test(j))
+              {
+                auto el = mesh[j];
+                for (int k = 0; k < el.GetNP(); k++)
+                  working_points.SetBit(el[k]);
+              }
+          }
       }
   }
 
 
 
   void RepairBisection(Mesh & mesh, Array<ElementIndex> & bad_elements, 
-		       const BitArray & isnewpoint, const Refinement & refinement,
-		       const Array<double> & pure_badness, 
-		       double max_worsening, const bool uselocalworsening,
-		       const Array< Array<int,PointIndex::BASE>* > & idmaps)
+                       const TBitArray<PointIndex> & isnewpoint, const Refinement & refinement,
+                       const Array<double, PointIndex> & pure_badness, 
+                       double max_worsening, const bool uselocalworsening,
+                       const Array< idmap_type* > & idmaps)
   {
     ostringstream ostrstr;
 
@@ -175,49 +169,46 @@ namespace netgen
 
     PushStatus("Repair Bisection");
 
-    Array<Point<3>* > should(np);
-    Array<Point<3>* > can(np);
+    Array<Point<3>, PointIndex> should(np);
+    Array<Point<3>, PointIndex> can(np);
     Array<Vec<3>* > nv(np);
     for(int i=0; i<np; i++)
-      {
-	nv[i] = new Vec<3>;
-	should[i] = new Point<3>;
-	can[i] = new Point<3>;
-      }
+      nv[i] = new Vec<3>;
     
-    BitArray isboundarypoint(np),isedgepoint(np);
+    TBitArray<PointIndex> isboundarypoint(np),isedgepoint(np);
     isboundarypoint.Clear();
     isedgepoint.Clear();
 
-    for(int i = 1; i <= mesh.GetNSeg(); i++)
+    for (auto & seg : mesh.LineSegments())
       {
-	const Segment & seg = mesh.LineSegment(i);
-	isedgepoint.Set(seg[0]);
-	isedgepoint.Set(seg[1]);
+        isedgepoint.SetBit(seg[0]);
+        isedgepoint.SetBit(seg[1]);
       }
 
-    Array<int> surfaceindex(np);
+    Array<int, PointIndex> surfaceindex(np);
     surfaceindex = -1;
-    
+
+    /*
     for (int i = 1; i <= mesh.GetNSE(); i++)
       {
-	const Element2d & sel = mesh.SurfaceElement(i);
-	for (int j = 1; j <= sel.GetNP(); j++)
-	  if(!isedgepoint.Test(sel.PNum(j)))
-	    {
-	      isboundarypoint.Set(sel.PNum(j));
-	      surfaceindex[sel.PNum(j) - PointIndex::BASE] = 
-		mesh.GetFaceDescriptor(sel.GetIndex()).SurfNr();
-	    }
-      }
-
+        const Element2dRef & sel = mesh.SurfaceElement(i);
+    */
+    for (auto sel : mesh.SurfaceElements())
+      for (int j = 1; j <= sel.GetNP(); j++)
+        if(!isedgepoint.Test(sel.PNum(j)))
+          {
+            isboundarypoint.SetBit(sel.PNum(j));
+            surfaceindex[sel.PNum(j)] = 
+              mesh.GetFaceDescriptor(sel.GetIndex()).SurfNr();
+          }
+    
 
 
     Validate(mesh,bad_elements,pure_badness,
-	     ((uselocalworsening) ?  (0.8*(max_worsening-1.) + 1.) : (0.1*(max_worsening-1.) + 1.)),
-	     uselocalworsening); // -> larger working area
-    BitArray working_elements(ne);
-    BitArray working_points(np);
+             ((uselocalworsening) ?  (0.8*(max_worsening-1.) + 1.) : (0.1*(max_worsening-1.) + 1.)),
+             uselocalworsening); // -> larger working area
+    TBitArray<ElementIndex> working_elements(ne+1);
+    TBitArray<PointIndex> working_points(np);
 
     GetWorkingArea(working_elements,working_points,mesh,bad_elements,numbadneighbours);
     //working_elements.Set();
@@ -231,36 +222,37 @@ namespace netgen
     
 
     int auxnum=0;
-    for(int i=1; i<=np; i++)
-      if(working_points.Test(i))
-	auxnum++;
+    for(PointIndex pi : mesh.Points().Range())
+      if(working_points.Test(pi))
+        auxnum++;
     
     ostrstr.str("");
     ostrstr << "Percentage working points: " << 100.*double(auxnum)/np;
     PrintMessage(5,ostrstr.str());
     
 
-    BitArray isworkingboundary(np);
-    for(int i=1; i<=np; i++)
-      if(working_points.Test(i) && isboundarypoint.Test(i))
-	isworkingboundary.Set(i);
+    TBitArray<PointIndex> isworkingboundary(np);
+    for (PointIndex pi : mesh.Points().Range())
+      if(working_points.Test(pi) && isboundarypoint.Test(pi))
+        isworkingboundary.SetBit(pi);
       else
-	isworkingboundary.Clear(i);
+        isworkingboundary.Clear(pi);
 
 
-    for(int i=0; i<np; i++)
-      *should[i] = mesh.Point(i+1);
+    for (PointIndex pi : mesh.Points().Range())
+      should[pi] = mesh[pi];
 
     
-    for(int i=0; i<np; i++)
+    // for(int i=0; i<np; i++)
+    for (PointIndex i = IndexBASE<PointIndex>(); i < IndexBASE<PointIndex>()+np; i++)
       {
-	if(isnewpoint.Test(i+PointIndex::BASE) && 
-	   //working_points.Test(i+PointIndex::BASE) && 
-	   mesh.mlbetweennodes[i+PointIndex::BASE][0] > 0)
-	  *can[i] = Center(*can[mesh.mlbetweennodes[i+PointIndex::BASE][0]-PointIndex::BASE],
-			   *can[mesh.mlbetweennodes[i+PointIndex::BASE][1]-PointIndex::BASE]);
-	else
-	  *can[i] = mesh.Point(i+1);
+        if(isnewpoint.Test(i) && 
+           //working_points.Test(i+PointIndex::BASE) && 
+           mesh.mlbetweennodes[i][0].IsValid())
+          can[i] = Center(can[mesh.mlbetweennodes[i][0]],
+                          can[mesh.mlbetweennodes[i][1]]);
+        else
+          can[i] = mesh[i];
       }
 
 
@@ -276,315 +268,322 @@ namespace netgen
 
     double oldlamedge,oldlamface;
 
-    MeshOptimize2d * optimizer2d = refinement.Get2dOptimizer();
-    if(!optimizer2d)
+    auto geo = mesh.GetGeometry();
+    if(!geo)
       {
-	cerr << "No 2D Optimizer!" << endl;
-	return;
+        cerr << "No 2D Optimizer!" << endl;
+        return;
       }    
 
     while ((facokedge < 1.-1e-8 || facokface < 1.-1e-8) && 
-	   cnttrials < maxtrials &&
-	   multithread.terminate != 1)
+           cnttrials < maxtrials &&
+           multithread.terminate != 1)
       {
-	(*testout) << "   facokedge " << facokedge << " facokface " << facokface << " cnttrials " << cnttrials << endl
-		   << " perc. " << 95. * max2( min2(facokedge,facokface),
-					       double(cnttrials)/double(maxtrials)) << endl;
+        (*testout) << "   facokedge " << facokedge << " facokface " << facokface << " cnttrials " << cnttrials << endl
+                   << " perc. " << 95. * max2( min2(facokedge,facokface),
+                                               double(cnttrials)/double(maxtrials)) << endl;
 
-	SetThreadPercent(95. * max2( min2(facokedge,facokface),
-				     double(cnttrials)/double(maxtrials)));
+        SetThreadPercent(95. * max2( min2(facokedge,facokface),
+                                     double(cnttrials)/double(maxtrials)));
 
-	ostrstr.str("");
-	ostrstr << "max. worsening " << max_worsening;
-	PrintMessage(5,ostrstr.str());
-	oldlamedge = lamedge;
-	lamedge *= 6;
-	if (lamedge > 2)
-	  lamedge = 2;
-	   
-	if(1==1 || facokedge < 1.-1e-8)
-	  {
-	    for(int i=0; i<nv.Size(); i++)
-	      *nv[i] = Vec<3>(0,0,0);
-	    for (int i = 1; i <= mesh.GetNSE(); i++)
-	      {
-		const Element2d & sel = mesh.SurfaceElement(i);
-		Vec<3> auxvec = Cross(mesh.Point(sel.PNum(2))-mesh.Point(sel.PNum(1)),
-                                      mesh.Point(sel.PNum(3))-mesh.Point(sel.PNum(1)));
-		auxvec.Normalize();
-		for (int j = 1; j <= sel.GetNP(); j++)
-		  if(!isedgepoint.Test(sel.PNum(j)))
-		    *nv[sel.PNum(j) - PointIndex::BASE] += auxvec;
-	      }
-	    for(int i=0; i<nv.Size(); i++)
-	      nv[i]->Normalize();
-	    
-	    
-	    do  // move edges
-	      {
-		lamedge *= 0.5;
-		cnttrials++;
-		if(cnttrials % 10 == 0)
-		  max_worsening *= 1.1;
-		
-		
-		factryedge = lamedge + (1.-lamedge) * facokedge;
+        ostrstr.str("");
+        ostrstr << "max. worsening " << max_worsening;
+        PrintMessage(5,ostrstr.str());
+        oldlamedge = lamedge;
+        lamedge *= 6;
+        if (lamedge > 2)
+          lamedge = 2;
+           
+        if(1==1 || facokedge < 1.-1e-8)
+          {
+            for(int i=0; i<nv.Size(); i++)
+              *nv[i] = Vec<3>(0,0,0);
+            /*
+            for (int i = 1; i <= mesh.GetNSE(); i++)
+              {
+                const Element2dRef & sel = mesh.SurfaceElement(i);
+            */
+            for (auto sel : mesh.SurfaceElements())
+              {
+                Vec<3> auxvec = Cross(mesh.Point(sel[1])-mesh.Point(sel[0]),
+                                      mesh.Point(sel[2])-mesh.Point(sel[0]));
+                auxvec.Normalize();
+                for (int j = 0; j < sel.GetNP(); j++)
+                  if(!isedgepoint.Test(sel[j]))
+                    *nv[sel[j] - IndexBASE<PointIndex>()] += auxvec;
+              }
+            for(int i=0; i<nv.Size(); i++)
+              nv[i]->Normalize();
+            
+            
+            do  // move edges
+              {
+                lamedge *= 0.5;
+                cnttrials++;
+                if(cnttrials % 10 == 0)
+                  max_worsening *= 1.1;
+                
+                
+                factryedge = lamedge + (1.-lamedge) * facokedge;
 
-		ostrstr.str("");
-		ostrstr << "lamedge = " << lamedge << ", trying: " << factryedge;
-		PrintMessage(5,ostrstr.str());
-		
+                ostrstr.str("");
+                ostrstr << "lamedge = " << lamedge << ", trying: " << factryedge;
+                PrintMessage(5,ostrstr.str());
+                
 
-		for (int i = 1; i <= np; i++)
-		  {
-		    if (isedgepoint.Test(i))
-		      {
-			for (int j = 0; j < 3; j++)
-			  mesh.Point(i)(j) = 
-			    lamedge * (*should.Get(i))(j) +
-			    (1.-lamedge) * (*can.Get(i))(j);
-		      }
-		    else
-		      mesh.Point(i) = *can.Get(i);
-		  }
-		if(facokedge < 1.-1e-8)
-		  {
-		    ostrstr.str("");
-		    ostrstr << "worsening: " <<
-		      Validate(mesh,bad_elements,pure_badness,max_worsening,uselocalworsening);
+                for (PointIndex pi : mesh.Points().Range())
+                  {
+                    if (isedgepoint.Test(pi))
+                      {
+                        for (int j = 0; j < 3; j++)
+                          mesh[pi](j) = 
+                            lamedge * should[pi](j) +
+                            (1.-lamedge) * can[pi](j);
+                      }
+                    else
+                      mesh[pi] = can[pi];
+                  }
+                if(facokedge < 1.-1e-8)
+                  {
+                    ostrstr.str("");
+                    ostrstr << "worsening: " <<
+                      Validate(mesh,bad_elements,pure_badness,max_worsening,uselocalworsening);
 
-		    PrintMessage(5,ostrstr.str());
-		  }
-		else
-		  Validate(mesh,bad_elements,pure_badness,-1,uselocalworsening);
-
-
-		ostrstr.str("");
-		ostrstr << bad_elements.Size() << " bad elements";
-		PrintMessage(5,ostrstr.str());
-	      }
-	    while (bad_elements.Size() > 0 && 
-		   cnttrials < maxtrials &&
-		   multithread.terminate != 1);
-	  }
-
-	if(cnttrials < maxtrials &&
-	   multithread.terminate != 1)
-	  {
-	    facokedge = factryedge;
-	    
-	    // smooth faces
-	    mesh.CalcSurfacesOfNode();
-	    
-	    MeshingParameters dummymp;
-	    mesh.ImproveMeshJacobianOnSurface(dummymp,isworkingboundary,nv,OPT_QUALITY, &idmaps);
-	    
-	    for (int i = 1; i <= np; i++)
-	      *can.Elem(i) = mesh.Point(i);
-	    
-	    if(optimizer2d)
-	      optimizer2d->ProjectBoundaryPoints(surfaceindex,can,should);
-	  }
+                    PrintMessage(5,ostrstr.str());
+                  }
+                else
+                  Validate(mesh,bad_elements,pure_badness,-1,uselocalworsening);
 
 
-	oldlamface = lamface;
-	lamface *= 6;
-	if (lamface > 2)
-	  lamface = 2;
+                ostrstr.str("");
+                ostrstr << bad_elements.Size() << " bad elements";
+                PrintMessage(5,ostrstr.str());
+              }
+            while (bad_elements.Size() > 0 && 
+                   cnttrials < maxtrials &&
+                   multithread.terminate != 1);
+          }
+
+        if(cnttrials < maxtrials &&
+           multithread.terminate != 1)
+          {
+            facokedge = factryedge;
+            
+            // smooth faces
+            mesh.CalcSurfacesOfNode();
+            
+            MeshingParameters dummymp;
+            mesh.ImproveMeshJacobianOnSurface(dummymp,isworkingboundary,nv,OPT_QUALITY, &idmaps);
+            
+            for (PointIndex pi : mesh.Points().Range())
+              can[pi] = mesh[pi];
+            
+            if(geo)
+              for (PointIndex pi : surfaceindex.Range())
+                {
+                  if(surfaceindex[pi] >= 0)
+                    {
+                      should[pi] = can[pi];
+                      geo->ProjectPoint(surfaceindex[pi],should[pi]);
+                    }
+                }
+          }
 
 
-	if(cnttrials < maxtrials &&
-	   multithread.terminate != 1)
-	  {
-
-	    do  // move faces
-	      {
-		lamface *= 0.5;
-		cnttrials++;
-		if(cnttrials % 10 == 0)
-		  max_worsening *= 1.1;
-		factryface = lamface + (1.-lamface) * facokface;
-
-		ostrstr.str("");
-		ostrstr << "lamface = " << lamface << ", trying: " << factryface;
-		PrintMessage(5,ostrstr.str());
-		
-		
-		for (int i = 1; i <= np; i++)
-		  {
-		    if (isboundarypoint.Test(i))
-		      {
-			for (int j = 0; j < 3; j++)
-			  mesh.Point(i)(j) = 
-			    lamface * (*should.Get(i))(j) +
-			    (1.-lamface) * (*can.Get(i))(j);
-		      }
-		    else
-		      mesh.Point(i) = *can.Get(i);
-		  }
-
-		ostrstr.str("");
-		ostrstr << "worsening: " <<
-		  Validate(mesh,bad_elements,pure_badness,max_worsening,uselocalworsening);
-		PrintMessage(5,ostrstr.str());
-	
-
-		ostrstr.str("");
-		ostrstr << bad_elements.Size() << " bad elements";
-		PrintMessage(5,ostrstr.str());
-	      }
-	    while (bad_elements.Size() > 0 && 
-		   cnttrials < maxtrials &&
-		   multithread.terminate != 1);
-	  }
+        oldlamface = lamface;
+        lamface *= 6;
+        if (lamface > 2)
+          lamface = 2;
 
 
+        if(cnttrials < maxtrials &&
+           multithread.terminate != 1)
+          {
 
-	if(cnttrials < maxtrials &&
-	   multithread.terminate != 1)
-	  {
-	    facokface = factryface;
-	    // smooth interior
-	    
-	    mesh.CalcSurfacesOfNode();
-	    
-	    MeshingParameters dummymp;
-	    mesh.ImproveMeshJacobian (dummymp, OPT_QUALITY,&working_points);
-	    //mesh.ImproveMeshJacobian (OPT_WORSTCASE,&working_points);
-	  
+            do  // move faces
+              {
+                lamface *= 0.5;
+                cnttrials++;
+                if(cnttrials % 10 == 0)
+                  max_worsening *= 1.1;
+                factryface = lamface + (1.-lamface) * facokface;
 
-	    for (int i = 1; i <= np; i++)
-	      *can.Elem(i) = mesh.Point(i);
-	  }
-	  
-	//!
-	if((facokedge < 1.-1e-8 || facokface < 1.-1e-8) && 
-	   cnttrials < maxtrials &&
-	   multithread.terminate != 1)
-	  {
-	    MeshingParameters dummymp;
-	    MeshOptimize3d optmesh(dummymp);
-	    for(int i=0; i<numtopimprove; i++)
-	      {
-		optmesh.SwapImproveSurface(mesh,OPT_QUALITY,&working_elements,&idmaps);
-		optmesh.SwapImprove(mesh,OPT_QUALITY,&working_elements);
-		
-	      }	    
+                ostrstr.str("");
+                ostrstr << "lamface = " << lamface << ", trying: " << factryface;
+                PrintMessage(5,ostrstr.str());
+                
+                
+                for (PointIndex pi : mesh.Points().Range())
+                  {
+                    if (isboundarypoint.Test(pi))
+                      {
+                        for (int j = 0; j < 3; j++)
+                          mesh[pi](j) = 
+                            lamface * should[pi](j) +
+                            (1.-lamface) * can[pi](j);
+                      }
+                    else
+                      mesh[pi] = can[pi];
+                  }
 
-	    //	    mesh.mglevels = 1;
-	    
-		
-	    ne = mesh.GetNE();
-	    working_elements.SetSize(ne);
-	    
-	    
-	    for (int i = 1; i <= np; i++)
-	      mesh.Point(i) = *should.Elem(i);
-	    
-	    Validate(mesh,bad_elements,pure_badness,
-		     ((uselocalworsening) ?  (0.8*(max_worsening-1.) + 1.) : (0.1*(max_worsening-1.) + 1.)),
-		     uselocalworsening);
-	    
-	    if(lamedge < oldlamedge || lamface < oldlamface)
-	      numbadneighbours++;
-	    GetWorkingArea(working_elements,working_points,mesh,bad_elements,numbadneighbours);
-	    for(int i=1; i<=np; i++)
-	      if(working_points.Test(i) && isboundarypoint.Test(i))
-		isworkingboundary.Set(i);
-	      else
-		isworkingboundary.Clear(i);
-	    auxnum=0;
-	    for(int i=1; i<=np; i++)
-	      if(working_points.Test(i))
-		auxnum++;
+                ostrstr.str("");
+                ostrstr << "worsening: " <<
+                  Validate(mesh,bad_elements,pure_badness,max_worsening,uselocalworsening);
+                PrintMessage(5,ostrstr.str());
+        
 
-	    
-	    ostrstr.str("");
-	    ostrstr << "Percentage working points: " << 100.*double(auxnum)/np;
-	    PrintMessage(5,ostrstr.str());
-	    
-	    for (int i = 1; i <= np; i++)
-	      mesh.Point(i) = *can.Elem(i);
-	  }
-	//!
+                ostrstr.str("");
+                ostrstr << bad_elements.Size() << " bad elements";
+                PrintMessage(5,ostrstr.str());
+              }
+            while (bad_elements.Size() > 0 && 
+                   cnttrials < maxtrials &&
+                   multithread.terminate != 1);
+          }
+
+
+
+        if(cnttrials < maxtrials &&
+           multithread.terminate != 1)
+          {
+            facokface = factryface;
+            // smooth interior
+            
+            mesh.CalcSurfacesOfNode();
+            
+            MeshingParameters dummymp;
+            mesh.ImproveMeshJacobian (dummymp, OPT_QUALITY,&working_points);
+            //mesh.ImproveMeshJacobian (OPT_WORSTCASE,&working_points);
+          
+
+            for (PointIndex pi : mesh.Points().Range())
+              can[pi] = mesh[pi];
+          }
+          
+        //!
+        if((facokedge < 1.-1e-8 || facokface < 1.-1e-8) && 
+           cnttrials < maxtrials &&
+           multithread.terminate != 1)
+          {
+            MeshingParameters dummymp;
+            MeshOptimize3d optmesh(mesh, dummymp, OPT_QUALITY);
+            for(int i=0; i<numtopimprove; i++)
+              {
+                optmesh.SwapImproveSurface(&working_elements,&idmaps);
+                optmesh.SwapImprove(&working_elements);
+                
+              }     
+
+            //      mesh.mglevels = 1;
+            
+                
+            ne = mesh.GetNE();
+            working_elements.SetSize(ne);
+            
+            
+            for (PointIndex pi : mesh.Points().Range())
+              mesh[pi] = should[pi];
+            
+            Validate(mesh,bad_elements,pure_badness,
+                     ((uselocalworsening) ?  (0.8*(max_worsening-1.) + 1.) : (0.1*(max_worsening-1.) + 1.)),
+                     uselocalworsening);
+            
+            if(lamedge < oldlamedge || lamface < oldlamface)
+              numbadneighbours++;
+            GetWorkingArea(working_elements,working_points,mesh,bad_elements,numbadneighbours);
+            for (PointIndex pi : mesh.Points().Range())
+              if(working_points.Test(pi) && isboundarypoint.Test(pi))
+                isworkingboundary.SetBit(pi);
+              else
+                isworkingboundary.Clear(pi);
+            auxnum=0;
+            for(PointIndex pi : mesh.Points().Range())
+              if(working_points.Test(pi))
+                auxnum++;
+
+            
+            ostrstr.str("");
+            ostrstr << "Percentage working points: " << 100.*double(auxnum)/np;
+            PrintMessage(5,ostrstr.str());
+            
+            for (PointIndex pi : mesh.Points().Range())
+              mesh[pi] = can[pi];
+          }
+        //!
 
       }
 
     MeshingParameters dummymp;
-    MeshOptimize3d optmesh(dummymp);
+    MeshOptimize3d optmesh(mesh, dummymp, OPT_QUALITY);
     for(int i=0; i<numtopimprove && multithread.terminate != 1; i++)
       {
-	optmesh.SwapImproveSurface(mesh,OPT_QUALITY,NULL,&idmaps);
-	optmesh.SwapImprove(mesh,OPT_QUALITY);
-	//mesh.UpdateTopology();
+        optmesh.SwapImproveSurface(NULL,&idmaps);
+        optmesh.SwapImprove();
+        //mesh.UpdateTopology();
       }
     mesh.UpdateTopology();
     /*
     if(cnttrials < 100)
       {
-	nv = Vec3d(0,0,0);
-	for (int i = 1; i <= mesh.GetNSE(); i++)
-	  {
-	    const Element2d & sel = mesh.SurfaceElement(i);
-	    Vec3d auxvec = Cross(mesh.Point(sel.PNum(2))-mesh.Point(sel.PNum(1)),
-				 mesh.Point(sel.PNum(3))-mesh.Point(sel.PNum(1)));
-	    auxvec.Normalize();
-	    for (int j = 1; j <= sel.GetNP(); j++)
-	      if(!isedgepoint.Test(sel.PNum(j)))
-		nv[sel.PNum(j) - PointIndex::BASE] += auxvec;
-	  }
-	for(int i=0; i<nv.Size(); i++)
-	  nv[i].Normalize();
-	
+        nv = Vec<3>(0,0,0);
+        for (int i = 1; i <= mesh.GetNSE(); i++)
+          {
+            const Element2dRef & sel = mesh.SurfaceElement(i);
+            Vec<3> auxvec = Cross(mesh.Point(sel[1])-mesh.Point(sel[0]),
+                                 mesh.Point(sel[2])-mesh.Point(sel[0]));
+            auxvec.Normalize();
+            for (int j = 1; j <= sel.GetNP(); j++)
+              if(!isedgepoint.Test(sel.PNum(j)))
+                nv[sel.PNum(j) - PointIndex::BASE] += auxvec;
+          }
+        for(int i=0; i<nv.Size(); i++)
+          nv[i].Normalize();
+        
 
-	mesh.ImproveMeshJacobianOnSurface(isboundarypoint,nv,OPT_QUALITY);
-	mesh.CalcSurfacesOfNode();
-	    // smooth interior
-	    
-	
-	for (int i = 1; i <= np; i++)
-	  if(isboundarypoint.Test(i))
-	    can.Elem(i) = mesh.Point(i);
-	    
-	if(optimizer2d)
-	  optimizer2d->ProjectBoundaryPoints(surfaceindex,can,should);
+        mesh.ImproveMeshJacobianOnSurface(isboundarypoint,nv,OPT_QUALITY);
+        mesh.CalcSurfacesOfNode();
+            // smooth interior
+            
+        
+        for (int i = 1; i <= np; i++)
+          if(isboundarypoint.Test(i))
+            can.Elem(i) = mesh.Point(i);
+            
+        if(optimizer2d)
+          optimizer2d->ProjectBoundaryPoints(surfaceindex,can,should);
 
-	
-	for (int i = 1; i <= np; i++)
-	  if(isboundarypoint.Test(i))
-	    for(int j=1; j<=3; j++)
-	      mesh.Point(i).X(j) = should.Get(i).X(j);
+        
+        for (int i = 1; i <= np; i++)
+          if(isboundarypoint.Test(i))
+            for(int j=1; j<=3; j++)
+              mesh.Point(i).X(j) = should.Get(i).X(j);
       }
     */
 
 
     if(cnttrials == maxtrials)
       {
-	for (int i = 1; i <= np; i++)
-	  mesh.Point(i) = *should.Get(i);
+        for (PointIndex pi : mesh.Points().Range())
+          mesh[pi] = should[pi];
 
-	Validate(mesh,bad_elements,pure_badness,max_worsening,uselocalworsening);
-	
-	for(int i=0; i<bad_elements.Size(); i++)
-	  {
-	    ostrstr.str("");
-	    ostrstr << "bad element:" << endl
-		    << mesh[bad_elements[i]][0] << ": " << mesh.Point(mesh[bad_elements[i]][0]) << endl
-		    << mesh[bad_elements[i]][1] << ": " << mesh.Point(mesh[bad_elements[i]][1]) << endl
-		    << mesh[bad_elements[i]][2] << ": " << mesh.Point(mesh[bad_elements[i]][2]) << endl
-		    << mesh[bad_elements[i]][3] << ": " << mesh.Point(mesh[bad_elements[i]][3]);
-	    PrintMessage(5,ostrstr.str());
-	  }
-	for (int i = 1; i <= np; i++)
-	  mesh.Point(i) = *can.Get(i);
+        Validate(mesh,bad_elements,pure_badness,max_worsening,uselocalworsening);
+        
+        for(int i=0; i<bad_elements.Size(); i++)
+          {
+            ostrstr.str("");
+            ostrstr << "bad element:" << endl
+                    << mesh[bad_elements[i]][0] << ": " << mesh.Point(mesh[bad_elements[i]][0]) << endl
+                    << mesh[bad_elements[i]][1] << ": " << mesh.Point(mesh[bad_elements[i]][1]) << endl
+                    << mesh[bad_elements[i]][2] << ": " << mesh.Point(mesh[bad_elements[i]][2]) << endl
+                    << mesh[bad_elements[i]][3] << ": " << mesh.Point(mesh[bad_elements[i]][3]);
+            PrintMessage(5,ostrstr.str());
+          }
+        for (PointIndex pi : mesh.Points().Range())
+          mesh[pi] = can[pi];
       }
 
     for(int i=0; i<np; i++)
-      {
-	delete nv[i];
-	delete can[i];
-	delete should[i];
-      }
+      delete nv[i];
 
     PopStatus();
   }

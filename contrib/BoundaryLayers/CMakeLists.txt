@@ -3,7 +3,6 @@ set(SRC
   highOrderBoundaryLayerUntangler.cpp
   meanPlaneSurfaceUntangler.cpp
   winslowParametric.cpp
-  winslowUntanglerGMSH.cpp
 )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

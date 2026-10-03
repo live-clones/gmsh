@@ -1863,6 +1863,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.value[6] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Point size");
+      general.value[6]->tooltip("General.PointSize");
       general.value[6]->minimum(0.1);
       general.value[6]->maximum(50);
       if(CTX::instance()->inputScrolling) general.value[6]->step(0.1);
@@ -1871,7 +1872,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.value[7] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width");
-      general.value[7]->tooltip("General.PointSize");
+      general.value[7]->tooltip("General.LineWidth");
       general.value[7]->minimum(0.1);
       general.value[7]->maximum(50);
       if(CTX::instance()->inputScrolling) general.value[7]->step(0.1);

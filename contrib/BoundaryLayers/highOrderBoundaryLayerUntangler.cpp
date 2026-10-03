@@ -15,6 +15,7 @@
 
 #include "highOrderBoundaryLayerUntangler.h"
 
+#include "Context.h"
 #include "GEdge.h"
 #include "GFace.h"
 #include "GModel.h"
@@ -36,7 +37,7 @@
 #include "qualityMeasuresJacobian.h"
 #include "meanPlaneSurfaceUntangler.h"
 #include "winslowParametric.h"
-#include "winslowUntanglerGMSH.h"
+#include "WinslowUntangler.h"
 
 #include <array>
 #include <algorithm>
@@ -2358,7 +2359,11 @@ namespace {
               numLockedFromOutsideElements, numReorientedIdeal,
               numDegenerate ? " (some degenerate tetrahedra skipped)" : "");
 
-    untangle_tetrahedra_GMSH(points, locked, tets, sh, 1.e+0);
+    WinslowUntangler::Options options;
+    options.strictFailures = true;
+    options.laplacianPresmoothing = true;
+    options.numThreads = CTX::instance()->numThreadsFor(tets.size(), 5000);
+    WinslowUntangler::untangle3D(points, locked, tets, sh, options);
 
     std::size_t numInvalidTet10 = 0, numInvalidPrism18 = 0;
     std::size_t numInvalidHex27 = 0;
@@ -2697,8 +2702,13 @@ namespace {
                        "untangler",
                        gf ? gf->tag() : 0);
       }
-      if(!useMetricParametric || !metricParametricOk)
-        untangle_triangles_2D_GMSH(points, locked, triangles, sh, 1.e+0);
+      if(!useMetricParametric || !metricParametricOk) {
+        WinslowUntangler::Options options;
+        options.strictFailures = true;
+        options.numThreads =
+          CTX::instance()->numThreadsFor(triangles.size(), 5000);
+        WinslowUntangler::untangle2D(points, locked, triangles, sh, options);
+      }
       writeBezierFaceUntanglerPos(gf, "after", points, locked, triangles, sh);
     }
 

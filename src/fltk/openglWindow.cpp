@@ -404,9 +404,7 @@ void openglWindow::draw()
 
     _ctx->draw3d();
     gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-    float ps =
-      CTX::instance()->geom.pointSize * _ctx->highResolutionPixelFactor();
-    gmshPointSize(ps);
+    gmshPointSize(CTX::instance()->geom.pointSize);
     gmshBegin(GL_POINTS);
     gmshVertex3d(_point[0], _point[1], _point[2]);
     gmshEnd();

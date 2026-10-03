@@ -28,22 +28,22 @@ void LoadVMatrixLine (istream & ist, DenseMatrix & m, int line)
       ist >> pnum;
       
       if (ch == 'x' || ch == 'X')
-	m.Elem(line, 3 * pnum - 2) = f;
+        m.Elem(line, 3 * pnum - 2) = f;
       if (ch == 'y' || ch == 'Y')
-	m.Elem(line, 3 * pnum - 1) = f;
+        m.Elem(line, 3 * pnum - 1) = f;
       if (ch == 'z' || ch == 'Z')
-	m.Elem(line, 3 * pnum    ) = f;
+        m.Elem(line, 3 * pnum    ) = f;
 
       if (ch == 'p' || ch == 'P')
-	{
-	  m.Elem(line  , 3 * pnum-2) = f;
-	  m.Elem(line+1, 3 * pnum-1) = f;
-	  m.Elem(line+2, 3 * pnum  ) = f;
-	}
+        {
+          m.Elem(line  , 3 * pnum-2) = f;
+          m.Elem(line+1, 3 * pnum-1) = f;
+          m.Elem(line+2, 3 * pnum  ) = f;
+        }
 
       ist >> ch;
       if (ch == COMMASIGN)
-	ist >> ch;
+        ist >> ch;
     }
 }
 
@@ -51,16 +51,16 @@ void LoadVMatrixLine (istream & ist, DenseMatrix & m, int line)
 
 
 
-int vnetrule :: NeighbourTrianglePoint (const threeint & t1, const threeint & t2) const
+int vnetrule :: NeighbourTrianglePoint (const IVec<3> & t1, const IVec<3> & t2) const
 {
   Array<int> tr1(3);
   Array<int> tr2(3);
-  tr1.Elem(1)=t1.i1;
-  tr1.Elem(2)=t1.i2;
-  tr1.Elem(3)=t1.i3;
-  tr2.Elem(1)=t2.i1;
-  tr2.Elem(2)=t2.i2;
-  tr2.Elem(3)=t2.i3;
+  tr1[0]=t1[0];
+  tr1[1]=t1[1];
+  tr1[2]=t1[2];
+  tr2[0]=t2[0];
+  tr2[1]=t2[1];
+  tr2[2]=t2[2];
 
 
   int ret=0;
@@ -68,11 +68,11 @@ int vnetrule :: NeighbourTrianglePoint (const threeint & t1, const threeint & t2
   for (int i=1; i<=3; i++)
     {
       for (int j=1; j<=3; j++)
-	{
-	  if ((tr1.Get(i)==tr2.Get(j) && tr1.Get((i%3)+1)==tr2.Get((j%3)+1)) ||
-              (tr1.Get(i)==tr2.Get((j%3)+1) && tr1.Get((i%3)+1)==tr2.Get(j)))
-	    {ret = tr2.Get((j+1)%3+1);}
-	}      
+        {
+          if ((tr1[i-1]==tr2[j-1] && tr1[(i%3)]==tr2[(j%3)]) ||
+              (tr1[i-1]==tr2[(j%3)] && tr1[(i%3)]==tr2[j-1]))
+            {ret = tr2[(j+1)%3];}
+        }      
     }
 
   return ret;
@@ -83,10 +83,10 @@ void vnetrule :: LoadRule (istream & ist)
 {
   char buf[256];
   char ch, ok;
-  Point3d p;
-  Element2d face;
+  Point<3> p;
+  RuleElement2d face(3);
   int i, j, i1, i2, i3, fs, ii, ii1, ii2, ii3;
-  twoint edge;
+  IVec<2> edge;
   DenseMatrix tempoldutonewu(30, 20), 
     tempoldutofreezone(30, 20),
     tempoldutofreezonelimit(30, 20),
@@ -118,476 +118,493 @@ void vnetrule :: LoadRule (istream & ist)
 
       if (strcmp (buf, "quality") == 0)
 
-	{
-	  ist >> quality;
-	}
+        {
+          ist >> quality;
+        }
 
       else if (strcmp (buf, "flags") == 0)
-	{
-	  ist >> ch;
-	  while (ch != ';')
-	    {
-	      flags.Append (ch);
-	      ist >> ch;
-	    }
-	}
+        {
+          ist >> ch;
+          while (ch != ';')
+            {
+              flags.Append (ch);
+              ist >> ch;
+            }
+        }
 
       else if (strcmp (buf, "mappoints") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      ist >> p.X();
-	      ist >> ch;    // ','
-	      ist >> p.Y();
-	      ist >> ch;    // ','
-	      ist >> p.Z();
-	      ist >> ch;    // ')'
+          while (ch == '(')
+            {
+              ist >> p(0);
+              ist >> ch;    // ','
+              ist >> p(1);
+              ist >> ch;    // ','
+              ist >> p(2);
+              ist >> ch;    // ')'
 
-	      points.Append (p);
-	      noldp++;
+              points.Append (p);
+              noldp++;
 
-	      tolerances.SetSize (noldp);
-	      tolerances.Elem(noldp) = 1;
+              tolerances.SetSize (noldp);
+              tolerances[tolerances.Range().Next()-1] = 1;
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  if (ch == '{')
-		    {
-		      ist >> tolerances.Elem(noldp);
-		      ist >> ch;  // '}'
-		    }
+              ist >> ch;
+              while (ch != ';')
+                {
+                  if (ch == '{')
+                    {
+                      ist >> tolerances[tolerances.Range().Next()-1];
+                      ist >> ch;  // '}'
+                    }
 
-		  ist >> ch;
-		}
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
 
       else if (strcmp (buf, "mapfaces") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      face.SetType(TRIG);
-	      ist >> face.PNum(1);
-	      ist >> ch;    // ','
-	      ist >> face.PNum(2);
-	      ist >> ch;    // ','
-	      ist >> face.PNum(3);
-	      ist >> ch;    // ')' or ','
-	      if (ch == COMMASIGN)
-		{
-		  face.SetType(QUAD);
-		  ist >> face.PNum(4);
-		  ist >> ch;    // ')' 
-		}
-	      faces.Append (face);
-	      noldf++;
+          while (ch == '(')
+            {
+              face.SetNP(3);
+              ist >> face[0];
+              ist >> ch;    // ','
+              ist >> face[1];
+              ist >> ch;    // ','
+              ist >> face[2];
+              ist >> ch;    // ')' or ','
+              if (ch == COMMASIGN)
+                {
+                  face.SetNP(4);
+                  ist >> face[3];
+                  ist >> ch;    // ')' 
+                }
+              faces.Append (face);
+              noldf++;
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  if (ch == 'd')
-		    {
-		      delfaces.Append (noldf);
-		      ist >> ch; // 'e'
-		      ist >> ch; // 'l'
-		    }
+              ist >> ch;
+              while (ch != ';')
+                {
+                  if (ch == 'd')
+                    {
+                      delfaces.Append (noldf);
+                      ist >> ch; // 'e'
+                      ist >> ch; // 'l'
+                    }
 
-		  ist >> ch;
-		}
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
       else if (strcmp (buf, "mapedges") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      ist >> edge.i1;
-	      ist >> ch;    // ','
-	      ist >> edge.i2;
-	      ist >> ch;    // ')'
+          while (ch == '(')
+            {
+              ist >> edge[0];
+              ist >> ch;    // ','
+              ist >> edge[1];
+              ist >> ch;    // ')'
 
-	      edges.Append (edge);
+              edges.Append (edge);
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  ist >> ch;
-		}
+              ist >> ch;
+              while (ch != ';')
+                {
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
 
       else if (strcmp (buf, "newpoints") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      ist >> p.X();
-	      ist >> ch;    // ','
-	      ist >> p.Y();
-	      ist >> ch;    // ','
-	      ist >> p.Z();
-	      ist >> ch;    // ')'
+          while (ch == '(')
+            {
+              ist >> p(0);
+              ist >> ch;    // ','
+              ist >> p(1);
+              ist >> ch;    // ','
+              ist >> p(2);
+              ist >> ch;    // ')'
 
-	      points.Append (p);
+              points.Append (p);
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  if (ch == '{')
-		    {
-		      LoadVMatrixLine (ist, tempoldutonewu,
-				       3 * (points.Size()-noldp) - 2);
+              ist >> ch;
+              while (ch != ';')
+                {
+                  if (ch == '{')
+                    {
+                      LoadVMatrixLine (ist, tempoldutonewu,
+                                       3 * (points.Size()-noldp) - 2);
 
-		      ist >> ch; // '{'
-		      LoadVMatrixLine (ist, tempoldutonewu,
-				       3 * (points.Size()-noldp) - 1);
+                      ist >> ch; // '{'
+                      LoadVMatrixLine (ist, tempoldutonewu,
+                                       3 * (points.Size()-noldp) - 1);
 
-		      ist >> ch; // '{'
-		      LoadVMatrixLine (ist, tempoldutonewu,
-				       3 * (points.Size()-noldp)    );
-		    }
+                      ist >> ch; // '{'
+                      LoadVMatrixLine (ist, tempoldutonewu,
+                                       3 * (points.Size()-noldp)    );
+                    }
 
-		  ist >> ch;
-		}
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
       else if (strcmp (buf, "newfaces") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      face.SetType(TRIG);
-	      ist >> face.PNum(1);
-	      ist >> ch;    // ','
-	      ist >> face.PNum(2);
-	      ist >> ch;    // ','
-	      ist >> face.PNum(3);
-	      ist >> ch;    // ')' or ','
-	      if (ch == COMMASIGN)
-		{
-		  face.SetType(QUAD);
-		  ist >> face.PNum(4);
-		  ist >> ch;    // ')' 
-		}
-	      faces.Append (face);
+          while (ch == '(')
+            {
+              face.SetNP(3);
+              ist >> face[0];
+              ist >> ch;    // ','
+              ist >> face[1];
+              ist >> ch;    // ','
+              ist >> face[2];
+              ist >> ch;    // ')' or ','
+              if (ch == COMMASIGN)
+                {
+                  face.SetNP(4);
+                  ist >> face[3];
+                  ist >> ch;    // ')' 
+                }
+              faces.Append (face);
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  ist >> ch;
-		}
+              ist >> ch;
+              while (ch != ';')
+                {
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
       else if (strcmp (buf, "freezone") == 0)
-	{
-	  ist >> ch;
-	
-	  while (ch == '(')
-	    {
-	      ist >> p.X();
-	      ist >> ch;    // ','
-	      ist >> p.Y();
-	      ist >> ch;    // ','
-	      ist >> p.Z();
-	      ist >> ch;    // ')'
-	    
-	      freezone.Append (p);
-	    
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  if (ch == '{')
-		    {
-		      LoadVMatrixLine (ist, tempoldutofreezone,
-				       3 * freezone.Size() - 2);
-		    
-		      ist >> ch; // '{'
-		      LoadVMatrixLine (ist, tempoldutofreezone,
-				       3 * freezone.Size() - 1);
-		    
-		      ist >> ch; // '{'
-		      LoadVMatrixLine (ist, tempoldutofreezone,
-				       3 * freezone.Size()    );
-		    }
-		
-		  ist >> ch;
-		}
-	    
-	      ist >> ch;
-	    }
-	
-	  ist.putback (ch);
-	}
+        {
+          ist >> ch;
+        
+          while (ch == '(')
+            {
+              ist >> p(0);
+              ist >> ch;    // ','
+              ist >> p(1);
+              ist >> ch;    // ','
+              ist >> p(2);
+              ist >> ch;    // ')'
+            
+              freezone.Append (p);
+            
+              ist >> ch;
+              while (ch != ';')
+                {
+                  if (ch == '{')
+                    {
+                      LoadVMatrixLine (ist, tempoldutofreezone,
+                                       3 * freezone.Size() - 2);
+                    
+                      ist >> ch; // '{'
+                      LoadVMatrixLine (ist, tempoldutofreezone,
+                                       3 * freezone.Size() - 1);
+                    
+                      ist >> ch; // '{'
+                      LoadVMatrixLine (ist, tempoldutofreezone,
+                                       3 * freezone.Size()    );
+                    }
+                
+                  ist >> ch;
+                }
+            
+              ist >> ch;
+            }
+        
+          ist.putback (ch);
+        }
       else if (strcmp (buf, "freezone2") == 0)
-	{
-	  int k, nfp;
+        {
+          int k, nfp;
 
-	  nfp = 0;
-	  ist >> ch;
+          nfp = 0;
+          ist >> ch;
 
-	  DenseMatrix hm1(3, 50), hm2(50, 50), hm3(50, 50);
-	  hm3 = 0;
+          DenseMatrix hm1(3, 50), hm2(50, 50), hm3(50, 50);
+          hm3 = 0;
 
-	  while (ch == '{')
-	    {
-	      hm1 = 0;
-	      nfp++;
-	      LoadVMatrixLine (ist, hm1, 1);
+          while (ch == '{')
+            {
+              hm1 = 0;
+              nfp++;
+              LoadVMatrixLine (ist, hm1, 1);
 
-	      for (i = 1; i <= points.Size(); i++)
-		tfz.Elem(nfp, i) = hm1.Get(1, 3*i-2);
+              for (i = 1; i <= points.Size(); i++)
+                tfz.Elem(nfp, i) = hm1.Get(1, 3*i-2);
 
 
-	      p.X() = p.Y() = p.Z() = 0;
-	      for (i = 1; i <= points.Size(); i++)
-		{
-		  p.X() += hm1.Get(1, 3*i-2) * points.Get(i).X();
-		  p.Y() += hm1.Get(1, 3*i-2) * points.Get(i).Y();
-		  p.Z() += hm1.Get(1, 3*i-2) * points.Get(i).Z();
-		}
-	      freezone.Append (p);
-	      freezonelimit.Append (p);
-	    
-	      hm2 = 0;
-	      for (i = 1; i <= 3 * noldp; i++)
-		hm2.Elem(i, i) = 1;
-	      for (i = 1; i <= 3 * noldp; i++)
-		for (j = 1; j <= 3 * (points.Size() - noldp); j++)
-		  hm2.Elem(j + 3 * noldp, i) = tempoldutonewu.Get(j, i);
-		  
-	      for (i = 1; i <= 3; i++)
-		for (j = 1; j <= 3 * noldp; j++)
-		  {
-		    double sum = 0;
-		    for (k = 1; k <= 3 * points.Size(); k++)
-		      sum += hm1.Get(i, k) * hm2.Get(k, j);
-		  
-		    hm3.Elem(i + 3 * (nfp-1), j) = sum;
-		  }
+              p(0) = p(1) = p(2) = 0;
+              for (auto pi : points.Range())
+                {
+                  int i = pi.Nr1();
+                  p(0) += hm1.Get(1, 3*i-2) * points[pi](0);
+                  p(1) += hm1.Get(1, 3*i-2) * points[pi](1);
+                  p(2) += hm1.Get(1, 3*i-2) * points[pi](2);
+                }
+              freezone.Append (p);
+              freezonelimit.Append (p);
+            
+              hm2 = 0;
+              for (i = 1; i <= 3 * noldp; i++)
+                hm2.Elem(i, i) = 1;
+              for (i = 1; i <= 3 * noldp; i++)
+                for (j = 1; j <= 3 * (points.Size() - noldp); j++)
+                  hm2.Elem(j + 3 * noldp, i) = tempoldutonewu.Get(j, i);
+                  
+              for (i = 1; i <= 3; i++)
+                for (j = 1; j <= 3 * noldp; j++)
+                  {
+                    double sum = 0;
+                    for (k = 1; k <= 3 * points.Size(); k++)
+                      sum += hm1.Get(i, k) * hm2.Get(k, j);
+                  
+                    hm3.Elem(i + 3 * (nfp-1), j) = sum;
+                  }
 
-	      //	    (*testout) << "freepoint: " << p << endl;
+              //            (*testout) << "freepoint: " << p << endl;
 
-	      while (ch != ';')
-		ist >> ch; 
+              while (ch != ';')
+                ist >> ch; 
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  tfzl = tfz;
+          tfzl = tfz;
 
-	  tempoldutofreezone = hm3;
-	  tempoldutofreezonelimit = hm3;
-	  ist.putback(ch);
-	}
+          tempoldutofreezone = hm3;
+          tempoldutofreezonelimit = hm3;
+          ist.putback(ch);
+        }
 
       else if (strcmp (buf, "freezonelimit") == 0)
-	{
-	  int k, nfp;
-	  nfp = 0;
-	  ist >> ch;
+        {
+          int k, nfp;
+          nfp = 0;
+          ist >> ch;
 
-	  DenseMatrix hm1(3, 50), hm2(50, 50), hm3(50, 50);
-	  hm3 = 0;
+          DenseMatrix hm1(3, 50), hm2(50, 50), hm3(50, 50);
+          hm3 = 0;
 
-	  while (ch == '{')
-	    {
-	      hm1 = 0;
-	      nfp++;
-	      LoadVMatrixLine (ist, hm1, 1);
+          while (ch == '{')
+            {
+              hm1 = 0;
+              nfp++;
+              LoadVMatrixLine (ist, hm1, 1);
 
-	      for (i = 1; i <= points.Size(); i++)
-		tfzl.Elem(nfp, i) = hm1.Get(1, 3*i-2);
+              for (i = 1; i <= points.Size(); i++)
+                tfzl.Elem(nfp, i) = hm1.Get(1, 3*i-2);
 
 
-	      p.X() = p.Y() = p.Z() = 0;
-	      for (i = 1; i <= points.Size(); i++)
-		{
-		  p.X() += hm1.Get(1, 3*i-2) * points.Get(i).X();
-		  p.Y() += hm1.Get(1, 3*i-2) * points.Get(i).Y();
-		  p.Z() += hm1.Get(1, 3*i-2) * points.Get(i).Z();
-		}
-	      freezonelimit.Elem(nfp) = p;
-	    
-	      hm2 = 0;
-	      for (i = 1; i <= 3 * noldp; i++)
-		hm2.Elem(i, i) = 1;
-	      for (i = 1; i <= 3 * noldp; i++)
-		for (j = 1; j <= 3 * (points.Size() - noldp); j++)
-		  hm2.Elem(j + 3 * noldp, i) = tempoldutonewu.Get(j, i);
-		  
-	      for (i = 1; i <= 3; i++)
-		for (j = 1; j <= 3 * noldp; j++)
-		  {
-		    double sum = 0;
-		    for (k = 1; k <= 3 * points.Size(); k++)
-		      sum += hm1.Get(i, k) * hm2.Get(k, j);
-		  
-		    hm3.Elem(i + 3 * (nfp-1), j) = sum;
-		  }
+              p(0) = p(1) = p(2) = 0;
+              for (auto pi : points.Range())
+                {
+                  int i = pi.Nr1();
+                  p(0) += hm1.Get(1, 3*i-2) * points[pi](0);
+                  p(1) += hm1.Get(1, 3*i-2) * points[pi](1);
+                  p(2) += hm1.Get(1, 3*i-2) * points[pi](2);
+                }
+              freezonelimit[nfp-1] = p;
+            
+              hm2 = 0;
+              for (i = 1; i <= 3 * noldp; i++)
+                hm2.Elem(i, i) = 1;
+              for (i = 1; i <= 3 * noldp; i++)
+                for (j = 1; j <= 3 * (points.Size() - noldp); j++)
+                  hm2.Elem(j + 3 * noldp, i) = tempoldutonewu.Get(j, i);
+                  
+              for (i = 1; i <= 3; i++)
+                for (j = 1; j <= 3 * noldp; j++)
+                  {
+                    double sum = 0;
+                    for (k = 1; k <= 3 * points.Size(); k++)
+                      sum += hm1.Get(i, k) * hm2.Get(k, j);
+                  
+                    hm3.Elem(i + 3 * (nfp-1), j) = sum;
+                  }
 
-	      //	    (*testout) << "freepoint: " << p << endl;
+              //            (*testout) << "freepoint: " << p << endl;
 
-	      while (ch != ';')
-		ist >> ch; 
+              while (ch != ';')
+                ist >> ch; 
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  tempoldutofreezonelimit = hm3;
-	  ist.putback(ch);
-	}
+          tempoldutofreezonelimit = hm3;
+          ist.putback(ch);
+        }
 
       else if (strcmp (buf, "freeset") == 0)
-	{
-	  freesets.Append (new Array<int>);
+        {
+          freesets.Append (new Array<int>);
 
-	  ist >> ch;
+          ist >> ch;
 
-	  while (ch != ';')
-	    {
-	      ist.putback (ch);
-	      ist >> i;
-	      freesets.Last()->Append(i);
-	      ist >> ch;
-	    }
-	}
+          while (ch != ';')
+            {
+              ist.putback (ch);
+              ist >> i;
+              freesets.Last()->Append(i);
+              ist >> ch;
+            }
+        }
 
       else if (strcmp (buf, "elements") == 0)
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      elements.Append (Element(TET));
+          while (ch == '(')
+            {
+              elements.Append (RuleElement(4));
 
-	      //	      elements.Last().SetNP(1);
-	      ist >> elements.Last().PNum(1);
-	      ist >> ch;    // ','
+              //              elements.Last().SetNP(1);
+              ist >> elements.Last()[0];
+              ist >> ch;    // ','
 
-	      if (ch == COMMASIGN)
-		{
-		  //		  elements.Last().SetNP(2);
-		  ist >> elements.Last().PNum(2);
-		  ist >> ch;    // ','
-		}
-	      if (ch == COMMASIGN)
-		{
-		  //		  elements.Last().SetNP(3);
-		  ist >> elements.Last().PNum(3);
-		  ist >> ch;    // ','
-		}
-	      if (ch == COMMASIGN)
-		{
-		  //		  elements.Last().SetNP(4);
-		  elements.Last().SetType(TET);
-		  ist >> elements.Last().PNum(4);
-		  ist >> ch;    // ','
-		}
-	      if (ch == COMMASIGN)
-		{
-		  //		  elements.Last().SetNP(5);
-		  elements.Last().SetType(PYRAMID);
-		  ist >> elements.Last().PNum(5);
-		  ist >> ch;    // ','
-		}
-	      if (ch == COMMASIGN)
-		{
-		  //		  elements.Last().SetNP(6);
-		  elements.Last().SetType(PRISM);
-		  ist >> elements.Last().PNum(6);
-		  ist >> ch;    // ','
-		}
+              if (ch == COMMASIGN)
+                {
+                  //              elements.Last().SetNP(2);
+                  ist >> elements.Last()[1];
+                  ist >> ch;    // ','
+                }
+              if (ch == COMMASIGN)
+                {
+                  //              elements.Last().SetNP(3);
+                  ist >> elements.Last()[2];
+                  ist >> ch;    // ','
+                }
+              if (ch == COMMASIGN)
+                {
+                  //              elements.Last().SetNP(4);
+                  elements.Last().SetType(TET);
+                  ist >> elements.Last()[3];
+                  ist >> ch;    // ','
+                }
+              if (ch == COMMASIGN)
+                {
+                  //              elements.Last().SetNP(5);
+                  elements.Last().SetType(PYRAMID);
+                  ist >> elements.Last()[4];
+                  ist >> ch;    // ','
+                }
+              if (ch == COMMASIGN)
+                {
+                  //              elements.Last().SetNP(6);
+                  elements.Last().SetType(PRISM);
+                  ist >> elements.Last()[5];
+                  ist >> ch;    // ','
+                }
+              
+              if (ch == COMMASIGN)
+                {
+                  //              elements.Last().SetNP(6);
+                  elements.Last().SetType(HEX);
+                  ist >> elements.Last()[6];
+                  ist >> ch;    // ','
+                }
+              if (ch == COMMASIGN)
+                {
+                  //              elements.Last().SetNP(6);
+                  elements.Last().SetType(HEX);
+                  ist >> elements.Last()[7];
+                  ist >> ch;    // ','
+                }
 
-	      /*
-	      orientations.Append (fourint());
-	      orientations.Last().i1 = elements.Last().PNum(1);
-	      orientations.Last().i2 = elements.Last().PNum(2);
-	      orientations.Last().i3 = elements.Last().PNum(3);
-	      orientations.Last().i4 = elements.Last().PNum(4);
-	      */
+              /*
+              orientations.Append (IVec<4,RulePointIndex>());
+              orientations.Last()[0] = elements.Last()[0];
+              orientations.Last()[1] = elements.Last()[1];
+              orientations.Last()[2] = elements.Last()[2];
+              orientations.Last()[3] = elements.Last()[3];
+              */
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  ist >> ch;
-		}
+              ist >> ch;
+              while (ch != ';')
+                {
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
       else if (strcmp (buf, "orientations") == 0)
 
-	{
-	  ist >> ch;
+        {
+          ist >> ch;
 
-	  while (ch == '(')
-	    {
-	      //        fourint a = fourint();
-	      orientations.Append (fourint());
+          while (ch == '(')
+            {
+              //        IVec<4> a = IVec<4>();
+              orientations.Append (IVec<4,RulePointIndex>());
 
-	      ist >> orientations.Last().i1;
-	      ist >> ch;    // ','
-	      ist >> orientations.Last().i2;
-	      ist >> ch;    // ','
-	      ist >> orientations.Last().i3;
-	      ist >> ch;    // ','
-	      ist >> orientations.Last().i4;
-	      ist >> ch;    // ','
+              ist >> orientations.Last()[0];
+              ist >> ch;    // ','
+              ist >> orientations.Last()[1];
+              ist >> ch;    // ','
+              ist >> orientations.Last()[2];
+              ist >> ch;    // ','
+              ist >> orientations.Last()[3];
+              ist >> ch;    // ','
 
 
-	      ist >> ch;
-	      while (ch != ';')
-		{
-		  ist >> ch;
-		}
+              ist >> ch;
+              while (ch != ';')
+                {
+                  ist >> ch;
+                }
 
-	      ist >> ch;
-	    }
+              ist >> ch;
+            }
 
-	  ist.putback (ch);
-	}
+          ist.putback (ch);
+        }
 
 
       else if (strcmp (buf, "endrule") != 0)
-	{
-	  PrintSysError ("Parser3d, unknown token " , buf);
-	}
+        {
+          PrintSysError ("Parser3d, unknown token " , buf);
+        }
     }
   while (!ist.eof() && strcmp (buf, "endrule") != 0);
 
@@ -638,10 +655,10 @@ void vnetrule :: LoadRule (istream & ist)
   for (i = 1; i <= freezone.Size(); i++)
     for (j = 1; j <= points.Size(); j++)
       {
-	if (tfz.Elem(i, j))
-	  (*oldutofreezone).Elem(i, j) = tfz.Elem(i, j);
-	if (tfzl.Elem(i, j))
-	  (*oldutofreezonelimit).Elem(i, j) = tfzl.Elem(i, j);
+        if (tfz.Elem(i, j))
+          (*oldutofreezone).Elem(i, j) = tfz.Elem(i, j);
+        if (tfzl.Elem(i, j))
+          (*oldutofreezonelimit).Elem(i, j) = tfzl.Elem(i, j);
       }
   
   /*
@@ -652,39 +669,39 @@ void vnetrule :: LoadRule (istream & ist)
 
   freezonepi.SetSize (freezone.Size());
   for (i = 1; i <= freezonepi.Size(); i++)
-    freezonepi.Elem(i) = 0;
+    freezonepi[i-1] = 0;
   for (i = 1; i <= freezone.Size(); i++)
-    for (j = 1; j <= noldp; j++)
-      if (Dist (freezone.Get(i), points.Get(j)) < 1e-8)
-	freezonepi.Elem(i) = j;
+    for (auto pj : points.Range().Modify(0, noldp-points.Size()))
+      if (Dist (freezone[i-1], points[pj]) < 1e-8)
+        freezonepi[i-1] = pj.Nr1();
 
 
 
   
   for (i = 1; i <= elements.Size(); i++)
     {
-      if (elements.Elem(i).GetNP() == 4)
-	{
-	  orientations.Append (fourint());
-	  orientations.Last().i1 = elements.Get(i).PNum(1);
-	  orientations.Last().i2 = elements.Get(i).PNum(2);
-	  orientations.Last().i3 = elements.Get(i).PNum(3);
-	  orientations.Last().i4 = elements.Get(i).PNum(4);
-	}
-      if (elements.Elem(i).GetNP() == 5)
-	{
-	  orientations.Append (fourint());
-	  orientations.Last().i1 = elements.Get(i).PNum(1);
-	  orientations.Last().i2 = elements.Get(i).PNum(2);
-	  orientations.Last().i3 = elements.Get(i).PNum(3);
-	  orientations.Last().i4 = elements.Get(i).PNum(5);
+      if (elements[i-1].GetNP() == 4)
+        {
+          orientations.Append (IVec<4,RulePointIndex>());
+          orientations.Last()[0] = elements[i-1][0];
+          orientations.Last()[1] = elements[i-1][1];
+          orientations.Last()[2] = elements[i-1][2];
+          orientations.Last()[3] = elements[i-1][3];
+        }
+      if (elements[i-1].GetNP() == 5)
+        {
+          orientations.Append (IVec<4,RulePointIndex>());
+          orientations.Last()[0] = elements[i-1][0];
+          orientations.Last()[1] = elements[i-1][1];
+          orientations.Last()[2] = elements[i-1][2];
+          orientations.Last()[3] = elements[i-1][4];
 
-	  orientations.Append (fourint());
-	  orientations.Last().i1 = elements.Get(i).PNum(1);
-	  orientations.Last().i2 = elements.Get(i).PNum(3);
-	  orientations.Last().i3 = elements.Get(i).PNum(4);
-	  orientations.Last().i4 = elements.Get(i).PNum(5);
-	}
+          orientations.Append (IVec<4,RulePointIndex>());
+          orientations.Last()[0] = elements[i-1][0];
+          orientations.Last()[1] = elements[i-1][2];
+          orientations.Last()[2] = elements[i-1][3];
+          orientations.Last()[3] = elements[i-1][4];
+        }
     }
 
 
@@ -693,7 +710,7 @@ void vnetrule :: LoadRule (istream & ist)
     {
       freesets.Append (new Array<int>);
       for (i = 1; i <= freezone.Size(); i++)
-	freesets.Elem(1)->Append(i);
+        freesets[0]->Append(i);
     }
 
 
@@ -706,65 +723,65 @@ void vnetrule :: LoadRule (istream & ist)
 
   if (quality < 100)
     {
-      for (int i = 1; i <= 3; i++)
-	{
-	  for (int j = 1; j <= points.Size(); j++)
-	    vp(j-1) = points.Get(j).X(i);
-	  oldutofreezone->Mult(vp, vfp);
-	  for (int j = 1; j <= freezone.Size(); j++)
-	    freezone.Elem(j).X(i) = vfp(j-1);
-	}
+      for (int i = 0; i < 3; i++)
+        {
+          for (auto pj : points.Range())
+            vp(pj.Nr0()) = points[pj](i);
+          oldutofreezone->Mult(vp, vfp);
+          for (int j = 1; j <= freezone.Size(); j++)
+            freezone[j-1](i) = vfp(j-1);
+        }
       //      for (i = 1; i <= freezone.Size(); i++)
-      //	(*testout) << "freepoint: " << freezone.Get(i) << endl;
+      //        (*testout) << "freepoint: " << freezone.Get(i) << endl;
     }
 
 
   for (fs = 1; fs <= freesets.Size(); fs++)
     {
-      freefaces.Append (new Array<threeint>);
+      freefaces.Append (new Array<IVec<3>>);
 
-      Array<int> & freeset = *freesets.Elem(fs);
-      Array<threeint> & freesetfaces = *freefaces.Last();
+      Array<int> & freeset = *freesets[fs-1];
+      Array<IVec<3>> & freesetfaces = *freefaces.Last();
 
       for (ii1 = 1; ii1 <= freeset.Size(); ii1++)
-	for (ii2 = 1; ii2 <= freeset.Size(); ii2++)
-	  for (ii3 = 1; ii3 <= freeset.Size(); ii3++)
-	    if (ii1 < ii2 && ii1 < ii3 && ii2 != ii3)
-	      {
-		i1 = freeset.Get(ii1);
-		i2 = freeset.Get(ii2);
-		i3 = freeset.Get(ii3);
+        for (ii2 = 1; ii2 <= freeset.Size(); ii2++)
+          for (ii3 = 1; ii3 <= freeset.Size(); ii3++)
+            if (ii1 < ii2 && ii1 < ii3 && ii2 != ii3)
+              {
+                i1 = freeset[ii1-1];
+                i2 = freeset[ii2-1];
+                i3 = freeset[ii3-1];
 
-		Vec3d v1, v2, n;
+                Vec<3> v1, v2, n;
 
-		v1 = freezone.Get(i3) - freezone.Get(i1);
-		v2 = freezone.Get(i2) - freezone.Get(i1);
-		n = Cross (v1, v2);
-		n /= n.Length();
-		//		(*testout) << "i1,2,3 = " << i1 << ", " << i2 << ", " << i3 << endl;
-		//		(*testout) << "v1 = " << v1 << " v2 = " << v2 << " n = " << n << endl;
-		ok = 1;
-		for (ii = 1; ii <= freeset.Size(); ii++)
-		  {
-		    i = freeset.Get(ii);
-		    //		    (*testout) << "i = " << i << endl;
-		    if (i != i1 && i != i2 && i != i3)
-		      if ( (freezone.Get(i) - freezone.Get(i1)) * n < 0 ) ok = 0;
-		  }
+                v1 = freezone[i3-1] - freezone[i1-1];
+                v2 = freezone[i2-1] - freezone[i1-1];
+                n = Cross (v1, v2);
+                n /= n.Length();
+                //              (*testout) << "i1,2,3 = " << i1 << ", " << i2 << ", " << i3 << endl;
+                //              (*testout) << "v1 = " << v1 << " v2 = " << v2 << " n = " << n << endl;
+                ok = 1;
+                for (ii = 1; ii <= freeset.Size(); ii++)
+                  {
+                    i = freeset[ii-1];
+                    //              (*testout) << "i = " << i << endl;
+                    if (i != i1 && i != i2 && i != i3)
+                      if ( (freezone[i-1] - freezone[i1-1]) * n < 0 ) ok = 0;
+                  }
 
-		if (ok)
-		  {
-		    freesetfaces.Append (threeint());
-		    freesetfaces.Last().i1 = i1;
-		    freesetfaces.Last().i2 = i2;
-		    freesetfaces.Last().i3 = i3;
-		  }
-	      }
+                if (ok)
+                  {
+                    freesetfaces.Append (IVec<3>());
+                    freesetfaces.Last()[0] = i1;
+                    freesetfaces.Last()[1] = i2;
+                    freesetfaces.Last()[2] = i3;
+                  }
+              }
     }
 
   for (fs = 1; fs <= freesets.Size(); fs++)
     {
-      freefaceinequ.Append (new DenseMatrix (freefaces.Get(fs)->Size(), 4));
+      freefaceinequ.Append (new DenseMatrix (freefaces[fs-1]->Size(), 4));
     }
 
 
@@ -773,83 +790,82 @@ void vnetrule :: LoadRule (istream & ist)
     //    Array<int> pnearness (noldp);
     pnearness.SetSize (noldp);
 
-    for (i = 1; i <= pnearness.Size(); i++)
-      pnearness.Elem(i) = INT_MAX/10;
+    pnearness = INT_MAX/10;
 
     for (j = 1; j <= GetNP(1); j++)
-      pnearness.Elem(GetPointNr (1, j)) = 0;
+      pnearness[GetPointNr (1, j)] = 0;
 
     do
       {
-	ok = 1;
+        ok = 1;
 
-	for (i = 1; i <= noldf; i++)
-	  {
-	    minn = INT_MAX/10;
-	    for (j = 1; j <= GetNP(i); j++)
-	      minn = min2 (minn, pnearness.Get(GetPointNr (i, j)));
+        for (i = 1; i <= noldf; i++)
+          {
+            minn = INT_MAX/10;
+            for (j = 1; j <= GetNP(i); j++)
+              minn = min2 (minn, pnearness[GetPointNr (i, j)]);
 
-	    for (j = 1; j <= GetNP(i); j++)
-	      if (pnearness.Get(GetPointNr (i, j)) > minn+1)
-		{
-		  ok = 0;
-		  pnearness.Elem(GetPointNr (i, j)) = minn+1;
-		}
-	  }
+            for (j = 1; j <= GetNP(i); j++)
+              if (pnearness[GetPointNr (i, j)] > minn+1)
+                {
+                  ok = 0;
+                  pnearness[GetPointNr (i, j)] = minn+1;
+                }
+          }
 
-	for (i = 1; i <= edges.Size(); i++)
-	  {
-	    int pi1 = edges.Get(i).i1;
-	    int pi2 = edges.Get(i).i2;
+        for (i = 1; i <= edges.Size(); i++)
+          {
+            RulePointIndex pi1 = RuleP(edges[i-1][0]);
+            RulePointIndex pi2 = RuleP(edges[i-1][1]);
 
-	    if (pnearness.Get(pi1) > pnearness.Get(pi2)+1)
-	      {
-		ok = 0;
-		pnearness.Elem(pi1) = pnearness.Get(pi2)+1;
-	      }
-	    if (pnearness.Get(pi2) > pnearness.Get(pi1)+1)
-	      {
-		ok = 0;
-		pnearness.Elem(pi2) = pnearness.Get(pi1)+1;
-	      }
-	  }
-	
+            if (pnearness[pi1] > pnearness[pi2]+1)
+              {
+                ok = 0;
+                pnearness[pi1] = pnearness[pi2]+1;
+              }
+            if (pnearness[pi2] > pnearness[pi1]+1)
+              {
+                ok = 0;
+                pnearness[pi2] = pnearness[pi1]+1;
+              }
+          }
+        
 
-	for (i = 1; i <= elements.Size(); i++)
-	  if (elements.Get(i).GetNP() == 6)  // prism rule
-	    {
-	      for (j = 1; j <= 3; j++)
-		{
-		  int pi1 = elements.Get(i).PNum(j);
-		  int pi2 = elements.Get(i).PNum(j+3);
+        for (i = 1; i <= elements.Size(); i++)
+          if (elements[i-1].GetNP() == 6)  // prism rule
+            {
+              for (j = 1; j <= 3; j++)
+                {
+                  RulePointIndex pi1 = elements[i-1].PNum(j);
+                  RulePointIndex pi2 = elements[i-1][j+2];
 
-		  if (pnearness.Get(pi1) > pnearness.Get(pi2)+1)
-		    {
-		      ok = 0;
-		      pnearness.Elem(pi1) = pnearness.Get(pi2)+1;
-		    }
-		  if (pnearness.Get(pi2) > pnearness.Get(pi1)+1)
-		    {
-		      ok = 0;
-		      pnearness.Elem(pi2) = pnearness.Get(pi1)+1;
-		    }
-		}
-	    }
+                  if (pnearness[pi1] > pnearness[pi2]+1)
+                    {
+                      ok = 0;
+                      pnearness[pi1] = pnearness[pi2]+1;
+                    }
+                  if (pnearness[pi2] > pnearness[pi1]+1)
+                    {
+                      ok = 0;
+                      pnearness[pi2] = pnearness[pi1]+1;
+                    }
+                }
+            }
       }
     while (!ok);
 
     maxpnearness = 0;
-    for (i = 1; i <= pnearness.Size(); i++)
-      maxpnearness = max2 (maxpnearness, pnearness.Get(i));
+    for (auto pi : pnearness.Range())
+      maxpnearness = max2 (maxpnearness, pnearness[pi]);
 
 
     fnearness.SetSize (noldf);
 
     for (i = 1; i <= noldf; i++)
       {
-	fnearness.Elem(i) = 0;
-	for (j = 1; j <= GetNP(i); j++)
-	  fnearness.Elem(i) += pnearness.Get(GetPointNr (i, j));
+        fnearness[i-1] = 0;
+        for (j = 1; j <= GetNP(i); j++)
+          fnearness[i-1] += pnearness[GetPointNr (i, j)];
       }
 
     // (*testout) << "rule " << name << ", pnear = " << pnearness << endl;
@@ -859,76 +875,76 @@ void vnetrule :: LoadRule (istream & ist)
   //Table of edges:
   for (fs = 1; fs <= freesets.Size(); fs++)
     {
-      freeedges.Append (new Array<twoint>);
+      freeedges.Append (new Array<IVec<2>>);
       
       //      Array<int> & freeset = *freesets.Get(fs);
-      Array<twoint> & freesetedges = *freeedges.Last();
-      Array<threeint> & freesetfaces = *freefaces.Get(fs);
-      int k,l;
-      INDEX ind;
+      Array<IVec<2>> & freesetedges = *freeedges.Last();
+      Array<IVec<3>> & freesetfaces = *freefaces[fs-1];
+      // int k,l;
+      // int ind;
       
-      for (k = 1; k <= freesetfaces.Size(); k++)
-	{
-          threeint tr = freesetfaces.Get(k);
+      for (int k = 1; k <= freesetfaces.Size(); k++)
+        {
+          // IVec<3> tr = freesetfaces.Get(k);
 
-	  for (l = k+1; l <= freesetfaces.Size(); l++)
-	    {
-	      ind = NeighbourTrianglePoint(freesetfaces.Get(k), freesetfaces.Get(l));
-	      if (!ind) continue;
+          for (int l = k+1; l <= freesetfaces.Size(); l++)
+            {
+              int ind = NeighbourTrianglePoint(freesetfaces[k-1], freesetfaces[l-1]);
+              if (!ind) continue;
 
-	      INDEX_3 f1(freesetfaces.Get(k).i1, 
-			 freesetfaces.Get(k).i2, 
-			 freesetfaces.Get(k).i3);
-	      INDEX_3 f2(freesetfaces.Get(l).i1, 
-			 freesetfaces.Get(l).i2, 
-			 freesetfaces.Get(l).i3);
-	      INDEX_2 ed(0, 0);
-	      for (int f11 = 1; f11 <= 3; f11++)
-		for (int f12 = 1; f12 <= 3; f12++)
-		  if (f11 != f12)
-		    for (int f21 = 1; f21 <= 3; f21++)
-		      for (int f22 = 1; f22 <= 3; f22++)		    
-			if (f1.I(f11) == f2.I(f21) && f1.I(f12) == f2.I(f22))
-			{
-			  ed.I(1) = f1.I(f11);
-			  ed.I(2) = f1.I(f12);
-			}
-	      //	      (*testout) << "ed = " << ed.I(1) << "-" << ed.I(2) << endl;
-	      //	      (*testout) << "ind = " << ind << " ed = " << ed << endl;
-	      for (int eli = 1; eli <= GetNOldF(); eli++)
-		{
-		  if (GetNP(eli) == 4)
-		    {
-		      for (int elr = 1; elr <= 4; elr++)
-			{
-			  if (GetPointNrMod (eli, elr) == ed.I(1) &&
-			      GetPointNrMod (eli, elr+2) == ed.I(2))
-			    {
-			      /*
-			      (*testout) << "ed is diagonal of rectangle" << endl;
-			      (*testout) << "ed = " << ed.I(1) << "-" << ed.I(2) << endl;
-			      (*testout) << "ind = " << ind << endl;
-			      */
-			      ind = 0;
-			    }
+              IVec<3> f1(freesetfaces[k-1][0], 
+                         freesetfaces[k-1][1], 
+                         freesetfaces[k-1][2]);
+              IVec<3> f2(freesetfaces[l-1][0], 
+                         freesetfaces[l-1][1], 
+                         freesetfaces[l-1][2]);
+              IVec<2,RulePointIndex> ed(RulePointIndex::INVALID, RulePointIndex::INVALID);
+              for (int f11 = 1; f11 <= 3; f11++)
+                for (int f12 = 1; f12 <= 3; f12++)
+                  if (f11 != f12)
+                    for (int f21 = 1; f21 <= 3; f21++)
+                      for (int f22 = 1; f22 <= 3; f22++)                    
+                        if (f1[f11-1] == f2[f21-1] && f1[f12-1] == f2[f22-1])
+                        {
+                          ed[0] = RuleP(f1[f11-1]);
+                          ed[1] = RuleP(f1[f12-1]);
+                        }
+              //              (*testout) << "ed = " << ed[0] << "-" << ed[1] << endl;
+              //              (*testout) << "ind = " << ind << " ed = " << ed << endl;
+              for (int eli = 1; eli <= GetNOldF(); eli++)
+                {
+                  if (GetNP(eli) == 4)
+                    {
+                      for (int elr = 1; elr <= 4; elr++)
+                        {
+                          if (GetPointNrMod (eli, elr) == ed[0] &&
+                              GetPointNrMod (eli, elr+2) == ed[1])
+                            {
+                              /*
+                              (*testout) << "ed is diagonal of rectangle" << endl;
+                              (*testout) << "ed = " << ed[0] << "-" << ed[1] << endl;
+                              (*testout) << "ind = " << ind << endl;
+                              */
+                              ind = 0;
+                            }
 
-			}
-		    }
-		}
+                        }
+                    }
+                }
 
-	      if (ind)
-		{
-		  /*
-		  (*testout) << "new edge from face " << k 
-			     << " = (" << freesetfaces.Get(k).i1 
-			     << ", " << freesetfaces.Get(k).i2 
-			     << ", " << freesetfaces.Get(k).i3
-			     << "), point " << ind << endl;
-			     */
-		  freesetedges.Append(twoint(k,ind));
-		}
-	    }	
-	}
+              if (ind)
+                {
+                  /*
+                  (*testout) << "new edge from face " << k 
+                             << " = (" << freesetfaces.Get(k)[0] 
+                             << ", " << freesetfaces.Get(k)[1] 
+                             << ", " << freesetfaces.Get(k)[2]
+                             << "), point " << ind << endl;
+                             */
+                  freesetedges.Append(IVec<2>(k,ind));
+                }
+            }   
+        }
     }
     
 }
@@ -957,10 +973,10 @@ void Meshing3 :: LoadRules (const char * filename, const char ** prules)
       const char ** hcp = prules; 
       size_t len = 0;
       while (*hcp)
-	{
-	  len += strlen (*hcp);
-	  hcp++;
-	}
+        {
+          len += strlen (*hcp);
+          hcp++;
+        }
       tr1 = new char[len+1];
       tr1[0] = 0;
       hcp = prules; //  tetrules;
@@ -968,18 +984,18 @@ void Meshing3 :: LoadRules (const char * filename, const char ** prules)
 
       char * tt1 = tr1;
       while (*hcp)
-	{
-	  strcat (tt1, *hcp);
-	  tt1 += strlen (*hcp);	  
-	  hcp++;
-	}
+        {
+          strcat (tt1, *hcp);
+          tt1 += strlen (*hcp);   
+          hcp++;
+        }
 
 
 #ifdef WIN32
       // VC++ 2005 workaround
       for(size_t i=0; i<len; i++)
-	if(tr1[i] == ',')
-	  tr1[i] = ':';
+        if(tr1[i] == ',')
+          tr1[i] = ':';
 #endif
 
       ist = new istringstream (tr1);
@@ -996,22 +1012,23 @@ void Meshing3 :: LoadRules (const char * filename, const char ** prules)
     {
       buf[0] = 0;
       (*ist) >> buf;
-	
+        
       if (strcmp (buf, "rule") == 0)
-	{
-	  vnetrule * rule = new vnetrule;
-	  rule -> LoadRule(*ist);
-	  rules.Append (rule);
-	  if (!rule->TestOk())
-	    {
-	      PrintSysError ("Parser3d: Rule ", rules.Size(), " not ok");
-	      exit (1);
-	    }
-	}
+        {
+          // vnetrule * rule = new vnetrule;
+          auto rule = make_unique<vnetrule>();
+          rule -> LoadRule(*ist);
+          if (!rule->TestOk())
+            {
+              PrintSysError ("Parser3d: Rule ", rules.Size(), " not ok");
+              exit (1);
+            }
+          rules.Append (std::move(rule));
+        }
       else if (strcmp (buf, "tolfak") == 0)
-	{
-	  (*ist) >> tolfak;
-	}
+        {
+          (*ist) >> tolfak;
+        }
     }
   delete ist;
   delete [] tr1;

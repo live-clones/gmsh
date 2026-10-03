@@ -510,9 +510,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     }
   }
 
-  double ps = CTX::instance()->pointSize * ctx->highResolutionPixelFactor();
-
-  gmshPointSize((float)ps);
+  gmshPointSize((float)CTX::instance()->pointSize);
   gl2psPointSize((float)(CTX::instance()->pointSize *
                          CTX::instance()->print.epsPointSizeFactor));
 
@@ -727,11 +725,11 @@ static bool addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
       ctx->drawString(label, px + offset, py + offset, 0.);
     }
     else if(singlePoint && (opt->pointType == 1 || opt->pointType == 3)) {
-      double ps = opt->pointSize * ctx->highResolutionPixelFactor();
       if(inModelCoordinates)
-        ctx->drawSphere(ps, px, py, 0, opt->light);
-      else
-        ctx->drawSphere(ps, px, py, 0, 10, 10, opt->light);
+        ctx->drawSphere(opt->pointSize, px, py, 0, opt->light);
+      else // a radius, in pixels of the window
+        ctx->drawSphere(0.5 * opt->pointSize * ctx->pointPixelFactor(), px, py,
+                        0, 10, 10, opt->light);
     }
     else {
       if(singlePoint) gmshBegin(GL_POINTS);
@@ -756,9 +754,7 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
 
   PViewOptions *opt = p->getOptions();
 
-  double ps = opt->pointSize * ctx->highResolutionPixelFactor();
-
-  gmshPointSize((float)ps);
+  gmshPointSize((float)opt->pointSize);
   gl2psPointSize(
     (float)(opt->pointSize * CTX::instance()->print.epsPointSizeFactor));
 
@@ -823,15 +819,9 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
   PViewData *data = p->getData(true); // use adaptive data if available
   PViewOptions *opt = p->getOptions();
   bool logged = false;
-  if(opt->rangeType == PViewOptions::Custom) {
-    opt->tmpMin = opt->customMin;
-    opt->tmpMax = opt->customMax;
-  }
-  else if(opt->rangeType == PViewOptions::PerTimeStep) {
-    opt->tmpMin = data->getMin(opt->timeStep);
-    opt->tmpMax = data->getMax(opt->timeStep);
-  }
-  else if(opt->abscissaRangeType == PViewOptions::Custom) {
+  if(opt->rangeType != PViewOptions::Custom &&
+     opt->rangeType != PViewOptions::PerTimeStep &&
+     opt->abscissaRangeType == PViewOptions::Custom) {
     // FIXME: should also compute min/max for reduced abscissa range over all
     // steps
     opt->tmpMin = ymin;
@@ -839,8 +829,7 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
     logged = true; // what getGraphData plotted, logarithm taken
   }
   else {
-    opt->tmpMin = data->getMin();
-    opt->tmpMax = data->getMax();
+    opt->getRange(data, opt->tmpMin, opt->tmpMax);
   }
 
   // the range on the scale the graph is drawn on, from the range in the

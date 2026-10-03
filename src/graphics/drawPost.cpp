@@ -140,7 +140,8 @@ static void addCylinderFor(drawContext *ctx, PViewOptions *opt,
   float *p0 = va->getVertexArray(3 * i);
   float *p1 = va->getVertexArray(3 * (i + 1));
   double x[2] = {p0[0], p1[0]}, y[2] = {p0[1], p1[1]}, z[2] = {p0[2], p1[2]};
-  double r = opt->lineWidth * ctx->pixel_equiv_x / ctx->s[0];
+  double r = 0.5 * opt->lineWidth * ctx->pointPixelFactor() *
+             ctx->pixel_equiv_x / ctx->s[0];
   double r0 = r, r1 = r;
   if(opt->lineType == 2) {
     // the thickness follows the value at each end
@@ -159,6 +160,7 @@ static void drawLineGlyphs(drawContext *ctx, PView *p, VertexArray *va,
   PViewOptions *opt = p->getOptions();
   glyphToken tok;
   tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+  tok.add(ctx->pointPixelFactor());
   tok.add(opt->lineWidth);
   tok.add(opt->lineType);
   addClipToken(tok, opt);
@@ -183,6 +185,7 @@ static void drawPointGlyphs(drawContext *ctx, PView *p, VertexArray *va)
   PViewOptions *opt = p->getOptions();
   glyphToken tok;
   tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+  tok.add(ctx->pointPixelFactor());
   tok.add(opt->pointSize);
   tok.add(opt->pointType);
   addClipToken(tok, opt);

@@ -45,6 +45,10 @@ Compute a mesh size field that is quite automatic Takes into account surface cur
 @*
 Options:@*
 @table @code
+@item exportPos
+Export the octree size field to a .pos file for debugging, named after the model@*
+Type: boolean@*
+Default value: @code{0}
 @item features
 Enable computation of local feature size (thin channels)@*
 Type: boolean@*
@@ -73,10 +77,6 @@ Default value: @code{20}
 Number of layers of elements in thin layers@*
 Type: integer@*
 Default value: @code{0}
-@item p4estFileToLoad
-p4est file containing the size field@*
-Type: string@*
-Default value: @code{""}
 @item smoothing
 Enable size smoothing (should always be true)@*
 Type: boolean@*

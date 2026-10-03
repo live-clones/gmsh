@@ -22,18 +22,24 @@ namespace netgen
 
 
   template < int D >
-  class SplineGeometry 
+  class DLL_HEADER SplineGeometry
   {
     // protected:
   public:  
     Array < GeomPoint<D> > geompoints;
     Array < SplineSeg<D>* > splines;
 
-    DLL_HEADER ~SplineGeometry();
+    SplineGeometry() : geompoints{}, splines{} { ; }
+    virtual ~SplineGeometry();
 
-    DLL_HEADER int Load (const Array<double> & raw_data, const int startpos = 0);
+    int Load (const Array<double> & raw_data, const int startpos = 0);
 
-    DLL_HEADER void GetRawData (Array<double> & raw_data) const;
+    virtual void DoArchive(Archive& ar)
+    {
+      ar & geompoints & splines;
+    }
+
+    void GetRawData (Array<double> & raw_data) const;
 
 
     const Array<SplineSeg<D>*> & GetSplines () const
@@ -44,7 +50,7 @@ namespace netgen
     SplineSeg<D> & GetSpline (const int i) {return *splines[i];}
     const SplineSeg<D> & GetSpline (const int i) const {return *splines[i];}
 
-    DLL_HEADER void GetBoundingBox (Box<D> & box) const;
+    void GetBoundingBox (Box<D> & box) const;
     Box<D> GetBoundingBox () const 
     { Box<D> box; GetBoundingBox (box); return box; }
 
@@ -52,8 +58,7 @@ namespace netgen
     const GeomPoint<D> & GetPoint(int i) const { return geompoints[i]; }
 
     // void SetGrading (const double grading);
-    DLL_HEADER void AppendPoint (const Point<D> & p, const double reffac = 1., const bool hpref = false);
-
+    void AppendPoint (const Point<D> & p, const double reffac = 1., const bool hpref = false);
 
     void AppendSegment(SplineSeg<D> * spline)
     {

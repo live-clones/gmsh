@@ -38,7 +38,7 @@
 #include "highOrderBoundaryLayerUntangler.h"
 #include "meanPlaneSurfaceUntangler.h"
 #include "winslowParametric.h"
-#include "winslowUntanglerGMSH.h"
+#include "WinslowUntangler.h"
 
 GMSH_BoundaryLayerPlugin::GMSH_BoundaryLayerPlugin()
   : GMSH_PostPlugin(
@@ -3683,6 +3683,10 @@ static void expandBL(
          triangles.size());
   if(meanPlaneDebugPatches)
     writeParametricTriangulationPos(gf, "before", points, locked, triangles);
+  WinslowUntangler::Options winslowOptions;
+  winslowOptions.strictFailures = true;
+  winslowOptions.numThreads =
+    CTX::instance()->numThreadsFor(triangles.size(), 5000);
   if(surfaceUntangler == 2) {
     bool ok =
       untangle_triangles_parametric_GMSH(gf, points, locked, triangles, sh,
@@ -3694,12 +3698,14 @@ static void expandBL(
       Msg::Warning("Metric-parametric P1 surface untangler failed on face %d; "
                    "falling back to standard parametric surface untangler",
                    gf ? gf->tag() : 0);
-      untangle_triangles_2D_GMSH(points, locked, triangles, sh, 1.e+0);
+      WinslowUntangler::untangle2D(points, locked, triangles, sh,
+                                  winslowOptions);
     }
   }
   else {
     if(stats) stats->parametric++;
-    untangle_triangles_2D_GMSH(points, locked, triangles, sh, 1.e+0);
+    WinslowUntangler::untangle2D(points, locked, triangles, sh,
+                                winslowOptions);
   }
   if(meanPlaneDebugPatches)
     writeParametricTriangulationPos(gf, "after", points, locked, triangles);
@@ -4055,11 +4061,11 @@ static void expandBL3D(
             "(build %.3g s, reoriented ideal %zu)",
             tets.size(), tTets - tVolume, reorientedIdealTets);
   double tUntangle = TimeOfDay();
-#if 1
-  untangle_tetrahedra_GMSH(points, locked, tets, sh, 1.e+0);
-#else
-  untangle_tetrahedra(points, locked, tets, sh, 1.e+0);
-#endif
+  WinslowUntangler::Options options;
+  options.strictFailures = true;
+  options.laplacianPresmoothing = true;
+  options.numThreads = CTX::instance()->numThreadsFor(tets.size(), 5000);
+  WinslowUntangler::untangle3D(points, locked, tets, sh, options);
   Msg::Info("Boundary layer 3D untangling done in %g s",
             TimeOfDay() - tUntangle);
 

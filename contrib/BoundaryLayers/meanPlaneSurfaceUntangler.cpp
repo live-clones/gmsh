@@ -15,6 +15,7 @@
 
 #include "meanPlaneSurfaceUntangler.h"
 
+#include "Context.h"
 #include "GFace.h"
 #include "GPoint.h"
 #include "GmshDefines.h"
@@ -27,7 +28,7 @@
 #include "Numeric.h"
 #include "SPoint3.h"
 #include "bezierBasis.h"
-#include "winslowUntanglerGMSH.h"
+#include "WinslowUntangler.h"
 
 #include <algorithm>
 #include <array>
@@ -1106,9 +1107,17 @@ namespace {
       return false;
     }
 
-    bool ok = untangle_triangles_2D_GMSH(
-      points, locked, triangles, sh, options.lambda, options.iterMaxInner,
-      options.iterMaxOuter, options.iterFailMax, options.timeMax, false);
+    WinslowUntangler::Options winslowOptions;
+    winslowOptions.lambda = options.lambda;
+    winslowOptions.maxInnerIterations = options.iterMaxInner;
+    winslowOptions.maxOuterIterations = options.iterMaxOuter;
+    winslowOptions.maxFailures = options.iterFailMax;
+    winslowOptions.timeMax = options.timeMax;
+    winslowOptions.strictFailures = true;
+    winslowOptions.numThreads =
+      CTX::instance()->numThreadsFor(triangles.size(), 5000);
+    bool ok = WinslowUntangler::untangle2D(points, locked, triangles, sh,
+                                          winslowOptions);
 
     for(const auto &it : indices) {
       if(locked[it.second]) continue;
@@ -1254,9 +1263,17 @@ namespace {
     removeLockedTriangles(locked, triangles, ideal);
     if(triangles.empty()) return true;
 
-    bool ok = untangle_triangles_2D_GMSH(
-      points, locked, triangles, ideal, options.lambda, options.iterMaxInner,
-      options.iterMaxOuter, options.iterFailMax, options.timeMax, false);
+    WinslowUntangler::Options winslowOptions;
+    winslowOptions.lambda = options.lambda;
+    winslowOptions.maxInnerIterations = options.iterMaxInner;
+    winslowOptions.maxOuterIterations = options.iterMaxOuter;
+    winslowOptions.maxFailures = options.iterFailMax;
+    winslowOptions.timeMax = options.timeMax;
+    winslowOptions.strictFailures = true;
+    winslowOptions.numThreads =
+      CTX::instance()->numThreadsFor(triangles.size(), 5000);
+    bool ok = WinslowUntangler::untangle2D(points, locked, triangles, ideal,
+                                          winslowOptions);
 
     if(!patchElements.empty()) {
       updateP2LagrangeNodes(gf, plane, patchElements, points, locked, maxMove);

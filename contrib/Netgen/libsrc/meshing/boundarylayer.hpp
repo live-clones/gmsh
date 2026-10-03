@@ -1,13 +1,130 @@
-#ifndef FILE_BOUNDARYLAYER
-#define FILE_BOUNDARYLAYER
+#ifndef NETGEN_BOUNDARYLAYER_HPP
+#define NETGEN_BOUNDARYLAYER_HPP
 
+#include <core/array.hpp>
+#include <mystdlib.h>
+#include <meshing.hpp>
+
+namespace netgen
+{
 
 ///
-extern void InsertVirtualBoundaryLayer (Mesh & mesh);
+DLL_HEADER extern void InsertVirtualBoundaryLayer (Mesh& mesh);
 
-/// Create a typical prismatic boundary layer on the given 
+/// Create a typical prismatic boundary layer on the given
 /// surfaces
-extern void GenerateBoundaryLayer (Mesh & mesh, MeshingParameters & mp);
 
+struct SpecialBoundaryPoint
+{
+  struct GrowthGroup
+  {
+    Array<int> faces;
+    Vec<3> growth_vector;
+    Array<PointIndex> new_points;
 
-#endif
+    GrowthGroup (FlatArray<int> faces_, FlatArray<Vec<3>> normals);
+    GrowthGroup (const GrowthGroup&) = default;
+    GrowthGroup () = default;
+  };
+  Array<GrowthGroup> growth_groups;
+  Vec<3> separating_direction;
+
+  SpecialBoundaryPoint (const std::map<int, Vec<3>>& normals);
+  SpecialBoundaryPoint () = default;
+};
+
+DLL_HEADER void GenerateBoundaryLayer (Mesh& mesh,
+                                       const BoundaryLayerParameters& blp);
+
+struct BoundaryLayer2dInfo
+{
+  int domain;
+  int new_domain;
+  bool make_new_domain;
+  int n_edge_descriptors;
+  Array<int> front_edge_descriptors;      // segments in front of the layer
+  Array<int> moved_edge_descriptors;      // boundaries the layer was grown from
+  Array<int> bl_edge_descriptors;         // boundary under the layer ...
+  Array<int> bl_edge_descriptors_orig;    // ... and where it came from
+};
+
+DLL_HEADER BoundaryLayer2dInfo InsertBoundaryLayer2d (Mesh& mesh, int domain, const Array<double>& thicknesses, bool should_make_new_domain = true, const Array<int>& boundaries = Array<int>{});
+
+DLL_HEADER Array<BoundaryLayer2dInfo> InsertBoundaryLayers2d (Mesh& mesh, const MeshingParameters& mp);
+
+DLL_HEADER void FinalizeBoundaryLayers2d (Mesh& mesh, FlatArray<BoundaryLayer2dInfo> infos);
+
+class BoundaryLayerTool
+{
+public:
+  BoundaryLayerTool (Mesh& mesh_, const BoundaryLayerParameters& params_);
+  void ProcessParameters ();
+  void Perform ();
+
+  Mesh& mesh;
+  MeshTopology& topo;
+  BoundaryLayerParameters params;
+  Array<Vec<3>, PointIndex> growthvectors;
+  std::map<PointIndex, Vec<3>> non_bl_growth_vectors;
+  Table<SurfaceElementIndex, PointIndex> p2sel;
+
+  BitArray domains, is_edge_moved, is_boundary_projected, is_boundary_moved;
+  Array<SegmentIndex> moved_segs;
+  int max_edge_nr, nfd_old, ndom_old;
+  Array<int> new_mat_nrs;
+  BitArray moved_surfaces;
+  int np, nseg, nse, ne;
+  PointIndex first_new_pi;
+  double total_height;
+  Array<POINTTYPE, PointIndex> point_types;
+
+  // These parameters are derived from given BoundaryLayerParameters and the Mesh
+  Array<double> par_heights;
+  Array<int> par_surfid;
+  bool insert_only_volume_elements;
+  map<string, string> par_new_mat;
+  bool have_material_map = false;
+  Array<size_t> par_project_boundaries;
+
+  bool have_single_segments;
+  Array<Segment, SegmentIndex> old_segments, free_segments, segments, new_segments, new_segments_on_moved_bnd;
+  Array<int, SegmentIndex> seg_face;  // per-segment face descriptor index (replaces seg.si usage in BL)
+  Array<Element2d, SurfaceElementIndex> new_sels, new_sels_on_moved_bnd;
+  Array<Array<PointIndex>, PointIndex> mapto;
+  Array<PointIndex, PointIndex> mapfrom;
+
+  Array<double> surfacefacs;
+  Array<int> si_map;
+
+  std::map<PointIndex, SpecialBoundaryPoint> special_boundary_points;
+  std::map<PointIndex, std::tuple<Vec<3>*, double>> growth_vector_map;
+
+  // major steps called in Perform()
+  void CreateNewFaceDescriptors ();
+  void CreateFaceDescriptorsSides ();
+  void CalculateGrowthVectors ();
+  Array<Array<pair<SegmentIndex, int>>, SegmentIndex> BuildSegMap ();
+
+  BitArray ProjectGrowthVectorsOnSurface ();
+  void InterpolateSurfaceGrowthVectors ();
+  void InterpolateGrowthVectors ();
+  void LimitGrowthVectorLengths ();
+  void FixSurfaceElements ();
+
+  void InsertNewElements (FlatArray<Array<pair<SegmentIndex, int>>, SegmentIndex> segmap, const BitArray& in_surface_direction);
+  void SetDomInOut ();
+  void SetDomInOutSides ();
+  void AddSegments ();
+  void AddSurfaceElements ();
+
+  Vec<3> getNormal (const Element2dRef & el)
+  {
+    auto v0 = mesh[el[0]];
+    return Cross(mesh[el[1]] - v0, mesh[el[2]] - v0).Normalize();
+  }
+
+  Vec<3> getEdgeTangent (PointIndex pi, int edgenr, FlatArray<Segment*> segs);
+};
+
+} // namespace netgen
+#endif // NETGEN_BOUNDARYLAYER_HPP

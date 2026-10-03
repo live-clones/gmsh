@@ -133,6 +133,31 @@ void PViewOptions::getRange(PViewData *data, double &min, double &max)
     min = customMin;
     max = customMax;
   }
+  else if(forceNumComponents) {
+    std::vector<double> key = {(double)(std::size_t)data,
+                               (double)data->getStamp(), (double)rangeType,
+                               (double)forceNumComponents};
+    if(rangeType == PerTimeStep) key.push_back(timeStep);
+    for(int i = 0; i < forceNumComponents && i < 9; i++)
+      key.push_back(componentMap[i]);
+    if(key != _forcedRangeKey) {
+      _forcedMin = VAL_INF;
+      _forcedMax = -VAL_INF;
+      for(int step = 0; step < data->getNumTimeSteps(); step++) {
+        if(rangeType == PerTimeStep && step != timeStep) continue;
+        if(!data->hasTimeStep(step)) continue;
+        _forcedMin = std::min(_forcedMin, data->getMin(step, false, 0,
+                                                       forceNumComponents,
+                                                       componentMap));
+        _forcedMax = std::max(_forcedMax, data->getMax(step, false, 0,
+                                                       forceNumComponents,
+                                                       componentMap));
+      }
+      _forcedRangeKey = key;
+    }
+    min = _forcedMin;
+    max = _forcedMax;
+  }
   else if(rangeType == PerTimeStep) {
     min = data->getMin(timeStep);
     max = data->getMax(timeStep);

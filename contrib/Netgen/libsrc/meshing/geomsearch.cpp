@@ -1,251 +1,258 @@
 #include <mystdlib.h>
-#include "meshing.hpp"
+#include "geomsearch.hpp"
+#include "adfront3.hpp"
 
 
 namespace netgen
 {
   GeomSearch3d :: GeomSearch3d() 
   {
-    size.i1 = 0; size.i2 = 0; size.i3 = 0; 
+    size[0] = 0; size[1] = 0; size[2] = 0; 
   };
 
   GeomSearch3d :: ~GeomSearch3d()
   {
     //delete old Hashtable:
-    if (size.i1 != 0)
+    if (size[0] != 0)
       {
-	for (int i = 0; i < size.i1*size.i2*size.i3; i++)
-	  delete hashtable[i];
+        for (int i = 0; i < size[0]*size[1]*size[2]; i++)
+          delete hashtable[i];
       } 
   }
 
-  void GeomSearch3d :: Init (Array <FrontPoint3,PointIndex::BASE> *pointsi, Array <FrontFace> *facesi)
+  void GeomSearch3d :: Init (Array <FrontPoint3,Front3PointIndex> *pointsi, Array <FrontFace> *facesi)
   {
     points = pointsi;
     faces = facesi;
-    size.i1 = 0; size.i2 = 0; size.i3 = 0; 
+    size[0] = 0; size[1] = 0; size[2] = 0; 
     reset = 1;
     hashcount = 1;
   }
 
-  void GeomSearch3d :: ElemMaxExt(Point3d& minp, Point3d& maxp, const MiniElement2d& elem)
+  void GeomSearch3d :: ElemMaxExt(Point<3>& minp, Point<3>& maxp, const FrontElement2d& elem)
   {
-    maxp.X()=(*points)[elem.PNum(1)].P()(0);
-    maxp.Y()=(*points)[elem.PNum(1)].P()(1);
-    maxp.Z()=(*points)[elem.PNum(1)].P()(2);
-    minp.X()=(*points)[elem.PNum(1)].P()(0);
-    minp.Y()=(*points)[elem.PNum(1)].P()(1);
-    minp.Z()=(*points)[elem.PNum(1)].P()(2);
+    maxp(0)=(*points)[elem[0]].P()(0);
+    maxp(1)=(*points)[elem[0]].P()(1);
+    maxp(2)=(*points)[elem[0]].P()(2);
+    minp(0)=(*points)[elem[0]].P()(0);
+    minp(1)=(*points)[elem[0]].P()(1);
+    minp(2)=(*points)[elem[0]].P()(2);
   
     for (int i=2; i <= 3; i++)
       {
-	maxp.X()=max2((*points)[elem.PNum(i)].P()(0),maxp.X());
-	maxp.Y()=max2((*points)[elem.PNum(i)].P()(1),maxp.Y());
-	maxp.Z()=max2((*points)[elem.PNum(i)].P()(2),maxp.Z());
-	minp.X()=min2((*points)[elem.PNum(i)].P()(0),minp.X());
-	minp.Y()=min2((*points)[elem.PNum(i)].P()(1),minp.Y());
-	minp.Z()=min2((*points)[elem.PNum(i)].P()(2),minp.Z());
+        maxp(0)=max2((*points)[elem.PNum(i)].P()(0),maxp(0));
+        maxp(1)=max2((*points)[elem.PNum(i)].P()(1),maxp(1));
+        maxp(2)=max2((*points)[elem.PNum(i)].P()(2),maxp(2));
+        minp(0)=min2((*points)[elem.PNum(i)].P()(0),minp(0));
+        minp(1)=min2((*points)[elem.PNum(i)].P()(1),minp(1));
+        minp(2)=min2((*points)[elem.PNum(i)].P()(2),minp(2));
       }
   }
 
-  void GeomSearch3d :: MinCoords(const Point3d& p1, Point3d& p2)
+  void GeomSearch3d :: MinCoords(const Point<3>& p1, Point<3>& p2)
   {
-    p2.X()=min2(p1.X(),p2.X());
-    p2.Y()=min2(p1.Y(),p2.Y());
-    p2.Z()=min2(p1.Z(),p2.Z());
+    p2(0)=min2(p1(0),p2(0));
+    p2(1)=min2(p1(1),p2(1));
+    p2(2)=min2(p1(2),p2(2));
   }
 
-  void GeomSearch3d :: MaxCoords(const Point3d& p1, Point3d& p2)
+  void GeomSearch3d :: MaxCoords(const Point<3>& p1, Point<3>& p2)
   {
-    p2.X()=max2(p1.X(),p2.X());
-    p2.Y()=max2(p1.Y(),p2.Y());
-    p2.Z()=max2(p1.Z(),p2.Z());
+    p2(0)=max2(p1(0),p2(0));
+    p2(1)=max2(p1(1),p2(1));
+    p2(2)=max2(p1(2),p2(2));
   }
 
   void GeomSearch3d :: Create()
   {
-    INDEX i,j,k;
+    int i,j,k;
     if (reset)
       {
-	const double hashelemsizefactor = 4;
-	reset = 0;
-	/*
-	  minext=Point3d(MAXDOUBLE, MAXDOUBLE, MAXDOUBLE);
-	  maxext=Point3d(MINDOUBLE, MINDOUBLE, MINDOUBLE);
-	*/
-	ElemMaxExt(minext, maxext, faces->Get(1).Face());
-	Point3d maxp, minp;
-	Vec3d midext(0,0,0);
+        const double hashelemsizefactor = 4;
+        reset = 0;
+        /*
+          minext=Point<3>(MAXDOUBLE, MAXDOUBLE, MAXDOUBLE);
+          maxext=Point<3>(MINDOUBLE, MINDOUBLE, MINDOUBLE);
+        */
+        ElemMaxExt(minext, maxext, faces->operator[](0).Face());
+        Point<3> maxp, minp;
+        Vec<3> midext(0,0,0);
       
-	//get max Extension of Frontfaces
-	for (i = 1; i <= faces->Size(); i++)
-	  {
-	    ElemMaxExt(minp, maxp, faces->Get(i).Face());
-	    MinCoords(minp, minext);
-	    MaxCoords(maxp, maxext);
-	    midext+=maxp-minp;
-	  }
+        //get max Extension of Frontfaces
+        for (i = 1; i <= faces->Size(); i++)
+          {
+            ElemMaxExt(minp, maxp, faces->operator[](i-1).Face());
+            MinCoords(minp, minext);
+            MaxCoords(maxp, maxext);
+            midext+=maxp-minp;
+          }
 
 
-	maxextreal = maxext;
-	maxext = maxext + 1e-4 * (maxext - minext);
+        maxextreal = maxext;
+        maxext = maxext + 1e-4 * (maxext - minext);
 
-	midext*=1./faces->Size();
-	Vec3d boxext = maxext - minext;
+        midext*=1./faces->Size();
+        Vec<3> boxext = maxext - minext;
       
-	//delete old Hashtable:
-	if (size.i1 != 0)
-	  {
-	    for (i = 1; i <= size.i1*size.i2*size.i3; i++)
-	      {
-		delete hashtable.Get(i);
-	      }
-	  } 
+        //delete old Hashtable:
+        if (size[0] != 0)
+          {
+            for (i = 1; i <= size[0]*size[1]*size[2]; i++)
+              {
+                delete hashtable[i-1];
+              }
+          } 
       
-	size.i1 = int (boxext.X()/midext.X()/hashelemsizefactor+1);
-	size.i2 = int (boxext.Y()/midext.Y()/hashelemsizefactor+1);
-	size.i3 = int (boxext.Z()/midext.Z()/hashelemsizefactor+1);
-	// PrintMessage (5, "hashsizes = ", size.i1, ", ", size.i2, ", ", size.i3);
-      
-	elemsize.X()=boxext.X()/size.i1;
-	elemsize.Y()=boxext.Y()/size.i2;
-	elemsize.Z()=boxext.Z()/size.i3;
+        size[0] = int (boxext(0)/midext(0)/hashelemsizefactor+1);
+        size[1] = int (boxext(1)/midext(1)/hashelemsizefactor+1);
+        size[2] = int (boxext(2)/midext(2)/hashelemsizefactor+1);
 
-	//create Hasharrays:
-	hashtable.SetSize(size.i1*size.i2*size.i3);
-	for (i = 1; i <= size.i1; i++)
-	  {
-	    for (j = 1; j <= size.i2; j++)
-	      {
-		for (k = 1; k <= size.i3; k++)
-		  {
-		    INDEX ind=i+(j-1)*size.i1+(k-1)*size.i2*size.i1;
-		    hashtable.Elem(ind) = new Array <int> ();
-		  }
-	      }
-	  }
+        int nfaces = faces->Size();
+        size[0] = min(size[0], nfaces);
+        size[1] = min(size[1], nfaces);
+        size[2] = min(size[2], nfaces);
+
+        // PrintMessage (5, "hashsizes = ", size[0], ", ", size[1], ", ", size[2]);
+      
+        elemsize(0)=boxext(0)/size[0];
+        elemsize(1)=boxext(1)/size[1];
+        elemsize(2)=boxext(2)/size[2];
+
+        //create Hasharrays:
+        hashtable.SetSize(size[0]*size[1]*size[2]);
+        for (i = 1; i <= size[0]; i++)
+          {
+            for (j = 1; j <= size[1]; j++)
+              {
+                for (k = 1; k <= size[2]; k++)
+                  {
+                    int ind=i+(j-1)*size[0]+(k-1)*size[1]*size[0];
+                    hashtable[ind-1] = new Array <int> ();
+                  }
+              }
+          }
       }
     else
       {
-	//Clear all Hash-Arrays
-	for (i = 1; i <= size.i1; i++)
-	  {
-	    for (j = 1; j <= size.i2; j++)
-	      {
-		for (k = 1; k <= size.i3; k++)
-		  {
-		    INDEX ind=i+(j-1)*size.i1+(k-1)*size.i2*size.i1;
-		    hashtable.Elem(ind)->SetSize(0);
-		  }
-	      }
-	  }	  
+        //Clear all Hash-Arrays
+        for (i = 1; i <= size[0]; i++)
+          {
+            for (j = 1; j <= size[1]; j++)
+              {
+                for (k = 1; k <= size[2]; k++)
+                  {
+                    int ind=i+(j-1)*size[0]+(k-1)*size[1]*size[0];
+                    hashtable[ind-1]->SetSize(0);
+                  }
+              }
+          }       
       }
   
     //Faces in Hashtable einfuegen:
     for (i = 1; i <= faces->Size(); i++)
       {
-	AddElem(faces->Get(i).Face(),i);
+        AddElem(faces->operator[](i-1).Face(),i);
       }
   
   }
 
-  void GeomSearch3d :: AddElem(const MiniElement2d& elem, INDEX elemnum)
+  void GeomSearch3d :: AddElem(const FrontElement2d& elem, int elemnum)
   {
-    Point3d minp, maxp;
+    Point<3> minp, maxp;
     ElemMaxExt(minp, maxp, elem);
-    int sx = int ((minp.X()-minext.X())/elemsize.X()+1.);
-    int ex = int ((maxp.X()-minext.X())/elemsize.X()+1.);
-    int sy = int ((minp.Y()-minext.Y())/elemsize.Y()+1.);
-    int ey = int ((maxp.Y()-minext.Y())/elemsize.Y()+1.);
-    int sz = int ((minp.Z()-minext.Z())/elemsize.Z()+1.);
-    int ez = int ((maxp.Z()-minext.Z())/elemsize.Z()+1.);
+    int sx = int ((minp(0)-minext(0))/elemsize(0)+1.);
+    int ex = int ((maxp(0)-minext(0))/elemsize(0)+1.);
+    int sy = int ((minp(1)-minext(1))/elemsize(1)+1.);
+    int ey = int ((maxp(1)-minext(1))/elemsize(1)+1.);
+    int sz = int ((minp(2)-minext(2))/elemsize(2)+1.);
+    int ez = int ((maxp(2)-minext(2))/elemsize(2)+1.);
   
     for (int ix = sx; ix <= ex; ix++)
       for (int iy = sy; iy <= ey; iy++)
         for (int iz = sz; iz <= ez; iz++)
           {
-            INDEX ind=ix+(iy-1)*size.i1+(iz-1)*size.i2*size.i1;
-            if (ind < 1 || ind > size.i1 * size.i2 * size.i3)
+            int ind=ix+(iy-1)*size[0]+(iz-1)*size[1]*size[0];
+            if (ind < 1 || ind > size[0] * size[1] * size[2])
               {
                 cerr << "Illegal hash-position";
                 cerr << "Position: " << ix << "," << iy << "," << iz << endl;
-		    throw NgException ("Illegal position in Geomsearch");
+                    throw NgException ("Illegal position in Geomsearch");
               }
-            hashtable.Elem(ind)->Append(elemnum);		      
+            hashtable[ind-1]->Append(elemnum);                
           }
   }
 
-  void GeomSearch3d :: GetLocals(Array<MiniElement2d> & locfaces,  Array<INDEX> & findex,
-				 INDEX fstind, const Point3d& p0, double xh)
+  void GeomSearch3d :: GetLocals(Array<FrontElement2d> & locfaces,  Array<int> & findex,
+                                 int fstind, const Point<3>& p0, double xh)
   {
     hashcount++;
   
-    Point3d minp, maxp, midp; 
+    Point<3> minp, maxp, midp; 
 
-    minp=p0-Vec3d(xh,xh,xh); //lay cube over sphere
-    maxp=p0+Vec3d(xh,xh,xh);
+    minp=p0-Vec<3>(xh,xh,xh); //lay cube over sphere
+    maxp=p0+Vec<3>(xh,xh,xh);
 
     MaxCoords(minext,minp); //cube may not be out of hash-region
     MinCoords(maxextreal,maxp);
 
 
-    int cluster = faces->Get(fstind).Cluster();
+    Front3PointIndex cluster = faces->operator[](fstind-1).Cluster();
   
-    int sx = int((minp.X()-minext.X())/elemsize.X()+1.);
-    int ex = int((maxp.X()-minext.X())/elemsize.X()+1.);
-    int sy = int((minp.Y()-minext.Y())/elemsize.Y()+1.);
-    int ey = int((maxp.Y()-minext.Y())/elemsize.Y()+1.);
-    int sz = int((minp.Z()-minext.Z())/elemsize.Z()+1.);
-    int ez = int((maxp.Z()-minext.Z())/elemsize.Z()+1.);
+    int sx = int((minp(0)-minext(0))/elemsize(0)+1.);
+    int ex = int((maxp(0)-minext(0))/elemsize(0)+1.);
+    int sy = int((minp(1)-minext(1))/elemsize(1)+1.);
+    int ey = int((maxp(1)-minext(1))/elemsize(1)+1.);
+    int sz = int((minp(2)-minext(2))/elemsize(2)+1.);
+    int ez = int((maxp(2)-minext(2))/elemsize(2)+1.);
     int ix,iy,iz,i,k;
 
-    int cnt1 = 0;  // test, how efficient hashtable is
-    int cnt2 = 0;
-    int cnt3 = 0;
+    [[maybe_unused]] int cnt1 = 0;  // test, how efficient hashtable is
+    [[maybe_unused]] int cnt2 = 0;
+    [[maybe_unused]] int cnt3 = 0;
   
     for (ix = sx; ix <= ex; ix++)
       {
-	for (iy = sy; iy <= ey; iy++)
-	  {
-	    for (iz = sz; iz <= ez; iz++)
-	      {
-		INDEX ind=ix+(iy-1)*size.i1+(iz-1)*size.i2*size.i1;
-	      
-		//go through all elements in one hash area
-		const Array <int> & area = *hashtable.Elem(ind);
-		for (k = 1; k <= area.Size(); k++)
-		  {
-		    cnt2++;
-		    i = area.Get(k);
-		    if (faces->Get(i).Cluster() == cluster && 
-			faces->Get(i).Valid() &&
-			faces->Get(i).HashValue() != hashcount && 
-			i != fstind)
-		      {
-			cnt1++;
-			const MiniElement2d & face = faces->Get(i).Face();
-		      
-			const Point3d & p1 = (*points)[face.PNum(1)].P();
-			const Point3d & p2 = (*points)[face.PNum(2)].P();
-			const Point3d & p3 = (*points)[face.PNum(3)].P();
-		      
-			midp = Center (p1, p2, p3);
-		      
-			// if (Dist2 (midp, p0) <= xh*xh)  
+        for (iy = sy; iy <= ey; iy++)
+          {
+            for (iz = sz; iz <= ez; iz++)
+              {
+                int ind=ix+(iy-1)*size[0]+(iz-1)*size[1]*size[0];
+              
+                //go through all elements in one hash area
+                const Array <int> & area = *hashtable[ind-1];
+                for (k = 1; k <= area.Size(); k++)
+                  {
+                    cnt2++;
+                    i = area[k-1];
+                    if (faces->operator[](i-1).Cluster() == cluster && 
+                        faces->operator[](i-1).Valid() &&
+                        faces->operator[](i-1).HashValue() != hashcount && 
+                        i != fstind)
+                      {
+                        cnt1++;
+                        const FrontElement2d & face = faces->operator[](i-1).Face();
+                      
+                        const Point<3> & p1 = (*points)[face[0]].P();
+                        const Point<3> & p2 = (*points)[face[1]].P();
+                        const Point<3> & p3 = (*points)[face[2]].P();
+                      
+                        midp = Center (p1, p2, p3);
+                      
+                        // if (Dist2 (midp, p0) <= xh*xh)  
                         if((Dist2 (p1, p0) <= xh*xh) ||
                            (Dist2 (p2, p0) <= xh*xh) ||
                            (Dist2 (p3, p0) <= xh*xh) ||
                            (Dist2 (midp, p0) <= xh*xh) )  // by Jochen Wild
-			  {
-			    cnt3++;
-			    locfaces.Append(faces->Get(i).Face());
-			    findex.Append(i);
-			    faces->Elem(i).SetHashValue(hashcount);
-			  }
-		      }
-		  }
-	      }
-	  }
+                          {
+                            cnt3++;
+                            locfaces.Append(faces->operator[](i-1).Face());
+                            findex.Append(i);
+                            faces->operator[](i-1).SetHashValue(hashcount);
+                          }
+                      }
+                  }
+              }
+          }
       }
     /*
       if (faces->Size() != 0 && hashcount % 200 == 0)

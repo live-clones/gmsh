@@ -28,7 +28,7 @@ inline void CalcInverse (const Mat<2,2> & m, Mat<2,2> & inv)
 
 
   // template <>
-void CalcInverse (const Mat<3,3> & m, Mat<3,3> & inv)
+DLL_HEADER void CalcInverse (const Mat<3,3> & m, Mat<3,3> & inv)
 {
   double det = Det (m);
   if (det == 0) 
@@ -83,7 +83,7 @@ double Det (const Mat<3,3> & m)
 
 void EigenValues (const Mat<3,3> & m, Vec<3> & ev)
 {
-  const double pi = 3.141592;
+  const double pi = M_PI;
   double a, b, c, d;
   double p, q;
   double arg;

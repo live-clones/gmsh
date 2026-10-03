@@ -9,9 +9,9 @@ their own respective license:
 * MeshOptimizer: MIT/X11 License
 * MeshQualityOptimizer: MIT/X11 License
 * Netgen: GNU Lesser General Public License (LGPL) v. 2.1
+* OctreeSizeField: Gmsh License
 * QuadMeshingTools: Gmsh License
 * QuadTri: Gmsh License
-* WinslowUntangler: Gmsh license
 * bamg: GNU Lesser General Public License (LGPL) v. 2.1 or later
 * blossom: Gmsh License
 * domhex: Gmsh License
