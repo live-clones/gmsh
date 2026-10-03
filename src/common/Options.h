@@ -968,6 +968,8 @@ unsigned int opt_view_color_hexahedra(OPT_ARGS_COL);
 unsigned int opt_view_color_prisms(OPT_ARGS_COL);
 unsigned int opt_view_color_pyramids(OPT_ARGS_COL);
 unsigned int opt_view_color_trihedra(OPT_ARGS_COL);
+unsigned int opt_view_color_polygons(OPT_ARGS_COL);
+unsigned int opt_view_color_polyhedra(OPT_ARGS_COL);
 unsigned int opt_view_color_tangents(OPT_ARGS_COL);
 unsigned int opt_view_color_normals(OPT_ARGS_COL);
 unsigned int opt_view_color_text2d(OPT_ARGS_COL);

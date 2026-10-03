@@ -2604,6 +2604,8 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Prisms" , opt_view_color_prisms , ELECOL, "Prism color" },
   { F|O, "Pyramids" , opt_view_color_pyramids , ELECOL, "Pyramid color" },
   { F|O, "Trihedra" , opt_view_color_trihedra , ELECOL, "Trihedron color" },
+  { F|O, "Polygons" , opt_view_color_polygons , ELECOL, "Polygon color" },
+  { F|O, "Polyhedra" , opt_view_color_polyhedra , ELECOL, "Polyhedron color" },
   { F|O, "Tangents" , opt_view_color_tangents ,
     {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255}, {255, 255, 0, 255},
     "Tangent vector color" },

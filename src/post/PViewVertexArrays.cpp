@@ -1643,7 +1643,7 @@ static void addOutlineElement(drawTarget *p, int ient, int iele, int numNodes,
     addOutlineQuadrangle(p, xyz, opt->color.quadrangle, pre);
     break;
   case TYPE_POLYG:
-    addOutlinePolygon(p, ient, iele, numNodes, xyz, opt->color.quadrangle, pre);
+    addOutlinePolygon(p, ient, iele, numNodes, xyz, opt->color.polygon, pre);
     break;
   case TYPE_TET:
     addOutlineSolid(p, xyz, opt->color.tetrahedron, pre, tetShape);
@@ -1659,7 +1659,8 @@ static void addOutlineElement(drawTarget *p, int ient, int iele, int numNodes,
     addOutlineQuadrangle(p, xyz, opt->color.pyramid, pre);
     break;
   case TYPE_POLYH:
-    addOutlinePolyhedron(p, ient, iele, numNodes, xyz, opt->color.pyramid, pre);
+    addOutlinePolyhedron(p, ient, iele, numNodes, xyz, opt->color.polyhedron,
+                         pre);
     break;
   }
 }
@@ -2233,7 +2234,7 @@ static void addElementRange(drawTarget *p, PViewData *data,
         if(sh >= 0)
           addCapOutlineSolid(p, xyz, colors[sh], *solidShapes[sh]);
         else if(type == TYPE_POLYH)
-          addCapOutlinePolyhedron(p, ent, i, xyz, opt->color.pyramid);
+          addCapOutlinePolyhedron(p, ent, i, xyz, opt->color.polyhedron);
       }
 
       for(int j = 0; j < numNodes; j++)

@@ -131,6 +131,7 @@ public:
   struct {
     unsigned int point, line, triangle, quadrangle;
     unsigned int tetrahedron, hexahedron, prism, pyramid, trihedron;
+    unsigned int polygon, polyhedron;
     unsigned int tangents, normals;
     unsigned int text2d, text3d, axes, background2d;
   } color;
