@@ -819,15 +819,9 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
   PViewData *data = p->getData(true); // use adaptive data if available
   PViewOptions *opt = p->getOptions();
   bool logged = false;
-  if(opt->rangeType == PViewOptions::Custom) {
-    opt->tmpMin = opt->customMin;
-    opt->tmpMax = opt->customMax;
-  }
-  else if(opt->rangeType == PViewOptions::PerTimeStep) {
-    opt->tmpMin = data->getMin(opt->timeStep);
-    opt->tmpMax = data->getMax(opt->timeStep);
-  }
-  else if(opt->abscissaRangeType == PViewOptions::Custom) {
+  if(opt->rangeType != PViewOptions::Custom &&
+     opt->rangeType != PViewOptions::PerTimeStep &&
+     opt->abscissaRangeType == PViewOptions::Custom) {
     // FIXME: should also compute min/max for reduced abscissa range over all
     // steps
     opt->tmpMin = ymin;
@@ -835,8 +829,7 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
     logged = true; // what getGraphData plotted, logarithm taken
   }
   else {
-    opt->tmpMin = data->getMin();
-    opt->tmpMax = data->getMax();
+    opt->getRange(data, opt->tmpMin, opt->tmpMax);
   }
 
   // the range on the scale the graph is drawn on, from the range in the
