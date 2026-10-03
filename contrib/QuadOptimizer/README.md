@@ -75,9 +75,7 @@ For example, surface quads with target size 4:
 gmsh geometry.step -2 -algo pack -clmin 4 -clmax 4 -o mesh.msh
 ```
 
-There are no QuadOptimizer test targets or CTest registrations in the Gmsh
-build. Existing standalone diagnostic fixtures remain available for explicit
-manual use. Debug files and JSON reports require explicit opt-in.
+Debug files and JSON reports require explicit opt-in.
 
 ## Improvement rounds
 
@@ -118,12 +116,7 @@ stars whose elements changed through a topology rewrite or a neighboring move.
 Smart and Winslow maintain separate active sets, so rejection by one proposal
 never suppresses the other. A successful move reactivates every free corner of
 its incident cells, including opposite quad corners. Deterministic coloring is
-cached until connectivity changes. `activeNodalSmoothing` defaults to true;
-`--active-smoothing 0` in the standalone driver retains full sweeps for comparison.
-`testActiveNodalSmoothing.py` checks identical coordinates and accepted moves
-against that baseline, propagation, a stationary disconnected patch and fewer
-node visits. It also checks that terminal Winslow covers all free nodes four
-times and that productive final sweeps do not restart topology.
+cached until connectivity changes. `activeNodalSmoothing` defaults to true.
 
 Topological queues are seeded once, then updated around changed connectivity
 and moved nodes. Valence queues, QQ/QT swap edges and TT merge edges persist
@@ -133,33 +126,24 @@ Quad and split-triangle validity is physical 3D validity and CAD-normal alignmen
 UV polygon convexity and UV triangle-area signs are not quality predicates.
 Parametric coordinates still locate projections and surface normals internally.
 The native quality audit uses the same physical validity rule.
-`testPhysicalQuadValidity.py` preserves five fixed planar Sample4 quads whose UV
-polygons are nonconvex, and checks that their native validity audit passes.
 
-Native Fast optimization has no round limit. The standalone driver uses
-`--max-passes -1` by default; a nonnegative value imposes an explicit cap.
+Native Fast optimization has no round limit.
 The existing per-face cavity cap remains a safeguard. Logs distinguish `topology-idle`,
 `iteration-budget` and `cavity-budget`; an exhausted cap is not convergence.
-`--max-passes 0` skips the rounds, but retains initial smoothing, terminal
-Winslow and final split/pair/CAD closure. `--max-accepted 0` disables topology
-rewrites, not node smoothing or final quad splitting. The historical `reachedFixedPoint` result refers to the
+The historical `reachedFixedPoint` result refers to the
 pre-polish topology stopping condition, not a joint topology/nodal fixed point
-of the delivered mesh. `terminalWinslowPasses` defaults to four; the standalone
-switch `--terminal-winslow-passes 0` disables only this polish for isolated tests.
+of the delivered mesh. `terminalWinslowPasses` defaults to four.
 
 The C++ options `terminalMandatoryCleanup`, `qualitySwaps` and `finalPairCleanup`
 enable the valence, swap and TT merge phases respectively. Their historical
-names are retained for compatibility. The standalone switches are `--valence`,
-`--swaps`, `--merge-tt` (0/1); old `--terminal-mandatory`/`--final-pairs` aliases
-remain accepted. Legacy counters `acceptedTerminalMandatoryCavities`,
-`finalQtSwaps` and `finalTtMerges` now cover those operations across all rounds.
+names are retained for compatibility. Legacy counters
+`acceptedTerminalMandatoryCavities`, `finalQtSwaps` and `finalTtMerges` now cover
+those operations across all rounds.
 CAD-driven TT flips retain the number of triangles and only replace a distant
-diagonal with a substantially closer one. `testTerminalCadTriangleSwap.py`
-checks this against analytic sphere distances.
+diagonal with a substantially closer one.
 
-Final splitting re-enqueues adjacent pairs. `testLateMandatoryClosure.py` checks
-round ordering, topology-only stopping, four terminal Winslow sweeps, and the
-final pair/CAD closure without restarting smoothing or valence operations.
+Final splitting re-enqueues adjacent pairs without restarting smoothing or
+valence operations.
 
 Before constructing the V2 topology, a fixed CAD pole of valence two may be
 regularized by splitting one incident quad through that pole. This preserves
@@ -167,8 +151,6 @@ every existing edge, point and CAD classification, and avoids skipping a whole
 face because two cells share both sides of a fixed pole. The staged face must
 pass the full orientation/connectivity check; otherwise the splits roll back.
 `initialValenceTwoQuadsSplit` counts these preparatory splits.
-`testFixedCadValenceTwo.py` covers QQ/QT stars and rollback in the presence of
-an unrelated bow-tie vertex.
 
 ## Options
 
@@ -209,8 +191,7 @@ an unrelated bow-tie vertex.
   CAD orientation at every sample. No points are added or moved. Admissible TT
   recombination and distant TT/QT chord swaps follow, without smoothing.
   Rejected splits and projection failures are reported. Negative values
-  disable only the CAD trigger. The standalone driver exposes
-  `--final-split-cad-ratio` with the same semantics.
+  disable only the CAD trigger.
   Final splits are independent of optimization budgets. A quality/CAD-only
   cut requires two absolutely admissible triangles and complete CAD samples;
   a physically invalid quad is repaired even when triangle shape limits cannot
@@ -242,65 +223,12 @@ gmsh background_h1.msh -2 -algo pack -clmin 1 -clmax 1 \
 `-2` meshes surfaces; PACK always places points and evaluates exclusion in
 physical 3D space. `Mesh.Pack3D` is retained only for compatibility and always
 returns 1; setting it to 0 warns and cannot enable UV packing.
-The standalone `quadV2StrategyMain.cpp` driver can also resume an existing
-mesh with `--max-accepted 0 --smoothing-passes 0 --final-winslow-passes 1`.
-`buildQuadV2Strategy.py` builds that driver using an existing Gmsh build.
-
-`testTerminalMandatory.py --runner PATH --output DIRECTORY` checks the
-valence two-point QQTQQT solve, fixed boundary, disable switch, cavity budget
-and size guard. `testTerminalPairs.py` isolates quality swaps and acceptable TT
-merges, including their idle reruns. `testFinalQuadSplit.py` checks diagonal
-selection on planar/spherical fixtures and preservation of fixed nodes.
-
-## Frozen reference, 2026-09-08
-
-Doghouse h=1: 4,671 nodes, 4,533 quads, 46 triangles. Reapplying one Winslow
-sweep to the saved Smart mesh reproduces the validated experiment exactly:
-3,919 moved nodes, absolute warping failures 18 to 16, absolute skewing
-failures 39 to 30. Connectivity, fixed nodes and 104 embedded segments are
-preserved; intrinsic and GFace orientation audits pass.
-
-The integrated native run from the triangular background takes 0.846 s in V2
-and 3.486 s total (one measurement, one thread, excluding background
-preparation and independent audits). It retains the cumulative acceptance
-budget across both smoothing phases instead of resetting it on mesh reload,
-so its coordinates can differ slightly from the two-process experiment.
-It finishes with 15 absolute warping failures and 30 skewing failures.
-These are reference results, not a guarantee that all specifications pass.
-
-`quadSmartWinslowFinal` exercises initial smoothing, ordered rounds to idle,
-last-only splitting and the explicit nodal modes. Numerical tests
-cover Smart corner sines, Winslow normalization and 3D rigid transformations.
 
 Fixed CAD valence-two preparation checks physical separation across both
 shared segments before any cut, so overlapping T/Q or Q/Q input is rejected
 without mutation while legitimate QQ/QT poles remain repairable.
 
-## STEP campaign, one report
-
-`runCadQuadCampaign.py --gmsh /path/to/gmsh --inputs /path/to/STEPs
---output /path/to/new-common-directory --jobs 10 --commit GIT_SHA`
-processes all `A*.stp`/`A*.step` surfaces directly in 3D at h=4. A separate
-triangular meshing process must succeed before PACK can start; its h=4 mesh is
-reused as the background while the original STEP CAD remains loaded. Boundary
-recovery warnings and all meshing errors abort that case immediately. There is
-no alternate algorithm, CAD healing, size reduction or retry of invalid cases.
-Ten independent one-thread Gmsh processes can run concurrently. Temporary
-triangular meshes are deleted. The single `rapport_A_h4.md` is updated as cases
-finish and contains timings, all preferred/absolute criterion counts, physical
-validity, edge lengths and sampled CAD-distance diagnostics. A completed mesh
-is not necessarily specification-compliant. Native logs and the input/binary
-manifest remain in the same output directory; no per-case quality reports or
-geometry files are committed.
-
 ## Optional diagnostic files
-
-Optimization drivers save only the requested mesh by default.
-`gmshQuadV2Strategy --report path.json` explicitly enables its JSON report
-and the report-only closest-CAD audits. `gmshQuadOptimizer` accepts
-`input.msh face-tag|all output.msh` without a quality POS path; supplying
-that optional path retains the existing quality export behavior.
-`buildQuadV2Strategy.py --manifest path.json` requests a build manifest.
 
 `Mesh.SaveDebugFiles = 1` enables optional PACK/QuadQuasiStructured
 point views, background-field exports, intermediate debug meshes and the
