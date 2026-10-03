@@ -15,6 +15,9 @@ algorithms.
   option translation, temporary uniform-size settings and quality summaries.
 - `quadFinalRepair.cpp`: quality-based and transactional terminal quad splitting.
 - `smallCavityOptimizerV2.cpp`: V2 improvement rounds and final physical smoothing.
+- `halfEdge.cpp`: shared topology, handle maps and mesh replacement transactions
+  for both optimizers and HoleRings. The legacy cavity context only adds sorted
+  views, cached queries and rewrite policy.
 
 The core keeps small dispatch calls. `Generator.h` and `meshGFaceOptimize.h`
 retain their original interfaces. Projection accelerators and the MSH4 embedded

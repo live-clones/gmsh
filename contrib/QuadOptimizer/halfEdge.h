@@ -42,10 +42,15 @@ namespace QuadOptimizer {
       const FaceHalfEdge *_owner = nullptr;
       std::uint64_t _revision = 0;
       Cavity _cavity;
+      std::vector<MElement *> _removedElements;
       std::vector<MElement *> _elements;
       std::vector<MVertex *> _newVertices;
+      std::vector<std::array<double, 3> > _newVertexPositions;
+      std::vector<MVertex *> _retiredVertices;
+      std::vector<Id> _retiredIds;
       std::vector<std::vector<Id> > _connectivity;
       HalfEdgeMesh::Mesh::PreparedReplacement _numeric;
+      bool _strictOwnership = false;
 
     public:
       PreparedReplacement() = default;
@@ -59,13 +64,27 @@ namespace QuadOptimizer {
           _owner = std::exchange(other._owner, nullptr);
           _revision = other._revision;
           _cavity = std::move(other._cavity);
+          _removedElements = std::move(other._removedElements);
           _elements = std::move(other._elements);
           _newVertices = std::move(other._newVertices);
+          _newVertexPositions = std::move(other._newVertexPositions);
+          _retiredVertices = std::move(other._retiredVertices);
+          _retiredIds = std::move(other._retiredIds);
           _connectivity = std::move(other._connectivity);
           _numeric = std::move(other._numeric);
+          _strictOwnership = other._strictOwnership;
         }
         return *this;
       }
+      explicit operator bool() const { return _owner != nullptr; }
+      const std::vector<MElement *> &removedElements() const
+      { return _removedElements; }
+      const std::vector<MElement *> &insertedElements() const
+      { return _elements; }
+      const std::vector<MVertex *> &newVertices() const
+      { return _newVertices; }
+      const std::vector<MVertex *> &retiredVertices() const
+      { return _retiredVertices; }
     };
 
     explicit FaceHalfEdge(GFace *face, bool splitFixedBoundaryFans = false);
@@ -73,6 +92,8 @@ namespace QuadOptimizer {
     FaceHalfEdge &operator=(const FaceHalfEdge &) = delete;
 
     bool valid() const;
+    const HalfEdgeMesh::Mesh &numericMesh() const { return _mesh; }
+    std::uint64_t vertexRevision(Id vertex) const;
 
     std::vector<Id> cells() const;
     std::vector<Id> vertices() const;
@@ -104,6 +125,12 @@ namespace QuadOptimizer {
     bool prepareReplacement(const Cavity &cavity,
                             const std::vector<MElement *> &inserted,
                             PreparedReplacement &prepared) const;
+    // General patches can have several boundary loops (for example a pillow
+    // around a hole); their oriented interface must still remain unchanged.
+    bool prepareReplacement(const std::vector<MElement *> &removed,
+                            const std::vector<MElement *> &inserted,
+                            PreparedReplacement &prepared) const;
+    bool replacementValid(const PreparedReplacement &prepared) const;
     bool replace(PreparedReplacement &prepared,
                  std::vector<MVertex *> *created = nullptr,
                  std::vector<MVertex *> *retired = nullptr);
@@ -111,6 +138,9 @@ namespace QuadOptimizer {
     // Geometry changes do not rebuild connectivity. They only update the
     // numeric point and revision stamps used by the rejected-cavity cache.
     bool synchronizeGeometry(const std::vector<MVertex *> &vertices);
+    // Refresh only coordinates whose bits changed, ignoring retired handles.
+    // Unlike synchronizeGeometry(), the return value reports an actual edit.
+    bool refreshGeometry(const std::vector<MVertex *> &vertices);
     std::uint64_t state(const Cavity &cavity) const;
     const std::vector<Id> &lastTouchedVertices() const
     { return _lastTouchedVertices; }
@@ -134,7 +164,12 @@ namespace QuadOptimizer {
                     const std::unordered_map<MVertex *, Id> *corners = nullptr);
     bool orientedBoundaryMatches(
       const Cavity &cavity,
-      const std::vector<std::vector<Id> > &inserted) const;
+      const std::vector<std::vector<Id> > &inserted,
+      bool allowEmptyBoundary) const;
+    bool prepareReplacement(const Cavity &cavity,
+                            const std::vector<MElement *> &inserted,
+                            PreparedReplacement &prepared,
+                            bool allowEmptyBoundary) const;
   };
 
 } // namespace QuadOptimizer

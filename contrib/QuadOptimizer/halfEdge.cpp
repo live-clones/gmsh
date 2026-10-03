@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstring>
 #include <map>
 #include <set>
 #include <utility>
@@ -41,29 +42,29 @@ namespace QuadOptimizer {
       return true;
     }
 
-    std::vector<DirectedEdge> boundaryOf(
-      const std::vector<std::vector<Id> > &cells)
+    bool boundaryOf(const std::vector<std::vector<Id> > &cells,
+                    std::vector<DirectedEdge> &result)
     {
+      result.clear();
       std::map<HalfEdgeMesh::Edge, std::vector<DirectedEdge> > incidences;
       for(const std::vector<Id> &cell : cells) {
-        if(cell.size() != 3 && cell.size() != 4) return {};
+        if(cell.size() != 3 && cell.size() != 4) return false;
         for(std::size_t i = 0; i < cell.size(); ++i) {
           const Id a = cell[i];
           const Id b = cell[(i + 1) % cell.size()];
           incidences[HalfEdgeMesh::canonicalEdge(a, b)].push_back({a, b});
         }
       }
-      std::vector<DirectedEdge> result;
       for(const auto &entry : incidences) {
         if(entry.second.size() == 1)
           result.push_back(entry.second.front());
         else if(entry.second.size() != 2 ||
                 entry.second[0].first != entry.second[1].second ||
                 entry.second[0].second != entry.second[1].first)
-          return {};
+          return false;
       }
       std::sort(result.begin(), result.end());
-      return result;
+      return true;
     }
 
   } // namespace
@@ -72,7 +73,8 @@ namespace QuadOptimizer {
   {
     if(face)
       for(std::size_t i = 0; i < face->mesh_vertices.size(); ++i)
-        _meshVertexPositions.emplace(face->mesh_vertices[i], i);
+        if(!_meshVertexPositions.emplace(face->mesh_vertices[i], i).second)
+          _valid = false;
     const auto elements = faceElements(face);
     std::unordered_map<MElement *, std::unordered_map<MVertex *, Id> > corners;
     if(splitFixedBoundaryFans) {
@@ -145,6 +147,13 @@ namespace QuadOptimizer {
   bool FaceHalfEdge::valid() const
   {
     return _face && _valid && _mesh.manifold();
+  }
+
+  std::uint64_t FaceHalfEdge::vertexRevision(Id vertex) const
+  {
+    return vertex >= 0 && static_cast<std::size_t>(vertex) <
+                            _vertexRevisions.size() ?
+      _vertexRevisions[static_cast<std::size_t>(vertex)] : 0;
   }
 
   FaceHalfEdge::Id FaceHalfEdge::addVertex(MVertex *vertex)
@@ -303,7 +312,8 @@ namespace QuadOptimizer {
 
   bool FaceHalfEdge::orientedBoundaryMatches(
     const Cavity &cavity,
-    const std::vector<std::vector<Id> > &inserted) const
+    const std::vector<std::vector<Id> > &inserted,
+    bool allowEmptyBoundary) const
   {
     std::vector<std::vector<Id> > removed;
     removed.reserve(cavity.cells.size());
@@ -312,15 +322,44 @@ namespace QuadOptimizer {
       if(vertices.empty()) return false;
       removed.push_back(vertices);
     }
-    const std::vector<DirectedEdge> before = boundaryOf(removed);
-    const std::vector<DirectedEdge> after = boundaryOf(inserted);
-    return !before.empty() && before == after;
+    std::vector<DirectedEdge> before, after;
+    return boundaryOf(removed, before) && boundaryOf(inserted, after) &&
+      (allowEmptyBoundary || !before.empty()) && before == after;
   }
 
   bool FaceHalfEdge::prepareReplacement(
     const Cavity &cavity,
     const std::vector<MElement *> &insertedElements,
     PreparedReplacement &result) const
+  {
+    return prepareReplacement(cavity, insertedElements, result, false);
+  }
+
+  bool FaceHalfEdge::prepareReplacement(
+    const std::vector<MElement *> &removed,
+    const std::vector<MElement *> &inserted,
+    PreparedReplacement &result) const
+  {
+    result = PreparedReplacement();
+    Cavity cavity;
+    std::set<Id> vertices;
+    for(MElement *element : removed) {
+      const Id cell = id(element);
+      if(cell == HalfEdgeMesh::invalid) return false;
+      cavity.cells.push_back(cell);
+      const auto corners = _mesh.faceVertices(cell);
+      vertices.insert(corners.begin(), corners.end());
+    }
+    // replace() retires a listed vertex only if the new patch and every
+    // unchanged cell have stopped using it. No disk assumption is needed.
+    cavity.interior.assign(vertices.begin(), vertices.end());
+    return prepareReplacement(cavity, inserted, result, true);
+  }
+
+  bool FaceHalfEdge::prepareReplacement(
+    const Cavity &cavity,
+    const std::vector<MElement *> &insertedElements,
+    PreparedReplacement &result, bool allowEmptyBoundary) const
   {
     result = PreparedReplacement();
     if(!valid() || cavity.empty() || insertedElements.empty() ||
@@ -369,14 +408,86 @@ namespace QuadOptimizer {
       }
       inserted.push_back(std::move(cell));
     }
-    if(!orientedBoundaryMatches(cavity, inserted) ||
+    if(!orientedBoundaryMatches(cavity, inserted, allowEmptyBoundary) ||
        !_mesh.prepareReplacement(cavity.cells, inserted, prepared._numeric))
       return false;
+    for(Id cell : cavity.cells) {
+      MElement *removed = element(cell);
+      if(!removed) return false;
+      prepared._removedElements.push_back(removed);
+    }
+    for(MVertex *created : prepared._newVertices)
+      prepared._newVertexPositions.push_back(
+        {{created->x(), created->y(), created->z()}});
+    std::set<Id> retained;
+    for(const auto &cell : inserted)
+      retained.insert(cell.begin(), cell.end());
+    for(Id vertexId : cavity.interior) {
+      if(retained.count(vertexId)) continue;
+      const auto incidences = _mesh.incidentFaces(vertexId);
+      if(std::any_of(incidences.begin(), incidences.end(),
+                    [&](Id cell) { return !removed.count(cell); }))
+        continue;
+      MVertex *retired = vertex(vertexId);
+      if(!retired) return false;
+      prepared._retiredIds.push_back(vertexId);
+      prepared._retiredVertices.push_back(retired);
+    }
     prepared._owner = this;
     prepared._revision = _revision;
     prepared._cavity = cavity;
     prepared._elements = insertedElements;
+    prepared._strictOwnership = allowEmptyBoundary;
+    if(!replacementValid(prepared)) return false;
     result = std::move(prepared);
+    return true;
+  }
+
+  bool FaceHalfEdge::replacementValid(const PreparedReplacement &prepared) const
+  {
+    if(prepared._owner != this || prepared._revision != _revision) return false;
+    if(prepared._strictOwnership) {
+      // General GFace ownership diffs transfer every listed new vertex and
+      // delete every retired vertex. A fixed CAD handle shared by numerical
+      // boundary fans must never enter such a diff.
+      if(_face->mesh_vertices.size() != _meshVertexPositions.size())
+        return false;
+      for(MVertex *created : prepared._newVertices)
+        if(_meshVertexPositions.count(created)) return false;
+      for(MVertex *retired : prepared._retiredVertices) {
+        const auto position = _meshVertexPositions.find(retired);
+        if(retired->onWhat() != _face || position == _meshVertexPositions.end() ||
+           position->second >= _face->mesh_vertices.size() ||
+           _face->mesh_vertices[position->second] != retired)
+          return false;
+      }
+    }
+    const auto vertexHandle = [&](Id vertexId) {
+      if(vertexId < static_cast<Id>(_vertices.size())) return vertex(vertexId);
+      const auto local = static_cast<std::size_t>(vertexId) - _vertices.size();
+      return local < prepared._newVertices.size() ?
+        prepared._newVertices[local] : nullptr;
+    };
+    const auto matches = [&](MElement *element, const std::vector<Id> &corners) {
+      if(!element || element->getNumPrimaryVertices() != corners.size())
+        return false;
+      for(std::size_t i = 0; i < corners.size(); ++i)
+        if(element->getVertex(static_cast<int>(i)) != vertexHandle(corners[i]))
+          return false;
+      return true;
+    };
+    for(std::size_t i = 0; i < prepared._cavity.cells.size(); ++i)
+      if(!matches(prepared._removedElements[i],
+                  _mesh.faceVertices(prepared._cavity.cells[i])))
+        return false;
+    for(std::size_t i = 0; i < prepared._elements.size(); ++i)
+      if(!matches(prepared._elements[i], prepared._connectivity[i])) return false;
+    for(std::size_t i = 0; i < prepared._newVertices.size(); ++i) {
+      const MVertex *vertex = prepared._newVertices[i];
+      const auto &position = prepared._newVertexPositions[i];
+      if(vertex->x() != position[0] || vertex->y() != position[1] ||
+         vertex->z() != position[2]) return false;
+    }
     return true;
   }
 
@@ -386,16 +497,14 @@ namespace QuadOptimizer {
   {
     if(createdResult) createdResult->clear();
     if(retiredResult) retiredResult->clear();
-    if(prepared._owner != this || prepared._revision != _revision)
-      return false;
+    if(!replacementValid(prepared)) return false;
     const Cavity &cavity = prepared._cavity;
     const auto &insertedElements = prepared._elements;
     const auto &created = prepared._newVertices;
     const std::size_t vertexBase = _vertices.size();
     const std::size_t cellBase = _elements.size();
 
-    std::vector<MElement *> removedElements;
-    removedElements.reserve(cavity.cells.size());
+    const auto &removedElements = prepared._removedElements;
     std::vector<Id> touched;
     for(const Id cell : cavity.cells) {
       MElement *handle = element(cell);
@@ -409,29 +518,19 @@ namespace QuadOptimizer {
       }
       else if(position >= _face->quadrangles.size() ||
               _face->quadrangles[position] != handle) return false;
-      removedElements.push_back(handle);
       const auto vertices = _mesh.faceVertices(cell);
       touched.insert(touched.end(), vertices.begin(), vertices.end());
     }
-    std::set<Id> retainedVertices;
     for(const auto &cell : prepared._connectivity) {
       touched.insert(touched.end(), cell.begin(), cell.end());
-      retainedVertices.insert(cell.begin(), cell.end());
     }
     std::sort(touched.begin(), touched.end());
     touched.erase(std::unique(touched.begin(), touched.end()), touched.end());
-    std::vector<Id> retiredIds;
+    const auto &retiredIds = prepared._retiredIds;
     std::vector<MVertex *> retired;
-    const std::set<Id> removedIds(cavity.cells.begin(), cavity.cells.end());
-    for(const Id vertexId : cavity.interior) {
-      if(retainedVertices.count(vertexId)) continue;
+    for(const Id vertexId : retiredIds) {
       MVertex *handle = vertex(vertexId);
       if(!handle) return false;
-      bool isolated = true;
-      for(const Id cell : _mesh.incidentFaces(vertexId))
-        if(!removedIds.count(cell)) isolated = false;
-      if(!isolated) continue;
-      retiredIds.push_back(vertexId);
       if(handle->onWhat() == _face && _meshVertexPositions.count(handle))
         retired.push_back(handle);
     }
@@ -584,6 +683,28 @@ namespace QuadOptimizer {
     }
     _lastTouchedVertices = std::move(touched);
     return true;
+  }
+
+  bool FaceHalfEdge::refreshGeometry(
+    const std::vector<MVertex *> &changedVertices)
+  {
+    if(!valid()) return false;
+    std::vector<Id> touched;
+    for(MVertex *handle : changedVertices) {
+      const Id vertexId = id(handle);
+      const auto *before = _mesh.vertexPosition(vertexId);
+      if(!before) continue;
+      const std::array<double, 3> position =
+        {{handle->x(), handle->y(), handle->z()}};
+      if(!std::memcmp(before->data(), position.data(), 3 * sizeof(double)))
+        continue;
+      _mesh.setVertexPosition(vertexId, position);
+      _vertexRevisions[static_cast<std::size_t>(vertexId)] = ++_revision;
+      touched.push_back(vertexId);
+    }
+    const bool changed = !touched.empty();
+    _lastTouchedVertices = std::move(touched);
+    return changed;
   }
 
   std::uint64_t FaceHalfEdge::state(const Cavity &cavity) const
