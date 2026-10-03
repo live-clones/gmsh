@@ -83,41 +83,12 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd) : _octree(nullptr)
   // they do not depend on the actual mesh that can be deleted
 
   std::set<SPoint2> myBCNodes;
-  for(std::size_t i = 0; i < _gf->triangles.size(); i++) {
-    MTriangle *e = _gf->triangles[i];
-    MVertex *news[3];
-    for(int j = 0; j < 3; j++) {
-      MVertex *v = e->getVertex(j);
-      auto it = _3Dto2D.find(v);
-      MVertex *newv = nullptr;
-      if(it == _3Dto2D.end()) {
-        SPoint2 p;
-        reparamMeshVertexOnFace(v, _gf, p);
-        newv = new MVertex(p.x(), p.y(), 0.0);
-        _vertices.push_back(newv);
-        _3Dto2D[v] = newv;
-        _2Dto3D[newv] = v;
-        if(v->onWhat()->dim() < 2) myBCNodes.insert(p);
-      }
-      else
-        newv = it->second;
-      news[j] = newv;
-    }
-    MTriangle *T2D = new MTriangle(news[0], news[1], news[2]);
-    _triangles.push_back(T2D);
-  }
-
-  // A quad-dominant/quad-only face (e.g. from Mesh.Algorithm=9 with
-  // Recombine3DAll, or Mesh.Pack3D) would otherwise leave this local
-  // parametric-space background mesh nearly empty, since it was only ever
-  // built from _gf->triangles: the spatial search structures built from it
-  // below would then fail to locate almost every query point. Split each
-  // quadrangle into two triangles for this purpose, same deduplicated
-  // vertex map as above.
-  for(std::size_t i = 0; i < _gf->quadrangles.size(); i++) {
-    MQuadrangle *e = _gf->quadrangles[i];
+  std::size_t numElements = _gf->triangles.size() + _gf->quadrangles.size();
+  for(std::size_t i = 0; i < numElements; i++) {
+    MElement *e = _gf->getMeshElement(i);
+    int n = e->getNumPrimaryVertices();
     MVertex *news[4];
-    for(int j = 0; j < 4; j++) {
+    for(int j = 0; j < n; j++) {
       MVertex *v = e->getVertex(j);
       auto it = _3Dto2D.find(v);
       MVertex *newv = nullptr;
@@ -134,8 +105,9 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd) : _octree(nullptr)
         newv = it->second;
       news[j] = newv;
     }
+    // quadrangles are split in two triangles
     _triangles.push_back(new MTriangle(news[0], news[1], news[2]));
-    _triangles.push_back(new MTriangle(news[0], news[2], news[3]));
+    if(n == 4) _triangles.push_back(new MTriangle(news[0], news[2], news[3]));
   }
 
   for(auto &p : myBCNodes)
@@ -214,21 +186,9 @@ static void propagateValuesOnFace(GFace *_gf,
 
   // Assemble
   laplaceTerm l(nullptr, 1, ONE);
-  for(std::size_t k = 0; k < _gf->triangles.size(); k++) {
-    MTriangle *t = _gf->triangles[k];
-    SElement se(t);
-    l.addToMatrix(myAssembler, &se);
-  }
-  // Vertices are numbered from both triangles and quadrangles above (see
-  // vs, populated from _gf->quadrangles too): a quad-dominant/quad-only
-  // face (e.g. from Mesh.Algorithm=9/Recombine3DAll) would otherwise leave
-  // most of its vertices with an empty matrix row -- a degenerate system
-  // that has been seen to hang the CSR solver's column-sort step
-  // (linearSystemCSR.cpp:sortColumns_ following a chain that never
-  // reaches its 0 sentinel) instead of just solving a trivial system.
-  for(std::size_t k = 0; k < _gf->quadrangles.size(); k++) {
-    MQuadrangle *q = _gf->quadrangles[k];
-    SElement se(q);
+  for(std::size_t k = 0;
+      k < _gf->triangles.size() + _gf->quadrangles.size(); k++) {
+    SElement se(_gf->getMeshElement(k));
     l.addToMatrix(myAssembler, &se);
   }
 

@@ -16,78 +16,32 @@
 #include "SVector3.h"
 #include "meshGFace.h"
 #include "boundaryLayersData.h"
-#include <cmath>
-#include <limits>
 
+// The chart of a discrete surface is piecewise linear and can reverse the
+// orientation of some of its triangles: compare the orientation of the element
+// in the chart with the one of the chart, where the element is
 static bool getDiscreteGFaceOrientation(discreteFace *gf, MElement *el,
                                         int &orientation)
 {
-  const std::size_t n = el->getNumPrimaryVertices();
-  if(n < 3) return false;
+  std::size_t n = el->getNumPrimaryVertices();
   std::vector<SPoint2> uv(n);
-  for(std::size_t i = 0; i < n; ++i) {
-    if(!reparamMeshVertexOnFace(el->getVertex(i), gf, uv[i], false) ||
-       !std::isfinite(uv[i].x()) || !std::isfinite(uv[i].y()))
+  SPoint2 c(0., 0.);
+  for(std::size_t i = 0; i < n; i++) {
+    if(!reparamMeshVertexOnFace(el->getVertex(i), gf, uv[i], false))
       return false;
+    c += uv[i];
   }
-
-  // A coarse physical chord can point against the local geometric normal
-  // even when the surface mesh has the correct, consistent chart winding.
-  // Determine that winding in face-local UV instead of using the chord.
-  long double scale = 0., area = 0.;
-  SPoint2 center(0., 0.);
-  for(const SPoint2 &p : uv) {
-    scale = std::max(scale, std::abs((long double)p.x() - uv[0].x()));
-    scale = std::max(scale, std::abs((long double)p.y() - uv[0].y()));
-    center += p - uv[0];
+  c *= 1. / n;
+  double area = 0.;
+  for(std::size_t i = 0; i < n; i++) {
+    const SPoint2 &p = uv[i], &q = uv[(i + 1) % n];
+    area += (p.x() - c.x()) * (q.y() - c.y()) - (q.x() - c.x()) * (p.y() - c.y());
   }
-  if(!std::isfinite(scale) || !(scale > 0.)) return false;
-  center *= 1. / n;
-  center += uv[0];
-  for(std::size_t i = 1; i + 1 < n; ++i) {
-    const long double ax = ((long double)uv[i].x() - uv[0].x()) / scale;
-    const long double ay = ((long double)uv[i].y() - uv[0].y()) / scale;
-    const long double bx = ((long double)uv[i + 1].x() - uv[0].x()) / scale;
-    const long double by = ((long double)uv[i + 1].y() - uv[0].y()) / scale;
-    area += ax * by - ay * bx;
-  }
-  if(!std::isfinite(area) ||
-     std::abs(area) <= 64. * std::numeric_limits<double>::epsilon())
-    return false;
-
-  // Planar simplification can choose a chart with negative parity. Sample
-  // normal and chart Jacobian strictly inside a source facet, away from its
-  // corners where the two lookups could select different folded facets.
-  const auto unit = [](SVector3 &v) {
-    if(!std::isfinite(v.x()) || !std::isfinite(v.y()) ||
-       !std::isfinite(v.z())) return false;
-    const double length = v.norm();
-    if(!std::isfinite(length) || !(length > 0.)) return false;
-    v *= 1. / length;
-    return true;
-  };
-  for(std::size_t i = 0; i <= n; ++i) {
-    SPoint2 p = center;
-    if(i) p += (uv[i - 1] - center) * 0.3819660112501051;
-    double u, v;
-    if(gf->trianglePosition(p.x(), p.y(), u, v) < 0 ||
-       !std::isfinite(u) || !std::isfinite(v) ||
-       u <= 1.e-6 || v <= 1.e-6 || u + v >= 1. - 1.e-6)
-      continue;
-    SVector3 normal;
-    if(!gf->normalIfContainsParam(p, normal)) continue;
-    auto derivative = gf->firstDer(p);
-    if(!unit(normal) || !unit(derivative.first) ||
-       !unit(derivative.second)) continue;
-    SVector3 jacobian = crossprod(derivative.first, derivative.second);
-    if(!unit(jacobian)) continue;
-    const double alignment = dot(normal, jacobian);
-    if(!std::isfinite(alignment) || std::abs(alignment) < 1. - 1.e-6)
-      continue;
-    orientation = (area > 0.) == (alignment > 0.) ? 1 : -1;
-    return true;
-  }
-  return false;
+  std::pair<SVector3, SVector3> der = gf->firstDer(c);
+  double chart = dot(gf->normal(c), crossprod(der.first, der.second));
+  if(area == 0. || chart == 0.) return false;
+  orientation = ((area > 0.) == (chart > 0.)) ? 1 : -1;
+  return true;
 }
 
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)

@@ -24,10 +24,10 @@ private:
   // from a list of elements
   double _maxTol;
   void _insert(MElement *e);
-  std::vector<MElement *> _find(double *P, int dim, double tol,
-                                bool onlyFirst) const;
-  std::vector<MElement *> _find(double *P, int dim, double tol, bool strict,
-                                bool onlyFirst) const;
+  void _find(double *P, int dim, double tol, bool onlyFirst,
+             std::vector<MElement *> &e) const;
+  void _find(double *P, int dim, double tol, bool strict, bool onlyFirst,
+             std::vector<MElement *> &e) const;
 
 public:
   MElementOctree(GModel *);

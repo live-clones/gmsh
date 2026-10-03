@@ -195,10 +195,10 @@ MElementOctree::~MElementOctree()
 // element is about that much larger). All of them, by increasing dimension, or
 // only one, trying the highest dimension first: the closest, and among those
 // as close (all the volumes holding the point) the first one inserted.
-std::vector<MElement *> MElementOctree::_find(double *P, int dim, double tol,
-                                              bool onlyFirst) const
+void MElementOctree::_find(double *P, int dim, double tol, bool onlyFirst,
+                           std::vector<MElement *> &e) const
 {
-  std::vector<MElement *> e;
+  e.clear();
   int dmin = (dim < 0) ? 0 : dim, dmax = (dim < 0) ? 3 : dim;
   for(int i = dmin; i <= dmax; i++) {
     int d = onlyFirst ? dmax + dmin - i : i;
@@ -206,43 +206,49 @@ std::vector<MElement *> MElementOctree::_find(double *P, int dim, double tol,
     // 4 tol times the element size of its bounding box (the enlarged reference
     // tetrahedron is the original one scaled by 1 + 4 tol); more for curved
     // elements
-    std::vector<void *> v;
+    thread_local std::vector<void *> v; // (reused: no allocation per call)
+    v.clear();
     Octree_SearchAllNear(P, _octree[d], 4. * _maxOrder * tol, 0., &v);
     MElement *best = nullptr;
     double bestOff = 0.;
     for(auto it = v.begin(); it != v.end(); ++it) {
       MElement *el = (MElement *)*it;
       double off = offElement(el, P, tol);
-      if(off < 0. || (d < 3 && off > tol * el->maxEdge())) continue;
+      if(off < 0. || (d < 3 && off > 0. && off > tol * el->maxEdge()))
+        continue;
       if(!onlyFirst)
         e.push_back(el);
-      else if(off == 0.) // (a volume, or right on a curve or a surface)
-        return {el};
+      else if(off == 0.) { // (a volume, or right on a curve or a surface)
+        e.push_back(el);
+        return;
+      }
       else if(!best || off < bestOff) {
         best = el;
         bestOff = off;
       }
     }
-    if(best) return {best};
+    if(best) {
+      e.push_back(best);
+      return;
+    }
   }
-  return e;
 }
 
 // Search with the tolerance tol (Mesh.ToleranceReferenceElement if negative),
 // then, if nothing is found and not strict, with the tolerance multiplied by
 // 10 until something is found or it reaches _maxTol.
-std::vector<MElement *> MElementOctree::_find(double *P, int dim, double tol,
-                                              bool strict, bool onlyFirst) const
+void MElementOctree::_find(double *P, int dim, double tol, bool strict,
+                           bool onlyFirst, std::vector<MElement *> &e) const
 {
-  if(dim > 3) return {};
+  e.clear();
+  if(dim > 3) return;
   if(tol < 0) tol = CTX::instance()->mesh.toleranceReferenceElement;
-  std::vector<MElement *> e = _find(P, dim, tol, onlyFirst);
-  if(strict) return e;
+  _find(P, dim, tol, onlyFirst, e);
+  if(strict) return;
   while(e.empty() && tol < _maxTol) {
     tol *= 10.;
-    e = _find(P, dim, tol, onlyFirst);
+    _find(P, dim, tol, onlyFirst, e);
   }
-  return e;
 }
 
 std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
@@ -250,7 +256,9 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
                                                 double tol) const
 {
   double P[3] = {x, y, z};
-  return _find(P, dim, tol, strict, false);
+  std::vector<MElement *> e;
+  _find(P, dim, tol, strict, false, e);
+  return e;
 }
 
 MElement *MElementOctree::findClosest(double x, double y, double z, int dim,
@@ -277,6 +285,7 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
                                bool strict, double tol) const
 {
   double P[3] = {x, y, z};
-  std::vector<MElement *> e = _find(P, dim, tol, strict, true);
+  thread_local std::vector<MElement *> e; // (reused: no allocation per call)
+  _find(P, dim, tol, strict, true, e);
   return e.empty() ? nullptr : e[0];
 }
