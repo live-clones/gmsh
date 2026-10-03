@@ -1398,45 +1398,68 @@ static void addScalarCap(drawTarget *p, double **xyz, double **val, int i0,
 // the outline of the section a clipping plane cuts out of a 3D element,
 // with the outlines of the elements: where the plane crosses its faces
 // (moved towards the kept side, like the section, but less, so that it is
-// drawn over it)
+// drawn over it); forEachFace(f) calls f(idx, nn) with the nn node indices
+// of each face
+template <class Faces>
 static void addCapOutline(drawTarget *p, double **xyz, unsigned int color,
-                          const solidShape &s)
+                          Faces &&forEachFace)
 {
   PViewOptions *opt = p->opt;
   double eps = 0.5e-5 * CTX::instance()->lc;
+  std::vector<SPoint3> q;
   for(int c = 0; c < 6; c++) {
     if(!(opt->clip & (1 << c))) continue;
     const double *pl = CTX::instance()->clipPlane[c];
     double len = sqrt(pl[0] * pl[0] + pl[1] * pl[1] + pl[2] * pl[2]);
     if(len < 1.e-15) continue;
     double n[3] = {pl[0] / len, pl[1] / len, pl[2] / len};
-    auto face = [&](const int *idx, int nn) {
-      double q[4][3];
-      int nq = 0;
-      for(int i = 0; i < nn && nq < 4; i++) {
+    forEachFace([&](const int *idx, int nn) {
+      q.clear();
+      for(int i = 0; i < nn; i++) {
         const double *a = xyz[idx[i]], *b = xyz[idx[(i + 1) % nn]];
         double da = pl[0] * a[0] + pl[1] * a[1] + pl[2] * a[2] + pl[3];
         double db = pl[0] * b[0] + pl[1] * b[1] + pl[2] * b[2] + pl[3];
         if((da < 0.) == (db < 0.)) continue;
         double t = da / (da - db);
-        for(int k = 0; k < 3; k++)
-          q[nq][k] = a[k] + t * (b[k] - a[k]) + eps * n[k];
-        nq++;
+        q.push_back(SPoint3(a[0] + t * (b[0] - a[0]) + eps * n[0],
+                            a[1] + t * (b[1] - a[1]) + eps * n[1],
+                            a[2] + t * (b[2] - a[2]) + eps * n[2]));
       }
-      // (a face that is not flat can be crossed twice)
-      for(int i = 0; i + 1 < nq; i += 2) {
-        double x[2] = {q[i][0], q[i + 1][0]}, y[2] = {q[i][1], q[i + 1][1]};
-        double z[2] = {q[i][2], q[i + 1][2]};
+      // (a face that is not flat can be crossed more than twice)
+      for(std::size_t i = 0; i + 1 < q.size(); i += 2) {
+        double x[2] = {q[i].x(), q[i + 1].x()}, y[2] = {q[i].y(), q[i + 1].y()};
+        double z[2] = {q[i].z(), q[i + 1].z()};
         SVector3 nl[2] = {SVector3(n[0], n[1], n[2]),
                           SVector3(n[0], n[1], n[2])};
         unsigned int col[2] = {color, color};
         getLineNormal(p, x, y, z, nullptr, nl, false);
         p->va_lines->add(x, y, z, nl, col, true);
       }
-    };
+    });
+  }
+}
+
+static void addCapOutlineSolid(drawTarget *p, double **xyz, unsigned int color,
+                               const solidShape &s)
+{
+  addCapOutline(p, xyz, color, [&](auto &&face) {
     for(int i = 0; i < s.numQuads; i++) face(s.quads[i], 4);
     for(int i = 0; i < s.numTriangles; i++) face(s.triangles[i], 3);
-  }
+  });
+}
+
+static void addCapOutlinePolyhedron(drawTarget *p, int ient, int iele,
+                                    double **xyz, unsigned int color)
+{
+  PViewData *data = p->view->getData();
+  MPolyhedron *polyhedron =
+    static_cast<MPolyhedron *>(data->getElement(p->opt->timeStep, ient, iele));
+  if(!polyhedron) return; // list data: the faces are unknown
+  std::vector<std::vector<int>> faces;
+  polyhedronFaces(polyhedron, faces);
+  addCapOutline(p, xyz, color, [&](auto &&face) {
+    for(auto &f : faces) face(f.data(), (int)f.size());
+  });
 }
 
 static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
@@ -2207,7 +2230,10 @@ static void addElementRange(drawTarget *p, PViewData *data,
         const unsigned int colors[4] = {
           opt->color.tetrahedron, opt->color.hexahedron, opt->color.prism,
           opt->color.pyramid};
-        if(sh >= 0) addCapOutline(p, xyz, colors[sh], *solidShapes[sh]);
+        if(sh >= 0)
+          addCapOutlineSolid(p, xyz, colors[sh], *solidShapes[sh]);
+        else if(type == TYPE_POLYH)
+          addCapOutlinePolyhedron(p, ent, i, xyz, opt->color.pyramid);
       }
 
       for(int j = 0; j < numNodes; j++)
