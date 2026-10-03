@@ -316,6 +316,17 @@ static void findSkin(const std::vector<MElement *> &elements, meshSkin &skin)
 // planes still do)
 static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
 {
+  if(ele->getType() == TYPE_POLYH) {
+    // a polyhedron need not be convex and can have any number of edges: its
+    // section is the union of those of its tetrahedra
+    MPolyhedron *p = static_cast<MPolyhedron *>(ele);
+    for(int i = 0; i < p->getNumTetrahedra(); i++) {
+      MTetrahedron t = p->getTetrahedron(i);
+      addCapInArray(va, &t, col);
+    }
+    return;
+  }
+
   int nv = ele->getNumPrimaryVertices();
   int ne = ele->getNumEdges();
   if(nv < 4 || ne < 6 || ne > 12) return; // not a convex 3D element we can cut
