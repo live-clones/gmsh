@@ -25,7 +25,7 @@ setup_dir = os.path.dirname(__file__)
 
 dist_info_dir = glob.glob(os.path.join(sdk_dir, 'lib', 'gmsh*.dist-info'))[0]
 dist_info_dir = dist_info_dir[len(os.path.join(sdk_dir, 'lib', '')):]
-match = re.match('(.*)-(.*)\.dist-info', dist_info_dir)
+match = re.match(r'(.*)-(.*)\.dist-info', dist_info_dir)
 name = match.group(1)
 version = match.group(2)
 

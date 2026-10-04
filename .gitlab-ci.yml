@@ -225,6 +225,73 @@ windows-sdk_official_release:
       - build/_CPack_Packages/
     expire_in: 1day
 
+# ---------------------------------------------------
+# Official Windows on ARM64 builds (master branch only)
+# ---------------------------------------------------
+# Built with MSVC (no MinGW for ARM64); no PETSc or OpenMP, as in windows_msvc_ci.
+# Static zlib is built from source (ENABLE_ZIPPER makes gmsh use it without FLTK).
+
+.windows_arm64_official: &windows_arm64_official
+  only:
+    - master@gmsh/gmsh
+  script:
+    - md build
+    - cd build
+    - git clone --depth 1 --branch v1.3.2 https://github.com/madler/zlib.git
+    - cmake -S zlib -B zlib-build -A ARM64 "-DCMAKE_INSTALL_PREFIX=$PWD\zlib-install" -DZLIB_BUILD_SHARED=OFF -DZLIB_BUILD_TESTING=OFF
+    - cmake --build zlib-build --config Release --target install
+    - $opts = @($env:EXTRA_OPTION -split '\s+' | Where-Object { $_ })
+    - cmake -A ARM64 "-DGMSH_HOST=gmsh.info" -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_OPENMP=0 -DENABLE_ZIPPER=1 "-DZLIB_INCLUDE_DIR=$PWD\zlib-install\include" "-DZLIB_LIBRARY=$PWD\zlib-install\lib\zs.lib" @opts ..
+    - cmake --build . --config Release --target package
+    - scp (Get-Item gmsh-*.zip).Name geuzaine@gmsh.info:.wwwgmsh/bin/Windows/
+    - ctest -C Release -j 4 --output-on-failure
+
+windows_arm64_official_snapshot:
+  <<: *windows_arm64_official
+  tags:
+    - windowsarm64
+    - official
+  except:
+    - tags
+
+windows_arm64_official_release:
+  variables:
+    EXTRA_OPTION: "-DGMSH_RELEASE=1"
+  <<: *windows_arm64_official
+  tags:
+    - windowsarm64
+    - official
+  only:
+    - /^gmsh_.*$/
+
+windows-arm64-sdk_official_snapshot:
+  variables:
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+  <<: *windows_arm64_official
+  tags:
+    - windowsarm64
+    - official
+  except:
+    - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
+
+windows-arm64-sdk_official_release:
+  variables:
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+  <<: *windows_arm64_official
+  tags:
+    - windowsarm64
+    - official
+  only:
+    - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
+
 # ------------------------------------------
 # Official macOS builds (master branch only)
 # ------------------------------------------
@@ -444,6 +511,7 @@ pypi_official_snapshot:
     - linux-sdk_official_snapshot
     - linux-nox-sdk_official_snapshot
     - windows-sdk_official_snapshot
+    - windows-arm64-sdk_official_snapshot
     - macosx-sdk_official_snapshot
     - macosarm-sdk_official_snapshot
   script:
@@ -451,6 +519,7 @@ pypi_official_snapshot:
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ manylinux_2_24_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ manylinux_2_24_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ win_amd64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/win64/ZIP/gmsh-git-WindowsARM64-sdk/ win_arm64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSX-sdk/ macosx_10_15_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSARM-sdk/ macosx_12_0_arm64
     - VERSION=`cat version.txt`
@@ -476,6 +545,7 @@ pypi_official_release:
   dependencies:
     - linux-sdk_official_release
     - windows-sdk_official_release
+    - windows-arm64-sdk_official_release
     - macosx-sdk_official_release
     - macosarm-sdk_official_release
   script:
@@ -488,12 +558,14 @@ pypi_official_release:
     - VERSION=`cat version.txt`
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ manylinux_2_24_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ win_amd64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/win64/ZIP/gmsh-${VERSION}-WindowsARM64-sdk/ win_arm64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSX-sdk/ macosx_10_15_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSARM-sdk/ macosx_12_0_arm64
     - scp gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh/
     - twine upload gmsh*.whl
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64* && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64* && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-WindowsARM64* && ln -s gmsh-${VERSION}-WindowsARM64.zip gmsh-stable-WindowsARM64.zip && ln -s gmsh-${VERSION}-WindowsARM64-sdk.zip gmsh-stable-WindowsARM64-sdk.zip"
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/macOS && rm -f gmsh-stable-MacOSX* && ln -s gmsh-${VERSION}-MacOSX.dmg gmsh-stable-MacOSX.dmg && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/macOS && rm -f gmsh-stable-MacOSARM* && ln -s gmsh-${VERSION}-MacOSARM.dmg gmsh-stable-MacOSARM.dmg && ln -s gmsh-${VERSION}-MacOSARM-sdk.tgz gmsh-stable-MacOSARM-sdk.tgz"
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/src && rm -f gmsh-stable-source.tgz && ln -s gmsh-${VERSION}-source.tgz gmsh-stable-source.tgz"
