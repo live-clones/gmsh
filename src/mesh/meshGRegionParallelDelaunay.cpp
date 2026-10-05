@@ -5106,6 +5106,9 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
     opt.numVolumes = (std::uint32_t)regions.size();
     opt.numFixedVertices = numFixed;
     opt.qualityMin = CTX::instance()->mesh.optimizeThreshold;
+    opt.sprQualityFactor = CTX::instance()->mesh.optimizeReconnectionThreshold;
+    opt.sprMaxPoints = CTX::instance()->mesh.optimizeReconnectionPoints;
+    opt.sprMaxSearchNodes = CTX::instance()->mesh.optimizeReconnectionSearch;
     opt.verbosity = verbosity;
     pdel3d::optimize(m, opt);
     if(Msg::GetVerbosity() > 5) m.verify(false);

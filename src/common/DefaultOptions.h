@@ -1562,6 +1562,19 @@ StringXNumber MeshOptions_Number[] = {
     "elements" },
   { F|O, "OptimizePyramids" , opt_mesh_optimize_pyramids , 0 ,
     "Optimize pyramids in hybrid 3D meshes (0: smoother; 1: untangler)" },
+  { F|O, "OptimizeReconnectionPoints" , opt_mesh_optimize_reconnection_points ,
+    16 ,
+    "Maximum number of nodes of the cavity that the parallel 3D optimizer "
+    "reconnects around a tetrahedron it could not improve otherwise (5 to 32)" },
+  { F|O, "OptimizeReconnectionSearch" , opt_mesh_optimize_reconnection_search ,
+    100 ,
+    "Maximum number of tetrahedra placed by the search for a better "
+    "reconnection of a cavity" },
+  { F|O, "OptimizeReconnectionThreshold" ,
+    opt_mesh_optimize_reconnection_threshold , 0.5 ,
+    "Reconnect the tetrahedra that the parallel 3D optimizer could not "
+    "improve otherwise and whose quality is below this fraction of "
+    "Mesh.OptimizeThreshold (0: no reconnection; 1: all of them, as HXT)" },
 
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
     "Weight of hexahedral element for METIS load balancing (-1: automatic)" },

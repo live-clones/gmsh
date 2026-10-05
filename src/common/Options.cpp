@@ -5358,6 +5358,39 @@ double opt_mesh_optimize_threshold(OPT_ARGS_NUM)
   return CTX::instance()->mesh.optimizeThreshold;
 }
 
+double opt_mesh_optimize_reconnection_threshold(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       val != CTX::instance()->mesh.optimizeReconnectionThreshold)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.optimizeReconnectionThreshold = val;
+  }
+  return CTX::instance()->mesh.optimizeReconnectionThreshold;
+}
+
+double opt_mesh_optimize_reconnection_points(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.optimizeReconnectionPoints)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.optimizeReconnectionPoints = (int)val;
+  }
+  return CTX::instance()->mesh.optimizeReconnectionPoints;
+}
+
+double opt_mesh_optimize_reconnection_search(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.optimizeReconnectionSearch)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.optimizeReconnectionSearch = (int)val;
+  }
+  return CTX::instance()->mesh.optimizeReconnectionSearch;
+}
+
 double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -6655,17 +6688,20 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     switch(CTX::instance()->mesh.algo3d) {
-    case ALGO_3D_FRONTAL:
+    case ALGO_3D_PDEL3D:
       FlGui::instance()->options->mesh.choice[3]->value(1);
       break;
-    case ALGO_3D_HXT:
+    case ALGO_3D_FRONTAL:
       FlGui::instance()->options->mesh.choice[3]->value(2);
       break;
-    case ALGO_3D_MMG3D:
+    case ALGO_3D_HXT:
       FlGui::instance()->options->mesh.choice[3]->value(3);
       break;
-    case ALGO_3D_INITIAL_ONLY:
+    case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(4);
+      break;
+    case ALGO_3D_INITIAL_ONLY:
+      FlGui::instance()->options->mesh.choice[3]->value(5);
       break;
     case ALGO_3D_DELAUNAY:
     default: FlGui::instance()->options->mesh.choice[3]->value(0); break;
