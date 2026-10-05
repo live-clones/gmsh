@@ -12,8 +12,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
-#include "pdel3d.h"
-#include "pdel3dInternal.h"
+#include "meshGRegionParallelOptimize.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "GmshMessage.h"
 #include "OS.h"

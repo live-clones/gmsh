@@ -9,7 +9,7 @@
 #include "GmshMessage.h"
 #include "meshGRegion.h"
 #include "meshGRegionHxt.h"
-#include "meshGRegionPDel3d.h"
+#include "meshGRegionParallelDelaunay.h"
 #include "meshGRegionNetgen.h"
 #include "meshGRegionMMG.h"
 #include "meshGFace.h"
@@ -247,7 +247,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   }
 
   if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D) {
-    int ret = meshGRegionPDel3d(regions);
+    int ret = meshGRegionParallelDelaunay(regions);
     if(ret == 1) Msg::Error("Parallel Delaunay 3D mesh failed");
     if(ret != 2) return;
     Msg::Warning("Falling back to Delaunay (del3d)");

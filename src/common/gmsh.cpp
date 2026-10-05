@@ -73,7 +73,7 @@
 #include "meshGFaceOptimize.h"
 #include "meshGRegionDelaunay.h"
 #include "meshGRegionHxt.h"
-#include "meshGRegionPDel3d.h"
+#include "meshGRegionParallelDelaunay.h"
 #include "gmshCrossFields.h"
 #include "qualityMeasuresJacobian.h"
 #include "meshRenumber.h"
@@ -9287,7 +9287,7 @@ GMSH_API void gmsh::algorithm::tetrahedralize(
     if(triangles.size() > 0)
       Msg::Error("3D constrained delaunay tetrahedralization is currently only "
                  "available using HXT");
-    delaunayMeshIn3DPDel3d(verts, tets);
+    delaunayMeshIn3DParallel(verts, tets);
   }
   else {
     if(triangles.size() > 0)

@@ -20,7 +20,7 @@ set(SRC
   meshGRegion.cpp
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
-    meshGRegionPDel3d.cpp pdel3d.cpp pdel3dMoore.cpp pdel3dTopo.cpp pdel3dRefine.cpp pdel3dOptimize.cpp
+    meshGRegionParallelDelaunay.cpp meshGRegionParallelOptimize.cpp
     meshGRegionDelaunay.cpp meshGRegionTet4.cpp
     meshGRegionDelaunayFlat.cpp meshGRegionOptimize.cpp meshGRegionOptimizeFlat.cpp meshGRegionAdapt.cpp
     meshGRegionTransfinite.cpp
@@ -41,7 +41,6 @@ set(SRC
   HighOrder.cpp
   meshPartition.cpp
   meshRefine.cpp
-  delaunay3d.cpp
   DivideAndConquer.cpp
   Field.cpp
   filterElements.cpp
