@@ -150,7 +150,7 @@ namespace pdel3d {
                              const std::vector<std::uint8_t> &lineInTriangle,
                              std::vector<tRef> &tri2tet,
                              std::vector<std::uint64_t> &line2tet, int nthreads,
-                             int verbosity);
+                             int verbosity, bool keepPartial = false);
   // color the tets: a flood fill bounded by the constrained facets gives the
   // connected volumes, which are matched to the given volumes through the set
   // of surface colors (triColor) bounding them: volume i gets color i, the
@@ -264,6 +264,32 @@ namespace pdel3d {
     std::uint64_t startDist = 0, lengthDist = ~0ull;
     std::size_t firstElem = 0, numElem = 0;
   };
+
+  // The sign of orient3d(a, b, r0, r1) for the valid tet t holding the four
+  // nodes, from the parity of their positions: the ring of an edge (a, b) is
+  // walked in a fixed direction, so that this sign is the same for all its
+  // tets and fixes the orientation of the tets of a retriangulation of the
+  // ring: for a triangle (r_i, r_j, r_l), i < j < l, orient3d(r_i, r_j, r_l,
+  // a) has the opposite sign (and the b-side one the same sign).
+  // Accepting whichever of the two is positive lets a triangle outside a
+  // non-convex ring polygon through: positive tets covering existing ones
+  // twice, while a gap elsewhere keeps the volumes adding up
+  inline int ringOrientation(const Mesh &m, tIdx t, vIdx a, vIdx b, vIdx r0,
+                             vIdx r1)
+  {
+    const vIdx *n = &m.node[4 * t];
+    unsigned p[4] = {0, 0, 0, 0};
+    for(unsigned q = 0; q < 4; q++) {
+      if(n[q] == a) p[0] = q;
+      if(n[q] == b) p[1] = q;
+      if(n[q] == r0) p[2] = q;
+      if(n[q] == r1) p[3] = q;
+    }
+    int inv = 0;
+    for(int x = 0; x < 4; x++)
+      for(int y = x + 1; y < 4; y++) inv += p[x] > p[y];
+    return (inv & 1) ? 1 : -1; // the tet itself has orient3d < 0
+  }
 
   inline bool outOfPartition(const Mesh &m, vIdx v, const Partition &p)
   { return (m.dist[v] - p.startDist) >= p.lengthDist; }

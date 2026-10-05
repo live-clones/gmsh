@@ -2651,6 +2651,9 @@ namespace pdel3d {
         // already there
         if(nreq == 2 && rq[0] == 0 && rq[1] == k - 1) nreq = 0;
         const double *pa = &m.xyz[4 * R.a], *pb = &m.xyz[4 * R.b];
+        // tet pos[1] holds a, b, r_{pos[0]} and r_{pos[1]}: a real tet
+        const int s = ringOrientation(m, R.tet[pos[1]], R.a, R.b,
+                                      R.vert[pos[0]], R.vert[pos[1]]);
         double ringVol = 0.;
         for(int i = 0; i < n; i++) {
           if(m.isGhost(R.tet[i])) continue;
@@ -2672,7 +2675,9 @@ namespace pdel3d {
                            *p2 = &m.xyz[4 * R.vert[pos[l]]];
               const double da = orient3dFast(p0, p1, p2, pa);
               const double db = orient3dFast(p0, p1, p2, pb);
-              if(da * db >= 0.) continue;
+              // a and b on opposite sides, the a-side tet with the ring's
+              // orientation
+              if(da * db >= 0. || da * s >= 0.) continue;
               const int t = idx(i, j, l);
               tv[t] = std::fabs(da) + std::fabs(db);
               tflip[t] = da > 0.;
@@ -3079,7 +3084,7 @@ namespace pdel3d {
                              const std::vector<std::uint8_t> &lineInTriangle,
                              std::vector<tRef> &tri2tet,
                              std::vector<std::uint64_t> &line2tet, int nthreads,
-                             int verbosity)
+                             int verbosity, bool keepPartial)
   {
     const double t0 = TimeOfDay();
     const std::size_t nt = triNode.size() / 3, nl = lineNode.size() / 2;
@@ -3089,16 +3094,20 @@ namespace pdel3d {
     for(std::size_t i = 0; i < nl; i++)
       if(!lineInTriangle[i] && line2tet[i] == NO_ADJ) missingLines++;
     if(!missingTri && !missingLines) return 0;
-    // the local removals are kept only when everything is recovered: tetgen
-    // gets the untouched Delaunay otherwise
-    const std::vector<vIdx> node0(m.node.begin(), m.node.begin() + 4 * m.ntet);
-    const std::vector<tRef> neigh0(m.neigh.begin(),
-                                   m.neigh.begin() + 4 * m.ntet);
-    const std::vector<std::uint16_t> flag0(m.flag.begin(),
-                                           m.flag.begin() + m.ntet);
-    const std::vector<tRef> tri2tet0(tri2tet);
-    const std::vector<std::uint64_t> line2tet0(line2tet);
+    // unless asked otherwise, the local removals are kept only when
+    // everything is recovered: tetgen gets the untouched Delaunay otherwise
+    std::vector<vIdx> node0;
+    std::vector<tRef> neigh0, tri2tet0;
+    std::vector<std::uint16_t> flag0;
+    std::vector<std::uint64_t> line2tet0;
     const std::size_t ntet0 = m.ntet;
+    if(!keepPartial) {
+      node0.assign(m.node.begin(), m.node.begin() + 4 * m.ntet);
+      neigh0.assign(m.neigh.begin(), m.neigh.begin() + 4 * m.ntet);
+      flag0.assign(m.flag.begin(), m.flag.begin() + m.ntet);
+      tri2tet0 = tri2tet;
+      line2tet0 = line2tet;
+    }
     // the triangles and lines in the mesh must survive the edge removals
     constrainFacets(m, tri2tet);
     constrainEdges(m, line2tet);
@@ -3173,7 +3182,7 @@ namespace pdel3d {
     }
     const std::size_t left =
       missingTri - recoveredTri + missingLines - recoveredLines;
-    if(left) {
+    if(left && !keepPartial) {
       std::copy(node0.begin(), node0.end(), m.node.begin());
       std::copy(neigh0.begin(), neigh0.end(), m.neigh.begin());
       std::copy(flag0.begin(), flag0.end(), m.flag.begin());
@@ -3181,7 +3190,7 @@ namespace pdel3d {
       tri2tet = tri2tet0;
       line2tet = line2tet0;
     }
-    else {
+    else if(!left) {
       // the edge removals leave deleted tets: the caller redoes the maps on
       // the compacted mesh
       m.removeDeleted(nthreads);
@@ -3191,7 +3200,7 @@ namespace pdel3d {
                 "%lu line(s) recovered by %lu edge removals (Wall %gs)",
                 recoveredTri, missingTri, recoveredLines, missingLines, R.swaps,
                 TimeOfDay() - t0);
-    if(verbosity > 0)
+    if(verbosity > 5)
       Msg::Info("  ring rejections: %lu with a ghost, %lu with more than 7 "
                 "tets, %lu constrained, %lu surface edges, %lu inconsistent, "
                 "%lu without the nodes, %lu without a positive triangulation, "
@@ -3696,6 +3705,8 @@ namespace {
     std::vector<MVertex *> vertices; // index -> vertex
     std::vector<pdel3d::vIdx> triNode, lineNode, pointNode;
     std::vector<std::uint32_t> triColor, lineColor;
+    std::vector<MTriangle *> triElem; // the elements behind triNode/lineNode
+    std::vector<MLine *> lineElem;
     // surface tags bounding (or embedded in) each region
     std::vector<std::vector<std::uint32_t>> volumes;
     // the surfaces forming a compound with each surface (a member may carry
@@ -3765,12 +3776,14 @@ namespace {
       for(MTriangle *t : gf->triangles) {
         for(int k = 0; k < 3; k++) s.triNode.push_back(index(t->getVertex(k)));
         s.triColor.push_back(gf->tag());
+        s.triElem.push_back(t);
       }
     }
     for(GEdge *ge : s.curves) {
       for(MLine *l : ge->lines) {
         for(int k = 0; k < 2; k++) s.lineNode.push_back(index(l->getVertex(k)));
         s.lineColor.push_back(ge->tag());
+        s.lineElem.push_back(l);
       }
     }
     for(GVertex *gv : s.points)
@@ -4127,6 +4140,666 @@ namespace {
     return total;
   }
 
+  // Local boundary recovery with TetGen: the tets around the triangles and
+  // lines still missing (the stars of their nodes, the tets they cross, two
+  // layers around) are handed to TetGen's recovery, cavity by cavity, in its
+  // non-convex mode, with the surface triangles and lines inside them and
+  // the facets of their boundary as constraints, and the result is stitched
+  // back, Steiner points included (the split surface triangles and lines
+  // replace the originals). Returns false when a cavity could not be
+  // recovered or stitched; the mesh is then left as it was
+  bool recoverWithLocalTetGen(pdel3d::Mesh &m, SurfaceMesh &s,
+                              std::vector<GRegion *> &regions,
+                              std::vector<pdel3d::tRef> &tri2tet,
+                              std::vector<std::uint64_t> &line2tet,
+                              const std::vector<std::uint8_t> &lineInTriangle,
+                              int nthreads)
+  {
+    using namespace pdel3d;
+    const double t0 = TimeOfDay();
+    const std::size_t nt = s.triNode.size() / 3, nl = s.lineNode.size() / 2;
+    std::vector<std::size_t> missingTri, missingLine;
+    for(std::size_t i = 0; i < nt; i++)
+      if(tri2tet[i] == NO_ADJ) missingTri.push_back(i);
+    for(std::size_t i = 0; i < nl; i++)
+      if(!lineInTriangle[i] && line2tet[i] == NO_ADJ) missingLine.push_back(i);
+    if(missingTri.empty() && missingLine.empty()) return true;
+
+    // a tet around every node involved
+    Recovery R(m);
+    const std::size_t nv = m.numVertices();
+    R.v2t.assign(nv, NO_ADJ);
+    std::vector<std::uint8_t> needed(nv, 0);
+    for(auto i : missingTri)
+      for(int k = 0; k < 3; k++) needed[s.triNode[3 * i + k]] = 1;
+    for(auto i : missingLine)
+      for(int k = 0; k < 2; k++) needed[s.lineNode[2 * i + k]] = 1;
+#pragma omp parallel for schedule(static) num_threads(std::max(1, nthreads))
+    for(std::size_t t = 0; t < m.ntet; t++) {
+      if(m.isDeleted((tIdx)t) || m.isGhost((tIdx)t)) continue;
+      for(unsigned k = 0; k < 4; k++) {
+        const vIdx v = m.node[4 * t + k];
+        if(needed[v]) R.v2t[v] = 4 * t + k;
+      }
+    }
+
+    // the cavity: a tet intersects a triangle when one of its edges pierces
+    // it or an edge of the triangle crosses one of its facets
+    const double tStart = TimeOfDay();
+    std::vector<std::uint8_t> inCavity(m.ntet, 0);
+    std::vector<tIdx> cavity;
+    auto add = [&](tIdx t) {
+      if(t == NO_TET || m.isDeleted(t) || m.isGhost(t) || inCavity[t]) return;
+      inCavity[t] = 1;
+      cavity.push_back(t);
+    };
+    // the segment (x, y) meets the facet (u, v, w), touching included: the
+    // cavity must hold every tet the missing items pass through
+    auto meets = [](const double *x, const double *y, const double *u,
+                    const double *v, const double *w) {
+      const double sx = orient3dFast(u, v, w, x), sy = orient3dFast(u, v, w, y);
+      if(sx * sy > 0.) return false;
+      const double s0 = orient3dFast(x, y, u, v), s1 = orient3dFast(x, y, v, w),
+                   s2 = orient3dFast(x, y, w, u);
+      return (s0 >= 0. && s1 >= 0. && s2 >= 0.) ||
+             (s0 <= 0. && s1 <= 0. && s2 <= 0.);
+    };
+    auto intersects = [&](tIdx t, const double *a, const double *b,
+                          const double *c, const vIdx *tri) {
+      const vIdx *n = &m.node[4 * t];
+      for(unsigned i = 0; i < 4; i++)
+        for(unsigned j = i + 1; j < 4; j++) {
+          if(n[i] == tri[0] || n[i] == tri[1] || n[i] == tri[2] ||
+             n[j] == tri[0] || n[j] == tri[1] || n[j] == tri[2])
+            continue;
+          if(meets(&m.xyz[4 * n[i]], &m.xyz[4 * n[j]], a, b, c)) return true;
+        }
+      const double *tp[3] = {a, b, c};
+      for(unsigned f = 0; f < 4; f++) {
+        const vIdx u = n[facetNode0(f)], v = n[facetNode1(f)],
+                   w = n[facetNode2(f)];
+        for(int e = 0; e < 3; e++) {
+          const vIdx x = tri[e], y = tri[(e + 1) % 3];
+          if(x == u || x == v || x == w || y == u || y == v || y == w) continue;
+          if(meets(tp[e], tp[(e + 1) % 3], &m.xyz[4 * u], &m.xyz[4 * v],
+                   &m.xyz[4 * w]))
+            return true;
+        }
+      }
+      return false;
+    };
+    auto crossedTets = [&](vIdx x, vIdx y) {
+      // the tets crossed by the segment (x, y), from the star of x
+      const double *px = &m.xyz[4 * x], *py = &m.xyz[4 * y];
+      R.star(x, R.scratch);
+      tIdx cur = NO_TET;
+      unsigned entering = 4;
+      for(auto t : R.scratch) {
+        add(t);
+        const vIdx *n = &m.node[4 * t];
+        if(m.isGhost(t)) continue;
+        unsigned ix = 0;
+        while(n[ix] != x) ix++;
+        const vIdx u = n[facetNode0(ix)], v = n[facetNode1(ix)],
+                   w = n[facetNode2(ix)];
+        if(R.segmentCrossesFacet(px, py, &m.xyz[4 * u], &m.xyz[4 * v],
+                                 &m.xyz[4 * w])) {
+          const tRef r = m.neigh[4 * t + ix];
+          cur = r >> 2;
+          entering = r & 3;
+        }
+      }
+      for(int step = 0; step < 1000 && cur != NO_TET; step++) {
+        if(m.isGhost(cur)) break;
+        add(cur);
+        const vIdx *n = &m.node[4 * cur];
+        if(n[0] == y || n[1] == y || n[2] == y || n[3] == y) break;
+        unsigned exitF = 4;
+        for(unsigned f = 0; f < 4 && exitF == 4; f++) {
+          if(f == entering) continue;
+          const vIdx u = n[facetNode0(f)], v = n[facetNode1(f)],
+                     w = n[facetNode2(f)];
+          if(R.segmentCrossesFacet(px, py, &m.xyz[4 * u], &m.xyz[4 * v],
+                                   &m.xyz[4 * w]))
+            exitF = f;
+        }
+        if(exitF == 4) break;
+        const tRef r = m.neigh[4 * cur + exitF];
+        cur = r >> 2;
+        entering = r & 3;
+      }
+    };
+    for(auto i : missingTri) {
+      const vIdx *tri = &s.triNode[3 * i];
+      const double *a = &m.xyz[4 * tri[0]], *b = &m.xyz[4 * tri[1]],
+                   *c = &m.xyz[4 * tri[2]];
+      const std::size_t first = cavity.size();
+      for(int k = 0; k < 3; k++) {
+        R.star(tri[k], R.scratch);
+        for(auto t : R.scratch) add(t);
+        crossedTets(tri[k], tri[(k + 1) % 3]);
+      }
+      // grow through the tets intersecting the triangle
+      for(std::size_t j = first; j < cavity.size(); j++) {
+        for(unsigned f = 0; f < 4; f++) {
+          const tIdx nb = m.neigh[4 * cavity[j] + f] >> 2;
+          if(m.isGhost(nb) || inCavity[nb]) continue;
+          if(intersects(nb, a, b, c, tri)) add(nb);
+        }
+      }
+    }
+    for(auto i : missingLine) {
+      const vIdx x = s.lineNode[2 * i], y = s.lineNode[2 * i + 1];
+      R.star(y, R.scratch);
+      for(auto t : R.scratch) add(t);
+      crossedTets(x, y);
+    }
+    const std::size_t sizeIntersecting = cavity.size();
+    // two layers around: room for the flips of the recovery, which must not
+    // reach the boundary of the cavity
+    for(int layer = 0; layer < 2; layer++) {
+      const std::size_t n0 = cavity.size();
+      for(std::size_t j = 0; j < n0; j++)
+        for(unsigned f = 0; f < 4; f++) add(m.neigh[4 * cavity[j] + f] >> 2);
+    }
+    const std::size_t sizeLayer = cavity.size();
+    // a cavity holding a sizable part of the mesh costs as much as the global
+    // recovery, and is more likely to fail: leave it to the global one
+    auto tooLarge = [&]() {
+      return cavity.size() > 10000 && cavity.size() > m.ntet / 4;
+    };
+    // a line on the boundary of the cavity could be split by a Steiner
+    // point, which the stitching cannot follow: the rings of tets around the
+    // lines join the cavity, to a fixpoint (the tets added are examined in
+    // turn)
+    std::set<std::uint64_t> lineEdges;
+    for(std::size_t i = 0; i < nl; i++)
+      lineEdges.insert(R.edgeKey(s.lineNode[2 * i], s.lineNode[2 * i + 1]));
+    auto addRing = [&](tIdx t, vIdx x, vIdx y) {
+      tIdx cur = t;
+      vIdx prev = GHOST;
+      for(unsigned k = 0; k < 4; k++) {
+        const vIdx v = m.node[4 * t + k];
+        if(v != x && v != y) {
+          prev = v;
+          break;
+        }
+      }
+      for(int step = 0; step < 64; step++) {
+        add(cur);
+        const vIdx *n = &m.node[4 * cur];
+        vIdx other = GHOST;
+        unsigned fPrev = 4;
+        for(unsigned k = 0; k < 4; k++) {
+          if(n[k] == prev)
+            fPrev = k;
+          else if(n[k] != x && n[k] != y)
+            other = n[k];
+        }
+        if(fPrev == 4) break;
+        const tRef r = m.neigh[4 * cur + fPrev];
+        if(r == NO_ADJ || (r >> 2) == t) break;
+        prev = other;
+        cur = r >> 2;
+      }
+    };
+    if(!lineEdges.empty())
+      for(std::size_t j = 0; j < cavity.size() && !tooLarge(); j++) {
+        const tIdx t = cavity[j];
+        for(int e = 0; e < 6; e++) {
+          unsigned n0, n1;
+          edgeNodes(e, n0, n1);
+          const vIdx x = m.node[4 * t + n0], y = m.node[4 * t + n1];
+          if(lineEdges.count(R.edgeKey(x, y))) addRing(t, x, y);
+        }
+      }
+    if(Msg::GetVerbosity() > 5)
+      Msg::Info("  cavity: %lu tets intersecting the missing items, %lu with a "
+                "layer, %lu with the rings (%g s)",
+                sizeIntersecting, sizeLayer, cavity.size(),
+                TimeOfDay() - tStart);
+    if(tooLarge()) {
+      Msg::Info("Local boundary recovery: the cavity is too large (%lu tets)",
+                cavity.size());
+      return false;
+    }
+    // connected components
+    std::vector<std::uint32_t> component(m.ntet, 0);
+    std::vector<std::vector<tIdx>> components;
+    for(auto t : cavity) {
+      if(component[t]) continue;
+      components.emplace_back();
+      std::vector<tIdx> &comp = components.back();
+      comp.push_back(t);
+      component[t] = (std::uint32_t)components.size();
+      for(std::size_t j = 0; j < comp.size(); j++)
+        for(unsigned f = 0; f < 4; f++) {
+          const tIdx nb = m.neigh[4 * comp[j] + f] >> 2;
+          if(inCavity[nb] && !component[nb]) {
+            component[nb] = (std::uint32_t)components.size();
+            comp.push_back(nb);
+          }
+        }
+    }
+
+    std::map<std::uint32_t, GFace *> faceOfTag;
+    for(GFace *gf : s.surfaces) faceOfTag[gf->tag()] = gf;
+    std::map<std::uint32_t, GEdge *> curveOfTag;
+    for(GEdge *ge : s.curves) curveOfTag[ge->tag()] = ge;
+
+    // TetGen is given the tets of each cavity as they are (its non-convex
+    // mode: the walks may leave the mesh, the constraints present are bonded
+    // beforehand), with the surface triangles and lines in it and the facets
+    // of its boundary as constraints: TetGen expects the boundary of a
+    // non-convex mesh to be made of constraints, which it never flips, so
+    // that the result fits in place of the old tets. Every cavity is
+    // recovered and validated before anything is modified: the fallback to
+    // the global recovery must find the mesh untouched
+    struct Pending {
+      std::vector<tIdx> *comp;
+      std::vector<vIdx> global; // local -> global vertex
+      std::vector<std::size_t> cavityTri, cavityLine;
+      boundaryRecoveryOutput out;
+      std::vector<std::uint32_t> newNode; // local vertex indices, oriented
+      std::vector<tRef> newNeigh; // refs: local (4 * t + f) or outer
+      std::vector<std::uint8_t> outer;
+      std::vector<std::pair<tRef, tRef>> outerLinks; // (outer ref, local ref)
+    };
+    std::vector<Pending> pending(components.size());
+    std::size_t numCavityTets = 0;
+    const int BOUNDARY_TAG = -2; // the facets of the cavity boundary
+    for(std::size_t c = 0; c < components.size(); c++) {
+      std::vector<tIdx> &comp = components[c];
+      Pending &P = pending[c];
+      P.comp = &comp;
+      numCavityTets += comp.size();
+      // local numbering of the vertices; localTet: 1 + the position of a tet
+      // in this component, 0 otherwise
+      std::map<vIdx, std::uint32_t> local;
+      std::vector<vIdx> &global = P.global;
+      auto localOf = [&](vIdx v) {
+        auto it = local.find(v);
+        if(it != local.end()) return it->second;
+        const std::uint32_t l = (std::uint32_t)global.size();
+        local[v] = l;
+        global.push_back(v);
+        return l;
+      };
+      std::vector<std::uint32_t> &localTet = component;
+      std::fill(localTet.begin(), localTet.end(), 0);
+      for(std::size_t j = 0; j < comp.size(); j++) {
+        localTet[comp[j]] = (std::uint32_t)j + 1;
+        for(unsigned k = 0; k < 4; k++) localOf(m.node[4 * comp[j] + k]);
+      }
+      auto inComponent = [&](vIdx v) { return local.count(v) > 0; };
+      const std::size_t nloc = global.size();
+      boundaryRecoveryInput in;
+      in.carve = false; // everything is kept
+      in.postprocess = false;
+      in.verbose = false;
+      in.nonconvex = true;
+      // the facets of flat tets on the boundary overlap exactly: no error
+      in.overlapAngleTolerance = 0.;
+      in.xyz.resize(3 * nloc);
+      for(std::size_t v = 0; v < nloc; v++)
+        for(int k = 0; k < 3; k++) in.xyz[3 * v + k] = m.xyz[4 * global[v] + k];
+      for(std::size_t j = 0; j < comp.size(); j++)
+        for(unsigned k = 0; k < 4; k++) {
+          in.tetNode.push_back(local[m.node[4 * comp[j] + k]]);
+          const tIdx nb = m.neigh[4 * comp[j] + k] >> 2;
+          in.tetNeighbors.push_back(
+            localTet[nb] ? (std::int64_t)localTet[nb] - 1 : -1);
+        }
+      // the constraints: the surface triangles and lines in the cavity,
+      // present (a tet of theirs is in it) or missing (their nodes are in it)
+      auto sorted3 = [](vIdx a, vIdx b, vIdx c) {
+        std::array<vIdx, 3> k = {a, b, c};
+        std::sort(k.begin(), k.end());
+        return k;
+      };
+      std::set<std::array<vIdx, 3>> surfaceFacets;
+      for(std::size_t i = 0; i < nt; i++) {
+        const vIdx *n = &s.triNode[3 * i];
+        bool take = false;
+        if(tri2tet[i] != NO_ADJ)
+          take = localTet[tri2tet[i] >> 2] != 0 ||
+                 localTet[m.neigh[tri2tet[i]] >> 2] != 0;
+        else
+          take = inComponent(n[0]) && inComponent(n[1]) && inComponent(n[2]);
+        if(!take) continue;
+        P.cavityTri.push_back(i);
+        for(int k = 0; k < 3; k++) in.triNode.push_back(local[n[k]]);
+        in.triTag.push_back((int)s.triColor[i]);
+        std::int64_t tet = -1;
+        if(tri2tet[i] != NO_ADJ) {
+          const tIdx t0 = tri2tet[i] >> 2, t1 = m.neigh[tri2tet[i]] >> 2;
+          tet = localTet[t0] ? (std::int64_t)localTet[t0] - 1 :
+                               (std::int64_t)localTet[t1] - 1;
+        }
+        in.triTet.push_back(tet);
+        surfaceFacets.insert(sorted3(n[0], n[1], n[2]));
+      }
+      for(std::size_t i = 0; i < nl; i++) {
+        if(lineInTriangle[i]) continue;
+        const vIdx *n = &s.lineNode[2 * i];
+        bool take = false;
+        if(line2tet[i] != NO_ADJ)
+          take = localTet[(tIdx)(line2tet[i] / 6)] != 0 ||
+                 (inComponent(n[0]) && inComponent(n[1]));
+        else
+          take = inComponent(n[0]) && inComponent(n[1]);
+        if(!take) continue;
+        P.cavityLine.push_back(i);
+        for(int k = 0; k < 2; k++) in.segNode.push_back(local[n[k]]);
+        in.segTag.push_back((int)s.lineColor[i]);
+      }
+      // the boundary facets of the cavity: constraints (TetGen must know
+      // the boundary of a non-convex mesh) with a tag of their own, and the
+      // keys for the stitching
+      struct facetKey {
+        std::uint32_t v0, v1, v2; // sorted
+        tRef ref;
+      };
+      auto key = [](std::uint32_t x, std::uint32_t y, std::uint32_t z, tRef r) {
+        facetKey k{x, y, z, r};
+        if(k.v0 > k.v1) std::swap(k.v0, k.v1);
+        if(k.v1 > k.v2) std::swap(k.v1, k.v2);
+        if(k.v0 > k.v1) std::swap(k.v0, k.v1);
+        return k;
+      };
+      auto less = [](const facetKey &a, const facetKey &b) {
+        if(a.v0 != b.v0) return a.v0 < b.v0;
+        if(a.v1 != b.v1) return a.v1 < b.v1;
+        return a.v2 < b.v2;
+      };
+      auto same = [](const facetKey &a, const facetKey &b) {
+        return a.v0 == b.v0 && a.v1 == b.v1 && a.v2 == b.v2;
+      };
+      std::vector<facetKey> boundary;
+      for(std::size_t j = 0; j < comp.size(); j++) {
+        const tIdx t = comp[j];
+        for(unsigned f = 0; f < 4; f++) {
+          const tRef r = m.neigh[4 * t + f];
+          if(localTet[r >> 2]) continue;
+          const vIdx a = m.node[4 * t + facetNode0(f)],
+                     b = m.node[4 * t + facetNode1(f)],
+                     c = m.node[4 * t + facetNode2(f)];
+          boundary.push_back(key(local[a], local[b], local[c], r));
+          if(surfaceFacets.count(sorted3(a, b, c))) continue;
+          in.triNode.push_back(local[a]);
+          in.triNode.push_back(local[b]);
+          in.triNode.push_back(local[c]);
+          in.triTag.push_back(BOUNDARY_TAG);
+          in.triTet.push_back((std::int64_t)j);
+        }
+      }
+      boundaryRecoveryOutput &out = P.out;
+      const int err = meshGRegionBoundaryRecoveryFlat(in, out);
+      if(err) {
+        Msg::Info("Local boundary recovery with TetGen failed (error %d) on a "
+                  "cavity of %lu tets",
+                  err, comp.size());
+        return false;
+      }
+      for(auto tag : out.changedFaces)
+        if(!faceOfTag.count(tag)) {
+          if(tag == BOUNDARY_TAG)
+            Msg::Info("Local boundary recovery with TetGen: Steiner point on "
+                      "the cavity boundary");
+          else
+            Msg::Info("Local boundary recovery with TetGen: Steiner point on "
+                      "an unknown surface %d",
+                      tag);
+          return false;
+        }
+      for(auto tag : out.changedEdges)
+        if(tag >= 0 && !curveOfTag.count(tag)) {
+          Msg::Info("Local boundary recovery with TetGen: Steiner point on an "
+                    "unknown curve %d",
+                    tag);
+          return false;
+        }
+      // the new tets, oriented like ours (exactly: flat tets are common in a
+      // planar region); the Steiner points follow the cavity vertices
+      const std::size_t nnew = out.tetNode.size() / 4;
+      auto coord = [&](std::uint32_t l) -> const double * {
+        if(l < nloc) return &m.xyz[4 * global[l]];
+        return &out.steinerXYZ[3 * (l - nloc)];
+      };
+      std::vector<std::uint32_t> &newNode = P.newNode;
+      newNode = out.tetNode;
+      for(std::size_t t = 0; t < nnew; t++) {
+        std::uint32_t *n = &newNode[4 * t];
+        const double o = robustPredicates::orient3d(coord(n[0]), coord(n[1]),
+                                                    coord(n[2]), coord(n[3]));
+        if(o == 0.) {
+          Msg::Info("Local boundary recovery with TetGen gave a flat tet");
+          return false;
+        }
+        if(o > 0.) std::swap(n[0], n[1]);
+      }
+      // the stitching: every boundary facet matches a facet of a new tet,
+      // the other facets of the new tets match among themselves
+      std::vector<facetKey> inner;
+      for(std::size_t t = 0; t < nnew; t++)
+        for(unsigned f = 0; f < 4; f++)
+          inner.push_back(
+            key(newNode[4 * t + facetNode0(f)], newNode[4 * t + facetNode1(f)],
+                newNode[4 * t + facetNode2(f)], (tRef)(4 * t + f)));
+      std::sort(boundary.begin(), boundary.end(), less);
+      std::sort(inner.begin(), inner.end(), less);
+      P.newNeigh.assign(4 * nnew, NO_ADJ);
+      P.outer.assign(4 * nnew, 0);
+      {
+        std::size_t j = 0;
+        for(std::size_t i = 0; i < boundary.size(); i++) {
+          while(j < inner.size() && less(inner[j], boundary[i])) j++;
+          if(j >= inner.size() || !same(boundary[i], inner[j])) {
+            Msg::Info("Local boundary recovery with TetGen changed the cavity "
+                      "boundary");
+            return false;
+          }
+          P.newNeigh[inner[j].ref] = boundary[i].ref;
+          P.outer[inner[j].ref] = 1;
+          P.outerLinks.push_back({boundary[i].ref, inner[j].ref});
+          j++;
+        }
+        for(std::size_t i = 0; i + 1 < inner.size(); i++) {
+          if(P.newNeigh[inner[i].ref] != NO_ADJ) continue;
+          if(same(inner[i], inner[i + 1]) &&
+             P.newNeigh[inner[i + 1].ref] == NO_ADJ) {
+            P.newNeigh[inner[i].ref] = inner[i + 1].ref;
+            P.newNeigh[inner[i + 1].ref] = inner[i].ref;
+            i++;
+          }
+        }
+        for(auto r : P.newNeigh)
+          if(r == NO_ADJ) {
+            Msg::Info("Local boundary recovery with TetGen: the cavity is not "
+                      "closed");
+            return false;
+          }
+      }
+    }
+
+    // ---- commit ----
+    std::size_t steiner = 0;
+    std::vector<std::uint8_t> triRemoved(nt, 0), lineRemoved(nl, 0);
+    for(Pending &P : pending) {
+      const std::vector<tIdx> &comp = *P.comp;
+      const std::vector<vIdx> &global = P.global;
+      const boundaryRecoveryOutput &out = P.out;
+      const std::size_t nnew = P.newNode.size() / 4;
+      const std::size_t numSteiner = out.steinerXYZ.size() / 3;
+      // the Steiner points: mesh vertices of their curve, surface or region,
+      // with the mean size of the cavity
+      double meanSize = 0.;
+      {
+        std::size_t count = 0;
+        for(auto v : global)
+          if(m.xyz[4 * v + 3] > 0.) {
+            meanSize += m.xyz[4 * v + 3];
+            count++;
+          }
+        meanSize = count ? meanSize / count : 0.;
+      }
+      std::vector<vIdx> newGlobal(global);
+      for(std::size_t k = 0; k < numSteiner; k++) {
+        const double *x = &out.steinerXYZ[3 * k];
+        MVertex *v = nullptr;
+        GEdge *ge = nullptr;
+        GFace *gf = nullptr;
+        if(out.steinerType[k] == 1) {
+          auto it = curveOfTag.find(out.steinerSegTag[k]);
+          if(it != curveOfTag.end())
+            ge = it->second;
+          else if(out.steinerFaceTag[k] >= 0) {
+            auto jt = faceOfTag.find(out.steinerFaceTag[k]);
+            if(jt != faceOfTag.end()) gf = jt->second;
+          }
+        }
+        else if(out.steinerType[k] == 2) {
+          auto jt = faceOfTag.find(out.steinerFaceTag[k]);
+          if(jt != faceOfTag.end()) gf = jt->second;
+        }
+        if(ge) {
+          MEdgeVertex *ev = new MEdgeVertex(x[0], x[1], x[2], ge, 0);
+          double uu = 0;
+          if(reparamMeshVertexOnEdge(ev, ge, uu)) ev->setParameter(0, uu);
+          ge->mesh_vertices.push_back(ev);
+          v = ev;
+        }
+        else if(gf) {
+          MFaceVertex *fv = new MFaceVertex(x[0], x[1], x[2], gf, 0, 0);
+          SPoint2 param;
+          if(reparamMeshVertexOnFace(fv, gf, param)) {
+            fv->setParameter(0, param.x());
+            fv->setParameter(1, param.y());
+          }
+          gf->mesh_vertices.push_back(fv);
+          v = fv;
+        }
+        else {
+          v = new MVertex(x[0], x[1], x[2], regions[0]);
+          regions[0]->mesh_vertices.push_back(v);
+        }
+        const vIdx index = (vIdx)m.numVertices();
+        v->setIndex((long)index);
+        s.vertices.push_back(v);
+        m.xyz.insert(m.xyz.end(), {x[0], x[1], x[2], meanSize});
+        newGlobal.push_back(index);
+        steiner++;
+      }
+      // the new tets, then the old ones go
+      m.reserveTets(m.ntet + nnew + 1024);
+      const tIdx base = (tIdx)m.ntet;
+      for(std::size_t t = 0; t < nnew; t++) {
+        const tIdx id = (tIdx)m.ntet++;
+        for(int k = 0; k < 4; k++) {
+          m.node[4 * id + k] = newGlobal[P.newNode[4 * t + k]];
+          const tRef r = P.newNeigh[4 * t + k];
+          m.neigh[4 * id + k] = P.outer[4 * t + k] ? r : r + 4 * base;
+        }
+        m.flag[id] = 0;
+        if(!m.color.empty()) m.color[id] = Mesh::COLOR_OUT;
+      }
+      for(auto &l : P.outerLinks) m.neigh[l.first] = l.second + 4 * base;
+      for(auto t : comp) {
+        m.flag[t] |= F_DELETED;
+        for(int k = 0; k < 4; k++) m.neigh[4 * t + k] = NO_ADJ;
+      }
+      // the surface meshes with Steiner points: the triangles and lines
+      // passed with that tag are replaced by TetGen's
+      for(auto tag : out.changedFaces) {
+        GFace *gf = faceOfTag[tag];
+        std::set<MTriangle *> gone;
+        for(auto i : P.cavityTri)
+          if(s.triColor[i] == (std::uint32_t)tag) {
+            triRemoved[i] = 1;
+            gone.insert(s.triElem[i]);
+          }
+        std::vector<MTriangle *> kept;
+        for(MTriangle *t : gf->triangles) {
+          if(gone.count(t))
+            delete t;
+          else
+            kept.push_back(t);
+        }
+        gf->triangles.swap(kept);
+        gf->deleteVertexArrays();
+        for(std::size_t i = 0; i < out.triTag.size(); i++) {
+          if(out.triTag[i] != tag) continue;
+          vIdx n[3];
+          for(int k = 0; k < 3; k++) n[k] = newGlobal[out.triNode[3 * i + k]];
+          MTriangle *t =
+            new MTriangle(s.vertices[n[0]], s.vertices[n[1]], s.vertices[n[2]]);
+          gf->triangles.push_back(t);
+          for(int k = 0; k < 3; k++) s.triNode.push_back(n[k]);
+          s.triColor.push_back(tag);
+          s.triElem.push_back(t);
+          tri2tet.push_back(NO_ADJ);
+          triRemoved.push_back(0);
+        }
+      }
+      for(auto tag : out.changedEdges) {
+        if(tag < 0) continue;
+        GEdge *ge = curveOfTag[tag];
+        std::set<MLine *> gone;
+        for(auto i : P.cavityLine)
+          if(s.lineColor[i] == (std::uint32_t)tag) {
+            lineRemoved[i] = 1;
+            gone.insert(s.lineElem[i]);
+          }
+        std::vector<MLine *> kept;
+        for(MLine *l : ge->lines) {
+          if(gone.count(l))
+            delete l;
+          else
+            kept.push_back(l);
+        }
+        ge->lines.swap(kept);
+        ge->deleteVertexArrays();
+        for(std::size_t i = 0; i < out.segTag.size(); i++) {
+          if(out.segTag[i] != tag) continue;
+          vIdx n[2];
+          for(int k = 0; k < 2; k++) n[k] = newGlobal[out.segNode[2 * i + k]];
+          MLine *l = new MLine(s.vertices[n[0]], s.vertices[n[1]]);
+          ge->lines.push_back(l);
+          for(int k = 0; k < 2; k++) s.lineNode.push_back(n[k]);
+          s.lineColor.push_back(tag);
+          s.lineElem.push_back(l);
+          line2tet.push_back(NO_ADJ);
+          lineRemoved.push_back(0);
+        }
+      }
+    }
+    // drop the replaced triangles and lines from the surface mesh
+    auto compact = [](auto &nodes, int per, auto &colors, auto &elems,
+                      auto &map, const std::vector<std::uint8_t> &removed) {
+      std::size_t n = 0;
+      for(std::size_t i = 0; i < removed.size(); i++) {
+        if(removed[i]) continue;
+        for(int k = 0; k < per; k++) nodes[per * n + k] = nodes[per * i + k];
+        colors[n] = colors[i];
+        elems[n] = elems[i];
+        map[n] = map[i];
+        n++;
+      }
+      nodes.resize(per * n);
+      colors.resize(n);
+      elems.resize(n);
+      map.resize(n);
+    };
+    compact(s.triNode, 3, s.triColor, s.triElem, tri2tet, triRemoved);
+    compact(s.lineNode, 2, s.lineColor, s.lineElem, line2tet, lineRemoved);
+    m.removeDeleted(nthreads);
+    Msg::Info("Local boundary recovery with TetGen: %lu cavit%s of %lu tets "
+              "in all, %lu Steiner point%s (Wall %gs)",
+              components.size(), components.size() > 1 ? "ies" : "y",
+              numCavityTets, steiner, steiner > 1 ? "s" : "", TimeOfDay() - t0);
+    return true;
+  }
+
 } // namespace
 
 int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
@@ -4214,13 +4887,48 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
   if(recovered) {
     Msg::Info("Recovering %lu missing triangle(s) and %lu missing line(s)...",
               missing, missingLines);
-    // by local edge removals first, with tetgen for whatever is left
+    // by local edge removals first, then TetGen on the cavities around what
+    // is left; the global TetGen recovery of the untouched Delaunay is the
+    // fallback
+    const std::vector<pdel3d::vIdx> node0(m.node.begin(),
+                                          m.node.begin() + 4 * m.ntet);
+    const std::vector<pdel3d::tRef> neigh0(m.neigh.begin(),
+                                           m.neigh.begin() + 4 * m.ntet);
+    const std::vector<std::uint16_t> flag0(m.flag.begin(),
+                                           m.flag.begin() + m.ntet);
+    const std::size_t ntet0 = m.ntet, nv0 = m.numVertices();
+    bool local = true;
     if(pdel3d::recoverLocally(m, s.triNode, s.lineNode, lineInTriangle, tri2tet,
-                              line2tet, nthreads, verbosity)) {
+                              line2tet, nthreads, verbosity, true)) {
+      if(Msg::GetVerbosity() > 5) m.verify(false);
+      // the edge removals moved the triangles and lines to other tets
+      pdel3d::triangleToTetMap(m, s.triNode, tri2tet);
+      pdel3d::lineToTetMap(m, s.lineNode, lineInTriangle, line2tet);
+      local = recoverWithLocalTetGen(m, s, regions, tri2tet, line2tet,
+                                     lineInTriangle, nthreads);
+      if(local) {
+        // everything must be there now
+        local = pdel3d::triangleToTetMap(m, s.triNode, tri2tet) == 0;
+        pdel3d::linesInTriangles(s.triNode, s.lineNode, lineInTriangle);
+        if(local)
+          local =
+            pdel3d::lineToTetMap(m, s.lineNode, lineInTriangle, line2tet) == 0;
+        if(!local) Msg::Info("Local boundary recovery incomplete");
+      }
+    }
+    if(!local) {
+      if(m.numVertices() != nv0)
+        Msg::Warning("Falling back to the global boundary recovery after a "
+                     "partial local one");
+      std::copy(node0.begin(), node0.end(), m.node.begin());
+      std::copy(neigh0.begin(), neigh0.end(), m.neigh.begin());
+      std::copy(flag0.begin(), flag0.end(), m.flag.begin());
+      m.ntet = ntet0;
       if(!recoverBoundary(m, s, regions)) {
         Msg::Error("Boundary recovery failed");
         return 1;
       }
+
       if(CTX::instance()->mesh.lcFromPoints) {
         for(GVertex *gv : s.points) {
           if(gv->prescribedMeshSizeAtVertex() == MAX_LC) continue;

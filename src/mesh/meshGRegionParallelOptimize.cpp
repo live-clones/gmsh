@@ -221,6 +221,9 @@ namespace pdel3d {
           ringVol -= orient3dFast(&m.xyz[4 * n[0]], &m.xyz[4 * n[1]],
                                   &m.xyz[4 * n[2]], &m.xyz[4 * n[3]]);
         }
+        // tet 1 holds a, b, ring[0] and ring[1]
+        const int s =
+          ringOrientation(m, C.tet[1], C.a, C.b, C.ring[0], C.ring[1]);
         double qa[35], qb[35], vol[35];
         bool flip[35];
         for(int i = 0; i < sp.nbr_triangles; i++) {
@@ -231,7 +234,9 @@ namespace pdel3d {
                        *p2 = &m.xyz[4 * r2];
           const double da = orient3dFast(p0, p1, p2, pa);
           const double db = orient3dFast(p0, p1, p2, pb);
-          if(da * db >= 0.) { // a and b on the same side: not a valid pair
+          // a and b on opposite sides, the a-side tet with the ring's
+          // orientation
+          if(da * db >= 0. || da * s >= 0.) {
             qa[i] = qb[i] = -1.;
             vol[i] = 0.;
             flip[i] = false;

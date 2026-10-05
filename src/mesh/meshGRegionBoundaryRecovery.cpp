@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cstdarg>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -65,10 +66,9 @@ namespace tetgenBR {
 
 #define REAL double
 
-  struct brdata {
-    GRegion *gr;
-    splitQuadRecovery *sqr;
-    const initialTetrahedralization *init;
+  struct coreData {
+    const boundaryRecoveryInput *in;
+    boundaryRecoveryOutput *out;
   };
 
   // dummy tetgenio class
@@ -136,140 +136,52 @@ namespace tetgenBR {
 #if !defined(TETLIBRARY)
 #define TETLIBRARY
 #endif
-#define printf Msg::Auto
+  // TetGen's messages: at their natural level, or as debug output when the
+  // caller does not want them (a failed local recovery is not an error)
+  static bool tetgenQuiet = false;
+  static void tetgenPrintf(const char *fmt, ...)
+  {
+    char str[5000];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(str, sizeof(str), fmt, args);
+    va_end(args);
+    if(tetgenQuiet)
+      Msg::Debug("%s", str);
+    else
+      Msg::Auto("%s", str);
+  }
+#define printf tetgenPrintf
 #include "tetgenBR.h"
 #include "tetgenBR.cxx"
 #undef printf
 
-  int tetgenmesh::reconstructmesh(void *p, double tol /* unused */)
+  int tetgenmesh::reconstructmesh(void *p, double /* unused */)
   {
-    GRegion *_gr = ((brdata *)p)->gr;
-    splitQuadRecovery *_sqr = ((brdata *)p)->sqr;
-    const initialTetrahedralization *_init = ((brdata *)p)->init;
+    const boundaryRecoveryInput &I = *((coreData *)p)->in;
+    boundaryRecoveryOutput &O = *((coreData *)p)->out;
 
     char opts[128];
     sprintf(opts, "YpeQT%gp/%g", CTX::instance()->mesh.toleranceInitialDelaunay,
-            CTX::instance()->mesh.angleToleranceFacetOverlap);
+            I.overlapAngleTolerance >= 0. ?
+              I.overlapAngleTolerance :
+              CTX::instance()->mesh.angleToleranceFacetOverlap);
     b->parse_commandline(opts);
 
-    double t_start = Cpu(), w_start = TimeOfDay();
-    std::vector<MVertex *> _vertices;
-    std::map<int, MVertex *> _extras;
-    // Get the set of vertices from GRegion.
-    if(_init) { _vertices = _init->vertices; }
-    else {
-      std::set<MVertex *, MVertexPtrLessThan> all;
-      std::vector<GFace *> const &f = _gr->faces();
-      for(auto it = f.begin(); it != f.end(); ++it) {
-        GFace *gf = *it;
-        for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-          MVertex *v0 = gf->triangles[i]->getVertex(0);
-          MVertex *v1 = gf->triangles[i]->getVertex(1);
-          MVertex *v2 = gf->triangles[i]->getVertex(2);
-          all.insert(v0);
-          all.insert(v1);
-          all.insert(v2);
-        }
-        if(_sqr) {
-	  //printf("face %d %zu quadrangles\n", gf->tag(), gf->quadrangles.size());
-          for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
-            MVertex *v0 = gf->quadrangles[i]->getVertex(0);
-            MVertex *v1 = gf->quadrangles[i]->getVertex(1);
-            MVertex *v2 = gf->quadrangles[i]->getVertex(2);
-            MVertex *v3 = gf->quadrangles[i]->getVertex(3);
-            MFace mf = gf->quadrangles[i]->getFace(0);
-            if(_sqr->doWeCreatePyramids()) {
-              SPoint3 p((v0->x() + v1->x() + v2->x() + v3->x()) * 0.25,
-                        (v0->y() + v1->y() + v2->y() + v3->y()) * 0.25,
-                        (v0->z() + v1->z() + v2->z() + v3->z()) * 0.25);
-              if(CTX::instance()->mesh.optimizePyramids < 0) {
-                // push the vertex along the face normal by fact * diam_face:
-                double fact = std::abs(CTX::instance()->mesh.optimizePyramids);
-                SVector3 n = mf.normal();
-                double diam = v0->distance(v2);
-                p = (p + fact * diam * n);
-              }
-              MVertex *newv = new MVertex(p.x(), p.y(), p.z(), gf);
-              // the extra vertex will be added in a GRegion (and reclassified
-              // correctly on that GRegion) when the pyramid is generated
-              _sqr->add(mf, newv, gf);
-              all.insert(newv);
-            }
-            else {
-              _sqr->add(mf, nullptr, gf);
-            }
-            all.insert(v0);
-            all.insert(v1);
-            all.insert(v2);
-            all.insert(v3);
-          }
-        }
-      }
-      std::vector<GEdge *> const &e = _gr->embeddedEdges();
-      for(auto it = e.begin(); it != e.end(); ++it) {
-        GEdge *ge = *it;
-        for(std::size_t i = 0; i < ge->lines.size(); i++) {
-          all.insert(ge->lines[i]->getVertex(0));
-          all.insert(ge->lines[i]->getVertex(1));
-        }
-      }
-      std::vector<GVertex *> const &v = _gr->embeddedVertices();
-      for(auto it = v.begin(); it != v.end(); ++it) {
-        GVertex *gv = *it;
-        for(std::size_t i = 0; i < gv->points.size(); i++) {
-          all.insert(gv->points[i]->getVertex(0));
-        }
-      }
-      all.insert(_gr->mesh_vertices.begin(), _gr->mesh_vertices.end());
-
-      _vertices.insert(_vertices.begin(), all.begin(), all.end());
-    }
-
     initializepools();
-
-    // Store all coordinates of the vertices as these will be pertubated in
-    // function delaunayTriangulation
-    std::map<MVertex *, SPoint3> originalCoordinates;
-    // the initial tetrahedralization: 4 positions in _vertices per tet, and
-    // the neighbors across the facets
-    std::vector<std::uint32_t> tetNode;
-    std::vector<std::int64_t> tetNeighbors;
-    if(_init) {
-      tetNode = _init->tetNode;
-      tetNeighbors = _init->neighbors;
-    }
-    else {
-      for(std::size_t i = 0; i < _vertices.size(); i++) {
-        MVertex *v = _vertices[i];
-        originalCoordinates[v] = v->point();
-      }
-      std::vector<MTetrahedron *> tets;
-      // will add 8 MVertices at the end of _vertices
-      delaunayMeshIn3D(_vertices, tets, false, &tetNeighbors);
-      if(Msg::GetErrorCount()) return 0;
-      for(std::size_t i = 0; i < _vertices.size(); i++)
-        _vertices[i]->setIndex((long)i);
-      tetNode.resize(4 * tets.size());
-      for(std::size_t i = 0; i < tets.size(); i++) {
-        for(int j = 0; j < 4; j++)
-          tetNode[4 * i + j] = (std::uint32_t)tets[i]->getVertex(j)->getIndex();
-        delete tets[i];
-      }
-    }
-
-    Msg::Debug("Points have been tetrahedralized");
+    const std::size_t nv = I.xyz.size() / 3;
 
     {
       point pointloop;
       REAL x, y, z;
 
       // Read the points.
-      for(std::size_t i = 0; i < _vertices.size(); i++) {
+      for(std::size_t i = 0; i < nv; i++) {
         makepoint(&pointloop, UNUSEDVERTEX);
         // Read the point coordinates.
-        x = pointloop[0] = _vertices[i]->x();
-        y = pointloop[1] = _vertices[i]->y();
-        z = pointloop[2] = _vertices[i]->z();
+        x = pointloop[0] = I.xyz[3 * i];
+        y = pointloop[1] = I.xyz[3 * i + 1];
+        z = pointloop[2] = I.xyz[3 * i + 2];
         // Determine the smallest and largest x, y and z coordinates.
         if(i == 0) {
           xmin = xmax = x;
@@ -306,12 +218,8 @@ namespace tetgenBR {
     makeindex2pointmap(idx2verlist);
     // 'idx2verlist' has length 'in->numberofpoints + 1'.
     idx2verlist[0] = dummypoint; // Let 0th-entry be dummypoint.
-    // Index the vertices, starting at 1 (vertex index 0 is used as special code
-    // in tetgenBR in case of failure)
-    for(std::size_t i = 0; i < _vertices.size(); i++) {
-      _vertices[i]->setIndex(i + 1);
-    }
 
+    std::vector<triface> ts; // the tets, in the input order
     {
       triface tetloop, checktet;
       triface hulltet, face1, face2;
@@ -321,19 +229,19 @@ namespace tetgenBR {
       int t1ver; // used by the fsymself() macro
       int k;
 
-      Msg::Info("Reconstructing mesh...");
+      if(I.verbose) Msg::Info("Reconstructing mesh...");
 
-      for(std::size_t i = 0; i < _vertices.size() + in->firstnumber; i++) {
+      for(std::size_t i = 0; i < nv + in->firstnumber; i++) {
         setpointtype(idx2verlist[i], VOLVERTEX); // initial type.
       }
 
       // Create the tetrahedra.
-      const std::size_t numTets = tetNode.size() / 4;
-      std::vector<triface> ts(numTets);
+      const std::size_t numTets = I.tetNode.size() / 4;
+      ts.resize(numTets);
       for(std::size_t i = 0; i < numTets; i++) {
         // Get the four vertices.
         for(int j = 0; j < 4; j++) {
-          p[j] = idx2verlist[tetNode[4 * i + j] + in->firstnumber];
+          p[j] = idx2verlist[I.tetNode[4 * i + j] + in->firstnumber];
         }
         // Check the orientation.
         ori = orient3d(p[0], p[1], p[2], p[3]);
@@ -367,7 +275,7 @@ namespace tetgenBR {
       // that the face bonds - including their edge versions - are identical.
       for(std::size_t i = 0; i < ts.size(); i++) {
         for(int kf = 0; kf < 4; kf++) {
-          const std::int64_t nj = tetNeighbors[4 * i + kf];
+          const std::int64_t nj = I.tetNeighbors[4 * i + kf];
           if(nj < 0 || (std::size_t)nj <= i) continue;
           triface L = ts[nj]; // created later
           triface E = ts[i]; // created earlier
@@ -421,8 +329,6 @@ namespace tetgenBR {
           } // L.ver
         } // kf
       } // i
-      ts.clear();
-      tetNeighbors.clear();
 
       // Create hull tets, create the point-to-tet map, and clean up the
       //   temporary spaces used in each tet.
@@ -469,72 +375,40 @@ namespace tetgenBR {
       }
 
       hullsize = tetrahedrons->items - hullsize;
-      tetNode.clear(); // Release all memory in this vector.
     }
 
-      std::vector<GFace *> const &f_list = _gr->faces();
-      std::vector<GEdge *> const &e_list = _gr->embeddedEdges();
-
       {
-        Msg::Info(" - Creating surface mesh");
+        if(I.verbose) Msg::Info(" - Creating surface mesh");
         face newsh;
         face newseg;
         point p[4];
         int idx;
 
-        for(auto it = f_list.begin(); it != f_list.end(); ++it) {
-          GFace *gf = *it;
-          for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-            for(int j = 0; j < 3; j++) {
-              p[j] = idx2verlist[gf->triangles[i]->getVertex(j)->getIndex()];
-              if(pointtype(p[j]) == VOLVERTEX) {
-                setpointtype(p[j], FACETVERTEX);
-              }
-            }
-            makeshellface(subfaces, &newsh);
-            setshvertices(newsh, p[0], p[1], p[2]);
-            setshellmark(newsh, gf->tag()); // the GFace's tag.
-            recentsh = newsh;
-            for(int j = 0; j < 3; j++) {
-              makeshellface(subsegs, &newseg);
-              setshvertices(newseg, sorg(newsh), sdest(newsh), nullptr);
-              // Set the default segment marker '-1'.
-              setshellmark(newseg, -1);
-              ssbond(newsh, newseg);
-              senextself(newsh);
+        for(std::size_t i = 0; i < I.triNode.size() / 3; i++) {
+          for(int j = 0; j < 3; j++) {
+            p[j] = idx2verlist[I.triNode[3 * i + j] + in->firstnumber];
+            if(pointtype(p[j]) == VOLVERTEX) {
+              setpointtype(p[j], FACETVERTEX);
             }
           }
-        } // it
-
-        if(_sqr) {
-          std::map<MFace, GFace *, MFaceLessThan> f = _sqr->getTri();
-          for(auto it = f.begin(); it != f.end(); it++) {
-            const MFace &mf = it->first;
-            for(int j = 0; j < 3; j++) {
-              p[j] = idx2verlist[mf.getVertex(j)->getIndex()];
-              if(pointtype(p[j]) == VOLVERTEX) {
-                setpointtype(p[j], FACETVERTEX);
-              }
-            }
-            makeshellface(subfaces, &newsh);
-            setshvertices(newsh, p[0], p[1], p[2]);
-            setshellmark(newsh, it->second->tag());
-            recentsh = newsh;
-            for(int j = 0; j < 3; j++) {
-              makeshellface(subsegs, &newseg);
-              setshvertices(newseg, sorg(newsh), sdest(newsh), nullptr);
-              // Set the default segment marker '-1'.
-              setshellmark(newseg, -1);
-              ssbond(newsh, newseg);
-              senextself(newsh);
-            }
+          makeshellface(subfaces, &newsh);
+          setshvertices(newsh, p[0], p[1], p[2]);
+          setshellmark(newsh, I.triTag[i]);
+          recentsh = newsh;
+          for(int j = 0; j < 3; j++) {
+            makeshellface(subsegs, &newseg);
+            setshvertices(newseg, sorg(newsh), sdest(newsh), nullptr);
+            // Set the default segment marker '-1'.
+            setshellmark(newseg, -1);
+            ssbond(newsh, newseg);
+            senextself(newsh);
           }
         }
 
         // Connecting triangles, removing redundant segments.
         unifysegments();
 
-        Msg::Info(" - Identifying boundary edges");
+        if(I.verbose) Msg::Info(" - Identifying boundary edges");
 
         face *shperverlist;
         int *idx2shlist;
@@ -548,11 +422,10 @@ namespace tetgenBR {
         // Process the set of PSC edges.
         // Remeber that all segments have default marker '-1'.
         //    int COUNTER = 0;
-        for(auto it = e_list.begin(); it != e_list.end(); ++it) {
-          GEdge *ge = *it;
-          for(std::size_t i = 0; i < ge->lines.size(); i++) {
+        for(std::size_t i = 0; i < I.segNode.size() / 2; i++) {
+          {
             for(int j = 0; j < 2; j++) {
-              p[j] = idx2verlist[ge->lines[i]->getVertex(j)->getIndex()];
+              p[j] = idx2verlist[I.segNode[2 * i + j] + in->firstnumber];
               setpointtype(p[j], RIDGEVERTEX);
             }
             if(p[0] == p[1]) {
@@ -616,9 +489,9 @@ namespace tetgenBR {
                 setshvertices(newseg, p[0], p[1], nullptr);
               }
             }
-            setshellmark(newseg, ge->tag());
-          } // i
-        } // e_list
+            setshellmark(newseg, I.segTag[i]);
+          }
+        } // segments
 
         delete[] shperverlist;
         delete[] idx2shlist;
@@ -628,379 +501,223 @@ namespace tetgenBR {
 
         // The total number of iunput segments.
         insegments = subsegs->items;
-
-        if(0) { outmesh2medit("dump2"); }
       }
 
       delete[] idx2verlist;
 
       // Boundary recovery.
 
+      if(I.nonconvex) {
+        // the walks towards a point (finddirection) may leave a cavity: let
+        // them. The constraints present in the mesh are bonded here, from
+        // the tets given with the triangles (the boundary of a cavity may be
+        // non-manifold: the tets around a point are not all reached through
+        // its faces, so no search), the segments through their subfaces, so
+        // that the recovery walks only for the missing ones
+        nonconvex = 1;
+        int t1ver; // used by the fsymself/fnextself macros
+        triface tetloop, spintet;
+        face sh;
+        std::size_t missingFaces = 0, missingSegs = 0, i = 0;
+        subfaces->traversalinit();
+        sh.sh = shellfacetraverse(subfaces);
+        while(sh.sh != nullptr) {
+          sh.shver = 0;
+          const point p0 = sorg(sh), p1 = sdest(sh), p2 = sapex(sh);
+          const std::int64_t j = i < I.triTet.size() ? I.triTet[i] : -1;
+          bool bonded = false;
+          if(j >= 0) {
+            // the face (p0, p1, p2) of tet j, oriented like the subface,
+            // seen from tet j or from the tet across
+            tetloop = ts[j];
+            int ver = 0;
+            for(; ver < 12; ver++) {
+              tetloop.ver = ver;
+              if(org(tetloop) == p0 && dest(tetloop) == p1 &&
+                 apex(tetloop) == p2)
+                break;
+            }
+            if(ver < 12)
+              bonded = true;
+            else {
+              for(ver = 0; ver < 12; ver++) {
+                tetloop.ver = ver;
+                if(org(tetloop) == p1 && dest(tetloop) == p0 &&
+                   apex(tetloop) == p2)
+                  break;
+              }
+              if(ver < 12) {
+                fsymself(tetloop);
+                bonded = true;
+              }
+            }
+            if(bonded) {
+              tsbond(tetloop, sh);
+              fsymself(tetloop);
+              sesymself(sh);
+              tsbond(tetloop, sh);
+            }
+          }
+          if(!bonded) missingFaces++;
+          sh.sh = shellfacetraverse(subfaces);
+          i++;
+        }
+        subsegs->traversalinit();
+        sh.sh = shellfacetraverse(subsegs);
+        while(sh.sh != nullptr) {
+          sh.shver = 0;
+          face parentsh;
+          spivot(sh, parentsh);
+          bool bonded = false;
+          if(parentsh.sh != nullptr) {
+            stpivot(parentsh, tetloop);
+            if(tetloop.tet != nullptr) {
+              const point e0 = sorg(sh), e1 = sdest(sh);
+              int ver = 0;
+              for(; ver < 12; ver++) {
+                tetloop.ver = ver;
+                if(org(tetloop) == e0 && dest(tetloop) == e1) break;
+              }
+              if(ver < 12) {
+                bonded = true;
+                sstbond1(sh, tetloop);
+                spintet = tetloop;
+                do {
+                  tssbond1(spintet, sh);
+                  fnextself(spintet);
+                } while(spintet.tet != tetloop.tet);
+              }
+            }
+          }
+          if(!bonded) missingSegs++;
+          sh.sh = shellfacetraverse(subsegs);
+        }
+        Msg::Debug("  nonconvex mesh: %lu of %ld faces and %lu of %ld segments "
+                   "left to recover",
+                   missingFaces, subfaces->items, missingSegs, subsegs->items);
+      }
+      ts.clear();
+
       clock_t t;
-      Msg::Info(" - Recovering boundary");
+      if(I.verbose) Msg::Info(" - Recovering boundary");
       recoverboundary(t);
 
-      carveholes();
+      if(I.carve) carveholes();
 
       if(subvertstack->objects > 0l) { suppresssteinerpoints(); }
 
-      recoverdelaunay();
-
-      // let's try
-      optimizemesh();
-
-      if((dupverts > 0l) || (unuverts > 0l)) {
-        // Remove hanging nodes.
-        // cannot call this here due to 8 additional exterior vertices we
-        // inserted jettisonnodes();
+      if(I.postprocess) {
+        recoverdelaunay();
+        // let's try
+        optimizemesh();
       }
 
-      long tetnumber, facenumber;
-
-      Msg::Debug("Statistics:\n");
-      Msg::Debug("  Input points: %ld", _vertices.size());
-      if(b->plc) {
-        Msg::Debug("  Input facets: %ld", f_list.size());
-        Msg::Debug("  Input segments: %ld", e_list.size());
-      }
-
-      tetnumber = tetrahedrons->items - hullsize;
-      facenumber = (tetnumber * 4l + hullsize) / 2l;
-
-      if(b->weighted) { // -w option
-        Msg::Debug(" Mesh points: %ld", points->items - nonregularcount);
-      }
-      else {
-        Msg::Debug(" Mesh points: %ld", points->items);
-      }
-      Msg::Debug("  Mesh tetrahedra: %ld", tetnumber);
-      Msg::Debug("  Mesh faces: %ld", facenumber);
-      if(meshedges > 0l) { Msg::Debug("  Mesh edges: %ld", meshedges); }
-      else {
-        if(!nonconvex) {
-          long vsize = points->items - dupverts - unuverts;
-          if(b->weighted) vsize -= nonregularcount;
-          meshedges = vsize + facenumber - tetnumber - 1;
-          Msg::Debug("  Mesh edges: %ld", meshedges);
-        }
-      }
-
-      if(b->plc || b->refine) {
-        Msg::Debug("  Mesh faces on facets: %ld", subfaces->items);
-        Msg::Debug("  Mesh edges on segments: %ld", subsegs->items);
-        if(st_volref_count > 0l) {
-          Msg::Debug("  Steiner points inside domain: %ld", st_volref_count);
-        }
-        if(st_facref_count > 0l) {
-          Msg::Debug("  Steiner points on facets:  %ld", st_facref_count);
-        }
-        if(st_segref_count > 0l) {
-          Msg::Debug("  Steiner points on segments:  %ld", st_segref_count);
-        }
-      }
-      else {
-        Msg::Debug("  Convex hull faces: %ld", hullsize);
-        if(meshhulledges > 0l) {
-          Msg::Debug("  Convex hull edges: %ld", meshhulledges);
-        }
-      }
-      if(b->weighted) { // -w option
-        Msg::Debug("  Skipped non-regular points: %ld", nonregularcount);
-      }
-
-      // Debug
-      if(0) { outmesh2medit("dump"); }
+      Msg::Debug("  Mesh tetrahedra: %ld", tetrahedrons->items - hullsize);
+      Msg::Debug("  Mesh faces on facets: %ld", subfaces->items);
+      Msg::Debug("  Mesh edges on segments: %ld", subsegs->items);
+      if(st_volref_count > 0l)
+        Msg::Debug("  Steiner points inside domain: %ld", st_volref_count);
+      if(st_facref_count > 0l)
+        Msg::Debug("  Steiner points on facets:  %ld", st_facref_count);
+      if(st_segref_count > 0l)
+        Msg::Debug("  Steiner points on segments:  %ld", st_segref_count);
 
       {
-        // Write mesh into to GRegion.
-
-        Msg::Debug("Writing to GRegion...");
-
+        // the output: the Steiner points first (index nv + k for the k-th)
         point p[4];
-
-        // In some hard cases, the surface mesh may be modified.
-        // Find the list of GFaces, GEdges that have been modified.
-        std::set<int> l_faces, l_edges;
-
-        if(points->items > (int)_vertices.size()) {
+        std::vector<std::uint32_t> markToIndex(points->items + nv + 2, 0);
+        for(std::size_t i = 0; i < nv; i++)
+          markToIndex[i + in->firstnumber] = (std::uint32_t)i;
+        {
           face parentseg, parentsh, spinsh;
           point pointloop;
-          // Create newly added mesh vertices.
-          // The new vertices must be added at the end of the point list.
           points->traversalinit();
           pointloop = pointtraverse();
           while(pointloop != (point)nullptr) {
             if(issteinerpoint(pointloop)) {
-              // Check if this Steiner point locates on boundary.
+              const std::uint32_t index =
+                (std::uint32_t)(nv + O.steinerXYZ.size() / 3);
+              markToIndex[pointmark(pointloop)] = index;
+              for(int k = 0; k < 3; k++) O.steinerXYZ.push_back(pointloop[k]);
+              int type = 0, segTag = -1, faceTag = -1;
               if(pointtype(pointloop) == FREESEGVERTEX) {
+                type = 1;
                 sdecode(point2sh(pointloop), parentseg);
                 assert(parentseg.sh != nullptr);
-                l_edges.insert(shellmark(parentseg));
-                // Get the GEdge containing this vertex.
-                GEdge *ge = nullptr;
-                GFace *gf = nullptr;
-                int etag = shellmark(parentseg);
-                for(auto it = e_list.begin(); it != e_list.end(); ++it) {
-                  if((*it)->tag() == etag) {
-                    ge = *it;
-                    break;
-                  }
-                }
-                if(ge != nullptr) {
-                  MEdgeVertex *v = new MEdgeVertex(pointloop[0], pointloop[1],
-                                                   pointloop[2], ge, 0);
-                  double uu = 0;
-                  if(reparamMeshVertexOnEdge(v, ge, uu)) {
-                    v->setParameter(0, uu);
-                  }
-                  v->setIndex(pointmark(pointloop));
-                  ge->mesh_vertices.push_back(v);
-                  _extras[pointmark(pointloop) - in->firstnumber] = v;
-                }
+                segTag = shellmark(parentseg);
+                O.changedEdges.insert(segTag);
                 spivot(parentseg, parentsh);
                 if(parentsh.sh != nullptr) {
-                  if(ge == nullptr) {
-                    // We treat this vertex a facet vertex.
-                    int ftag = shellmark(parentsh);
-                    for(auto it = f_list.begin(); it != f_list.end(); ++it) {
-                      if((*it)->tag() == ftag) {
-                        gf = *it;
-                        break;
-                      }
-                    }
-                    if(gf != nullptr) {
-                      MFaceVertex *v = new MFaceVertex(
-                        pointloop[0], pointloop[1], pointloop[2], gf, 0, 0);
-                      SPoint2 param;
-                      if(reparamMeshVertexOnFace(v, gf, param)) {
-                        v->setParameter(0, param.x());
-                        v->setParameter(1, param.y());
-                      }
-                      v->setIndex(pointmark(pointloop));
-                      gf->mesh_vertices.push_back(v);
-                      _extras[pointmark(pointloop) - in->firstnumber] = v;
-                    }
-                  }
-                  // Record all the GFaces' tag at this segment.
+                  faceTag = shellmark(parentsh);
+                  // Record all the facets at this segment (the ring is not
+                  // closed around a segment with a single facet)
                   spinsh = parentsh;
                   while(1) {
-                    l_faces.insert(shellmark(spinsh));
+                    O.changedFaces.insert(shellmark(spinsh));
                     spivotself(spinsh);
-                    if(spinsh.sh == parentsh.sh) break;
+                    if(spinsh.sh == nullptr || spinsh.sh == parentsh.sh) break;
                   }
-                }
-                if((ge == nullptr) && (gf == nullptr)) {
-                  // Create an interior mesh vertex.
-                  MVertex *v =
-                    new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
-                  v->setIndex(pointmark(pointloop));
-                  _extras[pointmark(pointloop) - in->firstnumber] = v;
-                  _gr->mesh_vertices.push_back(v);
                 }
               }
               else if(pointtype(pointloop) == FREEFACETVERTEX) {
+                type = 2;
                 sdecode(point2sh(pointloop), parentsh);
                 assert(parentsh.sh != nullptr);
-                l_faces.insert(shellmark(parentsh));
-                // Get the GFace containing this vertex.
-                GFace *gf = nullptr;
-                int ftag = shellmark(parentsh);
-                for(auto it = f_list.begin(); it != f_list.end(); ++it) {
-                  if((*it)->tag() == ftag) {
-                    gf = *it;
-                    break;
-                  }
-                }
-                if(gf != nullptr) {
-                  MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
-                                                   pointloop[2], gf, 0, 0);
-                  SPoint2 param;
-                  if(reparamMeshVertexOnFace(v, gf, param)) {
-                    v->setParameter(0, param.x());
-                    v->setParameter(1, param.y());
-                  }
-                  v->setIndex(pointmark(pointloop));
-                  gf->mesh_vertices.push_back(v);
-                  _extras[pointmark(pointloop) - in->firstnumber] = v;
-                }
-                else {
-                  // Create a mesh vertex.
-                  MVertex *v =
-                    new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
-                  v->setIndex(pointmark(pointloop));
-                  _gr->mesh_vertices.push_back(v);
-                  _extras[pointmark(pointloop) - in->firstnumber] = v;
-                }
+                faceTag = shellmark(parentsh);
+                O.changedFaces.insert(faceTag);
               }
-              else {
-                MVertex *v =
-                  new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
-                v->setIndex(pointmark(pointloop));
-                _gr->mesh_vertices.push_back(v);
-                _extras[pointmark(pointloop) - in->firstnumber] = v;
-              }
+              O.steinerType.push_back(type);
+              O.steinerSegTag.push_back(segTag);
+              O.steinerFaceTag.push_back(faceTag);
             }
             pointloop = pointtraverse();
           }
-          // assert((int)_vertices.size() == points->items);
         }
-
-        if(!_extras.empty())
-          Msg::Info(" - Added %d Steiner point%s", _extras.size(),
-                    (_extras.size() > 1) ? "s" : "");
-
-        if(l_edges.size() > 0) {
-          // There are Steiner points on segments!
+        {
           face segloop;
-          // Re-create the segment mesh in the corresponding GEdges.
-          for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
-            // Find the GEdge with tag = *it.
-
-            int etag = *it;
-            GEdge *ge = nullptr;
-            for(auto it = e_list.begin(); it != e_list.end(); ++it) {
-              if((*it)->tag() == etag) {
-                ge = *it;
-                break;
-              }
-            }
-            if(ge != nullptr) {
-              Msg::Info(" - Steiner points exist on curve %d", ge->tag());
-              // Delete the old triangles.
-              for(std::size_t i = 0; i < ge->lines.size(); i++)
-                delete ge->lines[i];
-              ge->lines.clear();
-              ge->deleteVertexArrays();
-              // Create the new triangles.
-              segloop.shver = 0;
-              subsegs->traversalinit();
-              segloop.sh = shellfacetraverse(subsegs);
-              while(segloop.sh != nullptr) {
-                if(shellmark(segloop) == etag) {
-                  p[0] = sorg(segloop);
-                  p[1] = sdest(segloop);
-                  int idx1 = pointmark(p[0]) - in->firstnumber;
-                  MVertex *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] :
-                    _vertices[idx1];
-                  int idx2 = pointmark(p[1]) - in->firstnumber;
-                  MVertex *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] :
-                    _vertices[idx2];
-                  MLine *t = new MLine(v1, v2);
-                  ge->lines.push_back(t);
-                }
-                segloop.sh = shellfacetraverse(subsegs);
-              }
-            }
-            else {
-              Msg::Debug("Unknown curve %d with Steiner point(s)", etag);
-            }
-          } // it
+          segloop.shver = 0;
+          subsegs->traversalinit();
+          segloop.sh = shellfacetraverse(subsegs);
+          while(segloop.sh != nullptr) {
+            p[0] = sorg(segloop);
+            p[1] = sdest(segloop);
+            O.segNode.push_back(markToIndex[pointmark(p[0])]);
+            O.segNode.push_back(markToIndex[pointmark(p[1])]);
+            O.segTag.push_back(shellmark(segloop));
+            segloop.sh = shellfacetraverse(subsegs);
+          }
         }
-
-        if(l_faces.size() > 0) {
-          // There are Steiner points on facets!
+        {
           face subloop;
-          // Re-create the surface mesh in the corresponding GFaces.
-          for(auto it = l_faces.begin(); it != l_faces.end(); ++it) {
-            // Find the GFace with tag = *it.
-
-            int ftag = *it;
-            GFace *gf = nullptr;
-            for(auto it = f_list.begin(); it != f_list.end(); ++it) {
-              if((*it)->tag() == ftag) {
-                gf = *it;
-                break;
-              }
-            }
-            if(gf != nullptr) {
-              // Delete the old triangles.
-              Msg::Info(" - Steiner points exist on surface %d", gf->tag());
-              for(std::size_t i = 0; i < gf->triangles.size(); i++)
-                delete gf->triangles[i];
-              gf->triangles.clear();
-              gf->deleteVertexArrays();
-
-              if(gf->quadrangles.size()) {
-                Msg::Warning("Steiner points not handled for quad surface mesh");
-              }
-
-              // Create the new triangles.
-              subloop.shver = 0;
-              subfaces->traversalinit();
-              subloop.sh = shellfacetraverse(subfaces);
-              while(subloop.sh != nullptr) {
-                if(shellmark(subloop) == ftag) {
-                  p[0] = sorg(subloop);
-                  p[1] = sdest(subloop);
-                  p[2] = sapex(subloop);
-                  int idx1 = pointmark(p[0]) - in->firstnumber;
-                  MVertex *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] :
-                    _vertices[idx1];
-                  int idx2 = pointmark(p[1]) - in->firstnumber;
-                  MVertex *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] :
-                    _vertices[idx2];
-                  int idx3 = pointmark(p[2]) - in->firstnumber;
-                  MVertex *v3 = idx3 >= (int)_vertices.size() ? _extras[idx3] :
-                    _vertices[idx3];
-                  MTriangle *t = new MTriangle(v1, v2, v3);
-                  gf->triangles.push_back(t);
-                }
-                subloop.sh = shellfacetraverse(subfaces);
-              }
-            }
-            else {
-              Msg::Debug("Unknown surface %d with Steiner point(s)", ftag);
-            }
-          } // it
+          subloop.shver = 0;
+          subfaces->traversalinit();
+          subloop.sh = shellfacetraverse(subfaces);
+          while(subloop.sh != nullptr) {
+            p[0] = sorg(subloop);
+            p[1] = sdest(subloop);
+            p[2] = sapex(subloop);
+            for(int k = 0; k < 3; k++)
+              O.triNode.push_back(markToIndex[pointmark(p[k])]);
+            O.triTag.push_back(shellmark(subloop));
+            subloop.sh = shellfacetraverse(subfaces);
+          }
         }
-
-        triface tetloop;
-
-        tetloop.ver = 11;
-        tetrahedrons->traversalinit();
-        tetloop.tet = tetrahedrontraverse();
-
-        while(tetloop.tet != (tetrahedron *)nullptr) {
-          p[0] = org(tetloop);
-          p[1] = dest(tetloop);
-          p[2] = apex(tetloop);
-          p[3] = oppo(tetloop);
-
-          int idx1 = pointmark(p[0]) - in->firstnumber;
-          MVertex *v1 =
-            idx1 >= (int)_vertices.size() ? _extras[idx1] : _vertices[idx1];
-          int idx2 = pointmark(p[1]) - in->firstnumber;
-          MVertex *v2 =
-            idx2 >= (int)_vertices.size() ? _extras[idx2] : _vertices[idx2];
-          int idx3 = pointmark(p[2]) - in->firstnumber;
-          MVertex *v3 =
-            idx3 >= (int)_vertices.size() ? _extras[idx3] : _vertices[idx3];
-          int idx4 = pointmark(p[3]) - in->firstnumber;
-          MVertex *v4 =
-            idx4 >= (int)_vertices.size() ? _extras[idx4] : _vertices[idx4];
-          MTetrahedron *t = new MTetrahedron(v1, v2, v3, v4);
-          _gr->tetrahedra.push_back(t);
+        {
+          triface tetloop;
+          tetloop.ver = 11;
+          tetrahedrons->traversalinit();
           tetloop.tet = tetrahedrontraverse();
+          while(tetloop.tet != (tetrahedron *)nullptr) {
+            p[0] = org(tetloop);
+            p[1] = dest(tetloop);
+            p[2] = apex(tetloop);
+            p[3] = oppo(tetloop);
+            for(int k = 0; k < 4; k++)
+              O.tetNode.push_back(markToIndex[pointmark(p[k])]);
+            tetloop.tet = tetrahedrontraverse();
+          }
         }
-      } // mesh output
-
-      Msg::Info("Done reconstructing mesh (Wall %gs, CPU %gs)",
-                TimeOfDay() - w_start, Cpu() - t_start);
-
-      // Put all coordinates back so they are not pertubated anymore
-      // (pertubation done in delaunayTriangulation)
-      for(auto vIter = originalCoordinates.begin();
-          vIter != originalCoordinates.end(); ++vIter) {
-        const SPoint3 &coordinates = vIter->second;
-        vIter->first->setXYZ(coordinates.x(), coordinates.y(), coordinates.z());
       }
-
-      // delete 8 new enclosing box vertices added in delaunayMeshIn3d
-      if(!_init) {
-        for(std::size_t i = _vertices.size() - 8; i < _vertices.size(); i++)
-          delete _vertices[i];
-      }
-
       return 1;
     }
 
@@ -1199,25 +916,297 @@ namespace tetgenBR {
 
   } // namespace tetgenBR
 
+  // the flat entry point: the recovery itself, with tetgen's error code
+  int runCore(const boundaryRecoveryInput &in, boundaryRecoveryOutput &out)
+  {
+    int err = 0;
+    tetgenBR::tetgenmesh *m = new tetgenBR::tetgenmesh();
+    m->in = new tetgenBR::tetgenio();
+    m->b = new tetgenBR::tetgenbehavior();
+    tetgenBR::coreData data = {&in, &out};
+    tetgenBR::tetgenQuiet = !in.verbose;
+    try {
+      if(!m->reconstructmesh((void *)&data, 0.)) err = -1;
+    } catch(int e) {
+      err = e;
+      if(e == 3) {
+        Msg::Debug("TetGen input error: event type %d, markers %d %d / %d %d",
+                   tetgenBR::sevent.e_type, tetgenBR::sevent.f_marker1,
+                   tetgenBR::sevent.f_marker2, tetgenBR::sevent.s_marker1,
+                   tetgenBR::sevent.s_marker2);
+        const int *fv[2] = {tetgenBR::sevent.f_vertices1,
+                            tetgenBR::sevent.f_vertices2};
+        for(int f = 0; f < 2; f++)
+          for(int k = 0; k < 3; k++) {
+            const int i = fv[f][k] - 1;
+            if(i >= 0 && 3 * i + 2 < (int)in.xyz.size())
+              Msg::Debug("  facet %d vertex %d: (%.17g %.17g %.17g)", f, i,
+                         in.xyz[3 * i], in.xyz[3 * i + 1], in.xyz[3 * i + 2]);
+          }
+      }
+    }
+    delete m->in;
+    delete m->b;
+    delete m;
+    tetgenBR::tetgenQuiet = false;
+    return err;
+  }
+
   bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr,
                                    const initialTetrahedralization *init)
   {
-    bool ret = false;
-    try {
-      tetgenBR::tetgenmesh *m = new tetgenBR::tetgenmesh();
-      m->in = new tetgenBR::tetgenio();
-      m->b = new tetgenBR::tetgenbehavior();
-      tetgenBR::brdata data = {gr, sqr, init};
-      ret = m->reconstructmesh((void *)&data, 0.);
-      delete m->in;
-      delete m->b;
-      delete m;
-    } catch(int err) {
-      if(err == 1) {
-        Msg::Error("Out of memory in boundary mesh recovery");
-        ret = false;
+    double t_start = Cpu(), w_start = TimeOfDay();
+    std::vector<MVertex *> _vertices;
+    // Get the set of vertices from GRegion.
+    if(init) { _vertices = init->vertices; }
+    else {
+      std::set<MVertex *, MVertexPtrLessThan> all;
+      std::vector<GFace *> const &f = gr->faces();
+      for(auto it = f.begin(); it != f.end(); ++it) {
+        GFace *gf = *it;
+        for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+          MVertex *v0 = gf->triangles[i]->getVertex(0);
+          MVertex *v1 = gf->triangles[i]->getVertex(1);
+          MVertex *v2 = gf->triangles[i]->getVertex(2);
+          all.insert(v0);
+          all.insert(v1);
+          all.insert(v2);
+        }
+        if(sqr) {
+          for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
+            MVertex *v0 = gf->quadrangles[i]->getVertex(0);
+            MVertex *v1 = gf->quadrangles[i]->getVertex(1);
+            MVertex *v2 = gf->quadrangles[i]->getVertex(2);
+            MVertex *v3 = gf->quadrangles[i]->getVertex(3);
+            MFace mf = gf->quadrangles[i]->getFace(0);
+            if(sqr->doWeCreatePyramids()) {
+              SPoint3 p((v0->x() + v1->x() + v2->x() + v3->x()) * 0.25,
+                        (v0->y() + v1->y() + v2->y() + v3->y()) * 0.25,
+                        (v0->z() + v1->z() + v2->z() + v3->z()) * 0.25);
+              if(CTX::instance()->mesh.optimizePyramids < 0) {
+                // push the vertex along the face normal by fact * diam_face:
+                double fact = std::abs(CTX::instance()->mesh.optimizePyramids);
+                SVector3 n = mf.normal();
+                double diam = v0->distance(v2);
+                p = (p + fact * diam * n);
+              }
+              MVertex *newv = new MVertex(p.x(), p.y(), p.z(), gf);
+              // the extra vertex will be added in a GRegion (and reclassified
+              // correctly on that GRegion) when the pyramid is generated
+              sqr->add(mf, newv, gf);
+              all.insert(newv);
+            }
+            else {
+              sqr->add(mf, nullptr, gf);
+            }
+            all.insert(v0);
+            all.insert(v1);
+            all.insert(v2);
+            all.insert(v3);
+          }
+        }
       }
-      else if(err == 3) {
+      std::vector<GEdge *> const &e = gr->embeddedEdges();
+      for(auto it = e.begin(); it != e.end(); ++it) {
+        GEdge *ge = *it;
+        for(std::size_t i = 0; i < ge->lines.size(); i++) {
+          all.insert(ge->lines[i]->getVertex(0));
+          all.insert(ge->lines[i]->getVertex(1));
+        }
+      }
+      std::vector<GVertex *> const &v = gr->embeddedVertices();
+      for(auto it = v.begin(); it != v.end(); ++it) {
+        GVertex *gv = *it;
+        for(std::size_t i = 0; i < gv->points.size(); i++) {
+          all.insert(gv->points[i]->getVertex(0));
+        }
+      }
+      all.insert(gr->mesh_vertices.begin(), gr->mesh_vertices.end());
+
+      _vertices.insert(_vertices.begin(), all.begin(), all.end());
+    }
+
+    // Store all coordinates of the vertices as these will be pertubated in
+    // function delaunayTriangulation
+    std::map<MVertex *, SPoint3> originalCoordinates;
+    boundaryRecoveryInput in;
+    if(init) {
+      in.tetNode = init->tetNode;
+      in.tetNeighbors = init->neighbors;
+    }
+    else {
+      for(std::size_t i = 0; i < _vertices.size(); i++) {
+        MVertex *v = _vertices[i];
+        originalCoordinates[v] = v->point();
+      }
+      std::vector<MTetrahedron *> tets;
+      // will add 8 MVertices at the end of _vertices
+      delaunayMeshIn3D(_vertices, tets, false, &in.tetNeighbors);
+      if(Msg::GetErrorCount()) return false;
+      for(std::size_t i = 0; i < _vertices.size(); i++)
+        _vertices[i]->setIndex((long)i);
+      in.tetNode.resize(4 * tets.size());
+      for(std::size_t i = 0; i < tets.size(); i++) {
+        for(int j = 0; j < 4; j++)
+          in.tetNode[4 * i + j] =
+            (std::uint32_t)tets[i]->getVertex(j)->getIndex();
+        delete tets[i];
+      }
+    }
+
+    Msg::Debug("Points have been tetrahedralized");
+
+    const std::size_t nv = _vertices.size();
+    in.xyz.resize(3 * nv);
+    for(std::size_t i = 0; i < nv; i++) {
+      in.xyz[3 * i] = _vertices[i]->x();
+      in.xyz[3 * i + 1] = _vertices[i]->y();
+      in.xyz[3 * i + 2] = _vertices[i]->z();
+      // Index the vertices, starting at 1 (vertex index 0 is used as special
+      // code in tetgenBR in case of failure)
+      _vertices[i]->setIndex(i + 1);
+    }
+    std::vector<GFace *> const &f_list = gr->faces();
+    std::vector<GEdge *> const &e_list = gr->embeddedEdges();
+    for(auto it = f_list.begin(); it != f_list.end(); ++it) {
+      GFace *gf = *it;
+      for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+        for(int j = 0; j < 3; j++)
+          in.triNode.push_back(
+            (std::uint32_t)(gf->triangles[i]->getVertex(j)->getIndex() - 1));
+        in.triTag.push_back(gf->tag());
+      }
+    }
+    if(sqr) {
+      std::map<MFace, GFace *, MFaceLessThan> f = sqr->getTri();
+      for(auto it = f.begin(); it != f.end(); it++) {
+        const MFace &mf = it->first;
+        for(int j = 0; j < 3; j++)
+          in.triNode.push_back((std::uint32_t)(mf.getVertex(j)->getIndex() - 1));
+        in.triTag.push_back(it->second->tag());
+      }
+    }
+    for(auto it = e_list.begin(); it != e_list.end(); ++it) {
+      GEdge *ge = *it;
+      for(std::size_t i = 0; i < ge->lines.size(); i++) {
+        for(int j = 0; j < 2; j++)
+          in.segNode.push_back(
+            (std::uint32_t)(ge->lines[i]->getVertex(j)->getIndex() - 1));
+        in.segTag.push_back(ge->tag());
+      }
+    }
+
+    boundaryRecoveryOutput out;
+    const int err = runCore(in, out);
+    bool ret = false;
+    if(err == 0) {
+      // Write mesh into to GRegion.
+      Msg::Debug("Writing to GRegion...");
+      std::vector<MVertex *> extras;
+      for(std::size_t k = 0; k < out.steinerType.size(); k++) {
+        const double *x = &out.steinerXYZ[3 * k];
+        GEdge *ge = nullptr;
+        GFace *gf = nullptr;
+        MVertex *v = nullptr;
+        if(out.steinerType[k] == 1) {
+          // Get the GEdge containing this vertex.
+          for(auto it = e_list.begin(); it != e_list.end(); ++it)
+            if((*it)->tag() == out.steinerSegTag[k]) ge = *it;
+          if(ge) {
+            MEdgeVertex *ev = new MEdgeVertex(x[0], x[1], x[2], ge, 0);
+            double uu = 0;
+            if(reparamMeshVertexOnEdge(ev, ge, uu)) ev->setParameter(0, uu);
+            ge->mesh_vertices.push_back(ev);
+            v = ev;
+          }
+          else if(out.steinerFaceTag[k] >= 0) {
+            // We treat this vertex a facet vertex.
+            for(auto it = f_list.begin(); it != f_list.end(); ++it)
+              if((*it)->tag() == out.steinerFaceTag[k]) gf = *it;
+          }
+        }
+        else if(out.steinerType[k] == 2) {
+          for(auto it = f_list.begin(); it != f_list.end(); ++it)
+            if((*it)->tag() == out.steinerFaceTag[k]) gf = *it;
+        }
+        if(!v && gf) {
+          MFaceVertex *fv = new MFaceVertex(x[0], x[1], x[2], gf, 0, 0);
+          SPoint2 param;
+          if(reparamMeshVertexOnFace(fv, gf, param)) {
+            fv->setParameter(0, param.x());
+            fv->setParameter(1, param.y());
+          }
+          gf->mesh_vertices.push_back(fv);
+          v = fv;
+        }
+        if(!v) {
+          // Create an interior mesh vertex.
+          v = new MVertex(x[0], x[1], x[2], gr);
+          gr->mesh_vertices.push_back(v);
+        }
+        v->setIndex((long)(nv + k + 1));
+        extras.push_back(v);
+      }
+      auto vertexOf = [&](std::uint32_t i) {
+        return i < nv ? _vertices[i] : extras[i - nv];
+      };
+
+      if(!extras.empty())
+        Msg::Info(" - Added %d Steiner point%s", extras.size(),
+                  (extras.size() > 1) ? "s" : "");
+
+      // the segment and surface meshes with Steiner points are re-created
+      for(auto etag : out.changedEdges) {
+        GEdge *ge = nullptr;
+        for(auto it = e_list.begin(); it != e_list.end(); ++it)
+          if((*it)->tag() == etag) ge = *it;
+        if(!ge) {
+          Msg::Debug("Unknown curve %d with Steiner point(s)", etag);
+          continue;
+        }
+        Msg::Info(" - Steiner points exist on curve %d", ge->tag());
+        for(std::size_t i = 0; i < ge->lines.size(); i++) delete ge->lines[i];
+        ge->lines.clear();
+        ge->deleteVertexArrays();
+        for(std::size_t i = 0; i < out.segTag.size(); i++)
+          if(out.segTag[i] == etag)
+            ge->lines.push_back(new MLine(vertexOf(out.segNode[2 * i]),
+                                          vertexOf(out.segNode[2 * i + 1])));
+      }
+      for(auto ftag : out.changedFaces) {
+        GFace *gf = nullptr;
+        for(auto it = f_list.begin(); it != f_list.end(); ++it)
+          if((*it)->tag() == ftag) gf = *it;
+        if(!gf) {
+          Msg::Debug("Unknown surface %d with Steiner point(s)", ftag);
+          continue;
+        }
+        Msg::Info(" - Steiner points exist on surface %d", gf->tag());
+        for(std::size_t i = 0; i < gf->triangles.size(); i++)
+          delete gf->triangles[i];
+        gf->triangles.clear();
+        gf->deleteVertexArrays();
+        if(gf->quadrangles.size())
+          Msg::Warning("Steiner points not handled for quad surface mesh");
+        for(std::size_t i = 0; i < out.triTag.size(); i++)
+          if(out.triTag[i] == ftag)
+            gf->triangles.push_back(new MTriangle(vertexOf(out.triNode[3 * i]),
+                                                  vertexOf(out.triNode[3 * i + 1]),
+                                                  vertexOf(out.triNode[3 * i + 2])));
+      }
+      for(std::size_t t = 0; t < out.tetNode.size() / 4; t++)
+        gr->tetrahedra.push_back(new MTetrahedron(
+          vertexOf(out.tetNode[4 * t]), vertexOf(out.tetNode[4 * t + 1]),
+          vertexOf(out.tetNode[4 * t + 2]), vertexOf(out.tetNode[4 * t + 3])));
+
+      Msg::Info("Done reconstructing mesh (Wall %gs, CPU %gs)",
+                TimeOfDay() - w_start, Cpu() - t_start);
+      ret = true;
+    }
+    else if(err == 1) {
+      Msg::Error("Out of memory in boundary mesh recovery");
+    }
+    else if(err == 3) {
         std::map<int, MVertex *> all;
         std::vector<GFace *> f = gr->faces();
         for(auto it = f.begin(); it != f.end(); ++it) {
@@ -1329,12 +1318,29 @@ namespace tetgenBR {
 #endif
         ret = false;
       }
-      else {
-        Msg::Error("Could not recover boundary mesh: error %d", err);
-        ret = false;
-      }
+    else {
+      Msg::Error("Could not recover boundary mesh: error %d", err);
+    }
+
+    // Put all coordinates back so they are not pertubated anymore
+    // (pertubation done in delaunayTriangulation)
+    for(auto vIter = originalCoordinates.begin();
+        vIter != originalCoordinates.end(); ++vIter) {
+      const SPoint3 &coordinates = vIter->second;
+      vIter->first->setXYZ(coordinates.x(), coordinates.y(), coordinates.z());
+    }
+    // delete 8 new enclosing box vertices added in delaunayMeshIn3d
+    if(!init && ret) {
+      for(std::size_t i = _vertices.size() - 8; i < _vertices.size(); i++)
+        delete _vertices[i];
     }
     return ret;
+  }
+
+  int meshGRegionBoundaryRecoveryFlat(const boundaryRecoveryInput &in,
+                                      boundaryRecoveryOutput &out)
+  {
+    return runCore(in, out);
   }
 
 #else
@@ -1343,6 +1349,12 @@ bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr,
                                  const initialTetrahedralization *init)
 {
   return false;
+}
+
+int meshGRegionBoundaryRecoveryFlat(const boundaryRecoveryInput &in,
+                                    boundaryRecoveryOutput &out)
+{
+  return -1;
 }
 
 #endif
