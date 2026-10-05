@@ -696,16 +696,17 @@ static void Mesh2D(GModel *m)
 
       int nPending = 0;
       bool exceptions = false;
-      std::vector<GFace *> temp;
-      temp.insert(temp.begin(), f.begin(), f.end());
-#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
-      for(size_t K = 0; K < temp.size(); K++) {
-        if(exceptions) continue;
+      // the members of a compound are meshed serially: the one that does the
+      // compound job reads and replaces the meshes of the others
+      std::vector<GFace *> temp, members;
+      for(GFace *gf : f) (gf->compound.empty() ? temp : members).push_back(gf);
+      auto meshOne = [&](GFace *gf) {
+        if(exceptions) return;
         int localPending = 0;
-        if(temp[K]->meshStatistics.status == GFace::PENDING) {
+        if(gf->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
           try { // OpenMP forbids leaving block via exception
-            temp[K]->mesh(true);
+            gf->mesh(true);
           } catch(...) {
             exceptions = true;
           }
@@ -716,7 +717,10 @@ static void Mesh2D(GModel *m)
           }
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
-      }
+      };
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+      for(size_t K = 0; K < temp.size(); K++) meshOne(temp[K]);
+      for(GFace *gf : members) meshOne(gf);
       if(exceptions) {
         CTX::instance()->lock = 0;
         throw std::runtime_error(Msg::GetLastError());
