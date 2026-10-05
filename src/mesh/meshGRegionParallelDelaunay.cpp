@@ -3532,11 +3532,9 @@ namespace pdel3d {
       // their tet are dropped, while the nodes are still in cache
       const std::size_t ntet = m.ntet;
       std::size_t numCandidates = 0;
-      std::vector<double> localTimeSizes(nthreads, 0.);
 #pragma omp parallel num_threads(nthreads) reduction(+ : numCandidates)
       {
         const int tid = Msg::GetThreadNum();
-        double &timeSizesLocal = localTimeSizes[tid];
         std::vector<double> &pts = localPts[tid];
         std::vector<tIdx> &tets = localTets[tid];
         pts.clear();
@@ -3547,14 +3545,12 @@ namespace pdel3d {
         constexpr std::size_t B = 2048;
         double bpts[4 * B];
         tIdx btets[B];
-        std::uint32_t bcolors[B];
         std::size_t nb = 0;
+        // the candidates too close to a node of their tet for the size
+        // interpolated from its nodes are dropped; the size field is only
+        // evaluated on those kept (as HXT does: on the nozzle 785M
+        // candidates against 169M kept, and the field took 470 of 540 s)
         auto flush = [&]() {
-          if(opt.sizeCallback) {
-            const double ts = TimeOfDay();
-            opt.sizeCallback(bpts, bcolors, nb, opt.sizeData);
-            timeSizesLocal += TimeOfDay() - ts;
-          }
           for(std::size_t i = 0; i < nb; i++) {
             const double *q = &bpts[4 * i];
             bool close = q[3] <= 0.;
@@ -3567,7 +3563,6 @@ namespace pdel3d {
             pts.insert(pts.end(), q, q + 4);
             tets.push_back(btets[i]);
           }
-          numCandidates += nb;
           nb = 0;
         };
 #pragma omp for schedule(dynamic, 4096) nowait
@@ -3581,9 +3576,9 @@ namespace pdel3d {
             s[i] = m.xyz[4 * v + 3];
           }
           double *center = &bpts[4 * nb];
-          if(bestCenter(p, s, center, opt) && !opt.sizeCallback) continue;
+          numCandidates++;
+          if(bestCenter(p, s, center, opt)) continue;
           btets[nb] = (tIdx)t;
-          bcolors[nb] = m.color[t];
           if(++nb == B) flush();
         }
         flush();
@@ -3612,8 +3607,17 @@ namespace pdel3d {
         }
       }
       const double t4 = TimeOfDay();
-      const double timeSizesRound =
-        *std::max_element(localTimeSizes.begin(), localTimeSizes.end());
+      // the sizes of the kept candidates from the field, in the volume of
+      // their tet
+      double timeSizesRound = 0.;
+      if(opt.sizeCallback && numKept) {
+        std::vector<std::uint32_t> colors(numKept);
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+        for(std::size_t i = 0; i < numKept; i++) colors[i] = m.color[hints[i]];
+        opt.sizeCallback(&m.xyz[4 * first], colors.data(), numKept,
+                         opt.sizeData);
+        timeSizesRound = TimeOfDay() - t4;
+      }
       timeSizes += timeSizesRound;
       if(toInsert.empty()) break;
       totalKept += toInsert.size();
@@ -3627,7 +3631,7 @@ namespace pdel3d {
       insertVertices(m, dopt, toInsert, status, &stats, &hints);
       const double t5 = TimeOfDay();
       compactNewVertices(m, first, toInsert, status, nthreads);
-      timeCandidates += t4 - t1 - timeSizesRound;
+      timeCandidates += t4 - t1;
       timeCompact += TimeOfDay() - t5;
       totalInserted += stats.inserted - before;
       if(stats.inserted == before) break;
