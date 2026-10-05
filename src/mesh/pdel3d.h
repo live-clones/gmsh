@@ -154,6 +154,7 @@ namespace pdel3d {
     void (*sizeCallback)(double *xyzs, const std::uint32_t *color,
                          std::size_t n, void *data) = nullptr;
     void *sizeData = nullptr;
+    int curveFilterWindow = 16;
     int verbosity = 0;
   };
 
@@ -187,8 +188,13 @@ namespace pdel3d {
     // unknown size gets the mean size of the vertices of its cavity
     bool filterOnSize = false;
     double sizeMin = 0., sizeMax = 1.e300, sizeFactor = 1.;
+    // number of vertices kept along the curve a vertex is checked against
+    int curveFilterWindow = 16;
     // 0: nothing is in the mesh yet; 1 - 0.5^n after n refinement rounds
     double partitionability = 0.;
+    // remove the deleted tets at the end (otherwise they stay as flagged
+    // slots until the caller compacts the mesh)
+    bool compact = true;
     // when the mesh is empty and all the vertices are inserted, store them
     // in insertion order (toInsert[i] then receives the original index of
     // vertex i), which keeps the coordinates read together close in memory
@@ -197,7 +203,10 @@ namespace pdel3d {
   };
 
   struct DelaunayStats {
-    std::size_t inserted = 0, filtered = 0, duplicates = 0, conflicts = 0;
+    // filtered: by the size filter in their cavity; curveFiltered: by the size
+    // filter against their predecessor along the curve
+    std::size_t inserted = 0, filtered = 0, curveFiltered = 0, duplicates = 0,
+                conflicts = 0;
     std::size_t rounds = 0;
     double timeSort = 0., timeInsert = 0.;
   };

@@ -1052,8 +1052,8 @@ namespace pdel3d {
 
     Kernel K(m, opt);
     std::vector<Local> locals(maxPartitions);
-    std::size_t totalInserted = 0, totalFiltered = 0, totalDuplicates = 0,
-                totalConflicts = 0, nrounds = 0;
+    std::size_t totalInserted = 0, totalFiltered = 0, totalCurveFiltered = 0,
+                totalDuplicates = 0, totalConflicts = 0, nrounds = 0;
     if(opt.verbosity > 0)
       Msg::Info("Delaunay of %lu points on %d threads (%lu in the mesh)",
                 passes[npasses] - passes[0], maxPartitions, numInMesh);
@@ -1091,19 +1091,30 @@ namespace pdel3d {
           sortByDist(pass, passLength);
         }
 
-        // filter consecutive vertices of the curve that are too close
+        // filter the vertices too close to one of the last vertices kept
+        // along the curve (a cheap approximation of the filter in the cavity,
+        // which costs a walk and a cavity search)
         std::size_t curveSkipped = 0;
         if(opt.filterOnSize) {
-          const double *p1 = nullptr;
+          const int W = std::max(1, std::min(opt.curveFilterWindow, 64));
+          const double *ring[64];
+          int nring = 0, head = 0;
           for(std::size_t i = 0; i < passLength; i++) {
             if(pass[i].status != ST_TODO) continue;
             const double *p2 = &m.xyz[4 * pass[i].node];
-            if(p1 && K.tooClose(p1[3], p2[3], Kernel::sqDist(p1, p2))) {
+            bool close = false;
+            for(int k = 0; k < nring && !close; k++)
+              close =
+                K.tooClose(ring[k][3], p2[3], Kernel::sqDist(ring[k], p2));
+            if(close) {
               pass[i].status = ST_FILTERED;
               curveSkipped++;
             }
-            else
-              p1 = p2;
+            else {
+              ring[head] = p2;
+              head = (head + 1) % W;
+              if(nring < W) nring++;
+            }
           }
         }
 
@@ -1221,7 +1232,7 @@ namespace pdel3d {
         const std::size_t numInserted = shift - numSkipped;
         const std::size_t numConflict = passLength - shift;
         totalInserted += numInserted;
-        totalFiltered += curveSkipped;
+        totalCurveFiltered += curveSkipped;
         // the vertices left by a lack of space are not conflicts
         if(passLength != numSkipped && !ranOutOfSpace)
           conflictRatio = (double)numConflict / (passLength - numSkipped);
@@ -1241,7 +1252,7 @@ namespace pdel3d {
       for(auto t : L.deleted)
         for(int k = 0; k < 4; k++) m.neigh[4 * t + k] = NO_ADJ;
     }
-    m.removeDeleted();
+    if(opt.compact) m.removeDeleted();
     if(!originalIndex.empty()) {
       for(std::size_t i = 0; i < nToInsert; i++) {
         toInsert[i] = originalIndex[i];
@@ -1258,6 +1269,7 @@ namespace pdel3d {
     if(stats) {
       stats->inserted += totalInserted;
       stats->filtered += totalFiltered;
+      stats->curveFiltered += totalCurveFiltered;
       stats->duplicates += totalDuplicates;
       stats->conflicts += totalConflicts;
       stats->rounds += nrounds;
@@ -1265,10 +1277,11 @@ namespace pdel3d {
       stats->timeInsert += t2 - t1;
     }
     if(opt.verbosity > 0)
-      Msg::Info("  %lu inserted, %lu filtered, %lu duplicates, %lu conflicts, "
-                "%lu rounds (%g s)",
-                totalInserted, totalFiltered, totalDuplicates, totalConflicts,
-                nrounds, t2 - t0);
+      Msg::Info("  %lu inserted, %lu filtered (%lu along the curve), %lu "
+                "duplicates, %lu conflicts, %lu rounds (%g s)",
+                totalInserted, totalFiltered + totalCurveFiltered,
+                totalCurveFiltered, totalDuplicates, totalConflicts, nrounds,
+                t2 - t0);
   }
 
   // ---------------------------------------------------------------------

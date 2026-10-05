@@ -203,9 +203,11 @@ namespace pdel3d {
     dopt.sizeMin = opt.sizeMin;
     dopt.sizeMax = opt.sizeMax;
     dopt.sizeFactor = opt.sizeFactor;
+    dopt.curveFilterWindow = opt.curveFilterWindow;
+    dopt.compact = false; // once at the end
     dopt.verbosity = opt.verbosity - 1;
     DelaunayStats stats;
-    std::size_t totalCandidates = 0, totalInserted = 0;
+    std::size_t totalCandidates = 0, totalInserted = 0, totalKept = 0;
     double timeCandidates = 0., timeSizes = 0.;
     std::vector<std::vector<double>> localPts(nthreads);
     std::vector<std::vector<tIdx>> localTets(nthreads);
@@ -263,8 +265,8 @@ namespace pdel3d {
       const double t3 = TimeOfDay();
       // keep the candidates far enough from the nodes of their tet, appended
       // to the mesh vertices
-      const std::size_t first = m.numVertices();
-      std::vector<vIdx> toInsert;
+      std::vector<std::uint8_t> keep(numCandidates, 0);
+#pragma omp parallel for schedule(static) num_threads(nthreads)
       for(std::size_t i = 0; i < numCandidates; i++) {
         const double *c = &pts[4 * i];
         if(c[3] <= 0.) continue;
@@ -274,11 +276,21 @@ namespace pdel3d {
           const double *q = &m.xyz[4 * n[k]];
           close = tooClose(q[3], c[3], sqDist(q, c), opt);
         }
-        if(close) continue;
-        toInsert.push_back((vIdx)m.numVertices());
-        m.xyz.insert(m.xyz.end(), c, c + 4);
+        keep[i] = close ? 0 : 1;
+      }
+      const std::size_t first = m.numVertices();
+      std::size_t numKept = 0;
+      for(std::size_t i = 0; i < numCandidates; i++) numKept += keep[i];
+      std::vector<vIdx> toInsert(numKept);
+      m.xyz.resize(4 * (first + numKept));
+      for(std::size_t i = 0, j = 0; i < numCandidates; i++) {
+        if(!keep[i]) continue;
+        toInsert[j] = (vIdx)(first + j);
+        std::copy(&pts[4 * i], &pts[4 * i] + 4, &m.xyz[4 * (first + j)]);
+        j++;
       }
       if(toInsert.empty()) break;
+      totalKept += toInsert.size();
       if(opt.verbosity > 0)
         Msg::Info("Refinement round %d: %lu candidates from %lu tets, %lu kept",
                   iter, numCandidates, ntet, toInsert.size());
@@ -292,12 +304,15 @@ namespace pdel3d {
       totalInserted += stats.inserted - before;
       if(stats.inserted == before) break;
     }
+    m.removeDeleted();
     if(opt.verbosity > 0)
-      Msg::Info("Refinement: %lu nodes inserted out of %lu candidates in %lu "
-                "rounds (Wall %gs: candidates "
-                "%g, sizes %g, sort %g, insert %g)",
-                totalInserted, totalCandidates, stats.rounds, TimeOfDay() - t0,
-                timeCandidates, timeSizes, stats.timeSort, stats.timeInsert);
+      Msg::Info(
+        "Refinement: %lu nodes inserted out of %lu candidates (%lu "
+        "kept, %lu filtered on the curve, %lu in their cavity) in %lu "
+        "rounds (Wall %gs: candidates %g, sizes %g, sort %g, insert %g)",
+        totalInserted, totalCandidates, totalKept, stats.curveFiltered,
+        stats.filtered, stats.rounds, TimeOfDay() - t0, timeCandidates,
+        timeSizes, stats.timeSort, stats.timeInsert);
   }
 
 } // namespace pdel3d
