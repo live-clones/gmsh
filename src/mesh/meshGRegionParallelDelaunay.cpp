@@ -3198,8 +3198,8 @@ namespace pdel3d {
       m.removeDeleted(nthreads);
     }
     if(verbosity > 0)
-      Msg::Info("Local boundary recovery: %lu of %lu triangle(s) and %lu of "
-                "%lu line(s) recovered by %lu edge removals (Wall %gs)",
+      Msg::Info("Boundary recovery by edge removals: %lu of %lu triangle(s) "
+                "and %lu of %lu line(s) recovered by %lu removals (Wall %gs)",
                 recoveredTri, missingTri, recoveredLines, missingLines, R.swaps,
                 TimeOfDay() - t0);
     if(verbosity > 5)
@@ -3516,7 +3516,7 @@ namespace pdel3d {
     dopt.sizeFactor = opt.sizeFactor;
     dopt.curveFilterWindow = opt.curveFilterWindow;
     dopt.compact = false; // once at the end
-    dopt.verbosity = opt.verbosity;
+    dopt.verbosity = opt.verbosity - 1; // its lines per round at -v 6
     DelaunayStats stats;
     std::size_t totalCandidates = 0, totalInserted = 0, totalKept = 0;
     double timeCandidates = 0., timeSizes = 0., timeCompact = 0.;
@@ -3621,9 +3621,6 @@ namespace pdel3d {
       timeSizes += timeSizesRound;
       if(toInsert.empty()) break;
       totalKept += toInsert.size();
-      if(opt.verbosity > 0)
-        Msg::Info("Refinement round %d: %lu candidates from %lu tets, %lu kept",
-                  iter, numCandidates, ntet, toInsert.size());
       dopt.partitionability = 1. - std::pow(0.5, iter);
       dopt.numVerticesInMesh = first;
       std::vector<std::uint8_t> status;
@@ -3634,6 +3631,17 @@ namespace pdel3d {
       timeCandidates += t4 - t1;
       timeCompact += TimeOfDay() - t5;
       totalInserted += stats.inserted - before;
+      if(opt.verbosity > 0) {
+        std::size_t numTets = 0;
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  reduction(+ : numTets)
+        for(std::size_t t = 0; t < m.ntet; t++)
+          if(!(m.flag[t] & F_DELETED) && m.color[t] < opt.numVolumes) numTets++;
+        Msg::Info("Refinement round %d: %lu nodes, %lu tets (%lu of %lu "
+                  "candidates inserted, Wall %gs)",
+                  iter, m.numVertices(), numTets, stats.inserted - before,
+                  toInsert.size(), TimeOfDay() - t1);
+      }
       if(stats.inserted == before) break;
     }
     const double t6 = TimeOfDay();
@@ -3641,14 +3649,15 @@ namespace pdel3d {
     timeCompact += TimeOfDay() - t6;
     m.removeDeleted();
     if(opt.verbosity > 0)
-      Msg::Info(
-        "Refinement: %lu nodes inserted out of %lu candidates (%lu "
-        "kept, %lu filtered on the curve, %lu in their cavity) in %lu "
-        "rounds (Wall %gs: candidates %g, sizes %g, sort %g, insert %g, "
-        "compaction %g)",
-        totalInserted, totalCandidates, totalKept, stats.curveFiltered,
-        stats.filtered, stats.rounds, TimeOfDay() - t0, timeCandidates,
-        timeSizes, stats.timeSort, stats.timeInsert, timeCompact);
+      Msg::Info("Refinement: %lu nodes inserted out of %lu candidates in %lu "
+                "rounds (Wall %gs)",
+                totalInserted, totalCandidates, stats.rounds, TimeOfDay() - t0);
+    if(opt.verbosity > 1)
+      Msg::Info("  %lu candidates kept, %lu filtered on the curve, %lu in "
+                "their cavity; candidates %gs, sizes %gs, sort %gs, insert "
+                "%gs, compaction %gs",
+                totalKept, stats.curveFiltered, stats.filtered, timeCandidates,
+                timeSizes, stats.timeSort, stats.timeInsert, timeCompact);
   }
 
 } // namespace pdel3d
@@ -4470,7 +4479,7 @@ namespace {
                 sizeIntersecting, sizeLayer, cavity.size(),
                 TimeOfDay() - tStart);
     if(tooLarge()) {
-      Msg::Info("Local boundary recovery: the cavity is too large (%lu tets)",
+      Msg::Info("Cavity recovery: the cavity is too large (%lu tets)",
                 cavity.size());
       return false;
     }
@@ -4647,32 +4656,28 @@ namespace {
       boundaryRecoveryOutput &out = P.out;
       const int err = meshGRegionBoundaryRecoveryFlat(in, out);
       if(err) {
-        Msg::Info("Local boundary recovery with TetGen failed (error %d) on a "
-                  "cavity of %lu tets",
+        Msg::Info("Cavity recovery failed (error %d) on a cavity of %lu tets",
                   err, comp.size());
         return false;
       }
       for(auto tag : out.changedFaces)
         if(faceOfTag.count(tag) && !faceOfTag[tag]->quadrangles.empty()) {
-          Msg::Info("Local boundary recovery with TetGen: Steiner point on a "
-                    "surface with quadrangles");
+          Msg::Info("Cavity recovery: Steiner point on a surface with "
+                    "quadrangles");
           return false;
         }
       for(auto tag : out.changedFaces)
         if(!faceOfTag.count(tag)) {
           if(tag == BOUNDARY_TAG)
-            Msg::Info("Local boundary recovery with TetGen: Steiner point on "
-                      "the cavity boundary");
+            Msg::Info("Cavity recovery: Steiner point on the cavity boundary");
           else
-            Msg::Info("Local boundary recovery with TetGen: Steiner point on "
-                      "an unknown surface %d",
+            Msg::Info("Cavity recovery: Steiner point on an unknown surface %d",
                       tag);
           return false;
         }
       for(auto tag : out.changedEdges)
         if(tag >= 0 && !curveOfTag.count(tag)) {
-          Msg::Info("Local boundary recovery with TetGen: Steiner point on an "
-                    "unknown curve %d",
+          Msg::Info("Cavity recovery: Steiner point on an unknown curve %d",
                     tag);
           return false;
         }
@@ -4690,7 +4695,7 @@ namespace {
         const double o = robustPredicates::orient3d(coord(n[0]), coord(n[1]),
                                                     coord(n[2]), coord(n[3]));
         if(o == 0.) {
-          Msg::Info("Local boundary recovery with TetGen gave a flat tet");
+          Msg::Info("Cavity recovery gave a flat tet");
           return false;
         }
         if(o > 0.) std::swap(n[0], n[1]);
@@ -4712,8 +4717,7 @@ namespace {
         for(std::size_t i = 0; i < boundary.size(); i++) {
           while(j < inner.size() && less(inner[j], boundary[i])) j++;
           if(j >= inner.size() || !same(boundary[i], inner[j])) {
-            Msg::Info("Local boundary recovery with TetGen changed the cavity "
-                      "boundary");
+            Msg::Info("Cavity recovery changed the cavity boundary");
             return false;
           }
           P.newNeigh[inner[j].ref] = boundary[i].ref;
@@ -4732,8 +4736,7 @@ namespace {
         }
         for(auto r : P.newNeigh)
           if(r == NO_ADJ) {
-            Msg::Info("Local boundary recovery with TetGen: the cavity is not "
-                      "closed");
+            Msg::Info("Cavity recovery: the cavity is not closed");
             return false;
           }
       }
@@ -4910,8 +4913,8 @@ namespace {
     compact(s.triNode, 3, s.triColor, s.triElem, tri2tet, triRemoved);
     compact(s.lineNode, 2, s.lineColor, s.lineElem, line2tet, lineRemoved);
     m.removeDeleted(nthreads);
-    Msg::Info("Local boundary recovery with TetGen: %lu cavit%s of %lu tets "
-              "in all, %lu Steiner point%s (Wall %gs)",
+    Msg::Info("Boundary recovery on cavities: %lu cavit%s of %lu tets in "
+              "all, %lu Steiner point%s (Wall %gs)",
               components.size(), components.size() > 1 ? "ies" : "y",
               numCavityTets, steiner, steiner > 1 ? "s" : "", TimeOfDay() - t0);
     return true;
@@ -5031,7 +5034,9 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
         if(local)
           local =
             pdel3d::lineToTetMap(m, s.lineNode, lineInTriangle, line2tet) == 0;
-        if(!local) Msg::Info("Local boundary recovery incomplete");
+        if(!local)
+          Msg::Info("Local boundary recovery incomplete: falling back to the "
+                    "global one");
       }
     }
     if(!local) {

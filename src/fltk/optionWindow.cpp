@@ -2591,7 +2591,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Parallel Delaunay (experimental)", 0, nullptr, nullptr},
         {"Frontal", 0, nullptr, nullptr},
         {"HXT (experimental)", 0, nullptr, nullptr},
-        {"MMG3D (experimental, single volume only)", 0, nullptr, nullptr},
+        {"MMG3D (experimental)", 0, nullptr, nullptr},
         {"Initial Mesh Only (no node insertion)", 0, nullptr, nullptr},
         {nullptr}};
       static Fl_Menu_Item menu_recombination_algo[] = {

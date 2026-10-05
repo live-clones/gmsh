@@ -1477,10 +1477,8 @@ namespace pdel3d {
         after += spr ? L.reconnections : L.swaps + L.relocations;
       }
       if(opt.verbosity > 0)
-        Msg::Info("Optimization pass %d: %lu bad tets (%lu to try), %lu %s "
-                  "(Wall %gs)",
-                  pass, numBad, bad.size(), after - before,
-                  spr ? "reconnections" : "edge swaps and node relocations",
+        Msg::Info("Optimization pass %d: %lu bad tets, %lu %s (Wall %gs)", pass,
+                  numBad, after - before, spr ? "reconnected" : "improved",
                   TimeOfDay() - t0);
       pass++;
       return after - before;
@@ -1510,11 +1508,14 @@ namespace pdel3d {
     for(std::size_t t = 0; t < m.ntet; t++)
       if(K.inVolume((tIdx)t) && K.qual[t] < 0.001) ill++;
     if(ill) Msg::Warning("%lu ill-shaped tets are still in the mesh", ill);
-    Msg::Info("Optimization: %lu edge swaps (%lu rejected on volume), %lu "
-              "node relocations, %lu reconnections (%lu failed), %lu "
-              "conflicts (Wall %gs)",
-              totalSwaps, totalInvalid, totalRelocations, totalReconnections,
-              totalFailed, totalConflicts, TimeOfDay() - t0);
+    Msg::Info("Optimization: %lu edge swaps, %lu node relocations, %lu "
+              "reconnections (Wall %gs)",
+              totalSwaps, totalRelocations, totalReconnections,
+              TimeOfDay() - t0);
+    if(opt.verbosity > 1)
+      Msg::Info("  %lu swaps rejected on volume, %lu reconnections failed, "
+                "%lu conflicts",
+                totalInvalid, totalFailed, totalConflicts);
     for(auto &L : locals)
       for(auto t : L.deleted)
         for(int k = 0; k < 4; k++) m.neigh[4 * t + k] = NO_ADJ;
