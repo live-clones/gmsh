@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cfloat>
+#include <memory>
 #include "pdel3d.h"
 #include "GmshMessage.h"
 #include "OS.h"
@@ -148,20 +149,17 @@ namespace pdel3d {
       return otherCenterTooClose;
     }
 
-    // drop the vertices from `first` on that no tet references, renumbering
-    // the nodes of the tets
-    void removeUnusedTail(Mesh &m, std::size_t first)
+    // drop the vertices from `first` on that were not inserted (status[i]
+    // is the status of toInsert[i]), renumbering the nodes of the tets
+    void compactNewVertices(Mesh &m, std::size_t first,
+                            const std::vector<vIdx> &toInsert,
+                            const std::vector<std::uint8_t> &status,
+                            int nthreads)
     {
-      const std::size_t nv = m.numVertices();
-      if(first >= nv) return;
-      std::vector<vIdx> newIndex(nv - first, GHOST);
-      for(std::size_t t = 0; t < m.ntet; t++) {
-        if(m.isDeleted((tIdx)t)) continue;
-        for(int k = 0; k < 4; k++) {
-          const vIdx v = m.node[4 * t + k];
-          if(v != GHOST && v >= first) newIndex[v - first] = 0;
-        }
-      }
+      const std::size_t nv = m.numVertices(), nnew = nv - first;
+      std::vector<vIdx> newIndex(nnew, GHOST);
+      for(std::size_t i = 0; i < toInsert.size(); i++)
+        if(status[i] == ST_INSERTED) newIndex[toInsert[i] - first] = 0;
       vIdx n = (vIdx)first;
       for(std::size_t v = first; v < nv; v++) {
         if(newIndex[v - first] == GHOST) continue;
@@ -172,6 +170,8 @@ namespace pdel3d {
       }
       if(n == nv) return;
       m.xyz.resize(4 * n);
+      m.numDefaultDist = std::min(m.numDefaultDist, first);
+#pragma omp parallel for schedule(static) num_threads(nthreads)
       for(std::size_t t = 0; t < m.ntet; t++) {
         if(m.isDeleted((tIdx)t)) continue;
         for(int k = 0; k < 4; k++) {
@@ -188,6 +188,7 @@ namespace pdel3d {
     const double t0 = TimeOfDay();
     const int nthreads = std::max(1, opt.numThreads);
     // only the tets of the volumes are refined
+#pragma omp parallel for schedule(static) num_threads(nthreads)
     for(std::size_t t = 0; t < m.ntet; t++) {
       if(m.isDeleted((tIdx)t)) continue;
       if(m.color[t] >= opt.numVolumes)
@@ -205,25 +206,61 @@ namespace pdel3d {
     dopt.sizeFactor = opt.sizeFactor;
     dopt.curveFilterWindow = opt.curveFilterWindow;
     dopt.compact = false; // once at the end
-    dopt.verbosity = opt.verbosity - 1;
+    dopt.verbosity = opt.verbosity;
     DelaunayStats stats;
     std::size_t totalCandidates = 0, totalInserted = 0, totalKept = 0;
-    double timeCandidates = 0., timeSizes = 0.;
+    double timeCandidates = 0., timeSizes = 0., timeCompact = 0.;
     std::vector<std::vector<double>> localPts(nthreads);
     std::vector<std::vector<tIdx>> localTets(nthreads);
+    std::size_t lastKept = m.ntet / 8;
     for(int iter = 0; iter < 42; iter++) {
       const double t1 = TimeOfDay();
-      // one candidate per unprocessed tet, in the order of the tets
+      // one candidate per unprocessed tet; the unprocessed tets are the new
+      // ones, gathered at the end of the array, hence the dynamic schedule.
+      // The candidates are processed in batches per thread: the size
+      // callback gives them their size, and those too close to a node of
+      // their tet are dropped, while the nodes are still in cache
       const std::size_t ntet = m.ntet;
       std::size_t numCandidates = 0;
-#pragma omp parallel num_threads(nthreads)
+      std::vector<double> localTimeSizes(nthreads, 0.);
+#pragma omp parallel num_threads(nthreads) reduction(+ : numCandidates)
       {
         const int tid = Msg::GetThreadNum();
+        double &timeSizesLocal = localTimeSizes[tid];
         std::vector<double> &pts = localPts[tid];
         std::vector<tIdx> &tets = localTets[tid];
         pts.clear();
         tets.clear();
-#pragma omp for schedule(static)
+        const std::size_t expected = lastKept / nthreads + 4096;
+        pts.reserve(4 * (expected + expected / 4));
+        tets.reserve(expected + expected / 4);
+        constexpr std::size_t B = 2048;
+        double bpts[4 * B];
+        tIdx btets[B];
+        std::uint32_t bcolors[B];
+        std::size_t nb = 0;
+        auto flush = [&]() {
+          if(opt.sizeCallback) {
+            const double ts = TimeOfDay();
+            opt.sizeCallback(bpts, bcolors, nb, opt.sizeData);
+            timeSizesLocal += TimeOfDay() - ts;
+          }
+          for(std::size_t i = 0; i < nb; i++) {
+            const double *q = &bpts[4 * i];
+            bool close = q[3] <= 0.;
+            const vIdx *n = &m.node[4 * btets[i]];
+            for(int k = 0; k < 4 && !close; k++) {
+              const double *x = &m.xyz[4 * n[k]];
+              close = tooClose(x[3], q[3], sqDist(x, q), opt);
+            }
+            if(close) continue;
+            pts.insert(pts.end(), q, q + 4);
+            tets.push_back(btets[i]);
+          }
+          numCandidates += nb;
+          nb = 0;
+        };
+#pragma omp for schedule(dynamic, 4096) nowait
         for(std::size_t t = 0; t < ntet; t++) {
           if(m.flag[t] & (F_PROCESSED | F_DELETED)) continue;
           m.flag[t] |= F_PROCESSED;
@@ -233,88 +270,71 @@ namespace pdel3d {
             for(int k = 0; k < 3; k++) p[i][k] = m.xyz[4 * v + k];
             s[i] = m.xyz[4 * v + 3];
           }
-          double center[4];
+          double *center = &bpts[4 * nb];
           if(bestCenter(p, s, center, opt) && !opt.sizeCallback) continue;
-          pts.insert(pts.end(), center, center + 4);
-          tets.push_back((tIdx)t);
+          btets[nb] = (tIdx)t;
+          bcolors[nb] = m.color[t];
+          if(++nb == B) flush();
         }
+        flush();
       }
+      totalCandidates += numCandidates;
+      if(!numCandidates) break;
+      // the candidates kept, appended to the mesh vertices
       std::vector<std::size_t> offset(nthreads + 1, 0);
       for(int i = 0; i < nthreads; i++)
         offset[i + 1] = offset[i] + localTets[i].size();
-      numCandidates = offset[nthreads];
-      if(!numCandidates) break;
-      std::vector<double> pts(4 * numCandidates);
-      std::vector<tIdx> tets(numCandidates);
-      for(int i = 0; i < nthreads; i++) {
-        std::copy(localPts[i].begin(), localPts[i].end(),
-                  pts.begin() + 4 * offset[i]);
-        std::copy(localTets[i].begin(), localTets[i].end(),
-                  tets.begin() + offset[i]);
-      }
-      totalCandidates += numCandidates;
-      const double t2 = TimeOfDay();
-      // the mesh sizes at the candidates
-      if(opt.sizeCallback) {
-        std::vector<std::uint32_t> colors(numCandidates);
-        for(std::size_t i = 0; i < numCandidates; i++)
-          colors[i] = m.color[tets[i]];
-        opt.sizeCallback(pts.data(), colors.data(), numCandidates,
-                         opt.sizeData);
-      }
-      const double t3 = TimeOfDay();
-      // keep the candidates far enough from the nodes of their tet, appended
-      // to the mesh vertices
-      std::vector<std::uint8_t> keep(numCandidates, 0);
-#pragma omp parallel for schedule(static) num_threads(nthreads)
-      for(std::size_t i = 0; i < numCandidates; i++) {
-        const double *c = &pts[4 * i];
-        if(c[3] <= 0.) continue;
-        const vIdx *n = &m.node[4 * tets[i]];
-        bool close = false;
-        for(int k = 0; k < 4 && !close; k++) {
-          const double *q = &m.xyz[4 * n[k]];
-          close = tooClose(q[3], c[3], sqDist(q, c), opt);
-        }
-        keep[i] = close ? 0 : 1;
-      }
+      const std::size_t numKept = offset[nthreads];
+      lastKept = numKept;
       const std::size_t first = m.numVertices();
-      std::size_t numKept = 0;
-      for(std::size_t i = 0; i < numCandidates; i++) numKept += keep[i];
       std::vector<vIdx> toInsert(numKept);
       std::vector<tIdx> hints(numKept);
+      if(m.xyz.capacity() < 4 * (first + numKept))
+        m.xyz.reserve(4 * (first + numKept) + 2 * (first + numKept));
       m.xyz.resize(4 * (first + numKept));
-      for(std::size_t i = 0, j = 0; i < numCandidates; i++) {
-        if(!keep[i]) continue;
-        toInsert[j] = (vIdx)(first + j);
-        hints[j] = tets[i];
-        std::copy(&pts[4 * i], &pts[4 * i] + 4, &m.xyz[4 * (first + j)]);
-        j++;
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+      for(int i = 0; i < nthreads; i++) {
+        std::copy(localPts[i].begin(), localPts[i].end(),
+                  &m.xyz[4 * (first + offset[i])]);
+        for(std::size_t j = 0; j < localTets[i].size(); j++) {
+          toInsert[offset[i] + j] = (vIdx)(first + offset[i] + j);
+          hints[offset[i] + j] = localTets[i][j];
+        }
       }
+      const double t4 = TimeOfDay();
+      const double timeSizesRound =
+        *std::max_element(localTimeSizes.begin(), localTimeSizes.end());
+      timeSizes += timeSizesRound;
       if(toInsert.empty()) break;
       totalKept += toInsert.size();
       if(opt.verbosity > 0)
         Msg::Info("Refinement round %d: %lu candidates from %lu tets, %lu kept",
                   iter, numCandidates, ntet, toInsert.size());
       dopt.partitionability = 1. - std::pow(0.5, iter);
+      dopt.numVerticesInMesh = first;
       std::vector<std::uint8_t> status;
       const std::size_t before = stats.inserted;
       insertVertices(m, dopt, toInsert, status, &stats, &hints);
-      removeUnusedTail(m, first);
-      timeCandidates += t2 - t1;
-      timeSizes += t3 - t2;
+      const double t5 = TimeOfDay();
+      compactNewVertices(m, first, toInsert, status, nthreads);
+      timeCandidates += t4 - t1 - timeSizesRound;
+      timeCompact += TimeOfDay() - t5;
       totalInserted += stats.inserted - before;
       if(stats.inserted == before) break;
     }
+    const double t6 = TimeOfDay();
+    m.removeDeleted(nthreads);
+    timeCompact += TimeOfDay() - t6;
     m.removeDeleted();
     if(opt.verbosity > 0)
       Msg::Info(
         "Refinement: %lu nodes inserted out of %lu candidates (%lu "
         "kept, %lu filtered on the curve, %lu in their cavity) in %lu "
-        "rounds (Wall %gs: candidates %g, sizes %g, sort %g, insert %g)",
+        "rounds (Wall %gs: candidates %g, sizes %g, sort %g, insert %g, "
+        "compaction %g)",
         totalInserted, totalCandidates, totalKept, stats.curveFiltered,
         stats.filtered, stats.rounds, TimeOfDay() - t0, timeCandidates,
-        timeSizes, stats.timeSort, stats.timeInsert);
+        timeSizes, stats.timeSort, stats.timeInsert, timeCompact);
   }
 
 } // namespace pdel3d

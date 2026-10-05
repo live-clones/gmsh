@@ -611,12 +611,13 @@ namespace pdel3d {
   } // namespace
 
   void mooreCurve(Mesh &m, const double min[3], const double max[3],
-                  const double *shift, std::size_t n)
+                  const double *shift, std::size_t first)
   {
     static const double defaultShift[3] = {0.5, 0.5, 0.5};
     if(!shift) shift = defaultShift;
-    if(!n) n = m.numVertices();
+    const std::size_t n = m.numVertices();
     if(m.dist.size() < n) m.dist.resize(n);
+    if(first >= n) return;
     const double nmax = 2097152.; // 1 << 21, quantization levels per axis
     double widthMax = 0.;
     for(int i = 0; i < 3; i++) widthMax = std::max(widthMax, max[i] - min[i]);
@@ -647,9 +648,9 @@ namespace pdel3d {
       sub1[i] = 2 * middle[i] - xmax;
       while((xmax - sub1[i]) * f1[i] >= nmax) f1[i] = std::nextafter(f1[i], 0.);
     }
-    const int nthreads = CTX::instance()->numThreadsFor(n, 1 << 16);
+    const int nthreads = CTX::instance()->numThreadsFor(n - first, 1 << 16);
 #pragma omp parallel for schedule(static) num_threads(nthreads)
-    for(std::size_t i = 0; i < n; i++) {
+    for(std::size_t i = first; i < n; i++) {
       const double *p = &m.xyz[4 * i];
       std::uint64_t q[3];
       for(int k = 0; k < 3; k++) {

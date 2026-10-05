@@ -430,40 +430,93 @@ namespace {
   }
 
   // give the mesh to the regions: the new vertices (in the volume of the
-  // first tet referencing them) and the tets
-  void exportMesh(pdel3d::Mesh &m, SurfaceMesh &s,
-                  std::vector<GRegion *> &regions)
+  // tets referencing them) and the tets, created in parallel with explicit
+  // numbers (the counters of the model are atomic)
+  std::size_t exportMesh(pdel3d::Mesh &m, SurfaceMesh &s,
+                         std::vector<GRegion *> &regions, int nthreads)
   {
     std::vector<pdel3d::vIdx> newIndex;
-    m.removeUnusedVertices(newIndex);
-    std::vector<MVertex *> c2v(m.numVertices(), nullptr);
-    for(std::size_t v = 0; v < s.vertices.size(); v++)
-      if(newIndex[v] != pdel3d::GHOST) c2v[newIndex[v]] = s.vertices[v];
-    std::vector<std::size_t> numTets(regions.size(), 0);
-    for(std::size_t t = 0; t < m.ntet; t++)
-      if(!m.isGhost((pdel3d::tIdx)t) && m.color[t] < regions.size())
-        numTets[m.color[t]]++;
-    for(std::size_t r = 0; r < regions.size(); r++) {
-      regions[r]->tetrahedra.reserve(regions[r]->tetrahedra.size() +
-                                     numTets[r]);
-      regions[r]->mesh_vertices.reserve(regions[r]->mesh_vertices.size() +
-                                        numTets[r] / 6);
+    m.removeUnusedVertices(newIndex, nthreads);
+    const std::size_t nv = m.numVertices(), nr = regions.size();
+    std::vector<MVertex *> c2v(nv, nullptr);
+    std::size_t numOld = 0;
+    for(std::size_t v = 0; v < s.vertices.size(); v++) {
+      if(newIndex[v] == pdel3d::GHOST) continue;
+      c2v[newIndex[v]] = s.vertices[v];
+      numOld++;
     }
-    for(std::size_t t = 0; t < m.ntet; t++) {
-      if(m.isGhost((pdel3d::tIdx)t) || m.color[t] >= regions.size()) continue;
-      GRegion *gr = regions[m.color[t]];
-      MVertex *vv[4];
-      for(int k = 0; k < 4; k++) {
-        const pdel3d::vIdx v = m.node[4 * t + k];
-        if(!c2v[v]) {
-          const double *x = &m.xyz[4 * v];
-          c2v[v] = new MVertex(x[0], x[1], x[2], gr);
-          gr->mesh_vertices.push_back(c2v[v]);
+    // the surface vertices come first and are all used
+    const std::size_t firstNew = numOld;
+    GModel *model = regions[0]->model();
+    const std::size_t baseV = model->getMaxVertexNumber(),
+                      baseE = model->getMaxElementNumber();
+    const int nt = std::max(1, nthreads);
+    // the region of each new vertex (any tet referencing it)
+    std::vector<std::uint32_t> owner(nv - firstNew, 0);
+    std::vector<std::size_t> chunkTets(nt + 1, 0);
+#pragma omp parallel for schedule(static) num_threads(nt)
+    for(int c = 0; c < nt; c++) {
+      std::size_t count = 0;
+      for(std::size_t t = c * m.ntet / nt; t < (c + 1) * m.ntet / nt; t++) {
+        if(m.isGhost((pdel3d::tIdx)t) || m.color[t] >= nr) continue;
+        count++;
+        for(int k = 0; k < 4; k++) {
+          const pdel3d::vIdx v = m.node[4 * t + k];
+          if(v >= firstNew) owner[v - firstNew] = m.color[t];
         }
-        vv[k] = c2v[v];
       }
-      gr->tetrahedra.push_back(new MTetrahedron(vv[0], vv[1], vv[2], vv[3]));
+      chunkTets[c + 1] = count;
     }
+    for(int c = 0; c < nt; c++) chunkTets[c + 1] += chunkTets[c];
+    const std::size_t total = chunkTets[nt];
+    std::vector<std::vector<std::vector<MVertex *>>> localVertices(
+      nt, std::vector<std::vector<MVertex *>>(nr));
+    std::vector<std::vector<std::vector<MTetrahedron *>>> localTets(
+      nt, std::vector<std::vector<MTetrahedron *>>(nr));
+#pragma omp parallel num_threads(nt)
+    {
+#pragma omp for schedule(static)
+      for(int c = 0; c < nt; c++) {
+        for(std::size_t v = firstNew + c * (nv - firstNew) / nt;
+            v < firstNew + (c + 1) * (nv - firstNew) / nt; v++) {
+          GRegion *gr = regions[owner[v - firstNew]];
+          const double *x = &m.xyz[4 * v];
+          c2v[v] = new MVertex(x[0], x[1], x[2], gr, baseV + 1 + v - firstNew);
+          localVertices[c][owner[v - firstNew]].push_back(c2v[v]);
+        }
+      }
+#pragma omp for schedule(static)
+      for(int c = 0; c < nt; c++) {
+        std::size_t rank = chunkTets[c];
+        for(std::size_t t = c * m.ntet / nt; t < (c + 1) * m.ntet / nt; t++) {
+          if(m.isGhost((pdel3d::tIdx)t) || m.color[t] >= nr) continue;
+          const pdel3d::vIdx *n = &m.node[4 * t];
+          localTets[c][m.color[t]].push_back(
+            new MTetrahedron(c2v[n[0]], c2v[n[1]], c2v[n[2]], c2v[n[3]],
+                             (int)(baseE + 1 + rank++)));
+        }
+      }
+    }
+    model->setMaxVertexNumber(baseV + nv - firstNew);
+    model->setMaxElementNumber(baseE + total);
+    for(std::size_t r = 0; r < nr; r++) {
+      std::size_t numV = 0, numT = 0;
+      for(int c = 0; c < nt; c++) {
+        numV += localVertices[c][r].size();
+        numT += localTets[c][r].size();
+      }
+      GRegion *gr = regions[r];
+      gr->mesh_vertices.reserve(gr->mesh_vertices.size() + numV);
+      gr->tetrahedra.reserve(gr->tetrahedra.size() + numT);
+      for(int c = 0; c < nt; c++) {
+        gr->mesh_vertices.insert(gr->mesh_vertices.end(),
+                                 localVertices[c][r].begin(),
+                                 localVertices[c][r].end());
+        gr->tetrahedra.insert(gr->tetrahedra.end(), localTets[c][r].begin(),
+                              localTets[c][r].end());
+      }
+    }
+    return total;
   }
 
 } // namespace
@@ -620,8 +673,7 @@ int meshGRegionPDel3d(std::vector<GRegion *> &regions)
     t3 = TimeOfDay();
   }
 
-  exportMesh(m, s, regions);
-  Msg::Info("Done exporting %lu tets (Wall %gs)", m.numRealTets(),
-            TimeOfDay() - t3);
+  const std::size_t numTets = exportMesh(m, s, regions, nthreads);
+  Msg::Info("Done exporting %lu tets (Wall %gs)", numTets, TimeOfDay() - t3);
   return 0;
 }

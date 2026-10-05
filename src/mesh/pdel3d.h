@@ -77,8 +77,12 @@ namespace pdel3d {
   struct Mesh {
     // vertices: x, y, z and the mesh size (<= 0: unknown), 4 doubles per vertex
     std::vector<double> xyz;
-    // position of each vertex along the current Moore curve
+    // position of each vertex along the current Moore curve; the first
+    // numDefaultDist entries are valid for the default (unshifted) curve on
+    // the bounding box defaultBox, which saves recomputing them
     std::vector<std::uint64_t> dist;
+    std::size_t numDefaultDist = 0;
+    double defaultBox[6] = {0., 0., 0., 0., 0., 0.};
     // tetrahedra: the arrays are sized to the capacity, the first ntet slots
     // are in use (some of them flagged deleted until removeDeleted())
     std::size_t ntet = 0;
@@ -94,16 +98,16 @@ namespace pdel3d {
     std::size_t tetCapacity() const { return flag.size(); }
     void reserveTets(std::size_t n);
     // drop the deleted tets, keeping the order of the others
-    void removeDeleted();
+    void removeDeleted(int nthreads = 1);
     // number of tets not deleted and not ghosts
     std::size_t numRealTets() const;
     bool isGhost(tIdx t) const { return node[4 * t + 3] == GHOST; }
     bool isDeleted(tIdx t) const { return flag[t] & F_DELETED; }
     // bounding box of the vertices
-    void bbox(double min[3], double max[3]) const;
+    void bbox(double min[3], double max[3], int nthreads = 1) const;
     // drop the vertices not referenced by any tet, keeping the order of the
     // others; newIndex[v] receives the new index of vertex v or GHOST
-    void removeUnusedVertices(std::vector<vIdx> &newIndex);
+    void removeUnusedVertices(std::vector<vIdx> &newIndex, int nthreads = 1);
     // sanity checks: node validity, orientation, adjacency symmetry, and
     // optionally the local Delaunay property across every facet; prints the
     // problems found and returns their number
@@ -185,11 +189,11 @@ namespace pdel3d {
   // relocation, in parallel
   void optimize(Mesh &m, OptimizeOptions &opt);
 
-  // Moore curve coordinate of every vertex (or of the first n), on a cube
+  // Moore curve coordinate of the vertices from `first` on, on a cube
   // enclosing the bounding box; shift[3] in [0, 1] moves the center of the
   // curve, which changes the partitions between rounds
   void mooreCurve(Mesh &m, const double min[3], const double max[3],
-                  const double *shift = nullptr, std::size_t n = 0);
+                  const double *shift = nullptr, std::size_t first = 0);
 
   // Insertion status per vertex
   enum : std::uint8_t {
@@ -215,6 +219,8 @@ namespace pdel3d {
     int curveFilterWindow = 16;
     // 0: nothing is in the mesh yet; 1 - 0.5^n after n refinement rounds
     double partitionability = 0.;
+    // number of vertices already in the mesh, when known (saves a scan)
+    std::size_t numVerticesInMesh = (std::size_t)-1;
     // remove the deleted tets at the end (otherwise they stay as flagged
     // slots until the caller compacts the mesh)
     bool compact = true;

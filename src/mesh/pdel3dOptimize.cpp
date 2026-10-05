@@ -521,6 +521,14 @@ namespace pdel3d {
 
   } // namespace
 
+  namespace {
+    struct badTet {
+      std::uint64_t dist;
+      tIdx t;
+      std::uint8_t todo;
+    };
+  } // namespace
+
   void optimize(Mesh &m, OptimizeOptions &opt)
   {
     const double t0 = TimeOfDay();
@@ -533,6 +541,7 @@ namespace pdel3d {
       K.fixedV[v] = 1;
     // the vertices of the constrained facets and edges, and of the hull, are
     // fixed too
+#pragma omp parallel for schedule(static) num_threads(maxThreads)
     for(std::size_t t = 0; t < m.ntet; t++) {
       if(m.isDeleted((tIdx)t)) continue;
       const vIdx *n = &m.node[4 * t];
@@ -565,6 +574,8 @@ namespace pdel3d {
     auto report = [&](const char *what) -> double {
       double worst = 2., avg = 0.;
       std::size_t count = 0;
+#pragma omp parallel for schedule(static) num_threads(maxThreads)              \
+  reduction(min : worst) reduction(+ : avg, count)
       for(std::size_t t = 0; t < m.ntet; t++) {
         if(!K.inVolume((tIdx)t)) continue;
         worst = std::min(worst, K.qual[t]);
@@ -577,25 +588,28 @@ namespace pdel3d {
     };
     report("starts");
     double bmin[3], bmax[3];
-    m.bbox(bmin, bmax);
+    m.bbox(bmin, bmax, maxThreads);
     std::vector<Local> locals(maxThreads);
+    std::vector<std::vector<badTet>> localBad(maxThreads);
     std::uint32_t seed = 1;
     std::size_t totalSwaps = 0, totalRelocations = 0, totalConflicts = 0;
     std::size_t lastBad = 0;
     for(int pass = 0; pass < opt.maxPasses; pass++) {
       // the bad tets, sorted along the curve
-      struct badTet {
-        std::uint64_t dist;
-        tIdx t;
-        std::uint8_t todo;
-      };
       std::vector<badTet> bad;
       std::size_t numBad = 0;
-      for(std::size_t t = 0; t < m.ntet; t++) {
-        if(!K.inVolume((tIdx)t) || K.qual[t] >= opt.qualityMin) continue;
-        numBad++;
-        if(!(m.flag[t] & F_PROCESSED)) bad.push_back({0, (tIdx)t, 1});
+#pragma omp parallel num_threads(maxThreads) reduction(+ : numBad)
+      {
+        std::vector<badTet> &lb = localBad[Msg::GetThreadNum()];
+        lb.clear();
+#pragma omp for schedule(static)
+        for(std::size_t t = 0; t < m.ntet; t++) {
+          if(!K.inVolume((tIdx)t) || K.qual[t] >= opt.qualityMin) continue;
+          numBad++;
+          if(!(m.flag[t] & F_PROCESSED)) lb.push_back({0, (tIdx)t, 1});
+        }
       }
+      for(auto &lb : localBad) bad.insert(bad.end(), lb.begin(), lb.end());
       if(bad.empty()) break;
       if(pass && numBad >= lastBad) break; // no progress
       lastBad = numBad;
@@ -620,12 +634,13 @@ namespace pdel3d {
           mooreCurve(m, bmin, bmax);
           curveIsDefault = true;
         }
-        for(auto &b : bad) b.dist = m.dist[m.node[4 * b.t]];
-        std::sort(bad.begin(), bad.end(), [](const badTet &x, const badTet &y) {
-          return x.dist < y.dist;
-        });
+#pragma omp parallel for schedule(static) num_threads(maxThreads)
+        for(std::size_t i = 0; i < bad.size(); i++)
+          bad[i].dist = m.dist[m.node[4 * bad[i].t]];
+        sortByDist(bad.data(), bad.size(), maxThreads);
         std::vector<std::uint64_t> dists(bad.size());
         std::vector<std::uint8_t> todo(bad.size());
+#pragma omp parallel for schedule(static) num_threads(maxThreads)
         for(std::size_t i = 0; i < bad.size(); i++) {
           dists[i] = bad[i].dist;
           todo[i] = bad[i].todo;
@@ -695,6 +710,8 @@ namespace pdel3d {
     // report before the compaction, which renumbers the tets
     report("done");
     std::size_t ill = 0;
+#pragma omp parallel for schedule(static) num_threads(maxThreads)              \
+  reduction(+ : ill)
     for(std::size_t t = 0; t < m.ntet; t++)
       if(K.inVolume((tIdx)t) && K.qual[t] < 0.001) ill++;
     if(ill) Msg::Warning("%lu ill-shaped tets are still in the mesh", ill);
@@ -704,7 +721,8 @@ namespace pdel3d {
     for(auto &L : locals)
       for(auto t : L.deleted)
         for(int k = 0; k < 4; k++) m.neigh[4 * t + k] = NO_ADJ;
-    m.removeDeleted();
+    m.numDefaultDist = 0;
+    m.removeDeleted(maxThreads);
   }
 
 } // namespace pdel3d

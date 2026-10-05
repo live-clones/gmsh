@@ -37,32 +37,62 @@ namespace pdel3d {
     return n;
   }
 
-  void Mesh::removeDeleted()
+  void Mesh::removeDeleted(int nthreads)
   {
+    // new index of every tet: counted per chunk, then offset
     std::vector<tIdx> newIndex(ntet);
-    tIdx n = 0;
-    for(std::size_t t = 0; t < ntet; t++)
-      newIndex[t] = isDeleted((tIdx)t) ? NO_TET : n++;
+    const int nchunks = std::max(1, nthreads);
+    std::vector<std::size_t> liveBefore(nchunks + 1, 0);
+#pragma omp parallel num_threads(nchunks)
+    {
+#pragma omp for schedule(static)
+      for(int c = 0; c < nchunks; c++) {
+        tIdx n = 0;
+        for(std::size_t t = c * ntet / nchunks; t < (c + 1) * ntet / nchunks;
+            t++)
+          newIndex[t] = isDeleted((tIdx)t) ? NO_TET : n++;
+        liveBefore[c + 1] = n;
+      }
+#pragma omp single
+      for(int c = 0; c < nchunks; c++) liveBefore[c + 1] += liveBefore[c];
+#pragma omp for schedule(static)
+      for(int c = 0; c < nchunks; c++) {
+        const tIdx off = (tIdx)liveBefore[c];
+        for(std::size_t t = c * ntet / nchunks; t < (c + 1) * ntet / nchunks;
+            t++)
+          if(newIndex[t] != NO_TET) newIndex[t] += off;
+      }
+    }
+    const std::size_t n = liveBefore[nchunks];
     if(n == ntet) return;
+    // move the tets (never upwards, so in sequence), then renumber the
+    // adjacencies in parallel
     for(std::size_t t = 0; t < ntet; t++) {
       const tIdx s = newIndex[t];
-      if(s == NO_TET) continue;
+      if(s == NO_TET || s == t) continue;
       for(int k = 0; k < 4; k++) {
         node[4 * s + k] = node[4 * t + k];
-        const tRef r = neigh[4 * t + k];
-        neigh[4 * s + k] =
-          (r == NO_ADJ) ? NO_ADJ : 4 * newIndex[r >> 2] + (r & 3);
+        neigh[4 * s + k] = neigh[4 * t + k];
       }
       flag[s] = flag[t];
       if(!color.empty()) color[s] = color[t];
     }
+#pragma omp parallel for schedule(static) num_threads(nchunks)
+    for(std::size_t s = 0; s < n; s++) {
+      for(int k = 0; k < 4; k++) {
+        const tRef r = neigh[4 * s + k];
+        if(r != NO_ADJ) neigh[4 * s + k] = 4 * newIndex[r >> 2] + (r & 3);
+      }
+    }
     ntet = n;
   }
 
-  void Mesh::removeUnusedVertices(std::vector<vIdx> &newIndex)
+  void Mesh::removeUnusedVertices(std::vector<vIdx> &newIndex, int nthreads)
   {
     const std::size_t nv = numVertices();
     newIndex.assign(nv, GHOST);
+    const int nt = std::max(1, nthreads);
+#pragma omp parallel for schedule(static) num_threads(nt)
     for(std::size_t t = 0; t < ntet; t++) {
       if(isDeleted((tIdx)t)) continue;
       for(int k = 0; k < 4; k++)
@@ -73,11 +103,13 @@ namespace pdel3d {
       if(newIndex[v] != GHOST) newIndex[v] = n++;
     if(n == nv) return;
     for(std::size_t v = 0; v < nv; v++) {
-      if(newIndex[v] == GHOST) continue;
+      if(newIndex[v] == GHOST || newIndex[v] == v) continue;
       for(int k = 0; k < 4; k++) xyz[4 * newIndex[v] + k] = xyz[4 * v + k];
     }
     xyz.resize(4 * n);
     dist.clear();
+    numDefaultDist = 0;
+#pragma omp parallel for schedule(static) num_threads(nt)
     for(std::size_t t = 0; t < ntet; t++) {
       if(isDeleted((tIdx)t)) continue;
       for(int k = 0; k < 4; k++)
@@ -86,16 +118,29 @@ namespace pdel3d {
     }
   }
 
-  void Mesh::bbox(double min[3], double max[3]) const
+  void Mesh::bbox(double min[3], double max[3], int nthreads) const
   {
     for(int k = 0; k < 3; k++) {
       min[k] = 1.e300;
       max[k] = -1.e300;
     }
-    for(std::size_t i = 0; i < numVertices(); i++) {
+    const std::size_t n = numVertices();
+    const int nt = std::max(1, nthreads);
+#pragma omp parallel num_threads(nt)
+    {
+      double lmin[3] = {1.e300, 1.e300, 1.e300};
+      double lmax[3] = {-1.e300, -1.e300, -1.e300};
+#pragma omp for schedule(static)
+      for(std::size_t i = 0; i < n; i++) {
+        for(int k = 0; k < 3; k++) {
+          lmin[k] = std::min(lmin[k], xyz[4 * i + k]);
+          lmax[k] = std::max(lmax[k], xyz[4 * i + k]);
+        }
+      }
+#pragma omp critical
       for(int k = 0; k < 3; k++) {
-        min[k] = std::min(min[k], xyz[4 * i + k]);
-        max[k] = std::max(max[k], xyz[4 * i + k]);
+        min[k] = std::min(min[k], lmin[k]);
+        max[k] = std::max(max[k], lmax[k]);
       }
     }
   }
@@ -236,6 +281,8 @@ namespace pdel3d {
       std::vector<tIdx> cavIndexKey;
       std::vector<std::uint32_t> cavIndexVal;
       // statistics
+      std::size_t conflictWalk = 0, conflictDig = 0, noStart = 0;
+      std::size_t hintUsed = 0, hintDead = 0, hintOut = 0;
       std::size_t inserted = 0, filtered = 0, duplicates = 0, conflicts = 0,
                   walkFailed = 0;
       bool noSpace = false;
@@ -345,7 +392,10 @@ namespace pdel3d {
                 return OK;
               }
               if(outOfPartition(m, n, P)) {
-                if(wantOther++ > 1000) return CONFLICT;
+                if(wantOther++ > 1000) {
+                  L.curTet = next;
+                  return CONFLICT;
+                }
               }
               else {
                 index = i;
@@ -354,7 +404,10 @@ namespace pdel3d {
             }
           }
           if(index == 4) {
-            if(outside) return CONFLICT;
+            if(outside) {
+              L.curTet = next; // all the way to the partition boundary
+              return CONFLICT;
+            }
             const double *a = &m.xyz[4 * curNode[0]],
                          *b = &m.xyz[4 * curNode[1]],
                          *c = &m.xyz[4 * curNode[2]],
@@ -407,6 +460,8 @@ namespace pdel3d {
         L.ball.clear();
         const Partition &P = L.partition;
         const bool perfect = opt.perfectDelaunay;
+        const double *p = &m.xyz[4 * vta];
+        const double filterSize = opt.filterOnSize ? p[3] : 0.;
         for(std::size_t start = L.deleted.size() - 1; start < L.deleted.size();
             start++) {
           const tIdx cur = L.deleted[start];
@@ -426,7 +481,17 @@ namespace pdel3d {
             }
             else {
               const vIdx n = m.node[r]; // the node of nb not in cur
-              if(n != GHOST && outOfPartition(m, n, P)) return CONFLICT;
+              if(n != GHOST) {
+                if(outOfPartition(m, n, P)) return CONFLICT;
+                // a cavity vertex too close to vta: stop digging right away
+                // (the cavities of the first points of a refinement are huge
+                // and most of those points are filtered)
+                if(filterSize > 0.) {
+                  const double *q = &m.xyz[4 * n];
+                  const double sn = q[3] > 0. ? q[3] : filterSize;
+                  if(tooClose(filterSize, sn, sqDist(p, q))) return TOO_CLOSE;
+                }
+              }
               L.deleted.push_back(nb);
               setDeleted(m, nb);
             }
@@ -761,14 +826,27 @@ namespace pdel3d {
         return true;
       }
 
-      Status insert(Local &L, vIdx vta, tIdx hint, bool checkPartition)
+      // hint is the tet where the walk starts when it is alive and in the
+      // partition; it receives the tet reached by the walk (the one
+      // containing vta, or a tet near it on a conflict), where a retry starts
+      Status insert(Local &L, vIdx vta, tIdx &hint, bool checkPartition)
       {
         const std::size_t prevDeleted = L.deleted.size();
         if(hint != NO_TET && hint < ntet && !m.isDeleted(hint) &&
-           (!checkPartition || tetInPartition(m, hint, L.partition)))
+           (!checkPartition || tetInPartition(m, hint, L.partition))) {
           L.curTet = hint;
+          L.hintUsed++;
+        }
+        else if(hint == NO_TET || hint >= ntet || m.isDeleted(hint))
+          L.hintDead++;
+        else
+          L.hintOut++;
         Status st = walk(L, vta);
-        if(st != OK) return st;
+        hint = L.curTet;
+        if(st != OK) {
+          if(st == CONFLICT) L.conflictWalk++;
+          return st;
+        }
         const tIdx t0 = L.curTet;
         const std::uint32_t color =
           m.color.empty() ? Mesh::COLOR_OUT : m.color[t0];
@@ -787,6 +865,7 @@ namespace pdel3d {
         bool edgeConstraint = false;
         st = dig(L, t0, vta, edgeConstraint);
         if(st != OK) {
+          if(st == CONFLICT) L.conflictDig++;
           restoreDeleted(L, prevDeleted);
           return st;
         }
@@ -926,7 +1005,7 @@ namespace pdel3d {
       unsigned npasses = 0;
       passes[0] = nToInsert;
       for(unsigned i = 0; i < 10; i++) {
-        if(passes[i] < 2048 || passes[i] / 8 < nInserted) {
+        if(passes[i] < 512 || passes[i] / 8 < nInserted) {
           passes[i + 1] = 0;
           npasses = i + 1;
           break;
@@ -936,13 +1015,6 @@ namespace pdel3d {
       for(unsigned i = 0; i <= npasses / 2; i++)
         std::swap(passes[i], passes[npasses - i]);
       return npasses;
-    }
-
-    void sortByDist(NodeInfo *first, std::size_t n)
-    {
-      std::sort(first, first + n, [](const NodeInfo &a, const NodeInfo &b) {
-        return a.dist < b.dist;
-      });
     }
 
   } // namespace
@@ -966,7 +1038,7 @@ namespace pdel3d {
       info[i] = {toInsert[i], 0, hints ? (*hints)[i] : NO_TET, ST_TODO};
 
     double bmin[3], bmax[3];
-    m.bbox(bmin, bmax);
+    m.bbox(bmin, bmax, maxPartitions);
     robustPredicates::exactinit(
       std::max(std::fabs(bmin[0]), std::fabs(bmax[0])),
       std::max(std::fabs(bmin[1]), std::fabs(bmax[1])),
@@ -974,8 +1046,11 @@ namespace pdel3d {
 
     const bool firstPassEver = (m.ntet == 0);
     std::size_t numInMesh = 0;
-    if(!firstPassEver) {
+    if(!firstPassEver && opt.numVerticesInMesh != (std::size_t)-1)
+      numInMesh = opt.numVerticesInMesh;
+    else if(!firstPassEver) {
       std::vector<std::uint8_t> used(m.numVertices(), 0);
+#pragma omp parallel for schedule(static) num_threads(maxPartitions)
       for(std::size_t t = 0; t < m.ntet; t++) {
         if(m.isDeleted((tIdx)t)) continue;
         for(int k = 0; k < 4; k++)
@@ -994,12 +1069,26 @@ namespace pdel3d {
       for(std::size_t i = nToInsert - 1; i > 0; i--)
         std::swap(info[i], info[lcg(seed) % (i + 1)]);
     }
-    mooreCurve(m, bmin, bmax);
+    // the default curve: only the vertices without a valid coordinate
+    {
+      bool sameBox = m.numDefaultDist <= m.numVertices();
+      for(int k = 0; k < 3 && sameBox; k++)
+        sameBox = m.defaultBox[k] == bmin[k] && m.defaultBox[3 + k] == bmax[k];
+      if(!sameBox) m.numDefaultDist = 0;
+      mooreCurve(m, bmin, bmax, nullptr, m.numDefaultDist);
+      m.numDefaultDist = m.numVertices();
+      for(int k = 0; k < 3; k++) {
+        m.defaultBox[k] = bmin[k];
+        m.defaultBox[3 + k] = bmax[k];
+      }
+    }
     bool curveIsDefault = true;
+    std::vector<std::uint64_t> defaultDist; // kept while a shifted curve is on
+#pragma omp parallel for schedule(static) num_threads(maxPartitions)
     for(std::size_t i = 0; i < nToInsert; i++)
       info[i].dist = m.dist[info[i].node];
     for(unsigned i = firstPassEver ? 1 : 0; i < npasses; i++)
-      sortByDist(&info[passes[i]], passes[i + 1] - passes[i]);
+      sortByDist(&info[passes[i]], passes[i + 1] - passes[i], maxPartitions);
     std::vector<vIdx> originalIndex;
     if(opt.reorderVertices && firstPassEver && nToInsert == m.numVertices()) {
       std::vector<double> xyz(4 * nToInsert);
@@ -1037,8 +1126,10 @@ namespace pdel3d {
         const std::size_t passLength = passEnd - passStart;
         NodeInfo *pass = &info[passStart];
         double startShift = 0.;
+        bool resort = true;
+        const double tr0 = TimeOfDay();
         nthreads =
-          computeNumberOfThreads(conflictRatio, nthreads, passLength, 2048);
+          computeNumberOfThreads(conflictRatio, nthreads, passLength, 512);
         nrounds++;
 
         // (re)compute the curve: shifted at random for the retries of a
@@ -1046,18 +1137,21 @@ namespace pdel3d {
         if(iround > 0 && nthreads > 1) {
           double shift[3] = {lcg01(seed), lcg01(seed), lcg01(seed)};
           startShift = lcg01(seed);
+          if(curveIsDefault) defaultDist.swap(m.dist);
           mooreCurve(m, bmin, bmax, shift);
           curveIsDefault = false;
-          for(std::size_t i = 0; i < passLength; i++)
-            pass[i].dist = m.dist[pass[i].node];
-          sortByDist(pass, passLength);
         }
         else if(!curveIsDefault) {
-          mooreCurve(m, bmin, bmax);
+          m.dist.swap(defaultDist);
           curveIsDefault = true;
+        }
+        else
+          resort = false;
+        if(resort) {
+#pragma omp parallel for schedule(static) num_threads(maxPartitions)
           for(std::size_t i = 0; i < passLength; i++)
             pass[i].dist = m.dist[pass[i].node];
-          sortByDist(pass, passLength);
+          sortByDist(pass, passLength, maxPartitions);
         }
 
         // filter the vertices too close to one of the last vertices kept
@@ -1066,39 +1160,55 @@ namespace pdel3d {
         std::size_t curveSkipped = 0;
         if(opt.filterOnSize) {
           const int W = std::max(1, std::min(opt.curveFilterWindow, 64));
-          const double *ring[64];
-          int nring = 0, head = 0;
-          for(std::size_t i = 0; i < passLength; i++) {
-            if(pass[i].status != ST_TODO) continue;
-            const double *p2 = &m.xyz[4 * pass[i].node];
-            bool close = false;
-            for(int k = 0; k < nring && !close; k++)
-              close =
-                K.tooClose(ring[k][3], p2[3], Kernel::sqDist(ring[k], p2));
-            if(close) {
-              pass[i].status = ST_FILTERED;
-              curveSkipped++;
-            }
-            else {
-              ring[head] = p2;
-              head = (head + 1) % W;
-              if(nring < W) nring++;
+          // in chunks, each with its own window (a few checks are lost at
+          // the chunk boundaries)
+          const int nchunks =
+            (int)std::min<std::size_t>(maxPartitions, 1 + passLength / 4096);
+#pragma omp parallel for schedule(static) num_threads(nchunks)                 \
+  reduction(+ : curveSkipped)
+          for(int c = 0; c < nchunks; c++) {
+            const double *ring[64];
+            int nring = 0, head = 0;
+            for(std::size_t i = c * passLength / nchunks;
+                i < (c + 1) * passLength / nchunks; i++) {
+              if(pass[i].status != ST_TODO) continue;
+              const double *p2 = &m.xyz[4 * pass[i].node];
+              bool close = false;
+              for(int k = 0; k < nring && !close; k++)
+                close =
+                  K.tooClose(ring[k][3], p2[3], Kernel::sqDist(ring[k], p2));
+              if(close) {
+                pass[i].status = ST_FILTERED;
+                curveSkipped++;
+              }
+              else {
+                ring[head] = p2;
+                head = (head + 1) % W;
+                if(nring < W) nring++;
+              }
             }
           }
         }
 
         // partitions: contiguous pieces of the (circular) sorted pass
         {
+          // the first round balances the vertices to insert; the retries
+          // balance all the vertices of the pass instead: the vertices left
+          // by the conflicts lie on the former partition boundaries, and
+          // balancing them alone gives thin partitions around those
+          // boundaries, which conflict again
           std::vector<std::uint64_t> dists(passLength);
           std::vector<std::uint8_t> todo(passLength);
+#pragma omp parallel for schedule(static) num_threads(maxPartitions)
           for(std::size_t i = 0; i < passLength; i++) {
             dists[i] = pass[i].dist;
-            todo[i] = pass[i].status == ST_TODO;
+            todo[i] = iround > 0 || pass[i].status == ST_TODO;
           }
           std::vector<Partition> parts(std::max(1, nthreads));
-          nthreads = makePartitions(dists.data(), todo.data(), passLength,
-                                    passLength - curveSkipped, nthreads,
-                                    startShift, parts);
+          nthreads =
+            makePartitions(dists.data(), todo.data(), passLength,
+                           iround > 0 ? passLength : passLength - curveSkipped,
+                           nthreads, startShift, parts);
           for(int i = 0; i < nthreads; i++) locals[i].partition = parts[i];
         }
 
@@ -1117,26 +1227,40 @@ namespace pdel3d {
           ranOutOfSpace = false;
         }
 
+        const double tr1 = TimeOfDay();
 #pragma omp parallel num_threads(nthreads)
         {
           const int tid = Msg::GetThreadNum();
           Local &L = locals[tid];
           L.noSpace = false;
           const Partition &P = L.partition;
-          // starting tet: any live tet of the partition
+          // starting tet: the hint of the first vertex when it is alive and
+          // in the partition, otherwise any live tet of the partition
           L.curTet = NO_TET;
-          for(std::size_t t = 0; t < K.ntet; t++) {
-            if(!m.isDeleted((tIdx)t) &&
-               (nthreads == 1 || tetInPartition(m, (tIdx)t, P))) {
-              L.curTet = (tIdx)t;
-              break;
+          for(std::size_t i = 0; i < P.numElem; i++) {
+            NodeInfo &ni = pass[(P.firstElem + i) % passLength];
+            if(ni.status != ST_TODO) continue;
+            if(L.noSpace) continue;
+            if(L.curTet == NO_TET) {
+              if(ni.hint != NO_TET && ni.hint < K.ntet &&
+                 !m.isDeleted(ni.hint) &&
+                 (nthreads == 1 || tetInPartition(m, ni.hint, P)))
+                L.curTet = ni.hint;
+              else {
+                for(std::size_t t = 0; t < K.ntet; t++) {
+                  if(!m.isDeleted((tIdx)t) &&
+                     (nthreads == 1 || tetInPartition(m, (tIdx)t, P))) {
+                    L.curTet = (tIdx)t;
+                    break;
+                  }
+                }
+                if(L.curTet == NO_TET) {
+                  L.noStart++;
+                  break;
+                }
+              }
             }
-          }
-          if(L.curTet != NO_TET) {
-            for(std::size_t i = 0; i < P.numElem; i++) {
-              NodeInfo &ni = pass[(P.firstElem + i) % passLength];
-              if(ni.status != ST_TODO) continue;
-              if(L.noSpace) continue;
+            {
               switch(K.insert(L, ni.node, ni.hint, nthreads > 1)) {
               case OK:
                 ni.status = ST_INSERTED;
@@ -1195,15 +1319,33 @@ namespace pdel3d {
         // the vertices left by a lack of space are not conflicts
         if(passLength != numSkipped && !ranOutOfSpace)
           conflictRatio = (double)numConflict / (passLength - numSkipped);
-        if(opt.verbosity > 1)
-          Msg::Info("%3d thrd | %10lu / %-10lu inserted (%.1f%%), %lu filtered",
+        if(opt.verbosity > 1) {
+          std::size_t cw = 0, cd = 0, ns = 0, hu = 0, hd = 0, ho = 0;
+          for(int i = 0; i < nthreads; i++) {
+            cw += locals[i].conflictWalk;
+            cd += locals[i].conflictDig;
+            ns += locals[i].noStart;
+            hu += locals[i].hintUsed;
+            hd += locals[i].hintDead;
+            ho += locals[i].hintOut;
+            locals[i].conflictWalk = locals[i].conflictDig = locals[i].noStart =
+              0;
+            locals[i].hintUsed = locals[i].hintDead = locals[i].hintOut = 0;
+          }
+          Msg::Info("%3d thrd | %10lu / %-10lu inserted (%.1f%%), %lu filtered "
+                    "(setup %.4fs, insertion %.4fs; conflicts: walk %lu, "
+                    "cavity %lu, no start %lu; hints used %lu, dead %lu, out "
+                    "%lu)",
                     nthreads, numInserted, passLength - numSkipped,
                     100. * numInserted /
                       std::max<std::size_t>(1, passLength - numSkipped),
-                    numSkipped);
+                    numSkipped, tr1 - tr0, TimeOfDay() - tr1, cw, cd, ns, hu,
+                    hd, ho);
+        }
         passes[ipass] += shift;
       }
     }
+    if(!curveIsDefault) m.dist.swap(defaultDist);
     for(auto &L : locals) {
       totalFiltered += L.filtered;
       totalDuplicates += L.duplicates;
@@ -1211,7 +1353,7 @@ namespace pdel3d {
       for(auto t : L.deleted)
         for(int k = 0; k < 4; k++) m.neigh[4 * t + k] = NO_ADJ;
     }
-    if(opt.compact) m.removeDeleted();
+    if(opt.compact) m.removeDeleted(maxPartitions);
     if(!originalIndex.empty()) {
       for(std::size_t i = 0; i < nToInsert; i++) {
         toInsert[i] = originalIndex[i];

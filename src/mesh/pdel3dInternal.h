@@ -99,6 +99,66 @@ namespace pdel3d {
     return std::min(maxThreadsInRound, numThreads);
   }
 
+  // Sort the items on their dist member (ascending), in parallel: a sample
+  // sort with 4 buckets per thread, each bucket sorted by one thread
+  template <class T> void sortByDist(T *items, std::size_t n, int nthreads)
+  {
+    auto cmp = [](const T &a, const T &b) { return a.dist < b.dist; };
+    if(nthreads < 2 || n < 65536) {
+      std::sort(items, items + n, cmp);
+      return;
+    }
+    const int nb = 4 * nthreads;
+    const std::size_t ns = 64 * (std::size_t)nb;
+    std::vector<std::uint64_t> sample(ns);
+    for(std::size_t i = 0; i < ns; i++)
+      sample[i] = items[(std::size_t)((i + 0.5) * n / ns)].dist;
+    std::sort(sample.begin(), sample.end());
+    std::vector<std::uint64_t> split(nb - 1);
+    for(int b = 0; b + 1 < nb; b++) split[b] = sample[(b + 1) * ns / nb];
+    // count[c * nb + b]: items of chunk c in bucket b, then where they go
+    std::vector<std::size_t> count((std::size_t)nthreads * nb, 0);
+    std::vector<std::size_t> bucketStart(nb + 1, 0);
+    std::vector<T> tmp(n);
+    auto bucket = [&](std::uint64_t d) {
+      return (int)(std::upper_bound(split.begin(), split.end(), d) -
+                   split.begin());
+    };
+#pragma omp parallel num_threads(nthreads)
+    {
+#pragma omp for schedule(static)
+      for(int c = 0; c < nthreads; c++) {
+        std::size_t *cnt = &count[(std::size_t)c * nb];
+        for(std::size_t i = c * n / nthreads; i < (c + 1) * n / nthreads; i++)
+          cnt[bucket(items[i].dist)]++;
+      }
+#pragma omp single
+      {
+        std::size_t pos = 0;
+        for(int b = 0; b < nb; b++) {
+          bucketStart[b] = pos;
+          for(int c = 0; c < nthreads; c++) {
+            const std::size_t k = count[(std::size_t)c * nb + b];
+            count[(std::size_t)c * nb + b] = pos;
+            pos += k;
+          }
+        }
+        bucketStart[nb] = pos;
+      }
+#pragma omp for schedule(static)
+      for(int c = 0; c < nthreads; c++) {
+        std::size_t *pos = &count[(std::size_t)c * nb];
+        for(std::size_t i = c * n / nthreads; i < (c + 1) * n / nthreads; i++)
+          tmp[pos[bucket(items[i].dist)]++] = items[i];
+      }
+#pragma omp for schedule(dynamic)
+      for(int b = 0; b < nb; b++)
+        std::sort(&tmp[bucketStart[b]], &tmp[0] + bucketStart[b + 1], cmp);
+#pragma omp for schedule(static)
+      for(std::size_t i = 0; i < n; i++) items[i] = tmp[i];
+    }
+  }
+
   inline std::uint32_t lcg(std::uint32_t &seed)
   {
     seed = seed * 1664525u + 1013904223u;
