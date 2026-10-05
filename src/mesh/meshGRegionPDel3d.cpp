@@ -585,9 +585,11 @@ int meshGRegionPDel3d(std::vector<GRegion *> &regions)
     std::size_t notInserted = 0;
     for(std::size_t i = 0; i < nv; i++)
       if(status[i] != pdel3d::ST_INSERTED) notInserted++;
-    if(notInserted)
-      Msg::Warning("%lu surface node(s) could not be inserted (duplicates?)",
-                   notInserted);
+    if(notInserted) {
+      Msg::Warning("%lu surface node(s) could not be inserted", notInserted);
+      if(Msg::GetVerbosity() > 5) m.verify(true);
+      return 2;
+    }
   }
   const double t1 = TimeOfDay();
   Msg::Info("Done tetrahedrizing %lu nodes (Wall %gs)", nv, t1 - t0);

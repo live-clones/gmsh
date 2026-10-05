@@ -70,6 +70,7 @@ namespace pdel3d {
       Partition partition;
       std::vector<tIdx> cavity, visited;
       std::size_t swaps = 0, relocations = 0, conflicts = 0;
+      std::size_t invalidSwaps = 0;
       bool noSpace = false;
     };
 
@@ -98,20 +99,26 @@ namespace pdel3d {
       }
 
       // a free slot for a new tet
-      tIdx newSlot(Local &L)
+      // make sure n free slots are available before a cavity is modified
+      bool ensureFreeSlots(Local &L, std::size_t n)
       {
-        if(L.deleted.empty()) {
+        while(L.deleted.size() < n) {
           const std::size_t first = ntet.fetch_add(BLOCK);
           const std::size_t last = std::min(first + BLOCK, cap);
+          if(first >= last) {
+            L.noSpace = true;
+            return false;
+          }
           for(std::size_t t = first; t < last; t++) {
             m.flag[t] = F_DELETED;
             L.deleted.push_back((tIdx)t);
           }
-          if(L.deleted.empty()) {
-            L.noSpace = true;
-            return NO_TET;
-          }
         }
+        return true;
+      }
+
+      tIdx newSlot(Local &L)
+      {
         const tIdx t = L.deleted.back();
         L.deleted.pop_back();
         return t;
@@ -177,7 +184,48 @@ namespace pdel3d {
           for(outF = 0; outF < 3; outF++)
             if(nn[outF] == r) break;
         } while(cur != t);
-        return C.n >= 3 ? OK : NOT_BETTER;
+        if(C.n < 3) return NOT_BETTER;
+        // a consistent mesh gives distinct ring vertices and outer tets that
+        // share the facets: anything else means the mesh is corrupted
+        for(int i = 0; i < C.n; i++) {
+          bool bad = C.ring[i] == C.a || C.ring[i] == C.b;
+          for(int j = 0; j < i && !bad; j++) bad = C.ring[i] == C.ring[j];
+          for(int side = 0; side < 2 && !bad; side++) {
+            const tRef out = side ? C.outB[i] : C.outA[i];
+            const tIdx o = out >> 2;
+            if(out == NO_ADJ || o >= cap || m.isDeleted(o)) {
+              bad = true;
+              break;
+            }
+            const vIdx x = side ? C.b : C.a, rp = C.ring[(i + C.n - 1) % C.n],
+                       r = C.ring[i];
+            int found = 0;
+            for(unsigned k = 0; k < 4; k++) {
+              if(k == (out & 3)) continue;
+              const vIdx v = m.node[4 * o + k];
+              found += (v == x) + (v == rp) + (v == r);
+            }
+            bad = found != 3;
+          }
+          if(bad) {
+            static int reports = 0;
+            if(reports++ < 5) {
+              Msg::Warning("Inconsistent ring of %d tets around edge %u-%u of "
+                           "tet %u (ring vertex %d: %u, outA %u outB %u)",
+                           C.n, C.a, C.b, t, i, C.ring[i], C.outA[i] >> 2,
+                           C.outB[i] >> 2);
+              for(int j = 0; j < C.n; j++) {
+                const vIdx *n = &m.node[4 * C.tet[j]];
+                Msg::Warning("  ring tet %u: nodes %u %u %u %u flag 0x%x color "
+                             "%u ring %u",
+                             C.tet[j], n[0], n[1], n[2], n[3], m.flag[C.tet[j]],
+                             m.color[C.tet[j]], C.ring[j]);
+              }
+            }
+            return NOT_BETTER;
+          }
+        }
+        return OK;
       }
 
       Status edgeRemoval(Local &L, tIdx t, int e)
@@ -196,9 +244,18 @@ namespace pdel3d {
         case 7: BuildSwapPattern7(&sp); break;
         default: return NOT_BETTER;
         }
-        // the two tets on each possible triangle of the ring
+        // the two tets on each possible triangle of the ring. The new tets
+        // must have a positive volume, and their volumes must add up to the
+        // volume of the ring: a triangle outside the ring polygon can give
+        // positive tets that cover existing ones twice
         const double *pa = &m.xyz[4 * C.a], *pb = &m.xyz[4 * C.b];
-        double qa[35], qb[35];
+        double ringVol = 0.;
+        for(int i = 0; i < C.n; i++) {
+          const vIdx *n = &m.node[4 * C.tet[i]];
+          ringVol -= orient3dFast(&m.xyz[4 * n[0]], &m.xyz[4 * n[1]],
+                                  &m.xyz[4 * n[2]], &m.xyz[4 * n[3]]);
+        }
+        double qa[35], qb[35], vol[35];
         bool flip[35];
         for(int i = 0; i < sp.nbr_triangles; i++) {
           const vIdx r0 = C.ring[sp.triangles[i][0]],
@@ -210,9 +267,11 @@ namespace pdel3d {
           const double db = orient3dFast(p0, p1, p2, pb);
           if(da * db >= 0.) { // a and b on the same side: not a valid pair
             qa[i] = qb[i] = -1.;
+            vol[i] = 0.;
             flip[i] = false;
             continue;
           }
+          vol[i] = std::fabs(da) + std::fabs(db);
           flip[i] = da > 0.;
           if(flip[i]) {
             qa[i] = gammaQuality(p1, p0, p2, pa, -da);
@@ -226,11 +285,16 @@ namespace pdel3d {
         int best = -1;
         double bestWorst = worst;
         for(int i = 0; i < sp.nbr_trianguls; i++) {
-          double w = 2.;
+          double w = 2., v = 0.;
           for(int j = 0; j < sp.nbr_triangles_2; j++) {
             const int it = sp.trianguls[i][j];
             w = std::min(w, std::min(qa[it], qb[it]));
+            v += vol[it];
             if(w <= bestWorst) break;
+          }
+          if(w > bestWorst && std::fabs(v - ringVol) > 1.e-6 * ringVol) {
+            L.invalidSwaps++;
+            continue;
           }
           if(w > bestWorst) {
             bestWorst = w;
@@ -254,6 +318,8 @@ namespace pdel3d {
           }
         }
         const std::uint32_t color = m.color[C.tet[0]];
+        // room for the new tets, secured before anything is modified
+        if(!ensureFreeSlots(L, 2 * (C.n - 2))) return CONFLICT;
         // the cavity tets are gone; their slots are reused
         for(int i = 0; i < C.n; i++) {
           m.flag[C.tet[i]] |= F_DELETED;
@@ -282,23 +348,6 @@ namespace pdel3d {
           if(flip[it]) std::swap(r0, r1);
           for(int side = 0; side < 2; side++) {
             const tIdx s = newSlot(L);
-            if(s == NO_TET) {
-              // out of space: undo (the cavity tets are untouched)
-              for(int k = 0; k < nc; k++) {
-                m.flag[created[k]] = F_DELETED;
-                L.deleted.push_back(created[k]);
-              }
-              for(int i = 0; i < C.n; i++) m.flag[C.tet[i]] &= ~F_DELETED;
-              // the cavity slots were pushed on the free list: remove them
-              L.deleted.erase(std::remove_if(L.deleted.begin(), L.deleted.end(),
-                                             [&](tIdx x) {
-                                               for(int i = 0; i < C.n; i++)
-                                                 if(C.tet[i] == x) return true;
-                                               return false;
-                                             }),
-                              L.deleted.end());
-              return CONFLICT;
-            }
             vIdx *n = &m.node[4 * s];
             if(side == 0) {
               n[0] = r0;
@@ -592,8 +641,10 @@ namespace pdel3d {
     std::vector<Local> locals(maxThreads);
     std::vector<std::vector<badTet>> localBad(maxThreads);
     std::uint32_t seed = 1;
-    std::size_t totalSwaps = 0, totalRelocations = 0, totalConflicts = 0;
+    std::size_t totalSwaps = 0, totalRelocations = 0, totalConflicts = 0,
+                totalInvalid = 0;
     std::size_t lastBad = 0;
+    bool ranOutOfSpace = false;
     for(int pass = 0; pass < opt.maxPasses; pass++) {
       // the bad tets, sorted along the curve
       std::vector<badTet> bad;
@@ -649,10 +700,13 @@ namespace pdel3d {
         nthreads = makePartitions(dists.data(), todo.data(), bad.size(),
                                   numTodo, nthreads, startShift, parts);
         for(int i = 0; i < nthreads; i++) locals[i].partition = parts[i];
-        // room for the new tets (an edge removal creates at most 3 more)
+        // room for the new tets (an edge removal creates at most 3 more); a
+        // round that ran out of space is redone with twice the capacity
         {
-          const std::size_t need =
+          std::size_t need =
             K.ntet + 4 * numTodo + (nthreads + 1) * Optimizer::BLOCK;
+          if(ranOutOfSpace) need = std::max(need, 2 * m.tetCapacity());
+          ranOutOfSpace = false;
           if(need > m.tetCapacity()) {
             m.reserveTets(
               std::max(need, m.tetCapacity() + m.tetCapacity() / 2));
@@ -687,17 +741,20 @@ namespace pdel3d {
         }
         if(K.ntet > K.cap) K.ntet = K.cap;
         m.ntet = K.ntet;
+        for(int i = 0; i < nthreads; i++)
+          if(locals[i].noSpace) ranOutOfSpace = true;
         conflictRatio = numTodo ? (double)numConflicts / numTodo : 0.;
         totalConflicts += numConflicts;
         if(opt.verbosity > 1)
           Msg::Info("Optimization pass %d round %d: %lu bad tets on %d "
                     "threads, %lu conflicts",
                     pass, round, numTodo, nthreads, numConflicts);
-        if(!numConflicts) break;
+        if(!numConflicts && !ranOutOfSpace) break;
       }
-      totalSwaps = totalRelocations = 0;
+      totalSwaps = totalRelocations = totalInvalid = 0;
       for(auto &L : locals) {
         totalSwaps += L.swaps;
+        totalInvalid += L.invalidSwaps;
         totalRelocations += L.relocations;
       }
       if(opt.verbosity > 0)
@@ -715,9 +772,10 @@ namespace pdel3d {
     for(std::size_t t = 0; t < m.ntet; t++)
       if(K.inVolume((tIdx)t) && K.qual[t] < 0.001) ill++;
     if(ill) Msg::Warning("%lu ill-shaped tets are still in the mesh", ill);
-    Msg::Info("Optimization: %lu edge swaps, %lu node relocations, %lu "
-              "conflicts (Wall %gs)",
-              totalSwaps, totalRelocations, totalConflicts, TimeOfDay() - t0);
+    Msg::Info("Optimization: %lu edge swaps (%lu rejected on volume), %lu "
+              "node relocations, %lu conflicts (Wall %gs)",
+              totalSwaps, totalInvalid, totalRelocations, totalConflicts,
+              TimeOfDay() - t0);
     for(auto &L : locals)
       for(auto t : L.deleted)
         for(int k = 0; k < 4; k++) m.neigh[4 * t + k] = NO_ADJ;

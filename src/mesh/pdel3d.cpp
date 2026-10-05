@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cmath>
 #include <cstring>
@@ -283,6 +284,7 @@ namespace pdel3d {
       // statistics
       std::size_t conflictWalk = 0, conflictDig = 0, noStart = 0;
       std::size_t hintUsed = 0, hintDead = 0, hintOut = 0;
+      std::size_t walkSteps = 0, straightWalks = 0;
       std::size_t inserted = 0, filtered = 0, duplicates = 0, conflicts = 0,
                   walkFailed = 0;
       bool noSpace = false;
@@ -357,12 +359,74 @@ namespace pdel3d {
 
       // walk from L.curTet to the tet containing vta (or to the ghost tet
       // whose hull face vta lies beyond); returns OK, DOUBLE or CONFLICT
+      // vta is in tet t (no facet has it beyond): OK, or DOUBLE when it
+      // coincides with a node
+      Status arrived(Local &L, tIdx t, const double *p)
+      {
+        const vIdx *curNode = &m.node[4 * t];
+        const double *a = &m.xyz[4 * curNode[0]], *b = &m.xyz[4 * curNode[1]],
+                     *c = &m.xyz[4 * curNode[2]], *d = &m.xyz[4 * curNode[3]];
+        L.curTet = t;
+        if((orient3dFast(a, b, c, p) >= 0) + (orient3dFast(a, b, p, d) >= 0) +
+             (orient3dFast(a, p, c, d) >= 0) + (orient3dFast(p, b, c, d) >= 0) >
+           2)
+          return DOUBLE;
+        return OK;
+      }
+
+      // walk from t0 to the tet containing vta along the segment from the
+      // centroid of t0, crossing only the tets cut by that segment: slower
+      // than the visibility walk, but it never wanders. Returns CONFLICT when
+      // the segment leaves the partition
+      Status straightWalk(Local &L, vIdx vta, tIdx t0)
+      {
+        const Partition &P = L.partition;
+        const double *p = &m.xyz[4 * vta];
+        L.straightWalks++;
+        double q[3] = {0., 0., 0.};
+        for(int k = 0; k < 4; k++)
+          for(int j = 0; j < 3; j++)
+            q[j] += 0.25 * m.xyz[4 * m.node[4 * t0 + k] + j];
+        tIdx cur = t0;
+        unsigned entering = 4;
+        for(std::size_t steps = 0; steps < 10000000; steps++) {
+          const vIdx *n = &m.node[4 * cur];
+          const tRef *nb = &m.neigh[4 * cur];
+          unsigned exitF = 4, anyBeyond = 4;
+          for(unsigned i = 0; i < 4; i++) {
+            if(i == entering) continue;
+            const double *a = &m.xyz[4 * n[facetNode0(i)]];
+            const double *b = &m.xyz[4 * n[facetNode1(i)]];
+            const double *c = &m.xyz[4 * n[facetNode2(i)]];
+            if(orient3dFast(p, a, b, c) >= 0.) continue; // p not beyond
+            anyBeyond = i;
+            // the segment exits through this facet if the line crosses it
+            const double s0 = orient3dFast(q, p, a, b),
+                         s1 = orient3dFast(q, p, b, c),
+                         s2 = orient3dFast(q, p, c, a);
+            if((s0 >= 0. && s1 >= 0. && s2 >= 0.) ||
+               (s0 <= 0. && s1 <= 0. && s2 <= 0.)) {
+              exitF = i;
+              break;
+            }
+          }
+          if(anyBeyond == 4) return arrived(L, cur, p);
+          if(exitF == 4) exitF = anyBeyond; // degenerate: any progress
+          const vIdx nn = m.node[nb[exitF]];
+          if(nn == GHOST) {
+            L.curTet = nb[exitF] >> 2;
+            return OK;
+          }
+          if(outOfPartition(m, nn, P)) return CONFLICT;
+          entering = nb[exitF] & 3;
+          cur = nb[exitF] >> 2;
+        }
+        return WALK_FAILED;
+      }
+
       Status walk(Local &L, vIdx vta)
       {
         tIdx next = L.curTet;
-        // the mesh is not Delaunay near the recovered boundary, where a
-        // visibility walk can cycle: give up (and retry later from
-        // elsewhere) after too many steps
         std::size_t steps = 0;
         const Partition &P = L.partition;
         if(m.node[4 * next + 3] == GHOST) {
@@ -370,6 +434,7 @@ namespace pdel3d {
           if(outOfPartition(m, m.node[r], P)) return CONFLICT;
           next = r >> 2;
         }
+        const tIdx start = next;
         const double *p = &m.xyz[4 * vta];
         unsigned enteringFace = 4;
         std::uint32_t seed = 1;
@@ -392,10 +457,7 @@ namespace pdel3d {
                 return OK;
               }
               if(outOfPartition(m, n, P)) {
-                if(wantOther++ > 1000) {
-                  L.curTet = next;
-                  return CONFLICT;
-                }
+                if(wantOther++ > 1000) return CONFLICT;
               }
               else {
                 index = i;
@@ -404,26 +466,17 @@ namespace pdel3d {
             }
           }
           if(index == 4) {
-            if(outside) {
-              L.curTet = next; // all the way to the partition boundary
-              return CONFLICT;
-            }
-            const double *a = &m.xyz[4 * curNode[0]],
-                         *b = &m.xyz[4 * curNode[1]],
-                         *c = &m.xyz[4 * curNode[2]],
-                         *d = &m.xyz[4 * curNode[3]];
-            L.curTet = next;
-            if((orient3dFast(a, b, c, p) >= 0) +
-                 (orient3dFast(a, b, p, d) >= 0) +
-                 (orient3dFast(a, p, c, d) >= 0) +
-                 (orient3dFast(p, b, c, d) >= 0) >
-               2)
-              return DOUBLE;
-            return OK;
+            if(outside) return CONFLICT; // L.curTet stays: the walk wandered
+            L.walkSteps += steps;
+            return arrived(L, next, p);
           }
           enteringFace = curNeigh[index] & 3;
           next = curNeigh[index] >> 2;
-          if(++steps > 10000) return WALK_FAILED;
+          // the visibility walk can wander for long in meshes with long
+          // tets (the surface Delaunay of a CAD model): switch to the
+          // straight walk from the starting tet (close to vta in the common
+          // case), which only crosses the tets cut by one segment
+          if(++steps > 256) return straightWalk(L, vta, start);
         }
       }
 
@@ -826,27 +879,33 @@ namespace pdel3d {
         return true;
       }
 
-      // hint is the tet where the walk starts when it is alive and in the
-      // partition; it receives the tet reached by the walk (the one
-      // containing vta, or a tet near it on a conflict), where a retry starts
-      Status insert(Local &L, vIdx vta, tIdx &hint, bool checkPartition)
+      // hint is the tet where the walk starts when it is alive (its slot
+      // may have been recycled: hintNode, its first node when the hint was
+      // taken, must still be there) and in the partition; it receives the
+      // tet reached by the walk (the one containing vta, or a tet near it
+      // on a conflict), where a retry starts
+      Status insert(Local &L, vIdx vta, tIdx &hint, vIdx &hintNode,
+                    bool checkPartition)
       {
         const std::size_t prevDeleted = L.deleted.size();
-        if(hint != NO_TET && hint < ntet && !m.isDeleted(hint) &&
-           (!checkPartition || tetInPartition(m, hint, L.partition))) {
+        const bool alive = hint != NO_TET && hint < ntet &&
+                           !m.isDeleted(hint) && m.node[4 * hint] == hintNode;
+        if(alive && (!checkPartition || tetInPartition(m, hint, L.partition))) {
           L.curTet = hint;
           L.hintUsed++;
         }
-        else if(hint == NO_TET || hint >= ntet || m.isDeleted(hint))
+        else if(!alive)
           L.hintDead++;
         else
           L.hintOut++;
         Status st = walk(L, vta);
-        hint = L.curTet;
         if(st != OK) {
           if(st == CONFLICT) L.conflictWalk++;
           return st;
         }
+        // the tet containing vta is the hint of a retry
+        hint = L.curTet;
+        hintNode = m.node[4 * hint];
         const tIdx t0 = L.curTet;
         const std::uint32_t color =
           m.color.empty() ? Mesh::COLOR_OUT : m.color[t0];
@@ -921,6 +980,7 @@ namespace pdel3d {
       vIdx node;
       std::uint64_t dist;
       tIdx hint;
+      vIdx hintNode; // node 0 of the hint tet, to detect a recycled slot
       std::uint8_t status;
     };
 
@@ -1034,8 +1094,11 @@ namespace pdel3d {
     if(!nToInsert) return;
     const int maxPartitions = std::max(1, opt.numThreads);
     std::vector<NodeInfo> info(nToInsert);
-    for(std::size_t i = 0; i < nToInsert; i++)
-      info[i] = {toInsert[i], 0, hints ? (*hints)[i] : NO_TET, ST_TODO};
+    for(std::size_t i = 0; i < nToInsert; i++) {
+      const tIdx h = hints ? (*hints)[i] : NO_TET;
+      info[i] = {toInsert[i], 0, h,
+                 h != NO_TET && h < m.ntet ? m.node[4 * h] : GHOST, ST_TODO};
+    }
 
     double bmin[3], bmax[3];
     m.bbox(bmin, bmax, maxPartitions);
@@ -1243,7 +1306,7 @@ namespace pdel3d {
             if(L.noSpace) continue;
             if(L.curTet == NO_TET) {
               if(ni.hint != NO_TET && ni.hint < K.ntet &&
-                 !m.isDeleted(ni.hint) &&
+                 !m.isDeleted(ni.hint) && m.node[4 * ni.hint] == ni.hintNode &&
                  (nthreads == 1 || tetInPartition(m, ni.hint, P)))
                 L.curTet = ni.hint;
               else {
@@ -1261,7 +1324,7 @@ namespace pdel3d {
               }
             }
             {
-              switch(K.insert(L, ni.node, ni.hint, nthreads > 1)) {
+              switch(K.insert(L, ni.node, ni.hint, ni.hintNode, nthreads > 1)) {
               case OK:
                 ni.status = ST_INSERTED;
                 L.inserted++;
@@ -1320,7 +1383,8 @@ namespace pdel3d {
         if(passLength != numSkipped && !ranOutOfSpace)
           conflictRatio = (double)numConflict / (passLength - numSkipped);
         if(opt.verbosity > 1) {
-          std::size_t cw = 0, cd = 0, ns = 0, hu = 0, hd = 0, ho = 0;
+          std::size_t cw = 0, cd = 0, ns = 0, hu = 0, hd = 0, ho = 0, ws = 0,
+                      sw = 0;
           for(int i = 0; i < nthreads; i++) {
             cw += locals[i].conflictWalk;
             cd += locals[i].conflictDig;
@@ -1328,19 +1392,22 @@ namespace pdel3d {
             hu += locals[i].hintUsed;
             hd += locals[i].hintDead;
             ho += locals[i].hintOut;
+            ws += locals[i].walkSteps;
+            sw += locals[i].straightWalks;
             locals[i].conflictWalk = locals[i].conflictDig = locals[i].noStart =
               0;
             locals[i].hintUsed = locals[i].hintDead = locals[i].hintOut = 0;
+            locals[i].walkSteps = locals[i].straightWalks = 0;
           }
           Msg::Info("%3d thrd | %10lu / %-10lu inserted (%.1f%%), %lu filtered "
                     "(setup %.4fs, insertion %.4fs; conflicts: walk %lu, "
                     "cavity %lu, no start %lu; hints used %lu, dead %lu, out "
-                    "%lu)",
+                    "%lu; %lu walk steps, %lu straight walks)",
                     nthreads, numInserted, passLength - numSkipped,
                     100. * numInserted /
                       std::max<std::size_t>(1, passLength - numSkipped),
                     numSkipped, tr1 - tr0, TimeOfDay() - tr1, cw, cd, ns, hu,
-                    hd, ho);
+                    hd, ho, ws, sw);
         }
         passes[ipass] += shift;
       }
@@ -1440,6 +1507,29 @@ namespace pdel3d {
           if(robustPredicates::insphere(&xyz[4 * n[0]], &xyz[4 * n[1]],
                                         &xyz[4 * n[2]], &xyz[4 * n[3]], e) < 0.)
             report("not locally Delaunay", t);
+        }
+      }
+    }
+    // duplicate tets (a double covering is combinatorially consistent)
+    {
+      std::vector<std::array<vIdx, 5>> keys;
+      keys.reserve(ntet);
+      for(std::size_t t = 0; t < ntet; t++) {
+        if(isDeleted((tIdx)t)) continue;
+        std::array<vIdx, 5> k = {node[4 * t], node[4 * t + 1], node[4 * t + 2],
+                                 node[4 * t + 3], (vIdx)t};
+        std::sort(k.begin(), k.begin() + 4);
+        keys.push_back(k);
+      }
+      std::sort(keys.begin(), keys.end());
+      for(std::size_t i = 1; i < keys.size(); i++) {
+        if(keys[i][0] == keys[i - 1][0] && keys[i][1] == keys[i - 1][1] &&
+           keys[i][2] == keys[i - 1][2] && keys[i][3] == keys[i - 1][3]) {
+          errors++;
+          if(verbose && errors <= 20)
+            Msg::Error("pdel3d verify: duplicate tets %u and %u (%u %u %u %u)",
+                       keys[i - 1][4], keys[i][4], keys[i][0], keys[i][1],
+                       keys[i][2], keys[i][3]);
         }
       }
     }
