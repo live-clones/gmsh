@@ -1485,18 +1485,20 @@ namespace pdel3d {
       pass++;
       return after - before;
     };
-    // edge removals and relocations until they stall, then reconnections of
-    // the tets they gave up on, which may unlock them again (as HXT
-    // alternates its two kinds of rounds)
-    for(int cycle = 0; cycle < 10 && pass < opt.maxPasses; cycle++) {
+    // edge removals and relocations until they stall (no progress, or less
+    // than 2% of the bad tets improved, which on large meshes goes on for
+    // long), then reconnections of the tets they gave up on, which may
+    // unlock them again (as HXT alternates its two kinds of rounds); each
+    // cycle gets up to maxPasses passes
+    for(int cycle = 0; cycle < 5; cycle++) {
       std::size_t lastBad = std::numeric_limits<std::size_t>::max();
-      while(pass < opt.maxPasses) {
+      for(int p = 0; p < opt.maxPasses; p++) {
         std::size_t numBad = 0;
         const std::size_t mods = runPass(false, numBad);
-        if(!mods || numBad >= lastBad) break;
+        if(!mods || numBad >= lastBad || 50 * mods < numBad) break;
         lastBad = numBad;
       }
-      if(!haveSPR || pass >= opt.maxPasses) break;
+      if(!haveSPR) break;
       std::size_t numBad = 0;
       if(!runPass(true, numBad)) break;
     }
