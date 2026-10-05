@@ -380,16 +380,20 @@ namespace pdel3d {
 
       // constraint flags of facet f of tet t transferred to the new tet
       // (vta, b0, b1, b2) built on it: the facet becomes facet 0, and its
-      // edges become edges 0 (b1-b2), 1 (b0-b2) and 2 (b0-b1)
-      inline std::uint16_t transferFlags(std::uint16_t flag, unsigned f) const
+      // edges become edges 0 (b1-b2), 1 (b0-b2) and 2 (b0-b1); with reversed
+      // the nodes are pushed as (b1, b0, b2)
+      inline std::uint16_t transferFlags(std::uint16_t flag, unsigned f,
+                                         bool reversed = false) const
       {
         if(!(flag & F_ALL_CONSTRAINTS)) return 0;
         std::uint16_t nf = 0;
         if(flag & (F_FACET0 << f)) nf |= F_FACET0;
         const unsigned *bn = ballNodes[f];
-        if(flag & (1 << edgeOfNodes[bn[1]][bn[2]])) nf |= F_EDGE0;
-        if(flag & (1 << edgeOfNodes[bn[0]][bn[2]])) nf |= F_EDGE1;
-        if(flag & (1 << edgeOfNodes[bn[0]][bn[1]])) nf |= F_EDGE2;
+        const unsigned b0 = reversed ? bn[1] : bn[0],
+                       b1 = reversed ? bn[0] : bn[1], b2 = bn[2];
+        if(flag & (1 << edgeOfNodes[b1][b2])) nf |= F_EDGE0;
+        if(flag & (1 << edgeOfNodes[b0][b2])) nf |= F_EDGE1;
+        if(flag & (1 << edgeOfNodes[b0][b1])) nf |= F_EDGE2;
         return nf;
       }
 
@@ -587,19 +591,21 @@ namespace pdel3d {
           m.color[L.deleted[i]] = color;
       }
 
-      // push facet f of tet t (seen from inside the cavity) on the ball, with
-      // its constraint flags transferred, and the given neighbor reference
+      // push facet f of tet t, a tet put back outside the cavity, on the
+      // ball: seen from inside the cavity its orientation is the reverse of
+      // the one of a deleted tet (the ghost vertex, always node 3, stays
+      // last)
       inline void bndPushFacet(Local &L, tIdx t, unsigned f, std::uint64_t r)
       {
         const vIdx *n = &m.node[4 * t];
-        bndPush(L, transferFlags(m.flag[t], f), n[ballNodes[f][0]],
-                n[ballNodes[f][1]], n[ballNodes[f][2]], (tRef)r);
+        bndPush(L, transferFlags(m.flag[t], f, true), n[ballNodes[f][1]],
+                n[ballNodes[f][0]], n[ballNodes[f][2]], (tRef)r);
       }
 
       // remove from the cavity the tets flagged F_UNDELETE and, progressively,
       // the tets behind the boundary faces that do not see vta, until the
       // cavity is star-shaped from vta
-      void reshapeCavity(Local &L, vIdx vta, std::size_t prevDeleted,
+      bool reshapeCavity(Local &L, vIdx vta, std::size_t prevDeleted,
                          bool undeleteTet)
       {
         const double *p = &m.xyz[4 * vta];
@@ -616,7 +622,7 @@ namespace pdel3d {
               break;
             }
           }
-          if(starShaped) return;
+          if(starShaped) return true;
         }
         const std::size_t numTet = L.deleted.size() - prevDeleted;
         tIdx *tets = &L.deleted[prevDeleted];
@@ -634,7 +640,9 @@ namespace pdel3d {
         };
         auto hashGet = [&](tIdx t) -> std::uint32_t {
           std::size_t h = (t * 2654435761u) & hmask;
-          while(L.cavIndexKey[h] != t) h = (h + 1) & hmask;
+          while(L.cavIndexKey[h] != t && L.cavIndexKey[h] != NO_TET)
+            h = (h + 1) & hmask;
+          if(L.cavIndexKey[h] == NO_TET) return 0xffffffffu;
           return L.cavIndexVal[h];
         };
         for(std::size_t i = 0; i < numTet; i++)
@@ -654,8 +662,16 @@ namespace pdel3d {
               L.faces[4 * i + f] = curFace;
               curFace++;
             }
-            else
-              L.faces[4 * i + f] = 4 * hashGet(r >> 2) + (r & 3);
+            else {
+              const std::uint32_t j = hashGet(r >> 2);
+              if(j == 0xffffffffu) {
+                Msg::Error(
+                  "Inconsistent cavity in pdel3d (tet %u is not in it)",
+                  r >> 2);
+                return false;
+              }
+              L.faces[4 * i + f] = 4 * j + (r & 3);
+            }
           }
         }
         // undelete the flagged tets that are not on the boundary of the cavity
@@ -742,6 +758,7 @@ namespace pdel3d {
             tets[i - shift] = tets[i];
         }
         L.deleted.resize(L.deleted.size() - shift);
+        return true;
       }
 
       Status insert(Local &L, vIdx vta, tIdx hint, bool checkPartition)
@@ -777,7 +794,10 @@ namespace pdel3d {
           bool undeleteTet = false;
           if(edgeConstraint)
             respectEdgeConstraints(L, vta, color, prevDeleted, undeleteTet);
-          reshapeCavity(L, vta, prevDeleted, undeleteTet);
+          if(!reshapeCavity(L, vta, prevDeleted, undeleteTet)) {
+            restoreDeleted(L, prevDeleted);
+            return TOO_CLOSE;
+          }
         }
         if(opt.filterOnSize) {
           double *pv = &m.xyz[4 * vta];

@@ -90,24 +90,35 @@ namespace {
     std::vector<std::uint32_t> triColor, lineColor;
     // surface tags bounding (or embedded in) each region
     std::vector<std::vector<std::uint32_t>> volumes;
+    // the surfaces forming a compound with each surface (a member may carry
+    // no element when the elements are classified on the originals)
+    std::map<std::uint32_t, std::vector<std::uint32_t>> siblings;
   };
 
-  // returns false when the input is not supported (non-triangular elements)
+  // returns false when the input is not supported (non-triangular elements).
+  // The surfaces are the boundary and embedded surfaces of the regions (a
+  // compound surface replacing its members when their elements are not
+  // reclassified on them); the curves to preserve are the ones embedded in
+  // the regions, the others being edges of the surface triangles
   bool collectSurfaceMesh(std::vector<GRegion *> &regions, SurfaceMesh &s)
   {
     std::set<GFace *, GEntityPtrLessThan> surfaces;
     std::set<GEdge *, GEntityPtrLessThan> curves;
+    const bool compounds = (CTX::instance()->mesh.compoundClassify == 0);
+    auto surface = [&](GFace *gf) {
+      return (compounds && gf->compoundSurface) ? gf->compoundSurface : gf;
+    };
     for(GRegion *gr : regions) {
-      std::vector<std::uint32_t> tags;
+      std::set<std::uint32_t> tags;
       for(GFace *gf : gr->faces()) {
-        surfaces.insert(gf);
-        tags.push_back(gf->tag());
+        surfaces.insert(surface(gf));
+        tags.insert(surface(gf)->tag());
       }
       for(GFace *gf : gr->embeddedFaces()) {
-        surfaces.insert(gf);
-        tags.push_back(gf->tag());
+        surfaces.insert(surface(gf));
+        tags.insert(surface(gf)->tag());
       }
-      s.volumes.push_back(tags);
+      s.volumes.push_back(std::vector<std::uint32_t>(tags.begin(), tags.end()));
       for(GEdge *ge : gr->embeddedEdges()) curves.insert(ge);
       for(GVertex *gv : gr->embeddedVertices()) s.points.push_back(gv);
     }
@@ -118,11 +129,14 @@ namespace {
                      gf->tag());
         return false;
       }
-      for(GEdge *ge : gf->edges()) curves.insert(ge);
-      for(GEdge *ge : gf->embeddedEdges()) curves.insert(ge);
     }
     s.surfaces.assign(surfaces.begin(), surfaces.end());
     s.curves.assign(curves.begin(), curves.end());
+    for(GFace *gf : s.surfaces) {
+      if(gf->compound.empty()) continue;
+      std::vector<std::uint32_t> &sib = s.siblings[gf->tag()];
+      for(GEntity *ge : gf->compound) sib.push_back(ge->tag());
+    }
     // number the vertices in order of appearance
     auto index = [&](MVertex *v) -> pdel3d::vIdx {
       if(v->getIndex() < 0) {
@@ -186,6 +200,48 @@ namespace {
   struct SizeData {
     std::vector<GRegion *> *regions;
     bool failed;
+  };
+
+  // perturb the coordinates of the vertices by a random fraction of the
+  // model size, and restore them on destruction
+  class perturbedCoordinates {
+  private:
+    std::vector<MVertex *> _vertices;
+    std::vector<double> _xyz;
+
+  public:
+    perturbedCoordinates(const std::vector<MVertex *> &vertices, double factor)
+    {
+      if(factor <= 0. || vertices.empty()) return;
+      _vertices = vertices;
+      _xyz.resize(3 * vertices.size());
+      double d = 0.;
+      for(std::size_t i = 0; i < vertices.size(); i++) {
+        MVertex *v = vertices[i];
+        _xyz[3 * i] = v->x();
+        _xyz[3 * i + 1] = v->y();
+        _xyz[3 * i + 2] = v->z();
+        d =
+          std::max(d, std::max(std::fabs(v->x()),
+                               std::max(std::fabs(v->y()), std::fabs(v->z()))));
+      }
+      d *= std::sqrt(3.) * factor;
+      std::uint32_t seed = 12345;
+      auto r = [&seed]() {
+        seed = seed * 1664525u + 1013904223u;
+        return seed * (1. / 4294967296.);
+      };
+      for(MVertex *v : _vertices) {
+        v->x() += d * r();
+        v->y() += d * r();
+        v->z() += d * r();
+      }
+    }
+    ~perturbedCoordinates()
+    {
+      for(std::size_t i = 0; i < _vertices.size(); i++)
+        _vertices[i]->setXYZ(_xyz[3 * i], _xyz[3 * i + 1], _xyz[3 * i + 2]);
+    }
   };
 
   // the gmsh mesh size field at the candidate points
@@ -420,6 +476,13 @@ int meshGRegionPDel3d(std::vector<GRegion *> &regions)
   const int verbosity = Msg::GetVerbosity() > 5 ? 2 : 1;
   SurfaceMesh s;
   if(!collectSurfaceMesh(regions, s)) return 2;
+  // As del3d, work on slightly perturbed coordinates: the nodes of curved
+  // surfaces (spheres) are cospherical to rounding, which sends every
+  // in-sphere test of the tetrahedralization to the exact arithmetic. The
+  // exact coordinates are restored when the mesh is handed back (the
+  // optimization leaves no tet thin enough to be inverted by that)
+  perturbedCoordinates perturbation(s.vertices,
+                                    CTX::instance()->mesh.randFactor3d);
   pdel3d::Mesh m;
   const std::size_t nv = s.vertices.size();
   m.xyz.resize(4 * nv);
@@ -514,7 +577,8 @@ int meshGRegionPDel3d(std::vector<GRegion *> &regions)
   }
   pdel3d::constrainFacets(m, tri2tet);
   pdel3d::constrainEdges(m, line2tet);
-  if(!pdel3d::colorVolumes(m, tri2tet, s.triColor, s.volumes)) return 1;
+  if(!pdel3d::colorVolumes(m, tri2tet, s.triColor, s.volumes, s.siblings))
+    return 1;
   if(Msg::GetVerbosity() > 5) m.verify(!recovered);
   const double t2 = TimeOfDay();
   Msg::Info("Done recovering the boundary (Wall %gs)", t2 - t1);

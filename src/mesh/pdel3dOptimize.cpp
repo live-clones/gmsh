@@ -370,6 +370,14 @@ namespace pdel3d {
             }
           }
         }
+        // the tets around the cavity may be improvable now
+        for(int i = 0; i < C.n; i++) {
+          for(int side = 0; side < 2; side++) {
+            const tIdx o = (side ? C.outB[i] : C.outA[i]) >> 2;
+            if(!m.isGhost(o) && tetInPartition(m, o, L.partition))
+              m.flag[o] &= ~F_PROCESSED;
+          }
+        }
         L.swaps++;
         return OK;
       }
@@ -484,7 +492,10 @@ namespace pdel3d {
           return NOT_BETTER;
         }
         place(a[0]);
-        for(auto r : cav) qual[r >> 2] = computeQuality(r >> 2);
+        for(auto r : cav) {
+          qual[r >> 2] = computeQuality(r >> 2);
+          m.flag[r >> 2] &= ~F_PROCESSED;
+        }
         L.relocations++;
         return OK;
       }
@@ -544,8 +555,12 @@ namespace pdel3d {
       }
     }
 #pragma omp parallel for schedule(static) num_threads(maxThreads)
-    for(std::size_t t = 0; t < m.ntet; t++)
+    // F_PROCESSED marks the tets that could not be improved, until a
+    // neighbor changes
+    for(std::size_t t = 0; t < m.ntet; t++) {
+      m.flag[t] &= ~F_PROCESSED;
       if(K.inVolume((tIdx)t)) K.qual[t] = K.computeQuality((tIdx)t);
+    }
 
     auto report = [&](const char *what) -> double {
       double worst = 2., avg = 0.;
@@ -575,12 +590,15 @@ namespace pdel3d {
         std::uint8_t todo;
       };
       std::vector<badTet> bad;
-      for(std::size_t t = 0; t < m.ntet; t++)
-        if(K.inVolume((tIdx)t) && K.qual[t] < opt.qualityMin)
-          bad.push_back({0, (tIdx)t, 1});
+      std::size_t numBad = 0;
+      for(std::size_t t = 0; t < m.ntet; t++) {
+        if(!K.inVolume((tIdx)t) || K.qual[t] >= opt.qualityMin) continue;
+        numBad++;
+        if(!(m.flag[t] & F_PROCESSED)) bad.push_back({0, (tIdx)t, 1});
+      }
       if(bad.empty()) break;
-      if(pass && bad.size() >= lastBad) break; // no progress
-      lastBad = bad.size();
+      if(pass && numBad >= lastBad) break; // no progress
+      lastBad = numBad;
       std::size_t passSwaps = totalSwaps, passReloc = totalRelocations;
       int nthreads = maxThreads;
       double conflictRatio = 0.;
@@ -589,7 +607,8 @@ namespace pdel3d {
         std::size_t numTodo = 0;
         for(auto &b : bad) numTodo += b.todo;
         if(!numTodo) break;
-        nthreads = computeNumberOfThreads(conflictRatio, nthreads, numTodo, 64);
+        nthreads =
+          computeNumberOfThreads(conflictRatio, nthreads, numTodo, 128);
         double startShift = 0.;
         if(round > 0 && nthreads > 1) {
           double shift[3] = {lcg01(seed), lcg01(seed), lcg01(seed)};
@@ -645,8 +664,10 @@ namespace pdel3d {
               numConflicts++;
               L.conflicts++;
             }
-            else
+            else {
               b.todo = 0;
+              if(st != OK) m.flag[b.t] |= F_PROCESSED; // stuck
+            }
           }
         }
         if(K.ntet > K.cap) K.ntet = K.cap;
@@ -665,9 +686,9 @@ namespace pdel3d {
         totalRelocations += L.relocations;
       }
       if(opt.verbosity > 0)
-        Msg::Info("Optimization pass %d: %lu bad tets, %lu edge swaps, %lu "
-                  "node relocations (Wall %gs)",
-                  pass, bad.size(), totalSwaps - passSwaps,
+        Msg::Info("Optimization pass %d: %lu bad tets (%lu to try), %lu edge "
+                  "swaps, %lu node relocations (Wall %gs)",
+                  pass, numBad, bad.size(), totalSwaps - passSwaps,
                   totalRelocations - passReloc, TimeOfDay() - t0);
       if(totalSwaps == passSwaps && totalRelocations == passReloc) break;
     }

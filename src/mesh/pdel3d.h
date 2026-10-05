@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <map>
 #include <vector>
 
 namespace pdel3d {
@@ -134,10 +135,14 @@ namespace pdel3d {
   // connected volumes, which are matched to the given volumes through the set
   // of surface colors (triColor) bounding them: volume i gets color i, the
   // others get colors from volumes.size() up, the outside gets COLOR_OUT.
-  // Returns false if some volume was not found
-  bool colorVolumes(Mesh &m, const std::vector<tRef> &tri2tet,
-                    const std::vector<std::uint32_t> &triColor,
-                    const std::vector<std::vector<std::uint32_t>> &volumes);
+  // The sets are completed with the siblings of their surfaces (siblings[c]
+  // lists the colors of the surfaces forming a compound with surface c)
+  // before comparison. Returns false if some volume was not found
+  bool colorVolumes(
+    Mesh &m, const std::vector<tRef> &tri2tet,
+    const std::vector<std::uint32_t> &triColor,
+    const std::vector<std::vector<std::uint32_t>> &volumes,
+    const std::map<std::uint32_t, std::vector<std::uint32_t>> &siblings);
 
   // ---------------------------------------------------------------------
   // refinement (pdel3dRefine.cpp)

@@ -216,10 +216,21 @@ namespace pdel3d {
     }
   }
 
-  bool colorVolumes(Mesh &m, const std::vector<tRef> &tri2tet,
-                    const std::vector<std::uint32_t> &triColor,
-                    const std::vector<std::vector<std::uint32_t>> &volumes)
+  bool colorVolumes(
+    Mesh &m, const std::vector<tRef> &tri2tet,
+    const std::vector<std::uint32_t> &triColor,
+    const std::vector<std::vector<std::uint32_t>> &volumes,
+    const std::map<std::uint32_t, std::vector<std::uint32_t>> &siblings)
   {
+    auto complete = [&](std::set<std::uint32_t> &set) {
+      std::set<std::uint32_t> more;
+      for(auto c : set) {
+        auto it = siblings.find(c);
+        if(it != siblings.end())
+          more.insert(it->second.begin(), it->second.end());
+      }
+      set.insert(more.begin(), more.end());
+    };
     // flood fill bounded by the constrained facets
     if(m.color.size() < m.tetCapacity()) m.color.resize(m.tetCapacity());
     std::fill(m.color.begin(), m.color.begin() + m.ntet, 0);
@@ -259,8 +270,10 @@ namespace pdel3d {
     }
     // match the components to the volumes
     std::map<std::set<std::uint32_t>, std::uint32_t> volumeOfSurfaces;
+    for(std::uint32_t c = 1; c <= numComponents; c++) complete(surfaces[c]);
     for(std::size_t i = 0; i < volumes.size(); i++) {
       std::set<std::uint32_t> s(volumes[i].begin(), volumes[i].end());
+      complete(s);
       if(volumeOfSurfaces.count(s)) {
         Msg::Error("Volumes %lu and %u are bounded by the same surfaces", i,
                    volumeOfSurfaces[s]);
@@ -285,6 +298,17 @@ namespace pdel3d {
       if(!m.isDeleted((tIdx)t)) m.color[t] = map[m.color[t]];
     bool ok = true;
     for(std::size_t i = 0; i < volumes.size(); i++) {
+      if(!found[i] && Msg::GetVerbosity() > 5) {
+        std::string msg = "Volume " + std::to_string(i) + " surfaces:";
+        for(auto t : volumes[i]) msg += " " + std::to_string(t);
+        Msg::Info("%s", msg.c_str());
+        for(std::uint32_t c = 1; c <= numComponents; c++) {
+          std::string m2 = "Component " + std::to_string(c) +
+                           (c == colorOut ? " (outside):" : ":");
+          for(auto t : surfaces[c]) m2 += " " + std::to_string(t);
+          Msg::Info("%s", m2.c_str());
+        }
+      }
       if(!found[i]) {
         Msg::Error("Volume %lu was not found in the tetrahedralization (its "
                    "bounding surfaces "
