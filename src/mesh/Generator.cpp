@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <limits>
 #include <stdlib.h>
 #include <set>
 #include <stack>
@@ -567,6 +568,8 @@ static void Mesh1D(GModel *m)
 
   Msg::StopProgressMeter();
 
+  // numbered as the threads created them: renumber canonically
+  m->renumberMeshCanonically(std::numeric_limits<std::size_t>::max());
   CheckEmptyMesh(m, 1);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[0] = w2 - w1;
@@ -734,6 +737,7 @@ static void Mesh2D(GModel *m)
 
     Msg::StopProgressMeter();
   }
+  m->renumberMeshCanonically(std::numeric_limits<std::size_t>::max());
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     replaceBadQuadDominantMeshes(m);
