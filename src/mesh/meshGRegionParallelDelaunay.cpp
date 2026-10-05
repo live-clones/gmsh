@@ -44,9 +44,7 @@
 
 namespace pdel3d {
 
-  // ---------------------------------------------------------------------
   // Mesh
-  // ---------------------------------------------------------------------
 
   void Mesh::reserveTets(std::size_t n)
   {
@@ -300,9 +298,7 @@ namespace pdel3d {
       return s;
     }
 
-    // ---------------------------------------------------------------------
     // insertion status codes (internal)
-    // ---------------------------------------------------------------------
     enum Status { OK, CONFLICT, TOO_CLOSE, DOUBLE, NO_SPACE, WALK_FAILED };
 
     // per-thread state, on its own cache lines: the counters at the end of
@@ -355,9 +351,7 @@ namespace pdel3d {
     inline void setDeleted(Mesh &m, tIdx t) { m.flag[t] |= F_DELETED; }
     inline void unsetDeleted(Mesh &m, tIdx t) { m.flag[t] &= ~F_DELETED; }
 
-    // ---------------------------------------------------------------------
     // the Delaunay kernel
-    // ---------------------------------------------------------------------
     class Kernel {
     public:
       Mesh &m;
@@ -691,7 +685,7 @@ namespace pdel3d {
         L.deleted.resize(start);
       }
 
-      // ---- constrained cavities (after HXT's hxt_tetDelaunayReshape.c) ----
+      // constrained cavities (after HXT's hxt_tetDelaunayReshape.c)
 
       // a constrained edge whose every surrounding tet is in the cavity would
       // disappear: flag one of those tets (on the far side of vta) to be
@@ -1130,9 +1124,7 @@ namespace pdel3d {
 
   } // namespace
 
-  // ---------------------------------------------------------------------
   // driver
-  // ---------------------------------------------------------------------
 
   void insertVertices(Mesh &m, DelaunayOptions &opt,
                       std::vector<vIdx> &toInsert,
@@ -1503,9 +1495,7 @@ namespace pdel3d {
                 t2 - t0);
   }
 
-  // ---------------------------------------------------------------------
   // verification
-  // ---------------------------------------------------------------------
 
   std::size_t Mesh::verify(bool delaunay, bool verbose) const
   {
@@ -2461,9 +2451,7 @@ namespace pdel3d {
     }
   }
 
-  // ---------------------------------------------------------------------
   // local boundary recovery
-  // ---------------------------------------------------------------------
 
   namespace {
 
@@ -3719,9 +3707,7 @@ void delaunayMeshIn3DParallel(std::vector<MVertex *> &v,
             tets.size(), TimeOfDay() - t0, stats.timeSort, stats.timeInsert);
 }
 
-// ---------------------------------------------------------------------------
 // volume meshing
-// ---------------------------------------------------------------------------
 
 namespace {
 
@@ -4776,7 +4762,7 @@ namespace {
       }
     }
 
-    // ---- commit ----
+    // commit
     std::size_t steiner = 0;
     std::vector<std::uint8_t> triRemoved(nt, 0), lineRemoved(nl, 0);
     for(Pending &P : pending) {

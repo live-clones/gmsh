@@ -120,9 +120,7 @@ namespace pdel3d {
     std::size_t verify(bool delaunay, bool verbose = true) const;
   };
 
-  // ---------------------------------------------------------------------
   // constraints
-  // ---------------------------------------------------------------------
 
   // facet of a tet (4 * tet + facet) carrying each triangle, NO_ADJ when the
   // triangle is not in the mesh; returns the number missing
@@ -166,9 +164,7 @@ namespace pdel3d {
     const std::vector<std::vector<std::uint32_t>> &volumes,
     const std::map<std::uint32_t, std::vector<std::uint32_t>> &siblings);
 
-  // ---------------------------------------------------------------------
   // refinement
-  // ---------------------------------------------------------------------
 
   struct RefineOptions {
     int numThreads = 1;
@@ -254,11 +250,9 @@ namespace pdel3d {
                       DelaunayStats *stats = nullptr,
                       const std::vector<tIdx> *hints = nullptr);
 
-  // ---------------------------------------------------------------------
   // shared by the parallel kernels: the partitions of the Moore curve, the
   // thread count throttled on the conflicts (after HXT), a parallel sort and
   // the fast orientation predicate
-  // ---------------------------------------------------------------------
 
   // a contiguous piece of the (circular) curve, and the range of the sorted
   // work items it holds

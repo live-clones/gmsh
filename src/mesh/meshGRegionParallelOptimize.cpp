@@ -39,7 +39,7 @@ namespace pdel3d {
 
     enum Status { OK, CONFLICT, NOT_BETTER, CONSTRAINED };
 
-    // ---- the cavity of a small polyhedron reconnection ----
+    // the cavity of a small polyhedron reconnection
 
     constexpr int SPR_MAX_POINTS = 32; // 8-bit node indices, dense tables
     constexpr int SPR_MAX_FACES = 512;
@@ -164,7 +164,7 @@ namespace pdel3d {
         return t;
       }
 
-      // ---- edge removal ----
+      // edge removal
 
       // the tets around the edge e of tet t, in order; ring[i] is the vertex
       // shared by tets i and i + 1
@@ -476,7 +476,7 @@ namespace pdel3d {
         return OK;
       }
 
-      // ---- node relocation ----
+      // node relocation
 
       // the tets around vertex v, starting from t; the base facet (opposite v)
       // of each is 4 * tet + facet
@@ -612,7 +612,7 @@ namespace pdel3d {
         return conflict ? CONFLICT : NOT_BETTER;
       }
 
-      // ---- small polyhedron reconnection ----
+      // small polyhedron reconnection
 
       // cached orientation of four cavity points, as the sign of
       // orient3d(a, b, c, d) (the cavity's tets are negative)
@@ -904,7 +904,7 @@ namespace pdel3d {
         return OK;
       }
 
-      // ---- the exhaustive search ----
+      // the exhaustive search
 
       // segment (p, q) crosses triangle (a, b, c) properly (no shared node)
       bool sprCrosses(SPRCavity &S, int p, int q, int a, int b, int c) const
