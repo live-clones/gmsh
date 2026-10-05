@@ -2480,13 +2480,17 @@ namespace pdel3d {
     struct Recovery {
       Mesh &m;
       std::vector<tRef> v2t; // a tet containing each vertex (NO_ADJ: none)
-      std::set<std::uint64_t> surfaceEdges; // edges that must not be removed
+      std::vector<std::uint64_t> surfaceEdges; // sorted; never removed
+      bool isSurfaceEdge(vIdx a, vIdx b) const
+      {
+        return std::binary_search(surfaceEdges.begin(), surfaceEdges.end(),
+                                  edgeKey(a, b));
+      }
       std::vector<tIdx> scratch;
       std::size_t swaps = 0;
       // rejection counters, reported at the debug verbosity
       std::size_t rGhost = 0, rBig = 0, rConstrained = 0, rSurfEdge = 0,
-                  rBad = 0, rNoVertices = 0, rNoTriangulation = 0, rNone = 0,
-                  rVolume = 0;
+                  rBad = 0, rNoVertices = 0, rNoTriangulation = 0, rVolume = 0;
 
       Recovery(Mesh &mesh) : m(mesh) {}
 
@@ -2558,12 +2562,12 @@ namespace pdel3d {
 
       // the ring around the edge of tet t between its nodes at positions ia
       // and ib; false when it cannot be removed (ghost or constrained facets,
-      // more than 7 tets, inconsistent)
+      // more than 31 tets, inconsistent)
       bool buildRing(tIdx t, unsigned ia, unsigned ib, Ring &R)
       {
         R.a = m.node[4 * t + ia];
         R.b = m.node[4 * t + ib];
-        if(surfaceEdges.count(edgeKey(R.a, R.b))) {
+        if(isSurfaceEdge(R.a, R.b)) {
           rSurfEdge++;
           return false;
         }
@@ -2936,7 +2940,20 @@ namespace pdel3d {
 
       // the edges of the facets crossed by the segment (x, y), walking from x
       // to y; false when the walk fails (hull, cycle)
-      bool crossedEdges(vIdx x, vIdx y, std::vector<std::uint64_t> &edges)
+      // an edge of a tet, by the indices of its nodes
+      struct EdgeRef {
+        tIdx t;
+        unsigned ia, ib;
+      };
+      void facetEdges(tIdx t, unsigned f, std::vector<EdgeRef> &edges)
+      {
+        const unsigned a = facetNode0(f), b = facetNode1(f), c = facetNode2(f);
+        edges.push_back({t, std::min(a, b), std::max(a, b)});
+        edges.push_back({t, std::min(b, c), std::max(b, c)});
+        edges.push_back({t, std::min(c, a), std::max(c, a)});
+      }
+
+      bool crossedEdges(vIdx x, vIdx y, std::vector<EdgeRef> &edges)
       {
         edges.clear();
         const double *px = &m.xyz[4 * x], *py = &m.xyz[4 * y];
@@ -2953,9 +2970,7 @@ namespace pdel3d {
           if(segmentCrossesFacet(px, py, &m.xyz[4 * u], &m.xyz[4 * v],
                                  &m.xyz[4 * w])) {
             const tRef r = m.neigh[4 * t + ix];
-            edges.push_back(edgeKey(u, v));
-            edges.push_back(edgeKey(v, w));
-            edges.push_back(edgeKey(w, u));
+            facetEdges(t, ix, edges);
             cur = r >> 2;
             entering = r & 3;
             break;
@@ -2974,9 +2989,7 @@ namespace pdel3d {
             if(segmentCrossesFacet(px, py, &m.xyz[4 * u], &m.xyz[4 * v],
                                    &m.xyz[4 * w])) {
               exitF = f;
-              edges.push_back(edgeKey(u, v));
-              edges.push_back(edgeKey(v, w));
-              edges.push_back(edgeKey(w, u));
+              facetEdges(cur, f, edges);
             }
           }
           if(exitF == 4) return false; // the segment goes through an edge
@@ -2987,20 +3000,17 @@ namespace pdel3d {
         return false;
       }
 
-      // remove the edge (p, q) with the ring triangulation containing the
-      // required ring positions of the given vertices when they are all ring
-      // vertices (nreq of them), or any valid triangulation when nreq is 0
-      bool removeEdge(vIdx p, vIdx q, const vIdx *want, int nreq, tRef *facet)
+      // remove the edge (nodes ia < ib of tet t) with the ring triangulation
+      // containing the required ring positions of the given vertices when
+      // they are all ring vertices (nreq of them), or any valid triangulation
+      // when nreq is 0. The callers always hold a tet of the edge: locating
+      // it from v2t only works for the nodes of the missing items
+      bool removeEdge(tIdx t, unsigned ia, unsigned ib, const vIdx *want,
+                      int nreq, tRef *facet)
       {
-        const tIdx t = findEdge(p, q);
-        if(t == NO_TET) return false;
-        unsigned ip = 0, iq = 0;
-        for(unsigned k = 0; k < 4; k++) {
-          if(m.node[4 * t + k] == p) ip = k;
-          if(m.node[4 * t + k] == q) iq = k;
-        }
+        if(m.isDeleted(t)) return false;
         Ring R;
-        if(!buildRing(t, std::min(ip, iq), std::max(ip, iq), R)) return false;
+        if(!buildRing(t, ia, ib, R)) return false;
         int req[3];
         for(int k = 0; k < nreq; k++) {
           req[k] = ringPosition(R, want[k]);
@@ -3021,7 +3031,7 @@ namespace pdel3d {
       bool recoverEdge(vIdx x, vIdx y)
       {
         const vIdx want[2] = {x, y};
-        std::vector<std::uint64_t> crossed;
+        std::vector<EdgeRef> crossed;
         for(int round = 0; round < 4; round++) {
           star(x, scratch);
           std::vector<tIdx> tets(scratch);
@@ -3031,17 +3041,17 @@ namespace pdel3d {
               if(n[ia] == x) continue;
               for(unsigned ib = ia + 1; ib < 4; ib++) {
                 if(n[ib] == x || n[ib] == GHOST) continue;
-                if(removeEdge(n[ia], n[ib], want, 2, nullptr)) return true;
+                if(removeEdge(t, ia, ib, want, 2, nullptr)) return true;
               }
             }
           }
           // no ring holds both: open the way with an unconstrained removal
           if(!crossedEdges(x, y, crossed)) return false;
           bool removed = false;
-          for(auto key : crossed) {
-            const vIdx p = (vIdx)(key >> 32), q = (vIdx)key;
+          for(auto e : crossed) {
+            const vIdx p = m.node[4 * e.t + e.ia], q = m.node[4 * e.t + e.ib];
             if(p == x || p == y || q == x || q == y) continue;
-            if(removeEdge(p, q, nullptr, 0, nullptr)) {
+            if(removeEdge(e.t, e.ia, e.ib, nullptr, 0, nullptr)) {
               removed = true;
               break;
             }
@@ -3071,7 +3081,7 @@ namespace pdel3d {
             for(unsigned f = 0; f < 4; f++)
               tets.push_back(m.neigh[4 * tets[i] + f] >> 2);
           std::set<std::uint64_t> seen;
-          std::vector<std::uint64_t> piercing;
+          std::vector<EdgeRef> piercing;
           for(auto t : tets) {
             if(m.isGhost(t) || m.isDeleted(t)) continue;
             const vIdx *n = &m.node[4 * t];
@@ -3082,16 +3092,16 @@ namespace pdel3d {
                   continue;
                 if(!seen.insert(edgeKey(p, q)).second) continue;
                 // the ring of an edge around the three nodes holds them all
-                if(removeEdge(p, q, want, 3, &facet)) return true;
+                if(removeEdge(t, ia, ib, want, 3, &facet)) return true;
                 if(segmentCrossesFacet(&m.xyz[4 * p], &m.xyz[4 * q], px, py,
                                        pz))
-                  piercing.push_back(edgeKey(p, q));
+                  piercing.push_back({t, ia, ib});
               }
             }
           }
           bool removed = false;
-          for(auto key : piercing) {
-            if(removeEdge((vIdx)(key >> 32), (vIdx)key, nullptr, 0, nullptr)) {
+          for(auto e : piercing) {
+            if(removeEdge(e.t, e.ia, e.ib, nullptr, 0, nullptr)) {
               removed = true;
               break;
             }
@@ -3109,7 +3119,7 @@ namespace pdel3d {
                              const std::vector<std::uint8_t> &lineInTriangle,
                              std::vector<tRef> &tri2tet,
                              std::vector<std::uint64_t> &line2tet, int nthreads,
-                             int verbosity, bool keepPartial)
+                             int verbosity)
   {
     const double t0 = TimeOfDay();
     const std::size_t nt = triNode.size() / 3, nl = lineNode.size() / 2;
@@ -3119,31 +3129,20 @@ namespace pdel3d {
     for(std::size_t i = 0; i < nl; i++)
       if(!lineInTriangle[i] && line2tet[i] == NO_ADJ) missingLines++;
     if(!missingTri && !missingLines) return 0;
-    // unless asked otherwise, the local removals are kept only when
-    // everything is recovered: tetgen gets the untouched Delaunay otherwise
-    std::vector<vIdx> node0;
-    std::vector<tRef> neigh0, tri2tet0;
-    std::vector<std::uint16_t> flag0;
-    std::vector<std::uint64_t> line2tet0;
-    const std::size_t ntet0 = m.ntet;
-    if(!keepPartial) {
-      node0.assign(m.node.begin(), m.node.begin() + 4 * m.ntet);
-      neigh0.assign(m.neigh.begin(), m.neigh.begin() + 4 * m.ntet);
-      flag0.assign(m.flag.begin(), m.flag.begin() + m.ntet);
-      tri2tet0 = tri2tet;
-      line2tet0 = line2tet;
-    }
     // the triangles and lines in the mesh must survive the edge removals
     constrainFacets(m, tri2tet);
     constrainEdges(m, line2tet);
     Recovery R(m);
+    R.surfaceEdges.reserve(3 * nt + nl);
     for(std::size_t i = 0; i < nt; i++) {
-      R.surfaceEdges.insert(R.edgeKey(triNode[3 * i], triNode[3 * i + 1]));
-      R.surfaceEdges.insert(R.edgeKey(triNode[3 * i + 1], triNode[3 * i + 2]));
-      R.surfaceEdges.insert(R.edgeKey(triNode[3 * i + 2], triNode[3 * i]));
+      R.surfaceEdges.push_back(R.edgeKey(triNode[3 * i], triNode[3 * i + 1]));
+      R.surfaceEdges.push_back(
+        R.edgeKey(triNode[3 * i + 1], triNode[3 * i + 2]));
+      R.surfaceEdges.push_back(R.edgeKey(triNode[3 * i + 2], triNode[3 * i]));
     }
     for(std::size_t i = 0; i < nl; i++)
-      R.surfaceEdges.insert(R.edgeKey(lineNode[2 * i], lineNode[2 * i + 1]));
+      R.surfaceEdges.push_back(R.edgeKey(lineNode[2 * i], lineNode[2 * i + 1]));
+    std::sort(R.surfaceEdges.begin(), R.surfaceEdges.end());
     // a tet around every vertex of a missing item
     const std::size_t nv = m.numVertices();
     R.v2t.assign(nv, NO_ADJ);
@@ -3207,15 +3206,7 @@ namespace pdel3d {
     }
     const std::size_t left =
       missingTri - recoveredTri + missingLines - recoveredLines;
-    if(left && !keepPartial) {
-      std::copy(node0.begin(), node0.end(), m.node.begin());
-      std::copy(neigh0.begin(), neigh0.end(), m.neigh.begin());
-      std::copy(flag0.begin(), flag0.end(), m.flag.begin());
-      m.ntet = ntet0;
-      tri2tet = tri2tet0;
-      line2tet = line2tet0;
-    }
-    else if(!left) {
+    if(!left) {
       // the edge removals leave deleted tets: the caller redoes the maps on
       // the compacted mesh
       m.removeDeleted(nthreads);
@@ -3226,7 +3217,7 @@ namespace pdel3d {
                 recoveredTri, missingTri, recoveredLines, missingLines, R.swaps,
                 TimeOfDay() - t0);
     if(verbosity > 5)
-      Msg::Info("  ring rejections: %lu with a ghost, %lu with more than 7 "
+      Msg::Info("  ring rejections: %lu with a ghost, %lu with more than 31 "
                 "tets, %lu constrained, %lu surface edges, %lu inconsistent, "
                 "%lu without the nodes, %lu without a positive triangulation, "
                 "%lu with a volume mismatch",
@@ -3670,7 +3661,6 @@ namespace pdel3d {
     const double t6 = TimeOfDay();
     m.removeDeleted(nthreads);
     timeCompact += TimeOfDay() - t6;
-    m.removeDeleted();
     if(opt.verbosity > 0)
       Msg::Info("Refinement: %lu nodes inserted out of %lu candidates in %lu "
                 "rounds (Wall %gs)",
@@ -4016,8 +4006,24 @@ namespace {
     std::vector<GRegion *> &regions = *sd->regions;
     const double lcGlob = CTX::instance()->lc;
     const bool extend = Extend2dMeshIn3dVolumes();
+    // without a size field or a callback the size is a constant per volume
+    // (its own size, the global one): no evaluation per point
+    GModel *gm = regions.empty() ? nullptr : regions[0]->model();
+    if(gm && gm->getFields()->getBackgroundField() <= 0 && !gm->lcCallback) {
+      std::vector<double> lc(regions.size());
+      for(std::size_t r = 0; r < regions.size(); r++)
+        lc[r] = std::min(lcGlob, regions[r]->getMeshSize());
+      for(std::size_t i = 0; i < n; i++) {
+        if(color[i] >= regions.size()) continue;
+        if(extend && xyzs[4 * i + 3] > 0.)
+          xyzs[4 * i + 3] = std::min(xyzs[4 * i + 3], lc[color[i]]);
+        else
+          xyzs[4 * i + 3] = lc[color[i]];
+      }
+      return;
+    }
     const int nthreads = CTX::instance()->numThreadsFor(n, 1 << 12);
-    bool exceptions = false;
+    std::atomic<bool> exceptions(false);
 #pragma omp parallel for schedule(dynamic, 256) num_threads(nthreads)
     for(std::size_t i = 0; i < n; i++) {
       if(exceptions || color[i] >= regions.size()) continue;
@@ -4568,8 +4574,13 @@ namespace {
         global.push_back(v);
         return l;
       };
+      // (the component ids are not needed anymore: the array is reused,
+      // cleared component by component rather than in full each time)
       std::vector<std::uint32_t> &localTet = component;
-      std::fill(localTet.begin(), localTet.end(), 0);
+      if(c == 0)
+        std::fill(localTet.begin(), localTet.end(), 0);
+      else
+        for(tIdx t : components[c - 1]) localTet[t] = 0;
       for(std::size_t j = 0; j < comp.size(); j++) {
         localTet[comp[j]] = (std::uint32_t)j + 1;
         for(unsigned k = 0; k < 4; k++) localOf(m.node[4 * comp[j] + k]);
@@ -5041,22 +5052,25 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
     const std::vector<std::uint16_t> flag0(m.flag.begin(),
                                            m.flag.begin() + m.ntet);
     const std::size_t ntet0 = m.ntet, nv0 = m.numVertices();
+    // the maps after each stage: the edge removals and the cavities move
+    // the triangles and lines to other tets
+    auto remap = [&]() {
+      missing = pdel3d::triangleToTetMap(m, s.triNode, tri2tet);
+      pdel3d::linesInTriangles(s.triNode, s.lineNode, lineInTriangle);
+      missingLines =
+        pdel3d::lineToTetMap(m, s.lineNode, lineInTriangle, line2tet);
+    };
     bool local = true;
-    if(pdel3d::recoverLocally(m, s.triNode, s.lineNode, lineInTriangle, tri2tet,
-                              line2tet, nthreads, verbosity, true)) {
-      if(Msg::GetVerbosity() > 5) m.verify(false);
-      // the edge removals moved the triangles and lines to other tets
-      pdel3d::triangleToTetMap(m, s.triNode, tri2tet);
-      pdel3d::lineToTetMap(m, s.lineNode, lineInTriangle, line2tet);
+    pdel3d::recoverLocally(m, s.triNode, s.lineNode, lineInTriangle, tri2tet,
+                           line2tet, nthreads, verbosity);
+    if(Msg::GetVerbosity() > 5) m.verify(false);
+    remap();
+    if(missing || missingLines) {
       local = recoverWithLocalTetGen(m, s, regions, tri2tet, line2tet,
                                      lineInTriangle, nthreads);
       if(local) {
-        // everything must be there now
-        local = pdel3d::triangleToTetMap(m, s.triNode, tri2tet) == 0;
-        pdel3d::linesInTriangles(s.triNode, s.lineNode, lineInTriangle);
-        if(local)
-          local =
-            pdel3d::lineToTetMap(m, s.lineNode, lineInTriangle, line2tet) == 0;
+        remap();
+        local = !missing && !missingLines;
         if(!local)
           Msg::Info("Local boundary recovery incomplete: falling back to the "
                     "global one");
@@ -5084,11 +5098,8 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
         }
       }
       surfaceSizes(s, m, sizeFactor);
+      remap();
     }
-    missing = pdel3d::triangleToTetMap(m, s.triNode, tri2tet);
-    pdel3d::linesInTriangles(s.triNode, s.lineNode, lineInTriangle);
-    missingLines =
-      pdel3d::lineToTetMap(m, s.lineNode, lineInTriangle, line2tet);
     if(missing || missingLines) {
       Msg::Error(
         "%lu triangle(s) and %lu line(s) still missing after boundary recovery",

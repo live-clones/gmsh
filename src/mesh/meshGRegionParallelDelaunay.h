@@ -152,7 +152,7 @@ namespace pdel3d {
                              const std::vector<std::uint8_t> &lineInTriangle,
                              std::vector<tRef> &tri2tet,
                              std::vector<std::uint64_t> &line2tet, int nthreads,
-                             int verbosity, bool keepPartial = false);
+                             int verbosity);
   // color the tets: a flood fill bounded by the constrained facets gives the
   // connected volumes, which are matched to the given volumes through the set
   // of surface colors (triColor) bounding them: volume i gets color i, the
