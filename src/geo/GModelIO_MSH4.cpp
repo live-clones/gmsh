@@ -4128,19 +4128,24 @@ static void writeMSH4Elements(
 
         std::size_t N = it->second.size();
         if(binary) {
+          // by blocks: a buffer for all the elements of a large mesh (16 GB
+          // for 400M tets) on top of the mesh itself is what gets paged out
           const int numVertPerElm = MElement::getInfoMSH(elmType);
-          std::size_t n = 1 + numVertPerElm;
-          std::vector<std::size_t> tags(N * n);
-          std::size_t k = 0;
-          for(std::size_t i = 0; i < N; i++) {
-            MElement *e = it->second[i];
-            tags[k] = e->getNum();
-            for(int j = 0; j < numVertPerElm; j++) {
-              tags[k + 1 + j] = e->getVertex(j)->getNum();
+          const std::size_t n = 1 + numVertPerElm, block = 1 << 20;
+          std::vector<std::size_t> tags(std::min(N, block) * n);
+          for(std::size_t first = 0; first < N; first += block) {
+            const std::size_t last = std::min(N, first + block);
+            std::size_t k = 0;
+            for(std::size_t i = first; i < last; i++) {
+              MElement *e = it->second[i];
+              tags[k] = e->getNum();
+              for(int j = 0; j < numVertPerElm; j++) {
+                tags[k + 1 + j] = e->getVertex(j)->getNum();
+              }
+              k += n;
             }
-            k += n;
+            fwrite(&tags[0], sizeof(std::size_t), k, fp);
           }
-          fwrite(&tags[0], sizeof(std::size_t), N * n, fp);
         }
         else {
           for(std::size_t i = 0; i < N; i++) {
