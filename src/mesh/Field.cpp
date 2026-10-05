@@ -1865,18 +1865,26 @@ public:
   {
     return "Take the minimum value of a list of fields.";
   }
+  void update()
+  {
+    if(!updateNeeded) return;
+    _fields.clear();
+    for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
+      Field *f = (GModel::current()->getFields()->get(*it));
+      if(!f) Msg::Warning("Unknown Field %i", *it);
+      if(f && *it != id) _fields.push_back(f);
+    }
+    updateNeeded = false;
+  }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-#pragma omp critical(MinField)
+    // resolved before meshing (FieldManager::initialize()), or else by the
+    // first thread that evaluates it; the lock must not be taken on every
+    // evaluation (see MathEvalField)
     if(updateNeeded) {
-      _fields.clear();
-      for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
-        Field *f = (GModel::current()->getFields()->get(*it));
-        if(!f) Msg::Warning("Unknown Field %i", *it);
-        if(f && *it != id) _fields.push_back(f);
-      }
-      updateNeeded = false;
+#pragma omp critical(MinField)
+      update();
     }
 
     double v = MAX_LC;
@@ -1912,18 +1920,23 @@ public:
   {
     return "Take the maximum value of a list of fields.";
   }
+  void update()
+  {
+    if(!updateNeeded) return;
+    _fields.clear();
+    for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
+      Field *f = (GModel::current()->getFields()->get(*it));
+      if(!f) Msg::Warning("Unknown Field %i", *it);
+      if(f && *it != id) _fields.push_back(f);
+    }
+    updateNeeded = false;
+  }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
+    if(updateNeeded) { // (see MinField)
 #pragma omp critical(MaxField)
-    if(updateNeeded) {
-      _fields.clear();
-      for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
-        Field *f = (GModel::current()->getFields()->get(*it));
-        if(!f) Msg::Warning("Unknown Field %i", *it);
-        if(f && *it != id) _fields.push_back(f);
-      }
-      updateNeeded = false;
+      update();
     }
 
     double v = -MAX_LC;
@@ -2070,10 +2083,12 @@ public:
       return MAX_LC;
     }
     if(!ge) return (*f)(x, y, z);
+    if(updateNeeded) { // (see MinField)
 #pragma omp critical(RestrictField)
-    if(updateNeeded) {
-      getRestrictEntities(ge->model(), _inTags, _tags, _boundary, _embedded);
-      updateNeeded = false;
+      if(updateNeeded) {
+        getRestrictEntities(ge->model(), _inTags, _tags, _boundary, _embedded);
+        updateNeeded = false;
+      }
     }
     if(_tags[ge->dim()].count(ge->tag())) return (*f)(x, y, z, ge);
     return MAX_LC;
@@ -2119,10 +2134,12 @@ public:
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     if(!ge) return MAX_LC;
+    if(updateNeeded) { // (see MinField)
 #pragma omp critical(ConstantField)
-    if(updateNeeded) {
-      getRestrictEntities(ge->model(), _inTags, _tags, _boundary, _embedded);
-      updateNeeded = false;
+      if(updateNeeded) {
+        getRestrictEntities(ge->model(), _inTags, _tags, _boundary, _embedded);
+        updateNeeded = false;
+      }
     }
     if(_tags[ge->dim()].count(ge->tag())) return _vIn;
     return _vOut;
@@ -2739,49 +2756,56 @@ public:
     if(!ge) return MAX_LC;
     if(ge->dim() != 2 && ge->dim() != 3) return MAX_LC;
 
-#pragma omp critical(ExtendField)
+    // the locks must not be taken on every evaluation (see MinField)
     if(updateNeeded) {
-      _entities.clear();
-      for(auto t : _surfaceTags) {
-        GFace *gf = GModel::current()->getFaceByTag(t);
-        if(gf) {
-          _entities.insert(gf);
+#pragma omp critical(ExtendField)
+      if(updateNeeded) {
+        _entities.clear();
+        for(auto t : _surfaceTags) {
+          GFace *gf = GModel::current()->getFaceByTag(t);
+          if(gf)
+            _entities.insert(gf);
+          else
+            Msg::Warning("Unknown surface %d", t);
         }
-        else {
-          Msg::Warning("Unknown surface %d", t);
-        }
-      }
-      for(auto t : _volumeTags) {
-        GRegion *gr = GModel::current()->getRegionByTag(t);
-        if(gr) {
-          _entities.insert(gr);
-        }
-        else {
-          Msg::Warning("Unknown volume %d", t);
+        for(auto t : _volumeTags) {
+          GRegion *gr = GModel::current()->getRegionByTag(t);
+          if(gr)
+            _entities.insert(gr);
+          else
+            Msg::Warning("Unknown volume %d", t);
         }
       }
     }
 
     if(_entities.find(ge) == _entities.end()) return MAX_LC;
 
+    const bool firstSurface =
+      ge->dim() == 2 && _surfaceTags.size() && _searchCurves.empty();
+    if(updateNeeded || firstSurface) {
 #pragma omp critical(ExtendField)
-    if(updateNeeded ||
-       (ge->dim() == 2 && _surfaceTags.size() && _searchCurves.empty())) {
-      // we are meshing our first surface; recompute distance to the elements on
-      // curves, and invalidate the distance to surfaces
-      recomputeCurves();
-      _searchSurfaces.clear();
-      updateNeeded = false;
+      if(updateNeeded ||
+         (ge->dim() == 2 && _surfaceTags.size() && _searchCurves.empty())) {
+        // we are meshing our first surface; recompute distance to the
+        // elements on curves, and invalidate the distance to surfaces
+        recomputeCurves();
+        _searchSurfaces.clear();
+        updateNeeded = false;
+      }
     }
+    const bool firstVolume =
+      ge->dim() == 3 && _volumeTags.size() && _searchSurfaces.empty();
+    if(updateNeeded || firstVolume) {
 #pragma omp critical(ExtendField)
-    if(updateNeeded ||
-       (ge->dim() == 3 && _volumeTags.size() && _searchSurfaces.empty())) {
-      // we are meshing our first volume; recompute distance to the elements on
-      // surfaces, and invalidate the distance to curves (to be ready for
-      // subsequent surface meshing pass)
-      recomputeSurfaces();
-      _searchCurves.clear();
-      updateNeeded = false;
+      if(updateNeeded ||
+         (ge->dim() == 3 && _volumeTags.size() && _searchSurfaces.empty())) {
+        // we are meshing our first volume; recompute distance to the
+        // elements on surfaces, and invalidate the distance to curves (to be
+        // ready for subsequent surface meshing pass)
+        recomputeSurfaces();
+        _searchCurves.clear();
+        updateNeeded = false;
+      }
     }
 
     double pt[3] = {X, Y, Z};
