@@ -2637,12 +2637,14 @@ class ExtendField : public Field {
   std::map<GEntity*, search> _searchCurves, _searchSurfaces;
   double _sizeMax, _ratio;
   bool _embedded;
+  int _searchDim; // dimension of the entities the search trees were built for
 public:
   ExtendField()
   {
     _sizeMax = MAX_LC;
     _ratio = 1.2;
     _embedded = true;
+    _searchDim = 0;
     options["SurfacesList"] = new FieldOptionList(
       _surfaceTags, "Tags of model surfaces on which to apply the field",
       &updateNeeded);
@@ -2739,8 +2741,10 @@ public:
     if(!ge) return MAX_LC;
     if(ge->dim() != 2 && ge->dim() != 3) return MAX_LC;
 
+    // build the search trees once per meshing pass: on the curves when
+    // meshing surfaces, on the surfaces when meshing volumes
 #pragma omp critical(ExtendField)
-    if(updateNeeded) {
+    if(updateNeeded || _searchDim != ge->dim()) {
       _entities.clear();
       for(auto t : _surfaceTags) {
         GFace *gf = GModel::current()->getFaceByTag(t);
@@ -2760,29 +2764,17 @@ public:
           Msg::Warning("Unknown volume %d", t);
         }
       }
+      _searchCurves.clear();
+      _searchSurfaces.clear();
+      if(ge->dim() == 2)
+        recomputeCurves();
+      else
+        recomputeSurfaces();
+      _searchDim = ge->dim();
+      updateNeeded = false;
     }
 
     if(_entities.find(ge) == _entities.end()) return MAX_LC;
-
-#pragma omp critical(ExtendField)
-    if(updateNeeded ||
-       (ge->dim() == 2 && _surfaceTags.size() && _searchCurves.empty())) {
-      // we are meshing our first surface; recompute distance to the elements on
-      // curves, and invalidate the distance to surfaces
-      recomputeCurves();
-      _searchSurfaces.clear();
-      updateNeeded = false;
-    }
-#pragma omp critical(ExtendField)
-    if(updateNeeded ||
-       (ge->dim() == 3 && _volumeTags.size() && _searchSurfaces.empty())) {
-      // we are meshing our first volume; recompute distance to the elements on
-      // surfaces, and invalidate the distance to curves (to be ready for
-      // subsequent surface meshing pass)
-      recomputeSurfaces();
-      _searchCurves.clear();
-      updateNeeded = false;
-    }
 
     double pt[3] = {X, Y, Z};
     std::vector<GEntity *> bnd = ge->boundaryEntities();
@@ -2795,24 +2787,17 @@ public:
       for(auto e : emb) bnd.push_back(e);
     }
     std::vector<double> sbnd(bnd.size(), 0.), dbnd(bnd.size(), 0.);
+    auto &search = (ge->dim() == 2) ? _searchCurves : _searchSurfaces;
     for(std::size_t i = 0; i < bnd.size(); i++) {
       nanoflann::KNNResultSet<double> res(1);
       std::size_t index = 0;
       double dist2 = 0.;
       res.init(&index, &dist2);
-      if(ge->dim() == 2) {
-        auto &s = _searchCurves[bnd[i]];
-        if(s.kdtree) {
-          s.kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
-          sbnd[i] = s.sizes[index];
-        }
-      }
-      else {
-        auto &s = _searchSurfaces[bnd[i]];
-        if(s.kdtree) {
-          s.kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
-          sbnd[i] = s.sizes[index];
-        }
+      auto it = search.find(bnd[i]); // no operator[]: other threads read too
+      if(it != search.end() && it->second.kdtree) {
+        it->second.kdtree->findNeighbors(res, &pt[0],
+                                         nanoflann::SearchParams(10));
+        sbnd[i] = it->second.sizes[index];
       }
       // "unscale" the boundary size according to the per-entity and/or the
       // global mesh size factor, so that, if a factor is applied, it will be on

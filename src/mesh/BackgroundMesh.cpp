@@ -83,10 +83,12 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd) : _octree(nullptr)
   // they do not depend on the actual mesh that can be deleted
 
   std::set<SPoint2> myBCNodes;
-  for(std::size_t i = 0; i < _gf->triangles.size(); i++) {
-    MTriangle *e = _gf->triangles[i];
-    MVertex *news[3];
-    for(int j = 0; j < 3; j++) {
+  std::size_t numElements = _gf->triangles.size() + _gf->quadrangles.size();
+  for(std::size_t i = 0; i < numElements; i++) {
+    MElement *e = _gf->getMeshElement(i);
+    int n = e->getNumPrimaryVertices();
+    MVertex *news[4];
+    for(int j = 0; j < n; j++) {
       MVertex *v = e->getVertex(j);
       auto it = _3Dto2D.find(v);
       MVertex *newv = nullptr;
@@ -103,8 +105,9 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd) : _octree(nullptr)
         newv = it->second;
       news[j] = newv;
     }
-    MTriangle *T2D = new MTriangle(news[0], news[1], news[2]);
-    _triangles.push_back(T2D);
+    // quadrangles are split in two triangles
+    _triangles.push_back(new MTriangle(news[0], news[1], news[2]));
+    if(n == 4) _triangles.push_back(new MTriangle(news[0], news[2], news[3]));
   }
 
   for(auto &p : myBCNodes)
@@ -183,9 +186,9 @@ static void propagateValuesOnFace(GFace *_gf,
 
   // Assemble
   laplaceTerm l(nullptr, 1, ONE);
-  for(std::size_t k = 0; k < _gf->triangles.size(); k++) {
-    MTriangle *t = _gf->triangles[k];
-    SElement se(t);
+  for(std::size_t k = 0;
+      k < _gf->triangles.size() + _gf->quadrangles.size(); k++) {
+    SElement se(_gf->getMeshElement(k));
     l.addToMatrix(myAssembler, &se);
   }
 
