@@ -1161,8 +1161,6 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
           else {
             MElement *t1 = n2t[i1];
             MElement *t2 = n2t[i2];
-            touched.insert(t1);
-            touched.insert(t2);
             MVertex *other = nullptr;
             for(int i = 0; i < 3; i++) {
               if(t1->getVertex(0) != t2->getVertex(i) &&
@@ -1172,6 +1170,10 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
                 break;
               }
             }
+            // two triangles with the same nodes cannot make a quadrangle
+            if(!other) continue;
+            touched.insert(t1);
+            touched.insert(t2);
             int start = 0;
             for(int i = 0; i < 3; i++) {
               if(t2->getVertex(0) != t1->getVertex(i) &&

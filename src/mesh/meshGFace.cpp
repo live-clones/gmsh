@@ -10,6 +10,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <map>
+#include <array>
 #include <algorithm>
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -502,6 +503,102 @@ static void pruneAndCleanupBDS(BDS_Mesh *m, BDS_GeomEntity *CLASS_F)
 // Recombine the surface mesh into quadrangles, for the recombination
 // algorithms that run at the end of the 2D mesher (the others run inside
 // quadMeshRemoveHalfOfOneDMesh).
+// On a surface with a seam and a pole (a degenerate curve collapsed to a
+// point), a coarse mesh can have an interior node adjacent to both sides of
+// the seam next to the pole: the two parametric triangles joining it to the
+// pole and to the first seam node are then the same real triangle, with
+// opposite orientations, and the pole belongs to nothing else. The two
+// triangles across the pole's ring (sharing the seam node - interior node
+// edge) span the pole without touching it. Repair: drop the pair and split
+// that edge at the pole, which gives a fan of four triangles around it.
+// Returns false when a duplicate pair cannot be repaired this way
+static bool repairDuplicateTriangles(GFace *gf)
+{
+  typedef std::array<MVertex *, 3> Key;
+  std::map<Key, std::vector<std::size_t>> byNodes;
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+    MTriangle *t = gf->triangles[i];
+    Key k = {t->getVertex(0), t->getVertex(1), t->getVertex(2)};
+    std::sort(k.begin(), k.end());
+    byNodes[k].push_back(i);
+  }
+  std::vector<std::pair<std::size_t, std::size_t>> pairs;
+  for(auto &kv : byNodes) {
+    if(kv.second.size() == 1) continue;
+    if(kv.second.size() != 2) {
+      Msg::Warning("%lu triangles with the same nodes on surface %d",
+                   kv.second.size(), gf->tag());
+      return false;
+    }
+    pairs.push_back({kv.second[0], kv.second[1]});
+  }
+  if(pairs.empty()) return true;
+  // the triangles around the nodes of the pairs
+  std::map<MVertex *, std::vector<std::size_t>> around;
+  for(auto &p : pairs)
+    for(int k = 0; k < 3; k++) around[gf->triangles[p.first]->getVertex(k)];
+  for(std::size_t i = 0; i < gf->triangles.size(); i++)
+    for(int k = 0; k < 3; k++) {
+      auto it = around.find(gf->triangles[i]->getVertex(k));
+      if(it != around.end()) it->second.push_back(i);
+    }
+  std::vector<bool> removed(gf->triangles.size(), false);
+  std::vector<MTriangle *> added;
+  for(auto &p : pairs) {
+    MTriangle *t1 = gf->triangles[p.first];
+    MVertex *pole = nullptr, *s = nullptr, *q = nullptr;
+    for(int k = 0; k < 3; k++) {
+      MVertex *v = t1->getVertex(k);
+      if(around[v].size() == 2)
+        pole = v;
+      else if(!s)
+        s = v;
+      else
+        q = v;
+    }
+    std::vector<std::size_t> across;
+    if(pole && s && q)
+      for(std::size_t i : around[s])
+        if(i != p.first && i != p.second && !removed[i] &&
+           (gf->triangles[i]->getVertex(0) == q ||
+            gf->triangles[i]->getVertex(1) == q ||
+            gf->triangles[i]->getVertex(2) == q))
+          across.push_back(i);
+    if(!pole || across.size() != 2) {
+      Msg::Warning("Cannot repair the duplicate triangle on surface %d",
+                   gf->tag());
+      return false;
+    }
+    for(std::size_t i : across) {
+      MTriangle *t = gf->triangles[i];
+      for(int k = 0; k < 3; k++) {
+        MVertex *a = t->getVertex(k), *b = t->getVertex((k + 1) % 3),
+                *c = t->getVertex((k + 2) % 3);
+        if((a == s && b == q) || (a == q && b == s)) {
+          added.push_back(new MTriangle(a, pole, c));
+          added.push_back(new MTriangle(pole, b, c));
+          removed[i] = true;
+          break;
+        }
+      }
+    }
+    removed[p.first] = removed[p.second] = true;
+  }
+  std::vector<MTriangle *> kept;
+  kept.reserve(gf->triangles.size());
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+    if(removed[i])
+      delete gf->triangles[i];
+    else
+      kept.push_back(gf->triangles[i]);
+  }
+  kept.insert(kept.end(), added.begin(), added.end());
+  gf->triangles.swap(kept);
+  Msg::Info("Repaired %lu duplicate triangle(s) at the pole(s) of surface %d",
+            pairs.size(), gf->tag());
+  return true;
+}
+
 static void recombineSurfaceMesh(GFace *gf)
 {
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
@@ -2152,6 +2249,12 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
   // delete the mesh
   delete m;
+
+  if(!repairDuplicateTriangles(gf)) {
+    Msg::Error("Surface %d has duplicate triangles", gf->tag());
+    gf->meshStatistics.status = GFace::FAILED;
+    return false;
+  }
 
   recombineSurfaceMesh(gf);
 
