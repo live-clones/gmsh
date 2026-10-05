@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstring>
 #include "pdel3d.h"
+#include "pdel3dInternal.h"
 #include "GmshMessage.h"
 #include "robustPredicates.h"
 #include "OS.h"
@@ -113,27 +114,6 @@ namespace pdel3d {
 
     inline int sign(double v) { return (v > 0.) - (v < 0.); }
 
-    // the plain floating-point determinants, decided by the static filters
-    // of robustPredicates (set by exactinit), with the adaptive exact
-    // evaluation as fallback: inlined, the common case is a few dozen flops
-    inline double orient3d(const double *pa, const double *pb, const double *pc,
-                           const double *pd)
-    {
-      const double adx = pa[0] - pd[0], bdx = pb[0] - pd[0],
-                   cdx = pc[0] - pd[0];
-      const double ady = pa[1] - pd[1], bdy = pb[1] - pd[1],
-                   cdy = pc[1] - pd[1];
-      const double adz = pa[2] - pd[2], bdz = pb[2] - pd[2],
-                   cdz = pc[2] - pd[2];
-      const double det = adx * (bdy * cdz - bdz * cdy) +
-                         bdx * (cdy * adz - cdz * ady) +
-                         cdx * (ady * bdz - adz * bdy);
-      if(det > robustPredicates::o3dstaticfilter ||
-         -det > robustPredicates::o3dstaticfilter)
-        return det;
-      return robustPredicates::orient3d(pa, pb, pc, pd);
-    }
-
     inline int insphereSign(const double *pa, const double *pb,
                             const double *pc, const double *pd,
                             const double *pe)
@@ -206,7 +186,7 @@ namespace pdel3d {
       const double *a = &m.xyz[4 * n[0]], *b = &m.xyz[4 * n[1]],
                    *c = &m.xyz[4 * n[2]], *e = &m.xyz[4 * vta];
       if(n[3] == GHOST) {
-        const double det = orient3d(a, b, c, e);
+        const double det = orient3dFast(a, b, c, e);
         if(det != 0.) return sign(det);
         // on the plane of the hull face: decide with the sphere through the
         // tet on the other side
@@ -228,23 +208,10 @@ namespace pdel3d {
       return s;
     }
 
-    inline std::uint32_t lcg(std::uint32_t &seed)
-    {
-      seed = seed * 1664525u + 1013904223u;
-      return seed;
-    }
-    inline double lcg01(std::uint32_t &seed)
-    { return lcg(seed) * (1. / 4294967296.); }
-
     // ---------------------------------------------------------------------
     // insertion status codes (internal)
     // ---------------------------------------------------------------------
-    enum Status { OK, CONFLICT, TOO_CLOSE, DOUBLE, NO_SPACE };
-
-    struct Partition {
-      std::uint64_t startDist = 0, lengthDist = ~0ull;
-      std::size_t firstElem = 0, numElem = 0;
-    };
+    enum Status { OK, CONFLICT, TOO_CLOSE, DOUBLE, NO_SPACE, WALK_FAILED };
 
     // per-thread state
     struct Local {
@@ -269,7 +236,8 @@ namespace pdel3d {
       std::vector<tIdx> cavIndexKey;
       std::vector<std::uint32_t> cavIndexVal;
       // statistics
-      std::size_t inserted = 0, filtered = 0, duplicates = 0, conflicts = 0;
+      std::size_t inserted = 0, filtered = 0, duplicates = 0, conflicts = 0,
+                  walkFailed = 0;
       bool noSpace = false;
 
       // local id of a vertex of the ball (1..31), 0 for the ghost
@@ -286,19 +254,6 @@ namespace pdel3d {
         return npts++;
       }
     };
-
-    inline bool outOfPartition(const Mesh &m, vIdx v, const Partition &p)
-    { return (m.dist[v] - p.startDist) >= p.lengthDist; }
-
-    // a tet lies in the partition if all its real nodes do
-    inline bool tetInPartition(const Mesh &m, tIdx t, const Partition &p)
-    {
-      const vIdx *n = &m.node[4 * t];
-      if(outOfPartition(m, n[0], p) || outOfPartition(m, n[1], p) ||
-         outOfPartition(m, n[2], p))
-        return false;
-      return n[3] == GHOST || !outOfPartition(m, n[3], p);
-    }
 
     inline void setDeleted(Mesh &m, tIdx t) { m.flag[t] |= F_DELETED; }
     inline void unsetDeleted(Mesh &m, tIdx t) { m.flag[t] &= ~F_DELETED; }
@@ -358,6 +313,10 @@ namespace pdel3d {
       Status walk(Local &L, vIdx vta)
       {
         tIdx next = L.curTet;
+        // the mesh is not Delaunay near the recovered boundary, where a
+        // visibility walk can cycle: give up (and retry later from
+        // elsewhere) after too many steps
+        std::size_t steps = 0;
         const Partition &P = L.partition;
         if(m.node[4 * next + 3] == GHOST) {
           const tRef r = m.neigh[4 * next + 3];
@@ -378,7 +337,7 @@ namespace pdel3d {
             const double *a = &m.xyz[4 * curNode[facetNode0(i)]];
             const double *b = &m.xyz[4 * curNode[facetNode1(i)]];
             const double *c = &m.xyz[4 * curNode[facetNode2(i)]];
-            if(orient3d(p, a, b, c) < 0.) { // p beyond facet i
+            if(orient3dFast(p, a, b, c) < 0.) { // p beyond facet i
               outside = 1;
               const vIdx n = m.node[curNeigh[i]];
               if(n == GHOST) {
@@ -401,14 +360,17 @@ namespace pdel3d {
                          *c = &m.xyz[4 * curNode[2]],
                          *d = &m.xyz[4 * curNode[3]];
             L.curTet = next;
-            if((orient3d(a, b, c, p) >= 0) + (orient3d(a, b, p, d) >= 0) +
-                 (orient3d(a, p, c, d) >= 0) + (orient3d(p, b, c, d) >= 0) >
+            if((orient3dFast(a, b, c, p) >= 0) +
+                 (orient3dFast(a, b, p, d) >= 0) +
+                 (orient3dFast(a, p, c, d) >= 0) +
+                 (orient3dFast(p, b, c, d) >= 0) >
                2)
               return DOUBLE;
             return OK;
           }
           enteringFace = curNeigh[index] & 3;
           next = curNeigh[index] >> 2;
+          if(++steps > 10000) return WALK_FAILED;
         }
       }
 
@@ -647,8 +609,8 @@ namespace pdel3d {
           for(std::size_t i = 0; i < L.ball.size(); i++) {
             const Local::bndFace &b = L.ball[i];
             if(b.n[2] == GHOST) continue;
-            if(orient3d(p, &m.xyz[4 * b.n[0]], &m.xyz[4 * b.n[1]],
-                        &m.xyz[4 * b.n[2]]) >= 0.) {
+            if(orient3dFast(p, &m.xyz[4 * b.n[0]], &m.xyz[4 * b.n[1]],
+                            &m.xyz[4 * b.n[2]]) >= 0.) {
               blindFace = i;
               starShaped = false;
               break;
@@ -728,8 +690,8 @@ namespace pdel3d {
           if(!(m.flag[t] & F_UNDELETE)) {
             const Local::bndFace &b = L.ball[curFace];
             if(b.n[2] == GHOST ||
-               orient3d(p, &m.xyz[4 * b.n[0]], &m.xyz[4 * b.n[1]],
-                        &m.xyz[4 * b.n[2]]) < 0.) {
+               orient3dFast(p, &m.xyz[4 * b.n[0]], &m.xyz[4 * b.n[1]],
+                            &m.xyz[4 * b.n[2]]) < 0.) {
               curFace++;
               continue;
             }
@@ -782,9 +744,12 @@ namespace pdel3d {
         L.deleted.resize(L.deleted.size() - shift);
       }
 
-      Status insert(Local &L, vIdx vta)
+      Status insert(Local &L, vIdx vta, tIdx hint, bool checkPartition)
       {
         const std::size_t prevDeleted = L.deleted.size();
+        if(hint != NO_TET && hint < ntet && !m.isDeleted(hint) &&
+           (!checkPartition || tetInPartition(m, hint, L.partition)))
+          L.curTet = hint;
         Status st = walk(L, vta);
         if(st != OK) return st;
         const tIdx t0 = L.curTet;
@@ -856,6 +821,7 @@ namespace pdel3d {
     struct NodeInfo {
       vIdx node;
       std::uint64_t dist;
+      tIdx hint;
       std::uint8_t status;
     };
 
@@ -952,24 +918,6 @@ namespace pdel3d {
       return npasses;
     }
 
-    // halve the threads when the conflicts are too many, and keep at least
-    // smallestPass vertices per thread
-    int computeNumberOfThreads(double conflictRatio, int numThreads,
-                               std::size_t numElem, std::size_t smallestPass)
-    {
-      const double maxBorders = 8.;
-      if(conflictRatio >
-         (numThreads - 1) * maxBorders / (numThreads * (maxBorders + 1) - 2.))
-        numThreads = (numThreads + 1) / 2;
-      int maxThreadsInRound = 1;
-      std::size_t tmp = numElem / smallestPass;
-      while(tmp > 1 && maxThreadsInRound < numThreads) {
-        tmp /= 2;
-        maxThreadsInRound *= 2;
-      }
-      return std::min(maxThreadsInRound, numThreads);
-    }
-
     void sortByDist(NodeInfo *first, std::size_t n)
     {
       std::sort(first, first + n, [](const NodeInfo &a, const NodeInfo &b) {
@@ -985,7 +933,8 @@ namespace pdel3d {
 
   void insertVertices(Mesh &m, DelaunayOptions &opt,
                       std::vector<vIdx> &toInsert,
-                      std::vector<std::uint8_t> &status, DelaunayStats *stats)
+                      std::vector<std::uint8_t> &status, DelaunayStats *stats,
+                      const std::vector<tIdx> *hints)
   {
     const double t0 = TimeOfDay();
     const std::size_t nToInsert = toInsert.size();
@@ -994,7 +943,7 @@ namespace pdel3d {
     const int maxPartitions = std::max(1, opt.numThreads);
     std::vector<NodeInfo> info(nToInsert);
     for(std::size_t i = 0; i < nToInsert; i++)
-      info[i] = {toInsert[i], 0, ST_TODO};
+      info[i] = {toInsert[i], 0, hints ? (*hints)[i] : NO_TET, ST_TODO};
 
     double bmin[3], bmax[3];
     m.bbox(bmin, bmax);
@@ -1118,45 +1067,19 @@ namespace pdel3d {
           }
         }
 
-        // partitions: contiguous pieces of the (circular) sorted pass, cut
-        // where the curve coordinate changes
-        if(nthreads > 1) {
-          const std::size_t perThread =
-            (passLength - curveSkipped) / nthreads + 1;
-          std::size_t counter = perThread;
-          int tid = 0;
-          const std::size_t offset =
-            (std::size_t)(startShift * passLength / nthreads);
-          for(std::size_t i = 0; i < passLength && tid < nthreads; i++) {
-            const std::size_t index = (offset + i) % passLength;
-            const std::uint64_t d = pass[index].dist;
-            if(counter >= perThread) {
-              const std::uint64_t prev =
-                pass[(index + passLength - 1) % passLength].dist;
-              if(d != prev) {
-                locals[tid].partition.firstElem = index;
-                locals[tid].partition.startDist = prev + (d - prev + 1) / 2;
-                counter = 0;
-                tid++;
-              }
-            }
-            if(pass[index].status == ST_TODO) counter++;
+        // partitions: contiguous pieces of the (circular) sorted pass
+        {
+          std::vector<std::uint64_t> dists(passLength);
+          std::vector<std::uint8_t> todo(passLength);
+          for(std::size_t i = 0; i < passLength; i++) {
+            dists[i] = pass[i].dist;
+            todo[i] = pass[i].status == ST_TODO;
           }
-          if(tid <= 1)
-            nthreads = 1;
-          else {
-            nthreads = tid;
-            for(tid = 0; tid < nthreads; tid++) {
-              Partition &P = locals[tid].partition;
-              const Partition &N = locals[(tid + 1) % nthreads].partition;
-              P.numElem = (N.firstElem + passLength - P.firstElem) % passLength;
-              P.lengthDist = N.startDist - P.startDist;
-            }
-          }
-        }
-        if(nthreads == 1) {
-          locals[0].partition = Partition();
-          locals[0].partition.numElem = passLength;
+          std::vector<Partition> parts(std::max(1, nthreads));
+          nthreads = makePartitions(dists.data(), todo.data(), passLength,
+                                    passLength - curveSkipped, nthreads,
+                                    startShift, parts);
+          for(int i = 0; i < nthreads; i++) locals[i].partition = parts[i];
         }
 
         // room for the new tets: about 6 net new tets per vertex in a volume,
@@ -1194,7 +1117,7 @@ namespace pdel3d {
               NodeInfo &ni = pass[(P.firstElem + i) % passLength];
               if(ni.status != ST_TODO) continue;
               if(L.noSpace) continue;
-              switch(K.insert(L, ni.node)) {
+              switch(K.insert(L, ni.node, ni.hint, nthreads > 1)) {
               case OK:
                 ni.status = ST_INSERTED;
                 L.inserted++;
@@ -1208,6 +1131,7 @@ namespace pdel3d {
                 L.duplicates++;
                 break;
               case CONFLICT: L.conflicts++; break;
+              case WALK_FAILED: L.walkFailed++; break;
               case NO_SPACE: L.noSpace = true; break;
               }
             }
@@ -1218,6 +1142,21 @@ namespace pdel3d {
         for(int i = 0; i < nthreads; i++)
           if(locals[i].noSpace) ranOutOfSpace = true;
 
+        // with a single thread, the vertices still to do are those whose walk
+        // cycled: give them up (the tets around them are candidates again at
+        // the next refinement round)
+        if(nthreads == 1 && !ranOutOfSpace) {
+          std::size_t failed = 0;
+          for(std::size_t i = passStart; i < passEnd; i++) {
+            if(info[i].status == ST_TODO) {
+              info[i].status = ST_FILTERED;
+              failed++;
+            }
+          }
+          if(failed)
+            Msg::Warning("%lu point(s) could not be located in the mesh",
+                         failed);
+        }
         // the vertices still to do go to the end of the pass, in order
         std::size_t shift = 0, numSkipped = 0;
         for(std::size_t i = passEnd; i > passStart;) {

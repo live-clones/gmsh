@@ -282,10 +282,12 @@ namespace pdel3d {
       std::size_t numKept = 0;
       for(std::size_t i = 0; i < numCandidates; i++) numKept += keep[i];
       std::vector<vIdx> toInsert(numKept);
+      std::vector<tIdx> hints(numKept);
       m.xyz.resize(4 * (first + numKept));
       for(std::size_t i = 0, j = 0; i < numCandidates; i++) {
         if(!keep[i]) continue;
         toInsert[j] = (vIdx)(first + j);
+        hints[j] = tets[i];
         std::copy(&pts[4 * i], &pts[4 * i] + 4, &m.xyz[4 * (first + j)]);
         j++;
       }
@@ -297,7 +299,7 @@ namespace pdel3d {
       dopt.partitionability = 1. - std::pow(0.5, iter);
       std::vector<std::uint8_t> status;
       const std::size_t before = stats.inserted;
-      insertVertices(m, dopt, toInsert, status, &stats);
+      insertVertices(m, dopt, toInsert, status, &stats, &hints);
       removeUnusedTail(m, first);
       timeCandidates += t2 - t1;
       timeSizes += t3 - t2;

@@ -520,6 +520,7 @@ int meshGRegionPDel3d(std::vector<GRegion *> &regions)
   Msg::Info("Done recovering the boundary (Wall %gs)", t2 - t1);
 
   // refinement
+  const std::size_t numFixed = m.numVertices();
   {
     pdel3d::RefineOptions opt;
     opt.numThreads = nthreads;
@@ -537,9 +538,23 @@ int meshGRegionPDel3d(std::vector<GRegion *> &regions)
       return 1;
     }
   }
-  const double t3 = TimeOfDay();
+  double t3 = TimeOfDay();
   Msg::Info("Done refining (Wall %gs)", t3 - t2);
   if(Msg::GetVerbosity() > 5) m.verify(false);
+  if(CTX::instance()->mesh.optimize > 0 &&
+     CTX::instance()->mesh.optimizeThreshold > 0.) {
+    Msg::Info("Optimizing mesh...");
+    pdel3d::OptimizeOptions opt;
+    opt.numThreads = nthreads;
+    opt.numVolumes = (std::uint32_t)regions.size();
+    opt.numFixedVertices = numFixed;
+    opt.qualityMin = CTX::instance()->mesh.optimizeThreshold;
+    opt.verbosity = verbosity;
+    pdel3d::optimize(m, opt);
+    if(Msg::GetVerbosity() > 5) m.verify(false);
+    Msg::Info("Done optimizing mesh (Wall %gs)", TimeOfDay() - t3);
+    t3 = TimeOfDay();
+  }
 
   exportMesh(m, s, regions);
   Msg::Info("Done exporting %lu tets (Wall %gs)", m.numRealTets(),
