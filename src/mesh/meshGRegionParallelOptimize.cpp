@@ -106,7 +106,7 @@ namespace pdel3d {
       std::vector<tIdx> deleted; // free slots
       Partition partition;
       std::vector<tIdx> cavity, visited;
-      std::size_t swaps = 0, relocations = 0, conflicts = 0;
+      std::size_t swaps = 0, relocations = 0;
       std::size_t invalidSwaps = 0;
       std::size_t reconnections = 0, failedReconnections = 0;
       bool noSpace = false;
@@ -1221,10 +1221,20 @@ namespace pdel3d {
         if(!L.spr) L.spr.reset(new SPRCavity);
         SPRCavity &S = *L.spr;
         if(sprOutOfPartition(bad, L.partition)) return CONFLICT;
-        std::memset(S.orient, 0, sizeof(S.orient));
-        std::fill(S.quality, S.quality + SPR_NUM_QUADS,
+        // only the entries the cavity can reach: a sixteenth of the tables
+        // with 16 points, for thousands of cavities per mesh
+        const int maxPoints = std::min(opt.sprMaxPoints, SPR_MAX_POINTS);
+        for(int a = 0; a < maxPoints; a++) {
+          for(int b = 0; b < maxPoints; b++)
+            std::memset(S.orient[a][b], 0, maxPoints * SPR_MAX_POINTS);
+          std::memset(S.faceMap[a], 0xff, maxPoints * SPR_MAX_POINTS * 2);
+        }
+        std::fill(S.quality,
+                  S.quality +
+                    sprQuadIndex(maxPoints - 4, maxPoints - 3, maxPoints - 2,
+                                 maxPoints - 1) +
+                    1,
                   std::numeric_limits<double>::quiet_NaN());
-        std::memset(S.faceMap, 0xff, sizeof(S.faceMap));
         S.numPoints = 4;
         S.numFaces = S.numEdges = S.numTriangles = 0;
         S.numTets = 1;
@@ -1249,7 +1259,6 @@ namespace pdel3d {
           if(st == NOT_BETTER) L.failedReconnections++;
           return st;
         };
-        const int maxPoints = std::min(opt.sprMaxPoints, SPR_MAX_POINTS);
         while(true) {
           const Status st = sprAttach(L);
           if(st != OK) return giveUp(st);
@@ -1443,10 +1452,7 @@ namespace pdel3d {
               continue;
             }
             const Status st = spr ? K.sprImprove(L, b.t) : K.improve(L, b.t);
-            if(st == CONFLICT) {
-              numConflicts++;
-              L.conflicts++;
-            }
+            if(st == CONFLICT) { numConflicts++; }
             else {
               b.todo = 0;
               if(st != OK) m.flag[b.t] |= spr ? F_SPR_TRIED : F_PROCESSED;

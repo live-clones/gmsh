@@ -602,28 +602,24 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
+    // the axial range first: a size field made of hundreds of frustums
+    // along an axis (jet nozzles) evaluates most of them outside it
     double dx = x - _x1;
     double dy = y - _y1;
     double dz = z - _z1;
     double x12 = _x2 - _x1;
     double y12 = _y2 - _y1;
     double z12 = _z2 - _z1;
-    double l12 = sqrt(x12 * x12 + y12 * y12 + z12 * z12);
-
-    double l = (dx * x12 + dy * y12 + dz * z12) / l12;
-    double r = sqrt(dx * dx + dy * dy + dz * dz - l * l);
-
-    double u = l / l12; // u varies between 0 (P1) and 1 (P2)
+    double l12sq = x12 * x12 + y12 * y12 + z12 * z12;
+    double u = (dx * x12 + dy * y12 + dz * z12) / l12sq; // 0 at P1, 1 at P2
+    if(!(u >= 0 && u <= 1)) return MAX_LC;
+    double r = sqrt(dx * dx + dy * dy + dz * dz - u * u * l12sq);
     double ri = (1 - u) * _r1i + u * _r2i;
     double ro = (1 - u) * _r1o + u * _r2o;
-    double v = (r - ri) / (ro - ri); // v varies between 0 (inner) and 1 (outer)
-
-    double lc = MAX_LC;
-    if(u >= 0 && u <= 1 && v >= 0 && v <= 1) {
-      lc =
-        (1 - v) * ((1 - u) * _v1i + u * _v2i) + v * ((1 - u) * _v1o + u * _v2o);
-    }
-    return lc;
+    double v = (r - ri) / (ro - ri); // 0 at the inner radius, 1 at the outer
+    if(!(v >= 0 && v <= 1)) return MAX_LC;
+    return (1 - v) * ((1 - u) * _v1i + u * _v2i) +
+           v * ((1 - u) * _v1o + u * _v2o);
   }
 };
 
