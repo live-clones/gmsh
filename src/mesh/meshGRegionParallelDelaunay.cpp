@@ -15,10 +15,8 @@
 #include <cmath>
 #include <cstring>
 #include <map>
-#include <memory>
 #include <numeric>
 #include <set>
-#include <stdexcept>
 #include "meshGRegionParallelDelaunay.h"
 #include "meshGRegionParallelOptimize.h"
 #include "GmshMessage.h"
@@ -37,6 +35,7 @@
 #include "MLine.h"
 #include "MPoint.h"
 #include "BackgroundMeshTools.h"
+#include "Field.h"
 #include "meshGRegion.h"
 #include "meshRelocateVertex.h"
 #include "MQuadrangle.h"
@@ -94,17 +93,36 @@ namespace pdel3d {
     }
     const std::size_t n = liveBefore[nchunks];
     if(n == ntet) return;
-    // move the tets (never upwards, so in sequence), then renumber the
-    // adjacencies in parallel
-    for(std::size_t t = 0; t < ntet; t++) {
-      const tIdx s = newIndex[t];
-      if(s == NO_TET || s == t) continue;
-      for(int k = 0; k < 4; k++) {
-        node[4 * s + k] = node[4 * t + k];
-        neigh[4 * s + k] = neigh[4 * t + k];
+    // move the tets: each chunk compacts its own range in place (in
+    // parallel: a tet never moves up), then the compacted blocks slide down
+    // to their place, in sequence (block c may overlap what block c - 1
+    // still has to move), then the adjacencies are renumbered in parallel
+#pragma omp parallel for schedule(static) num_threads(nchunks)
+    for(int c = 0; c < nchunks; c++) {
+      const std::size_t first = c * ntet / nchunks;
+      for(std::size_t t = first; t < (c + 1) * ntet / nchunks; t++) {
+        if(newIndex[t] == NO_TET) continue;
+        const std::size_t s = first + newIndex[t] - liveBefore[c];
+        if(s == t) continue;
+        for(int k = 0; k < 4; k++) {
+          node[4 * s + k] = node[4 * t + k];
+          neigh[4 * s + k] = neigh[4 * t + k];
+        }
+        flag[s] = flag[t];
+        if(!color.empty()) color[s] = color[t];
       }
-      flag[s] = flag[t];
-      if(!color.empty()) color[s] = color[t];
+    }
+    for(int c = 0; c < nchunks; c++) {
+      const std::size_t first = c * ntet / nchunks, dest = liveBefore[c],
+                        count = liveBefore[c + 1] - liveBefore[c];
+      if(dest == first || !count) continue;
+      std::memmove(&node[4 * dest], &node[4 * first], 4 * count * sizeof(vIdx));
+      std::memmove(&neigh[4 * dest], &neigh[4 * first],
+                   4 * count * sizeof(tRef));
+      std::memmove(&flag[dest], &flag[first], count * sizeof(std::uint16_t));
+      if(!color.empty())
+        std::memmove(&color[dest], &color[first],
+                     count * sizeof(std::uint32_t));
     }
 #pragma omp parallel for schedule(static) num_threads(nchunks)
     for(std::size_t s = 0; s < n; s++) {
@@ -287,8 +305,10 @@ namespace pdel3d {
     // ---------------------------------------------------------------------
     enum Status { OK, CONFLICT, TOO_CLOSE, DOUBLE, NO_SPACE, WALK_FAILED };
 
-    // per-thread state
-    struct Local {
+    // per-thread state, on its own cache lines: the counters at the end of
+    // one thread's state and the vectors at the start of the next thread's
+    // are both written on every insertion
+    struct alignas(128) Local {
       struct bndFace {
         vIdx n[3];
         tRef neigh; // the tet outside the cavity, then the new tet
@@ -469,7 +489,7 @@ namespace pdel3d {
         while(true) {
           const tRef *curNeigh = &m.neigh[4 * next];
           const vIdx *curNode = &m.node[4 * next];
-          unsigned index = 4, outside = 0, wantOther = 0;
+          unsigned index = 4, outside = 0;
           const unsigned randomU = lcg(seed);
           for(unsigned j = 0; j < 4; j++) {
             const unsigned i = (j + randomU) & 3;
@@ -484,10 +504,9 @@ namespace pdel3d {
                 L.curTet = curNeigh[i] >> 2;
                 return OK;
               }
-              if(outOfPartition(m, n, P)) {
-                if(wantOther++ > 1000) return CONFLICT;
-              }
-              else {
+              // a facet leading out of the partition: try another one; a
+              // conflict only when none leads inside
+              if(!outOfPartition(m, n, P)) {
                 index = i;
                 break;
               }
@@ -916,7 +935,8 @@ namespace pdel3d {
                     bool checkPartition)
       {
         const std::size_t prevDeleted = L.deleted.size();
-        const bool alive = hint != NO_TET && hint < ntet &&
+        const bool alive = hint != NO_TET &&
+                           hint < ntet.load(std::memory_order_relaxed) &&
                            !m.isDeleted(hint) && m.node[4 * hint] == hintNode;
         if(alive && (!checkPartition || tetInPartition(m, hint, L.partition))) {
           L.curTet = hint;
@@ -965,9 +985,12 @@ namespace pdel3d {
             return TOO_CLOSE;
           }
         }
-        if(opt.filterOnSize) {
+        // the size filter against the cavity vertices, when the size of the
+        // point was unknown (with a known size, the digging already tested
+        // every vertex it reached)
+        if(opt.filterOnSize && p[3] <= 0.) {
           double *pv = &m.xyz[4 * vta];
-          if(pv[3] <= 0.) { // mean size of the cavity vertices
+          { // mean size of the cavity vertices
             double s = 0., den = 0.;
             for(auto &b : L.ball) {
               for(int j = 0; j < 3; j++) {
