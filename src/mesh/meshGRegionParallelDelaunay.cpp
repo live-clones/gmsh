@@ -38,6 +38,8 @@
 #include "MPoint.h"
 #include "BackgroundMeshTools.h"
 #include "meshGRegion.h"
+#include "meshRelocateVertex.h"
+#include "MQuadrangle.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "meshGRegionBoundaryRecovery.h"
 
@@ -3714,12 +3716,61 @@ namespace {
     std::map<std::uint32_t, std::vector<std::uint32_t>> siblings;
   };
 
-  // returns false when the input is not supported (non-triangular elements).
-  // The surfaces are the boundary and embedded surfaces of the regions (a
-  // compound surface replacing its members when their elements are not
-  // reclassified on them); the curves to preserve are the ones embedded in
-  // the regions, the others being edges of the surface triangles
-  bool collectSurfaceMesh(std::vector<GRegion *> &regions, SurfaceMesh &s)
+  // The apex of the pyramid on quadrangle mf, whose element normal points
+  // into the volume when inward is 1 and out of it when -1. del3d puts it at
+  // the barycenter, exactly on the quadrangle, which its boundary recovery
+  // and refinement handle exactly. Here the coordinates are perturbed: tets
+  // would be built between the quadrangle and the side triangles of the
+  // pyramid, colored inside when the perturbation puts the apex outside,
+  // and flattened when the coordinates are restored. The apex is pushed
+  // into the volume by 1% of the quadrangle's diagonal, further when the
+  // quadrangle is warped, so that it is above the planes of the four
+  // triangles of its base by that much and those tets are outside.
+  // Mesh.OptimizePyramids < 0 gives the push explicitly, as in del3d
+  SPoint3 pyramidApex(const MFace &mf, int inward)
+  {
+    SPoint3 c = mf.barycenter();
+    SVector3 n = mf.normal() * (double)inward;
+    const double diag = std::max(mf.getVertex(0)->distance(mf.getVertex(2)),
+                                 mf.getVertex(1)->distance(mf.getVertex(3)));
+    double t;
+    if(CTX::instance()->mesh.optimizePyramids < 0) {
+      t = std::abs(CTX::instance()->mesh.optimizePyramids) * diag;
+    }
+    else {
+      const double delta = 0.01 * diag;
+      t = delta;
+      static const int tri[4][3] = {{0, 1, 2}, {0, 2, 3}, {1, 2, 3}, {0, 1, 3}};
+      for(int i = 0; i < 4; i++) {
+        SPoint3 a = mf.getVertex(tri[i][0])->point();
+        SVector3 nt = crossprod(SVector3(a, mf.getVertex(tri[i][1])->point()),
+                                SVector3(a, mf.getVertex(tri[i][2])->point()));
+        if(nt.normalize() == 0.) continue;
+        double cosine = dot(nt, n);
+        if(cosine < 0.) {
+          nt *= -1.;
+          cosine = -cosine;
+        }
+        if(cosine < 0.5) continue; // badly warped: the pyramid is hopeless
+        // height of the barycenter above the plane of the triangle
+        const double h = dot(SVector3(a, c), nt);
+        t = std::max(t, (delta - h) / cosine);
+      }
+    }
+    return SPoint3(c.x() + t * n.x(), c.y() + t * n.y(), c.z() + t * n.z());
+  }
+
+  // returns false when the input is not supported (polygons). The surfaces
+  // are the boundary and embedded surfaces of the regions (a compound surface
+  // replacing its members when their elements are not reclassified on them);
+  // the curves to preserve are the ones embedded in the regions, the others
+  // being edges of the surface triangles. Quadrangles are handled as in
+  // del3d (splitQuadRecovery): each gets a pyramid apex and its four side
+  // triangles are the constraints (the pyramid is built at the end), or two
+  // triangles when no pyramids are wanted. The recovery object is filled on
+  // the first call and reused on the next ones
+  bool collectSurfaceMesh(std::vector<GRegion *> &regions, SurfaceMesh &s,
+                          splitQuadRecovery &sqr)
   {
     std::set<GFace *, GEntityPtrLessThan> surfaces;
     std::set<GEdge *, GEntityPtrLessThan> curves;
@@ -3742,14 +3793,59 @@ namespace {
       for(GVertex *gv : gr->embeddedVertices()) s.points.push_back(gv);
     }
     for(GFace *gf : surfaces) {
-      if(gf->quadrangles.size() || gf->polygons.size()) {
-        Msg::Warning("Surface %d contains elements which are not triangles: "
-                     "the Parallel Delaunay algorithm only supports triangles",
+      if(gf->polygons.size()) {
+        Msg::Warning("Surface %d contains polygons: the Parallel Delaunay "
+                     "algorithm only supports triangles and quadrangles",
                      gf->tag());
         return false;
       }
     }
     s.surfaces.assign(surfaces.begin(), surfaces.end());
+    if(sqr.getQuad().empty()) {
+      // the quadrangles of the boundary surfaces, with the volume each
+      // bounds (its orientation gives the side of the apex)
+      std::vector<std::pair<GFace *, int>> quadSurfaces;
+      std::set<GFace *> seen;
+      for(GRegion *gr : regions) {
+        std::map<GFace *, int> inward;
+        bool oriented = false;
+        for(GFace *gf : gr->faces()) {
+          if(gf->quadrangles.empty()) continue;
+          if(seen.count(gf)) {
+            Msg::Warning("Surface %d with quadrangles bounds two volumes: "
+                         "non-manifold quadrangle boundaries are not supported",
+                         gf->tag());
+            return false;
+          }
+          seen.insert(gf);
+          if(!oriented && !orientRegionBoundary(gr, inward)) {
+            Msg::Warning("Cannot orient the boundary mesh of volume %d to "
+                         "place the pyramids on its quadrangles",
+                         gr->tag());
+            return false;
+          }
+          oriented = true;
+          quadSurfaces.push_back({gf, inward[gf]});
+        }
+        for(GFace *gf : gr->embeddedFaces())
+          if(!gf->quadrangles.empty())
+            Msg::Warning("Quadrangles of embedded surface %d are ignored",
+                         gf->tag());
+      }
+      for(auto &qs : quadSurfaces) {
+        GFace *gf = qs.first;
+        for(MQuadrangle *q : gf->quadrangles) {
+          MFace mf = q->getFace(0);
+          MVertex *apex = nullptr;
+          if(sqr.doWeCreatePyramids()) {
+            SPoint3 p = pyramidApex(mf, qs.second);
+            // classified on the volume when the pyramid is built
+            apex = new MVertex(p.x(), p.y(), p.z(), gf);
+          }
+          sqr.add(mf, apex, gf);
+        }
+      }
+    }
     s.curves.assign(curves.begin(), curves.end());
     for(GFace *gf : s.surfaces) {
       if(gf->compound.empty()) continue;
@@ -3767,6 +3863,8 @@ namespace {
     for(GFace *gf : s.surfaces)
       for(MTriangle *t : gf->triangles)
         for(int k = 0; k < 3; k++) t->getVertex(k)->setIndex(-1);
+    for(auto &it : sqr.getTri())
+      for(int k = 0; k < 3; k++) it.first.getVertex(k)->setIndex(-1);
     for(GEdge *ge : s.curves)
       for(MLine *l : ge->lines)
         for(int k = 0; k < 2; k++) l->getVertex(k)->setIndex(-1);
@@ -3778,6 +3876,13 @@ namespace {
         s.triColor.push_back(gf->tag());
         s.triElem.push_back(t);
       }
+    }
+    // the triangles standing for the quadrangles (no element behind them)
+    for(auto &it : sqr.getTri()) {
+      for(int k = 0; k < 3; k++)
+        s.triNode.push_back(index(it.first.getVertex(k)));
+      s.triColor.push_back(surface(it.second)->tag());
+      s.triElem.push_back(nullptr);
     }
     for(GEdge *ge : s.curves) {
       for(MLine *l : ge->lines) {
@@ -3858,11 +3963,13 @@ namespace {
         v->z() += d * r();
       }
     }
-    ~perturbedCoordinates()
+    void restore()
     {
       for(std::size_t i = 0; i < _vertices.size(); i++)
         _vertices[i]->setXYZ(_xyz[3 * i], _xyz[3 * i + 1], _xyz[3 * i + 2]);
+      _vertices.clear();
     }
+    ~perturbedCoordinates() { restore(); }
   };
 
   // the gmsh mesh size field at the candidate points
@@ -3899,7 +4006,7 @@ namespace {
   // surface meshes may have changed (Steiner points). The mesh is rebuilt
   // from them: vertices, tets, adjacencies and ghosts
   bool recoverBoundary(pdel3d::Mesh &m, SurfaceMesh &s,
-                       std::vector<GRegion *> &regions)
+                       std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
   {
     initialTetrahedralization init;
     init.vertices = s.vertices;
@@ -3925,13 +4032,13 @@ namespace {
     {
       regionGroupBoundary group(regions);
       for(MVertex *v : gr->mesh_vertices) v->setIndex(-1);
-      ok = meshGRegionBoundaryRecovery(gr, nullptr, &init);
+      ok = meshGRegionBoundaryRecovery(gr, &sqr, &init);
     }
     if(!ok) return false;
     // the surface mesh again (it may have changed), then the vertices of the
     // tets that are not in it (Steiner points in the volume)
     s = SurfaceMesh();
-    if(!collectSurfaceMesh(regions, s)) return false;
+    if(!collectSurfaceMesh(regions, s, sqr)) return false;
     for(MVertex *v : gr->mesh_vertices) v->setIndex(-1);
     for(MTetrahedron *t : gr->tetrahedra) {
       for(int k = 0; k < 4; k++) {
@@ -4542,6 +4649,12 @@ namespace {
         return false;
       }
       for(auto tag : out.changedFaces)
+        if(faceOfTag.count(tag) && !faceOfTag[tag]->quadrangles.empty()) {
+          Msg::Info("Local boundary recovery with TetGen: Steiner point on a "
+                    "surface with quadrangles");
+          return false;
+        }
+      for(auto tag : out.changedFaces)
         if(!faceOfTag.count(tag)) {
           if(tag == BOUNDARY_TAG)
             Msg::Info("Local boundary recovery with TetGen: Steiner point on "
@@ -4809,7 +4922,8 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
   const int nthreads = numThreads3D();
   const int verbosity = Msg::GetVerbosity() > 5 ? 2 : 1;
   SurfaceMesh s;
-  if(!collectSurfaceMesh(regions, s)) return 2;
+  splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
+  if(!collectSurfaceMesh(regions, s, sqr)) return 2;
   // As del3d, work on slightly perturbed coordinates: the nodes of curved
   // surfaces (spheres) are cospherical to rounding, which sends every
   // in-sphere test of the tetrahedralization to the exact arithmetic. The
@@ -4924,7 +5038,7 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
       std::copy(neigh0.begin(), neigh0.end(), m.neigh.begin());
       std::copy(flag0.begin(), flag0.end(), m.flag.begin());
       m.ntet = ntet0;
-      if(!recoverBoundary(m, s, regions)) {
+      if(!recoverBoundary(m, s, regions, sqr)) {
         Msg::Error("Boundary recovery failed");
         return 1;
       }
@@ -4997,5 +5111,13 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
 
   const std::size_t numTets = exportMesh(m, s, regions, nthreads);
   Msg::Info("Done exporting %lu tets (Wall %gs)", numTets, TimeOfDay() - t3);
+  // the pyramids on the quadrangles, as in del3d: on the exact coordinates
+  // (the apexes are moved into the volume, which the restoration would undo)
+  perturbation.restore();
+  const int nHybrid = sqr.buildPyramids(regions[0]->model());
+  if(nHybrid && sqr.doWeCreatePyramids()) {
+    regions[0]->model()->setAllVolumesPositive();
+    RelocateVerticesOfPyramids(regions, 3);
+  }
   return 0;
 }

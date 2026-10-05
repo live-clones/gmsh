@@ -88,6 +88,14 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search,
                               bool onlyTriangles = false);
 bool buildEdgeSearchStructure(GModel *model, es_cont &search);
 
+// Orientation of the boundary mesh of a region: inward[gf] is 1 when the
+// normals of the elements of surface gf (as their nodes order them) point into
+// gr, -1 when they point out of it. The surfaces of each closed shell of the
+// boundary are oriented consistently through their shared edges, and the shell
+// enclosing the largest volume is the outer one. Returns false when the
+// boundary cannot be oriented (inconsistent or non-manifold meshes)
+bool orientRegionBoundary(GRegion *gr, std::map<GFace *, int> &inward);
+
 // hybrid mesh recovery structure
 class splitQuadRecovery {
 private:

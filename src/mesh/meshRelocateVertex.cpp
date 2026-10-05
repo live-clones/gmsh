@@ -832,22 +832,24 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
   buildVertexToElement(region->prisms, adj);
   buildVertexToElement(region->hexahedra, adj);
 
+  // only the nodes of _vts have all their elements in adj: moving the other
+  // nodes of _tets could invert tets they do not see
   for(int i = 0; i < 10; i++) {
     double relax = (double)i / 10. + 1e-6;
     auto it = adj.begin();
     while(it != adj.end()) {
-      relocateVertexOfPyramid(it->first, it->second, relax);
+      if(_vts.find(it->first) != _vts.end())
+        relocateVertexOfPyramid(it->first, it->second, relax);
       ++it;
     }
   }
-
-  // return;
 
   for(int i = 0; i < niter + 2; i++) {
     auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
     while(it != adj.end()) {
-      relocateVertexGolden(it->first, it->second, relax, tol);
+      if(_vts.find(it->first) != _vts.end())
+        relocateVertexGolden(it->first, it->second, relax, tol);
       ++it;
     }
   }

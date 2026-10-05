@@ -33,6 +33,97 @@
 #include "OS.h"
 #include "Context.h"
 
+bool orientRegionBoundary(GRegion *gr, std::map<GFace *, int> &inward)
+{
+  inward.clear();
+  std::vector<GFace *> faces = gr->faces();
+  const std::size_t nf = faces.size();
+  if(!nf) return false;
+  // the edges of the surface elements on the model curves, with the surface
+  // and the direction of each use (the other edges are interior to a surface)
+  struct Use {
+    std::size_t face;
+    int dir;
+  };
+  std::map<std::pair<MVertex *, MVertex *>, std::vector<Use>> edges;
+  for(std::size_t i = 0; i < nf; i++) {
+    auto addElement = [&](MElement *e) {
+      const int n = e->getNumPrimaryVertices();
+      for(int k = 0; k < n; k++) {
+        MVertex *a = e->getVertex(k), *b = e->getVertex((k + 1) % n);
+        if(a->onWhat()->dim() > 1 || b->onWhat()->dim() > 1) continue;
+        if(a < b)
+          edges[{a, b}].push_back({i, 1});
+        else
+          edges[{b, a}].push_back({i, -1});
+      }
+    };
+    for(MTriangle *t : faces[i]->triangles) addElement(t);
+    for(MQuadrangle *q : faces[i]->quadrangles) addElement(q);
+  }
+  // the surfaces sharing an edge must traverse it in opposite directions
+  std::vector<std::vector<std::pair<std::size_t, int>>> adjacent(nf);
+  for(auto &e : edges) {
+    if(e.second.size() != 2 || e.second[0].face == e.second[1].face) continue;
+    const int rel = -e.second[0].dir * e.second[1].dir;
+    adjacent[e.second[0].face].push_back({e.second[1].face, rel});
+    adjacent[e.second[1].face].push_back({e.second[0].face, rel});
+  }
+  std::vector<int> sign(nf, 0), shell(nf, -1);
+  std::vector<double> volume;
+  for(std::size_t i = 0; i < nf; i++) {
+    if(sign[i]) continue;
+    const int c = (int)volume.size();
+    volume.push_back(0.);
+    sign[i] = 1;
+    shell[i] = c;
+    std::vector<std::size_t> stack = {i};
+    while(!stack.empty()) {
+      const std::size_t f = stack.back();
+      stack.pop_back();
+      for(auto &a : adjacent[f]) {
+        const int want = sign[f] * a.second;
+        if(!sign[a.first]) {
+          sign[a.first] = want;
+          shell[a.first] = c;
+          stack.push_back(a.first);
+        }
+        else if(sign[a.first] != want) {
+          return false;
+        }
+      }
+    }
+  }
+  // the volume enclosed by each shell, from its oriented elements
+  for(std::size_t i = 0; i < nf; i++) {
+    double v = 0.;
+    auto addTriangle = [&](MVertex *a, MVertex *b, MVertex *c) {
+      SVector3 pa(a->point()), pb(b->point()), pc(c->point());
+      v += dot(pa, crossprod(pb, pc)) / 6.;
+    };
+    for(MTriangle *t : faces[i]->triangles)
+      addTriangle(t->getVertex(0), t->getVertex(1), t->getVertex(2));
+    for(MQuadrangle *q : faces[i]->quadrangles) {
+      addTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(2));
+      addTriangle(q->getVertex(0), q->getVertex(2), q->getVertex(3));
+    }
+    volume[shell[i]] += sign[i] * v;
+  }
+  std::size_t outer = 0;
+  for(std::size_t c = 1; c < volume.size(); c++)
+    if(std::abs(volume[c]) > std::abs(volume[outer])) outer = c;
+  if(volume[outer] == 0.) return false;
+  for(std::size_t i = 0; i < nf; i++) {
+    const double v = volume[shell[i]];
+    if(v == 0.) return false;
+    // a positive volume: the oriented shell points away from what it
+    // encloses, the volume itself for the outer shell, a cavity otherwise
+    const int out = (sign[i] * v > 0.) ? 1 : -1;
+    inward[faces[i]] = (shell[i] == outer) ? -out : out;
+  }
+  return true;
+}
+
 void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
 {
   _quad[f] = v;
@@ -87,24 +178,30 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
     std::vector<GFace *> faces = gr->faces();
     for(std::size_t i = 0; i < faces.size(); i++) {
       GFace *gf = faces[i];
+      bool reported = false;
       for(std::size_t j = 0; j < gf->quadrangles.size(); j++) {
         auto it2 = _quad.find(gf->quadrangles[j]->getFace(0));
         if(it2 != _quad.end()) {
           if(it2->second) {
+            if(it2->second->onWhat()->dim() == 3) {
+              // the apex is already in the volume on the other side of the
+              // quadrangle: it cannot be the apex of a second pyramid (nor
+              // be owned, and deleted, by two volumes)
+              if(!reported)
+                Msg::Error("Surface %d with quadrangles bounds volumes %d and "
+                           "%d: non-manifold quadrangle boundaries are not "
+                           "supported, no pyramids in volume %d",
+                           gf->tag(), it2->second->onWhat()->tag(), gr->tag(),
+                           gr->tag());
+              reported = true;
+              continue;
+            }
             npyram++;
             gr->pyramids.push_back(new MPyramid(
               it2->first.getVertex(0), it2->first.getVertex(1),
               it2->first.getVertex(2), it2->first.getVertex(3), it2->second));
             gr->mesh_vertices.push_back(it2->second);
-            if(it2->second->onWhat()->dim() == 3) {
-              Msg::Error(
-                "Pyramid top vertex already classified on volume %d (!= %d) - "
-                "non-manifold quad boundaries not supported yet",
-                it2->second->onWhat()->tag(), gr->tag());
-            }
-            else {
-              it2->second->setEntity(gr);
-            }
+            it2->second->setEntity(gr);
           }
           else {
             ntrihedra++;
