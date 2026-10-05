@@ -9,11 +9,17 @@
 #include <vector>
 
 class MVertex;
+class GRegion;
 class MTetrahedron;
 
 // Delaunay tetrahedralization of a point set with the pdel3d kernel; the
 // vertices are not reordered, the tets reference them directly
 void delaunayMeshIn3DPDel3d(std::vector<MVertex *> &v,
                             std::vector<MTetrahedron *> &tets);
+
+// mesh the volumes of a group of connected regions with the pdel3d kernel;
+// returns 0 on success, 2 if the input is not supported (the caller may fall
+// back to another algorithm), 1 on error
+int meshGRegionPDel3d(std::vector<GRegion *> &regions);
 
 #endif

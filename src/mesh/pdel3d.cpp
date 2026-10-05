@@ -58,6 +58,33 @@ namespace pdel3d {
     ntet = n;
   }
 
+  void Mesh::removeUnusedVertices(std::vector<vIdx> &newIndex)
+  {
+    const std::size_t nv = numVertices();
+    newIndex.assign(nv, GHOST);
+    for(std::size_t t = 0; t < ntet; t++) {
+      if(isDeleted((tIdx)t)) continue;
+      for(int k = 0; k < 4; k++)
+        if(node[4 * t + k] != GHOST) newIndex[node[4 * t + k]] = 0;
+    }
+    vIdx n = 0;
+    for(std::size_t v = 0; v < nv; v++)
+      if(newIndex[v] != GHOST) newIndex[v] = n++;
+    if(n == nv) return;
+    for(std::size_t v = 0; v < nv; v++) {
+      if(newIndex[v] == GHOST) continue;
+      for(int k = 0; k < 4; k++) xyz[4 * newIndex[v] + k] = xyz[4 * v + k];
+    }
+    xyz.resize(4 * n);
+    dist.clear();
+    for(std::size_t t = 0; t < ntet; t++) {
+      if(isDeleted((tIdx)t)) continue;
+      for(int k = 0; k < 4; k++)
+        if(node[4 * t + k] != GHOST)
+          node[4 * t + k] = newIndex[node[4 * t + k]];
+    }
+  }
+
   void Mesh::bbox(double min[3], double max[3]) const
   {
     for(int k = 0; k < 3; k++) {
@@ -237,6 +264,10 @@ namespace pdel3d {
       // hash table for large cavities: (edge key, tet facet)
       std::vector<std::uint64_t> hkeys;
       std::vector<tRef> hvals;
+      // scratch of the cavity reshaping
+      std::vector<std::uint64_t> faces;
+      std::vector<tIdx> cavIndexKey;
+      std::vector<std::uint32_t> cavIndexVal;
       // statistics
       std::size_t inserted = 0, filtered = 0, duplicates = 0, conflicts = 0;
       bool noSpace = false;
@@ -306,17 +337,20 @@ namespace pdel3d {
       }
 
       // take at least `demand` free slots in total in local.deleted; returns
-      // false when the capacity is exhausted (the slots taken are kept)
+      // false when the capacity is exhausted: the slots taken are then only
+      // flagged deleted (the caller restores its cavity, which would unflag
+      // them if they were in the list) and go at the next compaction
       bool newDeleted(Local &L, std::size_t demand)
       {
         std::size_t needed = std::max(BLOCK, demand) - L.deleted.size();
         const std::size_t first = ntet.fetch_add(needed);
         const std::size_t last = std::min(first + needed, cap);
+        const bool ok = first + needed <= cap;
         for(std::size_t t = first; t < last; t++) {
           m.flag[t] = F_DELETED;
-          L.deleted.push_back((tIdx)t);
+          if(ok) L.deleted.push_back((tIdx)t);
         }
-        return first + needed <= cap;
+        return ok;
       }
 
       // walk from L.curTet to the tet containing vta (or to the ghost tet
@@ -526,6 +560,228 @@ namespace pdel3d {
         L.deleted.resize(start);
       }
 
+      // ---- constrained cavities (after HXT's hxt_tetDelaunayReshape.c) ----
+
+      // a constrained edge whose every surrounding tet is in the cavity would
+      // disappear: flag one of those tets (on the far side of vta) to be
+      // undeleted by reshapeCavity(). The color of the cavity tets serves as
+      // scratch (one bit per edge already handled), and is restored
+      void respectEdgeConstraints(Local &L, vIdx vta, std::uint32_t color,
+                                  std::size_t prevDeleted, bool &undeleteTet)
+      {
+        undeleteTet = false;
+        for(std::size_t i = prevDeleted; i < L.deleted.size(); i++)
+          m.color[L.deleted[i]] = 0;
+        const tIdx tetOfVta = L.deleted[prevDeleted];
+        const double *p = &m.xyz[4 * vta];
+        for(std::size_t i = prevDeleted; i < L.deleted.size(); i++) {
+          const tIdx delTet = L.deleted[i];
+          for(int edge = 0; edge < 6; edge++) {
+            if(!(m.flag[delTet] & (1 << edge)) ||
+               (m.color[delTet] & (1u << edge)))
+              continue;
+            unsigned inF, outF;
+            edgeFacets(edge, inF, outF);
+            bool edgeIsSafe = false;
+            tIdx cur = delTet;
+            tIdx toUndelete = NO_TET;
+            double distMax = -1.;
+            do {
+              const vIdx newV = m.node[4 * cur + inF];
+              const tRef r = m.neigh[4 * cur + outF];
+              cur = r >> 2;
+              inF = r & 3;
+              const vIdx *nodes = &m.node[4 * cur];
+              for(outF = 0; outF < 3; outF++)
+                if(nodes[outF] == newV) break;
+              if(m.isDeleted(cur) && !(m.flag[cur] & F_UNDELETE)) {
+                m.color[cur] |= 1u << edgeFromFacets(inF, outF);
+                if(cur != tetOfVta) {
+                  // the tet around the edge farthest from vta, measured at the
+                  // midpoint of its two nodes off the edge
+                  const double *a = &m.xyz[4 * newV],
+                               *b = &m.xyz[4 * nodes[inF]];
+                  double d = 0.;
+                  for(int l = 0; l < 3; l++) {
+                    const double diff = 0.5 * (a[l] + b[l]) - p[l];
+                    d += diff * diff;
+                  }
+                  if(d > distMax) {
+                    distMax = d;
+                    toUndelete = cur;
+                  }
+                }
+              }
+              else
+                edgeIsSafe = true;
+            } while(cur != delTet);
+            if(!edgeIsSafe && toUndelete != NO_TET) {
+              m.flag[toUndelete] |= F_UNDELETE;
+              undeleteTet = true;
+            }
+          }
+        }
+        for(std::size_t i = prevDeleted; i < L.deleted.size(); i++)
+          m.color[L.deleted[i]] = color;
+      }
+
+      // push facet f of tet t (seen from inside the cavity) on the ball, with
+      // its constraint flags transferred, and the given neighbor reference
+      inline void bndPushFacet(Local &L, tIdx t, unsigned f, std::uint64_t r)
+      {
+        const vIdx *n = &m.node[4 * t];
+        bndPush(L, transferFlags(m.flag[t], f), n[ballNodes[f][0]],
+                n[ballNodes[f][1]], n[ballNodes[f][2]], (tRef)r);
+      }
+
+      // remove from the cavity the tets flagged F_UNDELETE and, progressively,
+      // the tets behind the boundary faces that do not see vta, until the
+      // cavity is star-shaped from vta
+      void reshapeCavity(Local &L, vIdx vta, std::size_t prevDeleted,
+                         bool undeleteTet)
+      {
+        const double *p = &m.xyz[4 * vta];
+        std::size_t blindFace = 0;
+        if(!undeleteTet) {
+          bool starShaped = true;
+          for(std::size_t i = 0; i < L.ball.size(); i++) {
+            const Local::bndFace &b = L.ball[i];
+            if(b.n[2] == GHOST) continue;
+            if(orient3d(p, &m.xyz[4 * b.n[0]], &m.xyz[4 * b.n[1]],
+                        &m.xyz[4 * b.n[2]]) >= 0.) {
+              blindFace = i;
+              starShaped = false;
+              break;
+            }
+          }
+          if(starShaped) return;
+        }
+        const std::size_t numTet = L.deleted.size() - prevDeleted;
+        tIdx *tets = &L.deleted[prevDeleted];
+        // cavity index of each cavity tet, through a small hash table
+        std::size_t hsize = 16;
+        while(hsize < 4 * numTet) hsize <<= 1;
+        const std::size_t hmask = hsize - 1;
+        L.cavIndexKey.assign(hsize, NO_TET);
+        L.cavIndexVal.resize(hsize);
+        auto hashPut = [&](tIdx t, std::uint32_t i) {
+          std::size_t h = (t * 2654435761u) & hmask;
+          while(L.cavIndexKey[h] != NO_TET) h = (h + 1) & hmask;
+          L.cavIndexKey[h] = t;
+          L.cavIndexVal[h] = i;
+        };
+        auto hashGet = [&](tIdx t) -> std::uint32_t {
+          std::size_t h = (t * 2654435761u) & hmask;
+          while(L.cavIndexKey[h] != t) h = (h + 1) & hmask;
+          return L.cavIndexVal[h];
+        };
+        for(std::size_t i = 0; i < numTet; i++)
+          hashPut(tets[i], (std::uint32_t)i);
+        // faces[4 * i + f]: for an interior facet, the cavity-local reference
+        // 4 * j + g of the facet of the adjacent cavity tet; for a boundary
+        // facet, its index in the ball. The ball entries temporarily hold the
+        // cavity-local reference of their facet instead of the outside tet
+        L.faces.resize(4 * numTet);
+        std::size_t curFace = 0;
+        for(std::size_t i = 0; i < numTet; i++) {
+          const tIdx t = tets[i];
+          for(unsigned f = 0; f < 4; f++) {
+            const tRef r = m.neigh[4 * t + f];
+            if((m.flag[t] & (F_FACET0 << f)) || !m.isDeleted(r >> 2)) {
+              L.ball[curFace].neigh = (tRef)(4 * i + f);
+              L.faces[4 * i + f] = curFace;
+              curFace++;
+            }
+            else
+              L.faces[4 * i + f] = 4 * hashGet(r >> 2) + (r & 3);
+          }
+        }
+        // undelete the flagged tets that are not on the boundary of the cavity
+        if(undeleteTet) {
+          for(std::size_t i = 0; i < numTet; i++) {
+            const tIdx t = tets[i];
+            if(!(m.flag[t] & F_UNDELETE)) continue;
+            bool isBoundary = false;
+            for(unsigned f = 0; f < 4; f++) {
+              const tRef r = m.neigh[4 * t + f];
+              if((m.flag[t] & (F_FACET0 << f)) || !m.isDeleted(r >> 2)) {
+                isBoundary = true;
+                break;
+              }
+            }
+            if(isBoundary) continue;
+            m.flag[t] &= ~(F_UNDELETE | F_DELETED);
+            tets[i] = NO_TET;
+            for(unsigned f = 0; f < 4; f++) {
+              const std::uint64_t out = L.faces[4 * i + f];
+              L.faces[out] = L.ball.size();
+              bndPushFacet(L, t, f, out);
+            }
+          }
+        }
+        // undelete the tets behind the faces that do not see vta; faces below
+        // curFace are checked, those at or above are not yet
+        curFace = blindFace;
+        while(curFace < L.ball.size()) {
+          const std::uint64_t in = L.ball[curFace].neigh;
+          const tIdx t = tets[in / 4];
+          if(!(m.flag[t] & F_UNDELETE)) {
+            const Local::bndFace &b = L.ball[curFace];
+            if(b.n[2] == GHOST ||
+               orient3d(p, &m.xyz[4 * b.n[0]], &m.xyz[4 * b.n[1]],
+                        &m.xyz[4 * b.n[2]]) < 0.) {
+              curFace++;
+              continue;
+            }
+          }
+          else
+            m.flag[t] &= ~F_UNDELETE;
+          m.flag[t] &= ~F_DELETED;
+          tets[in / 4] = NO_TET;
+          for(unsigned f = 0; f < 4; f++) {
+            const tRef r = m.neigh[4 * t + f];
+            if((m.flag[t] & (F_FACET0 << f)) || !m.isDeleted(r >> 2)) {
+              // an exterior facet of t: remove it from the ball
+              std::size_t face = L.faces[4 * (in / 4) + f];
+              if(face < curFace) {
+                curFace--;
+                if(face != curFace) {
+                  L.ball[face] = L.ball[curFace];
+                  L.faces[L.ball[face].neigh] = face;
+                }
+                face = curFace;
+              }
+              const std::size_t last = L.ball.size() - 1;
+              if(face != last) {
+                L.ball[face] = L.ball[last];
+                L.faces[L.ball[face].neigh] = face;
+              }
+              L.ball.pop_back();
+            }
+            else {
+              // an interior facet of t becomes a boundary face
+              const std::uint64_t out = L.faces[4 * (in / 4) + f];
+              L.faces[out] = L.ball.size();
+              bndPushFacet(L, t, f, out);
+            }
+          }
+        }
+        // the ball entries point back to the outside tets
+        for(auto &b : L.ball) {
+          const std::uint64_t in = b.neigh;
+          b.neigh = m.neigh[4 * tets[in / 4] + (in & 3)];
+        }
+        // compact the cavity
+        std::size_t shift = 0;
+        for(std::size_t i = 0; i < numTet; i++) {
+          if(tets[i] == NO_TET)
+            shift++;
+          else if(shift)
+            tets[i - shift] = tets[i];
+        }
+        L.deleted.resize(L.deleted.size() - shift);
+      }
+
       Status insert(Local &L, vIdx vta)
       {
         const std::size_t prevDeleted = L.deleted.size();
@@ -553,7 +809,10 @@ namespace pdel3d {
           return st;
         }
         if(!opt.perfectDelaunay) {
-          // TODO: constrained edges and non star-shaped cavities (phase 2)
+          bool undeleteTet = false;
+          if(edgeConstraint)
+            respectEdgeConstraints(L, vta, color, prevDeleted, undeleteTet);
+          reshapeCavity(L, vta, prevDeleted, undeleteTet);
         }
         if(opt.filterOnSize) {
           double *pv = &m.xyz[4 * vta];
@@ -799,6 +1058,7 @@ namespace pdel3d {
       Msg::Info("Delaunay of %lu points on %d threads (%lu in the mesh)",
                 passes[npasses] - passes[0], maxPartitions, numInMesh);
 
+    bool ranOutOfSpace = false;
     for(unsigned ipass = 0; ipass < npasses; ipass++) {
       int nthreads = maxPartitions;
       double conflictRatio = 0.;
@@ -888,16 +1148,19 @@ namespace pdel3d {
           locals[0].partition.numElem = passLength;
         }
 
-        // room for the new tets: about 6 net new tets per vertex, plus the
-        // blocks the threads hoard
+        // room for the new tets: about 6 net new tets per vertex in a volume,
+        // more for vertices on surfaces, plus the blocks the threads hoard; a
+        // round that ran out of space is redone with twice the capacity
         {
-          const std::size_t need = K.ntet + 8 * (passLength - curveSkipped) +
-                                   (nthreads + 1) * Kernel::BLOCK;
+          std::size_t need = K.ntet + 12 * (passLength - curveSkipped) +
+                             (nthreads + 1) * Kernel::BLOCK;
+          if(ranOutOfSpace) need = std::max(need, 2 * m.tetCapacity());
           if(need > m.tetCapacity()) {
             m.reserveTets(
               std::max(need, m.tetCapacity() + m.tetCapacity() / 2));
             K.cap = m.tetCapacity();
           }
+          ranOutOfSpace = false;
         }
 
 #pragma omp parallel num_threads(nthreads)
@@ -941,6 +1204,8 @@ namespace pdel3d {
         }
         if(K.ntet > K.cap) K.ntet = K.cap;
         m.ntet = K.ntet;
+        for(int i = 0; i < nthreads; i++)
+          if(locals[i].noSpace) ranOutOfSpace = true;
 
         // the vertices still to do go to the end of the pass, in order
         std::size_t shift = 0, numSkipped = 0;
@@ -956,7 +1221,9 @@ namespace pdel3d {
         const std::size_t numInserted = shift - numSkipped;
         const std::size_t numConflict = passLength - shift;
         totalInserted += numInserted;
-        if(passLength != numSkipped)
+        totalFiltered += curveSkipped;
+        // the vertices left by a lack of space are not conflicts
+        if(passLength != numSkipped && !ranOutOfSpace)
           conflictRatio = (double)numConflict / (passLength - numSkipped);
         if(opt.verbosity > 1)
           Msg::Info("%3d thrd | %10lu / %-10lu inserted (%.1f%%), %lu filtered",

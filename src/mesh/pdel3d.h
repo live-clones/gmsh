@@ -44,6 +44,26 @@ namespace pdel3d {
   constexpr std::uint16_t F_FACET3 = 0x800;
   constexpr std::uint16_t F_ALL_FACETS = 0xf00;
   constexpr std::uint16_t F_ALL_CONSTRAINTS = 0xf3f;
+  constexpr std::uint16_t F_UNDELETE =
+    0x1000; // scratch of the cavity reshaping
+
+  // the two facets sharing edge e, the two nodes of edge e, and the edge
+  // between two facets
+  inline void edgeFacets(int e, unsigned &f0, unsigned &f1)
+  {
+    static const unsigned fmin[6] = {0, 0, 0, 1, 1, 2},
+                          fmax[6] = {1, 2, 3, 2, 3, 3};
+    f0 = fmin[e];
+    f1 = fmax[e];
+  }
+  inline void edgeNodes(int e, unsigned &n0, unsigned &n1)
+  { edgeFacets(5 - e, n0, n1); }
+  inline int edgeFromFacets(unsigned f0, unsigned f1)
+  {
+    static const int t[4][4] = {
+      {-1, 0, 1, 2}, {0, -1, 3, 4}, {1, 3, -1, 5}, {2, 4, 5, -1}};
+    return t[f0][f1];
+  }
 
   // Nodes of facet f, in an order such that {node0, node1, node2, f} is an even
   // permutation of {0, 1, 2, 3}; a valid tetrahedron has orient3d(n0, n1, n2,
@@ -80,11 +100,66 @@ namespace pdel3d {
     bool isDeleted(tIdx t) const { return flag[t] & F_DELETED; }
     // bounding box of the vertices
     void bbox(double min[3], double max[3]) const;
+    // drop the vertices not referenced by any tet, keeping the order of the
+    // others; newIndex[v] receives the new index of vertex v or GHOST
+    void removeUnusedVertices(std::vector<vIdx> &newIndex);
     // sanity checks: node validity, orientation, adjacency symmetry, and
     // optionally the local Delaunay property across every facet; prints the
     // problems found and returns their number
     std::size_t verify(bool delaunay, bool verbose = true) const;
   };
+
+  // ---------------------------------------------------------------------
+  // constraints (pdel3dTopo.cpp)
+  // ---------------------------------------------------------------------
+
+  // facet of a tet (4 * tet + facet) carrying each triangle, NO_ADJ when the
+  // triangle is not in the mesh; returns the number missing
+  std::size_t triangleToTetMap(const Mesh &m, const std::vector<vIdx> &triNode,
+                               std::vector<tRef> &tri2tet);
+  // edge of a tet (6 * tet + edge) carrying each line, NO_ADJ when missing;
+  // lines flagged in skip are not searched
+  std::size_t lineToTetMap(const Mesh &m, const std::vector<vIdx> &lineNode,
+                           const std::vector<std::uint8_t> &skip,
+                           std::vector<std::uint64_t> &line2tet);
+  // flag the lines that are edges of the triangles
+  void linesInTriangles(const std::vector<vIdx> &triNode,
+                        const std::vector<vIdx> &lineNode,
+                        std::vector<std::uint8_t> &inTriangle);
+  // set the facet constraint bits on both sides of each triangle, and the edge
+  // constraint bits around each line
+  void constrainFacets(Mesh &m, const std::vector<tRef> &tri2tet);
+  void constrainEdges(Mesh &m, const std::vector<std::uint64_t> &line2tet);
+  // color the tets: a flood fill bounded by the constrained facets gives the
+  // connected volumes, which are matched to the given volumes through the set
+  // of surface colors (triColor) bounding them: volume i gets color i, the
+  // others get colors from volumes.size() up, the outside gets COLOR_OUT.
+  // Returns false if some volume was not found
+  bool colorVolumes(Mesh &m, const std::vector<tRef> &tri2tet,
+                    const std::vector<std::uint32_t> &triColor,
+                    const std::vector<std::vector<std::uint32_t>> &volumes);
+
+  // ---------------------------------------------------------------------
+  // refinement (pdel3dRefine.cpp)
+  // ---------------------------------------------------------------------
+
+  struct RefineOptions {
+    int numThreads = 1;
+    // tets with a color at or above numVolumes are not refined
+    std::uint32_t numVolumes = 0;
+    double sizeMin = 0., sizeMax = 1.e300, sizeFactor = 1.;
+    // optional size field: called on the candidate points (x, y, z, size
+    // interpolated from the tet, 4 doubles each) and the color of their tets;
+    // it overwrites the size
+    void (*sizeCallback)(double *xyzs, const std::uint32_t *color,
+                         std::size_t n, void *data) = nullptr;
+    void *sizeData = nullptr;
+    int verbosity = 0;
+  };
+
+  // insert vertices in the volumes until the mesh matches the sizes stored in
+  // xyz[4 * v + 3]; the tets must be colored and constrained
+  void refine(Mesh &m, RefineOptions &opt);
 
   // Moore curve coordinate of every vertex (or of the first n), on a cube
   // enclosing the bounding box; shift[3] in [0, 1] moves the center of the

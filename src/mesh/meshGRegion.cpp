@@ -9,6 +9,7 @@
 #include "GmshMessage.h"
 #include "meshGRegion.h"
 #include "meshGRegionHxt.h"
+#include "meshGRegionPDel3d.h"
 #include "meshGRegionNetgen.h"
 #include "meshGRegionMMG.h"
 #include "meshGFace.h"
@@ -166,27 +167,12 @@ static void _deleteUnusedVertices(GRegion *gr)
   for(auto &p : allverts) gr->mesh_vertices.push_back(p.second);
 }
 
-void MeshDelaunayVolume(std::vector<GRegion *> &regions)
+regionGroupBoundary::regionGroupBoundary(std::vector<GRegion *> &regions)
+  : _gr(regions[0])
 {
-  if(regions.empty()) return;
-
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
-    if(meshGRegionHxt(regions) != 0) { Msg::Error("HXT 3D mesh failed"); }
-    return;
-  }
-
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D)
-    Msg::Warning("Parallel Delaunay (pdel3d) does not mesh volumes yet - "
-                 "using Delaunay (del3d)");
-  if(CTX::instance()->mesh.algo3d != ALGO_3D_RTREE &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_PDEL3D &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D)
-    return;
-
-  GRegion *gr = regions[0];
-  std::vector<GFace *> faces = gr->faces();
+  _faces = _gr->faces();
+  _embEdges = _gr->embeddedEdges();
+  _embVertices = _gr->embeddedVertices();
 
   std::set<GFace *, GEntityPtrLessThan> allFacesSet;
   for(std::size_t i = 0; i < regions.size(); i++) {
@@ -210,31 +196,79 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     allFacesSet = comp;
   }
 
-  std::vector<GFace *> allFaces(allFacesSet.begin(), allFacesSet.end());
-  gr->set(allFaces);
+  allFaces.assign(allFacesSet.begin(), allFacesSet.end());
+  _gr->set(allFaces);
 
   std::set<GEdge *, GEntityPtrLessThan> allEmbEdgesSet;
   for(std::size_t i = 0; i < regions.size(); i++) {
     std::vector<GEdge *> const &e = regions[i]->embeddedEdges();
     allEmbEdgesSet.insert(e.begin(), e.end());
   }
-  std::vector<GEdge *> allEmbEdges(allEmbEdgesSet.begin(),
-                                   allEmbEdgesSet.end());
-  std::vector<GEdge *> oldEmbEdges = gr->embeddedEdges();
-  gr->embeddedEdges() = allEmbEdges;
+  _gr->embeddedEdges().assign(allEmbEdgesSet.begin(), allEmbEdgesSet.end());
 
   std::set<GVertex *> allEmbVerticesSet;
   for(std::size_t i = 0; i < regions.size(); i++) {
     std::vector<GVertex *> const &e = regions[i]->embeddedVertices();
     allEmbVerticesSet.insert(e.begin(), e.end());
   }
-  std::vector<GVertex *> allEmbVertices(allEmbVerticesSet.begin(),
-                                        allEmbVerticesSet.end());
-  std::vector<GVertex *> oldEmbVertices = gr->embeddedVertices();
-  gr->embeddedVertices() = allEmbVertices;
+  _gr->embeddedVertices().assign(allEmbVerticesSet.begin(),
+                                 allEmbVerticesSet.end());
+}
 
+regionGroupBoundary::~regionGroupBoundary()
+{
+  // restore set of faces and embedded edges/vertices
+  if(CTX::instance()->mesh.compoundClassify == 0) {
+    std::set<GFace *, GEntityPtrLessThan> comp;
+    for(std::size_t i = 0; i < _faces.size(); i++) {
+      GFace *gf = _faces[i];
+      if(!gf->compoundSurface)
+        comp.insert(gf);
+      else if(gf->compoundSurface)
+        comp.insert(gf->compoundSurface);
+    }
+    std::vector<GFace *> lcomp(comp.begin(), comp.end());
+    _gr->set(lcomp);
+  }
+  else {
+    _gr->set(_faces);
+  }
+  _gr->embeddedEdges() = _embEdges;
+  _gr->embeddedVertices() = _embVertices;
+}
+
+void MeshDelaunayVolume(std::vector<GRegion *> &regions)
+{
+  if(regions.empty()) return;
+
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
+    if(meshGRegionHxt(regions) != 0) { Msg::Error("HXT 3D mesh failed"); }
+    return;
+  }
+
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D) {
+    int ret = meshGRegionPDel3d(regions);
+    if(ret == 1) Msg::Error("Parallel Delaunay 3D mesh failed");
+    if(ret != 2) return;
+    Msg::Warning("Falling back to Delaunay (del3d)");
+  }
+  if(CTX::instance()->mesh.algo3d != ALGO_3D_RTREE &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_PDEL3D &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D)
+    return;
+
+  GRegion *gr = regions[0];
   splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
-  bool success = meshGRegionBoundaryRecovery(gr, &sqr);
+  std::vector<GFace *> allFaces;
+  bool success;
+  {
+    // the recovery works on regions[0] with the boundary of the whole group
+    regionGroupBoundary group(regions);
+    allFaces = group.allFaces;
+    success = meshGRegionBoundaryRecovery(gr, &sqr);
+  }
 
   // sort triangles in all model faces in order to be able to search in vectors
   auto itf = allFaces.begin();
@@ -243,25 +277,6 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
               compareMTriangleLexicographic());
     ++itf;
   }
-
-  // restore set of faces and embedded edges/vertices
-  if(CTX::instance()->mesh.compoundClassify == 0) {
-    std::set<GFace *, GEntityPtrLessThan> comp;
-    for(std::size_t i = 0; i < faces.size(); i++) {
-      GFace *gf = faces[i];
-      if(!gf->compoundSurface)
-        comp.insert(gf);
-      else if(gf->compoundSurface)
-        comp.insert(gf->compoundSurface);
-    }
-    std::vector<GFace *> lcomp(comp.begin(), comp.end());
-    gr->set(lcomp);
-  }
-  else {
-    gr->set(faces);
-  }
-  gr->embeddedEdges() = oldEmbEdges;
-  gr->embeddedVertices() = oldEmbVertices;
 
   if(!success) return;
 

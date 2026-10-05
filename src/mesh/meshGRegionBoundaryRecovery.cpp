@@ -68,6 +68,7 @@ namespace tetgenBR {
   struct brdata {
     GRegion *gr;
     splitQuadRecovery *sqr;
+    const initialTetrahedralization *init;
   };
 
   // dummy tetgenio class
@@ -144,6 +145,7 @@ namespace tetgenBR {
   {
     GRegion *_gr = ((brdata *)p)->gr;
     splitQuadRecovery *_sqr = ((brdata *)p)->sqr;
+    const initialTetrahedralization *_init = ((brdata *)p)->init;
 
     char opts[128];
     sprintf(opts, "YpeQT%gp/%g", CTX::instance()->mesh.toleranceInitialDelaunay,
@@ -154,7 +156,8 @@ namespace tetgenBR {
     std::vector<MVertex *> _vertices;
     std::map<int, MVertex *> _extras;
     // Get the set of vertices from GRegion.
-    {
+    if(_init) { _vertices = _init->vertices; }
+    else {
       std::set<MVertex *, MVertexPtrLessThan> all;
       std::vector<GFace *> const &f = _gr->faces();
       for(auto it = f.begin(); it != f.end(); ++it) {
@@ -227,17 +230,32 @@ namespace tetgenBR {
     // Store all coordinates of the vertices as these will be pertubated in
     // function delaunayTriangulation
     std::map<MVertex *, SPoint3> originalCoordinates;
-    for(std::size_t i = 0; i < _vertices.size(); i++) {
-      MVertex *v = _vertices[i];
-      originalCoordinates[v] = v->point();
-    }
-
-    std::vector<MTetrahedron *> tets;
+    // the initial tetrahedralization: 4 positions in _vertices per tet, and
+    // the neighbors across the facets
+    std::vector<std::uint32_t> tetNode;
     std::vector<std::int64_t> tetNeighbors;
-
-    // will add 8 MVertices at the end of _vertices
-    delaunayMeshIn3D(_vertices, tets, false, &tetNeighbors);
-    if(Msg::GetErrorCount()) return 0;
+    if(_init) {
+      tetNode = _init->tetNode;
+      tetNeighbors = _init->neighbors;
+    }
+    else {
+      for(std::size_t i = 0; i < _vertices.size(); i++) {
+        MVertex *v = _vertices[i];
+        originalCoordinates[v] = v->point();
+      }
+      std::vector<MTetrahedron *> tets;
+      // will add 8 MVertices at the end of _vertices
+      delaunayMeshIn3D(_vertices, tets, false, &tetNeighbors);
+      if(Msg::GetErrorCount()) return 0;
+      for(std::size_t i = 0; i < _vertices.size(); i++)
+        _vertices[i]->setIndex((long)i);
+      tetNode.resize(4 * tets.size());
+      for(std::size_t i = 0; i < tets.size(); i++) {
+        for(int j = 0; j < 4; j++)
+          tetNode[4 * i + j] = (std::uint32_t)tets[i]->getVertex(j)->getIndex();
+        delete tets[i];
+      }
+    }
 
     Msg::Debug("Points have been tetrahedralized");
 
@@ -310,11 +328,12 @@ namespace tetgenBR {
       }
 
       // Create the tetrahedra.
-      std::vector<triface> ts(tets.size());
-      for(std::size_t i = 0; i < tets.size(); i++) {
+      const std::size_t numTets = tetNode.size() / 4;
+      std::vector<triface> ts(numTets);
+      for(std::size_t i = 0; i < numTets; i++) {
         // Get the four vertices.
         for(int j = 0; j < 4; j++) {
-          p[j] = idx2verlist[tets[i]->getVertex(j)->getIndex()];
+          p[j] = idx2verlist[tetNode[4 * i + j] + in->firstnumber];
         }
         // Check the orientation.
         ori = orient3d(p[0], p[1], p[2], p[3]);
@@ -450,9 +469,7 @@ namespace tetgenBR {
       }
 
       hullsize = tetrahedrons->items - hullsize;
-
-      for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
-      tets.clear(); // Release all memory in this vector.
+      tetNode.clear(); // Release all memory in this vector.
     }
 
       std::vector<GFace *> const &f_list = _gr->faces();
@@ -737,7 +754,7 @@ namespace tetgenBR {
                     v->setParameter(0, uu);
                   }
                   v->setIndex(pointmark(pointloop));
-                  _gr->mesh_vertices.push_back(v);
+                  ge->mesh_vertices.push_back(v);
                   _extras[pointmark(pointloop) - in->firstnumber] = v;
                 }
                 spivot(parentseg, parentsh);
@@ -760,7 +777,7 @@ namespace tetgenBR {
                         v->setParameter(1, param.y());
                       }
                       v->setIndex(pointmark(pointloop));
-                      _gr->mesh_vertices.push_back(v);
+                      gf->mesh_vertices.push_back(v);
                       _extras[pointmark(pointloop) - in->firstnumber] = v;
                     }
                   }
@@ -803,7 +820,7 @@ namespace tetgenBR {
                     v->setParameter(1, param.y());
                   }
                   v->setIndex(pointmark(pointloop));
-                  _gr->mesh_vertices.push_back(v);
+                  gf->mesh_vertices.push_back(v);
                   _extras[pointmark(pointloop) - in->firstnumber] = v;
                 }
                 else {
@@ -979,8 +996,10 @@ namespace tetgenBR {
       }
 
       // delete 8 new enclosing box vertices added in delaunayMeshIn3d
-      for(std::size_t i = _vertices.size() - 8; i < _vertices.size(); i++)
-        delete _vertices[i];
+      if(!_init) {
+        for(std::size_t i = _vertices.size() - 8; i < _vertices.size(); i++)
+          delete _vertices[i];
+      }
 
       return 1;
     }
@@ -1180,14 +1199,15 @@ namespace tetgenBR {
 
   } // namespace tetgenBR
 
-  bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
+  bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr,
+                                   const initialTetrahedralization *init)
   {
     bool ret = false;
     try {
       tetgenBR::tetgenmesh *m = new tetgenBR::tetgenmesh();
       m->in = new tetgenBR::tetgenio();
       m->b = new tetgenBR::tetgenbehavior();
-      tetgenBR::brdata data = {gr, sqr};
+      tetgenBR::brdata data = {gr, sqr, init};
       ret = m->reconstructmesh((void *)&data, 0.);
       delete m->in;
       delete m->b;
@@ -1319,7 +1339,8 @@ namespace tetgenBR {
 
 #else
 
-bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
+bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr,
+                                 const initialTetrahedralization *init)
 {
   return false;
 }

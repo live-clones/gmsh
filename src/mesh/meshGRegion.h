@@ -15,6 +15,7 @@ class GModel;
 class GRegion;
 class GFace;
 class GEdge;
+class GVertex;
 class MVertex;
 class MLine;
 class MTriangle;
@@ -52,6 +53,24 @@ public:
 };
 
 void MeshDelaunayVolume(std::vector<GRegion *> &delaunay);
+
+// The boundary recovery works on a single region: this gives regions[0] the
+// surfaces and embedded entities of the whole group of connected regions
+// (compound surfaces replacing their members when they are not reclassified),
+// and restores its own lists on destruction
+class regionGroupBoundary {
+private:
+  GRegion *_gr;
+  std::vector<GFace *> _faces;
+  std::vector<GEdge *> _embEdges;
+  std::vector<GVertex *> _embVertices;
+
+public:
+  std::vector<GFace *> allFaces;
+  regionGroupBoundary(std::vector<GRegion *> &regions);
+  ~regionGroupBoundary();
+  GRegion *region() const { return _gr; }
+};
 bool CreateAnEmptyVolumeMesh(GRegion *gr);
 int MeshTransfiniteVolume(GRegion *gr);
 int SubdivideExtrudedMesh(GModel *m);
