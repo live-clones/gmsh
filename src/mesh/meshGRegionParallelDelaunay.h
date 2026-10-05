@@ -51,6 +51,8 @@ namespace pdel3d {
   constexpr std::uint16_t F_ALL_CONSTRAINTS = 0xf3f;
   constexpr std::uint16_t F_UNDELETE =
     0x1000; // scratch of the cavity reshaping
+  constexpr std::uint16_t F_SPR_TRIED =
+    0x2000; // the optimizer's reconnection could not improve the tet
 
   // the two facets sharing edge e, the two nodes of edge e, and the edge
   // between two facets

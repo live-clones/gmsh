@@ -22,11 +22,21 @@ namespace pdel3d {
     std::size_t numFixedVertices = 0;
     double qualityMin = 0.3; // tets below are improved
     int maxPasses = 20;
+    // the small polyhedron reconnection of the tets that the edge removals
+    // and relocations leave below sprQualityFactor * qualityMin: the size of
+    // the cavity grown around them and the budget of the exhaustive search
+    // (tets placed, over the life of the cavity). Larger values (HXT: every
+    // tet below qualityMin, 32 points, 500 nodes) remove a few more bad tets
+    // for ten to fifty times the cost, which failed searches dominate
+    double sprQualityFactor = 0.5;
+    int sprMaxPoints = 16;
+    int sprMaxSearchNodes = 100;
     int verbosity = 0;
   };
 
   // improve the tets below the quality threshold by edge removal and node
-  // relocation, in parallel
+  // relocation, then by reconnection of the cavities around those left over,
+  // in parallel
   void optimize(Mesh &m, OptimizeOptions &opt);
 
 } // namespace pdel3d
