@@ -16,6 +16,7 @@
 // convex hull is closed by ghost tetrahedra sharing a vertex at infinity.
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstddef>
 #include <map>
@@ -138,6 +139,18 @@ namespace pdel3d {
   // constraint bits around each line
   void constrainFacets(Mesh &m, const std::vector<tRef> &tri2tet);
   void constrainEdges(Mesh &m, const std::vector<std::uint64_t> &line2tet);
+  // recover the missing triangles and lines (tri2tet[i] == NO_ADJ,
+  // line2tet[i] == NO_ADJ with lineInTriangle[i] == 0) by local edge
+  // removals: a missing edge is created by removing an edge around which its
+  // two nodes are ring vertices, a missing facet by removing an edge around
+  // which its three nodes are. The maps are updated for what was recovered,
+  // the deleted tets removed; returns the number of items still missing
+  std::size_t recoverLocally(Mesh &m, const std::vector<vIdx> &triNode,
+                             const std::vector<vIdx> &lineNode,
+                             const std::vector<std::uint8_t> &lineInTriangle,
+                             std::vector<tRef> &tri2tet,
+                             std::vector<std::uint64_t> &line2tet, int nthreads,
+                             int verbosity);
   // color the tets: a flood fill bounded by the constrained facets gives the
   // connected volumes, which are matched to the given volumes through the set
   // of surface colors (triColor) bounding them: volume i gets color i, the
@@ -394,6 +407,40 @@ namespace pdel3d {
   }
   inline double lcg01(std::uint32_t &seed)
   { return lcg(seed) * (1. / 4294967296.); }
+
+  // gmsh's gamma quality (3 inradius / circumradius) of the tet (p0, p1,
+  // p2, p3) whose orientation determinant is det (negative when valid);
+  // -1 for an inverted or flat tet
+  inline double gammaQuality(const double *p0, const double *p1, const double *p2,
+                      const double *p3, double det)
+  {
+    if(det >= 0.) return -1.;
+    const double volume = -det / 6.;
+    auto sq = [](const double *a, const double *b) {
+      const double dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
+      return dx * dx + dy * dy + dz * dz;
+    };
+    const double la = sq(p1, p0), lb = sq(p2, p0), lc = sq(p3, p0);
+    const double lA = sq(p3, p2), lB = sq(p3, p1), lC = sq(p2, p1);
+    const double lalA = std::sqrt(la * lA), lblB = std::sqrt(lb * lB),
+                 lclC = std::sqrt(lc * lC);
+    const double insideSqrt = (lalA + lblB + lclC) * (lalA + lblB - lclC) *
+                              (lalA - lblB + lclC) * (-lalA + lblB + lclC);
+    if(insideSqrt <= 0.) return 0.;
+    const double partR = std::sqrt(insideSqrt) / 24.;
+    auto area = [](const double *a, const double *b, const double *c) {
+      const double u[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+      const double v[3] = {c[0] - a[0], c[1] - a[1], c[2] - a[2]};
+      const double n[3] = {u[1] * v[2] - u[2] * v[1],
+                           u[2] * v[0] - u[0] * v[2],
+                           u[0] * v[1] - u[1] * v[0]};
+      return 0.5 * std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+    };
+    const double s = area(p0, p1, p2) + area(p0, p2, p3) + area(p0, p1, p3) +
+                     area(p1, p2, p3);
+    const double rho = 9. * volume / s;
+    return rho * volume / partR;
+  }
 
   // the plain floating-point determinants, decided by the static filters of
   // robustPredicates (set by exactinit), with the adaptive exact evaluation

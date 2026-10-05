@@ -38,6 +38,7 @@
 #include "MPoint.h"
 #include "BackgroundMeshTools.h"
 #include "meshGRegion.h"
+#include "meshGRegionLocalMeshMod.h"
 #include "meshGRegionBoundaryRecovery.h"
 
 namespace pdel3d {
@@ -2435,6 +2436,771 @@ namespace pdel3d {
     }
   }
 
+  // ---------------------------------------------------------------------
+  // local boundary recovery
+  // ---------------------------------------------------------------------
+
+  namespace {
+
+    // the ring of tets around an edge, as in the optimizer
+    struct Ring {
+      vIdx a, b; // the edge
+      int n = 0;
+      tIdx tet[32];
+      vIdx vert[32]; // vert[i] is shared by tets i and i + 1
+      tRef outA[32], outB[32]; // outer facets containing a (resp. b)
+      std::uint8_t flagA[32], flagB[32]; // their constraint bits
+    };
+
+    struct Recovery {
+      Mesh &m;
+      std::vector<tRef> v2t; // a tet containing each vertex (NO_ADJ: none)
+      std::set<std::uint64_t> surfaceEdges; // edges that must not be removed
+      std::vector<tIdx> scratch;
+      std::size_t swaps = 0;
+      // rejection counters, reported at the debug verbosity
+      std::size_t rGhost = 0, rBig = 0, rConstrained = 0, rSurfEdge = 0,
+                  rBad = 0, rNoVertices = 0, rNoTriangulation = 0, rNone = 0,
+                  rVolume = 0;
+
+      Recovery(Mesh &mesh) : m(mesh) {}
+
+      static std::uint64_t edgeKey(vIdx x, vIdx y)
+      {
+        if(x > y) std::swap(x, y);
+        return ((std::uint64_t)x << 32) | y;
+      }
+
+      // the tets around vertex v (at most 4096: the surface Delaunay of a
+      // CAD part has vertices joined to thousands of tets, which are not
+      // worth the effort)
+      std::vector<std::uint32_t> mark;
+      std::uint32_t stamp = 0;
+      void star(vIdx v, std::vector<tIdx> &out)
+      {
+        out.clear();
+        if(v2t[v] == NO_ADJ) return;
+        tIdx t0 = v2t[v] >> 2;
+        if(m.isDeleted(t0)) return;
+        if(mark.size() < m.tetCapacity()) mark.resize(m.tetCapacity(), 0);
+        stamp++;
+        out.push_back(t0);
+        mark[t0] = stamp;
+        for(std::size_t i = 0; i < out.size(); i++) {
+          const tIdx t = out[i];
+          const vIdx *n = &m.node[4 * t];
+          for(unsigned f = 0; f < 4; f++) {
+            if(n[f] == v) continue; // facet opposite v does not contain it
+            const tIdx nb = m.neigh[4 * t + f] >> 2;
+            if(mark[nb] == stamp) continue;
+            mark[nb] = stamp;
+            out.push_back(nb);
+            if(out.size() > 4096) {
+              out.clear();
+              return;
+            }
+          }
+        }
+      }
+
+      // a tet containing x and y, or NO_TET
+      tIdx findEdge(vIdx x, vIdx y)
+      {
+        star(x, scratch);
+        for(auto t : scratch) {
+          const vIdx *n = &m.node[4 * t];
+          if(n[0] == y || n[1] == y || n[2] == y || n[3] == y) return t;
+        }
+        return NO_TET;
+      }
+
+      // the facet (x, y, z), or NO_ADJ
+      tRef findFacet(vIdx x, vIdx y, vIdx z)
+      {
+        star(x, scratch);
+        for(auto t : scratch) {
+          const vIdx *n = &m.node[4 * t];
+          int iy = -1, iz = -1, ix = -1;
+          for(int k = 0; k < 4; k++) {
+            if(n[k] == x) ix = k;
+            if(n[k] == y) iy = k;
+            if(n[k] == z) iz = k;
+          }
+          if(ix >= 0 && iy >= 0 && iz >= 0) return 4 * t + (6 - ix - iy - iz);
+        }
+        return NO_ADJ;
+      }
+
+      // the ring around the edge of tet t between its nodes at positions ia
+      // and ib; false when it cannot be removed (ghost or constrained facets,
+      // more than 7 tets, inconsistent)
+      bool buildRing(tIdx t, unsigned ia, unsigned ib, Ring &R)
+      {
+        R.a = m.node[4 * t + ia];
+        R.b = m.node[4 * t + ib];
+        if(surfaceEdges.count(edgeKey(R.a, R.b))) {
+          rSurfEdge++;
+          return false;
+        }
+        const int e = edgeOfNodes[ia][ib];
+        if(m.flag[t] & (1 << e)) {
+          rConstrained++;
+          return false;
+        }
+        unsigned inF, outF;
+        edgeFacets(e, inF, outF);
+        R.n = 0;
+        tIdx cur = t;
+        int ghosts = 0;
+        do {
+          if(R.n == 31) {
+            rBig++;
+            return false;
+          }
+          if(m.isDeleted(cur)) {
+            rBad++;
+            return false;
+          }
+          if(m.isGhost(cur) && ++ghosts > 2) {
+            rGhost++;
+            return false;
+          }
+          const std::uint16_t f = m.flag[cur];
+          if(f & ((F_FACET0 << inF) | (F_FACET0 << outF))) {
+            rConstrained++;
+            return false;
+          }
+          const vIdx *n = &m.node[4 * cur];
+          const vIdx r = n[inF];
+          unsigned fa = 0, fb = 0;
+          for(unsigned k = 0; k < 4; k++) {
+            if(n[k] == R.a) fa = k;
+            if(n[k] == R.b) fb = k;
+          }
+          R.tet[R.n] = cur;
+          R.vert[R.n] = r;
+          R.outA[R.n] = m.neigh[4 * cur + fb];
+          R.outB[R.n] = m.neigh[4 * cur + fa];
+          R.flagA[R.n] = (f & (F_FACET0 << fb)) ? 1 : 0;
+          R.flagB[R.n] = (f & (F_FACET0 << fa)) ? 1 : 0;
+          R.n++;
+          const tRef rf = m.neigh[4 * cur + outF];
+          cur = rf >> 2;
+          inF = rf & 3;
+          const vIdx *nn = &m.node[4 * cur];
+          for(outF = 0; outF < 3; outF++)
+            if(nn[outF] == r) break;
+        } while(cur != t);
+        if(R.n < 3) {
+          rBad++;
+          return false;
+        }
+        for(int i = 0; i < R.n; i++) {
+          if(R.vert[i] == R.a || R.vert[i] == R.b) {
+            rBad++;
+            return false;
+          }
+          for(int j = 0; j < i; j++)
+            if(R.vert[i] == R.vert[j]) {
+              rBad++;
+              return false;
+            }
+          // a hull edge: the ring holds the two ghost tets and the ghost
+          // vertex once; a ring tet touching the hull elsewhere means the
+          // edge is not a hull edge but the ring is next to it: fine too
+        }
+        return true;
+      }
+
+      int ringPosition(const Ring &R, vIdx v) const
+      {
+        for(int i = 0; i < R.n; i++)
+          if(R.vert[i] == v) return i;
+        return -1;
+      }
+
+      // Remove the edge of the ring, retriangulating the ring polygon so that
+      // it contains the required positions (3 of them: a triangle, 2: a
+      // diagonal); facet receives the required triangle. The triangulation
+      // maximizing the worst quality of the new tets is found by dynamic
+      // programming over the sub-polygons (Klincsek), for any ring size; a
+      // ring through the hull holds the ghost vertex once, whose ear (its two
+      // neighbors) is forced: the two hull facets of the ring are replaced by
+      // the two on the diagonal joining them. Returns false when no valid
+      // triangulation exists (positive tets whose volumes add up to the ring)
+      bool edgeRemoval(const Ring &R, const int *req, int nreq, tRef *facet)
+      {
+        const int n = R.n;
+        int ghostPos = -1;
+        for(int i = 0; i < n; i++)
+          if(R.vert[i] == GHOST) ghostPos = i;
+        // the real vertices of the polygon, in order, after the ghost
+        const int k = ghostPos >= 0 ? n - 1 : n;
+        if(k < 3) return false;
+        int pos[32];
+        for(int i = 0; i < k; i++) pos[i] = (ghostPos + 1 + i) % n;
+        int rq[3];
+        for(int j = 0; j < nreq; j++) {
+          rq[j] = -1;
+          for(int i = 0; i < k; i++)
+            if(pos[i] == req[j]) rq[j] = i;
+          if(rq[j] < 0) return false; // the ghost cannot be required
+        }
+        std::sort(rq, rq + nreq);
+        // a required diagonal that is the closing edge of the polygon is
+        // already there
+        if(nreq == 2 && rq[0] == 0 && rq[1] == k - 1) nreq = 0;
+        const double *pa = &m.xyz[4 * R.a], *pb = &m.xyz[4 * R.b];
+        double ringVol = 0.;
+        for(int i = 0; i < n; i++) {
+          if(m.isGhost(R.tet[i])) continue;
+          const vIdx *v = &m.node[4 * R.tet[i]];
+          ringVol -= orient3dFast(&m.xyz[4 * v[0]], &m.xyz[4 * v[1]],
+                                  &m.xyz[4 * v[2]], &m.xyz[4 * v[3]]);
+        }
+        // the two tets on each triangle (i, j, l) of the polygon, i < j < l:
+        // worst quality (-1: invalid), volume, and whether the a-side tet is
+        // (j, i, l, a) rather than (i, j, l, a)
+        auto idx = [k](int i, int j, int l) { return (i * k + j) * k + l; };
+        std::vector<double> tq(k * k * k, -1.), tv(k * k * k, 0.);
+        std::vector<std::uint8_t> tflip(k * k * k, 0);
+        for(int i = 0; i < k; i++) {
+          for(int j = i + 1; j < k; j++) {
+            for(int l = j + 1; l < k; l++) {
+              const double *p0 = &m.xyz[4 * R.vert[pos[i]]],
+                           *p1 = &m.xyz[4 * R.vert[pos[j]]],
+                           *p2 = &m.xyz[4 * R.vert[pos[l]]];
+              const double da = orient3dFast(p0, p1, p2, pa);
+              const double db = orient3dFast(p0, p1, p2, pb);
+              if(da * db >= 0.) continue;
+              const int t = idx(i, j, l);
+              tv[t] = std::fabs(da) + std::fabs(db);
+              tflip[t] = da > 0.;
+              if(tflip[t])
+                tq[t] = std::min(gammaQuality(p1, p0, p2, pa, -da),
+                                 gammaQuality(p0, p1, p2, pb, db));
+              else
+                tq[t] = std::min(gammaQuality(p0, p1, p2, pa, da),
+                                 gammaQuality(p1, p0, p2, pb, -db));
+            }
+          }
+        }
+        auto triQ = [&](int i, int j, int l) { // any order of the indices
+          int a[3] = {i % k, j % k, l % k};
+          std::sort(a, a + 3);
+          return tq[idx(a[0], a[1], a[2])];
+        };
+        // Q[i][j]: best worst quality of a triangulation of the chain of
+        // vertices i..j (indices modulo k, j < i + k) closed by the diagonal
+        // (i, j); K[i][j] the apex of the triangle on that diagonal
+        const int kk = 2 * k;
+        std::vector<double> Q(kk * kk, -1.);
+        std::vector<int> K(kk * kk, -1);
+        for(int i = 0; i + 1 < kk; i++) Q[i * kk + i + 1] = 2.;
+        for(int len = 2; len < k; len++) {
+          for(int i = 0; i + len < kk; i++) {
+            const int j = i + len;
+            double best = -1.;
+            int bk = -1;
+            for(int c = i + 1; c < j; c++) {
+              const double q =
+                std::min(triQ(i, c, j), std::min(Q[i * kk + c], Q[c * kk + j]));
+              if(q > best) {
+                best = q;
+                bk = c;
+              }
+            }
+            Q[i * kk + j] = best;
+            K[i * kk + j] = bk;
+          }
+        }
+        // the triangulation: the required piece, then the best completion
+        std::vector<std::array<int, 3>> tris;
+        std::vector<std::array<int, 2>> chains;
+        double worst = 2.;
+        if(nreq == 3) {
+          worst = triQ(rq[0], rq[1], rq[2]);
+          tris.push_back({rq[0], rq[1], rq[2]});
+          chains = {{rq[0], rq[1]}, {rq[1], rq[2]}, {rq[2], rq[0] + k}};
+        }
+        else if(nreq == 2) {
+          chains = {{rq[0], rq[1]}, {rq[1], rq[0] + k}};
+        }
+        else
+          chains = {{0, k - 1}};
+        for(auto &ch : chains) {
+          if(ch[1] - ch[0] < 2) continue;
+          worst = std::min(worst, Q[ch[0] * kk + ch[1]]);
+        }
+        if(worst <= 0.) {
+          rNoTriangulation++;
+          return false;
+        }
+        std::vector<std::array<int, 2>> stack(chains);
+        while(!stack.empty()) {
+          const auto ch = stack.back();
+          stack.pop_back();
+          if(ch[1] - ch[0] < 2) continue;
+          const int c = K[ch[0] * kk + ch[1]];
+          tris.push_back({ch[0] % k, c % k, ch[1] % k});
+          stack.push_back({ch[0], c});
+          stack.push_back({c, ch[1]});
+        }
+        double vol = 0.;
+        for(auto &t : tris) {
+          int a[3] = {t[0], t[1], t[2]};
+          std::sort(a, a + 3);
+          vol += tv[idx(a[0], a[1], a[2])];
+        }
+        // on a hull edge, the sliver between the two hull triangulations of
+        // the quad (a, r_0, b, r_{k-1}) leaves the mesh: the new hull is
+        // reflex there (the surface is what it is, the convex hull is not)
+        double expected = ringVol;
+        if(ghostPos >= 0)
+          expected -= std::fabs(orient3dFast(pa, pb, &m.xyz[4 * R.vert[pos[0]]],
+                                             &m.xyz[4 * R.vert[pos[k - 1]]]));
+        if(std::fabs(vol - expected) > 1.e-6 * ringVol) {
+          rVolume++;
+          return false;
+        }
+
+        // constrained edges of the ring, carried to the new tets
+        std::vector<std::uint64_t> cEdges;
+        for(int i = 0; i < n; i++) {
+          const std::uint16_t f = m.flag[R.tet[i]];
+          if(!(f & F_ALL_EDGES)) continue;
+          for(int e = 0; e < 6; e++) {
+            if(!(f & (1 << e))) continue;
+            unsigned n0, n1;
+            edgeNodes(e, n0, n1);
+            cEdges.push_back(
+              edgeKey(m.node[4 * R.tet[i] + n0], m.node[4 * R.tet[i] + n1]));
+          }
+        }
+        const std::uint32_t color = m.color.empty() ? 0 : m.color[R.tet[0]];
+        const int nc = 2 * (int)tris.size() + (ghostPos >= 0 ? 2 : 0);
+        m.reserveTets(m.ntet + nc + 1024);
+        for(int i = 0; i < n; i++) m.flag[R.tet[i]] |= F_DELETED;
+        struct facetKey {
+          vIdx v0, v1, v2;
+          tRef ref;
+        };
+        std::vector<facetKey> facets;
+        facets.reserve(4 * nc);
+        auto addFacet = [&](vIdx x, vIdx y, vIdx z, tRef ref) {
+          if(x > y) std::swap(x, y);
+          if(y > z) std::swap(y, z);
+          if(x > y) std::swap(x, y);
+          facets.push_back({x, y, z, ref});
+        };
+        auto newTet = [&](vIdx n0, vIdx n1, vIdx n2, vIdx n3) {
+          const tIdx s = (tIdx)m.ntet++;
+          vIdx *v = &m.node[4 * s];
+          v[0] = n0;
+          v[1] = n1;
+          v[2] = n2;
+          v[3] = n3;
+          m.flag[s] = 0;
+          if(!m.color.empty()) m.color[s] = color;
+          for(unsigned f = 0; f < 4; f++) {
+            m.neigh[4 * s + f] = NO_ADJ;
+            addFacet(v[facetNode0(f)], v[facetNode1(f)], v[facetNode2(f)],
+                     4 * s + f);
+          }
+          for(auto key : cEdges) {
+            const vIdx u = (vIdx)(key >> 32), w = (vIdx)key;
+            int iu = -1, iw = -1;
+            for(int q = 0; q < 4; q++) {
+              if(v[q] == u) iu = q;
+              if(v[q] == w) iw = q;
+            }
+            if(iu >= 0 && iw >= 0)
+              m.flag[s] |= 1 << (5 - edgeFromFacets(iu, iw));
+          }
+          for(int q = 0; q < 4; q++)
+            if(v[q] != GHOST) v2t[v[q]] = 4 * s + q;
+          return s;
+        };
+        if(facet) *facet = NO_ADJ;
+        for(std::size_t it = 0; it < tris.size(); it++) {
+          int a[3] = {tris[it][0], tris[it][1], tris[it][2]};
+          std::sort(a, a + 3);
+          vIdx r0 = R.vert[pos[a[0]]], r1 = R.vert[pos[a[1]]],
+               r2 = R.vert[pos[a[2]]];
+          if(tflip[idx(a[0], a[1], a[2])]) std::swap(r0, r1);
+          const tIdx sa = newTet(r0, r1, r2, R.a), sb = newTet(r1, r0, r2, R.b);
+          if(it == 0 && nreq == 3) { // the required triangle, facet 3 of both
+            m.flag[sa] |= F_FACET3;
+            m.flag[sb] |= F_FACET3;
+            if(facet) *facet = 4 * sa + 3;
+          }
+          if(ghostPos >= 0 && a[0] == 0 && a[2] == k - 1) {
+            // the hull facets (r_0, r_{k-1}, a) and (r_0, r_{k-1}, b) close the
+            // ring on the outside: ghost tets oriented from the real tets
+            for(int side = 0; side < 2; side++) {
+              const tIdx t = side ? sb : sa;
+              const vIdx *v = &m.node[4 * t];
+              const vIdx x = R.vert[pos[a[1]]];
+              unsigned ix = 0;
+              while(v[ix] != x) ix++;
+              newTet(v[ballNodes[ix][0]], v[ballNodes[ix][1]],
+                     v[ballNodes[ix][2]], GHOST);
+            }
+          }
+        }
+        // adjacencies: the boundary facets of the ring first
+        for(int i = 0; i < n; i++) {
+          const vIdx rp = R.vert[(i + n - 1) % n], r = R.vert[i];
+          for(int side = 0; side < 2; side++) {
+            vIdx x = side ? R.b : R.a, y = rp, z = r;
+            if(x > y) std::swap(x, y);
+            if(y > z) std::swap(y, z);
+            if(x > y) std::swap(x, y);
+            const tRef out = side ? R.outB[i] : R.outA[i];
+            const bool constrained = side ? R.flagB[i] : R.flagA[i];
+            for(auto &fk : facets) {
+              if(fk.ref != NO_ADJ && fk.v0 == x && fk.v1 == y && fk.v2 == z) {
+                m.neigh[fk.ref] = out;
+                m.neigh[out] = fk.ref;
+                if(constrained) m.flag[fk.ref >> 2] |= F_FACET0 << (fk.ref & 3);
+                fk.ref = NO_ADJ;
+                break;
+              }
+            }
+          }
+        }
+        // then the facets between the new tets
+        for(std::size_t i = 0; i < facets.size(); i++) {
+          if(facets[i].ref == NO_ADJ) continue;
+          for(std::size_t j = i + 1; j < facets.size(); j++) {
+            if(facets[j].ref != NO_ADJ && facets[j].v0 == facets[i].v0 &&
+               facets[j].v1 == facets[i].v1 && facets[j].v2 == facets[i].v2) {
+              m.neigh[facets[i].ref] = facets[j].ref;
+              m.neigh[facets[j].ref] = facets[i].ref;
+              facets[j].ref = NO_ADJ;
+              break;
+            }
+          }
+        }
+        for(int i = 0; i < n; i++)
+          for(int q = 0; q < 4; q++) m.neigh[4 * R.tet[i] + q] = NO_ADJ;
+        swaps++;
+        return true;
+      }
+
+      // does the segment (x, y) cross the facet (u, v, w)? (x and y on either
+      // side of it, and the line through the triangle)
+      bool segmentCrossesFacet(const double *x, const double *y,
+                               const double *u, const double *v,
+                               const double *w) const
+      {
+        const double sx = orient3dFast(u, v, w, x),
+                     sy = orient3dFast(u, v, w, y);
+        if(sx * sy >= 0.) return false;
+        const double s0 = orient3dFast(x, y, u, v),
+                     s1 = orient3dFast(x, y, v, w),
+                     s2 = orient3dFast(x, y, w, u);
+        return (s0 > 0. && s1 > 0. && s2 > 0.) ||
+               (s0 < 0. && s1 < 0. && s2 < 0.);
+      }
+
+      // the edges of the facets crossed by the segment (x, y), walking from x
+      // to y; false when the walk fails (hull, cycle)
+      bool crossedEdges(vIdx x, vIdx y, std::vector<std::uint64_t> &edges)
+      {
+        edges.clear();
+        const double *px = &m.xyz[4 * x], *py = &m.xyz[4 * y];
+        star(x, scratch);
+        tIdx cur = NO_TET;
+        unsigned entering = 4;
+        for(auto t : scratch) {
+          const vIdx *n = &m.node[4 * t];
+          if(m.isGhost(t)) continue;
+          unsigned ix = 0;
+          while(n[ix] != x) ix++;
+          const vIdx u = n[facetNode0(ix)], v = n[facetNode1(ix)],
+                     w = n[facetNode2(ix)];
+          if(segmentCrossesFacet(px, py, &m.xyz[4 * u], &m.xyz[4 * v],
+                                 &m.xyz[4 * w])) {
+            const tRef r = m.neigh[4 * t + ix];
+            edges.push_back(edgeKey(u, v));
+            edges.push_back(edgeKey(v, w));
+            edges.push_back(edgeKey(w, u));
+            cur = r >> 2;
+            entering = r & 3;
+            break;
+          }
+        }
+        if(cur == NO_TET) return false;
+        for(int step = 0; step < 200; step++) {
+          if(m.isGhost(cur)) return false;
+          const vIdx *n = &m.node[4 * cur];
+          if(n[0] == y || n[1] == y || n[2] == y || n[3] == y) return true;
+          unsigned exitF = 4;
+          for(unsigned f = 0; f < 4 && exitF == 4; f++) {
+            if(f == entering) continue;
+            const vIdx u = n[facetNode0(f)], v = n[facetNode1(f)],
+                       w = n[facetNode2(f)];
+            if(segmentCrossesFacet(px, py, &m.xyz[4 * u], &m.xyz[4 * v],
+                                   &m.xyz[4 * w])) {
+              exitF = f;
+              edges.push_back(edgeKey(u, v));
+              edges.push_back(edgeKey(v, w));
+              edges.push_back(edgeKey(w, u));
+            }
+          }
+          if(exitF == 4) return false; // the segment goes through an edge
+          const tRef r = m.neigh[4 * cur + exitF];
+          cur = r >> 2;
+          entering = r & 3;
+        }
+        return false;
+      }
+
+      // remove the edge (p, q) with the ring triangulation containing the
+      // required ring positions of the given vertices when they are all ring
+      // vertices (nreq of them), or any valid triangulation when nreq is 0
+      bool removeEdge(vIdx p, vIdx q, const vIdx *want, int nreq, tRef *facet)
+      {
+        const tIdx t = findEdge(p, q);
+        if(t == NO_TET) return false;
+        unsigned ip = 0, iq = 0;
+        for(unsigned k = 0; k < 4; k++) {
+          if(m.node[4 * t + k] == p) ip = k;
+          if(m.node[4 * t + k] == q) iq = k;
+        }
+        Ring R;
+        if(!buildRing(t, std::min(ip, iq), std::max(ip, iq), R)) return false;
+        int req[3];
+        for(int k = 0; k < nreq; k++) {
+          req[k] = ringPosition(R, want[k]);
+          if(req[k] < 0) {
+            rNoVertices++;
+            return false;
+          }
+        }
+        if(nreq == 2 &&
+           ((req[0] + 1) % R.n == req[1] || (req[1] + 1) % R.n == req[0]))
+          return false; // adjacent ring vertices: the edge exists already
+        return edgeRemoval(R, req, nreq, facet);
+      }
+
+      // create the edge (x, y): by removing an edge around which x and y are
+      // ring vertices, or, when no such edge exists, by removing edges of the
+      // facets crossed by the segment until one does
+      bool recoverEdge(vIdx x, vIdx y)
+      {
+        const vIdx want[2] = {x, y};
+        std::vector<std::uint64_t> crossed;
+        for(int round = 0; round < 4; round++) {
+          star(x, scratch);
+          std::vector<tIdx> tets(scratch);
+          for(auto t : tets) {
+            const vIdx *n = &m.node[4 * t];
+            for(unsigned ia = 0; ia < 4; ia++) {
+              if(n[ia] == x) continue;
+              for(unsigned ib = ia + 1; ib < 4; ib++) {
+                if(n[ib] == x || n[ib] == GHOST) continue;
+                if(removeEdge(n[ia], n[ib], want, 2, nullptr)) return true;
+              }
+            }
+          }
+          // no ring holds both: open the way with an unconstrained removal
+          if(!crossedEdges(x, y, crossed)) return false;
+          bool removed = false;
+          for(auto key : crossed) {
+            const vIdx p = (vIdx)(key >> 32), q = (vIdx)key;
+            if(p == x || p == y || q == x || q == y) continue;
+            if(removeEdge(p, q, nullptr, 0, nullptr)) {
+              removed = true;
+              break;
+            }
+          }
+          if(!removed) return false;
+        }
+        return false;
+      }
+
+      // create the facet (x, y, z), whose edges exist: by removing an edge
+      // around which x, y and z are ring vertices, or, when no such edge
+      // exists, by removing edges piercing the facet until one does
+      bool recoverFacet(vIdx x, vIdx y, vIdx z, tRef &facet)
+      {
+        const vIdx want[3] = {x, y, z};
+        const double *px = &m.xyz[4 * x], *py = &m.xyz[4 * y],
+                     *pz = &m.xyz[4 * z];
+        for(int round = 0; round < 4; round++) {
+          // the edges of the tets around the three nodes and their neighbors
+          std::vector<tIdx> tets;
+          for(int k = 0; k < 3; k++) {
+            star(want[k], scratch);
+            tets.insert(tets.end(), scratch.begin(), scratch.end());
+          }
+          const std::size_t n0 = tets.size();
+          for(std::size_t i = 0; i < n0; i++)
+            for(unsigned f = 0; f < 4; f++)
+              tets.push_back(m.neigh[4 * tets[i] + f] >> 2);
+          std::set<std::uint64_t> seen;
+          std::vector<std::uint64_t> piercing;
+          for(auto t : tets) {
+            if(m.isGhost(t) || m.isDeleted(t)) continue;
+            const vIdx *n = &m.node[4 * t];
+            for(unsigned ia = 0; ia < 4; ia++) {
+              for(unsigned ib = ia + 1; ib < 4; ib++) {
+                const vIdx p = n[ia], q = n[ib];
+                if(p == x || p == y || p == z || q == x || q == y || q == z)
+                  continue;
+                if(!seen.insert(edgeKey(p, q)).second) continue;
+                // the ring of an edge around the three nodes holds them all
+                if(removeEdge(p, q, want, 3, &facet)) return true;
+                if(segmentCrossesFacet(&m.xyz[4 * p], &m.xyz[4 * q], px, py,
+                                       pz))
+                  piercing.push_back(edgeKey(p, q));
+              }
+            }
+          }
+          bool removed = false;
+          for(auto key : piercing) {
+            if(removeEdge((vIdx)(key >> 32), (vIdx)key, nullptr, 0, nullptr)) {
+              removed = true;
+              break;
+            }
+          }
+          if(!removed) return false;
+        }
+        return false;
+      }
+    };
+
+  } // namespace
+
+  std::size_t recoverLocally(Mesh &m, const std::vector<vIdx> &triNode,
+                             const std::vector<vIdx> &lineNode,
+                             const std::vector<std::uint8_t> &lineInTriangle,
+                             std::vector<tRef> &tri2tet,
+                             std::vector<std::uint64_t> &line2tet, int nthreads,
+                             int verbosity)
+  {
+    const double t0 = TimeOfDay();
+    const std::size_t nt = triNode.size() / 3, nl = lineNode.size() / 2;
+    std::size_t missingTri = 0, missingLines = 0;
+    for(std::size_t i = 0; i < nt; i++)
+      if(tri2tet[i] == NO_ADJ) missingTri++;
+    for(std::size_t i = 0; i < nl; i++)
+      if(!lineInTriangle[i] && line2tet[i] == NO_ADJ) missingLines++;
+    if(!missingTri && !missingLines) return 0;
+    // the local removals are kept only when everything is recovered: tetgen
+    // gets the untouched Delaunay otherwise
+    const std::vector<vIdx> node0(m.node.begin(), m.node.begin() + 4 * m.ntet);
+    const std::vector<tRef> neigh0(m.neigh.begin(),
+                                   m.neigh.begin() + 4 * m.ntet);
+    const std::vector<std::uint16_t> flag0(m.flag.begin(),
+                                           m.flag.begin() + m.ntet);
+    const std::vector<tRef> tri2tet0(tri2tet);
+    const std::vector<std::uint64_t> line2tet0(line2tet);
+    const std::size_t ntet0 = m.ntet;
+    // the triangles and lines in the mesh must survive the edge removals
+    constrainFacets(m, tri2tet);
+    constrainEdges(m, line2tet);
+    Recovery R(m);
+    for(std::size_t i = 0; i < nt; i++) {
+      R.surfaceEdges.insert(R.edgeKey(triNode[3 * i], triNode[3 * i + 1]));
+      R.surfaceEdges.insert(R.edgeKey(triNode[3 * i + 1], triNode[3 * i + 2]));
+      R.surfaceEdges.insert(R.edgeKey(triNode[3 * i + 2], triNode[3 * i]));
+    }
+    for(std::size_t i = 0; i < nl; i++)
+      R.surfaceEdges.insert(R.edgeKey(lineNode[2 * i], lineNode[2 * i + 1]));
+    // a tet around every vertex of a missing item
+    const std::size_t nv = m.numVertices();
+    R.v2t.assign(nv, NO_ADJ);
+    std::vector<std::uint8_t> needed(nv, 0);
+    for(std::size_t i = 0; i < nt; i++)
+      if(tri2tet[i] == NO_ADJ)
+        for(int k = 0; k < 3; k++) needed[triNode[3 * i + k]] = 1;
+    for(std::size_t i = 0; i < nl; i++)
+      if(!lineInTriangle[i] && line2tet[i] == NO_ADJ)
+        for(int k = 0; k < 2; k++) needed[lineNode[2 * i + k]] = 1;
+#pragma omp parallel for schedule(static) num_threads(std::max(1, nthreads))
+    for(std::size_t t = 0; t < m.ntet; t++) {
+      if(m.isDeleted((tIdx)t) || m.isGhost((tIdx)t)) continue;
+      for(unsigned k = 0; k < 4; k++) {
+        const vIdx v = m.node[4 * t + k];
+        if(needed[v]) R.v2t[v] = 4 * t + k; // any tet will do
+      }
+    }
+    std::size_t recoveredTri = 0, recoveredLines = 0;
+    for(int pass = 0; pass < 8; pass++) {
+      bool progress = false;
+      for(std::size_t i = 0; i < nl; i++) {
+        if(lineInTriangle[i] || line2tet[i] != NO_ADJ) continue;
+        const vIdx x = lineNode[2 * i], y = lineNode[2 * i + 1];
+        tIdx t = R.findEdge(x, y);
+        if(t == NO_TET && R.recoverEdge(x, y)) t = R.findEdge(x, y);
+        if(t == NO_TET) continue;
+        int ix = 0, iy = 0;
+        for(int k = 0; k < 4; k++) {
+          if(m.node[4 * t + k] == x) ix = k;
+          if(m.node[4 * t + k] == y) iy = k;
+        }
+        line2tet[i] = 6 * (std::uint64_t)t + edgeOfNodes[ix][iy];
+        recoveredLines++;
+        progress = true;
+      }
+      for(std::size_t i = 0; i < nt; i++) {
+        if(tri2tet[i] != NO_ADJ) continue;
+        const vIdx *v = &triNode[3 * i];
+        bool edges = true;
+        for(int k = 0; k < 3 && edges; k++) {
+          const vIdx x = v[k], y = v[(k + 1) % 3];
+          if(R.findEdge(x, y) == NO_TET) {
+            progress = R.recoverEdge(x, y) || progress;
+            edges = R.findEdge(x, y) != NO_TET;
+          }
+        }
+        if(!edges) continue;
+        tRef f = R.findFacet(v[0], v[1], v[2]);
+        if(f == NO_ADJ && !R.recoverFacet(v[0], v[1], v[2], f)) continue;
+        if(f == NO_ADJ) f = R.findFacet(v[0], v[1], v[2]);
+        if(f == NO_ADJ) continue;
+        tri2tet[i] = f;
+        m.flag[f >> 2] |= F_FACET0 << (f & 3);
+        const tRef g = m.neigh[f];
+        m.flag[g >> 2] |= F_FACET0 << (g & 3);
+        recoveredTri++;
+        progress = true;
+      }
+      if(!progress) break;
+    }
+    const std::size_t left =
+      missingTri - recoveredTri + missingLines - recoveredLines;
+    if(left) {
+      std::copy(node0.begin(), node0.end(), m.node.begin());
+      std::copy(neigh0.begin(), neigh0.end(), m.neigh.begin());
+      std::copy(flag0.begin(), flag0.end(), m.flag.begin());
+      m.ntet = ntet0;
+      tri2tet = tri2tet0;
+      line2tet = line2tet0;
+    }
+    else {
+      // the edge removals leave deleted tets: the caller redoes the maps on
+      // the compacted mesh
+      m.removeDeleted(nthreads);
+    }
+    if(verbosity > 0)
+      Msg::Info("Local boundary recovery: %lu of %lu triangle(s) and %lu of "
+                "%lu line(s) recovered by %lu edge removals (Wall %gs)",
+                recoveredTri, missingTri, recoveredLines, missingLines, R.swaps,
+                TimeOfDay() - t0);
+    if(verbosity > 0)
+      Msg::Info("  ring rejections: %lu with a ghost, %lu with more than 7 "
+                "tets, %lu constrained, %lu surface edges, %lu inconsistent, "
+                "%lu without the nodes, %lu without a positive triangulation, "
+                "%lu with a volume mismatch",
+                R.rGhost, R.rBig, R.rConstrained, R.rSurfEdge, R.rBad,
+                R.rNoVertices, R.rNoTriangulation, R.rVolume);
+    return left;
+  }
+
   bool colorVolumes(
     Mesh &m, const std::vector<tRef> &tri2tet,
     const std::vector<std::uint32_t> &triColor,
@@ -3448,19 +4214,23 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
   if(recovered) {
     Msg::Info("Recovering %lu missing triangle(s) and %lu missing line(s)...",
               missing, missingLines);
-    if(!recoverBoundary(m, s, regions)) {
-      Msg::Error("Boundary recovery failed");
-      return 1;
-    }
-    if(CTX::instance()->mesh.lcFromPoints) {
-      for(GVertex *gv : s.points) {
-        if(gv->prescribedMeshSizeAtVertex() == MAX_LC) continue;
-        for(MPoint *p : gv->points)
-          m.xyz[4 * p->getVertex(0)->getIndex() + 3] =
-            gv->prescribedMeshSizeAtVertex() / sizeFactor;
+    // by local edge removals first, with tetgen for whatever is left
+    if(pdel3d::recoverLocally(m, s.triNode, s.lineNode, lineInTriangle, tri2tet,
+                              line2tet, nthreads, verbosity)) {
+      if(!recoverBoundary(m, s, regions)) {
+        Msg::Error("Boundary recovery failed");
+        return 1;
       }
+      if(CTX::instance()->mesh.lcFromPoints) {
+        for(GVertex *gv : s.points) {
+          if(gv->prescribedMeshSizeAtVertex() == MAX_LC) continue;
+          for(MPoint *p : gv->points)
+            m.xyz[4 * p->getVertex(0)->getIndex() + 3] =
+              gv->prescribedMeshSizeAtVertex() / sizeFactor;
+        }
+      }
+      surfaceSizes(s, m, sizeFactor);
     }
-    surfaceSizes(s, m, sizeFactor);
     missing = pdel3d::triangleToTetMap(m, s.triNode, tri2tet);
     pdel3d::linesInTriangles(s.triNode, s.lineNode, lineInTriangle);
     missingLines =
