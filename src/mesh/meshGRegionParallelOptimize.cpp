@@ -420,8 +420,7 @@ namespace pdel3d {
                 if(n[q] == u) iu = q;
                 if(n[q] == v) iv = q;
               }
-              if(iu >= 0 && iv >= 0)
-                m.flag[s] |= 1 << (5 - edgeFromFacets(iu, iv));
+              if(iu >= 0 && iv >= 0) m.flag[s] |= 1 << edgeFromNodes(iu, iv);
             }
           }
         }
@@ -1144,7 +1143,7 @@ namespace pdel3d {
           while(rot < 3 && S.node[fn[rot]] != m.node[4 * t + ind[0]]) rot++;
           if(rot == 3) continue;
           for(int j = 0; j < 3; j++) {
-            const int e = 5 - edgeFromFacets(ind[j], ind[(j + 1) % 3]);
+            const int e = edgeFromNodes(ind[j], ind[(j + 1) % 3]);
             if(!(m.flag[t] & (1 << e))) continue;
             const std::uint8_t a = fn[(rot + j) % 3], b = fn[(rot + j + 1) % 3];
             cEdge[a][b] = cEdge[b][a] = 1;

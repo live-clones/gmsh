@@ -56,8 +56,8 @@ namespace pdel3d {
   constexpr std::uint16_t F_SPR_TRIED =
     0x2000; // the optimizer's reconnection could not improve the tet
 
-  // the two facets sharing edge e, the two nodes of edge e, and the edge
-  // between two facets
+  // the two facets sharing edge e, the two nodes of edge e, the edge between
+  // two facets and the edge between two nodes (e is also the flag bit)
   inline void edgeFacets(int e, unsigned &f0, unsigned &f1)
   {
     static const unsigned fmin[6] = {0, 0, 0, 1, 1, 2},
@@ -73,6 +73,8 @@ namespace pdel3d {
       {-1, 0, 1, 2}, {0, -1, 3, 4}, {1, 3, -1, 5}, {2, 4, 5, -1}};
     return t[f0][f1];
   }
+  inline int edgeFromNodes(unsigned n0, unsigned n1)
+  { return 5 - edgeFromFacets(n0, n1); }
 
   // Nodes of facet f, in an order such that {node0, node1, node2, f} is an even
   // permutation of {0, 1, 2, 3}; a valid tetrahedron has orient3d(n0, n1, n2,
@@ -119,7 +121,7 @@ namespace pdel3d {
     // sanity checks: node validity, orientation, adjacency symmetry, and
     // optionally the local Delaunay property across every facet; prints the
     // problems found and returns their number
-    std::size_t verify(bool delaunay, bool verbose = true) const;
+    std::size_t verify(bool delaunay) const;
   };
 
   // constraints
@@ -234,8 +236,7 @@ namespace pdel3d {
   struct DelaunayStats {
     // filtered: by the size filter in their cavity; curveFiltered: by the size
     // filter against their predecessor along the curve
-    std::size_t inserted = 0, filtered = 0, curveFiltered = 0, duplicates = 0,
-                conflicts = 0;
+    std::size_t inserted = 0, filtered = 0, curveFiltered = 0;
     std::size_t rounds = 0;
     double timeSort = 0., timeInsert = 0.;
   };
@@ -436,18 +437,34 @@ namespace pdel3d {
 
   // gmsh's gamma quality (3 inradius / circumradius) of the tet (p0, p1,
   // p2, p3) whose orientation determinant is det (negative when valid);
+  inline double sqDist(const double *a, const double *b)
+  {
+    const double dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
+    return dx * dx + dy * dy + dz * dz;
+  }
+
+  // the mesh size filter: two points at squared distance d2 with sizes s0 and
+  // s1 (0: unknown) are too close (opt: sizeMin, sizeMax, sizeFactor)
+  template <class Options>
+  inline bool tooClose(double s0, double s1, double d2, const Options &opt)
+  {
+    if(s0 > 0. && s1 > 0.) {
+      const double s =
+        std::min(opt.sizeMax, std::max(opt.sizeMin, 0.5 * (s0 + s1))) *
+        opt.sizeFactor;
+      return d2 < s * s;
+    }
+    return false;
+  }
+
   // -1 for an inverted or flat tet
-  inline double gammaQuality(const double *p0, const double *p1, const double *p2,
-                      const double *p3, double det)
+  inline double gammaQuality(const double *p0, const double *p1,
+                             const double *p2, const double *p3, double det)
   {
     if(det >= 0.) return -1.;
     const double volume = -det / 6.;
-    auto sq = [](const double *a, const double *b) {
-      const double dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
-      return dx * dx + dy * dy + dz * dz;
-    };
-    const double la = sq(p1, p0), lb = sq(p2, p0), lc = sq(p3, p0);
-    const double lA = sq(p3, p2), lB = sq(p3, p1), lC = sq(p2, p1);
+    const double la = sqDist(p1, p0), lb = sqDist(p2, p0), lc = sqDist(p3, p0);
+    const double lA = sqDist(p3, p2), lB = sqDist(p3, p1), lC = sqDist(p2, p1);
     const double lalA = std::sqrt(la * lA), lblB = std::sqrt(lb * lB),
                  lclC = std::sqrt(lc * lC);
     const double insideSqrt = (lalA + lblB + lclC) * (lalA + lblB - lclC) *
@@ -457,13 +474,12 @@ namespace pdel3d {
     auto area = [](const double *a, const double *b, const double *c) {
       const double u[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
       const double v[3] = {c[0] - a[0], c[1] - a[1], c[2] - a[2]};
-      const double n[3] = {u[1] * v[2] - u[2] * v[1],
-                           u[2] * v[0] - u[0] * v[2],
+      const double n[3] = {u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2],
                            u[0] * v[1] - u[1] * v[0]};
       return 0.5 * std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
     };
-    const double s = area(p0, p1, p2) + area(p0, p2, p3) + area(p0, p1, p3) +
-                     area(p1, p2, p3);
+    const double s =
+      area(p0, p1, p2) + area(p0, p2, p3) + area(p0, p1, p3) + area(p1, p2, p3);
     const double rho = 9. * volume / s;
     return rho * volume / partR;
   }

@@ -231,10 +231,6 @@ namespace pdel3d {
     const unsigned ballNodes[4][3] = {
       {1, 2, 3}, {2, 0, 3}, {0, 1, 3}, {1, 0, 2}};
 
-    // edge index (flag bit position) of the edge between two nodes
-    const int edgeOfNodes[4][4] = {
-      {-1, 5, 4, 3}, {5, -1, 2, 1}, {4, 2, -1, 0}, {3, 1, 0, -1}};
-
     inline int sign(double v) { return (v > 0.) - (v < 0.); }
 
     inline int insphereSign(const double *pa, const double *pb,
@@ -362,8 +358,7 @@ namespace pdel3d {
       std::size_t conflictWalk = 0, conflictDig = 0, noStart = 0;
       std::size_t hintUsed = 0, hintDead = 0, hintOut = 0;
       std::size_t walkSteps = 0, straightWalks = 0;
-      std::size_t inserted = 0, filtered = 0, duplicates = 0, conflicts = 0,
-                  walkFailed = 0;
+      std::size_t filtered = 0, duplicates = 0, conflicts = 0;
       bool noSpace = false;
 
       // local id of a vertex of the ball (1..31), 0 for the ghost
@@ -397,23 +392,6 @@ namespace pdel3d {
       Kernel(Mesh &_m, DelaunayOptions &_opt)
         : m(_m), opt(_opt), ntet(_m.ntet), cap(_m.tetCapacity())
       {
-      }
-
-      // mesh size filter
-      inline bool tooClose(double s0, double s1, double d2) const
-      {
-        if(s0 > 0. && s1 > 0.) {
-          const double s =
-            std::min(opt.sizeMax, std::max(opt.sizeMin, 0.5 * (s0 + s1))) *
-            opt.sizeFactor;
-          return d2 < s * s;
-        }
-        return false;
-      }
-      static inline double sqDist(const double *a, const double *b)
-      {
-        const double dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
-        return dx * dx + dy * dy + dz * dz;
       }
 
       // take at least `demand` free slots in total in local.deleted; returns
@@ -572,9 +550,9 @@ namespace pdel3d {
         const unsigned *bn = ballNodes[f];
         const unsigned b0 = reversed ? bn[1] : bn[0],
                        b1 = reversed ? bn[0] : bn[1], b2 = bn[2];
-        if(flag & (1 << edgeOfNodes[b1][b2])) nf |= F_EDGE0;
-        if(flag & (1 << edgeOfNodes[b0][b2])) nf |= F_EDGE1;
-        if(flag & (1 << edgeOfNodes[b0][b1])) nf |= F_EDGE2;
+        if(flag & (1 << edgeFromNodes(b1, b2))) nf |= F_EDGE0;
+        if(flag & (1 << edgeFromNodes(b0, b2))) nf |= F_EDGE1;
+        if(flag & (1 << edgeFromNodes(b0, b1))) nf |= F_EDGE2;
         return nf;
       }
 
@@ -617,7 +595,8 @@ namespace pdel3d {
                 if(filterSize > 0.) {
                   const double *q = &m.xyz[4 * n];
                   const double sn = q[3] > 0. ? q[3] : filterSize;
-                  if(tooClose(filterSize, sn, sqDist(p, q))) return TOO_CLOSE;
+                  if(tooClose(filterSize, sn, sqDist(p, q), opt))
+                    return TOO_CLOSE;
                 }
               }
               L.deleted.push_back(nb);
@@ -997,7 +976,8 @@ namespace pdel3d {
             const vIdx n = m.node[4 * t0 + j];
             if(j == 3 && n == GHOST) break;
             const double s = m.xyz[4 * n + 3] > 0. ? m.xyz[4 * n + 3] : p[3];
-            if(tooClose(p[3], s, sqDist(p, &m.xyz[4 * n]))) return TOO_CLOSE;
+            if(tooClose(p[3], s, sqDist(p, &m.xyz[4 * n]), opt))
+              return TOO_CLOSE;
           }
         }
         bool edgeConstraint = false;
@@ -1040,7 +1020,7 @@ namespace pdel3d {
               const vIdx n = b.n[j];
               if(n == GHOST) continue;
               const double s = m.xyz[4 * n + 3] > 0. ? m.xyz[4 * n + 3] : pv[3];
-              if(tooClose(pv[3], s, sqDist(pv, &m.xyz[4 * n]))) {
+              if(tooClose(pv[3], s, sqDist(pv, &m.xyz[4 * n]), opt)) {
                 restoreDeleted(L, prevDeleted);
                 return TOO_CLOSE;
               }
@@ -1113,7 +1093,7 @@ namespace pdel3d {
       if(orientation > 0) std::swap(i, j);
       const vIdx ni = info[i].node, nj = info[j].node, nk = info[k].node,
                  nl = info[l].node;
-      m.reserveTets(std::max<std::size_t>(5, m.tetCapacity()));
+      m.reserveTets(5);
       // HXT's initial configuration: tet 0 is (l, k, j, i), tets 1..4 are
       // the ghosts on its four facets, with the ghost vertex as node 3
       const vIdx nodes[20] = {nl,    nk,    nj, ni, nl,    nj,   nk,
@@ -1315,8 +1295,7 @@ namespace pdel3d {
               const double *p2 = &m.xyz[4 * pass[i].node];
               bool close = false;
               for(int k = 0; k < nring && !close; k++)
-                close =
-                  K.tooClose(ring[k][3], p2[3], Kernel::sqDist(ring[k], p2));
+                close = tooClose(ring[k][3], p2[3], sqDist(ring[k], p2), opt);
               if(close) {
                 pass[i].status = ST_FILTERED;
                 curveSkipped++;
@@ -1404,10 +1383,7 @@ namespace pdel3d {
             if(L.noSpace) break;
             {
               switch(K.insert(L, ni.node, ni.hint, ni.hintNode)) {
-              case OK:
-                ni.status = ST_INSERTED;
-                L.inserted++;
-                break;
+              case OK: ni.status = ST_INSERTED; break;
               case TOO_CLOSE:
                 ni.status = ST_FILTERED;
                 L.filtered++;
@@ -1417,7 +1393,7 @@ namespace pdel3d {
                 L.duplicates++;
                 break;
               case CONFLICT: L.conflicts++; break;
-              case WALK_FAILED: L.walkFailed++; break;
+              case WALK_FAILED: break;
               case NO_SPACE: L.noSpace = true; break;
               }
             }
@@ -1496,8 +1472,6 @@ namespace pdel3d {
       totalFiltered += L.filtered;
       totalDuplicates += L.duplicates;
       totalConflicts += L.conflicts;
-      for(auto t : L.deleted)
-        for(int k = 0; k < 4; k++) m.neigh[4 * t + k] = NO_ADJ;
     }
     if(opt.compact) m.removeDeleted(maxPartitions);
     if(!originalIndex.empty()) {
@@ -1517,8 +1491,6 @@ namespace pdel3d {
       stats->inserted += totalInserted;
       stats->filtered += totalFiltered;
       stats->curveFiltered += totalCurveFiltered;
-      stats->duplicates += totalDuplicates;
-      stats->conflicts += totalConflicts;
       stats->rounds += nrounds;
       stats->timeSort += t1 - t0;
       stats->timeInsert += t2 - t1;
@@ -1533,14 +1505,13 @@ namespace pdel3d {
 
   // verification
 
-  std::size_t Mesh::verify(bool delaunay, bool verbose) const
+  std::size_t Mesh::verify(bool delaunay) const
   {
     std::size_t errors = 0;
     const std::size_t nv = numVertices();
     auto report = [&](const char *what, std::size_t t) {
       errors++;
-      if(verbose && errors <= 20)
-        Msg::Error("pdel3d verify: %s (tet %lu)", what, t);
+      if(errors <= 20) Msg::Error("pdel3d verify: %s (tet %lu)", what, t);
     };
     for(std::size_t t = 0; t < ntet; t++) {
       if(isDeleted((tIdx)t)) continue;
@@ -1603,19 +1574,17 @@ namespace pdel3d {
         if(keys[i][0] == keys[i - 1][0] && keys[i][1] == keys[i - 1][1] &&
            keys[i][2] == keys[i - 1][2] && keys[i][3] == keys[i - 1][3]) {
           errors++;
-          if(verbose && errors <= 20)
+          if(errors <= 20)
             Msg::Error("pdel3d verify: duplicate tets %u and %u (%u %u %u %u)",
                        keys[i - 1][4], keys[i][4], keys[i][0], keys[i][1],
                        keys[i][2], keys[i][3]);
         }
       }
     }
-    if(verbose) {
-      if(errors)
-        Msg::Error("pdel3d verify: %lu problems", errors);
-      else
-        Msg::Info("pdel3d verify: %lu tets OK", numRealTets());
-    }
+    if(errors)
+      Msg::Error("pdel3d verify: %lu problems", errors);
+    else
+      Msg::Info("pdel3d verify: %lu tets OK", numRealTets());
     return errors;
   }
 
@@ -2398,7 +2367,7 @@ namespace pdel3d {
           if(n[k] == b) ib = k;
         }
         if(ib >= 0) {
-          line2tet[i] = 6 * (std::uint64_t)t + (5 - edgeFromFacets(ia, ib));
+          line2tet[i] = 6 * (std::uint64_t)t + edgeFromNodes(ia, ib);
           found = true;
           break;
         }
@@ -2579,7 +2548,7 @@ namespace pdel3d {
           rSurfEdge++;
           return false;
         }
-        const int e = edgeOfNodes[ia][ib];
+        const int e = edgeFromNodes(ia, ib);
         unsigned inF, outF;
         edgeFacets(e, inF, outF);
         R.n = 0;
@@ -3135,7 +3104,7 @@ namespace pdel3d {
           if(m.node[4 * t + k] == x) ix = k;
           if(m.node[4 * t + k] == y) iy = k;
         }
-        line2tet[i] = 6 * (std::uint64_t)t + edgeOfNodes[ix][iy];
+        line2tet[i] = 6 * (std::uint64_t)t + edgeFromNodes(ix, iy);
         recoveredLines++;
         progress = true;
       }
@@ -3321,24 +3290,6 @@ namespace pdel3d {
 namespace pdel3d {
 
   namespace {
-
-    inline double sqDist(const double *a, const double *b)
-    {
-      const double dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
-      return dx * dx + dy * dy + dz * dz;
-    }
-
-    inline bool tooClose(double s0, double s1, double d2,
-                         const RefineOptions &opt)
-    {
-      if(s0 > 0. && s1 > 0.) {
-        const double s =
-          std::min(opt.sizeMax, std::max(opt.sizeMin, 0.5 * (s0 + s1))) *
-          opt.sizeFactor;
-        return d2 < s * s;
-      }
-      return false;
-    }
 
     // A point inside the tet of nodes p[4] (with sizes s[4]) likely to respect
     // the mesh size: the circumcenter of the tet measured in edge lengths
@@ -4155,12 +4106,11 @@ namespace {
       const pdel3d::vIdx *tn = &m.node[4 * t];
       // ballNodes order: (vta, b0, b1, b2) is a valid tet when vta is on the
       // side of the tet, so (b0, b1, b2, GHOST) is a valid ghost
-      static const unsigned ballNodes[4][3] = {
-        {1, 2, 3}, {2, 0, 3}, {0, 1, 3}, {1, 0, 2}};
+      const unsigned *ballNodes = pdel3d::ballNodes[f];
       pdel3d::vIdx *gn = &m.node[4 * g];
-      gn[0] = tn[ballNodes[f][0]];
-      gn[1] = tn[ballNodes[f][1]];
-      gn[2] = tn[ballNodes[f][2]];
+      gn[0] = tn[ballNodes[0]];
+      gn[1] = tn[ballNodes[1]];
+      gn[2] = tn[ballNodes[2]];
       gn[3] = pdel3d::GHOST;
       m.flag[g] = 0;
       m.neigh[4 * g + 3] = r;
