@@ -1322,16 +1322,18 @@ namespace pdel3d {
           for(int i = 0; i < nthreads; i++) locals[i].partition = parts[i];
         }
 
-        // room for the new tets: about 6 net new tets per vertex in a volume,
-        // more for vertices on surfaces, plus the blocks the threads hoard; a
-        // round that ran out of space is redone with twice the capacity
+        // room for the new tets: about 6.5 net new tets per vertex, plus the
+        // blocks the threads hoard; the arrays grow by at least a quarter (a
+        // realloc, which remaps them), and a round that ran out of space goes
+        // on with half as much again
         {
-          std::size_t need = K.ntet + 12 * (passLength - curveSkipped) +
+          std::size_t need = K.ntet + 7 * (passLength - curveSkipped) +
                              (nthreads + 1) * Kernel::BLOCK;
-          if(ranOutOfSpace) need = std::max(need, 2 * m.tetCapacity());
+          if(ranOutOfSpace)
+            need = std::max(need, m.tetCapacity() + m.tetCapacity() / 2);
           if(need > m.tetCapacity()) {
             m.reserveTets(
-              std::max(need, m.tetCapacity() + m.tetCapacity() / 2));
+              std::max(need, m.tetCapacity() + m.tetCapacity() / 4));
             K.cap = m.tetCapacity();
           }
           ranOutOfSpace = false;
@@ -3482,7 +3484,7 @@ namespace pdel3d {
       std::vector<vIdx> toInsert(numKept);
       std::vector<tIdx> hints(numKept);
       if(m.xyz.capacity() < 4 * (first + numKept))
-        m.xyz.reserve(4 * (first + numKept) + 2 * (first + numKept));
+        m.xyz.reserve(5 * (first + numKept));
       m.xyz.resize(4 * (first + numKept));
 #pragma omp parallel for schedule(static) num_threads(nthreads)
       for(int i = 0; i < nthreads; i++) {

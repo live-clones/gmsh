@@ -19,7 +19,9 @@
 #include <cmath>
 #include <cstdint>
 #include <cstddef>
+#include <cstdlib>
 #include <map>
+#include <new>
 #include <set>
 #include <vector>
 #include "robustPredicates.h"
@@ -86,6 +88,56 @@ namespace pdel3d {
   inline unsigned facetNode1(unsigned f) { return (f & 2) ^ 3; }
   inline unsigned facetNode2(unsigned f) { return (f + 3) & 2; }
 
+  // a resizable array of a trivially copyable type, grown with realloc: a
+  // large block is then remapped rather than copied, so that the old and the
+  // new tet arrays are never both in memory
+  template <class T> class PodVector {
+  private:
+    T *_data = nullptr;
+    std::size_t _size = 0;
+
+  public:
+    PodVector() = default;
+    PodVector(const PodVector &) = delete;
+    PodVector &operator=(const PodVector &) = delete;
+    ~PodVector() { std::free(_data); }
+    std::size_t size() const { return _size; }
+    bool empty() const { return !_size; }
+    T &operator[](std::size_t i) { return _data[i]; }
+    const T &operator[](std::size_t i) const { return _data[i]; }
+    T *data() { return _data; }
+    T *begin() { return _data; }
+    T *end() { return _data + _size; }
+    const T *begin() const { return _data; }
+    const T *end() const { return _data + _size; }
+    void resize(std::size_t n, const T &value = T())
+    {
+      if(!n) {
+        clear();
+        return;
+      }
+      if(n != _size) {
+        T *p = (T *)std::realloc(_data, n * sizeof(T));
+        if(!p) throw std::bad_alloc();
+        _data = p;
+      }
+      for(std::size_t i = _size; i < n; i++) _data[i] = value;
+      _size = n;
+    }
+    void assign(std::size_t n, const T &value)
+    {
+      resize(n, value);
+      std::fill(_data, _data + n, value);
+    }
+    // frees the memory
+    void clear()
+    {
+      std::free(_data);
+      _data = nullptr;
+      _size = 0;
+    }
+  };
+
   struct Mesh {
     // vertices: x, y, z and the mesh size (<= 0: unknown), 4 doubles per vertex
     std::vector<double> xyz;
@@ -98,11 +150,11 @@ namespace pdel3d {
     // tetrahedra: the arrays are sized to the capacity, the first ntet slots
     // are in use (some of them flagged deleted until removeDeleted())
     std::size_t ntet = 0;
-    std::vector<vIdx> node; // 4 per tet; a ghost vertex is always node 3
-    std::vector<tRef> neigh; // 4 per tet
-    std::vector<std::uint16_t> flag;
+    PodVector<vIdx> node; // 4 per tet; a ghost vertex is always node 3
+    PodVector<tRef> neigh; // 4 per tet
+    PodVector<std::uint16_t> flag;
     // volume of the tet (COLOR_OUT: outside); left empty when not needed
-    std::vector<std::uint32_t> color;
+    PodVector<std::uint32_t> color;
 
     static constexpr std::uint32_t COLOR_OUT = 0xffffffffu;
 
@@ -462,7 +514,7 @@ namespace pdel3d {
 
   // link the facets of new tets that match each other, among the nf keys
   // (those already linked have ref NO_ADJ)
-  inline void linkFacets(std::vector<tRef> &neigh, FacetKey *facets, int nf)
+  inline void linkFacets(PodVector<tRef> &neigh, FacetKey *facets, int nf)
   {
     for(int i = 0; i < nf; i++) {
       if(facets[i].ref == NO_ADJ) continue;

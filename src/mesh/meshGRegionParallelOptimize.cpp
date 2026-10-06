@@ -117,7 +117,7 @@ namespace pdel3d {
     public:
       Mesh &m;
       const OptimizeOptions &opt;
-      std::vector<double> qual; // per tet slot
+      PodVector<double> qual; // per tet slot
       std::vector<std::uint8_t> fixedV;
       std::atomic<std::size_t> ntet;
       std::size_t cap;
@@ -1424,16 +1424,16 @@ namespace pdel3d {
                                   numTodo, nthreads, startShift, parts);
         for(int i = 0; i < nthreads; i++) locals[i].partition = parts[i];
         // room for the new tets (an edge removal creates at most 3 more, a
-        // reconnection a few dozen); a round that ran out of space is redone
-        // with twice the capacity
+        // reconnection a few dozen): only what may be needed, as the mesh
+        // hardly grows here; half as much again after running out of space
         {
-          std::size_t need = K.ntet + (spr ? 64 : 4) * numTodo +
+          std::size_t need = K.ntet + (spr ? 64 : 3) * numTodo +
                              (nthreads + 1) * Optimizer::BLOCK;
-          if(ranOutOfSpace) need = std::max(need, 2 * m.tetCapacity());
+          if(ranOutOfSpace)
+            need = std::max(need, m.tetCapacity() + m.tetCapacity() / 2);
           ranOutOfSpace = false;
           if(need > m.tetCapacity()) {
-            m.reserveTets(
-              std::max(need, m.tetCapacity() + m.tetCapacity() / 2));
+            m.reserveTets(need);
             K.cap = m.tetCapacity();
             K.qual.resize(K.cap, 0.);
           }
