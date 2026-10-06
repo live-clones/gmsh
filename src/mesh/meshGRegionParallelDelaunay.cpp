@@ -3,10 +3,34 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// The parallel Delaunay mesher (pdel3d): the Delaunay kernel on flat arrays
-// with ghost tetrahedra and Moore-curve partitions (after HXT), the Moore
-// curve, the constraints and the coloring of the volumes, the refinement
-// rounds, and the Gmsh driver that meshes a group of regions.
+// The parallel Delaunay mesher (pdel3d): the Delaunay kernel on flat arrays,
+// the Moore curve, the constraints and the coloring of the volumes, the
+// boundary recovery, the refinement rounds, and the Gmsh driver that meshes a
+// group of regions. The optimizer is in meshGRegionParallelOptimize.cpp.
+//
+// The data layout and the parallel scheme are those of HXT: flat arrays,
+// ghost tetrahedra closing the convex hull, each thread working on a piece of
+// a Moore curve, and conflicts retried on shifted curves. What differs:
+// - the refinement is del3d's: one candidate per tetrahedron, at its
+//   circumcenter, or at a point moved inside when that is outside or too
+//   close to a node, with the size interpolated from the nodes; candidates are
+//   filtered against the previous ones along the curve and in their cavity,
+//   and the size field is only evaluated on those kept;
+// - walks start from the tetrahedron that generated the candidate, and switch
+//   to a straight walk when the visibility walk wanders (CAD point sets);
+// - the boundary is recovered locally: the missing triangles and lines by
+//   edge removals first (ring triangulations by dynamic programming), then by
+//   TetGen's recovery on small cavities around what is left; the recovery of
+//   the whole surface mesh is only the fallback;
+// - the optimizer adds a small polyhedron reconnection, limited to the
+//   tetrahedra that edge removal and node relocation leave well below the
+//   threshold, on small cavities with a bounded search
+//   (Mesh.OptimizeReconnection*);
+// - the coordinates are perturbed during meshing, as in del3d (see
+//   meshGRegionParallelDelaunay() below);
+// - it supports del3d's features: groups of volumes colored at once, compound
+//   surfaces, embedded curves, surfaces and points, mesh size fields, and
+//   quadrangles on the boundary through pyramids.
 
 #include <algorithm>
 #include <array>
@@ -4973,11 +4997,23 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
   SurfaceMesh s;
   splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
   if(!collectSurfaceMesh(regions, s, sqr)) return 2;
-  // As del3d, work on slightly perturbed coordinates: the nodes of curved
-  // surfaces (spheres) are cospherical to rounding, which sends every
-  // in-sphere test of the tetrahedralization to the exact arithmetic. The
-  // exact coordinates are restored when the mesh is handed back (the
-  // optimization leaves no tet thin enough to be inverted by that)
+  // As del3d, work on coordinates perturbed by up to Mesh.RandomFactor3D times
+  // the size of the model, restored when the mesh is handed back (the
+  // optimization has removed the tets thin enough to be inverted by that).
+  // Measured on benchmarks/3d (October 2026), without the perturbation:
+  // - the nodes of curved CAD surfaces are cospherical to rounding, those of
+  //   planar faces coplanar, which sends the predicates of the initial
+  //   tetrahedralization to the exact arithmetic (3-5x slower on fil, crux,
+  //   percolation);
+  // - the degenerate Delaunay misses more surface triangles: the recovery is
+  //   up to 8x slower (geom8du, vulp5) and falls back to the global one on
+  //   vulp5 and core_coil;
+  // - the refinement can be faster, though (U_Joint_2.stp, clscale 0.02).
+  // The exact coordinates cannot be restored before the refinement: the
+  // recovered mesh then holds thousands of flat and hundreds of inverted
+  // tets, which only the optimization removes. Doing without the perturbation
+  // would need a symbolic perturbation of the predicates of the kernel and of
+  // the recovery.
   perturbedCoordinates perturbation(s.vertices,
                                     CTX::instance()->mesh.randFactor3d);
   pdel3d::Mesh m;

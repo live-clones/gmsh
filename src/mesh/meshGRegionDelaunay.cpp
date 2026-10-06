@@ -1178,6 +1178,13 @@ namespace {
 
     tetContainer allocator(S.size() * 10);
 
+    // Perturb the nodes by up to Mesh.RandomFactor3D times the size of the
+    // model (the boundary recovery restores them): the nodes of curved CAD
+    // surfaces are cospherical to rounding, those of planar faces coplanar,
+    // which sends the in-sphere tests to the exact arithmetic. Without it
+    // (benchmarks/3d, October 2026), del3d still succeeds everywhere, but is
+    // 2-2.5x slower on crux, fil and percolation. See also pdel3d
+    // (meshGRegionParallelDelaunay.cpp), which depends on it more
     for(std::size_t i = 0; i < N; i++) {
       MVertex *mv = S[i];
       double dx =
