@@ -1300,7 +1300,7 @@ namespace pdel3d {
     const double t0 = TimeOfDay();
     const int maxThreads = std::max(1, opt.numThreads);
     Optimizer K(m, opt);
-    K.qual.assign(m.tetCapacity(), 0.);
+    K.qual.resizeNoInit(m.tetCapacity()); // written below
     const std::size_t nv = m.numVertices();
     K.fixedV.assign(nv, 0);
     for(std::size_t v = 0; v < std::min(nv, opt.numFixedVertices); v++)
@@ -1332,9 +1332,13 @@ namespace pdel3d {
     // F_PROCESSED marks the tets that could not be improved, until a
     // neighbor changes, F_SPR_TRIED those the reconnection gave up on
 #pragma omp parallel for schedule(static) num_threads(maxThreads)
-    for(std::size_t t = 0; t < m.ntet; t++) {
+    for(std::size_t t = 0; t < m.tetCapacity(); t++) {
+      if(t >= m.ntet) {
+        K.qual[t] = 0.;
+        continue;
+      }
       m.flag[t] &= ~(F_PROCESSED | F_SPR_TRIED);
-      if(K.inVolume((tIdx)t)) K.qual[t] = K.computeQuality((tIdx)t);
+      K.qual[t] = K.inVolume((tIdx)t) ? K.computeQuality((tIdx)t) : 0.;
     }
 
     auto report = [&](const char *what) {
@@ -1397,20 +1401,35 @@ namespace pdel3d {
         if(!numTodo) break;
         nthreads = computeNumberOfThreads(conflictRatio, nthreads, numTodo,
                                           spr ? 8 : 128);
+        // a few tets are not worth the curve of all the vertices that the
+        // partitions need (about 30 ns per vertex, against a few us per tet,
+        // a few dozen for a reconnection)
+        if((double)numTodo * (spr ? 64 : 1) * 128 * nthreads < (double)nv)
+          nthreads = 1;
         double startShift = 0.;
-        if(round > 0 && nthreads > 1) {
-          double shift[3] = {lcg01(seed), lcg01(seed), lcg01(seed)};
-          startShift = lcg01(seed);
-          mooreCurve(m, bmin, bmax, shift);
-          curveIsDefault = false;
-        }
-        else if(!curveIsDefault) {
-          mooreCurve(m, bmin, bmax);
-          curveIsDefault = true;
-        }
+        if(nthreads == 1) {
+          // a single partition: the curve only orders the bad tets
+          if(m.dist.size() < nv) m.dist.resize(nv);
+          const MooreCurve curve(bmin, bmax);
 #pragma omp parallel for schedule(static) num_threads(maxThreads)
-        for(std::size_t i = 0; i < bad.size(); i++)
-          bad[i].dist = m.dist[m.node[4 * bad[i].t]];
+          for(std::size_t i = 0; i < bad.size(); i++)
+            bad[i].dist = curve.key(&m.xyz[4 * m.node[4 * bad[i].t]]);
+        }
+        else {
+          if(round > 0) {
+            double shift[3] = {lcg01(seed), lcg01(seed), lcg01(seed)};
+            startShift = lcg01(seed);
+            mooreCurve(m, bmin, bmax, shift);
+            curveIsDefault = false;
+          }
+          else if(!curveIsDefault) {
+            mooreCurve(m, bmin, bmax);
+            curveIsDefault = true;
+          }
+#pragma omp parallel for schedule(static) num_threads(maxThreads)
+          for(std::size_t i = 0; i < bad.size(); i++)
+            bad[i].dist = m.dist[m.node[4 * bad[i].t]];
+        }
         sortByDist(bad.data(), bad.size(), maxThreads);
         std::vector<std::uint64_t> dists(bad.size());
         std::vector<std::uint8_t> todo(bad.size());
@@ -1525,7 +1544,6 @@ namespace pdel3d {
                 "%lu conflicts",
                 totalInvalid, totalFailed, totalConflicts);
     m.numDefaultDist = 0;
-    m.removeDeleted(maxThreads);
   }
 
 } // namespace pdel3d

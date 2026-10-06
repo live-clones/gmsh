@@ -110,7 +110,9 @@ namespace pdel3d {
     T *end() { return _data + _size; }
     const T *begin() const { return _data; }
     const T *end() const { return _data + _size; }
-    void resize(std::size_t n, const T &value = T())
+    // the new entries are left uninitialized: the threads writing them first
+    // also place their pages
+    void resizeNoInit(std::size_t n)
     {
       if(!n) {
         clear();
@@ -121,12 +123,17 @@ namespace pdel3d {
         if(!p) throw std::bad_alloc();
         _data = p;
       }
-      for(std::size_t i = _size; i < n; i++) _data[i] = value;
       _size = n;
+    }
+    void resize(std::size_t n, const T &value = T())
+    {
+      const std::size_t old = _size;
+      resizeNoInit(n);
+      for(std::size_t i = old; i < n; i++) _data[i] = value;
     }
     void assign(std::size_t n, const T &value)
     {
-      resize(n, value);
+      resizeNoInit(n);
       std::fill(_data, _data + n, value);
     }
     // frees the memory
@@ -245,9 +252,18 @@ namespace pdel3d {
   // xyz[4 * v + 3]; the tets must be colored and constrained
   void refine(Mesh &m, RefineOptions &opt);
 
-  // Moore curve coordinate of the vertices from `first` on, on a cube
-  // enclosing the bounding box; shift[3] in [0, 1] moves the center of the
-  // curve, which changes the partitions between rounds
+  // Moore curve coordinate of a point, on a cube enclosing the bounding box
+  // min-max; shift[3] in [0, 1] moves the center of the curve (default: the
+  // center of the box), which changes the partitions between rounds
+  struct MooreCurve {
+    static constexpr double nmax = 2097152.; // 1 << 21 levels per axis
+    double lo[3], middle[3], f0[3], f1[3], sub1[3];
+    MooreCurve(const double min[3], const double max[3],
+               const double *shift = nullptr);
+    std::uint64_t key(const double *p) const;
+  };
+
+  // the Moore curve coordinate of the vertices from `first` on, in m.dist
   void mooreCurve(Mesh &m, const double min[3], const double max[3],
                   const double *shift = nullptr, std::size_t first = 0);
 

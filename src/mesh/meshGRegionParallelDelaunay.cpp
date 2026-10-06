@@ -73,10 +73,11 @@ namespace pdel3d {
   void Mesh::reserveTets(std::size_t n)
   {
     if(n <= tetCapacity()) return;
-    node.resize(4 * n);
-    neigh.resize(4 * n);
-    flag.resize(n);
-    if(!color.empty()) color.resize(n);
+    // no slot from ntet on is read before it is written
+    node.resizeNoInit(4 * n);
+    neigh.resizeNoInit(4 * n);
+    flag.resizeNoInit(n);
+    if(!color.empty()) color.resizeNoInit(n);
   }
 
   std::size_t Mesh::numRealTets() const
@@ -2144,21 +2145,16 @@ namespace pdel3d {
 
   } // namespace
 
-  void mooreCurve(Mesh &m, const double min[3], const double max[3],
-                  const double *shift, std::size_t first)
+  MooreCurve::MooreCurve(const double min[3], const double max[3],
+                         const double *shift)
   {
     static const double defaultShift[3] = {0.5, 0.5, 0.5};
     if(!shift) shift = defaultShift;
-    const std::size_t n = m.numVertices();
-    if(m.dist.size() < n) m.dist.resize(n);
-    if(first >= n) return;
-    const double nmax = 2097152.; // 1 << 21, quantization levels per axis
     double widthMax = 0.;
     for(int i = 0; i < 3; i++) widthMax = std::max(widthMax, max[i] - min[i]);
     if(widthMax <= 0.) widthMax = 1.;
     // the quantization is piecewise linear on each axis, with the breakpoint
     // (the center of the curve) at shift[i], and continuous there
-    double lo[3], middle[3], f0[3], f1[3], sub1[3];
     for(int i = 0; i < 3; i++) {
       double xmin, xmax;
       if(widthMax > 1.5 * (max[i] - min[i])) { // keep the box roughly cubic
@@ -2182,21 +2178,31 @@ namespace pdel3d {
       sub1[i] = 2 * middle[i] - xmax;
       while((xmax - sub1[i]) * f1[i] >= nmax) f1[i] = std::nextafter(f1[i], 0.);
     }
+  }
+
+  std::uint64_t MooreCurve::key(const double *p) const
+  {
+    std::uint64_t q[3];
+    for(int k = 0; k < 3; k++) {
+      double v =
+        (p[k] < middle[k]) ? (p[k] - lo[k]) * f0[k] : (p[k] - sub1[k]) * f1[k];
+      if(v < 0.) v = 0.;
+      if(v >= nmax) v = nmax - 1;
+      q[k] = (std::uint64_t)v;
+    }
+    return mooreKey(spread3(q[0]) | spread3(q[1]) << 1 | spread3(q[2]) << 2);
+  }
+
+  void mooreCurve(Mesh &m, const double min[3], const double max[3],
+                  const double *shift, std::size_t first)
+  {
+    const std::size_t n = m.numVertices();
+    if(m.dist.size() < n) m.dist.resize(n);
+    if(first >= n) return;
+    const MooreCurve curve(min, max, shift);
     const int nthreads = CTX::instance()->numThreadsFor(n - first, 1 << 16);
 #pragma omp parallel for schedule(static) num_threads(nthreads)
-    for(std::size_t i = first; i < n; i++) {
-      const double *p = &m.xyz[4 * i];
-      std::uint64_t q[3];
-      for(int k = 0; k < 3; k++) {
-        double v = (p[k] < middle[k]) ? (p[k] - lo[k]) * f0[k] :
-                                        (p[k] - sub1[k]) * f1[k];
-        if(v < 0.) v = 0.;
-        if(v >= nmax) v = nmax - 1;
-        q[k] = (std::uint64_t)v;
-      }
-      m.dist[i] =
-        mooreKey(spread3(q[0]) | spread3(q[1]) << 1 | spread3(q[2]) << 2);
-    }
+    for(std::size_t i = first; i < n; i++) m.dist[i] = curve.key(&m.xyz[4 * i]);
   }
 
 } // namespace pdel3d
@@ -3533,9 +3539,6 @@ namespace pdel3d {
       }
       if(stats.inserted == before) break;
     }
-    const double t6 = TimeOfDay();
-    m.removeDeleted(nthreads);
-    timeCompact += TimeOfDay() - t6;
     if(opt.verbosity > 0)
       Msg::Info("Refinement: %lu nodes inserted out of %lu candidates in %lu "
                 "rounds (Wall %gs)",
@@ -4100,12 +4103,10 @@ namespace {
   std::size_t exportMesh(pdel3d::Mesh &m, SurfaceMesh &s,
                          std::vector<GRegion *> &regions, int nthreads)
   {
-    std::size_t numDeleted = 0;
-#pragma omp parallel for schedule(static) num_threads(std::max(1, nthreads))   \
-  reduction(+ : numDeleted)
+    // the deleted tets (the mesh is not compacted) are skipped as outside
+#pragma omp parallel for schedule(static) num_threads(std::max(1, nthreads))
     for(std::size_t t = 0; t < m.ntet; t++)
-      numDeleted += m.isDeleted((pdel3d::tIdx)t);
-    if(numDeleted) m.removeDeleted(nthreads);
+      if(m.isDeleted((pdel3d::tIdx)t)) m.color[t] = pdel3d::Mesh::COLOR_OUT;
     std::vector<pdel3d::vIdx> newIndex;
     m.removeUnusedVertices(newIndex, nthreads);
     const std::size_t nv = m.numVertices(), nr = regions.size();
@@ -4135,8 +4136,8 @@ namespace {
     GModel *model = regions[0]->model();
     const std::size_t baseV = model->getMaxVertexNumber(),
                       baseE = model->getMaxElementNumber();
-    // only the nodes and colors of the tets are needed from here on (the mesh
-    // is compacted above): free the rest before the elements are created
+    // only the nodes and colors of the tets are needed from here on: free the
+    // rest before the elements are created
     m.neigh.clear();
     m.flag.clear();
     std::vector<std::uint64_t>().swap(m.dist);
