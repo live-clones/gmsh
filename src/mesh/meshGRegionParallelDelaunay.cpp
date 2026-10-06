@@ -832,8 +832,8 @@ namespace pdel3d {
               const std::uint32_t j = hashGet(r >> 2);
               if(j == 0xffffffffu) {
                 Msg::Error(
-                  "Inconsistent cavity in pdel3d (tet %lu is not in it)",
-                  (unsigned long)(r >> 2));
+                  "Inconsistent cavity in pdel3d (tet %zu is not in it)",
+                  (std::size_t)(r >> 2));
                 return false;
               }
               L.faces[4 * i + f] = 4 * j + (r & 3);
@@ -1190,7 +1190,7 @@ namespace pdel3d {
       for(int k = 0; k < 3 && sameBox; k++)
         sameBox = m.defaultBox[k] == bmin[k] && m.defaultBox[3 + k] == bmax[k];
       if(!sameBox) m.numDefaultDist = 0;
-      mooreCurve(m, bmin, bmax, nullptr, m.numDefaultDist);
+      mooreCurve(m, bmin, bmax, maxPartitions, nullptr, m.numDefaultDist);
       m.numDefaultDist = m.numVertices();
       for(int k = 0; k < 3; k++) {
         m.defaultBox[k] = bmin[k];
@@ -1228,7 +1228,7 @@ namespace pdel3d {
     std::size_t totalInserted = 0, totalFiltered = 0, totalCurveFiltered = 0,
                 totalDuplicates = 0, totalConflicts = 0, nrounds = 0;
     if(opt.verbosity > 0)
-      Msg::Info("Delaunay of %lu points on %d threads (%lu in the mesh)",
+      Msg::Info("Delaunay of %zu points on %d threads (%zu in the mesh)",
                 passes[npasses] - passes[0], maxPartitions, numInMesh);
 
     bool ranOutOfSpace = false;
@@ -1253,7 +1253,7 @@ namespace pdel3d {
           double shift[3] = {lcg01(seed), lcg01(seed), lcg01(seed)};
           startShift = lcg01(seed);
           if(curveIsDefault) defaultDist.swap(m.dist);
-          mooreCurve(m, bmin, bmax, shift);
+          mooreCurve(m, bmin, bmax, maxPartitions, shift);
           curveIsDefault = false;
         }
         else if(!curveIsDefault) {
@@ -1413,7 +1413,7 @@ namespace pdel3d {
             }
           }
           if(failed)
-            Msg::Warning("%lu point(s) could not be located in the mesh",
+            Msg::Warning("%zu point(s) could not be located in the mesh",
                          failed);
         }
         // the vertices still to do go to the end of the pass, in order
@@ -1451,10 +1451,10 @@ namespace pdel3d {
             locals[i].hintUsed = locals[i].hintDead = locals[i].hintOut = 0;
             locals[i].walkSteps = locals[i].straightWalks = 0;
           }
-          Msg::Info("%3d thrd | %10lu / %-10lu inserted (%.1f%%), %lu filtered "
-                    "(setup %.4fs, insertion %.4fs; conflicts: walk %lu, "
-                    "cavity %lu, no start %lu; hints used %lu, dead %lu, out "
-                    "%lu; %lu walk steps, %lu straight walks)",
+          Msg::Info("%3d thrd | %10lu / %-10lu inserted (%.1f%%), %zu filtered "
+                    "(setup %.4fs, insertion %.4fs; conflicts: walk %zu, "
+                    "cavity %zu, no start %zu; hints used %zu, dead %zu, out "
+                    "%zu; %zu walk steps, %zu straight walks)",
                     nthreads, numInserted, passLength - numSkipped,
                     100. * numInserted /
                       std::max<std::size_t>(1, passLength - numSkipped),
@@ -1495,8 +1495,8 @@ namespace pdel3d {
       stats->timeInsert += t2 - t1;
     }
     if(opt.verbosity > 0)
-      Msg::Info("  %lu inserted, %lu filtered (%lu along the curve), %lu "
-                "duplicates, %lu conflicts, %lu rounds (%g s)",
+      Msg::Info("  %zu inserted, %zu filtered (%zu along the curve), %zu "
+                "duplicates, %zu conflicts, %zu rounds (%g s)",
                 totalInserted, totalFiltered + totalCurveFiltered,
                 totalCurveFiltered, totalDuplicates, totalConflicts, nrounds,
                 t2 - t0);
@@ -1510,7 +1510,7 @@ namespace pdel3d {
     const std::size_t nv = numVertices();
     auto report = [&](const char *what, std::size_t t) {
       errors++;
-      if(errors <= 20) Msg::Error("pdel3d verify: %s (tet %lu)", what, t);
+      if(errors <= 20) Msg::Error("pdel3d verify: %s (tet %zu)", what, t);
     };
     for(std::size_t t = 0; t < ntet; t++) {
       if(isDeleted((tIdx)t)) continue;
@@ -1574,16 +1574,15 @@ namespace pdel3d {
            keys[i][2] == keys[i - 1][2] && keys[i][3] == keys[i - 1][3]) {
           errors++;
           if(errors <= 20)
-            Msg::Error("pdel3d verify: duplicate tets %lu and %lu",
-                       (unsigned long)keys[i - 1][4],
-                       (unsigned long)keys[i][4]);
+            Msg::Error("pdel3d verify: duplicate tets %zu and %zu",
+                       (std::size_t)keys[i - 1][4], (std::size_t)keys[i][4]);
         }
       }
     }
     if(errors)
-      Msg::Error("pdel3d verify: %lu problems", errors);
+      Msg::Error("pdel3d verify: %zu problems", errors);
     else
-      Msg::Info("pdel3d verify: %lu tets OK", numRealTets());
+      Msg::Info("pdel3d verify: %zu tets OK", numRealTets());
     return errors;
   }
 
@@ -2199,14 +2198,14 @@ namespace pdel3d {
   }
 
   void mooreCurve(Mesh &m, const double min[3], const double max[3],
-                  const double *shift, std::size_t first)
+                  int nthreads, const double *shift, std::size_t first)
   {
     const std::size_t n = m.numVertices();
     if(m.dist.size() < n) m.dist.resize(n);
     if(first >= n) return;
     const MooreCurve curve(min, max, shift);
-    const int nthreads = CTX::instance()->numThreadsFor(n - first, 1 << 16);
-#pragma omp parallel for schedule(static) num_threads(nthreads)
+    const int nt = (n - first < (1 << 16)) ? 1 : std::max(1, nthreads);
+#pragma omp parallel for schedule(static) num_threads(nt)
     for(std::size_t i = first; i < n; i++) m.dist[i] = curve.key(&m.xyz[4 * i]);
   }
 
@@ -2272,20 +2271,20 @@ namespace pdel3d {
   } // namespace
 
   std::size_t triangleToTetMap(const Mesh &m, const std::vector<vIdx> &triNode,
-                               std::vector<tRef> &tri2tet)
+                               std::vector<tRef> &tri2tet, int nthreads)
   {
     const std::size_t ntri = triNode.size() / 3;
     tri2tet.assign(ntri, NO_ADJ);
     if(!ntri) return 0;
-    const int nthreads = CTX::instance()->numThreadsFor(m.ntet, 1 << 16);
+    const int nt = (m.ntet < (1 << 16)) ? 1 : std::max(1, nthreads);
     std::vector<vIdx> sorted(triNode);
-#pragma omp parallel for schedule(static) num_threads(nthreads)
+#pragma omp parallel for schedule(static) num_threads(nt)
     for(std::size_t i = 0; i < ntri; i++)
       sort3(sorted[3 * i], sorted[3 * i + 1], sorted[3 * i + 2]);
     TriangleTable table(sorted);
     // every interior facet is seen from its two tets: only the one with the
     // smaller index writes, so that the entries are written once
-#pragma omp parallel for schedule(static) num_threads(nthreads)
+#pragma omp parallel for schedule(static) num_threads(nt)
     for(std::size_t t = 0; t < m.ntet; t++) {
       if(m.isDeleted((tIdx)t) || m.isGhost((tIdx)t)) continue;
       const vIdx *n = &m.node[4 * t];
@@ -2299,8 +2298,7 @@ namespace pdel3d {
       }
     }
     std::size_t missing = 0;
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  reduction(+ : missing)
+#pragma omp parallel for schedule(static) num_threads(nt) reduction(+ : missing)
     for(std::size_t i = 0; i < ntri; i++) missing += (tri2tet[i] == NO_ADJ);
     return missing;
   }
@@ -3132,14 +3130,14 @@ namespace pdel3d {
       m.removeDeleted(nthreads);
     }
     if(verbosity > 0)
-      Msg::Info("Boundary recovery by edge removals: %lu of %lu triangle(s) "
-                "and %lu of %lu line(s) recovered by %lu removals (Wall %gs)",
+      Msg::Info("Boundary recovery by edge removals: %zu of %zu triangle(s) "
+                "and %zu of %zu line(s) recovered by %zu removals (Wall %gs)",
                 recoveredTri, missingTri, recoveredLines, missingLines, R.swaps,
                 TimeOfDay() - t0);
-    if(verbosity > 5)
-      Msg::Info("  ring rejections: %lu with a ghost, %lu with more than 31 "
-                "tets, %lu surface edges, %lu inconsistent, %lu without the "
-                "nodes, %lu without a positive triangulation, %lu with a "
+    if(verbosity > 1)
+      Msg::Info("  ring rejections: %zu with a ghost, %zu with more than 31 "
+                "tets, %zu surface edges, %zu inconsistent, %zu without the "
+                "nodes, %zu without a positive triangulation, %zu with a "
                 "volume mismatch",
                 R.rGhost, R.rBig, R.rSurfEdge, R.rBad, R.rNoVertices,
                 R.rNoTriangulation, R.rVolume);
@@ -3285,7 +3283,7 @@ namespace pdel3d {
       std::set<std::uint32_t> s(volumes[i].begin(), volumes[i].end());
       complete(s);
       if(volumeOfSurfaces.count(s)) {
-        Msg::Error("Volumes %lu and %u are bounded by the same surfaces", i,
+        Msg::Error("Volumes %zu and %u are bounded by the same surfaces", i,
                    volumeOfSurfaces[s]);
         return false;
       }
@@ -3321,7 +3319,7 @@ namespace pdel3d {
         }
       }
       if(!found[i]) {
-        Msg::Error("Volume %lu was not found in the tetrahedralization (its "
+        Msg::Error("Volume %zu was not found in the tetrahedralization (its "
                    "bounding surfaces "
                    "do not enclose a single connected component)",
                    i);
@@ -3635,7 +3633,7 @@ namespace pdel3d {
   reduction(+ : numTets)
         for(std::size_t t = 0; t < m.ntet; t++)
           if(!(m.flag[t] & F_DELETED) && m.color[t] < opt.numVolumes) numTets++;
-        Msg::Info("Refinement round %d: %lu nodes, %lu tets (%lu of %lu "
+        Msg::Info("Refinement round %d: %zu nodes, %zu tets (%zu of %zu "
                   "candidates inserted, Wall %gs)",
                   iter, m.numVertices(), numTets, stats.inserted - before,
                   toInsert.size(), TimeOfDay() - t1);
@@ -3643,11 +3641,11 @@ namespace pdel3d {
       if(stats.inserted == before) break;
     }
     if(opt.verbosity > 0)
-      Msg::Info("Refinement: %lu nodes inserted out of %lu candidates in %lu "
+      Msg::Info("Refinement: %zu nodes inserted out of %zu candidates in %zu "
                 "rounds (Wall %gs)",
                 totalInserted, totalCandidates, stats.rounds, TimeOfDay() - t0);
     if(opt.verbosity > 1)
-      Msg::Info("  %lu candidates kept, %lu filtered on the curve, %lu in "
+      Msg::Info("  %zu candidates kept, %zu filtered on the curve, %zu in "
                 "their cavity; candidates %gs, sizes %gs, sort %gs, insert "
                 "%gs, compaction %gs",
                 totalKept, stats.curveFiltered, stats.filtered, timeCandidates,
@@ -3696,7 +3694,7 @@ void delaunayMeshIn3DParallel(std::vector<MVertex *> &v,
     tets.push_back(new MTetrahedron(v[toInsert[nd[0]]], v[toInsert[nd[1]]],
                                     v[toInsert[nd[2]]], v[toInsert[nd[3]]]));
   }
-  Msg::Info("pdel3d: %lu points, %lu tets (Wall %gs: sort %g, insert %g)", n,
+  Msg::Info("pdel3d: %zu points, %zu tets (Wall %gs: sort %g, insert %g)", n,
             tets.size(), TimeOfDay() - t0, stats.timeSort, stats.timeInsert);
 }
 
@@ -4127,7 +4125,7 @@ namespace {
     }
     gr->tetrahedra.clear();
     if(flat) {
-      Msg::Error("%lu flat tet(s) in the recovered mesh", flat);
+      Msg::Error("%zu flat tet(s) in the recovered mesh", flat);
       return false;
     }
     // adjacencies through the sorted facets
@@ -4502,12 +4500,12 @@ namespace {
         }
       }
     if(Msg::GetVerbosity() > 5)
-      Msg::Info("  cavity: %lu tets intersecting the missing items, %lu with a "
-                "layer, %lu with the rings (%g s)",
+      Msg::Info("  cavity: %zu tets intersecting the missing items, %zu with a "
+                "layer, %zu with the rings (%g s)",
                 sizeIntersecting, sizeLayer, cavity.size(),
                 TimeOfDay() - tStart);
     if(tooLarge()) {
-      Msg::Info("Cavity recovery: the cavity is too large (%lu tets)",
+      Msg::Info("Cavity recovery: the cavity is too large (%zu tets)",
                 cavity.size());
       return false;
     }
@@ -4681,7 +4679,7 @@ namespace {
       boundaryRecoveryOutput &out = P.out;
       const int err = meshGRegionBoundaryRecoveryFlat(in, out);
       if(err) {
-        Msg::Info("Cavity recovery failed (error %d) on a cavity of %lu tets",
+        Msg::Info("Cavity recovery failed (error %d) on a cavity of %zu tets",
                   err, comp.size());
         return false;
       }
@@ -4810,7 +4808,7 @@ namespace {
             lost++;
         }
         if(lost) {
-          Msg::Info("Cavity recovery left %lu constraint(s) missing", lost);
+          Msg::Info("Cavity recovery left %zu constraint(s) missing", lost);
           return false;
         }
       }
@@ -4829,7 +4827,7 @@ namespace {
       for(auto i : missingTri) left += !triIn[i];
       for(auto i : missingLine) left += !lineIn[i];
       if(left) {
-        Msg::Info("Cavity recovery: %lu missing item(s) in no cavity", left);
+        Msg::Info("Cavity recovery: %zu missing item(s) in no cavity", left);
         return false;
       }
     }
@@ -4967,8 +4965,8 @@ namespace {
     compact(s.triNode, 3, s.triColor, s.triElem, triRemoved);
     compact(s.lineNode, 2, s.lineColor, s.lineElem, lineRemoved);
     m.removeDeleted(nthreads);
-    Msg::Info("Boundary recovery on cavities: %lu cavit%s of %lu tets in "
-              "all, %lu Steiner point%s (Wall %gs)",
+    Msg::Info("Boundary recovery on cavities: %zu cavit%s of %zu tets in "
+              "all, %zu Steiner point%s (Wall %gs)",
               components.size(), components.size() > 1 ? "ies" : "y",
               numCavityTets, steiner, steiner > 1 ? "s" : "", TimeOfDay() - t0);
     return true;
@@ -5008,7 +5006,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
   setVertices(s, m, sizeFactor);
 
   // the Delaunay tetrahedralization of the surface vertices
-  Msg::Info("Tetrahedrizing %lu nodes...", nv);
+  Msg::Info("Tetrahedrizing %zu nodes...", nv);
   m.reserveTets(10 * nv + 16384);
   m.color.resize(m.tetCapacity(), pdel3d::Mesh::COLOR_OUT);
   {
@@ -5035,17 +5033,18 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
     for(std::size_t i = 0; i < nv; i++)
       if(status[i] != pdel3d::ST_INSERTED) notInserted++;
     if(notInserted) {
-      Msg::Warning("%lu surface node(s) could not be inserted", notInserted);
+      Msg::Warning("%zu surface node(s) could not be inserted", notInserted);
       if(Msg::GetVerbosity() > 5) m.verify(true);
       return 2;
     }
   }
   const double t1 = TimeOfDay();
-  Msg::Info("Done tetrahedrizing %lu nodes (Wall %gs)", nv, t1 - t0);
+  Msg::Info("Done tetrahedrizing %zu nodes (Wall %gs)", nv, t1 - t0);
 
   // the surface mesh must be in the tetrahedralization
   std::vector<pdel3d::tRef> tri2tet;
-  std::size_t missing = pdel3d::triangleToTetMap(m, s.triNode, tri2tet);
+  std::size_t missing =
+    pdel3d::triangleToTetMap(m, s.triNode, tri2tet, nthreads);
   std::vector<std::uint8_t> lineInTriangle;
   pdel3d::linesInTriangles(s.triNode, s.lineNode, lineInTriangle);
   std::vector<std::uint64_t> line2tet;
@@ -5053,7 +5052,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
     pdel3d::lineToTetMap(m, s.lineNode, lineInTriangle, line2tet);
   const bool recovered = missing || missingLines;
   if(recovered) {
-    Msg::Info("Recovering %lu missing triangle(s) and %lu missing line(s)...",
+    Msg::Info("Recovering %zu missing triangle(s) and %zu missing line(s)...",
               missing, missingLines);
     // by local edge removals first, then TetGen on the cavities around what
     // is left; the global TetGen recovery of the untouched Delaunay is the
@@ -5076,7 +5075,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
     // the maps after each stage: the edge removals and the cavities move
     // the triangles and lines to other tets
     auto remap = [&]() {
-      missing = pdel3d::triangleToTetMap(m, s.triNode, tri2tet);
+      missing = pdel3d::triangleToTetMap(m, s.triNode, tri2tet, nthreads);
       pdel3d::linesInTriangles(s.triNode, s.lineNode, lineInTriangle);
       missingLines =
         pdel3d::lineToTetMap(m, s.lineNode, lineInTriangle, line2tet);
@@ -5093,8 +5092,8 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
         remap();
         local = !missing && !missingLines;
         if(!local)
-          Msg::Info("Local boundary recovery incomplete (%lu triangle(s) and "
-                    "%lu line(s) missing): falling back to the global one",
+          Msg::Info("Local boundary recovery incomplete (%zu triangle(s) and "
+                    "%zu line(s) missing): falling back to the global one",
                     missing, missingLines);
       }
     }
@@ -5124,7 +5123,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
     }
     if(missing || missingLines) {
       Msg::Error(
-        "%lu triangle(s) and %lu line(s) still missing after boundary recovery",
+        "%zu triangle(s) and %zu line(s) still missing after boundary recovery",
         missing, missingLines);
       return 1;
     }
@@ -5179,7 +5178,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
   }
 
   const std::size_t numTets = exportMesh(m, s, regions, nthreads);
-  Msg::Info("Done exporting %lu tets (Wall %gs)", numTets, TimeOfDay() - t3);
+  Msg::Info("Done exporting %zu tets (Wall %gs)", numTets, TimeOfDay() - t3);
   // the pyramids on the quadrangles, as in del3d: on the exact coordinates
   // (the apexes are moved into the volume, which the restoration would undo)
   perturbation.restore();

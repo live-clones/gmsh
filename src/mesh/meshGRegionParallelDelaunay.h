@@ -191,7 +191,7 @@ namespace pdel3d {
   // facet of a tet (4 * tet + facet) carrying each triangle, NO_ADJ when the
   // triangle is not in the mesh; returns the number missing
   std::size_t triangleToTetMap(const Mesh &m, const std::vector<vIdx> &triNode,
-                               std::vector<tRef> &tri2tet);
+                               std::vector<tRef> &tri2tet, int nthreads = 1);
   // edge of a tet (6 * tet + edge) carrying each line, NO_LINE when missing;
   // lines flagged in skip are not searched
   std::size_t lineToTetMap(const Mesh &m, const std::vector<vIdx> &lineNode,
@@ -266,7 +266,8 @@ namespace pdel3d {
 
   // the Moore curve coordinate of the vertices from `first` on, in m.dist
   void mooreCurve(Mesh &m, const double min[3], const double max[3],
-                  const double *shift = nullptr, std::size_t first = 0);
+                  int nthreads, const double *shift = nullptr,
+                  std::size_t first = 0);
 
   // Insertion status per vertex
   enum : std::uint8_t {

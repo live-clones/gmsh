@@ -250,16 +250,16 @@ namespace pdel3d {
             static int reports = 0;
             if(reports++ < 5) {
               Msg::Warning("Inconsistent ring of %d tets around edge %u-%u of "
-                           "tet %lu (ring vertex %d: %u, outA %lu outB %lu)",
-                           C.n, C.a, C.b, (unsigned long)t, i, C.ring[i],
-                           (unsigned long)(C.outA[i] >> 2),
-                           (unsigned long)(C.outB[i] >> 2));
+                           "tet %zu (ring vertex %d: %u, outA %zu outB %zu)",
+                           C.n, C.a, C.b, (std::size_t)t, i, C.ring[i],
+                           (std::size_t)(C.outA[i] >> 2),
+                           (std::size_t)(C.outB[i] >> 2));
               for(int j = 0; j < C.n; j++) {
                 const vIdx *n = &m.node[4 * C.tet[j]];
                 Msg::Warning(
-                  "  ring tet %lu: nodes %u %u %u %u flag 0x%x color "
+                  "  ring tet %zu: nodes %u %u %u %u flag 0x%x color "
                   "%u ring %u",
-                  (unsigned long)C.tet[j], n[0], n[1], n[2], n[3],
+                  (std::size_t)C.tet[j], n[0], n[1], n[2], n[3],
                   m.flag[C.tet[j]], m.color[C.tet[j]], C.ring[j]);
               }
             }
@@ -1352,7 +1352,7 @@ namespace pdel3d {
         avg += K.qual[t];
         count++;
       }
-      Msg::Info("Optimization %s: worst = %g / average = %g (%lu tets)", what,
+      Msg::Info("Optimization %s: worst = %g / average = %g (%zu tets)", what,
                 worst, count ? avg / count : 0., count);
     };
     report("starts");
@@ -1419,11 +1419,11 @@ namespace pdel3d {
           if(round > 0) {
             double shift[3] = {lcg01(seed), lcg01(seed), lcg01(seed)};
             startShift = lcg01(seed);
-            mooreCurve(m, bmin, bmax, shift);
+            mooreCurve(m, bmin, bmax, maxThreads, shift);
             curveIsDefault = false;
           }
           else if(!curveIsDefault) {
-            mooreCurve(m, bmin, bmax);
+            mooreCurve(m, bmin, bmax, maxThreads);
             curveIsDefault = true;
           }
 #pragma omp parallel for schedule(static) num_threads(maxThreads)
@@ -1486,8 +1486,8 @@ namespace pdel3d {
         conflictRatio = numTodo ? (double)numConflicts / numTodo : 0.;
         totalConflicts += numConflicts;
         if(opt.verbosity > 1)
-          Msg::Info("Optimization pass %d round %d: %lu bad tets on %d "
-                    "threads, %lu conflicts",
+          Msg::Info("Optimization pass %d round %d: %zu bad tets on %d "
+                    "threads, %zu conflicts",
                     pass, round, numTodo, nthreads, numConflicts);
         if(!numConflicts && !ranOutOfSpace) break;
       }
@@ -1495,7 +1495,7 @@ namespace pdel3d {
       for(auto &L : locals)
         after += spr ? L.reconnections : L.swaps + L.relocations;
       if(opt.verbosity > 0)
-        Msg::Info("Optimization pass %d: %lu bad tets, %lu %s (Wall %gs)", pass,
+        Msg::Info("Optimization pass %d: %zu bad tets, %zu %s (Wall %gs)", pass,
                   numBad, after - before, spr ? "reconnected" : "improved",
                   TimeOfDay() - t0);
       pass++;
@@ -1534,14 +1534,14 @@ namespace pdel3d {
   reduction(+ : ill)
     for(std::size_t t = 0; t < m.ntet; t++)
       if(K.inVolume((tIdx)t) && K.qual[t] < 0.001) ill++;
-    if(ill) Msg::Warning("%lu ill-shaped tets are still in the mesh", ill);
-    Msg::Info("Optimization: %lu edge swaps, %lu node relocations, %lu "
+    if(ill) Msg::Warning("%zu ill-shaped tets are still in the mesh", ill);
+    Msg::Info("Optimization: %zu edge swaps, %zu node relocations, %zu "
               "reconnections (Wall %gs)",
               totalSwaps, totalRelocations, totalReconnections,
               TimeOfDay() - t0);
     if(opt.verbosity > 1)
-      Msg::Info("  %lu swaps rejected on volume, %lu reconnections failed, "
-                "%lu conflicts",
+      Msg::Info("  %zu swaps rejected on volume, %zu reconnections failed, "
+                "%zu conflicts",
                 totalInvalid, totalFailed, totalConflicts);
     m.numDefaultDist = 0;
   }

@@ -30,7 +30,7 @@ namespace pdel3d {
     // for ten to fifty times the cost, which failed searches dominate
     double sprQualityFactor = 0.5;
     int sprMaxPoints = 16;
-    int sprMaxSearchNodes = 100;
+    int sprMaxSearchNodes = 200;
     int verbosity = 0;
   };
 
