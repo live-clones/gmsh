@@ -6,6 +6,7 @@
 
 #include "GmshGlobal.h"
 
+class GFace;
 class GModel;
 
 namespace QuadOpt {
@@ -14,5 +15,9 @@ namespace QuadOpt {
   // model: persistent half-edge, local rewrites accepted when a single energy
   // decreases, tangent-plane Winslow smoothing, work-queue scheduling.
   GMSH_API void optimizeQuads(GModel *model);
+
+  // The same on one face, optionally after advancing quadrangle fronts into its
+  // triangles (Q-Morph, qoQMorph.cpp). False, face untouched, if it is refused.
+  bool optimizeFace(GFace *gf, bool fronts = false);
 
 } // namespace QuadOpt

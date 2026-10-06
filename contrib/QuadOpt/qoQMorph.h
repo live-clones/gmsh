@@ -12,12 +12,15 @@ class GModel;
 namespace QuadOpt {
 
   // Q-Morph post-processing of an existing first-order triangle surface mesh.
-  // The triangulation can come from any mesher. The implementation belongs in
-  // qoQMorph.cpp and uses HalfEdgeMesh from qoHalfEdge.h for all connectivity.
+  // The triangulation can come from any mesher. Quadrangle fronts advance layer
+  // by layer, with nine angular front priorities (qoQMorph.cpp); the optimizer
+  // (qoOptimizer.cpp) then pairs the remaining triangles and optimizes the mesh,
+  // sharing the face import/export and geometry (qoFace.h) with it.
   // CAD boundary and embedded-curve meshes are preserved. Interior vertices
   // and connectivity may change; the result can contain residual triangles.
   // Returns true on completion, false on failure with this face unchanged.
   // Apply before meshing adjacent volumes or generating high-order elements.
+  // Partitioned meshes and master/slave periodic meshes are not supported.
   GMSH_API bool qMorph(GFace *face);
 
   // Apply qMorph to the faces of a model, skipping empty faces and faces that

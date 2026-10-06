@@ -1,6 +1,8 @@
 set(QUAD_OPT_SRC
+  qoFace.cpp
   qoOptimizer.cpp
   qoPack.cpp
+  qoQMorph.cpp
   intrinsicTriangulation.cpp
   smallCavityWinslow.cpp
 )

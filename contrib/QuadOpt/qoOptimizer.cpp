@@ -16,33 +16,21 @@
 //    in two triangles along the diagonal closest to the CAD.
 
 #include "qoOptimizer.h"
-#include "qoHalfEdge.h"
+#include "qoFace.h"
 #include "smallCavityWinslow.h"
-#include "GModel.h"
 #include "GFace.h"
-#include "GEdge.h"
-#include "GPoint.h"
+#include "GModel.h"
 #include "GmshMessage.h"
-#include "MLine.h"
-#include "MQuadrangle.h"
-#include "MTriangle.h"
-#include "MVertex.h"
 #include "SPoint2.h"
-#include "SPoint3.h"
-#include "SVector3.h"
 #include <algorithm>
 #include <cmath>
 #include <deque>
 #include <functional>
 #include <limits>
-#include <set>
 #include <unordered_map>
 
 namespace QuadOpt {
   namespace {
-
-    using Cell = HalfEdgeMesh::Cell;
-    using Points = std::vector<SVector3>;
 
     // ------------------------------------------------------------------------
     // Energy model
@@ -61,86 +49,6 @@ namespace QuadOpt {
     constexpr double kMinCadAlignment = 0.3; // cosine(cell normal, CAD normal)
     constexpr std::size_t kMaxLoop = 10; // largest cavity boundary
     constexpr std::size_t kMaxCandidates = 4000;
-
-    // Area-weighted normal of a polygon, and its unit version (zero if null).
-    SVector3 areaNormal(const SVector3 *p, int n)
-    {
-      SVector3 normal(0., 0., 0.);
-      for(int i = 1; i + 1 < n; ++i)
-        normal += crossprod(p[i] - p[0], p[i + 1] - p[0]);
-      return normal;
-    }
-
-    SVector3 meanNormal(const SVector3 *p, int n)
-    {
-      SVector3 normal = areaNormal(p, n);
-      if(normal.norm() > 0.) normal.normalize();
-      return normal;
-    }
-
-    // Alignment of a cell with the CAD: cosine between its normal and the mean of
-    // the CAD normals at its vertices; -1 if these diverge too much (a cell too
-    // large for the curvature).
-    double alignment(const SVector3 *p, const SVector3 *nv, int n)
-    {
-      SVector3 mean(0., 0., 0.);
-      for(int i = 0; i < n; ++i) mean += nv[i] * (1. / n);
-      if(mean.norm() < 0.7) return -1.;
-      mean.normalize();
-      return dot(meanNormal(p, n), mean);
-    }
-
-    // Angle between two vectors in degrees (90 if one is null).
-    double degrees(const SVector3 &a, const SVector3 &b)
-    {
-      const double la = a.norm(), lb = b.norm();
-      if(!(la > 0.) || !(lb > 0.)) return 90.;
-      return std::acos(std::max(-1., std::min(1., dot(a, b) / (la * lb)))) *
-             180. / M_PI;
-    }
-
-    double cornerAngle(const SVector3 *p, int n, int i)
-    {
-      return degrees(p[(i + n - 1) % n] - p[i], p[(i + 1) % n] - p[i]);
-    }
-
-    // Largest angle between the normals of the two triangles of a quad, over
-    // both diagonals.
-    double warping(const SVector3 *p)
-    {
-      double worst = 0.;
-      for(int d = 0; d < 2; ++d) {
-        const SVector3 t1[3] = {p[d], p[(d + 1) % 4], p[(d + 2) % 4]};
-        const SVector3 t2[3] = {p[d], p[(d + 2) % 4], p[(d + 3) % 4]};
-        const SVector3 a = areaNormal(t1, 3), b = areaNormal(t2, 3);
-        if(!(a.norm() > 0.) || !(b.norm() > 0.)) return 180.;
-        worst = std::max(worst, degrees(a, b));
-      }
-      return worst;
-    }
-
-    // Smallest signed corner sine, measured in the cell's own mean plane, times
-    // an aspect factor; at most 1. Negative or tiny means invalid: reflex
-    // corner, degenerate edge, or normal opposed to the reference normal.
-    double quality(const SVector3 *p, int n, const SVector3 &nref)
-    {
-      SVector3 normal = areaNormal(p, n);
-      const double area = normal.norm();
-      if(!(area > 0.)) return -1.;
-      normal *= 1. / area;
-      if(dot(normal, nref) <= 0.) return -1.;
-      double lmin = 1.e300, lmax = 0., sine = 1.e300;
-      for(int i = 0; i < n; ++i) {
-        const SVector3 a = p[i] - p[(i + n - 1) % n], b = p[(i + 1) % n] - p[i];
-        const double la = a.norm(), lb = b.norm();
-        if(!(la > 0.) || !(lb > 0.)) return -1.;
-        lmin = std::min(lmin, lb);
-        lmax = std::max(lmax, lb);
-        sine = std::min(sine, dot(crossprod(a, b), normal) / (la * lb));
-      }
-      if(n == 3) sine /= 0.8660254037844386; // equilateral corner
-      return std::min(sine, 1.) * std::min(1., 1.5 * lmin / lmax);
-    }
 
     // A piece of a candidate: valid, and a quad neither nearly flat nor warped
     // beyond the limits (otherwise a merge would recreate what the final split
@@ -221,62 +129,30 @@ namespace QuadOpt {
       for(int k = 0; k < candidate.interior; ++k) candidate.center[k] = Q[m + k];
     }
 
-    class FaceOptimizer {
+    class FaceOptimizer : public FaceMesh, public Relaxer {
     public:
-      explicit FaceOptimizer(GFace *gf) : _gf(gf) {}
-      bool build();
+      explicit FaceOptimizer(GFace *gf) : FaceMesh(gf) {}
       void run();
-      void sync();
+      void finish(); // write the result back and report
+      bool smooth(int w) override
+      {
+        if(!smoothVertex(w)) return false;
+        ++_moves;
+        return true;
+      }
+      bool rewrite(const std::vector<int> &cells) override
+      {
+        return tryCavity(cells);
+      }
 
     private:
-      struct Vert {
-        SVector3 p;
-        double uv[2] = {0., 0.};
-        bool hasUV = false;
-        SVector3 n; // CAD normal, valid if hasN
-        bool hasN = false;
-        bool fixed = true; // on the CAD boundary: never moves, never removed
-        MVertex *mv = nullptr; // null until a new vertex is synchronized
-      };
-
-      GFace *_gf;
-      HalfEdgeMesh _he;
-      std::vector<Vert> _v;
-      std::set<std::uint64_t> _protected; // edges of embedded curves
       std::deque<int> _cellQueue, _vertexQueue;
       std::vector<char> _cellQueued, _vertexQueued;
       bool _final = false; // terminal phase: quads may be split
       std::size_t _rewrites = 0, _splits = 0, _moves = 0, _cells0 = 0, _tri0 = 0;
 
-      // -- import ----------------------------------------------------------
-      bool skip(const char *why) const
-      {
-        Msg::Warning("QuadOpt: face %d left unchanged: %s", _gf->tag(), why);
-        return false;
-      }
-      bool orient(std::vector<Cell> &cells);
-      static std::uint64_t edgeKey(int a, int b)
-      {
-        return HalfEdgeMesh::key(std::min(a, b), std::max(a, b));
-      }
-
-      // -- geometry --------------------------------------------------------
-      Points pointsOf(const Cell &c) const
-      {
-        Points p;
-        for(int i = 0; i < c.n; ++i) p.push_back(_v[c.v[i]].p);
-        return p;
-      }
-      bool ensureUV(int id);
-      bool project(const SVector3 &x, const double *guess, SVector3 &out,
-                   double *uv) const;
-      double deviation(const Cell &c);
-      double maxDeviation(const std::vector<Cell> &cells);
-      SVector3 normalOf(int w, const SVector3 &fallback);
-      double align(const Cell &c);
       double energyOf(const std::vector<int> &cells, const SVector3 &nref,
                       bool *valid = nullptr);
-      double selfQuality(const Cell &c) const;
       double angleAround(int w) const;
       bool touchesTriangle(int w) const;
 
@@ -291,7 +167,7 @@ namespace QuadOpt {
       void stars(const Cavity &cavity, std::vector<Candidate> &out) const;
       double energyOf(const Cavity &cavity, const Candidate &candidate,
                       const Points &Q, int *triangles) const;
-      bool placeInterior(const Cavity &cavity, const Candidate &candidate,
+      bool placeInterior(Cavity &cavity, const Candidate &candidate,
                          SVector3 *points, double (*uv)[2]);
       bool commit(Cavity &cavity, const Candidate &candidate,
                   const SVector3 *points, double (*uv)[2]);
@@ -339,253 +215,8 @@ namespace QuadOpt {
     };
 
     // ------------------------------------------------------------------------
-    // Import and export
+    // Energy of existing cells
     // ------------------------------------------------------------------------
-
-    bool FaceOptimizer::build()
-    {
-      if(_gf->quadrangles.empty()) return false;
-      std::vector<MElement *> elements(_gf->triangles.begin(),
-                                       _gf->triangles.end());
-      elements.insert(elements.end(), _gf->quadrangles.begin(),
-                      _gf->quadrangles.end());
-      std::unordered_map<MVertex *, int> id;
-      std::vector<Cell> cells;
-      for(MElement *e : elements) {
-        if(e->getPolynomialOrder() != 1) return skip("high-order elements");
-        Cell cell;
-        cell.n = e->getNumVertices();
-        for(int i = 0; i < cell.n; ++i) {
-          MVertex *mv = e->getVertex(i);
-          auto it = id.find(mv);
-          if(it == id.end()) {
-            it = id.emplace(mv, _he.addVertex()).first;
-            Vert vert;
-            vert.mv = mv;
-            vert.p = SVector3(mv->x(), mv->y(), mv->z());
-            vert.fixed = mv->onWhat() != _gf;
-            vert.hasUV = !vert.fixed && mv->getParameter(0, vert.uv[0]) &&
-                         mv->getParameter(1, vert.uv[1]);
-            _v.push_back(vert);
-          }
-          cell.v[i] = it->second;
-        }
-        cells.push_back(cell);
-      }
-      if(!orient(cells)) return skip("not orientable or non-manifold");
-      for(const Cell &c : cells)
-        if(_he.add(c) < 0) return skip("overlapping cells");
-      for(GEdge *ge : _gf->embeddedEdges())
-        for(MLine *l : ge->lines) {
-          auto a = id.find(l->getVertex(0)), b = id.find(l->getVertex(1));
-          if(a != id.end() && b != id.end())
-            _protected.insert(edgeKey(a->second, b->second));
-        }
-      growQueues();
-      return true;
-    }
-
-    // Orient every connected component coherently (neighbors traverse their
-    // shared edge in opposite directions), then along the CAD normal. False if
-    // the face is not orientable or has a non-manifold edge.
-    bool FaceOptimizer::orient(std::vector<Cell> &cells)
-    {
-      const int count = int(cells.size());
-      std::unordered_map<std::uint64_t, std::vector<int> > byEdge;
-      for(int k = 0; k < count; ++k)
-        for(int i = 0; i < cells[k].n; ++i)
-          byEdge[edgeKey(cells[k].v[i], cells[k].v[(i + 1) % cells[k].n])]
-            .push_back(k);
-      for(const auto &entry : byEdge)
-        if(entry.second.size() > 2) return false;
-      auto traverses = [&](int k, int a, int b) { // input orientation: a -> b ?
-        const Cell &c = cells[k];
-        for(int i = 0; i < c.n; ++i)
-          if(c.v[i] == a && c.v[(i + 1) % c.n] == b) return true;
-        return false;
-      };
-
-      std::vector<char> flipped(count, 0), seen(count, 0);
-      for(int root = 0; root < count; ++root) {
-        if(seen[root]) continue;
-        std::vector<int> component = {root};
-        seen[root] = 1;
-        for(std::size_t h = 0; h < component.size(); ++h) {
-          const int k = component[h];
-          for(int i = 0; i < cells[k].n; ++i) {
-            const int a = cells[k].v[i], b = cells[k].v[(i + 1) % cells[k].n];
-            for(int j : byEdge[edgeKey(a, b)]) {
-              if(j == k) continue;
-              const bool wanted = traverses(j, a, b) == !flipped[k];
-              if(!seen[j]) {
-                seen[j] = 1;
-                flipped[j] = wanted;
-                component.push_back(j);
-              }
-              else if(bool(flipped[j]) != wanted)
-                return false; // not orientable
-            }
-          }
-        }
-        // Along the CAD normal, on a sample of the component.
-        int vote = 0;
-        const std::size_t stride = std::max<std::size_t>(1, component.size() / 200);
-        for(std::size_t h = 0; h < component.size(); h += stride) {
-          const Cell &c = cells[component[h]];
-          if(!ensureUV(c.v[0])) continue;
-          Points p = pointsOf(c);
-          if(flipped[component[h]]) std::reverse(p.begin(), p.end());
-          const double d = dot(
-            meanNormal(p.data(), c.n),
-            _gf->normal(SPoint2(_v[c.v[0]].uv[0], _v[c.v[0]].uv[1])));
-          vote += d > 0. ? 1 : (d < 0. ? -1 : 0);
-        }
-        if(vote < 0)
-          for(int k : component) flipped[k] = !flipped[k];
-      }
-      for(int k = 0; k < count; ++k)
-        if(flipped[k])
-          std::reverse(cells[k].v.begin(), cells[k].v.begin() + cells[k].n);
-      return true;
-    }
-
-    // Write the optimized complex back to the face.
-    void FaceOptimizer::sync()
-    {
-      for(Vert &v : _v) {
-        if(v.fixed) continue;
-        if(!v.mv) {
-          v.mv =
-            new MFaceVertex(v.p.x(), v.p.y(), v.p.z(), _gf, v.uv[0], v.uv[1]);
-          _gf->mesh_vertices.push_back(v.mv);
-        }
-        else {
-          v.mv->setXYZ(v.p.x(), v.p.y(), v.p.z());
-          v.mv->setParameter(0, v.uv[0]);
-          v.mv->setParameter(1, v.uv[1]);
-        }
-      }
-      for(MTriangle *t : _gf->triangles) delete t;
-      for(MQuadrangle *q : _gf->quadrangles) delete q;
-      _gf->triangles.clear();
-      _gf->quadrangles.clear();
-      // Gmsh orients a face from its first element only (orientMeshGFace): list
-      // the best-shaped triangle and quad first, so that a nearly flat first
-      // element cannot reverse the whole face.
-      int best[5] = {-1, -1, -1, -1, -1};
-      double bestQuality[5] = {-2., -2., -2., -2., -2.};
-      for(int c = 0; c < int(_he.cells.size()); ++c)
-        if(_he.cells[c].alive) {
-          const int n = _he.cells[c].n;
-          const double q = selfQuality(_he.cells[c]);
-          if(q > bestQuality[n]) bestQuality[n] = q, best[n] = c;
-        }
-      auto emit = [&](int c) {
-        const Cell &cell = _he.cells[c];
-        MVertex *w[4];
-        for(int i = 0; i < cell.n; ++i) w[i] = _v[cell.v[i]].mv;
-        if(cell.n == 3)
-          _gf->triangles.push_back(new MTriangle(w[0], w[1], w[2]));
-        else
-          _gf->quadrangles.push_back(new MQuadrangle(w[0], w[1], w[2], w[3]));
-      };
-      for(int n : {3, 4})
-        if(best[n] >= 0) emit(best[n]);
-      for(int c = 0; c < int(_he.cells.size()); ++c)
-        if(_he.cells[c].alive && c != best[3] && c != best[4]) emit(c);
-
-      std::set<MVertex *> removed; // movable vertices no cell uses anymore
-      for(std::size_t w = 0; w < _v.size(); ++w)
-        if(!_v[w].fixed && _he.star[w].empty()) removed.insert(_v[w].mv);
-      auto &owned = _gf->mesh_vertices;
-      owned.erase(std::remove_if(owned.begin(), owned.end(),
-                                 [&](MVertex *v) { return removed.count(v); }),
-                  owned.end());
-      for(MVertex *v : removed) delete v;
-      _gf->deleteVertexArrays();
-      Msg::Info("QuadOpt face %d: cells %zu -> %zu, triangles %zu -> %zu, "
-                "rewrites=%zu splits=%zu moves=%zu",
-                _gf->tag(), _cells0,
-                _gf->triangles.size() + _gf->quadrangles.size(), _tri0,
-                _gf->triangles.size(), _rewrites, _splits, _moves);
-    }
-
-    // ------------------------------------------------------------------------
-    // Geometry
-    // ------------------------------------------------------------------------
-
-    bool FaceOptimizer::ensureUV(int id)
-    {
-      Vert &v = _v[id];
-      if(v.hasUV) return true;
-      SPoint2 uv;
-      if(_gf->geomType() == GEntity::DiscreteSurface)
-        uv = _gf->parFromPoint(SPoint3(v.p.x(), v.p.y(), v.p.z()), true, true);
-      else if(!v.mv || !reparamMeshVertexOnFace(v.mv, _gf, uv, true, false))
-        return false;
-      if(!std::isfinite(uv.x()) || !std::isfinite(uv.y())) return false;
-      v.uv[0] = uv.x();
-      v.uv[1] = uv.y();
-      v.hasUV = true;
-      return true;
-    }
-
-    // Closest point on the CAD surface and its parameters.
-    bool FaceOptimizer::project(const SVector3 &x, const double *guess,
-                                SVector3 &out, double *uv) const
-    {
-      const GPoint gp = _gf->closestPoint(SPoint3(x.x(), x.y(), x.z()), guess);
-      if(!gp.succeeded()) return false;
-      out = SVector3(gp.x(), gp.y(), gp.z());
-      uv[0] = gp.u();
-      uv[1] = gp.v();
-      return std::isfinite(out.norm());
-    }
-
-    // Distance of the cell centroid to the CAD, relative to the mean edge
-    // length: large when the cell cuts through the geometry.
-    double FaceOptimizer::deviation(const Cell &c)
-    {
-      const Points p = pointsOf(c);
-      SVector3 centroid(0., 0., 0.);
-      double h = 0.;
-      for(int i = 0; i < c.n; ++i) {
-        centroid += p[i] * (1. / c.n);
-        h += (p[(i + 1) % c.n] - p[i]).norm() / c.n;
-      }
-      if(!(h > 0.) || !ensureUV(c.v[0])) return 1.e9;
-      SVector3 q;
-      double uv[2];
-      if(!project(centroid, _v[c.v[0]].uv, q, uv)) return 1.e9;
-      return (q - centroid).norm() / h;
-    }
-
-    double FaceOptimizer::maxDeviation(const std::vector<Cell> &cells)
-    {
-      double result = 0.;
-      for(const Cell &c : cells) result = std::max(result, deviation(c));
-      return result;
-    }
-
-    // CAD normal at a vertex (cached); the fallback if it cannot be evaluated.
-    SVector3 FaceOptimizer::normalOf(int w, const SVector3 &fallback)
-    {
-      Vert &v = _v[w];
-      if(!v.hasN && ensureUV(w)) {
-        v.n = _gf->normal(SPoint2(v.uv[0], v.uv[1]));
-        if(v.n.norm() > 0.) v.n.normalize(), v.hasN = true;
-      }
-      return v.hasN ? v.n : fallback;
-    }
-
-    double FaceOptimizer::align(const Cell &c)
-    {
-      const Points p = pointsOf(c);
-      const SVector3 fallback = meanNormal(p.data(), c.n);
-      SVector3 nv[4];
-      for(int i = 0; i < c.n; ++i) nv[i] = normalOf(c.v[i], fallback);
-      return alignment(p.data(), nv, c.n);
-    }
 
     // Sum of cell costs; valid is false if one cell is not valid.
     double FaceOptimizer::energyOf(const std::vector<int> &cells,
@@ -601,12 +232,6 @@ namespace QuadOpt {
         if(valid && !(q > kMinQuality)) *valid = false;
       }
       return energy;
-    }
-
-    double FaceOptimizer::selfQuality(const Cell &c) const
-    {
-      const Points p = pointsOf(c);
-      return quality(p.data(), c.n, meanNormal(p.data(), c.n));
     }
 
     // Sum of the corner angles of the cells around w, in degrees.
@@ -938,8 +563,7 @@ namespace QuadOpt {
 
     // Put the interior points on the CAD, and check that the candidate still
     // improves the energy there.
-    bool FaceOptimizer::placeInterior(const Cavity &cavity,
-                                      const Candidate &candidate,
+    bool FaceOptimizer::placeInterior(Cavity &cavity, const Candidate &candidate,
                                       SVector3 *points, double (*uv)[2])
     {
       double guess[2] = {0., 0.};
@@ -954,6 +578,9 @@ namespace QuadOpt {
       for(int k = 0; k < candidate.interior; ++k) {
         if(!project(candidate.center[k], guess, points[k], uv[k])) return false;
         Q.push_back(points[k]);
+        // Judge the candidate with the true CAD normal of the new point.
+        SVector3 n = _gf->normal(SPoint2(uv[k][0], uv[k][1]));
+        if(n.norm() > 0.) cavity.N[cavity.size() + k] = n * (1. / n.norm());
       }
       int triangles;
       return energyOf(cavity, candidate, Q, &triangles) < cavity.energy - kGain;
@@ -967,15 +594,8 @@ namespace QuadOpt {
       const int m = cavity.size();
       std::vector<int> ids = cavity.loop;
       ids.resize(m + 2, -1);
-      for(int k = 0; k < candidate.interior; ++k) {
-        ids[m + k] = _he.addVertex();
-        Vert vert;
-        vert.p = points[k];
-        vert.uv[0] = uv[k][0], vert.uv[1] = uv[k][1];
-        vert.hasUV = true;
-        vert.fixed = false;
-        _v.push_back(vert);
-      }
+      for(int k = 0; k < candidate.interior; ++k)
+        ids[m + k] = addVertex(points[k], uv[k]);
       std::vector<Cell> fresh;
       for(const Piece &piece : candidate.pieces) {
         Cell cell;
@@ -1175,6 +795,7 @@ namespace QuadOpt {
 
     void FaceOptimizer::run()
     {
+      growQueues();
       for(const Cell &c : _he.cells) {
         _cells0 += c.alive;
         _tri0 += c.alive && c.n == 3;
@@ -1189,16 +810,32 @@ namespace QuadOpt {
       rounds(10);
     }
 
+    void FaceOptimizer::finish()
+    {
+      sync();
+      Msg::Info("QuadOpt face %d: cells %zu -> %zu, triangles %zu -> %zu, "
+                "rewrites=%zu splits=%zu moves=%zu",
+                _gf->tag(), _cells0,
+                _gf->triangles.size() + _gf->quadrangles.size(), _tri0,
+                _gf->triangles.size(), _rewrites, _splits, _moves);
+    }
+
   } // namespace
+
+  bool optimizeFace(GFace *gf, bool fronts)
+  {
+    FaceOptimizer optimizer(gf);
+    if(!optimizer.build()) return false;
+    if(fronts) advanceFronts(optimizer, optimizer);
+    optimizer.run();
+    optimizer.finish();
+    return true;
+  }
 
   void optimizeQuads(GModel *model)
   {
-    for(GFace *gf : model->getFaces()) {
-      FaceOptimizer optimizer(gf);
-      if(!optimizer.build()) continue;
-      optimizer.run();
-      optimizer.sync();
-    }
+    for(GFace *gf : model->getFaces())
+      if(!gf->quadrangles.empty()) optimizeFace(gf, false);
     model->deleteVertexArrays();
   }
 

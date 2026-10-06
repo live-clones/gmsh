@@ -80,6 +80,7 @@
 #if defined(HAVE_QUADOPTIMIZER)
 #include "qoOptimizer.h"
 #include "qoPack.h"
+#include "qoQMorph.h"
 #endif
 
 #include "meshDuplicateVertices.h"
@@ -1020,7 +1021,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
-     how != "OptimizeQuads" && how != "OptimizeQuadsFast" &&
+     how != "OptimizeQuads" && how != "OptimizeQuadsFast" && how != "QMorph" &&
      how != "OptimizeQuadHoleRings" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
      how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
@@ -1067,6 +1068,14 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
     QuadOpt::optimizeQuads(m);
 #else
     Msg::Error("%s requires QUADOPTIMIZER", how.c_str());
+#endif
+  }
+  else if(how == "QMorph") {
+#if defined(HAVE_QUADOPTIMIZER)
+    if(!QuadOpt::qMorph(m))
+      Msg::Warning("Q-Morph could not process all surfaces");
+#else
+    Msg::Error("QMorph requires QUADOPTIMIZER");
 #endif
   }
   else if(how == "MesquiteImprove2D") {
