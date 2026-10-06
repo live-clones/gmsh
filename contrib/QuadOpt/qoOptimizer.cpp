@@ -6,7 +6,7 @@
 //
 //  - The face is imported into a half-edge complex (qoHalfEdge.h).
 //  - A cavity is a small disk of cells. Every way of re-meshing it with the same
-//    boundary (with or without one interior point) is a candidate.
+//    boundary (with or without one or two interior points) is a candidate.
 //  - A candidate, like a nodal move (tangent-plane Winslow projected on the CAD),
 //    is applied only if the energy decreases and all its cells are valid, so the
 //    process terminates. The energy is the shape of the cells plus a valence term
@@ -173,13 +173,13 @@ namespace QuadOpt {
 
     struct Piece {
       int n;
-      std::array<int, 4> v; // indices in the cavity loop; loop size = interior
+      std::array<int, 4> v; // indices in the cavity loop; loop size = interior 1
     };
 
     struct Candidate {
       std::vector<Piece> pieces;
-      bool interior = false; // adds one point, at index loop.size()
-      SVector3 center; // first guess for the interior point
+      int interior = 0; // new points, at indices loop.size() and loop.size() + 1
+      SVector3 center[2]; // first guesses for them
     };
 
     // A disk of cells, with everything needed to judge a replacement.
@@ -192,12 +192,34 @@ namespace QuadOpt {
       std::vector<int> count; // old cells at each loop vertex
       std::vector<double> theta; // angle around each loop vertex, degrees
       std::vector<char> triangle; // a triangle outside the cavity touches it
-      Points N; // CAD normals at the loop vertices, then at the interior point
+      Points N; // CAD normals at the loop vertices, then at the interior points
       int triangles = 0;
       double energy = 0.; // current energy, valence included
       double deviation = -1.; // CAD deviation of the cells, computed lazily
       int size() const { return int(loop.size()); }
     };
+
+    // Laplacian relaxation of the interior points of a candidate, loop fixed: a
+    // cheap stand-in for judging it after smoothing.
+    void relax(Candidate &candidate, const Points &P)
+    {
+      const int m = int(P.size());
+      Points Q = P;
+      for(int k = 0; k < candidate.interior; ++k) Q.push_back(candidate.center[k]);
+      for(int iteration = 0; iteration < 4; ++iteration)
+        for(int k = 0; k < candidate.interior; ++k) {
+          SVector3 sum(0., 0., 0.);
+          int n = 0;
+          for(const Piece &piece : candidate.pieces)
+            for(int i = 0; i < piece.n; ++i)
+              if(piece.v[i] == m + k) {
+                sum += Q[piece.v[(i + 1) % piece.n]] + Q[piece.v[(i + piece.n - 1) % piece.n]];
+                n += 2;
+              }
+          if(n) Q[m + k] = sum * (1. / n);
+        }
+      for(int k = 0; k < candidate.interior; ++k) candidate.center[k] = Q[m + k];
+    }
 
     class FaceOptimizer {
     public:
@@ -270,9 +292,9 @@ namespace QuadOpt {
       double energyOf(const Cavity &cavity, const Candidate &candidate,
                       const Points &Q, int *triangles) const;
       bool placeInterior(const Cavity &cavity, const Candidate &candidate,
-                         SVector3 &point, double *uv);
+                         SVector3 *points, double (*uv)[2]);
       bool commit(Cavity &cavity, const Candidate &candidate,
-                  const SVector3 &center, const double *uv);
+                  const SVector3 *points, double (*uv)[2]);
       bool tryCavity(const std::vector<int> &cells);
       bool needsSplit(const Cell &c) const;
       bool splitQuad(int c);
@@ -740,7 +762,10 @@ namespace QuadOpt {
         cavity.N.push_back(normalOf(w, cavity.normal));
         mean += cavity.N.back() * (1. / cavity.size());
       }
-      cavity.N.push_back(mean.norm() > 0. ? mean * (1. / mean.norm()) : cavity.normal);
+      const SVector3 inner =
+        mean.norm() > 0. ? mean * (1. / mean.norm()) : cavity.normal;
+      cavity.N.push_back(inner);
+      cavity.N.push_back(inner);
 
       cavity.energy = energyOf(cells, cavity.normal);
       for(int k = 0; k < cavity.size(); ++k)
@@ -815,7 +840,8 @@ namespace QuadOpt {
     }
 
     // One new interior point joined to a subset S of the loop, with gaps of 1
-    // (triangle) or 2 (quad) between consecutive members of S.
+    // (triangle) or 2 (quad) between consecutive members of S; or two adjacent
+    // interior points, each joined to every second vertex of an arc, all quads.
     void FaceOptimizer::stars(const Cavity &cavity,
                               std::vector<Candidate> &out) const
     {
@@ -825,7 +851,7 @@ namespace QuadOpt {
         if(out.size() >= kMaxCandidates) return;
         if(S.size() >= 3 && m - last + S.front() <= 2) {
           Candidate candidate;
-          candidate.interior = true;
+          candidate.interior = 1;
           SVector3 center(0., 0., 0.);
           for(std::size_t a = 0; a < S.size(); ++a) {
             const int s = S[a], t = S[(a + 1) % S.size()];
@@ -835,7 +861,7 @@ namespace QuadOpt {
               candidate.pieces.push_back({4, {{m, s, (s + 1) % m, t}}});
             center += cavity.P[s] * (1. / S.size());
           }
-          candidate.center = center;
+          candidate.center[0] = center;
           out.push_back(candidate);
         }
         for(int gap = 1; gap <= 2 && last + gap < m; ++gap) {
@@ -848,6 +874,26 @@ namespace QuadOpt {
         S.assign(1, first);
         grow(first);
       }
+      // Arc 1 is a..b, arc 2 is b+1..a-1+m; two quads join the new points. Only
+      // useful to remove triangles around a large cavity.
+      for(int a = 0; a < m && m % 2 == 0 && m >= 6 && cavity.triangles > 0; ++a)
+        for(int b = a + 2; b + 3 <= a + m - 1 && out.size() < kMaxCandidates;
+            b += 2) {
+          Candidate candidate;
+          candidate.interior = 2;
+          for(int k = 0; k < 2; ++k) {
+            const int first = k ? b + 1 : a, last = k ? a - 1 + m : b;
+            for(int s = first; s < last; s += 2)
+              candidate.pieces.push_back(
+                {4, {{m + k, s % m, (s + 1) % m, (s + 2) % m}}});
+            candidate.center[k] = (cavity.P[first % m] + cavity.P[last % m]) * 0.5;
+          }
+          candidate.pieces.push_back({4, {{m, b % m, (b + 1) % m, m + 1}}});
+          candidate.pieces.push_back(
+            {4, {{m + 1, (a + m - 1) % m, a % m, m}}});
+          relax(candidate, cavity.P);
+          out.push_back(candidate);
+        }
     }
 
     // Energy of the cavity after the candidate; Q = loop positions followed by
@@ -857,9 +903,9 @@ namespace QuadOpt {
                                    int *triangles) const
     {
       const int m = cavity.size();
-      std::vector<int> count(m + 1, 0);
-      std::vector<char> hasTriangle(m + 1, 0);
-      double energy = 0., theta = 0.; // theta: angle at the interior point
+      std::vector<int> count(m + 2, 0);
+      std::vector<char> hasTriangle(m + 2, 0);
+      double energy = 0., theta[2] = {0., 0.}; // angles at the interior points
       *triangles = 0;
       for(const Piece &piece : candidate.pieces) {
         SVector3 p[4];
@@ -869,7 +915,8 @@ namespace QuadOpt {
           if(piece.n == 3) hasTriangle[piece.v[i]] = 1;
         }
         for(int i = 0; i < piece.n; ++i)
-          if(piece.v[i] == m) theta += cornerAngle(p, piece.n, i);
+          if(piece.v[i] >= m)
+            theta[piece.v[i] - m] += cornerAngle(p, piece.n, i);
         const double q = quality(p, piece.n, cavity.normal);
         SVector3 nv[4];
         for(int i = 0; i < piece.n; ++i) nv[i] = cavity.N[piece.v[i]];
@@ -884,16 +931,16 @@ namespace QuadOpt {
           energy += valenceCost(
             int(_he.star[cavity.loop[i]].size()) - cavity.count[i] + count[i],
             cavity.theta[i]);
-      if(candidate.interior && !hasTriangle[m])
-        energy += valenceCost(count[m], theta);
+      for(int k = 0; k < candidate.interior; ++k)
+        if(!hasTriangle[m + k]) energy += valenceCost(count[m + k], theta[k]);
       return energy;
     }
 
-    // Put the interior point on the CAD, and check that the candidate still
+    // Put the interior points on the CAD, and check that the candidate still
     // improves the energy there.
     bool FaceOptimizer::placeInterior(const Cavity &cavity,
                                       const Candidate &candidate,
-                                      SVector3 &point, double *uv)
+                                      SVector3 *points, double (*uv)[2])
     {
       double guess[2] = {0., 0.};
       int known = 0;
@@ -903,9 +950,11 @@ namespace QuadOpt {
         }
       if(!known) return false;
       guess[0] /= known, guess[1] /= known;
-      if(!project(candidate.center, guess, point, uv)) return false;
       Points Q = cavity.P;
-      Q.push_back(point);
+      for(int k = 0; k < candidate.interior; ++k) {
+        if(!project(candidate.center[k], guess, points[k], uv[k])) return false;
+        Q.push_back(points[k]);
+      }
       int triangles;
       return energyOf(cavity, candidate, Q, &triangles) < cavity.energy - kGain;
     }
@@ -913,16 +962,16 @@ namespace QuadOpt {
     // Replace the cavity by the candidate, unless it cuts the CAD more than the
     // cells it replaces.
     bool FaceOptimizer::commit(Cavity &cavity, const Candidate &candidate,
-                               const SVector3 &center, const double *uv)
+                               const SVector3 *points, double (*uv)[2])
     {
       const int m = cavity.size();
       std::vector<int> ids = cavity.loop;
-      ids.push_back(-1);
-      if(candidate.interior) {
-        ids[m] = _he.addVertex();
+      ids.resize(m + 2, -1);
+      for(int k = 0; k < candidate.interior; ++k) {
+        ids[m + k] = _he.addVertex();
         Vert vert;
-        vert.p = center;
-        vert.uv[0] = uv[0], vert.uv[1] = uv[1];
+        vert.p = points[k];
+        vert.uv[0] = uv[k][0], vert.uv[1] = uv[k][1];
         vert.hasUV = true;
         vert.fixed = false;
         _v.push_back(vert);
@@ -944,10 +993,10 @@ namespace QuadOpt {
          _he.replace(cavity.cells, fresh, created)) {
         pushAround(created);
         for(int w : cavity.loop) pushVertex(w);
-        if(candidate.interior) pushVertex(ids[m]);
+        for(int k = 0; k < candidate.interior; ++k) pushVertex(ids[m + k]);
         return true;
       }
-      if(candidate.interior) { // undo the new vertex
+      for(int k = 0; k < candidate.interior; ++k) { // undo the new vertices
         _v.pop_back();
         _he.star.pop_back();
       }
@@ -967,7 +1016,8 @@ namespace QuadOpt {
       std::vector<std::pair<double, int> > ranked;
       for(std::size_t k = 0; k < candidates.size(); ++k) {
         Points Q = cavity.P;
-        Q.push_back(candidates[k].center);
+        for(int j = 0; j < candidates[k].interior; ++j)
+          Q.push_back(candidates[k].center[j]);
         int triangles;
         const double e = energyOf(cavity, candidates[k], Q, &triangles);
         if(e < cavity.energy - kGain && triangles <= cavity.triangles)
@@ -976,11 +1026,11 @@ namespace QuadOpt {
       std::sort(ranked.begin(), ranked.end());
       for(std::size_t r = 0; r < ranked.size() && r < 4; ++r) {
         const Candidate &candidate = candidates[ranked[r].second];
-        SVector3 center = candidate.center;
-        double uv[2] = {0., 0.};
-        if(candidate.interior && !placeInterior(cavity, candidate, center, uv))
+        SVector3 points[2] = {candidate.center[0], candidate.center[1]};
+        double uv[2][2] = {{0., 0.}, {0., 0.}};
+        if(candidate.interior && !placeInterior(cavity, candidate, points, uv))
           continue;
-        if(commit(cavity, candidate, center, uv)) {
+        if(commit(cavity, candidate, points, uv)) {
           ++_rewrites;
           return true;
         }
