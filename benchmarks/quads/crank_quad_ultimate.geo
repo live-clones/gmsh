@@ -35,15 +35,10 @@ Mesh.RecombineAll = 1;
 Mesh.RecombinationAlgorithm = 1;
 // Impose no positive recombination quality threshold; validity checks remain.
 Mesh.RecombineMinimumQuality = 0;
-// Run V2 cleanup (1); use 2 to disable cleanup.
+// Run the cavity optimizer after Blossom (1); use 2 to disable it.
 Mesh.PackCleanupMethod = 1;
-// Use Smart Laplacian smoothing followed by one 3D Winslow sweep per batch.
-Mesh.OptimizeQuadsSmartLaplacian = 2;
-// Allow up to three Smart Laplacian sweeps initially and after topology changes.
+// Number of Winslow smoothing sweeps.
 Mesh.Smoothing = 3;
-// Consider splitting quads when their CAD distance exceeds 0.2 times local h;
-// accept the alternative diagonal only within tolerance and twice closer.
-Mesh.OptimizeQuadsFinalSplitCadDistanceRatio = 0.2;
 
 // Save all mesh elements, including those outside physical groups.
 Mesh.SaveAll = 1;

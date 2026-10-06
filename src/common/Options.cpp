@@ -7340,24 +7340,6 @@ double opt_mesh_pack_recombination(OPT_ARGS_NUM)
   return CTX::instance()->mesh.packRecombination;
 }
 
-double opt_mesh_optimize_quads_smart_laplacian(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsSmartLaplacian = (int)val;
-  return CTX::instance()->mesh.optimizeQuadsSmartLaplacian;
-}
-
-double opt_mesh_optimize_quads_final_split_cad_distance_ratio(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsFinalSplitCadDistanceRatio = val;
-  return CTX::instance()->mesh.optimizeQuadsFinalSplitCadDistanceRatio;
-}
-
-double opt_mesh_optimize_quads_target_size(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsTargetSize = val;
-  return CTX::instance()->mesh.optimizeQuadsTargetSize;
-}
-
 double opt_mesh_pack_sizemap_method(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.packSizemapMethod = val;
@@ -7381,12 +7363,6 @@ double opt_mesh_pack_intrinsic_edge_length_factor(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->mesh.packIntrinsicEdgeLengthFactor = val;
   return CTX::instance()->mesh.packIntrinsicEdgeLengthFactor;
-}
-
-double opt_mesh_optimize_quads_pillow_layers(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsPillowLayers = (int)val;
-  return CTX::instance()->mesh.optimizeQuadsPillowLayers;
 }
 
 double opt_mesh_pack_force_all_points(OPT_ARGS_NUM)

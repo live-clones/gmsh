@@ -126,7 +126,7 @@ namespace QuadOpt {
       preserveDiscreteBoundaryLoops();
       mesh.minCurveNodes = 1;
       mesh.nbSmoothing =
-        std::max(mesh.nbSmoothing, mesh.optimizeQuadsSmartLaplacian ? 3 : 5);
+        std::max(mesh.nbSmoothing, 3);
       mesh.packForceAllPoints = 1;
       mesh.optimizeQuadsMinimumEdgeLength = .5 * h;
       mesh.optimizeQuadsMaximumEdgeLength = 2. * h;

@@ -756,16 +756,6 @@ Recombination of the triangulation of the packed points. 0: Blossom, 1: Q-Morph 
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.OptimizeQuadsFinalSplitCadDistanceRatio
-Obsolete: no effect. Kept so that existing scripts still run@*
-Default value: @code{0.2}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.OptimizeQuadsSmartLaplacian
-Obsolete: only sets the minimum number of smoothing passes while packing (3 if non-zero, 5 otherwise). The cavity optimizer has a single energy and no Smart Laplacian@*
-Default value: @code{2}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.PackSizemapMethod
 Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)@*
 Default value: @code{3}@*
@@ -774,11 +764,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.PackPatterns
 Remesh simple CAD faces with quad patterns after packing of parallelograms (regular, but the patterns do not follow the size map)@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.OptimizeQuadsTargetSize
-Obsolete: no effect. Kept so that existing scripts still run@*
-Default value: @code{0.}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeQuadsMinimumEdgeLength
@@ -794,11 +779,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.PackIntrinsicEdgeLengthFactor
 Maximum intrinsic triangulation edge length divided by the local target size before local splitting and Delaunay legalization. Opt-in refinement: inserted midpoints do not obey the packing exclusion or cross field (non-positive: preserve packed points, no intrinsic long-edge splitting)@*
 Default value: @code{0.}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.OptimizeQuadsPillowLayers
-Obsolete: no effect. The hole-ring pass (OptimizeQuadHoleRings) was removed@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PackForceAllPoints
