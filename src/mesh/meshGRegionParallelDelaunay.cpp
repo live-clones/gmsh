@@ -1633,54 +1633,6 @@ namespace pdel3d {
 
   namespace {
 
-    // the only coordinate-shifting Moore curve at the first iteration, and
-    // Butz's curve at the two others
-    const std::uint16_t moore_hilbert2[512] = {
-      5684, 4663, 5683, 1584, 565,  566,  5170, 5169, 1080, 4159, 57,   4670,
-      2107, 2108, 58,   4669, 5676, 4655, 5675, 1576, 557,  558,  5162, 5161,
-      4644, 1061, 5159, 1062, 4643, 5666, 2080, 5665, 3594, 3593, 2061, 2062,
-      1035, 4616, 1036, 1551, 5124, 5123, 5,    4610, 5639, 2560, 6,    4609,
-      3602, 3601, 2069, 2070, 1043, 4624, 1044, 1559, 4636, 1053, 5151, 1054,
-      4635, 5658, 2072, 5657, 576,  1089, 1603, 1090, 3655, 5702, 1604, 5701,
-      3674, 3673, 2141, 2142, 1115, 4696, 1116, 1631, 4732, 1149, 5247, 1150,
-      4731, 5754, 2168, 5753, 3682, 3681, 2149, 2150, 1123, 4704, 1124, 1639,
-      1096, 4175, 73,   4686, 2123, 2124, 74,   4685, 1104, 4183, 81,   4694,
-      2131, 2132, 82,   4693, 3190, 1649, 1143, 4208, 3189, 1650, 3700, 3699,
-      3182, 1641, 1135, 4200, 3181, 1642, 3692, 3691, 5844, 4823, 5843, 1744,
-      725,  726,  5330, 5329, 728,  1241, 1755, 1242, 3807, 5854, 1756, 5853,
-      5836, 4815, 5835, 1736, 717,  718,  5322, 5321, 3270, 1729, 1223, 4288,
-      3269, 1730, 3780, 3779, 3818, 3817, 2285, 2286, 1259, 4840, 1260, 1775,
-      736,  1249, 1763, 1250, 3815, 5862, 1764, 5861, 3826, 3825, 2293, 2294,
-      1267, 4848, 1268, 1783, 3322, 1789, 763,  764,  3321, 1790, 5880, 2815,
-      640,  1153, 1667, 1154, 3719, 5766, 1668, 5765, 3738, 3737, 2205, 2206,
-      1179, 4760, 1180, 1695, 4796, 1213, 5311, 1214, 4795, 5818, 2232, 5817,
-      3746, 3745, 2213, 2214, 1187, 4768, 1188, 1703, 1160, 4239, 137,  4750,
-      2187, 2188, 138,  4749, 1168, 4247, 145,  4758, 2195, 2196, 146,  4757,
-      3254, 1713, 1207, 4272, 3253, 1714, 3764, 3763, 3246, 1705, 1199, 4264,
-      3245, 1706, 3756, 3755, 6132, 5111, 6131, 2032, 1013, 1014, 5618, 5617,
-      1528, 4607, 505,  5118, 2555, 2556, 506,  5117, 6124, 5103, 6123, 2024,
-      1005, 1006, 5610, 5609, 5092, 1509, 5607, 1510, 5091, 6114, 2528, 6113,
-      4042, 4041, 2509, 2510, 1483, 5064, 1484, 1999, 5572, 5571, 453,  5058,
-      6087, 3008, 454,  5057, 4050, 4049, 2517, 2518, 1491, 5072, 1492, 2007,
-      5084, 1501, 5599, 1502, 5083, 6106, 2520, 6105, 5556, 5555, 437,  5042,
-      6071, 2992, 438,  5041, 5548, 5547, 429,  5034, 6063, 2984, 430,  5033,
-      3466, 1933, 907,  908,  3465, 1934, 6024, 2959, 3474, 1941, 915,  916,
-      3473, 1942, 6032, 2967, 952,  1465, 1979, 1466, 4031, 6078, 1980, 6077,
-      6052, 5031, 6051, 1952, 933,  934,  5538, 5537, 4996, 1413, 5511, 1414,
-      4995, 6018, 2432, 6017, 6044, 5023, 6043, 1944, 925,  926,  5530, 5529,
-      5908, 4887, 5907, 1808, 789,  790,  5394, 5393, 792,  1305, 1819, 1306,
-      3871, 5918, 1820, 5917, 5900, 4879, 5899, 1800, 781,  782,  5386, 5385,
-      3334, 1793, 1287, 4352, 3333, 1794, 3844, 3843, 3882, 3881, 2349, 2350,
-      1323, 4904, 1324, 1839, 800,  1313, 1827, 1314, 3879, 5926, 1828, 5925,
-      3890, 3889, 2357, 2358, 1331, 4912, 1332, 1847, 3386, 1853, 827,  828,
-      3385, 1854, 5944, 2879, 5492, 5491, 373,  4978, 6007, 2928, 374,  4977,
-      5484, 5483, 365,  4970, 5999, 2920, 366,  4969, 3402, 1869, 843,  844,
-      3401, 1870, 5960, 2895, 3410, 1877, 851,  852,  3409, 1878, 5968, 2903,
-      888,  1401, 1915, 1402, 3967, 6014, 1916, 6013, 5988, 4967, 5987, 1888,
-      869,  870,  5474, 5473, 4932, 1349, 5447, 1350, 4931, 5954, 2368, 5953,
-      5980, 4959, 5979, 1880, 861,  862,  5466, 5465,
-    };
-
     // Butz's curve: 12 states x 512 entries, each entry packs the next state
     // above bit 9 and the 9 output bits below
     const std::uint16_t hilbert3[6144] = {
@@ -2210,9 +2162,15 @@ namespace pdel3d {
       return x;
     }
 
+    // the Moore curve at the first iteration: 8 blocks of 64 entries of
+    // hilbert3, one per octant, which close the curve
+    const std::uint16_t mooreBlock[8] = {2880, 64,  128, 192,
+                                         4160, 320, 384, 448};
+
     inline std::uint64_t mooreKey(std::uint64_t zorder)
     {
-      std::uint64_t transform = moore_hilbert2[zorder >> 54];
+      std::uint64_t transform =
+        hilbert3[mooreBlock[zorder >> 60] + ((zorder >> 54) & 63)];
       std::uint64_t out = transform & 0x1ff;
       for(int iter = 45; iter >= 0; iter -= 9) {
         transform =
@@ -2417,6 +2375,8 @@ namespace pdel3d {
     }
     std::size_t missing = 0;
     std::vector<tIdx> star;
+    std::vector<std::uint32_t> mark(m.ntet, 0);
+    std::uint32_t stamp = 0;
     for(std::size_t i = 0; i < nl; i++) {
       if(skip[i]) continue;
       const vIdx a = lineNode[2 * i], b = lineNode[2 * i + 1];
@@ -2427,6 +2387,7 @@ namespace pdel3d {
       }
       star.clear();
       star.push_back(tetOf[a]);
+      mark[tetOf[a]] = ++stamp;
       bool found = false;
       for(std::size_t s = 0; s < star.size() && !found; s++) {
         const tIdx t = star[s];
@@ -2445,9 +2406,9 @@ namespace pdel3d {
         for(unsigned f = 0; f < 4; f++) {
           if((int)f == ia) continue;
           const tIdx nb = m.neigh[4 * t + f] >> 2;
-          if(m.isGhost(nb)) continue;
-          if(std::find(star.begin(), star.end(), nb) == star.end())
-            star.push_back(nb);
+          if(m.isGhost(nb) || mark[nb] == stamp) continue;
+          mark[nb] = stamp;
+          star.push_back(nb);
         }
       }
       if(!found) missing++;
@@ -2498,7 +2459,6 @@ namespace pdel3d {
       tIdx tet[32];
       vIdx vert[32]; // vert[i] is shared by tets i and i + 1
       tRef outA[32], outB[32]; // outer facets containing a (resp. b)
-      std::uint8_t flagA[32], flagB[32]; // their constraint bits
     };
 
     struct Recovery {
@@ -2513,8 +2473,8 @@ namespace pdel3d {
       std::vector<tIdx> scratch;
       std::size_t swaps = 0;
       // rejection counters, reported at the debug verbosity
-      std::size_t rGhost = 0, rBig = 0, rConstrained = 0, rSurfEdge = 0,
-                  rBad = 0, rNoVertices = 0, rNoTriangulation = 0, rVolume = 0;
+      std::size_t rGhost = 0, rBig = 0, rSurfEdge = 0, rBad = 0,
+                  rNoVertices = 0, rNoTriangulation = 0, rVolume = 0;
 
       Recovery(Mesh &mesh) : m(mesh) {}
 
@@ -2608,8 +2568,9 @@ namespace pdel3d {
       }
 
       // the ring around the edge of tet t between its nodes at positions ia
-      // and ib; false when it cannot be removed (ghost or constrained facets,
-      // more than 31 tets, inconsistent)
+      // and ib; false when it cannot be removed (a surface edge, more than 31
+      // tets, inconsistent). The removals cannot destroy the triangles and
+      // lines in the mesh: their edges are all surface edges
       bool buildRing(tIdx t, unsigned ia, unsigned ib, Ring &R)
       {
         R.a = m.node[4 * t + ia];
@@ -2619,10 +2580,6 @@ namespace pdel3d {
           return false;
         }
         const int e = edgeOfNodes[ia][ib];
-        if(m.flag[t] & (1 << e)) {
-          rConstrained++;
-          return false;
-        }
         unsigned inF, outF;
         edgeFacets(e, inF, outF);
         R.n = 0;
@@ -2641,11 +2598,6 @@ namespace pdel3d {
             rGhost++;
             return false;
           }
-          const std::uint16_t f = m.flag[cur];
-          if(f & ((F_FACET0 << inF) | (F_FACET0 << outF))) {
-            rConstrained++;
-            return false;
-          }
           const vIdx *n = &m.node[4 * cur];
           const vIdx r = n[inF];
           unsigned fa = 0, fb = 0;
@@ -2657,8 +2609,6 @@ namespace pdel3d {
           R.vert[R.n] = r;
           R.outA[R.n] = m.neigh[4 * cur + fb];
           R.outB[R.n] = m.neigh[4 * cur + fa];
-          R.flagA[R.n] = (f & (F_FACET0 << fb)) ? 1 : 0;
-          R.flagB[R.n] = (f & (F_FACET0 << fa)) ? 1 : 0;
           R.n++;
           const tRef rf = m.neigh[4 * cur + outF];
           cur = rf >> 2;
@@ -2849,20 +2799,6 @@ namespace pdel3d {
           return false;
         }
 
-        // constrained edges of the ring, carried to the new tets
-        std::vector<std::uint64_t> cEdges;
-        for(int i = 0; i < n; i++) {
-          const std::uint16_t f = m.flag[R.tet[i]];
-          if(!(f & F_ALL_EDGES)) continue;
-          for(int e = 0; e < 6; e++) {
-            if(!(f & (1 << e))) continue;
-            unsigned n0, n1;
-            edgeNodes(e, n0, n1);
-            cEdges.push_back(
-              edgeKey(m.node[4 * R.tet[i] + n0], m.node[4 * R.tet[i] + n1]));
-          }
-        }
-        const std::uint32_t color = m.color.empty() ? 0 : m.color[R.tet[0]];
         const int nc = 2 * (int)tris.size() + (ghostPos >= 0 ? 2 : 0);
         m.reserveTets(m.ntet + nc + 1024);
         for(int i = 0; i < n; i++) m.flag[R.tet[i]] |= F_DELETED;
@@ -2886,21 +2822,10 @@ namespace pdel3d {
           v[2] = n2;
           v[3] = n3;
           m.flag[s] = 0;
-          if(!m.color.empty()) m.color[s] = color;
           for(unsigned f = 0; f < 4; f++) {
             m.neigh[4 * s + f] = NO_ADJ;
             addFacet(v[facetNode0(f)], v[facetNode1(f)], v[facetNode2(f)],
                      4 * s + f);
-          }
-          for(auto key : cEdges) {
-            const vIdx u = (vIdx)(key >> 32), w = (vIdx)key;
-            int iu = -1, iw = -1;
-            for(int q = 0; q < 4; q++) {
-              if(v[q] == u) iu = q;
-              if(v[q] == w) iw = q;
-            }
-            if(iu >= 0 && iw >= 0)
-              m.flag[s] |= 1 << (5 - edgeFromFacets(iu, iw));
           }
           for(int q = 0; q < 4; q++)
             if(v[q] != GHOST) v2t[v[q]] = 4 * s + q;
@@ -2914,11 +2839,8 @@ namespace pdel3d {
                r2 = R.vert[pos[a[2]]];
           if(tflip[idx(a[0], a[1], a[2])]) std::swap(r0, r1);
           const tIdx sa = newTet(r0, r1, r2, R.a), sb = newTet(r1, r0, r2, R.b);
-          if(it == 0 && nreq == 3) { // the required triangle, facet 3 of both
-            m.flag[sa] |= F_FACET3;
-            m.flag[sb] |= F_FACET3;
-            if(facet) *facet = 4 * sa + 3;
-          }
+          // the required triangle, facet 3 of both
+          if(it == 0 && nreq == 3 && facet) *facet = 4 * sa + 3;
           if(ghostPos >= 0 && a[0] == 0 && a[2] == k - 1) {
             // the hull facets (r_0, r_{k-1}, a) and (r_0, r_{k-1}, b) close the
             // ring on the outside: ghost tets oriented from the real tets
@@ -2942,12 +2864,10 @@ namespace pdel3d {
             if(y > z) std::swap(y, z);
             if(x > y) std::swap(x, y);
             const tRef out = side ? R.outB[i] : R.outA[i];
-            const bool constrained = side ? R.flagB[i] : R.flagA[i];
             for(auto &fk : facets) {
               if(fk.ref != NO_ADJ && fk.v0 == x && fk.v1 == y && fk.v2 == z) {
                 m.neigh[fk.ref] = out;
                 m.neigh[out] = fk.ref;
-                if(constrained) m.flag[fk.ref >> 2] |= F_FACET0 << (fk.ref & 3);
                 fk.ref = NO_ADJ;
                 break;
               }
@@ -3180,9 +3100,6 @@ namespace pdel3d {
     for(std::size_t i = 0; i < nl; i++)
       if(!lineInTriangle[i] && line2tet[i] == NO_LINE) missingLines++;
     if(!missingTri && !missingLines) return 0;
-    // the triangles and lines in the mesh must survive the edge removals
-    constrainFacets(m, tri2tet);
-    constrainEdges(m, line2tet);
     Recovery R(m);
     R.surfaceEdges.reserve(3 * nt + nl);
     for(std::size_t i = 0; i < nt; i++) {
@@ -3236,12 +3153,7 @@ namespace pdel3d {
         if(!edges) continue;
         tRef f = R.findFacet(v[0], v[1], v[2]);
         if(f == NO_ADJ && !R.recoverFacet(v[0], v[1], v[2], f)) continue;
-        if(f == NO_ADJ) f = R.findFacet(v[0], v[1], v[2]);
-        if(f == NO_ADJ) continue;
         tri2tet[i] = f;
-        m.flag[f >> 2] |= F_FACET0 << (f & 3);
-        const tRef g = m.neigh[f];
-        m.flag[g >> 2] |= F_FACET0 << (g & 3);
         recoveredTri++;
         progress = true;
       }
@@ -3261,11 +3173,11 @@ namespace pdel3d {
                 TimeOfDay() - t0);
     if(verbosity > 5)
       Msg::Info("  ring rejections: %lu with a ghost, %lu with more than 31 "
-                "tets, %lu constrained, %lu surface edges, %lu inconsistent, "
-                "%lu without the nodes, %lu without a positive triangulation, "
-                "%lu with a volume mismatch",
-                R.rGhost, R.rBig, R.rConstrained, R.rSurfEdge, R.rBad,
-                R.rNoVertices, R.rNoTriangulation, R.rVolume);
+                "tets, %lu surface edges, %lu inconsistent, %lu without the "
+                "nodes, %lu without a positive triangulation, %lu with a "
+                "volume mismatch",
+                R.rGhost, R.rBig, R.rSurfEdge, R.rBad, R.rNoVertices,
+                R.rNoTriangulation, R.rVolume);
     return left;
   }
 
