@@ -370,18 +370,8 @@ namespace pdel3d {
           L.deleted.push_back(C.tet[i]);
         }
         // the new tets, with their facets for the adjacencies
-        struct facetKey {
-          vIdx v0, v1, v2;
-          tRef ref;
-        };
-        facetKey facets[40];
+        FacetKey facets[40];
         int nf = 0;
-        auto addFacet = [&](vIdx x, vIdx y, vIdx z, tRef ref) {
-          if(x > y) std::swap(x, y);
-          if(y > z) std::swap(y, z);
-          if(x > y) std::swap(x, y);
-          facets[nf++] = {x, y, z, ref};
-        };
         for(int j = 0; j < sp.nbr_triangles_2; j++) {
           const int it = sp.trianguls[best][j];
           vIdx r0 = C.ring[sp.triangles[it][0]],
@@ -409,8 +399,8 @@ namespace pdel3d {
             m.color[s] = color;
             for(unsigned f = 0; f < 4; f++) {
               m.neigh[4 * s + f] = NO_ADJ;
-              addFacet(n[facetNode0(f)], n[facetNode1(f)], n[facetNode2(f)],
-                       4 * s + f);
+              facets[nf++] = FacetKey(n[facetNode0(f)], n[facetNode1(f)],
+                                      n[facetNode2(f)], 4 * s + f);
             }
             // constrained edges
             for(int k = 0; k < ncEdges; k++) {
@@ -428,14 +418,11 @@ namespace pdel3d {
         for(int i = 0; i < C.n; i++) {
           const vIdx rp = C.ring[(i + C.n - 1) % C.n], r = C.ring[i];
           for(int side = 0; side < 2; side++) {
-            vIdx x = side ? C.b : C.a, y = rp, z = r;
-            if(x > y) std::swap(x, y);
-            if(y > z) std::swap(y, z);
-            if(x > y) std::swap(x, y);
+            const FacetKey key(side ? C.b : C.a, rp, r, NO_ADJ);
             const tRef out = side ? C.outB[i] : C.outA[i];
             const bool constrained = side ? C.flagB[i] : C.flagA[i];
             for(int k = 0; k < nf; k++) {
-              if(facets[k].v0 == x && facets[k].v1 == y && facets[k].v2 == z) {
+              if(facets[k].sameFacet(key)) {
                 m.neigh[facets[k].ref] = out;
                 m.neigh[out] = facets[k].ref;
                 if(constrained)
@@ -447,18 +434,7 @@ namespace pdel3d {
           }
         }
         // then the facets between the new tets
-        for(int k = 0; k < nf; k++) {
-          if(facets[k].ref == NO_ADJ) continue;
-          for(int l = k + 1; l < nf; l++) {
-            if(facets[l].ref != NO_ADJ && facets[l].v0 == facets[k].v0 &&
-               facets[l].v1 == facets[k].v1 && facets[l].v2 == facets[k].v2) {
-              m.neigh[facets[k].ref] = facets[l].ref;
-              m.neigh[facets[l].ref] = facets[k].ref;
-              facets[l].ref = NO_ADJ;
-              break;
-            }
-          }
-        }
+        linkFacets(m.neigh, facets, nf);
         // the tets around the cavity may be improvable now
         for(int i = 0; i < C.n; i++) {
           for(int side = 0; side < 2; side++) {

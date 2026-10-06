@@ -437,6 +437,44 @@ namespace pdel3d {
 
   // gmsh's gamma quality (3 inradius / circumradius) of the tet (p0, p1,
   // p2, p3) whose orientation determinant is det (negative when valid);
+  // a facet by its sorted nodes, to match the facets of tets
+  struct FacetKey {
+    vIdx v0, v1, v2;
+    tRef ref;
+    FacetKey() = default;
+    FacetKey(vIdx a, vIdx b, vIdx c, tRef r) : v0(a), v1(b), v2(c), ref(r)
+    {
+      if(v0 > v1) std::swap(v0, v1);
+      if(v1 > v2) std::swap(v1, v2);
+      if(v0 > v1) std::swap(v0, v1);
+    }
+    bool operator<(const FacetKey &o) const
+    {
+      if(v0 != o.v0) return v0 < o.v0;
+      if(v1 != o.v1) return v1 < o.v1;
+      return v2 < o.v2;
+    }
+    bool sameFacet(const FacetKey &o) const
+    { return v0 == o.v0 && v1 == o.v1 && v2 == o.v2; }
+  };
+
+  // link the facets of new tets that match each other, among the nf keys
+  // (those already linked have ref NO_ADJ)
+  inline void linkFacets(std::vector<tRef> &neigh, FacetKey *facets, int nf)
+  {
+    for(int i = 0; i < nf; i++) {
+      if(facets[i].ref == NO_ADJ) continue;
+      for(int j = i + 1; j < nf; j++) {
+        if(facets[j].ref != NO_ADJ && facets[j].sameFacet(facets[i])) {
+          neigh[facets[i].ref] = facets[j].ref;
+          neigh[facets[j].ref] = facets[i].ref;
+          facets[j].ref = NO_ADJ;
+          break;
+        }
+      }
+    }
+  }
+
   inline double sqDist(const double *a, const double *b)
   {
     const double dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];

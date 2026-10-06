@@ -2771,18 +2771,8 @@ namespace pdel3d {
         const int nc = 2 * (int)tris.size() + (ghostPos >= 0 ? 2 : 0);
         m.reserveTets(m.ntet + nc + 1024);
         for(int i = 0; i < n; i++) m.flag[R.tet[i]] |= F_DELETED;
-        struct facetKey {
-          vIdx v0, v1, v2;
-          tRef ref;
-        };
-        std::vector<facetKey> facets;
+        std::vector<FacetKey> facets;
         facets.reserve(4 * nc);
-        auto addFacet = [&](vIdx x, vIdx y, vIdx z, tRef ref) {
-          if(x > y) std::swap(x, y);
-          if(y > z) std::swap(y, z);
-          if(x > y) std::swap(x, y);
-          facets.push_back({x, y, z, ref});
-        };
         auto newTet = [&](vIdx n0, vIdx n1, vIdx n2, vIdx n3) {
           const tIdx s = (tIdx)m.ntet++;
           vIdx *v = &m.node[4 * s];
@@ -2793,8 +2783,8 @@ namespace pdel3d {
           m.flag[s] = 0;
           for(unsigned f = 0; f < 4; f++) {
             m.neigh[4 * s + f] = NO_ADJ;
-            addFacet(v[facetNode0(f)], v[facetNode1(f)], v[facetNode2(f)],
-                     4 * s + f);
+            facets.emplace_back(v[facetNode0(f)], v[facetNode1(f)],
+                                v[facetNode2(f)], 4 * s + f);
           }
           for(int q = 0; q < 4; q++)
             if(v[q] != GHOST) v2t[v[q]] = 4 * s + q;
@@ -2828,13 +2818,10 @@ namespace pdel3d {
         for(int i = 0; i < n; i++) {
           const vIdx rp = R.vert[(i + n - 1) % n], r = R.vert[i];
           for(int side = 0; side < 2; side++) {
-            vIdx x = side ? R.b : R.a, y = rp, z = r;
-            if(x > y) std::swap(x, y);
-            if(y > z) std::swap(y, z);
-            if(x > y) std::swap(x, y);
+            const FacetKey key(side ? R.b : R.a, rp, r, NO_ADJ);
             const tRef out = side ? R.outB[i] : R.outA[i];
             for(auto &fk : facets) {
-              if(fk.ref != NO_ADJ && fk.v0 == x && fk.v1 == y && fk.v2 == z) {
+              if(fk.ref != NO_ADJ && fk.sameFacet(key)) {
                 m.neigh[fk.ref] = out;
                 m.neigh[out] = fk.ref;
                 fk.ref = NO_ADJ;
@@ -2844,18 +2831,7 @@ namespace pdel3d {
           }
         }
         // then the facets between the new tets
-        for(std::size_t i = 0; i < facets.size(); i++) {
-          if(facets[i].ref == NO_ADJ) continue;
-          for(std::size_t j = i + 1; j < facets.size(); j++) {
-            if(facets[j].ref != NO_ADJ && facets[j].v0 == facets[i].v0 &&
-               facets[j].v1 == facets[i].v1 && facets[j].v2 == facets[i].v2) {
-              m.neigh[facets[i].ref] = facets[j].ref;
-              m.neigh[facets[j].ref] = facets[i].ref;
-              facets[j].ref = NO_ADJ;
-              break;
-            }
-          }
-        }
+        linkFacets(m.neigh, facets.data(), (int)facets.size());
         for(int i = 0; i < n; i++)
           for(int q = 0; q < 4; q++) m.neigh[4 * R.tet[i] + q] = NO_ADJ;
         swaps++;
@@ -4056,32 +4032,17 @@ namespace {
       return false;
     }
     // adjacencies through the sorted facets
-    struct facetKey {
-      pdel3d::vIdx a, b, c;
-      pdel3d::tRef ref;
-    };
-    std::vector<facetKey> facets(4 * ntet);
-    for(std::size_t t = 0; t < ntet; t++) {
-      for(unsigned f = 0; f < 4; f++) {
-        pdel3d::vIdx a = m.node[4 * t + pdel3d::facetNode0(f)],
-                     b = m.node[4 * t + pdel3d::facetNode1(f)],
-                     c = m.node[4 * t + pdel3d::facetNode2(f)];
-        if(a > b) std::swap(a, b);
-        if(b > c) std::swap(b, c);
-        if(a > b) std::swap(a, b);
-        facets[4 * t + f] = {a, b, c, (pdel3d::tRef)(4 * t + f)};
-      }
-    }
-    std::sort(facets.begin(), facets.end(),
-              [](const facetKey &x, const facetKey &y) {
-                if(x.a != y.a) return x.a < y.a;
-                if(x.b != y.b) return x.b < y.b;
-                return x.c < y.c;
-              });
+    std::vector<pdel3d::FacetKey> facets(4 * ntet);
+    for(std::size_t t = 0; t < ntet; t++)
+      for(unsigned f = 0; f < 4; f++)
+        facets[4 * t + f] = pdel3d::FacetKey(
+          m.node[4 * t + pdel3d::facetNode0(f)],
+          m.node[4 * t + pdel3d::facetNode1(f)],
+          m.node[4 * t + pdel3d::facetNode2(f)], (pdel3d::tRef)(4 * t + f));
+    std::sort(facets.begin(), facets.end());
     std::vector<pdel3d::tRef> hull;
     for(std::size_t i = 0; i < facets.size();) {
-      if(i + 1 < facets.size() && facets[i].a == facets[i + 1].a &&
-         facets[i].b == facets[i + 1].b && facets[i].c == facets[i + 1].c) {
+      if(i + 1 < facets.size() && facets[i].sameFacet(facets[i + 1])) {
         m.neigh[facets[i].ref] = facets[i + 1].ref;
         m.neigh[facets[i + 1].ref] = facets[i].ref;
         i += 2;
@@ -4571,26 +4532,7 @@ namespace {
       // the boundary facets of the cavity: constraints (TetGen must know
       // the boundary of a non-convex mesh) with a tag of their own, and the
       // keys for the stitching
-      struct facetKey {
-        std::uint32_t v0, v1, v2; // sorted
-        tRef ref;
-      };
-      auto key = [](std::uint32_t x, std::uint32_t y, std::uint32_t z, tRef r) {
-        facetKey k{x, y, z, r};
-        if(k.v0 > k.v1) std::swap(k.v0, k.v1);
-        if(k.v1 > k.v2) std::swap(k.v1, k.v2);
-        if(k.v0 > k.v1) std::swap(k.v0, k.v1);
-        return k;
-      };
-      auto less = [](const facetKey &a, const facetKey &b) {
-        if(a.v0 != b.v0) return a.v0 < b.v0;
-        if(a.v1 != b.v1) return a.v1 < b.v1;
-        return a.v2 < b.v2;
-      };
-      auto same = [](const facetKey &a, const facetKey &b) {
-        return a.v0 == b.v0 && a.v1 == b.v1 && a.v2 == b.v2;
-      };
-      std::vector<facetKey> boundary;
+      std::vector<FacetKey> boundary;
       for(std::size_t j = 0; j < comp.size(); j++) {
         const tIdx t = comp[j];
         for(unsigned f = 0; f < 4; f++) {
@@ -4599,7 +4541,7 @@ namespace {
           const vIdx a = m.node[4 * t + facetNode0(f)],
                      b = m.node[4 * t + facetNode1(f)],
                      c = m.node[4 * t + facetNode2(f)];
-          boundary.push_back(key(local[a], local[b], local[c], r));
+          boundary.emplace_back(local[a], local[b], local[c], r);
           if(surfaceFacets.count(sorted3(a, b, c))) continue;
           in.triNode.push_back(local[a]);
           in.triNode.push_back(local[b]);
@@ -4657,21 +4599,21 @@ namespace {
       }
       // the stitching: every boundary facet matches a facet of a new tet,
       // the other facets of the new tets match among themselves
-      std::vector<facetKey> inner;
+      std::vector<FacetKey> inner;
       for(std::size_t t = 0; t < nnew; t++)
         for(unsigned f = 0; f < 4; f++)
-          inner.push_back(
-            key(newNode[4 * t + facetNode0(f)], newNode[4 * t + facetNode1(f)],
-                newNode[4 * t + facetNode2(f)], (tRef)(4 * t + f)));
-      std::sort(boundary.begin(), boundary.end(), less);
-      std::sort(inner.begin(), inner.end(), less);
+          inner.emplace_back(newNode[4 * t + facetNode0(f)],
+                             newNode[4 * t + facetNode1(f)],
+                             newNode[4 * t + facetNode2(f)], (tRef)(4 * t + f));
+      std::sort(boundary.begin(), boundary.end());
+      std::sort(inner.begin(), inner.end());
       P.newNeigh.assign(4 * nnew, NO_ADJ);
       P.outer.assign(4 * nnew, 0);
       {
         std::size_t j = 0;
         for(std::size_t i = 0; i < boundary.size(); i++) {
-          while(j < inner.size() && less(inner[j], boundary[i])) j++;
-          if(j >= inner.size() || !same(boundary[i], inner[j])) {
+          while(j < inner.size() && inner[j] < boundary[i]) j++;
+          if(j >= inner.size() || !boundary[i].sameFacet(inner[j])) {
             Msg::Info("Cavity recovery changed the cavity boundary");
             return false;
           }
@@ -4682,7 +4624,7 @@ namespace {
         }
         for(std::size_t i = 0; i + 1 < inner.size(); i++) {
           if(P.newNeigh[inner[i].ref] != NO_ADJ) continue;
-          if(same(inner[i], inner[i + 1]) &&
+          if(inner[i].sameFacet(inner[i + 1]) &&
              P.newNeigh[inner[i + 1].ref] == NO_ADJ) {
             P.newNeigh[inner[i].ref] = inner[i + 1].ref;
             P.newNeigh[inner[i + 1].ref] = inner[i].ref;
@@ -4700,8 +4642,8 @@ namespace {
       // by Steiner points
       {
         auto hasFacet = [&](std::uint32_t a, std::uint32_t b, std::uint32_t c) {
-          return std::binary_search(inner.begin(), inner.end(), key(a, b, c, 0),
-                                    less);
+          return std::binary_search(inner.begin(), inner.end(),
+                                    FacetKey(a, b, c, 0));
         };
         std::vector<std::uint64_t> edges;
         edges.reserve(6 * nnew);
