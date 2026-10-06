@@ -481,7 +481,10 @@ namespace pdel3d {
       {
         const Partition &P = L.partition;
         if(fixedV[v]) return CONSTRAINED;
-        if(outOfPartition(m, v, P)) return CONFLICT;
+        // every node of the cavity must be in the partition: the search below
+        // only checks the nodes it reaches beyond t
+        for(unsigned k = 0; k < 4; k++)
+          if(outOfPartition(m, m.node[4 * t + k], P)) return CONFLICT;
         cav.clear();
         L.visited.clear();
         unsigned iv = 0;

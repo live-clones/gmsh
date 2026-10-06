@@ -373,7 +373,8 @@ namespace pdel3d {
     };
 
     inline void setDeleted(Mesh &m, tIdx t) { m.flag[t] |= F_DELETED; }
-    inline void unsetDeleted(Mesh &m, tIdx t) { m.flag[t] &= ~F_DELETED; }
+    inline void unsetDeleted(Mesh &m, tIdx t)
+    { m.flag[t] &= ~(F_DELETED | F_UNDELETE); }
 
     // the Delaunay kernel
     class Kernel {
@@ -949,14 +950,17 @@ namespace pdel3d {
       // taken, must still be there) and in the partition; it receives the
       // tet reached by the walk (the one containing vta, or a tet near it
       // on a conflict), where a retry starts
-      Status insert(Local &L, vIdx vta, tIdx &hint, vIdx &hintNode,
-                    bool checkPartition)
+      bool hintAlive(tIdx hint, vIdx hintNode) const
+      {
+        return hint != NO_TET && hint < ntet.load(std::memory_order_relaxed) &&
+               !m.isDeleted(hint) && m.node[4 * hint] == hintNode;
+      }
+
+      Status insert(Local &L, vIdx vta, tIdx &hint, vIdx &hintNode)
       {
         const std::size_t prevDeleted = L.deleted.size();
-        const bool alive = hint != NO_TET &&
-                           hint < ntet.load(std::memory_order_relaxed) &&
-                           !m.isDeleted(hint) && m.node[4 * hint] == hintNode;
-        if(alive && (!checkPartition || tetInPartition(m, hint, L.partition))) {
+        const bool alive = hintAlive(hint, hintNode);
+        if(alive && tetInPartition(m, hint, L.partition)) {
           L.curTet = hint;
           L.hintUsed++;
         }
@@ -998,7 +1002,9 @@ namespace pdel3d {
           bool undeleteTet = false;
           if(edgeConstraint)
             respectEdgeConstraints(L, vta, color, prevDeleted, undeleteTet);
-          if(!reshapeCavity(L, vta, prevDeleted, undeleteTet)) {
+          // the cavity can be emptied (a point on a constrained facet)
+          if(!reshapeCavity(L, vta, prevDeleted, undeleteTet) ||
+             L.deleted.size() == prevDeleted) {
             restoreDeleted(L, prevDeleted);
             return TOO_CLOSE;
           }
@@ -1060,32 +1066,28 @@ namespace pdel3d {
         Msg::Error("Cannot tetrahedralize less than four points");
         return false;
       }
-      int orientation = 0;
-      std::size_t i = 0, j = 1, k = 2, l = 3;
-      for(i = 0; !orientation && i + 3 < n; i++) {
-        const double *d = &m.xyz[4 * info[i].node];
-        for(j = i + 1; !orientation && j + 2 < n; j++) {
-          const double *c = &m.xyz[4 * info[j].node];
-          const double cd[3] = {c[0] - d[0], c[1] - d[1], c[2] - d[2]};
-          if(cd[0] == 0. && cd[1] == 0. && cd[2] == 0.) continue;
-          for(k = j + 1; !orientation && k + 1 < n; k++) {
-            const double *b = &m.xyz[4 * info[k].node];
-            const double bd[3] = {b[0] - d[0], b[1] - d[1], b[2] - d[2]};
-            const double cr[3] = {bd[1] * cd[2] - bd[2] * cd[1],
-                                  bd[2] * cd[0] - bd[0] * cd[2],
-                                  bd[0] * cd[1] - bd[1] * cd[0]};
-            if(cr[0] == 0. && cr[1] == 0. && cr[2] == 0.) continue;
-            for(l = k + 1; !orientation && l < n; l++) {
-              const double *a = &m.xyz[4 * info[l].node];
-              orientation = sign(robustPredicates::orient3d(a, b, c, d));
-            }
-          }
+      // the first point, the next different one, the next one not on their
+      // line and the next one not in their plane
+      auto x = [&](std::size_t q) { return &m.xyz[4 * info[q].node]; };
+      auto collinear = [&](const double *a, const double *b, const double *c) {
+        for(int q = 0; q < 3; q++) {
+          const int r = (q + 1) % 3;
+          const double pa[2] = {a[q], a[r]}, pb[2] = {b[q], b[r]},
+                       pc[2] = {c[q], c[r]};
+          if(robustPredicates::orient2d(pa, pb, pc) != 0.) return false;
         }
+        return true;
+      };
+      std::size_t i = 0, j = 1, k, l;
+      while(j < n && x(j)[0] == x(i)[0] && x(j)[1] == x(i)[1] &&
+            x(j)[2] == x(i)[2])
+        j++;
+      for(k = j + 1; k < n && collinear(x(i), x(j), x(k)); k++) {}
+      int orientation = 0;
+      for(l = k + 1; l < n; l++) {
+        orientation = sign(robustPredicates::orient3d(x(l), x(k), x(j), x(i)));
+        if(orientation) break;
       }
-      l--;
-      k--;
-      j--;
-      i--;
       if(!orientation) {
         Msg::Error("All points are coplanar");
         return false;
@@ -1357,40 +1359,42 @@ namespace pdel3d {
         }
 
         const double tr1 = TimeOfDay();
+        const std::size_t ntet0 = K.ntet;
 #pragma omp parallel num_threads(nthreads)
         {
           const int tid = Msg::GetThreadNum();
           Local &L = locals[tid];
           L.noSpace = false;
           const Partition &P = L.partition;
-          // starting tet: the hint of the first vertex when it is alive and
-          // in the partition, otherwise any live tet of the partition
+          // starting tet, chosen before any thread inserts: the hint of the
+          // first vertex when it is alive and in the partition, otherwise any
+          // live tet of the partition
           L.curTet = NO_TET;
-          for(std::size_t i = 0; i < P.numElem; i++) {
-            NodeInfo &ni = pass[(P.firstElem + i) % passLength];
+          bool todo = false;
+          for(std::size_t i = 0; i < P.numElem && !todo; i++) {
+            const NodeInfo &ni = pass[(P.firstElem + i) % passLength];
             if(ni.status != ST_TODO) continue;
-            if(L.noSpace) continue;
-            if(L.curTet == NO_TET) {
-              if(ni.hint != NO_TET && ni.hint < K.ntet &&
-                 !m.isDeleted(ni.hint) && m.node[4 * ni.hint] == ni.hintNode &&
-                 (nthreads == 1 || tetInPartition(m, ni.hint, P)))
-                L.curTet = ni.hint;
-              else {
-                for(std::size_t t = 0; t < K.ntet; t++) {
-                  if(!m.isDeleted((tIdx)t) &&
-                     (nthreads == 1 || tetInPartition(m, (tIdx)t, P))) {
-                    L.curTet = (tIdx)t;
-                    break;
-                  }
-                }
-                if(L.curTet == NO_TET) {
-                  L.noStart++;
+            todo = true;
+            if(K.hintAlive(ni.hint, ni.hintNode) &&
+               tetInPartition(m, ni.hint, P))
+              L.curTet = ni.hint;
+            else {
+              for(std::size_t t = 0; t < ntet0; t++) {
+                if(!m.isDeleted((tIdx)t) && tetInPartition(m, (tIdx)t, P)) {
+                  L.curTet = (tIdx)t;
                   break;
                 }
               }
             }
+          }
+          if(todo && L.curTet == NO_TET) L.noStart++;
+#pragma omp barrier
+          for(std::size_t i = 0; i < P.numElem && L.curTet != NO_TET; i++) {
+            NodeInfo &ni = pass[(P.firstElem + i) % passLength];
+            if(ni.status != ST_TODO) continue;
+            if(L.noSpace) break;
             {
-              switch(K.insert(L, ni.node, ni.hint, ni.hintNode, nthreads > 1)) {
+              switch(K.insert(L, ni.node, ni.hint, ni.hintNode)) {
               case OK:
                 ni.status = ST_INSERTED;
                 L.inserted++;
@@ -2511,6 +2515,27 @@ namespace pdel3d {
         return ((std::uint64_t)x << 32) | y;
       }
 
+      // a tet around every needed vertex: the last in the tet array, so that
+      // the stars, hence the recovery, do not depend on the threads
+      void findStars(const std::vector<std::uint8_t> &needed, int nthreads)
+      {
+        v2t.assign(needed.size(), NO_ADJ);
+        const int nc = std::max(1, nthreads);
+        std::vector<std::vector<std::pair<vIdx, tRef>>> found(nc);
+#pragma omp parallel for schedule(static, 1) num_threads(nc)
+        for(int c = 0; c < nc; c++) {
+          for(std::size_t t = m.ntet * c / nc; t < m.ntet * (c + 1) / nc; t++) {
+            if(m.isDeleted((tIdx)t) || m.isGhost((tIdx)t)) continue;
+            for(unsigned k = 0; k < 4; k++) {
+              const vIdx v = m.node[4 * t + k];
+              if(needed[v]) found[c].push_back({v, (tRef)(4 * t + k)});
+            }
+          }
+        }
+        for(auto &f : found)
+          for(auto &p : f) v2t[p.first] = p.second;
+      }
+
       // the tets around vertex v (at most 4096: the surface Delaunay of a
       // CAD part has vertices joined to thousands of tets, which are not
       // worth the effort)
@@ -3160,7 +3185,6 @@ namespace pdel3d {
     std::sort(R.surfaceEdges.begin(), R.surfaceEdges.end());
     // a tet around every vertex of a missing item
     const std::size_t nv = m.numVertices();
-    R.v2t.assign(nv, NO_ADJ);
     std::vector<std::uint8_t> needed(nv, 0);
     for(std::size_t i = 0; i < nt; i++)
       if(tri2tet[i] == NO_ADJ)
@@ -3168,14 +3192,7 @@ namespace pdel3d {
     for(std::size_t i = 0; i < nl; i++)
       if(!lineInTriangle[i] && line2tet[i] == NO_ADJ)
         for(int k = 0; k < 2; k++) needed[lineNode[2 * i + k]] = 1;
-#pragma omp parallel for schedule(static) num_threads(std::max(1, nthreads))
-    for(std::size_t t = 0; t < m.ntet; t++) {
-      if(m.isDeleted((tIdx)t) || m.isGhost((tIdx)t)) continue;
-      for(unsigned k = 0; k < 4; k++) {
-        const vIdx v = m.node[4 * t + k];
-        if(needed[v]) R.v2t[v] = 4 * t + k; // any tet will do
-      }
-    }
+    R.findStars(needed, nthreads);
     std::size_t recoveredTri = 0, recoveredLines = 0;
     for(int pass = 0; pass < 8; pass++) {
       bool progress = false;
@@ -4330,20 +4347,12 @@ namespace {
     // a tet around every node involved
     Recovery R(m);
     const std::size_t nv = m.numVertices();
-    R.v2t.assign(nv, NO_ADJ);
     std::vector<std::uint8_t> needed(nv, 0);
     for(auto i : missingTri)
       for(int k = 0; k < 3; k++) needed[s.triNode[3 * i + k]] = 1;
     for(auto i : missingLine)
       for(int k = 0; k < 2; k++) needed[s.lineNode[2 * i + k]] = 1;
-#pragma omp parallel for schedule(static) num_threads(std::max(1, nthreads))
-    for(std::size_t t = 0; t < m.ntet; t++) {
-      if(m.isDeleted((tIdx)t) || m.isGhost((tIdx)t)) continue;
-      for(unsigned k = 0; k < 4; k++) {
-        const vIdx v = m.node[4 * t + k];
-        if(needed[v]) R.v2t[v] = 4 * t + k;
-      }
-    }
+    R.findStars(needed, nthreads);
 
     // the cavity: a tet intersects a triangle when one of its edges pierces
     // it or an edge of the triangle crosses one of its facets
