@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <map>
+#include <memory>
 #include <new>
 #include <set>
 #include <vector>
@@ -457,7 +458,7 @@ namespace pdel3d {
     // count[c * nb + b]: items of chunk c in bucket b, then where they go
     std::vector<std::size_t> count((std::size_t)nthreads * nb, 0);
     std::vector<std::size_t> bucketStart(nb + 1, 0);
-    std::vector<T> tmp(n);
+    std::unique_ptr<T[]> tmp(new T[n]); // no serial initialization
     auto bucket = [&](std::uint64_t d) {
       return (int)(std::upper_bound(split.begin(), split.end(), d) -
                    split.begin());

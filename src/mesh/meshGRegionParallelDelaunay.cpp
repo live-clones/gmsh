@@ -1162,6 +1162,7 @@ namespace pdel3d {
     if(!nToInsert) return;
     const int maxPartitions = std::max(1, opt.numThreads);
     std::vector<NodeInfo> info(nToInsert);
+#pragma omp parallel for schedule(static) num_threads(maxPartitions)
     for(std::size_t i = 0; i < nToInsert; i++) {
       const tIdx h = hints ? (*hints)[i] : NO_TET;
       info[i] = {toInsert[i], 0, h,
@@ -1487,12 +1488,14 @@ namespace pdel3d {
     }
     if(opt.compact) m.removeDeleted(maxPartitions);
     if(!originalIndex.empty()) {
+#pragma omp parallel for schedule(static) num_threads(maxPartitions)
       for(std::size_t i = 0; i < nToInsert; i++) {
         toInsert[i] = originalIndex[i];
         status[info[i].node] = info[i].status;
       }
     }
     else {
+#pragma omp parallel for schedule(static) num_threads(maxPartitions)
       for(std::size_t i = 0; i < nToInsert; i++) {
         toInsert[i] = info[i].node;
         status[i] = info[i].status;
