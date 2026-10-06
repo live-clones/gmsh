@@ -1,5 +1,5 @@
-// fistula: PACK quad surface mesh of an artery/vein anastomosis (curved tubes, small radius).
-// Run: gmsh fistula.geo -2 -nt 2 -o fistula.msh
+// fistula: quad surface mesh of an artery/vein anastomosis (curved tubes, small radius).
+// Run: see the Flow parameter below.
 
 SetFactory("OpenCASCADE");
 Ra_radius = 1.5;
@@ -36,16 +36,31 @@ DefineConstant[
   lc = {1, Min 0.5, Max 5, Step 0.25, Name "Parameters/Target edge length"}
 ];
 
-Mesh.Algorithm = 9;               // PACK
 Mesh.MeshSizeMin = lc;
 Mesh.MeshSizeMax = lc;
-Mesh.PackSizemapMethod = 3;
-Mesh.PackPatterns = 0;
-Mesh.AlgorithmSwitchOnFailure = 0;
 Mesh.RandomSeed = 1;
-Mesh.RecombineAll = 1;
-Mesh.RecombinationAlgorithm = 1;  // Blossom
-Mesh.RecombineMinimumQuality = 0;
-Mesh.PackCleanupMethod = 1;
 Mesh.SaveAll = 1;
 Mesh.SaveParametric = 1;
+
+// Flow: 0 = PACK + QuadOpt, run with   gmsh fistula.geo -2
+//       1 = Frontal-Delaunay + Q-Morph, run with   gmsh fistula.geo -
+// (with -2, Gmsh would mesh again after the script and discard Q-Morph).
+DefineConstant[
+  flow = {0, Choices {0 = "PACK + QuadOpt", 1 = "Frontal-Delaunay + Q-Morph"},
+          Name "Parameters/Flow"}
+];
+If(flow == 0)
+  Mesh.Algorithm = 9; // PACK
+  Mesh.PackSizemapMethod = 3;
+  Mesh.PackPatterns = 0;
+  Mesh.AlgorithmSwitchOnFailure = 0;
+  Mesh.RecombineAll = 1;
+  Mesh.RecombinationAlgorithm = 1; // Blossom
+  Mesh.RecombineMinimumQuality = 0;
+  Mesh.PackCleanupMethod = 1;
+Else
+  Mesh.Algorithm = 6; // Frontal-Delaunay
+  Mesh 2;
+  OptimizeMesh "QMorph";
+  Save "fistula.msh";
+EndIf
