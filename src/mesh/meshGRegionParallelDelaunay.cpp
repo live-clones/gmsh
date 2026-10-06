@@ -2536,12 +2536,14 @@ namespace pdel3d {
           for(auto &p : f) v2t[p.first] = p.second;
       }
 
-      // the tets around vertex v (at most 4096: the surface Delaunay of a
-      // CAD part has vertices joined to thousands of tets, which are not
-      // worth the effort)
+      // the tets around vertex v (none above cap). The removals give up on
+      // stars above MAX_STAR: the surface Delaunay of a CAD part has vertices
+      // joined to thousands of tets, which are not worth the effort
+      static constexpr std::size_t MAX_STAR = 4096;
       std::vector<std::uint32_t> mark;
       std::uint32_t stamp = 0;
-      void star(vIdx v, std::vector<tIdx> &out)
+      void star(vIdx v, std::vector<tIdx> &out,
+                std::size_t cap = (std::size_t)-1)
       {
         out.clear();
         if(v2t[v] == NO_ADJ) return;
@@ -2560,7 +2562,7 @@ namespace pdel3d {
             if(mark[nb] == stamp) continue;
             mark[nb] = stamp;
             out.push_back(nb);
-            if(out.size() > 4096) {
+            if(out.size() > cap) {
               out.clear();
               return;
             }
@@ -2997,7 +2999,7 @@ namespace pdel3d {
       {
         edges.clear();
         const double *px = &m.xyz[4 * x], *py = &m.xyz[4 * y];
-        star(x, scratch);
+        star(x, scratch, MAX_STAR);
         tIdx cur = NO_TET;
         unsigned entering = 4;
         for(auto t : scratch) {
@@ -3073,7 +3075,7 @@ namespace pdel3d {
         const vIdx want[2] = {x, y};
         std::vector<EdgeRef> crossed;
         for(int round = 0; round < 4; round++) {
-          star(x, scratch);
+          star(x, scratch, MAX_STAR);
           std::vector<tIdx> tets(scratch);
           for(auto t : tets) {
             const vIdx *n = &m.node[4 * t];
@@ -3113,7 +3115,7 @@ namespace pdel3d {
           // the edges of the tets around the three nodes and their neighbors
           std::vector<tIdx> tets;
           for(int k = 0; k < 3; k++) {
-            star(want[k], scratch);
+            star(want[k], scratch, MAX_STAR);
             tets.insert(tets.end(), scratch.begin(), scratch.end());
           }
           const std::size_t n0 = tets.size();
@@ -4706,9 +4708,9 @@ namespace {
         if(lineInTriangle[i]) continue;
         const vIdx *n = &s.lineNode[2 * i];
         bool take = false;
-        if(line2tet[i] != NO_ADJ)
-          take = localTet[(tIdx)(line2tet[i] / 6)] != 0 ||
-                 (inComponent(n[0]) && inComponent(n[1]));
+        // (the ring of a present line is in the cavity or out of it)
+        if(line2tet[i] != NO_LINE)
+          take = localTet[(tIdx)(line2tet[i] / 6)] != 0;
         else
           take = inComponent(n[0]) && inComponent(n[1]);
         if(!take) continue;
@@ -4842,6 +4844,55 @@ namespace {
             Msg::Info("Cavity recovery: the cavity is not closed");
             return false;
           }
+      }
+      // every constraint must be in the new tets: the triangles and lines of
+      // the cavity, or those replacing them on the surfaces and curves split
+      // by Steiner points
+      {
+        auto hasFacet = [&](std::uint32_t a, std::uint32_t b, std::uint32_t c) {
+          return std::binary_search(inner.begin(), inner.end(), key(a, b, c, 0),
+                                    less);
+        };
+        std::vector<std::uint64_t> edges;
+        edges.reserve(6 * nnew);
+        for(std::size_t t = 0; t < nnew; t++)
+          for(unsigned a = 0; a < 3; a++)
+            for(unsigned b = a + 1; b < 4; b++)
+              edges.push_back(
+                Recovery::edgeKey(newNode[4 * t + a], newNode[4 * t + b]));
+        std::sort(edges.begin(), edges.end());
+        auto hasEdge = [&](std::uint32_t a, std::uint32_t b) {
+          return std::binary_search(edges.begin(), edges.end(),
+                                    Recovery::edgeKey(a, b));
+        };
+        std::size_t lost = 0;
+        for(auto i : P.cavityTri) {
+          const vIdx *n = &s.triNode[3 * i];
+          if(!out.changedFaces.count((int)s.triColor[i]) &&
+             !hasFacet(local[n[0]], local[n[1]], local[n[2]]))
+            lost++;
+        }
+        for(std::size_t i = 0; i < out.triTag.size(); i++) {
+          const std::uint32_t *n = &out.triNode[3 * i];
+          if(out.changedFaces.count(out.triTag[i]) &&
+             !hasFacet(n[0], n[1], n[2]))
+            lost++;
+        }
+        for(auto i : P.cavityLine) {
+          const vIdx *n = &s.lineNode[2 * i];
+          if(!out.changedEdges.count((int)s.lineColor[i]) &&
+             !hasEdge(local[n[0]], local[n[1]]))
+            lost++;
+        }
+        for(std::size_t i = 0; i < out.segTag.size(); i++) {
+          const std::uint32_t *n = &out.segNode[2 * i];
+          if(out.changedEdges.count(out.segTag[i]) && !hasEdge(n[0], n[1]))
+            lost++;
+        }
+        if(lost) {
+          Msg::Info("Cavity recovery left %lu constraint(s) missing", lost);
+          return false;
+        }
       }
     }
 

@@ -993,6 +993,28 @@ namespace pdel3d {
         return true;
       }
 
+      // the constrained triangles and edges inside the cavity are facets and
+      // edges of the tets of the search (a flip of coplanar ones crosses
+      // nothing, so sprValid() lets it through)
+      static bool sprKeepsConstraints(const SPRCavity &S)
+      {
+        auto inTet = [&](const std::uint8_t *c, int n) {
+          for(int k = 0; k < S.depth; k++) {
+            const std::uint8_t *v = S.stack[k].n;
+            int found = 0;
+            for(int j = 0; j < 4; j++)
+              for(int i = 0; i < n; i++) found += (v[j] == c[i]);
+            if(found == n) return true;
+          }
+          return false;
+        };
+        for(int i = 0; i < S.numTriangles; i++)
+          if(!inTet(S.triangle[i], 3)) return false;
+        for(int i = 0; i < S.numEdges; i++)
+          if(!inTet(S.edge[i], 2)) return false;
+        return true;
+      }
+
       // depth-first search of the tetrahedralization of the remaining cavity
       // whose worst tet is above S.solutionQuality: the face whose best
       // candidate is the worst is filled first, its candidates best first
@@ -1002,6 +1024,7 @@ namespace pdel3d {
         if(S.numFaces == 0) {
           for(int p = 0; p < S.numPoints; p++)
             if(S.interior[p] && !S.used[p]) return;
+          if(!sprKeepsConstraints(S)) return;
           S.solutionQuality = worst;
           S.numSolution = S.depth;
           std::copy(S.stack, S.stack + S.depth, S.solution);
