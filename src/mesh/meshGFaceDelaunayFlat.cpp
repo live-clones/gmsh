@@ -1442,7 +1442,8 @@ bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
 #if defined(HAVE_HXT)
   if(data.discrete) {
     GPoint gp =
-      data.discrete->intersectionWithCircle(n1, n2, middle, d, newPoint);
+      data.discrete->intersectionWithCircleSpatial(n1, n2, middle, d,
+                                                   newPoint);
     if(gp.succeeded()) return true;
     return false;
   }

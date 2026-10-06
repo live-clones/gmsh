@@ -289,6 +289,20 @@ public:
     --_maxVertexNum;
   }
 
+  // set the global vertex/element num exactly (after a renumbering)
+  void resetMaxVertexNumber(std::size_t num) { _maxVertexNum = num; }
+  void resetMaxElementNumber(std::size_t num) { _maxElementNum = num; }
+  // renumber the nodes and elements canonically: entity by entity, the
+  // elements in their order, the nodes in the order of their list, except
+  // those with a number above keepUpTo, which were just created and are put
+  // after the others in the order of their first appearance in the elements.
+  // The meshing of a dimension depends on the node numbers of the lower
+  // dimensions (containers ordered or hashed by number, point ids), and a
+  // meshing with several threads numbers nodes and elements in the order the
+  // threads happen to create them: this makes the mesh depend only on the
+  // mesh of the lower dimensions, not on the threads or on the history of
+  // the numbering
+  void renumberMeshCanonically(std::size_t keepUpTo = 0);
   void checkPointMaxNumbers()
   {
     _checkPointedMaxVertexNum = _maxVertexNum;
@@ -345,8 +359,8 @@ public:
                               std::map<std::size_t, std::size_t>());
 
   // delete all the mesh-related caches (this must be called when the
-  // mesh is changed)
-  void destroyMeshCaches();
+  // mesh is changed), except the node caches if only elements were added
+  void destroyMeshCaches(bool keepVertexCaches = false);
   // delete the mesh stored in entities and call destroMeshCaches
   void deleteMesh();
   void deleteMesh(const std::vector<GEntity *> &entities);

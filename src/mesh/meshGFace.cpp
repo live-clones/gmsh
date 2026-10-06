@@ -6,10 +6,12 @@
 // Contributor(s):
 //   Michael Ermakov (ermakov@ipmnet.ru)
 
+#include <random>
 #include <limits>
 #include <sstream>
 #include <stdlib.h>
 #include <map>
+#include <array>
 #include <algorithm>
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -49,6 +51,37 @@
 #include "meshTriangulation.h"
 #include "meshDuplicateVertices.h"
 #include "meshGFaceParamBoundary.h"
+
+namespace {
+  // Faces are meshed in parallel, so perturbing points with rand() made each
+  // face's result depend on how the threads interleaved their draws. Seed a
+  // generator per face and per retry instead.
+  class FacePerturbation {
+    std::mt19937 _generator;
+
+  public:
+    FacePerturbation(const GFace *gf, int recurIter)
+    {
+      std::seed_seq seed{(unsigned)CTX::instance()->mesh.randomSeed,
+                         (unsigned)gf->tag(), (unsigned)recurIter};
+      _generator.seed(seed);
+    }
+    // uniform in [0, 1]
+    double operator()()
+    { return (double)_generator() / (double)std::mt19937::max(); }
+    // point i of the initial triangulation at (u, v), perturbed by up to
+    // randFactor * lc
+    void place(DocRecord &doc, int i, double u, double v, void *data, double lc)
+    {
+      const double du = CTX::instance()->mesh.randFactor * lc * (*this)();
+      const double dv = CTX::instance()->mesh.randFactor * lc * (*this)();
+      doc.points[i].where.h = u + du;
+      doc.points[i].where.v = v + dv;
+      doc.points[i].adjacent = nullptr;
+      doc.points[i].data = data;
+    }
+  };
+} // namespace
 
 static void remeshUnrecoveredEdges(
   std::multimap<MVertex *, BDS_Point *> &recoverMultiMapInv,
@@ -502,6 +535,102 @@ static void pruneAndCleanupBDS(BDS_Mesh *m, BDS_GeomEntity *CLASS_F)
 // Recombine the surface mesh into quadrangles, for the recombination
 // algorithms that run at the end of the 2D mesher (the others run inside
 // quadMeshRemoveHalfOfOneDMesh).
+// On a surface with a seam and a pole (a degenerate curve collapsed to a
+// point), a coarse mesh can have an interior node adjacent to both sides of
+// the seam next to the pole: the two parametric triangles joining it to the
+// pole and to the first seam node are then the same real triangle, with
+// opposite orientations, and the pole belongs to nothing else. The two
+// triangles across the pole's ring (sharing the seam node - interior node
+// edge) span the pole without touching it. Repair: drop the pair and split
+// that edge at the pole, which gives a fan of four triangles around it.
+// Returns false when a duplicate pair cannot be repaired this way
+static bool repairDuplicateTriangles(GFace *gf)
+{
+  typedef std::array<MVertex *, 3> Key;
+  std::map<Key, std::vector<std::size_t>> byNodes;
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+    MTriangle *t = gf->triangles[i];
+    Key k = {t->getVertex(0), t->getVertex(1), t->getVertex(2)};
+    std::sort(k.begin(), k.end());
+    byNodes[k].push_back(i);
+  }
+  std::vector<std::pair<std::size_t, std::size_t>> pairs;
+  for(auto &kv : byNodes) {
+    if(kv.second.size() == 1) continue;
+    if(kv.second.size() != 2) {
+      Msg::Warning("%lu triangles with the same nodes on surface %d",
+                   kv.second.size(), gf->tag());
+      return false;
+    }
+    pairs.push_back({kv.second[0], kv.second[1]});
+  }
+  if(pairs.empty()) return true;
+  // the triangles around the nodes of the pairs
+  std::map<MVertex *, std::vector<std::size_t>> around;
+  for(auto &p : pairs)
+    for(int k = 0; k < 3; k++) around[gf->triangles[p.first]->getVertex(k)];
+  for(std::size_t i = 0; i < gf->triangles.size(); i++)
+    for(int k = 0; k < 3; k++) {
+      auto it = around.find(gf->triangles[i]->getVertex(k));
+      if(it != around.end()) it->second.push_back(i);
+    }
+  std::vector<bool> removed(gf->triangles.size(), false);
+  std::vector<MTriangle *> added;
+  for(auto &p : pairs) {
+    MTriangle *t1 = gf->triangles[p.first];
+    MVertex *pole = nullptr, *s = nullptr, *q = nullptr;
+    for(int k = 0; k < 3; k++) {
+      MVertex *v = t1->getVertex(k);
+      if(around[v].size() == 2)
+        pole = v;
+      else if(!s)
+        s = v;
+      else
+        q = v;
+    }
+    std::vector<std::size_t> across;
+    if(pole && s && q)
+      for(std::size_t i : around[s])
+        if(i != p.first && i != p.second && !removed[i] &&
+           (gf->triangles[i]->getVertex(0) == q ||
+            gf->triangles[i]->getVertex(1) == q ||
+            gf->triangles[i]->getVertex(2) == q))
+          across.push_back(i);
+    if(!pole || across.size() != 2) {
+      Msg::Warning("Cannot repair the duplicate triangle on surface %d",
+                   gf->tag());
+      return false;
+    }
+    for(std::size_t i : across) {
+      MTriangle *t = gf->triangles[i];
+      for(int k = 0; k < 3; k++) {
+        MVertex *a = t->getVertex(k), *b = t->getVertex((k + 1) % 3),
+                *c = t->getVertex((k + 2) % 3);
+        if((a == s && b == q) || (a == q && b == s)) {
+          added.push_back(new MTriangle(a, pole, c));
+          added.push_back(new MTriangle(pole, b, c));
+          removed[i] = true;
+          break;
+        }
+      }
+    }
+    removed[p.first] = removed[p.second] = true;
+  }
+  std::vector<MTriangle *> kept;
+  kept.reserve(gf->triangles.size());
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+    if(removed[i])
+      delete gf->triangles[i];
+    else
+      kept.push_back(gf->triangles[i]);
+  }
+  kept.insert(kept.end(), added.begin(), added.end());
+  gf->triangles.swap(kept);
+  Msg::Info("Repaired %lu duplicate triangle(s) at the pole(s) of surface %d",
+            pairs.size(), gf->tag());
+  return true;
+}
+
 static void recombineSurfaceMesh(GFace *gf)
 {
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
@@ -905,25 +1034,19 @@ initialTriangulation(GFace *gf, BDS_Mesh *m, std::vector<BDS_Point *> &points,
                      SBoundingBox3d &bbox,
                      std::set<MVertex *, MVertexPtrLessThan> &all_vertices,
                      std::map<MVertex *, BDS_Point *> &recoverMapInv,
-                     std::vector<GEdge *> *replacementEdges)
+                     std::vector<GEdge *> *replacementEdges, int recurIter)
 {
   // use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
   if(CTX::instance()->mesh.oldInitialDelaunay2D) {
+    FacePerturbation perturbation(gf, recurIter);
     // compute the bounding box in parametric space
     SVector3 dd(bbox.max(), bbox.min());
     double LC2D = norm(dd);
     DocRecord doc(points.size() + 4);
     for(std::size_t i = 0; i < points.size(); i++) {
-      double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                  (double)RAND_MAX;
-      double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                  (double)RAND_MAX;
-      doc.points[i].where.h = points[i]->u + XX;
-      doc.points[i].where.v = points[i]->v + YY;
-      doc.points[i].data = points[i];
-      doc.points[i].adjacent = nullptr;
+      perturbation.place(doc, i, points[i]->u, points[i]->v, points[i], LC2D);
     }
 
     // increase the size of the bounding box
@@ -1129,8 +1252,9 @@ static void initialTriangulationPeriodic(
   std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap,
   std::vector<std::vector<BDS_Point *>> &edgeLoops_BDS,
   std::vector<int> &edgesEmbedded, SBoundingBox3d &bbox, int &nbPointsTotal,
-  double du, double dv, double LC2D)
+  double du, double dv, double LC2D, int recurIter)
 {
+  FacePerturbation perturbation(gf, recurIter);
   int count = 0;
 
   // Embedded Vertices
@@ -1175,15 +1299,7 @@ static void initialTriangulationPeriodic(
     pp->lcBGM() = BGM_MeshSize(*itvx, 0, 0, v->x(), v->y(), v->z());
     pp->lc() = pp->lcBGM();
     recoverMap[pp] = v;
-    double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                (double)RAND_MAX;
-    double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                (double)RAND_MAX;
-    doc.points[count].where.h = pp->u + XX;
-    doc.points[count].where.v = pp->v + YY;
-    doc.points[count].adjacent = nullptr;
-    doc.points[count].data = pp;
-    count++;
+    perturbation.place(doc, count++, pp->u, pp->v, pp, LC2D);
     ++itvx;
   }
 
@@ -1256,15 +1372,7 @@ static void initialTriangulationPeriodic(
           pp->lc() = pp->lcBGM();
           recoverMap[pp] = v;
           facile[v] = pp;
-          double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                      (double)RAND_MAX;
-          double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                      (double)RAND_MAX;
-          doc.points[count].where.h = pp->u + XX;
-          doc.points[count].where.v = pp->v + YY;
-          doc.points[count].adjacent = nullptr;
-          doc.points[count].data = pp;
-          count++;
+          perturbation.place(doc, count++, pp->u, pp->v, pp, LC2D);
         }
       }
     }
@@ -1283,15 +1391,7 @@ static void initialTriangulationPeriodic(
     std::vector<BDS_Point *> &edgeLoop_BDS = edgeLoops_BDS[i];
     for(std::size_t j = 0; j < edgeLoop_BDS.size(); j++) {
       BDS_Point *pp = edgeLoop_BDS[j];
-      double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                  (double)RAND_MAX;
-      double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                  (double)RAND_MAX;
-      doc.points[count].where.h = pp->u + XX;
-      doc.points[count].where.v = pp->v + YY;
-      doc.points[count].adjacent = nullptr;
-      doc.points[count].data = pp;
-      count++;
+      perturbation.place(doc, count++, pp->u, pp->v, pp, LC2D);
     }
   }
 
@@ -1403,7 +1503,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   buildBDSPoints(gf, all_vertices, m, points, bbox, recoverMap, recoverMapInv);
 
   initialTriangulation(gf, m, points, bbox, all_vertices, recoverMapInv,
-                       replacementEdges);
+                       replacementEdges, RECUR_ITER);
 
   if(debug && RECUR_ITER == 0) debugViews(m, gf, "initial");
 
@@ -1611,11 +1711,14 @@ static bool buildConsecutiveListOfVertices(
         }
       }
       else {
-        // detect which mesh variant to use for the next curve by selecting the
-        // mesh that starts with the node at the smallest distance, within the
-        // prescribed tolerance
-        double dist1 = coords.back().distance(p.front());
-        double dist2 = coords.back().distance(p_rev.front());
+        // Preserve the topological junction before choosing the closest
+        // parametric image. OCC pcurves can require a large UV tolerance: it
+        // must not let a different endpoint replace the current mesh vertex.
+        const double incompatible = std::numeric_limits<double>::infinity();
+        double dist1 = verts.back() == v.front() ?
+                         coords.back().distance(p.front()) : incompatible;
+        double dist2 = verts.back() == v_rev.front() ?
+                         coords.back().distance(p_rev.front()) : incompatible;
         if(!seam) {
           if(dist1 < dist2 && dist1 < tol) {
             coords.pop_back();
@@ -1648,8 +1751,10 @@ static bool buildConsecutiveListOfVertices(
           }
         }
         else {
-          double dist3 = coords.back().distance(p_alt.front());
-          double dist4 = coords.back().distance(p_alt_rev.front());
+          double dist3 = verts.back() == v.front() ?
+                           coords.back().distance(p_alt.front()) : incompatible;
+          double dist4 = verts.back() == v_rev.front() ?
+                           coords.back().distance(p_alt_rev.front()) : incompatible;
           if(dist1 < dist2 && dist1 < dist3 && dist1 < dist4 && dist1 < tol) {
             coords.pop_back();
             coords.insert(coords.end(), p.begin(), p.end());
@@ -1710,14 +1815,15 @@ static bool buildConsecutiveListOfVertices(
     return true;
   }
   double dist = coords.back().distance(coords.front());
-  if(dist < tol) {
+  if(verts.back() == verts.front() && dist < tol) {
     coords.pop_back();
     verts.pop_back();
   }
   else {
-    Msg::Debug("Distance %g between first and last node in 1D mesh of surface "
-               "%d exceeds tolerance %g",
-               dist, gf->tag(), tol);
+    Msg::Debug("First and last node in 1D mesh of surface %d do not match "
+               "(nodes %zu and %zu, parametric distance %g, tolerance %g)",
+               gf->tag(), verts.front()->getNum(), verts.back()->getNum(),
+               dist, tol);
     return false;
   }
 
@@ -1897,7 +2003,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   std::vector<int> edgesEmbedded;
 
   initialTriangulationPeriodic(gf, m, recoverMap, edgeLoops_BDS, edgesEmbedded,
-                               bbox, nbPointsTotal, du, dv, LC2D);
+                               bbox, nbPointsTotal, du, dv, LC2D, RECUR_ITER);
 
   // Recover the boundary edges and compute characteristic lenghts using mesh
   // edge spacing
@@ -2153,6 +2259,12 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   // delete the mesh
   delete m;
 
+  if(!repairDuplicateTriangles(gf)) {
+    Msg::Error("Surface %d has duplicate triangles", gf->tag());
+    gf->meshStatistics.status = GFace::FAILED;
+    return false;
+  }
+
   recombineSurfaceMesh(gf);
 
   gf->meshStatistics.status = GFace::DONE;
@@ -2215,7 +2327,12 @@ namespace {
     RestoreOptionAtEndOfScope(int *option) : _option(option), _initial(*option)
     {
     }
-    ~RestoreOptionAtEndOfScope() { *_option = _initial; }
+    // write only when changed: faces meshed in parallel run this destructor
+    // concurrently, and an unconditional write races with their reads
+    ~RestoreOptionAtEndOfScope()
+    {
+      if(*_option != _initial) *_option = _initial;
+    }
   };
 } // namespace
 

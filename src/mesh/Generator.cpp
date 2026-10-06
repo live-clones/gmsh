@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <limits>
 #include <stdlib.h>
 #include <set>
 #include <stack>
@@ -567,6 +568,8 @@ static void Mesh1D(GModel *m)
 
   Msg::StopProgressMeter();
 
+  // numbered as the threads created them: renumber canonically
+  m->renumberMeshCanonically(std::numeric_limits<std::size_t>::max());
   CheckEmptyMesh(m, 1);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[0] = w2 - w1;
@@ -696,16 +699,17 @@ static void Mesh2D(GModel *m)
 
       int nPending = 0;
       bool exceptions = false;
-      std::vector<GFace *> temp;
-      temp.insert(temp.begin(), f.begin(), f.end());
-#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
-      for(size_t K = 0; K < temp.size(); K++) {
-        if(exceptions) continue;
+      // the members of a compound are meshed serially: the one that does the
+      // compound job reads and replaces the meshes of the others
+      std::vector<GFace *> temp, members;
+      for(GFace *gf : f) (gf->compound.empty() ? temp : members).push_back(gf);
+      auto meshOne = [&](GFace *gf) {
+        if(exceptions) return;
         int localPending = 0;
-        if(temp[K]->meshStatistics.status == GFace::PENDING) {
+        if(gf->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
           try { // OpenMP forbids leaving block via exception
-            temp[K]->mesh(true);
+            gf->mesh(true);
           } catch(...) {
             exceptions = true;
           }
@@ -716,7 +720,10 @@ static void Mesh2D(GModel *m)
           }
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
-      }
+      };
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+      for(size_t K = 0; K < temp.size(); K++) meshOne(temp[K]);
+      for(GFace *gf : members) meshOne(gf);
       if(exceptions) {
         CTX::instance()->lock = 0;
         throw std::runtime_error(Msg::GetLastError());
@@ -730,6 +737,7 @@ static void Mesh2D(GModel *m)
 
     Msg::StopProgressMeter();
   }
+  m->renumberMeshCanonically(std::numeric_limits<std::size_t>::max());
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     replaceBadQuadDominantMeshes(m);
@@ -1654,7 +1662,10 @@ void GenerateMesh(GModel *m, int ask)
     for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
                                 CTX::instance()->mesh.optimizeNetgen);
         i++) {
-      if(CTX::instance()->mesh.optimize > i) OptimizeMesh(m);
+      // pdel3d optimizes its meshes itself
+      if(CTX::instance()->mesh.optimize > i &&
+         CTX::instance()->mesh.algo3d != ALGO_3D_PDEL3D)
+        OptimizeMesh(m);
       if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMesh(m, "Netgen");
     }
   }

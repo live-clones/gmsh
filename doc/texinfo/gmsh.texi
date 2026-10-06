@@ -468,11 +468,19 @@ on local mesh modifications. This technique makes use of edge swaps,
 splits, and collapses: long edges are split, short edges are collapsed,
 and edges are swapped if a better geometrical configuration is obtained.
 @item
-The ``Delaunay'' algorithm is inspired by the work of the GAMMA team at
-INRIA@footnote{P.-L. George and P. Frey, @emph{Mesh generation}, Hermes,
-Lyon, 2000.}. New points are inserted sequentially at the circumcenter
-of the element that has the largest dimensionless circumradius. The mesh
-is then reconnected using an anisotropic Delaunay criterion.
+The ``Delaunay'' algorithm is a Delaunay refinement
+algorithm@footnote{J. R. Shewchuk, @emph{Delaunay refinement algorithms
+for triangular mesh generation}, Computational Geometry 22(1--3),
+pp. 21--74, 2002.}: new points are inserted sequentially at the
+circumcenter of the element that has the largest dimensionless
+circumradius, with the Bowyer-Watson algorithm@footnote{A. Bowyer,
+@emph{Computing Dirichlet tessellations}, The Computer Journal 24(2),
+pp. 162--166, 1981; D. F. Watson, @emph{Computing the n-dimensional
+Delaunay tessellation with application to Voronoi polytopes}, The
+Computer Journal 24(2), pp. 167--172, 1981.}. The mesh is then
+reconnected using an anisotropic Delaunay criterion, following the work
+of P.-L. George and P. Frey@footnote{P.-L. George and P. Frey, @emph{Mesh
+generation}, Hermes, Lyon, 2000.}.
 @item
 The ``Frontal-Delaunay'' algorithm is inspired by the work of
 S. Rebay@footnote{S. Rebay, @emph{Efficient unstructured mesh generation
@@ -508,10 +516,29 @@ Several 3D unstructured algorithms are also available:
 The ``Delaunay'' algorithm is split into three separate steps. First, an
 initial mesh of the union of all the volumes in the model is performed,
 without inserting points in the volume. The surface mesh is then
-recovered using H. Si's boundary recovery algorithm Tetgen/BR. Then a
-three-dimensional version of the 2D Delaunay algorithm described above
-is applied to insert points in the volume to respect the mesh size
-constraints.
+recovered using H. Si's boundary recovery algorithm
+Tetgen/BR@footnote{H. Si, @emph{TetGen, a Delaunay-based quality
+tetrahedral mesh generator}, ACM Transactions on Mathematical Software
+41(2), pp. 1--36, 2015.}. Then a three-dimensional version of the 2D
+Delaunay algorithm described above is applied to insert points in the
+volume to respect the mesh size constraints.
+@item
+The ``Parallel Delaunay'' algorithm is an experimental parallel
+reimplementation of the ``Delaunay'' algorithm, which follows the design
+of HXT (see below): the tetrahedra are stored in flat arrays, and the
+threads work on separate pieces of a space-filling curve. The surface
+mesh is first recovered locally, by edge removals and by the
+re-tetrahedralization of small cavities around the missing triangles,
+with H. Si's global boundary recovery as a fallback. Points are then
+inserted in parallel rounds, and the mesh is optimized in parallel by
+edge removals, node relocations and small polyhedron
+reconnections@footnote{J. Liu, M. Sun and S. Chen, @emph{Small polyhedron
+reconnection for mesh improvement and its implementation based on
+advancing front technique}, International Journal for Numerical Methods
+in Engineering 79(8), pp. 1004--1018, 2009.}. It supports the same
+features as the ``Delaunay'' algorithm (embedded entities, mesh size
+fields, hybrid meshes with pyramids) and is selected with
+@code{Mesh.Algorithm3D = 11}, or @code{-algo pdel3d} on the command line.
 @item
 The ``Frontal'' algorithm uses J. Schoeberl's Netgen algorithm
 @footnote{J. Schoeberl, @emph{Netgen, an advancing front 2d/3d-mesh
@@ -530,11 +557,12 @@ guide}, INRIA, 2012.}  can generate anisotropic
 tetrahedralizations.
 @end itemize
 
-The ``Delaunay'' algorithm is currently the most robust and is the only
-one that supports the automatic generation of hybrid meshes with
-pyramids. Embedded model entities and general mesh size fields
-(@pxref{Specifying mesh element sizes}) are currently only supported by
-the ``Delaunay'' and ``HXT'' algorithms.
+The ``Delaunay'' algorithm is currently the most robust. It and the
+``Parallel Delaunay'' algorithm are the only ones that support the
+automatic generation of hybrid meshes with pyramids. Embedded model
+entities and general mesh size fields (@pxref{Specifying mesh element
+sizes}) are currently only supported by the ``Delaunay'', ``Parallel
+Delaunay'' and ``HXT'' algorithms.
 
 When Gmsh is configured with OpenMP support (@pxref{Compiling the source
 code}), most of the meshing steps can be performed in parallel:
@@ -544,9 +572,9 @@ code}), most of the meshing steps can be performed in parallel:
 i.e. curves (resp. surfaces) are each meshed sequentially, but several
 curves (resp. surfaces) can be meshed at the same time.
 @item
-3D meshing using HXT is parallelized using a fine-grained approach,
-i.e. the actual meshing procedure for a single volume is done in
-parallel.
+3D meshing using the Parallel Delaunay algorithm or HXT is parallelized
+using a fine-grained approach, i.e. the actual meshing procedure for a
+single volume is done in parallel.
 @end itemize
 The number of threads can be controlled with the @code{-nt} flag on the
 command line (@pxref{Gmsh command-line interface}), or with the
