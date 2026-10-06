@@ -409,6 +409,45 @@ static double sicnStraightTriangle(const MElement *e)
   return (dp >= 0.) ? iCN : -iCN;
 }
 
+// the same for a straight tetrahedron: 3 det(J) / (|J| |adj(J)|), with J the
+// (constant) jacobian with respect to the regular reference tetrahedron
+static double sicnStraightTetrahedron(const MElement *e)
+{
+  const MVertex *v0 = e->getVertex(0);
+  double u[3][3];
+  for(int i = 0; i < 3; i++) {
+    const MVertex *v = e->getVertex(i + 1);
+    u[i][0] = v->x() - v0->x();
+    u[i][1] = v->y() - v0->y();
+    u[i][2] = v->z() - v0->z();
+  }
+  static const double c1 = 1. / std::sqrt(3.), c2 = 1. / std::sqrt(6.),
+                      c3 = std::sqrt(1.5);
+  double J[3][3]; // J[row][column]
+  for(int k = 0; k < 3; k++) {
+    J[k][0] = u[0][k];
+    J[k][1] = -c1 * u[0][k] + 2. * c1 * u[1][k];
+    J[k][2] = -c2 * (u[0][k] + u[1][k]) + c3 * u[2][k];
+  }
+  const double I[9] = {J[1][1] * J[2][2] - J[1][2] * J[2][1],
+                       J[0][2] * J[2][1] - J[0][1] * J[2][2],
+                       J[0][1] * J[1][2] - J[0][2] * J[1][1],
+                       J[1][2] * J[2][0] - J[1][0] * J[2][2],
+                       J[0][0] * J[2][2] - J[0][2] * J[2][0],
+                       J[0][2] * J[1][0] - J[0][0] * J[1][2],
+                       J[1][0] * J[2][1] - J[1][1] * J[2][0],
+                       J[0][1] * J[2][0] - J[0][0] * J[2][1],
+                       J[0][0] * J[1][1] - J[0][1] * J[1][0]};
+  const double D = J[0][0] * I[0] + J[0][1] * I[3] + J[0][2] * I[6];
+  if(D == 0.) return 0.;
+  double nJ = 0., nI = 0.;
+  for(int k = 0; k < 9; k++) {
+    nJ += J[k / 3][k % 3] * J[k / 3][k % 3];
+    nI += I[k] * I[k];
+  }
+  return 3. * D / std::sqrt(nJ * nI);
+}
+
 static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
 {
   int nthreads = CTX::instance()->numThreads;
@@ -426,8 +465,10 @@ static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
   reduction(+ : qa)
     for(std::size_t i = 0; i < ne; i++) {
       MElement *e = ge->getMeshElement(i);
-      double q = (e->getTypeForMSH() == MSH_TRI_3) ? sicnStraightTriangle(e) :
-                                                     e->minSICNShapeMeasure();
+      const int type = e->getTypeForMSH();
+      double q = (type == MSH_TRI_3) ? sicnStraightTriangle(e) :
+                 (type == MSH_TET_4) ? sicnStraightTetrahedron(e) :
+                                       e->minSICNShapeMeasure();
       qm = std::min(qm, q);
       qa += q;
     }

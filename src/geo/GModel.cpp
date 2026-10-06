@@ -1314,10 +1314,15 @@ int GModel::mesh(int dimension)
 
 bool GModel::setAllVolumesPositive()
 {
-  bool ok = true;
-  for(auto it = regions.begin(); it != regions.end(); ++it)
-    for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i)
-      if(!(*it)->getMeshElement(i)->setVolumePositive()) ok = false;
+  int ok = 1;
+  for(auto it = regions.begin(); it != regions.end(); ++it) {
+    const std::size_t ne = (*it)->getNumMeshElements();
+    const int nthreads = CTX::instance()->numThreadsFor(ne, 1 << 16);
+#pragma omp parallel for schedule(static) num_threads(nthreads)               \
+  reduction(min : ok)
+    for(std::size_t i = 0; i < ne; ++i)
+      if(!(*it)->getMeshElement(i)->setVolumePositive()) ok = 0;
+  }
   return ok;
 }
 
