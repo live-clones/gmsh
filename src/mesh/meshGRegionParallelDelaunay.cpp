@@ -2878,66 +2878,65 @@ namespace pdel3d {
                (s0 < 0. && s1 < 0. && s2 < 0.);
       }
 
-      // the edges of the facets crossed by the segment (x, y), walking from x
-      // to y; false when the walk fails (hull, cycle)
+      // walk along the segment (x, y) from x through the facets it crosses,
+      // given the star of x: crossed(t, f) for each; true when it reaches y,
+      // false on the hull, through an edge or after maxSteps
+      template <class Crossed>
+      bool walkSegment(vIdx x, vIdx y, const std::vector<tIdx> &starOfX,
+                       int maxSteps, Crossed crossed)
+      {
+        const double *px = &m.xyz[4 * x], *py = &m.xyz[4 * y];
+        auto crosses = [&](tIdx t, unsigned f) {
+          const vIdx *n = &m.node[4 * t];
+          return segmentCrossesFacet(px, py, &m.xyz[4 * n[facetNode0(f)]],
+                                     &m.xyz[4 * n[facetNode1(f)]],
+                                     &m.xyz[4 * n[facetNode2(f)]]);
+        };
+        tRef r = NO_ADJ;
+        for(auto t : starOfX) {
+          if(m.isGhost(t)) continue;
+          unsigned ix = 0;
+          while(m.node[4 * t + ix] != x) ix++;
+          if(crosses(t, ix)) {
+            crossed(t, ix);
+            r = m.neigh[4 * t + ix];
+            break;
+          }
+        }
+        for(int step = 0; step < maxSteps && r != NO_ADJ; step++) {
+          const tIdx cur = r >> 2;
+          const unsigned entering = r & 3;
+          if(m.isGhost(cur)) return false;
+          const vIdx *n = &m.node[4 * cur];
+          if(n[0] == y || n[1] == y || n[2] == y || n[3] == y) return true;
+          unsigned exitF = 4;
+          for(unsigned f = 0; f < 4 && exitF == 4; f++)
+            if(f != entering && crosses(cur, f)) exitF = f;
+          if(exitF == 4) return false;
+          crossed(cur, exitF);
+          r = m.neigh[4 * cur + exitF];
+        }
+        return false;
+      }
+
       // an edge of a tet, by the indices of its nodes
       struct EdgeRef {
         tIdx t;
         unsigned ia, ib;
       };
-      void facetEdges(tIdx t, unsigned f, std::vector<EdgeRef> &edges)
-      {
-        const unsigned a = facetNode0(f), b = facetNode1(f), c = facetNode2(f);
-        edges.push_back({t, std::min(a, b), std::max(a, b)});
-        edges.push_back({t, std::min(b, c), std::max(b, c)});
-        edges.push_back({t, std::min(c, a), std::max(c, a)});
-      }
 
+      // the edges of the facets crossed by the segment (x, y)
       bool crossedEdges(vIdx x, vIdx y, std::vector<EdgeRef> &edges)
       {
         edges.clear();
-        const double *px = &m.xyz[4 * x], *py = &m.xyz[4 * y];
         star(x, scratch, MAX_STAR);
-        tIdx cur = NO_TET;
-        unsigned entering = 4;
-        for(auto t : scratch) {
-          const vIdx *n = &m.node[4 * t];
-          if(m.isGhost(t)) continue;
-          unsigned ix = 0;
-          while(n[ix] != x) ix++;
-          const vIdx u = n[facetNode0(ix)], v = n[facetNode1(ix)],
-                     w = n[facetNode2(ix)];
-          if(segmentCrossesFacet(px, py, &m.xyz[4 * u], &m.xyz[4 * v],
-                                 &m.xyz[4 * w])) {
-            const tRef r = m.neigh[4 * t + ix];
-            facetEdges(t, ix, edges);
-            cur = r >> 2;
-            entering = r & 3;
-            break;
-          }
-        }
-        if(cur == NO_TET) return false;
-        for(int step = 0; step < 200; step++) {
-          if(m.isGhost(cur)) return false;
-          const vIdx *n = &m.node[4 * cur];
-          if(n[0] == y || n[1] == y || n[2] == y || n[3] == y) return true;
-          unsigned exitF = 4;
-          for(unsigned f = 0; f < 4 && exitF == 4; f++) {
-            if(f == entering) continue;
-            const vIdx u = n[facetNode0(f)], v = n[facetNode1(f)],
-                       w = n[facetNode2(f)];
-            if(segmentCrossesFacet(px, py, &m.xyz[4 * u], &m.xyz[4 * v],
-                                   &m.xyz[4 * w])) {
-              exitF = f;
-              facetEdges(cur, f, edges);
-            }
-          }
-          if(exitF == 4) return false; // the segment goes through an edge
-          const tRef r = m.neigh[4 * cur + exitF];
-          cur = r >> 2;
-          entering = r & 3;
-        }
-        return false;
+        return walkSegment(x, y, scratch, 200, [&](tIdx t, unsigned f) {
+          const unsigned a = facetNode0(f), b = facetNode1(f),
+                         c = facetNode2(f);
+          edges.push_back({t, std::min(a, b), std::max(a, b)});
+          edges.push_back({t, std::min(b, c), std::max(b, c)});
+          edges.push_back({t, std::min(c, a), std::max(c, a)});
+        });
       }
 
       // remove the edge (nodes ia < ib of tet t) with the ring triangulation
@@ -4337,57 +4336,19 @@ namespace {
       }
       return false;
     };
+    // the star of x and the tets crossed by the segment (x, y)
     auto crossedTets = [&](vIdx x, vIdx y) {
-      // the tets crossed by the segment (x, y), from the star of x
-      const double *px = &m.xyz[4 * x], *py = &m.xyz[4 * y];
       R.star(x, R.scratch);
-      tIdx cur = NO_TET;
-      unsigned entering = 4;
-      for(auto t : R.scratch) {
-        add(t);
-        const vIdx *n = &m.node[4 * t];
-        if(m.isGhost(t)) continue;
-        unsigned ix = 0;
-        while(n[ix] != x) ix++;
-        const vIdx u = n[facetNode0(ix)], v = n[facetNode1(ix)],
-                   w = n[facetNode2(ix)];
-        if(R.segmentCrossesFacet(px, py, &m.xyz[4 * u], &m.xyz[4 * v],
-                                 &m.xyz[4 * w])) {
-          const tRef r = m.neigh[4 * t + ix];
-          cur = r >> 2;
-          entering = r & 3;
-        }
-      }
-      for(int step = 0; step < 1000 && cur != NO_TET; step++) {
-        if(m.isGhost(cur)) break;
-        add(cur);
-        const vIdx *n = &m.node[4 * cur];
-        if(n[0] == y || n[1] == y || n[2] == y || n[3] == y) break;
-        unsigned exitF = 4;
-        for(unsigned f = 0; f < 4 && exitF == 4; f++) {
-          if(f == entering) continue;
-          const vIdx u = n[facetNode0(f)], v = n[facetNode1(f)],
-                     w = n[facetNode2(f)];
-          if(R.segmentCrossesFacet(px, py, &m.xyz[4 * u], &m.xyz[4 * v],
-                                   &m.xyz[4 * w]))
-            exitF = f;
-        }
-        if(exitF == 4) break;
-        const tRef r = m.neigh[4 * cur + exitF];
-        cur = r >> 2;
-        entering = r & 3;
-      }
+      for(auto t : R.scratch) add(t);
+      R.walkSegment(x, y, R.scratch, 1000,
+                    [&](tIdx t, unsigned f) { add(m.neigh[4 * t + f] >> 2); });
     };
     for(auto i : missingTri) {
       const vIdx *tri = &s.triNode[3 * i];
       const double *a = &m.xyz[4 * tri[0]], *b = &m.xyz[4 * tri[1]],
                    *c = &m.xyz[4 * tri[2]];
       const std::size_t first = cavity.size();
-      for(int k = 0; k < 3; k++) {
-        R.star(tri[k], R.scratch);
-        for(auto t : R.scratch) add(t);
-        crossedTets(tri[k], tri[(k + 1) % 3]);
-      }
+      for(int k = 0; k < 3; k++) crossedTets(tri[k], tri[(k + 1) % 3]);
       // grow through the tets intersecting the triangle
       for(std::size_t j = first; j < cavity.size(); j++) {
         for(unsigned f = 0; f < 4; f++) {
