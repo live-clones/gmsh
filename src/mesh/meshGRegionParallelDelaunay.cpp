@@ -251,25 +251,9 @@ namespace pdel3d {
                    dlift = dex * dex + dey * dey + dez * dez;
       const double det =
         (dlift * abc - clift * dab) + (blift * cda - alift * bcd);
-      // the static filter of the model (too loose for small tets), then a
-      // semi-static one from the coordinate differences of these points (as
-      // CGAL does), then the adaptive exact predicate
-      int ret = (det > robustPredicates::ispstaticfilter) -
-                (det < -robustPredicates::ispstaticfilter);
+      const int ret = (det > robustPredicates::ispstaticfilter) -
+                      (det < -robustPredicates::ispstaticfilter);
       if(ret) return ret;
-      double mx = std::max(std::max(std::fabs(aex), std::fabs(bex)),
-                           std::max(std::fabs(cex), std::fabs(dex)));
-      double my = std::max(std::max(std::fabs(aey), std::fabs(bey)),
-                           std::max(std::fabs(cey), std::fabs(dey)));
-      double mz = std::max(std::max(std::fabs(aez), std::fabs(bez)),
-                           std::max(std::fabs(cez), std::fabs(dez)));
-      if(mx > mz) std::swap(mx, mz);
-      if(my > mz) std::swap(my, mz);
-      if(mx > 1e-58 && mz < 1e61) { // no underflow nor overflow below
-        const double eps = 1.2466136531027298e-13 * mx * my * mz * (mz * mz);
-        ret = (det > eps) - (det < -eps);
-        if(ret) return ret;
-      }
       return sign(robustPredicates::insphere(pa, pb, pc, pd, pe));
     }
 
