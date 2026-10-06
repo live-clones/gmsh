@@ -1169,10 +1169,9 @@ namespace pdel3d {
 
     double bmin[3], bmax[3];
     m.bbox(bmin, bmax, maxPartitions);
-    robustPredicates::exactinit(
-      std::max(std::fabs(bmin[0]), std::fabs(bmax[0])),
-      std::max(std::fabs(bmin[1]), std::fabs(bmax[1])),
-      std::max(std::fabs(bmin[2]), std::fabs(bmax[2])));
+    // the static filters bound the coordinate differences
+    robustPredicates::exactinit(bmax[0] - bmin[0], bmax[1] - bmin[1],
+                                bmax[2] - bmin[2]);
 
     const bool firstPassEver = (m.ntet == 0);
     std::size_t numInMesh = 0;

@@ -1168,11 +1168,13 @@ namespace {
     std::size_t N = S.size();
     _temp.resize(N + 1 + 8);
     double maxx = 0, maxy = 0, maxz = 0;
+    SBoundingBox3d bbox;
     for(std::size_t i = 0; i < N; i++) {
       MVertex *mv = S[i];
       maxx = std::max(maxx, fabs(mv->x()));
       maxy = std::max(maxy, fabs(mv->y()));
       maxz = std::max(maxz, fabs(mv->z()));
+      bbox += mv->point();
     }
     double d = 1 * sqrt(maxx * maxx + maxy * maxy + maxz * maxz);
 
@@ -1201,7 +1203,13 @@ namespace {
       _temp[v->getNum()] = mv;
     }
 
-    robustPredicates::exactinit(maxx, maxy, maxz);
+    // the static filters bound the coordinate differences, up to the size of
+    // the enclosing cube of initialCube()
+    if(!bbox.empty()) {
+      const SPoint3 a = bbox.min(), b = bbox.max();
+      robustPredicates::exactinit(1.3 * (b.x() - a.x()), 1.3 * (b.y() - a.y()),
+                                  1.3 * (b.z() - a.z()));
+    }
 
     Vert *box[8];
     delaunayTriangulation(_vertices, box, allocator);
