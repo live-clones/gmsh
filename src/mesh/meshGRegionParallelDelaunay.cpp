@@ -3608,9 +3608,10 @@ namespace pdel3d {
       const double t1 = TimeOfDay();
       // one candidate per unprocessed tet; the unprocessed tets are the new
       // ones, gathered at the end of the array, hence the dynamic schedule.
-      // The candidates are processed in batches per thread: the size
-      // callback gives them their size, and those too close to a node of
-      // their tet are dropped, while the nodes are still in cache
+      // The candidates too close to a node of their tet for the size
+      // interpolated from its nodes are dropped: the size field is only
+      // evaluated on those kept (as HXT does: on the nozzle 785M candidates
+      // against 169M kept, and the field took 470 of 540 s)
       const std::size_t ntet = m.ntet;
       std::size_t numCandidates = 0;
 #pragma omp parallel num_threads(nthreads) reduction(+ : numCandidates)
@@ -3623,29 +3624,6 @@ namespace pdel3d {
         const std::size_t expected = lastKept / nthreads + 4096;
         pts.reserve(4 * (expected + expected / 4));
         tets.reserve(expected + expected / 4);
-        constexpr std::size_t B = 2048;
-        double bpts[4 * B];
-        tIdx btets[B];
-        std::size_t nb = 0;
-        // the candidates too close to a node of their tet for the size
-        // interpolated from its nodes are dropped; the size field is only
-        // evaluated on those kept (as HXT does: on the nozzle 785M
-        // candidates against 169M kept, and the field took 470 of 540 s)
-        auto flush = [&]() {
-          for(std::size_t i = 0; i < nb; i++) {
-            const double *q = &bpts[4 * i];
-            bool close = q[3] <= 0.;
-            const vIdx *n = &m.node[4 * btets[i]];
-            for(int k = 0; k < 4 && !close; k++) {
-              const double *x = &m.xyz[4 * n[k]];
-              close = tooClose(x[3], q[3], sqDist(x, q), opt);
-            }
-            if(close) continue;
-            pts.insert(pts.end(), q, q + 4);
-            tets.push_back(btets[i]);
-          }
-          nb = 0;
-        };
 #pragma omp for schedule(dynamic, 4096) nowait
         for(std::size_t t = 0; t < ntet; t++) {
           if(m.flag[t] & (F_PROCESSED | F_DELETED)) continue;
@@ -3656,13 +3634,12 @@ namespace pdel3d {
             for(int k = 0; k < 3; k++) p[i][k] = m.xyz[4 * v + k];
             s[i] = m.xyz[4 * v + 3];
           }
-          double *center = &bpts[4 * nb];
+          double center[4];
           numCandidates++;
           if(bestCenter(p, s, center, opt)) continue;
-          btets[nb] = (tIdx)t;
-          if(++nb == B) flush();
+          pts.insert(pts.end(), center, center + 4);
+          tets.push_back((tIdx)t);
         }
-        flush();
       }
       totalCandidates += numCandidates;
       if(!numCandidates) break;
@@ -3796,7 +3773,7 @@ namespace {
     std::vector<GEdge *> curves;
     std::vector<GVertex *> points;
     std::vector<MVertex *> vertices; // index -> vertex
-    std::vector<pdel3d::vIdx> triNode, lineNode, pointNode;
+    std::vector<pdel3d::vIdx> triNode, lineNode;
     std::vector<std::uint32_t> triColor, lineColor;
     std::vector<MTriangle *> triElem; // the elements behind triNode/lineNode
     std::vector<MLine *> lineElem;
@@ -3991,15 +3968,31 @@ namespace {
       }
     }
     for(GVertex *gv : s.points)
-      for(MPoint *p : gv->points) s.pointNode.push_back(index(p->getVertex(0)));
+      for(MPoint *p : gv->points) index(p->getVertex(0));
     return true;
   }
 
-  // mesh size at the surface vertices: the mean length of their edges in the
-  // triangles and lines, and the prescribed size at embedded points
-  void surfaceSizes(const SurfaceMesh &s, pdel3d::Mesh &m, double factor)
+  // the coordinates of the vertices of s and their mesh size: prescribed at
+  // the embedded points, otherwise the mean length of their edges in the
+  // triangles and lines
+  void setVertices(const SurfaceMesh &s, pdel3d::Mesh &m, double factor)
   {
-    const std::size_t nv = m.numVertices();
+    const std::size_t nv = s.vertices.size();
+    m.xyz.assign(4 * nv, 0.);
+    for(std::size_t v = 0; v < nv; v++) {
+      m.xyz[4 * v + 0] = s.vertices[v]->x();
+      m.xyz[4 * v + 1] = s.vertices[v]->y();
+      m.xyz[4 * v + 2] = s.vertices[v]->z();
+    }
+    m.numDefaultDist = 0; // the curve coordinates are those of other vertices
+    if(CTX::instance()->mesh.lcFromPoints) {
+      for(GVertex *gv : s.points) {
+        if(gv->prescribedMeshSizeAtVertex() == MAX_LC) continue;
+        for(MPoint *p : gv->points)
+          m.xyz[4 * p->getVertex(0)->getIndex() + 3] =
+            gv->prescribedMeshSizeAtVertex() / factor;
+      }
+    }
     std::vector<double> sum(nv, 0.), count(nv, 0.);
     auto addEdge = [&](pdel3d::vIdx a, pdel3d::vIdx b) {
       const double l =
@@ -4123,7 +4116,8 @@ namespace {
   // surface meshes may have changed (Steiner points). The mesh is rebuilt
   // from them: vertices, tets, adjacencies and ghosts
   bool recoverBoundary(pdel3d::Mesh &m, SurfaceMesh &s,
-                       std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
+                       std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
+                       double sizeFactor)
   {
     initialTetrahedralization init;
     init.vertices = s.vertices;
@@ -4148,7 +4142,6 @@ namespace {
     bool ok;
     {
       regionGroupBoundary group(regions);
-      for(MVertex *v : gr->mesh_vertices) v->setIndex(-1);
       ok = meshGRegionBoundaryRecovery(gr, &sqr, &init);
     }
     if(!ok) return false;
@@ -4175,14 +4168,7 @@ namespace {
         gr->mesh_vertices[kept++] = v;
     }
     gr->mesh_vertices.resize(kept);
-    const std::size_t nv = s.vertices.size();
-    m.xyz.assign(4 * nv, 0.);
-    for(std::size_t v = 0; v < nv; v++) {
-      m.xyz[4 * v + 0] = s.vertices[v]->x();
-      m.xyz[4 * v + 1] = s.vertices[v]->y();
-      m.xyz[4 * v + 2] = s.vertices[v]->z();
-    }
-    m.numDefaultDist = 0; // the vertices were renumbered
+    setVertices(s, m, sizeFactor);
     // the tets, oriented with orient3d(n0, n1, n2, n3) < 0
     const std::size_t ntet = gr->tetrahedra.size();
     m.ntet = 0;
@@ -4419,8 +4405,8 @@ namespace {
   // recovered or stitched; the mesh is then left as it was
   bool recoverWithLocalTetGen(pdel3d::Mesh &m, SurfaceMesh &s,
                               std::vector<GRegion *> &regions,
-                              std::vector<pdel3d::tRef> &tri2tet,
-                              std::vector<std::uint64_t> &line2tet,
+                              const std::vector<pdel3d::tRef> &tri2tet,
+                              const std::vector<std::uint64_t> &line2tet,
                               const std::vector<std::uint8_t> &lineInTriangle,
                               int nthreads)
   {
@@ -5070,7 +5056,6 @@ namespace {
           for(int k = 0; k < 3; k++) s.triNode.push_back(n[k]);
           s.triColor.push_back(tag);
           s.triElem.push_back(t);
-          tri2tet.push_back(NO_ADJ);
           triRemoved.push_back(0);
         }
       }
@@ -5101,30 +5086,28 @@ namespace {
           for(int k = 0; k < 2; k++) s.lineNode.push_back(n[k]);
           s.lineColor.push_back(tag);
           s.lineElem.push_back(l);
-          line2tet.push_back(NO_LINE);
           lineRemoved.push_back(0);
         }
       }
     }
-    // drop the replaced triangles and lines from the surface mesh
+    // drop the replaced triangles and lines from the surface mesh (the caller
+    // maps them to the tets again)
     auto compact = [](auto &nodes, int per, auto &colors, auto &elems,
-                      auto &map, const std::vector<std::uint8_t> &removed) {
+                      const std::vector<std::uint8_t> &removed) {
       std::size_t n = 0;
       for(std::size_t i = 0; i < removed.size(); i++) {
         if(removed[i]) continue;
         for(int k = 0; k < per; k++) nodes[per * n + k] = nodes[per * i + k];
         colors[n] = colors[i];
         elems[n] = elems[i];
-        map[n] = map[i];
         n++;
       }
       nodes.resize(per * n);
       colors.resize(n);
       elems.resize(n);
-      map.resize(n);
     };
-    compact(s.triNode, 3, s.triColor, s.triElem, tri2tet, triRemoved);
-    compact(s.lineNode, 2, s.lineColor, s.lineElem, line2tet, lineRemoved);
+    compact(s.triNode, 3, s.triColor, s.triElem, triRemoved);
+    compact(s.lineNode, 2, s.lineColor, s.lineElem, lineRemoved);
     m.removeDeleted(nthreads);
     Msg::Info("Boundary recovery on cavities: %lu cavit%s of %lu tets in "
               "all, %lu Steiner point%s (Wall %gs)",
@@ -5163,24 +5146,8 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
                                     CTX::instance()->mesh.randFactor3d);
   pdel3d::Mesh m;
   const std::size_t nv = s.vertices.size();
-  m.xyz.resize(4 * nv);
-  for(std::size_t v = 0; v < nv; v++) {
-    m.xyz[4 * v + 0] = s.vertices[v]->x();
-    m.xyz[4 * v + 1] = s.vertices[v]->y();
-    m.xyz[4 * v + 2] = s.vertices[v]->z();
-    m.xyz[4 * v + 3] = 0.;
-  }
-  const double sizeFactor =
-    CTX::instance()->mesh.lcFactor * regions[0]->getMeshSizeFactor();
-  if(CTX::instance()->mesh.lcFromPoints) {
-    for(GVertex *gv : s.points) {
-      if(gv->prescribedMeshSizeAtVertex() == MAX_LC) continue;
-      for(MPoint *p : gv->points)
-        m.xyz[4 * p->getVertex(0)->getIndex() + 3] =
-          gv->prescribedMeshSizeAtVertex() / sizeFactor;
-    }
-  }
-  surfaceSizes(s, m, sizeFactor);
+  const double sizeFactor = CTX::instance()->mesh.lcFactor;
+  setVertices(s, m, sizeFactor);
 
   // the Delaunay tetrahedralization of the surface vertices
   Msg::Info("Tetrahedrizing %lu nodes...", nv);
@@ -5206,7 +5173,6 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
     s.vertices.swap(vertices);
     for(auto &v : s.triNode) v = inverse[v];
     for(auto &v : s.lineNode) v = inverse[v];
-    for(auto &v : s.pointNode) v = inverse[v];
     std::size_t notInserted = 0;
     for(std::size_t i = 0; i < nv; i++)
       if(status[i] != pdel3d::ST_INSERTED) notInserted++;
@@ -5279,20 +5245,10 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
       else
         Msg::Warning("Falling back to the global boundary recovery after a "
                      "partial local one");
-      if(!recoverBoundary(m, s, regions, sqr)) {
+      if(!recoverBoundary(m, s, regions, sqr, sizeFactor)) {
         Msg::Error("Boundary recovery failed");
         return 1;
       }
-
-      if(CTX::instance()->mesh.lcFromPoints) {
-        for(GVertex *gv : s.points) {
-          if(gv->prescribedMeshSizeAtVertex() == MAX_LC) continue;
-          for(MPoint *p : gv->points)
-            m.xyz[4 * p->getVertex(0)->getIndex() + 3] =
-              gv->prescribedMeshSizeAtVertex() / sizeFactor;
-        }
-      }
-      surfaceSizes(s, m, sizeFactor);
       remap();
     }
     if(missing || missingLines) {
