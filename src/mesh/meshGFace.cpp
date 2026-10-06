@@ -6,6 +6,7 @@
 // Contributor(s):
 //   Michael Ermakov (ermakov@ipmnet.ru)
 
+#include <random>
 #include <limits>
 #include <sstream>
 #include <stdlib.h>
@@ -50,27 +51,37 @@
 #include "meshTriangulation.h"
 #include "meshDuplicateVertices.h"
 #include "meshGFaceParamBoundary.h"
-#include <random>
 
-// Faces are meshed in parallel, so perturbing points with rand() made each
-// face's result depend on how the threads interleaved their draws. Seed a
-// generator per face and per retry instead.
-class FacePerturbation {
-  std::mt19937 _generator;
+namespace {
+  // Faces are meshed in parallel, so perturbing points with rand() made each
+  // face's result depend on how the threads interleaved their draws. Seed a
+  // generator per face and per retry instead.
+  class FacePerturbation {
+    std::mt19937 _generator;
 
-public:
-  FacePerturbation(const GFace *gf, int recurIter)
-  {
-    std::seed_seq seed{(unsigned)CTX::instance()->mesh.randomSeed,
-                       (unsigned)gf->tag(), (unsigned)recurIter};
-    _generator.seed(seed);
-  }
-  // uniform in [0, 1]
-  double operator()()
-  {
-    return (double)_generator() / (double)std::mt19937::max();
-  }
-};
+  public:
+    FacePerturbation(const GFace *gf, int recurIter)
+    {
+      std::seed_seq seed{(unsigned)CTX::instance()->mesh.randomSeed,
+                         (unsigned)gf->tag(), (unsigned)recurIter};
+      _generator.seed(seed);
+    }
+    // uniform in [0, 1]
+    double operator()()
+    { return (double)_generator() / (double)std::mt19937::max(); }
+    // point i of the initial triangulation at (u, v), perturbed by up to
+    // randFactor * lc
+    void place(DocRecord &doc, int i, double u, double v, void *data, double lc)
+    {
+      const double du = CTX::instance()->mesh.randFactor * lc * (*this)();
+      const double dv = CTX::instance()->mesh.randFactor * lc * (*this)();
+      doc.points[i].where.h = u + du;
+      doc.points[i].where.v = v + dv;
+      doc.points[i].adjacent = nullptr;
+      doc.points[i].data = data;
+    }
+  };
+} // namespace
 
 static void remeshUnrecoveredEdges(
   std::multimap<MVertex *, BDS_Point *> &recoverMultiMapInv,
@@ -1035,12 +1046,7 @@ initialTriangulation(GFace *gf, BDS_Mesh *m, std::vector<BDS_Point *> &points,
     double LC2D = norm(dd);
     DocRecord doc(points.size() + 4);
     for(std::size_t i = 0; i < points.size(); i++) {
-      double XX = CTX::instance()->mesh.randFactor * LC2D * perturbation();
-      double YY = CTX::instance()->mesh.randFactor * LC2D * perturbation();
-      doc.points[i].where.h = points[i]->u + XX;
-      doc.points[i].where.v = points[i]->v + YY;
-      doc.points[i].data = points[i];
-      doc.points[i].adjacent = nullptr;
+      perturbation.place(doc, i, points[i]->u, points[i]->v, points[i], LC2D);
     }
 
     // increase the size of the bounding box
@@ -1293,13 +1299,7 @@ static void initialTriangulationPeriodic(
     pp->lcBGM() = BGM_MeshSize(*itvx, 0, 0, v->x(), v->y(), v->z());
     pp->lc() = pp->lcBGM();
     recoverMap[pp] = v;
-    double XX = CTX::instance()->mesh.randFactor * LC2D * perturbation();
-    double YY = CTX::instance()->mesh.randFactor * LC2D * perturbation();
-    doc.points[count].where.h = pp->u + XX;
-    doc.points[count].where.v = pp->v + YY;
-    doc.points[count].adjacent = nullptr;
-    doc.points[count].data = pp;
-    count++;
+    perturbation.place(doc, count++, pp->u, pp->v, pp, LC2D);
     ++itvx;
   }
 
@@ -1372,13 +1372,7 @@ static void initialTriangulationPeriodic(
           pp->lc() = pp->lcBGM();
           recoverMap[pp] = v;
           facile[v] = pp;
-          double XX = CTX::instance()->mesh.randFactor * LC2D * perturbation();
-          double YY = CTX::instance()->mesh.randFactor * LC2D * perturbation();
-          doc.points[count].where.h = pp->u + XX;
-          doc.points[count].where.v = pp->v + YY;
-          doc.points[count].adjacent = nullptr;
-          doc.points[count].data = pp;
-          count++;
+          perturbation.place(doc, count++, pp->u, pp->v, pp, LC2D);
         }
       }
     }
@@ -1397,13 +1391,7 @@ static void initialTriangulationPeriodic(
     std::vector<BDS_Point *> &edgeLoop_BDS = edgeLoops_BDS[i];
     for(std::size_t j = 0; j < edgeLoop_BDS.size(); j++) {
       BDS_Point *pp = edgeLoop_BDS[j];
-      double XX = CTX::instance()->mesh.randFactor * LC2D * perturbation();
-      double YY = CTX::instance()->mesh.randFactor * LC2D * perturbation();
-      doc.points[count].where.h = pp->u + XX;
-      doc.points[count].where.v = pp->v + YY;
-      doc.points[count].adjacent = nullptr;
-      doc.points[count].data = pp;
-      count++;
+      perturbation.place(doc, count++, pp->u, pp->v, pp, LC2D);
     }
   }
 

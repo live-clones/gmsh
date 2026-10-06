@@ -6,19 +6,13 @@
 #include <stdlib.h>
 #include <cmath>
 #include <limits>
-#include <queue>
 #include "GmshMessage.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "GModelIO_GEO.h"
 #include "Geo.h"
 #include "Context.h"
-#include "MPoint.h"
 #include "MElementOctree.h"
-#include "Octree.h"
-#include "Context.h"
-#include "GEdgeLoop.h"
-#include "MEdge.h"
 #include "GModelParametrize.h"
 
 
@@ -545,112 +539,6 @@ void discreteFace::_debugParametrization(bool uv)
   }
 }
 
-void intrinsicDelaunayize(discreteFace *df)
-{
-#if defined(HAVE_EIGEN) && defined(HAVE_GEOMETRYCENTRAL)
-
-  char name[245];
-  sprintf(name, "intrinsic%d.pos", df->tag());
-  FILE *ff = fopen(name, "w");
-  fprintf(ff, "View \"\"{\n");
-
-  Eigen::MatrixXi triangles(df->triangles.size(), 3);
-  std::vector<geometrycentral::Vector3> vertexCoordinates;
-  for(auto t : df->triangles) {
-    t->getVertex(0)->setIndex(-1);
-    t->getVertex(1)->setIndex(-1);
-    t->getVertex(2)->setIndex(-1);
-  }
-  int index = 0;
-  for(auto t : df->triangles) {
-    for(int i = 0; i < 3; i++) {
-      if(t->getVertex(i)->getIndex() == -1) {
-        geometrycentral::Vector3 p = {
-          t->getVertex(i)->x(), t->getVertex(i)->y(), t->getVertex(i)->z()};
-        vertexCoordinates.push_back(p);
-        t->getVertex(i)->setIndex(index++);
-      }
-    }
-  }
-  Eigen::MatrixXd positions(vertexCoordinates.size(), 3);
-  for(size_t i = 0; i < vertexCoordinates.size(); i++) {
-    positions(i, 0) = vertexCoordinates[i].x;
-    positions(i, 1) = vertexCoordinates[i].y;
-    positions(i, 2) = vertexCoordinates[i].z;
-  }
-
-  int T = 0;
-  for(auto t : df->triangles) {
-    for(int i = 0; i < 3; i++) triangles(T, i) = t->getVertex(i)->getIndex();
-    T++;
-  }
-  geometrycentral::surface::ManifoldSurfaceMesh msm(triangles);
-
-  printf("isManifold %d\n", msm.isManifold());
-  printf("isOriented %d\n", msm.isOriented());
-  printf("nVertices %zu\n", msm.nVertices());
-  printf("nCorners %zu\n", msm.nCorners());
-  printf("nInteriorVertices %zu\n", msm.nInteriorVertices());
-
-  geometrycentral::surface::VertexPositionGeometry vpg(msm, positions);
-
-  geometrycentral::surface::SignpostIntrinsicTriangulation signpostTri(msm,
-                                                                       vpg);
-
-  signpostTri.flipToDelaunay();
-
-  signpostTri.delaunayRefine();
-  printf("-->nVertices %zu %zu\n", signpostTri.intrinsicMesh->nVertices(),
-         signpostTri.mesh.nVertices());
-
-  signpostTri.requireVertexIndices();
-
-  size_t nV = signpostTri.mesh.nVertices();
-  size_t nF = signpostTri.mesh.nFaces();
-
-  Eigen::MatrixXd vertexPositions(nV, 3);
-  Eigen::MatrixXi faceInds(nF, 3);
-
-  size_t iF = 0;
-  for(geometrycentral::surface::Face f : signpostTri.mesh.faces()) {
-    geometrycentral::surface::Halfedge he = f.halfedge();
-    for(int v = 0; v < 3; v++) {
-      geometrycentral::surface::Vertex vA = he.vertex();
-      size_t indA = signpostTri.vertexIndices[vA];
-      faceInds(iF, v) = indA;
-      he = he.next();
-    }
-    iF++;
-  }
-
-  size_t iV = 0;
-  for(geometrycentral::surface::Vertex v : signpostTri.mesh.vertices()) {
-    geometrycentral::Vector3 pos =
-      signpostTri.vertexLocations[v].interpolate(vpg.inputVertexPositions);
-    vertexPositions(iV, 0) = pos.x;
-    vertexPositions(iV, 1) = pos.y;
-    vertexPositions(iV, 2) = pos.z;
-    iV++;
-  }
-
-  for(int i = 0; i < nF; i++) {
-    int id0 = faceInds(i, 0);
-    int id1 = faceInds(i, 1);
-    int id2 = faceInds(i, 2);
-    fprintf(ff, "ST(%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg){%d,%d,%d};\n",
-            vertexPositions(id0, 0), vertexPositions(id0, 1),
-            vertexPositions(id0, 2), vertexPositions(id1, 0),
-            vertexPositions(id1, 1), vertexPositions(id1, 2),
-            vertexPositions(id2, 0), vertexPositions(id2, 1),
-            vertexPositions(id2, 2), df->tag(), df->tag(), df->tag());
-  }
-
-  fprintf(ff, "};\n");
-  fclose(ff);
-
-#endif
-}
-
 int discreteFace::createGeometry()
 {
   stl_vertices_uv.clear();
@@ -659,7 +547,6 @@ int discreteFace::createGeometry()
   stl_triangles.clear();
   if(triangles.empty()) return 0;
 
-  //  intrinsicDelaunayize(this);
 
   double minq = 1.;
   for(auto t : triangles) minq = std::min(minq, t->gammaShapeMeasure());
