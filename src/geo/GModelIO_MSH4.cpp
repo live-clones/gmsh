@@ -1043,22 +1043,31 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
     const int numVertPerElm = MElement::getInfoMSH(elmType);
     if(binary) {
-      std::size_t n = 1 + numVertPerElm, offset = pendingData.size();
-      pendingData.resize(offset + numElements * n);
-      if(fread(&pendingData[offset], sizeof(std::size_t), numElements * n,
-               fp) != numElements * n) {
-        delete[] elementsRead;
-        return nullptr;
-      }
-      if(swap)
-        SwapBytes((char *)&pendingData[offset], sizeof(std::size_t),
-                  numElements * n);
-      pending.push_back(
-        {entity, elmType, numVertPerElm, elementRead, offset, numElements});
-      elementRead += numElements;
-      if(pendingData.size() > (1 << 23) && !makePending()) {
-        delete[] elementsRead;
-        return nullptr;
+      // (a large block is read in pieces of about 64 MB, so that the memory
+      // stays bounded and the progress meter moves)
+      const std::size_t n = 1 + numVertPerElm, maxData = 1 << 23;
+      std::size_t left = numElements;
+      while(left) {
+        std::size_t offset = pendingData.size();
+        std::size_t room = (offset < maxData) ? (maxData - offset) / n : 0;
+        std::size_t num = std::min(left, std::max<std::size_t>(1, room));
+        pendingData.resize(offset + num * n);
+        if(fread(&pendingData[offset], sizeof(std::size_t), num * n, fp) !=
+           num * n) {
+          delete[] elementsRead;
+          return nullptr;
+        }
+        if(swap)
+          SwapBytes((char *)&pendingData[offset], sizeof(std::size_t),
+                    num * n);
+        pending.push_back(
+          {entity, elmType, numVertPerElm, elementRead, offset, num});
+        elementRead += num;
+        left -= num;
+        if(pendingData.size() >= maxData && !makePending()) {
+          delete[] elementsRead;
+          return nullptr;
+        }
       }
     }
     else {
