@@ -7334,6 +7334,12 @@ double opt_mesh_pack_cleanup_method(OPT_ARGS_NUM)
   return CTX::instance()->mesh.packCleanupMethod;
 }
 
+double opt_mesh_pack_recombination(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.packRecombination = (int)val;
+  return CTX::instance()->mesh.packRecombination;
+}
+
 double opt_mesh_optimize_quads_smart_laplacian(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsSmartLaplacian = (int)val;

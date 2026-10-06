@@ -751,6 +751,11 @@ V2 cleanup after packing of parallelograms. 1: enabled (0 is also accepted for c
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.PackRecombination
+Recombination of the triangulation of the packed points. 0: Blossom, 1: Q-Morph (advancing fronts); the cavity optimizer follows in both cases@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.OptimizeQuadsFinalSplitCadDistanceRatio
 Final V2 quad splitting: trigger distance to CAD divided by local target size; insert the other diagonal only if within tolerance and at least twice closer (negative disables CAD trigger; invalid or absolutely unacceptable quads are still split when possible)@*
 Default value: @code{0.2}@*

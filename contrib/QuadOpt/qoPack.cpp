@@ -4,6 +4,7 @@
 
 #include "qoPack.h"
 #include "qoOptimizer.h"
+#include "qoQMorph.h"
 #include "Context.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -28,7 +29,17 @@ namespace QuadOpt {
     transferSeamGEdgesVerticesToGFace(m);
     if(CTX::instance()->mesh.packPatterns)
       quadMeshingOfSimpleFacesWithPatterns(m, .02);
-    if(CTX::instance()->mesh.packCleanupMethod != 2)
+    if(CTX::instance()->mesh.packRecombination == 1) {
+      // Q-Morph on the triangles; a face already made of quads (patterns) is
+      // only optimized. Both include the cavity optimizer.
+      for(GFace *gf : m->getFaces()) {
+        if(gf->triangles.empty() && gf->quadrangles.empty()) continue;
+        if(gf->quadrangles.empty()) qMorph(gf);
+        else optimizeFace(gf);
+      }
+      m->deleteVertexArrays();
+    }
+    else if(CTX::instance()->mesh.packCleanupMethod != 2)
       optimizeQuads(m);
     else
       Msg::Info("PACK cleanup disabled: preserving generated mesh");
@@ -102,7 +113,7 @@ namespace QuadOpt {
       // points whatever the size specification (uniform or a size field)
       if(packing) {
         recombineAll = mesh.recombineAll;
-        mesh.recombineAll = 1;
+        mesh.recombineAll = mesh.packRecombination == 1 ? 0 : 1;
       }
       if(!active) return;
 

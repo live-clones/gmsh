@@ -1626,6 +1626,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PackCleanupMethod" , opt_mesh_pack_cleanup_method, 1 ,
     "V2 cleanup after packing of parallelograms. 1: enabled (0 is also "
       "accepted for compatibility), 2: disabled" },
+  { F|O, "PackRecombination", opt_mesh_pack_recombination, 0,
+    "Recombination of the triangulation of the packed points. 0: Blossom, "
+      "1: Q-Morph (advancing fronts); the cavity optimizer follows in both cases" },
   { F|O, "OptimizeQuadsFinalSplitCadDistanceRatio", opt_mesh_optimize_quads_final_split_cad_distance_ratio, 0.2,
     "Final V2 quad splitting: trigger distance to CAD divided by local target size; insert the other diagonal only if within tolerance and at least twice closer (negative disables CAD trigger; invalid or absolutely unacceptable quads are still split when possible)" },
   { F|O, "OptimizeQuadsSmartLaplacian", opt_mesh_optimize_quads_smart_laplacian, 2,

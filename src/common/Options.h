@@ -686,6 +686,7 @@ double opt_mesh_ignore_edges(OPT_ARGS_NUM);
 double opt_mesh_ignore_faces(OPT_ARGS_NUM);
 double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM);
 double opt_mesh_pack_cleanup_method(OPT_ARGS_NUM);
+double opt_mesh_pack_recombination(OPT_ARGS_NUM);
 double opt_mesh_save_debug_files(OPT_ARGS_NUM);
 double opt_mesh_optimize_quads_smart_laplacian(OPT_ARGS_NUM);
 double opt_mesh_optimize_quads_final_split_cad_distance_ratio(OPT_ARGS_NUM);
