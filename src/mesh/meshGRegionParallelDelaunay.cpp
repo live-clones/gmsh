@@ -42,6 +42,7 @@
 #include <memory>
 #include <numeric>
 #include <set>
+#include <unordered_set>
 #include "meshGRegionParallelDelaunay.h"
 #include "meshGRegionParallelOptimize.h"
 #include "GmshMessage.h"
@@ -4191,12 +4192,12 @@ namespace {
     // or are deleted when no tet of the volumes uses them
     std::vector<std::uint8_t> inVolume(nv, 0);
     std::vector<MVertex *> &steiner = regions[0]->mesh_vertices;
+    std::unordered_set<MVertex *> notSteiner; // any more
     for(std::size_t v = 0; v < s.vertices.size(); v++) {
       const bool volume = s.vertices[v]->onWhat() == regions[0];
       if(newIndex[v] == pdel3d::GHOST) {
         if(volume) {
-          steiner.erase(
-            std::find(steiner.begin(), steiner.end(), s.vertices[v]));
+          notSteiner.insert(s.vertices[v]);
           delete s.vertices[v];
           s.vertices[v] = nullptr;
         }
@@ -4216,13 +4217,14 @@ namespace {
     m.flag.clear();
     std::vector<std::uint64_t>().swap(m.dist);
     const int nt = std::max(1, nthreads);
+    const int nc = 8 * nt; // chunks, scheduled dynamically for the balance
     // the region of each new or Steiner vertex (any tet referencing it; nr:
     // none), and the number of tets of each region in each chunk
     std::vector<std::uint32_t> owner(nv, (std::uint32_t)nr);
-    std::vector<std::size_t> numTets(nt * nr, 0), numVerts(nt * nr, 0);
-#pragma omp parallel for schedule(static) num_threads(nt)
-    for(int c = 0; c < nt; c++) {
-      for(std::size_t t = c * m.ntet / nt; t < (c + 1) * m.ntet / nt; t++) {
+    std::vector<std::size_t> numTets(nc * nr, 0), numVerts(nc * nr, 0);
+#pragma omp parallel for schedule(dynamic) num_threads(nt)
+    for(int c = 0; c < nc; c++) {
+      for(std::size_t t = c * m.ntet / nc; t < (c + 1) * m.ntet / nc; t++) {
         if(m.isGhost((pdel3d::tIdx)t) || m.color[t] >= nr) continue;
         numTets[c * nr + m.color[t]]++;
         for(int k = 0; k < 4; k++) {
@@ -4233,7 +4235,7 @@ namespace {
     }
     for(std::size_t v = 0; v < firstNew; v++) {
       if(!inVolume[v] || !owner[v]) continue;
-      steiner.erase(std::find(steiner.begin(), steiner.end(), c2v[v]));
+      notSteiner.insert(c2v[v]);
       if(owner[v] == nr) {
         delete c2v[v];
         continue;
@@ -4241,19 +4243,24 @@ namespace {
       c2v[v]->setEntity(regions[owner[v]]);
       regions[owner[v]]->mesh_vertices.push_back(c2v[v]);
     }
-#pragma omp parallel for schedule(static) num_threads(nt)
-    for(int c = 0; c < nt; c++)
-      for(std::size_t v = firstNew + c * (nv - firstNew) / nt;
-          v < firstNew + (c + 1) * (nv - firstNew) / nt; v++)
+    if(!notSteiner.empty())
+      steiner.erase(
+        std::remove_if(steiner.begin(), steiner.end(),
+                       [&](MVertex *v) { return notSteiner.count(v) > 0; }),
+        steiner.end());
+#pragma omp parallel for schedule(dynamic) num_threads(nt)
+    for(int c = 0; c < nc; c++)
+      for(std::size_t v = firstNew + c * (nv - firstNew) / nc;
+          v < firstNew + (c + 1) * (nv - firstNew) / nc; v++)
         if(owner[v] < nr) numVerts[c * nr + owner[v]]++;
     // where each chunk writes in the vertex and tet lists of each region, and
     // the number of its first tet
-    std::vector<std::size_t> firstVert(nt * nr), firstTet(nt * nr),
-      firstNum(nt + 1, 0);
+    std::vector<std::size_t> firstVert(nc * nr), firstTet(nc * nr),
+      firstNum(nc + 1, 0);
     for(std::size_t r = 0; r < nr; r++) {
       GRegion *gr = regions[r];
       std::size_t v = gr->mesh_vertices.size(), t = gr->tetrahedra.size();
-      for(int c = 0; c < nt; c++) {
+      for(int c = 0; c < nc; c++) {
         firstVert[c * nr + r] = v;
         firstTet[c * nr + r] = t;
         v += numVerts[c * nr + r];
@@ -4262,18 +4269,21 @@ namespace {
       gr->mesh_vertices.resize(v);
       gr->tetrahedra.resize(t);
     }
-    for(int c = 0; c < nt; c++) {
+    for(int c = 0; c < nc; c++) {
       firstNum[c + 1] = firstNum[c];
       for(std::size_t r = 0; r < nr; r++)
         firstNum[c + 1] += numTets[c * nr + r];
     }
-    const std::size_t total = firstNum[nt];
+    const std::size_t total = firstNum[nc];
+    // the maximum numbers first: the constructors then never write them
+    model->setMaxVertexNumber(baseV + nv - firstNew);
+    model->setMaxElementNumber(baseE + total);
 #pragma omp parallel num_threads(nt)
     {
-#pragma omp for schedule(static)
-      for(int c = 0; c < nt; c++) {
-        for(std::size_t v = firstNew + c * (nv - firstNew) / nt;
-            v < firstNew + (c + 1) * (nv - firstNew) / nt; v++) {
+#pragma omp for schedule(dynamic)
+      for(int c = 0; c < nc; c++) {
+        for(std::size_t v = firstNew + c * (nv - firstNew) / nc;
+            v < firstNew + (c + 1) * (nv - firstNew) / nc; v++) {
           if(owner[v] == nr) continue;
           GRegion *gr = regions[owner[v]];
           const double *x = &m.xyz[4 * v];
@@ -4281,10 +4291,10 @@ namespace {
           gr->mesh_vertices[firstVert[c * nr + owner[v]]++] = c2v[v];
         }
       }
-#pragma omp for schedule(static)
-      for(int c = 0; c < nt; c++) {
+#pragma omp for schedule(dynamic)
+      for(int c = 0; c < nc; c++) {
         std::size_t num = baseE + 1 + firstNum[c];
-        for(std::size_t t = c * m.ntet / nt; t < (c + 1) * m.ntet / nt; t++) {
+        for(std::size_t t = c * m.ntet / nc; t < (c + 1) * m.ntet / nc; t++) {
           if(m.isGhost((pdel3d::tIdx)t) || m.color[t] >= nr) continue;
           const pdel3d::vIdx *n = &m.node[4 * t];
           regions[m.color[t]]->tetrahedra[firstTet[c * nr + m.color[t]]++] =
@@ -4293,8 +4303,6 @@ namespace {
         }
       }
     }
-    model->setMaxVertexNumber(baseV + nv - firstNew);
-    model->setMaxElementNumber(baseE + total);
     return total;
   }
 
