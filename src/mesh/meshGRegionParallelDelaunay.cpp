@@ -2663,7 +2663,11 @@ namespace pdel3d {
             if(pos[i] == req[j]) rq[j] = i;
           if(rq[j] < 0) return false; // the ghost cannot be required
         }
-        std::sort(rq, rq + nreq);
+        // sorted (at most 3 entries: GCC cannot tell, and std::sort trips
+        // -Warray-bounds)
+        for(int i = 1; i < nreq; i++)
+          for(int j = i; j > 0 && rq[j - 1] > rq[j]; j--)
+            std::swap(rq[j - 1], rq[j]);
         // a required diagonal that is the closing edge of the polygon is
         // already there
         if(nreq == 2 && rq[0] == 0 && rq[1] == k - 1) nreq = 0;
