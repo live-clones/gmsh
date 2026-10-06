@@ -69,8 +69,7 @@ static double objective_function(double xi, MVertex *ver, double xTarget,
       minQual = std::min(Q, minQual);
     }
     else if(!onlytet) {
-      // keep the sign: inverted elements must stay penalized
-      minQual = std::min(lt[i]->minSICNShapeMeasure() * .2, minQual);
+      minQual = std::min(std::abs(lt[i]->minSICNShapeMeasure()) * .2, minQual);
     }
   }
   ver->x() = x;
