@@ -7,8 +7,10 @@
 //   Jonathan Lambrechts
 //
 
+#include <atomic>
 #include <cstdlib>
 #include <limits>
+#include <mutex>
 #include <list>
 #include <cmath>
 #include <fstream>
@@ -94,7 +96,20 @@ Field *FieldManager::newField(int id, const std::string &type_name)
   if(!f) return nullptr;
   f->id = id;
   (*this)[id] = f;
+  // the fields that refer to others by id resolve them again
+  for(auto &it : *this) it.second->updateNeeded = true;
   return f;
+}
+
+static std::recursive_mutex fieldUpdateMutex;
+
+void Field::ensureUpdated()
+{
+  // checked again under the lock, which is recursive as an update can
+  // evaluate other fields (OctreeField)
+  if(!updateNeeded) return;
+  std::lock_guard<std::recursive_mutex> lock(fieldUpdateMutex);
+  if(updateNeeded) update();
 }
 
 int FieldManager::newId()
@@ -126,6 +141,8 @@ void FieldManager::deleteField(int id)
   }
   delete it->second;
   erase(it);
+  // the fields that refer to others by id resolve them again
+  for(auto &f : *this) f.second->updateNeeded = true;
 }
 
 // StructuredField
@@ -184,66 +201,74 @@ public:
   {
     if(_data) delete[] _data;
   }
+  // read the file: false on failure
+  bool read()
+  {
+    try {
+      std::ifstream input;
+      if(_textFormat)
+        input.open(_fileName.c_str());
+      else
+        input.open(_fileName.c_str(), std::ios::binary);
+      if(!input.is_open()) {
+        Msg::Error("Could not open file '%s'", _fileName.c_str());
+        return false;
+      }
+      input.exceptions(std::ifstream::eofbit | std::ifstream::failbit |
+                       std::ifstream::badbit);
+      if(!_textFormat) {
+        input.read((char *)_o, 3 * sizeof(double));
+        input.read((char *)_d, 3 * sizeof(double));
+        input.read((char *)_n, 3 * sizeof(int));
+        int nt = _n[0] * _n[1] * _n[2];
+        if(nt <= 0) {
+          Msg::Error("Field %i: invalid number of data points %d x %d x %d",
+                     this->id, _n[0], _n[1], _n[2]);
+          return false;
+        }
+        if(_data) delete[] _data;
+        _data = new double[nt];
+        input.read((char *)_data, nt * sizeof(double));
+      }
+      else {
+        input >> _o[0] >> _o[1] >> _o[2] >> _d[0] >> _d[1] >> _d[2] >> _n[0] >>
+          _n[1] >> _n[2];
+        int nt = _n[0] * _n[1] * _n[2];
+        if(nt <= 0) {
+          Msg::Error("Field %i: invalid number of data points %d x %d x %d",
+                     this->id, _n[0], _n[1], _n[2]);
+          return false;
+        }
+        if(_data) delete[] _data;
+        _data = new double[nt];
+        for(int i = 0; i < nt; i++) input >> _data[i];
+      }
+      input.close();
+    } catch(...) {
+      Msg::Error("Field %i: error reading file '%s'", this->id,
+                 _fileName.c_str());
+      return false;
+    }
+    for(int i = 0; i < 3; i++) {
+      // if there is a single point, make sure _d[i] != 0
+      if(_n[i] == 1 && !_d[i]) _d[i] = 1.;
+    }
+    if(!_d[0] || !_d[1] || !_d[2]) {
+      Msg::Error("Field %i: Dx, Dy and Dz should be non zero", this->id);
+      return false;
+    }
+    return true;
+  }
+  void update()
+  {
+    if(!updateNeeded) return;
+    _errorStatus = !read();
+    updateNeeded = false;
+  }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-    if(updateNeeded) {
-      _errorStatus = false;
-      try {
-        std::ifstream input;
-        if(_textFormat)
-          input.open(_fileName.c_str());
-        else
-          input.open(_fileName.c_str(), std::ios::binary);
-        if(!input.is_open()) {
-          Msg::Error("Could not open file '%s'", _fileName.c_str());
-          return MAX_LC;
-        }
-        input.exceptions(std::ifstream::eofbit | std::ifstream::failbit |
-                         std::ifstream::badbit);
-        if(!_textFormat) {
-          input.read((char *)_o, 3 * sizeof(double));
-          input.read((char *)_d, 3 * sizeof(double));
-          input.read((char *)_n, 3 * sizeof(int));
-          int nt = _n[0] * _n[1] * _n[2];
-          if(nt <= 0) {
-            Msg::Error("Field %i: invalid number of data points %d x %d x %d",
-                       this->id, _n[0], _n[1], _n[2]);
-            return MAX_LC;
-          }
-          if(_data) delete[] _data;
-          _data = new double[nt];
-          input.read((char *)_data, nt * sizeof(double));
-        }
-        else {
-          input >> _o[0] >> _o[1] >> _o[2] >> _d[0] >> _d[1] >> _d[2] >>
-            _n[0] >> _n[1] >> _n[2];
-          int nt = _n[0] * _n[1] * _n[2];
-          if(nt <= 0) {
-            Msg::Error("Field %i: invalid number of data points %d x %d x %d",
-                       this->id, _n[0], _n[1], _n[2]);
-            return MAX_LC;
-          }
-          if(_data) delete[] _data;
-          _data = new double[nt];
-          for(int i = 0; i < nt; i++) input >> _data[i];
-        }
-        input.close();
-      } catch(...) {
-        _errorStatus = true;
-        Msg::Error("Field %i: error reading file '%s'", this->id,
-                   _fileName.c_str());
-      }
-      for(int i = 0; i < 3; i++) {
-        // if there is a single point, make sure _d[i] != 0
-        if(_n[i] == 1 && !_d[i]) _d[i] = 1.;
-      }
-      if(!_d[0] || !_d[1] || !_d[2]) {
-        Msg::Error("Field %i: Dx, Dy and Dz should be non zero", this->id);
-        return MAX_LC;
-      }
-      updateNeeded = false;
-    }
+    ensureUpdated();
     if(_errorStatus) return MAX_LC;
     // tri-linear
     int id[2][3];
@@ -1159,13 +1184,7 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-    // the expression is parsed before meshing (FieldManager::initialize()),
-    // or else by the first thread that evaluates it; it can then be
-    // evaluated by several threads at once
-    if(updateNeeded) {
-#pragma omp critical(MathEvalFieldUpdate)
-      update();
-    }
+    ensureUpdated();
     return _expr.evaluate(x, y, z, ge);
   }
   const char *getName() { return "MathEval"; }
@@ -1230,14 +1249,10 @@ public:
     }
     updateNeeded = false;
   }
-  // (see MathEvalField)
   void operator()(double x, double y, double z, SMetric3 &metr,
                   GEntity *ge = nullptr)
   {
-    if(updateNeeded) {
-#pragma omp critical(MathEvalFieldAnisoUpdate)
-      update();
-    }
+    ensureUpdated();
     _expr.evaluate(x, y, z, metr, ge);
   }
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
@@ -1534,11 +1549,7 @@ public:
       Msg::Warning("Unknown Field %i", _inField);
       return MAX_LC;
     }
-    // (see MathEvalField)
-    if(updateNeeded) {
-#pragma omp critical(ParametricFieldUpdate)
-      update();
-    }
+    ensureUpdated();
     double xx = _expr[0].evaluate(x, y, z, ge);
     double yy = _expr[1].evaluate(x, y, z, ge);
     double zz = _expr[2].evaluate(x, y, z, ge);
@@ -1875,13 +1886,7 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-    // resolved before meshing (FieldManager::initialize()), or else by the
-    // first thread that evaluates it; the lock must not be taken on every
-    // evaluation (see MathEvalField)
-    if(updateNeeded) {
-#pragma omp critical(MinField)
-      update();
-    }
+    ensureUpdated();
 
     double v = MAX_LC;
     for(auto f : _fields) {
@@ -1930,10 +1935,7 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-    if(updateNeeded) { // (see MinField)
-#pragma omp critical(MaxField)
-      update();
-    }
+    ensureUpdated();
 
     double v = -MAX_LC;
     for(auto f : _fields) {
@@ -2069,6 +2071,15 @@ public:
            "if IncludeBoundary is set, and their embedded entities if "
            "IncludeEmbedded is set).";
   }
+  // the entities from the tags (cleared: a tag may have been removed)
+  void update()
+  {
+    if(!updateNeeded) return;
+    for(int dim = 0; dim < 4; dim++) _tags[dim].clear();
+    getRestrictEntities(GModel::current(), _inTags, _tags, _boundary,
+                        _embedded);
+    updateNeeded = false;
+  }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
@@ -2079,13 +2090,7 @@ public:
       return MAX_LC;
     }
     if(!ge) return (*f)(x, y, z);
-    if(updateNeeded) { // (see MinField)
-#pragma omp critical(RestrictField)
-      if(updateNeeded) {
-        getRestrictEntities(ge->model(), _inTags, _tags, _boundary, _embedded);
-        updateNeeded = false;
-      }
-    }
+    ensureUpdated();
     if(_tags[ge->dim()].count(ge->tag())) return (*f)(x, y, z, ge);
     return MAX_LC;
   }
@@ -2126,17 +2131,20 @@ public:
            "IncludeBoundary is set, and on their embedded entities if "
            "IncludeEmbedded is set), and VOut outside.";
   }
+  // the entities from the tags (cleared: a tag may have been removed)
+  void update()
+  {
+    if(!updateNeeded) return;
+    for(int dim = 0; dim < 4; dim++) _tags[dim].clear();
+    getRestrictEntities(GModel::current(), _inTags, _tags, _boundary,
+                        _embedded);
+    updateNeeded = false;
+  }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     if(!ge) return MAX_LC;
-    if(updateNeeded) { // (see MinField)
-#pragma omp critical(ConstantField)
-      if(updateNeeded) {
-        getRestrictEntities(ge->model(), _inTags, _tags, _boundary, _embedded);
-        updateNeeded = false;
-      }
-    }
+    ensureUpdated();
     if(_tags[ge->dim()].count(ge->tag())) return _vIn;
     return _vOut;
   }
@@ -2255,7 +2263,7 @@ public:
   void operator()(double x, double y, double z, SMetric3 &metr,
                   GEntity *ge = nullptr)
   {
-    if(updateNeeded) update();
+    ensureUpdated();
     double d2;
     std::size_t i = _search.nearest(SPoint3(x, y, z), &d2);
     if(i == _search.size()) {
@@ -2279,7 +2287,7 @@ public:
   }
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
-    if(updateNeeded) update();
+    ensureUpdated();
     double d2;
     if(_search.nearest(SPoint3(X, Y, Z), &d2) == _search.size()) return MAX_LC;
     return std::max(sqrt(d2), 0.05);
@@ -2415,12 +2423,9 @@ private:
   }
   void update()
   {
-    if(updateNeeded) {
-      updateNeeded = false;
-      if(_root) {
-        delete _root;
-        _root = nullptr;
-      }
+    if(updateNeeded && _root) {
+      delete _root;
+      _root = nullptr;
     }
     if(!_root) {
       _inField = _inFieldId >= 0 ?
@@ -2435,11 +2440,13 @@ private:
       _root->init(bounds.min().x(), bounds.min().y(), bounds.min().z(), _l0,
                   *_inField, 4);
     }
+    updateNeeded = false;
   }
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
+    ensureUpdated();
+    if(!_root) return MAX_LC;
     SPoint3 xmin = bounds.min();
-    SVector3 d = bounds.max() - xmin;
     return _root->evaluate((X - xmin.x()) / _l0, (Y - xmin.y()) / _l0,
                            (Z - xmin.z()) / _l0);
   }
@@ -2485,7 +2492,9 @@ class DistanceField : public Field {
   SPoint3Cloud _pc;
   SPoint3CloudAdaptor<SPoint3Cloud> _pc2kdtree;
   SPoint3KDTree *_kdtree;
-  std::size_t _outIndex;
+  // the point nearest to the last evaluation, for getAttractorInfo()
+  // (boundary layers, serial); atomic as evaluations run in parallel
+  std::atomic<std::size_t> _outIndex;
 
 public:
   DistanceField() : _pc2kdtree(_pc), _kdtree(nullptr), _outIndex(0)
@@ -2548,8 +2557,9 @@ public:
   }
   std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
   {
-    if(_outIndex < _infos.size() && _outIndex < _pc.pts.size())
-      return std::make_pair(_infos[_outIndex], _pc.pts[_outIndex]);
+    const std::size_t i = _outIndex.load(std::memory_order_relaxed);
+    if(i < _infos.size() && i < _pc.pts.size())
+      return std::make_pair(_infos[i], _pc.pts[i]);
     return std::make_pair(AttractorInfo(), SPoint3());
   }
   void update()
@@ -2623,13 +2633,15 @@ public:
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
-    update();
+    ensureUpdated();
     if(!_kdtree) return MAX_LC;
     double pt[3] = {X, Y, Z};
     nanoflann::KNNResultSet<double> res(1);
+    std::size_t index = 0;
     double outDistSqr;
-    res.init(&_outIndex, &outDistSqr);
+    res.init(&index, &outDistSqr);
     _kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
+    _outIndex.store(index, std::memory_order_relaxed);
     return sqrt(outDistSqr);
   }
 };
@@ -2746,10 +2758,9 @@ public:
       }
     }
   }
-  // the search trees on what is meshed of the boundaries: called by
-  // FieldManager::initialize() before each meshing pass, serially, so that
-  // the evaluations during the pass only read them (curves meshed when
-  // meshing surfaces, surfaces meshed when meshing volumes)
+  // the search trees on what is meshed of the boundaries (the curves when
+  // meshing surfaces, the surfaces when meshing volumes), rebuilt before each
+  // meshing pass by FieldManager::initialize()
   void update()
   {
     _entities.clear();
@@ -2777,12 +2788,7 @@ public:
     if(!ge) return MAX_LC;
     if(ge->dim() != 2 && ge->dim() != 3) return MAX_LC;
 
-    // evaluated outside a meshing pass after its options changed (the API,
-    // the GUI): build the trees now, as MinField resolves its fields
-    if(updateNeeded) {
-#pragma omp critical(ExtendField)
-      if(updateNeeded) update();
-    }
+    ensureUpdated();
 
     if(_entities.find(ge) == _entities.end()) return MAX_LC;
 
@@ -2812,8 +2818,7 @@ public:
       // "unscale" the boundary size according to the per-entity and/or the
       // global mesh size factor, so that, if a factor is applied, it will be on
       // the interpolated "specified" mesh size values
-      if(ge && ge->getMeshSizeFactor() != 1.0)
-        sbnd[i] /= ge->getMeshSizeFactor();
+      if(ge->getMeshSizeFactor() != 1.0) sbnd[i] /= ge->getMeshSizeFactor();
       sbnd[i] /= CTX::instance()->mesh.lcFactor;
       dbnd[i] = sqrt(dist2);
     }
