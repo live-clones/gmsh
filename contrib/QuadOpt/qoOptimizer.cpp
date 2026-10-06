@@ -47,7 +47,7 @@ namespace QuadOpt {
     constexpr double kMinSplitQuality = 0.2; // triangles of a split: ~10 deg
     constexpr double kFlatQuality = 0.1; // a quad below (angle > ~174) is split
     constexpr double kMinCadAlignment = 0.3; // cosine(cell normal, CAD normal)
-    constexpr std::size_t kMaxLoop = 10; // largest cavity boundary
+    constexpr std::size_t kMaxLoop = 12; // largest cavity boundary
     constexpr std::size_t kMaxCandidates = 4000;
 
     // A piece of a candidate: valid, and a quad neither nearly flat nor warped
@@ -184,6 +184,7 @@ namespace QuadOpt {
       bool tryCavity(const std::vector<int> &cells);
       bool needsSplit(const Cell &c) const;
       bool splitQuad(int c);
+      std::vector<int> pathToTriangle(int c, int depth) const;
       bool attempt(int c);
 
       // -- scheduler -------------------------------------------------------
@@ -683,6 +684,26 @@ namespace QuadOpt {
       return false;
     }
 
+    // Cells from triangle c to the nearest other triangle through edge
+    // neighbors, at most `depth` steps away (empty if there is none).
+    std::vector<int> FaceOptimizer::pathToTriangle(int c, int depth) const
+    {
+      std::vector<int> order = {c}, parent = {-1}, level = {0};
+      for(std::size_t h = 0; h < order.size() && level[h] < depth; ++h)
+        for(int i = 0; i < _he.cells[order[h]].n; ++i) {
+          const int d = _he.across(order[h], i);
+          if(d < 0 || std::find(order.begin(), order.end(), d) != order.end())
+            continue;
+          order.push_back(d), parent.push_back(int(h)), level.push_back(level[h] + 1);
+          if(_he.cells[d].n != 3) continue;
+          std::vector<int> path;
+          for(int k = int(order.size()) - 1; k >= 0; k = parent[k])
+            path.push_back(order[k]);
+          return path;
+        }
+      return {};
+    }
+
     // Cavities seeded by cell c, from the smallest to the largest.
     bool FaceOptimizer::attempt(int c)
     {
@@ -706,6 +727,10 @@ namespace QuadOpt {
             ring.push_back(d);
         }
         if(ring.size() > 2 && tryCavity(ring)) return true;
+        // The strip of cells to the nearest other triangle: re-meshing it moves
+        // a triangle through the quads, as a chain of TQ -> QT swaps would.
+        const std::vector<int> path = pathToTriangle(c, 4);
+        if(path.size() > 2 && tryCavity(path)) return true;
       }
       for(int i = 0; i < cell.n; ++i) // star of a vertex, boundary ones included
         if(tryCavity(_he.star[cell.v[i]])) return true;
