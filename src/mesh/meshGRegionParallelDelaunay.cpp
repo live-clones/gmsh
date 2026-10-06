@@ -39,6 +39,7 @@
 #include <cmath>
 #include <cstring>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <set>
 #include "meshGRegionParallelDelaunay.h"
@@ -3145,8 +3146,9 @@ namespace pdel3d {
     const std::vector<std::uint32_t> &triColor,
     const std::vector<std::vector<std::uint32_t>> &volumes,
     const std::map<std::uint32_t, std::vector<std::uint32_t>> &siblings,
-    const std::set<std::uint32_t> &embedded)
+    const std::set<std::uint32_t> &embedded, int nthreads)
   {
+    const int nt = std::max(1, nthreads);
     auto complete = [&](std::set<std::uint32_t> &set) {
       std::set<std::uint32_t> more;
       for(auto c : set) {
@@ -3156,32 +3158,79 @@ namespace pdel3d {
       }
       set.insert(more.begin(), more.end());
     };
-    // flood fill bounded by the constrained facets
+    // the connected components of tets bounded by the constrained facets: a
+    // parallel union-find linking the larger root under the smaller, so that
+    // each component ends up rooted at its smallest tet; they are numbered in
+    // that order from 1 (deleted tets: 0), the outside being the last one
+    // holding a ghost tet
+    const std::size_t ntet = m.ntet;
     if(m.color.size() < m.tetCapacity()) m.color.resize(m.tetCapacity());
-    std::fill(m.color.begin(), m.color.begin() + m.ntet, 0);
-    std::vector<tIdx> stack;
-    std::uint32_t color = 1, colorOut = 0;
-    for(std::size_t first = 0; first < m.ntet; first++) {
-      if(m.isDeleted((tIdx)first) || m.color[first]) continue;
-      stack.clear();
-      stack.push_back((tIdx)first);
-      m.color[first] = color;
-      for(std::size_t i = 0; i < stack.size(); i++) {
-        const tIdx t = stack[i];
-        if(m.isGhost(t)) colorOut = color;
-        for(unsigned f = 0; f < 4; f++) {
-          const tRef r = m.neigh[4 * t + f];
-          if(r == NO_ADJ || (m.flag[t] & (F_FACET0 << f))) continue;
-          const tIdx nb = r >> 2;
-          if(!m.color[nb]) {
-            m.color[nb] = color;
-            stack.push_back(nb);
-          }
+    std::unique_ptr<std::atomic<tIdx>[]> parent(new std::atomic<tIdx>[ntet]);
+#pragma omp parallel for schedule(static) num_threads(nt)
+    for(std::size_t t = 0; t < ntet; t++)
+      parent[t].store((tIdx)t, std::memory_order_relaxed);
+    auto findRoot = [&](tIdx x) {
+      while(true) {
+        tIdx p = parent[x].load(std::memory_order_relaxed);
+        if(p == x) return x;
+        const tIdx g = parent[p].load(std::memory_order_relaxed);
+        if(g != p) parent[x].compare_exchange_weak(p, g); // path halving
+        x = g;
+      }
+    };
+#pragma omp parallel for schedule(static) num_threads(nt)
+    for(std::size_t t = 0; t < ntet; t++) {
+      if(m.isDeleted((tIdx)t)) continue;
+      for(unsigned f = 0; f < 4; f++) {
+        const tRef r = m.neigh[4 * t + f];
+        if(r == NO_ADJ || (m.flag[t] & (F_FACET0 << f))) continue;
+        tIdx a = (tIdx)t, b = r >> 2;
+        if(b < a) continue; // each pair once
+        while(true) {
+          a = findRoot(a);
+          b = findRoot(b);
+          if(a == b) break;
+          if(a < b) std::swap(a, b);
+          tIdx expected = a;
+          if(parent[a].compare_exchange_strong(expected, b)) break;
         }
       }
-      color++;
     }
-    const std::uint32_t numComponents = color - 1;
+    std::vector<std::size_t> chunkRoots(nt + 1, 0);
+#pragma omp parallel for schedule(static) num_threads(nt)
+    for(int c = 0; c < nt; c++) {
+      std::size_t n = 0;
+      for(std::size_t t = ntet * c / nt; t < ntet * (c + 1) / nt; t++)
+        if(!m.isDeleted((tIdx)t) &&
+           parent[t].load(std::memory_order_relaxed) == (tIdx)t)
+          n++;
+      chunkRoots[c + 1] = n;
+    }
+    for(int c = 0; c < nt; c++) chunkRoots[c + 1] += chunkRoots[c];
+    std::uint32_t colorOut = 0;
+#pragma omp parallel num_threads(nt)
+    {
+#pragma omp for schedule(static)
+      for(int c = 0; c < nt; c++) {
+        std::uint32_t label = (std::uint32_t)chunkRoots[c];
+        for(std::size_t t = ntet * c / nt; t < ntet * (c + 1) / nt; t++) {
+          if(!m.isDeleted((tIdx)t) &&
+             parent[t].load(std::memory_order_relaxed) == (tIdx)t)
+            m.color[t] = ++label;
+        }
+      }
+#pragma omp for schedule(static) reduction(max : colorOut)
+      for(std::size_t t = 0; t < ntet; t++) {
+        if(m.isDeleted((tIdx)t)) {
+          m.color[t] = 0;
+          continue;
+        }
+        const tIdx root = findRoot((tIdx)t);
+        if(root != (tIdx)t) m.color[t] = m.color[root];
+        if(m.isGhost((tIdx)t)) colorOut = std::max(colorOut, m.color[root]);
+      }
+    }
+    const std::uint32_t numComponents = (std::uint32_t)chunkRoots[nt];
     Msg::Debug("%u connected components of tets bounded by constrained facets",
                numComponents);
     // merge the components on the two sides of the embedded surfaces
@@ -3203,18 +3252,26 @@ namespace pdel3d {
       merged = true;
     }
     if(merged) {
+#pragma omp parallel for schedule(static) num_threads(nt)
       for(std::size_t t = 0; t < m.ntet; t++)
         if(!m.isDeleted((tIdx)t)) m.color[t] = find(m.color[t]);
       colorOut = find(colorOut);
     }
-    // the surface colors seen by each component
+    // the surface colors seen by each component (the triangles come surface
+    // by surface: most insertions repeat the last one)
     std::vector<std::set<std::uint32_t>> surfaces(numComponents + 1);
+    std::vector<std::uint32_t> last(numComponents + 1, 0xffffffffu);
+    auto see = [&](std::uint32_t c, std::uint32_t tag) {
+      if(last[c] == tag) return;
+      last[c] = tag;
+      surfaces[c].insert(tag);
+    };
     for(std::size_t i = 0; i < tri2tet.size(); i++) {
       const tRef r = tri2tet[i];
       if(r == NO_ADJ) continue;
-      surfaces[m.color[r >> 2]].insert(triColor[i]);
+      see(m.color[r >> 2], triColor[i]);
       const tRef s = m.neigh[r];
-      if(s != NO_ADJ) surfaces[m.color[s >> 2]].insert(triColor[i]);
+      if(s != NO_ADJ) see(m.color[s >> 2], triColor[i]);
     }
     // match the components to the volumes
     std::map<std::set<std::uint32_t>, std::uint32_t> volumeOfSurfaces;
@@ -3242,6 +3299,7 @@ namespace pdel3d {
       else
         map[c] = next++;
     }
+#pragma omp parallel for schedule(static) num_threads(nt)
     for(std::size_t t = 0; t < m.ntet; t++)
       if(!m.isDeleted((tIdx)t)) m.color[t] = map[m.color[t]];
     bool ok = true;
@@ -5014,7 +5072,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
   pdel3d::constrainFacets(m, tri2tet);
   pdel3d::constrainEdges(m, line2tet);
   if(!pdel3d::colorVolumes(m, tri2tet, s.triColor, s.volumes, s.siblings,
-                           s.embedded))
+                           s.embedded, nthreads))
     return 1;
   if(Msg::GetVerbosity() > 5) m.verify(!recovered);
   const double t2 = TimeOfDay();

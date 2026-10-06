@@ -229,7 +229,7 @@ namespace pdel3d {
     const std::vector<std::uint32_t> &triColor,
     const std::vector<std::vector<std::uint32_t>> &volumes,
     const std::map<std::uint32_t, std::vector<std::uint32_t>> &siblings,
-    const std::set<std::uint32_t> &embedded);
+    const std::set<std::uint32_t> &embedded, int nthreads = 1);
 
   // refinement
 
