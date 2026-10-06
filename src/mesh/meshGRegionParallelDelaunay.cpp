@@ -4766,6 +4766,24 @@ namespace {
       }
     }
 
+    // every missing triangle and line must be in a cavity (one whose nodes are
+    // spread over two cavities is in neither): the mesh must stay untouched
+    // otherwise, for the fallback
+    {
+      std::vector<std::uint8_t> triIn(nt, 0), lineIn(nl, 0);
+      for(const Pending &P : pending) {
+        for(auto i : P.cavityTri) triIn[i] = 1;
+        for(auto i : P.cavityLine) lineIn[i] = 1;
+      }
+      std::size_t left = 0;
+      for(auto i : missingTri) left += !triIn[i];
+      for(auto i : missingLine) left += !lineIn[i];
+      if(left) {
+        Msg::Info("Cavity recovery: %lu missing item(s) in no cavity", left);
+        return false;
+      }
+    }
+
     // commit
     std::size_t steiner = 0;
     std::vector<std::uint8_t> triRemoved(nt, 0), lineRemoved(nl, 0);
@@ -5062,18 +5080,24 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
         remap();
         local = !missing && !missingLines;
         if(!local)
-          Msg::Info("Local boundary recovery incomplete: falling back to the "
-                    "global one");
+          Msg::Info("Local boundary recovery incomplete (%lu triangle(s) and "
+                    "%lu line(s) missing): falling back to the global one",
+                    missing, missingLines);
       }
     }
     if(!local) {
-      if(m.numVertices() != nv0)
+      // from the Delaunay before the local recovery, unless the cavities
+      // added Steiner points to the surface mesh, which that tetrahedralization
+      // does not have: then from the current one
+      if(m.numVertices() == nv0) {
+        std::copy(node0.begin(), node0.end(), m.node.begin());
+        std::copy(neigh0.begin(), neigh0.end(), m.neigh.begin());
+        std::copy(flag0.begin(), flag0.end(), m.flag.begin());
+        m.ntet = ntet0;
+      }
+      else
         Msg::Warning("Falling back to the global boundary recovery after a "
                      "partial local one");
-      std::copy(node0.begin(), node0.end(), m.node.begin());
-      std::copy(neigh0.begin(), neigh0.end(), m.neigh.begin());
-      std::copy(flag0.begin(), flag0.end(), m.flag.begin());
-      m.ntet = ntet0;
       if(!recoverBoundary(m, s, regions, sqr)) {
         Msg::Error("Boundary recovery failed");
         return 1;
