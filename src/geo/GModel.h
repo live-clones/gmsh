@@ -337,14 +337,6 @@ public:
   const hashmapMEdge &getMEdges() const { return _mapEdgeNum; }
   const hashmapMFace &getMFaces() const { return _mapFaceNum; }
 
-  // Invalidate explicitly numbered mesh edges/faces after a topology change.
-  // These maps contain vertex pointers and must be cleared before deletion.
-  void clearMeshEdgeAndFaceMaps()
-  {
-    _mapEdgeNum.clear();
-    _mapFaceNum.clear();
-  }
-
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
   void renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapping =

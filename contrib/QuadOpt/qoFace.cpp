@@ -188,7 +188,6 @@ namespace QuadOpt {
     for(MVertex *v : removed) delete v;
     _gf->transfinite_vertices.clear();
     _gf->getColumns()->clearData();
-    _gf->model()->clearMeshEdgeAndFaceMaps();
     orientMeshGFace()(_gf);
     _gf->deleteVertexArrays();
     _gf->model()->destroyMeshCaches();
