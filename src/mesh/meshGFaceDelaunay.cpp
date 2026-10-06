@@ -1831,7 +1831,8 @@ void bowyerWatsonParallelograms(
   // repeatedly splitting it can refine away from the intended location.
 #if defined(HAVE_QUADOPTIMIZER)
   if(gf->geomType() == GEntity::DiscreteSurface)
-    QuadOpt::intrinsicDelaunayizePackedSurface(gf, DATA);
+    QuadOpt::intrinsicDelaunayizePackedSurface(
+      gf, DATA, CTX::instance()->mesh.packIntrinsicEdgeLengthFactor);
 #endif
 
   if(CTX::instance()->mesh.saveDebugFiles) {

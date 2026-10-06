@@ -16,6 +16,17 @@ triangle/quad mesh. One face at a time, on a half-edge complex.
 Q-Morph needs a pure triangulation; in a PACK flow, faces already made of
 quads (patterns) are only optimized.
 
+## Options
+
+The algorithms take a `QuadOpt::Options` (`qoOptions.h`) in their signatures
+and never read Gmsh's global context: `optimizeQuads`, `optimizeFace`, `qMorph`,
+`finishPackMesh`, `PackMeshScope`. Gmsh options are translated into it in one
+place (`quadOptOptions()` in `Generator.cpp`); the intrinsic edge-length factor
+is a parameter of `intrinsicDelaunayizePackedSurface`. `PackMeshScope` is the
+only adapter that touches the global mesh settings, to prepare Gmsh for PACK.
+Gmsh options in use: `Mesh.PackRecombination`, `Mesh.PackCleanupMethod`,
+`Mesh.PackPatterns` (and the PACK sampling options, which belong to PACK).
+
 ## Files
 
 - `qoHalfEdge.h`: directed-edge map, vertex stars, cavities, transactional

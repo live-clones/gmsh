@@ -11,7 +11,10 @@ class MTriangle;
 struct bidimMeshData;
 namespace QuadOpt {
   // Called on the packed triangles, before Blossom constructs quadrangles.
-  std::size_t intrinsicDelaunayizePackedSurface(GFace *, bidimMeshData &);
+  // Edges longer than edgeLengthFactor times the local size are split (zero:
+  // never).
+  std::size_t intrinsicDelaunayizePackedSurface(GFace *, bidimMeshData &,
+                                                double edgeLengthFactor);
   void printTrianglesXYZ(const char *, const std::vector<MTriangle *> &);
 } // namespace QuadOpt
 #endif

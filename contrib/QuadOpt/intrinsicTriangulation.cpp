@@ -9,7 +9,6 @@
 #include "MTriangle.h"
 #include "MLine.h"
 #include "meshGFaceTri3.h"
-#include "Context.h"
 #include "GmshMessage.h"
 #include "OS.h"
 #include "robustPredicates.h"
@@ -184,6 +183,7 @@ namespace QuadOpt {
 
     GFace *_gf;
     bidimMeshData &_data;
+    const double _edgeLengthFactor;
     std::vector<HalfEdge> _halfEdges;
     std::vector<Face> _faces;
     std::vector<Edge> _edges;
@@ -387,8 +387,7 @@ namespace QuadOpt {
         BGM_MeshSize(_gf, u, v, point.x(), point.y(), point.z());
       if(!(localSize > 0.) || !std::isfinite(localSize)) return false;
 
-      const double intrinsicFactor =
-        CTX::instance()->mesh.packIntrinsicEdgeLengthFactor;
+      const double intrinsicFactor = _edgeLengthFactor;
       if(!(intrinsicFactor > 0.) || !std::isfinite(intrinsicFactor))
         return false;
       const double maximumLength = intrinsicFactor * localSize;
@@ -816,8 +815,8 @@ namespace QuadOpt {
     }
 
   public:
-    IntrinsicTriHalfEdgeMesh(GFace *gf, bidimMeshData &data)
-      : _gf(gf), _data(data)
+    IntrinsicTriHalfEdgeMesh(GFace *gf, bidimMeshData &data, double factor)
+      : _gf(gf), _data(data), _edgeLengthFactor(factor)
     {
       build();
     }
@@ -893,7 +892,8 @@ namespace QuadOpt {
   // persistent half-edge records: a flipped diagonal is measured by unfolding
   // its two incident triangles, while newly split edges start with their CAD
   // chord lengths.
-  std::size_t intrinsicDelaunayizePackedSurface(GFace *gf, bidimMeshData &data)
+  std::size_t intrinsicDelaunayizePackedSurface(GFace *gf, bidimMeshData &data,
+                                                double edgeLengthFactor)
   {
     double referenceOrientation = 0.;
     for(MTriangle *triangle : gf->triangles) {
@@ -921,7 +921,7 @@ namespace QuadOpt {
                        triangle->getVertex(2), referenceOrientation, data);
 
     const std::size_t initialTriangles = gf->triangles.size();
-    IntrinsicTriHalfEdgeMesh topology(gf, data);
+    IntrinsicTriHalfEdgeMesh topology(gf, data, edgeLengthFactor);
     if(!topology.valid()) return 0;
     const std::size_t maxFlips =
       std::max<std::size_t>(1000, 100 * initialTriangles);

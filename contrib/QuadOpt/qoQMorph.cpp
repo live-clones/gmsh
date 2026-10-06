@@ -654,7 +654,7 @@ namespace QuadOpt {
     }
   } // namespace
 
-  bool qMorph(GFace *face)
+  bool qMorph(GFace *face, const Options &options)
   {
     if(!face) return false;
     if(face->triangles.empty() && face->quadrangles.empty() &&
@@ -669,16 +669,16 @@ namespace QuadOpt {
       }
       ~CurrentModelScope() { GModel::setCurrent(saved); }
     } current(face->model());
-    return optimizeFace(face, true);
+    return optimizeFace(face, options, true);
   }
 
-  bool qMorph(GModel *model)
+  bool qMorph(GModel *model, const Options &options)
   {
     if(!model) return false;
     bool success = true;
     for(GFace *face : model->getFaces()) {
       if(face->triangles.empty() && face->polygons.empty()) continue;
-      if(!qMorph(face)) success = false;
+      if(!qMorph(face, options)) success = false;
     }
     model->deleteVertexArrays();
     return success;

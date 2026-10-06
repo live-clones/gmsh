@@ -81,6 +81,15 @@
 #include "qoOptimizer.h"
 #include "qoPack.h"
 #include "qoQMorph.h"
+
+static QuadOpt::Options quadOptOptions()
+{
+  QuadOpt::Options options;
+  options.patterns = CTX::instance()->mesh.packPatterns;
+  options.qMorph = CTX::instance()->mesh.packRecombination == 1;
+  options.optimize = CTX::instance()->mesh.packCleanupMethod != 2;
+  return options;
+}
 #endif
 
 #include "meshDuplicateVertices.h"
@@ -766,7 +775,7 @@ static void Mesh2D(GModel *m)
   // combine step, breaking them.
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
      CTX::instance()->mesh.algo3d != ALGO_3D_RTREE)
-    QuadOpt::finishPackMesh(m);
+    QuadOpt::finishPackMesh(m, quadOptOptions());
 #else
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) {
     for(GFace *gf : m->getFaces()) {
@@ -1588,7 +1597,7 @@ void GenerateMesh(GModel *m, int ask)
   srand(CTX::instance()->mesh.randomSeed);
 
 #if defined(HAVE_QUADOPTIMIZER)
-  QuadOpt::PackMeshScope packMeshScope;
+  QuadOpt::PackMeshScope packMeshScope(quadOptOptions());
 #endif
 
   // Change any high order elements back into first order ones (but skip

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "GmshGlobal.h"
+#include "qoOptions.h"
 
 class GFace;
 class GModel;
@@ -21,12 +22,12 @@ namespace QuadOpt {
   // Returns true on completion, false on failure with this face unchanged.
   // Apply before meshing adjacent volumes or generating high-order elements.
   // Partitioned meshes and master/slave periodic meshes are not supported.
-  GMSH_API bool qMorph(GFace *face);
+  GMSH_API bool qMorph(GFace *face, const Options &options = Options());
 
   // Apply qMorph to the faces of a model, skipping empty faces and faces that
   // already contain only quadrangles. Returns false if any face fails; faces
   // processed successfully remain modified. Refresh the model's mesh caches
   // and display arrays after processing.
-  GMSH_API bool qMorph(GModel *model);
+  GMSH_API bool qMorph(GModel *model, const Options &options = Options());
 
 } // namespace QuadOpt

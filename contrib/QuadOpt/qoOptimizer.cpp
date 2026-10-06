@@ -43,7 +43,6 @@ namespace QuadOpt {
     constexpr double kSmoothGain = 1.e-4; // minimal energy drop of a move
     constexpr double kCadTolerance = 0.03; // centroid-to-CAD / mean edge length
     constexpr double kCadSlack = 0.1; // a rewrite may cut the CAD this much more
-    constexpr double kMaxWarping = 25.; // degrees; a quad above is split
     constexpr double kMinSplitQuality = 0.2; // triangles of a split: ~10 deg
     constexpr double kFlatQuality = 0.1; // a quad below (angle > ~174) is split
     constexpr double kMinCadAlignment = 0.3; // cosine(cell normal, CAD normal)
@@ -53,10 +52,10 @@ namespace QuadOpt {
     // A piece of a candidate: valid, and a quad neither nearly flat nor warped
     // beyond the limits (otherwise a merge would recreate what the final split
     // removes, forever).
-    bool acceptable(double q, const SVector3 *p, int n)
+    bool acceptable(double q, const SVector3 *p, int n, double maximumWarping)
     {
       return n == 3 ? q > kMinQuality
-                    : q >= kFlatQuality && warpingWithin(p, kMaxWarping);
+                    : q >= kFlatQuality && warpingWithin(p, maximumWarping);
     }
 
     double cost(double q, int n)
@@ -141,7 +140,10 @@ namespace QuadOpt {
 
     class FaceOptimizer : public FaceMesh, public Relaxer {
     public:
-      explicit FaceOptimizer(GFace *gf) : FaceMesh(gf) {}
+      FaceOptimizer(GFace *gf, const Options &options)
+        : FaceMesh(gf), _options(options)
+      {
+      }
       void run();
       void finish(); // write the result back and report
       bool smooth(int w) override
@@ -156,6 +158,7 @@ namespace QuadOpt {
       }
 
     private:
+      const Options _options;
       std::deque<int> _cellQueue, _vertexQueue;
       std::vector<char> _cellQueued, _vertexQueued;
       bool _final = false; // terminal phase: quads may be split
@@ -442,7 +445,8 @@ namespace QuadOpt {
         const double q = quality(p, n, cavity.normal);
         const SVector3 nv[4] = {cavity.N[a], cavity.N[b], cavity.N[c],
                                 d < 0 ? SVector3() : cavity.N[d]};
-        return acceptable(q, p, n) && alignment(p, nv, n) > kMinCadAlignment
+        return acceptable(q, p, n, _options.maximumWarping) &&
+                       alignment(p, nv, n) > kMinCadAlignment
                  ? cost(q, n)
                  : std::numeric_limits<double>::infinity();
       };
@@ -569,7 +573,7 @@ namespace QuadOpt {
         const double q = quality(p, piece.n, cavity.normal);
         SVector3 nv[4];
         for(int i = 0; i < piece.n; ++i) nv[i] = cavity.N[piece.v[i]];
-        if(!acceptable(q, p, piece.n) ||
+        if(!acceptable(q, p, piece.n, _options.maximumWarping) ||
            alignment(p, nv, piece.n) <= kMinCadAlignment)
           return std::numeric_limits<double>::infinity();
         energy += cost(q, piece.n);
@@ -753,7 +757,7 @@ namespace QuadOpt {
     bool FaceOptimizer::needsSplit(const Cell &c) const
     {
       const Corners p = pointsOf(c);
-      return selfQuality(c) < kFlatQuality || warping(p.data()) > kMaxWarping;
+      return selfQuality(c) < kFlatQuality || warping(p.data()) > _options.maximumWarping;
     }
 
     // Replace a quad by two triangles along the diagonal that stays closest to
@@ -872,9 +876,9 @@ namespace QuadOpt {
 
   } // namespace
 
-  bool optimizeFace(GFace *gf, bool fronts)
+  bool optimizeFace(GFace *gf, const Options &options, bool fronts)
   {
-    FaceOptimizer optimizer(gf);
+    FaceOptimizer optimizer(gf, options);
     if(!optimizer.build()) return false;
     if(fronts) advanceFronts(optimizer, optimizer);
     optimizer.run();
@@ -882,10 +886,10 @@ namespace QuadOpt {
     return true;
   }
 
-  void optimizeQuads(GModel *model)
+  void optimizeQuads(GModel *model, const Options &options)
   {
     for(GFace *gf : model->getFaces())
-      if(!gf->quadrangles.empty()) optimizeFace(gf, false);
+      if(!gf->quadrangles.empty()) optimizeFace(gf, options);
     model->deleteVertexArrays();
   }
 

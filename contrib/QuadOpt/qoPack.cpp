@@ -20,27 +20,27 @@
 namespace QuadOpt {
 
   // PACK finalization: seams, patterns for simple faces, then the optimizer.
-  void finishPackMesh(GModel *m)
+  void finishPackMesh(GModel *m, const Options &options)
   {
     for(GFace *gf : m->getFaces())
       if(gf->meshStatistics.status == GFace::DONE)
         gf->meshStatistics.status = GFace::PENDING;
 
     transferSeamGEdgesVerticesToGFace(m);
-    if(CTX::instance()->mesh.packPatterns)
+    if(options.patterns)
       quadMeshingOfSimpleFacesWithPatterns(m, .02);
-    if(CTX::instance()->mesh.packRecombination == 1) {
+    if(options.qMorph) {
       // Q-Morph on the triangles; a face already made of quads (patterns) is
       // only optimized. Both include the cavity optimizer.
       for(GFace *gf : m->getFaces()) {
         if(gf->triangles.empty() && gf->quadrangles.empty()) continue;
-        if(gf->quadrangles.empty()) qMorph(gf);
-        else optimizeFace(gf);
+        if(gf->quadrangles.empty()) qMorph(gf, options);
+        else optimizeFace(gf, options);
       }
       m->deleteVertexArrays();
     }
-    else if(CTX::instance()->mesh.packCleanupMethod != 2)
-      optimizeQuads(m);
+    else if(options.optimize)
+      optimizeQuads(m, options);
     else
       Msg::Info("PACK cleanup disabled: preserving generated mesh");
 
@@ -93,7 +93,7 @@ namespace QuadOpt {
       }
     }
 
-    State()
+    explicit State(const Options &options)
     {
       contextMeshOptions &mesh = CTX::instance()->mesh;
       const bool uniformSize =
@@ -109,7 +109,7 @@ namespace QuadOpt {
       // points whatever the size specification (uniform or a size field)
       if(packing) {
         recombineAll = mesh.recombineAll;
-        mesh.recombineAll = mesh.packRecombination == 1 ? 0 : 1;
+        mesh.recombineAll = options.qMorph ? 0 : 1;
       }
       if(!active) return;
 
@@ -138,7 +138,10 @@ namespace QuadOpt {
     }
   };
 
-  PackMeshScope::PackMeshScope() : _state(new State) {}
+  PackMeshScope::PackMeshScope(const Options &options)
+    : _state(new State(options))
+  {
+  }
   PackMeshScope::~PackMeshScope() = default;
 
 } // namespace QuadOpt
