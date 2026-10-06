@@ -4098,6 +4098,12 @@ namespace {
   std::size_t exportMesh(pdel3d::Mesh &m, SurfaceMesh &s,
                          std::vector<GRegion *> &regions, int nthreads)
   {
+    std::size_t numDeleted = 0;
+#pragma omp parallel for schedule(static) num_threads(std::max(1, nthreads))   \
+  reduction(+ : numDeleted)
+    for(std::size_t t = 0; t < m.ntet; t++)
+      numDeleted += m.isDeleted((pdel3d::tIdx)t);
+    if(numDeleted) m.removeDeleted(nthreads);
     std::vector<pdel3d::vIdx> newIndex;
     m.removeUnusedVertices(newIndex, nthreads);
     const std::size_t nv = m.numVertices(), nr = regions.size();
@@ -4127,57 +4133,27 @@ namespace {
     GModel *model = regions[0]->model();
     const std::size_t baseV = model->getMaxVertexNumber(),
                       baseE = model->getMaxElementNumber();
+    // only the nodes and colors of the tets are needed from here on (the mesh
+    // is compacted above): free the rest before the elements are created
+    m.neigh.clear();
+    m.flag.clear();
+    std::vector<std::uint64_t>().swap(m.dist);
     const int nt = std::max(1, nthreads);
     // the region of each new or Steiner vertex (any tet referencing it; nr:
-    // none)
+    // none), and the number of tets of each region in each chunk
     std::vector<std::uint32_t> owner(nv, (std::uint32_t)nr);
-    std::vector<std::size_t> chunkTets(nt + 1, 0);
+    std::vector<std::size_t> numTets(nt * nr, 0), numVerts(nt * nr, 0);
 #pragma omp parallel for schedule(static) num_threads(nt)
     for(int c = 0; c < nt; c++) {
-      std::size_t count = 0;
       for(std::size_t t = c * m.ntet / nt; t < (c + 1) * m.ntet / nt; t++) {
         if(m.isGhost((pdel3d::tIdx)t) || m.color[t] >= nr) continue;
-        count++;
+        numTets[c * nr + m.color[t]]++;
         for(int k = 0; k < 4; k++) {
           const pdel3d::vIdx v = m.node[4 * t + k];
           if(v >= firstNew || inVolume[v]) owner[v] = m.color[t];
         }
       }
-      chunkTets[c + 1] = count;
     }
-    for(int c = 0; c < nt; c++) chunkTets[c + 1] += chunkTets[c];
-    const std::size_t total = chunkTets[nt];
-    std::vector<std::vector<std::vector<MVertex *>>> localVertices(
-      nt, std::vector<std::vector<MVertex *>>(nr));
-    std::vector<std::vector<std::vector<MTetrahedron *>>> localTets(
-      nt, std::vector<std::vector<MTetrahedron *>>(nr));
-#pragma omp parallel num_threads(nt)
-    {
-#pragma omp for schedule(static)
-      for(int c = 0; c < nt; c++) {
-        for(std::size_t v = firstNew + c * (nv - firstNew) / nt;
-            v < firstNew + (c + 1) * (nv - firstNew) / nt; v++) {
-          if(owner[v] == nr) continue;
-          GRegion *gr = regions[owner[v]];
-          const double *x = &m.xyz[4 * v];
-          c2v[v] = new MVertex(x[0], x[1], x[2], gr, baseV + 1 + v - firstNew);
-          localVertices[c][owner[v]].push_back(c2v[v]);
-        }
-      }
-#pragma omp for schedule(static)
-      for(int c = 0; c < nt; c++) {
-        std::size_t rank = chunkTets[c];
-        for(std::size_t t = c * m.ntet / nt; t < (c + 1) * m.ntet / nt; t++) {
-          if(m.isGhost((pdel3d::tIdx)t) || m.color[t] >= nr) continue;
-          const pdel3d::vIdx *n = &m.node[4 * t];
-          localTets[c][m.color[t]].push_back(
-            new MTetrahedron(c2v[n[0]], c2v[n[1]], c2v[n[2]], c2v[n[3]],
-                             (int)(baseE + 1 + rank++)));
-        }
-      }
-    }
-    model->setMaxVertexNumber(baseV + nv - firstNew);
-    model->setMaxElementNumber(baseE + total);
     for(std::size_t v = 0; v < firstNew; v++) {
       if(!inVolume[v] || !owner[v]) continue;
       steiner.erase(std::find(steiner.begin(), steiner.end(), c2v[v]));
@@ -4188,23 +4164,60 @@ namespace {
       c2v[v]->setEntity(regions[owner[v]]);
       regions[owner[v]]->mesh_vertices.push_back(c2v[v]);
     }
+#pragma omp parallel for schedule(static) num_threads(nt)
+    for(int c = 0; c < nt; c++)
+      for(std::size_t v = firstNew + c * (nv - firstNew) / nt;
+          v < firstNew + (c + 1) * (nv - firstNew) / nt; v++)
+        if(owner[v] < nr) numVerts[c * nr + owner[v]]++;
+    // where each chunk writes in the vertex and tet lists of each region, and
+    // the number of its first tet
+    std::vector<std::size_t> firstVert(nt * nr), firstTet(nt * nr),
+      firstNum(nt + 1, 0);
     for(std::size_t r = 0; r < nr; r++) {
-      std::size_t numV = 0, numT = 0;
-      for(int c = 0; c < nt; c++) {
-        numV += localVertices[c][r].size();
-        numT += localTets[c][r].size();
-      }
       GRegion *gr = regions[r];
-      gr->mesh_vertices.reserve(gr->mesh_vertices.size() + numV);
-      gr->tetrahedra.reserve(gr->tetrahedra.size() + numT);
+      std::size_t v = gr->mesh_vertices.size(), t = gr->tetrahedra.size();
       for(int c = 0; c < nt; c++) {
-        gr->mesh_vertices.insert(gr->mesh_vertices.end(),
-                                 localVertices[c][r].begin(),
-                                 localVertices[c][r].end());
-        gr->tetrahedra.insert(gr->tetrahedra.end(), localTets[c][r].begin(),
-                              localTets[c][r].end());
+        firstVert[c * nr + r] = v;
+        firstTet[c * nr + r] = t;
+        v += numVerts[c * nr + r];
+        t += numTets[c * nr + r];
+      }
+      gr->mesh_vertices.resize(v);
+      gr->tetrahedra.resize(t);
+    }
+    for(int c = 0; c < nt; c++) {
+      firstNum[c + 1] = firstNum[c];
+      for(std::size_t r = 0; r < nr; r++)
+        firstNum[c + 1] += numTets[c * nr + r];
+    }
+    const std::size_t total = firstNum[nt];
+#pragma omp parallel num_threads(nt)
+    {
+#pragma omp for schedule(static)
+      for(int c = 0; c < nt; c++) {
+        for(std::size_t v = firstNew + c * (nv - firstNew) / nt;
+            v < firstNew + (c + 1) * (nv - firstNew) / nt; v++) {
+          if(owner[v] == nr) continue;
+          GRegion *gr = regions[owner[v]];
+          const double *x = &m.xyz[4 * v];
+          c2v[v] = new MVertex(x[0], x[1], x[2], gr, baseV + 1 + v - firstNew);
+          gr->mesh_vertices[firstVert[c * nr + owner[v]]++] = c2v[v];
+        }
+      }
+#pragma omp for schedule(static)
+      for(int c = 0; c < nt; c++) {
+        std::size_t num = baseE + 1 + firstNum[c];
+        for(std::size_t t = c * m.ntet / nt; t < (c + 1) * m.ntet / nt; t++) {
+          if(m.isGhost((pdel3d::tIdx)t) || m.color[t] >= nr) continue;
+          const pdel3d::vIdx *n = &m.node[4 * t];
+          regions[m.color[t]]->tetrahedra[firstTet[c * nr + m.color[t]]++] =
+            new MTetrahedron(c2v[n[0]], c2v[n[1]], c2v[n[2]], c2v[n[3]],
+                             (int)num++);
+        }
       }
     }
+    model->setMaxVertexNumber(baseV + nv - firstNew);
+    model->setMaxElementNumber(baseE + total);
     return total;
   }
 
