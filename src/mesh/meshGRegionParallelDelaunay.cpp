@@ -2252,36 +2252,60 @@ namespace pdel3d {
     }
 
     // open addressing table of the (sorted) triangles
+    // filled in parallel; a triangle given twice keeps its smaller index
     struct TriangleTable {
       std::size_t mask;
-      std::vector<std::uint32_t> slot; // triangle index + 1, 0 when empty
+      // triangle index + 1, 0 when empty
+      std::unique_ptr<std::atomic<std::uint32_t>[]> slot;
       const std::vector<vIdx> &tri; // sorted nodes
 
-      TriangleTable(const std::vector<vIdx> &sortedTri) : tri(sortedTri)
+      TriangleTable(const std::vector<vIdx> &sortedTri, int nthreads)
+        : tri(sortedTri)
       {
         const std::size_t n = tri.size() / 3;
         std::size_t size = 16;
         while(size < 2 * n) size <<= 1;
         mask = size - 1;
-        slot.assign(size, 0);
-        for(std::size_t i = 0; i < n; i++) {
-          std::size_t h =
-            hash3(tri[3 * i], tri[3 * i + 1], tri[3 * i + 2]) & mask;
-          while(slot[h]) h = (h + 1) & mask;
-          slot[h] = (std::uint32_t)(i + 1);
+        slot.reset(new std::atomic<std::uint32_t>[size]);
+#pragma omp parallel num_threads(nthreads)
+        {
+#pragma omp for schedule(static)
+          for(std::size_t h = 0; h < size; h++)
+            slot[h].store(0, std::memory_order_relaxed);
+#pragma omp for schedule(static)
+          for(std::size_t i = 0; i < n; i++) {
+            const vIdx *k = &tri[3 * i];
+            std::size_t h = hash3(k[0], k[1], k[2]) & mask;
+            std::uint32_t mine = (std::uint32_t)(i + 1);
+            while(true) {
+              std::uint32_t cur = slot[h].load();
+              if(!cur) {
+                if(slot[h].compare_exchange_strong(cur, mine)) break;
+                continue; // taken meanwhile: look again
+              }
+              const vIdx *o = &tri[3 * (cur - 1)];
+              if(o[0] == k[0] && o[1] == k[1] && o[2] == k[2]) {
+                if(cur < mine) break;
+                if(slot[h].compare_exchange_strong(cur, mine)) break;
+                continue;
+              }
+              h = (h + 1) & mask;
+            }
+          }
         }
       }
       // index of the triangle (a, b, c) sorted, or -1
       std::int64_t find(vIdx a, vIdx b, vIdx c) const
       {
         std::size_t h = hash3(a, b, c) & mask;
-        while(slot[h]) {
-          const std::size_t i = slot[h] - 1;
+        while(true) {
+          const std::uint32_t s = slot[h].load(std::memory_order_relaxed);
+          if(!s) return -1;
+          const std::size_t i = s - 1;
           if(tri[3 * i] == a && tri[3 * i + 1] == b && tri[3 * i + 2] == c)
             return (std::int64_t)i;
           h = (h + 1) & mask;
         }
-        return -1;
       }
     };
 
@@ -2293,13 +2317,14 @@ namespace pdel3d {
     const std::size_t ntri = triNode.size() / 3;
     tri2tet.assign(ntri, NO_ADJ);
     if(!ntri) return 0;
+    const int nthreads = CTX::instance()->numThreadsFor(m.ntet, 1 << 16);
     std::vector<vIdx> sorted(triNode);
+#pragma omp parallel for schedule(static) num_threads(nthreads)
     for(std::size_t i = 0; i < ntri; i++)
       sort3(sorted[3 * i], sorted[3 * i + 1], sorted[3 * i + 2]);
-    TriangleTable table(sorted);
+    TriangleTable table(sorted, nthreads);
     // every interior facet is seen from its two tets: only the one with the
     // smaller index writes, so that the entries are written once
-    const int nthreads = CTX::instance()->numThreadsFor(m.ntet, 1 << 16);
 #pragma omp parallel for schedule(static) num_threads(nthreads)
     for(std::size_t t = 0; t < m.ntet; t++) {
       if(m.isDeleted((tIdx)t) || m.isGhost((tIdx)t)) continue;
@@ -2314,8 +2339,9 @@ namespace pdel3d {
       }
     }
     std::size_t missing = 0;
-    for(auto r : tri2tet)
-      if(r == NO_ADJ) missing++;
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  reduction(+ : missing)
+    for(std::size_t i = 0; i < ntri; i++) missing += (tri2tet[i] == NO_ADJ);
     return missing;
   }
 
@@ -3065,16 +3091,31 @@ namespace pdel3d {
       if(!lineInTriangle[i] && line2tet[i] == NO_LINE) missingLines++;
     if(!missingTri && !missingLines) return 0;
     Recovery R(m);
-    R.surfaceEdges.reserve(3 * nt + nl);
-    for(std::size_t i = 0; i < nt; i++) {
-      R.surfaceEdges.push_back(R.edgeKey(triNode[3 * i], triNode[3 * i + 1]));
-      R.surfaceEdges.push_back(
-        R.edgeKey(triNode[3 * i + 1], triNode[3 * i + 2]));
-      R.surfaceEdges.push_back(R.edgeKey(triNode[3 * i + 2], triNode[3 * i]));
+    {
+      // sorted in parallel, as the keys of the Moore curve sort
+      struct Key {
+        std::uint64_t dist;
+      };
+      const int nth = std::max(1, nthreads);
+      std::vector<Key> keys(3 * nt + nl);
+#pragma omp parallel num_threads(nth)
+      {
+#pragma omp for schedule(static)
+        for(std::size_t i = 0; i < nt; i++)
+          for(int k = 0; k < 3; k++)
+            keys[3 * i + k].dist =
+              R.edgeKey(triNode[3 * i + k], triNode[3 * i + (k + 1) % 3]);
+#pragma omp for schedule(static)
+        for(std::size_t i = 0; i < nl; i++)
+          keys[3 * nt + i].dist =
+            R.edgeKey(lineNode[2 * i], lineNode[2 * i + 1]);
+      }
+      sortByDist(keys.data(), keys.size(), nth);
+      R.surfaceEdges.resize(keys.size());
+#pragma omp parallel for schedule(static) num_threads(nth)
+      for(std::size_t i = 0; i < keys.size(); i++)
+        R.surfaceEdges[i] = keys[i].dist;
     }
-    for(std::size_t i = 0; i < nl; i++)
-      R.surfaceEdges.push_back(R.edgeKey(lineNode[2 * i], lineNode[2 * i + 1]));
-    std::sort(R.surfaceEdges.begin(), R.surfaceEdges.end());
     // a tet around every vertex of a missing item
     const std::size_t nv = m.numVertices();
     std::vector<std::uint8_t> needed(nv, 0);
@@ -4553,6 +4594,18 @@ namespace {
       std::vector<std::pair<tRef, tRef>> outerLinks; // (outer ref, local ref)
     };
     std::vector<Pending> pending(components.size());
+    // the triangles and lines a cavity can hold: missing, or with a tet in
+    // the cavities
+    std::vector<std::size_t> candTri, candLine;
+    for(std::size_t i = 0; i < nt; i++) {
+      const tRef r = tri2tet[i];
+      if(r == NO_ADJ || inCavity[r >> 2] || inCavity[m.neigh[r] >> 2])
+        candTri.push_back(i);
+    }
+    for(std::size_t i = 0; i < nl; i++)
+      if(!lineInTriangle[i] &&
+         (line2tet[i] == NO_LINE || inCavity[(tIdx)(line2tet[i] / 6)]))
+        candLine.push_back(i);
     std::size_t numCavityTets = 0;
     const int BOUNDARY_TAG = -2; // the facets of the cavity boundary
     for(std::size_t c = 0; c < components.size(); c++) {
@@ -4610,7 +4663,7 @@ namespace {
         return k;
       };
       std::set<std::array<vIdx, 3>> surfaceFacets;
-      for(std::size_t i = 0; i < nt; i++) {
+      for(auto i : candTri) {
         const vIdx *n = &s.triNode[3 * i];
         bool take = false;
         if(tri2tet[i] != NO_ADJ)
@@ -4631,8 +4684,7 @@ namespace {
         in.triTet.push_back(tet);
         surfaceFacets.insert(sorted3(n[0], n[1], n[2]));
       }
-      for(std::size_t i = 0; i < nl; i++) {
-        if(lineInTriangle[i]) continue;
+      for(auto i : candLine) {
         const vIdx *n = &s.lineNode[2 * i];
         bool take = false;
         // (the ring of a present line is in the cavity or out of it)
@@ -5046,13 +5098,21 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
     // by local edge removals first, then TetGen on the cavities around what
     // is left; the global TetGen recovery of the untouched Delaunay is the
     // fallback
-    const std::vector<pdel3d::vIdx> node0(m.node.begin(),
-                                          m.node.begin() + 4 * m.ntet);
-    const std::vector<pdel3d::tRef> neigh0(m.neigh.begin(),
-                                           m.neigh.begin() + 4 * m.ntet);
-    const std::vector<std::uint16_t> flag0(m.flag.begin(),
-                                           m.flag.begin() + m.ntet);
     const std::size_t ntet0 = m.ntet, nv0 = m.numVertices();
+    pdel3d::PodVector<pdel3d::vIdx> node0;
+    pdel3d::PodVector<pdel3d::tRef> neigh0;
+    pdel3d::PodVector<std::uint16_t> flag0;
+    node0.resizeNoInit(4 * ntet0);
+    neigh0.resizeNoInit(4 * ntet0);
+    flag0.resizeNoInit(ntet0);
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+    for(std::size_t t = 0; t < ntet0; t++) {
+      for(int k = 0; k < 4; k++) {
+        node0[4 * t + k] = m.node[4 * t + k];
+        neigh0[4 * t + k] = m.neigh[4 * t + k];
+      }
+      flag0[t] = m.flag[t];
+    }
     // the maps after each stage: the edge removals and the cavities move
     // the triangles and lines to other tets
     auto remap = [&]() {
@@ -5083,9 +5143,14 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
       // added Steiner points to the surface mesh, which that tetrahedralization
       // does not have: then from the current one
       if(m.numVertices() == nv0) {
-        std::copy(node0.begin(), node0.end(), m.node.begin());
-        std::copy(neigh0.begin(), neigh0.end(), m.neigh.begin());
-        std::copy(flag0.begin(), flag0.end(), m.flag.begin());
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+        for(std::size_t t = 0; t < ntet0; t++) {
+          for(int k = 0; k < 4; k++) {
+            m.node[4 * t + k] = node0[4 * t + k];
+            m.neigh[4 * t + k] = neigh0[4 * t + k];
+          }
+          m.flag[t] = flag0[t];
+        }
         m.ntet = ntet0;
       }
       else
