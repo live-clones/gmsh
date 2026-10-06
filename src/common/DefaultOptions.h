@@ -1565,12 +1565,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "OptimizeReconnectionPoints" , opt_mesh_optimize_reconnection_points ,
     16 , /* HXT: 32 */ "Maximum number of nodes of the cavity that the parallel "
     "3D optimizer reconnects around a tetrahedron it could not improve otherwise "
-    "(5 to 32)" },
+    "(5 to 32; below 5: no reconnection)" },
   { F|O, "OptimizeReconnectionSearch" , opt_mesh_optimize_reconnection_search ,
-    200 , /* HXT 500 */  "Maximum number of tetrahedra placed by the search for "
+    200 , /* HXT: 500 */ "Maximum number of tetrahedra placed by the search for "
     "a better reconnection of a cavity" },
   { F|O, "OptimizeReconnectionThreshold" , opt_mesh_optimize_reconnection_threshold ,
-    0.5 , /* HXT 1 */ "Reconnect the tetrahedra that the parallel 3D optimizer "
+    0.5 , /* HXT: 1 */ "Reconnect the tetrahedra that the parallel 3D optimizer "
     "could not improve otherwise and whose quality is below this fraction of "
     "Mesh.OptimizeThreshold (0: no reconnection; 1: all of them)" },
 

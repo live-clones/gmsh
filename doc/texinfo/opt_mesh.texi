@@ -647,7 +647,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeReconnectionPoints
-Maximum number of nodes of the cavity that the parallel 3D optimizer reconnects around a tetrahedron it could not improve otherwise (5 to 32)@*
+Maximum number of nodes of the cavity that the parallel 3D optimizer reconnects around a tetrahedron it could not improve otherwise (5 to 32; below 5: no reconnection)@*
 Default value: @code{16}@*
 Saved in: @code{General.OptionsFileName}
 
