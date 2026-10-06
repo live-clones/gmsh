@@ -653,11 +653,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeReconnectionSearch
 Maximum number of tetrahedra placed by the search for a better reconnection of a cavity@*
-Default value: @code{100}@*
+Default value: @code{200}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeReconnectionThreshold
-Reconnect the tetrahedra that the parallel 3D optimizer could not improve otherwise and whose quality is below this fraction of Mesh.OptimizeThreshold (0: no reconnection; 1: all of them, as HXT)@*
+Reconnect the tetrahedra that the parallel 3D optimizer could not improve otherwise and whose quality is below this fraction of Mesh.OptimizeThreshold (0: no reconnection; 1: all of them)@*
 Default value: @code{0.5}@*
 Saved in: @code{General.OptionsFileName}
 
