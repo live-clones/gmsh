@@ -3460,23 +3460,47 @@ namespace pdel3d {
                             int nthreads)
     {
       const std::size_t nv = m.numVertices(), nnew = nv - first;
-      std::vector<vIdx> newIndex(nnew, GHOST);
+      const int nt = std::max(1, nthreads);
+      std::vector<vIdx> newIndex(nnew);
+#pragma omp parallel for schedule(static) num_threads(nt)
+      for(std::size_t i = 0; i < nnew; i++) newIndex[i] = GHOST;
+#pragma omp parallel for schedule(static) num_threads(nt)
       for(std::size_t i = 0; i < toInsert.size(); i++)
         if(status[i] == ST_INSERTED) newIndex[toInsert[i] - first] = 0;
-      vIdx n = (vIdx)first;
-      for(std::size_t v = first; v < nv; v++) {
-        if(newIndex[v - first] == GHOST) continue;
-        newIndex[v - first] = n;
-        if(n != v)
-          for(int k = 0; k < 4; k++) m.xyz[4 * n + k] = m.xyz[4 * v + k];
-        n++;
+      // the vertices kept, in order: counted per chunk, then gathered and put
+      // back in place
+      std::vector<std::size_t> kept(nt + 1, 0);
+#pragma omp parallel for schedule(static) num_threads(nt)
+      for(int c = 0; c < nt; c++) {
+        std::size_t n = 0;
+        for(std::size_t i = nnew * c / nt; i < nnew * (c + 1) / nt; i++)
+          n += (newIndex[i] != GHOST);
+        kept[c + 1] = n;
       }
-      if(n == nv) return;
-      m.xyz.resize(4 * n);
+      for(int c = 0; c < nt; c++) kept[c + 1] += kept[c];
+      const std::size_t n = kept[nt];
+      if(n == nnew) return;
+      std::vector<double> xyz(4 * n);
+#pragma omp parallel for schedule(static) num_threads(nt)
+      for(int c = 0; c < nt; c++) {
+        std::size_t j = kept[c];
+        for(std::size_t i = nnew * c / nt; i < nnew * (c + 1) / nt; i++) {
+          if(newIndex[i] == GHOST) continue;
+          newIndex[i] = (vIdx)(first + j);
+          for(int k = 0; k < 4; k++)
+            xyz[4 * j + k] = m.xyz[4 * (first + i) + k];
+          j++;
+        }
+      }
+#pragma omp parallel for schedule(static) num_threads(nt)
+      for(std::size_t j = 0; j < 4 * n; j++) m.xyz[4 * first + j] = xyz[j];
+      m.xyz.resize(4 * (first + n));
       m.numDefaultDist = std::min(m.numDefaultDist, first);
-#pragma omp parallel for schedule(static) num_threads(nthreads)
+      // only the tets made by this insertion (not processed yet) can hold the
+      // new vertices
+#pragma omp parallel for schedule(static) num_threads(nt)
       for(std::size_t t = 0; t < m.ntet; t++) {
-        if(m.isDeleted((tIdx)t)) continue;
+        if(m.flag[t] & (F_DELETED | F_PROCESSED)) continue;
         for(int k = 0; k < 4; k++) {
           const vIdx v = m.node[4 * t + k];
           if(v != GHOST && v >= first) m.node[4 * t + k] = newIndex[v - first];
