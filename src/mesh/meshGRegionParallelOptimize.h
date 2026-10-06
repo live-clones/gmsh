@@ -37,7 +37,7 @@ namespace pdel3d {
   // improve the tets below the quality threshold by edge removal and node
   // relocation, then by reconnection of the cavities around those left over,
   // in parallel
-  void optimize(Mesh &m, OptimizeOptions &opt);
+  void optimize(Mesh &m, const OptimizeOptions &opt);
 
 } // namespace pdel3d
 

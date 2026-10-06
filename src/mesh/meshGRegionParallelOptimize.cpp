@@ -58,7 +58,7 @@ namespace pdel3d {
       std::uint8_t n[4];
     };
 
-    // Large (about 500 KB): one per thread, on the heap. The orientations
+    // Large (about 1.4 MB): one per thread, on the heap. The orientations
     // and qualities of the tets on the cavity points are cached by sorted
     // quadruple, for the whole life of the cavity (the points keep their
     // indices while it grows)
@@ -73,8 +73,7 @@ namespace pdel3d {
       // index of the face (a, b, c), stored from its smallest node, or
       // UINT16_MAX
       std::uint16_t faceMap[SPR_MAX_POINTS][SPR_MAX_POINTS][SPR_MAX_POINTS];
-      int numTets = 0; // the tets of the cavity, then of the solution
-      SPRTet tet[SPR_MAX_TETS];
+      int numTets = 0; // the number of tets of the cavity
       double worst = 0.; // quality of the worst tet of the cavity
       int numEdges = 0; // constrained edges inside the cavity
       std::uint8_t edge[SPR_MAX_CONSTRAINTS][2];
@@ -844,7 +843,8 @@ namespace pdel3d {
           // the tet in the cavity's numbering, its nodes in the mesh order:
           // the face holds the facet reversed
           const std::uint8_t *fn = S.face[i].n;
-          std::uint8_t *tv = S.tet[S.numTets++].n;
+          S.numTets++;
+          std::uint8_t tv[4];
           tv[f] = (std::uint8_t)oppV;
           const vIdx *n = &m.node[4 * t];
           for(int j = 0; j < 3; j++) {
@@ -1261,7 +1261,6 @@ namespace pdel3d {
         S.numPoints = 4;
         S.numFaces = S.numEdges = S.numTriangles = 0;
         S.numTets = 1;
-        S.tet[0] = SPRTet{{0, 1, 2, 3}};
         S.worst = qual[bad];
         S.nodes = 0;
         // ten times the budget for the nearly flat tets: few of them, and a
@@ -1276,7 +1275,8 @@ namespace pdel3d {
           for(int k = 0; k < 3; k++) S.xyz[i][k] = m.xyz[4 * n[i] + k];
           S.node[i] = n[i];
         }
-        sprSetQuality(S, S.tet[0].n, qual[bad]);
+        const std::uint8_t tv[4] = {0, 1, 2, 3};
+        sprSetQuality(S, tv, qual[bad]);
         for(unsigned f = 0; f < 4; f++)
           sprAddFace(S, facetNode0(f), facetNode1(f), facetNode2(f),
                      m.neigh[4 * bad + f], false);
@@ -1318,7 +1318,7 @@ namespace pdel3d {
     };
   } // namespace
 
-  void optimize(Mesh &m, OptimizeOptions &opt)
+  void optimize(Mesh &m, const OptimizeOptions &opt)
   {
     const double t0 = TimeOfDay();
     const int maxThreads = std::max(1, opt.numThreads);
@@ -1352,15 +1352,15 @@ namespace pdel3d {
         }
       }
     }
-#pragma omp parallel for schedule(static) num_threads(maxThreads)
     // F_PROCESSED marks the tets that could not be improved, until a
-    // neighbor changes
+    // neighbor changes, F_SPR_TRIED those the reconnection gave up on
+#pragma omp parallel for schedule(static) num_threads(maxThreads)
     for(std::size_t t = 0; t < m.ntet; t++) {
-      m.flag[t] &= ~F_PROCESSED;
+      m.flag[t] &= ~(F_PROCESSED | F_SPR_TRIED);
       if(K.inVolume((tIdx)t)) K.qual[t] = K.computeQuality((tIdx)t);
     }
 
-    auto report = [&](const char *what) -> double {
+    auto report = [&](const char *what) {
       double worst = 2., avg = 0.;
       std::size_t count = 0;
 #pragma omp parallel for schedule(static) num_threads(maxThreads)              \
@@ -1373,7 +1373,6 @@ namespace pdel3d {
       }
       Msg::Info("Optimization %s: worst = %g / average = %g (%lu tets)", what,
                 worst, count ? avg / count : 0., count);
-      return worst;
     };
     report("starts");
     const bool haveSPR = opt.sprQualityFactor > 0. && opt.sprMaxPoints > 4;
@@ -1382,8 +1381,7 @@ namespace pdel3d {
     std::vector<Local> locals(maxThreads);
     std::vector<std::vector<badTet>> localBad(maxThreads);
     std::uint32_t seed = 1;
-    std::size_t totalSwaps = 0, totalRelocations = 0, totalConflicts = 0,
-                totalInvalid = 0, totalReconnections = 0, totalFailed = 0;
+    std::size_t totalConflicts = 0;
     bool ranOutOfSpace = false;
     int pass = 0;
     // one pass over the bad tets: edge removals and relocations on those not
@@ -1498,16 +1496,8 @@ namespace pdel3d {
         if(!numConflicts && !ranOutOfSpace) break;
       }
       std::size_t after = 0;
-      totalSwaps = totalRelocations = totalInvalid = totalReconnections =
-        totalFailed = 0;
-      for(auto &L : locals) {
-        totalSwaps += L.swaps;
-        totalInvalid += L.invalidSwaps;
-        totalRelocations += L.relocations;
-        totalReconnections += L.reconnections;
-        totalFailed += L.failedReconnections;
+      for(auto &L : locals)
         after += spr ? L.reconnections : L.swaps + L.relocations;
-      }
       if(opt.verbosity > 0)
         Msg::Info("Optimization pass %d: %lu bad tets, %lu %s (Wall %gs)", pass,
                   numBad, after - before, spr ? "reconnected" : "improved",
@@ -1532,6 +1522,15 @@ namespace pdel3d {
       std::size_t numBad = 0;
       if(!runPass(true, numBad)) break;
     }
+    std::size_t totalSwaps = 0, totalRelocations = 0, totalInvalid = 0,
+                totalReconnections = 0, totalFailed = 0;
+    for(auto &L : locals) {
+      totalSwaps += L.swaps;
+      totalInvalid += L.invalidSwaps;
+      totalRelocations += L.relocations;
+      totalReconnections += L.reconnections;
+      totalFailed += L.failedReconnections;
+    }
     // report before the compaction, which renumbers the tets
     report("done");
     std::size_t ill = 0;
@@ -1548,11 +1547,6 @@ namespace pdel3d {
       Msg::Info("  %lu swaps rejected on volume, %lu reconnections failed, "
                 "%lu conflicts",
                 totalInvalid, totalFailed, totalConflicts);
-    for(auto &L : locals)
-      for(auto t : L.deleted)
-        for(int k = 0; k < 4; k++) m.neigh[4 * t + k] = NO_ADJ;
-#pragma omp parallel for schedule(static) num_threads(maxThreads)
-    for(std::size_t t = 0; t < m.ntet; t++) m.flag[t] &= ~F_SPR_TRIED;
     m.numDefaultDist = 0;
     m.removeDeleted(maxThreads);
   }
