@@ -7,7 +7,6 @@
 //   Jonathan Lambrechts
 //
 
-#include <atomic>
 #include <cstdlib>
 #include <limits>
 #include <list>
@@ -2651,16 +2650,12 @@ class ExtendField : public Field {
   std::map<GEntity*, search> _searchCurves, _searchSurfaces;
   double _sizeMax, _ratio;
   bool _embedded;
-  // dimension of the entities the search trees were built for, published
-  // after the trees (the threads test it without the lock)
-  std::atomic<int> _searchDim;
 public:
   ExtendField()
   {
     _sizeMax = MAX_LC;
     _ratio = 1.2;
     _embedded = true;
-    _searchDim = 0;
     options["SurfacesList"] = new FieldOptionList(
       _surfaceTags, "Tags of model surfaces on which to apply the field",
       &updateNeeded);
@@ -2751,44 +2746,42 @@ public:
       }
     }
   }
+  // the search trees on what is meshed of the boundaries: called by
+  // FieldManager::initialize() before each meshing pass, serially, so that
+  // the evaluations during the pass only read them (curves meshed when
+  // meshing surfaces, surfaces meshed when meshing volumes)
+  void update()
+  {
+    _entities.clear();
+    for(auto t : _surfaceTags) {
+      GFace *gf = GModel::current()->getFaceByTag(t);
+      if(gf)
+        _entities.insert(gf);
+      else
+        Msg::Warning("Unknown surface %d", t);
+    }
+    for(auto t : _volumeTags) {
+      GRegion *gr = GModel::current()->getRegionByTag(t);
+      if(gr)
+        _entities.insert(gr);
+      else
+        Msg::Warning("Unknown volume %d", t);
+    }
+    recomputeCurves();
+    recomputeSurfaces();
+    updateNeeded = false;
+  }
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
     if(!ge) return MAX_LC;
     if(ge->dim() != 2 && ge->dim() != 3) return MAX_LC;
 
-    // build the search trees once per meshing pass: on the curves when
-    // meshing surfaces, on the surfaces when meshing volumes; the lock must
-    // not be taken on every evaluation (see MinField)
-    if(_searchDim.load(std::memory_order_acquire) != ge->dim() ||
-       updateNeeded) {
+    // evaluated outside a meshing pass after its options changed (the API,
+    // the GUI): build the trees now, as MinField resolves its fields
+    if(updateNeeded) {
 #pragma omp critical(ExtendField)
-      if(_searchDim.load(std::memory_order_acquire) != ge->dim() ||
-         updateNeeded) {
-        _entities.clear();
-        for(auto t : _surfaceTags) {
-          GFace *gf = GModel::current()->getFaceByTag(t);
-          if(gf)
-            _entities.insert(gf);
-          else
-            Msg::Warning("Unknown surface %d", t);
-        }
-        for(auto t : _volumeTags) {
-          GRegion *gr = GModel::current()->getRegionByTag(t);
-          if(gr)
-            _entities.insert(gr);
-          else
-            Msg::Warning("Unknown volume %d", t);
-        }
-        _searchCurves.clear();
-        _searchSurfaces.clear();
-        if(ge->dim() == 2)
-          recomputeCurves();
-        else
-          recomputeSurfaces();
-        updateNeeded = false;
-        _searchDim.store(ge->dim(), std::memory_order_release);
-      }
+      if(updateNeeded) update();
     }
 
     if(_entities.find(ge) == _entities.end()) return MAX_LC;
@@ -2810,7 +2803,7 @@ public:
       std::size_t index = 0;
       double dist2 = 0.;
       res.init(&index, &dist2);
-      auto it = search.find(bnd[i]); // no operator[]: other threads read too
+      auto it = search.find(bnd[i]); // not operator[]: threads read it
       if(it != search.end() && it->second.kdtree) {
         it->second.kdtree->findNeighbors(res, &pt[0],
                                          nanoflann::SearchParams(10));
