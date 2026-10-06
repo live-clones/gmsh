@@ -7,6 +7,7 @@
 #include <limits>
 #include <stdlib.h>
 #include <sstream>
+#include <unordered_set>
 #include <stack>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -223,15 +224,17 @@ void GModel::destroy(bool keepName)
   gmshSurface::reset();
 }
 
-void GModel::destroyMeshCaches()
+void GModel::destroyMeshCaches(bool keepVertexCaches)
 {
   // this is called in GEntity::deleteMesh()
 #pragma omp critical(destroyMeshCaches)
   {
-    _vertexVectorCache.clear();
-    std::vector<MVertex *>().swap(_vertexVectorCache);
-    _vertexMapCache.clear();
-    std::map<std::size_t, MVertex *>().swap(_vertexMapCache);
+    if(!keepVertexCaches) {
+      _vertexVectorCache.clear();
+      std::vector<MVertex *>().swap(_vertexVectorCache);
+      _vertexMapCache.clear();
+      std::map<std::size_t, MVertex *>().swap(_vertexMapCache);
+    }
     _elementVectorCache.clear();
     std::vector<std::pair<MElement *, int>>().swap(_elementVectorCache);
     _elementMapCache.clear();
@@ -1902,6 +1905,44 @@ static void getDependentViewData(GModel *m, PViewDataGModel::DataType type,
   }
 }
 #endif
+
+void GModel::renumberMeshCanonically(std::size_t keepUpTo)
+{
+  destroyMeshCaches();
+  std::vector<GEntity *> entities;
+  getEntities(entities);
+  std::size_t nv = CTX::instance()->mesh.firstNodeTag - 1,
+              ne = CTX::instance()->mesh.firstElementTag - 1;
+  std::vector<MVertex *> order;
+  std::unordered_set<MVertex *> pending;
+  for(GEntity *ge : entities) {
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++)
+      ge->getMeshElement(j)->forceNum(++ne);
+    std::vector<MVertex *> &list = ge->mesh_vertices;
+    order.clear();
+    pending.clear();
+    for(MVertex *v : list) {
+      if(v->getNum() <= keepUpTo)
+        order.push_back(v);
+      else
+        pending.insert(v);
+    }
+    if(!pending.empty()) {
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+        MElement *e = ge->getMeshElement(j);
+        for(std::size_t k = 0; k < e->getNumVertices(); k++)
+          if(pending.erase(e->getVertex(k))) order.push_back(e->getVertex(k));
+      }
+      // nodes in no element of their entity: after the others, as listed
+      for(MVertex *v : list)
+        if(pending.count(v)) order.push_back(v);
+    }
+    for(MVertex *v : order) v->forceNum(++nv);
+    list.swap(order);
+  }
+  resetMaxVertexNumber(nv);
+  resetMaxElementNumber(ne);
+}
 
 void GModel::renumberMeshVertices(
   const std::map<std::size_t, std::size_t> &mapping)

@@ -1963,7 +1963,7 @@ static void meshCompound(GFace *gf, bool verbose)
     }
     else {
       gf->mesh_vertices.push_back(df->mesh_vertices[i]);
-      gf->mesh_vertices[i]->setEntity(gf);
+      df->mesh_vertices[i]->setEntity(gf);
     }
   }
 
