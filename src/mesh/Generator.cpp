@@ -1022,7 +1022,6 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
      how != "OptimizeQuads" && how != "OptimizeQuadsFast" && how != "QMorph" &&
-     how != "OptimizeQuadHoleRings" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
      how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());

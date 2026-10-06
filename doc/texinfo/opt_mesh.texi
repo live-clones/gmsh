@@ -747,7 +747,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PackCleanupMethod
-V2 cleanup after packing of parallelograms. 1: enabled (0 is also accepted for compatibility), 2: disabled@*
+Cavity optimizer after packing of parallelograms when PackRecombination is 0. 1: enabled (0 is also accepted for compatibility), 2: disabled@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -757,12 +757,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeQuadsFinalSplitCadDistanceRatio
-Final V2 quad splitting: trigger distance to CAD divided by local target size; insert the other diagonal only if within tolerance and at least twice closer (negative disables CAD trigger; invalid or absolutely unacceptable quads are still split when possible)@*
+Obsolete: no effect. Kept so that existing scripts still run@*
 Default value: @code{0.2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeQuadsSmartLaplacian
-V2 nodal smoothing: 0: projected centroid with Winslow fallback, 1: projected Smart Laplacian (strict minimum corner-sine improvement), 2: Smart Laplacian followed by one pure mean-plane 3D Winslow sweep. All modes retain CAD and specification guards@*
+Obsolete: only sets the minimum number of smoothing passes while packing (3 if non-zero, 5 otherwise). The cavity optimizer has a single energy and no Smart Laplacian@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -777,7 +777,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeQuadsTargetSize
-Target edge length for quad optimization (non-positive: use the mesh size field)@*
+Obsolete: no effect. Kept so that existing scripts still run@*
 Default value: @code{0.}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -797,7 +797,7 @@ Default value: @code{0.}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeQuadsPillowLayers
-Attempt a complete quadrilateral ring around holes with OptimizeQuadHoleRings and open it with local Winslow smoothing; 1 optimizes the complete affected stars and larger values add neighboring element layers (0: disabled). The dedicated ring pass permits shape/size specification failures while preserving physical validity and CAD fit@*
+Obsolete: no effect. The hole-ring pass (OptimizeQuadHoleRings) was removed@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

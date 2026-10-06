@@ -128,17 +128,6 @@ namespace QuadOpt {
       }
       return true;
     }
-
-    bool isBoundaryVertex(int v) const
-    {
-      for(int id : star[v]) {
-        const Cell &c = cells[id];
-        for(int i = 0; i < c.n; ++i)
-          if(c.v[i] == v && (cellAt(next(c, i), v) < 0 || cellAt(v, prev(c, i)) < 0))
-            return true;
-      }
-      return star[v].empty();
-    }
   };
 
 } // namespace QuadOpt
