@@ -40,7 +40,6 @@
 #include <cstring>
 #include <map>
 #include <numeric>
-#include <stdexcept>
 #include <set>
 #include "meshGRegionParallelDelaunay.h"
 #include "meshGRegionParallelOptimize.h"
@@ -74,14 +73,6 @@ namespace pdel3d {
   void Mesh::reserveTets(std::size_t n)
   {
     if(n <= tetCapacity()) return;
-    // 4 * tet + facet must fit in a tRef, below NO_ADJ
-    const std::size_t maxTets = NO_ADJ / 4;
-    if(n > maxTets) {
-      if(tetCapacity() >= maxTets)
-        throw std::length_error("The Parallel Delaunay algorithm is limited "
-                                "to 2^30 tets per group of volumes");
-      n = maxTets;
-    }
     node.resize(4 * n);
     neigh.resize(4 * n);
     flag.resize(n);
@@ -838,8 +829,8 @@ namespace pdel3d {
               const std::uint32_t j = hashGet(r >> 2);
               if(j == 0xffffffffu) {
                 Msg::Error(
-                  "Inconsistent cavity in pdel3d (tet %u is not in it)",
-                  r >> 2);
+                  "Inconsistent cavity in pdel3d (tet %lu is not in it)",
+                  (unsigned long)(r >> 2));
                 return false;
               }
               L.faces[4 * i + f] = 4 * j + (r & 3);
@@ -1560,12 +1551,12 @@ namespace pdel3d {
     }
     // duplicate tets (a double covering is combinatorially consistent)
     {
-      std::vector<std::array<vIdx, 5>> keys;
+      std::vector<std::array<tIdx, 5>> keys;
       keys.reserve(ntet);
       for(std::size_t t = 0; t < ntet; t++) {
         if(isDeleted((tIdx)t)) continue;
-        std::array<vIdx, 5> k = {node[4 * t], node[4 * t + 1], node[4 * t + 2],
-                                 node[4 * t + 3], (vIdx)t};
+        std::array<tIdx, 5> k = {node[4 * t], node[4 * t + 1], node[4 * t + 2],
+                                 node[4 * t + 3], (tIdx)t};
         std::sort(k.begin(), k.begin() + 4);
         keys.push_back(k);
       }
@@ -1575,9 +1566,9 @@ namespace pdel3d {
            keys[i][2] == keys[i - 1][2] && keys[i][3] == keys[i - 1][3]) {
           errors++;
           if(errors <= 20)
-            Msg::Error("pdel3d verify: duplicate tets %u and %u (%u %u %u %u)",
-                       keys[i - 1][4], keys[i][4], keys[i][0], keys[i][1],
-                       keys[i][2], keys[i][3]);
+            Msg::Error("pdel3d verify: duplicate tets %lu and %lu",
+                       (unsigned long)keys[i - 1][4],
+                       (unsigned long)keys[i][4]);
         }
       }
     }
@@ -5054,13 +5045,7 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
 {
   if(regions.empty()) return 0;
   splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
-  int ret;
-  try {
-    ret = meshRegions(regions, sqr);
-  } catch(std::length_error &e) {
-    Msg::Error("%s", e.what());
-    ret = 1;
-  }
+  const int ret = meshRegions(regions, sqr);
   // the pyramid apexes only go to the volumes on success
   if(ret)
     for(auto &q : sqr.getQuad()) delete q.second;

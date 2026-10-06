@@ -26,12 +26,14 @@
 
 namespace pdel3d {
 
+  // 32-bit vertex indices; 64-bit tet indices and references, so that a
+  // mesh can hold more than 2^30 tets (4 * tet + facet must fit)
   typedef std::uint32_t vIdx; // vertex index
-  typedef std::uint32_t tIdx; // tetrahedron index
-  typedef std::uint32_t tRef; // 4 * tetrahedron + facet
+  typedef std::uint64_t tIdx; // tetrahedron index
+  typedef std::uint64_t tRef; // 4 * tetrahedron + facet
   constexpr vIdx GHOST = 0xffffffffu; // the vertex at infinity
-  constexpr tRef NO_ADJ = 0xffffffffu;
-  constexpr tIdx NO_TET = 0xffffffffu;
+  constexpr tRef NO_ADJ = ~0ull;
+  constexpr tIdx NO_TET = ~0ull;
   constexpr std::uint64_t NO_LINE = ~0ull; // a line not in the mesh
 
   // flag bits of a tetrahedron, as in HXT

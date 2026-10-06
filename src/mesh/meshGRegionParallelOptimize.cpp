@@ -250,15 +250,17 @@ namespace pdel3d {
             static int reports = 0;
             if(reports++ < 5) {
               Msg::Warning("Inconsistent ring of %d tets around edge %u-%u of "
-                           "tet %u (ring vertex %d: %u, outA %u outB %u)",
-                           C.n, C.a, C.b, t, i, C.ring[i], C.outA[i] >> 2,
-                           C.outB[i] >> 2);
+                           "tet %lu (ring vertex %d: %u, outA %lu outB %lu)",
+                           C.n, C.a, C.b, (unsigned long)t, i, C.ring[i],
+                           (unsigned long)(C.outA[i] >> 2),
+                           (unsigned long)(C.outB[i] >> 2));
               for(int j = 0; j < C.n; j++) {
                 const vIdx *n = &m.node[4 * C.tet[j]];
-                Msg::Warning("  ring tet %u: nodes %u %u %u %u flag 0x%x color "
-                             "%u ring %u",
-                             C.tet[j], n[0], n[1], n[2], n[3], m.flag[C.tet[j]],
-                             m.color[C.tet[j]], C.ring[j]);
+                Msg::Warning(
+                  "  ring tet %lu: nodes %u %u %u %u flag 0x%x color "
+                  "%u ring %u",
+                  (unsigned long)C.tet[j], n[0], n[1], n[2], n[3],
+                  m.flag[C.tet[j]], m.color[C.tet[j]], C.ring[j]);
               }
             }
             return NOT_BETTER;
