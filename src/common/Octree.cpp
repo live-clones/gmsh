@@ -205,7 +205,8 @@ void Octree::searchAll(const double *p, double d, double a,
                        std::vector<void *> *out) const
 {
   if(nodes.empty()) return;
-  std::vector<uint32_t> found;
+  thread_local std::vector<uint32_t> found; // (reused: no allocation per call)
+  found.clear();
   uint32_t stack[maxDepth];
   int n = 0;
   stack[n++] = 0;

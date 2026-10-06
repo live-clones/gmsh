@@ -224,15 +224,17 @@ void GModel::destroy(bool keepName)
   gmshSurface::reset();
 }
 
-void GModel::destroyMeshCaches()
+void GModel::destroyMeshCaches(bool keepVertexCaches)
 {
   // this is called in GEntity::deleteMesh()
 #pragma omp critical(destroyMeshCaches)
   {
-    _vertexVectorCache.clear();
-    std::vector<MVertex *>().swap(_vertexVectorCache);
-    _vertexMapCache.clear();
-    std::map<std::size_t, MVertex *>().swap(_vertexMapCache);
+    if(!keepVertexCaches) {
+      _vertexVectorCache.clear();
+      std::vector<MVertex *>().swap(_vertexVectorCache);
+      _vertexMapCache.clear();
+      std::map<std::size_t, MVertex *>().swap(_vertexMapCache);
+    }
     _elementVectorCache.clear();
     std::vector<std::pair<MElement *, int>>().swap(_elementVectorCache);
     _elementMapCache.clear();

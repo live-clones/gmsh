@@ -359,8 +359,8 @@ public:
                               std::map<std::size_t, std::size_t>());
 
   // delete all the mesh-related caches (this must be called when the
-  // mesh is changed)
-  void destroyMeshCaches();
+  // mesh is changed), except the node caches if only elements were added
+  void destroyMeshCaches(bool keepVertexCaches = false);
   // delete the mesh stored in entities and call destroMeshCaches
   void deleteMesh();
   void deleteMesh(const std::vector<GEntity *> &entities);
