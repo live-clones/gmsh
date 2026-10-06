@@ -2236,60 +2236,36 @@ namespace pdel3d {
     }
 
     // open addressing table of the (sorted) triangles
-    // filled in parallel; a triangle given twice keeps its smaller index
     struct TriangleTable {
       std::size_t mask;
-      // triangle index + 1, 0 when empty
-      std::unique_ptr<std::atomic<std::uint32_t>[]> slot;
+      std::vector<std::uint32_t> slot; // triangle index + 1, 0 when empty
       const std::vector<vIdx> &tri; // sorted nodes
 
-      TriangleTable(const std::vector<vIdx> &sortedTri, int nthreads)
-        : tri(sortedTri)
+      TriangleTable(const std::vector<vIdx> &sortedTri) : tri(sortedTri)
       {
         const std::size_t n = tri.size() / 3;
         std::size_t size = 16;
         while(size < 2 * n) size <<= 1;
         mask = size - 1;
-        slot.reset(new std::atomic<std::uint32_t>[size]);
-#pragma omp parallel num_threads(nthreads)
-        {
-#pragma omp for schedule(static)
-          for(std::size_t h = 0; h < size; h++)
-            slot[h].store(0, std::memory_order_relaxed);
-#pragma omp for schedule(static)
-          for(std::size_t i = 0; i < n; i++) {
-            const vIdx *k = &tri[3 * i];
-            std::size_t h = hash3(k[0], k[1], k[2]) & mask;
-            std::uint32_t mine = (std::uint32_t)(i + 1);
-            while(true) {
-              std::uint32_t cur = slot[h].load();
-              if(!cur) {
-                if(slot[h].compare_exchange_strong(cur, mine)) break;
-                continue; // taken meanwhile: look again
-              }
-              const vIdx *o = &tri[3 * (cur - 1)];
-              if(o[0] == k[0] && o[1] == k[1] && o[2] == k[2]) {
-                if(cur < mine) break;
-                if(slot[h].compare_exchange_strong(cur, mine)) break;
-                continue;
-              }
-              h = (h + 1) & mask;
-            }
-          }
+        slot.assign(size, 0);
+        for(std::size_t i = 0; i < n; i++) {
+          std::size_t h =
+            hash3(tri[3 * i], tri[3 * i + 1], tri[3 * i + 2]) & mask;
+          while(slot[h]) h = (h + 1) & mask;
+          slot[h] = (std::uint32_t)(i + 1);
         }
       }
       // index of the triangle (a, b, c) sorted, or -1
       std::int64_t find(vIdx a, vIdx b, vIdx c) const
       {
         std::size_t h = hash3(a, b, c) & mask;
-        while(true) {
-          const std::uint32_t s = slot[h].load(std::memory_order_relaxed);
-          if(!s) return -1;
-          const std::size_t i = s - 1;
+        while(slot[h]) {
+          const std::size_t i = slot[h] - 1;
           if(tri[3 * i] == a && tri[3 * i + 1] == b && tri[3 * i + 2] == c)
             return (std::int64_t)i;
           h = (h + 1) & mask;
         }
+        return -1;
       }
     };
 
@@ -2306,7 +2282,7 @@ namespace pdel3d {
 #pragma omp parallel for schedule(static) num_threads(nthreads)
     for(std::size_t i = 0; i < ntri; i++)
       sort3(sorted[3 * i], sorted[3 * i + 1], sorted[3 * i + 2]);
-    TriangleTable table(sorted, nthreads);
+    TriangleTable table(sorted);
     // every interior facet is seen from its two tets: only the one with the
     // smaller index writes, so that the entries are written once
 #pragma omp parallel for schedule(static) num_threads(nthreads)
