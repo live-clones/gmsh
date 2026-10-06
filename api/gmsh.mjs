@@ -4305,11 +4305,15 @@ export function wrapGmsh(Module) {
    * Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
    * `entityKeyMaster') corresponding to the entity `tag' and the key pairs
    * (`typeKey', `entityKey') for the elements of type `elementType' and
-   * function space type `functionSpaceType'. If `returnCoord' is set, the
-   * `coord' and `coordMaster' vectors contain the x, y, z coordinates
-   * locating basis functions for sorting purposes.
+   * function space type `functionSpaceType'. `orientationSign' contains the
+   * sign (1 or -1) by which each basis function of the master key must be
+   * multiplied to match the corresponding basis function on the entity `tag'.
+   * If `returnCoord' is set, the `coord' and `coordMaster' vectors contain
+   * the x, y, z coordinates locating basis functions for sorting purposes.
+   * Only available for "IsoParametric" and "Lagrange" function spaces, and
+   * for "H1Legendre" and "HcurlLegendre" function spaces on curves.
    *
-   * Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster'.
+   * Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster', `orientationSign'.
    */
   gmsh.model.mesh.getPeriodicKeys = function(elementType, functionSpaceType, tag, returnCoord = true) {
     const tmp = [];
@@ -4322,7 +4326,8 @@ export function wrapGmsh(Module) {
       const api_entityKeysMaster_ = _alloc(8, tmp);
       const api_coord_ = _alloc(8, tmp);
       const api_coordMaster_ = _alloc(8, tmp);
-      M._gmshModelMeshGetPeriodicKeys(elementType, api_functionSpaceType_, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_ + 4, api_typeKeysMaster_, api_typeKeysMaster_ + 4, api_entityKeys_, api_entityKeys_ + 4, api_entityKeysMaster_, api_entityKeysMaster_ + 4, api_coord_, api_coord_ + 4, api_coordMaster_, api_coordMaster_ + 4, returnCoord ? 1 : 0, ierr);
+      const api_orientationSign_ = _alloc(8, tmp);
+      M._gmshModelMeshGetPeriodicKeys(elementType, api_functionSpaceType_, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_ + 4, api_typeKeysMaster_, api_typeKeysMaster_ + 4, api_entityKeys_, api_entityKeys_ + 4, api_entityKeysMaster_, api_entityKeysMaster_ + 4, api_coord_, api_coord_ + 4, api_coordMaster_, api_coordMaster_ + 4, api_orientationSign_, api_orientationSign_ + 4, returnCoord ? 1 : 0, ierr);
       _check();
       return [
         M.HEAP32[api_tagMaster_ >> 2],
@@ -4331,7 +4336,8 @@ export function wrapGmsh(Module) {
         _ovector(api_entityKeys_, 'size'),
         _ovector(api_entityKeysMaster_, 'size'),
         _ovector(api_coord_, 'double'),
-        _ovector(api_coordMaster_, 'double')];
+        _ovector(api_coordMaster_, 'double'),
+        _ovector(api_orientationSign_, 'int')];
     }
     finally {
       tmp.forEach((p) => M._free(p));

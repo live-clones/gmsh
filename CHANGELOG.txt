@@ -28,7 +28,9 @@ Plugin(DuplicateNodes), removed Plugin(CVTRemesh) and Plugin(CurvedBndDist);
 Gmsh now requires C++17 and CMake 3.10, and uses Eigen 5.0 by default; added
 support for OCC 8; upgraded bundled contrib/Netgen to v6.2.2608; fix MeshAdapt
 regression introduced in 4.12 on thin cones/cylinders; reproducible
-multi-threaded 1D and 2D meshing; bug fixes.
+multi-threaded 1D and 2D meshing; periodic keys for hierarchical H1 and
+H(curl) function spaces on curves, with the sign of each master basis function;
+hierarchical basis functions moved to contrib/HierarchicalBasis; bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,
@@ -43,7 +45,7 @@ multi-threaded 1D and 2D meshing; bug fixes.
   mesh/relocateNodes; new arguments to mesh/classifySurfaces; new and/or
   modified arguments to mesh/getFaces and mesh/getElementFaceNodes (use
   getFacesByType and getElementFaceNodesByType for the old behavior),
-  mesh/getAllFaces, mesh/addFaces
+  mesh/getAllFaces, mesh/addFaces, mesh/getPeriodicKeys
 
 * New or modified options: Geometry/Mesh/View.Opacity/OpacityMode,
   General.Shaders, General.Brightness, General.GraphicsCacheSize,

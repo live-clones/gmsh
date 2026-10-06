@@ -6125,14 +6125,38 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   }
 }
 
+// the master node of the node v of the periodic entity ge, or nullptr
+static MVertex *_getMasterNode(GEntity *ge, MVertex *v)
+{
+  auto it = ge->correspondingVertices.find(v);
+  if(it != ge->correspondingVertices.end()) return it->second;
+  it = ge->correspondingHighOrderVertices.find(v);
+  if(it != ge->correspondingHighOrderVertices.end()) return it->second;
+  return nullptr;
+}
+
 GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   const int elementType, const std::string &functionSpaceType, const int tag,
   int &tagMaster, std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
   std::vector<std::size_t> &entityKeys,
   std::vector<std::size_t> &entityKeysMaster, std::vector<double> &coord,
-  std::vector<double> &coordMaster, const bool returnCoord)
+  std::vector<double> &coordMaster, std::vector<int> &orientationSign,
+  const bool returnCoord)
 {
   if(!_checkInit()) return;
+  typeKeys.clear();
+  typeKeysMaster.clear();
+  entityKeys.clear();
+  entityKeysMaster.clear();
+  coord.clear();
+  coordMaster.clear();
+  orientationSign.clear();
+  int order = 0, numComponents = 0;
+  std::string fsName = "";
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, order, numComponents)) {
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    return;
+  }
   int dim = ElementType::getDimension(elementType);
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) {
@@ -6141,60 +6165,102 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   }
   if(ge->getMeshMaster() == ge) { // not periodic
     tagMaster = tag;
-    typeKeys.clear();
-    typeKeysMaster.clear();
-    entityKeys.clear();
-    entityKeysMaster.clear();
+    return;
+  }
+  tagMaster = ge->getMeshMaster()->tag();
+
+  bool lagrange = (fsName == "Lagrange");
+  bool hierarchical = (dim == 1 && (fsName == "H1Legendre" ||
+                                    fsName == "HcurlLegendre"));
+  if(!lagrange && !hierarchical) {
+    Msg::Error("Periodic keys are only available for \"IsoParametric\" and "
+               "\"Lagrange\" function spaces, and for \"H1Legendre\" and "
+               "\"HcurlLegendre\" function spaces on curves");
     return;
   }
 
-  tagMaster = ge->getMeshMaster()->tag();
   getKeys(elementType, functionSpaceType, typeKeys, entityKeys, coord, tag,
           returnCoord);
   typeKeysMaster = typeKeys;
   entityKeysMaster = entityKeys;
   coordMaster = coord;
+  orientationSign.resize(typeKeys.size(), 1);
 
-  int nthreads = CTX::instance()->numThreads;
-  if(!nthreads) nthreads = Msg::GetMaxThreads();
-
-  if(functionSpaceType == "IsoParametric" || functionSpaceType == "Lagrange") {
+  if(lagrange) {
+    int nthreads = CTX::instance()->numThreads;
+    if(!nthreads) nthreads = Msg::GetMaxThreads();
 #pragma omp parallel for num_threads(nthreads)
     for(std::size_t i = 0; i < entityKeys.size(); i++) {
       MVertex *v = GModel::current()->getMeshVertexByTag(entityKeys[i]);
-      if(!v) { Msg::Warning("Unknown node %d", entityKeys[i]); }
-      else {
-        auto mv = ge->correspondingVertices.find(v);
-        if(mv != ge->correspondingVertices.end()) {
-          entityKeysMaster[i] = mv->second->getNum();
-          if(returnCoord) {
-            coord[3 * i] = mv->second->x();
-            coord[3 * i + 1] = mv->second->y();
-            coord[3 * i + 2] = mv->second->z();
-          }
-        }
-        else {
-          auto mv2 = ge->correspondingHighOrderVertices.find(v);
-          if(mv2 != ge->correspondingHighOrderVertices.end()) {
-            entityKeysMaster[i] = mv2->second->getNum();
-            if(returnCoord) {
-              coord[3 * i] = mv2->second->x();
-              coord[3 * i + 1] = mv2->second->y();
-              coord[3 * i + 2] = mv2->second->z();
-            }
-          }
-          else {
-            Msg::Warning("Unknown master node corresponding to node %d",
-                         entityKeys[i]);
-          }
-        }
+      MVertex *m = v ? _getMasterNode(ge, v) : nullptr;
+      if(!m) {
+        Msg::Warning("Unknown master node corresponding to node %zu",
+                     entityKeys[i]);
+        continue;
+      }
+      entityKeysMaster[i] = m->getNum();
+      if(returnCoord) {
+        coordMaster[3 * i] = m->x();
+        coordMaster[3 * i + 1] = m->y();
+        coordMaster[3 * i + 2] = m->z();
+      }
+    }
+    return;
+  }
+
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  // on curves, the keys of each element are those of its 2 vertices (H1) and
+  // of its edge; the edge functions are oriented from the edge node with the
+  // smallest tag, so their sign changes where the master edge runs the other
+  // way
+  int familyType = ElementType::getParentType(elementType);
+  HierarchicalBasis *basis = CreateHierarchicalBasis(fsName, familyType, order);
+  if(!basis) return;
+  const int numVertexFunctions = basis->getNumVertexFunction();
+  const int numEdgeFunctions = basis->getNumEdgeFunction();
+  // the sign of each edge function when the edge is reversed
+  std::vector<std::vector<double>> reversed(numEdgeFunctions,
+                                            std::vector<double>(3, 1.));
+  basis->orientEdgeFunctionsForNegativeFlag(reversed);
+  delete basis;
+
+  std::size_t idx = 0;
+  for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
+    MElement *e = ge->getMeshElementByType(familyType, j);
+    MVertex *v[2] = {e->getVertex(0), e->getVertex(1)};
+    MVertex *m[2] = {_getMasterNode(ge, v[0]), _getMasterNode(ge, v[1])};
+    if(!m[0] || !m[1]) {
+      Msg::Warning("Unknown master nodes corresponding to nodes %zu and %zu",
+                   v[0]->getNum(), v[1]->getNum());
+      idx += numVertexFunctions + numEdgeFunctions;
+      continue;
+    }
+    for(int k = 0; k < numVertexFunctions; k++, idx++) {
+      entityKeysMaster[idx] = m[k]->getNum();
+      if(returnCoord) {
+        coordMaster[3 * idx] = m[k]->x();
+        coordMaster[3 * idx + 1] = m[k]->y();
+        coordMaster[3 * idx + 2] = m[k]->z();
+      }
+    }
+    if(!numEdgeFunctions) continue;
+    std::size_t edge = GModel::current()->addMEdge(MEdge(m[0], m[1]));
+    bool flip = (v[0]->getNum() < v[1]->getNum()) !=
+                (m[0]->getNum() < m[1]->getNum());
+    for(int k = 0; k < numEdgeFunctions; k++, idx++) {
+      entityKeysMaster[idx] = edge;
+      if(flip && reversed[k][0] < 0) orientationSign[idx] = -1;
+      if(returnCoord) {
+        coordMaster[3 * idx] = 0.5 * (m[0]->x() + m[1]->x());
+        coordMaster[3 * idx + 1] = 0.5 * (m[0]->y() + m[1]->y());
+        coordMaster[3 * idx + 2] = 0.5 * (m[0]->z() + m[1]->z());
       }
     }
   }
-  else {
-    Msg::Error("Periodic key generation currently only available for "
-               "\"IsoParametric\" and \"Lagrange\" function spaces");
-  }
+#else
+  Msg::Error("Function space '%s' requires the hierarchical basis module",
+             fsName.c_str());
+#endif
 }
 
 GMSH_API void
