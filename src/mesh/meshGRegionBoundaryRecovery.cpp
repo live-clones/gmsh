@@ -1104,47 +1104,12 @@ namespace tetgenBR {
       // Write mesh into to GRegion.
       Msg::Debug("Writing to GRegion...");
       std::vector<MVertex *> extras;
+      std::map<int, GEdge *> curves;
+      for(GEdge *ge : e_list) curves[ge->tag()] = ge;
+      std::map<int, GFace *> surfaces;
+      for(GFace *gf : f_list) surfaces[gf->tag()] = gf;
       for(std::size_t k = 0; k < out.steinerType.size(); k++) {
-        const double *x = &out.steinerXYZ[3 * k];
-        GEdge *ge = nullptr;
-        GFace *gf = nullptr;
-        MVertex *v = nullptr;
-        if(out.steinerType[k] == 1) {
-          // Get the GEdge containing this vertex.
-          for(auto it = e_list.begin(); it != e_list.end(); ++it)
-            if((*it)->tag() == out.steinerSegTag[k]) ge = *it;
-          if(ge) {
-            MEdgeVertex *ev = new MEdgeVertex(x[0], x[1], x[2], ge, 0);
-            double uu = 0;
-            if(reparamMeshVertexOnEdge(ev, ge, uu)) ev->setParameter(0, uu);
-            ge->mesh_vertices.push_back(ev);
-            v = ev;
-          }
-          else if(out.steinerFaceTag[k] >= 0) {
-            // We treat this vertex a facet vertex.
-            for(auto it = f_list.begin(); it != f_list.end(); ++it)
-              if((*it)->tag() == out.steinerFaceTag[k]) gf = *it;
-          }
-        }
-        else if(out.steinerType[k] == 2) {
-          for(auto it = f_list.begin(); it != f_list.end(); ++it)
-            if((*it)->tag() == out.steinerFaceTag[k]) gf = *it;
-        }
-        if(!v && gf) {
-          MFaceVertex *fv = new MFaceVertex(x[0], x[1], x[2], gf, 0, 0);
-          SPoint2 param;
-          if(reparamMeshVertexOnFace(fv, gf, param)) {
-            fv->setParameter(0, param.x());
-            fv->setParameter(1, param.y());
-          }
-          gf->mesh_vertices.push_back(fv);
-          v = fv;
-        }
-        if(!v) {
-          // Create an interior mesh vertex.
-          v = new MVertex(x[0], x[1], x[2], gr);
-          gr->mesh_vertices.push_back(v);
-        }
+        MVertex *v = newSteinerVertex(out, k, curves, surfaces, gr);
         v->setIndex((long)(nv + k + 1));
         extras.push_back(v);
       }
@@ -1344,6 +1309,44 @@ namespace tetgenBR {
     return runCore(in, out);
   }
 
+  MVertex *newSteinerVertex(const boundaryRecoveryOutput &out, std::size_t k,
+                            const std::map<int, GEdge *> &curves,
+                            const std::map<int, GFace *> &surfaces,
+                            GRegion *gr)
+  {
+    const double *x = &out.steinerXYZ[3 * k];
+    GEdge *ge = nullptr;
+    GFace *gf = nullptr;
+    if(out.steinerType[k] == 1) {
+      auto it = curves.find(out.steinerSegTag[k]);
+      if(it != curves.end()) ge = it->second;
+    }
+    if(!ge && out.steinerType[k] > 0 && out.steinerFaceTag[k] >= 0) {
+      auto it = surfaces.find(out.steinerFaceTag[k]);
+      if(it != surfaces.end()) gf = it->second;
+    }
+    if(ge) {
+      MEdgeVertex *ev = new MEdgeVertex(x[0], x[1], x[2], ge, 0);
+      double u = 0;
+      if(reparamMeshVertexOnEdge(ev, ge, u)) ev->setParameter(0, u);
+      ge->mesh_vertices.push_back(ev);
+      return ev;
+    }
+    if(gf) {
+      MFaceVertex *fv = new MFaceVertex(x[0], x[1], x[2], gf, 0, 0);
+      SPoint2 param;
+      if(reparamMeshVertexOnFace(fv, gf, param)) {
+        fv->setParameter(0, param.x());
+        fv->setParameter(1, param.y());
+      }
+      gf->mesh_vertices.push_back(fv);
+      return fv;
+    }
+    MVertex *v = new MVertex(x[0], x[1], x[2], gr);
+    gr->mesh_vertices.push_back(v);
+    return v;
+  }
+
 #else
 
 bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr,
@@ -1356,6 +1359,13 @@ int meshGRegionBoundaryRecoveryFlat(const boundaryRecoveryInput &in,
                                     boundaryRecoveryOutput &out)
 {
   return -1;
+}
+
+MVertex *newSteinerVertex(const boundaryRecoveryOutput &out, std::size_t k,
+                          const std::map<int, GEdge *> &curves,
+                          const std::map<int, GFace *> &surfaces, GRegion *gr)
+{
+  return nullptr;
 }
 
 #endif

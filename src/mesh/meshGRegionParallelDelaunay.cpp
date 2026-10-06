@@ -4491,9 +4491,9 @@ namespace {
         }
     }
 
-    std::map<std::uint32_t, GFace *> faceOfTag;
+    std::map<int, GFace *> faceOfTag;
     for(GFace *gf : s.surfaces) faceOfTag[gf->tag()] = gf;
-    std::map<std::uint32_t, GEdge *> curveOfTag;
+    std::map<int, GEdge *> curveOfTag;
     for(GEdge *ge : s.curves) curveOfTag[ge->tag()] = ge;
 
     // TetGen is given the tets of each cavity as they are (its non-convex
@@ -4827,43 +4827,8 @@ namespace {
       std::vector<vIdx> newGlobal(global);
       for(std::size_t k = 0; k < numSteiner; k++) {
         const double *x = &out.steinerXYZ[3 * k];
-        MVertex *v = nullptr;
-        GEdge *ge = nullptr;
-        GFace *gf = nullptr;
-        if(out.steinerType[k] == 1) {
-          auto it = curveOfTag.find(out.steinerSegTag[k]);
-          if(it != curveOfTag.end())
-            ge = it->second;
-          else if(out.steinerFaceTag[k] >= 0) {
-            auto jt = faceOfTag.find(out.steinerFaceTag[k]);
-            if(jt != faceOfTag.end()) gf = jt->second;
-          }
-        }
-        else if(out.steinerType[k] == 2) {
-          auto jt = faceOfTag.find(out.steinerFaceTag[k]);
-          if(jt != faceOfTag.end()) gf = jt->second;
-        }
-        if(ge) {
-          MEdgeVertex *ev = new MEdgeVertex(x[0], x[1], x[2], ge, 0);
-          double uu = 0;
-          if(reparamMeshVertexOnEdge(ev, ge, uu)) ev->setParameter(0, uu);
-          ge->mesh_vertices.push_back(ev);
-          v = ev;
-        }
-        else if(gf) {
-          MFaceVertex *fv = new MFaceVertex(x[0], x[1], x[2], gf, 0, 0);
-          SPoint2 param;
-          if(reparamMeshVertexOnFace(fv, gf, param)) {
-            fv->setParameter(0, param.x());
-            fv->setParameter(1, param.y());
-          }
-          gf->mesh_vertices.push_back(fv);
-          v = fv;
-        }
-        else {
-          v = new MVertex(x[0], x[1], x[2], regions[0]);
-          regions[0]->mesh_vertices.push_back(v);
-        }
+        MVertex *v =
+          newSteinerVertex(out, k, curveOfTag, faceOfTag, regions[0]);
         const vIdx index = (vIdx)m.numVertices();
         v->setIndex((long)index);
         s.vertices.push_back(v);

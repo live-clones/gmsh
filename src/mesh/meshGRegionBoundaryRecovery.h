@@ -7,9 +7,12 @@
 #define MESH_GREGION_BOUNDARY_RECOVERY_H
 
 #include <cstdint>
+#include <map>
 #include <set>
 #include <vector>
 
+class GEdge;
+class GFace;
 class GRegion;
 class MVertex;
 class splitQuadRecovery;
@@ -74,6 +77,12 @@ struct boundaryRecoveryOutput {
 // TetGen's error code otherwise (1: out of memory, 3: invalid input)
 int meshGRegionBoundaryRecoveryFlat(const boundaryRecoveryInput &in,
                                     boundaryRecoveryOutput &out);
+
+// the mesh vertex of Steiner point k of out: on its curve or surface when
+// known, in gr otherwise; added to the mesh vertices of that entity
+MVertex *newSteinerVertex(const boundaryRecoveryOutput &out, std::size_t k,
+                          const std::map<int, GEdge *> &curves,
+                          const std::map<int, GFace *> &surfaces, GRegion *gr);
 
 // Recover the boundary mesh of gr (its surfaces, embedded curves and points)
 // in a Delaunay tetrahedralization of its vertices with TetGen's algorithm,
