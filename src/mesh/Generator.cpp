@@ -78,7 +78,8 @@
 #endif
 
 #if defined(HAVE_QUADOPTIMIZER)
-#include "quadOptimizerIntegration.h"
+#include "qoOptimizer.h"
+#include "qoPack.h"
 #endif
 
 #include "meshDuplicateVertices.h"
@@ -764,7 +765,7 @@ static void Mesh2D(GModel *m)
   // combine step, breaking them.
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
      CTX::instance()->mesh.algo3d != ALGO_3D_RTREE)
-    QuadOptimizer::finishPackMesh(m);
+    QuadOpt::finishPackMesh(m);
 #else
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) {
     for(GFace *gf : m->getFaces()) {
@@ -1061,10 +1062,9 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
   else if(how == "UntangleTris") {
     for(GFace *gf : m->getFaces()) untangleGFaceMeshConstrained(gf);
   }
-  else if(how == "OptimizeQuads" || how == "OptimizeQuadsFast" ||
-          how == "OptimizeQuadHoleRings") {
+  else if(how == "OptimizeQuads" || how == "OptimizeQuadsFast") {
 #if defined(HAVE_QUADOPTIMIZER)
-    QuadOptimizer::optimizeQuads(m, how);
+    QuadOpt::optimizeQuads(m);
 #else
     Msg::Error("%s requires QUADOPTIMIZER", how.c_str());
 #endif
@@ -1580,7 +1580,7 @@ void GenerateMesh(GModel *m, int ask)
   srand(CTX::instance()->mesh.randomSeed);
 
 #if defined(HAVE_QUADOPTIMIZER)
-  QuadOptimizer::PackMeshScope packMeshScope;
+  QuadOpt::PackMeshScope packMeshScope;
 #endif
 
   // Change any high order elements back into first order ones (but skip

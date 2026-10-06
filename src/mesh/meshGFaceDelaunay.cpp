@@ -1819,7 +1819,7 @@ void bowyerWatsonParallelograms(
     for(MTri3 *triangle : AllTris)
       if(!triangle->isDeleted()) triangles.push_back(triangle->tri());
 #if defined(HAVE_QUADOPTIMIZER)
-    QuadOptimizer::printTrianglesXYZ(name, triangles);
+    QuadOpt::printTrianglesXYZ(name, triangles);
 #endif
   }
 
@@ -1831,7 +1831,7 @@ void bowyerWatsonParallelograms(
   // repeatedly splitting it can refine away from the intended location.
 #if defined(HAVE_QUADOPTIMIZER)
   if(gf->geomType() == GEntity::DiscreteSurface)
-    QuadOptimizer::intrinsicDelaunayizePackedSurface(gf, DATA);
+    QuadOpt::intrinsicDelaunayizePackedSurface(gf, DATA);
 #endif
 
   if(CTX::instance()->mesh.saveDebugFiles) {
@@ -1840,7 +1840,7 @@ void bowyerWatsonParallelograms(
     // This is the actual 3D triangulation sent to Blossom, after intrinsic
     // Delaunay flips and before any recombination or quad cleanup.
 #if defined(HAVE_QUADOPTIMIZER)
-    QuadOptimizer::printTrianglesXYZ(name, gf->triangles);
+    QuadOpt::printTrianglesXYZ(name, gf->triangles);
 #endif
   }
 

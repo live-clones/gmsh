@@ -10,9 +10,6 @@
 #include <stack>
 #include "GmshConfig.h"
 #include "meshGFaceOptimize.h"
-#if defined(HAVE_QUADOPTIMIZER)
-#include "quadFinalRepair.h"
-#endif
 #include "meshGFaceDelaunay.h"
 #include "qualityMeasures.h"
 #include "GFace.h"
@@ -1406,9 +1403,6 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
 
 void quadsToTriangles(GFace *gf, double minqual)
 {
-#if defined(HAVE_QUADOPTIMIZER)
-  QuadOptimizer::splitLowQualityQuads(gf, minqual);
-#else
   std::vector<MQuadrangle *> qds;
   std::map<MElement *, std::pair<MElement *, MElement *>> change;
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
@@ -1487,7 +1481,6 @@ void quadsToTriangles(GFace *gf, double minqual)
     }
   }
   _columns->_elemColumns = newElemColumns;
-#endif
 }
 
 void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
