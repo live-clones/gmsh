@@ -2999,7 +2999,7 @@ namespace pdel3d {
         if(m.isDeleted(t)) return false;
         Ring R;
         if(!buildRing(t, ia, ib, R)) return false;
-        int req[3];
+        int req[3] = {-1, -1, -1};
         for(int k = 0; k < nreq; k++) {
           req[k] = ringPosition(R, want[k]);
           if(req[k] < 0) {

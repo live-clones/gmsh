@@ -377,8 +377,6 @@ namespace pdel3d {
         };
         facetKey facets[40];
         int nf = 0;
-        tIdx created[10];
-        int nc = 0;
         auto addFacet = [&](vIdx x, vIdx y, vIdx z, tRef ref) {
           if(x > y) std::swap(x, y);
           if(y > z) std::swap(y, z);
@@ -426,7 +424,6 @@ namespace pdel3d {
               if(iu >= 0 && iv >= 0)
                 m.flag[s] |= 1 << (5 - edgeFromFacets(iu, iv));
             }
-            created[nc++] = s;
           }
         }
         // adjacencies: the boundary facets of the cavity first

@@ -109,8 +109,8 @@ bool orientRegionBoundary(GRegion *gr, std::map<GFace *, int> &inward)
     }
     volume[shell[i]] += sign[i] * v;
   }
-  std::size_t outer = 0;
-  for(std::size_t c = 1; c < volume.size(); c++)
+  int outer = 0;
+  for(int c = 1; c < (int)volume.size(); c++)
     if(std::abs(volume[c]) > std::abs(volume[outer])) outer = c;
   if(volume[outer] == 0.) return false;
   for(std::size_t i = 0; i < nf; i++) {
