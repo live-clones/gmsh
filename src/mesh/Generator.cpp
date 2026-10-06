@@ -544,6 +544,8 @@ static void Mesh1D(GModel *m)
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
   m->getFields()->initialize();
+  std::size_t maxVertexBefore, maxElementBefore;
+  m->getMaxMeshNumbersInUse(maxVertexBefore, maxElementBefore);
 
   Msg::StatusBar(true, "Meshing 1D...");
   double t1 = Cpu(), w1 = TimeOfDay();
@@ -610,7 +612,7 @@ static void Mesh1D(GModel *m)
   Msg::StopProgressMeter();
 
   // numbered as the threads created them: renumber canonically
-  m->renumberMeshCanonically(std::numeric_limits<std::size_t>::max());
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
   CheckEmptyMesh(m, 1);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[0] = w2 - w1;
@@ -688,6 +690,8 @@ static void Mesh2D(GModel *m)
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
   m->getFields()->initialize();
+  std::size_t maxVertexBefore, maxElementBefore;
+  m->getMaxMeshNumbersInUse(maxVertexBefore, maxElementBefore);
 
   Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu(), w1 = TimeOfDay();
@@ -778,7 +782,7 @@ static void Mesh2D(GModel *m)
 
     Msg::StopProgressMeter();
   }
-  m->renumberMeshCanonically(std::numeric_limits<std::size_t>::max());
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     replaceBadQuadDominantMeshes(m);

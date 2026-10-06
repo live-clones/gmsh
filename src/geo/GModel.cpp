@@ -1318,7 +1318,7 @@ bool GModel::setAllVolumesPositive()
   for(auto it = regions.begin(); it != regions.end(); ++it) {
     const std::size_t ne = (*it)->getNumMeshElements();
     const int nthreads = CTX::instance()->numThreadsFor(ne, 1 << 16);
-#pragma omp parallel for schedule(static) num_threads(nthreads)               \
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
   reduction(min : ok)
     for(std::size_t i = 0; i < ne; ++i)
       if(!(*it)->getMeshElement(i)->setVolumePositive()) ok = 0;
@@ -1911,38 +1911,57 @@ static void getDependentViewData(GModel *m, PViewDataGModel::DataType type,
 }
 #endif
 
-void GModel::renumberMeshCanonically(std::size_t keepUpTo)
+void GModel::getMaxMeshNumbersInUse(std::size_t &maxVertex,
+                                    std::size_t &maxElement) const
+{
+  maxVertex = maxElement = 0;
+  std::vector<GEntity *> entities;
+  getEntities(entities);
+  for(GEntity *ge : entities) {
+    for(MVertex *v : ge->mesh_vertices)
+      maxVertex = std::max(maxVertex, v->getNum());
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++)
+      maxElement = std::max(maxElement, ge->getMeshElement(j)->getNum());
+  }
+}
+
+void GModel::renumberMeshCanonically(std::size_t maxVertexBefore,
+                                     std::size_t maxElementBefore)
 {
   destroyMeshCaches();
   std::vector<GEntity *> entities;
   getEntities(entities);
-  std::size_t nv = CTX::instance()->mesh.firstNodeTag - 1,
-              ne = CTX::instance()->mesh.firstElementTag - 1;
+  const std::size_t firstV = std::max(1, CTX::instance()->mesh.firstNodeTag),
+                    firstE = std::max(1, CTX::instance()->mesh.firstElementTag);
+  std::size_t nv = std::max(maxVertexBefore, firstV - 1),
+              ne = std::max(maxElementBefore, firstE - 1);
   std::vector<MVertex *> order;
   std::unordered_set<MVertex *> pending;
   for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++)
-      ge->getMeshElement(j)->forceNum(++ne);
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      MElement *e = ge->getMeshElement(j);
+      if(e->getNum() > maxElementBefore) e->forceNum(++ne);
+    }
     std::vector<MVertex *> &list = ge->mesh_vertices;
     order.clear();
     pending.clear();
     for(MVertex *v : list) {
-      if(v->getNum() <= keepUpTo)
+      if(v->getNum() <= maxVertexBefore)
         order.push_back(v);
       else
         pending.insert(v);
     }
-    if(!pending.empty()) {
-      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-        MElement *e = ge->getMeshElement(j);
-        for(std::size_t k = 0; k < e->getNumVertices(); k++)
-          if(pending.erase(e->getVertex(k))) order.push_back(e->getVertex(k));
-      }
-      // nodes in no element of their entity: after the others, as listed
-      for(MVertex *v : list)
-        if(pending.count(v)) order.push_back(v);
+    if(pending.empty()) continue;
+    const std::size_t first = order.size();
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      MElement *e = ge->getMeshElement(j);
+      for(std::size_t k = 0; k < e->getNumVertices(); k++)
+        if(pending.erase(e->getVertex(k))) order.push_back(e->getVertex(k));
     }
-    for(MVertex *v : order) v->forceNum(++nv);
+    // nodes in no element of their entity: after the others, as listed
+    for(MVertex *v : list)
+      if(pending.count(v)) order.push_back(v);
+    for(std::size_t i = first; i < order.size(); i++) order[i]->forceNum(++nv);
     list.swap(order);
   }
   resetMaxVertexNumber(nv);

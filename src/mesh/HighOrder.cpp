@@ -1691,7 +1691,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 
   // the nodes created below are numbered as the threads create them: they
   // are renumbered canonically at the end, after the ones existing now
-  const std::size_t numBefore = m->getMaxVertexNumber();
+  std::size_t maxVertexBefore, maxElementBefore;
+  m->getMaxMeshNumbersInUse(maxVertexBefore, maxElementBefore);
 
   // Keep track of vertex/entities created
   edgeContainer edgeVertices(nShards);
@@ -1740,7 +1741,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 
   // store nodes in entities
   m->pruneMeshVertexAssociations();
-  m->renumberMeshCanonically(numBefore);
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
 
   Msg::StopProgressMeter();
   double t2 = Cpu(), w2 = TimeOfDay();
