@@ -413,6 +413,13 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
       //      Msg::Info("Done optimizing pyramids for hybrid mesh");
     }
 
+    // the mesh generator leaves the optimization of pdel3d meshes to pdel3d:
+    // optimize the ones it gave up on here
+    if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D) {
+      for(int i = 0; i < CTX::instance()->mesh.optimize; i++)
+        for(auto r : regions) optimizeMeshGRegion()(r);
+    }
+
     // test:
     // bool createBoundaryLayerOneLayer(GRegion *gr, std::vector<GFace *> &
     // bls); createBoundaryLayerOneLayer(gr, allFaces);

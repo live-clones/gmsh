@@ -79,8 +79,9 @@ int meshGRegionBoundaryRecoveryFlat(const boundaryRecoveryInput &in,
 // in a Delaunay tetrahedralization of its vertices with TetGen's algorithm,
 // inserting Steiner points if needed (the curve and surface meshes are then
 // updated, and the new boundary vertices added to their curve or surface). The
-// tetrahedra, covering the convex hull, are stored in gr->tetrahedra. The
-// initial tetrahedralization is computed here unless init is given
+// tetrahedra are stored in gr->tetrahedra. The initial tetrahedralization is
+// computed here unless init is given: the tetrahedra then cover its convex
+// hull, otherwise those outside the surfaces are removed
 bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr = nullptr,
                                  const initialTetrahedralization *init = nullptr);
 

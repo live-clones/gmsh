@@ -3981,6 +3981,7 @@ namespace {
 
   struct SizeData {
     std::vector<GRegion *> *regions;
+    int nthreads;
     bool failed;
   };
 
@@ -4052,7 +4053,8 @@ namespace {
       }
       return;
     }
-    const int nthreads = CTX::instance()->numThreadsFor(n, 1 << 12);
+    const int nthreads =
+      std::min(sd->nthreads, CTX::instance()->numThreadsFor(n, 1 << 12));
     std::atomic<bool> exceptions(false);
 #pragma omp parallel for schedule(dynamic, 256) num_threads(nthreads)
     for(std::size_t i = 0; i < n; i++) {
@@ -4121,6 +4123,15 @@ namespace {
         }
       }
     }
+    // the Steiner points of the local recovery that are gone
+    std::size_t kept = 0;
+    for(MVertex *v : gr->mesh_vertices) {
+      if(v->getIndex() < 0)
+        delete v;
+      else
+        gr->mesh_vertices[kept++] = v;
+    }
+    gr->mesh_vertices.resize(kept);
     const std::size_t nv = s.vertices.size();
     m.xyz.assign(4 * nv, 0.);
     for(std::size_t v = 0; v < nv; v++) {
@@ -4128,21 +4139,31 @@ namespace {
       m.xyz[4 * v + 1] = s.vertices[v]->y();
       m.xyz[4 * v + 2] = s.vertices[v]->z();
     }
+    m.numDefaultDist = 0; // the vertices were renumbered
     // the tets, oriented with orient3d(n0, n1, n2, n3) < 0
     const std::size_t ntet = gr->tetrahedra.size();
     m.ntet = 0;
     m.reserveTets(2 * ntet + 4096); // room for the ghosts
     m.ntet = ntet;
+    std::size_t flat = 0;
     for(std::size_t t = 0; t < ntet; t++) {
       MTetrahedron *tet = gr->tetrahedra[t];
+      pdel3d::vIdx *n = &m.node[4 * t];
       for(int k = 0; k < 4; k++)
-        m.node[4 * t + k] = (pdel3d::vIdx)tet->getVertex(k)->getIndex();
-      if(tet->getVolumeSign() < 0) std::swap(m.node[4 * t], m.node[4 * t + 1]);
+        n[k] = (pdel3d::vIdx)tet->getVertex(k)->getIndex();
+      const double o = robustPredicates::orient3d(
+        &m.xyz[4 * n[0]], &m.xyz[4 * n[1]], &m.xyz[4 * n[2]], &m.xyz[4 * n[3]]);
+      if(o > 0.) std::swap(n[0], n[1]);
+      if(o == 0.) flat++;
       m.flag[t] = 0;
       for(int k = 0; k < 4; k++) m.neigh[4 * t + k] = pdel3d::NO_ADJ;
       delete tet;
     }
     gr->tetrahedra.clear();
+    if(flat) {
+      Msg::Error("%lu flat tet(s) in the recovered mesh", flat);
+      return false;
+    }
     // adjacencies through the sorted facets
     struct facetKey {
       pdel3d::vIdx a, b, c;
@@ -4240,19 +4261,34 @@ namespace {
     const std::size_t nv = m.numVertices(), nr = regions.size();
     std::vector<MVertex *> c2v(nv, nullptr);
     std::size_t numOld = 0;
+    // the Steiner points of the recovery inside the volumes, classified on
+    // regions[0]: they go to the region of their tets like the new vertices,
+    // or are deleted when no tet of the volumes uses them
+    std::vector<std::uint8_t> inVolume(nv, 0);
+    std::vector<MVertex *> &steiner = regions[0]->mesh_vertices;
     for(std::size_t v = 0; v < s.vertices.size(); v++) {
-      if(newIndex[v] == pdel3d::GHOST) continue;
+      const bool volume = s.vertices[v]->onWhat() == regions[0];
+      if(newIndex[v] == pdel3d::GHOST) {
+        if(volume) {
+          steiner.erase(
+            std::find(steiner.begin(), steiner.end(), s.vertices[v]));
+          delete s.vertices[v];
+          s.vertices[v] = nullptr;
+        }
+        continue;
+      }
       c2v[newIndex[v]] = s.vertices[v];
+      inVolume[newIndex[v]] = volume;
       numOld++;
     }
-    // the surface vertices come first and are all used
     const std::size_t firstNew = numOld;
     GModel *model = regions[0]->model();
     const std::size_t baseV = model->getMaxVertexNumber(),
                       baseE = model->getMaxElementNumber();
     const int nt = std::max(1, nthreads);
-    // the region of each new vertex (any tet referencing it)
-    std::vector<std::uint32_t> owner(nv - firstNew, 0);
+    // the region of each new or Steiner vertex (any tet referencing it; nr:
+    // none)
+    std::vector<std::uint32_t> owner(nv, (std::uint32_t)nr);
     std::vector<std::size_t> chunkTets(nt + 1, 0);
 #pragma omp parallel for schedule(static) num_threads(nt)
     for(int c = 0; c < nt; c++) {
@@ -4262,7 +4298,7 @@ namespace {
         count++;
         for(int k = 0; k < 4; k++) {
           const pdel3d::vIdx v = m.node[4 * t + k];
-          if(v >= firstNew) owner[v - firstNew] = m.color[t];
+          if(v >= firstNew || inVolume[v]) owner[v] = m.color[t];
         }
       }
       chunkTets[c + 1] = count;
@@ -4279,10 +4315,11 @@ namespace {
       for(int c = 0; c < nt; c++) {
         for(std::size_t v = firstNew + c * (nv - firstNew) / nt;
             v < firstNew + (c + 1) * (nv - firstNew) / nt; v++) {
-          GRegion *gr = regions[owner[v - firstNew]];
+          if(owner[v] == nr) continue;
+          GRegion *gr = regions[owner[v]];
           const double *x = &m.xyz[4 * v];
           c2v[v] = new MVertex(x[0], x[1], x[2], gr, baseV + 1 + v - firstNew);
-          localVertices[c][owner[v - firstNew]].push_back(c2v[v]);
+          localVertices[c][owner[v]].push_back(c2v[v]);
         }
       }
 #pragma omp for schedule(static)
@@ -4299,6 +4336,16 @@ namespace {
     }
     model->setMaxVertexNumber(baseV + nv - firstNew);
     model->setMaxElementNumber(baseE + total);
+    for(std::size_t v = 0; v < firstNew; v++) {
+      if(!inVolume[v] || !owner[v]) continue;
+      steiner.erase(std::find(steiner.begin(), steiner.end(), c2v[v]));
+      if(owner[v] == nr) {
+        delete c2v[v];
+        continue;
+      }
+      c2v[v]->setEntity(regions[owner[v]]);
+      regions[owner[v]]->mesh_vertices.push_back(c2v[v]);
+    }
     for(std::size_t r = 0; r < nr; r++) {
       std::size_t numV = 0, numT = 0;
       for(int c = 0; c < nt; c++) {
@@ -4996,14 +5043,12 @@ namespace {
 
 } // namespace
 
-int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
+static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
 {
-  if(regions.empty()) return 0;
   const double t0 = TimeOfDay();
   const int nthreads = numThreads3D();
   const int verbosity = Msg::GetVerbosity() > 5 ? 2 : 1;
   SurfaceMesh s;
-  splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
   if(!collectSurfaceMesh(regions, s, sqr)) return 2;
   // As del3d, work on coordinates perturbed by up to Mesh.RandomFactor3D times
   // the size of the model, restored when the mesh is handed back (the
@@ -5182,7 +5227,7 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
     opt.sizeMin = CTX::instance()->mesh.lcMin;
     opt.sizeMax = CTX::instance()->mesh.lcMax;
     opt.sizeFactor = sizeFactor;
-    SizeData sd = {&regions, false};
+    SizeData sd = {&regions, nthreads, false};
     opt.sizeCallback = sizeCallback;
     opt.sizeData = &sd;
     opt.verbosity = verbosity;
@@ -5224,4 +5269,15 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
     RelocateVerticesOfPyramids(regions, 3);
   }
   return 0;
+}
+
+int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
+{
+  if(regions.empty()) return 0;
+  splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
+  const int ret = meshRegions(regions, sqr);
+  // the pyramid apexes only go to the volumes on success
+  if(ret)
+    for(auto &q : sqr.getQuad()) delete q.second;
+  return ret;
 }

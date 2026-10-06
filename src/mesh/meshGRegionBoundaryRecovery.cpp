@@ -1033,6 +1033,7 @@ namespace tetgenBR {
     if(init) {
       in.tetNode = init->tetNode;
       in.tetNeighbors = init->neighbors;
+      in.carve = false; // the caller sorts out the exterior
     }
     else {
       for(std::size_t i = 0; i < _vertices.size(); i++) {
