@@ -15,6 +15,5 @@ namespace QuadOpt {
   // never).
   std::size_t intrinsicDelaunayizePackedSurface(GFace *, bidimMeshData &,
                                                 double edgeLengthFactor);
-  void printTrianglesXYZ(const char *, const std::vector<MTriangle *> &);
 } // namespace QuadOpt
 #endif

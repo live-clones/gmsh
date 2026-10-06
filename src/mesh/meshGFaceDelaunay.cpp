@@ -1810,19 +1810,6 @@ void bowyerWatsonParallelograms(
                  rejectedPackedPoints, packed.size(), gf->tag());
   }
 
-  if(CTX::instance()->mesh.saveDebugFiles) {
-    char name[256];
-    sprintf(name, "ParametricTriangulation3D%d.pos", gf->tag());
-    // Keep the UV-Delaunay connectivity for direct comparison with the
-    // intrinsic result produced below.
-    std::vector<MTriangle *> triangles;
-    for(MTri3 *triangle : AllTris)
-      if(!triangle->isDeleted()) triangles.push_back(triangle->tri());
-#if defined(HAVE_QUADOPTIMIZER)
-    QuadOpt::printTrianglesXYZ(name, triangles);
-#endif
-  }
-
   transferDataStructure(gf, AllTris, DATA);
 
   // The intrinsic metric belongs to the progressive/MVC chart of a discrete
@@ -1834,16 +1821,6 @@ void bowyerWatsonParallelograms(
     QuadOpt::intrinsicDelaunayizePackedSurface(
       gf, DATA, CTX::instance()->mesh.packIntrinsicEdgeLengthFactor);
 #endif
-
-  if(CTX::instance()->mesh.saveDebugFiles) {
-    char name[256];
-    sprintf(name, "RawTriangulation3D%d.pos", gf->tag());
-    // This is the actual 3D triangulation sent to Blossom, after intrinsic
-    // Delaunay flips and before any recombination or quad cleanup.
-#if defined(HAVE_QUADOPTIMIZER)
-    QuadOpt::printTrianglesXYZ(name, gf->triangles);
-#endif
-  }
 
   backgroundMesh::unset();
 

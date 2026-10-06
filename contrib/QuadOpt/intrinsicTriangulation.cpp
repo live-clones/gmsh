@@ -959,27 +959,4 @@ namespace QuadOpt {
     return totalFlips;
   }
 
-  void printTrianglesXYZ(const char *name,
-                         const std::vector<MTriangle *> &triangles)
-  {
-    FILE *file = Fopen(name, "w");
-    if(!file) {
-      Msg::Error("Could not open file '%s'", name);
-      return;
-    }
-    fprintf(file, "View\"test\"{\n");
-    for(MTriangle *triangle : triangles) {
-      fprintf(file, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu};\n",
-              triangle->getVertex(0)->x(), triangle->getVertex(0)->y(),
-              triangle->getVertex(0)->z(), triangle->getVertex(1)->x(),
-              triangle->getVertex(1)->y(), triangle->getVertex(1)->z(),
-              triangle->getVertex(2)->x(), triangle->getVertex(2)->y(),
-              triangle->getVertex(2)->z(), triangle->getVertex(0)->getNum(),
-              triangle->getVertex(1)->getNum(),
-              triangle->getVertex(2)->getNum());
-    }
-    fprintf(file, "};\n");
-    fclose(file);
-  }
-
 } // namespace QuadOpt
