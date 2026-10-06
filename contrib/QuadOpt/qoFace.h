@@ -20,6 +20,18 @@ namespace QuadOpt {
   using Cell = HalfEdgeMesh::Cell;
   using Points = std::vector<SVector3>;
 
+  // The corners of a cell (at most four), without heap allocation.
+  struct Corners {
+    SVector3 p[4];
+    int n = 0;
+    const SVector3 *data() const { return p; }
+    const SVector3 &operator[](int i) const { return p[i]; }
+    SVector3 &operator[](int i) { return p[i]; }
+    int size() const { return n; }
+    SVector3 *begin() { return p; }
+    SVector3 *end() { return p + n; }
+  };
+
   // Area-weighted normal of a polygon, and its unit version (zero if null).
   inline SVector3 areaNormal(const SVector3 *p, int n)
   {
@@ -63,6 +75,20 @@ namespace QuadOpt {
       worst = std::max(worst, degrees(a, b));
     }
     return worst;
+  }
+
+  // True if warping(p) <= limit (degrees), without the arc cosines.
+  inline bool warpingWithin(const SVector3 *p, double limit)
+  {
+    const double c = std::cos(limit * M_PI / 180.);
+    for(int d = 0; d < 2; ++d) {
+      const SVector3 t1[3] = {p[d], p[(d + 1) % 4], p[(d + 2) % 4]};
+      const SVector3 t2[3] = {p[d], p[(d + 2) % 4], p[(d + 3) % 4]};
+      const SVector3 a = areaNormal(t1, 3), b = areaNormal(t2, 3);
+      const double na = a.norm(), nb = b.norm();
+      if(!(na > 0.) || !(nb > 0.) || dot(a, b) < c * na * nb) return false;
+    }
+    return true;
   }
 
   // Smallest signed corner sine, measured in the cell's own mean plane, times an
@@ -136,10 +162,11 @@ namespace QuadOpt {
     bool skip(const char *why) const;
     bool orient(std::vector<Cell> &cells);
 
-    Points pointsOf(const Cell &c) const
+    Corners pointsOf(const Cell &c) const
     {
-      Points p;
-      for(int i = 0; i < c.n; ++i) p.push_back(_v[c.v[i]].p);
+      Corners p;
+      p.n = c.n;
+      for(int i = 0; i < c.n; ++i) p.p[i] = _v[c.v[i]].p;
       return p;
     }
     int addVertex(const SVector3 &p, const double *uv); // new movable vertex

@@ -82,25 +82,29 @@ namespace QuadOpt {
       auto inSet = [&](int c) {
         return c >= 0 && std::find(set.begin(), set.end(), c) != set.end();
       };
-      std::unordered_map<int, int> nextOf;
+      std::vector<std::pair<int, int> > edges; // boundary edges a -> b
+      edges.reserve(16);
       for(int id : set)
         for(int i = 0; i < cells[id].n; ++i) {
           const int a = cells[id].v[i], b = next(cells[id], i);
-          if(inSet(cellAt(b, a))) continue;
-          if(!nextOf.emplace(a, b).second) return false;
+          if(!inSet(cellAt(b, a))) edges.emplace_back(a, b);
         }
-      if(nextOf.empty()) return false;
+      if(edges.empty()) return false;
       poly.clear();
-      const int first = nextOf.begin()->first;
-      for(int a = first;;) {
+      const int first = edges[0].first;
+      int a = first;
+      do {
         poly.push_back(a);
-        auto it = nextOf.find(a);
-        if(it == nextOf.end()) return false;
-        a = it->second;
-        if(a == first) break;
-        if(poly.size() > nextOf.size()) return false;
-      }
-      return poly.size() == nextOf.size();
+        int following = -1;
+        for(const auto &e : edges)
+          if(e.first == a) {
+            if(following >= 0) return false; // a repeated vertex: not a disk
+            following = e.second;
+          }
+        if(following < 0 || poly.size() > edges.size()) return false;
+        a = following;
+      } while(a != first);
+      return poly.size() == edges.size();
     }
 
     // Replace cells by new ones. Rolls back and returns false if the new

@@ -56,7 +56,7 @@ namespace QuadOpt {
     bool acceptable(double q, const SVector3 *p, int n)
     {
       return n == 3 ? q > kMinQuality
-                    : q >= kFlatQuality && warping(p) <= kMaxWarping;
+                    : q >= kFlatQuality && warpingWithin(p, kMaxWarping);
     }
 
     double cost(double q, int n)
@@ -84,8 +84,18 @@ namespace QuadOpt {
       std::array<int, 4> v; // indices in the cavity loop; loop size = interior 1
     };
 
+    // At most twelve pieces: a candidate allocates nothing.
+    struct Pieces {
+      Piece p[12];
+      int n = 0;
+      void push_back(const Piece &piece) { p[n++] = piece; }
+      void pop_back() { --n; }
+      const Piece *begin() const { return p; }
+      const Piece *end() const { return p + n; }
+    };
+
     struct Candidate {
-      std::vector<Piece> pieces;
+      Pieces pieces;
       int interior = 0; // new points, at indices loop.size() and loop.size() + 1
       SVector3 center[2]; // first guesses for them
     };
@@ -226,7 +236,7 @@ namespace QuadOpt {
       if(valid) *valid = true;
       for(int id : cells) {
         const Cell &c = _he.cells[id];
-        const Points p = pointsOf(c);
+        const Corners p = pointsOf(c);
         const double q = quality(p.data(), c.n, nref);
         energy += cost(align(c) > kMinCadAlignment ? q : -1., c.n);
         if(valid && !(q > kMinQuality)) *valid = false;
@@ -240,7 +250,7 @@ namespace QuadOpt {
       double theta = 0.;
       for(int id : _he.star[w]) {
         const Cell &c = _he.cells[id];
-        const Points p = pointsOf(c);
+        const Corners p = pointsOf(c);
         for(int i = 0; i < c.n; ++i)
           if(c.v[i] == w) theta += cornerAngle(p.data(), c.n, i);
       }
@@ -301,8 +311,14 @@ namespace QuadOpt {
           quads.push_back({{localId(cell.v[0]), localId(cell.v[1]),
                             localId(cell.v[2]), localId(cell.v[3])}});
       }
-      const auto result = QuadOpt::optimizeLocalSurfacePatchWinslow(
-        uv, fixed, tris, quads, 1., QuadOpt::SmallCavityWinslowOptions());
+      // One unknown vertex: a few iterations from the current position suffice.
+      QuadOpt::SmallCavityWinslowOptions options;
+      options.maxInnerIterations = 25;
+      options.maxOuterIterations = 2;
+      options.maxLineSearchSteps = 20;
+      options.harmonicInitialization = false;
+      const auto result =
+        QuadOpt::optimizeLocalSurfacePatchWinslow(uv, fixed, tris, quads, 1., options);
       if(!result.success) return false;
       const std::size_t k = local[w];
       proposal = origin + t1 * uv[k][0] + t2 * uv[k][1];
@@ -324,16 +340,23 @@ namespace QuadOpt {
       std::vector<Cell> cells;
       for(int c : star) cells.push_back(_he.cells[c]);
       const double before = energyOf(star, normal);
-      const double deviationBefore = maxDeviation(cells);
       const Vert saved = _v[w];
       _v[w].p = projected;
       _v[w].uv[0] = uv[0], _v[w].uv[1] = uv[1];
       _v[w].hasN = false;
       bool valid;
       const double after = energyOf(star, normal, &valid);
-      if(valid && after < before - kSmoothGain &&
-         maxDeviation(cells) <= std::max(deviationBefore, kCadTolerance))
-        return true;
+      if(valid && after < before - kSmoothGain) {
+        // Projections on the CAD are costly: only measured for improving moves.
+        const Vert moved = _v[w];
+        const double deviationAfter = maxDeviation(cells);
+        _v[w] = saved;
+        if(deviationAfter <= std::max(maxDeviation(cells), kCadTolerance)) {
+          _v[w] = moved;
+          return true;
+        }
+        return false;
+      }
       _v[w] = saved;
       return false;
     }
@@ -422,9 +445,8 @@ namespace QuadOpt {
                  ? cost(q, n)
                  : std::numeric_limits<double>::infinity();
       };
-      std::function<void(std::vector<Interval>, std::vector<Piece> &, double,
-                         int)>
-        split = [&](std::vector<Interval> todo, std::vector<Piece> &current,
+      std::function<void(std::vector<Interval>, Pieces &, double, int)>
+        split = [&](std::vector<Interval> todo, Pieces &current,
                     double energy, int triangles) {
           if(out.size() >= kMaxCandidates) return;
           while(!todo.empty() && todo.back().second - todo.back().first < 2)
@@ -460,7 +482,7 @@ namespace QuadOpt {
               current.pop_back();
             }
         };
-      std::vector<Piece> current;
+      Pieces current;
       split({{0, cavity.size() - 1}}, current, 0., 0);
     }
 
@@ -528,9 +550,10 @@ namespace QuadOpt {
                                    int *triangles) const
     {
       const int m = cavity.size();
-      std::vector<int> count(m + 2, 0);
-      std::vector<char> hasTriangle(m + 2, 0);
+      int count[kMaxLoop + 2] = {};
+      char hasTriangle[kMaxLoop + 2] = {};
       double energy = 0., theta[2] = {0., 0.}; // angles at the interior points
+      const double bound = cavity.energy - kGain; // every term is non-negative
       *triangles = 0;
       for(const Piece &piece : candidate.pieces) {
         SVector3 p[4];
@@ -550,6 +573,7 @@ namespace QuadOpt {
           return std::numeric_limits<double>::infinity();
         energy += cost(q, piece.n);
         *triangles += piece.n == 3;
+        if(!(energy < bound)) return std::numeric_limits<double>::infinity();
       }
       for(int i = 0; i < m; ++i)
         if(!cavity.triangle[i] && !hasTriangle[i])
@@ -634,10 +658,11 @@ namespace QuadOpt {
       stars(cavity, candidates);
 
       std::vector<std::pair<double, int> > ranked;
+      Points Q = cavity.P;
+      Q.resize(cavity.size() + 2);
       for(std::size_t k = 0; k < candidates.size(); ++k) {
-        Points Q = cavity.P;
         for(int j = 0; j < candidates[k].interior; ++j)
-          Q.push_back(candidates[k].center[j]);
+          Q[cavity.size() + j] = candidates[k].center[j];
         int triangles;
         const double e = energyOf(cavity, candidates[k], Q, &triangles);
         if(e < cavity.energy - kGain && triangles <= cavity.triangles)
@@ -702,7 +727,7 @@ namespace QuadOpt {
     // above 160 degrees must go) or too warped.
     bool FaceOptimizer::needsSplit(const Cell &c) const
     {
-      const Points p = pointsOf(c);
+      const Corners p = pointsOf(c);
       return selfQuality(c) < kFlatQuality || warping(p.data()) > kMaxWarping;
     }
 
@@ -711,7 +736,7 @@ namespace QuadOpt {
     bool FaceOptimizer::splitQuad(int id)
     {
       const Cell quad = _he.cells[id];
-      const Points p = pointsOf(quad);
+      const Corners p = pointsOf(quad);
       const SVector3 normal = meanNormal(p.data(), 4);
       const double limit = deviation(quad) + kCadSlack;
       // The triangles must be better than the quad, but not necessarily good:

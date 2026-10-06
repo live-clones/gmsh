@@ -118,7 +118,7 @@ namespace QuadOpt {
       for(std::size_t h = 0; h < component.size(); h += stride) {
         const Cell &c = cells[component[h]];
         if(!ensureUV(c.v[0])) continue;
-        Points p = pointsOf(c);
+        Corners p = pointsOf(c);
         if(flipped[component[h]]) std::reverse(p.begin(), p.end());
         const double d = dot(
           meanNormal(p.data(), c.n),
@@ -246,7 +246,7 @@ namespace QuadOpt {
 
   double FaceMesh::align(const Cell &c)
   {
-    const Points p = pointsOf(c);
+    const Corners p = pointsOf(c);
     const SVector3 fallback = meanNormal(p.data(), c.n);
     SVector3 nv[4];
     for(int i = 0; i < c.n; ++i) nv[i] = normalOf(c.v[i], fallback);
@@ -255,7 +255,7 @@ namespace QuadOpt {
 
   double FaceMesh::fit(const Cell &c)
   {
-    const Points p = pointsOf(c);
+    const Corners p = pointsOf(c);
     const SVector3 own = meanNormal(p.data(), c.n);
     SVector3 mean(0., 0., 0.);
     for(int i = 0; i < c.n; ++i) mean += normalOf(c.v[i], own);
@@ -264,26 +264,29 @@ namespace QuadOpt {
 
   double FaceMesh::selfQuality(const Cell &c) const
   {
-    const Points p = pointsOf(c);
+    const Corners p = pointsOf(c);
     return quality(p.data(), c.n, meanNormal(p.data(), c.n));
   }
 
-  // Distance of the cell centroid to the CAD, relative to the mean edge length:
-  // large when the cell cuts through the geometry.
+  // How far the cell cuts through the CAD: distance of its centroid to the
+  // tangent plane at each of its vertices, relative to the mean edge length (the
+  // sagitta to second order, with no projection on the CAD).
   double FaceMesh::deviation(const Cell &c)
   {
-    const Points p = pointsOf(c);
+    const Corners p = pointsOf(c);
+    const SVector3 own = meanNormal(p.data(), c.n);
     SVector3 centroid(0., 0., 0.);
     double h = 0.;
     for(int i = 0; i < c.n; ++i) {
       centroid += p[i] * (1. / c.n);
       h += (p[(i + 1) % c.n] - p[i]).norm() / c.n;
     }
-    if(!(h > 0.) || !ensureUV(c.v[0])) return 1.e9;
-    SVector3 q;
-    double uv[2];
-    if(!project(centroid, _v[c.v[0]].uv, q, uv)) return 1.e9;
-    return (q - centroid).norm() / h;
+    if(!(h > 0.)) return 1.e9;
+    double worst = 0.;
+    for(int i = 0; i < c.n; ++i)
+      worst = std::max(
+        worst, std::abs(dot(centroid - p[i], normalOf(c.v[i], own))));
+    return worst / h;
   }
 
   double FaceMesh::maxDeviation(const std::vector<Cell> &cells)

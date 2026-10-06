@@ -69,6 +69,7 @@ namespace QuadOpt {
     // wait until every surviving edge of this layer is consumed.
     std::set<Front> _queue;
     std::map<Key, Front> _pending;
+    std::set<int> _dirty; // vertices changed since the last background pass
     std::size_t _initial = 0, _active = 0, _morphed = 0, _splits = 0;
 
     static int frontType(double angle)
@@ -106,7 +107,7 @@ namespace QuadOpt {
     }
     SVector3 normalOf(const Cell &c) const
     {
-      const Points p = _m.pointsOf(c);
+      const Corners p = _m.pointsOf(c);
       return areaNormal(p.data(), c.n);
     }
     int opposite(int c, int a, int b) const
@@ -483,7 +484,7 @@ namespace QuadOpt {
       if(right < 0 || right == f.a || right == left) return false;
       locked.insert(FaceMesh::edgeKey(f.b, right));
       const Cell quad = quadrangle(f.a, f.b, right, left);
-      const Points p = _m.pointsOf(quad);
+      const Corners p = _m.pointsOf(quad);
       if(_m.fit(quad) < kMinQuadQuality || warping(p.data()) > kMaxQuadWarping ||
          _m.deviation(quad) > kMaxQuadDeviation)
         return false;
@@ -497,6 +498,7 @@ namespace QuadOpt {
     else {
       _splits += edit.splits;
       ++_morphed;
+      _dirty.insert(edit.touched.begin(), edit.touched.end());
     }
     update(edit.touched);
     return done;
@@ -521,6 +523,7 @@ namespace QuadOpt {
                          _he.cells[k].v.begin() + _he.cells[k].n);
         }
       update(touched);
+      _dirty.insert(touched.begin(), touched.end());
       return true;
     }
     return false;
@@ -535,39 +538,41 @@ namespace QuadOpt {
     update(std::set<int>(cell.v.begin(), cell.v.begin() + 3));
   }
 
-  // Between two layers no front is processed: flip the remaining triangles for
-  // quality and relax every vertex touching one, so that a thin triangle at the
-  // new front cannot stay trapped forever.
+  // Between two layers no front is processed: flip the triangles that changed
+  // for quality and relax their vertices, so that a thin triangle at the new
+  // front cannot stay trapped forever. Only the changed region is visited.
   void FrontAdvance::optimizeBackground()
   {
-    for(int pass = 0; pass < 2; ++pass) {
-      std::size_t changes = 0;
-      const std::size_t count = _he.cells.size();
-      for(std::size_t id = 0; id < count; ++id) {
-        if(!active(int(id))) continue;
-        const Cell cell = _he.cells[id];
-        for(int i = 0; i < 3 && active(int(id)); ++i) {
-          const int a = cell.v[i], b = _he.next(cell, i);
-          const int other = _he.cellAt(b, a);
-          if(a > b || !active(other) || protectedEdge(a, b)) continue;
-          const int c = opposite(int(id), a, b), d = opposite(other, a, b);
-          if(!(std::min(_m.fit(triangle(c, d, b)), _m.fit(triangle(d, c, a))) >
-               std::min(_m.fit(cell), _m.fit(_he.cells[other])) + 1.e-6))
-            continue;
-          Edit edit;
-          edit.firstCell = _he.cells.size(), edit.firstVertex = _v.size();
-          if(flip(edit, a, b, {}))
-            ++changes;
-          else
-            rollback(edit);
-        }
+    for(int pass = 0; pass < 2 && !_dirty.empty(); ++pass) {
+      const std::set<int> work = _dirty;
+      _dirty.clear();
+      for(int w : work) {
+        if(w >= int(_v.size())) continue;
+        const std::vector<int> star = _he.star[w];
+        for(int id : star)
+          for(int i = 0; i < 3 && active(id); ++i) {
+            const Cell cell = _he.cells[id];
+            const int a = cell.v[i], b = _he.next(cell, i);
+            const int other = _he.cellAt(b, a);
+            if(!active(other) || protectedEdge(a, b)) continue;
+            const int c = opposite(id, a, b), d = opposite(other, a, b);
+            if(!(std::min(_m.fit(triangle(c, d, b)), _m.fit(triangle(d, c, a))) >
+                 std::min(_m.fit(cell), _m.fit(_he.cells[other])) + 1.e-6))
+              continue;
+            Edit edit;
+            edit.firstCell = _he.cells.size(), edit.firstVertex = _v.size();
+            if(flip(edit, a, b, {}))
+              _dirty.insert(edit.touched.begin(), edit.touched.end());
+            else
+              rollback(edit);
+          }
       }
-      for(int w = 0; w < int(_v.size()); ++w) {
+      for(int w : work) {
+        if(w >= int(_v.size())) continue;
         bool background = false;
         for(int c : _he.star[w]) background = background || active(c);
-        if(background && _relax.smooth(w)) ++changes;
+        if(background && _relax.smooth(w)) _dirty.insert(w);
       }
-      if(!changes) break;
     }
   }
 
