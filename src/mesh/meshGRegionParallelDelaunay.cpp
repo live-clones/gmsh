@@ -40,6 +40,7 @@
 #include <cstring>
 #include <map>
 #include <numeric>
+#include <stdexcept>
 #include <set>
 #include "meshGRegionParallelDelaunay.h"
 #include "meshGRegionParallelOptimize.h"
@@ -73,6 +74,14 @@ namespace pdel3d {
   void Mesh::reserveTets(std::size_t n)
   {
     if(n <= tetCapacity()) return;
+    // 4 * tet + facet must fit in a tRef, below NO_ADJ
+    const std::size_t maxTets = NO_ADJ / 4;
+    if(n > maxTets) {
+      if(tetCapacity() >= maxTets)
+        throw std::length_error("The Parallel Delaunay algorithm is limited "
+                                "to 2^30 tets per group of volumes");
+      n = maxTets;
+    }
     node.resize(4 * n);
     neigh.resize(4 * n);
     flag.resize(n);
@@ -2395,7 +2404,7 @@ namespace pdel3d {
                            std::vector<std::uint64_t> &line2tet)
   {
     const std::size_t nl = lineNode.size() / 2;
-    line2tet.assign(nl, NO_ADJ);
+    line2tet.assign(nl, NO_LINE);
     std::size_t todo = 0;
     for(std::size_t i = 0; i < nl; i++)
       if(!skip[i]) todo++;
@@ -2459,7 +2468,7 @@ namespace pdel3d {
   void constrainEdges(Mesh &m, const std::vector<std::uint64_t> &line2tet)
   {
     for(auto e : line2tet) {
-      if(e == NO_ADJ) continue;
+      if(e == NO_LINE) continue;
       const tIdx t0 = (tIdx)(e / 6);
       unsigned inF, outF;
       edgeFacets((int)(e % 6), inF, outF);
@@ -3169,7 +3178,7 @@ namespace pdel3d {
     for(std::size_t i = 0; i < nt; i++)
       if(tri2tet[i] == NO_ADJ) missingTri++;
     for(std::size_t i = 0; i < nl; i++)
-      if(!lineInTriangle[i] && line2tet[i] == NO_ADJ) missingLines++;
+      if(!lineInTriangle[i] && line2tet[i] == NO_LINE) missingLines++;
     if(!missingTri && !missingLines) return 0;
     // the triangles and lines in the mesh must survive the edge removals
     constrainFacets(m, tri2tet);
@@ -3192,14 +3201,14 @@ namespace pdel3d {
       if(tri2tet[i] == NO_ADJ)
         for(int k = 0; k < 3; k++) needed[triNode[3 * i + k]] = 1;
     for(std::size_t i = 0; i < nl; i++)
-      if(!lineInTriangle[i] && line2tet[i] == NO_ADJ)
+      if(!lineInTriangle[i] && line2tet[i] == NO_LINE)
         for(int k = 0; k < 2; k++) needed[lineNode[2 * i + k]] = 1;
     R.findStars(needed, nthreads);
     std::size_t recoveredTri = 0, recoveredLines = 0;
     for(int pass = 0; pass < 8; pass++) {
       bool progress = false;
       for(std::size_t i = 0; i < nl; i++) {
-        if(lineInTriangle[i] || line2tet[i] != NO_ADJ) continue;
+        if(lineInTriangle[i] || line2tet[i] != NO_LINE) continue;
         const vIdx x = lineNode[2 * i], y = lineNode[2 * i + 1];
         tIdx t = R.findEdge(x, y);
         if(t == NO_TET && R.recoverEdge(x, y)) t = R.findEdge(x, y);
@@ -3264,7 +3273,8 @@ namespace pdel3d {
     Mesh &m, const std::vector<tRef> &tri2tet,
     const std::vector<std::uint32_t> &triColor,
     const std::vector<std::vector<std::uint32_t>> &volumes,
-    const std::map<std::uint32_t, std::vector<std::uint32_t>> &siblings)
+    const std::map<std::uint32_t, std::vector<std::uint32_t>> &siblings,
+    const std::set<std::uint32_t> &embedded)
   {
     auto complete = [&](std::set<std::uint32_t> &set) {
       std::set<std::uint32_t> more;
@@ -3303,6 +3313,29 @@ namespace pdel3d {
     const std::uint32_t numComponents = color - 1;
     Msg::Debug("%u connected components of tets bounded by constrained facets",
                numComponents);
+    // merge the components on the two sides of the embedded surfaces
+    std::vector<std::uint32_t> root(numComponents + 1);
+    std::iota(root.begin(), root.end(), 0);
+    auto find = [&](std::uint32_t c) {
+      while(root[c] != c) c = root[c] = root[root[c]];
+      return c;
+    };
+    bool merged = false;
+    for(std::size_t i = 0; i < tri2tet.size(); i++) {
+      const tRef r = tri2tet[i];
+      if(r == NO_ADJ || !embedded.count(triColor[i])) continue;
+      const tRef s = m.neigh[r];
+      if(s == NO_ADJ) continue;
+      const std::uint32_t a = find(m.color[r >> 2]), b = find(m.color[s >> 2]);
+      if(a == b) continue;
+      root[std::max(a, b)] = std::min(a, b);
+      merged = true;
+    }
+    if(merged) {
+      for(std::size_t t = 0; t < m.ntet; t++)
+        if(!m.isDeleted((tIdx)t)) m.color[t] = find(m.color[t]);
+      colorOut = find(colorOut);
+    }
     // the surface colors seen by each component
     std::vector<std::set<std::uint32_t>> surfaces(numComponents + 1);
     for(std::size_t i = 0; i < tri2tet.size(); i++) {
@@ -3329,7 +3362,7 @@ namespace pdel3d {
     std::vector<bool> found(volumes.size(), false);
     std::uint32_t next = (std::uint32_t)volumes.size();
     for(std::uint32_t c = 1; c <= numComponents; c++) {
-      if(c == colorOut) continue;
+      if(c == colorOut || find(c) != c) continue;
       auto it = volumeOfSurfaces.find(surfaces[c]);
       if(it != volumeOfSurfaces.end() && !found[it->second]) {
         map[c] = it->second;
@@ -3769,6 +3802,7 @@ namespace {
     std::vector<MLine *> lineElem;
     // surface tags bounding (or embedded in) each region
     std::vector<std::vector<std::uint32_t>> volumes;
+    std::set<std::uint32_t> embedded; // the tags of the embedded surfaces
     // the surfaces forming a compound with each surface (a member may carry
     // no element when the elements are classified on the originals)
     std::map<std::uint32_t, std::vector<std::uint32_t>> siblings;
@@ -3845,6 +3879,7 @@ namespace {
       for(GFace *gf : gr->embeddedFaces()) {
         surfaces.insert(surface(gf));
         tags.insert(surface(gf)->tag());
+        s.embedded.insert(surface(gf)->tag());
       }
       s.volumes.push_back(std::vector<std::uint32_t>(tags.begin(), tags.end()));
       for(GEdge *ge : gr->embeddedEdges()) curves.insert(ge);
@@ -3885,10 +3920,15 @@ namespace {
           oriented = true;
           quadSurfaces.push_back({gf, inward[gf]});
         }
-        for(GFace *gf : gr->embeddedFaces())
-          if(!gf->quadrangles.empty())
-            Msg::Warning("Quadrangles of embedded surface %d are ignored",
-                         gf->tag());
+        // no pyramid on an embedded surface (it would need one on each side)
+        for(GFace *gf : gr->embeddedFaces()) {
+          if(gf->quadrangles.empty()) continue;
+          Msg::Warning("Quadrangles of embedded surface %d are split in two "
+                       "triangles in the volume mesh",
+                       gf->tag());
+          for(MQuadrangle *q : gf->quadrangles)
+            sqr.add(q->getFace(0), nullptr, gf);
+        }
       }
       for(auto &qs : quadSurfaces) {
         GFace *gf = qs.first;
@@ -3944,6 +3984,7 @@ namespace {
     }
     for(GEdge *ge : s.curves) {
       for(MLine *l : ge->lines) {
+        if(l->getVertex(0) == l->getVertex(1)) continue;
         for(int k = 0; k < 2; k++) s.lineNode.push_back(index(l->getVertex(k)));
         s.lineColor.push_back(ge->tag());
         s.lineElem.push_back(l);
@@ -4390,7 +4431,7 @@ namespace {
     for(std::size_t i = 0; i < nt; i++)
       if(tri2tet[i] == NO_ADJ) missingTri.push_back(i);
     for(std::size_t i = 0; i < nl; i++)
-      if(!lineInTriangle[i] && line2tet[i] == NO_ADJ) missingLine.push_back(i);
+      if(!lineInTriangle[i] && line2tet[i] == NO_LINE) missingLine.push_back(i);
     if(missingTri.empty() && missingLine.empty()) return true;
 
     // a tet around every node involved
@@ -5060,7 +5101,7 @@ namespace {
           for(int k = 0; k < 2; k++) s.lineNode.push_back(n[k]);
           s.lineColor.push_back(tag);
           s.lineElem.push_back(l);
-          line2tet.push_back(NO_ADJ);
+          line2tet.push_back(NO_LINE);
           lineRemoved.push_back(0);
         }
       }
@@ -5263,7 +5304,8 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
   }
   pdel3d::constrainFacets(m, tri2tet);
   pdel3d::constrainEdges(m, line2tet);
-  if(!pdel3d::colorVolumes(m, tri2tet, s.triColor, s.volumes, s.siblings))
+  if(!pdel3d::colorVolumes(m, tri2tet, s.triColor, s.volumes, s.siblings,
+                           s.embedded))
     return 1;
   if(Msg::GetVerbosity() > 5) m.verify(!recovered);
   const double t2 = TimeOfDay();
@@ -5326,7 +5368,13 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
 {
   if(regions.empty()) return 0;
   splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
-  const int ret = meshRegions(regions, sqr);
+  int ret;
+  try {
+    ret = meshRegions(regions, sqr);
+  } catch(std::length_error &e) {
+    Msg::Error("%s", e.what());
+    ret = 1;
+  }
   // the pyramid apexes only go to the volumes on success
   if(ret)
     for(auto &q : sqr.getQuad()) delete q.second;

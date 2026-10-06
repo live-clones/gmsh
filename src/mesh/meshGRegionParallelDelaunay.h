@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <map>
+#include <set>
 #include <vector>
 #include "robustPredicates.h"
 
@@ -31,6 +32,7 @@ namespace pdel3d {
   constexpr vIdx GHOST = 0xffffffffu; // the vertex at infinity
   constexpr tRef NO_ADJ = 0xffffffffu;
   constexpr tIdx NO_TET = 0xffffffffu;
+  constexpr std::uint64_t NO_LINE = ~0ull; // a line not in the mesh
 
   // flag bits of a tetrahedron, as in HXT
   constexpr std::uint16_t F_EDGE0 =
@@ -126,7 +128,7 @@ namespace pdel3d {
   // triangle is not in the mesh; returns the number missing
   std::size_t triangleToTetMap(const Mesh &m, const std::vector<vIdx> &triNode,
                                std::vector<tRef> &tri2tet);
-  // edge of a tet (6 * tet + edge) carrying each line, NO_ADJ when missing;
+  // edge of a tet (6 * tet + edge) carrying each line, NO_LINE when missing;
   // lines flagged in skip are not searched
   std::size_t lineToTetMap(const Mesh &m, const std::vector<vIdx> &lineNode,
                            const std::vector<std::uint8_t> &skip,
@@ -140,7 +142,7 @@ namespace pdel3d {
   void constrainFacets(Mesh &m, const std::vector<tRef> &tri2tet);
   void constrainEdges(Mesh &m, const std::vector<std::uint64_t> &line2tet);
   // recover the missing triangles and lines (tri2tet[i] == NO_ADJ,
-  // line2tet[i] == NO_ADJ with lineInTriangle[i] == 0) by local edge
+  // line2tet[i] == NO_LINE with lineInTriangle[i] == 0) by local edge
   // removals: a missing edge is created by removing an edge around which its
   // two nodes are ring vertices, a missing facet by removing an edge around
   // which its three nodes are. The maps are updated for what was recovered,
@@ -157,12 +159,14 @@ namespace pdel3d {
   // others get colors from volumes.size() up, the outside gets COLOR_OUT.
   // The sets are completed with the siblings of their surfaces (siblings[c]
   // lists the colors of the surfaces forming a compound with surface c)
-  // before comparison. Returns false if some volume was not found
+  // before comparison. The two sides of a surface whose color is in embedded
+  // are in the same volume. Returns false if some volume was not found
   bool colorVolumes(
     Mesh &m, const std::vector<tRef> &tri2tet,
     const std::vector<std::uint32_t> &triColor,
     const std::vector<std::vector<std::uint32_t>> &volumes,
-    const std::map<std::uint32_t, std::vector<std::uint32_t>> &siblings);
+    const std::map<std::uint32_t, std::vector<std::uint32_t>> &siblings,
+    const std::set<std::uint32_t> &embedded);
 
   // refinement
 
