@@ -282,12 +282,19 @@ namespace {
     const std::vector<MTriangle> *t3d;
     SPoint3 p;
     std::size_t best = std::numeric_limits<std::size_t>::max();
+    // the triangle of the guess, preferred in case of ties
+    std::size_t preferred = std::numeric_limits<std::size_t>::max();
     triangleProjection proj;
     void consider(std::size_t i)
     {
       triangleProjection candidate;
       projectPointOnTriangle(p, (*t3d)[i], candidate);
-      if(candidate.d2 < proj.d2) {
+      bool better = candidate.d2 < proj.d2;
+      // ties to the preferred triangle, else to the smallest index, whatever
+      // the order of the visit
+      if(!better && candidate.d2 == proj.d2 && best != preferred)
+        better = i == preferred || i < best;
+      if(better) {
         best = i;
         proj = candidate;
       }
@@ -318,7 +325,10 @@ GPoint discreteFace::_closestPoint(const SPoint3 &p, const double guess[2],
   // as long as they can be closer
   if(guess) {
     int position = _locate(guess[0], guess[1]);
-    if(position >= 0) s.consider(position);
+    if(position >= 0) {
+      s.preferred = position;
+      s.consider(position);
+    }
   }
   double P[3] = {p.x(), p.y(), p.z()};
   _param.rtree3d.SearchNearest(P, &s.proj.d2, closestPointCallback, &s);
