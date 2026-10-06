@@ -1238,7 +1238,10 @@ namespace pdel3d {
         S.tet[0] = SPRTet{{0, 1, 2, 3}};
         S.worst = qual[bad];
         S.nodes = 0;
-        S.maxNodes = (std::uint64_t)std::max(1, opt.sprMaxSearchNodes);
+        // ten times the budget for the nearly flat tets: few of them, and a
+        // flat tet between two close surfaces can need it
+        S.maxNodes = (std::uint64_t)std::max(1, opt.sprMaxSearchNodes) *
+                     (qual[bad] < 1e-3 ? 10 : 1);
         L.sprDeleted.clear();
         m.flag[bad] |= F_DELETED;
         L.sprDeleted.push_back(bad);
