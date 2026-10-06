@@ -66,7 +66,6 @@ struct contextMeshOptions {
   int packCleanupMethod, packForceAllPoints, packSizemapMethod, packPatterns,
     packRecombination;
   double packIntrinsicEdgeLengthFactor;
-  double optimizeQuadsMinimumEdgeLength, optimizeQuadsMaximumEdgeLength;
   int saveDebugFiles;
   int oldInitialDelaunay2D;
   // mesh IO

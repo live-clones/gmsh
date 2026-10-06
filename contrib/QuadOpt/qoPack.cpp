@@ -59,8 +59,6 @@ namespace QuadOpt {
     int minCurveNodes = 0;
     int smoothingPasses = 0;
     int forceAllPackedPoints = 0;
-    double minimumEdgeLength = 0.;
-    double maximumEdgeLength = 0.;
     std::map<GEdge *, int> minimumSegmentsByEdge;
 
     void preserveDiscreteBoundaryLoops()
@@ -106,9 +104,7 @@ namespace QuadOpt {
           1.e-12 * std::max({1., mesh.lcMin, mesh.lcMax});
       const double h = (.5 * mesh.lcMin + .5 * mesh.lcMax) * mesh.lcFactor;
       packing = mesh.algo2d == ALGO_2D_PACK_PRLGRMS;
-      active = packing && uniformSize && h > 0. && std::isfinite(h) &&
-               !(mesh.optimizeQuadsMinimumEdgeLength > 0.) &&
-               !(mesh.optimizeQuadsMaximumEdgeLength > 0.);
+      active = packing && uniformSize && h > 0. && std::isfinite(h);
       // PACK is a quad mesher: recombine its triangulation of the packed
       // points whatever the size specification (uniform or a size field)
       if(packing) {
@@ -120,21 +116,13 @@ namespace QuadOpt {
       minCurveNodes = mesh.minCurveNodes;
       smoothingPasses = mesh.nbSmoothing;
       forceAllPackedPoints = mesh.packForceAllPoints;
-      minimumEdgeLength = mesh.optimizeQuadsMinimumEdgeLength;
-      maximumEdgeLength = mesh.optimizeQuadsMaximumEdgeLength;
 
       preserveDiscreteBoundaryLoops();
       mesh.minCurveNodes = 1;
-      mesh.nbSmoothing =
-        std::max(mesh.nbSmoothing, 3);
+      mesh.nbSmoothing = std::max(mesh.nbSmoothing, 3);
       mesh.packForceAllPoints = 1;
-      mesh.optimizeQuadsMinimumEdgeLength = .5 * h;
-      mesh.optimizeQuadsMaximumEdgeLength = 2. * h;
 
-      Msg::Info("PACK uniform size: h=%g, admissible edges=[%g,%g], "
-                "3D packing forced",
-                h, mesh.optimizeQuadsMinimumEdgeLength,
-                mesh.optimizeQuadsMaximumEdgeLength);
+      Msg::Info("PACK uniform size: h=%g, 3D packing forced", h);
     }
 
     ~State()
@@ -145,8 +133,6 @@ namespace QuadOpt {
       mesh.minCurveNodes = minCurveNodes;
       mesh.nbSmoothing = smoothingPasses;
       mesh.packForceAllPoints = forceAllPackedPoints;
-      mesh.optimizeQuadsMinimumEdgeLength = minimumEdgeLength;
-      mesh.optimizeQuadsMaximumEdgeLength = maximumEdgeLength;
       for(const auto &entry : minimumSegmentsByEdge)
         entry.first->meshAttributes.minimumMeshSegments = entry.second;
     }

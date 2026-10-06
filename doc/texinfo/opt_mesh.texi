@@ -766,16 +766,6 @@ Remesh simple CAD faces with quad patterns after packing of parallelograms (regu
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.OptimizeQuadsMinimumEdgeLength
-Hard minimum edge length accepted by quad cleanup (non-positive: disabled)@*
-Default value: @code{0.}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.OptimizeQuadsMaximumEdgeLength
-Hard maximum edge length accepted by quad cleanup (non-positive: disabled)@*
-Default value: @code{0.}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.PackIntrinsicEdgeLengthFactor
 Maximum intrinsic triangulation edge length divided by the local target size before local splitting and Delaunay legalization. Opt-in refinement: inserted midpoints do not obey the packing exclusion or cross field (non-positive: preserve packed points, no intrinsic long-edge splitting)@*
 Default value: @code{0.}@*

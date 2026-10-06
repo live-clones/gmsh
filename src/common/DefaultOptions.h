@@ -1630,12 +1630,6 @@ StringXNumber MeshOptions_Number[] = {
       "1: Q-Morph (advancing fronts); the cavity optimizer follows in both cases" },
   { F|O, "PackSizemapMethod", opt_mesh_pack_sizemap_method, 3,
     "Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)" },
-  { F|O, "OptimizeQuadsMinimumEdgeLength" , opt_mesh_optimize_quads_minimum_edge_length, 0. ,
-    "Hard minimum edge length accepted by quad cleanup (non-positive: "
-      "disabled)" },
-  { F|O, "OptimizeQuadsMaximumEdgeLength" , opt_mesh_optimize_quads_maximum_edge_length, 0. ,
-    "Hard maximum edge length accepted by quad cleanup (non-positive: "
-      "disabled)" },
   { F|O, "PackIntrinsicEdgeLengthFactor" ,
     opt_mesh_pack_intrinsic_edge_length_factor, 0. ,
     "Maximum intrinsic triangulation edge length divided by the local target "

@@ -7346,18 +7346,6 @@ double opt_mesh_pack_sizemap_method(OPT_ARGS_NUM)
   return CTX::instance()->mesh.packSizemapMethod;
 }
 
-double opt_mesh_optimize_quads_minimum_edge_length(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsMinimumEdgeLength = val;
-  return CTX::instance()->mesh.optimizeQuadsMinimumEdgeLength;
-}
-
-double opt_mesh_optimize_quads_maximum_edge_length(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsMaximumEdgeLength = val;
-  return CTX::instance()->mesh.optimizeQuadsMaximumEdgeLength;
-}
-
 double opt_mesh_pack_intrinsic_edge_length_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

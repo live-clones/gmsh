@@ -391,10 +391,7 @@ namespace QuadOpt {
         CTX::instance()->mesh.packIntrinsicEdgeLengthFactor;
       if(!(intrinsicFactor > 0.) || !std::isfinite(intrinsicFactor))
         return false;
-      double maximumLength = intrinsicFactor * localSize;
-      const double hardMaximum =
-        CTX::instance()->mesh.optimizeQuadsMaximumEdgeLength;
-      if(hardMaximum > 0.) maximumLength = std::min(maximumLength, hardMaximum);
+      const double maximumLength = intrinsicFactor * localSize;
       if(!(maximumLength > 0.) || !std::isfinite(maximumLength)) return false;
       ratio = intrinsicEdge.intrinsicLength / maximumLength;
       if(!std::isfinite(ratio)) return false;
