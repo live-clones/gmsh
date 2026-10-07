@@ -126,4 +126,30 @@ inline int hcurlTriangle(const Dual &a, const Dual &b, const Dual &c, int order,
   return n;
 }
 
+// The H(curl) functions of an edge of a tensor product element, along the
+// coordinate s in [-1, 1], multiplied by blend: blend L_k(s) grad(s), k = 0,
+// ..., order; return the number of functions
+inline int hcurlTensorEdge(const Dual &s, const Dual &blend, int order, Vec *f)
+{
+  for(int k = 0; k <= order; k++) f[k] = blend * legendre(k, s) * grad(s);
+  return order + 1;
+}
+
+// The H(curl) functions of a quadrilateral face of coordinates (s, t) in
+// [-1, 1]^2, multiplied by blend: blend L_n1(s) l_n2(t) grad(s), n1 = 0, ...,
+// order, n2 = 2, ..., order + 1, then blend l_n1(s) L_n2(t) grad(t), n1 = 2,
+// ..., order + 1, n2 = 0, ..., order; return the number of functions
+inline int hcurlQuadrangle(const Dual &s, const Dual &t, const Dual &blend,
+                           int order, Vec *f)
+{
+  int n = 0;
+  for(int n1 = 0; n1 <= order; n1++)
+    for(int n2 = 2; n2 <= order + 1; n2++)
+      f[n++] = blend * legendre(n1, s) * lobatto(n2, t) * grad(s);
+  for(int n1 = 2; n1 <= order + 1; n1++)
+    for(int n2 = 0; n2 <= order; n2++)
+      f[n++] = blend * lobatto(n1, s) * legendre(n2, t) * grad(t);
+  return n;
+}
+
 #endif

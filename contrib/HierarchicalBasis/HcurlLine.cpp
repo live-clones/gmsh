@@ -10,6 +10,7 @@
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
 #include "HcurlLine.h"
+#include "Blocks.h"
 
 HcurlLine::HcurlLine(int order) : _order(order)
 {
@@ -25,10 +26,7 @@ HcurlLine::HcurlLine(int order) : _order(order)
 void HcurlLine::functions(const Dual *x, std::vector<Vec> &vertex,
                           std::vector<Vec> &edge, std::vector<Vec> &face,
                           std::vector<Vec> &bubble)
-{
-  const Vec eu(Dual(1.), Dual(0.), Dual(0.));
-  for(int k = 0; k <= _order; k++) edge[k] = legendre(k, x[0]) * eu;
-}
+{ hcurlTensorEdge(x[0], Dual(1.), _order, edge.data()); }
 
 void HcurlLine::getKeysInfo(std::vector<int> &functionTypeInfo,
                             std::vector<int> &orderInfo)
