@@ -83,4 +83,47 @@ inline int h1QuadrangleKernel(const Dual &s, const Dual &t, const Dual &blend,
   return n;
 }
 
+// The H(curl) functions of an edge from vertex a to vertex b, of affine
+// coordinates a and b: the Whitney function 2 (a grad(b) - b grad(a)), the
+// function -2 grad(a b), and their Legendre extensions to the degrees k = 2,
+// ..., order, ((2k - 1) / k) L_k-1(b - a) f1 - ((k - 1) / k) L_k-2(b - a) f0;
+// return the number of functions
+inline int hcurlEdge(const Dual &a, const Dual &b, int order, Vec *f)
+{
+  Vec f0 = 2. * (a * grad(b) - b * grad(a));
+  Vec f1 = -2. * (b * grad(a) + a * grad(b));
+  f[0] = f0;
+  if(order >= 1) f[1] = f1;
+  for(int k = 2; k <= order; k++)
+    f[k] = ((2. * k - 1.) / k) * legendre(k - 1, b - a) * f1 -
+           ((k - 1.) / k) * legendre(k - 2, b - a) * f0;
+  return order + 1;
+}
+
+// The H(curl) functions of a triangular face of affine coordinates (a, b, c):
+// - for each edge (x, y) = (a, b), (b, c), (c, a) of the face, opposite to the
+//   vertex z: x y L_n(y - x) grad(z), n = 0, ..., order - 2;
+// - a b c L_n1(b - a) L_n2(a - c) grad(b), then the same with grad(c),
+//   n1 + n2 <= order - 3;
+// where L_k are the Legendre polynomials; return the number of functions
+inline int hcurlTriangle(const Dual &a, const Dual &b, const Dual &c, int order,
+                         Vec *f)
+{
+  const Dual *x[3] = {&a, &b, &c};
+  int n = 0;
+  for(int e = 0; e < 3; e++) {
+    const Dual &p = *x[e], &q = *x[(e + 1) % 3], &r = *x[(e + 2) % 3];
+    for(int k = 0; k <= order - 2; k++)
+      f[n++] = p * q * legendre(k, q - p) * grad(r);
+  }
+  Dual abc = a * b * c;
+  for(int g = 0; g < 2; g++) {
+    Vec dir = grad(g == 0 ? b : c);
+    for(int n1 = 0; n1 <= order - 3; n1++)
+      for(int n2 = 0; n2 <= order - 3 - n1; n2++)
+        f[n++] = abc * legendre(n1, b - a) * legendre(n2, a - c) * dir;
+  }
+  return n;
+}
+
 #endif
