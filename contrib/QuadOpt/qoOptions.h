@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <cstddef>
+
 namespace QuadOpt {
 
   // Everything QuadOpt is asked to do, passed explicitly to its entry points.
@@ -20,6 +22,8 @@ namespace QuadOpt {
     bool optimize = true;
     // A quad warped by more than this angle (degrees) is split in two triangles.
     double maximumWarping = 25.;
+    // Largest patch (cells) searched for a pattern, see qoPatch.h.
+    std::size_t maximumPatchCells = 40;
   };
 
 } // namespace QuadOpt

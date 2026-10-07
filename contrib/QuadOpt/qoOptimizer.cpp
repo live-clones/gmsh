@@ -884,7 +884,8 @@ namespace QuadOpt {
       int found[8] = {};
       Patch patch;
       for(const std::vector<int> &seed : seeds)
-        if(findPatch(_he, probe, seed, 40, patch)) ++found[patch.corner.size()];
+        if(findPatch(_he, probe, seed, _options.maximumPatchCells, patch))
+          ++found[patch.corner.size()];
       Msg::Info("QuadOpt face %d: %d seeds, patches with 3/4/5/6 corners: "
                 "%d %d %d %d",
                 _gf->tag(), int(seeds.size()), found[3], found[4], found[5],
