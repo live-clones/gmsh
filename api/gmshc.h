@@ -1279,9 +1279,11 @@ GMSH_API void gmshModelMeshGetJacobian(const size_t elementTag,
  * element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for N-th
  * order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN", with N
  * = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
- * "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 1, 2, ..., for N-th
- * order curl-conforming basis functions. `numComponents' returns the number C
- * of components of a basis function (e.g. 1 for scalar functions and 3 for
+ * "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 0, 1, ..., for N-th
+ * order curl-conforming basis functions; "HdivLegendreN" and
+ * "DivHdivLegendreN", with N = 0, 1, ..., for N-th order div-conforming basis
+ * functions (currently on triangles only). `numComponents' returns the number
+ * C of components of a basis function (e.g. 1 for scalar functions and 3 for
  * vector functions). `basisFunctions' returns the value of the N basis
  * functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...]
  * when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C

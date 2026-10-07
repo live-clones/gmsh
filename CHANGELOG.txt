@@ -27,7 +27,11 @@ CreateMeshEdges/Faces and CreateOverlaps parser functions; new
 Plugin(DuplicateNodes), removed Plugin(CVTRemesh) and Plugin(CurvedBndDist);
 Gmsh now requires C++17 and CMake 3.10, and uses Eigen 5.0 by default; added
 support for OCC 8; upgraded bundled contrib/Netgen to v6.2.2608; fix MeshAdapt
-regression introduced in 4.12 on thin cones/cylinders; bug fixes.
+regression introduced in 4.12 on thin cones/cylinders; hierarchical basis
+functions moved to contrib/HierarchicalBasis, with new H(div) functions on
+triangles and tests of all the bases; periodic keys for hierarchical H1 and
+H(curl) function spaces on curves, with the sign of each master basis function;
+bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,

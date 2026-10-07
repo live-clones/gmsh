@@ -3359,6 +3359,18 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
     fsComp = 3;
     return true;
   }
+  if(fsType.substr(0, 12) == "HdivLegendre") {
+    fsName = "HdivLegendre";
+    fsOrder = atoi(fsType.substr(12).c_str());
+    fsComp = 3;
+    return true;
+  }
+  if(fsType.substr(0, 15) == "DivHdivLegendre") {
+    fsName = "DivHdivLegendre";
+    fsOrder = atoi(fsType.substr(15).c_str());
+    fsComp = 1;
+    return true;
+  }
   return false;
 }
 

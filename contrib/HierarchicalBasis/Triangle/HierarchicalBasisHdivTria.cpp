@@ -72,8 +72,9 @@ void HierarchicalBasisHdivTria::generateHdivBasis(
   const std::vector<double> t3{0.0, -1.0, 0.0};
 
   const std::vector<double> n1{0.0, 1.0, 0.0};
-  const double invSqrt2 = M_SQRT1_2;
-  const std::vector<double> n2{-invSqrt2, -invSqrt2, 0.0};
+  // normal of the same length as the edge, for the normal component to be
+  // continuous across elements once mapped with the contravariant Piola map
+  const std::vector<double> n2{-1.0, -1.0, 0.0};
   const std::vector<double> n3{1.0, 0.0, 0.0};
 
   // Whitney functions
@@ -208,8 +209,9 @@ void HierarchicalBasisHdivTria::generateDivBasis(
   const std::vector<double> t3{0.0, -1.0, 0.0};
 
   const std::vector<double> n1{0.0, 1.0, 0.0};
-  const double invSqrt2 = M_SQRT1_2;
-  const std::vector<double> n2{-invSqrt2, -invSqrt2, 0.0};
+  // normal of the same length as the edge, for the normal component to be
+  // continuous across elements once mapped with the contravariant Piola map
+  const std::vector<double> n2{-1.0, -1.0, 0.0};
   const std::vector<double> n3{1.0, 0.0, 0.0};
 
   // Whitney functions
@@ -233,7 +235,7 @@ void HierarchicalBasisHdivTria::generateDivBasis(
   std::vector<double> divgamma_0(3);
   std::vector<double> divgamma_1(3);
   divgamma_0[0] = -1;
-  divgamma_0[1] = -invSqrt2;
+  divgamma_0[1] = -1;
   divgamma_0[2] = -1;
   divgamma_1[0] = 0;
   divgamma_1[1] = 0;
@@ -708,7 +710,7 @@ void HierarchicalBasisHdivTria::orientOneFace(
         double dphiV =
           dlambda23V * OrthogonalPoly::EvalLegendre(i1 - 2, sub[0]) +
           prod32 * dsub[0][1] * OrthogonalPoly::EvalDLegendre(i1 - 2, sub[0]);
-        faceFunctions[faceIt] = det * (t1[0] * dphiU + t1[0] * dphiV);
+        faceFunctions[faceIt] = det * (t1[0] * dphiU + t1[1] * dphiV);
         faceIt++;
       }
       double dlambda13U = dlambda[2][0] * lambda[1] + dlambda[1][0] * lambda[2];
