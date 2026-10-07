@@ -44,7 +44,7 @@ void H1Triangle::functions(const Dual *x, std::vector<Dual> &vertex,
   int n = 0;
   for(int e = 0; e < 3; e++)
     n += h1Edge(L[e], L[(e + 1) % 3], _order, &edge[n]);
-  h1Triangle(L[0], L[1], L[2], _order, face.data());
+  h1Triangle(L[0], L[1], L[2], Dual(1.), _order, face.data());
 }
 
 void H1Triangle::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
@@ -53,7 +53,7 @@ void H1Triangle::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
   Dual L[3];
   coordinates(x, L);
   const int *r = triangleRoles(flag1, flag2);
-  h1Triangle(L[r[0]], L[r[1]], L[r[2]], _order, face.data());
+  h1Triangle(L[r[0]], L[r[1]], L[r[2]], Dual(1.), _order, face.data());
 }
 
 void H1Triangle::getKeysInfo(std::vector<int> &functionTypeInfo,

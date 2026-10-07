@@ -30,13 +30,13 @@ inline int h1Edge(const Dual &a, const Dual &b, int order, Dual *f)
   return n;
 }
 
-// The H1 functions of a triangular face of affine coordinates (a, b, c): a b c
-// K_n1(b - a) K_n2(a - c), n1 + n2 <= order - 3; return the number of
-// functions
-inline int h1Triangle(const Dual &a, const Dual &b, const Dual &c, int order,
-                      Dual *f)
+// The H1 functions of a triangular face of affine coordinates (a, b, c),
+// multiplied by blend: blend a b c K_n1(b - a) K_n2(a - c), n1 + n2 <= order -
+// 3; return the number of functions
+inline int h1Triangle(const Dual &a, const Dual &b, const Dual &c,
+                      const Dual &blend, int order, Dual *f)
 {
-  Dual abc = a * b * c;
+  Dual abc = blend * a * b * c;
   int n = 0;
   for(int n1 = 0; n1 <= order - 3; n1++) {
     Dual k1 = kernel(n1, b - a);
@@ -66,6 +66,19 @@ inline int h1Quadrangle(const Dual &s, const Dual &t, const Dual &blend,
   for(int n1 = 2; n1 <= order; n1++) {
     Dual b1 = blend * lobatto(n1, s);
     for(int n2 = 2; n2 <= order; n2++) f[n++] = b1 * lobatto(n2, t);
+  }
+  return n;
+}
+
+// The same with the kernel functions: blend K_n1(s) K_n2(t), n1, n2 = 0, ...,
+// order - 2
+inline int h1QuadrangleKernel(const Dual &s, const Dual &t, const Dual &blend,
+                              int order, Dual *f)
+{
+  int n = 0;
+  for(int n1 = 0; n1 <= order - 2; n1++) {
+    Dual b1 = blend * kernel(n1, s);
+    for(int n2 = 0; n2 <= order - 2; n2++) f[n++] = b1 * kernel(n2, t);
   }
   return n;
 }

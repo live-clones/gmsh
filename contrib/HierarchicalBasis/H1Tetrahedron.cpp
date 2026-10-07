@@ -51,8 +51,8 @@ void H1Tetrahedron::functions(const Dual *x, std::vector<Dual> &vertex,
     n += h1Edge(L[edges[e][0]], L[edges[e][1]], _order, &edge[n]);
   n = 0;
   for(int f = 0; f < 4; f++)
-    n += h1Triangle(L[faces[f][0]], L[faces[f][1]], L[faces[f][2]], _order,
-                    &face[n]);
+    n += h1Triangle(L[faces[f][0]], L[faces[f][1]], L[faces[f][2]], Dual(1.),
+                    _order, &face[n]);
   Dual all = L[0] * L[1] * L[2] * L[3];
   n = 0;
   for(int n1 = 0; n1 <= _order - 4; n1++)
@@ -70,7 +70,7 @@ void H1Tetrahedron::faceFunctions(const Dual *x, int flag1, int flag2,
   coordinates(x, L);
   const int *f = faces[faceNumber], *r = triangleRoles(flag1, flag2);
   int perFace = _numTriFaceFunction / 4;
-  h1Triangle(L[f[r[0]]], L[f[r[1]]], L[f[r[2]]], _order,
+  h1Triangle(L[f[r[0]]], L[f[r[1]]], L[f[r[2]]], Dual(1.), _order,
              &face[faceNumber * perFace]);
 }
 

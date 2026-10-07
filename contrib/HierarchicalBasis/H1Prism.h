@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -11,109 +11,41 @@
 
 #ifndef H1_PRISM_H
 #define H1_PRISM_H
+
 #include "HierarchicalBasis.h"
 
-/**
- * MPrism
- *
- *               w
- *               ^
- *               |
- *               3
- *             ,/|`\
- *           ,/  |  `\
- *         ,/    |    `\
- *        4------+------5
- *        |      |      |
- *        |    ,/|`\    |
- *        |  ,/  |  `\  |
- *        |,/    |    `\|
- *       ,|      |      `\
- *     ,/ |      0      | `\
- *    u   |    ,/ `\    |    v
- *        |  ,/     `\  |
- *        |,/         `\|
- *        1-------------2
- *
- *  Oriented Edges:
- *  e0={0, 1},  e1={0, 2},  e2={0, 3},
- *  e3={1, 2},  e4={1, 4},  e5={2, 5},
- *  e6={3, 4},  e7={3, 5},  e8={4, 5}
- *
- * Oriented Surfaces:
- *   s3={0, 1, 2},      s4={3, 4, 5},       s0={0, 1, 3, 4},        s1={0, 2,
- * 3,5}        s2={1,2,4,5}
- *
- * Local (directional) orders on mesh faces are not allowed to exceed the
- * minimum of the (appropriate directional) orders of approximation associated
- * with the interior of the adjacent elements. Local orders of approximation on
- * mesh edges are limited by the minimum of all (appropriate directional) orders
- * corresponding to faces sharing that edge
- *
- */
-
+// H1 basis on the prism of base (0, 0), (1, 0), (0, 1) and height w in
+// [-1, 1], with the affine coordinates L0 = 1 - u - v, L1 = u, L2 = v of the
+// triangle, B = (1 - w) / 2 and T = (1 + w) / 2:
+// - the vertex functions L0 B, L1 B, L2 B, L0 T, L1 T, L2 T;
+// - the functions of the edges e0 = {0, 1}, e1 = {0, 2}, e2 = {0, 3},
+//   e3 = {1, 2}, e4 = {1, 4}, e5 = {2, 5}, e6 = {3, 4}, e7 = {3, 5},
+//   e8 = {4, 5}: B or T times the triangle edge functions of the horizontal
+//   edges, Li times the edge functions of B and T of the vertical ones (see
+//   h1Edge);
+// - the functions of the quadrilateral faces s0 = {0, 1, 3, 4},
+//   s1 = {0, 2, 3, 5}, s2 = {1, 2, 4, 5} over the edge {a, b} of the triangle:
+//   La Lb B T K_n1(Lb - La) K_n2(T - B) (see h1QuadrangleKernel), and of the
+//   triangular faces s3 = {0, 1, 2}, s4 = {3, 4, 5}: B or T times the triangle
+//   face functions (see h1Triangle);
+// - the bubble functions: the triangle face functions times l_n3(w), n3 = 2,
+//   ..., p;
+// where K_k are the kernel functions and l_k the Lobatto polynomials.
 class H1Prism : public HierarchicalBasis {
-private:
-  std::array<int, 2> _pb; //    _pb[0] : bubble function order in  direction uv
-                          //    _pb[1] : bubble function order in  direction w
-  std::array<int, 9> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches
-                                  // the order of the edge 0)
-
-  std::array<std::array<int, 3>, 2>
-    _pOrderQuadFace; /* _pOrderQuadFace[0] : Quad Face functions order in
-                      * direction u
-                      * (_pOrderQuadFace[0][i] corresponds to the u-order of
-                      * face i) _pOrderQuadFace[1] : Quad Face functions order
-                      * in direction v
-                      * (_pOrderQuadFace[1][i] corresponds to the v-order of
-                      * face i)
-                      */
-  std::array<int, 2> _pOrderTriFace; // Tri Face Functions order
-
-  // affine coordinate lambda j=1..5
-  static double _affineCoordinate(int j, double u, double v, double w);
-
-  void generateGradientBasis(double u, double v, double w,
-                             std::vector<std::vector<double>> &gradientVertex,
-                             std::vector<std::vector<double>> &gradientEdge,
-                             std::vector<std::vector<double>> &gradientFace,
-                             std::vector<std::vector<double>> &gradientBubble);
-
-  void orientOneFace(double u, double v, double w, int flag1, int flag2,
-                     int flag3, int faceNumber,
-                     std::vector<double> &faceBasis) override;
-
-  void orientOneFace(double u, double v, double w, int flag1, int flag2,
-                     int flag3, int faceNumber,
-                     std::vector<std::vector<double>> &faceFunctions) override;
-
 public:
   H1Prism(int order);
-  ~H1Prism() override = default;
-
-  // vertexBasis=[v0,...,v5]
-  // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
-  // faceBasis=[QuadFace\phif2_{2,2},...,phif2_{2,pF2_2},...,phif2_{pF2_1,2},...,phief2_{pF2_1,pF2_2},phif3_{2,2}...,
-  //            TriFace\phif0_{1,1},...,phif0_{1,pF0-2},phif0_{2,1}...,phif0_{2,pF0-3},...,phief0_{pF-2,1},phif1_{1,1}...]
-  // bubbleBasis=[phieb_{1,1,1},...]   1<=n1,n2;n1+n2<=pb1-1; 2<=n3<pb2
-
-  void generateBasis(double u, double v, double w,
-                     std::vector<double> &vertexBasis,
-                     std::vector<double> &edgeBasis,
-                     std::vector<double> &faceBasis,
-                     std::vector<double> &bubbleBasis) override;
-
-  void generateBasis(double u, double v, double w,
-                     std::vector<std::vector<double>> &vertexBasis,
-                     std::vector<std::vector<double>> &edgeBasis,
-                     std::vector<std::vector<double>> &faceBasis,
-                     std::vector<std::vector<double>> &bubbleBasis) override
-  {
-    generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
-                          bubbleBasis);
-  }
-
   void getKeysInfo(std::vector<int> &functionTypeInfo,
                    std::vector<int> &orderInfo) override;
+
+protected:
+  void functions(const Dual *x, std::vector<Dual> &vertex,
+                 std::vector<Dual> &edge, std::vector<Dual> &face,
+                 std::vector<Dual> &bubble) override;
+  void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
+                     int faceNumber, std::vector<Dual> &face) override;
+
+private:
+  int _order;
 };
+
 #endif
