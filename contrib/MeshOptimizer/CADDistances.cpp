@@ -34,9 +34,7 @@
 #include "BasisFactory.h"
 #include "JacobianBasis.h"
 #include "GModel.h"
-#if defined(HAVE_ANN)
-#include "ANN/ANN.h"
-#endif
+#include "SPoint3KDTree.h"
 #include "CADDistances.h"
 
 namespace {
@@ -289,22 +287,20 @@ namespace {
     return maxDist;
   }
 
-#if defined(HAVE_ANN)
   double oneSidedMaxDistFast(const std::vector<SPoint3> &dptsA,
-                             const ANNpointArray &ptsB, ANNkd_tree *treeB,
-                             double tol)
+                             const std::vector<SPoint3> &dptsB)
   {
-    ANNidx idx[1];
-    ANNdist distSq[1];
-    ANNdist maxDistSq = 0.;
-    for(unsigned int i = 0; i < dptsA.size(); i++) {
-      ANNcoord xyz[3] = {dptsA[i].x(), dptsA[i].y(), dptsA[i].z()};
-      treeB->annkSearch(xyz, 1, idx, distSq);
-      if(distSq[0] > maxDistSq) maxDistSq = distSq[0];
+    SPoint3Search searchB;
+    searchB.points() = dptsB;
+    searchB.build();
+    double maxDistSq = 0.;
+    for(std::size_t i = 0; i < dptsA.size(); i++) {
+      double distSq;
+      if(searchB.nearest(dptsA[i], &distSq) == searchB.size()) continue;
+      if(distSq > maxDistSq) maxDistSq = distSq;
     }
     return sqrt(maxDistSq);
   }
-#endif
 
   double discreteHausdorffDistanceBrute(const std::vector<SPoint3> &dpts1,
                                         const std::vector<SPoint3> &dpts2)
@@ -319,36 +315,9 @@ namespace {
                                        const std::vector<SPoint3> &dpts2,
                                        double tol)
   {
-#if defined(HAVE_ANN)
-    ANNpointArray pts1 = annAllocPts(dpts1.size(), 3);
-    for(unsigned int k = 0; k < dpts1.size(); k++) {
-      pts1[k][0] = dpts1[k].x();
-      pts1[k][1] = dpts1[k].y();
-      pts1[k][2] = dpts1[k].z();
-    }
-    ANNkd_tree *tree1 = new ANNkd_tree(pts1, dpts1.size(), 3);
-
-    ANNpointArray pts2 = annAllocPts(dpts2.size(), 3);
-    for(unsigned int k = 0; k < dpts2.size(); k++) {
-      pts2[k][0] = dpts2[k].x();
-      pts2[k][1] = dpts2[k].y();
-      pts2[k][2] = dpts2[k].z();
-    }
-    ANNkd_tree *tree2 = new ANNkd_tree(pts2, dpts2.size(), 3);
-
-    double d1 = oneSidedMaxDistFast(dpts1, pts2, tree2, tol);
-    double d2 = oneSidedMaxDistFast(dpts2, pts1, tree1, tol);
-
-    delete tree1, tree2;
-    annDeallocPts(pts1);
-    annDeallocPts(pts2);
-
+    double d1 = oneSidedMaxDistFast(dpts1, dpts2);
+    double d2 = oneSidedMaxDistFast(dpts2, dpts1);
     return (d1 > d2) ? d1 : d2;
-#else
-    Msg::Error(
-      "Gmsh should be compiled using ANN to compute Hausdorff distance");
-    return 0.;
-#endif
   }
 
   template <int distDef>

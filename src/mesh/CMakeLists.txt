@@ -20,6 +20,7 @@ set(SRC
   meshGRegion.cpp
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
+    meshGRegionParallelDelaunay.cpp meshGRegionParallelOptimize.cpp
     meshGRegionDelaunay.cpp meshGRegionTet4.cpp
     meshGRegionDelaunayFlat.cpp meshGRegionOptimize.cpp meshGRegionOptimizeFlat.cpp meshGRegionAdapt.cpp
     meshGRegionTransfinite.cpp
@@ -28,10 +29,10 @@ set(SRC
   meshGRegionBoundaryLayer.cpp
   meshQuantize2.cpp
   meshRelocateVertex.cpp
+  meshUntangling.cpp
   meshRenumber.cpp
   meshTriangulation.cpp
   meshMetric.cpp
-  meshUntangle.cpp
   meshMesquite.cpp
   BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp
@@ -40,12 +41,10 @@ set(SRC
   HighOrder.cpp
   meshPartition.cpp
   meshRefine.cpp
-  delaunay3d.cpp
   DivideAndConquer.cpp
   Field.cpp
   filterElements.cpp
   gmshCrossFields.cpp
-  automaticMeshSizeField.cpp
   meshQuadQuasiStructured.cpp
   meshOctreeLibOL.cpp
   meshCombine3D.cpp

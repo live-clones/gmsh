@@ -3,12 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GmshConfig.h"
 #include "NearestNeighbor.h"
-
-#if defined(HAVE_ANN)
-#include "ANN/ANN.h"
-#endif
+#include "SPoint3KDTree.h"
 
 GMSH_NearestNeighborPlugin::GMSH_NearestNeighborPlugin()
   : GMSH_PostPlugin({{GMSH_FULLRC, "View", nullptr, -1., ""}})
@@ -37,49 +33,38 @@ PView *GMSH_NearestNeighborPlugin::execute(PView *v)
     return v;
   }
 
-#if defined(HAVE_ANN)
-  ANNpointArray zeronodes = annAllocPts(totpoints, 3);
-  int k = 0, step = 0;
+  SPoint3Search search;
+  int step = 0;
   for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
     for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
       if(data1->skipElement(step, ent, ele)) continue;
       int numNodes = data1->getNumNodes(step, ent, ele);
       if(numNodes != 1) continue;
-      data1->getNode(step, ent, ele, 0, zeronodes[k][0], zeronodes[k][1],
-                     zeronodes[k][2]);
-      k++;
+      double x, y, z;
+      data1->getNode(step, ent, ele, 0, x, y, z);
+      search.points().push_back(SPoint3(x, y, z));
     }
   }
   // getNumPoints() also counts the points skipped above
-  if(k < 2) {
+  if(search.size() < 2) {
     Msg::Error("View[%d] contains less than 2 points", v1->getIndex());
-    annDeallocPts(zeronodes);
     return v;
   }
-  ANNkd_tree *kdtree = new ANNkd_tree(zeronodes, k, 3);
-  ANNidxArray index = new ANNidx[2];
-  ANNdistArray dist = new ANNdist[2];
+  search.build();
 
   v1->setChanged(true);
+  std::size_t k = 0;
   for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
     for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
       if(data1->skipElement(step, ent, ele)) continue;
       int numNodes = data1->getNumNodes(step, ent, ele);
       if(numNodes != 1) continue;
-      double xyz[3];
-      data1->getNode(step, ent, ele, 0, xyz[0], xyz[1], xyz[2]);
-      kdtree->annkSearch(xyz, 2, index, dist);
+      std::size_t index[2];
+      double dist[2];
+      search.nearest(search.point(k++), 2, index, dist);
       data1->setValue(step, ent, ele, 0, 0, sqrt(dist[1]));
     }
   }
-
-  delete kdtree;
-  annDeallocPts(zeronodes);
-  delete[] index;
-  delete[] dist;
-#else
-  Msg::Error("Nearest neighbor computation requires ANN");
-#endif
 
   data1->setName(v1->getData()->getName() + "_NearestNeighbor");
   data1->finalize();

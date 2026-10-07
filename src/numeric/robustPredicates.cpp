@@ -779,6 +779,9 @@ static REAL orient3dadapt(const REAL* const __restrict__ pa,
   REAL *finnow, *finother, *finswap;
   REAL fin1[192], fin2[192];
   int finlength;
+  // the expansions are always written before being summed, which GCC cannot
+  // see: silence -Wmaybe-uninitialized (reported on estimate())
+  fin1[0] = fin2[0] = 0.0;
 
   ////////////////////////////////////////////////////////
   // To avoid uninitialized warnings reported by valgrind.
@@ -1304,6 +1307,7 @@ static REAL incircleadapt(const REAL* const __restrict__ pa,
   REAL fin1[1152], fin2[1152];
   REAL *finnow, *finother, *finswap;
   int finlength;
+  fin1[0] = fin2[0] = 0.0; // as in orient3dadapt
 
   REAL adxtail, bdxtail, cdxtail, adytail, bdytail, cdytail;
   INEXACT REAL adxadx1, adyady1, bdxbdx1, bdybdy1, cdxcdx1, cdycdy1;
@@ -2259,6 +2263,7 @@ static REAL insphereadapt(const REAL* const __restrict__ pa,
   int ablen, cdlen;
   REAL fin1[1152];
   int finlength;
+  fin1[0] = 0.0; // as in orient3dadapt
 
   REAL aextail, bextail, cextail, dextail;
   REAL aeytail, beytail, ceytail, deytail;

@@ -13,34 +13,20 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
-
-#if !defined(HAVE_ANN)
-
-void carveHole(GRegion *gr, int num, double distance,
-               std::vector<int> &surfaces)
-{
-  Msg::Error("Gmsh must be compiled with ANN support to carve holes in meshes");
-}
-
-#else
-
-#include "ANN/ANN.h"
+#include "SPoint3KDTree.h"
 
 template <class T>
-void carveHole(std::vector<T *> &elements, double distance, ANNkd_tree *kdtree)
+void carveHole(std::vector<T *> &elements, double distance,
+               const SPoint3Search &search)
 {
   // delete all elements that have at least one vertex closer than
   // 'distance' from the carving surface vertices
-  ANNidxArray index = new ANNidx[1];
-  ANNdistArray dist = new ANNdist[1];
   std::vector<T *> temp;
   for(std::size_t i = 0; i < elements.size(); i++) {
     for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++) {
-      MVertex *v = elements[i]->getVertex(j);
-      double xyz[3] = {v->x(), v->y(), v->z()};
-      kdtree->annkSearch(xyz, 1, index, dist);
-      double d = std::sqrt(dist[0]);
-      if(d < distance) {
+      double d2;
+      search.nearest(elements[i]->getVertex(j)->point(), &d2);
+      if(std::sqrt(d2) < distance) {
         delete elements[i];
         break;
       }
@@ -50,8 +36,6 @@ void carveHole(std::vector<T *> &elements, double distance, ANNkd_tree *kdtree)
     }
   }
   elements = temp;
-  delete[] index;
-  delete[] dist;
 }
 
 template <class T>
@@ -77,38 +61,27 @@ void carveHole(GRegion *gr, int num, double distance,
   GModel *m = gr->model();
 
   // add all points from carving surfaces into kdtree
-  int numnodes = 0;
+  SPoint3Search search;
   for(std::size_t i = 0; i < surfaces.size(); i++) {
     GFace *gf = m->getFaceByTag(surfaces[i]);
     if(!gf) {
       Msg::Error("Unknown carving surface %d", surfaces[i]);
       return;
     }
-    numnodes += gf->mesh_vertices.size();
+    for(auto v : gf->mesh_vertices) search.points().push_back(v->point());
   }
-
-  ANNpointArray kdnodes = annAllocPts(numnodes, 3);
-  int k = 0;
-  for(std::size_t i = 0; i < surfaces.size(); i++) {
-    GFace *gf = m->getFaceByTag(surfaces[i]);
-    for(std::size_t j = 0; j < gf->mesh_vertices.size(); j++) {
-      kdnodes[k][0] = gf->mesh_vertices[j]->x();
-      kdnodes[k][1] = gf->mesh_vertices[j]->y();
-      kdnodes[k][2] = gf->mesh_vertices[j]->z();
-      k++;
-    }
+  if(!search.size()) {
+    Msg::Error("No nodes on carving surfaces");
+    return;
   }
-  ANNkd_tree *kdtree = new ANNkd_tree(kdnodes, numnodes, 3);
+  search.build();
 
   // remove the volume elements that are within 'distance' of the
   // carved surface
-  carveHole(gr->tetrahedra, distance, kdtree);
-  carveHole(gr->hexahedra, distance, kdtree);
-  carveHole(gr->prisms, distance, kdtree);
-  carveHole(gr->pyramids, distance, kdtree);
-
-  delete kdtree;
-  annDeallocPts(kdnodes);
+  carveHole(gr->tetrahedra, distance, search);
+  carveHole(gr->hexahedra, distance, search);
+  carveHole(gr->prisms, distance, search);
+  carveHole(gr->pyramids, distance, search);
 
   // TODO: remove any interior elements left inside the carved surface
   // (could shoot a line from each element's barycenter and count
@@ -143,5 +116,3 @@ void carveHole(GRegion *gr, int num, double distance,
                         it->getVertex(3)));
   }
 }
-
-#endif

@@ -11,21 +11,27 @@
   Advancing front class for volume meshing
 */
 
+#include <gprim/geomobjects.hpp>
+#include <gprim/adtree.hpp>
+#include "meshtype.hpp"
+#include "geomsearch.hpp"
 
+namespace netgen
+{
 
 /// Point in advancing front
 class FrontPoint3
 {
   /// coordinates
-Point<3> p;           
+  Point<3> p;           
   /// global node index
-PointIndex globalindex;   
+  PointIndex globalindex;   
   /// number of faces connected to point 
-int nfacetopoint;    
+  int nfacetopoint;    
   /// distance to original boundary
-int frontnr;
+  int frontnr;
   /// 
-int cluster;
+  Front3PointIndex cluster;
 public:
   ///
   FrontPoint3 ();
@@ -43,7 +49,7 @@ public:
   void AddFace ()
   { nfacetopoint++; }
 
-  ///
+  /// if last face is removed, then point is invalidated
   void RemoveFace()
   { 
     nfacetopoint--;
@@ -51,7 +57,7 @@ public:
   }
   
   ///
-  int Valid () const
+  bool Valid () const
   { return nfacetopoint >= 0; }
 
   ///
@@ -70,48 +76,12 @@ public:
 
 
 
-class MiniElement2d
-{
-protected:
-  int np;
-  PointIndex pnum[4];
-  bool deleted;
-public:
-  MiniElement2d ()
-  { np = 3; deleted = 0; }
-  MiniElement2d (int anp)
-  { np = anp; deleted = 0; }
-
-  int GetNP() const { return np; }
-  PointIndex & operator[] (int i) { return pnum[i]; }
-  const PointIndex operator[] (int i) const { return pnum[i]; }
-
-  const PointIndex PNum (int i) const { return pnum[i-1]; }
-  PointIndex & PNum (int i) { return pnum[i-1]; }
-  const PointIndex PNumMod (int i) const { return pnum[(i-1)%np]; }
-
-  void Delete () { deleted = 1; pnum[0] = pnum[1] = pnum[2] = pnum[3] = PointIndex::BASE-1; }
-  bool IsDeleted () const { return deleted; }
-};
-
-
-inline ostream & operator<<(ostream  & s, const MiniElement2d & el)
-{
-  s << "np = " << el.GetNP();
-  for (int j = 0; j < el.GetNP(); j++)
-    s << " " << el[j];
-  return s;
-}
-
-
-
-
 /// Face in advancing front
 class FrontFace
 {
 private:
   ///
-  MiniElement2d f;
+  FrontElement2d f;
   ///
   int qualclass;
   ///
@@ -119,15 +89,15 @@ private:
   ///
   int hashvalue;
   ///
-  int cluster;
-
+  Front3PointIndex cluster;
+  
 public:
   ///
   FrontFace ();
   ///
-  FrontFace (const MiniElement2d & af);
+  FrontFace (const FrontElement2d & af);
   ///
-  const MiniElement2d & Face () const
+  const FrontElement2d & Face () const
   { return f; }
   
   ///
@@ -143,8 +113,8 @@ public:
   {
     if (qualclass > 1)
       {
-	qualclass = 1;
-	oldfront = 0;
+        qualclass = 1;
+        oldfront = 0;
       }
   }
   
@@ -166,7 +136,7 @@ public:
   ///
   friend class AdFront3;
 
-  int Cluster () const { return cluster; }
+  Front3PointIndex Cluster () const { return cluster; }
 };  
 
 
@@ -176,45 +146,47 @@ public:
 class AdFront3
 {
   ///
-Array<FrontPoint3, PointIndex::BASE> points;
+  // Array<FrontPoint3, PointIndex::BASE, PointIndex> points;
+  Array<FrontPoint3, Front3PointIndex> points;
   ///
-Array<FrontFace> faces;
+  Array<FrontFace> faces;
   ///
-Array<PointIndex> delpointl;
-
+  Array<Front3PointIndex> delpointl;
+  
   /// which points are connected to pi ?
-TABLE<int, PointIndex::BASE> * connectedpairs;
+  // TABLE<PointIndex, PointIndex::BASE> * connectedpairs;
+  unique_ptr<DynamicTable<Front3PointIndex, Front3PointIndex>> connectedpairs;
   
   /// number of total front faces;
-int nff;
+  int nff;
   /// number of quads in front
-int nff4; 
+  int nff4; 
   
   ///
-double vol;
-
+  double vol;
+  
   ///
-GeomSearch3d hashtable;
-
+  GeomSearch3d hashtable;
+  
   /// 
-int hashon;
+  int hashon;
 
   ///
-int hashcreated;
-
+  int hashcreated;
+  
   /// counter for rebuilding internal tables
-int rebuildcounter;
+  int rebuildcounter;
   /// last base element
-int lasti;
+  int lasti;
   /// minimal selection-value of baseelements
-int minval;
-  Array<int, PointIndex::BASE> invpindex;
-  Array<char> pingroup;
+  int minval;
+  Array<LocalPointIndex, Front3PointIndex> invpindex;   // front -> local
+  Array<char, Front3PointIndex> pingroup;
   
   ///
-class Box3dTree * facetree;
+  class BoxTree<3> * facetree;
 public:
-
+  
   ///
   AdFront3 ();
   ///
@@ -225,14 +197,15 @@ public:
   int GetNP() const 
   { return points.Size(); }
   ///
-  const Point<3> & GetPoint (PointIndex pi) const
+  const Point<3> & GetPoint (Front3PointIndex pi) const
   { return points[pi].P(); }
   ///
   int GetNF() const
   { return nff; }
-  ///
-  const MiniElement2d & GetFace (int i) const
-  { return faces.Get(i).Face(); }
+  /// 1-based
+  const FrontElement2d & GetFace (int i) const
+  { return faces[i-1].Face(); }
+  const auto & Faces() const { return faces; }
   ///
   void Print () const;
   ///
@@ -253,44 +226,47 @@ public:
 
   ///
   void GetIntersectingFaces (const Point<3> & pmin, const Point<3> & pmax, 
-			     Array<int> & ifaces) const;
+                             Array<int> & ifaces) const;
+
+  bool PointInsideGroup(const Array<Front3PointIndex, LocalPointIndex> &grouppindex,
+                        const Array<MiniElement2d>& groupfaces) const;
 
   ///
   void GetFaceBoundingBox (int i, Box3d & box) const;
 
   ///
   int GetLocals (int baseelement,
-		 Array<Point3d > & locpoints,
+                 Array<Point<3>, LocalPointIndex> & locpoints,
                  Array<MiniElement2d> & locfaces,   // local index
-                 Array<PointIndex> & pindex,
-                 Array<INDEX> & findex,
-		 INDEX_2_HASHTABLE<int> & connectedpairs,
+                 Array<Front3PointIndex, LocalPointIndex> & pindex,   // local -> front
+                 Array<int> & findex,
+                 ClosedHashTable<IVec<2>,int> & connectedpairs,
                  float xh,
-		 float relh,
-		 INDEX& facesplit);
+                 float relh,
+                 int& facesplit);
   
   ///
   void GetGroup (int fi,
-                 Array<MeshPoint> & grouppoints,
+                 Array<MeshPoint, LocalPointIndex> & grouppoints,
                  Array<MiniElement2d> & groupelements,
-                 Array<PointIndex> & pindex,
-                 Array<INDEX> & findex);
+                 Array<Front3PointIndex, LocalPointIndex> & pindex,
+                 Array<int> & findex);
 
   ///
-  void DeleteFace (INDEX fi);
+  void DeleteFace (int fi);
   ///
-  PointIndex AddPoint (const Point<3> & p, PointIndex globind);
+  Front3PointIndex AddPoint (const Point<3> & p, PointIndex globind);
   ///
-  INDEX AddFace (const MiniElement2d & e);
+  int AddFace (const FrontElement2d & e);
   ///
-  INDEX AddConnectedPair (const INDEX_2 & pair);
+  int AddConnectedPair (IVec<2,Front3PointIndex> pair);
   ///
-  void IncrementClass (INDEX fi)
-  { faces.Elem(fi).IncrementQualClass(); }
+  void IncrementClass (int fi)
+  { faces[fi-1].IncrementQualClass(); }
 
   ///
-  void ResetClass (INDEX fi)
-  { faces.Elem(fi).ResetQualClass(); }
+  void ResetClass (int fi)
+  { faces[fi-1].ResetQualClass(); }
 
   ///
   void SetStartFront (int baseelnp = 0);
@@ -299,11 +275,11 @@ public:
   bool Inside (const Point<3> & p) const;
   /// both points on same side ?
   int SameSide (const Point<3> & lp1, const Point<3> & lp2, 
-		const Array<int> * testfaces = NULL) const;
+                const Array<int> * testfaces = NULL) const;
 
 
   ///
-  PointIndex GetGlobalIndex (PointIndex pi) const
+  PointIndex GetGlobalIndex (Front3PointIndex pi) const
   { return points[pi].GlobalIndex(); }
   ///
   double Volume () const
@@ -314,7 +290,5 @@ private:
   void RebuildInternalTables();
 };
 
-
-
-
+} // namespace netgen
 #endif

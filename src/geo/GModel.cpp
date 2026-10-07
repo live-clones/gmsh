@@ -7,6 +7,7 @@
 #include <limits>
 #include <stdlib.h>
 #include <sstream>
+#include <unordered_set>
 #include <stack>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -223,15 +224,17 @@ void GModel::destroy(bool keepName)
   gmshSurface::reset();
 }
 
-void GModel::destroyMeshCaches()
+void GModel::destroyMeshCaches(bool keepVertexCaches)
 {
   // this is called in GEntity::deleteMesh()
 #pragma omp critical(destroyMeshCaches)
   {
-    _vertexVectorCache.clear();
-    std::vector<MVertex *>().swap(_vertexVectorCache);
-    _vertexMapCache.clear();
-    std::map<std::size_t, MVertex *>().swap(_vertexMapCache);
+    if(!keepVertexCaches) {
+      _vertexVectorCache.clear();
+      std::vector<MVertex *>().swap(_vertexVectorCache);
+      _vertexMapCache.clear();
+      std::map<std::size_t, MVertex *>().swap(_vertexMapCache);
+    }
     _elementVectorCache.clear();
     std::vector<std::pair<MElement *, int>>().swap(_elementVectorCache);
     _elementMapCache.clear();
@@ -1311,10 +1314,15 @@ int GModel::mesh(int dimension)
 
 bool GModel::setAllVolumesPositive()
 {
-  bool ok = true;
-  for(auto it = regions.begin(); it != regions.end(); ++it)
-    for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i)
-      if(!(*it)->getMeshElement(i)->setVolumePositive()) ok = false;
+  int ok = 1;
+  for(auto it = regions.begin(); it != regions.end(); ++it) {
+    const std::size_t ne = (*it)->getNumMeshElements();
+    const int nthreads = CTX::instance()->numThreadsFor(ne, 1 << 16);
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  reduction(min : ok)
+    for(std::size_t i = 0; i < ne; ++i)
+      if(!(*it)->getMeshElement(i)->setVolumePositive()) ok = 0;
+  }
   return ok;
 }
 
@@ -1902,6 +1910,63 @@ static void getDependentViewData(GModel *m, PViewDataGModel::DataType type,
   }
 }
 #endif
+
+void GModel::getMaxMeshNumbersInUse(std::size_t &maxVertex,
+                                    std::size_t &maxElement) const
+{
+  maxVertex = maxElement = 0;
+  std::vector<GEntity *> entities;
+  getEntities(entities);
+  for(GEntity *ge : entities) {
+    for(MVertex *v : ge->mesh_vertices)
+      maxVertex = std::max(maxVertex, v->getNum());
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++)
+      maxElement = std::max(maxElement, ge->getMeshElement(j)->getNum());
+  }
+}
+
+void GModel::renumberMeshCanonically(std::size_t maxVertexBefore,
+                                     std::size_t maxElementBefore)
+{
+  destroyMeshCaches();
+  std::vector<GEntity *> entities;
+  getEntities(entities);
+  const std::size_t firstV = std::max(1, CTX::instance()->mesh.firstNodeTag),
+                    firstE = std::max(1, CTX::instance()->mesh.firstElementTag);
+  std::size_t nv = std::max(maxVertexBefore, firstV - 1),
+              ne = std::max(maxElementBefore, firstE - 1);
+  std::vector<MVertex *> order;
+  std::unordered_set<MVertex *> pending;
+  for(GEntity *ge : entities) {
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      MElement *e = ge->getMeshElement(j);
+      if(e->getNum() > maxElementBefore) e->forceNum(++ne);
+    }
+    std::vector<MVertex *> &list = ge->mesh_vertices;
+    order.clear();
+    pending.clear();
+    for(MVertex *v : list) {
+      if(v->getNum() <= maxVertexBefore)
+        order.push_back(v);
+      else
+        pending.insert(v);
+    }
+    if(pending.empty()) continue;
+    const std::size_t first = order.size();
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      MElement *e = ge->getMeshElement(j);
+      for(std::size_t k = 0; k < e->getNumVertices(); k++)
+        if(pending.erase(e->getVertex(k))) order.push_back(e->getVertex(k));
+    }
+    // nodes in no element of their entity: after the others, as listed
+    for(MVertex *v : list)
+      if(pending.count(v)) order.push_back(v);
+    for(std::size_t i = first; i < order.size(); i++) order[i]->forceNum(++nv);
+    list.swap(order);
+  }
+  resetMaxVertexNumber(nv);
+  resetMaxElementNumber(ne);
+}
 
 void GModel::renumberMeshVertices(
   const std::map<std::size_t, std::size_t> &mapping)
@@ -3805,13 +3870,14 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
 
 void GModel::computeSizeField()
 {
-#if defined(HAVE_HXT) && defined(HAVE_P4EST)
+#if defined(HAVE_HXT) && defined(HAVE_OCTREE_SIZE_FIELD)
   FieldManager *fields = getFields();
   int myId = fields->newId();
   fields->newField(myId, std::string("AutomaticMeshSizeField"));
   fields->get(myId)->update();
 #else
-  Msg::Error("Size field computation requires both HXT and P4EST");
+  Msg::Error("Size field computation requires both HXT and OctreeSizeField "
+             "(ENABLE_OCTREE_SIZE_FIELD)");
 #endif
 }
 

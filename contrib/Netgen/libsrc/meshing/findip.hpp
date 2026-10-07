@@ -1,12 +1,16 @@
+#ifndef NETGEN_FINDIP_HPP
+#define NETGEN_FINDIP_HPP
+
 // find inner point
 
+namespace netgen
+{
 
-
-inline void Minimize (const Array<Vec3d> & a,
-		      const Array<double> & c,
-		      int * act, 
-		      Vec<3> & x, double & f,
-		      int * sol)
+inline void Minimize (const Array<Vec<3>> & a,
+                      const Array<double> & c,
+                      int * act, 
+                      Vec<3> & x, double & f,
+                      int * sol)
 {
   int act1[4];
   Mat<3> m, inv;
@@ -17,50 +21,50 @@ inline void Minimize (const Array<Vec3d> & a,
   for (int j = 0; j < 5; j++)
     {
       for (int hk = 0, k = 0; hk < 4; hk++)
-	{
-	  if (hk == j) k++;
-	  act1[hk] = act[k];
-	  k++;
-	}
+        {
+          if (hk == j) k++;
+          act1[hk] = act[k];
+          k++;
+        }
 
       for (int k = 0; k < 3; k++)
-	{
-	  m(k, 0) = a[act1[0]].X() - a[act1[k+1]].X();
-	  m(k, 1) = a[act1[0]].Y() - a[act1[k+1]].Y();
-	  m(k, 2) = a[act1[0]].Z() - a[act1[k+1]].Z();
-	  rs(k) = c[act1[k+1]] - c[act1[0]];
-	}
+        {
+          m(k, 0) = a[act1[0]](0) - a[act1[k+1]](0);
+          m(k, 1) = a[act1[0]](1) - a[act1[k+1]](1);
+          m(k, 2) = a[act1[0]](2) - a[act1[k+1]](2);
+          rs(k) = c[act1[k+1]] - c[act1[0]];
+        }
 
       /*
       (*testout) << "act1 = "
-		 << act1[0] << " "
-		 << act1[1] << " "
-		 << act1[2] << " "
-		 << act1[3] << endl;
+                 << act1[0] << " "
+                 << act1[1] << " "
+                 << act1[2] << " "
+                 << act1[3] << endl;
       (*testout) << "Det = " << Det(m) << endl;
       */
 
       if (fabs (Det (m)) > 1e-10)
-	{
-	  CalcInverse (m, inv);
-	  xmax = inv * rs;
-	  
-	  double fmax = -1e10;
-	  for (int k = 0; k < 5; k++)
-	    {
-	      double hd = 
-		xmax(0) * a[act[k]].X() + xmax(1) * a[act[k]].Y() + xmax(2) * a[act[k]].Z() + c[act[k]];
-	      if (hd > fmax) fmax = hd;
-	    }
+        {
+          CalcInverse (m, inv);
+          xmax = inv * rs;
+          
+          double fmax = -1e10;
+          for (int k = 0; k < 5; k++)
+            {
+              double hd = 
+                xmax(0) * a[act[k]](0) + xmax(1) * a[act[k]](1) + xmax(2) * a[act[k]](2) + c[act[k]];
+              if (hd > fmax) fmax = hd;
+            }
 
-	  if (fmax < f)
-	    {
-	      f = fmax;
-	      x = xmax;
-	      for (int k = 0; k < 4; k++)
-		sol[k] = act1[k];
-	    }
-	}
+          if (fmax < f)
+            {
+              f = fmax;
+              x = xmax;
+              for (int k = 0; k < 4; k++)
+                sol[k] = act1[k];
+            }
+        }
     }
 }
 
@@ -69,13 +73,13 @@ inline void Minimize (const Array<Vec3d> & a,
 
 template <typename POINTArray, typename FACEArray>
 inline int FindInnerPoint (POINTArray & points,
-			   FACEArray & faces,
-			   Point3d & p)
+                           FACEArray & faces,
+                           Point<3> & p)
 {
-  static int timer = NgProfiler::CreateTimer ("FindInnerPoint");
-  NgProfiler::RegionTimer reg (timer);
+  static Timer timer("FindInnerPoint");
+  RegionTimer reg (timer);
 
-  Array<Vec3d> a;
+  Array<Vec<3>> a;
   Array<double> c;
   Mat<3> m, inv;
   Vec<3> rs, x = 0.0, center;
@@ -90,11 +94,11 @@ inline int FindInnerPoint (POINTArray & points,
 
   for (int i = 0; i < nf; i++)
     {
-      Point3d p1 = points.Get(faces[i][0]);
-      a[i] = Cross (points.Get(faces[i][1]) - p1,
-		    points.Get(faces[i][2]) - p1);
+      Point<3> p1 = points[faces[i][0]];
+      a[i] = Cross (points[faces[i][1]] - p1,
+                    points[faces[i][2]] - p1);
       a[i] /= a[i].Length();
-      c[i] = - (a[i].X() * p1.X() + a[i].Y() * p1.Y() + a[i].Z() * p1.Z());
+      c[i] = - (a[i](0) * p1(0) + a[i](1) * p1(1) + a[i](2) * p1(2));
     }
 
   /*
@@ -107,7 +111,7 @@ inline int FindInnerPoint (POINTArray & points,
   center = 0;
   for (int i = 0; i < faces.Size(); i++)
     for (int j = 0; j < 3; j++)
-      center += Vec<3> (points.Get(faces[i][j]));
+      center += Vec<3> (points[faces[i][j]]);
   center /= (3*faces.Size());
 
 
@@ -116,14 +120,14 @@ inline int FindInnerPoint (POINTArray & points,
   double hmax = 0;
   for (int i = 0; i < nf; i++)
     {
-      // const Element2d & el = faces[i];
+      // const Element2dRef & el = faces[i];
       // (*testout) << "el[" << i << "] = " << el << endl;
-      for (int j = 1; j <= 3; j++)
-	{
-	  double hi = Dist (points.Get(faces[i].PNumMod(j)),
-			    points.Get(faces[i].PNumMod(j+1)));
-	  if (hi > hmax) hmax = hi;
-	}
+      for (int j : Range(3))
+        {
+          double hi = Dist (points[faces[i][j%3]],
+                            points[faces[i][(j+1)%3]]);
+          if (hi > hmax) hmax = hi;
+        }
     }
   
   // (*testout) << "hmax = " << hmax << endl;
@@ -143,14 +147,14 @@ inline int FindInnerPoint (POINTArray & points,
   */
 
   int act[5] = { 0, nf, nf+1, nf+2, nf+3 };
-  int sol[4] = {0, 0, 0, 0};
+  int sol[4];
 
   while (1)
     {
       /*
       (*testout) << "try ";
       for (int j = 0; j < 5; j++)
-	(*testout)  << act[j] << " ";
+        (*testout)  << act[j] << " ";
       */
 
       Minimize (a, c, act, x, f, sol);
@@ -158,7 +162,7 @@ inline int FindInnerPoint (POINTArray & points,
       /*
       (*testout) << endl << "sol = ";
       for (int j = 0; j < 4; j++)
-	(*testout)  << sol[j] << " ";
+        (*testout)  << sol[j] << " ";
 
       (*testout) << " fmin = " << f << endl;
       */
@@ -167,15 +171,15 @@ inline int FindInnerPoint (POINTArray & points,
       bool found = 0;
       double maxval = f;
       for (int j = 0; j < nf; j++)
-	{
-	  double val = x(0) * a[j].X() + x(1) * a[j].Y() + x(2) * a[j].Z() + c[j];
-	  if (val > maxval + hmax * 1e-6)
-	    {
-	      found = 1;
-	      maxval = val;
-	      act[4] = j;
-	    }
-	}
+        {
+          double val = x(0) * a[j](0) + x(1) * a[j](1) + x(2) * a[j](2) + c[j];
+          if (val > maxval + hmax * 1e-6)
+            {
+              found = 1;
+              maxval = val;
+              act[4] = j;
+            }
+        }
       
       // (*testout) << "maxval = " << maxval << endl;
       if (!found) break;
@@ -183,10 +187,12 @@ inline int FindInnerPoint (POINTArray & points,
   
   // cout << "converged, f = " << f << endl;
   
-  p = Point3d (x(0), x(1), x(2));
+  p = Point<3> (x(0), x(1), x(2));
   // (*testout) << "findip, f = " << f << ", hmax = " << hmax << endl;
   return (f < -1e-5 * hmax);
 }
 
+} // namespace netgen
+#endif // FILE_FINDINNERPOINT_HPP
 
 

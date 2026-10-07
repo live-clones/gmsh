@@ -1043,22 +1043,31 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
     const int numVertPerElm = MElement::getInfoMSH(elmType);
     if(binary) {
-      std::size_t n = 1 + numVertPerElm, offset = pendingData.size();
-      pendingData.resize(offset + numElements * n);
-      if(fread(&pendingData[offset], sizeof(std::size_t), numElements * n,
-               fp) != numElements * n) {
-        delete[] elementsRead;
-        return nullptr;
-      }
-      if(swap)
-        SwapBytes((char *)&pendingData[offset], sizeof(std::size_t),
-                  numElements * n);
-      pending.push_back(
-        {entity, elmType, numVertPerElm, elementRead, offset, numElements});
-      elementRead += numElements;
-      if(pendingData.size() > (1 << 23) && !makePending()) {
-        delete[] elementsRead;
-        return nullptr;
+      // (a large block is read in pieces of about 64 MB, so that the memory
+      // stays bounded and the progress meter moves)
+      const std::size_t n = 1 + numVertPerElm, maxData = 1 << 23;
+      std::size_t left = numElements;
+      while(left) {
+        std::size_t offset = pendingData.size();
+        std::size_t room = (offset < maxData) ? (maxData - offset) / n : 0;
+        std::size_t num = std::min(left, std::max<std::size_t>(1, room));
+        pendingData.resize(offset + num * n);
+        if(fread(&pendingData[offset], sizeof(std::size_t), num * n, fp) !=
+           num * n) {
+          delete[] elementsRead;
+          return nullptr;
+        }
+        if(swap)
+          SwapBytes((char *)&pendingData[offset], sizeof(std::size_t),
+                    num * n);
+        pending.push_back(
+          {entity, elmType, numVertPerElm, elementRead, offset, num});
+        elementRead += num;
+        left -= num;
+        if(pendingData.size() >= maxData && !makePending()) {
+          delete[] elementsRead;
+          return nullptr;
+        }
       }
     }
     else {
@@ -2149,7 +2158,7 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
   }
 
   auto invalid = [&]() {
-    Msg::Warning("Skipping invalid face data in MSH4 file");
+    Msg::Warning("Skipping invalid face data in MSH%g file", version);
     return true;
   };
   if(numBlocks > numFaces || (!numBlocks && numFaces)) return invalid();
@@ -2208,6 +2217,24 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
     if(numFaces > 100000 && progressDue(k + 1, numFaces))
       Msg::ProgressMeter(k + 1, true, "Reading faces");
   }
+  return true;
+}
+
+// a node or an element read in a model where its tag is already taken: the
+// one there if the same (merged files can share them, e.g. the partitions of
+// a mesh), or a conflict
+static bool sameNode(MVertex *v, MVertex *w)
+{
+  double tol =
+    1e-12 * (1. + std::abs(w->x()) + std::abs(w->y()) + std::abs(w->z()));
+  return v->distance(w) <= tol;
+}
+
+static bool sameElement(MElement *e, MElement *f)
+{
+  if(e->getTypeForMSH() != f->getTypeForMSH()) return false;
+  for(std::size_t i = 0; i < e->getNumVertices(); i++)
+    if(e->getVertex(i) != f->getVertex(i)) return false;
   return true;
 }
 
@@ -2316,6 +2343,7 @@ int GModel::_readMSH4(const std::string &name)
       partitioned = true;
     }
     else if(!strncmp(&str[1], "Nodes", 5)) {
+      std::size_t conflicts = 0; // tags of other nodes already there
       bool hadNodesBefore =
         !_vertexVectorCache.empty() || !_vertexMapCache.empty();
       bool dense = false;
@@ -2359,6 +2387,8 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadNodesBefore) // should not happen
               Msg::Warning("Skipping duplicate node %zu", v->getNum());
+            else if(!sameNode(v, _vertexVectorCache[v->getNum()]))
+              conflicts++;
             delete v;
           }
         }
@@ -2376,14 +2406,20 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadNodesBefore) // should not happen
               Msg::Warning("Skipping duplicate node %zu", v->getNum());
+            else if(!sameNode(v, _vertexMapCache[v->getNum()]))
+              conflicts++;
             delete v;
           }
         }
       }
       delete[] verticesRead;
+      if(conflicts)
+        Msg::Warning("Skipping %zu nodes whose tags are those of other nodes "
+                     "in the model", conflicts);
     }
     else if(!strncmp(&str[1], "Elements", 8) ||
             !strncmp(&str[1], "Polytopes", 9)) {
+      std::size_t conflicts = 0; // (as for the nodes)
       bool hadElementsBefore =
         !_elementVectorCache.empty() || !_elementMapCache.empty();
       bool dense = false;
@@ -2433,6 +2469,8 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadElementsBefore) // should not happen
               Msg::Warning("Skipping duplicate element %zu", e->getNum());
+            else if(!sameElement(e, _elementVectorCache[e->getNum()].first))
+              conflicts++;
             delete e;
           }
         }
@@ -2452,11 +2490,16 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadElementsBefore) // should not happen
               Msg::Warning("Skipping duplicate element %zu", e->getNum());
+            else if(!sameElement(e, _elementMapCache[e->getNum()].first))
+              conflicts++;
             delete e;
           }
         }
       }
       delete[] elementsRead;
+      if(conflicts)
+        Msg::Warning("Skipping %zu elements whose tags are those of other "
+                     "elements in the model", conflicts);
     }
     else if(!strncmp(&str[1], "Edges", 5)) {
       bool ok = readMSH4Edges(this, fp, binary, swap);
@@ -4090,19 +4133,24 @@ static void writeMSH4Elements(
 
         std::size_t N = it->second.size();
         if(binary) {
+          // by blocks: a buffer for all the elements of a large mesh (16 GB
+          // for 400M tets) on top of the mesh itself is what gets paged out
           const int numVertPerElm = MElement::getInfoMSH(elmType);
-          std::size_t n = 1 + numVertPerElm;
-          std::vector<std::size_t> tags(N * n);
-          std::size_t k = 0;
-          for(std::size_t i = 0; i < N; i++) {
-            MElement *e = it->second[i];
-            tags[k] = e->getNum();
-            for(int j = 0; j < numVertPerElm; j++) {
-              tags[k + 1 + j] = e->getVertex(j)->getNum();
+          const std::size_t n = 1 + numVertPerElm, block = 1 << 20;
+          std::vector<std::size_t> tags(std::min(N, block) * n);
+          for(std::size_t first = 0; first < N; first += block) {
+            const std::size_t last = std::min(N, first + block);
+            std::size_t k = 0;
+            for(std::size_t i = first; i < last; i++) {
+              MElement *e = it->second[i];
+              tags[k] = e->getNum();
+              for(int j = 0; j < numVertPerElm; j++) {
+                tags[k + 1 + j] = e->getVertex(j)->getNum();
+              }
+              k += n;
             }
-            k += n;
+            fwrite(&tags[0], sizeof(std::size_t), k, fp);
           }
-          fwrite(&tags[0], sizeof(std::size_t), N * n, fp);
         }
         else {
           for(std::size_t i = 0; i < N; i++) {

@@ -9,6 +9,7 @@
 #include "GmshMessage.h"
 #include "meshGRegion.h"
 #include "meshGRegionHxt.h"
+#include "meshGRegionParallelDelaunay.h"
 #include "meshGRegionNetgen.h"
 #include "meshGRegionMMG.h"
 #include "meshGFace.h"
@@ -16,7 +17,6 @@
 #include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunay.h"
 #include "meshRelocateVertex.h"
-#include "meshUntangle.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
@@ -32,6 +32,97 @@
 #include "ExtrudeParams.h"
 #include "OS.h"
 #include "Context.h"
+
+bool orientRegionBoundary(GRegion *gr, std::map<GFace *, int> &inward)
+{
+  inward.clear();
+  std::vector<GFace *> faces = gr->faces();
+  const std::size_t nf = faces.size();
+  if(!nf) return false;
+  // the edges of the surface elements on the model curves, with the surface
+  // and the direction of each use (the other edges are interior to a surface)
+  struct Use {
+    std::size_t face;
+    int dir;
+  };
+  std::map<std::pair<MVertex *, MVertex *>, std::vector<Use>> edges;
+  for(std::size_t i = 0; i < nf; i++) {
+    auto addElement = [&](MElement *e) {
+      const int n = e->getNumPrimaryVertices();
+      for(int k = 0; k < n; k++) {
+        MVertex *a = e->getVertex(k), *b = e->getVertex((k + 1) % n);
+        if(a->onWhat()->dim() > 1 || b->onWhat()->dim() > 1) continue;
+        if(a < b)
+          edges[{a, b}].push_back({i, 1});
+        else
+          edges[{b, a}].push_back({i, -1});
+      }
+    };
+    for(MTriangle *t : faces[i]->triangles) addElement(t);
+    for(MQuadrangle *q : faces[i]->quadrangles) addElement(q);
+  }
+  // the surfaces sharing an edge must traverse it in opposite directions
+  std::vector<std::vector<std::pair<std::size_t, int>>> adjacent(nf);
+  for(auto &e : edges) {
+    if(e.second.size() != 2 || e.second[0].face == e.second[1].face) continue;
+    const int rel = -e.second[0].dir * e.second[1].dir;
+    adjacent[e.second[0].face].push_back({e.second[1].face, rel});
+    adjacent[e.second[1].face].push_back({e.second[0].face, rel});
+  }
+  std::vector<int> sign(nf, 0), shell(nf, -1);
+  std::vector<double> volume;
+  for(std::size_t i = 0; i < nf; i++) {
+    if(sign[i]) continue;
+    const int c = (int)volume.size();
+    volume.push_back(0.);
+    sign[i] = 1;
+    shell[i] = c;
+    std::vector<std::size_t> stack = {i};
+    while(!stack.empty()) {
+      const std::size_t f = stack.back();
+      stack.pop_back();
+      for(auto &a : adjacent[f]) {
+        const int want = sign[f] * a.second;
+        if(!sign[a.first]) {
+          sign[a.first] = want;
+          shell[a.first] = c;
+          stack.push_back(a.first);
+        }
+        else if(sign[a.first] != want) {
+          return false;
+        }
+      }
+    }
+  }
+  // the volume enclosed by each shell, from its oriented elements
+  for(std::size_t i = 0; i < nf; i++) {
+    double v = 0.;
+    auto addTriangle = [&](MVertex *a, MVertex *b, MVertex *c) {
+      SVector3 pa(a->point()), pb(b->point()), pc(c->point());
+      v += dot(pa, crossprod(pb, pc)) / 6.;
+    };
+    for(MTriangle *t : faces[i]->triangles)
+      addTriangle(t->getVertex(0), t->getVertex(1), t->getVertex(2));
+    for(MQuadrangle *q : faces[i]->quadrangles) {
+      addTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(2));
+      addTriangle(q->getVertex(0), q->getVertex(2), q->getVertex(3));
+    }
+    volume[shell[i]] += sign[i] * v;
+  }
+  int outer = 0;
+  for(int c = 1; c < (int)volume.size(); c++)
+    if(std::abs(volume[c]) > std::abs(volume[outer])) outer = c;
+  if(volume[outer] == 0.) return false;
+  for(std::size_t i = 0; i < nf; i++) {
+    const double v = volume[shell[i]];
+    if(v == 0.) return false;
+    // a positive volume: the oriented shell points away from what it
+    // encloses, the volume itself for the outer shell, a cavity otherwise
+    const int out = (sign[i] * v > 0.) ? 1 : -1;
+    inward[faces[i]] = (shell[i] == outer) ? -out : out;
+  }
+  return true;
+}
 
 void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
 {
@@ -87,24 +178,30 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
     std::vector<GFace *> faces = gr->faces();
     for(std::size_t i = 0; i < faces.size(); i++) {
       GFace *gf = faces[i];
+      bool reported = false;
       for(std::size_t j = 0; j < gf->quadrangles.size(); j++) {
         auto it2 = _quad.find(gf->quadrangles[j]->getFace(0));
         if(it2 != _quad.end()) {
           if(it2->second) {
+            if(it2->second->onWhat()->dim() == 3) {
+              // the apex is already in the volume on the other side of the
+              // quadrangle: it cannot be the apex of a second pyramid (nor
+              // be owned, and deleted, by two volumes)
+              if(!reported)
+                Msg::Error("Surface %d with quadrangles bounds volumes %d and "
+                           "%d: non-manifold quadrangle boundaries are not "
+                           "supported, no pyramids in volume %d",
+                           gf->tag(), it2->second->onWhat()->tag(), gr->tag(),
+                           gr->tag());
+              reported = true;
+              continue;
+            }
             npyram++;
             gr->pyramids.push_back(new MPyramid(
               it2->first.getVertex(0), it2->first.getVertex(1),
               it2->first.getVertex(2), it2->first.getVertex(3), it2->second));
             gr->mesh_vertices.push_back(it2->second);
-            if(it2->second->onWhat()->dim() == 3) {
-              Msg::Error(
-                "Pyramid top vertex already classified on volume %d (!= %d) - "
-                "non-manifold quad boundaries not supported yet",
-                it2->second->onWhat()->tag(), gr->tag());
-            }
-            else {
-              it2->second->setEntity(gr);
-            }
+            it2->second->setEntity(gr);
           }
           else {
             ntrihedra++;
@@ -167,23 +264,12 @@ static void _deleteUnusedVertices(GRegion *gr)
   for(auto &p : allverts) gr->mesh_vertices.push_back(p.second);
 }
 
-void MeshDelaunayVolume(std::vector<GRegion *> &regions)
+regionGroupBoundary::regionGroupBoundary(std::vector<GRegion *> &regions)
+  : _gr(regions[0])
 {
-  if(regions.empty()) return;
-
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
-    if(meshGRegionHxt(regions) != 0) { Msg::Error("HXT 3D mesh failed"); }
-    return;
-  }
-
-  if(CTX::instance()->mesh.algo3d != ALGO_3D_RTREE &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D)
-    return;
-
-  GRegion *gr = regions[0];
-  std::vector<GFace *> faces = gr->faces();
+  _faces = _gr->faces();
+  _embEdges = _gr->embeddedEdges();
+  _embVertices = _gr->embeddedVertices();
 
   std::set<GFace *, GEntityPtrLessThan> allFacesSet;
   for(std::size_t i = 0; i < regions.size(); i++) {
@@ -207,31 +293,79 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     allFacesSet = comp;
   }
 
-  std::vector<GFace *> allFaces(allFacesSet.begin(), allFacesSet.end());
-  gr->set(allFaces);
+  allFaces.assign(allFacesSet.begin(), allFacesSet.end());
+  _gr->set(allFaces);
 
   std::set<GEdge *, GEntityPtrLessThan> allEmbEdgesSet;
   for(std::size_t i = 0; i < regions.size(); i++) {
     std::vector<GEdge *> const &e = regions[i]->embeddedEdges();
     allEmbEdgesSet.insert(e.begin(), e.end());
   }
-  std::vector<GEdge *> allEmbEdges(allEmbEdgesSet.begin(),
-                                   allEmbEdgesSet.end());
-  std::vector<GEdge *> oldEmbEdges = gr->embeddedEdges();
-  gr->embeddedEdges() = allEmbEdges;
+  _gr->embeddedEdges().assign(allEmbEdgesSet.begin(), allEmbEdgesSet.end());
 
   std::set<GVertex *> allEmbVerticesSet;
   for(std::size_t i = 0; i < regions.size(); i++) {
     std::vector<GVertex *> const &e = regions[i]->embeddedVertices();
     allEmbVerticesSet.insert(e.begin(), e.end());
   }
-  std::vector<GVertex *> allEmbVertices(allEmbVerticesSet.begin(),
-                                        allEmbVerticesSet.end());
-  std::vector<GVertex *> oldEmbVertices = gr->embeddedVertices();
-  gr->embeddedVertices() = allEmbVertices;
+  _gr->embeddedVertices().assign(allEmbVerticesSet.begin(),
+                                 allEmbVerticesSet.end());
+}
 
+regionGroupBoundary::~regionGroupBoundary()
+{
+  // restore set of faces and embedded edges/vertices
+  if(CTX::instance()->mesh.compoundClassify == 0) {
+    std::set<GFace *, GEntityPtrLessThan> comp;
+    for(std::size_t i = 0; i < _faces.size(); i++) {
+      GFace *gf = _faces[i];
+      if(!gf->compoundSurface)
+        comp.insert(gf);
+      else if(gf->compoundSurface)
+        comp.insert(gf->compoundSurface);
+    }
+    std::vector<GFace *> lcomp(comp.begin(), comp.end());
+    _gr->set(lcomp);
+  }
+  else {
+    _gr->set(_faces);
+  }
+  _gr->embeddedEdges() = _embEdges;
+  _gr->embeddedVertices() = _embVertices;
+}
+
+void MeshDelaunayVolume(std::vector<GRegion *> &regions)
+{
+  if(regions.empty()) return;
+
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
+    if(meshGRegionHxt(regions) != 0) { Msg::Error("HXT 3D mesh failed"); }
+    return;
+  }
+
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D) {
+    int ret = meshGRegionParallelDelaunay(regions);
+    if(ret == 1) Msg::Error("Parallel Delaunay 3D mesh failed");
+    if(ret != 2) return;
+    Msg::Warning("Falling back to Delaunay (del3d)");
+  }
+  if(CTX::instance()->mesh.algo3d != ALGO_3D_RTREE &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_PDEL3D &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D)
+    return;
+
+  GRegion *gr = regions[0];
   splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
-  bool success = meshGRegionBoundaryRecovery(gr, &sqr);
+  std::vector<GFace *> allFaces;
+  bool success;
+  {
+    // the recovery works on regions[0] with the boundary of the whole group
+    regionGroupBoundary group(regions);
+    allFaces = group.allFaces;
+    success = meshGRegionBoundaryRecovery(gr, &sqr);
+  }
 
   // sort triangles in all model faces in order to be able to search in vectors
   auto itf = allFaces.begin();
@@ -240,25 +374,6 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
               compareMTriangleLexicographic());
     ++itf;
   }
-
-  // restore set of faces and embedded edges/vertices
-  if(CTX::instance()->mesh.compoundClassify == 0) {
-    std::set<GFace *, GEntityPtrLessThan> comp;
-    for(std::size_t i = 0; i < faces.size(); i++) {
-      GFace *gf = faces[i];
-      if(!gf->compoundSurface)
-        comp.insert(gf);
-      else if(gf->compoundSurface)
-        comp.insert(gf->compoundSurface);
-    }
-    std::vector<GFace *> lcomp(comp.begin(), comp.end());
-    gr->set(lcomp);
-  }
-  else {
-    gr->set(faces);
-  }
-  gr->embeddedEdges() = oldEmbEdges;
-  gr->embeddedVertices() = oldEmbVertices;
 
   if(!success) return;
 
@@ -284,7 +399,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     }
   }
   else if(CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
-	  CTX::instance()->mesh.algo3d != ALGO_3D_RTREE) {
+          CTX::instance()->mesh.algo3d != ALGO_3D_RTREE) {
     insertVerticesInRegion(gr, CTX::instance()->mesh.maxIterDelaunay3D, 1.,
                            true, &sqr);
     for(auto gr : regions) _deleteUnusedVertices(gr);
@@ -296,6 +411,13 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
       RelocateVerticesOfPyramids(regions, 3);
       // RelocateVertices(regions, 3);
       //      Msg::Info("Done optimizing pyramids for hybrid mesh");
+    }
+
+    // the mesh generator leaves the optimization of pdel3d meshes to pdel3d:
+    // optimize the ones it gave up on here
+    if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D) {
+      for(int i = 0; i < CTX::instance()->mesh.optimize; i++)
+        for(auto r : regions) optimizeMeshGRegion()(r);
     }
 
     // test:
@@ -334,21 +456,6 @@ void meshGRegion::operator()(GRegion *gr)
   else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL) {
     meshGRegionNetgen(gr);
   }
-}
-
-void untangleMeshGRegion::operator()(GRegion *gr, bool always)
-{
-  gr->model()->setCurrentMeshEntity(gr);
-
-  if(!always && gr->isFullyDiscrete()) return;
-
-  // don't optimize extruded meshes
-  if(gr->meshAttributes.method == MESH_TRANSFINITE) return;
-  ExtrudeParams *ep = gr->meshAttributes.extrude;
-  if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
-
-  Msg::Info("Untangling volume %d", gr->tag());
-  untangleMesh(gr);
 }
 
 

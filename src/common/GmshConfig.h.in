@@ -9,8 +9,6 @@
 #cmakedefine HAVE_3M
 #cmakedefine HAVE_64BIT_SIZE_T
 #cmakedefine HAVE_ACIS
-#cmakedefine HAVE_ALGLIB
-#cmakedefine HAVE_ANN
 #cmakedefine HAVE_BAMG
 #cmakedefine HAVE_BOUNDARY_LAYERS
 #cmakedefine HAVE_BLAS
@@ -48,13 +46,13 @@
 #cmakedefine HAVE_NO_VSNPRINTF
 #cmakedefine HAVE_OCC
 #cmakedefine HAVE_OCC_CAF
+#cmakedefine HAVE_OCTREE_SIZE_FIELD
 #cmakedefine HAVE_ONELAB
 #cmakedefine HAVE_ONELAB2
 #cmakedefine HAVE_ONELAB_METAMODEL
 #cmakedefine HAVE_UDT
 #cmakedefine HAVE_OPENGL
 #cmakedefine HAVE_OPTHOM
-#cmakedefine HAVE_P4EST
 #cmakedefine HAVE_PARASOLID
 #cmakedefine HAVE_PARASOLID_STEP
 #cmakedefine HAVE_PARSER
@@ -69,14 +67,12 @@
 #cmakedefine HAVE_SGEOM
 #cmakedefine HAVE_SLEPC
 #cmakedefine HAVE_SOLVER
-#cmakedefine HAVE_UNTANGLE
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGENBR
 #cmakedefine HAVE_TINYXML2
 #cmakedefine HAVE_TOUCHBAR
 #cmakedefine HAVE_VISUDEV
 #cmakedefine HAVE_VOROPP
-#cmakedefine HAVE_WINSLOWUNTANGLER
 #cmakedefine HAVE_ZIPPER
 
 #define GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS}"

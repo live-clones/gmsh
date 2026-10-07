@@ -18,10 +18,10 @@ namespace netgen
   */
 
 
-  template <int D>
-  inline Vec<D> operator+ (const Vec<D> & a, const Vec<D> & b)
+  template <int D, typename T>
+  inline Vec<D,T> operator+ (Vec<D,T> a, Vec<D,T> b)
   {
-    Vec<D> res;
+    Vec<D,T> res;
     for (int i = 0; i < D; i++)
       res(i) = a(i) + b(i);
     return res;
@@ -29,10 +29,10 @@ namespace netgen
 
 
 
-  template <int D>
-  inline Point<D> operator+ (const Point<D> & a, const Vec<D> & b)
+  template <int D, typename T>
+  inline Point<D,T> operator+ (Point<D,T> a, Vec<D,T> b)
   {
-    Point<D> res;
+    Point<D,T> res;
     for (int i = 0; i < D; i++)
       res(i) = a(i) + b(i);
     return res;
@@ -40,28 +40,28 @@ namespace netgen
 
 
 
-  template <int D>
-  inline Vec<D> operator- (const Point<D> & a, const Point<D> & b)
+  template <int D, typename T>
+  inline Vec<D,T> operator- (Point<D,T> a, Point<D,T> b)
   {
-    Vec<D> res;
+    Vec<D,T> res;
     for (int i = 0; i < D; i++)
       res(i) = a(i) - b(i);
     return res;
   }
 
-  template <int D>
-  inline Point<D> operator- (const Point<D> & a, const Vec<D> & b)
+  template <int D, typename T>
+  inline Point<D,T> operator- (Point<D,T> a, Vec<D,T> b)
   {
-    Point<D> res;
+    Point<D,T> res;
     for (int i = 0; i < D; i++)
       res(i) = a(i) - b(i);
     return res;
   }
 
-  template <int D>
-  inline Vec<D> operator- (const Vec<D> & a, const Vec<D> & b)
+  template <int D, typename T>
+  inline Vec<D,T> operator- (Vec<D,T> a, Vec<D,T> b)
   {
-    Vec<D> res;
+    Vec<D,T> res;
     for (int i = 0; i < D; i++)
       res(i) = a(i) - b(i);
     return res;
@@ -69,18 +69,27 @@ namespace netgen
 
 
 
-  template <int D>
-  inline Vec<D> operator* (double s, const Vec<D> & b)
+  template <int D, typename T>
+  inline Vec<D,T> operator* (T s, Vec<D,T> b)
   {
-    Vec<D> res;
+    Vec<D,T> res;
     for (int i = 0; i < D; i++)
       res(i) = s * b(i);
     return res;
   }
 
+  template <int D, int SW>
+  inline Vec<D, SIMD<double,SW>> operator* (SIMD<double,SW> s, Vec<D,double> b)
+  {
+    Vec<D,SIMD<double,SW>> res;
+    for (int i = 0; i < D; i++)
+      res(i) = s * b(i);
+    return res;
+  }
+  
 
   template <int D>
-  inline double operator* (const Vec<D> & a, const Vec<D> & b)
+  inline double operator* (Vec<D> a, Vec<D> b)
   {
     double sum = 0;
     for (int i = 0; i < D; i++)
@@ -90,26 +99,26 @@ namespace netgen
 
 
 
-  template <int D>
-  inline Vec<D> operator- (const Vec<D> & b)
+  template <int D, typename T>
+  inline Vec<D,T> operator- (Vec<D,T> b)
   {
-    Vec<D> res;
+    Vec<D,T> res;
     for (int i = 0; i < D; i++)
       res(i) = -b(i);
     return res;
   }
 
 
-  template <int D>
-  inline Point<D> & operator+= (Point<D> & a, const Vec<D> & b)
+  template <int D, typename T>
+  inline Point<D,T> & operator+= (Point<D,T> & a, Vec<D,T> b)
   {
     for (int i = 0; i < D; i++)
       a(i) += b(i);
     return a;
   }
 
-  template <int D>
-  inline Vec<D> & operator+= (Vec<D> & a, const Vec<D> & b)
+  template <int D, typename T>
+  inline Vec<D,T> & operator+= (Vec<D,T> & a, Vec<D> b)
   {
     for (int i = 0; i < D; i++)
       a(i) += b(i);
@@ -135,8 +144,8 @@ namespace netgen
 
 
 
-  template <int D>
-  inline Vec<D> & operator*= (Vec<D> & a, double s)
+  template <int D, typename T1, typename T2>
+  inline Vec<D,T1> & operator*= (Vec<D,T1> & a, T2 s)
   {
     for (int i = 0; i < D; i++)
       a(i) *= s;
@@ -179,9 +188,9 @@ namespace netgen
     Vec<2> res;
     for (int i = 0; i < 2; i++)
       {
-	res(i) = 0;
-	for (int j = 0; j < 2; j++)
-	  res(i) += m(i,j) * v(j);
+        res(i) = 0;
+        for (int j = 0; j < 2; j++)
+          res(i) += m(i,j) * v(j);
       }
     return res;
   }
@@ -191,9 +200,9 @@ namespace netgen
     Vec<2> res;
     for (int i = 0; i < 2; i++)
       {
-	res(i) = 0;
-	for (int j = 0; j < 3; j++)
-	  res(i) += m(i,j) * v(j);
+        res(i) = 0;
+        for (int j = 0; j < 3; j++)
+          res(i) += m(i,j) * v(j);
       }
     return res;
   }
@@ -204,9 +213,9 @@ namespace netgen
     Vec<3> res;
     for (int i = 0; i < 3; i++)
       {
-	res(i) = 0;
-	for (int j = 0; j < 2; j++)
-	  res(i) += m(i,j) * v(j);
+        res(i) = 0;
+        for (int j = 0; j < 2; j++)
+          res(i) += m(i,j) * v(j);
       }
     return res;
   }
@@ -217,9 +226,9 @@ namespace netgen
     Vec<3> res;
     for (int i = 0; i < 3; i++)
       {
-	res(i) = 0;
-	for (int j = 0; j < 3; j++)
-	  res(i) += m(i,j) * v(j);
+        res(i) = 0;
+        for (int j = 0; j < 3; j++)
+          res(i) += m(i,j) * v(j);
       }
     return res;
   }
@@ -247,17 +256,18 @@ namespace netgen
     }
   */
 
-  inline Mat<2,2> operator* (const Mat<2,2> & a, const Mat<2,2> & b)
+  template <typename T>
+  inline Mat<2,2,T> operator* (const Mat<2,2,T> & a, const Mat<2,2,T> & b)
   {
-    Mat<2,2> m;
+    Mat<2,2,T> m;
     for (int i = 0; i < 2; i++)
       for (int j = 0; j < 2; j++)
-	{
-	  double sum = 0;
-	  for (int k = 0; k < 2; k++)
-	    sum += a(i,k) * b(k, j);
-	  m(i,j) = sum; 
-	}
+        {
+          T sum(0);
+          for (int k = 0; k < 2; k++)
+            sum += a(i,k) * b(k, j);
+          m(i,j) = sum; 
+        }
     return m;
   }
 
@@ -266,27 +276,27 @@ namespace netgen
     Mat<2,2> m;
     for (int i = 0; i < 2; i++)
       for (int j = 0; j < 2; j++)
-	{
-	  double sum = 0;
-	  for (int k = 0; k < 3; k++)
-	    sum += a(i,k) * b(k, j);
-	  m(i,j) = sum; 
-	}
+        {
+          double sum = 0;
+          for (int k = 0; k < 3; k++)
+            sum += a(i,k) * b(k, j);
+          m(i,j) = sum; 
+        }
     return m;
   }
 
-
-  inline Mat<3,2> operator* (const Mat<3,2> & a, const Mat<2,2> & b)
+  template <typename T>
+  inline Mat<3,2,T> operator* (const Mat<3,2,T> & a, const Mat<2,2,T> & b)
   {
-    Mat<3,2> m;
+    Mat<3,2,T> m;
     for (int i = 0; i < 3; i++)
       for (int j = 0; j < 2; j++)
-	{
-	  double sum = 0;
-	  for (int k = 0; k < 2; k++)
-	    sum += a(i,k) * b(k, j);
-	  m(i,j) = sum; 
-	}
+        {
+          T sum(0.0);
+          for (int k = 0; k < 2; k++)
+            sum += a(i,k) * b(k, j);
+          m(i,j) = sum; 
+        }
     return m;
   }
 
@@ -297,27 +307,27 @@ namespace netgen
     Mat<2,3> m;
     for (int i = 0; i < 2; i++)
       for (int j = 0; j < 3; j++)
-	{
-	  double sum = 0;
-	  for (int k = 0; k < 2; k++)
-	    sum += a(i,k) * b(k, j);
-	  m(i,j) = sum; 
-	}
+        {
+          double sum = 0;
+          for (int k = 0; k < 2; k++)
+            sum += a(i,k) * b(k, j);
+          m(i,j) = sum; 
+        }
     return m;
   }
 
-
-  inline Mat<3,3> operator* (const Mat<3,3> & a, const Mat<3,3> & b)
+  template <typename T>
+  inline Mat<3,3,T> operator* (const Mat<3,3,T> & a, const Mat<3,3,T> & b)
   {
-    Mat<3,3> m;
+    Mat<3,3,T> m;
     for (int i = 0; i < 3; i++)
       for (int j = 0; j < 3; j++)
-	{
-	  double sum = 0;
-	  for (int k = 0; k < 3; k++)
-	    sum += a(i,k) * b(k, j);
-	  m(i,j) = sum; 
-	}
+        {
+          T sum = T(0);
+          for (int k = 0; k < 3; k++)
+            sum += a(i,k) * b(k, j);
+          m(i,j) = sum; 
+        }
     return m;
   }
 
@@ -334,7 +344,7 @@ namespace netgen
     Mat<W,H> res;
     for (int i = 0; i < H; i++)
       for (int j = 0; j < W; j++)
-	res(j,i) = m(i,j);
+        res(j,i) = m(i,j);
     return res;
   }
 
@@ -348,8 +358,8 @@ namespace netgen
 
 
 
-  template <int D>
-  inline ostream & operator<< (ostream & ost, const Vec<D> & a)
+  template <int D, typename T>
+  inline ostream & operator<< (ostream & ost, const Vec<D,T> & a)
   {
     ost << "(";
     for (int i = 0; i < D-1; i++)
@@ -358,8 +368,8 @@ namespace netgen
     return ost;
   }
 
-  template <int D>
-  inline ostream & operator<< (ostream & ost, const Point<D> & a)
+  template <int D, typename T>
+  inline ostream & operator<< (ostream & ost, const Point<D,T> & a)
   {
     ost << "(";
     for (int i = 0; i < D-1; i++)
@@ -375,15 +385,15 @@ namespace netgen
     return ost;
   }
 
-  template <int H, int W>
-  inline ostream & operator<< (ostream & ost, const Mat<H,W> & m)
+  template <int H, int W, typename T>
+  inline ostream & operator<< (ostream & ost, const Mat<H,W,T> & m)
   {
     ost << "(";
     for (int i = 0; i < H; i++)
       {
-	for (int j = 0; j < W; j++)
-	  ost << m(i,j) << "   ";
-	ost << endl;
+        for (int j = 0; j < W; j++)
+          ost << m(i,j) << "   ";
+        ost << endl;
       }
     return ost;
   }

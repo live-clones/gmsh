@@ -624,10 +624,11 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[2]->value() == 8) ? ALGO_2D_INITIAL_ONLY :
                   ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
-                  (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
-                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_HXT :
-                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_MMG3D :
-                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_INITIAL_ONLY :
+                  (o->mesh.choice[3]->value() == 1) ? ALGO_3D_PDEL3D :
+                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_FRONTAL :
+                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_HXT :
+                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_MMG3D :
+                  (o->mesh.choice[3]->value() == 5) ? ALGO_3D_INITIAL_ONLY :
                                                       ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
@@ -1354,6 +1355,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
                                 opt_view_color_pyramids(current, GMSH_GET, 0));
         opt_view_color_trihedra(i, GMSH_SET,
                                 opt_view_color_trihedra(current, GMSH_GET, 0));
+        opt_view_color_polygons(i, GMSH_SET,
+                                opt_view_color_polygons(current, GMSH_GET, 0));
+        opt_view_color_polyhedra(
+          i, GMSH_SET, opt_view_color_polyhedra(current, GMSH_GET, 0));
         opt_view_color_tangents(i, GMSH_SET,
                                 opt_view_color_tangents(current, GMSH_GET, 0));
         opt_view_color_normals(i, GMSH_SET,
@@ -1863,6 +1868,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.value[6] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Point size");
+      general.value[6]->tooltip("General.PointSize");
       general.value[6]->minimum(0.1);
       general.value[6]->maximum(50);
       if(CTX::instance()->inputScrolling) general.value[6]->step(0.1);
@@ -1871,7 +1877,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.value[7] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width");
-      general.value[7]->tooltip("General.PointSize");
+      general.value[7]->tooltip("General.LineWidth");
       general.value[7]->minimum(0.1);
       general.value[7]->maximum(50);
       if(CTX::instance()->inputScrolling) general.value[7]->step(0.1);
@@ -2582,9 +2588,10 @@ optionWindow::optionWindow(int deltaFontSize)
         {nullptr}};
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, nullptr, nullptr},
+        {"Parallel Delaunay (experimental)", 0, nullptr, nullptr},
         {"Frontal", 0, nullptr, nullptr},
         {"HXT (experimental)", 0, nullptr, nullptr},
-        {"MMG3D (experimental, single volume only)", 0, nullptr, nullptr},
+        {"MMG3D (experimental)", 0, nullptr, nullptr},
         {"Initial Mesh Only (no node insertion)", 0, nullptr, nullptr},
         {nullptr}};
       static Fl_Menu_Item menu_recombination_algo[] = {
@@ -4371,6 +4378,8 @@ void optionWindow::updateViewGroup(int index)
   opt_view_color_prisms(index, GMSH_GUI, 0);
   opt_view_color_pyramids(index, GMSH_GUI, 0);
   opt_view_color_trihedra(index, GMSH_GUI, 0);
+  opt_view_color_polygons(index, GMSH_GUI, 0);
+  opt_view_color_polyhedra(index, GMSH_GUI, 0);
   opt_view_color_tangents(index, GMSH_GUI, 0);
   opt_view_color_normals(index, GMSH_GUI, 0);
   opt_view_color_text2d(index, GMSH_GUI, 0);

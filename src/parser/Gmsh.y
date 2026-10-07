@@ -130,6 +130,7 @@ void removeEmbedded(const std::vector<std::pair<int, int> > &dimTags, int dim);
 void getAllElementaryTags(int dim, List_T *in);
 void getAllPhysicalTags(int dim, List_T *in);
 void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out);
+void getElementaryTagsForPhysicalNames(int dim, List_T *in, List_T *out);
 void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
                                     double x2, double y2, double z2, List_T *out);
 void getParentTags(int dim, List_T *in, List_T *out);
@@ -240,6 +241,7 @@ struct doubleXstring{
 %type <l> BracedOrNotRecursiveListOfStringExprVar BracedRecursiveListOfStringExprVar
 %type <l> FExpr_Multi ListOfDouble ListOfDoubleWithBraces ListOfDoubleOrAll
 %type <l> RecursiveListOfDouble RecursiveListOfListOfDouble Enumeration
+%type <l> ListOfPhysicalNames
 %type <l> ListOfColor RecursiveListOfColor
 %type <l> ListOfShapes Transform Extrude MultipleShape Boolean
 %type <l> TransfiniteCorners PeriodicTransform
@@ -2633,6 +2635,26 @@ ListOfShapes :
 	List_Read(tmp, i, &d);
  	Shape s;
 	s.Num = (int)d; // FIXME
+        switch ($3) {
+        case 0: s.Type = MSH_POINT    ; break;
+        case 1: s.Type = MSH_SEGM_LINE; break;
+        case 2: s.Type = MSH_SURF_PLAN; break; // we don't care about the actual type
+        case 3: s.Type = MSH_VOLUME   ; break;
+        }
+        List_Add($$, &s);
+      }
+      List_Delete(tmp);
+      List_Delete($5);
+    }
+  | ListOfShapes tPhysical GeoEntity '{' ListOfPhysicalNames '}' tEND
+    {
+      List_T *tmp = List_Create(10, 10, sizeof(double));
+      getElementaryTagsForPhysicalNames($3, $5, tmp);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+	double d;
+	List_Read(tmp, i, &d);
+ 	Shape s;
+	s.Num = (int)d;
         switch ($3) {
         case 0: s.Type = MSH_POINT    ; break;
         case 1: s.Type = MSH_SEGM_LINE; break;
@@ -5498,6 +5520,12 @@ FExpr_Multi :
         List_Delete($3);
       }
     }
+  | tPhysical GeoEntity '{' ListOfPhysicalNames '}'
+    {
+      $$ = List_Create(10, 10, sizeof(double));
+      getElementaryTagsForPhysicalNames($2, $4, $$);
+      List_Delete($4);
+    }
   | tParent GeoEntity ListOfDouble
     {
       $$ = List_Create(10, 10, sizeof(double));
@@ -5888,6 +5916,18 @@ RecursiveListOfDouble :
 	List_Add($$, &d);
       }
       List_Delete($3);
+    }
+;
+
+ListOfPhysicalNames :
+    StringExpr
+    {
+      $$ = List_Create(2, 1, sizeof(char*));
+      List_Add($$, &($1));
+    }
+  | ListOfPhysicalNames ',' StringExpr
+    {
+      List_Add($$, &($3));
     }
 ;
 
@@ -7007,6 +7047,29 @@ void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out)
       }
     }
   }
+}
+
+void getElementaryTagsForPhysicalNames(int dim, List_T *in, List_T *out)
+{
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  List_T *tags = List_Create(10, 10, sizeof(double));
+  for(int i = 0; i < List_Nbr(in); i++){
+    char *name;
+    List_Read(in, i, &name);
+    double num = GModel::current()->getPhysicalNumber(dim, name);
+    if(num < 0)
+      yymsg(0, "Unknown physical group '%s' of dimension %d", name, dim);
+    else
+      List_Add(tags, &num);
+    Free(name);
+  }
+  getElementaryTagsForPhysicalGroups(dim, tags, out);
+  List_Delete(tags);
 }
 
 void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,

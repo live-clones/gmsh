@@ -2,10 +2,6 @@
 
 @item ENABLE_3M
 Enable proprietary 3M extension (default: OFF)
-@item ENABLE_ALGLIB
-Enable ALGLIB (used by some mesh optimizers) (default: ON)
-@item ENABLE_ANN
-Enable ANN (used for fast point search in mesh/post) (default: ON)
 @item ENABLE_BAMG
 Enable Bamg 2D anisotropic mesh generator (default: ON)
 @item ENABLE_BOUNDARY_LAYERS
@@ -84,6 +80,8 @@ Enable OpenCASCADE CAF module (for STEP/IGES attributes) (default: ON)
 Link OpenCASCADE static instead of dynamic libraries (requires ENABLE_OCC) (default: OFF)
 @item ENABLE_OCC_TBB
 Add TBB libraries in list of OCC libraries (default: OFF)
+@item ENABLE_OCTREE_SIZE_FIELD
+Enable the octree-based automatic mesh size field (contrib/OctreeSizeField) (default: ON)
 @item ENABLE_ONELAB
 Enable ONELAB solver interface (default: ON)
 @item ENABLE_ONELAB_METAMODEL
@@ -96,8 +94,6 @@ Enable OpenMP (default: ON)
 Enable high-order mesh optimization tools (default: ON)
 @item ENABLE_OS_SPECIFIC_INSTALL
 Enable OS-specific (e.g. app bundle) installation (default: OFF)
-@item ENABLE_P4EST
-Enable p4est for enabling automatic mesh size field (experimental) (default: OFF)
 @item ENABLE_PACKAGE_STRIP
 Strip symbols in install packages to reduce install size (default: ON)
 @item ENABLE_PARSER
@@ -138,14 +134,10 @@ Enable TibyObjLoader for reading Wavefront files) (default: ON)
 Enable TinyXML2 parser (used by XAO reader) (default: ON)
 @item ENABLE_TOUCHBAR
 Enable Apple Touch bar (default: ON)
-@item ENABLE_UNTANGLE
-Enable 2D and 3D UNTANGLER (default: ON)
 @item ENABLE_VISUDEV
 Enable additional visualization capabilities for development purposes (default: OFF)
 @item ENABLE_VOROPP
 Enable voro++ (for hex meshing, experimental) (default: ON)
-@item ENABLE_WINSLOWUNTANGLER
-Enable WinslowUntangler extensions (requires ALGLIB) (default: ON)
 @item ENABLE_WRAP_JAVA
 Generate SWIG Java wrappers for private API (default: OFF)
 @item ENABLE_WRAP_PYTHON

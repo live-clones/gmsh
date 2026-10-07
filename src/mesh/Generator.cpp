@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <limits>
 #include <stdlib.h>
 #include <set>
 #include <stack>
@@ -61,10 +62,7 @@
 #include "HighOrderMeshFastCurving.h"
 #endif
 
-#if defined(HAVE_WINSLOWUNTANGLER)
-#include "meshSurfaceUntangling.h"
-#include "meshVolumeUntangling.h"
-#endif
+#include "meshUntangling.h"
 
 #include "meshMesquite.h"
 
@@ -411,6 +409,45 @@ static double sicnStraightTriangle(const MElement *e)
   return (dp >= 0.) ? iCN : -iCN;
 }
 
+// the same for a straight tetrahedron: 3 det(J) / (|J| |adj(J)|), with J the
+// (constant) jacobian with respect to the regular reference tetrahedron
+static double sicnStraightTetrahedron(const MElement *e)
+{
+  const MVertex *v0 = e->getVertex(0);
+  double u[3][3];
+  for(int i = 0; i < 3; i++) {
+    const MVertex *v = e->getVertex(i + 1);
+    u[i][0] = v->x() - v0->x();
+    u[i][1] = v->y() - v0->y();
+    u[i][2] = v->z() - v0->z();
+  }
+  static const double c1 = 1. / std::sqrt(3.), c2 = 1. / std::sqrt(6.),
+                      c3 = std::sqrt(1.5);
+  double J[3][3]; // J[row][column]
+  for(int k = 0; k < 3; k++) {
+    J[k][0] = u[0][k];
+    J[k][1] = -c1 * u[0][k] + 2. * c1 * u[1][k];
+    J[k][2] = -c2 * (u[0][k] + u[1][k]) + c3 * u[2][k];
+  }
+  const double I[9] = {J[1][1] * J[2][2] - J[1][2] * J[2][1],
+                       J[0][2] * J[2][1] - J[0][1] * J[2][2],
+                       J[0][1] * J[1][2] - J[0][2] * J[1][1],
+                       J[1][2] * J[2][0] - J[1][0] * J[2][2],
+                       J[0][0] * J[2][2] - J[0][2] * J[2][0],
+                       J[0][2] * J[1][0] - J[0][0] * J[1][2],
+                       J[1][0] * J[2][1] - J[1][1] * J[2][0],
+                       J[0][1] * J[2][0] - J[0][0] * J[2][1],
+                       J[0][0] * J[1][1] - J[0][1] * J[1][0]};
+  const double D = J[0][0] * I[0] + J[0][1] * I[3] + J[0][2] * I[6];
+  if(D == 0.) return 0.;
+  double nJ = 0., nI = 0.;
+  for(int k = 0; k < 9; k++) {
+    nJ += J[k / 3][k % 3] * J[k / 3][k % 3];
+    nI += I[k] * I[k];
+  }
+  return 3. * D / std::sqrt(nJ * nI);
+}
+
 static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
 {
   int nthreads = CTX::instance()->numThreads;
@@ -428,8 +465,10 @@ static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
   reduction(+ : qa)
     for(std::size_t i = 0; i < ne; i++) {
       MElement *e = ge->getMeshElement(i);
-      double q = (e->getTypeForMSH() == MSH_TRI_3) ? sicnStraightTriangle(e) :
-                                                     e->minSICNShapeMeasure();
+      const int type = e->getTypeForMSH();
+      double q = (type == MSH_TRI_3) ? sicnStraightTriangle(e) :
+                 (type == MSH_TET_4) ? sicnStraightTetrahedron(e) :
+                                       e->minSICNShapeMeasure();
       qm = std::min(qm, q);
       qa += q;
     }
@@ -505,6 +544,8 @@ static void Mesh1D(GModel *m)
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
   m->getFields()->initialize();
+  std::size_t maxVertexBefore, maxElementBefore;
+  m->getMaxMeshNumbersInUse(maxVertexBefore, maxElementBefore);
 
   Msg::StatusBar(true, "Meshing 1D...");
   double t1 = Cpu(), w1 = TimeOfDay();
@@ -570,6 +611,8 @@ static void Mesh1D(GModel *m)
 
   Msg::StopProgressMeter();
 
+  // numbered as the threads created them: renumber canonically
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
   CheckEmptyMesh(m, 1);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[0] = w2 - w1;
@@ -647,6 +690,8 @@ static void Mesh2D(GModel *m)
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
   m->getFields()->initialize();
+  std::size_t maxVertexBefore, maxElementBefore;
+  m->getMaxMeshNumbersInUse(maxVertexBefore, maxElementBefore);
 
   Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu(), w1 = TimeOfDay();
@@ -699,16 +744,17 @@ static void Mesh2D(GModel *m)
 
       int nPending = 0;
       bool exceptions = false;
-      std::vector<GFace *> temp;
-      temp.insert(temp.begin(), f.begin(), f.end());
-#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
-      for(size_t K = 0; K < temp.size(); K++) {
-        if(exceptions) continue;
+      // the members of a compound are meshed serially: the one that does the
+      // compound job reads and replaces the meshes of the others
+      std::vector<GFace *> temp, members;
+      for(GFace *gf : f) (gf->compound.empty() ? temp : members).push_back(gf);
+      auto meshOne = [&](GFace *gf) {
+        if(exceptions) return;
         int localPending = 0;
-        if(temp[K]->meshStatistics.status == GFace::PENDING) {
+        if(gf->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
           try { // OpenMP forbids leaving block via exception
-            temp[K]->mesh(true);
+            gf->mesh(true);
           } catch(...) {
             exceptions = true;
           }
@@ -719,7 +765,10 @@ static void Mesh2D(GModel *m)
           }
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
-      }
+      };
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+      for(size_t K = 0; K < temp.size(); K++) meshOne(temp[K]);
+      for(GFace *gf : members) meshOne(gf);
       if(exceptions) {
         CTX::instance()->lock = 0;
         throw std::runtime_error(Msg::GetLastError());
@@ -733,6 +782,7 @@ static void Mesh2D(GModel *m)
 
     Msg::StopProgressMeter();
   }
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     replaceBadQuadDominantMeshes(m);
@@ -1028,36 +1078,15 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
     }
   }
   else if(how == "UntangleTets") {
-#if defined(HAVE_WINSLOWUNTANGLER)
     double timeMax = 100.;
     int nIterWinslow = 10;
     for(GRegion *gr : m->getRegions()) {
       untangleGRegionMeshConstrained(gr, nIterWinslow, timeMax);
     }
-#else
-    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
-      untangleMeshGRegion opt;
-      opt(*it, force);
-    }
-#endif
     m->setAllVolumesPositive();
   }
   else if(how == "UntangleTris") {
-#if defined(HAVE_WINSLOWUNTANGLER)
-    int nIterWinslow = 10;
-    double timeMax = 100.;
-    for(GFace *gf : m->getFaces()) {
-      //      if(gf->geomType() == GFace::Plane || gf->geomType() ==
-      //      GFace::DiscreteSurface) {
-      untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
-      //      }
-      //      else {
-      //        Msg::Debug("- Surface %i: not planar, do not apply Winslow
-      //        untangling",
-      //                   gf->tag());
-      //      }
-    }
-#endif
+    for(GFace *gf : m->getFaces()) untangleGFaceMeshConstrained(gf);
   }
   else if(how == "MesquiteImprove2D") {
     for(auto it = m->firstFace(); it != m->lastFace(); it++) {
@@ -1167,15 +1196,11 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
     }
   }
   else if(how == "UntangleMeshGeometry") {
-#if defined(HAVE_WINSLOWUNTANGLER)
     int nIterWinslow = 10;
     for(GFace *gf : m->getFaces()) {
       if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility())
         continue;
-      if(gf->geomType() == GFace::Plane) {
-        double timeMax = 100.;
-        untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
-      }
+      if(gf->geomType() == GFace::Plane) { untangleGFaceMeshConstrained(gf); }
       else {
         Msg::Debug("- Surface %i: not planar, do not apply Winslow untangling",
                    gf->tag());
@@ -1187,10 +1212,6 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
       double timeMax = 100.;
       untangleGRegionMeshConstrained(gr, nIterWinslow, timeMax);
     }
-#else
-    Msg::Error("Untangle mesh geometry optimization requires the "
-               "WinslowUntangler module");
-#endif
   }
   else if(how == "HXT" || how =="HXT_FlipOnly") {
 #ifndef HAVE_HXT
@@ -1602,6 +1623,15 @@ void GenerateMesh(GModel *m, int ask)
     }
     if(old == 2 && ask == 1 && exists) doIt = true;
     if(old == 2 && ask == 2 && exists) doIt = true;
+    if(getenv("GMSH_DEBUG_BGMESH")) {
+      std::size_t nTri = 0;
+      for(GFace *gf : m->getFaces()) nTri += gf->getNumMeshElements();
+      Msg::Info("- debug: before BuildBackgroundMeshAndGuidingField: old=%d "
+                "ask=%d exists=%d overwriteGModelMesh=%d doIt=%d "
+                "faceTriangles=%zu",
+                old, ask, (int)exists, (int)overwriteGModelMesh, (int)doIt,
+                nTri);
+    }
     if(doIt) {
       bool deleteGModelMeshAfter =
         true; // mesh saved in background, no longer needed
@@ -1677,7 +1707,10 @@ void GenerateMesh(GModel *m, int ask)
     for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
                                 CTX::instance()->mesh.optimizeNetgen);
         i++) {
-      if(CTX::instance()->mesh.optimize > i) OptimizeMesh(m);
+      // pdel3d optimizes its meshes itself
+      if(CTX::instance()->mesh.optimize > i &&
+         CTX::instance()->mesh.algo3d != ALGO_3D_PDEL3D)
+        OptimizeMesh(m);
       if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMesh(m, "Netgen");
     }
   }

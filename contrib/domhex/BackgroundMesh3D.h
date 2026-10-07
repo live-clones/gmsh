@@ -12,10 +12,7 @@
 #include <numeric>
 #include "BGMBase.h"
 
-#if defined(HAVE_ANN)
-#include "ANN/ANN.h"
-class ANNkd_tree;
-#endif
+#include "SPoint3KDTree.h"
 
 // TODO: do we really need to build the graph vertex2elem-> vertex 2 neighbors ?
 // This was useful for the smoothness computation, if we want to take into
@@ -82,7 +79,7 @@ protected:
   bool smooth_the_crossfield;
 
   void initiate_crossfield();
-  void initiate_ANN_research();
+  void build_boundary_search();
   void computeCrossField();
   void computeSmoothnessOnlyFromBoundaries();
 
@@ -133,12 +130,8 @@ protected:
 
   static std::vector<montripletbis> permutation;
 
-#if defined(HAVE_ANN)
-  ANNkd_tree *annTree;
-  ANNpointArray dataPts;
-  ANNkd_tree *annTreeBnd;
-  ANNpointArray dataPtsBnd;
-#endif
+  SPoint3Search bndSearch;
+  std::vector<MVertex *> bndVertices;
 
 public:
   frameFieldBackgroundMesh3D(GRegion *_gf);

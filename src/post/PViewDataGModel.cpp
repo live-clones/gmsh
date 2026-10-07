@@ -210,67 +210,36 @@ bool PViewDataGModel::finalize(bool computeMinMax,
     }
 
     // if we don't have interpolation matrices for a given element type, assume
-    // isoparametric elements (except for ElementData, for which we know the
-    // interpolation: it's constant)
+    // isoparametric elements, except for the values of ElementData, which are
+    // constant per element (whatever the order of the element)
+    fullMatrix<double> constCoef(1, 1), constMono(1, 3);
+    constCoef(0, 0) = 1.;
     int types[] = {TYPE_PNT, TYPE_LIN, TYPE_TRI, TYPE_QUA,   TYPE_TET,
                    TYPE_HEX, TYPE_PRI, TYPE_PYR, TYPE_POLYG, TYPE_POLYH};
     for(std::size_t i = 0; i < sizeof(types) / sizeof(types[0]); i++) {
-      if(!haveInterpolationMatrices(types[i])) {
-        MElement *e = _getOneElementOfGivenType(model, types[i]);
-        if(e) {
-          const polynomialBasis *fs =
-            dynamic_cast<const polynomialBasis *>(e->getFunctionSpace());
-          if(fs) {
-            if(e->getPolynomialOrder() > 1) {
-              if(_type == ElementData) {
-                // data is constant per element: force the interpolation matrix
-                fullMatrix<double> coef(1, 1);
-                coef(0, 0) = 1.;
-                fullMatrix<double> mono(1, 3);
-                mono(0, 0) = 0.;
-                mono(0, 1) = 0.;
-                mono(0, 2) = 0.;
-                setInterpolationMatrices(types[i], coef, mono, fs->coefficients,
-                                         fs->monomials);
-              }
-              else
-                setInterpolationMatrices(types[i], fs->coefficients,
-                                         fs->monomials, fs->coefficients,
-                                         fs->monomials);
-            }
-            else
-              setInterpolationMatrices(types[i], fs->coefficients,
-                                       fs->monomials);
-          }
-          else {
-            const pyramidalBasis *fs =
-              dynamic_cast<const pyramidalBasis *>(e->getFunctionSpace());
-            if(fs) {
-              if(e->getPolynomialOrder() > 1) {
-                if(_type == ElementData) {
-                  // data is constant per element: force the interpolation
-                  // matrix
-                  fullMatrix<double> coef(1, 1);
-                  coef(0, 0) = 1.;
-                  fullMatrix<double> mono(1, 3);
-                  mono(0, 0) = 0.;
-                  mono(0, 1) = 0.;
-                  mono(0, 2) = 0.;
-                  setInterpolationMatrices(types[i], coef, mono,
-                                           fs->coefficients, fs->monomials);
-                }
-                else
-                  setInterpolationMatrices(types[i], fs->coefficients,
-                                           fs->monomials, fs->coefficients,
-                                           fs->monomials);
-              }
-              else
-                setInterpolationMatrices(types[i], fs->coefficients,
-                                         fs->monomials);
-            }
-          }
-        }
+      if(haveInterpolationMatrices(types[i])) continue;
+      MElement *e = _getOneElementOfGivenType(model, types[i]);
+      if(!e) continue;
+      const fullMatrix<double> *coef = nullptr, *mono = nullptr;
+      const nodalBasis *b = e->getFunctionSpace();
+      if(auto fs = dynamic_cast<const polynomialBasis *>(b)) {
+        coef = &fs->coefficients;
+        mono = &fs->monomials;
       }
+      else if(auto fs = dynamic_cast<const pyramidalBasis *>(b)) {
+        coef = &fs->coefficients;
+        mono = &fs->monomials;
+      }
+      if(!coef) continue;
+      bool curved = e->getPolynomialOrder() > 1;
+      if(_type == ElementData && curved)
+        setInterpolationMatrices(types[i], constCoef, constMono, *coef, *mono);
+      else if(_type == ElementData)
+        setInterpolationMatrices(types[i], constCoef, constMono);
+      else if(curved)
+        setInterpolationMatrices(types[i], *coef, *mono, *coef, *mono);
+      else
+        setInterpolationMatrices(types[i], *coef, *mono);
     }
   }
   return PViewData::finalize();
@@ -796,6 +765,9 @@ void PViewDataGModel::smooth()
   for(std::size_t i = 0; i < _steps.size(); i++) delete _steps[i];
   _steps = _steps2;
   _type = NodeData;
+  // (the values now at the nodes: the interpolation of the element data, e.g.
+  // constant for ElementData, no longer holds)
+  deleteInterpolationMatrices();
   finalize();
 }
 

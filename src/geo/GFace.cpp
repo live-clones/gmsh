@@ -21,6 +21,7 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "ExtrudeParams.h"
+#include "LBFGS.h"
 
 #if defined(HAVE_MESH)
 #include "meshGFace.h"
@@ -28,11 +29,6 @@
 #include "BackgroundMeshTools.h"
 #include "meshGFaceBipartiteLabelling.h"
 #include "Field.h"
-#endif
-
-#if defined(HAVE_ALGLIB)
-#include <stdafx.h>
-#include <optimization.h>
 #endif
 
 #if defined(HAVE_QUADMESHINGTOOLS)
@@ -1166,60 +1162,11 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface,
   return SPoint2(U, V);
 }
 
-#if defined(HAVE_ALGLIB)
-
-class data_wrapper {
-private:
-  const GFace *gf;
-  SPoint3 point;
-
-public:
-  data_wrapper()
-  {
-    gf = nullptr;
-    point = SPoint3();
-  }
-  ~data_wrapper() {}
-  const GFace *get_face() { return gf; }
-  void set_face(const GFace *face) { gf = face; }
-  SPoint3 get_point() { return point; }
-  void set_point(const SPoint3 &_point) { point = SPoint3(_point); }
-};
-
-// Callback function for ALGLIB
-void bfgs_callback(const alglib::real_1d_array &x, double &func,
-                   alglib::real_1d_array &grad, void *ptr)
-{
-  auto *w = static_cast<data_wrapper *>(ptr);
-  SPoint3 p = w->get_point();
-  const GFace *gf = w->get_face();
-
-  // Value of the objective
-  GPoint pnt = gf->point(x[0], x[1]);
-  func = 0.5 * (p.x() - pnt.x()) * (p.x() - pnt.x()) +
-         (p.y() - pnt.y()) * (p.y() - pnt.y()) +
-         (p.z() - pnt.z()) * (p.z() - pnt.z());
-  // printf("func : %f\n", func);
-
-  // Value of the gradient
-  std::pair<SVector3, SVector3> der = gf->firstDer(SPoint2(x[0], x[1]));
-  grad[0] = -(p.x() - pnt.x()) * der.first.x() -
-            (p.y() - pnt.y()) * der.first.y() -
-            (p.z() - pnt.z()) * der.first.z();
-  grad[1] = -(p.x() - pnt.x()) * der.second.x() -
-            (p.y() - pnt.y()) * der.second.y() -
-            (p.z() - pnt.z()) * der.second.z();
-  // printf("func %22.15E Gradients %22.15E %22.15E der %g %g %g\n", func,
-  //         grad[0], grad[1],der.first.x(),der.first.y(),der.first.z());
-}
-#endif
-
 GPoint GFace::closestPoint(const SPoint3 &queryPoint,
                            const double initialGuess[2]) const
 {
   if(geomType() == BoundaryLayerSurface) return GPoint();
 
-#if defined(HAVE_ALGLIB)
   // Test initial guess (a null guess means the caller has none: start from the
   // middle of the parameter range, the sampling below will do the rest)
   double min_u = initialGuess ? initialGuess[0] :
@@ -1251,31 +1198,29 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint,
   }
 
   try {
-    // Set up optimisation problem
-    alglib::ae_int_t dim = 2;
-    alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7]
-    alglib::minlbfgsstate state;
-    alglib::real_1d_array x;
-    const double initialCond[2] = {min_u, min_v};
-    x.setcontent(dim, initialCond);
-    minlbfgscreate(2, corr, x, state);
-
-    // Set stopping criteria
-    const double epsg = 1.e-12;
-    const double epsf = 0.;
-    const double epsx = 0.;
-    const alglib::ae_int_t maxits = 500;
-    minlbfgssetcond(state, epsg, epsf, epsx, maxits);
-
-    // Solve problem
-    data_wrapper w;
-    w.set_point(queryPoint);
-    w.set_face(this);
-    minlbfgsoptimize(state, bfgs_callback, nullptr, &w);
-
-    // Get results
-    alglib::minlbfgsreport rep;
-    minlbfgsresults(state, x, rep);
+    // Minimize half the squared distance to the query point
+    LBFGS::Options options;
+    options.memory = 2;
+    options.maxIterations = 500;
+    options.gradientTolerance = 1.e-12;
+    options.functionTolerance = 0.;
+    options.stepTolerance = 0.;
+    options.maxStepNorm = 0.;
+    std::vector<double> x = {min_u, min_v};
+    LBFGS::minimize(
+      x,
+      [&](const std::vector<double> &uv, std::vector<double> &grad) {
+        GPoint pnt = point(uv[0], uv[1]);
+        SVector3 d(queryPoint.x() - pnt.x(), queryPoint.y() - pnt.y(),
+                   queryPoint.z() - pnt.z());
+        std::pair<SVector3, SVector3> der = firstDer(SPoint2(uv[0], uv[1]));
+        grad[0] = -d.x() * der.first.x() - d.y() * der.first.y() -
+                  d.z() * der.first.z();
+        grad[1] = -d.x() * der.second.x() - d.y() * der.second.y() -
+                  d.z() * der.second.z();
+        return 0.5 * (d.x() * d.x() + d.y() * d.y() + d.z() * d.z());
+      },
+      options);
     GPoint pntF = point(x[0], x[1]);
     return pntF;
   } catch(...) {
@@ -1283,12 +1228,6 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint,
     SPoint2 p = parFromPoint(queryPoint, false);
     return point(p);
   }
-
-#else
-  Msg::Error("Closest point not implemented for this type of surface");
-  SPoint2 p = parFromPoint(queryPoint, false);
-  return point(p);
-#endif
 }
 
 bool GFace::containsParam(const SPoint2 &pt)
@@ -2024,7 +1963,7 @@ static void meshCompound(GFace *gf, bool verbose)
     }
     else {
       gf->mesh_vertices.push_back(df->mesh_vertices[i]);
-      gf->mesh_vertices[i]->setEntity(gf);
+      df->mesh_vertices[i]->setEntity(gf);
     }
   }
 

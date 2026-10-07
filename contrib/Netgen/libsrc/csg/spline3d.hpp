@@ -10,7 +10,7 @@ namespace netgen
   public:
     ///
     splinesegment3d (const Point<3> & ap1, const Point<3> & ap2, 
-		     const Point<3> & ap3);
+                     const Point<3> & ap3);
     ///
     void Evaluate (double t, Point<3> & p) const;
     ///
@@ -45,11 +45,11 @@ namespace netgen
     ///
     void EvaluateTangent (double t, Vec<3> & tang) const;
     ///
-    const Point<3> & P1(int i) const { return segments.Get(i)->P1(); }
+    const Point<3> & P1(int i) const { return segments[i-1]->P1(); }
     ///
-    const Point<3> & P2(int i) const { return segments.Get(i)->P2(); }
+    const Point<3> & P2(int i) const { return segments[i-1]->P2(); }
     ///
-    const Point<3> & P3(int i) const { return segments.Get(i)->P3(); }
+    const Point<3> & P3(int i) const { return segments[i-1]->P3(); }
   };
   
   ///

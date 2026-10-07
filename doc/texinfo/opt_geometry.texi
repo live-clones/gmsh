@@ -378,12 +378,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointSelectSize
 Display size of selected points (in pixels)@*
-Default value: @code{6}@*
+Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointSize
 Display size of points (in pixels)@*
-Default value: @code{4}@*
+Default value: @code{8}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointType

@@ -7,6 +7,7 @@
 //   Koen Hillewaert
 //
 
+#include <algorithm>
 #include <sstream>
 #include <mutex>
 #include <unordered_map>
@@ -334,13 +335,22 @@ static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
   static bool GLLquad = false;
   static const double relaxFail = 1e-2;
   double u0 = 0., u1 = 0., US[100];
-  bool reparamOK = reparamMeshVertexOnEdge(v0, ge, u0);
-  if(ge->periodic(0) && ge->getEndVertex() &&
-     ge->getEndVertex()->getNumMeshVertices() > 0 &&
-     v1 == ge->getEndVertex()->mesh_vertices[0])
-    u1 = ge->parBounds(0).high();
-  else
-    reparamOK &= reparamMeshVertexOnEdge(v1, ge, u1);
+  bool reparamOK = reparamMeshVertexOnEdge(v0, ge, u0) &&
+                   reparamMeshVertexOnEdge(v1, ge, u1);
+  // the seam node of a periodic curve has both parameter bounds: take the
+  // one on the side of the other node (the edge may come in either
+  // orientation)
+  if(reparamOK && ge->periodic(0) && ge->getEndVertex() &&
+     ge->getEndVertex()->getNumMeshVertices() > 0) {
+    MVertex *seam = ge->getEndVertex()->mesh_vertices[0];
+    const Range<double> b = ge->parBounds(0);
+    auto nearest = [&](double u) {
+      return std::fabs(u - b.low()) < std::fabs(u - b.high()) ? b.low() :
+                                                                 b.high();
+    };
+    if(v1 == seam && v0 != seam) u1 = nearest(u0);
+    else if(v0 == seam && v1 != seam) u0 = nearest(u1);
+  }
 
   if(reparamOK) {
     double uMin = std::min(u0, u1), uMax = std::max(u0, u1);
@@ -485,6 +495,24 @@ inline static bool getMinMaxVert(MVertex *v0, MVertex *v1, MVertex *&vMin,
   return increasing;
 }
 
+// The nodes of an edge element in the orientation from its end node of
+// smaller number to the one of larger number, interior nodes following. The
+// high-order nodes of an edge are created in this orientation whichever
+// element asks for them first, so that their positions do not depend on that
+// element (nor, with threads, on which one came first)
+static void canonicalEdgeVertices(const std::vector<MVertex *> &ve,
+                                  bool increasing, std::vector<MVertex *> &out)
+{
+  if(increasing) {
+    out = ve;
+    return;
+  }
+  out.clear();
+  out.push_back(ve[1]);
+  out.push_back(ve[0]);
+  for(std::size_t i = ve.size(); i > 2; i--) out.push_back(ve[i - 1]);
+}
+
 // Get new interior vertices for a 1D element
 static void getEdgeVertices(GEdge *ge, MElement *ele,
                             std::vector<MVertex *> &ve,
@@ -499,12 +527,18 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
   const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
   std::pair<MVertex *, MVertex *> p(vMin, vMax);
 
-  std::vector<MVertex *> veEdge;
+  // created in the canonical orientation (see canonicalEdgeVertices)
+  std::vector<MVertex *> veCanon, veEdge;
+  canonicalEdgeVertices(veOld, increasing, veCanon);
   // Get vertices on geometry if asked
   bool gotVertOnGeo =
-    linear ? false : getEdgeVerticesOnGeo(ge, veOld[0], veOld[1], veEdge, nPts);
+    linear ? false : getEdgeVerticesOnGeo(ge, vMin, vMax, veEdge, nPts);
   // If not on geometry, create from mesh interpolation
-  if(!gotVertOnGeo) interpVerticesInExistingEdge(ge, ele, veEdge, nPts);
+  if(!gotVertOnGeo) {
+    const MLineN edgeEl(veCanon, ele->getPolynomialOrder());
+    interpVerticesInExistingEdge(ge, &edgeEl, veEdge, nPts);
+  }
+  if(!increasing) std::reverse(veEdge.begin(), veEdge.end());
   const std::size_t sh = edgeVertices.shardOf(p);
   shardLock<edgeContainer> lock(edgeVertices, sh);
   edgeMap &em = edgeVertices.shard(sh);
@@ -553,16 +587,19 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
       else
         veEdge.assign(eVtcs.rbegin(), eVtcs.rend());
     }
-    else { // Vertices do not exist, create them
+    else { // Vertices do not exist, create them, in the canonical
+           // orientation (see canonicalEdgeVertices)
+      std::vector<MVertex *> veCanon;
+      canonicalEdgeVertices(veOld, increasing, veCanon);
       // Get vertices on geometry if asked
       bool gotVertOnGeo =
-        linear ? false :
-                 getEdgeVerticesOnGeo(gf, veOld[0], veOld[1], veEdge, nPts);
+        linear ? false : getEdgeVerticesOnGeo(gf, vMin, vMax, veEdge, nPts);
       if(!gotVertOnGeo) {
         // If not on geometry, create from mesh interpolation
-        const MLineN edgeEl(veOld, ele->getPolynomialOrder());
+        const MLineN edgeEl(veCanon, ele->getPolynomialOrder());
         interpVerticesInExistingEdge(gf, &edgeEl, veEdge, nPts);
       }
+      if(!increasing) std::reverse(veEdge.begin(), veEdge.end());
 
       std::vector<MVertex *> &eVtcs = em[p];
 
@@ -599,9 +636,13 @@ static void getEdgeVertices(GRegion *gr, MElement *ele,
       else
         veEdge.assign(eVtcs.rbegin(), eVtcs.rend());
     }
-    else { // Vertices do not exist, create them
-      const MLineN edgeEl(veOld, ele->getPolynomialOrder());
+    else { // Vertices do not exist, create them, in the canonical
+           // orientation (see canonicalEdgeVertices)
+      std::vector<MVertex *> veCanon;
+      canonicalEdgeVertices(veOld, increasing, veCanon);
+      const MLineN edgeEl(veCanon, ele->getPolynomialOrder());
       interpVerticesInExistingEdge(gr, &edgeEl, veEdge, nPts);
+      if(!increasing) std::reverse(veEdge.begin(), veEdge.end());
       std::vector<MVertex *> &eVtcs = em[p];
       if(increasing) // Add newly created vertices to list
         eVtcs.insert(eVtcs.end(), veEdge.begin(), veEdge.end());
@@ -1648,6 +1689,11 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   const int nthreadsMax = std::max(nthreads2D, nthreads3D);
   const std::size_t nShards = (nthreadsMax > 1) ? 16 * nthreadsMax : 1;
 
+  // the nodes created below are numbered as the threads create them: they
+  // are renumbered canonically at the end, after the ones existing now
+  std::size_t maxVertexBefore, maxElementBefore;
+  m->getMaxMeshNumbersInUse(maxVertexBefore, maxElementBefore);
+
   // Keep track of vertex/entities created
   edgeContainer edgeVertices(nShards);
   faceContainer faceVertices(nShards);
@@ -1695,6 +1741,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 
   // store nodes in entities
   m->pruneMeshVertexAssociations();
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
 
   Msg::StopProgressMeter();
   double t2 = Cpu(), w2 = TimeOfDay();

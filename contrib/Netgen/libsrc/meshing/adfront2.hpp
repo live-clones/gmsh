@@ -1,5 +1,5 @@
-#ifndef FILE_ADFRONT2
-#define FILE_ADFRONT2
+#ifndef NETGEN_ADFRONT2_HPP
+#define NETGEN_ADFRONT2_HPP
 
 /**************************************************************************/
 /* File:   adfront2.hpp                                                   */
@@ -14,6 +14,12 @@
 
 */
 
+#include <gprim/geomobjects.hpp>
+#include <gprim/adtree.hpp>
+#include "meshtype.hpp"
+
+namespace netgen
+{
   ///
   class FrontPoint2
   {
@@ -35,7 +41,7 @@
     ///
     FrontPoint2 ()
     {
-      globalindex = -1;
+      globalindex.Invalidate(); //  = -1;
       nlinetopoint = 0;
       frontnr = INT_MAX-10;    // attention: overflow on calculating  INT_MAX + 1
       mgi = NULL;
@@ -44,7 +50,7 @@
 
     ///
     FrontPoint2 (const Point<3> & ap, PointIndex agi,
-		 MultiPointGeomInfo * amgi, bool aonsurface = true);
+                 MultiPointGeomInfo * amgi, bool aonsurface = true);
     ///
     ~FrontPoint2 () { ; }
 
@@ -62,7 +68,7 @@
     {
       nlinetopoint--;
       if (nlinetopoint == 0)
-	nlinetopoint = -1;
+        nlinetopoint = -1;
     }
 
     ///
@@ -88,8 +94,8 @@
   class FrontLine
   {
   private:
-    /// Point Indizes
-    INDEX_2 l;            
+    /// front point indizes
+    IVec<2,Front2PointIndex> l;
     /// quality class 
     int lineclass;      
     /// geometry specific data
@@ -102,24 +108,13 @@
     }
 
     ///
-    FrontLine (const INDEX_2 & al)
-    {
-      l = al;
-      lineclass = 1;
-    }
-
+    FrontLine (const IVec<2,Front2PointIndex> & al)
+      : l(al), lineclass(1) { } 
 
     ///
-    const INDEX_2 & L () const
-    {
-      return l;
-    }
-
+    const auto & L () const { return l; }
     ///
-    int LineClass() const
-    {
-      return lineclass;
-    }
+    int LineClass() const { return lineclass; }
 
     ///
     void IncrementClass ()
@@ -135,20 +130,20 @@
     ///
     bool Valid () const
     {
-      return l.I1() != -1;
+      return l[0].IsValid();
     }
     ///
     void Invalidate ()
     {
-      l.I1() = -1;
-      l.I2() = -1;
+      l[0] = Front2PointIndex::INVALID;
+      l[1] = Front2PointIndex::INVALID;
       lineclass = 1000;
     }
 
     void SetGeomInfo (const PointGeomInfo & gi1, const PointGeomInfo & gi2)
       {
-	geominfo[0] = gi1;
-	geominfo[1] = gi2;
+        geominfo[0] = gi1;
+        geominfo[1] = gi2;
       }
 
     const PointGeomInfo * GetGeomInfo () const
@@ -165,21 +160,21 @@ class AdFront2
 {
 
   ///
-  Array<FrontPoint2> points;  /// front points
+  Array<FrontPoint2, Front2PointIndex> points;  /// front points
   Array<FrontLine> lines;     /// front lines
 
   Box3d boundingbox;
-  Box3dTree linesearchtree;       /// search tree for lines
-  Point3dTree pointsearchtree;    /// search tree for points
-  Point3dTree cpointsearchtree;   /// search tree for cone points (not used ???)
+  BoxTree<3> linesearchtree;       /// search tree for lines
+  Point3dTree<Front2PointIndex> pointsearchtree;    /// search tree for points
+  Point3dTree<Front2PointIndex> cpointsearchtree;   /// search tree for cone points (not used ???)
 
-  Array<int> delpointl;     /// list of deleted front points
+  Array<Front2PointIndex> delpointl;     /// list of deleted front points
   Array<int> dellinel;      /// list of deleted front lines
 
   int nfl;                  /// number of front lines;
-  INDEX_2_HASHTABLE<int> * allflines; /// all front lines ever have been
+  unique_ptr<ClosedHashTable<PointIndices<2>, int>> allflines; /// all front lines ever have been
 
-  Array<int> invpindex;
+  Array<int, Front2PointIndex> invpindex;   // front -> local number (0/-1 markers)
 
   int minval;
   int starti;
@@ -204,36 +199,37 @@ public:
   ///
   int GetNFL () const { return nfl; }
 
-  const FrontLine & GetLine (int nr) { return lines[nr]; }
-  const FrontPoint2 & GetPoint (int nr) { return points[nr]; }
-
+  const FrontLine & GetLine (int nr) const { return lines[nr]; }
+  const FrontPoint2 & GetPoint (Front2PointIndex nr) const { return points[nr]; }
+  const auto & GetLines () const { return lines; }
 
   ///
   int SelectBaseLine (Point<3> & p1, Point<3> & p2, 
-		      const PointGeomInfo *& geominfo1,
-		      const PointGeomInfo *& geominfo2,
-		      int & qualclass);
+                      const PointGeomInfo *& geominfo1,
+                      const PointGeomInfo *& geominfo2,
+                      int & qualclass);
 
   ///
   int GetLocals (int baseline, 
-		 Array<Point3d> & locpoints,
-		 Array<MultiPointGeomInfo> & pgeominfo,
-                 Array<INDEX_2> & loclines,   // local index
-                 Array<int> & pindex,
+                 Array<Point<3>, LocalPointIndex> & locpoints,
+                 Array<MultiPointGeomInfo, LocalPointIndex> & pgeominfo,
+                 Array<IVec<2,LocalPointIndex>> & loclines,
+                 Array<Front2PointIndex, LocalPointIndex> & pindex,   // local -> front
                  Array<int> & lindex,
                  double xh);
 
   ///
   void DeleteLine (int li);
   ///
-  int AddPoint (const Point<3> & p, PointIndex globind, 
+  Front2PointIndex AddPoint (const Point<3> & p, PointIndex globind, 
                 MultiPointGeomInfo * mgi = NULL,
                 bool pointonsurface = true);
   ///
-  int AddLine (int pi1, int pi2, 
+  int AddLine (Front2PointIndex pi1, Front2PointIndex pi2, 
                const PointGeomInfo & gi1, const PointGeomInfo & gi2);
   ///
-  int ExistsLine (int gpi1, int gpi2);
+  /// gpi are mesh point numbers
+  int ExistsLine (PointIndex gpi1, PointIndex gpi2);
 
   ///
   void IncrementClass (int li)
@@ -252,7 +248,7 @@ public:
     { return lines[li].GetGeomInfo (lend); }
   ///
 
-  PointIndex GetGlobalIndex (int pi) const
+  PointIndex GetGlobalIndex (Front2PointIndex pi) const
   {
     return points[pi].GlobalIndex();
   }
@@ -262,11 +258,12 @@ public:
   bool Inside (const Point<2> & p) const;
 
   bool SameSide (const Point<2> & lp1, const Point<2> & lp2, 
-                 const Array<int> * /* testfaces */ = NULL) const
+                 const FlatArray<int> * /* testfaces */ = NULL) const;
+  /*
   {
     return Inside (lp1) == Inside (lp2);
   }
-
+  */
 
   ///
   void SetStartFront ();
@@ -274,9 +271,5 @@ public:
   void PrintOpenSegments (ostream & ost) const;
 };
 
-
-
-#endif
-
-
-
+} // namespace netgen
+#endif // NETGEN_ADFRONT2_HPP

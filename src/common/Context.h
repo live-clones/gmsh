@@ -27,6 +27,8 @@ struct contextMeshOptions {
   int smoothCrossField, crossFieldClosestPoint;
   double lcFactor, randFactor, randFactor3d, lcIntegrationPrecision;
   double optimizeThreshold, normals, tangents, explode, angleSmoothNormals;
+  double optimizeReconnectionThreshold;
+  int optimizeReconnectionPoints, optimizeReconnectionSearch;
   double allowSwapEdgeAngle;
   double qualityInf, qualitySup, radiusInf, radiusSup;
   double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;

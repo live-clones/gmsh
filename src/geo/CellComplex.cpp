@@ -615,7 +615,17 @@ void CellComplex::_insertElementCells(
         std::size_t nv = element->getNumPrimaryVertices();
         for(std::size_t j = 0; j < nv; j++)
           nums[j] = element->getVertex(j)->getNum();
-        std::sort(nums, nums + nv);
+        // insertion sort, as above (std::sort makes GCC 14 warn with
+        // -Warray-bounds since it cannot tell that nv <= 8)
+        for(std::size_t j = 1; j < nv; j++) {
+          std::size_t num = nums[j];
+          std::size_t k = j;
+          while(k > 0 && nums[k - 1] > num) {
+            nums[k] = nums[k - 1];
+            k--;
+          }
+          nums[k] = num;
+        }
         std::pair<Cell **, bool> slot =
           index.insertKey(element->getDim(), nums, (int)nv);
         if(m)
