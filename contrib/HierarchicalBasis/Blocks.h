@@ -17,6 +17,29 @@ static const int tetrahedronEdges[6][2] = {{0, 1}, {1, 2}, {2, 0},
 static const int tetrahedronFaces[4][3] = {
   {0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3}};
 
+// The edges of the hexahedron e0 = {0, 1}, e1 = {0, 3}, e2 = {0, 4},
+// e3 = {1, 2}, e4 = {1, 5}, e5 = {3, 2}, e6 = {2, 6}, e7 = {3, 7}, e8 = {4, 5},
+// e9 = {4, 7}, e10 = {5, 6}, e11 = {7, 6}, by the coordinate (u, v or w) along
+// each edge and its two affine coordinates a0 = (1 + u) / 2, a1 = (1 - u) / 2,
+// a2 = (1 + v) / 2, a3 = (1 - v) / 2, a4 = (1 + w) / 2, a5 = (1 - w) / 2 across
+static const int hexahedronEdges[12][3] = {
+  {0, 3, 5}, {1, 1, 5}, {2, 1, 3}, {1, 0, 5}, {2, 3, 0}, {0, 2, 5},
+  {2, 2, 0}, {2, 2, 1}, {0, 3, 4}, {1, 4, 1}, {1, 4, 0}, {0, 4, 2}};
+// The faces of the hexahedron s0 = {0, 1, 3, 2}, s1 = {0, 1, 4, 5},
+// s2 = {0, 3, 4, 7}, s3 = {1, 2, 5, 6}, s4 = {3, 2, 7, 6}, s5 = {4, 5, 7, 6},
+// by their two coordinates and the affine coordinate across
+static const int hexahedronFaces[6][3] = {{0, 1, 5}, {0, 2, 3}, {1, 2, 1},
+                                          {1, 2, 0}, {0, 2, 2}, {0, 1, 4}};
+
+// The affine coordinates a0, ..., a5 of the hexahedron
+inline void hexahedronCoordinates(const Dual *x, Dual *a)
+{
+  for(int i = 0; i < 3; i++) {
+    a[2 * i] = 0.5 * (1. + x[i]);
+    a[2 * i + 1] = 0.5 * (1. - x[i]);
+  }
+}
+
 // The roles (a, b, c) taken by the vertices (0, 1, 2) of a triangular face in
 // the orientation of the face given by flag1 (0, 1 or 2) and flag2 (1 or -1)
 inline const int *triangleRoles(int flag1, int flag2)

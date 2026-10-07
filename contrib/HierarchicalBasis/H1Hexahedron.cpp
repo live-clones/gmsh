@@ -12,13 +12,6 @@
 #include "H1Hexahedron.h"
 #include "Blocks.h"
 
-// for each edge, the coordinate along it and the two affine coordinates across
-static const int edges[12][3] = {{0, 3, 5}, {1, 1, 5}, {2, 1, 3}, {1, 0, 5},
-                                 {2, 3, 0}, {0, 2, 5}, {2, 2, 0}, {2, 2, 1},
-                                 {0, 3, 4}, {1, 4, 1}, {1, 4, 0}, {0, 4, 2}};
-// for each face, its two coordinates and the affine coordinate across
-static const int faces[6][3] = {{0, 1, 5}, {0, 2, 3}, {1, 2, 1},
-                                {1, 2, 0}, {0, 2, 2}, {0, 1, 4}};
 // for each vertex, its three affine coordinates
 static const int vertices[8][3] = {{1, 3, 5}, {0, 3, 5}, {0, 2, 5}, {1, 2, 5},
                                    {1, 3, 4}, {0, 3, 4}, {0, 2, 4}, {1, 2, 4}};
@@ -37,32 +30,24 @@ H1Hexahedron::H1Hexahedron(int order) : _order(order)
   _numBubbleFunction = (order - 1) * (order - 1) * (order - 1);
 }
 
-static void coordinates(const Dual *x, Dual *a)
-{
-  for(int i = 0; i < 3; i++) {
-    a[2 * i] = 0.5 * (1. + x[i]);
-    a[2 * i + 1] = 0.5 * (1. - x[i]);
-  }
-}
-
 void H1Hexahedron::functions(const Dual *x, std::vector<Dual> &vertex,
                              std::vector<Dual> &edge, std::vector<Dual> &face,
                              std::vector<Dual> &bubble)
 {
   Dual a[6];
-  coordinates(x, a);
+  hexahedronCoordinates(x, a);
   for(int i = 0; i < 8; i++)
     vertex[i] = a[vertices[i][0]] * a[vertices[i][1]] * a[vertices[i][2]];
   int n = 0;
   for(int e = 0; e < 12; e++) {
-    Dual across = a[edges[e][1]] * a[edges[e][2]];
+    Dual across = a[hexahedronEdges[e][1]] * a[hexahedronEdges[e][2]];
     for(int k = 2; k <= _order; k++)
-      edge[n++] = lobatto(k, x[edges[e][0]]) * across;
+      edge[n++] = lobatto(k, x[hexahedronEdges[e][0]]) * across;
   }
   n = 0;
   for(int f = 0; f < 6; f++)
-    n += h1Quadrangle(x[faces[f][0]], x[faces[f][1]], a[faces[f][2]], _order,
-                      &face[n]);
+    n += h1Quadrangle(x[hexahedronFaces[f][0]], x[hexahedronFaces[f][1]],
+                      a[hexahedronFaces[f][2]], _order, &face[n]);
   n = 0;
   for(int n1 = 2; n1 <= _order; n1++)
     for(int n2 = 2; n2 <= _order; n2++)
@@ -74,8 +59,8 @@ void H1Hexahedron::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
                                  int faceNumber, std::vector<Dual> &face)
 {
   Dual a[6], s, t;
-  coordinates(x, a);
-  const int *f = faces[faceNumber];
+  hexahedronCoordinates(x, a);
+  const int *f = hexahedronFaces[faceNumber];
   quadrangleCoordinates(x[f[0]], x[f[1]], flag1, flag2, flag3, s, t);
   int perFace = _numQuadFaceFunction / 6;
   h1Quadrangle(s, t, a[f[2]], _order, &face[faceNumber * perFace]);

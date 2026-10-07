@@ -1,96 +1,46 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Ismail Badia.
+// Contributed by Ismail Badia (2019) and Nawfel BENATIA (2025).
 
-// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
-// Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+// Reference : Solin, P., Segeth, K., & Dolezel, I. (2003).
+//             Higher-Order Finite Element Methods (1st ed.).
+//             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
 #ifndef HCURL_HEXAHEDRON_H
 #define HCURL_HEXAHEDRON_H
 
 #include "HierarchicalBasis.h"
 
-/*
- * MHexahedron
- *
- *          v
- *   3----------2
- *   |\     ^   |\
- *   | \    |   | \
- *   |  \   |   |  \
- *   |   7------+---6
- *   |   |  +-- |-- | -> u
- *   0---+---\--1   |
- *    \  |    \  \  |
- *     \ |     \  \ |
- *      \|      w  \|
- *       4----------5
- *
- *  Oriented Edges:
- * e0={0, 1}, e1={0, 3}, e2={0, 4}, e3={1, 2}, e4 ={1, 5}, e5={3, 2},e6={2, 6},
- * e7={3, 7},e8={4, 5}, e9= {4, 7}, e10={5, 6}, e11={7, 6}
- *
- * Oritented Surface:
- *  s0={0, 1, 3, 2}, s1={0, 1, 4, 5}, s2={0, 3, 4, 7},
- *  s3={1, 2, 5, 6}, s4={2, 3, 7, 6}, s5={4, 5, 7, 6}
- * Local (directional) orders on mesh faces are not allowed to exceed the mini-
- * mum of the (appropriate directional) orders of approximation associated with
- * the interior of the adjacent elements. Local orders of approximation on mesh
- * edges are limited by the minimum of all (appropriate directional) orders cor-
- * responding to faces sharing that edge
- */
+// H(curl) basis on the hexahedron [-1, 1]^3, with the affine coordinates a0,
+// ..., a5 of hexahedronCoordinates:
+// - the functions of the edges (see hexahedronEdges): the product of the two
+//   affine coordinates across the edge times the tensor product edge functions
+//   (see hcurlTensorEdge);
+// - the functions of the faces (see hexahedronFaces): the affine coordinate
+//   across the face times the face functions of its two coordinates (see
+//   hcurlQuadrangle);
+// - the bubble functions L_n1(u) l_n2(v) l_n3(w) e_u, n1 = 0, ..., p, n2, n3 =
+//   2, ..., p + 1, and the same with the roles of u, v, w exchanged for e_v and
+//   e_w;
+// where L_k are the Legendre polynomials and l_k the Lobatto polynomials.
 class HcurlHexahedron : public HierarchicalBasis {
 public:
   HcurlHexahedron(int order);
-  virtual ~HcurlHexahedron();
+  void getKeysInfo(std::vector<int> &functionTypeInfo,
+                   std::vector<int> &orderInfo) override;
 
-  virtual void generateBasis(double u, double v, double w,
-                             std::vector<std::vector<double>> &vertexBasis,
-                             std::vector<std::vector<double>> &edgeBasis,
-                             std::vector<std::vector<double>> &faceBasis,
-                             std::vector<std::vector<double>> &bubbleBasis)
-  {
-    if(_space == HCURL) {
-      generateHcurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
-    }
-    else if(_space == CURL_HCURL) {
-      generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
-    }
-  };
-  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
-                           std::vector<int> &orderInfo);
+protected:
+  void functions(const Dual *x, std::vector<Vec> &vertex,
+                 std::vector<Vec> &edge, std::vector<Vec> &face,
+                 std::vector<Vec> &bubble) override;
+  void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
+                     int faceNumber, std::vector<Vec> &face) override;
 
 private:
-  int _pb1; // bubble function order in  direction u
-  int _pb2; // bubble function order in  direction v
-  int _pb3; // bubble function order in  direction w
-  int _pOrderEdge[12]; // Edge functions order (pOrderEdge[0] matches the order
-                       // of the edge 0)
-  int _pOrderFace1[6]; // Face functions order in direction u  (pOrderFace1[0]
-                       // matches the order of face 0 in direction u)
-  int _pOrderFace2[6]; // Face functions order in direction v (pOrderFace[0]
-                       // matches the order of face 0 in direction v)
-  static double _affineCoordinate(int j, double u, double v,
-                                  double w); // affine coordinate lambdaj j=1..6
-
-  // edgeBasis=[phie0_{0},...phie0_{pe0},phie1_{0},...phie1_{pe1}...]
-  // faceBasis=[phieFf1{n1,n2} (with 0<=n1<=pf1 , 2<=n2<=pf2+1), phieFf2{n1,n2}
-  // (with 2<=n1<=pf1+1 , 0<=n2<=pf2) ] bubbleBasis=[phieb1{n1,n2,n3} (with
-  // 0<=n1<=pb1 , 2<=n2<=pb2+1 , 2<=n3<=pb3+1)...]
-  virtual void
-  generateHcurlBasis(double u, double v, double w,
-                     std::vector<std::vector<double>> &edgeBasis,
-                     std::vector<std::vector<double>> &faceBasis,
-                     std::vector<std::vector<double>> &bubbleBasis);
-  virtual void generateCurlBasis(double u, double v, double w,
-                                 std::vector<std::vector<double>> &edgeBasis,
-                                 std::vector<std::vector<double>> &faceBasis,
-                                 std::vector<std::vector<double>> &bubbleBasis);
-  virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
-                             int flag3, int faceNumber,
-                             std::vector<std::vector<double>> &faceFunctions);
+  int _order;
 };
+
 #endif
