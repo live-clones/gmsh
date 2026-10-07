@@ -42,6 +42,8 @@ Gmsh options in use: `Mesh.PackRecombination`, `Mesh.PackCleanupMethod`,
   along the diagonal closest to the CAD.
 - `qoQMorph.cpp`: `FrontAdvance`, the fronts only (Owen et al. 1999, nine front
   types of Wang et al. 2025). It asks the optimizer to smooth and to re-mesh.
+- `qoPatch.h/.cpp`: search of patches with 3 to 6 corners (Bunin 2006) and the
+  star pattern that could re-mesh them; not yet applied.
 - `qoPack.cpp`: PACK settings scope and finalization.
 - `intrinsicTriangulation.*`, `smallCavityWinslow.*`: used by PACK and by the
   nodal smoothing.

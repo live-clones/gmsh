@@ -17,6 +17,7 @@
 
 #include "qoOptimizer.h"
 #include "qoFace.h"
+#include "qoPatch.h"
 #include "smallCavityWinslow.h"
 #include "GFace.h"
 #include "GModel.h"
@@ -146,6 +147,7 @@ namespace QuadOpt {
       }
       void run();
       void finish(); // write the result back and report
+      void scanPatches(); // search only (-v 99), see qoPatch.h
       bool smooth(int w) override
       {
         if(!smoothVertex(w)) return false;
@@ -864,8 +866,34 @@ namespace QuadOpt {
       rounds(10);
     }
 
+    void FaceOptimizer::scanPatches()
+    {
+      const Probe probe = {[&](int id, int k) {
+                             const Cell &c = _he.cells[id];
+                             const Corners p = pointsOf(c);
+                             return cornerAngle(p.data(), c.n, k);
+                           },
+                           [&](int w) { return !_v[w].fixed; }};
+      // Seeds: each triangle, each irregular interior vertex.
+      std::vector<std::vector<int> > seeds;
+      for(const Cell &c : _he.cells)
+        if(c.alive && c.n == 3) seeds.push_back({c.v[0], c.v[1], c.v[2]});
+      for(int w = 0; w < int(_v.size()); ++w)
+        if(!_v[w].fixed && !_he.star[w].empty() && _he.star[w].size() != 4)
+          seeds.push_back({w});
+      int found[8] = {};
+      Patch patch;
+      for(const std::vector<int> &seed : seeds)
+        if(findPatch(_he, probe, seed, 40, patch)) ++found[patch.corner.size()];
+      Msg::Info("QuadOpt face %d: %d seeds, patches with 3/4/5/6 corners: "
+                "%d %d %d %d",
+                _gf->tag(), int(seeds.size()), found[3], found[4], found[5],
+                found[6]);
+    }
+
     void FaceOptimizer::finish()
     {
+      if(Msg::GetVerbosity() >= 99) scanPatches();
       sync();
       Msg::Info("QuadOpt face %d: cells %zu -> %zu, triangles %zu -> %zu, "
                 "rewrites=%zu splits=%zu moves=%zu",
