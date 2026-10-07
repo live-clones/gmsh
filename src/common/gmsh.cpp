@@ -4182,6 +4182,105 @@ gmsh::model::mesh::addFaces(const std::vector<std::size_t> &faceTags,
   }
 }
 
+// the barycenter of the nodes
+template <class T>
+static void _barycenter(const T &nodes, std::size_t n, double *xyz)
+{
+  xyz[0] = xyz[1] = xyz[2] = 0.;
+  for(std::size_t i = 0; i < n; i++) {
+    xyz[0] += nodes[i]->x();
+    xyz[1] += nodes[i]->y();
+    xyz[2] += nodes[i]->z();
+  }
+  for(int i = 0; i < 3; i++) xyz[i] /= n;
+}
+
+// append a key, and the coordinates locating it if returnCoord is set
+static void _addKey(int typeKey, std::size_t entityKey, const double *xyz,
+                    std::vector<int> &typeKeys,
+                    std::vector<std::size_t> &entityKeys,
+                    std::vector<double> &coord, bool returnCoord)
+{
+  typeKeys.push_back(typeKey);
+  entityKeys.push_back(entityKey);
+  if(returnCoord) coord.insert(coord.end(), xyz, xyz + 3);
+}
+
+// the keys of the Lagrange basis functions of element e: one per node
+static void _addLagrangeKeys(MElement *e, std::vector<int> &typeKeys,
+                             std::vector<std::size_t> &entityKeys,
+                             std::vector<double> &coord, bool returnCoord)
+{
+  for(std::size_t k = 0; k < e->getNumVertices(); ++k) {
+    MVertex *v = e->getVertex(k);
+    double xyz[3] = {v->x(), v->y(), v->z()};
+    _addKey(0, v->getNum(), xyz, typeKeys, entityKeys, coord, returnCoord);
+  }
+}
+
+#if defined(HAVE_HIERARCHICAL_BASIS)
+// the keys of the hierarchical basis functions of element e: the vertex
+// functions keyed by their node (type key 0); the functions of each edge,
+// face and of the interior keyed by the global number of the edge, the face
+// or the element, with the type keys 1, 2, ... for the functions of an edge,
+// numbered on for those of a face, and on again for the bubble functions
+static void _addHierarchicalKeys(MElement *e, const HierarchicalBasis &basis,
+                                 std::vector<int> &typeKeys,
+                                 std::vector<std::size_t> &entityKeys,
+                                 std::vector<double> &coord, bool returnCoord)
+{
+  const int numQuad = basis.getNumQuadFace(), numTri = basis.getNumTriFace();
+  const int perEdge =
+    basis.getNumEdge() ? basis.getNumEdgeFunction() / basis.getNumEdge() : 0;
+  const int perQuad = numQuad ? basis.getNumQuadFaceFunction() / numQuad : 0;
+  const int perTri = numTri ? basis.getNumTriFaceFunction() / numTri : 0;
+  double xyz[3];
+  for(int k = 0; k < basis.getNumVertexFunction(); k++) {
+    MVertex *v = e->getVertex(k);
+    _barycenter(&v, 1, xyz);
+    _addKey(0, v->getNum(), xyz, typeKeys, entityKeys, coord, returnCoord);
+  }
+  if(basis.getNumEdgeFunction()) {
+    for(int i = 0; i < e->getNumEdges(); i++) {
+      MEdge edge = e->getEdge(i);
+      MVertex *v[2] = {edge.getVertex(0), edge.getVertex(1)};
+      _barycenter(v, 2, xyz);
+      std::size_t num = GModel::current()->addMEdge(std::move(edge));
+      for(int k = 1; k <= perEdge; k++)
+        _addKey(k, num, xyz, typeKeys, entityKeys, coord, returnCoord);
+    }
+  }
+  if(basis.getNumQuadFaceFunction() + basis.getNumTriFaceFunction()) {
+    for(int i = 0; i < numQuad + numTri; i++) {
+      MFace face = e->getFaceSolin(i);
+      std::vector<MVertex *> v(face.getNumVertices());
+      for(std::size_t k = 0; k < v.size(); k++) v[k] = face.getVertex(k);
+      _barycenter(v, v.size(), xyz);
+      std::size_t num = GModel::current()->addMFace(std::move(face));
+      int n = (i < numQuad) ? perQuad : perTri;
+      for(int k = 1; k <= n; k++)
+        _addKey(perEdge + k, num, xyz, typeKeys, entityKeys, coord,
+                returnCoord);
+    }
+  }
+  if(basis.getNumBubbleFunction()) {
+    std::vector<MVertex *> v(e->getNumVertices());
+    for(std::size_t k = 0; k < v.size(); k++) v[k] = e->getVertex(k);
+    _barycenter(v, v.size(), xyz);
+    int first = perEdge + std::max(perQuad, perTri);
+    for(int k = 1; k <= basis.getNumBubbleFunction(); k++)
+      _addKey(first + k, e->getNum(), xyz, typeKeys, entityKeys, coord,
+              returnCoord);
+  }
+}
+#endif
+
+static bool _isLagrange(const std::string &fsName)
+{
+  return fsName == "IsoParametric" || fsName == "Lagrange" ||
+         fsName == "GradIsoParametric" || fsName == "GradLagrange";
+}
+
 GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
                                          const std::string &functionSpaceType,
                                          std::vector<int> &typeKeys,
@@ -4205,44 +4304,18 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
+  std::size_t numElements = 0;
+  for(auto ge : entities) numElements += ge->getNumMeshElementsByType(familyType);
 
-  if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-     fsName == "GradIsoParametric" || fsName == "GradLagrange") {
-    const nodalBasis *nodalB(nullptr);
-    if(order == -1) { // isoparametric
-      nodalB = BasisFactory::getNodalBasis(elementType);
-    }
-    else {
-      int newType = ElementType::getType(familyType, order, false);
-      nodalB = BasisFactory::getNodalBasis(newType);
-    }
-
-    for(std::size_t i = 0; i < entities.size(); ++i) {
-      GEntity *ge = entities[i];
-      std::size_t numElementsInEntitie =
-        ge->getNumMeshElementsByType(familyType);
-      if(returnCoord) {
-        coord.reserve(coord.size() + numElementsInEntitie *
-                                       nodalB->getNumShapeFunctions() * 3);
-      }
-      typeKeys.reserve(typeKeys.size() +
-                       numElementsInEntitie * nodalB->getNumShapeFunctions());
-      entityKeys.reserve(entityKeys.size() +
-                         numElementsInEntitie * nodalB->getNumShapeFunctions());
-
-      for(std::size_t j = 0; j < numElementsInEntitie; ++j) {
-        MElement *e = ge->getMeshElementByType(familyType, j);
-        for(size_t k = 0; k < e->getNumVertices(); ++k) {
-          typeKeys.push_back(0);
-          entityKeys.push_back(e->getVertex(k)->getNum());
-          if(returnCoord) {
-            coord.push_back(e->getVertex(k)->x());
-            coord.push_back(e->getVertex(k)->y());
-            coord.push_back(e->getVertex(k)->z());
-          }
-        }
-      }
-    }
+  if(_isLagrange(fsName)) {
+    std::size_t n = numElements * ElementType::getNumVertices(elementType);
+    typeKeys.reserve(n);
+    entityKeys.reserve(n);
+    if(returnCoord) coord.reserve(3 * n);
+    for(auto ge : entities)
+      for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++)
+        _addLagrangeKeys(ge->getMeshElementByType(familyType, j), typeKeys,
+                         entityKeys, coord, returnCoord);
     return;
   }
 
@@ -4250,145 +4323,15 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
   HierarchicalBasis *basis =
     HierarchicalBasis::create(fsName, familyType, order);
   if(!basis) return;
-  int vSize = basis->getNumVertexFunction();
-  int bSize = basis->getNumBubbleFunction();
-  int eSize = basis->getNumEdgeFunction();
-  int quadFSize = basis->getNumQuadFaceFunction();
-  int triFSize = basis->getNumTriFaceFunction();
-  int fSize = quadFSize + triFSize;
-  int numDofsPerElement = vSize + bSize + eSize + fSize;
-  int numberQuadFaces = basis->getNumQuadFace();
-  int numberTriFaces = basis->getNumTriFace();
-  int numTriFaceFunction = 0;
-  if(basis->getNumTriFace() != 0) {
-    numTriFaceFunction =
-      triFSize /
-      basis->getNumTriFace(); // number of Tri face functions for one face
-  }
-  int numQuadFaceFunction = 0;
-  if(basis->getNumQuadFace() != 0) {
-    numQuadFaceFunction =
-      quadFSize /
-      basis->getNumQuadFace(); // number of Tri face functions for one face
-  }
-  int numEdgeFunction = 0;
-  if(basis->getNumEdge() != 0) {
-    numEdgeFunction =
-      eSize / basis->getNumEdge(); // number of edge functions for one edge
-  }
-  int const1 = numEdgeFunction + 1;
-  int const2 = const1 + numQuadFaceFunction;
-  int const3 = const1 + numTriFaceFunction;
-  int const4 = bSize + std::max(const3, const2);
+  std::size_t n = numElements * basis->getNumFunctions();
+  typeKeys.reserve(n);
+  entityKeys.reserve(n);
+  if(returnCoord) coord.reserve(3 * n);
+  for(auto ge : entities)
+    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++)
+      _addHierarchicalKeys(ge->getMeshElementByType(familyType, j), *basis,
+                           typeKeys, entityKeys, coord, returnCoord);
   delete basis;
-
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
-    if(returnCoord) {
-      coord.reserve(coord.size() +
-                    numElementsInEntitie * numDofsPerElement * 3);
-    }
-    typeKeys.reserve(typeKeys.size() +
-                     numElementsInEntitie * numDofsPerElement);
-    entityKeys.reserve(entityKeys.size() +
-                       numElementsInEntitie * numDofsPerElement);
-
-    for(std::size_t j = 0; j < numElementsInEntitie; j++) {
-      MElement *e = ge->getMeshElementByType(familyType, j);
-      // vertices
-      for(int k = 0; k < vSize; k++) {
-        typeKeys.push_back(0);
-        entityKeys.push_back(e->getVertex(k)->getNum());
-        if(returnCoord) {
-          coord.push_back(e->getVertex(k)->x());
-          coord.push_back(e->getVertex(k)->y());
-          coord.push_back(e->getVertex(k)->z());
-        }
-      }
-      // edges
-      if(eSize > 0) {
-        for(int jj = 0; jj < e->getNumEdges(); jj++) {
-          MEdge edge = e->getEdge(jj);
-          double coordEdge[3];
-          if(returnCoord) {
-            MVertex *v1 = edge.getVertex(0);
-            MVertex *v2 = edge.getVertex(1);
-
-            coordEdge[0] = 0.5 * (v1->x() + v2->x());
-            coordEdge[1] = 0.5 * (v1->y() + v2->y());
-            coordEdge[2] = 0.5 * (v1->z() + v2->z());
-          }
-          std::size_t edgeGlobalIndice =
-            GModel::current()->addMEdge(std::move(edge));
-          for(int k = 1; k < const1; k++) {
-            typeKeys.push_back(k);
-            entityKeys.push_back(edgeGlobalIndice);
-            if(returnCoord) {
-              coord.push_back(coordEdge[0]);
-              coord.push_back(coordEdge[1]);
-              coord.push_back(coordEdge[2]);
-            }
-          }
-        }
-      }
-      // faces
-      if(fSize > 0) {
-        for(int jj = 0; jj < numberQuadFaces + numberTriFaces; jj++) {
-          // Number the faces
-          MFace face = e->getFaceSolin(jj);
-          double coordFace[3] = {0., 0., 0.};
-          if(returnCoord) {
-            for(std::size_t indexV = 0; indexV < face.getNumVertices();
-                ++indexV) {
-              coordFace[0] += face.getVertex(indexV)->x();
-              coordFace[1] += face.getVertex(indexV)->y();
-              coordFace[2] += face.getVertex(indexV)->z();
-            }
-            coordFace[0] /= face.getNumVertices();
-            coordFace[1] /= face.getNumVertices();
-            coordFace[2] /= face.getNumVertices();
-          }
-          std::size_t faceGlobalIndice =
-            GModel::current()->addMFace(std::move(face));
-          int it2 = const2;
-          if(jj >= numberQuadFaces) { it2 = const3; }
-          for(int k = const1; k < it2; k++) {
-            typeKeys.push_back(k);
-            entityKeys.push_back(faceGlobalIndice);
-            if(returnCoord) {
-              coord.push_back(coordFace[0]);
-              coord.push_back(coordFace[1]);
-              coord.push_back(coordFace[2]);
-            }
-          }
-        }
-      }
-      // volumes
-      if(bSize > 0) {
-        double bubbleCenterCoord[3] = {0., 0., 0.};
-        if(returnCoord) {
-          for(unsigned int indexV = 0; indexV < e->getNumVertices(); ++indexV) {
-            bubbleCenterCoord[0] += e->getVertex(indexV)->x();
-            bubbleCenterCoord[1] += e->getVertex(indexV)->y();
-            bubbleCenterCoord[2] += e->getVertex(indexV)->z();
-          }
-          bubbleCenterCoord[0] /= e->getNumVertices();
-          bubbleCenterCoord[1] /= e->getNumVertices();
-          bubbleCenterCoord[2] /= e->getNumVertices();
-        }
-        for(int k = std::max(const3, const2); k < const4; k++) {
-          typeKeys.push_back(k);
-          entityKeys.push_back(e->getNum());
-          if(returnCoord) {
-            coord.push_back(bubbleCenterCoord[0]);
-            coord.push_back(bubbleCenterCoord[1]);
-            coord.push_back(bubbleCenterCoord[2]);
-          }
-        }
-      }
-    }
-  }
 #else
   Msg::Error("Function space '%s' requires the hierarchical basis module",
              fsName.c_str());
@@ -4416,156 +4359,17 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     Msg::Error("Unknown element %zu", elementTag);
     return;
   }
-  int elementType = e->getTypeForMSH();
-  int familyType = ElementType::getParentType(elementType);
-
-  if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-     fsName == "GradIsoParametric" || fsName == "GradLagrange") {
-    typeKeys.reserve(e->getNumVertices());
-    entityKeys.reserve(e->getNumVertices());
-    if(returnCoord) { coord.reserve(3 * e->getNumVertices()); }
-    for(size_t k = 0; k < e->getNumVertices(); ++k) {
-      typeKeys.push_back(0);
-      entityKeys.push_back(e->getVertex(k)->getNum());
-      if(returnCoord) {
-        coord.push_back(e->getVertex(k)->x());
-        coord.push_back(e->getVertex(k)->y());
-        coord.push_back(e->getVertex(k)->z());
-      }
-    }
+  if(_isLagrange(fsName)) {
+    _addLagrangeKeys(e, typeKeys, entityKeys, coord, returnCoord);
     return;
   }
-
 #if defined(HAVE_HIERARCHICAL_BASIS)
+  int familyType = ElementType::getParentType(e->getTypeForMSH());
   HierarchicalBasis *basis =
     HierarchicalBasis::create(fsName, familyType, order);
   if(!basis) return;
-  int vSize = basis->getNumVertexFunction();
-  int bSize = basis->getNumBubbleFunction();
-  int eSize = basis->getNumEdgeFunction();
-  int quadFSize = basis->getNumQuadFaceFunction();
-  int triFSize = basis->getNumTriFaceFunction();
-  int fSize = quadFSize + triFSize;
-  int numberQuadFaces = basis->getNumQuadFace();
-  int numberTriFaces = basis->getNumTriFace();
-  int numTriFaceFunction = 0;
-  if(basis->getNumTriFace() != 0) {
-    numTriFaceFunction =
-      triFSize /
-      basis->getNumTriFace(); // number of Tri face functions for one face
-  }
-  int numQuadFaceFunction = 0;
-  if(basis->getNumQuadFace() != 0) {
-    numQuadFaceFunction =
-      quadFSize /
-      basis->getNumQuadFace(); // number of Tri face functions for one face
-  }
-  int numEdgeFunction = 0;
-  if(basis->getNumEdge() != 0) {
-    numEdgeFunction =
-      eSize / basis->getNumEdge(); // number of edge functions for one edge
-  }
-  int const1 = numEdgeFunction + 1;
-  int const2 = const1 + numQuadFaceFunction;
-  int const3 = const1 + numTriFaceFunction;
-  int const4 = bSize + std::max(const3, const2);
-  int numDofsPerElement = vSize + bSize + eSize + fSize;
+  _addHierarchicalKeys(e, *basis, typeKeys, entityKeys, coord, returnCoord);
   delete basis;
-
-  typeKeys.reserve(numDofsPerElement);
-  entityKeys.reserve(numDofsPerElement);
-  if(returnCoord) { coord.reserve(3 * numDofsPerElement); }
-
-  // vertices
-  for(int k = 0; k < vSize; k++) {
-    typeKeys.push_back(0);
-    entityKeys.push_back(e->getVertex(k)->getNum());
-    if(returnCoord) {
-      coord.push_back(e->getVertex(k)->x());
-      coord.push_back(e->getVertex(k)->y());
-      coord.push_back(e->getVertex(k)->z());
-    }
-  }
-  // edges
-  if(eSize > 0) {
-    for(int jj = 0; jj < e->getNumEdges(); jj++) {
-      MEdge edge = e->getEdge(jj);
-      double coordEdge[3];
-      if(returnCoord) {
-        MVertex *v1 = edge.getVertex(0);
-        MVertex *v2 = edge.getVertex(1);
-
-        coordEdge[0] = 0.5 * (v1->x() + v2->x());
-        coordEdge[1] = 0.5 * (v1->y() + v2->y());
-        coordEdge[2] = 0.5 * (v1->z() + v2->z());
-      }
-      std::size_t edgeGlobalIndice =
-        GModel::current()->addMEdge(std::move(edge));
-      for(int k = 1; k < const1; k++) {
-        typeKeys.push_back(k);
-        entityKeys.push_back(edgeGlobalIndice);
-        if(returnCoord) {
-          coord.push_back(coordEdge[0]);
-          coord.push_back(coordEdge[1]);
-          coord.push_back(coordEdge[2]);
-        }
-      }
-    }
-  }
-  // faces
-  if(fSize > 0) {
-    for(int jj = 0; jj < numberQuadFaces + numberTriFaces; jj++) {
-      // Number the faces
-      MFace face = e->getFaceSolin(jj);
-      double coordFace[3] = {0., 0., 0.};
-      if(returnCoord) {
-        for(std::size_t indexV = 0; indexV < face.getNumVertices(); ++indexV) {
-          coordFace[0] += face.getVertex(indexV)->x();
-          coordFace[1] += face.getVertex(indexV)->y();
-          coordFace[2] += face.getVertex(indexV)->z();
-        }
-        coordFace[0] /= face.getNumVertices();
-        coordFace[1] /= face.getNumVertices();
-        coordFace[2] /= face.getNumVertices();
-      }
-      std::size_t faceGlobalIndice =
-        GModel::current()->addMFace(std::move(face));
-      int it2 = const2;
-      if(jj >= numberQuadFaces) { it2 = const3; }
-      for(int k = const1; k < it2; k++) {
-        typeKeys.push_back(k);
-        entityKeys.push_back(faceGlobalIndice);
-        if(returnCoord) {
-          coord.push_back(coordFace[0]);
-          coord.push_back(coordFace[1]);
-          coord.push_back(coordFace[2]);
-        }
-      }
-    }
-  }
-  // volumes
-  if(bSize > 0) {
-    double bubbleCenterCoord[3] = {0., 0., 0.};
-    if(returnCoord) {
-      for(unsigned int indexV = 0; indexV < e->getNumVertices(); ++indexV) {
-        bubbleCenterCoord[0] += e->getVertex(indexV)->x();
-        bubbleCenterCoord[1] += e->getVertex(indexV)->y();
-        bubbleCenterCoord[2] += e->getVertex(indexV)->z();
-      }
-      bubbleCenterCoord[0] /= e->getNumVertices();
-      bubbleCenterCoord[1] /= e->getNumVertices();
-      bubbleCenterCoord[2] /= e->getNumVertices();
-    }
-    for(int k = std::max(const3, const2); k < const4; k++) {
-      typeKeys.push_back(k);
-      entityKeys.push_back(e->getNum());
-      if(returnCoord) {
-        coord.push_back(bubbleCenterCoord[0]);
-        coord.push_back(bubbleCenterCoord[1]);
-        coord.push_back(bubbleCenterCoord[2]);
-      }
-    }
-  }
 #else
   Msg::Error("Function space '%s' requires the hierarchical basis module",
              fsName.c_str());
