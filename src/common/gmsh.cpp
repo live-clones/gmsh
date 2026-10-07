@@ -3782,6 +3782,22 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   }
 }
 
+// the orientation of an element for the hierarchical basis functions: the
+// rank of the order of the tags of its vertices among the permutations of the
+// vertices in lexicographic order (its Lehmer code, in Horner form)
+static int _orientation(MElement *e, int numVertices)
+{
+  int orientation = 0;
+  for(int i = 0; i < numVertices; i++) {
+    // the number of vertices after the i-th one with a smaller tag
+    int smaller = 0;
+    for(int j = i + 1; j < numVertices; j++)
+      if(e->getVertex(j)->getNum() < e->getVertex(i)->getNum()) smaller++;
+    orientation = orientation * (numVertices - i) + smaller;
+  }
+  return orientation;
+}
+
 GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
   const int elementType, const std::string &functionSpaceType,
   std::vector<int> &basisFunctionsOrientation, const int tag,
@@ -3827,59 +3843,20 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
     }
   }
   else { // Hierarchical type
-    const unsigned int numVertices =
+    const int numVertices =
       ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
-    std::vector<MVertex *> vertices(numVertices);
-    std::vector<unsigned int> verticesOrder(numVertices);
-    const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
-
     std::size_t entityOffset = 0;
-
     for(std::size_t iEntity = 0; iEntity < entities.size(); ++iEntity) {
       const GEntity *ge = entities[iEntity];
       std::size_t localNumElements = ge->getNumMeshElementsByType(familyType);
-
       const std::size_t begin = task * localNumElements / numTasks;
       const std::size_t end = (task + 1) * localNumElements / numTasks;
-
-      for(std::size_t iElement = begin; iElement < end; ++iElement) {
-        MElement *e = ge->getMeshElementByType(familyType, iElement);
-        for(std::size_t i = 0; i < numVertices; ++i) {
-          vertices[i] = e->getVertex(i);
-        }
-
-        for(std::size_t i = 0; i < numVertices; ++i) {
-          std::size_t max = 0;
-          std::size_t maxPos = 0;
-          for(std::size_t j = 0; j < numVertices; ++j) {
-            if(vertices[j] != nullptr) {
-              if(max < vertices[j]->getNum()) {
-                max = vertices[j]->getNum();
-                maxPos = j;
-              }
-            }
-          }
-          vertices[maxPos] = nullptr;
-          verticesOrder[maxPos] = numVertices - i - 1;
-        }
-
-        std::size_t elementOrientation = 0;
-        for(std::size_t i = 0; i < numVertices; ++i) {
-          elementOrientation +=
-            verticesOrder[i] * factorial[numVertices - i - 1];
-          for(std::size_t j = i + 1; j < numVertices; ++j) {
-            if(verticesOrder[j] > verticesOrder[i]) --verticesOrder[j];
-          }
-        }
-
-        basisFunctionsOrientation[entityOffset + iElement] =
-          (int)elementOrientation;
-      }
-
+      for(std::size_t iElement = begin; iElement < end; ++iElement)
+        basisFunctionsOrientation[entityOffset + iElement] = _orientation(
+          ge->getMeshElementByType(familyType, iElement), numVertices);
       entityOffset += localNumElements;
     }
   }
-
   return;
 }
 
@@ -3910,41 +3887,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElement(
     basisFunctionsOrientation = 0;
   }
   else { // Hierarchical type
-    const unsigned int numVertices =
+    const int numVertices =
       ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
-    std::vector<MVertex *> vertices(numVertices);
-    std::vector<unsigned int> verticesOrder(numVertices);
-    const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
-
-    for(std::size_t i = 0; i < numVertices; ++i) {
-      vertices[i] = e->getVertex(i);
-    }
-
-    for(std::size_t i = 0; i < numVertices; ++i) {
-      std::size_t max = 0;
-      std::size_t maxPos = 0;
-      for(std::size_t j = 0; j < numVertices; ++j) {
-        if(vertices[j] != nullptr) {
-          if(max < vertices[j]->getNum()) {
-            max = vertices[j]->getNum();
-            maxPos = j;
-          }
-        }
-      }
-      vertices[maxPos] = nullptr;
-      verticesOrder[maxPos] = numVertices - i - 1;
-    }
-
-    basisFunctionsOrientation = 0;
-    for(std::size_t i = 0; i < numVertices; ++i) {
-      basisFunctionsOrientation +=
-        verticesOrder[i] * factorial[numVertices - i - 1];
-      for(std::size_t j = i + 1; j < numVertices; ++j) {
-        if(verticesOrder[j] > verticesOrder[i]) --verticesOrder[j];
-      }
-    }
+    basisFunctionsOrientation = _orientation(e, numVertices);
   }
-
   return;
 }
 
@@ -4305,7 +4251,8 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
   std::size_t numElements = 0;
-  for(auto ge : entities) numElements += ge->getNumMeshElementsByType(familyType);
+  for(auto ge : entities)
+    numElements += ge->getNumMeshElementsByType(familyType);
 
   if(_isLagrange(fsName)) {
     std::size_t n = numElements * ElementType::getNumVertices(elementType);
