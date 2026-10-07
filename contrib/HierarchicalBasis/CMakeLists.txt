@@ -4,7 +4,6 @@
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
-    OrthogonalPoly.cpp
     HierarchicalBasis.cpp
     H1Point.cpp
     H1Line.cpp

@@ -44,9 +44,10 @@ namespace bt {
 
   int maxOrder(const Element &e)
   {
-    if(e.dim <= 2) return 6;
-    if(e.name == "tetrahedron") return 5;
-    return 4;
+    if(e.dim <= 1) return 12;
+    if(e.dim == 2) return 9;
+    if(e.name == "tetrahedron") return 7;
+    return 5;
   }
 
   std::string spaceType(const Space &s, int order, bool derivative)

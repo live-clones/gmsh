@@ -51,12 +51,11 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
     return nullptr;
   }
 
-  // the Lobatto and Legendre polynomials are tabulated up to orders 15 and 10
   bool h1 = (space == H1 || space == GRAD_H1);
-  int minOrder = h1 ? 1 : 0, maxOrder = h1 ? 15 : 10;
-  if(order < minOrder || order > maxOrder) {
-    Msg::Error("Order %d of function space '%s' is not available (%d to %d)",
-               order, fsName.c_str(), minOrder, maxOrder);
+  int minOrder = h1 ? 1 : 0;
+  if(order < minOrder) {
+    Msg::Error("Order %d of function space '%s' is not available (minimum %d)",
+               order, fsName.c_str(), minOrder);
     return nullptr;
   }
 
