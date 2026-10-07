@@ -8,7 +8,7 @@
 // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
 // Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
-#include "HierarchicalBasisHcurlPri.h"
+#include "HcurlPrism.h"
 
 HierarchicalBasisHcurlPri::HierarchicalBasisHcurlPri(int order)
 {

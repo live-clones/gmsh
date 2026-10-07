@@ -3,16 +3,17 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Ismail Badia (2019) and Nawfel BENATIA (2025).
+// Contributed by Nawfel BENATIA (2025), based on Ismail Badia's contribution
+// (2019).
 //
 // Reference : Solin, P., Segeth, K., & Dolezel, I. (2003).
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
 #include <iostream>
-#include "HierarchicalBasisHcurlTria.h"
+#include "HdivTriangle.h"
 
-HierarchicalBasisHcurlTria::HierarchicalBasisHcurlTria(int order)
+HierarchicalBasisHdivTria::HierarchicalBasisHdivTria(int order)
 {
   _pf = order;
   _pOrderEdge = {order, order, order};
@@ -28,11 +29,11 @@ HierarchicalBasisHcurlTria::HierarchicalBasisHcurlTria(int order)
   _numBubbleFunction = 0;
 }
 
-double HierarchicalBasisHcurlTria::dotProduct(const std::vector<double> &u,
-                                              const std::vector<double> &v)
+double HierarchicalBasisHdivTria::dotProduct(const std::vector<double> &u,
+                                             const std::vector<double> &v)
 { return u[0] * v[0] + u[1] * v[1]; }
 
-double HierarchicalBasisHcurlTria::_affineCoordinate(int j, double u, double v)
+double HierarchicalBasisHdivTria::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -42,7 +43,7 @@ double HierarchicalBasisHcurlTria::_affineCoordinate(int j, double u, double v)
   }
 }
 
-void HierarchicalBasisHcurlTria::generateHcurlBasis(
+void HierarchicalBasisHdivTria::generateHdivBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -58,31 +59,32 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
   double lambda3 = _affineCoordinate(3, uc, vc);
 
   const std::vector<double> t1{1.0, 0.0, 0.0};
-  const std::vector<double> t2{-1.0, 1.0, 0.0};
+  const std::vector<double> t2{-1.0, 1.0, 0.0}; //!!!!!
   const std::vector<double> t3{0.0, -1.0, 0.0};
 
   const std::vector<double> n1{0.0, 1.0, 0.0};
-  const double invSqrt2 = M_SQRT1_2;
-  const std::vector<double> n2{-invSqrt2, -invSqrt2, 0.0};
+  // normal of the same length as the edge, for the normal component to be
+  // continuous across elements once mapped with the contravariant Piola map
+  const std::vector<double> n2{-1.0, -1.0, 0.0};
   const std::vector<double> n3{1.0, 0.0, 0.0};
 
   // Whitney functions
-  std::vector<std::vector<double>> psie_0(3, std::vector<double>(3, 0));
-  std::vector<std::vector<double>> psie_1(3, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> gamma_0(3, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> gamma_1(3, std::vector<double>(3, 0));
   for(int i = 0; i < 3; i++) {
-    psie_0[0][i] = lambda3 * n2[i] / dotProduct(n2, t1) +
-                   lambda2 * n3[i] / dotProduct(n3, t1);
-    psie_0[1][i] = lambda1 * n3[i] / dotProduct(n3, t2) +
-                   lambda3 * n1[i] / dotProduct(n1, t2);
-    psie_0[2][i] = lambda2 * n1[i] / dotProduct(n1, t3) +
-                   lambda1 * n2[i] / dotProduct(n2, t3);
+    gamma_0[0][i] = lambda3 * t2[i] / dotProduct(t2, n1) +
+                    lambda2 * t3[i] / dotProduct(t3, n1);
+    gamma_0[1][i] = lambda1 * t3[i] / dotProduct(t3, n2) +
+                    lambda3 * t1[i] / dotProduct(t1, n2);
+    gamma_0[2][i] = lambda2 * t1[i] / dotProduct(t1, n3) +
+                    lambda1 * t2[i] / dotProduct(t2, n3);
 
-    psie_1[0][i] = lambda3 * n2[i] / dotProduct(n2, t1) -
-                   lambda2 * n3[i] / dotProduct(n3, t1);
-    psie_1[1][i] = lambda1 * n3[i] / dotProduct(n3, t2) -
-                   lambda3 * n1[i] / dotProduct(n1, t2);
-    psie_1[2][i] = lambda2 * n1[i] / dotProduct(n1, t3) -
-                   lambda1 * n2[i] / dotProduct(n2, t3);
+    gamma_1[0][i] = lambda3 * t2[i] / dotProduct(t2, n1) -
+                    lambda2 * t3[i] / dotProduct(t3, n1);
+    gamma_1[1][i] = lambda1 * t3[i] / dotProduct(t3, n2) -
+                    lambda3 * t1[i] / dotProduct(t1, n2);
+    gamma_1[2][i] = lambda2 * t1[i] / dotProduct(t1, n3) -
+                    lambda1 * t2[i] / dotProduct(t2, n3);
   }
 
   double subl3l2 = lambda3 - lambda2;
@@ -112,11 +114,11 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
   int edgeIt = 0;
   int faceIt = 0;
   for(int i = 0; i < _numEdge; i++) {
-    for(int j = 0; j < 3; j++) { edgeBasis[edgeIt][j] = jacob * psie_0[i][j]; }
+    for(int j = 0; j < 3; j++) { edgeBasis[edgeIt][j] = jacob * gamma_0[i][j]; }
     edgeIt++;
     if(_pOrderEdge[i] >= 1) {
       for(int j = 0; j < 3; j++) {
-        edgeBasis[edgeIt][j] = jacob * psie_1[i][j];
+        edgeBasis[edgeIt][j] = jacob * gamma_1[i][j];
       }
       edgeIt++;
 
@@ -124,34 +126,34 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
         for(int j = 0; j < 3; j++) {
           edgeBasis[edgeIt][j] =
             jacob * ((2 * double(iedge) - 1) / double(iedge) *
-                       legendreVector[i][iedge - 1] * psie_1[i][j] -
+                       legendreVector[i][iedge - 1] * gamma_1[i][j] -
                      (double(iedge) - 1) / double(iedge) *
-                       legendreVector[i][iedge - 2] * psie_0[i][j]);
+                       legendreVector[i][iedge - 2] * gamma_0[i][j]);
         }
         edgeIt++;
       }
     }
     double product = 0;
-    std::vector<double> nD(3, 0);
+    std::vector<double> tD(3, 0); //!!!!!!!!!!!!!
     switch(i) {
     case(0):
       product = lambda3 * lambda2;
-      nD[1] = 0.5;
+      tD[0] = 0.5;
       break;
     case(1):
       product = lambda1 * lambda3;
-      nD[0] = -0.5;
-      nD[1] = -0.5;
+      tD[0] = -0.5;
+      tD[1] = 0.5;
       break;
     case(2):
       product = lambda1 * lambda2;
-      nD[0] = 0.5;
+      tD[1] = -0.5;
       break;
     }
     for(int i1 = 2; i1 <= _pf; i1++) {
       for(int j = 0; j < 3; j++) {
         faceBasis[faceIt][j] =
-          jacob * product * legendreVector[i][i1 - 2] * nD[j];
+          jacob * product * legendreVector[i][i1 - 2] * tD[j];
       }
       faceIt++;
     }
@@ -178,10 +180,9 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlTria::generateCurlBasis(
-  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
-  std::vector<std::vector<double>> &faceBasis,
-  std::vector<std::vector<double>> &bubbleBasis)
+void HierarchicalBasisHdivTria::generateDivBasis(
+  double u, double v, double w, std::vector<double> &edgeBasis,
+  std::vector<double> &faceBasis, std::vector<double> &bubbleBasis)
 {
   //***
   // to map onto the reference domain of gmsh:
@@ -192,50 +193,48 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   double lambda1 = _affineCoordinate(1, uc, vc);
   double lambda2 = _affineCoordinate(2, uc, vc);
   double lambda3 = _affineCoordinate(3, uc, vc);
-  std::vector<double> t1 = std::vector<double>(3, 0);
-  t1[0] = 1;
-  std::vector<double> t2 = std::vector<double>(3, 0);
-  t2[0] = -1;
-  t2[1] = 1;
-  std::vector<double> t3 = std::vector<double>(3, 0);
-  t3[1] = -1;
-  std::vector<double> n1 = std::vector<double>(3, 0);
-  n1[1] = 1;
-  std::vector<double> n2 = std::vector<double>(3, 0);
-  n2[0] = -sqrt(0.5);
-  n2[1] = -sqrt(0.5);
-  std::vector<double> n3 = std::vector<double>(3, 0);
-  n3[0] = 1;
-  // Whitney functions
-  std::vector<std::vector<double>> psie_0(3, std::vector<double>(3, 0));
-  std::vector<std::vector<double>> psie_1(3, std::vector<double>(3, 0));
-  for(int i = 0; i < 3; i++) {
-    psie_0[0][i] = lambda3 * n2[i] / dotProduct(n2, t1) +
-                   lambda2 * n3[i] / dotProduct(n3, t1);
-    psie_0[1][i] = lambda1 * n3[i] / dotProduct(n3, t2) +
-                   lambda3 * n1[i] / dotProduct(n1, t2);
-    psie_0[2][i] = lambda2 * n1[i] / dotProduct(n1, t3) +
-                   lambda1 * n2[i] / dotProduct(n2, t3);
 
-    psie_1[0][i] = lambda3 * n2[i] / dotProduct(n2, t1) -
-                   lambda2 * n3[i] / dotProduct(n3, t1);
-    psie_1[1][i] = lambda1 * n3[i] / dotProduct(n3, t2) -
-                   lambda3 * n1[i] / dotProduct(n1, t2);
-    psie_1[2][i] = lambda2 * n1[i] / dotProduct(n1, t3) -
-                   lambda1 * n2[i] / dotProduct(n2, t3);
+  const std::vector<double> t1{1.0, 0.0, 0.0};
+  const std::vector<double> t2{-1.0, 1.0, 0.0};
+  const std::vector<double> t3{0.0, -1.0, 0.0};
+
+  const std::vector<double> n1{0.0, 1.0, 0.0};
+  // normal of the same length as the edge, for the normal component to be
+  // continuous across elements once mapped with the contravariant Piola map
+  const std::vector<double> n2{-1.0, -1.0, 0.0};
+  const std::vector<double> n3{1.0, 0.0, 0.0};
+
+  // Whitney functions
+  std::vector<std::vector<double>> gamma_0(3, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> gamma_1(3, std::vector<double>(3, 0));
+  for(int i = 0; i < 3; i++) {
+    gamma_0[0][i] = lambda3 * t2[i] / dotProduct(t2, n1) +
+                    lambda2 * t3[i] / dotProduct(t3, n1);
+    gamma_0[1][i] = lambda1 * t3[i] / dotProduct(t3, n2) +
+                    lambda3 * t1[i] / dotProduct(t1, n2);
+    gamma_0[2][i] = lambda2 * t1[i] / dotProduct(t1, n3) +
+                    lambda1 * t2[i] / dotProduct(t2, n3);
+
+    gamma_1[0][i] = lambda3 * t2[i] / dotProduct(t2, n1) -
+                    lambda2 * t3[i] / dotProduct(t3, n1);
+    gamma_1[1][i] = lambda1 * t3[i] / dotProduct(t3, n2) -
+                    lambda3 * t1[i] / dotProduct(t1, n2);
+    gamma_1[2][i] = lambda2 * t1[i] / dotProduct(t1, n3) -
+                    lambda1 * t2[i] / dotProduct(t2, n3);
   }
-  std::vector<double> curlpsie_0(3);
-  std::vector<double> curlpsie_1(3);
-  curlpsie_0[0] = 1;
-  curlpsie_0[1] = 1;
-  curlpsie_0[2] = 1;
-  curlpsie_1[0] = 0;
-  curlpsie_1[1] = 0;
-  curlpsie_1[2] = 0;
+  std::vector<double> divgamma_0(3);
+  std::vector<double> divgamma_1(3);
+  divgamma_0[0] = -1;
+  divgamma_0[1] = -1;
+  divgamma_0[2] = -1;
+  divgamma_1[0] = 0;
+  divgamma_1[1] = 0;
+  divgamma_1[2] = 0;
   std::vector<double> subtraction(3, 0);
   subtraction[0] = lambda3 - lambda2;
   subtraction[1] = lambda1 - lambda3;
   subtraction[2] = lambda2 - lambda1;
+
   std::vector<std::vector<double>> dsubtraction(3, std::vector<double>(2, 0));
   dsubtraction[0][0] = 1;
   dsubtraction[0][1] = 0.5;
@@ -243,6 +242,7 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   dsubtraction[1][1] = 0.5;
   dsubtraction[2][0] = -0.5;
   dsubtraction[2][1] = -1;
+
   std::vector<std::vector<double>> legendreVector(3);
   legendreVector[0] =
     std::vector<double>(std::max(std::max(_pOrderEdge[0], _pf - 1), 0));
@@ -250,6 +250,7 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
     std::vector<double>(std::max(std::max(_pOrderEdge[1], _pf - 1), 0));
   legendreVector[2] =
     std::vector<double>(std::max(std::max(_pOrderEdge[2], _pf - 1), 0));
+
   std::vector<std::vector<double>> dlegendreVector(3);
   dlegendreVector[0] =
     std::vector<double>(std::max(std::max(_pOrderEdge[0], _pf - 1), 0));
@@ -257,6 +258,7 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
     std::vector<double>(std::max(std::max(_pOrderEdge[1], _pf - 1), 0));
   dlegendreVector[2] =
     std::vector<double>(std::max(std::max(_pOrderEdge[2], _pf - 1), 0));
+
   for(unsigned int k = 0; k < legendreVector[0].size(); k++) {
     legendreVector[0][k] = OrthogonalPoly::EvalLegendre(k, subtraction[0]);
     dlegendreVector[0][k] = OrthogonalPoly::EvalDLegendre(k, subtraction[0]);
@@ -272,24 +274,24 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   int edgeIt = 0;
 
   for(int i = 0; i < _numEdge; i++) {
-    edgeBasis[edgeIt][2] = det * curlpsie_0[i];
+    edgeBasis[edgeIt] = det * divgamma_0[i];
     edgeIt++;
     if(_pOrderEdge[i] >= 1) {
-      edgeBasis[edgeIt][2] = det * curlpsie_1[i];
+      edgeBasis[edgeIt] = det * divgamma_1[i];
       edgeIt++;
       for(int iedge = 2; iedge <= _pOrderEdge[i]; iedge++) {
-        edgeBasis[edgeIt][2] =
+        edgeBasis[edgeIt] =
           det * ((2 * double(iedge) - 1) / double(iedge) *
                    (dsubtraction[i][0] * dlegendreVector[i][iedge - 1] *
-                      psie_1[i][1] -
+                      gamma_1[i][0] +
                     dsubtraction[i][1] * dlegendreVector[i][iedge - 1] *
-                      psie_1[i][0]) -
+                      gamma_1[i][1]) -
                  (double(iedge) - 1) / double(iedge) *
-                   (curlpsie_0[i] * legendreVector[i][iedge - 2] +
-                    dsubtraction[i][0] * dlegendreVector[i][iedge - 2] *
-                      psie_0[i][1] -
+                   (dsubtraction[i][0] * dlegendreVector[i][iedge - 2] *
+                      gamma_0[i][0] +
                     dsubtraction[i][1] * dlegendreVector[i][iedge - 2] *
-                      psie_0[i][0]));
+                      gamma_0[i][1] +
+                    divgamma_0[i] * legendreVector[i][iedge - 2]));
         edgeIt++;
       }
     }
@@ -298,7 +300,7 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   double dlambda23 = 0.5 * (lambda2 - lambda3);
   double prod32 = lambda3 * lambda2;
   for(int n1 = 2; n1 <= _pf; n1++) {
-    faceBasis[faceIt][2] =
+    faceBasis[faceIt] =
       0.5 * det *
       (dlambda23 * legendreVector[0][n1 - 2] +
        prod32 * dsubtraction[0][0] * dlegendreVector[0][n1 - 2]);
@@ -309,8 +311,8 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   double dlambda13V = 0.5 * (lambda3);
   double prod13 = lambda3 * lambda1;
   for(int n1 = 2; n1 <= _pf; n1++) {
-    faceBasis[faceIt][2] =
-      -det * 0.5 *
+    faceBasis[faceIt] =
+      -0.5 * det *
       (dlambda13U * legendreVector[1][n1 - 2] +
        prod13 * dsubtraction[1][0] * dlegendreVector[1][n1 - 2] -
        (dlambda13V * legendreVector[1][n1 - 2] +
@@ -320,7 +322,7 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   double dlambda12 = 0.5 * (lambda2 - lambda1);
   double prod12 = lambda2 * lambda1;
   for(int n1 = 2; n1 <= _pf; n1++) {
-    faceBasis[faceIt][2] =
+    faceBasis[faceIt] =
       -0.5 * det *
       (dlambda12 * legendreVector[2][n1 - 2] +
        prod12 * dsubtraction[2][1] * dlegendreVector[2][n1 - 2]);
@@ -331,12 +333,12 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   double dlambda123V = 0.5 * lambda3 * (lambda2 - lambda1);
   for(int n1 = 0; n1 < _pf - 2; n1++) {
     for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
-      faceBasis[faceIt][2] =
-        -0.5 * det *
-        (dlambda123V * legendreVector[0][n1] * legendreVector[2][n2] +
-         prod123 * dsubtraction[0][1] * dlegendreVector[0][n1] *
+      faceBasis[faceIt] =
+        0.5 * det *
+        (dlambda123U * legendreVector[0][n1] * legendreVector[2][n2] +
+         prod123 * dsubtraction[0][0] * dlegendreVector[0][n1] *
            legendreVector[2][n2] +
-         prod123 * dsubtraction[2][1] * legendreVector[0][n1] *
+         prod123 * dsubtraction[2][0] * legendreVector[0][n1] *
            dlegendreVector[2][n2]);
 
       faceIt++;
@@ -344,24 +346,24 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   }
   for(int n1 = 0; n1 < _pf - 2; n1++) {
     for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
-      faceBasis[faceIt][2] =
+      faceBasis[faceIt] =
         0.5 * det *
-        (dlambda123U * legendreVector[0][n1] * legendreVector[2][n2] +
-         prod123 * dsubtraction[0][0] * dlegendreVector[0][n1] *
+        (dlambda123V * legendreVector[0][n1] * legendreVector[2][n2] +
+         prod123 * dsubtraction[0][1] * dlegendreVector[0][n1] *
            legendreVector[2][n2] +
-         prod123 * dsubtraction[2][0] * legendreVector[0][n1] *
+         prod123 * dsubtraction[2][1] * legendreVector[0][n1] *
            dlegendreVector[2][n2]);
       faceIt++;
     }
   }
 }
 
-void HierarchicalBasisHcurlTria::orientOneFace(
+void HierarchicalBasisHdivTria::orientOneFace(
   double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
   std::vector<std::vector<double>> &faceFunctions)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
-    if(_space == HCURL) {
+    if(_space == HDIV) {
       // to map onto the reference domain of gmsh:
       double uc = 2 * u - 1;
       double vc = 2 * v - 1;
@@ -427,38 +429,38 @@ void HierarchicalBasisHcurlTria::orientOneFace(
       sub[0] = lambda[1] - lambda[0];
       sub[1] = lambda[2] - lambda[1];
       sub[2] = lambda[0] - lambda[2];
-      std::vector<double> n1 = std::vector<double>(2, 0);
-      n1[0] = dlambda[2][0];
-      n1[1] = dlambda[2][1];
-      std::vector<double> n2 = std::vector<double>(2, 0);
-      n2[0] = dlambda[0][0];
-      n2[1] = dlambda[0][1];
-      std::vector<double> n3 = std::vector<double>(2, 0);
-      n3[0] = dlambda[1][0];
-      n3[1] = dlambda[1][1];
+      std::vector<double> t1 = std::vector<double>(2, 0);
+      t1[0] = dlambda[2][1];
+      t1[1] = -dlambda[2][0];
+      std::vector<double> t2 = std::vector<double>(2, 0);
+      t2[0] = dlambda[0][1];
+      t2[1] = -dlambda[0][0];
+      std::vector<double> t3 = std::vector<double>(2, 0);
+      t3[0] = dlambda[1][1];
+      t3[1] = -dlambda[1][0];
       // edge-based face functions
       for(int i = 0; i < 3; i++) {
         double product2 = 0;
-        std::vector<double> *normal(nullptr);
+        std::vector<double> *tangent(nullptr);
         switch(i) {
         case(0):
           product2 = lambda[1] * lambda[0];
-          normal = &n1;
+          tangent = &t1;
           break;
         case(1):
           product2 = lambda[1] * lambda[2];
-          normal = &n2;
+          tangent = &t2;
           break;
         case(2):
           product2 = lambda[2] * lambda[0];
-          normal = &n3;
+          tangent = &t3;
           break;
         }
         for(int i1 = 2; i1 <= _pf; i1++) {
           for(int j = 0; j < 2; j++) {
             faceFunctions[faceIt][j] =
               jacob * product2 * OrthogonalPoly::EvalLegendre(i1 - 2, sub[i]) *
-              (*normal)[j];
+              (*tangent)[j];
           }
           faceFunctions[faceIt][2] = 0;
           faceIt++;
@@ -493,7 +495,15 @@ void HierarchicalBasisHcurlTria::orientOneFace(
         }
       }
     }
-    else if(_space == CURL_HCURL) {
+  }
+}
+
+void HierarchicalBasisHdivTria::orientOneFace(
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<double> &faceFunctions)
+{
+  if(!(flag1 == 0 && flag2 == 1)) {
+    if(_space == DIV_HDIV) {
       // to map onto the reference domain of gmsh:
       double uc = 2 * u - 1;
       double vc = 2 * v - 1;
@@ -561,15 +571,15 @@ void HierarchicalBasisHcurlTria::orientOneFace(
       sub[0] = lambda[1] - lambda[0];
       sub[1] = lambda[2] - lambda[1];
       sub[2] = lambda[0] - lambda[2];
-      std::vector<double> n1 = std::vector<double>(2, 0);
-      n1[0] = dlambda[2][0];
-      n1[1] = dlambda[2][1];
-      std::vector<double> n2 = std::vector<double>(2, 0);
-      n2[0] = dlambda[0][0];
-      n2[1] = dlambda[0][1];
-      std::vector<double> n3 = std::vector<double>(2, 0);
-      n3[0] = dlambda[1][0];
-      n3[1] = dlambda[1][1];
+      std::vector<double> t1 = std::vector<double>(2, 0);
+      t1[0] = dlambda[2][1];
+      t1[1] = -dlambda[2][0];
+      std::vector<double> t2 = std::vector<double>(2, 0);
+      t2[0] = dlambda[0][1];
+      t2[1] = -dlambda[0][0];
+      std::vector<double> t3 = std::vector<double>(2, 0);
+      t3[0] = dlambda[1][1];
+      t3[1] = -dlambda[1][0];
       std::vector<std::vector<double>> dsub(3, std::vector<double>(2, 0));
       for(int p = 0; p < 2; p++) {
         dsub[0][p] = dlambda[1][p] - dlambda[0][p];
@@ -587,9 +597,7 @@ void HierarchicalBasisHcurlTria::orientOneFace(
         double dphiV =
           dlambda23V * OrthogonalPoly::EvalLegendre(i1 - 2, sub[0]) +
           prod32 * dsub[0][1] * OrthogonalPoly::EvalDLegendre(i1 - 2, sub[0]);
-        faceFunctions[faceIt][0] = 0;
-        faceFunctions[faceIt][1] = 0;
-        faceFunctions[faceIt][2] = det * (n1[1] * dphiU - n1[0] * dphiV);
+        faceFunctions[faceIt] = det * (t1[0] * dphiU + t1[1] * dphiV);
         faceIt++;
       }
       double dlambda13U = dlambda[2][0] * lambda[1] + dlambda[1][0] * lambda[2];
@@ -602,9 +610,7 @@ void HierarchicalBasisHcurlTria::orientOneFace(
         double dphiV =
           dlambda13V * OrthogonalPoly::EvalLegendre(i1 - 2, sub[1]) +
           prod13 * dsub[1][1] * OrthogonalPoly::EvalDLegendre(i1 - 2, sub[1]);
-        faceFunctions[faceIt][0] = 0;
-        faceFunctions[faceIt][1] = 0;
-        faceFunctions[faceIt][2] = det * (n2[1] * dphiU - n2[0] * dphiV);
+        faceFunctions[faceIt] = det * (t2[0] * dphiU + t2[1] * dphiV);
         faceIt++;
       }
       double dlambda12U = dlambda[2][0] * lambda[0] + dlambda[0][0] * lambda[2];
@@ -617,9 +623,7 @@ void HierarchicalBasisHcurlTria::orientOneFace(
         double dphiV =
           dlambda12V * OrthogonalPoly::EvalLegendre(i1 - 2, sub[2]) +
           prod12 * dsub[2][1] * OrthogonalPoly::EvalDLegendre(i1 - 2, sub[2]);
-        faceFunctions[faceIt][0] = 0;
-        faceFunctions[faceIt][1] = 0;
-        faceFunctions[faceIt][2] = det * (n3[1] * dphiU - n3[0] * dphiV);
+        faceFunctions[faceIt] = det * (t3[0] * dphiU + t3[1] * dphiV);
         faceIt++;
       }
       // Genuine face function
@@ -646,30 +650,29 @@ void HierarchicalBasisHcurlTria::orientOneFace(
 
       for(int n1 = 0; n1 < _pf - 2; n1++) {
         for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
-          faceFunctions[faceIt][2] =
-            det *
-            ((dProduct[0] * LSubAC[n2] * LSubBA[n1] +
-              product * dsubBA[0] * LSubAC[n2] * dLSubBA[n1] +
-              product * dsubAC[0] * dLSubAC[n2] * LSubBA[n1]) *
-               dlambda[1][1] -
-             dlambda[1][0] * (dProduct[1] * LSubAC[n2] * LSubBA[n1] +
-                              product * dsubBA[1] * LSubAC[n2] * dLSubBA[n1] +
-                              product * dsubAC[1] * dLSubAC[n2] * LSubBA[n1]));
-
+          faceFunctions[faceIt] =
+            det * ((dProduct[0] * LSubAC[n2] * LSubBA[n1] +
+                    product * dsubBA[0] * LSubAC[n2] * dLSubBA[n1] +
+                    product * dsubAC[0] * dLSubAC[n2] * LSubBA[n1]) *
+                     dlambda[1][0] +
+                   (dProduct[1] * LSubAC[n2] * LSubBA[n1] +
+                    product * dsubBA[1] * LSubAC[n2] * dLSubBA[n1] +
+                    product * dsubAC[1] * dLSubAC[n2] * LSubBA[n1]) *
+                     dlambda[1][1]);
           faceIt++;
         }
       }
       for(int n1 = 0; n1 < _pf - 2; n1++) {
         for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
-          faceFunctions[faceIt][2] =
-            det *
-            ((dProduct[0] * LSubAC[n2] * LSubBA[n1] +
-              product * dsubBA[0] * LSubAC[n2] * dLSubBA[n1] +
-              product * dsubAC[0] * dLSubAC[n2] * LSubBA[n1]) *
-               dlambda[2][1] -
-             dlambda[2][0] * (dProduct[1] * LSubAC[n2] * LSubBA[n1] +
-                              product * dsubBA[1] * LSubAC[n2] * dLSubBA[n1] +
-                              product * dsubAC[1] * dLSubAC[n2] * LSubBA[n1]));
+          faceFunctions[faceIt] =
+            det * ((dProduct[0] * LSubAC[n2] * LSubBA[n1] +
+                    product * dsubBA[0] * LSubAC[n2] * dLSubBA[n1] +
+                    product * dsubAC[0] * dLSubAC[n2] * LSubBA[n1]) *
+                     dlambda[2][0] +
+                   (dProduct[1] * LSubAC[n2] * LSubBA[n1] +
+                    product * dsubBA[1] * LSubAC[n2] * dLSubBA[n1] +
+                    product * dsubAC[1] * dLSubAC[n2] * LSubBA[n1]) *
+                     dlambda[2][1]);
           faceIt++;
         }
       }
@@ -677,8 +680,8 @@ void HierarchicalBasisHcurlTria::orientOneFace(
   }
 }
 
-void HierarchicalBasisHcurlTria::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                             std::vector<int> &orderInfo)
+void HierarchicalBasisHdivTria::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                            std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int numEdge = 0; numEdge < 3; numEdge++) {

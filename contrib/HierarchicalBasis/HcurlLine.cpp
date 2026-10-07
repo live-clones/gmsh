@@ -9,7 +9,7 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#include "HierarchicalBasisHcurlLine.h"
+#include "HcurlLine.h"
 
 HierarchicalBasisHcurlLine::HierarchicalBasisHcurlLine(int order)
 {

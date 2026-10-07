@@ -9,7 +9,7 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#include "HierarchicalBasisH1Pri.h"
+#include "H1Prism.h"
 
 HierarchicalBasisH1Pri::HierarchicalBasisH1Pri(int order)
 {

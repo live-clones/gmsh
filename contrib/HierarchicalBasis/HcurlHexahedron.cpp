@@ -6,7 +6,7 @@
 // Contributed by Ismail Badia.
 
 #include <algorithm>
-#include "HierarchicalBasisHcurlBrick.h"
+#include "HcurlHexahedron.h"
 
 HierarchicalBasisHcurlBrick::HierarchicalBasisHcurlBrick(int order)
 {

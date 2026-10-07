@@ -10,7 +10,7 @@
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
 #include <iostream>
-#include "HierarchicalBasisH1Tria.h"
+#include "H1Triangle.h"
 
 HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int order)
 {

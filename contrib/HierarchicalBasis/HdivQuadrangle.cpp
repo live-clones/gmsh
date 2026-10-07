@@ -10,7 +10,7 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#include "HierarchicalBasisHdivQuad.h"
+#include "HdivQuadrangle.h"
 
 HierarchicalBasisHdivQuad::HierarchicalBasisHdivQuad(int order)
 {

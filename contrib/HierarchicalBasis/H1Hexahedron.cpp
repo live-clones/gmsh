@@ -10,7 +10,7 @@
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
 #include <algorithm>
-#include "HierarchicalBasisH1Brick.h"
+#include "H1Hexahedron.h"
 
 HierarchicalBasisH1Brick::HierarchicalBasisH1Brick(int order)
 {

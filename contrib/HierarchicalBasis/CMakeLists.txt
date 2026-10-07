@@ -6,22 +6,22 @@
 set(SRC
     OrthogonalPoly.cpp
     HierarchicalBasis.cpp
-    Point/HierarchicalBasisH1Point.cpp
-    Line/HierarchicalBasisH1Line.cpp
-    Line/HierarchicalBasisHcurlLine.cpp
-    Triangle/HierarchicalBasisH1Tria.cpp
-    Triangle/HierarchicalBasisHcurlTria.cpp
-    Triangle/HierarchicalBasisHdivTria.cpp 
-    Quadrilateral/HierarchicalBasisH1Quad.cpp
-    Quadrilateral/HierarchicalBasisHcurlQuad.cpp
-   # Quadrilateral/HierarchicalBasisHdivQuad.cpp   
-    Tetrahedron/HierarchicalBasisH1Tetra.cpp
-    Tetrahedron/HierarchicalBasisHcurlTetra.cpp
-    Hexahedron/HierarchicalBasisH1Brick.cpp
-    Hexahedron/HierarchicalBasisHcurlBrick.cpp
-    Prism/HierarchicalBasisH1Pri.cpp
-    Prism/HierarchicalBasisHcurlPri.cpp
+    H1Point.cpp
+    H1Line.cpp
+    HcurlLine.cpp
+    H1Triangle.cpp
+    HcurlTriangle.cpp
+    HdivTriangle.cpp
+    H1Quadrangle.cpp
+    HcurlQuadrangle.cpp
+    # HdivQuadrangle.cpp (not finished)
+    H1Tetrahedron.cpp
+    HcurlTetrahedron.cpp
+    H1Hexahedron.cpp
+    HcurlHexahedron.cpp
+    H1Prism.cpp
+    HcurlPrism.cpp
 )
 
-file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(contrib/HierarchicalBasis "${SRC};${HDR}")
