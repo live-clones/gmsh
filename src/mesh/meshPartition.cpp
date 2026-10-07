@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <sstream>
 #include <algorithm>
+#include <numeric>
 #include <ctime>
 #include <limits>
 #include <stack>
@@ -82,6 +83,10 @@ typedef std::vector<std::pair<MElement *, int> > elementPartitionList;
 extern "C" {
 #include <metis.h>
 }
+
+#if defined(HAVE_MTMETIS)
+#include <mtmetis.h>
+#endif
 
 // Graph of the mesh for partitioning purposes.
 class Graph {
@@ -614,6 +619,85 @@ static void correctTopology(const Graph &graph, std::vector<idx_t> &epart)
   }
 }
 
+#if defined(HAVE_MTMETIS)
+
+// Partition the dual graph with the multithreaded k-way algorithm of mt-metis,
+// translating the METIS options it supports. Returns a METIS error code.
+static int partitionGraphMtMetis(Graph &graph, const idx_t *metisOptions,
+                                 std::vector<idx_t> &epart, idx_t &objval)
+{
+  const std::size_t ne = graph.ne();
+  if(ne > std::numeric_limits<mtmetis_vtx_type>::max()) {
+    Msg::Error("Graph too large for mt-metis (32-bit vertex indices)");
+    return METIS_ERROR_INPUT;
+  }
+  int64_t totalWeight = ne;
+  if(graph.vwgt())
+    totalWeight = std::accumulate(graph.vwgt(), graph.vwgt() + ne, int64_t(0));
+  if(totalWeight > std::numeric_limits<mtmetis_wgt_type>::max()) {
+    Msg::Error("Total element weight too large for mt-metis (32-bit weights)");
+    return METIS_ERROR_INPUT;
+  }
+
+  std::vector<double> options(MTMETIS_NOPTIONS, MTMETIS_VAL_OFF);
+  options[MTMETIS_OPTION_NTHREADS] =
+    CTX::instance()->numThreadsFor(ne, 10000);
+  // the default seed is the time of day: fix it, as METIS does
+  options[MTMETIS_OPTION_SEED] = 0;
+  if(metisOptions[METIS_OPTION_UFACTOR] >= 0)
+    options[MTMETIS_OPTION_UBFACTOR] =
+      1. + metisOptions[METIS_OPTION_UFACTOR] / 1000.;
+  if(metisOptions[METIS_OPTION_CTYPE] == METIS_CTYPE_RM)
+    options[MTMETIS_OPTION_CTYPE] = MTMETIS_CTYPE_RM;
+  else if(metisOptions[METIS_OPTION_CTYPE] == METIS_CTYPE_SHEM)
+    options[MTMETIS_OPTION_CTYPE] = MTMETIS_CTYPE_SHEM;
+  if(metisOptions[METIS_OPTION_RTYPE] == METIS_RTYPE_FM)
+    options[MTMETIS_OPTION_RTYPE] = MTMETIS_RTYPE_FM;
+  else if(metisOptions[METIS_OPTION_RTYPE] == METIS_RTYPE_GREEDY)
+    options[MTMETIS_OPTION_RTYPE] = MTMETIS_RTYPE_GREEDY;
+  else if(metisOptions[METIS_OPTION_RTYPE] != -1)
+    Msg::Warning("mt-metis ignores the node FM refinement algorithms");
+  if(metisOptions[METIS_OPTION_OBJTYPE] == METIS_OBJTYPE_VOL)
+    Msg::Warning("mt-metis ignores the communication volume objective");
+  if(metisOptions[METIS_OPTION_MINCONN] == 1)
+    Msg::Warning("mt-metis ignores the 'minconn' option");
+
+  // mt-metis takes 64-bit edge offsets (used in place when idx_t is 64-bit),
+  // and 32-bit vertex indices and weights
+  std::vector<mtmetis_adj_type> xadjCopy;
+  const mtmetis_adj_type *xadj =
+    reinterpret_cast<const mtmetis_adj_type *>(graph.xadj());
+  if(sizeof(idx_t) != sizeof(mtmetis_adj_type)) {
+    xadjCopy.assign(graph.xadj(), graph.xadj() + ne + 1);
+    xadj = xadjCopy.data();
+  }
+  std::vector<mtmetis_vtx_type> adjncy(graph.adjncy(),
+                                       graph.adjncy() + graph.xadj(ne));
+  std::vector<mtmetis_wgt_type> vwgt;
+  if(graph.vwgt()) vwgt.assign(graph.vwgt(), graph.vwgt() + ne);
+  std::vector<mtmetis_pid_type> where(ne);
+  mtmetis_vtx_type nvtxs = ne, ncon = 1;
+  mtmetis_pid_type nparts = graph.nparts();
+  mtmetis_wgt_type edgecut = 0;
+
+  int err = MTMETIS_PartGraphKway(
+    &nvtxs, &ncon, xadj, adjncy.data(), vwgt.empty() ? nullptr : vwgt.data(),
+    nullptr, nullptr, &nparts, nullptr, nullptr, options.data(), &edgecut,
+    where.data());
+
+  switch(err) {
+  case MTMETIS_SUCCESS: break;
+  case MTMETIS_ERROR_INVALIDINPUT: return METIS_ERROR_INPUT;
+  case MTMETIS_ERROR_NOTENOUGHMEMORY: return METIS_ERROR_MEMORY;
+  default: return METIS_ERROR;
+  }
+  for(std::size_t i = 0; i < ne; i++) epart[i] = where[i];
+  objval = edgecut;
+  return METIS_OK;
+}
+
+#endif
+
 // Partition a graph created by makeGraph using Metis library. Returns: 0 =
 // success, 1 = error, 2 = exception thrown.
 static int partitionGraph(Graph &graph, bool verbose)
@@ -638,6 +722,18 @@ static int partitionGraph(Graph &graph, bool verbose)
       metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_KWAY;
       opt << "kway";
       break;
+#if defined(HAVE_MTMETIS)
+    case 3: // Multithreaded k-way (mt-metis)
+      metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_KWAY;
+      opt << "kway (mt-metis)";
+      break;
+#else
+    case 3:
+      Msg::Warning("Gmsh was not compiled with mt-metis: using METIS K-way");
+      metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_KWAY;
+      opt << "kway";
+      break;
+#endif
     default: opt << "default"; break;
     }
 
@@ -726,6 +822,13 @@ static int partitionGraph(Graph &graph, bool verbose)
     int metisError = 0;
     graph.createDualGraph(false);
 
+    double t1 = TimeOfDay();
+#if defined(HAVE_MTMETIS)
+    if(CTX::instance()->mesh.metisAlgorithm == 3) {
+      metisError = partitionGraphMtMetis(graph, metisOptions, epart, objval);
+    }
+    else
+#endif
     if(metisOptions[METIS_OPTION_PTYPE] == METIS_PTYPE_KWAY) {
       metisError = METIS_PartGraphKway(
         &ne, &ncon, graph.xadj(), graph.adjncy(), graph.vwgt(), nullptr,
@@ -736,6 +839,9 @@ static int partitionGraph(Graph &graph, bool verbose)
         &ne, &ncon, graph.xadj(), graph.adjncy(), graph.vwgt(), nullptr,
         nullptr, &numPart, nullptr, nullptr, metisOptions, &objval, &epart[0]);
     }
+    if(verbose)
+      Msg::Info("Partitioned graph of %lu vertices in %g s", graph.ne(),
+                TimeOfDay() - t1);
 
     switch(metisError) {
     case METIS_OK: break;
