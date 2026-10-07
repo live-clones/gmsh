@@ -12,7 +12,7 @@
 #include <iostream>
 #include "HcurlTriangle.h"
 
-HierarchicalBasisHcurlTria::HierarchicalBasisHcurlTria(int order)
+HcurlTriangle::HcurlTriangle(int order)
 {
   _pf = order;
   _pOrderEdge = {order, order, order};
@@ -28,11 +28,11 @@ HierarchicalBasisHcurlTria::HierarchicalBasisHcurlTria(int order)
   _numBubbleFunction = 0;
 }
 
-double HierarchicalBasisHcurlTria::dotProduct(const std::vector<double> &u,
-                                              const std::vector<double> &v)
+double HcurlTriangle::dotProduct(const std::vector<double> &u,
+                                 const std::vector<double> &v)
 { return u[0] * v[0] + u[1] * v[1]; }
 
-double HierarchicalBasisHcurlTria::_affineCoordinate(int j, double u, double v)
+double HcurlTriangle::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -42,7 +42,7 @@ double HierarchicalBasisHcurlTria::_affineCoordinate(int j, double u, double v)
   }
 }
 
-void HierarchicalBasisHcurlTria::generateHcurlBasis(
+void HcurlTriangle::generateHcurlBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -178,7 +178,7 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlTria::generateCurlBasis(
+void HcurlTriangle::generateCurlBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -356,7 +356,7 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlTria::orientOneFace(
+void HcurlTriangle::orientOneFace(
   double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
   std::vector<std::vector<double>> &faceFunctions)
 {
@@ -677,8 +677,8 @@ void HierarchicalBasisHcurlTria::orientOneFace(
   }
 }
 
-void HierarchicalBasisHcurlTria::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                             std::vector<int> &orderInfo)
+void HcurlTriangle::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int numEdge = 0; numEdge < 3; numEdge++) {

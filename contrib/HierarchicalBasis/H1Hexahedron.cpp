@@ -12,7 +12,7 @@
 #include <algorithm>
 #include "H1Hexahedron.h"
 
-HierarchicalBasisH1Brick::HierarchicalBasisH1Brick(int order)
+H1Hexahedron::H1Hexahedron(int order)
 {
   _numVertex = 8;
   _numEdge = 12;
@@ -33,8 +33,7 @@ HierarchicalBasisH1Brick::HierarchicalBasisH1Brick(int order)
   for(int dir = 0; dir < 2; ++dir) { _pOrderFace[dir].fill(order); }
 }
 
-double HierarchicalBasisH1Brick::_affineCoordinate(int j, double u, double v,
-                                                   double w)
+double H1Hexahedron::_affineCoordinate(int j, double u, double v, double w)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -47,9 +46,9 @@ double HierarchicalBasisH1Brick::_affineCoordinate(int j, double u, double v,
   }
 }
 
-void HierarchicalBasisH1Brick::_someProduct(double u, double v, double w,
-                                            std::vector<double> &product,
-                                            std::vector<double> &lambda)
+void H1Hexahedron::_someProduct(double u, double v, double w,
+                                std::vector<double> &product,
+                                std::vector<double> &lambda)
 {
   lambda[0] = _affineCoordinate(1, u, v, w);
   lambda[1] = _affineCoordinate(2, u, v, w);
@@ -72,16 +71,16 @@ void HierarchicalBasisH1Brick::_someProduct(double u, double v, double w,
   product[11] = lambda[4] * lambda[2];
 }
 
-void HierarchicalBasisH1Brick::generateBasis(double u, double v, double w,
-                                             std::vector<double> &vertexBasis,
-                                             std::vector<double> &edgeBasis,
-                                             std::vector<double> &faceBasis,
-                                             std::vector<double> &bubbleBasis)
+void H1Hexahedron::generateBasis(double u, double v, double w,
+                                 std::vector<double> &vertexBasis,
+                                 std::vector<double> &edgeBasis,
+                                 std::vector<double> &faceBasis,
+                                 std::vector<double> &bubbleBasis)
 {
   std::vector<double> product(12, 0);
   std::vector<double> lambda(6, 0);
 
-  HierarchicalBasisH1Brick::_someProduct(u, v, w, product, lambda);
+  H1Hexahedron::_someProduct(u, v, w, product, lambda);
 
   // vertex shape functions:
   vertexBasis[0] = lambda[1] * product[0];
@@ -190,12 +189,12 @@ void HierarchicalBasisH1Brick::generateBasis(double u, double v, double w,
   }
 }
 
-void HierarchicalBasisH1Brick::_someProductGrad(
+void H1Hexahedron::_someProductGrad(
   double u, double v, double w, std::vector<double> &product,
   std::vector<std::vector<double>> &gradientProduct,
   std::vector<double> &lambda, std::vector<std::vector<double>> &gradientLambda)
 {
-  //    HierarchicalBasisH1Brick::_someProduct(u, v, w, product, lambda);
+  //    H1Hexahedron::_someProduct(u, v, w, product, lambda);
 
   lambda[0] = _affineCoordinate(1, u, v, w);
   lambda[1] = _affineCoordinate(2, u, v, w);
@@ -250,7 +249,7 @@ void HierarchicalBasisH1Brick::_someProductGrad(
   gradientProduct[11][2] = 0.5 * lambda[2];
 }
 
-void HierarchicalBasisH1Brick::generateGradientBasis(
+void H1Hexahedron::generateGradientBasis(
   double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
@@ -262,8 +261,8 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
                                                    std::vector<double>(3, 0));
   std::vector<double> lambda(6, 0);
   std::vector<std::vector<double>> gradientLambda(6, std::vector<double>(3, 0));
-  HierarchicalBasisH1Brick::_someProductGrad(u, v, w, product, gradientProduct,
-                                             lambda, gradientLambda);
+  H1Hexahedron::_someProductGrad(u, v, w, product, gradientProduct, lambda,
+                                 gradientLambda);
   // vertex gradient:
   for(int it = 0; it < 3; it++) {
     gradientVertex[0][it] =
@@ -424,10 +423,9 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Brick::orientOneFace(double u, double v, double w,
-                                             int flag1, int flag2, int flag3,
-                                             int faceNumber,
-                                             std::vector<double> &faceBasis)
+void H1Hexahedron::orientOneFace(double u, double v, double w, int flag1,
+                                 int flag2, int flag3, int faceNumber,
+                                 std::vector<double> &faceBasis)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -506,9 +504,9 @@ void HierarchicalBasisH1Brick::orientOneFace(double u, double v, double w,
   }
 }
 
-void HierarchicalBasisH1Brick::orientOneFace(
-  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
-  std::vector<std::vector<double>> &gradientFace)
+void H1Hexahedron::orientOneFace(double u, double v, double w, int flag1,
+                                 int flag2, int flag3, int faceNumber,
+                                 std::vector<std::vector<double>> &gradientFace)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -614,8 +612,8 @@ void HierarchicalBasisH1Brick::orientOneFace(
   }
 }
 
-void HierarchicalBasisH1Brick::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                           std::vector<int> &orderInfo)
+void H1Hexahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
+                               std::vector<int> &orderInfo)
 {
   for(int i = 0; i < 8; i++) {
     functionTypeInfo[i] = 0;

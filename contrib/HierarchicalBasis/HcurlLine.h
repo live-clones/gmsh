@@ -9,8 +9,8 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#ifndef HIERARCHICAL_BASIS_HCURL_LINE_H
-#define HIERARCHICAL_BASIS_HCURL_LINE_H
+#ifndef HCURL_LINE_H
+#define HCURL_LINE_H
 
 #include "HierarchicalBasis.h"
 
@@ -24,7 +24,7 @@
  *
  */
 
-class HierarchicalBasisHcurlLine : public HierarchicalBasis {
+class HcurlLine : public HierarchicalBasis {
 private:
   int _pe; //  edge function order in  direction u
 
@@ -45,9 +45,9 @@ private:
                            const std::vector<double> &v);
 
 public:
-  HierarchicalBasisHcurlLine(int order);
+  HcurlLine(int order);
 
-  virtual ~HierarchicalBasisHcurlLine() = default;
+  virtual ~HcurlLine() = default;
 
   virtual void generateBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &vertexBasis,

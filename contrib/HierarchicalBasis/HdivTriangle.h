@@ -10,8 +10,8 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#ifndef HIERARCHICAL_BASIS_HDIV_TRIA_H
-#define HIERARCHICAL_BASIS_HDIV_TRIA_H
+#ifndef HDIV_TRIANGLE_H
+#define HDIV_TRIANGLE_H
 
 #include <math.h>
 #include "HierarchicalBasis.h"
@@ -36,7 +36,7 @@
  *  pe0,pe1,pe2<=pf
  *
  */
-class HierarchicalBasisHdivTria : public HierarchicalBasis {
+class HdivTriangle : public HierarchicalBasis {
 private:
   int _pf; // face function order
   std::array<int, 3> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches
@@ -69,9 +69,9 @@ private:
                              std::vector<std::vector<double>> &faceFunctions);
 
 public:
-  HierarchicalBasisHdivTria(int order);
+  HdivTriangle(int order);
 
-  virtual ~HierarchicalBasisHdivTria() = default;
+  virtual ~HdivTriangle() = default;
 
   virtual void generateBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &vertexBasis,

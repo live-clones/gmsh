@@ -10,7 +10,7 @@
 
 #include "HcurlPrism.h"
 
-HierarchicalBasisHcurlPri::HierarchicalBasisHcurlPri(int order)
+HcurlPrism::HcurlPrism(int order)
 {
   _numVertex = 6;
   _numEdge = 9;
@@ -38,10 +38,9 @@ HierarchicalBasisHcurlPri::HierarchicalBasisHcurlPri(int order)
   _pOrderEdge.fill(order);
 }
 
-HierarchicalBasisHcurlPri::~HierarchicalBasisHcurlPri() {}
+HcurlPrism::~HcurlPrism() {}
 
-double HierarchicalBasisHcurlPri::_affineCoordinate(int j, double u, double v,
-                                                    double w)
+double HcurlPrism::_affineCoordinate(int j, double u, double v, double w)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -53,19 +52,19 @@ double HierarchicalBasisHcurlPri::_affineCoordinate(int j, double u, double v,
   }
 }
 
-double
-HierarchicalBasisHcurlPri::dotProduct(const std::vector<double> &u1,
-                                      const std::vector<double> &u2) // in 2D
+double HcurlPrism::dotProduct(const std::vector<double> &u1,
+                              const std::vector<double> &u2) // in 2D
 { return u1[0] * u2[0] + u1[1] * u2[1]; }
 
-void HierarchicalBasisHcurlPri::matrixVectorProductForMapping(
-  double a, const std::vector<double> &u, std::vector<double> &result)
+void HcurlPrism::matrixVectorProductForMapping(double a,
+                                               const std::vector<double> &u,
+                                               std::vector<double> &result)
 {
   result[0] = a * 2 * u[0];
   result[1] = a * 2 * u[1];
   result[2] = a * u[2];
 }
-void HierarchicalBasisHcurlPri::generateHcurlBasis(
+void HcurlPrism::generateHcurlBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -426,9 +425,9 @@ void HierarchicalBasisHcurlPri::generateHcurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlPri::orientOneFace(
-  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
-  std::vector<std::vector<double>> &faceFunctions)
+void HcurlPrism::orientOneFace(double u, double v, double w, int flag1,
+                               int flag2, int flag3, int faceNumber,
+                               std::vector<std::vector<double>> &faceFunctions)
 {
   if(faceNumber < 3) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
@@ -1126,15 +1125,14 @@ void HierarchicalBasisHcurlPri::orientOneFace(
   }
 }
 
-void HierarchicalBasisHcurlPri::matrixVectorProductForCurlMapping(
-  std::vector<double> &result)
+void HcurlPrism::matrixVectorProductForCurlMapping(std::vector<double> &result)
 {
   result[0] = 2 * result[0]; // Jacob*result[0]/det;
   result[1] = 2 * result[1]; // Jacob*result[1]/det;
   result[2] = 4 * result[2];
 }
 
-void HierarchicalBasisHcurlPri::generateCurlBasis(
+void HcurlPrism::generateCurlBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -1714,8 +1712,8 @@ void HierarchicalBasisHcurlPri::generateCurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlPri::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                            std::vector<int> &orderInfo)
+void HcurlPrism::getKeysInfo(std::vector<int> &functionTypeInfo,
+                             std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int numEdge = 0; numEdge < 9; numEdge++) {

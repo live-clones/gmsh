@@ -9,8 +9,8 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#ifndef HIERARCHICAL_BASIS_H1_QUAD_H
-#define HIERARCHICAL_BASIS_H1_QUAD_H
+#ifndef H1_QUADRANGLE_H
+#define H1_QUADRANGLE_H
 
 #include "HierarchicalBasis.h"
 
@@ -37,7 +37,7 @@
  *
  */
 
-class HierarchicalBasisH1Quad : public HierarchicalBasis {
+class H1Quadrangle : public HierarchicalBasis {
 private:
   std::array<int, 4> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches
                                   // the edge 0 order)
@@ -62,8 +62,8 @@ private:
                      std::vector<std::vector<double>> &faceFunctions) override;
 
 public:
-  HierarchicalBasisH1Quad(int order);
-  ~HierarchicalBasisH1Quad() override = default;
+  H1Quadrangle(int order);
+  ~H1Quadrangle() override = default;
 
   // vertexBasis=[v0,...,v3]
   // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]

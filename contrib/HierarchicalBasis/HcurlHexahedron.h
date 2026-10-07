@@ -8,8 +8,8 @@
 // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
 // Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
-#ifndef HIERARCHICAL_BASIS_HCURL_BRICK_H
-#define HIERARCHICAL_BASIS_HCURL_BRICK_H
+#ifndef HCURL_HEXAHEDRON_H
+#define HCURL_HEXAHEDRON_H
 
 #include "HierarchicalBasis.h"
 
@@ -42,10 +42,10 @@
  * edges are limited by the minimum of all (appropriate directional) orders cor-
  * responding to faces sharing that edge
  */
-class HierarchicalBasisHcurlBrick : public HierarchicalBasis {
+class HcurlHexahedron : public HierarchicalBasis {
 public:
-  HierarchicalBasisHcurlBrick(int order);
-  virtual ~HierarchicalBasisHcurlBrick();
+  HcurlHexahedron(int order);
+  virtual ~HcurlHexahedron();
 
   virtual void generateBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &vertexBasis,

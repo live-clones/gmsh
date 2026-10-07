@@ -9,8 +9,8 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#ifndef HIERARCHICAL_BASIS_H1_LINE_H
-#define HIERARCHICAL_BASIS_H1_LINE_H
+#ifndef H1_LINE_H
+#define H1_LINE_H
 
 #include "HierarchicalBasis.h"
 
@@ -28,7 +28,7 @@
  *
  */
 
-class HierarchicalBasisH1Line : public HierarchicalBasis {
+class H1Line : public HierarchicalBasis {
 private:
   int _pe; //  edge function order in  direction u
 
@@ -42,8 +42,8 @@ private:
                              std::vector<std::vector<double>> &gradientBubble);
 
 public:
-  HierarchicalBasisH1Line(int pe);
-  ~HierarchicalBasisH1Line() override = default;
+  H1Line(int pe);
+  ~H1Line() override = default;
 
   // vertexBasis = [v0,v1]
   // edgeBasis   = [phie_{2},...,phie_{pe}]

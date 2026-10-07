@@ -12,7 +12,7 @@
 #include <iostream>
 #include "H1Triangle.h"
 
-HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int order)
+H1Triangle::H1Triangle(int order)
 {
   _pf = order;
   _pOrderEdge = {order, order, order};
@@ -27,7 +27,7 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int order)
   _numBubbleFunction = 0;
 }
 
-double HierarchicalBasisH1Tria::_affineCoordinate(int j, double u, double v)
+double H1Triangle::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -37,11 +37,11 @@ double HierarchicalBasisH1Tria::_affineCoordinate(int j, double u, double v)
   }
 }
 
-void HierarchicalBasisH1Tria::generateBasis(double u, double v, double w,
-                                            std::vector<double> &vertexBasis,
-                                            std::vector<double> &edgeBasis,
-                                            std::vector<double> &faceBasis,
-                                            std::vector<double> &bubbleBasis)
+void H1Triangle::generateBasis(double u, double v, double w,
+                               std::vector<double> &vertexBasis,
+                               std::vector<double> &edgeBasis,
+                               std::vector<double> &faceBasis,
+                               std::vector<double> &bubbleBasis)
 {
   // to map onto the reference domain of gmsh: u,v in (0,1) and uc,vc in (-1,1)
   double uc = 2 * u - 1;
@@ -126,7 +126,7 @@ void HierarchicalBasisH1Tria::generateBasis(double u, double v, double w,
   }
 }
 
-void HierarchicalBasisH1Tria::generateGradientBasis(
+void H1Triangle::generateGradientBasis(
   double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
@@ -301,8 +301,7 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
   }
 }
 
-std::pair<int, int>
-HierarchicalBasisH1Tria::computeEdgeFunctionRange(int edgeNumber) const
+std::pair<int, int> H1Triangle::computeEdgeFunctionRange(int edgeNumber) const
 {
   // Check edge number validity
   assert(edgeNumber >= 0 && edgeNumber < 3);
@@ -329,10 +328,9 @@ HierarchicalBasisH1Tria::computeEdgeFunctionRange(int edgeNumber) const
 // generate the correctly oriented functions directly in the first place,
 // avoiding this extra processing overhead.
 
-void HierarchicalBasisH1Tria::orientOneFace(double u, double v, double w,
-                                            int flag1, int flag2, int flag3,
-                                            int faceNumber,
-                                            std::vector<double> &faceBasis)
+void H1Triangle::orientOneFace(double u, double v, double w, int flag1,
+                               int flag2, int flag3, int faceNumber,
+                               std::vector<double> &faceBasis)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
     // to map onto the reference domain of gmsh:
@@ -390,9 +388,9 @@ void HierarchicalBasisH1Tria::orientOneFace(double u, double v, double w,
   }
 }
 
-void HierarchicalBasisH1Tria::orientOneFace(
-  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
-  std::vector<std::vector<double>> &gradientFace)
+void H1Triangle::orientOneFace(double u, double v, double w, int flag1,
+                               int flag2, int flag3, int faceNumber,
+                               std::vector<std::vector<double>> &gradientFace)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
     // to map onto the reference domain of gmsh:
@@ -495,8 +493,8 @@ void HierarchicalBasisH1Tria::orientOneFace(
   }
 }
 
-void HierarchicalBasisH1Tria::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                          std::vector<int> &orderInfo)
+void H1Triangle::getKeysInfo(std::vector<int> &functionTypeInfo,
+                             std::vector<int> &orderInfo)
 {
   functionTypeInfo[0] = 0;
   functionTypeInfo[1] = 0;

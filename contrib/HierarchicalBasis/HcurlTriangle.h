@@ -9,8 +9,8 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#ifndef HIERARCHICAL_BASIS_HCURL_TRIA_H
-#define HIERARCHICAL_BASIS_HCURL_TRIA_H
+#ifndef HCURL_TRIANGLE_H
+#define HCURL_TRIANGLE_H
 
 #include <iostream>
 #include <math.h>
@@ -36,7 +36,7 @@
  *  pe0,pe1,pe2<=pf
  *
  */
-class HierarchicalBasisHcurlTria : public HierarchicalBasis {
+class HcurlTriangle : public HierarchicalBasis {
 private:
   int _pf; // face function order
   std::array<int, 3> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches
@@ -66,9 +66,9 @@ private:
                              std::vector<std::vector<double>> &faceFunctions);
 
 public:
-  HierarchicalBasisHcurlTria(int order);
+  HcurlTriangle(int order);
 
-  virtual ~HierarchicalBasisHcurlTria() = default;
+  virtual ~HcurlTriangle() = default;
 
   virtual void generateBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &vertexBasis,

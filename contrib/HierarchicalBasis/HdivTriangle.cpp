@@ -13,7 +13,7 @@
 #include <iostream>
 #include "HdivTriangle.h"
 
-HierarchicalBasisHdivTria::HierarchicalBasisHdivTria(int order)
+HdivTriangle::HdivTriangle(int order)
 {
   _pf = order;
   _pOrderEdge = {order, order, order};
@@ -29,11 +29,11 @@ HierarchicalBasisHdivTria::HierarchicalBasisHdivTria(int order)
   _numBubbleFunction = 0;
 }
 
-double HierarchicalBasisHdivTria::dotProduct(const std::vector<double> &u,
-                                             const std::vector<double> &v)
+double HdivTriangle::dotProduct(const std::vector<double> &u,
+                                const std::vector<double> &v)
 { return u[0] * v[0] + u[1] * v[1]; }
 
-double HierarchicalBasisHdivTria::_affineCoordinate(int j, double u, double v)
+double HdivTriangle::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -43,7 +43,7 @@ double HierarchicalBasisHdivTria::_affineCoordinate(int j, double u, double v)
   }
 }
 
-void HierarchicalBasisHdivTria::generateHdivBasis(
+void HdivTriangle::generateHdivBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -180,9 +180,10 @@ void HierarchicalBasisHdivTria::generateHdivBasis(
   }
 }
 
-void HierarchicalBasisHdivTria::generateDivBasis(
-  double u, double v, double w, std::vector<double> &edgeBasis,
-  std::vector<double> &faceBasis, std::vector<double> &bubbleBasis)
+void HdivTriangle::generateDivBasis(double u, double v, double w,
+                                    std::vector<double> &edgeBasis,
+                                    std::vector<double> &faceBasis,
+                                    std::vector<double> &bubbleBasis)
 {
   //***
   // to map onto the reference domain of gmsh:
@@ -358,7 +359,7 @@ void HierarchicalBasisHdivTria::generateDivBasis(
   }
 }
 
-void HierarchicalBasisHdivTria::orientOneFace(
+void HdivTriangle::orientOneFace(
   double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
   std::vector<std::vector<double>> &faceFunctions)
 {
@@ -498,9 +499,9 @@ void HierarchicalBasisHdivTria::orientOneFace(
   }
 }
 
-void HierarchicalBasisHdivTria::orientOneFace(
-  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
-  std::vector<double> &faceFunctions)
+void HdivTriangle::orientOneFace(double u, double v, double w, int flag1,
+                                 int flag2, int flag3, int faceNumber,
+                                 std::vector<double> &faceFunctions)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
     if(_space == DIV_HDIV) {
@@ -680,8 +681,8 @@ void HierarchicalBasisHdivTria::orientOneFace(
   }
 }
 
-void HierarchicalBasisHdivTria::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                            std::vector<int> &orderInfo)
+void HdivTriangle::getKeysInfo(std::vector<int> &functionTypeInfo,
+                               std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int numEdge = 0; numEdge < 3; numEdge++) {

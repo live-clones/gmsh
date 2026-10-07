@@ -11,7 +11,7 @@
 
 #include "H1Prism.h"
 
-HierarchicalBasisH1Pri::HierarchicalBasisH1Pri(int order)
+H1Prism::H1Prism(int order)
 {
   _numVertex = 6;
   _numEdge = 9;
@@ -31,8 +31,7 @@ HierarchicalBasisH1Pri::HierarchicalBasisH1Pri(int order)
   _pOrderEdge.fill(order);
 }
 
-double HierarchicalBasisH1Pri::_affineCoordinate(int j, double u, double v,
-                                                 double w)
+double H1Prism::_affineCoordinate(int j, double u, double v, double w)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -44,11 +43,11 @@ double HierarchicalBasisH1Pri::_affineCoordinate(int j, double u, double v,
   }
 }
 
-void HierarchicalBasisH1Pri::generateBasis(double u, double v, double w,
-                                           std::vector<double> &vertexBasis,
-                                           std::vector<double> &edgeBasis,
-                                           std::vector<double> &faceBasis,
-                                           std::vector<double> &bubbleBasis)
+void H1Prism::generateBasis(double u, double v, double w,
+                            std::vector<double> &vertexBasis,
+                            std::vector<double> &edgeBasis,
+                            std::vector<double> &faceBasis,
+                            std::vector<double> &bubbleBasis)
 {
   //***
   // to map onto the reference domain of gmsh:
@@ -208,7 +207,7 @@ void HierarchicalBasisH1Pri::generateBasis(double u, double v, double w,
   }
 }
 
-void HierarchicalBasisH1Pri::generateGradientBasis(
+void H1Prism::generateGradientBasis(
   double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
@@ -512,10 +511,9 @@ void HierarchicalBasisH1Pri::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Pri::orientOneFace(double u, double v, double w,
-                                           int flag1, int flag2, int flag3,
-                                           int faceNumber,
-                                           std::vector<double> &faceBasis)
+void H1Prism::orientOneFace(double u, double v, double w, int flag1, int flag2,
+                            int flag3, int faceNumber,
+                            std::vector<double> &faceBasis)
 {
   if(faceNumber < 3) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
@@ -674,9 +672,9 @@ void HierarchicalBasisH1Pri::orientOneFace(double u, double v, double w,
   }
 }
 
-void HierarchicalBasisH1Pri::orientOneFace(
-  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
-  std::vector<std::vector<double>> &gradientFace)
+void H1Prism::orientOneFace(double u, double v, double w, int flag1, int flag2,
+                            int flag3, int faceNumber,
+                            std::vector<std::vector<double>> &gradientFace)
 {
   if(faceNumber < 3) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
@@ -926,8 +924,8 @@ void HierarchicalBasisH1Pri::orientOneFace(
   }
 }
 
-void HierarchicalBasisH1Pri::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                         std::vector<int> &orderInfo)
+void H1Prism::getKeysInfo(std::vector<int> &functionTypeInfo,
+                          std::vector<int> &orderInfo)
 {
   for(int i = 0; i < 6; i++) {
     functionTypeInfo[i] = 0;

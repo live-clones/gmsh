@@ -64,28 +64,28 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
   HierarchicalBasis *basis = nullptr;
   if(h1) {
     switch(familyType) {
-    case TYPE_PNT: basis = new HierarchicalBasisH1Point(); break;
-    case TYPE_LIN: basis = new HierarchicalBasisH1Line(order); break;
-    case TYPE_TRI: basis = new HierarchicalBasisH1Tria(order); break;
-    case TYPE_QUA: basis = new HierarchicalBasisH1Quad(order); break;
-    case TYPE_TET: basis = new HierarchicalBasisH1Tetra(order); break;
-    case TYPE_PRI: basis = new HierarchicalBasisH1Pri(order); break;
-    case TYPE_HEX: basis = new HierarchicalBasisH1Brick(order); break;
+    case TYPE_PNT: basis = new H1Point(); break;
+    case TYPE_LIN: basis = new H1Line(order); break;
+    case TYPE_TRI: basis = new H1Triangle(order); break;
+    case TYPE_QUA: basis = new H1Quadrangle(order); break;
+    case TYPE_TET: basis = new H1Tetrahedron(order); break;
+    case TYPE_PRI: basis = new H1Prism(order); break;
+    case TYPE_HEX: basis = new H1Hexahedron(order); break;
     }
   }
   else if(space == HCURL || space == CURL_HCURL) {
     switch(familyType) {
-    case TYPE_LIN: basis = new HierarchicalBasisHcurlLine(order); break;
-    case TYPE_TRI: basis = new HierarchicalBasisHcurlTria(order); break;
-    case TYPE_QUA: basis = new HierarchicalBasisHcurlQuad(order); break;
-    case TYPE_TET: basis = new HierarchicalBasisHcurlTetra(order); break;
-    case TYPE_PRI: basis = new HierarchicalBasisHcurlPri(order); break;
-    case TYPE_HEX: basis = new HierarchicalBasisHcurlBrick(order); break;
+    case TYPE_LIN: basis = new HcurlLine(order); break;
+    case TYPE_TRI: basis = new HcurlTriangle(order); break;
+    case TYPE_QUA: basis = new HcurlQuadrangle(order); break;
+    case TYPE_TET: basis = new HcurlTetrahedron(order); break;
+    case TYPE_PRI: basis = new HcurlPrism(order); break;
+    case TYPE_HEX: basis = new HcurlHexahedron(order); break;
     }
   }
   else {
     switch(familyType) {
-    case TYPE_TRI: basis = new HierarchicalBasisHdivTria(order); break;
+    case TYPE_TRI: basis = new HdivTriangle(order); break;
     }
   }
   if(!basis) {

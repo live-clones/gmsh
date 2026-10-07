@@ -11,7 +11,7 @@
 
 #include "H1Line.h"
 
-HierarchicalBasisH1Line::HierarchicalBasisH1Line(int pe)
+H1Line::H1Line(int pe)
 {
   _pe = pe;
   _numVertex = 2;
@@ -25,7 +25,7 @@ HierarchicalBasisH1Line::HierarchicalBasisH1Line(int pe)
   _numBubbleFunction = 0;
 }
 
-double HierarchicalBasisH1Line::_affineCoordinate(int j, double u)
+double H1Line::_affineCoordinate(int j, double u)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -34,11 +34,11 @@ double HierarchicalBasisH1Line::_affineCoordinate(int j, double u)
   }
 }
 
-void HierarchicalBasisH1Line::generateBasis(double u, double v, double w,
-                                            std::vector<double> &vertexBasis,
-                                            std::vector<double> &edgeBasis,
-                                            std::vector<double> &faceBasis,
-                                            std::vector<double> &bubbleBasis)
+void H1Line::generateBasis(double u, double v, double w,
+                           std::vector<double> &vertexBasis,
+                           std::vector<double> &edgeBasis,
+                           std::vector<double> &faceBasis,
+                           std::vector<double> &bubbleBasis)
 {
   double lambda1 = _affineCoordinate(1, u);
   double lambda2 = _affineCoordinate(2, u);
@@ -54,7 +54,7 @@ void HierarchicalBasisH1Line::generateBasis(double u, double v, double w,
   }
 }
 
-void HierarchicalBasisH1Line::generateGradientBasis(
+void H1Line::generateGradientBasis(
   double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
@@ -71,8 +71,8 @@ void HierarchicalBasisH1Line::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Line::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                          std::vector<int> &orderInfo)
+void H1Line::getKeysInfo(std::vector<int> &functionTypeInfo,
+                         std::vector<int> &orderInfo)
 {
   functionTypeInfo[0] = 0;
   orderInfo[0] = 1;

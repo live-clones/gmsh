@@ -10,7 +10,7 @@
 
 #include "HcurlTetrahedron.h"
 
-HierarchicalBasisHcurlTetra::HierarchicalBasisHcurlTetra(int order)
+HcurlTetrahedron::HcurlTetrahedron(int order)
 {
   _numVertex = 4;
   _numEdge = 6;
@@ -33,10 +33,9 @@ HierarchicalBasisHcurlTetra::HierarchicalBasisHcurlTetra(int order)
   for(int i = 0; i < 6; i++) { _pOrderEdge[i] = order; }
 }
 
-HierarchicalBasisHcurlTetra::~HierarchicalBasisHcurlTetra() {}
+HcurlTetrahedron::~HcurlTetrahedron() {}
 
-double HierarchicalBasisHcurlTetra::_affineCoordinate(int j, double u, double v,
-                                                      double w)
+double HcurlTetrahedron::_affineCoordinate(int j, double u, double v, double w)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -47,11 +46,11 @@ double HierarchicalBasisHcurlTetra::_affineCoordinate(int j, double u, double v,
   }
 }
 
-double HierarchicalBasisHcurlTetra::dotProduct(const std::vector<double> &u,
-                                               const std::vector<double> &v)
+double HcurlTetrahedron::dotProduct(const std::vector<double> &u,
+                                    const std::vector<double> &v)
 { return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]; }
 
-void HierarchicalBasisHcurlTetra::generateHcurlBasis(
+void HcurlTetrahedron::generateHcurlBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -429,7 +428,7 @@ void HierarchicalBasisHcurlTetra::generateHcurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlTetra::orientOneFace(
+void HcurlTetrahedron::orientOneFace(
   double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
   std::vector<std::vector<double>> &faceFunctions)
 {
@@ -858,24 +857,26 @@ void HierarchicalBasisHcurlTetra::orientOneFace(
   }
 }
 
-inline void HierarchicalBasisHcurlTetra::curlFunction(
-  double a, const std::vector<double> &nD, const std::vector<double> &grad,
-  std::vector<double> &result)
+inline void HcurlTetrahedron::curlFunction(double a,
+                                           const std::vector<double> &nD,
+                                           const std::vector<double> &grad,
+                                           std::vector<double> &result)
 {
   result[0] = a * (nD[2] * grad[1] - nD[1] * grad[2]);
   result[1] = a * (nD[0] * grad[2] - nD[2] * grad[0]);
   result[2] = a * (nD[1] * grad[0] - nD[0] * grad[1]);
 }
-inline void HierarchicalBasisHcurlTetra::gradient(
-  double lambda1, double lambda2, const std::vector<double> &dlambda1,
-  const std::vector<double> &dlambda2, std::vector<double> &result)
+inline void HcurlTetrahedron::gradient(double lambda1, double lambda2,
+                                       const std::vector<double> &dlambda1,
+                                       const std::vector<double> &dlambda2,
+                                       std::vector<double> &result)
 {
   for(int i = 0; i < 3; i++) {
     result[i] = lambda1 * dlambda2[i] + lambda2 * dlambda1[i];
   }
 }
 
-void HierarchicalBasisHcurlTetra::generateCurlBasis(
+void HcurlTetrahedron::generateCurlBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -1468,8 +1469,8 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlTetra::getKeysInfo(
-  std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo)
+void HcurlTetrahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                   std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int numEdge = 0; numEdge < 6; numEdge++) {

@@ -9,8 +9,8 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#ifndef HIERARCHICAL_BASIS_H1_PRI_H
-#define HIERARCHICAL_BASIS_H1_PRI_H
+#ifndef H1_PRISM_H
+#define H1_PRISM_H
 #include "HierarchicalBasis.h"
 
 /**
@@ -52,7 +52,7 @@
  *
  */
 
-class HierarchicalBasisH1Pri : public HierarchicalBasis {
+class H1Prism : public HierarchicalBasis {
 private:
   std::array<int, 2> _pb; //    _pb[0] : bubble function order in  direction uv
                           //    _pb[1] : bubble function order in  direction w
@@ -88,8 +88,8 @@ private:
                      std::vector<std::vector<double>> &faceFunctions) override;
 
 public:
-  HierarchicalBasisH1Pri(int order);
-  ~HierarchicalBasisH1Pri() override = default;
+  H1Prism(int order);
+  ~H1Prism() override = default;
 
   // vertexBasis=[v0,...,v5]
   // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]

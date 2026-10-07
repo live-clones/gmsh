@@ -8,8 +8,8 @@
 // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
 // Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
-#ifndef HIERARCHICAL_BASIS_HCURL_PRI_H
-#define HIERARCHICAL_BASIS_HCURL_PRI_H
+#ifndef HCURL_PRISM_H
+#define HCURL_PRISM_H
 
 #include <math.h>
 #include "HierarchicalBasis.h"
@@ -50,10 +50,10 @@
  * edges are limited by the minimum of all (appropriate directional) orders cor-
  * responding to faces sharing that edge
  */
-class HierarchicalBasisHcurlPri : public HierarchicalBasis {
+class HcurlPrism : public HierarchicalBasis {
 public:
-  HierarchicalBasisHcurlPri(int order);
-  virtual ~HierarchicalBasisHcurlPri();
+  HcurlPrism(int order);
+  virtual ~HcurlPrism();
   virtual void generateBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &vertexBasis,
                              std::vector<std::vector<double>> &edgeBasis,

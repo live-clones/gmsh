@@ -11,7 +11,7 @@
 
 #include "H1Tetrahedron.h"
 
-HierarchicalBasisH1Tetra::HierarchicalBasisH1Tetra(int order)
+H1Tetrahedron::H1Tetrahedron(int order)
 {
   _numVertex = 4;
   _numEdge = 6;
@@ -28,8 +28,7 @@ HierarchicalBasisH1Tetra::HierarchicalBasisH1Tetra(int order)
   _pOrderEdge = {order, order, order, order, order, order};
 }
 
-double HierarchicalBasisH1Tetra::_affineCoordinate(int j, double u, double v,
-                                                   double w)
+double H1Tetrahedron::_affineCoordinate(int j, double u, double v, double w)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -40,11 +39,11 @@ double HierarchicalBasisH1Tetra::_affineCoordinate(int j, double u, double v,
   }
 }
 
-void HierarchicalBasisH1Tetra::generateBasis(double u, double v, double w,
-                                             std::vector<double> &vertexBasis,
-                                             std::vector<double> &edgeBasis,
-                                             std::vector<double> &faceBasis,
-                                             std::vector<double> &bubbleBasis)
+void H1Tetrahedron::generateBasis(double u, double v, double w,
+                                  std::vector<double> &vertexBasis,
+                                  std::vector<double> &edgeBasis,
+                                  std::vector<double> &faceBasis,
+                                  std::vector<double> &bubbleBasis)
 {
   //***
   // to map onto the reference domain of gmsh:
@@ -175,7 +174,7 @@ void HierarchicalBasisH1Tetra::generateBasis(double u, double v, double w,
   }
 }
 
-void HierarchicalBasisH1Tetra::generateGradientBasis(
+void H1Tetrahedron::generateGradientBasis(
   double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
@@ -399,10 +398,9 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Tetra::orientOneFace(double u, double v, double w,
-                                             int flag1, int flag2, int flag3,
-                                             int faceNumber,
-                                             std::vector<double> &faceBasis)
+void H1Tetrahedron::orientOneFace(double u, double v, double w, int flag1,
+                                  int flag2, int flag3, int faceNumber,
+                                  std::vector<double> &faceBasis)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
     // to map onto the reference domain of gmsh:
@@ -482,7 +480,7 @@ void HierarchicalBasisH1Tetra::orientOneFace(double u, double v, double w,
   }
 }
 
-void HierarchicalBasisH1Tetra::orientOneFace(
+void H1Tetrahedron::orientOneFace(
   double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
   std::vector<std::vector<double>> &gradientFace)
 {
@@ -633,8 +631,8 @@ void HierarchicalBasisH1Tetra::orientOneFace(
   }
 }
 
-void HierarchicalBasisH1Tetra::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                           std::vector<int> &orderInfo)
+void H1Tetrahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                std::vector<int> &orderInfo)
 {
   functionTypeInfo[0] = 0;
   functionTypeInfo[1] = 0;

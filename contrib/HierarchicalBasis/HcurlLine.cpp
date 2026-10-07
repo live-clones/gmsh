@@ -11,7 +11,7 @@
 
 #include "HcurlLine.h"
 
-HierarchicalBasisHcurlLine::HierarchicalBasisHcurlLine(int order)
+HcurlLine::HcurlLine(int order)
 {
   _pe = order;
   _numVertex = 2;
@@ -25,7 +25,7 @@ HierarchicalBasisHcurlLine::HierarchicalBasisHcurlLine(int order)
   _numBubbleFunction = 0;
 }
 
-double HierarchicalBasisHcurlLine::_affineCoordinate(int j, double u)
+double HcurlLine::_affineCoordinate(int j, double u)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -34,11 +34,11 @@ double HierarchicalBasisHcurlLine::_affineCoordinate(int j, double u)
   }
 }
 
-double HierarchicalBasisHcurlLine::dotProduct(const std::vector<double> &u,
-                                              const std::vector<double> &v)
+double HcurlLine::dotProduct(const std::vector<double> &u,
+                             const std::vector<double> &v)
 { return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]; }
 
-void HierarchicalBasisHcurlLine::generateHcurlBasis(
+void HcurlLine::generateHcurlBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -86,17 +86,17 @@ void HierarchicalBasisHcurlLine::generateHcurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlLine::generateCurlBasis(
-  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
-  std::vector<std::vector<double>> &faceBasis,
-  std::vector<std::vector<double>> &bubbleBasis)
+void HcurlLine::generateCurlBasis(double u, double v, double w,
+                                  std::vector<std::vector<double>> &edgeBasis,
+                                  std::vector<std::vector<double>> &faceBasis,
+                                  std::vector<std::vector<double>> &bubbleBasis)
 {
   // For 1D line elements, the curl of H(curl) basis functions is zero.
   for(auto &vec : edgeBasis) std::fill(vec.begin(), vec.end(), 0.0);
 }
 
-void HierarchicalBasisHcurlLine::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                             std::vector<int> &orderInfo)
+void HcurlLine::getKeysInfo(std::vector<int> &functionTypeInfo,
+                            std::vector<int> &orderInfo)
 {
   for(int k = 0; k <= _pe; k++) {
     orderInfo[k] = k;

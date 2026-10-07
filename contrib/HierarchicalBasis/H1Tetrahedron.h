@@ -9,8 +9,8 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#ifndef HIERARCHICAL_BASIS_H1_TETRA_H
-#define HIERARCHICAL_BASIS_H1_TETRA_H
+#ifndef H1_TETRAHEDRON_H
+#define H1_TETRAHEDRON_H
 
 #include "HierarchicalBasis.h"
 
@@ -53,7 +53,7 @@
  *   corresponding to faces sharing that edge
  */
 
-class HierarchicalBasisH1Tetra : public HierarchicalBasis {
+class H1Tetrahedron : public HierarchicalBasis {
 private:
   std::array<int, 6> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches
                                   // the order of the edge 0)
@@ -77,8 +77,8 @@ private:
                      std::vector<std::vector<double>> &faceFunctions) override;
 
 public:
-  HierarchicalBasisH1Tetra(int order);
-  ~HierarchicalBasisH1Tetra() override = default;
+  H1Tetrahedron(int order);
+  ~H1Tetrahedron() override = default;
 
   // vertexBasis = [v0,...,v3]
   // edgeBasis   = [phie0_{2},...,phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]

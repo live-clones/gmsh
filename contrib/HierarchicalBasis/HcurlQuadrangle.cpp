@@ -11,7 +11,7 @@
 
 #include "HcurlQuadrangle.h"
 
-HierarchicalBasisHcurlQuad::HierarchicalBasisHcurlQuad(int order)
+HcurlQuadrangle::HcurlQuadrangle(int order)
 {
   _pf = {order, order};
   _pOrderEdge = {order, order, order, order};
@@ -26,7 +26,7 @@ HierarchicalBasisHcurlQuad::HierarchicalBasisHcurlQuad(int order)
   _numBubbleFunction = 0;
 }
 
-double HierarchicalBasisHcurlQuad::_affineCoordinate(int j, double u, double v)
+double HcurlQuadrangle::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -37,7 +37,7 @@ double HierarchicalBasisHcurlQuad::_affineCoordinate(int j, double u, double v)
   }
 }
 
-void HierarchicalBasisHcurlQuad::generateHcurlBasis(
+void HcurlQuadrangle::generateHcurlBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -112,7 +112,7 @@ void HierarchicalBasisHcurlQuad::generateHcurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlQuad::generateCurlBasis(
+void HcurlQuadrangle::generateCurlBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -183,7 +183,7 @@ void HierarchicalBasisHcurlQuad::generateCurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlQuad::orientOneFace(
+void HcurlQuadrangle::orientOneFace(
   double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
   std::vector<std::vector<double>> &faceFunctions)
 {
@@ -307,8 +307,8 @@ void HierarchicalBasisHcurlQuad::orientOneFace(
   }
 }
 
-void HierarchicalBasisHcurlQuad::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                             std::vector<int> &orderInfo)
+void HcurlQuadrangle::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                  std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int numEdge = 0; numEdge < 4; numEdge++) {

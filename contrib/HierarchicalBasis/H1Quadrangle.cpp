@@ -11,7 +11,7 @@
 
 #include "H1Quadrangle.h"
 
-HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int order)
+H1Quadrangle::H1Quadrangle(int order)
 {
   _pf = {order, order};
   _pOrderEdge = {order, order, order, order};
@@ -26,7 +26,7 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int order)
   _numBubbleFunction = 0;
 }
 
-double HierarchicalBasisH1Quad::_affineCoordinate(int j, double u, double v)
+double H1Quadrangle::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -37,11 +37,11 @@ double HierarchicalBasisH1Quad::_affineCoordinate(int j, double u, double v)
   }
 }
 
-void HierarchicalBasisH1Quad::generateBasis(double u, double v, double w,
-                                            std::vector<double> &vertexBasis,
-                                            std::vector<double> &edgeBasis,
-                                            std::vector<double> &faceBasis,
-                                            std::vector<double> &bubbleBasis)
+void H1Quadrangle::generateBasis(double u, double v, double w,
+                                 std::vector<double> &vertexBasis,
+                                 std::vector<double> &edgeBasis,
+                                 std::vector<double> &faceBasis,
+                                 std::vector<double> &bubbleBasis)
 {
   double lambda1 = _affineCoordinate(1, u, v);
   double lambda2 = _affineCoordinate(2, u, v);
@@ -172,7 +172,7 @@ void HierarchicalBasisH1Quad::generateBasis(double u, double v, double w,
   }
 }
 
-void HierarchicalBasisH1Quad::generateGradientBasis(
+void H1Quadrangle::generateGradientBasis(
   double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
@@ -347,10 +347,9 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Quad::orientOneFace(double u, double v, double w,
-                                            int flag1, int flag2, int flag3,
-                                            int faceNumber,
-                                            std::vector<double> &faceBasis)
+void H1Quadrangle::orientOneFace(double u, double v, double w, int flag1,
+                                 int flag2, int flag3, int faceNumber,
+                                 std::vector<double> &faceBasis)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -391,9 +390,9 @@ void HierarchicalBasisH1Quad::orientOneFace(double u, double v, double w,
   }
 }
 
-void HierarchicalBasisH1Quad::orientOneFace(
-  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
-  std::vector<std::vector<double>> &gradientFace)
+void H1Quadrangle::orientOneFace(double u, double v, double w, int flag1,
+                                 int flag2, int flag3, int faceNumber,
+                                 std::vector<std::vector<double>> &gradientFace)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -442,8 +441,8 @@ void HierarchicalBasisH1Quad::orientOneFace(
   }
 }
 
-void HierarchicalBasisH1Quad::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                          std::vector<int> &orderInfo)
+void H1Quadrangle::getKeysInfo(std::vector<int> &functionTypeInfo,
+                               std::vector<int> &orderInfo)
 {
   functionTypeInfo[0] = 0;
   functionTypeInfo[1] = 0;

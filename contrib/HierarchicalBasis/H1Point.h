@@ -9,8 +9,8 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#ifndef HIERARCHICAL_BASIS_H1_POINT_H
-#define HIERARCHICAL_BASIS_H1_POINT_H
+#ifndef H1_POINT_H
+#define H1_POINT_H
 
 #include "HierarchicalBasis.h"
 
@@ -20,7 +20,7 @@
  *
  */
 
-class HierarchicalBasisH1Point : public HierarchicalBasis {
+class H1Point : public HierarchicalBasis {
 private:
   void generateGradientBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &gradientVertex,
@@ -29,8 +29,8 @@ private:
                              std::vector<std::vector<double>> &gradientBubble);
 
 public:
-  HierarchicalBasisH1Point();
-  ~HierarchicalBasisH1Point() override = default;
+  H1Point();
+  ~H1Point() override = default;
 
   // vertexBasis=[v0]
   void generateBasis(double u, double v, double w,

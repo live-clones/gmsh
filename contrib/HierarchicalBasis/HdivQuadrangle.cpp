@@ -12,7 +12,7 @@
 
 #include "HdivQuadrangle.h"
 
-HierarchicalBasisHdivQuad::HierarchicalBasisHdivQuad(int order)
+HdivQuadrangle::HdivQuadrangle(int order)
 {
   _pf = {order, order};
   _pOrderEdge = {order, order, order, order};
@@ -26,7 +26,7 @@ HierarchicalBasisHdivQuad::HierarchicalBasisHdivQuad(int order)
   _numTriFaceFunction = 0, _numBubbleFunction = 0;
 }
 
-double HierarchicalBasisHdivQuad::_affineCoordinate(int j, double u, double v)
+double HdivQuadrangle::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -37,7 +37,7 @@ double HierarchicalBasisHdivQuad::_affineCoordinate(int j, double u, double v)
   }
 }
 
-void HierarchicalBasisHdivQuad::generateHdivBasis(
+void HdivQuadrangle::generateHdivBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -112,7 +112,7 @@ void HierarchicalBasisHdivQuad::generateHdivBasis(
   }
 }
 
-void HierarchicalBasisHdivQuad::generateDivBasis(
+void HdivQuadrangle::generateDivBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -183,7 +183,7 @@ void HierarchicalBasisHdivQuad::generateDivBasis(
   }
 }
 
-void HierarchicalBasisHdivQuad::orientOneFace(
+void HdivQuadrangle::orientOneFace(
   double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
   std::vector<std::vector<double>> &faceFunctions)
 {
@@ -307,8 +307,8 @@ void HierarchicalBasisHdivQuad::orientOneFace(
   }
 }
 
-void HierarchicalBasisHdivQuad::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                            std::vector<int> &orderInfo)
+void HdivQuadrangle::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                 std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int numEdge = 0; numEdge < 4; numEdge++) {

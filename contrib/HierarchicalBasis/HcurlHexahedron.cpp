@@ -8,7 +8,7 @@
 #include <algorithm>
 #include "HcurlHexahedron.h"
 
-HierarchicalBasisHcurlBrick::HierarchicalBasisHcurlBrick(int order)
+HcurlHexahedron::HcurlHexahedron(int order)
 {
   _pb1 = order;
   _pb2 = order;
@@ -29,10 +29,9 @@ HierarchicalBasisHcurlBrick::HierarchicalBasisHcurlBrick(int order)
   _numBubbleFunction = 3 * order * order * (order + 1);
 }
 
-HierarchicalBasisHcurlBrick::~HierarchicalBasisHcurlBrick() {}
+HcurlHexahedron::~HcurlHexahedron() {}
 
-double HierarchicalBasisHcurlBrick::_affineCoordinate(int j, double u, double v,
-                                                      double w)
+double HcurlHexahedron::_affineCoordinate(int j, double u, double v, double w)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -45,7 +44,7 @@ double HierarchicalBasisHcurlBrick::_affineCoordinate(int j, double u, double v,
   }
 }
 
-void HierarchicalBasisHcurlBrick::generateHcurlBasis(
+void HcurlHexahedron::generateHcurlBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -248,7 +247,7 @@ void HierarchicalBasisHcurlBrick::generateHcurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlBrick::orientOneFace(
+void HcurlHexahedron::orientOneFace(
   double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
   std::vector<std::vector<double>> &faceFunctions)
 {
@@ -541,7 +540,7 @@ void HierarchicalBasisHcurlBrick::orientOneFace(
   }
 }
 
-void HierarchicalBasisHcurlBrick::generateCurlBasis(
+void HcurlHexahedron::generateCurlBasis(
   double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
@@ -823,8 +822,8 @@ void HierarchicalBasisHcurlBrick::generateCurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlBrick::getKeysInfo(
-  std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo)
+void HcurlHexahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                  std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int numEdge = 0; numEdge < 12; numEdge++) {
