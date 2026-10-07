@@ -5,8 +5,7 @@
 
 set(SRC
     OrthogonalPoly.cpp
-    HierarchicalBasisUtils.cpp
-    CreateHierarchicalBasis.cpp
+    HierarchicalBasis.cpp
     HierarchicalBasisH1.cpp
     HierarchicalBasisHcurl.cpp
     HierarchicalBasisHdiv.cpp

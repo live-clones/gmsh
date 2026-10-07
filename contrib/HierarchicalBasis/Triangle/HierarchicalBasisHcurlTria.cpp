@@ -33,14 +33,7 @@ double HierarchicalBasisHcurlTria::dotProduct(const std::vector<double> &u,
                                               const std::vector<double> &v)
 { return u[0] * v[0] + u[1] * v[1]; }
 
-unsigned int HierarchicalBasisHcurlTria::getNumberOfOrientations() const
-{
-  return 6; // factorial 3
-}
-
-double HierarchicalBasisHcurlTria::_affineCoordinate(int const &j,
-                                                     double const &u,
-                                                     double const &v)
+double HierarchicalBasisHcurlTria::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -51,8 +44,7 @@ double HierarchicalBasisHcurlTria::_affineCoordinate(int const &j,
 }
 
 void HierarchicalBasisHcurlTria::generateHcurlBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {
@@ -188,7 +180,7 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
 }
 
 void HierarchicalBasisHcurlTria::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)
@@ -240,8 +232,7 @@ void HierarchicalBasisHcurlTria::orientEdgeFunctionsForNegativeFlag(
 }
 
 void HierarchicalBasisHcurlTria::generateCurlBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {
@@ -419,12 +410,11 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
 }
 
 void HierarchicalBasisHcurlTria::orientOneFace(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double>> &faceFunctions, std::string typeFunction)
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<std::vector<double>> &faceFunctions)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
-    if(typeFunction == "HcurlLegendre") {
+    if(_space == HCURL) {
       // to map onto the reference domain of gmsh:
       double uc = 2 * u - 1;
       double vc = 2 * v - 1;
@@ -556,7 +546,7 @@ void HierarchicalBasisHcurlTria::orientOneFace(
         }
       }
     }
-    else if("CurlHcurlLegendre" == typeFunction) {
+    else if(_space == CURL_HCURL) {
       // to map onto the reference domain of gmsh:
       double uc = 2 * u - 1;
       double vc = 2 * v - 1;
@@ -744,7 +734,7 @@ void HierarchicalBasisHcurlTria::orientOneFace(
 }
 
 void HierarchicalBasisHcurlTria::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
   const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
   std::vector<std::vector<double>> &fTableCopy)

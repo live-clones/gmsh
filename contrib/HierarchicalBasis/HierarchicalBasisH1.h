@@ -16,71 +16,62 @@
 
 class HierarchicalBasisH1 : public HierarchicalBasis {
 protected:
-  void orientOneFace(double const &u, double const &v, double const &w,
-                     int const &flag1, int const &flag2, int const &flag3,
-                     int const &faceNumber, std::vector<double> &faceFunctions,
-                     std::string typeFunction = "H1Legendre") override = 0;
-  void orientOneFace(double const &u, double const &v, double const &w,
-                     int const &flag1, int const &flag2, int const &flag3,
-                     int const &faceNumber,
-                     std::vector<std::vector<double>> &faceFunctions,
-                     std::string typeFunction = "GradH1Legendre") override = 0;
+  void orientOneFace(double u, double v, double w, int flag1, int flag2,
+                     int flag3, int faceNumber,
+                     std::vector<double> &faceFunctions) override = 0;
+  void
+  orientOneFace(double u, double v, double w, int flag1, int flag2, int flag3,
+                int faceNumber,
+                std::vector<std::vector<double>> &faceFunctions) override = 0;
 
   HierarchicalBasisH1() = default;
 
 public:
   ~HierarchicalBasisH1() override = default;
 
-  unsigned int getNumberOfOrientations() const override = 0;
-
-  void generateBasis(double const &u, double const &v, double const &w,
+  void generateBasis(double u, double v, double w,
                      std::vector<double> &vertexBasis,
                      std::vector<double> &edgeBasis,
                      std::vector<double> &faceBasis,
-                     std::vector<double> &bubbleBasis,
-                     std::string typeFunction = "H1Legendre") override = 0;
-  void generateBasis(double const &u, double const &v, double const &w,
-                     std::vector<std::vector<double>> &vertexBasis,
-                     std::vector<std::vector<double>> &edgeBasis,
-                     std::vector<std::vector<double>> &faceBasis,
-                     std::vector<std::vector<double>> &bubbleBasis,
-                     std::string typeFunction = "GradH1Legendre") override = 0;
+                     std::vector<double> &bubbleBasis) override = 0;
+  void
+  generateBasis(double u, double v, double w,
+                std::vector<std::vector<double>> &vertexBasis,
+                std::vector<std::vector<double>> &edgeBasis,
+                std::vector<std::vector<double>> &faceBasis,
+                std::vector<std::vector<double>> &bubbleBasis) override = 0;
 
   void orientEdgeFunctionsForNegativeFlag(
     std::vector<double> &edgeFunctions) override = 0;
   void orientEdgeFunctionsForNegativeFlag(
     std::vector<std::vector<double>> &edgeFunctions) override = 0;
 
-  void orientEdge(int const &flagOrientation, int const &edgeNumber,
+  void orientEdge(int flagOrientation, int edgeNumber,
                   std::vector<double> &edgeFunctions,
                   const std::vector<double> &eTablePositiveFlag,
                   const std::vector<double> &eTableNegativeFlag) override = 0;
   void orientEdge(
-    int const &flagOrientation, int const &edgeNumber,
+    int flagOrientation, int edgeNumber,
     std::vector<std::vector<double>> &edgeBasis,
     const std::vector<std::vector<double>> &eTablePositiveFlag,
     const std::vector<std::vector<double>> &eTableNegativeFlag) override = 0;
 
   void addAllOrientedFaceFunctions(
-    double const &u, double const &v, double const &w,
-    const std::vector<double> &faceFunctions,
+    double u, double v, double w, const std::vector<double> &faceFunctions,
     std::vector<double> &quadFaceFunctionsAllOrientations,
-    std::vector<double> &triFaceFunctionsAllOrientations,
-    std::string typeFunction = "H1Legendre") override;
+    std::vector<double> &triFaceFunctionsAllOrientations) override;
   void addAllOrientedFaceFunctions(
-    double const &u, double const &v, double const &w,
+    double u, double v, double w,
     const std::vector<std::vector<double>> &faceFunctions,
     std::vector<std::vector<double>> &quadFaceFunctionsAllOrientations,
-    std::vector<std::vector<double>> &triFaceFunctionsAllOrientations,
-    std::string typeFunction = "GradH1Legendre") override;
+    std::vector<std::vector<double>> &triFaceFunctionsAllOrientations) override;
 
-  void orientFace(int const &flag1, int const &flag2, int const &flag3,
-                  int const &faceNumber,
+  void orientFace(int flag1, int flag2, int flag3, int faceNumber,
                   const std::vector<double> &quadFaceFunctionsAllOrientations,
                   const std::vector<double> &triFaceFunctionsAllOrientations,
                   std::vector<double> &fTableCopy) override = 0;
   void orientFace(
-    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    int flag1, int flag2, int flag3, int faceNumber,
     const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientations,
     const std::vector<std::vector<double>> &triFaceFunctionsAllOrientations,
     std::vector<std::vector<double>> &fTableCopy) override = 0;

@@ -44,52 +44,43 @@ private:
                                   // the edge 0 order)
 
   // affine coordinate lambda_j j=1..3
-  static double _affineCoordinate(int const &j, double const &u,
-                                  double const &v);
+  static double _affineCoordinate(int j, double u, double v);
 
   // edgeBasis=[phie0_{0},...phie0_{pe0},phie1_{0},...phie1_{pe1}...; edge-based
   // bubble functions ] faceBasis=[ genuine bubble functions]
-  virtual void generateHdivBasis(double const &u, double const &v,
-                                 double const &w,
+  virtual void generateHdivBasis(double u, double v, double w,
                                  std::vector<std::vector<double>> &edgeBasis,
                                  std::vector<std::vector<double>> &faceBasis,
                                  std::vector<std::vector<double>> &bubbleBasis);
 
-  virtual void generateDivBasis(double const &u, double const &v,
-                                double const &w, std::vector<double> &edgeBasis,
+  virtual void generateDivBasis(double u, double v, double w,
+                                std::vector<double> &edgeBasis,
                                 std::vector<double> &faceBasis,
                                 std::vector<double> &bubbleBasis);
 
   static double dotProduct(const std::vector<double> &u,
                            const std::vector<double> &v);
 
-  virtual void orientOneFace(double const &u, double const &v, double const &w,
-                             int const &flag1, int const &flag2,
-                             int const &flag3, int const &faceNumber,
-                             std::vector<double> &faceFunctions,
-                             std::string typeFunction);
+  virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
+                             int flag3, int faceNumber,
+                             std::vector<double> &faceFunctions);
 
-  virtual void orientOneFace(double const &u, double const &v, double const &w,
-                             int const &flag1, int const &flag2,
-                             int const &flag3, int const &faceNumber,
-                             std::vector<std::vector<double>> &faceFunctions,
-                             std::string typeFunction);
+  virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
+                             int flag3, int faceNumber,
+                             std::vector<std::vector<double>> &faceFunctions);
 
 public:
   HierarchicalBasisHdivTria(int order);
 
   virtual ~HierarchicalBasisHdivTria() = default;
 
-  virtual unsigned int getNumberOfOrientations() const;
-
-  virtual void generateBasis(double const &u, double const &v, double const &w,
+  virtual void generateBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &vertexBasis,
                              std::vector<std::vector<double>> &edgeBasis,
                              std::vector<std::vector<double>> &faceBasis,
-                             std::vector<std::vector<double>> &bubbleBasis,
-                             std::string typeFunction)
+                             std::vector<std::vector<double>> &bubbleBasis)
   {
-    if(typeFunction == "HdivLegendre") {
+    if(_space == HDIV) {
       generateHdivBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
     else {
@@ -97,14 +88,13 @@ public:
     }
   }
 
-  virtual void generateBasis(double const &u, double const &v, double const &w,
+  virtual void generateBasis(double u, double v, double w,
                              std::vector<double> &vertexBasis,
                              std::vector<double> &edgeBasis,
                              std::vector<double> &faceBasis,
-                             std::vector<double> &bubbleBasis,
-                             std::string typeFunction)
+                             std::vector<double> &bubbleBasis)
   {
-    if("DivHdivLegendre" == typeFunction) {
+    if(_space == DIV_HDIV) {
       generateDivBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
     else {
@@ -118,23 +108,22 @@ public:
   orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions);
 
   virtual void
-  orientEdge(int const &flagOrientation, int const &edgeNumber,
+  orientEdge(int flagOrientation, int edgeNumber,
              std::vector<std::vector<double>> &edgeBasis,
              const std::vector<std::vector<double>> &eTablePositiveFlag,
              const std::vector<std::vector<double>> &eTableNegativeFlag);
-  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+  virtual void orientEdge(int flagOrientation, int edgeNumber,
                           std::vector<double> &edgeBasis,
                           const std::vector<double> &eTablePositiveFlag,
                           const std::vector<double> &eTableNegativeFlag);
 
   virtual void orientFace(
-    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    int flag1, int flag2, int flag3, int faceNumber,
     const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
     const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
     std::vector<std::vector<double>> &fTableCopy);
   virtual void
-  orientFace(int const &flag1, int const &flag2, int const &flag3,
-             int const &faceNumber,
+  orientFace(int flag1, int flag2, int flag3, int faceNumber,
              const std::vector<double> &quadFaceFunctionsAllOrientation,
              const std::vector<double> &triFaceFunctionsAllOrientation,
              std::vector<double> &fTableCopy);

@@ -32,14 +32,8 @@ HierarchicalBasisH1Pri::HierarchicalBasisH1Pri(int order)
   _pOrderEdge.fill(order);
 }
 
-unsigned int HierarchicalBasisH1Pri::getNumberOfOrientations() const
-{
-  return 720; // factorial 6
-}
-
-double HierarchicalBasisH1Pri::_affineCoordinate(const int &j, const double &u,
-                                                 const double &v,
-                                                 const double &w)
+double HierarchicalBasisH1Pri::_affineCoordinate(int j, double u, double v,
+                                                 double w)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -51,13 +45,11 @@ double HierarchicalBasisH1Pri::_affineCoordinate(const int &j, const double &u,
   }
 }
 
-void HierarchicalBasisH1Pri::generateBasis(double const &u, double const &v,
-                                           double const &w,
+void HierarchicalBasisH1Pri::generateBasis(double u, double v, double w,
                                            std::vector<double> &vertexBasis,
                                            std::vector<double> &edgeBasis,
                                            std::vector<double> &faceBasis,
-                                           std::vector<double> &bubbleBasis,
-                                           std::string typeFunction)
+                                           std::vector<double> &bubbleBasis)
 {
   //***
   // to map onto the reference domain of gmsh:
@@ -218,7 +210,7 @@ void HierarchicalBasisH1Pri::generateBasis(double const &u, double const &v,
 }
 
 void HierarchicalBasisH1Pri::generateGradientBasis(
-  double const &u, double const &v, double const &w,
+  double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
   std::vector<std::vector<double>> &gradientFace,
@@ -522,8 +514,7 @@ void HierarchicalBasisH1Pri::generateGradientBasis(
 }
 
 void HierarchicalBasisH1Pri::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
-  std::vector<double> &edgeFunctions,
+  int flagOrientation, int edgeNumber, std::vector<double> &edgeFunctions,
   const std::vector<double> &eTablePositiveFlag,
   const std::vector<double> &eTableNegativeFlag)
 {
@@ -550,7 +541,7 @@ void HierarchicalBasisH1Pri::orientEdge(
 }
 
 void HierarchicalBasisH1Pri::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)
@@ -621,12 +612,10 @@ void HierarchicalBasisH1Pri::orientEdgeFunctionsForNegativeFlag(
   }
 }
 
-void HierarchicalBasisH1Pri::orientOneFace(double const &u, double const &v,
-                                           double const &w, int const &flag1,
-                                           int const &flag2, int const &flag3,
-                                           int const &faceNumber,
-                                           std::vector<double> &faceBasis,
-                                           std::string typeFunction)
+void HierarchicalBasisH1Pri::orientOneFace(double u, double v, double w,
+                                           int flag1, int flag2, int flag3,
+                                           int faceNumber,
+                                           std::vector<double> &faceBasis)
 {
   if(faceNumber < 3) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
@@ -786,9 +775,8 @@ void HierarchicalBasisH1Pri::orientOneFace(double const &u, double const &v,
 }
 
 void HierarchicalBasisH1Pri::orientOneFace(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double>> &gradientFace, std::string typeFunction)
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<std::vector<double>> &gradientFace)
 {
   if(faceNumber < 3) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
@@ -1039,7 +1027,7 @@ void HierarchicalBasisH1Pri::orientOneFace(
 }
 
 void HierarchicalBasisH1Pri::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<double> &quadFaceFunctionsAllOrientation,
   const std::vector<double> &triFaceFunctionsAllOrientation,
   std::vector<double> &fTableCopy)
@@ -1076,7 +1064,7 @@ void HierarchicalBasisH1Pri::orientFace(
 }
 
 void HierarchicalBasisH1Pri::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
   const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
   std::vector<std::vector<double>> &fTableCopy)

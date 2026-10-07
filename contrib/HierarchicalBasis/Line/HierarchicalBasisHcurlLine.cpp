@@ -26,11 +26,6 @@ HierarchicalBasisHcurlLine::HierarchicalBasisHcurlLine(int order)
   _numBubbleFunction = 0;
 }
 
-unsigned int HierarchicalBasisHcurlLine::getNumberOfOrientations() const
-{
-  return 2; // factorial 2
-}
-
 double HierarchicalBasisHcurlLine::_affineCoordinate(int j, double u)
 {
   switch(j) {
@@ -45,8 +40,7 @@ double HierarchicalBasisHcurlLine::dotProduct(const std::vector<double> &u,
 { return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]; }
 
 void HierarchicalBasisHcurlLine::generateHcurlBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {
@@ -94,8 +88,7 @@ void HierarchicalBasisHcurlLine::generateHcurlBasis(
 }
 
 void HierarchicalBasisHcurlLine::generateCurlBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {
@@ -116,7 +109,7 @@ void HierarchicalBasisHcurlLine::orientEdgeFunctionsForNegativeFlag(
 }
 
 void HierarchicalBasisHcurlLine::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)

@@ -36,15 +36,8 @@ HierarchicalBasisHcurlTetra::HierarchicalBasisHcurlTetra(int order)
 
 HierarchicalBasisHcurlTetra::~HierarchicalBasisHcurlTetra() {}
 
-unsigned int HierarchicalBasisHcurlTetra::getNumberOfOrientations() const
-{
-  return 24; // factorial 4
-}
-
-double HierarchicalBasisHcurlTetra::_affineCoordinate(const int &j,
-                                                      const double &u,
-                                                      const double &v,
-                                                      const double &w)
+double HierarchicalBasisHcurlTetra::_affineCoordinate(int j, double u, double v,
+                                                      double w)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -60,8 +53,7 @@ double HierarchicalBasisHcurlTetra::dotProduct(const std::vector<double> &u,
 { return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]; }
 
 void HierarchicalBasisHcurlTetra::generateHcurlBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {
@@ -439,7 +431,7 @@ void HierarchicalBasisHcurlTetra::generateHcurlBasis(
 }
 
 void HierarchicalBasisHcurlTetra::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)
@@ -490,12 +482,11 @@ void HierarchicalBasisHcurlTetra::orientEdgeFunctionsForNegativeFlag(
   }
 }
 void HierarchicalBasisHcurlTetra::orientOneFace(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double>> &faceFunctions, std::string typeFunction)
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<std::vector<double>> &faceFunctions)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
-    if(typeFunction == "HcurlLegendre") {
+    if(_space == HCURL) {
       // orient Edge-based interior functions
       // to map onto the reference domain of gmsh:
       double uc = 2 * u - 1;
@@ -677,7 +668,7 @@ void HierarchicalBasisHcurlTetra::orientOneFace(
       }
     }
 
-    else if("CurlHcurlLegendre" == typeFunction) {
+    else if(_space == CURL_HCURL) {
       // to map onto the reference domain of gmsh:
       double uc = 2 * u - 1;
       double vc = 2 * v - 1;
@@ -922,7 +913,7 @@ void HierarchicalBasisHcurlTetra::orientOneFace(
   }
 }
 void HierarchicalBasisHcurlTetra::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
   const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
   std::vector<std::vector<double>> &fTableCopy)
@@ -946,17 +937,16 @@ void HierarchicalBasisHcurlTetra::orientFace(
 }
 
 inline void HierarchicalBasisHcurlTetra::curlFunction(
-  const double &a, const std::vector<double> &nD,
-  const std::vector<double> &grad, std::vector<double> &result)
+  double a, const std::vector<double> &nD, const std::vector<double> &grad,
+  std::vector<double> &result)
 {
   result[0] = a * (nD[2] * grad[1] - nD[1] * grad[2]);
   result[1] = a * (nD[0] * grad[2] - nD[2] * grad[0]);
   result[2] = a * (nD[1] * grad[0] - nD[0] * grad[1]);
 }
 inline void HierarchicalBasisHcurlTetra::gradient(
-  const double &lambda1, const double &lambda2,
-  const std::vector<double> &dlambda1, const std::vector<double> &dlambda2,
-  std::vector<double> &result)
+  double lambda1, double lambda2, const std::vector<double> &dlambda1,
+  const std::vector<double> &dlambda2, std::vector<double> &result)
 {
   for(int i = 0; i < 3; i++) {
     result[i] = lambda1 * dlambda2[i] + lambda2 * dlambda1[i];
@@ -964,8 +954,7 @@ inline void HierarchicalBasisHcurlTetra::gradient(
 }
 
 void HierarchicalBasisHcurlTetra::generateCurlBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {

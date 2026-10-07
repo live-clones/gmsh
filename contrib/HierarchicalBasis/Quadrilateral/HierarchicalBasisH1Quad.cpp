@@ -60,13 +60,7 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int pf1, int pf2, int pe0,
   }
 }
 
-unsigned int HierarchicalBasisH1Quad::getNumberOfOrientations() const
-{
-  return 24; // factorial 4
-}
-
-double HierarchicalBasisH1Quad::_affineCoordinate(int const &j, double const &u,
-                                                  double const &v)
+double HierarchicalBasisH1Quad::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -77,13 +71,11 @@ double HierarchicalBasisH1Quad::_affineCoordinate(int const &j, double const &u,
   }
 }
 
-void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
-                                            double const &w,
+void HierarchicalBasisH1Quad::generateBasis(double u, double v, double w,
                                             std::vector<double> &vertexBasis,
                                             std::vector<double> &edgeBasis,
                                             std::vector<double> &faceBasis,
-                                            std::vector<double> &bubbleBasis,
-                                            std::string typeFunction)
+                                            std::vector<double> &bubbleBasis)
 {
   double lambda1 = _affineCoordinate(1, u, v);
   double lambda2 = _affineCoordinate(2, u, v);
@@ -215,7 +207,7 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
 }
 
 void HierarchicalBasisH1Quad::generateGradientBasis(
-  double const &u, double const &v, double const &w,
+  double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
   std::vector<std::vector<double>> &gradientFace,
@@ -430,8 +422,7 @@ void HierarchicalBasisH1Quad::orientEdgeFunctionsForNegativeFlag(
 }
 
 void HierarchicalBasisH1Quad::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
-  std::vector<double> &edgeFunctions,
+  int flagOrientation, int edgeNumber, std::vector<double> &edgeFunctions,
   const std::vector<double> &eTablePositiveFlag,
   const std::vector<double> &eTableNegativeFlag)
 {
@@ -458,7 +449,7 @@ void HierarchicalBasisH1Quad::orientEdge(
 }
 
 void HierarchicalBasisH1Quad::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)
@@ -487,12 +478,10 @@ void HierarchicalBasisH1Quad::orientEdge(
   }
 }
 
-void HierarchicalBasisH1Quad::orientOneFace(double const &u, double const &v,
-                                            double const &w, int const &flag1,
-                                            int const &flag2, int const &flag3,
-                                            int const &faceNumber,
-                                            std::vector<double> &faceBasis,
-                                            std::string typeFunction)
+void HierarchicalBasisH1Quad::orientOneFace(double u, double v, double w,
+                                            int flag1, int flag2, int flag3,
+                                            int faceNumber,
+                                            std::vector<double> &faceBasis)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -534,9 +523,8 @@ void HierarchicalBasisH1Quad::orientOneFace(double const &u, double const &v,
 }
 
 void HierarchicalBasisH1Quad::orientOneFace(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double>> &gradientFace, std::string typeFunction)
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<std::vector<double>> &gradientFace)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -586,7 +574,7 @@ void HierarchicalBasisH1Quad::orientOneFace(
 }
 
 void HierarchicalBasisH1Quad::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<double> &quadFaceFunctionsAllOrientation,
   const std::vector<double> &triFaceFunctionsAllOrientation,
   std::vector<double> &fTableCopy)
@@ -599,7 +587,7 @@ void HierarchicalBasisH1Quad::orientFace(
 }
 
 void HierarchicalBasisH1Quad::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
   const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
   std::vector<std::vector<double>> &fTableCopy)

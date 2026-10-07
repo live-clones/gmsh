@@ -34,14 +34,7 @@ double HierarchicalBasisHdivTria::dotProduct(const std::vector<double> &u,
                                              const std::vector<double> &v)
 { return u[0] * v[0] + u[1] * v[1]; }
 
-unsigned int HierarchicalBasisHdivTria::getNumberOfOrientations() const
-{
-  return 6; // factorial 3
-}
-
-double HierarchicalBasisHdivTria::_affineCoordinate(int const &j,
-                                                    double const &u,
-                                                    double const &v)
+double HierarchicalBasisHdivTria::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -52,8 +45,7 @@ double HierarchicalBasisHdivTria::_affineCoordinate(int const &j,
 }
 
 void HierarchicalBasisHdivTria::generateHdivBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {
@@ -190,9 +182,8 @@ void HierarchicalBasisHdivTria::generateHdivBasis(
 }
 
 void HierarchicalBasisHdivTria::generateDivBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<double> &edgeBasis, std::vector<double> &faceBasis,
-  std::vector<double> &bubbleBasis)
+  double u, double v, double w, std::vector<double> &edgeBasis,
+  std::vector<double> &faceBasis, std::vector<double> &bubbleBasis)
 {
   //***
   // to map onto the reference domain of gmsh:
@@ -407,7 +398,7 @@ void HierarchicalBasisHdivTria::orientEdgeFunctionsForNegativeFlag(
 }
 
 void HierarchicalBasisHdivTria::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)
@@ -439,8 +430,7 @@ void HierarchicalBasisHdivTria::orientEdge(
 }
 
 void HierarchicalBasisHdivTria::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
-  std::vector<double> &edgeFunctions,
+  int flagOrientation, int edgeNumber, std::vector<double> &edgeFunctions,
   const std::vector<double> &eTablePositiveFlag,
   const std::vector<double> &eTableNegativeFlag)
 {
@@ -467,12 +457,11 @@ void HierarchicalBasisHdivTria::orientEdge(
 }
 
 void HierarchicalBasisHdivTria::orientOneFace(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double>> &faceFunctions, std::string typeFunction)
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<std::vector<double>> &faceFunctions)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
-    if(typeFunction == "HdivLegendre") {
+    if(_space == HDIV) {
       // to map onto the reference domain of gmsh:
       double uc = 2 * u - 1;
       double vc = 2 * v - 1;
@@ -611,12 +600,11 @@ void HierarchicalBasisHdivTria::orientOneFace(
 }
 
 void HierarchicalBasisHdivTria::orientOneFace(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<double> &faceFunctions, std::string typeFunction)
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<double> &faceFunctions)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
-    if("DivHdivLegendre" == typeFunction) {
+    if(_space == DIV_HDIV) {
       // to map onto the reference domain of gmsh:
       double uc = 2 * u - 1;
       double vc = 2 * v - 1;
@@ -797,7 +785,7 @@ void HierarchicalBasisHdivTria::orientOneFace(
 }
 
 void HierarchicalBasisHdivTria::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
   const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
   std::vector<std::vector<double>> &fTableCopy)
@@ -817,7 +805,7 @@ void HierarchicalBasisHdivTria::orientFace(
 }
 
 void HierarchicalBasisHdivTria::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<double> &quadFaceFunctionsAllOrientation,
   const std::vector<double> &triFaceFunctionsAllOrientation,
   std::vector<double> &fTableCopy)

@@ -24,22 +24,15 @@ HierarchicalBasisH1Point::HierarchicalBasisH1Point()
   _numBubbleFunction = 0;
 }
 
-unsigned int HierarchicalBasisH1Point::getNumberOfOrientations() const
-{
-  return 1; // factorial 1
-}
-
-void HierarchicalBasisH1Point::generateBasis(double const &u, double const &v,
-                                             double const &w,
+void HierarchicalBasisH1Point::generateBasis(double u, double v, double w,
                                              std::vector<double> &vertexBasis,
                                              std::vector<double> &edgeBasis,
                                              std::vector<double> &faceBasis,
-                                             std::vector<double> &bubbleBasis,
-                                             std::string typeFunction)
+                                             std::vector<double> &bubbleBasis)
 { vertexBasis[0] = 1; }
 
 void HierarchicalBasisH1Point::generateGradientBasis(
-  double const &u, double const &v, double const &w,
+  double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
   std::vector<std::vector<double>> &gradientFace,

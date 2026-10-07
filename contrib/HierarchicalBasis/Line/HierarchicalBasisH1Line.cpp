@@ -26,11 +26,6 @@ HierarchicalBasisH1Line::HierarchicalBasisH1Line(int pe)
   _numBubbleFunction = 0;
 }
 
-unsigned int HierarchicalBasisH1Line::getNumberOfOrientations() const
-{
-  return 2; // factorial 2
-}
-
 double HierarchicalBasisH1Line::_affineCoordinate(int j, double u)
 {
   switch(j) {
@@ -40,13 +35,11 @@ double HierarchicalBasisH1Line::_affineCoordinate(int j, double u)
   }
 }
 
-void HierarchicalBasisH1Line::generateBasis(double const &u, double const &v,
-                                            double const &w,
+void HierarchicalBasisH1Line::generateBasis(double u, double v, double w,
                                             std::vector<double> &vertexBasis,
                                             std::vector<double> &edgeBasis,
                                             std::vector<double> &faceBasis,
-                                            std::vector<double> &bubbleBasis,
-                                            std::string typeFunction)
+                                            std::vector<double> &bubbleBasis)
 {
   double lambda1 = _affineCoordinate(1, u);
   double lambda2 = _affineCoordinate(2, u);
@@ -63,7 +56,7 @@ void HierarchicalBasisH1Line::generateBasis(double const &u, double const &v,
 }
 
 void HierarchicalBasisH1Line::generateGradientBasis(
-  double const &u, double const &v, double const &w,
+  double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
   std::vector<std::vector<double>> &gradientFace,
@@ -96,8 +89,7 @@ void HierarchicalBasisH1Line::orientEdgeFunctionsForNegativeFlag(
 }
 
 void HierarchicalBasisH1Line::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
-  std::vector<double> &edgeFunctions,
+  int flagOrientation, int edgeNumber, std::vector<double> &edgeFunctions,
   const std::vector<double> &eTablePositiveFlag,
   const std::vector<double> &eTableNegativeFlag)
 {
@@ -109,7 +101,7 @@ void HierarchicalBasisH1Line::orientEdge(
 }
 
 void HierarchicalBasisH1Line::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)

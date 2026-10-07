@@ -12,11 +12,10 @@
 #include "HierarchicalBasisHcurl.h"
 
 void HierarchicalBasisHcurl::addAllOrientedFaceFunctions(
-  double const &u, double const &v, double const &w,
+  double u, double v, double w,
   const std::vector<std::vector<double>> &faceFunctions,
   std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-  std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
-  std::string typeFunction)
+  std::vector<std::vector<double>> &triFaceFunctionsAllOrientation)
 {
   // quadrilateral faces
   int it = 0;
@@ -59,8 +58,8 @@ void HierarchicalBasisHcurl::addAllOrientedFaceFunctions(
         break;
       }
       for(int iFace = 0; iFace < _numQuadFace; iFace++) {
-        orientOneFace(u, v, w, flag1, flag2, flag3, iFace, orientedFaceFunction,
-                      typeFunction);
+        orientOneFace(u, v, w, flag1, flag2, flag3, iFace,
+                      orientedFaceFunction);
       }
 
       for(int r = 0; r < _numQuadFaceFunction; r++) {
@@ -107,8 +106,8 @@ void HierarchicalBasisHcurl::addAllOrientedFaceFunctions(
 
       for(int iFace = _numQuadFace; iFace < _numQuadFace + _numTriFace;
           iFace++) {
-        orientOneFace(u, v, w, flag1, flag2, flag3, iFace, orientedFaceFunction,
-                      typeFunction);
+        orientOneFace(u, v, w, flag1, flag2, flag3, iFace,
+                      orientedFaceFunction);
       }
       for(int r = 0; r < _numTriFaceFunction; r++) {
         triFaceFunctionsAllOrientation[it][0] =

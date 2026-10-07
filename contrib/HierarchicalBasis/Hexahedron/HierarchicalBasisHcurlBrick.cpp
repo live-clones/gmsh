@@ -32,15 +32,8 @@ HierarchicalBasisHcurlBrick::HierarchicalBasisHcurlBrick(int order)
 
 HierarchicalBasisHcurlBrick::~HierarchicalBasisHcurlBrick() {}
 
-unsigned int HierarchicalBasisHcurlBrick::getNumberOfOrientations() const
-{
-  return 40320; // factorial 8
-}
-
-double HierarchicalBasisHcurlBrick::_affineCoordinate(const int &j,
-                                                      const double &u,
-                                                      const double &v,
-                                                      const double &w)
+double HierarchicalBasisHcurlBrick::_affineCoordinate(int j, double u, double v,
+                                                      double w)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -54,8 +47,7 @@ double HierarchicalBasisHcurlBrick::_affineCoordinate(const int &j,
 }
 
 void HierarchicalBasisHcurlBrick::generateHcurlBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {
@@ -258,7 +250,7 @@ void HierarchicalBasisHcurlBrick::generateHcurlBasis(
 }
 
 void HierarchicalBasisHcurlBrick::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)
@@ -309,9 +301,8 @@ void HierarchicalBasisHcurlBrick::orientEdgeFunctionsForNegativeFlag(
   }
 }
 void HierarchicalBasisHcurlBrick::orientOneFace(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double>> &faceFunctions, std::string typeFunction)
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<std::vector<double>> &faceFunctions)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -352,7 +343,7 @@ void HierarchicalBasisHcurlBrick::orientOneFace(
       }
     }
     else {
-      if(typeFunction == "HcurlLegendre") {
+      if(_space == HCURL) {
         std::vector<double> uvw(3);
         uvw[0] = u;
         uvw[1] = v;
@@ -441,7 +432,7 @@ void HierarchicalBasisHcurlBrick::orientOneFace(
           }
         }
       }
-      else if(typeFunction == "CurlHcurlLegendre") {
+      else if(_space == CURL_HCURL) {
         std::vector<double> vec1(3, 0);
         std::vector<double> vec2(3, 0);
         std::vector<double> uvw(3);
@@ -605,7 +596,7 @@ void HierarchicalBasisHcurlBrick::orientOneFace(
   }
 }
 void HierarchicalBasisHcurlBrick::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
   const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
   std::vector<std::vector<double>> &fTableCopy)
@@ -629,8 +620,7 @@ void HierarchicalBasisHcurlBrick::orientFace(
 }
 
 void HierarchicalBasisHcurlBrick::generateCurlBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {

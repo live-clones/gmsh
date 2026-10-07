@@ -22,43 +22,38 @@
 
 class HierarchicalBasisH1Point : public HierarchicalBasisH1 {
 private:
-  void generateGradientBasis(double const &u, double const &v, double const &w,
+  void generateGradientBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &gradientVertex,
                              std::vector<std::vector<double>> &gradientEdge,
                              std::vector<std::vector<double>> &gradientFace,
                              std::vector<std::vector<double>> &gradientBubble);
 
-  void orientOneFace(double const &u, double const &v, double const &w,
-                     int const &flag1, int const &flag2, int const &flag3,
-                     int const &faceNumber, std::vector<double> &faceFunctions,
-                     std::string typeFunction = "H1Legendre") override
-  { /* No operation needed for point basis */ }
-  void orientOneFace(double const &u, double const &v, double const &w,
-                     int const &flag1, int const &flag2, int const &flag3,
-                     int const &faceNumber,
-                     std::vector<std::vector<double>> &faceFunctions,
-                     std::string typeFunction = "GradH1Legendre") override
-  { /* No operation needed for point basis */ }
+  void orientOneFace(double u, double v, double w, int flag1, int flag2,
+                     int flag3, int faceNumber,
+                     std::vector<double> &faceFunctions) override
+  { /* No operation needed for point basis */
+  }
+  void orientOneFace(double u, double v, double w, int flag1, int flag2,
+                     int flag3, int faceNumber,
+                     std::vector<std::vector<double>> &faceFunctions) override
+  { /* No operation needed for point basis */
+  }
 
 public:
   HierarchicalBasisH1Point();
   ~HierarchicalBasisH1Point() override = default;
 
-  unsigned int getNumberOfOrientations() const override;
-
   // vertexBasis=[v0]
-  void generateBasis(double const &u, double const &v, double const &w,
+  void generateBasis(double u, double v, double w,
                      std::vector<double> &vertexBasis,
                      std::vector<double> &edgeBasis,
                      std::vector<double> &faceBasis,
-                     std::vector<double> &bubbleBasis,
-                     std::string typeFunction) override;
-  void generateBasis(double const &u, double const &v, double const &w,
+                     std::vector<double> &bubbleBasis) override;
+  void generateBasis(double u, double v, double w,
                      std::vector<std::vector<double>> &vertexBasis,
                      std::vector<std::vector<double>> &edgeBasis,
                      std::vector<std::vector<double>> &faceBasis,
-                     std::vector<std::vector<double>> &bubbleBasis,
-                     std::string typeFunction) override
+                     std::vector<std::vector<double>> &bubbleBasis) override
   {
     generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
                           bubbleBasis);
@@ -66,35 +61,40 @@ public:
 
   void orientEdgeFunctionsForNegativeFlag(
     std::vector<double> &edgeFunctions) override
-  { /* No operation needed for point basis */ }
+  { /* No operation needed for point basis */
+  }
   void orientEdgeFunctionsForNegativeFlag(
     std::vector<std::vector<double>> &edgeFunctions) override
-  { /* No operation needed for point basis */ }
+  { /* No operation needed for point basis */
+  }
 
-  void orientEdge(int const &flagOrientation, int const &edgeNumber,
+  void orientEdge(int flagOrientation, int edgeNumber,
                   std::vector<double> &edgeFunctions,
                   const std::vector<double> &eTablePositiveFlag,
                   const std::vector<double> &eTableNegativeFlag) override
-  { /* No operation needed for point basis */ }
+  { /* No operation needed for point basis */
+  }
   void orientEdge(
-    int const &flagOrientation, int const &edgeNumber,
+    int flagOrientation, int edgeNumber,
     std::vector<std::vector<double>> &edgeBasis,
     const std::vector<std::vector<double>> &eTablePositiveFlag,
     const std::vector<std::vector<double>> &eTableNegativeFlag) override
-  { /* No operation needed for point basis */ }
+  { /* No operation needed for point basis */
+  }
 
-  void orientFace(int const &flag1, int const &flag2, int const &flag3,
-                  int const &faceNumber,
+  void orientFace(int flag1, int flag2, int flag3, int faceNumber,
                   const std::vector<double> &quadFaceFunctionsAllOrientation,
                   const std::vector<double> &triFaceFunctionsAllOrientation,
                   std::vector<double> &fTableCopy) override
-  { /* No operation needed for point basis */ }
+  { /* No operation needed for point basis */
+  }
   void orientFace(
-    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    int flag1, int flag2, int flag3, int faceNumber,
     const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
     const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
     std::vector<std::vector<double>> &fTableCopy) override
-  { /* No operation needed for point basis */ }
+  { /* No operation needed for point basis */
+  }
 
   void getKeysInfo(std::vector<int> &functionTypeInfo,
                    std::vector<int> &orderInfo) override;

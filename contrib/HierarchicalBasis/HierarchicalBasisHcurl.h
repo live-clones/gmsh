@@ -16,45 +16,36 @@
 
 class HierarchicalBasisHcurl : public HierarchicalBasis {
 protected:
-  virtual void orientOneFace(double const &u, double const &v, double const &w,
-                             int const &flag1, int const &flag2,
-                             int const &flag3, int const &faceNumber,
-                             std::vector<double> &faceFunctions,
-                             std::string typeFunction)
+  virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
+                             int flag3, int faceNumber,
+                             std::vector<double> &faceFunctions)
   {
     // The method is an intentionally-blank override
   }
 
-  virtual void orientOneFace(double const &u, double const &v, double const &w,
-                             int const &flag1, int const &flag2,
-                             int const &flag3, int const &faceNumber,
-                             std::vector<std::vector<double>> &faceFunctions,
-                             std::string typeFunction) = 0;
+  virtual void
+  orientOneFace(double u, double v, double w, int flag1, int flag2, int flag3,
+                int faceNumber,
+                std::vector<std::vector<double>> &faceFunctions) = 0;
 
   HierarchicalBasisHcurl() = default;
 
 public:
   virtual ~HierarchicalBasisHcurl() = default;
 
-  virtual unsigned int getNumberOfOrientations() const = 0;
-
-  virtual void generateBasis(double const &u, double const &v, double const &w,
+  virtual void generateBasis(double u, double v, double w,
                              std::vector<double> &vertexBasis,
                              std::vector<double> &edgeBasis,
                              std::vector<double> &faceBasis,
-                             std::vector<double> &bubbleBasis,
-                             std::string typeFunction)
+                             std::vector<double> &bubbleBasis)
   {
     // The method is an intentionally-blank override
   }
-  virtual void generateBasis(double const &u, double const &v, double const &w,
+  virtual void generateBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &vertexBasis,
                              std::vector<std::vector<double>> &edgeBasis,
                              std::vector<std::vector<double>> &faceBasis,
-                             std::vector<std::vector<double>> &bubbleBasis,
-                             std::string typeFunction) = 0;
-
-  // typeFunction = HcurlLegendre, CurlHcurlLegendre
+                             std::vector<std::vector<double>> &bubbleBasis) = 0;
 
   virtual void
   orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions)
@@ -65,7 +56,7 @@ public:
   virtual void orientEdgeFunctionsForNegativeFlag(
     std::vector<std::vector<double>> &edgeFunctions) = 0;
 
-  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+  virtual void orientEdge(int flagOrientation, int edgeNumber,
                           std::vector<double> &edgeFunctions,
                           const std::vector<double> &eTablePositiveFlag,
                           const std::vector<double> &eTableNegativeFlag)
@@ -74,31 +65,27 @@ public:
   }
 
   virtual void
-  orientEdge(int const &flagOrientation, int const &edgeNumber,
+  orientEdge(int flagOrientation, int edgeNumber,
              std::vector<std::vector<double>> &edgeBasis,
              const std::vector<std::vector<double>> &eTablePositiveFlag,
              const std::vector<std::vector<double>> &eTableNegativeFlag) = 0;
 
   virtual void addAllOrientedFaceFunctions(
-    double const &u, double const &v, double const &w,
-    const std::vector<double> &faceFunctions,
+    double u, double v, double w, const std::vector<double> &faceFunctions,
     std::vector<double> &quadFaceFunctionsAllOrientations,
-    std::vector<double> &triFaceFunctionsAllOrientations,
-    std::string typeFunction)
+    std::vector<double> &triFaceFunctionsAllOrientations)
   {
     // The method is an intentionally-blank override
   }
 
   virtual void addAllOrientedFaceFunctions(
-    double const &u, double const &v, double const &w,
+    double u, double v, double w,
     const std::vector<std::vector<double>> &faceFunctions,
     std::vector<std::vector<double>> &quadFaceFunctionsAllOrientations,
-    std::vector<std::vector<double>> &triFaceFunctionsAllOrientations,
-    std::string typeFunction);
+    std::vector<std::vector<double>> &triFaceFunctionsAllOrientations);
 
   virtual void
-  orientFace(int const &flag1, int const &flag2, int const &flag3,
-             int const &faceNumber,
+  orientFace(int flag1, int flag2, int flag3, int faceNumber,
              const std::vector<double> &quadFaceFunctionsAllOrientations,
              const std::vector<double> &triFaceFunctionsAllOrientations,
              std::vector<double> &fTableCopy)
@@ -107,7 +94,7 @@ public:
   }
 
   virtual void orientFace(
-    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    int flag1, int flag2, int flag3, int faceNumber,
     const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientations,
     const std::vector<std::vector<double>> &triFaceFunctionsAllOrientations,
     std::vector<std::vector<double>> &fTableCopy) = 0;

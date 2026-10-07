@@ -49,13 +49,7 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int pf, int pe0, int pe1,
   if(pf < 1) { throw std::invalid_argument("pf must be >= 1."); }
 }
 
-unsigned int HierarchicalBasisH1Tria::getNumberOfOrientations() const
-{
-  return 6; // factorial 3
-}
-
-double HierarchicalBasisH1Tria::_affineCoordinate(int const &j, double const &u,
-                                                  double const &v)
+double HierarchicalBasisH1Tria::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -65,13 +59,11 @@ double HierarchicalBasisH1Tria::_affineCoordinate(int const &j, double const &u,
   }
 }
 
-void HierarchicalBasisH1Tria::generateBasis(double const &u, double const &v,
-                                            double const &w,
+void HierarchicalBasisH1Tria::generateBasis(double u, double v, double w,
                                             std::vector<double> &vertexBasis,
                                             std::vector<double> &edgeBasis,
                                             std::vector<double> &faceBasis,
-                                            std::vector<double> &bubbleBasis,
-                                            std::string typeFunction)
+                                            std::vector<double> &bubbleBasis)
 {
   // to map onto the reference domain of gmsh: u,v in (0,1) and uc,vc in (-1,1)
   double uc = 2 * u - 1;
@@ -157,7 +149,7 @@ void HierarchicalBasisH1Tria::generateBasis(double const &u, double const &v,
 }
 
 void HierarchicalBasisH1Tria::generateGradientBasis(
-  double const &u, double const &v, double const &w,
+  double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
   std::vector<std::vector<double>> &gradientFace,
@@ -385,8 +377,7 @@ void HierarchicalBasisH1Tria::orientEdgeFunctionsForNegativeFlag(
 }
 
 void HierarchicalBasisH1Tria::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
-  std::vector<double> &edgeFunctions,
+  int flagOrientation, int edgeNumber, std::vector<double> &edgeFunctions,
   const std::vector<double> &eTablePositiveFlag,
   const std::vector<double> &eTableNegativeFlag)
 {
@@ -403,7 +394,7 @@ void HierarchicalBasisH1Tria::orientEdge(
 }
 
 void HierarchicalBasisH1Tria::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)
@@ -430,12 +421,10 @@ void HierarchicalBasisH1Tria::orientEdge(
 // generate the correctly oriented functions directly in the first place,
 // avoiding this extra processing overhead.
 
-void HierarchicalBasisH1Tria::orientOneFace(double const &u, double const &v,
-                                            double const &w, int const &flag1,
-                                            int const &flag2, int const &flag3,
-                                            int const &faceNumber,
-                                            std::vector<double> &faceBasis,
-                                            std::string typeFunction)
+void HierarchicalBasisH1Tria::orientOneFace(double u, double v, double w,
+                                            int flag1, int flag2, int flag3,
+                                            int faceNumber,
+                                            std::vector<double> &faceBasis)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
     // to map onto the reference domain of gmsh:
@@ -494,9 +483,8 @@ void HierarchicalBasisH1Tria::orientOneFace(double const &u, double const &v,
 }
 
 void HierarchicalBasisH1Tria::orientOneFace(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double>> &gradientFace, std::string typeFunction)
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<std::vector<double>> &gradientFace)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
     // to map onto the reference domain of gmsh:
@@ -600,7 +588,7 @@ void HierarchicalBasisH1Tria::orientOneFace(
 }
 
 void HierarchicalBasisH1Tria::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<double> &quadFaceFunctionsAllOrientation,
   const std::vector<double> &triFaceFunctionsAllOrientation,
   std::vector<double> &fTableCopy)
@@ -618,7 +606,7 @@ void HierarchicalBasisH1Tria::orientFace(
 }
 
 void HierarchicalBasisH1Tria::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
   const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
   std::vector<std::vector<double>> &fTableCopy)

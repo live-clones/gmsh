@@ -47,19 +47,17 @@ class HierarchicalBasisHcurlBrick : public HierarchicalBasisHcurl {
 public:
   HierarchicalBasisHcurlBrick(int order);
   virtual ~HierarchicalBasisHcurlBrick();
-  virtual unsigned int getNumberOfOrientations() const;
 
-  virtual void generateBasis(double const &u, double const &v, double const &w,
+  virtual void generateBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &vertexBasis,
                              std::vector<std::vector<double>> &edgeBasis,
                              std::vector<std::vector<double>> &faceBasis,
-                             std::vector<std::vector<double>> &bubbleBasis,
-                             std::string typeFunction)
+                             std::vector<std::vector<double>> &bubbleBasis)
   {
-    if(typeFunction == "HcurlLegendre") {
+    if(_space == HCURL) {
       generateHcurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
-    else if("CurlHcurlLegendre" == typeFunction) {
+    else if(_space == CURL_HCURL) {
       generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
     else {
@@ -67,14 +65,14 @@ public:
     }
   };
   virtual void
-  orientEdge(int const &flagOrientation, int const &edgeNumber,
+  orientEdge(int flagOrientation, int edgeNumber,
              std::vector<std::vector<double>> &edgeBasis,
              const std::vector<std::vector<double>> &eTablePositiveFlag,
              const std::vector<std::vector<double>> &eTableNegativeFlag);
   virtual void orientEdgeFunctionsForNegativeFlag(
     std::vector<std::vector<double>> &edgeFunctions);
   virtual void orientFace(
-    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    int flag1, int flag2, int flag3, int faceNumber,
     const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
     const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
     std::vector<std::vector<double>> &fTableCopy);
@@ -91,28 +89,24 @@ private:
                        // matches the order of face 0 in direction u)
   int _pOrderFace2[6]; // Face functions order in direction v (pOrderFace[0]
                        // matches the order of face 0 in direction v)
-  static double
-  _affineCoordinate(const int &j, const double &u, const double &v,
-                    const double &w); // affine coordinate lambdaj j=1..6
+  static double _affineCoordinate(int j, double u, double v,
+                                  double w); // affine coordinate lambdaj j=1..6
 
   // edgeBasis=[phie0_{0},...phie0_{pe0},phie1_{0},...phie1_{pe1}...]
   // faceBasis=[phieFf1{n1,n2} (with 0<=n1<=pf1 , 2<=n2<=pf2+1), phieFf2{n1,n2}
   // (with 2<=n1<=pf1+1 , 0<=n2<=pf2) ] bubbleBasis=[phieb1{n1,n2,n3} (with
   // 0<=n1<=pb1 , 2<=n2<=pb2+1 , 2<=n3<=pb3+1)...]
   virtual void
-  generateHcurlBasis(double const &u, double const &v, double const &w,
+  generateHcurlBasis(double u, double v, double w,
                      std::vector<std::vector<double>> &edgeBasis,
                      std::vector<std::vector<double>> &faceBasis,
                      std::vector<std::vector<double>> &bubbleBasis);
-  virtual void generateCurlBasis(double const &u, double const &v,
-                                 double const &w,
+  virtual void generateCurlBasis(double u, double v, double w,
                                  std::vector<std::vector<double>> &edgeBasis,
                                  std::vector<std::vector<double>> &faceBasis,
                                  std::vector<std::vector<double>> &bubbleBasis);
-  virtual void orientOneFace(double const &u, double const &v, double const &w,
-                             int const &flag1, int const &flag2,
-                             int const &flag3, int const &faceNumber,
-                             std::vector<std::vector<double>> &faceFunctions,
-                             std::string typeFunction);
+  virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
+                             int flag3, int faceNumber,
+                             std::vector<std::vector<double>> &faceFunctions);
 };
 #endif

@@ -8,11 +8,9 @@
 #include "HierarchicalBasisH1.h"
 
 void HierarchicalBasisH1::addAllOrientedFaceFunctions(
-  double const &u, double const &v, double const &w,
-  const std::vector<double> &faceFunctions,
+  double u, double v, double w, const std::vector<double> &faceFunctions,
   std::vector<double> &quadFaceFunctionsAllOrientations,
-  std::vector<double> &triFaceFunctionsAllOrientations,
-  std::string typeFunction)
+  std::vector<double> &triFaceFunctionsAllOrientations)
 {
   // quadrilateral faces
   int it = 0;
@@ -31,8 +29,8 @@ void HierarchicalBasisH1::addAllOrientedFaceFunctions(
       int flag3 = quadFlags[2];
 
       for(int iFace = 0; iFace < _numQuadFace; iFace++) {
-        orientOneFace(u, v, w, flag1, flag2, flag3, iFace, orientedFaceFunction,
-                      typeFunction);
+        orientOneFace(u, v, w, flag1, flag2, flag3, iFace,
+                      orientedFaceFunction);
       }
 
       for(int r = 0; r < _numQuadFaceFunction; r++) {
@@ -59,8 +57,8 @@ void HierarchicalBasisH1::addAllOrientedFaceFunctions(
 
       for(int iFace = _numQuadFace; iFace < _numQuadFace + _numTriFace;
           iFace++) {
-        orientOneFace(u, v, w, flag1, flag2, flag3, iFace, orientedFaceFunction,
-                      typeFunction); // flage3 no sense !!!
+        orientOneFace(u, v, w, flag1, flag2, flag3, iFace,
+                      orientedFaceFunction); // flage3 no sense !!!
       }
 
       for(int r = 0; r < _numTriFaceFunction; r++) {
@@ -73,11 +71,10 @@ void HierarchicalBasisH1::addAllOrientedFaceFunctions(
 }
 
 void HierarchicalBasisH1::addAllOrientedFaceFunctions(
-  double const &u, double const &v, double const &w,
+  double u, double v, double w,
   const std::vector<std::vector<double>> &faceFunctions,
   std::vector<std::vector<double>> &quadFaceFunctionsAllOrientations,
-  std::vector<std::vector<double>> &triFaceFunctionsAllOrientations,
-  std::string typeFunction)
+  std::vector<std::vector<double>> &triFaceFunctionsAllOrientations)
 {
   int it = 0;
   // quadrilateral faces
@@ -98,8 +95,8 @@ void HierarchicalBasisH1::addAllOrientedFaceFunctions(
       int flag3 = quadFlags[2];
 
       for(int iFace = 0; iFace < _numQuadFace; iFace++) {
-        orientOneFace(u, v, w, flag1, flag2, flag3, iFace, orientedFaceFunction,
-                      typeFunction);
+        orientOneFace(u, v, w, flag1, flag2, flag3, iFace,
+                      orientedFaceFunction);
       }
 
       for(int r = 0; r < _numQuadFaceFunction; r++) {
@@ -128,8 +125,8 @@ void HierarchicalBasisH1::addAllOrientedFaceFunctions(
 
       for(int iFace = _numQuadFace; iFace < _numQuadFace + _numTriFace;
           iFace++) {
-        orientOneFace(u, v, w, flag1, flag2, flag3, iFace, orientedFaceFunction,
-                      typeFunction);
+        orientOneFace(u, v, w, flag1, flag2, flag3, iFace,
+                      orientedFaceFunction);
       }
 
       for(int r = 0; r < _numTriFaceFunction; r++) {

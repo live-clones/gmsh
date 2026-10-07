@@ -36,15 +36,8 @@ HierarchicalBasisH1Brick::HierarchicalBasisH1Brick(int order)
   for(int dir = 0; dir < 2; ++dir) { _pOrderFace[dir].fill(order); }
 }
 
-unsigned int HierarchicalBasisH1Brick::getNumberOfOrientations() const
-{
-  return 40320; // factorial 8
-}
-
-double HierarchicalBasisH1Brick::_affineCoordinate(const int &j,
-                                                   const double &u,
-                                                   const double &v,
-                                                   const double &w)
+double HierarchicalBasisH1Brick::_affineCoordinate(int j, double u, double v,
+                                                   double w)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -82,13 +75,11 @@ void HierarchicalBasisH1Brick::_someProduct(double u, double v, double w,
   product[11] = lambda[4] * lambda[2];
 }
 
-void HierarchicalBasisH1Brick::generateBasis(double const &u, double const &v,
-                                             double const &w,
+void HierarchicalBasisH1Brick::generateBasis(double u, double v, double w,
                                              std::vector<double> &vertexBasis,
                                              std::vector<double> &edgeBasis,
                                              std::vector<double> &faceBasis,
-                                             std::vector<double> &bubbleBasis,
-                                             std::string typeFunction)
+                                             std::vector<double> &bubbleBasis)
 {
   std::vector<double> product(12, 0);
   std::vector<double> lambda(6, 0);
@@ -203,8 +194,7 @@ void HierarchicalBasisH1Brick::generateBasis(double const &u, double const &v,
 }
 
 void HierarchicalBasisH1Brick::_someProductGrad(
-  double const &u, double const &v, double const &w,
-  std::vector<double> &product,
+  double u, double v, double w, std::vector<double> &product,
   std::vector<std::vector<double>> &gradientProduct,
   std::vector<double> &lambda, std::vector<std::vector<double>> &gradientLambda)
 {
@@ -264,7 +254,7 @@ void HierarchicalBasisH1Brick::_someProductGrad(
 }
 
 void HierarchicalBasisH1Brick::generateGradientBasis(
-  double const &u, double const &v, double const &w,
+  double u, double v, double w,
   std::vector<std::vector<double>> &gradientVertex,
   std::vector<std::vector<double>> &gradientEdge,
   std::vector<std::vector<double>> &gradientFace,
@@ -438,8 +428,7 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
 }
 
 void HierarchicalBasisH1Brick::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
-  std::vector<double> &edgeFunctions,
+  int flagOrientation, int edgeNumber, std::vector<double> &edgeFunctions,
   const std::vector<double> &eTablePositiveFlag,
   const std::vector<double> &eTableNegativeFlag)
 {
@@ -466,7 +455,7 @@ void HierarchicalBasisH1Brick::orientEdge(
 }
 
 void HierarchicalBasisH1Brick::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)
@@ -537,12 +526,10 @@ void HierarchicalBasisH1Brick::orientEdgeFunctionsForNegativeFlag(
   }
 }
 
-void HierarchicalBasisH1Brick::orientOneFace(double const &u, double const &v,
-                                             double const &w, int const &flag1,
-                                             int const &flag2, int const &flag3,
-                                             int const &faceNumber,
-                                             std::vector<double> &faceBasis,
-                                             std::string typeFunction)
+void HierarchicalBasisH1Brick::orientOneFace(double u, double v, double w,
+                                             int flag1, int flag2, int flag3,
+                                             int faceNumber,
+                                             std::vector<double> &faceBasis)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -622,9 +609,8 @@ void HierarchicalBasisH1Brick::orientOneFace(double const &u, double const &v,
 }
 
 void HierarchicalBasisH1Brick::orientOneFace(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double>> &gradientFace, std::string typeFunction)
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<std::vector<double>> &gradientFace)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -731,7 +717,7 @@ void HierarchicalBasisH1Brick::orientOneFace(
 }
 
 void HierarchicalBasisH1Brick::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<double> &quadFaceFunctionsAllOrientation,
   const std::vector<double> &triFaceFunctionsAllOrientation,
   std::vector<double> &fTableCopy)
@@ -751,7 +737,7 @@ void HierarchicalBasisH1Brick::orientFace(
 }
 
 void HierarchicalBasisH1Brick::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
   const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
   std::vector<std::vector<double>> &fTableCopy)

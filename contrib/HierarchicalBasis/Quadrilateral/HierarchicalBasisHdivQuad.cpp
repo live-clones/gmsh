@@ -27,14 +27,7 @@ HierarchicalBasisHdivQuad::HierarchicalBasisHdivQuad(int order)
   _numTriFaceFunction = 0, _numBubbleFunction = 0;
 }
 
-unsigned int HierarchicalBasisHdivQuad::getNumberOfOrientations() const
-{
-  return 24; // factorial 4
-}
-
-double HierarchicalBasisHdivQuad::_affineCoordinate(int const &j,
-                                                    double const &u,
-                                                    double const &v)
+double HierarchicalBasisHdivQuad::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -46,8 +39,7 @@ double HierarchicalBasisHdivQuad::_affineCoordinate(int const &j,
 }
 
 void HierarchicalBasisHdivQuad::generateHdivBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {
@@ -122,7 +114,7 @@ void HierarchicalBasisHdivQuad::generateHdivBasis(
 }
 
 void HierarchicalBasisHdivQuad::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)
@@ -175,8 +167,7 @@ void HierarchicalBasisHdivQuad::orientEdgeFunctionsForNegativeFlag(
 }
 
 void HierarchicalBasisHdivQuad::generateDivBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {
@@ -247,9 +238,8 @@ void HierarchicalBasisHdivQuad::generateDivBasis(
 }
 
 void HierarchicalBasisHdivQuad::orientOneFace(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double>> &faceFunctions, std::string typeFunction)
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<std::vector<double>> &faceFunctions)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     if(flag3 == 1) {
@@ -286,7 +276,7 @@ void HierarchicalBasisHdivQuad::orientOneFace(
       }
     }
     else {
-      if(typeFunction == "HdivLegendre") {
+      if(_space == HDIV) {
         std::vector<std::vector<double>> legendreVector(2);
         legendreVector[0] = std::vector<double>(_pf[0] + 1);
         legendreVector[1] = std::vector<double>(_pf[1] + 1);
@@ -327,7 +317,7 @@ void HierarchicalBasisHdivQuad::orientOneFace(
           }
         }
       }
-      else if(typeFunction == "DivHdivLegendre") {
+      else if(_space == DIV_HDIV) {
         std::vector<std::vector<double>> legendreVector(2);
         legendreVector[0] = std::vector<double>(_pf[0] + 1);
         legendreVector[1] = std::vector<double>(_pf[1] + 1);
@@ -375,7 +365,7 @@ void HierarchicalBasisHdivQuad::orientOneFace(
 }
 
 void HierarchicalBasisHdivQuad::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
   const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
   std::vector<std::vector<double>> &fTableCopy)

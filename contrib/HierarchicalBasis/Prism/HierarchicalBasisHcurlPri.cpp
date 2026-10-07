@@ -41,15 +41,8 @@ HierarchicalBasisHcurlPri::HierarchicalBasisHcurlPri(int order)
 
 HierarchicalBasisHcurlPri::~HierarchicalBasisHcurlPri() {}
 
-unsigned int HierarchicalBasisHcurlPri::getNumberOfOrientations() const
-{
-  return 720; // factorial 6
-}
-
-double HierarchicalBasisHcurlPri::_affineCoordinate(const int &j,
-                                                    const double &u,
-                                                    const double &v,
-                                                    const double &w)
+double HierarchicalBasisHcurlPri::_affineCoordinate(int j, double u, double v,
+                                                    double w)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -67,15 +60,14 @@ HierarchicalBasisHcurlPri::dotProduct(const std::vector<double> &u1,
 { return u1[0] * u2[0] + u1[1] * u2[1]; }
 
 void HierarchicalBasisHcurlPri::matrixVectorProductForMapping(
-  const double &a, const std::vector<double> &u, std::vector<double> &result)
+  double a, const std::vector<double> &u, std::vector<double> &result)
 {
   result[0] = a * 2 * u[0];
   result[1] = a * 2 * u[1];
   result[2] = a * u[2];
 }
 void HierarchicalBasisHcurlPri::generateHcurlBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {
@@ -436,7 +428,7 @@ void HierarchicalBasisHcurlPri::generateHcurlBasis(
 }
 
 void HierarchicalBasisHcurlPri::orientEdge(
-  int const &flagOrientation, int const &edgeNumber,
+  int flagOrientation, int edgeNumber,
   std::vector<std::vector<double>> &edgeFunctions,
   const std::vector<std::vector<double>> &eTablePositiveFlag,
   const std::vector<std::vector<double>> &eTableNegativeFlag)
@@ -487,9 +479,8 @@ void HierarchicalBasisHcurlPri::orientEdgeFunctionsForNegativeFlag(
   }
 }
 void HierarchicalBasisHcurlPri::orientOneFace(
-  double const &u, double const &v, double const &w, int const &flag1,
-  int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double>> &faceFunctions, std::string typeFunction)
+  double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
+  std::vector<std::vector<double>> &faceFunctions)
 {
   if(faceNumber < 3) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
@@ -532,7 +523,7 @@ void HierarchicalBasisHcurlPri::orientOneFace(
         }
       }
       else {
-        if(typeFunction == "HcurlLegendre") {
+        if(_space == HCURL) {
           // to map onto the reference domain of gmsh:
           double uc = 2 * u - 1;
           double vc = 2 * v - 1;
@@ -637,7 +628,7 @@ void HierarchicalBasisHcurlPri::orientOneFace(
             }
           }
         }
-        else if("CurlHcurlLegendre" == typeFunction) {
+        else if(_space == CURL_HCURL) {
           // to map onto the reference domain of gmsh:
           double uc = 2 * u - 1;
           double vc = 2 * v - 1;
@@ -804,7 +795,7 @@ void HierarchicalBasisHcurlPri::orientOneFace(
         it = it + (_pOrderQuadFace[0][k] + 1) * _pOrderQuadFace[1][k] +
              (_pOrderQuadFace[1][k] + 1) * _pOrderQuadFace[0][k];
       }
-      if(typeFunction == "HcurlLegendre") {
+      if(_space == HCURL) {
         // to map onto the reference domain of gmsh:
         double uc = 2 * u - 1;
         double vc = 2 * v - 1;
@@ -946,7 +937,7 @@ void HierarchicalBasisHcurlPri::orientOneFace(
           }
         }
       }
-      else if("CurlHcurlLegendre" == typeFunction) {
+      else if(_space == CURL_HCURL) {
         // to map onto the reference domain of gmsh:
         double uc = 2 * u - 1;
         double vc = 2 * v - 1;
@@ -1193,7 +1184,7 @@ void HierarchicalBasisHcurlPri::orientOneFace(
   }
 }
 void HierarchicalBasisHcurlPri::orientFace(
-  int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+  int flag1, int flag2, int flag3, int faceNumber,
   const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
   const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
   std::vector<std::vector<double>> &fTableCopy)
@@ -1246,8 +1237,7 @@ void HierarchicalBasisHcurlPri::matrixVectorProductForCurlMapping(
 }
 
 void HierarchicalBasisHcurlPri::generateCurlBasis(
-  double const &u, double const &v, double const &w,
-  std::vector<std::vector<double>> &edgeBasis,
+  double u, double v, double w, std::vector<std::vector<double>> &edgeBasis,
   std::vector<std::vector<double>> &faceBasis,
   std::vector<std::vector<double>> &bubbleBasis)
 {
