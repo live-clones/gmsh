@@ -181,4 +181,35 @@ inline int hcurlQuadrangle(const Dual &s, const Dual &t, const Dual &blend,
   return n;
 }
 
+// The H(curl) functions of a quadrilateral face of the prism, over the edge
+// from a to b of the triangle and with the vertical coordinate w in [-1, 1]:
+// A) the functions of the edge (see hcurlEdge) times l_n(w), n = 2, ..., order
+//    + 1, and B) a b K_k(b - a) L_n(w) grad(w), k = 0, ..., order - 1, n = 0,
+//    ..., order, the horizontal index being the outer one; or, if swap is set,
+//    B then A with the vertical index as the outer one; return the number of
+//    functions
+inline int hcurlPrismQuadrangle(const Dual &a, const Dual &b, const Dual &w,
+                                bool swap, int order, Vec *f)
+{
+  std::vector<Vec> e(order + 1);
+  hcurlEdge(a, b, order, e.data());
+  Dual ab = a * b;
+  int n = 0;
+  if(!swap) {
+    for(int i = 0; i <= order; i++)
+      for(int j = 2; j <= order + 1; j++) f[n++] = lobatto(j, w) * e[i];
+    for(int k = 0; k < order; k++)
+      for(int j = 0; j <= order; j++)
+        f[n++] = ab * kernel(k, b - a) * legendre(j, w) * grad(w);
+  }
+  else {
+    for(int j = 0; j <= order; j++)
+      for(int k = 0; k < order; k++)
+        f[n++] = ab * kernel(k, b - a) * legendre(j, w) * grad(w);
+    for(int j = 2; j <= order + 1; j++)
+      for(int i = 0; i <= order; i++) f[n++] = lobatto(j, w) * e[i];
+  }
+  return n;
+}
+
 #endif

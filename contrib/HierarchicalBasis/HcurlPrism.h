@@ -1,113 +1,53 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Ismail Badia.
+// Contributed by Ismail Badia (2019) and Nawfel BENATIA (2025).
 
-// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
-// Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+// Reference : Solin, P., Segeth, K., & Dolezel, I. (2003).
+//             Higher-Order Finite Element Methods (1st ed.).
+//             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
 #ifndef HCURL_PRISM_H
 #define HCURL_PRISM_H
 
-#include <math.h>
 #include "HierarchicalBasis.h"
 
-/**
- * MPrism
- *
- *               w
- *               ^
- *               |
- *               3
- *             ,/|`\
- *           ,/  |  `\
- *         ,/    |    `\
- *        4------+------5
- *        |      |      |
- *        |    ,/|`\    |
- *        |  ,/  |  `\  |
- *        |,/    |    `\|
- *       ,|      |      `\
- *     ,/ |      0      | `\
- *    u   |    ,/ `\    |    v
- *        |  ,/     `\  |
- *        |,/         `\|
- *        1-------------2
- *
- *  Oriented Edges:
- *  e0={0, 1}, e1={0, 2}, e2={0, 3}, e3={1, 2}, e4={1, 4},
- *  e5={2, 5}, e6={3, 4}, e7={3, 5}, e8={4, 5}
- *
- *
- * Oriented Surfaces:
- *  s3={0, 1, 2}, s4={3, 4, 5}, s0={0, 1, 3, 4}, s1={0, 2, 3,5}
- *  s2={1,2,4,5}
- * Local (directional) orders on mesh faces are not allowed to exceed the mini-
- * mum of the (appropriate directional) orders of approximation associated with
- * the interior of the adjacent elements. Local orders of approximation on mesh
- * edges are limited by the minimum of all (appropriate directional) orders cor-
- * responding to faces sharing that edge
- */
+// H(curl) basis on the prism of base (0, 0), (1, 0), (0, 1) and height w in
+// [-1, 1], with the affine coordinates L0 = 1 - u - v, L1 = u, L2 = v of the
+// triangle, B = (1 - w) / 2 and T = (1 + w) / 2:
+// - the functions of the edges e0 = {0, 1}, e1 = {0, 2}, e3 = {1, 2} (times B)
+//   and e6 = {3, 4}, e7 = {3, 5}, e8 = {4, 5} (times T) of the triangles (see
+//   hcurlEdge), and of the vertical edges e2 = {0, 3}, e4 = {1, 4},
+//   e5 = {2, 5}, Li L_k(w) grad(w), k = 0, ..., p;
+// - the functions of the quadrilateral faces s0 = {0, 1, 3, 4},
+//   s1 = {0, 2, 3, 5}, s2 = {1, 2, 4, 5} over the edges {0, 1}, {0, 2} and
+//   {1, 2} of the triangle (see hcurlPrismQuadrangle), and of the triangular
+//   faces s3 = {0, 1, 2} (times B) and s4 = {3, 4, 5} (times T) (see
+//   hcurlTriangle);
+// - the bubble functions: for the edges (x, y) = (0, 1), (2, 0), (1, 2) of the
+//   triangle, opposite to the vertex z, x y L_k(y - x) grad(z) l_n(w), k = 0,
+//   ..., p - 2, n = 2, ..., p + 1; with abc = L0 L1 L2 L_n1(L1 - L0)
+//   L_n2(L0 - L2), 2 abc l_n3(w) e_u, then -2 abc l_n3(w) e_v, n1 + n2 <= p -
+//   3, n3 = 2, ..., p + 1, and abc L_n3(w) grad(w), n1 + n2 <= p - 2, n3 = 0,
+//   ..., p;
+// where L_k are the Legendre polynomials and l_k the Lobatto polynomials.
 class HcurlPrism : public HierarchicalBasis {
 public:
   HcurlPrism(int order);
-  virtual ~HcurlPrism();
-  virtual void generateBasis(double u, double v, double w,
-                             std::vector<std::vector<double>> &vertexBasis,
-                             std::vector<std::vector<double>> &edgeBasis,
-                             std::vector<std::vector<double>> &faceBasis,
-                             std::vector<std::vector<double>> &bubbleBasis)
-  {
-    if(_space == HCURL) {
-      generateHcurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
-    }
-    else if(_space == CURL_HCURL) {
-      generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
-    }
-  }
+  void getKeysInfo(std::vector<int> &functionTypeInfo,
+                   std::vector<int> &orderInfo) override;
 
-  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
-                           std::vector<int> &orderInfo);
+protected:
+  void functions(const Dual *x, std::vector<Vec> &vertex,
+                 std::vector<Vec> &edge, std::vector<Vec> &face,
+                 std::vector<Vec> &bubble) override;
+  void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
+                     int faceNumber, std::vector<Vec> &face) override;
 
 private:
-  std::array<int, 2> _pb;
-  ; // bubble function order in  direction uv
-    // bubble function order in  direction w
-  std::array<int, 9> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches
-                                  // the order of the edge 0)
-
-  std::array<std::array<int, 3>, 2>
-    _pOrderQuadFace; // Quad Face functions order in direction u
-                     // (pOrderFace1[0] matches the order of face 0 in
-                     // direction u)
-                     // Quad Face functions order in direction v
-                     // (pOrderFace[0] matches the order of face 0 in
-                     // direction v)
-  std::array<int, 2> _pOrderTriFace; // Tri Face Functions order
-  static double _affineCoordinate(int j, double u, double v,
-                                  double w); // affine coordinate lambda j=1..5
-  static double dotProduct(const std::vector<double> &u1,
-                           const std::vector<double> &u2);
-  // to take into account the mapping (product with jacobian)
-  static void matrixVectorProductForMapping(
-    double a, const std::vector<double> &u,
-    std::vector<double> &result); // ((2,0,0),(0,2,0),(0,0,1))*u
-  static void matrixVectorProductForCurlMapping(
-    std::vector<double> &result); // det*((0.5,0,0),(0,0.5,0),(0,0,1))*result
-  virtual void
-  generateHcurlBasis(double u, double v, double w,
-                     std::vector<std::vector<double>> &edgeBasis,
-                     std::vector<std::vector<double>> &faceBasis,
-                     std::vector<std::vector<double>> &bubbleBasis);
-
-  virtual void generateCurlBasis(double u, double v, double w,
-                                 std::vector<std::vector<double>> &edgeBasis,
-                                 std::vector<std::vector<double>> &faceBasis,
-                                 std::vector<std::vector<double>> &bubbleBasis);
-  virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
-                             int flag3, int faceNumber,
-                             std::vector<std::vector<double>> &faceFunctions);
+  int _order;
 };
+
 #endif
