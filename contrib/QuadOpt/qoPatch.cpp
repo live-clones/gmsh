@@ -46,6 +46,86 @@ namespace QuadOpt {
 
     int starSingularities(int corners) { return corners == 4 ? 0 : 1; }
 
+    // The mesh of a star patch: block j has the coordinates (s, t), 0 <= s <=
+    // p_j, 0 <= t <= p_{j+1}, with the center at (0, 0), the end of spoke j at
+    // (p_j, 0), corner j at (p_j, p_{j+1}) and the end of spoke j + 1 at
+    // (0, p_{j+1}). The end of spoke j + 1 is the loop vertex p_j after corner j.
+    // The center is the mean of the spoke ends, weighted by 1 / p_j; spokes are
+    // straight, and the inside of a block is the Coons patch of its four sides.
+    void buildStar(const Patch &patch, Rewrite &rewrite)
+    {
+      const int n = int(patch.corner.size()), B = int(patch.loop.size());
+      const std::vector<int> &p = patch.param;
+      auto loop = [&](int i) { return ((i % B) + B) % B; };
+      std::vector<int> end(n); // loop index of the end of spoke j
+      for(int j = 0; j < n; ++j)
+        end[j] = loop(patch.corner[(j + n - 1) % n] + p[(j + n - 1) % n]);
+
+      using Weights = std::vector<double>;
+      auto unit = [&](int i) {
+        Weights w(B, 0.);
+        w[loop(i)] = 1.;
+        return w;
+      };
+      auto combine = [&](double a, const Weights &x, double b, const Weights &y) {
+        Weights w(B);
+        for(int i = 0; i < B; ++i) w[i] = a * x[i] + b * y[i];
+        return w;
+      };
+      // New vertices get the ids B, B + 1, ...
+      auto add = [&](const Weights &w) {
+        rewrite.weight.push_back(w);
+        return B + int(rewrite.weight.size()) - 1;
+      };
+
+      Weights center(B, 0.);
+      double sum = 0.;
+      for(int j = 0; j < n; ++j) sum += 1. / p[j];
+      for(int j = 0; j < n; ++j) center[end[j]] += 1. / (p[j] * sum);
+      const int centerId = add(center);
+      std::vector<std::vector<Weights> > spoke(n); // points of each spoke
+      std::vector<std::vector<int> > spokeId(n);
+      for(int j = 0; j < n; ++j)
+        for(int s = 0; s <= p[j]; ++s) {
+          spoke[j].push_back(combine(1. - double(s) / p[j], center,
+                                     double(s) / p[j], unit(end[j])));
+          spokeId[j].push_back(s == 0 ? centerId :
+                               s == p[j] ? loop(end[j]) : add(spoke[j].back()));
+        }
+
+      rewrite.quad.clear();
+      for(int j = 0; j < n; ++j) {
+        const int a = p[j], b = p[(j + 1) % n], next = (j + 1) % n;
+        std::vector<int> inner((a - 1) * (b - 1) + 1);
+        for(int s = 1; s < a; ++s)
+          for(int t = 1; t < b; ++t) {
+            const double u = double(s) / a, v = double(t) / b;
+            const Weights &bottom = spoke[j][s], &left = spoke[next][t];
+            const Weights top = unit(patch.corner[j] + a - s),
+                          right = unit(end[j] + t);
+            Weights w = combine(1. - v, bottom, v, top);
+            w = combine(1., w, 1. - u, left);
+            w = combine(1., w, u, right);
+            const Weights corners =
+              combine(1. - u, combine(1. - v, center, v, unit(end[next])), u,
+                      combine(1. - v, unit(end[j]), v, unit(patch.corner[j])));
+            inner[(s - 1) * (b - 1) + t - 1] = add(combine(1., w, -1., corners));
+          }
+        auto id = [&](int s, int t) {
+          if(s == 0 && t == 0) return centerId;
+          if(t == 0) return spokeId[j][s];
+          if(s == 0) return spokeId[next][t];
+          if(s == a) return loop(end[j] + t);
+          if(t == b) return loop(patch.corner[j] + a - s);
+          return inner[(s - 1) * (b - 1) + t - 1];
+        };
+        for(int s = 0; s < a; ++s)
+          for(int t = 0; t < b; ++t)
+            rewrite.quad.push_back(
+              {{id(s, t), id(s + 1, t), id(s + 1, t + 1), id(s, t + 1)}});
+      }
+    }
+
     template <class T> bool has(const std::vector<T> &v, const T &x)
     {
       return std::find(v.begin(), v.end(), x) != v.end();
@@ -104,7 +184,7 @@ namespace QuadOpt {
   const std::vector<Pattern> &patterns()
   {
     static const std::vector<Pattern> table = {
-      {"star", fitStar, starSingularities}};
+      {"star", fitStar, buildStar, starSingularities}};
     return table;
   }
 

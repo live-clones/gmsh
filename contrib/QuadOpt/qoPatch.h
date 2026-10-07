@@ -5,6 +5,7 @@
 #pragma once
 
 #include "qoHalfEdge.h"
+#include <array>
 #include <functional>
 #include <vector>
 
@@ -26,11 +27,22 @@ namespace QuadOpt {
     int pattern = -1; // index in patterns()
   };
 
+  // A quad mesh of the patch: the boundary vertices are the loop (indices 0 to
+  // loop size - 1), then come the new vertices. Positions are not part of the
+  // pattern, only a first guess of them: new vertex k is the combination
+  // sum_i weight[k][i] * (loop vertex i), a transfinite interpolation.
+  struct Rewrite {
+    std::vector<std::array<int, 4> > quad; // counterclockwise like the loop
+    std::vector<std::vector<double> > weight; // one per new vertex
+  };
+
   // A family of quad meshes of a disk with n corners, given by the side lengths.
   struct Pattern {
     const char *name;
     // Solves the pattern for the side lengths; false if it has no such mesh.
     bool (*fit)(const std::vector<int> &side, std::vector<int> &param);
+    // The mesh of a patch for which fit succeeded.
+    void (*build)(const Patch &patch, Rewrite &rewrite);
     // Interior vertices of valence other than four in the mesh of n corners.
     int (*singularities)(int corners);
   };

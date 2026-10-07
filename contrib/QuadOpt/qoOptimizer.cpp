@@ -25,10 +25,12 @@
 #include "SPoint2.h"
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <deque>
 #include <functional>
 #include <limits>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace QuadOpt {
   namespace {
@@ -49,6 +51,7 @@ namespace QuadOpt {
     constexpr double kMinCadAlignment = 0.3; // cosine(cell normal, CAD normal)
     constexpr std::size_t kMaxLoop = 12; // largest cavity boundary
     constexpr std::size_t kMaxCandidates = 4000;
+    constexpr double kPatchSizeSlack = 0.25; // a patch keeps its cell count
 
     // A piece of a candidate: valid, and a quad neither nearly flat nor warped
     // beyond the limits (otherwise a merge would recreate what the final split
@@ -147,7 +150,6 @@ namespace QuadOpt {
       }
       void run();
       void finish(); // write the result back and report
-      void scanPatches(); // search only (-v 99), see qoPatch.h
       bool smooth(int w) override
       {
         if(!smoothVertex(w)) return false;
@@ -163,7 +165,9 @@ namespace QuadOpt {
       const Options _options;
       std::deque<int> _cellQueue, _vertexQueue;
       std::vector<char> _cellQueued, _vertexQueued;
+      std::unordered_set<std::uint64_t> _tried; // cavities seen, see fingerprint()
       bool _final = false; // terminal phase: quads may be split
+      std::size_t _patches = 0, _patchTries = 0;
       std::size_t _rewrites = 0, _splits = 0, _moves = 0, _cells0 = 0, _tri0 = 0;
 
       double energyOf(const std::vector<int> &cells, const SVector3 &nref,
@@ -176,7 +180,8 @@ namespace QuadOpt {
       bool smoothVertex(int w);
 
       // -- cavity rewrites -------------------------------------------------
-      bool describe(const std::vector<int> &cells, Cavity &cavity);
+      bool describe(const std::vector<int> &cells, Cavity &cavity,
+                    std::size_t maxLoop = kMaxLoop);
       void partitions(const Cavity &cavity, int maxTriangles,
                       std::vector<Candidate> &out) const;
       void stars(const Cavity &cavity, std::vector<Candidate> &out) const;
@@ -191,6 +196,11 @@ namespace QuadOpt {
       bool splitQuad(int c);
       std::vector<int> pathToTriangle(int c, int depth) const;
       bool attempt(int c);
+
+      // -- patches (qoPatch.h) ---------------------------------------------
+      std::uint64_t fingerprint(const Cavity &cavity) const;
+      bool tryPatch(const Patch &patch);
+      std::size_t patchPass();
 
       // -- scheduler -------------------------------------------------------
       void pushCell(int c)
@@ -373,11 +383,12 @@ namespace QuadOpt {
 
     // Collect everything about a set of cells that candidates are judged on.
     // False if the set is not a small disk, or cannot be re-meshed freely.
-    bool FaceOptimizer::describe(const std::vector<int> &cells, Cavity &cavity)
+    bool FaceOptimizer::describe(const std::vector<int> &cells, Cavity &cavity,
+                                 std::size_t maxLoop)
     {
       cavity.cells = cells;
       if(!_he.loop(cells, cavity.loop) || cavity.size() < 3 ||
-         cavity.size() > int(kMaxLoop))
+         cavity.size() > int(maxLoop))
         return false;
       auto indexOf = [](const std::vector<int> &v, int x) {
         return int(std::find(v.begin(), v.end(), x) - v.begin());
@@ -660,6 +671,7 @@ namespace QuadOpt {
     {
       Cavity cavity;
       if(!describe(cells, cavity)) return false;
+      if(!_tried.insert(fingerprint(cavity)).second) return false;
       std::vector<Candidate> candidates;
       partitions(cavity, cavity.triangles, candidates); // never add triangles
       stars(cavity, candidates);
@@ -859,6 +871,10 @@ namespace QuadOpt {
       smoothAll();
       pushAllCells();
       rounds(50);
+      for(int pass = 0; _options.maximumPatchCells && pass < 3; ++pass) {
+        if(!patchPass()) break;
+        rounds(50);
+      }
       // Terminal phase: Winslow sweeps, then the quads that must be split.
       smoothAll();
       _final = true;
@@ -866,7 +882,162 @@ namespace QuadOpt {
       rounds(10);
     }
 
-    void FaceOptimizer::scanPatches()
+    // ------------------------------------------------------------------------
+    // Patches
+    // ------------------------------------------------------------------------
+
+    std::uint64_t mix(std::uint64_t h, std::uint64_t x)
+    {
+      h ^= x + 0x9e3779b97f4a7c15ull + (h << 6) + (h >> 2);
+      h *= 0xff51afd7ed558ccdull;
+      return h ^ (h >> 33);
+    }
+
+    // Everything the outcome of a rewrite depends on: the cells with the exact
+    // position of their vertices, and what the energy reads around the loop. The
+    // cells are combined by a sum, so that their order does not matter. A cavity
+    // seen again in the same state would fail again (a success changes the
+    // state): it is not tried twice.
+    std::uint64_t FaceOptimizer::fingerprint(const Cavity &cavity) const
+    {
+      auto bits = [](double x) {
+        std::uint64_t b;
+        std::memcpy(&b, &x, sizeof b);
+        return b;
+      };
+      std::uint64_t sum = 0;
+      for(int id : cavity.cells) {
+        std::uint64_t h = 0;
+        const Cell &c = _he.cells[id];
+        int first = 0;
+        for(int i = 1; i < c.n; ++i)
+          if(c.v[i] < c.v[first]) first = i;
+        for(int i = 0; i < c.n; ++i) {
+          const int w = c.v[(first + i) % c.n];
+          h = mix(mix(mix(mix(h, w), bits(_v[w].p.x())), bits(_v[w].p.y())),
+                  bits(_v[w].p.z()));
+        }
+        sum += h;
+      }
+      std::uint64_t h = sum;
+      for(int k = 0; k < cavity.size(); ++k)
+        h = mix(mix(mix(h, _he.star[cavity.loop[k]].size()),
+                    bits(cavity.theta[k])),
+                cavity.triangle[k]);
+      return h;
+    }
+
+    // Re-mesh a patch with its pattern: new points from the transfinite guess
+    // put on the CAD, Winslow on them, then kept if the energy of the cavity
+    // decreased and all its cells are acceptable, undone otherwise.
+    bool FaceOptimizer::tryPatch(const Patch &patch)
+    {
+      Cavity cavity;
+      if(!describe(patch.cells, cavity, patch.loop.size()) ||
+         cavity.loop != patch.loop)
+        return false;
+      if(!_tried.insert(mix(fingerprint(cavity), 1)).second) return false;
+      ++_patchTries;
+      Rewrite rewrite;
+      patterns()[patch.pattern].build(patch, rewrite);
+      double mass = 0.; // quads, and a pair of triangles counts as one
+      for(int id : cavity.cells) mass += _he.cells[id].n == 3 ? 0.5 : 1.;
+      if(std::abs(double(rewrite.quad.size()) - mass) >
+         std::max(2., kPatchSizeSlack * mass))
+        return false;
+
+      const int B = cavity.size(), I = int(rewrite.weight.size());
+      std::vector<int> ids = cavity.loop;
+      double h = 0.;
+      for(int k = 0; k < B; ++k)
+        h += (cavity.P[(k + 1) % B] - cavity.P[k]).norm() / B;
+      int added = 0;
+      auto undoVertices = [&]() {
+        for(; added > 0; --added) {
+          _v.pop_back();
+          _he.star.pop_back();
+        }
+      };
+      for(int k = 0; k < I; ++k) {
+        SVector3 guess(0., 0., 0.);
+        for(int i = 0; i < B; ++i) guess += cavity.P[i] * rewrite.weight[k][i];
+        int near = 0; // the loop vertex closest to the guess starts the projection
+        for(int i = 1; i < B; ++i)
+          if((cavity.P[i] - guess).norm() < (cavity.P[near] - guess).norm())
+            near = i;
+        SVector3 point;
+        double uv[2];
+        if(!ensureUV(cavity.loop[near]) ||
+           !project(guess, _v[cavity.loop[near]].uv, point, uv)) {
+          undoVertices();
+          return false;
+        }
+        ids.push_back(addVertex(point, uv));
+        ++added;
+      }
+      std::vector<Cell> fresh, old;
+      for(const std::array<int, 4> &quad : rewrite.quad) {
+        Cell cell;
+        cell.n = 4;
+        for(int i = 0; i < 4; ++i) cell.v[i] = ids[quad[i]];
+        fresh.push_back(cell);
+      }
+      for(int id : cavity.cells) old.push_back(_he.cells[id]);
+      std::vector<int> created;
+      if(!_he.replace(cavity.cells, fresh, created)) {
+        undoVertices();
+        return false;
+      }
+
+      for(int sweep = 0; sweep < 30; ++sweep) { // Winslow on the new points
+        double moved = 0.;
+        for(int k = B; k < B + I; ++k) {
+          SVector3 normal, proposal, projected;
+          double uv[2];
+          const int w = ids[k];
+          if(!winslowProposal(w, normal, proposal) ||
+             !project(proposal, _v[w].uv, projected, uv))
+            continue;
+          moved = std::max(moved, (projected - _v[w].p).norm());
+          _v[w].p = projected;
+          _v[w].uv[0] = uv[0], _v[w].uv[1] = uv[1];
+          _v[w].hasN = false;
+        }
+        if(moved < 1.e-3 * h) break;
+      }
+
+      Cavity after;
+      bool better = describe(created, after, patch.loop.size()) &&
+                    after.energy < cavity.energy - kGain;
+      for(int id : created) {
+        const Cell &c = _he.cells[id];
+        const Corners p = pointsOf(c);
+        better = better &&
+                 acceptable(quality(p.data(), 4, cavity.normal), p.data(), 4,
+                            _options.maximumWarping) &&
+                 align(c) > kMinCadAlignment;
+      }
+      if(better) { // it must not cut the CAD more than the cells it replaces
+        std::vector<Cell> now;
+        for(int id : created) now.push_back(_he.cells[id]);
+        better = maxDeviation(now) <= maxDeviation(old) + kCadSlack;
+      }
+      if(better) {
+        pushAround(created);
+        for(int w : cavity.loop) pushVertex(w);
+        for(int k = B; k < B + I; ++k) pushVertex(ids[k]);
+        ++_patches;
+        return true;
+      }
+      std::vector<int> restored;
+      _he.replace(created, old, restored); // the old cells cannot clash
+      undoVertices();
+      growQueues();
+      return false;
+    }
+
+    // Look for a patch around every defect; returns how many were re-meshed.
+    std::size_t FaceOptimizer::patchPass()
     {
       const Probe probe = {[&](int id, int k) {
                              const Cell &c = _he.cells[id];
@@ -874,33 +1045,32 @@ namespace QuadOpt {
                              return cornerAngle(p.data(), c.n, k);
                            },
                            [&](int w) { return !_v[w].fixed; }};
-      // Seeds: each triangle, each irregular interior vertex.
-      std::vector<std::vector<int> > seeds;
+      std::vector<std::vector<int> > seeds; // each triangle, each irregular vertex
       for(const Cell &c : _he.cells)
         if(c.alive && c.n == 3) seeds.push_back({c.v[0], c.v[1], c.v[2]});
       for(int w = 0; w < int(_v.size()); ++w)
         if(!_v[w].fixed && !_he.star[w].empty() && _he.star[w].size() != 4)
           seeds.push_back({w});
-      int found[8] = {};
+      std::size_t done = 0;
       Patch patch;
-      for(const std::vector<int> &seed : seeds)
-        if(findPatch(_he, probe, seed, _options.maximumPatchCells, patch))
-          ++found[patch.corner.size()];
-      Msg::Info("QuadOpt face %d: %d seeds, patches with 3/4/5/6 corners: "
-                "%d %d %d %d",
-                _gf->tag(), int(seeds.size()), found[3], found[4], found[5],
-                found[6]);
+      for(const std::vector<int> &seed : seeds) {
+        bool alive = true;
+        for(int w : seed) alive = alive && !_he.star[w].empty();
+        if(alive && findPatch(_he, probe, seed, _options.maximumPatchCells, patch))
+          done += tryPatch(patch);
+      }
+      return done;
     }
 
     void FaceOptimizer::finish()
     {
-      if(Msg::GetVerbosity() >= 99) scanPatches();
       sync();
       Msg::Info("QuadOpt face %d: cells %zu -> %zu, triangles %zu -> %zu, "
-                "rewrites=%zu splits=%zu moves=%zu",
+                "rewrites=%zu patches=%zu/%zu splits=%zu moves=%zu",
                 _gf->tag(), _cells0,
                 _gf->triangles.size() + _gf->quadrangles.size(), _tri0,
-                _gf->triangles.size(), _rewrites, _splits, _moves);
+                _gf->triangles.size(), _rewrites, _patches, _patchTries,
+                _splits, _moves);
     }
 
   } // namespace
