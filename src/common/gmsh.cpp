@@ -4339,8 +4339,7 @@ gmsh::model::mesh::getNumberOfKeys(const int elementType,
 
   int familyType = ElementType::getParentType(elementType);
 
-  if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-     fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+  if(_isLagrange(fsName)) {
     const nodalBasis *basis(nullptr);
     if(basisOrder == -1) { // isoparametric
       basis = BasisFactory::getNodalBasis(elementType);
@@ -4356,11 +4355,7 @@ gmsh::model::mesh::getNumberOfKeys(const int elementType,
     HierarchicalBasis *basis =
       HierarchicalBasis::create(fsName, familyType, basisOrder);
     if(!basis) return 0;
-    numberOfKeys = basis->getNumVertexFunction() +
-                   basis->getNumBubbleFunction() +
-                   basis->getNumEdgeFunction() +
-                   basis->getNumQuadFaceFunction() +
-                   basis->getNumTriFaceFunction();
+    numberOfKeys = basis->getNumFunctions();
     delete basis;
 #else
     Msg::Error("Function space '%s' requires the hierarchical basis module",
@@ -4394,8 +4389,7 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
 
   int familyType = ElementType::getParentType(elementType);
 
-  if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-     fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+  if(_isLagrange(fsName)) {
     const nodalBasis *basis(nullptr);
     if(basisOrder == -1) { // isoparametric
       basis = BasisFactory::getNodalBasis(elementType);
@@ -4429,12 +4423,7 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
   HierarchicalBasis *basis =
     HierarchicalBasis::create(fsName, familyType, basisOrder);
   if(!basis) return;
-  int vSize = basis->getNumVertexFunction();
-  int bSize = basis->getNumBubbleFunction();
-  int eSize = basis->getNumEdgeFunction();
-  int quadFSize = basis->getNumQuadFaceFunction();
-  int triFSize = basis->getNumTriFaceFunction();
-  int numDofsPerElement = vSize + bSize + eSize + quadFSize + triFSize;
+  int numDofsPerElement = basis->getNumFunctions();
   std::vector<int> functionTypeInfo(numDofsPerElement);
   std::vector<int> orderInfo(numDofsPerElement);
   basis->getKeysInfo(functionTypeInfo, orderInfo);
