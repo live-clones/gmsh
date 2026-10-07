@@ -9,7 +9,6 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#include <stdexcept>
 #include "HierarchicalBasisH1Pri.h"
 
 HierarchicalBasisH1Pri::HierarchicalBasisH1Pri(int order)
@@ -41,7 +40,7 @@ double HierarchicalBasisH1Pri::_affineCoordinate(int j, double u, double v,
   case(3): return 0.5 * (1 + u);
   case(4): return 0.5 * (1 + w);
   case(5): return 0.5 * (1 - w);
-  default: throw std::runtime_error("j must be : 1<=j<=5");
+  default: return 0.; // not reached
   }
 }
 

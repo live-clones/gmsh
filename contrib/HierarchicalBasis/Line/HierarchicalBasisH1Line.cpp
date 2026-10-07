@@ -9,7 +9,6 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#include <stdexcept>
 #include "HierarchicalBasisH1Line.h"
 
 HierarchicalBasisH1Line::HierarchicalBasisH1Line(int pe)
@@ -31,7 +30,7 @@ double HierarchicalBasisH1Line::_affineCoordinate(int j, double u)
   switch(j) {
   case(1): return 0.5 * (1 + u);
   case(2): return 0.5 * (1 - u);
-  default: throw std::runtime_error("j must be : 1<=j<=2");
+  default: return 0.; // not reached
   }
 }
 

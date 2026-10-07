@@ -8,7 +8,6 @@
 // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
 // Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
-#include <stdexcept>
 #include "HierarchicalBasisHcurlTetra.h"
 
 HierarchicalBasisHcurlTetra::HierarchicalBasisHcurlTetra(int order)
@@ -44,7 +43,7 @@ double HierarchicalBasisHcurlTetra::_affineCoordinate(int j, double u, double v,
   case(2): return -0.5 * (1 + u + v + w);
   case(3): return 0.5 * (1 + u);
   case(4): return 0.5 * (1 + w);
-  default: throw std::runtime_error("j must be : 1<=j<=4");
+  default: return 0.; // not reached
   }
 }
 
@@ -906,9 +905,6 @@ void HierarchicalBasisHcurlTetra::orientOneFace(
           itCopy++;
         }
       }
-    }
-    else {
-      throw std::runtime_error("unknown typeFunction");
     }
   }
 }

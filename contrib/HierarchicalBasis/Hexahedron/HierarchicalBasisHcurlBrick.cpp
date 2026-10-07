@@ -5,7 +5,6 @@
 //
 // Contributed by Ismail Badia.
 
-#include <stdexcept>
 #include <algorithm>
 #include "HierarchicalBasisHcurlBrick.h"
 
@@ -42,7 +41,7 @@ double HierarchicalBasisHcurlBrick::_affineCoordinate(int j, double u, double v,
   case(4): return 0.5 * (1 - v);
   case(5): return 0.5 * (1 + w);
   case(6): return 0.5 * (1 - w);
-  default: throw std::runtime_error("j must be : 1<=j<=6");
+  default: return 0.; // not reached
   }
 }
 
@@ -588,9 +587,6 @@ void HierarchicalBasisHcurlBrick::orientOneFace(
             iterator++;
           }
         }
-      }
-      else {
-        throw std::runtime_error("unknown typeFunction");
       }
     }
   }

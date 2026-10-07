@@ -3,7 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <stdexcept>
+#include "GmshMessage.h"
 #include "OrthogonalPoly.h"
 
 double OrthogonalPoly::EvalLobatto(int order, double x)
@@ -121,7 +121,8 @@ double OrthogonalPoly::EvalLobatto(int order, double x)
     return L;
 
   default:
-    throw std::runtime_error("Lobatto functions are written for orders =< 15");
+    Msg::Error("Lobatto polynomials are only available up to order 15");
+    return 0.;
   }
 }
 
@@ -233,7 +234,8 @@ double OrthogonalPoly::EvalDLobatto(int order, double x)
     return dL;
 
   default:
-    throw std::runtime_error("Lobatto functions are written for orders =< 15");
+    Msg::Error("Lobatto polynomials are only available up to order 15");
+    return 0.;
   }
 }
 
@@ -325,7 +327,8 @@ double OrthogonalPoly::EvalKernelFunction(int order, double x)
     phi = phi * 1. / 512. * pow(29. / 2., 0.5);
     return phi;
   default:
-    throw std::runtime_error("Lobatto functions are written for orders =< 15");
+    Msg::Error("Lobatto polynomials are only available up to order 15");
+    return 0.;
   }
 }
 
@@ -412,7 +415,8 @@ double OrthogonalPoly::EvalDKernelFunction(int order, double x)
     dphi = dphi * 1. / 512. * pow(29. / 2., 0.5);
     return dphi;
   default:
-    throw std::runtime_error("Lobatto functions are written for orders =< 15");
+    Msg::Error("Lobatto polynomials are only available up to order 15");
+    return 0.;
   }
 }
 
@@ -463,7 +467,8 @@ double OrthogonalPoly::EvalLegendre(int order, double x)
     L = 1. / 256. * L;
     return L;
   default:
-    throw std::runtime_error("Legendre functions are written for orders =< 10");
+    Msg::Error("Legendre polynomials are only available up to order 10");
+    return 0.;
   }
 }
 
@@ -510,6 +515,7 @@ double OrthogonalPoly::EvalDLegendre(int order, double x)
     dL = 1. / 256. * dL;
     return dL;
   default:
-    throw std::runtime_error("Legendre functions are written for orders =< 10");
+    Msg::Error("Legendre polynomials are only available up to order 10");
+    return 0.;
   }
 }

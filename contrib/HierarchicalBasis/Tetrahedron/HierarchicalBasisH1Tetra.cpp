@@ -9,7 +9,6 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#include <stdexcept>
 #include "HierarchicalBasisH1Tetra.h"
 
 HierarchicalBasisH1Tetra::HierarchicalBasisH1Tetra(int order)
@@ -27,7 +26,6 @@ HierarchicalBasisH1Tetra::HierarchicalBasisH1Tetra(int order)
   _pb = (order);
   _pOrderFace = {order, order, order, order};
   _pOrderEdge = {order, order, order, order, order, order};
-  if(order < 1) { throw std::invalid_argument("order must be >= 1"); }
 }
 
 double HierarchicalBasisH1Tetra::_affineCoordinate(int j, double u, double v,
@@ -38,7 +36,7 @@ double HierarchicalBasisH1Tetra::_affineCoordinate(int j, double u, double v,
   case(2): return -0.5 * (1 + u + v + w);
   case(3): return 0.5 * (1 + u);
   case(4): return 0.5 * (1 + w);
-  default: throw std::runtime_error("j must be : 1<=j<=4");
+  default: return 0.; // not reached
   }
 }
 

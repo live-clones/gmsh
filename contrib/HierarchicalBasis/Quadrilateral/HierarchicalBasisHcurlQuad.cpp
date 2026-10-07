@@ -9,7 +9,6 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#include <stdexcept>
 #include "HierarchicalBasisHcurlQuad.h"
 
 HierarchicalBasisHcurlQuad::HierarchicalBasisHcurlQuad(int order)
@@ -34,7 +33,7 @@ double HierarchicalBasisHcurlQuad::_affineCoordinate(int j, double u, double v)
   case(2): return 0.5 * (1 - u);
   case(3): return 0.5 * (1 + v);
   case(4): return 0.5 * (1 - v);
-  default: throw std::runtime_error("j must be : 1<=j<=4");
+  default: return 0.; // not reached
   }
 }
 
@@ -356,9 +355,6 @@ void HierarchicalBasisHcurlQuad::orientOneFace(
             iterator++;
           }
         }
-      }
-      else {
-        throw std::runtime_error("unknown typeFunction");
       }
     }
   }

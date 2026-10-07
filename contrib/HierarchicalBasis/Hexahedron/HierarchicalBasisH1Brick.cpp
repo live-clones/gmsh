@@ -10,7 +10,6 @@
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
 #include <algorithm>
-#include <stdexcept>
 #include "HierarchicalBasisH1Brick.h"
 
 HierarchicalBasisH1Brick::HierarchicalBasisH1Brick(int order)
@@ -25,8 +24,6 @@ HierarchicalBasisH1Brick::HierarchicalBasisH1Brick(int order)
   _numTriFaceFunction = 0;
   _numBubbleFunction =
     ((order >= 2) ? ((order - 1) * (order - 1) * (order - 1)) : 0);
-
-  if(order < 1) { throw std::invalid_argument("order must be >= 1"); }
   _pb = {order, order, order};
 
   // Initialize all edge orders uniformly
@@ -46,7 +43,7 @@ double HierarchicalBasisH1Brick::_affineCoordinate(int j, double u, double v,
   case(4): return 0.5 * (1 - v);
   case(5): return 0.5 * (1 + w);
   case(6): return 0.5 * (1 - w);
-  default: throw std::runtime_error("j must be : 1<=j<=6");
+  default: return 0.; // not reached
   }
 }
 

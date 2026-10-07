@@ -135,6 +135,9 @@ namespace bt {
       check(bf(type, "HdivLegendre1", {}), "HdivLegendre1 on type %d: no error",
             type);
     check(bf(4, "FooLegendre1", {}), "unknown function space: no error");
+    for(auto fs : {"H1Legendre0", "H1Legendre16", "HcurlLegendre-1",
+                   "HcurlLegendre11", "HdivLegendre11"})
+      check(bf(2, fs, {}), "%s: no error", fs);
     check(fails([]() { gmsh::model::mesh::getNumberOfKeys(7, "H1Legendre2"); }),
           "getNumberOfKeys on pyramids: no error");
     check(bf(2, "HcurlLegendre1", {-1}), "orientation -1: no error");

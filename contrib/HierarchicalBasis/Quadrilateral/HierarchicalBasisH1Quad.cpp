@@ -9,7 +9,6 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#include <stdexcept>
 #include "HierarchicalBasisH1Quad.h"
 
 HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int order)
@@ -25,39 +24,6 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int order)
   _numQuadFaceFunction = ((order >= 2) ? (order - 1) * (order - 1) : 0);
   _numTriFaceFunction = 0;
   _numBubbleFunction = 0;
-  if(order < 1) { throw std::invalid_argument("order must be >= 1"); }
-}
-
-HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int pf1, int pf2, int pe0,
-                                                 int pe1, int pe2, int pe3)
-{
-  _numVertex = 4;
-  _numEdge = 4;
-  _numQuadFace = 1;
-  _numTriFace = 0;
-  _numVertexFunction = 4;
-  _numEdgeFunction = pe0 + pe1 + pe2 + pe3 - 4;
-  _numQuadFaceFunction = ((pf1 - 1) * (pf2 - 1));
-  _numTriFaceFunction = 0;
-  _numBubbleFunction = 0;
-  _pf = {pf1, pf2};
-  _pOrderEdge = {pe0, pe1, pe2, pe3};
-
-  if(pe0 > pf1 || pe2 > pf1) {
-    throw std::runtime_error(
-      "Edge orders pe0 and pe2 must be <= pf1 (horizontal polynomial order).");
-  }
-  if(pe1 > pf2 || pe3 > pf2) {
-    throw std::runtime_error(
-      "Edge orders pe1 and pe3 must be <= pf2 (vertical polynomial order).");
-  }
-  if(pf1 < 1 || pf2 < 1) {
-    throw std::runtime_error(
-      "Polynomial face orders pf1 and pf2 must be >= 1.");
-  }
-  if(pe0 < 1 || pe1 < 1 || pe2 < 1 || pe3 < 1) {
-    throw std::runtime_error("All edge polynomial orders must be >= 1.");
-  }
 }
 
 double HierarchicalBasisH1Quad::_affineCoordinate(int j, double u, double v)
@@ -67,7 +33,7 @@ double HierarchicalBasisH1Quad::_affineCoordinate(int j, double u, double v)
   case(2): return 0.5 * (1 - u);
   case(3): return 0.5 * (1 + v);
   case(4): return 0.5 * (1 - v);
-  default: throw std::runtime_error("j must be : 1<=j<=4");
+  default: return 0.; // not reached
   }
 }
 

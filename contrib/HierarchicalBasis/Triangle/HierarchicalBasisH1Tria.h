@@ -66,7 +66,6 @@ private:
 
 public:
   HierarchicalBasisH1Tria(int order);
-  HierarchicalBasisH1Tria(int pf, int pe0, int pe1, int pe2);
   ~HierarchicalBasisH1Tria() override = default;
 
   // vertexBasis = [v0,...,v2]

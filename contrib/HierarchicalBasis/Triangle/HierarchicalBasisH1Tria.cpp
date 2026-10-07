@@ -9,13 +9,11 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#include <stdexcept>
 #include <iostream>
 #include "HierarchicalBasisH1Tria.h"
 
 HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int order)
 {
-  if(order < 1) { throw std::invalid_argument("order must be >= 1"); }
   _pf = order;
   _pOrderEdge = {order, order, order};
   _numVertex = 3;
@@ -29,33 +27,13 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int order)
   _numBubbleFunction = 0;
 }
 
-HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int pf, int pe0, int pe1,
-                                                 int pe2)
-{
-  _pf = pf;
-  _pOrderEdge = {pe0, pe1, pe2};
-  _numVertex = 3;
-  _numEdge = 3;
-  _numTriFace = 1;
-  _numQuadFace = 0;
-  _numVertexFunction = 3;
-  _numEdgeFunction = pe0 + pe1 + pe2 - 3;
-  _numQuadFaceFunction = 0;
-  _numTriFaceFunction = ((pf >= 3) ? (pf - 1) * (pf - 2) / 2 : 0);
-  _numBubbleFunction = 0;
-  if(pe0 > pf || pe1 > pf || pe2 > pf) {
-    throw std::invalid_argument("Edge orders pe0, pe1, and pe2 must be <= pf.");
-  }
-  if(pf < 1) { throw std::invalid_argument("pf must be >= 1."); }
-}
-
 double HierarchicalBasisH1Tria::_affineCoordinate(int j, double u, double v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
   case(2): return -0.5 * (u + v);
   case(3): return 0.5 * (1 + u);
-  default: throw std::runtime_error("j must be : 1<=j<=3");
+  default: return 0.; // not reached
   }
 }
 

@@ -11,7 +11,6 @@
 #ifndef HIERARCHICAL_BASIS_HCURL_TETRA_H
 #define HIERARCHICAL_BASIS_HCURL_TETRA_H
 
-#include <stdexcept>
 #include <math.h>
 #include "HierarchicalBasisHcurl.h"
 
@@ -65,9 +64,6 @@ public:
     }
     else if(_space == CURL_HCURL) {
       generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
-    }
-    else {
-      throw std::runtime_error("unknown typeFunction");
     }
   }
 

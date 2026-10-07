@@ -13,7 +13,6 @@
 #ifndef HIERARCHICAL_BASIS_HDIV_QUAD_H
 #define HIERARCHICAL_BASIS_HDIV_QUAD_H
 
-#include <stdexcept>
 #include "HierarchicalBasisHdiv.h"
 
 /*
@@ -80,9 +79,6 @@ public:
     if(_space == HDIV) {
       generateHdivBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
-    else {
-      throw std::runtime_error("unknown typeFunction");
-    }
   }
 
   virtual void generateBasis(double u, double v, double w,
@@ -93,9 +89,6 @@ public:
   {
     if(_space == DIV_HDIV) {
       generateDivBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
-    }
-    else {
-      throw std::runtime_error("unknown typeFunction");
     }
   }
 

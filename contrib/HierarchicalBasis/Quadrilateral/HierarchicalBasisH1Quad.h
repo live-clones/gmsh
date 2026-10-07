@@ -63,7 +63,6 @@ private:
 
 public:
   HierarchicalBasisH1Quad(int order);
-  HierarchicalBasisH1Quad(int pf1, int pf2, int pe0, int pe1, int pe2, int pe3);
   ~HierarchicalBasisH1Quad() override = default;
 
   // vertexBasis=[v0,...,v3]

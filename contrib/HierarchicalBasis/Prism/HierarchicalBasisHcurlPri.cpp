@@ -8,7 +8,6 @@
 // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
 // Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
-#include <stdexcept>
 #include "HierarchicalBasisHcurlPri.h"
 
 HierarchicalBasisHcurlPri::HierarchicalBasisHcurlPri(int order)
@@ -50,7 +49,7 @@ double HierarchicalBasisHcurlPri::_affineCoordinate(int j, double u, double v,
   case(3): return 0.5 * (1 + u);
   case(4): return 0.5 * (1 + w);
   case(5): return 0.5 * (1 - w);
-  default: throw std::runtime_error("j must be : 1<=j<=5");
+  default: return 0.; // not reached
   }
 }
 
@@ -782,9 +781,6 @@ void HierarchicalBasisHcurlPri::orientOneFace(
             }
           }
         }
-        else {
-          throw std::runtime_error("unknown typeFunction");
-        }
       }
     }
   }
@@ -1176,9 +1172,6 @@ void HierarchicalBasisHcurlPri::orientOneFace(
             it++;
           }
         }
-      }
-      else {
-        throw std::runtime_error("unknown typeFunction");
       }
     }
   }
