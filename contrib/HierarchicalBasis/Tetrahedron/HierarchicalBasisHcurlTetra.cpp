@@ -429,57 +429,6 @@ void HierarchicalBasisHcurlTetra::generateHcurlBasis(
   }
 }
 
-void HierarchicalBasisHcurlTetra::orientEdge(
-  int flagOrientation, int edgeNumber,
-  std::vector<std::vector<double>> &edgeFunctions,
-  const std::vector<std::vector<double>> &eTablePositiveFlag,
-  const std::vector<std::vector<double>> &eTableNegativeFlag)
-{
-  if(flagOrientation == -1) {
-    int constant1 = 0;
-    int constant2 = 0;
-    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
-    constant2 = constant2 - 1;
-    constant1 = constant2 - _pOrderEdge[edgeNumber];
-    for(int k = constant1; k <= constant2; k++) {
-      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
-      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
-      edgeFunctions[k][2] = eTableNegativeFlag[k][2];
-    }
-  }
-  else {
-    int constant1 = 0;
-    int constant2 = 0;
-    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
-    constant2 = constant2 - 1;
-    constant1 = constant2 - _pOrderEdge[edgeNumber];
-    for(int k = constant1; k <= constant2; k++) {
-      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
-      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
-      edgeFunctions[k][2] = eTablePositiveFlag[k][2];
-    }
-  }
-}
-void HierarchicalBasisHcurlTetra::orientEdgeFunctionsForNegativeFlag(
-  std::vector<std::vector<double>> &edgeFunctions)
-{
-  int constant1 = 0;
-  int constant2 = 0;
-  for(int edgeNumber = 0; edgeNumber < _numEdge; edgeNumber++) {
-    constant2 = 0;
-    constant2 = 0;
-    for(int i = 0; i <= edgeNumber; i++) { constant2 += _pOrderEdge[i] + 1; }
-    constant2 = constant2 - 1;
-    constant1 = constant2 - _pOrderEdge[edgeNumber];
-    for(int k = constant1; k <= constant2; k++) {
-      if((k - constant1) % 2 == 0) {
-        edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
-        edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
-        edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
-      }
-    }
-  }
-}
 void HierarchicalBasisHcurlTetra::orientOneFace(
   double u, double v, double w, int flag1, int flag2, int flag3, int faceNumber,
   std::vector<std::vector<double>> &faceFunctions)
@@ -906,29 +855,6 @@ void HierarchicalBasisHcurlTetra::orientOneFace(
         }
       }
     }
-  }
-}
-void HierarchicalBasisHcurlTetra::orientFace(
-  int flag1, int flag2, int flag3, int faceNumber,
-  const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-  const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
-  std::vector<std::vector<double>> &fTableCopy)
-{
-  int iterator = 0;
-  for(int i = 0; i < faceNumber; i++) {
-    iterator +=
-      3 * (_pOrderFace[i] - 1) + (_pOrderFace[i] - 2) * (_pOrderFace[i] - 1);
-  }
-  int numFaceFunctions =
-    3 * (_pOrderFace[faceNumber] - 1) +
-    (_pOrderFace[faceNumber] - 2) * (_pOrderFace[faceNumber] - 1);
-  int iOrientation = getOrientationTriFaceIndex(flag1, flag2);
-  int offset = iOrientation * _numTriFaceFunction;
-  int offset2 = iterator + numFaceFunctions;
-  for(int i = iterator; i < offset2; i++) {
-    fTableCopy[i][0] = triFaceFunctionsAllOrientation[i + offset][0];
-    fTableCopy[i][1] = triFaceFunctionsAllOrientation[i + offset][1];
-    fTableCopy[i][2] = triFaceFunctionsAllOrientation[i + offset][2];
   }
 }
 

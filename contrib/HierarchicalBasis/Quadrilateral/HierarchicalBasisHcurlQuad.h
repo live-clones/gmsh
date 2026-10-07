@@ -12,7 +12,7 @@
 #ifndef HIERARCHICAL_BASIS_HCURL_QUAD_H
 #define HIERARCHICAL_BASIS_HCURL_QUAD_H
 
-#include "HierarchicalBasisHcurl.h"
+#include "HierarchicalBasis.h"
 
 /*
  *
@@ -33,7 +33,7 @@
  *  pe3,pe1<=pf2       pe0,pe2<=pf1
  *
  */
-class HierarchicalBasisHcurlQuad : public HierarchicalBasisHcurl {
+class HierarchicalBasisHcurlQuad : public HierarchicalBasis {
 private:
   std::array<int, 4> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches
                                   // the edge 0 order)
@@ -80,21 +80,6 @@ public:
       generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
   }
-
-  virtual void
-  orientEdge(int flagOrientation, int edgeNumber,
-             std::vector<std::vector<double>> &edgeBasis,
-             const std::vector<std::vector<double>> &eTablePositiveFlag,
-             const std::vector<std::vector<double>> &eTableNegativeFlag);
-
-  virtual void orientEdgeFunctionsForNegativeFlag(
-    std::vector<std::vector<double>> &edgeFunctions);
-
-  virtual void orientFace(
-    int flag1, int flag2, int flag3, int faceNumber,
-    const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-    const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
-    std::vector<std::vector<double>> &fTableCopy);
 
   virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
                            std::vector<int> &orderInfo);

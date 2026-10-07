@@ -12,7 +12,7 @@
 #ifndef HIERARCHICAL_BASIS_HCURL_LINE_H
 #define HIERARCHICAL_BASIS_HCURL_LINE_H
 
-#include "HierarchicalBasisHcurl.h"
+#include "HierarchicalBasis.h"
 
 /*
  *
@@ -24,7 +24,7 @@
  *
  */
 
-class HierarchicalBasisHcurlLine : public HierarchicalBasisHcurl {
+class HierarchicalBasisHcurlLine : public HierarchicalBasis {
 private:
   int _pe; //  edge function order in  direction u
 
@@ -62,15 +62,6 @@ public:
       generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
   }
-
-  virtual void orientEdgeFunctionsForNegativeFlag(
-    std::vector<std::vector<double>> &edgeFunctions);
-
-  virtual void
-  orientEdge(int flagOrientation, int edgeNumber,
-             std::vector<std::vector<double>> &edgeBasis,
-             const std::vector<std::vector<double>> &eTablePositiveFlag,
-             const std::vector<std::vector<double>> &eTableNegativeFlag);
 
   virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
                            std::vector<int> &orderInfo);

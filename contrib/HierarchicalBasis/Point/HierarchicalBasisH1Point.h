@@ -12,7 +12,7 @@
 #ifndef HIERARCHICAL_BASIS_H1_POINT_H
 #define HIERARCHICAL_BASIS_H1_POINT_H
 
-#include "HierarchicalBasisH1.h"
+#include "HierarchicalBasis.h"
 
 /*
  *
@@ -20,7 +20,7 @@
  *
  */
 
-class HierarchicalBasisH1Point : public HierarchicalBasisH1 {
+class HierarchicalBasisH1Point : public HierarchicalBasis {
 private:
   void generateGradientBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &gradientVertex,

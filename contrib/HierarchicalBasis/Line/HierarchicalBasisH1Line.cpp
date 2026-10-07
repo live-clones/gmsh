@@ -71,49 +71,6 @@ void HierarchicalBasisH1Line::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Line::orientEdgeFunctionsForNegativeFlag(
-  std::vector<double> &edgeFunctions)
-{
-  for(int k = 0; k <= _pe - 2; k++) {
-    if(k % 2 != 0) { edgeFunctions[k] = edgeFunctions[k] * (-1); }
-  }
-}
-
-void HierarchicalBasisH1Line::orientEdgeFunctionsForNegativeFlag(
-  std::vector<std::vector<double>> &edgeFunctions)
-{
-  for(int k = 0; k <= _pe - 2; k++) {
-    if(k % 2 != 0) { edgeFunctions[k][0] = edgeFunctions[k][0] * (-1); }
-  }
-}
-
-void HierarchicalBasisH1Line::orientEdge(
-  int flagOrientation, int edgeNumber, std::vector<double> &edgeFunctions,
-  const std::vector<double> &eTablePositiveFlag,
-  const std::vector<double> &eTableNegativeFlag)
-{
-  // Select appropriate table based on orientation
-  const std::vector<double> &appropriateTable =
-    (flagOrientation == -1) ? eTableNegativeFlag : eTablePositiveFlag;
-
-  for(int k = 0; k <= _pe - 2; k++) { edgeFunctions[k] = appropriateTable[k]; }
-}
-
-void HierarchicalBasisH1Line::orientEdge(
-  int flagOrientation, int edgeNumber,
-  std::vector<std::vector<double>> &edgeFunctions,
-  const std::vector<std::vector<double>> &eTablePositiveFlag,
-  const std::vector<std::vector<double>> &eTableNegativeFlag)
-{
-  // Select appropriate table based on orientation
-  const std::vector<std::vector<double>> &appropriateTable =
-    (flagOrientation == -1) ? eTableNegativeFlag : eTablePositiveFlag;
-
-  for(int k = 0; k <= _pe - 2; k++) {
-    edgeFunctions[k][0] = appropriateTable[k][0];
-  }
-}
-
 void HierarchicalBasisH1Line::getKeysInfo(std::vector<int> &functionTypeInfo,
                                           std::vector<int> &orderInfo)
 {

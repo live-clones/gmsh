@@ -6,9 +6,6 @@
 set(SRC
     OrthogonalPoly.cpp
     HierarchicalBasis.cpp
-    HierarchicalBasisH1.cpp
-    HierarchicalBasisHcurl.cpp
-    HierarchicalBasisHdiv.cpp
     Point/HierarchicalBasisH1Point.cpp
     Line/HierarchicalBasisH1Line.cpp
     Line/HierarchicalBasisHcurlLine.cpp

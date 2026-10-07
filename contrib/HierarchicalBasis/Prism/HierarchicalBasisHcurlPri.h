@@ -12,7 +12,7 @@
 #define HIERARCHICAL_BASIS_HCURL_PRI_H
 
 #include <math.h>
-#include "HierarchicalBasisHcurl.h"
+#include "HierarchicalBasis.h"
 
 /**
  * MPrism
@@ -50,7 +50,7 @@
  * edges are limited by the minimum of all (appropriate directional) orders cor-
  * responding to faces sharing that edge
  */
-class HierarchicalBasisHcurlPri : public HierarchicalBasisHcurl {
+class HierarchicalBasisHcurlPri : public HierarchicalBasis {
 public:
   HierarchicalBasisHcurlPri(int order);
   virtual ~HierarchicalBasisHcurlPri();
@@ -67,19 +67,6 @@ public:
       generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
   }
-
-  virtual void
-  orientEdge(int flagOrientation, int edgeNumber,
-             std::vector<std::vector<double>> &edgeBasis,
-             const std::vector<std::vector<double>> &eTablePositiveFlag,
-             const std::vector<std::vector<double>> &eTableNegativeFlag);
-  virtual void orientEdgeFunctionsForNegativeFlag(
-    std::vector<std::vector<double>> &edgeFunctions);
-  virtual void orientFace(
-    int flag1, int flag2, int flag3, int faceNumber,
-    const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-    const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
-    std::vector<std::vector<double>> &fTableCopy);
 
   virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
                            std::vector<int> &orderInfo);

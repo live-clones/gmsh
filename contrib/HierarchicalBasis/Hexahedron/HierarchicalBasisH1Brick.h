@@ -12,7 +12,7 @@
 #ifndef HIERARCHICAL_BASIS_H1_BRICK_H
 #define HIERARCHICAL_BASIS_H1_BRICK_H
 
-#include "HierarchicalBasisH1.h"
+#include "HierarchicalBasis.h"
 
 /*
  * MHexahedron
@@ -44,7 +44,7 @@
  * responding to faces sharing that edge
  */
 
-class HierarchicalBasisH1Brick : public HierarchicalBasisH1 {
+class HierarchicalBasisH1Brick : public HierarchicalBasis {
 private:
   std::array<int, 3> _pb; /*
                            * _pb[0] : bubble function order in the u-direction
@@ -126,31 +126,6 @@ public:
     generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
                           bubbleBasis);
   }
-
-  void orientEdgeFunctionsForNegativeFlag(
-    std::vector<double> &edgeFunctions) override;
-  void orientEdgeFunctionsForNegativeFlag(
-    std::vector<std::vector<double>> &edgeFunctions) override;
-
-  void orientEdge(int flagOrientation, int edgeNumber,
-                  std::vector<double> &edgeFunctions,
-                  const std::vector<double> &eTablePositiveFlag,
-                  const std::vector<double> &eTableNegativeFlag) override;
-  void orientEdge(
-    int flagOrientation, int edgeNumber,
-    std::vector<std::vector<double>> &edgeBasis,
-    const std::vector<std::vector<double>> &eTablePositiveFlag,
-    const std::vector<std::vector<double>> &eTableNegativeFlag) override;
-
-  void orientFace(int flag1, int flag2, int flag3, int faceNumber,
-                  const std::vector<double> &quadFaceFunctionsAllOrientation,
-                  const std::vector<double> &triFaceFunctionsAllOrientation,
-                  std::vector<double> &fTableCopy) override;
-  void orientFace(
-    int flag1, int flag2, int flag3, int faceNumber,
-    const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-    const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
-    std::vector<std::vector<double>> &fTableCopy) override;
 
   void getKeysInfo(std::vector<int> &functionTypeInfo,
                    std::vector<int> &orderInfo) override;

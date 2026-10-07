@@ -96,14 +96,14 @@ protected:
 
   HierarchicalBasis() = default;
 
-  // The operations below are implemented by each element, for scalar
-  // (std::vector<double>) and vector (std::vector<std::vector<double>>)
-  // functions; which ones are used depends on the space (e.g. vector values
-  // for H(curl), vector gradients for H1). Those an element does not need
-  // (e.g. the face operations on lines, or the scalar ones for H(curl)) do
-  // nothing.
-
-  // the basis functions at (u, v, w) in the reference orientation
+  // Each element computes, at one point (u, v, w), the basis functions in the
+  // reference orientation (generateBasis), and the face functions of face
+  // faceNumber for the orientation of the face given by the flags
+  // (orientOneFace). Both are implemented for scalar (std::vector<double>)
+  // and vector (std::vector<std::vector<double>>) functions; which version is
+  // used depends on the space (scalar values and vector gradients for H1,
+  // vector values and curls for H(curl), vector values and scalar divergences
+  // for H(div)). The versions an element does not need do nothing.
   virtual void generateBasis(double u, double v, double w,
                              std::vector<double> &vertexBasis,
                              std::vector<double> &edgeBasis,
@@ -114,53 +114,6 @@ protected:
                              std::vector<std::vector<double>> &edgeBasis,
                              std::vector<std::vector<double>> &faceBasis,
                              std::vector<std::vector<double>> &bubbleBasis);
-
-  // the edge functions for the reversed orientation of all the edges
-  virtual void
-  orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions);
-  virtual void orientEdgeFunctionsForNegativeFlag(
-    std::vector<std::vector<double>> &edgeFunctions);
-
-  // copy the functions of edge edgeNumber from eTablePositiveFlag (computed by
-  // generateBasis) or from eTableNegativeFlag (computed by
-  // orientEdgeFunctionsForNegativeFlag), depending on the orientation flag
-  virtual void orientEdge(int flagOrientation, int edgeNumber,
-                          std::vector<double> &edgeFunctions,
-                          const std::vector<double> &eTablePositiveFlag,
-                          const std::vector<double> &eTableNegativeFlag);
-  virtual void
-  orientEdge(int flagOrientation, int edgeNumber,
-             std::vector<std::vector<double>> &edgeBasis,
-             const std::vector<std::vector<double>> &eTablePositiveFlag,
-             const std::vector<std::vector<double>> &eTableNegativeFlag);
-
-  // the face functions for all the orientations of the faces (8 for
-  // quadrilateral faces, 6 for triangular faces)
-  virtual void addAllOrientedFaceFunctions(
-    double u, double v, double w, const std::vector<double> &faceFunctions,
-    std::vector<double> &quadFaceFunctionsAllOrientation,
-    std::vector<double> &triFaceFunctionsAllOrientation);
-  virtual void addAllOrientedFaceFunctions(
-    double u, double v, double w,
-    const std::vector<std::vector<double>> &faceFunctions,
-    std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-    std::vector<std::vector<double>> &triFaceFunctionsAllOrientation);
-
-  // copy the functions of face faceNumber, for the orientation given by the
-  // flags, from the tables computed by addAllOrientedFaceFunctions
-  virtual void
-  orientFace(int flag1, int flag2, int flag3, int faceNumber,
-             const std::vector<double> &quadFaceFunctionsAllOrientation,
-             const std::vector<double> &triFaceFunctionsAllOrientation,
-             std::vector<double> &fTableCopy);
-  virtual void orientFace(
-    int flag1, int flag2, int flag3, int faceNumber,
-    const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-    const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
-    std::vector<std::vector<double>> &fTableCopy);
-
-  // the face functions of face faceNumber for the orientation given by the
-  // flags, used by addAllOrientedFaceFunctions
   virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
                              int flag3, int faceNumber,
                              std::vector<double> &faceFunctions);
@@ -168,49 +121,17 @@ protected:
                              int flag3, int faceNumber,
                              std::vector<std::vector<double>> &faceFunctions);
 
-  // the index of an orientation of a quadrilateral face (0 to 7) or of a
-  // triangular face (0 to 5) in the tables of addAllOrientedFaceFunctions,
-  // and the reverse:
-  //
-  //  quadrilateral faces                 triangular faces
-  //  flag1   flag2   flag3   index       flag1   flag2   index
-  //   +1      +1      +1       0           0      +1       0
-  //   -1      +1      +1       1           1      +1       1
-  //   +1      -1      +1       2           2      +1       2
-  //   -1      -1      +1       3           0      -1       3
-  //   +1      +1      -1       4           1      -1       4
-  //   -1      +1      -1       5           2      -1       5
-  //   +1      -1      -1       6
-  //   -1      -1      -1       7
-  static int getOrientationQuadFaceIndex(int flag1, int flag2, int flag3)
-  {
-    assert((flag1 == 1 || flag1 == -1) && (flag2 == 1 || flag2 == -1) &&
-           (flag3 == 1 || flag3 == -1));
-    return (flag1 == -1 ? 1 : 0) | (flag2 == -1 ? 2 : 0) |
-           (flag3 == -1 ? 4 : 0);
-  }
-  static int getOrientationTriFaceIndex(int flag1, int flag2)
-  {
-    assert((flag1 == 0 || flag1 == 1 || flag1 == 2) &&
-           (flag2 == 1 || flag2 == -1));
-    return flag1 + (flag2 == -1 ? 3 : 0);
-  }
-  static std::array<int, 3> getQuadFaceFlagsFromIndex(int index)
-  {
-    assert(index >= 0 && index < 8);
-    return {(index & 1) ? -1 : 1, (index & 2) ? -1 : 1, (index & 4) ? -1 : 1};
-  }
-  static std::array<int, 2> getTriFaceFlagsFromIndex(int index)
-  {
-    assert(index >= 0 && index < 6);
-    return {index % 3, (index < 3) ? 1 : -1};
-  }
-
 private:
+  // the functions at the point uvw in the reference orientation, and the face
+  // functions for the 8 orientations of the quadrilateral faces and the 6
+  // orientations of the triangular faces, getNumComponents() values per
+  // function
   template <class T>
-  void _evaluate(const std::vector<double> &uvw,
-                 const std::vector<int> &orientations,
-                 std::vector<double> &values);
+  void _generate(const double *uvw, double *vertex, double *edge, double *face,
+                 double *bubble);
+  template <class T>
+  void _orientFaces(const double *uvw, const double *face, double *quadFaces,
+                    double *triFaces);
 };
 
 #endif

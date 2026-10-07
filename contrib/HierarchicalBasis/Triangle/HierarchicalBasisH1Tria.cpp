@@ -320,76 +320,6 @@ HierarchicalBasisH1Tria::computeEdgeFunctionRange(int edgeNumber) const
   return {startIndex, endIndex};
 }
 
-void HierarchicalBasisH1Tria::orientEdgeFunctionsForNegativeFlag(
-  std::vector<double> &edgeFunctions)
-{
-  for(int edgeNumber = 0; edgeNumber < _numEdge; edgeNumber++) {
-    // Get the range of indices for this edge's functions
-    auto [startIndex, endIndex] = computeEdgeFunctionRange(edgeNumber);
-
-    for(int k = startIndex; k <= endIndex; k++) {
-      // Invert sign for every odd-indexed local function on the edge
-      if((k - startIndex) % 2 != 0) {
-        edgeFunctions[k] = edgeFunctions[k] * (-1.0);
-      }
-    }
-  }
-}
-
-void HierarchicalBasisH1Tria::orientEdgeFunctionsForNegativeFlag(
-  std::vector<std::vector<double>> &edgeFunctions)
-{
-  for(int edgeNumber = 0; edgeNumber < _numEdge; edgeNumber++) {
-    // Get the range of indices for this edge's functions
-    auto [startIndex, endIndex] = computeEdgeFunctionRange(edgeNumber);
-
-    for(int k = startIndex; k <= endIndex; k++) {
-      // Invert sign for every odd-indexed local function on the edge
-      if((k - startIndex) % 2 != 0) {
-        edgeFunctions[k][0] = edgeFunctions[k][0] * (-1.0);
-        edgeFunctions[k][1] = edgeFunctions[k][1] * (-1.0);
-        edgeFunctions[k][2] = edgeFunctions[k][2] * (-1.0);
-      }
-    }
-  }
-}
-
-void HierarchicalBasisH1Tria::orientEdge(
-  int flagOrientation, int edgeNumber, std::vector<double> &edgeFunctions,
-  const std::vector<double> &eTablePositiveFlag,
-  const std::vector<double> &eTableNegativeFlag)
-{
-  // Select appropriate table based on orientation
-  const std::vector<double> &appropriateTable =
-    (flagOrientation == -1) ? eTableNegativeFlag : eTablePositiveFlag;
-
-  // Get the range of indices for this edge's functions
-  auto [startIndex, endIndex] = computeEdgeFunctionRange(edgeNumber);
-
-  for(int k = startIndex; k <= endIndex; k++) {
-    edgeFunctions[k] = appropriateTable[k];
-  }
-}
-
-void HierarchicalBasisH1Tria::orientEdge(
-  int flagOrientation, int edgeNumber,
-  std::vector<std::vector<double>> &edgeFunctions,
-  const std::vector<std::vector<double>> &eTablePositiveFlag,
-  const std::vector<std::vector<double>> &eTableNegativeFlag)
-{
-  // Select appropriate table based on orientation
-  const std::vector<std::vector<double>> &appropriateTable =
-    (flagOrientation == -1) ? eTableNegativeFlag : eTablePositiveFlag;
-
-  // Get the range of indices for this edge's functions
-  auto [startIndex, endIndex] = computeEdgeFunctionRange(edgeNumber);
-
-  for(int k = startIndex; k <= endIndex; k++) {
-    edgeFunctions[k][0] = appropriateTable[k][0];
-    edgeFunctions[k][1] = appropriateTable[k][1];
-  }
-}
-
 // This function checks whether the face is in the standard orientation (flags 0
 // and 1). If so, no changes are made. Otherwise, it regenerates the face basis
 // functions corresponding to the specified (non-standard) orientation flags.
@@ -562,44 +492,6 @@ void HierarchicalBasisH1Tria::orientOneFace(
         iterator++;
       }
     }
-  }
-}
-
-void HierarchicalBasisH1Tria::orientFace(
-  int flag1, int flag2, int flag3, int faceNumber,
-  const std::vector<double> &quadFaceFunctionsAllOrientation,
-  const std::vector<double> &triFaceFunctionsAllOrientation,
-  std::vector<double> &fTableCopy)
-{
-  /*
-   *     These arguments are not used in this particular case :
-                      flag3, faceNumber, quadFaceFunctionsAllOrientation
-   */
-
-  int iOrientation = getOrientationTriFaceIndex(flag1, flag2);
-  int offset = iOrientation * _numTriFaceFunction;
-  for(int i = 0; i < _numTriFaceFunction; i++) {
-    fTableCopy[i] = triFaceFunctionsAllOrientation[i + offset];
-  }
-}
-
-void HierarchicalBasisH1Tria::orientFace(
-  int flag1, int flag2, int flag3, int faceNumber,
-  const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-  const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
-  std::vector<std::vector<double>> &fTableCopy)
-{
-  /*
-   *     These arguments are not used in this particular case :
-                      flag3, faceNumber, quadFaceFunctionsAllOrientation
-   */
-
-  int iOrientation = getOrientationTriFaceIndex(flag1, flag2);
-  int offset = iOrientation * _numTriFaceFunction;
-  for(int i = 0; i < _numTriFaceFunction; i++) {
-    fTableCopy[i][0] = triFaceFunctionsAllOrientation[i + offset][0];
-    fTableCopy[i][1] = triFaceFunctionsAllOrientation[i + offset][1];
-    fTableCopy[i][2] = triFaceFunctionsAllOrientation[i + offset][2];
   }
 }
 

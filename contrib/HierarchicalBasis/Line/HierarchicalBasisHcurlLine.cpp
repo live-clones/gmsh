@@ -95,40 +95,6 @@ void HierarchicalBasisHcurlLine::generateCurlBasis(
   for(auto &vec : edgeBasis) std::fill(vec.begin(), vec.end(), 0.0);
 }
 
-void HierarchicalBasisHcurlLine::orientEdgeFunctionsForNegativeFlag(
-  std::vector<std::vector<double>> &edgeFunctions)
-{
-  for(int k = 0; k <= _pe; k++) {
-    if(k % 2 == 0) {
-      edgeFunctions[k][0] = edgeFunctions[k][0] * (-1);
-      edgeFunctions[k][1] = edgeFunctions[k][1] * (-1);
-      edgeFunctions[k][2] = edgeFunctions[k][2] * (-1);
-    }
-  }
-}
-
-void HierarchicalBasisHcurlLine::orientEdge(
-  int flagOrientation, int edgeNumber,
-  std::vector<std::vector<double>> &edgeFunctions,
-  const std::vector<std::vector<double>> &eTablePositiveFlag,
-  const std::vector<std::vector<double>> &eTableNegativeFlag)
-{
-  if(flagOrientation == -1) {
-    for(int k = 0; k <= _pe; k++) {
-      edgeFunctions[k][0] = eTableNegativeFlag[k][0];
-      edgeFunctions[k][1] = eTableNegativeFlag[k][1];
-      edgeFunctions[k][2] = eTableNegativeFlag[k][2];
-    }
-  }
-  else {
-    for(int k = 0; k <= _pe; k++) {
-      edgeFunctions[k][0] = eTablePositiveFlag[k][0];
-      edgeFunctions[k][1] = eTablePositiveFlag[k][1];
-      edgeFunctions[k][2] = eTablePositiveFlag[k][2];
-    }
-  }
-}
-
 void HierarchicalBasisHcurlLine::getKeysInfo(std::vector<int> &functionTypeInfo,
                                              std::vector<int> &orderInfo)
 {

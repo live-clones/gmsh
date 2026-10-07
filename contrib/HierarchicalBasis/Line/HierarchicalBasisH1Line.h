@@ -12,7 +12,7 @@
 #ifndef HIERARCHICAL_BASIS_H1_LINE_H
 #define HIERARCHICAL_BASIS_H1_LINE_H
 
-#include "HierarchicalBasisH1.h"
+#include "HierarchicalBasis.h"
 
 /* MLine
  *
@@ -28,7 +28,7 @@
  *
  */
 
-class HierarchicalBasisH1Line : public HierarchicalBasisH1 {
+class HierarchicalBasisH1Line : public HierarchicalBasis {
 private:
   int _pe; //  edge function order in  direction u
 
@@ -63,21 +63,6 @@ public:
     generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
                           bubbleBasis);
   }
-
-  void orientEdgeFunctionsForNegativeFlag(
-    std::vector<double> &edgeFunctions) override;
-  void orientEdgeFunctionsForNegativeFlag(
-    std::vector<std::vector<double>> &edgeFunctions) override;
-
-  void orientEdge(int flagOrientation, int edgeNumber,
-                  std::vector<double> &edgeFunctions,
-                  const std::vector<double> &eTablePositiveFlag,
-                  const std::vector<double> &eTableNegativeFlag) override;
-  void orientEdge(
-    int flagOrientation, int edgeNumber,
-    std::vector<std::vector<double>> &edgeBasis,
-    const std::vector<std::vector<double>> &eTablePositiveFlag,
-    const std::vector<std::vector<double>> &eTableNegativeFlag) override;
 
   void getKeysInfo(std::vector<int> &functionTypeInfo,
                    std::vector<int> &orderInfo) override;

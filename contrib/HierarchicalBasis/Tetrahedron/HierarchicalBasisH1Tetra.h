@@ -12,7 +12,7 @@
 #ifndef HIERARCHICAL_BASIS_H1_TETRA_H
 #define HIERARCHICAL_BASIS_H1_TETRA_H
 
-#include "HierarchicalBasisH1.h"
+#include "HierarchicalBasis.h"
 
 /*
  * MTetrahedron
@@ -53,7 +53,7 @@
  *   corresponding to faces sharing that edge
  */
 
-class HierarchicalBasisH1Tetra : public HierarchicalBasisH1 {
+class HierarchicalBasisH1Tetra : public HierarchicalBasis {
 private:
   std::array<int, 6> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches
                                   // the order of the edge 0)
@@ -100,31 +100,6 @@ public:
     generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
                           bubbleBasis);
   }
-
-  void orientEdgeFunctionsForNegativeFlag(
-    std::vector<double> &edgeFunctions) override;
-  void orientEdgeFunctionsForNegativeFlag(
-    std::vector<std::vector<double>> &edgeFunctions) override;
-
-  void orientEdge(int flagOrientation, int edgeNumber,
-                  std::vector<double> &edgeFunctions,
-                  const std::vector<double> &eTablePositiveFlag,
-                  const std::vector<double> &eTableNegativeFlag) override;
-  void orientEdge(
-    int flagOrientation, int edgeNumber,
-    std::vector<std::vector<double>> &edgeBasis,
-    const std::vector<std::vector<double>> &eTablePositiveFlag,
-    const std::vector<std::vector<double>> &eTableNegativeFlag) override;
-
-  void orientFace(int flag1, int flag2, int flag3, int faceNumber,
-                  const std::vector<double> &quadFaceFunctionsAllOrientation,
-                  const std::vector<double> &triFaceFunctionsAllOrientation,
-                  std::vector<double> &fTableCopy) override;
-  void orientFace(
-    int flag1, int flag2, int flag3, int faceNumber,
-    const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-    const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
-    std::vector<std::vector<double>> &fTableCopy) override;
 
   void getKeysInfo(std::vector<int> &functionTypeInfo,
                    std::vector<int> &orderInfo) override;
