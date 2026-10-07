@@ -25,6 +25,8 @@ namespace QuadOpt {
     std::vector<int> side; // side[j]: edges from corner j to corner j + 1
     std::vector<int> param; // what the pattern solved for, see Pattern::fit
     int pattern = -1; // index in patterns()
+    double mass = 0.; // cells of the patch, a triangle counting for half a quad
+    double slack = 0.25; // a pattern keeps that fraction of the mass, +- 2 cells
   };
 
   // A quad mesh of the patch: the boundary vertices are the loop (indices 0 to
@@ -39,12 +41,13 @@ namespace QuadOpt {
   // A family of quad meshes of a disk with n corners, given by the side lengths.
   struct Pattern {
     const char *name;
-    // Solves the pattern for the side lengths; false if it has no such mesh.
-    bool (*fit)(const std::vector<int> &side, std::vector<int> &param);
+    // Solves the pattern for the corners and sides of the patch, and for a cell
+    // count close to its mass; false if it has no such mesh.
+    bool (*fit)(Patch &patch);
     // The mesh of a patch for which fit succeeded.
     void (*build)(const Patch &patch, Rewrite &rewrite);
-    // Interior vertices of valence other than four in the mesh of n corners.
-    int (*singularities)(int corners);
+    // Interior vertices of valence other than four in the mesh of a fitted patch.
+    int (*singularities)(const Patch &patch);
   };
   const std::vector<Pattern> &patterns();
 
@@ -60,6 +63,6 @@ namespace QuadOpt {
   // pattern has singularities. False if there is none.
   bool findPatch(const HalfEdgeMesh &he, const Probe &mesh,
                  const std::vector<int> &seeds, std::size_t maxCells,
-                 Patch &patch);
+                 double sizeSlack, Patch &patch);
 
 } // namespace QuadOpt

@@ -940,11 +940,6 @@ namespace QuadOpt {
       ++_patchTries;
       Rewrite rewrite;
       patterns()[patch.pattern].build(patch, rewrite);
-      double mass = 0.; // quads, and a pair of triangles counts as one
-      for(int id : cavity.cells) mass += _he.cells[id].n == 3 ? 0.5 : 1.;
-      if(std::abs(double(rewrite.quad.size()) - mass) >
-         std::max(2., kPatchSizeSlack * mass))
-        return false;
 
       const int B = cavity.size(), I = int(rewrite.weight.size());
       std::vector<int> ids = cavity.loop;
@@ -1056,7 +1051,8 @@ namespace QuadOpt {
       for(const std::vector<int> &seed : seeds) {
         bool alive = true;
         for(int w : seed) alive = alive && !_he.star[w].empty();
-        if(alive && findPatch(_he, probe, seed, _options.maximumPatchCells, patch))
+        if(alive && findPatch(_he, probe, seed, _options.maximumPatchCells,
+                      kPatchSizeSlack, patch))
           done += tryPatch(patch);
       }
       return done;

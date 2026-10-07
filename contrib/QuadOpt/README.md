@@ -43,12 +43,13 @@ Gmsh options in use: `Mesh.PackRecombination`, `Mesh.PackCleanupMethod`,
 - `qoQMorph.cpp`: `FrontAdvance`, the fronts only (Owen et al. 1999, nine front
   types of Wang et al. 2025). It asks the optimizer to smooth and to re-mesh.
 - `qoPatch.h/.cpp`: search of patches with 3 to 6 corners (Bunin 2006) and the
-  star pattern that re-meshes them (a grid for four corners). The optimizer
+  patterns that re-mesh them: the star (a grid for four corners) and the split,
+  a straight chord cutting the patch into two stars (3 + 5 corners: a pair of
+  singular vertices). A pattern must keep the cell count of the patch within 25 %. The optimizer
   applies a pattern after the local rewrites have converged: new points from
   the transfinite guess, Winslow, kept only if the energy of the cavity
   decreases, undone otherwise. A cavity already seen in the same state (hash of
-  its cells and positions) is not tried again. A patch keeps its cell count
-  within 25 %.
+  its cells and positions) is not tried again.
 - `qoPack.cpp`: PACK settings scope and finalization.
 - `intrinsicTriangulation.*`, `smallCavityWinslow.*`: used by PACK and by the
   nodal smoothing.
