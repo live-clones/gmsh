@@ -212,4 +212,25 @@ inline int hcurlPrismQuadrangle(const Dual &a, const Dual &b, const Dual &w,
   return n;
 }
 
+// The H(div) functions of an edge from vertex a to vertex b of a triangle:
+// the H(curl) functions of the edge (see hcurlEdge), rotated by -90 degrees;
+// return the number of functions
+inline int hdivEdge(const Dual &a, const Dual &b, int order, Vec *f)
+{
+  int n = hcurlEdge(a, b, order, f);
+  for(int i = 0; i < n; i++) f[i] = -1. * rotate(f[i]);
+  return n;
+}
+
+// The H(div) functions of a triangle of affine coordinates (a, b, c): those of
+// hcurlTriangle, with rot(z) instead of grad(z) for the edge-based functions;
+// return the number of functions
+inline int hdivTriangle(const Dual &a, const Dual &b, const Dual &c, int order,
+                        Vec *f)
+{
+  int n = hcurlTriangle(a, b, c, order, f);
+  for(int i = 0; i < 3 * (order - 1); i++) f[i] = rotate(f[i]);
+  return n;
+}
+
 #endif
