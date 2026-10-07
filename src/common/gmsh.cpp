@@ -4129,8 +4129,7 @@ gmsh::model::mesh::addFaces(const std::vector<std::size_t> &faceTags,
 }
 
 // the barycenter of the nodes
-template <class T>
-static void _barycenter(const T &nodes, std::size_t n, double *xyz)
+static void _barycenter(MVertex *const *nodes, std::size_t n, double *xyz)
 {
   xyz[0] = xyz[1] = xyz[2] = 0.;
   for(std::size_t i = 0; i < n; i++) {
@@ -4149,7 +4148,11 @@ static void _addKey(int typeKey, std::size_t entityKey, const double *xyz,
 {
   typeKeys.push_back(typeKey);
   entityKeys.push_back(entityKey);
-  if(returnCoord) coord.insert(coord.end(), xyz, xyz + 3);
+  if(returnCoord) {
+    coord.push_back(xyz[0]);
+    coord.push_back(xyz[1]);
+    coord.push_back(xyz[2]);
+  }
 }
 
 // the keys of the Lagrange basis functions of element e: one per node
@@ -4180,17 +4183,19 @@ static void _addHierarchicalKeys(MElement *e, const HierarchicalBasis &basis,
     basis.getNumEdge() ? basis.getNumEdgeFunction() / basis.getNumEdge() : 0;
   const int perQuad = numQuad ? basis.getNumQuadFaceFunction() / numQuad : 0;
   const int perTri = numTri ? basis.getNumTriFaceFunction() / numTri : 0;
-  double xyz[3];
+  double xyz[3] = {0., 0., 0.};
   for(int k = 0; k < basis.getNumVertexFunction(); k++) {
     MVertex *v = e->getVertex(k);
-    _barycenter(&v, 1, xyz);
-    _addKey(0, v->getNum(), xyz, typeKeys, entityKeys, coord, returnCoord);
+    double p[3] = {v->x(), v->y(), v->z()};
+    _addKey(0, v->getNum(), p, typeKeys, entityKeys, coord, returnCoord);
   }
   if(basis.getNumEdgeFunction()) {
     for(int i = 0; i < e->getNumEdges(); i++) {
       MEdge edge = e->getEdge(i);
-      MVertex *v[2] = {edge.getVertex(0), edge.getVertex(1)};
-      _barycenter(v, 2, xyz);
+      if(returnCoord) {
+        MVertex *v[2] = {edge.getVertex(0), edge.getVertex(1)};
+        _barycenter(v, 2, xyz);
+      }
       std::size_t num = GModel::current()->addMEdge(std::move(edge));
       for(int k = 1; k <= perEdge; k++)
         _addKey(k, num, xyz, typeKeys, entityKeys, coord, returnCoord);
@@ -4199,9 +4204,12 @@ static void _addHierarchicalKeys(MElement *e, const HierarchicalBasis &basis,
   if(basis.getNumQuadFaceFunction() + basis.getNumTriFaceFunction()) {
     for(int i = 0; i < numQuad + numTri; i++) {
       MFace face = e->getFaceSolin(i);
-      std::vector<MVertex *> v(face.getNumVertices());
-      for(std::size_t k = 0; k < v.size(); k++) v[k] = face.getVertex(k);
-      _barycenter(v, v.size(), xyz);
+      if(returnCoord) {
+        MVertex *v[4];
+        for(std::size_t k = 0; k < face.getNumVertices(); k++)
+          v[k] = face.getVertex(k);
+        _barycenter(v, face.getNumVertices(), xyz);
+      }
       std::size_t num = GModel::current()->addMFace(std::move(face));
       int n = (i < numQuad) ? perQuad : perTri;
       for(int k = 1; k <= n; k++)
@@ -4210,9 +4218,11 @@ static void _addHierarchicalKeys(MElement *e, const HierarchicalBasis &basis,
     }
   }
   if(basis.getNumBubbleFunction()) {
-    std::vector<MVertex *> v(e->getNumVertices());
-    for(std::size_t k = 0; k < v.size(); k++) v[k] = e->getVertex(k);
-    _barycenter(v, v.size(), xyz);
+    if(returnCoord) {
+      std::vector<MVertex *> v;
+      e->getVertices(v);
+      _barycenter(v.data(), v.size(), xyz);
+    }
     int first = perEdge + std::max(perQuad, perTri);
     for(int k = 1; k <= basis.getNumBubbleFunction(); k++)
       _addKey(first + k, e->getNum(), xyz, typeKeys, entityKeys, coord,
