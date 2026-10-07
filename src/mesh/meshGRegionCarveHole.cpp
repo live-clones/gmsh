@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <limits>
 #include <set>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -24,7 +25,7 @@ void carveHole(std::vector<T *> &elements, double distance,
   std::vector<T *> temp;
   for(std::size_t i = 0; i < elements.size(); i++) {
     for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++) {
-      double d2;
+      double d2 = std::numeric_limits<double>::max(); // no point: kept
       search.nearest(elements[i]->getVertex(j)->point(), &d2);
       if(std::sqrt(d2) < distance) {
         delete elements[i];
