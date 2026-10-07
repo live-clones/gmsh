@@ -218,9 +218,9 @@ void HierarchicalBasisHcurlPri::generateHcurlBasis(
         for(int iedge = 2; iedge <= _pOrderEdge[i]; iedge++) {
           for(int j = 0; j < 3; j++) {
             edgeBasis[edgeIt][j] =
-              (2 * float(iedge) - 1) / float(iedge) *
+              (2 * double(iedge) - 1) / double(iedge) *
                 legendreVector[index][iedge - 1] * psie_1[index][j] -
-              (float(iedge) - 1) / float(iedge) *
+              (double(iedge) - 1) / double(iedge) *
                 legendreVector[index][iedge - 2] * psie_0[index][j];
           }
           matrixVectorProductForMapping(lambda, edgeBasis[edgeIt],
@@ -279,9 +279,9 @@ void HierarchicalBasisHcurlPri::generateHcurlBasis(
         }
         else {
           for(int j = 0; j < 3; j++) {
-            facePsi[j] = (2 * float(n1) - 1) / float(n1) *
+            facePsi[j] = (2 * double(n1) - 1) / double(n1) *
                            legendreVector[index][n1 - 1] * psie_1[index][j] -
-                         (float(n1) - 1) / float(n1) *
+                         (double(n1) - 1) / double(n1) *
                            legendreVector[index][n1 - 2] * psie_0[index][j];
           }
         }
@@ -628,9 +628,9 @@ void HierarchicalBasisHcurlPri::orientOneFace(
               for(int j = 0; j < 2; j++) {
                 faceFunctions[iterator][j] =
                   impactFlag1 * impactFlag2 * lw * jacob *
-                  ((2 * float(it2) - 1) / float(it2) * LSub[it2 - 1] *
+                  ((2 * double(it2) - 1) / double(it2) * LSub[it2 - 1] *
                      psie_1[j] -
-                   (float(it2) - 1) / float(it2) * LSub[it2 - 2] * psie_0[j]);
+                   (double(it2) - 1) / double(it2) * LSub[it2 - 2] * psie_0[j]);
               }
               faceFunctions[iterator][2] = 0; // psie_0[2]==psie_1[2]==0
               iterator++;
@@ -766,14 +766,14 @@ void HierarchicalBasisHcurlPri::orientOneFace(
               std::vector<double> psie(2, 0);
               for(int j = 0; j < 2; j++) {
                 psie[j] =
-                  (2 * float(it2) - 1) / float(it2) * Lsub[it2 - 1] *
+                  (2 * double(it2) - 1) / double(it2) * Lsub[it2 - 1] *
                     psie_1[j] -
-                  (float(it2) - 1) / float(it2) * Lsub[it2 - 2] * psie_0[j];
+                  (double(it2) - 1) / double(it2) * Lsub[it2 - 2] * psie_0[j];
               }
-              double curlpsie = (2 * float(it2) - 1) / float(it2) *
+              double curlpsie = (2 * double(it2) - 1) / double(it2) *
                                   (dsub[0] * dLsub[it2 - 1] * psie_1[1] -
                                    dsub[1] * dLsub[it2 - 1] * psie_1[0]) -
-                                (float(it2) - 1) / float(it2) *
+                                (double(it2) - 1) / double(it2) *
                                   (curlpsie_0 * Lsub[it2 - 2] +
                                    dsub[0] * dLsub[it2 - 2] * psie_0[1] -
                                    dsub[1] * dLsub[it2 - 2] * psie_0[0]);
@@ -1453,12 +1453,12 @@ void HierarchicalBasisHcurlPri::generateCurlBasis(
         edgeIt++;
         for(int iedge = 2; iedge <= _pOrderEdge[i]; iedge++) {
           double curlpsie =
-            (2 * float(iedge) - 1) / float(iedge) *
+            (2 * double(iedge) - 1) / double(iedge) *
               (dsubtraction[index][0] * dlegendreVector[index][iedge - 1] *
                  psie_1[index][1] -
                dsubtraction[index][1] * dlegendreVector[index][iedge - 1] *
                  psie_1[index][0]) -
-            (float(iedge) - 1) / float(iedge) *
+            (double(iedge) - 1) / double(iedge) *
               (curlpsie_0[index] * legendreVector[index][iedge - 2] +
                dsubtraction[index][0] * dlegendreVector[index][iedge - 2] *
                  psie_0[index][1] -
@@ -1466,9 +1466,9 @@ void HierarchicalBasisHcurlPri::generateCurlBasis(
                  psie_0[index][0]);
           std::vector<double> psi(3, 0);
           for(int j = 0; j < 2; j++) {
-            psi[j] = (2 * float(iedge) - 1) / float(iedge) *
+            psi[j] = (2 * double(iedge) - 1) / double(iedge) *
                        legendreVector[index][iedge - 1] * psie_1[index][j] -
-                     (float(iedge) - 1) / float(iedge) *
+                     (double(iedge) - 1) / double(iedge) *
                        legendreVector[index][iedge - 2] * psie_0[index][j];
           }
           edgeBasis[edgeIt][0] = -dlambda * psi[1];
@@ -1544,17 +1544,17 @@ void HierarchicalBasisHcurlPri::generateCurlBasis(
         }
         else {
           for(int j = 0; j < 2; j++) {
-            psie[j] = (2 * float(n1) - 1) / float(n1) *
+            psie[j] = (2 * double(n1) - 1) / double(n1) *
                         legendreVector[index][n1 - 1] * psie_1[index][j] -
-                      (float(n1) - 1) / float(n1) *
+                      (double(n1) - 1) / double(n1) *
                         legendreVector[index][n1 - 2] * psie_0[index][j];
           }
-          curlpsie = (2 * float(n1) - 1) / float(n1) *
+          curlpsie = (2 * double(n1) - 1) / double(n1) *
                        (dsubtraction[index][0] *
                           dlegendreVector[index][n1 - 1] * psie_1[index][1] -
                         dsubtraction[index][1] *
                           dlegendreVector[index][n1 - 1] * psie_1[index][0]) -
-                     (float(n1) - 1) / float(n1) *
+                     (double(n1) - 1) / double(n1) *
                        (curlpsie_0[index] * legendreVector[index][n1 - 2] +
                         dsubtraction[index][0] *
                           dlegendreVector[index][n1 - 2] * psie_0[index][1] -

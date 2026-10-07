@@ -83,9 +83,9 @@ void HierarchicalBasisHcurlLine::generateHcurlBasis(
     edgeIt++;
     for(int iedge = 2; iedge <= _pe; iedge++) {
       for(int j = 0; j < 3; j++) {
-        edgeBasis[edgeIt][j] = (2 * float(iedge) - 1) / float(iedge) *
+        edgeBasis[edgeIt][j] = (2 * double(iedge) - 1) / double(iedge) *
                                  legendreVector[iedge - 1] * psie_1[j] -
-                               (float(iedge) - 1) / float(iedge) *
+                               (double(iedge) - 1) / double(iedge) *
                                  legendreVector[iedge - 2] * psie_0[j];
       }
       edgeIt++;

@@ -132,9 +132,9 @@ void HierarchicalBasisHcurlTria::generateHcurlBasis(
       for(int iedge = 2; iedge <= _pOrderEdge[i]; iedge++) {
         for(int j = 0; j < 3; j++) {
           edgeBasis[edgeIt][j] =
-            jacob * ((2 * float(iedge) - 1) / float(iedge) *
+            jacob * ((2 * double(iedge) - 1) / double(iedge) *
                        legendreVector[i][iedge - 1] * psie_1[i][j] -
-                     (float(iedge) - 1) / float(iedge) *
+                     (double(iedge) - 1) / double(iedge) *
                        legendreVector[i][iedge - 2] * psie_0[i][j]);
         }
         edgeIt++;
@@ -341,12 +341,12 @@ void HierarchicalBasisHcurlTria::generateCurlBasis(
       edgeIt++;
       for(int iedge = 2; iedge <= _pOrderEdge[i]; iedge++) {
         edgeBasis[edgeIt][2] =
-          det * ((2 * float(iedge) - 1) / float(iedge) *
+          det * ((2 * double(iedge) - 1) / double(iedge) *
                    (dsubtraction[i][0] * dlegendreVector[i][iedge - 1] *
                       psie_1[i][1] -
                     dsubtraction[i][1] * dlegendreVector[i][iedge - 1] *
                       psie_1[i][0]) -
-                 (float(iedge) - 1) / float(iedge) *
+                 (double(iedge) - 1) / double(iedge) *
                    (curlpsie_0[i] * legendreVector[i][iedge - 2] +
                     dsubtraction[i][0] * dlegendreVector[i][iedge - 2] *
                       psie_0[i][1] -
