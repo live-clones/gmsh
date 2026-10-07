@@ -11,6 +11,12 @@
 
 // Building blocks shared by the hierarchical bases of several elements.
 
+// The edges and the faces of the tetrahedron, by their vertices
+static const int tetrahedronEdges[6][2] = {{0, 1}, {1, 2}, {2, 0},
+                                           {0, 3}, {2, 3}, {1, 3}};
+static const int tetrahedronFaces[4][3] = {
+  {0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3}};
+
 // The roles (a, b, c) taken by the vertices (0, 1, 2) of a triangular face in
 // the orientation of the face given by flag1 (0, 1 or 2) and flag2 (1 or -1)
 inline const int *triangleRoles(int flag1, int flag2)

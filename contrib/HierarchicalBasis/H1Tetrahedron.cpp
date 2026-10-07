@@ -12,9 +12,6 @@
 #include "H1Tetrahedron.h"
 #include "Blocks.h"
 
-static const int edges[6][2] = {{0, 1}, {1, 2}, {2, 0}, {0, 3}, {2, 3}, {1, 3}};
-static const int faces[4][3] = {{0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3}};
-
 H1Tetrahedron::H1Tetrahedron(int order) : _order(order)
 {
   _dual = true;
@@ -48,11 +45,12 @@ void H1Tetrahedron::functions(const Dual *x, std::vector<Dual> &vertex,
   for(int i = 0; i < 4; i++) vertex[i] = L[i];
   int n = 0;
   for(int e = 0; e < 6; e++)
-    n += h1Edge(L[edges[e][0]], L[edges[e][1]], _order, &edge[n]);
+    n += h1Edge(L[tetrahedronEdges[e][0]], L[tetrahedronEdges[e][1]], _order,
+                &edge[n]);
   n = 0;
   for(int f = 0; f < 4; f++)
-    n += h1Triangle(L[faces[f][0]], L[faces[f][1]], L[faces[f][2]], Dual(1.),
-                    _order, &face[n]);
+    n += h1Triangle(L[tetrahedronFaces[f][0]], L[tetrahedronFaces[f][1]],
+                    L[tetrahedronFaces[f][2]], Dual(1.), _order, &face[n]);
   Dual all = L[0] * L[1] * L[2] * L[3];
   n = 0;
   for(int n1 = 0; n1 <= _order - 4; n1++)
@@ -68,7 +66,7 @@ void H1Tetrahedron::faceFunctions(const Dual *x, int flag1, int flag2,
 {
   Dual L[4];
   coordinates(x, L);
-  const int *f = faces[faceNumber], *r = triangleRoles(flag1, flag2);
+  const int *f = tetrahedronFaces[faceNumber], *r = triangleRoles(flag1, flag2);
   int perFace = _numTriFaceFunction / 4;
   h1Triangle(L[f[r[0]]], L[f[r[1]]], L[f[r[2]]], Dual(1.), _order,
              &face[faceNumber * perFace]);
