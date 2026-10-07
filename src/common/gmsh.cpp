@@ -4289,8 +4289,10 @@ gmsh::model::mesh::getNumberOfOrientations(const int elementType,
     const int familyType = ElementType::getParentType(elementType);
     const unsigned int numVertices =
       ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
-    const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
-    return factorial[numVertices];
+    // one orientation per permutation of the vertices
+    int factorial = 1;
+    for(unsigned int i = 2; i <= numVertices; i++) factorial *= i;
+    return factorial;
   }
 
   return 0;
