@@ -10,6 +10,7 @@
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
 #include "H1Triangle.h"
+#include "Blocks.h"
 
 H1Triangle::H1Triangle(int order) : _order(order)
 {
@@ -41,35 +42,18 @@ void H1Triangle::functions(const Dual *x, std::vector<Dual> &vertex,
   coordinates(x, L);
   for(int i = 0; i < 3; i++) vertex[i] = L[i];
   int n = 0;
-  for(int e = 0; e < 3; e++) {
-    const Dual &a = L[e], &b = L[(e + 1) % 3];
-    for(int k = 0; k <= _order - 2; k++) edge[n++] = a * b * kernel(k, b - a);
-  }
-  _faceFunctions(L[0], L[1], L[2], face);
-}
-
-void H1Triangle::_faceFunctions(const Dual &a, const Dual &b, const Dual &c,
-                                std::vector<Dual> &face)
-{
-  Dual abc = a * b * c;
-  int n = 0;
-  for(int n1 = 0; n1 <= _order - 3; n1++) {
-    Dual k1 = kernel(n1, b - a);
-    for(int n2 = 0; n2 <= _order - 3 - n1; n2++)
-      face[n++] = abc * k1 * kernel(n2, a - c);
-  }
+  for(int e = 0; e < 3; e++)
+    n += h1Edge(L[e], L[(e + 1) % 3], _order, &edge[n]);
+  h1Triangle(L[0], L[1], L[2], _order, face.data());
 }
 
 void H1Triangle::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
                                int faceNumber, std::vector<Dual> &face)
 {
-  // the roles (a, b, c) taken by L0, L1, L2 in each orientation of the face
-  static const int roles[3][2][3] = {
-    {{0, 2, 1}, {0, 1, 2}}, {{1, 0, 2}, {1, 2, 0}}, {{2, 1, 0}, {2, 0, 1}}};
-  const int *r = roles[flag1][flag2 == 1 ? 1 : 0];
   Dual L[3];
   coordinates(x, L);
-  _faceFunctions(L[r[0]], L[r[1]], L[r[2]], face);
+  const int *r = triangleRoles(flag1, flag2);
+  h1Triangle(L[r[0]], L[r[1]], L[r[2]], _order, face.data());
 }
 
 void H1Triangle::getKeysInfo(std::vector<int> &functionTypeInfo,

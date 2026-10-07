@@ -17,11 +17,10 @@
 // H1 basis on the triangle (0, 0), (1, 0), (0, 1), with the affine
 // coordinates L0 = 1 - u - v, L1 = u and L2 = v of its vertices:
 // - the vertex functions L0, L1, L2;
-// - the functions La Lb K_k(Lb - La), k = 0, ..., p - 2, of the edges
-//   e0 = {v0, v1}, e1 = {v1, v2} and e2 = {v2, v0} from va to vb;
-// - the face functions L0 L1 L2 K_n1(L1 - L0) K_n2(L0 - L2), n1 + n2 <= p - 3,
-//   with the roles of L0, L1 and L2 permuted to orient the face;
-// where K_k are the kernel functions.
+// - the functions of the edges e0 = {v0, v1}, e1 = {v1, v2}, e2 = {v2, v0};
+// - the functions of the face (v0, v1, v2), with the roles of its vertices
+//   permuted to orient it;
+// see h1Edge and h1Triangle.
 class H1Triangle : public HierarchicalBasis {
 public:
   H1Triangle(int order);
@@ -37,8 +36,6 @@ protected:
 
 private:
   int _order;
-  void _faceFunctions(const Dual &a, const Dual &b, const Dual &c,
-                      std::vector<Dual> &face);
 };
 
 #endif
