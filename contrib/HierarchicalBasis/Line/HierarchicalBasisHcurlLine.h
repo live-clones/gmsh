@@ -44,12 +44,6 @@ private:
   static double dotProduct(const std::vector<double> &u,
                            const std::vector<double> &v);
 
-  virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
-                             int flag3, int faceNumber,
-                             std::vector<std::vector<double>> &faceFunctions)
-  { /* No operation needed for line basis */
-  }
-
 public:
   HierarchicalBasisHcurlLine(int order);
 
@@ -77,14 +71,6 @@ public:
              std::vector<std::vector<double>> &edgeBasis,
              const std::vector<std::vector<double>> &eTablePositiveFlag,
              const std::vector<std::vector<double>> &eTableNegativeFlag);
-
-  virtual void orientFace(
-    int flag1, int flag2, int flag3, int faceNumber,
-    const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-    const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
-    std::vector<std::vector<double>> &fTableCopy)
-  { /* No operation needed for line basis */
-  }
 
   virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
                            std::vector<int> &orderInfo);

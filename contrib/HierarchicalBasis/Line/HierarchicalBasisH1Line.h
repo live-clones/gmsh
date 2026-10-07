@@ -41,17 +41,6 @@ private:
                              std::vector<std::vector<double>> &gradientFace,
                              std::vector<std::vector<double>> &gradientBubble);
 
-  void orientOneFace(double u, double v, double w, int flag1, int flag2,
-                     int flag3, int faceNumber,
-                     std::vector<double> &faceBasis) override
-  { /* No operation needed for line basis */
-  }
-  void orientOneFace(double u, double v, double w, int flag1, int flag2,
-                     int flag3, int faceNumber,
-                     std::vector<std::vector<double>> &faceFunctions) override
-  { /* No operation needed for line basis */
-  }
-
 public:
   HierarchicalBasisH1Line(int pe);
   ~HierarchicalBasisH1Line() override = default;
@@ -89,20 +78,6 @@ public:
     std::vector<std::vector<double>> &edgeBasis,
     const std::vector<std::vector<double>> &eTablePositiveFlag,
     const std::vector<std::vector<double>> &eTableNegativeFlag) override;
-
-  void orientFace(int flag1, int flag2, int flag3, int faceNumber,
-                  const std::vector<double> &quadFaceFunctionsAllOrientation,
-                  const std::vector<double> &triFaceFunctionsAllOrientation,
-                  std::vector<double> &fTableCopy) override
-  { /* No operation needed for line basis */
-  }
-  void orientFace(
-    int flag1, int flag2, int flag3, int faceNumber,
-    const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-    const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
-    std::vector<std::vector<double>> &fTableCopy) override
-  { /* No operation needed for line basis */
-  }
 
   void getKeysInfo(std::vector<int> &functionTypeInfo,
                    std::vector<int> &orderInfo) override;

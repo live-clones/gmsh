@@ -99,25 +99,27 @@ protected:
   // The operations below are implemented by each element, for scalar
   // (std::vector<double>) and vector (std::vector<std::vector<double>>)
   // functions; which ones are used depends on the space (e.g. vector values
-  // for H(curl), vector gradients for H1).
+  // for H(curl), vector gradients for H1). Those an element does not need
+  // (e.g. the face operations on lines, or the scalar ones for H(curl)) do
+  // nothing.
 
   // the basis functions at (u, v, w) in the reference orientation
   virtual void generateBasis(double u, double v, double w,
                              std::vector<double> &vertexBasis,
                              std::vector<double> &edgeBasis,
                              std::vector<double> &faceBasis,
-                             std::vector<double> &bubbleBasis) = 0;
+                             std::vector<double> &bubbleBasis);
   virtual void generateBasis(double u, double v, double w,
                              std::vector<std::vector<double>> &vertexBasis,
                              std::vector<std::vector<double>> &edgeBasis,
                              std::vector<std::vector<double>> &faceBasis,
-                             std::vector<std::vector<double>> &bubbleBasis) = 0;
+                             std::vector<std::vector<double>> &bubbleBasis);
 
   // the edge functions for the reversed orientation of all the edges
   virtual void
-  orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions) = 0;
+  orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions);
   virtual void orientEdgeFunctionsForNegativeFlag(
-    std::vector<std::vector<double>> &edgeFunctions) = 0;
+    std::vector<std::vector<double>> &edgeFunctions);
 
   // copy the functions of edge edgeNumber from eTablePositiveFlag (computed by
   // generateBasis) or from eTableNegativeFlag (computed by
@@ -125,24 +127,24 @@ protected:
   virtual void orientEdge(int flagOrientation, int edgeNumber,
                           std::vector<double> &edgeFunctions,
                           const std::vector<double> &eTablePositiveFlag,
-                          const std::vector<double> &eTableNegativeFlag) = 0;
+                          const std::vector<double> &eTableNegativeFlag);
   virtual void
   orientEdge(int flagOrientation, int edgeNumber,
              std::vector<std::vector<double>> &edgeBasis,
              const std::vector<std::vector<double>> &eTablePositiveFlag,
-             const std::vector<std::vector<double>> &eTableNegativeFlag) = 0;
+             const std::vector<std::vector<double>> &eTableNegativeFlag);
 
   // the face functions for all the orientations of the faces (8 for
   // quadrilateral faces, 6 for triangular faces)
   virtual void addAllOrientedFaceFunctions(
     double u, double v, double w, const std::vector<double> &faceFunctions,
     std::vector<double> &quadFaceFunctionsAllOrientation,
-    std::vector<double> &triFaceFunctionsAllOrientation) = 0;
+    std::vector<double> &triFaceFunctionsAllOrientation);
   virtual void addAllOrientedFaceFunctions(
     double u, double v, double w,
     const std::vector<std::vector<double>> &faceFunctions,
     std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
-    std::vector<std::vector<double>> &triFaceFunctionsAllOrientation) = 0;
+    std::vector<std::vector<double>> &triFaceFunctionsAllOrientation);
 
   // copy the functions of face faceNumber, for the orientation given by the
   // flags, from the tables computed by addAllOrientedFaceFunctions
@@ -150,22 +152,21 @@ protected:
   orientFace(int flag1, int flag2, int flag3, int faceNumber,
              const std::vector<double> &quadFaceFunctionsAllOrientation,
              const std::vector<double> &triFaceFunctionsAllOrientation,
-             std::vector<double> &fTableCopy) = 0;
+             std::vector<double> &fTableCopy);
   virtual void orientFace(
     int flag1, int flag2, int flag3, int faceNumber,
     const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
     const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
-    std::vector<std::vector<double>> &fTableCopy) = 0;
+    std::vector<std::vector<double>> &fTableCopy);
 
   // the face functions of face faceNumber for the orientation given by the
   // flags, used by addAllOrientedFaceFunctions
   virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
                              int flag3, int faceNumber,
-                             std::vector<double> &faceFunctions) = 0;
-  virtual void
-  orientOneFace(double u, double v, double w, int flag1, int flag2, int flag3,
-                int faceNumber,
-                std::vector<std::vector<double>> &faceFunctions) = 0;
+                             std::vector<double> &faceFunctions);
+  virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
+                             int flag3, int faceNumber,
+                             std::vector<std::vector<double>> &faceFunctions);
 
   // the index of an orientation of a quadrilateral face (0 to 7) or of a
   // triangular face (0 to 5) in the tables of addAllOrientedFaceFunctions,

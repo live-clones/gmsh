@@ -113,6 +113,46 @@ std::vector<int> HierarchicalBasis::getEdgeFunctionSignsForReversedEdges()
   return signs;
 }
 
+// the operations an element does not need do nothing
+typedef std::vector<double> S;
+typedef std::vector<std::vector<double>> V;
+void HierarchicalBasis::generateBasis(double, double, double, S &, S &, S &,
+                                      S &)
+{
+}
+void HierarchicalBasis::generateBasis(double, double, double, V &, V &, V &,
+                                      V &)
+{
+}
+void HierarchicalBasis::orientEdgeFunctionsForNegativeFlag(S &) {}
+void HierarchicalBasis::orientEdgeFunctionsForNegativeFlag(V &) {}
+void HierarchicalBasis::orientEdge(int, int, S &, const S &, const S &) {}
+void HierarchicalBasis::orientEdge(int, int, V &, const V &, const V &) {}
+void HierarchicalBasis::addAllOrientedFaceFunctions(double, double, double,
+                                                    const S &, S &, S &)
+{
+}
+void HierarchicalBasis::addAllOrientedFaceFunctions(double, double, double,
+                                                    const V &, V &, V &)
+{
+}
+void HierarchicalBasis::orientFace(int, int, int, int, const S &, const S &,
+                                   S &)
+{
+}
+void HierarchicalBasis::orientFace(int, int, int, int, const V &, const V &,
+                                   V &)
+{
+}
+void HierarchicalBasis::orientOneFace(double, double, double, int, int, int,
+                                      int, S &)
+{
+}
+void HierarchicalBasis::orientOneFace(double, double, double, int, int, int,
+                                      int, V &)
+{
+}
+
 // zero values and copies of scalar and vector basis functions
 static void zero(double &v) { v = 0.; }
 static void zero(std::vector<double> &v) { v.assign(3, 0.); }

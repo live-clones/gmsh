@@ -17,69 +17,18 @@
 
 class HierarchicalBasisHdiv : public HierarchicalBasis {
 protected:
-  virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
-                             int flag3, int faceNumber,
-                             std::vector<double> &faceFunctions) = 0;
-
-  virtual void
-  orientOneFace(double u, double v, double w, int flag1, int flag2, int flag3,
-                int faceNumber,
-                std::vector<std::vector<double>> &faceFunctions) = 0;
-
   HierarchicalBasisHdiv() = default;
-
-public:
-  virtual ~HierarchicalBasisHdiv() = default;
-
-  virtual void generateBasis(double u, double v, double w,
-                             std::vector<std::vector<double>> &vertexBasis,
-                             std::vector<std::vector<double>> &edgeBasis,
-                             std::vector<std::vector<double>> &faceBasis,
-                             std::vector<std::vector<double>> &bubbleBasis) = 0;
-  virtual void generateBasis(double u, double v, double w,
-                             std::vector<double> &vertexBasis,
-                             std::vector<double> &edgeBasis,
-                             std::vector<double> &faceBasis,
-                             std::vector<double> &bubbleBasis) = 0;
-
-  virtual void
-  orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions) = 0;
-  virtual void orientEdgeFunctionsForNegativeFlag(
-    std::vector<std::vector<double>> &edgeFunctions) = 0;
-
-  virtual void orientEdge(int flagOrientation, int edgeNumber,
-                          std::vector<double> &edgeFunctions,
-                          const std::vector<double> &eTablePositiveFlag,
-                          const std::vector<double> &eTableNegativeFlag) = 0;
-  virtual void
-  orientEdge(int flagOrientation, int edgeNumber,
-             std::vector<std::vector<double>> &edgeBasis,
-             const std::vector<std::vector<double>> &eTablePositiveFlag,
-             const std::vector<std::vector<double>> &eTableNegativeFlag) = 0;
-
-  virtual void addAllOrientedFaceFunctions(
+  // the face functions for all the orientations of the faces, from the
+  // functions of one face computed by orientOneFace (divergences and values)
+  void addAllOrientedFaceFunctions(
     double u, double v, double w, const std::vector<double> &faceFunctions,
     std::vector<double> &quadFaceFunctionsAllOrientations,
-    std::vector<double> &triFaceFunctionsAllOrientations);
-  virtual void addAllOrientedFaceFunctions(
+    std::vector<double> &triFaceFunctionsAllOrientations) override;
+  void addAllOrientedFaceFunctions(
     double u, double v, double w,
     const std::vector<std::vector<double>> &faceFunctions,
     std::vector<std::vector<double>> &quadFaceFunctionsAllOrientations,
-    std::vector<std::vector<double>> &triFaceFunctionsAllOrientations);
-
-  virtual void
-  orientFace(int flag1, int flag2, int flag3, int faceNumber,
-             const std::vector<double> &quadFaceFunctionsAllOrientations,
-             const std::vector<double> &triFaceFunctionsAllOrientations,
-             std::vector<double> &fTableCopy) = 0;
-  virtual void orientFace(
-    int flag1, int flag2, int flag3, int faceNumber,
-    const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientations,
-    const std::vector<std::vector<double>> &triFaceFunctionsAllOrientations,
-    std::vector<std::vector<double>> &fTableCopy) = 0;
-
-  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
-                           std::vector<int> &orderInfo) = 0;
+    std::vector<std::vector<double>> &triFaceFunctionsAllOrientations) override;
 };
 
 #endif
