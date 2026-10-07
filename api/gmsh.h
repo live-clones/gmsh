@@ -1441,14 +1441,16 @@ namespace gmsh { // Top-level functions
       // element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for N-th
       // order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN", with
       // N = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
-      // "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 1, 2, ..., for N-th
-      // order curl-conforming basis functions. `numComponents' returns the number
-      // C of components of a basis function (e.g. 1 for scalar functions and 3 for
-      // vector functions). `basisFunctions' returns the value of the N basis
-      // functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1,
-      // ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...]
-      // when C == 3. For basis functions that depend on the orientation of the
-      // elements, all values for the first orientation are returned first,
+      // "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 0, 1, ..., for N-th
+      // order curl-conforming basis functions; "HdivLegendreN" and
+      // "DivHdivLegendreN", with N = 0, 1, ..., for N-th order div-conforming
+      // basis functions (currently on triangles only). `numComponents' returns the
+      // number C of components of a basis function (e.g. 1 for scalar functions
+      // and 3 for vector functions). `basisFunctions' returns the value of the N
+      // basis functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN,
+      // g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u,
+      // ...] when C == 3. For basis functions that depend on the orientation of
+      // the elements, all values for the first orientation are returned first,
       // followed by values for the second, etc. `numOrientations' returns the
       // overall number of orientations. If the `wantedOrientations' vector is not
       // empty, only return the values for the desired orientation indices.
@@ -2004,9 +2006,13 @@ namespace gmsh { // Top-level functions
       // Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
       // `entityKeyMaster') corresponding to the entity `tag' and the key pairs
       // (`typeKey', `entityKey') for the elements of type `elementType' and
-      // function space type `functionSpaceType'. If `returnCoord' is set, the
-      // `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
-      // basis functions for sorting purposes.
+      // function space type `functionSpaceType'. `orientationSign' contains the
+      // sign (1 or -1) by which each basis function of the master key must be
+      // multiplied to match the corresponding basis function on the entity `tag'.
+      // If `returnCoord' is set, the `coord' and `coordMaster' vectors contain the
+      // x, y, z coordinates locating basis functions for sorting purposes. Only
+      // available for "IsoParametric" and "Lagrange" function spaces, and for
+      // "H1Legendre" and "HcurlLegendre" function spaces on curves.
       GMSH_API void getPeriodicKeys(const int elementType,
                                     const std::string & functionSpaceType,
                                     const int tag,
@@ -2017,6 +2023,7 @@ namespace gmsh { // Top-level functions
                                     std::vector<std::size_t> & entityKeysMaster,
                                     std::vector<double> & coord,
                                     std::vector<double> & coordMaster,
+                                    std::vector<int> & orientationSign,
                                     const bool returnCoord = true);
 
       // gmsh::model::mesh::importStl

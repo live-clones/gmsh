@@ -5963,9 +5963,11 @@ module gmsh
   !! element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for N-th
   !! order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN", with N
   !! = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
-  !! "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 1, 2, ..., for N-th
-  !! order curl-conforming basis functions. `numComponents' returns the number C
-  !! of components of a basis function (e.g. 1 for scalar functions and 3 for
+  !! "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 0, 1, ..., for N-th
+  !! order curl-conforming basis functions; "HdivLegendreN" and
+  !! "DivHdivLegendreN", with N = 0, 1, ..., for N-th order div-conforming basis
+  !! functions (currently on triangles only). `numComponents' returns the number
+  !! C of components of a basis function (e.g. 1 for scalar functions and 3 for
   !! vector functions). `basisFunctions' returns the value of the N basis
   !! functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...]
   !! when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C
@@ -8040,9 +8042,13 @@ module gmsh
   !> Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
   !! `entityKeyMaster') corresponding to the entity `tag' and the key pairs
   !! (`typeKey', `entityKey') for the elements of type `elementType' and
-  !! function space type `functionSpaceType'. If `returnCoord' is set, the
-  !! `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
-  !! basis functions for sorting purposes.
+  !! function space type `functionSpaceType'. `orientationSign' contains the
+  !! sign (1 or -1) by which each basis function of the master key must be
+  !! multiplied to match the corresponding basis function on the entity `tag'.
+  !! If `returnCoord' is set, the `coord' and `coordMaster' vectors contain the
+  !! x, y, z coordinates locating basis functions for sorting purposes. Only
+  !! available for "IsoParametric" and "Lagrange" function spaces, and for
+  !! "H1Legendre" and "HcurlLegendre" function spaces on curves.
   subroutine gmshModelMeshGetPeriodicKeys(elementType, &
                                           functionSpaceType, &
                                           tag, &
@@ -8053,6 +8059,7 @@ module gmsh
                                           entityKeysMaster, &
                                           coord, &
                                           coordMaster, &
+                                          orientationSign, &
                                           returnCoord, &
                                           ierr)
     interface
@@ -8072,6 +8079,8 @@ module gmsh
                      api_coord_n_, &
                      api_coordMaster_, &
                      api_coordMaster_n_, &
+                     api_orientationSign_, &
+                     api_orientationSign_n_, &
                      returnCoord, &
                      ierr_) &
       bind(C, name="gmshModelMeshGetPeriodicKeys")
@@ -8092,6 +8101,8 @@ module gmsh
       integer(c_size_t) :: api_coord_n_
       type(c_ptr), intent(out) :: api_coordMaster_
       integer(c_size_t) :: api_coordMaster_n_
+      type(c_ptr), intent(out) :: api_orientationSign_
+      integer(c_size_t), intent(out) :: api_orientationSign_n_
       integer(c_int), value, intent(in) :: returnCoord
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
@@ -8106,6 +8117,7 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: entityKeysMaster
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     real(c_double), dimension(:), allocatable, intent(out) :: coordMaster
+    integer(c_int), dimension(:), allocatable, intent(out) :: orientationSign
     logical, intent(in), optional :: returnCoord
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_typeKeys_
@@ -8120,6 +8132,8 @@ module gmsh
     integer(c_size_t) :: api_coord_n_
     type(c_ptr) :: api_coordMaster_
     integer(c_size_t) :: api_coordMaster_n_
+    type(c_ptr) :: api_orientationSign_
+    integer(c_size_t) :: api_orientationSign_n_
     call C_API(elementType=int(elementType, c_int), &
          functionSpaceType=istring_(functionSpaceType), &
          tag=int(tag, c_int), &
@@ -8136,6 +8150,8 @@ module gmsh
          api_coord_n_=api_coord_n_, &
          api_coordMaster_=api_coordMaster_, &
          api_coordMaster_n_=api_coordMaster_n_, &
+         api_orientationSign_=api_orientationSign_, &
+         api_orientationSign_n_=api_orientationSign_n_, &
          returnCoord=optval_c_bool(.true., returnCoord), &
          ierr_=ierr)
     typeKeys = ovectorint_(api_typeKeys_, &
@@ -8150,6 +8166,8 @@ module gmsh
       api_coord_n_)
     coordMaster = ovectordouble_(api_coordMaster_, &
       api_coordMaster_n_)
+    orientationSign = ovectorint_(api_orientationSign_, &
+      api_orientationSign_n_)
   end subroutine gmshModelMeshGetPeriodicKeys
 
   !> Import the model STL representation (if available) as the current mesh.

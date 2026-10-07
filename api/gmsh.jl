@@ -3466,16 +3466,18 @@ the u, v, w coordinates of the reference element; "LagrangeN" and
 "GradLagrangeN", with N = 1, 2, ..., for N-th order Lagrange basis functions;
 "H1LegendreN" and "GradH1LegendreN", with N = 1, 2, ..., for N-th order
 hierarchical H1 Legendre functions; "HcurlLegendreN" and "CurlHcurlLegendreN",
-with N = 1, 2, ..., for N-th order curl-conforming basis functions.
-`numComponents` returns the number C of components of a basis function (e.g. 1
-for scalar functions and 3 for vector functions). `basisFunctions` returns the
-value of the N basis functions at the evaluation points, i.e. [g1f1, g1f2, ...,
-g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u,
-...] when C == 3. For basis functions that depend on the orientation of the
-elements, all values for the first orientation are returned first, followed by
-values for the second, etc. `numOrientations` returns the overall number of
-orientations. If the `wantedOrientations` vector is not empty, only return the
-values for the desired orientation indices.
+with N = 0, 1, ..., for N-th order curl-conforming basis functions;
+"HdivLegendreN" and "DivHdivLegendreN", with N = 0, 1, ..., for N-th order div-
+conforming basis functions (currently on triangles only). `numComponents`
+returns the number C of components of a basis function (e.g. 1 for scalar
+functions and 3 for vector functions). `basisFunctions` returns the value of the
+N basis functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1,
+...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C
+== 3. For basis functions that depend on the orientation of the elements, all
+values for the first orientation are returned first, followed by values for the
+second, etc. `numOrientations` returns the overall number of orientations. If
+the `wantedOrientations` vector is not empty, only return the values for the
+desired orientation indices.
 
 Return `numComponents`, `basisFunctions`, `numOrientations`.
 
@@ -4799,11 +4801,15 @@ const get_periodic_nodes = getPeriodicNodes
 Get the master entity `tagMaster` and the key pairs (`typeKeyMaster`,
 `entityKeyMaster`) corresponding to the entity `tag` and the key pairs
 (`typeKey`, `entityKey`) for the elements of type `elementType` and function
-space type `functionSpaceType`. If `returnCoord` is set, the `coord` and
-`coordMaster` vectors contain the x, y, z coordinates locating basis functions
-for sorting purposes.
+space type `functionSpaceType`. `orientationSign` contains the sign (1 or -1) by
+which each basis function of the master key must be multiplied to match the
+corresponding basis function on the entity `tag`. If `returnCoord` is set, the
+`coord` and `coordMaster` vectors contain the x, y, z coordinates locating basis
+functions for sorting purposes. Only available for "IsoParametric" and
+"Lagrange" function spaces, and for "H1Legendre" and "HcurlLegendre" function
+spaces on curves.
 
-Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
+Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`, `orientationSign`.
 
 Types:
  - `elementType`: integer
@@ -4816,6 +4822,7 @@ Types:
  - `entityKeysMaster`: vector of sizes
  - `coord`: vector of doubles
  - `coordMaster`: vector of doubles
+ - `orientationSign`: vector of integers
  - `returnCoord`: boolean
 """
 function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true)
@@ -4832,10 +4839,12 @@ function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true
     api_coord_n_ = Ref{Csize_t}()
     api_coordMaster_ = Ref{Ptr{Cdouble}}()
     api_coordMaster_n_ = Ref{Csize_t}()
+    api_orientationSign_ = Ref{Ptr{Cint}}()
+    api_orientationSign_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetPeriodicKeys, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, returnCoord, ierr)
+          (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, api_orientationSign_, api_orientationSign_n_, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own = true)
     typeKeysMaster = unsafe_wrap(Array, api_typeKeysMaster_[], api_typeKeysMaster_n_[], own = true)
@@ -4843,7 +4852,8 @@ function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true
     entityKeysMaster = unsafe_wrap(Array, api_entityKeysMaster_[], api_entityKeysMaster_n_[], own = true)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
     coordMaster = unsafe_wrap(Array, api_coordMaster_[], api_coordMaster_n_[], own = true)
-    return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster, coord, coordMaster
+    orientationSign = unsafe_wrap(Array, api_orientationSign_[], api_orientationSign_n_[], own = true)
+    return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster, coord, coordMaster, orientationSign
 end
 const get_periodic_keys = getPeriodicKeys
 

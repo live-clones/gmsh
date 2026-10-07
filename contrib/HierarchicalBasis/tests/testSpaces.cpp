@@ -1,0 +1,150 @@
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+// The spaces spanned by the basis functions, in several orientations:
+// - the functions are linearly independent;
+// - H1 of order p is the full polynomial space of the element (P_p on
+//   simplices, Q_p on quadrangles and hexahedra, P_p x P_p on prisms);
+// - H(curl) and H(div) of order p contain all the vector polynomials of
+//   degree p, and the gradients (resp. rotated gradients) of H1 of order p+1;
+// - the sequence is exact: the null space of the gradient is the constants,
+//   the null space of the curl (resp. divergence) has the dimension of H1 of
+//   order p+1 minus one, i.e. it is made of the gradients (resp. rotated
+//   gradients);
+// - the bases are hierarchical: the functions of order p are also functions of
+//   order p+1.
+
+#include <cmath>
+#include "basisTest.h"
+
+namespace bt {
+
+  static const double tol = 1e-10;
+
+  // the vector fields with one component equal to a monomial of total degree
+  // <= p, and the others zero, at the points uvw
+  static Eigen::MatrixXd vectorPolynomials(int dim, int p,
+                                           const std::vector<double> &uvw)
+  {
+    std::vector<std::array<int, 3>> m = totalDegree(dim, p);
+    int nq = uvw.size() / 3;
+    Eigen::MatrixXd V = Eigen::MatrixXd::Zero(nq * dim, m.size() * dim);
+    for(int q = 0; q < nq; q++)
+      for(std::size_t i = 0; i < m.size(); i++)
+        for(int c = 0; c < dim; c++)
+          V(q * dim + c, i * dim + c) = monomial(m[i], &uvw[3 * q]);
+    return V;
+  }
+
+  // the gradients (or the rotated gradients (d/dv, -d/du) if rotate is set) of
+  // the monomials spanning H1 of order p
+  static Eigen::MatrixXd gradients(const Element &e, int p,
+                                   const std::vector<double> &uvw,
+                                   bool rotate = false)
+  {
+    std::vector<std::array<int, 3>> m = monomials(e, p);
+    int nq = uvw.size() / 3;
+    Eigen::MatrixXd G(nq * e.dim, m.size());
+    for(int q = 0; q < nq; q++)
+      for(std::size_t i = 0; i < m.size(); i++) {
+        std::array<double, 3> g = gradMonomial(m[i], &uvw[3 * q]);
+        if(rotate) g = {g[1], -g[0], 0.};
+        for(int c = 0; c < e.dim; c++) G(q * e.dim + c, i) = g[c];
+      }
+    return G;
+  }
+
+  void testSpaces()
+  {
+    Random r(3);
+    for(auto &e : elements()) {
+      if(e.dim == 0) continue;
+      for(auto &s : spaces()) {
+        if(!supported(s, e)) continue;
+        for(int p = s.minOrder; p <= maxOrder(e); p++) {
+          std::string fs = spaceType(s, p);
+          const char *n = e.name.c_str(), *f = fs.c_str();
+          int nc = (s.kind == H1) ? 1 : e.dim;
+          int nf =
+            evaluate(e.type, interiorPoints(e, 1, r), fs, {0}).numFunctions;
+          // enough points for the least squares fits to be meaningful
+          std::vector<double> uvw =
+            interiorPoints(e, std::max(30, 3 * nf / nc + 10), r);
+          Table t = evaluate(e.type, uvw, fs, {0});
+          std::vector<int> o = orientations(t.totalOrientations, 4);
+          t = evaluate(e.type, uvw, fs, o);
+          Table d = evaluate(e.type, uvw, spaceType(s, p, true), o);
+          Table next = evaluate(e.type, uvw, spaceType(s, p + 1), o);
+          int numKernel = monomials(e, p + 1).size() - 1;
+          for(std::size_t i = 0; i < o.size(); i++) {
+            Eigen::MatrixXd A = columns(t, i, nc);
+            check(rank(A) == nf,
+                  "%s %s orientation %d: rank %d for %d functions", n, f, o[i],
+                  rank(A), nf);
+            int dr = rank(columns(d, i, d.numComponents));
+            if(s.kind == H1) {
+              std::vector<std::array<int, 3>> m = monomials(e, p);
+              Eigen::MatrixXd M(t.numPoints, m.size());
+              for(int q = 0; q < t.numPoints; q++)
+                for(std::size_t j = 0; j < m.size(); j++)
+                  M(q, j) = monomial(m[j], &uvw[3 * q]);
+              double res = spanResidual(A, M);
+              check(res < tol,
+                    "%s %s orientation %d: polynomials of the "
+                    "element not reproduced (%g)",
+                    n, f, o[i], res);
+              check(nf - dr == 1,
+                    "%s %s orientation %d: gradient null space "
+                    "of dimension %d",
+                    n, f, o[i], nf - dr);
+            }
+            else if(e.dim == 1) { // H(curl) on lines: polynomials of degree p
+              double res = spanResidual(A, vectorPolynomials(1, p, uvw));
+              check(res < tol,
+                    "%s %s orientation %d: polynomials not "
+                    "reproduced (%g)",
+                    n, f, o[i], res);
+            }
+            else {
+              double res = spanResidual(A, vectorPolynomials(e.dim, p, uvw));
+              check(res < tol,
+                    "%s %s orientation %d: vector polynomials of "
+                    "degree %d not reproduced (%g)",
+                    n, f, o[i], p, res);
+              res = spanResidual(A, gradients(e, p + 1, uvw, s.kind == HDIV));
+              check(res < tol,
+                    "%s %s orientation %d: %s of H1 of order %d not "
+                    "reproduced (%g)",
+                    n, f, o[i],
+                    s.kind == HDIV ? "rotated gradients" : "gradients", p + 1,
+                    res);
+              check(nf - dr == numKernel,
+                    "%s %s orientation %d: %s null "
+                    "space of dimension %d, expected %d",
+                    n, f, o[i], s.kind == HDIV ? "divergence" : "curl", nf - dr,
+                    numKernel);
+            }
+            // hierarchy: each function of order p is a function of order p+1
+            Eigen::MatrixXd B = columns(next, i, nc);
+            std::set<int> found;
+            for(int j = 0; j < nf; j++) {
+              double scale = std::max(A.col(j).norm(), 1.);
+              for(int k = 0; k < B.cols(); k++)
+                if((B.col(k) - A.col(j)).norm() < 1e-12 * scale) {
+                  found.insert(k);
+                  break;
+                }
+            }
+            check((int)found.size() == nf,
+                  "%s %s orientation %d: only %d of "
+                  "the %d functions are functions of order %d",
+                  n, f, o[i], (int)found.size(), nf, p + 1);
+          }
+        }
+      }
+    }
+  }
+
+} // namespace bt

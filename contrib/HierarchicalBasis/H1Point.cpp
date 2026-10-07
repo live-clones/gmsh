@@ -1,0 +1,33 @@
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributed by Ismail Badia (2019) and Nawfel BENATIA (2025).
+
+// Reference : Solin, P., Segeth, K., & Dolezel, I. (2003).
+//             Higher-Order Finite Element Methods (1st ed.).
+//             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+
+#include "H1Point.h"
+
+H1Point::H1Point()
+{
+  _numVertex = 1;
+  _numEdge = _numQuadFace = _numTriFace = 0;
+  _numVertexFunction = 1;
+  _numEdgeFunction = _numQuadFaceFunction = _numTriFaceFunction =
+    _numBubbleFunction = 0;
+}
+
+void H1Point::functions(const Dual *x, std::vector<Dual> &vertex,
+                        std::vector<Dual> &edge, std::vector<Dual> &face,
+                        std::vector<Dual> &bubble)
+{ vertex[0] = Dual(1.); }
+
+void H1Point::getKeysInfo(std::vector<int> &functionTypeInfo,
+                          std::vector<int> &orderInfo)
+{
+  functionTypeInfo[0] = 0;
+  orderInfo[0] = 0;
+}

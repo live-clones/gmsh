@@ -3991,9 +3991,11 @@ class model:
             element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for N-th
             order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN", with N
             = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
-            "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 1, 2, ..., for N-th
-            order curl-conforming basis functions. `numComponents' returns the number C
-            of components of a basis function (e.g. 1 for scalar functions and 3 for
+            "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 0, 1, ..., for N-th
+            order curl-conforming basis functions; "HdivLegendreN" and
+            "DivHdivLegendreN", with N = 0, 1, ..., for N-th order div-conforming basis
+            functions (currently on triangles only). `numComponents' returns the number
+            C of components of a basis function (e.g. 1 for scalar functions and 3 for
             vector functions). `basisFunctions' returns the value of the N basis
             functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...]
             when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C
@@ -5463,11 +5465,15 @@ class model:
             Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
             `entityKeyMaster') corresponding to the entity `tag' and the key pairs
             (`typeKey', `entityKey') for the elements of type `elementType' and
-            function space type `functionSpaceType'. If `returnCoord' is set, the
-            `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
-            basis functions for sorting purposes.
+            function space type `functionSpaceType'. `orientationSign' contains the
+            sign (1 or -1) by which each basis function of the master key must be
+            multiplied to match the corresponding basis function on the entity `tag'.
+            If `returnCoord' is set, the `coord' and `coordMaster' vectors contain the
+            x, y, z coordinates locating basis functions for sorting purposes. Only
+            available for "IsoParametric" and "Lagrange" function spaces, and for
+            "H1Legendre" and "HcurlLegendre" function spaces on curves.
 
-            Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster'.
+            Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster', `orientationSign'.
 
             Types:
             - `elementType': integer
@@ -5480,6 +5486,7 @@ class model:
             - `entityKeysMaster': vector of sizes
             - `coord': vector of doubles
             - `coordMaster': vector of doubles
+            - `orientationSign': vector of integers
             - `returnCoord': boolean
             """
             api_tagMaster_ = c_int()
@@ -5489,6 +5496,7 @@ class model:
             api_entityKeysMaster_, api_entityKeysMaster_n_ = POINTER(c_size_t)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_coordMaster_, api_coordMaster_n_ = POINTER(c_double)(), c_size_t()
+            api_orientationSign_, api_orientationSign_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetPeriodicKeys(
                 c_int(elementType),
@@ -5501,6 +5509,7 @@ class model:
                 byref(api_entityKeysMaster_), byref(api_entityKeysMaster_n_),
                 byref(api_coord_), byref(api_coord_n_),
                 byref(api_coordMaster_), byref(api_coordMaster_n_),
+                byref(api_orientationSign_), byref(api_orientationSign_n_),
                 c_int(bool(returnCoord)),
                 byref(ierr))
             if ierr.value != 0:
@@ -5512,7 +5521,8 @@ class model:
                 _ovectorsize(api_entityKeys_, api_entityKeys_n_.value),
                 _ovectorsize(api_entityKeysMaster_, api_entityKeysMaster_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value),
-                _ovectordouble(api_coordMaster_, api_coordMaster_n_.value))
+                _ovectordouble(api_coordMaster_, api_coordMaster_n_.value),
+                _ovectorint(api_orientationSign_, api_orientationSign_n_.value))
         get_periodic_keys = getPeriodicKeys
 
         @staticmethod

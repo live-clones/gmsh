@@ -3149,17 +3149,20 @@ export function wrapGmsh(Module) {
    * element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for N-th
    * order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN", with
    * N = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
-   * "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 1, 2, ..., for N-th
-   * order curl-conforming basis functions. `numComponents' returns the number
-   * C of components of a basis function (e.g. 1 for scalar functions and 3
-   * for vector functions). `basisFunctions' returns the value of the N basis
-   * functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1,
-   * ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...]
-   * when C == 3. For basis functions that depend on the orientation of the
-   * elements, all values for the first orientation are returned first,
-   * followed by values for the second, etc. `numOrientations' returns the
-   * overall number of orientations. If the `wantedOrientations' vector is not
-   * empty, only return the values for the desired orientation indices.
+   * "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 0, 1, ..., for N-th
+   * order curl-conforming basis functions; "HdivLegendreN" and
+   * "DivHdivLegendreN", with N = 0, 1, ..., for N-th order div-conforming
+   * basis functions (currently on triangles only). `numComponents' returns
+   * the number C of components of a basis function (e.g. 1 for scalar
+   * functions and 3 for vector functions). `basisFunctions' returns the value
+   * of the N basis functions at the evaluation points, i.e. [g1f1, g1f2, ...,
+   * g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw,
+   * g2f1u, ...] when C == 3. For basis functions that depend on the
+   * orientation of the elements, all values for the first orientation are
+   * returned first, followed by values for the second, etc. `numOrientations'
+   * returns the overall number of orientations. If the `wantedOrientations'
+   * vector is not empty, only return the values for the desired orientation
+   * indices.
    *
    * Return `numComponents', `basisFunctions', `numOrientations'.
    */
@@ -4305,11 +4308,15 @@ export function wrapGmsh(Module) {
    * Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
    * `entityKeyMaster') corresponding to the entity `tag' and the key pairs
    * (`typeKey', `entityKey') for the elements of type `elementType' and
-   * function space type `functionSpaceType'. If `returnCoord' is set, the
-   * `coord' and `coordMaster' vectors contain the x, y, z coordinates
-   * locating basis functions for sorting purposes.
+   * function space type `functionSpaceType'. `orientationSign' contains the
+   * sign (1 or -1) by which each basis function of the master key must be
+   * multiplied to match the corresponding basis function on the entity `tag'.
+   * If `returnCoord' is set, the `coord' and `coordMaster' vectors contain
+   * the x, y, z coordinates locating basis functions for sorting purposes.
+   * Only available for "IsoParametric" and "Lagrange" function spaces, and
+   * for "H1Legendre" and "HcurlLegendre" function spaces on curves.
    *
-   * Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster'.
+   * Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster', `orientationSign'.
    */
   gmsh.model.mesh.getPeriodicKeys = function(elementType, functionSpaceType, tag, returnCoord = true) {
     const tmp = [];
@@ -4322,7 +4329,8 @@ export function wrapGmsh(Module) {
       const api_entityKeysMaster_ = _alloc(8, tmp);
       const api_coord_ = _alloc(8, tmp);
       const api_coordMaster_ = _alloc(8, tmp);
-      M._gmshModelMeshGetPeriodicKeys(elementType, api_functionSpaceType_, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_ + 4, api_typeKeysMaster_, api_typeKeysMaster_ + 4, api_entityKeys_, api_entityKeys_ + 4, api_entityKeysMaster_, api_entityKeysMaster_ + 4, api_coord_, api_coord_ + 4, api_coordMaster_, api_coordMaster_ + 4, returnCoord ? 1 : 0, ierr);
+      const api_orientationSign_ = _alloc(8, tmp);
+      M._gmshModelMeshGetPeriodicKeys(elementType, api_functionSpaceType_, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_ + 4, api_typeKeysMaster_, api_typeKeysMaster_ + 4, api_entityKeys_, api_entityKeys_ + 4, api_entityKeysMaster_, api_entityKeysMaster_ + 4, api_coord_, api_coord_ + 4, api_coordMaster_, api_coordMaster_ + 4, api_orientationSign_, api_orientationSign_ + 4, returnCoord ? 1 : 0, ierr);
       _check();
       return [
         M.HEAP32[api_tagMaster_ >> 2],
@@ -4331,7 +4339,8 @@ export function wrapGmsh(Module) {
         _ovector(api_entityKeys_, 'size'),
         _ovector(api_entityKeysMaster_, 'size'),
         _ovector(api_coord_, 'double'),
-        _ovector(api_coordMaster_, 'double')];
+        _ovector(api_coordMaster_, 'double'),
+        _ovector(api_orientationSign_, 'int')];
     }
     finally {
       tmp.forEach((p) => M._free(p));
