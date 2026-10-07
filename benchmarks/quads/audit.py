@@ -30,6 +30,7 @@ def cross(a,b): return (a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]
 def dot(a,b): return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]
 def nrm(a): return math.sqrt(dot(a,a))
 warped = collections.defaultdict(int)
+ind = collections.Counter()  # industrial criteria, over the whole mesh
 stats = collections.defaultdict(lambda: [0,0,0,1.0, 0])  # sgn+ , sgn-, n, minq, tri
 res = {}
 for ty, tag, ids in elems:
@@ -52,6 +53,13 @@ for ty, tag, ids in elems:
             den = nrm(u)*nrm(v)
             w = max(w, 180. if den == 0 else math.degrees(math.acos(max(-1., min(1., dot(u, v)/den)))))
         warped[tag] += w > 25.
+        ind['quads'] += 1
+        ind['warp15'] += w > 15.
+        edges = [nrm(sub(P[(k+1)%4], P[k])) for k in range(4)]
+        ind['aspect5'] += max(edges) > 5.*min(edges)
+        ang = [math.degrees(math.acos(max(-1., min(1., dot(sub(P[(k+1)%4], P[k]), sub(P[k-1], P[k]))/(edges[k]*edges[k-1]+1e-300))))) for k in range(4)]
+        ind['angle<45'] += min(ang) < 45.
+        ind['angle>135'] += max(ang) > 135.
     st = stats[tag]; st[2] += 1; st[4] += (ty==2)
     if s > 0: st[0] += 1
     else: st[1] += 1
@@ -59,4 +67,8 @@ for ty, tag, ids in elems:
 for tag, st in sorted(stats.items()):
     pos, neg = st[0], st[1]
     print(f"face {tag}: cells={st[2]} tri={st[4]} orientedOK={pos} flipped/invalid={neg} minSine={st[3]:.3f} warped={warped[tag]}")
+tri = sum(st[4] for st in stats.values()); cells = sum(st[2] for st in stats.values())
+q = max(ind['quads'], 1)
+print(f"industrial: quads={ind['quads']} tri%={100.*tri/max(cells,1):.1f} angle<45={ind['angle<45']} angle>135={ind['angle>135']} "
+      f"warp>15={ind['warp15']} aspect>5={ind['aspect5']} (quads %: {100.*ind['angle<45']/q:.1f} {100.*ind['angle>135']/q:.1f} {100.*ind['warp15']/q:.1f} {100.*ind['aspect5']/q:.1f})")
 gmsh.finalize()
