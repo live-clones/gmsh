@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,512 +9,85 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#include <iostream>
 #include "H1Triangle.h"
 
-H1Triangle::H1Triangle(int order)
+H1Triangle::H1Triangle(int order) : _order(order)
 {
-  _pf = order;
-  _pOrderEdge = {order, order, order};
+  _dual = true;
   _numVertex = 3;
   _numEdge = 3;
   _numTriFace = 1;
   _numQuadFace = 0;
   _numVertexFunction = 3;
-  _numEdgeFunction = (3 * order - 3);
-  _numQuadFaceFunction = 0,
-  _numTriFaceFunction = ((order >= 3) ? (order - 1) * (order - 2) / 2 : 0);
+  _numEdgeFunction = 3 * order - 3;
+  _numQuadFaceFunction = 0;
+  _numTriFaceFunction = (order >= 3) ? (order - 1) * (order - 2) / 2 : 0;
   _numBubbleFunction = 0;
 }
 
-double H1Triangle::_affineCoordinate(int j, double u, double v)
+// the affine coordinates of the vertices
+static void coordinates(const Dual *x, Dual *L)
 {
-  switch(j) {
-  case(1): return 0.5 * (1 + v);
-  case(2): return -0.5 * (u + v);
-  case(3): return 0.5 * (1 + u);
-  default: return 0.; // not reached
+  L[0] = 1. - x[0] - x[1];
+  L[1] = x[0];
+  L[2] = x[1];
+}
+
+void H1Triangle::functions(const Dual *x, std::vector<Dual> &vertex,
+                           std::vector<Dual> &edge, std::vector<Dual> &face,
+                           std::vector<Dual> &bubble)
+{
+  Dual L[3];
+  coordinates(x, L);
+  for(int i = 0; i < 3; i++) vertex[i] = L[i];
+  int n = 0;
+  for(int e = 0; e < 3; e++) {
+    const Dual &a = L[e], &b = L[(e + 1) % 3];
+    for(int k = 0; k <= _order - 2; k++) edge[n++] = a * b * kernel(k, b - a);
+  }
+  _faceFunctions(L[0], L[1], L[2], face);
+}
+
+void H1Triangle::_faceFunctions(const Dual &a, const Dual &b, const Dual &c,
+                                std::vector<Dual> &face)
+{
+  Dual abc = a * b * c;
+  int n = 0;
+  for(int n1 = 0; n1 <= _order - 3; n1++) {
+    Dual k1 = kernel(n1, b - a);
+    for(int n2 = 0; n2 <= _order - 3 - n1; n2++)
+      face[n++] = abc * k1 * kernel(n2, a - c);
   }
 }
 
-void H1Triangle::generateBasis(double u, double v, double w,
-                               std::vector<double> &vertexBasis,
-                               std::vector<double> &edgeBasis,
-                               std::vector<double> &faceBasis,
-                               std::vector<double> &bubbleBasis)
+void H1Triangle::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
+                               int faceNumber, std::vector<Dual> &face)
 {
-  // to map onto the reference domain of gmsh: u,v in (0,1) and uc,vc in (-1,1)
-  double uc = 2 * u - 1;
-  double vc = 2 * v - 1;
-
-  double lambda1 = _affineCoordinate(1, uc, vc);
-  double lambda2 = _affineCoordinate(2, uc, vc);
-  double lambda3 = _affineCoordinate(3, uc, vc);
-
-  double product32 = lambda2 * lambda3;
-  double subtraction32 = lambda3 - lambda2;
-
-  double product13 = lambda3 * lambda1;
-  double subtraction13 = lambda1 - lambda3;
-
-  double product21 = lambda2 * lambda1;
-  double subtraction21 = lambda2 - lambda1;
-
-  double product = lambda1 * lambda2 * lambda3;
-
-  // vertex shape functions:
-  vertexBasis[0] = lambda2;
-  vertexBasis[1] = lambda3;
-  vertexBasis[2] = lambda1;
-
-  // edge 0  shape functions and a part of face functions :
-  int iterator2 = 0;
-
-  for(int k = 0; k <= _pOrderEdge[0] - 2; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
-    edgeBasis[k] = product32 * kernel;
-    int iterator = 0;
-    while(iterator <= _pf - 3 - k) {
-      faceBasis[iterator2 + iterator] = product * kernel;
-      iterator++;
-    }
-    iterator2 = iterator2 + _pf - 2 - k;
-  }
-
-  for(int k = _pOrderEdge[0] - 1; k <= _pf - 3; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
-    int iterator = 0;
-    while(iterator <= _pf - 3 - k) {
-      faceBasis[iterator2 + iterator] = product * kernel;
-      iterator++;
-    }
-    iterator2 = iterator2 + _pf - 2 - k;
-  }
-
-  // edge 1 shape functions  :
-  for(int k = 0; k <= _pOrderEdge[1] - 2; k++) {
-    edgeBasis[_pOrderEdge[0] + k - 1] =
-      product13 * OrthogonalPoly::EvalKernelFunction(k, subtraction13);
-  }
-
-  // edge 2  shape functions and a part of face functions :
-  for(int k = 0; k <= _pOrderEdge[2] - 2; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
-    edgeBasis[k + _pOrderEdge[0] + _pOrderEdge[1] - 2] = product21 * kernel;
-    int iterator2 = k;
-    int iterator1 = 0;
-    int iterator3 = _pf - 2;
-    while(iterator1 <= _pf - 3 - k) {
-      faceBasis[iterator2] = faceBasis[iterator2] * kernel;
-      iterator2 = iterator2 + iterator3;
-      iterator1++;
-      iterator3--;
-    }
-  }
-
-  for(int k = _pOrderEdge[2] - 1; k <= _pf - 3; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
-    int iterator2 = k;
-    int iterator1 = 0;
-    int iterator3 = _pf - 2;
-    while(iterator1 <= _pf - 3 - k) {
-      faceBasis[iterator2] = faceBasis[iterator2] * kernel;
-      iterator2 = iterator2 + iterator3;
-      iterator1++;
-      iterator3--;
-    }
-  }
-}
-
-void H1Triangle::generateGradientBasis(
-  double u, double v, double w,
-  std::vector<std::vector<double>> &gradientVertex,
-  std::vector<std::vector<double>> &gradientEdge,
-  std::vector<std::vector<double>> &gradientFace,
-  std::vector<std::vector<double>> &gradientBubble)
-{
-  // to map onto the reference domain of gmsh: u,v in (0,1) and uc,vc in (-1,1)
-  double uc = 2 * u - 1;
-  double vc = 2 * v - 1;
-
-  double lambda1 = _affineCoordinate(1, uc, vc);
-  double lambda2 = _affineCoordinate(2, uc, vc);
-  double lambda3 = _affineCoordinate(3, uc, vc);
-
-  double product32 = lambda2 * lambda3;
-  double subtraction32 = lambda3 - lambda2;
-
-  double product13 = lambda3 * lambda1;
-  double subtraction13 = lambda1 - lambda3;
-
-  double product21 = lambda2 * lambda1;
-  double subtraction21 = lambda2 - lambda1;
-
-  double product = lambda1 * lambda2 * lambda3;
-
-  double jacob = 2; // jacobian=((2,0),(0,2))
-  double dlambda1U = 0;
-  double dlambda1V = 0.5;
-
-  double dlambda2U = -0.5;
-  double dlambda2V = -0.5;
-
-  double dlambda3U = 0.5;
-  double dlambda3V = 0;
-
-  // vertex gradient functions:
-  gradientVertex[0][0] = jacob * dlambda2U;
-  gradientVertex[0][1] = jacob * dlambda2V;
-  gradientVertex[1][0] = jacob * dlambda3U;
-  gradientVertex[1][1] = jacob * dlambda3V;
-  gradientVertex[2][0] = jacob * dlambda1U;
-  gradientVertex[2][1] = jacob * dlambda1V;
-
-  std::vector<double> tablIntermU(_numTriFaceFunction);
-  std::vector<double> tablIntermV(_numTriFaceFunction);
-
-  // edge 0  gradient  and a part of face functions gradient :
-  int iterator2 = 0;
-  for(int k = 0; k <= _pOrderEdge[0] - 2; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
-    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction32);
-
-    gradientEdge[k][0] =
-      (gradientVertex[1][0] * lambda2 + gradientVertex[0][0] * lambda3) *
-        kernel +
-      product32 * (gradientVertex[1][0] - gradientVertex[0][0]) * dKernel;
-    gradientEdge[k][1] =
-      (gradientVertex[1][1] * lambda2 + gradientVertex[0][1] * lambda3) *
-        kernel +
-      product32 * (gradientVertex[1][1] - gradientVertex[0][1]) * dKernel;
-
-    int iterator = 0;
-    while(iterator <= _pf - 3 - k) {
-      gradientFace[iterator2 + iterator][0] =
-        (gradientVertex[1][0] * product21 + gradientVertex[0][0] * product13 +
-         gradientVertex[2][0] * product32) *
-          kernel +
-        product * (gradientVertex[1][0] - gradientVertex[0][0]) * dKernel;
-
-      gradientFace[iterator2 + iterator][1] =
-        (gradientVertex[1][1] * product21 + gradientVertex[0][1] * product13 +
-         gradientVertex[2][1] * product32) *
-          kernel +
-        product * (gradientVertex[1][1] - gradientVertex[0][1]) * dKernel;
-
-      tablIntermU[iterator2 + iterator] =
-        product * (gradientVertex[0][0] - gradientVertex[2][0]) * kernel;
-      tablIntermV[iterator2 + iterator] =
-        product * (gradientVertex[0][1] - gradientVertex[2][1]) * kernel;
-      iterator++;
-    }
-    iterator2 = iterator2 + _pf - 2 - k;
-  }
-
-  for(int k = _pOrderEdge[0] - 1; k <= _pf - 3; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
-    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction32);
-
-    int iterator = 0;
-    while(iterator <= _pf - 3 - k) {
-      gradientFace[iterator2 + iterator][0] =
-        (gradientVertex[1][0] * product21 + gradientVertex[0][0] * product13 +
-         gradientVertex[2][0] * product32) *
-          kernel +
-        product * (gradientVertex[1][0] - gradientVertex[0][0]) * dKernel;
-
-      gradientFace[iterator2 + iterator][1] =
-        (gradientVertex[1][1] * product21 + gradientVertex[0][1] * product13 +
-         gradientVertex[2][1] * product32) *
-          kernel +
-        product * (gradientVertex[1][1] - gradientVertex[0][1]) * dKernel;
-
-      tablIntermU[iterator2 + iterator] =
-        product * (gradientVertex[0][0] - gradientVertex[2][0]) * kernel;
-      tablIntermV[iterator2 + iterator] =
-        product * (gradientVertex[0][1] - gradientVertex[2][1]) * kernel;
-      iterator++;
-    }
-    iterator2 = iterator2 + _pf - 2 - k;
-  }
-
-  // edge 1 shape functions gradient  :
-  for(int k = 0; k <= _pOrderEdge[1] - 2; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction13);
-    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction13);
-
-    gradientEdge[_pOrderEdge[0] + k - 1][0] =
-      (lambda3 * gradientVertex[2][0] + lambda1 * gradientVertex[1][0]) *
-        kernel +
-      product13 * (gradientVertex[2][0] - gradientVertex[1][0]) * dKernel;
-    gradientEdge[_pOrderEdge[0] + k - 1][1] =
-      (lambda3 * gradientVertex[2][1] + lambda1 * gradientVertex[1][1]) *
-        kernel +
-      product13 * (gradientVertex[2][1] - gradientVertex[1][1]) * dKernel;
-  }
-
-  // edge 2  gradient  and a part of face functions gradient :
-  for(int k = 0; k <= _pOrderEdge[2] - 2; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
-    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction21);
-
-    gradientEdge[k + _pOrderEdge[0] + _pOrderEdge[1] - 2][0] =
-      (lambda2 * gradientVertex[2][0] + lambda1 * gradientVertex[0][0]) *
-        kernel +
-      product21 * (gradientVertex[0][0] - gradientVertex[2][0]) * dKernel;
-    gradientEdge[k + _pOrderEdge[0] + _pOrderEdge[1] - 2][1] =
-      (lambda2 * gradientVertex[2][1] + lambda1 * gradientVertex[0][1]) *
-        kernel +
-      product21 * (gradientVertex[0][1] - gradientVertex[2][1]) * dKernel;
-    int iterator2 = k;
-    int iterator1 = 0;
-    int iterator3 = _pf - 2;
-    while(iterator1 <= _pf - 3 - k) {
-      gradientFace[iterator2][0] =
-        gradientFace[iterator2][0] * kernel + tablIntermU[iterator2] * dKernel;
-      gradientFace[iterator2][1] =
-        gradientFace[iterator2][1] * kernel + tablIntermV[iterator2] * dKernel;
-
-      iterator2 = iterator2 + iterator3;
-      iterator1++;
-      iterator3--;
-    }
-  }
-
-  for(int k = _pOrderEdge[2] - 1; k <= _pf - 3; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
-    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction21);
-
-    int iterator2 = k;
-    int iterator1 = 0;
-    int iterator3 = _pf - 2;
-    while(iterator1 <= _pf - 3 - k) {
-      gradientFace[iterator2][0] =
-        gradientFace[iterator2][0] * kernel + tablIntermU[iterator2] * dKernel;
-      gradientFace[iterator2][1] =
-        gradientFace[iterator2][1] * kernel + tablIntermV[iterator2] * dKernel;
-
-      iterator2 = iterator2 + iterator3;
-      iterator1++;
-      iterator3--;
-    }
-  }
-}
-
-std::pair<int, int> H1Triangle::computeEdgeFunctionRange(int edgeNumber) const
-{
-  // Check edge number validity
-  assert(edgeNumber >= 0 && edgeNumber < 3);
-
-  // Compute the start and end index of this edge’s shape functions
-  int startIndex = 0;
-  for(int i = 0; i < edgeNumber; ++i) {
-    assert(_pOrderEdge[i] >= 2);
-    startIndex += _pOrderEdge[i] - 1;
-  }
-
-  int nEdgeFuncs = _pOrderEdge[edgeNumber] - 1;
-  int endIndex = startIndex + nEdgeFuncs - 1;
-
-  return {startIndex, endIndex};
-}
-
-// This function checks whether the face is in the standard orientation (flags 0
-// and 1). If so, no changes are made. Otherwise, it regenerates the face basis
-// functions corresponding to the specified (non-standard) orientation flags.
-//
-// Note: This approach is not optimal, as it discards and recomputes the
-// functions when the orientation is not standard. A better design would
-// generate the correctly oriented functions directly in the first place,
-// avoiding this extra processing overhead.
-
-void H1Triangle::orientOneFace(double u, double v, double w, int flag1,
-                               int flag2, int flag3, int faceNumber,
-                               std::vector<double> &faceBasis)
-{
-  if(!(flag1 == 0 && flag2 == 1)) {
-    // to map onto the reference domain of gmsh:
-    double uc = 2 * u - 1;
-    double vc = 2 * v - 1;
-    //*****
-    int iterator = 0;
-    std::vector<double> lambda(3);
-
-    lambda[0] = _affineCoordinate(2, uc, vc);
-    lambda[1] = _affineCoordinate(3, uc, vc);
-    lambda[2] = _affineCoordinate(1, uc, vc);
-
-    double product = lambda[0] * lambda[1] * lambda[2];
-    if(flag1 == 1 && flag2 == -1) {
-      double copy = lambda[0];
-      lambda[0] = lambda[1];
-      lambda[1] = copy;
-    }
-    else if(flag1 == 0 && flag2 == -1) {
-      double copy = lambda[2];
-      lambda[2] = lambda[1];
-      lambda[1] = copy;
-    }
-    else if(flag1 == 2 && flag2 == -1) {
-      double copy = lambda[2];
-      lambda[2] = lambda[0];
-      lambda[0] = copy;
-    }
-    else if(flag1 == 1 && flag2 == 1) {
-      double copy = lambda[0];
-      lambda[0] = lambda[1];
-      lambda[1] = lambda[2];
-      lambda[2] = copy;
-    }
-    else if(flag1 == 2 && flag2 == 1) {
-      double copy = lambda[0];
-      lambda[0] = lambda[2];
-      lambda[2] = lambda[1];
-      lambda[1] = copy;
-    }
-    double subs1 = lambda[1] - lambda[0];
-    double subs2 = lambda[0] - lambda[2];
-    std::vector<double> phiSubs2(_pf - 2);
-    for(int it = 0; it < _pf - 2; it++) {
-      phiSubs2[it] = OrthogonalPoly::EvalKernelFunction(it, subs2);
-    }
-    for(int n1 = 0; n1 < _pf - 2; n1++) {
-      double phiSubs1 = OrthogonalPoly::EvalKernelFunction(n1, subs1);
-      for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
-        faceBasis[iterator] = product * phiSubs1 * phiSubs2[n2];
-        iterator++;
-      }
-    }
-  }
-}
-
-void H1Triangle::orientOneFace(double u, double v, double w, int flag1,
-                               int flag2, int flag3, int faceNumber,
-                               std::vector<std::vector<double>> &gradientFace)
-{
-  if(!(flag1 == 0 && flag2 == 1)) {
-    // to map onto the reference domain of gmsh:
-    double uc = 2 * u - 1;
-    double vc = 2 * v - 1;
-
-    int iterator = 0;
-    std::vector<double> lambda(3);
-    std::vector<std::vector<double>> dlambda(3, std::vector<double>(2, 0));
-    std::vector<double> dProduct(
-      2); // gradient of (lambdaA * lambdaB * lambdaC)
-
-    lambda[0] = _affineCoordinate(2, uc, vc);
-    lambda[1] = _affineCoordinate(3, uc, vc);
-    lambda[2] = _affineCoordinate(1, uc, vc);
-
-    dlambda[0][0] = -1; //* jacobian
-    dlambda[0][1] = -1; //* jacobian
-    dlambda[1][0] = 1; //* jacobian
-    dlambda[2][1] = 1; //* jacobian
-
-    double pl3l1 = lambda[1] * lambda[2];
-    dProduct[0] = lambda[2] * lambda[0] - pl3l1;
-    dProduct[1] = lambda[0] * lambda[1] - pl3l1;
-
-    double product = lambda[0] * lambda[1] * lambda[2];
-
-    if(flag1 == 1 && flag2 == -1) {
-      double copy = lambda[0];
-      lambda[0] = lambda[1];
-      lambda[1] = copy;
-      std::vector<double> dcopy = dlambda[0];
-      dlambda[0] = dlambda[1];
-      dlambda[1] = dcopy;
-    }
-    else if(flag1 == 0 && flag2 == -1) {
-      double copy = lambda[2];
-      lambda[2] = lambda[1];
-      lambda[1] = copy;
-      std::vector<double> dcopy = dlambda[2];
-      dlambda[2] = dlambda[1];
-      dlambda[1] = dcopy;
-    }
-    else if(flag1 == 2 && flag2 == -1) {
-      double copy = lambda[2];
-      lambda[2] = lambda[0];
-      lambda[0] = copy;
-      std::vector<double> dcopy = dlambda[2];
-      dlambda[2] = dlambda[0];
-      dlambda[0] = dcopy;
-    }
-    else if(flag1 == 1 && flag2 == 1) {
-      double copy = lambda[0];
-      lambda[0] = lambda[1];
-      lambda[1] = lambda[2];
-      lambda[2] = copy;
-      std::vector<double> dcopy = dlambda[0];
-      dlambda[0] = dlambda[1];
-      dlambda[1] = dlambda[2];
-      dlambda[2] = dcopy;
-    }
-    else if(flag1 == 2 && flag2 == 1) {
-      double copy = lambda[0];
-      lambda[0] = lambda[2];
-      lambda[2] = lambda[1];
-      lambda[1] = copy;
-      std::vector<double> dcopy = dlambda[0];
-      dlambda[0] = dlambda[2];
-      dlambda[2] = dlambda[1];
-      dlambda[1] = dcopy;
-    }
-
-    double subsBA = lambda[1] - lambda[0];
-    double subsAC = lambda[0] - lambda[2];
-
-    std::vector<double> dsubsBA(2), dsubsAC(2);
-    for(int i = 0; i < 2; i++) {
-      dsubsBA[i] = dlambda[1][i] - dlambda[0][i];
-      dsubsAC[i] = dlambda[0][i] - dlambda[2][i];
-    }
-
-    std::vector<double> phiSubsAC(_pf - 2), dphiSubsAC(_pf - 2);
-    for(int it = 0; it < _pf - 2; it++) {
-      phiSubsAC[it] = OrthogonalPoly::EvalKernelFunction(it, subsAC);
-      dphiSubsAC[it] = OrthogonalPoly::EvalDKernelFunction(it, subsAC);
-    }
-    for(int n1 = 0; n1 < _pf - 2; n1++) {
-      double phiBA = OrthogonalPoly::EvalKernelFunction(n1, subsBA);
-      double dphiBA = OrthogonalPoly::EvalDKernelFunction(n1, subsBA);
-      for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
-        for(int i = 0; i < 2; i++) {
-          gradientFace[iterator][i] =
-            dProduct[i] * phiBA * phiSubsAC[n2] +
-            product * dphiBA * dsubsBA[i] * phiSubsAC[n2] +
-            product * phiBA * dsubsAC[i] * dphiSubsAC[n2];
-        }
-        iterator++;
-      }
-    }
-  }
+  // the roles (a, b, c) taken by L0, L1, L2 in each orientation of the face
+  static const int roles[3][2][3] = {
+    {{0, 2, 1}, {0, 1, 2}}, {{1, 0, 2}, {1, 2, 0}}, {{2, 1, 0}, {2, 0, 1}}};
+  const int *r = roles[flag1][flag2 == 1 ? 1 : 0];
+  Dual L[3];
+  coordinates(x, L);
+  _faceFunctions(L[r[0]], L[r[1]], L[r[2]], face);
 }
 
 void H1Triangle::getKeysInfo(std::vector<int> &functionTypeInfo,
                              std::vector<int> &orderInfo)
 {
-  functionTypeInfo[0] = 0;
-  functionTypeInfo[1] = 0;
-  functionTypeInfo[2] = 0;
-  orderInfo[0] = 1;
-  orderInfo[1] = 1;
-  orderInfo[2] = 1;
-  int it = 3;
-  for(int numEdge = 0; numEdge < 3; numEdge++) {
-    for(int i = 2; i <= _pOrderEdge[numEdge]; i++) {
+  int it = 0;
+  for(int i = 0; i < 3; i++, it++) {
+    functionTypeInfo[it] = 0;
+    orderInfo[it] = 1;
+  }
+  for(int e = 0; e < 3; e++)
+    for(int k = 2; k <= _order; k++, it++) {
       functionTypeInfo[it] = 1;
-      orderInfo[it] = i;
-      it++;
+      orderInfo[it] = k;
     }
-  }
-  for(int n1 = 1; n1 < _pf - 1; n1++) {
-    for(int n2 = 1; n2 <= _pf - 1 - n1; n2++) {
+  for(int n1 = 0; n1 <= _order - 3; n1++)
+    for(int n2 = 0; n2 <= _order - 3 - n1; n2++, it++) {
       functionTypeInfo[it] = 2;
-      orderInfo[it] = n1 + n2 + 1;
-      it++;
+      orderInfo[it] = n1 + n2 + 3;
     }
-  }
 }
