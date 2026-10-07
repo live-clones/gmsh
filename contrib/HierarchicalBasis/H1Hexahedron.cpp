@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,640 +9,101 @@
 //             Higher-Order Finite Element Methods (1st ed.).
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
-#include <algorithm>
 #include "H1Hexahedron.h"
+#include "Blocks.h"
 
-H1Hexahedron::H1Hexahedron(int order)
+// for each edge, the coordinate along it and the two affine coordinates across
+static const int edges[12][3] = {{0, 3, 5}, {1, 1, 5}, {2, 1, 3}, {1, 0, 5},
+                                 {2, 3, 0}, {0, 2, 5}, {2, 2, 0}, {2, 2, 1},
+                                 {0, 3, 4}, {1, 4, 1}, {1, 4, 0}, {0, 4, 2}};
+// for each face, its two coordinates and the affine coordinate across
+static const int faces[6][3] = {{0, 1, 5}, {0, 2, 3}, {1, 2, 1},
+                                {1, 2, 0}, {0, 2, 2}, {0, 1, 4}};
+// for each vertex, its three affine coordinates
+static const int vertices[8][3] = {{1, 3, 5}, {0, 3, 5}, {0, 2, 5}, {1, 2, 5},
+                                   {1, 3, 4}, {0, 3, 4}, {0, 2, 4}, {1, 2, 4}};
+
+H1Hexahedron::H1Hexahedron(int order) : _order(order)
 {
+  _dual = true;
   _numVertex = 8;
   _numEdge = 12;
   _numQuadFace = 6;
   _numTriFace = 0;
   _numVertexFunction = 8;
-  _numEdgeFunction = ((order >= 2) ? (12 * order - 12) : 0);
-  _numQuadFaceFunction = ((order >= 2) ? (6 * (order - 1) * (order - 1)) : 0);
+  _numEdgeFunction = 12 * (order - 1);
+  _numQuadFaceFunction = 6 * (order - 1) * (order - 1);
   _numTriFaceFunction = 0;
-  _numBubbleFunction =
-    ((order >= 2) ? ((order - 1) * (order - 1) * (order - 1)) : 0);
-  _pb = {order, order, order};
-
-  // Initialize all edge orders uniformly
-  _pOrderEdge.fill(order);
-
-  // Initialize all face orders uniformly in both u and v directions
-  for(int dir = 0; dir < 2; ++dir) { _pOrderFace[dir].fill(order); }
+  _numBubbleFunction = (order - 1) * (order - 1) * (order - 1);
 }
 
-double H1Hexahedron::_affineCoordinate(int j, double u, double v, double w)
+static void coordinates(const Dual *x, Dual *a)
 {
-  switch(j) {
-  case(1): return 0.5 * (1 + u);
-  case(2): return 0.5 * (1 - u);
-  case(3): return 0.5 * (1 + v);
-  case(4): return 0.5 * (1 - v);
-  case(5): return 0.5 * (1 + w);
-  case(6): return 0.5 * (1 - w);
-  default: return 0.; // not reached
+  for(int i = 0; i < 3; i++) {
+    a[2 * i] = 0.5 * (1. + x[i]);
+    a[2 * i + 1] = 0.5 * (1. - x[i]);
   }
 }
 
-void H1Hexahedron::_someProduct(double u, double v, double w,
-                                std::vector<double> &product,
-                                std::vector<double> &lambda)
+void H1Hexahedron::functions(const Dual *x, std::vector<Dual> &vertex,
+                             std::vector<Dual> &edge, std::vector<Dual> &face,
+                             std::vector<Dual> &bubble)
 {
-  lambda[0] = _affineCoordinate(1, u, v, w);
-  lambda[1] = _affineCoordinate(2, u, v, w);
-  lambda[2] = _affineCoordinate(3, u, v, w);
-  lambda[3] = _affineCoordinate(4, u, v, w);
-  lambda[4] = _affineCoordinate(5, u, v, w);
-  lambda[5] = _affineCoordinate(6, u, v, w);
-
-  product[0] = lambda[3] * lambda[5];
-  product[1] = lambda[1] * lambda[5];
-  product[2] = lambda[1] * lambda[3];
-  product[3] = lambda[0] * lambda[5];
-  product[4] = lambda[3] * lambda[0];
-  product[5] = lambda[2] * lambda[5];
-  product[6] = lambda[2] * lambda[0];
-  product[7] = lambda[2] * lambda[1];
-  product[8] = lambda[3] * lambda[4];
-  product[9] = lambda[4] * lambda[1];
-  product[10] = lambda[4] * lambda[0];
-  product[11] = lambda[4] * lambda[2];
+  Dual a[6];
+  coordinates(x, a);
+  for(int i = 0; i < 8; i++)
+    vertex[i] = a[vertices[i][0]] * a[vertices[i][1]] * a[vertices[i][2]];
+  int n = 0;
+  for(int e = 0; e < 12; e++) {
+    Dual across = a[edges[e][1]] * a[edges[e][2]];
+    for(int k = 2; k <= _order; k++)
+      edge[n++] = lobatto(k, x[edges[e][0]]) * across;
+  }
+  n = 0;
+  for(int f = 0; f < 6; f++)
+    n += h1Quadrangle(x[faces[f][0]], x[faces[f][1]], a[faces[f][2]], _order,
+                      &face[n]);
+  n = 0;
+  for(int n1 = 2; n1 <= _order; n1++)
+    for(int n2 = 2; n2 <= _order; n2++)
+      for(int n3 = 2; n3 <= _order; n3++)
+        bubble[n++] = lobatto(n1, x[0]) * lobatto(n2, x[1]) * lobatto(n3, x[2]);
 }
 
-void H1Hexahedron::generateBasis(double u, double v, double w,
-                                 std::vector<double> &vertexBasis,
-                                 std::vector<double> &edgeBasis,
-                                 std::vector<double> &faceBasis,
-                                 std::vector<double> &bubbleBasis)
+void H1Hexahedron::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
+                                 int faceNumber, std::vector<Dual> &face)
 {
-  std::vector<double> product(12, 0);
-  std::vector<double> lambda(6, 0);
-
-  H1Hexahedron::_someProduct(u, v, w, product, lambda);
-
-  // vertex shape functions:
-  vertexBasis[0] = lambda[1] * product[0];
-  vertexBasis[1] = lambda[0] * product[0];
-  vertexBasis[2] = lambda[0] * product[5];
-  vertexBasis[3] = lambda[1] * product[5];
-  vertexBasis[4] = lambda[1] * product[8];
-  vertexBasis[5] = lambda[0] * product[8];
-  vertexBasis[6] = lambda[0] * product[11];
-  vertexBasis[7] = lambda[1] * product[11];
-
-  std::vector<double> lkVectorU(_pb[0] - 1);
-  std::vector<double> lkVectorV(_pb[1] - 1);
-  std::vector<double> lkVectorW(_pb[2] - 1);
-
-  for(int it = 2; it <= _pb[0]; it++) {
-    lkVectorU[it - 2] = OrthogonalPoly::EvalLobatto(it, u);
-  }
-  for(int it = 2; it <= _pb[1]; it++) {
-    lkVectorV[it - 2] = OrthogonalPoly::EvalLobatto(it, v);
-  }
-  for(int it = 2; it <= _pb[2]; it++) {
-    lkVectorW[it - 2] = OrthogonalPoly::EvalLobatto(it, w);
-  }
-  // edge shape functions:
-  int indexEdgeBasis = 0;
-  std::vector<double> *vectorTarget1(nullptr);
-  for(int iEdge = 0; iEdge < _numEdge; iEdge++) {
-    switch(iEdge) {
-    case(0):
-    case(5):
-    case(8):
-    case(11): vectorTarget1 = &lkVectorU; break;
-    case(1):
-    case(3):
-    case(9):
-    case(10): vectorTarget1 = &lkVectorV; break;
-    case(2):
-    case(4):
-    case(6):
-    case(7): vectorTarget1 = &lkVectorW; break;
-    }
-    for(int indexEdgeFunc = 0; indexEdgeFunc < _pOrderEdge[iEdge] - 1;
-        indexEdgeFunc++) {
-      edgeBasis[indexEdgeBasis] =
-        (*vectorTarget1)[indexEdgeFunc] * product[iEdge];
-      indexEdgeBasis++;
-    }
-  }
-  // face shape functions:
-  int indexFaceFunction = 0;
-  std::vector<double> *vectorTarget2(nullptr);
-  for(int iFace = 0; iFace < _numQuadFace; iFace++) {
-    int indexLambda;
-    switch(iFace) {
-    case(0):
-      indexLambda = 5;
-      vectorTarget1 = &lkVectorU;
-      vectorTarget2 = &lkVectorV;
-      break;
-    case(1):
-      indexLambda = 3;
-      vectorTarget1 = &lkVectorU;
-      vectorTarget2 = &lkVectorW;
-      break;
-    case(2):
-      indexLambda = 1;
-      vectorTarget1 = &lkVectorV;
-      vectorTarget2 = &lkVectorW;
-      break;
-    case(3):
-      indexLambda = 0;
-      vectorTarget1 = &lkVectorV;
-      vectorTarget2 = &lkVectorW;
-      break;
-    case(4):
-      indexLambda = 2;
-      vectorTarget1 = &lkVectorU;
-      vectorTarget2 = &lkVectorW;
-      break;
-    case(5):
-      indexLambda = 4;
-      vectorTarget1 = &lkVectorU;
-      vectorTarget2 = &lkVectorV;
-      break;
-    }
-    for(int index1 = 0; index1 < _pOrderFace[0][iFace] - 1; index1++) {
-      for(int index2 = 0; index2 < _pOrderFace[1][iFace] - 1; index2++) {
-        faceBasis[indexFaceFunction] = lambda[indexLambda] *
-                                       (*vectorTarget1)[index1] *
-                                       (*vectorTarget2)[index2];
-        indexFaceFunction++;
-      }
-    }
-  }
-  // bubble shape functions:
-  int indexBubbleBasis = 0;
-  for(int ipb1 = 0; ipb1 < _pb[0] - 1; ipb1++) {
-    for(int ipb2 = 0; ipb2 < _pb[1] - 1; ipb2++) {
-      for(int ipb3 = 0; ipb3 < _pb[2] - 1; ipb3++) {
-        bubbleBasis[indexBubbleBasis] =
-          lkVectorU[ipb1] * lkVectorV[ipb2] * lkVectorW[ipb3];
-        indexBubbleBasis++;
-      }
-    }
-  }
-}
-
-void H1Hexahedron::_someProductGrad(
-  double u, double v, double w, std::vector<double> &product,
-  std::vector<std::vector<double>> &gradientProduct,
-  std::vector<double> &lambda, std::vector<std::vector<double>> &gradientLambda)
-{
-  //    H1Hexahedron::_someProduct(u, v, w, product, lambda);
-
-  lambda[0] = _affineCoordinate(1, u, v, w);
-  lambda[1] = _affineCoordinate(2, u, v, w);
-  lambda[2] = _affineCoordinate(3, u, v, w);
-  lambda[3] = _affineCoordinate(4, u, v, w);
-  lambda[4] = _affineCoordinate(5, u, v, w);
-  lambda[5] = _affineCoordinate(6, u, v, w);
-
-  gradientLambda[0][0] = 0.5;
-  gradientLambda[1][0] = -0.5;
-  gradientLambda[2][1] = 0.5;
-  gradientLambda[3][1] = -0.5;
-  gradientLambda[4][2] = 0.5;
-  gradientLambda[5][2] = -0.5;
-
-  product[0] = lambda[3] * lambda[5];
-  product[1] = lambda[1] * lambda[5];
-  product[2] = lambda[1] * lambda[3];
-  product[3] = lambda[0] * lambda[5];
-  product[4] = lambda[3] * lambda[0];
-  product[5] = lambda[2] * lambda[5];
-  product[6] = lambda[2] * lambda[0];
-  product[7] = lambda[2] * lambda[1];
-  product[8] = lambda[3] * lambda[4];
-  product[9] = lambda[4] * lambda[1];
-  product[10] = lambda[4] * lambda[0];
-  product[11] = lambda[4] * lambda[2];
-
-  gradientProduct[0][1] = -0.5 * lambda[5];
-  gradientProduct[0][2] = -0.5 * lambda[3];
-  gradientProduct[1][0] = -0.5 * lambda[5];
-  gradientProduct[1][2] = -0.5 * lambda[1];
-  gradientProduct[2][0] = -0.5 * lambda[3];
-  gradientProduct[2][1] = -0.5 * lambda[1];
-  gradientProduct[3][0] = 0.5 * lambda[5];
-  gradientProduct[3][2] = -0.5 * lambda[0];
-  gradientProduct[4][0] = 0.5 * lambda[3];
-  gradientProduct[4][1] = -0.5 * lambda[0];
-  gradientProduct[5][1] = 0.5 * lambda[5];
-  gradientProduct[5][2] = -0.5 * lambda[2];
-  gradientProduct[6][0] = 0.5 * lambda[2];
-  gradientProduct[6][1] = 0.5 * lambda[0];
-  gradientProduct[7][0] = -0.5 * lambda[2];
-  gradientProduct[7][1] = 0.5 * lambda[1];
-  gradientProduct[8][1] = -0.5 * lambda[4];
-  gradientProduct[8][2] = 0.5 * lambda[3];
-  gradientProduct[9][0] = -0.5 * lambda[4];
-  gradientProduct[9][2] = 0.5 * lambda[1];
-  gradientProduct[10][0] = 0.5 * lambda[4];
-  gradientProduct[10][2] = 0.5 * lambda[0];
-  gradientProduct[11][1] = 0.5 * lambda[4];
-  gradientProduct[11][2] = 0.5 * lambda[2];
-}
-
-void H1Hexahedron::generateGradientBasis(
-  double u, double v, double w,
-  std::vector<std::vector<double>> &gradientVertex,
-  std::vector<std::vector<double>> &gradientEdge,
-  std::vector<std::vector<double>> &gradientFace,
-  std::vector<std::vector<double>> &gradientBubble)
-{
-  std::vector<double> product(12, 0);
-  std::vector<std::vector<double>> gradientProduct(12,
-                                                   std::vector<double>(3, 0));
-  std::vector<double> lambda(6, 0);
-  std::vector<std::vector<double>> gradientLambda(6, std::vector<double>(3, 0));
-  H1Hexahedron::_someProductGrad(u, v, w, product, gradientProduct, lambda,
-                                 gradientLambda);
-  // vertex gradient:
-  for(int it = 0; it < 3; it++) {
-    gradientVertex[0][it] =
-      gradientLambda[1][it] * product[0] + gradientProduct[0][it] * lambda[1];
-    gradientVertex[1][it] =
-      gradientLambda[0][it] * product[0] + gradientProduct[0][it] * lambda[0];
-    gradientVertex[2][it] =
-      gradientLambda[0][it] * product[5] + gradientProduct[5][it] * lambda[0];
-    gradientVertex[3][it] =
-      gradientLambda[1][it] * product[5] + gradientProduct[5][it] * lambda[1];
-    gradientVertex[4][it] =
-      gradientLambda[1][it] * product[8] + gradientProduct[8][it] * lambda[1];
-    gradientVertex[5][it] =
-      gradientLambda[0][it] * product[8] + gradientProduct[8][it] * lambda[0];
-    gradientVertex[6][it] =
-      gradientLambda[0][it] * product[11] + gradientProduct[11][it] * lambda[0];
-    gradientVertex[7][it] =
-      gradientLambda[1][it] * product[11] + gradientProduct[11][it] * lambda[1];
-  }
-  std::vector<double> lkVectorU(_pb[0] - 1);
-  std::vector<double> lkVectorV(_pb[1] - 1);
-  std::vector<double> lkVectorW(_pb[2] - 1);
-  std::vector<std::vector<double>> dlkVectorU(_pb[0] - 1,
-                                              std::vector<double>(3, 0.));
-  std::vector<std::vector<double>> dlkVectorV(_pb[1] - 1,
-                                              std::vector<double>(3, 0.));
-  std::vector<std::vector<double>> dlkVectorW(_pb[2] - 1,
-                                              std::vector<double>(3, 0.));
-  for(int it = 2; it <= _pb[0]; it++) {
-    lkVectorU[it - 2] = OrthogonalPoly::EvalLobatto(it, u);
-    dlkVectorU[it - 2][0] = OrthogonalPoly::EvalDLobatto(it, u);
-  }
-  for(int it = 2; it <= _pb[1]; it++) {
-    lkVectorV[it - 2] = OrthogonalPoly::EvalLobatto(it, v);
-    dlkVectorV[it - 2][1] = OrthogonalPoly::EvalDLobatto(it, v);
-  }
-  for(int it = 2; it <= _pb[2]; it++) {
-    lkVectorW[it - 2] = OrthogonalPoly::EvalLobatto(it, w);
-    dlkVectorW[it - 2][2] = OrthogonalPoly::EvalDLobatto(it, w);
-  }
-  // edge gradient:
-  int indexEdgeBasis = 0;
-  std::vector<double> *vectorTarget1(nullptr);
-  std::vector<std::vector<double>> *dvectorTarget1(nullptr);
-  for(int iEdge = 0; iEdge < _numEdge; iEdge++) {
-    switch(iEdge) {
-    case(0):
-    case(5):
-    case(8):
-    case(11):
-      vectorTarget1 = &lkVectorU;
-      dvectorTarget1 = &dlkVectorU;
-      break;
-    case(1):
-    case(3):
-    case(9):
-    case(10):
-      vectorTarget1 = &lkVectorV;
-      dvectorTarget1 = &dlkVectorV;
-      break;
-    case(2):
-    case(4):
-    case(6):
-    case(7):
-      vectorTarget1 = &lkVectorW;
-      dvectorTarget1 = &dlkVectorW;
-      break;
-    }
-    for(int indexEdgeFunc = 0; indexEdgeFunc < _pOrderEdge[iEdge] - 1;
-        indexEdgeFunc++) {
-      for(int it = 0; it < 3; it++) {
-        gradientEdge[indexEdgeBasis][it] =
-          (*dvectorTarget1)[indexEdgeFunc][it] * product[iEdge] +
-          (*vectorTarget1)[indexEdgeFunc] * gradientProduct[iEdge][it];
-      }
-      indexEdgeBasis++;
-    }
-  }
-  // face gradient:
-  int indexFaceFunction = 0;
-  std::vector<double> *vectorTarget2(nullptr);
-  std::vector<std::vector<double>> *dvectorTarget2(nullptr);
-  for(int iFace = 0; iFace < _numQuadFace; iFace++) {
-    int indexLambda = 0;
-    switch(iFace) {
-    case(0):
-      indexLambda = 5;
-      vectorTarget1 = &lkVectorU;
-      vectorTarget2 = &lkVectorV;
-      dvectorTarget1 = &dlkVectorU;
-      dvectorTarget2 = &dlkVectorV;
-      break;
-    case(1):
-      indexLambda = 3;
-      vectorTarget1 = &lkVectorU;
-      vectorTarget2 = &lkVectorW;
-      dvectorTarget1 = &dlkVectorU;
-      dvectorTarget2 = &dlkVectorW;
-      break;
-    case(2):
-      indexLambda = 1;
-      vectorTarget1 = &lkVectorV;
-      vectorTarget2 = &lkVectorW;
-      dvectorTarget1 = &dlkVectorV;
-      dvectorTarget2 = &dlkVectorW;
-      break;
-    case(3):
-      indexLambda = 0;
-      vectorTarget1 = &lkVectorV;
-      vectorTarget2 = &lkVectorW;
-      dvectorTarget1 = &dlkVectorV;
-      dvectorTarget2 = &dlkVectorW;
-      break;
-    case(4):
-      indexLambda = 2;
-      vectorTarget1 = &lkVectorU;
-      vectorTarget2 = &lkVectorW;
-      dvectorTarget1 = &dlkVectorU;
-      dvectorTarget2 = &dlkVectorW;
-      break;
-    case(5):
-      indexLambda = 4;
-      vectorTarget1 = &lkVectorU;
-      vectorTarget2 = &lkVectorV;
-      dvectorTarget1 = &dlkVectorU;
-      dvectorTarget2 = &dlkVectorV;
-      break;
-    }
-    for(int index1 = 0; index1 < _pOrderFace[0][iFace] - 1; index1++) {
-      for(int index2 = 0; index2 < _pOrderFace[1][iFace] - 1; index2++) {
-        for(int it = 0; it < 3; it++) {
-          gradientFace[indexFaceFunction][it] =
-            gradientLambda[indexLambda][it] * (*vectorTarget1)[index1] *
-              (*vectorTarget2)[index2] +
-            lambda[indexLambda] * (*dvectorTarget1)[index1][it] *
-              (*vectorTarget2)[index2] +
-            lambda[indexLambda] * (*vectorTarget1)[index1] *
-              (*dvectorTarget2)[index2][it];
-        }
-        indexFaceFunction++;
-      }
-    }
-  }
-  // bubble shape functions:
-  int indexBubbleBasis = 0;
-  for(int ipb1 = 0; ipb1 < _pb[0] - 1; ipb1++) {
-    for(int ipb2 = 0; ipb2 < _pb[1] - 1; ipb2++) {
-      for(int ipb3 = 0; ipb3 < _pb[2] - 1; ipb3++) {
-        gradientBubble[indexBubbleBasis][0] =
-          dlkVectorU[ipb1][0] * lkVectorV[ipb2] * lkVectorW[ipb3];
-        gradientBubble[indexBubbleBasis][1] =
-          lkVectorU[ipb1] * dlkVectorV[ipb2][1] * lkVectorW[ipb3];
-        gradientBubble[indexBubbleBasis][2] =
-          lkVectorU[ipb1] * lkVectorV[ipb2] * dlkVectorW[ipb3][2];
-        indexBubbleBasis++;
-      }
-    }
-  }
-}
-
-void H1Hexahedron::orientOneFace(double u, double v, double w, int flag1,
-                                 int flag2, int flag3, int faceNumber,
-                                 std::vector<double> &faceBasis)
-{
-  if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
-    int iterator = 0;
-    for(int i = 0; i < faceNumber; i++) {
-      iterator += (_pOrderFace[0][i] - 1) * (_pOrderFace[1][i] - 1);
-    }
-    if(flag3 == 1) {
-      for(int it1 = 2; it1 <= _pOrderFace[0][faceNumber]; it1++) {
-        for(int it2 = 2; it2 <= _pOrderFace[1][faceNumber]; it2++) {
-          int impactFlag1 = 1;
-          int impactFlag2 = 1;
-          if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-          if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-          faceBasis[iterator] = faceBasis[iterator] * impactFlag1 * impactFlag2;
-          iterator++;
-        }
-      }
-    }
-    else {
-      double lambda = 0;
-      double var1 = 0;
-      double var2 = 0;
-      switch(faceNumber) {
-      case(0):
-        lambda = _affineCoordinate(6, u, v, w);
-        var1 = u;
-        var2 = v;
-        break;
-      case(1):
-        lambda = _affineCoordinate(4, u, v, w);
-        var1 = u;
-        var2 = w;
-        break;
-      case(2):
-        lambda = _affineCoordinate(2, u, v, w);
-        var1 = v;
-        var2 = w;
-        break;
-      case(3):
-        lambda = _affineCoordinate(1, u, v, w);
-        var1 = v;
-        var2 = w;
-        break;
-      case(4):
-        lambda = _affineCoordinate(3, u, v, w);
-        var1 = u;
-        var2 = w;
-        break;
-      case(5):
-        lambda = _affineCoordinate(5, u, v, w);
-        var1 = u;
-        var2 = v;
-        break;
-      }
-      std::vector<double> lkVector1(_pOrderFace[0][faceNumber] - 1);
-      std::vector<double> lkVector2(_pOrderFace[1][faceNumber] - 1);
-      for(int it = 2; it <= _pOrderFace[0][faceNumber]; it++) {
-        lkVector1[it - 2] = OrthogonalPoly::EvalLobatto(it, var1);
-      }
-      for(int it = 2; it <= _pOrderFace[1][faceNumber]; it++) {
-        lkVector2[it - 2] = OrthogonalPoly::EvalLobatto(it, var2);
-      }
-
-      for(int it1 = 2; it1 <= _pOrderFace[1][faceNumber]; it1++) {
-        for(int it2 = 2; it2 <= _pOrderFace[0][faceNumber]; it2++) {
-          int impactFlag1 = 1;
-          int impactFlag2 = 1;
-          if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-          if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-          faceBasis[iterator] = lambda * lkVector1[it2 - 2] *
-                                lkVector2[it1 - 2] * impactFlag1 * impactFlag2;
-          iterator++;
-        }
-      }
-    }
-  }
-}
-
-void H1Hexahedron::orientOneFace(double u, double v, double w, int flag1,
-                                 int flag2, int flag3, int faceNumber,
-                                 std::vector<std::vector<double>> &gradientFace)
-{
-  if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
-    int iterator = 0;
-    for(int i = 0; i < faceNumber; i++) {
-      iterator += (_pOrderFace[0][i] - 1) * (_pOrderFace[1][i] - 1);
-    }
-    if(flag3 == 1) {
-      for(int it1 = 2; it1 <= _pOrderFace[0][faceNumber]; it1++) {
-        for(int it2 = 2; it2 <= _pOrderFace[1][faceNumber]; it2++) {
-          int impactFlag1 = 1;
-          int impactFlag2 = 1;
-          if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-          if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-          gradientFace[iterator][0] =
-            gradientFace[iterator][0] * impactFlag1 * impactFlag2;
-          gradientFace[iterator][1] =
-            gradientFace[iterator][1] * impactFlag1 * impactFlag2;
-          gradientFace[iterator][2] =
-            gradientFace[iterator][2] * impactFlag1 * impactFlag2;
-          iterator++;
-        }
-      }
-    }
-    else {
-      std::vector<double> uvw(3);
-      uvw[0] = u;
-      uvw[1] = v;
-      uvw[2] = w;
-      double lambda = 0;
-      int var1 = 0;
-      int var2 = 0;
-      std::vector<double> gradientLambda(3, 0);
-      switch(faceNumber) {
-      case(0):
-        lambda = _affineCoordinate(6, u, v, w);
-        var1 = 0;
-        var2 = 1;
-        gradientLambda[2] = -0.5;
-        break;
-      case(1):
-        lambda = _affineCoordinate(4, u, v, w);
-        var1 = 0;
-        var2 = 2;
-        gradientLambda[1] = -0.5;
-        break;
-      case(2):
-        lambda = _affineCoordinate(2, u, v, w);
-        var1 = 1;
-        var2 = 2;
-        gradientLambda[0] = -0.5;
-        break;
-      case(3):
-        lambda = _affineCoordinate(1, u, v, w);
-        var1 = 1;
-        var2 = 2;
-        gradientLambda[0] = 0.5;
-        break;
-      case(4):
-        lambda = _affineCoordinate(3, u, v, w);
-        var1 = 0;
-        var2 = 2;
-        gradientLambda[1] = 0.5;
-        break;
-      case(5):
-        lambda = _affineCoordinate(5, u, v, w);
-        var1 = 0;
-        var2 = 1;
-        gradientLambda[2] = 0.5;
-        break;
-      }
-      std::vector<double> lkVector1(_pOrderFace[0][faceNumber] - 1);
-      std::vector<double> lkVector2(_pOrderFace[1][faceNumber] - 1);
-      std::vector<std::vector<double>> dlkVector1(
-        _pOrderFace[0][faceNumber] - 1, std::vector<double>(3, 0.));
-      std::vector<std::vector<double>> dlkVector2(
-        _pOrderFace[1][faceNumber] - 1, std::vector<double>(3, 0.));
-      for(int it = 2; it <= _pOrderFace[0][faceNumber]; it++) {
-        lkVector1[it - 2] = OrthogonalPoly::EvalLobatto(it, uvw[var1]);
-        dlkVector1[it - 2][var1] = OrthogonalPoly::EvalDLobatto(it, uvw[var1]);
-      }
-      for(int it = 2; it <= _pOrderFace[1][faceNumber]; it++) {
-        lkVector2[it - 2] = OrthogonalPoly::EvalLobatto(it, uvw[var2]);
-        dlkVector2[it - 2][var2] = OrthogonalPoly::EvalDLobatto(it, uvw[var2]);
-      }
-      for(int it1 = 2; it1 <= _pOrderFace[1][faceNumber]; it1++) {
-        for(int it2 = 2; it2 <= _pOrderFace[0][faceNumber]; it2++) {
-          int impactFlag1 = 1;
-          int impactFlag2 = 1;
-          if(flag2 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
-          if(flag1 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
-          for(int itVector = 0; itVector < 3; itVector++) {
-            gradientFace[iterator][itVector] =
-              (gradientLambda[itVector] * lkVector1[it2 - 2] *
-                 lkVector2[it1 - 2] +
-               lambda * dlkVector1[it2 - 2][itVector] * lkVector2[it1 - 2] +
-               lambda * lkVector1[it2 - 2] * dlkVector2[it1 - 2][itVector]) *
-              impactFlag1 * impactFlag2;
-          }
-          iterator++;
-        }
-      }
-    }
-  }
+  Dual a[6], s, t;
+  coordinates(x, a);
+  const int *f = faces[faceNumber];
+  quadrangleCoordinates(x[f[0]], x[f[1]], flag1, flag2, flag3, s, t);
+  int perFace = _numQuadFaceFunction / 6;
+  h1Quadrangle(s, t, a[f[2]], _order, &face[faceNumber * perFace]);
 }
 
 void H1Hexahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
                                std::vector<int> &orderInfo)
 {
-  for(int i = 0; i < 8; i++) {
-    functionTypeInfo[i] = 0;
-    orderInfo[i] = 1;
+  int it = 0;
+  for(int i = 0; i < 8; i++, it++) {
+    functionTypeInfo[it] = 0;
+    orderInfo[it] = 1;
   }
-  int it = 8;
-  for(int numEdge = 0; numEdge < 12; numEdge++) {
-    for(int i = 2; i <= _pOrderEdge[numEdge]; i++) {
+  for(int e = 0; e < 12; e++)
+    for(int k = 2; k <= _order; k++, it++) {
       functionTypeInfo[it] = 1;
-      orderInfo[it] = i;
-      it++;
+      orderInfo[it] = k;
     }
-  }
-  for(int numFace = 0; numFace < 6; numFace++) {
-    for(int n1 = 2; n1 <= _pOrderFace[0][numFace]; n1++) {
-      for(int n2 = 2; n2 <= _pOrderFace[1][numFace]; n2++) {
+  for(int f = 0; f < 6; f++)
+    for(int n1 = 2; n1 <= _order; n1++)
+      for(int n2 = 2; n2 <= _order; n2++, it++) {
         functionTypeInfo[it] = 2;
         orderInfo[it] = std::max(n1, n2);
-        it++;
       }
-    }
-  }
-  for(int ipb1 = 2; ipb1 <= _pb[0]; ipb1++) {
-    for(int ipb2 = 2; ipb2 <= _pb[1]; ipb2++) {
-      for(int ipb3 = 2; ipb3 <= _pb[2]; ipb3++) {
+  for(int n1 = 2; n1 <= _order; n1++)
+    for(int n2 = 2; n2 <= _order; n2++)
+      for(int n3 = 2; n3 <= _order; n3++, it++) {
         functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(std::max(ipb1, ipb2), ipb3);
-        it++;
+        orderInfo[it] = std::max(std::max(n1, n2), n3);
       }
-    }
-  }
 }

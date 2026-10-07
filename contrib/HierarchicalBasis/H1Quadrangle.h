@@ -20,8 +20,7 @@
 // - the vertex functions a2 a4, a1 a4, a1 a3, a2 a3;
 // - the functions a4 l_k(u), a1 l_k(v), a3 l_k(u), a2 l_k(v), k = 2, ..., p,
 //   of the edges e0 = {v0, v1}, e1 = {v1, v2}, e2 = {v3, v2} and e3 = {v0, v3};
-// - the face functions l_n1(s) l_n2(t), n1, n2 = 2, ..., p, with (s, t) =
-//   (u, v) in the reference orientation of the face;
+// - the face functions of the face of coordinates (u, v) (see h1Quadrangle);
 // where l_k are the Lobatto polynomials.
 class H1Quadrangle : public HierarchicalBasis {
 public:
@@ -38,7 +37,6 @@ protected:
 
 private:
   int _order;
-  void _faceFunctions(const Dual &s, const Dual &t, std::vector<Dual> &face);
 };
 
 #endif

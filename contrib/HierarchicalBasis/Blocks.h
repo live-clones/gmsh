@@ -46,4 +46,28 @@ inline int h1Triangle(const Dual &a, const Dual &b, const Dual &c, int order,
   return n;
 }
 
+// The coordinates (s, t) of a quadrilateral face of coordinates (s0, t0), in
+// the orientation of the face given by the flags: flag1 and flag2 reverse s0
+// and t0, flag3 = -1 exchanges them
+inline void quadrangleCoordinates(const Dual &s0, const Dual &t0, int flag1,
+                                  int flag2, int flag3, Dual &s, Dual &t)
+{
+  s = (flag3 == 1) ? flag1 * s0 : flag2 * t0;
+  t = (flag3 == 1) ? flag2 * t0 : flag1 * s0;
+}
+
+// The H1 functions of a quadrilateral face of coordinates (s, t) in [-1, 1]^2,
+// multiplied by blend: blend l_n1(s) l_n2(t), n1, n2 = 2, ..., order, where
+// l_k are the Lobatto polynomials; return the number of functions
+inline int h1Quadrangle(const Dual &s, const Dual &t, const Dual &blend,
+                        int order, Dual *f)
+{
+  int n = 0;
+  for(int n1 = 2; n1 <= order; n1++) {
+    Dual b1 = blend * lobatto(n1, s);
+    for(int n2 = 2; n2 <= order; n2++) f[n++] = b1 * lobatto(n2, t);
+  }
+  return n;
+}
+
 #endif

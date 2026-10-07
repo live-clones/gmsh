@@ -10,6 +10,7 @@
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
 #include "H1Quadrangle.h"
+#include "Blocks.h"
 
 H1Quadrangle::H1Quadrangle(int order) : _order(order)
 {
@@ -42,28 +43,15 @@ void H1Quadrangle::functions(const Dual *x, std::vector<Dual> &vertex,
   for(int e = 0; e < 4; e++)
     for(int k = 2; k <= _order; k++)
       edge[n++] = *across[e] * lobatto(k, *along[e]);
-  _faceFunctions(u, v, face);
-}
-
-void H1Quadrangle::_faceFunctions(const Dual &s, const Dual &t,
-                                  std::vector<Dual> &face)
-{
-  int n = 0;
-  for(int n1 = 2; n1 <= _order; n1++) {
-    Dual l1 = lobatto(n1, s);
-    for(int n2 = 2; n2 <= _order; n2++) face[n++] = l1 * lobatto(n2, t);
-  }
+  h1Quadrangle(u, v, Dual(1.), _order, face.data());
 }
 
 void H1Quadrangle::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
                                  int faceNumber, std::vector<Dual> &face)
 {
-  // flag1 and flag2 reverse u and v, flag3 = -1 exchanges them
-  Dual s = flag1 * x[0], t = flag2 * x[1];
-  if(flag3 == 1)
-    _faceFunctions(s, t, face);
-  else
-    _faceFunctions(t, s, face);
+  Dual s, t;
+  quadrangleCoordinates(x[0], x[1], flag1, flag2, flag3, s, t);
+  h1Quadrangle(s, t, Dual(1.), _order, face.data());
 }
 
 void H1Quadrangle::getKeysInfo(std::vector<int> &functionTypeInfo,
