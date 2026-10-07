@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -13,31 +13,18 @@
 
 H1Point::H1Point()
 {
+  _dual = true;
   _numVertex = 1;
-  _numEdge = 0;
-  _numQuadFace = 0;
-  _numTriFace = 0;
+  _numEdge = _numQuadFace = _numTriFace = 0;
   _numVertexFunction = 1;
-  _numEdgeFunction = 0;
-  _numQuadFaceFunction = 0;
-  _numTriFaceFunction = 0;
-  _numBubbleFunction = 0;
+  _numEdgeFunction = _numQuadFaceFunction = _numTriFaceFunction =
+    _numBubbleFunction = 0;
 }
 
-void H1Point::generateBasis(double u, double v, double w,
-                            std::vector<double> &vertexBasis,
-                            std::vector<double> &edgeBasis,
-                            std::vector<double> &faceBasis,
-                            std::vector<double> &bubbleBasis)
-{ vertexBasis[0] = 1; }
-
-void H1Point::generateGradientBasis(
-  double u, double v, double w,
-  std::vector<std::vector<double>> &gradientVertex,
-  std::vector<std::vector<double>> &gradientEdge,
-  std::vector<std::vector<double>> &gradientFace,
-  std::vector<std::vector<double>> &gradientBubble)
-{ gradientVertex[0][0] = 1; }
+void H1Point::functions(const Dual *x, std::vector<Dual> &vertex,
+                        std::vector<Dual> &edge, std::vector<Dual> &face,
+                        std::vector<Dual> &bubble)
+{ vertex[0] = Dual(1.); }
 
 void H1Point::getKeysInfo(std::vector<int> &functionTypeInfo,
                           std::vector<int> &orderInfo)

@@ -138,6 +138,24 @@ void HierarchicalBasis::orientOneFace(double, double, double, int, int, int,
                                       int, V &)
 {
 }
+void HierarchicalBasis::functions(const Dual *, std::vector<Dual> &,
+                                  std::vector<Dual> &, std::vector<Dual> &,
+                                  std::vector<Dual> &)
+{
+}
+void HierarchicalBasis::functions(const Dual *, std::vector<Vec> &,
+                                  std::vector<Vec> &, std::vector<Vec> &,
+                                  std::vector<Vec> &)
+{
+}
+void HierarchicalBasis::faceFunctions(const Dual *, int, int, int, int,
+                                      std::vector<Dual> &)
+{
+}
+void HierarchicalBasis::faceFunctions(const Dual *, int, int, int, int,
+                                      std::vector<Vec> &)
+{
+}
 
 // conversions between the scalar and vector functions of the elements and the
 // arrays of values
@@ -233,6 +251,63 @@ void HierarchicalBasis::_orientFaces(const double *uvw, const double *face,
   }
 }
 
+// the value or the derivative of a function, depending on the space
+void HierarchicalBasis::_store(const Dual &f, double *out) const
+{
+  if(_space == H1) { out[0] = f.v; }
+  else {
+    for(int i = 0; i < 3; i++) out[i] = f.d[i];
+  }
+}
+
+void HierarchicalBasis::_store(const Vec &f, double *out) const
+{
+  if(_space == DIV_HDIV) { out[0] = f.div(); }
+  else if(_space == CURL_HCURL) {
+    for(int i = 0; i < 3; i++) out[i] = f.curl(i);
+  }
+  else {
+    for(int i = 0; i < 3; i++) out[i] = f.c[i].v;
+  }
+}
+
+template <class E>
+void HierarchicalBasis::_generateDual(const double *uvw, double *vertex,
+                                      double *edge, double *face,
+                                      double *bubble, double *quadFaces,
+                                      double *triFaces)
+{
+  const int nc = getNumComponents(), nQ = _numQuadFaceFunction,
+            nT = _numTriFaceFunction;
+  const Dual x[3] = {Dual::coordinate(0, uvw[0]), Dual::coordinate(1, uvw[1]),
+                     Dual::coordinate(2, uvw[2])};
+  std::vector<E> v(_numVertexFunction), e(_numEdgeFunction), f(nQ + nT),
+    b(_numBubbleFunction);
+  functions(x, v, e, f, b);
+  for(std::size_t i = 0; i < v.size(); i++) _store(v[i], vertex + nc * i);
+  for(std::size_t i = 0; i < e.size(); i++) _store(e[i], edge + nc * i);
+  for(std::size_t i = 0; i < f.size(); i++) _store(f[i], face + nc * i);
+  for(std::size_t i = 0; i < b.size(); i++) _store(b[i], bubble + nc * i);
+  // the face functions for all the orientations of the quadrilateral faces,
+  // then of the triangular faces
+  for(int o = 0; o < (nQ ? 8 : 0); o++) {
+    std::vector<E> oriented(f);
+    std::array<int, 3> fl = quadFaceFlags(o);
+    for(int i = 0; i < _numQuadFace; i++)
+      faceFunctions(x, fl[0], fl[1], fl[2], i, oriented);
+    for(int r = 0; r < nQ; r++)
+      _store(oriented[r], quadFaces + nc * (o * nQ + r));
+  }
+  for(int o = 0; o < (nT ? 6 : 0); o++) {
+    std::vector<E> oriented(f);
+    std::array<int, 3> fl = triFaceFlags(o);
+    for(int i = _numQuadFace; i < _numQuadFace + _numTriFace; i++)
+      faceFunctions(x, fl[0], fl[1], fl[2], i, oriented);
+    for(int r = 0; r < nT; r++)
+      _store(oriented[nQ + r], triFaces + nc * (o * nT + r));
+  }
+}
+
 // a reference element of the given family, with vertices tagged 1, 2, ...
 static MElement *referenceElement(int familyType,
                                   std::vector<MVertex *> &vertices)
@@ -281,13 +356,20 @@ void HierarchicalBasis::evaluate(const std::vector<double> &uvw,
     const double *p = &uvw[3 * q];
     double *v = vertex.data() + q * nV * nc, *e = edge.data() + q * nE * nc,
            *f = face.data() + q * nF * nc, *b = bubble.data() + q * nB * nc;
+    double *qf = quadFaces.data() + q * 8 * nQ * nc,
+           *tf = triFaces.data() + q * 6 * nT * nc;
+    if(_dual) {
+      if(_space == H1 || _space == GRAD_H1)
+        _generateDual<Dual>(p, v, e, f, b, qf, tf);
+      else
+        _generateDual<Vec>(p, v, e, f, b, qf, tf);
+      continue;
+    }
     if(scalar)
       _generate<double>(p, v, e, f, b);
     else
       _generate<std::vector<double>>(p, v, e, f, b);
     if(!nF) continue;
-    double *qf = quadFaces.data() + q * 8 * nQ * nc,
-           *tf = triFaces.data() + q * 6 * nT * nc;
     if(scalar)
       _orientFaces<double>(p, f, qf, tf);
     else

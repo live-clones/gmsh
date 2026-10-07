@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-#include "OrthogonalPoly.h"
+#include "Dual.h"
 
 // Hierarchical basis functions on a reference element. The functions are
 // associated with the vertices, edges, faces and interior ("bubble") of the
@@ -121,6 +121,25 @@ protected:
                              int flag3, int faceNumber,
                              std::vector<std::vector<double>> &faceFunctions);
 
+  // The converted elements (_dual set) instead compute each function once, as
+  // a dual number (Dual, for H1) or a vector of dual numbers (Vec, for H(curl)
+  // and H(div)), at the point x given as dual numbers: the derivatives
+  // (gradients, curls and divergences) follow. functions() gives the
+  // functions in the reference orientation, faceFunctions() replaces the
+  // functions of face faceNumber by those for the orientation of the face given
+  // by the flags.
+  bool _dual = false;
+  virtual void functions(const Dual *x, std::vector<Dual> &vertex,
+                         std::vector<Dual> &edge, std::vector<Dual> &face,
+                         std::vector<Dual> &bubble);
+  virtual void functions(const Dual *x, std::vector<Vec> &vertex,
+                         std::vector<Vec> &edge, std::vector<Vec> &face,
+                         std::vector<Vec> &bubble);
+  virtual void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
+                             int faceNumber, std::vector<Dual> &face);
+  virtual void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
+                             int faceNumber, std::vector<Vec> &face);
+
 private:
   // the functions at the point uvw in the reference orientation, and the face
   // functions for the 8 orientations of the quadrilateral faces and the 6
@@ -132,6 +151,12 @@ private:
   template <class T>
   void _orientFaces(const double *uvw, const double *face, double *quadFaces,
                     double *triFaces);
+  template <class E>
+  void _generateDual(const double *uvw, double *vertex, double *edge,
+                     double *face, double *bubble, double *quadFaces,
+                     double *triFaces);
+  void _store(const Dual &f, double *out) const;
+  void _store(const Vec &f, double *out) const;
 };
 
 #endif

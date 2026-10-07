@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,42 +14,17 @@
 
 #include "HierarchicalBasis.h"
 
-/*
- *
- *              *
- *
- */
-
+// H1 basis on a point: the constant function
 class H1Point : public HierarchicalBasis {
-private:
-  void generateGradientBasis(double u, double v, double w,
-                             std::vector<std::vector<double>> &gradientVertex,
-                             std::vector<std::vector<double>> &gradientEdge,
-                             std::vector<std::vector<double>> &gradientFace,
-                             std::vector<std::vector<double>> &gradientBubble);
-
 public:
   H1Point();
-  ~H1Point() override = default;
-
-  // vertexBasis=[v0]
-  void generateBasis(double u, double v, double w,
-                     std::vector<double> &vertexBasis,
-                     std::vector<double> &edgeBasis,
-                     std::vector<double> &faceBasis,
-                     std::vector<double> &bubbleBasis) override;
-  void generateBasis(double u, double v, double w,
-                     std::vector<std::vector<double>> &vertexBasis,
-                     std::vector<std::vector<double>> &edgeBasis,
-                     std::vector<std::vector<double>> &faceBasis,
-                     std::vector<std::vector<double>> &bubbleBasis) override
-  {
-    generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
-                          bubbleBasis);
-  }
-
   void getKeysInfo(std::vector<int> &functionTypeInfo,
                    std::vector<int> &orderInfo) override;
+
+protected:
+  void functions(const Dual *x, std::vector<Dual> &vertex,
+                 std::vector<Dual> &edge, std::vector<Dual> &face,
+                 std::vector<Dual> &bubble) override;
 };
 
 #endif

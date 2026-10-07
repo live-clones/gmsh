@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,58 +14,21 @@
 
 #include "HierarchicalBasis.h"
 
-/* MLine
- *
- *
- *                   ^ v
- *                   |
- *                   |
- *                   |
- *            v0     |     v1
- *       -----+------+-----+------> u
- *           -1      0     1
- *
- *
- */
-
+// H1 basis on the line u in [-1, 1], with vertices 0 (u = -1) and 1 (u = 1):
+// the 2 vertex functions, and the edge functions of degrees 2 to the order
 class H1Line : public HierarchicalBasis {
-private:
-  int _pe; //  edge function order in  direction u
-
-  static double
-  _affineCoordinate(int j, double u); // affine coordinate lambda_j, j={1,2}
-
-  void generateGradientBasis(double u, double v, double w,
-                             std::vector<std::vector<double>> &gradientVertex,
-                             std::vector<std::vector<double>> &gradientEdge,
-                             std::vector<std::vector<double>> &gradientFace,
-                             std::vector<std::vector<double>> &gradientBubble);
-
 public:
-  H1Line(int pe);
-  ~H1Line() override = default;
-
-  // vertexBasis = [v0,v1]
-  // edgeBasis   = [phie_{2},...,phie_{pe}]
-
-  void generateBasis(double u, double v, double w,
-                     std::vector<double> &vertexBasis,
-                     std::vector<double> &edgeBasis,
-                     std::vector<double> &faceBasis,
-                     std::vector<double> &bubbleBasis) override;
-
-  void generateBasis(double u, double v, double w,
-                     std::vector<std::vector<double>> &vertexBasis,
-                     std::vector<std::vector<double>> &edgeBasis,
-                     std::vector<std::vector<double>> &faceBasis,
-                     std::vector<std::vector<double>> &bubbleBasis) override
-  {
-    generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
-                          bubbleBasis);
-  }
-
+  H1Line(int order);
   void getKeysInfo(std::vector<int> &functionTypeInfo,
                    std::vector<int> &orderInfo) override;
+
+protected:
+  void functions(const Dual *x, std::vector<Dual> &vertex,
+                 std::vector<Dual> &edge, std::vector<Dual> &face,
+                 std::vector<Dual> &bubble) override;
+
+private:
+  int _order;
 };
 
 #endif

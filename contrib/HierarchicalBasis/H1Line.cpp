@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -11,75 +11,38 @@
 
 #include "H1Line.h"
 
-H1Line::H1Line(int pe)
+H1Line::H1Line(int order) : _order(order)
 {
-  _pe = pe;
+  _dual = true;
   _numVertex = 2;
   _numEdge = 1;
-  _numQuadFace = 0;
-  _numTriFace = 0;
+  _numQuadFace = _numTriFace = 0;
   _numVertexFunction = 2;
-  _numEdgeFunction = pe - 1;
-  _numQuadFaceFunction = 0;
-  _numTriFaceFunction = 0;
-  _numBubbleFunction = 0;
+  _numEdgeFunction = order - 1;
+  _numQuadFaceFunction = _numTriFaceFunction = _numBubbleFunction = 0;
 }
 
-double H1Line::_affineCoordinate(int j, double u)
+void H1Line::functions(const Dual *x, std::vector<Dual> &vertex,
+                       std::vector<Dual> &edge, std::vector<Dual> &face,
+                       std::vector<Dual> &bubble)
 {
-  switch(j) {
-  case(1): return 0.5 * (1 + u);
-  case(2): return 0.5 * (1 - u);
-  default: return 0.; // not reached
-  }
-}
-
-void H1Line::generateBasis(double u, double v, double w,
-                           std::vector<double> &vertexBasis,
-                           std::vector<double> &edgeBasis,
-                           std::vector<double> &faceBasis,
-                           std::vector<double> &bubbleBasis)
-{
-  double lambda1 = _affineCoordinate(1, u);
-  double lambda2 = _affineCoordinate(2, u);
-  double product = lambda1 * lambda2;
-  double substraction = lambda1 - lambda2;
-  // vertex shape functions:
-  vertexBasis[0] = lambda2;
-  vertexBasis[1] = lambda1;
-  // edge functions :
-  for(int k = 2; k <= _pe; k++) {
-    edgeBasis[k - 2] =
-      product * OrthogonalPoly::EvalKernelFunction(k - 2, substraction);
-  }
-}
-
-void H1Line::generateGradientBasis(
-  double u, double v, double w,
-  std::vector<std::vector<double>> &gradientVertex,
-  std::vector<std::vector<double>> &gradientEdge,
-  std::vector<std::vector<double>> &gradientFace,
-  std::vector<std::vector<double>> &gradientBubble)
-{
-  double dlambda1 = 0.5;
-  double dlambda2 = -0.5;
-  // vertex gradient functions:
-  gradientVertex[0][0] = dlambda2;
-  gradientVertex[1][0] = dlambda1;
-  for(int k = 2; k <= _pe; k++) {
-    gradientEdge[k - 2][0] = OrthogonalPoly::EvalDLobatto(k, u);
-  }
+  // the affine coordinates of the vertices
+  Dual l0 = 0.5 * (1. - x[0]), l1 = 0.5 * (1. + x[0]);
+  vertex[0] = l0;
+  vertex[1] = l1;
+  for(int k = 2; k <= _order; k++)
+    edge[k - 2] = l1 * l0 * kernel(k - 2, l1 - l0);
 }
 
 void H1Line::getKeysInfo(std::vector<int> &functionTypeInfo,
                          std::vector<int> &orderInfo)
 {
-  functionTypeInfo[0] = 0;
-  orderInfo[0] = 1;
-  functionTypeInfo[1] = 0;
-  orderInfo[1] = 1;
-  for(int k = 2; k <= _pe; k++) {
-    orderInfo[k] = k;
+  for(int i = 0; i < 2; i++) {
+    functionTypeInfo[i] = 0;
+    orderInfo[i] = 1;
+  }
+  for(int k = 2; k <= _order; k++) {
     functionTypeInfo[k] = 1;
+    orderInfo[k] = k;
   }
 }

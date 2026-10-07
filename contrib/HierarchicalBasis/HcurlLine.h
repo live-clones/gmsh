@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,57 +14,22 @@
 
 #include "HierarchicalBasis.h"
 
-/*
- *
- *          ^ v
- *          |
- *          |
- *   0      |     1
- * --+------+-----+---> u
- *
- */
-
+// H(curl) basis on the line u in [-1, 1]: the edge functions L_k(u) e_u, for
+// the Legendre polynomials L_k of degrees k = 0 to the order (the Whitney
+// function and its hierarchical extensions)
 class HcurlLine : public HierarchicalBasis {
-private:
-  int _pe; //  edge function order in  direction u
-
-  static double
-  _affineCoordinate(int j, double u); // affine coordinate lambda_j j={1,2}
-
-  virtual void
-  generateHcurlBasis(double u, double v, double w,
-                     std::vector<std::vector<double>> &edgeBasis,
-                     std::vector<std::vector<double>> &faceBasis,
-                     std::vector<std::vector<double>> &bubbleBasis);
-  virtual void generateCurlBasis(double u, double v, double w,
-                                 std::vector<std::vector<double>> &edgeBasis,
-                                 std::vector<std::vector<double>> &faceBasis,
-                                 std::vector<std::vector<double>> &bubbleBasis);
-
-  static double dotProduct(const std::vector<double> &u,
-                           const std::vector<double> &v);
-
 public:
   HcurlLine(int order);
+  void getKeysInfo(std::vector<int> &functionTypeInfo,
+                   std::vector<int> &orderInfo) override;
 
-  virtual ~HcurlLine() = default;
+protected:
+  void functions(const Dual *x, std::vector<Vec> &vertex,
+                 std::vector<Vec> &edge, std::vector<Vec> &face,
+                 std::vector<Vec> &bubble) override;
 
-  virtual void generateBasis(double u, double v, double w,
-                             std::vector<std::vector<double>> &vertexBasis,
-                             std::vector<std::vector<double>> &edgeBasis,
-                             std::vector<std::vector<double>> &faceBasis,
-                             std::vector<std::vector<double>> &bubbleBasis)
-  {
-    if(_space == HCURL) {
-      generateHcurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
-    }
-    else if(_space == CURL_HCURL) {
-      generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
-    }
-  }
-
-  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
-                           std::vector<int> &orderInfo);
+private:
+  int _order;
 };
 
 #endif
