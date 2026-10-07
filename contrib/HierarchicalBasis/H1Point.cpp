@@ -13,7 +13,6 @@
 
 H1Point::H1Point()
 {
-  _dual = true;
   _numVertex = 1;
   _numEdge = _numQuadFace = _numTriFace = 0;
   _numVertexFunction = 1;

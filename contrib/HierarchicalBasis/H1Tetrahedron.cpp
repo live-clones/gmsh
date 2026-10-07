@@ -14,7 +14,6 @@
 
 H1Tetrahedron::H1Tetrahedron(int order) : _order(order)
 {
-  _dual = true;
   _numVertex = 4;
   _numEdge = 6;
   _numTriFace = 4;

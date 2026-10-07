@@ -14,7 +14,6 @@
 
 HcurlHexahedron::HcurlHexahedron(int order) : _order(order)
 {
-  _dual = true;
   _numVertex = 8;
   _numEdge = 12;
   _numQuadFace = 6;

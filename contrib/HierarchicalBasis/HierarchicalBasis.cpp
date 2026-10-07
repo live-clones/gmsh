@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <array>
-#include <type_traits>
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "MPoint.h"
@@ -119,25 +118,7 @@ std::vector<int> HierarchicalBasis::getEdgeFunctionSignsForReversedEdges()
   return signs;
 }
 
-// the versions of the operations an element does not need do nothing
-typedef std::vector<double> S;
-typedef std::vector<std::vector<double>> V;
-void HierarchicalBasis::generateBasis(double, double, double, S &, S &, S &,
-                                      S &)
-{
-}
-void HierarchicalBasis::generateBasis(double, double, double, V &, V &, V &,
-                                      V &)
-{
-}
-void HierarchicalBasis::orientOneFace(double, double, double, int, int, int,
-                                      int, S &)
-{
-}
-void HierarchicalBasis::orientOneFace(double, double, double, int, int, int,
-                                      int, V &)
-{
-}
+// the version of the functions an element does not need does nothing
 void HierarchicalBasis::functions(const Dual *, std::vector<Dual> &,
                                   std::vector<Dual> &, std::vector<Dual> &,
                                   std::vector<Dual> &)
@@ -155,46 +136,6 @@ void HierarchicalBasis::faceFunctions(const Dual *, int, int, int, int,
 void HierarchicalBasis::faceFunctions(const Dual *, int, int, int, int,
                                       std::vector<Vec> &)
 {
-}
-
-// conversions between the scalar and vector functions of the elements and the
-// arrays of values
-static void zero(double &v) { v = 0.; }
-static void zero(std::vector<double> &v) { v.assign(3, 0.); }
-static void copy(double v, double *out) { out[0] = v; }
-static void copy(const std::vector<double> &v, double *out)
-{
-  out[0] = v[0];
-  out[1] = v[1];
-  out[2] = v[2];
-}
-static void copy(const double *in, double &v) { v = in[0]; }
-static void copy(const double *in, std::vector<double> &v)
-{
-  v[0] = in[0];
-  v[1] = in[1];
-  v[2] = in[2];
-}
-template <class T> static void copyAll(const std::vector<T> &v, double *out)
-{
-  int nc = std::is_same<T, double>::value ? 1 : 3;
-  for(std::size_t i = 0; i < v.size(); i++) copy(v[i], out + nc * i);
-}
-
-template <class T>
-void HierarchicalBasis::_generate(const double *uvw, double *vertex,
-                                  double *edge, double *face, double *bubble)
-{
-  T z;
-  zero(z);
-  std::vector<T> vt(_numVertexFunction, z), et(_numEdgeFunction, z),
-    ft(_numQuadFaceFunction + _numTriFaceFunction, z),
-    bt(_numBubbleFunction, z);
-  generateBasis(uvw[0], uvw[1], uvw[2], vt, et, ft, bt);
-  copyAll(vt, vertex);
-  copyAll(et, edge);
-  copyAll(ft, face);
-  copyAll(bt, bubble);
 }
 
 // the flags of an orientation of a quadrilateral face (0 to 7) or of a
@@ -222,35 +163,6 @@ static int quadFaceIndex(const std::vector<int> &flags)
 static int triFaceIndex(const std::vector<int> &flags)
 { return flags[0] + (flags[1] == -1 ? 3 : 0); }
 
-template <class T>
-void HierarchicalBasis::_orientFaces(const double *uvw, const double *face,
-                                     double *quadFaces, double *triFaces)
-{
-  const int nc = getNumComponents(), nQ = _numQuadFaceFunction,
-            nT = _numTriFaceFunction;
-  T z;
-  zero(z);
-  std::vector<T> oriented(nQ + nT, z);
-  // all the quadrilateral faces in the same orientation, then all the
-  // triangular faces
-  for(int o = 0; o < (nQ ? 8 : 0); o++) {
-    for(int r = 0; r < nQ + nT; r++) copy(face + nc * r, oriented[r]);
-    std::array<int, 3> f = quadFaceFlags(o);
-    for(int i = 0; i < _numQuadFace; i++)
-      orientOneFace(uvw[0], uvw[1], uvw[2], f[0], f[1], f[2], i, oriented);
-    for(int r = 0; r < nQ; r++)
-      copy(oriented[r], quadFaces + nc * (o * nQ + r));
-  }
-  for(int o = 0; o < (nT ? 6 : 0); o++) {
-    for(int r = 0; r < nQ + nT; r++) copy(face + nc * r, oriented[r]);
-    std::array<int, 3> f = triFaceFlags(o);
-    for(int i = _numQuadFace; i < _numQuadFace + _numTriFace; i++)
-      orientOneFace(uvw[0], uvw[1], uvw[2], f[0], f[1], f[2], i, oriented);
-    for(int r = 0; r < nT; r++)
-      copy(oriented[nQ + r], triFaces + nc * (o * nT + r));
-  }
-}
-
 // the value or the derivative of a function, depending on the space
 void HierarchicalBasis::_store(const Dual &f, double *out) const
 {
@@ -272,10 +184,9 @@ void HierarchicalBasis::_store(const Vec &f, double *out) const
 }
 
 template <class E>
-void HierarchicalBasis::_generateDual(const double *uvw, double *vertex,
-                                      double *edge, double *face,
-                                      double *bubble, double *quadFaces,
-                                      double *triFaces)
+void HierarchicalBasis::_generate(const double *uvw, double *vertex,
+                                  double *edge, double *face, double *bubble,
+                                  double *quadFaces, double *triFaces)
 {
   const int nc = getNumComponents(), nQ = _numQuadFaceFunction,
             nT = _numTriFaceFunction;
@@ -351,29 +262,16 @@ void HierarchicalBasis::evaluate(const std::vector<double> &uvw,
   std::vector<double> vertex(nq * nV * nc), edge(nq * nE * nc),
     face(nq * nF * nc), bubble(nq * nB * nc), quadFaces(nq * 8 * nQ * nc),
     triFaces(nq * 6 * nT * nc);
-  bool scalar = (nc == 1);
   for(int q = 0; q < nq; q++) {
     const double *p = &uvw[3 * q];
     double *v = vertex.data() + q * nV * nc, *e = edge.data() + q * nE * nc,
            *f = face.data() + q * nF * nc, *b = bubble.data() + q * nB * nc;
     double *qf = quadFaces.data() + q * 8 * nQ * nc,
            *tf = triFaces.data() + q * 6 * nT * nc;
-    if(_dual) {
-      if(_space == H1 || _space == GRAD_H1)
-        _generateDual<Dual>(p, v, e, f, b, qf, tf);
-      else
-        _generateDual<Vec>(p, v, e, f, b, qf, tf);
-      continue;
-    }
-    if(scalar)
-      _generate<double>(p, v, e, f, b);
+    if(_space == H1 || _space == GRAD_H1)
+      _generate<Dual>(p, v, e, f, b, qf, tf);
     else
-      _generate<std::vector<double>>(p, v, e, f, b);
-    if(!nF) continue;
-    if(scalar)
-      _orientFaces<double>(p, f, qf, tf);
-    else
-      _orientFaces<std::vector<double>>(p, f, qf, tf);
+      _generate<Vec>(p, v, e, f, b, qf, tf);
   }
   const std::vector<int> signs = getEdgeFunctionSignsForReversedEdges();
   const int perEdge = _numEdge ? nE / _numEdge : 0;

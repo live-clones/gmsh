@@ -14,7 +14,6 @@
 
 H1Quadrangle::H1Quadrangle(int order) : _order(order)
 {
-  _dual = true;
   _numVertex = 4;
   _numEdge = 4;
   _numQuadFace = 1;

@@ -14,7 +14,6 @@
 
 HcurlLine::HcurlLine(int order) : _order(order)
 {
-  _dual = true;
   _numVertex = 2;
   _numEdge = 1;
   _numQuadFace = _numTriFace = 0;

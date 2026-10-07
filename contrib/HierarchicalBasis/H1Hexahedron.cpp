@@ -18,7 +18,6 @@ static const int vertices[8][3] = {{1, 3, 5}, {0, 3, 5}, {0, 2, 5}, {1, 2, 5},
 
 H1Hexahedron::H1Hexahedron(int order) : _order(order)
 {
-  _dual = true;
   _numVertex = 8;
   _numEdge = 12;
   _numQuadFace = 6;

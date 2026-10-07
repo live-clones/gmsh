@@ -17,7 +17,6 @@ static const int quadEdges[3][2] = {{0, 1}, {0, 2}, {1, 2}};
 
 HcurlPrism::HcurlPrism(int order) : _order(order)
 {
-  _dual = true;
   _numVertex = 6;
   _numEdge = 9;
   _numTriFace = (order < 2) ? 0 : 2;

@@ -14,7 +14,6 @@
 
 HdivTriangle::HdivTriangle(int order) : _order(order)
 {
-  _dual = true;
   _numVertex = 3;
   _numEdge = 3;
   _numTriFace = 1;

@@ -14,7 +14,6 @@
 
 H1Triangle::H1Triangle(int order) : _order(order)
 {
-  _dual = true;
   _numVertex = 3;
   _numEdge = 3;
   _numTriFace = 1;

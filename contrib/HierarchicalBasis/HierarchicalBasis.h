@@ -96,39 +96,14 @@ protected:
 
   HierarchicalBasis() = default;
 
-  // Each element computes, at one point (u, v, w), the basis functions in the
-  // reference orientation (generateBasis), and the face functions of face
-  // faceNumber for the orientation of the face given by the flags
-  // (orientOneFace). Both are implemented for scalar (std::vector<double>)
-  // and vector (std::vector<std::vector<double>>) functions; which version is
-  // used depends on the space (scalar values and vector gradients for H1,
-  // vector values and curls for H(curl), vector values and scalar divergences
-  // for H(div)). The versions an element does not need do nothing.
-  virtual void generateBasis(double u, double v, double w,
-                             std::vector<double> &vertexBasis,
-                             std::vector<double> &edgeBasis,
-                             std::vector<double> &faceBasis,
-                             std::vector<double> &bubbleBasis);
-  virtual void generateBasis(double u, double v, double w,
-                             std::vector<std::vector<double>> &vertexBasis,
-                             std::vector<std::vector<double>> &edgeBasis,
-                             std::vector<std::vector<double>> &faceBasis,
-                             std::vector<std::vector<double>> &bubbleBasis);
-  virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
-                             int flag3, int faceNumber,
-                             std::vector<double> &faceFunctions);
-  virtual void orientOneFace(double u, double v, double w, int flag1, int flag2,
-                             int flag3, int faceNumber,
-                             std::vector<std::vector<double>> &faceFunctions);
-
-  // The converted elements (_dual set) instead compute each function once, as
-  // a dual number (Dual, for H1) or a vector of dual numbers (Vec, for H(curl)
-  // and H(div)), at the point x given as dual numbers: the derivatives
-  // (gradients, curls and divergences) follow. functions() gives the
-  // functions in the reference orientation, faceFunctions() replaces the
-  // functions of face faceNumber by those for the orientation of the face given
-  // by the flags.
-  bool _dual = false;
+  // Each element computes its basis functions at the point x (the reference
+  // coordinates u, v, w as dual numbers), each function once, as a dual number
+  // (Dual) for H1 or a vector of dual numbers (Vec) for H(curl) and H(div): the
+  // derivatives (gradients, curls, divergences) follow. functions() gives the
+  // functions in the reference orientation, faceFunctions() replaces those of
+  // face faceNumber by the functions for the orientation of the face given by
+  // the flags. Each element implements the version of its space; the other one
+  // does nothing.
   virtual void functions(const Dual *x, std::vector<Dual> &vertex,
                          std::vector<Dual> &edge, std::vector<Dual> &face,
                          std::vector<Dual> &bubble);
@@ -145,16 +120,10 @@ private:
   // functions for the 8 orientations of the quadrilateral faces and the 6
   // orientations of the triangular faces, getNumComponents() values per
   // function
-  template <class T>
-  void _generate(const double *uvw, double *vertex, double *edge, double *face,
-                 double *bubble);
-  template <class T>
-  void _orientFaces(const double *uvw, const double *face, double *quadFaces,
-                    double *triFaces);
   template <class E>
-  void _generateDual(const double *uvw, double *vertex, double *edge,
-                     double *face, double *bubble, double *quadFaces,
-                     double *triFaces);
+  void _generate(const double *uvw, double *vertex, double *edge, double *face,
+                 double *bubble, double *quadFaces, double *triFaces);
+  // the value or the derivative of a function, depending on the space
   void _store(const Dual &f, double *out) const;
   void _store(const Vec &f, double *out) const;
 };
