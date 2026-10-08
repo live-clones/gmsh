@@ -41,8 +41,6 @@ typedef std::set<std::pair<int, GEntity *>, OriGEntityPtrFullLessThan>
 #define hashmapentity                                                          \
   std::unordered_map<GEntity *, setorientity, GEntityPtrFullHash,              \
                      GEntityPtrFullEqual>
-#define hashmapelement                                                         \
-  std::unordered_map<MElement *, GEntity *, MElementPtrHash, MElementPtrEqual>
 #define hashmapelementpart                                                     \
   std::unordered_map<MElement *, int, MElementPtrHash, MElementPtrEqual>
 // The second member indexes a table of distinct partition lists rather than
@@ -1912,62 +1910,67 @@ static void createNewEntities(GModel *model, Graph *graph = nullptr)
   }
 }
 
-static void fillElementToEntity(GModel *model, hashmapelement &elmToEntity,
-                                int dim)
-{
-  elmToEntity.reserve(model->getNumMeshElements());
+// The entity of each element. Element numbers are usually dense, so the
+// entities are stored in an array indexed by element number, which is filled
+// in parallel and uses less memory than a hash map; a hash map is only used
+// if the numbering is sparse.
+class elementEntityMap {
+private:
+  std::vector<GEntity *> _byNum;
+  std::unordered_map<MElement *, GEntity *, MElementPtrHash, MElementPtrEqual>
+    _map;
 
-  // Loop over volumes
-  if(dim < 0 || dim == 3) {
-    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
-      for(auto itElm = (*it)->tetrahedra.begin();
-          itElm != (*it)->tetrahedra.end(); ++itElm)
-        elmToEntity.insert(std::make_pair(*itElm, *it));
-      for(auto itElm = (*it)->hexahedra.begin();
-          itElm != (*it)->hexahedra.end(); ++itElm)
-        elmToEntity.insert(std::make_pair(*itElm, *it));
-      for(auto itElm = (*it)->prisms.begin(); itElm != (*it)->prisms.end();
-          ++itElm)
-        elmToEntity.insert(std::make_pair(*itElm, *it));
-      for(auto itElm = (*it)->pyramids.begin(); itElm != (*it)->pyramids.end();
-          ++itElm)
-        elmToEntity.insert(std::make_pair(*itElm, *it));
-      for(auto itElm = (*it)->trihedra.begin(); itElm != (*it)->trihedra.end();
-          ++itElm)
-        elmToEntity.insert(std::make_pair(*itElm, *it));
+public:
+  GEntity *get(MElement *e) const
+  {
+    if(!_byNum.empty())
+      return e->getNum() < _byNum.size() ? _byNum[e->getNum()] : nullptr;
+    auto it = _map.find(e);
+    return it == _map.end() ? nullptr : it->second;
+  }
+  void clear()
+  {
+    std::vector<GEntity *>().swap(_byNum);
+    _map.clear();
+  }
+  // fills the map with the elements of the entities of dimension dim (all if
+  // dim < 0)
+  void fill(GModel *model, int dim)
+  {
+    clear();
+    std::vector<GEntity *> entities;
+    model->getEntities(entities, dim);
+    std::vector<std::size_t> offset(entities.size() + 1, 0);
+    for(std::size_t i = 0; i < entities.size(); i++)
+      offset[i + 1] = offset[i] + entities[i]->getNumMeshElements();
+    const std::size_t num = offset.back();
+    const std::size_t maxNum = model->getMaxElementNumber();
+    if(maxNum > 2 * num + 1000000) {
+      _map.reserve(num);
+      for(std::size_t i = 0; i < entities.size(); i++)
+        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
+          _map.insert(
+            std::make_pair(entities[i]->getMeshElement(j), entities[i]));
+      return;
+    }
+    _byNum.assign(maxNum + 1, nullptr);
+    const std::size_t chunkSize = 4096;
+    const std::size_t numChunks = (num + chunkSize - 1) / chunkSize;
+    const int nthreads = CTX::instance()->numThreadsFor(num, 100000);
+#pragma omp parallel for schedule(dynamic, 1) num_threads(nthreads)
+    for(std::size_t c = 0; c < numChunks; c++) {
+      const std::size_t end = std::min(num, (c + 1) * chunkSize);
+      std::size_t k =
+        std::upper_bound(offset.begin(), offset.end(), c * chunkSize) -
+        offset.begin() - 1;
+      for(std::size_t i = c * chunkSize; i < end; i++) {
+        while(i >= offset[k + 1]) k++;
+        MElement *e = entities[k]->getMeshElement(i - offset[k]);
+        if(e->getNum() < _byNum.size()) _byNum[e->getNum()] = entities[k];
+      }
     }
   }
-
-  // Loop over surfaces
-  if(dim < 0 || dim == 2) {
-    for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
-      for(auto itElm = (*it)->triangles.begin();
-          itElm != (*it)->triangles.end(); ++itElm)
-        elmToEntity.insert(std::make_pair(*itElm, *it));
-      for(auto itElm = (*it)->quadrangles.begin();
-          itElm != (*it)->quadrangles.end(); ++itElm)
-        elmToEntity.insert(std::make_pair(*itElm, *it));
-    }
-  }
-
-  // Loop over curves
-  if(dim < 0 || dim == 1) {
-    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
-      for(auto itElm = (*it)->lines.begin(); itElm != (*it)->lines.end();
-          ++itElm)
-        elmToEntity.insert(std::make_pair(*itElm, *it));
-    }
-  }
-
-  // Loop over points
-  if(dim < 0 || dim == 0) {
-    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
-      for(auto itElm = (*it)->points.begin(); itElm != (*it)->points.end();
-          ++itElm)
-        elmToEntity.insert(std::make_pair(*itElm, *it));
-    }
-  }
-}
+};
 
 static MElement *getReferenceElement(
   const elementPartitionList &pairs,
@@ -2088,16 +2091,16 @@ static PART_ENTITY *createPartitionEntity(
   return ppe;
 }
 
-static partitionVertex *assignPartitionBoundary(
-  GModel *model, MVertex *ve, MElement *reference,
-  const std::vector<int> &partitions,
-  partitionEntityMap<partitionVertex> &pvertices,
-  hashmapelement &elementToEntity, int &numEntity)
+static partitionVertex *
+assignPartitionBoundary(GModel *model, MVertex *ve, MElement *reference,
+                        const std::vector<int> &partitions,
+                        partitionEntityMap<partitionVertex> &pvertices,
+                        const elementEntityMap &elementToEntity, int &numEntity)
 {
   partitionVertex *newEntity = nullptr;
   partitionVertex *ppv = createPartitionEntity(model, numEntity, partitions,
-                                   elementToEntity[reference], &newEntity,
-                                   pvertices);
+                                               elementToEntity.get(reference),
+                                               &newEntity, pvertices);
 
   ppv->addPoint(new MPoint(ve));
 
@@ -2275,11 +2278,10 @@ static void addFacetElement(partitionEdge *pe, MElement *e)
 // also distinguished by the volume on the other side, as a surface can only
 // bound two volumes.
 template <class FACET, class PART_ENTITY>
-static void
-createPartitionBoundaries(Graph &graph, GModel *model,
-                          const std::vector<std::vector<int>> &lists,
-                          partitionEntityMap<PART_ENTITY> &pentities,
-                          hashmapelement &elementToEntity, int &numEntity)
+static void createPartitionBoundaries(
+  Graph &graph, GModel *model, const std::vector<std::vector<int>> &lists,
+  partitionEntityMap<PART_ENTITY> &pentities,
+  const elementEntityMap &elementToEntity, int &numEntity)
 {
   const int dim = graph.dim();
   // the order of the reference element
@@ -2368,8 +2370,7 @@ createPartitionBoundaries(Graph &graph, GModel *model,
   std::vector<std::vector<GEntity *>> entities(numChunks);
   std::vector<std::vector<int>> orientations(numChunks);
   auto entityOf = [&elementToEntity](MElement *e) -> GEntity * {
-    auto it = elementToEntity.find(e);
-    return it == elementToEntity.end() ? nullptr : it->second;
+    return elementToEntity.get(e);
   };
 #pragma omp parallel for schedule(dynamic, 1) num_threads(nthreads)
   for(std::size_t c = 0; c < numChunks; c++) {
@@ -2396,9 +2397,13 @@ createPartitionBoundaries(Graph &graph, GModel *model,
   // them, in the order of the graph. Every facet records the entities it
   // bounds, unless already recorded; a zero orientation cannot happen on a
   // conformal mesh (see assignNewEntityBRep): the pair is left for another
-  // facet.
-  std::set<std::pair<GEntity *, GEntity *>> bounds;
-  std::vector<int> partitions;
+  // facet. Consecutive facets mostly belong to the same partition entity, so
+  // the last one and the entities it bounds are kept at hand.
+  std::unordered_map<GEntity *, std::vector<GEntity *>> bounds;
+  std::vector<int> partitions, lastPartitions;
+  GEntity *lastReference = nullptr, *lastOther = nullptr;
+  PART_ENTITY *pe = nullptr;
+  std::vector<GEntity *> *peBounds = nullptr;
   for(std::size_t c = 0; c < numChunks; c++) {
     for(std::size_t r = 0; r < records[c].size(); r++) {
       const facetRecord &rec = records[c][r];
@@ -2411,20 +2416,28 @@ createPartitionBoundaries(Graph &graph, GModel *model,
       std::sort(partitions.begin(), partitions.end());
       partitions.erase(std::unique(partitions.begin(), partitions.end()),
                        partitions.end());
+      GEntity *reference = entities[c][rec.first];
       // in 3D, a partition surface bounds the volumes on both sides
       GEntity *other = (dim == 3 && rec.last - rec.first == 2) ?
                          entities[c][rec.first + 1] :
                          nullptr;
-      PART_ENTITY *newEntity = nullptr;
-      PART_ENTITY *pe = createPartitionEntity(model, numEntity, partitions,
-                                              entities[c][rec.first],
-                                              &newEntity, pentities, other);
+      if(!pe || reference != lastReference || other != lastOther ||
+         partitions != lastPartitions) {
+        PART_ENTITY *newEntity = nullptr;
+        pe = createPartitionEntity(model, numEntity, partitions, reference,
+                                   &newEntity, pentities, other);
+        peBounds = &bounds[pe];
+        lastReference = reference;
+        lastOther = other;
+        lastPartitions = partitions;
+      }
       addFacetElement(pe, facets[c][r]);
       for(std::size_t j = rec.first; j < rec.last; j++) {
         GEntity *b = entities[c][j];
         if(!orientations[c][j] ||
-           !bounds.insert(std::make_pair(static_cast<GEntity *>(pe), b)).second)
+           std::find(peBounds->begin(), peBounds->end(), b) != peBounds->end())
           continue;
+        peBounds->push_back(b);
         addPartitionBoundary(b, pe, orientations[c][j]);
       }
     }
@@ -2436,31 +2449,59 @@ createPartitionBoundaries(Graph &graph, GModel *model,
   }
 }
 
-static void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
+static void assignNewEntityBRep(Graph &graph,
+                                const elementEntityMap &elementToEntity)
 {
+  // The pairs of entities (of an element, of a neighbor of dimension one
+  // less) are found in parallel, by chunks of elements, each chunk keeping
+  // the first element pair of each entity pair, then merged in the order of
+  // the chunks: the orientation of an entity pair is the one of its first
+  // element pair in the graph, as when this was serial.
+  struct entityPair {
+    GEntity *g1, *g2;
+    int ori;
+  };
+  const std::size_t chunkSize = 4096;
+  const std::size_t numChunks = (graph.ne() + chunkSize - 1) / chunkSize;
+  std::vector<std::vector<entityPair>> pairs(numChunks);
+  auto entityOf = [&elementToEntity](MElement *e) -> GEntity * {
+    return elementToEntity.get(e);
+  };
+  const int nthreads = CTX::instance()->numThreadsFor(graph.ne(), 10000);
+#pragma omp parallel for schedule(dynamic, 1) num_threads(nthreads)
+  for(std::size_t c = 0; c < numChunks; c++) {
+    std::set<std::pair<GEntity *, GEntity *>> seen;
+    const std::size_t end = std::min(graph.ne(), (c + 1) * chunkSize);
+    for(std::size_t i = c * chunkSize; i < end; i++) {
+      MElement *current = graph.element(i);
+      for(idx_t j = graph.xadj(i); j < graph.xadj(i + 1); j++) {
+        MElement *neighbor = graph.element(graph.adjncy(j));
+        if(current->getDim() != neighbor->getDim() + 1) continue;
+        GEntity *g1 = entityOf(current);
+        GEntity *g2 = entityOf(neighbor);
+        if(seen.count(std::make_pair(g1, g2))) continue;
+        const int ori = computeOrientation(current, neighbor);
+        // A zero orientation means the elements are neighbors in the
+        // node-based dual graph without one being a facet of the other,
+        // which cannot happen on a conformal mesh. Record nothing: MSH4
+        // encodes the orientation as the sign of the tag, so a 0 would read
+        // back as -1. Leave the pair unmarked, so another element pair can
+        // still establish the relation with a real orientation.
+        if(!ori) continue;
+        seen.insert(std::make_pair(g1, g2));
+        entityPair p = {g1, g2, ori};
+        pairs[c].push_back(p);
+      }
+    }
+  }
+
   std::set<std::pair<GEntity *, GEntity *> > brepWithoutOri;
   hashmapentity brep;
-  for(std::size_t i = 0; i < graph.ne(); i++) {
-    MElement *current = graph.element(i);
-    for(idx_t j = graph.xadj(i); j < graph.xadj(i + 1); j++) {
-      if(current->getDim() == graph.element(graph.adjncy(j))->getDim() + 1) {
-        GEntity *g1 = elementToEntity[current];
-        GEntity *g2 = elementToEntity[graph.element(graph.adjncy(j))];
-        if(brepWithoutOri.find(std::pair<GEntity *, GEntity *>(g1, g2)) ==
-           brepWithoutOri.end()) {
-          const int ori =
-            computeOrientation(current, graph.element(graph.adjncy(j)));
-          // A zero orientation means the elements are neighbors in the
-          // node-based dual graph without one being a facet of the other,
-          // which cannot happen on a conformal mesh. Record nothing: MSH4
-          // encodes the orientation as the sign of the tag, so a 0 would read
-          // back as -1. Leave the pair unmarked, so another element pair can
-          // still establish the relation with a real orientation.
-          if(!ori) continue;
-          brepWithoutOri.insert(std::make_pair(g1, g2));
-          brep[g1].insert(std::make_pair(ori, g2));
-        }
-      }
+  for(std::size_t c = 0; c < numChunks; c++) {
+    for(std::size_t k = 0; k < pairs[c].size(); k++) {
+      const entityPair &p = pairs[c][k];
+      if(brepWithoutOri.insert(std::make_pair(p.g1, p.g2)).second)
+        brep[p.g1].insert(std::make_pair(p.ori, p.g2));
     }
   }
 
@@ -2647,8 +2688,8 @@ static void createPartitionTopology(
   Graph &meshGraph)
 {
   int meshDim = model->getMeshDim();
-  hashmapelement elementToEntity;
-  fillElementToEntity(model, elementToEntity, -1);
+  elementEntityMap elementToEntity;
+  elementToEntity.fill(model, -1);
   assignNewEntityBRep(meshGraph, elementToEntity);
 
   partitionEntityMap<partitionFace> pfaces;
@@ -2691,7 +2732,7 @@ static void createPartitionTopology(
     }
 
     elementToEntity.clear();
-    fillElementToEntity(model, elementToEntity, 2);
+    elementToEntity.fill(model, 2);
   }
 
   if(meshDim >= 2) {
@@ -2743,7 +2784,7 @@ static void createPartitionTopology(
     // there first, or the point ends up bounding the middle of a curve
     splitPartitionCurvesAtJunctions(model);
     elementToEntity.clear();
-    fillElementToEntity(model, elementToEntity, 1);
+    elementToEntity.fill(model, 1);
   }
 
   if(meshDim >= 1) {
@@ -2816,7 +2857,7 @@ static void createPartitionTopology(
           boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++)
           boundaryEntityAndRefElement.insert(std::make_pair(
-            elementToEntity[it->second[i].first], it->second[i].first));
+            elementToEntity.get(it->second[i].first), it->second[i].first));
 
         assignBrep(model, boundaryEntityAndRefElement, pv);
       }
