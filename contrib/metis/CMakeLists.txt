@@ -55,7 +55,7 @@ set(SRC
   libmetis/mmd.c
   libmetis/ometis.c
   libmetis/options.c
- # libmetis/parmetis.c
+  libmetis/parmetis.c
   libmetis/pmetis.c
   libmetis/refine.c
   libmetis/separator.c

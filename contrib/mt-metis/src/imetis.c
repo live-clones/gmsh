@@ -17,7 +17,7 @@
 
 
 #include "imetis.h"
-#include "../metis/include/metis.h"
+#include <metis.h> /* For Gmsh: contrib/metis */
 
 
 
@@ -165,7 +165,7 @@ wgt_type metis_initcut(
 
   tid_type const myid = dlthread_get_id(ctrl->comm);
 
-  __METIS_SetDefaultOptions(options);
+  METIS_SetDefaultOptions(options);
 
   m_ncon = 1;
 
@@ -196,11 +196,11 @@ wgt_type metis_initcut(
   status = METIS_OK;
   if (rb || nparts == 2) {
     options[METIS_OPTION_RTYPE] = METIS_RTYPE_FM;
-    status = __METIS_PartGraphRecursive(&m_nvtxs,&m_ncon,m_xadj, \
+    status = METIS_PartGraphRecursive(&m_nvtxs,&m_ncon,m_xadj, \
         m_adjncy,m_vwgt,NULL,m_adjwgt,&m_nparts,m_tpwgts, \
         &ubf,options,&cut,m_where);
   } else {
-    status = __METIS_PartGraphKway(&m_nvtxs,&m_ncon,m_xadj, \
+    status = METIS_PartGraphKway(&m_nvtxs,&m_ncon,m_xadj, \
         m_adjncy,m_vwgt,NULL,m_adjwgt,&m_nparts,m_tpwgts, \
         &ubf,options,&cut,m_where);
   }
@@ -236,7 +236,7 @@ wgt_type metis_initsep(
 
   tid_type const myid = dlthread_get_id(ctrl->comm);
 
-  __METIS_SetDefaultOptions(options);
+  METIS_SetDefaultOptions(options);
 
   options[METIS_OPTION_NITER] = 10;
   options[METIS_OPTION_DBGLVL] = 0;
@@ -252,7 +252,7 @@ wgt_type metis_initsep(
   S_create_arrays(nvtxs,xadj,adjncy,vwgt,NULL,where,&m_xadj,&m_adjncy, \
       &m_vwgt,NULL,&m_where);
 
-  __METIS_ComputeVertexSeparator(&m_nvtxs,m_xadj,m_adjncy, \
+  METIS_ComputeVertexSeparator(&m_nvtxs,m_xadj,m_adjncy, \
       m_vwgt,options,&sep,m_where);
 
   S_destroy_arrays(nvtxs,where,m_xadj,m_adjncy,m_vwgt,NULL,m_where);
@@ -278,7 +278,7 @@ wgt_type metis_kway(
     dl_start_timer(&(ctrl->timers.metis));
   }
 
-  __METIS_SetDefaultOptions(options);
+  METIS_SetDefaultOptions(options);
 
   m_ncon = 1;
 
@@ -299,10 +299,10 @@ wgt_type metis_kway(
 
   if (rb) {
     options[METIS_OPTION_RTYPE] = METIS_RTYPE_FM;
-    __METIS_PartGraphRecursive(&m_nvtxs,&m_ncon,m_xadj,m_adjncy,m_vwgt,NULL, \
+    METIS_PartGraphRecursive(&m_nvtxs,&m_ncon,m_xadj,m_adjncy,m_vwgt,NULL, \
         m_adjwgt,&m_nparts,NULL,&ubf,options,&cut,m_where);
   } else {
-    __METIS_PartGraphKway(&m_nvtxs,&m_ncon,m_xadj,m_adjncy,m_vwgt,NULL, \
+    METIS_PartGraphKway(&m_nvtxs,&m_ncon,m_xadj,m_adjncy,m_vwgt,NULL, \
         m_adjwgt,&m_nparts,NULL,&ubf,options,&cut,m_where);
   }
 
@@ -338,7 +338,7 @@ wgt_type metis_esep(
     dl_stop_timer(&(ctrl->timers.metis));
   }
 
-  __METIS_SetDefaultOptions(options);
+  METIS_SetDefaultOptions(options);
 
   options[METIS_OPTION_NITER] = 10;
   if (ctrl->verbosity == MTMETIS_VERBOSITY_MAXIMUM) {
@@ -366,7 +366,7 @@ wgt_type metis_esep(
 
   m_nvtxs = (idx_t)graph->mynvtxs[0];
 
-  __METIS_PartGraphRecursive(&m_nvtxs,&ncon, \
+  METIS_PartGraphRecursive(&m_nvtxs,&ncon, \
       m_xadj,m_adjncy,m_vwgt,NULL,m_adjwgt,&nparts,NULL, \
       &ubf,options,&curobj,m_where);
 
@@ -403,7 +403,7 @@ wgt_type metis_vsep(
     dl_start_timer(&(ctrl->timers.metis));
   }
 
-  __METIS_SetDefaultOptions(options);
+  METIS_SetDefaultOptions(options);
 
   options[METIS_OPTION_NITER] = 10;
   if (ctrl->verbosity == MTMETIS_VERBOSITY_MAXIMUM) {
@@ -429,7 +429,7 @@ wgt_type metis_vsep(
       graph->vwgt[0],NULL,where[0],&m_xadj,&m_adjncy, \
       &m_vwgt,NULL,&m_where);
 
-  __METIS_ComputeVertexSeparator(&m_nvtxs,m_xadj,m_adjncy, \
+  METIS_ComputeVertexSeparator(&m_nvtxs,m_xadj,m_adjncy, \
       m_vwgt,options,&curobj,m_where);
 
   S_destroy_arrays(graph->mynvtxs[0],where[0],m_xadj,m_adjncy,m_vwgt, \
@@ -474,7 +474,7 @@ void metis_nd(
 
   dlthread_pool_init(omp_get_num_threads());
 
-  __METIS_SetDefaultOptions(options);
+  METIS_SetDefaultOptions(options);
 
   options[METIS_OPTION_NITER] = ctrl->nrefpass;
   options[METIS_OPTION_DBGLVL] = 0;
@@ -487,7 +487,7 @@ void metis_nd(
       &m_vwgt,NULL,&m_perm);
 
   m_nvtxs = (idx_t)graph->mynvtxs[0];
-  __METIS_NodeND(&m_nvtxs,m_xadj,m_adjncy,m_vwgt,options,m_fperm,m_perm);
+  METIS_NodeND(&m_nvtxs,m_xadj,m_adjncy,m_vwgt,options,m_fperm,m_perm);
 
   S_destroy_arrays(graph->mynvtxs[0],perm[0],m_xadj,m_adjncy,m_vwgt, \
       NULL,m_perm);

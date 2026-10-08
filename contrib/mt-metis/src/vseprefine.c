@@ -451,8 +451,26 @@ static void S_metis_refine(
     xadj[i+1] = lnedges;
   }
 
-  __METIS_NodeRefine(graph->mynvtxs[myid],xadj,(idx_t*)graph->vwgt[myid], \
-      adjncy,(idx_t*)graph->where[myid],(idx_t*)locked,1.03);
+  /* For Gmsh: the weights, parts and locks are not of METIS's idx_t type
+   * (64-bit in Gmsh), so copy them instead of casting the pointers */
+  {
+    idx_t * vwgt = malloc(sizeof(idx_t)*mynvtxs);
+    idx_t * where = malloc(sizeof(idx_t)*mynvtxs);
+    idx_t * hmarker = malloc(sizeof(idx_t)*mynvtxs);
+    for (i=0;i<mynvtxs;++i) {
+      vwgt[i] = graph->vwgt[myid][i];
+      where[i] = graph->where[myid][i];
+      hmarker[i] = locked[i];
+    }
+    METIS_NodeRefine(graph->mynvtxs[myid],xadj,vwgt,adjncy,where,hmarker, \
+        1.03);
+    for (i=0;i<mynvtxs;++i) {
+      graph->where[myid][i] = where[i];
+    }
+    dl_free(hmarker);
+    dl_free(where);
+    dl_free(vwgt);
+  }
 
 
   wgt_set(lpwgts,0,3);
