@@ -5,6 +5,8 @@
 
 #include "pointInsertionFlat.h"
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <string>
@@ -26,6 +28,7 @@
 #include "Geo.h"
 #include "gmshVertex.h"
 #include "GmshMessage.h"
+#include "Numeric.h"
 #include "OS.h"
 
 namespace {
@@ -44,6 +47,99 @@ struct FlatPoint {
   double m[9];
   int layer;
   int limit; // -1: unbounded
+  int tet; // a tet of the region holding the point (-1: unknown)
+};
+
+// Point location in the region's tets by walking from a nearby tet across
+// the face opposite to its most negative barycentric coordinate. The spawns
+// land a distance h from their parent, a few tets away, whereas the octree
+// returns hundreds of overlapping boxes in the long tets of the boundary-only
+// Delaunay mesh of a thin region (most of the fill time in a spherical
+// shell). A tet is accepted with the octree's own test (xyz2uvw and isInside
+// with the same tolerance), so the walk finds a tet exactly when the octree
+// does, except when it leaves a non-convex region or meets a flat tet: it
+// then gives up and the caller falls back to the octree.
+class TetWalker {
+public:
+  TetWalker(const std::vector<MTetrahedron *> &tets, double tol)
+    : _tets(tets), _tol(tol), _neighbors(4 * tets.size(), -1),
+      _flat(tets.size(), false)
+  {
+    struct Facet {
+      std::array<std::size_t, 3> key;
+      int tetFace;
+    };
+    std::vector<Facet> facets(4 * tets.size());
+    for(std::size_t t = 0; t < tets.size(); t++) {
+      double mat[3][3];
+      tets[t]->getMat(mat);
+      _flat[t] = (det3x3(mat) == 0.);
+      for(int i = 0; i < 4; i++) {
+        Facet &f = facets[4 * t + i];
+        for(int j = 0, k = 0; j < 4; j++)
+          if(j != i) f.key[k++] = tets[t]->getVertex(j)->getNum();
+        std::sort(f.key.begin(), f.key.end());
+        f.tetFace = (int)(4 * t + i);
+      }
+      for(int i = 0; i < 4; i++) {
+        MVertex *v = tets[t]->getVertex(i);
+        if(!_tetOf.count(v)) _tetOf[v] = (int)t;
+      }
+    }
+    std::sort(facets.begin(), facets.end(),
+              [](const Facet &a, const Facet &b) {
+                return a.key != b.key ? a.key < b.key : a.tetFace < b.tetFace;
+              });
+    for(std::size_t i = 0; i + 1 < facets.size(); i++) {
+      if(facets[i].key != facets[i + 1].key) continue;
+      _neighbors[facets[i].tetFace] = facets[i + 1].tetFace / 4;
+      _neighbors[facets[i + 1].tetFace] = facets[i].tetFace / 4;
+      i++;
+    }
+    for(std::size_t t = 0; t < tets.size(); t++) _index[tets[t]] = (int)t;
+  }
+
+  // the first tet holding v, or -1
+  int tetOf(MVertex *v) const
+  {
+    auto it = _tetOf.find(v);
+    return it == _tetOf.end() ? -1 : it->second;
+  }
+
+  // the index of e, or -1
+  int indexOf(MElement *e) const
+  {
+    auto it = _index.find(e);
+    return it == _index.end() ? -1 : it->second;
+  }
+
+  // a tet holding (x,y,z) reached from start, or -1 if the walk gives up
+  int walk(int start, double x, double y, double z) const
+  {
+    const int maxSteps = 10000;
+    double xyz[3] = {x, y, z}, uvw[3];
+    int t = start;
+    for(int step = 0; t >= 0 && step < maxSteps; step++) {
+      if(_flat[t]) return -1;
+      _tets[t]->xyz2uvw(xyz, uvw);
+      if(_tets[t]->isInside(uvw[0], uvw[1], uvw[2], _tol)) return t;
+      double lambda[4] = {1. - uvw[0] - uvw[1] - uvw[2], uvw[0], uvw[1],
+                          uvw[2]};
+      int worst = 0;
+      for(int i = 1; i < 4; i++)
+        if(lambda[i] < lambda[worst]) worst = i;
+      t = _neighbors[4 * t + worst];
+    }
+    return -1;
+  }
+
+private:
+  const std::vector<MTetrahedron *> &_tets;
+  double _tol;
+  std::vector<int> _neighbors; // across the face opposite to each vertex
+  std::vector<bool> _flat;
+  std::unordered_map<MVertex *, int> _tetOf;
+  std::unordered_map<MElement *, int> _index;
 };
 
 // A uniform grid over the region's bounding box, cell size fixed once from
@@ -184,8 +280,9 @@ int layerLimit(int tag)
 // point-to-point spacing check alone cannot catch -- were still producing
 // degenerate local configurations. Verified: 35/35 clean runs with this
 // enabled vs. roughly half failing (cleanly, no crash) without it.
-bool farFromBoundary(MElementOctree *octree, double x, double y, double z,
-                      double h)
+template <class Locate>
+bool farFromBoundary(const Locate &locate, int hint, double x, double y,
+                     double z, double h)
 {
   const double k2 = 0.5;
   double box = k2 * h;
@@ -194,7 +291,7 @@ bool farFromBoundary(MElementOctree *octree, double x, double y, double z,
     {x, y - box, z}, {x, y, z + box}, {x, y, z - box},
   };
   for(auto &p : probes)
-    if(!octree->find(p[0], p[1], p[2], 3, true)) return false;
+    if(locate(hint, p[0], p[1], p[2]) < 0) return false;
   return true;
 }
 
@@ -257,6 +354,18 @@ void fillRegionFlat(GRegion *gr)
   std::vector<MElement *> regionElements(gr->tetrahedra.begin(),
                                          gr->tetrahedra.end());
   MElementOctree *octree = new MElementOctree(regionElements);
+  TetWalker walker(gr->tetrahedra,
+                   CTX::instance()->mesh.toleranceReferenceElement);
+  // the index of a tet holding (x,y,z), or -1: by a walk from the tet hint,
+  // else by the octree (with the same tolerance)
+  auto locate = [&](int hint, double x, double y, double z) {
+    if(hint >= 0) {
+      int t = walker.walk(hint, x, y, z);
+      if(t >= 0) return t;
+    }
+    MElement *e = octree->find(x, y, z, 3, true);
+    return e ? walker.indexOf(e) : -1;
+  };
 
   // seed the front from the boundary mesh (points, then curves, then
   // surfaces, matching Filler::treat_region's ordering)
@@ -301,6 +410,7 @@ void fillRegionFlat(GRegion *gr)
     if(!isFinitePoint(p.h, p.m)) continue;
     p.layer = 0;
     p.limit = limitOf[v];
+    p.tet = walker.tetOf(v);
     seeds.push_back(p);
     h0 += p.h;
   }
@@ -345,8 +455,9 @@ void fillRegionFlat(GRegion *gr)
       double y = parent.y + parent.h * dir[i][1];
       double z = parent.z + parent.h * dir[i][2];
 
-      MElement *e = octree->find(x, y, z, 3, true);
-      if(!e) continue;
+      int t = locate(parent.tet, x, y, z);
+      if(t < 0) continue;
+      MElement *e = gr->tetrahedra[t];
 
       FlatPoint cand;
       cand.x = x; cand.y = y; cand.z = z;
@@ -355,14 +466,15 @@ void fillRegionFlat(GRegion *gr)
       if(!isFinitePoint(cand.h, cand.m)) continue;
       cand.layer = parent.layer + 1;
       cand.limit = parent.limit;
+      cand.tet = t;
 
       // cheap spacing test first: most spawns land on an existing point,
-      // and farFromBoundary costs 6 octree queries
+      // and farFromBoundary costs 6 point locations
       double radius = k1 * cand.h;
       if(hash.hasNeighborWithin(pts, x, y, z, radius, cand.m, parentIdx))
         continue;
 
-      if(!farFromBoundary(octree, x, y, z, cand.h)) continue;
+      if(!farFromBoundary(locate, t, x, y, z, cand.h)) continue;
 
       uint32_t idx = (uint32_t)pts.size();
       pts.push_back(cand);

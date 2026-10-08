@@ -10,6 +10,7 @@
 #include "GModel.h"
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -47,6 +48,36 @@ static void buildUniqueFaces(GRegion *gr,
 #if defined(HAVE_HXT)
 
 #include "hxt_combine_cpp_api.h"
+
+// The volume of a first-order hex, exact as the Jacobian determinant of the
+// trilinear map has degree 2 along each direction: 2x2x2 Gauss points, in
+// closed form (MElement::getVolume takes 27 generic Jacobian evaluations)
+static double hexVolume(const MHexahedron *h)
+{
+  static const double s[8][3] = {{-1, -1, -1}, {1, -1, -1}, {1, 1, -1},
+                                 {-1, 1, -1},  {-1, -1, 1}, {1, -1, 1},
+                                 {1, 1, 1},    {-1, 1, 1}};
+  const double g = 1. / std::sqrt(3.);
+  double vol = 0.;
+  for(int q = 0; q < 8; q++) {
+    const double p[3] = {s[q][0] * g, s[q][1] * g, s[q][2] * g};
+    double J[3][3] = {{0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}};
+    for(int i = 0; i < 8; i++) {
+      const MVertex *v = h->getVertex(i);
+      const double x[3] = {v->x(), v->y(), v->z()};
+      const double a = 1. + s[i][0] * p[0], b = 1. + s[i][1] * p[1],
+                   c = 1. + s[i][2] * p[2];
+      const double d[3] = {s[i][0] * b * c / 8., s[i][1] * a * c / 8.,
+                           s[i][2] * a * b / 8.};
+      for(int k = 0; k < 3; k++)
+        for(int l = 0; l < 3; l++) J[k][l] += x[k] * d[l];
+    }
+    vol += J[0][0] * (J[1][1] * J[2][2] - J[1][2] * J[2][1]) -
+           J[0][1] * (J[1][0] * J[2][2] - J[1][2] * J[2][0]) +
+           J[0][2] * (J[1][0] * J[2][1] - J[1][1] * J[2][0]);
+  }
+  return vol;
+}
 
 static void createMeshStore(GRegion *gr, HXTCombine::MeshStore &ms,
                             std::map<MVertex *, uint32_t> &v2c,
@@ -935,7 +966,7 @@ int meshCombine3D(GRegion *gr)
       all_v.insert(v6);
       all_v.insert(v7);
       MHexahedron *h = new MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7);
-      volHex += h->getVolume();
+      volHex += hexVolume(h);
       numHex++;
       gr->hexahedra.push_back(h);
       if(!hexQAtBuild.empty()) {

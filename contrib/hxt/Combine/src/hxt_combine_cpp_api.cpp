@@ -54,6 +54,41 @@ namespace {
     return order;
   }
 
+  /**
+  * Lists of cells by tet or by vertex in compressed rows: the same lists, in
+  * increasing cell order, as vectors of vectors, without an allocation and
+  * its spare capacity per row (most of the memory of the selection on
+  * meshes with millions of candidates)
+  */
+  class CellLists {
+  public:
+    struct Row {
+      const CellIndex *b, *e;
+      const CellIndex *begin() const { return b; }
+      const CellIndex *end() const { return e; }
+    };
+    // rowsOf(c, add) calls add(row) for each row of cell c
+    template <class RowsOf>
+    CellLists(std::size_t nbRows, std::size_t nbCells, const RowsOf &rowsOf)
+      : start_(nbRows + 1, 0)
+    {
+      for (CellIndex c = 0; c < nbCells; ++c)
+        rowsOf(c, [&](std::size_t r) { start_[r + 1]++; });
+      for (std::size_t r = 0; r < nbRows; ++r) start_[r + 1] += start_[r];
+      cells_.resize(start_[nbRows]);
+      std::vector<std::size_t> next(start_.begin(), start_.end() - 1);
+      for (CellIndex c = 0; c < nbCells; ++c)
+        rowsOf(c, [&](std::size_t r) { cells_[next[r]++] = c; });
+    }
+    Row operator[](std::size_t r) const
+    {
+      return {cells_.data() + start_[r], cells_.data() + start_[r + 1]};
+    }
+  private:
+    std::vector<std::size_t> start_;
+    std::vector<CellIndex> cells_;
+  };
+
   class CellGreedySelection {
   public:
     static constexpr CellIndex NO_CELL = (CellIndex)-1;
@@ -75,15 +110,18 @@ namespace {
     {
       frontalSelection(cells, cellQualities, selected);
 
-      std::vector<std::vector<CellIndex> > tetToCells(tetOwner_.size());
-      std::vector<std::vector<CellIndex> > vertexToCells(vertexRefCount_.size());
-      for (CellIndex c = 0; c < cells.size(); ++c) {
-        const HXTCombineCell& cell = cells[c];
-        for (unsigned int i = 0; i < cell.nbInteriorTets(); ++i)
-          tetToCells[cell.interiorTetrahedra[i]].push_back(c);
-        for (unsigned int i = 0; i < cell.nbVertices(); ++i)
-          vertexToCells[cell.vertexes[i]].push_back(c);
-      }
+      CellLists tetToCells(tetOwner_.size(), cells.size(),
+                           [&](CellIndex c, const auto &add) {
+                             const HXTCombineCell &cell = cells[c];
+                             for (unsigned int i = 0; i < cell.nbInteriorTets(); ++i)
+                               add(cell.interiorTetrahedra[i]);
+                           });
+      CellLists vertexToCells(vertexRefCount_.size(), cells.size(),
+                              [&](CellIndex c, const auto &add) {
+                                const HXTCombineCell &cell = cells[c];
+                                for (unsigned int i = 0; i < cell.nbVertices(); ++i)
+                                  add(cell.vertexes[i]);
+                              });
 
       localSearchImprove(cells, cellQualities, tetToCells, vertexToCells, selected);
       coverageImprove(cells, cellQualities, tetToCells, vertexToCells, selected);
@@ -126,17 +164,24 @@ namespace {
       const double* cellQualities,
       vector<bool>& selected)
     {
-      std::unordered_map<size_t, std::vector<CellIndex> > facetToCells;
+      // (facet hash, cell) pairs sorted by hash, then by cell as the lists
+      // of a map from the hash to the cells would be, in a fraction of the
+      // memory of such a map
+      std::vector<std::pair<size_t, CellIndex> > facetToCells;
       auto keyHash = [](const FacetKey& k) {
         size_t h = 1469598103934665603ull;
         for(VertexIndex v : k) { h ^= v; h *= 1099511628211ull; }
         return h;
       };
+      std::size_t nbHexes = 0;
+      for (const HXTCombineCell& cell : cells) nbHexes += cell.isHex();
+      facetToCells.reserve(6 * nbHexes);
       for (CellIndex c = 0; c < cells.size(); ++c) {
         if (!cells[c].isHex()) continue;
         for (unsigned int f = 0; f < 6; ++f)
-          facetToCells[keyHash(hexFacetKey(cells[c], f))].push_back(c);
+          facetToCells.emplace_back(keyHash(hexFacetKey(cells[c], f)), c);
       }
+      std::sort(facetToCells.begin(), facetToCells.end());
 
       std::vector<CellIndex> globalOrder =
         orderCellDecreasingQuality(cells, cellQualities);
@@ -152,10 +197,14 @@ namespace {
       auto pushNeighbors = [&](CellIndex c) {
         if (!cells[c].isHex()) return;
         for (unsigned int f = 0; f < 6; ++f) {
-          auto it = facetToCells.find(keyHash(hexFacetKey(cells[c], f)));
-          if (it == facetToCells.end()) continue;
-          for (CellIndex nb : it->second)
+          const size_t h = keyHash(hexFacetKey(cells[c], f));
+          auto it = std::lower_bound(
+            facetToCells.begin(), facetToCells.end(),
+            std::pair<size_t, CellIndex>(h, 0));
+          for (; it != facetToCells.end() && it->first == h; ++it) {
+            CellIndex nb = it->second;
             if (nb != c && !resolved[nb]) front.push(nb);
+          }
         }
       };
 
@@ -206,8 +255,8 @@ namespace {
     void localSearchImprove(
       const vector<HXTCombineCell>& cells,
       const double* cellQualities,
-      const std::vector<std::vector<CellIndex> >& tetToCells,
-      const std::vector<std::vector<CellIndex> >& vertexToCells,
+      const CellLists& tetToCells,
+      const CellLists& vertexToCells,
       vector<bool>& selected)
     {
       if (cells.empty()) return;
@@ -300,8 +349,8 @@ namespace {
     void coverageImprove(
       const vector<HXTCombineCell>& cells,
       const double* cellQualities,
-      const std::vector<std::vector<CellIndex> >& tetToCells,
-      const std::vector<std::vector<CellIndex> >& vertexToCells,
+      const CellLists& tetToCells,
+      const CellLists& vertexToCells,
       vector<bool>& selected)
     {
       if (cells.empty()) return;
@@ -801,9 +850,26 @@ namespace {
     * An option is to have only visible facets of the selected cells.
     * Because for sure if we already have selected 2 hexes sharing a facet we can remove it from here.
     */
-    std::map<trindex, int> facetTriangles_;
-    std::map<bindex, int> facetDiagonals_;
-    std::map<bindex, int> edges_;
+    // (only counted, never iterated: hash tables, as the local searches
+    // add and remove constraints millions of times)
+    struct IndexHash {
+      static size_t mix(size_t h, unsigned int v)
+      {
+        return (h ^ v) * 1099511628211ull;
+      }
+      size_t operator()(const bindex &k) const
+      {
+        return mix(mix(1469598103934665603ull, k.indices[0]), k.indices[1]);
+      }
+      size_t operator()(const trindex &k) const
+      {
+        return mix(mix(mix(1469598103934665603ull, k.indices[0]),
+                       k.indices[1]), k.indices[2]);
+      }
+    };
+    std::unordered_map<trindex, int, IndexHash> facetTriangles_;
+    std::unordered_map<bindex, int, IndexHash> facetDiagonals_;
+    std::unordered_map<bindex, int, IndexHash> edges_;
   };
 
 }

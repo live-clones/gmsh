@@ -497,6 +497,39 @@ void CondNumBasis::getInvCondNumGeneral(int nCondNumNodes,
                               nodesXYZ, dumNormals, invCond);
 }
 
+bool CondNumBasis::getSignedInvCondNumRange3D(const double (*nodesXYZ)[3],
+                                              double &iCNMin,
+                                              double &iCNMax) const
+{
+  if(_dim != 3 || _nMapNodes > 8 ||
+     ElementType::getParentType(_tag) == TYPE_TRIH)
+    return false;
+  const fullMatrix<double> &gX = _gradBasis->dShapeIdealMat_dX;
+  const fullMatrix<double> &gY = _gradBasis->dShapeIdealMat_dY;
+  const fullMatrix<double> &gZ = _gradBasis->dShapeIdealMat_dZ;
+  for(int i = 0; i < _nCondNumNodes; i++) {
+    // dxyz[k][l]: derivative of coordinate k along reference direction l
+    double dxyz[3][3] = {{0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}};
+    for(int j = 0; j < _nMapNodes; j++) {
+      const double dX = gX(i, j), dY = gY(i, j), dZ = gZ(i, j);
+      // (at a corner of a first-order hex, only the corner and its 3
+      // neighbours contribute)
+      if(dX == 0. && dY == 0. && dZ == 0.) continue;
+      for(int k = 0; k < 3; k++) {
+        dxyz[k][0] += dX * nodesXYZ[j][k];
+        dxyz[k][1] += dY * nodesXYZ[j][k];
+        dxyz[k][2] += dZ * nodesXYZ[j][k];
+      }
+    }
+    const double iCN = calcInvCondNum3D<true>(
+      dxyz[0][0], dxyz[0][1], dxyz[0][2], dxyz[1][0], dxyz[1][1], dxyz[1][2],
+      dxyz[2][0], dxyz[2][1], dxyz[2][2]);
+    if(!i || iCN < iCNMin) iCNMin = iCN;
+    if(!i || iCN > iCNMax) iCNMax = iCN;
+  }
+  return true;
+}
+
 void CondNumBasis::getSignedInvCondNumGeneral(
   int nCondNumNodes, const fullMatrix<double> &dSMat_dX,
   const fullMatrix<double> &dSMat_dY, const fullMatrix<double> &dSMat_dZ,
