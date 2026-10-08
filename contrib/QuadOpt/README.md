@@ -50,6 +50,9 @@ Gmsh options in use: `Mesh.PackRecombination`, `Mesh.PackCleanupMethod`,
   the transfinite guess, Winslow, kept only if the energy of the cavity
   decreases, undone otherwise. A cavity already seen in the same state (hash of
   its cells and positions) is not tried again.
+  A face with no movable vertex (a thin strip, a small face) is only a polygon: its
+  triangulation of least energy (dynamic programming over the loop) replaces the
+  mesh if it is better and does not cut the CAD more.
 - `qoPack.cpp`: PACK settings scope and finalization.
 - `intrinsicTriangulation.*`, `smallCavityWinslow.*`: used by PACK and by the
   nodal smoothing.

@@ -42,6 +42,7 @@ namespace QuadOpt {
     constexpr double kTriangleCost = 0.3; // a triangle costs this much extra
     constexpr double kValenceWeight = 0.03;
     constexpr double kMinQuality = 1.e-3; // below: the cell is not valid
+    constexpr double kRepairQuality = 1.e-4; // least quality of a cell in a bare polygon
     constexpr double kGain = 1.e-3; // minimal energy drop of a rewrite
     constexpr double kSmoothGain = 1.e-4; // minimal energy drop of a move
     constexpr double kCadTolerance = 0.03; // centroid-to-CAD / mean edge length
@@ -64,7 +65,7 @@ namespace QuadOpt {
 
     double cost(double q, int n)
     {
-      q = std::max(q, -1.);
+      q = q > kMinQuality ? std::min(q, 1.) : -1.; // an invalid cell is invalid
       const double bad = std::max(0., 0.3 - q);
       return (1. - q) * (1. - q) + 10. * bad * bad +
              (n == 3 ? kTriangleCost : 0.);
@@ -201,6 +202,7 @@ namespace QuadOpt {
       std::uint64_t fingerprint(const Cavity &cavity) const;
       bool tryPatch(const Patch &patch);
       std::size_t patchPass();
+      bool retriangulateBare();
 
       // -- scheduler -------------------------------------------------------
       void pushCell(int c)
@@ -868,6 +870,7 @@ namespace QuadOpt {
         _cells0 += c.alive;
         _tri0 += c.alive && c.n == 3;
       }
+      retriangulateBare();
       smoothAll();
       pushAllCells();
       rounds(50);
@@ -1029,6 +1032,94 @@ namespace QuadOpt {
       undoVertices();
       growQueues();
       return false;
+    }
+
+    // A face with no movable vertex (a thin strip, a small face) is only a polygon
+    // to triangulate: no local rewrite can improve it, since the boundary nodes
+    // are fixed and every cavity is a sliver. The triangulation of least energy
+    // (dynamic programming over the loop, O(m^3)) replaces the mesh if it is
+    // better, as it is when the boundary triangulation has degenerate cells.
+    bool FaceOptimizer::retriangulateBare()
+    {
+      std::vector<int> cells;
+      for(std::size_t c = 0; c < _he.cells.size(); ++c)
+        if(_he.cells[c].alive) cells.push_back(int(c));
+      for(std::size_t w = 0; w < _v.size(); ++w)
+        if(!_he.star[w].empty() && !_v[w].fixed) return false;
+      std::vector<int> loop;
+      if(cells.empty() || !_he.loop(cells, loop) || loop.size() < 4 ||
+         loop.size() > 80)
+        return false;
+      const int m = int(loop.size());
+      auto normal = [&](int i) { return normalOf(loop[i], SVector3(0., 0., 1.)); };
+      const double inf = std::numeric_limits<double>::infinity();
+      auto triangle = [&](int i, int k, int j) {
+        const SVector3 p[3] = {_v[loop[i]].p, _v[loop[k]].p, _v[loop[j]].p};
+        const SVector3 n = normal(i) + normal(k) + normal(j);
+        const double q = quality(p, 3, n * (1. / std::max(n.norm(), 1.e-300)));
+        return q > kRepairQuality ? cost(q, 3) : inf;
+      };
+      std::vector<double> best(m * m, 0.);
+      std::vector<int> split(m * m, -1);
+      for(int length = 2; length < m; ++length)
+        for(int i = 0; i + length < m; ++i) {
+          const int j = i + length;
+          best[i * m + j] = inf;
+          for(int k = i + 1; k < j; ++k) {
+            const double e = best[i * m + k] + best[k * m + j];
+            if(e < best[i * m + j]) {
+              const double t = triangle(i, k, j);
+              if(e + t < best[i * m + j]) best[i * m + j] = e + t, split[i * m + j] = k;
+            }
+          }
+        }
+      double before = 0.;
+      for(int id : cells) {
+        const Cell &c = _he.cells[id];
+        before += cost(fit(c), c.n);
+      }
+      if(!(best[m - 1] < before - kGain)) return false;
+      std::vector<Cell> fresh;
+      std::vector<std::pair<int, int> > todo = {{0, m - 1}};
+      while(!todo.empty()) {
+        const auto [i, j] = todo.back();
+        todo.pop_back();
+        if(j - i < 2) continue;
+        const int k = split[i * m + j];
+        Cell cell;
+        cell.n = 3;
+        cell.v = {{loop[i], loop[k], loop[j], -1}};
+        fresh.push_back(cell);
+        todo.push_back({i, k});
+        todo.push_back({k, j});
+      }
+      // The CAD normal at the middle of a cell, not only at its vertices: a
+      // triangle may join three points of a sharply curved face.
+      auto cutting = [&](const std::vector<Cell> &set) {
+        int count = 0;
+        for(const Cell &c : set) {
+          const Corners p = pointsOf(c);
+          SVector3 centroid(0., 0., 0.), projected;
+          for(int i = 0; i < c.n; ++i) centroid += p[i] * (1. / c.n);
+          double uv[2];
+          if(!ensureUV(c.v[0]) || !project(centroid, _v[c.v[0]].uv, projected, uv)) {
+            ++count;
+            continue;
+          }
+          SVector3 n = _gf->normal(SPoint2(uv[0], uv[1]));
+          count += !(quality(p.data(), c.n, n) > 0.);
+        }
+        return count;
+      };
+      std::vector<Cell> old;
+      for(int id : cells) old.push_back(_he.cells[id]);
+      if(cutting(fresh) > cutting(old)) return false;
+      std::vector<int> created;
+      if(!_he.replace(cells, fresh, created)) return false;
+      growQueues();
+      pushAround(created);
+      ++_rewrites;
+      return true;
     }
 
     // Look for a patch around every defect; returns how many were re-meshed.
