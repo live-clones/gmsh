@@ -113,17 +113,22 @@ namespace QuadOpt {
         }
       }
       // Along the CAD normal, on a sample of the component.
-      int vote = 0;
+      double vote = 0.; // each cell weighs by how sure it is
       const std::size_t stride = std::max<std::size_t>(1, component.size() / 200);
       for(std::size_t h = 0; h < component.size(); h += stride) {
         const Cell &c = cells[component[h]];
         if(!ensureUV(c.v[0])) continue;
         Corners p = pointsOf(c);
+        // The CAD normal at the middle of the cell: at a vertex it can be the one
+        // of another side of a fold or of a seam.
+        SVector3 centroid(0., 0., 0.), projected;
+        for(int i = 0; i < c.n; ++i) centroid += p[i] * (1. / c.n);
+        double uv[2];
+        if(!project(centroid, _v[c.v[0]].uv, projected, uv)) continue;
         if(flipped[component[h]]) std::reverse(p.begin(), p.end());
-        const double d = dot(
-          meanNormal(p.data(), c.n),
-          _gf->normal(SPoint2(_v[c.v[0]].uv[0], _v[c.v[0]].uv[1])));
-        vote += d > 0. ? 1 : (d < 0. ? -1 : 0);
+        const double d =
+          dot(meanNormal(p.data(), c.n), _gf->normal(SPoint2(uv[0], uv[1])));
+        vote += d;
       }
       if(vote < 0)
         for(int k : component) flipped[k] = !flipped[k];
@@ -156,12 +161,15 @@ namespace QuadOpt {
     // Gmsh orients a face from its first element only (orientMeshGFace): list
     // the best-shaped triangle and quad first, so that a nearly flat first
     // element cannot reverse the whole face.
+    // Gmsh compares that element with the CAD normals at its vertices: take one
+    // that follows them, so that it keeps the orientation chosen here.
     int best[5] = {-1, -1, -1, -1, -1};
-    double bestQuality[5] = {-2., -2., -2., -2., -2.};
+    double bestQuality[5] = {-9., -9., -9., -9., -9.};
     for(int c = 0; c < int(_he.cells.size()); ++c)
       if(_he.cells[c].alive) {
         const int n = _he.cells[c].n;
-        const double q = selfQuality(_he.cells[c]);
+        const double a = align(_he.cells[c]);
+        const double q = a > 0.7 ? selfQuality(_he.cells[c]) : -2. + a;
         if(q > bestQuality[n]) bestQuality[n] = q, best[n] = c;
       }
     auto emit = [&](int c) {

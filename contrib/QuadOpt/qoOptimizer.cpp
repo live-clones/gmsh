@@ -1175,7 +1175,9 @@ namespace QuadOpt {
   void optimizeQuads(GModel *model, const Options &options)
   {
     for(GFace *gf : model->getFaces())
-      if(!gf->quadrangles.empty()) optimizeFace(gf, options);
+      // A face with no interior vertex is a polygon to triangulate, quads or not.
+      if(!gf->quadrangles.empty() || (gf->mesh_vertices.empty() && !gf->triangles.empty()))
+        optimizeFace(gf, options);
     model->deleteVertexArrays();
   }
 
