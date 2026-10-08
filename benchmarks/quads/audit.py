@@ -31,6 +31,7 @@ def dot(a,b): return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]
 def nrm(a): return math.sqrt(dot(a,a))
 warped = collections.defaultdict(int)
 ind = collections.Counter()  # industrial criteria, over the whole mesh
+area = collections.defaultdict(float)  # mesh area of each face
 stats = collections.defaultdict(lambda: [0,0,0,1.0, 0])  # sgn+ , sgn-, n, minq, tri
 res = {}
 for ty, tag, ids in elems:
@@ -60,6 +61,9 @@ for ty, tag, ids in elems:
         ang = [math.degrees(math.acos(max(-1., min(1., dot(sub(P[(k+1)%4], P[k]), sub(P[k-1], P[k]))/(edges[k]*edges[k-1]+1e-300))))) for k in range(4)]
         ind['angle<45'] += min(ang) < 45.
         ind['angle>135'] += max(ang) > 135.
+    a2 = (0., 0., 0.)
+    for k in range(1, n-1): a2 = tuple(x+y for x, y in zip(a2, cross(sub(P[k], P[0]), sub(P[k+1], P[0]))))
+    area[tag] += nrm(a2)/2.
     st = stats[tag]; st[2] += 1; st[4] += (ty==2)
     if s > 0: st[0] += 1
     else: st[1] += 1
@@ -68,7 +72,14 @@ for tag, st in sorted(stats.items()):
     pos, neg = st[0], st[1]
     print(f"face {tag}: cells={st[2]} tri={st[4]} orientedOK={pos} flipped/invalid={neg} minSine={st[3]:.3f} warped={warped[tag]}")
 tri = sum(st[4] for st in stats.values()); cells = sum(st[2] for st in stats.values())
+# A face much smaller than a cell is a CAD sliver (it has no room for a cell): its
+# invalid cells are counted apart.
+typical = sum(area.values())/max(cells, 1)
+sliver = {t for t, a in area.items() if a < 0.05*typical}
+real = sum(st[1] for t, st in stats.items() if t not in sliver)
+tri_real = sum(st[4] for t, st in stats.items() if t not in sliver); cells_real = sum(st[2] for t, st in stats.items() if t not in sliver)
+print(f"slivers: {len(sliver)} faces smaller than 0.05 cell, invalid cells {sum(st[1] for t, st in stats.items() if t in sliver)}, triangles {tri - tri_real}; other faces: invalid {real}, triangles {tri_real} of {cells_real} cells ({100.*tri_real/max(cells_real,1):.1f}%)")
 q = max(ind['quads'], 1)
-print(f"industrial: quads={ind['quads']} tri%={100.*tri/max(cells,1):.1f} angle<45={ind['angle<45']} angle>135={ind['angle>135']} "
+print(f"industrial: invalid_real={real} quads={ind['quads']} tri%={100.*tri/max(cells,1):.1f} angle<45={ind['angle<45']} angle>135={ind['angle>135']} "
       f"warp>15={ind['warp15']} aspect>5={ind['aspect5']} (quads %: {100.*ind['angle<45']/q:.1f} {100.*ind['angle>135']/q:.1f} {100.*ind['warp15']/q:.1f} {100.*ind['aspect5']/q:.1f})")
 gmsh.finalize()
