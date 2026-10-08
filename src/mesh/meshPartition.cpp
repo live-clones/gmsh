@@ -339,36 +339,82 @@ public:
       }
     }
 
-    // marker[n] counts how many nodes element n shares with the element being
-    // processed. One byte is enough: it saturates at 255, which is still above
-    // every threshold, so the comparison below is unaffected.
-    std::vector<unsigned char> marker(_ne, 0);
-    std::vector<idx_t> nbrs;
-    nbrs.reserve(256);
-
+    // The neighbors of each element are found in parallel, by chunks of
+    // elements whose neighbors are stored in a buffer per chunk, and copied
+    // into _adjncy at the end. The node-element map is freed before _adjncy is
+    // allocated, so that the buffers do not add to the memory peak. The
+    // neighbors are stored in the order in which they are first met, as when
+    // this was serial.
+    const int nthreads = CTX::instance()->numThreadsFor(_ne, 10000);
+    const std::size_t chunkSize = 4096;
+    const std::size_t numChunks = (_ne + chunkSize - 1) / chunkSize;
+    std::vector<std::vector<idx_t>> chunks(numChunks);
     _xadj.assign(_ne + 1, 0);
     std::vector<idx_t>().swap(_adjncy);
-    _adjncy.reserve(_eptr[_ne]);
-
-    for(std::size_t i = 0; i < _ne; i++) {
-      nbrs.clear();
-      for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++) {
-        for(idx_t k = nptr[_eind[j]]; k < nptr[_eind[j] + 1]; k++) {
-          const idx_t n = nind[k];
-          if(n == (idx_t)i) continue;
-          if(marker[n] == 0) nbrs.push_back(n);
-          if(marker[n] != 255) marker[n]++;
+#pragma omp parallel num_threads(nthreads)
+    {
+      // counts how many nodes each candidate neighbor shares with the element
+      // being processed: a small hash table (open addressing), reset after
+      // each element, instead of a mesh-sized array per thread
+      struct entry {
+        idx_t key;
+        int count;
+      };
+      int bits = 10;
+      std::vector<entry> table(std::size_t(1) << bits, entry{-1, 0});
+      std::vector<std::size_t> slots; // in the order of the first meeting
+#pragma omp for schedule(dynamic, 1)
+      for(std::size_t c = 0; c < numChunks; c++) {
+        std::vector<idx_t> &out = chunks[c];
+        const std::size_t end = std::min(_ne, (c + 1) * chunkSize);
+        for(std::size_t i = c * chunkSize; i < end; i++) {
+          // a table at least twice as large as the number of candidates
+          // (rarely more than a few hundred)
+          std::size_t m = 0;
+          for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++)
+            m += nptr[_eind[j] + 1] - nptr[_eind[j]];
+          if(2 * m > table.size()) {
+            while((std::size_t(1) << bits) < 2 * m) bits++;
+            table.assign(std::size_t(1) << bits, entry{-1, 0});
+          }
+          const std::size_t mask = table.size() - 1;
+          slots.clear();
+          for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++) {
+            for(idx_t k = nptr[_eind[j]]; k < nptr[_eind[j] + 1]; k++) {
+              const idx_t n = nind[k];
+              if(n == (idx_t)i) continue;
+              std::size_t h =
+                (std::size_t)(((uint64_t)n * 0x9E3779B97F4A7C15ULL) >>
+                              (64 - bits));
+              while(table[h].key != -1 && table[h].key != n) h = (h + 1) & mask;
+              if(table[h].key == -1) {
+                table[h].key = n;
+                table[h].count = 0;
+                slots.push_back(h);
+              }
+              table[h].count++;
+            }
+          }
+          const int *row = threshold[etype[i]];
+          const std::size_t before = out.size();
+          for(std::size_t j = 0; j < slots.size(); j++) {
+            entry &t = table[slots[j]];
+            if(t.count >= row[etype[t.key]]) out.push_back(t.key);
+            t.key = -1;
+          }
+          _xadj[i + 1] = (idx_t)(out.size() - before);
         }
       }
-
-      const int *row = threshold[etype[i]];
-      for(std::size_t j = 0; j < nbrs.size(); j++) {
-        const idx_t n = nbrs[j];
-        if(marker[n] >= row[etype[n]]) _adjncy.push_back(n);
-        marker[n] = 0;
-      }
-
-      _xadj[i + 1] = (idx_t)_adjncy.size();
+    }
+    std::vector<idx_t>().swap(nind);
+    std::vector<idx_t>().swap(nptr);
+    for(std::size_t i = 0; i < _ne; i++) _xadj[i + 1] += _xadj[i];
+    _adjncy.resize(_xadj[_ne]);
+#pragma omp parallel for schedule(dynamic, 1) num_threads(nthreads)
+    for(std::size_t c = 0; c < numChunks; c++) {
+      std::copy(chunks[c].begin(), chunks[c].end(),
+                _adjncy.begin() + _xadj[c * chunkSize]);
+      std::vector<idx_t>().swap(chunks[c]);
     }
   }
   void fillDefaultWeights()
