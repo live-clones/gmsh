@@ -49,9 +49,7 @@ typedef std::set<std::pair<int, GEntity *>, OriGEntityPtrFullLessThan>
 // holding a list of its own: the lists repeat heavily (in 3D there is one per
 // partition), and a one-element std::vector<int> per (element, facet) pair was
 // a heap allocation for every facet of every boundary element.
-typedef std::vector<std::pair<MElement *, int> > elementPartitionList;
-#define hashmapface                                                            \
-  std::unordered_map<MFace, elementPartitionList, MFaceHash, MFaceEqual>
+typedef std::vector<std::pair<MElement *, int>> elementPartitionList;
 #define hashmapedge                                                            \
   std::unordered_map<MEdge, elementPartitionList, MEdgeHash, MEdgeEqual>
 #define hashmapvertex                                                          \
@@ -1980,43 +1978,52 @@ getPartitionInVector(std::vector<int> &partitions,
 // Partition entities are looked up by their partition list. This used to be
 // keyed on a heap-constructed PART_ENTITY used purely as a probe, which meant
 // building and destroying a full GFace/GEdge/GVertex for every interface
-// facet of the mesh.
+// facet of the mesh. A partition entity is also distinguished by the entity
+// of its reference element, and, if given, by the entity on the other side
+// (a partition surface between two volumes can only bound two volumes).
+template <class PART_ENTITY> struct partitionEntityEntry {
+  GEntity *reference, *other;
+  PART_ENTITY *entity;
+};
 template <class PART_ENTITY>
 using partitionEntityMap =
-  std::map<std::vector<int>, std::vector<std::pair<GEntity *, PART_ENTITY *> > >;
+  std::map<std::vector<int>, std::vector<partitionEntityEntry<PART_ENTITY>>>;
 
 template <class PART_ENTITY>
-static PART_ENTITY *
-createPartitionEntity(GModel *model, int &numEntity,
-                      const std::vector<int> &partitions,
-                      GEntity *referenceEntity, PART_ENTITY **newEntity,
-                      partitionEntityMap<PART_ENTITY> &pentities)
+static PART_ENTITY *createPartitionEntity(
+  GModel *model, int &numEntity, const std::vector<int> &partitions,
+  GEntity *referenceEntity, PART_ENTITY **newEntity,
+  partitionEntityMap<PART_ENTITY> &pentities, GEntity *otherEntity = nullptr)
 {
-  std::vector<std::pair<GEntity *, PART_ENTITY *> > &same =
-    pentities[partitions];
+  std::vector<partitionEntityEntry<PART_ENTITY>> &same = pentities[partitions];
   for(std::size_t i = 0; i < same.size(); i++)
-    if(same[i].first == referenceEntity) return same[i].second;
+    if(same[i].reference == referenceEntity && same[i].other == otherEntity)
+      return same[i].entity;
 
   // Create new entity and add it to the model
   PART_ENTITY *ppe = new PART_ENTITY(model, ++numEntity, partitions);
   ppe->setParentEntity(referenceEntity->getParentEntity());
-  same.push_back(std::make_pair(referenceEntity, ppe));
+  partitionEntityEntry<PART_ENTITY> entry = {referenceEntity, otherEntity, ppe};
+  same.push_back(entry);
   model->add(ppe);
   *newEntity = ppe;
 
   return ppe;
 }
 
-static partitionFace *assignPartitionBoundary(
-  GModel *model, MFace &me, MElement *reference,
-  const std::vector<int> &partitions,
-  partitionEntityMap<partitionFace> &pfaces,
-  hashmapelement &elementToEntity, int &numEntity)
+static partitionFace *
+assignPartitionBoundary(GModel *model, MFace &me, MElement *reference,
+                        const std::vector<int> &partitions,
+                        partitionEntityMap<partitionFace> &pfaces,
+                        hashmapelement &elementToEntity, int &numEntity,
+                        partitionFace **entity = nullptr,
+                        MElement **created = nullptr, GEntity *other = nullptr)
 {
+  MElement *facet = nullptr;
   partitionFace *newEntity = nullptr;
   partitionFace *ppf = createPartitionEntity(model, numEntity, partitions,
-                                   elementToEntity[reference], &newEntity,
-                                   pfaces);
+                                             elementToEntity[reference],
+                                             &newEntity, pfaces, other);
   int numFace = 0;
   for(int i = 0; i < reference->getNumFaces(); i++) {
     if(reference->getFace(i) == me) {
@@ -2032,15 +2039,18 @@ static partitionFace *assignPartitionBoundary(
     if(verts.size() == 3) {
       MTriangle *element = new MTriangle(verts);
       ppf->addTriangle(element);
+      facet = element;
     }
     else if(verts.size() == 6) {
       MTriangle6 *element = new MTriangle6(verts);
       ppf->addTriangle(element);
+      facet = element;
     }
     else {
       MTriangleN *element =
         new MTriangleN(verts, verts.back()->getPolynomialOrder());
       ppf->addTriangle(element);
+      facet = element;
     }
   }
   else if(me.getNumVertices() == 4) {
@@ -2050,35 +2060,44 @@ static partitionFace *assignPartitionBoundary(
     if(verts.size() == 4) {
       MQuadrangle *element = new MQuadrangle(verts);
       ppf->addQuadrangle(element);
+      facet = element;
     }
     else if(verts.size() == 8) {
       MQuadrangle8 *element = new MQuadrangle8(verts);
       ppf->addQuadrangle(element);
+      facet = element;
     }
     else if(verts.size() == 9) {
       MQuadrangle9 *element = new MQuadrangle9(verts);
       ppf->addQuadrangle(element);
+      facet = element;
     }
     else {
       MQuadrangleN *element =
         new MQuadrangleN(verts, verts.back()->getPolynomialOrder());
       ppf->addQuadrangle(element);
+      facet = element;
     }
   }
 
+  if(entity) *entity = ppf;
+  if(created) *created = facet;
   return newEntity;
 }
 
-static partitionEdge *assignPartitionBoundary(
-  GModel *model, MEdge &me, MElement *reference,
-  const std::vector<int> &partitions,
-  partitionEntityMap<partitionEdge> &pedges,
-  hashmapelement &elementToEntity, int &numEntity)
+static partitionEdge *
+assignPartitionBoundary(GModel *model, MEdge &me, MElement *reference,
+                        const std::vector<int> &partitions,
+                        partitionEntityMap<partitionEdge> &pedges,
+                        hashmapelement &elementToEntity, int &numEntity,
+                        partitionEdge **entity = nullptr,
+                        MElement **created = nullptr, GEntity *other = nullptr)
 {
+  MElement *facet = nullptr;
   partitionEdge *newEntity = nullptr;
   partitionEdge *ppe = createPartitionEntity(model, numEntity, partitions,
-                                   elementToEntity[reference], &newEntity,
-                                   pedges);
+                                             elementToEntity[reference],
+                                             &newEntity, pedges, other);
 
   int numEdge = 0;
   for(int i = 0; i < reference->getNumEdges(); i++) {
@@ -2095,17 +2114,22 @@ static partitionEdge *assignPartitionBoundary(
     if(verts.size() == 2) {
       MLine *element = new MLine(verts);
       ppe->addLine(element);
+      facet = element;
     }
     else if(verts.size() == 3) {
       MLine3 *element = new MLine3(verts);
       ppe->addLine(element);
+      facet = element;
     }
     else {
       MLineN *element = new MLineN(verts);
       ppe->addLine(element);
+      facet = element;
     }
   }
 
+  if(entity) *entity = ppe;
+  if(created) *created = facet;
   return newEntity;
 }
 
@@ -2211,6 +2235,130 @@ static void assignBrep(GModel *model,
       if(!ori) continue;
       static_cast<GEdge *>(it->first)->setVertex(entity, ori);
       entity->addEdge(static_cast<GEdge *>(it->first));
+    }
+  }
+}
+
+// The facets (faces in 3D, edges in 2D) of an element
+static int getNumFacets(MElement *e, MFace *) { return e->getNumFaces(); }
+static int getNumFacets(MElement *e, MEdge *) { return e->getNumEdges(); }
+static MFace getFacet(MElement *e, int i, MFace *) { return e->getFace(i); }
+static MEdge getFacet(MElement *e, int i, MEdge *) { return e->getEdge(i); }
+
+// Whether the element has all the nodes of the facet, i.e. shares the facet
+// (as MFace and MEdge compare their nodes), without building its facets
+template <class FACET> static bool hasFacet(MElement *e, const FACET &f)
+{
+  const std::size_t n = e->getNumPrimaryVertices();
+  for(std::size_t i = 0; i < f.getNumVertices(); i++) {
+    MVertex *v = f.getVertex(i);
+    std::size_t j = 0;
+    while(j < n && e->getVertex(j) != v) j++;
+    if(j == n) return false;
+  }
+  return true;
+}
+
+// Records that the partition entity pe (a face or an edge) bounds the entity
+// of the mesh dimension b
+static void addPartitionBoundary(GEntity *b, GEntity *pe, int ori)
+{
+  if(pe->dim() == 2) {
+    static_cast<GRegion *>(b)->setFace(static_cast<partitionFace *>(pe), ori);
+    static_cast<partitionFace *>(pe)->addRegion(static_cast<GRegion *>(b));
+  }
+  else if(pe->dim() == 1) {
+    static_cast<GFace *>(b)->setEdge(static_cast<partitionEdge *>(pe), ori);
+    static_cast<partitionEdge *>(pe)->addFace(static_cast<GFace *>(b));
+  }
+}
+
+// Records that the partition entity pe, to which the facet element was just
+// added, bounds the entities of the given elements sharing that facet, unless
+// already recorded in bounds
+static void
+addPartitionBoundaries(GEntity *pe, MElement *facet,
+                       const std::vector<MElement *> &sharing,
+                       hashmapelement &elementToEntity,
+                       std::set<std::pair<GEntity *, GEntity *>> &bounds)
+{
+  for(std::size_t j = 0; j < sharing.size(); j++) {
+    GEntity *b = elementToEntity[sharing[j]];
+    if(bounds.count(std::make_pair(pe, b))) continue;
+    // a zero orientation cannot happen on a conformal mesh (see
+    // assignNewEntityBRep): leave the pair for another facet
+    const int ori = computeOrientation(sharing[j], facet);
+    if(!ori) continue;
+    bounds.insert(std::make_pair(pe, b));
+    addPartitionBoundary(b, pe, ori);
+  }
+}
+
+// Creates the partition entities bounding the partitions of a mesh of
+// dimension dim, made of the facets (faces in 3D, edges in 2D) of the elements
+// of dimension dim shared by elements in different partitions. These elements
+// are neighbors in the dual graph of the mesh, so the facets are found from
+// it, in the order of the graph, instead of from a map of all the facets of
+// the elements on the partition boundaries. As before, a facet is copied from
+// its reference element: among the elements sharing it, the one in the lowest
+// partition, with the lowest number. Every facet records the entities it
+// bounds, not only the first facet of each partition entity: a partition
+// curve of a 2D mesh can bound several surfaces, through different facets. A
+// partition surface of a 3D mesh is also distinguished by the volume on the
+// other side, as a surface can only bound two volumes.
+template <class FACET, class PART_ENTITY>
+static void
+createPartitionBoundaries(Graph &graph, GModel *model,
+                          partitionEntityMap<PART_ENTITY> &pentities,
+                          hashmapelement &elementToEntity, int &numEntity)
+{
+  const int dim = graph.dim();
+  std::set<std::pair<GEntity *, GEntity *>> bounds;
+  std::vector<MElement *> sharing;
+  for(std::size_t i = 0; i < graph.ne(); i++) {
+    MElement *e = graph.element(i);
+    if(!e || e->getDim() != dim) continue;
+    // only the elements with a neighbor in a lower or higher partition
+    bool cut = false;
+    for(idx_t j = graph.xadj(i); j < graph.xadj(i + 1) && !cut; j++) {
+      MElement *n = graph.element(graph.adjncy(j));
+      cut = n && n->getDim() == dim && n->getPartition() != e->getPartition();
+    }
+    if(!cut) continue;
+
+    for(int k = 0; k < getNumFacets(e, (FACET *)nullptr); k++) {
+      FACET f = getFacet(e, k, (FACET *)nullptr);
+      // the elements sharing the facet (more than 2 if non-manifold),
+      // ordered by partition and number
+      sharing.assign(1, e);
+      for(idx_t j = graph.xadj(i); j < graph.xadj(i + 1); j++) {
+        MElement *n = graph.element(graph.adjncy(j));
+        if(n && n->getDim() == dim && hasFacet(n, f)) sharing.push_back(n);
+      }
+      std::sort(sharing.begin(), sharing.end(), [](MElement *a, MElement *b) {
+        if(a->getPartition() != b->getPartition())
+          return a->getPartition() < b->getPartition();
+        return a->getNum() < b->getNum();
+      });
+      // handle the facet once, from its reference element
+      if(sharing[0] != e) continue;
+      std::vector<int> partitions;
+      for(std::size_t j = 0; j < sharing.size(); j++) {
+        if(partitions.empty() ||
+           partitions.back() != sharing[j]->getPartition())
+          partitions.push_back(sharing[j]->getPartition());
+      }
+      if(partitions.size() < 2) continue;
+
+      // in 3D, a partition surface bounds the volumes on both sides
+      GEntity *other = (dim == 3 && sharing.size() == 2) ?
+                         elementToEntity[sharing[1]] :
+                         nullptr;
+      PART_ENTITY *pe = nullptr;
+      MElement *facet = nullptr;
+      assignPartitionBoundary(model, f, e, partitions, pentities,
+                              elementToEntity, numEntity, &pe, &facet, other);
+      addPartitionBoundaries(pe, facet, sharing, elementToEntity, bounds);
     }
   }
 }
@@ -2440,7 +2588,6 @@ static void createPartitionTopology(
   partitionEntityMap<partitionEdge> pedges;
   partitionEntityMap<partitionVertex> pvertices;
 
-  hashmapface faceToElement;
   hashmapedge edgeToElement;
   hashmapvertex vertexToElement;
   // the distinct partition lists referenced by the maps above
@@ -2454,44 +2601,9 @@ static void createPartitionTopology(
   if(meshDim >= 3) {
     Msg::Info(" - Creating partition surfaces");
 
-    partitionLists.resize(model->getNumPartitions());
-    for(std::size_t i = 0; i < model->getNumPartitions(); i++)
-      partitionLists[i].assign(1, (int)i + 1);
-    for(std::size_t i = 0; i < model->getNumPartitions(); i++) {
-      for(auto it = boundaryElements[i].begin();
-          it != boundaryElements[i].end(); ++it) {
-        for(int j = 0; j < (*it)->getNumFaces(); j++) {
-          faceToElement[(*it)->getFace(j)].push_back(
-            std::make_pair(*it, (int)i));
-        }
-      }
-    }
     int numFaceEntity = model->getMaxElementaryNumber(2);
-    for(auto it = faceToElement.begin(); it != faceToElement.end(); ++it) {
-      MFace f = it->first;
-
-      std::vector<int> partitions;
-      getPartitionInVector(partitions, it->second, partitionLists);
-      if(partitions.size() < 2) continue;
-
-      MElement *reference = getReferenceElement(it->second, partitionLists);
-      if(!reference) continue;
-
-      partitionFace *pf =
-        assignPartitionBoundary(model, f, reference, partitions, pfaces,
-                                elementToEntity, numFaceEntity);
-      if(pf) {
-        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
-          boundaryEntityAndRefElement;
-        for(std::size_t i = 0; i < it->second.size(); i++)
-          boundaryEntityAndRefElement.insert(std::make_pair(
-            elementToEntity[it->second[i].first], it->second[i].first));
-
-        assignBrep(model, boundaryEntityAndRefElement, pf);
-      }
-    }
-    faceToElement.clear();
-    partitionLists.clear();
+    createPartitionBoundaries<MFace>(meshGraph, model, pfaces, elementToEntity,
+                                     numFaceEntity);
 
     faces = model->getFaces();
     divideNonConnectedEntities(model, 2, regions, faces, edges, vertices);
@@ -2503,18 +2615,9 @@ static void createPartitionTopology(
     Msg::Info(" - Creating partition curves");
 
     if(meshDim == 2) {
-      partitionLists.resize(model->getNumPartitions());
-      for(std::size_t i = 0; i < model->getNumPartitions(); i++)
-        partitionLists[i].assign(1, (int)i + 1);
-      for(std::size_t i = 0; i < model->getNumPartitions(); i++) {
-        for(auto it = boundaryElements[i].begin();
-            it != boundaryElements[i].end(); ++it) {
-          for(int j = 0; j < (*it)->getNumEdges(); j++) {
-            edgeToElement[(*it)->getEdge(j)].push_back(
-              std::make_pair(*it, (int)i));
-          }
-        }
-      }
+      int numEdgeEntity = model->getMaxElementaryNumber(1);
+      createPartitionBoundaries<MEdge>(meshGraph, model, pedges,
+                                       elementToEntity, numEdgeEntity);
     }
     else {
       Graph subGraph(model);
@@ -2556,6 +2659,7 @@ static void createPartitionTopology(
     }
 
     int numEdgeEntity = model->getMaxElementaryNumber(1);
+    std::set<std::pair<GEntity *, GEntity *>> edgeBounds;
     for(auto it = edgeToElement.begin(); it != edgeToElement.end(); ++it) {
       MEdge e = it->first;
 
@@ -2566,19 +2670,16 @@ static void createPartitionTopology(
       MElement *reference = getReferenceElement(it->second, partitionLists);
       if(!reference) continue;
 
-      partitionEdge *pe =
-        assignPartitionBoundary(model, e, reference, partitions, pedges,
-                                elementToEntity, numEdgeEntity);
-      if(pe) {
-        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
-          boundaryEntityAndRefElement;
-        for(std::size_t i = 0; i < it->second.size(); i++) {
-          boundaryEntityAndRefElement.insert(std::make_pair(
-            elementToEntity[it->second[i].first], it->second[i].first));
-        }
-
-        assignBrep(model, boundaryEntityAndRefElement, pe);
-      }
+      // every edge records the surfaces it bounds (see
+      // createPartitionBoundaries())
+      partitionEdge *pe = nullptr;
+      MElement *facet = nullptr;
+      assignPartitionBoundary(model, e, reference, partitions, pedges,
+                              elementToEntity, numEdgeEntity, &pe, &facet);
+      std::vector<MElement *> sharing;
+      for(std::size_t i = 0; i < it->second.size(); i++)
+        sharing.push_back(it->second[i].first);
+      addPartitionBoundaries(pe, facet, sharing, elementToEntity, edgeBounds);
     }
     edgeToElement.clear();
     partitionLists.clear();
