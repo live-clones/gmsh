@@ -143,7 +143,7 @@ int meshCombine3D(GRegion *gr)
   Msg::Info("Identifying Hexes for region %d", gr->tag());
   HXTCombine::TetMeshForCombining tm4c(&ms);
   HXTCombine::HXTCombineCellStore ccs(tm4c);
-  double minQuality = 0.0001;
+  double minQuality = CTX::instance()->mesh.recombine3DMinimumQuality;
   ccs.computeHexes(minQuality);
   Msg::Info("%d Hexes found", ccs.hexes().size());
 

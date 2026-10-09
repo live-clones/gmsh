@@ -1746,6 +1746,10 @@ StringXNumber MeshOptions_Number[] = {
     "3d recombination conformity type (0: nonconforming, 1: trihedra, "
     "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)"
     "(experimental)" },
+  { F|O, "Recombine3DMinimumQuality" , opt_mesh_recombine3d_minimum_quality , 1.e-4 ,
+    "Minimum quality of the candidate hexahedra of the 3d recombination: "
+    "fewer candidates take less time and memory, but the worse hexahedra the "
+    "selection could still use are left as tetrahedra (experimental)" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
   { F|O, "Renumber" , opt_mesh_renumber , 1 ,

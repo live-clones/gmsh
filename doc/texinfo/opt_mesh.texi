@@ -926,6 +926,11 @@ Saved in: @code{General.OptionsFileName}
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Recombine3DMinimumQuality
+Minimum quality of the candidate hexahedra of the 3d recombination: fewer candidates take less time and memory, but the worse hexahedra the selection could still use are left as tetrahedra (experimental)@*
+Default value: @code{0.0001}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.RefineSteps
 Number of refinement steps in the MeshAdapt-based 2D algorithms@*
 Default value: @code{10}@*

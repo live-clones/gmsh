@@ -43,11 +43,10 @@ public:
     tets_(tetMesh), qualityThreshold_(minQuality),
     filler_(omp_get_max_threads(), cells)
   {
-    // Reserving space definitely improves the performances on big models
-    // But no real good guess. This depends a lot on the input mesh and on the min quality
-
-    // It depends on the cell types, on the tet mesh, on the min quality !
-    filler_.reserve(20*tetMesh.nbVertices());
+    // No reservation: the number of cells depends on the cell types, on the
+    // tet mesh and on the min quality, and the former guess of 20 cells per
+    // vertex, constructed upfront, took 26 GB for 9 million vertices
+    // whatever the min quality
   }
 
   void operator()(const vector<VertexIndex>& vertices)
@@ -287,12 +286,20 @@ void countAndCompareCellsIMR(std::ofstream& out, TetMeshForCombining& tetMesh, c
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
+// Give back the spare capacity left by the growth of the cell array (up to
+// half of its size), which would otherwise stay allocated during the selection
+static void shrinkCells(std::vector<HXTCombineCell>& cells)
+{
+  if (cells.capacity() > cells.size() + cells.size() / 10) cells.shrink_to_fit();
+}
+
 void HXTCombineCellStore::computeHexes(double minQuality) {
   StoreCandidateCells store(mesh_, minQuality, hexes());
 
   computeAllHex(store, mesh_, minQuality);
 
   store.flush();
+  shrinkCells(hexes());
 }
 void HXTCombineCellStore::computePrisms(double minQuality) {
   StoreCandidateCells store(mesh_, minQuality, prisms());
