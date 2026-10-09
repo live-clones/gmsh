@@ -28,7 +28,8 @@ Plugin(DuplicateNodes); new H(div)/L2 and reorganized H(curl) hierarchical basis
 functions; removed Plugin(CVTRemesh) and Plugin(CurvedBndDist); Gmsh now
 requires C++17 and CMake 3.10, and uses Eigen 5.0 by default; added support for
 OCC 8; upgraded bundled contrib/Netgen to v6.2.2608; fix MeshAdapt regression
-introduced in 4.12 on thin cones/cylinders; bug fixes.
+introduced in 4.12 on thin cones/cylinders; reproducible multi-threaded 1D and
+2D meshing; bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,
@@ -43,13 +44,12 @@ introduced in 4.12 on thin cones/cylinders; bug fixes.
   mesh/relocateNodes; new arguments to mesh/classifySurfaces; new and/or
   modified arguments to mesh/getFaces and mesh/getElementFaceNodes (use
   getFacesByType and getElementFaceNodesByType for the old behavior),
-  mesh/getAllFaces, mesh/addFaces, mesh/getPeriodicKeys; hierarchical basis
-  function type keys (mesh/getKeys, mesh/getKeysForElement,
-  mesh/getPeriodicKeys) are now 4 times the position of the function on its
-  node, edge, face or element plus the type of that entity (so that they do not
-  depend on the order of the function space (they are about 4 times larger than
-  before); new optional argument "periodic" to
-  mesh/getBasisFunctionsOrientation and
+  mesh/getAllFaces, mesh/addFaces; hierarchical basis function type keys
+  (mesh/getKeys, mesh/getKeysForElement, mesh/getPeriodicKeys) are now 4 times
+  the position of the function on its node, edge, face or element plus the type
+  of that entity, so that they do not depend on the order of the function space
+  (they are about 4 times larger than before); new optional argument "periodic"
+  to mesh/getBasisFunctionsOrientation and
   mesh/getBasisFunctionsOrientationForElement (true by default: the elements
   touching periodic curves and surfaces are oriented with the tags of the master
   nodes, so that mesh/getPeriodicKeys maps the keys of all the hierarchical
@@ -64,8 +64,9 @@ introduced in 4.12 on thin cones/cylinders; bug fixes.
   Mesh.FlatOptimize3D, Negative Mesh.OptimizePyramids places the pyramid apex
   along the face normal, Mesh.PartitionSplitLocalBrep,
   Mesh.CreateEdges/CreateFaces, Mesh.NbEdges/NbFaces/NbPolygons/NbPolyhedra,
-  View.Color.Polygons/Polyhedra, Mesh.Algorithm3D = 11 (or -algo pdel3d) for the
-  parallel Delaunay algorithm, Mesh.OptimizeReconnectionThreshold/Points/Search
+  View.Color.Polygons/Polyhedra, Mesh.Algorithm3D = 11 (or -algo pdel3d) for
+  the parallel Delaunay algorithm, Mesh.OptimizeReconnectionThreshold/Points/
+  Search
 
 4.15.2 (March 24, 2026): fixed issue in 3D structured CGNS output.
 
