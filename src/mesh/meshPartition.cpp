@@ -2155,45 +2155,21 @@ static int computeOrientation(MElement *reference, MElement *element)
   return 0;
 }
 
-static void assignBrep(GModel *model,
-                       std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
+// Records the curves bounded by the new partition point pv, from the curve
+// elements given with their curves. (Partition surfaces and curves record
+// their B-Rep in createPartitionBoundaries().)
+static void assignBrep(std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
                          &boundaryEntityAndRefElement,
-                       GEntity *e)
+                       partitionVertex *pv)
 {
   // a zero orientation means the entities are not incident, which cannot
   // happen on a conformal mesh (see assignNewEntityBRep)
-  if(e->dim() == 2) {
-    partitionFace *entity = static_cast<partitionFace *>(e);
-
-    for(auto it = boundaryEntityAndRefElement.begin();
-        it != boundaryEntityAndRefElement.end(); ++it) {
-      const int ori = computeOrientation(it->second, entity->getMeshElement(0));
-      if(!ori) continue;
-      static_cast<GRegion *>(it->first)->setFace(entity, ori);
-      entity->addRegion(static_cast<GRegion *>(it->first));
-    }
-  }
-  else if(e->dim() == 1) {
-    partitionEdge *entity = static_cast<partitionEdge *>(e);
-
-    for(auto it = boundaryEntityAndRefElement.begin();
-        it != boundaryEntityAndRefElement.end(); ++it) {
-      const int ori = computeOrientation(it->second, entity->getMeshElement(0));
-      if(!ori) continue;
-      static_cast<GFace *>(it->first)->setEdge(entity, ori);
-      entity->addFace(static_cast<GFace *>(it->first));
-    }
-  }
-  else if(e->dim() == 0) {
-    partitionVertex *entity = static_cast<partitionVertex *>(e);
-
-    for(auto it = boundaryEntityAndRefElement.begin();
-        it != boundaryEntityAndRefElement.end(); ++it) {
-      const int ori = computeOrientation(it->second, entity->getMeshElement(0));
-      if(!ori) continue;
-      static_cast<GEdge *>(it->first)->setVertex(entity, ori);
-      entity->addEdge(static_cast<GEdge *>(it->first));
-    }
+  for(auto it = boundaryEntityAndRefElement.begin();
+      it != boundaryEntityAndRefElement.end(); ++it) {
+    const int ori = computeOrientation(it->second, pv->getMeshElement(0));
+    if(!ori) continue;
+    static_cast<GEdge *>(it->first)->setVertex(pv, ori);
+    pv->addEdge(static_cast<GEdge *>(it->first));
   }
 }
 
@@ -2859,7 +2835,7 @@ static void createPartitionTopology(
           boundaryEntityAndRefElement.insert(std::make_pair(
             elementToEntity.get(it->second[i].first), it->second[i].first));
 
-        assignBrep(model, boundaryEntityAndRefElement, pv);
+        assignBrep(boundaryEntityAndRefElement, pv);
       }
     }
     vertexToElement.clear();
