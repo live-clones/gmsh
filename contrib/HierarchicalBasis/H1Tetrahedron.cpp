@@ -72,28 +72,12 @@ void H1Tetrahedron::faceFunctions(const Dual *x, int flag1, int flag2,
              &face[faceNumber * perFace]);
 }
 
-void H1Tetrahedron::keysInfo(std::vector<int> &functionTypeInfo,
-                             std::vector<int> &orderInfo)
+void H1Tetrahedron::functionInfo(std::vector<FunctionInfo> &info)
 {
-  int it = 0;
-  for(int i = 0; i < 4; i++, it++) {
-    functionTypeInfo[it] = 0;
-    orderInfo[it] = 1;
-  }
-  for(int e = 0; e < 6; e++)
-    for(int k = 2; k <= _order; k++, it++) {
-      functionTypeInfo[it] = 1;
-      orderInfo[it] = k;
-    }
-  for(int f = 0; f < 4; f++)
-    for(int d = 0; d <= _order - 3; d++)
-      for(int n2 = 0; n2 <= d; n2++, it++) {
-        functionTypeInfo[it] = 2;
-        orderInfo[it] = d + 3;
-      }
+  for(int i = 0; i < 4; i++) info.push_back({0, 1, false});
+  for(int e = 0; e < 6; e++) h1EdgeInfo(1, _order, info);
+  for(int f = 0; f < 4; f++) h1TriangleInfo(2, _order, info);
   for(int d = 0; d <= _order - 4; d++)
-    for(int k = 0; k < (d + 1) * (d + 2) / 2; k++, it++) {
-      functionTypeInfo[it] = 3;
-      orderInfo[it] = d + 4;
-    }
+    for(int k = 0; k < (d + 1) * (d + 2) / 2; k++)
+      info.push_back({3, d + 4, false});
 }

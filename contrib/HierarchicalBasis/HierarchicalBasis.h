@@ -19,6 +19,15 @@
 
 #include "Dual.h"
 
+// The type of a basis function (0 for vertex, 1 for edge, 2 for face and 3 for
+// bubble functions), its order, i.e. the lowest order of the space it belongs
+// to, and whether it is in the kernel of the derivative (a gradient in H(curl),
+// a curl in H(div))
+struct FunctionInfo {
+  int type, order;
+  bool kernel;
+};
+
 // Hierarchical basis functions on a reference element. The functions are
 // associated with the vertices, edges, faces and interior ("bubble") of the
 // element; the edge and face functions depend on the orientation of the
@@ -52,6 +61,7 @@ public:
   // vertices
   int getNumberOfOrientations() const;
 
+  int getNumVertex() const { return _numVertex; }
   int getNumEdge() const { return _numEdge; }
   int getNumTriFace() const { return _numTriFace; }
   int getNumQuadFace() const { return _numQuadFace; }
@@ -90,6 +100,25 @@ public:
   void getKeysInfo(std::vector<int> &functionTypeInfo,
                    std::vector<int> &orderInfo) const;
 
+  // Each element computes its basis functions at the point x (the reference
+  // coordinates u, v, w as dual numbers), each function once, as a dual number
+  // (Dual) for H1 or a vector of dual numbers (Vec) for H(curl) and H(div): the
+  // derivatives (gradients, curls, divergences) follow. functions() gives the
+  // functions in the reference orientation, faceFunctions() replaces those of
+  // face faceNumber by the functions for the orientation of the face given by
+  // the flags. Each element implements the version of its space; the other one
+  // does nothing.
+  virtual void functions(const Dual *x, std::vector<Dual> &vertex,
+                         std::vector<Dual> &edge, std::vector<Dual> &face,
+                         std::vector<Dual> &bubble);
+  virtual void functions(const Dual *x, std::vector<Vec> &vertex,
+                         std::vector<Vec> &edge, std::vector<Vec> &face,
+                         std::vector<Vec> &bubble);
+  virtual void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
+                             int faceNumber, std::vector<Dual> &face);
+  virtual void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
+                             int faceNumber, std::vector<Vec> &face);
+
 protected:
   Space _space = H1;
   Part _part = ALL;
@@ -110,32 +139,12 @@ protected:
 
   HierarchicalBasis() = default;
 
-  // Each element computes its basis functions at the point x (the reference
-  // coordinates u, v, w as dual numbers), each function once, as a dual number
-  // (Dual) for H1 or a vector of dual numbers (Vec) for H(curl) and H(div): the
-  // derivatives (gradients, curls, divergences) follow. functions() gives the
-  // functions in the reference orientation, faceFunctions() replaces those of
-  // face faceNumber by the functions for the orientation of the face given by
-  // the flags. Each element implements the version of its space; the other one
-  // does nothing.
-  virtual void functions(const Dual *x, std::vector<Dual> &vertex,
-                         std::vector<Dual> &edge, std::vector<Dual> &face,
-                         std::vector<Dual> &bubble);
-  virtual void functions(const Dual *x, std::vector<Vec> &vertex,
-                         std::vector<Vec> &edge, std::vector<Vec> &face,
-                         std::vector<Vec> &bubble);
-  virtual void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
-                             int faceNumber, std::vector<Dual> &face);
-  virtual void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
-                             int faceNumber, std::vector<Vec> &face);
-  // the type (0 for vertex, 1 for edge, 2 for face, 3 for bubble functions)
-  // and the order of each function of the whole space, in the order of
+  // the information of each function of the whole space, in the order of
   // functions()
-  virtual void keysInfo(std::vector<int> &functionTypeInfo,
-                        std::vector<int> &orderInfo) = 0;
-  // whether each function of the whole space is in the kernel of the
-  // derivative; return false if the element does not split its space
-  virtual bool kernelInfo(std::vector<bool> &kernel) { return false; }
+  virtual void functionInfo(std::vector<FunctionInfo> &info) = 0;
+  // whether the element gives the kernel of the derivative in functionInfo(),
+  // i.e. whether its space can be split
+  virtual bool hasParts() const { return false; }
 
 private:
   // the functions of the part of the space, and their indices in the whole

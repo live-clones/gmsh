@@ -55,22 +55,9 @@ void H1Triangle::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
   h1Triangle(L[r[0]], L[r[1]], L[r[2]], Dual(1.), _order, face.data());
 }
 
-void H1Triangle::keysInfo(std::vector<int> &functionTypeInfo,
-                          std::vector<int> &orderInfo)
+void H1Triangle::functionInfo(std::vector<FunctionInfo> &info)
 {
-  int it = 0;
-  for(int i = 0; i < 3; i++, it++) {
-    functionTypeInfo[it] = 0;
-    orderInfo[it] = 1;
-  }
-  for(int e = 0; e < 3; e++)
-    for(int k = 2; k <= _order; k++, it++) {
-      functionTypeInfo[it] = 1;
-      orderInfo[it] = k;
-    }
-  for(int d = 0; d <= _order - 3; d++)
-    for(int n2 = 0; n2 <= d; n2++, it++) {
-      functionTypeInfo[it] = 2;
-      orderInfo[it] = d + 3;
-    }
+  for(int i = 0; i < 3; i++) info.push_back({0, 1, false});
+  for(int e = 0; e < 3; e++) h1EdgeInfo(1, _order, info);
+  h1TriangleInfo(2, _order, info);
 }

@@ -12,6 +12,7 @@
 
 #include <array>
 #include <cstdint>
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -128,6 +129,18 @@ namespace bt {
   };
   ElementKeys elementKeys(std::size_t elementTag, const std::string &fsType);
 
+  // the basis functions of an element by key: their type, order and values
+  // (by point, then component) at the points uvw, in the orientation of the
+  // element
+  struct KeyedFunction {
+    int type, order;
+    std::vector<double> values;
+  };
+  typedef std::map<std::pair<int, std::size_t>, KeyedFunction> KeyedFunctions;
+  KeyedFunctions keyedFunctions(std::size_t elementTag, const Element &e,
+                                const std::vector<double> &uvw,
+                                const std::string &fsType);
+
   // record the result of a check; print a message and count the failures
   bool check(bool ok, const char *fmt, ...);
   int numFailures();
@@ -142,6 +155,8 @@ namespace bt {
   void testApi();
   void testPeriodic();
   void testHierarchy();
+  void testParts();
+  void testL2();
   void testReference(const std::string &file, bool write);
 
 } // namespace bt

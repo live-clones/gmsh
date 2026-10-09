@@ -53,22 +53,9 @@ void H1Quadrangle::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
   h1Quadrangle(s, t, Dual(1.), _order, face.data());
 }
 
-void H1Quadrangle::keysInfo(std::vector<int> &functionTypeInfo,
-                            std::vector<int> &orderInfo)
+void H1Quadrangle::functionInfo(std::vector<FunctionInfo> &info)
 {
-  int it = 0;
-  for(int i = 0; i < 4; i++, it++) {
-    functionTypeInfo[it] = 0;
-    orderInfo[it] = 1;
-  }
-  for(int e = 0; e < 4; e++)
-    for(int k = 2; k <= _order; k++, it++) {
-      functionTypeInfo[it] = 1;
-      orderInfo[it] = k;
-    }
-  for(int m = 2; m <= _order; m++)
-    for(int k = 0; k < 2 * m - 3; k++, it++) {
-      functionTypeInfo[it] = 2;
-      orderInfo[it] = m;
-    }
+  for(int i = 0; i < 4; i++) info.push_back({0, 1, false});
+  for(int e = 0; e < 4; e++) h1EdgeInfo(1, _order, info);
+  h1QuadrangleInfo(2, _order, info);
 }

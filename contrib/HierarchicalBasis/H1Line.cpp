@@ -10,6 +10,7 @@
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
 #include "H1Line.h"
+#include "Blocks.h"
 
 H1Line::H1Line(int order) : _order(order)
 {
@@ -33,15 +34,8 @@ void H1Line::functions(const Dual *x, std::vector<Dual> &vertex,
     edge[k - 2] = l1 * l0 * kernel(k - 2, l1 - l0);
 }
 
-void H1Line::keysInfo(std::vector<int> &functionTypeInfo,
-                      std::vector<int> &orderInfo)
+void H1Line::functionInfo(std::vector<FunctionInfo> &info)
 {
-  for(int i = 0; i < 2; i++) {
-    functionTypeInfo[i] = 0;
-    orderInfo[i] = 1;
-  }
-  for(int k = 2; k <= _order; k++) {
-    functionTypeInfo[k] = 1;
-    orderInfo[k] = k;
-  }
+  for(int i = 0; i < 2; i++) info.push_back({0, 1, false});
+  h1EdgeInfo(1, _order, info);
 }

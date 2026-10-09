@@ -5,74 +5,43 @@
 //
 // Contributed by Ismail Badia (2019) and Nawfel BENATIA (2025).
 
-// Reference : Solin, P., Segeth, K., & Dolezel, I. (2003).
-//             Higher-Order Finite Element Methods (1st ed.).
-//             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// References: Solin, P., Segeth, K., & Dolezel, I. (2003). Higher-Order Finite
+// Element Methods. Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// Zaglmayr, S. (2006). High Order Finite Element Methods for Electromagnetic
+// Field Computation. PhD thesis, Johannes Kepler University Linz.
 
 #include "HdivTriangle.h"
 #include "Blocks.h"
 
-HdivTriangle::HdivTriangle(int order) : _order(order)
+HdivTriangle::HdivTriangle(int order) : _order(order), _hcurl(order)
 {
-  _numVertex = 3;
-  _numEdge = 3;
-  _numTriFace = 1;
-  _numQuadFace = 0;
+  _numVertex = _hcurl.getNumVertex();
+  _numEdge = _hcurl.getNumEdge();
+  _numTriFace = _hcurl.getNumTriFace();
+  _numQuadFace = _hcurl.getNumQuadFace();
   _numVertexFunction = 0;
-  _numEdgeFunction = 3 * order + 3;
-  _numQuadFaceFunction = 0;
-  _numTriFaceFunction =
-    (order == 0) ? 0 : 3 * (order - 1) + (order - 1) * (order - 2);
+  _numEdgeFunction = _hcurl.getNumEdgeFunction();
+  _numQuadFaceFunction = _hcurl.getNumQuadFaceFunction();
+  _numTriFaceFunction = _hcurl.getNumTriFaceFunction();
   _numBubbleFunction = 0;
-}
-
-// the affine coordinates of the vertices
-static void coordinates(const Dual *x, Dual *L)
-{
-  L[0] = 1. - x[0] - x[1];
-  L[1] = x[0];
-  L[2] = x[1];
 }
 
 void HdivTriangle::functions(const Dual *x, std::vector<Vec> &vertex,
                              std::vector<Vec> &edge, std::vector<Vec> &face,
                              std::vector<Vec> &bubble)
 {
-  Dual L[3];
-  coordinates(x, L);
-  int n = 0;
-  for(int e = 0; e < 3; e++)
-    n += hdivEdge(L[e], L[(e + 1) % 3], _order, &edge[n]);
-  hdivTriangle(L[0], L[1], L[2], _order, face.data());
+  _hcurl.functions(x, vertex, edge, face, bubble);
+  for(auto &f : edge) f = -1. * rotate(f);
+  for(auto &f : face) f = rotate(f);
 }
 
 void HdivTriangle::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
                                  int faceNumber, std::vector<Vec> &face)
 {
-  Dual L[3];
-  coordinates(x, L);
-  const int *r = triangleRoles(flag1, flag2);
-  hdivTriangle(L[r[0]], L[r[1]], L[r[2]], _order, face.data());
+  // the functions of the only face of the element
+  _hcurl.faceFunctions(x, flag1, flag2, flag3, faceNumber, face);
+  for(auto &f : face) f = rotate(f);
 }
 
-void HdivTriangle::keysInfo(std::vector<int> &functionTypeInfo,
-                            std::vector<int> &orderInfo)
-{
-  int it = 0;
-  for(int e = 0; e < 3; e++)
-    for(int k = 0; k <= _order; k++, it++) {
-      functionTypeInfo[it] = 1;
-      orderInfo[it] = k;
-    }
-  for(int e = 0; e < 3; e++)
-    for(int k = 2; k <= _order; k++, it++) {
-      functionTypeInfo[it] = 2;
-      orderInfo[it] = k;
-    }
-  for(int g = 0; g < 2; g++)
-    for(int n1 = 0; n1 <= _order - 3; n1++)
-      for(int n2 = 0; n2 <= _order - 3 - n1; n2++, it++) {
-        functionTypeInfo[it] = 2;
-        orderInfo[it] = n1 + n2 + 3;
-      }
-}
+void HdivTriangle::functionInfo(std::vector<FunctionInfo> &info)
+{ _hcurl.functionInfo(info); }

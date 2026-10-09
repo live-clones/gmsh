@@ -31,8 +31,7 @@ public:
   H1Hexahedron(int order);
 
 protected:
-  void keysInfo(std::vector<int> &functionTypeInfo,
-                std::vector<int> &orderInfo) override;
+  void functionInfo(std::vector<FunctionInfo> &info) override;
   void functions(const Dual *x, std::vector<Dual> &vertex,
                  std::vector<Dual> &edge, std::vector<Dual> &face,
                  std::vector<Dual> &bubble) override;

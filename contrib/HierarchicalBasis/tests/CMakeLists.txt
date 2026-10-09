@@ -9,7 +9,7 @@
 add_executable(hierarchicalBasisTests
   main.cpp basisTest.cpp testCounts.cpp testDerivatives.cpp testSpaces.cpp
   testTraces.cpp testConformity.cpp testApi.cpp testPeriodic.cpp
-  testReference.cpp testHierarchy.cpp)
+  testReference.cpp testHierarchy.cpp testParts.cpp testL2.cpp)
 target_include_directories(hierarchicalBasisTests PRIVATE
   ${CMAKE_SOURCE_DIR}/api)
 target_link_libraries(hierarchicalBasisTests shared)
@@ -18,7 +18,7 @@ set_target_properties(hierarchicalBasisTests PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 foreach(TEST counts derivatives spaces traces conformity api periodic
-             hierarchy)
+             hierarchy parts l2)
   add_test(NAME hierarchicalBasis_${TEST}
            COMMAND hierarchicalBasisTests ${TEST})
 endforeach()

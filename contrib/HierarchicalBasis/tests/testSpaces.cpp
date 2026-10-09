@@ -15,9 +15,7 @@
 //   the null space of the curl (resp. divergence) has the dimension of H1 of
 //   order p+1 minus one, i.e. it is made of the gradients (resp. rotated
 //   gradients), and the null space of the divergence in 3D is made of the
-//   curls;
-// - the bases are hierarchical: the functions of order p are also functions of
-//   order p+1.
+//   curls (the hierarchy of the bases is checked by testHierarchy).
 
 #include <cmath>
 #include "basisTest.h"
@@ -79,7 +77,6 @@ namespace bt {
           std::vector<int> o = orientations(t.totalOrientations, 4);
           t = evaluate(e.type, uvw, fs, o);
           Table d = evaluate(e.type, uvw, spaceType(s, p, true), o);
-          Table next = evaluate(e.type, uvw, spaceType(s, p + 1), o);
           int numKernel = monomials(e, p + 1).size() - 1;
           // in 3D, the curls of H(curl) of order p + 1 on tetrahedra (0 for
           // RT0), of order p on the other elements
@@ -131,6 +128,10 @@ namespace bt {
                       "not reproduced (%g)",
                       n, f, o[i], q, res);
                 numKernel = rank(C);
+                // on prisms, also the vertical fields q(u, v) e_w with q
+                // homogeneous of degree p >= 1, which are not curls of H(curl)
+                // functions of order p
+                if(e.name == "prism" && p) numKernel += p + 1;
               }
               else {
                 res = spanResidual(A, gradients(e, p + 1, uvw, s.kind == HDIV));
@@ -147,21 +148,6 @@ namespace bt {
                     n, f, o[i], s.kind == HDIV ? "divergence" : "curl", nf - dr,
                     numKernel);
             }
-            // hierarchy: each function of order p is a function of order p+1
-            Eigen::MatrixXd B = columns(next, i, nc);
-            std::set<int> found;
-            for(int j = 0; j < nf; j++) {
-              double scale = std::max(A.col(j).norm(), 1.);
-              for(int k = 0; k < B.cols(); k++)
-                if((B.col(k) - A.col(j)).norm() < 1e-12 * scale) {
-                  found.insert(k);
-                  break;
-                }
-            }
-            check((int)found.size() == nf,
-                  "%s %s orientation %d: only %d of "
-                  "the %d functions are functions of order %d",
-                  n, f, o[i], (int)found.size(), nf, p + 1);
           }
         }
       }

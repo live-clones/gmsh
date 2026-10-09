@@ -5,34 +5,35 @@
 //
 // Contributed by Ismail Badia (2019) and Nawfel BENATIA (2025).
 
-// Reference : Solin, P., Segeth, K., & Dolezel, I. (2003).
-//             Higher-Order Finite Element Methods (1st ed.).
-//             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// References: Solin, P., Segeth, K., & Dolezel, I. (2003). Higher-Order Finite
+// Element Methods. Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// Zaglmayr, S. (2006). High Order Finite Element Methods for Electromagnetic
+// Field Computation. PhD thesis, Johannes Kepler University Linz.
 
 #ifndef HDIV_QUADRANGLE_H
 #define HDIV_QUADRANGLE_H
 
 #include "HierarchicalBasis.h"
-
-// H(div) basis on the quadrangle [-1, 1]^2: the H(curl) basis of
-// HcurlQuadrangle rotated in the plane, by -90 degrees for the edge functions
-// (as for the edges of HdivTriangle) and by 90 degrees for the face functions
-// (see hdivQuadrangle).
+#include "HcurlQuadrangle.h"
+// H(div) basis on the quadrangle: the H(curl) basis of HcurlQuadrangle rotated
+// in the plane, by -90 degrees for the edge functions and by 90 degrees for the
+// face functions. The rotated gradients are the divergence-free functions.
 class HdivQuadrangle : public HierarchicalBasis {
 public:
   HdivQuadrangle(int order);
-
-protected:
-  void keysInfo(std::vector<int> &functionTypeInfo,
-                std::vector<int> &orderInfo) override;
+  void functionInfo(std::vector<FunctionInfo> &info) override;
   void functions(const Dual *x, std::vector<Vec> &vertex,
                  std::vector<Vec> &edge, std::vector<Vec> &face,
                  std::vector<Vec> &bubble) override;
   void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
                      int faceNumber, std::vector<Vec> &face) override;
 
+protected:
+  bool hasParts() const override { return true; }
+
 private:
   int _order;
+  HcurlQuadrangle _hcurl;
 };
 
 #endif

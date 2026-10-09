@@ -37,9 +37,7 @@ namespace bt {
     switch(s.kind) {
     case H1: return true;
     case HCURL: return e.dim >= 1;
-    case HDIV:
-      return e.name == "triangle" || e.name == "quadrangle" ||
-             e.name == "hexahedron";
+    case HDIV: return e.dim >= 2;
     }
     return false;
   }
@@ -307,6 +305,33 @@ namespace bt {
       }
     }
     return k;
+  }
+
+  KeyedFunctions keyedFunctions(std::size_t tag, const Element &e,
+                                const std::vector<double> &uvw,
+                                const std::string &fs)
+  {
+    std::vector<int> typeKeys;
+    std::vector<std::size_t> entityKeys;
+    std::vector<double> coord;
+    gmsh::model::mesh::getKeysForElement(tag, fs, typeKeys, entityKeys, coord,
+                                         false);
+    gmsh::vectorpair info;
+    gmsh::model::mesh::getKeysInformation(typeKeys, entityKeys, e.type, fs,
+                                          info);
+    int o;
+    gmsh::model::mesh::getBasisFunctionsOrientationForElement(tag, fs, o);
+    Table t = evaluate(e.type, uvw, fs, {o});
+    KeyedFunctions f;
+    for(std::size_t i = 0; i < typeKeys.size(); i++) {
+      KeyedFunction &fi = f[{typeKeys[i], entityKeys[i]}];
+      fi.type = info[i].first;
+      fi.order = info[i].second;
+      for(int q = 0; q < t.numPoints; q++)
+        for(int c = 0; c < t.numComponents; c++)
+          fi.values.push_back(t(0, q, i, c));
+    }
+    return f;
   }
 
   static int _numFailures = 0, _numChecks = 0;

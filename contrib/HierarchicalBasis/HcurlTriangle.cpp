@@ -5,14 +5,15 @@
 //
 // Contributed by Ismail Badia (2019) and Nawfel BENATIA (2025).
 
-// Reference : Solin, P., Segeth, K., & Dolezel, I. (2003).
-//             Higher-Order Finite Element Methods (1st ed.).
-//             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// References: Solin, P., Segeth, K., & Dolezel, I. (2003). Higher-Order Finite
+// Element Methods. Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// Zaglmayr, S. (2006). High Order Finite Element Methods for Electromagnetic
+// Field Computation. PhD thesis, Johannes Kepler University Linz.
 
 #include "HcurlTriangle.h"
 #include "Blocks.h"
 
-HcurlTriangle::HcurlTriangle(int order) : _order(order)
+HcurlTriangle::HcurlTriangle(int order) : _order(order), _h1(order + 1)
 {
   _numVertex = 3;
   _numEdge = 3;
@@ -21,8 +22,7 @@ HcurlTriangle::HcurlTriangle(int order) : _order(order)
   _numVertexFunction = 0;
   _numEdgeFunction = 3 * order + 3;
   _numQuadFaceFunction = 0;
-  _numTriFaceFunction =
-    (order == 0) ? 0 : 3 * (order - 1) + (order - 1) * (order - 2);
+  _numTriFaceFunction = order ? (order - 1) * (order + 1) : 0;
   _numBubbleFunction = 0;
 }
 
@@ -40,10 +40,13 @@ void HcurlTriangle::functions(const Dual *x, std::vector<Vec> &vertex,
 {
   Dual L[3];
   coordinates(x, L);
+  std::vector<Dual> hv, he, hf, hb;
+  h1Functions(_h1, x, hv, he, hf, hb);
   int n = 0;
   for(int e = 0; e < 3; e++)
-    n += hcurlEdge(L[e], L[(e + 1) % 3], _order, &edge[n]);
-  hcurlTriangle(L[0], L[1], L[2], _order, face.data());
+    n += hcurlEdge(whitney(L[e], L[(e + 1) % 3]), &he[e * _order], _order,
+                   &edge[n]);
+  hcurlTriangle(L[0], L[1], L[2], Dual(1.), hf.data(), _order, face.data());
 }
 
 void HcurlTriangle::faceFunctions(const Dual *x, int flag1, int flag2,
@@ -52,28 +55,15 @@ void HcurlTriangle::faceFunctions(const Dual *x, int flag1, int flag2,
 {
   Dual L[3];
   coordinates(x, L);
+  std::vector<Dual> hf;
+  h1FaceFunctions(_h1, x, flag1, flag2, flag3, 0, hf);
   const int *r = triangleRoles(flag1, flag2);
-  hcurlTriangle(L[r[0]], L[r[1]], L[r[2]], _order, face.data());
+  hcurlTriangle(L[r[0]], L[r[1]], L[r[2]], Dual(1.), hf.data(), _order,
+                face.data());
 }
 
-void HcurlTriangle::keysInfo(std::vector<int> &functionTypeInfo,
-                             std::vector<int> &orderInfo)
+void HcurlTriangle::functionInfo(std::vector<FunctionInfo> &info)
 {
-  int it = 0;
-  for(int e = 0; e < 3; e++)
-    for(int k = 0; k <= _order; k++, it++) {
-      functionTypeInfo[it] = 1;
-      orderInfo[it] = k;
-    }
-  for(int e = 0; e < 3; e++)
-    for(int k = 2; k <= _order; k++, it++) {
-      functionTypeInfo[it] = 2;
-      orderInfo[it] = k;
-    }
-  for(int g = 0; g < 2; g++)
-    for(int n1 = 0; n1 <= _order - 3; n1++)
-      for(int n2 = 0; n2 <= _order - 3 - n1; n2++, it++) {
-        functionTypeInfo[it] = 2;
-        orderInfo[it] = n1 + n2 + 3;
-      }
+  for(int e = 0; e < 3; e++) hcurlEdgeInfo(_order, info);
+  hcurlTriangleInfo(_order, info);
 }

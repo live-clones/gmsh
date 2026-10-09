@@ -19,8 +19,11 @@ set(SRC
     H1Hexahedron.cpp
     HcurlHexahedron.cpp
     HdivHexahedron.cpp
+    HdivTetrahedron.cpp
+    HdivPrism.cpp
     H1Prism.cpp
     HcurlPrism.cpp
+    L2Element.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

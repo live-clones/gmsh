@@ -69,30 +69,13 @@ void H1Hexahedron::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
   h1Quadrangle(s, t, a[f[2]], _order, &face[faceNumber * perFace]);
 }
 
-void H1Hexahedron::keysInfo(std::vector<int> &functionTypeInfo,
-                            std::vector<int> &orderInfo)
+void H1Hexahedron::functionInfo(std::vector<FunctionInfo> &info)
 {
-  int it = 0;
-  for(int i = 0; i < 8; i++, it++) {
-    functionTypeInfo[it] = 0;
-    orderInfo[it] = 1;
-  }
-  for(int e = 0; e < 12; e++)
-    for(int k = 2; k <= _order; k++, it++) {
-      functionTypeInfo[it] = 1;
-      orderInfo[it] = k;
-    }
-  for(int f = 0; f < 6; f++)
-    for(int m = 2; m <= _order; m++)
-      for(int k = 0; k < 2 * m - 3; k++, it++) {
-        functionTypeInfo[it] = 2;
-        orderInfo[it] = m;
-      }
+  for(int i = 0; i < 8; i++) info.push_back({0, 1, false});
+  for(int e = 0; e < 12; e++) h1EdgeInfo(1, _order, info);
+  for(int f = 0; f < 6; f++) h1QuadrangleInfo(2, _order, info);
   for(int m = 2; m <= _order; m++)
     for(int k = 0;
-        k < (m - 1) * (m - 1) * (m - 1) - (m - 2) * (m - 2) * (m - 2);
-        k++, it++) {
-      functionTypeInfo[it] = 3;
-      orderInfo[it] = m;
-    }
+        k < (m - 1) * (m - 1) * (m - 1) - (m - 2) * (m - 2) * (m - 2); k++)
+      info.push_back({3, m, false});
 }

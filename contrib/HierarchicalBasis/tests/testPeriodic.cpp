@@ -100,7 +100,7 @@ namespace bt {
                       x.size() == 3 * tk.size() && xm.size() == x.size());
         check(sizes, "periodic curve %d %s: wrong sizes", c.slave, fs.c_str());
         if(!sizes) continue;
-        double coordError = 0., valueError = 0.;
+        double coordError = 0., valueError = 0., scale = 1.;
         int unmatched = 0;
         for(std::size_t j = 0; j < tk.size(); j++) {
           for(int k = 0; k < 3; k++)
@@ -130,11 +130,12 @@ namespace bt {
           double vs = trace(e, fs, j % nk, u, c.dir);
           double vm = trace(em, fs, fm, um, c.dir);
           valueError = std::max(valueError, std::abs(sign[j] * vs - vm));
+          scale = std::max(scale, std::abs(vm));
         }
-        check(coordError < 1e-10 && !unmatched && valueError < 1e-9,
+        check(coordError < 1e-10 && !unmatched && valueError < 1e-10 * scale,
               "periodic curve %d %s: coordinates differ by %g, %d unmatched "
-              "keys, values differ by %g",
-              c.slave, fs.c_str(), coordError, unmatched, valueError);
+              "keys, values differ by %g (relative to %g)",
+              c.slave, fs.c_str(), coordError, unmatched, valueError, scale);
       }
     }
   }

@@ -5,42 +5,44 @@
 //
 // Contributed by Ismail Badia (2019) and Nawfel BENATIA (2025).
 
-// Reference : Solin, P., Segeth, K., & Dolezel, I. (2003).
-//             Higher-Order Finite Element Methods (1st ed.).
-//             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// References: Solin, P., Segeth, K., & Dolezel, I. (2003). Higher-Order Finite
+// Element Methods. Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// Zaglmayr, S. (2006). High Order Finite Element Methods for Electromagnetic
+// Field Computation. PhD thesis, Johannes Kepler University Linz.
 
 #ifndef HCURL_HEXAHEDRON_H
 #define HCURL_HEXAHEDRON_H
 
 #include "HierarchicalBasis.h"
-
+#include "H1Hexahedron.h"
 // H(curl) basis on the hexahedron [-1, 1]^3, with the affine coordinates a0,
-// ..., a5 of hexahedronCoordinates:
-// - the functions of the edges (see hexahedronEdges): the product of the two
-//   affine coordinates across the edge times the tensor product edge functions
-//   (see hcurlTensorEdge);
-// - the functions of the faces (see hexahedronFaces): the affine coordinate
-//   across the face times the face functions of its two coordinates (see
+// ..., a5 of hexahedronCoordinates and the gradients of the H1 functions of
+// H1Hexahedron of order p + 1:
+// - the functions of the edges (see hexahedronEdges), whose lowest order
+//   function is the product of the two affine coordinates across the edge
+//   times the gradient of the coordinate along it (see hcurlEdge);
+// - the functions of the faces (see hexahedronFaces): those of its two
+//   coordinates, multiplied by the affine coordinate across the face (see
 //   hcurlQuadrangle);
-// - the bubble functions L_n1(u) l_n2(v) l_n3(w) e_u, n1 = 0, ..., p, n2, n3 =
-//   2, ..., p + 1, and the same with the roles of u, v, w exchanged for e_v and
-//   e_w;
-// where L_k are the Legendre polynomials and l_k the Lobatto polynomials.
+// - the bubble functions, by increasing order l = 1, ..., p: the gradients of
+//   the H1 bubbles of order l + 1, then the rotational functions of order l
+//   (see rotationalBubbles()).
 class HcurlHexahedron : public HierarchicalBasis {
 public:
   HcurlHexahedron(int order);
-
-protected:
-  void keysInfo(std::vector<int> &functionTypeInfo,
-                std::vector<int> &orderInfo) override;
+  void functionInfo(std::vector<FunctionInfo> &info) override;
   void functions(const Dual *x, std::vector<Vec> &vertex,
                  std::vector<Vec> &edge, std::vector<Vec> &face,
                  std::vector<Vec> &bubble) override;
   void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
                      int faceNumber, std::vector<Vec> &face) override;
 
+protected:
+  bool hasParts() const override { return true; }
+
 private:
   int _order;
+  H1Hexahedron _h1;
 };
 
 #endif

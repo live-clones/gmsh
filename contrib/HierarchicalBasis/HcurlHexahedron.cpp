@@ -5,14 +5,15 @@
 //
 // Contributed by Ismail Badia (2019) and Nawfel BENATIA (2025).
 
-// Reference : Solin, P., Segeth, K., & Dolezel, I. (2003).
-//             Higher-Order Finite Element Methods (1st ed.).
-//             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// References: Solin, P., Segeth, K., & Dolezel, I. (2003). Higher-Order Finite
+// Element Methods. Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// Zaglmayr, S. (2006). High Order Finite Element Methods for Electromagnetic
+// Field Computation. PhD thesis, Johannes Kepler University Linz.
 
 #include "HcurlHexahedron.h"
 #include "Blocks.h"
 
-HcurlHexahedron::HcurlHexahedron(int order) : _order(order)
+HcurlHexahedron::HcurlHexahedron(int order) : _order(order), _h1(order + 1)
 {
   _numVertex = 8;
   _numEdge = 12;
@@ -25,15 +26,36 @@ HcurlHexahedron::HcurlHexahedron(int order) : _order(order)
   _numBubbleFunction = 3 * order * order * (order + 1);
 }
 
-// the degrees of the Legendre polynomial (0 to the order) of the coordinate d
-// along a bubble function, and of the Lobatto polynomials (2 to the order + 1)
-// of the two other coordinates
-static void bubbleRange(int d, int order, int *lo, int *hi)
+// The rotational bubble functions of order l, with m = l + 1 and the Lobatto
+// polynomials l_k: l_j(v) l_k(w) grad(u), l_i(u) l_k(w) grad(v) and l_i(u)
+// l_j(v) grad(w), the pairs of indices in [2, m]^2 with max = m; then, with A
+// = l_i(u), B = l_j(v), C = l_k(w), grad(A) B C - A grad(B) C + A B grad(C),
+// then grad(A) B C + A grad(B) C - A B grad(C), (i, j, k) in [2, m]^3 with
+// max(i, j, k) = m; the indices by increasing order
+static int rotationalBubbles(const Dual *x, int l, Vec *f)
 {
-  for(int i = 0; i < 3; i++) {
-    lo[i] = (i == d) ? 0 : 2;
-    hi[i] = (i == d) ? order : order + 1;
+  const int m = l + 1;
+  int n = 0;
+  for(int d = 0; d < 3; d++) {
+    int p = (d + 1) % 3, q = (d + 2) % 3;
+    if(p > q) std::swap(p, q);
+    for(int j = 2; j <= m; j++)
+      for(int k = 2; k <= m; k++)
+        if(std::max(j, k) == m)
+          f[n++] = lobatto(j, x[p]) * lobatto(k, x[q]) * grad(x[d]);
   }
+  for(int type = 0; type < 2; type++)
+    for(int i = 2; i <= m; i++)
+      for(int j = 2; j <= m; j++)
+        for(int k = 2; k <= m; k++)
+          if(std::max(std::max(i, j), k) == m) {
+            Dual A = lobatto(i, x[0]), B = lobatto(j, x[1]),
+                 C = lobatto(k, x[2]);
+            double s = (type == 0) ? -1. : 1.;
+            f[n++] =
+              (B * C) * grad(A) + s * (A * C) * grad(B) - s * (A * B) * grad(C);
+          }
+  return n;
 }
 
 void HcurlHexahedron::functions(const Dual *x, std::vector<Vec> &vertex,
@@ -42,31 +64,27 @@ void HcurlHexahedron::functions(const Dual *x, std::vector<Vec> &vertex,
 {
   Dual a[6];
   hexahedronCoordinates(x, a);
+  std::vector<Dual> hv, he, hf, hb;
+  h1Functions(_h1, x, hv, he, hf, hb);
   int n = 0;
   for(int e = 0; e < 12; e++) {
     const int *h = hexahedronEdges[e];
-    n += hcurlTensorEdge(x[h[0]], a[h[1]] * a[h[2]], _order, &edge[n]);
+    n += hcurlEdge(a[h[1]] * a[h[2]] * grad(x[h[0]]), &he[e * _order], _order,
+                   &edge[n]);
   }
   n = 0;
   for(int f = 0; f < 6; f++) {
     const int *h = hexahedronFaces[f];
-    n += hcurlQuadrangle(x[h[0]], x[h[1]], a[h[2]], _order, &face[n]);
+    n += hcurlQuadrangle(x[h[0]], x[h[1]], a[h[2]], &hf[f * _order * _order],
+                         _order, &face[n]);
   }
-  // the bubble functions along e_u, e_v and e_w: the Legendre polynomial of
-  // the coordinate along the function, the Lobatto polynomials of the others
+  std::vector<Vec> r(_numBubbleFunction + 1);
   n = 0;
-  for(int d = 0; d < 3; d++) {
-    int lo[3], hi[3];
-    bubbleRange(d, _order, lo, hi);
-    for(int n1 = lo[0]; n1 <= hi[0]; n1++)
-      for(int n2 = lo[1]; n2 <= hi[1]; n2++)
-        for(int n3 = lo[2]; n3 <= hi[2]; n3++) {
-          int k[3] = {n1, n2, n3};
-          Dual f(1.);
-          for(int i = 0; i < 3; i++)
-            f = f * (i == d ? legendre(k[i], x[i]) : lobatto(k[i], x[i]));
-          bubble[n++] = f * grad(x[d]);
-        }
+  for(int l = 1; l <= _order; l++) {
+    for(int k = (l - 1) * (l - 1) * (l - 1); k < l * l * l; k++)
+      bubble[n++] = grad(hb[k]);
+    int nr = rotationalBubbles(x, l, r.data());
+    for(int k = 0; k < nr; k++) bubble[n++] = r[k];
   }
 }
 
@@ -78,39 +96,22 @@ void HcurlHexahedron::faceFunctions(const Dual *x, int flag1, int flag2,
   hexahedronCoordinates(x, a);
   const int *h = hexahedronFaces[faceNumber];
   quadrangleCoordinates(x[h[0]], x[h[1]], flag1, flag2, flag3, s, t);
+  std::vector<Dual> hf;
+  h1FaceFunctions(_h1, x, flag1, flag2, flag3, faceNumber, hf);
   int perFace = _numQuadFaceFunction / 6;
-  hcurlQuadrangle(s, t, a[h[2]], _order, &face[faceNumber * perFace]);
+  hcurlQuadrangle(s, t, a[h[2]], &hf[faceNumber * _order * _order], _order,
+                  &face[faceNumber * perFace]);
 }
 
-void HcurlHexahedron::keysInfo(std::vector<int> &functionTypeInfo,
-                               std::vector<int> &orderInfo)
+void HcurlHexahedron::functionInfo(std::vector<FunctionInfo> &info)
 {
-  int it = 0;
-  for(int e = 0; e < 12; e++)
-    for(int k = 0; k <= _order; k++, it++) {
-      functionTypeInfo[it] = 1;
-      orderInfo[it] = k;
-    }
-  for(int f = 0; f < 6; f++) {
-    for(int n1 = 0; n1 <= _order; n1++)
-      for(int n2 = 2; n2 <= _order + 1; n2++, it++) {
-        functionTypeInfo[it] = 2;
-        orderInfo[it] = std::max(n1, n2);
-      }
-    for(int n1 = 2; n1 <= _order + 1; n1++)
-      for(int n2 = 0; n2 <= _order; n2++, it++) {
-        functionTypeInfo[it] = 2;
-        orderInfo[it] = std::max(n1, n2);
-      }
-  }
-  for(int d = 0; d < 3; d++) {
-    int lo[3], hi[3];
-    bubbleRange(d, _order, lo, hi);
-    for(int n1 = lo[0]; n1 <= hi[0]; n1++)
-      for(int n2 = lo[1]; n2 <= hi[1]; n2++)
-        for(int n3 = lo[2]; n3 <= hi[2]; n3++, it++) {
-          functionTypeInfo[it] = 3;
-          orderInfo[it] = std::max(std::max(n1, n2), n3);
-        }
+  for(int e = 0; e < 12; e++) hcurlEdgeInfo(_order, info);
+  for(int f = 0; f < 6; f++) hcurlQuadrangleInfo(_order, info);
+  for(int l = 1; l <= _order; l++) {
+    int m = l + 1,
+        layer = (m - 1) * (m - 1) * (m - 1) - (m - 2) * (m - 2) * (m - 2);
+    for(int k = 0; k < layer; k++) info.push_back({3, l, true});
+    for(int k = 0; k < 3 * (2 * m - 3) + 2 * layer; k++)
+      info.push_back({3, l, false});
   }
 }

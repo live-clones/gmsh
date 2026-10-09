@@ -25,7 +25,8 @@ int main(int argc, char **argv)
     {"counts", bt::testCounts},         {"derivatives", bt::testDerivatives},
     {"spaces", bt::testSpaces},         {"traces", bt::testTraces},
     {"conformity", bt::testConformity}, {"api", bt::testApi},
-    {"periodic", bt::testPeriodic},     {"hierarchy", bt::testHierarchy}};
+    {"periodic", bt::testPeriodic},     {"hierarchy", bt::testHierarchy},
+    {"parts", bt::testParts},           {"l2", bt::testL2}};
 
   std::string name = argc > 1 ? argv[1] : "";
   if(!tests.count(name) && name != "reference") {

@@ -29,8 +29,11 @@
 #include "H1Hexahedron.h"
 #include "HcurlHexahedron.h"
 #include "HdivHexahedron.h"
+#include "HdivTetrahedron.h"
+#include "HdivPrism.h"
 #include "H1Prism.h"
 #include "HcurlPrism.h"
+#include "L2Element.h"
 
 HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
                                              int familyType, int order)
@@ -99,10 +102,22 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
     case TYPE_HEX: basis = new HcurlHexahedron(order); break;
     }
   }
+  else if(space == L2) {
+    switch(familyType) {
+    case TYPE_LIN:
+    case TYPE_TRI:
+    case TYPE_QUA:
+    case TYPE_TET:
+    case TYPE_PRI:
+    case TYPE_HEX: basis = new L2Element(familyType, order); break;
+    }
+  }
   else if(space == HDIV || space == DIV_HDIV) {
     switch(familyType) {
     case TYPE_TRI: basis = new HdivTriangle(order); break;
     case TYPE_QUA: basis = new HdivQuadrangle(order); break;
+    case TYPE_TET: basis = new HdivTetrahedron(order); break;
+    case TYPE_PRI: basis = new HdivPrism(order); break;
     case TYPE_HEX: basis = new HdivHexahedron(order); break;
     }
   }
@@ -127,10 +142,14 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
 bool HierarchicalBasis::_select()
 {
   const int nf = _numAllFunctions();
-  std::vector<int> type(nf), order(nf);
-  keysInfo(type, order);
-  std::vector<bool> kernel(nf, false);
-  if(_part != ALL && !kernelInfo(kernel)) return false;
+  if(_part != ALL && !hasParts()) return false;
+  std::vector<FunctionInfo> info;
+  functionInfo(info);
+  if((int)info.size() != nf) {
+    Msg::Error("Wrong number of hierarchical basis functions (%d for %d)",
+               (int)info.size(), nf);
+    return false;
+  }
   // the entity of each function and its position there, from the layout of
   // the functions: one per vertex, then edge by edge, face by face
   // (quadrilateral faces first) and the bubbles
@@ -140,7 +159,7 @@ bool HierarchicalBasis::_select()
   _functions.clear();
   _selected.clear();
   for(int i = 0; i < nf; i++) {
-    Function f = {type[i], 0, 0, order[i]};
+    Function f = {info[i].type, 0, 0, info[i].order};
     int j = i;
     if(j < _numVertexFunction) { f.entity = j; }
     else if((j -= _numVertexFunction) < _numEdgeFunction) {
@@ -157,7 +176,7 @@ bool HierarchicalBasis::_select()
     }
     else
       f.position = j - _numTriFaceFunction;
-    if(_part == ALL || kernel[i] == (_part == KERNEL)) {
+    if(_part == ALL || info[i].kernel == (_part == KERNEL)) {
       _functions.push_back(f);
       _selected.push_back(i);
     }
@@ -189,6 +208,7 @@ int HierarchicalBasis::getEdgeFunctionSignForReversedEdge(int position) const
   // sign with the edge when their degree is odd: for H1 (degree k + 2 for the
   // k-th function of the edge) every other function from the second one, for
   // H(curl) and H(div) (degree k) every other function from the first one
+  if(_space == L2) return 1; // the functions do not depend on orientation
   bool h1 = (_space == H1 || _space == GRAD_H1);
   return (position % 2 == (h1 ? 1 : 0)) ? -1 : 1;
 }

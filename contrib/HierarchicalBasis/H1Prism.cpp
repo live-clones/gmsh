@@ -108,35 +108,14 @@ void H1Prism::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
   }
 }
 
-void H1Prism::keysInfo(std::vector<int> &functionTypeInfo,
-                       std::vector<int> &orderInfo)
+void H1Prism::functionInfo(std::vector<FunctionInfo> &info)
 {
-  int it = 0;
-  for(int i = 0; i < 6; i++, it++) {
-    functionTypeInfo[it] = 0;
-    orderInfo[it] = 1;
-  }
-  for(int e = 0; e < 9; e++)
-    for(int k = 2; k <= _order; k++, it++) {
-      functionTypeInfo[it] = 1;
-      orderInfo[it] = k;
-    }
-  for(int f = 0; f < 3; f++)
-    for(int m = 0; m <= _order - 2; m++)
-      for(int k = 0; k < 2 * m + 1; k++, it++) {
-        functionTypeInfo[it] = 2;
-        orderInfo[it] = m + 2;
-      }
-  for(int f = 0; f < _numTriFace; f++)
-    for(int i = 0; i < (_order - 2) * (_order - 1) / 2; i++, it++) {
-      functionTypeInfo[it] = 2;
-      orderInfo[it] = triangleOrder(i);
-    }
+  for(int i = 0; i < 6; i++) info.push_back({0, 1, false});
+  for(int e = 0; e < 9; e++) h1EdgeInfo(1, _order, info);
+  for(int f = 0; f < 3; f++) h1QuadrangleInfo(2, _order, info);
+  for(int f = 0; f < _numTriFace; f++) h1TriangleInfo(2, _order, info);
   for(int m = 3; m <= _order; m++)
     for(int i = 0; i < (m - 2) * (m - 1) / 2; i++)
       for(int k = 2; k <= m; k++)
-        if(std::max(triangleOrder(i), k) == m) {
-          functionTypeInfo[it] = 3;
-          orderInfo[it++] = m;
-        }
+        if(std::max(triangleOrder(i), k) == m) info.push_back({3, m, false});
 }

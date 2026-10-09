@@ -10,6 +10,7 @@
 //             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
 
 #include "H1Point.h"
+#include "Blocks.h"
 
 H1Point::H1Point()
 {
@@ -25,9 +26,5 @@ void H1Point::functions(const Dual *x, std::vector<Dual> &vertex,
                         std::vector<Dual> &bubble)
 { vertex[0] = Dual(1.); }
 
-void H1Point::keysInfo(std::vector<int> &functionTypeInfo,
-                       std::vector<int> &orderInfo)
-{
-  functionTypeInfo[0] = 0;
-  orderInfo[0] = 0;
-}
+void H1Point::functionInfo(std::vector<FunctionInfo> &info)
+{ info.push_back({0, 0, false}); }

@@ -5,31 +5,34 @@
 //
 // Contributed by Ismail Badia (2019) and Nawfel BENATIA (2025).
 
-// Reference : Solin, P., Segeth, K., & Dolezel, I. (2003).
-//             Higher-Order Finite Element Methods (1st ed.).
-//             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// References: Solin, P., Segeth, K., & Dolezel, I. (2003). Higher-Order Finite
+// Element Methods. Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+// Zaglmayr, S. (2006). High Order Finite Element Methods for Electromagnetic
+// Field Computation. PhD thesis, Johannes Kepler University Linz.
 
 #ifndef HCURL_LINE_H
 #define HCURL_LINE_H
 
 #include "HierarchicalBasis.h"
-
-// H(curl) basis on the line u in [-1, 1]: the edge functions L_k(u) e_u, for
-// the Legendre polynomials L_k of degrees k = 0 to the order (the Whitney
-// function and its hierarchical extensions)
+#include "H1Line.h"
+// H(curl) basis on the line [-1, 1]: the Whitney function of the edge, then
+// the gradients of the H1 functions of the edge of order p + 1.
 class HcurlLine : public HierarchicalBasis {
 public:
   HcurlLine(int order);
-
-protected:
-  void keysInfo(std::vector<int> &functionTypeInfo,
-                std::vector<int> &orderInfo) override;
+  void functionInfo(std::vector<FunctionInfo> &info) override;
   void functions(const Dual *x, std::vector<Vec> &vertex,
                  std::vector<Vec> &edge, std::vector<Vec> &face,
                  std::vector<Vec> &bubble) override;
+  void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
+                     int faceNumber, std::vector<Vec> &face) override;
+
+protected:
+  bool hasParts() const override { return true; }
 
 private:
   int _order;
+  H1Line _h1;
 };
 
 #endif

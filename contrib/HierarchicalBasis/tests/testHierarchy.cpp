@@ -18,40 +18,6 @@
 
 namespace bt {
 
-  // the functions of an element by key: their information and values
-  struct Function {
-    int type, order;
-    std::vector<double> values;
-  };
-  typedef std::map<std::pair<int, std::size_t>, Function> Functions;
-
-  static Functions functions(std::size_t tag, const Element &e,
-                             const std::vector<double> &uvw,
-                             const std::string &fs)
-  {
-    std::vector<int> typeKeys;
-    std::vector<std::size_t> entityKeys;
-    std::vector<double> coord;
-    gmsh::model::mesh::getKeysForElement(tag, fs, typeKeys, entityKeys, coord,
-                                         false);
-    gmsh::vectorpair info;
-    gmsh::model::mesh::getKeysInformation(typeKeys, entityKeys, e.type, fs,
-                                          info);
-    int o;
-    gmsh::model::mesh::getBasisFunctionsOrientationForElement(tag, fs, o);
-    Table t = evaluate(e.type, uvw, fs, {o});
-    Functions f;
-    for(std::size_t i = 0; i < typeKeys.size(); i++) {
-      Function &fi = f[{typeKeys[i], entityKeys[i]}];
-      fi.type = info[i].first;
-      fi.order = info[i].second;
-      for(int q = 0; q < t.numPoints; q++)
-        for(int c = 0; c < t.numComponents; c++)
-          fi.values.push_back(t(0, q, i, c));
-    }
-    return f;
-  }
-
   void testHierarchy()
   {
     Random r(6);
@@ -64,11 +30,9 @@ namespace bt {
         std::size_t tag = singleElement(e, nodes);
         for(auto &s : spaces()) {
           if(!supported(s, e)) continue;
-          // the H(curl) and H(div) functions are not ordered by degree yet
-          if(s.kind != H1) continue;
-          std::vector<Functions> all;
+          std::vector<KeyedFunctions> all;
           for(int p = s.minOrder; p <= maxOrder(e); p++)
-            all.push_back(functions(tag, e, uvw, spaceType(s, p)));
+            all.push_back(keyedFunctions(tag, e, uvw, spaceType(s, p)));
           for(std::size_t i = 0; i + 1 < all.size(); i++) {
             int p = s.minOrder + i;
             std::string fs = spaceType(s, p);
@@ -79,7 +43,7 @@ namespace bt {
                         "%s %s: key (%d, %zu) not a key of order %d", n, f,
                         kv.first.first, kv.first.second, p + 1))
                 continue;
-              const Function &a = kv.second, &b = it->second;
+              const KeyedFunction &a = kv.second, &b = it->second;
               double diff = 0., scale = 1.;
               for(std::size_t j = 0; j < a.values.size(); j++) {
                 diff = std::max(diff, std::abs(a.values[j] - b.values[j]));
@@ -93,7 +57,7 @@ namespace bt {
                     b.type, a.order, b.order);
             }
             // the functions of order <= q among those of the last order
-            const Functions &last = all.back();
+            const KeyedFunctions &last = all.back();
             int nq = 0;
             for(auto &kv : last)
               if(kv.second.order <= p) nq++;
