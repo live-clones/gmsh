@@ -56,8 +56,8 @@ void HcurlTriangle::faceFunctions(const Dual *x, int flag1, int flag2,
   hcurlTriangle(L[r[0]], L[r[1]], L[r[2]], _order, face.data());
 }
 
-void HcurlTriangle::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                std::vector<int> &orderInfo)
+void HcurlTriangle::keysInfo(std::vector<int> &functionTypeInfo,
+                             std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int e = 0; e < 3; e++)

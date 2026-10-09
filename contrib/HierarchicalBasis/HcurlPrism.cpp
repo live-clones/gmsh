@@ -126,8 +126,8 @@ void HcurlPrism::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
   }
 }
 
-void HcurlPrism::getKeysInfo(std::vector<int> &functionTypeInfo,
-                             std::vector<int> &orderInfo)
+void HcurlPrism::keysInfo(std::vector<int> &functionTypeInfo,
+                          std::vector<int> &orderInfo)
 {
   const int p = _order;
   int it = 0;

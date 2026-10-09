@@ -48,10 +48,14 @@ void H1Hexahedron::functions(const Dual *x, std::vector<Dual> &vertex,
     n += h1Quadrangle(x[hexahedronFaces[f][0]], x[hexahedronFaces[f][1]],
                       a[hexahedronFaces[f][2]], _order, &face[n]);
   n = 0;
-  for(int n1 = 2; n1 <= _order; n1++)
-    for(int n2 = 2; n2 <= _order; n2++)
-      for(int n3 = 2; n3 <= _order; n3++)
-        bubble[n++] = lobatto(n1, x[0]) * lobatto(n2, x[1]) * lobatto(n3, x[2]);
+  // by increasing max(n1, n2, n3), then increasing n1, n2 and n3
+  for(int m = 2; m <= _order; m++)
+    for(int n1 = 2; n1 <= m; n1++)
+      for(int n2 = 2; n2 <= m; n2++)
+        for(int n3 = 2; n3 <= m; n3++)
+          if(std::max(std::max(n1, n2), n3) == m)
+            bubble[n++] =
+              lobatto(n1, x[0]) * lobatto(n2, x[1]) * lobatto(n3, x[2]);
 }
 
 void H1Hexahedron::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
@@ -65,8 +69,8 @@ void H1Hexahedron::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
   h1Quadrangle(s, t, a[f[2]], _order, &face[faceNumber * perFace]);
 }
 
-void H1Hexahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
-                               std::vector<int> &orderInfo)
+void H1Hexahedron::keysInfo(std::vector<int> &functionTypeInfo,
+                            std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int i = 0; i < 8; i++, it++) {
@@ -79,15 +83,16 @@ void H1Hexahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
       orderInfo[it] = k;
     }
   for(int f = 0; f < 6; f++)
-    for(int n1 = 2; n1 <= _order; n1++)
-      for(int n2 = 2; n2 <= _order; n2++, it++) {
+    for(int m = 2; m <= _order; m++)
+      for(int k = 0; k < 2 * m - 3; k++, it++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = std::max(n1, n2);
+        orderInfo[it] = m;
       }
-  for(int n1 = 2; n1 <= _order; n1++)
-    for(int n2 = 2; n2 <= _order; n2++)
-      for(int n3 = 2; n3 <= _order; n3++, it++) {
-        functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(std::max(n1, n2), n3);
-      }
+  for(int m = 2; m <= _order; m++)
+    for(int k = 0;
+        k < (m - 1) * (m - 1) * (m - 1) - (m - 2) * (m - 2) * (m - 2);
+        k++, it++) {
+      functionTypeInfo[it] = 3;
+      orderInfo[it] = m;
+    }
 }

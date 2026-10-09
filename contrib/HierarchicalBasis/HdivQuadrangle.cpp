@@ -50,8 +50,8 @@ void HdivQuadrangle::faceFunctions(const Dual *x, int flag1, int flag2,
   hdivQuadrangle(s, t, _order, face.data());
 }
 
-void HdivQuadrangle::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                 std::vector<int> &orderInfo)
+void HdivQuadrangle::keysInfo(std::vector<int> &functionTypeInfo,
+                              std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int e = 0; e < 4; e++)

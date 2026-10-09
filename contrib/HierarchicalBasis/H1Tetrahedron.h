@@ -28,10 +28,10 @@
 class H1Tetrahedron : public HierarchicalBasis {
 public:
   H1Tetrahedron(int order);
-  void getKeysInfo(std::vector<int> &functionTypeInfo,
-                   std::vector<int> &orderInfo) override;
 
 protected:
+  void keysInfo(std::vector<int> &functionTypeInfo,
+                std::vector<int> &orderInfo) override;
   void functions(const Dual *x, std::vector<Dual> &vertex,
                  std::vector<Dual> &edge, std::vector<Dual> &face,
                  std::vector<Dual> &bubble) override;

@@ -27,8 +27,8 @@ void HcurlLine::functions(const Dual *x, std::vector<Vec> &vertex,
                           std::vector<Vec> &bubble)
 { hcurlTensorEdge(x[0], Dual(1.), _order, edge.data()); }
 
-void HcurlLine::getKeysInfo(std::vector<int> &functionTypeInfo,
-                            std::vector<int> &orderInfo)
+void HcurlLine::keysInfo(std::vector<int> &functionTypeInfo,
+                         std::vector<int> &orderInfo)
 {
   for(int k = 0; k <= _order; k++) {
     functionTypeInfo[k] = 1;

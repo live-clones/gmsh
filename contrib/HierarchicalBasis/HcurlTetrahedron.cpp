@@ -88,8 +88,8 @@ void HcurlTetrahedron::faceFunctions(const Dual *x, int flag1, int flag2,
                 &face[faceNumber * perFace]);
 }
 
-void HcurlTetrahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                   std::vector<int> &orderInfo)
+void HcurlTetrahedron::keysInfo(std::vector<int> &functionTypeInfo,
+                                std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int e = 0; e < 6; e++)

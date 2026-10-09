@@ -141,6 +141,7 @@ namespace bt {
   void testConformity();
   void testApi();
   void testPeriodic();
+  void testHierarchy();
   void testReference(const std::string &file, bool write);
 
 } // namespace bt

@@ -6,6 +6,7 @@
 #ifndef BLOCKS_H
 #define BLOCKS_H
 
+#include <algorithm>
 #include <vector>
 #include "Dual.h"
 
@@ -61,18 +62,26 @@ inline int h1Edge(const Dual &a, const Dual &b, int order, Dual *f)
 
 // The H1 functions of a triangular face of affine coordinates (a, b, c),
 // multiplied by blend: blend a b c K_n1(b - a) K_n2(a - c), n1 + n2 <= order -
-// 3; return the number of functions
+// 3, by increasing n1 + n2 (the functions of a lower order come first, in the
+// same positions), then increasing n2; return the number of functions
 inline int h1Triangle(const Dual &a, const Dual &b, const Dual &c,
                       const Dual &blend, int order, Dual *f)
 {
   Dual abc = blend * a * b * c;
   int n = 0;
-  for(int n1 = 0; n1 <= order - 3; n1++) {
-    Dual k1 = kernel(n1, b - a);
-    for(int n2 = 0; n2 <= order - 3 - n1; n2++)
-      f[n++] = abc * k1 * kernel(n2, a - c);
-  }
+  for(int d = 0; d <= order - 3; d++)
+    for(int n2 = 0; n2 <= d; n2++)
+      f[n++] = abc * kernel(d - n2, b - a) * kernel(n2, a - c);
   return n;
+}
+
+// The order of the i-th function of h1Triangle: d + 3 for the d (d + 1) / 2-th
+// to the (d + 1) (d + 2) / 2 - 1-th functions
+inline int triangleOrder(int i)
+{
+  int d = 0;
+  while((d + 1) * (d + 2) / 2 <= i) d++;
+  return d + 3;
 }
 
 // The coordinates (s, t) of a quadrilateral face of coordinates (s0, t0), in
@@ -87,15 +96,18 @@ inline void quadrangleCoordinates(const Dual &s0, const Dual &t0, int flag1,
 
 // The H1 functions of a quadrilateral face of coordinates (s, t) in [-1, 1]^2,
 // multiplied by blend: blend l_n1(s) l_n2(t), n1, n2 = 2, ..., order, where
-// l_k are the Lobatto polynomials; return the number of functions
+// l_k are the Lobatto polynomials, by increasing max(n1, n2) (the functions of
+// a lower order come first, in the same positions), then increasing n1 and
+// n2; return the number of functions
 inline int h1Quadrangle(const Dual &s, const Dual &t, const Dual &blend,
                         int order, Dual *f)
 {
   int n = 0;
-  for(int n1 = 2; n1 <= order; n1++) {
-    Dual b1 = blend * lobatto(n1, s);
-    for(int n2 = 2; n2 <= order; n2++) f[n++] = b1 * lobatto(n2, t);
-  }
+  for(int m = 2; m <= order; m++)
+    for(int n1 = 2; n1 <= m; n1++)
+      for(int n2 = 2; n2 <= m; n2++)
+        if(std::max(n1, n2) == m)
+          f[n++] = blend * lobatto(n1, s) * lobatto(n2, t);
   return n;
 }
 
@@ -105,10 +117,11 @@ inline int h1QuadrangleKernel(const Dual &s, const Dual &t, const Dual &blend,
                               int order, Dual *f)
 {
   int n = 0;
-  for(int n1 = 0; n1 <= order - 2; n1++) {
-    Dual b1 = blend * kernel(n1, s);
-    for(int n2 = 0; n2 <= order - 2; n2++) f[n++] = b1 * kernel(n2, t);
-  }
+  for(int m = 0; m <= order - 2; m++)
+    for(int n1 = 0; n1 <= m; n1++)
+      for(int n2 = 0; n2 <= m; n2++)
+        if(std::max(n1, n2) == m)
+          f[n++] = blend * kernel(n1, s) * kernel(n2, t);
   return n;
 }
 

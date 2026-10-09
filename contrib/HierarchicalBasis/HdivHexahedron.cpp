@@ -71,8 +71,8 @@ void HdivHexahedron::faceFunctions(const Dual *x, int flag1, int flag2,
   hdivQuadrangleFace(s, t, a[h[2]], _order, &face[faceNumber * perFace]);
 }
 
-void HdivHexahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                 std::vector<int> &orderInfo)
+void HdivHexahedron::keysInfo(std::vector<int> &functionTypeInfo,
+                              std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int f = 0; f < 6; f++)

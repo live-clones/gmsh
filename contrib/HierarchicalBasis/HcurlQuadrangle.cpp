@@ -49,8 +49,8 @@ void HcurlQuadrangle::faceFunctions(const Dual *x, int flag1, int flag2,
   hcurlQuadrangle(s, t, Dual(1.), _order, face.data());
 }
 
-void HcurlQuadrangle::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                  std::vector<int> &orderInfo)
+void HcurlQuadrangle::keysInfo(std::vector<int> &functionTypeInfo,
+                               std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int e = 0; e < 4; e++)

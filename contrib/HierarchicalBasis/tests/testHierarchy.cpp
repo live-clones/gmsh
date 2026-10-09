@@ -1,0 +1,115 @@
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+// The hierarchy of the bases, through their keys, as needed for p-adaptivity:
+// each function of order p is a function of order p+1, with the same key, the
+// same values and the same information (type and order); and the functions of
+// order p whose order information is at most q are exactly the functions of
+// order q. Checked on a single element with several numberings of its nodes,
+// i.e. in several orientations.
+
+#include <algorithm>
+#include <cmath>
+#include <map>
+#include "gmsh.h"
+#include "basisTest.h"
+
+namespace bt {
+
+  // the functions of an element by key: their information and values
+  struct Function {
+    int type, order;
+    std::vector<double> values;
+  };
+  typedef std::map<std::pair<int, std::size_t>, Function> Functions;
+
+  static Functions functions(std::size_t tag, const Element &e,
+                             const std::vector<double> &uvw,
+                             const std::string &fs)
+  {
+    std::vector<int> typeKeys;
+    std::vector<std::size_t> entityKeys;
+    std::vector<double> coord;
+    gmsh::model::mesh::getKeysForElement(tag, fs, typeKeys, entityKeys, coord,
+                                         false);
+    gmsh::vectorpair info;
+    gmsh::model::mesh::getKeysInformation(typeKeys, entityKeys, e.type, fs,
+                                          info);
+    int o;
+    gmsh::model::mesh::getBasisFunctionsOrientationForElement(tag, fs, o);
+    Table t = evaluate(e.type, uvw, fs, {o});
+    Functions f;
+    for(std::size_t i = 0; i < typeKeys.size(); i++) {
+      Function &fi = f[{typeKeys[i], entityKeys[i]}];
+      fi.type = info[i].first;
+      fi.order = info[i].second;
+      for(int q = 0; q < t.numPoints; q++)
+        for(int c = 0; c < t.numComponents; c++)
+          fi.values.push_back(t(0, q, i, c));
+    }
+    return f;
+  }
+
+  void testHierarchy()
+  {
+    Random r(6);
+    for(auto &e : elements()) {
+      if(e.dim == 0) continue;
+      std::vector<double> uvw = interiorPoints(e, 5, r);
+      for(int numbering = 0; numbering < 3; numbering++) {
+        std::vector<std::size_t> nodes = permutation(e.numVertices, r);
+        if(!numbering) std::sort(nodes.begin(), nodes.end());
+        std::size_t tag = singleElement(e, nodes);
+        for(auto &s : spaces()) {
+          if(!supported(s, e)) continue;
+          // the H(curl) and H(div) functions are not ordered by degree yet
+          if(s.kind != H1) continue;
+          std::vector<Functions> all;
+          for(int p = s.minOrder; p <= maxOrder(e); p++)
+            all.push_back(functions(tag, e, uvw, spaceType(s, p)));
+          for(std::size_t i = 0; i + 1 < all.size(); i++) {
+            int p = s.minOrder + i;
+            std::string fs = spaceType(s, p);
+            const char *n = e.name.c_str(), *f = fs.c_str();
+            for(auto &kv : all[i]) {
+              auto it = all[i + 1].find(kv.first);
+              if(!check(it != all[i + 1].end(),
+                        "%s %s: key (%d, %zu) not a key of order %d", n, f,
+                        kv.first.first, kv.first.second, p + 1))
+                continue;
+              const Function &a = kv.second, &b = it->second;
+              double diff = 0., scale = 1.;
+              for(std::size_t j = 0; j < a.values.size(); j++) {
+                diff = std::max(diff, std::abs(a.values[j] - b.values[j]));
+                scale = std::max(scale, std::abs(a.values[j]));
+              }
+              check(diff < 1e-12 * scale && a.type == b.type &&
+                      a.order == b.order,
+                    "%s %s: function of key (%d, %zu) differs at order %d "
+                    "(values by %g, type %d/%d, order %d/%d)",
+                    n, f, kv.first.first, kv.first.second, p + 1, diff, a.type,
+                    b.type, a.order, b.order);
+            }
+            // the functions of order <= q among those of the last order
+            const Functions &last = all.back();
+            int nq = 0;
+            for(auto &kv : last)
+              if(kv.second.order <= p) nq++;
+            bool same = (nq == (int)all[i].size());
+            for(auto &kv : all[i])
+              if(!last.count(kv.first) || last.at(kv.first).order > p)
+                same = false;
+            check(same,
+                  "%s %s: the functions of order <= %d of order %d are not "
+                  "the functions of order %d (%d for %d)",
+                  n, f, p, s.minOrder + (int)all.size() - 1, p, nq,
+                  (int)all[i].size());
+          }
+        }
+      }
+    }
+  }
+
+} // namespace bt

@@ -18,10 +18,10 @@
 class H1Point : public HierarchicalBasis {
 public:
   H1Point();
-  void getKeysInfo(std::vector<int> &functionTypeInfo,
-                   std::vector<int> &orderInfo) override;
 
 protected:
+  void keysInfo(std::vector<int> &functionTypeInfo,
+                std::vector<int> &orderInfo) override;
   void functions(const Dual *x, std::vector<Dual> &vertex,
                  std::vector<Dual> &edge, std::vector<Dual> &face,
                  std::vector<Dual> &bubble) override;

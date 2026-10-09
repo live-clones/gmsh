@@ -73,11 +73,17 @@ void H1Prism::functions(const Dual *x, std::vector<Dual> &vertex,
     n += h1Triangle(L[0], L[1], L[2], B, _order, &face[n]);
     h1Triangle(L[0], L[1], L[2], T, _order, &face[n]);
   }
+  // the triangle functions times l_k(w), by increasing order max(order of
+  // the triangle function, k), then in the order of the triangle functions
+  // and increasing k
   std::vector<Dual> tri(_numTriFaceFunction / 2 + 1);
-  int nt = h1Triangle(L[0], L[1], L[2], Dual(1.), _order, tri.data());
+  h1Triangle(L[0], L[1], L[2], Dual(1.), _order, tri.data());
   n = 0;
-  for(int i = 0; i < nt; i++)
-    for(int k = 2; k <= _order; k++) bubble[n++] = tri[i] * lobatto(k, x[2]);
+  for(int m = 3; m <= _order; m++)
+    for(int i = 0; i < (m - 2) * (m - 1) / 2; i++)
+      for(int k = 2; k <= m; k++)
+        if(std::max(triangleOrder(i), k) == m)
+          bubble[n++] = tri[i] * lobatto(k, x[2]);
 }
 
 void H1Prism::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
@@ -102,8 +108,8 @@ void H1Prism::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
   }
 }
 
-void H1Prism::getKeysInfo(std::vector<int> &functionTypeInfo,
-                          std::vector<int> &orderInfo)
+void H1Prism::keysInfo(std::vector<int> &functionTypeInfo,
+                       std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int i = 0; i < 6; i++, it++) {
@@ -116,21 +122,21 @@ void H1Prism::getKeysInfo(std::vector<int> &functionTypeInfo,
       orderInfo[it] = k;
     }
   for(int f = 0; f < 3; f++)
-    for(int n1 = 2; n1 <= _order; n1++)
-      for(int n2 = 2; n2 <= _order; n2++, it++) {
+    for(int m = 0; m <= _order - 2; m++)
+      for(int k = 0; k < 2 * m + 1; k++, it++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = std::max(n1, n2);
+        orderInfo[it] = m + 2;
       }
   for(int f = 0; f < _numTriFace; f++)
-    for(int n1 = 0; n1 <= _order - 3; n1++)
-      for(int n2 = 0; n2 <= _order - 3 - n1; n2++, it++) {
-        functionTypeInfo[it] = 2;
-        orderInfo[it] = n1 + n2 + 3;
-      }
-  for(int n1 = 0; n1 <= _order - 3; n1++)
-    for(int n2 = 0; n2 <= _order - 3 - n1; n2++)
-      for(int n3 = 2; n3 <= _order; n3++, it++) {
-        functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(n1 + n2 + 3, n3);
-      }
+    for(int i = 0; i < (_order - 2) * (_order - 1) / 2; i++, it++) {
+      functionTypeInfo[it] = 2;
+      orderInfo[it] = triangleOrder(i);
+    }
+  for(int m = 3; m <= _order; m++)
+    for(int i = 0; i < (m - 2) * (m - 1) / 2; i++)
+      for(int k = 2; k <= m; k++)
+        if(std::max(triangleOrder(i), k) == m) {
+          functionTypeInfo[it] = 3;
+          orderInfo[it++] = m;
+        }
 }

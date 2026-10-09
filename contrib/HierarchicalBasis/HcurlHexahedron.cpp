@@ -82,8 +82,8 @@ void HcurlHexahedron::faceFunctions(const Dual *x, int flag1, int flag2,
   hcurlQuadrangle(s, t, a[h[2]], _order, &face[faceNumber * perFace]);
 }
 
-void HcurlHexahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                  std::vector<int> &orderInfo)
+void HcurlHexahedron::keysInfo(std::vector<int> &functionTypeInfo,
+                               std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int e = 0; e < 12; e++)

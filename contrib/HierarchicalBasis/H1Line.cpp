@@ -33,8 +33,8 @@ void H1Line::functions(const Dual *x, std::vector<Dual> &vertex,
     edge[k - 2] = l1 * l0 * kernel(k - 2, l1 - l0);
 }
 
-void H1Line::getKeysInfo(std::vector<int> &functionTypeInfo,
-                         std::vector<int> &orderInfo)
+void H1Line::keysInfo(std::vector<int> &functionTypeInfo,
+                      std::vector<int> &orderInfo)
 {
   for(int i = 0; i < 2; i++) {
     functionTypeInfo[i] = 0;

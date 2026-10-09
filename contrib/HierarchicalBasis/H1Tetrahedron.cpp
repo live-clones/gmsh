@@ -52,11 +52,12 @@ void H1Tetrahedron::functions(const Dual *x, std::vector<Dual> &vertex,
                     L[tetrahedronFaces[f][2]], Dual(1.), _order, &face[n]);
   Dual all = L[0] * L[1] * L[2] * L[3];
   n = 0;
-  for(int n1 = 0; n1 <= _order - 4; n1++)
-    for(int n2 = 0; n2 <= _order - 4 - n1; n2++)
-      for(int n3 = 0; n3 <= _order - 4 - n1 - n2; n3++)
+  // by increasing n1 + n2 + n3, then increasing n1 and n2
+  for(int d = 0; d <= _order - 4; d++)
+    for(int n1 = 0; n1 <= d; n1++)
+      for(int n2 = 0; n2 <= d - n1; n2++)
         bubble[n++] = all * kernel(n1, L[2] - L[0]) * kernel(n2, L[1] - L[0]) *
-                      kernel(n3, L[3] - L[0]);
+                      kernel(d - n1 - n2, L[3] - L[0]);
 }
 
 void H1Tetrahedron::faceFunctions(const Dual *x, int flag1, int flag2,
@@ -71,8 +72,8 @@ void H1Tetrahedron::faceFunctions(const Dual *x, int flag1, int flag2,
              &face[faceNumber * perFace]);
 }
 
-void H1Tetrahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
-                                std::vector<int> &orderInfo)
+void H1Tetrahedron::keysInfo(std::vector<int> &functionTypeInfo,
+                             std::vector<int> &orderInfo)
 {
   int it = 0;
   for(int i = 0; i < 4; i++, it++) {
@@ -85,15 +86,14 @@ void H1Tetrahedron::getKeysInfo(std::vector<int> &functionTypeInfo,
       orderInfo[it] = k;
     }
   for(int f = 0; f < 4; f++)
-    for(int n1 = 0; n1 <= _order - 3; n1++)
-      for(int n2 = 0; n2 <= _order - 3 - n1; n2++, it++) {
+    for(int d = 0; d <= _order - 3; d++)
+      for(int n2 = 0; n2 <= d; n2++, it++) {
         functionTypeInfo[it] = 2;
-        orderInfo[it] = n1 + n2 + 3;
+        orderInfo[it] = d + 3;
       }
-  for(int n1 = 0; n1 <= _order - 4; n1++)
-    for(int n2 = 0; n2 <= _order - 4 - n1; n2++)
-      for(int n3 = 0; n3 <= _order - 4 - n1 - n2; n3++, it++) {
-        functionTypeInfo[it] = 3;
-        orderInfo[it] = n1 + n2 + n3 + 4;
-      }
+  for(int d = 0; d <= _order - 4; d++)
+    for(int k = 0; k < (d + 1) * (d + 2) / 2; k++, it++) {
+      functionTypeInfo[it] = 3;
+      orderInfo[it] = d + 4;
+    }
 }

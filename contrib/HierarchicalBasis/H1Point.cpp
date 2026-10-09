@@ -25,8 +25,8 @@ void H1Point::functions(const Dual *x, std::vector<Dual> &vertex,
                         std::vector<Dual> &bubble)
 { vertex[0] = Dual(1.); }
 
-void H1Point::getKeysInfo(std::vector<int> &functionTypeInfo,
-                          std::vector<int> &orderInfo)
+void H1Point::keysInfo(std::vector<int> &functionTypeInfo,
+                       std::vector<int> &orderInfo)
 {
   functionTypeInfo[0] = 0;
   orderInfo[0] = 0;

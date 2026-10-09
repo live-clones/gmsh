@@ -35,20 +35,36 @@
 HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
                                              int familyType, int order)
 {
-  Space space;
-  if(fsName == "H1Legendre")
-    space = H1;
-  else if(fsName == "GradH1Legendre")
-    space = GRAD_H1;
-  else if(fsName == "HcurlLegendre")
-    space = HCURL;
-  else if(fsName == "CurlHcurlLegendre")
-    space = CURL_HCURL;
-  else if(fsName == "HdivLegendre")
-    space = HDIV;
-  else if(fsName == "DivHdivLegendre")
-    space = DIV_HDIV;
-  else {
+  static const struct {
+    const char *name;
+    Space space;
+    Part part;
+  } names[] = {{"H1Legendre", H1, ALL},
+               {"GradH1Legendre", GRAD_H1, ALL},
+               {"HcurlLegendre", HCURL, ALL},
+               {"HcurlLegendreGrad", HCURL, KERNEL},
+               {"HcurlLegendreNoGrad", HCURL, COMPLEMENT},
+               {"CurlHcurlLegendre", CURL_HCURL, ALL},
+               {"CurlHcurlLegendreGrad", CURL_HCURL, KERNEL},
+               {"CurlHcurlLegendreNoGrad", CURL_HCURL, COMPLEMENT},
+               {"HdivLegendre", HDIV, ALL},
+               {"HdivLegendreCurl", HDIV, KERNEL},
+               {"HdivLegendreNoCurl", HDIV, COMPLEMENT},
+               {"DivHdivLegendre", DIV_HDIV, ALL},
+               {"DivHdivLegendreCurl", DIV_HDIV, KERNEL},
+               {"DivHdivLegendreNoCurl", DIV_HDIV, COMPLEMENT},
+               {"L2Legendre", L2, ALL}};
+  Space space = H1;
+  Part part = ALL;
+  bool known = false;
+  for(auto &n : names) {
+    if(fsName == n.name) {
+      space = n.space;
+      part = n.part;
+      known = true;
+    }
+  }
+  if(!known) {
     Msg::Error("Unknown function space named '%s'", fsName.c_str());
     return nullptr;
   }
@@ -83,7 +99,7 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
     case TYPE_HEX: basis = new HcurlHexahedron(order); break;
     }
   }
-  else {
+  else if(space == HDIV || space == DIV_HDIV) {
     switch(familyType) {
     case TYPE_TRI: basis = new HdivTriangle(order); break;
     case TYPE_QUA: basis = new HdivQuadrangle(order); break;
@@ -96,8 +112,68 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
     return nullptr;
   }
   basis->_space = space;
+  basis->_part = part;
   basis->_familyType = familyType;
+  if(!basis->_select()) {
+    Msg::Error("Function space '%s' is not available on elements of family "
+               "%i",
+               fsName.c_str(), familyType);
+    delete basis;
+    return nullptr;
+  }
   return basis;
+}
+
+bool HierarchicalBasis::_select()
+{
+  const int nf = _numAllFunctions();
+  std::vector<int> type(nf), order(nf);
+  keysInfo(type, order);
+  std::vector<bool> kernel(nf, false);
+  if(_part != ALL && !kernelInfo(kernel)) return false;
+  // the entity of each function and its position there, from the layout of
+  // the functions: one per vertex, then edge by edge, face by face
+  // (quadrilateral faces first) and the bubbles
+  const int perEdge = _numEdge ? _numEdgeFunction / _numEdge : 0;
+  const int perQuad = _numQuadFace ? _numQuadFaceFunction / _numQuadFace : 0;
+  const int perTri = _numTriFace ? _numTriFaceFunction / _numTriFace : 0;
+  _functions.clear();
+  _selected.clear();
+  for(int i = 0; i < nf; i++) {
+    Function f = {type[i], 0, 0, order[i]};
+    int j = i;
+    if(j < _numVertexFunction) { f.entity = j; }
+    else if((j -= _numVertexFunction) < _numEdgeFunction) {
+      f.entity = j / perEdge;
+      f.position = j % perEdge;
+    }
+    else if((j -= _numEdgeFunction) < _numQuadFaceFunction) {
+      f.entity = j / perQuad;
+      f.position = j % perQuad;
+    }
+    else if((j -= _numQuadFaceFunction) < _numTriFaceFunction) {
+      f.entity = _numQuadFace + j / perTri;
+      f.position = j % perTri;
+    }
+    else
+      f.position = j - _numTriFaceFunction;
+    if(_part == ALL || kernel[i] == (_part == KERNEL)) {
+      _functions.push_back(f);
+      _selected.push_back(i);
+    }
+  }
+  return true;
+}
+
+void HierarchicalBasis::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                    std::vector<int> &orderInfo) const
+{
+  functionTypeInfo.resize(_functions.size());
+  orderInfo.resize(_functions.size());
+  for(std::size_t i = 0; i < _functions.size(); i++) {
+    functionTypeInfo[i] = _functions[i].type;
+    orderInfo[i] = _functions[i].order;
+  }
 }
 
 int HierarchicalBasis::getNumberOfOrientations() const
@@ -107,18 +183,14 @@ int HierarchicalBasis::getNumberOfOrientations() const
   return n;
 }
 
-std::vector<int> HierarchicalBasis::getEdgeFunctionSignsForReversedEdges()
+int HierarchicalBasis::getEdgeFunctionSignForReversedEdge(int position) const
 {
   // the functions of each edge are ordered by increasing degree, and change
   // sign with the edge when their degree is odd: for H1 (degree k + 2 for the
   // k-th function of the edge) every other function from the second one, for
   // H(curl) and H(div) (degree k) every other function from the first one
-  int perEdge = _numEdge ? _numEdgeFunction / _numEdge : 0;
   bool h1 = (_space == H1 || _space == GRAD_H1);
-  std::vector<int> signs(_numEdgeFunction);
-  for(int i = 0; i < _numEdgeFunction; i++)
-    signs[i] = ((i % perEdge) % 2 == (h1 ? 1 : 0)) ? -1 : 1;
-  return signs;
+  return (position % 2 == (h1 ? 1 : 0)) ? -1 : 1;
 }
 
 // the version of the functions an element does not need does nothing
@@ -169,7 +241,7 @@ static int triFaceIndex(const std::vector<int> &flags)
 // the value or the derivative of a function, depending on the space
 void HierarchicalBasis::_store(const Dual &f, double *out) const
 {
-  if(_space == H1) { out[0] = f.v; }
+  if(_space == H1 || _space == L2) { out[0] = f.v; }
   else {
     for(int i = 0; i < 3; i++) out[i] = f.d[i];
   }
@@ -256,9 +328,10 @@ void HierarchicalBasis::evaluate(const std::vector<double> &uvw,
             nQ = _numQuadFaceFunction, nT = _numTriFaceFunction, nF = nQ + nT,
             nB = _numBubbleFunction, nf = nV + nE + nF + nB;
   const int numOrientations = getNumberOfOrientations();
+  const int ns = _selected.size();
   values.resize(
     (wantedOrientations.empty() ? numOrientations : wantedOrientations.size()) *
-    std::size_t(nq) * nf * nc);
+    std::size_t(nq) * ns * nc);
 
   // the functions in the reference orientation, by point, function and
   // component; the face functions for all the orientations of the faces
@@ -271,13 +344,16 @@ void HierarchicalBasis::evaluate(const std::vector<double> &uvw,
            *f = face.data() + q * nF * nc, *b = bubble.data() + q * nB * nc;
     double *qf = quadFaces.data() + q * 8 * nQ * nc,
            *tf = triFaces.data() + q * 6 * nT * nc;
-    if(_space == H1 || _space == GRAD_H1)
+    if(_space == H1 || _space == GRAD_H1 || _space == L2)
       _generate<Dual>(p, v, e, f, b, qf, tf);
     else
       _generate<Vec>(p, v, e, f, b, qf, tf);
   }
-  const std::vector<int> signs = getEdgeFunctionSignsForReversedEdges();
   const int perEdge = _numEdge ? nE / _numEdge : 0;
+  std::vector<int> signs(nE);
+  for(int i = 0; i < nE; i++)
+    signs[i] = getEdgeFunctionSignForReversedEdge(i % perEdge);
+  std::vector<double> all(nf * nc);
   const int perQuadFace = _numQuadFace ? nQ / _numQuadFace : 0;
   const int perTriFace = _numTriFace ? nT / _numTriFace : 0;
 
@@ -313,7 +389,7 @@ void HierarchicalBasis::evaluate(const std::vector<double> &uvw,
         (i < _numQuadFace) ? quadFaceIndex(flags) : triFaceIndex(flags);
     }
     for(int q = 0; q < nq; ++q) {
-      double *out = &values[(index * nq + q) * nf * nc];
+      double *out = all.data();
       for(int i = 0; i < nV * nc; i++) *out++ = vertex[q * nV * nc + i];
       for(int i = 0; i < nE; i++) {
         const double *e = &edge[(q * nE + i) * nc];
@@ -335,6 +411,11 @@ void HierarchicalBasis::evaluate(const std::vector<double> &uvw,
         for(int c = 0; c < nc; c++) *out++ = f[c];
       }
       for(int i = 0; i < nB * nc; i++) *out++ = bubble[q * nB * nc + i];
+      // the functions of the part of the space
+      double *selected = &values[(index * nq + q) * ns * nc];
+      for(int i = 0; i < ns; i++)
+        for(int c = 0; c < nc; c++)
+          selected[i * nc + c] = all[_selected[i] * nc + c];
     }
     nextPermutation(vertices, element);
   }

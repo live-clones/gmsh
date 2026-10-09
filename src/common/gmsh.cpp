@@ -3309,18 +3309,6 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
     fsComp = 0;
     return true;
   }
-  if(fsType.size() > 8 && fsType.substr(0, 8) == "Lagrange") {
-    fsName = "Lagrange";
-    fsOrder = atoi(fsType.substr(8).c_str());
-    fsComp = 1;
-    return true;
-  }
-  if(fsType.size() > 12 && fsType.substr(0, 12) == "GradLagrange") {
-    fsName = "GradLagrange";
-    fsOrder = atoi(fsType.substr(12).c_str());
-    fsComp = 3;
-    return true;
-  }
   if(fsType == "IsoParametric" || fsType == "Lagrange") {
     fsName = "Lagrange";
     fsOrder = -1;
@@ -3333,40 +3321,22 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
     fsComp = 3;
     return true;
   }
-  if(fsType.substr(0, 10) == "H1Legendre") {
-    fsName = "H1Legendre";
-    fsOrder = atoi(fsType.substr(10).c_str());
+  // a name followed by the order, e.g. "HcurlLegendreNoGrad2"
+  std::size_t n = fsType.find_last_not_of("0123456789");
+  if(n == std::string::npos || n + 1 == fsType.size()) return false;
+  if(fsType[n] == '-') n--; // negative orders, which are rejected later
+  fsName = fsType.substr(0, n + 1);
+  fsOrder = atoi(fsType.substr(n + 1).c_str());
+  if(fsName == "Lagrange" || fsName == "H1Legendre" || fsName == "L2Legendre" ||
+     fsName.substr(0, 15) == "DivHdivLegendre") {
     fsComp = 1;
     return true;
   }
-  if(fsType.substr(0, 14) == "GradH1Legendre") {
-    fsName = "GradH1Legendre";
-    fsOrder = atoi(fsType.substr(14).c_str());
+  if(fsName == "GradLagrange" || fsName == "GradH1Legendre" ||
+     fsName.substr(0, 13) == "HcurlLegendre" ||
+     fsName.substr(0, 17) == "CurlHcurlLegendre" ||
+     fsName.substr(0, 12) == "HdivLegendre") {
     fsComp = 3;
-    return true;
-  }
-  if(fsType.substr(0, 13) == "HcurlLegendre") {
-    fsName = "HcurlLegendre";
-    fsOrder = atoi(fsType.substr(13).c_str());
-    fsComp = 3;
-    return true;
-  }
-  if(fsType.substr(0, 17) == "CurlHcurlLegendre") {
-    fsName = "CurlHcurlLegendre";
-    fsOrder = atoi(fsType.substr(17).c_str());
-    fsComp = 3;
-    return true;
-  }
-  if(fsType.substr(0, 12) == "HdivLegendre") {
-    fsName = "HdivLegendre";
-    fsOrder = atoi(fsType.substr(12).c_str());
-    fsComp = 3;
-    return true;
-  }
-  if(fsType.substr(0, 15) == "DivHdivLegendre") {
-    fsName = "DivHdivLegendre";
-    fsOrder = atoi(fsType.substr(15).c_str());
-    fsComp = 1;
     return true;
   }
   return false;
@@ -4168,65 +4138,75 @@ static void _addLagrangeKeys(MElement *e, std::vector<int> &typeKeys,
 }
 
 #if defined(HAVE_HIERARCHICAL_BASIS)
+// the type key of a hierarchical basis function: 4 times its position on its
+// vertex, edge, face or element, plus the type of the entity (0 to 3), which
+// makes the keys unique and independent of the order of the basis
+static int _typeKey(const HierarchicalBasis::Function &f)
+{ return 4 * f.position + f.type; }
+
 // the keys of the hierarchical basis functions of element e: the vertex
-// functions keyed by their node (type key 0); the functions of each edge,
-// face and of the interior keyed by the global number of the edge, the face
-// or the element, with the type keys 1, 2, ... for the functions of an edge,
-// numbered on for those of a face, and on again for the bubble functions
+// functions keyed by their node, the functions of each edge and face by the
+// global number of the edge or the face, the bubble functions by the element
 static void _addHierarchicalKeys(MElement *e, const HierarchicalBasis &basis,
                                  std::vector<int> &typeKeys,
                                  std::vector<std::size_t> &entityKeys,
                                  std::vector<double> &coord, bool returnCoord)
 {
-  const int numQuad = basis.getNumQuadFace(), numTri = basis.getNumTriFace();
-  const int perEdge =
-    basis.getNumEdge() ? basis.getNumEdgeFunction() / basis.getNumEdge() : 0;
-  const int perQuad = numQuad ? basis.getNumQuadFaceFunction() / numQuad : 0;
-  const int perTri = numTri ? basis.getNumTriFaceFunction() / numTri : 0;
-  double xyz[3] = {0., 0., 0.};
-  for(int k = 0; k < basis.getNumVertexFunction(); k++) {
-    MVertex *v = e->getVertex(k);
-    double p[3] = {v->x(), v->y(), v->z()};
-    _addKey(0, v->getNum(), p, typeKeys, entityKeys, coord, returnCoord);
-  }
-  if(basis.getNumEdgeFunction()) {
-    for(int i = 0; i < e->getNumEdges(); i++) {
-      MEdge edge = e->getEdge(i);
-      if(returnCoord) {
-        MVertex *v[2] = {edge.getVertex(0), edge.getVertex(1)};
-        _barycenter(v, 2, xyz);
+  // the global number and the barycenter of each edge and face of the element
+  // with functions, computed once
+  std::size_t edges[12], faces[6];
+  double edgeXyz[12][3], faceXyz[6][3], elementXyz[3];
+  bool edgeDone[12] = {false}, faceDone[6] = {false}, elementDone = false;
+  for(auto &f : basis.getFunctions()) {
+    std::size_t key = 0;
+    double *xyz = nullptr, nodeXyz[3];
+    if(f.type == 0) {
+      MVertex *v = e->getVertex(f.entity);
+      key = v->getNum();
+      nodeXyz[0] = v->x();
+      nodeXyz[1] = v->y();
+      nodeXyz[2] = v->z();
+      xyz = nodeXyz;
+    }
+    else if(f.type == 1) {
+      if(!edgeDone[f.entity]) {
+        MEdge edge = e->getEdge(f.entity);
+        if(returnCoord) {
+          MVertex *v[2] = {edge.getVertex(0), edge.getVertex(1)};
+          _barycenter(v, 2, edgeXyz[f.entity]);
+        }
+        edges[f.entity] = GModel::current()->addMEdge(std::move(edge));
+        edgeDone[f.entity] = true;
       }
-      std::size_t num = GModel::current()->addMEdge(std::move(edge));
-      for(int k = 1; k <= perEdge; k++)
-        _addKey(k, num, xyz, typeKeys, entityKeys, coord, returnCoord);
+      key = edges[f.entity];
+      xyz = edgeXyz[f.entity];
     }
-  }
-  if(basis.getNumQuadFaceFunction() + basis.getNumTriFaceFunction()) {
-    for(int i = 0; i < numQuad + numTri; i++) {
-      MFace face = e->getFaceSolin(i);
-      if(returnCoord) {
-        MVertex *v[4];
-        for(std::size_t k = 0; k < face.getNumVertices(); k++)
-          v[k] = face.getVertex(k);
-        _barycenter(v, face.getNumVertices(), xyz);
+    else if(f.type == 2) {
+      if(!faceDone[f.entity]) {
+        MFace face = e->getFaceSolin(f.entity);
+        if(returnCoord) {
+          MVertex *v[4];
+          for(std::size_t k = 0; k < face.getNumVertices(); k++)
+            v[k] = face.getVertex(k);
+          _barycenter(v, face.getNumVertices(), faceXyz[f.entity]);
+        }
+        faces[f.entity] = GModel::current()->addMFace(std::move(face));
+        faceDone[f.entity] = true;
       }
-      std::size_t num = GModel::current()->addMFace(std::move(face));
-      int n = (i < numQuad) ? perQuad : perTri;
-      for(int k = 1; k <= n; k++)
-        _addKey(perEdge + k, num, xyz, typeKeys, entityKeys, coord,
-                returnCoord);
+      key = faces[f.entity];
+      xyz = faceXyz[f.entity];
     }
-  }
-  if(basis.getNumBubbleFunction()) {
-    if(returnCoord) {
-      std::vector<MVertex *> v;
-      e->getVertices(v);
-      _barycenter(v.data(), v.size(), xyz);
+    else {
+      if(!elementDone && returnCoord) {
+        std::vector<MVertex *> v;
+        e->getVertices(v);
+        _barycenter(v.data(), v.size(), elementXyz);
+      }
+      elementDone = true;
+      key = e->getNum();
+      xyz = elementXyz;
     }
-    int first = perEdge + std::max(perQuad, perTri);
-    for(int k = 1; k <= basis.getNumBubbleFunction(); k++)
-      _addKey(first + k, e->getNum(), xyz, typeKeys, entityKeys, coord,
-              returnCoord);
+    _addKey(_typeKey(f), key, xyz, typeKeys, entityKeys, coord, returnCoord);
   }
 }
 #endif
@@ -5604,7 +5584,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
 
   bool lagrange = (fsName == "Lagrange");
   bool hierarchical = (dim == 1 && (fsName == "H1Legendre" ||
-                                    fsName == "HcurlLegendre"));
+                                    fsName.substr(0, 13) == "HcurlLegendre"));
   if(!lagrange && !hierarchical) {
     Msg::Error("Periodic keys are only available for \"IsoParametric\" and "
                "\"Lagrange\" function spaces, and for \"H1Legendre\" and "
@@ -5649,10 +5629,13 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   int familyType = ElementType::getParentType(elementType);
   HierarchicalBasis *basis = HierarchicalBasis::create(fsName, familyType, order);
   if(!basis) return;
-  const int numVertexFunctions = basis->getNumVertexFunction();
-  const int numEdgeFunctions = basis->getNumEdgeFunction();
-  // the sign of each edge function when the edge is reversed
-  std::vector<int> reversed = basis->getEdgeFunctionSignsForReversedEdges();
+  const std::vector<HierarchicalBasis::Function> functions =
+    basis->getFunctions();
+  std::vector<int> reversed(functions.size(), 1);
+  for(std::size_t k = 0; k < functions.size(); k++)
+    if(functions[k].type == 1)
+      reversed[k] =
+        basis->getEdgeFunctionSignForReversedEdge(functions[k].position);
   delete basis;
 
   std::size_t idx = 0;
@@ -5663,29 +5646,31 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
     if(!m[0] || !m[1]) {
       Msg::Warning("Unknown master nodes corresponding to nodes %zu and %zu",
                    v[0]->getNum(), v[1]->getNum());
-      idx += numVertexFunctions + numEdgeFunctions;
+      idx += functions.size();
       continue;
     }
-    for(int k = 0; k < numVertexFunctions; k++, idx++) {
-      entityKeysMaster[idx] = m[k]->getNum();
-      if(returnCoord) {
-        coordMaster[3 * idx] = m[k]->x();
-        coordMaster[3 * idx + 1] = m[k]->y();
-        coordMaster[3 * idx + 2] = m[k]->z();
-      }
-    }
-    if(!numEdgeFunctions) continue;
-    std::size_t edge = GModel::current()->addMEdge(MEdge(m[0], m[1]));
+    std::size_t edge = 0;
     bool flip = (v[0]->getNum() < v[1]->getNum()) !=
                 (m[0]->getNum() < m[1]->getNum());
-    for(int k = 0; k < numEdgeFunctions; k++, idx++) {
-      entityKeysMaster[idx] = edge;
-      if(flip) orientationSign[idx] = reversed[k];
-      if(returnCoord) {
-        coordMaster[3 * idx] = 0.5 * (m[0]->x() + m[1]->x());
-        coordMaster[3 * idx + 1] = 0.5 * (m[0]->y() + m[1]->y());
-        coordMaster[3 * idx + 2] = 0.5 * (m[0]->z() + m[1]->z());
+    for(std::size_t k = 0; k < functions.size(); k++, idx++) {
+      double xyz[3];
+      if(functions[k].type == 0) {
+        MVertex *n = m[functions[k].entity];
+        entityKeysMaster[idx] = n->getNum();
+        xyz[0] = n->x();
+        xyz[1] = n->y();
+        xyz[2] = n->z();
       }
+      else {
+        if(!edge) edge = GModel::current()->addMEdge(MEdge(m[0], m[1]));
+        entityKeysMaster[idx] = edge;
+        if(flip) orientationSign[idx] = reversed[k];
+        xyz[0] = 0.5 * (m[0]->x() + m[1]->x());
+        xyz[1] = 0.5 * (m[0]->y() + m[1]->y());
+        xyz[2] = 0.5 * (m[0]->z() + m[1]->z());
+      }
+      if(returnCoord)
+        for(int c = 0; c < 3; c++) coordMaster[3 * idx + c] = xyz[c];
     }
   }
 #else
