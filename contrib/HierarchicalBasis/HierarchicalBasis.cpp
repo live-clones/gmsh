@@ -23,10 +23,12 @@
 #include "HdivTriangle.h"
 #include "H1Quadrangle.h"
 #include "HcurlQuadrangle.h"
+#include "HdivQuadrangle.h"
 #include "H1Tetrahedron.h"
 #include "HcurlTetrahedron.h"
 #include "H1Hexahedron.h"
 #include "HcurlHexahedron.h"
+#include "HdivHexahedron.h"
 #include "H1Prism.h"
 #include "HcurlPrism.h"
 
@@ -84,6 +86,8 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
   else {
     switch(familyType) {
     case TYPE_TRI: basis = new HdivTriangle(order); break;
+    case TYPE_QUA: basis = new HdivQuadrangle(order); break;
+    case TYPE_HEX: basis = new HdivHexahedron(order); break;
     }
   }
   if(!basis) {

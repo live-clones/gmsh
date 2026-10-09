@@ -131,9 +131,11 @@ namespace bt {
     const int pyramid = 7;
     for(auto fs : {"H1Legendre1", "HcurlLegendre1", "HdivLegendre1"})
       check(bf(pyramid, fs, {}), "%s on pyramids: no error", fs);
-    for(int type : {1, 3, 4, 5, 6})
-      check(bf(type, "HdivLegendre1", {}), "HdivLegendre1 on type %d: no error",
-            type);
+    for(auto &e : elements())
+      for(auto &s : spaces())
+        if(s.kind == HDIV && !supported(s, e))
+          check(bf(e.type, "HdivLegendre1", {}),
+                "HdivLegendre1 on %s: no error", e.name.c_str());
     check(bf(4, "FooLegendre1", {}), "unknown function space: no error");
     for(auto fs : {"H1Legendre0", "HcurlLegendre-1", "HdivLegendre-1"})
       check(bf(2, fs, {}), "%s: no error", fs);

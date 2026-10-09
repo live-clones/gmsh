@@ -8,11 +8,14 @@
 // - H1 of order p is the full polynomial space of the element (P_p on
 //   simplices, Q_p on quadrangles and hexahedra, P_p x P_p on prisms);
 // - H(curl) and H(div) of order p contain all the vector polynomials of
-//   degree p, and the gradients (resp. rotated gradients) of H1 of order p+1;
+//   degree p, and the gradients (resp. rotated gradients in 2D) of H1 of
+//   order p+1; H(div) in 3D contains the curls of H(curl), of order p+1 on
+//   tetrahedra (0 for p = 0) and of order p on the other elements;
 // - the sequence is exact: the null space of the gradient is the constants,
 //   the null space of the curl (resp. divergence) has the dimension of H1 of
 //   order p+1 minus one, i.e. it is made of the gradients (resp. rotated
-//   gradients);
+//   gradients), and the null space of the divergence in 3D is made of the
+//   curls;
 // - the bases are hierarchical: the functions of order p are also functions of
 //   order p+1.
 
@@ -78,6 +81,13 @@ namespace bt {
           Table d = evaluate(e.type, uvw, spaceType(s, p, true), o);
           Table next = evaluate(e.type, uvw, spaceType(s, p + 1), o);
           int numKernel = monomials(e, p + 1).size() - 1;
+          // in 3D, the curls of H(curl) of order p + 1 on tetrahedra (0 for
+          // RT0), of order p on the other elements
+          int q = (e.name != "tetrahedron") ? p : (p ? p + 1 : 0);
+          Table curls;
+          if(s.kind == HDIV && e.dim == 3)
+            curls =
+              evaluate(e.type, uvw, "CurlHcurlLegendre" + std::to_string(q), o);
           for(std::size_t i = 0; i < o.size(); i++) {
             Eigen::MatrixXd A = columns(t, i, nc);
             check(rank(A) == nf,
@@ -113,13 +123,24 @@ namespace bt {
                     "%s %s orientation %d: vector polynomials of "
                     "degree %d not reproduced (%g)",
                     n, f, o[i], p, res);
-              res = spanResidual(A, gradients(e, p + 1, uvw, s.kind == HDIV));
-              check(res < tol,
-                    "%s %s orientation %d: %s of H1 of order %d not "
-                    "reproduced (%g)",
-                    n, f, o[i],
-                    s.kind == HDIV ? "rotated gradients" : "gradients", p + 1,
-                    res);
+              if(s.kind == HDIV && e.dim == 3) {
+                Eigen::MatrixXd C = columns(curls, i, curls.numComponents);
+                res = spanResidual(A, C);
+                check(res < tol,
+                      "%s %s orientation %d: curls of H(curl) of order %d "
+                      "not reproduced (%g)",
+                      n, f, o[i], q, res);
+                numKernel = rank(C);
+              }
+              else {
+                res = spanResidual(A, gradients(e, p + 1, uvw, s.kind == HDIV));
+                check(res < tol,
+                      "%s %s orientation %d: %s of H1 of order %d not "
+                      "reproduced (%g)",
+                      n, f, o[i],
+                      s.kind == HDIV ? "rotated gradients" : "gradients", p + 1,
+                      res);
+              }
               check(nf - dr == numKernel,
                     "%s %s orientation %d: %s null "
                     "space of dimension %d, expected %d",

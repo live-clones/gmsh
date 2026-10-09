@@ -153,6 +153,16 @@ inline Vec grad(const Dual &a)
 inline Vec rot(const Dual &a)
 { return Vec(Dual(a.d[1]), Dual(-a.d[0]), Dual(0.)); }
 
+// The cross product of two vector fields. With factors from grad(), the second
+// derivatives are dropped: this keeps the divergence of f * (grad(a) x
+// grad(b)) exact, since grad(a) x grad(b) is divergence free.
+inline Vec cross(const Vec &a, const Vec &b)
+{
+  return Vec(a.c[1] * b.c[2] - a.c[2] * b.c[1],
+             a.c[2] * b.c[0] - a.c[0] * b.c[2],
+             a.c[0] * b.c[1] - a.c[1] * b.c[0]);
+}
+
 // The rotation (v_y, -v_x, 0) of a vector field in the plane, which maps
 // H(curl) to H(div) functions in 2D
 inline Vec rotate(const Vec &v) { return Vec(v.c[1], -v.c[0], Dual(0.)); }

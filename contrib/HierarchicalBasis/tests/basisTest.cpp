@@ -37,7 +37,9 @@ namespace bt {
     switch(s.kind) {
     case H1: return true;
     case HCURL: return e.dim >= 1;
-    case HDIV: return e.name == "triangle";
+    case HDIV:
+      return e.name == "triangle" || e.name == "quadrangle" ||
+             e.name == "hexahedron";
     }
     return false;
   }

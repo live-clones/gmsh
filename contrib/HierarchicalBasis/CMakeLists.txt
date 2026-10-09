@@ -13,11 +13,12 @@ set(SRC
     HdivTriangle.cpp
     H1Quadrangle.cpp
     HcurlQuadrangle.cpp
-    # HdivQuadrangle.cpp (not finished)
+    HdivQuadrangle.cpp
     H1Tetrahedron.cpp
     HcurlTetrahedron.cpp
     H1Hexahedron.cpp
     HcurlHexahedron.cpp
+    HdivHexahedron.cpp
     H1Prism.cpp
     HcurlPrism.cpp
 )

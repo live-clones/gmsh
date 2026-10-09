@@ -233,4 +233,28 @@ inline int hdivTriangle(const Dual &a, const Dual &b, const Dual &c, int order,
   return n;
 }
 
+// The H(div) functions of a quadrilateral face of coordinates (s, t): those of
+// hcurlQuadrangle, rotated by 90 degrees; return the number of functions
+inline int hdivQuadrangle(const Dual &s, const Dual &t, int order, Vec *f)
+{
+  int n = hcurlQuadrangle(s, t, Dual(1.), order, f);
+  for(int i = 0; i < n; i++) f[i] = rotate(f[i]);
+  return n;
+}
+
+// The H(div) functions of a quadrilateral face of a 3D element, of coordinates
+// (s, t) in [-1, 1]^2, multiplied by blend: blend L_n1(s) L_n2(t) grad(s) x
+// grad(t), n1, n2 = 0, ..., order; return the number of functions
+inline int hdivQuadrangleFace(const Dual &s, const Dual &t, const Dual &blend,
+                              int order, Vec *f)
+{
+  Vec st = cross(grad(s), grad(t));
+  int n = 0;
+  for(int n1 = 0; n1 <= order; n1++) {
+    Dual b1 = blend * legendre(n1, s);
+    for(int n2 = 0; n2 <= order; n2++) f[n++] = b1 * legendre(n2, t) * st;
+  }
+  return n;
+}
+
 #endif

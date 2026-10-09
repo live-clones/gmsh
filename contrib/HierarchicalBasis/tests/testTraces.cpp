@@ -63,6 +63,11 @@ namespace bt {
   { return {a[0] - b[0], a[1] - b[1], a[2] - b[2]}; }
   static double dot(const Vec &a, const Vec &b)
   { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+  static Vec cross(const Vec &a, const Vec &b)
+  {
+    return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
+            a[0] * b[1] - a[1] * b[0]};
+  }
 
   // random points on a sub-entity, with the tangent vectors there
   static void pointsOn(const SubEntity &s, int n, Random &r,
@@ -123,8 +128,11 @@ namespace bt {
                                                                       o);
             for(auto &sub : se) {
               if(s.kind != H1 && sub.nodes.size() == 1) continue;
-              // H(div) traces only on the edges of 2D elements
-              if(s.kind == HDIV && sub.nodes.size() > 2) continue;
+              // H(div) traces on the edges of 2D elements and on the faces of
+              // 3D elements
+              bool facet =
+                (e.dim == 2) ? sub.nodes.size() == 2 : sub.nodes.size() >= 3;
+              if(s.kind == HDIV && !facet) continue;
               std::vector<Vec> pts;
               std::vector<std::vector<Vec>> tan;
               pointsOn(sub, 4, r, pts, tan);
@@ -146,6 +154,7 @@ namespace bt {
                       trace = std::max(trace, std::abs(dot(v, tq)));
                   else {
                     Vec nq = {tan[q][0][1], -tan[q][0][0], 0.};
+                    if(e.dim == 3) nq = cross(tan[q][0], tan[q][1]);
                     trace = std::max(trace, std::abs(dot(v, nq)));
                   }
                 }

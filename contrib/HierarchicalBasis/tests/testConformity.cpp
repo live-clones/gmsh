@@ -216,8 +216,12 @@ namespace bt {
           for(std::size_t k = 0; k < nt; k++)
             v.push_back(phys.dot(Eigen::Vector3d(t[q][k].data())));
         }
-        else
+        else if(dim == 2) // the normal to the edge
           v.push_back(phys.dot(Eigen::Vector3d(t[q][1].data())));
+        else { // the normal to the face
+          Eigen::Vector3d t1(t[q][0].data()), t2(t[q][1].data());
+          v.push_back(phys.dot(t1.cross(t2)));
+        }
       }
     }
     return tr;
@@ -240,7 +244,6 @@ namespace bt {
         check(!fa.empty(), "%dD mesh: no shared facets", dim);
         for(auto &s : spaces()) {
           if(dim == 1 && s.kind != H1) continue;
-          if(dim == 3 && s.kind == HDIV) continue;
           int maxp = (s.kind == H1) ? 4 : 3;
           for(int p = s.minOrder; p <= maxp; p++) {
             std::string fs = spaceType(s, p);
