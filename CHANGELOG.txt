@@ -48,7 +48,12 @@ introduced in 4.12 on thin cones/cylinders; bug fixes.
   mesh/getPeriodicKeys) are now 4 times the position of the function on its
   node, edge, face or element plus the type of that entity (so that they do not
   depend on the order of the function space (they are about 4 times larger than
-  before)
+  before); new optional argument "periodic" to
+  mesh/getBasisFunctionsOrientation and
+  mesh/getBasisFunctionsOrientationForElement (true by default: the elements
+  touching periodic curves and surfaces are oriented with the tags of the master
+  nodes, so that mesh/getPeriodicKeys maps the keys of all the hierarchical
+  function spaces one-to-one)
 
 * New or modified options: Geometry/Mesh/View.Opacity/OpacityMode,
   General.Shaders, General.Brightness, General.GraphicsCacheSize,

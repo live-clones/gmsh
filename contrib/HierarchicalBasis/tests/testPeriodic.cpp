@@ -4,10 +4,11 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 // Periodic keys on curves: on a square whose opposite sides are periodic, each
-// basis function on a slave curve, multiplied by the sign returned by
-// getPeriodicKeys(), equals the basis function of the master key at the
-// corresponding point of the master curve (value for H1, tangential component
-// for H(curl)).
+// basis function on a slave curve equals the basis function of its master key
+// (given by getPeriodicKeys()) at the corresponding point of the master curve
+// (value for H1, tangential component for H(curl)), the elements being oriented
+// with their master nodes. Periodic surfaces are checked by
+// examples/api/periodic_keys.py.
 
 #include <cmath>
 #include "gmsh.h"
@@ -73,6 +74,16 @@ namespace bt {
     gmsh::model::mesh::setPeriodic(
       1, {3}, {1}, {1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1});
     gmsh::model::mesh::generate(2);
+    // renumber the nodes: in the mesh as generated, the nodes of a slave curve
+    // are numbered in the order of those of the master curve, which would hide
+    // a wrong orientation
+    {
+      Random r(9);
+      std::vector<std::size_t> tags;
+      std::vector<double> c, pc;
+      gmsh::model::mesh::getNodes(tags, c, pc);
+      gmsh::model::mesh::renumberNodes(tags, permutation(tags.size(), r));
+    }
 
     struct Case {
       int slave;
@@ -89,15 +100,15 @@ namespace bt {
       gmsh::model::mesh::getElementsByType(1, tags, nodes, c.slave);
       for(auto &fs : fss) {
         int master;
-        std::vector<int> tk, tkm, sign;
+        std::vector<int> tk, tkm;
         std::vector<std::size_t> ek, ekm;
         std::vector<double> x, xm;
         gmsh::model::mesh::getPeriodicKeys(1, fs, c.slave, master, tk, tkm, ek,
-                                           ekm, x, xm, sign);
+                                           ekm, x, xm);
         int nk = gmsh::model::mesh::getNumberOfKeys(1, fs);
-        bool sizes = (tk.size() == nk * tags.size() &&
-                      tkm.size() == tk.size() && sign.size() == tk.size() &&
-                      x.size() == 3 * tk.size() && xm.size() == x.size());
+        bool sizes =
+          (tk.size() == nk * tags.size() && tkm.size() == tk.size() &&
+           x.size() == 3 * tk.size() && xm.size() == x.size());
         check(sizes, "periodic curve %d %s: wrong sizes", c.slave, fs.c_str());
         if(!sizes) continue;
         double coordError = 0., valueError = 0., scale = 1.;
@@ -129,7 +140,7 @@ namespace bt {
           }
           double vs = trace(e, fs, j % nk, u, c.dir);
           double vm = trace(em, fs, fm, um, c.dir);
-          valueError = std::max(valueError, std::abs(sign[j] * vs - vm));
+          valueError = std::max(valueError, std::abs(vs - vm));
           scale = std::max(scale, std::abs(vm));
         }
         check(coordError < 1e-10 && !unmatched && valueError < 1e-10 * scale,

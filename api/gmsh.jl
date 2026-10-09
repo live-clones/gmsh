@@ -3521,15 +3521,19 @@ end
 const get_basis_functions = getBasisFunctions
 
 """
-    gmsh.model.mesh.getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+    gmsh.model.mesh.getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1, periodic = true)
 
 Get the orientation index of the elements of type `elementType` in the entity of
 tag `tag`. The arguments have the same meaning as in `getBasisFunctions`.
 `basisFunctionsOrientation` is a vector giving for each element the orientation
 index in the values returned by `getBasisFunctions`. For Lagrange basis
-functions the call is superfluous as it will return a vector of zeros. If
-`numTasks` > 1, only compute and return the part of the data indexed by `task`
-(for C++ only; output vector must be preallocated).
+functions the call is superfluous as it will return a vector of zeros. The
+orientation of an element is given by the order of the tags of its nodes; if
+`periodic` is set, the nodes on periodic entities are ordered by the tags of
+their master nodes, so that the basis functions on a periodic curve or surface
+are those of the master curve or surface (see `getPeriodicKeys`). If `numTasks`
+> 1, only compute and return the part of the data indexed by `task` (for C++
+only; output vector must be preallocated).
 
 Return `basisFunctionsOrientation`.
 
@@ -3540,14 +3544,15 @@ Types:
  - `tag`: integer
  - `task`: size
  - `numTasks`: size
+ - `periodic`: boolean
 """
-function getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+function getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1, periodic = true)
     api_basisFunctionsOrientation_ = Ref{Ptr{Cint}}()
     api_basisFunctionsOrientation_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctionsOrientation, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, functionSpaceType, api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_, tag, task, numTasks, ierr)
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Cint, Ptr{Cint}),
+          elementType, functionSpaceType, api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_, tag, task, numTasks, periodic, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     basisFunctionsOrientation = unsafe_wrap(Array, api_basisFunctionsOrientation_[], api_basisFunctionsOrientation_n_[], own = true)
     return basisFunctionsOrientation
@@ -3555,9 +3560,11 @@ end
 const get_basis_functions_orientation = getBasisFunctionsOrientation
 
 """
-    gmsh.model.mesh.getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
+    gmsh.model.mesh.getBasisFunctionsOrientationForElement(elementTag, functionSpaceType, periodic = true)
 
-Get the orientation of a single element `elementTag`.
+Get the orientation of a single element `elementTag`, with the master nodes of
+the nodes on periodic entities if `periodic` is set (see
+`getBasisFunctionsOrientation`).
 
 Return `basisFunctionsOrientation`.
 
@@ -3565,13 +3572,14 @@ Types:
  - `elementTag`: size
  - `functionSpaceType`: string
  - `basisFunctionsOrientation`: integer
+ - `periodic`: boolean
 """
-function getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
+function getBasisFunctionsOrientationForElement(elementTag, functionSpaceType, periodic = true)
     api_basisFunctionsOrientation_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctionsOrientationForElement, gmsh.lib), Cvoid,
-          (Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}),
-          elementTag, functionSpaceType, api_basisFunctionsOrientation_, ierr)
+          (Csize_t, Ptr{Cchar}, Ptr{Cint}, Cint, Ptr{Cint}),
+          elementTag, functionSpaceType, api_basisFunctionsOrientation_, periodic, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_basisFunctionsOrientation_[]
 end
@@ -4831,15 +4839,15 @@ const get_periodic_nodes = getPeriodicNodes
 Get the master entity `tagMaster` and the key pairs (`typeKeyMaster`,
 `entityKeyMaster`) corresponding to the entity `tag` and the key pairs
 (`typeKey`, `entityKey`) for the elements of type `elementType` and function
-space type `functionSpaceType`. `orientationSign` contains the sign (1 or -1) by
-which each basis function of the master key must be multiplied to match the
-corresponding basis function on the entity `tag`. If `returnCoord` is set, the
-`coord` and `coordMaster` vectors contain the x, y, z coordinates locating basis
-functions for sorting purposes. Only available for "IsoParametric" and
-"Lagrange" function spaces, and for "H1Legendre" and "HcurlLegendre" function
-spaces on curves.
+space type `functionSpaceType`. If `returnCoord` is set, the `coord` and
+`coordMaster` vectors contain the x, y, z coordinates locating basis functions
+for sorting purposes. For the hierarchical function spaces, the elements must be
+oriented with `periodic` set in `getBasisFunctionsOrientation`: the basis
+function of each key is then the basis function of its master key. On surfaces,
+the keys of "HdivLegendre" function spaces are those of the face functions of
+the 3D elements.
 
-Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`, `orientationSign`.
+Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
 
 Types:
  - `elementType`: integer
@@ -4852,7 +4860,6 @@ Types:
  - `entityKeysMaster`: vector of sizes
  - `coord`: vector of doubles
  - `coordMaster`: vector of doubles
- - `orientationSign`: vector of integers
  - `returnCoord`: boolean
 """
 function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true)
@@ -4869,12 +4876,10 @@ function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true
     api_coord_n_ = Ref{Csize_t}()
     api_coordMaster_ = Ref{Ptr{Cdouble}}()
     api_coordMaster_n_ = Ref{Csize_t}()
-    api_orientationSign_ = Ref{Ptr{Cint}}()
-    api_orientationSign_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetPeriodicKeys, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, api_orientationSign_, api_orientationSign_n_, returnCoord, ierr)
+          (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own = true)
     typeKeysMaster = unsafe_wrap(Array, api_typeKeysMaster_[], api_typeKeysMaster_n_[], own = true)
@@ -4882,8 +4887,7 @@ function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true
     entityKeysMaster = unsafe_wrap(Array, api_entityKeysMaster_[], api_entityKeysMaster_n_[], own = true)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
     coordMaster = unsafe_wrap(Array, api_coordMaster_[], api_coordMaster_n_[], own = true)
-    orientationSign = unsafe_wrap(Array, api_orientationSign_[], api_orientationSign_n_[], own = true)
-    return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster, coord, coordMaster, orientationSign
+    return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster, coord, coordMaster
 end
 const get_periodic_keys = getPeriodicKeys
 

@@ -2517,32 +2517,40 @@ namespace gmsh { // Top-level functions
       // `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
       // each element the orientation index in the values returned by
       // `getBasisFunctions'. For Lagrange basis functions the call is superfluous
-      // as it will return a vector of zeros. If `numTasks' > 1, only compute and
-      // return the part of the data indexed by `task' (for C++ only; output vector
-      // must be preallocated).
+      // as it will return a vector of zeros. The orientation of an element is
+      // given by the order of the tags of its nodes; if `periodic' is set, the
+      // nodes on periodic entities are ordered by the tags of their master nodes,
+      // so that the basis functions on a periodic curve or surface are those of
+      // the master curve or surface (see `getPeriodicKeys'). If `numTasks' > 1,
+      // only compute and return the part of the data indexed by `task' (for C++
+      // only; output vector must be preallocated).
       inline void getBasisFunctionsOrientation(const int elementType,
                                                const std::string & functionSpaceType,
                                                std::vector<int> & basisFunctionsOrientation,
                                                const int tag = -1,
                                                const std::size_t task = 0,
-                                               const std::size_t numTasks = 1)
+                                               const std::size_t numTasks = 1,
+                                               const bool periodic = true)
       {
         int ierr = 0;
         int *api_basisFunctionsOrientation_; size_t api_basisFunctionsOrientation_n_;
-        gmshModelMeshGetBasisFunctionsOrientation(elementType, functionSpaceType.c_str(), &api_basisFunctionsOrientation_, &api_basisFunctionsOrientation_n_, tag, task, numTasks, &ierr);
+        gmshModelMeshGetBasisFunctionsOrientation(elementType, functionSpaceType.c_str(), &api_basisFunctionsOrientation_, &api_basisFunctionsOrientation_n_, tag, task, numTasks, (int)periodic, &ierr);
         if(ierr) throwLastError();
         basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
       }
 
       // gmsh::model::mesh::getBasisFunctionsOrientationForElement
       //
-      // Get the orientation of a single element `elementTag'.
+      // Get the orientation of a single element `elementTag', with the master
+      // nodes of the nodes on periodic entities if `periodic' is set (see
+      // `getBasisFunctionsOrientation').
       inline void getBasisFunctionsOrientationForElement(const std::size_t elementTag,
                                                          const std::string & functionSpaceType,
-                                                         int & basisFunctionsOrientation)
+                                                         int & basisFunctionsOrientation,
+                                                         const bool periodic = true)
       {
         int ierr = 0;
-        gmshModelMeshGetBasisFunctionsOrientationForElement(elementTag, functionSpaceType.c_str(), &basisFunctionsOrientation, &ierr);
+        gmshModelMeshGetBasisFunctionsOrientationForElement(elementTag, functionSpaceType.c_str(), &basisFunctionsOrientation, (int)periodic, &ierr);
         if(ierr) throwLastError();
       }
 
@@ -3469,13 +3477,13 @@ namespace gmsh { // Top-level functions
       // Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
       // `entityKeyMaster') corresponding to the entity `tag' and the key pairs
       // (`typeKey', `entityKey') for the elements of type `elementType' and
-      // function space type `functionSpaceType'. `orientationSign' contains the
-      // sign (1 or -1) by which each basis function of the master key must be
-      // multiplied to match the corresponding basis function on the entity `tag'.
-      // If `returnCoord' is set, the `coord' and `coordMaster' vectors contain the
-      // x, y, z coordinates locating basis functions for sorting purposes. Only
-      // available for "IsoParametric" and "Lagrange" function spaces, and for
-      // "H1Legendre" and "HcurlLegendre" function spaces on curves.
+      // function space type `functionSpaceType'. If `returnCoord' is set, the
+      // `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
+      // basis functions for sorting purposes. For the hierarchical function
+      // spaces, the elements must be oriented with `periodic' set in
+      // `getBasisFunctionsOrientation': the basis function of each key is then the
+      // basis function of its master key. On surfaces, the keys of "HdivLegendre"
+      // function spaces are those of the face functions of the 3D elements.
       inline void getPeriodicKeys(const int elementType,
                                   const std::string & functionSpaceType,
                                   const int tag,
@@ -3486,7 +3494,6 @@ namespace gmsh { // Top-level functions
                                   std::vector<std::size_t> & entityKeysMaster,
                                   std::vector<double> & coord,
                                   std::vector<double> & coordMaster,
-                                  std::vector<int> & orientationSign,
                                   const bool returnCoord = true)
       {
         int ierr = 0;
@@ -3496,8 +3503,7 @@ namespace gmsh { // Top-level functions
         size_t *api_entityKeysMaster_; size_t api_entityKeysMaster_n_;
         double *api_coord_; size_t api_coord_n_;
         double *api_coordMaster_; size_t api_coordMaster_n_;
-        int *api_orientationSign_; size_t api_orientationSign_n_;
-        gmshModelMeshGetPeriodicKeys(elementType, functionSpaceType.c_str(), tag, &tagMaster, &api_typeKeys_, &api_typeKeys_n_, &api_typeKeysMaster_, &api_typeKeysMaster_n_, &api_entityKeys_, &api_entityKeys_n_, &api_entityKeysMaster_, &api_entityKeysMaster_n_, &api_coord_, &api_coord_n_, &api_coordMaster_, &api_coordMaster_n_, &api_orientationSign_, &api_orientationSign_n_, (int)returnCoord, &ierr);
+        gmshModelMeshGetPeriodicKeys(elementType, functionSpaceType.c_str(), tag, &tagMaster, &api_typeKeys_, &api_typeKeys_n_, &api_typeKeysMaster_, &api_typeKeysMaster_n_, &api_entityKeys_, &api_entityKeys_n_, &api_entityKeysMaster_, &api_entityKeysMaster_n_, &api_coord_, &api_coord_n_, &api_coordMaster_, &api_coordMaster_n_, (int)returnCoord, &ierr);
         if(ierr) throwLastError();
         typeKeys.assign(api_typeKeys_, api_typeKeys_ + api_typeKeys_n_); gmshFree(api_typeKeys_);
         typeKeysMaster.assign(api_typeKeysMaster_, api_typeKeysMaster_ + api_typeKeysMaster_n_); gmshFree(api_typeKeysMaster_);
@@ -3505,7 +3511,6 @@ namespace gmsh { // Top-level functions
         entityKeysMaster.assign(api_entityKeysMaster_, api_entityKeysMaster_ + api_entityKeysMaster_n_); gmshFree(api_entityKeysMaster_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
         coordMaster.assign(api_coordMaster_, api_coordMaster_ + api_coordMaster_n_); gmshFree(api_coordMaster_);
-        orientationSign.assign(api_orientationSign_, api_orientationSign_ + api_orientationSign_n_); gmshFree(api_orientationSign_);
       }
 
       // gmsh::model::mesh::importStl

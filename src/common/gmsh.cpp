@@ -3820,17 +3820,43 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   }
 }
 
+// the master node of a node on a periodic entity, following the chains of
+// periodic entities (the node itself if it is not on a periodic entity)
+static MVertex *_masterNode(MVertex *v)
+{
+  for(int depth = 0; depth < 10; depth++) { // (no cycles)
+    GEntity *ge = v->onWhat();
+    if(!ge || ge->getMeshMaster() == ge) break;
+    auto it = ge->correspondingVertices.find(v);
+    if(it == ge->correspondingVertices.end()) {
+      it = ge->correspondingHighOrderVertices.find(v);
+      if(it == ge->correspondingHighOrderVertices.end()) break;
+    }
+    if(it->second == v) break;
+    v = it->second;
+  }
+  return v;
+}
+
 // the orientation of an element for the hierarchical basis functions: the
 // rank of the order of the tags of its vertices among the permutations of the
-// vertices in lexicographic order (its Lehmer code, in Horner form)
-static int _orientation(MElement *e, int numVertices)
+// vertices in lexicographic order (its Lehmer code, in Horner form); if
+// periodic is set, the vertices are ordered by the tags of their master nodes,
+// then by their own tags, so that the entities of a periodic curve or surface
+// are oriented as those of the master curve or surface
+static int _orientation(MElement *e, int numVertices, bool periodic)
 {
+  std::pair<std::size_t, std::size_t> key[8];
+  for(int i = 0; i < numVertices; i++) {
+    MVertex *v = e->getVertex(i);
+    key[i] = {periodic ? _masterNode(v)->getNum() : v->getNum(), v->getNum()};
+  }
   int orientation = 0;
   for(int i = 0; i < numVertices; i++) {
-    // the number of vertices after the i-th one with a smaller tag
+    // the number of vertices after the i-th one with a smaller key
     int smaller = 0;
     for(int j = i + 1; j < numVertices; j++)
-      if(e->getVertex(j)->getNum() < e->getVertex(i)->getNum()) smaller++;
+      if(key[j] < key[i]) smaller++;
     orientation = orientation * (numVertices - i) + smaller;
   }
   return orientation;
@@ -3860,7 +3886,7 @@ static bool _isHierarchicalAvailable(const std::string &fsName, int familyType,
 GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
   const int elementType, const std::string &functionSpaceType,
   std::vector<int> &basisFunctionsOrientation, const int tag,
-  const std::size_t task, const std::size_t numTasks)
+  const std::size_t task, const std::size_t numTasks, const bool periodic)
 {
   if(!_checkInit()) return;
 
@@ -3914,8 +3940,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
       const std::size_t begin = task * localNumElements / numTasks;
       const std::size_t end = (task + 1) * localNumElements / numTasks;
       for(std::size_t iElement = begin; iElement < end; ++iElement)
-        basisFunctionsOrientation[entityOffset + iElement] = _orientation(
-          ge->getMeshElementByType(familyType, iElement), numVertices);
+        basisFunctionsOrientation[entityOffset + iElement] =
+          _orientation(ge->getMeshElementByType(familyType, iElement),
+                       numVertices, periodic);
       entityOffset += localNumElements;
     }
   }
@@ -3924,7 +3951,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
 
 GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElement(
   const std::size_t elementTag, const std::string &functionSpaceType,
-  int &basisFunctionsOrientation)
+  int &basisFunctionsOrientation, const bool periodic)
 {
   if(!_checkInit()) return;
 
@@ -3951,7 +3978,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElement(
   else { // Hierarchical type
     const int numVertices =
       ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
-    basisFunctionsOrientation = _orientation(e, numVertices);
+    basisFunctionsOrientation = _orientation(e, numVertices, periodic);
   }
   return;
 }
@@ -4239,24 +4266,33 @@ static void _addLagrangeKeys(MElement *e, std::vector<int> &typeKeys,
 static int _typeKey(const HierarchicalBasis::Function &f)
 { return 4 * f.position + f.type; }
 
-// the keys of the hierarchical basis functions of element e: the vertex
-// functions keyed by their node, the functions of each edge and face by the
-// global number of the edge or the face, the bubble functions by the element
-static void _addHierarchicalKeys(MElement *e, const HierarchicalBasis &basis,
-                                 std::vector<int> &typeKeys,
-                                 std::vector<std::size_t> &entityKeys,
-                                 std::vector<double> &coord, bool returnCoord)
+// the keys of the given functions of a hierarchical basis of element e: the
+// vertex functions keyed by their node, the functions of each edge and face by
+// the global number of the edge or the face, the bubble functions by the
+// element; if master is given, the keys of the corresponding functions of the
+// master entities, the nodes being replaced by their master nodes, and the
+// edges and faces by those of the master nodes
+static void _addHierarchicalKeys(
+  MElement *e, const std::vector<HierarchicalBasis::Function> &functions,
+  std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
+  std::vector<double> &coord, bool returnCoord,
+  const std::map<MVertex *, MVertex *> *master = nullptr)
 {
+  auto node = [&](MVertex *v) {
+    if(!master) return v;
+    auto it = master->find(v);
+    return (it == master->end()) ? v : it->second;
+  };
   // the global number and the barycenter of each edge and face of the element
   // with functions, computed once
   std::size_t edges[12], faces[6];
   double edgeXyz[12][3], faceXyz[6][3], elementXyz[3];
   bool edgeDone[12] = {false}, faceDone[6] = {false}, elementDone = false;
-  for(auto &f : basis.getFunctions()) {
+  for(auto &f : functions) {
     std::size_t key = 0;
     double *xyz = nullptr, nodeXyz[3];
     if(f.type == 0) {
-      MVertex *v = e->getVertex(f.entity);
+      MVertex *v = node(e->getVertex(f.entity));
       key = v->getNum();
       nodeXyz[0] = v->x();
       nodeXyz[1] = v->y();
@@ -4266,6 +4302,8 @@ static void _addHierarchicalKeys(MElement *e, const HierarchicalBasis &basis,
     else if(f.type == 1) {
       if(!edgeDone[f.entity]) {
         MEdge edge = e->getEdge(f.entity);
+        if(master)
+          edge = MEdge(node(edge.getVertex(0)), node(edge.getVertex(1)));
         if(returnCoord) {
           MVertex *v[2] = {edge.getVertex(0), edge.getVertex(1)};
           _barycenter(v, 2, edgeXyz[f.entity]);
@@ -4279,6 +4317,12 @@ static void _addHierarchicalKeys(MElement *e, const HierarchicalBasis &basis,
     else if(f.type == 2) {
       if(!faceDone[f.entity]) {
         MFace face = e->getFaceSolin(f.entity);
+        if(master) {
+          std::vector<MVertex *> v(face.getNumVertices());
+          for(std::size_t k = 0; k < v.size(); k++)
+            v[k] = node(face.getVertex(k));
+          face = MFace(v);
+        }
         if(returnCoord) {
           MVertex *v[4];
           for(std::size_t k = 0; k < face.getNumVertices(); k++)
@@ -4357,8 +4401,9 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
   if(returnCoord) coord.reserve(3 * n);
   for(auto ge : entities)
     for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++)
-      _addHierarchicalKeys(ge->getMeshElementByType(familyType, j), *basis,
-                           typeKeys, entityKeys, coord, returnCoord);
+      _addHierarchicalKeys(ge->getMeshElementByType(familyType, j),
+                           basis->getFunctions(), typeKeys, entityKeys, coord,
+                           returnCoord);
   delete basis;
 #else
   Msg::Error("Function space '%s' requires the hierarchical basis module",
@@ -4398,7 +4443,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
   HierarchicalBasis *basis =
     HierarchicalBasis::create(fsName, familyType, order, minOrder);
   if(!basis) return;
-  _addHierarchicalKeys(e, *basis, typeKeys, entityKeys, coord, returnCoord);
+  _addHierarchicalKeys(e, basis->getFunctions(), typeKeys, entityKeys, coord,
+                       returnCoord);
   delete basis;
 #else
   Msg::Error("Function space '%s' requires the hierarchical basis module",
@@ -5658,8 +5704,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   int &tagMaster, std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
   std::vector<std::size_t> &entityKeys,
   std::vector<std::size_t> &entityKeysMaster, std::vector<double> &coord,
-  std::vector<double> &coordMaster, std::vector<int> &orientationSign,
-  const bool returnCoord)
+  std::vector<double> &coordMaster, const bool returnCoord)
 {
   if(!_checkInit()) return;
   typeKeys.clear();
@@ -5668,7 +5713,6 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   entityKeysMaster.clear();
   coord.clear();
   coordMaster.clear();
-  orientationSign.clear();
   int order = 0, numComponents = 0;
   std::string fsName = "";
   int minOrder = 0;
@@ -5689,24 +5733,12 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   }
   tagMaster = ge->getMeshMaster()->tag();
 
-  bool lagrange = (fsName == "Lagrange");
-  bool hierarchical = (dim == 1 && (fsName == "H1Legendre" ||
-                                    fsName.substr(0, 13) == "HcurlLegendre"));
-  if(!lagrange && !hierarchical) {
-    Msg::Error("Periodic keys are only available for \"IsoParametric\" and "
-               "\"Lagrange\" function spaces, and for \"H1Legendre\" and "
-               "\"HcurlLegendre\" function spaces on curves");
-    return;
-  }
-
-  getKeys(elementType, functionSpaceType, typeKeys, entityKeys, coord, tag,
-          returnCoord);
-  typeKeysMaster = typeKeys;
-  entityKeysMaster = entityKeys;
-  coordMaster = coord;
-  orientationSign.resize(typeKeys.size(), 1);
-
-  if(lagrange) {
+  if(_isLagrange(fsName)) {
+    getKeys(elementType, functionSpaceType, typeKeys, entityKeys, coord, tag,
+            returnCoord);
+    typeKeysMaster = typeKeys;
+    entityKeysMaster = entityKeys;
+    coordMaster = coord;
     int nthreads = CTX::instance()->numThreads;
     if(!nthreads) nthreads = Msg::GetMaxThreads();
 #pragma omp parallel for num_threads(nthreads)
@@ -5729,57 +5761,47 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   }
 
 #if defined(HAVE_HIERARCHICAL_BASIS)
-  // on curves, the keys of each element are those of its 2 vertices (H1) and
-  // of its edge; the edge functions are oriented from the edge node with the
-  // smallest tag, so their sign changes where the master edge runs the other
-  // way
+  // the keys of the elements of the entity, and the same keys with the master
+  // nodes, edges and faces: the elements being oriented with the master nodes
+  // (see _orientation), the basis functions are the same
+  if(dim != 1 && dim != 2) {
+    Msg::Error("Periodic keys of hierarchical function spaces are only "
+               "available on curves and surfaces");
+    return;
+  }
   int familyType = ElementType::getParentType(elementType);
-  HierarchicalBasis *basis =
-    HierarchicalBasis::create(fsName, familyType, order, minOrder);
+  // on surfaces, the H(div) functions of the faces of the 3D elements
+  bool faces3D = (dim == 2 && (fsName.substr(0, 12) == "HdivLegendre" ||
+                               fsName.substr(0, 15) == "DivHdivLegendre"));
+  HierarchicalBasis *basis = HierarchicalBasis::create(
+    fsName,
+    faces3D ? (familyType == TYPE_TRI ? TYPE_TET : TYPE_HEX) : familyType,
+    order, minOrder);
   if(!basis) return;
-  const std::vector<HierarchicalBasis::Function> functions =
-    basis->getFunctions();
-  std::vector<int> reversed(functions.size(), 1);
-  for(std::size_t k = 0; k < functions.size(); k++)
-    if(functions[k].type == 1)
-      reversed[k] =
-        basis->getEdgeFunctionSignForReversedEdge(functions[k].position);
+  std::vector<HierarchicalBasis::Function> functions;
+  for(auto &f : basis->getFunctions())
+    if(!faces3D || (f.type == 2 && f.entity == 0)) functions.push_back(f);
   delete basis;
 
-  std::size_t idx = 0;
   for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
     MElement *e = ge->getMeshElementByType(familyType, j);
-    MVertex *v[2] = {e->getVertex(0), e->getVertex(1)};
-    MVertex *m[2] = {_getMasterNode(ge, v[0]), _getMasterNode(ge, v[1])};
-    if(!m[0] || !m[1]) {
-      Msg::Warning("Unknown master nodes corresponding to nodes %zu and %zu",
-                   v[0]->getNum(), v[1]->getNum());
-      idx += functions.size();
-      continue;
-    }
-    std::size_t edge = 0;
-    bool flip = (v[0]->getNum() < v[1]->getNum()) !=
-                (m[0]->getNum() < m[1]->getNum());
-    for(std::size_t k = 0; k < functions.size(); k++, idx++) {
-      double xyz[3];
-      if(functions[k].type == 0) {
-        MVertex *n = m[functions[k].entity];
-        entityKeysMaster[idx] = n->getNum();
-        xyz[0] = n->x();
-        xyz[1] = n->y();
-        xyz[2] = n->z();
+    std::map<MVertex *, MVertex *> master;
+    for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+      MVertex *v = e->getVertex(k), *m = _getMasterNode(ge, v);
+      // nodes on the boundary of the entity, with the master of their entity
+      if(!m && v->onWhat() && v->onWhat() != ge)
+        m = _getMasterNode(v->onWhat(), v);
+      if(!m) {
+        Msg::Warning("Unknown master node corresponding to node %zu",
+                     v->getNum());
+        m = v;
       }
-      else {
-        if(!edge) edge = GModel::current()->addMEdge(MEdge(m[0], m[1]));
-        entityKeysMaster[idx] = edge;
-        if(flip) orientationSign[idx] = reversed[k];
-        xyz[0] = 0.5 * (m[0]->x() + m[1]->x());
-        xyz[1] = 0.5 * (m[0]->y() + m[1]->y());
-        xyz[2] = 0.5 * (m[0]->z() + m[1]->z());
-      }
-      if(returnCoord)
-        for(int c = 0; c < 3; c++) coordMaster[3 * idx + c] = xyz[c];
+      master[v] = m;
     }
+    _addHierarchicalKeys(e, functions, typeKeys, entityKeys, coord,
+                         returnCoord);
+    _addHierarchicalKeys(e, functions, typeKeysMaster, entityKeysMaster,
+                         coordMaster, returnCoord, &master);
   }
 #else
   Msg::Error("Function space '%s' requires the hierarchical basis module",

@@ -6058,15 +6058,20 @@ module gmsh
   !! `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
   !! each element the orientation index in the values returned by
   !! `getBasisFunctions'. For Lagrange basis functions the call is superfluous
-  !! as it will return a vector of zeros. If `numTasks' > 1, only compute and
-  !! return the part of the data indexed by `task' (for C++ only; output vector
-  !! must be preallocated).
+  !! as it will return a vector of zeros. The orientation of an element is given
+  !! by the order of the tags of its nodes; if `periodic' is set, the nodes on
+  !! periodic entities are ordered by the tags of their master nodes, so that
+  !! the basis functions on a periodic curve or surface are those of the master
+  !! curve or surface (see `getPeriodicKeys'). If `numTasks' > 1, only compute
+  !! and return the part of the data indexed by `task' (for C++ only; output
+  !! vector must be preallocated).
   subroutine gmshModelMeshGetBasisFunctionsOrientation(elementType, &
                                                        functionSpaceType, &
                                                        basisFunctionsOrientation, &
                                                        tag, &
                                                        task, &
                                                        numTasks, &
+                                                       periodic, &
                                                        ierr)
     interface
     subroutine C_API(elementType, &
@@ -6076,6 +6081,7 @@ module gmsh
                      tag, &
                      task, &
                      numTasks, &
+                     periodic, &
                      ierr_) &
       bind(C, name="gmshModelMeshGetBasisFunctionsOrientation")
       use, intrinsic :: iso_c_binding
@@ -6086,6 +6092,7 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       integer(c_size_t), value, intent(in) :: task
       integer(c_size_t), value, intent(in) :: numTasks
+      integer(c_int), value, intent(in) :: periodic
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -6095,6 +6102,7 @@ module gmsh
     integer, intent(in), optional :: tag
     integer, intent(in), optional :: task
     integer, intent(in), optional :: numTasks
+    logical, intent(in), optional :: periodic
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_basisFunctionsOrientation_
     integer(c_size_t) :: api_basisFunctionsOrientation_n_
@@ -6105,36 +6113,44 @@ module gmsh
          tag=optval_c_int(-1, tag), &
          task=optval_c_size_t(0, task), &
          numTasks=optval_c_size_t(1, numTasks), &
+         periodic=optval_c_bool(.true., periodic), &
          ierr_=ierr)
     basisFunctionsOrientation = ovectorint_(api_basisFunctionsOrientation_, &
       api_basisFunctionsOrientation_n_)
   end subroutine gmshModelMeshGetBasisFunctionsOrientation
 
-  !> Get the orientation of a single element `elementTag'.
+  !> Get the orientation of a single element `elementTag', with the master nodes
+  !! of the nodes on periodic entities if `periodic' is set (see
+  !! `getBasisFunctionsOrientation').
   subroutine gmshModelMeshGetBasisFunctionsOrientationForElement(elementTag, &
                                                                  functionSpaceType, &
                                                                  basisFunctionsOrientation, &
+                                                                 periodic, &
                                                                  ierr)
     interface
     subroutine C_API(elementTag, &
                      functionSpaceType, &
                      basisFunctionsOrientation, &
+                     periodic, &
                      ierr_) &
       bind(C, name="gmshModelMeshGetBasisFunctionsOrientationForElement")
       use, intrinsic :: iso_c_binding
       integer(c_size_t), value, intent(in) :: elementTag
       character(len=1, kind=c_char), dimension(*), intent(in) :: functionSpaceType
       integer(c_int) :: basisFunctionsOrientation
+      integer(c_int), value, intent(in) :: periodic
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer, intent(in) :: elementTag
     character(len=*), intent(in) :: functionSpaceType
     integer(c_int) :: basisFunctionsOrientation
+    logical, intent(in), optional :: periodic
     integer(c_int), intent(out), optional :: ierr
     call C_API(elementTag=int(elementTag, c_size_t), &
          functionSpaceType=istring_(functionSpaceType), &
          basisFunctionsOrientation=basisFunctionsOrientation, &
+         periodic=optval_c_bool(.true., periodic), &
          ierr_=ierr)
   end subroutine gmshModelMeshGetBasisFunctionsOrientationForElement
 
@@ -8075,13 +8091,13 @@ module gmsh
   !> Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
   !! `entityKeyMaster') corresponding to the entity `tag' and the key pairs
   !! (`typeKey', `entityKey') for the elements of type `elementType' and
-  !! function space type `functionSpaceType'. `orientationSign' contains the
-  !! sign (1 or -1) by which each basis function of the master key must be
-  !! multiplied to match the corresponding basis function on the entity `tag'.
-  !! If `returnCoord' is set, the `coord' and `coordMaster' vectors contain the
-  !! x, y, z coordinates locating basis functions for sorting purposes. Only
-  !! available for "IsoParametric" and "Lagrange" function spaces, and for
-  !! "H1Legendre" and "HcurlLegendre" function spaces on curves.
+  !! function space type `functionSpaceType'. If `returnCoord' is set, the
+  !! `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
+  !! basis functions for sorting purposes. For the hierarchical function spaces,
+  !! the elements must be oriented with `periodic' set in
+  !! `getBasisFunctionsOrientation': the basis function of each key is then the
+  !! basis function of its master key. On surfaces, the keys of "HdivLegendre"
+  !! function spaces are those of the face functions of the 3D elements.
   subroutine gmshModelMeshGetPeriodicKeys(elementType, &
                                           functionSpaceType, &
                                           tag, &
@@ -8092,7 +8108,6 @@ module gmsh
                                           entityKeysMaster, &
                                           coord, &
                                           coordMaster, &
-                                          orientationSign, &
                                           returnCoord, &
                                           ierr)
     interface
@@ -8112,8 +8127,6 @@ module gmsh
                      api_coord_n_, &
                      api_coordMaster_, &
                      api_coordMaster_n_, &
-                     api_orientationSign_, &
-                     api_orientationSign_n_, &
                      returnCoord, &
                      ierr_) &
       bind(C, name="gmshModelMeshGetPeriodicKeys")
@@ -8134,8 +8147,6 @@ module gmsh
       integer(c_size_t) :: api_coord_n_
       type(c_ptr), intent(out) :: api_coordMaster_
       integer(c_size_t) :: api_coordMaster_n_
-      type(c_ptr), intent(out) :: api_orientationSign_
-      integer(c_size_t), intent(out) :: api_orientationSign_n_
       integer(c_int), value, intent(in) :: returnCoord
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
@@ -8150,7 +8161,6 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: entityKeysMaster
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     real(c_double), dimension(:), allocatable, intent(out) :: coordMaster
-    integer(c_int), dimension(:), allocatable, intent(out) :: orientationSign
     logical, intent(in), optional :: returnCoord
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_typeKeys_
@@ -8165,8 +8175,6 @@ module gmsh
     integer(c_size_t) :: api_coord_n_
     type(c_ptr) :: api_coordMaster_
     integer(c_size_t) :: api_coordMaster_n_
-    type(c_ptr) :: api_orientationSign_
-    integer(c_size_t) :: api_orientationSign_n_
     call C_API(elementType=int(elementType, c_int), &
          functionSpaceType=istring_(functionSpaceType), &
          tag=int(tag, c_int), &
@@ -8183,8 +8191,6 @@ module gmsh
          api_coord_n_=api_coord_n_, &
          api_coordMaster_=api_coordMaster_, &
          api_coordMaster_n_=api_coordMaster_n_, &
-         api_orientationSign_=api_orientationSign_, &
-         api_orientationSign_n_=api_orientationSign_n_, &
          returnCoord=optval_c_bool(.true., returnCoord), &
          ierr_=ierr)
     typeKeys = ovectorint_(api_typeKeys_, &
@@ -8199,8 +8205,6 @@ module gmsh
       api_coord_n_)
     coordMaster = ovectordouble_(api_coordMaster_, &
       api_coordMaster_n_)
-    orientationSign = ovectorint_(api_orientationSign_, &
-      api_orientationSign_n_)
   end subroutine gmshModelMeshGetPeriodicKeys
 
   !> Import the model STL representation (if available) as the current mesh.
