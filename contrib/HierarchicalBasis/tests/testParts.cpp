@@ -10,7 +10,10 @@
 //   functions of H1Legendre<p+1>, and the curls of HcurlLegendreNoGrad<p> are
 //   linearly independent, but for the lowest order (Whitney) functions, which
 //   span the gradients of the vertex functions;
-// - HdivLegendreCurl<p> are divergence free, and the divergences of
+// - HdivLegendreCurl<p> are divergence free (the gradients and curls being
+//   computed without derivatives, so that this holds by construction; that
+//   the derivatives of the functions are right is checked by testDerivatives
+//   on the whole space, of which the parts are filters), and the divergences of
 //   HdivLegendreNoCurl<p> are linearly independent, but for the lowest order
 //   functions, which span the curls of the lowest order H(curl) functions; in
 //   3D, the former are curls of HcurlLegendreNoGrad, of order p + 1 on

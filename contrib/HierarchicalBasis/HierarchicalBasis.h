@@ -54,8 +54,6 @@ public:
 
   virtual ~HierarchicalBasis() = default;
 
-  Space getSpace() const { return _space; }
-  Part getPart() const { return _part; }
   // number of components of each basis function: 1 or 3
   int getNumComponents() const
   { return (_space == H1 || _space == DIV_HDIV || _space == L2) ? 1 : 3; }

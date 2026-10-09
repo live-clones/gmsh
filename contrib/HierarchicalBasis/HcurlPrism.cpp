@@ -67,7 +67,8 @@ int HcurlPrism::_quadrangle(const Dual *x, int f, int flag1, int flag2,
   // and the vertical one, reversed by flag2; flag3 = -1 exchanges them
   int ia = quadEdges[f][0], ib = quadEdges[f][1];
   if(flag1 == -1) std::swap(ia, ib);
-  const Dual &a = L[ia], &b = L[ib], w = double(flag2) * x[2];
+  const Dual &a = L[ia], &b = L[ib];
+  Dual w = double(flag2) * x[2];
   auto Ph = [&](int n) { return a * b * kernel(n, b - a); };
   auto Pv = [&](int n) { return B * T * kernel(n, w); };
   Vec Wh = whitney(a, b), Wv = grad(w);
@@ -129,7 +130,7 @@ void HcurlPrism::functions(const Dual *x, std::vector<Vec> &vertex,
         if(std::max(rotationalOrder(r), k - 1) == l)
           bubble[n++] = lobatto(k, x[2]) * R[r];
     for(int i = 0; i < nF; i++)
-      if(triangleOrder(i) - 1 == l) bubble[n++] = F[i] * whitney(B, T);
+      if(triangleOrder(i) - 1 == l) bubble[n++] = F[i] * grad(x[2]);
     for(int i = 0; i < nF; i++)
       for(int k = 2; k <= p + 1; k++)
         if(std::max(triangleOrder(i), k) - 1 == l) {
@@ -164,11 +165,7 @@ void HcurlPrism::functionInfo(std::vector<FunctionInfo> &info)
 {
   const int p = _order;
   for(int e = 0; e < 9; e++) hcurlEdgeInfo(p, info);
-  for(int f = 0; f < 3; f++)
-    for(int l = 1; l <= p; l++) {
-      for(int k = 0; k < 2 * l - 1; k++) info.push_back({2, l, true});
-      for(int k = 0; k < 2 * l + 1; k++) info.push_back({2, l, false});
-    }
+  for(int f = 0; f < 3; f++) hcurlQuadrangleInfo(p, info);
   for(int f = 0; f < _numTriFace; f++) hcurlTriangleInfo(p, info);
   int nR = (p + 2) * (p - 1) / 2, nF = p * (p - 1) / 2;
   for(int l = 2; l <= p; l++) {

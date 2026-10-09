@@ -11,7 +11,7 @@
 //   p, with the same keys;
 // - the divergences of HdivLegendre<p> span L2Legendre<p> on quadrangles,
 //   hexahedra and prisms, L2Legendre<p-1> on triangles and tetrahedra
-//   (Brezzi-Douglas- Marini), and those of HdivLegendreCurl<p> with
+//   (Brezzi-Douglas-Marini), and those of HdivLegendreCurl<p> with
 //   HdivLegendreNoCurl<p+1> (Raviart-Thomas) span L2Legendre<p> there too.
 
 #include <cmath>

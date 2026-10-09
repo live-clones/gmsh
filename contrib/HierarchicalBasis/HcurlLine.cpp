@@ -32,10 +32,5 @@ void HcurlLine::functions(const Dual *x, std::vector<Vec> &vertex,
   hcurlEdge(whitney(hv[0], hv[1]), he.data(), _order, edge.data());
 }
 
-void HcurlLine::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
-                              int faceNumber, std::vector<Vec> &face)
-{
-}
-
 void HcurlLine::functionInfo(std::vector<FunctionInfo> &info)
 { hcurlEdgeInfo(_order, info); }

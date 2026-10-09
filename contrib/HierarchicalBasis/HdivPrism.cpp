@@ -49,24 +49,15 @@ static int triangleFaceOrder(int i)
   return l;
 }
 
-// the degree of the i-th product of Legendre polynomials of 2 u - 1 and 2 v -
-// 1 (by increasing degree d, then increasing degree in v)
-static int triangleL2Order(int i)
-{
-  int d = 0;
-  while((d + 1) * (d + 2) / 2 <= i) d++;
-  return d;
-}
-
 void HdivPrism::_quadrangle(const Dual *x, int f, int flag1, int flag2,
                             int flag3, const Vec *c, Vec *out)
 {
   Dual L[3], B, T;
   coordinates(x, L, B, T);
   // the lowest order function: the H(div) function of the edge (a, b) of the
-  // triangle, a grad(b) x grad(w) - b grad(a) x grad(w), whose normal trace is
-  // that of grad(s) x grad(t) / 2 on the face of coordinates (s, t), as on the
-  // faces of the hexahedron
+  // triangle, a grad(b) x grad(w) - b grad(a) x grad(w), times 2 and the signs
+  // of the orientation: its normal trace is that of grad(s) x grad(t) on the
+  // face of coordinates (s, t), as on the faces of the hexahedron
   int ia = quadEdges[f][0], ib = quadEdges[f][1];
   if(flag1 == -1) std::swap(ia, ib);
   const Dual &a = L[ia], &b = L[ib];
@@ -107,7 +98,8 @@ void HdivPrism::functions(const Dual *x, std::vector<Vec> &vertex,
   const int roles[3] = {0, 1, 2};
   for(int f = 0; f < 2; f++)
     _triangleFace(x, f, roles, &face[3 * perQuad + f * perTri]);
-  // the interior
+  // the interior, the products q of Legendre polynomials being ordered like
+  // the H1 functions of a triangle (of orders 3, 4, ...)
   std::vector<Vec> dv, de, df, db;
   hcurlFunctions(_triangle, x, dv, de, df, db);
   std::vector<Dual> q;
@@ -124,7 +116,7 @@ void HdivPrism::functions(const Dual *x, std::vector<Vec> &vertex,
           bubble[n++] = legendre(k, x[2]) * df[i];
     for(std::size_t i = 0; i < q.size(); i++)
       for(int k = 2; k <= p + 1; k++)
-        if(std::max(triangleL2Order(i), k - 1) == l)
+        if(std::max(triangleOrder(i) - 3, k - 1) == l)
           bubble[n++] = (q[i] * lobatto(k, x[2])) * gw;
   }
 }
@@ -166,7 +158,7 @@ void HdivPrism::functionInfo(std::vector<FunctionInfo> &info)
           info.push_back({3, l, false});
     for(int i = 0; i < nq; i++)
       for(int k = 2; k <= p + 1; k++)
-        if(std::max(triangleL2Order(i), k - 1) == l)
+        if(std::max(triangleOrder(i) - 3, k - 1) == l)
           info.push_back({3, l, false});
   }
 }

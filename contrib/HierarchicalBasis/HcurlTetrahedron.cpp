@@ -87,15 +87,13 @@ void HcurlTetrahedron::functions(const Dual *x, std::vector<Vec> &vertex,
   }
   // by increasing order l, the gradients of the H1 bubbles of order l + 1,
   // then the rotational functions of order l
-  std::vector<Vec> r(_numBubbleFunction + 1);
   n = 0;
   for(int l = 3; l <= _order; l++) {
     int d = l - 3;
     for(int k = d * (d + 1) * (d + 2) / 6; k < (d + 1) * (d + 2) * (d + 3) / 6;
         k++)
       bubble[n++] = grad(hb[k]);
-    int nr = rotationalBubbles(L, l, r.data());
-    for(int k = 0; k < nr; k++) bubble[n++] = r[k];
+    n += rotationalBubbles(L, l, &bubble[n]);
   }
 }
 

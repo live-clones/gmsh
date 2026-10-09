@@ -24,8 +24,6 @@ public:
   void functions(const Dual *x, std::vector<Vec> &vertex,
                  std::vector<Vec> &edge, std::vector<Vec> &face,
                  std::vector<Vec> &bubble) override;
-  void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
-                     int faceNumber, std::vector<Vec> &face) override;
 
 protected:
   bool hasParts() const override { return true; }

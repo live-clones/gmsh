@@ -8,7 +8,8 @@
 // each basis function they share (same key), once the functions are oriented
 // with getBasisFunctionsOrientationForElement() and mapped to the physical
 // element (covariant Piola map for H(curl), contravariant for H(div)); the
-// functions of only one of the elements must have zero trace there. Checked for
+// functions of only one of the elements must have zero trace there. Checked up
+// to order 4, for some parts and ranges of orders of the spaces too, and for
 // several numberings of the nodes, i.e. with many different orientations.
 
 #include <algorithm>
@@ -242,55 +243,66 @@ namespace bt {
         }
         std::vector<Facet> fa = facets(dim);
         check(!fa.empty(), "%dD mesh: no shared facets", dim);
+        // the spaces up to order 4, and some of their parts and ranges
+        std::vector<std::pair<const Space *, std::string>> tested;
         for(auto &s : spaces()) {
           if(dim == 1 && s.kind != H1) continue;
-          int maxp = (s.kind == H1) ? 4 : 3;
-          for(int p = s.minOrder; p <= maxp; p++) {
-            std::string fs = spaceType(s, p);
-            double worst = 0., worstScale = 1.;
-            int numFacets = 0;
-            for(auto &f : fa) {
-              bool ok = true;
-              for(auto tag : f.elements) {
-                int type, d, e;
-                std::vector<std::size_t> n;
-                gmsh::model::mesh::getElement(tag, type, n, d, e);
-                for(auto &el : elements())
-                  if(el.type == type && !supported(s, el)) ok = false;
-              }
-              if(!ok) continue;
-              numFacets++;
-              std::vector<Vec> pts;
-              std::vector<std::vector<Vec>> tan;
-              facetPoints(f, r, pts, tan);
-              double scale = 1.;
-              auto t0 = traces(f.elements[0], s, fs, pts, tan, scale);
-              auto t1 = traces(f.elements[1], s, fs, pts, tan, scale);
-              for(auto &kv : t0) {
-                auto it = t1.find(kv.first);
-                for(std::size_t i = 0; i < kv.second.size(); i++) {
-                  double other = (it == t1.end()) ? 0. : it->second[i];
-                  double diff = std::abs(kv.second[i] - other) / scale;
-                  if(diff > worst) {
-                    worst = diff;
-                    worstScale = scale;
-                  }
+          for(int p = s.minOrder; p <= 4; p++)
+            tested.push_back({&s, spaceType(s, p)});
+          if(s.kind == HCURL)
+            for(auto fs : {"HcurlLegendreNoGrad1:2", "HcurlLegendreGrad2:3"})
+              tested.push_back({&s, fs});
+          // (no parts of the H(div) space on the prisms of the 3D mesh)
+          if(s.kind == HDIV && dim == 2)
+            for(auto fs : {"HdivLegendreCurl1:2", "HdivLegendreNoCurl2:3"})
+              tested.push_back({&s, fs});
+        }
+        for(auto &sf : tested) {
+          const Space &s = *sf.first;
+          const std::string &fs = sf.second;
+          double worst = 0., worstScale = 1.;
+          int numFacets = 0;
+          for(auto &f : fa) {
+            bool ok = true;
+            for(auto tag : f.elements) {
+              int type, d, e;
+              std::vector<std::size_t> n;
+              gmsh::model::mesh::getElement(tag, type, n, d, e);
+              for(auto &el : elements())
+                if(el.type == type && !supported(s, el)) ok = false;
+            }
+            if(!ok) continue;
+            numFacets++;
+            std::vector<Vec> pts;
+            std::vector<std::vector<Vec>> tan;
+            facetPoints(f, r, pts, tan);
+            double scale = 1.;
+            auto t0 = traces(f.elements[0], s, fs, pts, tan, scale);
+            auto t1 = traces(f.elements[1], s, fs, pts, tan, scale);
+            for(auto &kv : t0) {
+              auto it = t1.find(kv.first);
+              for(std::size_t i = 0; i < kv.second.size(); i++) {
+                double other = (it == t1.end()) ? 0. : it->second[i];
+                double diff = std::abs(kv.second[i] - other) / scale;
+                if(diff > worst) {
+                  worst = diff;
+                  worstScale = scale;
                 }
               }
-              for(auto &kv : t1) {
-                if(t0.count(kv.first)) continue;
-                for(double v : kv.second)
-                  if(std::abs(v) / scale > worst) {
-                    worst = std::abs(v) / scale;
-                    worstScale = scale;
-                  }
-              }
             }
-            check(worst < 1e-9,
-                  "%dD mesh, numbering %d, %s: traces differ by %g (relative "
-                  "to %g) over %d facets",
-                  dim, numbering, fs.c_str(), worst, worstScale, numFacets);
+            for(auto &kv : t1) {
+              if(t0.count(kv.first)) continue;
+              for(double v : kv.second)
+                if(std::abs(v) / scale > worst) {
+                  worst = std::abs(v) / scale;
+                  worstScale = scale;
+                }
+            }
           }
+          check(worst < 1e-9,
+                "%dD mesh, numbering %d, %s: traces differ by %g (relative "
+                "to %g) over %d facets",
+                dim, numbering, fs.c_str(), worst, worstScale, numFacets);
         }
       }
     }

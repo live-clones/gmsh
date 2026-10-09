@@ -24,7 +24,7 @@ public:
                  std::vector<Dual> &bubble) override;
 
 private:
-  int _family, _order, _dim;
+  int _dim;
   // the exponents of the Legendre polynomials of each function, and its order
   std::vector<std::array<int, 4>> _indices;
 };

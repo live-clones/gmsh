@@ -3379,11 +3379,13 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
   std::size_t n = fsType.find_last_not_of("0123456789");
   if(n == std::string::npos || n + 1 == fsType.size()) return false;
   if(fsType[n] == '-') n--; // negative orders, which are rejected later
+  // orders of at most 4 digits, larger ones being rejected
+  if(fsType.size() - n - 1 > 5) return false;
   fsOrder = atoi(fsType.substr(n + 1).c_str());
   int minOrder = 0;
   if(fsType[n] == ':') {
     std::size_t m = fsType.find_last_not_of("0123456789", n - 1);
-    if(m == std::string::npos || m + 1 == n) return false;
+    if(m == std::string::npos || m + 1 == n || n - m - 1 > 4) return false;
     minOrder = atoi(fsType.substr(m + 1, n - m - 1).c_str());
     n = m;
     if(fsType.substr(0, 8) == "Lagrange" ||
@@ -3834,6 +3836,27 @@ static int _orientation(MElement *e, int numVertices)
   return orientation;
 }
 
+// (the names given by _getFunctionSpaceInfo)
+static bool _isLagrange(const std::string &fsName)
+{ return fsName == "Lagrange" || fsName == "GradLagrange"; }
+
+// whether a hierarchical function space is available on the elements of a
+// family (an error is printed otherwise)
+static bool _isHierarchicalAvailable(const std::string &fsName, int familyType,
+                                     int order, int minOrder)
+{
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  HierarchicalBasis *basis =
+    HierarchicalBasis::create(fsName, familyType, order, minOrder);
+  delete basis;
+  return basis != nullptr;
+#else
+  Msg::Error("Function space '%s' requires the hierarchical basis module",
+             fsName.c_str());
+  return false;
+#endif
+}
+
 GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
   const int elementType, const std::string &functionSpaceType,
   std::vector<int> &basisFunctionsOrientation, const int tag,
@@ -3841,11 +3864,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
 {
   if(!_checkInit()) return;
 
-  int basisOrder = 0;
+  int basisOrder = 0, minOrder = 0;
   std::string fsName = "";
   int numComponents = 0;
   if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
-                            numComponents)) {
+                            numComponents, &minOrder)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return;
   }
@@ -3855,6 +3878,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   const int familyType = ElementType::getParentType(elementType);
+  if(!fsName.empty() && !_isLagrange(fsName) &&
+     !_isHierarchicalAvailable(fsName, familyType, basisOrder, minOrder))
+    return;
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     const GEntity *ge = entities[i];
@@ -3936,11 +3962,11 @@ gmsh::model::mesh::getNumberOfOrientations(const int elementType,
 {
   if(!_checkInit()) return -1;
 
-  int basisOrder = 0;
+  int basisOrder = 0, minOrder = 0;
   std::string fsName = "";
   int numComponents = 0;
   if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
-                            numComponents)) {
+                            numComponents, &minOrder)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return 0;
   }
@@ -3950,6 +3976,9 @@ gmsh::model::mesh::getNumberOfOrientations(const int elementType,
   }
   else { // Hierarchical type
     const int familyType = ElementType::getParentType(elementType);
+    if(!fsName.empty() &&
+       !_isHierarchicalAvailable(fsName, familyType, basisOrder, minOrder))
+      return 0;
     const unsigned int numVertices =
       ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
     // one orientation per permutation of the vertices
@@ -4277,12 +4306,6 @@ static void _addHierarchicalKeys(MElement *e, const HierarchicalBasis &basis,
 }
 #endif
 
-static bool _isLagrange(const std::string &fsName)
-{
-  return fsName == "IsoParametric" || fsName == "Lagrange" ||
-         fsName == "GradIsoParametric" || fsName == "GradLagrange";
-}
-
 GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
                                          const std::string &functionSpaceType,
                                          std::vector<int> &typeKeys,
@@ -4387,6 +4410,7 @@ GMSH_API int
 gmsh::model::mesh::getNumberOfKeys(const int elementType,
                                    const std::string &functionSpaceType)
 {
+  if(!_checkInit()) return 0;
   int numberOfKeys = 0;
   int basisOrder = 0;
   std::string fsName = "";
@@ -4431,6 +4455,7 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
   const int elementType, const std::string &functionSpaceType,
   gmsh::vectorpair &infoKeys)
 {
+  if(!_checkInit()) return;
   infoKeys.clear();
   int basisOrder = 0;
   std::string fsName = "";
@@ -4444,7 +4469,7 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
 
   if(typeKeys.size() != entityKeys.size()) {
     Msg::Error("The size of 'typeKeys' is different from the size of "
-               "'entityKeys' ('%i', '%i')",
+               "'entityKeys' ('%zu', '%zu')",
                typeKeys.size(), entityKeys.size());
     return;
   }
@@ -4492,6 +4517,14 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
   delete basis;
   std::size_t keySize = typeKeys.size();
   if(!keySize) return;
+  // the keys of whole elements, as given by getKeys or getKeysForElement
+  if(!numDofsPerElement || keySize % numDofsPerElement) {
+    Msg::Error("The %zu keys are not those of elements of type %d in function "
+               "space '%s' (%d keys per element)",
+               keySize, elementType, functionSpaceType.c_str(),
+               numDofsPerElement);
+    return;
+  }
   infoKeys.resize(keySize);
   std::size_t it = keySize / numDofsPerElement;
   for(std::size_t i = 0; i < it; i++) {
@@ -4597,7 +4630,7 @@ GMSH_API void gmsh::model::mesh::getIntegrationPoints(
   weights.clear();
   std::string intName = "";
   int intOrder = 0;
-  if(!_getIntegrationInfo(integrationType, intName, intOrder)) {
+  if(!_getIntegrationInfo(integrationType, intName, intOrder) || intOrder < 0) {
     Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
     return;
   }

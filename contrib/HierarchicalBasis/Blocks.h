@@ -111,6 +111,15 @@ inline void h1QuadrangleInfo(int type, int order,
     for(int k = 0; k < 2 * m - 3; k++) info.push_back({type, m, false});
 }
 
+// The Lobatto polynomials l_0(x), ..., l_n(x), computed once for the loops on
+// their products
+inline std::vector<Dual> lobattos(int n, const Dual &x)
+{
+  std::vector<Dual> l(n + 1);
+  for(int k = 0; k <= n; k++) l[k] = lobatto(k, x);
+  return l;
+}
+
 // The H1 functions of an edge from vertex a to vertex b, of affine
 // coordinates a and b: a b K_k(b - a), k = 0, ..., order - 2; return the
 // number of functions
@@ -163,12 +172,12 @@ inline void quadrangleCoordinates(const Dual &s0, const Dual &t0, int flag1,
 inline int h1Quadrangle(const Dual &s, const Dual &t, const Dual &blend,
                         int order, Dual *f)
 {
+  std::vector<Dual> ls = lobattos(order, s), lt = lobattos(order, t);
   int n = 0;
   for(int m = 2; m <= order; m++)
     for(int n1 = 2; n1 <= m; n1++)
       for(int n2 = 2; n2 <= m; n2++)
-        if(std::max(n1, n2) == m)
-          f[n++] = blend * lobatto(n1, s) * lobatto(n2, t);
+        if(std::max(n1, n2) == m) f[n++] = blend * ls[n1] * lt[n2];
   return n;
 }
 
@@ -280,16 +289,15 @@ inline void hcurlTriangleInfo(int order, std::vector<FunctionInfo> &info)
 inline int hcurlQuadrangleRotational(const Dual &s, const Dual &t,
                                      const Dual &blend, int order, Vec *f)
 {
+  std::vector<Dual> ls = lobattos(order + 1, s), lt = lobattos(order + 1, t);
   int n = 0;
   for(int m = 2; m <= order + 1; m++) {
-    f[n++] = blend * lobatto(m, t) * grad(s);
-    f[n++] = blend * lobatto(m, s) * grad(t);
+    f[n++] = blend * lt[m] * grad(s);
+    f[n++] = blend * ls[m] * grad(t);
     for(int i = 2; i <= m; i++)
       for(int j = 2; j <= m; j++)
-        if(std::max(i, j) == m) {
-          Dual li = lobatto(i, s), lj = lobatto(j, t);
-          f[n++] = blend * (lj * grad(li) - li * grad(lj));
-        }
+        if(std::max(i, j) == m)
+          f[n++] = blend * (lt[j] * grad(ls[i]) - ls[i] * grad(lt[j]));
   }
   return n;
 }

@@ -16,7 +16,7 @@
 #include "HierarchicalBasis.h"
 #include "HcurlTriangle.h"
 // H(div) basis on the triangle: the H(curl) basis of HcurlTriangle rotated in
-// the plane, by -90 degrees for the edge functions and by 90 degrees for the
+// the plane, by 90 degrees for the edge functions and by -90 degrees for the
 // face functions. The rotated gradients are the divergence-free functions.
 class HdivTriangle : public HierarchicalBasis {
 public:

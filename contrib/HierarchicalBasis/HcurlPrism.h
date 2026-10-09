@@ -37,7 +37,9 @@
 //   the functions of the triangle (see hcurlTriangle);
 // - in the interior, with the H1 functions F of the triangle (see h1Triangle),
 //   its rotational H(curl) functions R (see hcurlTriangleRotational) and the
-//   Lobatto polynomials l_k(w): R l_k, F grad(w) and F grad(l_k) - l_k grad(F).
+//   Lobatto polynomials l_k(w): R l_k, F grad(w) and F grad(l_k) - l_k grad(F),
+//   R being the rotational H(curl) functions of the triangle of order p and F
+//   its H1 functions of order p + 1.
 class HcurlPrism : public HierarchicalBasis {
 public:
   HcurlPrism(int order);
@@ -54,8 +56,8 @@ protected:
 private:
   int _order;
   H1Prism _h1;
-  // the functions of quadrilateral face f, of order l, from the H1 functions
-  // h of the face, in the orientation given by the flags
+  // the functions of quadrilateral face f, from the H1 functions h of the
+  // face, in the orientation given by the flags
   int _quadrangle(const Dual *x, int f, int flag1, int flag2, int flag3,
                   const Dual *h, Vec *out);
 };

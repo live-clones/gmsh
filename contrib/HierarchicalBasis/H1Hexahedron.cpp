@@ -49,13 +49,14 @@ void H1Hexahedron::functions(const Dual *x, std::vector<Dual> &vertex,
                       a[hexahedronFaces[f][2]], _order, &face[n]);
   n = 0;
   // by increasing max(n1, n2, n3), then increasing n1, n2 and n3
+  std::vector<Dual> l[3] = {lobattos(_order, x[0]), lobattos(_order, x[1]),
+                            lobattos(_order, x[2])};
   for(int m = 2; m <= _order; m++)
     for(int n1 = 2; n1 <= m; n1++)
       for(int n2 = 2; n2 <= m; n2++)
         for(int n3 = 2; n3 <= m; n3++)
           if(std::max(std::max(n1, n2), n3) == m)
-            bubble[n++] =
-              lobatto(n1, x[0]) * lobatto(n2, x[1]) * lobatto(n3, x[2]);
+            bubble[n++] = l[0][n1] * l[1][n2] * l[2][n3];
 }
 
 void H1Hexahedron::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,

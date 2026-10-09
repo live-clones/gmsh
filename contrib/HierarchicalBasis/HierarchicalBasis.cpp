@@ -35,6 +35,22 @@
 #include "HcurlPrism.h"
 #include "L2Element.h"
 
+// the name of a family of elements, for the error messages
+static const char *familyName(int familyType)
+{
+  switch(familyType) {
+  case TYPE_PNT: return "points";
+  case TYPE_LIN: return "lines";
+  case TYPE_TRI: return "triangles";
+  case TYPE_QUA: return "quadrangles";
+  case TYPE_TET: return "tetrahedra";
+  case TYPE_PYR: return "pyramids";
+  case TYPE_PRI: return "prisms";
+  case TYPE_HEX: return "hexahedra";
+  default: return "these elements";
+  }
+}
+
 HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
                                              int familyType, int order,
                                              int minOrder)
@@ -74,10 +90,13 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
   }
 
   bool h1 = (space == H1 || space == GRAD_H1);
-  int lowestOrder = h1 ? 1 : 0;
-  if(order < lowestOrder) {
-    Msg::Error("Order %d of function space '%s' is not available (minimum %d)",
-               order, fsName.c_str(), lowestOrder);
+  // the order: from 0 (1 for H1) to an order whose evaluation is still
+  // reasonable
+  int lowestOrder = h1 ? 1 : 0, highestOrder = 40;
+  if(order < lowestOrder || order > highestOrder) {
+    Msg::Error("Order %d of function space '%s' is not available (from %d to "
+               "%d)",
+               order, fsName.c_str(), lowestOrder, highestOrder);
     return nullptr;
   }
 
@@ -129,8 +148,8 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
     }
   }
   if(!basis) {
-    Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-               fsName.c_str());
+    Msg::Error("Function space '%s' is not available on %s", fsName.c_str(),
+               familyName(familyType));
     return nullptr;
   }
   basis->_space = space;
@@ -138,9 +157,9 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
   basis->_minOrder = minOrder;
   basis->_familyType = familyType;
   if(!basis->_select()) {
-    Msg::Error("Function space '%s' is not available on elements of family "
-               "%i",
-               fsName.c_str(), familyType);
+    Msg::Error("Function space '%s' is not available on %s (no parts of the "
+               "space)",
+               fsName.c_str(), familyName(familyType));
     delete basis;
     return nullptr;
   }
@@ -324,17 +343,18 @@ void HierarchicalBasis::_generate(const double *uvw, double *vertex,
 }
 
 // a reference element of the given family, with vertices tagged 1, 2, ...
+// (with the tag 1, so that it does not change the tags given to new elements)
 static MElement *referenceElement(int familyType,
                                   std::vector<MVertex *> &vertices)
 {
   switch(familyType) {
-  case TYPE_HEX: return new MHexahedron(vertices);
-  case TYPE_PRI: return new MPrism(vertices);
-  case TYPE_TET: return new MTetrahedron(vertices);
-  case TYPE_QUA: return new MQuadrangle(vertices);
-  case TYPE_TRI: return new MTriangle(vertices);
-  case TYPE_LIN: return new MLine(vertices);
-  case TYPE_PNT: return new MPoint(vertices);
+  case TYPE_HEX: return new MHexahedron(vertices, 1);
+  case TYPE_PRI: return new MPrism(vertices, 1);
+  case TYPE_TET: return new MTetrahedron(vertices, 1);
+  case TYPE_QUA: return new MQuadrangle(vertices, 1);
+  case TYPE_TRI: return new MTriangle(vertices, 1);
+  case TYPE_LIN: return new MLine(vertices, 1);
+  case TYPE_PNT: return new MPoint(vertices, 1);
   }
   return nullptr;
 }
@@ -352,7 +372,8 @@ void HierarchicalBasis::evaluate(const std::vector<double> &uvw,
                                  const std::vector<int> &wantedOrientations,
                                  std::vector<double> &values)
 {
-  const int nq = uvw.size() / 3, nc = getNumComponents();
+  const std::size_t nq = uvw.size() / 3;
+  const int nc = getNumComponents();
   const int nV = _numVertexFunction, nE = _numEdgeFunction,
             nQ = _numQuadFaceFunction, nT = _numTriFaceFunction, nF = nQ + nT,
             nB = _numBubbleFunction, nf = nV + nE + nF + nB;
@@ -367,7 +388,7 @@ void HierarchicalBasis::evaluate(const std::vector<double> &uvw,
   std::vector<double> vertex(nq * nV * nc), edge(nq * nE * nc),
     face(nq * nF * nc), bubble(nq * nB * nc), quadFaces(nq * 8 * nQ * nc),
     triFaces(nq * 6 * nT * nc);
-  for(int q = 0; q < nq; q++) {
+  for(std::size_t q = 0; q < nq; q++) {
     const double *p = &uvw[3 * q];
     double *v = vertex.data() + q * nV * nc, *e = edge.data() + q * nE * nc,
            *f = face.data() + q * nF * nc, *b = bubble.data() + q * nB * nc;
@@ -393,17 +414,19 @@ void HierarchicalBasis::evaluate(const std::vector<double> &uvw,
     vertices[i] = new MVertex(0., 0., 0., nullptr, i + 1);
   MElement *element = referenceElement(_familyType, vertices);
   std::vector<int> edgeFlags(_numEdge), faceIndex(_numQuadFace + _numTriFace);
+  // the place of each orientation in the output (-1 if not wanted)
+  std::vector<int> place(numOrientations, -1);
+  for(int o = 0; o < numOrientations; ++o)
+    if(wantedOrientations.empty()) place[o] = o;
+  for(std::size_t i = 0; i < wantedOrientations.size(); i++)
+    if(wantedOrientations[i] >= 0 && wantedOrientations[i] < numOrientations)
+      place[wantedOrientations[i]] = i;
   for(int o = 0; o < numOrientations; ++o) {
-    std::size_t index = o;
-    if(!wantedOrientations.empty()) {
-      auto it =
-        std::find(wantedOrientations.begin(), wantedOrientations.end(), o);
-      if(it == wantedOrientations.end()) {
-        nextPermutation(vertices, element);
-        continue;
-      }
-      index = it - wantedOrientations.begin();
+    if(place[o] < 0) {
+      nextPermutation(vertices, element);
+      continue;
     }
+    const std::size_t index = place[o];
     // the edges oriented differently from the reference element, and the
     // orientation of each face
     for(int i = 0; i < _numEdge && nE; ++i) {
@@ -417,7 +440,7 @@ void HierarchicalBasis::evaluate(const std::vector<double> &uvw,
       faceIndex[i] =
         (i < _numQuadFace) ? quadFaceIndex(flags) : triFaceIndex(flags);
     }
-    for(int q = 0; q < nq; ++q) {
+    for(std::size_t q = 0; q < nq; ++q) {
       double *out = all.data();
       for(int i = 0; i < nV * nc; i++) *out++ = vertex[q * nV * nc + i];
       for(int i = 0; i < nE; i++) {

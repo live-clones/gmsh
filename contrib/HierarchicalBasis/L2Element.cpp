@@ -8,8 +8,8 @@
 #include "L2Element.h"
 
 L2Element::L2Element(int familyType, int order)
-  : _family(familyType), _order(order)
 {
+  _familyType = familyType;
   const bool simplex = (familyType == TYPE_LIN || familyType == TYPE_TRI ||
                         familyType == TYPE_TET);
   _dim = (familyType == TYPE_LIN)                           ? 1 :
@@ -49,9 +49,10 @@ void L2Element::functions(const Dual *x, std::vector<Dual> &vertex,
   // the coordinates in [-1, 1]: u, v on the triangles of simplices and prisms,
   // and w on tetrahedra
   Dual y[3] = {x[0], x[1], x[2]};
-  if(_family == TYPE_TRI || _family == TYPE_TET || _family == TYPE_PRI)
+  if(_familyType == TYPE_TRI || _familyType == TYPE_TET ||
+     _familyType == TYPE_PRI)
     for(int i = 0; i < 2; i++) y[i] = 2. * x[i] - 1.;
-  if(_family == TYPE_TET) y[2] = 2. * x[2] - 1.;
+  if(_familyType == TYPE_TET) y[2] = 2. * x[2] - 1.;
   std::vector<Dual> &out = (_dim == 1) ? edge : (_dim == 2) ? face : bubble;
   for(std::size_t i = 0; i < _indices.size(); i++) {
     Dual f(1.);

@@ -32,7 +32,8 @@ HcurlHexahedron::HcurlHexahedron(int order) : _order(order), _h1(order + 1)
 // = l_i(u), B = l_j(v), C = l_k(w), grad(A) B C - A grad(B) C + A B grad(C),
 // then grad(A) B C + A grad(B) C - A B grad(C), (i, j, k) in [2, m]^3 with
 // max(i, j, k) = m; the indices by increasing order
-static int rotationalBubbles(const Dual *x, int l, Vec *f)
+static int rotationalBubbles(const Dual *x, const std::vector<Dual> *lob, int l,
+                             Vec *f)
 {
   const int m = l + 1;
   int n = 0;
@@ -41,16 +42,14 @@ static int rotationalBubbles(const Dual *x, int l, Vec *f)
     if(p > q) std::swap(p, q);
     for(int j = 2; j <= m; j++)
       for(int k = 2; k <= m; k++)
-        if(std::max(j, k) == m)
-          f[n++] = lobatto(j, x[p]) * lobatto(k, x[q]) * grad(x[d]);
+        if(std::max(j, k) == m) f[n++] = lob[p][j] * lob[q][k] * grad(x[d]);
   }
   for(int type = 0; type < 2; type++)
     for(int i = 2; i <= m; i++)
       for(int j = 2; j <= m; j++)
         for(int k = 2; k <= m; k++)
           if(std::max(std::max(i, j), k) == m) {
-            Dual A = lobatto(i, x[0]), B = lobatto(j, x[1]),
-                 C = lobatto(k, x[2]);
+            const Dual &A = lob[0][i], &B = lob[1][j], &C = lob[2][k];
             double s = (type == 0) ? -1. : 1.;
             f[n++] =
               (B * C) * grad(A) + s * (A * C) * grad(B) - s * (A * B) * grad(C);
@@ -78,13 +77,14 @@ void HcurlHexahedron::functions(const Dual *x, std::vector<Vec> &vertex,
     n += hcurlQuadrangle(x[h[0]], x[h[1]], a[h[2]], &hf[f * _order * _order],
                          _order, &face[n]);
   }
-  std::vector<Vec> r(_numBubbleFunction + 1);
+  std::vector<Dual> lob[3] = {lobattos(_order + 1, x[0]),
+                              lobattos(_order + 1, x[1]),
+                              lobattos(_order + 1, x[2])};
   n = 0;
   for(int l = 1; l <= _order; l++) {
     for(int k = (l - 1) * (l - 1) * (l - 1); k < l * l * l; k++)
       bubble[n++] = grad(hb[k]);
-    int nr = rotationalBubbles(x, l, r.data());
-    for(int k = 0; k < nr; k++) bubble[n++] = r[k];
+    n += rotationalBubbles(x, lob, l, &bubble[n]);
   }
 }
 
