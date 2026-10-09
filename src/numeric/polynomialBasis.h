@@ -41,6 +41,16 @@ public:
                     double third[][3][3][3]) const;
 
   void evaluateMonomials(double u, double v, double w, double p[]) const;
+
+protected:
+  // monomial exponents per term and direction, filled from monomials by
+  // _packEvaluationData(), which constructors must call after setting them
+  std::vector<int> _exp[3];
+  int _maxExp[3] = {0, 0, 0};
+
+  void _packEvaluationData();
+  void _powerTables(double u, double v, double w, double *pu, double *pv,
+                    double *pw) const;
 };
 
 #endif

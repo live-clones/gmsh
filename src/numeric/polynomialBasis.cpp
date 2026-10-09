@@ -102,33 +102,70 @@ polynomialBasis::polynomialBasis(int tag) : nodalBasis(tag)
   }
 
   coefficients = generateLagrangeMonomialCoefficients(monomials, points);
+  _packEvaluationData();
 }
 
 polynomialBasis::~polynomialBasis() {}
 
-void polynomialBasis::evaluateMonomials(double u, double v, double w,
-                                        double p[]) const
+// Largest exponent plus one that the power tables can hold
+constexpr int maxPowers = 16;
+
+// Each entry is pow_int itself, as a sequential recurrence would not round the
+// same way
+void polynomialBasis::_powerTables(double u, double v, double w, double *pu,
+                                   double *pv, double *pw) const
 {
-  for(int j = 0; j < monomials.size1(); ++j) {
-    p[j] = 1.;
-    switch(dimension) {
-    case 3: p[j] *= pow_int(w, monomials(j, 2));
-    case 2: p[j] *= pow_int(v, monomials(j, 1));
-    case 1: p[j] *= pow_int(u, monomials(j, 0));
-    default: break;
+  for(int k = 0; k <= _maxExp[0]; k++) pu[k] = pow_int(u, k);
+  for(int k = 0; k <= _maxExp[1]; k++) pv[k] = pow_int(v, k);
+  for(int k = 0; k <= _maxExp[2]; k++) pw[k] = pow_int(w, k);
+}
+
+void polynomialBasis::_packEvaluationData()
+{
+  const int dim = monomials.size2();
+  const int nTerms = monomials.size1();
+  for(int d = 0; d < 3; d++) {
+    _exp[d].assign(nTerms, 0);
+    int mx = 0;
+    for(int j = 0; j < nTerms; j++) {
+      int e = d < dim ? (int)monomials(j, d) : 0;
+      if(e > mx) mx = e;
+      // keep the stack tables in bounds even after the error
+      if(e >= maxPowers) e = maxPowers - 1;
+      _exp[d][j] = e;
     }
+    if(mx >= maxPowers) {
+      Msg::Error("Monomial exponent %d too high", mx);
+      mx = maxPowers - 1;
+    }
+    _maxExp[d] = mx;
   }
 }
 
+void polynomialBasis::evaluateMonomials(double u, double v, double w,
+                                        double p[]) const
+{
+  double pu[maxPowers], pv[maxPowers], pw[maxPowers];
+  _powerTables(u, v, w, pu, pv, pw);
+  const int nTerms = monomials.size1();
+  for(int j = 0; j < nTerms; ++j)
+    p[j] = pw[_exp[2][j]] * pv[_exp[1][j]] * pu[_exp[0][j]];
+}
+
+// The loops below run term-outer and shape-function-inner so that they stream
+// the column-major coefficients. The sum order per shape function is unchanged.
 void polynomialBasis::f(double u, double v, double w, double *sf) const
 {
   double p[1256];
   evaluateMonomials(u, v, w, p);
-  for(int i = 0; i < coefficients.size1(); i++) {
-    sf[i] = 0.0;
-    for(int j = 0; j < coefficients.size2(); j++) {
-      sf[i] += coefficients(i, j) * p[j];
-    }
+  const int nSF = coefficients.size1();
+  const int nTerms = coefficients.size2();
+  const double *__restrict c = coefficients.getDataPtr();
+  double *__restrict s = sf;
+  for(int i = 0; i < nSF; i++) s[i] = 0.0;
+  for(int j = 0; j < nTerms; j++) {
+    const double pj = p[j];
+    for(int i = 0; i < nSF; i++) s[i] += c[i + nSF * j] * pj;
   }
 }
 
@@ -137,15 +174,20 @@ void polynomialBasis::f(const fullMatrix<double> &coord,
 {
   double p[1256];
   sf.resize(coord.size1(), coefficients.size1());
+  const int nSF = coefficients.size1();
+  const int nTerms = coefficients.size2();
+  double row[1256];
+  const double *__restrict c = coefficients.getDataPtr();
   for(int iPoint = 0; iPoint < coord.size1(); iPoint++) {
     evaluateMonomials(coord(iPoint, 0),
                       coord.size2() > 1 ? coord(iPoint, 1) : 0,
                       coord.size2() > 2 ? coord(iPoint, 2) : 0, p);
-    for(int i = 0; i < coefficients.size1(); i++) {
-      sf(iPoint, i) = 0.;
-      for(int j = 0; j < coefficients.size2(); j++)
-        sf(iPoint, i) += coefficients(i, j) * p[j];
+    for(int i = 0; i < nSF; i++) row[i] = 0.;
+    for(int j = 0; j < nTerms; j++) {
+      const double pj = p[j];
+      for(int i = 0; i < nSF; i++) row[i] += c[i + nSF * j] * pj;
     }
+    for(int i = 0; i < nSF; i++) sf(iPoint, i) = row[i];
   }
 }
 
@@ -183,57 +225,60 @@ void polynomialBasis::df(const fullMatrix<double> &coord,
 
 void polynomialBasis::df(double u, double v, double w, double grads[][3]) const
 {
-  switch(monomials.size2()) {
-  case 1:
-    for(int i = 0; i < coefficients.size1(); i++) {
-      grads[i][0] = 0;
-      grads[i][1] = 0;
-      grads[i][2] = 0;
-      for(int j = 0; j < coefficients.size2(); j++) {
-        if(monomials(j, 0) > 0)
-          grads[i][0] += coefficients(i, j) *
-                         pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0);
+  double pu[maxPowers], pv[maxPowers], pw[maxPowers];
+  _powerTables(u, v, w, pu, pv, pw);
+
+  const int nSF = coefficients.size1();
+  const int nTerms = coefficients.size2();
+  double g[3 * 1256];
+  double *__restrict g0 = g;
+  double *__restrict g1 = g + nSF;
+  double *__restrict g2 = g + 2 * nSF;
+  const double *__restrict c = coefficients.getDataPtr();
+  for(int i = 0; i < 3 * nSF; i++) g[i] = 0.;
+
+  // no trailing *1.0 for the missing dimensions, so the compiler contracts the
+  // same multiply-add pairs as the old per-dimension code did
+  const int dim = monomials.size2();
+  for(int j = 0; j < nTerms; j++) {
+    const double *__restrict cj = c + nSF * j;
+    const int eu = _exp[0][j], ev = _exp[1][j], ew = _exp[2][j];
+    if(dim >= 1 && eu > 0) {
+      const double a = pu[eu - 1], b = eu;
+      if(dim == 1) {
+        for(int i = 0; i < nSF; i++) g0[i] += cj[i] * a * b;
+      }
+      else {
+        const double cc = pv[ev];
+        if(dim == 2) {
+          for(int i = 0; i < nSF; i++) g0[i] += cj[i] * a * b * cc;
+        }
+        else {
+          const double d = pw[ew];
+          for(int i = 0; i < nSF; i++) g0[i] += cj[i] * a * b * cc * d;
+        }
       }
     }
-    break;
-  case 2:
-    for(int i = 0; i < coefficients.size1(); i++) {
-      grads[i][0] = 0;
-      grads[i][1] = 0;
-      grads[i][2] = 0;
-      for(int j = 0; j < coefficients.size2(); j++) {
-        if(monomials(j, 0) > 0)
-          grads[i][0] += coefficients(i, j) *
-                         pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0) *
-                         pow_int(v, monomials(j, 1));
-        if(monomials(j, 1) > 0)
-          grads[i][1] += coefficients(i, j) * pow_int(u, monomials(j, 0)) *
-                         pow_int(v, (monomials(j, 1) - 1)) * monomials(j, 1);
+    if(dim >= 2 && ev > 0) {
+      const double a = pu[eu], b = pv[ev - 1], cc = ev;
+      if(dim == 2) {
+        for(int i = 0; i < nSF; i++) g1[i] += cj[i] * a * b * cc;
+      }
+      else {
+        const double d = pw[ew];
+        for(int i = 0; i < nSF; i++) g1[i] += cj[i] * a * b * cc * d;
       }
     }
-    break;
-  case 3:
-    for(int i = 0; i < coefficients.size1(); i++) {
-      grads[i][0] = 0;
-      grads[i][1] = 0;
-      grads[i][2] = 0;
-      for(int j = 0; j < coefficients.size2(); j++) {
-        if(monomials(j, 0) > 0)
-          grads[i][0] += coefficients(i, j) *
-                         pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0) *
-                         pow_int(v, monomials(j, 1)) *
-                         pow_int(w, monomials(j, 2));
-        if(monomials(j, 1) > 0)
-          grads[i][1] += coefficients(i, j) * pow_int(u, monomials(j, 0)) *
-                         pow_int(v, (monomials(j, 1) - 1)) * monomials(j, 1) *
-                         pow_int(w, monomials(j, 2));
-        if(monomials(j, 2) > 0)
-          grads[i][2] += coefficients(i, j) * pow_int(u, monomials(j, 0)) *
-                         pow_int(v, monomials(j, 1)) *
-                         pow_int(w, (monomials(j, 2) - 1)) * monomials(j, 2);
-      }
+    if(dim >= 3 && ew > 0) {
+      const double a = pu[eu], b = pv[ev], cc = pw[ew - 1], d = ew;
+      for(int i = 0; i < nSF; i++) g2[i] += cj[i] * a * b * cc * d;
     }
-    break;
+  }
+
+  for(int i = 0; i < nSF; i++) {
+    grads[i][0] = g0[i];
+    grads[i][1] = g1[i];
+    grads[i][2] = g2[i];
   }
 }
 
