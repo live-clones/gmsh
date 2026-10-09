@@ -79,6 +79,19 @@ namespace bt {
     return C;
   }
 
+  // the keys of the functions of a space
+  static std::set<std::pair<int, std::size_t>> keys(std::size_t tag,
+                                                    const std::string &fs)
+  {
+    std::vector<int> tk;
+    std::vector<std::size_t> ek;
+    std::vector<double> c;
+    gmsh::model::mesh::getKeysForElement(tag, fs, tk, ek, c, false);
+    std::set<std::pair<int, std::size_t>> k;
+    for(std::size_t i = 0; i < tk.size(); i++) k.insert({tk[i], ek[i]});
+    return k;
+  }
+
   void testParts()
   {
     Random r(7);
@@ -92,6 +105,32 @@ namespace bt {
         int o;
         gmsh::model::mesh::getBasisFunctionsOrientationForElement(
           tag, "HcurlLegendre1", o);
+        // the increments of the H(curl) orders 0.5, 1, 1.5 and 2 of GetDP are
+        // disjoint, and add up to the spaces of these orders
+        if(e.dim >= 1) {
+          const char *names[4] = {"HcurlLegendre0", "HcurlLegendre1:1",
+                                  "HcurlLegendreNoGrad2:2",
+                                  "HcurlLegendreGrad2:2"};
+          std::set<std::pair<int, std::size_t>> sum;
+          std::size_t total = 0;
+          bool ok = true;
+          for(int i = 0; i < 4; i++) {
+            auto k = keys(tag, names[i]);
+            total += k.size();
+            sum.insert(k.begin(), k.end());
+            if(i == 2) {
+              auto a = keys(tag, "HcurlLegendreNoGrad2"),
+                   b = keys(tag, "HcurlLegendreGrad1");
+              a.insert(b.begin(), b.end());
+              ok = ok && (a == sum);
+            }
+          }
+          ok = ok && total == sum.size() && sum == keys(tag, "HcurlLegendre2");
+          check(ok,
+                "%s: the increments of GetDP's H(curl) orders do not add "
+                "up",
+                e.name.c_str());
+        }
         for(auto &s : spaces()) {
           if(s.kind == H1 || !supported(s, e)) continue;
           bool curl = (s.kind == HCURL);

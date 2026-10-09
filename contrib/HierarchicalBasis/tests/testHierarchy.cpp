@@ -7,8 +7,9 @@
 // each function of order p is a function of order p+1, with the same key, the
 // same values and the same information (type and order); and the functions of
 // order p whose order information is at most q are exactly the functions of
-// order q. Checked on a single element with several numberings of its nodes,
-// i.e. in several orientations.
+// order q; and the functions of the range of orders "q:p" are those of order p
+// whose order information is at least q. Checked on a single element with
+// several numberings of its nodes, i.e. in several orientations.
 
 #include <algorithm>
 #include <cmath>
@@ -55,6 +56,25 @@ namespace bt {
                     "(values by %g, type %d/%d, order %d/%d)",
                     n, f, kv.first.first, kv.first.second, p + 1, diff, a.type,
                     b.type, a.order, b.order);
+            }
+            // the range of orders q:p
+            for(int q = s.minOrder; q <= p; q++) {
+              std::string fr =
+                s.name + std::to_string(q) + ":" + std::to_string(p);
+              KeyedFunctions range = keyedFunctions(tag, e, uvw, fr);
+              int n = 0;
+              bool same = true;
+              for(auto &kv : all[i]) {
+                if(kv.second.order < q) continue;
+                n++;
+                auto it = range.find(kv.first);
+                if(it == range.end() || it->second.values != kv.second.values)
+                  same = false;
+              }
+              check(same && n == (int)range.size(),
+                    "%s %s: %d functions, not the %d functions of order >= %d "
+                    "of order %d",
+                    e.name.c_str(), fr.c_str(), (int)range.size(), n, q, p);
             }
             // the functions of order <= q among those of the last order
             const KeyedFunctions &last = all.back();

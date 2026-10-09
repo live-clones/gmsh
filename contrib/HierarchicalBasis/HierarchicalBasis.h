@@ -46,9 +46,11 @@ public:
   // "GradH1Legendre", "HcurlLegendre", "CurlHcurlLegendre", "HdivLegendre",
   // "DivHdivLegendre" or "L2Legendre", the H(curl) names followed by "Grad" or
   // "NoGrad" and the H(div) names by "Curl" or "NoCurl" for a part of the
-  // space; return nullptr, with an error message, if it is not available
+  // space, keeping only the functions of order minOrder or higher (the
+  // functions of orders minOrder to order); return nullptr, with an error
+  // message, if it is not available
   static HierarchicalBasis *create(const std::string &fsName, int familyType,
-                                   int order);
+                                   int order, int minOrder = 0);
 
   virtual ~HierarchicalBasis() = default;
 
@@ -122,6 +124,7 @@ public:
 protected:
   Space _space = H1;
   Part _part = ALL;
+  int _minOrder = 0;
   int _familyType = 0;
 
   // number of vertices, edges, quadrilateral and triangular faces

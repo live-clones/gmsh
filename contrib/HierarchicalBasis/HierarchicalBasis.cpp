@@ -36,7 +36,8 @@
 #include "L2Element.h"
 
 HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
-                                             int familyType, int order)
+                                             int familyType, int order,
+                                             int minOrder)
 {
   static const struct {
     const char *name;
@@ -73,10 +74,16 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
   }
 
   bool h1 = (space == H1 || space == GRAD_H1);
-  int minOrder = h1 ? 1 : 0;
-  if(order < minOrder) {
+  int lowestOrder = h1 ? 1 : 0;
+  if(order < lowestOrder) {
     Msg::Error("Order %d of function space '%s' is not available (minimum %d)",
-               order, fsName.c_str(), minOrder);
+               order, fsName.c_str(), lowestOrder);
+    return nullptr;
+  }
+
+  if(minOrder < 0 || minOrder > order) {
+    Msg::Error("Wrong range of orders %d:%d of function space '%s'", minOrder,
+               order, fsName.c_str());
     return nullptr;
   }
 
@@ -128,6 +135,7 @@ HierarchicalBasis *HierarchicalBasis::create(const std::string &fsName,
   }
   basis->_space = space;
   basis->_part = part;
+  basis->_minOrder = minOrder;
   basis->_familyType = familyType;
   if(!basis->_select()) {
     Msg::Error("Function space '%s' is not available on elements of family "
@@ -176,7 +184,8 @@ bool HierarchicalBasis::_select()
     }
     else
       f.position = j - _numTriFaceFunction;
-    if(_part == ALL || info[i].kernel == (_part == KERNEL)) {
+    if((_part == ALL || info[i].kernel == (_part == KERNEL)) &&
+       info[i].order >= _minOrder) {
       _functions.push_back(f);
       _selected.push_back(i);
     }

@@ -137,6 +137,9 @@ namespace bt {
           check(bf(e.type, "HdivLegendre1", {}),
                 "HdivLegendre1 on %s: no error", e.name.c_str());
     check(bf(4, "FooLegendre1", {}), "unknown function space: no error");
+    for(auto fs : {"HcurlLegendre3:2", "HcurlLegendre:2", "Lagrange1:2",
+                   "H1Legendre-1:2"})
+      check(bf(4, fs, {}), "%s: no error", fs);
     for(auto fs : {"H1Legendre0", "HcurlLegendre-1", "HdivLegendre-1"})
       check(bf(2, fs, {}), "%s: no error", fs);
     // no maximum order
