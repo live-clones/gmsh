@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <mutex>
 #include <vector>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
@@ -11,6 +12,8 @@ static std::vector<IntPt *> GQL(40, nullptr);
 
 IntPt *getGQLPts(int order)
 {
+  static std::mutex mutex;
+  std::lock_guard<std::mutex> lock(mutex);
   if(static_cast<int>(GQL.size()) < order + 1)
     GQL.resize(order + 1, nullptr);
   if(!GQL[order]) {

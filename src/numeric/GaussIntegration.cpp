@@ -10,6 +10,7 @@
 static void pts2fullMatrix(int npts, IntPt *pts, fullMatrix<double> &pMatrix,
                            fullVector<double> &wMatrix)
 {
+  if(!pts) npts = 0; // rule not available
   pMatrix.resize(npts, 3);
   wMatrix.resize(npts, 1);
   for(int i = 0; i < npts; i++) {

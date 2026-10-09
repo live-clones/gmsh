@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <mutex>
 #include <vector>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
@@ -12,6 +13,8 @@ static std::vector<IntPt *> GQPyr(40, nullptr);
 
 IntPt *getGQPyrPts(int order)
 {
+  static std::mutex mutex;
+  std::lock_guard<std::mutex> lock(mutex);
   if(static_cast<int>(GQPyr.size()) < order + 1)
     GQPyr.resize(order + 1, nullptr);
   if(!GQPyr[order]) {
@@ -24,6 +27,7 @@ IntPt *getGQPyrPts(int order)
 
     double *GJ20Pt, *GJ20Wt;
     getGaussJacobiQuadrature(2, 0, nbPtW, &GJ20Pt, &GJ20Wt);
+    if(!GJ20Pt) return nullptr; // not available (an error was printed)
 
     IntPt *intpt = new IntPt[getNGQPyrPts(order)];
 

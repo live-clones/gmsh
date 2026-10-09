@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <mutex>
 #include <vector>
 #include "GmshMessage.h"
 #include "GaussIntegration.h"
@@ -39,10 +40,10 @@ const double xq7[7] = {0.,
 const double yq7[7] = {0.,
                        0.9660917830792959,
                        -0.9660917830792959,
-                       0.7745966692414834,
-                       -0.7745966692414834,
-                       0.7745966692414834,
-                       -0.7745966692414834};
+                       0.5773502691896258,
+                       -0.5773502691896258,
+                       0.5773502691896258,
+                       -0.5773502691896258};
 const double pq7[7] = {1.1428571428571428,  0.31746031746031744,
                        0.31746031746031744, 0.5555555555555556,
                        0.5555555555555556,  0.5555555555555556,
@@ -100,6 +101,8 @@ IntPt *getGQQPts(int order, bool forceTensorRule)
 {
   if(!forceTensorRule && order <= 2) return GQQ[order];
 
+  static std::mutex mutex;
+  std::lock_guard<std::mutex> lock(mutex);
   if(static_cast<int>(GQQGL.size()) < order + 1)
     GQQGL.resize(order + 1, nullptr);
   if(!GQQGL[order]) {

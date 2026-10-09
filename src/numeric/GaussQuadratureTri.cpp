@@ -711,12 +711,13 @@ static int GQTnPt[21] = {1,  1,  3,  4,  6,  7,  12, 13, 16, 19, 25,
 // 20 (or any order if forceTensorRule is set), computed once
 static const std::vector<IntPt> &tensorRule(int order)
 {
+  // by the number of Gauss points per direction: several orders share a rule
+  const int n = (order + 3) / 2;
   static std::map<int, std::vector<IntPt>> rules;
   static std::mutex mutex;
   std::lock_guard<std::mutex> lock(mutex);
-  std::vector<IntPt> &pts = rules[order];
+  std::vector<IntPt> &pts = rules[n];
   if(pts.empty()) {
-    int n = (order + 3) / 2;
     pts.resize(n * n);
     GaussLegendreTri(n, n, pts.data());
   }
