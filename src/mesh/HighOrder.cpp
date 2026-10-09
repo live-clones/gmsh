@@ -1319,22 +1319,22 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   warmUpCaches(gf->quadrangles, nPts);
 
   std::vector<MTriangle *> triangles2(gf->triangles.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-    triangles2[i] = setHighOrder(gf->triangles[i], gf, edgeVertices,
-                                 faceVertices, linear, incomplete, nPts);
+  std::vector<MQuadrangle *> quadrangles2(gf->quadrangles.size());
+#pragma omp parallel num_threads(nthreads) if(nthreads > 1)
+  {
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+      triangles2[i] = setHighOrder(gf->triangles[i], gf, edgeVertices,
+                                   faceVertices, linear, incomplete, nPts);
+    }
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
+      quadrangles2[i] = setHighOrder(gf->quadrangles[i], gf, edgeVertices,
+                                     faceVertices, linear, incomplete, nPts);
+    }
   }
   for(std::size_t i = 0; i < gf->triangles.size(); i++) delete gf->triangles[i];
   gf->triangles = triangles2;
-
-  std::vector<MQuadrangle *> quadrangles2(gf->quadrangles.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
-    quadrangles2[i] = setHighOrder(gf->quadrangles[i], gf, edgeVertices,
-                                   faceVertices, linear, incomplete, nPts);
-  }
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++)
     delete gf->quadrangles[i];
   gf->quadrangles = quadrangles2;
@@ -1472,42 +1472,38 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   warmUpCaches(gr->pyramids, nPts);
 
   std::vector<MTetrahedron *> tetrahedra2(gr->tetrahedra.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
-    tetrahedra2[i] = setHighOrder(gr->tetrahedra[i], gr, edgeVertices, faceVertices, incomplete,
-                         nPts);
+  std::vector<MHexahedron *> hexahedra2(gr->hexahedra.size());
+  std::vector<MPrism *> prisms2(gr->prisms.size());
+  std::vector<MPyramid *> pyramids2(gr->pyramids.size());
+#pragma omp parallel num_threads(nthreads) if(nthreads > 1)
+  {
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
+      tetrahedra2[i] = setHighOrder(gr->tetrahedra[i], gr, edgeVertices,
+                                    faceVertices, incomplete, nPts);
+    }
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gr->hexahedra.size(); i++) {
+      hexahedra2[i] = setHighOrder(gr->hexahedra[i], gr, edgeVertices,
+                                   faceVertices, incomplete, nPts);
+    }
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gr->prisms.size(); i++) {
+      prisms2[i] = setHighOrder(gr->prisms[i], gr, edgeVertices, faceVertices,
+                                incomplete, nPts);
+    }
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gr->pyramids.size(); i++) {
+      pyramids2[i] = setHighOrder(gr->pyramids[i], gr, edgeVertices,
+                                  faceVertices, incomplete, nPts);
+    }
   }
   for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) delete gr->tetrahedra[i];
   gr->tetrahedra = tetrahedra2;
-
-  std::vector<MHexahedron *> hexahedra2(gr->hexahedra.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gr->hexahedra.size(); i++) {
-    hexahedra2[i] = setHighOrder(gr->hexahedra[i], gr, edgeVertices, faceVertices, incomplete,
-                         nPts);
-  }
   for(std::size_t i = 0; i < gr->hexahedra.size(); i++) delete gr->hexahedra[i];
   gr->hexahedra = hexahedra2;
-
-  std::vector<MPrism *> prisms2(gr->prisms.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gr->prisms.size(); i++) {
-    prisms2[i] = setHighOrder(gr->prisms[i], gr, edgeVertices, faceVertices, incomplete,
-                         nPts);
-  }
   for(std::size_t i = 0; i < gr->prisms.size(); i++) delete gr->prisms[i];
   gr->prisms = prisms2;
-
-  std::vector<MPyramid *> pyramids2(gr->pyramids.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gr->pyramids.size(); i++) {
-    pyramids2[i] = setHighOrder(gr->pyramids[i], gr, edgeVertices, faceVertices, incomplete,
-                         nPts);
-  }
   for(std::size_t i = 0; i < gr->pyramids.size(); i++) delete gr->pyramids[i];
   gr->pyramids = pyramids2;
 
