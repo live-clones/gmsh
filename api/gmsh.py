@@ -3992,10 +3992,27 @@ class model:
             order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN", with N
             = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
             "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 0, 1, ..., for N-th
-            order curl-conforming basis functions; "HdivLegendreN" and
-            "DivHdivLegendreN", with N = 0, 1, ..., for N-th order div-conforming basis
-            functions (currently on triangles only). `numComponents' returns the number
-            C of components of a basis function (e.g. 1 for scalar functions and 3 for
+            order curl-conforming basis functions, and their parts "HcurlLegendreGradN"
+            (the gradients of the edge, face and bubble functions of "H1Legendre(N+1)")
+            and "HcurlLegendreNoGradN" (the other functions): "HcurlLegendre0" gives
+            the lowest order (Whitney) functions, "HcurlLegendre1" the full first order
+            functions, "HcurlLegendreNoGrad2" with "HcurlLegendreGrad1" the incomplete
+            second order functions (Nedelec of the first kind on simplices), and
+            "HcurlLegendre2" the full second order functions, i.e. orders 0.5, 1, 1.5
+            and 2 in GetDP, and so on; "HdivLegendreN" and "DivHdivLegendreN", with N =
+            0, 1, ..., for N-th order div-conforming basis functions, and their parts
+            "HdivLegendreCurlN" (the divergence-free functions) and
+            "HdivLegendreNoCurlN" (the other functions), except on prisms;
+            "L2LegendreN", with N = 0, 1, ..., for N-th order discontinuous basis
+            functions, which span the divergences of the div-conforming functions. For
+            all these hierarchical function spaces, the order N is that of the space,
+            i.e. all the functions up to order N, and can be replaced by a range M:N to
+            only keep the functions of orders M to N (the order of each function being
+            that given by `getKeysInformation'): e.g. "HcurlLegendre1:1",
+            "HcurlLegendreNoGrad2:2" and "HcurlLegendreGrad2:2" are the functions added
+            by the orders 1, 1.5 and 2 of GetDP above. The parts and ranges of a space
+            have the keys of the space. `numComponents' returns the number C of
+            components of a basis function (e.g. 1 for scalar functions and 3 for
             vector functions). `basisFunctions' returns the value of the N basis
             functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...]
             when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C
@@ -4398,10 +4415,26 @@ class model:
             Generate the pair of keys for the elements of type `elementType' in the
             entity of tag `tag', for the `functionSpaceType' function space. Each pair
             (`typeKey', `entityKey') uniquely identifies a basis function in the
-            function space. If `returnCoord' is set, the `coord' vector contains the x,
-            y, z coordinates locating basis functions for sorting purposes. Warning:
-            this is an experimental feature and will probably change in a future
-            release.
+            function space. For the hierarchical function spaces, `entityKey' is the
+            tag of the node, the global number of the edge or face (see `createEdges'
+            and `createFaces') or the tag of the element the basis function is
+            associated with, and `typeKey' is 4 times the position of the basis
+            function among those of that entity, plus 0, 1, 2 or 3 for the node, edge,
+            face and element: the keys of a basis function do not depend on the order
+            of the function space, but they can be as large as 4 times the number of
+            basis functions of the entity. For example, for "HcurlLegendre2" on a
+            tetrahedron, each edge of global number e carries the keys (1, e) for its
+            lowest order (Whitney) function, (5, e) and (9, e) for the gradients of
+            order 1 and 2, and each face of global number f the keys (2, f) for the
+            gradient and (6, f) and (10, f) for the two other functions of order 2;
+            "HcurlLegendre1" has the keys (1, e) and (5, e) of the same functions. Keys
+            identify the basis functions within one family of function spaces (H1,
+            H(curl), H(div) or L2): the same keys designate different functions in two
+            families, so a code combining several families in one field must tell them
+            apart, e.g. by offsetting the type keys of each family. If `returnCoord' is
+            set, the `coord' vector contains the x, y, z coordinates locating basis
+            functions for sorting purposes. Warning: this is an experimental feature
+            and will probably change in a future release.
 
             Return `typeKeys', `entityKeys', `coord'.
 
