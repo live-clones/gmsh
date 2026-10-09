@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <complex>
 #include <iostream>
+#include <type_traits>
 
 #if defined(HAVE_EIGEN)
 #ifdef Success // in X11 header X.h
@@ -226,6 +227,20 @@ public:
   void setOwnData(bool ownData) { _ownData = ownData; };
 };
 
+// Out-of-line streaming product for the small-product window in mult() below;
+// defined in fullMatrix.cpp, which is also where the __restrict no-alias
+// contract sits: swig parses this header for the python wrapper and does not
+// know __restrict. The kernel is kept out of this header on purpose: inline, it
+// re-layouts every hot translation unit that pulls the header in (measured:
+// +/-17% swings on unrelated scalar loops, gcc -O3, Cascade Lake). The buffers
+// must not alias, same contract as Eigen's noalias product that mult() already
+// applies to its output.
+void multSmallDense(const double *a, int ar, int ac,
+                    const double *b, int br, int bc, double *c, int cr);
+void multSmallDense(const std::complex<double> *a, int ar, int ac,
+                    const std::complex<double> *b, int br, int bc,
+                    std::complex<double> *c, int cr);
+
 // An interface for dense matrix of scalars (real or complex, with simple or
 // double precision)
 
@@ -235,6 +250,10 @@ private:
   int _r, _c; // size of the matrix
   scalar *_data; // pointer on the first element
   friend class fullVector<scalar>;
+
+  // bounds of the small-product window in mult(), see there
+  static constexpr int smallProductMin = 8;
+  static constexpr int smallProductMax = 64;
 
 #if defined(HAVE_EIGEN)
   typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic> > EigenMat;
@@ -537,6 +556,19 @@ public:
   void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
 #if defined(HAVE_EIGEN)
   {
+    // Eigen packs and blocks both operands before multiplying; for these
+    // sizes the packing costs more than the multiplies, and a plain
+    // streaming product wins (measured on the quality sweeps; below this
+    // window Eigen's inline product is faster, above it the blocked kernel)
+    if constexpr(std::is_same_v<scalar, double> ||
+                 std::is_same_v<scalar, std::complex<double>>) {
+      if(_r >= smallProductMin && _r <= smallProductMax &&
+         _c <= smallProductMax && b._c <= smallProductMax &&
+         c._r == _r && c._c == b._c) {
+        multSmallDense(_data, _r, _c, b._data, b._r, b._c, c._data, c._r);
+        return;
+      }
+    }
     EigenMat ma(_data, _r, _c), mb(b._data, b._r, b._c), mc(c._data, c._r, c._c);
     mc.noalias() = ma * mb;
   }

@@ -14,6 +14,43 @@
 #define F77NAME(x) (x##_)
 #endif
 
+#if defined(HAVE_EIGEN)
+
+// Streaming product for the small-product window in fullMatrix::mult. k-outer
+// so the inner loop streams a column of each operand (unit stride,
+// elementwise, vectorizable); each output element still accumulates over k
+// ascending, the same order as Eigen's dot product form.
+namespace {
+template <class scalar>
+void multSmallDenseT(const scalar *__restrict a, int ar, int ac,
+                    const scalar *__restrict b, int br, int bc,
+                    scalar *__restrict c, int cr)
+{
+  for(int i = 0; i < cr * bc; i++) c[i] = scalar(0.);
+  for(int j = 0; j < bc; j++)
+    for(int k = 0; k < ac; k++) {
+      const scalar bv = b[k + br * j];
+      for(int i = 0; i < ar; i++) c[i + cr * j] += a[i + ar * k] * bv;
+    }
+}
+} // namespace
+
+void multSmallDense(const double *__restrict a, int ar, int ac,
+                    const double *__restrict b, int br, int bc,
+                    double *__restrict c, int cr)
+{
+  multSmallDenseT(a, ar, ac, b, br, bc, c, cr);
+}
+
+void multSmallDense(const std::complex<double> *__restrict a, int ar, int ac,
+                    const std::complex<double> *__restrict b, int br, int bc,
+                    std::complex<double> *__restrict c, int cr)
+{
+  multSmallDenseT(a, ar, ac, b, br, bc, c, cr);
+}
+
+#endif
+
 // Specialisation of fullVector/Matrix operations using BLAS and LAPACK
 
 #if defined(HAVE_BLAS) && !defined(HAVE_EIGEN)
