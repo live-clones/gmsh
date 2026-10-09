@@ -6,6 +6,7 @@
 #include <complex>
 #include <string.h>
 #include <algorithm>
+#include <type_traits>
 #include "GmshConfig.h"
 #include "fullMatrix.h"
 #include "GmshMessage.h"
@@ -551,10 +552,44 @@ void fullMatrix<scalar>::multAddy(const fullVector<scalar> &x,
   vy += ma * vx;
 }
 
+// Bounds of the small-product window in fullMatrix::mult
+static constexpr int smallProductMin = 8;
+static constexpr int smallProductMax = 64;
+
+// k-outer so the inner loop streams a column of each operand with unit
+// stride. Each output element still accumulates over k ascending, the same
+// order as Eigen's product. The buffers must not alias, the same contract as
+// the noalias product below.
+template <class scalar>
+static void multSmallDense(const scalar *__restrict a, int ar, int ac,
+                           const scalar *__restrict b, int br, int bc,
+                           scalar *__restrict c, int cr)
+{
+  for(int i = 0; i < cr * bc; i++) c[i] = scalar(0.);
+  for(int j = 0; j < bc; j++)
+    for(int k = 0; k < ac; k++) {
+      const scalar bv = b[k + br * j];
+      for(int i = 0; i < ar; i++) c[i + cr * j] += a[i + ar * k] * bv;
+    }
+}
+
 template <class scalar>
 void fullMatrix<scalar>::mult(const fullMatrix<scalar> &b,
                               fullMatrix<scalar> &c) const
 {
+  // Eigen packs and blocks both operands before multiplying. For these sizes
+  // the packing costs more than the multiplies and a plain streaming product
+  // wins. Below the window Eigen's inline product is faster, above it the
+  // blocked kernel.
+  if constexpr(std::is_same_v<scalar, double> ||
+               std::is_same_v<scalar, std::complex<double>>) {
+    if(_r >= smallProductMin && _r <= smallProductMax &&
+       _c <= smallProductMax && b._c <= smallProductMax && c._r == _r &&
+       c._c == b._c) {
+      multSmallDense(_data, _r, _c, b._data, b._r, b._c, c._data, c._r);
+      return;
+    }
+  }
   EigenMat<scalar> ma(_data, _r, _c), mb(b._data, b._r, b._c),
     mc(c._data, c._r, c._c);
   mc.noalias() = ma * mb;
