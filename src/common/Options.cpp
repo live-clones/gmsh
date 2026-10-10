@@ -76,20 +76,6 @@ static void stringColorsChanged()
 #endif
 }
 
-#if defined(HAVE_FLTK)
-// give the graphic windows the visual the options ask for; FLTK recreates the
-// OpenGL context of those whose mode changed
-static void resetOpenglMode()
-{
-  if(!FlGui::available()) return;
-  int mode = openglWindowMode();
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-    for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-      FlGui::instance()->graph[i]->gl[j]->mode(mode);
-  if(FlGui::instance()->fullscreen) FlGui::instance()->fullscreen->mode(mode);
-}
-#endif
-
 // General routines for string options
 
 bool StringOption(int action, const char *category, int num, const char *name,

@@ -56,6 +56,11 @@ namespace glShader {
   bool available();
   // is the shader pipeline drawing? Asked for (General.Shaders) and available
   bool enabled();
+  // should contexts be made for the shader pipeline? Asked for, and the
+  // program did not fail to build in such a context before: a failure is kept
+  // for the session, the fixed function pipeline drawing instead in a context
+  // of its own
+  bool wanted();
 
   // the two matrices, in the column major layout glMatrix uses
   void setMatrices(const double modelview[16], const double projection[16]);

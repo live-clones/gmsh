@@ -100,8 +100,18 @@ int openglWindowMode()
   }
   // the shader pipeline needs a core profile on macOS, which cannot do fixed
   // function: the two pipelines cannot share a context
-  if(CTX::instance()->shaders) mode |= FL_OPENGL3;
+  if(glShader::wanted()) mode |= FL_OPENGL3;
   return mode;
+}
+
+void resetOpenglMode()
+{
+  if(!FlGui::available()) return;
+  int mode = openglWindowMode();
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+      FlGui::instance()->graph[i]->gl[j]->mode(mode);
+  if(FlGui::instance()->fullscreen) FlGui::instance()->fullscreen->mode(mode);
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h)
@@ -280,8 +290,16 @@ void openglWindow::draw()
     glImmediate::resetMatrices();
     // report what the new context can do
     glApi::describe();
-    // report now if the shader pipeline cannot be had
-    if(CTX::instance()->shaders) glShader::available();
+    // report now if the shader pipeline cannot be had; if the program failed
+    // to build, the fixed function pipeline cannot draw in this context
+    // either: the windows get a context of their own for it, and are drawn
+    // again then
+    if(CTX::instance()->shaders && !glShader::available() &&
+       (mode() & FL_OPENGL3) && !glShader::wanted()) {
+      Fl::add_timeout(0., [](void *) { resetOpenglMode(); });
+      _lock = false;
+      return;
+    }
   }
   glShader::setContext(context());
 

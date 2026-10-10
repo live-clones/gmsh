@@ -24,6 +24,8 @@ class MElement;
 // the FLTK visual the graphic windows ask for; changing it recreates the
 // OpenGL context
 int openglWindowMode();
+// give the graphic windows that visual
+void resetOpenglMode();
 
 class openglWindow : public Fl_Gl_Window {
 private:
