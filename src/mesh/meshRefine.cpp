@@ -111,7 +111,8 @@ static void Subdivide(GEdge *ge)
 }
 
 static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
-                      faceContainer &faceVertices, bool linear)
+                      faceContainer &faceVertices, bool linear,
+                      std::map<MFace, MVertex *, MFaceLessThan> &centers)
 {
   if(!splitIntoQuads && !splitIntoHexas) {
     std::vector<MTriangle *> triangles2;
@@ -166,6 +167,7 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
           newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
         }
         gf->mesh_vertices.push_back(newv);
+        centers[t->getFace(0)] = newv;
         if(splitIntoHexas) faceVertices[t->getFace(0)].push_back(newv);
         quadrangles2.push_back(new MQuadrangle(t->getVertex(0), t->getVertex(3),
                                                newv, t->getVertex(5)));
@@ -497,8 +499,26 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
   // Subdivide the second order elements to create the refined linear
   // mesh
   for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) Subdivide(*it);
+  std::map<MFace, MVertex *, MFaceLessThan> centers;
   for(auto it = m->firstFace(); it != m->lastFace(); ++it)
-    Subdivide(*it, splitIntoQuads, splitIntoHexas, faceVertices, linear);
+    Subdivide(*it, splitIntoQuads, splitIntoHexas, faceVertices, linear,
+              centers);
+
+  // the nodes created at the centers of the triangles of periodic surfaces
+  // correspond to those of the master triangles
+  for(auto &c : centers) {
+    GFace *gf = dynamic_cast<GFace *>(c.second->onWhat());
+    if(!gf || gf->getMeshMaster() == gf) continue;
+    std::map<MVertex *, MVertex *> &v2v = gf->correspondingVertices;
+    std::vector<MVertex *> corners;
+    for(std::size_t i = 0; i < c.first.getNumVertices(); i++) {
+      auto it = v2v.find(c.first.getVertex(i));
+      if(it != v2v.end()) corners.push_back(it->second);
+    }
+    if(corners.size() != c.first.getNumVertices()) continue;
+    auto it = centers.find(MFace(corners));
+    if(it != centers.end()) v2v[c.second] = it->second;
+  }
   for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it, splitIntoHexas, faceVertices);
 
