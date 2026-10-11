@@ -610,14 +610,16 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
 {
   if(!ge->haveParametrization()) linear = true;
 
-  std::vector<MVertex *> veOld;
+  // per-thread scratch, reused across the elements of a pass
+  static thread_local std::vector<MVertex *> veOld, veCanon, veEdge;
+  veOld.clear();
+  veEdge.clear();
   ele->getVertices(veOld);
   MVertex *vMin, *vMax;
   const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
   std::pair<MVertex *, MVertex *> p(vMin, vMax);
 
   // created in the canonical orientation (see canonicalEdgeVertices)
-  std::vector<MVertex *> veCanon, veEdge;
   canonicalEdgeVertices(veOld, increasing, veCanon);
   // Get vertices on geometry if asked
   bool gotVertOnGeo =
@@ -655,13 +657,14 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
 {
   if(!gf->haveParametrization()) linear = true;
 
+  static thread_local std::vector<MVertex *> veOld, veEdge, veCanon;
   for(int i = 0; i < ele->getNumEdges(); i++) {
-    std::vector<MVertex *> veOld;
+    veOld.clear();
     ele->getEdgeVertices(i, veOld);
     MVertex *vMin, *vMax;
     const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
     std::pair<MVertex *, MVertex *> p(vMin, vMax);
-    std::vector<MVertex *> veEdge;
+    veEdge.clear();
 
     const std::size_t sh = edgeVertices.shardOf(p);
     shardLock<edgeContainer> lock(edgeVertices, sh);
@@ -678,7 +681,6 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
     }
     else { // Vertices do not exist, create them, in the canonical
            // orientation (see canonicalEdgeVertices)
-      std::vector<MVertex *> veCanon;
       canonicalEdgeVertices(veOld, increasing, veCanon);
       // Get vertices on geometry if asked
       bool gotVertOnGeo =
@@ -704,7 +706,7 @@ static void getEdgeVertices(GRegion *gr, MElement *ele,
                             std::vector<MVertex *> &ve,
                             edgeContainer &edgeVertices, int nPts = 1)
 {
-  std::vector<MVertex *> veOld, veEdge, veCanon;
+  static thread_local std::vector<MVertex *> veOld, veEdge, veCanon;
   ve.reserve(ve.size() + ele->getNumEdges() * nPts);
   for(int i = 0; i < ele->getNumEdges(); i++) {
     veOld.clear();
@@ -933,7 +935,10 @@ static void getFaceVerticesOnGeo(GFace *gf,
                                  const std::vector<MVertex *> &vertices,
                                  std::vector<MVertex *> &vf)
 {
-  SPoint2 pts[1000];
+  // sized to the element: a fixed array touched 16 KB of stack per call and
+  // could overflow at very high orders
+  static thread_local std::vector<SPoint2> pts;
+  pts.resize(vertices.size());
   bool reparamOK = true;
   bool onBoundary = false;
   for(std::size_t k = 0; k < vertices.size(); ++k)
@@ -1008,7 +1013,8 @@ static void getFaceVertices(GFace *gf, MElement *ele,
 {
   if(!gf->haveParametrization()) linear = true;
 
-  std::vector<MVertex *> boundaryVertices;
+  static thread_local std::vector<MVertex *> boundaryVertices;
+  boundaryVertices.clear();
   {
     std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
@@ -1143,11 +1149,12 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
                             std::vector<MVertex *> &newVertices,
                             faceContainer &faceVertices, int nPts = 1)
 {
-  std::vector<MVertex *> vCorner;
+  static thread_local std::vector<MVertex *> vCorner, vFace,
+    faceBoundaryVertices, canonical;
+  vCorner.clear();
   ele->getVertices(vCorner);
   // NB: We can get more than corner vertices but we use only corners
 
-  std::vector<MVertex *> vFace, faceBoundaryVertices, canonical;
   for(int i = 0; i < ele->getNumFaces(); i++) {
     MFace face = ele->getFace(i);
     vFace.clear();
@@ -1188,7 +1195,8 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
 static void getVolumeVertices(GRegion *gr, MElement *ele,
                               std::vector<MVertex *> &newVertices, int nPts = 1)
 {
-  std::vector<MVertex *> boundaryVertices;
+  static thread_local std::vector<MVertex *> boundaryVertices;
+  boundaryVertices.clear();
   {
     std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
@@ -1266,7 +1274,8 @@ static MTriangle *setHighOrder(MTriangle *t, GFace *gf,
                                faceContainer &faceVertices, bool linear,
                                bool incomplete, int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gf, t, v, edgeVertices, linear, nPts);
   if(nPts == 1) {
     return new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
@@ -1284,7 +1293,8 @@ static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
                                  faceContainer &faceVertices, bool linear,
                                  bool incomplete, int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gf, q, v, edgeVertices, linear, nPts);
   if(incomplete) {
     if(nPts == 1) {
@@ -1348,7 +1358,8 @@ static MTetrahedron *setHighOrder(MTetrahedron *t, GRegion *gr,
                                   faceContainer &faceVertices, bool incomplete,
                                   int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gr, t, v, edgeVertices, nPts);
   if(nPts == 1) {
     return new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2),
@@ -1371,7 +1382,8 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
                                  faceContainer &faceVertices, bool incomplete,
                                  int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gr, h, v, edgeVertices, nPts);
   if(incomplete) {
     if(nPts == 1) {
@@ -1412,7 +1424,8 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr, edgeContainer &edgeVertices,
                             faceContainer &faceVertices, bool incomplete,
                             int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gr, p, v, edgeVertices, nPts);
   if(incomplete) {
     if(nPts == 1) {
@@ -1449,7 +1462,8 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
                               faceContainer &faceVertices, bool incomplete,
                               int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gr, p, v, edgeVertices, nPts);
   if(!incomplete) {
     getFaceVertices(gr, p, v, faceVertices, nPts);
