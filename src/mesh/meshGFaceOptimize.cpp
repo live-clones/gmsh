@@ -178,7 +178,8 @@ void buildEdgeToElements(std::vector<MElement *> &tris, e2t_cont &adj)
   buildEdgeToElement(tris, adj);
 }
 
-void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
+void buildListOfEdgeAngle(const e2t_cont &adj,
+                          std::vector<edge_angle> &edges_detected,
                           std::vector<edge_angle> &edges_lonly)
 {
   auto it = adj.begin();
