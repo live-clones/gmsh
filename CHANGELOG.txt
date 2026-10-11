@@ -32,7 +32,6 @@ introduced in 4.12 on thin cones/cylinders; reproducible multi-threaded 1D and
 2D meshing; periodic node correspondences are now computed for transfinite,
 extruded and subdivided meshes (periodicity constraints no longer need to be
 redefined after meshing); bug fixes.
->>>>>>> master
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,
