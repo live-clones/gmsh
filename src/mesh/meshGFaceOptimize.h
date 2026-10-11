@@ -74,7 +74,8 @@ public:
           _minNum = std::min(_minNum, num);
           _maxNum = std::max(_maxNum, num);
         }
-        _pairs.push_back(std::pair<MVertex *, MElement *>(v, t));
+        // finalize() buckets by number, reading it back there chases a pointer
+        _pairs.push_back(Adjacency{v, t, num});
       }
     }
   }
@@ -93,7 +94,12 @@ public:
   }
 
 private:
-  std::vector<std::pair<MVertex *, MElement *> > _pairs;
+  struct Adjacency {
+    MVertex *v;
+    MElement *el;
+    std::size_t num;
+  };
+  std::vector<Adjacency> _pairs;
   std::vector<MVertex *> _vertices;
   std::vector<std::size_t> _first;
   std::vector<MElement *> _elements;

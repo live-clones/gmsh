@@ -945,13 +945,13 @@ void VertexToElementCSR::finalize()
     std::vector<std::size_t> first(range + 1, 0);
     std::vector<MVertex *> byNum(range, nullptr);
     for(std::size_t i = 0; i < _pairs.size(); i++)
-      first[_pairs[i].first->getNum() - minNum + 1]++;
+      first[_pairs[i].num - minNum + 1]++;
     for(std::size_t k = 0; k < range; k++) first[k + 1] += first[k];
     std::vector<std::size_t> next(first.begin(), first.end() - 1);
     for(std::size_t i = 0; i < _pairs.size(); i++) {
-      std::size_t k = _pairs[i].first->getNum() - minNum;
-      byNum[k] = _pairs[i].first;
-      _elements[next[k]++] = _pairs[i].second;
+      std::size_t k = _pairs[i].num - minNum;
+      byNum[k] = _pairs[i].v;
+      _elements[next[k]++] = _pairs[i].el;
     }
     for(std::size_t k = 0; k < range; k++) {
       if(first[k + 1] != first[k]) {
@@ -965,16 +965,15 @@ void VertexToElementCSR::finalize()
     // sparse vertex numbers: a stable sort keeps, for each vertex, the
     // elements in insertion order
     std::stable_sort(_pairs.begin(), _pairs.end(),
-                     [](const std::pair<MVertex *, MElement *> &a,
-                        const std::pair<MVertex *, MElement *> &b) {
-                       return a.first->getNum() < b.first->getNum();
+                     [](const Adjacency &a, const Adjacency &b) {
+                       return a.num < b.num;
                      });
     for(std::size_t i = 0; i < _pairs.size(); i++) {
-      if(i == 0 || _pairs[i].first != _pairs[i - 1].first) {
-        _vertices.push_back(_pairs[i].first);
+      if(i == 0 || _pairs[i].v != _pairs[i - 1].v) {
+        _vertices.push_back(_pairs[i].v);
         _first.push_back(i);
       }
-      _elements[i] = _pairs[i].second;
+      _elements[i] = _pairs[i].el;
     }
     _first.push_back(_pairs.size());
   }
