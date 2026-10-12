@@ -627,8 +627,42 @@ namespace ClosureGen {
     }
   }
 
+  // The full closure of a prism of any order, from the mapping of its corners:
+  // each node is sent where the symmetry of the reference prism mapping corner
+  // k to corner cl[k] sends it (as for hexahedra, see generateFaceClosureHexFull)
+  void prismFullClosureFromCorners(nodalBasis::closure &cl,
+                                   const fullMatrix<double> &points)
+  {
+    const std::vector<int> corner(cl.begin(), cl.begin() + 6);
+    cl.resize(points.size1());
+    for(int iNode = 0; iNode < points.size1(); ++iNode) {
+      const double u = points(iNode, 0), v = points(iNode, 1),
+                   w = points(iNode, 2);
+      // the linear shape functions of the prism at the node
+      const double tri[3] = {1. - u - v, u, v};
+      double x[3] = {0., 0., 0.};
+      for(int k = 0; k < 6; k++) {
+        const double phi = tri[k % 3] * (k < 3 ? 1. - w : 1. + w) / 2.;
+        for(int j = 0; j < 3; j++) x[j] += phi * points(corner[k], j);
+      }
+      int J = 0;
+      double D = std::numeric_limits<double>::max();
+      for(int jNode = 0; jNode < points.size1(); ++jNode) {
+        const double d = pow2(points(jNode, 0) - x[0]) +
+                         pow2(points(jNode, 1) - x[1]) +
+                         pow2(points(jNode, 2) - x[2]);
+        if(d < D) {
+          J = jNode;
+          D = d;
+        }
+      }
+      cl[iNode] = J;
+    }
+  }
+
   void generateFaceClosurePrismFull(nodalBasis::clCont &closureFull,
-                                    std::vector<int> &closureRef, int order)
+                                    std::vector<int> &closureRef, int order,
+                                    const fullMatrix<double> &points)
   {
     nodalBasis::clCont closure;
     closureFull.clear();
@@ -656,47 +690,10 @@ namespace ClosureGen {
         }
       }
     }
-    static const int edges[] = {0, 1, 0, 2, 0, 3, 1, 2, 1, 4,
-                                2, 5, 3, 4, 3, 5, 4, 5, -1};
-    addEdgeNodes(closureFull, edges, order);
     if(order < 2) return;
-    // face center nodes for p2 prism
-    static const int faces[5][4] = {
-      {0, 2, 1, -1}, {3, 4, 5, -1}, {0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
-
-    if(order == 2) {
-      int nextFaceNode = 15;
-      int numFaces = 5;
-      int numFaceNodes = 4;
-      std::map<int, int> nodeSum2Face;
-      for(int iFace = 0; iFace < numFaces; iFace++) {
-        int nodeSum = 0;
-        for(int iNode = 0; iNode < numFaceNodes; iNode++) {
-          nodeSum += faces[iFace][iNode];
-        }
-        nodeSum2Face[nodeSum] = iFace;
-      }
-      for(std::size_t i = 0; i < closureFull.size(); i++) {
-        if(closureFull[i].empty()) continue;
-        for(int iFace = 0; iFace < numFaces; iFace++) {
-          int nodeSum = 0;
-          for(int iNode = 0; iNode < numFaceNodes; iNode++)
-            nodeSum += faces[iFace][iNode] < 0 ?
-                         faces[iFace][iNode] :
-                         closureFull[i][faces[iFace][iNode]];
-          auto it = nodeSum2Face.find(nodeSum);
-          if(it == nodeSum2Face.end()) Msg::Error("Prism face not found");
-          int mappedFaceId = it->second;
-          if(mappedFaceId > 1) {
-            closureFull[i].push_back(nextFaceNode + mappedFaceId - 2);
-          }
-        }
-      }
-    }
-    else {
-      Msg::Error("FaceClosureFull not implemented for prisms of order %d",
-                 order);
-    }
+    for(std::size_t i = 0; i < closureFull.size(); i++)
+      if(!closureFull[i].empty())
+        prismFullClosureFromCorners(closureFull[i], points);
   }
 
   void generateFaceClosurePyr(nodalBasis::clCont &closure, int order,
@@ -840,7 +837,7 @@ nodalBasis::nodalBasis(int tag)
     }
     else {
       generateFaceClosurePrism(closures, order);
-      generateFaceClosurePrismFull(fullClosures, closureRef, order);
+      generateFaceClosurePrismFull(fullClosures, closureRef, order, points);
     }
     break;
   case TYPE_HEX:

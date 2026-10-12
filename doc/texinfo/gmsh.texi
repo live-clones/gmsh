@@ -5708,24 +5708,83 @@ Pyramid14:
 
 @subsection High-order elements
 
-The node ordering of a higher order (possibly curved) element is
-compatible with the numbering of low order element (it is a
-generalization). We number nodes in the following order:
-@itemize --
-@item the element principal or corner vertices;
-@item the internal nodes for each edge;
-@item the internal nodes for each face;
-@item the volume internal nodes.
-@end itemize
+The nodes of an element of order @var{p} are ordered with respect to its
+corners, numbered as for the low order elements above:
+@enumerate
+@item
+the corners;
+@item
+the nodes inside the edges, edge after edge in the order of the table
+below: the @var{p}-1 nodes of an edge are equally spaced, from the first
+corner of the edge to the second one;
+@item
+for a volume element, the nodes inside the faces, face after face in the
+order of the table below: the nodes of a face are ordered as the nodes
+inside a triangle or a quadrangle of order @var{p} whose corners are the
+corners of the face, in the order of the table;
+@item
+the nodes inside the element, ordered as all the nodes of an element of
+the same type and of lower order placed inside it: of order @var{p}-3 for
+a triangle, @var{p}-2 for a quadrangle, @var{p}-4 for a tetrahedron,
+@var{p}-2 for a hexahedron and @var{p}-3 for a pyramid. Prisms are the
+exception, see below.
+@end enumerate
 
-The numbering for internal nodes is recursive, i.e. the numbering follows
-that of the nodes of an embedded edge/face/volume of lower order. The
-higher order nodes are assumed to be equispaced. Edges and faces are
-numbered following the lowest order template that generates a single
-high-order on this edge/face. Furthermore, an edge is oriented from the
-node with the lowest to the highest index. The orientation of a face
-is such that the computed normal points outward; the starting point is
-the node with the lowest index.
+The rule thus applies recursively to the nodes inside the faces and
+inside the element. Incomplete (serendipity) elements only have the nodes
+of the corners and of the edges. The low order elements above follow the
+same rule.
+
+@multitable @columnfractions .15 .85
+@headitem Element @tab Edges (first corner, second corner)
+@item Triangle @tab (0,1) (1,2) (2,0)
+@item Quadrangle @tab (0,1) (1,2) (2,3) (3,0)
+@item Tetrahedron @tab (0,1) (1,2) (2,0) (3,0) (3,2) (3,1)
+@item Hexahedron @tab (0,1) (0,3) (0,4) (1,2) (1,5) (2,3) (2,6) (3,7)
+(4,5) (4,7) (5,6) (6,7)
+@item Prism @tab (0,1) (0,2) (0,3) (1,2) (1,4) (2,5) (3,4) (3,5) (4,5)
+@item Pyramid @tab (0,1) (0,3) (0,4) (1,2) (1,4) (2,3) (2,4) (3,4)
+@end multitable
+
+@multitable @columnfractions .15 .85
+@headitem Element @tab Faces (corners)
+@item Tetrahedron @tab (0,2,1) (0,1,3) (0,3,2) (3,1,2)
+@item Hexahedron @tab (0,3,2,1) (0,1,5,4) (0,4,7,3) (1,2,6,5) (2,3,7,6)
+(4,5,6,7)
+@item Prism @tab (0,2,1) (3,4,5) (0,1,4,3) (0,3,5,2) (1,2,5,4)
+@item Pyramid @tab (0,1,4) (3,0,4) (1,2,4) (2,3,4) (0,3,2,1)
+@end multitable
+
+For example, the face (3,1,2) of a tetrahedron of order 4 has 3 nodes
+inside, ordered as the 3 nodes inside a triangle of order 4 whose corners
+0, 1 and 2 are the corners 3, 1 and 2 of the tetrahedron. Note that the
+edges do not always go from the corner of lower number to the corner of
+higher number, nor do the faces always start at the corner of lowest
+number.
+
+The nodes inside a prism are ordered as the product of the nodes inside a
+triangle and of the nodes along a line: for each node of a triangle of
+order @var{p}-3 placed inside the triangular faces, in the order of that
+triangle, come the nodes of a line of order @var{p}-2 placed inside the
+height of the prism, in the order of that line (its two ends first, then
+the nodes between them). For example, the nodes
+66 to 74 inside a prism of order 4 (75 nodes) are, in the reference
+coordinates (@var{u}, @var{v}, @var{w}) of the prism above:
+@example
+@group
+66: (1/4, 1/4, -1/2)   69: (1/2, 1/4, -1/2)   72: (1/4, 1/2, -1/2)
+67: (1/4, 1/4,  1/2)   70: (1/2, 1/4,  1/2)   73: (1/4, 1/2,  1/2)
+68: (1/4, 1/4,    0)   71: (1/2, 1/4,    0)   74: (1/4, 1/2,    0)
+@end group
+@end example
+
+Two elements sharing an edge or a face both order its nodes with respect
+to their own corners: the nodes of a shared edge can thus appear in
+reverse order, and the nodes of a shared face rotated or mirrored.
+
+The reference coordinates of the nodes of an element of any type and order
+are given by @code{gmsh/model/mesh/getElementProperties} (@pxref{Namespace
+gmsh/model/mesh}).
 
 @c -------------------------------------------------------------------------
 @c Legacy formats
