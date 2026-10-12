@@ -1511,6 +1511,27 @@ void checkHighOrderTriangles(const char *cc, GModel *m,
       cc, minJGlob, avg / (count ? count : 1), bad.size(), minGGlob);
 }
 
+// The high-order nodes of a straight tetrahedron are where its corners put
+// them: its scaled Jacobian is then 1 everywhere, and computing its distortion
+// (the bulk of the time spent in the check, most tetrahedra being straight) can
+// be skipped
+static bool isStraight(MTetrahedron *t)
+{
+  const int n = t->getNumVertices();
+  if(n == 4) return true;
+  const fullMatrix<double> &pts = t->getFunctionSpace()->points;
+  SPoint3 p0 = t->getVertex(0)->point(), p1 = t->getVertex(1)->point(),
+          p2 = t->getVertex(2)->point(), p3 = t->getVertex(3)->point();
+  const double tol =
+    1e-10 * std::max(p0.distance(p1), std::max(p0.distance(p2), p0.distance(p3)));
+  for(int i = 4; i < n; i++) {
+    const double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
+    const SPoint3 p = p0 * (1. - u - v - w) + p1 * u + p2 * v + p3 * w;
+    if(p.distance(t->getVertex(i)->point()) > tol) return false;
+  }
+  return true;
+}
+
 void checkHighOrderTetrahedron(const char *cc, GModel *m,
                                std::vector<MElement *> &bad, double &minJGlob)
 {
@@ -1521,7 +1542,7 @@ void checkHighOrderTetrahedron(const char *cc, GModel *m,
   for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
     for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++) {
       MTetrahedron *t = (*it)->tetrahedra[i];
-      double disto_ = t->distoShapeMeasure();
+      double disto_ = isStraight(t) ? 1. : t->distoShapeMeasure();
       minJGlob = std::min(minJGlob, disto_);
       avg += disto_;
       count++;
