@@ -1724,6 +1724,83 @@ static void setHighOrderFromExistingMesh(GFace *gf, edgeContainer &edgeVertices,
   }
 }
 
+// Store the nodes created by SetOrderN in the entities they are classified on,
+// entity by entity in the order of their first appearance in the elements, and
+// number them and the new elements in that order: what
+// pruneMeshVertexAssociations() followed by renumberMeshCanonically() do, but
+// without sorting all the nodes, as the old ones stay where they are. Returns
+// false (and does nothing) when the classification of a new node is not the
+// one pruneMeshVertexAssociations() would give, i.e. the last entity of lowest
+// dimension whose elements use it (e.g. between the surfaces of a compound)
+static bool storeNewVertices(GModel *m, std::size_t maxVertexBefore,
+                             std::size_t maxElementBefore)
+{
+  std::vector<GEntity *> entities;
+  m->getEntities(entities);
+  // the new nodes are told by their number, given by the model since
+  // maxVertexBefore (unless the numbers are too sparse)
+  std::size_t refs = 0;
+  for(GEntity *ge : entities)
+    if(ge->getNumMeshElements())
+      refs += ge->getNumMeshElements() * ge->getMeshElement(0)->getNumVertices();
+  const std::size_t maxNum = m->getMaxVertexNumber();
+  if(maxNum < maxVertexBefore || maxNum - maxVertexBefore > 2 * refs + 1000000)
+    return false;
+  std::vector<char> stored(maxNum - maxVertexBefore, 0);
+  std::vector<std::size_t> first(entities.size());
+  for(std::size_t i = 0; i < entities.size(); i++)
+    first[i] = entities[i]->mesh_vertices.size();
+  const std::size_t firstV = std::max(1, CTX::instance()->mesh.firstNodeTag),
+                    firstE = std::max(1, CTX::instance()->mesh.firstElementTag);
+  std::size_t ne = std::max(maxElementBefore, firstE - 1);
+  bool ok = true;
+  // the entities come by increasing dimension: a new node is stored when met
+  // in an element of its entity, and must have been stored already when met in
+  // an element of an entity of higher dimension
+  for(std::size_t i = 0; i < entities.size() && ok; i++) {
+    GEntity *ge = entities[i];
+    for(std::size_t j = 0; j < ge->getNumMeshElements() && ok; j++) {
+      MElement *e = ge->getMeshElement(j);
+      if(e->getNum() > maxElementBefore) e->forceNum(++ne);
+      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+        MVertex *v = e->getVertex(k);
+        if(v->getNum() <= maxVertexBefore) continue;
+        if(v->getNum() > maxNum) {
+          ok = false;
+          break;
+        }
+        char &s = stored[v->getNum() - maxVertexBefore - 1];
+        if(v->onWhat() == ge) {
+          if(!s) {
+            s = 1;
+            ge->mesh_vertices.push_back(v);
+          }
+        }
+        else if(!s || ge->dim() <= v->onWhat()->dim()) {
+          ok = false;
+          break;
+        }
+      }
+    }
+  }
+  if(!ok) { // renumberMeshCanonically() will number the elements again
+    for(std::size_t i = 0; i < entities.size(); i++)
+      entities[i]->mesh_vertices.resize(first[i]);
+    return false;
+  }
+  m->destroyMeshCaches();
+  // number the new nodes once all are stored, the test above being on the
+  // numbers
+  std::size_t nv = std::max(maxVertexBefore, firstV - 1);
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    std::vector<MVertex *> &list = entities[i]->mesh_vertices;
+    for(std::size_t j = first[i]; j < list.size(); j++) list[j]->forceNum(++nv);
+  }
+  m->resetMaxVertexNumber(nv);
+  m->resetMaxElementNumber(ne);
+  return true;
+}
+
 void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
                bool onlyVisible)
 {
@@ -1805,6 +1882,18 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   // TODO: we can leak nodes of discrete entities with existing high-order
   // nodes, if we ask a mesh with a different order
 
+  // high-order nodes of another order are dropped by the elements replaced
+  // below, and must be dropped by their entities too
+  bool otherOrder = false;
+  {
+    std::vector<GEntity *> entities;
+    m->getEntities(entities);
+    for(GEntity *ge : entities) {
+      const int o = getOrder(ge);
+      if(o > 1 && o != order) otherOrder = true;
+    }
+  }
+
   for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
     Msg::Info("Meshing curve %d order %d", (*it)->tag(), order);
     Msg::ProgressMeter(++counter, false, msg);
@@ -1840,8 +1929,11 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   CTX::instance()->geom.occFastProjection = oldFastProjection;
 
   // store nodes in entities
-  m->pruneMeshVertexAssociations();
-  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
+  if(otherOrder ||
+     !storeNewVertices(m, maxVertexBefore, maxElementBefore)) {
+    m->pruneMeshVertexAssociations();
+    m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
+  }
 
   Msg::StopProgressMeter();
   double t2 = Cpu(), w2 = TimeOfDay();
