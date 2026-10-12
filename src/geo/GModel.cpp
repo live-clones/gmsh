@@ -7,7 +7,6 @@
 #include <limits>
 #include <stdlib.h>
 #include <sstream>
-#include <unordered_set>
 #include <stack>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -1935,34 +1934,65 @@ void GModel::renumberMeshCanonically(std::size_t maxVertexBefore,
                     firstE = std::max(1, CTX::instance()->mesh.firstElementTag);
   std::size_t nv = std::max(maxVertexBefore, firstV - 1),
               ne = std::max(maxElementBefore, firstE - 1);
-  std::vector<MVertex *> order;
-  std::unordered_set<MVertex *> pending;
   for(GEntity *ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       if(e->getNum() > maxElementBefore) e->forceNum(++ne);
     }
+  }
+  // the new nodes are told by their number: mark each with its entity (the new
+  // numbers are given once all the entities are ordered, so that they do not
+  // mix with the old ones)
+  std::size_t minNum = std::numeric_limits<std::size_t>::max(), maxNum = 0;
+  for(GEntity *ge : entities) {
+    for(MVertex *v : ge->mesh_vertices) {
+      if(v->getNum() > maxVertexBefore) {
+        minNum = std::min(minNum, v->getNum());
+        maxNum = std::max(maxNum, v->getNum());
+      }
+    }
+  }
+  if(minNum > maxNum) {
+    resetMaxVertexNumber(nv);
+    resetMaxElementNumber(ne);
+    return;
+  }
+  std::vector<unsigned int> owner(maxNum - minNum + 1, 0);
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(MVertex *v : entities[i]->mesh_vertices)
+      if(v->getNum() >= minNum) owner[v->getNum() - minNum] = i + 1;
+  auto pending = [&](MVertex *v, std::size_t i) {
+    return v->getNum() >= minNum && v->getNum() <= maxNum &&
+           owner[v->getNum() - minNum] == i + 1;
+  };
+  std::vector<std::size_t> first(entities.size());
+  std::vector<MVertex *> order;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
     std::vector<MVertex *> &list = ge->mesh_vertices;
     order.clear();
-    pending.clear();
-    for(MVertex *v : list) {
-      if(v->getNum() <= maxVertexBefore)
-        order.push_back(v);
-      else
-        pending.insert(v);
-    }
-    if(pending.empty()) continue;
-    const std::size_t first = order.size();
+    for(MVertex *v : list)
+      if(v->getNum() <= maxVertexBefore) order.push_back(v);
+    first[i] = order.size();
+    if(first[i] == list.size()) continue;
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
-      for(std::size_t k = 0; k < e->getNumVertices(); k++)
-        if(pending.erase(e->getVertex(k))) order.push_back(e->getVertex(k));
+      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+        MVertex *v = e->getVertex(k);
+        if(pending(v, i)) {
+          owner[v->getNum() - minNum] = 0;
+          order.push_back(v);
+        }
+      }
     }
     // nodes in no element of their entity: after the others, as listed
     for(MVertex *v : list)
-      if(pending.count(v)) order.push_back(v);
-    for(std::size_t i = first; i < order.size(); i++) order[i]->forceNum(++nv);
+      if(pending(v, i)) order.push_back(v);
     list.swap(order);
+  }
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    std::vector<MVertex *> &list = entities[i]->mesh_vertices;
+    for(std::size_t j = first[i]; j < list.size(); j++) list[j]->forceNum(++nv);
   }
   resetMaxVertexNumber(nv);
   resetMaxElementNumber(ne);

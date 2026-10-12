@@ -685,6 +685,26 @@ static void PrintMesh2dStatistics(GModel *m)
   fclose(statreport);
 }
 
+// The surfaces meshed by their own algorithm (transfinite or extruded) instead
+// of as copies of their master have no periodic node correspondence: find it
+// by matching the nodes through the periodic transformation
+static void MatchPeriodicNodes(GModel *m)
+{
+  double tol = -1.;
+  for(GFace *gf : m->getFaces()) {
+    GEntity *master = gf->getMeshMaster();
+    if(master == gf || gf->affineTransform.size() != 16 ||
+       !gf->correspondingVertices.empty() || !gf->getNumMeshElements())
+      continue;
+    if(tol < 0)
+      tol = CTX::instance()->geom.matchMeshTolerance * m->bounds().diag();
+    if(!gf->updateCorrespondingVertices(tol))
+      Msg::Warning("Mesh of surface %d does not match the mesh of its periodic "
+                   "master surface %d: no periodic node correspondence",
+                   gf->tag(), master->tag());
+  }
+}
+
 static void Mesh2D(GModel *m)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
@@ -782,6 +802,7 @@ static void Mesh2D(GModel *m)
 
     Msg::StopProgressMeter();
   }
+  MatchPeriodicNodes(m);
   m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
@@ -1379,6 +1400,16 @@ static void relocateSlaveVertices(std::vector<GEntity *> &entities,
   }
 }
 
+// the image of a node by an affine transformation
+static SPoint3 transformed(MVertex *v, const std::vector<double> &tfo)
+{
+  if(tfo.size() != 16) return v->point();
+  double src[4] = {v->x(), v->y(), v->z(), 1}, xyz[3] = {0, 0, 0};
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 4; j++) xyz[i] += tfo[4 * i + j] * src[j];
+  return SPoint3(xyz[0], xyz[1], xyz[2]);
+}
+
 void FixPeriodicMesh(GModel *m)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
@@ -1529,8 +1560,30 @@ void FixPeriodicMesh(GModel *m)
           // underlying orientation of the geometrical surfaces)
           bool revert = dot(tgtFace.normal(), srcIter->first.normal()) < 0;
           if(revert) srcElmt->reverse();
-          for(std::size_t j = nbVtcs; j < srcElmt->getNumVertices(); j++) {
-            p2p[tgtElmt->getVertex(j)] = srcElmt->getVertex(j);
+          bool sameCorners = true;
+          for(int iVtx = 0; iVtx < nbVtcs; iVtx++)
+            if(srcElmt->getVertex(iVtx) != vtcs[iVtx]) sameCorners = false;
+          if(sameCorners) {
+            for(std::size_t j = nbVtcs; j < srcElmt->getNumVertices(); j++)
+              p2p[tgtElmt->getVertex(j)] = srcElmt->getVertex(j);
+          }
+          else {
+            // the meshes were generated independently (e.g. transfinite or
+            // extruded): match the high-order nodes through the transformation
+            const std::vector<double> &tfo = tgt->affineTransform;
+            for(std::size_t j = nbVtcs; j < tgtElmt->getNumVertices(); j++) {
+              MVertex *best = nullptr;
+              double dmin = 0.;
+              for(std::size_t k = nbVtcs; k < srcElmt->getNumVertices(); k++) {
+                double d = transformed(srcElmt->getVertex(k), tfo)
+                             .distance(tgtElmt->getVertex(j)->point());
+                if(!best || d < dmin) {
+                  best = srcElmt->getVertex(k);
+                  dmin = d;
+                }
+              }
+              if(best) p2p[tgtElmt->getVertex(j)] = best;
+            }
           }
           if(revert) srcElmt->reverse();
         }

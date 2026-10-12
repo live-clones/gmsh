@@ -316,7 +316,11 @@ public:
   void setMeshMaster(GEntity *);
   void setMeshMaster(GEntity *, const std::vector<double> &,
                      bool updateCorrespondingVertices = true);
-  void updateCorrespondingVertices();
+  // match the nodes with those of the master through the affine transform,
+  // and move them onto the images of their master nodes; if tolerance >= 0,
+  // do nothing and return false if a node is farther than tolerance from the
+  // image of its closest master node
+  bool updateCorrespondingVertices(double tolerance = -1.);
   void copyMasterCoordinates();
   virtual void alignElementsWithMaster() {}
 
