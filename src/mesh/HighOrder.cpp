@@ -88,8 +88,8 @@ public:
     }
   }
   MVertex *const *nodes(const entry *e) const { return &_nodes[e->first]; }
-  // k must not be in the map yet
-  template <class IT> void insert(const KEY &k, IT begin, IT end)
+  // k must not be in the map yet; the entry is valid until the next insertion
+  template <class IT> const entry *insert(const KEY &k, IT begin, IT end)
   {
     if(4 * (_size + 1) > 3 * _table.size()) _grow();
     std::size_t i = _slot(k);
@@ -100,6 +100,7 @@ public:
     _nodes.insert(_nodes.end(), begin, end);
     e.num = (int)(_nodes.size() - e.first);
     _size++;
+    return &e;
   }
 };
 
@@ -1107,6 +1108,36 @@ static int retrieveFaceBoundaryVertices(int k, int type, int nPts,
   }
 }
 
+// The boundary nodes of a face (its corners, then the nodes of its edges, from
+// each corner to the next) in the orientation starting from its corner of
+// smallest number, towards the neighbor of smaller number. The high-order nodes
+// of a face are created in this orientation whichever element asks for them
+// first, so that their positions do not depend on that element (nor, with
+// threads, on which one came first)
+static void canonicalFaceVertices(const std::vector<MVertex *> &b, int nCorner,
+                                  int nPts, std::vector<MVertex *> &out)
+{
+  int s = 0;
+  for(int i = 1; i < nCorner; i++)
+    if(b[i]->getNum() < b[s]->getNum()) s = i;
+  const bool forward = b[(s + 1) % nCorner]->getNum() <
+                       b[(s + nCorner - 1) % nCorner]->getNum();
+  out.clear();
+  for(int i = 0; i < nCorner; i++)
+    out.push_back(b[forward ? (s + i) % nCorner : (s - i + nCorner) % nCorner]);
+  for(int i = 0; i < nCorner; i++) {
+    if(forward) {
+      auto e = b.begin() + nCorner + ((s + i) % nCorner) * nPts;
+      out.insert(out.end(), e, e + nPts);
+    }
+    else { // the edge from corner s - i to s - i - 1, reversed
+      auto e = b.begin() + nCorner + ((s - i - 1 + 2 * nCorner) % nCorner) * nPts;
+      out.insert(out.end(), std::reverse_iterator<decltype(e)>(e + nPts),
+                 std::reverse_iterator<decltype(e)>(e));
+    }
+  }
+}
+
 // Get new face (excluding edge) vertices for a face of a 3D element
 static void getFaceVertices(GRegion *gr, MElement *ele,
                             std::vector<MVertex *> &newVertices,
@@ -1116,7 +1147,7 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
   ele->getVertices(vCorner);
   // NB: We can get more than corner vertices but we use only corners
 
-  std::vector<MVertex *> vFace, faceBoundaryVertices;
+  std::vector<MVertex *> vFace, faceBoundaryVertices, canonical;
   for(int i = 0; i < ele->getNumFaces(); i++) {
     MFace face = ele->getFace(i);
     vFace.clear();
@@ -1124,30 +1155,31 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
     shardLock<faceContainer> lock(faceVertices, sh);
     faceMap &fm = faceVertices.shard(sh);
     const faceMap::entry *fIter = fm.find(face);
-    if(fIter) { // Vertices already exist
-      vFace.assign(fm.nodes(fIter), fm.nodes(fIter) + fIter->num);
-      int orientation;
-      bool swap;
-      if(fIter->key.computeCorrespondence(face, orientation, swap)) {
-        // Check correspondence and apply permutation if needed
-        if(face.getNumVertices() == 3 && nPts > 1)
-          reorientTrianglePoints(vFace, orientation, swap);
-        else if(face.getNumVertices() == 4)
-          reorientQuadPoints(vFace, orientation, swap, nPts - 1);
-      }
-      else
-        Msg::Error(
-          "Error in face lookup for retrieval of high order face nodes");
-    }
-    else { // Vertices do not exist, create them by interpolation
+    if(!fIter) { // Vertices do not exist, create them by interpolation, in the
+                 // canonical orientation (see canonicalFaceVertices)
       int type = retrieveFaceBoundaryVertices(
         i, ele->getType(), nPts, vCorner, newVertices, faceBoundaryVertices);
+      const int nCorner = (type == TYPE_TRI) ? 3 : 4;
+      canonicalFaceVertices(faceBoundaryVertices, nCorner, nPts, canonical);
       fullMatrix<double> *coefficients =
         getInnerVertexPlacement(type, nPts + 1);
-      interpVerticesInExistingFace(gr, *coefficients, faceBoundaryVertices,
-                                   vFace);
-      fm.insert(face, vFace.begin(), vFace.end());
+      interpVerticesInExistingFace(gr, *coefficients, canonical, vFace);
+      const MFace key(canonical[0], canonical[1], canonical[2],
+                      nCorner == 4 ? canonical[3] : nullptr);
+      fIter = fm.insert(key, vFace.begin(), vFace.end());
     }
+    vFace.assign(fm.nodes(fIter), fm.nodes(fIter) + fIter->num);
+    int orientation;
+    bool swap;
+    if(fIter->key.computeCorrespondence(face, orientation, swap)) {
+      // Check correspondence and apply permutation if needed
+      if(face.getNumVertices() == 3 && nPts > 1)
+        reorientTrianglePoints(vFace, orientation, swap);
+      else if(face.getNumVertices() == 4)
+        reorientQuadPoints(vFace, orientation, swap, nPts - 1);
+    }
+    else
+      Msg::Error("Error in face lookup for retrieval of high order face nodes");
     newVertices.insert(newVertices.end(), vFace.begin(), vFace.end());
   }
 }
