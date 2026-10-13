@@ -52,7 +52,10 @@ typedef unsigned long intptr_t;
 #endif
 
 #if defined(HAVE_OCC)
+#include <Standard_Version.hxx>
+#if OCC_VERSION_HEX >= 0x080000
 #include <OSD_ThreadPool.hxx>
+#endif
 #endif
 
 #if defined(HAVE_FLTK)
@@ -253,7 +256,7 @@ int GmshFinalize()
   delete PluginManager::instance();
 #endif
   BasisFactory::clearAll();
-#if defined(HAVE_OCC)
+#if defined(HAVE_OCC) && OCC_VERSION_HEX >= 0x080000
   // stop OCC's worker threads now: when Gmsh is a DLL the pool is destroyed
   // at unload, after the workers are killed, and OCC 8 then hangs waking them
   {
