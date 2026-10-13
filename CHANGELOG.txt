@@ -30,7 +30,10 @@ Plugin(CurvedBndDist); Gmsh now requires C++17 and CMake 3.10, and uses Eigen
 v6.2.2608; fix MeshAdapt regression introduced in 4.12 on thin cones/cylinders;
 reproducible multi-threaded 1D and 2D meshing; periodic node correspondences are
 now computed for transfinite, extruded and subdivided meshes (periodicity
-constraints no longer need to be redefined after meshing); bug fixes.
+constraints no longer need to be redefined after meshing); official binary
+builds now use OCC 8.0 and FLTK 1.4.
+
+bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,
