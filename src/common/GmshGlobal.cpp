@@ -51,6 +51,10 @@ typedef unsigned long intptr_t;
 #include "PluginManager.h"
 #endif
 
+#if defined(HAVE_OCC)
+#include <OSD_ThreadPool.hxx>
+#endif
+
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
 #include "graphicWindow.h"
@@ -249,6 +253,16 @@ int GmshFinalize()
   delete PluginManager::instance();
 #endif
   BasisFactory::clearAll();
+#if defined(HAVE_OCC)
+  // stop OCC's worker threads now: when Gmsh is a DLL the pool is destroyed
+  // at unload, after the workers are killed, and OCC 8 then hangs waking them
+  {
+    const Handle(OSD_ThreadPool) &pool = OSD_ThreadPool::DefaultPool();
+    int n = pool->NbThreads();
+    pool->Init(1); // joins the workers
+    pool->Init(n); // the new workers only start when a job runs
+  }
+#endif
   Msg::Finalize();
   isInitialized = false;
   return 1;
