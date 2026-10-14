@@ -1326,6 +1326,25 @@ StringXNumber MeshOptions_Number[] = {
     "kernel; 1: flat-array kernel, which produces the same meshes; 2: "
     "flat-array kernel with faster floating-point shortcuts on planar faces "
     "and isotropic metrics, which give equivalent but not identical meshes)" },
+  { F|O, "FrontalSeedAngle" , opt_mesh_frontal_seed_angle , 0. ,
+    "Orientation (in degrees, modulo 60) of the seed of Mesh.FrontalInsertionOrder "
+    "2, 5 and 6 (negative: the mean orientation of the boundary edges)" },
+  { F|O, "FrontalInsertionOrder" , opt_mesh_frontal_insertion_order , 0. ,
+    "Order in which the Frontal-Delaunay algorithm refines its front, with the "
+    "flat-array kernel (Mesh.FlatRefine2D > 0) (0: largest circumradius "
+    "first; 1: by layer, i.e. distance in number of elements from the "
+    "boundaries, then largest circumradius; 2: by distance in number of "
+    "elements from a single seed placed far from the boundaries, then largest "
+    "circumradius; 3: the first Mesh.FrontalInsertionLayers layers from the "
+    "boundaries one by one, then largest circumradius; 4: by bands of layers "
+    "from the boundaries, of widths k, 2k, 4k... (k = "
+    "Mesh.FrontalInsertionLayers), largest circumradius first in each band; 5: "
+    "largest circumradius first from a single seed placed far from the "
+    "boundaries, the boundaries waiting until the seeded mesh reaches them; "
+    "6: the first Mesh.FrontalInsertionLayers layers from the boundaries one "
+    "by one, then as 5)" },
+  { F|O, "FrontalInsertionLayers" , opt_mesh_frontal_insertion_layers , 2. ,
+    "Number of layers k used by Mesh.FrontalInsertionOrder 3, 4 and 6" },
   { F|O, "FlatRefine3D" , opt_mesh_flat_refine_3d , 1. ,
     "Use the flat-array kernel for 3D Delaunay point insertion (set to 0 to "
     "use the original object-based kernel, which produces the same meshes)" },

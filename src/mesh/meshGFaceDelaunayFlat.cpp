@@ -245,6 +245,54 @@ struct flatMeshData {
   // computed differently, so the rare near-cocircular decisions can flip and
   // the mesh is no longer identical to the one the classic kernel produces.
   bool fastCircles = false;
+  // Mesh.FrontalInsertionOrder > 0 (frontal only): the front is refined by
+  // keys computed from vertex layers. The layer of a vertex is its distance
+  // in number of elements from where the front starts - the boundaries
+  // (imported vertices at 0) or a single seed (orders 2 and 5: seed vertices
+  // at 0, imported ones at farLayer) - one more than the lower of the two
+  // ends of the active edge it was placed from (nextLayer, set before each
+  // insertion). Order 6 counts from the boundaries, and marks the seed and
+  // the vertices grown from it with farLayer.
+  bool byLayer = false;
+  static constexpr int farLayer = 1 << 24;
+  std::vector<int> vlayer;
+  int nextLayer = 0;
+  // the queue key of an active edge whose ends are at layers la and lb, from
+  // its lower layer: the layer itself (orders 1 and 2), the layer up to k
+  // then a single key (3), its band, the bands being k, 2k, 4k... layers
+  // wide (4), whether the seed reached it (5), or the layer up to k, then
+  // whether the seed reached the edge (6); the largest radius goes first
+  // within a key
+  int order = 0, bandWidth = 2;
+  int edgeKey(int la, int lb) const
+  {
+    const int layer = std::min(la, lb);
+    if(order == 6) {
+      if(layer < bandWidth) return layer;
+      return std::max(la, lb) >= farLayer ? bandWidth : bandWidth + 1;
+    }
+    if(order == 3) return std::min(layer, bandWidth);
+    if(order == 5) return layer >= farLayer ? 1 : 0;
+    if(order == 4) {
+      int band = 0;
+      for(long start = 0, w = bandWidth; layer >= start + w; start += w, w *= 2)
+        band++;
+      return band;
+    }
+    return layer;
+  }
+  // the layer of a point placed from an active edge with ends at la and lb
+  int newLayer(int la, int lb) const
+  {
+    if(order == 6 && std::max(la, lb) >= farLayer) return farLayer;
+    return std::min(la, lb) + 1;
+  }
+  std::pair<int, int> edgeLayers(std::size_t t, int active) const
+  {
+    const std::array<std::size_t, 3> &tri = triangles[t];
+    const int ip1 = active - 1 < 0 ? 2 : active - 1;
+    return {vlayer[tri[ip1]], vlayer[tri[active]]};
+  }
   // per-triangle arrays
   std::vector<std::array<std::size_t, 3>> triangles;
   std::vector<std::array<std::size_t, 3>> neigh;
@@ -281,6 +329,7 @@ struct flatMeshData {
     vertices.push_back(nullptr);
     vxyz.push_back({{x, y, z}});
     vdim.push_back(2);
+    if(byLayer) vlayer.push_back(nextLayer);
     return idx;
   }
 
@@ -294,6 +343,7 @@ struct flatMeshData {
     vertices.pop_back();
     vxyz.pop_back();
     vdim.pop_back();
+    if(byLayer) vlayer.pop_back();
   }
 
   void releaseTriangleSlot(std::size_t t)
@@ -331,6 +381,9 @@ struct flatMeshData {
 struct flatQueueEntry {
   double radius;
   std::size_t t;
+  // Mesh.FrontalInsertionOrder > 0: the key of the active edge (frontKey),
+  // served before the radius (always 0 otherwise)
+  int layer;
 };
 
 // Same priority as algo 6's compareTri3Ptr: largest circumradius first, ties
@@ -341,6 +394,7 @@ struct flatQueueCompare {
   bool operator()(const flatQueueEntry &a,
                   const flatQueueEntry &b) const
   {
+    if(a.layer != b.layer) return a.layer > b.layer;
     if(a.radius < b.radius) return true;
     if(a.radius > b.radius) return false;
     const std::array<std::size_t, 3> ka = data->faceKey(a.t);
@@ -350,6 +404,10 @@ struct flatQueueCompare {
     return a.t > b.t;
   }
 };
+
+// Mesh.FrontalInsertionOrder > 0: the lowest key of the active edges of a
+// triangle, and that edge (the lowest layer among those of that key)
+int frontKey(const flatMeshData &data, std::size_t t, int &edge);
 
 // The refinement queue as a contiguous binary heap (std::push_heap /
 // std::pop_heap) instead of the std::set<MTri3*>: same top element at every
@@ -371,11 +429,17 @@ struct flatQueue {
 
   inline bool empty() const { return heap.empty(); }
 
+  int layerOf(std::size_t t) const
+  {
+    int edge;
+    return data->byLayer ? frontKey(*data, t, edge) : 0;
+  }
+
   void push(std::size_t t)
   {
     if(data->flags[t] & TRI_IN_QUEUE) return;
     data->flags[t] |= TRI_IN_QUEUE;
-    heap.push_back({data->circumRadius[t], t});
+    heap.push_back({data->circumRadius[t], t, layerOf(t)});
     std::push_heap(heap.begin(), heap.end(), compare);
   }
 
@@ -383,7 +447,7 @@ struct flatQueue {
   {
     if(data->flags[t] & TRI_IN_QUEUE) return;
     data->flags[t] |= TRI_IN_QUEUE;
-    heap.push_back({data->circumRadius[t], t});
+    heap.push_back({data->circumRadius[t], t, layerOf(t)});
   }
 
   void makeHeap() { std::make_heap(heap.begin(), heap.end(), compare); }
@@ -781,6 +845,28 @@ bool isActive(const flatMeshData &data, std::size_t t, double limit_,
       return true;
   }
   return false;
+}
+
+int frontKey(const flatMeshData &data, std::size_t t, int &edge)
+{
+  int bestKey = std::numeric_limits<int>::max();
+  int bestLayer = std::numeric_limits<int>::max();
+  edge = -1;
+  for(int k = 0; k < 3; k++) {
+    std::size_t neigh = data.neigh[t][k];
+    if(neigh == FLAT_NONE ||
+       (data.circumRadius[neigh] < LIMIT_ && data.circumRadius[neigh] > 0)) {
+      const std::pair<int, int> l = data.edgeLayers(t, k);
+      const int key = data.edgeKey(l.first, l.second);
+      const int layer = std::min(l.first, l.second);
+      if(key < bestKey || (key == bestKey && layer < bestLayer)) {
+        bestKey = key;
+        bestLayer = layer;
+        edge = k;
+      }
+    }
+  }
+  return bestKey;
 }
 
 void circumCenterMetric(std::size_t base, const double *metric,
@@ -1504,6 +1590,7 @@ void transferDataStructure(GFace *gf, flatMeshData &data,
   releaseVector(data.cavityStack);
   releaseVector(data.newCavityBuffer);
   releaseVector(data.vdim);
+  releaseVector(data.vlayer);
   releaseVector(data.vSizes);
   releaseVector(data.vSizesBGM);
 
@@ -1669,6 +1756,88 @@ void bowyerWatsonFlat(GFace *gf, int MAXPNT,
   splitElementsInBoundaryLayerIfNeeded(gf);
 }
 
+// Mesh.FrontalInsertionOrder = 2, 5 and 6: the single seed the front grows
+// from (with 6, once the layers along the boundaries are done), an
+// equilateral triangle of the local size (so accepted at once, which makes
+// its neighbors active) at the centroid of the triangle of the initial mesh
+// with the largest circumcircle, i.e. far from the boundaries
+static void seedFront(GFace *gf, flatMeshData &data, flatQueue &queue)
+{
+  std::size_t big = FLAT_NONE;
+  double bigR2 = -1.;
+  for(std::size_t t = 0; t < data.triangles.size(); t++) {
+    if(data.flags[t] & TRI_DELETED) continue;
+    const std::array<std::size_t, 3> &tri = data.triangles[t];
+    double l2[3], area2 = 0.;
+    for(int k = 0; k < 3; k++) {
+      const std::size_t a = tri[k], b = tri[(k + 1) % 3];
+      const double du = data.Us[b] - data.Us[a], dv = data.Vs[b] - data.Vs[a];
+      l2[k] = du * du + dv * dv;
+    }
+    area2 = (data.Us[tri[1]] - data.Us[tri[0]]) *
+              (data.Vs[tri[2]] - data.Vs[tri[0]]) -
+            (data.Us[tri[2]] - data.Us[tri[0]]) *
+              (data.Vs[tri[1]] - data.Vs[tri[0]]);
+    if(area2 == 0.) continue;
+    // R^2 = a^2 b^2 c^2 / (16 A^2), with area2 = 2 A
+    const double R2 = l2[0] * l2[1] * l2[2] / (4. * area2 * area2);
+    if(R2 > bigR2) {
+      bigR2 = R2;
+      big = t;
+    }
+  }
+  if(big == FLAT_NONE) return;
+  const std::array<std::size_t, 3> &tri = data.triangles[big];
+  const double c[2] = {
+    (data.Us[tri[0]] + data.Us[tri[1]] + data.Us[tri[2]]) * ONE_THIRD,
+    (data.Vs[tri[0]] + data.Vs[tri[1]] + data.Vs[tri[2]]) * ONE_THIRD};
+  // the size the front uses (optimalPointFrontal): the background one, or
+  // the size interpolated from the boundary if smaller and extended inside
+  GPoint p = gf->point(c[0], c[1]);
+  double h = BGM_MeshSize(gf, c[0], c[1], p.x(), p.y(), p.z());
+  if(data.extend1d)
+    h = std::min(h, (data.vSizes[tri[0]] + data.vSizes[tri[1]] +
+                     data.vSizes[tri[2]]) * ONE_THIRD);
+  // its orientation: the option, or the mean orientation (modulo 60 degrees)
+  // of the boundary edges, weighted by their length
+  double angle = CTX::instance()->mesh.frontalSeedAngle * M_PI / 180.;
+  if(angle < 0.) {
+    double zx = 0., zy = 0.;
+    for(std::size_t t = 0; t < data.triangles.size(); t++) {
+      if(data.flags[t] & TRI_DELETED) continue;
+      for(int e = 0; e < 3; e++) {
+        if(data.neigh[t][e] != FLAT_NONE) continue;
+        const std::size_t a = data.triangles[t][e == 0 ? 2 : e - 1];
+        const std::size_t b = data.triangles[t][e];
+        const double du = data.Us[b] - data.Us[a], dv = data.Vs[b] - data.Vs[a];
+        const double l = std::sqrt(du * du + dv * dv), phi = std::atan2(dv, du);
+        zx += l * std::cos(6. * phi);
+        zy += l * std::sin(6. * phi);
+      }
+    }
+    angle = std::atan2(zy, zx) / 6.;
+  }
+  data.nextLayer = data.order == 6 ? data.farLayer : 0;
+  for(int k = 0; k < 3; k++) {
+    const double th = angle + 0.5 * M_PI + 2. * M_PI * k / 3.;
+    double q[2] = {c[0] + h / std::sqrt(3.) * std::cos(th),
+                   c[1] + h / std::sqrt(3.) * std::sin(th)};
+    double metric[3];
+    buildMetric(gf, q, metric);
+    std::size_t s = FLAT_NONE;
+    for(std::size_t t = 0; t < data.triangles.size() && s == FLAT_NONE; t++)
+      if(!(data.flags[t] & TRI_DELETED) &&
+         inCircumCircleAniso(gf, t, q, metric, data))
+        s = t;
+    if(s == FLAT_NONE || !insertAPoint(gf, q, metric, data, queue, s)) {
+      Msg::Warning("Could not seed the front of surface %d", gf->tag());
+      return;
+    }
+  }
+  Msg::Debug("Front of surface %d seeded at (%g, %g), size %g, angle %g",
+             gf->tag(), c[0], c[1], h, angle * 180. / M_PI);
+}
+
 void bowyerWatsonFrontalFlat(
   GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   std::map<MVertex *, SPoint2> *parametricCoordinates,
@@ -1681,6 +1850,15 @@ void bowyerWatsonFrontalFlat(
     Msg::Error("Invalid meshing data structure");
     return;
   }
+
+  const int order = CTX::instance()->mesh.frontalInsertionOrder;
+  DATA.order = order;
+  DATA.bandWidth = CTX::instance()->mesh.frontalInsertionLayers;
+  DATA.byLayer = order >= 1 && order <= 6;
+  if(DATA.byLayer)
+    DATA.vlayer.assign(DATA.Us.size(),
+                       (order == 2 || order == 5) ? DATA.farLayer : 0);
+  if(order == 2 || order == 5 || order == 6) seedFront(gf, DATA, ActiveTris);
 
   int ITER = 0, active_edge;
   // seed the front: collect every active triangle, then heapify once (linear
@@ -1708,6 +1886,11 @@ void bowyerWatsonFrontalFlat(
                    DATA.vertices.size() - DATA.numBoundary,
                    DATA.circumRadius[worst]);
       double newPoint[2], metric[3];
+      if(DATA.byLayer) {
+        frontKey(DATA, worst, active_edge);
+        const std::pair<int, int> l = DATA.edgeLayers(worst, active_edge);
+        DATA.nextLayer = DATA.newLayer(l.first, l.second);
+      }
       if(optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint, metric)) {
         SPoint2 NP(newPoint[0], newPoint[1]);
         int nIntersections;

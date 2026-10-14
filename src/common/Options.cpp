@@ -6612,6 +6612,26 @@ double opt_mesh_flat_refine_2d(OPT_ARGS_NUM)
   return CTX::instance()->mesh.flatRefine2D;
 }
 
+double opt_mesh_frontal_insertion_order(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.frontalInsertionOrder = (int)val;
+  return CTX::instance()->mesh.frontalInsertionOrder;
+}
+
+double opt_mesh_frontal_insertion_layers(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.frontalInsertionLayers = std::max(1, (int)val);
+  return CTX::instance()->mesh.frontalInsertionLayers;
+}
+
+double opt_mesh_frontal_seed_angle(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.frontalSeedAngle = val;
+  return CTX::instance()->mesh.frontalSeedAngle;
+}
+
 double opt_mesh_flat_refine_3d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

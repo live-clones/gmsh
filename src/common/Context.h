@@ -55,6 +55,8 @@ struct contextMeshOptions {
   int flatRefine2D, flatRefine3D, flatOptimize3D;
   int odtSmoothing2D, boundaryNodeSliding2D, valenceRepair2D;
   double valenceRepairThreshold2D;
+  int frontalInsertionOrder, frontalInsertionLayers;
+  double frontalSeedAngle;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, ignoreUnknownSections;
   int ignoreEdges, ignoreFaces;
   int boundaryLayerFanElements;
