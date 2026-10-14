@@ -53,6 +53,7 @@ struct contextMeshOptions {
   double hoMaxRho, hoMaxAngle, hoMaxInnerAngle;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int flatRefine2D, flatRefine3D, flatOptimize3D;
+  int odtSmoothing2D, boundaryNodeSliding2D;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, ignoreUnknownSections;
   int ignoreEdges, ignoreFaces;
   int boundaryLayerFanElements;

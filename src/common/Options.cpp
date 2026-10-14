@@ -6628,6 +6628,18 @@ double opt_mesh_flat_optimize_3d(OPT_ARGS_NUM)
   return CTX::instance()->mesh.flatOptimize3D;
 }
 
+double opt_mesh_odt_smoothing_2d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.odtSmoothing2D = (int)val;
+  return CTX::instance()->mesh.odtSmoothing2D;
+}
+
+double opt_mesh_boundary_node_sliding_2d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.boundaryNodeSliding2D = (int)val;
+  return CTX::instance()->mesh.boundaryNodeSliding2D;
+}
+
 double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

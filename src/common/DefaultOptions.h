@@ -1238,6 +1238,11 @@ StringXNumber MeshOptions_Number[] = {
     "Number of elements (per Pi radians) for 2D boundary layer fans" },
   { F|O|D, "BoundaryLayerFanPoints" , opt_mesh_boundary_layer_fan_elements, 5. ,
     "[Deprecated]" },
+  { F|O, "BoundaryNodeSliding2D" , opt_mesh_boundary_node_sliding_2d , 1 ,
+    "Let Mesh.ODTSmoothing2D slide the nodes of the curves of a planar "
+    "surface along their curve (never on a curve that bounds or is embedded "
+    "in another surface, nor on a periodic, compound, transfinite or "
+    "extruded curve)" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Order of the mesh to be created by coarsening CGNS structured zones (1 to "
@@ -1546,6 +1551,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 2. ,
     "Number of edge subdivisions used to draw high-order mesh elements" },
 
+  { F|O, "ODTSmoothing2D" , opt_mesh_odt_smoothing_2d , 0 ,
+    "Number of passes of smoothing of the isotropic triangle meshes of planar "
+    "surfaces toward the optimal Delaunay triangulation (ODT) of their size, "
+    "after the Mesh.Smoothing passes: each node moves to the mean of the "
+    "circumcenters of its triangles, weighted by their area and density, "
+    "only if the worst triangle around it does not get worse" },
   { F|O, "OldInitialDelaunay2D" , opt_mesh_old_initial_delaunay_2d , 0. ,
     "Use old initial 2D Delaunay code" },
   { F|O, "Opacity" , opt_mesh_opacity , 1. ,
