@@ -321,10 +321,12 @@ static void drawKeptCylinders(drawContext *ctx, GModel *m)
   glyphToken gt;
   for(auto v : keptToken(ctx, 1, false)) gt.add(v);
   gt.add(ctx->pixel_equiv_x / ctx->s[0]);
+  gt.add(ctx->pointPixelFactor());
   gt.add(c->geom.curveWidth);
   glyphList *g;
   if(!glyphCache::get(m, GLYPH_GEOM_CURVES, gt, g)) {
-    double r = c->geom.curveWidth * ctx->pixel_equiv_x / ctx->s[0];
+    double r = 0.5 * c->geom.curveWidth * ctx->pointPixelFactor() *
+               ctx->pixel_equiv_x / ctx->s[0];
     std::vector<SPoint3> pts;
     forKeptEntities(ctx, m, 1, [&](GEntity *e) {
       curvePoints(ctx, static_cast<GEdge *>(e), pts);
@@ -395,7 +397,7 @@ static bool drawKept(drawContext *ctx, GModel *m, int dim)
   gmshLightTwoSide(!pick && dim == 2 && c->geom.surfaceType > 1 &&
                    c->geom.lightTwoSide);
   gmshLighting(false);
-  gmshPointSize((float)(c->geom.pointSize * ctx->highResolutionPixelFactor()));
+  gmshPointSize((float)c->geom.pointSize);
   gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
   gmshLineWidth((float)width);
   gl2psLineWidth((float)(width * c->print.epsLineWidthFactor));
@@ -434,7 +436,7 @@ static void drawGeomPoint(drawContext *ctx, GVertex *v, double size)
     }
   }
   if(c->geom.pointLabels || v->getSelection() == GEntity::SelectShow) {
-    double ps = c->geom.pointSize * ctx->highResolutionPixelFactor();
+    double ps = c->geom.pointSize * ctx->pointPixelFactor();
     double offset = (0.5 * ps + 0.1 * c->glFontSize) * ctx->pixel_equiv_x;
     drawEntityLabel(ctx, v, x, y, z, offset);
   }
@@ -457,7 +459,8 @@ static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
         // over the kept cylinders it is drawn now, under the depth test set
         // above, and not with the glyphs drawn at the end of the pass
         if(glyphList *g = merged ? nullptr : geomGlyphs(ctx)) {
-          double r = width * ctx->pixel_equiv_x / ctx->s[0];
+          double r = 0.5 * width * ctx->pointPixelFactor() *
+                     ctx->pixel_equiv_x / ctx->s[0];
           g->addCylinder(x, y, z, r, r, glyphCurrentColor());
         }
         else
@@ -480,7 +483,8 @@ static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
   if(c->geom.curveLabels || e->getSelection() == GEntity::SelectShow) {
     GPoint p = e->point(t);
     double offset =
-      (0.5 * c->geom.curveWidth + 0.1 * c->glFontSize) * ctx->pixel_equiv_x;
+      (0.5 * c->geom.curveWidth * ctx->pointPixelFactor() +
+       0.1 * c->glFontSize) * ctx->pixel_equiv_x;
     double x = p.x(), y = p.y(), z = p.z();
     ctx->transform(x, y, z);
     drawEntityLabel(ctx, e, x, y, z, offset);
@@ -598,13 +602,14 @@ static const SBoundingBox3d &volumeBounds(GRegion *r)
   return v.bb;
 }
 
-static void drawGeomVolume(drawContext *ctx, GRegion *r)
+// size: that of a point, the marker being twice as large
+static void drawGeomVolume(drawContext *ctx, GRegion *r, double size)
 {
   CTX *c = CTX::instance();
   bool shown = c->geom.volumes || r->getSelection() == GEntity::SelectShow;
   bool label = c->geom.volumeLabels || r->getSelection() == GEntity::SelectShow;
   if(!shown && !label) return;
-  const double size = 8.;
+  size *= 2.;
   const SBoundingBox3d &bb = volumeBounds(r);
   double x = bb.center().x(), y = bb.center().y(), z = bb.center().z();
   double d = bb.diag() / 50.;
@@ -632,7 +637,8 @@ static void drawGeomVolume(drawContext *ctx, GRegion *r)
   }
   if(label)
     drawEntityLabel(ctx, r, x, y, z,
-                    (size + 0.1 * c->glFontSize) * ctx->pixel_equiv_x);
+                    (0.5 * size * ctx->pointPixelFactor() +
+                     0.1 * c->glFontSize) * ctx->pixel_equiv_x);
 }
 
 // what an entity draws itself: all of it, or what the kept arrays do not
@@ -660,12 +666,11 @@ static void drawGeomEntity(drawContext *ctx, GEntity *e)
   // highlighting a point would grow it over the marker of the volume next to
   // it and there would be no way back
   bool sel = e->getSelection() && !ctx->inPickColorMode();
-  double fact = ctx->highResolutionPixelFactor();
   double size = sel ? c->geom.selectedPointSize : c->geom.pointSize;
   double width = sel ? c->geom.selectedCurveWidth : c->geom.curveWidth;
   if(dim == 2) width /= 2.; // the wireframe of a surface
   if(dim == 0) {
-    gmshPointSize((float)(size * fact));
+    gmshPointSize((float)size);
     gl2psPointSize((float)(size * c->print.epsPointSizeFactor));
   }
   else {
@@ -676,12 +681,10 @@ static void drawGeomEntity(drawContext *ctx, GEntity *e)
   gmshColor4ubv((const void *)&col);
 
   switch(dim) {
-  // (a sphere is sized in pixels of the window, as those of the mesh nodes,
-  // not of the framebuffer, which the point size is)
   case 0: drawGeomPoint(ctx, static_cast<GVertex *>(e), size); break;
   case 1: drawGeomCurve(ctx, static_cast<GEdge *>(e), sel, width); break;
   case 2: drawGeomSurface(ctx, static_cast<GFace *>(e), sel); break;
-  case 3: drawGeomVolume(ctx, static_cast<GRegion *>(e)); break;
+  case 3: drawGeomVolume(ctx, static_cast<GRegion *>(e), size); break;
   }
 }
 

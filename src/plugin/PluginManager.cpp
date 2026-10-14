@@ -225,9 +225,7 @@ void PluginManager::registerDefaultPlugins()
 #if defined(HAVE_SOLVER)
     add(new GMSH_DistancePlugin());
 #endif
-#if defined(HAVE_ANN)
     add(new GMSH_NearestNeighborPlugin());
-#endif
     add(new GMSH_SpanningTreePlugin());
 #if defined(HAVE_BOUNDARY_LAYERS)
     add(new GMSH_BoundaryLayerPlugin());

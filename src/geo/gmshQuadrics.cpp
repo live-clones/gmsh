@@ -14,11 +14,7 @@
 #include "GFace.h"
 #include "MTriangle.h"
 #include "robustPredicates.h"
-
-#if defined(HAVE_ALGLIB)
-#include <stdafx.h>
-#include <optimization.h>
-#endif
+#include "LBFGS.h"
 
 static double _tetcircumcenter(double a[3], double b[3], double c[3],
                                double d[3], double circumcenter[3])
@@ -142,48 +138,24 @@ void computeGradient(const std::vector<SPoint3> &points, const double params[6],
   }
 }
 
-#if defined(HAVE_ALGLIB)
-
-static void bfgs_callback_cyl(const alglib::real_1d_array &x, double &func,
-                              alglib::real_1d_array &grad, void *ptr)
-{
-  std::vector<SPoint3> *points = (std::vector<SPoint3> *)ptr;
-  double p[6] = {x[0], x[1], x[2], x[3], x[4], x[5]};
-  func = costFunction(*points, p);
-  double g[6];
-  computeGradient(*points, p, g);
-  for(int i = 0; i < 6; i++) grad[i] = g[i];
-}
-
-#endif
-
 void fitCylinder(std::vector<SPoint3> &points, double params[6])
 {
-#if defined(HAVE_ALGLIB)
-  alglib::ae_int_t dim = 6;
-  alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7]
-  alglib::minlbfgsstate state;
-  alglib::real_1d_array x;
-  const double initialCond[6] = {0, 0, 0, 0, 0, 1};
-  x.setcontent(dim, initialCond);
-  minlbfgscreate(6, corr, x, state);
-  // Set stopping criteria
-  const double epsg = 1.e-12;
-  const double epsf = 0.;
-  const double epsx = 0.;
-  const alglib::ae_int_t maxits = 500;
-  minlbfgssetcond(state, epsg, epsf, epsx, maxits);
-
-  // Solve problem
-  minlbfgsoptimize(state, bfgs_callback_cyl, nullptr, &points);
-
-  // Get results
-  alglib::minlbfgsreport rep;
-  minlbfgsresults(state, x, rep);
+  LBFGS::Options options;
+  options.memory = 2;
+  options.maxIterations = 500;
+  options.gradientTolerance = 1.e-12;
+  options.functionTolerance = 0.;
+  options.stepTolerance = 0.;
+  options.maxStepNorm = 0.;
+  std::vector<double> x = {0., 0., 0., 0., 0., 1.};
+  LBFGS::minimize(
+    x,
+    [&points](const std::vector<double> &p, std::vector<double> &grad) {
+      computeGradient(points, p.data(), grad.data());
+      return costFunction(points, p.data());
+    },
+    options);
   for(int i = 0; i < 6; i++) params[i] = x[i];
-#else
-  Msg::Error("fitCylinder requires ALGLIB");
-#endif
 }
 
 void gmshQuadricSphere::compute(std::vector<SPoint3> &p)

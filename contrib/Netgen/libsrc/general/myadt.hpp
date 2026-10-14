@@ -12,37 +12,23 @@
 */
 
 
-
 #include "../include/mystdlib.h"
 #include "../include/mydefs.hpp"
 
 
-#include "ngexception.hpp"
-#include "parthreads.hpp"
-// #include "moveablemem.hpp"
-#include "dynamicmem.hpp"
+#include <core/ngcore.hpp>
+namespace netgen
+{
+  using namespace ngcore;
+  using NgException = Exception;
+}
 
 #include "template.hpp"
-#include "array.hpp"
 #include "table.hpp"
-#include "hashtabl.hpp"
 
 
-#include "symbolta.hpp"
-#include "bitarray.hpp"
-#include "flags.hpp"
-#include "spbita2d.hpp"
 
-#include "seti.hpp"
-#include "optmem.hpp"
-#include "autoptr.hpp"
-#include "sort.hpp"
-#include "stack.hpp"
-#include "mystring.hpp"
-#include "profiler.hpp"
 
-#include "mpi_interface.hpp"
-#include "netgenout.hpp"
-
+// #include "mpi_interface.hpp"
 
 #endif

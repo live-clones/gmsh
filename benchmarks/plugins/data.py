@@ -13,6 +13,10 @@
 # order (6-node triangles, 9-node quadrangles, 10-node tetrahedra, 27-node
 # hexahedra), as list data
 #
+# and polytopes.msh: a hexagonal prism polyhedron and a hexagon polygon with a
+# hanging node, without sub-simplices (Gmsh computes them when needed), with
+# the scalar view (1 step) as model data
+#
 # The files are committed: run this only to change them.
 
 import math
@@ -98,6 +102,49 @@ def views(name):
     gmsh.view.addHomogeneousModelData(v, 0, name, 'ElementData', et, vals)
 
 
+def polytopes():
+    gmsh.clear()
+    gmsh.model.add('polytopes')
+    # the prism: its 12 nodes, its two hexagons and its six quadrangles
+    r = gmsh.model.addDiscreteEntity(3)
+    pts, tags = [], []
+    for k in range(2):
+        for i in range(6):
+            a = i * math.pi / 3
+            pts += [0.5 + 0.5 * math.cos(a), 0.5 + 0.5 * math.sin(a), k]
+            tags.append(6 * k + i + 1)
+    gmsh.model.mesh.addNodes(3, r, tags, pts)
+    bottom = [6, 5, 4, 3, 2, 1]
+    top = [7, 8, 9, 10, 11, 12]
+    sides = [[i + 1, (i + 1) % 6 + 1, (i + 1) % 6 + 7, i + 7]
+             for i in range(6)]
+    faces = bottom + top + [k for f in sides for k in f]
+    gmsh.model.mesh.addPolyhedra(r, [], [8], [6, 6] + [4] * 6, faces)
+    # the hexagon below it, with a node hanging on its first edge
+    s = gmsh.model.addDiscreteEntity(2)
+    pts, tags = [], []
+    for i in range(6):
+        a = i * math.pi / 3
+        pts += [0.5 + 0.5 * math.cos(a), 0.5 + 0.5 * math.sin(a), -1]
+        tags.append(13 + i)
+        if i == 0:
+            pts += [0.5 + 0.25 * (1 + math.cos(math.pi / 3)),
+                    0.5 + 0.25 * math.sin(math.pi / 3), -1]
+            tags.append(19)
+    gmsh.model.mesh.addNodes(2, s, tags, pts)
+    gmsh.model.mesh.addPolygons(s, [], tags, [7])
+    tags, coord, _ = gmsh.model.mesh.getNodes()
+    xyz = [coord[3 * i:3 * i + 3] for i in range(len(tags))]
+    v = gmsh.view.add('scalar')
+    gmsh.view.addHomogeneousModelData(
+        v, 0, 'polytopes', 'NodeData', tags, [scalar(*p, 0) for p in xyz])
+    msh = os.path.join(HERE, 'data', 'polytopes.msh')
+    gmsh.option.setNumber('PostProcessing.SaveMesh', 1)
+    gmsh.write(msh)
+    gmsh.option.setNumber('PostProcessing.SaveMesh', 0)
+    gmsh.view.write(v, msh, True)
+
+
 def main():
     os.makedirs(os.path.join(HERE, 'data'), exist_ok=True)
     gmsh.initialize(readConfigFiles=False)
@@ -137,6 +184,7 @@ def main():
     with open(os.path.join(HERE, 'data', 'order2.pos'), 'w') as f:
         for k in ('scalar', 'vector'):
             f.write('View "%s" {\n%s\n};\n' % (k, '\n'.join(out[k])))
+    polytopes()
     gmsh.finalize()
 
 

@@ -11,6 +11,9 @@
   Affine - Linear mapping in 3D space
  */
 
+#include "geom3d.hpp"
+#include "geomfuncs.hpp"
+
 namespace netgen
 {
 
@@ -24,14 +27,14 @@ class Transformation3d
 public:
   ///
   Transformation3d ();
-  /// Unit tet is mapped to tet descibed by pp
-  Transformation3d (const Point3d ** pp);
-  /// Unit tet is mapped to tet descibed by pp
-  Transformation3d (const Point3d pp[]);
+  /// Unit tet is mapped to tet described by pp
+  Transformation3d (const Point<3> ** pp);
+  /// Unit tet is mapped to tet described by pp
+  Transformation3d (const Point<3> pp[]);
   /// translation
-  Transformation3d (const Vec3d & translate);
+  Transformation3d (const Vec<3> & translate);
   /// rotation with ...
-  Transformation3d (const Point3d & c, double alpha, double beta, double gamma);
+  Transformation3d (const Point<3> & c, double alpha, double beta, double gamma);
   /// 
   void CalcInverse (Transformation3d & inv) const;
   /// this = ta x tb
@@ -39,31 +42,31 @@ public:
   /// dir = 1..3 (== x..z)
   void SetAxisRotation (int dir, double alpha);
   ///
-  void Transform (const Point3d & from, Point3d & to) const
+  void Transform (const Point<3> & from, Point<3> & to) const
     {
-      for (int i = 1; i <= 3; i++)
-	{
-	  to.X(i) = offset[i-1] + lin[i-1][0] * from.X(1) + 
-	    lin[i-1][1] * from.X(2) + lin[i-1][2] * from.X(3);
-	}
+      for (int i = 0; i < 3; i++)
+        {
+          to(i) = offset[i] + lin[i][0] * from(0) + 
+            lin[i][1] * from(1) + lin[i][2] * from(2);
+        }
     }
 
   ///
-  void Transform (Point3d & p) const
+  void Transform (Point<3> & p) const
   {
-    Point3d hp;
+    Point<3> hp;
     Transform (p, hp);
     p = hp;
   }
 
   /// transform vector, apply only linear part, not offset
-  void Transform (const Vec3d & from, Vec3d & to) const
+  void Transform (const Vec<3> & from, Vec<3> & to) const
     {
-      for (int i = 1; i <= 3; i++)
-	{
-	  to.X(i) = lin[i-1][0] * from.X(1) + 
-	    lin[i-1][1] * from.X(2) + lin[i-1][2] * from.X(3);
-	}
+      for (int i = 0; i < 3; i++)
+        {
+          to(i) = lin[i][0] * from(0) + 
+            lin[i][1] * from(1) + lin[i][2] * from(2);
+        }
     }
   friend ostream & operator<< (ostream & ost, Transformation3d & trans);
 };
@@ -90,7 +93,7 @@ public:
   ///
   Transformation () { m = 0; v = 0; }
 
-  /// Unit tet is mapped to tet descibed by pp
+  /// Unit tet is mapped to tet described by pp
   Transformation (const Point<D> * pp);
 
   /// translation
@@ -102,6 +105,8 @@ public:
       m(i,i) = 1;
   }
 
+  Transformation (const Point<D> & c, const Vec<3> & axes, double angle);
+  
   // rotation with ...
   Transformation (const Point<D> & c, double alpha, double beta, double gamma)
   {
@@ -128,8 +133,23 @@ public:
     //  (*testout) << "Rotation - Transformation:" << (*this) << endl;
   }
 
+  Mat<D> & GetMatrix() { return m; }
+  Vec<D> & GetVector() { return v; }
+
+  void DoArchive(Archive& ar)
+  {
+      ar & m & v;
+  }
+
   /// 
-  void CalcInverse (Transformation & inv) const;
+  Transformation CalcInverse () const
+  {
+    Transformation inv;
+    // inv.m = Inv(m);
+    ::netgen::CalcInverse (m, inv.m);
+    inv.v = inv.m * (-v);
+    return inv;
+  }
 
   /// this = ta x tb
   void Combine (const Transformation & ta, const Transformation & tb)
@@ -154,7 +174,7 @@ public:
     {
       v(i) = 0;
       for (j = 0; j <= 2; j++)
-	m(i,j) = 0;
+        m(i,j) = 0;
     }
     
     m(dir,dir) = 1;
@@ -182,6 +202,9 @@ public:
   {
     to = m * from;
   }
+
+  Point<D> operator() (Point<D> from) const { Point<D> to; Transform(from, to); return to; }
+  Vec<D> operator() (Vec<D> from) const { Vec<D> to; Transform(from, to); return to; }
 };
 
 template <int D>

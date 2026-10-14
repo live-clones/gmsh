@@ -1,58 +1,94 @@
 #ifndef FILE_IMPROVE3
 #define FILE_IMPROVE3
 
-
-extern double CalcTotalBad (const Mesh::T_POINTS & points, 
-			    const Mesh::T_VOLELEMENTS & elements,
-			    const MeshingParameters & mp);
+namespace netgen
+{
 
 
 ///
 class MeshOptimize3d
 {
+  Mesh & mesh;
   const MeshingParameters & mp;
+  OPTIMIZEGOAL goal = OPT_QUALITY;
+  double min_badness = 0;
+
+  /// element badness, valid only during an optimization pass; NaN = not computed
+  Array<float, ElementIndex> badness;
+  void EnsureBadnessSize ();
+  float GetBadness (ElementIndex ei);
+  void SetBadness (ElementIndex ei, float bad) { EnsureBadnessSize(); badness[ei] = bad; }
+  void InvalidateBadness (ElementIndex ei) { if (badness.Range().Contains(ei)) badness[ei] = NAN; }
+  /// mesh.Compress(), keeping the badness array aligned with the elements
+  void CompressMesh ();
+
+  bool HasBadElement(FlatArray<ElementIndex> els);
+  bool HasIllegalElement(FlatArray<ElementIndex> els);
+  bool NeedsOptimization(FlatArray<ElementIndex> els);
+
 public:
-  MeshOptimize3d (const MeshingParameters & amp) : mp(amp) { ; }
-  void CombineImprove (Mesh & mesh, OPTIMIZEGOAL goal = OPT_QUALITY);
-  void SplitImprove (Mesh & mesh, OPTIMIZEGOAL goal = OPT_QUALITY);
-  void SwapImprove (Mesh & mesh, OPTIMIZEGOAL goal = OPT_QUALITY,
-		    const BitArray * working_elements = NULL);
-  void SwapImproveSurface (Mesh & mesh, OPTIMIZEGOAL goal = OPT_QUALITY,
-			   const BitArray * working_elements = NULL,
-			   const Array< Array<int,PointIndex::BASE>* > * idmaps = NULL);
-  void SwapImprove2 (Mesh & mesh, OPTIMIZEGOAL goal = OPT_QUALITY);
+
+  MeshOptimize3d (Mesh & m, const MeshingParameters & amp, OPTIMIZEGOAL agoal = OPT_QUALITY) :
+      mesh(m), mp(amp), goal(agoal) { ; }
+
+  void SetGoal(OPTIMIZEGOAL agoal) { goal = agoal; }
+  void SetMinBadness(double badness) { min_badness = badness; }
+
+  tuple<double, double, int> UpdateBadness();
+
+  double CombineImproveEdge (
+            Table<ElementIndex, PointIndex> & elements_of_point,
+            PointIndex pi0, PointIndex pi1,
+            FlatArray<bool, PointIndex> is_point_removed, bool check_only=false);
+
+  void CombineImprove ();
+
+  void SplitImprove ();
+  double SplitImproveEdge (Table<ElementIndex,PointIndex> & elementsonnode, Array<PointIndices<3>> &locfaces, double badmax, PointIndex pi1, PointIndex pi2, PointIndex ptmp, bool check_only=false);
+
+  void SplitImprove2 ();
+  double SplitImprove2Element (ElementIndex ei, const Table<ElementIndex, PointIndex> & elements_of_point, bool check_only);
+  
+
+  double SwapImproveEdge (const TBitArray<ElementIndex> * working_elements, Table<ElementIndex,PointIndex> & elementsonnode, ClosedHashTable<SortedPointIndices<3>, int> & faces, PointIndex pi1, PointIndex pi2, bool check_only=false);
+  void SwapImprove (const TBitArray<ElementIndex> * working_elements = NULL);
+  void SwapImproveSurface (const TBitArray<ElementIndex> * working_elements = NULL,
+                           const Array< idmap_type* > * idmaps = NULL);
+  void SwapImprove2 (bool conform_segments = false);
+  double SwapImprove2 (ElementIndex eli1, int face, Table<ElementIndex, PointIndex> & elementsonnode, DynamicTable<SurfaceElementIndex, PointIndex> & belementsonnode, bool conform_segments, bool check_only=false );
+
+  void ImproveMesh() { mesh.ImproveMesh(mp, goal); }
 
   double 
-  CalcBad (const Mesh::T_POINTS & points, const Element & elem, double h)
+  CalcBad (const Mesh::T_POINTS & points, const ElementRef & elem, double h)
   {
     if (elem.GetType() == TET)
       return CalcTetBadness (points[elem[0]], points[elem[1]],  
-			     points[elem[2]], points[elem[3]], h, mp);  
+                             points[elem[2]], points[elem[3]], h, mp);  
     return 0;
   }
 
 
-  double CalcTotalBad (const Mesh::T_POINTS & points, 
-		       const Mesh::T_VOLELEMENTS & elements)
+  double GetLegalPenalty()
   {
-    return netgen::CalcTotalBad (points, elements, mp);
+    return goal == OPT_LEGAL ? 1e15 : 1e6;
   }
 
 };
 
 
 inline double 
-CalcBad (const Mesh::T_POINTS & points, const Element & elem, double h, const MeshingParameters & mp)
+CalcBad (const Mesh::T_POINTS & points, const ElementRef & elem, double h, const MeshingParameters & mp)
 {
   if (elem.GetType() == TET)
     return CalcTetBadness (points[elem[0]], points[elem[1]],  
-			   points[elem[2]], points[elem[3]], h, mp);  
+                           points[elem[2]], points[elem[3]], h, mp);  
   return 0;
 }
 
 
 
-extern int WrongOrientation (const Mesh::T_POINTS & points, const Element & el);
+extern int WrongOrientation (const Mesh::T_POINTS & points, const ElementRef & el);
 
 
 /* Functional depending of inner point inside triangular surface */
@@ -81,14 +117,14 @@ public:
 class PointFunction1 : public MinFunction
 {
   Mesh::T_POINTS & points;
-  const Array<INDEX_3> & faces;
+  const Array<PointIndices<3>> & faces;
   const MeshingParameters & mp;
   double h;
 public:
   PointFunction1 (Mesh::T_POINTS & apoints, 
-		  const Array<INDEX_3> & afaces,
-		  const MeshingParameters & amp,
-		  double ah);
+                  const Array<PointIndices<3>> & afaces,
+                  const MeshingParameters & amp,
+                  double ah);
   
   virtual double Func (const Vector & x) const;
   virtual double FuncDeriv (const Vector & x, const Vector & dir, double & deriv) const;
@@ -100,8 +136,8 @@ class JacobianPointFunction : public MinFunction
 {
 public:
   Mesh::T_POINTS & points;
-  const Mesh::T_VOLELEMENTS & elements;
-  TABLE<INDEX> elementsonpoint;
+  const T_VOLELEMENTS & elements;
+  Table<ElementIndex, PointIndex> elementsonpoint;
   PointIndex actpind;
 
   bool onplane;
@@ -109,9 +145,8 @@ public:
   
 public:
   JacobianPointFunction (Mesh::T_POINTS & apoints, 
-			 const Mesh::T_VOLELEMENTS & aelements);
-  virtual ~JacobianPointFunction() {}
-  
+                         const T_VOLELEMENTS & aelements);
+  virtual ~JacobianPointFunction () { ; }
   virtual void SetPointIndex (PointIndex aactpind);
   virtual double Func (const Vector & x) const;
   virtual double FuncGrad (const Vector & x, Vector & g) const;
@@ -121,6 +156,5 @@ public:
   inline void UnSetNV(void) {onplane = false;}
 };
 
-
-
+} // namespace netgen
 #endif

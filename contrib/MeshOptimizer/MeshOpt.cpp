@@ -27,6 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <exception>
 #include "GmshMessage.h"
 #include "GmshConfig.h"
 #include "ObjContrib.h"
@@ -34,13 +35,7 @@
 #include "MeshOptCommon.h"
 #include "MeshOpt.h"
 
-#if defined(HAVE_ALGLIB)
-#include <ap.h>
-#include <alglibinternal.h>
-#include <alglibmisc.h>
-#include <linalg.h>
-#include <optimization.h>
-#endif
+#include "LBFGS.h"
 
 MeshOpt::MeshOpt(const std::map<MElement *, GEntity *> &element2entity,
                  const std::map<MElement *, GEntity *> &bndEl2Ent,
@@ -164,67 +159,47 @@ void MeshOpt::calcScale(std::vector<double> &scale)
 
 void MeshOpt::updateResults() { _objFunc->updateResults(); }
 
-#if defined(HAVE_ALGLIB)
-
-static void evalObjGradFunc(const alglib::real_1d_array &x, double &Obj,
-                            alglib::real_1d_array &gradObj, void *MOInst)
-{
-  std::vector<double> x_(x.getcontent(), x.getcontent() + x.length());
-  std::vector<double> gradObj_(gradObj.length(), 0.);
-  (static_cast<MeshOpt *>(MOInst))->evalObjGrad(x_, Obj, gradObj_);
-  for(std::size_t i = 0; i < gradObj_.size(); i++) gradObj[i] = gradObj_[i];
-}
-
-static void printProgressFunc(const alglib::real_1d_array &x, double Obj,
-                              void *MOInst)
-{
-  std::vector<double> x_(x.getcontent(), x.getcontent() + x.length());
-  (static_cast<MeshOpt *>(MOInst))->printProgress(x_, Obj);
-}
-
-#endif
-
 void MeshOpt::runOptim(std::vector<double> &x,
                        const std::vector<double> &initGradObj, int itMax,
                        int iBar)
 {
-  static const double EPSG = 0.;
-  static const double EPSF = 0.;
-  static const double EPSX = 0.;
-
   _iter = 0;
 
-  std::vector<double> s;
-  calcScale(s);
+  LBFGS::Options options;
+  options.maxIterations = itMax;
+  options.gradientTolerance = 0.;
+  options.functionTolerance = 0.;
+  options.stepTolerance = 0.;
+  options.maxStepNorm = 0.;
+  calcScale(options.scale);
+  options.scalePreconditioner = true;
+  options.progress = [this](int, const std::vector<double> &xp, double f,
+                            double, double) { printProgress(xp, f); };
 
   int iterationscount = 0, nfev = 0, terminationtype = -1;
-
-#if defined(HAVE_ALGLIB)
-  alglib::real_1d_array scale;
-  scale.setcontent(s.size(), &s[0]);
-  alglib::real_1d_array vec;
-  vec.setcontent(x.size(), &x[0]);
-  alglib::mincgstate state;
-  alglib::mincgreport rep;
   try {
-    mincgcreate(vec, state);
-    mincgsetscale(state, scale);
-    mincgsetprecscale(state);
-    mincgsetcond(state, EPSG, EPSF, EPSX, itMax);
-    mincgsetxrep(state, true);
-    alglib::mincgoptimize(state, evalObjGradFunc, printProgressFunc, this);
-    mincgresults(state, vec, rep);
-  } catch(alglib::ap_error &e) {
-    Msg::Error("%s", e.msg.c_str());
+    LBFGS::Result result = LBFGS::minimize(
+      x,
+      [this](const std::vector<double> &xe, std::vector<double> &gradObj) {
+        double obj = 0.;
+        std::fill(gradObj.begin(), gradObj.end(), 0.);
+        evalObjGrad(xe, obj, gradObj);
+        return obj;
+      },
+      options);
+    iterationscount = result.iterations;
+    nfev = result.functionEvaluations;
+    terminationtype = result.terminationType;
+  } catch(const std::exception &e) {
+    Msg::Error("%s", e.what());
   }
-  x.assign(vec.getcontent(), vec.getcontent() + vec.length());
-  iterationscount = rep.iterationscount;
-  nfev = rep.nfev;
-  terminationtype = rep.terminationtype;
-#else
-  // TODO: provide our own implementation!
-  Msg::Error("Mesh optimizer requires ALGLIB");
-#endif
+  // Evaluations at rejected trial points also update the mesh and objective.
+  // Restore their state at the coordinates actually returned by the solver.
+  if(!x.empty()) {
+    double obj;
+    std::vector<double> gradObj(x.size(), 0.);
+    evalObjGrad(x, obj, gradObj);
+  }
 
   if(_nCurses) {
     if(_optHistory.size() < 8) { _optHistory.push_front(new char[1000]); }

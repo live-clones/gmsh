@@ -45,11 +45,17 @@ typedef unsigned long intptr_t;
 #include "Field.h"
 #include "meshPartition.h"
 #include "gmshCrossFields.h"
-#include "automaticMeshSizeField.h"
 #endif
 
 #if defined(HAVE_PLUGINS)
 #include "PluginManager.h"
+#endif
+
+#if defined(HAVE_OCC)
+#include <Standard_Version.hxx>
+#if OCC_VERSION_HEX >= 0x080000
+#include <OSD_ThreadPool.hxx>
+#endif
 #endif
 
 #if defined(HAVE_FLTK)
@@ -250,6 +256,16 @@ int GmshFinalize()
   delete PluginManager::instance();
 #endif
   BasisFactory::clearAll();
+#if defined(HAVE_OCC) && OCC_VERSION_HEX >= 0x080000
+  // stop OCC's worker threads now: when Gmsh is a DLL the pool is destroyed
+  // at unload, after the workers are killed, and OCC 8 then hangs waking them
+  {
+    const Handle(OSD_ThreadPool) &pool = OSD_ThreadPool::DefaultPool();
+    int n = pool->NbThreads();
+    pool->Init(1); // joins the workers
+    pool->Init(n); // the new workers only start when a job runs
+  }
+#endif
   Msg::Finalize();
   isInitialized = false;
   return 1;
@@ -299,9 +315,8 @@ int GmshBatch()
   if(!CTX::instance()->bgmFileName.empty()) {
     if(CTX::instance()->bgmFileName.substr(
          CTX::instance()->bgmFileName.find_last_of(".") + 1) == "p4est") {
-      automaticMeshSizeField *a =
-        new automaticMeshSizeField(CTX::instance()->bgmFileName);
-      GModel::current()->getFields()->setBackgroundField(a);
+      Msg::Error("Loading a saved octree size field (.p4est) is no longer "
+                 "supported; recompute the size field instead");
     }
     else {
       MergePostProcessingFile(CTX::instance()->bgmFileName);
@@ -453,16 +468,12 @@ int GmshFLTK(int argc, char **argv)
 #if defined(HAVE_POST) && defined(HAVE_MESH)
   // read background mesh if any
   if(!CTX::instance()->bgmFileName.empty()) {
-    // If the background mesh is an octree (we us p4est), then we load the
-    // background mesh as an automaticMeshSizeField
+    // Loading a saved octree size field (.p4est) is no longer supported
+    // (see src/mesh/GModel::computeSizeField and OctreeSizeField)
     if(CTX::instance()->bgmFileName.substr(
          CTX::instance()->bgmFileName.find_last_of(".") + 1) == "p4est") {
-      automaticMeshSizeField *a =
-        new automaticMeshSizeField(CTX::instance()->bgmFileName);
-      //      int newId = GModel::current()->getFields()->newId();
-      //      (*GModel::current()->getFields())[newId] = a;
-      //      printf("loading %s\n",CTX::instance()->bgmFileName.c_str());
-      GModel::current()->getFields()->setBackgroundField(a);
+      Msg::Error("Loading a saved octree size field (.p4est) is no longer "
+                 "supported; recompute the size field instead");
     }
     else {
       MergePostProcessingFile(CTX::instance()->bgmFileName);

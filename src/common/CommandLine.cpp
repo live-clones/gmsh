@@ -112,8 +112,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-save_topology", "Save model topology (Mesh.SaveTopology)"));
   s.push_back(mp("-save_views", "Save all views with the mesh (Mesh.SaveViews)"));
   s.push_back(mp("-algo string", "Select mesh algorithm: auto, meshadapt, del2d, "
-                 "front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, "
-                 "hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
+                 "front2d, delquad, quadqs, initial2d, del3d, pdel3d, front3d, "
+                 "mmg3d, hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
   s.push_back(mp("-smooth int", "Set number of mesh smoothing steps "
                  "(Mesh.Smoothing)"));
   s.push_back(mp("-order int", "Set mesh order (Mesh.ElementOrder)"));
@@ -1021,6 +1021,8 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
         opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_RTREE);
       else if(argv[i] == "hxt")
         opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_HXT);
+      else if(argv[i] == "pdel3d")
+        opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_PDEL3D);
       else if(argv[i] == "initial3d")
         opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_INITIAL_ONLY);
       else {

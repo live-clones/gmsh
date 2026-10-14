@@ -11,37 +11,34 @@
 /* Date:   20. Nov. 99                                                    */
 /**************************************************************************/
 
+#include "mydefs.hpp"
+#include <meshing/visual_interface.hpp>
+
 /*
   Application program interface to Netgen
 
 */
 
-#if 0 // GMSH #ifdef WIN32
-   #if NGINTERFACE_EXPORTS || NGLIB_EXPORTS || nglib_EXPORTS
-      #define DLL_HEADER   __declspec(dllexport)
-   #else
-      #define DLL_HEADER   __declspec(dllimport)
-   #endif
-#else
-   #define DLL_HEADER 
-#endif
-
-
 // max number of nodes per element
-#define NG_ELEMENT_MAXPOINTS 12
+#define NG_ELEMENT_MAXPOINTS 20
 
 // max number of nodes per surface element
 #define NG_SURFACE_ELEMENT_MAXPOINTS 8
 
+// #ifndef PARALLEL
+// typedef int MPI_Comm;
+// #endif
+// namespace netgen { extern DLL_HEADER ngcore::NgMPI_Comm ng_comm; }
 
 
 // implemented element types:
 enum NG_ELEMENT_TYPE { 
+  NG_PNT = 0,
   NG_SEGM = 1, NG_SEGM3 = 2,
-  NG_TRIG = 10, NG_QUAD=11, NG_TRIG6 = 12, NG_QUAD6 = 13,
+  NG_TRIG = 10, NG_QUAD=11, NG_TRIG6 = 12, NG_QUAD6 = 13, NG_QUAD8 = 14,
   NG_TET = 20, NG_TET10 = 21, 
-  NG_PYRAMID = 22, NG_PRISM = 23, NG_PRISM12 = 24,
-  NG_HEX = 25
+  NG_PYRAMID = 22, NG_PRISM = 23, NG_PRISM12 = 24, NG_PRISM15 = 27, NG_PYRAMID13 = 28,
+  NG_HEX = 25, NG_HEX20 = 26, NG_HEX7 = 29
 };
 
 typedef double NG_POINT[3];  // coordinates
@@ -53,11 +50,11 @@ typedef int NG_FACE[4];      // points, last one is 0 for trig
 extern "C" {
 #endif
   
-  // load geomtry from file 
+  // load geometry from file 
   DLL_HEADER void Ng_LoadGeometry (const char * filename);
-  
+
   // load netgen mesh
-  DLL_HEADER void Ng_LoadMesh (const char * filename);
+  DLL_HEADER void Ng_LoadMesh (const char * filename, ngcore::NgMPI_Comm comm = ngcore::NgMPI_Comm{});
 
   // load netgen mesh
   DLL_HEADER void Ng_LoadMeshFromString (const char * mesh_as_string);
@@ -77,7 +74,7 @@ extern "C" {
   // number of surface triangles
   DLL_HEADER int Ng_GetNSE ();
   
-  // Get Point coordintes, index from 1 .. np
+  // Get Point coordinates, index from 1 .. np
   DLL_HEADER void Ng_GetPoint (int pi, double * p);
   
   // Get Element Points
@@ -92,10 +89,10 @@ extern "C" {
   DLL_HEADER void Ng_SetElementIndex(const int ei, const int index);
 
   // Get Material of element ei
-  DLL_HEADER char * Ng_GetElementMaterial (int ei);
+  DLL_HEADER const char * Ng_GetElementMaterial (int ei);
 
   // Get Material of domain dom
-  DLL_HEADER char * Ng_GetDomainMaterial (int dom);
+  DLL_HEADER const char * Ng_GetDomainMaterial (int dom);
   
   // Get User Data
   DLL_HEADER int Ng_GetUserDataSize (char * id);
@@ -124,8 +121,11 @@ extern "C" {
   DLL_HEADER char * Ng_GetBCNumBCName (int bcnr);
   //void Ng_GetBCNumBCName (int bcnr, char * name);
 
+  // Get BCName for bc-number of co dim 2
+  DLL_HEADER char * Ng_GetCD2NumCD2Name (int cd2nr);
+
   // Get normal vector of surface element node
-  DLL_HEADER void Ng_GetNormalVector (int sei, int locpi, double * nv);     
+  // DLL_HEADER void Ng_GetNormalVector (int sei, int locpi, double * nv);     
   
 
   DLL_HEADER void Ng_SetPointSearchStartElement(int el);
@@ -141,12 +141,12 @@ extern "C" {
                                                const int * const indices = NULL, const int numind = 0);
   
 
-  // is elment ei curved ?
+  // is element ei curved ?
   DLL_HEADER int Ng_IsElementCurved (int ei);
-  // is elment sei curved ?
+  // is element sei curved ?
   DLL_HEADER int Ng_IsSurfaceElementCurved (int sei);
 
-  /// Curved Elemens:
+  /// Curved Elements:
   /// xi..local coordinates
   /// x ..global coordinates
   /// dxdxi...D x D Jacobian matrix (row major storage)
@@ -161,7 +161,7 @@ extern "C" {
   
 
 
-  /// Curved Elemens:
+  /// Curved Elements:
   /// xi..local coordinates
   /// x ..global coordinates
   /// dxdxi...D x D-1 Jacobian matrix (row major storage)
@@ -169,7 +169,7 @@ extern "C" {
   DLL_HEADER void Ng_GetSurfaceElementTransformation (int sei, const double * xi, 
                                                       double * x, double * dxdxi);
   
-  /// Curved Elemens:
+  /// Curved Elements:
   /// xi..local coordinates
   /// sxi..step xi
   /// x ..global coordinates
@@ -220,11 +220,13 @@ extern "C" {
   DLL_HEADER int Ng_GetNEdges();
   DLL_HEADER int Ng_GetNFaces();
 
-  
+  [[deprecated("orientation is not supported anymore")]]                          
   DLL_HEADER int Ng_GetElement_Edges (int elnr, int * edges, int * orient = 0);
+  // [[deprecated("orientation is not supported anymore")]]                            
   DLL_HEADER int Ng_GetElement_Faces (int elnr, int * faces, int * orient = 0);
-
+  [[deprecated("orientation is not supported anymore")]]                          
   DLL_HEADER int Ng_GetSurfaceElement_Edges (int selnr, int * edges, int * orient = 0);
+  // [[deprecated("orientation is not supported anymore")]]                            
   DLL_HEADER int Ng_GetSurfaceElement_Face (int selnr, int * orient = 0);
 
   DLL_HEADER void Ng_GetSurfaceElementNeighbouringDomains(const int selnr, int & in, int & out);
@@ -269,68 +271,26 @@ extern "C" {
 
 
   void Ng_SurfaceElementTransformation (int eli, double x, double y, 
-					double * p3d, double * jacobian);
+                                        double * p3d, double * jacobian);
 
 #ifdef PARALLEL
-  // Is Element ei an element of this processor ??
-  bool Ng_IsGhostEl (int ei);
 
-  void Ng_SetGhostEl(const int ei, const bool aisghost );
-
-  bool Ng_IsGhostSEl (int ei);
-
-  void Ng_SetGhostSEl(const int ei, const bool aisghost );
-
-  bool Ng_IsGhostVert ( int pnum );
-  bool Ng_IsGhostEdge ( int ednum );
-  bool Ng_IsGhostFace ( int fanum );
-
-  bool Ng_IsExchangeEl ( int elnum );
-  bool Ng_IsExchangeSEl ( int selnr );
-
-  void Ng_UpdateOverlap ();
-  int Ng_Overlap();
-/*   void Ng_SetGhostVert ( const int pnum, const bool aisghost ); */
-/*   void Ng_SetGhostEdge ( const int ednum, const bool aisghost ); */
-/*   void Ng_SetGhostFace ( const int fanum, const bool aisghost ); */
-
-
-
-
-  // the folling functions are 0-base  !!
-  int NgPar_GetLoc2Glob_VolEl ( int locnum );
-
-  // int NgPar_GetDistantNodeNums ( int nt, int locnum, int * procs, int * distnum);
+  // the following functions are 0-base  !!
 
   // number on distant processor 
-
-  // gibt anzahl an distant pnums zurueck
-  // * pnums entspricht ARRAY<int[2] >
+  // returns pairs  (dist_proc, num_on_dist_proc)
   int NgPar_GetDistantNodeNums ( int nodetype, int locnum, int * pnums );
   int NgPar_GetNDistantNodeNums ( int nodetype, int locnum );
-
-  int NgPar_GetDistantPNum ( int proc, int locnum ) ;
-  int NgPar_GetDistantEdgeNum ( int proc, int locnum ) ;
-  int NgPar_GetDistantFaceNum ( int proc, int locnum ) ;
-  int NgPar_GetDistantElNum ( int proc, int locnum );
-
-  bool NgPar_IsExchangeFace ( int fnr ) ;
-  bool NgPar_IsExchangeVert ( int vnum );
-  bool NgPar_IsExchangeEdge ( int ednum );
-  bool NgPar_IsExchangeElement ( int elnum );
-
-  void NgPar_PrintParallelMeshTopology ();
-  bool NgPar_IsElementInPartition ( int elnum, int dest );
-
-  bool NgPar_IsGhostFace ( int facenum );
-  bool NgPar_IsGhostEdge ( int edgenum );
-
+  
+  DLL_HEADER int NgPar_GetGlobalNodeNum (int nodetype, int locnum);
 
 #endif
   
   namespace netgen {
   // #include "../visualization/soldata.hpp"
     class SolutionData;
+    class MouseEventHandler;
+    class UserVisualizationObject;
   }
 
   enum Ng_SolutionType
@@ -346,13 +306,17 @@ extern "C" {
   
   struct Ng_SolutionData
   {
-    const char * name; // name of gridfunction
+    std::string name;      // name of gridfunction
+    std::string title = ""; // name of gridfunction ( printed on top of window )
+    std::string number_format = "%.3e"; // printf-style string to format colormap values
+    std::string unit = ""; // string to append to last number in colormap (ASCII only)
     double * data;    // solution values
     int components;   // relevant (double) components in solution vector
     int dist;         // # doubles per entry alignment! 
     int iscomplex;    // complex vector ? 
     bool draw_surface;
     bool draw_volume;
+    std::shared_ptr<netgen::BitArray> draw_surfaces, draw_volumes;
     int order;        // order of elements, only partially supported 
     Ng_SolutionType soltype;  // type of solution function
     netgen::SolutionData * solclass;
@@ -365,7 +329,13 @@ extern "C" {
   /// delete gridfunctions
   DLL_HEADER void Ng_ClearSolutionData();
   // redraw 
-  DLL_HEADER void Ng_Redraw();
+  DLL_HEADER void Ng_Redraw(bool blocking = false);
+  ///
+  DLL_HEADER void Ng_TclCmd(std::string cmd);
+  ///
+  DLL_HEADER void Ng_SetMouseEventHandler (netgen::MouseEventHandler * handler);
+  ///
+  DLL_HEADER void Ng_SetUserVisualizationObject (netgen::UserVisualizationObject * vis);
   //
   DLL_HEADER void Ng_SetVisualizationParameter (const char * name, 
                                                 const char * value);
@@ -383,10 +353,11 @@ extern "C" {
 
   DLL_HEADER void RunParallel ( void * (*fun)(void *), void * in);
 
-  DLL_HEADER void Ng_PushStatus (const char * str);
+  #define NG_STATUS_USES_STD_STRING
+  DLL_HEADER void Ng_PushStatus (const std::string& str);
   DLL_HEADER void Ng_PopStatus ();
   DLL_HEADER void Ng_SetThreadPercentage (double percent);
-  DLL_HEADER void Ng_GetStatus (char ** str, double & percent);
+  DLL_HEADER void Ng_GetStatus (std::string& str, double & percent);
 
   DLL_HEADER void Ng_SetTerminate(void);
   DLL_HEADER void Ng_UnSetTerminate(void);
@@ -413,11 +384,11 @@ extern "C" {
   DLL_HEADER void Ng_InitPointCurve(double red, double green, double blue);
   DLL_HEADER void Ng_AddPointCurvePoint(const double * point);
 
-
-#ifdef PARALLEL
-  void Ng_SetElementPartition ( int elnr, int part );
-  int  Ng_GetElementPartition ( int elnr );
-#endif
+  
+  // #ifdef PARALLEL
+  // void Ng_SetElementPartition ( int elnr, int part );
+  // int  Ng_GetElementPartition ( int elnr );
+  // #endif
 
   DLL_HEADER void Ng_SaveMesh ( const char * meshfile );
   DLL_HEADER void Ng_Bisect ( const char * refinementfile );
@@ -428,6 +399,9 @@ extern "C" {
 
   typedef void * Ng_Mesh;
   DLL_HEADER Ng_Mesh Ng_SelectMesh (Ng_Mesh mesh);
+
+  DLL_HEADER void Ng_GetArgs (int & argc, char ** &argv);
+
 
 #ifdef __cplusplus
 }
@@ -483,15 +457,6 @@ extern "C" {
     return value is number of nodes
    */
   DLL_HEADER int Ng_GetElementClosureNodes (int dim, int elementnr, int nodeset, int * nodes);
-
-
-  struct Ng_Tcl_Interp;
-  typedef int (Ng_Tcl_CmdProc) (Ng_Tcl_Interp *interp, int argc, const char *argv[]);
-
-  DLL_HEADER void Ng_Tcl_CreateCommand (Ng_Tcl_Interp * interp, 
-                                        const char * cmdName, Ng_Tcl_CmdProc * proc);
-
-  void Ng_Tcl_SetResult (Ng_Tcl_Interp * interp, const char * result);
 }
 
 
@@ -500,10 +465,9 @@ extern "C" {
 
 #ifdef __cplusplus
 #include <iostream>
-namespace netgen 
+namespace ngcore
 {
-  DLL_HEADER extern std::ostream * testout;
-  DLL_HEADER extern int printmessage_importance;
+  NGCORE_API extern int printmessage_importance;
 }
 
 #endif

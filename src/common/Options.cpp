@@ -76,20 +76,6 @@ static void stringColorsChanged()
 #endif
 }
 
-#if defined(HAVE_FLTK)
-// give the graphic windows the visual the options ask for; FLTK recreates the
-// OpenGL context of those whose mode changed
-static void resetOpenglMode()
-{
-  if(!FlGui::available()) return;
-  int mode = openglWindowMode();
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-    for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-      FlGui::instance()->graph[i]->gl[j]->mode(mode);
-  if(FlGui::instance()->fullscreen) FlGui::instance()->fullscreen->mode(mode);
-}
-#endif
-
 // General routines for string options
 
 bool StringOption(int action, const char *category, int num, const char *name,
@@ -5358,6 +5344,39 @@ double opt_mesh_optimize_threshold(OPT_ARGS_NUM)
   return CTX::instance()->mesh.optimizeThreshold;
 }
 
+double opt_mesh_optimize_reconnection_threshold(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       val != CTX::instance()->mesh.optimizeReconnectionThreshold)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.optimizeReconnectionThreshold = val;
+  }
+  return CTX::instance()->mesh.optimizeReconnectionThreshold;
+}
+
+double opt_mesh_optimize_reconnection_points(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.optimizeReconnectionPoints)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.optimizeReconnectionPoints = (int)val;
+  }
+  return CTX::instance()->mesh.optimizeReconnectionPoints;
+}
+
+double opt_mesh_optimize_reconnection_search(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.optimizeReconnectionSearch)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.optimizeReconnectionSearch = (int)val;
+  }
+  return CTX::instance()->mesh.optimizeReconnectionSearch;
+}
+
 double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -6655,17 +6674,20 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     switch(CTX::instance()->mesh.algo3d) {
-    case ALGO_3D_FRONTAL:
+    case ALGO_3D_PDEL3D:
       FlGui::instance()->options->mesh.choice[3]->value(1);
       break;
-    case ALGO_3D_HXT:
+    case ALGO_3D_FRONTAL:
       FlGui::instance()->options->mesh.choice[3]->value(2);
       break;
-    case ALGO_3D_MMG3D:
+    case ALGO_3D_HXT:
       FlGui::instance()->options->mesh.choice[3]->value(3);
       break;
-    case ALGO_3D_INITIAL_ONLY:
+    case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(4);
+      break;
+    case ALGO_3D_INITIAL_ONLY:
+      FlGui::instance()->options->mesh.choice[3]->value(5);
       break;
     case ALGO_3D_DELAUNAY:
     default: FlGui::instance()->options->mesh.choice[3]->value(0); break;
@@ -10911,6 +10933,44 @@ unsigned int opt_view_color_trihedra(OPT_ARGS_COL)
 #endif
 }
 
+unsigned int opt_view_color_polygons(OPT_ARGS_COL)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0);
+  if(action & GMSH_SET) {
+    opt->color.polygon = val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    CCC(opt->color.polygon, FlGui::instance()->options->view.color[9]);
+  }
+#endif
+  return opt->color.polygon;
+#else
+  return 0;
+#endif
+}
+
+unsigned int opt_view_color_polyhedra(OPT_ARGS_COL)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0);
+  if(action & GMSH_SET) {
+    opt->color.polyhedron = val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    CCC(opt->color.polyhedron, FlGui::instance()->options->view.color[10]);
+  }
+#endif
+  return opt->color.polyhedron;
+#else
+  return 0;
+#endif
+}
+
 unsigned int opt_view_color_tangents(OPT_ARGS_COL)
 {
 #if defined(HAVE_POST)
@@ -10921,7 +10981,7 @@ unsigned int opt_view_color_tangents(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    CCC(opt->color.tangents, FlGui::instance()->options->view.color[9]);
+    CCC(opt->color.tangents, FlGui::instance()->options->view.color[11]);
   }
 #endif
   return opt->color.tangents;
@@ -10940,7 +11000,7 @@ unsigned int opt_view_color_normals(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    CCC(opt->color.normals, FlGui::instance()->options->view.color[10]);
+    CCC(opt->color.normals, FlGui::instance()->options->view.color[12]);
   }
 #endif
   return opt->color.normals;
@@ -10959,7 +11019,7 @@ unsigned int opt_view_color_text2d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    CCC(opt->color.text2d, FlGui::instance()->options->view.color[11]);
+    CCC(opt->color.text2d, FlGui::instance()->options->view.color[13]);
 #endif
   return opt->color.text2d;
 #else
@@ -10977,7 +11037,7 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    CCC(opt->color.text3d, FlGui::instance()->options->view.color[12]);
+    CCC(opt->color.text3d, FlGui::instance()->options->view.color[14]);
 #endif
   return opt->color.text3d;
 #else
@@ -10995,7 +11055,7 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    CCC(opt->color.axes, FlGui::instance()->options->view.color[13]);
+    CCC(opt->color.axes, FlGui::instance()->options->view.color[15]);
 #endif
   return opt->color.axes;
 #else
@@ -11013,7 +11073,7 @@ unsigned int opt_view_color_background2d(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    CCC(opt->color.background2d, FlGui::instance()->options->view.color[14]);
+    CCC(opt->color.background2d, FlGui::instance()->options->view.color[16]);
 #endif
   return opt->color.background2d;
 #else

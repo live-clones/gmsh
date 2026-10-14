@@ -18,12 +18,11 @@ namespace netgen
   class TriangleApproximation;
   class TATriangle;
 
-
   /**
      A top level object is an entity to be meshed.
      I can be either a solid, or one surface patch of a solid.
   */
-  class TopLevelObject
+  class DLL_HEADER TopLevelObject
   {
     Solid * solid;
     Surface * surface;
@@ -38,8 +37,15 @@ namespace netgen
 
   public:
     TopLevelObject (Solid * asolid,
-		    Surface * asurface = NULL);
+                    Surface * asurface = NULL);
+    // default constructor for archive
+    TopLevelObject() {}
 
+    void DoArchive(Archive& archive)
+    {
+      archive & solid & surface & red & blue & green & visible & transp & maxh
+        & material & layer & bc & bcname;
+    }
     const Solid * GetSolid() const { return solid; }
     Solid * GetSolid() { return solid; }
 
@@ -91,11 +97,11 @@ namespace netgen
   /**
      CSGeometry has the whole geometric information
   */
-  class CSGeometry : public NetgenGeometry
+  class DLL_HEADER CSGeometry : public NetgenGeometry
   {
   private:
     /// all surfaces
-    SYMBOLTABLE<Surface*> surfaces;
+    SymbolTable<Surface*> surfaces;
 
   public:
     /// primitive of surface
@@ -105,18 +111,38 @@ namespace netgen
     Array<Surface*> delete_them;
 
     /// all named solids
-    SYMBOLTABLE<Solid*> solids;
+    SymbolTable<Solid*> solids;
 
     /// all 2d splinecurves
-    SYMBOLTABLE< SplineGeometry<2>* > splinecurves2d;
+    SymbolTable<shared_ptr<SplineGeometry<2>>> splinecurves2d;
     /// all 3d splinecurves
-    SYMBOLTABLE< SplineGeometry<3>* > splinecurves3d;
+    SymbolTable<shared_ptr<SplineGeometry<3>>> splinecurves3d;
 
     /// all top level objects: solids and surfaces
     Array<TopLevelObject*> toplevelobjects;
 
+  public:
     /// additional points specified by user
-    Array<Point<3> > userpoints;
+    class UserPoint : public Point<3>
+    {
+      int index;
+      string name;
+    public:
+      UserPoint() = default;
+      UserPoint (Point<3> p, int _index) : Point<3>(p), index(_index) { ; }
+      UserPoint (Point<3> p, const string & _name) : Point<3>(p), index(-1), name(_name) { ; } 
+      int GetIndex() const { return index; }
+      const string & GetName() const { return name; } 
+      void DoArchive(Archive& archive)
+      {
+        archive & index & name;
+        Point<3>::DoArchive(archive);
+      }
+    };
+    
+  private:
+    // Array<Point<3> > userpoints;
+    Array<UserPoint> userpoints;
     Array<double> userpoints_ref_factor;
 
     mutable Array<Point<3> > identpoints;
@@ -134,7 +160,7 @@ namespace netgen
     static Box<3> default_boundingbox;
 
     /// identic surfaces are stored by pair of indizes, val = inverse
-    INDEX_2_HASHTABLE<int> identicsurfaces;
+    ClosedHashTable<IVec<2>, int> identicsurfaces;
     Array<int> isidenticto;
     /// identification of boundaries (periodic, thin domains, ...)
 
@@ -143,6 +169,11 @@ namespace netgen
     /// filename of inputfile
     string filename;
 
+    /// store splinesurfaces, such that added ones do not get deleted before geometry does
+    Array<shared_ptr<SplineSurface>> spline_surfaces;
+
+    shared_ptr<BlockAllocator> solid_ball = Solid::ball;
+    
   public:
     CSGeometry ();
     CSGeometry (const string & afilename);
@@ -150,14 +181,37 @@ namespace netgen
 
     void Clean ();
 
-    virtual void Save (string filename) const;
+    virtual void Save (const filesystem::path & filename) const override;
     void Save (ostream & ost) const;
     void Load (istream & ist);
 
     void SaveSurfaces (ostream & out) const;
     void LoadSurfaces (istream & in);
 
-    virtual void SaveToMeshFile (ostream & ost) const;
+    virtual void SaveToMeshFile (ostream & ost) const override;
+
+    PointGeomInfo ProjectPoint(int surfind, Point<3> & p) const override;
+    bool ProjectPointGI (int surfind, Point<3> & p, PointGeomInfo & gi) const override;
+    void ProjectPointEdge(int surfind, int surfind2, Point<3> & p,
+                          EdgePointGeomInfo* gi = nullptr, int edgenr = -1) const override;
+    Vec<3> GetNormal(int surfind, const Point<3> & p, const PointGeomInfo* gi = nullptr) const override;
+
+    void PointBetween(const Point<3> & p1, const Point<3> & p2,
+                      double secpoint, int surfi,
+                      const PointGeomInfo & gi1,
+                      const PointGeomInfo & gi2,
+                      Point<3> & newp, PointGeomInfo & newgi) const override;
+
+    void PointBetweenEdge(const Point<3> & p1, const Point<3> & p2, double secpoint,
+                      int surfi1, int surfi2,
+                      const EdgePointGeomInfo & ap1,
+                      const EdgePointGeomInfo & ap2,
+                      Point<3> & newp, EdgePointGeomInfo & newgi,
+                      int edgenr) const override;
+
+    Vec<3> GetTangent (const Point<3> & p, int surfi1, int surfi2,
+                       const EdgePointGeomInfo & ap1,
+                       int edgenr = -1) const override;
 
     int GetChangeVal() { return changeval; }
     void Change() { changeval++; }
@@ -176,13 +230,15 @@ namespace netgen
     const Solid * GetSolid (const string & name) const;
     int GetNSolids () const { return solids.Size(); }
     const Solid * GetSolid (int i) const { return solids[i]; }
-    const SYMBOLTABLE<Solid*> & GetSolids () const { return solids; }
+    const SymbolTable<Solid*> & GetSolids () const { return solids; }
 
 
-    void SetSplineCurve (const char * name, SplineGeometry<2> * spl);
-    void SetSplineCurve (const char * name, SplineGeometry<3> * spl);
-    const SplineGeometry<2> * GetSplineCurve2d (const string & name) const;
-    const SplineGeometry<3> * GetSplineCurve3d (const string & name) const;
+    void SetSplineCurve (const char * name, shared_ptr<SplineGeometry<2>> spl);
+    void SetSplineCurve (const char * name, shared_ptr<SplineGeometry<3>> spl);
+    shared_ptr<SplineGeometry<2>> GetSplineCurve2d (const string & name) const;
+    shared_ptr<SplineGeometry<3>> GetSplineCurve3d (const string & name) const;
+
+    void DoArchive(Archive& archive) override;
     
 
     void SetFlags (const char * solidname, const Flags & flags);
@@ -210,11 +266,13 @@ namespace netgen
     void RemoveTopLevelObject (Solid * sol, Surface * surf = NULL); 
 
 
-    void AddUserPoint (const Point<3> & p, double ref_factor = 0)
-    { userpoints.Append (p); userpoints_ref_factor.Append (ref_factor); }
+    void AddUserPoint (const Point<3> & p, double ref_factor = 0)      
+    { userpoints.Append (UserPoint(p,userpoints.Size()+1)); userpoints_ref_factor.Append (ref_factor); }
+    void AddUserPoint (const UserPoint up, double ref_factor = 0)
+    { userpoints.Append (up); userpoints_ref_factor.Append (ref_factor); }
     int GetNUserPoints () const
     { return userpoints.Size(); }
-    const Point<3> & GetUserPoint (int nr) const
+    const UserPoint & GetUserPoint (int nr) const
     { return userpoints[nr]; }
     double GetUserPointRefFactor (int nr) const
     { return userpoints_ref_factor[nr]; }
@@ -246,16 +304,18 @@ namespace netgen
     void FindIdenticSurfaces (double eps);
     ///
     void GetSurfaceIndices (const Solid * sol, 
-			    const BoxSphere<3> & box, 
-			    Array<int> & locsurf) const;
+                            const BoxSphere<3> & box, 
+                            Array<int> & locsurf) const;
     ///
     void GetIndependentSurfaceIndices (const Solid * sol, 
-				       const BoxSphere<3> & box, 
-				       Array<int> & locsurf) const;
+                                       const BoxSphere<3> & box, 
+                                       Array<int> & locsurf) const;
     ///
+    /*
     void GetIndependentSurfaceIndices (const Solid * sol, 
-				       const Point<3> & p, Vec<3> & v,
-				       Array<int> & locsurf) const;
+                                       const Point<3> & p, Vec<3> & v,
+                                       Array<int> & locsurf) const;
+    */
     ///
     void GetIndependentSurfaceIndices (Array<int> & locsurf) const;
 
@@ -267,7 +327,7 @@ namespace netgen
     const TriangleApproximation * GetTriApprox (int msnr)
     {
       if (msnr < triapprox.Size())
-	return triapprox[msnr];
+        return triapprox[msnr];
       return 0;
     }
   
@@ -275,13 +335,13 @@ namespace netgen
     void IterateAllSolids (SolidIterator & it, bool only_once = false) const;
 
     void RefineTriangleApprox (Solid * locsol, 
-			       int surfind,
-			       const BoxSphere<3> & box, 
-			       double detail,
-			       const TATriangle & tria, 
-			       TriangleApproximation & tams,
-			       IndexSet & iset,
-			       int level);
+                               int surfind,
+                               const BoxSphere<3> & box, 
+                               double detail,
+                               const TATriangle & tria, 
+                               TriangleApproximation & tams,
+                               IndexSet & iset,
+                               int level);
 
     const Box<3> & BoundingBox () const { return boundingbox; }
 
@@ -311,10 +371,14 @@ namespace netgen
 
     Array<BCModification> bcmodifications;
 
-    virtual int GenerateMesh (Mesh*& mesh, MeshingParameters & mparam, 
-			      int perfstepsstart, int perfstepsend);
 
-    virtual const Refinement & GetRefinement () const; 
+    map<tuple<Surface*,Surface*>, string> named_edges;
+      
+
+    
+    virtual int GenerateMesh (shared_ptr<Mesh> & mesh, MeshingParameters & mparam) override;
+
+    void AddSplineSurface (shared_ptr<SplineSurface> ss) { spline_surfaces.Append(ss); }
   };
 
 

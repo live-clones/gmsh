@@ -223,15 +223,17 @@ void GModel::destroy(bool keepName)
   gmshSurface::reset();
 }
 
-void GModel::destroyMeshCaches()
+void GModel::destroyMeshCaches(bool keepVertexCaches)
 {
   // this is called in GEntity::deleteMesh()
 #pragma omp critical(destroyMeshCaches)
   {
-    _vertexVectorCache.clear();
-    std::vector<MVertex *>().swap(_vertexVectorCache);
-    _vertexMapCache.clear();
-    std::map<std::size_t, MVertex *>().swap(_vertexMapCache);
+    if(!keepVertexCaches) {
+      _vertexVectorCache.clear();
+      std::vector<MVertex *>().swap(_vertexVectorCache);
+      _vertexMapCache.clear();
+      std::map<std::size_t, MVertex *>().swap(_vertexMapCache);
+    }
     _elementVectorCache.clear();
     std::vector<std::pair<MElement *, int>>().swap(_elementVectorCache);
     _elementMapCache.clear();
@@ -1311,10 +1313,15 @@ int GModel::mesh(int dimension)
 
 bool GModel::setAllVolumesPositive()
 {
-  bool ok = true;
-  for(auto it = regions.begin(); it != regions.end(); ++it)
-    for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i)
-      if(!(*it)->getMeshElement(i)->setVolumePositive()) ok = false;
+  int ok = 1;
+  for(auto it = regions.begin(); it != regions.end(); ++it) {
+    const std::size_t ne = (*it)->getNumMeshElements();
+    const int nthreads = CTX::instance()->numThreadsFor(ne, 1 << 16);
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  reduction(min : ok)
+    for(std::size_t i = 0; i < ne; ++i)
+      if(!(*it)->getMeshElement(i)->setVolumePositive()) ok = 0;
+  }
   return ok;
 }
 
@@ -1902,6 +1909,94 @@ static void getDependentViewData(GModel *m, PViewDataGModel::DataType type,
   }
 }
 #endif
+
+void GModel::getMaxMeshNumbersInUse(std::size_t &maxVertex,
+                                    std::size_t &maxElement) const
+{
+  maxVertex = maxElement = 0;
+  std::vector<GEntity *> entities;
+  getEntities(entities);
+  for(GEntity *ge : entities) {
+    for(MVertex *v : ge->mesh_vertices)
+      maxVertex = std::max(maxVertex, v->getNum());
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++)
+      maxElement = std::max(maxElement, ge->getMeshElement(j)->getNum());
+  }
+}
+
+void GModel::renumberMeshCanonically(std::size_t maxVertexBefore,
+                                     std::size_t maxElementBefore)
+{
+  destroyMeshCaches();
+  std::vector<GEntity *> entities;
+  getEntities(entities);
+  const std::size_t firstV = std::max(1, CTX::instance()->mesh.firstNodeTag),
+                    firstE = std::max(1, CTX::instance()->mesh.firstElementTag);
+  std::size_t nv = std::max(maxVertexBefore, firstV - 1),
+              ne = std::max(maxElementBefore, firstE - 1);
+  for(GEntity *ge : entities) {
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      MElement *e = ge->getMeshElement(j);
+      if(e->getNum() > maxElementBefore) e->forceNum(++ne);
+    }
+  }
+  // the new nodes are told by their number: mark each with its entity (the new
+  // numbers are given once all the entities are ordered, so that they do not
+  // mix with the old ones)
+  std::size_t minNum = std::numeric_limits<std::size_t>::max(), maxNum = 0;
+  for(GEntity *ge : entities) {
+    for(MVertex *v : ge->mesh_vertices) {
+      if(v->getNum() > maxVertexBefore) {
+        minNum = std::min(minNum, v->getNum());
+        maxNum = std::max(maxNum, v->getNum());
+      }
+    }
+  }
+  if(minNum > maxNum) {
+    resetMaxVertexNumber(nv);
+    resetMaxElementNumber(ne);
+    return;
+  }
+  std::vector<unsigned int> owner(maxNum - minNum + 1, 0);
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(MVertex *v : entities[i]->mesh_vertices)
+      if(v->getNum() >= minNum) owner[v->getNum() - minNum] = i + 1;
+  auto pending = [&](MVertex *v, std::size_t i) {
+    return v->getNum() >= minNum && v->getNum() <= maxNum &&
+           owner[v->getNum() - minNum] == i + 1;
+  };
+  std::vector<std::size_t> first(entities.size());
+  std::vector<MVertex *> order;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    std::vector<MVertex *> &list = ge->mesh_vertices;
+    order.clear();
+    for(MVertex *v : list)
+      if(v->getNum() <= maxVertexBefore) order.push_back(v);
+    first[i] = order.size();
+    if(first[i] == list.size()) continue;
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      MElement *e = ge->getMeshElement(j);
+      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+        MVertex *v = e->getVertex(k);
+        if(pending(v, i)) {
+          owner[v->getNum() - minNum] = 0;
+          order.push_back(v);
+        }
+      }
+    }
+    // nodes in no element of their entity: after the others, as listed
+    for(MVertex *v : list)
+      if(pending(v, i)) order.push_back(v);
+    list.swap(order);
+  }
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    std::vector<MVertex *> &list = entities[i]->mesh_vertices;
+    for(std::size_t j = first[i]; j < list.size(); j++) list[j]->forceNum(++nv);
+  }
+  resetMaxVertexNumber(nv);
+  resetMaxElementNumber(ne);
+}
 
 void GModel::renumberMeshVertices(
   const std::map<std::size_t, std::size_t> &mapping)
@@ -3805,13 +3900,14 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
 
 void GModel::computeSizeField()
 {
-#if defined(HAVE_HXT) && defined(HAVE_P4EST)
+#if defined(HAVE_HXT) && defined(HAVE_OCTREE_SIZE_FIELD)
   FieldManager *fields = getFields();
   int myId = fields->newId();
   fields->newField(myId, std::string("AutomaticMeshSizeField"));
   fields->get(myId)->update();
 #else
-  Msg::Error("Size field computation requires both HXT and P4EST");
+  Msg::Error("Size field computation requires both HXT and OctreeSizeField "
+             "(ENABLE_OCTREE_SIZE_FIELD)");
 #endif
 }
 

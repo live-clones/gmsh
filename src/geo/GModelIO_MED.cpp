@@ -289,6 +289,46 @@ int GModel::readMED(const std::string &name)
   return ret;
 }
 
+// the nodes and the elements of a model whose tag another node elsewhere or
+// another element has (files merged in a model can repeat a tag for the same
+// node or element, e.g. the ghosts of a domain decomposition, but no other)
+static void countConflictingTags(GModel *m, std::size_t &nodes,
+                                 std::size_t &elements)
+{
+  nodes = elements = 0;
+  std::vector<GEntity *> entities;
+  m->getEntities(entities);
+  std::vector<MVertex *> vs(m->getMaxVertexNumber() + 1, nullptr);
+  for(auto ge : entities) {
+    for(auto v : ge->mesh_vertices) {
+      MVertex *&w = vs[v->getNum()];
+      if(!w)
+        w = v;
+      else if(v->distance(w) > 1e-12 * (1. + std::abs(w->x()) +
+                                        std::abs(w->y()) + std::abs(w->z())))
+        nodes++;
+    }
+  }
+  std::vector<MElement *> es(m->getMaxElementNumber() + 1, nullptr);
+  for(auto ge : entities) {
+    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+      MElement *e = ge->getMeshElement(i);
+      MElement *&f = es[e->getNum()];
+      if(!f) {
+        f = e;
+        continue;
+      }
+      bool same = (e->getTypeForMSH() == f->getTypeForMSH());
+      for(std::size_t j = 0; same && j < e->getNumVertices(); j++)
+        same = (e->getVertex(j)->point().distance(f->getVertex(j)->point()) <=
+                1e-12 * (1. + std::abs(f->getVertex(j)->x()) +
+                         std::abs(f->getVertex(j)->y()) +
+                         std::abs(f->getVertex(j)->z())));
+      if(!same) elements++;
+    }
+  }
+}
+
 int GModel::readMED(const std::string &name, int meshIndex)
 {
   med_idt fid = MEDouvrir((char *)name.c_str(), MED_LECTURE);
@@ -305,6 +345,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
 
   checkPointMaxNumbers();
   GModel::setCurrent(this); // make sure we increment max nums in this model
+  bool merged = getNumMeshVertices() > 0;
 
   // read mesh info
   char meshName[MED_TAILLE_NOM + 1], meshDesc[MED_TAILLE_DESC + 1];
@@ -587,6 +628,18 @@ int GModel::readMED(const std::string &name, int meshIndex)
         }
       }
     }
+  }
+
+  // a file merged in a model with the mesh of other files (e.g. a subdomain of
+  // a domain decomposition) should number its nodes and elements after them
+  if(merged) {
+    std::size_t nodes, elements;
+    countConflictingTags(this, nodes, elements);
+    if(nodes || elements)
+      Msg::Warning("%zu node and %zu element tags of '%s' are already those "
+                   "of other nodes or elements in model '%s': fields on them "
+                   "will be wrong", nodes, elements, name.c_str(),
+                   getName().c_str());
   }
 
   // check if we need to read some post-processing data later

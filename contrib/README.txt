@@ -2,8 +2,6 @@ The source files located in this directory are optional and not mandatory for
 standard Gmsh use. They are provided for convenience and are each covered by
 their own respective license:
 
-* ALGLIB: GNU General Public License (GPL) v. 2 or later
-* ANN: GNU Lesser General Public License
 * BoundaryLayers: GNU Affero General Public License (AGPL) v. 3 or later
 * HighOrderMeshOptimizer: MIT/X11 License
 * MathEx: GNU Lesser General Public License (LGPL) v. 2.1 or later, with static
@@ -11,9 +9,9 @@ their own respective license:
 * MeshOptimizer: MIT/X11 License
 * MeshQualityOptimizer: MIT/X11 License
 * Netgen: GNU Lesser General Public License (LGPL) v. 2.1
+* OctreeSizeField: Gmsh License
 * QuadMeshingTools: Gmsh License
 * QuadTri: Gmsh License
-* WinslowUntangler: Gmsh license
 * bamg: GNU Lesser General Public License (LGPL) v. 2.1 or later
 * blossom: Gmsh License
 * domhex: Gmsh License
@@ -31,7 +29,6 @@ their own respective license:
 * stb: MIT License or public domain (stb_truetype)
 * tinyobjloader: MIT License
 * tinyxml2: Zlib License
-* untangle: No license, freely available for non-commercial purposes
 * voro++: BSD-type License
 * zipper: Zlib License
 

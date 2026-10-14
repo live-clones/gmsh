@@ -1,0 +1,324 @@
+#ifndef NETGEN_CORE_PAJE_TRACE_HPP
+#define NETGEN_CORE_PAJE_TRACE_HPP
+
+#include <algorithm>
+#include <cstdint>
+#include <limits>
+#include <vector>
+
+#include "logging.hpp"       // for logger
+#include "ngcore_api.hpp"    // for NGCORE_API
+#include "utils.hpp"
+
+namespace ngcore
+{
+
+  extern NGCORE_API class PajeTrace *trace;
+  class PajeTrace
+    {
+    public:
+      using TClock = std::chrono::system_clock;
+
+    protected:
+      std::shared_ptr<Logger> logger = GetLogger("PajeTrace");
+    private:
+      NGCORE_API static size_t max_tracefile_size;
+      NGCORE_API static bool trace_thread_counter;
+      NGCORE_API static bool trace_threads;
+      NGCORE_API static bool mem_tracing_enabled;
+      NGCORE_API static bool write_paje_file;
+
+      NGCORE_API static size_t mem_trace_threshold;
+
+      bool tracing_enabled;
+      TTimePoint start_time;
+      TTimePoint end_time = 0;
+      int nthreads;
+
+    public:
+      NGCORE_API void Write();
+      NGCORE_API void WritePajeFile( const std::string & filename );
+      NGCORE_API void WriteTimingChart();
+
+      // Approximate number of events to trace. Tracing will
+      // be stopped if any thread reaches this number of events
+      unsigned int max_num_events_per_thread;
+
+      static void SetTraceMemory( bool trace_memory )
+        {
+          mem_tracing_enabled = trace_memory;
+        }
+
+      static void SetMemoryTraceThreshold( size_t bytes )
+        {
+          mem_trace_threshold = bytes;
+        }
+
+      static void SetTraceThreads( bool atrace_threads )
+        {
+          trace_threads = atrace_threads;
+        }
+
+      static void SetTraceThreadCounter( bool trace_threads )
+        {
+          trace_thread_counter = trace_threads;
+        }
+
+      static void SetMaxTracefileSize( size_t max_size )
+        {
+          max_tracefile_size = max_size;
+        }
+
+      static void SetWritePajeFile( bool write )
+        {
+          write_paje_file = write;
+        }
+
+      std::string tracefile_name;
+
+      struct Job
+        {
+          int job_id;
+          const std::type_info *type;
+          TTimePoint start_time;
+          TTimePoint stop_time;
+        };
+
+      struct Task
+        {
+          int thread_id;
+
+          int id;
+          int id_type;
+
+          int additional_value;
+
+          TTimePoint time;
+          bool is_start;
+
+          static constexpr int ID_NONE = -1;
+          static constexpr int ID_JOB = 1;
+          static constexpr int ID_TIMER = 2;
+        };
+
+      struct TimerEvent
+        {
+          TTimePoint time;
+          int timer_id;
+          int thread_id;
+          int custom_value = -1;
+          bool is_start;
+
+          bool operator < (const TimerEvent & other) const { return time < other.time; }
+        };
+
+      struct UserEvent
+        {
+          TTimePoint t_start = 0, t_end = 0;
+          std::string data = "";
+          int container = 0;
+          int id = 0;
+
+          bool operator < (const UserEvent & other) const { return t_start < other.t_start; }
+        };
+
+      struct ThreadLink
+        {
+          int thread_id;
+          int key;
+          TTimePoint time;
+          bool is_start;
+          bool operator < (const ThreadLink & other) const { return time < other.time; }
+        };
+
+      struct MemoryEvent
+        {
+          TTimePoint time;
+          size_t bytes;
+          uintptr_t addr;
+          unsigned char kind;   // 0 host alloc, 1 host free, 2 device alloc, 3 device free
+        };
+
+      std::vector<std::vector<Task> > tasks;
+      std::vector<Job> jobs;
+      std::vector<TimerEvent> timer_events;
+      std::vector<UserEvent> user_events;
+      std::vector<std::tuple<std::string, int>> user_containers;
+      std::vector<TimerEvent> gpu_events;
+      std::vector<std::vector<ThreadLink> > links;
+      std::vector<std::vector<MemoryEvent> > memory_events;   // per thread
+
+    public:
+      NGCORE_API void StopTracing();
+
+      PajeTrace() = delete;
+      PajeTrace(const PajeTrace &) = delete;
+      PajeTrace(PajeTrace &&) = delete;
+      NGCORE_API PajeTrace(int anthreads, std::string aname = "");
+      NGCORE_API ~PajeTrace();
+
+      void operator=(const PajeTrace &) = delete;
+      void operator=(PajeTrace &&) = delete;
+
+      int AddUserContainer(std::string name, int parent=-1)
+      {
+        if(auto pos = std::find(user_containers.begin(), user_containers.end(), std::tuple{name,parent}); pos != user_containers.end())
+          return pos - user_containers.begin();
+        int id = user_containers.size();
+        user_containers.push_back({name, parent});
+        return id;
+      }
+
+      void AddUserEvent(UserEvent ue)
+      {
+          if(!tracing_enabled) return;
+          if(unlikely(user_events.size() == max_num_events_per_thread))
+            { StopTracing(); return; }
+          user_events.push_back(ue);
+      }
+      void StartGPU(int timer_id = 0, int user_value = -1)
+        {
+          if(!tracing_enabled) return;
+          if(unlikely(gpu_events.size() == max_num_events_per_thread))
+            { StopTracing(); return; }
+          gpu_events.push_back(TimerEvent{GetTimeCounter(), timer_id, 0, user_value, true});
+        }
+
+      void StopGPU(int timer_id)
+        {
+          if(!tracing_enabled) return;
+          if(unlikely(gpu_events.size() == max_num_events_per_thread))
+            { StopTracing(); return; }
+          gpu_events.push_back(TimerEvent{GetTimeCounter(), timer_id, 0, -1, false});
+        }
+
+      // a finished gpu kernel, times measured by the device, converted to host ticks
+      void AddGPUEvent(int timer_id, TTimePoint t_start, TTimePoint t_stop)
+        {
+          if(!tracing_enabled) return;
+          if(unlikely(gpu_events.size()+2 >= max_num_events_per_thread))
+            { StopTracing(); return; }
+          gpu_events.push_back(TimerEvent{t_start, timer_id, 0, -1, true});
+          gpu_events.push_back(TimerEvent{t_stop, timer_id, 0, -1, false});
+        }
+
+      void StartTimer(int timer_id, int user_value = -1)
+        {
+          if(!tracing_enabled) return;
+          if(unlikely(timer_events.size() == max_num_events_per_thread))
+            { StopTracing(); return; }
+          timer_events.push_back(TimerEvent{GetTimeCounter(), timer_id, 0, user_value, true});
+        }
+
+      void StopTimer(int timer_id)
+        {
+          if(!tracing_enabled) return;
+          if(unlikely(timer_events.size() == max_num_events_per_thread))
+            { StopTracing(); return; }
+          timer_events.push_back(TimerEvent{GetTimeCounter(), timer_id, 0, -1, false});
+        }
+
+      // called through the MemTrace* hooks in memtrace.hpp
+      NGCORE_API void AddMemoryEvent(const void * p, size_t bytes, unsigned char kind);
+
+
+      int StartTask(int thread_id, int id, int id_type = Task::ID_NONE, int additional_value = -1)
+        {
+          if(!tracing_enabled) return -1;
+          if(!trace_threads && !trace_thread_counter) return -1;
+          if(unlikely(tasks[thread_id].size() == max_num_events_per_thread))
+            { StopTracing(); return -1; }
+          int task_num = tasks[thread_id].size();
+          tasks[thread_id].push_back( Task{thread_id, id, id_type, additional_value, GetTimeCounter(), true} );
+          return task_num;
+        }
+
+      void StopTask(int thread_id, int id, int id_type = Task::ID_NONE)
+        {
+          if(!tracing_enabled) return;
+          if(!trace_threads && !trace_thread_counter) return;
+          tasks[thread_id].push_back( Task{thread_id, id, id_type, 0, GetTimeCounter(), false} );
+        }
+
+      int StartJob(int job_id, const std::type_info & type)
+        {
+          if(!tracing_enabled) return -1;
+          if(jobs.size() == max_num_events_per_thread)
+            { StopTracing(); return -1; }
+          jobs.push_back( Job{job_id, &type, GetTimeCounter()} );
+          return jobs.size()-1;
+        }
+
+      void StopJob(int index)
+        {
+          if(index >= 0)
+            jobs[index].stop_time = GetTimeCounter();
+        }
+
+      void StartLink(int thread_id, int key)
+        {
+          if(!tracing_enabled) return;
+          if(links[thread_id].size() == max_num_events_per_thread)
+            { StopTracing(); return; }
+          links[thread_id].push_back( ThreadLink{thread_id, key, GetTimeCounter(), true} );
+        }
+
+      void StopLink(int thread_id, int key)
+        {
+          if(!tracing_enabled) return;
+          if(links[thread_id].size() == max_num_events_per_thread)
+            { StopTracing(); return; }
+          links[thread_id].push_back( ThreadLink{thread_id, key, GetTimeCounter(), false} );
+        }
+
+      void SendData(); // MPI parallel data reduction
+
+    };
+
+
+  /*
+    A named container for events an application produces itself, e.g. one
+    per gpu queue. Intervals are given in host ticks, or on another clock
+    (a device timer) mapped through the anchor taken after a sync.
+  */
+  class TraceContainer
+    {
+      std::string name;
+      int id = -1;
+      PajeTrace * id_trace = nullptr;   // container ids are per trace
+      TTimePoint anchor_tick = 0;
+      double anchor_time = 0;
+
+    public:
+      TraceContainer (std::string aname) : name(std::move(aname)) { }
+
+      bool Active() const { return trace != nullptr; }
+
+      // value: one integer stored with the event (e.g. bytes of a transfer)
+      void AddTicks (const std::string & label, TTimePoint t0, TTimePoint t1, int value = 0)
+        {
+          if(!trace) return;
+          if(id_trace != trace)
+            {
+              id = trace->AddUserContainer(name);
+              id_trace = trace;
+            }
+          trace->AddUserEvent({t0, t1, label, id, value});
+        }
+
+      void Anchor (double clock_now)
+        {
+          anchor_tick = GetTimeCounter();
+          anchor_time = clock_now;
+        }
+
+      void AddInterval (const std::string & label, double t0, double t1, int value = 0)
+        { AddTicks(label, Tick(t0), Tick(t1), value); }
+
+    private:
+      TTimePoint Tick (double t) const
+        { return anchor_tick + (long long) ((t-anchor_time) / seconds_per_tick); }
+    };
+} // namespace ngcore
+
+#endif // NETGEN_CORE_PAJE_TRACE_HPP

@@ -164,9 +164,10 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v)
 
   unsigned int col = getColorByVertex(e, v);
   gmshColor4ubv((const void *)&col);
-  double offset = (0.5 * CTX::instance()->mesh.nodeSize +
-                   0.1 * CTX::instance()->glFontSize) *
-                  ctx->pixel_equiv_x;
+  double offset =
+    (0.5 * CTX::instance()->mesh.nodeSize * ctx->pointPixelFactor() +
+     0.1 * CTX::instance()->glFontSize) *
+    ctx->pixel_equiv_x;
   ctx->drawString(str, v->x() + offset / ctx->s[0], v->y() + offset / ctx->s[1],
                   v->z() + offset / ctx->s[2]);
 }
@@ -250,6 +251,7 @@ static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
 {
   glyphToken tok;
   tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+  tok.add(ctx->pointPixelFactor());
   tok.add(CTX::instance()->mesh.nodeSize);
   tok.add(CTX::instance()->mesh.nodeType);
   tok.add(CTX::instance()->mesh.colorCarousel);

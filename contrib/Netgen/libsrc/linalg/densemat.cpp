@@ -15,14 +15,15 @@ namespace netgen
   DenseMatrix :: DenseMatrix (int h, int w)
   {
     if (!w) w = h;
-    width = w;
+    width = w; 
     height = h;
-    if (h*w)
-      data = new double[h*w];
+    int hw = h*w;
+    if (hw)
+      data = new double[hw];
     else 
       data = 0;
 
-    for (int i = 0 ; i < (h * w); i++)
+    for (int i = 0 ; i < (hw); i++)
       data[i] = 0;
   }
 
@@ -48,7 +49,8 @@ namespace netgen
   {
     data = NULL; height = width = 0;
     SetSize (m2.Height(), m2.Width());
-    memcpy (data, m2.data, sizeof(double) * Height() * Width());
+    if (Height() && Width())
+      memcpy (data, m2.data, sizeof(double) * (Height() * Width()));
   }
 
   DenseMatrix :: ~DenseMatrix ()
@@ -68,7 +70,7 @@ namespace netgen
     
     delete[] data;
     
-    if (h*w)  
+    if (h && w)  
       data = new double[h*w];
     else
       data = NULL;
@@ -110,15 +112,14 @@ namespace netgen
     
     if (Height() != m2.Height() || Width() != m2.Width())
       {
-        (*myerr) << "DenseMatrix::Operator+=: Sizes don't fit" << endl;
-        return *this;
+        throw Exception ("DenseMatrix::operator+=: sizes don't fit");
       }
     
     if (data)
       {
-	p = data;
-	q = m2.data;
-	for (i = Width() * Height(); i > 0; i--)
+        p = data;
+        q = m2.data;
+        for (i = Width() * Height(); i > 0; i--)
           {
             *p += *q;
             p++;
@@ -126,7 +127,7 @@ namespace netgen
           }
       }
     else
-      (*myerr) << "DenseMatrix::Operator+=: Matrix not allocated" << endl;
+      throw Exception ("DenseMatrix::operator+=: matrix not allocated");
 
     return *this;
   }
@@ -139,8 +140,7 @@ namespace netgen
 
     if (Height() != m2.Height() || Width() != m2.Width())
       {
-        (*myerr) << "DenseMatrix::Operator-=: Sizes don't fit" << endl;
-        return *this;
+        throw Exception ("DenseMatrix::operator-=: sizes don't fit");
       }
 
     if (data)
@@ -155,7 +155,7 @@ namespace netgen
           }
       }
     else
-      (*myerr) << "DenseMatrix::Operator-=: Matrix not allocated" << endl;
+      throw Exception ("DenseMatrix::operator-=: matrix not allocated");
 
     return *this;
   }
@@ -189,8 +189,7 @@ namespace netgen
   {
     if (width != height)
       {
-        (*myerr) << "DenseMatrix :: Det: width != height" << endl;
-        return 0;
+        throw Exception ("DenseMatrix::Det: width != height");
       }
 
     switch (width)
@@ -205,8 +204,7 @@ namespace netgen
           - data[2] * data[4] * data[6];
       default:
         {
-          (*myerr) << "Matrix :: Det:  general size not implemented (size=" << width << ")" << endl;
-          return 0;
+          throw Exception ("DenseMatrix::Det: general size not implemented (size=" + ToString(width) + ")");
         }
       }
   }
@@ -218,13 +216,11 @@ namespace netgen
 
     if (m1.Width() != m1.Height())
       {
-        (*myerr) << "CalcInverse: matrix not symmetric" << endl;
-        return;
+        throw Exception ("CalcInverse: matrix not square");
       }
     if (m1.Width() != m2.Width() || m1.Height() != m2.Height())
       {
-        (*myerr) << "CalcInverse: dim(m2) != dim(m1)" << endl;
-        return;
+        throw Exception ("CalcInverse: dim(m2) != dim(m1)");
       }
 
 
@@ -233,7 +229,6 @@ namespace netgen
         det = m1.Det();
         if (det == 0)
           {
-            (*myerr) << "CalcInverse: Matrix singular" << endl;
             (*testout) << "CalcInverse: Matrix singular" << endl;
             return;
           }
@@ -300,7 +295,7 @@ namespace netgen
         for (i = 1; i <= n; i++)
           {
             if (dots && i % 10 == 0)
-              (*mycout) << "." << flush;
+              cout << "." << flush;
 
             for (j = i; j <= n; j++)
               {
@@ -311,7 +306,7 @@ namespace netgen
 
                 for (k = i-2; k >= 0; --k, ++pik, ++pjk)
                   x -= (*pik) * (*pjk);
-		  
+                  
                 // for (k = i-1; k >= 1; --k)
                 //   x -= m2.Get(j, k) * m2.Get(i, k);
 
@@ -322,7 +317,7 @@ namespace netgen
                         cerr << "Matrix indefinite 1" << endl;
                         return;
                       }
-		  
+                  
                     p.Elem(i) = 1 / sqrt(x);
                   }
                 else
@@ -338,13 +333,13 @@ namespace netgen
         // check: A = L L^t
 
         //       for (i = 1; i <= n; i++)
-        // 	for (j = 1; j <= n; j++)
-        // 	  {
-        // 	    x = 0;
-        // 	    for (k = 1; k <= i && k <= j; k++)
-        // 	      x += m2.Get(i, k) * m2.Get(j, k);
-        // 	    (*testout) << "err " << i << "," << j << " = " << (m1.Get(i, j) - x) << endl;
-        // 	  }
+        //      for (j = 1; j <= n; j++)
+        //        {
+        //          x = 0;
+        //          for (k = 1; k <= i && k <= j; k++)
+        //            x += m2.Get(i, k) * m2.Get(j, k);
+        //          (*testout) << "err " << i << "," << j << " = " << (m1.Get(i, j) - x) << endl;
+        //        }
 
 
       
@@ -356,7 +351,7 @@ namespace netgen
         for (i = 1; i <= n; i++)
           {
             if (dots && i % 10 == 0)
-              (*mycout) << "+" << flush;
+              cout << "+" << flush;
 
             for (j = i; j <= n; j++)
               {
@@ -377,13 +372,13 @@ namespace netgen
       
         //      (*testout) << "check L^-1" << endl;
         //      for (i = 1; i <= n; i++)
-        // 	for (j = 1; j <= n; j++)
-        // 	  {
-        // 	    x = 0;
-        // 	    for (k = j; k <= i; k++)
-        // 	      x += hm.Get(i, k) * m2.Get(j, k);
-        // 	    (*testout) << "i, j = " << i << "," << j << " x = " << x << endl;
-        // 	  }
+        //      for (j = 1; j <= n; j++)
+        //        {
+        //          x = 0;
+        //          for (k = j; k <= i; k++)
+        //            x += hm.Get(i, k) * m2.Get(j, k);
+        //          (*testout) << "i, j = " << i << "," << j << " x = " << x << endl;
+        //        }
 
 
         // calc A^-1 = L^-T * L^-1
@@ -391,7 +386,7 @@ namespace netgen
         for (i = 1; i <= n; i++)
           {
             if (dots && i % 10 == 0)
-              (*mycout) << "-" << flush;
+              cout << "-" << flush;
 
             for (j = 1; j <= i; j++)
               {
@@ -406,16 +401,16 @@ namespace netgen
                   x += *pik * *pjk;
                 // for (  ; k <= n; k++)
                 //   x += m2.Get(i, k) * m2.Get(j, k);
-	      
+              
                 m2.Elem(i, j) = x;
               }
           }
-	  
+          
         for (i = 1; i <= n; i++)
           for (j = 1; j < i; j++)
             m2.Elem(j, i) = m2.Get(i, j);
       
-        if (dots) (*mycout) << endl;
+        if (dots) cout << endl;
 #endif
 
 
@@ -442,31 +437,31 @@ namespace netgen
         // Algorithm of Stoer, Einf. i. d. Num. Math, S 145
       
         for (j = 1; j <= n; j++)
-          p.Set(j, j);
+          p[j-1] = j;
       
         for (j = 1; j <= n; j++)
           {
             // pivot search
-	  
+          
             max = fabs(m2.Get(j, j));
             r = j;
-	  
+          
             for (i = j+1; i <= n ;i++)
               if (fabs (m2.Get(i, j)) > max)
                 {
                   r = i;
                   max = fabs (m2.Get(i, j));
                 }
-	  
+          
             if (max < 1e-20)
               {
                 cerr << "Inverse matrix: matrix singular" << endl;
                 *testout << "Inverse matrix: matrix singular" << endl;
                 return;
               }
-	  
+          
             r = j;
-	  
+          
             // exchange rows
             if (r > j)
               {
@@ -476,19 +471,19 @@ namespace netgen
                     m2.Elem(j, k) = m2.Get(r, k);
                     m2.Elem(r, k) = hr;
                   }
-                hi = p.Get(j);
-                p.Elem(j) = p.Get(r);
-                p.Elem(r) = hi;
+                hi = p[j-1];
+                p[j-1] = p[r-1];
+                p[r-1] = hi;
               }
-	  
-	  
+          
+          
             // transformation
-	  
+          
             hr = 1 / m2.Get(j, j);
             for (i = 1; i <= n; i++)
               m2.Elem(i, j) *= hr;
             m2.Elem(j, j) = hr;
-	  
+          
             for (k = 1; k <= n; k++)
               if (k != j)
                 {
@@ -504,7 +499,7 @@ namespace netgen
         for (i = 1; i <= n; i++)
           {
             for (k = 1; k <= n; k++)
-              hv(p.Get(k)-1) = m2.Get(i, k);
+              hv(p[k-1]-1) = m2.Get(i, k);
             for (k = 1; k <= n; k++)
               m2.Elem(i, k) = hv(k-1);
           }
@@ -515,7 +510,7 @@ namespace netgen
           if (m1.Symmetric())
           for (i = 1; i <= n; i++)
           for (j = 1; j < i; j++)
-	  m1.Elem(j, i) = m1.Get(i, j);
+          m1.Elem(j, i) = m1.Get(i, j);
 
           m2 = 0;
     
@@ -524,7 +519,7 @@ namespace netgen
       
           for (i = 1; i <= n; i++)
           {
-          //	(*mycout) << '.' << flush;
+          //    cout << '.' << flush;
           q = m1.Get(i, i);
           for (k = 1; k <= n; k++)
           {
@@ -553,36 +548,36 @@ namespace netgen
           //          m1.Elem(j, k) -= q * m1.Elem(i, k);
           //          m2.Elem(j, k) -= q * m2.Elem(i, k);
           //          }
-	  
+          
           }
           }  
             
           for (i = n; i >= 1; i--)
           {
-          //	(*mycout) << "+" << flush;
+          //    cout << "+" << flush;
           for (j = 1; j < i; j++)
-	  {
+          {
           q = m1.Elem(j, i);
 
           double * m2pi = &m2.Elem(i, 1);
           double * m2pj = &m2.Elem(j, 1);
 
           for (k = n; k > 0; --k, ++m2pi, ++m2pj)
-          *m2pj -= q * (*m2pi);	    
+          *m2pj -= q * (*m2pi);     
 
-	    
-          //	    for (k = 1; k <= n; k++)
-          //	      {
-          //		m1.Elem(j, k) -= q * m1.Elem(i, k);
-          //		m2.Elem(j, k) -= q * m2.Elem(i, k);
-          //	      }    
-	  }         
+            
+          //        for (k = 1; k <= n; k++)
+          //          {
+          //            m1.Elem(j, k) -= q * m1.Elem(i, k);
+          //            m2.Elem(j, k) -= q * m2.Elem(i, k);
+          //          }    
+          }         
           }
 
           if (m2.Symmetric())
           {
           for (i = 1; i <= n; i++)
-	  for (j = 1; j < i; j++)
+          for (j = 1; j < i; j++)
           m2.Elem(i, j) = m2.Elem(j, i);
           }
         */
@@ -600,8 +595,7 @@ namespace netgen
 
     if (m2.Height() != n1 || m2.Width() != n1)
       {
-        (*myerr) << "CalcAAt: sizes don't fit" << endl;
-        return;
+        throw Exception ("CalcAAt: sizes don't fit");
       }
 
     for (i = 1; i <= n1; i++)
@@ -645,8 +639,7 @@ namespace netgen
 
     if (m2.Height() != n2 || m2.Width() != n2)
       {
-        (*myerr) << "CalcAtA: sizes don't fit" << endl;
-        return;
+        throw Exception ("CalcAtA: sizes don't fit");
       }
 
     for (i = 1; i <= n2; i++)
@@ -671,8 +664,7 @@ namespace netgen
 
     if (m2.Height() != n1 || m2.Width() != n3 || b.Width() != n2)
       {
-        (*myerr) << "CalcABt: sizes don't fit" << endl;
-        return;
+        throw Exception ("CalcABt: sizes don't fit");
       }
 
     double * pm2 = &m2.Elem(1, 1);
@@ -685,13 +677,13 @@ namespace netgen
           {
             sum = 0;
             const double * pa = pa1;
-	  
+          
             for (k = 1; k <= n2; k++)
               {
                 sum += *pa * *pb;
                 pa++; pb++;
               }
-	  
+          
             *pm2 = sum;
             pm2++;
           }
@@ -709,8 +701,7 @@ namespace netgen
 
     if (m2.Height() != n2 || m2.Width() != n3 || b.Height() != n1)
       {
-        (*myerr) << "CalcAtB: sizes don't fit" << endl;
-        return;
+        throw Exception ("CalcAtB: sizes don't fit");
       }
 
     for (i = 1; i <= n2 * n3; i++)
@@ -725,8 +716,8 @@ namespace netgen
 
           for (k = 1; k <= n3; ++k, ++pm2, ++pb)
             *pm2 += va * *pb;
-          //	for (k = 1; k <= n3; k++)
-          //	  m2.Elem(j, k) += va * b.Get(i, k);
+          //    for (k = 1; k <= n3; k++)
+          //      m2.Elem(j, k) += va * b.Get(i, k);
         }
     /*
       for (i = 1; i <= n2; i++)
@@ -751,17 +742,8 @@ namespace netgen
     DenseMatrix temp (m1.Height(), m2.Width());
 
     if (m1.Width() != m2.Height())
-      {
-        (*myerr) << "DenseMatrix :: operator*: Matrix Size does not fit" << endl;
-      }
-    else if (temp.Height() != m1.Height())
-      {
-        (*myerr) << "DenseMatrix :: operator*: temp not allocated" << endl;
-      }
-    else
-      {
-        Mult (m1, m2, temp);
-      }
+      throw Exception ("DenseMatrix::operator*: matrix sizes don't fit");
+    Mult (m1, m2, temp);
     return temp;
   }
 
@@ -774,11 +756,9 @@ namespace netgen
     if (m1.Width() != m2.Height() || m1.Height() != m3.Height() ||
         m2.Width() != m3.Width() )
       {
-        (*myerr) << "DenseMatrix :: Mult: Matrix Size does not fit" << endl;
-        (*myerr) << "m1: " << m1.Height() << " x " << m1.Width() << endl;
-        (*myerr) << "m2: " << m2.Height() << " x " << m2.Width() << endl;
-        (*myerr) << "m3: " << m3.Height() << " x " << m3.Width() << endl;
-        return;
+        throw Exception ("DenseMatrix::Mult: matrix sizes don't fit, m1: " + ToString(m1.Height()) + " x " + ToString(m1.Width())
+                         + ", m2: " + ToString(m2.Height()) + " x " + ToString(m2.Width())
+                         + ", m3: " + ToString(m3.Height()) + " x " + ToString(m3.Width()));
       }
     /*
       else if (m1.Symmetric() || m2.Symmetric() || m3.Symmetric())
@@ -801,16 +781,16 @@ namespace netgen
           const double * pm1 = &m1.Get(1, 1);
           for (i = 1; i <= n1; i++)
           {
-	  const double * pm2 = &m2.Get(1, 1);
-	  double * pm3i = &m3.Elem(i, 1);
+          const double * pm2 = &m2.Get(1, 1);
+          double * pm3i = &m3.Elem(i, 1);
 
-	  for (j = 1; j <= n3; j++)
+          for (j = 1; j <= n3; j++)
           {
           const double vm1 = *pm1;
           ++pm1;
-          //	      const double vm1 = m1.Get(i, j);
+          //          const double vm1 = m1.Get(i, j);
           double * pm3 = pm3i;
-          //	      const double * pm2 = &m2.Get(j, 1);
+          //          const double * pm2 = &m2.Get(j, 1);
 
           for (k = 0; k < n2; k++)
           {
@@ -819,31 +799,31 @@ namespace netgen
           ++pm3;
           }
 
-          //	    for (k = 1; k <= n2; k++)
-          //	      m3.Elem(i, k) += m1.Get(i, j) * m2.Get(j, k);
+          //        for (k = 1; k <= n2; k++)
+          //          m3.Elem(i, k) += m1.Get(i, j) * m2.Get(j, k);
           }
           }
-	*/
+        */
 
         /*
           for (i = 1; i <= n1; i++)
           for (j = 1; j <= n2; j++)
-	  {
+          {
           sum = 0;
           for (k = 1; k <= n3; k++)
           sum += m1.Get(i, k) * m2.Get(k, j);
           m3.Set(i, j, sum);
-	  }
+          }
         */
 
 
         /*
           for (i = 1; i <= n1; i++)
           {
-	  const double pm1i = &m1.Get(i, 1);
-	  const double pm2j = &m2.Get(1, 1);
+          const double pm1i = &m1.Get(i, 1);
+          const double pm2j = &m2.Get(1, 1);
 
-	  for (j = 1; j <= n2; j++)
+          for (j = 1; j <= n2; j++)
           {
           double sum = 0;
           const double * pm1 = pm1i;
@@ -856,11 +836,11 @@ namespace netgen
           ++pm1;
           pm2 += n2;
           }
-	      
+              
           m3.Set (i, j, sum);
           }
           }
-	*/
+        */
 
 
         p3 = m3.data;
@@ -872,7 +852,7 @@ namespace netgen
           {
             p1sn = p1s + n3;
             p2s = m2.data;
-	  
+          
             while (p2s != p2sn)
               {
                 sum = 0;
@@ -901,21 +881,10 @@ namespace netgen
     int i, j;
 
     if (m1.Width() != m2.Width() || m1.Height() != m2.Height())
-      {
-        (*myerr) << "BaseMatrix :: operator+: Matrix Size does not fit" << endl;
-      }
-    else if (temp.Height() != m1.Height())
-      {
-        (*myerr) << "BaseMatrix :: operator+: temp not allocated" << endl;
-      }
-    else
-      {
-        for (i = 1; i <= m1.Height(); i++)
-          for (j = 1; j <= m1.Width(); j++)
-            {
-              temp.Set(i, j, m1.Get(i, j) + m2.Get(i, j));
-            }
-      }
+      throw Exception ("DenseMatrix::operator+: matrix sizes don't fit");
+    for (i = 1; i <= m1.Height(); i++)
+      for (j = 1; j <= m1.Width(); j++)
+        temp.Set(i, j, m1.Get(i, j) + m2.Get(i, j));
     return temp;
   }
 
@@ -971,14 +940,9 @@ namespace netgen
     }
 
     if (m != v.Size())
-    {
-    (*myerr) << "\nMatrix and Vector don't fit" << endl;
-    }
-    else if (Height() != prod.Size())
-    {
-    (*myerr) << "Base_Matrix::operator*(Vector): prod vector not ok" << endl;
-    }
-    else
+      throw Exception ("DenseMatrix::Mult: matrix and vector don't fit");
+    if (Height() != prod.Size())
+      throw Exception ("DenseMatrix::Mult: prod vector size not ok");
     #endif
     {
     if (Symmetric())
@@ -1012,7 +976,7 @@ namespace netgen
     {
     sum = 0;
     sp = &v.Get(1);
-	      
+              
     for (int j = 1; j <= m; j++)
     {
     //        sum += Get(i,j) * v.Get(j);
@@ -1020,7 +984,7 @@ namespace netgen
     mp++;
     sp++;
     }
-	      
+              
     //      prod.Set (i, sum);
     *dp = sum;
     dp++;
@@ -1050,7 +1014,7 @@ namespace netgen
       int i, j;
       int w = Width(), h = Height();
       if (prod.Size() != w)
-	prod.SetSize (w);
+        prod.SetSize (w);
 
       const double * pmat = &Get(1, 1);
       const double * pv = &v(0);
@@ -1058,30 +1022,30 @@ namespace netgen
       prod = 0;
 
       for (i = 1; i <= h; i++)
-	{
-	  double val = *pv;
-	  ++pv;
+        {
+          double val = *pv;
+          ++pv;
 
-	  double * pprod = &prod(0);
+          double * pprod = &prod(0);
 
-	  for (j = w-1; j >= 0; --j, ++pmat, ++pprod)
-	    {
-	      *pprod += val * *pmat;
-	    }
-	}
-	
+          for (j = w-1; j >= 0; --j, ++pmat, ++pprod)
+            {
+              *pprod += val * *pmat;
+            }
+        }
+        
       /*
         double sum;
 
         for (i = 1; i <= Width(); i++)
-	{
+        {
         sum = 0;
-	  
+          
         for (int j = 1; j <= Height(); j++)
         sum += Get(j, i) * v.Get(j);
-	  
+          
         prod.Set (i, sum);
-	}
+        }
       */
     }
   }
@@ -1098,28 +1062,23 @@ namespace netgen
     res.SetSize (Height());
 
     if (Width() != x.Size() || Height() != b.Size())
-      {
-        (*myerr) << "\nMatrix and Vector don't fit" << endl;
-      }
-    else if (Height() != res.Size())
-      {
-        (*myerr) << "Base_Matrix::operator*(Vector): prod vector not ok" << endl;
-      }
-    else
+      throw Exception ("DenseMatrix::Residuum: matrix and vector don't fit");
+    if (Height() != res.Size())
+      throw Exception ("DenseMatrix::Residuum: res vector size not ok");
       {
         int h = Height(); 
         int w = Width();
         const double * mp = &Get(1, 1);
 
-        for (int i = 1; i <= h; i++)
+        for (int i = 0; i < h; i++)
           {
-            sum = b(i-1);
+            sum = b(i);
             const double * xp = &x(0);
 
             for (int j = 1; j <= w; ++j, ++mp, ++xp)
               sum -= *mp * *xp;
-	  
-            res(i-1) = sum;
+          
+            res(i) = sum;
           }
       }
   }
@@ -1133,7 +1092,7 @@ namespace netgen
 
     if (Width() != hx.Size() || Height() != hx.Size())
       {
-        (*myerr) << "Matrix::EvaluateBilinearForm: sizes don't fit" << endl;
+        throw Exception ("DenseMatrix::EvaluateBilinearForm: sizes don't fit");
       }
     else
       {
@@ -1169,7 +1128,7 @@ namespace netgen
                 hy.Elem(pnum.Get(i)) += Get(i, j) * hx.Get(pnum.Get(j));
                 hy.Elem(pnum.Get(j)) += Get(i, j) * hx.Get(pnum.Get(i));
               }
-            hy.Elem(pnum.Get(j)) += Get(i, i) * hx.Get(pnum.Get(i));	
+            hy.Elem(pnum.Get(j)) += Get(i, i) * hx.Get(pnum.Get(i));    
           }
       }
     else
@@ -1209,20 +1168,17 @@ namespace netgen
 
     if (Width() != Height())
       {
-        (*myerr) << "SolveDestroy: Matrix not square";
-        return;
+        throw Exception ("SolveDestroy: matrix not square");
       }
     if (Width() != v.Size())
       {
-        (*myerr) << "SolveDestroy: Matrix and Vector don't fit";
-        return;
+        throw Exception ("SolveDestroy: matrix and vector don't fit");
       }
 
     sol = v;
     if (Height() != sol.Size())
       {
-        (*myerr) << "SolveDestroy: Solution Vector not ok";
-        return;
+        throw Exception ("SolveDestroy: solution vector size not ok");
       }
 
 
@@ -1245,7 +1201,7 @@ namespace netgen
       
         for (i = 1; i <= n; i++)
           {
-            // (*mycout) << "." << flush;
+            // cout << "." << flush;
             for (j = i; j <= n; j++)
               {
                 x = Get(i, j);
@@ -1255,7 +1211,7 @@ namespace netgen
 
                 for (k = i-2; k >= 0; --k, ++pik, ++pjk)
                   x -= (*pik) * (*pjk);
-		  
+                  
                 // for (k = i-1; k >= 1; --k)
                 //   x -= Get(j, k) * Get(i, k);
 
@@ -1266,7 +1222,7 @@ namespace netgen
                         cerr << "Matrix indefinite" << endl;
                         return;
                       }
-		  
+                  
                     p(i-1) = 1 / sqrt(x);
                   }
                 else
@@ -1296,8 +1252,8 @@ namespace netgen
 
             for (int j = 1; j < i; j++, ++pij, ++solj)
               val -= *pij * *solj;
-            //	  for (j = 1; j < i; j++)
-            //	    val -= Get(i, j) * sol.Get(j);
+            //    for (j = 1; j < i; j++)
+            //      val -= Get(i, j) * sol.Get(j);
 
             sol(i-1) = val / Get(i, i);
           }
@@ -1314,15 +1270,15 @@ namespace netgen
 
             for (j = 1; j < i; ++j, ++pij, ++solj)
               *solj -= val * *pij;
-            //	  for (j = 1; j < i; j++)
-            //	    sol.Elem(j) -= Get(i, j) * val;
+            //    for (j = 1; j < i; j++)
+            //      sol.Elem(j) -= Get(i, j) * val;
           }
 
 
       }
     else
       {
-        //      (*mycout) << "gauss" << endl;
+        //      cout << "gauss" << endl;
         int n = Height();
         for (int i = 1; i <= n; i++)
           {
@@ -1336,9 +1292,9 @@ namespace netgen
 
                     for (int k = i+1; k <= n; ++k, ++pik, ++pjk)
                       *pjk -= q * *pik;
-		  
+                  
                     //  for (k = i+1; k <= Height(); k++)
-                    //	Elem(j, k) -= q * Get(i,k);
+                    //  Elem(j, k) -= q * Get(i,k);
 
 
                     sol(j-1) -= q * sol(i-1);
@@ -1350,7 +1306,7 @@ namespace netgen
           {
             q = sol(i-1);
             for (int j = i+1; j <= n; j++)
-	      q -= Get(i,j) * sol(j-1);
+              q -= Get(i,j) * sol(j-1);
 
             sol(i-1) = q / Get(i,i);
           }
@@ -1379,6 +1335,6 @@ namespace netgen
     return ost;
   }
 
-
+  
 
 }

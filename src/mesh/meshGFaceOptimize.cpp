@@ -1161,8 +1161,6 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
           else {
             MElement *t1 = n2t[i1];
             MElement *t2 = n2t[i2];
-            touched.insert(t1);
-            touched.insert(t2);
             MVertex *other = nullptr;
             for(int i = 0; i < 3; i++) {
               if(t1->getVertex(0) != t2->getVertex(i) &&
@@ -1172,6 +1170,10 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
                 break;
               }
             }
+            // two triangles with the same nodes cannot make a quadrangle
+            if(!other) continue;
+            touched.insert(t1);
+            touched.insert(t2);
             int start = 0;
             for(int i = 0; i < 3; i++) {
               if(t2->getVertex(0) != t1->getVertex(i) &&
@@ -1278,24 +1280,34 @@ static double printStats(GFace *gf, const char *message)
   return Qmin;
 }
 
-// The topological optimization routines assume that a full topology of the
-// model exists. When reading multi-surface STL files for example, if
-// CreateTopology or ReclassifySurfaces is not called, quads can have nodes
-// owned by an adjacent surface. Since the topological optimization routines
-// remove nodes, this will produce an invalide model mesh (and crash).
-static bool _isModelOkForTopologicalOpti(GModel *m)
+// The topological optimization routines remove nodes of gf, which assumes a
+// complete mesh topology: in multi-surface STL files read without
+// CreateTopology or ReclassifySurfaces, elements of a surface can have nodes
+// owned by an adjacent surface, and removing them leaves an invalid mesh (and
+// crashes). The elements of gf must thus only use nodes of gf or of curves and
+// points, and the other surfaces must not use nodes of gf - which can only be
+// looked at when no other thread is meshing them (parallel Mesh2D), where gf
+// was just remeshed and its nodes are new to the other surfaces anyway
+static bool _isFaceOkForTopologicalOpti(GFace *gf)
 {
-  for(auto it = m->firstFace(); it != m->lastFace(); it++) {
-    GFace *gf = *it;
-    for(std::size_t j = 0; j < gf->getNumMeshElements(); j++) {
-      MElement *e = gf->getMeshElement(j);
-      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
-        GEntity *ge = e->getVertex(k)->onWhat();
-        if(!ge) return false;
-        if(ge->dim() == 2 && ge != gf) return false;
-      }
+  for(std::size_t j = 0; j < gf->getNumMeshElements(); j++) {
+    MElement *e = gf->getMeshElement(j);
+    for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+      GEntity *ge = e->getVertex(k)->onWhat();
+      if(!ge) return false;
+      if(ge->dim() == 2 && ge != gf) return false;
     }
   }
+  return true;
+}
+
+static bool _isModelOkForTopologicalOpti(GFace *gf)
+{
+  if(!_isFaceOkForTopologicalOpti(gf)) return false;
+  if(Msg::GetNumThreads() > 1) return true;
+  GModel *m = gf->model();
+  for(auto it = m->firstFace(); it != m->lastFace(); it++)
+    if(*it != gf && !_isFaceOkForTopologicalOpti(*it)) return false;
   return true;
 }
 
@@ -1322,7 +1334,7 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
 #pragma omp critical(recombineIntoQuads)
   {
     if(topologicalOptiPasses > 0) {
-      if(!_isModelOkForTopologicalOpti(gf->model())) {
+      if(!_isModelOkForTopologicalOpti(gf)) {
         Msg::Info(
           "Skipping topological optimization - mesh topology is not complete");
       }

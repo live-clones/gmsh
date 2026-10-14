@@ -1921,6 +1921,11 @@ void drawContext::initPosition(bool saveMatrices)
     gmshClipPlane(i, CTX::instance()->clipPlane[i]);
 }
 
+double drawContext::pointPixelFactor()
+{
+  return glImmediate::pixelScale() / _highResolutionPixelFactor;
+}
+
 bool drawContext::world2Window(const double xyz[3], double win[2])
 {
   double fact = highResolutionPixelFactor();

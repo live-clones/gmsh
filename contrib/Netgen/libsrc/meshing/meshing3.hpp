@@ -1,8 +1,12 @@
 #ifndef FILE_MESHING3
 #define FILE_MESHING3
 
+#include "meshclass.hpp"
+#include "adfront3.hpp"
+#include "ruler3.hpp"
 
-
+namespace netgen
+{
 
 enum MESHING3_RESULT
 {
@@ -19,15 +23,17 @@ enum MESHING3_RESULT
 class Meshing3
 {
   /// current state of front
-  AdFront3 * adfront;
+  unique_ptr<AdFront3> adfront;
   /// 3d generation rules
-  Array<vnetrule*> rules;
+  Array<unique_ptr<vnetrule>> rules;
   /// counts how often a rule is used
   Array<int> ruleused, canuse, foundmap;
   /// describes, why a rule is not applied
-  Array<char*> problems;
+  Array<string> problems;
   /// tolerance criterion
   double tolfak;
+  /// mesh point number -> front point number
+  Array<Front3PointIndex, PointIndex> glob2front;
 public:
   /// 
   Meshing3 (const string & rulefilename); 
@@ -42,22 +48,21 @@ public:
   MESHING3_RESULT GenerateMesh (Mesh & mesh, const MeshingParameters & mp);
   
   ///
-  int ApplyRules (Array<Point3d> & lpoints, Array<int> & allowpoint,
-		  Array<MiniElement2d> & lfaces, INDEX lfacesplit,
-		  INDEX_2_HASHTABLE<int> & connectedpairs,
-		  Array<Element> & elements,
-		  Array<INDEX> & delfaces, int tolerance, 
-		  double sloppy, int rotind1,
-		  float & retminerr);
+  int ApplyRules (Array<Point<3>, LocalPointIndex> & lpoints,
+                  Array<int, LocalPointIndex> & allowpoint,
+                  Array<MiniElement2d> & lfaces, int lfacesplit,
+                  ClosedHashTable<IVec<2>,int> & connectedpairs,
+                  Array<LocalElement> & elements,
+                  Array<int> & delfaces, int tolerance, 
+                  double sloppy, int rotind1,
+                  float & retminerr);
   
   ///
-  PointIndex AddPoint (const Point3d & p, PointIndex globind);
+  Front3PointIndex AddPoint (const Point<3> & p, PointIndex globind);
+  /// elem is given in mesh point numbers
+  void AddBoundaryElement (const Element2dRef & elem);
   ///
-  void AddBoundaryElement (const Element2d & elem);
-  ///
-  void AddBoundaryElement (const MiniElement2d & elem);
-  ///
-  int AddConnectedPair (const INDEX_2 & pair);
+  int AddConnectedPair (PointIndices<2> pair);
   
   ///
   void BlockFill (Mesh & mesh, double gh);
@@ -108,23 +113,11 @@ public:
 /*
 template <typename POINTArray, typename FACEArray>
 extern int FindInnerPoint (POINTArray & grouppoints,
-			   FACEArray & groupfaces,
-			   Point3d & p);
+                           FACEArray & groupfaces,
+                           Point<3> & p);
 
 */
 
-
-
-
+} // namespace netgen
 
 #endif
-
-
-
-
-
-
-
-
-
-

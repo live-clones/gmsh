@@ -9,12 +9,40 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GFace.h"
+#include "discreteFace.h"
 #include "MVertex.h"
 #include "MElement.h"
 #include "SPoint2.h"
 #include "SVector3.h"
 #include "meshGFace.h"
 #include "boundaryLayersData.h"
+
+// The chart of a discrete surface is piecewise linear and can reverse the
+// orientation of some of its triangles: compare the orientation of the element
+// in the chart with the one of the chart, where the element is
+static bool getDiscreteGFaceOrientation(discreteFace *gf, MElement *el,
+                                        int &orientation)
+{
+  std::size_t n = el->getNumPrimaryVertices();
+  std::vector<SPoint2> uv(n);
+  SPoint2 c(0., 0.);
+  for(std::size_t i = 0; i < n; i++) {
+    if(!reparamMeshVertexOnFace(el->getVertex(i), gf, uv[i], false))
+      return false;
+    c += uv[i];
+  }
+  c *= 1. / n;
+  double area = 0.;
+  for(std::size_t i = 0; i < n; i++) {
+    const SPoint2 &p = uv[i], &q = uv[(i + 1) % n];
+    area += (p.x() - c.x()) * (q.y() - c.y()) - (q.x() - c.x()) * (p.y() - c.y());
+  }
+  std::pair<SVector3, SVector3> der = gf->firstDer(c);
+  double chart = dot(gf->normal(c), crossprod(der.first, der.second));
+  if(area == 0. || chart == 0.) return false;
+  orientation = ((area > 0.) == (chart > 0.)) ? 1 : -1;
+  return true;
+}
 
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)
 {
@@ -55,6 +83,8 @@ static void getGFaceOrientation(GFace *gf, BoundaryLayerColumns *blc,
                                 bool existBL, bool fromVert, int &orientNonBL,
                                 int &orientBL)
 {
+  discreteFace *df = dynamic_cast<discreteFace *>(gf);
+  const bool useChart = df && df->haveParametrization();
   for(std::size_t iEl = 0; iEl < gf->getNumMeshElements(); iEl++) {
     MElement *e = gf->getMeshElement(iEl);
     const bool isBLEl =
@@ -62,11 +92,15 @@ static void getGFaceOrientation(GFace *gf, BoundaryLayerColumns *blc,
     SVector3 nf;
     // Check only if orientation of BL/non-BL el. not already known
     if((!isBLEl && orientNonBL == 0) || (isBLEl && orientBL == 0)) {
-      const bool found = fromVert ? getGFaceNormalFromVert(gf, e, nf) :
-                                    getGFaceNormalFromBary(gf, e, nf);
+      int orient = 0;
+      const bool found = useChart ? getDiscreteGFaceOrientation(df, e, orient) :
+        (fromVert ? getGFaceNormalFromVert(gf, e, nf) :
+                    getGFaceNormalFromBary(gf, e, nf));
       if(found) {
-        SVector3 ne = e->getFace(0).normal();
-        const int orient = (dot(ne, nf) > 0.) ? 1 : -1;
+        if(!useChart) {
+          SVector3 ne = e->getFace(0).normal();
+          orient = (dot(ne, nf) > 0.) ? 1 : -1;
+        }
         if(isBLEl)
           orientBL = orient;
         else
@@ -120,6 +154,10 @@ void orientMeshGFace::operator()(GFace *gf)
     getGFaceOrientation(gf, blc, existBL, true, orientNonBL, orientBL);
     if((orientNonBL == 0) || (orientBL == 0))
       getGFaceOrientation(gf, blc, existBL, false, orientNonBL, orientBL);
+    if(gf->geomType() == GEntity::DiscreteSurface &&
+       ((orientNonBL == 0) || (orientBL == 0)))
+      Msg::Warning("Could not evaluate chart orientation in surface %d",
+                   gf->tag());
 
     // Exit if could not determine orientation of both non-BL el. and BL el.
     if((orientNonBL == 0) && (orientBL == 0)) {

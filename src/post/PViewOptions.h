@@ -7,6 +7,7 @@
 #define PVIEW_OPTIONS_H
 
 #include <string>
+#include <vector>
 #include "ColorTable.h"
 #include "SBoundingBox3d.h"
 
@@ -130,6 +131,7 @@ public:
   struct {
     unsigned int point, line, triangle, quadrangle;
     unsigned int tetrahedron, hexahedron, prism, pyramid, trihedron;
+    unsigned int polygon, polyhedron;
     unsigned int tangents, normals;
     unsigned int text2d, text3d, axes, background2d;
   } color;
@@ -137,6 +139,10 @@ public:
 private:
   // static reference that contains default values
   static PViewOptions *_reference;
+  // the range of the forced components, computed by looping over all the
+  // values, and what it was computed for
+  std::vector<double> _forcedRangeKey;
+  double _forcedMin, _forcedMax;
 
 public:
   PViewOptions();
@@ -155,7 +161,8 @@ public:
   // get i-th color amongst nb (i in [0, nb - 1])
   unsigned int getColor(int i, int nb);
   // the range of the values of data the options ask for: the custom one, that
-  // of the current time step, or that of all the steps
+  // of the current time step, or that of all the steps; of the forced
+  // components if the number of components is forced
   void getRange(PViewData *data, double &min, double &max);
   // are the faces drawn only those on the skin (DrawSkinOnly, with the values
   // drawn on them)? and is nothing else drawn of the volumes, so that they can

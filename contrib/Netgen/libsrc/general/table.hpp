@@ -34,11 +34,25 @@ protected:
 
 public:
   ///
-  BASE_TABLE (int size);
+  BASE_TABLE (BASE_TABLE && table2)
+    : data(std::move(table2.data)), oneblock(table2.oneblock)
+  {
+    table2.oneblock = nullptr;
+  }
+
+  DLL_HEADER BASE_TABLE (int size);
   ///
-  BASE_TABLE (const FlatArray<int> & entrysizes, int elemsize);
+  DLL_HEADER BASE_TABLE (const FlatArray<int> & entrysizes, int elemsize);
   ///
-  ~BASE_TABLE ();
+  DLL_HEADER ~BASE_TABLE ();
+
+  BASE_TABLE & operator= (BASE_TABLE && table2)
+  {
+    data = std::move(table2.data);
+    Swap (oneblock, table2.oneblock);
+    return *this;
+  }
+  
   ///
   void SetSize (int size);
   ///
@@ -70,10 +84,12 @@ public:
   ///
   void AllocateElementsOneBlock (int elemsize);
   
-  int AllocatedElements () const;
-  int UsedElements () const;
+  size_t AllocatedElements () const;
+  size_t UsedElements () const;
 
   void SetElementSizesToMaxSizes ();
+
+  void DoArchive (Archive & ar, int elemsize);
 };
 
 
@@ -94,15 +110,25 @@ class TABLE : public BASE_TABLE
 public:
   /// Creates table.
   inline TABLE () : BASE_TABLE(0) { ; }
-
+  
   /// Creates table of size size
   inline TABLE (int size) : BASE_TABLE (size) { ; }
 
+  TABLE (TABLE && tab2)
+    : BASE_TABLE(move(tab2))
+  { }
+  
   /// Creates fixed maximal element size table
-  inline TABLE (const FlatArray<int,BASE> & entrysizes)
-    : BASE_TABLE (FlatArray<int> (entrysizes.Size(), const_cast<int*>(&entrysizes[BASE])), 
-		  sizeof(T))
+  inline TABLE (FlatArray<int> entrysizes)
+    : BASE_TABLE (entrysizes, sizeof(T))
   { ; }
+
+  TABLE & operator= (TABLE && tab2)
+  {
+    BASE_TABLE::operator=(move(tab2));
+    return *this;
+  }
+
   
   /// Changes Size of table to size, deletes data
   inline void SetSize (int size)
@@ -129,7 +155,7 @@ public:
   inline void Add1 (int i, const T & acont)
   {
     IncSize (i-1, sizeof (T));
-    ((T*)data.Elem(i).col)[data.Elem(i).size-1] = acont;
+    ((T*)data[i-1].col)[data[i-1].size-1] = acont;
   }
   
   ///
@@ -142,15 +168,22 @@ public:
   /// Inserts element acont into row i. BASE-based. Does not test if already used, assumes to have enough memory
   inline void AddSave (int i, const T & acont)
     {
+      NETGEN_CHECK_RANGE(i, BASE, data.Size()+BASE);
       ((T*)data[i-BASE].col)[data[i-BASE].size] = acont;
       data[i-BASE].size++;
+    }
+
+  inline void ParallelAdd (int i, const T & acont)
+    {
+      auto oldval = AsAtomic (data[i-BASE].size)++;
+      ((T*)data[i-BASE].col)[oldval] = acont;
     }
 
   /// Inserts element acont into row i. 1-based. Does not test if already used, assumes to have mem
   inline void AddSave1 (int i, const T & acont)
     {
-      ((T*)data.Elem(i).col)[data.Elem(i).size] = acont;
-      data.Elem(i).size++;
+      ((T*)data[i-1].col)[data[i-1].size] = acont;
+      data[i-1].size++;
     }
 
   /// Inserts element acont into row i. Does not test if already used.
@@ -162,17 +195,19 @@ public:
   /** Set the nr-th element in the i-th row to acont.
     Does not check for overflow. */
   inline void Set (int i, int nr, const T & acont)
-    { ((T*)data.Get(i).col)[nr-1] = acont; }
+    { ((T*)data[i-1].col)[nr-1] = acont; }
   /** Returns the nr-th element in the i-th row.
     Does not check for overflow. */
   inline const T & Get (int i, int nr) const
-    { return ((T*)data.Get(i).col)[nr-1]; }
+    { return ((T*)data[i-1].col)[nr-1]; }
 
+  inline T & Get (int i, int nr)
+    { return ((T*)data[i-1].col)[nr-1]; }
 
   /** Returns pointer to the first element in row i. */
   inline const T * GetLine (int i) const
   {
-    return ((const T*)data.Get(i).col);
+    return ((const T*)data[i-1].col);
   }
 
 
@@ -184,7 +219,7 @@ public:
 
   /// Returns size of the i-th row.
   inline int EntrySize (int i) const
-    { return data.Get(i).size; }
+    { return data[i-1].size; }
 
   /*
   inline void DecEntrySize (int i)
@@ -197,12 +232,12 @@ public:
   inline void PrintMemInfo (ostream & ost) const
   {
     int els = AllocatedElements(); 
-    ost << "table: allocaed " << els 
-	<< " a " << sizeof(T) << " Byts = " 
-	<< els * sizeof(T) 
-	<< " bytes in " << Size() << " bags."
-	<< " used: " << UsedElements()
-	<< endl;
+    ost << "table: allocated " << els 
+        << " a " << sizeof(T) << " Byts = " 
+        << els * sizeof(T) 
+        << " bytes in " << Size() << " bags."
+        << " used: " << UsedElements()
+        << endl;
   }
 
   /// Access entry.
@@ -215,8 +250,13 @@ public:
 
     return FlatArray<T> (data[i-BASE].size, (T*)data[i-BASE].col);
   }
-};
 
+  void DoArchive (Archive & ar)
+  {
+    BASE_TABLE::DoArchive(ar, sizeof(T));
+  }
+
+};
 
 template <class T, int BASE>
 inline ostream & operator<< (ostream & ost, const TABLE<T,BASE> & table)
@@ -227,7 +267,7 @@ inline ostream & operator<< (ostream & ost, const TABLE<T,BASE> & table)
       FlatArray<T> row = table[i];
       ost << "(" << row.Size() << ") ";
       for (int j = 0; j < row.Size(); j++)
-	ost << row[j] << " ";
+        ost << row[j] << " ";
       ost << endl;
     }
   return ost;

@@ -498,7 +498,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.LineWidth
 Display width of lines (in pixels)@*
-Default value: @code{1}@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.MaxRecursionLevel
@@ -598,7 +598,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.PointSize
 Display size of points (in pixels)@*
-Default value: @code{3}@*
+Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.PointType
@@ -818,6 +818,16 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Trihedra
 Trihedron color@*
+Default value: @code{@{0,0,0@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Polygons
+Polygon color@*
+Default value: @code{@{0,0,0@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Polyhedra
+Polyhedron color@*
 Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 

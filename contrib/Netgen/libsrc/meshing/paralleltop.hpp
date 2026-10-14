@@ -4,149 +4,165 @@
 namespace netgen
 {
 
-  //  extern int ntasks;
 
   class ParallelMeshTopology
   {
     const Mesh & mesh;
-
-    // number of local elements, vertices, points (?), edges, faces
-    int ne, nv, np, ned, nfa;
-
-    // number of local segments and surface elements
-    int nseg, nsurfel;
-
-    // number of global elements, vertices, ???,  faces
-    int neglob, nseglob, nvglob;
-    int nparel;
-    int nfaglob;
-    int nedglob;
 
     /**
        mapping from local to distant vertex number
        each row of the table corresponds to one vertex
        each row contains a list of pairs (procnr, dist_vnum)
     */
-    TABLE<int,PointIndex::BASE> loc2distvert;
-    TABLE<int,0> loc2distedge, loc2distface;
-    TABLE<int,0> loc2distel, loc2distsegm, loc2distsurfel;
+    
+    DynamicTable<int> loc2distvert;
+    DynamicTable<int> loc2distedge, loc2distface;
 
-    bool coarseupdate;
+    Array<int> glob_vert;
+
+    // will get rid of them
+    Array<int> glob_edge, glob_face;
+    Array<int> glob_el, glob_surfel, glob_segm;
+
+    bool is_updated;
 
   public:
 
     ParallelMeshTopology (const Mesh & amesh);
     ~ParallelMeshTopology ();
 
+    void Reset ();
+    void Print() const;
+
+    
+    void UpdateCoarseGrid();
+    // [[deprecated("should not need it anymore")]]                    
+    // void UpdateCoarseGridGlobal();
+    void IdentifyVerticesAfterRefinement();
+    void EnumeratePointsGlobally ();
+        
+    void AddDistantProc    (PointIndex pi, int proc) { loc2distvert.AddUnique (pi-IndexBASE<PointIndex>(), proc); }
+    void AddDistantFaceProc (int edge, int proc) { loc2distface.AddUnique (edge, proc); }
+    void AddDistantEdgeProc (int face, int proc) { loc2distedge.AddUnique (face, proc); }
+    
+    FlatArray<int> GetDistantProcs (PointIndex pi) const { return loc2distvert[pi-IndexBASE<PointIndex>()]; }
+    FlatArray<int> GetDistantFaceProcs (FaceIndex locnum) const { return loc2distface[locnum.Nr0()]; }
+    FlatArray<int> GetDistantEdgeProcs (EdgeIndex locnum) const { return loc2distedge[locnum.Nr0()]; }
+
+
+    
+    auto & L2G (PointIndex pi) { return glob_vert[pi-IndexBASE<PointIndex>()]; } 
+    auto L2G (PointIndex pi) const { return glob_vert[pi-IndexBASE<PointIndex>()]; } 
+
+
     /// set number of local vertices, reset sizes of loc2dist_vert, isexchangevert...
     void SetNV (int anv);
+    void SetNV_Loc2Glob (int anv);
     void SetNE (int ane);
     void SetNSE (int anse);
     void SetNSegm (int anseg);
 
-    void SetNVGlob ( int anvglob )   { nvglob = anvglob; }
-    void SetNEGlob ( int aneglob )   { neglob = aneglob; }
-    void SetNSEGlob ( int anseglob )   { nseglob = anseglob; }
+    [[deprecated("Use AddDistantFaceProc instead!")]]                
+    void SetDistantFaceNum (int dest, int locnum) { loc2distface.AddUnique (locnum-1, dest); }
+    [[deprecated("Use AddDistantProc instead!")]]                
+    void SetDistantPNum    (int dest, int locnum) { loc2distvert.AddUnique (locnum-1, dest); }
+    [[deprecated("Use AddDistantEdgeProc instead!")]]                
+    void SetDistantEdgeNum (int dest, int locnum) { loc2distedge.AddUnique (locnum-1, dest); }
 
-    int GetNVGlob ()  { return nvglob; }
-    int GetNEGlob ()  { return neglob; }
-
-
-    void Reset ();
-
-    void SetLoc2Glob_Vert   ( int locnum, int globnum ) { loc2distvert[locnum][0] = globnum; }
-    void SetLoc2Glob_VolEl  ( int locnum, int globnum ) { loc2distel[locnum-1][0] = globnum; }
-    void SetLoc2Glob_SurfEl ( int locnum, int globnum ) { loc2distsurfel[locnum-1][0] = globnum; }
-    void SetLoc2Glob_Segm   ( int locnum, int globnum ) { loc2distsegm[locnum-1][0] = globnum; }
-
-    int GetLoc2Glob_Vert  ( int locnum ) const { return loc2distvert[locnum][0]; }
-    int GetLoc2Glob_VolEl ( int locnum ) const { return loc2distel[locnum-1][0]; }
-    int GetLoc2Glob_SurfEl ( int locnum ) const { return loc2distsurfel[locnum-1][0]; }
-
-    void GetVertNeighbours ( int vnum, Array<int> & dests ) const;
+    [[deprecated("Use GetDistantFaceProcx instead!")]]                    
+    FlatArray<int> GetDistantFaceNums (int locnum) const { return loc2distface[locnum]; }
+    [[deprecated("Use GetDistantEdgeProcx instead!")]]
+    FlatArray<int> GetDistantEdgeNums (int locnum) const { return loc2distedge[locnum]; }
 
 
-    int GetNDistantPNums ( int locpnum ) const       
-    { return loc2distvert[locpnum].Size() / 2 + 1; } 
+    
+    [[deprecated("Use L2G(pi) instead!")]]                
+    void SetLoc2Glob_Vert   (int locnum, int globnum) { glob_vert[locnum-1] = globnum; }
+    [[deprecated("Try to avoid global enumration!")]]                
+    void SetLoc2Glob_Edge   (int locnum, int globnum) { glob_edge[locnum-1] = globnum; }
+    [[deprecated("Try to avoid global enumration!")]]                
+    void SetLoc2Glob_Face   (int locnum, int globnum) { glob_face[locnum-1] = globnum; }
+    // [[deprecated("Try to avoid global enumration!")]]                
+    void SetLoc2Glob_VolEl  (int locnum, int globnum) { glob_el[locnum-1] = globnum; }
+    // [[deprecated("Try to avoid global enumration!")]]                
+    void SetLoc2Glob_SurfEl (int locnum, int globnum) { glob_surfel[locnum-1] = globnum; }
+    // [[deprecated("Try to avoid global enumration!")]]                
+    void SetLoc2Glob_Segm   (int locnum, int globnum) { glob_segm[locnum-1] = globnum; }
 
-    int GetNDistantFaceNums ( int locfacenum ) const 
-    { return loc2distface[locfacenum-1].Size() / 2 + 1; } 
+    // [[deprecated("Try to avoid global enumration!")]]                    
+    int GetGlobalPNum    (PointIndex locnum) const { return glob_vert[locnum-IndexBASE<PointIndex>()]; }
+    [[deprecated("Try to avoid global enumration!")]]                
+    int GetGlobalEdgeNum (int locnum) const { return glob_edge[locnum-1]; }
+    [[deprecated("Try to avoid global enumration!")]]                
+    int GetGlobalFaceNum (int locnum) const { return glob_face[locnum-1]; }
+    [[deprecated("Try to avoid global enumration!")]]                
+    int GetGlobalElNum   (int locnum) const { return glob_el[locnum-1]; }
+    [[deprecated("Try to avoid global enumration!")]]                
+    int GetGlobalSElNum  (int locnum) const { return glob_surfel[locnum-1]; }
 
-    int GetNDistantEdgeNums ( int locedgenum ) const  
-    { return loc2distedge[locedgenum-1].Size() / 2 + 1; }
+    
 
-    int GetNDistantElNums ( int locelnum ) const      
-    { return loc2distel[locelnum-1].Size() / 2 + 1; }
+    // [[deprecated("Use GetDistantPNums(locnum).Size() instead!")]]            
+    int GetNDistantPNums (int locpnum) const { return loc2distvert[locpnum-1].Size(); }
 
-    int GetDistantPNum ( int proc, int locpnum ) const;
-    int GetDistantEdgeNum ( int proc, int locedgenum ) const;
-    int GetDistantFaceNum ( int proc, int locedgenum ) const;
-    int GetDistantElNum ( int proc, int locelnum ) const;
+    // [[deprecated("Use GetDistantFaceNums(locnum).Size() instead!")]]                
+    int GetNDistantFaceNums (int locfacenum) const { return loc2distface[locfacenum-1].Size(); }
 
-    int GetDistantPNums ( int locpnum, int * distpnums ) const;
-    int GetDistantEdgeNums ( int locedgenum, int * distedgenums ) const;
-    int GetDistantFaceNums ( int locedgenum, int * distfacenums ) const;
-    int GetDistantElNums ( int locelnum, int * distfacenums ) const;
+    // [[deprecated("Use GetDistantEdgeNums(locnum).Size() instead!")]]                    
+    int GetNDistantEdgeNums ( int locedgenum) const { return loc2distedge[locedgenum-1].Size(); }
 
-    void Print() const;
-
-
-    bool IsExchangeVert ( PointIndex vnum ) const  { return loc2distvert[vnum].Size() > 1; }
-    bool IsExchangeEdge ( int ednum ) const  { return loc2distedge[ednum-1].Size() > 1; }
-    bool IsExchangeFace ( int fnum ) const   { return loc2distface[fnum-1].Size() > 1; }
-    bool IsExchangeElement ( int elnum ) const   { return false; }
-
-
-    bool IsExchangeSEl ( int selnum ) const { return loc2distsurfel[selnum-1].Size() > 1; }
-
-
-    bool IsExchangeVert (int dest, int vnum ) const
+    // [[deprecated("Use GetDistantPNums(locnum) -> FlatArray instead!")]]                
+    void GetDistantPNums (int locpnum, int * distpnums ) const
     {
-      FlatArray<int> exchange = loc2distvert[vnum];
-      for (int i = 1; i < exchange.Size(); i += 2)
-	if (exchange[i] == dest) return true;
-      return false;
+      for (int i = 0; i < loc2distvert[locpnum-1].Size(); i++ )
+        distpnums[i] = loc2distvert[locpnum-1][i];
+    } 
+
+    // [[deprecated("Use GetDistantFaceNums(locnum) -> FlatArray instead!")]]                    
+    void GetDistantFaceNums (int locfacenum, int * distfacenums ) const
+    {
+      for ( int i = 0; i < loc2distface[locfacenum-1].Size(); i++ )
+        distfacenums[i] = loc2distface[locfacenum-1][i];
+    } 
+
+    // [[deprecated("Use GetDistantFaceNums(locnum) -> FlatArray instead!")]]                        
+    void GetDistantFaceNums (int locfacenum, Array<int> & distfacenums ) const
+    {
+      // distfacenums = loc2distface[locfacenum-1];
+      auto loc = loc2distface[locfacenum-1];
+      distfacenums.SetSize (loc.Size());
+      for (int i = 0; i < loc.Size(); i++)
+        distfacenums[i] = loc[i];
     }
 
-    bool IsExchangeEdge (int dest, int ednum ) const
+    // [[deprecated("Use GetDistantEdgeNums(locnum) -> FlatArray instead!")]]                            
+    void GetDistantEdgeNums (int locedgenum, int * distedgenums ) const
     {
-      FlatArray<int> exchange = loc2distedge[ednum-1];
-      for (int i = 1; i < exchange.Size(); i += 2)
-	if (exchange[i] == dest) return true;
-      return false;
-    }
+      for (int i = 0; i < loc2distedge[locedgenum-1].Size(); i++ )
+        distedgenums[i] = loc2distedge[locedgenum-1][i];
+    } 
 
-    bool IsExchangeFace (int dest, int fnum ) const
+    // [[deprecated("Use GetDistantEdgeNums(locnum) -> FlatArray instead!")]]                                
+    void GetDistantEdgeNums (int locedgenum, Array<int> & distedgenums ) const
     {
-      FlatArray<int> exchange = loc2distface[fnum-1];
-      for (int i = 1; i < exchange.Size(); i += 2)
-	if (exchange[i] == dest) return true;
-      return false;
+      // distedgenums = loc2distedge[locedgenum-1];
+      auto loc = loc2distedge[locedgenum-1];
+      distedgenums.SetSize (loc.Size());
+      for (int i = 0; i < loc.Size(); i++)
+        distedgenums[i] = loc[i];
+    } 
+
+    [[deprecated("Use GetDistantProcs(..)!")]]                    
+    FlatArray<int> GetDistantPNums (int locnum) const { return loc2distvert[locnum]; }
+
+
+    
+    [[deprecated("Use GetDistantProcs(..).Contains instead!")]]                
+    bool IsExchangeVert (int dest, int vnum) const
+    {
+      return loc2distvert[vnum-1].Contains (dest);
     }
-
-    bool IsExchangeElement (int dest, int elnum ) const  { return false; }
-
-    void Update();
-
-    void UpdateCoarseGrid();
-    void UpdateRefinement ();
-    void UpdateTopology ();
-    void UpdateExchangeElements();
-
-    void UpdateCoarseGridGlobal();
-
-    bool DoCoarseUpdate() const { return !coarseupdate; }
-
-    void SetDistantFaceNum ( int dest, int locnum, int distnum );
-    void SetDistantPNum ( int dest, int locnum, int distnum );
-    void SetDistantEdgeNum ( int dest, int locnum, int distnum );
-    void SetDistantEl ( int dest, int locnum, int distnum );
-    void SetDistantSurfEl ( int dest, int locnum, int distnum );
-    void SetDistantSegm ( int dest, int locnum, int distnum );
-
-    bool IsGhostEl ( int elnum ) const   { return mesh.VolumeElement(elnum).IsGhost(); }
   };
- 
 
 }
 

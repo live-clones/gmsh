@@ -20,9 +20,9 @@ namespace netgen
     /// half edgelength
     float h2;
     ///
-    GradingBox * childs[8];
+    GradingBox * childs[8] = {nullptr};
     ///
-    GradingBox * father;
+    GradingBox * father = nullptr;
     ///
     double hopt;
     ///
@@ -30,21 +30,39 @@ namespace netgen
 
     struct 
     {
+      /*
       unsigned int cutboundary:1;
       unsigned int isinner:1;
       unsigned int oldcell:1;
       unsigned int pinner:1;
+      */
+      bool cutboundary;
+      bool isinner;
+      bool oldcell;
+      bool pinner;
     } flags;
 
     ///
     GradingBox (const double * ax1, const double * ax2);
+    /// default constructor for Archive
+    GradingBox() = default;
     ///
     void DeleteChilds();
     ///
 
+    void DoArchive(Archive& ar);
+
     Point<3> PMid() const { return Point<3> (xmid[0], xmid[1], xmid[2]); }
     double H2() const { return h2; }
+    double HOpt() const { return hopt; }
 
+    bool HasChilds() const
+    {
+      for (int i = 0; i < 8; i++)
+        if (childs[i]) return true;
+      return false;
+    }
+    
     friend class LocalH;
 
     static BlockAllocator ball;
@@ -67,48 +85,64 @@ namespace netgen
     ///
     Array<GradingBox*> boxes;
     ///
-    Box3d boundingbox;
+    Box<3> boundingbox;
+    /// octree or quadtree
+    int dimension;
   public:
     ///
-    LocalH (const Point3d & pmin, const Point3d & pmax, double grading);
+    DLL_HEADER LocalH (Point<3> pmin, Point<3> pmax, double grading, int adimension = 3);
     ///
-    LocalH (const Box<3> & box, double grading);
+    LocalH (const Box<3> & box, double grading, int adimension = 3)
+      : LocalH (box.PMin(), box.PMax(), grading, adimension) { ; }
+    /// Default ctor for archive
+    LocalH() = default;
+
+    DLL_HEADER ~LocalH();
     ///
-    ~LocalH();
+    DLL_HEADER unique_ptr<LocalH> Copy();
+    DLL_HEADER unique_ptr<LocalH> Copy( const Box<3> & bbox );
     ///
-    void Delete();
+    DLL_HEADER void Delete();
+    ///
+    DLL_HEADER void DoArchive(Archive& ar);
     ///
     void SetGrading (double agrading) { grading = agrading; }
     ///
-    void SetH (const Point3d & x, double h);
+    DLL_HEADER void SetH (Point<3> x, double h);
     ///
-    double GetH (const Point3d & x) const;
+    DLL_HEADER double GetH (Point<3> x) const;
     /// minimal h in box (pmin, pmax)
-    double GetMinH (const Point3d & pmin, const Point3d & pmax) const;
+    DLL_HEADER double GetMinH (Point<3> pmin, Point<3> pmax) const;
 
     /// mark boxes intersecting with boundary-box
-    // void CutBoundary (const Point3d & pmin, const Point3d & pmax)
+    // void CutBoundary (const Point<3> & pmin, const Point<3> & pmax)
     // { CutBoundaryRec (pmin, pmax, root); }
+
     void CutBoundary (const Box<3> & box)
     { CutBoundaryRec (box.PMin(), box.PMax(), root); }
+
+    GradingBox * Find(Point<3> p) const;
   
     /// find inner boxes
-    void FindInnerBoxes (class AdFront3 * adfront,
-			 int (*testinner)(const Point3d & p1));
+    void FindInnerBoxes (const class AdFront3 & adfront,
+                         int (*testinner)(const Point<3> & p1));
 
-    void FindInnerBoxes (class AdFront2 * adfront,
-			 int (*testinner)(const Point<2> & p1));
+    void FindInnerBoxes (const class AdFront2 & adfront,
+                         int (*testinner)(const Point<2> & p1));
 
 
     /// clears all flags 
     void ClearFlags ()
     { ClearFlagsRec(root); }
 
+    void ClearRootFlags ();
+
     /// widen refinement zone
     void WidenRefinement ();
 
     /// get points in inner elements
-    void GetInnerPoints (Array<Point<3> > & points);
+    void GetInnerPoints (Array<Point<3> > & points) const;
+    void GetInnerPointsRec (const GradingBox * box, Array<Point<3> > & points) const;
 
     /// get points in outer closure
     void GetOuterPoints (Array<Point<3> > & points);
@@ -117,38 +151,38 @@ namespace netgen
     void Convexify ();
     ///
     int GetNBoxes () { return boxes.Size(); } 
-    const Box3d & GetBoundingBox () const
+    const Box<3> & GetBoundingBox () const
     { return boundingbox; }
     ///
     void PrintMemInfo (ostream & ost) const;
   private:
     /// 
-    double GetMinHRec (const Point3d & pmin, const Point3d & pmax,
-		       const GradingBox * box) const;
+    double GetMinHRec (const Point<3> & pmin, const Point<3> & pmax,
+                       const GradingBox * box) const;
     ///
-    void CutBoundaryRec (const Point3d & pmin, const Point3d & pmax,
-			 GradingBox * box);
+    void CutBoundaryRec (const Point<3> & pmin, const Point<3> & pmax,
+                         GradingBox * box);
 
     ///
-    void FindInnerBoxesRec ( int (*inner)(const Point3d & p),
-			     GradingBox * box);
+    void FindInnerBoxesRec ( int (*inner)(const Point<3> & p),
+                             GradingBox * box);
 
     ///
     void FindInnerBoxesRec2 (GradingBox * box,
-			     class AdFront3 * adfront,
-			     Array<Box3d> & faceboxes,
-			     Array<int> & finds, int nfinbox);
+                             const class AdFront3 & adfront,
+                             Array<Box3d> & faceboxes,
+                             Array<int> & finds, int nfinbox);
 
 
 
     void FindInnerBoxesRec ( int (*inner)(const Point<2> & p),
-			     GradingBox * box);
+                             GradingBox * box);
 
     ///
     void FindInnerBoxesRec2 (GradingBox * box,
-			     class AdFront2 * adfront,
-			     Array<Box<3> > & faceboxes,
-			     Array<int> & finds, int nfinbox);
+                             const class AdFront2 & adfront,
+                             FlatArray<Box<2>> faceboxes,
+                             FlatArray<int> finds); // , int nfinbox);
 
 
 
@@ -161,6 +195,8 @@ namespace netgen
     ///
     void ConvexifyRec (GradingBox * box);
 
+    unique_ptr<LocalH> CopyRec( const Box<3> & bbox, GradingBox * current );
+
     friend ostream & operator<< (ostream & ost, const LocalH & loch);
   };
 
@@ -170,8 +206,8 @@ namespace netgen
   inline ostream & operator<< (ostream & ost, const GradingBox & box)
   {
     ost << "gradbox, pmid = " << box.PMid() << ", h2 = " << box.H2() 
-	<< " cutbound = " << box.flags.cutboundary << " isinner = " << box.flags.isinner 
-	<< endl;
+        << " cutbound = " << box.flags.cutboundary << " isinner = " << box.flags.isinner 
+        << endl;
     return ost;
   }
 

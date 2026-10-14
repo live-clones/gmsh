@@ -33,8 +33,7 @@ Frame_field::Frame_field() {}
 
 void Frame_field::init_region(GRegion *gr)
 {
-#if defined(HAVE_ANN)
-  // Fill in a ANN tree with the boundary cross field of region gr
+  // Fill in a search tree with the boundary cross field of region gr
   unsigned int i;
   GFace *gf;
   std::vector<GFace *> faces;
@@ -52,16 +51,10 @@ void Frame_field::init_region(GRegion *gr)
     init_face(gf);
   }
 
-  ANNpointArray duplicate = annAllocPts(field.size(), 3);
-
-  for(i = 0; i < field.size(); i++) {
-    duplicate[i][0] = field[i].first.x();
-    duplicate[i][1] = field[i].first.y();
-    duplicate[i][2] = field[i].first.z();
-  }
-
-  kd_tree = new ANNkd_tree(duplicate, field.size(), 3);
-#endif
+  fieldSearch.clear();
+  for(i = 0; i < field.size(); i++)
+    fieldSearch.points().push_back(field[i].first);
+  fieldSearch.build();
 }
 
 void Frame_field::init_face(GFace *gf)
@@ -114,34 +107,15 @@ STensor3 Frame_field::search(double x, double y, double z)
   distance1 = 1000000.0;
   distance2 = 1000000.0;
   e2 = 0.000001;
-#if defined(HAVE_ANN)
-  ANNpoint query;
-  ANNidxArray indices;
-  ANNdistArray distances;
-
-  if(field.size() <= 1) {
+  std::size_t indices[2];
+  double distances[2];
+  if(fieldSearch.nearest(SPoint3(x, y, z), 2, indices, distances) < 2) {
     return STensor3(1.0);
   }
-
-  query = annAllocPt(3);
-  query[0] = x;
-  query[1] = y;
-  query[2] = z;
-
-  indices = new ANNidx[2];
-  distances = new ANNdist[2];
-
-  double e = 0.0;
-  kd_tree->annkSearch(query, 2, indices, distances, e);
   index1 = indices[0];
   index2 = indices[1];
   distance1 = distances[0];
   distance2 = distances[1];
-
-  annDeallocPt(query);
-  delete[] indices;
-  delete[] distances;
-#endif
 
   if(fabs(sqrt(distance2) - sqrt(distance1)) < e2) {
     if(labels[index2] < labels[index1]) {
@@ -321,15 +295,8 @@ void Frame_field::clear()
   Nearest_point::clear();
   field.clear();
   labels.clear();
-#if defined(HAVE_ANN)
-  delete kd_tree->thePoints();
-  delete kd_tree;
-  annClose();
-#endif
-#if defined(HAVE_ANN)
-  if(annTree && annTree->thePoints()) delete annTree->thePoints();
-  if(annTree) delete annTree;
-#endif
+  fieldSearch.clear();
+  vertexSearch.clear();
 }
 
 // double max(const double a, const double b) { return (b>a)?b:a;}
@@ -409,52 +376,28 @@ void Frame_field::build_listVertices(GEntity *gr, int dim, bool initialize)
   }
 }
 
-int Frame_field::buildAnnData(GEntity *ge, int dim)
+int Frame_field::buildSearchData(GEntity *ge, int dim)
 {
   build_listVertices(ge, dim);
   int n = listVertices.size();
-#if defined(HAVE_ANN)
-  ANNpointArray annTreeData = annAllocPts(n, 3);
-  for(int i = 0; i < n; i++) {
-    MVertex *pVertex = listVertices[i];
-    annTreeData[i][0] = pVertex->x();
-    annTreeData[i][1] = pVertex->y();
-    annTreeData[i][2] = pVertex->z();
-  }
-  annTree = new ANNkd_tree(annTreeData, n, 3);
-#endif
-  std::cout << "ANN data for " << ge->tag() << "(" << dim << ") contains " << n
-            << " vertices" << std::endl;
+  vertexSearch.clear();
+  for(int i = 0; i < n; i++)
+    vertexSearch.points().push_back(listVertices[i]->point());
+  vertexSearch.build();
+  std::cout << "Search data for " << ge->tag() << "(" << dim << ") contains "
+            << n << " vertices" << std::endl;
   return n;
 }
 
-void Frame_field::deleteAnnData()
+void Frame_field::deleteSearchData()
 {
-#if defined(HAVE_ANN)
-  if(annTree && annTree->thePoints()) delete annTree->thePoints();
-  if(annTree) delete annTree;
-  annTree = NULL;
-#endif
+  vertexSearch.clear();
 }
 
-int Frame_field::findAnnIndex(const SPoint3 &p)
+int Frame_field::findNearestIndex(const SPoint3 &p)
 {
-  int index = 0;
-#if defined(HAVE_ANN)
-  ANNpoint query = annAllocPt(3);
-  ANNidxArray indices = new ANNidx[1];
-  ANNdistArray distances = new ANNdist[1];
-  query[0] = p.x();
-  query[1] = p.y();
-  query[2] = p.z();
-  double e = 0.;
-  annTree->annkSearch(query, 1, indices, distances, e);
-  annDeallocPt(query);
-  index = indices[0];
-  delete[] indices;
-  delete[] distances;
-#endif
-  return index;
+  std::size_t index = vertexSearch.nearest(p);
+  return index < vertexSearch.size() ? (int)index : 0;
 }
 
 void Frame_field::initFace(GFace *gf)
@@ -530,8 +473,8 @@ void Frame_field::initFace(GFace *gf)
     crossField[pVertex] = m;
   }
 
-  // fills ANN data with the vertices of the contour (dim=1) of "gf"
-  buildAnnData(gf, 1);
+  // fills search data with the vertices of the contour (dim=1) of "gf"
+  buildSearchData(gf, 1);
 
   std::cout << "Nodes on contour = " << vertex_to_elements.size() << std::endl;
   std::cout << "crossField = " << crossField.size() << std::endl;
@@ -564,8 +507,8 @@ void Frame_field::initFace(GFace *gf)
     else
       y = cross3D((*iter).second); // local cross y.getFirst() is the normal
 
-    // Find the index of the nearest cross on the contour, using annTree
-    int index = findAnnIndex(pVertex0->point());
+    // Find the index of the nearest cross on the contour, using vertexSearch
+    int index = findNearestIndex(pVertex0->point());
     MVertex *pVertex = listVertices[index]; // nearest vertex on contour
     iter = crossField.find(pVertex);
     if(iter == crossField.end()) {
@@ -587,8 +530,8 @@ void Frame_field::initFace(GFace *gf)
     }
     crossField[pVertex0] = m;
   }
-  checkAnnData(gf, "zzz.pos");
-  deleteAnnData();
+  checkSearchData(gf, "zzz.pos");
+  deleteSearchData();
 }
 
 void Frame_field::initRegion(GRegion *gr, int n)
@@ -602,24 +545,24 @@ void Frame_field::initRegion(GRegion *gr, int n)
     smoothFace(*iter, n);
   }
 
-  // Fills ANN data with the vertices of the surface (dim=2) of "gr"
-  buildAnnData(gr, 2);
+  // Fills search data with the vertices of the surface (dim=2) of "gr"
+  buildSearchData(gr, 2);
   for(unsigned int i = 0; i < gr->getNumMeshVertices(); i++) {
     MVertex *pVertex0 = gr->getMeshVertex(i);
     if(pVertex0->onWhat()->dim() != 3) continue;
-    // Find the index of the nearest cross on the contour, using annTree
-    int index = findAnnIndex(pVertex0->point());
+    // Find the index of the nearest cross on the contour, using vertexSearch
+    int index = findNearestIndex(pVertex0->point());
     MVertex *pVertex = listVertices[index];
     STensor3 m = crossField[pVertex];
     crossField.insert(std::pair<MVertex *, STensor3>(pVertex0, m));
   }
-  deleteAnnData();
-  buildAnnData(gr, 3);
+  deleteSearchData();
+  buildSearchData(gr, 3);
 }
 
 STensor3 Frame_field::findCross(double x, double y, double z)
 {
-  int index = Frame_field::findAnnIndex(SPoint3(x, y, z));
+  int index = Frame_field::findNearestIndex(SPoint3(x, y, z));
   MVertex *pVertex = Frame_field::listVertices[index];
   return crossField[pVertex];
 }
@@ -1064,14 +1007,13 @@ void Frame_field::save_dist(const std::string &filename)
   file.close();
 }
 
-void Frame_field::checkAnnData(GEntity *ge, const std::string &filename)
+void Frame_field::checkSearchData(GEntity *ge, const std::string &filename)
 {
-#if defined(HAVE_ANN)
   std::ofstream file(filename.c_str());
-  file << "View \"ANN pairing\" {\n";
+  file << "View \"Nearest pairing\" {\n";
   for(unsigned int i = 0; i < ge->getNumMeshVertices(); i++) {
     MVertex *pVerta = ge->getMeshVertex(i);
-    MVertex *pVertb = listVertices[findAnnIndex(pVerta->point())];
+    MVertex *pVertb = listVertices[findNearestIndex(pVerta->point())];
     double value = pVerta->distance(pVertb);
     file << "SL (" << pVerta->x() << ", " << pVerta->y() << ", " << pVerta->z()
          << ", " << pVertb->x() << ", " << pVertb->y() << ", " << pVertb->z()
@@ -1080,7 +1022,6 @@ void Frame_field::checkAnnData(GEntity *ge, const std::string &filename)
   }
   file << "};\n";
   file.close();
-#endif
 }
 
 void Frame_field::save_energy(GRegion *gr, const std::string &filename)
@@ -1146,8 +1087,6 @@ Size_field::Size_field() {}
 
 void Size_field::init_region(GRegion *gr)
 {
-#if defined(HAVE_ANN)
-
   GModel *model = GModel::current();
 
   std::vector<GFace *> faces = gr->faces();
@@ -1167,24 +1106,12 @@ void Size_field::init_region(GRegion *gr)
     }
   }
 
-  ANNpointArray duplicate = annAllocPts(field.size(), 3);
-
-  for(std::size_t i = 0; i < field.size(); i++) {
-    duplicate[i][0] = field[i].first.x();
-    duplicate[i][1] = field[i].first.y();
-    duplicate[i][2] = field[i].first.z();
-  }
-
-  kd_tree = new ANNkd_tree(duplicate, field.size(), 3);
+  fieldSearch.clear();
+  for(std::size_t i = 0; i < field.size(); i++)
+    fieldSearch.points().push_back(field[i].first);
+  fieldSearch.build();
 
   boundary.clear();
-
-  ANNpoint query = annAllocPt(3);
-  ANNidxArray indices = new ANNidx[1];
-  ANNdistArray distances = new ANNdist[1];
-
-  int index = 0;
-  double e = 0.0;
 
   for(it = faces.begin(); it != faces.end(); it++) {
     GFace *gf = *it;
@@ -1194,13 +1121,8 @@ void Size_field::init_region(GRegion *gr)
       for(std::size_t j = 0; j < element->getNumVertices(); j++) {
         MVertex *vertex = element->getVertex(j);
 
-        query[0] = vertex->x();
-        query[1] = vertex->y();
-        query[2] = vertex->z();
-
-        kd_tree->annkSearch(query, 1, indices, distances, e);
-        index = indices[0];
-
+        std::size_t index = fieldSearch.nearest(vertex->point());
+        if(index == fieldSearch.size()) continue;
         boundary.insert(
           std::pair<MVertex *, double>(vertex, field[index].second));
       }
@@ -1208,11 +1130,6 @@ void Size_field::init_region(GRegion *gr)
   }
 
   octree = new MElementOctree(model);
-
-  annDeallocPt(query);
-  delete[] indices;
-  delete[] distances;
-#endif
 }
 
 void Size_field::solve(GRegion *gr)
@@ -1432,18 +1349,13 @@ void Size_field::clear()
   delete octree;
   field.clear();
   boundary.clear();
-#if defined(HAVE_ANN)
-  delete kd_tree->thePoints();
-  delete kd_tree;
-  annClose();
-#endif
+  fieldSearch.clear();
 }
 
 Nearest_point::Nearest_point() {}
 
 void Nearest_point::init_region(GRegion *gr)
 {
-#if defined(HAVE_ANN)
   unsigned int i;
   int j;
   int gauss_num;
@@ -1512,45 +1424,22 @@ void Nearest_point::init_region(GRegion *gr)
     // vicinity.push_back(NULL);
   }
 
-  ANNpointArray duplicate = annAllocPts(field.size(), 3);
-
-  for(i = 0; i < field.size(); i++) {
-    duplicate[i][0] = field[i].x();
-    duplicate[i][1] = field[i].y();
-    duplicate[i][2] = field[i].z();
-  }
-
-  kd_tree = new ANNkd_tree(duplicate, field.size(), 3);
-#endif
+  fieldSearch.clear();
+  fieldSearch.points() = field;
+  fieldSearch.build();
 }
 
 bool Nearest_point::search(double x, double y, double z, SVector3 &vec)
 {
-  int index;
   bool val = false;
-#if defined(HAVE_ANN)
-  double e;
   double e2;
   SPoint3 found;
-  ANNpoint query;
-  ANNidxArray indices;
-  ANNdistArray distances;
 
-  query = annAllocPt(3);
-  query[0] = x;
-  query[1] = y;
-  query[2] = z;
-
-  indices = new ANNidx[1];
-  distances = new ANNdist[1];
-
-  e = 0.0;
-  kd_tree->annkSearch(query, 1, indices, distances, e);
-  index = indices[0];
-
-  annDeallocPt(query);
-  delete[] indices;
-  delete[] distances;
+  std::size_t index = fieldSearch.nearest(SPoint3(x, y, z));
+  if(index == fieldSearch.size()) {
+    vec = SVector3(1.0, 0.0, 0.0);
+    return val;
+  }
 
   if(vicinity[index] != NULL) {
     found = closest(vicinity[index], SPoint3(x, y, z));
@@ -1571,7 +1460,6 @@ bool Nearest_point::search(double x, double y, double z, SVector3 &vec)
     vec = SVector3(1.0, 0.0, 0.0);
     val = 0;
   }
-#endif
 
   return val;
 }
@@ -1742,11 +1630,7 @@ void Nearest_point::clear()
 {
   field.clear();
   vicinity.clear();
-#if defined(HAVE_ANN)
-  delete kd_tree->thePoints();
-  delete kd_tree;
-  annClose();
-#endif
+  fieldSearch.clear();
 }
 
 // static declarations
@@ -1759,20 +1643,14 @@ std::map<MEdge, double, MEdgeLessThan> Frame_field::crossDist;
 std::map<MVertex *, std::set<MVertex *> > Frame_field::vertex_to_vertices;
 std::map<MVertex *, std::set<MElement *> > Frame_field::vertex_to_elements;
 std::vector<MVertex *> Frame_field::listVertices;
-#if defined(HAVE_ANN)
-ANNkd_tree *Frame_field::kd_tree;
-ANNkd_tree *Frame_field::annTree;
-#endif
+SPoint3Search Frame_field::fieldSearch;
+SPoint3Search Frame_field::vertexSearch;
 
 std::vector<std::pair<SPoint3, double> > Size_field::field;
 std::map<MVertex *, double> Size_field::boundary;
 MElementOctree *Size_field::octree;
-#if defined(HAVE_ANN)
-ANNkd_tree *Size_field::kd_tree;
-#endif
+SPoint3Search Size_field::fieldSearch;
 
 std::vector<SPoint3> Nearest_point::field;
 std::vector<MElement *> Nearest_point::vicinity;
-#if defined(HAVE_ANN)
-ANNkd_tree *Nearest_point::kd_tree;
-#endif
+SPoint3Search Nearest_point::fieldSearch;

@@ -73,6 +73,7 @@
 #include "meshGFaceOptimize.h"
 #include "meshGRegionDelaunay.h"
 #include "meshGRegionHxt.h"
+#include "meshGRegionParallelDelaunay.h"
 #include "gmshCrossFields.h"
 #include "qualityMeasuresJacobian.h"
 #include "meshRenumber.h"
@@ -2759,7 +2760,9 @@ GMSH_API void gmsh::model::mesh::addElements(
 
   for(std::size_t i = 0; i < elementTypes.size(); i++)
     _addElements(dim, tag, ge, elementTypes[i], elementTags[i], nodeTags[i]);
-  GModel::current()->destroyMeshCaches();
+  ge->deleteVertexArrays();
+  GModel::current()->destroyMeshCaches(true); // nodes are unchanged
+  CTX::instance()->meshChanged();
 }
 
 GMSH_API void gmsh::model::mesh::addElementsByType(
@@ -2775,7 +2778,9 @@ GMSH_API void gmsh::model::mesh::addElementsByType(
     return;
   }
   _addElements(dim, tag, ge, elementType, elementTags, nodeTags);
-  GModel::current()->destroyMeshCaches();
+  ge->deleteVertexArrays();
+  GModel::current()->destroyMeshCaches(true); // nodes are unchanged
+  CTX::instance()->meshChanged();
 }
 
 // the polytopes of the given type (34 or 35) classified on the entity of tag
@@ -9281,6 +9286,12 @@ GMSH_API void gmsh::algorithm::tetrahedralize(
   std::vector<MTetrahedron *> tets;
   if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
     delaunayMeshIn3DHxt(verts, tets, trianglesToRecover);
+  }
+  else if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D) {
+    if(triangles.size() > 0)
+      Msg::Error("3D constrained delaunay tetrahedralization is currently only "
+                 "available using HXT");
+    delaunayMeshIn3DParallel(verts, tets);
   }
   else {
     if(triangles.size() > 0)

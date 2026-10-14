@@ -73,7 +73,8 @@
 #define MaxOctLvl 10
 #define MinGrdLvl 5
 #define ItmPerBuc 100
-#define MemBlkSiz 100000
+#define MinMemBlkSiz 256
+#define MaxMemBlkSiz 100000
 #define TngFlg    1
 #define AniFlg    2
 #define MaxThr    256
@@ -180,7 +181,7 @@ typedef struct
 
 typedef struct
 {
-   MshThrSct thr[ MaxThr ];
+   MshThrSct *thr;
    size_t   UsrSiz[ LolNmbTyp ], NmbItm[ LolNmbTyp ];
    fpn      aniso, eps;
    itg      BasIdx;
@@ -214,8 +215,8 @@ typedef struct
 
 typedef struct
 {
-   OctThrSct thr[ MaxThr ];
-   itg      MaxLvl, NmbFreOct, NmbOct, GrdLvl, NmbBuc, NmbThr;
+   OctThrSct *thr;
+   itg      MaxLvl, NmbFreOct, NmbOct, GrdLvl, NmbBuc, NmbThr, BlkSiz;
    size_t   MemUse;
    fpn      eps, MaxSiz, MinSiz, BucSiz, bnd[2][3];
    OctSct   oct, *CurOctBlk;
@@ -372,6 +373,11 @@ int64_t LolNewOctree(itg NmbVer, fpn *PtrCrd1, fpn *PtrCrd2,
 
    // Setup the mesh structure
    msh = NewMem(tre, sizeof(MshSct));
+   memset(msh, 0, sizeof(MshSct));
+   msh->thr = NewMem(tre, NmbThr * sizeof(MshThrSct));
+   memset(msh->thr, 0, NmbThr * sizeof(MshThrSct));
+   tre->thr = NewMem(tre, NmbThr * sizeof(OctThrSct));
+   memset(tre->thr, 0, NmbThr * sizeof(OctThrSct));
    msh->BasIdx = BasIdx;
 
    msh->NmbItm[ LolTypVer ] = NmbVer;
@@ -420,6 +426,7 @@ int64_t LolNewOctree(itg NmbVer, fpn *PtrCrd1, fpn *PtrCrd2,
    SetMshBox(tre, msh);
    tre->msh = msh;
    msh->eps = tre->eps;
+   tre->BlkSiz = MIN(MaxMemBlkSiz, MAX(MinMemBlkSiz, TotItmCnt));
 
    // Set the grid size depending on the number of entities in the mesh
    tre->GrdLvl = MAX(MinGrdLvl, log((TotItmCnt) / ItmPerBuc) / (3 * log(2)));
@@ -434,6 +441,7 @@ int64_t LolNewOctree(itg NmbVer, fpn *PtrCrd1, fpn *PtrCrd2,
 
       OctThr->ThrStk = NewMem(tre, CUB(tre->NmbBuc) * sizeof(void *));
       OctThr->ThrTag = NewMem(tre, CUB(tre->NmbBuc) * sizeof(itg));
+      memset(OctThr->ThrTag, 0, CUB(tre->NmbBuc) * sizeof(itg));
 
       // Setup the temporary edge for local geometric calculations
       for(i=0;i<2;i++)
@@ -626,7 +634,7 @@ size_t LolFreeOctree(int64_t OctIdx)
    size_t   MemUse = tre->MemUse;
 
    FreAllMem(tre);
-   memset(tre, 0, sizeof(TreSct));
+   free(tre);
 
    return(MemUse);
 }
@@ -1653,12 +1661,12 @@ static void SubOct(  MshSct *msh, TreSct *tre, OctSct *oct,
    // If there is no more free octants, allocate a new bloc
    if(!tre->NmbFreOct)
    {
-      tre->CurOctBlk = NewMem(tre, MemBlkSiz * 8 * sizeof(OctSct));
-      tre->NmbFreOct = MemBlkSiz;
+      tre->CurOctBlk = NewMem(tre, tre->BlkSiz * 8 * sizeof(OctSct));
+      tre->NmbFreOct = tre->BlkSiz;
    }
 
    // The octant points on its first son, the other are consectutive in memory
-   oct->son = &tre->CurOctBlk[ (MemBlkSiz - tre->NmbFreOct--) * 8 ];
+   oct->son = &tre->CurOctBlk[ (tre->BlkSiz - tre->NmbFreOct--) * 8 ];
    oct->sub = 1;
    tre->NmbOct+=8;
 
@@ -1788,12 +1796,12 @@ static void LnkItm(TreSct *tre, OctSct *oct, itg typ, itg idx, char ani)
    // In case nore more link container are availbable, allocate a new bloc
    if(!tre->NexFreLnk)
    {
-      tre->NexFreLnk = NewMem(tre, MemBlkSiz * sizeof(LnkSct));
+      tre->NexFreLnk = NewMem(tre, tre->BlkSiz * sizeof(LnkSct));
 
-      for(i=0;i<MemBlkSiz;i++)
+      for(i=0;i<tre->BlkSiz;i++)
          tre->NexFreLnk[i].nex = &tre->NexFreLnk[ i+1 ];
 
-      tre->NexFreLnk[ MemBlkSiz - 1 ].nex = NULL;
+      tre->NexFreLnk[ tre->BlkSiz - 1 ].nex = NULL;
    }
 
    // Get the next free link container and set it with the given item
@@ -2545,41 +2553,98 @@ static itg VerInsEdg(EdgSct *edg, VerSct *ver, fpn eps)
 /* Compute the distance between a vertex and a triangle                       */
 /*----------------------------------------------------------------------------*/
 
+static fpn DisVerSegCrd(fpn VerCrd[3], fpn Pnt1[3], fpn Pnt2[3])
+{
+   itg i;
+   fpn T, Len2, Edg[3], Dif[3], Img[3];
+
+   SubVec3(Pnt2, Pnt1, Edg);
+   SubVec3(VerCrd, Pnt1, Dif);
+   Len2 = DotPrd(Edg, Edg);
+
+   if(!(Len2 > 0.))
+      return(DisPow(VerCrd, Pnt1));
+
+   T = DotPrd(Dif, Edg) / Len2;
+   T = MAX(0., MIN(1., T));
+
+   for(i=0;i<3;i++)
+      Img[i] = Pnt1[i] + T * Edg[i];
+
+   return(DisPow(VerCrd, Img));
+}
+
+static fpn DisVerTriCrd(fpn VerCrd[3], fpn *A, fpn *B, fpn *C)
+{
+   itg i;
+   fpn D1, D2, D3, D4, D5, D6, Va, Vb, Vc, Den, S, T;
+   fpn Ab[3], Ac[3], Ap[3], Bp[3], Cp[3], Img[3], Nrm[3];
+
+   SubVec3(B, A, Ab);
+   SubVec3(C, A, Ac);
+   CrsPrd(Ab, Ac, Nrm);
+
+   if(!(DotPrd(Nrm, Nrm) > 0.))
+      return(MIN(DisVerSegCrd(VerCrd, A, B),
+             MIN(DisVerSegCrd(VerCrd, B, C),
+                 DisVerSegCrd(VerCrd, C, A))));
+
+   SubVec3(VerCrd, A, Ap);
+   D1 = DotPrd(Ab, Ap);
+   D2 = DotPrd(Ac, Ap);
+
+   if((D1 <= 0.) && (D2 <= 0.))
+      return(DisPow(VerCrd, A));
+
+   SubVec3(VerCrd, B, Bp);
+   D3 = DotPrd(Ab, Bp);
+   D4 = DotPrd(Ac, Bp);
+
+   if((D3 >= 0.) && (D4 <= D3))
+      return(DisPow(VerCrd, B));
+
+   Vc = D1 * D4 - D3 * D2;
+
+   if((Vc <= 0.) && (D1 >= 0.) && (D3 <= 0.))
+      return(DisVerSegCrd(VerCrd, A, B));
+
+   SubVec3(VerCrd, C, Cp);
+   D5 = DotPrd(Ab, Cp);
+   D6 = DotPrd(Ac, Cp);
+
+   if((D6 >= 0.) && (D5 <= D6))
+      return(DisPow(VerCrd, C));
+
+   Vb = D5 * D2 - D1 * D6;
+
+   if((Vb <= 0.) && (D2 >= 0.) && (D6 <= 0.))
+      return(DisVerSegCrd(VerCrd, A, C));
+
+   Va = D3 * D6 - D5 * D4;
+
+   if((Va <= 0.) && (D4 - D3 >= 0.) && (D5 - D6 >= 0.))
+      return(DisVerSegCrd(VerCrd, B, C));
+
+   Den = Va + Vb + Vc;
+
+   if(!(Den > 0.) || !isfinite(Den))
+      return(MIN(DisVerSegCrd(VerCrd, A, B),
+             MIN(DisVerSegCrd(VerCrd, B, C),
+                 DisVerSegCrd(VerCrd, C, A))));
+
+   S = Vb / Den;
+   T = Vc / Den;
+
+   for(i=0;i<3;i++)
+      Img[i] = A[i] + S * Ab[i] + T * Ac[i];
+
+   return(DisPow(VerCrd, Img));
+}
+
 static fpn DisVerTri(MshSct *msh, fpn VerCrd[3], TriSct *tri)
 {
-   fpn ImgCrd[3], TmpCrd[3], u[3], v[3], w[3], nrm[3], SubVol[3], TotVol;
-
-   // Project the vertex on the triangle's plane
-   PrjVerPla(VerCrd, tri->ver[0]->crd, tri->nrm, ImgCrd);
-
-   // Compute the vectors stemming from the projection to the triangle's nodes
-   SubVec3(tri->ver[0]->crd, ImgCrd, u);
-   SubVec3(tri->ver[1]->crd, ImgCrd, v);
-   SubVec3(tri->ver[2]->crd, ImgCrd, w);
-
-   // Compute the three tets' volumes
-   CrsPrd(v, w, nrm);
-   SubVol[0] = -DotPrd(nrm, tri->nrm);
-   SubVol[0] = MAX(SubVol[0], 0.);
-
-   CrsPrd(w, u, nrm);
-   SubVol[1] = -DotPrd(nrm, tri->nrm);
-   SubVol[1] = MAX(SubVol[1], 0.);
-
-   CrsPrd(u, v, nrm);
-   SubVol[2] = -DotPrd(nrm, tri->nrm);
-   SubVol[2] = MAX(SubVol[2], 0.);
-
-   // Compute the closest position with the barycentric coordinates
-   TotVol = SubVol[0] + SubVol[1] + SubVol[2];
-   MulVec2(SubVol[0] / TotVol, tri->ver[0]->crd, ImgCrd);
-   MulVec2(SubVol[1] / TotVol, tri->ver[1]->crd, TmpCrd);
-   AddVec2(TmpCrd, ImgCrd);
-   MulVec2(SubVol[2] / TotVol, tri->ver[2]->crd, TmpCrd);
-   AddVec2(TmpCrd, ImgCrd);
-
-   // Return the square of the distance
-   return(DisPow(VerCrd, ImgCrd));
+   return(DisVerTriCrd(VerCrd, tri->ver[0]->crd,
+                       tri->ver[1]->crd, tri->ver[2]->crd));
 }
 
 

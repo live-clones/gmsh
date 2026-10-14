@@ -20,9 +20,9 @@ namespace netgen
   {
     for (int i = 0; i < size; i++)
       {
-	data[i].maxsize = 0;
-	data[i].size = 0;
-	data[i].col = NULL;
+        data[i].maxsize = 0;
+        data[i].size = 0;
+        data[i].col = NULL;
       }
     oneblock = NULL;
   }
@@ -30,22 +30,22 @@ namespace netgen
   BASE_TABLE :: BASE_TABLE (const FlatArray<int> & entrysizes, int elemsize)
     : data(entrysizes.Size())
   {
-    int i, cnt = 0;
-    int n = entrysizes.Size();
+    size_t cnt = 0;
+    size_t n = entrysizes.Size();
 
-    for (i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++)
       cnt += entrysizes[i];
     oneblock = new char[elemsize * cnt];
     // mem_total_alloc_table += elemsize * cnt;
 
     cnt = 0;
-    for (i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++)
       {
-	data[i].maxsize = entrysizes[i];
-	data[i].size = 0;
+        data[i].maxsize = entrysizes[i];
+        data[i].size = 0;
 
-	data[i].col = &oneblock[elemsize * cnt];
-	cnt += entrysizes[i];
+        data[i].col = &oneblock[elemsize * cnt];
+        cnt += entrysizes[i];
       }
   }
 
@@ -55,8 +55,8 @@ namespace netgen
       delete [] oneblock;
     else
       {
-	for (int i = 0; i < data.Size(); i++)
-	  delete [] (char*)data[i].col;
+        for (int i = 0; i < data.Size(); i++)
+          delete [] (char*)data[i].col;
       }
   }
   
@@ -68,9 +68,9 @@ namespace netgen
     data.SetSize(size);
     for (int i = 0; i < size; i++)
       {
-	data[i].maxsize = 0;
-	data[i].size = 0;
-	data[i].col = NULL;
+        data[i].maxsize = 0;
+        data[i].size = 0;
+        data[i].col = NULL;
       }    
   }
   
@@ -82,15 +82,15 @@ namespace netgen
 
     if (size < oldsize)
       for (int i = size; i < oldsize; i++)
-	delete [] (char*)data[i].col;
+        delete [] (char*)data[i].col;
     
     data.SetSize(size);
 
     for (int i = oldsize; i < size; i++)
       {
-	data[i].maxsize = 0;
-	data[i].size = 0;
-	data[i].col = NULL;
+        data[i].maxsize = 0;
+        data[i].size = 0;
+        data[i].col = NULL;
       }    
   }
 
@@ -99,21 +99,22 @@ namespace netgen
 #ifdef DEBUG
     if (i < 0 || i >= data.Size())
       {
-	MyError ("BASE_TABLE::Inc: Out of range");
-	return;
+        throw Exception ("BASE_TABLE::Inc: Out of range");
+        return;
       }
 #endif
 
     linestruct & line = data[i];
     if (line.size == line.maxsize)
       {
-	void * p = new char [(line.maxsize+5) * elsize];
-      
-	memcpy (p, line.col, line.maxsize * elsize);
-	delete [] (char*)line.col;
+        void * p = new char [(line.maxsize+5) * elsize];
 
-	line.col = p;
-	line.maxsize += 5;
+        if (line.maxsize && elsize)
+          memcpy (p, line.col, line.maxsize * elsize);
+        delete [] (char*)line.col;
+
+        line.col = p;
+        line.maxsize += 5;
       }
   
     line.size++;
@@ -127,12 +128,12 @@ namespace netgen
     linestruct & line = data[i];
     if (newsize > line.maxsize)
       {
-	void * p = new char [newsize * elsize];
+        void * p = new char [newsize * elsize];
       
-	memcpy (p, line.col, min2 (newsize, line.size) * elsize);
-	delete [] (char*)line.col;
+        memcpy (p, line.col, min2 (newsize, line.size) * elsize);
+        delete [] (char*)line.col;
 
-	line.col = p;
+        line.col = p;
       }
 
     line.size = newsize;
@@ -148,8 +149,8 @@ namespace netgen
 #ifdef DEBUG
     if (i < 0 || i >= data.Size())
       {
-	MyError ("BASE_TABLE::Dec: Out of range");
-	return;
+        throw Exception ("BASE_TABLE::Dec: Out of range");
+        return;
       }
 #endif
 
@@ -158,8 +159,8 @@ namespace netgen
 #ifdef DEBUG
     if (line.size == 0)
       {
-	MyError ("BASE_TABLE::Dec: EntrySize < 0");
-	return;      
+        throw Exception ("BASE_TABLE::Dec: EntrySize < 0");
+        return;      
       }
 #endif
   
@@ -171,36 +172,36 @@ namespace netgen
 
   void BASE_TABLE :: AllocateElementsOneBlock (int elemsize)
   {
-    int cnt = 0;
-    int n = data.Size();
+    size_t cnt = 0;
+    size_t n = data.Size();
 
-    for (int i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++)
       cnt += data[i].maxsize;
     oneblock = new char[elemsize * cnt];
 
     cnt = 0;
-    for (int i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++)
       {
-	data[i].size = 0;
-	data[i].col = &oneblock[elemsize * cnt];
-	cnt += data[i].maxsize;
+        data[i].size = 0;
+        data[i].col = &oneblock[elemsize * cnt];
+        cnt += data[i].maxsize;
       }
   }
 
 
 
-  int BASE_TABLE :: AllocatedElements () const
+  size_t BASE_TABLE :: AllocatedElements () const
   {
-    int els = 0;
-    for (int i = 0; i < data.Size(); i++)
+    size_t els = 0;
+    for (size_t i = 0; i < data.Size(); i++)
       els += data[i].maxsize;
     return els;
   }
   
-  int BASE_TABLE :: UsedElements () const
+  size_t BASE_TABLE :: UsedElements () const
   {
-    int els = 0;
-    for (int i = 0; i < data.Size(); i++)
+    size_t els = 0;
+    for (size_t i = 0; i < data.Size(); i++)
       els += data[i].size;
     return els;
   }
@@ -211,4 +212,44 @@ namespace netgen
       data[i].size = data[i].maxsize;
   }
 
+
+  
+  void BASE_TABLE :: DoArchive (Archive & ar, int elemsize)
+  {
+    if (ar.Output())
+      {
+        size_t entries = 0, size = data.Size();
+        for (size_t i = 0; i < data.Size(); i++)
+          entries += data[i].size;
+        ar & size & entries;
+        for (size_t i = 0; i < data.Size(); i++)
+          {
+            ar & data[i].size;
+            ar.Do ((unsigned char*)data[i].col, data[i].size*elemsize);
+            /*
+            for (size_t j = 0; j < data[i].size*elemsize; j++)
+              ar &  ((unsigned char*) data[i].col)[j];
+            cout << "write " << data[i].size*elemsize << " chars" << endl;
+            */
+          }
+      }
+    else
+      {
+        size_t entries, size;
+        ar & size & entries;
+        data.SetSize(size);
+        oneblock = new char [entries*elemsize];
+        size_t cnt = 0;
+        for (size_t i = 0; i < size; i++)
+          {
+            ar & data[i].size;
+            data[i].col = oneblock+cnt;
+            data[i].maxsize = data[i].size;
+            ar.Do ((unsigned char*)(oneblock+cnt), data[i].size*elemsize);
+            cnt += data[i].size*elemsize;
+          }
+      }
+  }    
+
+  
 }

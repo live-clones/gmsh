@@ -7,6 +7,8 @@
 /* Date:   1. Dez. 95                                                     */
 /**************************************************************************/
 
+#include <functional>
+
 namespace netgen 
 {
 
@@ -31,6 +33,26 @@ namespace netgen
   };
 
 
+  inline INSOLID_TYPE Intersection (INSOLID_TYPE ina, INSOLID_TYPE inb)
+  {
+    if (ina == IS_INSIDE && inb == IS_INSIDE) return IS_INSIDE;
+    if (ina == IS_OUTSIDE || inb == IS_OUTSIDE) return IS_OUTSIDE;
+    return DOES_INTERSECT;
+  }
+  
+  inline INSOLID_TYPE Union (INSOLID_TYPE ina, INSOLID_TYPE inb)
+  {
+    if (ina == IS_INSIDE || inb == IS_INSIDE) return IS_INSIDE;
+    if (ina == IS_OUTSIDE && inb == IS_OUTSIDE) return IS_OUTSIDE;
+    return DOES_INTERSECT;
+  }
+
+  inline INSOLID_TYPE Complement (INSOLID_TYPE in)
+  {
+    if (in == IS_INSIDE) return IS_OUTSIDE;
+    if (in == IS_OUTSIDE) return IS_INSIDE;
+    return DOES_INTERSECT;
+  }
 
   class Solid
   {
@@ -46,14 +68,29 @@ namespace netgen
     optyp op;
     bool visited;
     double maxh;
+    int num_surfs;
 
     // static int cntnames;
 
   public:
     Solid (Primitive * aprim);
     Solid (optyp aop, Solid * as1, Solid * as2 = NULL);
+    // default constructor for archive
+    Solid () {}
     ~Solid ();
 
+    void DoArchive(Archive& archive)
+    {
+      archive & name & prim & s1 & s2 & visited & maxh & num_surfs;
+      if(archive.Output())
+        archive << int(op);
+      else
+        {
+          int iop;
+          archive & iop;
+          op = optyp(iop);
+        }
+    }
     const char * Name () const { return name; }
     void SetName (const char * aname);
 
@@ -73,6 +110,7 @@ namespace netgen
     void GetTangentialSurfaceIndices2 (const Point<3> & p, const Vec<3> & v, Array<int> & surfids, double eps) const;
     void GetTangentialSurfaceIndices3 (const Point<3> & p, const Vec<3> & v, const Vec<3> & v2, Array<int> & surfids, double eps) const;
 
+    void ForEachSurface (const std::function<void(Surface*,bool)> & lambda, bool inv = false) const;
 
     Primitive * GetPrimitive ()
     { return (op == TERM || op == TERM_REF) ? prim : NULL; }
@@ -84,40 +122,51 @@ namespace netgen
 
     // geometric tests
 
+    INSOLID_TYPE PointInSolid (const Point<3> & p, double eps) const;
+    INSOLID_TYPE VecInSolid (const Point<3> & p, const Vec<3> & v, double eps) const;
+
+    // checks if lim s->0 lim t->0  p + t(v1 + s v2) in solid
+    INSOLID_TYPE VecInSolid2 (const Point<3> & p, const Vec<3> & v1,
+                              const Vec<3> & v2, double eps) const;
+
+    
     bool IsIn (const Point<3> & p, double eps = 1e-6) const;
     bool IsStrictIn (const Point<3> & p, double eps = 1e-6) const;
     bool VectorIn (const Point<3> & p, const Vec<3> & v, double eps = 1e-6) const;
     bool VectorStrictIn (const Point<3> & p, const Vec<3> & v, double eps = 1e-6) const;
   
     bool VectorIn2 (const Point<3> & p, const Vec<3> & v1, const Vec<3> & v2,
-		    double eps) const;
+                    double eps) const;
+    /*
     bool VectorIn2Rec (const Point<3> & p, const Vec<3> & v1, const Vec<3> & v2,
-		       double eps) const;
-
+                       double eps) const;
+    */
+    bool VectorStrictIn2 (const Point<3> & p, const Vec<3> & v1, const Vec<3> & v2,
+                          double eps) const;
 
     /// compute localization in point p
-    void TangentialSolid (const Point<3> & p, Solid *& tansol, Array<int> & surfids, double eps) const;
+    unique_ptr<Solid> TangentialSolid (const Point<3> & p, Array<int> & surfids, double eps) const;
 
     /// compute localization in point p tangential to vector t
-    void TangentialSolid2 (const Point<3> & p, const Vec<3> & t,
-			   Solid *& tansol, Array<int> & surfids, double eps) const;
+    unique_ptr<Solid> TangentialSolid2 (const Point<3> & p, const Vec<3> & t,
+                                        Array<int> & surfids, double eps) const;
 
     /** compute localization in point p, with second order approximation to edge
-	p + s t + s*s/2 t2 **/
-    void TangentialSolid3 (const Point<3> & p, const Vec<3> & t, const Vec<3> & t2, 
-			   Solid *& tansol, Array<int> & surfids, double eps) const;
+        p + s t + s*s/2 t2 **/
+    unique_ptr<Solid> TangentialSolid3 (const Point<3> & p, const Vec<3> & t, const Vec<3> & t2, 
+                                        Array<int> & surfids, double eps) const;
 
 
 
     /** tangential solid, which follows the edge
-	p + s t + s*s/2 t2
-	with second order, and the neighbouring face
-	p + s t + s*s/2 t2 + r m
-	with first order
+        p + s t + s*s/2 t2
+        with second order, and the neighbouring face
+        p + s t + s*s/2 t2 + r m
+        with first order
     **/
-    void TangentialEdgeSolid (const Point<3> & p, const Vec<3> & t, const Vec<3> & t2, 
-			      const Vec<3> & m, 
-			      Solid *& tansol, Array<int> & surfids, double eps) const;
+    unique_ptr<Solid> TangentialEdgeSolid (const Point<3> & p, const Vec<3> & t, const Vec<3> & t2, 
+                                           const Vec<3> & m, 
+                                           Array<int> & surfids, double eps) const;
 
 
     void CalcOnePrimitiveSpecialPoints (const Box<3> & box, Array<Point<3> > & pts) const;
@@ -140,18 +189,18 @@ namespace netgen
     { return maxh; }
 
     void GetSolidData (ostream & ost, int first = 1) const;
-    static Solid * CreateSolid (istream & ist, const SYMBOLTABLE<Solid*> & solids);
+    static Solid * CreateSolid (istream & ist, const SymbolTable<Solid*> & solids);
 
 
-    static BlockAllocator ball;
+    static shared_ptr<BlockAllocator> ball;
     void * operator new(size_t /* s */) 
     {
-      return ball.Alloc();
+      return ball->Alloc();
     }
 
     void operator delete (void * p)
     {
-      ball.Free (p);
+      ball->Free (p);
     }
 
 
@@ -159,27 +208,27 @@ namespace netgen
     ///
 
     void RecBoundaries (const Point<3> & p, Array<int> & bounds, 
-			int & in, int & strin) const;
+                        int & in, int & strin) const;
     ///
     void RecTangentialSolid (const Point<3> & p, Solid *& tansol, Array<int> & surfids, 
-			     int & in, int & strin, double eps) const;
+                             bool & in, bool & strin, double eps) const;
 
     void RecTangentialSolid2 (const Point<3> & p, const Vec<3> & vec, 
-			      Solid *& tansol, Array<int> & surfids, 
-			      int & in, int & strin, double eps) const;
+                              Solid *& tansol, Array<int> & surfids, 
+                              bool & in, bool & strin, double eps) const;
     ///
     void RecTangentialSolid3 (const Point<3> & p, const Vec<3> & vec,const Vec<3> & vec2, 
-			      Solid *& tansol, Array<int> & surfids, 
-			      int & in, int & strin, double eps) const;
+                              Solid *& tansol, Array<int> & surfids, 
+                              bool & in, bool & strin, double eps) const;
     ///
     void RecTangentialEdgeSolid (const Point<3> & p, const Vec<3> & t, const Vec<3> & t2, 
-				 const Vec<3> & m, 
-				 Solid *& tansol, Array<int> & surfids, 
-				 int & in, int & strin, double eps) const;
+                                 const Vec<3> & m, 
+                                 Solid *& tansol, Array<int> & surfids, 
+                                 bool & in, bool & strin, double eps) const;
 
     ///
     void RecEdge (const Point<3> & p, const Vec<3> & v,
-		  int & in, int & strin, int & faces, double eps) const;
+                  bool & in, bool & strin, int & faces, double eps) const;
     ///
     void CalcSurfaceInverseRec (int inv);
     ///
@@ -189,9 +238,9 @@ namespace netgen
     void RecGetTangentialSurfaceIndices (const Point<3> & p, Array<int> & surfids, double eps) const;
     void RecGetTangentialSurfaceIndices2 (const Point<3> & p, const Vec<3> & v, Array<int> & surfids, double eps) const;
     void RecGetTangentialSurfaceIndices3 (const Point<3> & p, const Vec<3> & v, const Vec<3> & v2, 
-					  Array<int> & surfids, double eps) const;
+                                          Array<int> & surfids, double eps) const;
     void RecGetTangentialEdgeSurfaceIndices (const Point<3> & p, const Vec<3> & v, const Vec<3> & v2, const Vec<3> & m,
-					     Array<int> & surfids, double eps) const;
+                                             Array<int> & surfids, double eps) const;
     void RecGetSurfaceIndices (IndexSet & iset) const;
 
     void RecCalcOnePrimitiveSpecialPoints (Array<Point<3> > & pts) const;
@@ -216,7 +265,7 @@ namespace netgen
 
   class ReducePrimitiveIterator : public SolidIterator
   {
-    const BoxSphere<3> & box;
+    BoxSphere<3> box;
   public:
     ReducePrimitiveIterator (const BoxSphere<3> & abox)
       : SolidIterator(), box(abox) { ; }
@@ -224,7 +273,7 @@ namespace netgen
     virtual void Do (Solid * sol)
     {
       if (sol -> GetPrimitive())
-	sol -> GetPrimitive() -> Reduce (box);
+        sol -> GetPrimitive() -> Reduce (box);
     }
   };
 
@@ -237,7 +286,7 @@ namespace netgen
     virtual void Do (Solid * sol)
     {
       if (sol -> GetPrimitive())
-	sol -> GetPrimitive() -> UnReduce ();
+        sol -> GetPrimitive() -> UnReduce ();
     }
   };
 

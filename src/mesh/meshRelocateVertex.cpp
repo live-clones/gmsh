@@ -18,9 +18,7 @@
 #include "qualityMeasures.h"
 #include "Context.h"
 
-#if defined(HAVE_WINSLOWUNTANGLER)
-#include "winslowUntangler.h"
-#endif
+#include "WinslowUntangler.h"
 
 using vec3 = std::array<double, 3>;
 inline double dot(const vec3 &a, const vec3 &b)
@@ -477,8 +475,6 @@ void RelocateVertices(GRegion *region, int niter, double tol)
   }
 }
 
-#if defined(HAVE_WINSLOWUNTANGLER)
-
 void _getVertices(std::vector<MElement *> &el, std::vector<MVertex *> &interior,
                   std::vector<MVertex *> &boundary)
 {
@@ -619,7 +615,12 @@ void _untanglePyramidsLocal(GRegion *region)
       // printf("Untangling vertex %d (%lu elements, %lu interior, %lu bnd)\n",
       //        v_current->getIndex(),el.size(), interior.size(),
       //        boundary.size());
-      untangle_tetrahedra(points, locked, tets, tetIdealShapes, 1.e-0, 130, 2);
+      WinslowUntangler::Options options;
+      options.lambda = 1.e-0;
+      options.maxInnerIterations = 130;
+      options.maxOuterIterations = 2;
+      WinslowUntangler::untangle3D(points, locked, tets, tetIdealShapes,
+                                   options);
       bool success = true;
       if(!success)
         _v_pyr_new.insert(v_current);
@@ -755,7 +756,12 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
 
     for(size_t i = 0; i < tets.size(); i++) { tetIdealShapes.push_back(equi); }
 
-    untangle_tetrahedra(points, locked, tets, tetIdealShapes, 1.e-12, 130, 2);
+    WinslowUntangler::Options options;
+    options.lambda = 1.e-12;
+    options.maxInnerIterations = 130;
+    options.maxOuterIterations = 2;
+    options.numThreads = CTX::instance()->numThreadsFor(tets.size(), 5000);
+    WinslowUntangler::untangle3D(points, locked, tets, tetIdealShapes, options);
 
     for(auto v : _v_pyr) {
       v->x() = points[v->getIndex()][0];
@@ -765,7 +771,6 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
   }
   return 0;
 }
-#endif
 
 void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 {
@@ -777,14 +782,12 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
     return;
   }
 
-#if defined(HAVE_WINSLOWUNTANGLER)
   if(CTX::instance()->mesh.optimizePyramids == 1.) {
     Msg::Info("Using new pyramid optimization");
     _untanglePyramids(region, true, false);
     _untanglePyramidsLocal(region);
     return;
   }
-#endif
 
   if(!niter) return;
 
@@ -829,22 +832,24 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
   buildVertexToElement(region->prisms, adj);
   buildVertexToElement(region->hexahedra, adj);
 
+  // only the nodes of _vts have all their elements in adj: moving the other
+  // nodes of _tets could invert tets they do not see
   for(int i = 0; i < 10; i++) {
     double relax = (double)i / 10. + 1e-6;
     auto it = adj.begin();
     while(it != adj.end()) {
-      relocateVertexOfPyramid(it->first, it->second, relax);
+      if(_vts.find(it->first) != _vts.end())
+        relocateVertexOfPyramid(it->first, it->second, relax);
       ++it;
     }
   }
-
-  // return;
 
   for(int i = 0; i < niter + 2; i++) {
     auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
     while(it != adj.end()) {
-      relocateVertexGolden(it->first, it->second, relax, tol);
+      if(_vts.find(it->first) != _vts.end())
+        relocateVertexGolden(it->first, it->second, relax, tol);
       ++it;
     }
   }
