@@ -119,6 +119,15 @@
 #endif
 #endif
 
+// otherwise clang inlines the adaptive stages and every call pays for their stack frame
+#if defined(__GNUC__)
+#define ADAPT_NOINLINE __attribute__((noinline, cold))
+#elif defined(_MSC_VER)
+#define ADAPT_NOINLINE __declspec(noinline)
+#else
+#define ADAPT_NOINLINE
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -613,6 +622,7 @@ static REAL estimate(const int elen, const REAL* const e)
 //   return acx * bcy - acy * bcx;
 // }
 
+ADAPT_NOINLINE
 static REAL orient2dadapt(const REAL* const __restrict__ pa,
                           const REAL* const __restrict__ pb,
                           const REAL* const __restrict__ pc,
@@ -759,6 +769,7 @@ REAL orient2d(const REAL* const __restrict__ pa, const REAL* const __restrict__ 
 /*****************************************************************************/
 
 
+ADAPT_NOINLINE
 static REAL orient3dadapt(const REAL* const __restrict__ pa,
                           const REAL* const __restrict__ pb,
                           const REAL* const __restrict__ pc,
@@ -1283,6 +1294,7 @@ REAL orient3d(const REAL* const __restrict__ pa,
 //   return alift * bcdet + blift * cadet + clift * abdet;
 // }
 
+ADAPT_NOINLINE
 static REAL incircleadapt(const REAL* const __restrict__ pa,
                           const REAL* const __restrict__ pb,
                           const REAL* const __restrict__ pc,
@@ -2234,6 +2246,7 @@ static REAL insphereexact(const REAL* const __restrict__ pa,
 }
 
 
+ADAPT_NOINLINE
 static REAL insphereadapt(const REAL* const __restrict__ pa,
                           const REAL* const __restrict__ pb,
                           const REAL* const __restrict__ pc,
