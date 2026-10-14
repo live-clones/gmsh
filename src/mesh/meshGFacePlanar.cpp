@@ -211,13 +211,16 @@ namespace planar {
       onCurve[i] = v->onWhat()->dim() < 2;
     }
 
-    // the curves of the surface (boundary and embedded) and the neighbors of
-    // their nodes on them
+    // the curves of the surface (boundary and embedded), their edges, and
+    // the neighbors of their nodes on them
     _curves = gf->edges();
     for(GEdge *ge : gf->embeddedEdges()) _curves.push_back(ge);
     for(GEdge *ge : _curves)
       for(MLine *l : ge->lines) {
         MVertex *a = l->getVertex(0), *b = l->getVertex(1);
+        auto ia = _id.find(a), ib = _id.find(b);
+        if(ia != _id.end() && ib != _id.end())
+          constrainedEdges.push_back({ia->second, ib->second});
         _curveNb[a].push_back(b);
         _curveNb[b].push_back(a);
       }
@@ -335,28 +338,62 @@ namespace planar {
     return nSlide;
   }
 
-  void Face::write(const Mesh &m)
+  void Face::write(const Mesh &m, bool topology)
   {
-    // the nodes of the surface, and the nodes that slid along their curve
-    for(int i = 0; i < (int)_verts.size(); i++) {
-      MVertex *v = _verts[i];
-      if(v->onWhat()->dim() == 2) {
-        SPoint3 P = _to3D(m.x[i]);
-        v->setXYZ(P.x(), P.y(), P.z());
-        SPoint2 uv = _gf->parFromPoint(P);
-        v->setParameter(0, uv.x());
-        v->setParameter(1, uv.y());
-      }
-      else if(m.slidable(i)) {
-        double t;
-        v->getParameter(0, t);
-        if(t != m.tpar[i]) {
-          GPoint p = _curves[m.slideCurve[i]]->point(m.tpar[i]);
-          v->setXYZ(p.x(), p.y(), p.z());
-          v->setParameter(0, m.tpar[i]);
+    // move the kept nodes; with topology changes, also create the inserted
+    // ones, delete the removed ones (always nodes of the surface) and
+    // rebuild the triangles
+    const int n0 = (int)_verts.size();
+    std::vector<MVertex *> vtx(m.nv, nullptr);
+    for(int i = 0; i < m.nv; i++) {
+      if(!m.aliveV[i]) continue;
+      if(i < n0) {
+        MVertex *v = _verts[i];
+        vtx[i] = v;
+        if(v->onWhat()->dim() == 2) {
+          SPoint3 P = _to3D(m.x[i]);
+          v->setXYZ(P.x(), P.y(), P.z());
+          SPoint2 uv = _gf->parFromPoint(P);
+          v->setParameter(0, uv.x());
+          v->setParameter(1, uv.y());
+        }
+        else if(m.slidable(i)) {
+          double t;
+          v->getParameter(0, t);
+          if(t != m.tpar[i]) {
+            GPoint p = _curves[m.slideCurve[i]]->point(m.tpar[i]);
+            v->setXYZ(p.x(), p.y(), p.z());
+            v->setParameter(0, m.tpar[i]);
+          }
         }
       }
+      else if(topology) {
+        SPoint3 P = _to3D(m.x[i]);
+        SPoint2 uv = _gf->parFromPoint(P);
+        MFaceVertex *v =
+          new MFaceVertex(P.x(), P.y(), P.z(), _gf, uv.x(), uv.y());
+        _gf->mesh_vertices.push_back(v);
+        vtx[i] = v;
+      }
     }
+    if(!topology) return;
+    std::set<MVertex *> dead;
+    for(int i = 0; i < n0; i++)
+      if(!m.aliveV[i]) dead.insert(_verts[i]);
+    if(!dead.empty()) {
+      std::vector<MVertex *> keep;
+      keep.reserve(_gf->mesh_vertices.size());
+      for(MVertex *v : _gf->mesh_vertices)
+        if(!dead.count(v)) keep.push_back(v);
+      _gf->mesh_vertices.swap(keep);
+      for(MVertex *v : dead) delete v;
+    }
+    for(MTriangle *t : _gf->triangles) delete t;
+    _gf->triangles.clear();
+    for(std::size_t t = 0; t < m.tri.size(); t++)
+      if(m.aliveT[t])
+        _gf->triangles.push_back(new MTriangle(
+          vtx[m.tri[t][0]], vtx[m.tri[t][1]], vtx[m.tri[t][2]]));
   }
 
 } // namespace planar
@@ -375,7 +412,7 @@ void smoothPlanarFaceODT(GFace *gf, int iterations)
   for(std::size_t t = 0; t < m.tri.size(); t++) all[t] = (int)t;
   const double g0 = m.minGamma(all);
   planar::smoothODT(m, iterations);
-  face.write(m);
+  face.write(m, false);
   Msg::Info("ODT smoothing of surface %d: worst gamma %.3f -> %.3f, %d "
             "sliding boundary nodes (%g s)",
             gf->tag(), g0, m.minGamma(all), nSlide, TimeOfDay() - t0);

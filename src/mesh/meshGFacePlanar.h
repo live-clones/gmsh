@@ -7,7 +7,8 @@
 #define MESH_GFACE_PLANAR_H
 
 // The triangle mesh of a planar surface as flat arrays in the plane of the
-// surface, for the optimizations that move its nodes (Mesh.ODTSmoothing2D).
+// surface, for the optimizations that move its nodes (Mesh.ODTSmoothing2D) or
+// also change its connectivity (Mesh.ValenceRepair2D, meshGFaceValence.cpp).
 // The surface is read once and written back once. Nodes on curves and points
 // stay on them; the nodes on curves may slide along their curve, between
 // their two neighbors on it (Mesh.BoundaryNodeSliding2D), except where
@@ -67,11 +68,16 @@ namespace planar {
     std::vector<V2> x;
     std::vector<std::array<int, 3>> tri;
     std::vector<char> aliveT, aliveV, onBnd;
+    // nodes whose fan is open (on the boundary of the surface), at
+    // construction
+    std::vector<char> openFan;
     // local size of the input mesh at each node (mean length of its edges),
     // fixed: the ODT smoother keeps this density
     std::vector<double> h0;
     std::vector<std::vector<int>> vt;
     int nv = 0;
+    // mean edge length of the input mesh
+    double h = 0;
     // nodes on curves sliding along them: curve index (-1: fixed),
     // parameter, and their two neighbors on the curve, with the parameter of
     // each on the curve of the node when it cannot slide itself (NaN
@@ -95,6 +101,38 @@ namespace planar {
       return std::isnan(slideNbT[v][k]) ? tparOf(slideNb[v][k]) :
                                           slideNbT[v][k];
     }
+    // journal of the first positions of the nodes moved since it was opened
+    // (multi-step changes), each node once
+    struct JournalEntry {
+      int v;
+      V2 x;
+      double t;
+    };
+    bool journalOpen = false;
+    std::vector<JournalEntry> journal;
+    std::vector<char> journaled;
+    void openJournal() { journalOpen = true; }
+    void record(int v)
+    {
+      if(!journalOpen) return;
+      if(v >= (int)journaled.size()) journaled.resize(x.size(), 0);
+      if(journaled[v]) return;
+      journaled[v] = 1;
+      journal.push_back({v, x[v], tparOf(v)});
+    }
+    // close the journal, first restoring the positions if restore
+    void closeJournal(bool restore)
+    {
+      for(auto &e : journal) {
+        if(restore) {
+          x[e.v] = e.x;
+          if(e.v < (int)tpar.size()) tpar[e.v] = e.t;
+        }
+        journaled[e.v] = 0;
+      }
+      journal.clear();
+      journalOpen = false;
+    }
 
     // onCurve: nodes on curves or points (fixed unless they slide)
     Mesh(const std::vector<V2> &x0, const std::vector<std::array<int, 3>> &t0,
@@ -115,9 +153,11 @@ namespace planar {
         for(int v : tri[i]) vt[v].push_back(i);
       // the edges (a, b), a < b: an edge is on the boundary if a single
       // triangle uses it; the mean length of the edges of each node
-      onBnd = onCurve;
+      openFan.assign(nv, 0);
       h0.assign(nv, 0.);
       std::vector<int> nEdgesOf(nv, 0);
+      double hs = 0;
+      std::size_t nEdges = 0;
       std::vector<int> nb;
       for(int a = 0; a < nv; a++) {
         nb.clear();
@@ -128,15 +168,43 @@ namespace planar {
         for(std::size_t i = 0, j; i < nb.size(); i = j) {
           const int b = nb[i];
           for(j = i + 1; j < nb.size() && nb[j] == b;) j++;
-          if(j - i == 1) onBnd[a] = onBnd[b] = 1;
+          if(j - i == 1) openFan[a] = openFan[b] = 1;
           const double l = norm(x[a] - x[b]);
+          hs += l;
           h0[a] += l;
           h0[b] += l;
           nEdgesOf[a]++;
           nEdgesOf[b]++;
+          nEdges++;
         }
       }
+      onBnd = onCurve;
+      for(int v = 0; v < nv; v++)
+        if(openFan[v]) onBnd[v] = 1;
+      h = hs / nEdges;
       for(int v = 0; v < nv; v++) h0[v] /= std::max(1, nEdgesOf[v]);
+    }
+
+    // the neighbors of node v, in the order of its triangles
+    void neighbors(int v, std::vector<int> &s) const
+    {
+      s.clear();
+      for(int t : vt[v])
+        for(int w : tri[t])
+          if(w != v && std::find(s.begin(), s.end(), w) == s.end())
+            s.push_back(w);
+    }
+    std::vector<int> neighbors(int v) const
+    {
+      std::vector<int> s;
+      neighbors(v, s);
+      return s;
+    }
+
+    void move(int v, V2 pos)
+    {
+      record(v);
+      x[v] = pos;
     }
 
     double triGamma(int t) const
@@ -160,6 +228,24 @@ namespace planar {
       for(int t : tris)
         if(aliveT[t]) g = std::min(g, triGamma(t));
       return g;
+    }
+    // the centroid of the star polygon of a node, and the worst gamma of the
+    // star (as starGamma, computed on the way)
+    bool starCentroid(int v, V2 &target, double &gamma) const
+    {
+      V2 num = {0, 0};
+      double den = 0;
+      gamma = 1.;
+      for(int t : vt[v]) {
+        V2 p = x[tri[t][0]], q = x[tri[t][1]], r = x[tri[t][2]];
+        double A = orient(p, q, r);
+        num = num + (A / 3) * (p + q + r);
+        den += A;
+        gamma = std::min(gamma, gammaOf(p, q, r));
+      }
+      if(den <= 0) return false;
+      target = (1. / den) * num;
+      return true;
     }
 
     // slide a node along its curve, between its two neighbors on it, to the
@@ -219,9 +305,29 @@ namespace planar {
         bt = t2;
       }
       if(!(bg > g0 + 1e-12)) return false;
+      record(v);
       x[v] = curvePoint(c, bt);
       tpar[v] = bt;
       return true;
+    }
+
+    // move each node to the centroid of its star polygon, only if that does
+    // not lower the worst triangle of its star; the nodes on curves slide
+    // instead
+    void smoothNodes(const std::vector<int> &nodes, int iters = 4)
+    {
+      for(int it = 0; it < iters; it++)
+        for(int v : nodes) {
+          if(!aliveV[v]) continue;
+          if(onBnd[v]) {
+            if(slidable(v)) slideBest(v);
+            continue;
+          }
+          V2 target;
+          double g;
+          if(!starCentroid(v, target, g)) continue;
+          if(starGamma(v, &target) >= g) move(v, target);
+        }
     }
   };
 
@@ -235,10 +341,12 @@ namespace planar {
   // from the surface, then written back
   class Face {
   public:
-    // the nodes (x, onCurve: on a curve or a point) and the triangles
+    // the nodes (x, onCurve: on a curve or a point), the triangles, and the
+    // edges of the curves
     std::vector<V2> x;
     std::vector<char> onCurve;
     std::vector<std::array<int, 3>> tri;
+    std::vector<std::pair<int, int>> constrainedEdges;
 
     explicit Face(GFace *gf);
     // no triangles, or no plane
@@ -247,8 +355,9 @@ namespace planar {
     // the curves whose nodes another mesh uses or whose distribution is
     // imposed; the number of sliding nodes
     int setupSliding(Mesh &m);
-    // write the nodes back
-    void write(const Mesh &m);
+    // write the nodes back (and, if topology, the inserted and removed nodes
+    // and the triangles)
+    void write(const Mesh &m, bool topology);
 
   private:
     GFace *_gf;

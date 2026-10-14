@@ -602,6 +602,8 @@ double opt_mesh_flat_optimize_3d(OPT_ARGS_NUM);
 double opt_mesh_flexible_transfinite(OPT_ARGS_NUM);
 double opt_mesh_odt_smoothing_2d(OPT_ARGS_NUM);
 double opt_mesh_boundary_node_sliding_2d(OPT_ARGS_NUM);
+double opt_mesh_valence_repair_2d(OPT_ARGS_NUM);
+double opt_mesh_valence_repair_threshold_2d(OPT_ARGS_NUM);
 double opt_mesh_quasi_transfinite(OPT_ARGS_NUM);
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_visible(OPT_ARGS_NUM);

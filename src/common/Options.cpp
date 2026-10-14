@@ -6640,6 +6640,18 @@ double opt_mesh_boundary_node_sliding_2d(OPT_ARGS_NUM)
   return CTX::instance()->mesh.boundaryNodeSliding2D;
 }
 
+double opt_mesh_valence_repair_2d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.valenceRepair2D = (int)val;
+  return CTX::instance()->mesh.valenceRepair2D;
+}
+
+double opt_mesh_valence_repair_threshold_2d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.valenceRepairThreshold2D = val;
+  return CTX::instance()->mesh.valenceRepairThreshold2D;
+}
+
 double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

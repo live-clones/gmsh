@@ -32,6 +32,7 @@
 #include "meshGFaceBamg.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFacePlanar.h"
+#include "meshGFaceValence.h"
 #include "meshGFaceQuadHalf.h"
 #include "meshGFaceCopy.h"
 #include "meshGFaceDirections.h"
@@ -753,15 +754,17 @@ runDelaunayAlgorithm(GFace *gf, bool infty, bool seedBamgWithBowyerWatson,
      !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine))
     laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
 
-  // Mesh.ODTSmoothing2D, after the smoothing: isotropic triangle meshes of
-  // planar surfaces only (not the anisotropic ones of BAMG, nor the right
-  // triangles that Frontal-Quad and the packing make for quadrangles)
+  // Mesh.ValenceRepair2D and Mesh.ODTSmoothing2D, after the smoothing:
+  // isotropic triangle meshes of planar surfaces only (not the anisotropic
+  // ones of BAMG, nor the right triangles that Frontal-Quad and the packing
+  // make for quadrangles)
   const int algo2D = gf->getMeshingAlgo();
   if((algo2D == ALGO_2D_FRONTAL || algo2D == ALGO_2D_DELAUNAY ||
       algo2D == ALGO_2D_AUTO) &&
      gf->geomType() == GEntity::Plane && !equivalence &&
      !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      gf->getColumns()->_toFirst.empty()) {
+    if(CTX::instance()->mesh.valenceRepair2D) repairValence2D(gf);
     if(CTX::instance()->mesh.odtSmoothing2D > 0)
       smoothPlanarFaceODT(gf, CTX::instance()->mesh.odtSmoothing2D);
   }

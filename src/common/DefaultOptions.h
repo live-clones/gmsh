@@ -1239,10 +1239,10 @@ StringXNumber MeshOptions_Number[] = {
   { F|O|D, "BoundaryLayerFanPoints" , opt_mesh_boundary_layer_fan_elements, 5. ,
     "[Deprecated]" },
   { F|O, "BoundaryNodeSliding2D" , opt_mesh_boundary_node_sliding_2d , 1 ,
-    "Let Mesh.ODTSmoothing2D slide the nodes of the curves of a planar "
-    "surface along their curve (never on a curve that bounds or is embedded "
-    "in another surface, nor on a periodic, compound, transfinite or "
-    "extruded curve)" },
+    "Let Mesh.ODTSmoothing2D and Mesh.ValenceRepair2D slide the nodes of the "
+    "curves of a planar surface along their curve (never on a curve that "
+    "bounds or is embedded in another surface, nor on a periodic, compound, "
+    "transfinite or extruded curve)" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Order of the mesh to be created by coarsening CGNS structured zones (1 to "
@@ -1828,6 +1828,22 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "UnvStrictFormat" , opt_mesh_unv_strict_format , 1 ,
     "Use strict format specification for UNV files, with 'D' for exponents "
     "(instead of 'E' as used by some tools)" },
+
+  { F|O, "ValenceRepair2D" , opt_mesh_valence_repair_2d , 0 ,
+    "Repair the valences of the isotropic triangle meshes of planar surfaces, "
+    "after the Mesh.Smoothing passes: rework them toward valence 6 inside "
+    "(and the valence the angle calls for on the boundary) and toward "
+    "equilateral triangles (0: no, 1: greedy flips, collapses and insertions "
+    "that lower the valence defects, 2: then glide the 5-7 dislocations "
+    "toward each other), smooth them toward the optimal Delaunay "
+    "triangulation, and remesh locally the triangles of quality below "
+    "Mesh.ValenceRepairThreshold2D" },
+  { F|O, "ValenceRepairThreshold2D" , opt_mesh_valence_repair_threshold_2d , 0.9 ,
+    "Quality (gamma) below which Mesh.ValenceRepair2D remeshes a triangle "
+    "locally after the valences, worst first: it tries the flip, the "
+    "collapse and the split of each of its edges, each followed by a local "
+    "smoothing, and keeps the change that raises the worst quality the most "
+    "(0: none)" },
 
   { F|O, "VolumeEdges" , opt_mesh_volume_edges , 1. ,
     "Display edges of volume mesh?" },

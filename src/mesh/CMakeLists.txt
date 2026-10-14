@@ -13,6 +13,7 @@ set(SRC
     meshGFaceTransfinite.cpp meshGFaceExtruded.cpp
     meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunay.cpp
     meshGFaceDelaunayFlat.cpp meshGFaceOptimize.cpp meshGFacePlanar.cpp
+    meshGFaceValence.cpp
     meshGFaceBipartiteLabelling.cpp
     meshGFaceOrient.cpp meshGFaceQuadHalf.cpp meshGFaceCopy.cpp
     meshGFaceDirections.cpp meshGFaceBoundaryLayer.cpp
