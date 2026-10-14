@@ -12,6 +12,7 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "MElement.h"
+#include "FastAscii.h"
 #include "VTKXML.h"
 #include "MPoint.h"
 #include "MLine.h"
@@ -1592,31 +1593,34 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
   fprintf(fp, "};\n");
 }
 
-void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
+void MElement::writeSTL(FastAscii &out, bool binary, double scalingFactor)
 {
   if(getType() != TYPE_TRI && getType() != TYPE_QUA) return;
   int qid[3] = {0, 2, 3};
   SVector3 n = getFace(0).normal();
   if(!binary) {
-    fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
-    fprintf(fp, "  outer loop\n");
-    for(int j = 0; j < 3; j++)
-      fprintf(
-        fp, "    vertex %.16g %.16g %.16g\n", getVertex(j)->x() * scalingFactor,
-        getVertex(j)->y() * scalingFactor, getVertex(j)->z() * scalingFactor);
-    fprintf(fp, "  endloop\n");
-    fprintf(fp, "endfacet\n");
-    if(getNumVertices() == 4) {
-      fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
-      fprintf(fp, "  outer loop\n");
-      for(int j = 0; j < 3; j++)
-        fprintf(fp, "    vertex %.16g %.16g %.16g\n",
-                getVertex(qid[j])->x() * scalingFactor,
-                getVertex(qid[j])->y() * scalingFactor,
-                getVertex(qid[j])->z() * scalingFactor);
-      fprintf(fp, "  endloop\n");
-      fprintf(fp, "endfacet\n");
-    }
+    auto facet = [&](const MVertex *v0, const MVertex *v1, const MVertex *v2) {
+      out.write("facet normal ");
+      out.putG<6>(n[0]);
+      out.put(' ');
+      out.putG<6>(n[1]);
+      out.put(' ');
+      out.putG<6>(n[2]);
+      out.write("\n  outer loop\n");
+      for(const MVertex *v : {v0, v1, v2}) {
+        out.write("    vertex ");
+        out.putG<16>(v->x() * scalingFactor);
+        out.put(' ');
+        out.putG<16>(v->y() * scalingFactor);
+        out.put(' ');
+        out.putG<16>(v->z() * scalingFactor);
+        out.put('\n');
+      }
+      out.write("  endloop\nendfacet\n");
+    };
+    facet(getVertex(0), getVertex(1), getVertex(2));
+    if(getNumVertices() == 4)
+      facet(getVertex(qid[0]), getVertex(qid[1]), getVertex(qid[2]));
   }
   else {
     char data[50];
@@ -1630,14 +1634,14 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
       coords[3 + 3 * j + 2] = (float)(getVertex(j)->z() * scalingFactor);
     }
     data[48] = data[49] = 0;
-    fwrite(data, sizeof(char), 50, fp);
+    out.writeBytes(data, sizeof(data));
     if(getNumVertices() == 4) {
       for(int j = 0; j < 3; j++) {
         coords[3 + 3 * j] = (float)(getVertex(qid[j])->x() * scalingFactor);
         coords[3 + 3 * j + 1] = (float)(getVertex(qid[j])->y() * scalingFactor);
         coords[3 + 3 * j + 2] = (float)(getVertex(qid[j])->z() * scalingFactor);
       }
-      fwrite(data, sizeof(char), 50, fp);
+      out.writeBytes(data, sizeof(data));
     }
   }
 }

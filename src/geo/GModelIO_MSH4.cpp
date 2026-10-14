@@ -3347,35 +3347,35 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
         double u, v;
         mv->getParameter(0, u);
         mv->getParameter(1, v);
-        out.putDouble16g(x);
+        out.putG<16>(x);
         out.put(' ');
-        out.putDouble16g(y);
+        out.putG<16>(y);
         out.put(' ');
-        out.putDouble16g(z);
+        out.putG<16>(z);
         out.put(' ');
-        out.putDouble16g(u);
+        out.putG<16>(u);
         out.put(' ');
-        out.putDouble16g(v);
+        out.putG<16>(v);
         out.put('\n');
       }
       else if(n == 4) {
         double u;
         mv->getParameter(0, u);
-        out.putDouble16g(x);
+        out.putG<16>(x);
         out.put(' ');
-        out.putDouble16g(y);
+        out.putG<16>(y);
         out.put(' ');
-        out.putDouble16g(z);
+        out.putG<16>(z);
         out.put(' ');
-        out.putDouble16g(u);
+        out.putG<16>(u);
         out.put('\n');
       }
       else {
-        out.putDouble16g(x);
+        out.putG<16>(x);
         out.put(' ');
-        out.putDouble16g(y);
+        out.putG<16>(y);
         out.put(' ');
-        out.putDouble16g(z);
+        out.putG<16>(z);
         out.put('\n');
       }
     }

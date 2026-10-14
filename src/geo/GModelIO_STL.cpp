@@ -8,6 +8,7 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
+#include "FastAscii.h"
 #include "GModel.h"
 #include "OS.h"
 #include "MLine.h"
@@ -269,13 +270,20 @@ static void writeSTLfaces(FILE *fp, std::vector<GFace *> &faces, bool binary,
     }
   }
 
-  if(!binary) { fprintf(fp, "solid %s\n", name.c_str()); }
+  // one ASCII facet is a dozen values, so a mesh with a million triangles
+  // makes tens of millions of fprintf calls: the writer converts them inline
+  FastAscii out(fp);
+  if(!binary) {
+    out.write("solid ");
+    out.write(name.c_str());
+    out.put('\n');
+  }
   else {
     char header[80];
     strncpy(header, name.c_str(), 79);
     header[79] = '\0';
-    fwrite(header, sizeof(char), 80, fp);
-    fwrite(&nfacets, sizeof(unsigned int), 1, fp);
+    out.writeBytes(header, sizeof(header));
+    out.writeBytes(&nfacets, sizeof(nfacets));
   }
 
   for(auto it = faces.begin(); it != faces.end(); ++it) {
@@ -309,13 +317,23 @@ static void writeSTLfaces(FILE *fp, std::vector<GFace *> &faces, bool binary,
         double n[3];
         normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n);
         if(!binary) {
-          fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
-          fprintf(fp, "  outer loop\n");
-          for(int j = 0; j < 3; j++)
-            fprintf(fp, "    vertex %.16g %.16g %.16g\n", x[j] * scalingFactor,
-                    y[j] * scalingFactor, z[j] * scalingFactor);
-          fprintf(fp, "  endloop\n");
-          fprintf(fp, "endfacet\n");
+          out.write("facet normal ");
+          out.putG<6>(n[0]);
+          out.put(' ');
+          out.putG<6>(n[1]);
+          out.put(' ');
+          out.putG<6>(n[2]);
+          out.write("\n  outer loop\n");
+          for(int j = 0; j < 3; j++) {
+            out.write("    vertex ");
+            out.putG<16>(x[j] * scalingFactor);
+            out.put(' ');
+            out.putG<16>(y[j] * scalingFactor);
+            out.put(' ');
+            out.putG<16>(z[j] * scalingFactor);
+            out.put('\n');
+          }
+          out.write("  endloop\nendfacet\n");
         }
         else {
           char data[50];
@@ -329,19 +347,23 @@ static void writeSTLfaces(FILE *fp, std::vector<GFace *> &faces, bool binary,
             coords[3 + 3 * j + 2] = (float)(z[j] * scalingFactor);
           }
           data[48] = data[49] = 0;
-          fwrite(data, sizeof(char), 50, fp);
+          out.writeBytes(data, sizeof(data));
         }
       }
     }
     else {
       for(std::size_t i = 0; i < gf->triangles.size(); i++)
-        gf->triangles[i]->writeSTL(fp, binary, scalingFactor);
+        gf->triangles[i]->writeSTL(out, binary, scalingFactor);
       for(std::size_t i = 0; i < gf->quadrangles.size(); i++)
-        gf->quadrangles[i]->writeSTL(fp, binary, scalingFactor);
+        gf->quadrangles[i]->writeSTL(out, binary, scalingFactor);
     }
   }
 
-  if(!binary) fprintf(fp, "endsolid %s\n", name.c_str());
+  if(!binary) {
+    out.write("endsolid ");
+    out.write(name.c_str());
+    out.put('\n');
+  }
 }
 
 int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,

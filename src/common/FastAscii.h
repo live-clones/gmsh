@@ -21,7 +21,7 @@
 #endif
 #endif
 
-// Exact "%.16g" for the mesh writers. Through the C library it costs more than
+// Exact "%.<P>g" for the mesh writers. Through the C library it costs more than
 // the rest of the save, ~200-370 ns per value, and a 958k-node 2D mesh has 4.8M
 // values. std::to_chars gives the same bytes 4-5x faster, but gcc only has it
 // from 11 (the official Linux builds use gcc 8) and libc++ only from macOS
@@ -39,9 +39,9 @@
 #include <bit>
 #endif
 // This is the exact rational method of Dragon4 [1], which is also the slow path
-// of Gay's dtoa [2], with 128-bit integers in place of bignums since 16 digits
-// are all that is needed. The value is m * 2^A * 5^B, so scaled to 16 digits it
-// is the ratio of two integers. The quotient gives the digits and twice the
+// of Gay's dtoa [2], with 128-bit integers in place of bignums since at most 17
+// digits are needed. The value is m * 2^A * 5^B, so scaled to P digits it is
+// the ratio of two integers. The quotient gives the digits and twice the
 // remainder against the divisor rounds the last one, ties to even, which is the
 // correctly rounded result C asks of printf [4]. The decimal exponent starts
 // from the log10(2) estimate of [3] and is fixed up from the digit count.
@@ -86,8 +86,9 @@ namespace fastascii {
   }
 
   // -1 when the value must go through the C library
-  inline int format16g(double d, char *out)
+  template <int P> inline int formatG(double d, char *out)
   {
+    static_assert(P >= 1 && P <= 17, "kPow10 and the digit buffer bound P");
     const std::uint64_t bits = bitsOf(d);
     const bool negative = (bits >> 63) != 0;
     std::uint64_t m = bits & ((std::uint64_t{1} << 52) - 1);
@@ -110,7 +111,7 @@ namespace fastascii {
     // the digit count of the exact quotient (it is within one)
     int X = static_cast<int>((e2 + 52) * 0.30102999566398119521);
     for(int attempt = 0; attempt < 3; attempt++) {
-      const int s = X - 15;
+      const int s = X - (P - 1);
       const int A = e2 - s; // value = m * 2^A * 5^B with B = -s
       const int B = -s;
       if(B > 55 || B < -55) return -1;
@@ -132,11 +133,11 @@ namespace fastascii {
         den <<= -A;
       }
       u128 D = num / den, R = num - D * den;
-      if(D < kPow10[15]) {
+      if(D < kPow10[P - 1]) {
         X--;
         continue;
       }
-      if(D >= kPow10[16]) {
+      if(D >= kPow10[P]) {
         X++;
         continue;
       }
@@ -144,21 +145,21 @@ namespace fastascii {
         D++;
       else if(R == den - R && (D & 1))
         D++; // exact tie: round to even
-      if(D == kPow10[16]) { // the rounding carried into the next power of ten
+      if(D == kPow10[P]) { // the rounding carried into the next power of ten
         X++;
-        D = kPow10[15];
+        D = kPow10[P - 1];
       }
-      char dig[17];
+      char dig[P + 1];
       {
         std::uint64_t d64 = static_cast<std::uint64_t>(D);
-        for(int i = 15; i >= 0; i--) {
+        for(int i = P - 1; i >= 0; i--) {
           dig[i] = static_cast<char>('0' + d64 % 10);
           d64 /= 10;
         }
       }
-      int last = 16;
+      int last = P;
       while(last > 1 && dig[last - 1] == '0') last--; // %g drops trailing zeros
-      if(X < -4 || X >= 16) {
+      if(X < -4 || X >= P) {
         out[k++] = dig[0];
         if(last > 1) {
           out[k++] = '.';
@@ -255,21 +256,21 @@ public:
     const auto r = std::to_chars(tmp, tmp + sizeof(tmp), v);
     writeBytes(tmp, static_cast<std::size_t>(r.ptr - tmp));
   }
-  // same bytes as fprintf("%.16g", v)
-  void putDouble16g(double v)
+  // same bytes as fprintf with a "%g" conversion of the same precision
+  template <int P> void putG(double v)
   {
     char tmp[40];
     int n = -1;
 #if defined(GMSH_FAST_ASCII_TO_CHARS)
     if(std::isfinite(v)) { // printf and to_chars spell nan differently
-      const auto r = std::to_chars(tmp, tmp + sizeof(tmp), v,
-                                   std::chars_format::general, 16);
+      const auto r =
+        std::to_chars(tmp, tmp + sizeof(tmp), v, std::chars_format::general, P);
       n = static_cast<int>(r.ptr - tmp);
     }
 #elif defined(GMSH_FAST_ASCII_INT128)
-    n = fastascii::format16g(v, tmp);
+    n = fastascii::formatG<P>(v, tmp);
 #endif
-    if(n < 0) n = std::snprintf(tmp, sizeof(tmp), "%.16g", v);
+    if(n < 0) n = std::snprintf(tmp, sizeof(tmp), "%.*g", P, v);
     if(n > 0) writeBytes(tmp, static_cast<std::size_t>(n));
   }
 

@@ -19,6 +19,7 @@
 #include "FuncSpaceData.h"
 #include "GaussIntegration.h"
 
+class FastAscii;
 class GModel;
 class nodalBasis;
 class JacobianBasis;
@@ -480,7 +481,7 @@ public:
                         bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto, double scalingFactor = 1.0,
                         int elementary = 1);
-  virtual void writeSTL(FILE *fp, bool binary = false,
+  virtual void writeSTL(FastAscii &out, bool binary = false,
                         double scalingFactor = 1.0);
   virtual void writeX3D(FILE *fp, double scalingFactor = 1.0);
   virtual void writeVRML(FILE *fp);
