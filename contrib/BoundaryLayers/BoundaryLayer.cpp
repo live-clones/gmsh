@@ -507,7 +507,9 @@ replaceFaces(GModel *gm,
     for(auto q : gf->quadrangles) {
       bool found = false;
       auto itLayer = layers.find(q);
-      for(size_t i = 0; i < 4; i++) {
+      // edges i and i + 2 are opposite: i = 2 and 3 would split the quad again,
+      // reversed
+      for(size_t i = 0; i < 2 && !found; i++) {
         MEdge ei = q->getEdge(i);
         MEdge ei2 = q->getEdge((i + 2) % 4);
         auto it0 = split.find(ei);
