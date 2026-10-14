@@ -1994,6 +1994,12 @@ void bowyerWatsonFrontalFlat(
 
   // the queue is empty but its heap vector kept its capacity
   releaseVector(ActiveTris.heap);
+  if(std::getenv("GMSH_DEBUG_LAYERS")) { // DEBUG-LAYERS
+    FILE *f = std::fopen(std::getenv("GMSH_DEBUG_LAYERS"), "w"); // DEBUG-LAYERS
+    for(std::size_t i = 0; i < DATA.Us.size(); i++) // DEBUG-LAYERS
+      std::fprintf(f, "%g %g %d\n", DATA.Us[i], DATA.Vs[i], DATA.byLayer ? DATA.vlayer[i] : -1); // DEBUG-LAYERS
+    std::fclose(f); // DEBUG-LAYERS
+  } // DEBUG-LAYERS
 
   transferDataStructure(gf, DATA, equivalence);
 
