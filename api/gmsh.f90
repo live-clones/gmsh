@@ -724,6 +724,8 @@ module gmsh
         gmshModelMeshSetAlgorithm
     procedure, nopass :: setSizeFromBoundary => &
         gmshModelMeshSetSizeFromBoundary
+    procedure, nopass :: setFrontalPriority => &
+        gmshModelMeshSetFrontalPriority
     procedure, nopass :: setCompound => &
         gmshModelMeshSetCompound
     procedure, nopass :: setOutwardOrientation => &
@@ -7545,6 +7547,37 @@ module gmsh
          val=int(val, c_int), &
          ierr_=ierr)
   end subroutine gmshModelMeshSetSizeFromBoundary
+
+  !> Give the curve of tag `tag' a priority in the Frontal-Delaunay 2D
+  !! algorithm: the `numLayers' layers of triangles along it are created first,
+  !! layer by layer, before the rest of its surfaces (0 removes the priority).
+  !! Currently only supported for `dim' == 1.
+  subroutine gmshModelMeshSetFrontalPriority(dim, &
+                                             tag, &
+                                             numLayers, &
+                                             ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     numLayers, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshSetFrontalPriority")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: numLayers
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: numLayers
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         numLayers=int(numLayers, c_int), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshSetFrontalPriority
 
   !> Set a compound meshing constraint on the model entities of dimension `dim'
   !! and tags `tags'. During meshing, compound entities are treated as a single

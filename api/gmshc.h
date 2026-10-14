@@ -1666,6 +1666,15 @@ GMSH_API void gmshModelMeshSetSizeFromBoundary(const int dim,
                                                const int val,
                                                int * ierr);
 
+/* Give the curve of tag `tag' a priority in the Frontal-Delaunay 2D
+ * algorithm: the `numLayers' layers of triangles along it are created first,
+ * layer by layer, before the rest of its surfaces (0 removes the priority).
+ * Currently only supported for `dim' == 1. */
+GMSH_API void gmshModelMeshSetFrontalPriority(const int dim,
+                                              const int tag,
+                                              const int numLayers,
+                                              int * ierr);
+
 /* Set a compound meshing constraint on the model entities of dimension `dim'
  * and tags `tags'. During meshing, compound entities are treated as a single
  * discrete entity, which is automatically reparametrized. */

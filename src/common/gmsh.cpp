@@ -6136,6 +6136,21 @@ GMSH_API void gmsh::model::mesh::setSizeFromBoundary(const int dim,
   }
 }
 
+GMSH_API void gmsh::model::mesh::setFrontalPriority(const int dim,
+                                                    const int tag,
+                                                    const int numLayers)
+{
+  if(!_checkInit()) return;
+  if(dim == 1) {
+    GEdge *ge = GModel::current()->getEdgeByTag(tag);
+    if(!ge) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      return;
+    }
+    ge->meshAttributes.frontalPriority = numLayers;
+  }
+}
+
 GMSH_API void gmsh::model::mesh::setCompound(const int dim,
                                              const std::vector<int> &tags)
 {

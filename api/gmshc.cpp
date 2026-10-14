@@ -2339,6 +2339,17 @@ GMSH_API void gmshModelMeshSetSizeFromBoundary(const int dim, const int tag, con
   }
 }
 
+GMSH_API void gmshModelMeshSetFrontalPriority(const int dim, const int tag, const int numLayers, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setFrontalPriority(dim, tag, numLayers);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshSetCompound(const int dim, const int * tags, const size_t tags_n, int * ierr)
 {
   if(ierr) *ierr = 0;

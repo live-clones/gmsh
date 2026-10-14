@@ -4465,6 +4465,29 @@ end
 const set_size_from_boundary = setSizeFromBoundary
 
 """
+    gmsh.model.mesh.setFrontalPriority(dim, tag, numLayers)
+
+Give the curve of tag `tag` a priority in the Frontal-Delaunay 2D algorithm: the
+`numLayers` layers of triangles along it are created first, layer by layer,
+before the rest of its surfaces (0 removes the priority). Currently only
+supported for `dim` == 1.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `numLayers`: integer
+"""
+function setFrontalPriority(dim, tag, numLayers)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetFrontalPriority, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, numLayers, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_frontal_priority = setFrontalPriority
+
+"""
     gmsh.model.mesh.setCompound(dim, tags)
 
 Set a compound meshing constraint on the model entities of dimension `dim` and

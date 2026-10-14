@@ -287,11 +287,54 @@ struct flatMeshData {
     if(order == 6 && std::max(la, lb) >= farLayer) return farLayer;
     return std::min(la, lb) + 1;
   }
-  std::pair<int, int> edgeLayers(std::size_t t, int active) const
+  // Curves with a frontal priority (GEdge::meshAttributes.frontalPriority =
+  // k > 0, frontal only): the k layers of triangles along them are created
+  // first, layer by layer, then the rest of the front in the order above. A
+  // vertex carries the number of priority layers left at it (vprio: k on the
+  // curve, the largest k of its curves at a corner, 0 elsewhere) and its
+  // layer counted from the priority curves (vpdepth); a point placed from an
+  // active edge gets one priority layer less than the end with the most, and
+  // the layer after the lower one. An active edge is in the priority band as
+  // long as one of its ends has layers left, so that the band ends with a
+  // fan around the ends of a priority curve.
+  bool byPriority = false;
+  int maxPriority = 0;
+  std::vector<int> vprio, vpdepth;
+  int nextPrio = 0, nextPdepth = farLayer;
+  bool keyed() const { return byLayer || byPriority; }
+  // the queue key of the active edge from vertex a to vertex b - the keys of
+  // the priority band [0, maxPriority) first, then those of the order above
+  // - and the layer that ranks the edges of a triangle with the same key
+  // (so that a priority of k layers on every curve is Mesh.FrontalInsertion-
+  // Order 3 with k layers)
+  int frontEdgeKey(std::size_t a, std::size_t b, int &layer) const
+  {
+    if(byPriority && std::max(vprio[a], vprio[b]) > 0) {
+      layer = std::min(vpdepth[a], vpdepth[b]);
+      return layer;
+    }
+    if(!byLayer) {
+      layer = std::min(vpdepth[a], vpdepth[b]);
+      return maxPriority;
+    }
+    layer = std::min(vlayer[a], vlayer[b]);
+    return maxPriority + edgeKey(vlayer[a], vlayer[b]);
+  }
+  // set the layers of the point about to be placed from the active edge
+  // from vertex a to vertex b
+  void setNext(std::size_t a, std::size_t b)
+  {
+    if(byLayer) nextLayer = newLayer(vlayer[a], vlayer[b]);
+    if(byPriority) {
+      nextPrio = std::max(0, std::max(vprio[a], vprio[b]) - 1);
+      nextPdepth = std::min(std::min(vpdepth[a], vpdepth[b]), farLayer - 1) + 1;
+    }
+  }
+  std::pair<std::size_t, std::size_t> edgeEnds(std::size_t t, int active) const
   {
     const std::array<std::size_t, 3> &tri = triangles[t];
     const int ip1 = active - 1 < 0 ? 2 : active - 1;
-    return {vlayer[tri[ip1]], vlayer[tri[active]]};
+    return {tri[ip1], tri[active]};
   }
   // per-triangle arrays
   std::vector<std::array<std::size_t, 3>> triangles;
@@ -330,6 +373,10 @@ struct flatMeshData {
     vxyz.push_back({{x, y, z}});
     vdim.push_back(2);
     if(byLayer) vlayer.push_back(nextLayer);
+    if(byPriority) {
+      vprio.push_back(nextPrio);
+      vpdepth.push_back(nextPdepth);
+    }
     return idx;
   }
 
@@ -344,6 +391,10 @@ struct flatMeshData {
     vxyz.pop_back();
     vdim.pop_back();
     if(byLayer) vlayer.pop_back();
+    if(byPriority) {
+      vprio.pop_back();
+      vpdepth.pop_back();
+    }
   }
 
   void releaseTriangleSlot(std::size_t t)
@@ -381,8 +432,9 @@ struct flatMeshData {
 struct flatQueueEntry {
   double radius;
   std::size_t t;
-  // Mesh.FrontalInsertionOrder > 0: the key of the active edge (frontKey),
-  // served before the radius (always 0 otherwise)
+  // Mesh.FrontalInsertionOrder > 0 or curves with a frontal priority: the
+  // key of the active edge (frontKey), served before the radius (always 0
+  // otherwise)
   int layer;
 };
 
@@ -405,8 +457,9 @@ struct flatQueueCompare {
   }
 };
 
-// Mesh.FrontalInsertionOrder > 0: the lowest key of the active edges of a
-// triangle, and that edge (the lowest layer among those of that key)
+// Mesh.FrontalInsertionOrder > 0 or curves with a frontal priority: the
+// lowest key of the active edges of a triangle, and that edge (the lowest
+// layer among those of that key)
 int frontKey(const flatMeshData &data, std::size_t t, int &edge);
 
 // The refinement queue as a contiguous binary heap (std::push_heap /
@@ -432,7 +485,7 @@ struct flatQueue {
   int layerOf(std::size_t t) const
   {
     int edge;
-    return data->byLayer ? frontKey(*data, t, edge) : 0;
+    return data->keyed() ? frontKey(*data, t, edge) : 0;
   }
 
   void push(std::size_t t)
@@ -856,9 +909,9 @@ int frontKey(const flatMeshData &data, std::size_t t, int &edge)
     std::size_t neigh = data.neigh[t][k];
     if(neigh == FLAT_NONE ||
        (data.circumRadius[neigh] < LIMIT_ && data.circumRadius[neigh] > 0)) {
-      const std::pair<int, int> l = data.edgeLayers(t, k);
-      const int key = data.edgeKey(l.first, l.second);
-      const int layer = std::min(l.first, l.second);
+      const std::pair<std::size_t, std::size_t> e = data.edgeEnds(t, k);
+      int layer;
+      const int key = data.frontEdgeKey(e.first, e.second, layer);
       if(key < bestKey || (key == bestKey && layer < bestLayer)) {
         bestKey = key;
         bestLayer = layer;
@@ -1591,6 +1644,8 @@ void transferDataStructure(GFace *gf, flatMeshData &data,
   releaseVector(data.newCavityBuffer);
   releaseVector(data.vdim);
   releaseVector(data.vlayer);
+  releaseVector(data.vprio);
+  releaseVector(data.vpdepth);
   releaseVector(data.vSizes);
   releaseVector(data.vSizesBGM);
 
@@ -1838,6 +1893,37 @@ static void seedFront(GFace *gf, flatMeshData &data, flatQueue &queue)
              gf->tag(), c[0], c[1], h, angle * 180. / M_PI);
 }
 
+// The priority layers of the imported vertices, from the curves of the
+// surface (bounding or embedded) with a frontal priority
+static void setFrontalPriority(GFace *gf, flatMeshData &data)
+{
+  std::map<GEntity *, int> prio;
+  std::vector<GEdge *> curves = gf->edges();
+  for(GEdge *ge : gf->embeddedEdges()) curves.push_back(ge);
+  for(GEdge *ge : curves) {
+    const int k = std::min(ge->meshAttributes.frontalPriority, 1 << 20);
+    if(k <= 0) continue;
+    prio[ge] = k;
+    for(GVertex *gv : {ge->getBeginVertex(), ge->getEndVertex()})
+      if(gv) prio[gv] = std::max(prio[gv], k);
+    data.maxPriority = std::max(data.maxPriority, k);
+  }
+  if(prio.empty()) return;
+  data.byPriority = true;
+  data.vprio.assign(data.Us.size(), 0);
+  data.vpdepth.assign(data.Us.size(), data.farLayer);
+  int n = 0;
+  for(std::size_t i = 0; i < data.numBoundary; i++) {
+    auto it = prio.find(data.vertices[i]->onWhat());
+    if(it == prio.end()) continue;
+    data.vprio[i] = it->second;
+    data.vpdepth[i] = 0;
+    n++;
+  }
+  Msg::Debug("Surface %d: %d boundary nodes with a frontal priority of up to "
+             "%d layers", gf->tag(), n, data.maxPriority);
+}
+
 void bowyerWatsonFrontalFlat(
   GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   std::map<MVertex *, SPoint2> *parametricCoordinates,
@@ -1858,6 +1944,7 @@ void bowyerWatsonFrontalFlat(
   if(DATA.byLayer)
     DATA.vlayer.assign(DATA.Us.size(),
                        (order == 2 || order == 5) ? DATA.farLayer : 0);
+  setFrontalPriority(gf, DATA);
   if(order == 2 || order == 5 || order == 6) seedFront(gf, DATA, ActiveTris);
 
   int ITER = 0, active_edge;
@@ -1886,10 +1973,11 @@ void bowyerWatsonFrontalFlat(
                    DATA.vertices.size() - DATA.numBoundary,
                    DATA.circumRadius[worst]);
       double newPoint[2], metric[3];
-      if(DATA.byLayer) {
+      if(DATA.keyed()) {
         frontKey(DATA, worst, active_edge);
-        const std::pair<int, int> l = DATA.edgeLayers(worst, active_edge);
-        DATA.nextLayer = DATA.newLayer(l.first, l.second);
+        const std::pair<std::size_t, std::size_t> e =
+          DATA.edgeEnds(worst, active_edge);
+        DATA.setNext(e.first, e.second);
       }
       if(optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint, metric)) {
         SPoint2 NP(newPoint[0], newPoint[1]);

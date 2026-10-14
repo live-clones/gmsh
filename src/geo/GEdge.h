@@ -266,6 +266,9 @@ public:
     ExtrudeParams *extrude;
     // reverse mesh orientation
     bool reverseMesh;
+    // number of layers of triangles along the curve that the Frontal-Delaunay
+    // algorithm creates before the rest of its surfaces
+    int frontalPriority;
   } meshAttributes;
 
   virtual double getMeshSize() const { return meshAttributes.meshSize; }

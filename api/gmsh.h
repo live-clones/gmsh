@@ -1868,6 +1868,16 @@ namespace gmsh { // Top-level functions
                                         const int tag,
                                         const int val);
 
+      // gmsh::model::mesh::setFrontalPriority
+      //
+      // Give the curve of tag `tag' a priority in the Frontal-Delaunay 2D
+      // algorithm: the `numLayers' layers of triangles along it are created first,
+      // layer by layer, before the rest of its surfaces (0 removes the priority).
+      // Currently only supported for `dim' == 1.
+      GMSH_API void setFrontalPriority(const int dim,
+                                       const int tag,
+                                       const int numLayers);
+
       // gmsh::model::mesh::setCompound
       //
       // Set a compound meshing constraint on the model entities of dimension `dim'

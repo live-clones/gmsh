@@ -557,6 +557,9 @@ mesh.add('setAlgorithm', doc, None, iint('dim'), iint('tag'), iint('val'))
 doc = '''Force the mesh size to be extended from the boundary, or not, for the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
 mesh.add('setSizeFromBoundary', doc, None, iint('dim'), iint('tag'), iint('val'))
 
+doc = '''Give the curve of tag `tag' a priority in the Frontal-Delaunay 2D algorithm: the `numLayers' layers of triangles along it are created first, layer by layer, before the rest of its surfaces (0 removes the priority). Currently only supported for `dim' == 1.'''
+mesh.add('setFrontalPriority', doc, None, iint('dim'), iint('tag'), iint('numLayers'))
+
 doc = '''Set a compound meshing constraint on the model entities of dimension `dim' and tags `tags'. During meshing, compound entities are treated as a single discrete entity, which is automatically reparametrized.'''
 mesh.add('setCompound', doc, None, iint('dim'), ivectorint('tags'))
 

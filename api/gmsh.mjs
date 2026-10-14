@@ -4009,6 +4009,25 @@ export function wrapGmsh(Module) {
   };
 
   /**
+   * gmsh.model.mesh.setFrontalPriority(dim, tag, numLayers)
+   *
+   * Give the curve of tag `tag' a priority in the Frontal-Delaunay 2D
+   * algorithm: the `numLayers' layers of triangles along it are created
+   * first, layer by layer, before the rest of its surfaces (0 removes the
+   * priority). Currently only supported for `dim' == 1.
+   */
+  gmsh.model.mesh.setFrontalPriority = function(dim, tag, numLayers) {
+    const tmp = [];
+    try {
+      M._gmshModelMeshSetFrontalPriority(dim, tag, numLayers, ierr);
+      _check();
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
    * gmsh.model.mesh.setCompound(dim, tags)
    *
    * Set a compound meshing constraint on the model entities of dimension

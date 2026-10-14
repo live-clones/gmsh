@@ -5092,6 +5092,31 @@ class model:
         set_size_from_boundary = setSizeFromBoundary
 
         @staticmethod
+        def setFrontalPriority(dim, tag, numLayers):
+            """
+            gmsh.model.mesh.setFrontalPriority(dim, tag, numLayers)
+
+            Give the curve of tag `tag' a priority in the Frontal-Delaunay 2D
+            algorithm: the `numLayers' layers of triangles along it are created first,
+            layer by layer, before the rest of its surfaces (0 removes the priority).
+            Currently only supported for `dim' == 1.
+
+            Types:
+            - `dim': integer
+            - `tag': integer
+            - `numLayers': integer
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSetFrontalPriority(
+                c_int(dim),
+                c_int(tag),
+                c_int(numLayers),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_frontal_priority = setFrontalPriority
+
+        @staticmethod
         def setCompound(dim, tags):
             """
             gmsh.model.mesh.setCompound(dim, tags)
