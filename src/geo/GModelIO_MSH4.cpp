@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <variant>
 
+#include "FastAscii.h"
 #include "GmshDefines.h"
 #include "OS.h"
 #include "Context.h"
@@ -3326,29 +3327,56 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
     fwrite(&coord[0], sizeof(double), n * numVerts, fp);
   }
   else {
+    FastAscii out(fp);
     if(version >= 4.1) {
-      for(auto it = begin; it != end; ++it)
-        fprintf(fp, "%zu\n", (*it)->getNum());
+      for(auto it = begin; it != end; ++it) {
+        out.putInt((*it)->getNum());
+        out.put('\n');
+      }
     }
     for(auto it = begin; it != end; ++it) {
       MVertex *mv = *it;
       double x = mv->x() * scalingFactor;
       double y = mv->y() * scalingFactor;
       double z = mv->z() * scalingFactor;
-      if(version < 4.1) fprintf(fp, "%zu ", mv->getNum());
+      if(version < 4.1) {
+        out.putInt(mv->getNum());
+        out.put(' ');
+      }
       if(n == 5) {
         double u, v;
         mv->getParameter(0, u);
         mv->getParameter(1, v);
-        fprintf(fp, "%.16g %.16g %.16g %.16g %.16g\n", x, y, z, u, v);
+        out.putDouble16g(x);
+        out.put(' ');
+        out.putDouble16g(y);
+        out.put(' ');
+        out.putDouble16g(z);
+        out.put(' ');
+        out.putDouble16g(u);
+        out.put(' ');
+        out.putDouble16g(v);
+        out.put('\n');
       }
       else if(n == 4) {
         double u;
         mv->getParameter(0, u);
-        fprintf(fp, "%.16g %.16g %.16g %.16g\n", x, y, z, u);
+        out.putDouble16g(x);
+        out.put(' ');
+        out.putDouble16g(y);
+        out.put(' ');
+        out.putDouble16g(z);
+        out.put(' ');
+        out.putDouble16g(u);
+        out.put('\n');
       }
       else {
-        fprintf(fp, "%.16g %.16g %.16g\n", x, y, z);
+        out.putDouble16g(x);
+        out.put(' ');
+        out.putDouble16g(y);
+        out.put(' ');
+        out.putDouble16g(z);
+        out.put('\n');
       }
     }
   }
@@ -4130,10 +4158,6 @@ static void writeMSH4Elements(
           fwrite(&elmType, sizeof(int), 1, fp);
           fwrite(&numElm, sizeof(std::size_t), 1, fp);
         }
-        else {
-          fprintf(fp, "%d %d %d %zu\n", (version >= 4.1) ? dim : entityTag,
-                  (version >= 4.1) ? entityTag : dim, elmType, numElm);
-        }
 
         std::size_t N = it->second.size();
         if(binary) {
@@ -4157,13 +4181,24 @@ static void writeMSH4Elements(
           }
         }
         else {
+          FastAscii out(fp);
+          out.putInt((version >= 4.1) ? dim : entityTag);
+          out.put(' ');
+          out.putInt((version >= 4.1) ? entityTag : dim);
+          out.put(' ');
+          out.putInt(elmType);
+          out.put(' ');
+          out.putInt(numElm);
+          out.put('\n');
           for(std::size_t i = 0; i < N; i++) {
             MElement *e = it->second[i];
-            fprintf(fp, "%zu ", e->getNum());
+            out.putInt(e->getNum());
+            out.put(' ');
             for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-              fprintf(fp, "%zu ", e->getVertex(i)->getNum());
+              out.putInt(e->getVertex(i)->getNum());
+              out.put(' ');
             }
-            fprintf(fp, "\n");
+            out.put('\n');
           }
         }
       }
