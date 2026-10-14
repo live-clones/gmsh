@@ -31,7 +31,10 @@ v6.2.2608; fix MeshAdapt regression introduced in 4.12 on thin cones/cylinders;
 reproducible multi-threaded 1D and 2D meshing; periodic node correspondences are
 now computed for transfinite, extruded and subdivided meshes (periodicity
 constraints no longer need to be redefined after meshing); official binary
-builds now use OCC 8.0 and FLTK 1.4.
+builds now use OCC 8.0 and FLTK 1.4; boolean operations now return the entities
+of the result that are not on the boundary of other ones (including embedded
+ones), plus the arguments left unchanged, each once and regardless of
+Geometry.OCCBooleanPreserveNumbering.
 
 bug fixes.
 

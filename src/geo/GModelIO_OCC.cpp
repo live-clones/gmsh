@@ -112,6 +112,7 @@
 #include <StepData_StepModel.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
+#include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS.hxx>
 #include <gce_MakeCirc.hxx>
 #include <gce_MakeElips.hxx>
@@ -744,8 +745,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(solid, t, recursive);
     std::pair<int, int> p(3, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p))
-      outDimTags.push_back(p);
+    if(!exists || !returnNewOnly) outDimTags.push_back(p);
     count++;
   }
   if(highestDimOnly && count) return;
@@ -767,8 +767,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(face, t, recursive);
     std::pair<int, int> p(2, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p))
-      outDimTags.push_back(p);
+    if(!exists || !returnNewOnly) outDimTags.push_back(p);
     count++;
   }
   if(highestDimOnly && count) return;
@@ -790,8 +789,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(edge, t, recursive);
     std::pair<int, int> p(1, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p))
-      outDimTags.push_back(p);
+    if(!exists || !returnNewOnly) outDimTags.push_back(p);
     count++;
   }
   if(highestDimOnly && count) return;
@@ -813,8 +811,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(vertex, t, recursive);
     std::pair<int, int> p(0, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p))
-      outDimTags.push_back(p);
+    if(!exists || !returnNewOnly) outDimTags.push_back(p);
     count++;
   }
 }
@@ -4083,49 +4080,6 @@ bool OCC_Internals::booleanOperator(
   inDimTags.insert(inDimTags.end(), toolDimTags.begin(), toolDimTags.end());
   std::size_t numObjects = objectDimTags.size();
 
-  // the bound images of input i, as listed in outDimTagsMap[i]; called before
-  // the result is bound, to mark the existing images, and after, to build
-  // outDimTagsMap
-  auto boundImages = [&](std::size_t i) {
-    int dim = inDimTags[i].first;
-    std::vector<std::pair<int, int>> dimTags;
-    if(mapModified[i].Extent() == 0) { // not modified
-      if(_isBound(dim, mapOriginal[i])) {
-        int t = _find(dim, mapOriginal[i]);
-        dimTags.push_back(std::make_pair(dim, t));
-      }
-    }
-    else {
-      NCollection_List<TopoDS_Shape>::Iterator it(mapModified[i]);
-      for(; it.More(); it.Next()) {
-        if(_isBound(dim, it.Value())) {
-          int t = _find(dim, it.Value());
-          dimTags.push_back(std::make_pair(dim, t));
-        }
-      }
-      NCollection_List<TopoDS_Shape>::Iterator it2(mapGenerated[i]);
-      for(; it2.More(); it2.Next()) {
-        if(_isBound(dim, it2.Value())) {
-          int t = _find(dim, it2.Value());
-          dimTags.push_back(std::make_pair(dim, t));
-        }
-      }
-    }
-    return dimTags;
-  };
-
-  // the result can contain existing entities (a kept input left unchanged, or
-  // an image coinciding with an existing entity): mark them in _toPreserve so
-  // that _multiBind returns them; after the inputs are unbound, because _unbind
-  // skips the entities in _toPreserve
-  auto markBoundImages = [&]() {
-    for(std::size_t i = 0; i < inDimTags.size(); i++) {
-      if(mapDeleted[i]) continue;
-      std::vector<std::pair<int, int>> dimTags = boundImages(i);
-      _toPreserve.insert(dimTags.begin(), dimTags.end());
-    }
-  };
-
   if(tag >= 0 || !CTX::instance()->geom.occBooleanPreserveNumbering) {
     // if we specify the tag explicitly, or if we don't care about preserving
     // the numering, just go ahead and bind the resulting shape (and sub-shapes)
@@ -4142,11 +4096,8 @@ bool OCC_Internals::booleanOperator(
         }
       }
     }
-    if(tag < 0) markBoundImages();
     _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
-               (tag >= 0) ? false : true);
-    _filterTags(outDimTags, minDim);
-    _toPreserve.clear();
+               false);
   }
   else {
     // otherwise, try to preserve the numbering of the input shapes that did not
@@ -4210,19 +4161,73 @@ bool OCC_Internals::booleanOperator(
       }
     }
     for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
-    markBoundImages();
-    // bind all remaining entities and add the new and the marked ones to the
-    // returned list
-    _multiBind(result, -1, outDimTags, false, true, true);
-    _filterTags(outDimTags, minDim);
+    // bind all remaining entities
+    _multiBind(result, -1, outDimTags, false, true, false);
     _toPreserve.clear();
   }
+
+  if(tag < 0) {
+    // return the entities of the result that are not on the boundary of another
+    // entity of the result (embedded entities are not), and the arguments left
+    // unchanged
+    TopTools_IndexedMapOfShape onBoundary;
+    const TopAbs_ShapeEnum types[4] = {TopAbs_SOLID, TopAbs_FACE, TopAbs_EDGE,
+                                       TopAbs_VERTEX};
+    for(int k = 0; k < 3; k++) {
+      TopExp_Explorer exp(result, types[k]);
+      for(; exp.More(); exp.Next()) {
+        TopExp_Explorer sub(exp.Current().Oriented(TopAbs_FORWARD),
+                            types[k + 1]);
+        for(; sub.More(); sub.Next()) {
+          TopAbs_Orientation o = sub.Current().Orientation();
+          if(o == TopAbs_FORWARD || o == TopAbs_REVERSED)
+            onBoundary.Add(sub.Current());
+        }
+      }
+    }
+    std::set<std::pair<int, int>> unchanged;
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
+      int dim = inDimTags[i].first;
+      if(!mapDeleted[i] && mapModified[i].Extent() == 0 &&
+         _isBound(dim, mapOriginal[i]))
+        unchanged.insert(std::make_pair(dim, _find(dim, mapOriginal[i])));
+    }
+    std::vector<std::pair<int, int>> tmp;
+    for(auto &p : outDimTags) {
+      if(unchanged.count(p) || !onBoundary.Contains(_find(p.first, p.second)))
+        tmp.push_back(p);
+    }
+    outDimTags.swap(tmp);
+  }
+  _filterTags(outDimTags, minDim);
 
   // return output and input/output correspondence maps
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
-    std::vector<std::pair<int, int>> dimTags = boundImages(i);
+    std::vector<std::pair<int, int>> dimTags;
+    if(mapModified[i].Extent() == 0) { // not modified
+      if(_isBound(dim, mapOriginal[i])) {
+        int t = _find(dim, mapOriginal[i]);
+        dimTags.push_back(std::make_pair(dim, t));
+      }
+    }
+    else {
+      NCollection_List<TopoDS_Shape>::Iterator it(mapModified[i]);
+      for(; it.More(); it.Next()) {
+        if(_isBound(dim, it.Value())) {
+          int t = _find(dim, it.Value());
+          dimTags.push_back(std::make_pair(dim, t));
+        }
+      }
+      NCollection_List<TopoDS_Shape>::Iterator it2(mapGenerated[i]);
+      for(; it2.More(); it2.Next()) {
+        if(_isBound(dim, it2.Value())) {
+          int t = _find(dim, it2.Value());
+          dimTags.push_back(std::make_pair(dim, t));
+        }
+      }
+    }
     std::ostringstream sstream;
     sstream << "BOOL in (" << dim << "," << tag << ") -> out";
     for(std::size_t j = 0; j < dimTags.size(); j++)

@@ -3574,7 +3574,9 @@ the object is deleted.
 
 As explained in @ref{Floating point expressions}, @var{boolean} can
 be used in an expression, in which case it returns the list of tags of
-the entities resulting from the boolean operation.  See
+the entities resulting from the boolean operation that are not on the
+boundary of other resulting entities, together with the arguments left
+unchanged by the operation.  See
 @url{@value{GITLAB-PREFIX}/examples/boolean/,examples/boolean} for
 examples.
 

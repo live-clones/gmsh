@@ -53,4 +53,29 @@ For preserve In {0:1}
     Error("BooleanIntersection returned %g surfaces instead of 2 (preserve %g)",
           #s(), preserve);
   EndIf
+
+  // the part of a removed tool that lies on the internal face of two volumes
+  // is on the boundary of the resulting volumes: like a new face there, it is
+  // not returned
+  b1 = newv; Box(b1) = {10, 0, 0, 1, 1, 1};
+  b2 = newv; Box(b2) = {10, 0, 1, 1, 1, 1};
+  w() = BooleanFragments{ Volume{b1}; Delete; }{ Volume{b2}; Delete; };
+  t = news; Rectangle(t) = {9, -1, 1, 3, 3};
+  f() = BooleanFragments{ Volume{w()}; Delete; }{ Surface{t}; Delete; };
+  If(#f() != 3)
+    Error("BooleanFragments returned %g entities instead of 3 (preserve %g)",
+          #f(), preserve);
+  EndIf
+
+  // a curve crossing the boundary of a surface is split in two: the part
+  // embedded in the surface is returned as well as the part outside
+  r = news; Rectangle(r) = {20, 0, 0, 1, 1};
+  p1 = newp; Point(p1) = {20.5, 0.5, 0};
+  p2 = newp; Point(p2) = {22, 0.5, 0};
+  l = newc; Line(l) = {p1, p2};
+  f() = BooleanFragments{ Surface{r}; Delete; }{ Curve{l}; Delete; };
+  If(#f() != 3)
+    Error("BooleanFragments returned %g entities instead of 3 (preserve %g)",
+          #f(), preserve);
+  EndIf
 EndFor
