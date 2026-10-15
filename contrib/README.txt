@@ -24,6 +24,7 @@ their own respective license:
 * mobile: GNU General Public License (GPL), v. 2 or later
 * mpeg_encode: freely distributed, but patents are held by several companies on
   various aspects of the MPEG video standard
+* mt-metis: MIT License
 * nii2mesh: BSD License
 * onelab: MIT/X11 License
 * stb: MIT License or public domain (stb_truetype)
