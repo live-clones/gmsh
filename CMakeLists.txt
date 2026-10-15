@@ -1722,6 +1722,13 @@ include_directories(src/common src/fltk src/geo src/graphics src/mesh src/solver
                     src/numeric src/parser src/plugin src/post api
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)
 
+if(HAVE_MTMETIS)
+  # mt-metis was added before all the external includes were known (e.g. the
+  # directory of omp.h): give them to it now, after its own METIS headers
+  target_include_directories(mtmetis PRIVATE ${EXTERNAL_INCLUDES}
+                             ${OpenMP_C_INCLUDE_DIRS})
+endif()
+
 # set this for external codes that might include this CMakeList file
 set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE
     STRING "External include directories" FORCE)
