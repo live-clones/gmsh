@@ -1,0 +1,34 @@
+# Changelog
+
+0.5.0 - 2016.08.14
+  -Removed the Bowstring library in favor of the WildRiver library for I/O.
+  -Added Hill-Scanning refinement scheme.
+  -Changed API calls to mimick the METIS interface.
+  -Changed type and static function names to not use conventions reserved by 
+  the C standard.
+  -Fix issues related having different type sizes.
+
+0.4.4 - 2015.09.03
+  -Fixed ND API call issue.
+
+0.4.3 - 2015.05.25
+  -Fixed regression in ND quality.
+  -Added error message for missing input file.
+  -Improved termination conidition to take the entire size of the graph into
+  account, rather than just the number of vertices.
+  -Removed lots of dead code and other refactoring.
+  -Added recursive bisection.
+  -Renamed internal METIS_* functions.
+
+0.4.2 - 2015.04.23
+  -Improved quality of kway refinement for a high number of threads.
+  -Reduced memory usage.
+
+0.4.1 - 2015.02.16
+  -Fixed command line to not take a number of parameters for vertex separators
+  or nested dissection.
+
+0.4.0 - 2015.02.13
+  -Added initial versions of nested dissection and vertex separators.
+  -Added FirstChoice grouping.
+  -Re-wrote contraction code.
