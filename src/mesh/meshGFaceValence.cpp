@@ -80,7 +80,7 @@ struct TopoMesh : planar::Mesh {
   }
   // scratch marks for rings
   std::vector<int> markV, markT;
-  int stamp = 0;
+  int stamp = 0, ringStamp = 0;
 
   // onCurve: nodes on curves or points (never removed, fixed unless they
   // slide); constrainedEdges: edges of curves (never flipped nor split)
@@ -396,7 +396,7 @@ struct TopoMesh : planar::Mesh {
 
   std::vector<int> ring(const std::vector<int> &nodes, int k)
   {
-    int s = ++stamp;
+    int s = ringStamp = ++stamp;
     std::vector<int> out, front;
     for(int v : nodes)
       if(markV[v] != s) {
@@ -417,6 +417,19 @@ struct TopoMesh : planar::Mesh {
       front.swap(nxt);
     }
     return out;
+  }
+  // the worst of the triangles that have no node of the last ring()
+  double minGammaAway(const std::vector<int> &tris) const
+  {
+    double g = 1.;
+    for(int t : tris) {
+      if(!aliveT[t]) continue;
+      bool away = true;
+      for(int v : tri[t])
+        if(markV[v] == ringStamp) away = false;
+      if(away) g = std::min(g, triGamma(t));
+    }
+    return g;
   }
   std::vector<int> regionTris(const std::vector<int> &nodes)
   {
@@ -1129,22 +1142,31 @@ struct Repair {
         std::vector<int> touched;
         bool ok = doQ(cands[i], r, sp, touched, tn);
         if(ok) {
-          m.smoothNodes(m.ring(touched, rings));
           auto z2 = zone;
           if(sp.ok()) z2.push_back(sp.n);
           std::vector<int> alive;
           for(int v : z2)
             if(m.aliveV[v]) alive.push_back(v);
-          double gA = m.minGamma(m.regionTris(alive));
           int eA = 0;
           for(int v : alive) eA += m.dev2(v);
-          int dE = eA - eBefore;
-          if(dE <= budget && (gA > bestG + 1e-9 ||
-                             (best >= 0 && std::fabs(gA - bestG) < 1e-9 &&
-                              dE < bestDE))) {
-            bestG = gA;
-            bestDE = dE;
-            best = (int)i;
+          const int dE = eA - eBefore;
+          // the change is only smoothed if it can win: the valences do not
+          // depend on the positions, and the triangles of the zone that the
+          // smoothing does not move keep their quality
+          if(dE <= budget) {
+            const auto moving = m.ring(touched, rings);
+            const auto tris = m.regionTris(alive);
+            if(m.minGammaAway(tris) >= bestG - 1e-9) {
+              m.smoothNodes(moving);
+              const double gA = m.minGamma(tris);
+              if(gA > bestG + 1e-9 ||
+                 (best >= 0 && std::fabs(gA - bestG) < 1e-9 &&
+                  dE < bestDE)) {
+                bestG = gA;
+                bestDE = dE;
+                best = (int)i;
+              }
+            }
           }
           if(sp.ok()) m.unsplit(sp);
           else if(r.kind == 0) m.unflip(r.flip);
