@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     // specific interpolation order can be requested using "LagrangeN" and
     // "GradLagrangeN" with N = 1, 2, ... Other supported function spaces
     // include "H1LegendreN", "GradH1LegendreN", "HcurlLegendreN",
-    // "CurlHcurlLegendreN".
+    // "CurlHcurlLegendreN", "HdivLegendreN" and "DivHdivLegendreN".
     int numComponents, numOrientations;
     std::vector<double> basisFunctions;
     gmsh::model::mesh::getBasisFunctions

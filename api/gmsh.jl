@@ -3466,16 +3466,33 @@ the u, v, w coordinates of the reference element; "LagrangeN" and
 "GradLagrangeN", with N = 1, 2, ..., for N-th order Lagrange basis functions;
 "H1LegendreN" and "GradH1LegendreN", with N = 1, 2, ..., for N-th order
 hierarchical H1 Legendre functions; "HcurlLegendreN" and "CurlHcurlLegendreN",
-with N = 1, 2, ..., for N-th order curl-conforming basis functions.
-`numComponents` returns the number C of components of a basis function (e.g. 1
-for scalar functions and 3 for vector functions). `basisFunctions` returns the
-value of the N basis functions at the evaluation points, i.e. [g1f1, g1f2, ...,
-g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u,
-...] when C == 3. For basis functions that depend on the orientation of the
-elements, all values for the first orientation are returned first, followed by
-values for the second, etc. `numOrientations` returns the overall number of
-orientations. If the `wantedOrientations` vector is not empty, only return the
-values for the desired orientation indices.
+with N = 0, 1, ..., for N-th order curl-conforming basis functions, and their
+parts "HcurlLegendreGradN" (the gradients of the edge, face and bubble functions
+of "H1Legendre(N+1)") and "HcurlLegendreNoGradN" (the other functions):
+"HcurlLegendre0" gives the lowest order (Whitney) functions, "HcurlLegendre1"
+the full first order functions, "HcurlLegendreNoGrad2" with "HcurlLegendreGrad1"
+the incomplete second order functions (Nedelec of the first kind on simplices),
+and "HcurlLegendre2" the full second order functions, i.e. orders 0.5, 1, 1.5
+and 2 in GetDP, and so on; "HdivLegendreN" and "DivHdivLegendreN", with N = 0,
+1, ..., for N-th order div-conforming basis functions, and their parts
+"HdivLegendreCurlN" (the divergence-free functions) and "HdivLegendreNoCurlN"
+(the other functions), except on prisms; "L2LegendreN", with N = 0, 1, ..., for
+N-th order discontinuous basis functions, which span the divergences of the div-
+conforming functions. For all these hierarchical function spaces, the order N is
+that of the space, i.e. all the functions up to order N, and can be replaced by
+a range M:N to only keep the functions of orders M to N (the order of each
+function being that given by `getKeysInformation`): e.g. "HcurlLegendre1:1",
+"HcurlLegendreNoGrad2:2" and "HcurlLegendreGrad2:2" are the functions added by
+the orders 1, 1.5 and 2 of GetDP above. The parts and ranges of a space have the
+keys of the space. `numComponents` returns the number C of components of a basis
+function (e.g. 1 for scalar functions and 3 for vector functions).
+`basisFunctions` returns the value of the N basis functions at the evaluation
+points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v,
+g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis functions that
+depend on the orientation of the elements, all values for the first orientation
+are returned first, followed by values for the second, etc. `numOrientations`
+returns the overall number of orientations. If the `wantedOrientations` vector
+is not empty, only return the values for the desired orientation indices.
 
 Return `numComponents`, `basisFunctions`, `numOrientations`.
 
@@ -3504,15 +3521,19 @@ end
 const get_basis_functions = getBasisFunctions
 
 """
-    gmsh.model.mesh.getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+    gmsh.model.mesh.getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1, periodic = true)
 
 Get the orientation index of the elements of type `elementType` in the entity of
 tag `tag`. The arguments have the same meaning as in `getBasisFunctions`.
 `basisFunctionsOrientation` is a vector giving for each element the orientation
 index in the values returned by `getBasisFunctions`. For Lagrange basis
-functions the call is superfluous as it will return a vector of zeros. If
-`numTasks` > 1, only compute and return the part of the data indexed by `task`
-(for C++ only; output vector must be preallocated).
+functions the call is superfluous as it will return a vector of zeros. The
+orientation of an element is given by the order of the tags of its nodes; if
+`periodic` is set, the nodes on periodic entities are ordered by the tags of
+their master nodes, so that the basis functions on a periodic curve or surface
+are those of the master curve or surface (see `getPeriodicKeys`). If `numTasks`
+> 1, only compute and return the part of the data indexed by `task` (for C++
+only; output vector must be preallocated).
 
 Return `basisFunctionsOrientation`.
 
@@ -3523,14 +3544,15 @@ Types:
  - `tag`: integer
  - `task`: size
  - `numTasks`: size
+ - `periodic`: boolean
 """
-function getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+function getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1, periodic = true)
     api_basisFunctionsOrientation_ = Ref{Ptr{Cint}}()
     api_basisFunctionsOrientation_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctionsOrientation, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, functionSpaceType, api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_, tag, task, numTasks, ierr)
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Cint, Ptr{Cint}),
+          elementType, functionSpaceType, api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_, tag, task, numTasks, periodic, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     basisFunctionsOrientation = unsafe_wrap(Array, api_basisFunctionsOrientation_[], api_basisFunctionsOrientation_n_[], own = true)
     return basisFunctionsOrientation
@@ -3538,9 +3560,11 @@ end
 const get_basis_functions_orientation = getBasisFunctionsOrientation
 
 """
-    gmsh.model.mesh.getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
+    gmsh.model.mesh.getBasisFunctionsOrientationForElement(elementTag, functionSpaceType, periodic = true)
 
-Get the orientation of a single element `elementTag`.
+Get the orientation of a single element `elementTag`, with the master nodes of
+the nodes on periodic entities if `periodic` is set (see
+`getBasisFunctionsOrientation`).
 
 Return `basisFunctionsOrientation`.
 
@@ -3548,13 +3572,14 @@ Types:
  - `elementTag`: size
  - `functionSpaceType`: string
  - `basisFunctionsOrientation`: integer
+ - `periodic`: boolean
 """
-function getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
+function getBasisFunctionsOrientationForElement(elementTag, functionSpaceType, periodic = true)
     api_basisFunctionsOrientation_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctionsOrientationForElement, gmsh.lib), Cvoid,
-          (Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}),
-          elementTag, functionSpaceType, api_basisFunctionsOrientation_, ierr)
+          (Csize_t, Ptr{Cchar}, Ptr{Cint}, Cint, Ptr{Cint}),
+          elementTag, functionSpaceType, api_basisFunctionsOrientation_, periodic, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_basisFunctionsOrientation_[]
 end
@@ -3832,10 +3857,25 @@ const add_faces = addFaces
 
 Generate the pair of keys for the elements of type `elementType` in the entity
 of tag `tag`, for the `functionSpaceType` function space. Each pair (`typeKey`,
-`entityKey`) uniquely identifies a basis function in the function space. If
-`returnCoord` is set, the `coord` vector contains the x, y, z coordinates
-locating basis functions for sorting purposes. Warning: this is an experimental
-feature and will probably change in a future release.
+`entityKey`) uniquely identifies a basis function in the function space. For the
+hierarchical function spaces, `entityKey` is the tag of the node, the global
+number of the edge or face (see `createEdges` and `createFaces`) or the tag of
+the element the basis function is associated with, and `typeKey` is 4 times the
+position of the basis function among those of that entity, plus 0, 1, 2 or 3 for
+the node, edge, face and element: the keys of a basis function do not depend on
+the order of the function space, but they can be as large as 4 times the number
+of basis functions of the entity. For example, for "HcurlLegendre2" on a
+tetrahedron, each edge of global number e carries the keys (1, e) for its lowest
+order (Whitney) function, (5, e) and (9, e) for the gradients of order 1 and 2,
+and each face of global number f the keys (2, f) for the gradient and (6, f) and
+(10, f) for the two other functions of order 2; "HcurlLegendre1" has the keys
+(1, e) and (5, e) of the same functions. Keys identify the basis functions
+within one family of function spaces (H1, H(curl), H(div) or L2): the same keys
+designate different functions in two families, so a code combining several
+families in one field must tell them apart, e.g. by offsetting the type keys of
+each family. If `returnCoord` is set, the `coord` vector contains the x, y, z
+coordinates locating basis functions for sorting purposes. Warning: this is an
+experimental feature and will probably change in a future release.
 
 Return `typeKeys`, `entityKeys`, `coord`.
 
@@ -4801,7 +4841,11 @@ Get the master entity `tagMaster` and the key pairs (`typeKeyMaster`,
 (`typeKey`, `entityKey`) for the elements of type `elementType` and function
 space type `functionSpaceType`. If `returnCoord` is set, the `coord` and
 `coordMaster` vectors contain the x, y, z coordinates locating basis functions
-for sorting purposes.
+for sorting purposes. For the hierarchical function spaces, the elements must be
+oriented with `periodic` set in `getBasisFunctionsOrientation`: the basis
+function of each key is then the basis function of its master key. On surfaces,
+the keys of "HdivLegendre" function spaces are those of the face functions of
+the 3D elements.
 
 Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
 

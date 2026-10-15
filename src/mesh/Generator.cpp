@@ -1473,8 +1473,13 @@ void FixPeriodicMesh(GModel *m)
         }
         else {
           MLine *srcLine = srcIter->second;
-          for(std::size_t i = 2; i < tgtLine->getNumVertices(); i++)
-            p2p[tgtLine->getVertex(i)] = srcLine->getVertex(i);
+          // The counterpart edge can run in the opposite direction. Its
+          // interior high-order nodes must then be paired in reverse order.
+          const bool reversed = srcLine->getVertex(0) != vtcs[0];
+          const std::size_t numVertices = tgtLine->getNumVertices();
+          for(std::size_t i = 2; i < numVertices; i++)
+          p2p[tgtLine->getVertex(i)] =
+          srcLine->getVertex(reversed ? numVertices + 1 - i : i);
         }
       }
     }

@@ -36,8 +36,8 @@ int MPyramid::getVolumeSign()
 
 void MPyramid::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
-  *npts = getNGQPyrPts(pOrder);
   *pts = getGQPyrPts(pOrder);
+  *npts = *pts ? getNGQPyrPts(pOrder) : 0;
 }
 
 bool MPyramid::getFaceInfo(const MFace &face, int &ithFace, int &sign,

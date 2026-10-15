@@ -3,6 +3,12 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cmath>
+#include <map>
+#include <mutex>
+#include <utility>
+#include <vector>
+
 /* 1 point rule points */
 static double GL_pt1[1] = {0.000000000000000e+00};
 
@@ -214,6 +220,43 @@ static double GL_wt20[20] = {
   1.019301198172404e-01, 8.327674157670475e-02, 6.267204833410906e-02,
   4.060142980038694e-02, 1.761400713915212e-02};
 
+// the Gauss-Legendre rule with n points, for the numbers of points that are not
+// tabulated: the points are the roots of the Legendre polynomial L_n, found by
+// Newton's method, in increasing order, and the weights are 2 / ((1 - x^2)
+// L'_n(x)^2); the rules are computed once and kept
+inline void gmshGaussLegendre1DComputed(int n, double **t, double **w)
+{
+  static std::map<int, std::pair<std::vector<double>, std::vector<double>>>
+    rules;
+  static std::mutex mutex;
+  std::lock_guard<std::mutex> lock(mutex);
+  auto &rule = rules[n];
+  if(rule.first.empty()) {
+    rule.first.resize(n);
+    rule.second.resize(n);
+    for(int i = 0; i < n; i++) {
+      // the i-th root from the right, then Newton's iterations
+      double x = std::cos(M_PI * (i + 0.75) / (n + 0.5)), dL = 1.;
+      for(int it = 0; it < 100; it++) {
+        double L0 = 1., L1 = x;
+        for(int k = 2; k <= n; k++) {
+          double L2 = ((2. * k - 1.) * x * L1 - (k - 1.) * L0) / k;
+          L0 = L1;
+          L1 = L2;
+        }
+        dL = n * (x * L1 - L0) / (x * x - 1.);
+        double dx = L1 / dL;
+        x -= dx;
+        if(std::abs(dx) < 1e-16) break;
+      }
+      rule.first[n - 1 - i] = x;
+      rule.second[n - 1 - i] = 2. / ((1. - x * x) * dL * dL);
+    }
+  }
+  *t = rule.first.data();
+  *w = rule.second.data();
+}
+
 inline void gmshGaussLegendre1D(int nbQuadPoints, double **t, double **w)
 {
   switch(nbQuadPoints) {
@@ -286,8 +329,12 @@ inline void gmshGaussLegendre1D(int nbQuadPoints, double **t, double **w)
     *w = GL_wt20;
     break;
   default:
-    *t = nullptr;
-    *w = nullptr;
+    if(nbQuadPoints > 0)
+      gmshGaussLegendre1DComputed(nbQuadPoints, t, w);
+    else {
+      *t = nullptr;
+      *w = nullptr;
+    }
     break;
   }
 }

@@ -1830,12 +1830,12 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, const double
   }
 }
 
-GMSH_API void gmshModelMeshGetBasisFunctionsOrientation(const int elementType, const char * functionSpaceType, int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n, const int tag, const size_t task, const size_t numTasks, int * ierr)
+GMSH_API void gmshModelMeshGetBasisFunctionsOrientation(const int elementType, const char * functionSpaceType, int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n, const int tag, const size_t task, const size_t numTasks, const int periodic, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_basisFunctionsOrientation_;
-    gmsh::model::mesh::getBasisFunctionsOrientation(elementType, functionSpaceType, api_basisFunctionsOrientation_, tag, task, numTasks);
+    gmsh::model::mesh::getBasisFunctionsOrientation(elementType, functionSpaceType, api_basisFunctionsOrientation_, tag, task, numTasks, periodic);
     vector2ptr(api_basisFunctionsOrientation_, basisFunctionsOrientation, basisFunctionsOrientation_n);
   }
   catch(...){
@@ -1843,11 +1843,11 @@ GMSH_API void gmshModelMeshGetBasisFunctionsOrientation(const int elementType, c
   }
 }
 
-GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElement(const size_t elementTag, const char * functionSpaceType, int * basisFunctionsOrientation, int * ierr)
+GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElement(const size_t elementTag, const char * functionSpaceType, int * basisFunctionsOrientation, const int periodic, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::getBasisFunctionsOrientationForElement(elementTag, functionSpaceType, *basisFunctionsOrientation);
+    gmsh::model::mesh::getBasisFunctionsOrientationForElement(elementTag, functionSpaceType, *basisFunctionsOrientation, periodic);
   }
   catch(...){
     if(ierr) *ierr = 1;

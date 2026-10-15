@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <mutex>
 #include <vector>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
@@ -89,6 +90,8 @@ IntPt *getGQHPts(int order, bool forceTensorRule)
 {
   if(!forceTensorRule && order <= 1) return GQH[order];
 
+  static std::mutex mutex;
+  std::lock_guard<std::mutex> lock(mutex);
   if(static_cast<int>(GQHGL.size()) < order + 1)
     GQHGL.resize(order + 1, nullptr);
   if(!GQHGL[order]) {

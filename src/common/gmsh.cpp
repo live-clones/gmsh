@@ -51,19 +51,9 @@
 #include "OS.h"
 #include "Options.h"
 #include "OpenFile.h"
-#include "HierarchicalBasisH1Quad.h"
-#include "HierarchicalBasisH1Tria.h"
-#include "HierarchicalBasisH1Line.h"
-#include "HierarchicalBasisH1Brick.h"
-#include "HierarchicalBasisH1Tetra.h"
-#include "HierarchicalBasisH1Pri.h"
-#include "HierarchicalBasisH1Point.h"
-#include "HierarchicalBasisHcurlLine.h"
-#include "HierarchicalBasisHcurlQuad.h"
-#include "HierarchicalBasisHcurlBrick.h"
-#include "HierarchicalBasisHcurlTria.h"
-#include "HierarchicalBasisHcurlTetra.h"
-#include "HierarchicalBasisHcurlPri.h"
+#if defined(HAVE_HIERARCHICAL_BASIS)
+#include "HierarchicalBasis.h"
+#endif
 #include "Overlap.h"
 
 #if defined(HAVE_MESH)
@@ -3309,26 +3299,67 @@ GMSH_API void gmsh::model::mesh::getElementQualities(
   }
 }
 
+// The hierarchical function spaces and the basis functions of GetDP. In GetDP,
+// a function space is a sum of families of basis functions, each family
+// adding the functions of a given (half-integer) order on a type of entity;
+// here a function space type selects the functions of a range of orders, and
+// getKeysInformation() gives the entity type of each function (0: node, 1:
+// edge, 2: face, 3: element). The families of GetDP and these selections span
+// the same spaces, on simplices, but are not made of the same functions:
+//
+//  GetDP           order  function space type     entity   remark
+//  --------------------------------------------------------------------------
+//  BF_Node         1      H1Legendre1             node
+//  BF_Node_2E      2      H1Legendre2:2           edge
+//  BF_Node_2F      2      H1Legendre2:2           face     quadrangles
+//  BF_Node_2V      2      H1Legendre2:2           element  hexahedra
+//  BF_Node_3E      3      H1Legendre3:3           edge
+//  BF_Node_3F      3      H1Legendre3:3           face
+//  BF_Node_3V      3      H1Legendre3:3           element
+//  BF_GradNode...         GradH1Legendre...                as BF_Node...
+//  BF_Edge         0.5    HcurlLegendre0          edge     Whitney
+//  BF_Edge_2E      1      HcurlLegendreGrad1:1    edge     grad BF_Node_2E
+//  BF_Edge_3F_a,b  1.5    HcurlLegendreNoGrad2:2  face     2 per triangle
+//  BF_Edge_4E      2      HcurlLegendreGrad2:2    edge     grad BF_Node_3E
+//  BF_Edge_4F      2      HcurlLegendreGrad2:2    face     grad BF_Node_3F
+//  BF_CurlEdge...         CurlHcurlLegendre...             as BF_Edge...
+//  BF_Facet        0.5    HdivLegendre0           face     edge in 2D
+//  BF_DivFacet     0      DivHdivLegendre0        face     edge in 2D
+//  BF_Volume       0      L2Legendre0             element
+//
+// The functions of GetDP's H(curl) orders are then:
+//
+//  GetDP order  function space types
+//  -------------------------------------------------------------------------
+//  0.5          HcurlLegendre0
+//  1            HcurlLegendre1 (= HcurlLegendre0 + HcurlLegendre1:1)
+//  1.5          HcurlLegendreNoGrad2 + HcurlLegendreGrad1 (= HcurlLegendre1 +
+//               HcurlLegendreNoGrad2:2): Nedelec of the first kind
+//  2            HcurlLegendre2 (= HcurlLegendreNoGrad2 + HcurlLegendreGrad2)
+//  p + 0.5      HcurlLegendreNoGrad<p+1> + HcurlLegendreGrad<p>
+//  p + 1        HcurlLegendre<p+1>
+//
+// BF_Edge_3F_c (with BF_Edge_3F_a and BF_Edge_3F_b) spans the face functions
+// of HcurlLegendre2:2, i.e. adds the gradients of BF_Node_3F. On quadrangles
+// and hexahedra, the functions of order 1 (HcurlLegendre1:1) also contain
+// rotational face and element functions, and GetDP's BF_Edge_2E are not
+// gradients: there, GetDP's orders do not match the parts of these spaces.
+// Gauging the H(curl) spaces, as with the tree-cotree gauge on BF_Edge in
+// GetDP, amounts to leaving out the gradients (HcurlLegendreGrad) and gauging
+// the lowest order functions (HcurlLegendre0).
+
+// the name, the order and the number of components of a function space type,
+// and the lowest order of its functions if the order is a range "M:N" (for
+// the hierarchical bases, the functions of orders M to N)
 static bool _getFunctionSpaceInfo(const std::string &fsType,
                                   std::string &fsName, int &fsOrder,
-                                  int &fsComp)
+                                  int &fsComp, int *fsMinOrder = nullptr)
 {
+  if(fsMinOrder) *fsMinOrder = 0;
   if(fsType.empty() || fsType == "None") {
     fsName = "";
     fsOrder = 0;
     fsComp = 0;
-    return true;
-  }
-  if(fsType.size() > 8 && fsType.substr(0, 8) == "Lagrange") {
-    fsName = "Lagrange";
-    fsOrder = atoi(fsType.substr(8).c_str());
-    fsComp = 1;
-    return true;
-  }
-  if(fsType.size() > 12 && fsType.substr(0, 12) == "GradLagrange") {
-    fsName = "GradLagrange";
-    fsOrder = atoi(fsType.substr(12).c_str());
-    fsComp = 3;
     return true;
   }
   if(fsType == "IsoParametric" || fsType == "Lagrange") {
@@ -3343,27 +3374,35 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
     fsComp = 3;
     return true;
   }
-  if(fsType.substr(0, 10) == "H1Legendre") {
-    fsName = "H1Legendre";
-    fsOrder = atoi(fsType.substr(10).c_str());
+  // a name followed by the order, e.g. "HcurlLegendreNoGrad2", or by a range
+  // of orders, e.g. "HcurlLegendreGrad2:2"
+  std::size_t n = fsType.find_last_not_of("0123456789");
+  if(n == std::string::npos || n + 1 == fsType.size()) return false;
+  if(fsType[n] == '-') n--; // negative orders, which are rejected later
+  // orders of at most 4 digits, larger ones being rejected
+  if(fsType.size() - n - 1 > 5) return false;
+  fsOrder = atoi(fsType.substr(n + 1).c_str());
+  int minOrder = 0;
+  if(fsType[n] == ':') {
+    std::size_t m = fsType.find_last_not_of("0123456789", n - 1);
+    if(m == std::string::npos || m + 1 == n || n - m - 1 > 4) return false;
+    minOrder = atoi(fsType.substr(m + 1, n - m - 1).c_str());
+    n = m;
+    if(fsType.substr(0, 8) == "Lagrange" ||
+       fsType.substr(0, 12) == "GradLagrange")
+      return false;
+  }
+  fsName = fsType.substr(0, n + 1);
+  if(fsMinOrder) *fsMinOrder = minOrder;
+  if(fsName == "Lagrange" || fsName == "H1Legendre" || fsName == "L2Legendre" ||
+     fsName.substr(0, 15) == "DivHdivLegendre") {
     fsComp = 1;
     return true;
   }
-  if(fsType.substr(0, 14) == "GradH1Legendre") {
-    fsName = "GradH1Legendre";
-    fsOrder = atoi(fsType.substr(14).c_str());
-    fsComp = 3;
-    return true;
-  }
-  if(fsType.substr(0, 13) == "HcurlLegendre") {
-    fsName = "HcurlLegendre";
-    fsOrder = atoi(fsType.substr(13).c_str());
-    fsComp = 3;
-    return true;
-  }
-  if(fsType.substr(0, 17) == "CurlHcurlLegendre") {
-    fsName = "CurlHcurlLegendre";
-    fsOrder = atoi(fsType.substr(17).c_str());
+  if(fsName == "GradLagrange" || fsName == "GradH1Legendre" ||
+     fsName.substr(0, 13) == "HcurlLegendre" ||
+     fsName.substr(0, 17) == "CurlHcurlLegendre" ||
+     fsName.substr(0, 12) == "HdivLegendre") {
     fsComp = 3;
     return true;
   }
@@ -3675,6 +3714,33 @@ GMSH_API void gmsh::model::mesh::getJacobian(
   }
 }
 
+// check that the wanted orientations exist and are not repeated
+static bool _checkWantedOrientations(const std::vector<int> &wantedOrientations,
+                                     int maxOrientation,
+                                     const std::string &fsName, int familyType)
+{
+  if(wantedOrientations.size() > static_cast<std::size_t>(maxOrientation)) {
+    Msg::Error("Asking for more orientations than there exist (max: %d)",
+               maxOrientation);
+    return false;
+  }
+  std::set<int> unique;
+  for(int ori : wantedOrientations) {
+    if(ori < 0 || ori >= maxOrientation) {
+      Msg::Error(
+        "Orientation %d does not exist for function space named '%s' on %s",
+        ori, fsName.c_str(),
+        ElementType::nameOfParentType(familyType, true).c_str());
+      return false;
+    }
+    if(!unique.insert(ori).second) {
+      Msg::Error("Duplicate wanted orientation %d", ori);
+      return false;
+    }
+  }
+  return true;
+}
+
 GMSH_API void gmsh::model::mesh::getBasisFunctions(
   const int elementType, const std::vector<double> &localCoord,
   const std::string &functionSpaceType, int &numComponents,
@@ -3686,8 +3752,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   basisFunctions.clear();
   std::string fsName = "";
   int fsOrder = 0;
-  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, fsOrder,
-                            numComponents)) {
+  int minOrder = 0;
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, fsOrder, numComponents,
+                            &minOrder)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return;
   }
@@ -3696,22 +3763,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   const int familyType = ElementType::getParentType(elementType);
 
   if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
-    // Check if there is no error in wantedOrientations
-    if(wantedOrientations.size() != 0) {
-      if(wantedOrientations.size() > 1) {
-        Msg::Error("Asking for more orientation that there exist");
-        return;
-      }
-
-      if(wantedOrientations[0] != 0) {
-        Msg::Error(
-          "Orientation %i does not exist for function stace named '%s' on %s",
-          wantedOrientations[0], fsName.c_str(),
-          ElementType::nameOfParentType(familyType, true).c_str());
-        return;
-      }
-    }
-
+    if(!_checkWantedOrientations(wantedOrientations, 1, fsName, familyType))
+      return;
     const nodalBasis *basis = nullptr;
     if(numComponents) {
       if(fsOrder == -1) { // isoparametric
@@ -3749,485 +3802,99 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     numOrientations = 1;
   }
   else { // Hierarchical type
-    HierarchicalBasis *basis(nullptr);
-    if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-      switch(familyType) {
-      case TYPE_HEX: {
-        basis = new HierarchicalBasisH1Brick(fsOrder);
-      } break;
-      case TYPE_PRI: {
-        basis = new HierarchicalBasisH1Pri(fsOrder);
-      } break;
-      case TYPE_TET: {
-        basis = new HierarchicalBasisH1Tetra(fsOrder);
-      } break;
-      case TYPE_QUA: {
-        basis = new HierarchicalBasisH1Quad(fsOrder);
-      } break;
-      case TYPE_TRI: {
-        basis = new HierarchicalBasisH1Tria(fsOrder);
-      } break;
-      case TYPE_LIN: {
-        basis = new HierarchicalBasisH1Line(fsOrder);
-      } break;
-      case TYPE_PNT: {
-        basis = new HierarchicalBasisH1Point();
-      } break;
-      default:
-        Msg::Error("Unknown familyType %i for basis function type %s",
-                   familyType, fsName.c_str());
-        return;
-      }
+#if defined(HAVE_HIERARCHICAL_BASIS)
+    HierarchicalBasis *basis =
+      HierarchicalBasis::create(fsName, familyType, fsOrder, minOrder);
+    if(!basis) return;
+    if(_checkWantedOrientations(wantedOrientations,
+                                basis->getNumberOfOrientations(), fsName,
+                                familyType)) {
+      numOrientations = basis->getNumberOfOrientations();
+      basis->evaluate(localCoord, wantedOrientations, basisFunctions);
     }
-    else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-      switch(familyType) {
-      case TYPE_QUA: {
-        basis = new HierarchicalBasisHcurlQuad(fsOrder);
-      } break;
-      case TYPE_HEX: {
-        basis = new HierarchicalBasisHcurlBrick(fsOrder);
-      } break;
-      case TYPE_TRI: {
-        basis = new HierarchicalBasisHcurlTria(fsOrder);
-      } break;
-      case TYPE_TET: {
-        basis = new HierarchicalBasisHcurlTetra(fsOrder);
-      } break;
-      case TYPE_PRI: {
-        basis = new HierarchicalBasisHcurlPri(fsOrder);
-      } break;
-      case TYPE_LIN: {
-        basis = new HierarchicalBasisHcurlLine(fsOrder);
-      } break;
-      default:
-        Msg::Error("Unknown familyType %i for basis function type %s",
-                   familyType, fsName.c_str());
-        return;
-      }
-    }
-    else {
-      Msg::Error("Unknown function space named '%s'", fsName.c_str());
-      return;
-    }
-
-    const std::size_t vSize = basis->getnVertexFunction();
-    const std::size_t bSize = basis->getnBubbleFunction();
-    const std::size_t eSize = basis->getnEdgeFunction();
-    const std::size_t fSize =
-      basis->getnTriFaceFunction() + basis->getnQuadFaceFunction();
-    const std::size_t maxOrientation = basis->getNumberOfOrientations();
-    numOrientations = maxOrientation;
-    const std::size_t numFunctionsPerElement = vSize + bSize + eSize + fSize;
-    const unsigned int numVertices =
-      ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
-
-    basisFunctions.resize(
-      (wantedOrientations.size() == 0 ? maxOrientation :
-                                        wantedOrientations.size()) *
-      numberOfGaussPoints * numFunctionsPerElement * numComponents);
-
-    // Check if there is no error in wantedOrientations
-    if(wantedOrientations.size() != 0) {
-      if(wantedOrientations.size() > maxOrientation) {
-        Msg::Error("Asking for more orientation that there exist");
-        return;
-      }
-      for(unsigned int i = 0; i < wantedOrientations.size(); ++i) {
-        if(wantedOrientations[i] >= static_cast<int>(maxOrientation) ||
-           wantedOrientations[i] < 0) {
-          Msg::Error("Orientation %i does not exist for function stace named "
-                     "'%s' on %s",
-                     wantedOrientations[i], fsName.c_str(),
-                     ElementType::nameOfParentType(familyType, true).c_str());
-          return;
-        }
-      }
-      std::vector<int> sortedWantedOrientations = wantedOrientations;
-      std::sort(sortedWantedOrientations.begin(),
-                sortedWantedOrientations.end());
-      int previousInt = sortedWantedOrientations[0];
-      for(unsigned int i = 1; i < sortedWantedOrientations.size(); ++i) {
-        if(previousInt == sortedWantedOrientations[i]) {
-          Msg::Error("Duplicate wanted orientation found");
-          return;
-        }
-        previousInt = sortedWantedOrientations[i];
-      }
-    }
-
-    std::vector<MVertex *> vertices(numVertices);
-    for(unsigned int i = 0; i < numVertices; ++i) {
-      vertices[i] = new MVertex(0., 0., 0., nullptr, i + 1);
-    }
-    MElement *element = nullptr;
-    switch(familyType) {
-    case TYPE_HEX: {
-      element = new MHexahedron(vertices);
-    } break;
-    case TYPE_PRI: {
-      element = new MPrism(vertices);
-    } break;
-    case TYPE_TET: {
-      element = new MTetrahedron(vertices);
-    } break;
-    case TYPE_QUA: {
-      element = new MQuadrangle(vertices);
-    } break;
-    case TYPE_TRI: {
-      element = new MTriangle(vertices);
-    } break;
-    case TYPE_LIN: {
-      element = new MLine(vertices);
-    } break;
-    case TYPE_PNT: {
-      element = new MPoint(vertices);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
-
-    switch(numComponents) {
-    case 1: {
-      std::vector<std::vector<double>> vTable(
-        numberOfGaussPoints,
-        std::vector<double>(vSize)); // Vertex functions of one element
-      std::vector<std::vector<double>> bTable(
-        numberOfGaussPoints,
-        std::vector<double>(bSize)); // bubble functions of one element
-      std::vector<std::vector<double>> fTable(
-        numberOfGaussPoints,
-        std::vector<double>(fSize)); // face functions of one element
-      std::vector<std::vector<double>> eTable(
-        numberOfGaussPoints,
-        std::vector<double>(eSize)); // edge functions of one element
-
-      for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-        const double u = localCoord[3 * q];
-        const double v = localCoord[3 * q + 1];
-        const double w = localCoord[3 * q + 2];
-
-        basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q],
-                             bTable[q]);
-      }
-      // compute only one time the value of the edge basis functions for
-      // each possible orientations
-      std::vector<std::vector<double>> eTableNegativeFlag(eTable);
-      if(eSize != 0) {
-        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-          basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag[q]);
-        }
-      }
-
-      // compute only one time the value of the face basis functions for
-      // each possible orientations
-      std::vector<std::vector<double>> quadFaceFunctionsAllOrientations(
-        numberOfGaussPoints,
-        std::vector<double>(basis->getnQuadFaceFunction() * 8, 0));
-      std::vector<std::vector<double>> triFaceFunctionsAllOrientations(
-        numberOfGaussPoints,
-        std::vector<double>(basis->getnTriFaceFunction() * 6, 0));
-      if(fSize != 0) {
-        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-          const double u = localCoord[3 * q];
-          const double v = localCoord[3 * q + 1];
-          const double w = localCoord[3 * q + 2];
-
-          basis->addAllOrientedFaceFunctions(
-            u, v, w, fTable[q], quadFaceFunctionsAllOrientations[q],
-            triFaceFunctionsAllOrientations[q]);
-        }
-      }
-
-      std::vector<std::vector<double>> eTableCopy(
-        numberOfGaussPoints,
-        std::vector<double>(eSize, 0)); // use eTableCopy to orient the edges
-      std::vector<std::vector<double>> fTableCopy(
-        numberOfGaussPoints,
-        std::vector<double>(fSize, 0)); // use fTableCopy to orient the faces
-
-      unsigned int iOrientationIndex = 0;
-      for(unsigned int iOrientation = 0; iOrientation < maxOrientation;
-          ++iOrientation) {
-        if(wantedOrientations.size() != 0) {
-          auto it = std::find(wantedOrientations.begin(),
-                              wantedOrientations.end(), iOrientation);
-          if(it != wantedOrientations.end()) {
-            iOrientationIndex = &(*it) - &wantedOrientations[0];
-          }
-          else {
-            MVertexPtrLessThan comp;
-            std::next_permutation(vertices.begin(), vertices.end(), comp);
-            for(unsigned int i = 0; i < numVertices; ++i) {
-              element->setVertex(i, vertices[i]);
-            }
-            continue;
-          }
-        }
-        else {
-          iOrientationIndex = iOrientation;
-        }
-
-        if(eSize != 0) {
-          for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
-            MEdge edge = element->getEdge(iEdge);
-            MEdge edgeSolin = element->getEdgeSolin(iEdge);
-            const int orientationFlag =
-              (edge.getMinVertex() != edgeSolin.getVertex(0)) ? -1 : 1;
-            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-              basis->orientEdge(orientationFlag, iEdge, eTableCopy[q],
-                                eTable[q], eTableNegativeFlag[q]);
-            }
-          }
-        }
-
-        if(fSize != 0) {
-          for(int iFace = 0;
-              iFace < basis->getNumTriFace() + basis->getNumQuadFace();
-              ++iFace) {
-            MFace face = element->getFaceSolin(iFace);
-            std::vector<int> faceOrientationFlag(3);
-            face.getOrientationFlagForFace(faceOrientationFlag);
-            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-              basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1],
-                                faceOrientationFlag[2], iFace,
-                                quadFaceFunctionsAllOrientations[q],
-                                triFaceFunctionsAllOrientations[q],
-                                fTableCopy[q]);
-            }
-          }
-        }
-
-        const std::size_t offsetOrientation =
-          iOrientationIndex * numberOfGaussPoints * numFunctionsPerElement;
-        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-          const std::size_t offsetGP = q * numFunctionsPerElement;
-
-          for(unsigned int i = 0; i < vSize; ++i) {
-            basisFunctions[offsetOrientation + offsetGP + i] = vTable[q][i];
-          }
-          unsigned int offset = vSize;
-          for(unsigned int i = 0; i < eSize; ++i) {
-            basisFunctions[offsetOrientation + offsetGP + offset + i] =
-              eTableCopy[q][i];
-          }
-          offset += eSize;
-          for(unsigned int i = 0; i < fSize; ++i) {
-            basisFunctions[offsetOrientation + offsetGP + offset + i] =
-              fTableCopy[q][i];
-          }
-          offset += fSize;
-          for(unsigned int i = 0; i < bSize; ++i) {
-            basisFunctions[offsetOrientation + offsetGP + offset + i] =
-              bTable[q][i];
-          }
-        }
-
-        MVertexPtrLessThan comp;
-        std::next_permutation(vertices.begin(), vertices.end(), comp);
-        for(unsigned int i = 0; i < numVertices; ++i) {
-          element->setVertex(i, vertices[i]);
-        }
-      }
-      break;
-    }
-    case 3: {
-      std::vector<std::vector<std::vector<double>>> vTable(
-        numberOfGaussPoints,
-        std::vector<std::vector<double>>(
-          vSize,
-          std::vector<double>(3, 0.))); // Vertex functions of one element
-      std::vector<std::vector<std::vector<double>>> bTable(
-        numberOfGaussPoints,
-        std::vector<std::vector<double>>(
-          bSize,
-          std::vector<double>(3, 0.))); // bubble functions of one element
-      std::vector<std::vector<std::vector<double>>> fTable(
-        numberOfGaussPoints,
-        std::vector<std::vector<double>>(
-          fSize, std::vector<double>(3, 0.))); // face functions of one element
-      std::vector<std::vector<std::vector<double>>> eTable(
-        numberOfGaussPoints,
-        std::vector<std::vector<double>>(
-          eSize, std::vector<double>(3, 0.))); // edge functions of one element
-
-      for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-        const double u = localCoord[3 * q];
-        const double v = localCoord[3 * q + 1];
-        const double w = localCoord[3 * q + 2];
-
-        basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q],
-                             bTable[q], fsName);
-      }
-      // compute only one time the value of the edge basis functions for
-      // each possible orientations
-      std::vector<std::vector<std::vector<double>>> eTableNegativeFlag(eTable);
-      if(eSize != 0) {
-        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-          basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag[q]);
-        }
-      }
-
-      // compute only one time the value of the face basis functions for
-      // each possible orientations
-      std::vector<std::vector<std::vector<double>>>
-        quadFaceFunctionsAllOrientations(
-          numberOfGaussPoints,
-          std::vector<std::vector<double>>(basis->getnQuadFaceFunction() * 8,
-                                           std::vector<double>(3, 0.)));
-      std::vector<std::vector<std::vector<double>>>
-        triFaceFunctionsAllOrientations(
-          numberOfGaussPoints,
-          std::vector<std::vector<double>>(basis->getnTriFaceFunction() * 6,
-                                           std::vector<double>(3, 0.)));
-      if(fSize != 0) {
-        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-          const double u = localCoord[3 * q];
-          const double v = localCoord[3 * q + 1];
-          const double w = localCoord[3 * q + 2];
-
-          basis->addAllOrientedFaceFunctions(
-            u, v, w, fTable[q], quadFaceFunctionsAllOrientations[q],
-            triFaceFunctionsAllOrientations[q], fsName);
-        }
-      }
-
-      std::vector<std::vector<std::vector<double>>> eTableCopy(
-        numberOfGaussPoints,
-        std::vector<std::vector<double>>(
-          eSize,
-          std::vector<double>(3, 0.))); // use eTableCopy to orient the edges
-      std::vector<std::vector<std::vector<double>>> fTableCopy(
-        numberOfGaussPoints,
-        std::vector<std::vector<double>>(
-          fSize,
-          std::vector<double>(3, 0.))); // use fTableCopy to orient the faces
-
-      unsigned int iOrientationIndex = 0;
-      for(unsigned int iOrientation = 0; iOrientation < maxOrientation;
-          ++iOrientation) {
-        if(wantedOrientations.size() != 0) {
-          auto it = std::find(wantedOrientations.begin(),
-                              wantedOrientations.end(), iOrientation);
-          if(it != wantedOrientations.end()) {
-            iOrientationIndex = &(*it) - &wantedOrientations[0];
-          }
-          else {
-            MVertexPtrLessThan comp;
-            std::next_permutation(vertices.begin(), vertices.end(), comp);
-            for(unsigned int i = 0; i < numVertices; ++i) {
-              element->setVertex(i, vertices[i]);
-            }
-            continue;
-          }
-        }
-        else {
-          iOrientationIndex = iOrientation;
-        }
-
-        if(eSize != 0) {
-          for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
-            MEdge edge = element->getEdge(iEdge);
-            MEdge edgeSolin = element->getEdgeSolin(iEdge);
-            const int orientationFlag =
-              (edge.getMinVertex() != edgeSolin.getVertex(0) ? -1 : 1);
-            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-              basis->orientEdge(orientationFlag, iEdge, eTableCopy[q],
-                                eTable[q], eTableNegativeFlag[q]);
-            }
-          }
-        }
-
-        if(fSize != 0) {
-          for(int iFace = 0;
-              iFace < basis->getNumTriFace() + basis->getNumQuadFace();
-              ++iFace) {
-            MFace face = element->getFaceSolin(iFace);
-            std::vector<int> faceOrientationFlag(3);
-            face.getOrientationFlagForFace(faceOrientationFlag);
-            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-              basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1],
-                                faceOrientationFlag[2], iFace,
-                                quadFaceFunctionsAllOrientations[q],
-                                triFaceFunctionsAllOrientations[q],
-                                fTableCopy[q]);
-            }
-          }
-        }
-
-        const std::size_t offsetOrientation =
-          iOrientationIndex * numberOfGaussPoints * numFunctionsPerElement * 3;
-        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-          const std::size_t offsetGP = q * numFunctionsPerElement * 3;
-
-          for(unsigned int i = 0; i < vSize; ++i) {
-            basisFunctions[offsetOrientation + offsetGP + 3 * i] =
-              vTable[q][i][0];
-            basisFunctions[offsetOrientation + offsetGP + 3 * i + 1] =
-              vTable[q][i][1];
-            basisFunctions[offsetOrientation + offsetGP + 3 * i + 2] =
-              vTable[q][i][2];
-          }
-          unsigned int offset = 3 * vSize;
-          for(unsigned int i = 0; i < eSize; ++i) {
-            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i] =
-              eTableCopy[q][i][0];
-            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 1] =
-              eTableCopy[q][i][1];
-            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 2] =
-              eTableCopy[q][i][2];
-          }
-          offset += 3 * eSize;
-          for(unsigned int i = 0; i < fSize; ++i) {
-            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i] =
-              fTableCopy[q][i][0];
-            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 1] =
-              fTableCopy[q][i][1];
-            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 2] =
-              fTableCopy[q][i][2];
-          }
-          offset += 3 * fSize;
-          for(unsigned int i = 0; i < bSize; ++i) {
-            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i] =
-              bTable[q][i][0];
-            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 1] =
-              bTable[q][i][1];
-            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 2] =
-              bTable[q][i][2];
-          }
-        }
-
-        MVertexPtrLessThan comp;
-        std::next_permutation(vertices.begin(), vertices.end(), comp);
-        for(unsigned int i = 0; i < numVertices; ++i) {
-          element->setVertex(i, vertices[i]);
-        }
-      }
-      break;
-    }
-    }
-
-    for(unsigned int i = 0; i < numVertices; ++i) { delete vertices[i]; }
-    delete element;
     delete basis;
+#else
+    Msg::Error("Function space '%s' requires the hierarchical basis module",
+               fsName.c_str());
+#endif
   }
+}
 
-  return;
+// the master node of a node on a periodic entity, following the chains of
+// periodic entities (the node itself if it is not on a periodic entity)
+static MVertex *_masterNode(MVertex *v)
+{
+  for(int depth = 0; depth < 10; depth++) { // (no cycles)
+    GEntity *ge = v->onWhat();
+    if(!ge || ge->getMeshMaster() == ge) break;
+    auto it = ge->correspondingVertices.find(v);
+    if(it == ge->correspondingVertices.end()) {
+      it = ge->correspondingHighOrderVertices.find(v);
+      if(it == ge->correspondingHighOrderVertices.end()) break;
+    }
+    if(it->second == v) break;
+    v = it->second;
+  }
+  return v;
+}
+
+// the orientation of an element for the hierarchical basis functions: the
+// rank of the order of the tags of its vertices among the permutations of the
+// vertices in lexicographic order (its Lehmer code, in Horner form); if
+// periodic is set, the vertices are ordered by the tags of their master nodes,
+// then by their own tags, so that the entities of a periodic curve or surface
+// are oriented as those of the master curve or surface
+static int _orientation(MElement *e, int numVertices, bool periodic)
+{
+  std::pair<std::size_t, std::size_t> key[8];
+  for(int i = 0; i < numVertices; i++) {
+    MVertex *v = e->getVertex(i);
+    key[i] = {periodic ? _masterNode(v)->getNum() : v->getNum(), v->getNum()};
+  }
+  int orientation = 0;
+  for(int i = 0; i < numVertices; i++) {
+    // the number of vertices after the i-th one with a smaller key
+    int smaller = 0;
+    for(int j = i + 1; j < numVertices; j++)
+      if(key[j] < key[i]) smaller++;
+    orientation = orientation * (numVertices - i) + smaller;
+  }
+  return orientation;
+}
+
+// (the names given by _getFunctionSpaceInfo)
+static bool _isLagrange(const std::string &fsName)
+{ return fsName == "Lagrange" || fsName == "GradLagrange"; }
+
+// whether a hierarchical function space is available on the elements of a
+// family (an error is printed otherwise)
+static bool _isHierarchicalAvailable(const std::string &fsName, int familyType,
+                                     int order, int minOrder)
+{
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  HierarchicalBasis *basis =
+    HierarchicalBasis::create(fsName, familyType, order, minOrder);
+  delete basis;
+  return basis != nullptr;
+#else
+  Msg::Error("Function space '%s' requires the hierarchical basis module",
+             fsName.c_str());
+  return false;
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
   const int elementType, const std::string &functionSpaceType,
   std::vector<int> &basisFunctionsOrientation, const int tag,
-  const std::size_t task, const std::size_t numTasks)
+  const std::size_t task, const std::size_t numTasks, const bool periodic)
 {
   if(!_checkInit()) return;
 
-  int basisOrder = 0;
+  int basisOrder = 0, minOrder = 0;
   std::string fsName = "";
   int numComponents = 0;
   if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
-                            numComponents)) {
+                            numComponents, &minOrder)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return;
   }
@@ -4237,6 +3904,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   const int familyType = ElementType::getParentType(elementType);
+  if(!fsName.empty() && !_isLagrange(fsName) &&
+     !_isHierarchicalAvailable(fsName, familyType, basisOrder, minOrder))
+    return;
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     const GEntity *ge = entities[i];
@@ -4261,65 +3931,27 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
     }
   }
   else { // Hierarchical type
-    const unsigned int numVertices =
+    const int numVertices =
       ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
-    std::vector<MVertex *> vertices(numVertices);
-    std::vector<unsigned int> verticesOrder(numVertices);
-    const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
-
     std::size_t entityOffset = 0;
-
     for(std::size_t iEntity = 0; iEntity < entities.size(); ++iEntity) {
       const GEntity *ge = entities[iEntity];
       std::size_t localNumElements = ge->getNumMeshElementsByType(familyType);
-
       const std::size_t begin = task * localNumElements / numTasks;
       const std::size_t end = (task + 1) * localNumElements / numTasks;
-
-      for(std::size_t iElement = begin; iElement < end; ++iElement) {
-        MElement *e = ge->getMeshElementByType(familyType, iElement);
-        for(std::size_t i = 0; i < numVertices; ++i) {
-          vertices[i] = e->getVertex(i);
-        }
-
-        for(std::size_t i = 0; i < numVertices; ++i) {
-          std::size_t max = 0;
-          std::size_t maxPos = 0;
-          for(std::size_t j = 0; j < numVertices; ++j) {
-            if(vertices[j] != nullptr) {
-              if(max < vertices[j]->getNum()) {
-                max = vertices[j]->getNum();
-                maxPos = j;
-              }
-            }
-          }
-          vertices[maxPos] = nullptr;
-          verticesOrder[maxPos] = numVertices - i - 1;
-        }
-
-        std::size_t elementOrientation = 0;
-        for(std::size_t i = 0; i < numVertices; ++i) {
-          elementOrientation +=
-            verticesOrder[i] * factorial[numVertices - i - 1];
-          for(std::size_t j = i + 1; j < numVertices; ++j) {
-            if(verticesOrder[j] > verticesOrder[i]) --verticesOrder[j];
-          }
-        }
-
+      for(std::size_t iElement = begin; iElement < end; ++iElement)
         basisFunctionsOrientation[entityOffset + iElement] =
-          (int)elementOrientation;
-      }
-
+          _orientation(ge->getMeshElementByType(familyType, iElement),
+                       numVertices, periodic);
       entityOffset += localNumElements;
     }
   }
-
   return;
 }
 
 GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElement(
   const std::size_t elementTag, const std::string &functionSpaceType,
-  int &basisFunctionsOrientation)
+  int &basisFunctionsOrientation, const bool periodic)
 {
   if(!_checkInit()) return;
 
@@ -4344,41 +3976,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElement(
     basisFunctionsOrientation = 0;
   }
   else { // Hierarchical type
-    const unsigned int numVertices =
+    const int numVertices =
       ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
-    std::vector<MVertex *> vertices(numVertices);
-    std::vector<unsigned int> verticesOrder(numVertices);
-    const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
-
-    for(std::size_t i = 0; i < numVertices; ++i) {
-      vertices[i] = e->getVertex(i);
-    }
-
-    for(std::size_t i = 0; i < numVertices; ++i) {
-      std::size_t max = 0;
-      std::size_t maxPos = 0;
-      for(std::size_t j = 0; j < numVertices; ++j) {
-        if(vertices[j] != nullptr) {
-          if(max < vertices[j]->getNum()) {
-            max = vertices[j]->getNum();
-            maxPos = j;
-          }
-        }
-      }
-      vertices[maxPos] = nullptr;
-      verticesOrder[maxPos] = numVertices - i - 1;
-    }
-
-    basisFunctionsOrientation = 0;
-    for(std::size_t i = 0; i < numVertices; ++i) {
-      basisFunctionsOrientation +=
-        verticesOrder[i] * factorial[numVertices - i - 1];
-      for(std::size_t j = i + 1; j < numVertices; ++j) {
-        if(verticesOrder[j] > verticesOrder[i]) --verticesOrder[j];
-      }
-    }
+    basisFunctionsOrientation = _orientation(e, numVertices, periodic);
   }
-
   return;
 }
 
@@ -4388,11 +3989,11 @@ gmsh::model::mesh::getNumberOfOrientations(const int elementType,
 {
   if(!_checkInit()) return -1;
 
-  int basisOrder = 0;
+  int basisOrder = 0, minOrder = 0;
   std::string fsName = "";
   int numComponents = 0;
   if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
-                            numComponents)) {
+                            numComponents, &minOrder)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return 0;
   }
@@ -4402,10 +4003,15 @@ gmsh::model::mesh::getNumberOfOrientations(const int elementType,
   }
   else { // Hierarchical type
     const int familyType = ElementType::getParentType(elementType);
+    if(!fsName.empty() &&
+       !_isHierarchicalAvailable(fsName, familyType, basisOrder, minOrder))
+      return 0;
     const unsigned int numVertices =
       ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
-    const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
-    return factorial[numVertices];
+    // one orientation per permutation of the vertices
+    int factorial = 1;
+    for(unsigned int i = 2; i <= numVertices; i++) factorial *= i;
+    return factorial;
   }
 
   return 0;
@@ -4614,6 +4220,136 @@ gmsh::model::mesh::addFaces(const std::vector<std::size_t> &faceTags,
   }
 }
 
+// the barycenter of the nodes
+static void _barycenter(MVertex *const *nodes, std::size_t n, double *xyz)
+{
+  xyz[0] = xyz[1] = xyz[2] = 0.;
+  for(std::size_t i = 0; i < n; i++) {
+    xyz[0] += nodes[i]->x();
+    xyz[1] += nodes[i]->y();
+    xyz[2] += nodes[i]->z();
+  }
+  for(int i = 0; i < 3; i++) xyz[i] /= n;
+}
+
+// append a key, and the coordinates locating it if returnCoord is set
+static void _addKey(int typeKey, std::size_t entityKey, const double *xyz,
+                    std::vector<int> &typeKeys,
+                    std::vector<std::size_t> &entityKeys,
+                    std::vector<double> &coord, bool returnCoord)
+{
+  typeKeys.push_back(typeKey);
+  entityKeys.push_back(entityKey);
+  if(returnCoord) {
+    coord.push_back(xyz[0]);
+    coord.push_back(xyz[1]);
+    coord.push_back(xyz[2]);
+  }
+}
+
+// the keys of the Lagrange basis functions of element e: one per node
+static void _addLagrangeKeys(MElement *e, std::vector<int> &typeKeys,
+                             std::vector<std::size_t> &entityKeys,
+                             std::vector<double> &coord, bool returnCoord)
+{
+  for(std::size_t k = 0; k < e->getNumVertices(); ++k) {
+    MVertex *v = e->getVertex(k);
+    double xyz[3] = {v->x(), v->y(), v->z()};
+    _addKey(0, v->getNum(), xyz, typeKeys, entityKeys, coord, returnCoord);
+  }
+}
+
+#if defined(HAVE_HIERARCHICAL_BASIS)
+// the type key of a hierarchical basis function: 4 times its position on its
+// vertex, edge, face or element, plus the type of the entity (0 to 3), which
+// makes the keys unique and independent of the order of the basis
+static int _typeKey(const HierarchicalBasis::Function &f)
+{ return 4 * f.position + f.type; }
+
+// the keys of the given functions of a hierarchical basis of element e: the
+// vertex functions keyed by their node, the functions of each edge and face by
+// the global number of the edge or the face, the bubble functions by the
+// element; if master is given, the keys of the corresponding functions of the
+// master entities, the nodes being replaced by their master nodes, and the
+// edges and faces by those of the master nodes
+static void _addHierarchicalKeys(
+  MElement *e, const std::vector<HierarchicalBasis::Function> &functions,
+  std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
+  std::vector<double> &coord, bool returnCoord,
+  const std::map<MVertex *, MVertex *> *master = nullptr)
+{
+  auto node = [&](MVertex *v) {
+    if(!master) return v;
+    auto it = master->find(v);
+    return (it == master->end()) ? v : it->second;
+  };
+  // the global number and the barycenter of each edge and face of the element
+  // with functions, computed once
+  std::size_t edges[12], faces[6];
+  double edgeXyz[12][3], faceXyz[6][3], elementXyz[3];
+  bool edgeDone[12] = {false}, faceDone[6] = {false}, elementDone = false;
+  for(auto &f : functions) {
+    std::size_t key = 0;
+    double *xyz = nullptr, nodeXyz[3];
+    if(f.type == 0) {
+      MVertex *v = node(e->getVertex(f.entity));
+      key = v->getNum();
+      nodeXyz[0] = v->x();
+      nodeXyz[1] = v->y();
+      nodeXyz[2] = v->z();
+      xyz = nodeXyz;
+    }
+    else if(f.type == 1) {
+      if(!edgeDone[f.entity]) {
+        MEdge edge = e->getEdge(f.entity);
+        if(master)
+          edge = MEdge(node(edge.getVertex(0)), node(edge.getVertex(1)));
+        if(returnCoord) {
+          MVertex *v[2] = {edge.getVertex(0), edge.getVertex(1)};
+          _barycenter(v, 2, edgeXyz[f.entity]);
+        }
+        edges[f.entity] = GModel::current()->addMEdge(std::move(edge));
+        edgeDone[f.entity] = true;
+      }
+      key = edges[f.entity];
+      xyz = edgeXyz[f.entity];
+    }
+    else if(f.type == 2) {
+      if(!faceDone[f.entity]) {
+        MFace face = e->getFaceSolin(f.entity);
+        if(master) {
+          std::vector<MVertex *> v(face.getNumVertices());
+          for(std::size_t k = 0; k < v.size(); k++)
+            v[k] = node(face.getVertex(k));
+          face = MFace(v);
+        }
+        if(returnCoord) {
+          MVertex *v[4];
+          for(std::size_t k = 0; k < face.getNumVertices(); k++)
+            v[k] = face.getVertex(k);
+          _barycenter(v, face.getNumVertices(), faceXyz[f.entity]);
+        }
+        faces[f.entity] = GModel::current()->addMFace(std::move(face));
+        faceDone[f.entity] = true;
+      }
+      key = faces[f.entity];
+      xyz = faceXyz[f.entity];
+    }
+    else {
+      if(!elementDone && returnCoord) {
+        std::vector<MVertex *> v;
+        e->getVertices(v);
+        _barycenter(v.data(), v.size(), elementXyz);
+      }
+      elementDone = true;
+      key = e->getNum();
+      xyz = elementXyz;
+    }
+    _addKey(_typeKey(f), key, xyz, typeKeys, entityKeys, coord, returnCoord);
+  }
+}
+#endif
+
 GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
                                          const std::string &functionSpaceType,
                                          std::vector<int> &typeKeys,
@@ -4628,7 +4364,9 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
   int order = 0;
   int numComponents = 0;
   std::string fsName = "";
-  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, order, numComponents)) {
+  int minOrder = 0;
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, order, numComponents,
+                            &minOrder)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return;
   }
@@ -4637,247 +4375,40 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
+  std::size_t numElements = 0;
+  for(auto ge : entities)
+    numElements += ge->getNumMeshElementsByType(familyType);
 
-  HierarchicalBasis *basis(nullptr);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(order);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(order);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
-  }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(order);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(order);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
-  }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
-    const nodalBasis *nodalB(nullptr);
-    if(order == -1) { // isoparametric
-      nodalB = BasisFactory::getNodalBasis(elementType);
-    }
-    else {
-      int familyType = ElementType::getParentType(elementType);
-      int newType = ElementType::getType(familyType, order, false);
-      nodalB = BasisFactory::getNodalBasis(newType);
-    }
-
-    for(std::size_t i = 0; i < entities.size(); ++i) {
-      GEntity *ge = entities[i];
-      std::size_t numElementsInEntitie =
-        ge->getNumMeshElementsByType(familyType);
-      if(returnCoord) {
-        coord.reserve(coord.size() + numElementsInEntitie *
-                                       nodalB->getNumShapeFunctions() * 3);
-      }
-      typeKeys.reserve(typeKeys.size() +
-                       numElementsInEntitie * nodalB->getNumShapeFunctions());
-      entityKeys.reserve(entityKeys.size() +
-                         numElementsInEntitie * nodalB->getNumShapeFunctions());
-
-      for(std::size_t j = 0; j < numElementsInEntitie; ++j) {
-        MElement *e = ge->getMeshElementByType(familyType, j);
-        for(size_t k = 0; k < e->getNumVertices(); ++k) {
-          typeKeys.push_back(0);
-          entityKeys.push_back(e->getVertex(k)->getNum());
-          if(returnCoord) {
-            coord.push_back(e->getVertex(k)->x());
-            coord.push_back(e->getVertex(k)->y());
-            coord.push_back(e->getVertex(k)->z());
-          }
-        }
-      }
-    }
-    return;
-  }
-  else {
-    Msg::Error("Unknown function space named '%s'", fsName.c_str());
+  if(_isLagrange(fsName)) {
+    std::size_t n = numElements * ElementType::getNumVertices(elementType);
+    typeKeys.reserve(n);
+    entityKeys.reserve(n);
+    if(returnCoord) coord.reserve(3 * n);
+    for(auto ge : entities)
+      for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++)
+        _addLagrangeKeys(ge->getMeshElementByType(familyType, j), typeKeys,
+                         entityKeys, coord, returnCoord);
     return;
   }
 
-  int vSize = basis->getnVertexFunction();
-  int bSize = basis->getnBubbleFunction();
-  int eSize = basis->getnEdgeFunction();
-  int quadFSize = basis->getnQuadFaceFunction();
-  int triFSize = basis->getnTriFaceFunction();
-  int fSize = quadFSize + triFSize;
-  int numDofsPerElement = vSize + bSize + eSize + fSize;
-  int numberQuadFaces = basis->getNumQuadFace();
-  int numberTriFaces = basis->getNumTriFace();
-  int numTriFaceFunction = 0;
-  if(basis->getNumTriFace() != 0) {
-    numTriFaceFunction =
-      triFSize /
-      basis->getNumTriFace(); // number of Tri face functions for one face
-  }
-  int numQuadFaceFunction = 0;
-  if(basis->getNumQuadFace() != 0) {
-    numQuadFaceFunction =
-      quadFSize /
-      basis->getNumQuadFace(); // number of Tri face functions for one face
-  }
-  int numEdgeFunction = 0;
-  if(basis->getNumEdge() != 0) {
-    numEdgeFunction =
-      eSize / basis->getNumEdge(); // number of edge functions for one edge
-  }
-  int const1 = numEdgeFunction + 1;
-  int const2 = const1 + numQuadFaceFunction;
-  int const3 = const1 + numTriFaceFunction;
-  int const4 = bSize + std::max(const3, const2);
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  HierarchicalBasis *basis =
+    HierarchicalBasis::create(fsName, familyType, order, minOrder);
+  if(!basis) return;
+  std::size_t n = numElements * basis->getNumFunctions();
+  typeKeys.reserve(n);
+  entityKeys.reserve(n);
+  if(returnCoord) coord.reserve(3 * n);
+  for(auto ge : entities)
+    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++)
+      _addHierarchicalKeys(ge->getMeshElementByType(familyType, j),
+                           basis->getFunctions(), typeKeys, entityKeys, coord,
+                           returnCoord);
   delete basis;
-
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
-    if(returnCoord) {
-      coord.reserve(coord.size() +
-                    numElementsInEntitie * numDofsPerElement * 3);
-    }
-    typeKeys.reserve(typeKeys.size() +
-                     numElementsInEntitie * numDofsPerElement);
-    entityKeys.reserve(entityKeys.size() +
-                       numElementsInEntitie * numDofsPerElement);
-
-    for(std::size_t j = 0; j < numElementsInEntitie; j++) {
-      MElement *e = ge->getMeshElementByType(familyType, j);
-      // vertices
-      for(int k = 0; k < vSize; k++) {
-        typeKeys.push_back(0);
-        entityKeys.push_back(e->getVertex(k)->getNum());
-        if(returnCoord) {
-          coord.push_back(e->getVertex(k)->x());
-          coord.push_back(e->getVertex(k)->y());
-          coord.push_back(e->getVertex(k)->z());
-        }
-      }
-      // edges
-      if(eSize > 0) {
-        for(int jj = 0; jj < e->getNumEdges(); jj++) {
-          MEdge edge = e->getEdge(jj);
-          double coordEdge[3];
-          if(returnCoord) {
-            MVertex *v1 = edge.getVertex(0);
-            MVertex *v2 = edge.getVertex(1);
-
-            coordEdge[0] = 0.5 * (v1->x() + v2->x());
-            coordEdge[1] = 0.5 * (v1->y() + v2->y());
-            coordEdge[2] = 0.5 * (v1->z() + v2->z());
-          }
-          std::size_t edgeGlobalIndice =
-            GModel::current()->addMEdge(std::move(edge));
-          for(int k = 1; k < const1; k++) {
-            typeKeys.push_back(k);
-            entityKeys.push_back(edgeGlobalIndice);
-            if(returnCoord) {
-              coord.push_back(coordEdge[0]);
-              coord.push_back(coordEdge[1]);
-              coord.push_back(coordEdge[2]);
-            }
-          }
-        }
-      }
-      // faces
-      if(fSize > 0) {
-        for(int jj = 0; jj < numberQuadFaces + numberTriFaces; jj++) {
-          // Number the faces
-          MFace face = e->getFaceSolin(jj);
-          double coordFace[3] = {0., 0., 0.};
-          if(returnCoord) {
-            for(std::size_t indexV = 0; indexV < face.getNumVertices();
-                ++indexV) {
-              coordFace[0] += face.getVertex(indexV)->x();
-              coordFace[1] += face.getVertex(indexV)->y();
-              coordFace[2] += face.getVertex(indexV)->z();
-            }
-            coordFace[0] /= face.getNumVertices();
-            coordFace[1] /= face.getNumVertices();
-            coordFace[2] /= face.getNumVertices();
-          }
-          std::size_t faceGlobalIndice =
-            GModel::current()->addMFace(std::move(face));
-          int it2 = const2;
-          if(jj >= numberQuadFaces) { it2 = const3; }
-          for(int k = const1; k < it2; k++) {
-            typeKeys.push_back(k);
-            entityKeys.push_back(faceGlobalIndice);
-            if(returnCoord) {
-              coord.push_back(coordFace[0]);
-              coord.push_back(coordFace[1]);
-              coord.push_back(coordFace[2]);
-            }
-          }
-        }
-      }
-      // volumes
-      if(bSize > 0) {
-        double bubbleCenterCoord[3] = {0., 0., 0.};
-        if(returnCoord) {
-          for(unsigned int indexV = 0; indexV < e->getNumVertices(); ++indexV) {
-            bubbleCenterCoord[0] += e->getVertex(indexV)->x();
-            bubbleCenterCoord[1] += e->getVertex(indexV)->y();
-            bubbleCenterCoord[2] += e->getVertex(indexV)->z();
-          }
-          bubbleCenterCoord[0] /= e->getNumVertices();
-          bubbleCenterCoord[1] /= e->getNumVertices();
-          bubbleCenterCoord[2] /= e->getNumVertices();
-        }
-        for(int k = std::max(const3, const2); k < const4; k++) {
-          typeKeys.push_back(k);
-          entityKeys.push_back(e->getNum());
-          if(returnCoord) {
-            coord.push_back(bubbleCenterCoord[0]);
-            coord.push_back(bubbleCenterCoord[1]);
-            coord.push_back(bubbleCenterCoord[2]);
-          }
-        }
-      }
-    }
-  }
+#else
+  Msg::Error("Function space '%s' requires the hierarchical basis module",
+             fsName.c_str());
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::getKeysForElement(
@@ -4892,7 +4423,9 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
   int order = 0;
   int numComponents = 0;
   std::string fsName = "";
-  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, order, numComponents)) {
+  int minOrder = 0;
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, order, numComponents,
+                            &minOrder)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return;
   }
@@ -4901,317 +4434,65 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     Msg::Error("Unknown element %zu", elementTag);
     return;
   }
-  int elementType = e->getTypeForMSH();
-  int familyType = ElementType::getParentType(elementType);
-
-  HierarchicalBasis *basis(nullptr);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(order);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(order);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
-  }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(order);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(order);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
-  }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
-    typeKeys.reserve(e->getNumVertices());
-    entityKeys.reserve(e->getNumVertices());
-    if(returnCoord) { coord.reserve(3 * e->getNumVertices()); }
-    for(size_t k = 0; k < e->getNumVertices(); ++k) {
-      typeKeys.push_back(0);
-      entityKeys.push_back(e->getVertex(k)->getNum());
-      if(returnCoord) {
-        coord.push_back(e->getVertex(k)->x());
-        coord.push_back(e->getVertex(k)->y());
-        coord.push_back(e->getVertex(k)->z());
-      }
-    }
+  if(_isLagrange(fsName)) {
+    _addLagrangeKeys(e, typeKeys, entityKeys, coord, returnCoord);
     return;
   }
-  else {
-    Msg::Error("Unknown function space named '%s'", fsName.c_str());
-    return;
-  }
-
-  int vSize = basis->getnVertexFunction();
-  int bSize = basis->getnBubbleFunction();
-  int eSize = basis->getnEdgeFunction();
-  int quadFSize = basis->getnQuadFaceFunction();
-  int triFSize = basis->getnTriFaceFunction();
-  int fSize = quadFSize + triFSize;
-  int numberQuadFaces = basis->getNumQuadFace();
-  int numberTriFaces = basis->getNumTriFace();
-  int numTriFaceFunction = 0;
-  if(basis->getNumTriFace() != 0) {
-    numTriFaceFunction =
-      triFSize /
-      basis->getNumTriFace(); // number of Tri face functions for one face
-  }
-  int numQuadFaceFunction = 0;
-  if(basis->getNumQuadFace() != 0) {
-    numQuadFaceFunction =
-      quadFSize /
-      basis->getNumQuadFace(); // number of Tri face functions for one face
-  }
-  int numEdgeFunction = 0;
-  if(basis->getNumEdge() != 0) {
-    numEdgeFunction =
-      eSize / basis->getNumEdge(); // number of edge functions for one edge
-  }
-  int const1 = numEdgeFunction + 1;
-  int const2 = const1 + numQuadFaceFunction;
-  int const3 = const1 + numTriFaceFunction;
-  int const4 = bSize + std::max(const3, const2);
-  int numDofsPerElement = vSize + bSize + eSize + fSize;
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  int familyType = ElementType::getParentType(e->getTypeForMSH());
+  HierarchicalBasis *basis =
+    HierarchicalBasis::create(fsName, familyType, order, minOrder);
+  if(!basis) return;
+  _addHierarchicalKeys(e, basis->getFunctions(), typeKeys, entityKeys, coord,
+                       returnCoord);
   delete basis;
-
-  typeKeys.reserve(numDofsPerElement);
-  entityKeys.reserve(numDofsPerElement);
-  if(returnCoord) { coord.reserve(3 * numDofsPerElement); }
-
-  // vertices
-  for(int k = 0; k < vSize; k++) {
-    typeKeys.push_back(0);
-    entityKeys.push_back(e->getVertex(k)->getNum());
-    if(returnCoord) {
-      coord.push_back(e->getVertex(k)->x());
-      coord.push_back(e->getVertex(k)->y());
-      coord.push_back(e->getVertex(k)->z());
-    }
-  }
-  // edges
-  if(eSize > 0) {
-    for(int jj = 0; jj < e->getNumEdges(); jj++) {
-      MEdge edge = e->getEdge(jj);
-      double coordEdge[3];
-      if(returnCoord) {
-        MVertex *v1 = edge.getVertex(0);
-        MVertex *v2 = edge.getVertex(1);
-
-        coordEdge[0] = 0.5 * (v1->x() + v2->x());
-        coordEdge[1] = 0.5 * (v1->y() + v2->y());
-        coordEdge[2] = 0.5 * (v1->z() + v2->z());
-      }
-      std::size_t edgeGlobalIndice =
-        GModel::current()->addMEdge(std::move(edge));
-      for(int k = 1; k < const1; k++) {
-        typeKeys.push_back(k);
-        entityKeys.push_back(edgeGlobalIndice);
-        if(returnCoord) {
-          coord.push_back(coordEdge[0]);
-          coord.push_back(coordEdge[1]);
-          coord.push_back(coordEdge[2]);
-        }
-      }
-    }
-  }
-  // faces
-  if(fSize > 0) {
-    for(int jj = 0; jj < numberQuadFaces + numberTriFaces; jj++) {
-      // Number the faces
-      MFace face = e->getFaceSolin(jj);
-      double coordFace[3] = {0., 0., 0.};
-      if(returnCoord) {
-        for(std::size_t indexV = 0; indexV < face.getNumVertices(); ++indexV) {
-          coordFace[0] += face.getVertex(indexV)->x();
-          coordFace[1] += face.getVertex(indexV)->y();
-          coordFace[2] += face.getVertex(indexV)->z();
-        }
-        coordFace[0] /= face.getNumVertices();
-        coordFace[1] /= face.getNumVertices();
-        coordFace[2] /= face.getNumVertices();
-      }
-      std::size_t faceGlobalIndice =
-        GModel::current()->addMFace(std::move(face));
-      int it2 = const2;
-      if(jj >= numberQuadFaces) { it2 = const3; }
-      for(int k = const1; k < it2; k++) {
-        typeKeys.push_back(k);
-        entityKeys.push_back(faceGlobalIndice);
-        if(returnCoord) {
-          coord.push_back(coordFace[0]);
-          coord.push_back(coordFace[1]);
-          coord.push_back(coordFace[2]);
-        }
-      }
-    }
-  }
-  // volumes
-  if(bSize > 0) {
-    double bubbleCenterCoord[3] = {0., 0., 0.};
-    if(returnCoord) {
-      for(unsigned int indexV = 0; indexV < e->getNumVertices(); ++indexV) {
-        bubbleCenterCoord[0] += e->getVertex(indexV)->x();
-        bubbleCenterCoord[1] += e->getVertex(indexV)->y();
-        bubbleCenterCoord[2] += e->getVertex(indexV)->z();
-      }
-      bubbleCenterCoord[0] /= e->getNumVertices();
-      bubbleCenterCoord[1] /= e->getNumVertices();
-      bubbleCenterCoord[2] /= e->getNumVertices();
-    }
-    for(int k = std::max(const3, const2); k < const4; k++) {
-      typeKeys.push_back(k);
-      entityKeys.push_back(e->getNum());
-      if(returnCoord) {
-        coord.push_back(bubbleCenterCoord[0]);
-        coord.push_back(bubbleCenterCoord[1]);
-        coord.push_back(bubbleCenterCoord[2]);
-      }
-    }
-  }
+#else
+  Msg::Error("Function space '%s' requires the hierarchical basis module",
+             fsName.c_str());
+#endif
 }
 
 GMSH_API int
 gmsh::model::mesh::getNumberOfKeys(const int elementType,
                                    const std::string &functionSpaceType)
 {
+  if(!_checkInit()) return 0;
   int numberOfKeys = 0;
   int basisOrder = 0;
   std::string fsName = "";
   int numComponents = 0;
+  int minOrder = 0;
   if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
-                            numComponents)) {
+                            numComponents, &minOrder)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return 0;
   }
+
   int familyType = ElementType::getParentType(elementType);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    HierarchicalBasis *basis(nullptr);
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(basisOrder);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(basisOrder);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return 0;
-    }
-    int vSize = basis->getnVertexFunction();
-    int bSize = basis->getnBubbleFunction();
-    int eSize = basis->getnEdgeFunction();
-    int quadFSize = basis->getnQuadFaceFunction();
-    int triFSize = basis->getnTriFaceFunction();
-    numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
-    delete basis;
-  }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    HierarchicalBasis *basis(nullptr);
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(basisOrder);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(basisOrder);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return 0;
-    }
-    int vSize = basis->getnVertexFunction();
-    int bSize = basis->getnBubbleFunction();
-    int eSize = basis->getnEdgeFunction();
-    int quadFSize = basis->getnQuadFaceFunction();
-    int triFSize = basis->getnTriFaceFunction();
-    numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
-    delete basis;
-  }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+
+  if(_isLagrange(fsName)) {
     const nodalBasis *basis(nullptr);
     if(basisOrder == -1) { // isoparametric
       basis = BasisFactory::getNodalBasis(elementType);
     }
     else {
-      int familyType = ElementType::getParentType(elementType);
       int newType = ElementType::getType(familyType, basisOrder, false);
       basis = BasisFactory::getNodalBasis(newType);
     }
     numberOfKeys = basis->getNumShapeFunctions();
   }
   else {
-    Msg::Error("Unknown function space named '%s'", fsName.c_str());
-    return 0;
+#if defined(HAVE_HIERARCHICAL_BASIS)
+    HierarchicalBasis *basis =
+      HierarchicalBasis::create(fsName, familyType, basisOrder, minOrder);
+    if(!basis) return 0;
+    numberOfKeys = basis->getNumFunctions();
+    delete basis;
+#else
+    Msg::Error("Function space '%s' requires the hierarchical basis module",
+               fsName.c_str());
+#endif
   }
-
   return numberOfKeys;
 }
 
@@ -5220,88 +4501,33 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
   const int elementType, const std::string &functionSpaceType,
   gmsh::vectorpair &infoKeys)
 {
+  if(!_checkInit()) return;
   infoKeys.clear();
   int basisOrder = 0;
   std::string fsName = "";
   int numComponents = 0;
+  int minOrder = 0;
   if(!_getFunctionSpaceInfo(functionSpaceType, fsName, basisOrder,
-                            numComponents)) {
+                            numComponents, &minOrder)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return;
   }
 
   if(typeKeys.size() != entityKeys.size()) {
     Msg::Error("The size of 'typeKeys' is different from the size of "
-               "'entityKeys' ('%i', '%i')",
+               "'entityKeys' ('%zu', '%zu')",
                typeKeys.size(), entityKeys.size());
     return;
   }
 
-  HierarchicalBasis *basis(nullptr);
   int familyType = ElementType::getParentType(elementType);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(basisOrder);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(basisOrder);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
-  }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(basisOrder);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(basisOrder);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
-  }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+
+  if(_isLagrange(fsName)) {
     const nodalBasis *basis(nullptr);
     if(basisOrder == -1) { // isoparametric
       basis = BasisFactory::getNodalBasis(elementType);
     }
     else {
-      int familyType = ElementType::getParentType(elementType);
       int newType = ElementType::getType(familyType, basisOrder, false);
       basis = BasisFactory::getNodalBasis(newType);
     }
@@ -5325,23 +4551,26 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
     }
     return;
   }
-  else {
-    Msg::Error("Unknown function space named '%s'", fsName.c_str());
-    return;
-  }
 
-  int vSize = basis->getnVertexFunction();
-  int bSize = basis->getnBubbleFunction();
-  int eSize = basis->getnEdgeFunction();
-  int quadFSize = basis->getnQuadFaceFunction();
-  int triFSize = basis->getnTriFaceFunction();
-  int numDofsPerElement = vSize + bSize + eSize + quadFSize + triFSize;
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  HierarchicalBasis *basis =
+    HierarchicalBasis::create(fsName, familyType, basisOrder, minOrder);
+  if(!basis) return;
+  int numDofsPerElement = basis->getNumFunctions();
   std::vector<int> functionTypeInfo(numDofsPerElement);
   std::vector<int> orderInfo(numDofsPerElement);
   basis->getKeysInfo(functionTypeInfo, orderInfo);
   delete basis;
   std::size_t keySize = typeKeys.size();
   if(!keySize) return;
+  // the keys of whole elements, as given by getKeys or getKeysForElement
+  if(!numDofsPerElement || keySize % numDofsPerElement) {
+    Msg::Error("The %zu keys are not those of elements of type %d in function "
+               "space '%s' (%d keys per element)",
+               keySize, elementType, functionSpaceType.c_str(),
+               numDofsPerElement);
+    return;
+  }
   infoKeys.resize(keySize);
   std::size_t it = keySize / numDofsPerElement;
   for(std::size_t i = 0; i < it; i++) {
@@ -5350,6 +4579,10 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
       infoKeys[const1 + j] = std::make_pair(functionTypeInfo[j], orderInfo[j]);
     }
   }
+#else
+  Msg::Error("Function space '%s' requires the hierarchical basis module",
+             fsName.c_str());
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::getBarycenters(
@@ -5443,7 +4676,7 @@ GMSH_API void gmsh::model::mesh::getIntegrationPoints(
   weights.clear();
   std::string intName = "";
   int intOrder = 0;
-  if(!_getIntegrationInfo(integrationType, intName, intOrder)) {
+  if(!_getIntegrationInfo(integrationType, intName, intOrder) || intOrder < 0) {
     Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
     return;
   }
@@ -6456,6 +5689,16 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   }
 }
 
+// the master node of the node v of the periodic entity ge, or nullptr
+static MVertex *_getMasterNode(GEntity *ge, MVertex *v)
+{
+  auto it = ge->correspondingVertices.find(v);
+  if(it != ge->correspondingVertices.end()) return it->second;
+  it = ge->correspondingHighOrderVertices.find(v);
+  if(it != ge->correspondingHighOrderVertices.end()) return it->second;
+  return nullptr;
+}
+
 GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   const int elementType, const std::string &functionSpaceType, const int tag,
   int &tagMaster, std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
@@ -6464,6 +5707,20 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   std::vector<double> &coordMaster, const bool returnCoord)
 {
   if(!_checkInit()) return;
+  typeKeys.clear();
+  typeKeysMaster.clear();
+  entityKeys.clear();
+  entityKeysMaster.clear();
+  coord.clear();
+  coordMaster.clear();
+  int order = 0, numComponents = 0;
+  std::string fsName = "";
+  int minOrder = 0;
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, order, numComponents,
+                            &minOrder)) {
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    return;
+  }
   int dim = ElementType::getDimension(elementType);
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) {
@@ -6472,60 +5729,84 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   }
   if(ge->getMeshMaster() == ge) { // not periodic
     tagMaster = tag;
-    typeKeys.clear();
-    typeKeysMaster.clear();
-    entityKeys.clear();
-    entityKeysMaster.clear();
     return;
   }
-
   tagMaster = ge->getMeshMaster()->tag();
-  getKeys(elementType, functionSpaceType, typeKeys, entityKeys, coord, tag,
-          returnCoord);
-  typeKeysMaster = typeKeys;
-  entityKeysMaster = entityKeys;
-  coordMaster = coord;
 
-  int nthreads = CTX::instance()->numThreads;
-  if(!nthreads) nthreads = Msg::GetMaxThreads();
-
-  if(functionSpaceType == "IsoParametric" || functionSpaceType == "Lagrange") {
+  if(_isLagrange(fsName)) {
+    getKeys(elementType, functionSpaceType, typeKeys, entityKeys, coord, tag,
+            returnCoord);
+    typeKeysMaster = typeKeys;
+    entityKeysMaster = entityKeys;
+    coordMaster = coord;
+    int nthreads = CTX::instance()->numThreads;
+    if(!nthreads) nthreads = Msg::GetMaxThreads();
 #pragma omp parallel for num_threads(nthreads)
     for(std::size_t i = 0; i < entityKeys.size(); i++) {
       MVertex *v = GModel::current()->getMeshVertexByTag(entityKeys[i]);
-      if(!v) { Msg::Warning("Unknown node %d", entityKeys[i]); }
-      else {
-        auto mv = ge->correspondingVertices.find(v);
-        if(mv != ge->correspondingVertices.end()) {
-          entityKeysMaster[i] = mv->second->getNum();
-          if(returnCoord) {
-            coord[3 * i] = mv->second->x();
-            coord[3 * i + 1] = mv->second->y();
-            coord[3 * i + 2] = mv->second->z();
-          }
-        }
-        else {
-          auto mv2 = ge->correspondingHighOrderVertices.find(v);
-          if(mv2 != ge->correspondingHighOrderVertices.end()) {
-            entityKeysMaster[i] = mv2->second->getNum();
-            if(returnCoord) {
-              coord[3 * i] = mv2->second->x();
-              coord[3 * i + 1] = mv2->second->y();
-              coord[3 * i + 2] = mv2->second->z();
-            }
-          }
-          else {
-            Msg::Warning("Unknown master node corresponding to node %d",
-                         entityKeys[i]);
-          }
-        }
+      MVertex *m = v ? _getMasterNode(ge, v) : nullptr;
+      if(!m) {
+        Msg::Warning("Unknown master node corresponding to node %zu",
+                     entityKeys[i]);
+        continue;
+      }
+      entityKeysMaster[i] = m->getNum();
+      if(returnCoord) {
+        coordMaster[3 * i] = m->x();
+        coordMaster[3 * i + 1] = m->y();
+        coordMaster[3 * i + 2] = m->z();
       }
     }
+    return;
   }
-  else {
-    Msg::Error("Periodic key generation currently only available for "
-               "\"IsoParametric\" and \"Lagrange\" function spaces");
+
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  // the keys of the elements of the entity, and the same keys with the master
+  // nodes, edges and faces: the elements being oriented with the master nodes
+  // (see _orientation), the basis functions are the same
+  if(dim != 1 && dim != 2) {
+    Msg::Error("Periodic keys of hierarchical function spaces are only "
+               "available on curves and surfaces");
+    return;
   }
+  int familyType = ElementType::getParentType(elementType);
+  // on surfaces, the H(div) functions of the faces of the 3D elements
+  bool faces3D = (dim == 2 && (fsName.substr(0, 12) == "HdivLegendre" ||
+                               fsName.substr(0, 15) == "DivHdivLegendre"));
+  HierarchicalBasis *basis = HierarchicalBasis::create(
+    fsName,
+    faces3D ? (familyType == TYPE_TRI ? TYPE_TET : TYPE_HEX) : familyType,
+    order, minOrder);
+  if(!basis) return;
+  std::vector<HierarchicalBasis::Function> functions;
+  for(auto &f : basis->getFunctions())
+    if(!faces3D || (f.type == 2 && f.entity == 0)) functions.push_back(f);
+  delete basis;
+
+  for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
+    MElement *e = ge->getMeshElementByType(familyType, j);
+    std::map<MVertex *, MVertex *> master;
+    for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+      MVertex *v = e->getVertex(k), *m = _getMasterNode(ge, v);
+      // nodes on the boundary of the entity, with the master of their entity
+      if(!m && v->onWhat() && v->onWhat() != ge)
+        m = _getMasterNode(v->onWhat(), v);
+      if(!m) {
+        Msg::Warning("Unknown master node corresponding to node %zu",
+                     v->getNum());
+        m = v;
+      }
+      master[v] = m;
+    }
+    _addHierarchicalKeys(e, functions, typeKeys, entityKeys, coord,
+                         returnCoord);
+    _addHierarchicalKeys(e, functions, typeKeysMaster, entityKeysMaster,
+                         coordMaster, returnCoord, &master);
+  }
+#else
+  Msg::Error("Function space '%s' requires the hierarchical basis module",
+             fsName.c_str());
+#endif
 }
 
 GMSH_API void
