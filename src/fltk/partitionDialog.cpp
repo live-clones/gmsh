@@ -216,6 +216,10 @@ void partition_dialog()
 
   static Fl_Menu_Item metisAlgMenu[] = {{"Recursive", 0, nullptr, nullptr},
                                         {"K-way", 0, nullptr, nullptr},
+#if defined(HAVE_MTMETIS)
+                                        {"Multithreaded k-way", 0, nullptr,
+                                         nullptr},
+#endif
                                         {nullptr}};
 
   static Fl_Menu_Item metisEdgeMatchingMenu[] = {
