@@ -3299,116 +3299,6 @@ GMSH_API void gmsh::model::mesh::getElementQualities(
   }
 }
 
-// The hierarchical function spaces and the basis functions of GetDP. In GetDP,
-// a function space is a sum of families of basis functions, each family
-// adding the functions of a given (half-integer) order on a type of entity;
-// here a function space type selects the functions of a range of orders, and
-// getKeysInformation() gives the entity type of each function (0: node, 1:
-// edge, 2: face, 3: element). The families of GetDP and these selections span
-// the same spaces, on simplices, but are not made of the same functions:
-//
-//  GetDP           order  function space type     entity   remark
-//  --------------------------------------------------------------------------
-//  BF_Node         1      H1Legendre1             node
-//  BF_Node_2E      2      H1Legendre2:2           edge
-//  BF_Node_2F      2      H1Legendre2:2           face     quadrangles
-//  BF_Node_2V      2      H1Legendre2:2           element  hexahedra
-//  BF_Node_3E      3      H1Legendre3:3           edge
-//  BF_Node_3F      3      H1Legendre3:3           face
-//  BF_Node_3V      3      H1Legendre3:3           element
-//  BF_GradNode...         GradH1Legendre...                as BF_Node...
-//  BF_Edge         0.5    HcurlLegendre0          edge     Whitney
-//  BF_Edge_2E      1      HcurlLegendreGrad1:1    edge     grad BF_Node_2E
-//  BF_Edge_3F_a,b  1.5    HcurlLegendreNoGrad2:2  face     2 per triangle
-//  BF_Edge_4E      2      HcurlLegendreGrad2:2    edge     grad BF_Node_3E
-//  BF_Edge_4F      2      HcurlLegendreGrad2:2    face     grad BF_Node_3F
-//  BF_CurlEdge...         CurlHcurlLegendre...             as BF_Edge...
-//  BF_Facet        0.5    HdivLegendre0           face     edge in 2D
-//  BF_DivFacet     0      DivHdivLegendre0        face     edge in 2D
-//  BF_Volume       0      L2Legendre0             element
-//
-// The functions of GetDP's H(curl) orders are then:
-//
-//  GetDP order  function space types
-//  -------------------------------------------------------------------------
-//  0.5          HcurlLegendre0
-//  1            HcurlLegendre1 (= HcurlLegendre0 + HcurlLegendre1:1)
-//  1.5          HcurlLegendreNoGrad2 + HcurlLegendreGrad1 (= HcurlLegendre1 +
-//               HcurlLegendreNoGrad2:2): Nedelec of the first kind
-//  2            HcurlLegendre2 (= HcurlLegendreNoGrad2 + HcurlLegendreGrad2)
-//  p + 0.5      HcurlLegendreNoGrad<p+1> + HcurlLegendreGrad<p>
-//  p + 1        HcurlLegendre<p+1>
-//
-// BF_Edge_3F_c (with BF_Edge_3F_a and BF_Edge_3F_b) spans the face functions
-// of HcurlLegendre2:2, i.e. adds the gradients of BF_Node_3F. On quadrangles
-// and hexahedra, the functions of order 1 (HcurlLegendre1:1) also contain
-// rotational face and element functions, and GetDP's BF_Edge_2E are not
-// gradients: there, GetDP's orders do not match the parts of these spaces.
-// Gauging the H(curl) spaces, as with the tree-cotree gauge on BF_Edge in
-// GetDP, amounts to leaving out the gradients (HcurlLegendreGrad) and gauging
-// the lowest order functions (HcurlLegendre0).
-
-// the name, the order and the number of components of a function space type,
-// and the lowest order of its functions if the order is a range "M:N" (for
-// the hierarchical bases, the functions of orders M to N)
-static bool _getFunctionSpaceInfo(const std::string &fsType,
-                                  std::string &fsName, int &fsOrder,
-                                  int &fsComp, int *fsMinOrder = nullptr)
-{
-  if(fsMinOrder) *fsMinOrder = 0;
-  if(fsType.empty() || fsType == "None") {
-    fsName = "";
-    fsOrder = 0;
-    fsComp = 0;
-    return true;
-  }
-  if(fsType == "IsoParametric" || fsType == "Lagrange") {
-    fsName = "Lagrange";
-    fsOrder = -1;
-    fsComp = 1;
-    return true;
-  }
-  if(fsType == "GradIsoParametric" || fsType == "GradLagrange") {
-    fsName = "GradLagrange";
-    fsOrder = -1;
-    fsComp = 3;
-    return true;
-  }
-  // a name followed by the order, e.g. "HcurlLegendreNoGrad2", or by a range
-  // of orders, e.g. "HcurlLegendreGrad2:2"
-  std::size_t n = fsType.find_last_not_of("0123456789");
-  if(n == std::string::npos || n + 1 == fsType.size()) return false;
-  if(fsType[n] == '-') n--; // negative orders, which are rejected later
-  // orders of at most 4 digits, larger ones being rejected
-  if(fsType.size() - n - 1 > 5) return false;
-  fsOrder = atoi(fsType.substr(n + 1).c_str());
-  int minOrder = 0;
-  if(fsType[n] == ':') {
-    std::size_t m = fsType.find_last_not_of("0123456789", n - 1);
-    if(m == std::string::npos || m + 1 == n || n - m - 1 > 4) return false;
-    minOrder = atoi(fsType.substr(m + 1, n - m - 1).c_str());
-    n = m;
-    if(fsType.substr(0, 8) == "Lagrange" ||
-       fsType.substr(0, 12) == "GradLagrange")
-      return false;
-  }
-  fsName = fsType.substr(0, n + 1);
-  if(fsMinOrder) *fsMinOrder = minOrder;
-  if(fsName == "Lagrange" || fsName == "H1Legendre" || fsName == "L2Legendre" ||
-     fsName.substr(0, 15) == "DivHdivLegendre") {
-    fsComp = 1;
-    return true;
-  }
-  if(fsName == "GradLagrange" || fsName == "GradH1Legendre" ||
-     fsName.substr(0, 13) == "HcurlLegendre" ||
-     fsName.substr(0, 17) == "CurlHcurlLegendre" ||
-     fsName.substr(0, 12) == "HdivLegendre") {
-    fsComp = 3;
-    return true;
-  }
-  return false;
-}
-
 GMSH_API void gmsh::model::mesh::getJacobians(
   const int elementType, const std::vector<double> &localCoord,
   std::vector<double> &jacobians, std::vector<double> &determinants,
@@ -3741,6 +3631,67 @@ static bool _checkWantedOrientations(const std::vector<int> &wantedOrientations,
   return true;
 }
 
+// the name, the order and the number of components of a function space type,
+// and the lowest order of its functions if the order is a range "M:N" (for
+// the hierarchical bases, the functions of orders M to N)
+static bool _getFunctionSpaceInfo(const std::string &fsType,
+                                  std::string &fsName, int &fsOrder,
+                                  int &fsComp, int *fsMinOrder = nullptr)
+{
+  if(fsMinOrder) *fsMinOrder = 0;
+  if(fsType.empty() || fsType == "None") {
+    fsName = "";
+    fsOrder = 0;
+    fsComp = 0;
+    return true;
+  }
+  if(fsType == "IsoParametric" || fsType == "Lagrange") {
+    fsName = "Lagrange";
+    fsOrder = -1;
+    fsComp = 1;
+    return true;
+  }
+  if(fsType == "GradIsoParametric" || fsType == "GradLagrange") {
+    fsName = "GradLagrange";
+    fsOrder = -1;
+    fsComp = 3;
+    return true;
+  }
+  // a name followed by the order, e.g. "HcurlLegendreNoGrad2", or by a range
+  // of orders, e.g. "HcurlLegendreGrad2:2"
+  std::size_t n = fsType.find_last_not_of("0123456789");
+  if(n == std::string::npos || n + 1 == fsType.size()) return false;
+  if(fsType[n] == '-') n--; // negative orders, which are rejected later
+  // orders of at most 4 digits, larger ones being rejected
+  if(fsType.size() - n - 1 > 5) return false;
+  fsOrder = atoi(fsType.substr(n + 1).c_str());
+  int minOrder = 0;
+  if(fsType[n] == ':') {
+    std::size_t m = fsType.find_last_not_of("0123456789", n - 1);
+    if(m == std::string::npos || m + 1 == n || n - m - 1 > 4) return false;
+    minOrder = atoi(fsType.substr(m + 1, n - m - 1).c_str());
+    n = m;
+    if(fsType.substr(0, 8) == "Lagrange" ||
+       fsType.substr(0, 12) == "GradLagrange")
+      return false;
+  }
+  fsName = fsType.substr(0, n + 1);
+  if(fsMinOrder) *fsMinOrder = minOrder;
+  if(fsName == "Lagrange" || fsName == "H1Legendre" || fsName == "L2Legendre" ||
+     fsName.substr(0, 15) == "DivHdivLegendre") {
+    fsComp = 1;
+    return true;
+  }
+  if(fsName == "GradLagrange" || fsName == "GradH1Legendre" ||
+     fsName.substr(0, 13) == "HcurlLegendre" ||
+     fsName.substr(0, 17) == "CurlHcurlLegendre" ||
+     fsName.substr(0, 12) == "HdivLegendre") {
+    fsComp = 3;
+    return true;
+  }
+  return false;
+}
+
 GMSH_API void gmsh::model::mesh::getBasisFunctions(
   const int elementType, const std::vector<double> &localCoord,
   const std::string &functionSpaceType, int &numComponents,
@@ -3803,6 +3754,58 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   }
   else { // Hierarchical type
 #if defined(HAVE_HIERARCHICAL_BASIS)
+    // Note on the correspondance between the function space types defined here
+    // and those in GetDP:
+    //
+    // In GetDP, a function space is a sum of families of basis functions, each
+    // family adding the functions of a given (half-integer) order on a type of
+    // entity; here a function space type selects the functions of a range of
+    // orders, and getKeysInformation() gives the entity type of each function
+    // (0: node, 1: edge, 2: face, 3: element). The families of GetDP and these
+    // selections span the same spaces, on simplices, but are not made of the
+    // same functions:
+    //
+    //  GetDP           order  function space type     entity   remark
+    //  --------------------------------------------------------------------------
+    //  BF_Node         1      H1Legendre1             node
+    //  BF_Node_2E      2      H1Legendre2:2           edge
+    //  BF_Node_2F      2      H1Legendre2:2           face     quadrangles
+    //  BF_Node_2V      2      H1Legendre2:2           element  hexahedra
+    //  BF_Node_3E      3      H1Legendre3:3           edge
+    //  BF_Node_3F      3      H1Legendre3:3           face
+    //  BF_Node_3V      3      H1Legendre3:3           element
+    //  BF_GradNode...         GradH1Legendre...                as BF_Node...
+    //  BF_Edge         0.5    HcurlLegendre0          edge     Whitney
+    //  BF_Edge_2E      1      HcurlLegendreGrad1:1    edge     grad BF_Node_2E
+    //  BF_Edge_3F_a,b  1.5    HcurlLegendreNoGrad2:2  face     2 per triangle
+    //  BF_Edge_4E      2      HcurlLegendreGrad2:2    edge     grad BF_Node_3E
+    //  BF_Edge_4F      2      HcurlLegendreGrad2:2    face     grad BF_Node_3F
+    //  BF_CurlEdge...         CurlHcurlLegendre...             as BF_Edge...
+    //  BF_Facet        0.5    HdivLegendre0           face     edge in 2D
+    //  BF_DivFacet     0      DivHdivLegendre0        face     edge in 2D
+    //  BF_Volume       0      L2Legendre0             element
+    //
+    // The functions of GetDP's H(curl) orders are then:
+    //
+    //  GetDP order  function space types
+    //  -------------------------------------------------------------------------
+    //  0.5          HcurlLegendre0
+    //  1            HcurlLegendre1 (= HcurlLegendre0 + HcurlLegendre1:1)
+    //  1.5          HcurlLegendreNoGrad2 + HcurlLegendreGrad1 (= HcurlLegendre1
+    //               + HcurlLegendreNoGrad2:2): Nedelec of the first kind
+    //  2            HcurlLegendre2 (= HcurlLegendreNoGrad2 + HcurlLegendreGrad2)
+    //  p + 0.5      HcurlLegendreNoGrad<p+1> + HcurlLegendreGrad<p>
+    //  p + 1        HcurlLegendre<p+1>
+    //
+    // BF_Edge_3F_c (with BF_Edge_3F_a and BF_Edge_3F_b) spans the face
+    // functions of HcurlLegendre2:2, i.e. adds the gradients of BF_Node_3F. On
+    // quadrangles and hexahedra, the functions of order 1 (HcurlLegendre1:1)
+    // also contain rotational face and element functions, and GetDP's
+    // BF_Edge_2E are not gradients: there, GetDP's orders do not match the
+    // parts of these spaces.  Gauging the H(curl) spaces, as with the
+    // tree-cotree gauge on BF_Edge in GetDP, amounts to leaving out the
+    // gradients (HcurlLegendreGrad) and gauging the lowest order functions
+    // (HcurlLegendre0).
     HierarchicalBasis *basis =
       HierarchicalBasis::create(fsName, familyType, fsOrder, minOrder);
     if(!basis) return;
