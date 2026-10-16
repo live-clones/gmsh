@@ -70,7 +70,7 @@ def main():
                 gmsh.model.mesh.addElementsByType(face, 3, [1], [1, 2, 3, 4])
             if name == "near_flat":
                 assert gmsh.model.mesh.getElementQualities([1], "minSICN")[0] > 0
-            gmsh.option.setNumber("Mesh.PackTargetSize", 1)
+            gmsh.option.setNumber("Mesh.OptimizeQuadsTargetSize", 1)
             gmsh.option.setNumber("Mesh.OptimizeQuadsMinimumEdgeLength", 0)
             gmsh.option.setNumber("Mesh.OptimizeQuadsMaximumEdgeLength", 100)
             gmsh.option.setNumber("Mesh.OptimizeQuadsFinalSplitCadDistanceRatio", ratio)

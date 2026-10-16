@@ -27,13 +27,6 @@
 #endif
 
 namespace QuadOptimizer {
-  static double optimizationTargetSize()
-  {
-    const contextMeshOptions &mesh = CTX::instance()->mesh;
-    return mesh.optimizeQuadsTargetSize > 0. ? mesh.optimizeQuadsTargetSize :
-                                               mesh.packTargetSize;
-  }
-
   static void PrintQuadMeshQualitySummary(
     const char *label, const QuadOptimizer::QuadMeshQualitySummary &quality)
   {
@@ -138,11 +131,12 @@ namespace QuadOptimizer {
       std::max(0., CTX::instance()->mesh.recombineMinimumQuality);
     options.pillowNeighborLayers =
       CTX::instance()->mesh.optimizeQuadsPillowLayers;
-    if(optimizationTargetSize() > 0. ||
+    const double targetSize = CTX::instance()->mesh.optimizeQuadsTargetSize;
+    if(targetSize > 0. ||
        CTX::instance()->mesh.optimizeQuadsMinimumEdgeLength > 0. ||
        CTX::instance()->mesh.optimizeQuadsMaximumEdgeLength > 0.) {
       options.enforceSizeMap = true;
-      options.targetSize = optimizationTargetSize();
+      options.targetSize = targetSize;
       options.minimumEdgeLength =
         CTX::instance()->mesh.optimizeQuadsMinimumEdgeLength;
       options.maximumEdgeLength =
@@ -466,11 +460,12 @@ namespace QuadOptimizer {
       QuadOptimizer::SmallCavityOptimizerOptions terminalOptions;
       terminalOptions.invalidateVertexArrays = false;
       terminalOptions.minimumRecombinationQuality = std::max(0., minQuality);
-      if(optimizationTargetSize() > 0. ||
+      const double targetSize = CTX::instance()->mesh.optimizeQuadsTargetSize;
+      if(targetSize > 0. ||
          CTX::instance()->mesh.optimizeQuadsMinimumEdgeLength > 0. ||
          CTX::instance()->mesh.optimizeQuadsMaximumEdgeLength > 0.) {
         terminalOptions.enforceSizeMap = true;
-        terminalOptions.targetSize = optimizationTargetSize();
+        terminalOptions.targetSize = targetSize;
         terminalOptions.minimumEdgeLength =
           CTX::instance()->mesh.optimizeQuadsMinimumEdgeLength;
         terminalOptions.maximumEdgeLength =
@@ -728,23 +723,16 @@ namespace QuadOptimizer {
     }
   }
 
-  // Mesh.PackTargetSize is the single physical-size control for PACK. Also
-  // recognize the historical uniform `-clmin h -clmax h` spelling: it must
-  // drive the same bounded 3D pipeline on native CAD faces. With variable
-  // sizes (e.g. a size field), only the implicit recombination applies. The
-  // scope restores the public context after generation so a subsequent
-  // operation can use other settings.
-  struct PackTargetSizeScope::State {
+  // PACK uses the standard mesh size settings. For uniform sizes, derive
+  // cleanup bounds and preserve boundary loops; variable size fields keep
+  // their local sizing. Restore temporary meshing settings after generation.
+  struct PackMeshScope::State {
     bool active = false;
     bool packing = false;
     int recombineAll = 0;
     int minCurveNodes = 0;
     int smoothingPasses = 0;
     int forceAllPackedPoints = 0;
-    double sizeFactor = 1.;
-    double minimumSize = 0.;
-    double maximumSize = 0.;
-    double targetSize = 0.;
     double minimumEdgeLength = 0.;
     double maximumEdgeLength = 0.;
     std::map<GEdge *, int> minimumSegmentsByEdge;
@@ -784,13 +772,15 @@ namespace QuadOptimizer {
     State()
     {
       contextMeshOptions &mesh = CTX::instance()->mesh;
-      const bool uniformLegacySize =
-        !(mesh.packTargetSize > 0.) && mesh.lcMin > 0. && mesh.lcMax > 0. &&
+      const bool uniformSize =
+        mesh.lcMin > 0. && mesh.lcMax > 0. && mesh.lcFactor > 0. &&
+        std::isfinite(mesh.lcFactor) &&
         std::isfinite(mesh.lcMin) && std::isfinite(mesh.lcMax) &&
         std::abs(mesh.lcMax - mesh.lcMin) <=
           1.e-12 * std::max({1., mesh.lcMin, mesh.lcMax});
+      const double h = (.5 * mesh.lcMin + .5 * mesh.lcMax) * mesh.lcFactor;
       packing = mesh.algo2d == ALGO_2D_PACK_PRLGRMS;
-      active = packing && (mesh.packTargetSize > 0. || uniformLegacySize) &&
+      active = packing && uniformSize && h > 0. && std::isfinite(h) &&
                !(mesh.optimizeQuadsMinimumEdgeLength > 0.) &&
                !(mesh.optimizeQuadsMaximumEdgeLength > 0.);
       // PACK is a quad mesher: recombine its triangulation of the packed
@@ -804,29 +794,18 @@ namespace QuadOptimizer {
       minCurveNodes = mesh.minCurveNodes;
       smoothingPasses = mesh.nbSmoothing;
       forceAllPackedPoints = mesh.packForceAllPoints;
-      sizeFactor = mesh.lcFactor;
-      minimumSize = mesh.lcMin;
-      maximumSize = mesh.lcMax;
-      targetSize = mesh.packTargetSize;
       minimumEdgeLength = mesh.optimizeQuadsMinimumEdgeLength;
       maximumEdgeLength = mesh.optimizeQuadsMaximumEdgeLength;
 
-      const double h = mesh.packTargetSize > 0. ?
-                         mesh.packTargetSize :
-                         .5 * (mesh.lcMin + mesh.lcMax);
       preserveDiscreteBoundaryLoops();
       mesh.minCurveNodes = 1;
       mesh.nbSmoothing =
         std::max(mesh.nbSmoothing, mesh.optimizeQuadsSmartLaplacian ? 3 : 5);
       mesh.packForceAllPoints = 1;
-      mesh.lcFactor = 1.;
-      mesh.lcMin = h;
-      mesh.lcMax = h;
-      mesh.packTargetSize = h;
       mesh.optimizeQuadsMinimumEdgeLength = .5 * h;
       mesh.optimizeQuadsMaximumEdgeLength = 2. * h;
 
-      Msg::Info("PACK master target size: h=%g, admissible edges=[%g,%g], "
+      Msg::Info("PACK uniform size: h=%g, admissible edges=[%g,%g], "
                 "3D packing forced",
                 h, mesh.optimizeQuadsMinimumEdgeLength,
                 mesh.optimizeQuadsMaximumEdgeLength);
@@ -840,10 +819,6 @@ namespace QuadOptimizer {
       mesh.minCurveNodes = minCurveNodes;
       mesh.nbSmoothing = smoothingPasses;
       mesh.packForceAllPoints = forceAllPackedPoints;
-      mesh.lcFactor = sizeFactor;
-      mesh.lcMin = minimumSize;
-      mesh.lcMax = maximumSize;
-      mesh.packTargetSize = targetSize;
       mesh.optimizeQuadsMinimumEdgeLength = minimumEdgeLength;
       mesh.optimizeQuadsMaximumEdgeLength = maximumEdgeLength;
       for(const auto &entry : minimumSegmentsByEdge)
@@ -851,7 +826,7 @@ namespace QuadOptimizer {
     }
   };
 
-  PackTargetSizeScope::PackTargetSizeScope() : _state(new State) {}
-  PackTargetSizeScope::~PackTargetSizeScope() = default;
+  PackMeshScope::PackMeshScope() : _state(new State) {}
+  PackMeshScope::~PackMeshScope() = default;
 
 } // namespace QuadOptimizer

@@ -546,12 +546,10 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       }
   }
 
-  /* Generate triangulation */
-  /* - scalingOnTriangulation: this factor is used to get a triangulation a bit
-   * more finer than the target quadrangulation, to get a more accurate cross
-   * field */
-  double edgeScaling = packing ? CTX::instance()->mesh.packScalingOnTriangulation :
-                                 CTX::instance()->mesh.quadqsScalingOnTriangulation;
+  // PACK uses the same sizing for the background triangulation and packing.
+  // QuadQS keeps its own background triangulation scaling.
+  const double edgeScaling =
+    packing ? 1. : CTX::instance()->mesh.quadqsScalingOnTriangulation;
   if(!surfaceMeshed) { generateMeshWithSpecialParameters(gm, edgeScaling); }
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);

@@ -781,18 +781,8 @@ Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, config
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PackScalingOnTriangulation
-Edge-length scaling for the PACK background triangulation@*
-Default value: @code{0.75}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PackTargetSize
-Physical target edge length for PACK (non-positive: use the mesh size settings)@*
-Default value: @code{0.}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.OptimizeQuadsTargetSize
-Target edge length for quad optimization (non-positive: inherit PackTargetSize, then the mesh size field)@*
+Target edge length for quad optimization (non-positive: use the mesh size field)@*
 Default value: @code{0.}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -31,10 +31,10 @@ Background Field = 3;
 
 Mesh 3;
 
-Plugin(BoundaryLayer).Surfaces = "11, 3, 10";
+Plugin(BoundaryLayer).Surfaces = "11, 3, 10, 6, 2, 5";
 Plugin(BoundaryLayer).Volumes = "1";
-Plugin(BoundaryLayer).Thickness = 1./2.3;
-Plugin(BoundaryLayer).Size = 1./2.3;
+Plugin(BoundaryLayer).Thickness = 7./2.3;
+Plugin(BoundaryLayer).Size = 1./12.3;
 Plugin(BoundaryLayer).Ratio = 1.2;
 Plugin(BoundaryLayer).Run;
 

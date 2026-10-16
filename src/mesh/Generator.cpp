@@ -1703,7 +1703,7 @@ void GenerateMesh(GModel *m, int ask)
   srand(CTX::instance()->mesh.randomSeed);
 
 #if defined(HAVE_QUADOPTIMIZER)
-  QuadOptimizer::PackTargetSizeScope packTargetSizeScope;
+  QuadOptimizer::PackMeshScope packMeshScope;
 #endif
 
   // Change any high order elements back into first order ones (but skip

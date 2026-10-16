@@ -11,13 +11,13 @@ namespace QuadOptimizer {
   void optimizeQuads(GModel *, const std::string &, bool reportQuality = true);
   void finishPackMesh(GModel *);
   // Restore the caller's settings after the complete mesh generation scope.
-  class PackTargetSizeScope {
+  class PackMeshScope {
     struct State;
     std::unique_ptr<State> _state;
 
   public:
-    PackTargetSizeScope();
-    ~PackTargetSizeScope();
+    PackMeshScope();
+    ~PackMeshScope();
   };
 } // namespace QuadOptimizer
 #endif

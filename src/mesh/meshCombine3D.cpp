@@ -15,11 +15,13 @@
 #include <cstdlib>
 #include <fstream>
 #include <map>
+#include <unordered_set>
 #include <set>
 #include <sstream>
 #include <utility>
 #include "SPoint3.h"
 #include "SVector3.h"
+#include "MFace.h"
 #include "MQuadrangle.h"
 #include "MTriangle.h"
 #include "MTetrahedron.h"
@@ -49,6 +51,95 @@ static void buildUniqueFaces(GRegion *gr,
 #if defined(HAVE_HXT)
 
 #include "hxt_combine_cpp_api.h"
+
+// Two tets standing on the two triangles of an unmatched hex or prism quad
+// face, split along the same diagonal and sharing the vertex opposite to it,
+// form a pyramid on that face: replace them with one pyramid. The four
+// lateral triangles are preserved, and the base matches the quad face
+// without a trihedron.
+static std::size_t makeFreePyramids(GRegion *gr)
+{
+  std::map<MFace, std::vector<MTetrahedron *>, MFaceLessThan> tri2tet;
+  for(MTetrahedron *t : gr->tetrahedra)
+    for(int f = 0; f < 4; f++) tri2tet[t->getFace(f)].push_back(t);
+  // a quad face on 2 tets has its 4 vertices on tets: the others are not
+  // counted
+  std::unordered_set<MVertex *> onTets;
+  onTets.reserve(gr->tetrahedra.size());
+  for(MTetrahedron *t : gr->tetrahedra)
+    for(int k = 0; k < 4; k++) onTets.insert(t->getVertex(k));
+  std::map<MFace, int, MFaceLessThan> quads;
+  auto addQuads = [&](MElement *e, int nbFaces,
+                      int (*face)(const int, const int)) {
+    for(int f = 0; f < nbFaces; f++) {
+      if(face(f, 3) < 0) continue; // a triangle
+      bool candidate = true;
+      for(int j = 0; j < 4 && candidate; j++)
+        candidate = onTets.count(e->getVertex(face(f, j)));
+      if(candidate) quads[e->getFace(f)]++;
+    }
+  };
+  for(MHexahedron *h : gr->hexahedra) addQuads(h, 6, MHexahedron::faces_hexa);
+  for(MPrism *p : gr->prisms) addQuads(p, 5, MPrism::faces_prism);
+
+  auto apexOf = [](MTetrahedron *t, MVertex *x, MVertex *y, MVertex *z) {
+    for(int k = 0; k < 4; k++) {
+      MVertex *w = t->getVertex(k);
+      if(w != x && w != y && w != z) return w;
+    }
+    return (MVertex *)nullptr;
+  };
+  std::set<MTetrahedron *> used;
+  std::size_t n = 0;
+  for(auto &kv : quads) {
+    if(kv.second != 1) continue; // shared by two cells
+    const MFace &q = kv.first;
+    MVertex *v[4] = {q.getVertex(0), q.getVertex(1), q.getVertex(2),
+                     q.getVertex(3)};
+    for(int d = 0; d < 2; d++) {
+      MVertex *a = v[d], *b = v[d + 1], *c = v[(d + 2) % 4],
+              *e = v[(d + 3) % 4];
+      auto i1 = tri2tet.find(MFace(a, b, c));
+      auto i2 = tri2tet.find(MFace(c, e, a));
+      if(i1 == tri2tet.end() || i2 == tri2tet.end()) continue;
+      if(i1->second.size() != 1 || i2->second.size() != 1) continue;
+      MTetrahedron *t1 = i1->second[0], *t2 = i2->second[0];
+      if(t1 == t2 || used.count(t1) || used.count(t2)) continue;
+      MVertex *apex = apexOf(t1, a, b, c);
+      if(!apex || apex != apexOf(t2, c, e, a)) continue;
+      // a warped face can leave one corner of the pyramid nearly flat:
+      // keep a margin, later smoothing only protects the worst element of
+      // each cavity
+      const double minQuality = 0.1;
+      MPyramid *p = new MPyramid(v[0], v[1], v[2], v[3], apex);
+      if(!(p->minSICNShapeMeasure() >= minQuality)) {
+        delete p;
+        p = new MPyramid(v[0], v[3], v[2], v[1], apex);
+        if(!(p->minSICNShapeMeasure() >= minQuality)) {
+          delete p;
+          continue;
+        }
+      }
+      used.insert(t1);
+      used.insert(t2);
+      gr->pyramids.push_back(p);
+      n++;
+      break;
+    }
+  }
+  if(n) {
+    std::vector<MTetrahedron *> kept;
+    kept.reserve(gr->tetrahedra.size());
+    for(MTetrahedron *t : gr->tetrahedra) {
+      if(used.count(t))
+        delete t;
+      else
+        kept.push_back(t);
+    }
+    gr->tetrahedra.swap(kept);
+  }
+  return n;
+}
 
 // The volume of a first-order hex, exact as the Jacobian determinant of the
 // trilinear map has degree 2 along each direction: 2x2x2 Gauss points, in
@@ -1173,6 +1264,13 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
     volHex, volTet, 100 * volHex / (volHex + volTet));
   Msg::Info("Number Hex %12d --- Number Tet %12d --- Percentage Num Hex %12.5E",
             numHex, numTet, 100 * (double)numHex / (numHex + numTet));
+
+  if(CTX::instance()->mesh.recombine3DConformity == 2) {
+    const std::size_t nPyr = makeFreePyramids(gr);
+    Msg::Info("%zu pyramids on hex/prism quad faces (%zu tets merged), "
+              "%zu tets left",
+              nPyr, 2 * nPyr, gr->tetrahedra.size());
+  }
 
   return 0;
 }

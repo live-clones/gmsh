@@ -2,7 +2,7 @@
 General.Terminal = 1;
 General.AbortOnError = 1;
 
-Mesh.PackTargetSize = 4;
+Mesh.OptimizeQuadsTargetSize = 4;
 Mesh.OptimizeQuadsMinimumEdgeLength = 2;
 Mesh.OptimizeQuadsMaximumEdgeLength = 8;
 

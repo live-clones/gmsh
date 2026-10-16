@@ -12,7 +12,7 @@ algorithms.
 - `intrinsicTriangulation.cpp`: intrinsic connectivity, flips and optional
   long-edge splitting; called before Blossom, never as a final cleanup.
 - `quadOptimizerIntegration.cpp`: PACK completion, native optimizer dispatch,
-  option translation, temporary target-size settings and quality summaries.
+  option translation, temporary uniform-size settings and quality summaries.
 - `quadFinalRepair.cpp`: quality-based and transactional terminal quad splitting.
 - `smallCavityOptimizerV2.cpp`: V2 improvement rounds and final physical smoothing.
 
@@ -28,7 +28,6 @@ options have been renamed; the old names are not aliases:
 | Previous suffix after `Mesh.` | Replacement |
 | --- | --- |
 | `QuadqsCleanupMethod` | `PackCleanupMethod` |
-| `QuadqsTargetSize` | `PackTargetSize` |
 | `QuadqsPacking3D` | `Pack3D` |
 | `QuadqsPacking3DForceAllPoints` | `PackForceAllPoints` |
 | `QuadqsIntrinsicEdgeLengthFactor` | `PackIntrinsicEdgeLengthFactor` |
@@ -38,10 +37,14 @@ options have been renamed; the old names are not aliases:
 | `QuadqsMaximumEdgeLength` | `OptimizeQuadsMaximumEdgeLength` |
 | `QuadqsPillowLayers` | `OptimizeQuadsPillowLayers` |
 
+`Mesh.MeshSizeMin`, `Mesh.MeshSizeMax` and the active size field control mesh
+generation. Set both bounds to the same value for uniform sizing;
+`Mesh.MeshSizeFactor` scales the resulting sizes.
 `Mesh.OptimizeQuadsTargetSize` optionally overrides the target used by the
-optimizer; zero inherits `Mesh.PackTargetSize`, then the active size field.
-`Mesh.PackSizemapMethod = 3` and `Mesh.PackScalingOnTriangulation = 0.75`
-configure the shared guiding-field implementation independently of Quadqs.
+optimizer; non-positive values use the local sizes from Gmsh's size field.
+`Mesh.PackSizemapMethod = 3` selects the guiding-field size map independently
+of Quadqs. PACK uses the same sizing for its background triangulation and point
+packing, with no intermediate size scaling.
 The default intrinsic split factor remains zero: no extra midpoint insertion.
 `Mesh.OptimizeQuadsPillowLayers` enables the separate
 `gmsh::model::mesh::optimize("OptimizeQuadHoleRings")` pass after Fast cleanup.
@@ -69,7 +72,7 @@ that could immediately remove the requested ring.
 For example, surface quads with target size 4:
 
 ```sh
-gmsh geometry.step -2 -algo pack -setnumber Mesh.PackTargetSize 4 -o mesh.msh
+gmsh geometry.step -2 -algo pack -clmin 4 -clmax 4 -o mesh.msh
 ```
 
 There are no QuadOptimizer test targets or CTest registrations in the Gmsh

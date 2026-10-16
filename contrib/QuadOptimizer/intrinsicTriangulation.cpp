@@ -379,17 +379,12 @@ namespace QuadOptimizer {
       const double u = .5 * _data.Us[ia] + .5 * _data.Us[ib];
       const double v = .5 * _data.Vs[ia] + .5 * _data.Vs[ib];
       if(!std::isfinite(u) || !std::isfinite(v)) return false;
-      double localSize = CTX::instance()->mesh.packTargetSize;
-      GPoint point;
-      const bool needPoint = geometry || !(localSize > 0.);
-      if(needPoint) {
-        point = _gf->point(u, v);
-        if(!point.succeeded() || !std::isfinite(point.x()) ||
-           !std::isfinite(point.y()) || !std::isfinite(point.z()))
-          return false;
-      }
-      if(!(localSize > 0.))
-        localSize = BGM_MeshSize(_gf, u, v, point.x(), point.y(), point.z());
+      const GPoint point = _gf->point(u, v);
+      if(!point.succeeded() || !std::isfinite(point.x()) ||
+         !std::isfinite(point.y()) || !std::isfinite(point.z()))
+        return false;
+      const double localSize =
+        BGM_MeshSize(_gf, u, v, point.x(), point.y(), point.z());
       if(!(localSize > 0.) || !std::isfinite(localSize)) return false;
 
       const double intrinsicFactor =

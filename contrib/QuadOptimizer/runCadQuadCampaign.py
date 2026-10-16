@@ -160,7 +160,7 @@ def case(args, source):
             'Mesh.Algorithm = 9;', 'Mesh.RecombineAll = 1;',
             'Mesh.Pack3D = 1;', 'Mesh.PackCleanupMethod = 1;',
             'Mesh.OptimizeQuadsSmartLaplacian = 2;', 'Mesh.PackIntrinsicEdgeLengthFactor = 0;',
-            'Mesh.PackTargetSize = 4;', 'Mesh.OptimizeQuadsMinimumEdgeLength = 2;',
+            'Mesh.OptimizeQuadsMinimumEdgeLength = 2;',
             'Mesh.OptimizeQuadsMaximumEdgeLength = 8;', 'Mesh.RecombineMinimumQuality = -1;',
             'Mesh.OptimizeQuadsFinalSplitCadDistanceRatio = 0.2;',
             'Mesh 2;', 'Save ' + geo_string(quad) + ';',

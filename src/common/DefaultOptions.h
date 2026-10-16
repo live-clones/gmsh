@@ -1653,12 +1653,8 @@ StringXNumber MeshOptions_Number[] = {
       "All modes retain CAD and specification guards" },
   { F|O, "PackSizemapMethod", opt_mesh_pack_sizemap_method, 3,
     "Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)" },
-  { F|O, "PackScalingOnTriangulation", opt_mesh_pack_scaling_on_triangulation, 0.75,
-    "Edge-length scaling for the PACK background triangulation" },
-  { F|O, "PackTargetSize", opt_mesh_pack_target_size, 0.,
-    "Physical target edge length for PACK (non-positive: use the mesh size settings)" },
   { F|O, "OptimizeQuadsTargetSize", opt_mesh_optimize_quads_target_size, 0.,
-    "Target edge length for quad optimization (non-positive: inherit PackTargetSize, then the mesh size field)" },
+    "Target edge length for quad optimization (non-positive: use the mesh size field)" },
   { F|O, "OptimizeQuadsMinimumEdgeLength" , opt_mesh_optimize_quads_minimum_edge_length, 0. ,
     "Hard minimum edge length accepted by quad cleanup (non-positive: "
       "disabled)" },

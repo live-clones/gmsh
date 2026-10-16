@@ -6,7 +6,7 @@ get_filename_component(TEST_DIRECTORY "${TEST_GEO}" DIRECTORY)
 execute_process(
   COMMAND "${GMSH_EXECUTABLE}" "${TEST_GEO}"
           -parse_and_exit -nopopup -v 5
-          -setnumber Mesh.PackTargetSize 1
+          -setnumber Mesh.OptimizeQuadsTargetSize 1
           -setnumber Mesh.OptimizeQuadsMinimumEdgeLength 0.4
           -setnumber Mesh.OptimizeQuadsMaximumEdgeLength 3
   WORKING_DIRECTORY "${TEST_DIRECTORY}"

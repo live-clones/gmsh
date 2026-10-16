@@ -24,7 +24,7 @@ Line(8) = {8, 1};
 Curve Loop(1) = {1:8};
 Plane Surface(1) = {1};
 
-Mesh.PackTargetSize = 1;
+Mesh.OptimizeQuadsTargetSize = 1;
 Mesh.OptimizeQuadsMinimumEdgeLength = 0.05;
 Mesh.OptimizeQuadsMaximumEdgeLength = 5;
 Merge "testOptimizeQuadsFastDiamond.msh";

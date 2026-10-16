@@ -698,8 +698,6 @@ double opt_mesh_save_debug_files(OPT_ARGS_NUM);
 double opt_mesh_optimize_quads_smart_laplacian(OPT_ARGS_NUM);
 double opt_mesh_optimize_quads_final_split_cad_distance_ratio(OPT_ARGS_NUM);
 double opt_mesh_pack_sizemap_method(OPT_ARGS_NUM);
-double opt_mesh_pack_scaling_on_triangulation(OPT_ARGS_NUM);
-double opt_mesh_pack_target_size(OPT_ARGS_NUM);
 double opt_mesh_optimize_quads_target_size(OPT_ARGS_NUM);
 double opt_mesh_optimize_quads_minimum_edge_length(OPT_ARGS_NUM);
 double opt_mesh_optimize_quads_maximum_edge_length(OPT_ARGS_NUM);

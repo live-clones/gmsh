@@ -7411,18 +7411,6 @@ double opt_mesh_pack_sizemap_method(OPT_ARGS_NUM)
   return CTX::instance()->mesh.packSizemapMethod;
 }
 
-double opt_mesh_pack_scaling_on_triangulation(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->mesh.packScalingOnTriangulation = val;
-  return CTX::instance()->mesh.packScalingOnTriangulation;
-}
-
-double opt_mesh_pack_target_size(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->mesh.packTargetSize = val;
-  return CTX::instance()->mesh.packTargetSize;
-}
-
 double opt_mesh_optimize_quads_minimum_edge_length(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsMinimumEdgeLength = val;

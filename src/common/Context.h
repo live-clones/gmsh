@@ -70,8 +70,7 @@ struct contextMeshOptions {
   double quadqsRemeshingBoldness, quadqsScalingOnTriangulation;
   int packCleanupMethod, pack3D, packForceAllPoints, packSizemapMethod,
     packPatterns;
-  double packTargetSize, packIntrinsicEdgeLengthFactor,
-    packScalingOnTriangulation;
+  double packIntrinsicEdgeLengthFactor;
   int optimizeQuadsPillowLayers, optimizeQuadsSmartLaplacian;
   double optimizeQuadsTargetSize, optimizeQuadsMinimumEdgeLength,
     optimizeQuadsMaximumEdgeLength, optimizeQuadsFinalSplitCadDistanceRatio;

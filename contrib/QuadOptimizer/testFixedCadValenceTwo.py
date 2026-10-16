@@ -47,7 +47,7 @@ def main():
                         for t,ts,ns in zip(types,tags,nodes)]
             before = connectivity()
             for key, value in {'Mesh.OptimizeQuadsSmartLaplacian':1, 'Mesh.Smoothing':0,
-                               'Mesh.PackTargetSize':1, 'Mesh.OptimizeQuadsMinimumEdgeLength':0,
+                               'Mesh.OptimizeQuadsTargetSize':1, 'Mesh.OptimizeQuadsMinimumEdgeLength':0,
                                'Mesh.OptimizeQuadsMaximumEdgeLength':100, 'General.Verbosity':6}.items():
                 gmsh.option.setNumber(key, value)
             gmsh.logger.start()
