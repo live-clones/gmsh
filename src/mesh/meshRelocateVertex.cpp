@@ -476,7 +476,7 @@ void RelocateVertices(GFace *gf, int niter, double tol)
 // at the same time, the colors one after the other. After the first pass,
 // a vertex moves again only if it, or a vertex of one of its elements, has
 // moved: in the regular parts of the mesh, the first pass is enough.
-void RelocateVertices(GRegion *region, int niter, double tol)
+void RelocateVertices(GRegion *region, int niter, double tol, int nthreads)
 {
   if(!niter) return;
 
@@ -542,9 +542,10 @@ void RelocateVertices(GRegion *region, int niter, double tol)
     for(int type : types) BasisFactory::getCondNumBasis(type);
   }
 
-  const int nthreads = CTX::instance()->mesh.maxNumThreads3D > 0 ?
-                         CTX::instance()->mesh.maxNumThreads3D :
-                         CTX::instance()->numThreadsFor(n, 1000);
+  if(nthreads <= 0)
+    nthreads = CTX::instance()->mesh.maxNumThreads3D > 0 ?
+                 CTX::instance()->mesh.maxNumThreads3D :
+                 CTX::instance()->numThreadsFor(n, 1000);
   std::vector<char> active(n, 1), moved(n, 0);
   for(int pass = 0; pass < niter + 2; pass++) {
     double relax = std::min((double)(pass + 1) / niter, 1.0);
@@ -959,6 +960,6 @@ void RelocateVerticesOfPyramids(std::vector<GRegion *> &regions, int niter,
 void RelocateVertices(std::vector<GRegion *> &regions, int niter, double tol)
 {
   for(std::size_t k = 0; k < regions.size(); k++) {
-    RelocateVertices(regions[k], niter, tol);
+    RelocateVertices(regions[k], niter, tol, 0);
   }
 }

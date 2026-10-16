@@ -946,9 +946,19 @@ Saved in: @code{General.OptionsFileName}
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Recombine3DDelaunay
+Tetrahedralization of the points of the 3d recombination (0: HXT, 1: pdel3d, 2: pdel3d, whose tetrahedra are then improved without moving the points) (experimental)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Recombine3DMinimumQuality
 Minimum quality of the candidate hexahedra of the 3d recombination: fewer candidates take less time and memory, but the worse hexahedra the selection could still use are left as tetrahedra (experimental)@*
-Default value: @code{0.0001}@*
+Default value: @code{0.2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Recombine3DSmoothing
+Number of vertex relocation steps after the 3d recombination (2 more passes are made) (experimental)@*
+Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RefineSteps

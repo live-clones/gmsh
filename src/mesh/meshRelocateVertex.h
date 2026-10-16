@@ -12,7 +12,9 @@ class GRegion;
 class GFace;
 class MElement;
 
-void RelocateVertices(GRegion *region, int niter, double tol = 1.e-2);
+// nthreads: Mesh.MaxNumThreads3D, else General.NumThreads, if 0
+void RelocateVertices(GRegion *region, int niter, double tol = 1.e-2,
+                      int nthreads = 0);
 void RelocateVertices(std::vector<GRegion *> &regions, int niter,
                       double tol = 1.e-2);
 void RelocateVertices(GFace *, int niter, double tol = 1.e-6);

@@ -1034,7 +1034,17 @@ static void Mesh3D(GModel *m)
       break;
     }
 
-    MeshDelaunayVolume(connected[i]);
+#if defined(HAVE_DOMHEX) and defined(HAVE_HXT)
+    // The flat filler meshes its regions again, its first Delaunay mesh
+    // only locates its points: needless if the sizes are not extended from
+    // the boundary and the cross field is not smoothed in the volume
+    const bool fillerAlone = CTX::instance()->mesh.algo3d == ALGO_3D_RTREE &&
+                             !Extend2dMeshIn3dVolumes() &&
+                             !CTX::instance()->mesh.smoothCrossField;
+#else
+    const bool fillerAlone = false;
+#endif
+    if(!fillerAlone) MeshDelaunayVolume(connected[i]);
 
 #if defined(HAVE_DOMHEX) and defined(HAVE_HXT)
     // additional code for experimental hex mesh - will eventually be replaced
@@ -1052,7 +1062,11 @@ static void Mesh3D(GModel *m)
                              gr->meshAttributes.recombine3D)) {
         hexDominant = true;
         meshCombine3D(gr, &frames);
-        RelocateVertices(gr, CTX::instance()->mesh.nbSmoothing);
+        // all the cores, as the combination, unless Mesh.MaxNumThreads3D
+        RelocateVertices(gr, CTX::instance()->mesh.recombine3DSmoothing, 1.e-2,
+                         CTX::instance()->mesh.maxNumThreads3D > 0 ?
+                           CTX::instance()->mesh.maxNumThreads3D :
+                           Msg::GetMaxThreads());
       }
     }
 #endif

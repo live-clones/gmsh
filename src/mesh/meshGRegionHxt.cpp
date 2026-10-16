@@ -503,6 +503,89 @@ int meshGRegionHxt(std::vector<GRegion *> &regions)
   return 1;
 }
 
+static HXTStatus _meshGRegionHxtWithPoints(GRegion *gr,
+                                           const std::vector<double> &xyz,
+                                           int nthreads,
+                                           std::vector<MVertex *> &vertices)
+{
+  HXT_CHECK(hxtSetMessageCallback(messageCallback));
+
+  HXTMesh *mesh;
+  HXT_CHECK(hxtMeshCreate(&mesh));
+
+  std::vector<GRegion *> regions(1, gr);
+  std::map<MVertex *, uint32_t> v2c;
+  std::vector<MVertex *> c2v;
+  HXT_CHECK(Gmsh2Hxt(regions, mesh, v2c, c2v));
+
+  // the points after the vertices of the boundary
+  const uint64_t nb = mesh->vertices.num, n = xyz.size() / 3;
+  double *coord;
+  HXT_CHECK(hxtAlignedMalloc(&coord, 4 * (nb + n) * sizeof(double)));
+  std::copy(mesh->vertices.coord, mesh->vertices.coord + 4 * nb, coord);
+  for(uint64_t i = 0; i < n; i++) {
+    double *c = &coord[4 * (nb + i)];
+    c[0] = xyz[3 * i + 0];
+    c[1] = xyz[3 * i + 1];
+    c[2] = xyz[3 * i + 2];
+    c[3] = 0.;
+  }
+  HXT_CHECK(hxtAlignedFree(&mesh->vertices.coord));
+  mesh->vertices.coord = coord;
+  mesh->vertices.num = mesh->vertices.size = nb + n;
+
+  // as embedded points, the only vertices besides the ones of the boundary
+  // that HXT inserts
+  const uint64_t np = mesh->points.num;
+  uint32_t *node, *color;
+  HXT_CHECK(hxtAlignedMalloc(&node, (np + n) * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&color, (np + n) * sizeof(uint32_t)));
+  if(np) {
+    std::copy(mesh->points.node, mesh->points.node + np, node);
+    std::copy(mesh->points.color, mesh->points.color + np, color);
+  }
+  for(uint64_t i = 0; i < n; i++) {
+    node[np + i] = (uint32_t)(nb + i);
+    color[np + i] = gr->tag();
+  }
+  HXT_CHECK(hxtAlignedFree(&mesh->points.node));
+  HXT_CHECK(hxtAlignedFree(&mesh->points.color));
+  mesh->points.node = node;
+  mesh->points.color = color;
+  mesh->points.num = mesh->points.size = np + n;
+
+  HXTTetMeshOptions options = {
+    nthreads, // int defaultThreads;
+    nthreads, // int delaunayThreads;
+    nthreads, // int improveThreads;
+    CTX::instance()->mesh.reproducible, // int reproducible;
+    (Msg::GetVerbosity() > 5) ? 2 : 1, // int verbosity;
+    0, // int stat;
+    0, // int refine;
+    0, // int optimize;
+    CTX::instance()->mesh.toleranceInitialDelaunay, // tolerance for tetgen
+    {nullptr, nullptr, 0.}, // quality
+    {nullptr, nullptr, CTX::instance()->mesh.lcMin,
+     CTX::instance()->mesh.lcMax, 1.}}; // nodalSize
+
+  HXT_CHECK(hxtTetMesh(mesh, &options));
+
+  HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));
+  vertices.assign(n, nullptr);
+  for(uint64_t i = 0; i < n && nb + i < c2v.size(); i++)
+    vertices[i] = c2v[nb + i];
+  HXT_CHECK(hxtMeshDelete(&mesh));
+  return HXT_STATUS_OK;
+}
+
+int meshGRegionHxtWithPoints(GRegion *gr, const std::vector<double> &xyz,
+                             int nthreads, std::vector<MVertex *> &vertices)
+{
+  HXTStatus status = _meshGRegionHxtWithPoints(gr, xyz, nthreads, vertices);
+  if(status == HXT_STATUS_OK) return 0;
+  return 1;
+}
+
 static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
                                       std::vector<MTetrahedron *> &tets,
                                       const std::vector<MTriangle> &triangles)
@@ -1037,6 +1120,13 @@ void refineTetrahedraHxt(const std::vector<double> &coord, const std::vector<dou
 #else
 
 int meshGRegionHxt(std::vector<GRegion *> &regions)
+{
+  Msg::Error("Gmsh should be compiled with Hxt to enable this option");
+  return -1;
+}
+
+int meshGRegionHxtWithPoints(GRegion *gr, const std::vector<double> &xyz,
+                             int nthreads, std::vector<MVertex *> &vertices)
 {
   Msg::Error("Gmsh should be compiled with Hxt to enable this option");
   return -1;
