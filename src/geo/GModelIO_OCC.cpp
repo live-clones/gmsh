@@ -112,7 +112,6 @@
 #include <StepData_StepModel.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
-#include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS.hxx>
 #include <gce_MakeCirc.hxx>
 #include <gce_MakeElips.hxx>
@@ -447,7 +446,9 @@ void OCC_Internals::_unbind(const TopoDS_Vertex &vertex, int tag,
   std::pair<int, int> dimTag(0, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _vertexTag.UnBind(vertex);
-  _tagVertex.UnBind(tag);
+  // the tag may have been rebound to another vertex (see _bind)
+  if(_tagVertex.IsBound(tag) && _tagVertex.Find(tag).IsSame(vertex))
+    _tagVertex.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(0);
   _changed = true;
@@ -466,7 +467,9 @@ void OCC_Internals::_unbind(const TopoDS_Edge &edge, int tag, bool recursive)
   std::pair<int, int> dimTag(1, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _edgeTag.UnBind(edge);
-  _tagEdge.UnBind(tag);
+  // the tag may have been rebound to another edge (see _bind)
+  if(_tagEdge.IsBound(tag) && _tagEdge.Find(tag).IsSame(edge))
+    _tagEdge.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(1);
   if(recursive) {
@@ -495,7 +498,9 @@ void OCC_Internals::_unbind(const TopoDS_Wire &wire, int tag, bool recursive)
   std::pair<int, int> dimTag(-1, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _wireTag.UnBind(wire);
-  _tagWire.UnBind(tag);
+  // the tag may have been rebound to another wire (see _bind)
+  if(_tagWire.IsBound(tag) && _tagWire.Find(tag).IsSame(wire))
+    _tagWire.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(-1);
   if(recursive) {
@@ -524,7 +529,9 @@ void OCC_Internals::_unbind(const TopoDS_Face &face, int tag, bool recursive)
   std::pair<int, int> dimTag(2, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _faceTag.UnBind(face);
-  _tagFace.UnBind(tag);
+  // the tag may have been rebound to another face (see _bind)
+  if(_tagFace.IsBound(tag) && _tagFace.Find(tag).IsSame(face))
+    _tagFace.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(2);
   if(recursive) {
@@ -560,7 +567,9 @@ void OCC_Internals::_unbind(const TopoDS_Shell &shell, int tag, bool recursive)
   std::pair<int, int> dimTag(-2, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _shellTag.UnBind(shell);
-  _tagShell.UnBind(tag);
+  // the tag may have been rebound to another shell (see _bind)
+  if(_tagShell.IsBound(tag) && _tagShell.Find(tag).IsSame(shell))
+    _tagShell.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(-2);
   if(recursive) {
@@ -581,7 +590,9 @@ void OCC_Internals::_unbind(const TopoDS_Solid &solid, int tag, bool recursive)
   std::pair<int, int> dimTag(3, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _solidTag.UnBind(solid);
-  _tagSolid.UnBind(tag);
+  // the tag may have been rebound to another solid (see _bind)
+  if(_tagSolid.IsBound(tag) && _tagSolid.Find(tag).IsSame(solid))
+    _tagSolid.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(3);
   if(recursive) {
@@ -4170,7 +4181,7 @@ bool OCC_Internals::booleanOperator(
     // return the entities of the result that are not on the boundary of another
     // entity of the result (embedded entities are not), and the arguments left
     // unchanged
-    TopTools_IndexedMapOfShape onBoundary;
+    NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> onBoundary;
     const TopAbs_ShapeEnum types[4] = {TopAbs_SOLID, TopAbs_FACE, TopAbs_EDGE,
                                        TopAbs_VERTEX};
     for(int k = 0; k < 3; k++) {
