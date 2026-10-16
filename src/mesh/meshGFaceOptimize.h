@@ -104,7 +104,8 @@ template <class T>
 void buildEdgeToElement(std::vector<T *> &eles, e2t_cont &adj);
 
 void buildEdgeToTriangle(std::vector<MTriangle *> &, e2t_cont &adj);
-void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
+void buildListOfEdgeAngle(const e2t_cont &adj,
+                          std::vector<edge_angle> &edges_detected,
                           std::vector<edge_angle> &edges_lonly);
 void buildEdgeToElements(std::vector<MElement *> &tris, e2t_cont &adj);
 
