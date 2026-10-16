@@ -19,6 +19,9 @@
 #include "Context.h"
 
 #include "WinslowUntangler.h"
+#include "BasisFactory.h"
+#include <set>
+#include <unordered_map>
 
 using vec3 = std::array<double, 3>;
 inline double dot(const vec3 &a, const vec3 &b)
@@ -457,6 +460,10 @@ void RelocateVertices(GFace *gf, int niter, double tol)
   }
 }
 
+// Gauss-Seidel by colors: the vertices of a color share no element and move
+// at the same time, the colors one after the other. After the first pass,
+// a vertex moves again only if it, or a vertex of one of its elements, has
+// moved: in the regular parts of the mesh, the first pass is enough.
 void RelocateVertices(GRegion *region, int niter, double tol)
 {
   if(!niter) return;
@@ -466,13 +473,86 @@ void RelocateVertices(GRegion *region, int niter, double tol)
   buildVertexToElement(region->pyramids, adj);
   buildVertexToElement(region->prisms, adj);
   buildVertexToElement(region->hexahedra, adj);
-  for(int i = 0; i < niter + 2; i++) {
-    auto it = adj.begin();
-    double relax = std::min((double)(i + 1) / niter, 1.0);
-    while(it != adj.end()) {
-      relocateVertexGolden(it->first, it->second, relax, tol);
-      ++it;
+
+  // the vertices that move (inside the region), in the order of their numbers
+  std::vector<MVertex *> vertices;
+  std::vector<const std::vector<MElement *> *> elements;
+  std::unordered_map<MVertex *, int> index;
+  for(auto &it : adj) {
+    if(it.first->onWhat()->dim() != 3) continue;
+    index[it.first] = (int)vertices.size();
+    vertices.push_back(it.first);
+    elements.push_back(&it.second);
+  }
+  const int n = (int)vertices.size();
+  if(!n) return;
+
+  // the moving vertices sharing an element with each, and a length
+  std::vector<std::vector<int> > neighbors(n);
+  std::vector<double> length(n, 0.);
+  for(int i = 0; i < n; i++) {
+    const SPoint3 p = vertices[i]->point();
+    for(MElement *e : *elements[i])
+      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+        MVertex *v = e->getVertex(j);
+        length[i] = std::max(length[i], p.distance(v->point()));
+        auto it = index.find(v);
+        if(it != index.end() && it->second != i) neighbors[i].push_back(it->second);
+      }
+    std::sort(neighbors[i].begin(), neighbors[i].end());
+    neighbors[i].erase(std::unique(neighbors[i].begin(), neighbors[i].end()),
+                       neighbors[i].end());
+  }
+
+  // greedy coloring, in the order of the vertices
+  std::vector<int> color(n, -1);
+  int nbColors = 0;
+  {
+    std::vector<int> used;
+    for(int i = 0; i < n; i++) {
+      used.assign(nbColors + 1, 0);
+      for(int j : neighbors[i])
+        if(color[j] >= 0) used[color[j]] = 1;
+      int c = 0;
+      while(used[c]) c++;
+      color[i] = c;
+      nbColors = std::max(nbColors, c + 1);
     }
+  }
+  std::vector<std::vector<int> > byColor(nbColors);
+  for(int i = 0; i < n; i++) byColor[color[i]].push_back(i);
+
+  // the bases of the quality measures are created here, not by the threads
+  {
+    std::set<int> types;
+    for(int i = 0; i < n; i++)
+      for(MElement *e : *elements[i]) types.insert(e->getTypeForMSH());
+    for(int type : types) BasisFactory::getCondNumBasis(type);
+  }
+
+  const int nthreads = CTX::instance()->mesh.maxNumThreads3D > 0 ?
+                         CTX::instance()->mesh.maxNumThreads3D :
+                         CTX::instance()->numThreadsFor(n, 1000);
+  std::vector<char> active(n, 1), moved(n, 0);
+  for(int pass = 0; pass < niter + 2; pass++) {
+    double relax = std::min((double)(pass + 1) / niter, 1.0);
+    for(int c = 0; c < nbColors; c++) {
+      const std::vector<int> &list = byColor[c];
+#pragma omp parallel for schedule(dynamic, 64) num_threads(nthreads)
+      for(int k = 0; k < (int)list.size(); k++) {
+        const int i = list[k];
+        if(!active[i]) continue;
+        const SPoint3 before = vertices[i]->point();
+        relocateVertexGolden(vertices[i], *elements[i], relax, tol);
+        moved[i] = before.distance(vertices[i]->point()) > 1.e-3 * length[i];
+      }
+    }
+    for(int i = 0; i < n; i++) {
+      bool a = moved[i];
+      for(std::size_t j = 0; j < neighbors[i].size() && !a; j++) a = moved[neighbors[i][j]];
+      active[i] = a;
+    }
+    std::fill(moved.begin(), moved.end(), 0);
   }
 }
 
