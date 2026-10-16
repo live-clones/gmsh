@@ -17,7 +17,7 @@
 class statisticsWindow {
 public:
   Fl_Window *win;
-  Fl_Output *value[50];
+  Fl_Output *value[64];
   Fl_Button *butt[8];
   Fl_Group *group[3];
   Fl_Box *memUsage;

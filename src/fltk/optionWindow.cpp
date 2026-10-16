@@ -1354,6 +1354,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
                                 opt_view_color_pyramids(current, GMSH_GET, 0));
         opt_view_color_trihedra(i, GMSH_SET,
                                 opt_view_color_trihedra(current, GMSH_GET, 0));
+        opt_view_color_polygons(i, GMSH_SET,
+                                opt_view_color_polygons(current, GMSH_GET, 0));
+        opt_view_color_polyhedra(
+          i, GMSH_SET, opt_view_color_polyhedra(current, GMSH_GET, 0));
         opt_view_color_tangents(i, GMSH_SET,
                                 opt_view_color_tangents(current, GMSH_GET, 0));
         opt_view_color_normals(i, GMSH_SET,
@@ -4372,6 +4376,8 @@ void optionWindow::updateViewGroup(int index)
   opt_view_color_prisms(index, GMSH_GUI, 0);
   opt_view_color_pyramids(index, GMSH_GUI, 0);
   opt_view_color_trihedra(index, GMSH_GUI, 0);
+  opt_view_color_polygons(index, GMSH_GUI, 0);
+  opt_view_color_polyhedra(index, GMSH_GUI, 0);
   opt_view_color_tangents(index, GMSH_GUI, 0);
   opt_view_color_normals(index, GMSH_GUI, 0);
   opt_view_color_text2d(index, GMSH_GUI, 0);

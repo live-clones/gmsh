@@ -52,7 +52,8 @@ bug fixes.
   with the mesh in MSH/VTU/MED), Mesh.FlatRefineDelaunay2D/3D,
   Mesh.FlatOptimize3D, Negative Mesh.OptimizePyramids places the pyramid apex
   along the face normal, Mesh.PartitionSplitLocalBrep,
-  Mesh.CreateEdges/CreateFaces, Mesh.NbEdges/NbFaces/NbPolygons/NbPolyhedra
+  Mesh.CreateEdges/CreateFaces, Mesh.NbEdges/NbFaces/NbPolygons/NbPolyhedra,
+  View.Color.Polygons/Polyhedra
 
 4.15.2 (March 24, 2026): fixed issue in 3D structured CGNS output.
 

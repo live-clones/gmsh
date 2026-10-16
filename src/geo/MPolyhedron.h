@@ -158,6 +158,7 @@ public:
   {
     return _vertices[_faceIndices()[i]];
   }
+  int getPolygonVertexIndex(int i) const { return _faceIndices()[i]; }
   int getNumTetrahedra() const
   {
     _ensureTetrahedra();
