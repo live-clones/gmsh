@@ -14,6 +14,7 @@
 #include <cmath>
 #include <cstdlib>
 #include "hxt_omp.h"
+#include "atomic_ops.h"
 
 /**
 * \author Jeanne Pellerin
@@ -163,15 +164,14 @@ namespace {
     uint64_t stamp_ = (uint64_t)0xffffffffu << 32;
     unsigned int rankOf(const uint64_t& r) const
     {
-      const uint64_t x = __atomic_load_n(&r, __ATOMIC_RELAXED);
+      const uint64_t x = atomicLoad(&r);
       return (x >> 32) == (stamp_ >> 32) ? (unsigned int)x : NONE;
     }
     static void writeMin(uint64_t& r, uint64_t value)
     {
-      uint64_t current = __atomic_load_n(&r, __ATOMIC_RELAXED);
+      uint64_t current = atomicLoad(&r);
       while (value < current &&
-             !__atomic_compare_exchange_n(&r, &current, value, true,
-                                          __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {}
+             !atomicCompareExchange(&r, current, value)) {}
     }
     std::vector<uint64_t> any_, write_;
   };
@@ -478,7 +478,7 @@ namespace {
       for (int r = 0; r < (int)n; ++r) {
         const HXTCombineCell cell = cells[order[r]];
         for (unsigned int i = 0; i < cell.nbVertices(); ++i)
-          __atomic_fetch_add(&start[cell.vertexes[i] + 1], 1, __ATOMIC_RELAXED);
+          atomicFetchAdd(&start[cell.vertexes[i] + 1], 1);
       }
       for (std::size_t v = 0; v < nbVertices; ++v) start[v + 1] += start[v];
       std::vector<CellIndex> ranks(start[nbVertices]);
@@ -488,7 +488,7 @@ namespace {
         for (int r = 0; r < (int)n; ++r) {
           const HXTCombineCell cell = cells[order[r]];
           for (unsigned int i = 0; i < cell.nbVertices(); ++i)
-            ranks[__atomic_fetch_add(&next[cell.vertexes[i]], 1, __ATOMIC_RELAXED)] = r;
+            ranks[atomicFetchAdd(&next[cell.vertexes[i]], 1)] = r;
         }
       }
 #pragma omp parallel for schedule(dynamic, 1024)
@@ -503,16 +503,15 @@ namespace {
       // cells with a taken interior tet; returns the first undecided rank of
       // v, n if none
       auto advance = [&](VertexIndex v, std::vector<CellIndex>* rejected) {
-        std::size_t h = __atomic_load_n(&head[v], __ATOMIC_RELAXED);
+        std::size_t h = atomicLoad(&head[v]);
         CellIndex first = (CellIndex)n;
         for (; h < start[v + 1]; ++h) {
           const CellIndex r = ranks[h];
-          if (__atomic_load_n(&decided[r], __ATOMIC_RELAXED)) continue;
+          if (atomicLoad(&decided[r])) continue;
           const CellIndex c = order[r];
           if (rejected && !flags[c] && oneInteriorTetSelected(cells[c])) {
             char expected = 0;
-            if (__atomic_compare_exchange_n(&decided[r], &expected, 1, false,
-                                            __ATOMIC_RELAXED, __ATOMIC_RELAXED))
+            if (atomicCompareExchange(&decided[r], expected, 1))
               rejected->push_back(r);
             continue;
           }
@@ -520,10 +519,9 @@ namespace {
           break;
         }
         // several threads may move it: keep the farthest
-        std::size_t current = __atomic_load_n(&head[v], __ATOMIC_RELAXED);
+        std::size_t current = atomicLoad(&head[v]);
         while (h > current &&
-               !__atomic_compare_exchange_n(&head[v], &current, h, true,
-                                            __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {}
+               !atomicCompareExchange(&head[v], current, h)) {}
         return first;
       };
       auto isFirst = [&](CellIndex r) {
@@ -578,10 +576,9 @@ namespace {
             for (unsigned int i = 0; i < cell.nbVertices(); ++i) {
               const CellIndex r = advance(cell.vertexes[i], nullptr);
               if (r == n) continue;
-              unsigned int seen = __atomic_load_n(&checked[r], __ATOMIC_RELAXED);
+              unsigned int seen = atomicLoad(&checked[r]);
               if (seen == levelId ||
-                  !__atomic_compare_exchange_n(&checked[r], &seen, levelId, false,
-                                               __ATOMIC_RELAXED, __ATOMIC_RELAXED))
+                  !atomicCompareExchange(&checked[r], seen, levelId))
                 continue;
               if (isFirst(r)) found[t].push_back(r);
             }

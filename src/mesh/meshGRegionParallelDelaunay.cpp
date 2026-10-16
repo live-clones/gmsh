@@ -5164,7 +5164,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
     m.xyz.resize(4 * (numFixed + n));
     std::vector<pdel3d::vIdx> toInsert(n);
 #pragma omp parallel for schedule(static) num_threads(nthreads)
-    for(std::size_t i = 0; i < n; i++) {
+    for(std::int64_t i = 0; i < (std::int64_t)n; i++) {
       double *x = &m.xyz[4 * (numFixed + i)];
       for(int k = 0; k < 3; k++) x[k] = (*points)[3 * i + k];
       x[3] = 0.;

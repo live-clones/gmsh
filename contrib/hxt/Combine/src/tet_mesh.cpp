@@ -10,6 +10,7 @@
 
 #include "basic_types.h"
 #include "hxt_omp.h"
+#include "atomic_ops.h"
 
 /**
 * \author Jeanne Pellerin
@@ -304,7 +305,7 @@ void TetMeshForCombining::fillFacets()
   for (int t = 0; t < (int)nbTets(); ++t)
     for (TetFacetIndex f = 0; f < 4; ++f)
       if ((TetIndex)t < adjacentTet(t, f))
-        __atomic_fetch_add(&facetStart_[tetFacet(t, f).indices[0] + 1], 1, __ATOMIC_RELAXED);
+        atomicFetchAdd(&facetStart_[tetFacet(t, f).indices[0] + 1], 1);
   for (VertexIndex v = 0; v < nbVertices(); ++v) facetStart_[v + 1] += facetStart_[v];
   facets_.resize(facetStart_[nbVertices()]);
   std::vector<std::size_t> next(facetStart_.begin(), facetStart_.end() - 1);
@@ -313,7 +314,7 @@ void TetMeshForCombining::fillFacets()
     for (TetFacetIndex f = 0; f < 4; ++f)
       if ((TetIndex)t < adjacentTet(t, f)) {
         const trindex facet = tetFacet(t, f);
-        facets_[__atomic_fetch_add(&next[facet.indices[0]], 1, __ATOMIC_RELAXED)] =
+        facets_[atomicFetchAdd(&next[facet.indices[0]], 1)] =
           std::make_pair(facet.indices[1], facet.indices[2]);
       }
 #pragma omp parallel for schedule(dynamic, 1024)

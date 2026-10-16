@@ -1034,7 +1034,7 @@ static void Mesh3D(GModel *m)
       break;
     }
 
-#if defined(HAVE_DOMHEX) and defined(HAVE_HXT)
+#if defined(HAVE_DOMHEX) && defined(HAVE_HXT)
     // The flat filler meshes its regions again, its first Delaunay mesh
     // only locates its points: needless if the sizes are not extended from
     // the boundary and the cross field is not smoothed in the volume
@@ -1046,7 +1046,7 @@ static void Mesh3D(GModel *m)
 #endif
     if(!fillerAlone) MeshDelaunayVolume(connected[i]);
 
-#if defined(HAVE_DOMHEX) and defined(HAVE_HXT)
+#if defined(HAVE_DOMHEX) && defined(HAVE_HXT)
     // additional code for experimental hex mesh - will eventually be replaced
     // by new HXT-based code
     for(std::size_t j = 0; j < connected[i].size(); j++) {
