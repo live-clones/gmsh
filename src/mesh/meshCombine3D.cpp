@@ -28,6 +28,7 @@
 #include "MPyramid.h"
 #include "MTrihedron.h"
 #include "meshGRegion.h"
+#include "meshCombine3D.h"
 
 static void buildUniqueFaces(GRegion *gr,
                              std::map<MFace, GRegion *, MFaceLessThan> &bnd)
@@ -120,7 +121,7 @@ static void createMeshStore(GRegion *gr, HXTCombine::MeshStore &ms,
   computeTetAdjacencies(ms);
 }
 
-int meshCombine3D(GRegion *gr)
+int meshCombine3D(GRegion *gr, const CombineFrames *frames)
 {
   if(gr->tetrahedra.empty()) {
     Msg::Error("Region %d has no tetrahedra to combine (Delaunay meshing "
@@ -144,8 +145,6 @@ int meshCombine3D(GRegion *gr)
   HXTCombine::TetMeshForCombining tm4c(&ms);
   HXTCombine::HXTCombineCellStore ccs(tm4c);
   double minQuality = CTX::instance()->mesh.recombine3DMinimumQuality;
-  ccs.computeHexes(minQuality);
-  Msg::Info("%d Hexes found", ccs.hexes().size());
 
   // Mesh.Recombine3DLevel (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)
   // controls whether prisms are also computed and let selectCellsGreedy
@@ -156,15 +155,46 @@ int meshCombine3D(GRegion *gr)
     Msg::Warning("Mesh.Recombine3DLevel=2 (pyramids) is not implemented "
                  "yet; falling back to hex+prisms");
   bool enablePrisms = CTX::instance()->mesh.recombine3DLevel >= 1;
-  if(enablePrisms) {
-    ccs.computePrisms(minQuality);
-    Msg::Info("%d Prisms found", ccs.prisms().size());
+
+  std::vector<double> axes, sizes;
+  std::size_t nbFramed = 0;
+  if(frames && CTX::instance()->mesh.recombine3DCandidates == 1) {
+    axes.assign(9 * c2v.size(), 0.);
+    sizes.assign(c2v.size(), 0.);
+    for(std::size_t i = 0; i < c2v.size(); i++) {
+      auto it = frames->find(c2v[i]);
+      if(it == frames->end()) continue;
+      std::copy(it->second.axes, it->second.axes + 9, &axes[9 * i]);
+      sizes[i] = it->second.size;
+      nbFramed++;
+    }
   }
 
-  // ----------------- S E L E C T I N G   H E X E S
-  // -------------------------------------
-  std::array<bool, 4> cellTypes{true, enablePrisms, false, true};
-  ccs.selectCellsGreedy(cellTypes);
+  if(nbFramed) {
+    HXTCombine::FrameSelectionStatistics stats;
+    ccs.selectAlongFrames(minQuality, axes, sizes, enablePrisms, &stats);
+    Msg::Info("%zu Hexes proposed along the frames of %zu vertices, %zu "
+              "selected", stats.nbProposedHexes, nbFramed,
+              stats.nbSelectedProposedHexes);
+    Msg::Info("%zu Hexes proposed around the %zu vertices left in tets",
+              stats.nbResidualHexes, stats.nbFreeVertices);
+    if(enablePrisms)
+      Msg::Info("%zu Prisms proposed on the %zu tets left",
+                stats.nbProposedPrisms, stats.nbFreeTets);
+  }
+  else {
+    ccs.computeHexes(minQuality);
+    Msg::Info("%d Hexes found", ccs.hexes().size());
+    if(enablePrisms) {
+      ccs.computePrisms(minQuality);
+      Msg::Info("%d Prisms found", ccs.prisms().size());
+    }
+
+    // ----------------- S E L E C T I N G   H E X E S
+    // -------------------------------------
+    std::array<bool, 4> cellTypes{true, enablePrisms, false, true};
+    ccs.selectCellsGreedy(cellTypes);
+  }
   Msg::Info("%d Hexes selected", ccs.nbSelectedHexes());
   if(enablePrisms)
     Msg::Info("%d Prisms selected", ccs.nbSelectedPrisms());
@@ -1118,7 +1148,7 @@ int meshCombine3D(GRegion *gr)
 }
 #else
 
-int meshCombine3D(GRegion *gr)
+int meshCombine3D(GRegion *gr, const CombineFrames *frames)
 {
   Msg::Warning(
     "Gmsh must be compiled with HXT to enable hybrid mesh generation");

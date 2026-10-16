@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include <array>
+#include <vector>
 
 /**
 * \file hxt_combine_cell.h Declaration of the structure holding a tet combination.
@@ -25,7 +26,8 @@ namespace HXTCombine{
  * CombineCell is a combination of tetrahedra of Mesh 
  * that define a hexahedron, or a prism, or a pyramid.
  * 
- * It stores indices of the vertices and tetrahedra in the Mesh.
+ * It refers to the indices of the vertices and tetrahedra in the Mesh, held
+ * by an HXTCombineCellArray: it is a view, valid until the array changes.
  * Tets are separated between interior and boundary tets.
  * Boundary tets connect 4 vertices in the same cell quad facet.
 */
@@ -33,29 +35,19 @@ struct HXTCombineCell {
   HXTIndex numVertices;
   HXTIndex numInteriorTets;
   HXTIndex numBoundaryTets;
-  HXTIndex vertexes[8];
-  HXTIndex interiorTetrahedra[16];
-  HXTIndex boundaryTetrahedra[8];
-
-  HXTCombineCell() {
-    numVertices = 0;
-    numInteriorTets = 0;
-    numBoundaryTets = 0;
-  }
+  const HXTIndex* vertexes;
+  const HXTIndex* interiorTetrahedra;
+  const HXTIndex* boundaryTetrahedra;
 
   HXTCombineCell(
     const HXTIndex* inputVertices, HXTIndex inputNbVertices,
     const HXTIndex* inputInteriorTets, HXTIndex inputNbInteriorTets,
     const HXTIndex* inputBoundaryTets, HXTIndex inputNbBoundaryTets
-  ) {
-    numVertices = inputNbVertices;
-    numInteriorTets = inputNbInteriorTets;
-    numBoundaryTets = inputNbBoundaryTets;
-
-    memcpy(vertexes, inputVertices, sizeof(HXTIndex)*numVertices);
-    memcpy(interiorTetrahedra, inputInteriorTets, sizeof(HXTIndex)*numInteriorTets);
-    memcpy(boundaryTetrahedra, inputBoundaryTets, sizeof(HXTIndex)*numBoundaryTets);
-  }
+  ) :
+    numVertices(inputNbVertices), numInteriorTets(inputNbInteriorTets),
+    numBoundaryTets(inputNbBoundaryTets), vertexes(inputVertices),
+    interiorTetrahedra(inputInteriorTets), boundaryTetrahedra(inputBoundaryTets)
+  {}
 
   HXTIndex nbVertices() const { return numVertices; }
   const HXTIndex* vertices() const { return vertexes; }
@@ -95,6 +87,100 @@ struct HXTCombineCell {
     if (localTetIndex < nbInteriorTets()) return interiorTetrahedra[localTetIndex];
     else return boundaryTetrahedra[localTetIndex-nbInteriorTets()];
   }
+};
+
+/**
+ * The cells of a type, one after the other in one array: the vertices, the
+ * interior tets and the boundary tets of each, 7 tets for an average hex
+ * candidate (from 5 to 13), with its offset and its 3 counts. Half the 140
+ * bytes per hex of fixed-size arrays, the third for a prism, and a cell is
+ * read in one or two cache lines.
+ */
+class HXTCombineCellArray {
+public:
+  HXTCombineCellArray() : start_(1, 0) {}
+
+  std::size_t size() const { return counts_.size(); }
+  bool empty() const { return counts_.empty(); }
+
+  HXTCombineCell operator[](std::size_t c) const {
+    const HXTIndex* v = data_.data() + start_[c];
+    const unsigned int nv = counts_[c].nbVertices, ni = counts_[c].nbInteriorTets;
+    return HXTCombineCell(v, nv, v + nv, ni, v + nv + ni,
+                          counts_[c].nbBoundaryTets);
+  }
+
+  void push_back(const HXTIndex* vertices, unsigned int nbVertices,
+                 const HXTIndex* interiorTets, unsigned int nbInteriorTets,
+                 const HXTIndex* boundaryTets, unsigned int nbBoundaryTets) {
+    data_.insert(data_.end(), vertices, vertices + nbVertices);
+    data_.insert(data_.end(), interiorTets, interiorTets + nbInteriorTets);
+    data_.insert(data_.end(), boundaryTets, boundaryTets + nbBoundaryTets);
+    start_.push_back(data_.size());
+    counts_.push_back({(unsigned char)nbVertices, (unsigned char)nbInteriorTets,
+                       (unsigned char)nbBoundaryTets});
+  }
+  void push_back(const HXTCombineCell& cell) {
+    push_back(cell.vertexes, cell.numVertices, cell.interiorTetrahedra,
+              cell.numInteriorTets, cell.boundaryTetrahedra, cell.numBoundaryTets);
+  }
+  // the cells of more after these
+  void append(const HXTCombineCellArray& more) {
+    reserve(size() + more.size(), data_.size() + more.data_.size());
+    const std::size_t offset = data_.size();
+    data_.insert(data_.end(), more.data_.begin(), more.data_.end());
+    for (std::size_t c = 1; c < more.start_.size(); ++c)
+      start_.push_back(offset + more.start_[c]);
+    counts_.insert(counts_.end(), more.counts_.begin(), more.counts_.end());
+  }
+  // exactly, not to a power of 2 of the current sizes
+  void reserve(std::size_t nbCells, std::size_t nbIndices) {
+    if (start_.capacity() < nbCells + 1) start_.reserve(nbCells + 1);
+    if (counts_.capacity() < nbCells) counts_.reserve(nbCells);
+    if (data_.capacity() < nbIndices) data_.reserve(nbIndices);
+  }
+  void clear() {
+    start_.assign(1, 0);
+    counts_.clear();
+    data_.clear();
+  }
+  void shrink_to_fit() {
+    start_.shrink_to_fit();
+    counts_.shrink_to_fit();
+    data_.shrink_to_fit();
+  }
+  void swap(HXTCombineCellArray& other) {
+    start_.swap(other.start_);
+    counts_.swap(other.counts_);
+    data_.swap(other.data_);
+  }
+  std::size_t nbIndices() const { return data_.size(); }
+  std::size_t memoryBytes() const {
+    return start_.capacity() * sizeof(start_[0]) +
+           counts_.capacity() * sizeof(counts_[0]) +
+           data_.capacity() * sizeof(data_[0]);
+  }
+
+  class const_iterator {
+  public:
+    const_iterator(const HXTCombineCellArray* array, std::size_t c) : array_(array), c_(c) {}
+    HXTCombineCell operator*() const { return (*array_)[c_]; }
+    const_iterator& operator++() { ++c_; return *this; }
+    bool operator!=(const const_iterator& other) const { return c_ != other.c_; }
+  private:
+    const HXTCombineCellArray* array_;
+    std::size_t c_;
+  };
+  const_iterator begin() const { return const_iterator(this, 0); }
+  const_iterator end() const { return const_iterator(this, size()); }
+
+private:
+  struct Counts {
+    unsigned char nbVertices, nbInteriorTets, nbBoundaryTets;
+  };
+  std::vector<std::size_t> start_; // nbCells + 1
+  std::vector<Counts> counts_;
+  std::vector<HXTIndex> data_;
 };
 
 

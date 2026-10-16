@@ -1742,6 +1742,10 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Recombine3DLevel" , opt_mesh_recombine3d_level , 0 ,
     "3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids) "
     "(experimental)" },
+  { F|O, "Recombine3DCandidates" , opt_mesh_recombine3d_candidates , 1 ,
+    "Candidate cells of the 3d recombination (0: all the hexahedra and prisms "
+    "of the tetrahedral mesh, 1: proposed along the frame field of the point "
+    "insertion, where it is known) (experimental)" },
   { F|O, "Recombine3DConformity" , opt_mesh_recombine3d_conformity , 0 ,
     "3d recombination conformity type (0: nonconforming, 1: trihedra, "
     "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)"

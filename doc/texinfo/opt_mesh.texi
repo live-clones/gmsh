@@ -921,6 +921,11 @@ Saved in: @code{General.OptionsFileName}
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Recombine3DCandidates
+Candidate cells of the 3d recombination (0: all the hexahedra and prisms of the tetrahedral mesh, 1: proposed along the frame field of the point insertion, where it is known) (experimental)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Recombine3DConformity
 3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)(experimental)@*
 Default value: @code{0}@*

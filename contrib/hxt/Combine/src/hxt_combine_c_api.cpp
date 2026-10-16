@@ -11,9 +11,10 @@
 */
 
 using HXTCombine::HXTCombineCell;
+using HXTCombine::HXTCombineCellArray;
 
 struct HXTCombineCellVector {
-  std::vector<HXTCombineCell> data;
+  HXTCombineCellArray data;
 };
 
 
@@ -26,27 +27,27 @@ HXTStatus HXTCombineCellVectorSize(HXTCombineCellVector *vector, HXTIndex *size)
 HXTStatus HXTCombineCellVectorCellVertices(
   HXTCombineCellVector *vector, HXTIndex cellIndex, HXTIndex **vertices, HXTIndex* numVertices) 
 {
-  HXTCombineCell& cell = vector->data[cellIndex];
+  HXTCombineCell cell = vector->data[cellIndex];
   *numVertices = cell.nbVertices();
-  *vertices = &cell.vertexes[0];
+  *vertices = const_cast<HXTIndex*>(cell.vertexes);
   return HXT_STATUS_OK;
 }
 
 HXTStatus HXTCombineCellVectorCellInteriorTets(
   HXTCombineCellVector *vector, HXTIndex cellIndex, HXTIndex **tets, HXTIndex* nbTets)
 {
-  HXTCombineCell& cell = vector->data[cellIndex];
+  HXTCombineCell cell = vector->data[cellIndex];
   *nbTets = cell.nbInteriorTets();
-  *tets = &cell.interiorTetrahedra[0];
+  *tets = const_cast<HXTIndex*>(cell.interiorTetrahedra);
   return HXT_STATUS_OK;
 }
 
 HXTStatus HXTCombineCellVectorCellBoundaryTets(
   HXTCombineCellVector *vector, HXTIndex cellIndex, HXTIndex **tets, HXTIndex* nbTets)
 {
-  HXTCombineCell& cell = vector->data[cellIndex];
+  HXTCombineCell cell = vector->data[cellIndex];
   *nbTets = cell.nbBoundaryTets();
-  *tets = &cell.boundaryTetrahedra[0];
+  *tets = const_cast<HXTIndex*>(cell.boundaryTetrahedra);
   return HXT_STATUS_OK;
 }
 

@@ -64,13 +64,19 @@ inline bool isCellReallyValid(const TetMeshWrapper& tets, const vector<VertexInd
 }
 
 
+/**
+* \param start if given, only the prisms whose smallest vertex a has
+* (*start)[a] set
+*/
 template< class ACTION >
-void computeAllPrisms(ACTION& actionOnPrism, const TetMeshForCombining& M, double minQ)
+void computeAllPrisms(ACTION& actionOnPrism, const TetMeshForCombining& M, double minQ,
+                      const std::vector<bool>* start = nullptr)
 {
   // --- 1  ---  A
 #pragma omp parallel for schedule(dynamic)
   for (int aSigned = 0; aSigned < (int)M.nbVertices(); ++aSigned) {
     unsigned int a(aSigned);
+    if (start && !(*start)[a]) continue;
     vector<VertexIndex> aroundA = M.verticesAroundVertices(a);
     filterValues(aroundA, a);
     // --- 2 --- B
@@ -167,14 +173,18 @@ void computeAllPyramids(ACTION& actionOnPyramid, const TetMeshForCombining& M, d
 
 /**
 * \brief The function to identify all hexes in a tetrahedral mesh
+* \param start if given, only the hexes whose smallest vertex a has
+* (*start)[a] set
 */
 template<class ACTION>
-void computeAllHex(ACTION& actionOnHex, const TetMeshForCombining& M, double minQ)
+void computeAllHex(ACTION& actionOnHex, const TetMeshForCombining& M, double minQ,
+                   const std::vector<bool>* start = nullptr)
 {
   // --- 1  ---  A
 #pragma omp parallel for schedule(dynamic)
   for (int a0 = 0; a0 < (int)M.nbVertices(); ++a0) {
     unsigned int a(a0);
+    if (start && !(*start)[a]) continue;
     vector<VertexIndex> aroundA = M.verticesAroundVertices(a);
     filterValues(aroundA, a);
     // --- 2 --- B

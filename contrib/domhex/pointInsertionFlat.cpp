@@ -48,6 +48,7 @@ struct FlatPoint {
   int layer;
   int limit; // -1: unbounded
   int tet; // a tet of the region holding the point (-1: unknown)
+  MVertex *v; // the boundary vertex of a seed, null for the spawns
 };
 
 // Point location in the region's tets by walking from a nearby tet across
@@ -312,7 +313,7 @@ bool isFinitePoint(double h, const double m[9])
 
 } // namespace
 
-void fillRegionFlat(GRegion *gr)
+void fillRegionFlat(GRegion *gr, CombineFrames *frames)
 {
   int numSmooth = CTX::instance()->mesh.smoothCrossField;
   if(numSmooth && gr->dim() == 3) {
@@ -411,6 +412,7 @@ void fillRegionFlat(GRegion *gr)
     p.layer = 0;
     p.limit = limitOf[v];
     p.tet = walker.tetOf(v);
+    p.v = v;
     seeds.push_back(p);
     h0 += p.h;
   }
@@ -467,6 +469,7 @@ void fillRegionFlat(GRegion *gr)
       cand.layer = parent.layer + 1;
       cand.limit = parent.limit;
       cand.tet = t;
+      cand.v = nullptr;
 
       // cheap spacing test first: most spawns land on an existing point,
       // and farFromBoundary costs 6 point locations
@@ -550,8 +553,18 @@ void fillRegionFlat(GRegion *gr)
     // of them involved a layer-0 point (never two candidate points),
     // which is exactly this. That degenerate local configuration is what
     // was corrupting TetGen's boundary recovery downstream.
-    if(p.layer == 0) continue;
+    auto keepFrame = [&](MVertex *v) {
+      if(!frames) return;
+      CombineFrame &f = (*frames)[v];
+      std::copy(p.m, p.m + 9, f.axes);
+      f.size = p.h;
+    };
+    if(p.layer == 0) {
+      keepFrame(p.v);
+      continue;
+    }
     MVertex *v = new MVertex(p.x, p.y, p.z, gr, 0);
+    keepFrame(v);
     Vertex *vv = new Vertex(p.x, p.y, p.z);
     newVertex.push_back(vv);
     gmshVertex *newV = new gmshVertex(gr->model(), vv);

@@ -14,11 +14,14 @@
 #ifndef POINT_INSERTION_FLAT_H
 #define POINT_INSERTION_FLAT_H
 
+#include "meshCombine3D.h"
+
 class GRegion;
 
 // Fills gr with interior points the same way Filler::treat_region does, then
 // hands them to the Delaunay tetrahedralizer. Drop-in replacement for
-// `Filler().treat_region(gr)`.
-void fillRegionFlat(GRegion *gr);
+// `Filler().treat_region(gr)`. If frames is given, it receives the frame and
+// the size of each point, the boundary vertices included.
+void fillRegionFlat(GRegion *gr, CombineFrames *frames = nullptr);
 
 #endif

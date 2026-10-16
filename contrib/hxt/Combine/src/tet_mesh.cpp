@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "basic_types.h"
+#include "hxt_omp.h"
 
 /**
 * \author Jeanne Pellerin
@@ -259,9 +260,9 @@ void TetMeshForCombining::chainTetCornersAroundVertices() {
 
 void TetMeshForCombining::fillVertexToVertices()
 {
-  vertexToVertices_.resize(nbVertices());
-  vector<VertexIndex> temp;
-  for (VertexIndex v = 0; v < nbVertices(); ++v) {
+  // the sorted neighbours of a vertex, in compressed rows: counted, then
+  // written, the vertices in parallel
+  auto around = [&](VertexIndex v, vector<VertexIndex>& temp) {
     temp.resize(0);
     TetCornerIndex c = vertexToTetCorner_[v];
     while (c != NO_ID) {
@@ -273,32 +274,56 @@ void TetMeshForCombining::fillVertexToVertices()
       c = nextTetCornerAroundVertex_[c];
     }
     std::sort(temp.begin(), temp.end(), std::greater<VertexIndex>());
-    auto it = std::unique(temp.begin(), temp.end());
-    temp.resize(std::distance(temp.begin(), it));
-    std::swap(temp, vertexToVertices_[v]);
+    temp.erase(std::unique(temp.begin(), temp.end()), temp.end());
+  };
+  vertexToVerticesStart_.assign(nbVertices() + 1, 0);
+#pragma omp parallel
+  {
+    vector<VertexIndex> temp;
+#pragma omp for schedule(dynamic, 1024)
+    for (int v = 0; v < (int)nbVertices(); ++v) {
+      around(v, temp);
+      vertexToVerticesStart_[v + 1] = temp.size();
+    }
+  }
+  for (VertexIndex v = 0; v < nbVertices(); ++v)
+    vertexToVerticesStart_[v + 1] += vertexToVerticesStart_[v];
+  vertexToVertices_.resize(vertexToVerticesStart_[nbVertices()]);
+#pragma omp parallel
+  {
+    vector<VertexIndex> temp;
+#pragma omp for schedule(dynamic, 1024)
+    for (int v = 0; v < (int)nbVertices(); ++v) {
+      around(v, temp);
+      std::copy(temp.begin(), temp.end(),
+                vertexToVertices_.begin() + vertexToVerticesStart_[v]);
+    }
   }
 }
 
 void TetMeshForCombining::fillFacets()
 {
-  facets_.resize(nbVertices());
-
-  unsigned int nb = 0;
-  for (TetIndex t = 0; t < nbTets(); ++t) {
-    for (TetFacetIndex f = 0; f < 4; ++f) {
-      TetIndex adjacent = adjacentTet(t, f);
-      if (t < adjacent) {
-        trindex facet = tetFacet(t, f);
-        facets_[facet.indices[0]].push_back(std::make_pair(facet.indices[1], facet.indices[2]));
-        nb++;
+  // the facets by smallest vertex, in compressed rows sorted by the 2 others
+  facetStart_.assign(nbVertices() + 1, 0);
+#pragma omp parallel for schedule(static)
+  for (int t = 0; t < (int)nbTets(); ++t)
+    for (TetFacetIndex f = 0; f < 4; ++f)
+      if ((TetIndex)t < adjacentTet(t, f))
+        __atomic_fetch_add(&facetStart_[tetFacet(t, f).indices[0] + 1], 1, __ATOMIC_RELAXED);
+  for (VertexIndex v = 0; v < nbVertices(); ++v) facetStart_[v + 1] += facetStart_[v];
+  facets_.resize(facetStart_[nbVertices()]);
+  std::vector<std::size_t> next(facetStart_.begin(), facetStart_.end() - 1);
+#pragma omp parallel for schedule(static)
+  for (int t = 0; t < (int)nbTets(); ++t)
+    for (TetFacetIndex f = 0; f < 4; ++f)
+      if ((TetIndex)t < adjacentTet(t, f)) {
+        const trindex facet = tetFacet(t, f);
+        facets_[__atomic_fetch_add(&next[facet.indices[0]], 1, __ATOMIC_RELAXED)] =
+          std::make_pair(facet.indices[1], facet.indices[2]);
       }
-    }
-  }
-  for (auto &v : facets_) {
-    std::sort(v.begin(), v.end());
-  }
-
-  //  std::cout << "There are " << nb << " facets " << std::endl;
+#pragma omp parallel for schedule(dynamic, 1024)
+  for (int v = 0; v < (int)nbVertices(); ++v)
+    std::sort(facets_.begin() + facetStart_[v], facets_.begin() + facetStart_[v + 1]);
 }
 
 /** Maybe could be done at the same time than tet connection to avoid
