@@ -32,6 +32,8 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include <functional>
+#include <string>
 #include "meshGFaceValence.h"
 #include "meshGFacePlanar.h"
 #include "GFace.h"
@@ -141,7 +143,10 @@ struct TopoMesh : planar::Mesh {
     return d * d;
   }
   int sdev(int v) const { return val[v] - vstar[v]; }
-  bool isDefect(int v) const { return aliveV[v] && val[v] != vstar[v]; }
+  bool isDefect(int v) const
+  {
+    return aliveV[v] && !frozen(v) && val[v] != vstar[v];
+  }
 
   int opposite(int t, int a, int b) const
   {
@@ -305,9 +310,11 @@ struct TopoMesh : planar::Mesh {
     aliveV[u.a] = 1;
   }
 
-  int addNode(V2 pos)
+  int addNode(V2 pos, int own)
   {
     int n = nv++;
+    if((int)nodeOwner.size() <= n) nodeOwner.resize(n + 1, -1);
+    nodeOwner[n] = own;
     if(n == (int)x.size()) {
       x.push_back(pos);
       aliveV.push_back(1);
@@ -328,9 +335,10 @@ struct TopoMesh : planar::Mesh {
     }
     return n;
   }
-  int addTriangle(std::array<int, 3> T)
+  int addTriangle(std::array<int, 3> T, int own)
   {
     tri.push_back(T);
+    owner.push_back(own);
     aliveT.push_back(1);
     markT.push_back(0);
     return (int)tri.size() - 1;
@@ -345,12 +353,12 @@ struct TopoMesh : planar::Mesh {
     auto q = edgeQuad(a, b);
     if(!q) return u;
     int t1 = q->t1, t2 = q->t2, c = q->c, d = q->d;
-    int n = addNode(0.5 * (x[a] + x[b]));
+    int n = addNode(0.5 * (x[a] + x[b]), owner[t1]);
     h0[n] = 0.5 * (h0[a] + h0[b]);
     tri[t1] = {a, n, c};
     tri[t2] = {b, n, d};
-    int t3 = addTriangle({n, b, c});
-    int t4 = addTriangle({n, a, d});
+    int t3 = addTriangle({n, b, c}, owner[t1]);
+    int t4 = addTriangle({n, a, d}, owner[t2]);
     vtDel(vt[a], t2);
     vtAdd(vt[a], t4);
     vtDel(vt[b], t1);
@@ -1095,7 +1103,7 @@ struct Repair {
     using Item = std::pair<double, int>;
     std::priority_queue<Item, std::vector<Item>, std::greater<Item>> heap;
     for(size_t t = 0; t < m.tri.size(); t++)
-      if(m.aliveT[t]) {
+      if(m.aliveT[t] && m.owner[t] >= 0) {
         double g = m.triGamma((int)t);
         if(g < thr) heap.push({g, (int)t});
       }
@@ -1186,7 +1194,7 @@ struct Repair {
       changed++;
       for(int tt : m.regionTris(m.ring(touched, rings + 1))) {
         double gg = m.triGamma(tt);
-        if(m.aliveT[tt] && gg < thr) heap.push({gg, tt});
+        if(m.aliveT[tt] && m.owner[tt] >= 0 && gg < thr) heap.push({gg, tt});
       }
     }
     return changed;
@@ -1213,7 +1221,7 @@ struct Repair {
   {
     int e = 0;
     for(int v = 0; v < m.nv; v++)
-      if(m.aliveV[v]) e += m.dev2(v);
+      if(m.aliveV[v] && !m.frozen(v)) e += m.dev2(v);
     return e;
   }
 
@@ -1221,22 +1229,27 @@ struct Repair {
 
 } // namespace
 
-void repairValence2D(GFace *gf)
+namespace {
+
+// repair the surfaces together, the triangles of the surfaces for which frozen
+// is true loaded frozen; false if they are not in a plane
+bool repairValence2D(const std::vector<GFace *> &faces, int type,
+                     const std::function<bool(GFace *)> &frozen)
 {
-  const int type = CTX::instance()->mesh.valenceRepair2D;
-  if(type <= 0) return;
   const double t0 = TimeOfDay();
-  planar::Face face(gf);
-  if(face.empty()) return;
+  planar::Face face(faces, frozen);
+  if(face.empty()) return false;
   TopoMesh m(face.x, face.tri, face.onCurve, face.constrainedEdges);
+  face.init(m);
   const int nSlide = CTX::instance()->mesh.boundaryNodeSliding2D ?
                        face.setupSliding(m) :
                        0;
 
   Repair r(m);
   const std::size_t def0 = r.defects().size();
-  std::vector<int> all(m.tri.size());
-  for(std::size_t t = 0; t < m.tri.size(); t++) all[t] = (int)t;
+  std::vector<int> all;
+  for(std::size_t t = 0; t < m.tri.size(); t++)
+    if(m.owner[t] >= 0) all.push_back((int)t);
   const double g0 = m.minGamma(all);
 
   r.gammaMin = 0.9;
@@ -1254,19 +1267,55 @@ void repairValence2D(GFace *gf)
       if(!r.qualityPass(thr, 2)) break;
     smoothODT(m, nSmooth);
   }
-  Msg::Debug("Valence repair of surface %d: %d flips, %d collapses, %d "
+  std::string tags;
+  for(GFace *gf : faces)
+    tags += (tags.empty() ? "" : ", ") + std::to_string(gf->tag());
+  Msg::Debug("Valence repair of surface(s) %s: %d flips, %d collapses, %d "
              "insertions, %d dipole glides, %d compactions, %d changes below "
              "the threshold, %d refused",
-             gf->tag(), r.stats.flip, r.stats.collapse, r.stats.insertion,
+             tags.c_str(), r.stats.flip, r.stats.collapse, r.stats.insertion,
              r.stats.dipole, r.stats.compaction, r.stats.quality,
              r.stats.rejected);
   face.write(m, true);
 
   std::vector<int> alive;
   for(std::size_t t = 0; t < m.tri.size(); t++)
-    if(m.aliveT[t]) alive.push_back((int)t);
-  Msg::Info("Valence repair of surface %d: %zu -> %zu valence defects, "
-            "worst gamma %.3f -> %.3f, %d sliding boundary nodes (%g s)",
-            gf->tag(), def0, r.defects().size(), g0, m.minGamma(alive), nSlide,
-            TimeOfDay() - t0);
+    if(m.aliveT[t] && m.owner[t] >= 0) alive.push_back((int)t);
+  Msg::Info("Valence repair of surface%s %s: %zu -> %zu valence defects, "
+            "worst gamma %.3f -> %.3f, %d sliding boundary nodes, %zu frozen "
+            "neighbor triangles (%g s)",
+            faces.size() > 1 ? "s" : "", tags.c_str(), def0,
+            r.defects().size(), g0, m.minGamma(alive), nSlide,
+            face.numFrozen(), TimeOfDay() - t0);
+  return true;
+}
+
+} // namespace
+
+void repairValence2D(GFace *gf)
+{
+  const int type = CTX::instance()->mesh.valenceRepair2D;
+  if(type <= 0) return;
+  repairValence2D({gf}, type, planar::frozenWhileMeshing);
+}
+
+void repairValence2D(const std::vector<GFace *> &faces)
+{
+  // the surfaces in a plane are repaired together, the triangles of the
+  // other surfaces that touch them frozen; one by one otherwise
+  const int type = CTX::instance()->mesh.valenceRepair2D > 0 ?
+                     CTX::instance()->mesh.valenceRepair2D :
+                     2;
+  std::set<GFace *> set(faces.begin(), faces.end());
+  auto others = [&set](GFace *g) { return !set.count(g); };
+  std::vector<GFace *> planar;
+  for(GFace *gf : faces)
+    if(!gf->triangles.empty()) planar.push_back(gf);
+  if(planar.empty()) return;
+  if(repairValence2D(planar, type, others)) return;
+  for(GFace *gf : planar) {
+    if(!repairValence2D({gf}, type,
+                        [gf](GFace *g) { return g != gf; }))
+      Msg::Warning("Surface %d is not planar: no valence repair", gf->tag());
+  }
 }

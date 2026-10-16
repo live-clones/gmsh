@@ -71,6 +71,7 @@
 #include "meshGFace.h"
 #include "meshGFaceDelaunay.h"
 #include "meshGFaceOptimize.h"
+#include "meshGFaceValence.h"
 #include "meshGRegionDelaunay.h"
 #include "meshGRegionHxt.h"
 #include "meshGRegionParallelDelaunay.h"
@@ -1893,6 +1894,27 @@ GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
                                           const vectorpair &dimTags, double quality)
 {
   if(!_checkInit()) return;
+#if defined(HAVE_MESH)
+  if(how == "ValenceRepair2D") {
+    // the given surfaces (all of them by default) repaired together
+    std::vector<GFace *> faces;
+    if(dimTags.empty())
+      faces.assign(GModel::current()->firstFace(),
+                   GModel::current()->lastFace());
+    for(auto &dt : dimTags) {
+      if(dt.first != 2) continue;
+      GFace *gf = GModel::current()->getFaceByTag(dt.second);
+      if(!gf) {
+        Msg::Error("%s does not exist", _getEntityName(2, dt.second).c_str());
+        return;
+      }
+      faces.push_back(gf);
+    }
+    repairValence2D(faces);
+    CTX::instance()->meshChanged();
+    return;
+  }
+#endif
   if(dimTags.size()) {
     Msg::Warning(
       "Optimization of specified model entities is not interfaced yet");

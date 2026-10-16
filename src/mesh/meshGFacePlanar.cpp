@@ -3,6 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cstdint>
+#include <map>
 #include <set>
 #include "meshGFacePlanar.h"
 #include "GFace.h"
@@ -12,6 +14,8 @@
 #include "MLine.h"
 #include "MVertex.h"
 #include "ExtrudeParams.h"
+#include "discreteFace.h"
+#include "SBoundingBox3d.h"
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
@@ -162,36 +166,48 @@ namespace planar {
                    _origin.z() + p.x * _e1.z() + p.y * _e2.z());
   }
 
-  Face::Face(GFace *gf) : _gf(gf)
+  Face::Face(const std::vector<GFace *> &faces,
+             const std::function<bool(GFace *)> &frozen)
+    : _faces(faces), _inSet(faces.begin(), faces.end())
   {
-    if(gf->triangles.empty()) return;
-    // the nodes of the triangles, numbered in the order they appear, and the
-    // triangles
-    _id.reserve(gf->triangles.size() / 2 + 3);
-    tri.reserve(gf->triangles.size());
-    for(MTriangle *t : gf->triangles) {
-      std::array<int, 3> T;
-      for(int k = 0; k < 3; k++) {
-        MVertex *v = t->getVertex(k);
-        auto it = _id.emplace(v, (int)_verts.size());
-        if(it.second) _verts.push_back(v);
-        T[k] = it.first->second;
+    // the nodes of the triangles of the surfaces, numbered in the order they
+    // appear, and the triangles
+    std::size_t nt = 0;
+    for(GFace *gf : faces) nt += gf->triangles.size();
+    if(!nt) return;
+    _id.reserve(nt / 2 + 3);
+    tri.reserve(nt);
+    owner.reserve(nt);
+    for(std::size_t f = 0; f < faces.size(); f++)
+      for(MTriangle *t : faces[f]->triangles) {
+        std::array<int, 3> T;
+        for(int k = 0; k < 3; k++) {
+          MVertex *v = t->getVertex(k);
+          auto it = _id.emplace(v, (int)_verts.size());
+          if(it.second) _verts.push_back(v);
+          T[k] = it.first->second;
+        }
+        tri.push_back(T);
+        owner.push_back((int)f);
       }
-      tri.push_back(T);
-    }
 
     // frame of the plane: the mean normal of the triangles, so that they are
     // counterclockwise in it and keep their orientation when written back
     SVector3 nrm(0., 0., 0.);
-    for(MTriangle *t : gf->triangles) {
-      SVector3 a(t->getVertex(0)->point(), t->getVertex(1)->point());
-      SVector3 b(t->getVertex(0)->point(), t->getVertex(2)->point());
-      nrm += crossprod(a, b);
-    }
-    if(nrm.norm() == 0.) {
+    for(GFace *gf : faces)
+      for(MTriangle *t : gf->triangles) {
+        SVector3 a(t->getVertex(0)->point(), t->getVertex(1)->point());
+        SVector3 b(t->getVertex(0)->point(), t->getVertex(2)->point());
+        nrm += crossprod(a, b);
+      }
+    auto clear = [this]() {
       _verts.clear();
       _id.clear();
       tri.clear();
+      owner.clear();
+    };
+    if(nrm.norm() == 0.) {
+      clear();
       return;
     }
     nrm.normalize();
@@ -201,20 +217,91 @@ namespace planar {
     _e1.normalize();
     _e2 = crossprod(nrm, _e1);
     _origin = _verts[0]->point();
+    // several surfaces, or frozen neighbors, must lie in that plane
+    SBoundingBox3d bb;
+    for(MVertex *v : _verts) bb += v->point();
+    const double tol = 1e-8 * bb.diag();
+    auto inPlane = [&](MVertex *v) {
+      SVector3 d(_origin, v->point());
+      return std::abs(::dot(d, nrm)) <= tol;
+    };
+    if(faces.size() > 1)
+      for(MVertex *v : _verts)
+        if(!inPlane(v)) {
+          clear();
+          return;
+        }
+    const int nSet = (int)_verts.size();
+
+    // the frozen triangles: those of the other surfaces of the plane that
+    // touch the nodes of the surfaces (only nodes on curves or points can)
+    if(frozen && !faces.empty()) {
+      GModel *gm = faces[0]->model();
+      for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
+        GFace *g = *it;
+        if(_inSet.count(g) || !frozen(g)) continue;
+        std::vector<MTriangle *> touching;
+        for(MTriangle *t : g->triangles)
+          for(int k = 0; k < 3; k++) {
+            MVertex *v = t->getVertex(k);
+            if(v->onWhat() && v->onWhat()->dim() < 2 && _id.count(v)) {
+              touching.push_back(t);
+              break;
+            }
+          }
+        bool ok = true;
+        for(MTriangle *t : touching)
+          for(int k = 0; k < 3 && ok; k++) ok = inPlane(t->getVertex(k));
+        if(!ok) continue;
+        for(MTriangle *t : touching) {
+          std::array<int, 3> T;
+          for(int k = 0; k < 3; k++) {
+            MVertex *v = t->getVertex(k);
+            auto it2 = _id.emplace(v, (int)_verts.size());
+            if(it2.second) _verts.push_back(v);
+            T[k] = it2.first->second;
+          }
+          tri.push_back(T);
+          owner.push_back(-1);
+          _numFrozen++;
+        }
+      }
+    }
 
     const int n0 = (int)_verts.size();
     x.resize(n0);
     onCurve.assign(n0, 0);
+    frozenV.assign(n0, 0);
     for(int i = 0; i < n0; i++) {
       MVertex *v = _verts[i];
       x[i] = _to2D(v->x(), v->y(), v->z());
-      onCurve[i] = v->onWhat()->dim() < 2;
+      onCurve[i] = v->onWhat()->dim() < 2 || i >= nSet;
+      frozenV[i] = i >= nSet;
     }
 
-    // the curves of the surface (boundary and embedded), their edges, and
+    // the edges of the frozen triangles, and those between the triangles of
+    // two surfaces, are never flipped nor split; their nodes are fixed
+    std::unordered_map<uint64_t, int> edgeOwner;
+    for(std::size_t t = 0; t < tri.size(); t++)
+      for(int k = 0; k < 3; k++) {
+        int a = tri[t][k], b = tri[t][(k + 1) % 3];
+        uint64_t key = ((uint64_t)std::min(a, b) << 32) | std::max(a, b);
+        auto it = edgeOwner.emplace(key, owner[t]);
+        if(owner[t] < 0 || (!it.second && it.first->second != owner[t])) {
+          constrainedEdges.push_back({a, b});
+          onCurve[a] = onCurve[b] = 1;
+        }
+      }
+
+    // the curves of the surfaces (boundary and embedded), their edges, and
     // the neighbors of their nodes on them
-    _curves = gf->edges();
-    for(GEdge *ge : gf->embeddedEdges()) _curves.push_back(ge);
+    std::set<GEdge *> seen;
+    for(GFace *gf : faces) {
+      std::vector<GEdge *> curves = gf->edges();
+      for(GEdge *ge : gf->embeddedEdges()) curves.push_back(ge);
+      for(GEdge *ge : curves)
+        if(seen.insert(ge).second) _curves.push_back(ge);
+    }
     for(GEdge *ge : _curves)
       for(MLine *l : ge->lines) {
         MVertex *a = l->getVertex(0), *b = l->getVertex(1);
@@ -228,14 +315,14 @@ namespace planar {
 
   int Face::setupSliding(Mesh &m)
   {
-    // never on a curve whose nodes another mesh uses (a curve that bounds or
-    // is embedded in another surface, possibly meshed at the same time, a
-    // periodic curve, a compound) or whose node distribution is imposed (a
-    // transfinite or an extruded curve)
-    GModel *gm = _gf->model();
+    // never on a curve whose nodes a mesh that is not optimized with the
+    // surfaces uses (a curve that bounds or is embedded in another surface,
+    // possibly meshed at the same time, a periodic curve, a compound) or
+    // whose node distribution is imposed (a transfinite or an extruded curve)
+    GModel *gm = _faces[0]->model();
     std::set<GEdge *> elsewhere, masters;
     for(auto it = gm->firstFace(); it != gm->lastFace(); ++it)
-      if(*it != _gf)
+      if(!_inSet.count(*it))
         for(GEdge *e : (*it)->embeddedEdges()) elsewhere.insert(e);
     for(auto it = gm->firstEdge(); it != gm->lastEdge(); ++it)
       if((*it)->getMeshMaster() != *it)
@@ -245,7 +332,7 @@ namespace planar {
       GEdge *ge = _curves[c];
       const char *fixed = nullptr;
       for(GFace *f : ge->faces())
-        if(f != _gf) fixed = "it bounds another surface";
+        if(!_inSet.count(f)) fixed = "it bounds another surface";
       if(elsewhere.count(ge)) fixed = "it is embedded in another surface";
       if(ge->getMeshMaster() != ge || masters.count(ge))
         fixed = "it is periodic";
@@ -258,7 +345,7 @@ namespace planar {
         fixed = "it is extruded";
       if(fixed)
         Msg::Debug("Surface %d: the nodes of curve %d do not slide, %s",
-                   _gf->tag(), ge->tag(), fixed);
+                   _faces[0]->tag(), ge->tag(), fixed);
       else
         curveIndex[ge] = (int)c;
     }
@@ -271,9 +358,14 @@ namespace planar {
     m.tpar.assign(n0, 0.);
     m.slideNb.assign(n0, {-1, -1});
     m.slideNbT.assign(n0, {0., 0.});
+    // the nodes of frozen triangles never move
+    std::vector<char> usedFrozen(n0, 0);
+    for(std::size_t t = 0; t < tri.size(); t++)
+      if(owner[t] < 0)
+        for(int v : tri[t]) usedFrozen[v] = 1;
     for(int i = 0; i < n0; i++) {
       MVertex *v = _verts[i];
-      if(v->onWhat()->dim() != 1) continue;
+      if(usedFrozen[i] || v->onWhat()->dim() != 1) continue;
       GEdge *ge = static_cast<GEdge *>(v->onWhat());
       auto ci = curveIndex.find(ge);
       if(ci == curveIndex.end()) continue;
@@ -341,21 +433,27 @@ namespace planar {
   void Face::write(const Mesh &m, bool topology)
   {
     // move the kept nodes; with topology changes, also create the inserted
-    // ones, delete the removed ones (always nodes of the surface) and
-    // rebuild the triangles
+    // ones, delete the removed ones (always nodes of a surface) and rebuild
+    // the triangles of each surface. The frozen nodes never move.
     const int n0 = (int)_verts.size();
+    auto onFace = [](GFace *gf, SPoint3 P, MVertex *v) {
+      // the parametric coordinates, on the surfaces that have some
+      if(gf->geomType() == GEntity::DiscreteSurface) return;
+      SPoint2 uv = gf->parFromPoint(P);
+      v->setParameter(0, uv.x());
+      v->setParameter(1, uv.y());
+    };
     std::vector<MVertex *> vtx(m.nv, nullptr);
     for(int i = 0; i < m.nv; i++) {
       if(!m.aliveV[i]) continue;
       if(i < n0) {
         MVertex *v = _verts[i];
         vtx[i] = v;
-        if(v->onWhat()->dim() == 2) {
+        if(m.frozen(i)) continue;
+        if(v->onWhat()->dim() == 2 && _inSet.count((GFace *)v->onWhat())) {
           SPoint3 P = _to3D(m.x[i]);
           v->setXYZ(P.x(), P.y(), P.z());
-          SPoint2 uv = _gf->parFromPoint(P);
-          v->setParameter(0, uv.x());
-          v->setParameter(1, uv.y());
+          onFace(static_cast<GFace *>(v->onWhat()), P, v);
         }
         else if(m.slidable(i)) {
           double t;
@@ -368,32 +466,46 @@ namespace planar {
         }
       }
       else if(topology) {
+        GFace *gf = _faces[m.nodeOwner[i]];
         SPoint3 P = _to3D(m.x[i]);
-        SPoint2 uv = _gf->parFromPoint(P);
-        MFaceVertex *v =
-          new MFaceVertex(P.x(), P.y(), P.z(), _gf, uv.x(), uv.y());
-        _gf->mesh_vertices.push_back(v);
+        MVertex *v;
+        if(gf->geomType() == GEntity::DiscreteSurface)
+          v = new MVertex(P.x(), P.y(), P.z(), gf);
+        else {
+          SPoint2 uv = gf->parFromPoint(P);
+          v = new MFaceVertex(P.x(), P.y(), P.z(), gf, uv.x(), uv.y());
+        }
+        gf->mesh_vertices.push_back(v);
         vtx[i] = v;
       }
     }
     if(!topology) return;
-    std::set<MVertex *> dead;
+    std::map<GFace *, std::set<MVertex *>> dead;
     for(int i = 0; i < n0; i++)
-      if(!m.aliveV[i]) dead.insert(_verts[i]);
-    if(!dead.empty()) {
+      if(!m.aliveV[i]) dead[static_cast<GFace *>(_verts[i]->onWhat())].insert(
+          _verts[i]);
+    for(auto &d : dead) {
       std::vector<MVertex *> keep;
-      keep.reserve(_gf->mesh_vertices.size());
-      for(MVertex *v : _gf->mesh_vertices)
-        if(!dead.count(v)) keep.push_back(v);
-      _gf->mesh_vertices.swap(keep);
-      for(MVertex *v : dead) delete v;
+      keep.reserve(d.first->mesh_vertices.size());
+      for(MVertex *v : d.first->mesh_vertices)
+        if(!d.second.count(v)) keep.push_back(v);
+      d.first->mesh_vertices.swap(keep);
+      for(MVertex *v : d.second) delete v;
     }
-    for(MTriangle *t : _gf->triangles) delete t;
-    _gf->triangles.clear();
+    for(GFace *gf : _faces) {
+      for(MTriangle *t : gf->triangles) delete t;
+      gf->triangles.clear();
+    }
     for(std::size_t t = 0; t < m.tri.size(); t++)
-      if(m.aliveT[t])
-        _gf->triangles.push_back(new MTriangle(
+      if(m.aliveT[t] && m.owner[t] >= 0)
+        _faces[m.owner[t]]->triangles.push_back(new MTriangle(
           vtx[m.tri[t][0]], vtx[m.tri[t][1]], vtx[m.tri[t][2]]));
+  }
+
+  bool frozenWhileMeshing(GFace *gf)
+  {
+    return gf->geomType() == GEntity::DiscreteSurface &&
+           !static_cast<discreteFace *>(gf)->haveParametrization();
   }
 
 } // namespace planar
@@ -402,9 +514,10 @@ void smoothPlanarFaceODT(GFace *gf, int iterations)
 {
   if(iterations <= 0) return;
   const double t0 = TimeOfDay();
-  planar::Face face(gf);
+  planar::Face face({gf}, planar::frozenWhileMeshing);
   if(face.empty()) return;
   planar::Mesh m(face.x, face.tri, face.onCurve);
+  face.init(m);
   const int nSlide = CTX::instance()->mesh.boundaryNodeSliding2D ?
                        face.setupSliding(m) :
                        0;

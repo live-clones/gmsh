@@ -1954,7 +1954,10 @@ export function wrapGmsh(Module) {
    * "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node
    * relocation, "QuadQuasiStructured" for quad mesh optimization,
    * "UntangleMeshGeometry" for untangling, "HXT" for tetrahedral
-   * optimisation). If `force' is set apply the optimization also to discrete
+   * optimisation, "ValenceRepair2D" for the valence repair of planar triangle
+   * meshes, as Mesh.ValenceRepair2D does after meshing: the given surfaces in
+   * a plane are repaired together, the triangles of the others that touch
+   * them are kept). If `force' is set apply the optimization also to discrete
    * entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given,
    * only apply the optimizer to the given entities. For HXT optimizer, the
    * `quality' argument should be specified

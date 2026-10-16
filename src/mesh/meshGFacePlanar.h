@@ -6,19 +6,24 @@
 #ifndef MESH_GFACE_PLANAR_H
 #define MESH_GFACE_PLANAR_H
 
-// The triangle mesh of a planar surface as flat arrays in the plane of the
-// surface, for the optimizations that move its nodes (Mesh.ODTSmoothing2D) or
-// also change its connectivity (Mesh.ValenceRepair2D, meshGFaceValence.cpp).
-// The surface is read once and written back once. Nodes on curves and points
-// stay on them; the nodes on curves may slide along their curve, between
-// their two neighbors on it (Mesh.BoundaryNodeSliding2D), except where
-// another mesh uses them or their distribution is imposed.
+// The triangle mesh of a planar surface, or of several surfaces in the same
+// plane, as flat arrays in the plane, for the optimizations that move its
+// nodes (Mesh.ODTSmoothing2D) or also change its connectivity
+// (Mesh.ValenceRepair2D, meshGFaceValence.cpp). The surfaces are read once and
+// written back once. The triangles of the other surfaces of the plane that
+// touch their nodes, when their mesh must not change, are loaded too, frozen:
+// they count in the valences and in the quality of the moves, and are never
+// modified. Nodes on curves and points stay on them; the nodes on curves may
+// slide along their curve, between their two neighbors on it
+// (Mesh.BoundaryNodeSliding2D), when all the surfaces that use them are
+// optimized together and their distribution is not imposed.
 
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <set>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -75,6 +80,12 @@ namespace planar {
     // fixed: the ODT smoother keeps this density
     std::vector<double> h0;
     std::vector<std::vector<int>> vt;
+    // the surface of each triangle (-1: frozen, never modified), the surface
+    // of each node inserted later, and the frozen nodes (used by frozen
+    // triangles only)
+    std::vector<int> owner, nodeOwner;
+    std::vector<char> frozenV;
+    bool frozen(int v) const { return v < (int)frozenV.size() && frozenV[v]; }
     int nv = 0;
     // mean edge length of the input mesh
     double h = 0;
@@ -337,30 +348,47 @@ namespace planar {
   // them
   void smoothODT(Mesh &m, int iters);
 
-  // the triangle mesh of a planar surface in the frame of its plane: read
-  // from the surface, then written back
+  // the triangle mesh of planar surfaces in the frame of their plane: read
+  // from the surfaces, then written back
   class Face {
   public:
-    // the nodes (x, onCurve: on a curve or a point), the triangles, and the
-    // edges of the curves
+    // the nodes (x, onCurve: on a curve or a point, or shared with another
+    // surface), the triangles and their surface (owner, -1 for the frozen
+    // ones), the frozen nodes, and the edges that are never flipped nor split
+    // (the edges of the curves, of the frozen triangles and between two
+    // surfaces)
     std::vector<V2> x;
-    std::vector<char> onCurve;
+    std::vector<char> onCurve, frozenV;
     std::vector<std::array<int, 3>> tri;
+    std::vector<int> owner;
     std::vector<std::pair<int, int>> constrainedEdges;
 
-    explicit Face(GFace *gf);
+    // the surfaces optimized together, and the other surfaces whose
+    // triangles are loaded frozen (only those in the same plane)
+    Face(const std::vector<GFace *> &faces,
+         const std::function<bool(GFace *)> &frozen);
     // no triangles, or no plane
     bool empty() const { return x.empty(); }
-    // let the nodes of the curves of the surface slide along them, except on
-    // the curves whose nodes another mesh uses or whose distribution is
+    // the frozen triangles loaded
+    std::size_t numFrozen() const { return _numFrozen; }
+    // let the nodes of the curves slide along them, except on the curves used
+    // by a surface that is not optimized with them, or whose distribution is
     // imposed; the number of sliding nodes
     int setupSliding(Mesh &m);
+    // the mesh to optimize, with the surface of each triangle
+    void init(Mesh &m) const
+    {
+      m.owner = owner;
+      m.frozenV = frozenV;
+    }
     // write the nodes back (and, if topology, the inserted and removed nodes
     // and the triangles)
     void write(const Mesh &m, bool topology);
 
   private:
-    GFace *_gf;
+    std::vector<GFace *> _faces;
+    std::set<GFace *> _inSet;
+    std::size_t _numFrozen = 0;
     std::vector<MVertex *> _verts;
     std::unordered_map<MVertex *, int> _id;
     SPoint3 _origin;
@@ -370,6 +398,10 @@ namespace planar {
     V2 _to2D(double X, double Y, double Z) const;
     SPoint3 _to3D(V2 p) const;
   };
+
+  // the surfaces whose mesh no optimization changes while a surface is
+  // meshed: the discrete surfaces without parametrization
+  bool frozenWhileMeshing(GFace *gf);
 
 } // namespace planar
 

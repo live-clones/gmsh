@@ -28,6 +28,7 @@
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
+#include "meshGFaceValence.h"
 #include "meshGFaceBDS.h"
 #include "meshGRegion.h"
 #include "meshGRegionHxt.h"
@@ -1070,7 +1071,8 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
-     how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
+     how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly" &&
+     how != "ValenceRepair2D") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
     return;
   }
@@ -1166,6 +1168,9 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
 #else
     Msg::Error("High-order mesh optimization requires the OPTHOM module");
 #endif
+  }
+  else if(how == "ValenceRepair2D") {
+    repairValence2D(std::vector<GFace *>(m->firstFace(), m->lastFace()));
   }
   else if(how == "Laplace2D") {
     for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
