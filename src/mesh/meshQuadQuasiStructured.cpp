@@ -381,6 +381,7 @@ bool generateMeshWithSpecialParameters(GModel *gm,
   int algoRecombine = CTX::instance()->mesh.algoRecombine;
   int algoSubdivide = CTX::instance()->mesh.algoSubdivide;
   int algo = CTX::instance()->mesh.algo2d;
+  int algo3d = CTX::instance()->mesh.algo3d;
   CTX::instance()->mesh.minCurveNodes = std::min(minCurveNodes, 5);
   CTX::instance()->mesh.minCircleNodes = std::min(minCircleNodes, 30);
   CTX::instance()->mesh.lcFactor = lcFactor * scalingOnTriangulation;
@@ -391,6 +392,9 @@ bool generateMeshWithSpecialParameters(GModel *gm,
   CTX::instance()->mesh.algoSubdivide = 0;
   CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
   //    ALGO_2D_MESHADAPT; /* slow but frontal does not always work */
+  // the surface directions of the hex-dominant 3D algorithm are those of
+  // the final surface mesh: not computed on this one
+  if(algo3d == ALGO_3D_RTREE) CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
 
   /* Generate the triangulation with standard gmsh pipeline */
   GenerateMesh(gm, 2);
@@ -403,6 +407,7 @@ bool generateMeshWithSpecialParameters(GModel *gm,
   CTX::instance()->mesh.algoRecombine = algoRecombine;
   CTX::instance()->mesh.algoSubdivide = algoSubdivide;
   CTX::instance()->mesh.algo2d = algo;
+  CTX::instance()->mesh.algo3d = algo3d;
 
   /* Lock again before going back to GenerateMesh() */
   if(shouldLock) CTX::instance()->lock = 1;

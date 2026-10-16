@@ -9,7 +9,9 @@
 class GFace;
 
 // Store, for every node of the surface mesh, the cross field directions and
-// the background mesh size in GFace::storage1..storage4. Only called when
+// the mesh size in GFace::storage1..storage4: those of the scaled cross field
+// guiding the surface mesh if any (PACK, QuadQS), else of the background
+// mesh of the surface. Only called when
 // Mesh.Algorithm3D is the R-tree (hex-dominant) algorithm; the data is
 // consumed by contrib/domhex (directions3D.cpp).
 void directions_storage(GFace *gf);
