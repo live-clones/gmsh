@@ -52,7 +52,8 @@ for t in elementTypes:
     # their gradient (in the reference space of the given element type). A
     # specific interpolation order can be requested using "LagrangeN" and
     # "GradLagrangeN" with N = 1, 2, ... Other supported function spaces include
-    # "H1LegendreN", "GradH1LegendreN", "HcurlLegendreN", "CurlHcurlLegendreN".
+    # "H1LegendreN", "GradH1LegendreN", "HcurlLegendreN", "CurlHcurlLegendreN",
+    # "HdivLegendreN" and "DivHdivLegendreN".
     numComponents, basisFunctions, numOrientations =\
     gmsh.model.mesh.getBasisFunctions(t, localCoords, "Lagrange")
     pp("basis functions at integration points", basisFunctions, 1)

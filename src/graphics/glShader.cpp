@@ -638,6 +638,9 @@ void main()
     GLint _uFireReveal = -1, _uFireRevealOn = -1;
     bool _fireTried = false;
     bool _tried = false;
+    // the program failed to build in a context made for it (kept across
+    // contexts, unlike the rest)
+    bool _failed = false;
 
     // the transparency buffers, the composite program and whether that pass
     // is being drawn; the depth is a copy of the window's, so that opaque
@@ -774,6 +777,14 @@ void main()
       return s;
     }
 
+    bool fail()
+    {
+      _failed = true;
+      Msg::Warning("Drawing with the fixed function pipeline instead of the "
+                   "shaders (General.Shaders) for the rest of the session");
+      return false;
+    }
+
     bool build()
     {
       if(_tried) {
@@ -783,6 +794,7 @@ void main()
         return _program != 0;
       }
       _tried = true;
+      if(_failed) return false;
 
       if(!glApi::haveShaders()) {
         Msg::Warning("This OpenGL context has no shaders: drawing with the "
@@ -791,11 +803,11 @@ void main()
       }
 
       GLuint vs = compile(GL_VERTEX_SHADER, prologue() + vertexBody);
-      if(!vs) return false;
+      if(!vs) return fail();
       GLuint fs = compile(GL_FRAGMENT_SHADER, prologue() + fragmentBody);
       if(!fs) {
         glApi::DeleteShader(vs);
-        return false;
+        return fail();
       }
 
       GLuint p = glApi::CreateProgram();
@@ -828,7 +840,7 @@ void main()
         if(len > 1) glApi::GetProgramInfoLog(p, len, nullptr, &log[0]);
         Msg::Error("Could not link the drawing program: %s", &log[0]);
         glApi::DeleteProgram(p);
-        return false;
+        return fail();
       }
 
       _program = p;
@@ -903,6 +915,8 @@ void main()
   bool available() { return build(); }
 
   bool enabled() { return CTX::instance()->shaders && available(); }
+
+  bool wanted() { return CTX::instance()->shaders && !_failed; }
 
   bool use()
   {

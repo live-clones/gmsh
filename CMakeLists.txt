@@ -52,12 +52,14 @@ opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
+opt(HIERARCHICAL_BASIS "Enable hierarchical basis functions" ${DEFAULT})
 opt(HXT "Enable HXT library (for reparametrization and meshing)" ${DEFAULT})
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
 opt(MESH "Enable mesh module" ${DEFAULT})
 opt(MESQUITE "Enable mesquite" ${DEFAULT})
 opt(METIS "Enable Metis mesh partitioner" ${DEFAULT})
+opt(MTMETIS "Enable multithreaded mt-metis mesh partitioner (requires Metis and OpenMP)" ${DEFAULT})
 opt(MMG "Enable Mmg mesh adaptation interface" ${DEFAULT})
 opt(MPEG_ENCODE "Enable built-in MPEG movie encoder" ${DEFAULT})
 opt(MPI "Enable MPI (experimental, not used for meshing)" OFF)
@@ -118,7 +120,7 @@ if(NOT GMSH_RELEASE)
   find_package(Git)
   if(GIT_FOUND)
     execute_process(COMMAND ${GIT_EXECUTABLE} log -1 --format=%h
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} ERROR_QUIET
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} ERROR_QUIET
                     OUTPUT_VARIABLE GIT_COMMIT_HASH
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif()
@@ -872,6 +874,7 @@ if(HAVE_MESH OR HAVE_SOLVER)
       message(STATUS "Using system version of METIS")
       list(APPEND EXTERNAL_LIBRARIES ${METIS_LIB})
       list(APPEND EXTERNAL_INCLUDES ${METIS_INC})
+      set(METIS_INCLUDE_DIRS ${METIS_INC})
       set_config_option(HAVE_METIS "Metis")
     elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/metis)
       # GKlib's own regex, except with Emscripten, whose C library has one
@@ -882,8 +885,15 @@ if(HAVE_MESH OR HAVE_SOLVER)
       add_subdirectory(contrib/metis)
       include_directories(contrib/metis/include contrib/metis/libmetis
                           contrib/metis/GKlib)
+      set(METIS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/metis/include)
       set_config_option(HAVE_METIS "Metis[contrib]")
     endif()
+  endif()
+  if(ENABLE_MTMETIS AND HAVE_METIS AND HAVE_OPENMP AND NOT WIN32 AND
+     EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/mt-metis)
+    add_subdirectory(contrib/mt-metis)
+    include_directories(contrib/mt-metis/include)
+    set_config_option(HAVE_MTMETIS "MtMetis[contrib]")
   endif()
 endif()
 
@@ -933,6 +943,13 @@ if(HAVE_MESH)
     add_subdirectory(contrib/OctreeSizeField)
     include_directories(contrib/OctreeSizeField)
     set_config_option(HAVE_OCTREE_SIZE_FIELD "OctreeSizeField")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis
+     AND ENABLE_HIERARCHICAL_BASIS)
+    add_subdirectory(contrib/HierarchicalBasis)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis)
+    set_config_option(HAVE_HIERARCHICAL_BASIS "HierarchicalBasis")
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND ENABLE_DOMHEX)
@@ -1529,43 +1546,43 @@ endif()
 # add C functions API
 set(GMSH_SRC ${GMSH_SRC};api/gmshc.cpp)
 
-# force full warnings to encourage everybody to write clean(er) code
+# force full warnings to encourage everybody to write clean(er) code; they are
+# set on the targets below, not on each file: per-file flags all go into the
+# flags.make that every object depends on with the Makefile generator, so that
+# adding a source file would recompile everything
 check_cxx_compiler_flag("-Wall" WALL)
 if(WALL AND NOT MSVC)
-  file(GLOB_RECURSE WALL_SRC src/common/*.cpp src/fltk/*.cpp FunctionSpace/*.cpp
-       src/geo/*.cpp src/graphics/*.cpp src/mesh/*.cpp src/numeric/*.cpp src/parser/*.cpp
-       src/plugin/*.cpp src/post/*.cpp src/solver/*.cpp)
-  set(WF "-Wall")
+  set(WF -Wall)
   check_cxx_compiler_flag("-Wint-to-void-pointer-cast" WCAST)
   if(WCAST)
-    set(WF "${WF} -Wno-int-to-void-pointer-cast")
+    list(APPEND WF -Wno-int-to-void-pointer-cast)
   endif()
   check_cxx_compiler_flag("-Wdeprecated-declarations" WDEPREC)
   if(WDEPREC)
     # macOS deprecates the whole of OpenGL
-    set(WF "${WF} -Wno-deprecated-declarations")
+    list(APPEND WF -Wno-deprecated-declarations)
   endif()
   check_cxx_compiler_flag("-Wmisleading-indentation" WIND)
   if(WIND)
-    set(WF "${WF} -Wno-misleading-indentation")
+    list(APPEND WF -Wno-misleading-indentation)
   endif()
   check_cxx_compiler_flag("-Wno-attributes" WATTR)
   if(WATTR)
     # FIXME: remove this when GCC behaves more intelligently
-    set(WF "${WF} -Wno-attributes")
+    list(APPEND WF -Wno-attributes)
   endif()
   check_cxx_compiler_flag("-Wno-unused-but-set-variable" WUNUSED)
   if(WUNUSED)
-    set(WF "${WF} -Wno-unused-but-set-variable")
+    list(APPEND WF -Wno-unused-but-set-variable)
   endif()
   if(WIN32 OR NOT HAVE_64BIT_SIZE_T)
     # FIXME: remove printf family warnings on 32 bit systems and windows
     check_cxx_compiler_flag("-Wno-format" WFORMAT)
     if(WFORMAT)
-      set(WF "${WF} -Wno-format")
+      list(APPEND WF -Wno-format)
     endif()
   endif()
-  set_compile_flags(WALL_SRC ${WF})
+  set(GMSH_WARN_FLAGS ${WF})
 endif()
 
 # don't issue warnings for contributed libraries and for autogenerated files
@@ -1720,6 +1737,13 @@ endif()
 include_directories(src/common src/fltk src/geo src/graphics src/mesh src/solver
                     src/numeric src/parser src/plugin src/post api
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)
+
+if(HAVE_MTMETIS)
+  # mt-metis was added before all the external includes were known (e.g. the
+  # directory of omp.h): give them to it now, after its own METIS headers
+  target_include_directories(mtmetis PRIVATE ${EXTERNAL_INCLUDES}
+                             ${OpenMP_C_INCLUDE_DIRS})
+endif()
 
 # set this for external codes that might include this CMakeList file
 set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE
@@ -1879,6 +1903,17 @@ if(ENABLE_BUILD_ANDROID)
   target_link_libraries(androidGmsh ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
   add_custom_command(TARGET androidGmsh POST_BUILD COMMAND
                      ${CMAKE_STRIP} ${LIBRARY_OUTPUT_PATH}/libgmsh.so)
+endif()
+
+# full warnings on the C++ files of all the targets compiling the Gmsh sources
+# (the -w flag of contributed and autogenerated files still turns them off)
+if(GMSH_WARN_FLAGS)
+  foreach(TARGET_NAME lib shared gmsh libgmsh androidGmsh)
+    if(TARGET ${TARGET_NAME})
+      target_compile_options(${TARGET_NAME} PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${GMSH_WARN_FLAGS}>")
+    endif()
+  endforeach()
 endif()
 
 # parser target
@@ -2132,7 +2167,7 @@ endif()
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E echo
   "@c This file was generated by cmake: do not edit manually!\n${OPT_TEXI}"
-  OUTPUT_FILE cmake_options.texi)
+  OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake_options.texi")
 
 if(MAKEINFO AND TEXI2PDF)
   add_custom_target(doc COMMAND ${CMAKE_COMMAND} -E tar zcf
@@ -2326,6 +2361,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       endif()
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()
+    #if(HAVE_HIERARCHICAL_BASIS AND HAVE_EIGEN)
+    #  add_subdirectory(contrib/HierarchicalBasis/tests)
+    #endif()
   endif()
   # enable this once we have worked out the path issues on the build machines
   if(0 AND ENABLE_BUILD_DYNAMIC)
@@ -2338,7 +2376,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
         string(REPLACE "\." "_" TEST ${TEST})
         add_test(NAME ${TEST} COMMAND ${PYTHON_EXECUTABLE} ${TESTFILE} -nopopup)
         set_property(TEST ${TEST} APPEND PROPERTY ENVIRONMENT
-                     "PYTHONPATH=${CMAKE_SOURCE_DIR}/api")
+                     "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/api")
         set_property(TEST ${TEST} APPEND PROPERTY ENVIRONMENT
                      "LD_LIBRARY_PATH=${CMAKE_CURRENT_BINARY_DIR}")
         endforeach()
@@ -2368,24 +2406,24 @@ if(ENABLE_COVERAGE)
             --synthesize-missing)
       endif()
     endif()
-    set(COV_RAW ${CMAKE_BINARY_DIR}/coverage.raw.info)
-    set(COV_FILTERED ${CMAKE_BINARY_DIR}/coverage.info)
-    set(COV_HTML ${CMAKE_BINARY_DIR}/coverage)
+    set(COV_RAW ${CMAKE_CURRENT_BINARY_DIR}/coverage.raw.info)
+    set(COV_FILTERED ${CMAKE_CURRENT_BINARY_DIR}/coverage.info)
+    set(COV_HTML ${CMAKE_CURRENT_BINARY_DIR}/coverage)
     add_custom_target(coverage_reset
-      COMMAND ${LCOV} --quiet --directory ${CMAKE_BINARY_DIR} --zerocounters
+      COMMAND ${LCOV} --quiet --directory ${CMAKE_CURRENT_BINARY_DIR} --zerocounters
       COMMENT "Resetting code coverage counters")
     add_custom_target(coverage
-      COMMAND ${LCOV} --quiet --directory ${CMAKE_BINARY_DIR}
-        --base-directory ${CMAKE_SOURCE_DIR} --capture --output-file ${COV_RAW}
+      COMMAND ${LCOV} --quiet --directory ${CMAKE_CURRENT_BINARY_DIR}
+        --base-directory ${CMAKE_CURRENT_SOURCE_DIR} --capture --output-file ${COV_RAW}
         ${LCOV_IGNORE}
-      COMMAND ${LCOV} --quiet --remove ${COV_RAW} "${CMAKE_SOURCE_DIR}/contrib/*"
-        "${CMAKE_BINARY_DIR}/*" "petsc/include/*" "/usr/*" "/opt/*" "/Library/*"
+      COMMAND ${LCOV} --quiet --remove ${COV_RAW} "${CMAKE_CURRENT_SOURCE_DIR}/contrib/*"
+        "${CMAKE_CURRENT_BINARY_DIR}/*" "petsc/include/*" "/usr/*" "/opt/*" "/Library/*"
         "/Applications/*" ${LCOV_IGNORE} --output-file ${COV_FILTERED}
       COMMAND ${GENHTML} --quiet --legend
         --title "Gmsh ${GMSH_VERSION} code coverage" --output-directory ${COV_HTML}
         ${GENHTML_IGNORE} ${COV_FILTERED}
       COMMAND ${CMAKE_COMMAND} -E echo "Coverage report: ${COV_HTML}/index.html"
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       COMMENT "Generating HTML coverage report")
     add_dependencies(coverage gmsh)
   else()

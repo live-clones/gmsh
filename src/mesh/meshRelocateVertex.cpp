@@ -46,10 +46,14 @@ inline double tet_volume(vec3 a, vec3 b, vec3 c, vec3 d)
   return dot((a - d), cross(b - d, c - d)) / 6.;
 }
 
+// signedQuality: the SICN of the elements other than tets keeps its sign, so
+// that inverted ones stay penalized (the hex-dominant meshes); without it its
+// absolute value is taken, as del3d needs for its pyramid apexes
 static double objective_function(double xi, MVertex *ver, double xTarget,
                                  double yTarget, double zTarget,
                                  const std::vector<MElement *> &lt,
-                                 bool onlytet = false)
+                                 bool onlytet = false,
+                                 bool signedQuality = false)
 {
   double x = ver->x();
   double y = ver->y();
@@ -72,8 +76,8 @@ static double objective_function(double xi, MVertex *ver, double xTarget,
       minQual = std::min(Q, minQual);
     }
     else if(!onlytet) {
-      // keep the sign: inverted elements must stay penalized
-      minQual = std::min(lt[i]->minSICNShapeMeasure() * .2, minQual);
+      const double q = lt[i]->minSICNShapeMeasure();
+      minQual = std::min((signedQuality ? q : std::abs(q)) * .2, minQual);
     }
   }
   ver->x() = x;
@@ -143,7 +147,8 @@ static bool Stopping_Rule(double const x0, double const x1, double const tol)
 static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
                                               double yTarget, double zTarget,
                                               const std::vector<MElement *> &lt,
-                                              double const tol, double &q)
+                                              double const tol, double &q,
+                                              bool signedQuality = false)
 {
   const double lambda = 0.5 * (std::sqrt(5.0) - 1.0);
   const double mu = 0.5 * (3.0 - std::sqrt(5.0)); // = 1 - lambda
@@ -152,8 +157,10 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
 
   double x1 = b - lambda * (b - a);
   double x2 = a + lambda * (b - a);
-  double fx1 = objective_function(x1, ver, xTarget, yTarget, zTarget, lt);
-  double fx2 = objective_function(x2, ver, xTarget, yTarget, zTarget, lt);
+  double fx1 = objective_function(x1, ver, xTarget, yTarget, zTarget, lt, false,
+                             signedQuality);
+  double fx2 = objective_function(x2, ver, xTarget, yTarget, zTarget, lt, false,
+                             signedQuality);
 
   if(tol < 0.0) return fx1 > fx2 ? x1 : x2;
 
@@ -165,7 +172,8 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
       x1 = x2;
       fx1 = fx2;
       x2 = b - mu * (b - a);
-      fx2 = objective_function(x2, ver, xTarget, yTarget, zTarget, lt);
+      fx2 = objective_function(x2, ver, xTarget, yTarget, zTarget, lt, false,
+                             signedQuality);
     }
     else {
       b = x2;
@@ -173,7 +181,8 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
       x2 = x1;
       fx2 = fx1;
       x1 = a + mu * (b - a);
-      fx1 = objective_function(x1, ver, xTarget, yTarget, zTarget, lt);
+      fx1 = objective_function(x1, ver, xTarget, yTarget, zTarget, lt, false,
+                             signedQuality);
     }
   }
   // printf("finally : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
@@ -328,7 +337,8 @@ void relocateVertexOfPyramid(MVertex *ver, const std::vector<MElement *> &lt,
 
 static void relocateVertexGolden(MVertex *ver,
                                  const std::vector<MElement *> &lt,
-                                 double relax, double tol)
+                                 double relax, double tol,
+                                 bool signedQuality = false)
 {
   if(ver->onWhat()->dim() != 3) return;
   double x = 0.0, y = 0.0, z = 0.0;
@@ -347,8 +357,10 @@ static void relocateVertexGolden(MVertex *ver,
     N += lt[i]->getNumVertices();
   }
 
-  double NO_MOVE_OBJ = objective_function(0.0, ver, x / N, y / N, z / N, lt);
-  double FULL_MOVE_OBJ = objective_function(1.0, ver, x / N, y / N, z / N, lt);
+  double NO_MOVE_OBJ = objective_function(0.0, ver, x / N, y / N, z / N, lt,
+                                          false, signedQuality);
+  double FULL_MOVE_OBJ = objective_function(1.0, ver, x / N, y / N, z / N, lt,
+                                            false, signedQuality);
   if(FULL_MOVE_OBJ > NO_MOVE_OBJ) {
     ver->x() = x / N;
     ver->y() = y / N;
@@ -357,8 +369,8 @@ static void relocateVertexGolden(MVertex *ver,
   }
 
   double q;
-  double xi =
-    Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N, lt, tol, q);
+  double xi = Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N, lt,
+                                              tol, q, signedQuality);
   ver->x() = (1. - xi) * ver->x() + xi * x / N;
   ver->y() = (1. - xi) * ver->y() + xi * y / N;
   ver->z() = (1. - xi) * ver->z() + xi * z / N;
@@ -543,7 +555,7 @@ void RelocateVertices(GRegion *region, int niter, double tol)
         const int i = list[k];
         if(!active[i]) continue;
         const SPoint3 before = vertices[i]->point();
-        relocateVertexGolden(vertices[i], *elements[i], relax, tol);
+        relocateVertexGolden(vertices[i], *elements[i], relax, tol, true);
         moved[i] = before.distance(vertices[i]->point()) > 1.e-3 * length[i];
       }
     }
@@ -913,22 +925,24 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
   buildVertexToElement(region->prisms, adj);
   buildVertexToElement(region->hexahedra, adj);
 
+  // only the nodes of _vts have all their elements in adj: moving the other
+  // nodes of _tets could invert tets they do not see
   for(int i = 0; i < 10; i++) {
     double relax = (double)i / 10. + 1e-6;
     auto it = adj.begin();
     while(it != adj.end()) {
-      relocateVertexOfPyramid(it->first, it->second, relax);
+      if(_vts.find(it->first) != _vts.end())
+        relocateVertexOfPyramid(it->first, it->second, relax);
       ++it;
     }
   }
-
-  // return;
 
   for(int i = 0; i < niter + 2; i++) {
     auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
     while(it != adj.end()) {
-      relocateVertexGolden(it->first, it->second, relax, tol);
+      if(_vts.find(it->first) != _vts.end())
+        relocateVertexGolden(it->first, it->second, relax, tol);
       ++it;
     }
   }

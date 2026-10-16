@@ -135,11 +135,17 @@ bool Cell::_sortVertexIndices()
   std::pair<MVertex *, char> vi[8];
   for(int i = 0; i < n; i++) vi[i] = std::make_pair(_v[i], (char)i);
 
-  std::sort(vi, vi + n,
-            [](const std::pair<MVertex *, char> &a,
-               const std::pair<MVertex *, char> &b) {
-              return a.first->getNum() < b.first->getNum();
-            });
+  // insertion sort: std::sort makes GCC 14 warn (-Warray-bounds) since it
+  // cannot tell that n <= 8
+  for(int i = 1; i < n; i++) {
+    std::pair<MVertex *, char> p = vi[i];
+    int k = i;
+    while(k > 0 && vi[k - 1].first->getNum() > p.first->getNum()) {
+      vi[k] = vi[k - 1];
+      k--;
+    }
+    vi[k] = p;
+  }
 
   for(int i = 1; i < n; i++) {
     if(vi[i].first->getNum() == vi[i - 1].first->getNum()) {

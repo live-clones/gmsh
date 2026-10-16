@@ -45,8 +45,12 @@ bool drawContextOffscreen::begin(int width, int height, double scale,
                                  bool screen)
 {
   if(width < 1 || height < 1) return false;
-  if(!offscreenContext::makeCurrent(CTX::instance()->shaders)) return false;
-  if(CTX::instance()->shaders) glShader::available();
+  bool core = glShader::wanted();
+  if(!offscreenContext::makeCurrent(core)) return false;
+  // a program that fails to build: the fixed function pipeline, in a context
+  // of its own
+  if(core && !glShader::available() && !offscreenContext::makeCurrent(false))
+    return false;
   if(!screen && !glShader::beginPrintTarget(width, height)) {
     Msg::Error("Could not draw a picture of %dx%d pixels without a window",
                width, height);

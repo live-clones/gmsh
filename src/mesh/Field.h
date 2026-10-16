@@ -108,6 +108,10 @@ public:
   virtual ~Field();
   bool isDeprecated() { return _deprecated; }
   virtual void update() {}
+  // update() for an evaluation outside a meshing pass (the API, the GUI):
+  // within a pass FieldManager::initialize() has called it on every field,
+  // serially, so that the evaluations only read
+  void ensureUpdated();
   int id;
   std::map<std::string, FieldOption *> options;
   std::map<std::string, FieldCallback *> callbacks;

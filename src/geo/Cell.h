@@ -126,7 +126,10 @@ public:
   bool inSubdomain() const { return _domain ? true : false; }
   void getMeshVertices(std::vector<MVertex *> &v) const
   {
-    v.assign(_v, _v + (int)_nv);
+    // element-wise copy: assign() with a range makes GCC 14 warn about a
+    // memmove to a null destination when the vector is empty (-Wnonnull)
+    v.resize(_nv);
+    for(int i = 0; i < _nv; i++) v[i] = _v[i];
   }
 
   void setImmune(bool immune) { _immune = immune; };

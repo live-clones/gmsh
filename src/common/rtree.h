@@ -1655,7 +1655,11 @@ void RTREE_QUAL::ReInsert(Node* a_node, ListNode** a_listNode)
 }
 
 
-// Search in an index tree or subtree for all data retangles that overlap the argument rectangle.
+// Visit the data whose rectangle is at most at the distance whose square is
+// *a_bound2 from the point, nearest rectangles first; the callback can lower
+// *a_bound2. Rectangles at exactly that distance are visited too, so that the
+// callback sees every candidate tied with the best (the order in which tied
+// nodes are popped depends on their addresses)
 RTREE_TEMPLATE
 void RTREE_QUAL::SearchNearest(const ELEMTYPE a_point[NUMDIMS], const ELEMTYPEREAL *a_bound2,
                                void a_callback(DATATYPE a_data, void* a_context), void* a_context)
@@ -1674,11 +1678,11 @@ void RTREE_QUAL::SearchNearest(const ELEMTYPE a_point[NUMDIMS], const ELEMTYPERE
   while(!queue.empty()) {
     Entry e = queue.top();
     queue.pop();
-    if(e.first >= *a_bound2) break; // (all the others are farther)
+    if(e.first > *a_bound2) break; // (all the others are farther)
     Node* node = e.second;
     for(int index = 0; index < node->m_count; ++index) {
       ELEMTYPEREAL d2 = dist2(node->m_branch[index].m_rect);
-      if(d2 >= *a_bound2) continue;
+      if(d2 > *a_bound2) continue;
       if(node->IsInternalNode())
         queue.push(Entry(d2, node->m_branch[index].m_child));
       else

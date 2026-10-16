@@ -15,6 +15,7 @@ class GModel;
 class GRegion;
 class GFace;
 class GEdge;
+class GVertex;
 class MVertex;
 class MLine;
 class MTriangle;
@@ -52,6 +53,24 @@ public:
 };
 
 void MeshDelaunayVolume(std::vector<GRegion *> &delaunay);
+
+// The boundary recovery works on a single region: this gives regions[0] the
+// surfaces and embedded entities of the whole group of connected regions
+// (compound surfaces replacing their members when they are not reclassified),
+// and restores its own lists on destruction
+class regionGroupBoundary {
+private:
+  GRegion *_gr;
+  std::vector<GFace *> _faces;
+  std::vector<GEdge *> _embEdges;
+  std::vector<GVertex *> _embVertices;
+
+public:
+  std::vector<GFace *> allFaces;
+  regionGroupBoundary(std::vector<GRegion *> &regions);
+  ~regionGroupBoundary();
+  GRegion *region() const { return _gr; }
+};
 bool CreateAnEmptyVolumeMesh(GRegion *gr);
 int MeshTransfiniteVolume(GRegion *gr);
 int SubdivideExtrudedMesh(GModel *m);
@@ -68,6 +87,14 @@ GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2,
 bool buildFaceSearchStructure(GModel *model, fs_cont &search,
                               bool onlyTriangles = false);
 bool buildEdgeSearchStructure(GModel *model, es_cont &search);
+
+// Orientation of the boundary mesh of a region: inward[gf] is 1 when the
+// normals of the elements of surface gf (as their nodes order them) point into
+// gr, -1 when they point out of it. The surfaces of each closed shell of the
+// boundary are oriented consistently through their shared edges, and the shell
+// enclosing the largest volume is the outer one. Returns false when the
+// boundary cannot be oriented (inconsistent or non-manifold meshes)
+bool orientRegionBoundary(GRegion *gr, std::map<GFace *, int> &inward);
 
 // hybrid mesh recovery structure
 class splitQuadRecovery {

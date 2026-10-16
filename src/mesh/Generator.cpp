@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <limits>
 #include <stdlib.h>
 #include <algorithm>
 #include <cstdio>
@@ -415,6 +416,45 @@ static double sicnStraightTriangle(const MElement *e)
   return (dp >= 0.) ? iCN : -iCN;
 }
 
+// the same for a straight tetrahedron: 3 det(J) / (|J| |adj(J)|), with J the
+// (constant) jacobian with respect to the regular reference tetrahedron
+static double sicnStraightTetrahedron(const MElement *e)
+{
+  const MVertex *v0 = e->getVertex(0);
+  double u[3][3];
+  for(int i = 0; i < 3; i++) {
+    const MVertex *v = e->getVertex(i + 1);
+    u[i][0] = v->x() - v0->x();
+    u[i][1] = v->y() - v0->y();
+    u[i][2] = v->z() - v0->z();
+  }
+  static const double c1 = 1. / std::sqrt(3.), c2 = 1. / std::sqrt(6.),
+                      c3 = std::sqrt(1.5);
+  double J[3][3]; // J[row][column]
+  for(int k = 0; k < 3; k++) {
+    J[k][0] = u[0][k];
+    J[k][1] = -c1 * u[0][k] + 2. * c1 * u[1][k];
+    J[k][2] = -c2 * (u[0][k] + u[1][k]) + c3 * u[2][k];
+  }
+  const double I[9] = {J[1][1] * J[2][2] - J[1][2] * J[2][1],
+                       J[0][2] * J[2][1] - J[0][1] * J[2][2],
+                       J[0][1] * J[1][2] - J[0][2] * J[1][1],
+                       J[1][2] * J[2][0] - J[1][0] * J[2][2],
+                       J[0][0] * J[2][2] - J[0][2] * J[2][0],
+                       J[0][2] * J[1][0] - J[0][0] * J[1][2],
+                       J[1][0] * J[2][1] - J[1][1] * J[2][0],
+                       J[0][1] * J[2][0] - J[0][0] * J[2][1],
+                       J[0][0] * J[1][1] - J[0][1] * J[1][0]};
+  const double D = J[0][0] * I[0] + J[0][1] * I[3] + J[0][2] * I[6];
+  if(D == 0.) return 0.;
+  double nJ = 0., nI = 0.;
+  for(int k = 0; k < 9; k++) {
+    nJ += J[k / 3][k % 3] * J[k / 3][k % 3];
+    nI += I[k] * I[k];
+  }
+  return 3. * D / std::sqrt(nJ * nI);
+}
+
 static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
 {
   int nthreads = CTX::instance()->numThreads;
@@ -432,8 +472,10 @@ static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
   reduction(+ : qa)
     for(std::size_t i = 0; i < ne; i++) {
       MElement *e = ge->getMeshElement(i);
-      double q = (e->getTypeForMSH() == MSH_TRI_3) ? sicnStraightTriangle(e) :
-                                                     e->minSICNShapeMeasure();
+      const int type = e->getTypeForMSH();
+      double q = (type == MSH_TRI_3) ? sicnStraightTriangle(e) :
+                 (type == MSH_TET_4) ? sicnStraightTetrahedron(e) :
+                                       e->minSICNShapeMeasure();
       qm = std::min(qm, q);
       qa += q;
     }
@@ -504,35 +546,13 @@ static void Mesh0D(GModel *m)
   }
 }
 
-// Curves meshed in parallel draw vertex numbers from a shared counter, so the
-// numbers of different curves interleave depending on thread scheduling. The
-// 2D meshers order boundary vertices by number (MVertexPtrLessThan), which made
-// surface meshes depend on the number of threads. Reassign the same set of
-// numbers in curve order; this is the identity when curves are meshed in
-// sequence.
-static void RenumberCurveVerticesInCurveOrder(GModel *m)
-{
-  std::vector<MVertex *> verts;
-  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it)
-    verts.insert(verts.end(), (*it)->mesh_vertices.begin(),
-                 (*it)->mesh_vertices.end());
-  std::vector<std::size_t> nums(verts.size());
-  for(std::size_t i = 0; i < verts.size(); i++) nums[i] = verts[i]->getNum();
-  std::sort(nums.begin(), nums.end());
-  bool changed = false;
-  for(std::size_t i = 0; i < verts.size(); i++) {
-    if(verts[i]->getNum() == nums[i]) continue;
-    verts[i]->forceNum(nums[i]);
-    changed = true;
-  }
-  if(changed) m->destroyMeshCaches();
-}
-
 static void Mesh1D(GModel *m)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
   m->getFields()->initialize();
+  std::size_t maxVertexBefore, maxElementBefore;
+  m->getMaxMeshNumbersInUse(maxVertexBefore, maxElementBefore);
 
   Msg::StatusBar(true, "Meshing 1D...");
   double t1 = Cpu(), w1 = TimeOfDay();
@@ -598,8 +618,8 @@ static void Mesh1D(GModel *m)
 
   Msg::StopProgressMeter();
 
-  RenumberCurveVerticesInCurveOrder(m);
-
+  // numbered as the threads created them: renumber canonically
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
   CheckEmptyMesh(m, 1);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[0] = w2 - w1;
@@ -672,11 +692,33 @@ static void PrintMesh2dStatistics(GModel *m)
   fclose(statreport);
 }
 
+// The surfaces meshed by their own algorithm (transfinite or extruded) instead
+// of as copies of their master have no periodic node correspondence: find it
+// by matching the nodes through the periodic transformation
+static void MatchPeriodicNodes(GModel *m)
+{
+  double tol = -1.;
+  for(GFace *gf : m->getFaces()) {
+    GEntity *master = gf->getMeshMaster();
+    if(master == gf || gf->affineTransform.size() != 16 ||
+       !gf->correspondingVertices.empty() || !gf->getNumMeshElements())
+      continue;
+    if(tol < 0)
+      tol = CTX::instance()->geom.matchMeshTolerance * m->bounds().diag();
+    if(!gf->updateCorrespondingVertices(tol))
+      Msg::Warning("Mesh of surface %d does not match the mesh of its periodic "
+                   "master surface %d: no periodic node correspondence",
+                   gf->tag(), master->tag());
+  }
+}
+
 static void Mesh2D(GModel *m)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
   m->getFields()->initialize();
+  std::size_t maxVertexBefore, maxElementBefore;
+  m->getMaxMeshNumbersInUse(maxVertexBefore, maxElementBefore);
 
   Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu(), w1 = TimeOfDay();
@@ -738,16 +780,17 @@ static void Mesh2D(GModel *m)
 
       int nPending = 0;
       bool exceptions = false;
-      std::vector<GFace *> temp;
-      temp.insert(temp.begin(), f.begin(), f.end());
-#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
-      for(size_t K = 0; K < temp.size(); K++) {
-        if(exceptions) continue;
+      // the members of a compound are meshed serially: the one that does the
+      // compound job reads and replaces the meshes of the others
+      std::vector<GFace *> temp, members;
+      for(GFace *gf : f) (gf->compound.empty() ? temp : members).push_back(gf);
+      auto meshOne = [&](GFace *gf) {
+        if(exceptions) return;
         int localPending = 0;
-        if(temp[K]->meshStatistics.status == GFace::PENDING) {
+        if(gf->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
           try { // OpenMP forbids leaving block via exception
-            temp[K]->mesh(true);
+            gf->mesh(true);
           } catch(...) {
             exceptions = true;
           }
@@ -758,7 +801,10 @@ static void Mesh2D(GModel *m)
           }
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
-      }
+      };
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+      for(size_t K = 0; K < temp.size(); K++) meshOne(temp[K]);
+      for(GFace *gf : members) meshOne(gf);
       if(exceptions) {
         CTX::instance()->lock = 0;
         throw std::runtime_error(Msg::GetLastError());
@@ -772,6 +818,8 @@ static void Mesh2D(GModel *m)
 
     Msg::StopProgressMeter();
   }
+  MatchPeriodicNodes(m);
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     replaceBadQuadDominantMeshes(m);
@@ -1384,6 +1432,16 @@ static void relocateSlaveVertices(std::vector<GEntity *> &entities,
   }
 }
 
+// the image of a node by an affine transformation
+static SPoint3 transformed(MVertex *v, const std::vector<double> &tfo)
+{
+  if(tfo.size() != 16) return v->point();
+  double src[4] = {v->x(), v->y(), v->z(), 1}, xyz[3] = {0, 0, 0};
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 4; j++) xyz[i] += tfo[4 * i + j] * src[j];
+  return SPoint3(xyz[0], xyz[1], xyz[2]);
+}
+
 void FixPeriodicMesh(GModel *m)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
@@ -1447,8 +1505,13 @@ void FixPeriodicMesh(GModel *m)
         }
         else {
           MLine *srcLine = srcIter->second;
-          for(std::size_t i = 2; i < tgtLine->getNumVertices(); i++)
-            p2p[tgtLine->getVertex(i)] = srcLine->getVertex(i);
+          // The counterpart edge can run in the opposite direction. Its
+          // interior high-order nodes must then be paired in reverse order.
+          const bool reversed = srcLine->getVertex(0) != vtcs[0];
+          const std::size_t numVertices = tgtLine->getNumVertices();
+          for(std::size_t i = 2; i < numVertices; i++)
+          p2p[tgtLine->getVertex(i)] =
+          srcLine->getVertex(reversed ? numVertices + 1 - i : i);
         }
       }
     }
@@ -1534,8 +1597,30 @@ void FixPeriodicMesh(GModel *m)
           // underlying orientation of the geometrical surfaces)
           bool revert = dot(tgtFace.normal(), srcIter->first.normal()) < 0;
           if(revert) srcElmt->reverse();
-          for(std::size_t j = nbVtcs; j < srcElmt->getNumVertices(); j++) {
-            p2p[tgtElmt->getVertex(j)] = srcElmt->getVertex(j);
+          bool sameCorners = true;
+          for(int iVtx = 0; iVtx < nbVtcs; iVtx++)
+            if(srcElmt->getVertex(iVtx) != vtcs[iVtx]) sameCorners = false;
+          if(sameCorners) {
+            for(std::size_t j = nbVtcs; j < srcElmt->getNumVertices(); j++)
+              p2p[tgtElmt->getVertex(j)] = srcElmt->getVertex(j);
+          }
+          else {
+            // the meshes were generated independently (e.g. transfinite or
+            // extruded): match the high-order nodes through the transformation
+            const std::vector<double> &tfo = tgt->affineTransform;
+            for(std::size_t j = nbVtcs; j < tgtElmt->getNumVertices(); j++) {
+              MVertex *best = nullptr;
+              double dmin = 0.;
+              for(std::size_t k = nbVtcs; k < srcElmt->getNumVertices(); k++) {
+                double d = transformed(srcElmt->getVertex(k), tfo)
+                             .distance(tgtElmt->getVertex(j)->point());
+                if(!best || d < dmin) {
+                  best = srcElmt->getVertex(k);
+                  dmin = d;
+                }
+              }
+              if(best) p2p[tgtElmt->getVertex(j)] = best;
+            }
           }
           if(revert) srcElmt->reverse();
         }
@@ -1721,7 +1806,10 @@ void GenerateMesh(GModel *m, int ask)
     for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
                                 CTX::instance()->mesh.optimizeNetgen);
         i++) {
-      if(CTX::instance()->mesh.optimize > i) OptimizeMesh(m);
+      // pdel3d optimizes its meshes itself
+      if(CTX::instance()->mesh.optimize > i &&
+         CTX::instance()->mesh.algo3d != ALGO_3D_PDEL3D)
+        OptimizeMesh(m);
       if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMesh(m, "Netgen");
     }
   }

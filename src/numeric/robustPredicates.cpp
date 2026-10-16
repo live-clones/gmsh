@@ -119,6 +119,15 @@
 #endif
 #endif
 
+// otherwise clang inlines the adaptive stages and every call pays for their stack frame
+#if defined(__GNUC__)
+#define ADAPT_NOINLINE __attribute__((noinline, cold))
+#elif defined(_MSC_VER)
+#define ADAPT_NOINLINE __declspec(noinline)
+#else
+#define ADAPT_NOINLINE
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -613,6 +622,7 @@ static REAL estimate(const int elen, const REAL* const e)
 //   return acx * bcy - acy * bcx;
 // }
 
+ADAPT_NOINLINE
 static REAL orient2dadapt(const REAL* const __restrict__ pa,
                           const REAL* const __restrict__ pb,
                           const REAL* const __restrict__ pc,
@@ -759,6 +769,7 @@ REAL orient2d(const REAL* const __restrict__ pa, const REAL* const __restrict__ 
 /*****************************************************************************/
 
 
+ADAPT_NOINLINE
 static REAL orient3dadapt(const REAL* const __restrict__ pa,
                           const REAL* const __restrict__ pb,
                           const REAL* const __restrict__ pc,
@@ -779,6 +790,9 @@ static REAL orient3dadapt(const REAL* const __restrict__ pa,
   REAL *finnow, *finother, *finswap;
   REAL fin1[192], fin2[192];
   int finlength;
+  // the expansions are always written before being summed, which GCC cannot
+  // see: silence -Wmaybe-uninitialized (reported on estimate())
+  fin1[0] = fin2[0] = 0.0;
 
   ////////////////////////////////////////////////////////
   // To avoid uninitialized warnings reported by valgrind.
@@ -1280,6 +1294,7 @@ REAL orient3d(const REAL* const __restrict__ pa,
 //   return alift * bcdet + blift * cadet + clift * abdet;
 // }
 
+ADAPT_NOINLINE
 static REAL incircleadapt(const REAL* const __restrict__ pa,
                           const REAL* const __restrict__ pb,
                           const REAL* const __restrict__ pc,
@@ -1304,6 +1319,7 @@ static REAL incircleadapt(const REAL* const __restrict__ pa,
   REAL fin1[1152], fin2[1152];
   REAL *finnow, *finother, *finswap;
   int finlength;
+  fin1[0] = fin2[0] = 0.0; // as in orient3dadapt
 
   REAL adxtail, bdxtail, cdxtail, adytail, bdytail, cdytail;
   INEXACT REAL adxadx1, adyady1, bdxbdx1, bdybdy1, cdxcdx1, cdycdy1;
@@ -2230,6 +2246,7 @@ static REAL insphereexact(const REAL* const __restrict__ pa,
 }
 
 
+ADAPT_NOINLINE
 static REAL insphereadapt(const REAL* const __restrict__ pa,
                           const REAL* const __restrict__ pb,
                           const REAL* const __restrict__ pc,
@@ -2259,6 +2276,7 @@ static REAL insphereadapt(const REAL* const __restrict__ pa,
   int ablen, cdlen;
   REAL fin1[1152];
   int finlength;
+  fin1[0] = 0.0; // as in orient3dadapt
 
   REAL aextail, bextail, cextail, dextail;
   REAL aeytail, beytail, ceytail, deytail;

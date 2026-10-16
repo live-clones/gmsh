@@ -468,16 +468,33 @@ on local mesh modifications. This technique makes use of edge swaps,
 splits, and collapses: long edges are split, short edges are collapsed,
 and edges are swapped if a better geometrical configuration is obtained.
 @item
-The ``Delaunay'' algorithm is inspired by the work of the GAMMA team at
-INRIA@footnote{P.-L. George and P. Frey, @emph{Mesh generation}, Hermes,
-Lyon, 2000.}. New points are inserted sequentially at the circumcenter
-of the element that has the largest dimensionless circumradius. The mesh
-is then reconnected using an anisotropic Delaunay criterion.
+The ``Delaunay'' algorithm is a Delaunay refinement
+algorithm@footnote{J. R. Shewchuk, @emph{Delaunay refinement algorithms
+for triangular mesh generation}, Computational Geometry 22(1--3),
+pp. 21--74, 2002.}: new points are inserted sequentially at the
+circumcenter of the element that has the largest dimensionless
+circumradius, with the Bowyer-Watson algorithm@footnote{A. Bowyer,
+@emph{Computing Dirichlet tessellations}, The Computer Journal 24(2),
+pp. 162--166, 1981; D. F. Watson, @emph{Computing the n-dimensional
+Delaunay tessellation with application to Voronoi polytopes}, The
+Computer Journal 24(2), pp. 167--172, 1981.}. The mesh is then
+reconnected using an anisotropic Delaunay criterion, following the work
+of P.-L. George and P. Frey@footnote{P.-L. George and P. Frey, @emph{Mesh
+generation}, Hermes, Lyon, 2000.}.
 @item
 The ``Frontal-Delaunay'' algorithm is inspired by the work of
 S. Rebay@footnote{S. Rebay, @emph{Efficient unstructured mesh generation
 by means of Delaunay triangulation and Bowyer-Watson algorithm},
-J. Comput.  Phys. 106, pp. 25--138, 1993.}.
+J. Comput.  Phys. 106, pp. 25--138, 1993.}. It uses the same
+Bowyer-Watson insertion as the ``Delaunay'' algorithm, but places the
+points with an advancing front: a triangle is active when it is too
+large for the mesh size and is adjacent to the boundary or to a triangle
+that is already small enough. The largest active triangle is treated
+first: a new point is placed on the perpendicular bisector of its edge
+on the front, so as to form with that edge an equilateral triangle of
+the prescribed size (in the metric of the surface). The front thus
+advances from the boundary inwards, leaving layers of nearly equilateral
+triangles. This is the default 2D algorithm.
 @item
 Other experimental algorithms with specific features are also
 available. In particular, ``Frontal-Delaunay for
@@ -501,6 +518,13 @@ mesh size fields better than the ``Frontal-Delaunay''.  When the
 automatically triggered. The ``Automatic'' algorithm uses ``Delaunay''
 for plane surfaces and ``MeshAdapt'' for all other surfaces.
 
+The 2D algorithm is selected with the @code{Mesh.Algorithm} option (1:
+``MeshAdapt'', 2: ``Automatic'', 5: ``Delaunay'', 6:
+``Frontal-Delaunay'', 7: ``BAMG'', 8: ``Frontal-Delaunay for Quads'';
+@pxref{Mesh options}), or with @code{-algo meshadapt}, @code{auto},
+@code{del2d}, @code{front2d}, @code{bamg} or @code{delquad} on the
+command line (@pxref{Gmsh command-line interface}).
+
 Several 3D unstructured algorithms are also available:
 
 @itemize
@@ -508,10 +532,12 @@ Several 3D unstructured algorithms are also available:
 The ``Delaunay'' algorithm is split into three separate steps. First, an
 initial mesh of the union of all the volumes in the model is performed,
 without inserting points in the volume. The surface mesh is then
-recovered using H. Si's boundary recovery algorithm Tetgen/BR. Then a
-three-dimensional version of the 2D Delaunay algorithm described above
-is applied to insert points in the volume to respect the mesh size
-constraints.
+recovered using H. Si's boundary recovery algorithm
+Tetgen/BR@footnote{H. Si, @emph{TetGen, a Delaunay-based quality
+tetrahedral mesh generator}, ACM Transactions on Mathematical Software
+41(2), pp. 1--36, 2015.}. Then a three-dimensional version of the 2D
+Delaunay algorithm described above is applied to insert points in the
+volume to respect the mesh size constraints.
 @item
 The ``Frontal'' algorithm uses J. Schoeberl's Netgen algorithm
 @footnote{J. Schoeberl, @emph{Netgen, an advancing front 2d/3d-mesh
@@ -521,8 +547,22 @@ generator based on abstract rules}, Comput. Visual. Sci., 1, pp. 41--52,
 The ``HXT'' algorithm@footnote{C. Marot, J. Pellerin and J.‐F. Remacle,
 @emph{One machine, one minute, three billion tetrahedra}, International
 Journal for Numerical Methods in Engineering 117.9, pp 967-990, 2019.}
-is a new efficient and parallel reimplementation of the Delaunay
-algorithm.
+is a parallel reimplementation of the Delaunay algorithm: the
+tetrahedra are stored in flat arrays, and the points are inserted and
+the mesh is optimized by threads working on separate pieces of a
+space-filling curve.
+@item
+The ``Parallel Delaunay'' algorithm is an experimental parallel
+algorithm that follows the data layout and the parallelization strategy
+of HXT, with the point insertion strategy of the ``Delaunay''
+algorithm. The surface mesh is
+recovered locally around the missing triangles, with H. Si's global
+boundary recovery as a fallback, and the mesh is optimized by edge
+removals, node relocations and small polyhedron
+reconnections@footnote{J. Liu, M. Sun and S. Chen, @emph{Small polyhedron
+reconnection for mesh improvement and its implementation based on
+advancing front technique}, International Journal for Numerical Methods
+in Engineering 79(8), pp. 1004--1018, 2009.}.
 @item
 Other experimental algorithms with specific features are also available.
 In particular, ``MMG3D''@footnote{C. Dobrzynski, @emph{MMG3D: user
@@ -530,11 +570,20 @@ guide}, INRIA, 2012.}  can generate anisotropic
 tetrahedralizations.
 @end itemize
 
-The ``Delaunay'' algorithm is currently the most robust and is the only
-one that supports the automatic generation of hybrid meshes with
-pyramids. Embedded model entities and general mesh size fields
-(@pxref{Specifying mesh element sizes}) are currently only supported by
-the ``Delaunay'' and ``HXT'' algorithms.
+The 3D algorithm is selected with the @code{Mesh.Algorithm3D} option
+(1: ``Delaunay'', 4: ``Frontal'', 7: ``MMG3D'', 10: ``HXT'', 11:
+``Parallel Delaunay''; @pxref{Mesh options}), or with @code{-algo
+del3d}, @code{front3d}, @code{mmg3d}, @code{hxt} or @code{pdel3d} on the
+command line (@pxref{Gmsh command-line interface}).
+
+The ``Delaunay'' algorithm is currently the most robust. It and the
+``Parallel Delaunay'' algorithm are the only ones that support the
+automatic generation of hybrid meshes with pyramids. Embedded model
+entities and general mesh size fields (@pxref{Specifying mesh element
+sizes}) are currently only supported by the ``Delaunay'', ``HXT'' and
+``Parallel Delaunay'' algorithms. For large meshes, the ``HXT'' and
+``Parallel Delaunay'' algorithms are much faster when several threads
+are used.
 
 When Gmsh is configured with OpenMP support (@pxref{Compiling the source
 code}), most of the meshing steps can be performed in parallel:
@@ -544,9 +593,9 @@ code}), most of the meshing steps can be performed in parallel:
 i.e. curves (resp. surfaces) are each meshed sequentially, but several
 curves (resp. surfaces) can be meshed at the same time.
 @item
-3D meshing using HXT is parallelized using a fine-grained approach,
-i.e. the actual meshing procedure for a single volume is done in
-parallel.
+3D meshing using the HXT or Parallel Delaunay algorithms is parallelized
+using a fine-grained approach, i.e. the actual meshing procedure for a
+single volume is done in parallel.
 @end itemize
 The number of threads can be controlled with the @code{-nt} flag on the
 command line (@pxref{Gmsh command-line interface}), or with the
@@ -831,10 +880,18 @@ various operations on the resulting post-processing views
 (@pxref{Post-processing module}), can export plots in many different
 formats, and can generate complex animations (see e.g. @ref{t8});
 @item
+display large models, meshes and post-processing datasets
+interactively. Gmsh draws with an OpenGL shader pipeline (the classic
+fixed function pipeline remains available), with order-independent
+transparency, clipping planes with capped cuts, an optional ``studio''
+shading with soft shadows, and interactive queries and measurements;
+@item
 run on low end machines and/or machines with no graphical
 interface. Gmsh can be compiled with or without the GUI
 (@pxref{Compiling the source code}), and all versions can be used either
-interactively or directly from the command line;
+interactively or directly from the command line. Images and movies can
+also be rendered off-screen, without a display (e.g. on a compute
+server);
 @item
 configure your preferred options. Gmsh has a large number of
 configuration options that can be set interactively using the GUI,
@@ -866,11 +923,6 @@ available features, and many aspects of the interface could be enhanced
 @item
 While Gmsh can create and manipulate geometries interactively, it is in
 no way a full-fledged replacement for an advanced CAD system.
-@item
-Gmsh uses straightforward OpenGL 1.1 for graphics, without specific
-tricks to handle very large meshes and post-processing datasets
-(decimation and automatic level of detail, culling, advanced
-transparency, etc.).
 @item
 Your complaints about Gmsh here :-)
 @end itemize
@@ -3522,7 +3574,9 @@ the object is deleted.
 
 As explained in @ref{Floating point expressions}, @var{boolean} can
 be used in an expression, in which case it returns the list of tags of
-the highest dimensional entities created by the boolean operation.  See
+the entities resulting from the boolean operation that are not on the
+boundary of other resulting entities, together with the arguments left
+unchanged by the operation.  See
 @url{@value{GITLAB-PREFIX}/examples/boolean/,examples/boolean} for
 examples.
 
@@ -5656,24 +5710,83 @@ Pyramid14:
 
 @subsection High-order elements
 
-The node ordering of a higher order (possibly curved) element is
-compatible with the numbering of low order element (it is a
-generalization). We number nodes in the following order:
-@itemize --
-@item the element principal or corner vertices;
-@item the internal nodes for each edge;
-@item the internal nodes for each face;
-@item the volume internal nodes.
-@end itemize
+The nodes of an element of order @var{p} are ordered with respect to its
+corners, numbered as for the low order elements above:
+@enumerate
+@item
+the corners;
+@item
+the nodes inside the edges, edge after edge in the order of the table
+below: the @var{p}-1 nodes of an edge are equally spaced, from the first
+corner of the edge to the second one;
+@item
+for a volume element, the nodes inside the faces, face after face in the
+order of the table below: the nodes of a face are ordered as the nodes
+inside a triangle or a quadrangle of order @var{p} whose corners are the
+corners of the face, in the order of the table;
+@item
+the nodes inside the element, ordered as all the nodes of an element of
+the same type and of lower order placed inside it: of order @var{p}-3 for
+a triangle, @var{p}-2 for a quadrangle, @var{p}-4 for a tetrahedron,
+@var{p}-2 for a hexahedron and @var{p}-3 for a pyramid. Prisms are the
+exception, see below.
+@end enumerate
 
-The numbering for internal nodes is recursive, i.e. the numbering follows
-that of the nodes of an embedded edge/face/volume of lower order. The
-higher order nodes are assumed to be equispaced. Edges and faces are
-numbered following the lowest order template that generates a single
-high-order on this edge/face. Furthermore, an edge is oriented from the
-node with the lowest to the highest index. The orientation of a face
-is such that the computed normal points outward; the starting point is
-the node with the lowest index.
+The rule thus applies recursively to the nodes inside the faces and
+inside the element. Incomplete (serendipity) elements only have the nodes
+of the corners and of the edges. The low order elements above follow the
+same rule.
+
+@multitable @columnfractions .15 .85
+@headitem Element @tab Edges (first corner, second corner)
+@item Triangle @tab (0,1) (1,2) (2,0)
+@item Quadrangle @tab (0,1) (1,2) (2,3) (3,0)
+@item Tetrahedron @tab (0,1) (1,2) (2,0) (3,0) (3,2) (3,1)
+@item Hexahedron @tab (0,1) (0,3) (0,4) (1,2) (1,5) (2,3) (2,6) (3,7)
+(4,5) (4,7) (5,6) (6,7)
+@item Prism @tab (0,1) (0,2) (0,3) (1,2) (1,4) (2,5) (3,4) (3,5) (4,5)
+@item Pyramid @tab (0,1) (0,3) (0,4) (1,2) (1,4) (2,3) (2,4) (3,4)
+@end multitable
+
+@multitable @columnfractions .15 .85
+@headitem Element @tab Faces (corners)
+@item Tetrahedron @tab (0,2,1) (0,1,3) (0,3,2) (3,1,2)
+@item Hexahedron @tab (0,3,2,1) (0,1,5,4) (0,4,7,3) (1,2,6,5) (2,3,7,6)
+(4,5,6,7)
+@item Prism @tab (0,2,1) (3,4,5) (0,1,4,3) (0,3,5,2) (1,2,5,4)
+@item Pyramid @tab (0,1,4) (3,0,4) (1,2,4) (2,3,4) (0,3,2,1)
+@end multitable
+
+For example, the face (3,1,2) of a tetrahedron of order 4 has 3 nodes
+inside, ordered as the 3 nodes inside a triangle of order 4 whose corners
+0, 1 and 2 are the corners 3, 1 and 2 of the tetrahedron. Note that the
+edges do not always go from the corner of lower number to the corner of
+higher number, nor do the faces always start at the corner of lowest
+number.
+
+The nodes inside a prism are ordered as the product of the nodes inside a
+triangle and of the nodes along a line: for each node of a triangle of
+order @var{p}-3 placed inside the triangular faces, in the order of that
+triangle, come the nodes of a line of order @var{p}-2 placed inside the
+height of the prism, in the order of that line (its two ends first, then
+the nodes between them). For example, the nodes
+66 to 74 inside a prism of order 4 (75 nodes) are, in the reference
+coordinates (@var{u}, @var{v}, @var{w}) of the prism above:
+@example
+@group
+66: (1/4, 1/4, -1/2)   69: (1/2, 1/4, -1/2)   72: (1/4, 1/2, -1/2)
+67: (1/4, 1/4,  1/2)   70: (1/2, 1/4,  1/2)   73: (1/4, 1/2,  1/2)
+68: (1/4, 1/4,    0)   71: (1/2, 1/4,    0)   74: (1/4, 1/2,    0)
+@end group
+@end example
+
+Two elements sharing an edge or a face both order its nodes with respect
+to their own corners: the nodes of a shared edge can thus appear in
+reverse order, and the nodes of a shared face rotated or mirrored.
+
+The reference coordinates of the nodes of an element of any type and order
+are given by @code{gmsh/model/mesh/getElementProperties} (@pxref{Namespace
+gmsh/model/mesh}).
 
 @c -------------------------------------------------------------------------
 @c Legacy formats

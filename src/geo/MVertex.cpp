@@ -482,34 +482,23 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
     param2 = p2[0];
   }
   else if(p1.size() >= 1 && p2.size() >= 1) {
-    int imin = 0;
-    int jmin = 0;
-    {
-      double d = (p2[0].x() - p1[0].x()) * (p2[0].x() - p1[0].x()) +
-                 (p2[0].y() - p1[0].y()) * (p2[0].y() - p1[0].y());
-      for(std::size_t i = 0; i < p2.size(); i++) {
-        double d1 = (p2[i].x() - p1[0].x()) * (p2[i].x() - p1[0].x()) +
-                    (p2[i].y() - p1[0].y()) * (p2[i].y() - p1[0].y());
-        if(d1 < d) {
+    // a node on a seam has several parametric images: take the closest pair,
+    // whatever the order of the two nodes
+    std::size_t imin = 0, jmin = 0;
+    double d = -1.;
+    for(std::size_t i = 0; i < p1.size(); i++) {
+      for(std::size_t j = 0; j < p2.size(); j++) {
+        const double dx = p2[j].x() - p1[i].x(), dy = p2[j].y() - p1[i].y();
+        const double d1 = dx * dx + dy * dy;
+        if(d < 0. || d1 < d) {
           imin = i;
+          jmin = j;
           d = d1;
         }
       }
     }
-    {
-      double d = (p2[0].x() - p1[0].x()) * (p2[0].x() - p1[0].x()) +
-                 (p2[0].y() - p1[0].y()) * (p2[0].y() - p1[0].y());
-      for(std::size_t i = 0; i < p1.size(); i++) {
-        double d1 = (p2[0].x() - p1[i].x()) * (p2[0].x() - p1[i].x()) +
-                    (p2[0].y() - p1[i].y()) * (p2[0].y() - p1[i].y());
-        if(d1 < d) {
-          jmin = i;
-          d = d1;
-        }
-      }
-    }
-    param1 = p1[jmin];
-    param2 = p2[imin];
+    param1 = p1[imin];
+    param2 = p2[jmin];
   }
   else {
     // brute force!

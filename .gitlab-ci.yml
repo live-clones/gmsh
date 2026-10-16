@@ -59,7 +59,7 @@ windows_ci:
     - cd build
     - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 .. && ls"
     - c:\cygwin64\bin\bash -c "/usr/bin/make -j 8"
-    - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 8 --output-on-failure && ls"
+    - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 8 --timeout 600 --output-on-failure && ls"
   tags:
     - windows64
     - shared
@@ -177,7 +177,7 @@ linux-nox-sdk_official_release:
     - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
     - c:\cygwin64\bin\bash -c "/usr/bin/make package -j 4"
     - c:\cygwin64\bin\bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
-    - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 4 --output-on-failure"
+    - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 4 --timeout 600 --output-on-failure"
 
 windows_official_snapshot:
   <<: *windows_official

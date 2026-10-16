@@ -21,6 +21,14 @@
 #include <Eigen/Dense>
 #endif
 
+// GCC 14 sees the AVX stores of Eigen's vectorized assignment into the small
+// vectors below (e.g. of size 3) without the run-time size checks that keep
+// them in bounds
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
+
 template <class scalar> class fullMatrix;
 
 // An interface for vectors of scalars (real or complex, with simple or double
@@ -803,5 +811,9 @@ public:
   bool getOwnData() const { return _ownData; };
   void setOwnData(bool ownData) { _ownData = ownData; };
 };
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #endif

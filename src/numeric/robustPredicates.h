@@ -17,6 +17,10 @@ namespace robustPredicates {
 
 void exactinit(double maxx, double maxy, double maxz);
 
+// static filters of orient3d() and insphere(), set by exactinit(): a plain
+// floating-point determinant larger than them in magnitude has the right sign
+extern double o3dstaticfilter, ispstaticfilter;
+
 double insphere(
   const double* const __restrict__ pa,
   const double* const __restrict__ pb,

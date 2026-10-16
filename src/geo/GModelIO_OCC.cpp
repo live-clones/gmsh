@@ -446,7 +446,9 @@ void OCC_Internals::_unbind(const TopoDS_Vertex &vertex, int tag,
   std::pair<int, int> dimTag(0, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _vertexTag.UnBind(vertex);
-  _tagVertex.UnBind(tag);
+  // the tag may have been rebound to another vertex (see _bind)
+  if(_tagVertex.IsBound(tag) && _tagVertex.Find(tag).IsSame(vertex))
+    _tagVertex.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(0);
   _changed = true;
@@ -465,7 +467,9 @@ void OCC_Internals::_unbind(const TopoDS_Edge &edge, int tag, bool recursive)
   std::pair<int, int> dimTag(1, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _edgeTag.UnBind(edge);
-  _tagEdge.UnBind(tag);
+  // the tag may have been rebound to another edge (see _bind)
+  if(_tagEdge.IsBound(tag) && _tagEdge.Find(tag).IsSame(edge))
+    _tagEdge.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(1);
   if(recursive) {
@@ -494,7 +498,9 @@ void OCC_Internals::_unbind(const TopoDS_Wire &wire, int tag, bool recursive)
   std::pair<int, int> dimTag(-1, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _wireTag.UnBind(wire);
-  _tagWire.UnBind(tag);
+  // the tag may have been rebound to another wire (see _bind)
+  if(_tagWire.IsBound(tag) && _tagWire.Find(tag).IsSame(wire))
+    _tagWire.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(-1);
   if(recursive) {
@@ -523,7 +529,9 @@ void OCC_Internals::_unbind(const TopoDS_Face &face, int tag, bool recursive)
   std::pair<int, int> dimTag(2, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _faceTag.UnBind(face);
-  _tagFace.UnBind(tag);
+  // the tag may have been rebound to another face (see _bind)
+  if(_tagFace.IsBound(tag) && _tagFace.Find(tag).IsSame(face))
+    _tagFace.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(2);
   if(recursive) {
@@ -559,7 +567,9 @@ void OCC_Internals::_unbind(const TopoDS_Shell &shell, int tag, bool recursive)
   std::pair<int, int> dimTag(-2, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _shellTag.UnBind(shell);
-  _tagShell.UnBind(tag);
+  // the tag may have been rebound to another shell (see _bind)
+  if(_tagShell.IsBound(tag) && _tagShell.Find(tag).IsSame(shell))
+    _tagShell.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(-2);
   if(recursive) {
@@ -580,7 +590,9 @@ void OCC_Internals::_unbind(const TopoDS_Solid &solid, int tag, bool recursive)
   std::pair<int, int> dimTag(3, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _solidTag.UnBind(solid);
-  _tagSolid.UnBind(tag);
+  // the tag may have been rebound to another solid (see _bind)
+  if(_tagSolid.IsBound(tag) && _tagSolid.Find(tag).IsSame(solid))
+    _tagSolid.UnBind(tag);
   _toRemove.insert(dimTag);
   _recomputeMaxTag(3);
   if(recursive) {
@@ -744,8 +756,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(solid, t, recursive);
     std::pair<int, int> p(3, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p))
-      outDimTags.push_back(p);
+    if(!exists || !returnNewOnly) outDimTags.push_back(p);
     count++;
   }
   if(highestDimOnly && count) return;
@@ -767,8 +778,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(face, t, recursive);
     std::pair<int, int> p(2, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p))
-      outDimTags.push_back(p);
+    if(!exists || !returnNewOnly) outDimTags.push_back(p);
     count++;
   }
   if(highestDimOnly && count) return;
@@ -790,8 +800,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(edge, t, recursive);
     std::pair<int, int> p(1, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p))
-      outDimTags.push_back(p);
+    if(!exists || !returnNewOnly) outDimTags.push_back(p);
     count++;
   }
   if(highestDimOnly && count) return;
@@ -813,8 +822,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(vertex, t, recursive);
     std::pair<int, int> p(0, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p))
-      outDimTags.push_back(p);
+    if(!exists || !returnNewOnly) outDimTags.push_back(p);
     count++;
   }
 }
@@ -3860,10 +3868,14 @@ static void _printBooleanWarnings(T &algo, const std::string &what)
 static void _filterTags(std::vector<std::pair<int, int>> &outDimTags,
                         int minDim)
 {
+  // keep the entities of dimension >= minDim, each once (the same entity can be
+  // found several times in the result, e.g. a curve embedded in a surface)
   std::vector<std::pair<int, int>> tmp(outDimTags);
+  std::set<std::pair<int, int>> seen;
   outDimTags.clear();
   for(std::size_t i = 0; i < tmp.size(); i++) {
-    if(tmp[i].first >= minDim) outDimTags.push_back(tmp[i]);
+    if(tmp[i].first >= minDim && seen.insert(tmp[i]).second)
+      outDimTags.push_back(tmp[i]);
   }
 }
 
@@ -4096,8 +4108,7 @@ bool OCC_Internals::booleanOperator(
       }
     }
     _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
-               (tag >= 0) ? false : true);
-    _filterTags(outDimTags, minDim);
+               false);
   }
   else {
     // otherwise, try to preserve the numbering of the input shapes that did not
@@ -4161,17 +4172,50 @@ bool OCC_Internals::booleanOperator(
       }
     }
     for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
-    // bind all remaining entities and add the new ones to the returned list
-    _multiBind(result, -1, outDimTags, false, true, true);
-    _filterTags(outDimTags, minDim);
+    // bind all remaining entities
+    _multiBind(result, -1, outDimTags, false, true, false);
     _toPreserve.clear();
   }
+
+  if(tag < 0) {
+    // return the entities of the result that are not on the boundary of another
+    // entity of the result (embedded entities are not), and the arguments left
+    // unchanged
+    NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> onBoundary;
+    const TopAbs_ShapeEnum types[4] = {TopAbs_SOLID, TopAbs_FACE, TopAbs_EDGE,
+                                       TopAbs_VERTEX};
+    for(int k = 0; k < 3; k++) {
+      TopExp_Explorer exp(result, types[k]);
+      for(; exp.More(); exp.Next()) {
+        TopExp_Explorer sub(exp.Current().Oriented(TopAbs_FORWARD),
+                            types[k + 1]);
+        for(; sub.More(); sub.Next()) {
+          TopAbs_Orientation o = sub.Current().Orientation();
+          if(o == TopAbs_FORWARD || o == TopAbs_REVERSED)
+            onBoundary.Add(sub.Current());
+        }
+      }
+    }
+    std::set<std::pair<int, int>> unchanged;
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
+      int dim = inDimTags[i].first;
+      if(!mapDeleted[i] && mapModified[i].Extent() == 0 &&
+         _isBound(dim, mapOriginal[i]))
+        unchanged.insert(std::make_pair(dim, _find(dim, mapOriginal[i])));
+    }
+    std::vector<std::pair<int, int>> tmp;
+    for(auto &p : outDimTags) {
+      if(unchanged.count(p) || !onBoundary.Contains(_find(p.first, p.second)))
+        tmp.push_back(p);
+    }
+    outDimTags.swap(tmp);
+  }
+  _filterTags(outDimTags, minDim);
 
   // return output and input/output correspondence maps
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
-    std::pair<int, int> dimTag(dim, tag);
     std::vector<std::pair<int, int>> dimTags;
     if(mapModified[i].Extent() == 0) { // not modified
       if(_isBound(dim, mapOriginal[i])) {

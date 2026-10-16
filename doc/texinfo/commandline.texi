@@ -59,7 +59,7 @@ Save model topology (Mesh.SaveTopology)
 @item -save_views
 Save all views with the mesh (Mesh.SaveViews)
 @item -algo string
-Select mesh algorithm: auto, meshadapt, del2d, front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)
+Select mesh algorithm: auto, meshadapt, del2d, front2d, delquad, quadqs, initial2d, del3d, pdel3d, front3d, mmg3d, hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)
 @item -smooth int
 Set number of mesh smoothing steps (Mesh.Smoothing)
 @item -order int
