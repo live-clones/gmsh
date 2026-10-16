@@ -25,54 +25,49 @@ trindex tetFacet(const MeshStore& tets, TetIndex t, TetFacetIndex lf) {
   return trindex(v0, v1, v2);
 }
 
-/**
-* This is expensive and requires quite a lot of memory
-*
-* Is it the fastest way to compute these adjacencies. How can we parallelize that ?
-*/
+// The facets matched around their smallest vertex: the tets around each
+// vertex in compressed rows, then each facet looks for the other tet that
+// has its 3 vertices, the tets in parallel (each one writes its own facets)
 void computeTetAdjacencies(MeshStore& store){
 
-  AdjacentTetIndex NO_ADJACENT = store.NO_ADJACENT_ID;
+  const AdjacentTetIndex NO_ADJACENT = store.NO_ADJACENT_ID;
+  const int64_t nbTets = store.tetCorners.size()/4;
+  const std::size_t nbVertices = store.vertices.size()/4;
+  const VertexIndex* corners = store.tetCorners.data();
 
-  unsigned int nbTets = store.tetCorners.size()/4;
-  unsigned int nbVertices = store.vertices.size();
-
-  // 1. Chain corners around vertices
-  vector<TetCornerIndex> nextTetCornerAroundVertex(store.tetCorners.size(), NO_ID);
-  vector<TetCornerIndex> vertexToTetCorner(nbVertices, NO_ID);
-  for (TetIndex t = 0; t < nbTets; ++t) {
-    for (TetVertexIndex lv = 0; lv < 4; ++lv) {
-      TetCornerIndex c = 4*t+lv;
-      VertexIndex v = store.tetCorners[c];
-      nextTetCornerAroundVertex[c] = vertexToTetCorner[v];
-      vertexToTetCorner[v] = c;
-    }
+  vector<std::size_t> start(nbVertices + 1, 0);
+  for (std::size_t c = 0; c < 4*(std::size_t)nbTets; ++c) start[corners[c] + 1]++;
+  for (std::size_t v = 0; v < nbVertices; ++v) start[v + 1] += start[v];
+  vector<TetIndex> tetsAround(4*(std::size_t)nbTets);
+  {
+    vector<std::size_t> pos(start.begin(), start.end() - 1);
+    for (std::size_t c = 0; c < 4*(std::size_t)nbTets; ++c)
+      tetsAround[pos[corners[c]]++] = (TetIndex)(c/4);
   }
 
-  // 2. Get tet adjacencies
-  store.tetAdjacent.resize(4*nbTets, NO_ADJACENT);
-  for (TetIndex t = 0; t < nbTets; ++t) {
+  store.tetAdjacent.assign(4*(std::size_t)nbTets, NO_ADJACENT);
+  AdjacentTetIndex* adjacent = store.tetAdjacent.data();
+#pragma omp parallel for schedule(static)
+  for (int64_t t = 0; t < nbTets; ++t) {
+    const VertexIndex* tc = corners + 4*t;
     for (TetFacetIndex f = 0; f < 4; ++f) {
-      if (store.tetAdjacent[4*t+f] == NO_ADJACENT) {
-        trindex facet = tetFacet(store, t, f);
-        VertexIndex v0 = facet.indices[0];
-
-        for (TetCornerIndex c = vertexToTetCorner[v0]; c!= NO_ID; c = nextTetCornerAroundVertex[c]) {
-          TetIndex tetAroundV0 = c/4;
-          if (tetAroundV0 != t) {
-            // Find the adjacent facet index in tetAroundV0
-            TetFacetIndex adjacentF = NO_ADJACENT;
-            if      (tetFacet(store,tetAroundV0, 0) == facet) adjacentF = 0;
-            else if (tetFacet(store,tetAroundV0, 1) == facet) adjacentF = 1;
-            else if (tetFacet(store,tetAroundV0, 2) == facet) adjacentF = 2;
-            else if (tetFacet(store,tetAroundV0, 3) == facet) adjacentF = 3;
-
-            if (adjacentF != NO_ADJACENT) {
-              store.tetAdjacent[4*t+f] = 4*tetAroundV0 + adjacentF; 
-              store.tetAdjacent[4*tetAroundV0+adjacentF] = 4*t + f;
-              break;
-            }
-          }
+      // the facet opposite to its vertex f
+      const VertexIndex a = tc[Tet::facetVertex[f][0]];
+      const VertexIndex b = tc[Tet::facetVertex[f][1]];
+      const VertexIndex c = tc[Tet::facetVertex[f][2]];
+      const VertexIndex v = std::min(a, std::min(b, c));
+      for (std::size_t k = start[v]; k < start[v + 1]; ++k) {
+        const TetIndex u = tetsAround[k];
+        if (u == (TetIndex)t) continue;
+        const VertexIndex* uc = corners + 4*(std::size_t)u;
+        unsigned int nb = 0, other = 0;
+        for (TetVertexIndex lv = 0; lv < 4; ++lv) {
+          if (uc[lv] == a || uc[lv] == b || uc[lv] == c) nb++;
+          else other = lv;
+        }
+        if (nb == 3) {
+          adjacent[4*t + f] = 4*(AdjacentTetIndex)u + other;
+          break;
         }
       }
     }

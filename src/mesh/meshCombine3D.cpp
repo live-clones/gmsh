@@ -80,42 +80,55 @@ static double hexVolume(const MHexahedron *h)
   return vol;
 }
 
+// The vertices numbered in the order in which the tets first reach them, the
+// number kept in MVertex::_index (-1 for the vertices of the region that no
+// tet reaches, if any, and 0 in the triangles for the ones of the boundary)
 static void createMeshStore(GRegion *gr, HXTCombine::MeshStore &ms,
-                            std::map<MVertex *, uint32_t> &v2c,
                             std::vector<MVertex *> &c2v)
 {
-  for(auto t : gr->tetrahedra) {
-    for(size_t i = 0; i < 4; i++) {
+  const std::vector<MTetrahedron *> &tets = gr->tetrahedra;
+  std::vector<GFace *> faces = gr->faces();
+  for(auto gf : faces)
+    for(auto t : gf->triangles)
+      for(std::size_t i = 0; i < 3; i++) t->getVertex(i)->setIndex(-1);
+  for(auto v : gr->mesh_vertices) v->setIndex(-1);
+  for(auto t : tets)
+    for(std::size_t i = 0; i < 4; i++) t->getVertex(i)->setIndex(-1);
+  c2v.clear();
+  for(auto t : tets) {
+    for(std::size_t i = 0; i < 4; i++) {
       MVertex *v = t->getVertex(i);
-      if(v2c.find(v) == v2c.end()) {
-        v2c[v] = c2v.size();
+      if(v->getIndex() < 0) {
+        v->setIndex(c2v.size());
         c2v.push_back(v);
       }
     }
   }
 
-  for(auto v : c2v) {
-    ms.vertices.push_back(v->x());
-    ms.vertices.push_back(v->y());
-    ms.vertices.push_back(v->z());
-    ms.vertices.push_back(0.0);
-  }
-
-  for(auto t : gr->tetrahedra) {
-    for(size_t i = 0; i < 4; i++) {
-      MVertex *v = t->getVertex(i);
-      ms.tetCorners.push_back(v2c[v]);
+  const int64_t nv = c2v.size(), nt = tets.size();
+  ms.vertices.resize(4 * nv);
+  ms.tetCorners.resize(4 * nt);
+#pragma omp parallel
+  {
+#pragma omp for schedule(static)
+    for(int64_t i = 0; i < nv; i++) {
+      ms.vertices[4 * i] = c2v[i]->x();
+      ms.vertices[4 * i + 1] = c2v[i]->y();
+      ms.vertices[4 * i + 2] = c2v[i]->z();
+      ms.vertices[4 * i + 3] = 0.;
     }
+#pragma omp for schedule(static)
+    for(int64_t t = 0; t < nt; t++)
+      for(std::size_t i = 0; i < 4; i++)
+        ms.tetCorners[4 * t + i] = tets[t]->getVertex(i)->getIndex();
   }
 
-  std::vector<GFace *> faces = gr->faces();
   for(auto gf : faces) {
     for(auto t : gf->triangles) {
       ms.triangleColors.push_back(gf->tag());
-      for(size_t i = 0; i < 3; i++) {
-        MVertex *v = t->getVertex(i);
-        ms.triangleCorners.push_back(v2c[v]);
-      }
+      for(std::size_t i = 0; i < 3; i++)
+        ms.triangleCorners.push_back(
+          std::max(t->getVertex(i)->getIndex(), 0L));
     }
   }
   computeTetAdjacencies(ms);
@@ -135,10 +148,9 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
   int numHex = 0, numTet = 0;
   int debugTrackHexIdx = -1; // EXPERIMENTAL: see GMSH_INSPECT_PRISM_XYZ below
 
-  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   HXTCombine::MeshStore ms;
-  createMeshStore(gr, ms, v2c, c2v);
+  createMeshStore(gr, ms, c2v);
   // ----------------- I D E N T I F Y   H E X E S
   // -------------------------------------
   Msg::Info("Identifying Hexes for region %d", gr->tag());
@@ -958,7 +970,22 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
 
   std::set<MFace, MFaceLessThan> faceToDelete;
 
-  std::unordered_set<MVertex *> all_v;
+  // only a cell face with its 4 vertices on the surface meshes can be made of
+  // 2 boundary triangles: the others are not searched
+  std::vector<char> onBoundary(c2v.size());
+  for(std::size_t i = 0; i < c2v.size(); i++) {
+    GEntity *ge = c2v[i]->onWhat();
+    onBoundary[i] = ge && ge->dim() < 3;
+  }
+  auto faceOnBoundary = [&](const HXTCombine::HXTCombineCell &c,
+                            int (*face)(const int, const int), int l) {
+    for(int j = 0; j < 4; j++)
+      if(!onBoundary[c.vertexes[face(l, j)]]) return false;
+    return true;
+  };
+
+  // the vertices of the elements, by their number (MVertex::_index)
+  std::vector<char> used(c2v.size(), 0);
 
   double worstHexSicnAtBuild = 1e300, worstHexSelectionQuality = 0;
   std::size_t worstHexBuildIdx = 0;
@@ -987,14 +1014,14 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
       MVertex *v5 = c2v[ccs.hexes()[k].vertexes[5]];
       MVertex *v6 = c2v[ccs.hexes()[k].vertexes[6]];
       MVertex *v7 = c2v[ccs.hexes()[k].vertexes[7]];
-      all_v.insert(v0);
-      all_v.insert(v1);
-      all_v.insert(v2);
-      all_v.insert(v3);
-      all_v.insert(v4);
-      all_v.insert(v5);
-      all_v.insert(v6);
-      all_v.insert(v7);
+      used[v0->getIndex()] = 1;
+      used[v1->getIndex()] = 1;
+      used[v2->getIndex()] = 1;
+      used[v3->getIndex()] = 1;
+      used[v4->getIndex()] = 1;
+      used[v5->getIndex()] = 1;
+      used[v6->getIndex()] = 1;
+      used[v7->getIndex()] = 1;
       MHexahedron *h = new MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7);
       volHex += hexVolume(h);
       numHex++;
@@ -1009,6 +1036,8 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
         }
       }
       for(int l = 0; l < 6; l++) {
+        if(!faceOnBoundary(ccs.hexes()[k], MHexahedron::faces_hexa, l))
+          continue;
         MFace f = h->getFace(l);
         MFace f012(f.getVertex(0), f.getVertex(1), f.getVertex(2));
         MFace f230(f.getVertex(2), f.getVertex(3), f.getVertex(0));
@@ -1053,12 +1082,12 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
       MVertex *v3 = c2v[ccs.prisms()[k].vertexes[3]];
       MVertex *v4 = c2v[ccs.prisms()[k].vertexes[4]];
       MVertex *v5 = c2v[ccs.prisms()[k].vertexes[5]];
-      all_v.insert(v0);
-      all_v.insert(v1);
-      all_v.insert(v2);
-      all_v.insert(v3);
-      all_v.insert(v4);
-      all_v.insert(v5);
+      used[v0->getIndex()] = 1;
+      used[v1->getIndex()] = 1;
+      used[v2->getIndex()] = 1;
+      used[v3->getIndex()] = 1;
+      used[v4->getIndex()] = 1;
+      used[v5->getIndex()] = 1;
       MPrism *p = new MPrism(v0, v1, v2, v3, v4, v5);
       gr->prisms.push_back(p);
       // Faces 0 and 1 are the 2 triangular caps: they coincide with
@@ -1067,6 +1096,7 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
       // diagonal-pair-of-triangles-to-quadrangle reconciliation as for
       // hexahedra above.
       for(int l = 2; l < 5; l++) {
+        if(!faceOnBoundary(ccs.prisms()[k], MPrism::faces_prism, l)) continue;
         MFace f = p->getFace(l);
         MFace f012(f.getVertex(0), f.getVertex(1), f.getVertex(2));
         MFace f230(f.getVertex(2), f.getVertex(3), f.getVertex(0));
@@ -1100,10 +1130,10 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
       MVertex *v1 = c2v[ms.tetCorners[4 * k + 1]];
       MVertex *v2 = c2v[ms.tetCorners[4 * k + 2]];
       MVertex *v3 = c2v[ms.tetCorners[4 * k + 3]];
-      all_v.insert(v0);
-      all_v.insert(v1);
-      all_v.insert(v2);
-      all_v.insert(v3);
+      used[v0->getIndex()] = 1;
+      used[v1->getIndex()] = 1;
+      used[v2->getIndex()] = 1;
+      used[v3->getIndex()] = 1;
       MTetrahedron *tet = new MTetrahedron(v0, v1, v2, v3);
       gr->tetrahedra.push_back(tet);
       volTet += tet->getVolume();
@@ -1114,7 +1144,7 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
   {
     std::vector<MVertex *> vr;
     for(auto v : gr->mesh_vertices) {
-      if(all_v.find(v) != all_v.end())
+      if(v->getIndex() >= 0 && used[v->getIndex()])
         vr.push_back(v);
       else {
         delete v;

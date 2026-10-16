@@ -16234,7 +16234,7 @@ long tetgenmesh::lawsonflip3d(flipconstraints *fc)
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-void tetgenmesh::recoverdelaunay()
+void tetgenmesh::recoverdelaunay(bool onlyChanged)
 {
   arraypool *flipqueue, *nextflipqueue, *swapqueue;
   triface tetloop, neightet, *parytet;
@@ -16253,7 +16253,9 @@ void tetgenmesh::recoverdelaunay()
   tetrahedrons->traversalinit();
   tetloop.tet = tetrahedrontraverse();
   while (tetloop.tet != NULL) {
-    for (tetloop.ver = 0; tetloop.ver < 4; tetloop.ver++) {
+    const bool skip =
+      onlyChanged && (elemmarker(tetloop.tet) & UNCHANGEDTET);
+    for (tetloop.ver = 0; tetloop.ver < 4 && !skip; tetloop.ver++) {
       decode(tetloop.tet[tetloop.ver], neightet);
       if (!facemarked(neightet)) {
         flippush(flipstack, &tetloop);
