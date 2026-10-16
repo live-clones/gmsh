@@ -126,7 +126,7 @@ static inline void free_barrier(
   /* check to make sure bar is not in use */
   for (i=0;i<bar->nthreads;++i) {
     while (mybar[i*IDX_OFFSET] != 0) {
-      _mm_pause();  
+      dl_pause();  
     }
   }
 
@@ -168,7 +168,7 @@ static inline void wait_barrier(
   /* wait for my children to reach the barrier */
   while ((lc && BAR_LOAD(mybar[lc*IDX_OFFSET]) != 1) || \
       (rc && BAR_LOAD(mybar[rc*IDX_OFFSET]) != 1)) {
-    _mm_pause();
+    dl_pause();
   }
 
   /* mark that I have reached the barrier */
@@ -176,7 +176,7 @@ static inline void wait_barrier(
 
   /* wait for the root thread to be finished */
   while (BAR_LOAD(mybar[0]) != 1) {
-    _mm_pause();
+    dl_pause();
   }
 
   /* barrier achieved -- now reset */
@@ -184,7 +184,7 @@ static inline void wait_barrier(
   /* wait for my children to reset */
   while ((lc && BAR_LOAD(mybar[lc*IDX_OFFSET]) == 1) || \
       (rc && BAR_LOAD(mybar[rc*IDX_OFFSET]) == 1)) {
-    _mm_pause();
+    dl_pause();
   }
 
   /* reset myself */
@@ -192,7 +192,7 @@ static inline void wait_barrier(
 
   /* wait for the root to reset */
   while (BAR_LOAD(mybar[0]) == 1) {
-    _mm_pause(); 
+    dl_pause(); 
   }
 
   /* so that when a barrier is free'd, we can be sure all threads are done

@@ -18,8 +18,9 @@ The files are unmodified copies of the upstream files, except:
 * src/vseprefine.c: METIS_NodeRefine() gets copies of the weights, parts and
   locks as idx_t arrays instead of casts of the pointers (idx_t is 64-bit in
   Gmsh)
-* domlib/dlmacros.h: _mm_pause() only uses the x86 "pause" instruction on x86
-  ("yield" on ARM)
+* domlib/dlmacros.h, dllcb_funcs.h, dlthread.c: _mm_pause() is renamed
+  dl_pause(), as _mm_pause() is a compiler builtin on x86, and only uses the
+  x86 "pause" instruction on x86 ("yield" on ARM)
 * domlib/dllcb_funcs.h: the lock-free communication lists use __atomic
   release stores and acquire loads (and sequentially consistent termination
   flags) instead of plain stores and volatile flags, which crash on weakly

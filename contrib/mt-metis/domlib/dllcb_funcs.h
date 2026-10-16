@@ -208,7 +208,7 @@ DLLCB_VISIBILITY int DLLCB_PUB(combuffer_finish)(
         /* if someone invalidated me -- re-validate myself */
         DLLCB_SETFLAG(info->finished,1);
       }
-      _mm_pause(); /* don't max out the cpu */
+      dl_pause(); /* don't max out the cpu */
     }
   }
   /* do a final check to make sure I didn't overwrite myself */
@@ -235,7 +235,7 @@ DLLCB_VISIBILITY int DLLCB_PUB(combuffer_finish)(
         DLLCB_SETFLAG(info->finished,0);
         return 0;
       }
-      _mm_pause(); /* don't max out the cpu */
+      dl_pause(); /* don't max out the cpu */
     }
   } while (t != myid);
 

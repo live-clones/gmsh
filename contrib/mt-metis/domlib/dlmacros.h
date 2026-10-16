@@ -206,18 +206,17 @@
         (fabs(((a)-(b))/(fabs(b)+1.0)) < 0.001))))
 
 
-#ifdef _MSC_VER
-/* I think I need to include the xmm- something header... */
-#else
-static inline void _mm_pause(void)
+/* For Gmsh: a spin-wait hint, named dl_pause() as _mm_pause() is a compiler
+ * builtin on x86 */
+static inline void dl_pause(void)
 {
-#if defined(__x86_64__) || defined(__i386__) /* For Gmsh */
-  __asm__ ( "pause;" );
+#if defined(_MSC_VER)
+#elif defined(__x86_64__) || defined(__i386__)
+  __asm__ __volatile__ ( "pause" );
 #elif defined(__aarch64__) || defined(__arm__)
   __asm__ __volatile__ ( "yield" );
 #endif
 }
-#endif
 
    
 #endif

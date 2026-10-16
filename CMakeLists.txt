@@ -52,6 +52,7 @@ opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
+opt(HIERARCHICAL_BASIS "Enable hierarchical basis functions" ${DEFAULT})
 opt(HXT "Enable HXT library (for reparametrization and meshing)" ${DEFAULT})
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
@@ -943,6 +944,13 @@ if(HAVE_MESH)
     set_config_option(HAVE_OCTREE_SIZE_FIELD "OctreeSizeField")
   endif()
 
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis
+     AND ENABLE_HIERARCHICAL_BASIS)
+    add_subdirectory(contrib/HierarchicalBasis)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis)
+    set_config_option(HAVE_HIERARCHICAL_BASIS "HierarchicalBasis")
+  endif()
+
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND ENABLE_DOMHEX)
     add_subdirectory(contrib/domhex)
     include_directories(contrib/domhex)
@@ -1722,6 +1730,13 @@ include_directories(src/common src/fltk src/geo src/graphics src/mesh src/solver
                     src/numeric src/parser src/plugin src/post api
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)
 
+if(HAVE_MTMETIS)
+  # mt-metis was added before all the external includes were known (e.g. the
+  # directory of omp.h): give them to it now, after its own METIS headers
+  target_include_directories(mtmetis PRIVATE ${EXTERNAL_INCLUDES}
+                             ${OpenMP_C_INCLUDE_DIRS})
+endif()
+
 # set this for external codes that might include this CMakeList file
 set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE
     STRING "External include directories" FORCE)
@@ -2338,6 +2353,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       endif()
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()
+    #if(HAVE_HIERARCHICAL_BASIS AND HAVE_EIGEN)
+    #  add_subdirectory(contrib/HierarchicalBasis/tests)
+    #endif()
   endif()
   # enable this once we have worked out the path issues on the build machines
   if(0 AND ENABLE_BUILD_DYNAMIC)
