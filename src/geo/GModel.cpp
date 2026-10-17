@@ -1811,20 +1811,119 @@ std::size_t GModel::getNumMeshParentElements() const
   return n;
 }
 
+// Add the edges or faces of the elements of the entities to the set, numbered
+// in the order they first appear, by several threads: the keys are hashed
+// once, each thread then takes the keys of its share (by hash) and notes
+// where each first appears, and the new keys are appended in that order, so
+// that the numbering does not depend on the number of threads. countOf(e)
+// gives the number of keys of an element, keysOf(e, keys) the keys.
+template <class Set, class C, class F>
+static void createEdgesOrFaces(const std::vector<GEntity *> &entities, Set &set,
+                               C countOf, F keysOf)
+{
+  typedef typename Set::key_type K;
+  // the elements, and where the keys of each start
+  std::vector<MElement *> elements;
+  std::vector<std::size_t> start(1, 0);
+  for(GEntity *ge : entities) {
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      MElement *e = ge->getMeshElement(j);
+      elements.push_back(e);
+      start.push_back(start.back() + countOf(e));
+    }
+  }
+  std::size_t total = start.back(), numElements = elements.size();
+  if(!total) return;
+  int nthreads = CTX::instance()->numThreadsFor(total, 100000);
+  if(nthreads == 1) { // (the same numbering, in one pass)
+    std::vector<K> keys;
+    for(auto e : elements) {
+      keysOf(e, keys);
+      for(auto &key : keys) set.add(std::move(key));
+    }
+    return;
+  }
+  if(!set.empty()) set.index(); // (read by the threads, not changed)
+  auto range = [&](int t, std::size_t &a, std::size_t &b) {
+    a = numElements * t / nthreads;
+    b = numElements * (t + 1) / nthreads;
+  };
+
+  // the hash of each key
+  std::vector<std::size_t> hashes(total);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    typename Set::hasher hash;
+    std::vector<K> keys;
+    std::size_t a, b;
+    range(t, a, b);
+    for(std::size_t i = a; i < b; i++) {
+      keysOf(elements[i], keys);
+      for(std::size_t k = 0; k < keys.size(); k++)
+        hashes[start[i] + k] = hash(keys[k]);
+    }
+  }
+
+  // where each new key first appears
+  std::vector<std::uint8_t> isFirst(total, 0);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    Set mine; // the keys of this share, numbered by where they first appear
+    std::vector<K> keys;
+    for(std::size_t i = 0; i < numElements; i++) {
+      bool built = false;
+      for(std::size_t p = start[i]; p < start[i + 1]; p++) {
+        if(nthreads > 1 && (int)((hashes[p] >> 40) % nthreads) != t) continue;
+        if(!built) keysOf(elements[i], keys);
+        built = true;
+        mine.add(std::move(keys[p - start[i]]), p + 1);
+      }
+    }
+    for(const auto &entry : mine)
+      if(set.empty() || set.indexOf(entry.first) == Set::npos)
+        isFirst[entry.second - 1] = 1;
+  }
+  std::vector<std::size_t>().swap(hashes);
+
+  // the new keys, numbered in order: each thread appends those of its
+  // elements from the number the ones before leave off at
+  std::vector<std::size_t> numFirst(nthreads + 1, 0);
+  for(int t = 0; t < nthreads; t++) {
+    std::size_t a, b;
+    range(t, a, b);
+    numFirst[t + 1] = numFirst[t];
+    for(std::size_t p = start[a]; p < start[b]; p++)
+      numFirst[t + 1] += isFirst[p];
+  }
+  std::size_t first = set.append(numFirst[nthreads]);
+  std::size_t num0 = set.maxNumber();
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    std::vector<K> keys;
+    std::size_t a, b, n = numFirst[t];
+    range(t, a, b);
+    for(std::size_t i = a; i < b; i++) {
+      keysOf(elements[i], keys);
+      for(std::size_t k = 0; k < keys.size(); k++)
+        if(isFirst[start[i] + k])
+          set.set(first + n, std::move(keys[k]), num0 + 1 + n), n++;
+    }
+  }
+  set.setMaxNumber(num0 + numFirst[nthreads]);
+}
+
 void GModel::createMEdges(const std::vector<std::pair<int, int>> &dimTags)
 {
   Msg::StatusBar(true, "Creating mesh edges...");
   std::vector<GEntity *> entities;
   getEntities(entities, dimTags);
-  for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumEdges(); k++) {
-        MEdge edge = e->getEdge(k);
-        addMEdge(std::move(edge));
-      }
-    }
-  }
+  createEdgesOrFaces(
+    entities, _meshEdges,
+    [](MElement *e) { return (std::size_t)e->getNumEdges(); },
+    [](MElement *e, std::vector<MEdge> &keys) {
+      keys.resize(e->getNumEdges());
+      for(int k = 0; k < e->getNumEdges(); k++) keys[k] = e->getEdge(k);
+    });
   Msg::StatusBar(true, "Done creating mesh edges");
 }
 
@@ -1833,15 +1932,13 @@ void GModel::createMFaces(const std::vector<std::pair<int, int>> &dimTags)
   Msg::StatusBar(true, "Creating mesh faces...");
   std::vector<GEntity *> entities;
   getEntities(entities, dimTags);
-  for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumFaces(); k++) {
-        MFace face = e->getFace(k);
-        addMFace(std::move(face));
-      }
-    }
-  }
+  createEdgesOrFaces(
+    entities, _meshFaces,
+    [](MElement *e) { return (std::size_t)e->getNumFaces(); },
+    [](MElement *e, std::vector<MFace> &keys) {
+      keys.resize(e->getNumFaces());
+      for(int k = 0; k < e->getNumFaces(); k++) keys[k] = e->getFace(k);
+    });
   Msg::StatusBar(true, "Done creating mesh faces");
 }
 

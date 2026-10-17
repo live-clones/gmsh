@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <limits>
 #include <atomic>
+#include <type_traits>
 #include <stdexcept>
 #include <variant>
 
@@ -2165,6 +2166,83 @@ static bool skipMSH4Bytes(FILE *fp, std::size_t n)
   return !fseek(fp, (long)n, SEEK_CUR);
 }
 
+// The mesh edges or faces of n records of stride values each (the tag, then
+// the node tags), added to the set: by several threads, or looked up one by
+// one (lookup) when the model had some before the section (e.g. the other
+// partitions of the mesh). False if a node is unknown (the entries added are
+// dropped again).
+template <class Set, class F>
+static bool addEdgesOrFaces(GModel *const model, Set &set,
+                            const std::size_t *data, std::size_t n,
+                            std::size_t stride, bool lookup, F keyOf)
+{
+  typedef typename Set::key_type K;
+  std::size_t numNodes = stride - 1, before = set.size();
+  auto nodes = [&](const std::size_t *d, std::vector<MVertex *> &v) {
+    for(std::size_t j = 0; j < numNodes; j++)
+      if(!(v[j] = model->findMeshVertexByTag(d[j + 1]))) return false;
+    return true;
+  };
+  if(n) model->getMeshVertexByTag(data[1]); // (builds the cache, if need be)
+  bool bad = false;
+  int nthreads = CTX::instance()->numThreadsFor(n, 10000);
+  if(lookup) {
+    // the records that are new, by several threads (the index is read only),
+    // then those added one by one, with the nodes found by the threads (the
+    // lookup of a node is not cheap when the numbering is sparse)
+    set.index();
+    std::vector<std::uint8_t> isNew(n, 0);
+    std::vector<std::size_t> hashes(n);
+    std::vector<MVertex *> verts(n * numNodes);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)             \
+  reduction(| : bad)
+    for(int t = 0; t < nthreads; t++) {
+      std::vector<MVertex *> v(numNodes);
+      for(std::size_t k = n * t / nthreads; k < n * (t + 1) / nthreads && !bad;
+          k++) {
+        const std::size_t *d = &data[stride * k];
+        if(!(bad = !nodes(d, v))) {
+          std::copy(v.begin(), v.end(), &verts[k * numNodes]);
+          K key = keyOf(v);
+          hashes[k] = set.hashOf(key);
+          isNew[k] = (set.indexOf(key, hashes[k]) == Set::npos);
+        }
+      }
+    }
+    std::vector<MVertex *> v(numNodes);
+    set.reserve(before + n);
+    for(std::size_t k = 0; k < n && !bad; k++) {
+      if(!isNew[k]) continue;
+      std::copy(&verts[k * numNodes], &verts[k * numNodes] + numNodes,
+                v.begin());
+      set.add(keyOf(v), data[stride * k], hashes[k]);
+    }
+  }
+  else {
+    std::size_t first = set.append(n), maxNum = 0;
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)             \
+  reduction(max : maxNum) reduction(| : bad)
+    for(int t = 0; t < nthreads; t++) {
+      std::vector<MVertex *> v(numNodes);
+      for(std::size_t k = n * t / nthreads; k < n * (t + 1) / nthreads && !bad;
+          k++) {
+        const std::size_t *d = &data[stride * k];
+        if(!(bad = !nodes(d, v))) {
+          set.set(first + k, keyOf(v), d[0]);
+          maxNum = std::max(maxNum, d[0]);
+        }
+      }
+    }
+    set.setMaxNumber(maxNum);
+  }
+  if(bad) {
+    Msg::Error("Unknown node in the mesh %s of the MSH4 file",
+               std::is_same<K, MEdge>::value ? "edges" : "faces");
+    set.truncate(before);
+  }
+  return !bad;
+}
+
 static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary,
                           bool swap)
 {
@@ -2179,33 +2257,14 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary,
   }
 
   Msg::Info("%zu edge%s", numEdges, numEdges > 1 ? "s" : "");
-  Msg::StartProgressMeter(numEdges);
 
-  // each edge is its tag followed by its 2 node tags; a model that has no
-  // edges yet takes them as they come, one that has (e.g. the other
-  // partitions of the mesh) looks each up
+  // each edge is its tag followed by its 2 node tags
   std::vector<std::size_t> data;
   if(!readMSH4SizeTs(fp, binary, swap, 3 * numEdges, data)) return false;
-  bool append = !model->getNumMEdges();
-  model->reserveMEdges(numEdges);
-  for(std::size_t k = 0; k < numEdges; k++) {
-    const std::size_t *edgeData = &data[3 * k];
-    MVertex *v0 = model->getMeshVertexByTag(edgeData[1]);
-    MVertex *v1 = model->getMeshVertexByTag(edgeData[2]);
-    if(!v0 || !v1) {
-      Msg::Error("Invalid node tags in edge data in MSH4 file");
-      return false;
-    }
-    MEdge me(v0, v1);
-    if(append)
-      model->appendMEdge(std::move(me), edgeData[0]);
-    else
-      model->addMEdge(std::move(me), edgeData[0]);
-    if(numEdges > 100000 && progressDue(k + 1, numEdges))
-      Msg::ProgressMeter(k + 1, true, "Reading edges");
-  }
-
-  return true;
+  return addEdgesOrFaces(
+    model, model->meshEdges(), data.data(), numEdges, 3,
+    model->getNumMEdges() > 0,
+    [](const std::vector<MVertex *> &v) { return MEdge(v[0], v[1]); });
 }
 
 // In MSH 4.2, faces are stored by blocks of faces with the same number of nodes
@@ -2249,19 +2308,16 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
   }
 
   // the records are read by chunks, so that an invalid count is not
-  // allocated; a model that has no faces yet takes them as they come, one
-  // that has (e.g. the other partitions of the mesh) looks each up; those of
-  // an invalid section are dropped again
-  std::size_t numBefore = model->getNumMFaces(), numRead = 0;
-  bool append = !numBefore;
-  model->reserveMFaces(numFaces);
+  // allocated; those of an invalid section are dropped again
+  GModel::MFaceSet &set = model->meshFaces();
+  std::size_t numBefore = set.size(), numRead = 0;
+  set.reserve(numBefore + numFaces);
   auto invalid = [&]() {
     Msg::Warning("Skipping invalid face data in MSH%g file", version);
-    model->truncateMFaces(numBefore);
+    set.truncate(numBefore);
     return true;
   };
   std::vector<std::size_t> data;
-  std::vector<MVertex *> v;
   for(std::size_t block = 0; block < numBlocks; block++) {
     if(version < 4.2)
       header = {blocks41[2 * block], blocks41[2 * block + 1]};
@@ -2270,22 +2326,14 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
     std::size_t numNodes = header[0], numFacesInBlock = header[1];
     if(numNodes < 3 || numFacesInBlock > numFaces - numRead) return invalid();
     std::size_t stride = numNodes + 1;
-    std::size_t chunk = std::max<std::size_t>(1, (1 << 20) / stride);
-    v.resize(numNodes);
+    std::size_t chunk = std::max<std::size_t>(1, (1 << 22) / stride);
     for(std::size_t first = 0; first < numFacesInBlock; first += chunk) {
       std::size_t n = std::min(chunk, numFacesInBlock - first);
       if(!readMSH4SizeTs(fp, binary, swap, stride * n, data)) return invalid();
-      for(std::size_t k = 0; k < n; k++) {
-        const std::size_t *faceData = &data[stride * k];
-        for(std::size_t j = 0; j < numNodes; j++) {
-          v[j] = model->getMeshVertexByTag(faceData[j + 1]);
-          if(!v[j]) return invalid();
-        }
-        if(append)
-          model->appendMFace(MFace(v), faceData[0]);
-        else
-          model->addMFace(MFace(v), faceData[0]);
-      }
+      if(!addEdgesOrFaces(
+           model, set, data.data(), n, stride, numBefore > 0,
+           [](const std::vector<MVertex *> &v) { return MFace(v); }))
+        return invalid();
       numRead += n;
       if(numFaces > 100000) Msg::ProgressMeter(numRead, true, "Reading faces");
     }
@@ -4253,17 +4301,28 @@ static void edgesOrFacesToSave(GModel *const model, const Set &set,
                    orr->owningPartition()) != partitionsToSave.end())
         entities.push_back(orr);
   }
-  std::vector<typename Set::value_type::first_type> keys;
-  subset.clear();
-  for(auto ge : entities) {
-    for(std::size_t k = 0; k < ge->getNumMeshElements(); k++) {
-      edgesOf(ge->getMeshElement(k), keys);
+  std::vector<MElement *> elements;
+  for(auto ge : entities)
+    for(std::size_t k = 0; k < ge->getNumMeshElements(); k++)
+      elements.push_back(ge->getMeshElement(k));
+  // (the lookups are read-only once the index is built)
+  set.index();
+  int nthreads = CTX::instance()->numThreadsFor(elements.size(), 10000);
+  std::vector<std::vector<std::size_t>> found(nthreads);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    std::vector<typename Set::key_type> keys;
+    for(std::size_t j = elements.size() * t / nthreads;
+        j < elements.size() * (t + 1) / nthreads; j++) {
+      edgesOf(elements[j], keys);
       for(auto &key : keys) {
         std::size_t i = set.indexOf(key);
-        if(i != Set::npos) subset.push_back(i);
+        if(i != Set::npos) found[t].push_back(i);
       }
     }
   }
+  subset.clear();
+  for(auto &f : found) subset.insert(subset.end(), f.begin(), f.end());
   std::sort(subset.begin(), subset.end());
   subset.erase(std::unique(subset.begin(), subset.end()), subset.end());
 }

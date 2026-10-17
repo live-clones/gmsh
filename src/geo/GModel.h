@@ -330,21 +330,10 @@ public:
   { return _meshEdges.add(std::move(edge), num); }
   std::size_t addMFace(MFace &&face, std::size_t num = 0)
   { return _meshFaces.add(std::move(face), num); }
-  // append mesh edges or faces known to be new (e.g. read from a file into a
-  // model that has none), without looking for duplicates
-  void appendMEdge(MEdge &&edge, std::size_t num)
-  { _meshEdges.append(std::move(edge), num); }
-  void appendMFace(MFace &&face, std::size_t num)
-  { _meshFaces.append(std::move(face), num); }
-  // drop the mesh edges or faces from the n-th on (e.g. those of a file that
-  // turns out to be invalid)
-  void truncateMEdges(std::size_t n) { _meshEdges.truncate(n); }
-  void truncateMFaces(std::size_t n) { _meshFaces.truncate(n); }
-  // make room for n more mesh edges or faces, before adding them
-  void reserveMEdges(std::size_t n)
-  { _meshEdges.reserve(_meshEdges.size() + n); }
-  void reserveMFaces(std::size_t n)
-  { _meshFaces.reserve(_meshFaces.size() + n); }
+  // the sets themselves, for the readers of mesh files, which append to them
+  // in bulk (see NumberedSet.h)
+  MEdgeSet &meshEdges() { return _meshEdges; }
+  MFaceSet &meshFaces() { return _meshFaces; }
 
   // get number of edges or faces
   std::size_t getNumMEdges() const { return _meshEdges.size(); };
