@@ -1002,7 +1002,7 @@ int GModel::writeMED(const std::string &name, bool saveAll,
       for(auto it = firstFace(); it != lastFace(); it++) {
         if(!saveAll && (*it)->physicals.empty()) continue;
         for(auto p : (*it)->polygons) {
-          for(int j = 0; j < p->getNumPrimaryVertices(); j++)
+          for(std::size_t j = 0; j < p->getNumPrimaryVertices(); j++)
             conn.push_back(p->getVertex(j)->getIndex());
           index.push_back((med_int)conn.size() + 1);
           fam.push_back(families[*it]);

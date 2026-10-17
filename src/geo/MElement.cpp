@@ -1711,7 +1711,7 @@ static void polytopeVTKCell(const MElement *e, std::vector<int> &ints)
 {
   ints.clear();
   if(e->getType() == TYPE_POLYG) {
-    for(int i = 0; i < e->getNumPrimaryVertices(); i++)
+    for(std::size_t i = 0; i < e->getNumPrimaryVertices(); i++)
       ints.push_back((int)e->getVertex(i)->getIndex() - 1);
   }
   else {
