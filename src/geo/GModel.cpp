@@ -232,12 +232,10 @@ void GModel::destroyMeshCaches(bool keepVertexCaches)
       _vertexVectorCache.clear();
       std::vector<MVertex *>().swap(_vertexVectorCache);
       _vertexMapCache.clear();
-      std::map<std::size_t, MVertex *>().swap(_vertexMapCache);
     }
     _elementVectorCache.clear();
     std::vector<std::pair<MElement *, int>>().swap(_elementVectorCache);
     _elementMapCache.clear();
-    std::map<std::size_t, std::pair<MElement *, int>>().swap(_elementMapCache);
     _elementIndexCache.clear();
     std::map<int, int>().swap(_elementIndexCache);
     if(_elementOctree) {
@@ -3047,6 +3045,12 @@ void GModel::_associateEntityWithMeshVertices()
   for(auto it = firstVertex(); it != lastVertex(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->points);
   }
+}
+
+void GModel::_storeVerticesInEntities(TagMap<MVertex *> &vertices)
+{
+  std::map<std::size_t, MVertex *> sorted(vertices.begin(), vertices.end());
+  _storeVerticesInEntities(sorted);
 }
 
 void GModel::_storeVerticesInEntities(

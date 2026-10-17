@@ -23,6 +23,7 @@
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
 #include "NumberedSet.h"
+#include "TagMap.h"
 #include "OverlapManager.h"
 
 template <class scalar> class simpleFunction;
@@ -111,9 +112,9 @@ protected:
   // vertex and element caches to speed-up direct access by tag (mostly
   // used for post-processing I/O)
   std::vector<MVertex *> _vertexVectorCache;
-  std::map<std::size_t, MVertex *> _vertexMapCache;
+  TagMap<MVertex *> _vertexMapCache;
   std::vector<std::pair<MElement *, int>> _elementVectorCache;
-  std::map<std::size_t, std::pair<MElement *, int>> _elementMapCache;
+  TagMap<std::pair<MElement *, int>> _elementMapCache;
   std::map<int, int> _elementIndexCache;
 
   // ghost cell information (stores partitions for each element acting
@@ -185,6 +186,9 @@ protected:
   // store the vertices in the geometrical entity they are associated
   // with, and delete those that are not associated with any entity
   void _storeVerticesInEntities(std::map<std::size_t, MVertex *> &vertices);
+  // (the same for the node cache of a numbering that is not dense, in the
+  // order of the tags)
+  void _storeVerticesInEntities(TagMap<MVertex *> &vertices);
   void _storeVerticesInEntities(std::vector<MVertex *> &vertices);
 
   // store the physical tags in the geometrical entities

@@ -557,7 +557,8 @@ int GModel::_readMSH3(const std::string &name)
     } while(str[0] != '$');
   }
 
-  std::map<std::size_t, MVertex *> vertexMap(_vertexMapCache);
+  std::map<std::size_t, MVertex *> vertexMap(_vertexMapCache.begin(),
+                                             _vertexMapCache.end());
   std::vector<MVertex *> vertexVector(_vertexVectorCache);
 
   // store the elements in their associated elementary entity. If the
