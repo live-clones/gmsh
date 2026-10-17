@@ -23,6 +23,14 @@
 #include <set>
 #include <unordered_map>
 
+// the elements around a vertex, as a range of a VertexToElementCSR
+struct ElementSpan {
+  MElement *const *e;
+  std::size_t n;
+  std::size_t size() const { return n; }
+  MElement *operator[](std::size_t i) const { return e[i]; }
+};
+
 using vec3 = std::array<double, 3>;
 inline double dot(const vec3 &a, const vec3 &b)
 {
@@ -49,10 +57,10 @@ inline double tet_volume(vec3 a, vec3 b, vec3 c, vec3 d)
 // signedQuality: the SICN of the elements other than tets keeps its sign, so
 // that inverted ones stay penalized (the hex-dominant meshes); without it its
 // absolute value is taken, as del3d needs for its pyramid apexes
+template <class Elements>
 static double objective_function(double xi, MVertex *ver, double xTarget,
                                  double yTarget, double zTarget,
-                                 const std::vector<MElement *> &lt,
-                                 bool onlytet = false,
+                                 const Elements &lt, bool onlytet = false,
                                  bool signedQuality = false)
 {
   double x = ver->x();
@@ -144,9 +152,10 @@ static bool Stopping_Rule(double const x0, double const x1, double const tol)
   return std::abs(x1 - x0) < tol;
 }
 
+template <class Elements>
 static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
                                               double yTarget, double zTarget,
-                                              const std::vector<MElement *> &lt,
+                                              const Elements &lt,
                                               double const tol, double &q,
                                               bool signedQuality = false)
 {
@@ -335,8 +344,8 @@ void relocateVertexOfPyramid(MVertex *ver, const std::vector<MElement *> &lt,
   }
 }
 
-static void relocateVertexGolden(MVertex *ver,
-                                 const std::vector<MElement *> &lt,
+template <class Elements>
+static void relocateVertexGolden(MVertex *ver, const Elements &lt,
                                  double relax, double tol,
                                  bool signedQuality = false)
 {
@@ -476,25 +485,62 @@ void RelocateVertices(GFace *gf, int niter, double tol)
 // at the same time, the colors one after the other. After the first pass,
 // a vertex moves again only if it, or a vertex of one of its elements, has
 // moved: in the regular parts of the mesh, the first pass is enough.
-void RelocateVertices(GRegion *region, int niter, double tol, int nthreads)
+// true if the elements around a vertex are all at least as good as qTet
+// (gamma of the tets) and qOther (SICN of the others): moving the vertex would
+// hardly raise the minimum the smoothing maximizes
+template <class Elements>
+static bool goodElements(const Elements &lt, double qTet, double qOther)
+{
+  for(std::size_t i = 0; i < lt.size(); i++) {
+    MElement *e = lt[i];
+    if(e->getNumVertices() == 4) {
+      double V;
+      const double q = qmTetrahedron::gamma(
+        e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
+        e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+        e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
+        e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(), &V);
+      if(V > 0 || q < qTet) return false;
+    }
+    else if(e->minSICNShapeMeasure() < qOther)
+      return false;
+  }
+  return true;
+}
+
+void RelocateVertices(GRegion *region, int niter, double tol, int nthreads,
+                      bool skipGoodVertices)
 {
   if(!niter) return;
 
-  v2t_cont adj;
-  buildVertexToElement(region->tetrahedra, adj);
-  buildVertexToElement(region->pyramids, adj);
-  buildVertexToElement(region->prisms, adj);
-  buildVertexToElement(region->hexahedra, adj);
+  if(nthreads <= 0)
+    nthreads = CTX::instance()->mesh.maxNumThreads3D > 0 ?
+                 CTX::instance()->mesh.maxNumThreads3D :
+                 CTX::instance()->numThreadsFor(region->getNumMeshElements(),
+                                                1000);
 
-  // the vertices that move (inside the region), in the order of their numbers
+  // the elements around each vertex, the vertices by increasing number and
+  // the elements in the order of the lists below (as a v2t_cont)
+  VertexToElementCSR adj;
+  adj.add(region->tetrahedra);
+  adj.add(region->pyramids);
+  adj.add(region->prisms);
+  adj.add(region->hexahedra);
+  adj.finalize();
+
+  // the vertices that move (inside the region), numbered in MVertex::_index
+  // (-1 for the others)
   std::vector<MVertex *> vertices;
-  std::vector<const std::vector<MElement *> *> elements;
-  std::unordered_map<MVertex *, int> index;
-  for(auto &it : adj) {
-    if(it.first->onWhat()->dim() != 3) continue;
-    index[it.first] = (int)vertices.size();
-    vertices.push_back(it.first);
-    elements.push_back(&it.second);
+  std::vector<ElementSpan> elements;
+  for(std::size_t k = 0; k < adj.numVertices(); k++) {
+    MVertex *v = adj.vertex(k);
+    if(v->onWhat()->dim() != 3) {
+      v->setIndex(-1);
+      continue;
+    }
+    v->setIndex((long)vertices.size());
+    vertices.push_back(v);
+    elements.push_back({adj.elements(k), adj.numElements(k)});
   }
   const int n = (int)vertices.size();
   if(!n) return;
@@ -502,15 +548,19 @@ void RelocateVertices(GRegion *region, int niter, double tol, int nthreads)
   // the moving vertices sharing an element with each, and a length
   std::vector<std::vector<int> > neighbors(n);
   std::vector<double> length(n, 0.);
+#pragma omp parallel for schedule(dynamic, 1024) num_threads(nthreads)
   for(int i = 0; i < n; i++) {
     const SPoint3 p = vertices[i]->point();
-    for(MElement *e : *elements[i])
+    const ElementSpan &lt = elements[i];
+    for(std::size_t k = 0; k < lt.size(); k++) {
+      MElement *e = lt[k];
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
         MVertex *v = e->getVertex(j);
         length[i] = std::max(length[i], p.distance(v->point()));
-        auto it = index.find(v);
-        if(it != index.end() && it->second != i) neighbors[i].push_back(it->second);
+        const long w = v->getIndex();
+        if(w >= 0 && w != i) neighbors[i].push_back((int)w);
       }
+    }
     std::sort(neighbors[i].begin(), neighbors[i].end());
     neighbors[i].erase(std::unique(neighbors[i].begin(), neighbors[i].end()),
                        neighbors[i].end());
@@ -538,14 +588,16 @@ void RelocateVertices(GRegion *region, int niter, double tol, int nthreads)
   {
     std::set<int> types;
     for(int i = 0; i < n; i++)
-      for(MElement *e : *elements[i]) types.insert(e->getTypeForMSH());
+      for(std::size_t k = 0; k < elements[i].size(); k++)
+        types.insert(elements[i][k]->getTypeForMSH());
     for(int type : types) BasisFactory::getCondNumBasis(type);
   }
 
-  if(nthreads <= 0)
-    nthreads = CTX::instance()->mesh.maxNumThreads3D > 0 ?
-                 CTX::instance()->mesh.maxNumThreads3D :
-                 CTX::instance()->numThreadsFor(n, 1000);
+  // the vertices whose elements are all good are left where they are: most
+  // vertices of a hex-dominant mesh, which barely move, while the worst
+  // elements are smoothed as much (the quality of the elements of a pipe
+  // junction unchanged to 1e-3, in half the time)
+  const double qTet = 0.5, qOther = 0.9;
   std::vector<char> active(n, 1), moved(n, 0);
   for(int pass = 0; pass < niter + 2; pass++) {
     double relax = std::min((double)(pass + 1) / niter, 1.0);
@@ -555,8 +607,10 @@ void RelocateVertices(GRegion *region, int niter, double tol, int nthreads)
       for(int k = 0; k < (int)list.size(); k++) {
         const int i = list[k];
         if(!active[i]) continue;
+        if(skipGoodVertices && goodElements(elements[i], qTet, qOther))
+          continue;
         const SPoint3 before = vertices[i]->point();
-        relocateVertexGolden(vertices[i], *elements[i], relax, tol, true);
+        relocateVertexGolden(vertices[i], elements[i], relax, tol, true);
         moved[i] = before.distance(vertices[i]->point()) > 1.e-3 * length[i];
       }
     }
@@ -960,6 +1014,6 @@ void RelocateVerticesOfPyramids(std::vector<GRegion *> &regions, int niter,
 void RelocateVertices(std::vector<GRegion *> &regions, int niter, double tol)
 {
   for(std::size_t k = 0; k < regions.size(); k++) {
-    RelocateVertices(regions[k], niter, tol, 0);
+    RelocateVertices(regions[k], niter, tol, 0, false);
   }
 }

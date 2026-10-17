@@ -948,7 +948,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DSmoothing
 Number of vertex relocation steps after the 3d recombination (2 more passes are made) (experimental)@*
-Default value: @code{3}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RefineSteps

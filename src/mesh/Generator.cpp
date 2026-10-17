@@ -1066,7 +1066,8 @@ static void Mesh3D(GModel *m)
         RelocateVertices(gr, CTX::instance()->mesh.recombine3DSmoothing, 1.e-2,
                          CTX::instance()->mesh.maxNumThreads3D > 0 ?
                            CTX::instance()->mesh.maxNumThreads3D :
-                           Msg::GetMaxThreads());
+                           Msg::GetMaxThreads(),
+                         true);
       }
     }
 #endif

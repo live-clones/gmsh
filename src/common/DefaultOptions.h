@@ -1766,7 +1766,7 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum quality of the candidate hexahedra of the 3d recombination: "
     "fewer candidates take less time and memory, but the worse hexahedra the "
     "selection could still use are left as tetrahedra (experimental)" },
-  { F|O, "Recombine3DSmoothing" , opt_mesh_recombine3d_smoothing , 3 ,
+  { F|O, "Recombine3DSmoothing" , opt_mesh_recombine3d_smoothing , 1 ,
     "Number of vertex relocation steps after the 3d recombination (2 more "
     "passes are made) (experimental)" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
