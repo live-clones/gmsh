@@ -7,7 +7,6 @@
 #include <functional>
 #include <iostream>
 #include <iomanip>
-#include <mutex>
 #include <set>
 #include <sstream>
 #include <stack>
@@ -22,6 +21,7 @@
 #include "compute_candidate_cells.h"
 
 #include "hxt_omp.h"
+#include <cstdint>
 
 /**
 * \author Jeanne Pellerin
@@ -501,6 +501,167 @@ namespace {
     std::vector<std::size_t> limits;
   };
 
+  // A set of hexes (by a key of 8 vertices) shared by the threads
+  // The vertices along a Morton curve, for the threads to visit them by
+  // blocks of neighbours
+  std::vector<VertexIndex> spatialOrder(const TetMeshForCombining& M)
+  {
+    const VertexIndex n = M.nbVertices();
+    vec3 lo = M.point(0), hi = lo;
+    for (VertexIndex v = 1; v < n; ++v)
+      for (int k = 0; k < 3; ++k) {
+        lo[k] = std::min(lo[k], M.point(v)[k]);
+        hi[k] = std::max(hi[k], M.point(v)[k]);
+      }
+    auto spread = [](std::uint64_t x) {
+      x &= 0x1fffff;
+      x = (x | x << 32) & 0x1f00000000ffffull;
+      x = (x | x << 16) & 0x1f0000ff0000ffull;
+      x = (x | x << 8) & 0x100f00f00f00f00full;
+      x = (x | x << 4) & 0x10c30c30c30c30c3ull;
+      x = (x | x << 2) & 0x1249249249249249ull;
+      return x;
+    };
+    std::vector<std::pair<std::uint64_t, VertexIndex> > keys(n);
+#pragma omp parallel for schedule(static)
+    for (int i = 0; i < (int)n; ++i) {
+      std::uint64_t code = 0;
+      for (int k = 0; k < 3; ++k) {
+        const double t = hi[k] > lo[k] ? (M.point(i)[k] - lo[k]) / (hi[k] - lo[k]) : 0.;
+        code |= spread((std::uint64_t)(t * 2097151.)) << k;
+      }
+      keys[i] = std::make_pair(code, (VertexIndex)i);
+    }
+    std::sort(keys.begin(), keys.end());
+    std::vector<VertexIndex> order(n);
+    for (VertexIndex i = 0; i < n; ++i) order[i] = keys[i].second;
+    return order;
+  }
+
+  // The hexes a thread accepted lately, in an open addressing table emptied
+  // when half full: a hex is found from its corners, close along the Morton
+  // curve, mostly by the thread that found it first, which skips it then. Without locks, and what the
+  // other threads accept is proposed again, removed when they are gathered.
+  class RecentHexes {
+  public:
+    typedef std::array<VertexIndex, 8> Hex8;
+    RecentHexes() : slots_(capacity), used_(capacity, 0) {}
+    bool contains(const Hex8& h) const
+    {
+      for (std::size_t i = hash(h);; i = (i + 1) & (capacity - 1)) {
+        if (!used_[i]) return false;
+        if (slots_[i] == h) return true;
+      }
+    }
+    void insert(const Hex8& h)
+    {
+      if (2 * size_ >= capacity) {
+        std::fill(used_.begin(), used_.end(), 0);
+        size_ = 0;
+      }
+      std::size_t i = hash(h);
+      while (used_[i]) {
+        if (slots_[i] == h) return;
+        i = (i + 1) & (capacity - 1);
+      }
+      slots_[i] = h;
+      used_[i] = 1;
+      ++size_;
+    }
+
+  private:
+    static constexpr std::size_t capacity = 1 << 17;
+    static std::size_t hash(const Hex8& h)
+    {
+      std::uint64_t x = 1469598103934665603ull;
+      for (VertexIndex v : h) x = (x ^ v) * 1099511628211ull;
+      return (std::size_t)(x ^ (x >> 29)) & (capacity - 1);
+    }
+    std::vector<Hex8> slots_;
+    std::vector<unsigned char> used_;
+    std::size_t size_ = 0;
+  };
+
+  // The symmetries of the cube on the labellings of a hex (a, b, c, d at the
+  // bottom, e, f, g, h above them): the labelling s(h)[i] = h[s[i]], indexed
+  // by s[0], s[1] (a neighbour of s[0]) and s[3] (another one), which
+  // determine it, with whether it is a rotation (24) or a reflection (24)
+  struct HexSymmetries {
+    unsigned char perm[8][8][8][8];
+    bool rotation[8][8][8];
+    bool exists[8][8][8];
+    HexSymmetries()
+    {
+      static const unsigned char rotations[24][8] = {
+        {0, 1, 2, 3, 4, 5, 6, 7}, {0, 3, 7, 4, 1, 2, 6, 5}, {0, 4, 5, 1, 3, 7, 6, 2},
+        {1, 0, 4, 5, 2, 3, 7, 6}, {1, 2, 3, 0, 5, 6, 7, 4}, {1, 5, 6, 2, 0, 4, 7, 3},
+        {2, 1, 5, 6, 3, 0, 4, 7}, {2, 3, 0, 1, 6, 7, 4, 5}, {2, 6, 7, 3, 1, 5, 4, 0},
+        {3, 0, 1, 2, 7, 4, 5, 6}, {3, 2, 6, 7, 0, 1, 5, 4}, {3, 7, 4, 0, 2, 6, 5, 1},
+        {4, 0, 3, 7, 5, 1, 2, 6}, {4, 5, 1, 0, 7, 6, 2, 3}, {4, 7, 6, 5, 0, 3, 2, 1},
+        {5, 1, 0, 4, 6, 2, 3, 7}, {5, 4, 7, 6, 1, 0, 3, 2}, {5, 6, 2, 1, 4, 7, 3, 0},
+        {6, 2, 1, 5, 7, 3, 0, 4}, {6, 5, 4, 7, 2, 1, 0, 3}, {6, 7, 3, 2, 5, 4, 0, 1},
+        {7, 3, 2, 6, 4, 0, 1, 5}, {7, 4, 0, 3, 6, 5, 1, 2}, {7, 6, 5, 4, 3, 2, 1, 0}};
+      static const unsigned char mirror[8] = {0, 3, 2, 1, 4, 7, 6, 5};
+      for (int i = 0; i < 8; ++i)
+        for (int j = 0; j < 8; ++j)
+          for (int k = 0; k < 8; ++k) exists[i][j][k] = false;
+      for (const auto& r : rotations) {
+        for (int m = 0; m < 2; ++m) {
+          unsigned char s[8];
+          for (int i = 0; i < 8; ++i) s[i] = m ? r[mirror[i]] : r[i];
+          std::copy(s, s + 8, perm[s[0]][s[1]][s[3]]);
+          rotation[s[0]][s[1]][s[3]] = !m;
+          exists[s[0]][s[1]][s[3]] = true;
+        }
+      }
+    }
+  };
+  const HexSymmetries& hexSymmetries()
+  {
+    static const HexSymmetries symmetries;
+    return symmetries;
+  }
+
+  // the positions of the smallest vertex of a labelling and of its neighbours
+  // by increasing vertex
+  void smallestCorner(const std::array<VertexIndex, 8>& h, int& i0, int n[3])
+  {
+    static const int neighbours[8][3] = {{1, 3, 4}, {0, 2, 5}, {1, 3, 6}, {0, 2, 7},
+                                         {0, 5, 7}, {1, 4, 6}, {2, 5, 7}, {3, 4, 6}};
+    i0 = (int)(std::min_element(h.begin(), h.end()) - h.begin());
+    std::copy(neighbours[i0], neighbours[i0] + 3, n);
+    std::sort(n, n + 3, [&h](int x, int y) { return h[x] < h[y]; });
+  }
+  std::array<VertexIndex, 8> applySymmetry(const std::array<VertexIndex, 8>& h,
+                                           const unsigned char* s)
+  {
+    std::array<VertexIndex, 8> c;
+    for (int i = 0; i < 8; ++i) c[i] = h[s[i]];
+    return c;
+  }
+
+  // the smallest of the 24 labellings of a hex given by the rotations of the
+  // cube (the smallest vertex first, then its smallest neighbour): the
+  // labelling of a hex whatever the corner it is found from
+  std::array<VertexIndex, 8> canonicalHex(const std::array<VertexIndex, 8>& h)
+  {
+    const HexSymmetries& S = hexSymmetries();
+    int i0, n[3];
+    smallestCorner(h, i0, n);
+    const int third = S.exists[i0][n[0]][n[1]] && S.rotation[i0][n[0]][n[1]] ? n[1] : n[2];
+    return applySymmetry(h, S.perm[i0][n[0]][third]);
+  }
+
+  // the same over the mirror labellings too: the hex itself, whatever its
+  // orientation (8 vertices may form several hexes)
+  std::array<VertexIndex, 8> hexKey(const std::array<VertexIndex, 8>& h)
+  {
+    const HexSymmetries& S = hexSymmetries();
+    int i0, n[3];
+    smallestCorner(h, i0, n);
+    return applySymmetry(h, S.perm[i0][n[0]][n[1]]);
+  }
+
   // the tests computeAllPrisms makes on its way to the prism (a,b,c,d,e,f)
   bool passesPrismTests(const TetMeshForCombining& M,
                         const std::array<VertexIndex, 6>& v, double minQ)
@@ -634,10 +795,12 @@ void HXTCombineCellStore::computeGuidedHexes(double minQuality,
   const int nbThreads = omp_get_max_threads();
   typedef std::array<VertexIndex, 8> Hex8;
   ProposalsByThread<std::vector<std::pair<Hex8, Hex8> > > found(nbThreads);
-
-#pragma omp parallel for schedule(dynamic, 256)
-  for (int a0 = 0; a0 < (int)M.nbVertices(); ++a0) {
-    const VertexIndex a = (VertexIndex)a0;
+  // the corners of a hex visited by the same thread, mostly
+  const std::vector<VertexIndex> order = spatialOrder(M);
+  std::vector<RecentHexes> recent(nbThreads);
+#pragma omp parallel for schedule(dynamic, 4096)
+  for (int a0 = 0; a0 < (int)order.size(); ++a0) {
+    const VertexIndex a = order[a0];
     const double size = sizes[a];
     if (!(size > 0.)) continue;
     if (startVertices && !(*startVertices)[a]) continue;
@@ -732,7 +895,7 @@ void HXTCombineCellStore::computeGuidedHexes(double minQuality,
       // the hex found, and fails as computeAllHex's tests would)
       unsigned int labellings = faceTests[0][1][sx][sy][cx][cy] &
                                 faceTests[0][2][sx][sz][cx][cz] &
-                                faceTests[1][2][sy][sz][cy][cz]; if (labellings)
+                                faceTests[1][2][sy][sz][cy][cz];
       if ((labellings & 1) &&
           !(M.hexCornerQuality(a, b, d, e) >= minQuality &&
             M.hexCornerQuality(b, c, a, f) >= minQuality &&
@@ -758,6 +921,10 @@ void HXTCombineCellStore::computeGuidedHexes(double minQuality,
       std::sort(sorted.begin(), sorted.end());
       if (std::adjacent_find(sorted.begin(), sorted.end()) != sorted.end())
         continue;
+      // already accepted from another corner (the tests at a differ from a
+      // corner to the other: a hex is kept if it passes them from one)
+      const Hex8 key = hexKey(hex);
+      if (recent[thread].contains(key)) continue;
       // the tests at g, the 3 opposite faces shared by both labellings; the
       // octant may be left-handed: then the mirrored labelling
       auto cornersAtG = [&](VertexIndex b, VertexIndex d, VertexIndex f, VertexIndex h) {
@@ -775,11 +942,15 @@ void HXTCombineCellStore::computeGuidedHexes(double minQuality,
         std::swap(hex[1], hex[3]);
         std::swap(hex[5], hex[7]);
       }
-      found.add(thread, std::make_pair(sorted, hex));
+      // once, in a labelling independent of the corner (and of the thread);
+      // of the hexes on the same 8 vertices, the one of smallest labelling is
+      // kept below
+      recent[thread].insert(key);
+      found.add(thread, std::make_pair(sorted, canonicalHex(hex)));
     }
   }
 
-  // a hex is found from up to its 8 corners
+  // in the order of their sorted vertices
   std::vector<std::pair<Hex8, Hex8> > all = found.gather();
   // nor the hexes already there
   if (!hexes().empty()) {
