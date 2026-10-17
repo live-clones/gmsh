@@ -550,7 +550,11 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   // QuadQS keeps its own background triangulation scaling.
   const double edgeScaling =
     packing ? 1. : CTX::instance()->mesh.quadqsScalingOnTriangulation;
-  if(!surfaceMeshed) { generateMeshWithSpecialParameters(gm, edgeScaling); }
+  if(!surfaceMeshed) {
+    const double w = TimeOfDay(), c = Cpu();
+    generateMeshWithSpecialParameters(gm, edgeScaling);
+    AddMeshStageTime("background mesh", TimeOfDay() - w, Cpu() - c);
+  }
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
   bool overwrite = true;
@@ -584,7 +588,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   int failedCrossFields = 0;
   /* Per GFace computations, in parallel */
   {
-    Msg::Info(
+    Msg::Debug(
       "- %s sizemap method: %s (%i), expect midpoint subdivision: %i, "
       "scaling on edge length: %f",
       method, nameOfSizeMapMethod(qqsSizemapMethod).c_str(),
@@ -606,7 +610,10 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     global_size_map.reserve(3 * ntris);
 
     int nthreads = crossFieldHeatSolverUsesMumps() ? 1 : getNumThreads();
-#pragma omp parallel for schedule(dynamic) num_threads(nthreads) reduction(+ : failedCrossFields)
+    const double tCrossFields = TimeOfDay(), cCrossFields = Cpu();
+    int nbCrossFields = 0;
+    std::size_t nbCrossFieldTriangles = 0;
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads) reduction(+ : failedCrossFields, nbCrossFields, nbCrossFieldTriangles)
     for(size_t f = 0; f < faces.size(); ++f) {
       GFace *gf = faces[f];
 
@@ -635,10 +642,12 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       double thresholdNormConvergence = 1.e-2;
       int nbBoundaryExtensionLayer = 1;
       int verbosity = 0;
-      Msg::Info("- Face %i/%li: compute cross field (%li triangles, %li B.C. "
-                "edges, %i diffusion levels) ...",
-                gf->tag(), faces.size(), triangles.size(), lines.size(),
-                nbDiffusionLevels);
+      Msg::Debug("- Face %i/%li: compute cross field (%li triangles, %li B.C. "
+                 "edges, %i diffusion levels) ...",
+                 gf->tag(), faces.size(), triangles.size(), lines.size(),
+                 nbDiffusionLevels);
+      nbCrossFields++;
+      nbCrossFieldTriangles += triangles.size();
       int scf = computeCrossFieldWithHeatEquation(
         N, triangles, lines, triEdgeTheta, nbDiffusionLevels,
         thresholdNormConvergence, nbBoundaryExtensionLayer, verbosity);
@@ -771,6 +780,13 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         //    localSizemap, "sizemap_f"+std::to_string(gf->tag()));
       }
     }
+    Msg::Info("Cross field on %d surface%s (%zu triangles, %zu singularities, "
+              "Wall %gs)",
+              nbCrossFields, nbCrossFields == 1 ? "" : "s",
+              nbCrossFieldTriangles, global_singularity_list.size(),
+              TimeOfDay() - tCrossFields);
+    AddMeshStageTime("cross field", TimeOfDay() - tCrossFields,
+                     Cpu() - cCrossFields);
   }
 
   if(failedCrossFields) {

@@ -33,6 +33,10 @@ struct FrameSelectionStatistics {
   std::size_t nbResidualHexes = 0;
   std::size_t nbFreeTets = 0;
   std::size_t nbProposedPrisms = 0;
+  // wall and CPU times of the proposal of the candidate cells and of their
+  // selection
+  double wallCandidates = 0., cpuCandidates = 0.;
+  double wallSelection = 0., cpuSelection = 0.;
 };
 
 /**

@@ -32,6 +32,7 @@
 #include "GmshMessage.h"
 #include "Numeric.h"
 #include "OS.h"
+#include "Generator.h"
 #include "robustPredicates.h"
 #include "meshGRegionHxt.h"
 #include "meshGRegionParallelDelaunay.h"
@@ -800,7 +801,7 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     return locate(hint, x, y, z);
   };
 
-  double t0 = Cpu();
+  double t0 = TimeOfDay(), c0 = Cpu();
   for(const FlatPoint &p : seeds) {
     uint32_t idx = (uint32_t)pts.size();
     pts.push_back(p);
@@ -818,8 +819,8 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     if(parent.limit != -1 && parent.layer >= parent.limit) continue;
 
     if(count % 1000 == 0)
-      Msg::Info("%d points inserted -- queue size %d", (int)pts.size(),
-                (int)(queue.size() - qhead));
+      Msg::Debug("%d points inserted -- queue size %d", (int)pts.size(),
+                 (int)(queue.size() - qhead));
     count++;
 
     // 6 candidate spawns along +-(local frame axes), exactly as
@@ -880,8 +881,9 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     }
   }
 
-  Msg::Info("- Region %i: flat filler inserted %d points (%.3f seconds)",
-            gr->tag(), (int)pts.size(), Cpu() - t0);
+  Msg::Info("Region %d: %d points inserted by the flat filler (Wall %gs)",
+            gr->tag(), (int)pts.size(), TimeOfDay() - t0);
+  AddMeshStageTime("flat filler", TimeOfDay() - t0, Cpu() - c0);
 
   // Defensive near-duplicate cleanup: the spacing check above rejects
   // candidates closer than k1*h to an existing point, but a handful of
@@ -961,9 +963,21 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
                            Msg::GetMaxThreads();
     std::vector<MVertex *> vertices;
     const int algo = CTX::instance()->mesh.recombine3DDelaunay;
-    if(algo ? !meshGRegionParallelDelaunayWithPoints(gr, xyz, vertices,
-                                                     algo == 2) :
-              !meshGRegionHxtWithPoints(gr, xyz, nthreads, vertices)) {
+    // the messages of the tetrahedralizer are for its debugging here
+    const int verbosity = Msg::GetVerbosity();
+    if(verbosity < 99) Msg::SetVerbosity(std::min(verbosity, 3));
+    const double t1 = TimeOfDay(), c1 = Cpu();
+    const bool ok =
+      algo ? !meshGRegionParallelDelaunayWithPoints(gr, xyz, vertices,
+                                                    algo == 2) :
+             !meshGRegionHxtWithPoints(gr, xyz, nthreads, vertices);
+    Msg::SetVerbosity(verbosity);
+    AddMeshStageTime("tetrahedralization", TimeOfDay() - t1, Cpu() - c1);
+    if(ok) {
+      Msg::Info("Region %d: %zu tetrahedra (%s, Wall %gs)", gr->tag(),
+                gr->tetrahedra.size(),
+                algo == 2 ? "pdel3d, optimized" : algo ? "pdel3d" : "HXT",
+                TimeOfDay() - t1);
       for(std::size_t i = 0; i < interior.size(); i++)
         keepFrame(vertices[i], pts[interior[i]]);
       Frame_field::clear();

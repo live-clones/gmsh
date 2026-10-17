@@ -5214,7 +5214,8 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
     opt.sprQualityFactor = CTX::instance()->mesh.optimizeReconnectionThreshold;
     opt.sprMaxPoints = CTX::instance()->mesh.optimizeReconnectionPoints;
     opt.sprMaxSearchNodes = CTX::instance()->mesh.optimizeReconnectionSearch;
-    opt.verbosity = verbosity;
+    // the tets of the given points are an intermediate mesh, combined next
+    opt.verbosity = points ? 0 : verbosity;
     pdel3d::optimize(m, opt);
     if(Msg::GetVerbosity() > 5) m.verify(false);
     Msg::Info("Done optimizing mesh (Wall %gs)", TimeOfDay() - t3);

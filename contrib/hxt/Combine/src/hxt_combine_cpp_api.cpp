@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
+#include <ctime>
+#include <functional>
 #include <map>
 #include <set>
 #include <sstream>
@@ -1201,25 +1204,45 @@ namespace HXTCombine {
       return (std::size_t)std::count(v.begin(), v.end(), true);
     };
 
-    resetSelection();
+    // the times of the candidates and of the selection
+    auto timed = [](double& wall, double& cpu, const std::function<void()>& f) {
+      const auto w = std::chrono::steady_clock::now();
+      const std::clock_t c = std::clock();
+      f();
+      wall += std::chrono::duration<double>(std::chrono::steady_clock::now() - w).count();
+      cpu += double(std::clock() - c) / CLOCKS_PER_SEC;
+    };
+    auto candidates = [&](const std::function<void()>& f) {
+      timed(stats.wallCandidates, stats.cpuCandidates, f);
+    };
+    auto selection = [&](const std::function<void()>& f) {
+      timed(stats.wallSelection, stats.cpuSelection, f);
+    };
+
+    selection([&] { resetSelection(); });
     // 2 neighbours along each axis: one misses the hexes of curved lattices
-    computeGuidedHexes(minQuality, frames, sizes, nullptr, 2);
+    candidates([&] { computeGuidedHexes(minQuality, frames, sizes, nullptr, 2); });
     stats.nbProposedHexes = hexes().size();
-    selectCells(HEX);
+    selection([&] { selectCells(HEX); });
     stats.nbSelectedProposedHexes = nbSelectedHexes();
 
     // more neighbours where the frames leave tets
-    std::vector<bool> fv = freeVertices();
-    stats.nbFreeVertices = count(fv);
-    computeGuidedHexes(minQuality, frames, sizes, &fv, 3, 2);
+    std::vector<bool> fv;
+    candidates([&] {
+      fv = freeVertices();
+      stats.nbFreeVertices = count(fv);
+      computeGuidedHexes(minQuality, frames, sizes, &fv, 3, 2);
+    });
     stats.nbResidualHexes = hexes().size() - stats.nbProposedHexes;
-    selectCells(HEX);
+    selection([&] { selectCells(HEX); });
 
     if (prisms) {
-      stats.nbFreeTets = count(selectedTets());
-      computeGuidedPrisms(minQuality, frames, sizes, selectedTets());
+      candidates([&] {
+        stats.nbFreeTets = count(selectedTets());
+        computeGuidedPrisms(minQuality, frames, sizes, selectedTets());
+      });
       stats.nbProposedPrisms = this->prisms().size();
-      selectCells(PRISM);
+      selection([&] { selectCells(PRISM); });
     }
     if (statistics) *statistics = stats;
   }

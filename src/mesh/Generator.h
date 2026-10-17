@@ -6,6 +6,8 @@
 #ifndef GENERATOR_H
 #define GENERATOR_H
 
+#include <string>
+
 class GModel;
 class GRegion;
 
@@ -17,5 +19,8 @@ void AdaptMesh(GModel *m);
 void FixPeriodicMesh(GModel *m);
 void GetStatistics(double stat[50], double quality[3][101] = 0,
                    bool visibleOnly = false);
+// the wall and CPU times of a stage of the current mesh generation (added to
+// those of the same stage), reported with the summary of a hex-dominant mesh
+void AddMeshStageTime(const std::string &stage, double wall, double cpu);
 
 #endif

@@ -546,6 +546,80 @@ static void Mesh0D(GModel *m)
   }
 }
 
+// the stages of the current mesh generation and their wall and CPU times
+static std::vector<std::pair<std::string, std::pair<double, double> > >
+  meshStageTimes;
+static int generateMeshDepth = 0;
+
+void AddMeshStageTime(const std::string &stage, double wall, double cpu)
+{
+  for(auto &s : meshStageTimes) {
+    if(s.first == stage) {
+      s.second.first += wall;
+      s.second.second += cpu;
+      return;
+    }
+  }
+  meshStageTimes.push_back(std::make_pair(stage, std::make_pair(wall, cpu)));
+}
+
+// the wall and CPU times since (wall, cpu) minus those of the stages added
+// since the first ones, as a stage of its own
+static void addRemainingStageTime(const std::string &stage, std::size_t first,
+                                  double wall, double cpu)
+{
+  double w = TimeOfDay() - wall, c = Cpu() - cpu;
+  for(std::size_t i = first; i < meshStageTimes.size(); i++) {
+    w -= meshStageTimes[i].second.first;
+    c -= meshStageTimes[i].second.second;
+  }
+  AddMeshStageTime(stage, std::max(w, 0.), std::max(c, 0.));
+}
+
+// the minimum SICN of the volume elements of a hex-dominant mesh, by type,
+// and the times of the stages of its generation
+static void PrintHexDominantMeshQuality(GModel *m, double wall, double cpu)
+{
+  std::vector<MElement *> elements[4]; // hexahedra, prisms, pyramids, tets
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    GRegion *gr = *it;
+    elements[0].insert(elements[0].end(), gr->hexahedra.begin(),
+                       gr->hexahedra.end());
+    elements[1].insert(elements[1].end(), gr->prisms.begin(), gr->prisms.end());
+    elements[2].insert(elements[2].end(), gr->pyramids.begin(),
+                       gr->pyramids.end());
+    elements[3].insert(elements[3].end(), gr->tetrahedra.begin(),
+                       gr->tetrahedra.end());
+  }
+  if(elements[0].empty()) return;
+  const char *names[4] = {"hexahedra", "prisms", "pyramids", "tetrahedra"};
+  Msg::Info("Quality (minimum SICN):");
+  for(int k = 0; k < 4; k++) {
+    const std::vector<MElement *> &e = elements[k];
+    if(e.empty()) continue;
+    double qmin = 1., sum = 0.;
+    long bad = 0;
+#pragma omp parallel for reduction(min : qmin) reduction(+ : sum, bad)
+    for(long i = 0; i < (long)e.size(); i++) {
+      const double q = e[i]->minSICNShapeMeasure();
+      qmin = std::min(qmin, q);
+      sum += q;
+      bad += q < 0.1;
+    }
+    Msg::Info("  %-10s %9zu   min %.3f   mean %.3f   %ld below 0.1", names[k],
+              e.size(), qmin, sum / e.size(), bad);
+  }
+  std::size_t nbTrihedra = 0;
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
+    nbTrihedra += (*it)->trihedra.size();
+  if(nbTrihedra) Msg::Info("  %-10s %9zu", "trihedra", nbTrihedra);
+  Msg::Info("Timings:                    Wall (s)    CPU (s)");
+  for(auto &s : meshStageTimes)
+    Msg::Info("  %-24s %9.2f  %9.2f", s.first.c_str(), s.second.first,
+              s.second.second);
+  Msg::Info("  %-24s %9.2f  %9.2f", "total", TimeOfDay() - wall, Cpu() - cpu);
+}
+
 static void Mesh1D(GModel *m)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
@@ -1063,18 +1137,33 @@ static void Mesh3D(GModel *m)
         hexDominant = true;
         meshCombine3D(gr, &frames);
         // all the cores, as the combination, unless Mesh.MaxNumThreads3D
+        const double tSmoothing = TimeOfDay(), cSmoothing = Cpu();
         RelocateVertices(gr, CTX::instance()->mesh.recombine3DSmoothing, 1.e-2,
                          CTX::instance()->mesh.maxNumThreads3D > 0 ?
                            CTX::instance()->mesh.maxNumThreads3D :
                            Msg::GetMaxThreads(),
                          true);
+        AddMeshStageTime("smoothing", TimeOfDay() - tSmoothing,
+                         Cpu() - cSmoothing);
+        if(CTX::instance()->mesh.recombine3DSmoothing > 0)
+          Msg::Info("Region %d: vertices relocated (%d passes, Wall %gs)",
+                    gr->tag(), CTX::instance()->mesh.recombine3DSmoothing + 2,
+                    TimeOfDay() - tSmoothing);
       }
     }
 #endif
   }
 
-  if(hexDominant)
+  if(hexDominant) {
+    const double tTrihedra = TimeOfDay(), cTrihedra = Cpu();
     MakeHybridHexTetMeshConformalThroughTriHedron(m);
+    AddMeshStageTime("trihedra", TimeOfDay() - tTrihedra, Cpu() - cTrihedra);
+    std::size_t nbTrihedra = 0;
+    for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
+      nbTrihedra += (*it)->trihedra.size();
+    Msg::Info("%zu trihedra on the unmatched quadrangular faces (Wall %gs)",
+              nbTrihedra, TimeOfDay() - tTrihedra);
+  }
 
   // ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
@@ -1664,7 +1753,7 @@ static bool quantize1DIfNeeded(GModel *m)
       GEdge *ge = m->getEdgeByTag(tag);
       size_t Ni_now = ge->lines.size();
       if((int)Ni_now != Ni) {
-        Msg::Info("Remeshing Curve %d for Even Quantization", tag);
+        Msg::Debug("Remeshing Curve %d for Even Quantization", tag);
         meshGEdge mge;
         mge.ForceNumberOfSubdivisions = Ni;
         mge(ge);
@@ -1694,6 +1783,15 @@ void GenerateMesh(GModel *m, int ask)
     return;
   }
   CTX::instance()->lock = 1;
+
+  // the stage times of the outermost generation (the background mesh of the
+  // quad meshers is generated inside)
+  if(!generateMeshDepth) meshStageTimes.clear();
+  struct DepthGuard {
+    DepthGuard() { generateMeshDepth++; }
+    ~DepthGuard() { generateMeshDepth--; }
+  } depthGuard;
+  const double wallStart = TimeOfDay(), cpuStart = Cpu();
 
   Msg::ResetErrorCounter();
 
@@ -1744,6 +1842,8 @@ void GenerateMesh(GModel *m, int ask)
     if(doIt) {
       bool deleteGModelMeshAfter =
         true; // mesh saved in background, no longer needed
+      const std::size_t first = meshStageTimes.size();
+      const double w = TimeOfDay(), c = Cpu();
       if(BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
                                            deleteGModelMeshAfter,
                                            overwriteField) != 0) {
@@ -1751,6 +1851,7 @@ void GenerateMesh(GModel *m, int ask)
         Msg::Error("Could not build background guiding field; meshing aborted");
         return;
       }
+      addRemainingStageTime("guiding field", first, w, c);
     }
 
     if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT && old == 2 &&
@@ -1782,17 +1883,23 @@ void GenerateMesh(GModel *m, int ask)
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
+    const double w = TimeOfDay(), c = Cpu();
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     std::for_each(m->firstFace(), m->lastFace(), deMeshGFace());
     Mesh0D(m);
     Mesh1D(m);
     quantize1DIfNeeded(m);
+    if(generateMeshDepth == 1)
+      AddMeshStageTime("1D mesh", TimeOfDay() - w, Cpu() - c);
   }
 
   // 2D mesh
   if(ask == 2 || (ask > 2 && old < 2)) {
+    const double w = TimeOfDay(), c = Cpu();
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     Mesh2D(m);
+    if(generateMeshDepth == 1)
+      AddMeshStageTime("2D mesh", TimeOfDay() - w, Cpu() - c);
     // if two passes --> juste fait le ...
     //    createSizeFieldFromExistingMesh (m, false);
     // Mesh2D(m);
@@ -1805,7 +1912,13 @@ void GenerateMesh(GModel *m, int ask)
   }
 
   // 3D mesh
-  if(ask == 3) { Mesh3D(m); }
+  if(ask == 3) {
+    const std::size_t first = meshStageTimes.size();
+    const double w = TimeOfDay(), c = Cpu();
+    Mesh3D(m);
+    if(generateMeshDepth == 1 && meshStageTimes.size() > first)
+      addRemainingStageTime("3D, other", first, w, c);
+  }
 
   // Orient the line and surface meshes so that they match the orientation of
   // the geometrical entities and/or the user orientation constraints
@@ -1815,6 +1928,7 @@ void GenerateMesh(GModel *m, int ask)
     std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
 
   // Optimize quality of 3D tet mesh
+  const double wallOptimize = TimeOfDay(), cpuOptimize = Cpu();
   if(m->getMeshStatus() == 3 &&
      CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
      CTX::instance()->mesh.algo3d != ALGO_3D_HXT) {
@@ -1827,6 +1941,13 @@ void GenerateMesh(GModel *m, int ask)
         OptimizeMesh(m);
       if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMesh(m, "Netgen");
     }
+  }
+
+  if(generateMeshDepth == 1 && m->getMeshStatus() == 3 &&
+     CTX::instance()->mesh.recombine3DAll) {
+    AddMeshStageTime("tet optimization", TimeOfDay() - wallOptimize,
+                     Cpu() - cpuOptimize);
+    PrintHexDominantMeshQuality(m, wallStart, cpuStart);
   }
 
   // Subdivide into quads or hexas

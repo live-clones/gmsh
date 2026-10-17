@@ -1097,8 +1097,8 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
     else {
       int ecount =
         cubicGraph ? (pairs.size() + makeGraphPeriodic.size()) : pairs.size();
-      Msg::Info("Blossom: %d internal %d closed", (int)pairs.size(),
-                (int)makeGraphPeriodic.size());
+      Msg::Debug("Blossom: %d internal %d closed", (int)pairs.size(),
+                 (int)makeGraphPeriodic.size());
       Msg::Debug("Perfect Match Starts %d edges %d nodes", ecount, ncount);
       std::map<MElement *, int> t2n;
       std::map<int, MElement *> n2t;
@@ -1235,11 +1235,11 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
           }
         }
         if(rejectedInvertedPairs)
-          Msg::Info("Blossom: kept %zu inverted matched triangle pair%s "
-                    "unrecombined (eta range [%g,%g])",
-                    rejectedInvertedPairs,
-                    rejectedInvertedPairs == 1 ? "" : "s",
-                    minimumRejectedEta, maximumRejectedEta);
+          Msg::Debug("Blossom: kept %zu inverted matched triangle pair%s "
+                     "unrecombined (eta range [%g,%g])",
+                     rejectedInvertedPairs,
+                     rejectedInvertedPairs == 1 ? "" : "s",
+                     minimumRejectedEta, maximumRejectedEta);
         if(retainedInvalidQuads)
           Msg::Info("Blossom: retained %zu non-positive-quality quads "
                     "(RecombineMinimumQuality < 0)", retainedInvalidQuads);

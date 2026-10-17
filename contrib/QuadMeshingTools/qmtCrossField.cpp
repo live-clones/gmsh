@@ -145,7 +145,7 @@ namespace QMT {
         Msg::Error("Cross field MUMPS must run on the host MPI thread");
         return;
       }
-      Msg::Info("Cross field linear solver: PETSc/MUMPS, %zu unknowns", N);
+      Msg::Debug("Cross field linear solver: PETSc/MUMPS, %zu unknowns", N);
 #elif defined(HAVE_EIGEN)
       Msg::Info("Cross field linear solver: Eigen SparseLU, %zu unknowns (PETSc/MUMPS unavailable)", N);
       Msg::Debug("Eigen call: initialize sparse matrix, vectors and solver");
@@ -321,7 +321,7 @@ namespace QMT {
 #if defined(QMT_CROSS_FIELD_MUMPS)
       if(!ready || !ksp) return false;
       const double start = TimeOfDay();
-      Msg::Info("Cross field MUMPS factorization begin (%zu unknowns)", N);
+      Msg::Debug("Cross field MUMPS factorization begin (%zu unknowns)", N);
       // Changing only values keeps symbolic analysis reusable, but every dt
       // requires a fresh numeric factor. RHS-only solves reuse that factor.
       bool ok = check((KSPSetOperators)(ksp, matrix, matrix), "operator update") &&
@@ -336,8 +336,8 @@ namespace QMT {
                      static_cast<int>(reason));
         }
       }
-      Msg::Info("Cross field MUMPS factorization %s in %.3f s", ok ? "done" : "failed",
-                TimeOfDay() - start);
+      Msg::Debug("Cross field MUMPS factorization %s in %.3f s", ok ? "done" : "failed",
+                 TimeOfDay() - start);
       return ok;
 #elif defined(HAVE_EIGEN)
       Msg::Debug("Eigen call: factorize sparse matrix");

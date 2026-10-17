@@ -7,6 +7,7 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
+#include "Generator.h"
 #include "GModel.h"
 #include <algorithm>
 #include <array>
@@ -235,7 +236,8 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
     return -1;
   }
 
-  Msg::Info("Creating Mesh Wrapper for region %d", gr->tag());
+  const double tStart = TimeOfDay(), cStart = Cpu();
+  Msg::Debug("Creating Mesh Wrapper for region %d", gr->tag());
   double volHex = 0, volTet = 0;
   int numHex = 0, numTet = 0;
   int debugTrackHexIdx = -1; // EXPERIMENTAL: see GMSH_INSPECT_PRISM_XYZ below
@@ -245,7 +247,7 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
   createMeshStore(gr, ms, c2v);
   // ----------------- I D E N T I F Y   H E X E S
   // -------------------------------------
-  Msg::Info("Identifying Hexes for region %d", gr->tag());
+  Msg::Debug("Identifying Hexes for region %d", gr->tag());
   HXTCombine::TetMeshForCombining tm4c(&ms);
   HXTCombine::HXTCombineCellStore ccs(tm4c);
   double minQuality = CTX::instance()->mesh.recombine3DMinimumQuality;
@@ -274,34 +276,50 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
     }
   }
 
+  AddMeshStageTime("combination: setup", TimeOfDay() - tStart, Cpu() - cStart);
+  const double tSelect = TimeOfDay(), cSelect = Cpu();
   if(nbFramed) {
     HXTCombine::FrameSelectionStatistics stats;
     ccs.selectAlongFrames(minQuality, axes, sizes, enablePrisms, &stats);
-    Msg::Info("%zu Hexes proposed along the frames of %zu vertices, %zu "
-              "selected", stats.nbProposedHexes, nbFramed,
-              stats.nbSelectedProposedHexes);
-    Msg::Info("%zu Hexes proposed around the %zu vertices left in tets",
-              stats.nbResidualHexes, stats.nbFreeVertices);
+    // the CPU time with the clock of the others, shared as std::clock shares
+    // it (it counts the system time as well)
+    const double cpu = Cpu() - cSelect;
+    const double share =
+      stats.cpuCandidates + stats.cpuSelection > 0. ?
+        stats.cpuCandidates / (stats.cpuCandidates + stats.cpuSelection) :
+        0.5;
+    AddMeshStageTime("combination: candidates", stats.wallCandidates,
+                     share * cpu);
+    AddMeshStageTime("combination: selection", stats.wallSelection,
+                     (1. - share) * cpu);
+    Msg::Debug("%zu Hexes proposed along the frames of %zu vertices, %zu "
+               "selected", stats.nbProposedHexes, nbFramed,
+               stats.nbSelectedProposedHexes);
+    Msg::Debug("%zu Hexes proposed around the %zu vertices left in tets",
+               stats.nbResidualHexes, stats.nbFreeVertices);
     if(enablePrisms)
-      Msg::Info("%zu Prisms proposed on the %zu tets left",
-                stats.nbProposedPrisms, stats.nbFreeTets);
+      Msg::Debug("%zu Prisms proposed on the %zu tets left",
+                 stats.nbProposedPrisms, stats.nbFreeTets);
   }
   else {
     ccs.computeHexes(minQuality);
-    Msg::Info("%d Hexes found", ccs.hexes().size());
+    Msg::Debug("%d Hexes found", ccs.hexes().size());
     if(enablePrisms) {
       ccs.computePrisms(minQuality);
-      Msg::Info("%d Prisms found", ccs.prisms().size());
+      Msg::Debug("%d Prisms found", ccs.prisms().size());
     }
 
     // ----------------- S E L E C T I N G   H E X E S
     // -------------------------------------
     std::array<bool, 4> cellTypes{true, enablePrisms, false, true};
     ccs.selectCellsGreedy(cellTypes);
+    AddMeshStageTime("combination: candidates and selection",
+                     TimeOfDay() - tSelect, Cpu() - cSelect);
   }
-  Msg::Info("%d Hexes selected", ccs.nbSelectedHexes());
+  const double tOutput = TimeOfDay(), cOutput = Cpu();
+  Msg::Debug("%d Hexes selected", ccs.nbSelectedHexes());
   if(enablePrisms)
-    Msg::Info("%d Prisms selected", ccs.nbSelectedPrisms());
+    Msg::Debug("%d Prisms selected", ccs.nbSelectedPrisms());
   //	ccs.saveMSH("hexdom.msh",cellTypes);
 
   if(getenv("GMSH_SELECTION_QUALITY_STATS")) {
@@ -1242,8 +1260,8 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
         delete v;
       }
     }
-    Msg::Info("%d vertice have been removed durin tet2hex combination",
-              gr->mesh_vertices.size() - vr.size());
+    Msg::Debug("%d vertices removed by the combination",
+               (int)(gr->mesh_vertices.size() - vr.size()));
     gr->mesh_vertices = vr;
   }
   std::vector<GFace *> faces = gr->faces();
@@ -1259,19 +1277,31 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
     gf->triangles = temp;
   }
 
-  Msg::Info("Hybrid mesh statistics");
-  Msg::Info(
-    "Volume Hex %12.5E --- Volume Tet %12.5E --- Percentage Vol Hex %12.5E",
-    volHex, volTet, 100 * volHex / (volHex + volTet));
-  Msg::Info("Number Hex %12d --- Number Tet %12d --- Percentage Num Hex %12.5E",
-            numHex, numTet, 100 * (double)numHex / (numHex + numTet));
+  Msg::Debug("Volume Hex %12.5E --- Volume Tet %12.5E --- Percentage Vol Hex "
+             "%12.5E", volHex, volTet, 100 * volHex / (volHex + volTet));
+  Msg::Debug("Number Hex %12d --- Number Tet %12d --- Percentage Num Hex "
+             "%12.5E", numHex, numTet,
+             100 * (double)numHex / (numHex + numTet));
 
+  AddMeshStageTime("combination: output", TimeOfDay() - tOutput,
+                   Cpu() - cOutput);
   if(CTX::instance()->mesh.recombine3DConformity == 2) {
+    const double tPyramids = TimeOfDay(), cPyramids = Cpu();
     const std::size_t nPyr = makeFreePyramids(gr);
-    Msg::Info("%zu pyramids on hex/prism quad faces (%zu tets merged), "
-              "%zu tets left",
-              nPyr, 2 * nPyr, gr->tetrahedra.size());
+    AddMeshStageTime("combination: pyramids", TimeOfDay() - tPyramids,
+                     Cpu() - cPyramids);
+    Msg::Debug("%zu pyramids on hex/prism quad faces (%zu tets merged), "
+               "%zu tets left",
+               nPyr, 2 * nPyr, gr->tetrahedra.size());
   }
+
+  double volPrism = 0.;
+  for(MPrism *p : gr->prisms) volPrism += std::abs(p->getVolume());
+  Msg::Info("Region %d: %d hexahedra (%.1f%% of the volume), %zu prisms, %zu "
+            "pyramids, %zu tetrahedra (Wall %gs)",
+            gr->tag(), numHex, 100. * volHex / (volHex + volPrism + volTet),
+            gr->prisms.size(), gr->pyramids.size(), gr->tetrahedra.size(),
+            TimeOfDay() - tStart);
 
   return 0;
 }
