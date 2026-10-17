@@ -43,6 +43,11 @@ public:
   static void init_region(GRegion *);
   static void init_face(GFace *);
   static STensor3 search(double, double, double);
+  // the same, near[2] receiving the 2 nearest points of the field; given the
+  // 2 nearest points of a nearby location (hint), the search is bounded by
+  // the distance to them, with the same result
+  static STensor3 search(double x, double y, double z, std::size_t near[2],
+                         const std::size_t *hint = nullptr);
   static STensor3 combine(double, double, double);
   static void print_field1();
   static void print_field2(GRegion *);

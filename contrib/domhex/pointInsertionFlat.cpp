@@ -54,6 +54,9 @@ struct FlatPoint {
   int limit; // -1: unbounded
   int tet; // a tet of the region holding the point (-1: unknown)
   MVertex *v; // the boundary vertex of a seed, null for the spawns
+  // the 2 nearest points of the boundary frame field (the frame comes from
+  // them), the bound of the search of a spawn's
+  std::size_t near[2];
 };
 
 // Point location in the region's tets by walking from a nearby tet across
@@ -190,6 +193,31 @@ public:
             double d =
               std::max(std::fabs(ax), std::max(std::fabs(ay), std::fabs(az)));
             if(d < radius) return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  // true if some accepted point other than `skip` lies within `radius` of
+  // (x,y,z) in the Euclidean norm: it then also lies within radius in the
+  // infinity norm of any frame whose rows are unit vectors (|row . d| <= |d|)
+  bool hasNeighborWithinEuclidean(const std::vector<FlatPoint> &pts, double x,
+                                  double y, double z, double radius,
+                                  uint32_t skip) const
+  {
+    const double r2 = radius * radius;
+    for(int64_t cx = cellOf(x - radius); cx <= cellOf(x + radius); cx++) {
+      for(int64_t cy = cellOf(y - radius); cy <= cellOf(y + radius); cy++) {
+        for(int64_t cz = cellOf(z - radius); cz <= cellOf(z + radius); cz++) {
+          auto it = _grid.find(pack(cx, cy, cz));
+          if(it == _grid.end()) continue;
+          for(uint32_t idx : it->second) {
+            if(idx == skip) continue;
+            const FlatPoint &p = pts[idx];
+            const double dx = p.x - x, dy = p.y - y, dz = p.z - z;
+            if(dx * dx + dy * dy + dz * dz < r2) return true;
           }
         }
       }
@@ -335,16 +363,20 @@ void setIdentity(double m[9])
   m[6] = 0.; m[7] = 0.; m[8] = 1.;
 }
 
-void metricAt(double x, double y, double z, double m[9])
+// near receives the 2 nearest points of the boundary frame field; hint, those
+// of a nearby point, bounds the search (same result)
+void metricAt(double x, double y, double z, double m[9], std::size_t near[2],
+              const std::size_t *hint = nullptr)
 {
   if(CTX::instance()->mesh.smoothCrossField) {
+    near[0] = near[1] = (std::size_t)-1;
     STensor3 t = Frame_field::findCross(x, y, z);
     m[0] = t.get_m11(); m[1] = t.get_m21(); m[2] = t.get_m31();
     m[3] = t.get_m12(); m[4] = t.get_m22(); m[5] = t.get_m32();
     m[6] = t.get_m13(); m[7] = t.get_m23(); m[8] = t.get_m33();
   }
   else {
-    STensor3 t = Frame_field::search(x, y, z);
+    STensor3 t = Frame_field::search(x, y, z, near, hint);
     m[0] = t.get_m11(); m[1] = t.get_m21(); m[2] = t.get_m31();
     m[3] = t.get_m12(); m[4] = t.get_m22(); m[5] = t.get_m32();
     m[6] = t.get_m13(); m[7] = t.get_m23(); m[8] = t.get_m33();
@@ -530,7 +562,7 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     FlatPoint p;
     p.x = v->x(); p.y = v->y(); p.z = v->z();
     p.h = sizeAtVertex(v);
-    metricAt(p.x, p.y, p.z, p.m);
+    metricAt(p.x, p.y, p.z, p.m, p.near);
     if(!isFinitePoint(p.h, p.m)) continue;
     p.layer = 0;
     p.limit = limitOf[v];
@@ -815,7 +847,18 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
       FlatPoint cand;
       cand.x = x; cand.y = y; cand.z = z;
       cand.h = sizeAt(e, x, y, z);
-      metricAt(x, y, z, cand.m);
+      // most spawns land on an existing point: a neighbour closer than the
+      // spacing radius in the Euclidean norm is closer in the frame of the
+      // spawn too (unit rows), which is then not looked up (6 queries of the
+      // boundary frames per accepted point otherwise, 70% of the fill time);
+      // the margin covers the rounding of the norm of the rows
+      if(std::isfinite(cand.h) &&
+         hash.hasNeighborWithinEuclidean(pts, x, y, z,
+                                         (1. - 1.e-12) * k1 * cand.h,
+                                         parentIdx)) {
+        continue;
+      }
+      metricAt(x, y, z, cand.m, cand.near, parent.near);
       if(!isFinitePoint(cand.h, cand.m)) continue;
       cand.layer = parent.layer + 1;
       cand.limit = parent.limit;

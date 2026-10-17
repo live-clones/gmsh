@@ -95,6 +95,13 @@ void Frame_field::init_face(GFace *gf)
 
 STensor3 Frame_field::search(double x, double y, double z)
 {
+  std::size_t near[2];
+  return search(x, y, z, near);
+}
+
+STensor3 Frame_field::search(double x, double y, double z,
+                             std::size_t near[2], const std::size_t *hint)
+{
   // Determines the frame/cross at location (x,y,z)
   int index1;
   int index2;
@@ -109,9 +116,26 @@ STensor3 Frame_field::search(double x, double y, double z)
   e2 = 0.000001;
   std::size_t indices[2];
   double distances[2];
-  if(fieldSearch.nearest(SPoint3(x, y, z), 2, indices, distances) < 2) {
+  const SPoint3 p(x, y, z);
+  std::size_t found = 0;
+  if(hint && hint[0] < field.size() && hint[1] < field.size()) {
+    // the 2 nearest points are not farther than the farthest of the 2 hints
+    auto dist2 = [&p](const SPoint3 &q) {
+      const double dx = p.x() - q.x(), dy = p.y() - q.y(), dz = p.z() - q.z();
+      return dx * dx + dy * dy + dz * dz;
+    };
+    const double d2 =
+      std::max(dist2(field[hint[0]].first), dist2(field[hint[1]].first));
+    found = fieldSearch.nearestWithin(p, 2, indices, distances,
+                                      d2 * (1. + 1.e-12) + 1.e-300);
+  }
+  if(found < 2) found = fieldSearch.nearest(p, 2, indices, distances);
+  if(found < 2) {
+    near[0] = near[1] = field.size();
     return STensor3(1.0);
   }
+  near[0] = indices[0];
+  near[1] = indices[1];
   index1 = indices[0];
   index2 = indices[1];
   distance1 = distances[0];
