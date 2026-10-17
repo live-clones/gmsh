@@ -1038,6 +1038,8 @@ cpp_header = """// {0}
 #else
 #define {2}_API __declspec(dllimport)
 #endif
+#elif defined(__EMSCRIPTEN__)
+#define {2}_API __attribute__ ((used, visibility("default")))
 #elif defined(__GNUC__)
 #define {2}_API __attribute__ ((visibility("default")))
 #else
@@ -1096,6 +1098,8 @@ c_header = """/*
 #else
 #define {2}_API __declspec(dllimport)
 #endif
+#elif defined(__EMSCRIPTEN__)
+#define {2}_API __attribute__ ((used, visibility("default")))
 #elif defined(__GNUC__)
 #define {2}_API __attribute__ ((visibility("default")))
 #else

@@ -59,6 +59,8 @@ int GmshFLTK(int argc = 0, char **argv = nullptr);
 #else
 #define GMSH_API __declspec(dllimport)
 #endif
+#elif defined(__EMSCRIPTEN__)
+#define GMSH_API __attribute__ ((used, visibility("default")))
 #elif defined(__GNUC__)
 #define GMSH_API __attribute__ ((visibility("default")))
 #else
