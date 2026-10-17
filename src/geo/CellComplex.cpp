@@ -101,8 +101,8 @@ private:
   template <std::size_t N>
   static int _shard(const std::array<std::size_t, N> &key)
   {
-    // top bits of the multiplicative hash
-    return (int)(CellVertexKeyHash<N>()(key) >> 60);
+    // the top 4 bits of the multiplicative hash, whatever the word size
+    return (int)(CellVertexKeyHash<N>()(key) >> (8 * sizeof(std::size_t) - 4));
   }
 
   // insert a slot for the cell with the given sorted vertex numbers:

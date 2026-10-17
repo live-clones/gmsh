@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
+#include "Hash.h"
 
 // A set of keys (mesh edges or faces) with a number each, in the order they
 // were added: the entries are (key, number) pairs in a vector, and lookups go
@@ -29,7 +30,10 @@ public:
 
 private:
   std::vector<value_type> _entries;
-  std::vector<std::size_t> _hashes; // of the keys of the entries
+  // the hashes of the keys of the entries, 64 bits wide whatever the
+  // word size (a slot holds their high half as a tag)
+  typedef std::uint64_t hash_t;
+  std::vector<hash_t> _hashes;
   std::size_t _maxNum = 0;
   // a slot of the index: the entry it points to plus one (0 if free), and
   // the hash of its key, so that probing an occupied slot that does not match
@@ -43,10 +47,16 @@ private:
   Hash _hash;
   Equal _equal;
 
-  static std::uint32_t _tag(std::size_t h) { return (std::uint32_t)(h >> 32); }
+  static std::uint32_t _tag(hash_t h) { return (std::uint32_t)(h >> 32); }
+  hash_t _hashOf(const K &key) const
+  {
+    hash_t h = _hash(key);
+    if(sizeof(std::size_t) < 8) h = HashMix(h); // (spread a 32-bit hash)
+    return h;
+  }
   // the slot of key, of hash h: the one holding an equal entry, or the free
   // one where it would go
-  std::size_t _slot(const K &key, std::size_t h) const
+  std::size_t _slot(const K &key, hash_t h) const
   {
     std::size_t s = h & _mask;
     while(_slots[s].index &&
@@ -65,11 +75,11 @@ private:
     _mask = cap - 1;
     std::vector<value_type> &entries =
       const_cast<std::vector<value_type> &>(_entries);
-    std::vector<std::size_t> &hashes =
-      const_cast<std::vector<std::size_t> &>(_hashes);
+    std::vector<hash_t> &hashes = const_cast<std::vector<hash_t> &>(_hashes);
     std::size_t kept = 0;
     for(std::size_t i = 0; i < entries.size(); i++) {
-      std::size_t h = hashes[i], s = _slot(entries[i].first, h);
+      hash_t h = hashes[i];
+      std::size_t s = _slot(entries[i].first, h);
       if(_slots[s].index) continue; // a duplicate
       if(kept != i) {
         entries[kept] = std::move(entries[i]);
@@ -109,7 +119,7 @@ public:
   void clear()
   {
     std::vector<value_type>().swap(_entries);
-    std::vector<std::size_t>().swap(_hashes);
+    std::vector<hash_t>().swap(_hashes);
     std::vector<slot>().swap(_slots);
     _maxNum = 0;
     _indexed = false;
@@ -123,15 +133,15 @@ public:
     if(!_indexed) _index();
   }
   // the hash of a key, for the lookups below that take it
-  std::size_t hashOf(const K &key) const { return _hash(key); }
+  hash_t hashOf(const K &key) const { return _hashOf(key); }
   // the index of the entry of key, npos if there is none
-  std::size_t indexOf(const K &key, std::size_t h) const
+  std::size_t indexOf(const K &key, hash_t h) const
   {
     if(!_indexed) _index();
     std::size_t s = _slot(key, h);
     return _slots[s].index ? _slots[s].index - 1 : npos;
   }
-  std::size_t indexOf(const K &key) const { return indexOf(key, _hash(key)); }
+  std::size_t indexOf(const K &key) const { return indexOf(key, _hashOf(key)); }
   const_iterator find(const K &key) const
   {
     std::size_t i = indexOf(key);
@@ -139,7 +149,7 @@ public:
   }
   // add key, of hash h, with number num (the largest number so far plus one
   // if 0), or return the number it already has
-  std::size_t add(K &&key, std::size_t num, std::size_t h)
+  std::size_t add(K &&key, std::size_t num, hash_t h)
   {
     if(!_indexed) _index();
     std::size_t s = _slot(key, h);
@@ -154,14 +164,14 @@ public:
   }
   std::size_t add(K &&key, std::size_t num = 0)
   {
-    std::size_t h = _hash(key);
+    hash_t h = _hashOf(key);
     return add(std::move(key), num, h);
   }
   // append an entry without looking for a duplicate (see above)
   void append(K &&key, std::size_t num)
   {
     _maxNum = std::max(_maxNum, num);
-    _hashes.push_back(_hash(key));
+    _hashes.push_back(_hashOf(key));
     _entries.emplace_back(std::move(key), num);
     _indexed = false;
   }
@@ -177,7 +187,7 @@ public:
   }
   void set(std::size_t i, K &&key, std::size_t num)
   {
-    _hashes[i] = _hash(key);
+    _hashes[i] = _hashOf(key);
     _entries[i] = value_type(std::move(key), num);
   }
   // the largest number so far is kept by append(K, num); after set() it is

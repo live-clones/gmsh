@@ -1863,17 +1863,16 @@ static void createEdgesOrFaces(const std::vector<GEntity *> &entities, Set &set,
   };
 
   // the hash of each key
-  std::vector<std::size_t> hashes(total);
+  std::vector<std::uint64_t> hashes(total);
 #pragma omp parallel for schedule(static, 1) num_threads(nthreads)
   for(int t = 0; t < nthreads; t++) {
-    typename Set::hasher hash;
     std::vector<K> keys;
     std::size_t a, b;
     range(t, a, b);
     for(std::size_t i = a; i < b; i++) {
       keysOf(elements[i], keys);
       for(std::size_t k = 0; k < keys.size(); k++)
-        hashes[start[i] + k] = hash(keys[k]);
+        hashes[start[i] + k] = set.hashOf(keys[k]);
     }
   }
 
@@ -1896,7 +1895,7 @@ static void createEdgesOrFaces(const std::vector<GEntity *> &entities, Set &set,
       if(set.empty() || set.indexOf(entry.first) == Set::npos)
         isFirst[entry.second - 1] = 1;
   }
-  std::vector<std::size_t>().swap(hashes);
+  std::vector<std::uint64_t>().swap(hashes);
 
   // the new keys, numbered in order: each thread appends those of its
   // elements from the number the ones before leave off at

@@ -2197,7 +2197,7 @@ static bool addEdgesOrFaces(GModel *const model, Set &set,
     // lookup of a node is not cheap when the numbering is sparse)
     set.index();
     std::vector<std::uint8_t> isNew(n, 0);
-    std::vector<std::size_t> hashes(n);
+    std::vector<std::uint64_t> hashes(n);
     std::vector<MVertex *> verts(n * numNodes);
 #pragma omp parallel for schedule(static, 1) num_threads(nthreads)             \
   reduction(| : bad)

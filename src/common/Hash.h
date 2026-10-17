@@ -7,6 +7,7 @@
 #define HASH_H
 
 #include "GmshConfig.h"
+#include <cstdint>
 
 // FNV (Fowler–Noll–Vo) hashing parameters
 
@@ -58,7 +59,7 @@ template <int N> struct HashFNV1a {
 
 // Mixing of a 64-bit value (the finalizer of splitmix64): every bit of the
 // result depends on every bit of x, so that the high bits can be used too
-inline std::size_t HashMix(std::size_t x)
+inline std::uint64_t HashMix(std::uint64_t x)
 {
   x ^= x >> 30;
   x *= 0xbf58476d1ce4e5b9ull;
