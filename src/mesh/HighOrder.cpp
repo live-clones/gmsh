@@ -12,6 +12,8 @@
 #include <cstdint>
 #include <mutex>
 #include <unordered_map>
+#include "Hash.h"
+#include "MFaceHash.h"
 #include <vector>
 #include "GmshConfig.h"
 #include "GModel.h"
@@ -55,12 +57,10 @@ private:
   std::vector<MVertex *> _nodes;
   HASH _hash;
   EQUAL _equal;
-  // the high bits of the product, independent of the low bits of the hash
-  // that choose the shard (see shardedContainer)
+  // (the low bits of the hash; the shard is chosen from the high ones, see
+  // shardedContainer)
   std::size_t _slot(const KEY &k) const
-  {
-    return (std::uint64_t)_hash(k) * 0x9e3779b97f4a7c15ULL >> (64 - _bits);
-  }
+  { return _hash(k) & (_table.size() - 1); }
   void _grow()
   {
     std::vector<entry> old;
@@ -107,24 +107,14 @@ public:
 struct MVertexPairHash {
   std::size_t operator()(const std::pair<MVertex *, MVertex *> &p) const
   {
-    // cheaper than FNV-1a on the 16 bytes, which shows in the profiles
-    std::size_t h = p.first->getNum() * 0x9e3779b97f4a7c15ULL + p.second->getNum();
-    return h ^ (h >> 29);
+    // (the pair is ordered: not an MEdge)
+    return HashMix(HashCombine(p.first->getNum(), p.second->getNum()));
   }
 };
 typedef nodeMap<std::pair<MVertex *, MVertex *>, MVertexPairHash,
                 std::equal_to<std::pair<MVertex *, MVertex *> > >
   edgeMap;
-struct MFaceNodesHash { // idem
-  std::size_t operator()(const MFace &f) const
-  {
-    std::size_t h = 0;
-    for(std::size_t i = 0; i < f.getNumVertices(); i++)
-      h = h * 0x9e3779b97f4a7c15ULL + f.getSortedVertex(i)->getNum();
-    return h ^ (h >> 29);
-  }
-};
-typedef nodeMap<MFace, MFaceNodesHash, MFaceEqual> faceMap;
+typedef nodeMap<MFace, MFaceHash, MFaceEqual> faceMap;
 
 // The two containers above are shared by all the entities being curved, and are
 // written to while the elements of an entity are treated in parallel. They are
@@ -146,9 +136,7 @@ public:
   }
   bool isParallel() const { return _shards.size() > 1; }
   std::size_t shardOf(const KEY &k) const
-  {
-    return _shards.size() > 1 ? (_hash(k) % _shards.size()) : 0;
-  }
+  { return HashShard(_hash(k), (int)_shards.size()); }
   MAP &shard(std::size_t i) { return _shards[i]; }
   void lock(std::size_t i)
   {
@@ -163,7 +151,7 @@ public:
 typedef shardedContainer<edgeMap, std::pair<MVertex *, MVertex *>,
                          MVertexPairHash>
   edgeContainer;
-typedef shardedContainer<faceMap, MFace, MFaceNodesHash> faceContainer;
+typedef shardedContainer<faceMap, MFace, MFaceHash> faceContainer;
 
 template <class C> class shardLock {
 private:

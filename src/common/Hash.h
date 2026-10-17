@@ -69,4 +69,15 @@ inline std::uint64_t HashMix(std::uint64_t x)
   return x;
 }
 
+// A hash extended with a value: the multiply-add of a polynomial hash, to be
+// finished with HashMix() once all the values are in
+inline std::uint64_t HashCombine(std::uint64_t h, std::uint64_t v)
+{ return h * 0x9e3779b97f4a7c15ull + v; }
+
+// The share, among n, of a mixed hash: for threads that each take a share of
+// a set of keys, taken from the high bits, which the slot of an open
+// addressing table does not use
+inline int HashShard(std::uint64_t h, int n)
+{ return n > 1 ? (int)((h >> 32) % (std::uint64_t)n) : 0; }
+
 #endif

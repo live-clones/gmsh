@@ -14,7 +14,7 @@ struct MFaceHash {
   {
     std::size_t h = f.getNumVertices();
     for(std::size_t i = 0; i < f.getNumVertices(); i++)
-      h = h * 0x9e3779b97f4a7c15ull + f.getSortedVertex(i)->getNum();
+      h = HashCombine(h, f.getSortedVertex(i)->getNum());
     return HashMix(h);
   }
 };

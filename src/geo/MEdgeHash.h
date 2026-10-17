@@ -12,9 +12,8 @@
 struct MEdgeHash {
   size_t operator()(const MEdge &e) const
   {
-    std::size_t h = e.getMinVertex()->getNum() * 0x9e3779b97f4a7c15ull +
-                    e.getMaxVertex()->getNum();
-    return HashMix(h);
+    return HashMix(
+      HashCombine(e.getMinVertex()->getNum(), e.getMaxVertex()->getNum()));
   }
 };
 

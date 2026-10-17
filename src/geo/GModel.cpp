@@ -1885,7 +1885,7 @@ static void createEdgesOrFaces(const std::vector<GEntity *> &entities, Set &set,
     for(std::size_t i = 0; i < numElements; i++) {
       bool built = false;
       for(std::size_t p = start[i]; p < start[i + 1]; p++) {
-        if(nthreads > 1 && (int)((hashes[p] >> 40) % nthreads) != t) continue;
+        if(HashShard(hashes[p], nthreads) != t) continue;
         if(!built) keysOf(elements[i], keys);
         built = true;
         mine.add(std::move(keys[p - start[i]]), p + 1);
