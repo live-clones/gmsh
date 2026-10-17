@@ -1704,13 +1704,42 @@ int MElement::getEdgeCorners(int num, MVertex *v[2]) const
   return 2;
 }
 
+// the ints of a polygon or polyhedron cell in the legacy VTK format: the
+// indices of the nodes of a polygon; for a polyhedron the number of faces,
+// then for each face its number of nodes and their indices
+static void polytopeVTKCell(const MElement *e, std::vector<int> &ints)
+{
+  ints.clear();
+  if(e->getType() == TYPE_POLYG) {
+    for(int i = 0; i < e->getNumPrimaryVertices(); i++)
+      ints.push_back((int)e->getVertex(i)->getIndex() - 1);
+  }
+  else {
+    const MPolyhedron *p = static_cast<const MPolyhedron *>(e);
+    ints.push_back(p->getNumPolygons());
+    for(int f = 0; f < p->getNumPolygons(); f++) {
+      ints.push_back(p->getPolygonStart(f + 1) - p->getPolygonStart(f));
+      for(int k = p->getPolygonStart(f); k < p->getPolygonStart(f + 1); k++)
+        ints.push_back((int)p->getPolygonVertex(k)->getIndex() - 1);
+    }
+  }
+}
+
 int MElement::getTypeForVTK() const
 {
+  if(getType() == TYPE_POLYG) return 7;
+  if(getType() == TYPE_POLYH) return 42;
   return getVTKXMLCell(getTypeForMSH(), false).type;
 }
 
+// (for a polyhedron, the number of ints of its cell: see polytopeVTKCell())
 std::size_t MElement::getNumVerticesVTK() const
 {
+  if(getType() == TYPE_POLYG || getType() == TYPE_POLYH) {
+    std::vector<int> ints;
+    polytopeVTKCell(this, ints);
+    return ints.size();
+  }
   return getVTKXMLCell(getTypeForMSH(), false).nodes.size();
 }
 
@@ -1724,32 +1753,34 @@ MVertex *MElement::getVertexVTK(int num)
 
 void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
 {
-  const vtkXMLCell &cell = getVTKXMLCell(getTypeForMSH());
-  if(!cell.type) return;
-
-  int n = (int)cell.nodes.size();
-  std::vector<int> nodes(cell.nodes);
-  if(cell.type == 72) {
-    // VTK reads the Lagrange hexahedra of the files of this version (as of
-    // the .vtu files older than 2.2) with the last two vertical edges, the
-    // 11th and 12th, swapped
-    int perEdge = getPolynomialOrder() - 1;
-    for(int i = 0; i < perEdge; i++)
-      std::swap(nodes[8 + 10 * perEdge + i], nodes[8 + 11 * perEdge + i]);
+  std::vector<int> ints;
+  if(getType() == TYPE_POLYG || getType() == TYPE_POLYH) {
+    polytopeVTKCell(this, ints);
   }
+  else {
+    const vtkXMLCell &cell = getVTKXMLCell(getTypeForMSH());
+    if(!cell.type) return;
+    std::vector<int> nodes(cell.nodes);
+    if(cell.type == 72) {
+      // VTK reads the Lagrange hexahedra of the files of this version (as of
+      // the .vtu files older than 2.2) with the last two vertical edges, the
+      // 11th and 12th, swapped
+      int perEdge = getPolynomialOrder() - 1;
+      for(int i = 0; i < perEdge; i++)
+        std::swap(nodes[8 + 10 * perEdge + i], nodes[8 + 11 * perEdge + i]);
+    }
+    for(auto k : nodes) ints.push_back((int)getVertex(k)->getIndex() - 1);
+  }
+  int n = (int)ints.size();
   if(binary) {
-    std::vector<int> verts(n + 1);
-    verts[0] = n;
-    for(int i = 0; i < n; i++)
-      verts[i + 1] = (int)getVertex(nodes[i])->getIndex() - 1;
+    ints.insert(ints.begin(), n);
     // VTK always expects big endian binary data
-    if(!bigEndian) SwapBytes((char *)&verts[0], sizeof(int), n + 1);
-    fwrite(&verts[0], sizeof(int), n + 1, fp);
+    if(!bigEndian) SwapBytes((char *)&ints[0], sizeof(int), n + 1);
+    fwrite(&ints[0], sizeof(int), n + 1, fp);
   }
   else {
     fprintf(fp, "%d", n);
-    for(int i = 0; i < n; i++)
-      fprintf(fp, " %ld", getVertex(nodes[i])->getIndex() - 1);
+    for(int i = 0; i < n; i++) fprintf(fp, " %d", ints[i]);
     fprintf(fp, "\n");
   }
 }
