@@ -110,6 +110,29 @@ public:
              end();
   }
   std::size_t count(std::size_t tag) const { return find(tag) != end(); }
+  // room for n entries without growing
+  void reserve(std::size_t n)
+  {
+    if(4 * n > 3 * _slots.size()) {
+      std::size_t size = _size;
+      _size = n - 1;
+      _grow();
+      _size = size;
+    }
+  }
+  // insert tag with value, unless it is there: the value there and whether
+  // it was inserted (one probe, where a count and an insertion would take
+  // two)
+  std::pair<V &, bool> insert(std::size_t tag, const V &value)
+  {
+    if(4 * (_size + 1) > 3 * _slots.size()) _grow();
+    std::size_t s = _probe(tag);
+    if(_slots[s].first) return {_slots[s].second, false};
+    _slots[s].first = tag;
+    _slots[s].second = value;
+    _size++;
+    return {_slots[s].second, true};
+  }
   // the value of tag, inserted (default) if it is not there
   V &operator[](std::size_t tag)
   {

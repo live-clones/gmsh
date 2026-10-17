@@ -1272,21 +1272,36 @@ SBoundingBox3d GModel::bounds(bool aroundVisible)
   std::vector<GEntity *> entities;
   getEntities(entities);
   SBoundingBox3d bb;
+  // the mesh nodes of the entities, in chunks that several threads take
+  struct chunk {
+    GEntity *ge;
+    std::size_t first, last;
+  };
+  std::vector<chunk> chunks;
+  std::size_t numNodes = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
-    if(!aroundVisible || entities[i]->getVisibility()) {
-      if(entities[i]->getNativeType() == GEntity::OpenCascadeModel) {
-        bb += entities[i]->bounds();
-      }
-      else {
-        // using the mesh vertices for now
-        if(entities[i]->dim() == 0)
-          bb += static_cast<GVertex *>(entities[i])->xyz();
-        else
-          for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
-            bb += entities[i]->mesh_vertices[j]->point();
-      }
+    if(aroundVisible && !entities[i]->getVisibility()) continue;
+    if(entities[i]->getNativeType() == GEntity::OpenCascadeModel)
+      bb += entities[i]->bounds();
+    else if(entities[i]->dim() == 0)
+      bb += static_cast<GVertex *>(entities[i])->xyz();
+    else {
+      std::size_t n = entities[i]->mesh_vertices.size();
+      numNodes += n;
+      for(std::size_t a = 0; a < n; a += 1 << 18)
+        chunks.push_back({entities[i], a, std::min(n, a + (1 << 18))});
     }
   }
+  int nthreads = CTX::instance()->numThreadsFor(numNodes, 1 << 20);
+  std::vector<SBoundingBox3d> bbs(nthreads);
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+  for(std::size_t c = 0; c < chunks.size(); c++) {
+    SBoundingBox3d &b = bbs[Msg::GetThreadNum()];
+    for(std::size_t j = chunks[c].first; j < chunks[c].last; j++)
+      b += chunks[c].ge->mesh_vertices[j]->point();
+  }
+  for(auto &b : bbs)
+    if(!b.empty()) bb += b; // (adding an empty box adds its sentinel corners)
   return bb;
 }
 

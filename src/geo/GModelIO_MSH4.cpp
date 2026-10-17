@@ -743,10 +743,14 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
         return nullptr;
       }
       if(swap) SwapBytes((char *)&coord[0], sizeof(double), n * numNodes);
-      std::size_t k = 0;
+      // (the nodes of a large block are made by several threads)
+      std::size_t minTag = minNodeNum, maxTag = maxNodeNum;
+      int nthreads = CTX::instance()->numThreadsFor(numNodes, 100000);
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  reduction(min : minTag) reduction(max : maxTag)
       for(std::size_t j = 0; j < numNodes; j++) {
         MVertex *mv = nullptr;
-        std::size_t tagNode = tags[j];
+        std::size_t tagNode = tags[j], k = n * j;
         if(n == 5) {
           mv = new MFaceVertex(coord[k], coord[k + 1], coord[k + 2], entity,
                                coord[k + 3], coord[k + 4], tagNode);
@@ -759,15 +763,16 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
           mv =
             new MVertex(coord[k], coord[k + 1], coord[k + 2], entity, tagNode);
         }
-        k += n;
         mv->setEntity(entity);
-        minNodeNum = std::min(minNodeNum, tagNode);
-        maxNodeNum = std::max(maxNodeNum, tagNode);
-        verticesRead[nodeRead] = mv;
-        nodeRead++;
-        if(totalNumRead > 100000 && progressDue(nodeRead, totalNumRead))
-          Msg::ProgressMeter(nodeRead, true, "Reading nodes");
+        minTag = std::min(minTag, tagNode);
+        maxTag = std::max(maxTag, tagNode);
+        verticesRead[nodeRead + j] = mv;
       }
+      minNodeNum = minTag;
+      maxNodeNum = maxTag;
+      nodeRead += numNodes;
+      if(totalNumRead > 100000)
+        Msg::ProgressMeter(nodeRead, true, "Reading nodes");
     }
     else {
       if(version >= 4.1) {
@@ -2343,6 +2348,31 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
   return true;
 }
 
+// the partition of the elements of an entity that belongs to one partition
+// only, 0 otherwise
+static int singlePartitionOf(GEntity *ge)
+{
+  switch(ge->geomType()) {
+  case GEntity::PartitionPoint: {
+    auto p = static_cast<partitionVertex *>(ge);
+    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
+  }
+  case GEntity::PartitionCurve: {
+    auto p = static_cast<partitionEdge *>(ge);
+    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
+  }
+  case GEntity::PartitionSurface: {
+    auto p = static_cast<partitionFace *>(ge);
+    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
+  }
+  case GEntity::PartitionVolume: {
+    auto p = static_cast<partitionRegion *>(ge);
+    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
+  }
+  default: return 0;
+  }
+}
+
 // a node or an element read in a model where its tag is already taken: the
 // one there if the same (merged files can share them, e.g. the partitions of
 // a mesh), or a conflict
@@ -2480,17 +2510,23 @@ int GModel::_readMSH4(const std::string &name)
         return false;
       }
       if(hadNodesBefore) {
-        // the vector cache is kept if the numbering of all the nodes stays
-        // fairly dense (e.g. the partitions of a mesh read from several
-        // files); otherwise the map cache takes the previous nodes
-        dense = _vertexMapCache.empty() &&
-                maxNodeNum < 10 * (getNumMeshVertices() + totalNumRead);
-        if(!dense) {
+        // the vector cache is kept, or taken back from the map cache, if the
+        // numbering of all the nodes is fairly dense (e.g. the partitions of
+        // a mesh read from several files, sparse one by one, dense together);
+        // otherwise the map cache takes the previous nodes
+        maxNodeNum = std::max(maxNodeNum, getMaxVertexNumber());
+        dense = maxNodeNum < 10 * (getNumMeshVertices() + totalNumRead);
+        if(!dense && !_vertexVectorCache.empty()) {
           for(std::size_t i = 0; i < _vertexVectorCache.size(); i++) {
             MVertex *v = _vertexVectorCache[i];
             if(v) _vertexMapCache[v->getNum()] = v;
           }
           _vertexVectorCache.clear();
+        }
+        else if(dense && !_vertexMapCache.empty()) {
+          _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
+          for(auto &p : _vertexMapCache) _vertexVectorCache[p.first] = p.second;
+          _vertexMapCache.clear();
         }
       }
       // populate map cache with just-read nodes, and put them in entity if not
@@ -2498,10 +2534,27 @@ int GModel::_readMSH4(const std::string &name)
       if(dense) {
         if(_vertexVectorCache.size() < maxNodeNum + 1)
           _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
+        // the new nodes go in the cache by several threads, each taking the
+        // tags of its share (the accesses to the cache are what costs), then
+        // in their entities one by one
+        std::vector<std::size_t> tags(totalNumRead);
+        for(std::size_t i = 0; i < totalNumRead; i++)
+          tags[i] = verticesRead[i]->getNum();
+        std::vector<std::uint8_t> isNew(totalNumRead, 0);
+        int nthreads = CTX::instance()->numThreadsFor(totalNumRead, 100000);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+        for(int t = 0; t < nthreads; t++) {
+          for(std::size_t i = 0; i < totalNumRead; i++) {
+            if(nthreads > 1 && (int)(tags[i] % nthreads) != t) continue;
+            if(!_vertexVectorCache[tags[i]]) {
+              _vertexVectorCache[tags[i]] = verticesRead[i];
+              isNew[i] = 1;
+            }
+          }
+        }
         for(std::size_t i = 0; i < totalNumRead; i++) {
           MVertex *v = verticesRead[i];
-          if(!_vertexVectorCache[v->getNum()]) {
-            _vertexVectorCache[v->getNum()] = v;
+          if(isNew[i]) {
             if(v->onWhat())
               v->onWhat()->addMeshVertex(v);
             else // should not happen
@@ -2510,17 +2563,18 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadNodesBefore) // should not happen
               Msg::Warning("Skipping duplicate node %zu", v->getNum());
-            else if(!sameNode(v, _vertexVectorCache[v->getNum()]))
+            else if(!sameNode(v, _vertexVectorCache[tags[i]]))
               conflicts++;
             delete v;
           }
         }
       }
       else {
+        _vertexMapCache.reserve(_vertexMapCache.size() + totalNumRead);
         for(std::size_t i = 0; i < totalNumRead; i++) {
           MVertex *v = verticesRead[i];
-          if(_vertexMapCache.count(v->getNum()) == 0) {
-            _vertexMapCache[v->getNum()] = v;
+          auto r = _vertexMapCache.insert(v->getNum(), v);
+          if(r.second) {
             if(v->onWhat())
               v->onWhat()->addMeshVertex(v);
             else // should not happen
@@ -2529,7 +2583,7 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadNodesBefore) // should not happen
               Msg::Warning("Skipping duplicate node %zu", v->getNum());
-            else if(!sameNode(v, _vertexMapCache[v->getNum()]))
+            else if(!sameNode(v, r.first))
               conflicts++;
             delete v;
           }
@@ -2564,56 +2618,82 @@ int GModel::_readMSH4(const std::string &name)
       }
       if(hadElementsBefore) {
         // (as for the nodes)
-        dense = _elementMapCache.empty() &&
-                maxElementNum < 10 * (getNumMeshElements() + totalNumRead);
-        if(!dense) {
+        maxElementNum = std::max(maxElementNum, getMaxElementNumber());
+        dense = maxElementNum < 10 * (getNumMeshElements() + totalNumRead);
+        if(!dense && !_elementVectorCache.empty()) {
           for(std::size_t i = 0; i < _elementVectorCache.size(); i++) {
             std::pair<MElement *, int> p = _elementVectorCache[i];
             if(p.first) _elementMapCache[p.first->getNum()] = p;
           }
           _elementVectorCache.clear();
         }
+        else if(dense && !_elementMapCache.empty()) {
+          _elementVectorCache.resize(maxElementNum + 1,
+                                     std::make_pair(nullptr, 0));
+          for(auto &p : _elementMapCache)
+            _elementVectorCache[p.first] = p.second;
+          _elementMapCache.clear();
+        }
       }
+      // (the elements of an entity of one partition are marked with it)
+      GEntity *last = nullptr;
+      int part = 0;
+      auto addToEntity = [&](MElement *e, GEntity *entity) {
+        if(entity != last) {
+          last = entity;
+          part = singlePartitionOf(entity);
+        }
+        if(part) e->setPartition(part);
+        if(entity->geomType() != GEntity::GhostCurve &&
+           entity->geomType() != GEntity::GhostSurface &&
+           entity->geomType() != GEntity::GhostVolume)
+          entity->addElement(e);
+      };
       if(dense) {
         if(_elementVectorCache.size() < maxElementNum + 1)
           _elementVectorCache.resize(maxElementNum + 1,
                                      std::make_pair(nullptr, 0));
-        for(std::size_t i = 0; i < totalNumRead; i++) {
-          MElement *e = elementsRead[i].first;
-          GEntity *entity = elementsRead[i].second;
-          if(!_elementVectorCache[e->getNum()].first) {
-            _elementVectorCache[e->getNum()] = std::make_pair(e, entity->tag());
-            if(entity->geomType() != GEntity::GhostCurve &&
-               entity->geomType() != GEntity::GhostSurface &&
-               entity->geomType() != GEntity::GhostVolume) {
-              entity->addElement(e);
+        // (as for the nodes)
+        std::vector<std::size_t> tags(totalNumRead);
+        for(std::size_t i = 0; i < totalNumRead; i++)
+          tags[i] = elementsRead[i].first->getNum();
+        std::vector<std::uint8_t> isNew(totalNumRead, 0);
+        int nthreads = CTX::instance()->numThreadsFor(totalNumRead, 100000);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+        for(int t = 0; t < nthreads; t++) {
+          for(std::size_t i = 0; i < totalNumRead; i++) {
+            if(nthreads > 1 && (int)(tags[i] % nthreads) != t) continue;
+            if(!_elementVectorCache[tags[i]].first) {
+              _elementVectorCache[tags[i]] = std::make_pair(
+                elementsRead[i].first, elementsRead[i].second->tag());
+              isNew[i] = 1;
             }
           }
+        }
+        for(std::size_t i = 0; i < totalNumRead; i++) {
+          MElement *e = elementsRead[i].first;
+          if(isNew[i]) { addToEntity(e, elementsRead[i].second); }
           else {
             if(!hadElementsBefore) // should not happen
               Msg::Warning("Skipping duplicate element %zu", e->getNum());
-            else if(!sameElement(e, _elementVectorCache[e->getNum()].first))
+            else if(!sameElement(e, _elementVectorCache[tags[i]].first))
               conflicts++;
             delete e;
           }
         }
       }
       else {
+        _elementMapCache.reserve(_elementMapCache.size() + totalNumRead);
         for(std::size_t i = 0; i < totalNumRead; i++) {
           MElement *e = elementsRead[i].first;
           GEntity *entity = elementsRead[i].second;
-          if(_elementMapCache.count(e->getNum()) == 0) {
-            _elementMapCache[e->getNum()] = std::make_pair(e, entity->tag());
-            if(entity->geomType() != GEntity::GhostCurve &&
-               entity->geomType() != GEntity::GhostSurface &&
-               entity->geomType() != GEntity::GhostVolume) {
-              entity->addElement(e);
-            }
-          }
+          auto r = _elementMapCache.insert(e->getNum(),
+                                           std::make_pair(e, entity->tag()));
+          if(r.second) { addToEntity(e, entity); }
           else {
             if(!hadElementsBefore) // should not happen
               Msg::Warning("Skipping duplicate element %zu", e->getNum());
-            else if(!sameElement(e, _elementMapCache[e->getNum()].first))
+            else if(!sameElement(e, r.first.first))
               conflicts++;
             delete e;
           }
@@ -2748,51 +2828,6 @@ int GModel::_readMSH4(const std::string &name)
   }
 
   fclose(fp);
-
-  if(partitioned) {
-    // This part is added to ensure the compatibility between the new
-    // partitioning and the old one.
-    std::vector<GEntity *> entities;
-    getEntities(entities);
-    for(std::size_t i = 0; i < entities.size(); i++) {
-      if(entities[i]->geomType() == GEntity::PartitionPoint) {
-        partitionVertex *pv = static_cast<partitionVertex *>(entities[i]);
-        if(pv->numPartitions() == 1) {
-          const int part = pv->getPartition(0);
-          for(std::size_t j = 0; j < pv->getNumMeshElements(); j++) {
-            pv->getMeshElement(j)->setPartition(part);
-          }
-        }
-      }
-      else if(entities[i]->geomType() == GEntity::PartitionCurve) {
-        partitionEdge *pe = static_cast<partitionEdge *>(entities[i]);
-        if(pe->numPartitions() == 1) {
-          const int part = pe->getPartition(0);
-          for(std::size_t j = 0; j < pe->getNumMeshElements(); j++) {
-            pe->getMeshElement(j)->setPartition(part);
-          }
-        }
-      }
-      else if(entities[i]->geomType() == GEntity::PartitionSurface) {
-        partitionFace *pf = static_cast<partitionFace *>(entities[i]);
-        if(pf->numPartitions() == 1) {
-          const int part = pf->getPartition(0);
-          for(std::size_t j = 0; j < pf->getNumMeshElements(); j++) {
-            pf->getMeshElement(j)->setPartition(part);
-          }
-        }
-      }
-      else if(entities[i]->geomType() == GEntity::PartitionVolume) {
-        partitionRegion *pr = static_cast<partitionRegion *>(entities[i]);
-        if(pr->numPartitions() == 1) {
-          const int part = pr->getPartition(0);
-          for(std::size_t j = 0; j < pr->getNumMeshElements(); j++) {
-            pr->getMeshElement(j)->setPartition(part);
-          }
-        }
-      }
-    }
-  }
 
   return 1;
 }
