@@ -7,6 +7,7 @@
 #define TAG_MAP_H
 
 #include <cstddef>
+#include <iterator>
 #include <utility>
 #include <vector>
 #include "Hash.h"
@@ -29,6 +30,13 @@ public:
     S *_p, *_end;
 
   public:
+    // (the traits, for the standard algorithms and containers, e.g. a
+    // std::map built from a range of the entries)
+    typedef std::forward_iterator_tag iterator_category;
+    typedef S value_type;
+    typedef std::ptrdiff_t difference_type;
+    typedef S *pointer;
+    typedef S &reference;
     basic_iterator(S *p, S *end) : _p(p), _end(end)
     {
       while(_p != _end && !_p->first) _p++;
@@ -41,6 +49,12 @@ public:
         _p++;
       } while(_p != _end && !_p->first);
       return *this;
+    }
+    basic_iterator operator++(int)
+    {
+      basic_iterator it = *this;
+      ++*this;
+      return it;
     }
     bool operator==(const basic_iterator &o) const { return _p == o._p; }
     bool operator!=(const basic_iterator &o) const { return _p != o._p; }
