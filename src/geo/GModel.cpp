@@ -188,8 +188,8 @@ void GModel::destroy(bool keepName)
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
   // (the mesh edges and faces hold nodes about to be deleted)
-  hashmapMEdge().swap(_mapEdgeNum);
-  hashmapMFace().swap(_mapFaceNum);
+  _meshEdges.clear();
+  _meshFaces.clear();
 
   for(auto it = firstRegion(); it != lastRegion(); ++it) delete *it;
   regions.clear();
@@ -254,8 +254,8 @@ void GModel::deleteMesh()
   for(auto it = firstEdge(); it != lastEdge(); ++it) (*it)->deleteMesh();
   for(auto it = firstVertex(); it != lastVertex(); ++it) (*it)->deleteMesh();
   destroyMeshCaches();
-  _mapEdgeNum.clear();
-  _mapFaceNum.clear();
+  _meshEdges.clear();
+  _meshFaces.clear();
   _currentMeshEntity = nullptr;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
@@ -1845,20 +1845,11 @@ void GModel::createMFaces(const std::vector<std::pair<int, int>> &dimTags)
   Msg::StatusBar(true, "Done creating mesh faces");
 }
 
-std::size_t GModel::addMEdge(MEdge &&edge, std::size_t num)
-{
-  std::pair<MEdge, std::size_t> key(std::move(edge),
-                                    num ? num : _mapEdgeNum.size() + 1);
-  std::pair<hashmapMEdge::iterator, bool> it =
-    _mapEdgeNum.insert(std::move(key));
-  return it.first->second;
-}
-
 std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
 {
   MEdge e(v0, v1);
-  auto it = _mapEdgeNum.find(e);
-  if(it != _mapEdgeNum.end()) {
+  auto it = _meshEdges.find(e);
+  if(it != _meshEdges.end()) {
     edge = it->first;
     return it->second;
   }
@@ -1868,21 +1859,12 @@ std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
   }
 }
 
-std::size_t GModel::addMFace(MFace &&face, std::size_t num)
-{
-  std::pair<MFace, std::size_t> key(std::move(face),
-                                    num ? num : _mapFaceNum.size() + 1);
-  std::pair<hashmapMFace::iterator, bool> it =
-    _mapFaceNum.insert(std::move(key));
-  return it.first->second;
-}
-
 std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
                              MFace &face)
 {
   MFace f(v0, v1, v2, v3);
-  auto it = _mapFaceNum.find(f);
-  if(it != _mapFaceNum.end()) {
+  auto it = _meshFaces.find(f);
+  if(it != _meshFaces.end()) {
     face = it->first;
     return it->second;
   }

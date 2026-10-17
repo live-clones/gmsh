@@ -2181,9 +2181,12 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary,
   Msg::Info("%zu edge%s", numEdges, numEdges > 1 ? "s" : "");
   Msg::StartProgressMeter(numEdges);
 
-  // each edge is its tag followed by its 2 node tags
+  // each edge is its tag followed by its 2 node tags; a model that has no
+  // edges yet takes them as they come, one that has (e.g. the other
+  // partitions of the mesh) looks each up
   std::vector<std::size_t> data;
   if(!readMSH4SizeTs(fp, binary, swap, 3 * numEdges, data)) return false;
+  bool append = !model->getNumMEdges();
   model->reserveMEdges(numEdges);
   for(std::size_t k = 0; k < numEdges; k++) {
     const std::size_t *edgeData = &data[3 * k];
@@ -2194,7 +2197,10 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary,
       return false;
     }
     MEdge me(v0, v1);
-    model->addMEdge(std::move(me), edgeData[0]);
+    if(append)
+      model->appendMEdge(std::move(me), edgeData[0]);
+    else
+      model->addMEdge(std::move(me), edgeData[0]);
     if(numEdges > 100000 && progressDue(k + 1, numEdges))
       Msg::ProgressMeter(k + 1, true, "Reading edges");
   }
@@ -2222,11 +2228,10 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
     numFaces = header[0] + header[1];
   }
 
-  auto invalid = [&]() {
+  if(numBlocks > numFaces || (!numBlocks && numFaces)) {
     Msg::Warning("Skipping invalid face data in MSH%g file", version);
     return true;
-  };
-  if(numBlocks > numFaces || (!numBlocks && numFaces)) return invalid();
+  }
 
   // (ASCII data is skipped with the rest of the section)
   if(CTX::instance()->mesh.ignoreFaces) {
@@ -2243,9 +2248,18 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
     return true;
   }
 
-  // faces are added to the model once the whole section is read, and records
-  // are read by chunks so that an invalid count is not allocated
-  std::vector<std::pair<MFace, std::size_t>> faces;
+  // the records are read by chunks, so that an invalid count is not
+  // allocated; a model that has no faces yet takes them as they come, one
+  // that has (e.g. the other partitions of the mesh) looks each up; those of
+  // an invalid section are dropped again
+  std::size_t numBefore = model->getNumMFaces(), numRead = 0;
+  bool append = !numBefore;
+  model->reserveMFaces(numFaces);
+  auto invalid = [&]() {
+    Msg::Warning("Skipping invalid face data in MSH%g file", version);
+    model->truncateMFaces(numBefore);
+    return true;
+  };
   std::vector<std::size_t> data;
   std::vector<MVertex *> v;
   for(std::size_t block = 0; block < numBlocks; block++) {
@@ -2254,8 +2268,7 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
     else if(!readMSH4SizeTs(fp, binary, swap, 2, header))
       return invalid();
     std::size_t numNodes = header[0], numFacesInBlock = header[1];
-    if(numNodes < 3 || numFacesInBlock > numFaces - faces.size())
-      return invalid();
+    if(numNodes < 3 || numFacesInBlock > numFaces - numRead) return invalid();
     std::size_t stride = numNodes + 1;
     std::size_t chunk = std::max<std::size_t>(1, (1 << 20) / stride);
     v.resize(numNodes);
@@ -2268,20 +2281,17 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
           v[j] = model->getMeshVertexByTag(faceData[j + 1]);
           if(!v[j]) return invalid();
         }
-        faces.emplace_back(MFace(v), faceData[0]);
+        if(append)
+          model->appendMFace(MFace(v), faceData[0]);
+        else
+          model->addMFace(MFace(v), faceData[0]);
       }
+      numRead += n;
+      if(numFaces > 100000) Msg::ProgressMeter(numRead, true, "Reading faces");
     }
   }
-  if(faces.size() != numFaces) return invalid();
-
+  if(numRead != numFaces) return invalid();
   Msg::Info("%zu face%s", numFaces, numFaces > 1 ? "s" : "");
-  Msg::StartProgressMeter(numFaces);
-  model->reserveMFaces(numFaces);
-  for(std::size_t k = 0; k < numFaces; k++) {
-    model->addMFace(std::move(faces[k].first), faces[k].second);
-    if(numFaces > 100000 && progressDue(k + 1, numFaces))
-      Msg::ProgressMeter(k + 1, true, "Reading faces");
-  }
   return true;
 }
 
@@ -4214,78 +4224,99 @@ static void writeMSH4Elements(
     writeMSH4Polytopes(fp, binary, polytopesByType, numPolytopes);
 }
 
+// The mesh edges or faces of the elements of the partitions to save, as
+// indices in the set, in its order (edgesOf(e, keys) gives the edges or faces
+// of an element)
+template <class Set, class F>
+static void edgesOrFacesToSave(GModel *const model, const Set &set,
+                               bool partitioned,
+                               const std::vector<int> &partitionsToSave,
+                               F edgesOf, std::vector<std::size_t> &subset)
+{
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
+  getEntitiesToSave(model, partitioned, partitionsToSave, true, regions, faces,
+                    edges, vertices);
+  std::vector<GEntity *> entities(vertices.begin(), vertices.end());
+  entities.insert(entities.end(), edges.begin(), edges.end());
+  entities.insert(entities.end(), faces.begin(), faces.end());
+  entities.insert(entities.end(), regions.begin(), regions.end());
+  for(const auto &mgr : model->getOverlapManagers()) {
+    for(const auto &of : std::get<0>(mgr.getAllOverlaps()))
+      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                   of->owningPartition()) != partitionsToSave.end())
+        entities.push_back(of);
+    for(const auto &orr : std::get<1>(mgr.getAllOverlaps()))
+      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                   orr->owningPartition()) != partitionsToSave.end())
+        entities.push_back(orr);
+  }
+  std::vector<typename Set::value_type::first_type> keys;
+  subset.clear();
+  for(auto ge : entities) {
+    for(std::size_t k = 0; k < ge->getNumMeshElements(); k++) {
+      edgesOf(ge->getMeshElement(k), keys);
+      for(auto &key : keys) {
+        std::size_t i = set.indexOf(key);
+        if(i != Set::npos) subset.push_back(i);
+      }
+    }
+  }
+  std::sort(subset.begin(), subset.end());
+  subset.erase(std::unique(subset.begin(), subset.end()), subset.end());
+}
+
+// f(entry) for the edges or faces to write: all of them, or those of the
+// partitions to save
+template <class Set, class F, class G>
+static std::size_t
+forEdgesOrFacesToSave(GModel *const model, const Set &set, bool partitioned,
+                      const std::vector<int> &partitionsToSave, F edgesOf, G f)
+{
+  if(partitionsToSave.empty() || !partitioned) {
+    for(const auto &entry : set) f(entry);
+    return set.size();
+  }
+  std::vector<std::size_t> subset;
+  edgesOrFacesToSave(model, set, partitioned, partitionsToSave, edgesOf,
+                     subset);
+  for(auto i : subset) f(set[i]);
+  return subset.size();
+}
+
 static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
                            bool partitioned,
                            const std::vector<int> &partitionsToSave)
 {
-  auto printEdges = [&](const GModel::hashmapMEdge &edges) {
-    if(edges.empty()) return;
-    fprintf(fp, "$Edges\n");
-    if(binary) {
-      std::size_t numEdges = edges.size();
-      fwrite(&numEdges, sizeof(std::size_t), 1, fp);
-    }
-    else {
-      fprintf(fp, "%zu\n", edges.size());
-    }
-    std::vector<std::size_t> data;
-    if(binary) data.reserve(3 * edges.size());
-    for(const auto &[edge, tag] : edges) {
-      size_t v0 = edge.getVertex(0)->getNum();
-      size_t v1 = edge.getVertex(1)->getNum();
-      if(binary)
-        data.insert(data.end(), {tag, v0, v1});
-      else
-        fprintf(fp, "%zu %zu %zu\n", tag, v0, v1);
-    }
-    if(binary) fwrite(data.data(), sizeof(std::size_t), data.size(), fp);
-
-    if(binary) fprintf(fp, "\n");
-    fprintf(fp, "$EndEdges\n");
+  auto edgesOf = [](MElement *e, std::vector<MEdge> &keys) {
+    keys.resize(e->getNumEdges());
+    for(int k = 0; k < e->getNumEdges(); k++) keys[k] = e->getEdge(k);
   };
+  // each edge is its tag followed by its 2 node tags
+  std::vector<std::size_t> data;
+  std::size_t numEdges = forEdgesOrFacesToSave(
+    model, model->getMEdges(), partitioned, partitionsToSave, edgesOf,
+    [&](const GModel::MEdgeSet::value_type &entry) {
+      data.insert(data.end(), {entry.second, entry.first.getVertex(0)->getNum(),
+                               entry.first.getVertex(1)->getNum()});
+    });
+  if(!numEdges) return;
 
-  if(partitionsToSave.empty() || !partitioned)
-    printEdges(model->getMEdges());
-  else {
-    GModel::hashmapMEdge subsetEdges;
-    auto addEdgesFromElement = [&](auto *e) {
-      for(int k = 0; k < e->getNumEdges(); ++k) {
-        MEdge me = e->getEdge(k);
-        auto it = model->getMEdges().find(me);
-        if(it != model->getMEdges().end()) { subsetEdges[me] = it->second; }
-      }
-    };
-    auto addEdgesFromEntity = [&](GEntity *entity) {
-      for(size_t k = 0; k < entity->getNumMeshElements(); ++k) {
-        MElement *el = entity->getMeshElement(k);
-        addEdgesFromElement(el);
-      }
-    };
-    std::set<GRegion *, GEntityPtrLessThan> regions;
-    std::set<GFace *, GEntityPtrLessThan> faces;
-    std::set<GEdge *, GEntityPtrLessThan> edges;
-    std::set<GVertex *, GEntityPtrLessThan> vertices;
-    getEntitiesToSave(model, partitioned, partitionsToSave, true, regions,
-                      faces, edges, vertices);
-    for(auto vertex : vertices) { addEdgesFromEntity(vertex); }
-    for(auto edge : edges) { addEdgesFromEntity(edge); }
-    for(auto face : faces) { addEdgesFromEntity(face); }
-    for(auto region : regions) { addEdgesFromEntity(region); }
-    for(const auto &mgr : model->getOverlapManagers()) {
-      for(const auto &of : std::get<0>(mgr.getAllOverlaps())) {
-        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                     of->owningPartition()) != partitionsToSave.end())
-          addEdgesFromEntity(of);
-      }
-      for(const auto &or_ : std::get<1>(mgr.getAllOverlaps())) {
-        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                     or_->owningPartition()) != partitionsToSave.end())
-          addEdgesFromEntity(or_);
-      }
-    }
-
-    printEdges(subsetEdges);
+  fprintf(fp, "$Edges\n");
+  if(binary) {
+    fwrite(&numEdges, sizeof(std::size_t), 1, fp);
+    fwrite(data.data(), sizeof(std::size_t), data.size(), fp);
+    fprintf(fp, "\n");
   }
+  else {
+    fprintf(fp, "%zu\n", numEdges);
+    for(std::size_t k = 0; k < numEdges; k++)
+      fprintf(fp, "%zu %zu %zu\n", data[3 * k], data[3 * k + 1],
+              data[3 * k + 2]);
+  }
+  fprintf(fp, "$EndEdges\n");
 }
 
 static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
@@ -4293,101 +4324,66 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
                            const std::vector<int> &partitionsToSave,
                            double version)
 {
-  auto printFaces = [&](const GModel::hashmapMFace &faces) {
-    if(faces.empty()) return;
-    // one block per number of nodes
-    std::map<std::size_t, std::vector<const GModel::hashmapMFace::value_type *>>
-      blocks;
-    for(const auto &f : faces) blocks[f.first.getNumVertices()].push_back(&f);
-    // (before MSH 4.2: the numbers of triangles and quadrangles, and no block
-    // headers)
-    std::size_t header[2] = {blocks.size(), faces.size()};
-    if(version < 4.2) {
-      if(blocks.size() > blocks.count(3) + blocks.count(4))
-        Msg::Warning("Skipping faces with more than 4 nodes: use MSH 4.2");
-      for(auto it = blocks.begin(); it != blocks.end();)
-        it =
-          (it->first == 3 || it->first == 4) ? std::next(it) : blocks.erase(it);
-      header[0] = blocks.count(3) ? blocks[3].size() : 0;
-      header[1] = blocks.count(4) ? blocks[4].size() : 0;
-      if(blocks.empty()) return;
-    }
-    fprintf(fp, "$Faces\n");
-    if(binary)
-      fwrite(header, sizeof(std::size_t), 2, fp);
-    else
-      fprintf(fp, "%zu %zu\n", header[0], header[1]);
-    std::vector<std::size_t> data;
-    for(const auto &[numNodes, block] : blocks) {
-      if(version >= 4.2) {
-        std::size_t h[2] = {numNodes, block.size()};
-        if(binary)
-          fwrite(h, sizeof(std::size_t), 2, fp);
-        else
-          fprintf(fp, "%zu %zu\n", h[0], h[1]);
-      }
-      if(binary) {
-        data.clear();
-        data.reserve((numNodes + 1) * block.size());
-        for(auto f : block) {
-          data.push_back(f->second);
-          for(std::size_t j = 0; j < numNodes; j++)
-            data.push_back(f->first.getVertex(j)->getNum());
-        }
-        fwrite(data.data(), sizeof(std::size_t), data.size(), fp);
-      }
-      else {
-        for(auto f : block) {
-          fprintf(fp, "%zu", f->second);
-          for(std::size_t j = 0; j < numNodes; j++)
-            fprintf(fp, " %zu", f->first.getVertex(j)->getNum());
-          fprintf(fp, "\n");
-        }
-      }
-    }
-    if(binary) fprintf(fp, "\n");
-    fprintf(fp, "$EndFaces\n");
+  auto facesOf = [](MElement *e, std::vector<MFace> &keys) {
+    keys.resize(e->getNumFaces());
+    for(int k = 0; k < e->getNumFaces(); k++) keys[k] = e->getFace(k);
   };
+  // one block per number of nodes: each face is its tag followed by its node
+  // tags
+  std::map<std::size_t, std::vector<std::size_t>> blocks;
+  forEdgesOrFacesToSave(model, model->getMFaces(), partitioned,
+                        partitionsToSave, facesOf,
+                        [&](const GModel::MFaceSet::value_type &entry) {
+                          std::size_t numNodes = entry.first.getNumVertices();
+                          std::vector<std::size_t> &data = blocks[numNodes];
+                          data.push_back(entry.second);
+                          for(std::size_t j = 0; j < numNodes; j++)
+                            data.push_back(entry.first.getVertex(j)->getNum());
+                        });
+  // (before MSH 4.2: the numbers of triangles and quadrangles, and no block
+  // headers)
+  if(version < 4.2) {
+    if(blocks.size() > blocks.count(3) + blocks.count(4))
+      Msg::Warning("Skipping faces with more than 4 nodes: use MSH 4.2");
+    for(auto it = blocks.begin(); it != blocks.end();)
+      it =
+        (it->first == 3 || it->first == 4) ? std::next(it) : blocks.erase(it);
+  }
+  if(blocks.empty()) return;
+  std::size_t numFaces = 0;
+  for(auto &[numNodes, data] : blocks) numFaces += data.size() / (numNodes + 1);
+  std::size_t header[2] = {blocks.size(), numFaces};
+  if(version < 4.2) {
+    header[0] = blocks.count(3) ? blocks[3].size() / 4 : 0;
+    header[1] = blocks.count(4) ? blocks[4].size() / 5 : 0;
+  }
 
-  if(partitionsToSave.empty() || !partitioned) {
-    printFaces(model->getMFaces());
-    return;
-  }
-  // Compute face subset to export
-  GModel::hashmapMFace subsetFaces;
-  auto addFacesFromEntity = [&](GEntity *entity) {
-    for(size_t k = 0; k < entity->getNumMeshElements(); ++k) {
-      MElement *el = entity->getMeshElement(k);
-      for(int j = 0; j < el->getNumFaces(); ++j) {
-        MFace mf = el->getFace(j);
-        auto it = model->getMFaces().find(mf);
-        if(it != model->getMFaces().end()) { subsetFaces[mf] = it->second; }
+  fprintf(fp, "$Faces\n");
+  if(binary)
+    fwrite(header, sizeof(std::size_t), 2, fp);
+  else
+    fprintf(fp, "%zu %zu\n", header[0], header[1]);
+  for(auto &[numNodes, data] : blocks) {
+    std::size_t n = data.size() / (numNodes + 1);
+    if(version >= 4.2) {
+      std::size_t h[2] = {numNodes, n};
+      if(binary)
+        fwrite(h, sizeof(std::size_t), 2, fp);
+      else
+        fprintf(fp, "%zu %zu\n", h[0], h[1]);
+    }
+    if(binary) { fwrite(data.data(), sizeof(std::size_t), data.size(), fp); }
+    else {
+      for(std::size_t k = 0; k < n; k++) {
+        const std::size_t *d = &data[(numNodes + 1) * k];
+        fprintf(fp, "%zu", d[0]);
+        for(std::size_t j = 1; j <= numNodes; j++) fprintf(fp, " %zu", d[j]);
+        fprintf(fp, "\n");
       }
     }
-  };
-  std::set<GRegion *, GEntityPtrLessThan> regions;
-  std::set<GFace *, GEntityPtrLessThan> faces;
-  std::set<GEdge *, GEntityPtrLessThan> edges;
-  std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, partitionsToSave, true, regions, faces,
-                    edges, vertices);
-  for(auto vertex : vertices) { addFacesFromEntity(vertex); }
-  for(auto edge : edges) { addFacesFromEntity(edge); }
-  for(auto face : faces) { addFacesFromEntity(face); }
-  for(auto region : regions) { addFacesFromEntity(region); }
-  for(const auto &mgr : model->getOverlapManagers()) {
-    for(const auto &of : std::get<0>(mgr.getAllOverlaps())) {
-      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   of->owningPartition()) != partitionsToSave.end())
-        addFacesFromEntity(of);
-    }
-    for(const auto &or_ : std::get<1>(mgr.getAllOverlaps())) {
-      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   or_->owningPartition()) != partitionsToSave.end())
-        addFacesFromEntity(or_);
-    }
   }
-  printFaces(subsetFaces);
+  if(binary) fprintf(fp, "\n");
+  fprintf(fp, "$EndFaces\n");
 }
 
 static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,

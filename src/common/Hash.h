@@ -56,4 +56,16 @@ template <int N> struct HashFNV1a {
   }
 };
 
+// Mixing of a 64-bit value (the finalizer of splitmix64): every bit of the
+// result depends on every bit of x, so that the high bits can be used too
+inline std::size_t HashMix(std::size_t x)
+{
+  x ^= x >> 30;
+  x *= 0xbf58476d1ce4e5b9ull;
+  x ^= x >> 27;
+  x *= 0x94d049bb133111ebull;
+  x ^= x >> 31;
+  return x;
+}
+
 #endif

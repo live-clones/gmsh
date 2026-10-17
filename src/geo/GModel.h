@@ -22,6 +22,7 @@
 #include "SBoundingBox3d.h"
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
+#include "NumberedSet.h"
 #include "OverlapManager.h"
 
 template <class scalar> class simpleFunction;
@@ -45,10 +46,9 @@ class partitionRegion;
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel {
 public:
-  using hashmapMFace =
-    std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual>;
-  using hashmapMEdge =
-    std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>;
+  // the mesh edges and faces with a global number (see NumberedSet.h)
+  using MEdgeSet = NumberedSet<MEdge, MEdgeHash, MEdgeEqual>;
+  using MFaceSet = NumberedSet<MFace, MFaceHash, MFaceEqual>;
 
 private:
   std::multimap<std::pair<const std::vector<int>, const std::vector<int>>,
@@ -58,8 +58,8 @@ private:
   std::set<GFace *, GEntityPtrLessThan> _chainFaces;
   std::set<GEdge *, GEntityPtrLessThan> _chainEdges;
   std::set<GVertex *, GEntityPtrLessThan> _chainVertices;
-  hashmapMEdge _mapEdgeNum;
-  hashmapMFace _mapFaceNum;
+  MEdgeSet _meshEdges;
+  MFaceSet _meshFaces;
   // the maximum vertex and element id number in the mesh
   std::size_t _maxVertexNum, _maxElementNum;
   std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
@@ -324,36 +324,44 @@ public:
   void createMFaces(const std::vector<std::pair<int, int>> &dimTags =
                     std::vector<std::pair<int, int>>());
 
-  // add a mesh edge or face in the global edge or face map with number "num",
-  // or number it (starting at 1) if num == 0
-  std::size_t addMEdge(MEdge &&edge, std::size_t num = 0);
-  std::size_t addMFace(MFace &&face, std::size_t num = 0);
+  // add a mesh edge or face with the global number "num", or the next number
+  // if num == 0; return its number (the one it already has if it is there)
+  std::size_t addMEdge(MEdge &&edge, std::size_t num = 0)
+  { return _meshEdges.add(std::move(edge), num); }
+  std::size_t addMFace(MFace &&face, std::size_t num = 0)
+  { return _meshFaces.add(std::move(face), num); }
+  // append mesh edges or faces known to be new (e.g. read from a file into a
+  // model that has none), without looking for duplicates
+  void appendMEdge(MEdge &&edge, std::size_t num)
+  { _meshEdges.append(std::move(edge), num); }
+  void appendMFace(MFace &&face, std::size_t num)
+  { _meshFaces.append(std::move(face), num); }
+  // drop the mesh edges or faces from the n-th on (e.g. those of a file that
+  // turns out to be invalid)
+  void truncateMEdges(std::size_t n) { _meshEdges.truncate(n); }
+  void truncateMFaces(std::size_t n) { _meshFaces.truncate(n); }
   // make room for n more mesh edges or faces, before adding them
   void reserveMEdges(std::size_t n)
-  {
-    _mapEdgeNum.reserve(_mapEdgeNum.size() + n);
-  }
+  { _meshEdges.reserve(_meshEdges.size() + n); }
   void reserveMFaces(std::size_t n)
-  {
-    _mapFaceNum.reserve(_mapFaceNum.size() + n);
-  }
+  { _meshFaces.reserve(_meshFaces.size() + n); }
 
   // get number of edges or faces
-  std::size_t getNumMEdges() const { return _mapEdgeNum.size(); };
-  std::size_t getNumMFaces() const { return _mapFaceNum.size(); };
+  std::size_t getNumMEdges() const { return _meshEdges.size(); };
+  std::size_t getNumMFaces() const { return _meshFaces.size(); };
 
   // get the edge of face and its global number given mesh nodes (return 0 if
-  // the edge or face does not exist in the edge or face map)
+  // the edge or face does not exist)
   std::size_t getMEdge(MVertex *v0, MVertex *v1, MEdge &edge);
   std::size_t getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
                        MFace &face);
-  // iterate on edges and faces
-  hashmapMEdge::const_iterator firstMEdge() { return _mapEdgeNum.begin(); }
-  hashmapMEdge::const_iterator lastMEdge() { return _mapEdgeNum.end(); }
-  hashmapMFace::const_iterator firstMFace() { return _mapFaceNum.begin(); }
-  hashmapMFace::const_iterator lastMFace() { return _mapFaceNum.end(); }
-  const hashmapMEdge &getMEdges() const { return _mapEdgeNum; }
-  const hashmapMFace &getMFaces() const { return _mapFaceNum; }
+  // iterate on edges and faces, in the order they were added
+  MEdgeSet::const_iterator firstMEdge() { return _meshEdges.begin(); }
+  MEdgeSet::const_iterator lastMEdge() { return _meshEdges.end(); }
+  MFaceSet::const_iterator firstMFace() { return _meshFaces.begin(); }
+  MFaceSet::const_iterator lastMFace() { return _meshFaces.end(); }
+  const MEdgeSet &getMEdges() const { return _meshEdges; }
+  const MFaceSet &getMFaces() const { return _meshFaces; }
 
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)

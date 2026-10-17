@@ -1,0 +1,140 @@
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+#ifndef NUMBERED_SET_H
+#define NUMBERED_SET_H
+
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
+#include <vector>
+
+// A set of keys (mesh edges or faces) with a number each, in the order they
+// were added: the entries are (key, number) pairs in a vector, and lookups go
+// through an index over them, a flat open-addressing table built on the first
+// lookup and kept up to date after that. Entries appended in bulk, e.g. from
+// a file, are not checked for duplicates until the index is built: a file
+// then costs no more than its reading, and a model that never looks anything
+// up never builds the index. (The index holds at most 2^32 - 2 entries.)
+template <class K, class Hash, class Equal> class NumberedSet {
+public:
+  typedef std::pair<K, std::size_t> value_type;
+  typedef typename std::vector<value_type>::const_iterator const_iterator;
+  static const std::size_t npos = (std::size_t)-1;
+
+private:
+  std::vector<value_type> _entries;
+  std::size_t _maxNum = 0;
+  // a slot of the index: the entry it points to plus one (0 if free), and
+  // the hash of its key, so that probing an occupied slot that does not match
+  // costs no access to the entry
+  struct slot {
+    std::uint32_t index, hash;
+  };
+  mutable std::vector<slot> _slots;
+  mutable std::size_t _mask = 0;
+  mutable bool _indexed = false;
+  Hash _hash;
+  Equal _equal;
+
+  static std::uint32_t _tag(std::size_t h) { return (std::uint32_t)(h >> 32); }
+  // the slot of key, of hash h: the one holding an equal entry, or the free
+  // one where it would go
+  std::size_t _slot(const K &key, std::size_t h) const
+  {
+    std::size_t s = h & _mask;
+    while(_slots[s].index &&
+          (_slots[s].hash != _tag(h) ||
+           !_equal(_entries[_slots[s].index - 1].first, key)))
+      s = (s + 1) & _mask;
+    return s;
+  }
+  // (re)build the index over the entries, with room for n of them at a load
+  // of one half at most, dropping the entries that duplicate an earlier one
+  void _index(std::size_t n) const
+  {
+    std::size_t cap = 16;
+    while(cap < 2 * (n + 1)) cap <<= 1;
+    _slots.assign(cap, slot{0, 0});
+    _mask = cap - 1;
+    std::vector<value_type> &entries =
+      const_cast<std::vector<value_type> &>(_entries);
+    std::size_t kept = 0;
+    for(std::size_t i = 0; i < entries.size(); i++) {
+      std::size_t h = _hash(entries[i].first), s = _slot(entries[i].first, h);
+      if(_slots[s].index) continue; // a duplicate
+      if(kept != i) entries[kept] = std::move(entries[i]);
+      _slots[s] = slot{(std::uint32_t)++kept, _tag(h)};
+    }
+    entries.resize(kept);
+    _indexed = true;
+  }
+  void _index() const { _index(_entries.size()); }
+
+public:
+  std::size_t size() const { return _entries.size(); }
+  bool empty() const { return _entries.empty(); }
+  const_iterator begin() const { return _entries.begin(); }
+  const_iterator end() const { return _entries.end(); }
+  const value_type &operator[](std::size_t i) const { return _entries[i]; }
+  // make room for n entries (in the index too, if it is built)
+  void reserve(std::size_t n)
+  {
+    _entries.reserve(n);
+    if(_indexed && 2 * (n + 1) > _slots.size()) _index(n);
+  }
+  // drop the entries from the n-th on
+  void truncate(std::size_t n)
+  {
+    if(n >= _entries.size()) return;
+    _entries.resize(n);
+    _maxNum = 0;
+    for(auto &e : _entries) _maxNum = std::max(_maxNum, e.second);
+    _indexed = false;
+  }
+  void clear()
+  {
+    std::vector<value_type>().swap(_entries);
+    std::vector<slot>().swap(_slots);
+    _maxNum = 0;
+    _indexed = false;
+  }
+  // the index of the entry of key, npos if there is none
+  std::size_t indexOf(const K &key) const
+  {
+    if(!_indexed) _index();
+    std::size_t s = _slot(key, _hash(key));
+    return _slots[s].index ? _slots[s].index - 1 : npos;
+  }
+  const_iterator find(const K &key) const
+  {
+    std::size_t i = indexOf(key);
+    return i == npos ? end() : begin() + i;
+  }
+  // add key with number num (the largest number so far plus one if 0), or
+  // return the number it already has
+  std::size_t add(K &&key, std::size_t num = 0)
+  {
+    if(!_indexed) _index();
+    std::size_t h = _hash(key), s = _slot(key, h);
+    if(_slots[s].index) return _entries[_slots[s].index - 1].second;
+    if(!num) num = _maxNum + 1;
+    _maxNum = std::max(_maxNum, num);
+    _entries.emplace_back(std::move(key), num);
+    _slots[s] = slot{(std::uint32_t)_entries.size(), _tag(h)};
+    if(2 * (_entries.size() + 1) > _slots.size()) _index();
+    return num;
+  }
+  // append an entry without looking for a duplicate (see above)
+  void append(K &&key, std::size_t num)
+  {
+    _maxNum = std::max(_maxNum, num);
+    _entries.emplace_back(std::move(key), num);
+    _indexed = false;
+  }
+};
+
+#endif
