@@ -5076,6 +5076,7 @@ $Polytopes
     minElementTag(size_t) maxElementTag(size_t)
   entityDim(int) entityTag(int) elementType(int; 34 or 35, see below)
     numPolytopesInBlock(size_t)
+    elementOffset(size_t) ...  (numPolytopesInBlock + 1 values, see below)
     < elementTag(size_t) numNodes(size_t) nodeTag(size_t) ...
       numTriangles(size_t) nodeTag(size_t) ...  (if elementType == 34) >
     < elementTag(size_t) numFaces(size_t)
@@ -5294,7 +5295,11 @@ with the edges, 54 with the faces, 27 in the volume)
 Polygons (@code{elementType} 34) and polyhedra (@code{elementType} 35) are
 stored in the @code{$Polytopes} section instead of @code{$Elements}, as
 their number of nodes varies. As in @code{$Elements}, the element type of the
-block fixes the shape of its records: a polygon is given by its list of
+block fixes the shape of its records, but not their size: a block thus starts
+with the offsets of its records, i.e. where each of them starts, counted in
+values (@code{size_t}) from the first record, the last offset being the total
+number of values of the records; any range of records can thus be located and
+read without reading the ones before it. A polygon is given by its list of
 nodes, a polyhedron by the list of nodes of each of its faces. Both are
 followed by an optional sub-triangulation or sub-tetrahedralization (with 0
 simplices if none is given): 3 node tags per triangle, 4 per tetrahedron, in

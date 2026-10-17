@@ -12,16 +12,14 @@ Save "polytopes_out.msh";
 Delete Model;
 Merge "polytopes_out.msh";
 If(Mesh.NbNodes != 15 || Mesh.NbPolygons != 1 || Mesh.NbPolyhedra != 1)
-  Error("Expected 15 nodes, 1 polygon and 1 polyhedron after the round trip, "
-        "got %g, %g and %g", Mesh.NbNodes, Mesh.NbPolygons, Mesh.NbPolyhedra);
+  Error("Expected 15 nodes, 1 polygon and 1 polyhedron after the round trip, got %g, %g and %g", Mesh.NbNodes, Mesh.NbPolygons, Mesh.NbPolyhedra);
 EndIf
 Mesh.Binary = 1;
 Save "polytopes_out.msh";
 Delete Model;
 Merge "polytopes_out.msh";
 If(Mesh.NbNodes != 15 || Mesh.NbPolygons != 1 || Mesh.NbPolyhedra != 1)
-  Error("Expected 15 nodes, 1 polygon and 1 polyhedron after the binary round "
-        "trip, got %g, %g and %g", Mesh.NbNodes, Mesh.NbPolygons,
+  Error("Expected 15 nodes, 1 polygon and 1 polyhedron after the binary round trip, got %g, %g and %g", Mesh.NbNodes, Mesh.NbPolygons,
         Mesh.NbPolyhedra);
 EndIf
 Mesh.Binary = 0;
@@ -33,6 +31,5 @@ Save "polytopes_out.msh";
 Delete Model;
 Merge "polytopes_out.msh";
 If(Mesh.NbNodes != 15 || Mesh.NbPolygons != 1 || Mesh.NbPolyhedra != 1)
-  Error("Expected 15 nodes, 1 polygon and 1 polyhedron without subdivisions, "
-        "got %g, %g and %g", Mesh.NbNodes, Mesh.NbPolygons, Mesh.NbPolyhedra);
+  Error("Expected 15 nodes, 1 polygon and 1 polyhedron without subdivisions, got %g, %g and %g", Mesh.NbNodes, Mesh.NbPolygons, Mesh.NbPolyhedra);
 EndIf
