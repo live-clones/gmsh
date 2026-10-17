@@ -804,6 +804,8 @@ static void Mesh2D(GModel *m)
 
   // boundary layers are not yet thread-safe
   if(m->getFields()->getNumBoundaryLayerFields()) nthreads = 1;
+  // the recombination of the PACK surfaces, after packing them one by one
+  const int nthreadsRecombination = nthreads;
 
   for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     // Frontal-Delaunay for quads and co are not yet thread-safe
@@ -876,9 +878,16 @@ static void Mesh2D(GModel *m)
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
       };
+      startDeferredRecombination();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
       for(size_t K = 0; K < temp.size(); K++) meshOne(temp[K]);
       for(GFace *gf : members) meshOne(gf);
+      // (also after an exception: the surfaces it waits for are meshed)
+      try {
+        finishDeferredRecombination(nthreadsRecombination);
+      } catch(...) {
+        exceptions = true;
+      }
       if(exceptions) {
         CTX::instance()->lock = 0;
         throw std::runtime_error(Msg::GetLastError());
