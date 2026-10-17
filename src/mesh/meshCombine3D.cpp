@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <map>
+#include <unordered_map>
 #include <unordered_set>
 #include <set>
 #include <sstream>
@@ -1285,7 +1286,9 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
 
 #endif
 
-bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm)
+// the original version, on all the faces of the volume elements (and their
+// polyhedra)
+static bool makeConformalThroughTrihedraAllFaces(GModel *gm)
 {
   fs_cont search;
   // on boundary.
@@ -1349,5 +1352,226 @@ bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm)
     Msg::Info("- MakeHybridHexTetMeshConformalThroughTriHedron: %d "
               "trihedra created",
               nbTrihedraCreated);
+  return true;
+}
+
+namespace {
+  // a face by its vertices sorted by address (3 or 4, the 4th null for a
+  // triangle)
+  struct SortedFace {
+    MVertex *v[4];
+    bool operator==(const SortedFace &o) const
+    {
+      return v[0] == o.v[0] && v[1] == o.v[1] && v[2] == o.v[2] &&
+             v[3] == o.v[3];
+    }
+  };
+  struct SortedFaceHash {
+    std::size_t operator()(const SortedFace &f) const
+    {
+      std::size_t h = 0;
+      for(int i = 0; i < 4; i++)
+        h = h * 0x9E3779B97F4A7C15ull + (std::size_t)f.v[i] / sizeof(void *);
+      return h ^ (h >> 29);
+    }
+  };
+  SortedFace sortedFace(MVertex *a, MVertex *b, MVertex *c,
+                        MVertex *d = nullptr)
+  {
+    SortedFace f = {{a, b, c, d}};
+    std::sort(f.v, f.v + (d ? 4 : 3));
+    return f;
+  }
+} // namespace
+
+// The quadrangular faces of the hexahedra, prisms and pyramids with two
+// triangular faces on their other side get a trihedron, as the original
+// version, without looking at all the faces of all the elements: such a face
+// has its 4 vertices on elements with triangular faces, and only the faces
+// meeting that condition (all the occurrences of a face do), and the
+// triangles of the unmatched ones, are counted
+bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm)
+{
+  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit)
+    if(!(*rit)->polyhedra.empty()) return makeConformalThroughTrihedraAllFaces(gm);
+
+  // the vertices of the elements with triangular faces, marked 1 in
+  // MVertex::_index (the other vertices of the quadrangular faces 0)
+  bool anyTriangle = false;
+  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
+    GRegion *gr = *rit;
+    auto mark = [](MElement *e, long m) {
+      for(std::size_t k = 0; k < e->getNumPrimaryVertices(); k++)
+        e->getVertex(k)->setIndex(m);
+    };
+    for(MHexahedron *e : gr->hexahedra) mark(e, 0);
+    for(MTetrahedron *e : gr->tetrahedra) mark(e, 0);
+    for(MPyramid *e : gr->pyramids) mark(e, 0);
+    for(MPrism *e : gr->prisms) mark(e, 0);
+    for(MTrihedron *e : gr->trihedra) mark(e, 0);
+  }
+  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
+    GRegion *gr = *rit;
+    auto mark = [&anyTriangle](MElement *e) {
+      anyTriangle = true;
+      for(std::size_t k = 0; k < e->getNumPrimaryVertices(); k++)
+        e->getVertex(k)->setIndex(1);
+    };
+    for(MTetrahedron *e : gr->tetrahedra) mark(e);
+    for(MPyramid *e : gr->pyramids) mark(e);
+    for(MPrism *e : gr->prisms) mark(e);
+    for(MTrihedron *e : gr->trihedra) mark(e);
+  }
+  if(!anyTriangle) return true;
+
+  // the occurrences of the quadrangular faces with their 4 vertices there,
+  // with the vertices in the order of their element, sorted by face (and
+  // order of occurrence)
+  struct QuadOccurrence {
+    SortedFace key;
+    MVertex *v[4];
+    GRegion *gr;
+    std::size_t rank;
+  };
+  std::vector<QuadOccurrence> quads;
+  auto addQuads = [&](MElement *e, int nbFaces,
+                      int (*face)(const int, const int), GRegion *gr) {
+    for(int f = 0; f < nbFaces; f++) {
+      if(face(f, 3) < 0) continue; // a triangle
+      QuadOccurrence q;
+      bool candidate = true;
+      for(int j = 0; j < 4 && candidate; j++) {
+        q.v[j] = e->getVertex(face(f, j));
+        candidate = q.v[j]->getIndex() == 1;
+      }
+      if(!candidate) continue;
+      q.key = sortedFace(q.v[0], q.v[1], q.v[2], q.v[3]);
+      q.gr = gr;
+      q.rank = quads.size();
+      quads.push_back(q);
+    }
+  };
+  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
+    GRegion *gr = *rit;
+    for(MHexahedron *e : gr->hexahedra)
+      addQuads(e, 6, MHexahedron::faces_hexa, gr);
+    for(MPrism *e : gr->prisms) addQuads(e, 5, MPrism::faces_prism, gr);
+    for(MPyramid *e : gr->pyramids) addQuads(e, 5, MPyramid::faces_pyramid, gr);
+    for(MTrihedron *e : gr->trihedra)
+      addQuads(e, 3, MTrihedron::faces_trihedron, gr);
+  }
+  std::sort(quads.begin(), quads.end(),
+            [](const QuadOccurrence &x, const QuadOccurrence &y) {
+              for(int i = 0; i < 4; i++)
+                if(x.key.v[i] != y.key.v[i]) return x.key.v[i] < y.key.v[i];
+              return x.rank < y.rank;
+            });
+
+  // the faces of the surface meshes bounding the regions (as
+  // buildFaceSearchStructure)
+  std::unordered_set<SortedFace, SortedFaceHash> boundary;
+  {
+    std::set<GFace *> faces;
+    for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
+      std::vector<GFace *> f = (*rit)->faces();
+      faces.insert(f.begin(), f.end());
+    }
+    for(GFace *gf : faces) {
+      for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+        MElement *e = gf->getMeshElement(i);
+        const std::size_t n = e->getNumPrimaryVertices();
+        if(n == 3)
+          boundary.insert(
+            sortedFace(e->getVertex(0), e->getVertex(1), e->getVertex(2)));
+        else if(n == 4)
+          boundary.insert(sortedFace(e->getVertex(0), e->getVertex(1),
+                                     e->getVertex(2), e->getVertex(3)));
+      }
+    }
+  }
+
+  // the unmatched ones (an odd number of occurrences, the last one kept, as
+  // the original version), not on the boundary, in the order of the original
+  // version (MFaceLessThan: by sorted vertex numbers), and the triangles of
+  // their two splits
+  struct Hanging {
+    std::size_t num[4];
+    const QuadOccurrence *q;
+  };
+  std::vector<Hanging> hanging;
+  std::unordered_map<SortedFace, int, SortedFaceHash> triangles;
+  for(std::size_t i = 0; i < quads.size();) {
+    std::size_t j = i + 1;
+    while(j < quads.size() && quads[j].key == quads[i].key) j++;
+    const QuadOccurrence &q = quads[j - 1];
+    if((j - i) % 2 && !boundary.count(q.key)) {
+      Hanging h;
+      for(int k = 0; k < 4; k++) h.num[k] = q.v[k]->getNum();
+      std::sort(h.num, h.num + 4);
+      h.q = &q;
+      hanging.push_back(h);
+      MVertex *const *v = q.v;
+      triangles[sortedFace(v[0], v[1], v[2])];
+      triangles[sortedFace(v[2], v[3], v[0])];
+      triangles[sortedFace(v[0], v[1], v[3])];
+      triangles[sortedFace(v[3], v[1], v[2])];
+    }
+    i = j;
+  }
+  std::sort(hanging.begin(), hanging.end(),
+            [](const Hanging &x, const Hanging &y) {
+              return std::lexicographical_compare(x.num, x.num + 4, y.num,
+                                                  y.num + 4);
+            });
+
+  // their occurrences as faces of the elements
+  auto addTriangles = [&](MElement *e, int nbFaces,
+                          int (*face)(const int, const int)) {
+    for(int f = 0; f < nbFaces; f++) {
+      if(face(f, 3) >= 0) continue; // a quadrangle
+      auto it = triangles.find(sortedFace(e->getVertex(face(f, 0)),
+                                          e->getVertex(face(f, 1)),
+                                          e->getVertex(face(f, 2))));
+      if(it != triangles.end()) it->second++;
+    }
+  };
+  auto tetFace = [](const int f, const int j) {
+    return j < 3 ? MTetrahedron::faces_tetra(f, j) : -1;
+  };
+  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
+    GRegion *gr = *rit;
+    for(MTetrahedron *e : gr->tetrahedra) addTriangles(e, 4, tetFace);
+    for(MPyramid *e : gr->pyramids) addTriangles(e, 5, MPyramid::faces_pyramid);
+    for(MPrism *e : gr->prisms) addTriangles(e, 5, MPrism::faces_prism);
+    for(MTrihedron *e : gr->trihedra)
+      addTriangles(e, 3, MTrihedron::faces_trihedron);
+  }
+  // unmatched and not on the boundary
+  auto hangingTriangle = [&](MVertex *a, MVertex *b, MVertex *c) {
+    const SortedFace f = sortedFace(a, b, c);
+    auto it = triangles.find(f);
+    return it != triangles.end() && it->second % 2 && !boundary.count(f);
+  };
+
+  int nbTrihedraCreated = 0;
+  for(auto &h : hanging) {
+    MVertex *const *v = h.q->v;
+    if(hangingTriangle(v[0], v[1], v[2]) && hangingTriangle(v[2], v[3], v[0])) {
+      h.q->gr->trihedra.push_back(new MTrihedron(v[3], v[0], v[1], v[2]));
+      nbTrihedraCreated++;
+    }
+    else if(hangingTriangle(v[0], v[1], v[3]) &&
+            hangingTriangle(v[3], v[1], v[2])) {
+      h.q->gr->trihedra.push_back(new MTrihedron(v[0], v[1], v[2], v[3]));
+      nbTrihedraCreated++;
+    }
+    else
+      Msg::Warning("MakeMeshConformal: wrong mesh topology, quad verts %zu %zu "
+                   "%zu %zu",
+                   v[0]->getNum(), v[1]->getNum(), v[2]->getNum(),
+                   v[3]->getNum());
+  }
+  Msg::Debug("%d hanging quadrangular faces, %d trihedra created",
+             (int)hanging.size(), nbTrihedraCreated);
   return true;
 }
