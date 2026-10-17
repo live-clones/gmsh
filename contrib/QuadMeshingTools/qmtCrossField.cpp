@@ -275,9 +275,11 @@ namespace QMT {
 #if defined(QMT_CROSS_FIELD_MUMPS)
       if(!ready || !matrix) return false;
       PC pc = nullptr;
-      // the system is symmetric (not definite: the Crouzeix-Raviart weights
-      // can be negative): an LDL^T factorization with pivoting
-      return check(MatSetOption(matrix, MAT_SYMMETRIC, PETSC_TRUE), "matrix symmetry") &&
+      // the system is symmetric positive definite (the Crouzeix-Raviart
+      // operator is semi-definite, the mass positive): a Cholesky
+      // factorization without pivoting
+      return check(MatSetOption(matrix, MAT_SPD, PETSC_TRUE), "matrix definiteness") &&
+        check(MatSetOption(matrix, MAT_SYMMETRIC, PETSC_TRUE), "matrix symmetry") &&
         check(MatSetOption(matrix, MAT_SYMMETRY_ETERNAL, PETSC_TRUE), "matrix symmetry") &&
         check(VecCreateSeq(PETSC_COMM_SELF, N, &rhs), "rhs creation") &&
         check(VecDuplicate(rhs, &solution), "solution creation") &&
