@@ -1,0 +1,101 @@
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+#include <set>
+#include <FL/Fl.H>
+#include <FL/Fl_Window.H>
+#include "windowPlacement.h"
+
+static Fl_Window *reference = nullptr;
+static std::set<Fl_Window *> placed;
+
+static std::vector<screenArea> screenAreas()
+{
+  std::vector<screenArea> areas;
+  for(int n = 0; n < Fl::screen_count(); n++) {
+    screenArea a;
+    Fl::screen_work_area(a.x, a.y, a.w, a.h, n);
+    areas.push_back(a);
+  }
+  if(areas.empty()) { // should not happen, but let's be safe
+    screenArea a;
+    Fl::screen_work_area(a.x, a.y, a.w, a.h);
+    areas.push_back(a);
+  }
+  return areas;
+}
+
+void setReferenceWindow(Fl_Window *win) { reference = win; }
+
+int windowScreen(Fl_Window *win)
+{
+  int n = visibleOn(screenAreas(), win->x(), win->y(), win->w());
+  return (n < 0) ? 0 : n;
+}
+
+void windowWorkArea(Fl_Window *win, int &X, int &Y, int &W, int &H)
+{
+  Fl::screen_work_area(X, Y, W, H, windowScreen(win));
+}
+
+void placeWindowAt(Fl_Window *win, int x, int y)
+{
+  std::vector<screenArea> areas = screenAreas();
+  int w = win->w(), h = win->h();
+  int n = visibleOn(areas, x, y, w);
+  if(n < 0) {
+    n = (reference && reference != win) ? windowScreen(reference) : 0;
+    fitIn(areas[n], x, y, w, h);
+  }
+  if(w != win->w() || h != win->h())
+    win->resize(x, y, w, h);
+  else
+    win->position(x, y);
+#if FL_API_VERSION >= 10400
+  // with several screens of different scale factors, a position alone does not
+  // identify the screen
+  win->screen_num(n);
+#endif
+  placed.insert(win);
+}
+
+void placeWindow(Fl_Window *win, int offset[2])
+{
+  if(win->shown()) return;
+  if(!reference) {
+    placeWindowAt(win, offset[0], offset[1]);
+    return;
+  }
+  storeWindowOffset(win, offset);
+  placeWindowAt(win, reference->x() + offset[0], reference->y() + offset[1]);
+}
+
+void storeWindowOffset(Fl_Window *win, int offset[2])
+{
+  if(!reference || !placed.count(win)) return;
+  offset[0] = win->x() - reference->x();
+  offset[1] = win->y() - reference->y();
+}
+
+void centerWindow(Fl_Window *win)
+{
+  if(win->shown()) return;
+  if(placed.count(win)) { // keep it where the user left it, if visible
+    placeWindowAt(win, win->x(), win->y());
+    return;
+  }
+  int X, Y, W, H;
+  if(reference)
+    windowWorkArea(reference, X, Y, W, H);
+  else
+    Fl::screen_work_area(X, Y, W, H);
+  placeWindowAt(win, X + (W - win->w()) / 2, Y + (H - win->h()) / 2);
+}
+
+void forgetWindow(Fl_Window *win)
+{
+  placed.erase(win);
+  if(reference == win) reference = nullptr;
+}
