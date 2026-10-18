@@ -882,7 +882,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombineGreedyFirst
-Match first the pairs of triangles best for both and clearly better than their other choices, Blossom then matching the triangles left (0: never, 1: on surfaces meshed with the packing of parallelograms, 2: always)@*
+Match first the pairs of triangles best for both and clearly better than their other choices, Blossom then matching the triangles left (0: never, 1: on surfaces meshed with the packing of parallelograms for hex-dominant meshes, 2: always)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

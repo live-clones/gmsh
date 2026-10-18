@@ -1718,7 +1718,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "RecombineGreedyFirst" , opt_mesh_recombine_greedy_first , 1 ,
     "Match first the pairs of triangles best for both and clearly better than "
     "their other choices, Blossom then matching the triangles left (0: never, "
-    "1: on surfaces meshed with the packing of parallelograms, 2: always)" },
+    "1: on surfaces meshed with the packing of parallelograms for hex-dominant "
+    "meshes, 2: always)" },
   { F|O, "RecombineOptimizeTopology" , opt_mesh_recombine_optimize_topology , 5 ,
     "Number of topological optimization passes (removal of diamonds, ...) of "
     "recombined surface meshes" },

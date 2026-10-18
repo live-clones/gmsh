@@ -1187,9 +1187,12 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
     };
 
     const int greedyFirst = CTX::instance()->mesh.recombineGreedyFirst;
+    // (the quads of hex-dominant meshes: more hexes; quad surface meshes are
+    // left to Blossom, the cleanup making fewer triangles of its matching)
     const bool prematch =
       greedyFirst == 2 ||
-      (greedyFirst == 1 && gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS);
+      (greedyFirst == 1 && gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS &&
+       CTX::instance()->mesh.algo3d == ALGO_3D_RTREE);
 
     if(prematch) {
       // Greedy pre-matching: the pairs that are the best of both their
