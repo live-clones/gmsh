@@ -63,7 +63,11 @@ public:
   {
     if(CTX::instance()->fontSize > 0) { return CTX::instance()->fontSize; }
     else {
-      int h = Fl::h(); // main (first) screen
+      // the screen that will show the graphic window
+      int n = Fl::screen_num(CTX::instance()->glPosition[0],
+                             CTX::instance()->glPosition[1]);
+      int x, y, w, h;
+      Fl::screen_work_area(x, y, w, h, n);
       if(h < 800)
         return 11;
       else if(h < 1000)
@@ -77,7 +81,7 @@ public:
       else if(h < 1800)
         return 16;
       float dpih, dpiv;
-      Fl::screen_dpi(dpih, dpiv); // main (first) screen
+      Fl::screen_dpi(dpih, dpiv, n);
       int s = std::max(16, (int)(dpih / 10.));
       return s;
     }

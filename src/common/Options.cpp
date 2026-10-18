@@ -2437,28 +2437,35 @@ double opt_general_graphics_size1(OPT_ARGS_NUM)
   return CTX::instance()->glSize[1];
 }
 
-double opt_general_context_position0(OPT_ARGS_NUM)
+double opt_general_window_position_deprecated(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->ctxPosition[0] = (int)val;
-  return CTX::instance()->ctxPosition[0];
+  // the absolute window positions were replaced by offsets relative to the
+  // graphic window; the old values are ignored
+  return 0.;
 }
 
-double opt_general_context_position1(OPT_ARGS_NUM)
+double opt_general_context_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->ctxPosition[1] = (int)val;
-  return CTX::instance()->ctxPosition[1];
+  if(action & GMSH_SET) CTX::instance()->ctxOffset[0] = (int)val;
+  return CTX::instance()->ctxOffset[0];
 }
 
-double opt_general_file_chooser_position0(OPT_ARGS_NUM)
+double opt_general_context_offset1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->fileChooserPosition[0] = (int)val;
-  return CTX::instance()->fileChooserPosition[0];
+  if(action & GMSH_SET) CTX::instance()->ctxOffset[1] = (int)val;
+  return CTX::instance()->ctxOffset[1];
 }
 
-double opt_general_file_chooser_position1(OPT_ARGS_NUM)
+double opt_general_file_chooser_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->fileChooserPosition[1] = (int)val;
-  return CTX::instance()->fileChooserPosition[1];
+  if(action & GMSH_SET) CTX::instance()->fileChooserOffset[0] = (int)val;
+  return CTX::instance()->fileChooserOffset[0];
+}
+
+double opt_general_file_chooser_offset1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->fileChooserOffset[1] = (int)val;
+  return CTX::instance()->fileChooserOffset[1];
 }
 
 double opt_general_system_menu_bar(OPT_ARGS_NUM)
@@ -2545,48 +2552,40 @@ double opt_general_menu_size1(OPT_ARGS_NUM)
   return CTX::instance()->menuSize[1];
 }
 
-double opt_general_menu_position0(OPT_ARGS_NUM)
+double opt_general_menu_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    CTX::instance()->menuPosition[0] = (int)val;
-    if(CTX::instance()->menuPosition[0] < 0)
-      CTX::instance()->menuPosition[0] = 0;
-  }
-  return CTX::instance()->menuPosition[0];
+  if(action & GMSH_SET) CTX::instance()->menuOffset[0] = (int)val;
+  return CTX::instance()->menuOffset[0];
 }
 
-double opt_general_menu_position1(OPT_ARGS_NUM)
+double opt_general_menu_offset1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    CTX::instance()->menuPosition[1] = (int)val;
-    if(CTX::instance()->menuPosition[1] < 0)
-      CTX::instance()->menuPosition[1] = 300;
-  }
-  return CTX::instance()->menuPosition[1];
+  if(action & GMSH_SET) CTX::instance()->menuOffset[1] = (int)val;
+  return CTX::instance()->menuOffset[1];
 }
 
-double opt_general_option_position0(OPT_ARGS_NUM)
+double opt_general_option_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->optPosition[0] = (int)val;
-  return CTX::instance()->optPosition[0];
+  if(action & GMSH_SET) CTX::instance()->optOffset[0] = (int)val;
+  return CTX::instance()->optOffset[0];
 }
 
-double opt_general_option_position1(OPT_ARGS_NUM)
+double opt_general_option_offset1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->optPosition[1] = (int)val;
-  return CTX::instance()->optPosition[1];
+  if(action & GMSH_SET) CTX::instance()->optOffset[1] = (int)val;
+  return CTX::instance()->optOffset[1];
 }
 
-double opt_general_plugin_position0(OPT_ARGS_NUM)
+double opt_general_plugin_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->pluginPosition[0] = (int)val;
-  return CTX::instance()->pluginPosition[0];
+  if(action & GMSH_SET) CTX::instance()->pluginOffset[0] = (int)val;
+  return CTX::instance()->pluginOffset[0];
 }
 
-double opt_general_plugin_position1(OPT_ARGS_NUM)
+double opt_general_plugin_offset1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->pluginPosition[1] = (int)val;
-  return CTX::instance()->pluginPosition[1];
+  if(action & GMSH_SET) CTX::instance()->pluginOffset[1] = (int)val;
+  return CTX::instance()->pluginOffset[1];
 }
 
 double opt_general_plugin_size0(OPT_ARGS_NUM)
@@ -2601,16 +2600,16 @@ double opt_general_plugin_size1(OPT_ARGS_NUM)
   return CTX::instance()->pluginSize[1];
 }
 
-double opt_general_field_position0(OPT_ARGS_NUM)
+double opt_general_field_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->fieldPosition[0] = (int)val;
-  return CTX::instance()->fieldPosition[0];
+  if(action & GMSH_SET) CTX::instance()->fieldOffset[0] = (int)val;
+  return CTX::instance()->fieldOffset[0];
 }
 
-double opt_general_field_position1(OPT_ARGS_NUM)
+double opt_general_field_offset1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->fieldPosition[1] = (int)val;
-  return CTX::instance()->fieldPosition[1];
+  if(action & GMSH_SET) CTX::instance()->fieldOffset[1] = (int)val;
+  return CTX::instance()->fieldOffset[1];
 }
 
 double opt_general_field_size0(OPT_ARGS_NUM)
@@ -2625,16 +2624,16 @@ double opt_general_field_size1(OPT_ARGS_NUM)
   return CTX::instance()->fieldSize[1];
 }
 
-double opt_general_extra_position0(OPT_ARGS_NUM)
+double opt_general_extra_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->extraPosition[0] = (int)val;
-  return CTX::instance()->extraPosition[0];
+  if(action & GMSH_SET) CTX::instance()->extraOffset[0] = (int)val;
+  return CTX::instance()->extraOffset[0];
 }
 
-double opt_general_extra_position1(OPT_ARGS_NUM)
+double opt_general_extra_offset1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->extraPosition[1] = (int)val;
-  return CTX::instance()->extraPosition[1];
+  if(action & GMSH_SET) CTX::instance()->extraOffset[1] = (int)val;
+  return CTX::instance()->extraOffset[1];
 }
 
 double opt_general_extra_size0(OPT_ARGS_NUM)
@@ -2649,64 +2648,64 @@ double opt_general_extra_size1(OPT_ARGS_NUM)
   return CTX::instance()->extraSize[1];
 }
 
-double opt_general_statistics_position0(OPT_ARGS_NUM)
+double opt_general_statistics_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->statPosition[0] = (int)val;
-  return CTX::instance()->statPosition[0];
+  if(action & GMSH_SET) CTX::instance()->statOffset[0] = (int)val;
+  return CTX::instance()->statOffset[0];
 }
 
-double opt_general_statistics_position1(OPT_ARGS_NUM)
+double opt_general_statistics_offset1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->statPosition[1] = (int)val;
-  return CTX::instance()->statPosition[1];
+  if(action & GMSH_SET) CTX::instance()->statOffset[1] = (int)val;
+  return CTX::instance()->statOffset[1];
 }
 
-double opt_general_visibility_position0(OPT_ARGS_NUM)
+double opt_general_visibility_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->visPosition[0] = (int)val;
-  return CTX::instance()->visPosition[0];
+  if(action & GMSH_SET) CTX::instance()->visOffset[0] = (int)val;
+  return CTX::instance()->visOffset[0];
 }
 
-double opt_general_visibility_position1(OPT_ARGS_NUM)
+double opt_general_visibility_offset1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->visPosition[1] = (int)val;
-  return CTX::instance()->visPosition[1];
+  if(action & GMSH_SET) CTX::instance()->visOffset[1] = (int)val;
+  return CTX::instance()->visOffset[1];
 }
 
-double opt_general_clip_position0(OPT_ARGS_NUM)
+double opt_general_clip_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->clipPosition[0] = (int)val;
-  return CTX::instance()->clipPosition[0];
+  if(action & GMSH_SET) CTX::instance()->clipOffset[0] = (int)val;
+  return CTX::instance()->clipOffset[0];
 }
 
-double opt_general_clip_position1(OPT_ARGS_NUM)
+double opt_general_clip_offset1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->clipPosition[1] = (int)val;
-  return CTX::instance()->clipPosition[1];
+  if(action & GMSH_SET) CTX::instance()->clipOffset[1] = (int)val;
+  return CTX::instance()->clipOffset[1];
 }
 
-double opt_general_manip_position0(OPT_ARGS_NUM)
+double opt_general_manip_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->manipPosition[0] = (int)val;
-  return CTX::instance()->manipPosition[0];
+  if(action & GMSH_SET) CTX::instance()->manipOffset[0] = (int)val;
+  return CTX::instance()->manipOffset[0];
 }
 
-double opt_general_manip_position1(OPT_ARGS_NUM)
+double opt_general_manip_offset1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->manipPosition[1] = (int)val;
-  return CTX::instance()->manipPosition[1];
+  if(action & GMSH_SET) CTX::instance()->manipOffset[1] = (int)val;
+  return CTX::instance()->manipOffset[1];
 }
 
-double opt_general_hot_position0(OPT_ARGS_NUM)
+double opt_general_hot_offset0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->hotPosition[0] = (int)val;
-  return CTX::instance()->hotPosition[0];
+  if(action & GMSH_SET) CTX::instance()->hotOffset[0] = (int)val;
+  return CTX::instance()->hotOffset[0];
 }
 
-double opt_general_hot_position1(OPT_ARGS_NUM)
+double opt_general_hot_offset1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->hotPosition[1] = (int)val;
-  return CTX::instance()->hotPosition[1];
+  if(action & GMSH_SET) CTX::instance()->hotOffset[1] = (int)val;
+  return CTX::instance()->hotOffset[1];
 }
 
 double opt_general_high_resolution_graphics(OPT_ARGS_NUM)

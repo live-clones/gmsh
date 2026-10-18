@@ -29,6 +29,7 @@
 #include "helpWindow.h"
 #include "colorbarWindow.h"
 #include "fileDialogs.h"
+#include "windowPlacement.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -1426,57 +1427,32 @@ void FlGui::storeCurrentWindowsInfo()
   if(graph[0]->isMenuDetached()) {
     CTX::instance()->detachedMenu = 1;
     CTX::instance()->menuSize[1] = graph[0]->getMenuHeight();
-    CTX::instance()->menuPosition[0] = graph[0]->getMenuPositionX();
-    CTX::instance()->menuPosition[1] = graph[0]->getMenuPositionY();
+    storeWindowOffset(graph[0]->getMenuWindow(), CTX::instance()->menuOffset);
   }
   else
     CTX::instance()->detachedMenu = 0;
-  CTX::instance()->optPosition[0] = options->win->x();
-  CTX::instance()->optPosition[1] = options->win->y();
-  CTX::instance()->pluginPosition[0] = plugins->win->x();
-  CTX::instance()->pluginPosition[1] = plugins->win->y();
+  storeWindowOffset(options->win, CTX::instance()->optOffset);
+  storeWindowOffset(plugins->win, CTX::instance()->pluginOffset);
   CTX::instance()->pluginSize[0] = plugins->win->w();
   CTX::instance()->pluginSize[1] = plugins->win->h();
-  CTX::instance()->fieldPosition[0] = fields->win->x();
-  CTX::instance()->fieldPosition[1] = fields->win->y();
+  storeWindowOffset(fields->win, CTX::instance()->fieldOffset);
   CTX::instance()->fieldSize[0] = fields->win->w();
   CTX::instance()->fieldSize[1] = fields->win->h();
-  CTX::instance()->statPosition[0] = stats->win->x();
-  CTX::instance()->statPosition[1] = stats->win->y();
-  CTX::instance()->visPosition[0] = visibility->win->x();
-  CTX::instance()->visPosition[1] = visibility->win->y();
-  CTX::instance()->hotPosition[0] = highordertools->win->x();
-  CTX::instance()->hotPosition[1] = highordertools->win->y();
-  CTX::instance()->clipPosition[0] = clipping->win->x();
-  CTX::instance()->clipPosition[1] = clipping->win->y();
-  CTX::instance()->manipPosition[0] = manip->win->x();
-  CTX::instance()->manipPosition[1] = manip->win->y();
-  if(lastContextWindow == 4) {
-    CTX::instance()->ctxPosition[0] = onelabContext->win->x();
-    CTX::instance()->ctxPosition[1] = onelabContext->win->y();
-  }
-  else if(lastContextWindow == 3) {
-    CTX::instance()->ctxPosition[0] = physicalContext->win->x();
-    CTX::instance()->ctxPosition[1] = physicalContext->win->y();
-  }
-  else if(lastContextWindow == 2) {
-    CTX::instance()->ctxPosition[0] = meshContext->win->x();
-    CTX::instance()->ctxPosition[1] = meshContext->win->y();
-  }
-  else if(lastContextWindow == 1) {
-    CTX::instance()->ctxPosition[0] = transformContext->win->x();
-    CTX::instance()->ctxPosition[1] = transformContext->win->y();
-  }
-  else {
-    CTX::instance()->ctxPosition[0] = elementaryContext->win->x();
-    CTX::instance()->ctxPosition[1] = elementaryContext->win->y();
-  }
+  storeWindowOffset(stats->win, CTX::instance()->statOffset);
+  storeWindowOffset(visibility->win, CTX::instance()->visOffset);
+  storeWindowOffset(highordertools->win, CTX::instance()->hotOffset);
+  storeWindowOffset(clipping->win, CTX::instance()->clipOffset);
+  storeWindowOffset(manip->win, CTX::instance()->manipOffset);
+  Fl_Window *ctx = (lastContextWindow == 4) ? onelabContext->win :
+                   (lastContextWindow == 3) ? physicalContext->win :
+                   (lastContextWindow == 2) ? meshContext->win :
+                   (lastContextWindow == 1) ? transformContext->win :
+                                              elementaryContext->win;
+  storeWindowOffset(ctx, CTX::instance()->ctxOffset);
 #if defined(HAVE_3M)
   storeWindowPosition3M();
 #endif
-
-  fileChooserGetPosition(&CTX::instance()->fileChooserPosition[0],
-                         &CTX::instance()->fileChooserPosition[1]);
+  fileChooserStoreOffset(CTX::instance()->fileChooserOffset);
 }
 
 // Callbacks
@@ -1516,8 +1492,9 @@ void window_cb(Fl_Widget *w, void *data)
       oldy = FlGui::instance()->graph[0]->getWindow()->y();
       oldw = FlGui::instance()->graph[0]->getWindow()->w();
       oldh = FlGui::instance()->graph[0]->getWindow()->h();
-      FlGui::instance()->graph[0]->getWindow()->resize(Fl::x(), Fl::y(),
-                                                       Fl::w(), Fl::h());
+      int x, y, w, h;
+      windowWorkArea(FlGui::instance()->graph[0]->getWindow(), x, y, w, h);
+      FlGui::instance()->graph[0]->getWindow()->resize(x, y, w, h);
       zoom = 1;
     }
     else {
@@ -1527,9 +1504,12 @@ void window_cb(Fl_Widget *w, void *data)
   }
   else if(str == "fullscreen") {
     if(!fullscreen) {
-      // resize to screen size first, in case fullscreen does not work
+      // resize to the size of the screen of the current graphic window first,
+      // in case fullscreen does not work
       int x, y, w, h;
-      Fl::screen_xywh(x, y, w, h);
+      Fl::screen_xywh(
+        x, y, w, h,
+        windowScreen(FlGui::instance()->getCurrentOpenglWindow()->top_window()));
       FlGui::instance()->fullscreen->resize(x, y, w, h);
       // setting resizable() is necessary with recent FLTK versions (1.4)
       FlGui::instance()->fullscreen->resizable(FlGui::instance()->fullscreen);

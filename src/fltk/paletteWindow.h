@@ -8,16 +8,23 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
+#include "windowPlacement.h"
 
 // Derive special windows from Fl_Double_Window to correctly process
 // the OS-specific shorcuts (Esc & Cmd-w on Mac, Alt+F4 on Windows)
 class paletteWindow : public Fl_Double_Window {
+private:
+  // position relative to the main graphic window, applied when shown
+  int *_offset;
+
 public:
-  paletteWindow(int w, int h, bool nonModal, const char *l = nullptr)
-    : Fl_Double_Window(w, h, l)
+  paletteWindow(int w, int h, bool nonModal, const char *l = nullptr,
+                int *offset = nullptr)
+    : Fl_Double_Window(w, h, l), _offset(offset)
   {
     if(nonModal) set_non_modal();
   }
+  ~paletteWindow() { forgetWindow(this); }
   virtual int handle(int event)
   {
     switch(event) {
@@ -39,6 +46,7 @@ public:
   }
   virtual void show()
   {
+    if(_offset) placeWindow(this, _offset);
     if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
     Fl_Double_Window::show();
   }

@@ -38,6 +38,7 @@ typedef unsigned long intptr_t;
 #include "fieldWindow.h"
 #include "pluginWindow.h"
 #include "helpWindow.h"
+#include "windowPlacement.h"
 #include "openglWindow.h"
 #include "onelabContextWindow.h"
 #include "onelabGroup.h"
@@ -800,11 +801,13 @@ static void help_online_cb(Fl_Widget *w, void *data)
 
 static void help_basic_cb(Fl_Widget *w, void *data)
 {
+  centerWindow(FlGui::instance()->help->basic);
   FlGui::instance()->help->basic->show();
 }
 
 void help_about_cb(Fl_Widget *w, void *data)
 {
+  centerWindow(FlGui::instance()->help->about);
   FlGui::instance()->help->about->show();
 }
 
@@ -3693,6 +3696,7 @@ void status_options_cb(Fl_Widget *w, void *data)
   }
   else if(what == "?") { // display options
     help_options_cb(nullptr, nullptr);
+    centerWindow(FlGui::instance()->help->options);
     FlGui::instance()->help->options->show();
   }
   else if(what == "p") { // toggle projection mode
@@ -4104,6 +4108,12 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   int sh = 2 * FL_NORMAL_SIZE - 3; // status bar height
   int sw = FL_NORMAL_SIZE + 2; // status button width
 
+  // the usable area of the screen that will show the window
+  int screenX, screenY, screenW, screenH;
+  Fl::screen_work_area(screenX, screenY, screenW, screenH,
+                       Fl::screen_num(CTX::instance()->glPosition[0],
+                                      CTX::instance()->glPosition[1]));
+
   int mheight = main ? 2 * BH /* nonzero! */ : 0;
   int glheight = CTX::instance()->glSize[1] - mheight;
   // make sure glheight is positive
@@ -4113,8 +4123,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
   int height = mh + glheight + mheight + sh;
   // make sure height < screen height
-  if(height > Fl::h()) {
-    height = Fl::h();
+  if(height > screenH) {
+    height = screenH;
     glheight = height - mh - mheight - sh;
     CTX::instance()->glSize[1] = glheight + mheight;
   }
@@ -4128,8 +4138,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
   int width = glwidth + twidth;
   // make sure width < screen width
-  if(width > Fl::w()) {
-    width = Fl::w();
+  if(width > screenW) {
+    width = screenW;
     glwidth = width - twidth;
     CTX::instance()->glSize[0] = glwidth + twidth;
   }
@@ -4349,20 +4359,27 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   else
     _label->color(FL_BACKGROUND_COLOR, FL_DARK2);
 
-  _win->position(CTX::instance()->glPosition[0],
-                 CTX::instance()->glPosition[1]);
+  if(main) {
+    // the other windows are placed relative to the main graphic window
+    setReferenceWindow(_win);
+    placeWindowAt(_win, CTX::instance()->glPosition[0],
+                  CTX::instance()->glPosition[1]);
+  }
+  else {
+    _win->position(CTX::instance()->glPosition[0],
+                   CTX::instance()->glPosition[1]);
+  }
   _win->end();
 
   if(main && detachedMenu) {
     _menuwin =
       new mainWindow(CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
-                     CTX::instance()->nonModalWindows ? true : false, "Gmsh");
+                     CTX::instance()->nonModalWindows ? true : false, "Gmsh",
+                     CTX::instance()->menuOffset);
     _menuwin->callback(file_quit_cb);
     _menuwin->box(GMSH_WINDOW_BOX);
     _onelab = new onelabGroup(0, 0, _menuwin->w(), _menuwin->h());
     _onelab->enableTreeWidgetResize(true);
-    _menuwin->position(CTX::instance()->menuPosition[0],
-                       CTX::instance()->menuPosition[1]);
     _menuwin->resizable(_onelab);
     _menuwin->size_range(_onelab->getMinWindowWidth(),
                          _onelab->getMinWindowHeight());
@@ -4406,14 +4423,13 @@ void graphicWindow::detachMenu()
 
   _menuwin =
     new mainWindow(_onelab->w(), CTX::instance()->menuSize[1],
-                   CTX::instance()->nonModalWindows ? true : false, "Gmsh");
+                   CTX::instance()->nonModalWindows ? true : false, "Gmsh",
+                   CTX::instance()->menuOffset);
   _menuwin->callback(file_quit_cb);
   _menuwin->box(GMSH_WINDOW_BOX);
   _onelab->box(FL_FLAT_BOX);
   _menuwin->add(_onelab);
   _onelab->resize(0, 0, _menuwin->w(), _menuwin->h());
-  _menuwin->position(CTX::instance()->menuPosition[0],
-                     CTX::instance()->menuPosition[1]);
   _menuwin->resizable(_onelab);
   _menuwin->size_range(_onelab->getMinWindowWidth(),
                        _onelab->getMinWindowHeight());
@@ -4428,8 +4444,7 @@ void graphicWindow::attachMenu()
 {
   if(!_menuwin || !_onelab || !_browser) return;
   CTX::instance()->menuSize[1] = _menuwin->h();
-  CTX::instance()->menuPosition[0] = _menuwin->x();
-  CTX::instance()->menuPosition[1] = _menuwin->y();
+  storeWindowOffset(_menuwin, CTX::instance()->menuOffset);
   _menuwin->remove(_onelab);
   _menuwin->hide();
   delete _menuwin;
@@ -4500,18 +4515,6 @@ int graphicWindow::getMenuHeight()
 {
   if(!_menuwin) return 0;
   return _menuwin->h();
-}
-
-int graphicWindow::getMenuPositionX()
-{
-  if(!_menuwin) return 0;
-  return _menuwin->x();
-}
-
-int graphicWindow::getMenuPositionY()
-{
-  if(!_menuwin) return 0;
-  return _menuwin->y();
 }
 
 bool graphicWindow::split(openglWindow *g, char how, double ratio)

@@ -357,8 +357,6 @@ helpWindow::helpWindow()
       << "for more information</center>";
     o->value(sstream.str().c_str());
     o->link(help_link);
-    about->position(Fl::x() + Fl::w() / 2 - width / 2,
-                    Fl::y() + Fl::h() / 2 - height / 2);
     about->end();
   }
 
@@ -417,8 +415,6 @@ helpWindow::helpWindow()
     o->value(s.c_str());
 
     basic->resizable(o);
-    basic->position(Fl::x() + Fl::w() / 2 - width / 2,
-                    Fl::y() + Fl::h() / 2 - height / 2);
     basic->end();
   }
 
@@ -482,8 +478,6 @@ helpWindow::helpWindow()
     }
 
     options->resizable(browser);
-    options->position(Fl::x() + Fl::w() / 2 - width / 2,
-                      Fl::y() + Fl::h() / 2 - height / 2);
     options->size_range(width, height);
     options->end();
   }

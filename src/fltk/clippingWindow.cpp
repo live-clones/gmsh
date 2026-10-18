@@ -233,7 +233,8 @@ clippingWindow::clippingWindow(int deltaFontSize)
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow(
-    width, height, CTX::instance()->nonModalWindows ? true : false, "Clipping");
+    width, height, CTX::instance()->nonModalWindows ? true : false, "Clipping",
+                          CTX::instance()->clipOffset);
   win->box(GMSH_WINDOW_BOX);
 
   browser = new Fl_Multi_Browser(0, 0, L, height);
@@ -330,8 +331,6 @@ clippingWindow::clippingWindow(int deltaFontSize)
     o->callback(clip_reset_cb);
   }
 
-  win->position(CTX::instance()->clipPosition[0],
-                CTX::instance()->clipPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

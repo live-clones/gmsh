@@ -21,8 +21,9 @@ private:
   bool _redraw;
 
 public:
-  contextWindow(int w, int h, bool nonModal, const char *l = nullptr)
-    : paletteWindow(w, h, nonModal, l), _redraw(false)
+  contextWindow(int w, int h, bool nonModal, const char *l = nullptr,
+                int *offset = nullptr)
+    : paletteWindow(w, h, nonModal, l, offset), _redraw(false)
   {
   }
   virtual int handle(int event);

@@ -282,7 +282,8 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "High-order tools");
+                          "High-order tools",
+                          CTX::instance()->hotOffset);
   win->box(GMSH_WINDOW_BOX);
 
   int y = WB;
@@ -482,8 +483,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   push[1]->callback(highordertools_runopti_cb);
 
   // win->resizable(o);
-  win->position(CTX::instance()->hotPosition[0],
-                CTX::instance()->hotPosition[1]);
   win->end();
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -530,7 +529,8 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   int height = 24 * BH;
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "High-order tools");
+                          "High-order tools",
+                          CTX::instance()->hotOffset);
   win->box(GMSH_WINDOW_BOX);
 
   int y = WB;
@@ -540,8 +540,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   box->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   box->label("High-order tools requires mesh module");
 
-  win->position(CTX::instance()->hotPosition[0],
-                CTX::instance()->hotPosition[1]);
   win->end();
   FL_NORMAL_SIZE += deltaFontSize;
 }

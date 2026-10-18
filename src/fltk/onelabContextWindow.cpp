@@ -150,14 +150,13 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
 
   win = new contextWindow(_width, _height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Parameters");
+                          "Parameters",
+                          CTX::instance()->ctxOffset);
   win->box(GMSH_WINDOW_BOX);
 
   _choice = new Fl_Choice(WB, WB, _width - 2 * WB, BH);
   _choice->callback(choice_cb);
 
-  win->position(CTX::instance()->ctxPosition[0],
-                CTX::instance()->ctxPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

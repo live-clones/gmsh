@@ -110,7 +110,8 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Statistics");
+                          "Statistics",
+                          CTX::instance()->statOffset);
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
@@ -229,8 +230,6 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
     o->callback(statistics_update_cb);
   }
 
-  win->position(CTX::instance()->statPosition[0],
-                CTX::instance()->statPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
