@@ -550,6 +550,8 @@ static void Mesh0D(GModel *m)
 static std::vector<std::pair<std::string, std::pair<double, double> > >
   meshStageTimes;
 static int generateMeshDepth = 0;
+// the times of the last Mesh2D in the recombination of the PACK surfaces
+static double wallRecombination2D = 0., cpuRecombination2D = 0.;
 
 void AddMeshStageTime(const std::string &stage, double wall, double cpu)
 {
@@ -796,6 +798,7 @@ static void Mesh2D(GModel *m)
 
   Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu(), w1 = TimeOfDay();
+  wallRecombination2D = cpuRecombination2D = 0.;
 
   int nthreads = CTX::instance()->numThreads;
   if(CTX::instance()->mesh.maxNumThreads2D > 0)
@@ -804,13 +807,17 @@ static void Mesh2D(GModel *m)
 
   // boundary layers are not yet thread-safe
   if(m->getFields()->getNumBoundaryLayerFields()) nthreads = 1;
-  // the recombination of the PACK surfaces, after packing them one by one
+  // the recombination of the PACK surfaces, after packing them (one by one
+  // if they cannot be in parallel)
   const int nthreadsRecombination = nthreads;
 
   for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
-    // Frontal-Delaunay for quads and co are not yet thread-safe
+    // Frontal-Delaunay for quads and co are not yet thread-safe; PACK is
+    // on CAD surfaces (the packing only reads the guiding field), not yet on
+    // discrete ones (their intrinsic Delaunay pass)
     if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
-       (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+       ((*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS &&
+        (*it)->geomType() == GEntity::DiscreteSurface) ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
       nthreads = 1;
 
@@ -883,10 +890,16 @@ static void Mesh2D(GModel *m)
       for(size_t K = 0; K < temp.size(); K++) meshOne(temp[K]);
       for(GFace *gf : members) meshOne(gf);
       // (also after an exception: the surfaces it waits for are meshed)
+      const double wRecombination = TimeOfDay(), cRecombination = Cpu();
+      std::size_t nRecombined = 0;
       try {
-        finishDeferredRecombination(nthreadsRecombination);
+        nRecombined = finishDeferredRecombination(nthreadsRecombination);
       } catch(...) {
         exceptions = true;
+      }
+      if(nRecombined) {
+        wallRecombination2D += TimeOfDay() - wRecombination;
+        cpuRecombination2D += Cpu() - cRecombination;
       }
       if(exceptions) {
         CTX::instance()->lock = 0;
@@ -1907,8 +1920,17 @@ void GenerateMesh(GModel *m, int ask)
     const double w = TimeOfDay(), c = Cpu();
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     Mesh2D(m);
-    if(generateMeshDepth == 1)
-      AddMeshStageTime("2D mesh", TimeOfDay() - w, Cpu() - c);
+    if(generateMeshDepth == 1) {
+      const double wall = TimeOfDay() - w, cpu = Cpu() - c;
+      if(wallRecombination2D > 0.) {
+        AddMeshStageTime("2D mesh: packing", wall - wallRecombination2D,
+                         cpu - cpuRecombination2D);
+        AddMeshStageTime("2D mesh: Blossom", wallRecombination2D,
+                         cpuRecombination2D);
+      }
+      else
+        AddMeshStageTime("2D mesh", wall, cpu);
+    }
     // if two passes --> juste fait le ...
     //    createSizeFieldFromExistingMesh (m, false);
     // Mesh2D(m);

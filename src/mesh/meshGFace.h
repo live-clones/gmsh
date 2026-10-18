@@ -28,11 +28,12 @@ public:
   void check(GFace *, bool print = true);
 };
 
-// The PACK surfaces are packed one at a time; their recombination (Blossom)
-// and the steps after it can wait, to be done for all of them in parallel by
-// finishDeferredRecombination
+// The PACK surfaces may have to be packed one at a time; their recombination
+// (Blossom) and the steps after it can wait, to be done for all of them in
+// parallel by
+// finishDeferredRecombination (which returns their number)
 void startDeferredRecombination();
-void finishDeferredRecombination(int nthreads);
+std::size_t finishDeferredRecombination(int nthreads);
 
 // Destroy the mesh of the face
 class deMeshGFace {

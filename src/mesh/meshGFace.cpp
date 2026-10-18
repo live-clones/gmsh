@@ -632,9 +632,10 @@ static bool repairDuplicateTriangles(GFace *gf)
   return true;
 }
 
-// PACK packs its surfaces one at a time (that is not thread-safe) and
-// recombines them afterwards, all together in parallel (Blossom is): the
-// surfaces met while deferring whose recombination and last steps wait
+// PACK may have to pack its surfaces one at a time (discrete surfaces are
+// not yet thread-safe) and recombines them afterwards, all together in
+// parallel: the surfaces met while deferring whose recombination and last
+// steps wait
 static bool deferRecombination = false;
 static std::set<GFace *, GEntityPtrLessThan> deferredFaces;
 
@@ -2404,7 +2405,7 @@ void startDeferredRecombination()
   deferredFaces.clear();
 }
 
-void finishDeferredRecombination(int nthreads)
+std::size_t finishDeferredRecombination(int nthreads)
 {
   // the largest first, for the threads to end together
   std::vector<GFace *> faces(deferredFaces.begin(), deferredFaces.end());
@@ -2431,6 +2432,7 @@ void finishDeferredRecombination(int nthreads)
     storeDirections(gf);
     meshGFace().check(gf);
   }
+  return faces.size();
 }
 
 void meshGFace::operator()(GFace *gf, bool print)
