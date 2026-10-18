@@ -53,9 +53,11 @@ void placeWindowAt(Fl_Window *win, int x, int y)
     win->resize(x, y, w, h);
   else
     win->position(x, y);
-#if FL_API_VERSION >= 10400
+#if FL_API_VERSION > 10400
   // with several screens of different scale factors, a position alone does not
-  // identify the screen
+  // identify the screen (the setter appeared during the development of 1.4.0,
+  // so 1.4.0 itself is left out: a version check cannot tell its snapshots
+  // apart)
   win->screen_num(n);
 #endif
   placed.insert(win);
