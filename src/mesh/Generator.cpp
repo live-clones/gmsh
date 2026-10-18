@@ -82,7 +82,18 @@
 #endif
 
 #if defined(HAVE_QUADOPTIMIZER)
-#include "quadOptimizerIntegration.h"
+#include "qoOptimizer.h"
+#include "qoPack.h"
+#include "qoQMorph.h"
+
+static QuadOpt::Options quadOptOptions()
+{
+  QuadOpt::Options options;
+  options.patterns = CTX::instance()->mesh.packPatterns;
+  options.qMorph = CTX::instance()->mesh.packRecombination == 1;
+  options.optimize = CTX::instance()->mesh.packCleanupMethod != 2;
+  return options;
+}
 #endif
 
 #include "meshDuplicateVertices.h"
@@ -933,11 +944,11 @@ static void Mesh2D(GModel *m)
 #if defined(HAVE_QUADOPTIMIZER)
   // Skip the pattern-based/cleanup quad finalization pass when a 3D
   // hex-combine (RTREE) is requested: it re-touches surface mesh sizes
-  // and point positions that Pack3D placed in 3D specifically for the
+  // and point positions that PACK placed in 3D specifically for the
   // combine step, breaking them.
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
      CTX::instance()->mesh.algo3d != ALGO_3D_RTREE)
-    QuadOptimizer::finishPackMesh(m);
+    QuadOpt::finishPackMesh(m, quadOptOptions());
 #else
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) {
     for(GFace *gf : m->getFaces()) {
@@ -1217,8 +1228,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
-     how != "OptimizeQuads" && how != "OptimizeQuadsFast" &&
-     how != "OptimizeQuadHoleRings" &&
+     how != "OptimizeQuads" && how != "OptimizeQuadsFast" && how != "QMorph" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
      how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
@@ -1259,12 +1269,19 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
   else if(how == "UntangleTris") {
     for(GFace *gf : m->getFaces()) untangleGFaceMeshConstrained(gf);
   }
-  else if(how == "OptimizeQuads" || how == "OptimizeQuadsFast" ||
-          how == "OptimizeQuadHoleRings") {
+  else if(how == "OptimizeQuads" || how == "OptimizeQuadsFast") {
 #if defined(HAVE_QUADOPTIMIZER)
-    QuadOptimizer::optimizeQuads(m, how);
+    QuadOpt::optimizeQuads(m);
 #else
     Msg::Error("%s requires QUADOPTIMIZER", how.c_str());
+#endif
+  }
+  else if(how == "QMorph") {
+#if defined(HAVE_QUADOPTIMIZER)
+    if(!QuadOpt::qMorph(m))
+      Msg::Warning("Q-Morph could not process all surfaces");
+#else
+    Msg::Error("QMorph requires QUADOPTIMIZER");
 #endif
   }
   else if(how == "MesquiteImprove2D") {
@@ -1824,7 +1841,7 @@ void GenerateMesh(GModel *m, int ask)
   srand(CTX::instance()->mesh.randomSeed);
 
 #if defined(HAVE_QUADOPTIMIZER)
-  QuadOptimizer::PackMeshScope packMeshScope;
+  QuadOpt::PackMeshScope packMeshScope(quadOptOptions());
 #endif
 
   // Change any high order elements back into first order ones (but skip

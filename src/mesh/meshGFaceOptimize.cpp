@@ -12,9 +12,6 @@
 #include <stack>
 #include "GmshConfig.h"
 #include "meshGFaceOptimize.h"
-#if defined(HAVE_QUADOPTIMIZER)
-#include "quadFinalRepair.h"
-#endif
 #include "meshGFaceDelaunay.h"
 #include "qualityMeasures.h"
 #include "GFace.h"
@@ -1301,6 +1298,15 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
           if(it == pairOfNodes.end()) continue;
           partner[global[i1]] = partner[global[i2]] = it->second;
         }
+        if(rejectedInvertedPairs)
+          Msg::Info("Blossom: kept %zu inverted matched triangle pair%s "
+                    "unrecombined (eta range [%g,%g])",
+                    rejectedInvertedPairs,
+                    rejectedInvertedPairs == 1 ? "" : "s",
+                    minimumRejectedEta, maximumRejectedEta);
+        if(retainedInvalidQuads)
+          Msg::Info("Blossom: retained %zu non-positive-quality quads "
+                    "(RecombineMinimumQuality < 0)", retainedInvalidQuads);
         free(elist);
       };
 
@@ -1608,9 +1614,6 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
 
 void quadsToTriangles(GFace *gf, double minqual)
 {
-#if defined(HAVE_QUADOPTIMIZER)
-  QuadOptimizer::splitLowQualityQuads(gf, minqual);
-#else
   std::vector<MQuadrangle *> qds;
   std::map<MElement *, std::pair<MElement *, MElement *>> change;
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
@@ -1689,7 +1692,6 @@ void quadsToTriangles(GFace *gf, double minqual)
     }
   }
   _columns->_elemColumns = newElemColumns;
-#endif
 }
 
 void splitElementsInBoundaryLayerIfNeeded(GFace *gf)

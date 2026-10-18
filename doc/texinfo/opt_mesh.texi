@@ -762,18 +762,13 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PackCleanupMethod
-Cleanup after packing of parallelograms. 0: legacy OptimizeQuads, 1: OptimizeQuadsFast with topology convergence and final 3D smoothing, 2: disabled@*
+Cavity optimizer after packing of parallelograms when PackRecombination is 0. 1: enabled (0 is also accepted for compatibility), 2: disabled@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.OptimizeQuadsFinalSplitCadDistanceRatio
-Final V2 quad splitting: trigger distance to CAD divided by local target size; insert the other diagonal only if within tolerance and at least twice closer (negative disables CAD trigger; invalid or absolutely unacceptable quads are still split when possible)@*
-Default value: @code{0.2}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.OptimizeQuadsSmartLaplacian
-V2 nodal smoothing: 0: projected centroid with Winslow fallback, 1: projected Smart Laplacian (strict minimum corner-sine improvement), 2: Smart Laplacian followed by one pure mean-plane 3D Winslow sweep. All modes retain CAD and specification guards@*
-Default value: @code{2}@*
+@item Mesh.PackRecombination
+Recombination of the triangulation of the packed points. 0: Blossom, 1: Q-Morph (advancing fronts); the cavity optimizer follows in both cases@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PackSizemapMethod
@@ -781,29 +776,14 @@ Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, config
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.OptimizeQuadsTargetSize
-Target edge length for quad optimization (non-positive: use the mesh size field)@*
-Default value: @code{0.}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.OptimizeQuadsMinimumEdgeLength
-Hard minimum edge length accepted by quad cleanup (non-positive: disabled)@*
-Default value: @code{0.}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.OptimizeQuadsMaximumEdgeLength
-Hard maximum edge length accepted by quad cleanup (non-positive: disabled)@*
-Default value: @code{0.}@*
+@item Mesh.PackPatterns
+Remesh simple CAD faces with quad patterns after packing of parallelograms (regular, but the patterns do not follow the size map)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PackIntrinsicEdgeLengthFactor
 Maximum intrinsic triangulation edge length divided by the local target size before local splitting and Delaunay legalization. Opt-in refinement: inserted midpoints do not obey the packing exclusion or cross field (non-positive: preserve packed points, no intrinsic long-edge splitting)@*
 Default value: @code{0.}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.OptimizeQuadsPillowLayers
-Attempt a complete quadrilateral ring around holes after quad optimization and open an admissible new ring with local Winslow smoothing; 1 optimizes the complete affected stars and larger values add neighboring element layers (0: disabled)@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Pack3D
@@ -899,6 +879,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.RecombineAll
 Apply recombination algorithm to all surfaces, ignoring per-surface spec@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RecombineGreedyFirst
+Match first the pairs of triangles best for both and clearly better than their other choices, Blossom then matching the triangles left (0: never, 1: on surfaces meshed with the packing of parallelograms, 2: always)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombineOptimizeTopology

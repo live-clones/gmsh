@@ -1694,7 +1694,6 @@ void bowyerWatsonParallelograms(
   std::set<MTri3 *, compareTri3Ptr> AllTris;
   bidimMeshData DATA(equivalence, parametricCoordinates);
   std::vector<MVertex *> packed;
-  std::vector<SMetric3> metrics;
 
   Msg::Debug("- Face %i: bowyerWatsonParallelograms ...", gf->tag());
   if(!gf->haveParametrization()) {
@@ -1707,7 +1706,7 @@ void bowyerWatsonParallelograms(
 
 #if defined(HAVE_DOMHEX)
   Msg::Debug("bowyerWatsonParallelograms: 3D point placement and exclusion");
-  packingOfParallelograms(gf, packed, metrics);
+  packingOfParallelograms(gf, packed);
 #else
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
@@ -1811,19 +1810,6 @@ void bowyerWatsonParallelograms(
                  rejectedPackedPoints, packed.size(), gf->tag());
   }
 
-  if(CTX::instance()->mesh.saveDebugFiles) {
-    char name[256];
-    sprintf(name, "ParametricTriangulation3D%d.pos", gf->tag());
-    // Keep the UV-Delaunay connectivity for direct comparison with the
-    // intrinsic result produced below.
-    std::vector<MTriangle *> triangles;
-    for(MTri3 *triangle : AllTris)
-      if(!triangle->isDeleted()) triangles.push_back(triangle->tri());
-#if defined(HAVE_QUADOPTIMIZER)
-    QuadOptimizer::printTrianglesXYZ(name, triangles);
-#endif
-  }
-
   transferDataStructure(gf, AllTris, DATA);
 
   // The intrinsic metric belongs to the progressive/MVC chart of a discrete
@@ -1832,18 +1818,9 @@ void bowyerWatsonParallelograms(
   // repeatedly splitting it can refine away from the intended location.
 #if defined(HAVE_QUADOPTIMIZER)
   if(gf->geomType() == GEntity::DiscreteSurface)
-    QuadOptimizer::intrinsicDelaunayizePackedSurface(gf, DATA);
+    QuadOpt::intrinsicDelaunayizePackedSurface(
+      gf, DATA, CTX::instance()->mesh.packIntrinsicEdgeLengthFactor);
 #endif
-
-  if(CTX::instance()->mesh.saveDebugFiles) {
-    char name[256];
-    sprintf(name, "RawTriangulation3D%d.pos", gf->tag());
-    // This is the actual 3D triangulation sent to Blossom, after intrinsic
-    // Delaunay flips and before any recombination or quad cleanup.
-#if defined(HAVE_QUADOPTIMIZER)
-    QuadOptimizer::printTrianglesXYZ(name, gf->triangles);
-#endif
-  }
 
   backgroundMesh::unset();
 
