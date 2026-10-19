@@ -19,9 +19,9 @@
 #define BB (7 * FL_NORMAL_SIZE) // width of a button with internal label
 #define BH (2 * FL_NORMAL_SIZE + 1) // button height
 #define WB (5) // window border
-// least width of the tool windows: that of the option window, i.e. 30 em of
+// least width of the tool windows: that of the option window, i.e. 28 em of
 // fields with a scrollbar beside them
-#define TW (30 * FL_NORMAL_SIZE + 2 * WB + Fl::scrollbar_size())
+#define TW (28 * FL_NORMAL_SIZE + 2 * WB + Fl::scrollbar_size())
 
 class Fl_Window;
 class graphicWindow;

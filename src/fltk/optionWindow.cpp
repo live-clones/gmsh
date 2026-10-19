@@ -2039,7 +2039,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[13]->callback(general_options_ok_cb);
       general.value[36] =
         new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 2 * BH, IW / 2, BH,
-                           "Light proximity and brightness");
+                           "Proximity and brightness");
       general.value[36]->tooltip("General.Brightness");
       general.value[36]->minimum(0);
       general.value[36]->maximum(10);
@@ -2094,7 +2094,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.value[34] =
         new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 5 * BH, IW / 3, BH,
-                           "Studio samples, spread and floor offset");
+                           "Studio samples, spread, floor offset");
       general.value[34]->tooltip("General.StudioFloorOffset");
       general.value[34]->minimum(-10);
       general.value[34]->maximum(10);
@@ -3346,10 +3346,12 @@ optionWindow::optionWindow(int deltaFontSize)
       static Fl_Menu_Item menu_scale[] = {
         {"Linear", 0, nullptr, nullptr},
         {"Logarithmic", 0, nullptr, nullptr},
-        {"Symmetric logarithmic", 0, nullptr, nullptr},
+        {"Symmetric log", 0, nullptr, nullptr},
         {nullptr}};
+      // the right column of the next rows: what a label of 7 em leaves
+      int RW = width - IW - 4 * WB - 7 * FL_NORMAL_SIZE;
       view.choice[1] =
-        new Fl_Choice(L + width - IWW - 2 * WB, 2 * WB + 5 * BH, IWW, BH);
+        new Fl_Choice(L + width - RW - 2 * WB, 2 * WB + 5 * BH, RW, BH);
       view.choice[1]->tooltip("View.ScaleType");
       view.choice[1]->menu(menu_scale);
       view.choice[1]->align(FL_ALIGN_RIGHT);
@@ -3366,8 +3368,8 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[7]->align(FL_ALIGN_RIGHT);
       view.choice[7]->callback(view_options_ok_cb, (void *)"custom_range");
 
-      view.butt[38] = new Fl_Check_Button(L + width - IWW - 2 * WB,
-                                          2 * WB + 6 * BH, IWW, BH, "Saturate");
+      view.butt[38] = new Fl_Check_Button(L + width - RW - 2 * WB,
+                                          2 * WB + 6 * BH, RW, BH, "Saturate");
       view.butt[38]->tooltip("View.SaturateValues");
       view.butt[38]->type(FL_TOGGLE_BUTTON);
       view.butt[38]->callback(view_options_ok_cb);
@@ -3383,7 +3385,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[31]->callback(view_options_ok_cb);
 
       view.value[35] = new Fl_Value_Input(
-        L + width - IWW - 2 * WB, 2 * WB + 7 * BH, IWW / 2, BH, "Threshold");
+        L + width - RW - 2 * WB, 2 * WB + 7 * BH, RW / 2, BH, "Threshold");
       view.value[35]->tooltip("View.ScaleThreshold");
       view.value[35]->align(FL_ALIGN_RIGHT);
       view.value[35]->when(FL_WHEN_RELEASE);
@@ -4435,9 +4437,8 @@ void optionWindow::updateViewTargets()
     if(str != viewList->browser->text(i + 1))
       viewList->browser->text(i + 1, str.c_str());
   }
-  std::string str = (n > 1) ?
-                      "Changes apply to " + std::to_string(n) + " views" :
-                      "Changes apply to this view only";
+  std::string str = (n > 1) ? "Applies to " + std::to_string(n) + " views" :
+                              "Applies to this view only";
   viewList->count->copy_label(str.c_str());
 }
 

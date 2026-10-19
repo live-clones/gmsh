@@ -1010,24 +1010,24 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     o->callback(elementary_switch_tabs_cb);
   }
   {
-    value[0] = new Fl_Value_Input(WB, height - WB - BH, IW / 3, BH, "X");
-    value[1] =
-      new Fl_Value_Input(WB + IW / 2, height - WB - BH, IW / 3, BH, "Y");
+    // the snap fields on the left (3 em each, an em for X and Y), the freeze
+    // check buttons on the right, WB apart or their focus boxes touch
+    int sw = 3 * FL_NORMAL_SIZE, sp = sw + 2 * WB + FL_NORMAL_SIZE;
+    value[0] = new Fl_Value_Input(WB, height - WB - BH, sw, BH, "X");
+    value[1] = new Fl_Value_Input(WB + sp, height - WB - BH, sw, BH, "Y");
     value[2] =
-      new Fl_Value_Input(WB + IW, height - WB - BH, IW / 3, BH, "Z snap");
+      new Fl_Value_Input(WB + 2 * sp, height - WB - BH, sw, BH, "Z snap");
     for(int i = 0; i < 3; i++) {
       value[i]->align(FL_ALIGN_RIGHT);
       value[i]->callback(elementary_snap_cb);
     }
-    // WB apart, or their focus boxes touch
-    int bx = width - 6 * BH - 2 * WB;
-    butt[0] = new Fl_Check_Button(bx, height - WB - BH, 1.2 * BH, BH, "X");
+    int cw = 1.2 * BH, zw = 3 * BH, bx = width - WB - 2 * cw - 2 * WB - zw;
+    butt[0] = new Fl_Check_Button(bx, height - WB - BH, cw, BH, "X");
     butt[0]->tooltip("Toggle (x) or exclusive unselect (Shift+x)");
-    butt[1] = new Fl_Check_Button(bx + 1.2 * BH + WB, height - WB - BH,
-                                  1.2 * BH, BH, "Y");
+    butt[1] = new Fl_Check_Button(bx + cw + WB, height - WB - BH, cw, BH, "Y");
     butt[1]->tooltip("Toggle (y) or exclusive unselect (Shift+y)");
-    butt[2] = new Fl_Check_Button(width - 6 * BH + 2.4 * BH, height - WB - BH,
-                                  (6 - 2 * 1.2) * BH - WB, BH, "Z freeze");
+    butt[2] = new Fl_Check_Button(bx + 2 * (cw + WB), height - WB - BH, zw, BH,
+                                  "Z freeze");
     butt[2]->tooltip("Toggle (z) or exclusive unselect (Shift+z)");
   }
 
