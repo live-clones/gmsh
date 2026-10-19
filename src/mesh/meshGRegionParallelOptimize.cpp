@@ -21,6 +21,7 @@
 #include <limits>
 #include <memory>
 #include "GmshConfig.h"
+#include "gmshCompat.h"
 #include "meshGRegionParallelOptimize.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "GmshMessage.h"
@@ -39,13 +40,19 @@ namespace pdel3d {
 
     enum Status { OK, CONFLICT, NOT_BETTER, CONSTRAINED };
 
+    // sizes of the dense tables below: the most tets a tetrahedralization of n
+    // points can have, and the number of 4-point sets, one per candidate tet
+    GMSH_CONSTEVAL int maxCavityTets(int n) { return (n * n - 3 * n - 2) / 2; }
+    GMSH_CONSTEVAL int numCavityQuads(int n)
+    { return n * (n - 1) * (n - 2) * (n - 3) / 24; }
+
     // the cavity of a small polyhedron reconnection
 
     constexpr int SPR_MAX_POINTS = 32; // 8-bit node indices, dense tables
     constexpr int SPR_MAX_FACES = 512;
-    constexpr int SPR_MAX_TETS = 463; // (n * n - 3 * n - 2) / 2 for n = 32
+    constexpr int SPR_MAX_TETS = maxCavityTets(SPR_MAX_POINTS);
     constexpr int SPR_MAX_CONSTRAINTS = 100;
-    constexpr int SPR_NUM_QUADS = 35960; // C(32, 4)
+    constexpr int SPR_NUM_QUADS = numCavityQuads(SPR_MAX_POINTS);
 
     // a boundary face of the cavity, counterclockwise seen from inside it,
     // and the mesh facet behind it (NO_ADJ for a face created by the search)
