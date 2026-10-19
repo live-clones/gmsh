@@ -64,7 +64,7 @@ Move only along z coordinate in geometry creation mode
 @item Shift+Escape
 Enable full mouse selection
 @item Ctrl+d
-Attach/detach menu
+Dock/undock tool windows
 @item Ctrl+e
 Export project
 @item Ctrl+f
@@ -175,6 +175,8 @@ Set -Y view
 Set -Z view
 @item Alt+Shift+1
 Reset bounding box around visible entities
-@item Alt+Ctrl++1
+@item Alt+Ctrl+1
 Sync scale between viewports
+@item Alt+Ctrl+t
+Show/hide menu
 @end table

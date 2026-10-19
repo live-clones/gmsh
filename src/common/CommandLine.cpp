@@ -268,7 +268,7 @@ GetShortcutsUsage(const std::string &ctrl)
   s.push_back(mp("Shift+z", "Move only along z coordinate in geometry "
                  "creation mode"));
   s.push_back(mp("Shift+Escape", "Enable full mouse selection"));
-  s.push_back(mp(cc + "d", "Attach/detach menu"));
+  s.push_back(mp(cc + "d", "Dock/undock tool windows"));
   s.push_back(mp(cc + "e", "Export project"));
   s.push_back(mp(cc + "f", "Enter full screen"));
   s.push_back(mp(cc + "i", "Show statistics window"));
@@ -331,7 +331,8 @@ GetShortcutsUsage(const std::string &ctrl)
   s.push_back(mp("Alt+Shift+y", "Set -Y view"));
   s.push_back(mp("Alt+Shift+z", "Set -Z view"));
   s.push_back(mp("Alt+Shift+1", "Reset bounding box around visible entities"));
-  s.push_back(mp("Alt+" + cc + "+1", "Sync scale between viewports"));
+  s.push_back(mp("Alt+" + cc + "1", "Sync scale between viewports"));
+  s.push_back(mp("Alt+" + cc + "t", "Show/hide menu"));
   return s;
 }
 
