@@ -4248,6 +4248,17 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _onelab = nullptr;
   }
 
+  // the edges are dragged within the resizable box: the tree and the messages
+  // keep a least size, as at the border of the tile their edge could not be
+  // grabbed again (next to it the graphics, subwindows, take the events)
+  {
+    int minw = _onelab ? 3 * BB / 2 + 4 * WB : 0;
+    int minh = _browser ? 2 * BH : 0;
+    dummyBox *drag =
+      new dummyBox(minw, mh, _tile->w() - minw, _tile->h() - minh);
+    _tile->insert(*drag, 0);
+    _tile->resizable(drag);
+  }
   _tile->callback(tile_cb);
   _tile->end();
 
@@ -4255,7 +4266,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
 
   // if the tree widget is too small it will not be rebuilt correctly (probably
-  // a bug)... so impose minimum width
+  // a bug)... so impose minimum width, the least it can be dragged to
   int minw = 3 * BB / 2 + 4 * WB;
   if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
   _tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
