@@ -14,7 +14,8 @@
 // stretches, one that starts in the right half moves with the right margin,
 // and the others stay where they are; the children of a group that moves or
 // stays do the same, those of a group on one row that stretches share its
-// width. Only x and w change.
+// width. A scroll is followed into, apart from its scrollbars. Only x and w
+// change.
 class widthRules {
 private:
   enum { Stay, Shift, Stretch, Share };

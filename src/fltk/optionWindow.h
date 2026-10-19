@@ -53,7 +53,7 @@ private:
   Fl_Group *_category[6];
   Fl_Button *_categoryButton[6];
   // _width is the width the sections are laid out for, the least there is
-  int _current, _rowHeight, _width;
+  int _current, _rowHeight, _width, _buttonWidth;
   std::vector<Fl_Widget *> _hiddenBySearch;
   void _makeSections(int category);
   bool _searching();

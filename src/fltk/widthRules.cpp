@@ -37,13 +37,17 @@ void widthRules::_record(Fl_Widget *w, int mid, int right, int rule, int parent)
   else
     it.rule = Stay;
   _items.push_back(it);
-  // a scroll places its own scrollbars and children
   Fl_Group *g = w->as_group();
-  if(!g || dynamic_cast<Fl_Scroll *>(g)) return;
+  if(!g) return;
   int index = _items.size() - 1;
   int childRule = (it.rule == Stretch && isRow(g)) ? Share : it.rule;
-  for(int i = 0; i < g->children(); i++)
-    _record(g->child(i), mid, right, childRule, index);
+  // a scroll places its own scrollbars
+  Fl_Scroll *s = dynamic_cast<Fl_Scroll *>(g);
+  for(int i = 0; i < g->children(); i++) {
+    Fl_Widget *c = g->child(i);
+    if(s && (c == &s->scrollbar || c == &s->hscrollbar)) continue;
+    _record(c, mid, right, childRule, index);
+  }
 }
 
 void widthRules::record(Fl_Group *g, int mid, int right)
@@ -76,7 +80,7 @@ void widthRules::apply(int extra) const
       g->Fl_Widget::resize(x, w->y(), ww, w->h());
       g->init_sizes();
     }
-    else
+    else // a scroll only moves its children, which their items place after
       w->resize(x, w->y(), ww, w->h());
   }
 }

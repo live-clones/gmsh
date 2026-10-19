@@ -162,16 +162,30 @@ void toolDock::_layout()
     _show(pw);
     yy += pw->h();
   }
-  if(_tabs->children()) {
-    int ht = std::max(y() + H - yy, 2 * _rowHeight);
+  // the tabs in the height left, if there is room for their row at least:
+  // the main window is sometimes shorter than the titles alone
+  int ht = y() + H - yy;
+  if(_tabs->children() && ht >= 2 * _rowHeight) {
     _tabs->Fl_Widget::resize(X, yy, W, ht);
     for(int i = 0; i < _tabs->children(); i++)
       _tabs->child(i)->resize(X, yy + _rowHeight, W, ht - _rowHeight);
+#if FL_API_VERSION >= 10400
+    // the row starts from its first tab again: FLTK scrolls it to keep the
+    // tab chosen in view, from the width the tabs had then (0 before their
+    // first layout), and never scrolls back
+    _tabs->handle_overflow(Fl_Tabs::OVERFLOW_PULLDOWN);
+#endif
+    if(Fl_Widget *v = _tabs->value()) _tabs->value(v);
     _tabs->show();
     _showCurrent();
   }
-  else
+  else {
     _tabs->hide();
+    for(int i = 0; i < _tabs->children(); i++) {
+      paletteWindow *pw = ((dockTab *)_tabs->child(i))->win;
+      if(pw->visible()) pw->Fl_Double_Window::hide();
+    }
+  }
   redraw();
   _layingOut = old;
 }
@@ -292,10 +306,13 @@ void toolDock::fold(dockTitle *t, bool folded)
 
 void toolDock::undockAll(bool show)
 {
+  // the tabs in order, then the stack from the bottom: docked again in this
+  // order, each stacked window going on top, they come back as they were
   std::vector<paletteWindow *> all;
   for(int i = 0; i < _tabs->children(); i++)
     all.push_back(((dockTab *)_tabs->child(i))->win);
-  for(dockTitle *t : _stack) all.push_back(t->win);
+  for(auto t = _stack.rbegin(); t != _stack.rend(); ++t)
+    all.push_back((*t)->win);
   for(paletteWindow *pw : all) hidden(pw);
   if(show)
     for(paletteWindow *pw : all) pw->show(); // where it was placed last

@@ -1483,6 +1483,7 @@ optionWindow::optionWindow(int deltaFontSize)
   int width = TW - Fl::scrollbar_size() - WB;
   int height = 12 * BH + 4 * WB;
   _rowHeight = BH;
+  _buttonWidth = BB;
   _width = width;
   _current = 0;
 
@@ -4324,7 +4325,8 @@ void optionWindow::layout(bool keepPosition)
   int ypos = keepPosition ? scroll->yposition() : 0;
   scroll->scroll_to(0, 0);
   scroll->resize(0, y, ww - WB, std::max(0, bottom - y));
-  redraw->position(ww - redraw->w() - WB, wh - bh - WB);
+  // sized too: hidden, it is scaled with the window like the scroll it lies in
+  redraw->resize(ww - _buttonWidth - WB, wh - bh - WB, _buttonWidth, bh);
 
   // the sections follow the width; the colormap keeps its shape
   int cw = scroll->w() - Fl::scrollbar_size(), extra = cw - _width;

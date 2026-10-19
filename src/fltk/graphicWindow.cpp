@@ -4759,12 +4759,14 @@ void graphicWindow::setDocking(bool docking)
     mainWindow::closeToolHook = close_tool_hook;
     paletteWindow::resizedHook = resized_hook;
     paletteWindow::hiddenHook = hidden_hook;
-    // the tool windows open on the desktop join the dock
+    // the tool windows open on the desktop join the dock, in the order they
+    // were shown (the list of FLTK starts with the newest)
     std::vector<paletteWindow *> open;
     for(Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) {
       paletteWindow *p = dynamic_cast<paletteWindow *>(w);
       if(p && p->dockable() && !p->parent()) open.push_back(p);
     }
+    std::reverse(open.begin(), open.end());
     for(auto p : open) p->show();
   }
   else {
