@@ -440,8 +440,9 @@ helpWindow::helpWindow()
     showhelp->callback(help_options_cb);
     showhelp->tooltip("Show help strings");
 
-    search = searchBox(3 * WB + 2 * BW, WB, BW, BH, "Search options and workspace",
-                       "Filter list using regular expression", help_options_cb);
+    search =
+      searchBox(3 * WB + 2 * BW, WB, BW, BH, "Search options and workspace",
+                "Filter list using regular expression", help_options_cb);
     // search->take_focus(); cannot call this here - it triggers show() on Linux
     // in fltk 1.3.3
 

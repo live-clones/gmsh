@@ -225,7 +225,7 @@ partitionWindow::partitionWindow(int deltaFontSize)
 
   // Main options group [0]
   {
-    const int GH = 3 * BH + 2 + 5 * WB;
+    const int GH = 4 * BH + 2 + 6 * WB;
     y += WB;
     Fl_Group *g = new Fl_Group(0, y, w, GH);
     // Partitioner
@@ -239,10 +239,11 @@ partitionWindow::partitionWindow(int deltaFontSize)
 #endif
       o->align(FL_ALIGN_RIGHT);
     }
+    y += BH + WB;
     // Number of partitions
     {
       Fl_Value_Input *const o =
-        new Fl_Value_Input(2 * WB + 2 * BB, y, IW, BH, "Number of\nPartitions");
+        new Fl_Value_Input(WB, y, IW, BH, "Number of partitions");
       inputNumPartition = o;
       o->minimum(0);
       o->maximum(std::numeric_limits<unsigned short>::max());
@@ -307,7 +308,7 @@ partitionWindow::partitionWindow(int deltaFontSize)
 
   // Metis advanced option group [2]
   {
-    const int GH = 2 + WB + 3 * (BH + WB) + 2;
+    const int GH = 2 + WB + 4 * (BH + WB);
     Fl_Group *g = new Fl_Group(0, y, w, GH);
     // Box (line)
     {
@@ -315,23 +316,25 @@ partitionWindow::partitionWindow(int deltaFontSize)
       o->box(FL_ENGRAVED_FRAME);
       o->labeltype(FL_NO_LABEL);
     }
-    y += 2 + WB + 1; // +1 for multiline label
+    y += 2 + WB;
     // Edge matching algorithm
     {
-      Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Edge matching");
+      Fl_Choice *const o =
+        new Fl_Choice(WB, y, IW + 2 * FL_NORMAL_SIZE, BH, "Edge matching");
       choiceEdgeMatch = o;
       o->menu(metisEdgeMatchingMenu);
       o->align(FL_ALIGN_RIGHT);
     }
+    y += BH + WB;
     // Refinement algorithm
     {
-      Fl_Choice *const o =
-        new Fl_Choice(2 * WB + 2 * BB, y, BB, BH, "Refinement\nalgorithm");
+      Fl_Choice *const o = new Fl_Choice(WB, y, IW + 2 * FL_NORMAL_SIZE, BH,
+                                         "Refinement algorithm");
       choiceRefineAlg = o;
       o->menu(metisRefineAlgMenu);
       o->align(FL_ALIGN_RIGHT);
     }
-    y += BH + WB + 1; // +1 for multiline label
+    y += BH + WB;
     // element weights - line 1, a row that widens as one
     Fl_Group *row1 = new Fl_Group(WB, y, w - 2 * WB, BH);
     {
@@ -362,7 +365,7 @@ partitionWindow::partitionWindow(int deltaFontSize)
       o->align(FL_ALIGN_RIGHT);
     }
     row1->end();
-    y += 2 + WB + BH + 1;
+    y += BH + WB;
     // element weights - line 2
     Fl_Group *row2 = new Fl_Group(WB, y, w - 2 * WB, BH);
     {
@@ -393,7 +396,7 @@ partitionWindow::partitionWindow(int deltaFontSize)
       o->align(FL_ALIGN_RIGHT);
     }
     row2->end();
-    y += BH + WB + 1; // +1 for multiline label
+    y += BH + WB;
     g->end();
     g->hide();
   }

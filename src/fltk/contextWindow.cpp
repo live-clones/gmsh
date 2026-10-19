@@ -789,15 +789,15 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     {
       group[5] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                               height - 3 * WB - 2 * BH, "Rectangle");
-      input[26] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[26] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Corner X");
       input[26]->value("0");
-      input[27] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[27] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Corner Y");
       input[27]->value("0");
-      input[28] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[28] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Corner Z");
       input[28]->value("0");
-      input[29] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "DX");
+      input[29] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Size X");
       input[29]->value("1");
-      input[30] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "DY");
+      input[30] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Size Y");
       input[30]->value("0.5");
       input[31] =
         new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Rounded radius");
@@ -884,17 +884,17 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     {
       group[8] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                               height - 3 * WB - 2 * BH, "Box");
-      input[47] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[47] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Corner X");
       input[47]->value("0");
-      input[48] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[48] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Corner Y");
       input[48]->value("0");
-      input[49] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[49] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Corner Z");
       input[49]->value("0");
-      input[50] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "DX");
+      input[50] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Size X");
       input[50]->value("1");
-      input[51] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "DY");
+      input[51] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Size Y");
       input[51]->value("1");
-      input[52] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "DZ");
+      input[52] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Size Z");
       input[52]->value("1");
       for(int i = 47; i < 53; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
@@ -977,19 +977,19 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     {
       group[11] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                                height - 3 * WB - 2 * BH, "Wedge");
-      input[68] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[68] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Corner X");
       input[68]->value("0");
-      input[69] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[69] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Corner Y");
       input[69]->value("0");
-      input[70] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[70] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Corner Z");
       input[70]->value("0");
-      input[71] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "DX");
+      input[71] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Size X");
       input[71]->value("0.5");
-      input[72] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "DY");
+      input[72] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Size Y");
       input[72]->value("0.5");
-      input[73] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "DZ");
+      input[73] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Size Z");
       input[73]->value("0.5");
-      input[74] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Top DX");
+      input[74] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Top size X");
       input[74]->value("0");
       for(int i = 68; i < 75; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
@@ -1376,11 +1376,11 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
     {
       group[0] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                               height - 3 * WB - 2 * BH, "Translate");
-      input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "DX");
+      input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Translation X");
       input[0]->value("0");
-      input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "DY");
+      input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Translation Y");
       input[1]->value("0");
-      input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "DZ");
+      input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Translation Z");
       input[2]->value("1");
       for(int i = 0; i < 3; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, width - 4 * WB, BH,
