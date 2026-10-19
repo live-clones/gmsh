@@ -468,9 +468,9 @@ void pluginWindow::layout()
   bool post =
     p && p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN && PView::list.size();
 
-  // the list of plugins (7 lines, down to 3 in a short window), the plugin
-  // chosen with three rows at least, the views of a post-processing plugin
-  // (down to 2 lines), Record and Run
+  // the list of plugins (7 lines, down to 3 in a short window), the views of
+  // a post-processing plugin (down to 2 lines), the plugin chosen with three
+  // rows at least, Record and Run
   int top = 2 * WB + bh, bottom = wh - bh - 2 * WB;
   int line = (_listHeight - 4) / 7, lh = _listHeight;
   int vh = post ? views->heightFor(PView::list.size()) : 0;
@@ -490,17 +490,18 @@ void pluginWindow::layout()
   browser->resize(WB, y, ww - 2 * WB, lh);
   y += lh + WB;
 
-  // Record and Run at the bottom, the views of a post-processing plugin above
-  int yb = wh - bh - WB;
-  record->resize(WB, yb, record->w(), bh);
-  run->resize(ww - run->w() - WB, yb, run->w(), bh);
+  // the views of a post-processing plugin under the plugins, what it runs on
+  // before how; Record and Run at the bottom
   if(post) {
-    views->resize(WB, bottom - vh, ww - 2 * WB, vh);
+    views->resize(WB, y, ww - 2 * WB, vh);
     views->show();
-    bottom -= vh + WB;
+    y += vh + WB;
   }
   else
     views->hide();
+  int yb = wh - bh - WB;
+  record->resize(WB, yb, record->w(), bh);
+  run->resize(ww - run->w() - WB, yb, run->w(), bh);
 
   // the plugin chosen, scrolling between the two, kept where it was scrolled
   // to (e.g. when views are chosen)
