@@ -2576,6 +2576,12 @@ double opt_general_option_offset1(OPT_ARGS_NUM)
   return CTX::instance()->optOffset[1];
 }
 
+double opt_general_option_height(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->optHeight = (int)val;
+  return CTX::instance()->optHeight;
+}
+
 double opt_general_plugin_offset0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->pluginOffset[0] = (int)val;

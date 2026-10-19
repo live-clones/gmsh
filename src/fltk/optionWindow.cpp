@@ -10,16 +10,19 @@
 typedef unsigned long intptr_t;
 #endif
 #include <string.h>
+#include <algorithm>
+#include <cctype>
 #include <FL/Fl.H>
-#include <FL/Fl_Tabs.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Color_Chooser.H>
 #include <FL/fl_ask.H>
+#include <FL/fl_draw.H>
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "FlGui.h"
 #include "inputValue.h"
 #include "optionWindow.h"
+#include "hintInput.h"
 #include "gamepadWindow.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
@@ -40,6 +43,9 @@ typedef unsigned long intptr_t;
 #if defined(HAVE_TOUCHBAR)
 #include "touchBar.h"
 #endif
+
+// lower case, safe for any byte of a UTF-8 string
+static char lower(char c) { return (char)std::tolower((unsigned char)c); }
 
 extern StringXColor GeneralOptions_Color[];
 extern StringXColor GeometryOptions_Color[];
@@ -168,10 +174,37 @@ void options_cb(Fl_Widget *w, void *data)
 
 static void options_browser_cb(Fl_Widget *w, void *data)
 {
-  // allows multiple selections with the mouse
-  FlGui::instance()->options->showGroup(
-    FlGui::instance()->options->browser->value(), true, true);
+  // the view clicked is shown; the others selected change with it
+  int line = FlGui::instance()->options->viewList->browser->value();
+  if(line > 0) FlGui::instance()->options->showGroup(line + 5, true, true);
 }
+
+static void options_category_cb(Fl_Widget *w, void *data)
+{
+  optionWindow *o = FlGui::instance()->options;
+  int c = (intptr_t)data;
+  int n = PView::list.size();
+  o->search->value("");
+  if(c < 5)
+    o->showGroup(c + 1);
+  else if(n)
+    o->showGroup(6 + std::max(0, std::min(o->view.index, n - 1)), true, true);
+}
+
+static void options_section_cb(Fl_Widget *w, void *data)
+{
+  int i = (intptr_t)data;
+  FlGui::instance()->options->toggleSection(i / 100, i % 100);
+}
+
+static void options_search_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->options->layout(false); }
+
+static void options_resized_cb(void *data)
+{ FlGui::instance()->options->layout(true); }
+
+static void options_select_views_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->options->selectViews((const char *)data); }
 
 static void options_show_file_cb(Fl_Widget *w, void *data)
 {
@@ -729,7 +762,7 @@ static void view_options_timestep_cb(Fl_Widget *w, void *data)
   std::string str((const char *)data);
   for(int i = 0; i < (int)PView::list.size(); i++) {
     if(i == FlGui::instance()->options->view.index ||
-       FlGui::instance()->options->browser->selected(i + 6)) {
+       FlGui::instance()->options->viewList->browser->selected(i + 1)) {
       if(str == "=")
         opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *)w)->value());
       else if(str == "-")
@@ -759,7 +792,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       double vmax = -1e200;
       for(int i = 0; i < (int)PView::list.size(); i++) {
         if(i == current ||
-           FlGui::instance()->options->browser->selected(i + 6)) {
+           FlGui::instance()->options->viewList->browser->selected(i + 1)) {
           // compute min/max taking current visibility status and tensor display
           // mode into account
           if(str == "range_min")
@@ -909,7 +942,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 
   // modify only the views that need to be updated
   for(int i = 0; i < (int)PView::list.size(); i++) {
-    if(i == current || FlGui::instance()->options->browser->selected(i + 6)) {
+    if(i == current ||
+       FlGui::instance()->options->viewList->browser->selected(i + 1)) {
       double val;
 
       // view_choice
@@ -1379,7 +1413,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   // or the views before it get its old map back
   for(int i = 0; i < (int)PView::list.size(); i++) {
     if((force && i == current) ||
-       (i != current && FlGui::instance()->options->browser->selected(i + 6))) {
+       (i != current &&
+        FlGui::instance()->options->viewList->browser->selected(i + 1))) {
       ColorTable_Copy(&PView::list[current]->getOptions()->colorTable);
       ColorTable_Paste(&PView::list[i]->getOptions()->colorTable);
       PView::list[i]->setChanged(true);
@@ -1442,39 +1477,82 @@ optionWindow::optionWindow(int deltaFontSize)
 
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 37 * FL_NORMAL_SIZE + WB;
+  // the widgets of each section are built at their place in a tab of at most
+  // 11 rows of this width; layout() then stacks the sections in the scroll
+  int L = 0;
+  int width = TW - Fl::scrollbar_size() - WB;
   int height = 12 * BH + 4 * WB;
-  int L = 7 * FL_NORMAL_SIZE;
+  _rowHeight = BH;
+  _width = width;
+  _current = 0;
 
-  win = new paletteWindow(width, height,
-                          CTX::instance()->nonModalWindows ? true : false, nullptr,
-                          CTX::instance()->optOffset);
+  // the scrollbar, shown when needed, ends where the search and the category
+  // bar end, so that everything is aligned on the right
+  int winWidth = TW;
+  int winHeight = CTX::instance()->optHeight;
+  {
+    int sx, sy, sw, sh;
+    Fl::screen_work_area(sx, sy, sw, sh);
+    winHeight = std::min(winHeight, sh - 2 * BH);
+  }
+  winHeight = std::max(winHeight, 12 * BH);
+
+  win = new paletteWindow(winWidth, winHeight,
+                          CTX::instance()->nonModalWindows ? true : false,
+                          nullptr, CTX::instance()->optOffset);
   win->box(GMSH_WINDOW_BOX);
-  win->label("Options - General");
+  // the category bar shows the category, the view list the views
+  win->label("Options");
 
-  // Selection browser
-  browser = new Fl_Multi_Browser(0, 0, L, height);
-  browser->box(GMSH_SIMPLE_RIGHT_BOX);
-  browser->has_scrollbar(Fl_Browser_::VERTICAL);
-  browser->add("General");
-  browser->add("Geometry");
-  browser->add("Mesh");
-  browser->add("Solver");
-  browser->add("Post-pro");
-  browser->callback(options_browser_cb);
-  browser->value(1);
+  // the search goes through all the categories, hence above them
+  {
+    Fl_Group *o = new Fl_Group(WB, WB, winWidth - 2 * WB, BH);
+    o->tooltip("Show only the options whose label, name or choices match");
+    o->box(FL_DOWN_BOX);
+    o->color(FL_BACKGROUND2_COLOR);
+    search = new hintInput(WB + BH, WB + 2, winWidth - 2 * WB - BH - 2, BH - 4,
+                           "@gmsh_search", "Search all options");
+    search->box(FL_FLAT_BOX);
+    search->callback(options_search_cb);
+    search->when(FL_WHEN_CHANGED);
+    o->resizable(search);
+    o->end();
+  }
 
-  redraw = new Fl_Return_Button(WB, height - BH - WB, L - WB, BH, "Redraw");
-  redraw->callback(redraw_cb);
+  {
+    static const char *names[6] = {"General", "Geometry", "Mesh",
+                                   "Solver",  "Post-pro", "Views"};
+    Fl_Group *o = new Fl_Group(WB, 2 * WB + BH, winWidth - 2 * WB, BH);
+    int bw = (winWidth - 2 * WB) / 6;
+    for(int i = 0; i < 6; i++) {
+      int x = WB + i * bw;
+      _categoryButton[i] = new Fl_Button(
+        x, 2 * WB + BH, (i < 5) ? bw : winWidth - WB - x, BH, names[i]);
+      _categoryButton[i]->type(FL_RADIO_BUTTON);
+      _categoryButton[i]->selection_color(FL_SELECTION_COLOR);
+      _categoryButton[i]->callback(options_category_cb, (void *)(intptr_t)i);
+    }
+    _categoryButton[0]->value(1);
+    o->end();
+  }
 
-  width -= L;
+  // the views whose options change together: the one shown and the selected
+  viewList =
+    new targetList(WB, 2 * WB + BH, winWidth - 2 * WB, BH,
+                   {"All", "Visible", "Only this"}, options_select_views_cb);
+  viewList->browser->callback(options_browser_cb);
+  viewList->hide();
+
+  scroll = new Fl_Scroll(0, 3 * WB + 2 * BH, winWidth - WB,
+                         winHeight - 3 * WB - 2 * BH);
+  scroll->type(Fl_Scroll::VERTICAL);
+
   int BW = width - 4 * WB;
   int IWW = 1.1 * IW;
 
   // General options
   general.group = new Fl_Group(L, 0, width, height, "General Options");
   {
-    Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
                                  height - 2 * WB - BH, "General");
@@ -1493,15 +1571,15 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[13]->callback(general_options_ok_cb);
 
       general.butt[23] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH,
                             "Highlight hovered entity");
       general.butt[23]->tooltip("General.MouseHoverHighlight");
       general.butt[23]->type(FL_TOGGLE_BUTTON);
       general.butt[23]->callback(general_options_ok_cb);
 
       general.butt[11] =
-        new Fl_Check_Button(L + 2 * WB + BW / 2, 2 * WB + 3 * BH, BW / 2, BH,
-                            "Hover mesh and views");
+        new Fl_Check_Button(L + 2 * WB + BW / 2, 2 * WB + 3 * BH, BW - BW / 2,
+                            BH, "Hover mesh and views");
       general.butt[11]->tooltip("General.MouseHoverMeshes");
       general.butt[11]->type(FL_TOGGLE_BUTTON);
       general.butt[11]->callback(general_options_ok_cb);
@@ -2074,8 +2152,6 @@ optionWindow::optionWindow(int deltaFontSize)
       general.choice[5]->align(FL_ALIGN_RIGHT);
       general.choice[5]->callback(general_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 8 * BH, IW + 20,
-                                   height - 5 * WB - 8 * BH);
       std::size_t i = 0, j = 0;
       while(GeneralOptions_Color[j].str) {
         if(GeneralOptions_Color[j].level & GMSH_DEPRECATED) {
@@ -2095,7 +2171,6 @@ optionWindow::optionWindow(int deltaFontSize)
           break;
         }
       }
-      s->end();
 
       o->end();
     }
@@ -2179,7 +2254,6 @@ optionWindow::optionWindow(int deltaFontSize)
       }
       o->end();
     }
-    o->end();
   }
 
   general.group->end();
@@ -2188,7 +2262,6 @@ optionWindow::optionWindow(int deltaFontSize)
   geo.group = new Fl_Group(L, 0, width, height, "Geometry Options");
   geo.group->hide();
   {
-    Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
                                  height - 2 * WB - BH, "General");
@@ -2290,26 +2363,30 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[3]->type(FL_TOGGLE_BUTTON);
       geo.butt[3]->callback(geometry_options_ok_cb);
 
-      geo.butt[4] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
-                                        BW / 2 - WB, BH, "Point labels");
+      geo.butt[4] =
+        new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
+                            width - width / 2 - 2 * WB, BH, "Point labels");
       geo.butt[4]->tooltip("Geometry.PointLabels");
       geo.butt[4]->type(FL_TOGGLE_BUTTON);
       geo.butt[4]->callback(geometry_options_ok_cb);
 
-      geo.butt[5] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH,
-                                        BW / 2 - WB, BH, "Curve labels");
+      geo.butt[5] =
+        new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH,
+                            width - width / 2 - 2 * WB, BH, "Curve labels");
       geo.butt[5]->tooltip("Geometry.CurveLabels");
       geo.butt[5]->type(FL_TOGGLE_BUTTON);
       geo.butt[5]->callback(geometry_options_ok_cb);
 
-      geo.butt[6] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH,
-                                        BW / 2 - WB, BH, "Surface labels");
+      geo.butt[6] =
+        new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH,
+                            width - width / 2 - 2 * WB, BH, "Surface labels");
       geo.butt[6]->tooltip("Geometry.SurfaceLabels");
       geo.butt[6]->type(FL_TOGGLE_BUTTON);
       geo.butt[6]->callback(geometry_options_ok_cb);
 
-      geo.butt[7] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH,
-                                        BW / 2 - WB, BH, "Volume labels");
+      geo.butt[7] =
+        new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH,
+                            width - width / 2 - 2 * WB, BH, "Volume labels");
       geo.butt[7]->tooltip("Geometry.VolumeLabels");
       geo.butt[7]->type(FL_TOGGLE_BUTTON);
       geo.butt[7]->callback(geometry_options_ok_cb);
@@ -2539,15 +2616,13 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.choice[6]->align(FL_ALIGN_RIGHT);
       geo.choice[6]->callback(geometry_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 5 * BH, IW + 20,
-                                   height - 5 * WB - 5 * BH);
       std::size_t i = 0, j = 0;
       while(GeometryOptions_Color[j].str) {
         if(GeometryOptions_Color[j].level & GMSH_DEPRECATED) {
           j++;
           continue;
         }
-        geo.color[i] = new Fl_Button(L + 2 * WB, 2 * WB + (4 + i) * BH, IW, BH,
+        geo.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (5 + i) * BH, IW, BH,
                                      GeometryOptions_Color[j].str);
         geo.color[i]->callback(color_cb,
                                (void *)GeometryOptions_Color[j].function);
@@ -2558,11 +2633,9 @@ optionWindow::optionWindow(int deltaFontSize)
           break;
         }
       }
-      s->end();
 
       o->end();
     }
-    o->end();
   }
   geo.group->end();
 
@@ -2570,7 +2643,6 @@ optionWindow::optionWindow(int deltaFontSize)
   mesh.group = new Fl_Group(L, 0, width, height, "Mesh Options");
   mesh.group->hide();
   {
-    Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
                                  height - 2 * WB - BH, "General");
@@ -2681,9 +2753,9 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[3]->align(FL_ALIGN_RIGHT);
       mesh.value[3]->callback(mesh_options_ok_cb);
 
-      mesh.butt[4] =
-        new Fl_Check_Button(L + width / 2, 2 * WB + 9 * BH,
-                            BW / 2 - WB, BH, "Incomplete elements");
+      mesh.butt[4] = new Fl_Check_Button(L + width / 2, 2 * WB + 9 * BH,
+                                         width - width / 2 - 2 * WB, BH,
+                                         "Incomplete elements");
       mesh.butt[4]->tooltip("Mesh.SecondOrderIncomplete");
       mesh.butt[4]->type(FL_TOGGLE_BUTTON);
       mesh.butt[4]->callback(mesh_options_ok_cb);
@@ -2793,7 +2865,8 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[11]->callback(mesh_options_ok_cb);
 
       mesh.butt[1] = new Fl_Check_Button(L + width / 2, 2 * WB + 5 * BH,
-                                         BW / 2 - WB, BH, "Hide interior edges");
+                                         width - width / 2 - 2 * WB, BH,
+                                         "Hide interior edges");
       mesh.butt[1]->tooltip("Mesh.DrawSkinEdgesOnly");
       mesh.butt[1]->type(FL_TOGGLE_BUTTON);
       mesh.butt[1]->callback(mesh_options_ok_cb);
@@ -2803,32 +2876,36 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Hide interior faces", 0, nullptr, nullptr},
         {"Hide partition faces", 0, nullptr, nullptr},
         {nullptr}};
-      mesh.choice[12] =
-        new Fl_Choice(L + width / 2, 2 * WB + 6 * BH, BW / 2 - WB, BH);
+      mesh.choice[12] = new Fl_Choice(L + width / 2, 2 * WB + 6 * BH,
+                                      width - width / 2 - 2 * WB, BH);
       mesh.choice[12]->menu(menu_skin);
       mesh.choice[12]->tooltip("Mesh.DrawSkinOnly");
       mesh.choice[12]->callback(mesh_options_ok_cb);
 
-      mesh.butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
-                                          BW / 2 - WB, BH, "Node labels");
+      mesh.butt[12] =
+        new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
+                            width - width / 2 - 2 * WB, BH, "Node labels");
       mesh.butt[12]->tooltip("Mesh.NodeLabels");
       mesh.butt[12]->type(FL_TOGGLE_BUTTON);
       mesh.butt[12]->callback(mesh_options_ok_cb);
 
       mesh.butt[13] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH,
-                                          BW / 2 - WB, BH, "1D element labels");
+                                          width - width / 2 - 2 * WB, BH,
+                                          "1D element labels");
       mesh.butt[13]->tooltip("Mesh.LineLabels");
       mesh.butt[13]->type(FL_TOGGLE_BUTTON);
       mesh.butt[13]->callback(mesh_options_ok_cb);
 
       mesh.butt[14] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH,
-                                          BW / 2 - WB, BH, "2D element labels");
+                                          width - width / 2 - 2 * WB, BH,
+                                          "2D element labels");
       mesh.butt[14]->tooltip("Mesh.SurfaceLabels");
       mesh.butt[14]->type(FL_TOGGLE_BUTTON);
       mesh.butt[14]->callback(mesh_options_ok_cb);
 
       mesh.butt[15] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH,
-                                          BW / 2 - WB, BH, "3D element labels");
+                                          width - width / 2 - 2 * WB, BH,
+                                          "3D element labels");
       mesh.butt[15]->tooltip("Mesh.VolumeLabels");
       mesh.butt[15]->type(FL_TOGGLE_BUTTON);
       mesh.butt[15]->callback(mesh_options_ok_cb);
@@ -3079,15 +3156,13 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[4]->align(FL_ALIGN_RIGHT);
       mesh.choice[4]->callback(mesh_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 8 * BH, IW + 20,
-                                   height - 5 * WB - 8 * BH);
       std::size_t i = 0, j = 0;
       while(MeshOptions_Color[j].str) {
         if(MeshOptions_Color[j].level & GMSH_DEPRECATED) {
           j++;
           continue;
         }
-        mesh.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW, BH,
+        mesh.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (8 + i) * BH, IW, BH,
                                       MeshOptions_Color[j].str);
         mesh.color[i]->callback(color_cb,
                                 (void *)MeshOptions_Color[j].function);
@@ -3098,11 +3173,9 @@ optionWindow::optionWindow(int deltaFontSize)
           break;
         }
       }
-      s->end();
 
       o->end();
     }
-    o->end();
   }
   mesh.group->end();
 
@@ -3110,7 +3183,6 @@ optionWindow::optionWindow(int deltaFontSize)
   solver.group = new Fl_Group(L, 0, width, height, "Solver Options");
   solver.group->hide();
   {
-    Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
     {
       {
         Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
@@ -3150,7 +3222,6 @@ optionWindow::optionWindow(int deltaFontSize)
         o->end();
       }
     }
-    o->end();
   }
   solver.group->end();
 
@@ -3158,7 +3229,6 @@ optionWindow::optionWindow(int deltaFontSize)
   post.group = new Fl_Group(L, 0, width, height, "Post-processing Options");
   post.group->hide();
   {
-    Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
                                  height - 2 * WB - BH, "General");
@@ -3215,7 +3285,6 @@ optionWindow::optionWindow(int deltaFontSize)
 
       o->end();
     }
-    o->end();
   }
   post.group->end();
 
@@ -3224,7 +3293,6 @@ optionWindow::optionWindow(int deltaFontSize)
   view.group = new Fl_Group(L, 0, width, height, "View Options");
   view.group->hide();
   {
-    Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
                                  height - 2 * WB - BH, "General");
@@ -3593,14 +3661,14 @@ optionWindow::optionWindow(int deltaFontSize)
       view.butt[10]->callback(view_options_ok_cb);
 
       view.butt[1] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH,
-                                         BW / 2 - WB, BH,
+                                         width - width / 2 - 2 * WB, BH,
                                          "Hide interior edges");
       view.butt[1]->tooltip("View.DrawSkinEdgesOnly");
       view.butt[1]->type(FL_TOGGLE_BUTTON);
       view.butt[1]->callback(view_options_ok_cb);
 
       view.butt[2] = new Fl_Check_Button(L + width / 2, 2 * WB + 5 * BH,
-                                         BW / 2 - WB, BH,
+                                         width - width / 2 - 2 * WB, BH,
                                          "Hide interior faces");
       view.butt[2]->tooltip("View.DrawSkinOnly");
       view.butt[2]->type(FL_TOGGLE_BUTTON);
@@ -3697,17 +3765,21 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[14]->align(FL_ALIGN_RIGHT);
       view.choice[14]->callback(view_options_ok_cb);
 
+      // the 9 fields of the map widen together
+      int W = width - 5 * WB - IW;
+      Fl_Group *row = new Fl_Group(L + 3 * WB + IW, 2 * WB + 10 * BH, W, BH);
       for(int i = 0; i < 9; i++) {
-        int W = width - 5 * WB - IW;
         int w = W / 9;
         view.value[70 + i] =
-          new Fl_Value_Input(L + 3 * WB + IW + i * w, 2 * WB + 10 * BH, w, BH);
+          new Fl_Value_Input(L + 3 * WB + IW + i * w, 2 * WB + 10 * BH,
+                             (i < 8) ? w : W - 8 * w, BH);
         view.value[70 + i]->tooltip("View.ComponentMap");
         view.value[70 + i]->minimum(-1);
         view.value[70 + i]->maximum(9);
         if(CTX::instance()->inputScrolling) view.value[70 + i]->step(1);
         view.value[70 + i]->callback(view_options_ok_cb);
       }
+      row->end();
 
       o->end();
     }
@@ -3716,6 +3788,9 @@ optionWindow::optionWindow(int deltaFontSize)
                                  height - 2 * WB - BH, "Transfo");
       o->hide();
 
+      // the matrix, the offsets and the raise move together, as one table
+      Fl_Group *table = new Fl_Group(L + 2 * WB, 2 * WB + 1 * BH,
+                                     2 * IW - 3 * WB + 7 * IW / 10, 4 * BH);
       Fl_Box *b = new Fl_Box(FL_NO_BOX, L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
                              "Coordinate transformation:");
       b->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
@@ -3770,6 +3845,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[45] = new inputValueFloat(L + 2 * WB + 2 * IW - 3 * WB,
                                            2 * WB + 4 * BH, 7 * IW / 10, BH);
       view.value[45]->tooltip("View.RaizeZ");
+      table->end();
       view.value[46] = new inputValueFloat(L + 2 * WB, 2 * WB + 5 * BH, 3 * ss,
                                            BH, "Normal raise");
       view.value[46]->tooltip("View.NormalRaize");
@@ -4024,8 +4100,6 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[79]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
       view.value[79]->callback(view_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
-                                   height - 5 * WB - 7 * BH);
       std::size_t i = 0, j = 0;
       while(ViewOptions_Color[j].str) {
         if(ViewOptions_Color[j].level & GMSH_DEPRECATED) {
@@ -4043,7 +4117,6 @@ optionWindow::optionWindow(int deltaFontSize)
           break;
         }
       }
-      s->end();
 
       o->end();
     }
@@ -4072,87 +4145,355 @@ optionWindow::optionWindow(int deltaFontSize)
       // the keys go to the map widget below
       view.choice[17]->clear_visible_focus();
 
-      view.colorbar = new colorbarWindow(L + 2 * WB, 3 * WB + 2 * BH,
-                                         width - 4 * WB, height - 5 * WB - 2 * BH);
-      view.colorbar->end();
+      // 16:9, but tall enough for its help
+      int cw = width - 4 * WB;
+      view.colorbar =
+        new colorbarWindow(L + 2 * WB, 3 * WB + 2 * BH, cw, 9 * cw / 16);
+      view.colorbar->size(cw,
+                          std::max(9 * cw / 16, view.colorbar->helpHeight()));
       view.colorbar->callback(view_options_ok_cb);
 
       o->end();
     }
-    o->end();
   }
   view.group->end();
 
+  scroll->end();
+
+  redraw = new Fl_Return_Button(winWidth - BB - WB, winHeight - BH - WB, BB, BH,
+                                "Redraw");
+  redraw->callback(redraw_cb);
+  redraw->hide();
+
   win->end();
 
+  _category[0] = general.group;
+  _category[1] = geo.group;
+  _category[2] = mesh.group;
+  _category[3] = solver.group;
+  _category[4] = post.group;
+  _category[5] = view.group;
+  for(int c = 0; c < 6; c++) _makeSections(c);
+  win->resizable(scroll);
+  ((paletteWindow *)win)->sizeRange(winWidth, 12 * BH); // height: layout()
+  ((paletteWindow *)win)->whenResized(options_resized_cb, nullptr);
+  layout(false);
+
   FL_NORMAL_SIZE += deltaFontSize;
+}
+
+void optionWindow::_makeSections(int c)
+{
+  // the groups built as tabs become sections; the tab shown first is open
+  Fl_Group *g = _category[c];
+  bool first = true;
+  g->label(nullptr);
+  g->resizable(nullptr);
+  std::vector<Fl_Group *> groups;
+  for(int i = 0; i < g->children(); i++)
+    if(g->child(i)->as_group()) groups.push_back(g->child(i)->as_group());
+  for(std::size_t i = 0; i < groups.size(); i++) {
+    section sec;
+    sec.group = groups[i];
+    sec.name = sec.group->label();
+    sec.open = first && sec.group->visible();
+    if(sec.open) first = false;
+    sec.group->label(nullptr);
+    sec.group->resizable(nullptr);
+    sec.group->show();
+    // the widgets top to bottom, grouped in blocks of those that overlap
+    std::vector<Fl_Widget *> w(sec.group->array(),
+                               sec.group->array() + sec.group->children());
+    std::stable_sort(w.begin(), w.end(), [](Fl_Widget *a, Fl_Widget *b) {
+      return a->y() < b->y();
+    });
+    for(Fl_Widget *o : w) {
+      int y = o->y() - sec.group->y();
+      if(sec.blocks.empty() || y >= sec.blocks.back().y + sec.blocks.back().h) {
+        block b;
+        b.y = y;
+        b.h = 0;
+        sec.blocks.push_back(b);
+      }
+      block &b = sec.blocks.back();
+      b.h = std::max(b.h, y + o->h() - b.y);
+      b.widgets.push_back(o);
+      b.dy.push_back(y - b.y);
+    }
+    // the right column starts in the middle, the right margin is 2 * WB in
+    sec.rules.record(sec.group, _width / 2 - 1, _width - 2 * WB);
+    sec.header = new Fl_Button(0, 0, sec.group->w(), _rowHeight);
+    sec.header->box(FL_FLAT_BOX);
+    sec.header->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+    sec.header->labelfont(FL_BOLD);
+    sec.header->clear_visible_focus();
+    sec.header->callback(options_section_cb, (void *)(intptr_t)(100 * c + i));
+    g->add(sec.header);
+    _sections[c].push_back(sec);
+  }
+}
+
+static bool matches(Fl_Widget *w, const std::string &s)
+{
+  if(!w->visible()) return false;
+  auto has = [&s](const char *text) {
+    if(!text) return false;
+    std::string t(text);
+    std::transform(t.begin(), t.end(), t.begin(), lower);
+    return t.find(s) != std::string::npos;
+  };
+  // the tooltip holds the name of the option
+  if(has(w->label()) || has(w->tooltip())) return true;
+  if(Fl_Menu_ *m = dynamic_cast<Fl_Menu_ *>(w)) {
+    for(int i = 0; i < m->size(); i++)
+      if(has(m->text(i))) return true;
+  }
+  if(Fl_Group *g = w->as_group()) {
+    for(int i = 0; i < g->children(); i++)
+      if(matches(g->child(i), s)) return true;
+  }
+  return false;
+}
+
+bool optionWindow::_searching() { return search->size() > 0; }
+
+void optionWindow::layout(bool keepPosition)
+{
+  static const char *names[6] = {"General", "Geometry", "Mesh",
+                                 "Solver",  "Post-pro", "View"};
+  int bh = _rowHeight, ww = win->w(), wh = win->h();
+  std::string s(search->value());
+  std::transform(s.begin(), s.end(), s.begin(), lower);
+
+  // widgets hidden by the previous search are shown again
+  for(Fl_Widget *w : _hiddenBySearch) w->show();
+  _hiddenBySearch.clear();
+
+  // no category is chosen while searching in all of them
+  for(int c = 0; c < 6; c++)
+    _categoryButton[c]->value(s.empty() && c == _current);
+
+  // the blocks to show: all of them in the current category, or those that
+  // match in every category while searching
+  std::vector<std::vector<std::vector<bool>>> shown(6);
+  bool any[6];
+  for(int c = 0; c < 6; c++) {
+    any[c] = false;
+    bool active = s.empty() ? (c == _current) : (c < 5 || PView::list.size());
+    shown[c].resize(_sections[c].size());
+    for(std::size_t i = 0; i < _sections[c].size(); i++) {
+      section &sec = _sections[c][i];
+      std::string name(sec.name);
+      std::transform(name.begin(), name.end(), name.begin(), lower);
+      bool all = s.empty() || name.find(s) != std::string::npos;
+      for(block &b : sec.blocks) {
+        bool show = active && all;
+        if(active && !all)
+          for(Fl_Widget *w : b.widgets)
+            if(matches(w, s)) show = true;
+        shown[c][i].push_back(show);
+        if(show) any[c] = true;
+      }
+    }
+  }
+
+  // below the search field and the category bar, the views, as many as there
+  // are but down to two in a short window, then the options; the least height
+  // of the window leaves three rows of options
+  int y = 3 * WB + 2 * bh;
+  int bottom = redraw->visible() ? wh - bh - 2 * WB : wh;
+  int least = y + 3 * bh + (wh - bottom);
+  if(any[5] && PView::list.size()) {
+    int h = std::min(viewList->heightFor(PView::list.size()),
+                     bottom - y - WB - 3 * bh);
+    h = std::max(h, viewList->heightFor(2));
+    viewList->resize(WB, y, ww - 2 * WB, h);
+    viewList->show();
+    y += h + WB;
+    least += viewList->heightFor(2) + WB;
+  }
+  else
+    viewList->hide();
+  // taller if needed, laid out again then
+  if(((paletteWindow *)win)->leastHeight(least)) {
+    // laid out again by the resize, but scrolled to the top
+    layout(keepPosition);
+    return;
+  }
+
+  int ypos = keepPosition ? scroll->yposition() : 0;
+  scroll->scroll_to(0, 0);
+  scroll->resize(0, y, ww - WB, std::max(0, bottom - y));
+  redraw->position(ww - redraw->w() - WB, wh - bh - WB);
+
+  // the sections follow the width; the colormap keeps its shape
+  int cw = scroll->w() - Fl::scrollbar_size(), extra = cw - _width;
+  int sw = _width - 2 * WB + extra;
+  for(int c = 0; c < 6; c++)
+    for(section &sec : _sections[c]) sec.rules.apply(extra);
+  int cbw = view.colorbar->w();
+  view.colorbar->size(cbw, std::max(9 * cbw / 16, view.colorbar->helpHeight()));
+
+  // the sections stacked down the scroll; a group is first moved, which moves
+  // its children, then its children are placed and its height set. The
+  // groups leave room for the scrollbar, or they could scroll sideways
+  int yy = scroll->y();
+  bool first = true;
+  for(int c = 0; c < 6; c++) {
+    Fl_Group *g = _category[c];
+    if(!any[c]) {
+      // hidden, and out of the way: FLTK 1.3 scrolls over hidden children
+      g->hide();
+      g->resize(g->x(), scroll->y(), g->w(), 0);
+      continue;
+    }
+    g->show();
+    int y0 = yy;
+    g->resize(0, y0, cw, g->h());
+    for(std::size_t i = 0; i < _sections[c].size(); i++) {
+      section &sec = _sections[c][i];
+      std::vector<bool> &show = shown[c][i];
+      if(std::find(show.begin(), show.end(), true) == show.end()) {
+        sec.header->hide();
+        sec.group->hide();
+        continue;
+      }
+      bool open = !s.empty() || sec.open;
+      std::string label = std::string(open ? "@-22> " : "@-2> ") +
+                          (s.empty() ? "" : std::string(names[c]) + " - ") +
+                          sec.name;
+      sec.header->copy_label(label.c_str());
+      // a line between sections
+      sec.header->box(first ? FL_FLAT_BOX : GMSH_SIMPLE_TOP_BOX);
+      sec.header->down_box(sec.header->box()); // no pressed look
+      first = false;
+      sec.header->resize(WB, yy, sw, bh);
+      sec.header->show();
+      yy += bh;
+      if(!open) {
+        sec.group->hide();
+        continue;
+      }
+      sec.group->show();
+      sec.group->resize(sec.group->x(), yy, sw, sec.group->h());
+      int bottom = 0;
+      for(std::size_t j = 0; j < sec.blocks.size(); j++) {
+        block &b = sec.blocks[j];
+        if(!show[j]) {
+          for(Fl_Widget *w : b.widgets) {
+            if(w->visible()) _hiddenBySearch.push_back(w);
+            w->hide();
+          }
+          continue;
+        }
+        int gap = j ? b.y - sec.blocks[j - 1].y - sec.blocks[j - 1].h : b.y;
+        int top = bottom + gap;
+        int h = 0;
+        for(std::size_t k = 0; k < b.widgets.size(); k++) {
+          b.widgets[k]->position(b.widgets[k]->x(), yy + top + b.dy[k]);
+          h = std::max(h, b.dy[k] + b.widgets[k]->h());
+        }
+        bottom = top + h;
+      }
+      sec.group->resize(sec.group->x(), yy, sw, bottom + WB);
+      yy += bottom + WB;
+    }
+    g->resize(0, y0, cw, yy - y0);
+  }
+  int most = std::max(0, yy - scroll->y() - scroll->h());
+  scroll->scroll_to(0, std::min(ypos, most));
+
+  win->init_sizes();
+  win->redraw();
+}
+
+void optionWindow::toggleSection(int c, int i)
+{
+  section &sec = _sections[c][i];
+  if(_searching()) {
+    // a result leads to its section, in full, scrolled to it
+    sec.open = true;
+    _current = -1;
+    int n = PView::list.size();
+    showGroup(c < 5 ? c + 1 : 6 + std::max(0, std::min(view.index, n - 1)),
+              true, true);
+    int bottom = scroll->y();
+    for(int k = 0; k < 6; k++)
+      if(_category[k]->visible())
+        bottom = std::max(bottom, _category[k]->y() + _category[k]->h());
+    int most = std::max(0, bottom - scroll->y() - scroll->h());
+    scroll->scroll_to(0, std::min(sec.header->y() - scroll->y(), most));
+    return;
+  }
+  sec.open = !sec.open;
+  layout(true);
+}
+
+void optionWindow::updateViewTargets()
+{
+  // the view shown in bold ("@." stops the formatting of the name)
+  int n = 0;
+  for(int i = 0; i < (int)PView::list.size(); i++) {
+    if(i == view.index || viewList->browser->selected(i + 1)) n++;
+    std::string str = std::string(i == view.index ? "@b@.[" : "@.[") +
+                      std::to_string(i) + "] " +
+                      PView::list[i]->getData()->getName();
+    if(str != viewList->browser->text(i + 1))
+      viewList->browser->text(i + 1, str.c_str());
+  }
+  std::string str = (n > 1) ?
+                      "Changes apply to " + std::to_string(n) + " views" :
+                      "Changes apply to this view only";
+  viewList->count->copy_label(str.c_str());
+}
+
+void optionWindow::selectViews(const std::string &which)
+{
+  for(int i = 0; i < (int)PView::list.size(); i++) {
+    bool on = (which == "All") ||
+              (which == "Visible" && PView::list[i]->getOptions()->visible) ||
+              i == view.index;
+    viewList->browser->select(i + 1, on ? 1 : 0);
+  }
+  updateViewTargets();
 }
 
 void optionWindow::showGroup(int num, bool showWindow,
                              bool allowMultipleSelections)
 {
-  general.group->hide();
-  geo.group->hide();
-  mesh.group->hide();
-  solver.group->hide();
-  post.group->hide();
-  view.group->hide();
-
-  if(num > 5 && allowMultipleSelections) {
-    for(int i = 1; i <= 5; i++) browser->select(i, 0);
-  }
-  else {
-    browser->deselect();
-  }
-  browser->select(num, 1);
-  switch(num) {
-  case 0:
-  case 1:
-    win->label("Options - General");
-    general.group->show();
-    break;
-  case 2:
-    win->label("Options - Geometry");
-    geo.group->show();
-    break;
-  case 3:
-    win->label("Options - Mesh");
-    mesh.group->show();
-    break;
-  case 4:
-    win->label("Options - Solver");
-    solver.group->show();
-    break;
-  case 5:
-    win->label("Options - Post-pro");
-    post.group->show();
-    break;
-  default: {
+  // a category asked for: the search is left
+  if(showWindow) search->value("");
+  int c = (num <= 1) ? 0 : (num <= 5) ? num - 1 : 5;
+  if(c == 5) {
+    if(!allowMultipleSelections) viewList->browser->deselect();
+    viewList->browser->select(num - 5, 1);
     updateViewGroup(num - 6);
-    static char str[128];
-    sprintf(str, "Options - View [%d]", num - 6);
-    win->label(str);
-    view.group->show();
-  } break;
   }
+  updateViewTargets();
+  bool same = (c == _current);
+  _current = c;
+  layout(same);
   if(showWindow) win->show();
 }
 
 void optionWindow::resetBrowser()
 {
-  int select = browser->value();
-  browser->clear();
-  browser->add("General");
-  browser->add("Geometry");
-  browser->add("Mesh");
-  browser->add("Solver");
-  browser->add("Post-pro");
-  for(std::size_t i = 0; i < PView::list.size(); i++) {
-    char str[128];
-    sprintf(str, "View [%zu]", i);
-    browser->add(str);
-  }
-  int num = (select <= browser->size()) ? select : browser->size();
+  viewList->browser->clear();
+  for(std::size_t i = 0; i < PView::list.size(); i++)
+    viewList->browser->add(""); // the names set by updateViewTargets()
+  int n = PView::list.size();
+  // the options of a view are also searched in the other categories: those of
+  // the view shown, kept or the nearest left
+  if(n)
+    updateViewGroup(std::max(0, std::min(view.index, n - 1)));
+  else
+    view.index = -1;
+  if(n)
+    _categoryButton[5]->activate();
+  else
+    _categoryButton[5]->deactivate();
+  int num = _current + 1;
+  if(_current == 5) num = n ? 6 + std::max(0, std::min(view.index, n - 1)) : 5;
   showGroup(num, false);
 }
 
@@ -4397,17 +4738,11 @@ void optionWindow::activate(const char *what)
   // activate/deactivate parts of the option window depending on the
   // user's choices (or the option settings)
   if(!strcmp(what, "fast_redraw")) {
-    if(general.butt[2]->value()) {
-      browser->resize(browser->x(), browser->y(), browser->w(),
-                      win->h() - 2 * WB - BH);
+    if(general.butt[2]->value())
       redraw->show();
-      win->redraw();
-    }
-    else {
-      browser->resize(browser->x(), browser->y(), browser->w(), win->h());
+    else
       redraw->hide();
-      win->redraw();
-    }
+    layout(true);
     drawContext::global()->draw();
   }
   else if(!strcmp(what, "shaders")) {

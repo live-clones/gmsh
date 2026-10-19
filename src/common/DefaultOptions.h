@@ -825,6 +825,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Maximum number of threads used by Gmsh when compiled with OpenMP support "
     "(0: use system default, i.e. OMP_NUM_THREADS)"},
 
+  { F|S, "OptionsHeight" , opt_general_option_height , 650. ,
+    "Height (in pixels) of the option window" },
   { F|S, "OptionsOffsetX" , opt_general_option_offset0 , 600. ,
     "Horizontal offset (in pixels) of the upper left corner of the option "
     "window, relative to the upper left corner of the graphic window" },

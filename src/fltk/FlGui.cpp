@@ -1432,6 +1432,7 @@ void FlGui::storeCurrentWindowsInfo()
   else
     CTX::instance()->detachedMenu = 0;
   storeWindowOffset(options->win, CTX::instance()->optOffset);
+  CTX::instance()->optHeight = options->win->h();
   storeWindowOffset(plugins->win, CTX::instance()->pluginOffset);
   CTX::instance()->pluginSize[0] = plugins->win->w();
   CTX::instance()->pluginSize[1] = plugins->win->h();

@@ -192,6 +192,7 @@ double opt_general_menu_offset0(OPT_ARGS_NUM);
 double opt_general_menu_offset1(OPT_ARGS_NUM);
 double opt_general_option_offset0(OPT_ARGS_NUM);
 double opt_general_option_offset1(OPT_ARGS_NUM);
+double opt_general_option_height(OPT_ARGS_NUM);
 double opt_general_plugin_offset0(OPT_ARGS_NUM);
 double opt_general_plugin_offset1(OPT_ARGS_NUM);
 double opt_general_plugin_size0(OPT_ARGS_NUM);

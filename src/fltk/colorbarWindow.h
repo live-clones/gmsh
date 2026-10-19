@@ -7,10 +7,10 @@
 #define COLORBAR_WINDOWH
 
 #include <FL/Fl.H>
-#include <FL/Fl_Window.H>
+#include <FL/Fl_Widget.H>
 #include "ColorTable.h"
 
-class colorbarWindow : public Fl_Window {
+class colorbarWindow : public Fl_Widget {
 private:
   int font_height, marker_height, wedge_height;
   const char *label;
@@ -23,13 +23,13 @@ private:
   GmshColorTable *ct; // pointer to the color table (allocated in the view)
   bool *viewchanged; // pointer to changed bit in view
   Fl_Color color_bg;
-  // convert window X coordinate to color table index
+  // convert widget X coordinate to color table index
   int x_to_index(int x);
-  // convert color table index to window X coordinate
+  // convert color table index to widget X coordinate
   int index_to_x(int index);
-  // convert a window Y coordinate to a color intensity
+  // convert a widget Y coordinate to a color intensity
   int y_to_intensity(int y);
-  // convert a color intensity to a window Y coordinate
+  // convert a color intensity to a widget Y coordinate
   int intensity_to_y(int intensity);
   // redraw part of the colorbarWindow (between a and b)
   void redraw_range(int a, int b);
@@ -40,6 +40,8 @@ public:
   colorbarWindow(int x, int y, int w, int h, const char *l = nullptr);
   void draw();
   int handle(int);
+  // the least height that shows the help above the color wedge
+  int helpHeight() const;
   void update(const char *name, double min, double max, GmshColorTable *ct,
               bool *changed);
 };
