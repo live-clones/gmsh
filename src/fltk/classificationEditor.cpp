@@ -306,6 +306,8 @@ static void classify_cb(Fl_Widget *w, void *data)
     GModel::current()->createGeometryOfDiscreteEntities();
 
   NoElementsSelectedMode(e);
+  // the entities changed: the visibility list held the old ones
+  FlGui::instance()->resetVisibility();
 }
 
 classificationEditor::classificationEditor(int deltaFontSize)
@@ -416,8 +418,9 @@ classificationEditor::classificationEditor(int deltaFontSize)
       FL_TOGGLE_BUTTON);
 
     y += BH;
-    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button(
-      (int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
+    // on the right, as the action buttons of the other tools
+    buttons[CLASS_BUTTON_CLASSIFY] =
+      new Fl_Return_Button(width - 2 * WB - BBB, y, BBB, BH, "Reclassify");
     buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
     buttons[CLASS_BUTTON_CLASSIFY]->activate();
 
