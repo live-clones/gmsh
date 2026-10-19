@@ -483,9 +483,8 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   push[1]->callback(highordertools_runopti_cb);
 
   win->end();
-  // as narrow as the option window, wider as the window is widened
-  ((paletteWindow *)win)->followWidth(width / 2, width - 2 * WB);
-  ((paletteWindow *)win)->sizeRange(width, height, 0, height);
+  // of fixed height, as narrow as the option window, wider as one likes
+  ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
   FL_NORMAL_SIZE += deltaFontSize;
 }
 

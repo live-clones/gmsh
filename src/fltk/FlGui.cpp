@@ -661,15 +661,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
 
-  // the tool windows, docked in the main window while it has a dock
-  std::vector<Fl_Window *> tools = {
-    options->win,         plugins->win,          fields->win,
-    visibility->win,      clipping->win,         manip->win,
-    stats->win,           highordertools->win,   elementaryContext->win,
-    physicalContext->win, transformContext->win, meshContext->win,
-    onelabContext->win,   classify->window};
-  if(partition->win) tools.push_back(partition->win);
-  for(auto w : tools) ((paletteWindow *)w)->dockable(true);
+  for(auto w : toolWindows()) ((paletteWindow *)w)->dockable(true);
   // what docked tools skip while hidden, refreshed when shown again
   ((paletteWindow *)visibility->win)
     ->whenRevealed(
@@ -1440,6 +1432,18 @@ void FlGui::setProgress(const std::string &msg, double val, double min,
   setStatus(msg);
 }
 
+std::vector<Fl_Window *> FlGui::toolWindows()
+{
+  std::vector<Fl_Window *> tools = {
+    options->win,         plugins->win,          fields->win,
+    visibility->win,      clipping->win,         manip->win,
+    stats->win,           highordertools->win,   elementaryContext->win,
+    physicalContext->win, transformContext->win, meshContext->win,
+    onelabContext->win,   classify->window};
+  if(partition->win) tools.push_back(partition->win);
+  return tools;
+}
+
 void FlGui::storeCurrentWindowsInfo()
 {
   CTX::instance()->glPosition[0] = graph[0]->getWindow()->x();
@@ -1498,16 +1502,12 @@ void window_cb(Fl_Widget *w, void *data)
   if(str == "minimize") {
     // the docked tool windows go with the main window
     auto iconize = [](Fl_Window *w) {
-      if(w && w->shown() && !w->parent()) w->iconize();
+      if(w->shown() && !w->parent()) w->iconize();
     };
     FlGui *g = FlGui::instance();
     for(std::size_t i = 0; i < g->graph.size(); i++)
       iconize(g->graph[i]->getWindow());
-    for(Fl_Window *w :
-        {g->options->win, g->plugins->win, g->fields->win, g->visibility->win,
-         g->highordertools->win, g->clipping->win, g->partition->win,
-         g->classify->window, g->manip->win, g->stats->win})
-      iconize(w);
+    for(Fl_Window *w : g->toolWindows()) iconize(w);
   }
   else if(str == "zoom") {
     if(!zoom) {
@@ -1569,13 +1569,8 @@ void window_cb(Fl_Widget *w, void *data)
     FlGui *g = FlGui::instance();
     for(std::size_t i = 0; i < g->graph.size(); i++)
       g->graph[i]->getWindow()->show();
-    for(Fl_Window *w : std::initializer_list<Fl_Window *>{
-          g->options->win, g->plugins->win, g->fields->win,
-          g->elementaryContext->win, g->transformContext->win,
-          g->physicalContext->win, g->onelabContext->win, g->meshContext->win,
-          g->visibility->win, g->highordertools->win, g->clipping->win,
-          g->partition->win, g->classify->window, g->manip->win, g->stats->win})
-      if(w && w->shown() && !w->parent()) w->show();
+    for(Fl_Window *w : g->toolWindows())
+      if(w->shown() && !w->parent()) w->show();
   }
 }
 

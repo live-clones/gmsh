@@ -6,6 +6,7 @@
 #ifndef TARGET_LIST_H
 #define TARGET_LIST_H
 
+#include <string>
 #include <vector>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Multi_Browser.H>
@@ -30,6 +31,13 @@ public:
   // as tall as n entries, from 2 to 6 lines, with the line of buttons
   int heightFor(int n) const;
   void resize(int x, int y, int w, int h);
+  // the name of view i in a list: "[i] name"
+  static std::string viewName(int i);
+  // chooses the lines for which = "All", "Visible" or anything else (none);
+  // the views start at line first (the lines before are visible), and the
+  // line of view keep, if any, is always chosen
+  void selectViews(const std::string &which, int first = 0, int keep = -1);
+  int selectedCount() const;
 };
 
 #endif

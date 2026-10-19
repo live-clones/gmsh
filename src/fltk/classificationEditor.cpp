@@ -425,9 +425,8 @@ classificationEditor::classificationEditor(int deltaFontSize)
   }
 
   window->end();
-  // as narrow as the option window, wider as the window is widened
-  ((paletteWindow *)window)->followWidth(width / 2, width - 2 * WB);
-  ((paletteWindow *)window)->sizeRange(width, height, 0, height);
+  // of fixed height, as narrow as the option window, wider as one likes
+  ((paletteWindow *)window)->fixedLayout(width, height, 2 * WB);
 
   NoElementsSelectedMode(this, false);
   FL_NORMAL_SIZE += deltaFontSize;

@@ -7,6 +7,9 @@
 #include <FL/fl_draw.H>
 #include "FlGui.h"
 #include "targetList.h"
+#include "PView.h"
+#include "PViewData.h"
+#include "PViewOptions.h"
 
 targetList::targetList(int x, int y, int w, int rowHeight,
                        const std::vector<const char *> &buttons,
@@ -32,6 +35,31 @@ int targetList::heightFor(int n) const
   fl_font(browser->textfont(), browser->textsize());
   int lines = std::max(2, std::min(6, n));
   return lines * (fl_height() + 2) + 4 + WB + _rowHeight;
+}
+
+std::string targetList::viewName(int i)
+{
+  return "[" + std::to_string(i) + "] " + PView::list[i]->getData()->getName();
+}
+
+void targetList::selectViews(const std::string &which, int first, int keep)
+{
+  for(int i = 0; i < browser->size(); i++) {
+    int v = i - first;
+    bool visible = v < 0 || (v < (int)PView::list.size() &&
+                             PView::list[v]->getOptions()->visible);
+    bool on = (which == "All") || (which == "Visible" && visible) ||
+              (keep >= 0 && v == keep);
+    browser->select(i + 1, on ? 1 : 0);
+  }
+}
+
+int targetList::selectedCount() const
+{
+  int n = 0;
+  for(int i = 1; i <= browser->size(); i++)
+    if(browser->selected(i)) n++;
+  return n;
 }
 
 void targetList::resize(int x, int y, int w, int h)

@@ -23,6 +23,7 @@
 // fields with a scrollbar beside them
 #define TW (30 * FL_NORMAL_SIZE + 2 * WB + Fl::scrollbar_size())
 
+class Fl_Window;
 class graphicWindow;
 class openglWindow;
 class optionWindow;
@@ -82,6 +83,8 @@ public:
   clippingWindow *clipping;
   partitionWindow *partition;
   classificationEditor *classify;
+  // the tool windows, docked while the main window has a dock
+  std::vector<Fl_Window *> toolWindows();
   manipWindow *manip;
   elementaryContextWindow *elementaryContext;
   transformContextWindow *transformContext;

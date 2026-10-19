@@ -105,6 +105,13 @@ public:
     _maxH = maxh;
     size_range(minw, minh, maxw, maxh);
   }
+  // a window of fixed height built w x h, whose widgets follow a wider width
+  // up to the right margin, margin pixels before the edge
+  void fixedLayout(int w, int h, int margin)
+  {
+    followWidth(w / 2, w - margin);
+    sizeRange(w, h, 0, h);
+  }
   int leastWidth() const { return _minW; }
   int leastHeight() const { return _minH; }
   bool fixedHeight() const { return _maxH && _maxH == _minH; }

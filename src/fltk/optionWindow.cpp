@@ -11,7 +11,6 @@ typedef unsigned long intptr_t;
 #endif
 #include <string.h>
 #include <algorithm>
-#include <cctype>
 #include <FL/Fl.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Color_Chooser.H>
@@ -43,9 +42,6 @@ typedef unsigned long intptr_t;
 #if defined(HAVE_TOUCHBAR)
 #include "touchBar.h"
 #endif
-
-// lower case, safe for any byte of a UTF-8 string
-static char lower(char c) { return (char)std::tolower((unsigned char)c); }
 
 extern StringXColor GeneralOptions_Color[];
 extern StringXColor GeometryOptions_Color[];
@@ -1506,19 +1502,9 @@ optionWindow::optionWindow(int deltaFontSize)
   win->label("Options");
 
   // the search goes through all the categories, hence above them
-  {
-    Fl_Group *o = new Fl_Group(WB, WB, winWidth - 2 * WB, BH);
-    o->tooltip("Show only the options whose label, name or choices match");
-    o->box(FL_DOWN_BOX);
-    o->color(FL_BACKGROUND2_COLOR);
-    search = new hintInput(WB + BH, WB + 2, winWidth - 2 * WB - BH - 2, BH - 4,
-                           "@gmsh_search", "Search all options");
-    search->box(FL_FLAT_BOX);
-    search->callback(options_search_cb);
-    search->when(FL_WHEN_CHANGED);
-    o->resizable(search);
-    o->end();
-  }
+  search = searchBox(WB, WB, winWidth - 2 * WB, BH, "Search all options",
+                     "Show only the options whose label, name or choices match",
+                     options_search_cb);
 
   {
     static const char *names[6] = {"General", "Geometry", "Mesh",
@@ -4239,9 +4225,7 @@ static bool matches(Fl_Widget *w, const std::string &s)
   if(!w->visible()) return false;
   auto has = [&s](const char *text) {
     if(!text) return false;
-    std::string t(text);
-    std::transform(t.begin(), t.end(), t.begin(), lower);
-    return t.find(s) != std::string::npos;
+    return LowerCase(text).find(s) != std::string::npos;
   };
   // the tooltip holds the name of the option
   if(has(w->label()) || has(w->tooltip())) return true;
@@ -4263,8 +4247,7 @@ void optionWindow::layout(bool keepPosition)
   static const char *names[6] = {"General", "Geometry", "Mesh",
                                  "Solver",  "Post-pro", "View"};
   int bh = _rowHeight, ww = win->w(), wh = win->h();
-  std::string s(search->value());
-  std::transform(s.begin(), s.end(), s.begin(), lower);
+  std::string s = LowerCase(search->value());
 
   // widgets hidden by the previous search are shown again
   for(Fl_Widget *w : _hiddenBySearch) w->show();
@@ -4284,9 +4267,7 @@ void optionWindow::layout(bool keepPosition)
     shown[c].resize(_sections[c].size());
     for(std::size_t i = 0; i < _sections[c].size(); i++) {
       section &sec = _sections[c][i];
-      std::string name(sec.name);
-      std::transform(name.begin(), name.end(), name.begin(), lower);
-      bool all = s.empty() || name.find(s) != std::string::npos;
+      bool all = s.empty() || LowerCase(sec.name).find(s) != std::string::npos;
       for(block &b : sec.blocks) {
         bool show = active && all;
         if(active && !all)
@@ -4437,9 +4418,8 @@ void optionWindow::updateViewTargets()
   int n = 0;
   for(int i = 0; i < (int)PView::list.size(); i++) {
     if(i == view.index || viewList->browser->selected(i + 1)) n++;
-    std::string str = std::string(i == view.index ? "@b@.[" : "@.[") +
-                      std::to_string(i) + "] " +
-                      PView::list[i]->getData()->getName();
+    std::string str =
+      (i == view.index ? "@b@." : "@.") + targetList::viewName(i);
     if(str != viewList->browser->text(i + 1))
       viewList->browser->text(i + 1, str.c_str());
   }
@@ -4451,12 +4431,7 @@ void optionWindow::updateViewTargets()
 
 void optionWindow::selectViews(const std::string &which)
 {
-  for(int i = 0; i < (int)PView::list.size(); i++) {
-    bool on = (which == "All") ||
-              (which == "Visible" && PView::list[i]->getOptions()->visible) ||
-              i == view.index;
-    viewList->browser->select(i + 1, on ? 1 : 0);
-  }
+  viewList->selectViews(which, 0, view.index);
   updateViewTargets();
 }
 

@@ -1035,9 +1035,8 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
   tab2->hide();
 
   win->end();
-  // as narrow as the option window, wider as the window is widened
-  ((paletteWindow *)win)->followWidth(width / 2, width - 2 * WB);
-  ((paletteWindow *)win)->sizeRange(width, height, 0, height);
+  // of fixed height, as narrow as the option window, wider as one likes
+  ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -1227,9 +1226,8 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
   }
 
   win->end();
-  // as narrow as the option window, wider as the window is widened
-  ((paletteWindow *)win)->followWidth(width / 2, width - 2 * WB);
-  ((paletteWindow *)win)->sizeRange(width, height, 0, height);
+  // of fixed height, as narrow as the option window, wider as one likes
+  ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -1519,9 +1517,8 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
   choice->callback(selection_mode_cb);
 
   win->end();
-  // as narrow as the option window, wider as the window is widened
-  ((paletteWindow *)win)->followWidth(width / 2, width - 2 * WB);
-  ((paletteWindow *)win)->sizeRange(width, height, 0, height);
+  // of fixed height, as narrow as the option window, wider as one likes
+  ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -1633,9 +1630,8 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
   }
 
   win->end();
-  // as narrow as the option window, wider as the window is widened
-  ((paletteWindow *)win)->followWidth(width / 2, width - 2 * WB);
-  ((paletteWindow *)win)->sizeRange(width, height, 0, height);
+  // of fixed height, as narrow as the option window, wider as one likes
+  ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }

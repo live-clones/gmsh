@@ -14,7 +14,6 @@
 #include "GmshDefines.h"
 #include "PView.h"
 #include "PViewOptions.h"
-#include "PViewData.h"
 #include "GModel.h"
 #include "Context.h"
 
@@ -187,15 +186,8 @@ static void clip_update(bool adjusting)
 
 static void clip_targets_cb(Fl_Widget *w, void *data)
 {
-  // the geometry and the mesh are always visible
-  std::string which((const char *)data);
-  Fl_Multi_Browser *b = FlGui::instance()->clipping->browser;
-  for(int i = 0; i < b->size(); i++) {
-    bool on = (which == "All") ||
-              (which == "Visible" &&
-               (i < 2 || PView::list[i - 2]->getOptions()->visible));
-    b->select(i + 1, on ? 1 : 0);
-  }
+  // the views follow the geometry and the mesh, always visible
+  FlGui::instance()->clipping->targets->selectViews((const char *)data, 2);
   clip_update(false);
 }
 
@@ -399,9 +391,7 @@ void clippingWindow::_placeTargets()
 
 void clippingWindow::updateCount()
 {
-  int n = 0;
-  for(int i = 0; i < browser->size(); i++)
-    if(browser->selected(i + 1)) n++;
+  int n = targets->selectedCount();
   std::string str = group[0]->visible() ?
                       "Plane " + std::to_string(choice->value()) + " clips " :
                       "The box clips ";
@@ -414,11 +404,8 @@ void clippingWindow::resetBrowser()
   browser->clear();
   browser->add("Geometry");
   browser->add("Mesh");
-  for(std::size_t i = 0; i < PView::list.size(); i++) {
-    std::string str =
-      "[" + std::to_string(i) + "] " + PView::list[i]->getData()->getName();
-    browser->add(str.c_str());
-  }
+  for(std::size_t i = 0; i < PView::list.size(); i++)
+    browser->add(targetList::viewName(i).c_str());
   _placeTargets();
 
   int idx = choice->value();

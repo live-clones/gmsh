@@ -10,7 +10,6 @@
 typedef unsigned long intptr_t;
 #endif
 #include <algorithm>
-#include <cctype>
 #include <vector>
 #include <string.h>
 #include <FL/Fl_Return_Button.H>
@@ -36,9 +35,6 @@ typedef unsigned long intptr_t;
 #include "scriptStringInterface.h"
 #include "StringUtils.h"
 #include "OS.h"
-
-// lower case, safe for any byte of a UTF-8 string
-static char lower(char c) { return (char)std::tolower((unsigned char)c); }
 
 #define MAX_PLUGIN_OPTIONS 50
 class PluginDialogBox {
@@ -239,18 +235,22 @@ static void plugin_help_cb(Fl_Widget *w, void *data)
 
 static void plugin_views_cb(Fl_Widget *w, void *data)
 {
-  std::string which((const char *)data);
-  Fl_Multi_Browser *b = FlGui::instance()->plugins->views->browser;
-  for(int i = 0; i < b->size() && i < (int)PView::list.size(); i++) {
-    bool on = (which == "All") ||
-              (which == "Visible" && PView::list[i]->getOptions()->visible);
-    b->select(i + 1, on ? 1 : 0);
-  }
+  FlGui::instance()->plugins->views->selectViews((const char *)data);
   plugin_browser_cb(nullptr, nullptr);
 }
 
 static void plugin_resized_cb(void *data)
 { FlGui::instance()->plugins->layout(); }
+
+// the height of the label of a box wrapped on lines w wide, as FLTK draws a
+// label inside its box, plus a border below
+static int wrappedHeight(Fl_Box *b, int w)
+{
+  fl_font(b->labelfont(), b->labelsize());
+  int tw = w - 6, th = 0;
+  fl_measure(b->label(), tw, th, 0);
+  return th + WB;
+}
 
 void pluginWindow::_createDialogBox(GMSH_Plugin *p)
 {
@@ -291,11 +291,9 @@ int pluginWindow::_placeDialogBox(GMSH_Plugin *p, int x, int y, int w)
   d->title->resize(x, yy, w, bh);
   yy += bh;
   // the short help on as many lines as it takes
-  fl_font(d->about->labelfont(), d->about->labelsize());
-  int tw = w - 6, th = 0; // as FLTK draws a label inside its box
-  fl_measure(d->about->label(), tw, th, 0);
-  d->about->resize(x, yy, w, th + WB);
-  yy += th + 2 * WB;
+  int ah = wrappedHeight(d->about, w);
+  d->about->resize(x, yy, w, ah);
+  yy += ah + WB;
   int m = std::min(p->getNbOptionsStr(), MAX_PLUGIN_OPTIONS);
   int n = std::min(p->getNbOptions(), MAX_PLUGIN_OPTIONS);
   for(int i = 0; i < m; i++, yy += bh)
@@ -344,20 +342,9 @@ pluginWindow::pluginWindow(int deltaFontSize)
                           "Plugins", CTX::instance()->pluginOffset);
   win->box(GMSH_WINDOW_BOX);
 
-  {
-    Fl_Group *o = new Fl_Group(WB, WB, width - 2 * WB, BH);
-    o->tooltip("Show only the plugins whose name or description match");
-    o->box(FL_DOWN_BOX);
-    o->color(FL_BACKGROUND2_COLOR);
-    search = new hintInput(WB + BH, WB + 2, width - 2 * WB - BH - 2, BH - 4,
-                           "@gmsh_search", "Search plugins");
-    search->box(FL_FLAT_BOX);
-    search->callback(plugin_search_cb);
-    // Enter filters, and does not run the plugin
-    search->when(FL_WHEN_CHANGED | FL_WHEN_ENTER_KEY_ALWAYS);
-    o->resizable(search);
-    o->end();
-  }
+  search = searchBox(WB, WB, width - 2 * WB, BH, "Search plugins",
+                     "Show only the plugins whose name or description match",
+                     plugin_search_cb);
 
   // the name of each plugin, then what it does
   browser = new Fl_Hold_Browser(WB, 2 * WB + BH, width - 2 * WB, 7 * BH);
@@ -430,12 +417,10 @@ GMSH_Plugin *pluginWindow::selected() const
 
 void pluginWindow::filter()
 {
-  std::string s(search->value());
-  std::transform(s.begin(), s.end(), s.begin(), lower);
+  std::string s = LowerCase(search->value());
   for(int i = 1; i <= browser->size(); i++) {
     GMSH_Plugin *p = (GMSH_Plugin *)browser->data(i);
-    std::string t = p->getName() + " " + p->getShortHelp();
-    std::transform(t.begin(), t.end(), t.begin(), lower);
+    std::string t = LowerCase(p->getName() + " " + p->getShortHelp());
     if(s.empty() || t.find(s) != std::string::npos)
       browser->show(i);
     else
@@ -469,9 +454,7 @@ void pluginWindow::toggleHelp()
 
 void pluginWindow::updateCount()
 {
-  int n = 0;
-  for(int i = 1; i <= views->browser->size(); i++)
-    if(views->browser->selected(i)) n++;
+  int n = views->selectedCount();
   std::string str =
     n ? "Runs on " + std::to_string(n) + (n > 1 ? " views" : " view") :
         "Runs without a view";
@@ -534,10 +517,7 @@ void pluginWindow::layout()
   else
     helpHeader->hide();
   if(p && _helpOpen) {
-    fl_font(help->labelfont(), help->labelsize());
-    int tw = w - 6, th = 0; // as FLTK draws a label inside its box
-    fl_measure(help->label(), tw, th, 0);
-    help->resize(WB, y + bh, w, th + WB);
+    help->resize(WB, y + bh, w, wrappedHeight(help, w));
     help->show();
   }
   else {
@@ -572,9 +552,7 @@ void pluginWindow::resetViewBrowser()
   for(int i = 0; i < b->size(); i++) state.push_back(b->selected(i + 1));
   b->clear();
   for(std::size_t i = 0; i < PView::list.size(); i++) {
-    std::string str =
-      "[" + std::to_string(i) + "] " + PView::list[i]->getData()->getName();
-    b->add(str.c_str());
+    b->add(targetList::viewName(i).c_str());
     if(i < state.size() && state[i]) b->select(i + 1);
   }
   plugin_browser_cb(nullptr, nullptr);
