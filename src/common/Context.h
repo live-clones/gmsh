@@ -273,6 +273,8 @@ public:
   int inputScrolling;
   // position and size of various windows in the GUI
   int glPosition[2], glSize[2], msgSize, menuSize[2], detachedMenu;
+  // the tool windows in a dock of the main window, and its width
+  int dockTools, dockWidth;
   // positions of the other windows, relative to the graphic window
   int menuOffset[2], optOffset[2], visOffset[2], hotOffset[2], clipOffset[2],
     manipOffset[2], statOffset[2], ctxOffset[2], partOffset[2],

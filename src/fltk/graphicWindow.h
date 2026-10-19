@@ -24,6 +24,10 @@ class openglWindow;
 class onelabGroup;
 class messageBrowser;
 
+class toolDock;
+class dockDivider;
+class paletteWindow;
+
 class graphicWindow {
 private:
   bool _autoScrollMessages;
@@ -40,6 +44,15 @@ private:
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   std::vector<std::string> _messages;
+  // the column of docked tool windows on the right of the tiles, the edge
+  // dragged to change its width, and the box that says what resizes
+  toolDock *_dock;
+  dockDivider *_divider;
+  Fl_Box *_resbox;
+  bool _docking;
+  void _layoutDock(int width);
+  int _leastTileWidth();
+  int _fitDockWidth(int w);
 
 public:
   std::vector<openglWindow *> gl;
@@ -76,6 +89,17 @@ public:
   void attachMenu();
   void attachDetachMenu();
   bool isMenuDetached() { return _menuwin ? true : false; }
+  // tool windows shown are docked, in a column visible while one is docked
+  bool isDocking() { return _docking; }
+  void setDocking(bool docking);
+  bool isDockShown();
+  void dockTool(paletteWindow *w);
+  void toolHidden(paletteWindow *w);
+  void toolResized(paletteWindow *w);
+  // closes the tool shown in the dock, if any
+  bool closeDockedTool();
+  int getDockWidth();
+  void setDockWidth(int w);
   bool split(openglWindow *g, char how, double ratio);
   void setAnimButtons(int mode);
   void checkAnimButtons();
@@ -120,5 +144,6 @@ void quick_access_cb(Fl_Widget *w, void *data);
 void show_hide_message_cb(Fl_Widget *w, void *data);
 void show_hide_menu_cb(Fl_Widget *w, void *data);
 void attach_detach_menu_cb(Fl_Widget *w, void *data);
+void dock_tools_cb(Fl_Widget *w, void *data);
 
 #endif

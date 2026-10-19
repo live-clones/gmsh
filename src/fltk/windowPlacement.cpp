@@ -76,7 +76,8 @@ void placeWindow(Fl_Window *win, int offset[2])
 
 void storeWindowOffset(Fl_Window *win, int offset[2])
 {
-  if(!reference || !placed.count(win)) return;
+  // a docked window keeps the offset it had on the desktop
+  if(!reference || !placed.count(win) || win->parent()) return;
   offset[0] = win->x() - reference->x();
   offset[1] = win->y() - reference->y();
 }

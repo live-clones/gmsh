@@ -27,6 +27,7 @@ typedef unsigned long intptr_t;
 #include "mainWindow.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
+#include "toolDock.h"
 #include "optionWindow.h"
 #include "gamepadWindow.h"
 #include "statisticsWindow.h"
@@ -2901,7 +2902,8 @@ static Fl_Menu_Item bar_table[] = {
     {"Minimize",           FL_CTRL+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
     {"Enter Full Screen",  FL_CTRL+'f', (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
-    {"Attach/Detach Menu", FL_CTRL+'d', (Fl_Callback *)attach_detach_menu_cb, nullptr, FL_MENU_DIVIDER},
+    {"Attach/Detach Menu", FL_CTRL+'d', (Fl_Callback *)attach_detach_menu_cb, nullptr},
+    {"Dock/Undock Tool Windows", 0, (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
     {nullptr},
   {"&Help", 0, nullptr, nullptr, FL_SUBMENU},
@@ -2971,7 +2973,8 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Minimize",           FL_META+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
     {"Enter Full Screen",  FL_META+'f', (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
-    {"Attach/Detach Menu", FL_META+'d', (Fl_Callback *)attach_detach_menu_cb, nullptr, FL_MENU_DIVIDER},
+    {"Attach/Detach Menu", FL_META+'d', (Fl_Callback *)attach_detach_menu_cb, nullptr},
+    {"Dock/Undock Tool Windows", 0, (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
     {nullptr},
   {"Help", 0, nullptr, nullptr, FL_SUBMENU},
@@ -3996,6 +3999,31 @@ void show_hide_menu_cb(Fl_Widget *w, void *data)
   FlGui::check();
 }
 
+void dock_tools_cb(Fl_Widget *w, void *data)
+{
+  opt_general_dock_tools(0, GMSH_SET | GMSH_GUI,
+                         !FlGui::instance()->graph[0]->isDocking());
+  FlGui::check();
+}
+
+static void dock_divider_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = (graphicWindow *)data;
+  g->setDockWidth(g->getWindow()->w() - Fl::event_x() - WB / 2);
+}
+
+// the main window docking the tool windows, which reach it through the hooks of
+// paletteWindow
+static graphicWindow *theDocking = nullptr;
+static void dock_hook(paletteWindow *w) { theDocking->dockTool(w); }
+static bool close_tool_hook(Fl_Window *w)
+{
+  // Cmd-W in the main window closes the tool shown in the dock, if any
+  return theDocking->getWindow() == w && theDocking->closeDockedTool();
+}
+static void resized_hook(paletteWindow *w) { theDocking->toolResized(w); }
+static void hidden_hook(paletteWindow *w) { theDocking->toolHidden(w); }
+
 void attach_detach_menu_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g =
@@ -4187,6 +4215,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   // a dummy resizable box that won't eat events
   dummyBox *resbox = new dummyBox(_minWidth, mh, width - _minWidth, glheight);
   _win->resizable(resbox);
+  _resbox = resbox;
 
   // tiled windows (tree menu, opengl, messages)
   _tile = new Fl_Tile(0, mh, glwidth + twidth, glheight + mheight);
@@ -4261,6 +4290,20 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
   _tile->callback(tile_cb);
   _tile->end();
+
+  // the dock of the tool windows, shown while one is docked
+  _docking = false;
+  if(main) {
+    _divider = new dockDivider(0, mh, 0, glheight + mheight);
+    _divider->callback(dock_divider_cb, this);
+    _divider->hide();
+    _dock = new toolDock(0, mh, 0, glheight + mheight, BH);
+    _dock->hide();
+  }
+  else {
+    _divider = nullptr;
+    _dock = nullptr;
+  }
 
   // resize the tiles to match the prescribed sizes
   _tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
@@ -4399,10 +4442,17 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   else {
     _menuwin = nullptr;
   }
+
+  if(main && CTX::instance()->dockTools) setDocking(true);
 }
 
 graphicWindow::~graphicWindow()
 {
+  // the docked tool windows are not ours to delete
+  if(_dock) {
+    _dock->undockAll(false);
+    setDocking(false);
+  }
   openglWindow::setLastHandled(nullptr);
   _tile->clear();
   _win->clear();
@@ -4492,7 +4542,7 @@ void graphicWindow::showMenu()
   if(_onelab->w() < FL_NORMAL_SIZE) {
     int width = CTX::instance()->menuSize[0];
     if(width < FL_NORMAL_SIZE) width = _onelab->getMinWindowWidth();
-    int maxw = _win->w();
+    int maxw = _tile->w(); // without the dock
     if(width > maxw) width = maxw / 2;
     setMenuWidth(width);
     // necessary until resizing of 0-sized groups works
@@ -4659,12 +4709,124 @@ int graphicWindow::getGlHeight()
   return h;
 }
 
+// the width of the window, the dock taking its room from the graphics, as the
+// tree does, so that the size saved at exit does not depend on the tools open
 int graphicWindow::getGlWidth() { return _win->w(); }
 
 void graphicWindow::setGlWidth(int w)
 {
   if(w == _win->w()) return;
   _win->size(std::max(w, _minWidth), _win->h());
+  _win->redraw();
+}
+
+bool graphicWindow::isDockShown() { return _dock && _dock->visible(); }
+
+// the least width of the tool windows, in the frame of the dock tabs
+static int leastDockWidth() { return TW + Fl::box_dw(FL_THIN_UP_BOX); }
+
+int graphicWindow::getDockWidth()
+{ return std::max(CTX::instance()->dockWidth, leastDockWidth()); }
+
+int graphicWindow::_leastTileWidth()
+{
+  // the tree, and some room for the graphics
+  int tw = (_onelab && !_menuwin) ? _onelab->w() : 0;
+  return std::max(_minWidth, tw + BB);
+}
+
+int graphicWindow::_fitDockWidth(int w)
+{
+  w = std::min(w, _win->w() - WB - _leastTileWidth());
+  return std::max(w, leastDockWidth());
+}
+
+void graphicWindow::setDockWidth(int w)
+{
+  if(!isDockShown()) return;
+  w = _fitDockWidth(w);
+  CTX::instance()->dockWidth = w;
+  _layoutDock(w);
+}
+
+void graphicWindow::setDocking(bool docking)
+{
+  if(!_dock || docking == _docking) return;
+  _docking = docking;
+  if(docking) {
+    theDocking = this;
+    paletteWindow::dockHook = dock_hook;
+    mainWindow::closeToolHook = close_tool_hook;
+    paletteWindow::resizedHook = resized_hook;
+    paletteWindow::hiddenHook = hidden_hook;
+    // the tool windows open on the desktop join the dock
+    std::vector<paletteWindow *> open;
+    for(Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) {
+      paletteWindow *p = dynamic_cast<paletteWindow *>(w);
+      if(p && p->dockable() && !p->parent()) open.push_back(p);
+    }
+    for(auto p : open) p->show();
+  }
+  else {
+    paletteWindow::dockHook = nullptr;
+    _dock->undockAll();
+    paletteWindow::hiddenHook = nullptr;
+    theDocking = nullptr;
+    mainWindow::closeToolHook = nullptr;
+    paletteWindow::resizedHook = nullptr;
+    _layoutDock(0);
+  }
+}
+
+void graphicWindow::toolResized(paletteWindow *w) { _dock->resized(w); }
+
+bool graphicWindow::closeDockedTool()
+{ return isDockShown() && _dock->closeCurrent(); }
+
+void graphicWindow::dockTool(paletteWindow *w)
+{
+  if(!isDockShown()) {
+    // the window widened if the graphics would get narrower than their least,
+    // within the screen
+    int need = _leastTileWidth() + getDockWidth() + WB;
+    if(_win->w() < need) {
+      int sx, sy, sw, sh;
+      windowWorkArea(_win, sx, sy, sw, sh);
+      _win->size(std::min(need, sw), _win->h());
+    }
+    _layoutDock(_fitDockWidth(getDockWidth()));
+  }
+  _dock->dock(w);
+}
+
+void graphicWindow::toolHidden(paletteWindow *w)
+{
+  _dock->hidden(w);
+  if(_dock->empty()) _layoutDock(0);
+}
+
+void graphicWindow::_layoutDock(int width)
+{
+  // the tiles take what the dock leaves
+  int ww = _win->w(), y = _tile->y(), h = _tile->h();
+  int dw = width ? width + WB : 0;
+  _tile->resize(0, y, ww - dw, h);
+  if(width) {
+    _divider->resize(ww - dw, y, WB, h);
+    _divider->show();
+    _dock->resize(ww - width, y, width, h);
+    _dock->show();
+  }
+  else {
+    _divider->hide();
+    _dock->hide();
+  }
+  // the dock keeps its width when the window is resized, and the window keeps
+  // room for it
+  _win->size_range((width ? _leastTileWidth() : _minWidth) + dw, _minHeight);
+  _resbox->resize(_minWidth, _resbox->y(), std::max(1, ww - dw - _minWidth),
+                  _resbox->h());
+  _win->init_sizes();
   _win->redraw();
 }
 

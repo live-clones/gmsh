@@ -23,6 +23,7 @@
 #include "highOrderToolsWindow.h"
 #include "clippingWindow.h"
 #include "partitionDialog.h"
+#include "paletteWindow.h"
 #include "classificationEditor.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
@@ -659,6 +660,25 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   for(std::size_t i = 0; i < graph.size(); i++)
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
+
+  // the tool windows, docked in the main window while it has a dock
+  std::vector<Fl_Window *> tools = {
+    options->win,         plugins->win,          fields->win,
+    visibility->win,      clipping->win,         manip->win,
+    stats->win,           highordertools->win,   elementaryContext->win,
+    physicalContext->win, transformContext->win, meshContext->win,
+    onelabContext->win,   classify->window};
+  if(partition->win) tools.push_back(partition->win);
+  for(auto w : tools) ((paletteWindow *)w)->dockable(true);
+  // what docked tools skip while hidden, refreshed when shown again
+  ((paletteWindow *)visibility->win)
+    ->whenRevealed(
+      [](void *) { visibility_cb(nullptr, (void *)"redraw_only"); }, nullptr);
+  ((paletteWindow *)stats->win)
+    ->whenRevealed([](void *) { FlGui::instance()->stats->compute(false); },
+                   nullptr);
+  ((paletteWindow *)manip->win)
+    ->whenRevealed([](void *) { FlGui::instance()->manip->update(); }, nullptr);
 
   if(CTX::instance()->showOptionsOnStartup) options->win->show();
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
@@ -1438,13 +1458,13 @@ void FlGui::storeCurrentWindowsInfo()
   else
     CTX::instance()->detachedMenu = 0;
   storeWindowOffset(options->win, CTX::instance()->optOffset);
-  CTX::instance()->optHeight = options->win->h();
+  CTX::instance()->optHeight = ((paletteWindow *)options->win)->desktopH();
   storeWindowOffset(plugins->win, CTX::instance()->pluginOffset);
-  CTX::instance()->pluginSize[0] = plugins->win->w();
-  CTX::instance()->pluginSize[1] = plugins->win->h();
+  CTX::instance()->pluginSize[0] = ((paletteWindow *)plugins->win)->desktopW();
+  CTX::instance()->pluginSize[1] = ((paletteWindow *)plugins->win)->desktopH();
   storeWindowOffset(fields->win, CTX::instance()->fieldOffset);
-  CTX::instance()->fieldSize[0] = fields->win->w();
-  CTX::instance()->fieldSize[1] = fields->win->h();
+  CTX::instance()->fieldSize[0] = ((paletteWindow *)fields->win)->desktopW();
+  CTX::instance()->fieldSize[1] = ((paletteWindow *)fields->win)->desktopH();
   storeWindowOffset(stats->win, CTX::instance()->statOffset);
   storeWindowOffset(visibility->win, CTX::instance()->visOffset);
   storeWindowOffset(highordertools->win, CTX::instance()->hotOffset);
@@ -1476,25 +1496,18 @@ void window_cb(Fl_Widget *w, void *data)
   std::string str((const char *)data);
 
   if(str == "minimize") {
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      if(FlGui::instance()->graph[i]->getWindow()->shown())
-        FlGui::instance()->graph[i]->getWindow()->iconize();
-    if(FlGui::instance()->options->win->shown())
-      FlGui::instance()->options->win->iconize();
-    if(FlGui::instance()->plugins->win->shown())
-      FlGui::instance()->plugins->win->iconize();
-    if(FlGui::instance()->fields->win->shown())
-      FlGui::instance()->fields->win->iconize();
-    if(FlGui::instance()->visibility->win->shown())
-      FlGui::instance()->visibility->win->iconize();
-    if(FlGui::instance()->highordertools->win->shown())
-      FlGui::instance()->highordertools->win->iconize();
-    if(FlGui::instance()->clipping->win->shown())
-      FlGui::instance()->clipping->win->iconize();
-    if(FlGui::instance()->manip->win->shown())
-      FlGui::instance()->manip->win->iconize();
-    if(FlGui::instance()->stats->win->shown())
-      FlGui::instance()->stats->win->iconize();
+    // the docked tool windows go with the main window
+    auto iconize = [](Fl_Window *w) {
+      if(w && w->shown() && !w->parent()) w->iconize();
+    };
+    FlGui *g = FlGui::instance();
+    for(std::size_t i = 0; i < g->graph.size(); i++)
+      iconize(g->graph[i]->getWindow());
+    for(Fl_Window *w :
+        {g->options->win, g->plugins->win, g->fields->win, g->visibility->win,
+         g->highordertools->win, g->clipping->win, g->partition->win,
+         g->classify->window, g->manip->win, g->stats->win})
+      iconize(w);
   }
   else if(str == "zoom") {
     if(!zoom) {
@@ -1552,40 +1565,17 @@ void window_cb(Fl_Widget *w, void *data)
     }
   }
   else if(str == "front") {
-    // the order is important!
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->getWindow()->show();
-    if(FlGui::instance()->options->win->shown())
-      FlGui::instance()->options->win->show();
-    if(FlGui::instance()->plugins->win->shown())
-      FlGui::instance()->plugins->win->show();
-    if(FlGui::instance()->fields->win->shown())
-      FlGui::instance()->fields->win->show();
-    if(FlGui::instance()->elementaryContext->win->shown())
-      FlGui::instance()->elementaryContext->win->show();
-    if(FlGui::instance()->transformContext->win->shown())
-      FlGui::instance()->transformContext->win->show();
-    if(FlGui::instance()->physicalContext->win->shown())
-      FlGui::instance()->physicalContext->win->show();
-    if(FlGui::instance()->onelabContext->win->shown())
-      FlGui::instance()->onelabContext->win->show();
-    if(FlGui::instance()->meshContext->win->shown())
-      FlGui::instance()->meshContext->win->show();
-    if(FlGui::instance()->visibility->win->shown())
-      FlGui::instance()->visibility->win->show();
-    if(FlGui::instance()->highordertools->win->shown())
-      FlGui::instance()->highordertools->win->show();
-    if(FlGui::instance()->clipping->win->shown())
-      FlGui::instance()->clipping->win->show();
-    if(FlGui::instance()->partition->win &&
-       FlGui::instance()->partition->win->shown())
-      FlGui::instance()->partition->win->show();
-    if(FlGui::instance()->classify->window->shown())
-      FlGui::instance()->classify->window->show();
-    if(FlGui::instance()->manip->win->shown())
-      FlGui::instance()->manip->win->show();
-    if(FlGui::instance()->stats->win->shown())
-      FlGui::instance()->stats->win->show();
+    // the order is important; the docked tool windows come with the main one
+    FlGui *g = FlGui::instance();
+    for(std::size_t i = 0; i < g->graph.size(); i++)
+      g->graph[i]->getWindow()->show();
+    for(Fl_Window *w : std::initializer_list<Fl_Window *>{
+          g->options->win, g->plugins->win, g->fields->win,
+          g->elementaryContext->win, g->transformContext->win,
+          g->physicalContext->win, g->onelabContext->win, g->meshContext->win,
+          g->visibility->win, g->highordertools->win, g->clipping->win,
+          g->partition->win, g->classify->window, g->manip->win, g->stats->win})
+      if(w && w->shown() && !w->parent()) w->show();
   }
 }
 

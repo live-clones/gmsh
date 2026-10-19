@@ -594,6 +594,12 @@ StringXNumber GeneralOptions_Number[] = {
     "On Windows, should processes created by Gmsh be detached?" },
   { F|O, "DisplayBorderFactor" , opt_general_display_border_factor , 0.2 ,
     "Border factor for model display (0: model fits window size exactly)" },
+  { F|S, "DockTools" , opt_general_dock_tools , 1. ,
+    "Open the tool windows (options, plugins, visibility, ...) as tabs of a "
+    "dock on the right of the main window" },
+  { F|S, "DockWidth" , opt_general_dock_width , 0. ,
+    "Width (in pixels) of the dock of the tool windows (0: the least width of "
+    "the tool windows)" },
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
     "Use a double buffered graphic window (on Unix, should be set to 0 when "
     "working on a remote host without GLX)" },

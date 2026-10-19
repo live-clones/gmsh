@@ -6,6 +6,7 @@
 #ifndef PALETTE_WINDOWH
 #define PALETTE_WINDOWH
 
+#include <algorithm>
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
 #include "windowPlacement.h"
@@ -24,14 +25,68 @@ private:
   void *_resizedData;
   // the least and greatest sizes, kept here as FLTK 1.3 cannot give them back
   int _minW, _minH, _maxW, _maxH;
+  // a tool window, docked in the main window while it has a dock
+  bool _dockable;
+  // the border (FLTK removes those of subwindows), size and non-modal state
+  // (floating above other windows on macOS) the window had on the desktop
+  // before it was docked
+  bool _desktopBorder, _desktopNonModal;
+  int _desktopW, _desktopH;
+  // called when the dock shows the window again
+  void (*_revealed)(void *);
+  void *_revealedData;
 
 public:
+  // set by the main window while it has a dock: docks a window and shows it
+  inline static void (*dockHook)(paletteWindow *w) = nullptr;
+  // called when a docked window is hidden, or resized
+  inline static void (*hiddenHook)(paletteWindow *w) = nullptr;
+  inline static void (*resizedHook)(paletteWindow *w) = nullptr;
   paletteWindow(int w, int h, bool nonModal, const char *l = nullptr,
                 int *offset = nullptr)
     : Fl_Double_Window(w, h, l), _offset(offset), _width(w), _resized(nullptr),
-      _resizedData(nullptr), _minW(0), _minH(0), _maxW(0), _maxH(0)
+      _resizedData(nullptr), _minW(0), _minH(0), _maxW(0), _maxH(0),
+      _dockable(false), _desktopBorder(true), _desktopNonModal(false),
+      _desktopW(w), _desktopH(h), _revealed(nullptr), _revealedData(nullptr)
   {
     if(nonModal) set_non_modal();
+  }
+  void dockable(bool d) { _dockable = d; }
+  bool dockable() const { return _dockable; }
+  // docked, shown where placed: Cocoa centers a non-modal window otherwise
+  void keepPosition() { force_position(1); }
+  // the window leaves the desktop for the dock, its offset kept as it was, and
+  // comes back
+  void leaveDesktop()
+  {
+    _desktopBorder = border();
+    _desktopNonModal = non_modal();
+    clear_flag(NON_MODAL);
+    _desktopW = w();
+    _desktopH = h();
+    if(_offset) storeWindowOffset(this, _offset);
+    forgetWindow(this);
+  }
+  // the size on the desktop, also while docked
+  int desktopW() const { return parent() ? _desktopW : w(); }
+  int desktopH() const { return parent() ? _desktopH : h(); }
+  // docked, the window is shown again (its tab chosen, unfolded): a tool
+  // refreshes there what it skips while hidden
+  void whenRevealed(void (*cb)(void *), void *data)
+  {
+    _revealed = cb;
+    _revealedData = data;
+  }
+  void revealed()
+  {
+    if(_revealed) _revealed(_revealedData);
+  }
+  void backToDesktop()
+  {
+    border(_desktopBorder);
+    if(_desktopNonModal) set_non_modal();
+    size(std::max(_desktopW, _minW),
+         fixedHeight() ? _minH : std::max(_desktopH, _minH));
   }
   ~paletteWindow() { forgetWindow(this); }
   // the widgets as placed now follow a wider window (see widthRules.h)
@@ -78,12 +133,15 @@ public:
       init_sizes();
     }
     if(_resized) _resized(_resizedData);
+    if(parent() && resizedHook) resizedHook(this);
   }
   virtual int handle(int event)
   {
     switch(event) {
     case FL_SHORTCUT:
     case FL_KEYBOARD:
+      // docked, only when the focus is inside: the main window has its own
+      if(parent() && !contains(Fl::focus())) break;
 #if defined(__APPLE__)
       if(Fl::test_shortcut(FL_META + 'w') || Fl::test_shortcut(FL_Escape)) {
 #elif defined(WIN32)
@@ -100,9 +158,25 @@ public:
   }
   virtual void show()
   {
+    if(_dockable && dockHook) {
+      dockHook(this);
+      return;
+    }
+    if(parent()) { // docked
+      Fl_Double_Window::show();
+      return;
+    }
     if(_offset) placeWindow(this, _offset);
     if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
     Fl_Double_Window::show();
+  }
+  virtual void hide()
+  {
+    // FLTK also hides the subwindows of a window it hides: not a close
+    if(parent() && hiddenHook && top_window()->shown())
+      hiddenHook(this);
+    else
+      Fl_Double_Window::hide();
   }
 };
 

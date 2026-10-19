@@ -26,6 +26,7 @@ set(SRC
     extraDialogs.cpp
     windowPlacement.cpp
     widthRules.cpp
+    toolDock.cpp
     targetList.cpp
     classificationEditor.cpp
     partitionDialog.cpp
