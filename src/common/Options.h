@@ -996,6 +996,16 @@ typedef struct {
   const char *help;
 } StringXString;
 
+// For the built-in options of DefaultOptions.h, whose defaults are literals.
+// Plugins change their defaults at runtime, so they keep StringXString.
+typedef struct {
+  int level;
+  const char *str;
+  std::string (*function)(int num, int action, const std::string &val);
+  const char *def;
+  const char *help;
+} StringXLiteral;
+
 typedef struct {
   int level;
   const char *str;

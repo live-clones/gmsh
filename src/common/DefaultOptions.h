@@ -9,6 +9,7 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "Options.h"
+#include "gmshCompat.h"
 
 //          PLEASE RESPECT THE ALPHABETICAL ORDER WHEN
 //                    INSERTING A NEW OPTION!
@@ -25,7 +26,7 @@
 
 // STRINGS
 
-StringXString GeneralOptions_String[] = {
+GMSH_CONSTINIT StringXLiteral GeneralOptions_String[] = {
   { F|O, "AxesFormatX" , opt_general_axes_format0 , "%.3g" ,
     "Number format for X-axis (in standard C form)" },
   { F|O, "AxesFormatY" , opt_general_axes_format1 , "%.3g" ,
@@ -150,7 +151,7 @@ StringXString GeneralOptions_String[] = {
    { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
-StringXString GeometryOptions_String[] = {
+GMSH_CONSTINIT StringXLiteral GeometryOptions_String[] = {
   { F|O, "DoubleClickedPointCommand" , opt_geometry_double_clicked_point_command,
     "ONELAB" , "Command parsed when double-clicking on a point, or 'ONELAB' "
     "to edit associated ONELAB parameters" },
@@ -208,11 +209,11 @@ StringXString GeometryOptions_String[] = {
   { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
-StringXString MeshOptions_String[] = {
+GMSH_CONSTINIT StringXLiteral MeshOptions_String[] = {
   { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
-StringXString SolverOptions_String[] = {
+GMSH_CONSTINIT StringXLiteral SolverOptions_String[] = {
   { F|S, "Executable0" , opt_solver_executable0 , "",
     "System command to launch solver 0" },
   { F|S, "Executable1" , opt_solver_executable1 , "" ,
@@ -316,7 +317,7 @@ StringXString SolverOptions_String[] = {
   { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
-StringXString PostProcessingOptions_String[] = {
+GMSH_CONSTINIT StringXLiteral PostProcessingOptions_String[] = {
   { F|O, "DoubleClickedGraphPointCommand" , opt_post_double_clicked_graph_point_command, "" ,
     "Command parsed when double-clicking on a graph data point "
     "(e.g. Merge Sprintf('file_%g.pos', PostProcessing.GraphPointX);)" },
@@ -327,7 +328,7 @@ StringXString PostProcessingOptions_String[] = {
   { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
-StringXString ViewOptions_String[] = {
+GMSH_CONSTINIT StringXLiteral ViewOptions_String[] = {
   { F|O, "Attributes" , opt_view_attributes , "" ,
     "Optional string attached to the view. If the string contains 'AlwaysVisible', "
     "the view will not be hidden when new ones are merged."},
@@ -393,7 +394,7 @@ StringXString ViewOptions_String[] = {
   { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
-StringXString PrintOptions_String[] = {
+GMSH_CONSTINIT StringXLiteral PrintOptions_String[] = {
   { F|O, "ParameterCommand" , opt_print_parameter_command ,
     "Mesh.Clip=1; View.Clip=1; General.ClipWholeElements=1; "
     "General.Clip0D=Print.Parameter; SetChanged;" ,
@@ -404,7 +405,7 @@ StringXString PrintOptions_String[] = {
 
 // NUMBERS
 
-StringXNumber GeneralOptions_Number[] = {
+GMSH_CONSTINIT StringXNumber GeneralOptions_Number[] = {
   { F|O, "AbortOnError" , opt_general_abort_on_error , 0. ,
     "Abort on error? (0: no, 1: abort meshing, 2: throw an exception unless in "
     "interactive mode, 3: throw an exception always, 4: exit)" },
@@ -1016,7 +1017,7 @@ StringXNumber GeneralOptions_Number[] = {
   { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
-StringXNumber GeometryOptions_Number[] = {
+GMSH_CONSTINIT StringXNumber GeometryOptions_Number[] = {
   { F|O, "AutoCoherence" , opt_geometry_auto_coherence , 1. ,
     "Should all duplicate entities be automatically removed with the built-in "
     "geometry kernel? If Geometry.AutoCoherence = 2, also remove degenerate "
@@ -1257,7 +1258,7 @@ StringXNumber GeometryOptions_Number[] = {
   { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
-StringXNumber MeshOptions_Number[] = {
+GMSH_CONSTINIT StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_FRONTAL ,
     "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 3: Initial mesh only, "
     "5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, "
@@ -1893,7 +1894,7 @@ StringXNumber MeshOptions_Number[] = {
   { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
-StringXNumber SolverOptions_Number[] = {
+GMSH_CONSTINIT StringXNumber SolverOptions_Number[] = {
   { F|O, "AlwaysListen" , opt_solver_listen , 0. ,
     "Always listen to incoming connection requests?" },
   { F|O, "AutoArchiveOutputFiles" , opt_solver_auto_archive_output_files , 0. ,
@@ -1928,7 +1929,7 @@ StringXNumber SolverOptions_Number[] = {
   { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
-StringXNumber PostProcessingOptions_Number[] = {
+GMSH_CONSTINIT StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "AnimationDelay" , opt_post_anim_delay , 0.1 ,
     "Delay (in seconds) between frames in automatic animation mode" },
   { F|O, "AnimationCycle" , opt_post_anim_cycle , 0. ,
@@ -1992,7 +1993,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { 0, nullptr , nullptr , 0., "" }
 } ;
 
-StringXNumber ViewOptions_Number[] = {
+GMSH_CONSTINIT StringXNumber ViewOptions_Number[] = {
   { F|O, "AbscissaRangeType" , opt_view_abscissa_range_type , 1 ,
     "Ascissa scale range type (1: default, 2: custom)" },
   { F|O, "AdaptSkinOnly" , opt_view_adapt_skin_only , 2. ,
@@ -2317,7 +2318,7 @@ StringXNumber ViewOptions_Number[] = {
   { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
-StringXNumber PrintOptions_Number[] = {
+GMSH_CONSTINIT StringXNumber PrintOptions_Number[] = {
   { F|O, "Parameter" , opt_print_parameter , 0. ,
     "Current value of the print parameter" },
   { F|O, "ParameterFirst" , opt_print_parameter_first , -1. ,
@@ -2457,7 +2458,7 @@ StringXNumber PrintOptions_Number[] = {
 // Solid Works (light blue to light gray): 94,198,255 -> 232,232,232
 // Catia (dark grey-blue to light gray-blue): 63,62,119 -> 181,182,202
 
-StringXColor GeneralOptions_Color[] = {
+GMSH_CONSTINIT StringXColor GeneralOptions_Color[] = {
   { F|O, "Background" , opt_general_color_background ,
     {255, 255, 255, 255}, {255, 255, 255, 255}, {245, 245, 245, 255}, {0, 0, 0, 255},
     "Background color" },
@@ -2493,7 +2494,7 @@ StringXColor GeneralOptions_Color[] = {
   { 0, nullptr , nullptr ,  {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , nullptr }
 } ;
 
-StringXColor GeometryOptions_Color[] = {
+GMSH_CONSTINIT StringXColor GeometryOptions_Color[] = {
   { F|O, "Points" , opt_geometry_color_points ,
     {90, 90, 90, 255}, {90, 90, 90, 255}, {0, 0, 0, 255}, {178, 178, 178, 255},
     "Normal geometry point color" },
@@ -2561,7 +2562,7 @@ StringXColor GeometryOptions_Color[] = {
 #define COL17 {104, 0, 255, 255}
 #define COL19 {184, 0, 255, 255}
 
-StringXColor MeshOptions_Color[] = {
+GMSH_CONSTINIT StringXColor MeshOptions_Color[] = {
   { F|O, "Nodes" , opt_mesh_color_nodes ,
     {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {0, 0, 255, 255},
     "Mesh node color" },
@@ -2653,17 +2654,17 @@ StringXColor MeshOptions_Color[] = {
   { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , nullptr }
 } ;
 
-StringXColor SolverOptions_Color[] = {
+GMSH_CONSTINIT StringXColor SolverOptions_Color[] = {
   { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
-StringXColor PostProcessingOptions_Color[] = {
+GMSH_CONSTINIT StringXColor PostProcessingOptions_Color[] = {
   { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
 #define ELECOL  {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}, {245, 245, 245, 255}
 
-StringXColor ViewOptions_Color[] = {
+GMSH_CONSTINIT StringXColor ViewOptions_Color[] = {
   { F|O, "Points" , opt_view_color_points , ELECOL, "Point color" },
   { F|O, "Lines" , opt_view_color_lines , ELECOL, "Line color" },
   { F|O, "Triangles" , opt_view_color_triangles , ELECOL, "Triangle color" },
@@ -2690,7 +2691,7 @@ StringXColor ViewOptions_Color[] = {
   { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
-StringXColor PrintOptions_Color[] = {
+GMSH_CONSTINIT StringXColor PrintOptions_Color[] = {
   { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
