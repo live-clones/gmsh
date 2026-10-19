@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 5.0.0-git-44744ced2; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20261018; Build host: cg.local; Build options: 64Bit Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] HierarchicalBasis Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg MtMetis[contrib] Netgen Nii2mesh ONELAB ONELABMetamodel OctreeSizeField OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Voro++[contrib] Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 6.0.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 5.0.0-git-84d8815b2; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20261019; Build host: cg.local; Build options: 64Bit Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] HierarchicalBasis Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg MtMetis[contrib] Netgen Nii2mesh ONELAB ONELABMetamodel OctreeSizeField OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Voro++[contrib] Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 6.0.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -183,7 +183,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"5.0.0-git-44744ced2"}@*
+Default value: @code{"5.0.0-git-84d8815b2"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -571,6 +571,16 @@ Border factor for model display (0: model fits window size exactly)@*
 Default value: @code{0.2}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.DockTools
+Open the tool windows (options, plugins, visibility, ...) as tabs of a dock on the right of the main window@*
+Default value: @code{1}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.DockWidth
+Width (in pixels) of the dock of the tool windows (0: the least width of the tool windows)@*
+Default value: @code{0}@*
+Saved in: @code{General.SessionFileName}
+
 @item General.DoubleBuffer
 Use a double buffered graphic window (on Unix, should be set to 0 when working on a remote host without GLX)@*
 Default value: @code{1}@*
@@ -627,8 +637,8 @@ Default value: @code{320}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.FieldWidth
-Width (in pixels) of the field window@*
-Default value: @code{420}@*
+Width (in pixels) of the field window (0: the least width of the tool windows)@*
+Default value: @code{0}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.FileChooserOffsetX
@@ -976,6 +986,11 @@ Maximum number of threads used by Gmsh when compiled with OpenMP support (0: use
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.OptionsHeight
+Height (in pixels) of the option window@*
+Default value: @code{650}@*
+Saved in: @code{General.SessionFileName}
+
 @item General.OptionsOffsetX
 Horizontal offset (in pixels) of the upper left corner of the option window, relative to the upper left corner of the graphic window@*
 Default value: @code{600}@*
@@ -995,6 +1010,16 @@ Saved in: @code{General.OptionsFileName}
 Orthographic projection mode (0: perspective projection)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
+
+@item General.PartitionOffsetX
+Horizontal offset (in pixels) of the upper left corner of the mesh partitioning window, relative to the upper left corner of the graphic window@*
+Default value: @code{600}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.PartitionOffsetY
+Vertical offset (in pixels) of the upper left corner of the mesh partitioning window, relative to the upper left corner of the graphic window@*
+Default value: @code{150}@*
+Saved in: @code{General.SessionFileName}
 
 @item General.Phlogiston
 Phlogiston (0: none)@*
@@ -1017,8 +1042,8 @@ Default value: @code{320}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.PluginWidth
-Width (in pixels) of the plugin window@*
-Default value: @code{420}@*
+Width (in pixels) of the plugin window (0: the least width of the tool windows)@*
+Default value: @code{0}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.PointSize
@@ -1055,6 +1080,16 @@ Saved in: @code{General.OptionsFileName}
 Maximum memory (in MB) used by each of the caches kept between frames: glyphs (spheres, arrows, ...; fixed function pipeline only) and strings (0: automatic)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
+
+@item General.ReclassifyOffsetX
+Horizontal offset (in pixels) of the upper left corner of the window to reclassify 2D meshes, relative to the upper left corner of the graphic window@*
+Default value: @code{600}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.ReclassifyOffsetY
+Vertical offset (in pixels) of the upper left corner of the window to reclassify 2D meshes, relative to the upper left corner of the graphic window@*
+Default value: @code{150}@*
+Saved in: @code{General.SessionFileName}
 
 @item General.RotationX
 First Euler angle (used if Trackball=0)@*
