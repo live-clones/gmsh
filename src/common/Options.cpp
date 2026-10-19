@@ -2690,6 +2690,30 @@ double opt_general_clip_offset1(OPT_ARGS_NUM)
   return CTX::instance()->clipOffset[1];
 }
 
+double opt_general_partition_offset0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->partOffset[0] = (int)val;
+  return CTX::instance()->partOffset[0];
+}
+
+double opt_general_partition_offset1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->partOffset[1] = (int)val;
+  return CTX::instance()->partOffset[1];
+}
+
+double opt_general_reclassify_offset0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->reclassifyOffset[0] = (int)val;
+  return CTX::instance()->reclassifyOffset[0];
+}
+
+double opt_general_reclassify_offset1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->reclassifyOffset[1] = (int)val;
+  return CTX::instance()->reclassifyOffset[1];
+}
+
 double opt_general_manip_offset0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->manipOffset[0] = (int)val;

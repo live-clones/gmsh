@@ -22,6 +22,8 @@
 #include "visibilityWindow.h"
 #include "highOrderToolsWindow.h"
 #include "clippingWindow.h"
+#include "partitionDialog.h"
+#include "classificationEditor.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
 #include "onelabContextWindow.h"
@@ -642,6 +644,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   visibility = new visibilityWindow(CTX::instance()->deltaFontSize);
   highordertools = new highOrderToolsWindow(CTX::instance()->deltaFontSize);
   clipping = new clippingWindow(CTX::instance()->deltaFontSize);
+  partition = new partitionWindow(CTX::instance()->deltaFontSize);
+  classify = new classificationEditor(CTX::instance()->deltaFontSize);
   manip = new manipWindow(CTX::instance()->deltaFontSize);
   elementaryContext =
     new elementaryContextWindow(CTX::instance()->deltaFontSize);
@@ -688,6 +692,8 @@ FlGui::~FlGui()
   delete visibility;
   delete highordertools;
   delete clipping;
+  delete partition;
+  delete classify;
   delete manip;
   delete elementaryContext;
   delete transformContext;
@@ -1443,6 +1449,9 @@ void FlGui::storeCurrentWindowsInfo()
   storeWindowOffset(visibility->win, CTX::instance()->visOffset);
   storeWindowOffset(highordertools->win, CTX::instance()->hotOffset);
   storeWindowOffset(clipping->win, CTX::instance()->clipOffset);
+  if(partition->win)
+    storeWindowOffset(partition->win, CTX::instance()->partOffset);
+  storeWindowOffset(classify->window, CTX::instance()->reclassifyOffset);
   storeWindowOffset(manip->win, CTX::instance()->manipOffset);
   Fl_Window *ctx = (lastContextWindow == 4) ? onelabContext->win :
                    (lastContextWindow == 3) ? physicalContext->win :
@@ -1568,6 +1577,11 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->highordertools->win->show();
     if(FlGui::instance()->clipping->win->shown())
       FlGui::instance()->clipping->win->show();
+    if(FlGui::instance()->partition->win &&
+       FlGui::instance()->partition->win->shown())
+      FlGui::instance()->partition->win->show();
+    if(FlGui::instance()->classify->window->shown())
+      FlGui::instance()->classify->window->show();
     if(FlGui::instance()->manip->win->shown())
       FlGui::instance()->manip->win->show();
     if(FlGui::instance()->stats->win->shown())

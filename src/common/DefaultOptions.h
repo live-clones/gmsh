@@ -845,6 +845,14 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Orthographic" , opt_general_orthographic , 1. ,
     "Orthographic projection mode (0: perspective projection)" },
 
+  { F|S, "PartitionOffsetX" , opt_general_partition_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the mesh "
+    "partitioning window, relative to the upper left corner of the graphic "
+    "window" },
+  { F|S, "PartitionOffsetY" , opt_general_partition_offset1 , 150. ,
+    "Vertical offset (in pixels) of the upper left corner of the mesh "
+    "partitioning window, relative to the upper left corner of the graphic "
+    "window" },
   { F|O, "Phlogiston" , opt_general_phlogiston , 1. ,
     "Phlogiston (0: none)" },
   { F|S, "PluginOffsetX" , opt_general_plugin_offset0 , 600. ,
@@ -885,6 +893,14 @@ StringXNumber GeneralOptions_Number[] = {
     "glyphs (spheres, arrows, ...; fixed function pipeline only) and strings "
     "(0: automatic)" },
 
+  { F|S, "ReclassifyOffsetX" , opt_general_reclassify_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the window to "
+    "reclassify 2D meshes, relative to the upper left corner of the graphic "
+    "window" },
+  { F|S, "ReclassifyOffsetY" , opt_general_reclassify_offset1 , 150. ,
+    "Vertical offset (in pixels) of the upper left corner of the window to "
+    "reclassify 2D meshes, relative to the upper left corner of the graphic "
+    "window" },
   { F,   "RotationX" , opt_general_rotation0 , 0.0 ,
     "First Euler angle (used if Trackball=0)" },
   { F,   "RotationY" , opt_general_rotation1 , 0.0 ,

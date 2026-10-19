@@ -25,7 +25,9 @@
 #include "meshGFaceDelaunay.h"
 #endif
 
-static void NoElementsSelectedMode(classificationEditor *e)
+// without update only the buttons change, as when the editor is built at
+// start-up
+static void NoElementsSelectedMode(classificationEditor *e, bool update = true)
 {
   e->buttons[CLASS_BUTTON_SELECT_ELEMENTS]->activate();
   e->buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS]->activate();
@@ -35,6 +37,7 @@ static void NoElementsSelectedMode(classificationEditor *e)
   e->toggles[CLASS_TOGGLE_BOUNDARY]->deactivate();
   e->inputs[CLASS_VALUE_ANGLE]->deactivate();
   e->buttons[CLASS_BUTTON_CLASSIFY]->deactivate();
+  if(!update) return;
 
   CTX::instance()->meshChanged();
   CTX::instance()->pickElements = 0;
@@ -305,24 +308,22 @@ static void classify_cb(Fl_Widget *w, void *data)
   NoElementsSelectedMode(e);
 }
 
-classificationEditor::classificationEditor() : selected(nullptr)
+classificationEditor::classificationEditor(int deltaFontSize)
+  : selected(nullptr)
 {
-  opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
-
-  drawContext::global()->draw();
-
+  FL_NORMAL_SIZE -= deltaFontSize;
   int BBB = (int)(1.4 * BB);
-  const int width = (int)(3.15 * BBB), height = (int)(10.5 * BH);
+  const int width = TW, height = (int)(10.5 * BH);
 
-  window = new paletteWindow(width, height,
-                             CTX::instance()->nonModalWindows ? true : false,
-                             "Reclassify 2D");
+  window = new paletteWindow(
+    width, height, CTX::instance()->nonModalWindows ? true : false,
+    "Reclassify 2D", CTX::instance()->reclassifyOffset);
   window->box(GMSH_WINDOW_BOX);
 
   int x = WB, y = WB;
   {
     Fl_Box *b =
-      new Fl_Box(x, y, width, BH,
+      new Fl_Box(x, y, width - 2 * WB, BH,
                  "1. Select mesh elements on which to perform edge detection");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
@@ -353,7 +354,8 @@ classificationEditor::classificationEditor() : selected(nullptr)
   }
   {
     y += BH;
-    Fl_Box *b = new Fl_Box(x, y, width, BH, "2. Fine-tune edge selection");
+    Fl_Box *b =
+      new Fl_Box(x, y, width - 2 * WB, BH, "2. Fine-tune edge selection");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     x += WB;
@@ -401,7 +403,7 @@ classificationEditor::classificationEditor() : selected(nullptr)
   }
   {
     y += BH;
-    Fl_Box *b = new Fl_Box(x, y, width, BH,
+    Fl_Box *b = new Fl_Box(x, y, width - 2 * WB, BH,
                            "3. Reclassify surfaces using selected edges");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
@@ -423,15 +425,21 @@ classificationEditor::classificationEditor() : selected(nullptr)
   }
 
   window->end();
-  window->hotspot(window);
+  // as narrow as the option window, wider as the window is widened
+  ((paletteWindow *)window)->followWidth(width / 2, width - 2 * WB);
+  ((paletteWindow *)window)->sizeRange(width, height, 0, height);
 
-  NoElementsSelectedMode(this);
+  NoElementsSelectedMode(this, false);
+  FL_NORMAL_SIZE += deltaFontSize;
+}
+
+void classificationEditor::show()
+{
+  // the edges are what is selected
+  opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
+  drawContext::global()->draw();
+  window->show();
 }
 
 void mesh_classify_cb(Fl_Widget *w, void *data)
-{
-  // create the (static) editor
-  static classificationEditor *editor = nullptr;
-  if(!editor) editor = new classificationEditor();
-  editor->show();
-}
+{ FlGui::instance()->classify->show(); }

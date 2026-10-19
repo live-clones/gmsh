@@ -33,6 +33,8 @@ class statisticsWindow;
 class visibilityWindow;
 class highOrderToolsWindow;
 class clippingWindow;
+class partitionWindow;
+class classificationEditor;
 class manipWindow;
 class elementaryContextWindow;
 class transformContextWindow;
@@ -78,6 +80,8 @@ public:
   visibilityWindow *visibility;
   highOrderToolsWindow *highordertools;
   clippingWindow *clipping;
+  partitionWindow *partition;
+  classificationEditor *classify;
   manipWindow *manip;
   elementaryContextWindow *elementaryContext;
   transformContextWindow *transformContext;
