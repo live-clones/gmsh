@@ -3989,7 +3989,7 @@ GMSH_API double gmshLoggerGetMemory(int * ierr);
 GMSH_API double gmshLoggerGetTotalMemory(int * ierr);
 
 /* Return last error message, if any. */
-GMSH_API void gmshLoggerGetLastError(char ** error,
+GMSH_API void gmshLoggerGetLastError(char ** message,
                                      int * ierr);
 
 #endif
