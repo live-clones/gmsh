@@ -414,19 +414,14 @@ static void gamepad_handler(void *data)
 void FlGui::applyColorScheme(bool redraw)
 {
   static int first = true;
-  int N = 4 + FL_NUM_GRAY;
-  static std::vector<unsigned char> r(N, 0), g(N, 0), b(N, 0);
+  static unsigned char r[3], g[3], b[3];
 
   if(first) {
     // store default (OS-dependent) interface colors:
     Fl::get_system_colors();
-    Fl::get_color(FL_BACKGROUND_COLOR, r[0], g[0], b[0]);
-    Fl::get_color(FL_BACKGROUND2_COLOR, r[1], g[1], b[1]);
-    Fl::get_color(FL_FOREGROUND_COLOR, r[2], g[2], b[2]);
-    Fl::get_color(FL_SELECTION_COLOR, r[3], g[3], b[3]);
-    for(int i = 0; i < FL_NUM_GRAY; i++) {
-      Fl::get_color(fl_gray_ramp(i), r[4 + i], g[4 + i], b[4 + i]);
-    }
+    Fl::get_color(FL_BACKGROUND2_COLOR, r[0], g[0], b[0]);
+    Fl::get_color(FL_FOREGROUND_COLOR, r[1], g[1], b[1]);
+    Fl::get_color(FL_SELECTION_COLOR, r[2], g[2], b[2]);
   }
 
   if(CTX::instance()->guiColorScheme == 1) { // dark mode
@@ -440,16 +435,13 @@ void FlGui::applyColorScheme(bool redraw)
     }
     Fl::set_color(FL_SELECTION_COLOR, 200, 200, 200);
   }
-  else if(!first && available() && CTX::instance()->guiColorScheme == 0) {
-    // retore default colors (only if not calling the routine from the
-    // constructor)
-    Fl::set_color(FL_BACKGROUND_COLOR, r[0], g[0], b[0]);
-    Fl::set_color(FL_BACKGROUND2_COLOR, r[1], g[1], b[1]);
-    Fl::set_color(FL_FOREGROUND_COLOR, r[2], g[2], b[2]);
-    for(int i = 0; i < FL_NUM_GRAY; i++) {
-      Fl::set_color(fl_gray_ramp(i), r[4 + i], g[4 + i], b[4 + i]);
-    }
-    Fl::set_color(FL_SELECTION_COLOR, r[3], g[3], b[3]);
+  else { // light mode
+    Fl::set_color(FL_BACKGROUND2_COLOR, r[0], g[0], b[0]);
+    Fl::set_color(FL_FOREGROUND_COLOR, r[1], g[1], b[1]);
+    Fl::set_color(FL_SELECTION_COLOR, r[2], g[2], b[2]);
+    // the grey of the desktop (macOS, Qt), lighter than the one FLTK gives;
+    // the ramp of greys for the frames follows
+    Fl::background(236, 236, 236);
   }
 
   first = false;
