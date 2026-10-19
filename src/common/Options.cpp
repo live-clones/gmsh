@@ -79,7 +79,7 @@ static void showInGui(int action, const char *category, int num,
 // string, number and colour options; in the order of the option files
 struct optionCategory {
   const char *name, *title, *docFile;
-  StringXString *strings;
+  StringXLiteral *strings;
   StringXNumber *numbers;
   StringXColor *colors;
 };
@@ -121,7 +121,7 @@ bool StringOption(int action, const char *category, int num, const char *name,
       Msg::Error("Unknown string option category '%s'", category);
     return false;
   }
-  StringXString *s = c->strings;
+  StringXLiteral *s = c->strings;
 
   int i = 0;
   while(s[i].str && strcmp(s[i].str, name)) i++;
@@ -141,7 +141,7 @@ bool StringOption(int action, const char *category, int num, const char *name,
   return true;
 }
 
-static void SetDefaultStringOptions(int num, StringXString s[])
+static void SetDefaultStringOptions(int num, StringXLiteral s[])
 {
   int i = 0;
   while(s[i].str) {
@@ -150,7 +150,7 @@ static void SetDefaultStringOptions(int num, StringXString s[])
   }
 }
 
-static void SetStringOptionsGUI(int num, StringXString s[])
+static void SetStringOptionsGUI(int num, StringXLiteral s[])
 {
   int i = 0;
   while(s[i].str) {
@@ -160,7 +160,7 @@ static void SetStringOptionsGUI(int num, StringXString s[])
 }
 
 static void PrintStringOptions(int num, int level, int diff, int help,
-                               StringXString s[], const char *prefix,
+                               StringXLiteral s[], const char *prefix,
                                FILE *file,
                                std::vector<std::string> *vec = nullptr)
 {
@@ -200,7 +200,7 @@ static const char *GetOptionSaveLevel(int level)
   }
 }
 
-static void PrintStringOptionsDoc(StringXString s[], const char *prefix,
+static void PrintStringOptionsDoc(StringXLiteral s[], const char *prefix,
                                   FILE *file)
 {
   int i = 0;
