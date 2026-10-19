@@ -23,6 +23,7 @@ typedef unsigned long intptr_t;
 #include "FlGui.h"
 #include "drawContext.h"
 #include "visibilityWindow.h"
+#include "hintInput.h"
 #include "paletteWindow.h"
 #include "contextWindow.h"
 #include "graphicWindow.h"
@@ -1434,18 +1435,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     browser_type = new Fl_Choice(2 * WB, height - 2 * BH - 3 * WB, w1, BH);
     browser_type->menu(browser_type_table);
 
-    Fl_Group *o =
-      new Fl_Group(2 * WB + w1 + WB, height - 2 * BH - 3 * WB, w2, BH);
-    o->tooltip("Filter list using regular expression");
-    o->box(FL_DOWN_BOX);
-    o->color(FL_BACKGROUND2_COLOR);
-    search = new Fl_Input(2 * WB + w1 + WB + BH, height - 2 * BH - 3 * WB + 2,
-                          w2 - BH - 2, BH - 4, "@gmsh_search");
-    search->box(FL_FLAT_BOX);
-    search->callback(visibility_cb, (void *)"list_only");
-    search->when(FL_WHEN_CHANGED);
-    o->resizable(search);
-    o->end();
+    search = searchBox(2 * WB + w1 + WB, height - 2 * BH - 3 * WB, w2, BH,
+                       "Filter list", "Filter list using regular expression",
+                       visibility_cb);
+    search->user_data((void *)"list_only");
 
     Fl_Return_Button *b1 = new Fl_Return_Button(
       width - 2 * WB - w3, height - 2 * BH - 3 * WB, w3, BH, "Apply");

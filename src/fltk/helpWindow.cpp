@@ -16,6 +16,7 @@
 #include "FlGui.h"
 #include "inputValue.h"
 #include "helpWindow.h"
+#include "hintInput.h"
 #include "paletteWindow.h"
 #include "CommandLine.h"
 #include "StringUtils.h"
@@ -439,19 +440,10 @@ helpWindow::helpWindow()
     showhelp->callback(help_options_cb);
     showhelp->tooltip("Show help strings");
 
-    Fl_Group *o = new Fl_Group(3 * WB + 2 * BW, WB, BW, BH);
-    o->tooltip("Filter list using regular expression");
-    o->box(FL_DOWN_BOX);
-    o->color(FL_BACKGROUND2_COLOR);
-    search = new Fl_Input(3 * WB + 2 * BW + BH, WB + 2, BW - BH - 2, BH - 4,
-                          "@gmsh_search");
-    search->box(FL_FLAT_BOX);
-    search->callback(help_options_cb);
-    search->when(FL_WHEN_CHANGED);
+    search = searchBox(3 * WB + 2 * BW, WB, BW, BH, "Search options and workspace",
+                       "Filter list using regular expression", help_options_cb);
     // search->take_focus(); cannot call this here - it triggers show() on Linux
     // in fltk 1.3.3
-    o->resizable(search);
-    o->end();
 
     browser = new Fl_Browser(0, BH + 2 * WB, width, height - 2 * BH - 4 * WB);
     browser->box(GMSH_SIMPLE_TOP_BOX);

@@ -1502,7 +1502,7 @@ optionWindow::optionWindow(int deltaFontSize)
   win->label("Options");
 
   // the search goes through all the categories, hence above them
-  search = searchBox(WB, WB, winWidth - 2 * WB, BH, "Search all options",
+  search = searchBox(WB, WB, winWidth - 2 * WB, BH, "Search options",
                      "Show only the options whose label, name or choices match",
                      options_search_cb);
 

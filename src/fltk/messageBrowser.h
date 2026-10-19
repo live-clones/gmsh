@@ -7,6 +7,7 @@
 #define MESSAGE_BROWSER_H
 
 #include "FlGui.h"
+#include "hintInput.h"
 #include <algorithm>
 #include <string>
 #include <regex>
@@ -31,17 +32,9 @@ public:
     _box = new Fl_Group(x, y, w, bh + 2 * wb);
     _box->box(GMSH_SIMPLE_TOP_BOX);
 
-    Fl_Group *o = new Fl_Group(x + wb, y + wb, sw, bh);
-    o->tooltip("Filter messages using regular expression");
-    o->box(FL_THIN_DOWN_BOX);
-    o->color(FL_BACKGROUND2_COLOR);
-    _search = new Fl_Input(x + wb + bh, y + wb + 2, sw - bh - 2, bh - 4,
-                           "@-1gmsh_search");
-    _search->box(FL_FLAT_BOX);
-    _search->when(FL_WHEN_CHANGED);
+    _search = searchBox(x + wb, y + wb, sw, bh, "Search messages",
+                        "Filter messages using regular expression", nullptr);
     _search->textsize(FL_NORMAL_SIZE - 1);
-    o->resizable(_search);
-    o->end();
 
     _save = new Fl_Button(x + wb + sw + WB, y + wb, bb, bh, "Save");
     _save->labelsize(FL_NORMAL_SIZE - 1);
