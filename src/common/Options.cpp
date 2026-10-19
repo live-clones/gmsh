@@ -2553,7 +2553,10 @@ double opt_general_menu_size0(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->graph[0]->setMenuWidth(CTX::instance()->menuSize[0]);
+    if(CTX::instance()->menuSize[0] > 0)
+      FlGui::instance()->graph[0]->setMenuWidth(CTX::instance()->menuSize[0]);
+    else
+      FlGui::instance()->graph[0]->hideMenu();
   }
 #endif
   return CTX::instance()->menuSize[0];

@@ -40,9 +40,11 @@ private:
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  Fl_Button *_butt[14];
+  Fl_Button *_butt[15];
   Fl_Progress *_label;
   int _minWidth, _minHeight;
+  // the width of the menu while it is hidden, to show it again
+  int _menuWidth;
   std::vector<std::string> _messages;
   // the column of docked tool windows on the right of the tiles, the edge
   // dragged to change its width, and the box that says what resizes

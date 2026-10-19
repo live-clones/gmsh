@@ -290,6 +290,21 @@ static void gmsh_measure(Fl_Color c)
   bl; vv(0.38, -0.28); vv(0.46, -0.15); el;
 }
 
+static void gmsh_sidebar(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(-0.8, -0.8);
+  vv(0.8, -0.8);
+  vv(0.8, 0.8);
+  vv(-0.8, 0.8);
+  el;
+  bl;
+  vv(-0.3, -0.8);
+  vv(-0.3, 0.8);
+  el;
+}
+
 static void gmsh_models(Fl_Color c)
 {
   fl_color(c);
@@ -563,6 +578,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fl_add_symbol("gmsh_pause", gmsh_pause, 1);
   fl_add_symbol("gmsh_forward", gmsh_forward, 1);
   fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
+  fl_add_symbol("gmsh_sidebar", gmsh_sidebar, 1);
   fl_add_symbol("gmsh_models", gmsh_models, 1);
   fl_add_symbol("gmsh_query", gmsh_query, 1);
   fl_add_symbol("gmsh_measure", gmsh_measure, 1);

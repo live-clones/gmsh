@@ -783,7 +783,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F,   "MaxZ" , opt_general_zmax , 0. ,
     "Maximum model coordinate along the Z-axis (read-only)" },
   { F|S, "MenuWidth" , opt_general_menu_size0 , 200. ,
-    "Width (in pixels) of the menu tree" },
+    "Width (in pixels) of the menu tree (0: hidden)" },
   { F|S, "MenuHeight" , opt_general_menu_size1 , 200. ,
     "Height (in pixels) of the (detached) menu tree" },
   { F|S, "MenuOffsetX" , opt_general_menu_offset0 , 350. ,

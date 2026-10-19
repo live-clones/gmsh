@@ -2902,6 +2902,7 @@ static Fl_Menu_Item bar_table[] = {
     {"Minimize",           FL_CTRL+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
     {"Enter Full Screen",  FL_CTRL+'f', (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
+    {"Show/Hide Menu",     FL_CTRL+FL_ALT+'t', (Fl_Callback *)show_hide_menu_cb, nullptr},
     {"Attach/Detach Menu", FL_CTRL+'d', (Fl_Callback *)attach_detach_menu_cb, nullptr},
     {"Dock/Undock Tool Windows", 0, (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
@@ -2973,6 +2974,7 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Minimize",           FL_META+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
     {"Enter Full Screen",  FL_META+'f', (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
+    {"Show/Hide Menu",     FL_META+FL_ALT+'t', (Fl_Callback *)show_hide_menu_cb, nullptr},
     {"Attach/Detach Menu", FL_META+'d', (Fl_Callback *)attach_detach_menu_cb, nullptr},
     {"Dock/Undock Tool Windows", 0, (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
@@ -3697,6 +3699,9 @@ void status_options_cb(Fl_Widget *w, void *data)
     for(std::size_t i = 0; i < tofree.size(); i++) free(tofree[i]);
     drawContext::global()->draw();
   }
+  else if(what == "menu") { // show or hide the menu
+    show_hide_menu_cb(nullptr, nullptr);
+  }
   else if(what == "?") { // display options
     help_options_cb(nullptr, nullptr);
     centerWindow(FlGui::instance()->help->options);
@@ -4208,7 +4213,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   // minimum width should be exactly the width of the status bar buttons (see
   // below)
-  _minWidth = 10 + 11 * sw + 1.75 * FL_NORMAL_SIZE;
+  _minWidth = 10 + 12 * sw + 1.75 * FL_NORMAL_SIZE;
   _minHeight = 100;
   _win->size_range(_minWidth, _minHeight);
 
@@ -4309,10 +4314,16 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
 
   // if the tree widget is too small it will not be rebuilt correctly (probably
-  // a bug)... so impose minimum width, the least it can be dragged to
+  // a bug)... so impose minimum width, the least it can be dragged to; a width
+  // of 0 means that the menu is hidden: built at its least width, hidden at
+  // the end
   int minw = 3 * BB / 2 + 4 * WB;
-  if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
-  _tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
+  int mw = CTX::instance()->menuSize[0];
+  bool hiddenMenu = (mw <= 0);
+  if(mw < minw) mw = minw;
+  if(!hiddenMenu) CTX::instance()->menuSize[0] = mw;
+  _menuWidth = mw;
+  _tile->position(twidth, 0, mw, 0);
 
   // bottom button bar
   _bottom = new Fl_Box(0, mh + glheight + mheight, width, sh);
@@ -4321,6 +4332,15 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
 
+  _butt[14] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_sidebar");
+  _butt[14]->callback(status_options_cb, (void *)"menu");
+#if defined(__APPLE__)
+  _butt[14]->tooltip("Show or hide the menu (Cmd+Alt+t)");
+#else
+  _butt[14]->tooltip("Show or hide the menu (Ctrl+Alt+t)");
+#endif
+  x += sw;
   _butt[5] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_models");
   _butt[5]->callback(status_options_cb, (void *)"model");
@@ -4426,10 +4446,10 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _win->end();
 
   if(main && detachedMenu) {
-    _menuwin =
-      new mainWindow(CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
-                     CTX::instance()->nonModalWindows ? true : false, "Gmsh",
-                     CTX::instance()->menuOffset);
+    _menuwin = new mainWindow(std::max(CTX::instance()->menuSize[0], minw),
+                              CTX::instance()->menuSize[1],
+                              CTX::instance()->nonModalWindows ? true : false,
+                              "Gmsh", CTX::instance()->menuOffset);
     _menuwin->callback(file_quit_cb);
     _menuwin->box(GMSH_WINDOW_BOX);
     _onelab = new onelabGroup(0, 0, _menuwin->w(), _menuwin->h());
@@ -4444,6 +4464,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 
   if(main && CTX::instance()->dockTools) setDocking(true);
+  if(main && hiddenMenu) hideMenu();
 }
 
 graphicWindow::~graphicWindow()
@@ -4483,7 +4504,8 @@ void graphicWindow::detachMenu()
   _tile->redraw();
 
   _menuwin =
-    new mainWindow(_onelab->w(), CTX::instance()->menuSize[1],
+    new mainWindow(std::max(_onelab->w(), _onelab->getMinWindowWidth()),
+                   CTX::instance()->menuSize[1],
                    CTX::instance()->nonModalWindows ? true : false, "Gmsh",
                    CTX::instance()->menuOffset);
   _menuwin->callback(file_quit_cb);
@@ -4540,11 +4562,14 @@ void graphicWindow::showMenu()
 {
   if(_menuwin || !_onelab || !_win->shown()) return;
   if(_onelab->w() < FL_NORMAL_SIZE) {
+    // the width set, or the one the menu had when it was hidden
     int width = CTX::instance()->menuSize[0];
+    if(width < FL_NORMAL_SIZE) width = _menuWidth;
     if(width < FL_NORMAL_SIZE) width = _onelab->getMinWindowWidth();
     int maxw = _tile->w(); // without the dock
     if(width > maxw) width = maxw / 2;
     setMenuWidth(width);
+    CTX::instance()->menuSize[0] = width;
     // necessary until resizing of 0-sized groups works
     _onelab->rebuildTree(true);
   }
@@ -4553,7 +4578,10 @@ void graphicWindow::showMenu()
 void graphicWindow::hideMenu()
 {
   if(_menuwin || !_onelab) return;
-  CTX::instance()->menuSize[0] = _onelab->w();
+  // hidden, the menu has no width (saved as such); the width it had is kept
+  // to show it again
+  if(_onelab->w() > 0) _menuWidth = _onelab->w();
+  CTX::instance()->menuSize[0] = 0;
   setMenuWidth(0);
 }
 
