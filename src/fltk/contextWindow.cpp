@@ -650,7 +650,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 34 * FL_NORMAL_SIZE;
+  int width = TW;
   int height = 5 * WB + 10 * BH;
 
   win = new paletteWindow(width, height,
@@ -1019,10 +1019,11 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       value[i]->align(FL_ALIGN_RIGHT);
       value[i]->callback(elementary_snap_cb);
     }
-    butt[0] =
-      new Fl_Check_Button(width - 6 * BH, height - WB - BH, 1.2 * BH, BH, "X");
+    // WB apart, or their focus boxes touch
+    int bx = width - 6 * BH - 2 * WB;
+    butt[0] = new Fl_Check_Button(bx, height - WB - BH, 1.2 * BH, BH, "X");
     butt[0]->tooltip("Toggle (x) or exclusive unselect (Shift+x)");
-    butt[1] = new Fl_Check_Button(width - 6 * BH + 1.2 * BH, height - WB - BH,
+    butt[1] = new Fl_Check_Button(bx + 1.2 * BH + WB, height - WB - BH,
                                   1.2 * BH, BH, "Y");
     butt[1]->tooltip("Toggle (y) or exclusive unselect (Shift+y)");
     butt[2] = new Fl_Check_Button(width - 6 * BH + 2.4 * BH, height - WB - BH,
@@ -1034,6 +1035,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
   tab2->hide();
 
   win->end();
+  // as narrow as the option window, wider as the window is widened
+  ((paletteWindow *)win)->followWidth(width / 2, width - 2 * WB);
+  ((paletteWindow *)win)->sizeRange(width, height, 0, height);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -1163,7 +1167,7 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 30 * FL_NORMAL_SIZE;
+  int width = TW;
   int height = 5 * WB + 4 * BH;
 
   win = new paletteWindow(width, height,
@@ -1179,7 +1183,7 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
       group[0] =
         new Fl_Group(WB, WB + BH, width - 2 * WB, 3 * BH + 3 * WB, "Add");
 
-      box[0] = new Fl_Box(2 * WB, 2 * WB + 1 * BH, width, BH);
+      box[0] = new Fl_Box(2 * WB, 2 * WB + 1 * BH, width - 4 * WB, BH);
       box[0]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
       input[0] = new Fl_Input_Choice(2 * WB, 2 * WB + 2 * BH,
@@ -1209,7 +1213,7 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
       group[1] =
         new Fl_Group(WB, WB + BH, width - 2 * WB, 3 * BH + 3 * WB, "Remove");
 
-      box[1] = new Fl_Box(2 * WB, 2 * WB + 1 * BH, width, BH);
+      box[1] = new Fl_Box(2 * WB, 2 * WB + 1 * BH, width - 4 * WB, BH);
       box[1]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
       choice[0] =
@@ -1223,6 +1227,9 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
   }
 
   win->end();
+  // as narrow as the option window, wider as the window is widened
+  ((paletteWindow *)win)->followWidth(width / 2, width - 2 * WB);
+  ((paletteWindow *)win)->sizeRange(width, height, 0, height);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -1357,7 +1364,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 36 * FL_NORMAL_SIZE;
+  int width = TW;
   int height = 5 * WB + 10 * BH;
 
   win = new paletteWindow(width, height,
@@ -1387,8 +1394,9 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       input[21] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Mesh layers");
       input[21]->value("5");
       input[21]->align(FL_ALIGN_RIGHT);
-      butt[8] = new Fl_Check_Button(width / 2 + 2 * WB, 2 * WB + 6 * BH,
-                                    width / 2 - 4 * WB, BH, "Recombine");
+      // on a row of its own, as the label of the layers takes half the width
+      butt[8] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, width - 4 * WB, BH,
+                                    "Recombine");
       butt[8]->value(1);
       group[0]->end();
     }
@@ -1396,35 +1404,36 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
     {
       group[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH,
                               "Rotate");
-      input[3] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Axis point X");
-      input[3]->value("0");
-      input[4] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Axis point Y");
-      input[4]->value("0");
-      input[5] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Axis point Z");
-      input[5]->value("0");
-      input[6] =
-        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 1 * BH, IW/2, BH, "Axis direction DX");
-      input[6]->value("0");
-      input[7] =
-        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 2 * BH, IW/2, BH, "Axis direction DY");
-      input[7]->value("1");
-      input[8] =
-        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 3 * BH, IW/2, BH, "Axis direction DZ");
-      input[8]->value("0");
-      input[9] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Angle");
+      // the axis point and direction, each as one row of three fields
+      static const char *tips[6] = {"Axis point X",      "Axis point Y",
+                                    "Axis point Z",      "Axis direction DX",
+                                    "Axis direction DY", "Axis direction DZ"};
+      static const char *values[6] = {"0", "0", "0", "0", "1", "0"};
+      for(int i = 0; i < 6; i++) {
+        int row = i / 3, col = i % 3;
+        int x = 2 * WB + col * IW / 3;
+        int w = (col < 2) ? IW / 3 : IW - 2 * (IW / 3);
+        input[3 + i] = new Fl_Input(
+          x, 2 * WB + (1 + row) * BH, w, BH,
+          (col < 2) ? nullptr : (row ? "Axis direction" : "Axis point"));
+        input[3 + i]->tooltip(tips[i]);
+        input[3 + i]->value(values[i]);
+      }
+      input[9] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Angle");
       input[9]->value("Pi/4");
       for(int i = 3; i < 10; i++) { input[i]->align(FL_ALIGN_RIGHT); }
-      butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
+      butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, width - 4 * WB, BH,
                                     "Apply rotation on copy");
       butt[1]->value(0);
-      butt[9] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, width - 4 * WB, BH,
+      butt[9] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
                                     "Extrude mesh");
       butt[9]->value(0);
-      input[22] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Mesh layers");
+      input[22] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Mesh layers");
       input[22]->value("5");
       input[22]->align(FL_ALIGN_RIGHT);
-      butt[10] = new Fl_Check_Button(width / 2 + 2 * WB, 2 * WB + 7 * BH,
-                                     width / 2 - 4 * WB, BH, "Recombine");
+      // on a row of its own, as the label of the layers takes half the width
+      butt[10] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, width - 4 * WB,
+                                     BH, "Recombine");
       butt[10]->value(1);
       group[1]->end();
     }
@@ -1510,6 +1519,9 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
   choice->callback(selection_mode_cb);
 
   win->end();
+  // as narrow as the option window, wider as the window is widened
+  ((paletteWindow *)win)->followWidth(width / 2, width - 2 * WB);
+  ((paletteWindow *)win)->sizeRange(width, height, 0, height);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -1561,7 +1573,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
                                            {"Alternated", 0, nullptr, nullptr},
                                            {nullptr}};
 
-  int width = 29 * FL_NORMAL_SIZE;
+  int width = TW;
   int height = 4 * WB + 4 * BH;
 
   win = new paletteWindow(width, height, CTX::instance()->nonModalWindows,
@@ -1621,6 +1633,9 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
   }
 
   win->end();
+  // as narrow as the option window, wider as the window is widened
+  ((paletteWindow *)win)->followWidth(width / 2, width - 2 * WB);
+  ((paletteWindow *)win)->sizeRange(width, height, 0, height);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }

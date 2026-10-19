@@ -14,6 +14,7 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Value_Input.H>
+#include <algorithm>
 #include <FL/fl_draw.H>
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -106,23 +107,19 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width0 = 34 * FL_NORMAL_SIZE + WB;
-  int height0 = 12 * BH + 4 * WB;
-  int width = (CTX::instance()->fieldSize[0] < width0) ?
-                width0 :
-                CTX::instance()->fieldSize[0];
-  int height = (CTX::instance()->fieldSize[1] < height0) ?
-                 height0 :
-                 CTX::instance()->fieldSize[1];
+  // as narrow as the option window: the fields on top, the one chosen below
+  int width0 = TW;
+  int height0 = 20 * BH;
+  int width = std::max(CTX::instance()->fieldSize[0], width0);
+  int height = std::max(CTX::instance()->fieldSize[1], height0);
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Size fields",
-                          CTX::instance()->fieldOffset);
+                          "Size fields", CTX::instance()->fieldOffset);
   win->box(GMSH_WINDOW_BOX);
 
 #if defined(HAVE_MESH)
-  int x = WB, y = WB, w = (int)(1.5 * BB), h = height - 2 * WB - 3 * BH;
+  int x = WB, y = WB, w = (width - 4 * WB) / 3;
 
   Fl_Menu_Button *new_btn = new Fl_Menu_Button(x, y, w, BH, "New");
   FieldManager &fields = *GModel::current()->getFields();
@@ -131,25 +128,25 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
     new_btn->add(it->first.c_str());
   new_btn->callback(field_new_cb);
 
-  y += BH;
-  browser = new Fl_Hold_Browser(x, y + WB, w, h - 2 * WB);
-  browser->callback(field_browser_cb);
-
-  y += h;
-  delete_btn = new Fl_Button(x, y, w, BH, "Delete");
+  delete_btn = new Fl_Button(x + w + WB, y, w, BH, "Delete");
   delete_btn->callback(field_delete_cb, this);
 
-  y += BH;
-  put_on_view_btn = new Fl_Menu_Button(x, y, w, BH, "Visualize");
+  put_on_view_btn = new Fl_Menu_Button(
+    x + 2 * (w + WB), y, width - 2 * WB - 2 * (w + WB), BH, "Visualize");
   put_on_view_btn->callback(field_put_on_view_cb, this);
 
-  x += w + WB;
-  y = WB;
-  w = width - x - WB;
-  h = height - y - WB;
+  y += BH + WB;
+  fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+  int hb = 5 * (fl_height() + 2) + 4;
+  browser = new Fl_Hold_Browser(x, y, width - 2 * WB, hb);
+  browser->callback(field_browser_cb);
+
+  y += hb + WB;
+  w = width - 2 * WB;
+  int h = height - y - WB;
   empty_message = new Fl_Box(x, y, w, h,
                              "Create a new field\n\n"
-                             "- or -\n\nSelect a field in the browser");
+                             "- or -\n\nSelect a field in the list");
   empty_message->align(FL_ALIGN_CENTER);
 
   editor_group = new Fl_Group(x, y, w, h);
@@ -177,6 +174,10 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 
   background_btn = new Fl_Round_Button(x, y + h - BH - WB, w - BB - WB, BH,
                                        "Set as background field");
+
+  // the options take the room, Apply stays at the bottom right
+  options_tab->resizable(
+    new Fl_Box(x + IW, y + WB, w - IW - BB - WB, h - BH - 3 * WB));
   options_tab->end();
 
   Fl_Group *help_tab = new Fl_Group(x, y, w, h, "Help");
@@ -186,18 +187,15 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   help_tab->end();
 
   tabs->end();
+  tabs->resizable(options_tab);
 
   editor_group->end();
-
-  win->resizable(new Fl_Box((int)(1.5 * BB) + 2 * WB, BH + 2 * WB,
-                            width - 3 * WB - (int)(1.5 * BB),
-                            height - 3 * BH - 5 * WB));
   editor_group->resizable(tabs);
-  tabs->resizable(options_tab);
-  options_tab->resizable(new Fl_Box(3 * BB + 4 * WB, BH + 2 * WB,
-                                    width - 9 * WB - 5 * BB,
-                                    height - 3 * BH - 5 * WB));
-  win->size_range(width0, height0);
+
+  // the buttons and the list widen, the editor takes the height
+  win->resizable(new Fl_Box(2 * WB, y, width - 4 * WB, h - BH));
+  // the least height leaves three rows of field options
+  ((paletteWindow *)win)->sizeRange(width0, 9 * WB + 7 * BH + hb);
 
 #endif
 

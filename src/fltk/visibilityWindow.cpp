@@ -1321,14 +1321,23 @@ static void tree_cb(Fl_Widget *w, void *data)
 #endif
 }
 
+static void visibility_tab_cb(Fl_Widget *w, void *data)
+{
+  Fl_Tabs *t = (Fl_Tabs *)w;
+  int i = t->find(t->value());
+  ((paletteWindow *)t->window())->leastHeight(((int *)data)[i]);
+}
+
 visibilityWindow::visibilityWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int CC = BB;
 
-  static int cols[5] = {3 * WB, CC, CC, 2 * CC, 0};
-  int width = cols[0] + cols[1] + cols[2] + cols[3] + 4 * WB;
+  // as narrow as the option window; the last column takes what is left
+  int width = TW;
+  static int cols[5] = {3 * WB, CC, CC, 0, 0};
+  cols[3] = width - 4 * WB - cols[0] - cols[1] - cols[2];
   int height = 18 * BH;
   int brw = width - 4 * WB;
 
@@ -1339,6 +1348,12 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   win->box(GMSH_WINDOW_BOX);
 
   Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+  // the least height: three rows of the list, tree or windows, all of the
+  // numeric and interactive tabs
+  static int least[5];
+  least[0] = least[1] = least[4] = 7 * BH + 6 * WB;
+  least[2] = least[3] = 15 * BH + 5 * WB;
+  o->callback(visibility_tab_cb, least);
   {
     Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB,
                                height - 3 * WB - 2 * BH, "List");
@@ -1638,7 +1653,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   o->end();
 
   win->resizable(o);
-  win->size_range(width, 15 * BH + 5 * WB);
+  ((paletteWindow *)win)->sizeRange(width, least[0]);
 
   {
     int aw = (int)(3.5 * FL_NORMAL_SIZE);

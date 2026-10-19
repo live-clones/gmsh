@@ -632,8 +632,9 @@ StringXNumber GeneralOptions_Number[] = {
     "[Deprecated]" },
   { F|S, "FieldHeight" , opt_general_field_size1 , 320. ,
     "Height (in pixels) of the field window" },
-  { F|S, "FieldWidth" , opt_general_field_size0 , 420. ,
-    "Width (in pixels) of the field window" },
+  { F|S, "FieldWidth" , opt_general_field_size0 , 0. ,
+    "Width (in pixels) of the field window (0: the least width of the tool "
+    "windows)" },
   { F|S, "FileChooserOffsetX" , opt_general_file_chooser_offset0 , 150. ,
     "Horizontal offset (in pixels) of the upper left corner of the file "
     "chooser windows, relative to the upper left corner of the graphic window" },
