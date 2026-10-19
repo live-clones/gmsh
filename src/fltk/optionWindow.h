@@ -10,6 +10,7 @@
 #include <vector>
 #include <FL/Fl.H>
 #include <FL/Fl_Scroll.H>
+#include <FL/Fl_Tabs.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Multi_Browser.H>
@@ -51,7 +52,10 @@ private:
   };
   std::vector<section> _sections[6];
   Fl_Group *_category[6];
-  Fl_Button *_categoryButton[6];
+  // the tabs of the categories: empty, the view list and the scroll lie in
+  // their frame
+  Fl_Tabs *_tabs;
+  Fl_Group *_categoryTab[6];
   // _width is the width the sections are laid out for, the least there is
   int _current, _rowHeight, _width, _buttonWidth;
   std::vector<Fl_Widget *> _hiddenBySearch;
@@ -131,6 +135,8 @@ public:
   void updateViewGroup(int index);
   void activate(const char *what);
   void toggleSection(int category, int section);
+  // the tab clicked
+  void categoryChosen();
   void selectViews(const std::string &which);
   void updateViewTargets();
   // keepPosition keeps the scroll where it is, e.g. when a section is folded

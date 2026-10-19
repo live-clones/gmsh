@@ -176,16 +176,7 @@ static void options_browser_cb(Fl_Widget *w, void *data)
 }
 
 static void options_category_cb(Fl_Widget *w, void *data)
-{
-  optionWindow *o = FlGui::instance()->options;
-  int c = (intptr_t)data;
-  int n = PView::list.size();
-  o->search->value("");
-  if(c < 5)
-    o->showGroup(c + 1);
-  else if(n)
-    o->showGroup(6 + std::max(0, std::min(o->view.index, n - 1)), true, true);
-}
+{ FlGui::instance()->options->categoryChosen(); }
 
 static void options_section_cb(Fl_Widget *w, void *data)
 {
@@ -1475,8 +1466,9 @@ optionWindow::optionWindow(int deltaFontSize)
 
   // the widgets of each section are built at their place in a tab of at most
   // 11 rows of this width; layout() then stacks the sections in the scroll
-  int L = 0;
-  int width = TW - Fl::scrollbar_size() - WB;
+  // the sections lie in a scroll inside the frame of the tabs
+  int L = WB + Fl::box_dx(FL_THIN_UP_BOX);
+  int width = TW - 2 * L - Fl::scrollbar_size();
   int height = 12 * BH + 4 * WB;
   _rowHeight = BH;
   _buttonWidth = BB;
@@ -1498,7 +1490,7 @@ optionWindow::optionWindow(int deltaFontSize)
                           CTX::instance()->nonModalWindows ? true : false,
                           nullptr, CTX::instance()->optOffset);
   win->box(GMSH_WINDOW_BOX);
-  // the category bar shows the category, the view list the views
+  // the tabs show the category, the view list the views
   win->label("Options");
 
   // the search goes through all the categories, hence above them
@@ -1506,32 +1498,30 @@ optionWindow::optionWindow(int deltaFontSize)
                      "Show only the options whose label, name or choices match",
                      options_search_cb);
 
+  // the categories as tabs, empty: what they show is placed by layout()
   {
     static const char *names[6] = {"General", "Geometry", "Mesh",
                                    "Solver",  "Post-pro", "Views"};
-    Fl_Group *o = new Fl_Group(WB, 2 * WB + BH, winWidth - 2 * WB, BH);
-    int bw = (winWidth - 2 * WB) / 6;
+    _tabs =
+      new Fl_Tabs(WB, 2 * WB + BH, winWidth - 2 * WB, winHeight - 3 * WB - BH);
     for(int i = 0; i < 6; i++) {
-      int x = WB + i * bw;
-      _categoryButton[i] = new Fl_Button(
-        x, 2 * WB + BH, (i < 5) ? bw : winWidth - WB - x, BH, names[i]);
-      _categoryButton[i]->type(FL_RADIO_BUTTON);
-      _categoryButton[i]->selection_color(FL_SELECTION_COLOR);
-      _categoryButton[i]->callback(options_category_cb, (void *)(intptr_t)i);
+      _categoryTab[i] = new Fl_Group(WB, 2 * WB + 2 * BH, winWidth - 2 * WB,
+                                     winHeight - 3 * WB - 2 * BH, names[i]);
+      _categoryTab[i]->end();
     }
-    _categoryButton[0]->value(1);
-    o->end();
+    _tabs->end();
+    _tabs->callback(options_category_cb);
   }
 
   // the views whose options change together: the one shown and the selected
   viewList =
-    new targetList(WB, 2 * WB + BH, winWidth - 2 * WB, BH,
+    new targetList(L + WB, 2 * WB + 2 * BH, winWidth - 2 * L - 2 * WB, BH,
                    {"All", "Visible", "Only this"}, options_select_views_cb);
   viewList->browser->callback(options_browser_cb);
   viewList->hide();
 
-  scroll = new Fl_Scroll(0, 3 * WB + 2 * BH, winWidth - WB,
-                         winHeight - 3 * WB - 2 * BH);
+  scroll = new Fl_Scroll(L, 3 * WB + 2 * BH, winWidth - 2 * L,
+                         winHeight - 4 * WB - 2 * BH);
   scroll->type(Fl_Scroll::VERTICAL);
 
   int BW = width - 4 * WB;
@@ -4208,7 +4198,8 @@ void optionWindow::_makeSections(int c)
       b.dy.push_back(y - b.y);
     }
     // the right column starts in the middle, the right margin is 2 * WB in
-    sec.rules.record(sec.group, _width / 2 - 1, _width - 2 * WB);
+    int L = sec.group->x() - WB; // the left edge of the scroll
+    sec.rules.record(sec.group, L + _width / 2 - 1, L + _width - 2 * WB);
     sec.header = new Fl_Button(0, 0, sec.group->w(), _rowHeight);
     sec.header->box(FL_FLAT_BOX);
     sec.header->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
@@ -4253,10 +4244,6 @@ void optionWindow::layout(bool keepPosition)
   for(Fl_Widget *w : _hiddenBySearch) w->show();
   _hiddenBySearch.clear();
 
-  // no category is chosen while searching in all of them
-  for(int c = 0; c < 6; c++)
-    _categoryButton[c]->value(s.empty() && c == _current);
-
   // the blocks to show: all of them in the current category, or those that
   // match in every category while searching
   std::vector<std::vector<std::vector<bool>>> shown(6);
@@ -4279,17 +4266,27 @@ void optionWindow::layout(bool keepPosition)
     }
   }
 
-  // below the search field and the category bar, the views, as many as there
-  // are but down to two in a short window, then the options; the least height
-  // of the window leaves three rows of options
-  int y = 3 * WB + 2 * bh;
-  int bottom = redraw->visible() ? wh - bh - 2 * WB : wh;
+  // below the search field, the tabs down to the bottom (or the Redraw
+  // button); in their frame the views, as many as there are but down to two
+  // in a short window, then the options; the least height of the window
+  // leaves three rows of options
+  int ty = 2 * WB + bh;
+  int tabsBottom = redraw->visible() ? wh - bh - 2 * WB : wh - WB;
+  int L = scroll->x();
+  int y = ty + bh + WB;
+  int bottom = tabsBottom - WB;
   int least = y + 3 * bh + (wh - bottom);
+  _tabs->Fl_Widget::resize(WB, ty, ww - 2 * WB, tabsBottom - ty);
+  for(int c = 0; c < 6; c++)
+    _categoryTab[c]->resize(WB, ty + bh, ww - 2 * WB, tabsBottom - ty - bh);
+  // the tab of the category stays while searching in all of them
+  _tabs->value(_categoryTab[std::max(0, _current)]);
+  _tabs->redraw();
   if(any[5] && PView::list.size()) {
     int h = std::min(viewList->heightFor(PView::list.size()),
                      bottom - y - WB - 3 * bh);
     h = std::max(h, viewList->heightFor(2));
-    viewList->resize(WB, y, ww - 2 * WB, h);
+    viewList->resize(L + WB, y, ww - 2 * L - 2 * WB, h);
     viewList->show();
     y += h + WB;
     least += viewList->heightFor(2) + WB;
@@ -4305,7 +4302,7 @@ void optionWindow::layout(bool keepPosition)
 
   int ypos = keepPosition ? scroll->yposition() : 0;
   scroll->scroll_to(0, 0);
-  scroll->resize(0, y, ww - WB, std::max(0, bottom - y));
+  scroll->resize(L, y, ww - 2 * L, std::max(0, bottom - y));
   // sized too: hidden, it is scaled with the window like the scroll it lies in
   redraw->resize(ww - _buttonWidth - WB, wh - bh - WB, _buttonWidth, bh);
 
@@ -4332,7 +4329,7 @@ void optionWindow::layout(bool keepPosition)
     }
     g->show();
     int y0 = yy;
-    g->resize(0, y0, cw, g->h());
+    g->resize(L, y0, cw, g->h());
     for(std::size_t i = 0; i < _sections[c].size(); i++) {
       section &sec = _sections[c][i];
       std::vector<bool> &show = shown[c][i];
@@ -4350,7 +4347,7 @@ void optionWindow::layout(bool keepPosition)
       sec.header->box(first ? FL_FLAT_BOX : GMSH_SIMPLE_TOP_BOX);
       sec.header->down_box(sec.header->box()); // no pressed look
       first = false;
-      sec.header->resize(WB, yy, sw, bh);
+      sec.header->resize(L + WB, yy, sw, bh);
       sec.header->show();
       yy += bh;
       if(!open) {
@@ -4381,13 +4378,28 @@ void optionWindow::layout(bool keepPosition)
       sec.group->resize(sec.group->x(), yy, sw, bottom + WB);
       yy += bottom + WB;
     }
-    g->resize(0, y0, cw, yy - y0);
+    g->resize(L, y0, cw, yy - y0);
   }
   int most = std::max(0, yy - scroll->y() - scroll->h());
   scroll->scroll_to(0, std::min(ypos, most));
 
   win->init_sizes();
   win->redraw();
+}
+
+void optionWindow::categoryChosen()
+{
+  int c = _tabs->find(_tabs->value());
+  int n = PView::list.size();
+  if(c == 5 && !n) { // no views: the tab is greyed out, and stays so
+    layout(true);
+    return;
+  }
+  search->value("");
+  if(c < 5)
+    showGroup(c + 1);
+  else
+    showGroup(6 + std::max(0, std::min(view.index, n - 1)), true, true);
 }
 
 void optionWindow::toggleSection(int c, int i)
@@ -4466,9 +4478,9 @@ void optionWindow::resetBrowser()
   else
     view.index = -1;
   if(n)
-    _categoryButton[5]->activate();
+    _categoryTab[5]->activate();
   else
-    _categoryButton[5]->deactivate();
+    _categoryTab[5]->deactivate();
   int num = _current + 1;
   if(_current == 5) num = n ? 6 + std::max(0, std::min(view.index, n - 1)) : 5;
   showGroup(num, false);
