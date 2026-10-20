@@ -725,9 +725,12 @@ static void Mesh2D(GModel *m)
   if(m->getFields()->getNumBoundaryLayerFields()) nthreads = 1;
 
   for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
-    // Frontal-Delaunay for quads and co are not yet thread-safe
+    // Frontal-Delaunay for quads and co are not yet thread-safe; PACK is
+    // on CAD surfaces (the packing only reads the guiding field), not yet on
+    // discrete ones
     if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
-       (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+       ((*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS &&
+        (*it)->geomType() == GEntity::DiscreteSurface) ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
       nthreads = 1;
 
@@ -1648,6 +1651,49 @@ static bool quantize1DIfNeeded(GModel *m)
   return true;
 }
 
+// With PACK, the boundary loops of discrete surfaces must stay polygons: a
+// closed curve gets at least 3 segments, two curves sharing both their
+// endpoints at least 2 each (OCCFace imposes the same minima on its wires).
+// Restored after the generation.
+class PackDiscreteLoops {
+  std::map<GEdge *, int> _minimumSegments;
+  void require(GEdge *edge, int minimum)
+  {
+    if(edge->meshAttributes.minimumMeshSegments >= minimum) return;
+    _minimumSegments.emplace(edge, edge->meshAttributes.minimumMeshSegments);
+    edge->meshAttributes.minimumMeshSegments = minimum;
+  }
+
+public:
+  PackDiscreteLoops()
+  {
+    GModel *model = GModel::current();
+    if(!model || CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS) return;
+    for(GFace *face : model->getFaces()) {
+      if(face->geomType() != GEntity::DiscreteSurface) continue;
+      std::map<std::pair<int, int>, std::set<GEdge *>> edgesByEndpoints;
+      for(GEdge *edge : face->edges()) {
+        GVertex *first = edge->getBeginVertex();
+        GVertex *second = edge->getEndVertex();
+        if(!first || !second) continue;
+        if(first == second)
+          require(edge, 3);
+        else
+          edgesByEndpoints[std::minmax(first->tag(), second->tag())].insert(
+            edge);
+      }
+      for(const auto &entry : edgesByEndpoints)
+        if(entry.second.size() == 2)
+          for(GEdge *edge : entry.second) require(edge, 2);
+    }
+  }
+  ~PackDiscreteLoops()
+  {
+    for(const auto &entry : _minimumSegments)
+      entry.first->meshAttributes.minimumMeshSegments = entry.second;
+  }
+};
+
 void GenerateMesh(GModel *m, int ask)
 {
   // ProfilerStart("gmsh.prof");
@@ -1664,6 +1710,8 @@ void GenerateMesh(GModel *m, int ask)
 
   // Initialize pseudo random mesh generator with the same seed
   srand(CTX::instance()->mesh.randomSeed);
+
+  PackDiscreteLoops packDiscreteLoops;
 
   // Change any high order elements back into first order ones (but skip
   // discrete entities)

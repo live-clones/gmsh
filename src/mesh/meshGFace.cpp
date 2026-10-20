@@ -1202,6 +1202,13 @@ recoverBoundaryEdges(GFace *gf, BDS_Mesh *m, std::vector<GEdge *> &edges,
              edgesToRecover.size(), edgesNotRecovered.size());
 
   if(edgesNotRecovered.size() || gf->meshStatistics.refineAllEdges) {
+    if(!CTX::instance()->mesh.repairSelfIntersecting1dMesh) {
+      Msg::Warning("Surface %d: boundary recovery failed; keeping the 1D mesh "
+                   "without subdivision (Mesh.RepairSelfIntersecting1DMesh=0)",
+                   gf->tag());
+      gf->meshStatistics.status = GFace::FAILED;
+      return EdgeRecovery::Failed;
+    }
     std::ostringstream sstream;
     for(auto itr = edgesNotRecovered.begin(); itr != edgesNotRecovered.end();
         ++itr)
@@ -2057,6 +2064,16 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
 
   if(doItAgain) {
+    // Stop before serialization or any change to shared curve meshes. In
+    // particular, do not invalidate already meshed neighboring surfaces.
+    if(!CTX::instance()->mesh.repairSelfIntersecting1dMesh) {
+      Msg::Warning("Surface %d: boundary recovery failed; keeping the 1D mesh "
+                   "without subdivision (Mesh.RepairSelfIntersecting1DMesh=0)",
+                   gf->tag());
+      gf->meshStatistics.status = GFace::FAILED;
+      delete m;
+      return false;
+    }
     // this block is not thread safe. 2D mesh will be serialized for surfaces
     // that have their 1D mesh self-intersect
     if(Msg::GetNumThreads() != 1) {
@@ -2154,6 +2171,15 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                   &recoverMap, &true_boundary);
     if(debug) debugViews(m, gf, "phase3");
     if(debug) debugViews(m, gf, "phase4");
+
+    if(gf->meshStatistics.status == GFace::FAILED &&
+       !CTX::instance()->mesh.repairSelfIntersecting1dMesh) {
+      Msg::Warning("Surface %d: meshing failed; keeping the 1D mesh without "
+                   "subdivision (Mesh.RepairSelfIntersecting1DMesh=0)",
+                   gf->tag());
+      delete m;
+      return false;
+    }
 
     // refining the bounding curves does not always help, e.g. near the apex
     // of a cone, where the circumference always ends up smaller than the mesh
