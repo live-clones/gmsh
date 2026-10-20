@@ -756,6 +756,11 @@ Display mesh pyramids?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.RepairSelfIntersecting1DMesh
+Allow surface meshers to subdivide the boundary mesh and retry when recovering boundary edges fails (0: mark the surface as failed and preserve the existing curve mesh without subdivision or retries)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveDebugFiles
 Write optional meshing and optimization debug meshes, background fields, point views and statistics JSON, independently of verbosity@*
 Default value: @code{0}@*
