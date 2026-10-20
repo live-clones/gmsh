@@ -73,10 +73,6 @@ typedef unsigned long intptr_t;
 #include "3M.h"
 #endif
 
-#if defined(HAVE_TOUCHBAR)
-#include "touchBar.h"
-#endif
-
 static void file_new_cb(Fl_Widget *w, void *data)
 {
 test:
@@ -3347,10 +3343,6 @@ void quick_access_cb(Fl_Widget *w, void *data)
       opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI, 0);
     }
   }
-
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
 }
 
 static void model_switch_cb(Fl_Widget *w, void *data)

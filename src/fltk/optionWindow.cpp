@@ -39,10 +39,6 @@ typedef unsigned long intptr_t;
 #include "Context.h"
 #include "StringUtils.h"
 #include "gmshLocalNetworkClient.h"
-#if defined(HAVE_TOUCHBAR)
-#include "touchBar.h"
-#endif
-
 extern StringXColor GeneralOptions_Color[];
 extern StringXColor GeometryOptions_Color[];
 extern StringXColor MeshOptions_Color[];
@@ -570,10 +566,6 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_opacity(0, GMSH_SET, o->geo.value[21]->value());
   opt_geometry_opacity_mode(0, GMSH_SET, o->geo.choice[6]->value());
 
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
-
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   drawContext::global()->draw();
@@ -668,10 +660,6 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
   opt_mesh_light_lines(0, GMSH_SET, o->mesh.choice[10]->value());
-
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -1417,10 +1405,6 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       PView::list[i]->setChanged(true);
     }
   }
-
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;

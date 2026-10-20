@@ -56,10 +56,6 @@
 #include "Field.h"
 #endif
 
-#if defined(HAVE_TOUCHBAR)
-#include "touchBar.h"
-#endif
-
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
@@ -679,10 +675,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
   if(CTX::instance()->showOptionsOnStartup) options->win->show();
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
-
-#if defined(HAVE_TOUCHBAR)
-  showTouchBar();
-#endif
 }
 
 FlGui::~FlGui()
@@ -776,10 +768,6 @@ int FlGui::run(const std::string &optionFileName)
   // draw the scene
   drawContext::global()->draw(false);
 
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
-
   int ret = Fl::run();
 
   if(optionFileName.size()) {
@@ -858,10 +846,6 @@ int FlGui::testGlobalShortcuts(int event)
       break;
     }
   }
-
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
 
   if(status == 2) {
     drawContext::global()->draw();
