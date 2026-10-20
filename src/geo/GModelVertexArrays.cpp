@@ -173,6 +173,11 @@ template <class T> static bool areSomeElementsCurved(std::vector<T *> &elements)
 // is the element drawn with its curved representation?
 static bool isCurved(MElement *ele)
 {
+  // A four-node quadrangle is bilinear, not planar in general. Subdivide it
+  // through its reference-space mapping whenever the user requests more than
+  // one display sub-edge, just like a higher-order element.
+  if(ele->getType() == TYPE_QUA && CTX::instance()->mesh.numSubEdges > 1)
+    return true;
   return (ele->getPolynomialOrder() > 1) &&
          (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
 }

@@ -9411,6 +9411,14 @@ void tetgenmesh::flip31(face* flipfaces, int flipflag)
   point pa, pb, pc;
   int i;
 
+  if(flipfaces[0].sh == NULL || flipfaces[1].sh == NULL ||
+     flipfaces[2].sh == NULL) {
+    // stale/missing subface handle (seen during Steiner point removal on
+    // strongly graded inputs) -- bail out cleanly instead of
+    // dereferencing a null face.
+    terminatetetgen(this, 2);
+  }
+
   pa = sdest(flipfaces[0]);
   pb = sdest(flipfaces[1]);
   pc = sdest(flipfaces[2]);
@@ -12074,6 +12082,13 @@ int tetgenmesh::recoveredgebyflips(point startpt, point endpt, face *sedge,
 
     // Search the edge from 'startpt'.
     point2tetorg(startpt, *searchtet);
+    if (searchtet->tet == NULL) {
+      // 'startpt' has no valid tetrahedron to search from (stale
+      // point-to-tet reference); report failure so the caller falls back
+      // to its normal Steiner-point-insertion recovery path instead of
+      // dereferencing a null tet.
+      return 0;
+    }
     dir = finddirection(searchtet, endpt);
     if (dir == ACROSSVERT) {
       if (dest(*searchtet) == endpt) {

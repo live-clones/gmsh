@@ -608,7 +608,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NumSubEdges
 Number of edge subdivisions used to draw high-order mesh elements@*
-Default value: @code{2}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OldInitialDelaunay2D
