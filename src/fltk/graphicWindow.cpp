@@ -4025,9 +4025,13 @@ static void message_browser_cb(Fl_Widget *w, void *data)
 static void message_menu_search_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = (graphicWindow *)data;
-  g->getMessageBrowser()->clear();
-  for(int i = 0; i < (int)g->getMessages().size(); i++)
-    g->getMessageBrowser()->add(g->getMessages()[i].c_str());
+  g->getMessageBrowser()->rebuild(g->getMessages());
+}
+
+static void message_menu_copy_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = (graphicWindow *)data;
+  g->copySelectedMessagesToClipboard();
 }
 
 static void tile_cb(Fl_Widget *w, void *data)
@@ -4225,6 +4229,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _browser->callback(message_browser_cb, this);
     _browser->search_callback(message_menu_search_cb, this);
     _browser->autoscroll_callback(message_menu_autoscroll_cb, this);
+    _browser->copy_callback(message_menu_copy_cb, this);
     _browser->save_callback(message_menu_save_cb, this);
     _browser->clear_callback(message_menu_clear_cb, this);
   }
@@ -4912,6 +4917,12 @@ void graphicWindow::addMessage(const char *msg)
     // this does not seem to work (17/02/2017)
 #pragma omp critical(addMessage)
   {
+    // the console keeps the last 50000 messages: beyond, the oldest tenth goes
+    const std::size_t maxMessages = 50000;
+    if(_messages.size() >= maxMessages) {
+      _messages.erase(_messages.begin(), _messages.begin() + maxMessages / 10);
+      _browser->rebuild(_messages);
+    }
     _messages.push_back(msg);
     _browser->add(msg);
     if(_autoScrollMessages && _win->shown() && _browser->h() >= FL_NORMAL_SIZE)
@@ -4953,9 +4964,13 @@ void graphicWindow::copySelectedMessagesToClipboard()
 {
   if(!_browser) return;
 
+  // the lines selected, or all of them
+  bool any = false;
+  for(int i = 1; i <= _browser->size(); i++)
+    if(_browser->selected(i)) any = true;
   std::string buff;
   for(int i = 1; i <= _browser->size(); i++) {
-    if(_browser->selected(i)) {
+    if(!any || _browser->selected(i)) {
       const char *c = _browser->text(i);
       if(strlen(c) > 5 && c[0] == '@')
         buff += std::string(&c[5]);

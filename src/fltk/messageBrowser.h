@@ -11,14 +11,19 @@
 #include <algorithm>
 #include <string>
 #include <regex>
+#include <vector>
 
 class messageBrowser : public Fl_Group {
 private:
   Fl_Browser *_browser;
   Fl_Group *_box;
   Fl_Check_Button *_autoscroll;
-  Fl_Button *_clear, *_save;
+  Fl_Button *_copy, *_save, *_clear;
   Fl_Input *_search;
+  // the filter typed, compiled once; a regular expression that does not parse
+  // is shown in red and filters nothing
+  std::regex _filter;
+  bool _filtering, _filterValid;
 
 public:
   messageBrowser(int x, int y, int w, int h, const char *l = 0)
@@ -36,15 +41,20 @@ public:
                         "Filter messages using regular expression", nullptr);
     _search->textsize(FL_NORMAL_SIZE - 1);
 
-    _save = new Fl_Button(x + wb + sw + WB, y + wb, bb, bh, "Save");
+    _copy = new Fl_Button(x + wb + sw + WB, y + wb, bb, bh, "Copy");
+    _copy->labelsize(FL_NORMAL_SIZE - 1);
+    _copy->box(FL_THIN_UP_BOX);
+    _copy->tooltip("Copy the selected lines, or all of them, to the clipboard");
+
+    _save = new Fl_Button(x + sw + bb + 2 * WB, y + wb, bb, bh, "Save");
     _save->labelsize(FL_NORMAL_SIZE - 1);
     _save->box(FL_THIN_UP_BOX);
 
-    _clear = new Fl_Button(x + sw + bb + 2 * WB, y + wb, bb, bh, "Clear");
+    _clear = new Fl_Button(x + sw + 2 * bb + 3 * WB, y + wb, bb, bh, "Clear");
     _clear->labelsize(FL_NORMAL_SIZE - 1);
     _clear->box(FL_THIN_UP_BOX);
 
-    _autoscroll = new Fl_Check_Button(x + sw + 2 * bb + 3 * WB, y + wb, 2 * bb,
+    _autoscroll = new Fl_Check_Button(x + sw + 3 * bb + 4 * WB, y + wb, 2 * bb,
                                       bh, "Autoscroll messages");
     _autoscroll->labelsize(FL_NORMAL_SIZE - 1);
     _autoscroll->type(FL_TOGGLE_BUTTON);
@@ -65,6 +75,31 @@ public:
     _browser->end();
     end();
     resizable(_browser);
+    _filtering = _filterValid = false;
+  }
+  // the filter typed, compiled once for every line to come
+  void filter()
+  {
+    std::string s = _search->value();
+    _filtering = !s.empty();
+    _filterValid = true;
+    if(_filtering) {
+      try {
+        // icase for case-insensitive search
+        _filter = std::regex(s, std::regex_constants::icase);
+      } catch(...) {
+        _filterValid = false;
+      }
+    }
+    _search->textcolor(_filterValid ? FL_FOREGROUND_COLOR : FL_RED);
+    _search->redraw();
+  }
+  // the lines again, through the filter typed
+  void rebuild(const std::vector<std::string> &messages)
+  {
+    filter();
+    _browser->clear();
+    for(const std::string &m : messages) add(m.c_str());
   }
   void box(Fl_Boxtype new_box) { _browser->box(new_box); }
   void textfont(Fl_Font font) { _browser->textfont(font); }
@@ -76,24 +111,15 @@ public:
   {
     _autoscroll->callback(cb, p);
   }
+  void copy_callback(Fl_Callback *cb, void *p) { _copy->callback(cb, p); }
   void save_callback(Fl_Callback *cb, void *p) { _save->callback(cb, p); }
   void clear_callback(Fl_Callback *cb, void *p) { _clear->callback(cb, p); }
   void bottomline(int line) { _browser->bottomline(line); }
   int size() { return _browser->size(); }
   void add(const char *newtext)
   {
-    std::string search = _search->value();
-    if(search.empty()) { _browser->add(newtext); }
-    else {
-      std::string tmp(newtext);
-      try {
-        // icase for case-insensitive search
-        if(std::regex_search(tmp,
-                             std::regex(search, std::regex_constants::icase)))
-          _browser->add(newtext);
-      } catch(...) {
-      }
-    }
+    if(!_filtering || !_filterValid || std::regex_search(newtext, _filter))
+      _browser->add(newtext);
   }
   void clear() { _browser->clear(); }
   const char *text(int line) const { return _browser->text(line); }
