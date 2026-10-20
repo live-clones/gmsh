@@ -66,14 +66,25 @@ int dockTitle::handle(int event)
       _dragging = true;
       window()->cursor(FL_CURSOR_MOVE);
     }
-    if(_dragging) dock->dragging(win, Fl::event_x_root(), Fl::event_y_root());
+    if(_dragging) {
+      // read before the chip moves: moving a window lets the system report
+      // the pointer, which overwrites the event
+      int ex = Fl::event_x(), ey = Fl::event_y();
+      dock->dragging(win, Fl::event_x_root(), Fl::event_y_root());
+      dock->stackTarget(ex, ey);
+    }
     return 1;
   case FL_RELEASE:
     if(_dragging) {
       _dragging = false;
       window()->cursor(FL_CURSOR_DEFAULT);
-      dock->dragEnded(win, Fl::event_x_root(), Fl::event_y_root(),
-                      dock->outside(Fl::event_x(), Fl::event_y()));
+      if(dock->outside(Fl::event_x(), Fl::event_y())) {
+        dock->dragEnded(win, Fl::event_x_root(), Fl::event_y_root(), true);
+      }
+      else {
+        dock->dropInStack(this);
+        dock->dragEnded(win, 0, 0, false);
+      }
       return 1;
     }
     if(!Fl::event_inside(this)) return 1;
@@ -104,8 +115,14 @@ int dockTabs::handle(int event)
       window()->cursor(FL_CURSOR_MOVE);
     }
     if(_dragging) {
+      // read before the chip moves (see dockTitle::handle())
+      int at = _indexAt(Fl::event_x(), Fl::event_y());
       dock->dragging(((dockTab *)_pressed)->win, Fl::event_x_root(),
                      Fl::event_y_root());
+      if(at != _dropAt) {
+        _dropAt = at;
+        redraw();
+      }
       return 1;
     }
     break;
@@ -113,16 +130,22 @@ int dockTabs::handle(int event)
     if(_dragging) {
       _dragging = false;
       window()->cursor(FL_CURSOR_DEFAULT);
-      paletteWindow *pw = ((dockTab *)_pressed)->win;
+      Fl_Widget *t = _pressed;
+      paletteWindow *pw = ((dockTab *)t)->win;
       _pressed = nullptr;
       if(dock->outside(Fl::event_x(), Fl::event_y())) {
+        _dropAt = -1;
         dock->dragEnded(pw, Fl::event_x_root(), Fl::event_y_root(), true);
         return 1;
       }
-      // released in the dock: the tab under the pointer is chosen, if it is
-      // the one pressed
+      // put down where it was dragged along the row, and chosen: the dock
+      // shows its window from the callback
+      if(_dropAt >= 0) insert(*t, _dropAt);
+      _dropAt = -1;
+      if(value(t)) do_callback();
+      redraw();
       dock->dragEnded(pw, 0, 0, false);
-      break;
+      return 1;
     }
     _pressed = nullptr;
     break;
@@ -130,9 +153,33 @@ int dockTabs::handle(int event)
   return Fl_Tabs::handle(event);
 }
 
+int dockTabs::_indexAt(int x, int y)
+{
+  // the place in the row a tab dropped at (x, y) takes: before the tab whose
+  // middle is after x, else at the end
+  int nc = children();
+  if(!nc || y < this->y() || y >= this->y() + tab_height()) return -1;
+  tab_positions();
+  for(int i = 0; i < nc; i++)
+    if(x < this->x() + tab_offset + (tab_pos[i] + tab_pos[i + 1]) / 2) return i;
+  return nc;
+}
+
+void dockTabs::draw()
+{
+  Fl_Tabs::draw();
+  if(_dropAt < 0) return;
+  // the marker of the place, a bar between the tabs
+  tab_positions();
+  int xx = x() + tab_offset + tab_pos[_dropAt];
+  fl_color(FL_SELECTION_COLOR);
+  fl_rectf(xx - 1, y(), 3, tab_height());
+}
+
 toolDock::toolDock(int x, int y, int w, int h, int rowHeight)
   : Fl_Group(x, y, w, h), _rowHeight(rowHeight), _ghost(nullptr),
-    _dropHint(false), _clock(0), _layingOut(false), _requested(nullptr)
+    _dropHint(false), _dropAt(-1), _clock(0), _layingOut(false),
+    _requested(nullptr)
 {
   // FLTK 1.5 tabs draw their row with the box of their parent: without one, a
   // closed tab stays drawn
@@ -311,10 +358,7 @@ void toolDock::dock(paletteWindow *pw)
   _use(pw);
   _requested = pw;
   if(dockTitle *t = _titleOf(pw)) {
-    // shown again: open, at the top
-    _stack.erase(std::find(_stack.begin(), _stack.end(), t));
-    _stack.insert(_stack.begin(), t);
-    t->folded = false;
+    t->folded = false; // shown again: open, where it is in the stack
   }
   else if(dockTab *t = _tabOf(pw)) {
     t->copy_label(pw->label()); // some windows change their label
@@ -431,9 +475,45 @@ void toolDock::dragging(paletteWindow *pw, int x, int y)
   _ghost->follow(pw->label(), _rowHeight, x, y);
 }
 
+int toolDock::_stackIndexAt(int y) const
+{
+  // the place in the stack a title dropped at y takes: before the stacked
+  // window whose middle is below y, else at the end
+  for(std::size_t i = 0; i < _stack.size(); i++) {
+    dockTitle *t = _stack[i];
+    int hh = t->h() + (t->shut ? 0 : t->win->h());
+    if(y < t->y() + hh / 2) return (int)i;
+  }
+  return (int)_stack.size();
+}
+
+void toolDock::stackTarget(int x, int y)
+{
+  int at = outside(x, y) ? -1 : _stackIndexAt(y);
+  if(at == _dropAt) return;
+  _dropAt = at;
+  redraw();
+}
+
+void toolDock::dropInStack(dockTitle *t)
+{
+  if(_dropAt < 0) return;
+  auto it = std::find(_stack.begin(), _stack.end(), t);
+  int from = (int)(it - _stack.begin()), to = _dropAt;
+  _dropAt = -1;
+  _stack.erase(it);
+  if(to > from) to--;
+  _stack.insert(_stack.begin() + to, t);
+  _layout();
+}
+
 void toolDock::dragEnded(paletteWindow *pw, int x, int y, bool tearOut)
 {
   if(_ghost) _ghost->hide();
+  if(_dropAt >= 0) {
+    _dropAt = -1;
+    redraw();
+  }
   if(!tearOut) return;
   pw->floating(true);
   hidden(pw);
@@ -458,6 +538,18 @@ void toolDock::draw()
     return;
   }
   Fl_Group::draw();
+  if(_dropAt < 0) return;
+  // the marker of the place a dragged title would take: a bar on the top
+  // edge of the stacked window it would go before, or under the last
+  int yy = y();
+  if(_dropAt < (int)_stack.size())
+    yy = _stack[_dropAt]->y();
+  else if(!_stack.empty()) {
+    dockTitle *t = _stack.back();
+    yy = t->y() + t->h() + (t->shut ? 0 : t->win->h());
+  }
+  fl_color(FL_SELECTION_COLOR);
+  fl_rectf(x(), yy - 1, w(), 3);
 }
 
 int dockDivider::handle(int event)
@@ -474,8 +566,13 @@ int dockDivider::handle(int event)
 
 void dockDivider::draw()
 {
-  fl_color(highlight ? FL_SELECTION_COLOR : color());
+  fl_color(color());
   fl_rectf(x(), y(), w(), h());
   fl_color(FL_DARK2);
   fl_line(x(), y(), x(), y() + h());
+  // the target of a window dragged over the dock: a bar down the middle
+  if(highlight) {
+    fl_color(FL_SELECTION_COLOR);
+    fl_rectf(x() + w() / 2 - 1, y(), 2, h());
+  }
 }

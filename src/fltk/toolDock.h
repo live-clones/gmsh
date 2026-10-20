@@ -58,21 +58,26 @@ public:
   int handle(int event);
 };
 
-// The tabs of the docked windows of free height: a tab dragged out of the
-// dock tears its window out of it
+// The tabs of the docked windows of free height: a tab dragged along the row
+// is put down where it is released, a tab dragged out of the dock tears its
+// window out of it
 class dockTabs : public Fl_Tabs {
-  // the tab the button went down on, where, and whether it has been dragged
+  // the tab the button went down on, where, whether it has been dragged, and
+  // where in the row a release would put it (-1: not over the row)
   Fl_Widget *_pressed;
   int _pushX, _pushY;
   bool _dragging;
+  int _dropAt;
+  int _indexAt(int x, int y);
 
 public:
   dockTabs(int x, int y, int w, int h)
     : Fl_Tabs(x, y, w, h), _pressed(nullptr), _pushX(0), _pushY(0),
-      _dragging(false)
+      _dragging(false), _dropAt(-1)
   {
   }
   int handle(int event);
+  void draw();
 };
 
 // A column of the main window where the tool windows are docked, as
@@ -88,6 +93,10 @@ private:
   // drawn as the target of a window dragged over it (see draw())
   bool _dropHint;
   std::vector<dockTitle *> _stack; // from the top
+  // where in the stack a release of the title being dragged would put it
+  // (-1: not over the dock)
+  int _dropAt;
+  int _stackIndexAt(int y) const;
   // when each window was last used, to fold and to close
   std::map<paletteWindow *, unsigned long> _used;
   unsigned long _clock;
@@ -117,6 +126,10 @@ public:
   bool dragged(int fromX, int fromY, int x, int y) const;
   void dragging(paletteWindow *pw, int x, int y);
   bool outside(int x, int y) const;
+  // a title dragged to (x, y) in the dock: the marker of where it would go,
+  // and its move there on the release
+  void stackTarget(int x, int y);
+  void dropInStack(dockTitle *t);
   // the drag over: the chip goes, and the window leaves the dock for the
   // desktop under the pointer if asked, staying there until dragged back
   // (see paletteWindow::floating())
