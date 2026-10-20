@@ -194,8 +194,16 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 
 int GFace2PolyMesh(int faceTag, PolyMesh **pm)
 {
-  // FIXME using the public API inside Gmsh is not a good idea
-  if(!gmsh::isInitialized()) gmsh::initialize();
+  // FIXME using the public API inside Gmsh is not a good idea: at least
+  // without reading the option files again, nor making every later error
+  // throw an exception (what gmsh::initialize does for API users)
+  if(!gmsh::isInitialized()) {
+    const int abortOnError = CTX::instance()->abortOnError;
+    const int terminal = CTX::instance()->terminal;
+    gmsh::initialize(0, nullptr, false, false);
+    CTX::instance()->abortOnError = abortOnError;
+    CTX::instance()->terminal = terminal;
+  }
   *pm = new PolyMesh;
 
   std::unordered_map<size_t, size_t> nodeLabels;
