@@ -80,8 +80,7 @@ void surfacePointWithExclusionRegion::print(FILE *f, int i)
 {
   //  fprintf(f, "SP(%g,%g,%g){%d};\n", _v->x(), _v->y(), _v->z(), i);
   //  return;
-  fprintf(f, "SP(%g,%g,%g){%d};\n", _v->x(), _v->y(), _v->z(), i);
-  //  fprintf(f, "SP(%g,%g,%g){%d};\n", _center.x(), _center.y(), 0.0, i);
+  fprintf(f, "SP(%g,%g,%g){%d};\n", _center.x(), _center.y(), 0.0, i);
   fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
 	  _q[0].x(), _q[0].y(), 0.0, _q[1].x(), _q[1].y(), 0.0, _q[2].x(),
           _q[2].y(), 0.0, _q[3].x(), _q[3].y(), 0.0, i, i, i, i);
@@ -105,8 +104,13 @@ bool inExclusionZone(
   RTree<surfacePointWithExclusionRegion *, double, 2, double> &rtree)
 {
   my_wrapper w(p, parent);
-  double _min[2] = {p.x() - 1.e-1, p.y() - 1.e-1},
-         _max[2] = {p.x() + 1.e-1, p.y() + 1.e-1};
+  // Exclusion regions are stored in the R-tree with their axis-aligned
+  // bounding boxes. A point query is therefore sufficient to retrieve every
+  // region that can contain p. The previous fixed-size UV window made each
+  // query visit a large fraction of the tree on fine or strongly graded size
+  // maps, turning the packing loop effectively quadratic.
+  double _min[2] = {p.x(), p.y()};
+  double _max[2] = {p.x(), p.y()};
   rtree.Search(_min, _max, rtree_callback, &w);
 
   return w._tooclose;

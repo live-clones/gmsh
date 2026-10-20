@@ -1534,7 +1534,10 @@ namespace pdel3d {
   reduction(+ : ill)
     for(std::size_t t = 0; t < m.ntet; t++)
       if(K.inVolume((tIdx)t) && K.qual[t] < 0.001) ill++;
-    if(ill) Msg::Warning("%zu ill-shaped tets are still in the mesh", ill);
+    // (verbosity 0: an intermediate mesh, as the tets of a hex-dominant mesh
+    // before their combination)
+    if(ill && opt.verbosity > 0)
+      Msg::Warning("%zu ill-shaped tets are still in the mesh", ill);
     Msg::Info("Optimization: %zu edge swaps, %zu node relocations, %zu "
               "reconnections (Wall %gs)",
               totalSwaps, totalRelocations, totalReconnections,

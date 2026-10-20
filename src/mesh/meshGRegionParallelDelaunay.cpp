@@ -4201,8 +4201,11 @@ namespace {
   // give the mesh to the regions: the new vertices (in the volume of the
   // tets referencing them) and the tets, created in parallel with explicit
   // numbers (the counters of the model are atomic)
+  // vertices, if given, receives the vertex of each vertex index of m before
+  // the export (null for the ones no tet of the volumes uses)
   std::size_t exportMesh(pdel3d::Mesh &m, SurfaceMesh &s,
-                         std::vector<GRegion *> &regions, int nthreads)
+                         std::vector<GRegion *> &regions, int nthreads,
+                         std::vector<MVertex *> *vertices = nullptr)
   {
     // the deleted tets (the mesh is not compacted) are skipped as outside
 #pragma omp parallel for schedule(static) num_threads(std::max(1, nthreads))
@@ -4328,6 +4331,11 @@ namespace {
                              (int)num++);
         }
       }
+    }
+    if(vertices) {
+      vertices->assign(newIndex.size(), nullptr);
+      for(std::size_t v = 0; v < newIndex.size(); v++)
+        if(newIndex[v] != pdel3d::GHOST) (*vertices)[v] = c2v[newIndex[v]];
     }
     return total;
   }
@@ -4974,10 +4982,22 @@ namespace {
 
 } // namespace
 
-static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
+// points: if given, these points (3 coordinates each) are inserted in the
+// volumes instead of the refinement, and the mesh is only optimized by
+// changing its connectivity, if optimizeTopology; the vertex of each point
+// goes to pointVertices (null if it was not inserted)
+static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
+                       const std::vector<double> *points = nullptr,
+                       std::vector<MVertex *> *pointVertices = nullptr,
+                       bool optimizeTopology = false)
 {
   const double t0 = TimeOfDay();
-  const int nthreads = numThreads3D();
+  // with given points (the hex-dominant meshes): all the cores, as the
+  // combination that follows, unless Mesh.MaxNumThreads3D
+  const int nthreads = !points ? numThreads3D() :
+                       CTX::instance()->mesh.maxNumThreads3D > 0 ?
+                                 CTX::instance()->mesh.maxNumThreads3D :
+                                 Msg::GetMaxThreads();
   const int verbosity = Msg::GetVerbosity() > 5 ? 2 : 1;
   SurfaceMesh s;
   if(!collectSurfaceMesh(regions, s, sqr)) return 2;
@@ -5137,9 +5157,32 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
   const double t2 = TimeOfDay();
   Msg::Info("Done recovering the boundary (Wall %gs)", t2 - t1);
 
-  // refinement
+  // refinement, or the given points
   const std::size_t numFixed = m.numVertices();
-  {
+  if(points) {
+    const std::size_t n = points->size() / 3;
+    m.xyz.resize(4 * (numFixed + n));
+    std::vector<pdel3d::vIdx> toInsert(n);
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+    for(std::int64_t i = 0; i < (std::int64_t)n; i++) {
+      double *x = &m.xyz[4 * (numFixed + i)];
+      for(int k = 0; k < 3; k++) x[k] = (*points)[3 * i + k];
+      x[3] = 0.;
+      toInsert[i] = (pdel3d::vIdx)(numFixed + i);
+    }
+    pdel3d::DelaunayOptions opt;
+    opt.numThreads = nthreads;
+    opt.perfectDelaunay = false;
+    opt.allowOuterInsertion = false;
+    opt.numVerticesInMesh = numFixed;
+    opt.verbosity = verbosity;
+    std::vector<std::uint8_t> status;
+    pdel3d::DelaunayStats stats;
+    pdel3d::insertVertices(m, opt, toInsert, status, &stats);
+    Msg::Info("Inserted %zu of %zu points (Wall %gs)", stats.inserted, n,
+              TimeOfDay() - t2);
+  }
+  else {
     pdel3d::RefineOptions opt;
     opt.numThreads = nthreads;
     opt.numVolumes = (std::uint32_t)regions.size();
@@ -5159,25 +5202,35 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
   double t3 = TimeOfDay();
   Msg::Info("Done refining (Wall %gs)", t3 - t2);
   if(Msg::GetVerbosity() > 5) m.verify(false);
-  if(CTX::instance()->mesh.optimize > 0 &&
+  if((!points || optimizeTopology) && CTX::instance()->mesh.optimize > 0 &&
      CTX::instance()->mesh.optimizeThreshold > 0.) {
     Msg::Info("Optimizing mesh...");
     pdel3d::OptimizeOptions opt;
     opt.numThreads = nthreads;
     opt.numVolumes = (std::uint32_t)regions.size();
-    opt.numFixedVertices = numFixed;
+    // all the vertices fixed with the given points: they stay where they are
+    opt.numFixedVertices = points ? m.numVertices() : numFixed;
     opt.qualityMin = CTX::instance()->mesh.optimizeThreshold;
     opt.sprQualityFactor = CTX::instance()->mesh.optimizeReconnectionThreshold;
     opt.sprMaxPoints = CTX::instance()->mesh.optimizeReconnectionPoints;
     opt.sprMaxSearchNodes = CTX::instance()->mesh.optimizeReconnectionSearch;
-    opt.verbosity = verbosity;
+    // the tets of the given points are an intermediate mesh, combined next
+    opt.verbosity = points ? 0 : verbosity;
     pdel3d::optimize(m, opt);
     if(Msg::GetVerbosity() > 5) m.verify(false);
     Msg::Info("Done optimizing mesh (Wall %gs)", TimeOfDay() - t3);
     t3 = TimeOfDay();
   }
 
-  const std::size_t numTets = exportMesh(m, s, regions, nthreads);
+  std::vector<MVertex *> vertices;
+  const std::size_t numTets =
+    exportMesh(m, s, regions, nthreads, points ? &vertices : nullptr);
+  if(points) {
+    const std::size_t n = points->size() / 3;
+    pointVertices->assign(n, nullptr);
+    for(std::size_t i = 0; i < n && numFixed + i < vertices.size(); i++)
+      (*pointVertices)[i] = vertices[numFixed + i];
+  }
   Msg::Info("Done exporting %zu tets (Wall %gs)", numTets, TimeOfDay() - t3);
   // the pyramids on the quadrangles, as in del3d: on the exact coordinates
   // (the apexes are moved into the volume, which the restoration would undo)
@@ -5196,6 +5249,20 @@ int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
   splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
   const int ret = meshRegions(regions, sqr);
   // the pyramid apexes only go to the volumes on success
+  if(ret)
+    for(auto &q : sqr.getQuad()) delete q.second;
+  return ret;
+}
+
+int meshGRegionParallelDelaunayWithPoints(GRegion *gr,
+                                          const std::vector<double> &xyz,
+                                          std::vector<MVertex *> &vertices,
+                                          bool optimizeTopology)
+{
+  std::vector<GRegion *> regions(1, gr);
+  splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
+  const int ret =
+    meshRegions(regions, sqr, &xyz, &vertices, optimizeTopology);
   if(ret)
     for(auto &q : sqr.getQuad()) delete q.second;
   return ret;

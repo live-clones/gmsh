@@ -12,6 +12,7 @@
 // meshGRegion{Refine,Optimize}.cpp sources).
 
 #include <cstdint>
+#include <unordered_map>
 #include <vector>
 #include "qualityMeasures.h"
 
@@ -31,6 +32,11 @@ void delaunayMeshIn3D(std::vector<MVertex *> &v,
                       std::vector<MTetrahedron *> &result,
                       bool removeBox = false,
                       std::vector<std::int64_t> *neighbors = nullptr);
+
+// mesh size at the nodes of the region's boundary and current tets, as
+// extended from the lower-dimensional meshes (Mesh.MeshSizeExtendFromBoundary)
+void computeMeshSizesFromBoundary(GRegion *gr,
+                                  std::unordered_map<MVertex *, double> &vSizes);
 
 // mesh the interior of a region whose boundary is already meshed
 void insertVerticesInRegion(GRegion *gr, int maxIter,

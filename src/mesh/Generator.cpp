@@ -54,6 +54,7 @@
 #include "simple3D.h"
 // #include "yamakawa.h"
 #include "pointInsertion.h"
+#include "pointInsertionFlat.h"
 #endif
 
 #if defined(HAVE_OPTHOM)
@@ -1019,24 +1020,28 @@ static void Mesh3D(GModel *m)
       break;
     }
 
-    MeshDelaunayVolume(connected[i]);
+#if defined(HAVE_DOMHEX) && defined(HAVE_HXT)
+    // The flat filler meshes its regions again, its first Delaunay mesh
+    // only locates its points: needless if the sizes are not extended from
+    // the boundary and the cross field is not smoothed in the volume
+    const bool fillerAlone = CTX::instance()->mesh.algo3d == ALGO_3D_RTREE &&
+                             !Extend2dMeshIn3dVolumes() &&
+                             !CTX::instance()->mesh.smoothCrossField;
+#else
+    const bool fillerAlone = false;
+#endif
+    if(!fillerAlone) MeshDelaunayVolume(connected[i]);
 
-#if defined(HAVE_DOMHEX) and defined(HAVE_HXT)
+#if defined(HAVE_DOMHEX) && defined(HAVE_HXT)
     // additional code for experimental hex mesh - will eventually be replaced
     // by new HXT-based code
     for(std::size_t j = 0; j < connected[i].size(); j++) {
       GRegion *gr = connected[i][j];
+      CombineFrames frames;
       bool treat_region_ok = false;
       if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
-        if(old_algo_hexa()) {
-          Filler f;
-          f.treat_region(gr);
-          treat_region_ok = true;
-        }
-        else {
-          Filler3D f;
-          treat_region_ok = f.treat_region(gr);
-        }
+        fillRegionFlat(gr, &frames);
+        treat_region_ok = true;
       }
 
       if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
