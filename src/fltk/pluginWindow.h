@@ -16,6 +16,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Box.H>
 #include "targetList.h"
+#include "hintInput.h"
 
 class GMSH_Plugin;
 
@@ -27,6 +28,7 @@ private:
   bool _helpOpen;
   // the plugin whose options are in the scroll
   GMSH_Plugin *_shown;
+  searchFilter _filter;
   void _createDialogBox(GMSH_Plugin *p);
   // returns where what follows goes
   int _placeDialogBox(GMSH_Plugin *p, int x, int y, int w);

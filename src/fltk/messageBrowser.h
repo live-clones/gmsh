@@ -10,7 +10,6 @@
 #include "hintInput.h"
 #include <algorithm>
 #include <string>
-#include <regex>
 #include <vector>
 
 class messageBrowser : public Fl_Group {
@@ -20,10 +19,7 @@ private:
   Fl_Check_Button *_autoscroll;
   Fl_Button *_copy, *_save, *_clear;
   Fl_Input *_search;
-  // the filter typed, compiled once; a regular expression that does not parse
-  // is shown in red and filters nothing
-  std::regex _filter;
-  bool _filtering, _filterValid;
+  searchFilter _filter;
 
 public:
   messageBrowser(int x, int y, int w, int h, const char *l = 0)
@@ -37,8 +33,11 @@ public:
     _box = new Fl_Group(x, y, w, bh + 2 * wb);
     _box->box(GMSH_SIMPLE_TOP_BOX);
 
-    _search = searchBox(x + wb, y + wb, sw, bh, "Search messages",
-                        "Filter messages using regular expression", nullptr);
+    _search =
+      searchBox(x + wb, y + wb, sw, bh, "Search messages",
+                "Show only the messages matching the regular expression,\n"
+                "whatever the case",
+                nullptr);
     _search->textsize(FL_NORMAL_SIZE - 1);
 
     _copy = new Fl_Button(x + wb + sw + WB, y + wb, bb, bh, "Copy");
@@ -75,25 +74,9 @@ public:
     _browser->end();
     end();
     resizable(_browser);
-    _filtering = _filterValid = false;
   }
   // the filter typed, compiled once for every line to come
-  void filter()
-  {
-    std::string s = _search->value();
-    _filtering = !s.empty();
-    _filterValid = true;
-    if(_filtering) {
-      try {
-        // icase for case-insensitive search
-        _filter = std::regex(s, std::regex_constants::icase);
-      } catch(...) {
-        _filterValid = false;
-      }
-    }
-    _search->textcolor(_filterValid ? FL_FOREGROUND_COLOR : FL_RED);
-    _search->redraw();
-  }
+  void filter() { _filter.set(_search); }
   // the lines again, through the filter typed
   void rebuild(const std::vector<std::string> &messages)
   {
@@ -118,8 +101,7 @@ public:
   int size() { return _browser->size(); }
   void add(const char *newtext)
   {
-    if(!_filtering || !_filterValid || std::regex_search(newtext, _filter))
-      _browser->add(newtext);
+    if(_filter.matches(newtext)) _browser->add(newtext);
   }
   void clear() { _browser->clear(); }
   const char *text(int line) const { return _browser->text(line); }

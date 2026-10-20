@@ -1504,9 +1504,11 @@ optionWindow::optionWindow(int deltaFontSize)
   win->label("Options");
 
   // the search goes through all the categories, hence above them
-  search = searchBox(WB, WB, winWidth - 2 * WB, BH, "Search options",
-                     "Show only the options whose label, name or choices match",
-                     options_search_cb);
+  search =
+    searchBox(WB, WB, winWidth - 2 * WB, BH, "Search options",
+              "Show only the options whose label, name or choices match the\n"
+              "regular expression, whatever the case",
+              options_search_cb);
 
   // the categories as tabs, empty: what they show is placed by layout()
   {
@@ -4203,13 +4205,10 @@ void optionWindow::_makeSections(int c)
   }
 }
 
-static bool matches(Fl_Widget *w, const std::string &s)
+static bool matches(Fl_Widget *w, const searchFilter &f)
 {
   if(!w->visible()) return false;
-  auto has = [&s](const char *text) {
-    if(!text) return false;
-    return LowerCase(text).find(s) != std::string::npos;
-  };
+  auto has = [&f](const char *text) { return text && f.matches(text); };
   // the tooltip holds the name of the option
   if(has(w->label()) || has(w->tooltip())) return true;
   if(Fl_Menu_ *m = dynamic_cast<Fl_Menu_ *>(w)) {
@@ -4218,19 +4217,20 @@ static bool matches(Fl_Widget *w, const std::string &s)
   }
   if(Fl_Group *g = w->as_group()) {
     for(int i = 0; i < g->children(); i++)
-      if(matches(g->child(i), s)) return true;
+      if(matches(g->child(i), f)) return true;
   }
   return false;
 }
 
-bool optionWindow::_searching() { return search->size() > 0; }
+bool optionWindow::_searching() { return !_filter.empty(); }
 
 void optionWindow::layout(bool keepPosition)
 {
   static const char *names[6] = {"General", "Geometry", "Mesh",
                                  "Solver",  "Post-pro", "View"};
   int bh = _rowHeight, ww = win->w(), wh = win->h();
-  std::string s = LowerCase(search->value());
+  _filter.set(search);
+  bool searching = !_filter.empty();
 
   // widgets hidden by the previous search are shown again
   for(Fl_Widget *w : _hiddenBySearch) w->show();
@@ -4242,16 +4242,16 @@ void optionWindow::layout(bool keepPosition)
   bool any[6];
   for(int c = 0; c < 6; c++) {
     any[c] = false;
-    bool active = s.empty() ? (c == _current) : (c < 5 || PView::list.size());
+    bool active = searching ? (c < 5 || PView::list.size()) : (c == _current);
     shown[c].resize(_sections[c].size());
     for(std::size_t i = 0; i < _sections[c].size(); i++) {
       section &sec = _sections[c][i];
-      bool all = s.empty() || LowerCase(sec.name).find(s) != std::string::npos;
+      bool all = !searching || _filter.matches(sec.name);
       for(block &b : sec.blocks) {
         bool show = active && all;
         if(active && !all)
           for(Fl_Widget *w : b.widgets)
-            if(matches(w, s)) show = true;
+            if(matches(w, _filter)) show = true;
         shown[c][i].push_back(show);
         if(show) any[c] = true;
       }
@@ -4330,9 +4330,9 @@ void optionWindow::layout(bool keepPosition)
         sec.group->hide();
         continue;
       }
-      bool open = !s.empty() || sec.open;
+      bool open = searching || sec.open;
       std::string label = std::string(open ? "@-22> " : "@-2> ") +
-                          (s.empty() ? "" : std::string(names[c]) + " - ") +
+                          (searching ? std::string(names[c]) + " - " : "") +
                           sec.name;
       sec.header->copy_label(label.c_str());
       // a line between sections

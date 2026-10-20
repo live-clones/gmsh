@@ -10,11 +10,14 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Browser.H>
 
+#include "hintInput.h"
+
 class helpWindow {
 public:
   Fl_Window *about, *basic, *options;
   Fl_Check_Button *modified, *showhelp;
   Fl_Input *search;
+  searchFilter filter;
   Fl_Browser *browser;
 
 public:

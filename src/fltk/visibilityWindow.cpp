@@ -10,7 +10,6 @@
 typedef unsigned long intptr_t;
 #endif
 #include <string>
-#include <regex>
 #include <sstream>
 #include <algorithm>
 #include <map>
@@ -73,20 +72,7 @@ public:
       sstream << " " << getType() << " " << getTag() << " " << getName();
     return sstream.str();
   }
-  bool match(const std::string &pattern)
-  {
-    if(pattern.empty()) return true;
-    std::string line(getBrowserLine(false));
-    try {
-      // icase for case-insensitive search
-      if(std::regex_search(line,
-                           std::regex(pattern, std::regex_constants::icase)))
-        return true;
-    } catch(...) {
-      return false;
-    }
-    return false;
-  }
+  bool match(const searchFilter &f) { return f.matches(getBrowserLine(false)); }
 };
 
 class VisModel : public Vis {
@@ -325,7 +311,7 @@ public:
     }
   };
   // repopulate the list with current data of the given type
-  void update(VisibilityType type, const std::string &search)
+  void update(VisibilityType type, const searchFilter &search)
   {
     std::map<int, std::string> oldLabels;
 #if defined(HAVE_PARSER)
@@ -476,8 +462,10 @@ static void _rebuild_list_browser()
   default: type = VisibilityList::ElementaryEntities; break;
   }
 
-  std::string search = FlGui::instance()->visibility->search->value();
-  VisibilityList::instance()->update(type, search);
+  FlGui::instance()->visibility->filter.set(
+    FlGui::instance()->visibility->search);
+  VisibilityList::instance()->update(type,
+                                     FlGui::instance()->visibility->filter);
 
   for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++) {
     FlGui::instance()->visibility->browser->add(
@@ -1435,9 +1423,11 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     browser_type = new Fl_Choice(2 * WB, height - 2 * BH - 3 * WB, w1, BH);
     browser_type->menu(browser_type_table);
 
-    search = searchBox(2 * WB + w1 + WB, height - 2 * BH - 3 * WB, w2, BH,
-                       "Filter list", "Filter list using regular expression",
-                       visibility_cb);
+    search = searchBox(
+      2 * WB + w1 + WB, height - 2 * BH - 3 * WB, w2, BH, "Filter list",
+      "Show only the entries matching the regular expression,\n"
+      "whatever the case",
+      visibility_cb);
     search->user_data((void *)"list_only");
 
     Fl_Return_Button *b1 = new Fl_Return_Button(

@@ -28,6 +28,7 @@
 #include "gamepadWindow.h"
 #include "widthRules.h"
 #include "targetList.h"
+#include "hintInput.h"
 
 extern Fl_Menu_Item menu_font_names[];
 
@@ -59,6 +60,7 @@ private:
   // _width is the width the sections are laid out for, the least there is
   int _current, _rowHeight, _width, _buttonWidth;
   std::vector<Fl_Widget *> _hiddenBySearch;
+  searchFilter _filter;
   void _makeSections(int category);
   bool _searching();
 

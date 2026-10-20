@@ -342,9 +342,11 @@ pluginWindow::pluginWindow(int deltaFontSize)
                           "Plugins", CTX::instance()->pluginOffset);
   win->box(GMSH_WINDOW_BOX);
 
-  search = searchBox(WB, WB, width - 2 * WB, BH, "Search plugins",
-                     "Show only the plugins whose name or description match",
-                     plugin_search_cb);
+  search = searchBox(
+    WB, WB, width - 2 * WB, BH, "Search plugins",
+    "Show only the plugins whose name or description match the regular\n"
+    "expression, whatever the case",
+    plugin_search_cb);
 
   // the name of each plugin, then what it does
   browser = new Fl_Hold_Browser(WB, 2 * WB + BH, width - 2 * WB, 7 * BH);
@@ -417,11 +419,10 @@ GMSH_Plugin *pluginWindow::selected() const
 
 void pluginWindow::filter()
 {
-  std::string s = LowerCase(search->value());
+  _filter.set(search);
   for(int i = 1; i <= browser->size(); i++) {
     GMSH_Plugin *p = (GMSH_Plugin *)browser->data(i);
-    std::string t = LowerCase(p->getName() + " " + p->getShortHelp());
-    if(s.empty() || t.find(s) != std::string::npos)
+    if(_filter.matches(p->getName() + " " + p->getShortHelp()))
       browser->show(i);
     else
       browser->hide(i);
