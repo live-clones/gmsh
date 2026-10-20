@@ -100,6 +100,8 @@ public:
   void toolResized(paletteWindow *w);
   // closes the tool shown in the dock, if any
   bool closeDockedTool();
+  // runs the entry of the menu bar whose shortcut is the current event
+  bool runMenuShortcut();
   int getDockWidth();
   void setDockWidth(int w);
   bool split(openglWindow *g, char how, double ratio);

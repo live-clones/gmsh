@@ -24,6 +24,7 @@ typedef unsigned long intptr_t;
 #include <FL/filename.H>
 #include <FL/Fl_Tree.H>
 #include "FlGui.h"
+#include "Shortcuts.h"
 #include "mainWindow.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
@@ -2848,11 +2849,11 @@ static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
 // are already defined as global shortcuts)
 static Fl_Menu_Item bar_table[] = {
   {"&File", 0, nullptr, nullptr, FL_SUBMENU},
-    {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, nullptr},
-    {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_merge_cb, (void*)"open"},
+    {"&New...",     fltkShortcut("file_new"), (Fl_Callback *)file_new_cb, nullptr},
+    {"&Open...",    fltkShortcut("file_open"), (Fl_Callback *)file_open_merge_cb, (void*)"open"},
     {"Open Recent", 0, nullptr, nullptr, FL_SUBMENU},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", FL_CTRL+FL_SHIFT+'r', (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", fltkShortcut("file_recent"), (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
@@ -2862,10 +2863,10 @@ static Fl_Menu_Item bar_table[] = {
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {nullptr},
-    {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
+    {"M&erge...",   fltkShortcut("file_merge"), (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
     {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, nullptr, FL_MENU_DIVIDER},
     {"&Clear",      0, (Fl_Callback *)file_clear_cb, nullptr},
-    {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, nullptr},
+    {"&Rename...",  fltkShortcut("file_rename"), (Fl_Callback *)file_rename_cb, nullptr},
     {"Delete",      0, (Fl_Callback *)file_delete_cb, nullptr, FL_MENU_DIVIDER},
     {"Remote", 0, nullptr, nullptr, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
@@ -2873,44 +2874,44 @@ static Fl_Menu_Item bar_table[] = {
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
       {nullptr},
-    {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, nullptr},
-    {"Save Model Options", FL_CTRL+'j', (Fl_Callback *)file_options_save_cb, (void*)"file"},
-    {"Save Options As Default", FL_CTRL+FL_SHIFT+'j', (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
-    {"&Export...",  FL_CTRL+'e', (Fl_Callback *)file_export_cb, nullptr, FL_MENU_DIVIDER},
-    {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, nullptr},
+    {"Sa&ve Mesh",  fltkShortcut("mesh_save"), (Fl_Callback *)mesh_save_cb, nullptr},
+    {"Save Model Options", fltkShortcut("options_save"), (Fl_Callback *)file_options_save_cb, (void*)"file"},
+    {"Save Options As Default", fltkShortcut("options_save_default"), (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
+    {"&Export...",  fltkShortcut("file_export"), (Fl_Callback *)file_export_cb, nullptr, FL_MENU_DIVIDER},
+    {"&Quit",       fltkShortcut("quit"), (Fl_Callback *)file_quit_cb, nullptr},
     {nullptr},
   {"&Tools", 0, nullptr, nullptr, FL_SUBMENU},
-    {"&Options",         FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, nullptr},
-    {"Pl&ugins",         FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
-    {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, nullptr},
-    {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, nullptr},
-    {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
+    {"&Options",         fltkShortcut("options"), (Fl_Callback *)options_cb, nullptr},
+    {"Pl&ugins",         fltkShortcut("plugins"), (Fl_Callback *)plugin_cb, (void*)(-1)},
+    {"&Visibility",      fltkShortcut("visibility"), (Fl_Callback *)visibility_cb, nullptr},
+    {"&Clipping",        fltkShortcut("clipping"), (Fl_Callback *)clip_cb, nullptr},
+    {"&Manipulator",     fltkShortcut("manipulator"), (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
 #if defined(HAVE_3M)
     {"&3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
 #endif
-    {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, nullptr},
-    {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)show_hide_message_cb, nullptr},
+    {"S&tatistics",      fltkShortcut("statistics"), (Fl_Callback *)statistics_cb, nullptr},
+    {"M&essage Console", fltkShortcut("console"), (Fl_Callback *)show_hide_message_cb, nullptr},
     {nullptr},
   {"&Window", 0, nullptr, nullptr, FL_SUBMENU},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
 #if defined(WIN32)
-    {"Copy to Clipboard",  FL_CTRL+'c', (Fl_Callback *)file_window_cb, (void*)"copy", FL_MENU_DIVIDER},
+    {"Copy to Clipboard",  fltkShortcut("window_copy"), (Fl_Callback *)file_window_cb, (void*)"copy", FL_MENU_DIVIDER},
 #endif
     {"Split Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
     {"Split Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
     {"Unsplit",            0, (Fl_Callback *)file_window_cb, (void*)"split_u", FL_MENU_DIVIDER},
-    {"Minimize",           FL_CTRL+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
+    {"Minimize",           fltkShortcut("minimize"), (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
-    {"Enter Full Screen",  FL_CTRL+'f', (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
-    {"Show/Hide Menu",     FL_CTRL+FL_ALT+'t', (Fl_Callback *)show_hide_menu_cb, nullptr},
+    {"Enter Full Screen",  fltkShortcut("fullscreen"), (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
+    {"Show/Hide Menu",     fltkShortcut("menu_show_hide"), (Fl_Callback *)show_hide_menu_cb, nullptr},
     {"Attach/Detach Menu", 0, (Fl_Callback *)attach_detach_menu_cb, nullptr},
-    {"Dock/Undock Tool Windows", FL_CTRL+'d', (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
+    {"Dock/Undock Tool Windows", fltkShortcut("dock"), (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
     {nullptr},
   {"&Help", 0, nullptr, nullptr, FL_SUBMENU},
     {"On&line Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
-    {"&Keyboard and Mouse Usage",  FL_CTRL+'h', (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
-    {"&Current Options and Workspace", FL_CTRL+FL_SHIFT+'h', (Fl_Callback *)status_options_cb, (void*)"?", 0},
+    {"&Keyboard and Mouse Usage",  fltkShortcut("help_keys"), (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
+    {"&Current Options and Workspace", fltkShortcut("help_options"), (Fl_Callback *)status_options_cb, (void*)"?", 0},
     {"&Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr, FL_MENU_DIVIDER},
     {"&About Gmsh",           0, (Fl_Callback *)help_about_cb, nullptr},
     {nullptr},
@@ -2924,11 +2925,11 @@ static Fl_Menu_Item bar_table[] = {
 // File->Quit)
 static Fl_Menu_Item sysbar_table[] = {
   {"File", 0, nullptr, nullptr, FL_SUBMENU},
-    {"New...",     FL_META+'n', (Fl_Callback *)file_new_cb, nullptr},
-    {"Open...",    FL_META+'o', (Fl_Callback *)file_open_merge_cb, (void*)"open"},
+    {"New...",     fltkShortcut("file_new", true), (Fl_Callback *)file_new_cb, nullptr},
+    {"Open...",    fltkShortcut("file_open", true), (Fl_Callback *)file_open_merge_cb, (void*)"open"},
     {"Open Recent", 0, nullptr, nullptr, FL_SUBMENU},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", FL_META+FL_SHIFT+'r', (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", fltkShortcut("file_recent", true), (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
@@ -2938,10 +2939,10 @@ static Fl_Menu_Item sysbar_table[] = {
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {nullptr},
-    {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
+    {"Merge...",   fltkShortcut("file_merge", true), (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
     {"Watch Pattern...",   0, (Fl_Callback *)file_watch_cb, nullptr, FL_MENU_DIVIDER},
     {"Clear",      0, (Fl_Callback *)file_clear_cb, nullptr},
-    {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, nullptr},
+    {"Rename...",  fltkShortcut("file_rename", true), (Fl_Callback *)file_rename_cb, nullptr},
     {"Delete",     0, (Fl_Callback *)file_delete_cb, nullptr, FL_MENU_DIVIDER},
     {"Remote", 0, nullptr, nullptr, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
@@ -2949,40 +2950,40 @@ static Fl_Menu_Item sysbar_table[] = {
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
       {nullptr},
-    {"Save Mesh",  FL_META+'s', (Fl_Callback *)mesh_save_cb, nullptr},
-    {"Save Model Options", FL_META+'j', (Fl_Callback *)file_options_save_cb, (void*)"file"},
-    {"Save Options As Default", FL_META+FL_SHIFT+'j', (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
-    {"Export...",  FL_META+'e', (Fl_Callback *)file_export_cb, nullptr},
+    {"Save Mesh",  fltkShortcut("mesh_save", true), (Fl_Callback *)mesh_save_cb, nullptr},
+    {"Save Model Options", fltkShortcut("options_save", true), (Fl_Callback *)file_options_save_cb, (void*)"file"},
+    {"Save Options As Default", fltkShortcut("options_save_default", true), (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
+    {"Export...",  fltkShortcut("file_export", true), (Fl_Callback *)file_export_cb, nullptr},
     {nullptr},
   {"Tools", 0, nullptr, nullptr, FL_SUBMENU},
-    {"Options",         FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, nullptr},
-    {"Plugins",         FL_META+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
-    {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, nullptr},
-    {"Clipping",        FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, nullptr},
-    {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
+    {"Options",         fltkShortcut("options", true), (Fl_Callback *)options_cb, nullptr},
+    {"Plugins",         fltkShortcut("plugins", true), (Fl_Callback *)plugin_cb, (void*)(-1)},
+    {"Visibility",      fltkShortcut("visibility", true), (Fl_Callback *)visibility_cb, nullptr},
+    {"Clipping",        fltkShortcut("clipping", true), (Fl_Callback *)clip_cb, nullptr},
+    {"Manipulator",     fltkShortcut("manipulator", true), (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
 #if defined(HAVE_3M)
     {"3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
 #endif
-    {"Statistics",      FL_META+'i', (Fl_Callback *)statistics_cb, nullptr},
-    {"Message Console", FL_META+'l', (Fl_Callback *)show_hide_message_cb, nullptr},
+    {"Statistics",      fltkShortcut("statistics", true), (Fl_Callback *)statistics_cb, nullptr},
+    {"Message Console", fltkShortcut("console", true), (Fl_Callback *)show_hide_message_cb, nullptr},
     {nullptr},
   {"Window", 0, nullptr, nullptr, FL_SUBMENU},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
     {"Split Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
     {"Split Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
     {"Unsplit",            0, (Fl_Callback *)file_window_cb, (void*)"split_u", FL_MENU_DIVIDER},
-    {"Minimize",           FL_META+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
+    {"Minimize",           fltkShortcut("minimize", true), (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
-    {"Enter Full Screen",  FL_META+'f', (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
-    {"Show/Hide Menu",     FL_META+FL_ALT+'t', (Fl_Callback *)show_hide_menu_cb, nullptr},
+    {"Enter Full Screen",  fltkShortcut("fullscreen", true), (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
+    {"Show/Hide Menu",     fltkShortcut("menu_show_hide", true), (Fl_Callback *)show_hide_menu_cb, nullptr},
     {"Attach/Detach Menu", 0, (Fl_Callback *)attach_detach_menu_cb, nullptr},
-    {"Dock/Undock Tool Windows", FL_META+'d', (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
+    {"Dock/Undock Tool Windows", fltkShortcut("dock", true), (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
     {nullptr},
   {"Help", 0, nullptr, nullptr, FL_SUBMENU},
     {"Online Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
     {"Keyboard and Mouse Usage", 0, (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
-    {"Current Options and Workspace", FL_META+FL_SHIFT+'h', (Fl_Callback *)status_options_cb, (void*)"?"},
+    {"Current Options and Workspace", fltkShortcut("help_options", true), (Fl_Callback *)status_options_cb, (void*)"?"},
     {"Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr},
     {nullptr},
   {nullptr}
@@ -3724,24 +3725,24 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Vertically", 0, quick_access_cb, (void*)"split_ver"},
          { "Unsplit", 0, quick_access_cb, (void*)"unsplit"},
          { nullptr },
-      { "Axes", FL_ALT + 'a', quick_access_cb, (void*)"axes",
+      { "Axes", fltkShortcut("axes_loop"), quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
       { "Hover mesh and views", 0, quick_access_cb, (void*)"hover_meshes",
         FL_MENU_TOGGLE },
       { "Projection mode", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Orthographic", FL_ALT + 'o', quick_access_cb, (void*)"orthographic"},
+         { "Orthographic", fltkShortcut("projection"), quick_access_cb, (void*)"orthographic"},
          { "Perspective", 0, quick_access_cb, (void*)"perspective"},
          { nullptr },
       { "All general options...", 0, quick_access_cb, (void*)"general",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "Geometry visibility", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Points", FL_ALT + 'p', quick_access_cb, (void*)"geometry_points",
+         { "Points", fltkShortcut("geometry_points"), quick_access_cb, (void*)"geometry_points",
            FL_MENU_TOGGLE },
-         { "Curves", FL_ALT + 'l', quick_access_cb, (void*)"geometry_curves",
+         { "Curves", fltkShortcut("geometry_curves"), quick_access_cb, (void*)"geometry_curves",
            FL_MENU_TOGGLE },
-         { "Surfaces ", FL_ALT + 's', quick_access_cb, (void*)"geometry_surfaces",
+         { "Surfaces ", fltkShortcut("geometry_surfaces"), quick_access_cb, (void*)"geometry_surfaces",
            FL_MENU_TOGGLE },
-         { "Volumes", FL_ALT + 'v', quick_access_cb, (void*)"geometry_volumes",
+         { "Volumes", fltkShortcut("geometry_volumes"), quick_access_cb, (void*)"geometry_volumes",
            FL_MENU_TOGGLE },
          { nullptr },
       { "Geometry opacity", 0, quick_access_cb,
@@ -3749,29 +3750,29 @@ void status_options_cb(Fl_Widget *w, void *data)
       { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "Mesh visibility", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Nodes", FL_ALT + FL_SHIFT + 'p', quick_access_cb, (void*)"mesh_nodes",
+         { "Nodes", fltkShortcut("mesh_nodes"), quick_access_cb, (void*)"mesh_nodes",
            FL_MENU_TOGGLE },
-         { "1D elements", FL_ALT + FL_SHIFT + 'l', quick_access_cb, (void*)"mesh_lines",
+         { "1D elements", fltkShortcut("mesh_lines"), quick_access_cb, (void*)"mesh_lines",
            FL_MENU_TOGGLE },
-         { "2D element edges ", FL_ALT + FL_SHIFT + 's', quick_access_cb,
+         { "2D element edges ", fltkShortcut("mesh_surface_edges"), quick_access_cb,
            (void*)"mesh_surface_edges", FL_MENU_TOGGLE },
-         { "2D element faces", FL_ALT + FL_SHIFT + 'd', quick_access_cb,
+         { "2D element faces", fltkShortcut("mesh_surface_faces"), quick_access_cb,
            (void*)"mesh_surface_faces", FL_MENU_TOGGLE },
-         { "3D element edges", FL_ALT + FL_SHIFT + 'v', quick_access_cb,
+         { "3D element edges", fltkShortcut("mesh_volume_edges"), quick_access_cb,
            (void*)"mesh_volume_edges", FL_MENU_TOGGLE },
-         { "3D element faces", FL_ALT + FL_SHIFT + 'b', quick_access_cb,
+         { "3D element faces", fltkShortcut("mesh_volume_faces"), quick_access_cb,
            (void*)"mesh_volume_faces", FL_MENU_TOGGLE },
          { nullptr },
-      { "Toggle mesh display", FL_ALT + 'm', quick_access_cb, (void*)"mesh_toggle" },
+      { "Toggle mesh display", fltkShortcut("mesh_toggle"), quick_access_cb, (void*)"mesh_toggle" },
       { "Mesh opacity", 0, quick_access_cb, (void*)"mesh_opacity" },
       { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
       { "All mesh options...", 0, quick_access_cb, (void*)"mesh",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
-      { "View element outlines ", FL_ALT + 'e', quick_access_cb,
+      { "View element outlines ", fltkShortcut("view_elements"), quick_access_cb,
         (void*)"view_element_outlines", FL_MENU_TOGGLE },
       { "View normal raise", 0, quick_access_cb, (void*)"view_normal_raise" },
       { "View intervals", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Iso-values", FL_ALT + 't', quick_access_cb, (void*)"view_iso"},
+         { "Iso-values", fltkShortcut("view_intervals"), quick_access_cb, (void*)"view_iso"},
          { "Continuous map", 0, quick_access_cb, (void*)"view_continous"},
          { "Filled iso-values", 0, quick_access_cb, (void*)"view_filled"},
          { "Numeric values", 0, quick_access_cb, (void*)"view_numeric"},
@@ -4335,11 +4336,10 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[14] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_sidebar");
   _butt[14]->callback(status_options_cb, (void *)"menu");
-#if defined(__APPLE__)
-  _butt[14]->tooltip("Show or hide the menu (Cmd+Alt+t)");
-#else
-  _butt[14]->tooltip("Show or hide the menu (Ctrl+Alt+t)");
-#endif
+  static std::string menuTip = "Show or hide the menu (" +
+                               GetShortcutsOf("menu_show_hide")[0].label() +
+                               ")";
+  _butt[14]->tooltip(menuTip.c_str());
   x += sw;
   _butt[5] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_models");
@@ -4706,6 +4706,21 @@ void graphicWindow::checkAnimButtons()
     _butt[10]->deactivate();
     _butt[11]->deactivate();
   }
+}
+
+bool graphicWindow::runMenuShortcut()
+{
+  // the entry of the menu bar whose shortcut is the event, run as a click on
+  // it would; the system menu bar of macOS does not always take its own
+  Fl_Menu_Item *table = bar_table;
+#if defined(__APPLE__)
+  if(_sysbar) table = sysbar_table;
+#endif
+  const Fl_Menu_Item *m = table->test_shortcut();
+  if(!m || !m->callback()) return false;
+  Fl_Widget *w = _bar ? (Fl_Widget *)_bar : (Fl_Widget *)_sysbar;
+  const_cast<Fl_Menu_Item *>(m)->do_callback(w);
+  return true;
 }
 
 void graphicWindow::setMenuWidth(int w)

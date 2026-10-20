@@ -45,6 +45,7 @@
 #include "XpmIcon.h"
 #include "Options.h"
 #include "CommandLine.h"
+#include "Shortcuts.h"
 #include "Context.h"
 #include "StringUtils.h"
 #include "gl2ps.h"
@@ -796,376 +797,70 @@ int FlGui::run(const std::string &optionFileName)
   return ret;
 }
 
+// the FLTK code of a shortcut of the table
+static int fltkCode(const Shortcut &s)
+{
+  int k = s.key;
+  if(k >= KeyF1 && k < KeyF1 + 12)
+    k = FL_F + 1 + (k - KeyF1);
+  else if(k == KeyEscape)
+    k = FL_Escape;
+  else if(k == KeyLeft)
+    k = FL_Left;
+  else if(k == KeyRight)
+    k = FL_Right;
+  else if(k == KeyUp)
+    k = FL_Up;
+  else if(k == KeyDown)
+    k = FL_Down;
+  else if(k == KeyPageUp)
+    k = FL_Page_Up;
+  else if(k == KeyPageDown)
+    k = FL_Page_Down;
+  if(s.mods & ModCommand) k += FL_COMMAND;
+  if(s.mods & ModShift) k += FL_SHIFT;
+  if(s.mods & ModAlt) k += FL_ALT;
+  return k;
+}
+
+int fltkShortcut(const char *action, bool systemBar)
+{
+  for(const ShortcutEntry &e : GetShortcuts())
+    if(!strcmp(e.action, action))
+      return (systemBar && e.inWindowBarOnly) ? 0 : fltkCode(e.shortcut);
+  Msg::Error("Unknown shortcut action '%s'", action);
+  return 0;
+}
+
+// the event is this shortcut
+static bool fltkTest(const Shortcut &s)
+{
+  if(s.mods & AnyModifiers)
+    return Fl::event_key() == (fltkCode(s) & FL_KEY_MASK);
+  return Fl::test_shortcut(fltkCode(s));
+}
+
 int FlGui::testGlobalShortcuts(int event)
 {
   // we only handle shortcuts here
   if(event != FL_SHORTCUT) return 0;
 
   int status = 0;
-
-  if(Fl::test_shortcut('0')) {
-    geometry_reload_cb(nullptr, nullptr);
+  if(graph[0]->runMenuShortcut()) {
+    // a shortcut of the menus is its entry, also when the system menu bar
+    // did not take it
     status = 1;
   }
-  if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0') ||
-     Fl::test_shortcut('9')) { // for Bruno
-    onelab_reload_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F + 1)) {
-    mesh_1d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('2') || Fl::test_shortcut(FL_F + 2)) {
-    mesh_2d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('3') || Fl::test_shortcut(FL_F + 3)) {
-    mesh_3d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + 'q') ||
-          Fl::test_shortcut(FL_META + 'q')) {
-    // only necessary when using the system menu bar, but hey, it cannot hurt...
-    file_quit_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + 't') ||
-          Fl::test_shortcut(FL_META + 't')) {
-    onelab_cb(nullptr,  (void *)"compute");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + FL_ALT + 't') ||
-          Fl::test_shortcut(FL_META + FL_ALT + 't')) {
-    show_hide_menu_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('g')) {
-    FlGui::toggleModule("Geometry");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('m')) {
-    FlGui::toggleModule("Mesh");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('s')) {
-    FlGui::toggleModule("Solver");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('p')) {
-    FlGui::toggleModule("Post-processing");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('w')) {
-    file_watch_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('e')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->endSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('u')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->undoSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('i')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->invertSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('q')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->quitSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('-')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->invertSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('x')) {
-    elementaryContext->butt[0]->value(!elementaryContext->butt[0]->value());
-    status = 1;
-  }
-  else if(Fl::test_shortcut('y')) {
-    elementaryContext->butt[1]->value(!elementaryContext->butt[1]->value());
-    status = 1;
-  }
-  else if(Fl::test_shortcut('z')) {
-    elementaryContext->butt[2]->value(!elementaryContext->butt[2]->value());
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'x')) {
-    elementaryContext->butt[0]->value(0);
-    elementaryContext->butt[1]->value(1);
-    elementaryContext->butt[2]->value(1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'y')) {
-    elementaryContext->butt[0]->value(1);
-    elementaryContext->butt[1]->value(0);
-    elementaryContext->butt[2]->value(1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'z')) {
-    elementaryContext->butt[0]->value(1);
-    elementaryContext->butt[1]->value(1);
-    elementaryContext->butt[2]->value(0);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_Escape) ||
-          Fl::test_shortcut(FL_META + FL_Escape) ||
-          Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
-          Fl::test_shortcut(FL_CTRL + FL_Escape) ||
-          Fl::test_shortcut(FL_ALT + FL_Escape)) {
-    if(fullscreen->shown()) {
-      window_cb(nullptr, (void *)"fullscreen");
-      status = 1;
+  else {
+    for(const ShortcutEntry &e : GetShortcuts()) {
+      if(!fltkTest(e.shortcut)) continue;
+      int st = runShortcut(e.action);
+      if(!st) continue; // a menu entry, or not for this build
+      // a key passed on is handled, but as if it had not been: what is
+      // under the mouse reads it too
+      status = e.passOn ? 0 : st;
+      break;
     }
-    else {
-      bool lasso = false;
-      for(std::size_t i = 0; i < graph.size(); i++)
-        for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-          if(graph[i]->gl[j]->lassoMode) lasso = true;
-      if(lasso) {
-        for(std::size_t i = 0; i < graph.size(); i++)
-          for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-            graph[i]->gl[j]->lassoMode = false;
-        status = 2;
-      }
-      else {
-        status_options_cb(nullptr, (void *)"S");
-        status = 1;
-      }
-    }
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'a')) {
-    window_cb(nullptr, (void *)"front");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'o')) {
-    general_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'g')) {
-    geometry_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'm')) {
-    mesh_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 's')) {
-    solver_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'p')) {
-    post_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
-    view_options_cb(nullptr, (void *)-1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
-    if(PView::list.size()) {
-      if(options->view.index >= 0 &&
-         options->view.index < (int)PView::list.size())
-        plugins->show(options->view.index);
-      else
-        plugins->show(0);
-    }
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'f')) {
-    opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
-                            !opt_general_fast_redraw(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'b')) {
-    opt_general_draw_bounding_box(
-      0, GMSH_SET | GMSH_GUI, !opt_general_draw_bounding_box(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'i')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
-                            !opt_view_show_scale(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'c')) {
-    opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
-                             opt_general_color_scheme(0, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'c')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_colormap_number(i, GMSH_SET | GMSH_GUI,
-                                 opt_view_colormap_number(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'w')) {
-    opt_geometry_light(0, GMSH_SET | GMSH_GUI,
-                       !opt_geometry_light(0, GMSH_GET, 0));
-    opt_mesh_light(0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_light(i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'x') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
-    status_xyz1p_cb(nullptr, (void *)"x");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'y') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'y')) {
-    status_xyz1p_cb(nullptr, (void *)"y");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'z') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'z')) {
-    status_xyz1p_cb(nullptr, (void *)"z");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_CTRL + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_META + '1')) {
-    status_xyz1p_cb(nullptr, (void *)"1:1");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'o')) {
-    status_options_cb(nullptr, (void *)"p");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'a')) {
-    opt_general_axes(0, GMSH_SET | GMSH_GUI,
-                     opt_general_axes(0, GMSH_GET, 0) + 1);
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_axes(i, GMSH_SET | GMSH_GUI,
-                      opt_view_axes(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'a')) {
-    opt_general_small_axes(0, GMSH_SET | GMSH_GUI,
-                           !opt_general_small_axes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'p')) {
-    opt_geometry_points(0, GMSH_SET | GMSH_GUI,
-                        !opt_geometry_points(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'l')) {
-    opt_geometry_curves(0, GMSH_SET | GMSH_GUI,
-                        !opt_geometry_curves(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 's')) {
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI,
-                          !opt_geometry_surfaces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'v')) {
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI,
-                         !opt_geometry_volumes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'p')) {
-    opt_mesh_nodes(0, GMSH_SET | GMSH_GUI, !opt_mesh_nodes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'l')) {
-    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 's')) {
-    opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_surface_edges(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'v')) {
-    opt_mesh_volume_edges(0, GMSH_SET | GMSH_GUI,
-                          !opt_mesh_volume_edges(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'd')) {
-    opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
-                              opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'd')) {
-    opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_surface_faces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'b')) {
-    opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI,
-                          !opt_mesh_volume_faces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'm')) {
-    quick_access_cb(nullptr, (void *)"mesh_toggle");
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 't')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        int t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
-        if(t == 4) t = 1; // skip numeric display
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, t);
-      }
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 't')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI,
-                                opt_view_intervals_type(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'r')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_range_type(i, GMSH_SET | GMSH_GUI,
-                            opt_view_range_type(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'n')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_draw_strings(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'e') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'e')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_element(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_show_element(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'h')) {
-    static int show = 0;
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
-    show = !show;
-    status = 2;
-  }
-  else if(testArrowShortcuts()) {
-    status = 1;
   }
 
 #if defined(HAVE_TOUCHBAR)
@@ -1184,32 +879,300 @@ int FlGui::testGlobalShortcuts(int event)
 
 int FlGui::testArrowShortcuts()
 {
-  if(Fl::test_shortcut(FL_Left)) {
+  // the keys the 3D view handles itself when it has the focus
+  static const char *keys[] = {"time_step_prev", "time_step_next", "view_prev",
+                               "view_next",      "page_prev",      "page_next"};
+  for(const ShortcutEntry &e : GetShortcuts()) {
+    bool arrow = false;
+    for(const char *k : keys)
+      if(!strcmp(e.action, k)) arrow = true;
+    if(arrow && fltkTest(e.shortcut)) return runShortcut(e.action) ? 1 : 0;
+  }
+  return 0;
+}
+
+// what each action of the shortcut table does; the entries of the menus are
+// run by the menus (see graphicWindow::runMenuShortcut()), those of the quick
+// access menu of the status bar by its callback. Returns 0 for an action not
+// handled here, 1 when done, 2 when the scene must be drawn again
+int FlGui::runShortcut(const std::string &a)
+{
+  // --- reloading and meshing
+  if(a == "geometry_reload") {
+    geometry_reload_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "project_reload") {
+    onelab_reload_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "mesh_1d") {
+    mesh_1d_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "mesh_2d") {
+    mesh_2d_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "mesh_3d") {
+    mesh_3d_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "solver_run") {
+    onelab_cb(nullptr, (void *)"compute");
+    return 1;
+  }
+  if(a == "quit") {
+    // only necessary when using the system menu bar, but hey, it cannot hurt
+    file_quit_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "watch") {
+    file_watch_cb(nullptr, nullptr);
+    return 1;
+  }
+  // --- the modules of the tree
+  if(a == "module_geometry") {
+    FlGui::toggleModule("Geometry");
+    return 1;
+  }
+  if(a == "module_mesh") {
+    FlGui::toggleModule("Mesh");
+    return 1;
+  }
+  if(a == "module_solver") {
+    FlGui::toggleModule("Solver");
+    return 1;
+  }
+  if(a == "module_post") {
+    FlGui::toggleModule("Post-processing");
+    return 1;
+  }
+  // --- a selection under way
+  if(a == "selection_end" || a == "selection_undo" || a == "selection_invert" ||
+     a == "selection_quit") {
+    for(std::size_t i = 0; i < graph.size(); i++)
+      for(std::size_t j = 0; j < graph[i]->gl.size(); j++) {
+        openglWindow *gl = graph[i]->gl[j];
+        if(a == "selection_end") gl->endSelection = 1;
+        if(a == "selection_undo") gl->undoSelection = 1;
+        if(a == "selection_invert") gl->invertSelection = 1;
+        if(a == "selection_quit") gl->quitSelection = 1;
+      }
+    return 1;
+  }
+  // --- placing an elementary entity with the mouse: the axes it may move
+  // along, one at a time or all but one
+  if(a == "freeze_x" || a == "freeze_y" || a == "freeze_z") {
+    int i = a[7] - 'x';
+    elementaryContext->butt[i]->value(!elementaryContext->butt[i]->value());
+    return 1;
+  }
+  if(a == "freeze_but_x" || a == "freeze_but_y" || a == "freeze_but_z") {
+    int i = a[11] - 'x';
+    for(int j = 0; j < 3; j++) elementaryContext->butt[j]->value(j != i);
+    return 1;
+  }
+  if(a == "escape") {
+    if(fullscreen->shown()) {
+      window_cb(nullptr, (void *)"fullscreen");
+      return 1;
+    }
+    bool lasso = false;
+    for(std::size_t i = 0; i < graph.size(); i++)
+      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
+        if(graph[i]->gl[j]->lassoMode) lasso = true;
+    if(lasso) {
+      for(std::size_t i = 0; i < graph.size(); i++)
+        for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
+          graph[i]->gl[j]->lassoMode = false;
+      return 2;
+    }
+    status_options_cb(nullptr, (void *)"S");
+    return 1;
+  }
+  // --- the windows
+  if(a == "window_front") {
+    window_cb(nullptr, (void *)"front");
+    return 1;
+  }
+  if(a == "options_general") {
+    general_options_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "options_geometry") {
+    geometry_options_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "options_mesh") {
+    mesh_options_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "options_solver") {
+    solver_options_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "options_post") {
+    post_options_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "options_view") {
+    view_options_cb(nullptr, (void *)-1);
+    return 1;
+  }
+  if(a == "plugins_view") {
+    if(PView::list.size()) {
+      if(options->view.index >= 0 &&
+         options->view.index < (int)PView::list.size())
+        plugins->show(options->view.index);
+      else
+        plugins->show(0);
+    }
+    return 1;
+  }
+  // --- the display: what the quick access menu of the status bar does too
+  if(a == "geometry_points" || a == "geometry_curves" ||
+     a == "geometry_surfaces" || a == "geometry_volumes" || a == "mesh_nodes" ||
+     a == "mesh_lines" || a == "mesh_surface_edges" ||
+     a == "mesh_surface_faces" || a == "mesh_volume_edges" ||
+     a == "mesh_volume_faces" || a == "mesh_toggle") {
+    quick_access_cb(nullptr, (void *)a.c_str());
+    return 2;
+  }
+  if(a == "fast_redraw") {
+    opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
+                            !opt_general_fast_redraw(0, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "bounding_boxes") {
+    opt_general_draw_bounding_box(
+      0, GMSH_SET | GMSH_GUI, !opt_general_draw_bounding_box(0, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "view_scales") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
+                            !opt_view_show_scale(i, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "color_scheme") {
+    opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
+                             opt_general_color_scheme(0, GMSH_GET, 0) + 1);
+    return 2;
+  }
+  if(a == "colormaps") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_colormap_number(i, GMSH_SET | GMSH_GUI,
+                                 opt_view_colormap_number(i, GMSH_GET, 0) + 1);
+    return 2;
+  }
+  if(a == "lighting") {
+    opt_geometry_light(0, GMSH_SET | GMSH_GUI,
+                       !opt_geometry_light(0, GMSH_GET, 0));
+    opt_mesh_light(0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_light(i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
+    return 2;
+  }
+  // the view callback reads Shift and Ctrl itself (-X, reset, sync)
+  if(a == "view_x" || a == "view_y" || a == "view_z") {
+    status_xyz1p_cb(nullptr, (void *)(a == "view_x" ? "x" :
+                                      a == "view_y" ? "y" :
+                                                      "z"));
+    return 1;
+  }
+  if(a == "view_1_1") {
+    status_xyz1p_cb(nullptr, (void *)"1:1");
+    return 1;
+  }
+  if(a == "projection") {
+    status_options_cb(nullptr, (void *)"p");
+    return 1;
+  }
+  if(a == "axes_loop") {
+    opt_general_axes(0, GMSH_SET | GMSH_GUI,
+                     opt_general_axes(0, GMSH_GET, 0) + 1);
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_axes(i, GMSH_SET | GMSH_GUI,
+                      opt_view_axes(i, GMSH_GET, 0) + 1);
+    return 2;
+  }
+  if(a == "small_axes") {
+    opt_general_small_axes(0, GMSH_SET | GMSH_GUI,
+                           !opt_general_small_axes(0, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "surface_type") {
+    opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
+                              opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
+    return 2;
+  }
+  if(a == "view_intervals" || a == "view_intervals_all") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) {
+        int t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
+        if(t == 4 && a == "view_intervals") t = 1; // skip numeric display
+        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, t);
+      }
+    return 2;
+  }
+  if(a == "view_range") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_range_type(i, GMSH_SET | GMSH_GUI,
+                            opt_view_range_type(i, GMSH_GET, 0) + 1);
+    return 2;
+  }
+  if(a == "view_annotations") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
+                              !opt_view_draw_strings(i, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "view_elements") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_show_element(i, GMSH_SET | GMSH_GUI,
+                              !opt_view_show_element(i, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "views_hide_show") {
+    static int show = 0;
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
+    show = !show;
+    return 2;
+  }
+  // --- the time steps and the views, on the arrows
+  if(a == "time_step_prev") {
     status_play_manual(1, -CTX::instance()->post.animStep);
     return 1;
   }
-  else if(Fl::test_shortcut(FL_Right)) {
+  if(a == "time_step_next") {
     status_play_manual(1, CTX::instance()->post.animStep);
     return 1;
   }
-  else if(Fl::test_shortcut(FL_Up)) {
+  if(a == "view_prev") {
     status_play_manual(0, -CTX::instance()->post.animStep);
     return 1;
   }
-  else if(Fl::test_shortcut(FL_Down)) {
+  if(a == "view_next") {
     status_play_manual(0, CTX::instance()->post.animStep);
     return 1;
   }
 #if defined(HAVE_POPPLER)
-  else if(Fl::test_shortcut('u') || Fl::test_shortcut(FL_Page_Up)) {
+  if(a == "page_prev") {
     gmshPopplerWrapper::setCurrentPageDown();
-    drawContext::global()->draw();
-    return 1;
+    return 2;
   }
-  else if(Fl::test_shortcut('d') || Fl::test_shortcut(FL_Page_Down)) {
+  if(a == "page_next") {
     gmshPopplerWrapper::setCurrentPageUp();
-    drawContext::global()->draw();
-    return 1;
+    return 2;
   }
 #endif
   return 0;

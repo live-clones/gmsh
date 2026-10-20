@@ -25,6 +25,10 @@
 
 class Fl_Window;
 class graphicWindow;
+
+// the FLTK code of the shortcut of an action of the table in Shortcuts.h, for
+// the menus; 0 for one not bound on the macOS system menu bar
+int fltkShortcut(const char *action, bool systemBar = false);
 class openglWindow;
 class optionWindow;
 class onelabWindow;
@@ -132,6 +136,8 @@ public:
   static bool getFinishedProcessingCommandLine();
   // test application-level keyboard shortcuts
   int testGlobalShortcuts(int event);
+  // runs an action of the shortcut table (src/common/Shortcuts.h) by name
+  int runShortcut(const std::string &action);
   // test the arrow shortcuts (not in the application-level shortcuts)
   // since it is used elsewhere (where we want to override widget
   // navigation). This is necessary since FLTK 1.1.
