@@ -1320,9 +1320,11 @@ void MElement::interpolateCurl(double val[], double u, double v, double w,
   double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
   getJacobian(u, v, w, jac);
   inv3x3(jac, inv);
-  interpolateGrad(&val[0], u, v, w, fx, stride, inv, order);
-  interpolateGrad(&val[1], u, v, w, fy, stride, inv, order);
-  interpolateGrad(&val[2], u, v, w, fz, stride, inv, order);
+  double gsf[1256][3];
+  getGradShapeFunctions(u, v, w, gsf, order);
+  _interpolateGradFromGradients(gsf, &val[0], fx, stride, inv);
+  _interpolateGradFromGradients(gsf, &val[1], fy, stride, inv);
+  _interpolateGradFromGradients(gsf, &val[2], fz, stride, inv);
   f[0] = fz[1] - fy[2];
   f[1] = -(fz[0] - fx[2]);
   f[2] = fy[0] - fx[1];
@@ -1334,9 +1336,11 @@ double MElement::interpolateDiv(double val[], double u, double v, double w,
   double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
   getJacobian(u, v, w, jac);
   inv3x3(jac, inv);
-  interpolateGrad(&val[0], u, v, w, fx, stride, inv, order);
-  interpolateGrad(&val[1], u, v, w, fy, stride, inv, order);
-  interpolateGrad(&val[2], u, v, w, fz, stride, inv, order);
+  double gsf[1256][3];
+  getGradShapeFunctions(u, v, w, gsf, order);
+  _interpolateGradFromGradients(gsf, &val[0], fx, stride, inv);
+  _interpolateGradFromGradients(gsf, &val[1], fy, stride, inv);
+  _interpolateGradFromGradients(gsf, &val[2], fz, stride, inv);
   return fx[0] + fy[1] + fz[2];
 }
 
