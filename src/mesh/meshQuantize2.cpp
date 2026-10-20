@@ -11,7 +11,7 @@
 #include <numeric>
 #include <unordered_map>
 #include "GmshMessage.h"
-#include "gmsh.h"
+#include "GModel.h"
 
 using namespace std;
 
@@ -252,17 +252,19 @@ Solution compute_weighted_even_faces(const vector<int>& N,
 void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<int> &N) {
     // --- 1. Lister toutes les surfaces (dim=2) et toutes les courbes (dim=1)
   vector<vector<int>> faces;
-  gmsh::initialize();
-  vector<pair<int,int>> surfaces, curves;
-  gmsh::model::getEntities(surfaces, 2);
-  gmsh::model::getEntities(curves,   1);
+  // the model itself rather than the API: gmsh::initialize() would read the
+  // option files again and make every later error throw an exception
+  GModel *model = GModel::current();
+  vector<GEntity *> surfaces, curves;
+  model->getEntities(surfaces, 2);
+  model->getEntities(curves, 1);
 
   //    printf("%lu %lu\n",surfaces.size(),curves.size());
 
   // --- 2. Map tag de courbe -> index compact [0..m-1]
   //  vector<int> curveTags;
   curveTags.reserve(curves.size());
-  for (const auto &c : curves) curveTags.push_back(c.second);
+  for (GEntity *c : curves) curveTags.push_back(c->tag());
 
   unordered_map<int,int> tag2idx;
   tag2idx.reserve(curveTags.size());
@@ -271,10 +273,10 @@ void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<in
   // --- 3. faces: pour chaque surface, récupérer le bord "courbes" (dim=1)
   faces.clear();
   faces.reserve(surfaces.size());
-  for (const auto &s : surfaces) {
+  for (GEntity *s : surfaces) {
     vector<pair<int,int>> boundary;
     // combined=true (pas de doublons), oriented=false, recursive=false
-    gmsh::model::getBoundary({s}, boundary);
+    model->getBoundaryTags({{2, s->tag()}}, boundary, true, true, false);
     //    printf("face %d %lu bnd\n",s.second,boundary.size());
     vector<int> f;
     f.reserve(boundary.size());
@@ -292,21 +294,8 @@ void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<in
   // NB: on additionne tous les types 1D retournés (2-node, 3-node, 4-node lines, etc.)
   N.assign((int)curveTags.size(), 0);
 
-  for (size_t i = 0; i < curveTags.size(); ++i) {
-    int ctag = curveTags[i];
-
-    // Ces conteneurs seront remplis par Gmsh (par type d'élément)
-    vector<int> elemTypes;
-    vector<vector<std::size_t>> elemTags, nodeTags;
-
-    gmsh::model::mesh::getElements(elemTypes, elemTags, nodeTags,
-				   /*dim=*/1, /*tag=*/ctag);
-
-    std::size_t count = 0;
-    for (const auto &etags : elemTags) count += etags.size();
-
-    N[i] = static_cast<int>(count);
-  }
+  for (size_t i = 0; i < curveTags.size(); ++i)
+    N[i] = static_cast<int>(curves[i]->getNumMeshElements());
 
   //  for (auto l : faces){
   //    for (auto e : l){
