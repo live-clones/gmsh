@@ -792,27 +792,9 @@ void openglWindow::hostQuickAccess()
   status_options_cb(nullptr, (void *)"quick_access");
 }
 
-int openglWindow::pixel_w()
-{
-#if(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 4)
-  return Fl_Gl_Window::pixel_w();
-#elif(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
-  return Fl_Gl_Window::pixel_w();
-#else
-  return w();
-#endif
-}
+int openglWindow::pixel_w() { return Fl_Gl_Window::pixel_w(); }
 
-int openglWindow::pixel_h()
-{
-#if(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 4)
-  return Fl_Gl_Window::pixel_h();
-#elif(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
-  return Fl_Gl_Window::pixel_h();
-#else
-  return h();
-#endif
-}
+int openglWindow::pixel_h() { return Fl_Gl_Window::pixel_h(); }
 
 // the clicks and keys of a selection are taken by the event loop: wait for
 // them until the selection has something to say

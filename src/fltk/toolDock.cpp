@@ -50,9 +50,7 @@ toolDock::toolDock(int x, int y, int w, int h, int rowHeight)
   // closed tab stays drawn
   box(FL_FLAT_BOX);
   _tabs = new Fl_Tabs(x, y, w, h);
-#if FL_API_VERSION >= 10400
   _tabs->handle_overflow(Fl_Tabs::OVERFLOW_PULLDOWN);
-#endif
   _tabs->when(FL_WHEN_CHANGED);
   _tabs->callback(_tabs_cb, this);
   _tabs->end();
@@ -169,12 +167,10 @@ void toolDock::_layout()
     _tabs->Fl_Widget::resize(X, yy, W, ht);
     for(int i = 0; i < _tabs->children(); i++)
       _tabs->child(i)->resize(X, yy + _rowHeight, W, ht - _rowHeight);
-#if FL_API_VERSION >= 10400
     // the row starts from its first tab again: FLTK scrolls it to keep the
     // tab chosen in view, from the width the tabs had then (0 before their
     // first layout), and never scrolls back
     _tabs->handle_overflow(Fl_Tabs::OVERFLOW_PULLDOWN);
-#endif
     if(Fl_Widget *v = _tabs->value()) _tabs->value(v);
     _tabs->show();
     _showCurrent();
@@ -249,10 +245,9 @@ void toolDock::dock(paletteWindow *pw)
     }
     else {
       dockTab *t = new dockTab(x(), y(), w(), h(), pw);
-#if FL_API_VERSION >= 10400 // a close button on the tab
+      // a close button on the tab
       t->when(FL_WHEN_CLOSED);
       t->callback(_close_cb);
-#endif
       t->copy_label(pw->label());
       t->labelfont(FL_BOLD); // as the titles of the stacked windows
       _tabs->add(t);

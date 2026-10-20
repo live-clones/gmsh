@@ -233,6 +233,7 @@ include(CheckTypeSize)
 include(CheckSymbolExists)
 include(CheckIncludeFile)
 include(CheckCXXCompilerFlag)
+include(CheckCXXSourceCompiles)
 include(CheckCCompilerFlag)
 
 macro(set_config_option VARNAME STRING)
@@ -640,14 +641,17 @@ if(ENABLE_VISUDEV)
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
-  # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,
-  # where e.g. xft and xinerama options are not dealt with)
+  # first, try to use fltk-config (FindFLTK is buggy on Unix, where e.g. xft
+  # and xinerama options are not dealt with)
   find_program(FLTK_CONFIG_SCRIPT fltk-config)
   if(FLTK_CONFIG_SCRIPT)
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --api-version
                     OUTPUT_VARIABLE FLTK_VERSION)
     string(STRIP "${FLTK_VERSION}" FLTK_VERSION)
-    if(FLTK_VERSION VERSION_GREATER_EQUAL "1.3.0")
+    if(FLTK_VERSION VERSION_LESS "1.4.0")
+      message(FATAL_ERROR "Gmsh requires FLTK 1.4.0 or higher (found FLTK "
+        "${FLTK_VERSION}); set ENABLE_FLTK=0 to build without the GUI")
+    else()
       add_subdirectory(src/fltk)
       set_config_option(HAVE_FLTK "Fltk")
       message(STATUS "Using fltk-config script for Fltk " ${FLTK_VERSION})
@@ -666,6 +670,17 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
     set(FLTK_SKIP_FLUID TRUE)
     find_package(FLTK)
     if(FLTK_FOUND)
+      set(CMAKE_REQUIRED_INCLUDES ${FLTK_INCLUDE_DIR})
+      check_cxx_source_compiles("#include <FL/Enumerations.H>
+        #if FL_API_VERSION < 10400
+        #error
+        #endif
+        int main() { return 0; }" FLTK_14)
+      unset(CMAKE_REQUIRED_INCLUDES)
+      if(NOT FLTK_14)
+        message(FATAL_ERROR "Gmsh requires FLTK 1.4.0 or higher; set "
+          "ENABLE_FLTK=0 to build without the GUI")
+      endif()
       add_subdirectory(src/fltk)
       set_config_option(HAVE_FLTK "Fltk")
       list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
