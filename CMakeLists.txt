@@ -654,9 +654,17 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
       add_subdirectory(src/fltk)
       set_config_option(HAVE_FLTK "Fltk")
       message(STATUS "Using fltk-config script for Fltk " ${FLTK_VERSION})
-      execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
-                      OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
-      string(STRIP "${FLTK_INCLUDE_DIR}" FLTK_INCLUDE_DIR)
+      # the include directories come from the compiler flags, as the headers
+      # of an FLTK built with Cairo (e.g. on Debian) include cairo.h
+      execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --cxxflags
+                      OUTPUT_VARIABLE FLTK_CXXFLAGS)
+      string(REGEX MATCHALL "-I[^ \t\n]+" FLTK_INCLUDE_DIR "${FLTK_CXXFLAGS}")
+      string(REPLACE "-I" "" FLTK_INCLUDE_DIR "${FLTK_INCLUDE_DIR}")
+      if(NOT FLTK_INCLUDE_DIR)
+        execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
+                        OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
+        string(STRIP "${FLTK_INCLUDE_DIR}" FLTK_INCLUDE_DIR)
+      endif()
       list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --ldflags
                       OUTPUT_VARIABLE FLTK_LIBRARIES)
