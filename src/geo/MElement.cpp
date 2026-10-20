@@ -887,27 +887,31 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
   return dJ;
 }
 
-double MElement::getJacobian(double u, double v, double w,
-                             double jac[3][3]) const
+double MElement::_jacobianFromGradients(const double (*gsf)[3],
+                                        double jac[3][3]) const
 {
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
   if(getDim() > 3) return 0;
-
-  double gsf[1256][3];
-  getGradShapeFunctions(u, v, w, gsf);
   for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     const MVertex *ver = getShapeFunctionNode(i);
-    double *gg = gsf[i];
+    const double *gg = gsf[i];
     for(int j = 0; j < getDim(); j++) {
       jac[j][0] += ver->x() * gg[j];
       jac[j][1] += ver->y() * gg[j];
       jac[j][2] += ver->z() * gg[j];
     }
   }
-
   return _computeDeterminantAndRegularize(this, jac);
+}
+
+double MElement::getJacobian(double u, double v, double w,
+                             double jac[3][3]) const
+{
+  double gsf[1256][3];
+  getGradShapeFunctions(u, v, w, gsf);
+  return _jacobianFromGradients(gsf, jac);
 }
 
 double MElement::getJacobian(const fullMatrix<double> &gsf,
@@ -1258,13 +1262,12 @@ void MElement::movePointFromElementSpaceToParentSpace(double &u, double &v,
   w = uvwP[2];
 }
 
-double MElement::interpolate(double val[], double u, double v, double w,
-                             int stride, int order)
+double MElement::_interpolateFromShapeFunctions(const double *sf,
+                                                const double *val,
+                                                int stride) const
 {
   double sum = 0;
   int j = 0;
-  double sf[1256];
-  getShapeFunctions(u, v, w, sf, order);
   for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     sum += val[j] * sf[i];
     j += stride;
@@ -1272,27 +1275,44 @@ double MElement::interpolate(double val[], double u, double v, double w,
   return sum;
 }
 
-void MElement::interpolateGrad(double val[], double u, double v, double w,
-                               double f[], int stride, double invjac[3][3],
-                               int order)
+double MElement::interpolate(double val[], double u, double v, double w,
+                             int stride, int order)
+{
+  double sf[1256];
+  getShapeFunctions(u, v, w, sf, order);
+  return _interpolateFromShapeFunctions(sf, val, stride);
+}
+
+void MElement::_interpolateGradFromGradients(const double (*gsf)[3],
+                                             const double *val, double f[],
+                                             int stride,
+                                             double invjac[3][3]) const
 {
   double dfdu[3] = {0., 0., 0.};
   int j = 0;
-  double gsf[1256][3];
-  getGradShapeFunctions(u, v, w, gsf, order);
   for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     dfdu[0] += val[j] * gsf[i][0];
     dfdu[1] += val[j] * gsf[i][1];
     dfdu[2] += val[j] * gsf[i][2];
     j += stride;
   }
-  if(invjac) { matvec(invjac, dfdu, f); }
-  else {
-    double jac[3][3], inv[3][3];
+  matvec(invjac, dfdu, f);
+}
+
+void MElement::interpolateGrad(double val[], double u, double v, double w,
+                               double f[], int stride, double invjac[3][3],
+                               int order)
+{
+  double gsf[1256][3];
+  getGradShapeFunctions(u, v, w, gsf, order);
+  double inv[3][3];
+  if(!invjac) {
+    double jac[3][3];
     getJacobian(u, v, w, jac);
     inv3x3(jac, inv);
-    matvec(inv, dfdu, f);
+    invjac = inv;
   }
+  _interpolateGradFromGradients(gsf, val, f, stride, invjac);
 }
 
 void MElement::interpolateCurl(double val[], double u, double v, double w,

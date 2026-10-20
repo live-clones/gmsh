@@ -55,6 +55,21 @@ protected:
   static bool _getFaceInfo(const MFace &face, const MFace &other, int &sign,
                            int &rot);
 
+  // the Jacobian and its determinant from shape function gradients already
+  // evaluated at a point, summed in the same order as getJacobian()
+  double _jacobianFromGradients(const double (*gsf)[3], double jac[3][3]) const;
+
+  // interpolate nodal values from shape functions already evaluated at a
+  // point, in the same order as interpolate()
+  double _interpolateFromShapeFunctions(const double *sf, const double *val,
+                                        int stride) const;
+
+  // interpolate the gradient of nodal values from shape function gradients
+  // already evaluated at a point, in the same order as interpolateGrad()
+  void _interpolateGradFromGradients(const double (*gsf)[3], const double *val,
+                                     double f[], int stride,
+                                     double invjac[3][3]) const;
+
 public:
   MElement(std::size_t num = 0, int part = 0);
   virtual ~MElement() {}
