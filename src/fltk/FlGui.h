@@ -23,6 +23,7 @@
 // fields with a scrollbar beside them
 #define TW (28 * FL_NORMAL_SIZE + 2 * WB + Fl::scrollbar_size())
 
+class paletteWindow;
 class Fl_Window;
 class graphicWindow;
 
@@ -93,8 +94,12 @@ public:
   // open ones move when the option changes
   void applyFloatingTools();
   void storeFloatingTools();
-  // docks or undocks every tool
+  // a tool kept on the desktop or docked, moved if open
+  void setToolFloating(paletteWindow *p, bool floating);
+  // docks or undocks every tool, or the one holding the focus (else the one
+  // shown in the dock)
   void dockTools(bool dock);
+  void toggleCurrentTool();
   manipWindow *manip;
   elementaryContextWindow *elementaryContext;
   transformContextWindow *transformContext;

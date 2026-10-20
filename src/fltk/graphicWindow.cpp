@@ -2904,7 +2904,8 @@ static Fl_Menu_Item bar_table[] = {
     {"Enter Full Screen",  fltkShortcut("fullscreen"), (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
     {"Show/Hide Menu",     fltkShortcut("menu_show_hide"), (Fl_Callback *)show_hide_menu_cb, nullptr},
     {"Attach/Detach Menu", 0, (Fl_Callback *)attach_detach_menu_cb, nullptr},
-    {"Dock/Undock Tool Windows", fltkShortcut("dock"), (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
+    {"Dock/Undock Tool Window", fltkShortcut("dock"), (Fl_Callback *)dock_tool_cb, nullptr},
+    {"Dock/Undock All Tool Windows", fltkShortcut("dock_all"), (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
     {nullptr},
   {"Help", 0, nullptr, nullptr, FL_SUBMENU},
@@ -3956,15 +3957,24 @@ void show_hide_menu_cb(Fl_Widget *w, void *data)
   FlGui::check();
 }
 
+void dock_tool_cb(Fl_Widget *w, void *data)
+{
+  FlGui::instance()->toggleCurrentTool();
+  FlGui::check();
+}
+
 void dock_tools_cb(Fl_Widget *w, void *data)
 {
   // docks every tool when any is open on the desktop, undocks every one
-  // otherwise
-  bool dock = false;
+  // when all the open ones are docked; with none open, the list is flipped
+  bool open = false, floating = false;
   for(auto t : FlGui::instance()->toolWindows()) {
     paletteWindow *p = (paletteWindow *)t;
-    if(p->floating() && p->shown()) dock = true;
+    if(!p->isOpen()) continue;
+    open = true;
+    if(p->floating()) floating = true;
   }
+  bool dock = open ? floating : !CTX::instance()->floatingTools.empty();
   FlGui::instance()->dockTools(dock);
   FlGui::check();
 }
@@ -4875,6 +4885,9 @@ void graphicWindow::_drop_cb(void *data)
 }
 
 void graphicWindow::toolResized(paletteWindow *w) { _dock->resized(w); }
+
+paletteWindow *graphicWindow::currentDockedTool()
+{ return isDockShown() ? _dock->current() : nullptr; }
 
 bool graphicWindow::closeDockedTool()
 { return isDockShown() && _dock->closeCurrent(); }

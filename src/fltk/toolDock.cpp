@@ -334,12 +334,17 @@ void toolDock::_close_cb(Fl_Widget *w, void *data)
   ((dockTab *)w)->win->do_callback();
 }
 
-bool toolDock::closeCurrent()
+paletteWindow *toolDock::current()
 {
-  // the visible one used last: open in the stack, or the tab shown
   paletteWindow *last = nullptr;
   for(auto &u : _used)
     if(u.first->visible() && (!last || u.second > _used[last])) last = u.first;
+  return last;
+}
+
+bool toolDock::closeCurrent()
+{
+  paletteWindow *last = current();
   if(!last) return false;
   last->do_callback();
   return true;

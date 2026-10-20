@@ -107,7 +107,8 @@ public:
   // a floating tool moved on the desktop, docked when dragged over the dock
   void toolTornOut(paletteWindow *w, int x, int y);
   void toolMoved(paletteWindow *w);
-  // closes the tool shown in the dock, if any
+  // the tool shown in the dock, used last, if any, and closing it
+  paletteWindow *currentDockedTool();
   bool closeDockedTool();
   // runs the entry of the menu bar whose shortcut is the current event
   bool runMenuShortcut();
@@ -157,6 +158,7 @@ void quick_access_cb(Fl_Widget *w, void *data);
 void show_hide_message_cb(Fl_Widget *w, void *data);
 void show_hide_menu_cb(Fl_Widget *w, void *data);
 void attach_detach_menu_cb(Fl_Widget *w, void *data);
+void dock_tool_cb(Fl_Widget *w, void *data);
 void dock_tools_cb(Fl_Widget *w, void *data);
 
 #endif

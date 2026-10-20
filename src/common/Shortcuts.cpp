@@ -105,7 +105,8 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("window_copy", {'c', ModCommand}, "Copy graphic window to clipboard"),
 #endif
     // the menus
-    E("dock", {'d', ModCommand}, "Dock/undock all tool windows"),
+    E("dock", {'d', ModCommand}, "Dock/undock current tool window"),
+    E("dock_all", {'d', ModCommand | ModShift}, "Dock/undock all tool windows"),
     E("file_export", {'e', ModCommand}, "Export project"),
     E("fullscreen", {'f', ModCommand}, "Enter full screen"),
     E("help_keys", {'h', ModCommand}, "Show keyboard and mouse usage", false,

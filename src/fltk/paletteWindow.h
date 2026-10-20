@@ -62,6 +62,9 @@ public:
   bool dockable() const { return _dockable; }
   void floating(bool f) { _floating = f; }
   bool floating() const { return _floating; }
+  // on the desktop, or in the dock (where a folded or covered window is not
+  // shown)
+  bool isOpen() const { return parent() || shown(); }
   void name(const std::string &n) { _name = n; }
   const std::string &name() const { return _name; }
   // docked, shown where placed: Cocoa centers a non-modal window otherwise

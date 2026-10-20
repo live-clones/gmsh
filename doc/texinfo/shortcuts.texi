@@ -68,6 +68,8 @@ Move only along y coordinate in geometry creation mode
 @item Shift+z
 Move only along z coordinate in geometry creation mode
 @item Ctrl+d
+Dock/undock current tool window
+@item Shift+Ctrl+d
 Dock/undock all tool windows
 @item Ctrl+e
 Export project

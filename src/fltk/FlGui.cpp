@@ -1426,14 +1426,32 @@ void FlGui::applyFloatingTools()
   for(auto w : toolWindows()) {
     paletteWindow *p = (paletteWindow *)w;
     bool floating = names.find("," + p->name() + ",") != std::string::npos;
-    if(floating == p->floating()) continue;
-    p->floating(floating);
-    if(!p->shown()) continue;
-    // an open tool moves: a docked one leaves the dock when hidden, and a
-    // tool on the desktop joins it when shown
-    if(floating) p->hide();
-    p->show();
+    if(floating != p->floating()) setToolFloating(p, floating);
   }
+}
+
+void FlGui::setToolFloating(paletteWindow *p, bool floating)
+{
+  p->floating(floating);
+  if(!p->isOpen()) return;
+  // an open tool moves: a docked one leaves the dock when hidden, and a tool
+  // on the desktop joins it when shown
+  if(floating && p->parent()) p->hide();
+  p->show();
+}
+
+void FlGui::toggleCurrentTool()
+{
+  // the tool holding the focus, else the one shown in the dock used last
+  paletteWindow *p = nullptr;
+  for(Fl_Widget *w = Fl::focus(); w && !p; w = w->parent()) {
+    p = dynamic_cast<paletteWindow *>(w);
+    if(p && !p->dockable()) p = nullptr;
+  }
+  if(!p) p = graph[0]->currentDockedTool();
+  if(!p || !p->isOpen()) return;
+  setToolFloating(p, p->parent() != nullptr);
+  storeFloatingTools();
 }
 
 void FlGui::storeFloatingTools()

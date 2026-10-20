@@ -145,7 +145,9 @@ public:
   // gives all the windows back to the desktop, shown or not
   void undockAll(bool show = true);
   bool empty() const { return !_tabs->children() && _stack.empty(); }
-  // closes the visible window used last, as its close button would
+  // the visible window used last: open in the stack, or the tab shown
+  paletteWindow *current();
+  // closes it, as its close button would
   bool closeCurrent();
   void resize(int x, int y, int w, int h);
   void draw();
