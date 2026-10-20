@@ -4171,14 +4171,12 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #endif
   }
 
-  // minimum width should be exactly the width of the status bar buttons (see
-  // below)
-  _minWidth = 10 + 12 * sw + 1.75 * FL_NORMAL_SIZE;
-  _minHeight = 100;
-  _win->size_range(_minWidth, _minHeight);
-
-  // a dummy resizable box that won't eat events
-  dummyBox *resbox = new dummyBox(_minWidth, mh, width - _minWidth, glheight);
+  // a dummy resizable box that won't eat events, created before the tile so
+  // that FLTK does not find it first when it looks for the widget under the
+  // mouse (which would turn every move over the graphic windows into a leave
+  // and an enter, and no move at all); its place is set below, once the
+  // status bar says where the resizing part of the window starts
+  dummyBox *resbox = new dummyBox(0, mh, width, glheight);
   _win->resizable(resbox);
   _resbox = resbox;
 
@@ -4383,6 +4381,15 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 
   x += 4;
+
+  // the least width of the window is what the status bar buttons take, and
+  // the part of the window that resizes starts after them, so that they stay
+  // in place
+  _minWidth = x;
+  _minHeight = 100;
+  _win->size_range(_minWidth, _minHeight);
+  resbox->resize(_minWidth, mh, std::max(1, width - _minWidth), glheight);
+
   _label =
     new mainWindowProgress(x, mh + glheight + mheight + 2, width - x - 2, sht);
   _label->box(FL_FLAT_BOX);
@@ -4391,6 +4398,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _label->color(FL_BACKGROUND_COLOR, FL_LIGHT3);
   else
     _label->color(FL_BACKGROUND_COLOR, FL_DARK2);
+  // a saved width below the least one
+  if(_win->w() < _minWidth) _win->size(_minWidth, _win->h());
 
   if(main) {
     // the other windows are placed relative to the main graphic window
