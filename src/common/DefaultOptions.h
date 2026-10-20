@@ -1240,9 +1240,9 @@ StringXNumber GeometryOptions_Number[] = {
     "Display surface labels?" },
   { F|O|D, "SurfaceNumbers" , opt_geometry_surface_labels , 0. ,
     "[Deprecated]" },
-  { F|O, "SurfaceType" , opt_geometry_surface_type , 0. ,
-    "Surface display type (0: cross, 1: wireframe, 2: solid). Wireframe and solid "
-    "are not available with the built-in geometry kernel." },
+  { F|O, "SurfaceType" , opt_geometry_surface_type , 2. ,
+    "Surface display type (0: cross, 1: wireframe, 2: solid). A surface of the "
+    "built-in geometry kernel is drawn as a cross until it is meshed." },
 
   { F|O, "Tangents" , opt_geometry_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },
