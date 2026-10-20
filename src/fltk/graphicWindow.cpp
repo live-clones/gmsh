@@ -4686,12 +4686,15 @@ bool graphicWindow::runMenuShortcut()
   // the entry of the menu bar whose shortcut is the event, run as a click on
   // it would; the system menu bar of macOS does not always take its own
   Fl_Menu_Item *table = bar_table;
+  Fl_Widget *w = _bar;
 #if defined(__APPLE__)
-  if(_sysbar) table = systemBarTable();
+  if(_sysbar) {
+    table = systemBarTable();
+    w = _sysbar;
+  }
 #endif
   const Fl_Menu_Item *m = table->test_shortcut();
   if(!m || !m->callback()) return false;
-  Fl_Widget *w = _bar ? (Fl_Widget *)_bar : (Fl_Widget *)_sysbar;
   const_cast<Fl_Menu_Item *>(m)->do_callback(w);
   return true;
 }
