@@ -14,7 +14,9 @@
 // shortcuts its menus show and the list of the help window and of the
 // documentation are all read from this table, so that they cannot drift
 // apart. The table knows no toolkit: the GUI maps its keys and runs its
-// actions by name.
+// actions by name. The titles of the menus must not carry a mnemonic (an
+// "&" letter) that an Alt shortcut below uses: the menu bar opens the menu
+// before the shortcut is seen.
 
 // the keys that are not a character
 enum ShortcutKey {

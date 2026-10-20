@@ -2847,10 +2847,13 @@ static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
 
 // The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics since they
 // are already defined as global shortcuts)
+// no label carries a mnemonic (an "&" letter): the titles of the menus would
+// take Alt+f, t, w and h from the shortcuts of the table (see Shortcuts.h)
+// before they are seen, and the macOS system menu bar wants none
 static Fl_Menu_Item bar_table[] = {
-  {"&File", 0, nullptr, nullptr, FL_SUBMENU},
-    {"&New...",     fltkShortcut("file_new"), (Fl_Callback *)file_new_cb, nullptr},
-    {"&Open...",    fltkShortcut("file_open"), (Fl_Callback *)file_open_merge_cb, (void*)"open"},
+  {"File", 0, nullptr, nullptr, FL_SUBMENU},
+    {"New...",     fltkShortcut("file_new"), (Fl_Callback *)file_new_cb, nullptr},
+    {"Open...",    fltkShortcut("file_open"), (Fl_Callback *)file_open_merge_cb, (void*)"open"},
     {"Open Recent", 0, nullptr, nullptr, FL_SUBMENU},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", fltkShortcut("file_recent"), (Fl_Callback *)file_open_recent_cb, nullptr},
@@ -2863,10 +2866,10 @@ static Fl_Menu_Item bar_table[] = {
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {nullptr},
-    {"M&erge...",   fltkShortcut("file_merge"), (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
+    {"Merge...",   fltkShortcut("file_merge"), (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
     {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, nullptr, FL_MENU_DIVIDER},
-    {"&Clear",      0, (Fl_Callback *)file_clear_cb, nullptr},
-    {"&Rename...",  fltkShortcut("file_rename"), (Fl_Callback *)file_rename_cb, nullptr},
+    {"Clear",      0, (Fl_Callback *)file_clear_cb, nullptr},
+    {"Rename...",  fltkShortcut("file_rename"), (Fl_Callback *)file_rename_cb, nullptr},
     {"Delete",      0, (Fl_Callback *)file_delete_cb, nullptr, FL_MENU_DIVIDER},
     {"Remote", 0, nullptr, nullptr, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
@@ -2874,25 +2877,25 @@ static Fl_Menu_Item bar_table[] = {
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
       {nullptr},
-    {"Sa&ve Mesh",  fltkShortcut("mesh_save"), (Fl_Callback *)mesh_save_cb, nullptr},
+    {"Save Mesh",  fltkShortcut("mesh_save"), (Fl_Callback *)mesh_save_cb, nullptr},
     {"Save Model Options", fltkShortcut("options_save"), (Fl_Callback *)file_options_save_cb, (void*)"file"},
     {"Save Options As Default", fltkShortcut("options_save_default"), (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
-    {"&Export...",  fltkShortcut("file_export"), (Fl_Callback *)file_export_cb, nullptr, FL_MENU_DIVIDER},
-    {"&Quit",       fltkShortcut("quit"), (Fl_Callback *)file_quit_cb, nullptr},
+    {"Export...",  fltkShortcut("file_export"), (Fl_Callback *)file_export_cb, nullptr, FL_MENU_DIVIDER},
+    {"Quit",       fltkShortcut("quit"), (Fl_Callback *)file_quit_cb, nullptr},
     {nullptr},
-  {"&Tools", 0, nullptr, nullptr, FL_SUBMENU},
-    {"&Options",         fltkShortcut("options"), (Fl_Callback *)options_cb, nullptr},
-    {"Pl&ugins",         fltkShortcut("plugins"), (Fl_Callback *)plugin_cb, (void*)(-1)},
-    {"&Visibility",      fltkShortcut("visibility"), (Fl_Callback *)visibility_cb, nullptr},
-    {"&Clipping",        fltkShortcut("clipping"), (Fl_Callback *)clip_cb, nullptr},
-    {"&Manipulator",     fltkShortcut("manipulator"), (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
+  {"Tools", 0, nullptr, nullptr, FL_SUBMENU},
+    {"Options",         fltkShortcut("options"), (Fl_Callback *)options_cb, nullptr},
+    {"Plugins",         fltkShortcut("plugins"), (Fl_Callback *)plugin_cb, (void*)(-1)},
+    {"Visibility",      fltkShortcut("visibility"), (Fl_Callback *)visibility_cb, nullptr},
+    {"Clipping",        fltkShortcut("clipping"), (Fl_Callback *)clip_cb, nullptr},
+    {"Manipulator",     fltkShortcut("manipulator"), (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
 #if defined(HAVE_3M)
-    {"&3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
+    {"3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
 #endif
-    {"S&tatistics",      fltkShortcut("statistics"), (Fl_Callback *)statistics_cb, nullptr},
-    {"M&essage Console", fltkShortcut("console"), (Fl_Callback *)show_hide_message_cb, nullptr},
+    {"Statistics",      fltkShortcut("statistics"), (Fl_Callback *)statistics_cb, nullptr},
+    {"Message Console", fltkShortcut("console"), (Fl_Callback *)show_hide_message_cb, nullptr},
     {nullptr},
-  {"&Window", 0, nullptr, nullptr, FL_SUBMENU},
+  {"Window", 0, nullptr, nullptr, FL_SUBMENU},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
 #if defined(WIN32)
     {"Copy to Clipboard",  fltkShortcut("window_copy"), (Fl_Callback *)file_window_cb, (void*)"copy", FL_MENU_DIVIDER},
@@ -2908,86 +2911,42 @@ static Fl_Menu_Item bar_table[] = {
     {"Dock/Undock Tool Windows", fltkShortcut("dock"), (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
     {nullptr},
-  {"&Help", 0, nullptr, nullptr, FL_SUBMENU},
-    {"On&line Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
-    {"&Keyboard and Mouse Usage",  fltkShortcut("help_keys"), (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
-    {"&Current Options and Workspace", fltkShortcut("help_options"), (Fl_Callback *)status_options_cb, (void*)"?", 0},
-    {"&Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr, FL_MENU_DIVIDER},
-    {"&About Gmsh",           0, (Fl_Callback *)help_about_cb, nullptr},
+  {"Help", 0, nullptr, nullptr, FL_SUBMENU},
+    {"Online Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
+    {"Keyboard and Mouse Usage",  fltkShortcut("help_keys"), (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
+    {"Current Options and Workspace", fltkShortcut("help_options"), (Fl_Callback *)status_options_cb, (void*)"?", 0},
+    {"Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr, FL_MENU_DIVIDER},
+    {"About Gmsh",           0, (Fl_Callback *)help_about_cb, nullptr},
     {nullptr},
   {nullptr}
 };
 
 #if defined(__APPLE__)
 
-// Alternative items for the macOS system menu bar (removed '&' shortcuts: they
-// would cause spurious menu items to appear on the menu window; removed
-// File->Quit)
-static Fl_Menu_Item sysbar_table[] = {
-  {"File", 0, nullptr, nullptr, FL_SUBMENU},
-    {"New...",     fltkShortcut("file_new", true), (Fl_Callback *)file_new_cb, nullptr},
-    {"Open...",    fltkShortcut("file_open", true), (Fl_Callback *)file_open_merge_cb, (void*)"open"},
-    {"Open Recent", 0, nullptr, nullptr, FL_SUBMENU},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", fltkShortcut("file_recent", true), (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {nullptr},
-    {"Merge...",   fltkShortcut("file_merge", true), (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
-    {"Watch Pattern...",   0, (Fl_Callback *)file_watch_cb, nullptr, FL_MENU_DIVIDER},
-    {"Clear",      0, (Fl_Callback *)file_clear_cb, nullptr},
-    {"Rename...",  fltkShortcut("file_rename", true), (Fl_Callback *)file_rename_cb, nullptr},
-    {"Delete",     0, (Fl_Callback *)file_delete_cb, nullptr, FL_MENU_DIVIDER},
-    {"Remote", 0, nullptr, nullptr, FL_MENU_DIVIDER | FL_SUBMENU},
-      {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
-      {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
-      {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
-      {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
-      {nullptr},
-    {"Save Mesh",  fltkShortcut("mesh_save", true), (Fl_Callback *)mesh_save_cb, nullptr},
-    {"Save Model Options", fltkShortcut("options_save", true), (Fl_Callback *)file_options_save_cb, (void*)"file"},
-    {"Save Options As Default", fltkShortcut("options_save_default", true), (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
-    {"Export...",  fltkShortcut("file_export", true), (Fl_Callback *)file_export_cb, nullptr},
-    {nullptr},
-  {"Tools", 0, nullptr, nullptr, FL_SUBMENU},
-    {"Options",         fltkShortcut("options", true), (Fl_Callback *)options_cb, nullptr},
-    {"Plugins",         fltkShortcut("plugins", true), (Fl_Callback *)plugin_cb, (void*)(-1)},
-    {"Visibility",      fltkShortcut("visibility", true), (Fl_Callback *)visibility_cb, nullptr},
-    {"Clipping",        fltkShortcut("clipping", true), (Fl_Callback *)clip_cb, nullptr},
-    {"Manipulator",     fltkShortcut("manipulator", true), (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
-#if defined(HAVE_3M)
-    {"3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
-#endif
-    {"Statistics",      fltkShortcut("statistics", true), (Fl_Callback *)statistics_cb, nullptr},
-    {"Message Console", fltkShortcut("console", true), (Fl_Callback *)show_hide_message_cb, nullptr},
-    {nullptr},
-  {"Window", 0, nullptr, nullptr, FL_SUBMENU},
-    {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
-    {"Split Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
-    {"Split Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
-    {"Unsplit",            0, (Fl_Callback *)file_window_cb, (void*)"split_u", FL_MENU_DIVIDER},
-    {"Minimize",           fltkShortcut("minimize", true), (Fl_Callback *)window_cb, (void*)"minimize"},
-    {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
-    {"Enter Full Screen",  fltkShortcut("fullscreen", true), (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
-    {"Show/Hide Menu",     fltkShortcut("menu_show_hide", true), (Fl_Callback *)show_hide_menu_cb, nullptr},
-    {"Attach/Detach Menu", 0, (Fl_Callback *)attach_detach_menu_cb, nullptr},
-    {"Dock/Undock Tool Windows", fltkShortcut("dock", true), (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
-    {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
-    {nullptr},
-  {"Help", 0, nullptr, nullptr, FL_SUBMENU},
-    {"Online Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
-    {"Keyboard and Mouse Usage", 0, (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
-    {"Current Options and Workspace", fltkShortcut("help_options", true), (Fl_Callback *)status_options_cb, (void*)"?"},
-    {"Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr},
-    {nullptr},
-  {nullptr}
-};
+// the items of the macOS system menu bar: those of the window bar without
+// Quit and About, which the application menu has, nor the shortcut of the
+// keyboard help, as Cmd+H hides the application
+static Fl_Menu_Item *systemBarTable()
+{
+  static std::vector<Fl_Menu_Item> table;
+  if(table.empty()) {
+    int n = sizeof(bar_table) / sizeof(bar_table[0]);
+    for(int i = 0; i < n; i++) {
+      Fl_Menu_Item it = bar_table[i];
+      if(it.callback_ == (Fl_Callback *)file_quit_cb ||
+         it.callback_ == (Fl_Callback *)help_about_cb) {
+        // the last of its menu: the divider above it goes too
+        if(it.text && !bar_table[i + 1].text && table.size())
+          table.back().flags &= ~FL_MENU_DIVIDER;
+        continue;
+      }
+      if(it.callback_ == (Fl_Callback *)help_basic_cb)
+        it.shortcut_ = fltkShortcut("help_keys", true);
+      table.push_back(it);
+    }
+  }
+  return &table[0];
+}
 
 #endif
 
@@ -4197,7 +4156,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #if defined(__APPLE__)
     if(CTX::instance()->systemMenuBar) {
       _sysbar = new Fl_Sys_Menu_Bar(1, 1, 1, 1);
-      _sysbar->menu(sysbar_table);
+      _sysbar->menu(systemBarTable());
       _sysbar->global();
       fillRecentHistoryMenu();
     }
@@ -4714,7 +4673,7 @@ bool graphicWindow::runMenuShortcut()
   // it would; the system menu bar of macOS does not always take its own
   Fl_Menu_Item *table = bar_table;
 #if defined(__APPLE__)
-  if(_sysbar) table = sysbar_table;
+  if(_sysbar) table = systemBarTable();
 #endif
   const Fl_Menu_Item *m = table->test_shortcut();
   if(!m || !m->callback()) return false;
@@ -5051,7 +5010,7 @@ void graphicWindow::fillRecentHistoryMenu()
 
   Fl_Menu_Item *table = bar_table;
 #if defined(__APPLE__)
-  if(CTX::instance()->systemMenuBar) table = sysbar_table;
+  if(CTX::instance()->systemMenuBar) table = systemBarTable();
 #endif
 
   static char recent[10][256];
