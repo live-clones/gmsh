@@ -98,6 +98,7 @@ public:
                                                       double &w) const;
   using MElement::isInside;
   virtual bool isInside(double u, double v, double w, double tol) const;
+  virtual bool hasStaticIntegrationPoints() const { return false; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 
   virtual MElement *getParent() const { return _orig; }
@@ -207,6 +208,7 @@ public:
                                                       double &w) const;
   using MElement::isInside;
   virtual bool isInside(double u, double v, double w, double tol) const;
+  virtual bool hasStaticIntegrationPoints() const { return false; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 
   virtual MElement *getParent() const { return _orig; }
@@ -315,6 +317,7 @@ public:
                                                       double &w) const;
   using MElement::isInside;
   virtual bool isInside(double u, double v, double w, double tol) const;
+  virtual bool hasStaticIntegrationPoints() const { return false; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 
   virtual MElement *getParent() const { return _orig; }
@@ -423,6 +426,7 @@ public:
                                                       double &w) const;
   using MElement::isInside;
   virtual bool isInside(double u, double v, double w, double tol) const;
+  virtual bool hasStaticIntegrationPoints() const { return false; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 
   virtual MElement *getParent() const { return _orig; }

@@ -188,6 +188,7 @@ public:
       return false;
     return true;
   }
+  virtual bool hasStaticIntegrationPoints() const { return true; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual SPoint3 circumcenter();
   static int edges_tetra(const int edge, const int vert)

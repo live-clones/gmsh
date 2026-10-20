@@ -75,6 +75,7 @@ public:
     if(fabs(u) > tol || fabs(v) > tol || fabs(w) > tol) return false;
     return true;
   }
+  virtual bool hasStaticIntegrationPoints() const { return true; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   {
     static IntPt GQL[1];

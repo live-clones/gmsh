@@ -104,6 +104,7 @@ public:
     }
   }
   virtual SPoint3 barycenterUVW() const { return SPoint3(0, 0, 0); }
+  virtual bool hasStaticIntegrationPoints() const { return true; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual void discretize(double tol, std::vector<SPoint3> &dpts,
                           std::vector<double> &ts);
