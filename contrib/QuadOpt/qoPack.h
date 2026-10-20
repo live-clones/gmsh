@@ -15,8 +15,9 @@ namespace QuadOpt {
   void finishPackMesh(GModel *model, const Options &options);
 
   // Applies the PACK-specific mesh settings for the duration of a generation
-  // (uniform size, recombination) and restores the caller's settings. This is
-  // the adapter to Gmsh's global context; the algorithms do not use it.
+  // (recombination, polygonal loops of discrete faces) and restores the
+  // caller's settings. This is the adapter to Gmsh's global context; the
+  // algorithms do not use it.
   class PackMeshScope {
     struct State;
     std::unique_ptr<State> _state;

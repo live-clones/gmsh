@@ -1725,8 +1725,6 @@ void bowyerWatsonParallelograms(
              packed.size());
 
   MTri3 *oneNewTriangle = nullptr;
-  const bool forceAllPackedPoints =
-    CTX::instance()->mesh.packForceAllPoints;
   std::size_t rejectedPackedPoints = 0;
   std::size_t singularPackedMetrics = 0;
   for(std::size_t i = 0; i < packed.size();) {
@@ -1773,7 +1771,8 @@ void bowyerWatsonParallelograms(
       bool success =
         insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA, AllTris,
                      nullptr, oneNewTriangle, &oneNewTriangle, false,
-                     forceAllPackedPoints, &physicalPoint);
+                     true, &physicalPoint); // located over the whole
+                                            // triangulation if needed
       if(!success) {
         oneNewTriangle = nullptr;
         ++rejectedPackedPoints;
@@ -1801,7 +1800,7 @@ void bowyerWatsonParallelograms(
                  singularPackedMetrics, singularPackedMetrics == 1 ? "" : "s",
                  gf->tag());
 
-  if(forceAllPackedPoints && rejectedPackedPoints) {
+  if(rejectedPackedPoints) {
     // Rejection of a packed candidate does not invalidate the triangulation:
     // insertion is transactional and the remaining mesh is still usable.
     // Report the loss, but do not make the complete meshing operation fail.

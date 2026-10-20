@@ -49,16 +49,12 @@ namespace QuadOpt {
         gf->meshStatistics.status = GFace::DONE;
   }
 
-  // PACK uses the standard mesh size settings. For uniform sizes, derive
-  // cleanup bounds and preserve boundary loops; variable size fields keep
-  // their local sizing. Restore temporary meshing settings after generation.
+  // PACK uses the standard mesh size settings and the options as the user
+  // set them: only the recombination is forced, and the loops of discrete
+  // faces kept polygons. Restored after generation.
   struct PackMeshScope::State {
-    bool active = false;
     bool packing = false;
     int recombineAll = 0;
-    int minCurveNodes = 0;
-    int smoothingPasses = 0;
-    int forceAllPackedPoints = 0;
     std::map<GEdge *, int> minimumSegmentsByEdge;
 
     void preserveDiscreteBoundaryLoops()
@@ -96,43 +92,20 @@ namespace QuadOpt {
     explicit State(const Options &options)
     {
       contextMeshOptions &mesh = CTX::instance()->mesh;
-      const bool uniformSize =
-        mesh.lcMin > 0. && mesh.lcMax > 0. && mesh.lcFactor > 0. &&
-        std::isfinite(mesh.lcFactor) &&
-        std::isfinite(mesh.lcMin) && std::isfinite(mesh.lcMax) &&
-        std::abs(mesh.lcMax - mesh.lcMin) <=
-          1.e-12 * std::max({1., mesh.lcMin, mesh.lcMax});
-      const double h = (.5 * mesh.lcMin + .5 * mesh.lcMax) * mesh.lcFactor;
       packing = mesh.algo2d == ALGO_2D_PACK_PRLGRMS;
-      active = packing && uniformSize && h > 0. && std::isfinite(h);
+      if(!packing) return;
       // PACK is a quad mesher: recombine its triangulation of the packed
-      // points whatever the size specification (uniform or a size field)
-      if(packing) {
-        recombineAll = mesh.recombineAll;
-        mesh.recombineAll = options.qMorph ? 0 : 1;
-      }
-      if(!active) return;
-
-      minCurveNodes = mesh.minCurveNodes;
-      smoothingPasses = mesh.nbSmoothing;
-      forceAllPackedPoints = mesh.packForceAllPoints;
-
+      // points
+      recombineAll = mesh.recombineAll;
+      mesh.recombineAll = options.qMorph ? 0 : 1;
+      // the loops of discrete faces must stay polygons
       preserveDiscreteBoundaryLoops();
-      mesh.minCurveNodes = 1;
-      mesh.nbSmoothing = std::max(mesh.nbSmoothing, 3);
-      mesh.packForceAllPoints = 1;
-
-      Msg::Info("PACK uniform size: h=%g, 3D packing forced", h);
     }
 
     ~State()
     {
-      contextMeshOptions &mesh = CTX::instance()->mesh;
-      if(packing) mesh.recombineAll = recombineAll;
-      if(!active) return;
-      mesh.minCurveNodes = minCurveNodes;
-      mesh.nbSmoothing = smoothingPasses;
-      mesh.packForceAllPoints = forceAllPackedPoints;
+      if(!packing) return;
+      CTX::instance()->mesh.recombineAll = recombineAll;
       for(const auto &entry : minimumSegmentsByEdge)
         entry.first->meshAttributes.minimumMeshSegments = entry.second;
     }

@@ -7422,13 +7422,6 @@ double opt_mesh_recombine_greedy_first(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombineGreedyFirst;
 }
 
-double opt_mesh_pack_force_all_points(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.packForceAllPoints = (int)val;
-  return CTX::instance()->mesh.packForceAllPoints;
-}
-
 double opt_mesh_pack_patterns(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.packPatterns = (int)val;
