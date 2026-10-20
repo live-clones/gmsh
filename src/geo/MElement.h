@@ -470,6 +470,12 @@ public:
   double interpolateDiv(double val[], double u, double v, double w,
                         int stride = 3, int order = -1);
 
+  // true when getIntegrationPoints() returns a static table that only depends
+  // on the element type and the rule order, so the shape functions at the
+  // points can be cached and shared (false for polygons, polyhedra and
+  // sub-elements, whose points depend on the geometry)
+  virtual bool hasStaticIntegrationPoints() const { return false; }
+
   // integration routines
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   {

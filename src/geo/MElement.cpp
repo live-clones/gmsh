@@ -5,10 +5,13 @@
 
 #include <sstream>
 #include <stdlib.h>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <atomic>
+#include <memory>
 #include <mutex>
+#include <unordered_map>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -609,11 +612,119 @@ SPoint3 MElement::barycenterUVW() const
   return p;
 }
 
+namespace {
+
+  // Shape functions and gradients at the quadrature points of a rule, evaluated
+  // once with the regular basis code and reused by all elements with the same
+  // function spaces, element type and rule order.
+  struct quadratureBasisKey {
+    int sfTag; // MSH tag of the function space of the interpolated values
+    int gradTag; // MSH tag of the function space of the geometry (jacobian)
+    int elementType; // element type, selecting the integration rule
+    int ruleOrder; // order passed to getIntegrationPoints()
+    bool operator==(const quadratureBasisKey &other) const
+    {
+      return sfTag == other.sfTag && gradTag == other.gradTag &&
+             elementType == other.elementType && ruleOrder == other.ruleOrder;
+    }
+  };
+
+  struct quadratureBasisHash {
+    std::size_t operator()(const quadratureBasisKey &key) const
+    {
+      std::size_t h = std::hash<int>()(key.sfTag);
+      h = h * 1000003u ^ std::hash<int>()(key.gradTag);
+      h = h * 1000003u ^ std::hash<int>()(key.elementType);
+      h = h * 1000003u ^ std::hash<int>()(key.ruleOrder);
+      return h;
+    }
+  };
+
+  struct quadratureBasisData {
+    int npts = 0;
+    int nsf = 0; // row stride of sf, >= number of shape functions
+    int ngrad = 0; // row stride of gsf, >= number of shape functions
+    std::vector<IntPt> pts; // quadrature points and weights
+    std::vector<double> sf; // npts * nsf shape function values
+    // npts * ngrad rows of double[3], the type getGradShapeFunctions() fills
+    std::unique_ptr<double[][3]> gsf;
+    const double *sfRow(int i) const
+    { return &sf[static_cast<std::size_t>(i) * nsf]; }
+    const double (*gsfRow(int i) const)[3]
+    { return &gsf[static_cast<std::size_t>(i) * ngrad]; }
+  };
+
+  // One cache per thread, so lookups need no lock. The keys are MSH tags, not
+  // basis pointers: BasisFactory::clearAll() deletes the bases at finalize and
+  // a re-initialize can recycle their addresses.
+  thread_local std::unordered_map<quadratureBasisKey, quadratureBasisData,
+                                  quadratureBasisHash>
+    quadratureBasisCache;
+
+  // Callers choose the rule order, so the key set is not closed. A sweep that
+  // grows the cache past this size drops it, and entries are rebuilt on demand.
+  constexpr std::size_t maxQuadratureBasisCacheSize = 256;
+
+  const quadratureBasisData *
+  _getQuadratureBasisCache(MElement *e, int ruleOrder, int sfOrder)
+  {
+    const nodalBasis *gradSpace = e->getFunctionSpace();
+    const nodalBasis *sfSpace = e->getFunctionSpace(sfOrder);
+    if(!gradSpace || !sfSpace) return nullptr;
+
+    quadratureBasisKey key{sfSpace->type, gradSpace->type, e->getType(),
+                           ruleOrder};
+    auto it = quadratureBasisCache.find(key);
+    if(it != quadratureBasisCache.end()) return &it->second;
+
+    int npts;
+    IntPt *pts;
+    e->getIntegrationPoints(ruleOrder, &npts, &pts);
+    if(npts <= 0 || !pts) return nullptr;
+
+    if(quadratureBasisCache.size() > maxQuadratureBasisCacheSize)
+      quadratureBasisCache.clear();
+
+    quadratureBasisData &data = quadratureBasisCache[key];
+    data.npts = npts;
+    const int nsfElement = static_cast<int>(e->getNumShapeFunctions());
+    data.nsf = std::max(sfSpace->getNumShapeFunctions(), nsfElement);
+    data.ngrad = std::max(gradSpace->getNumShapeFunctions(), nsfElement);
+    data.pts.assign(pts, pts + npts);
+    data.sf.assign(static_cast<std::size_t>(npts) * data.nsf, 0.);
+    data.gsf = std::make_unique<double[][3]>(static_cast<std::size_t>(npts) *
+                                             data.ngrad);
+    for(int i = 0; i < npts; i++) {
+      double u = pts[i].pt[0], v = pts[i].pt[1], w = pts[i].pt[2];
+      // through the virtual calls, so that element overrides still apply
+      const std::size_t row = static_cast<std::size_t>(i);
+      e->getShapeFunctions(u, v, w, &data.sf[row * data.nsf], sfOrder);
+      e->getGradShapeFunctions(u, v, w, &data.gsf[row * data.ngrad]);
+    }
+    return &data;
+  }
+
+} // namespace
+
 double MElement::getVolume()
 {
+  const int ruleOrder = getPolynomialOrder() + 3;
+  if(hasStaticIntegrationPoints()) {
+    const quadratureBasisData *data =
+      _getQuadratureBasisCache(this, ruleOrder, -1);
+    if(data) {
+      double vol = 0.;
+      for(int i = 0; i < data->npts; i++) {
+        double jac[3][3];
+        vol +=
+          _jacobianFromGradients(data->gsfRow(i), jac) * data->pts[i].weight;
+      }
+      return vol;
+    }
+  }
   int npts;
   IntPt *pts;
-  getIntegrationPoints(getPolynomialOrder() + 3, &npts, &pts);
+  getIntegrationPoints(ruleOrder, &npts, &pts);
   double vol = 0.;
   for(int i = 0; i < npts; i++) {
     vol += getJacobianDeterminant(pts[i].pt[0], pts[i].pt[1], pts[i].pt[2]) *
@@ -1347,6 +1458,20 @@ double MElement::interpolateDiv(double val[], double u, double v, double w,
 
 double MElement::integrate(double val[], int pOrder, int stride, int order)
 {
+  if(hasStaticIntegrationPoints()) {
+    const quadratureBasisData *data =
+      _getQuadratureBasisCache(this, pOrder, order);
+    if(data) {
+      double sum = 0;
+      for(int i = 0; i < data->npts; i++) {
+        double jac[3][3];
+        double detuvw = _jacobianFromGradients(data->gsfRow(i), jac);
+        sum += _interpolateFromShapeFunctions(data->sfRow(i), val, stride) *
+               data->pts[i].weight * detuvw;
+      }
+      return sum;
+    }
+  }
   int npts;
   IntPt *gp;
   getIntegrationPoints(pOrder, &npts, &gp);
