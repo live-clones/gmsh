@@ -11,8 +11,20 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
+#include <FL/Fl_Menu_Window.H>
 
 class paletteWindow;
+
+// The name of the window being torn out of the dock, in a chip that follows
+// the pointer, as the tab or title held: a window of its own, over everything
+class dragGhost : public Fl_Menu_Window {
+  std::string _label;
+
+public:
+  dragGhost() : Fl_Menu_Window(1, 1) { set_override(); }
+  void follow(const char *label, int rowHeight, int xroot, int yroot);
+  void draw();
+};
 
 // The tab of a docked window of free height: an empty group, which the tabs
 // show and hide as they please; the window lies over it and is shown by the
@@ -26,17 +38,40 @@ public:
 };
 
 // The title bar of a docked window of fixed height, stacked above the tabs: a
-// click folds or unfolds the window, its cross closes it
+// click folds or unfolds the window, its cross closes it, a drag out of the
+// dock tears the window out of it
 class dockTitle : public Fl_Widget {
+  // where the button went down, and whether it has been dragged since
+  int _pushX, _pushY;
+  bool _dragging;
+
 public:
   paletteWindow *win;
   // folded by a click, and folded as laid out, also for lack of room
   bool folded, shut;
   dockTitle(int x, int y, int w, int h, paletteWindow *win)
-    : Fl_Widget(x, y, w, h), win(win), folded(false), shut(false)
+    : Fl_Widget(x, y, w, h), _pushX(0), _pushY(0), _dragging(false), win(win),
+      folded(false), shut(false)
   {
   }
   void draw();
+  int handle(int event);
+};
+
+// The tabs of the docked windows of free height: a tab dragged out of the
+// dock tears its window out of it
+class dockTabs : public Fl_Tabs {
+  // the tab the button went down on, where, and whether it has been dragged
+  Fl_Widget *_pressed;
+  int _pushX, _pushY;
+  bool _dragging;
+
+public:
+  dockTabs(int x, int y, int w, int h)
+    : Fl_Tabs(x, y, w, h), _pressed(nullptr), _pushX(0), _pushY(0),
+      _dragging(false)
+  {
+  }
   int handle(int event);
 };
 
@@ -48,7 +83,10 @@ public:
 class toolDock : public Fl_Group {
 private:
   int _rowHeight;
-  Fl_Tabs *_tabs;
+  dockTabs *_tabs;
+  dragGhost *_ghost;
+  // drawn as the target of a window dragged over it (see draw())
+  bool _dropHint;
   std::vector<dockTitle *> _stack; // from the top
   // when each window was last used, to fold and to close
   std::map<paletteWindow *, unsigned long> _used;
@@ -67,9 +105,24 @@ private:
   static void _close_cb(Fl_Widget *w, void *data);
 
 public:
+  // set by the main window: a window torn out of the dock, to be shown on
+  // the desktop under the pointer (root coordinates)
+  inline static void (*tornOutHook)(paletteWindow *w, int x, int y) = nullptr;
   toolDock(int x, int y, int w, int h, int rowHeight);
   // docks the window, or brings it forward, and shows it
   void dock(paletteWindow *pw);
+  // a tab or title dragged: whether the drag from (fromX, fromY) to (x, y)
+  // is one, the chip of its window at the pointer (root coordinates), and
+  // whether a release at (x, y) is out of the dock
+  bool dragged(int fromX, int fromY, int x, int y) const;
+  void dragging(paletteWindow *pw, int x, int y);
+  bool outside(int x, int y) const;
+  // the drag over: the chip goes, and the window leaves the dock for the
+  // desktop under the pointer if asked, staying there until dragged back
+  // (see paletteWindow::floating())
+  void dragEnded(paletteWindow *pw, int x, int y, bool tearOut);
+  void dropHint(bool on);
+  bool dropHint() const { return _dropHint; }
   // the docked window is hidden by its own code: closed
   void hidden(paletteWindow *pw);
   // a docked window changed its own size
@@ -82,13 +135,18 @@ public:
   // closes the visible window used last, as its close button would
   bool closeCurrent();
   void resize(int x, int y, int w, int h);
+  void draw();
 };
 
 // The edge between the tiles and the dock, a line like the edges of the tiles,
 // dragged to change the width of the dock
 class dockDivider : public Fl_Box {
 public:
-  dockDivider(int x, int y, int w, int h) : Fl_Box(x, y, w, h) {}
+  // drawn in the selection colour with the drop hint of the dock
+  bool highlight;
+  dockDivider(int x, int y, int w, int h) : Fl_Box(x, y, w, h), highlight(false)
+  {
+  }
   int handle(int event);
   void draw();
 };

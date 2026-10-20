@@ -4,12 +4,36 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <cstdlib>
 #include <string>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/fl_draw.H>
 #include "paletteWindow.h"
 #include "toolDock.h"
+#include "FlGui.h" // for WB
+
+void dragGhost::follow(const char *label, int rowHeight, int xroot, int yroot)
+{
+  _label = label ? label : "";
+  fl_font(FL_HELVETICA_BOLD, FL_NORMAL_SIZE);
+  int w = 0, h = 0;
+  fl_measure(_label.c_str(), w, h, 0);
+  w += 2 * WB;
+  // under the pointer, as the title bar of the window will be
+  resize(xroot - w / 2, yroot - rowHeight / 2, w, rowHeight);
+  if(!shown()) show();
+  redraw();
+}
+
+void dragGhost::draw()
+{
+  // from the origin: x() and y() of a window are its place on the screen
+  fl_draw_box(FL_THIN_UP_BOX, 0, 0, w(), h(), FL_BACKGROUND_COLOR);
+  fl_font(FL_HELVETICA_BOLD, FL_NORMAL_SIZE);
+  fl_color(FL_FOREGROUND_COLOR);
+  fl_draw(_label.c_str(), 0, 0, w(), h(), FL_ALIGN_CENTER);
+}
 
 void dockTitle::draw()
 {
@@ -29,27 +53,91 @@ void dockTitle::draw()
 
 int dockTitle::handle(int event)
 {
+  toolDock *dock = (toolDock *)parent();
   switch(event) {
-  case FL_PUSH: return 1;
+  case FL_PUSH:
+    _pushX = Fl::event_x();
+    _pushY = Fl::event_y();
+    _dragging = false;
+    return 1;
+  case FL_DRAG:
+    if(!_dragging &&
+       dock->dragged(_pushX, _pushY, Fl::event_x(), Fl::event_y())) {
+      _dragging = true;
+      window()->cursor(FL_CURSOR_MOVE);
+    }
+    if(_dragging) dock->dragging(win, Fl::event_x_root(), Fl::event_y_root());
+    return 1;
   case FL_RELEASE:
+    if(_dragging) {
+      _dragging = false;
+      window()->cursor(FL_CURSOR_DEFAULT);
+      dock->dragEnded(win, Fl::event_x_root(), Fl::event_y_root(),
+                      dock->outside(Fl::event_x(), Fl::event_y()));
+      return 1;
+    }
     if(!Fl::event_inside(this)) return 1;
     if(Fl::event_x() >= x() + w() - h())
       win->do_callback(); // as the close button of the window
     else
-      ((toolDock *)parent())->fold(this, !shut);
+      dock->fold(this, !shut);
     return 1;
   }
   return Fl_Widget::handle(event);
 }
 
+int dockTabs::handle(int event)
+{
+  toolDock *dock = (toolDock *)parent();
+  switch(event) {
+  case FL_PUSH:
+    _pressed = which(Fl::event_x(), Fl::event_y());
+    _pushX = Fl::event_x();
+    _pushY = Fl::event_y();
+    _dragging = false;
+    break;
+  case FL_DRAG:
+    if(_pressed && !_dragging &&
+       dock->dragged(_pushX, _pushY, Fl::event_x(), Fl::event_y())) {
+      _dragging = true;
+      push(nullptr); // the tab is no longer being chosen
+      window()->cursor(FL_CURSOR_MOVE);
+    }
+    if(_dragging) {
+      dock->dragging(((dockTab *)_pressed)->win, Fl::event_x_root(),
+                     Fl::event_y_root());
+      return 1;
+    }
+    break;
+  case FL_RELEASE:
+    if(_dragging) {
+      _dragging = false;
+      window()->cursor(FL_CURSOR_DEFAULT);
+      paletteWindow *pw = ((dockTab *)_pressed)->win;
+      _pressed = nullptr;
+      if(dock->outside(Fl::event_x(), Fl::event_y())) {
+        dock->dragEnded(pw, Fl::event_x_root(), Fl::event_y_root(), true);
+        return 1;
+      }
+      // released in the dock: the tab under the pointer is chosen, if it is
+      // the one pressed
+      dock->dragEnded(pw, 0, 0, false);
+      break;
+    }
+    _pressed = nullptr;
+    break;
+  }
+  return Fl_Tabs::handle(event);
+}
+
 toolDock::toolDock(int x, int y, int w, int h, int rowHeight)
-  : Fl_Group(x, y, w, h), _rowHeight(rowHeight), _clock(0), _layingOut(false),
-    _requested(nullptr)
+  : Fl_Group(x, y, w, h), _rowHeight(rowHeight), _ghost(nullptr),
+    _dropHint(false), _clock(0), _layingOut(false), _requested(nullptr)
 {
   // FLTK 1.5 tabs draw their row with the box of their parent: without one, a
   // closed tab stays drawn
   box(FL_FLAT_BOX);
-  _tabs = new Fl_Tabs(x, y, w, h);
+  _tabs = new dockTabs(x, y, w, h);
   _tabs->handle_overflow(Fl_Tabs::OVERFLOW_PULLDOWN);
   _tabs->when(FL_WHEN_CHANGED);
   _tabs->callback(_tabs_cb, this);
@@ -320,6 +408,58 @@ void toolDock::resize(int x, int y, int w, int h)
   _layout();
 }
 
+bool toolDock::dragged(int fromX, int fromY, int x, int y) const
+{
+  // a few pixels: a click wobbles less
+  return abs(x - fromX) > 4 || abs(y - fromY) > 4;
+}
+
+bool toolDock::outside(int x, int y) const
+{
+  return x < this->x() || x >= this->x() + w() || y < this->y() ||
+         y >= this->y() + h();
+}
+
+void toolDock::dragging(paletteWindow *pw, int x, int y)
+{
+  if(!_ghost) {
+    Fl_Group *current = Fl_Group::current();
+    Fl_Group::current(nullptr);
+    _ghost = new dragGhost();
+    Fl_Group::current(current);
+  }
+  _ghost->follow(pw->label(), _rowHeight, x, y);
+}
+
+void toolDock::dragEnded(paletteWindow *pw, int x, int y, bool tearOut)
+{
+  if(_ghost) _ghost->hide();
+  if(!tearOut) return;
+  pw->floating(true);
+  hidden(pw);
+  if(tornOutHook) tornOutHook(pw, x, y);
+}
+
+void toolDock::dropHint(bool on)
+{
+  if(on == _dropHint) return;
+  _dropHint = on;
+  redraw();
+}
+
+void toolDock::draw()
+{
+  // the target of a window dragged over the dock is said by the divider,
+  // which the docked windows never cover, and by a tint of the column while
+  // it is empty
+  if(_dropHint && empty()) {
+    fl_color(fl_color_average(FL_SELECTION_COLOR, FL_BACKGROUND_COLOR, 0.2));
+    fl_rectf(x(), y(), w(), h());
+    return;
+  }
+  Fl_Group::draw();
+}
+
 int dockDivider::handle(int event)
 {
   switch(event) {
@@ -334,7 +474,7 @@ int dockDivider::handle(int event)
 
 void dockDivider::draw()
 {
-  fl_color(color());
+  fl_color(highlight ? FL_SELECTION_COLOR : color());
   fl_rectf(x(), y(), w(), h());
   fl_color(FL_DARK2);
   fl_line(x(), y(), x(), y() + h());

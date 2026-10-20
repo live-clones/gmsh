@@ -7,6 +7,7 @@
 #define PALETTE_WINDOWH
 
 #include <algorithm>
+#include <string>
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
 #include "windowPlacement.h"
@@ -25,8 +26,11 @@ private:
   void *_resizedData;
   // the least and greatest sizes, kept here as FLTK 1.3 cannot give them back
   int _minW, _minH, _maxW, _maxH;
-  // a tool window, docked in the main window while it has a dock
-  bool _dockable;
+  // a tool window, docked in the main window while it has a dock, unless it
+  // was dragged out of the dock: then it stays on the desktop until dragged
+  // back (see General.FloatingTools, which names it)
+  bool _dockable, _floating;
+  std::string _name;
   // the border (FLTK removes those of subwindows), size and non-modal state
   // (floating above other windows on macOS) the window had on the desktop
   // before it was docked
@@ -42,17 +46,24 @@ public:
   // called when a docked window is hidden, or resized
   inline static void (*hiddenHook)(paletteWindow *w) = nullptr;
   inline static void (*resizedHook)(paletteWindow *w) = nullptr;
+  // called when a floating tool window is moved on the desktop
+  inline static void (*movedHook)(paletteWindow *w) = nullptr;
   paletteWindow(int w, int h, bool nonModal, const char *l = nullptr,
                 int *offset = nullptr)
     : Fl_Double_Window(w, h, l), _offset(offset), _width(w), _resized(nullptr),
       _resizedData(nullptr), _minW(0), _minH(0), _maxW(0), _maxH(0),
-      _dockable(false), _desktopBorder(true), _desktopNonModal(false),
-      _desktopW(w), _desktopH(h), _revealed(nullptr), _revealedData(nullptr)
+      _dockable(false), _floating(false), _desktopBorder(true),
+      _desktopNonModal(false), _desktopW(w), _desktopH(h), _revealed(nullptr),
+      _revealedData(nullptr)
   {
     if(nonModal) set_non_modal();
   }
   void dockable(bool d) { _dockable = d; }
   bool dockable() const { return _dockable; }
+  void floating(bool f) { _floating = f; }
+  bool floating() const { return _floating; }
+  void name(const std::string &n) { _name = n; }
+  const std::string &name() const { return _name; }
   // docked, shown where placed: Cocoa centers a non-modal window otherwise
   void keepPosition() { force_position(1); }
   // the window leaves the desktop for the dock, its offset kept as it was, and
@@ -134,7 +145,10 @@ public:
   {
     bool sized = (w != this->w() || h != this->h());
     Fl_Double_Window::resize(x, y, w, h);
-    if(!sized) return; // only moved
+    if(!sized) { // only moved
+      if(!parent() && _dockable && _floating && movedHook) movedHook(this);
+      return;
+    }
     if(!_rules.empty()) {
       _rules.apply(w - _width);
       init_sizes();
@@ -165,7 +179,7 @@ public:
   }
   virtual void show()
   {
-    if(_dockable && dockHook) {
+    if(_dockable && !_floating && dockHook) {
       dockHook(this);
       return;
     }

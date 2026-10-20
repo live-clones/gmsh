@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
+#include <algorithm>
 #include <sstream>
 #include <string.h>
 #include <FL/Fl.H>
@@ -662,7 +663,30 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
 
-  for(auto w : toolWindows()) ((paletteWindow *)w)->dockable(true);
+  // the tool windows dock, and are named for General.FloatingTools
+  const std::pair<Fl_Window *, const char *> tools[] = {
+    {options->win, "options"},
+    {plugins->win, "plugins"},
+    {fields->win, "fields"},
+    {visibility->win, "visibility"},
+    {clipping->win, "clipping"},
+    {manip->win, "manipulator"},
+    {stats->win, "statistics"},
+    {highordertools->win, "highorder"},
+    {elementaryContext->win, "elementary"},
+    {physicalContext->win, "physical"},
+    {transformContext->win, "transform"},
+    {meshContext->win, "mesh"},
+    {onelabContext->win, "onelab"},
+    {classify->window, "reclassify"},
+    {partition->win, "partition"}};
+  for(auto &t : tools) {
+    if(!t.first) continue;
+    paletteWindow *p = (paletteWindow *)t.first;
+    p->dockable(true);
+    p->name(t.second);
+  }
+  applyFloatingTools();
   // what docked tools skip while hidden, refreshed when shown again
   ((paletteWindow *)visibility->win)
     ->whenRevealed(
@@ -1393,6 +1417,34 @@ std::vector<Fl_Window *> FlGui::toolWindows()
     onelabContext->win,   classify->window};
   if(partition->win) tools.push_back(partition->win);
   return tools;
+}
+
+void FlGui::applyFloatingTools()
+{
+  std::string names = "," + CTX::instance()->floatingTools + ",";
+  names.erase(std::remove(names.begin(), names.end(), ' '), names.end());
+  for(auto w : toolWindows()) {
+    paletteWindow *p = (paletteWindow *)w;
+    p->floating(names.find("," + p->name() + ",") != std::string::npos);
+  }
+}
+
+void FlGui::storeFloatingTools()
+{
+  std::string names;
+  for(auto w : toolWindows()) {
+    paletteWindow *p = (paletteWindow *)w;
+    if(!p->floating()) continue;
+    names += (names.empty() ? "" : ",") + p->name();
+  }
+  CTX::instance()->floatingTools = names;
+}
+
+void FlGui::dockTools(bool dock)
+{
+  for(auto w : toolWindows()) ((paletteWindow *)w)->floating(false);
+  storeFloatingTools();
+  opt_general_dock_tools(0, GMSH_SET | GMSH_GUI, dock);
 }
 
 void FlGui::storeCurrentWindowsInfo()

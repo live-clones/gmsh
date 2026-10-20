@@ -1255,6 +1255,16 @@ std::string opt_general_executable_filename(OPT_ARGS_STR)
   return CTX::instance()->exeFileName;
 }
 
+std::string opt_general_floating_tools(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->floatingTools = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->applyFloatingTools();
+#endif
+  return CTX::instance()->floatingTools;
+}
+
 std::string opt_general_default_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->defaultFileName = val;

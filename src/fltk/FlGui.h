@@ -89,6 +89,11 @@ public:
   classificationEditor *classify;
   // the tool windows, docked while the main window has a dock
   std::vector<Fl_Window *> toolWindows();
+  // the ones kept on the desktop, from and to General.FloatingTools
+  void applyFloatingTools();
+  void storeFloatingTools();
+  // docks or undocks every tool, none left floating (General.DockTools)
+  void dockTools(bool dock);
   manipWindow *manip;
   elementaryContextWindow *elementaryContext;
   transformContextWindow *transformContext;

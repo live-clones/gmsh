@@ -42,6 +42,7 @@ std::string opt_general_build_info(OPT_ARGS_STR);
 std::string opt_general_filename(OPT_ARGS_STR);
 std::string opt_general_executable_filename(OPT_ARGS_STR);
 std::string opt_general_default_filename(OPT_ARGS_STR);
+std::string opt_general_floating_tools(OPT_ARGS_STR);
 std::string opt_general_tmp_filename(OPT_ARGS_STR);
 std::string opt_general_error_filename(OPT_ARGS_STR);
 std::string opt_general_session_filename(OPT_ARGS_STR);

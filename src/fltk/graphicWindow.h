@@ -52,6 +52,12 @@ private:
   dockDivider *_divider;
   Fl_Box *_resbox;
   bool _docking;
+  // the floating tool being dragged over the dock, docked when the button is
+  // released there, and when it last moved
+  paletteWindow *_dropping;
+  double _dropMoved;
+  bool _overDock(paletteWindow *w);
+  static void _drop_cb(void *data);
   void _layoutDock(int width);
   int _leastTileWidth();
   int _fitDockWidth(int w);
@@ -98,6 +104,10 @@ public:
   void dockTool(paletteWindow *w);
   void toolHidden(paletteWindow *w);
   void toolResized(paletteWindow *w);
+  // a tool torn out of the dock, shown on the desktop under the pointer, and
+  // a floating tool moved on the desktop, docked when dragged over the dock
+  void toolTornOut(paletteWindow *w, int x, int y);
+  void toolMoved(paletteWindow *w);
   // closes the tool shown in the dock, if any
   bool closeDockedTool();
   // runs the entry of the menu bar whose shortcut is the current event
