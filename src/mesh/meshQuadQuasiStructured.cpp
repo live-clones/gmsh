@@ -795,12 +795,6 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     return -1;
   }
 
-  if(failedCrossFields) {
-    Msg::Error("Could not compute cross field on %i surface(s); "
-               "guiding field not built", failedCrossFields);
-    return -1;
-  }
-
   sort_unique(global_size_map);
 
   /* Warning: from now on, code is not optimized in terms of data structures
