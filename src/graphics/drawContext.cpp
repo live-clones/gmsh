@@ -594,33 +594,13 @@ static void dashDistances(VertexArray *va, int first, int count,
   }
 }
 
-// Keep each large-array chunk on an independent primitive boundary.
-// Connected strips and fans remain a single draw to preserve connectivity.
-static void drawArrayChunks(GLenum type, int first, int count)
-{
-  const int verticesPerElement = type == GL_POINTS ? 1 :
-    type == GL_LINES ? 2 : type == GL_TRIANGLES ? 3 : type == GL_QUADS ? 4 : 0;
-  if(verticesPerElement) {
-    const int maxVerticesPerDraw = (1 << 16) * verticesPerElement;
-    while(count > 0) {
-      const int chunk = std::min(maxVerticesPerDraw, count);
-      glDrawArrays(type, first, chunk);
-      first += chunk;
-      count -= chunk;
-    }
-  }
-  else {
-    glDrawArrays(type, first, count);
-  }
-}
-
 // the vertices [first, first + count) of the bound array
 static void drawRange(VertexArray *va, GLenum type, bool normals, bool colors,
                       int first, int count)
 {
   if(count <= 0) return;
   if(!glShader::enabled()) {
-    drawArrayChunks(type, first, count);
+    glDrawArrays(type, first, count);
     return;
   }
   if(!glShader::use()) return;
@@ -659,7 +639,7 @@ static void drawRange(VertexArray *va, GLenum type, bool normals, bool colors,
   if(!dash.empty())
     glShader::setStipple(true, gmshLineStippleFactor(),
                          gmshLineStipplePattern());
-  drawArrayChunks(type, first, count);
+  glDrawArrays(type, first, count);
 }
 
 void drawVertexArray(VertexArray *va, GLenum type, int flags,
