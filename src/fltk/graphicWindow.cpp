@@ -4847,9 +4847,7 @@ void graphicWindow::toolMoved(paletteWindow *w)
     if(_dropping != w) {
       _dropping = w;
       if(!isDockShown()) _layoutDock(_fitDockWidth(getDockWidth()));
-      _dock->dropHint(true);
-      _divider->highlight = true;
-      _divider->redraw();
+      _dropHint(true);
       // docked when the button is released: the system is asked for it
       Fl::add_timeout(0.05, _drop_cb, this);
     }
@@ -4857,11 +4855,17 @@ void graphicWindow::toolMoved(paletteWindow *w)
   else if(_dropping == w) {
     Fl::remove_timeout(_drop_cb, this);
     _dropping = nullptr;
-    _dock->dropHint(false);
-    _divider->highlight = false;
-    _divider->redraw();
+    _dropHint(false);
     if(_dock->empty()) _layoutDock(0);
   }
+}
+
+void graphicWindow::_dropHint(bool on)
+{
+  _dock->dropHint(on);
+  if(on == _divider->highlight) return;
+  _divider->highlight = on;
+  _divider->redraw();
 }
 
 void graphicWindow::_drop_cb(void *data)
@@ -4869,6 +4873,10 @@ void graphicWindow::_drop_cb(void *data)
   graphicWindow *g = (graphicWindow *)data;
   paletteWindow *w = g->_dropping;
   if(!w) return;
+  // Shift held keeps the tool out of the dock, to leave it over the dock
+  // (Alt would tile the window on macOS): no hint while it is
+  bool shift = shiftKeyDown();
+  g->_dropHint(!shift);
   // still held, or, where the system cannot say, still moving a moment ago
   int down = mouseButtonDown();
   if(down == 1 || (down == -1 && TimeOfDay() - g->_dropMoved < 0.4)) {
@@ -4876,9 +4884,11 @@ void graphicWindow::_drop_cb(void *data)
     return;
   }
   g->_dropping = nullptr;
-  g->_dock->dropHint(false);
-  g->_divider->highlight = false;
-  g->_divider->redraw();
+  g->_dropHint(false);
+  if(shift) {
+    if(g->_dock->empty()) g->_layoutDock(0);
+    return;
+  }
   w->floating(false);
   w->show(); // docks it
   FlGui::instance()->storeFloatingTools();

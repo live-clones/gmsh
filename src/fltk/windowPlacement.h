@@ -72,5 +72,7 @@ void forgetWindow(Fl_Window *win);
 // where it cannot say (while the window manager drags a window by its title
 // bar, FLTK gets no mouse events)
 int mouseButtonDown();
+// whether the Shift key is held, asked of the system likewise
+bool shiftKeyDown();
 
 #endif

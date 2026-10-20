@@ -56,6 +56,7 @@ private:
   paletteWindow *_dropping;
   double _dropMoved;
   bool _overDock(paletteWindow *w);
+  void _dropHint(bool on);
   static void _drop_cb(void *data);
   void _layoutDock(int width);
   int _leastTileWidth();

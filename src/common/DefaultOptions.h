@@ -68,7 +68,8 @@ StringXString GeneralOptions_String[] = {
     "the main window, by name: options, plugins, fields, visibility, clipping, "
     "manipulator, statistics, highorder, elementary, physical, transform, "
     "mesh, onelab, reclassify, partition (a tool is also dragged in and out of "
-    "the dock, and Dock/Undock Tool Windows moves them all)" },
+    "the dock, Shift held when it is dropped keeping it out, and Dock/Undock "
+    "Tool Windows moves them all)" },
   { F|S, "FltkTheme" , opt_general_gui_theme , "" ,
     "FLTK user interface theme (try e.g. plastic or gtk+)" },
 

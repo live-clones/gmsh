@@ -39,6 +39,28 @@ int mouseButtonDown()
 #endif
 }
 
+bool shiftKeyDown()
+{
+#if defined(__APPLE__)
+  return CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) &
+         kCGEventFlagMaskShift;
+#elif defined(WIN32)
+  return (GetAsyncKeyState(VK_SHIFT) & 0x8000) ? true : false;
+#elif defined(FLTK_USE_X11)
+  Display *d = fl_x11_display();
+  if(!d) return false;
+  Window root, child;
+  int rx, ry, x, y;
+  unsigned int mask;
+  if(!XQueryPointer(d, DefaultRootWindow(d), &root, &child, &rx, &ry, &x, &y,
+                    &mask))
+    return false;
+  return (mask & ShiftMask) ? true : false;
+#else
+  return false;
+#endif
+}
+
 static Fl_Window *reference = nullptr;
 static std::set<Fl_Window *> placed;
 
