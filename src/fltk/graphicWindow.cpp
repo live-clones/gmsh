@@ -3960,7 +3960,7 @@ void dock_tools_cb(Fl_Widget *w, void *data)
 {
   // docks every tool when any is open on the desktop, undocks every one
   // otherwise
-  bool dock = !FlGui::instance()->graph[0]->isDocking();
+  bool dock = false;
   for(auto t : FlGui::instance()->toolWindows()) {
     paletteWindow *p = (paletteWindow *)t;
     if(p->floating() && p->shown()) dock = true;
@@ -4261,7 +4261,6 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _tile->end();
 
   // the dock of the tool windows, shown while one is docked
-  _docking = false;
   _dropping = nullptr;
   _dropMoved = 0.;
   if(main) {
@@ -4439,7 +4438,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _menuwin = nullptr;
   }
 
-  if(main && CTX::instance()->dockTools) setDocking(true);
+  if(main) setDocking(true);
   if(main && hiddenMenu) hideMenu();
 }
 
@@ -4774,8 +4773,7 @@ void graphicWindow::setDockWidth(int w)
 
 void graphicWindow::setDocking(bool docking)
 {
-  if(!_dock || (!docking && !_docking)) return;
-  _docking = docking;
+  if(!_dock) return;
   if(docking) {
     theDocking = this;
     paletteWindow::dockHook = dock_hook;

@@ -1425,7 +1425,14 @@ void FlGui::applyFloatingTools()
   names.erase(std::remove(names.begin(), names.end(), ' '), names.end());
   for(auto w : toolWindows()) {
     paletteWindow *p = (paletteWindow *)w;
-    p->floating(names.find("," + p->name() + ",") != std::string::npos);
+    bool floating = names.find("," + p->name() + ",") != std::string::npos;
+    if(floating == p->floating()) continue;
+    p->floating(floating);
+    if(!p->shown()) continue;
+    // an open tool moves: a docked one leaves the dock when hidden, and a
+    // tool on the desktop joins it when shown
+    if(floating) p->hide();
+    p->show();
   }
 }
 
@@ -1442,9 +1449,13 @@ void FlGui::storeFloatingTools()
 
 void FlGui::dockTools(bool dock)
 {
-  for(auto w : toolWindows()) ((paletteWindow *)w)->floating(false);
-  storeFloatingTools();
-  opt_general_dock_tools(0, GMSH_SET | GMSH_GUI, dock);
+  std::string names;
+  if(!dock)
+    for(auto w : toolWindows()) {
+      paletteWindow *p = (paletteWindow *)w;
+      names += (names.empty() ? "" : ",") + p->name();
+    }
+  opt_general_floating_tools(0, GMSH_SET | GMSH_GUI, names);
 }
 
 void FlGui::storeCurrentWindowsInfo()

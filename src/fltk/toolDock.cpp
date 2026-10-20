@@ -570,9 +570,10 @@ void dockDivider::draw()
   fl_rectf(x(), y(), w(), h());
   fl_color(FL_DARK2);
   fl_line(x(), y(), x(), y() + h());
-  // the target of a window dragged over the dock: a bar down the middle
+  // the target of a window dragged over the dock: its edge lights up, as
+  // wide as the marker between the tabs
   if(highlight) {
     fl_color(FL_SELECTION_COLOR);
-    fl_rectf(x() + w() / 2 - 1, y(), 2, h());
+    fl_rectf(x() + w() - 3, y(), 3, h());
   }
 }

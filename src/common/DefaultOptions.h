@@ -64,10 +64,11 @@ StringXString GeneralOptions_String[] = {
   { F,   "FileName" , opt_general_filename , "" ,
     "Current project file name (read-only)" },
   { F|S, "FloatingTools" , opt_general_floating_tools , "" ,
-    "Tool windows kept on the desktop while the others are docked (see "
-    "General.DockTools), by name: options, plugins, fields, visibility, "
-    "clipping, manipulator, statistics, highorder, elementary, physical, "
-    "transform, mesh, onelab, reclassify, partition" },
+    "Tool windows kept on the desktop instead of in the dock on the right of "
+    "the main window, by name: options, plugins, fields, visibility, clipping, "
+    "manipulator, statistics, highorder, elementary, physical, transform, "
+    "mesh, onelab, reclassify, partition (a tool is also dragged in and out of "
+    "the dock, and Dock/Undock Tool Windows moves them all)" },
   { F|S, "FltkTheme" , opt_general_gui_theme , "" ,
     "FLTK user interface theme (try e.g. plastic or gtk+)" },
 
@@ -599,10 +600,6 @@ StringXNumber GeneralOptions_Number[] = {
     "On Windows, should processes created by Gmsh be detached?" },
   { F|O, "DisplayBorderFactor" , opt_general_display_border_factor , 0.2 ,
     "Border factor for model display (0: model fits window size exactly)" },
-  { F|S, "DockTools" , opt_general_dock_tools , 1. ,
-    "Open the tool windows (options, plugins, visibility, ...) as tabs of a "
-    "dock on the right of the main window; a tool dragged out of the dock "
-    "stays on the desktop (see General.FloatingTools)" },
   { F|S, "DockWidth" , opt_general_dock_width , 0. ,
     "Width (in pixels) of the dock of the tool windows (0: the least width of "
     "the tool windows)" },

@@ -51,7 +51,6 @@ private:
   toolDock *_dock;
   dockDivider *_divider;
   Fl_Box *_resbox;
-  bool _docking;
   // the floating tool being dragged over the dock, docked when the button is
   // released there, and when it last moved
   paletteWindow *_dropping;
@@ -98,7 +97,7 @@ public:
   void attachDetachMenu();
   bool isMenuDetached() { return _menuwin ? true : false; }
   // tool windows shown are docked, in a column visible while one is docked
-  bool isDocking() { return _docking; }
+  // (see paletteWindow::floating() for the ones kept out)
   void setDocking(bool docking);
   bool isDockShown();
   void dockTool(paletteWindow *w);

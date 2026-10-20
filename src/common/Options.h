@@ -186,7 +186,6 @@ double opt_general_show_module_menu(OPT_ARGS_NUM);
 double opt_general_message_size(OPT_ARGS_NUM);
 double opt_general_message_fontsize(OPT_ARGS_NUM);
 double opt_general_detached_menu(OPT_ARGS_NUM);
-double opt_general_dock_tools(OPT_ARGS_NUM);
 double opt_general_dock_width(OPT_ARGS_NUM);
 double opt_general_detached_process(OPT_ARGS_NUM);
 double opt_general_menu_size0(OPT_ARGS_NUM);

@@ -2533,16 +2533,6 @@ double opt_general_detached_menu(OPT_ARGS_NUM)
   return CTX::instance()->detachedMenu;
 }
 
-double opt_general_dock_tools(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->dockTools = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->graph[0]->setDocking(CTX::instance()->dockTools);
-#endif
-  return CTX::instance()->dockTools;
-}
-
 double opt_general_dock_width(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->dockWidth = (int)val;

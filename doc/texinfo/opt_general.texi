@@ -72,7 +72,7 @@ Default value: @code{""}@*
 Saved in: @code{-}
 
 @item General.FloatingTools
-Tool windows kept on the desktop while the others are docked (see General.DockTools), by name: options, plugins, fields, visibility, clipping, manipulator, statistics, highorder, elementary, physical, transform, mesh, onelab, reclassify, partition@*
+Tool windows kept on the desktop instead of in the dock on the right of the main window, by name: options, plugins, fields, visibility, clipping, manipulator, statistics, highorder, elementary, physical, transform, mesh, onelab, reclassify, partition (a tool is also dragged in and out of the dock, and Dock/Undock Tool Windows moves them all)@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
@@ -575,11 +575,6 @@ Saved in: @code{General.OptionsFileName}
 Border factor for model display (0: model fits window size exactly)@*
 Default value: @code{0.2}@*
 Saved in: @code{General.OptionsFileName}
-
-@item General.DockTools
-Open the tool windows (options, plugins, visibility, ...) as tabs of a dock on the right of the main window; a tool dragged out of the dock stays on the desktop (see General.FloatingTools)@*
-Default value: @code{1}@*
-Saved in: @code{General.SessionFileName}
 
 @item General.DockWidth
 Width (in pixels) of the dock of the tool windows (0: the least width of the tool windows)@*
