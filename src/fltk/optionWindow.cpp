@@ -48,6 +48,16 @@ extern StringXColor GeometryOptions_Color[];
 extern StringXColor MeshOptions_Color[];
 extern StringXColor ViewOptions_Color[];
 
+// the colour options of a table that get a button: a new one in the table
+// needs no code here
+static int colorOptions(StringXColor *table)
+{
+  int n = 0;
+  for(int i = 0; table[i].str; i++)
+    if(!(table[i].level & GMSH_DEPRECATED)) n++;
+  return n;
+}
+
 static Fl_Menu_Item menu_point_display[] = {{"Color dot", 0, nullptr, nullptr},
                                             {"3D sphere", 0, nullptr, nullptr},
                                             {nullptr}};
@@ -1434,18 +1444,18 @@ optionWindow::optionWindow(int deltaFontSize)
   general.butt.resize(50, nullptr);
   general.push.resize(50, nullptr);
   general.value.resize(50, nullptr);
-  general.color.resize(50, nullptr);
+  general.color.resize(colorOptions(GeneralOptions_Color), nullptr);
   general.input.resize(50, nullptr);
   general.choice.resize(50, nullptr);
   geo.butt.resize(50, nullptr);
   geo.value.resize(50, nullptr);
-  geo.color.resize(50, nullptr);
+  geo.color.resize(colorOptions(GeometryOptions_Color), nullptr);
   geo.choice.resize(50, nullptr);
   mesh.butt.resize(50, nullptr);
   mesh.retbutt.resize(50, nullptr);
   mesh.input.resize(50, nullptr);
   mesh.value.resize(50, nullptr);
-  mesh.color.resize(50, nullptr);
+  mesh.color.resize(colorOptions(MeshOptions_Color), nullptr);
   mesh.choice.resize(50, nullptr);
   solver.butt.resize(50, nullptr);
   solver.value.resize(50, nullptr);
@@ -1458,7 +1468,7 @@ optionWindow::optionWindow(int deltaFontSize)
   view.input.resize(50, nullptr);
   view.push.resize(50, nullptr);
   view.choice.resize(50, nullptr);
-  view.color.resize(50, nullptr);
+  view.color.resize(colorOptions(ViewOptions_Color), nullptr);
   view.label.resize(50, nullptr);
   view.menu.resize(50, nullptr);
 
@@ -2146,10 +2156,6 @@ optionWindow::optionWindow(int deltaFontSize)
                                    (void *)GeneralOptions_Color[j].function);
         i++;
         j++;
-        if(i >= general.color.size()) {
-          Msg::Error("General color widget vector should be resized");
-          break;
-        }
       }
 
       o->end();
@@ -2608,10 +2614,6 @@ optionWindow::optionWindow(int deltaFontSize)
                                (void *)GeometryOptions_Color[j].function);
         i++;
         j++;
-        if(i >= geo.color.size()) {
-          Msg::Error("Geometry color widget vector should be resized");
-          break;
-        }
       }
 
       o->end();
@@ -3147,10 +3149,6 @@ optionWindow::optionWindow(int deltaFontSize)
                                 (void *)MeshOptions_Color[j].function);
         i++;
         j++;
-        if(i >= mesh.color.size()) {
-          Msg::Error("Mesh color widget vector should be resized");
-          break;
-        }
       }
 
       o->end();
@@ -4087,10 +4085,6 @@ optionWindow::optionWindow(int deltaFontSize)
                                 (void *)ViewOptions_Color[j].function);
         i++;
         j++;
-        if(i >= view.color.size()) {
-          Msg::Error("View color widget vector should be resized");
-          break;
-        }
       }
 
       o->end();
