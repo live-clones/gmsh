@@ -34,7 +34,6 @@
 #include "OS.h"
 #include "Generator.h"
 #include "robustPredicates.h"
-#include "meshGRegionHxt.h"
 #include "meshGRegionParallelDelaunay.h"
 
 namespace {
@@ -947,10 +946,8 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     else interior.push_back(i);
   }
 
-#if defined(HAVE_HXT)
-  // the boundary and the points tetrahedralized as they are, in parallel
-  // (all the cores, as the combination, unless Mesh.MaxNumThreads3D), by HXT
-  // or pdel3d (Mesh.Recombine3DDelaunay)
+  // the boundary and the points tetrahedralized as they are by pdel3d, its
+  // tetrahedra then improved without moving the points
   {
     std::vector<double> xyz(3 * interior.size());
     for(std::size_t i = 0; i < interior.size(); i++) {
@@ -958,36 +955,27 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
       xyz[3 * i + 1] = pts[interior[i]].y;
       xyz[3 * i + 2] = pts[interior[i]].z;
     }
-    const int nthreads = CTX::instance()->mesh.maxNumThreads3D > 0 ?
-                           CTX::instance()->mesh.maxNumThreads3D :
-                           Msg::GetMaxThreads();
     std::vector<MVertex *> vertices;
-    const int algo = CTX::instance()->mesh.recombine3DDelaunay;
     // the messages of the tetrahedralizer are for its debugging here
     const int verbosity = Msg::GetVerbosity();
     if(verbosity < 99) Msg::SetVerbosity(std::min(verbosity, 3));
     const double t1 = TimeOfDay(), c1 = Cpu();
     const bool ok =
-      algo ? !meshGRegionParallelDelaunayWithPoints(gr, xyz, vertices,
-                                                    algo == 2) :
-             !meshGRegionHxtWithPoints(gr, xyz, nthreads, vertices);
+      !meshGRegionParallelDelaunayWithPoints(gr, xyz, vertices, true);
     Msg::SetVerbosity(verbosity);
     AddMeshStageTime("tetrahedralization", TimeOfDay() - t1, Cpu() - c1);
     if(ok) {
-      Msg::Info("Region %d: %zu tetrahedra (%s, Wall %gs)", gr->tag(),
-                gr->tetrahedra.size(),
-                algo == 2 ? "pdel3d, optimized" : algo ? "pdel3d" : "HXT",
-                TimeOfDay() - t1);
+      Msg::Info("Region %d: %zu tetrahedra (pdel3d, optimized, Wall %gs)",
+                gr->tag(), gr->tetrahedra.size(), TimeOfDay() - t1);
       for(std::size_t i = 0; i < interior.size(); i++)
         keepFrame(vertices[i], pts[interior[i]]);
       Frame_field::clear();
       return;
     }
-    Msg::Warning("%s could not tetrahedralize region %d with its points, "
-                 "legacy Delaunay instead", algo ? "pdel3d" : "HXT", gr->tag());
+    Msg::Warning("pdel3d could not tetrahedralize region %d with its points, "
+                 "legacy Delaunay instead", gr->tag());
     deleter(gr);
   }
-#endif
 
   // the legacy Delaunay, the points as embedded vertices
   std::vector<GVertex *> oldEmbedded = gr->embeddedVertices();

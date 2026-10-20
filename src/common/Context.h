@@ -42,7 +42,7 @@ struct contextMeshOptions {
   int recombineNodeRepositioning;
   double recombineMinimumQuality;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
-  int recombine3DCandidates, recombine3DSmoothing, recombine3DDelaunay;
+  int recombine3DCandidates, recombine3DSmoothing;
   double recombine3DMinimumQuality;
   int flexibleTransfinite, quasiTransfinite, transfiniteTri, maxRetries;
   int repairSelfIntersecting1dMesh;

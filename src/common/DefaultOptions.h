@@ -1796,10 +1796,6 @@ StringXNumber MeshOptions_Number[] = {
     "3d recombination conformity type (0: nonconforming, 1: trihedra, "
     "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)"
     "(experimental)" },
-  { F|O, "Recombine3DDelaunay" , opt_mesh_recombine3d_delaunay , 2 ,
-    "Tetrahedralization of the points of the 3d recombination (0: HXT, "
-    "1: pdel3d, 2: pdel3d, whose tetrahedra are then improved without moving "
-    "the points) (experimental)" },
   { F|O, "Recombine3DMinimumQuality" , opt_mesh_recombine3d_minimum_quality , 0.2 ,
     "Minimum quality of the candidate hexahedra of the 3d recombination: "
     "fewer candidates take less time and memory, but the worse hexahedra the "
