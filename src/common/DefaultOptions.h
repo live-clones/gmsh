@@ -561,24 +561,32 @@ StringXNumber GeneralOptions_Number[] = {
     "Only draw layer of elements that intersect the clipping plane" },
   { F|O, "ClipOnlyVolume" , opt_general_clip_only_volume , 0. ,
     "Only clip volume elements" },
-  { F|S, "ClipPositionX" , opt_general_clip_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the clipping "
-    "planes window" },
-  { F|S, "ClipPositionY" , opt_general_clip_position1 , 150. ,
-    "Vertical position (in pixels) of the upper left corner of the clipping "
-    "planes window" },
+  { F|S, "ClipOffsetX" , opt_general_clip_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the clipping "
+    "planes window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "ClipPositionX" , opt_general_window_position_deprecated , 650. ,
+    "[Deprecated]" },
+  { F|S, "ClipOffsetY" , opt_general_clip_offset1 , 100. ,
+    "Vertical offset (in pixels) of the upper left corner of the clipping "
+    "planes window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "ClipPositionY" , opt_general_window_position_deprecated , 150. ,
+    "[Deprecated]" },
   { F|O, "ClipWholeElements" , opt_general_clip_whole_elements , 0. ,
     "Clip whole elements" },
   { F|S, "ColorScheme", opt_general_color_scheme , 1. ,
     "Default color scheme for graphics (0: light, 1: default, 2: grayscale, 3: dark)" },
   { F|O, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. ,
     "Ask confirmation before overwriting files?" },
-  { F|S, "ContextPositionX" , opt_general_context_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the contextual "
-    "windows" },
-  { F|S, "ContextPositionY" , opt_general_context_position1 , 150. ,
-    "Vertical position (in pixels) of the upper left corner of the contextual "
-    "windows" },
+  { F|S, "ContextOffsetX" , opt_general_context_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the contextual "
+    "windows, relative to the upper left corner of the graphic window" },
+  { F|S|D, "ContextPositionX" , opt_general_window_position_deprecated , 650. ,
+    "[Deprecated]" },
+  { F|S, "ContextOffsetY" , opt_general_context_offset1 , 100. ,
+    "Vertical offset (in pixels) of the upper left corner of the contextual "
+    "windows, relative to the upper left corner of the graphic window" },
+  { F|S|D, "ContextPositionY" , opt_general_window_position_deprecated , 150. ,
+    "[Deprecated]" },
 
   { F|S, "DetachedMenu" , opt_general_detached_menu , 0. ,
     "Should the menu window be detached from the graphic window?" },
@@ -595,10 +603,16 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ExpertMode" , opt_general_expert_mode, 0. ,
     "Enable expert mode (to disable all the messages meant for inexperienced "
     "users)" },
-  { F|S, "ExtraPositionX" , opt_general_extra_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the generic extra window" },
-  { F|S, "ExtraPositionY" , opt_general_extra_position1 , 350. ,
-    "Vertical position (in pixels) of the upper left corner of the generic extra window" },
+  { F|S, "ExtraOffsetX" , opt_general_extra_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the generic "
+    "extra window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "ExtraPositionX" , opt_general_window_position_deprecated , 650. ,
+    "[Deprecated]" },
+  { F|S, "ExtraOffsetY" , opt_general_extra_offset1 , 300. ,
+    "Vertical offset (in pixels) of the upper left corner of the generic "
+    "extra window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "ExtraPositionY" , opt_general_window_position_deprecated , 350. ,
+    "[Deprecated]" },
   { F|S, "ExtraHeight" , opt_general_extra_size1 , 100. ,
     "Height (in pixels) of the generic extra window" },
   { F|S, "ExtraWidth" , opt_general_extra_size0 , 100. ,
@@ -606,20 +620,30 @@ StringXNumber GeneralOptions_Number[] = {
 
  { F|O, "FastRedraw" , opt_general_fast_redraw, 0. ,
     "Draw simplified model while rotating, panning and zooming" },
-  { F|S, "FieldPositionX" , opt_general_field_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the field window" },
-  { F|S, "FieldPositionY" , opt_general_field_position1 , 550. ,
-    "Vertical position (in pixels) of the upper left corner of the field window" },
+  { F|S, "FieldOffsetX" , opt_general_field_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the field "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "FieldPositionX" , opt_general_window_position_deprecated , 650. ,
+    "[Deprecated]" },
+  { F|S, "FieldOffsetY" , opt_general_field_offset1 , 500. ,
+    "Vertical offset (in pixels) of the upper left corner of the field "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "FieldPositionY" , opt_general_window_position_deprecated , 550. ,
+    "[Deprecated]" },
   { F|S, "FieldHeight" , opt_general_field_size1 , 320. ,
     "Height (in pixels) of the field window" },
   { F|S, "FieldWidth" , opt_general_field_size0 , 420. ,
     "Width (in pixels) of the field window" },
-  { F|S, "FileChooserPositionX" , opt_general_file_chooser_position0 , 200. ,
-    "Horizontal position (in pixels) of the upper left corner of the file chooser "
-    "windows" },
-  { F|S, "FileChooserPositionY" , opt_general_file_chooser_position1 , 200. ,
-    "Vertical position (in pixels) of the upper left corner of the file chooser "
-    "windows" },
+  { F|S, "FileChooserOffsetX" , opt_general_file_chooser_offset0 , 150. ,
+    "Horizontal offset (in pixels) of the upper left corner of the file "
+    "chooser windows, relative to the upper left corner of the graphic window" },
+  { F|S|D, "FileChooserPositionX" , opt_general_window_position_deprecated , 200. ,
+    "[Deprecated]" },
+  { F|S, "FileChooserOffsetY" , opt_general_file_chooser_offset1 , 150. ,
+    "Vertical offset (in pixels) of the upper left corner of the file chooser "
+    "windows, relative to the upper left corner of the graphic window" },
+  { F|S|D, "FileChooserPositionY" , opt_general_window_position_deprecated , 200. ,
+    "[Deprecated]" },
   { F|S, "FltkColorScheme" , opt_general_gui_color_scheme , 0. ,
     "FLTK user interface color theme (0: standard, 1:dark)" },
   { F|O, "FltkRefreshRate" , opt_general_gui_refresh_rate , 5. ,
@@ -644,12 +668,16 @@ StringXNumber GeneralOptions_Number[] = {
     "Width (in pixels) of the graphic window, and of the pictures made "
     "without one (in batch mode, or without the graphical interface)" },
 
-  { F|S, "HighOrderToolsPositionX" , opt_general_hot_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the high-order "
-    "tools window" },
-  { F|S, "HighOrderToolsPositionY" , opt_general_hot_position1 , 150. ,
-    "Vertical position (in pixels) of the upper left corner of the high-order "
-    "tools window" },
+  { F|S, "HighOrderToolsOffsetX" , opt_general_hot_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the high-order "
+    "tools window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "HighOrderToolsPositionX" , opt_general_window_position_deprecated , 650. ,
+    "[Deprecated]" },
+  { F|S, "HighOrderToolsOffsetY" , opt_general_hot_offset1 , 100. ,
+    "Vertical offset (in pixels) of the upper left corner of the high-order "
+    "tools window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "HighOrderToolsPositionY" , opt_general_window_position_deprecated , 150. ,
+    "[Deprecated]" },
   { F|O, "HighResolutionGraphics" , opt_general_high_resolution_graphics , 1. ,
     "Use high-resolution OpenGL graphics (e.g. for Macs with retina displays)" },
 
@@ -730,12 +758,17 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "LineWidth" , opt_general_line_width , 1.5 ,
     "Display width of lines (in pixels)" },
 
-  { F|S, "ManipulatorPositionX" , opt_general_manip_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the manipulator "
+  { F|S, "ManipulatorOffsetX" , opt_general_manip_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the "
+    "manipulator window, relative to the upper left corner of the graphic "
     "window" },
-  { F|S, "ManipulatorPositionY" , opt_general_manip_position1 , 150. ,
-    "Vertical position (in pixels) of the upper left corner of the manipulator "
-    "window" },
+  { F|S|D, "ManipulatorPositionX" , opt_general_window_position_deprecated , 650. ,
+    "[Deprecated]" },
+  { F|S, "ManipulatorOffsetY" , opt_general_manip_offset1 , 100. ,
+    "Vertical offset (in pixels) of the upper left corner of the manipulator "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "ManipulatorPositionY" , opt_general_window_position_deprecated , 150. ,
+    "[Deprecated]" },
   { F,   "MaxX" , opt_general_xmax , 0. ,
     "Maximum model coordinate along the X-axis (read-only)" },
   { F,   "MaxY" , opt_general_ymax , 0. ,
@@ -746,10 +779,16 @@ StringXNumber GeneralOptions_Number[] = {
     "Width (in pixels) of the menu tree" },
   { F|S, "MenuHeight" , opt_general_menu_size1 , 200. ,
     "Height (in pixels) of the (detached) menu tree" },
-  { F|S, "MenuPositionX" , opt_general_menu_position0 , 400. ,
-    "Horizontal position (in pixels) of the (detached) menu tree" },
-  { F|S, "MenuPositionY" , opt_general_menu_position1 , 400. ,
-    "Vertical position (in pixels) of the (detached) menu tree" },
+  { F|S, "MenuOffsetX" , opt_general_menu_offset0 , 350. ,
+    "Horizontal offset (in pixels) of the upper left corner of the (detached) "
+    "menu tree, relative to the upper left corner of the graphic window" },
+  { F|S|D, "MenuPositionX" , opt_general_window_position_deprecated , 400. ,
+    "[Deprecated]" },
+  { F|S, "MenuOffsetY" , opt_general_menu_offset1 , 350. ,
+    "Vertical offset (in pixels) of the upper left corner of the (detached) "
+    "menu tree, relative to the upper left corner of the graphic window" },
+  { F|S|D, "MenuPositionY" , opt_general_window_position_deprecated , 400. ,
+    "[Deprecated]" },
   { F|O, "MessageFontSize" , opt_general_message_fontsize , -1. ,
     "Size of the font in the message window, in pixels (-1: automatic)" },
   { F|S, "MessageHeight" , opt_general_message_size , 300. ,
@@ -786,11 +825,16 @@ StringXNumber GeneralOptions_Number[] = {
     "Maximum number of threads used by Gmsh when compiled with OpenMP support "
     "(0: use system default, i.e. OMP_NUM_THREADS)"},
 
-  { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the option "
-    "window" },
-  { F|S, "OptionsPositionY" , opt_general_option_position1 , 150. ,
-    "Vertical position (in pixels) of the upper left corner of the option window" },
+  { F|S, "OptionsOffsetX" , opt_general_option_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the option "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "OptionsPositionX" , opt_general_window_position_deprecated , 650. ,
+    "[Deprecated]" },
+  { F|S, "OptionsOffsetY" , opt_general_option_offset1 , 100. ,
+    "Vertical offset (in pixels) of the upper left corner of the option "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "OptionsPositionY" , opt_general_window_position_deprecated , 150. ,
+    "[Deprecated]" },
   { F|O, "OrderIndependentTransparency" ,
     opt_general_order_independent_transparency , 1. ,
     "Use order-independent (weighted blended) transparency instead of "
@@ -800,11 +844,16 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "Phlogiston" , opt_general_phlogiston , 1. ,
     "Phlogiston (0: none)" },
-  { F|S, "PluginPositionX" , opt_general_plugin_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the plugin "
-    "window" },
-  { F|S, "PluginPositionY" , opt_general_plugin_position1 , 550. ,
-    "Vertical position (in pixels) of the upper left corner of the plugin window" },
+  { F|S, "PluginOffsetX" , opt_general_plugin_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the plugin "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "PluginPositionX" , opt_general_window_position_deprecated , 650. ,
+    "[Deprecated]" },
+  { F|S, "PluginOffsetY" , opt_general_plugin_offset1 , 500. ,
+    "Vertical offset (in pixels) of the upper left corner of the plugin "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "PluginPositionY" , opt_general_window_position_deprecated , 550. ,
+    "[Deprecated]" },
   { F|S, "PluginHeight" , opt_general_plugin_size1 , 320. ,
     "Height (in pixels) of the plugin window" },
   { F|S, "PluginWidth" , opt_general_plugin_size0 , 420. ,
@@ -886,12 +935,16 @@ StringXNumber GeneralOptions_Number[] = {
     " centered)" },
   { F|O, "SmallAxesSize" , opt_general_small_axes_size , 30. ,
     "Size (in pixels) of small axes" },
-  { F|S, "StatisticsPositionX" , opt_general_statistics_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the statistic "
-    "window" },
-  { F|S, "StatisticsPositionY" , opt_general_statistics_position1 , 150. ,
-    "Vertical position (in pixels) of the upper left corner of the statistic"
-    " window" },
+  { F|S, "StatisticsOffsetX" , opt_general_statistics_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the statistic "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "StatisticsPositionX" , opt_general_window_position_deprecated , 650. ,
+    "[Deprecated]" },
+  { F|S, "StatisticsOffsetY" , opt_general_statistics_offset1 , 100. ,
+    "Vertical offset (in pixels) of the upper left corner of the statistic "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "StatisticsPositionY" , opt_general_window_position_deprecated , 150. ,
+    "[Deprecated]" },
   { F|O, "Stereo" , opt_general_stereo_mode , 0. ,
     "Use stereo rendering" },
   { F|O, "StudioFloorOffset" , opt_general_studio_floor_offset , 0. ,
@@ -946,12 +999,16 @@ StringXNumber GeneralOptions_Number[] = {
     "4: +information, 5: +status, 99: +debug)" },
   { F|O, "VertexBufferObjects" , opt_general_vertex_buffer_objects , 1. ,
     "Store vertex arrays in OpenGL buffer objects?" },
-  { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the visibility "
-    "window" },
-  { F|S, "VisibilityPositionY" , opt_general_visibility_position1 , 150. ,
-    "Vertical position (in pixels) of the upper left corner of the visibility "
-    "window" },
+  { F|S, "VisibilityOffsetX" , opt_general_visibility_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the visibility "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "VisibilityPositionX" , opt_general_window_position_deprecated , 650. ,
+    "[Deprecated]" },
+  { F|S, "VisibilityOffsetY" , opt_general_visibility_offset1 , 100. ,
+    "Vertical offset (in pixels) of the upper left corner of the visibility "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S|D, "VisibilityPositionY" , opt_general_window_position_deprecated , 150. ,
+    "[Deprecated]" },
 
   { F|O, "ZoomFactor" , opt_general_zoom_factor , 4.0 ,
     "Middle mouse button zoom acceleration factor" },

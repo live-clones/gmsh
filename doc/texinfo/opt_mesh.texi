@@ -442,7 +442,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisAlgorithm
-METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)@*
+METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way, 3: Multithreaded k-way with mt-metis, if available)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 

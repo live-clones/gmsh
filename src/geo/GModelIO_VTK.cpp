@@ -16,6 +16,8 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "MElement.h"
 #include "ElementType.h"
 #include "VTKXML.h"
@@ -264,41 +266,53 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   int iSurface = getMaxElementaryNumber(2) + 1;
   int iVolume = getMaxElementaryNumber(3) + 1;
 
-  std::map<int, std::vector<MElement *>> elements[8];
+  std::map<int, std::vector<MElement *>> elements[10];
+
+  // the nodes at the given indices (false if one is out of range)
+  auto nodesAt = [&](const int *idx, int n, std::vector<MVertex *> &v) {
+    v.clear();
+    for(int j = 0; j < n; j++) {
+      if(idx[j] < 0 || idx[j] >= (int)vertices.size()) {
+        Msg::Error("Wrong node index %d", idx[j]);
+        return false;
+      }
+      v.push_back(vertices[idx[j]]);
+    }
+    return true;
+  };
 
   if(haveCells) {
-    std::vector<std::vector<MVertex *>> cells(numElements);
+    // the ints of each cell: node indices, except for the polyhedra (see
+    // below)
+    std::vector<std::vector<int>> cells(numElements);
     for(std::size_t i = 0; i < cells.size(); i++) {
-      int numVerts, n[100];
+      int numInts;
       if(binary) {
-        if(fread(&numVerts, sizeof(int), 1, fp) != 1) {
+        if(fread(&numInts, sizeof(int), 1, fp) != 1) {
           fclose(fp);
           return 0;
         }
-        if(!bigEndian) SwapBytes((char *)&numVerts, sizeof(int), 1);
-        if((int)fread(n, sizeof(int), numVerts, fp) != numVerts) {
+        if(!bigEndian) SwapBytes((char *)&numInts, sizeof(int), 1);
+        cells[i].resize(std::max(numInts, 0));
+        if(numInts > 0 &&
+           (int)fread(&cells[i][0], sizeof(int), numInts, fp) != numInts) {
           fclose(fp);
           return 0;
         }
-        if(!bigEndian) SwapBytes((char *)n, sizeof(int), numVerts);
+        if(!bigEndian) SwapBytes((char *)&cells[i][0], sizeof(int), numInts);
       }
       else {
-        if(fscanf(fp, "%d", &numVerts) != 1) {
+        if(fscanf(fp, "%d", &numInts) != 1) {
           fclose(fp);
           return 0;
         }
-        for(int j = 0; j < numVerts; j++) {
-          if(fscanf(fp, "%d", &n[j]) != 1) {
+        cells[i].resize(std::max(numInts, 0));
+        for(int j = 0; j < numInts; j++) {
+          if(fscanf(fp, "%d", &cells[i][j]) != 1) {
             fclose(fp);
             return 0;
           }
         }
-      }
-      for(int j = 0; j < numVerts; j++) {
-        if(n[j] >= 0 && n[j] < (int)vertices.size())
-          cells[i].push_back(vertices[n[j]]);
-        else
-          Msg::Error("Wrong node index %d", n[j]);
       }
     }
 
@@ -330,8 +344,38 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
             return 0;
           }
         }
+        std::vector<int> &ints = cells[i];
+        std::vector<MVertex *> v;
+        if(type == 7) { // polygon
+          if(nodesAt(ints.data(), (int)ints.size(), v))
+            created[i] = new MPolygon(v);
+          continue;
+        }
+        if(type == 42) { // polyhedron: the number of faces, then for each face
+                         // its number of nodes and their indices
+          std::vector<MVertex *> fv;
+          std::vector<int> starts = {0};
+          std::size_t k = 1;
+          bool ok = !ints.empty();
+          for(int f = 0; ok && f < ints[0]; f++) {
+            ok = k < ints.size() && k + ints[k] < ints.size() + 1 &&
+                 nodesAt(&ints[k + 1], ints[k], fv);
+            if(!ok) break;
+            v.insert(v.end(), fv.begin(), fv.end());
+            starts.push_back((int)v.size());
+            k += 1 + ints[k];
+          }
+          if(!ok || k != ints.size()) {
+            Msg::Error("Wrong polyhedron cell %zu", i);
+            continue;
+          }
+          MPolyhedron *ph = new MPolyhedron(v);
+          ph->setPolygons(v, starts);
+          created[i] = ph;
+          continue;
+        }
         // the element and its node ordering, as for the .vtu files
-        int numVerts = cells[i].size();
+        int numVerts = ints.size();
         int mshType = getMSHTypeOfVTKXMLCell(type, numVerts);
         if(!mshType) {
           Msg::Error("Unknown type of cell %d (with %d nodes)", type, numVerts);
@@ -343,11 +387,12 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
           // format: with the 11th and 12th edges swapped
           int perEdge = ElementType::getOrder(mshType) - 1;
           for(int k = 0; k < perEdge; k++)
-            std::swap(cells[i][8 + 10 * perEdge + k],
-                      cells[i][8 + 11 * perEdge + k]);
+            std::swap(ints[8 + 10 * perEdge + k], ints[8 + 11 * perEdge + k]);
         }
-        std::vector<MVertex *> v(numVerts);
-        for(int k = 0; k < numVerts; k++) v[cell.nodes[k]] = cells[i][k];
+        std::vector<MVertex *> w;
+        if(!nodesAt(ints.data(), numVerts, w)) continue;
+        v.resize(numVerts);
+        for(int k = 0; k < numVerts; k++) v[cell.nodes[k]] = w[k];
         created[i] = factory.create(mshType, v);
       }
 
@@ -391,6 +436,8 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
         case TYPE_HEX: elements[5][tag].push_back(e); break;
         case TYPE_PRI: elements[6][tag].push_back(e); break;
         case TYPE_PYR: elements[7][tag].push_back(e); break;
+        case TYPE_POLYG: elements[8][tag].push_back(e); break;
+        case TYPE_POLYH: elements[9][tag].push_back(e); break;
         default: delete e; break;
         }
       }
@@ -398,16 +445,14 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     else {
       for(std::size_t i = 0; i < cells.size(); i++) {
         int nbNodes = (int)cells[i].size();
+        std::vector<MVertex *> v;
+        if(!nodesAt(cells[i].data(), nbNodes, v)) continue;
         switch(nbNodes) {
-        case 1: elements[0][iPoint++].push_back(new MPoint(cells[i])); break;
-        case 2: elements[1][iCurve].push_back(new MLine(cells[i])); break;
-        case 3: elements[2][iSurface].push_back(new MTriangle(cells[i])); break;
-        case 4:
-          elements[3][iSurface].push_back(new MQuadrangle(cells[i]));
-          break;
-        default:
-          Msg::Error("Unknown type of mesh element with %d nodes", nbNodes);
-          break;
+        case 1: elements[0][iPoint++].push_back(new MPoint(v)); break;
+        case 2: elements[1][iCurve].push_back(new MLine(v)); break;
+        case 3: elements[2][iSurface].push_back(new MTriangle(v)); break;
+        case 4: elements[3][iSurface].push_back(new MQuadrangle(v)); break;
+        default: elements[8][iSurface].push_back(new MPolygon(v)); break;
         }
       }
     }

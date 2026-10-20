@@ -655,7 +655,8 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Elementary Entity Context");
+                          "Elementary Entity Context",
+                          CTX::instance()->ctxOffset);
   win->box(GMSH_WINDOW_BOX);
   {
     tab1 = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
@@ -1032,8 +1033,6 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
   tab1->show();
   tab2->hide();
 
-  win->position(CTX::instance()->ctxPosition[0],
-                CTX::instance()->ctxPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
@@ -1169,7 +1168,8 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Physical Group Context");
+                          "Physical Group Context",
+                          CTX::instance()->ctxOffset);
   win->box(GMSH_WINDOW_BOX);
 
   {
@@ -1222,8 +1222,6 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
     tab->end();
   }
 
-  win->position(CTX::instance()->ctxPosition[0],
-                CTX::instance()->ctxPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
@@ -1364,7 +1362,8 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Elementary Operation Context");
+                          "Elementary Operation Context",
+                          CTX::instance()->ctxOffset);
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
@@ -1510,8 +1509,6 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
   choice->align(FL_ALIGN_RIGHT);
   choice->callback(selection_mode_cb);
 
-  win->position(CTX::instance()->ctxPosition[0],
-                CTX::instance()->ctxPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
@@ -1568,7 +1565,8 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
   int height = 4 * WB + 4 * BH;
 
   win = new paletteWindow(width, height, CTX::instance()->nonModalWindows,
-                          "Mesh Context");
+                          "Mesh Context",
+                          CTX::instance()->ctxOffset);
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
@@ -1622,8 +1620,6 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
     o->end();
   }
 
-  win->position(CTX::instance()->ctxPosition[0],
-                CTX::instance()->ctxPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

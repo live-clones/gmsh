@@ -69,8 +69,6 @@ public:
   int getMenuWidth();
   void setMenuWidth(int w);
   int getMenuHeight();
-  int getMenuPositionX();
-  int getMenuPositionY();
   void showMenu();
   void hideMenu();
   void showHideMenu();

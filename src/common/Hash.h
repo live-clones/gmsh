@@ -7,6 +7,7 @@
 #define HASH_H
 
 #include "GmshConfig.h"
+#include <cstdint>
 
 // FNV (Fowler–Noll–Vo) hashing parameters
 
@@ -55,5 +56,28 @@ template <int N> struct HashFNV1a {
     return Hash1FNV1a<N>::eval(hash, static_cast<const unsigned char *>(key));
   }
 };
+
+// Mixing of a 64-bit value (the finalizer of splitmix64): every bit of the
+// result depends on every bit of x, so that the high bits can be used too
+inline std::uint64_t HashMix(std::uint64_t x)
+{
+  x ^= x >> 30;
+  x *= 0xbf58476d1ce4e5b9ull;
+  x ^= x >> 27;
+  x *= 0x94d049bb133111ebull;
+  x ^= x >> 31;
+  return x;
+}
+
+// A hash extended with a value: the multiply-add of a polynomial hash, to be
+// finished with HashMix() once all the values are in
+inline std::uint64_t HashCombine(std::uint64_t h, std::uint64_t v)
+{ return h * 0x9e3779b97f4a7c15ull + v; }
+
+// The share, among n, of a mixed hash: for threads that each take a share of
+// a set of keys, taken from the high bits, which the slot of an open
+// addressing table does not use
+inline int HashShard(std::uint64_t h, int n)
+{ return n > 1 ? (int)((h >> 32) % (std::uint64_t)n) : 0; }
 
 #endif

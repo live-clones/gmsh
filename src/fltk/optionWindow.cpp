@@ -1447,7 +1447,8 @@ optionWindow::optionWindow(int deltaFontSize)
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow(width, height,
-                          CTX::instance()->nonModalWindows ? true : false);
+                          CTX::instance()->nonModalWindows ? true : false, nullptr,
+                          CTX::instance()->optOffset);
   win->box(GMSH_WINDOW_BOX);
   win->label("Options - General");
 
@@ -4082,8 +4083,6 @@ optionWindow::optionWindow(int deltaFontSize)
   }
   view.group->end();
 
-  win->position(CTX::instance()->optPosition[0],
-                CTX::instance()->optPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

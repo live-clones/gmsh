@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cstdint>
 #include <algorithm>
 #include <cstring>
 #include <unordered_map>
@@ -390,12 +391,12 @@ namespace {
     std::size_t operator()(const NodeKey &k) const
     {
       const unsigned char *p = (const unsigned char *)&k;
-      std::size_t h = 14695981039346656037ULL;
+      std::uint64_t h = 14695981039346656037ULL;
       for(std::size_t i = 0; i < sizeof(NodeKey); i++) {
         h ^= p[i];
         h *= 1099511628211ULL;
       }
-      return h;
+      return (std::size_t)h;
     }
   };
   struct NodeKeyEqual {

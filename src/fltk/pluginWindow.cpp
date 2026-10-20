@@ -330,7 +330,8 @@ pluginWindow::pluginWindow(int deltaFontSize)
                  CTX::instance()->pluginSize[1];
 
   win = new paletteWindow(
-    width, height, CTX::instance()->nonModalWindows ? true : false, "Plugins");
+    width, height, CTX::instance()->nonModalWindows ? true : false, "Plugins",
+                          CTX::instance()->pluginOffset);
   win->box(GMSH_WINDOW_BOX);
 
   browser = new Fl_Hold_Browser(0, 0, L1, height);
@@ -368,8 +369,6 @@ pluginWindow::pluginWindow(int deltaFontSize)
   win->resizable(new Fl_Box(L1 + L2 + 2 * BH, height - 4 * BH, 10, 10));
   win->size_range(width0, height0);
 
-  win->position(CTX::instance()->pluginPosition[0],
-                CTX::instance()->pluginPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

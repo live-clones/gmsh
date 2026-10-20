@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <vector>
+#include "Hash.h"
 
 // Finds the faces that are met an odd number of times - the skin of a set of
 // 3D elements, when each element gives its faces (or of 2D elements, when
@@ -34,13 +35,6 @@ private:
   };
   std::vector<slot> _slots;
   std::size_t _mask, _count;
-  static std::uint64_t _mix(std::uint64_t x)
-  {
-    x ^= x >> 32;
-    x *= 0xff51afd7ed558ccdull;
-    x ^= x >> 29;
-    return x;
-  }
   void _grow()
   {
     std::vector<slot> old;
@@ -66,7 +60,7 @@ public:
     if(n <= 1) return 0;
     K kmin = std::min(k[0], k[1]);
     for(int a = 2; a < numNodes; a++) kmin = std::min(kmin, k[a]);
-    return (int)((_mix((std::uint64_t)kmin) >> 20) % (std::uint64_t)n);
+    return HashShard(HashMix((std::uint64_t)kmin), n);
   }
   // The hash that stands for a face (k is sorted in place). Asking for the
   // faces of an element before adding them lets the misses of their slots
@@ -77,7 +71,7 @@ public:
       for(int b = a; b > 0 && k[b] < k[b - 1]; b--) std::swap(k[b], k[b - 1]);
     std::uint64_t h = ((std::uint64_t)(unsigned int)tag << 8) ^ numNodes;
     for(int a = 0; a < numNodes; a++)
-      h = _mix(h * 0x9e3779b97f4a7c15ull ^ (std::uint64_t)k[a]);
+      h = HashMix(HashCombine(h, (std::uint64_t)k[a]));
     if(!h) h = 1;
 #if defined(__GNUC__) || defined(__clang__)
     __builtin_prefetch(&_slots[h & _mask]);

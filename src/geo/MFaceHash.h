@@ -12,11 +12,10 @@
 struct MFaceHash {
   size_t operator()(const MFace &f) const
   {
-    size_t v[4] = {0, 0, 0, 0};
-    for(size_t i = 0; i < f.getNumVertices(); i++) {
-      v[i] = f.getSortedVertex(i)->getNum();
-    }
-    return HashFNV1a<sizeof(size_t[4])>::eval(v);
+    std::size_t h = f.getNumVertices();
+    for(std::size_t i = 0; i < f.getNumVertices(); i++)
+      h = HashCombine(h, f.getSortedVertex(i)->getNum());
+    return HashMix(h);
   }
 };
 

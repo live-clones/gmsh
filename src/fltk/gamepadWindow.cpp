@@ -52,7 +52,8 @@ gamepadWindow::gamepadWindow()
   int L = FL_NORMAL_SIZE;
 
   win = new paletteWindow(width, height,
-                          CTX::instance()->nonModalWindows ? true : false);
+                          CTX::instance()->nonModalWindows ? true : false, nullptr,
+                          CTX::instance()->optOffset);
   win->box(GMSH_WINDOW_BOX);
   win->label("Gamepad Configuration Tool (in work)");
 
@@ -161,7 +162,5 @@ gamepadWindow::gamepadWindow()
     Fl::add_timeout(frequency, gamepadWindow_handler, (void *)this);
   }
 
-  win->position(CTX::instance()->optPosition[0],
-                CTX::instance()->optPosition[1]);
   win->end();
 }

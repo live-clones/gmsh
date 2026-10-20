@@ -31,6 +31,7 @@
 #include "FlGui.h"
 #include "optionWindow.h"
 #include "fileDialogs.h"
+#include "windowPlacement.h"
 #include "CreateFile.h"
 #include "Options.h"
 #include "Context.h"
@@ -70,24 +71,7 @@ public:
     else
       Fl_File_Chooser::show();
   }
-  void position(int x, int y)
-  {
-    if(_win) _win->position(x, y);
-  }
-  int x()
-  {
-    if(_win)
-      return _win->x();
-    else
-      return 100;
-  }
-  int y()
-  {
-    if(_win)
-      return _win->y();
-    else
-      return 100;
-  }
+  Fl_Window *window() { return _win; }
 };
 
 static flFileChooser *fc = nullptr;
@@ -175,9 +159,9 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     if(!fc) {
       fc = new flFileChooser(thepath.c_str(), thefilter2,
                              Fl_File_Chooser::SINGLE, message);
-      fc->position(CTX::instance()->fileChooserPosition[0],
-                   CTX::instance()->fileChooserPosition[1]);
     }
+    if(fc->window())
+      placeWindow(fc->window(), CTX::instance()->fileChooserOffset);
     switch(type) {
     case FILE_CHOOSER_MULTI: fc->type(Fl_File_Chooser::MULTI); break;
     case FILE_CHOOSER_CREATE: fc->type(Fl_File_Chooser::CREATE); break;
@@ -221,15 +205,13 @@ int fileChooserGetFilter()
   }
 }
 
-void fileChooserGetPosition(int *x, int *y)
+void fileChooserStoreOffset(int offset[2])
 {
   if(CTX::instance()->nativeFileChooser) {
     // not available
   }
-  else {
-    if(!fc) return;
-    *x = fc->x();
-    *y = fc->y();
+  else if(fc && fc->window()) {
+    storeWindowOffset(fc->window(), offset);
   }
 }
 

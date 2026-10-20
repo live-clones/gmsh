@@ -188,8 +188,8 @@ void GModel::destroy(bool keepName)
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
   // (the mesh edges and faces hold nodes about to be deleted)
-  hashmapMEdge().swap(_mapEdgeNum);
-  hashmapMFace().swap(_mapFaceNum);
+  _meshEdges.clear();
+  _meshFaces.clear();
 
   for(auto it = firstRegion(); it != lastRegion(); ++it) delete *it;
   regions.clear();
@@ -232,12 +232,10 @@ void GModel::destroyMeshCaches(bool keepVertexCaches)
       _vertexVectorCache.clear();
       std::vector<MVertex *>().swap(_vertexVectorCache);
       _vertexMapCache.clear();
-      std::map<std::size_t, MVertex *>().swap(_vertexMapCache);
     }
     _elementVectorCache.clear();
     std::vector<std::pair<MElement *, int>>().swap(_elementVectorCache);
     _elementMapCache.clear();
-    std::map<std::size_t, std::pair<MElement *, int>>().swap(_elementMapCache);
     _elementIndexCache.clear();
     std::map<int, int>().swap(_elementIndexCache);
     if(_elementOctree) {
@@ -254,8 +252,8 @@ void GModel::deleteMesh()
   for(auto it = firstEdge(); it != lastEdge(); ++it) (*it)->deleteMesh();
   for(auto it = firstVertex(); it != lastVertex(); ++it) (*it)->deleteMesh();
   destroyMeshCaches();
-  _mapEdgeNum.clear();
-  _mapFaceNum.clear();
+  _meshEdges.clear();
+  _meshFaces.clear();
   _currentMeshEntity = nullptr;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
@@ -1274,21 +1272,36 @@ SBoundingBox3d GModel::bounds(bool aroundVisible)
   std::vector<GEntity *> entities;
   getEntities(entities);
   SBoundingBox3d bb;
+  // the mesh nodes of the entities, in chunks that several threads take
+  struct chunk {
+    GEntity *ge;
+    std::size_t first, last;
+  };
+  std::vector<chunk> chunks;
+  std::size_t numNodes = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
-    if(!aroundVisible || entities[i]->getVisibility()) {
-      if(entities[i]->getNativeType() == GEntity::OpenCascadeModel) {
-        bb += entities[i]->bounds();
-      }
-      else {
-        // using the mesh vertices for now
-        if(entities[i]->dim() == 0)
-          bb += static_cast<GVertex *>(entities[i])->xyz();
-        else
-          for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
-            bb += entities[i]->mesh_vertices[j]->point();
-      }
+    if(aroundVisible && !entities[i]->getVisibility()) continue;
+    if(entities[i]->getNativeType() == GEntity::OpenCascadeModel)
+      bb += entities[i]->bounds();
+    else if(entities[i]->dim() == 0)
+      bb += static_cast<GVertex *>(entities[i])->xyz();
+    else {
+      std::size_t n = entities[i]->mesh_vertices.size();
+      numNodes += n;
+      for(std::size_t a = 0; a < n; a += 1 << 18)
+        chunks.push_back({entities[i], a, std::min(n, a + (1 << 18))});
     }
   }
+  int nthreads = CTX::instance()->numThreadsFor(numNodes, 1 << 20);
+  std::vector<SBoundingBox3d> bbs(nthreads);
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+  for(std::size_t c = 0; c < chunks.size(); c++) {
+    SBoundingBox3d &b = bbs[Msg::GetThreadNum()];
+    for(std::size_t j = chunks[c].first; j < chunks[c].last; j++)
+      b += chunks[c].ge->mesh_vertices[j]->point();
+  }
+  for(auto &b : bbs)
+    if(!b.empty()) bb += b; // (adding an empty box adds its sentinel corners)
   return bb;
 }
 
@@ -1811,20 +1824,118 @@ std::size_t GModel::getNumMeshParentElements() const
   return n;
 }
 
+// Add the edges or faces of the elements of the entities to the set, numbered
+// in the order they first appear, by several threads: the keys are hashed
+// once, each thread then takes the keys of its share (by hash) and notes
+// where each first appears, and the new keys are appended in that order, so
+// that the numbering does not depend on the number of threads. countOf(e)
+// gives the number of keys of an element, keysOf(e, keys) the keys.
+template <class Set, class C, class F>
+static void createEdgesOrFaces(const std::vector<GEntity *> &entities, Set &set,
+                               C countOf, F keysOf)
+{
+  typedef typename Set::key_type K;
+  // the elements, and where the keys of each start
+  std::vector<MElement *> elements;
+  std::vector<std::size_t> start(1, 0);
+  for(GEntity *ge : entities) {
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      MElement *e = ge->getMeshElement(j);
+      elements.push_back(e);
+      start.push_back(start.back() + countOf(e));
+    }
+  }
+  std::size_t total = start.back(), numElements = elements.size();
+  if(!total) return;
+  int nthreads = CTX::instance()->numThreadsFor(total, 100000);
+  if(nthreads == 1) { // (the same numbering, in one pass)
+    std::vector<K> keys;
+    for(auto e : elements) {
+      keysOf(e, keys);
+      for(auto &key : keys) set.add(std::move(key));
+    }
+    return;
+  }
+  if(!set.empty()) set.index(); // (read by the threads, not changed)
+  auto range = [&](int t, std::size_t &a, std::size_t &b) {
+    a = numElements * t / nthreads;
+    b = numElements * (t + 1) / nthreads;
+  };
+
+  // the hash of each key
+  std::vector<std::uint64_t> hashes(total);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    std::vector<K> keys;
+    std::size_t a, b;
+    range(t, a, b);
+    for(std::size_t i = a; i < b; i++) {
+      keysOf(elements[i], keys);
+      for(std::size_t k = 0; k < keys.size(); k++)
+        hashes[start[i] + k] = set.hashOf(keys[k]);
+    }
+  }
+
+  // where each new key first appears
+  std::vector<std::uint8_t> isFirst(total, 0);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    Set mine; // the keys of this share, numbered by where they first appear
+    std::vector<K> keys;
+    for(std::size_t i = 0; i < numElements; i++) {
+      bool built = false;
+      for(std::size_t p = start[i]; p < start[i + 1]; p++) {
+        if(HashShard(hashes[p], nthreads) != t) continue;
+        if(!built) keysOf(elements[i], keys);
+        built = true;
+        mine.add(std::move(keys[p - start[i]]), p + 1);
+      }
+    }
+    for(const auto &entry : mine)
+      if(set.empty() || set.indexOf(entry.first) == Set::npos)
+        isFirst[entry.second - 1] = 1;
+  }
+  std::vector<std::uint64_t>().swap(hashes);
+
+  // the new keys, numbered in order: each thread appends those of its
+  // elements from the number the ones before leave off at
+  std::vector<std::size_t> numFirst(nthreads + 1, 0);
+  for(int t = 0; t < nthreads; t++) {
+    std::size_t a, b;
+    range(t, a, b);
+    numFirst[t + 1] = numFirst[t];
+    for(std::size_t p = start[a]; p < start[b]; p++)
+      numFirst[t + 1] += isFirst[p];
+  }
+  std::size_t first = set.append(numFirst[nthreads]);
+  std::size_t num0 = set.maxNumber();
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    std::vector<K> keys;
+    std::size_t a, b, n = numFirst[t];
+    range(t, a, b);
+    for(std::size_t i = a; i < b; i++) {
+      keysOf(elements[i], keys);
+      for(std::size_t k = 0; k < keys.size(); k++)
+        if(isFirst[start[i] + k])
+          set.set(first + n, std::move(keys[k]), num0 + 1 + n), n++;
+    }
+  }
+  set.setMaxNumber(num0 + numFirst[nthreads]);
+}
+
 void GModel::createMEdges(const std::vector<std::pair<int, int>> &dimTags)
 {
   Msg::StatusBar(true, "Creating mesh edges...");
   std::vector<GEntity *> entities;
   getEntities(entities, dimTags);
-  for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumEdges(); k++) {
-        MEdge edge = e->getEdge(k);
-        addMEdge(std::move(edge));
-      }
-    }
-  }
+  createEdgesOrFaces(
+    entities, _meshEdges,
+    [](MElement *e) { return (std::size_t)e->getNumEdges(); },
+    [](MElement *e, std::vector<MEdge> &keys) {
+      keys.resize(e->getNumEdges());
+      for(int k = 0; k < e->getNumEdges(); k++) keys[k] = e->getEdge(k);
+    });
   Msg::StatusBar(true, "Done creating mesh edges");
 }
 
@@ -1833,32 +1944,21 @@ void GModel::createMFaces(const std::vector<std::pair<int, int>> &dimTags)
   Msg::StatusBar(true, "Creating mesh faces...");
   std::vector<GEntity *> entities;
   getEntities(entities, dimTags);
-  for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumFaces(); k++) {
-        MFace face = e->getFace(k);
-        addMFace(std::move(face));
-      }
-    }
-  }
+  createEdgesOrFaces(
+    entities, _meshFaces,
+    [](MElement *e) { return (std::size_t)e->getNumFaces(); },
+    [](MElement *e, std::vector<MFace> &keys) {
+      keys.resize(e->getNumFaces());
+      for(int k = 0; k < e->getNumFaces(); k++) keys[k] = e->getFace(k);
+    });
   Msg::StatusBar(true, "Done creating mesh faces");
-}
-
-std::size_t GModel::addMEdge(MEdge &&edge, std::size_t num)
-{
-  std::pair<MEdge, std::size_t> key(std::move(edge),
-                                    num ? num : _mapEdgeNum.size() + 1);
-  std::pair<hashmapMEdge::iterator, bool> it =
-    _mapEdgeNum.insert(std::move(key));
-  return it.first->second;
 }
 
 std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
 {
   MEdge e(v0, v1);
-  auto it = _mapEdgeNum.find(e);
-  if(it != _mapEdgeNum.end()) {
+  auto it = _meshEdges.find(e);
+  if(it != _meshEdges.end()) {
     edge = it->first;
     return it->second;
   }
@@ -1868,21 +1968,12 @@ std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
   }
 }
 
-std::size_t GModel::addMFace(MFace &&face, std::size_t num)
-{
-  std::pair<MFace, std::size_t> key(std::move(face),
-                                    num ? num : _mapFaceNum.size() + 1);
-  std::pair<hashmapMFace::iterator, bool> it =
-    _mapFaceNum.insert(std::move(key));
-  return it.first->second;
-}
-
 std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
                              MFace &face)
 {
   MFace f(v0, v1, v2, v3);
-  auto it = _mapFaceNum.find(f);
-  if(it != _mapFaceNum.end()) {
+  auto it = _meshFaces.find(f);
+  if(it != _meshFaces.end()) {
     face = it->first;
     return it->second;
   }
@@ -2968,6 +3059,12 @@ void GModel::_associateEntityWithMeshVertices()
   for(auto it = firstVertex(); it != lastVertex(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->points);
   }
+}
+
+void GModel::_storeVerticesInEntities(TagMap<MVertex *> &vertices)
+{
+  std::map<std::size_t, MVertex *> sorted(vertices.begin(), vertices.end());
+  _storeVerticesInEntities(sorted);
 }
 
 void GModel::_storeVerticesInEntities(

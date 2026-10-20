@@ -226,20 +226,23 @@ public:
       else if(prefs.entryExists(name))
         prefs.deleteEntry(name);
     }
-    prefs.set((_prefix + "PositionX").c_str(), window->x());
-    prefs.set((_prefix + "PositionY").c_str(), window->y());
+    int offset[2] = {0, 0};
+    storeWindowOffset(window, offset);
+    prefs.set((_prefix + "OffsetX").c_str(), offset[0]);
+    prefs.set((_prefix + "OffsetY").c_str(), offset[1]);
     prefs.set((_prefix + "Width").c_str(), window->w());
     prefs.set((_prefix + "Height").c_str(), window->h());
   }
   std::string run()
   {
     Fl_Preferences prefs(Fl_Preferences::USER, "fltk.org", "gmsh");
-    int x = 100, y = 100, h = 4 * WB + 10 * BH, w = 3 * BB + 2 * WB;
-    prefs.get((_prefix + "PositionX").c_str(), x, x);
-    prefs.get((_prefix + "PositionY").c_str(), y, y);
+    int offset[2] = {100, 100}, h = 4 * WB + 10 * BH, w = 3 * BB + 2 * WB;
+    prefs.get((_prefix + "OffsetX").c_str(), offset[0], offset[0]);
+    prefs.get((_prefix + "OffsetY").c_str(), offset[1], offset[1]);
     prefs.get((_prefix + "Width").c_str(), w, w);
     prefs.get((_prefix + "Height").c_str(), h, h);
-    window->resize(x, y, w, h);
+    window->size(w, h);
+    placeWindow(window, offset);
     int old = browser->value();
     browser->clear();
     for(int i = 0; i < 100; i++) {
@@ -352,20 +355,23 @@ public:
 
   void save(Fl_Preferences &prefs)
   {
-    prefs.set((_prefix + "PositionX").c_str(), window->x());
-    prefs.set((_prefix + "PositionY").c_str(), window->y());
+    int offset[2] = {0, 0};
+    storeWindowOffset(window, offset);
+    prefs.set((_prefix + "OffsetX").c_str(), offset[0]);
+    prefs.set((_prefix + "OffsetY").c_str(), offset[1]);
     prefs.set((_prefix + "Width").c_str(), window->w());
     prefs.set((_prefix + "Height").c_str(), window->h());
   }
   int run()
   {
     Fl_Preferences prefs(Fl_Preferences::USER, "fltk.org", "gmsh");
-    int x = 100, y = 100, h = 3 * WB + 2 * BH, w = 3 * BB + 2 * WB;
-    prefs.get((_prefix + "PositionX").c_str(), x, x);
-    prefs.get((_prefix + "PositionY").c_str(), y, y);
+    int offset[2] = {100, 100}, h = 3 * WB + 2 * BH, w = 3 * BB + 2 * WB;
+    prefs.get((_prefix + "OffsetX").c_str(), offset[0], offset[0]);
+    prefs.get((_prefix + "OffsetY").c_str(), offset[1], offset[1]);
     prefs.get((_prefix + "Width").c_str(), w, w);
     prefs.get((_prefix + "Height").c_str(), h, h);
-    window->resize(x, y, w, h);
+    window->size(w, h);
+    placeWindow(window, offset);
 
     int order_max = CTX::instance()->mesh.cgnsImportOrder;
     int order = 1;

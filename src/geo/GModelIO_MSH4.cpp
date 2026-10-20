@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <limits>
 #include <atomic>
+#include <type_traits>
 #include <stdexcept>
 #include <variant>
 
@@ -742,10 +743,14 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
         return nullptr;
       }
       if(swap) SwapBytes((char *)&coord[0], sizeof(double), n * numNodes);
-      std::size_t k = 0;
+      // (the nodes of a large block are made by several threads)
+      std::size_t minTag = minNodeNum, maxTag = maxNodeNum;
+      int nthreads = CTX::instance()->numThreadsFor(numNodes, 100000);
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  reduction(min : minTag) reduction(max : maxTag)
       for(std::size_t j = 0; j < numNodes; j++) {
         MVertex *mv = nullptr;
-        std::size_t tagNode = tags[j];
+        std::size_t tagNode = tags[j], k = n * j;
         if(n == 5) {
           mv = new MFaceVertex(coord[k], coord[k + 1], coord[k + 2], entity,
                                coord[k + 3], coord[k + 4], tagNode);
@@ -758,15 +763,16 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
           mv =
             new MVertex(coord[k], coord[k + 1], coord[k + 2], entity, tagNode);
         }
-        k += n;
         mv->setEntity(entity);
-        minNodeNum = std::min(minNodeNum, tagNode);
-        maxNodeNum = std::max(maxNodeNum, tagNode);
-        verticesRead[nodeRead] = mv;
-        nodeRead++;
-        if(totalNumRead > 100000 && progressDue(nodeRead, totalNumRead))
-          Msg::ProgressMeter(nodeRead, true, "Reading nodes");
+        minTag = std::min(minTag, tagNode);
+        maxTag = std::max(maxTag, tagNode);
+        verticesRead[nodeRead + j] = mv;
       }
+      minNodeNum = minTag;
+      maxNodeNum = maxTag;
+      nodeRead += numNodes;
+      if(totalNumRead > 100000)
+        Msg::ProgressMeter(nodeRead, true, "Reading nodes");
     }
     else {
       if(version >= 4.1) {
@@ -1196,12 +1202,78 @@ static bool readMSH4SizeTs(FILE *fp, bool binary, bool swap, std::size_t n,
   return true;
 }
 
-// As in $Elements, the type in the block header fixes the shape of the records.
-// A polygon is `elementTag numNodes nodeTag ...`, a polyhedron is `elementTag
-// numFaces` then `numNodes nodeTag ...` for each face. Both end with
-// `numSimplices nodeTag ...`, the optional sub-triangulation or
-// sub-tetrahedralization, whose nodes need not be nodes of the polygon or of
-// the faces: those are the hanging or interior nodes.
+// A polytope from its record of n values (see readMSH4Polytopes()), or
+// nullptr with the error; the nodes are looked up without filling the caches
+// of the model, as several threads do this at once
+static MElement *makeMSH4Polytope(GModel *model, int elmType,
+                                  const std::size_t *d, std::size_t n,
+                                  std::vector<MVertex *> &polygons,
+                                  std::vector<int> &polygonStarts,
+                                  std::vector<MVertex *> &simplices,
+                                  std::string &error)
+{
+  std::size_t pos = 0;
+  auto next = [&](std::size_t &v) {
+    if(pos >= n) return false;
+    v = d[pos++];
+    return true;
+  };
+  auto nodes = [&](std::size_t num, std::vector<MVertex *> &v) {
+    if(num > n - pos) return false;
+    for(std::size_t k = 0; k < num; k++) {
+      MVertex *mv = model->findMeshVertexByTag(d[pos++]);
+      if(!mv) {
+        error = "Unknown node " + std::to_string(d[pos - 1]) + " in element " +
+                std::to_string(d[0]);
+        return false;
+      }
+      v.push_back(mv);
+    }
+    return true;
+  };
+  polygons.clear();
+  simplices.clear();
+  polygonStarts.assign(1, 0);
+  std::size_t tag = 0, numPolygons = 1, numSimplices = 0;
+  bool ok = next(tag) && (elmType == MSH_POLYG_ || next(numPolygons));
+  for(std::size_t k = 0; ok && k < numPolygons; k++) {
+    std::size_t numNodes = 0;
+    ok = next(numNodes) && nodes(numNodes, polygons);
+    polygonStarts.push_back((int)polygons.size());
+  }
+  ok = ok && next(numSimplices) &&
+       nodes(numSimplices * (elmType == MSH_POLYG_ ? 3 : 4), simplices) &&
+       pos == n;
+  if(!ok) {
+    if(error.empty())
+      error = "Malformed record of element " + std::to_string(n ? d[0] : 0);
+    return nullptr;
+  }
+  MElementFactory factory;
+  MElement *e = factory.create(elmType, polygons, tag, 0, false, 0, nullptr);
+  if(!e) {
+    error = "Could not create element " + std::to_string(tag);
+    return nullptr;
+  }
+  if(elmType == MSH_POLYG_)
+    static_cast<MPolygon *>(e)->setTriangles(simplices);
+  else
+    static_cast<MPolyhedron *>(e)->setPolygonsAndTetrahedra(
+      polygons, polygonStarts, simplices);
+  return e;
+}
+
+// As in $Elements, the type in the block header fixes the shape of the
+// records. As their size varies, a block starts with where each of its
+// records starts in its values (numPolytopes + 1 offsets, counted in size_t
+// values from the first record, the last one being their total), so that any
+// range of records can be read without the ones before it. A polygon is
+// `elementTag numNodes nodeTag ...`, a polyhedron `elementTag numFaces` then
+// `numNodes nodeTag ...` for each face. Both end with `numSimplices nodeTag
+// ...`, the optional sub-triangulation or sub-tetrahedralization, whose nodes
+// need not be nodes of the polygon or of the faces: those are the hanging or
+// interior nodes. The records are read about 64 MB at a time, and their
+// polytopes made by several threads.
 static std::pair<MElement *, GEntity *> *
 readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
                   std::size_t &totalNumRead, std::size_t &maxElementNum,
@@ -1263,6 +1335,10 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
                  "instead of $Polytopes", elmType);
       return fail();
     }
+    if(elementRead + numElements > totalNumRead) {
+      Msg::Error("More polytopes in the blocks than in the section header");
+      return fail();
+    }
 
     GEntity *entity = model->getEntityByTag(entityDim, entityTag);
     if(!entity) {
@@ -1279,85 +1355,80 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
       static_cast<ghostRegion *>(entity)->haveMesh(true);
     }
 
-    const std::size_t numVertPerSimplex = (elmType == MSH_POLYG_) ? 3 : 4;
+    std::vector<std::size_t> offsets;
+    if(!readMSH4SizeTs(fp, binary, swap, numElements + 1, offsets))
+      return fail();
+    for(std::size_t j = 0; j < numElements; j++) {
+      if(offsets[j + 1] < offsets[j]) {
+        Msg::Error("Decreasing offsets in the polytopes of entity %d %d",
+                   entityDim, entityTag);
+        return fail();
+      }
+    }
 
-    // node tags to nodes, with the same diagnostic as in readMSH4Elements
-    auto getNodes = [&](const std::vector<std::size_t> &tags,
-                        std::vector<MVertex *> &nodes, std::size_t elmTag) {
-      nodes.resize(tags.size());
-      for(std::size_t k = 0; k < tags.size(); k++) {
-        nodes[k] = model->getMeshVertexByTag(tags[k]);
-        if(!nodes[k]) {
-          auto parts = getEntityPartition(entity, false);
-          std::string partitionInfo = "";
-          if(!parts.empty()) {
-            partitionInfo = " (partitions:";
-            for(auto p : parts) partitionInfo += " " + std::to_string(p);
-            partitionInfo += ")";
+    // the polytopes first to last (excluded), from their records in values
+    std::vector<std::size_t> values;
+    auto make = [&](std::size_t first, std::size_t last) {
+      std::size_t base = offsets[first];
+      // (a lookup that builds the caches of the model if need be, before the
+      // threads read them)
+      std::size_t k = (elmType == MSH_POLYG_) ? 2 : 3;
+      if(offsets[first + 1] - base > k) model->getMeshVertexByTag(values[k]);
+      const std::size_t chunk = 1024, num = last - first;
+      std::size_t minNum = std::numeric_limits<std::size_t>::max(), maxNum = 0;
+      std::atomic<bool> bad(false);
+      std::string error;
+#pragma omp parallel for schedule(dynamic)                                     \
+  num_threads(CTX::instance()->numThreadsFor(num, 10000))                      \
+  reduction(min : minNum) reduction(max : maxNum)
+      for(std::size_t c = 0; c < num; c += chunk) {
+        if(bad) continue;
+        std::vector<MVertex *> polygons, simplices;
+        std::vector<int> polygonStarts;
+        for(std::size_t j = first + c; j < first + std::min(num, c + chunk);
+            j++) {
+          std::string err;
+          MElement *e =
+            makeMSH4Polytope(model, elmType, &values[offsets[j] - base],
+                             offsets[j + 1] - offsets[j], polygons,
+                             polygonStarts, simplices, err);
+          if(!e) {
+#pragma omp critical
+            if(!bad) {
+              error = err;
+              bad = true;
+            }
+            break;
           }
-          Msg::Error("Unknown node %zu in element %zu in entity %d %d and "
-                     "elementType %d. Entity type is %s. Partition data is %s",
-                     tags[k], elmTag, entityDim, entityTag, elmType,
-                     entity->getTypeString().c_str(), partitionInfo.c_str());
-          return false;
+          elementsRead[elementRead + j] = std::make_pair(e, entity);
+          minNum = std::min(minNum, e->getNum());
+          maxNum = std::max(maxNum, e->getNum());
         }
       }
+      if(bad) {
+        Msg::Error("%s in entity %d %d and element type %d", error.c_str(),
+                   entityDim, entityTag, elmType);
+        return false;
+      }
+      minElementNum = std::min(minElementNum, minNum);
+      maxElementNum = std::max(maxElementNum, maxNum);
       return true;
     };
 
-    for(std::size_t j = 0; j < numElements; j++) {
-      std::size_t elmTag = 0, numPolygons = 1;
-      if(!readMSH4SizeT(fp, binary, swap, elmTag)) return fail();
-      if(elmType == MSH_POLYH_ &&
-         !readMSH4SizeT(fp, binary, swap, numPolygons))
+    for(std::size_t first = 0; first < numElements;) {
+      std::size_t last = first + 1;
+      while(last < numElements &&
+            offsets[last + 1] - offsets[first] <= (std::size_t)1 << 23)
+        last++;
+      if(!readMSH4SizeTs(fp, binary, swap, offsets[last] - offsets[first],
+                         values) ||
+         !make(first, last))
         return fail();
-
-      std::vector<std::size_t> tags;
-      std::vector<MVertex *> polygons, nodes;
-      std::vector<int> polygonStarts = {0};
-      for(std::size_t k = 0; k < numPolygons; k++) {
-        std::size_t polygonSize = 0;
-        if(!readMSH4SizeT(fp, binary, swap, polygonSize) ||
-           !readMSH4SizeTs(fp, binary, swap, polygonSize, tags))
-          return fail();
-        if(!getNodes(tags, nodes, elmTag)) return fail();
-        polygons.insert(polygons.end(), nodes.begin(), nodes.end());
-        polygonStarts.push_back(polygonStarts.back() + (int)polygonSize);
-      }
-
-      std::size_t numSimplices = 0;
-      std::vector<MVertex *> simplices;
-      if(!readMSH4SizeT(fp, binary, swap, numSimplices) ||
-         !readMSH4SizeTs(fp, binary, swap, numSimplices * numVertPerSimplex,
-                         tags))
-        return fail();
-      if(!getNodes(tags, simplices, elmTag)) return fail();
-
-      MElementFactory elementFactory;
-      MElement *element = elementFactory.create(
-        elmType, polygons, elmTag, 0, false, 0, nullptr);
-      if(!element) {
-        Msg::Error("Could not create element %zu of type %d", elmTag, elmType);
-        return fail();
-      }
-
-      if(elmType == MSH_POLYG_) {
-        static_cast<MPolygon *>(element)->setTriangles(simplices);
-      }
-      else {
-        static_cast<MPolyhedron *>(element)->setPolygonsAndTetrahedra(
-          polygons, polygonStarts, simplices);
-      }
-
-      minElementNum = std::min(minElementNum, elmTag);
-      maxElementNum = std::max(maxElementNum, elmTag);
-
-      elementsRead[elementRead] = std::make_pair(element, entity);
-      elementRead++;
-
-      if(totalNumRead > 100000 && progressDue(elementRead, totalNumRead))
-        Msg::ProgressMeter(elementRead, true, "Reading elements");
+      first = last;
+      if(totalNumRead > 100000)
+        Msg::ProgressMeter(elementRead + last, true, "Reading elements");
     }
+    elementRead += numElements;
   }
 
   // if the vertex numbering is dense, we fill the vector cache, otherwise we
@@ -2100,6 +2171,83 @@ static bool skipMSH4Bytes(FILE *fp, std::size_t n)
   return !fseek(fp, (long)n, SEEK_CUR);
 }
 
+// The mesh edges or faces of n records of stride values each (the tag, then
+// the node tags), added to the set: by several threads, or looked up one by
+// one (lookup) when the model had some before the section (e.g. the other
+// partitions of the mesh). False if a node is unknown (the entries added are
+// dropped again).
+template <class Set, class F>
+static bool addEdgesOrFaces(GModel *const model, Set &set,
+                            const std::size_t *data, std::size_t n,
+                            std::size_t stride, bool lookup, F keyOf)
+{
+  typedef typename Set::key_type K;
+  std::size_t numNodes = stride - 1, before = set.size();
+  auto nodes = [&](const std::size_t *d, std::vector<MVertex *> &v) {
+    for(std::size_t j = 0; j < numNodes; j++)
+      if(!(v[j] = model->findMeshVertexByTag(d[j + 1]))) return false;
+    return true;
+  };
+  if(n) model->getMeshVertexByTag(data[1]); // (builds the cache, if need be)
+  bool bad = false;
+  int nthreads = CTX::instance()->numThreadsFor(n, 10000);
+  if(lookup) {
+    // the records that are new, by several threads (the index is read only),
+    // then those added one by one, with the nodes found by the threads (the
+    // lookup of a node is not cheap when the numbering is sparse)
+    set.index();
+    std::vector<std::uint8_t> isNew(n, 0);
+    std::vector<std::uint64_t> hashes(n);
+    std::vector<MVertex *> verts(n * numNodes);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)             \
+  reduction(| : bad)
+    for(int t = 0; t < nthreads; t++) {
+      std::vector<MVertex *> v(numNodes);
+      for(std::size_t k = n * t / nthreads; k < n * (t + 1) / nthreads && !bad;
+          k++) {
+        const std::size_t *d = &data[stride * k];
+        if(!(bad = !nodes(d, v))) {
+          std::copy(v.begin(), v.end(), &verts[k * numNodes]);
+          K key = keyOf(v);
+          hashes[k] = set.hashOf(key);
+          isNew[k] = (set.indexOf(key, hashes[k]) == Set::npos);
+        }
+      }
+    }
+    std::vector<MVertex *> v(numNodes);
+    set.reserve(before + n);
+    for(std::size_t k = 0; k < n && !bad; k++) {
+      if(!isNew[k]) continue;
+      std::copy(&verts[k * numNodes], &verts[k * numNodes] + numNodes,
+                v.begin());
+      set.add(keyOf(v), data[stride * k], hashes[k]);
+    }
+  }
+  else {
+    std::size_t first = set.append(n), maxNum = 0;
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)             \
+  reduction(max : maxNum) reduction(| : bad)
+    for(int t = 0; t < nthreads; t++) {
+      std::vector<MVertex *> v(numNodes);
+      for(std::size_t k = n * t / nthreads; k < n * (t + 1) / nthreads && !bad;
+          k++) {
+        const std::size_t *d = &data[stride * k];
+        if(!(bad = !nodes(d, v))) {
+          set.set(first + k, keyOf(v), d[0]);
+          maxNum = std::max(maxNum, d[0]);
+        }
+      }
+    }
+    set.setMaxNumber(maxNum);
+  }
+  if(bad) {
+    Msg::Error("Unknown node in the mesh %s of the MSH4 file",
+               std::is_same<K, MEdge>::value ? "edges" : "faces");
+    set.truncate(before);
+  }
+  return !bad;
+}
+
 static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary,
                           bool swap)
 {
@@ -2114,27 +2262,14 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary,
   }
 
   Msg::Info("%zu edge%s", numEdges, numEdges > 1 ? "s" : "");
-  Msg::StartProgressMeter(numEdges);
 
   // each edge is its tag followed by its 2 node tags
   std::vector<std::size_t> data;
   if(!readMSH4SizeTs(fp, binary, swap, 3 * numEdges, data)) return false;
-  model->reserveMEdges(numEdges);
-  for(std::size_t k = 0; k < numEdges; k++) {
-    const std::size_t *edgeData = &data[3 * k];
-    MVertex *v0 = model->getMeshVertexByTag(edgeData[1]);
-    MVertex *v1 = model->getMeshVertexByTag(edgeData[2]);
-    if(!v0 || !v1) {
-      Msg::Error("Invalid node tags in edge data in MSH4 file");
-      return false;
-    }
-    MEdge me(v0, v1);
-    model->addMEdge(std::move(me), edgeData[0]);
-    if(numEdges > 100000 && progressDue(k + 1, numEdges))
-      Msg::ProgressMeter(k + 1, true, "Reading edges");
-  }
-
-  return true;
+  return addEdgesOrFaces(
+    model, model->meshEdges(), data.data(), numEdges, 3,
+    model->getNumMEdges() > 0,
+    [](const std::vector<MVertex *> &v) { return MEdge(v[0], v[1]); });
 }
 
 // In MSH 4.2, faces are stored by blocks of faces with the same number of nodes
@@ -2157,11 +2292,10 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
     numFaces = header[0] + header[1];
   }
 
-  auto invalid = [&]() {
+  if(numBlocks > numFaces || (!numBlocks && numFaces)) {
     Msg::Warning("Skipping invalid face data in MSH%g file", version);
     return true;
-  };
-  if(numBlocks > numFaces || (!numBlocks && numFaces)) return invalid();
+  }
 
   // (ASCII data is skipped with the rest of the section)
   if(CTX::instance()->mesh.ignoreFaces) {
@@ -2178,46 +2312,65 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
     return true;
   }
 
-  // faces are added to the model once the whole section is read, and records
-  // are read by chunks so that an invalid count is not allocated
-  std::vector<std::pair<MFace, std::size_t>> faces;
+  // the records are read by chunks, so that an invalid count is not
+  // allocated; those of an invalid section are dropped again
+  GModel::MFaceSet &set = model->meshFaces();
+  std::size_t numBefore = set.size(), numRead = 0;
+  set.reserve(numBefore + numFaces);
+  auto invalid = [&]() {
+    Msg::Warning("Skipping invalid face data in MSH%g file", version);
+    set.truncate(numBefore);
+    return true;
+  };
   std::vector<std::size_t> data;
-  std::vector<MVertex *> v;
   for(std::size_t block = 0; block < numBlocks; block++) {
     if(version < 4.2)
       header = {blocks41[2 * block], blocks41[2 * block + 1]};
     else if(!readMSH4SizeTs(fp, binary, swap, 2, header))
       return invalid();
     std::size_t numNodes = header[0], numFacesInBlock = header[1];
-    if(numNodes < 3 || numFacesInBlock > numFaces - faces.size())
-      return invalid();
+    if(numNodes < 3 || numFacesInBlock > numFaces - numRead) return invalid();
     std::size_t stride = numNodes + 1;
-    std::size_t chunk = std::max<std::size_t>(1, (1 << 20) / stride);
-    v.resize(numNodes);
+    std::size_t chunk = std::max<std::size_t>(1, (1 << 22) / stride);
     for(std::size_t first = 0; first < numFacesInBlock; first += chunk) {
       std::size_t n = std::min(chunk, numFacesInBlock - first);
       if(!readMSH4SizeTs(fp, binary, swap, stride * n, data)) return invalid();
-      for(std::size_t k = 0; k < n; k++) {
-        const std::size_t *faceData = &data[stride * k];
-        for(std::size_t j = 0; j < numNodes; j++) {
-          v[j] = model->getMeshVertexByTag(faceData[j + 1]);
-          if(!v[j]) return invalid();
-        }
-        faces.emplace_back(MFace(v), faceData[0]);
-      }
+      if(!addEdgesOrFaces(
+           model, set, data.data(), n, stride, numBefore > 0,
+           [](const std::vector<MVertex *> &v) { return MFace(v); }))
+        return invalid();
+      numRead += n;
+      if(numFaces > 100000) Msg::ProgressMeter(numRead, true, "Reading faces");
     }
   }
-  if(faces.size() != numFaces) return invalid();
-
+  if(numRead != numFaces) return invalid();
   Msg::Info("%zu face%s", numFaces, numFaces > 1 ? "s" : "");
-  Msg::StartProgressMeter(numFaces);
-  model->reserveMFaces(numFaces);
-  for(std::size_t k = 0; k < numFaces; k++) {
-    model->addMFace(std::move(faces[k].first), faces[k].second);
-    if(numFaces > 100000 && progressDue(k + 1, numFaces))
-      Msg::ProgressMeter(k + 1, true, "Reading faces");
-  }
   return true;
+}
+
+// the partition of the elements of an entity that belongs to one partition
+// only, 0 otherwise
+static int singlePartitionOf(GEntity *ge)
+{
+  switch(ge->geomType()) {
+  case GEntity::PartitionPoint: {
+    auto p = static_cast<partitionVertex *>(ge);
+    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
+  }
+  case GEntity::PartitionCurve: {
+    auto p = static_cast<partitionEdge *>(ge);
+    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
+  }
+  case GEntity::PartitionSurface: {
+    auto p = static_cast<partitionFace *>(ge);
+    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
+  }
+  case GEntity::PartitionVolume: {
+    auto p = static_cast<partitionRegion *>(ge);
+    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
+  }
+  default: return 0;
+  }
 }
 
 // a node or an element read in a model where its tag is already taken: the
@@ -2357,17 +2510,23 @@ int GModel::_readMSH4(const std::string &name)
         return false;
       }
       if(hadNodesBefore) {
-        // the vector cache is kept if the numbering of all the nodes stays
-        // fairly dense (e.g. the partitions of a mesh read from several
-        // files); otherwise the map cache takes the previous nodes
-        dense = _vertexMapCache.empty() &&
-                maxNodeNum < 10 * (getNumMeshVertices() + totalNumRead);
-        if(!dense) {
+        // the vector cache is kept, or taken back from the map cache, if the
+        // numbering of all the nodes is fairly dense (e.g. the partitions of
+        // a mesh read from several files, sparse one by one, dense together);
+        // otherwise the map cache takes the previous nodes
+        maxNodeNum = std::max(maxNodeNum, getMaxVertexNumber());
+        dense = maxNodeNum < 10 * (getNumMeshVertices() + totalNumRead);
+        if(!dense && !_vertexVectorCache.empty()) {
           for(std::size_t i = 0; i < _vertexVectorCache.size(); i++) {
             MVertex *v = _vertexVectorCache[i];
             if(v) _vertexMapCache[v->getNum()] = v;
           }
           _vertexVectorCache.clear();
+        }
+        else if(dense && !_vertexMapCache.empty()) {
+          _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
+          for(auto &p : _vertexMapCache) _vertexVectorCache[p.first] = p.second;
+          _vertexMapCache.clear();
         }
       }
       // populate map cache with just-read nodes, and put them in entity if not
@@ -2375,10 +2534,27 @@ int GModel::_readMSH4(const std::string &name)
       if(dense) {
         if(_vertexVectorCache.size() < maxNodeNum + 1)
           _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
+        // the new nodes go in the cache by several threads, each taking the
+        // tags of its share (the accesses to the cache are what costs), then
+        // in their entities one by one
+        std::vector<std::size_t> tags(totalNumRead);
+        for(std::size_t i = 0; i < totalNumRead; i++)
+          tags[i] = verticesRead[i]->getNum();
+        std::vector<std::uint8_t> isNew(totalNumRead, 0);
+        int nthreads = CTX::instance()->numThreadsFor(totalNumRead, 100000);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+        for(int t = 0; t < nthreads; t++) {
+          for(std::size_t i = 0; i < totalNumRead; i++) {
+            if(nthreads > 1 && (int)(tags[i] % nthreads) != t) continue;
+            if(!_vertexVectorCache[tags[i]]) {
+              _vertexVectorCache[tags[i]] = verticesRead[i];
+              isNew[i] = 1;
+            }
+          }
+        }
         for(std::size_t i = 0; i < totalNumRead; i++) {
           MVertex *v = verticesRead[i];
-          if(!_vertexVectorCache[v->getNum()]) {
-            _vertexVectorCache[v->getNum()] = v;
+          if(isNew[i]) {
             if(v->onWhat())
               v->onWhat()->addMeshVertex(v);
             else // should not happen
@@ -2387,17 +2563,18 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadNodesBefore) // should not happen
               Msg::Warning("Skipping duplicate node %zu", v->getNum());
-            else if(!sameNode(v, _vertexVectorCache[v->getNum()]))
+            else if(!sameNode(v, _vertexVectorCache[tags[i]]))
               conflicts++;
             delete v;
           }
         }
       }
       else {
+        _vertexMapCache.reserve(_vertexMapCache.size() + totalNumRead);
         for(std::size_t i = 0; i < totalNumRead; i++) {
           MVertex *v = verticesRead[i];
-          if(_vertexMapCache.count(v->getNum()) == 0) {
-            _vertexMapCache[v->getNum()] = v;
+          auto r = _vertexMapCache.insert(v->getNum(), v);
+          if(r.second) {
             if(v->onWhat())
               v->onWhat()->addMeshVertex(v);
             else // should not happen
@@ -2406,7 +2583,7 @@ int GModel::_readMSH4(const std::string &name)
           else {
             if(!hadNodesBefore) // should not happen
               Msg::Warning("Skipping duplicate node %zu", v->getNum());
-            else if(!sameNode(v, _vertexMapCache[v->getNum()]))
+            else if(!sameNode(v, r.first))
               conflicts++;
             delete v;
           }
@@ -2441,56 +2618,82 @@ int GModel::_readMSH4(const std::string &name)
       }
       if(hadElementsBefore) {
         // (as for the nodes)
-        dense = _elementMapCache.empty() &&
-                maxElementNum < 10 * (getNumMeshElements() + totalNumRead);
-        if(!dense) {
+        maxElementNum = std::max(maxElementNum, getMaxElementNumber());
+        dense = maxElementNum < 10 * (getNumMeshElements() + totalNumRead);
+        if(!dense && !_elementVectorCache.empty()) {
           for(std::size_t i = 0; i < _elementVectorCache.size(); i++) {
             std::pair<MElement *, int> p = _elementVectorCache[i];
             if(p.first) _elementMapCache[p.first->getNum()] = p;
           }
           _elementVectorCache.clear();
         }
+        else if(dense && !_elementMapCache.empty()) {
+          _elementVectorCache.resize(maxElementNum + 1,
+                                     std::make_pair(nullptr, 0));
+          for(auto &p : _elementMapCache)
+            _elementVectorCache[p.first] = p.second;
+          _elementMapCache.clear();
+        }
       }
+      // (the elements of an entity of one partition are marked with it)
+      GEntity *last = nullptr;
+      int part = 0;
+      auto addToEntity = [&](MElement *e, GEntity *entity) {
+        if(entity != last) {
+          last = entity;
+          part = singlePartitionOf(entity);
+        }
+        if(part) e->setPartition(part);
+        if(entity->geomType() != GEntity::GhostCurve &&
+           entity->geomType() != GEntity::GhostSurface &&
+           entity->geomType() != GEntity::GhostVolume)
+          entity->addElement(e);
+      };
       if(dense) {
         if(_elementVectorCache.size() < maxElementNum + 1)
           _elementVectorCache.resize(maxElementNum + 1,
                                      std::make_pair(nullptr, 0));
-        for(std::size_t i = 0; i < totalNumRead; i++) {
-          MElement *e = elementsRead[i].first;
-          GEntity *entity = elementsRead[i].second;
-          if(!_elementVectorCache[e->getNum()].first) {
-            _elementVectorCache[e->getNum()] = std::make_pair(e, entity->tag());
-            if(entity->geomType() != GEntity::GhostCurve &&
-               entity->geomType() != GEntity::GhostSurface &&
-               entity->geomType() != GEntity::GhostVolume) {
-              entity->addElement(e);
+        // (as for the nodes)
+        std::vector<std::size_t> tags(totalNumRead);
+        for(std::size_t i = 0; i < totalNumRead; i++)
+          tags[i] = elementsRead[i].first->getNum();
+        std::vector<std::uint8_t> isNew(totalNumRead, 0);
+        int nthreads = CTX::instance()->numThreadsFor(totalNumRead, 100000);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+        for(int t = 0; t < nthreads; t++) {
+          for(std::size_t i = 0; i < totalNumRead; i++) {
+            if(nthreads > 1 && (int)(tags[i] % nthreads) != t) continue;
+            if(!_elementVectorCache[tags[i]].first) {
+              _elementVectorCache[tags[i]] = std::make_pair(
+                elementsRead[i].first, elementsRead[i].second->tag());
+              isNew[i] = 1;
             }
           }
+        }
+        for(std::size_t i = 0; i < totalNumRead; i++) {
+          MElement *e = elementsRead[i].first;
+          if(isNew[i]) { addToEntity(e, elementsRead[i].second); }
           else {
             if(!hadElementsBefore) // should not happen
               Msg::Warning("Skipping duplicate element %zu", e->getNum());
-            else if(!sameElement(e, _elementVectorCache[e->getNum()].first))
+            else if(!sameElement(e, _elementVectorCache[tags[i]].first))
               conflicts++;
             delete e;
           }
         }
       }
       else {
+        _elementMapCache.reserve(_elementMapCache.size() + totalNumRead);
         for(std::size_t i = 0; i < totalNumRead; i++) {
           MElement *e = elementsRead[i].first;
           GEntity *entity = elementsRead[i].second;
-          if(_elementMapCache.count(e->getNum()) == 0) {
-            _elementMapCache[e->getNum()] = std::make_pair(e, entity->tag());
-            if(entity->geomType() != GEntity::GhostCurve &&
-               entity->geomType() != GEntity::GhostSurface &&
-               entity->geomType() != GEntity::GhostVolume) {
-              entity->addElement(e);
-            }
-          }
+          auto r = _elementMapCache.insert(e->getNum(),
+                                           std::make_pair(e, entity->tag()));
+          if(r.second) { addToEntity(e, entity); }
           else {
             if(!hadElementsBefore) // should not happen
               Msg::Warning("Skipping duplicate element %zu", e->getNum());
-            else if(!sameElement(e, _elementMapCache[e->getNum()].first))
+            else if(!sameElement(e, r.first.first))
               conflicts++;
             delete e;
           }
@@ -2625,51 +2828,6 @@ int GModel::_readMSH4(const std::string &name)
   }
 
   fclose(fp);
-
-  if(partitioned) {
-    // This part is added to ensure the compatibility between the new
-    // partitioning and the old one.
-    std::vector<GEntity *> entities;
-    getEntities(entities);
-    for(std::size_t i = 0; i < entities.size(); i++) {
-      if(entities[i]->geomType() == GEntity::PartitionPoint) {
-        partitionVertex *pv = static_cast<partitionVertex *>(entities[i]);
-        if(pv->numPartitions() == 1) {
-          const int part = pv->getPartition(0);
-          for(std::size_t j = 0; j < pv->getNumMeshElements(); j++) {
-            pv->getMeshElement(j)->setPartition(part);
-          }
-        }
-      }
-      else if(entities[i]->geomType() == GEntity::PartitionCurve) {
-        partitionEdge *pe = static_cast<partitionEdge *>(entities[i]);
-        if(pe->numPartitions() == 1) {
-          const int part = pe->getPartition(0);
-          for(std::size_t j = 0; j < pe->getNumMeshElements(); j++) {
-            pe->getMeshElement(j)->setPartition(part);
-          }
-        }
-      }
-      else if(entities[i]->geomType() == GEntity::PartitionSurface) {
-        partitionFace *pf = static_cast<partitionFace *>(entities[i]);
-        if(pf->numPartitions() == 1) {
-          const int part = pf->getPartition(0);
-          for(std::size_t j = 0; j < pf->getNumMeshElements(); j++) {
-            pf->getMeshElement(j)->setPartition(part);
-          }
-        }
-      }
-      else if(entities[i]->geomType() == GEntity::PartitionVolume) {
-        partitionRegion *pr = static_cast<partitionRegion *>(entities[i]);
-        if(pr->numPartitions() == 1) {
-          const int part = pr->getPartition(0);
-          for(std::size_t j = 0; j < pr->getNumMeshElements(); j++) {
-            pr->getMeshElement(j)->setPartition(part);
-          }
-        }
-      }
-    }
-  }
 
   return 1;
 }
@@ -3717,8 +3875,52 @@ writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   fprintf(fp, "$EndNodes\n");
 }
 
+// The record of a polytope as size_t values (see readMSH4Polytopes()); lines
+// gets where the lines of the ASCII layout start
+static void writeMSH4Polytope(MElement *e, std::vector<std::size_t> &values,
+                              std::vector<std::size_t> &lines)
+{
+  values.push_back(e->getNum());
+  if(e->getTypeForMSH() == MSH_POLYG_) {
+    MPolygon *polygon = static_cast<MPolygon *>(e);
+    std::size_t numNodes = polygon->getNumPrimaryVertices();
+    values.push_back(numNodes);
+    for(std::size_t j = 0; j < numNodes; j++)
+      values.push_back(polygon->getVertex(j)->getNum());
+    int numTriangles =
+      polygon->hasGivenTriangles() ? polygon->getNumTriangles() : 0;
+    lines.push_back(values.size());
+    values.push_back(numTriangles);
+    for(int j = 0; j < numTriangles; j++) {
+      MTriangle tri = polygon->getTriangle(j);
+      for(int k = 0; k < 3; k++) values.push_back(tri.getVertex(k)->getNum());
+    }
+  }
+  else {
+    MPolyhedron *polyhedron = static_cast<MPolyhedron *>(e);
+    int numPolygons = polyhedron->getNumPolygons();
+    values.push_back(numPolygons);
+    for(int j = 0; j < numPolygons; j++) {
+      int i0 = polyhedron->getPolygonStart(j);
+      int i1 = polyhedron->getPolygonStart(j + 1);
+      lines.push_back(values.size());
+      values.push_back(i1 - i0);
+      for(int k = i0; k < i1; k++)
+        values.push_back(polyhedron->getPolygonVertex(k)->getNum());
+    }
+    int numTetrahedra =
+      polyhedron->hasGivenTetrahedra() ? polyhedron->getNumTetrahedra() : 0;
+    lines.push_back(values.size());
+    values.push_back(numTetrahedra);
+    for(int j = 0; j < numTetrahedra; j++) {
+      MTetrahedron tet = polyhedron->getTetrahedron(j);
+      for(int k = 0; k < 4; k++) values.push_back(tet.getVertex(k)->getNum());
+    }
+  }
+}
+
 static void writeMSH4Polytopes(
-  FILE *fp, bool binary, double version,
+  FILE *fp, bool binary,
   std::map<std::pair<int, int>, std::vector<MElement *>> polytopesByType[4],
   std::size_t &numPolytopes)
 {
@@ -3747,11 +3949,7 @@ static void writeMSH4Polytopes(
     fwrite(&maxTag, sizeof(std::size_t), 1, fp);
   }
   else {
-    if(version >= 4.1)
-      fprintf(fp, "%zu %zu %zu %zu\n", numSection, numPolytopes, minTag,
-              maxTag);
-    else
-      fprintf(fp, "%zu %zu\n", numSection, numPolytopes);
+    fprintf(fp, "%zu %zu %zu %zu\n", numSection, numPolytopes, minTag, maxTag);
   }
 
   for(int dim = 0; dim <= 3; dim++) {
@@ -3767,107 +3965,35 @@ static void writeMSH4Polytopes(
         fwrite(&numElm, sizeof(std::size_t), 1, fp);
       }
       else {
-        fprintf(fp, "%d %d %d %zu\n", (version >= 4.1) ? dim : entityTag,
-                (version >= 4.1) ? entityTag : dim, elmType, numElm);
+        fprintf(fp, "%d %d %d %zu\n", dim, entityTag, elmType, numElm);
       }
 
-      std::size_t N = it->second.size();
+      // the records, with where each starts
+      std::vector<std::size_t> values, offsets(1, 0), lines;
+      for(std::size_t i = 0; i < numElm; i++) {
+        writeMSH4Polytope(it->second[i], values, lines);
+        offsets.push_back(values.size());
+      }
       if(binary) {
-        std::vector<std::size_t> tags;
-        for(std::size_t i = 0; i < N; i++) {
-          MElement *e = it->second[i];
-          tags.push_back(e->getNum());
-          if(e->getTypeForMSH() == MSH_POLYG_) {
-            MPolygon *polygon = static_cast<MPolygon *>(e);
-            size_t polygonSize = polygon->getNumPrimaryVertices();
-            tags.push_back(polygonSize);
-            for(std::size_t j = 0; j < polygonSize; j++) {
-              tags.push_back(polygon->getVertex(j)->getNum());
-            }
-
-            const int numTriangles =
-              polygon->hasGivenTriangles() ? polygon->getNumTriangles() : 0;
-            tags.push_back(numTriangles);
-            for(int j = 0; j < numTriangles; j++) {
-              MTriangle tri = polygon->getTriangle(j);
-              for(int k = 0; k < 3; k++) {
-                tags.push_back(tri.getVertex(k)->getNum());
-              }
-            }
-          }
-          else if(e->getTypeForMSH() == MSH_POLYH_) {
-            MPolyhedron *polyhedron = static_cast<MPolyhedron *>(e);
-            size_t numPolygons = polyhedron->getNumPolygons();
-            tags.push_back(numPolygons);
-            for(std::size_t j = 0; j < numPolygons; j++) {
-              int i0 = polyhedron->getPolygonStart(j);
-              int i1 = polyhedron->getPolygonStart(j + 1);
-              tags.push_back(i1 - i0);
-              for(int k = i0; k < i1; k++) {
-                tags.push_back(polyhedron->getPolygonVertex(k)->getNum());
-              }
-            }
-
-            const int numTetrahedra = polyhedron->hasGivenTetrahedra() ?
-                                        polyhedron->getNumTetrahedra() :
-                                        0;
-            tags.push_back(numTetrahedra);
-            for(int j = 0; j < numTetrahedra; j++) {
-              MTetrahedron tetra = polyhedron->getTetrahedron(j);
-              for(int k = 0; k < 4; k++) {
-                tags.push_back(tetra.getVertex(k)->getNum());
-              }
-            }
-          }
-        }
-        fwrite(&tags[0], sizeof(std::size_t), tags.size(), fp);
+        fwrite(&offsets[0], sizeof(std::size_t), offsets.size(), fp);
+        if(!values.empty())
+          fwrite(&values[0], sizeof(std::size_t), values.size(), fp);
       }
       else {
-        for(std::size_t i = 0; i < N; i++) {
-          MElement *e = it->second[i];
-          fprintf(fp, "%zu ", e->getNum());
-          if(e->getTypeForMSH() == MSH_POLYG_) {
-            MPolygon *polygon = static_cast<MPolygon *>(e);
-            int polygonSize = polygon->getNumPrimaryVertices();
-            fprintf(fp, "%d ", polygonSize);
-            for(int j = 0; j < polygonSize; j++) {
-              fprintf(fp, "%zu ", polygon->getVertex(j)->getNum());
+        for(std::size_t i = 0; i < offsets.size(); i++)
+          fprintf(fp, "%zu%s", offsets[i],
+                  (i + 1 == offsets.size() || (i + 1) % 10 == 0) ? "\n" : " ");
+        std::size_t l = 0;
+        for(std::size_t i = 0; i < numElm; i++) {
+          bool start = true;
+          for(std::size_t k = offsets[i]; k < offsets[i + 1]; k++) {
+            if(l < lines.size() && lines[l] == k) {
+              fprintf(fp, "\n");
+              l++;
+              start = true;
             }
-
-            const int numTriangles =
-              polygon->hasGivenTriangles() ? polygon->getNumTriangles() : 0;
-            fprintf(fp, "\n%d ", numTriangles);
-            for(int j = 0; j < numTriangles; j++) {
-              MTriangle tri = polygon->getTriangle(j);
-              for(int k = 0; k < 3; k++) {
-                fprintf(fp, "%zu ", tri.getVertex(k)->getNum());
-              }
-            }
-          }
-          else if(e->getTypeForMSH() == MSH_POLYH_) {
-            MPolyhedron *polyhedron = static_cast<MPolyhedron *>(e);
-
-            int numPolygons = polyhedron->getNumPolygons();
-            fprintf(fp, "%d", numPolygons);
-            for(int j = 0; j < numPolygons; j++) {
-              int i0 = polyhedron->getPolygonStart(j);
-              int i1 = polyhedron->getPolygonStart(j + 1);
-              fprintf(fp, "\n%d ", i1 - i0);
-              for(int k = i0; k < i1; k++) {
-                fprintf(fp, "%zu ", polyhedron->getPolygonVertex(k)->getNum());
-              }
-            }
-
-            const int numTetrahedra = polyhedron->hasGivenTetrahedra() ?
-                                        polyhedron->getNumTetrahedra() :
-                                        0;
-            fprintf(fp, "\n%d ", numTetrahedra);
-            for(int j = 0; j < numTetrahedra; j++) {
-              MTetrahedron tera = polyhedron->getTetrahedron(j);
-              for(int k = 0; k < 4; k++) {
-                fprintf(fp, "%zu ", tera.getVertex(k)->getNum());
-              }
-            }
+            fprintf(fp, start ? "%zu" : " %zu", values[k]);
+            start = false;
           }
           fprintf(fp, "\n");
         }
@@ -4178,81 +4304,113 @@ static void writeMSH4Elements(
     Msg::Warning("Skipping %zu polygons and polyhedra: use MSH 4.2",
                  numPolytopes);
   else if(numPolytopes)
-    writeMSH4Polytopes(fp, binary, version, polytopesByType, numPolytopes);
+    writeMSH4Polytopes(fp, binary, polytopesByType, numPolytopes);
+}
+
+// The mesh edges or faces of the elements of the partitions to save, as
+// indices in the set, in its order (edgesOf(e, keys) gives the edges or faces
+// of an element)
+template <class Set, class F>
+static void edgesOrFacesToSave(GModel *const model, const Set &set,
+                               bool partitioned,
+                               const std::vector<int> &partitionsToSave,
+                               F edgesOf, std::vector<std::size_t> &subset)
+{
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
+  getEntitiesToSave(model, partitioned, partitionsToSave, true, regions, faces,
+                    edges, vertices);
+  std::vector<GEntity *> entities(vertices.begin(), vertices.end());
+  entities.insert(entities.end(), edges.begin(), edges.end());
+  entities.insert(entities.end(), faces.begin(), faces.end());
+  entities.insert(entities.end(), regions.begin(), regions.end());
+  for(const auto &mgr : model->getOverlapManagers()) {
+    for(const auto &of : std::get<0>(mgr.getAllOverlaps()))
+      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                   of->owningPartition()) != partitionsToSave.end())
+        entities.push_back(of);
+    for(const auto &orr : std::get<1>(mgr.getAllOverlaps()))
+      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                   orr->owningPartition()) != partitionsToSave.end())
+        entities.push_back(orr);
+  }
+  std::vector<MElement *> elements;
+  for(auto ge : entities)
+    for(std::size_t k = 0; k < ge->getNumMeshElements(); k++)
+      elements.push_back(ge->getMeshElement(k));
+  // (the lookups are read-only once the index is built)
+  set.index();
+  int nthreads = CTX::instance()->numThreadsFor(elements.size(), 10000);
+  std::vector<std::vector<std::size_t>> found(nthreads);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++) {
+    std::vector<typename Set::key_type> keys;
+    for(std::size_t j = elements.size() * t / nthreads;
+        j < elements.size() * (t + 1) / nthreads; j++) {
+      edgesOf(elements[j], keys);
+      for(auto &key : keys) {
+        std::size_t i = set.indexOf(key);
+        if(i != Set::npos) found[t].push_back(i);
+      }
+    }
+  }
+  subset.clear();
+  for(auto &f : found) subset.insert(subset.end(), f.begin(), f.end());
+  std::sort(subset.begin(), subset.end());
+  subset.erase(std::unique(subset.begin(), subset.end()), subset.end());
+}
+
+// f(entry) for the edges or faces to write: all of them, or those of the
+// partitions to save
+template <class Set, class F, class G>
+static std::size_t
+forEdgesOrFacesToSave(GModel *const model, const Set &set, bool partitioned,
+                      const std::vector<int> &partitionsToSave, F edgesOf, G f)
+{
+  if(partitionsToSave.empty() || !partitioned) {
+    for(const auto &entry : set) f(entry);
+    return set.size();
+  }
+  std::vector<std::size_t> subset;
+  edgesOrFacesToSave(model, set, partitioned, partitionsToSave, edgesOf,
+                     subset);
+  for(auto i : subset) f(set[i]);
+  return subset.size();
 }
 
 static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
                            bool partitioned,
                            const std::vector<int> &partitionsToSave)
 {
-  auto printEdges = [&](const GModel::hashmapMEdge &edges) {
-    if(edges.empty()) return;
-    fprintf(fp, "$Edges\n");
-    if(binary) {
-      std::size_t numEdges = edges.size();
-      fwrite(&numEdges, sizeof(std::size_t), 1, fp);
-    }
-    else {
-      fprintf(fp, "%zu\n", edges.size());
-    }
-    std::vector<std::size_t> data;
-    if(binary) data.reserve(3 * edges.size());
-    for(const auto &[edge, tag] : edges) {
-      size_t v0 = edge.getVertex(0)->getNum();
-      size_t v1 = edge.getVertex(1)->getNum();
-      if(binary)
-        data.insert(data.end(), {tag, v0, v1});
-      else
-        fprintf(fp, "%zu %zu %zu\n", tag, v0, v1);
-    }
-    if(binary) fwrite(data.data(), sizeof(std::size_t), data.size(), fp);
-
-    if(binary) fprintf(fp, "\n");
-    fprintf(fp, "$EndEdges\n");
+  auto edgesOf = [](MElement *e, std::vector<MEdge> &keys) {
+    keys.resize(e->getNumEdges());
+    for(int k = 0; k < e->getNumEdges(); k++) keys[k] = e->getEdge(k);
   };
+  // each edge is its tag followed by its 2 node tags
+  std::vector<std::size_t> data;
+  std::size_t numEdges = forEdgesOrFacesToSave(
+    model, model->getMEdges(), partitioned, partitionsToSave, edgesOf,
+    [&](const GModel::MEdgeSet::value_type &entry) {
+      data.insert(data.end(), {entry.second, entry.first.getVertex(0)->getNum(),
+                               entry.first.getVertex(1)->getNum()});
+    });
+  if(!numEdges) return;
 
-  if(partitionsToSave.empty() || !partitioned)
-    printEdges(model->getMEdges());
-  else {
-    GModel::hashmapMEdge subsetEdges;
-    auto addEdgesFromElement = [&](auto *e) {
-      for(int k = 0; k < e->getNumEdges(); ++k) {
-        MEdge me = e->getEdge(k);
-        auto it = model->getMEdges().find(me);
-        if(it != model->getMEdges().end()) { subsetEdges[me] = it->second; }
-      }
-    };
-    auto addEdgesFromEntity = [&](GEntity *entity) {
-      for(size_t k = 0; k < entity->getNumMeshElements(); ++k) {
-        MElement *el = entity->getMeshElement(k);
-        addEdgesFromElement(el);
-      }
-    };
-    std::set<GRegion *, GEntityPtrLessThan> regions;
-    std::set<GFace *, GEntityPtrLessThan> faces;
-    std::set<GEdge *, GEntityPtrLessThan> edges;
-    std::set<GVertex *, GEntityPtrLessThan> vertices;
-    getEntitiesToSave(model, partitioned, partitionsToSave, true, regions,
-                      faces, edges, vertices);
-    for(auto vertex : vertices) { addEdgesFromEntity(vertex); }
-    for(auto edge : edges) { addEdgesFromEntity(edge); }
-    for(auto face : faces) { addEdgesFromEntity(face); }
-    for(auto region : regions) { addEdgesFromEntity(region); }
-    for(const auto &mgr : model->getOverlapManagers()) {
-      for(const auto &of : std::get<0>(mgr.getAllOverlaps())) {
-        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                     of->owningPartition()) != partitionsToSave.end())
-          addEdgesFromEntity(of);
-      }
-      for(const auto &or_ : std::get<1>(mgr.getAllOverlaps())) {
-        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                     or_->owningPartition()) != partitionsToSave.end())
-          addEdgesFromEntity(or_);
-      }
-    }
-
-    printEdges(subsetEdges);
+  fprintf(fp, "$Edges\n");
+  if(binary) {
+    fwrite(&numEdges, sizeof(std::size_t), 1, fp);
+    fwrite(data.data(), sizeof(std::size_t), data.size(), fp);
+    fprintf(fp, "\n");
   }
+  else {
+    fprintf(fp, "%zu\n", numEdges);
+    for(std::size_t k = 0; k < numEdges; k++)
+      fprintf(fp, "%zu %zu %zu\n", data[3 * k], data[3 * k + 1],
+              data[3 * k + 2]);
+  }
+  fprintf(fp, "$EndEdges\n");
 }
 
 static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
@@ -4260,101 +4418,66 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
                            const std::vector<int> &partitionsToSave,
                            double version)
 {
-  auto printFaces = [&](const GModel::hashmapMFace &faces) {
-    if(faces.empty()) return;
-    // one block per number of nodes
-    std::map<std::size_t, std::vector<const GModel::hashmapMFace::value_type *>>
-      blocks;
-    for(const auto &f : faces) blocks[f.first.getNumVertices()].push_back(&f);
-    // (before MSH 4.2: the numbers of triangles and quadrangles, and no block
-    // headers)
-    std::size_t header[2] = {blocks.size(), faces.size()};
-    if(version < 4.2) {
-      if(blocks.size() > blocks.count(3) + blocks.count(4))
-        Msg::Warning("Skipping faces with more than 4 nodes: use MSH 4.2");
-      for(auto it = blocks.begin(); it != blocks.end();)
-        it =
-          (it->first == 3 || it->first == 4) ? std::next(it) : blocks.erase(it);
-      header[0] = blocks.count(3) ? blocks[3].size() : 0;
-      header[1] = blocks.count(4) ? blocks[4].size() : 0;
-      if(blocks.empty()) return;
-    }
-    fprintf(fp, "$Faces\n");
-    if(binary)
-      fwrite(header, sizeof(std::size_t), 2, fp);
-    else
-      fprintf(fp, "%zu %zu\n", header[0], header[1]);
-    std::vector<std::size_t> data;
-    for(const auto &[numNodes, block] : blocks) {
-      if(version >= 4.2) {
-        std::size_t h[2] = {numNodes, block.size()};
-        if(binary)
-          fwrite(h, sizeof(std::size_t), 2, fp);
-        else
-          fprintf(fp, "%zu %zu\n", h[0], h[1]);
-      }
-      if(binary) {
-        data.clear();
-        data.reserve((numNodes + 1) * block.size());
-        for(auto f : block) {
-          data.push_back(f->second);
-          for(std::size_t j = 0; j < numNodes; j++)
-            data.push_back(f->first.getVertex(j)->getNum());
-        }
-        fwrite(data.data(), sizeof(std::size_t), data.size(), fp);
-      }
-      else {
-        for(auto f : block) {
-          fprintf(fp, "%zu", f->second);
-          for(std::size_t j = 0; j < numNodes; j++)
-            fprintf(fp, " %zu", f->first.getVertex(j)->getNum());
-          fprintf(fp, "\n");
-        }
-      }
-    }
-    if(binary) fprintf(fp, "\n");
-    fprintf(fp, "$EndFaces\n");
+  auto facesOf = [](MElement *e, std::vector<MFace> &keys) {
+    keys.resize(e->getNumFaces());
+    for(int k = 0; k < e->getNumFaces(); k++) keys[k] = e->getFace(k);
   };
+  // one block per number of nodes: each face is its tag followed by its node
+  // tags
+  std::map<std::size_t, std::vector<std::size_t>> blocks;
+  forEdgesOrFacesToSave(model, model->getMFaces(), partitioned,
+                        partitionsToSave, facesOf,
+                        [&](const GModel::MFaceSet::value_type &entry) {
+                          std::size_t numNodes = entry.first.getNumVertices();
+                          std::vector<std::size_t> &data = blocks[numNodes];
+                          data.push_back(entry.second);
+                          for(std::size_t j = 0; j < numNodes; j++)
+                            data.push_back(entry.first.getVertex(j)->getNum());
+                        });
+  // (before MSH 4.2: the numbers of triangles and quadrangles, and no block
+  // headers)
+  if(version < 4.2) {
+    if(blocks.size() > blocks.count(3) + blocks.count(4))
+      Msg::Warning("Skipping faces with more than 4 nodes: use MSH 4.2");
+    for(auto it = blocks.begin(); it != blocks.end();)
+      it =
+        (it->first == 3 || it->first == 4) ? std::next(it) : blocks.erase(it);
+  }
+  if(blocks.empty()) return;
+  std::size_t numFaces = 0;
+  for(auto &[numNodes, data] : blocks) numFaces += data.size() / (numNodes + 1);
+  std::size_t header[2] = {blocks.size(), numFaces};
+  if(version < 4.2) {
+    header[0] = blocks.count(3) ? blocks[3].size() / 4 : 0;
+    header[1] = blocks.count(4) ? blocks[4].size() / 5 : 0;
+  }
 
-  if(partitionsToSave.empty() || !partitioned) {
-    printFaces(model->getMFaces());
-    return;
-  }
-  // Compute face subset to export
-  GModel::hashmapMFace subsetFaces;
-  auto addFacesFromEntity = [&](GEntity *entity) {
-    for(size_t k = 0; k < entity->getNumMeshElements(); ++k) {
-      MElement *el = entity->getMeshElement(k);
-      for(int j = 0; j < el->getNumFaces(); ++j) {
-        MFace mf = el->getFace(j);
-        auto it = model->getMFaces().find(mf);
-        if(it != model->getMFaces().end()) { subsetFaces[mf] = it->second; }
+  fprintf(fp, "$Faces\n");
+  if(binary)
+    fwrite(header, sizeof(std::size_t), 2, fp);
+  else
+    fprintf(fp, "%zu %zu\n", header[0], header[1]);
+  for(auto &[numNodes, data] : blocks) {
+    std::size_t n = data.size() / (numNodes + 1);
+    if(version >= 4.2) {
+      std::size_t h[2] = {numNodes, n};
+      if(binary)
+        fwrite(h, sizeof(std::size_t), 2, fp);
+      else
+        fprintf(fp, "%zu %zu\n", h[0], h[1]);
+    }
+    if(binary) { fwrite(data.data(), sizeof(std::size_t), data.size(), fp); }
+    else {
+      for(std::size_t k = 0; k < n; k++) {
+        const std::size_t *d = &data[(numNodes + 1) * k];
+        fprintf(fp, "%zu", d[0]);
+        for(std::size_t j = 1; j <= numNodes; j++) fprintf(fp, " %zu", d[j]);
+        fprintf(fp, "\n");
       }
     }
-  };
-  std::set<GRegion *, GEntityPtrLessThan> regions;
-  std::set<GFace *, GEntityPtrLessThan> faces;
-  std::set<GEdge *, GEntityPtrLessThan> edges;
-  std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, partitionsToSave, true, regions, faces,
-                    edges, vertices);
-  for(auto vertex : vertices) { addFacesFromEntity(vertex); }
-  for(auto edge : edges) { addFacesFromEntity(edge); }
-  for(auto face : faces) { addFacesFromEntity(face); }
-  for(auto region : regions) { addFacesFromEntity(region); }
-  for(const auto &mgr : model->getOverlapManagers()) {
-    for(const auto &of : std::get<0>(mgr.getAllOverlaps())) {
-      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   of->owningPartition()) != partitionsToSave.end())
-        addFacesFromEntity(of);
-    }
-    for(const auto &or_ : std::get<1>(mgr.getAllOverlaps())) {
-      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   or_->owningPartition()) != partitionsToSave.end())
-        addFacesFromEntity(or_);
-    }
   }
-  printFaces(subsetFaces);
+  if(binary) fprintf(fp, "\n");
+  fprintf(fp, "$EndFaces\n");
 }
 
 static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,

@@ -19,7 +19,7 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *pat,
                 const char *fname = nullptr);
 std::string fileChooserGetName(int num);
 int fileChooserGetFilter();
-void fileChooserGetPosition(int *x, int *y);
+void fileChooserStoreOffset(int offset[2]);
 
 // the options of a movie in MPEG (FORMAT_MPEG) or MP4 (FORMAT_MP4)
 int mpegFileDialog(const char *filename, int format);

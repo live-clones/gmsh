@@ -8,6 +8,7 @@
 
 #include <array>
 #include <unordered_map>
+#include "Hash.h"
 #include "CellComplex.h"
 #include "Context.h"
 #include "MElement.h"
@@ -54,10 +55,9 @@ static void parallelSort(std::vector<T> &v, Compare comp)
 template <std::size_t N> struct CellVertexKeyHash {
   std::size_t operator()(const std::array<std::size_t, N> &key) const
   {
-    std::size_t h = 0;
-    for(std::size_t i = 0; i < N; i++)
-      h = h * 0x9e3779b97f4a7c15ul ^ key[i];
-    return h;
+    std::uint64_t h = 0;
+    for(std::size_t i = 0; i < N; i++) h = HashCombine(h, key[i]);
+    return (std::size_t)HashMix(h);
   }
 };
 
@@ -100,10 +100,7 @@ private:
 
   template <std::size_t N>
   static int _shard(const std::array<std::size_t, N> &key)
-  {
-    // top bits of the multiplicative hash
-    return (int)(CellVertexKeyHash<N>()(key) >> 60);
-  }
+  { return HashShard(CellVertexKeyHash<N>()(key), 16); }
 
   // insert a slot for the cell with the given sorted vertex numbers:
   // returns the address of the (stable) Cell* slot and whether the key was

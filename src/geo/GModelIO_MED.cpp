@@ -23,6 +23,8 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "discreteVertex.h"
 #include "Context.h"
 
@@ -444,6 +446,31 @@ int GModel::readMED(const std::string &name, int meshIndex)
   MEDfamLire(fid, meshName, &nodeFamily[0], numEle, MED_NOEUD, MED_NONE);
 #endif
 
+  // the families and the tags of the numEle cells of a type
+  auto readCellInfo = [&](med_geometrie_element type, med_int numEle,
+                          std::vector<med_int> &elementFamily,
+                          std::vector<med_int> &eleTags) {
+    elementFamily.assign(numEle, 0);
+#if (MED_MAJOR_NUM >= 3)
+    if(MEDmeshEntityFamilyNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT,
+                                   MED_CELL, type, &elementFamily[0]) < 0) {
+#else
+    if(MEDfamLire(fid, meshName, &elementFamily[0], numEle, MED_MAILLE, type) <
+       0) {
+#endif
+      Msg::Info(
+        "No family number for elements: using 0 as default family number");
+    }
+    eleTags.resize(numEle);
+#if (MED_MAJOR_NUM >= 3)
+    if(MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL,
+                             type, &eleTags[0]) < 0)
+#else
+    if(MEDnumLire(fid, meshName, &eleTags[0], numEle, MED_MAILLE, type) < 0)
+#endif
+      eleTags.clear();
+  };
+
   // read elements (loop over all possible MSH element types)
   for(int mshType = 0; mshType < MSH_MAX_NUM + 1; mshType++) {
     med_geometrie_element type = msh2medElementType(mshType);
@@ -472,25 +499,8 @@ int GModel::readMED(const std::string &name, int meshIndex)
       Msg::Error("Could not read MED elements");
       return 0;
     }
-    std::vector<med_int> elementFamily(numEle, 0);
-#if(MED_MAJOR_NUM >= 3)
-    if(MEDmeshEntityFamilyNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT,
-                                   MED_CELL, type, &elementFamily[0]) < 0) {
-#else
-    if(MEDfamLire(fid, meshName, &elementFamily[0], numEle, MED_MAILLE, type) <
-       0) {
-#endif
-      Msg::Info(
-        "No family number for elements: using 0 as default family number");
-    }
-    std::vector<med_int> eleTags(numEle);
-#if(MED_MAJOR_NUM >= 3)
-    if(MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL,
-                             type, &eleTags[0]) < 0)
-#else
-    if(MEDnumLire(fid, meshName, &eleTags[0], numEle, MED_MAILLE, type) < 0)
-#endif
-      eleTags.clear();
+    std::vector<med_int> elementFamily, eleTags;
+    readCellInfo(type, numEle, elementFamily, eleTags);
     std::map<int, std::vector<MElement *> > elements;
     MElementFactory factory;
     for(int j = 0; j < numEle; j++) {
@@ -518,6 +528,108 @@ int GModel::readMED(const std::string &name, int meshIndex)
     }
     _storeElementsInEntities(elements);
   }
+
+#if (MED_MAJOR_NUM >= 3)
+  // the size of an array of the polygons or polyhedra (MED_INDEX_FACE,
+  // MED_INDEX_NODE or MED_CONNECTIVITY)
+  auto polySize = [&](med_geometrie_element type, med_data_type what) {
+    med_bool changeOfCoord, geoTransform;
+    return MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL, type,
+                          what, MED_NODAL, &changeOfCoord, &geoTransform);
+  };
+  // the nodes conn[a - 1] to conn[b - 1] (excluded), 1-based as in MED, added
+  // to v; false if out of range
+  auto polyNodes = [&](const std::vector<med_int> &conn, med_int a, med_int b,
+                       std::vector<MVertex *> &v) {
+    if(a < 1 || b < a || b > (med_int)conn.size() + 1) return false;
+    for(med_int k = a - 1; k < b - 1; k++) {
+      if(conn[k] < 1 || conn[k] > (med_int)verts.size()) {
+        Msg::Error("Wrong node index %d in MED file", conn[k]);
+        return false;
+      }
+      v.push_back(verts[conn[k] - 1]);
+    }
+    return true;
+  };
+
+  // read polygons: their nodes as one list, with where each polygon starts in
+  // it (1-based, numPolygons + 1 entries); without sub-triangulation, which
+  // Gmsh computes when needed
+  {
+    med_int indexSize = polySize(MED_POLYGON, MED_INDEX_NODE);
+    med_int connSize = polySize(MED_POLYGON, MED_CONNECTIVITY);
+    if(indexSize > 1 && connSize > 0) {
+      med_int numEle = indexSize - 1;
+      std::vector<med_int> index(indexSize), conn(connSize);
+      if(MEDmeshPolygonRd(fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL,
+                          MED_NODAL, &index[0], &conn[0]) < 0) {
+        Msg::Error("Could not read MED polygons");
+        return 0;
+      }
+      std::vector<med_int> elementFamily, eleTags;
+      readCellInfo(MED_POLYGON, numEle, elementFamily, eleTags);
+      std::map<int, std::vector<MElement *>> elements;
+      MElementFactory factory;
+      for(med_int j = 0; j < numEle; j++) {
+        std::vector<MVertex *> v;
+        if(!polyNodes(conn, index[j], index[j + 1], v)) {
+          Msg::Error("Wrong polygon %d in MED file", j + 1);
+          continue;
+        }
+        MElement *e =
+          factory.create(MSH_POLYG_, v, eleTags.empty() ? 0 : eleTags[j]);
+        if(e) elements[std::abs(elementFamily[j])].push_back(e);
+      }
+      _storeElementsInEntities(elements);
+    }
+  }
+
+  // read polyhedra: the nodes of their faces as one list, with where each
+  // face starts in it (1-based, numFaces + 1 entries) and where the faces of
+  // each polyhedron start in that (1-based, numPolyhedra + 1 entries); without
+  // sub-tetrahedralization, which Gmsh computes when needed
+  {
+    med_int faceIndexSize = polySize(MED_POLYHEDRON, MED_INDEX_FACE);
+    med_int nodeIndexSize = polySize(MED_POLYHEDRON, MED_INDEX_NODE);
+    med_int connSize = polySize(MED_POLYHEDRON, MED_CONNECTIVITY);
+    if(faceIndexSize > 1 && nodeIndexSize > 1 && connSize > 0) {
+      med_int numEle = faceIndexSize - 1;
+      std::vector<med_int> faceIndex(faceIndexSize), nodeIndex(nodeIndexSize),
+        conn(connSize);
+      if(MEDmeshPolyhedronRd(fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL,
+                             MED_NODAL, &faceIndex[0], &nodeIndex[0],
+                             &conn[0]) < 0) {
+        Msg::Error("Could not read MED polyhedra");
+        return 0;
+      }
+      std::vector<med_int> elementFamily, eleTags;
+      readCellInfo(MED_POLYHEDRON, numEle, elementFamily, eleTags);
+      std::map<int, std::vector<MElement *>> elements;
+      MElementFactory factory;
+      for(med_int j = 0; j < numEle; j++) {
+        std::vector<MVertex *> v;
+        std::vector<int> starts = {0};
+        bool ok = faceIndex[j] >= 1 && faceIndex[j] <= faceIndex[j + 1] &&
+                  faceIndex[j + 1] <= nodeIndexSize;
+        for(med_int f = faceIndex[j] - 1; ok && f < faceIndex[j + 1] - 1; f++) {
+          ok = polyNodes(conn, nodeIndex[f], nodeIndex[f + 1], v);
+          starts.push_back((int)v.size());
+        }
+        if(!ok) {
+          Msg::Error("Wrong polyhedron %d in MED file", j + 1);
+          continue;
+        }
+        MElement *e =
+          factory.create(MSH_POLYH_, v, eleTags.empty() ? 0 : eleTags[j]);
+        if(!e) continue;
+        static_cast<MPolyhedron *>(e)->setPolygonsAndTetrahedra(v, starts, {});
+        elements[std::abs(elementFamily[j])].push_back(e);
+      }
+      _storeElementsInEntities(elements);
+    }
+  }
+#endif
+
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(verts);
 
@@ -884,6 +996,32 @@ int GModel::writeMED(const std::string &name, bool saveAll,
                           typ);
       writeElementsMED(fid, meshName, conn, fam, tags, typ);
     }
+#if (MED_MAJOR_NUM >= 3)
+    { // polygons: their nodes as one list, with where each starts (1-based)
+      std::vector<med_int> index(1, 1), conn, fam, tags;
+      for(auto it = firstFace(); it != lastFace(); it++) {
+        if(!saveAll && (*it)->physicals.empty()) continue;
+        for(auto p : (*it)->polygons) {
+          for(std::size_t j = 0; j < p->getNumPrimaryVertices(); j++)
+            conn.push_back(p->getVertex(j)->getIndex());
+          index.push_back((med_int)conn.size() + 1);
+          fam.push_back(families[*it]);
+          tags.push_back(p->getNum());
+        }
+      }
+      if(!fam.empty() &&
+         (MEDmeshPolygonWr(fid, meshName, MED_NO_DT, MED_NO_IT, 0., MED_CELL,
+                           MED_NODAL, (med_int)index.size(), &index[0],
+                           &conn[0]) < 0 ||
+          MEDmeshEntityNumberWr(fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL,
+                                MED_POLYGON, (med_int)tags.size(),
+                                &tags[0]) < 0 ||
+          MEDmeshEntityFamilyNumberWr(fid, meshName, MED_NO_DT, MED_NO_IT,
+                                      MED_CELL, MED_POLYGON,
+                                      (med_int)fam.size(), &fam[0]) < 0))
+        Msg::Error("Could not write MED polygons");
+    }
+#endif
     { // tets
       med_geometrie_element typ = MED_NONE;
       std::vector<med_int> conn, fam, tags;
@@ -918,6 +1056,39 @@ int GModel::writeMED(const std::string &name, bool saveAll,
           fillElementsMED(families[*it], (*it)->pyramids, conn, fam, tags, typ);
       writeElementsMED(fid, meshName, conn, fam, tags, typ);
     }
+#if (MED_MAJOR_NUM >= 3)
+    { // polyhedra: the nodes of their faces as one list, with where each face
+      // starts in it and where the faces of each polyhedron start in that
+      // (1-based)
+      std::vector<med_int> faceIndex(1, 1), nodeIndex(1, 1), conn, fam, tags;
+      for(auto it = firstRegion(); it != lastRegion(); it++) {
+        if(!saveAll && (*it)->physicals.empty()) continue;
+        for(auto p : (*it)->polyhedra) {
+          for(int f = 0; f < p->getNumPolygons(); f++) {
+            for(int k = p->getPolygonStart(f); k < p->getPolygonStart(f + 1);
+                k++)
+              conn.push_back(p->getPolygonVertex(k)->getIndex());
+            nodeIndex.push_back((med_int)conn.size() + 1);
+          }
+          faceIndex.push_back((med_int)nodeIndex.size());
+          fam.push_back(families[*it]);
+          tags.push_back(p->getNum());
+        }
+      }
+      if(!fam.empty() &&
+         (MEDmeshPolyhedronWr(fid, meshName, MED_NO_DT, MED_NO_IT, 0., MED_CELL,
+                              MED_NODAL, (med_int)faceIndex.size(),
+                              &faceIndex[0], (med_int)nodeIndex.size(),
+                              &nodeIndex[0], &conn[0]) < 0 ||
+          MEDmeshEntityNumberWr(fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL,
+                                MED_POLYHEDRON, (med_int)tags.size(),
+                                &tags[0]) < 0 ||
+          MEDmeshEntityFamilyNumberWr(fid, meshName, MED_NO_DT, MED_NO_IT,
+                                      MED_CELL, MED_POLYHEDRON,
+                                      (med_int)fam.size(), &fam[0]) < 0))
+        Msg::Error("Could not write MED polyhedra");
+    }
+#endif
   }
 
   if(MEDfermer(fid) < 0) {
