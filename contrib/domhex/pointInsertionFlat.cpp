@@ -9,7 +9,6 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
-#include <cstring>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -39,8 +38,7 @@
 namespace {
 
 // k1*h is the minimal distance between two accepted points, k2*h the
-// minimal distance to the boundary (unused here, see below -- disabled
-// upstream too).
+// minimal distance to the boundary
 const double k1 = 0.61;
 
 // One accepted (or candidate) point, everything a plain double/int: no
@@ -399,17 +397,9 @@ int layerLimit(int tag)
 }
 
 // A box of half-width k2*h centered on (x,y,z) must stay fully inside the
-// volume mesh's element octree. Both Filler::treat_region
-// (simple3D.cpp:far_from_boundary) and the dead Filler3D
-// (pointInsertionRTreeTools.cpp:far_from_boundary_3D) hardcode this check
-// to always accept ("return 1;"/"return true;"); enabling it here removed
-// the last source of TetGen boundary-recovery failures once boundary
-// points were no longer re-embedded as duplicates (see the layer==0 skip
-// below): candidates landing too close to a boundary facet -- without
-// necessarily being close to any single boundary *vertex*, which the
-// point-to-point spacing check alone cannot catch -- were still producing
-// degenerate local configurations. Verified: 35/35 clean runs with this
-// enabled vs. roughly half failing (cleanly, no crash) without it.
+// volume: a candidate too close to a boundary facet (not necessarily to a
+// boundary vertex, which the spacing test alone cannot see) makes the
+// boundary recovery of the tetrahedralization fail.
 template <class Locate>
 bool farFromBoundary(const Locate &locate, int hint, double x, double y,
                      double z, double h)

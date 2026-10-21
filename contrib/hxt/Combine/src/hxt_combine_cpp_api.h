@@ -57,15 +57,6 @@ public:
   }
 
   /**
-  * Appends all the hexes (prisms) of the tet mesh, or with startVertices
-  * only those whose smallest vertex a has startVertices[a] set
-  */
-  void computeHexes(double minQuality,
-                    const std::vector<bool>* startVertices = nullptr);
-  void computePrisms(double minQuality,
-                     const std::vector<bool>* startVertices = nullptr);
-  void computePyramids(double minQuality);
-  /**
   * Appends the hexes proposed by a frame field: frames holds the 3 axes of
   * each vertex (9 values), sizes the edge length there (0: no proposal).
   * With startVertices, only from the vertices a with startVertices[a] set;
@@ -85,8 +76,6 @@ public:
   void computeGuidedPrisms(double minQuality, const std::vector<double>& frames,
                            const std::vector<double>& sizes,
                            const std::vector<bool>& freeTets);
-
-  void selectCellsGreedy(std::array<bool,nbCellTypes> cellType);
 
   /**
   * Proposes the hexes along a frame field (see computeGuidedHexes) and
@@ -135,13 +124,6 @@ private:
 };
 
 
-/* Functions maintened for C API  */ 
-void computePotentialHexes(
-  TetMeshForCombining& tetMesh, double hexQualityThreshold, HXTCombineCellArray& hexes);
-
-void computePotentialPrisms(
-  TetMeshForCombining& tetMesh, double hexQualityThreshold, HXTCombineCellArray& prisms);
-
 /** 
 * Compute the quality for all provided cells 
 * \pre The array holding qualities is allocated and owned by the client
@@ -152,8 +134,6 @@ void computeCellQualityVector(
   double* qualities);
 
 double cellQualityAPI(const TetMeshWrapper& tets, const HXTCombineCell& cell);
-
-void countAndCompareCellsIMR(std::ofstream& out, TetMeshForCombining& tetMesh, const vector<double>& minQualities);
 
 
 /**

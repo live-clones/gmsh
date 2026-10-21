@@ -1023,8 +1023,7 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
   }
 }
 
-static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
-                                bool acceptAllQualities = false)
+static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true)
 {
   if(gf->triangles.empty()) return;
   if(gf->compound.size()) return;
@@ -1109,7 +1108,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
     for(std::size_t i = 0; i < gf->triangles.size(); ++i)
       t2n[gf->triangles[i]] = i;
 
-    std::size_t rejectedInvertedPairs = 0, retainedInvalidQuads = 0;
+    std::size_t rejectedInvertedPairs = 0;
     double minimumRejectedEta = std::numeric_limits<double>::infinity();
     double maximumRejectedEta = -std::numeric_limits<double>::infinity();
     // the quadrangle of two matched triangles (or two other triangles if the
@@ -1155,21 +1154,17 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
         // Blossom solves a purely combinatorial perfect matching. On a
         // sharply folded discrete surface it can consequently pair two
         // individually valid triangles into a physically inverted bilinear
-        // quadrangle. Keep the original pair in that case: the mixed cleanup
-        // catalog can still reconnect it later, but a negative
-        // RecombineMinimumQuality explicitly retains raw matched quads for an
-        // optimizer-repair experiment.
+        // quadrangle. Keep the original pair in that case.
         MQuadrangle *q = new MQuadrangle(vs[0], vs[1], vs[2], vs[3]);
         const double eta = q->etaShapeMeasure();
         const bool invalid = !std::isfinite(eta) || !(eta > 0.);
-        if(invalid && !acceptAllQualities) {
+        if(invalid) {
           ++rejectedInvertedPairs;
           minimumRejectedEta = std::min(minimumRejectedEta, eta);
           maximumRejectedEta = std::max(maximumRejectedEta, eta);
           delete q;
           return;
         }
-        if(invalid) ++retainedInvalidQuads;
         touched.insert(t1);
         touched.insert(t2);
         gf->quadrangles.push_back(q);
@@ -1181,9 +1176,6 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
                    "unrecombined (eta range [%g,%g])",
                    rejectedInvertedPairs, rejectedInvertedPairs == 1 ? "" : "s",
                    minimumRejectedEta, maximumRejectedEta);
-      if(retainedInvalidQuads)
-        Msg::Info("Blossom: retained %zu non-positive-quality quads "
-                  "(RecombineMinimumQuality < 0)", retainedInvalidQuads);
     };
 
     const int greedyFirst = CTX::instance()->mesh.recombineGreedyFirst;
@@ -1301,15 +1293,6 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
           if(it == pairOfNodes.end()) continue;
           partner[global[i1]] = partner[global[i2]] = it->second;
         }
-        if(rejectedInvertedPairs)
-          Msg::Info("Blossom: kept %zu inverted matched triangle pair%s "
-                    "unrecombined (eta range [%g,%g])",
-                    rejectedInvertedPairs,
-                    rejectedInvertedPairs == 1 ? "" : "s",
-                    minimumRejectedEta, maximumRejectedEta);
-        if(retainedInvalidQuads)
-          Msg::Info("Blossom: retained %zu non-positive-quality quads "
-                    "(RecombineMinimumQuality < 0)", retainedInvalidQuads);
         free(elist);
       };
 
@@ -1363,7 +1346,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
         Msg::Warning(
           "Perfect Match failed in quadrangulation, try something else");
         pairs.clear();
-        _recombineIntoQuads(gf, false, cubicGraph, acceptAllQualities);
+        _recombineIntoQuads(gf, false, cubicGraph);
       }
       else {
         std::size_t nbAlone = 0;
@@ -1423,7 +1406,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
             "Perfect Match failed in quadrangulation, try something else");
           free(elist);
           pairs.clear();
-          _recombineIntoQuads(gf, false, cubicGraph, acceptAllQualities);
+          _recombineIntoQuads(gf, false, cubicGraph);
         }
         else {
           for(int k = 0; k < elist[0]; k++) {
@@ -1475,7 +1458,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true,
           itp->n1, orientation < 0 ? itp->n3 : itp->n4, itp->n2,
           orientation < 0 ? itp->n4 : itp->n3);
         const double eta = quadrangle->etaShapeMeasure();
-        if(acceptAllQualities || (std::isfinite(eta) && eta > 0.)) {
+        if(std::isfinite(eta) && eta > 0.) {
           touched.insert(t1);
           touched.insert(t2);
           gf->quadrangles.push_back(quadrangle);
@@ -1563,7 +1546,7 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
 
   if(debug) gf->model()->writeMSH("recombine_0before.msh");
 
-  _recombineIntoQuads(gf, blossom, true, minqual < 0.);
+  _recombineIntoQuads(gf, blossom, true);
 
   if(debug) gf->model()->writeMSH("recombine_1raw.msh");
 

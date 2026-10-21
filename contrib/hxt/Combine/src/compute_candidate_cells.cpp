@@ -87,258 +87,6 @@ private:
   std::vector<HXTCombineCellArray> buffers_;
 };
 
-
-struct CandidateCellStatistics {
-  enum CellType { CUBE, BOTELLA, YAMAKAWA, ALL, FALSE_VALID, FAILED, COLOR_TETS, COLOR_FACETS };
-
-  const std::string typeNames_[8]{
-    "Cube", "Botella", "Yamakawa", "All Hexes", "False valid",
-    "Invalid nb tets", "Invalid tet color", "Invalid facet color" };
-
-  unsigned int data_[8] = { 0,0,0,0,0,0,0,0 };
-
-  void addCell(const TetMeshForCombining& tets, const vector<VertexIndex>& vertices)
-  {
-    // Min scaled jacobian is above the threshold but the hex is not really valid.
-    if (!isCellReallyValid(tets, vertices)) data_[FALSE_VALID]++;
-    else {
-      CandidateCell hex(vertices, tets);
-      if (!hex.checkTetsTopology())        data_[FAILED]++;
-      else if (!hex.haveTetsSameColor())   data_[COLOR_TETS]++;
-      else if (!hex.checkQuadFacetColor() || !hex.checkQuadFacetBoundary()) data_[COLOR_FACETS]++;
-      else {
-        if (hex.isCubeDecomposition())      data_[CUBE]++;
-        if (hex.isBotellaDecomposition())   data_[BOTELLA]++;
-        if (hex.isYamakawaDecomposition())  data_[YAMAKAWA]++;
-        data_[ALL]++;
-      }
-    }
-  }
-  void addCell(const TetMeshForCombining& tets, const vector<VertexIndex>& vertices, TetIndex t0)
-  {
-    // Min scaled jacobian is above the threshold but the hex is not really valid.
-    if (!isCellReallyValid(tets, vertices)) data_[FALSE_VALID]++;
-    else {
-      CandidateCell hex(vertices, t0, tets);
-      if (!hex.checkTetsTopology())        data_[FAILED]++;
-      else if (!hex.haveTetsSameColor())   data_[COLOR_TETS]++;
-      else if (!hex.checkQuadFacetColor() || !hex.checkQuadFacetBoundary()) data_[COLOR_FACETS]++;
-      else {
-        if (hex.isCubeDecomposition())      data_[CUBE]++;
-        if (hex.isBotellaDecomposition())   data_[BOTELLA]++;
-        if (hex.isYamakawaDecomposition())  data_[YAMAKAWA]++;
-        data_[ALL]++;
-      }
-    }
-  }
-
-  void printCategories(std::ofstream& out) const
-  {
-    for (unsigned int i = 0; i <8; ++i)
-      out << std::setw(20) << std::left << typeNames_[i];
-  }
-  void printData(std::ofstream& out) const
-  {
-    for (unsigned int i = 0; i <8; ++i)
-      out << std::setw(20) << std::left << data_[i];
-  }
-  void operator+=(const CandidateCellStatistics& rhs)
-  {
-    for (unsigned int i = 0; i <8; ++i)
-      data_[i] += rhs.data_[i];
-  }
-  void reset() {
-    for (unsigned int i = 0; i < 8; ++i)
-      data_[i]=0;
-  }
-};
-
-
-/**
- * Specifically written to produce results for IMR 2017 and compare our algorithm
- * to the pattern based method
- */
-class ClassifyCandidateHexes {
-public:
-  ClassifyCandidateHexes(const TetMeshForCombining& tetMesh, double minQuality,
-    vector<CandidateCellStatistics>& nbHexesPerThreadPerType)
-    :tets_(tetMesh), qualityThreshold_(minQuality), stats_(nbHexesPerThreadPerType)
-  {
-    stats_.resize(omp_get_max_threads());
-  }
-  void operator()(const vector<VertexIndex>& hexVertices)
-  {
-    if (cellQuality(tets_, hexVertices) > qualityThreshold_) {
-      unsigned int iThread = omp_get_thread_num();
-      stats_[iThread].addCell(tets_, hexVertices);
-    }
-  }
-  void operator()(const vector<VertexIndex>& vertices, TetIndex t0)
-  {
-    double quality = cellQuality(tets_, vertices);
-    if (quality > qualityThreshold_ ) {
-      unsigned int iThread = omp_get_thread_num();
-      stats_[iThread].addCell(tets_, vertices, t0);
-    }
-  }
-
-private:
-  const TetMeshForCombining& tets_;
-  const double qualityThreshold_;
-  vector<CandidateCellStatistics>& stats_;
-};
-
-
-//-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
-
-void countAndCompareCellsIMR(std::ofstream& out, TetMeshForCombining& tetMesh, const vector<double>& minQualities)
-{
-  CandidateCellStatistics stats;
-
-  out << std::setw(20) << std::left << "Q min"
-      << std::setw(20) << std::left << "timing";
-  stats.printCategories(out);
-  out << std::endl;
-
-  unsigned int nbThreads = omp_get_max_threads();
-
-  for (unsigned int i = 0; i < minQualities.size(); ++i) {
-    double minQuality = minQualities[i];
-
-    auto t0 = std::chrono::high_resolution_clock::now();
-
-    vector<CandidateCellStatistics> threadStats(nbThreads);
-    ClassifyCandidateHexes counter(tetMesh, minQuality, threadStats);
-
-    computeAllHex(counter, tetMesh, minQuality);
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> countTiming(t1 - t0);
-
-    stats.reset();
-    for (unsigned int j = 0; j < nbThreads; ++j) {
-      stats += threadStats[j];
-    }
-
-    out << std::setw(20) << std::left << minQuality
-        << std::setw(20) << std::left << countTiming.count();
-    stats.printData(out);
-    out << std::endl;
-  }
-  // PRISMS
-  for (unsigned int i = 0; i < minQualities.size(); ++i) {
-    double minQuality = minQualities[i];
-
-    auto t0 = std::chrono::high_resolution_clock::now();
-
-    vector<CandidateCellStatistics> threadStats(nbThreads);
-    ClassifyCandidateHexes counter(tetMesh, minQuality, threadStats);
-
-    computeAllPrisms(counter, tetMesh, minQuality);
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> countTiming(t1 - t0);
-
-    stats.reset();
-    for (unsigned int j = 0; j < nbThreads; ++j) {
-      stats += threadStats[j];
-    }
-    out << std::setw(20) << std::left << minQuality
-      << std::setw(20) << std::left << countTiming.count();
-    stats.printData(out);
-    out << std::endl;
-  }
-  //PYRAMIDS
-  for (unsigned int i = 0; i < minQualities.size(); ++i) {
-    double minQuality = minQualities[i];
-
-    auto t0 = std::chrono::high_resolution_clock::now();
-
-    vector<CandidateCellStatistics> threadStats(nbThreads);
-    ClassifyCandidateHexes counter(tetMesh, minQuality, threadStats);
-
-    computeAllPyramids(counter, tetMesh, 0);
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> countTiming(t1 - t0);
-
-    stats.reset();
-    for (unsigned int j = 0; j < nbThreads; ++j) {
-      stats += threadStats[j];
-    }
-
-    out << std::setw(20) << std::left << minQuality
-      << std::setw(20) << std::left << countTiming.count();
-    stats.printData(out);
-    out << std::endl;
-  }
-
-  out << std::endl;
-}
-
-
-//-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
-
-// Give back the spare capacity left by the growth of the cell array (up to
-// half of its size), which would otherwise stay allocated during the selection
-static void shrinkCells(HXTCombineCellArray& cells)
-{
-  cells.shrink_to_fit();
-}
-
-// Appends the cells of more to cells, in the order of their sorted vertices:
-// the threads find them in an arbitrary order
-static void appendCells(HXTCombineCellArray& cells,
-                        HXTCombineCellArray& more)
-{
-  auto key = [](const HXTCombineCell& c) {
-    std::array<VertexIndex, 8> k;
-    k.fill(NO_ID);
-    std::copy(c.vertexes, c.vertexes + c.nbVertices(), k.begin());
-    std::sort(k.begin(), k.begin() + c.nbVertices());
-    return k;
-  };
-  std::vector<std::pair<std::array<VertexIndex, 8>, std::size_t> > order(more.size());
-  for (std::size_t i = 0; i < more.size(); ++i) order[i] = {key(more[i]), i};
-  std::sort(order.begin(), order.end());
-  cells.reserve(cells.size() + more.size(), cells.nbIndices() + more.nbIndices());
-  for (const auto& o : order) cells.push_back(more[o.second]);
-  HXTCombineCellArray().swap(more);
-}
-
-void HXTCombineCellStore::computeHexes(double minQuality,
-                                       const std::vector<bool>* startVertices)
-{
-  HXTCombineCellArray found;
-  {
-    StoreCandidateCells store(mesh_, minQuality, found);
-    computeAllHex(store, mesh_, minQuality, startVertices);
-    store.flush();
-  }
-  if (hexes().empty() && !startVertices) {
-    hexes().swap(found);
-    shrinkCells(hexes());
-  }
-  else appendCells(hexes(), found);
-}
-
-void HXTCombineCellStore::computePrisms(double minQuality,
-                                        const std::vector<bool>* startVertices)
-{
-  HXTCombineCellArray found;
-  {
-    StoreCandidateCells store(mesh_, minQuality, found);
-    computeAllPrisms(store, mesh_, minQuality, startVertices);
-    store.flush();
-  }
-  if (prisms().empty() && !startVertices) prisms().swap(found);
-  else appendCells(prisms(), found);
-}
-
 namespace {
 
   // the n vertices of vs nearest to p, NO_ID if fewer
@@ -662,7 +410,7 @@ namespace {
     return applySymmetry(h, S.perm[i0][n[0]][n[1]]);
   }
 
-  // the tests computeAllPrisms makes on its way to the prism (a,b,c,d,e,f)
+  // the quality and validity tests of a prism (a,b,c,d,e,f) on its corners
   bool passesPrismTests(const TetMeshForCombining& M,
                         const std::array<VertexIndex, 6>& v, double minQ)
   {
@@ -771,7 +519,7 @@ void HXTCombineCellStore::computeGuidedPrisms(double minQuality,
       store(vector<VertexIndex>(all[i].second.begin(), all[i].second.end()));
     store.flush();
   }
-  prisms().append(cells); // in the order appendCells would sort them
+  prisms().append(cells); // in the order of their sorted vertices
 }
 
 /**
@@ -838,7 +586,7 @@ void HXTCombineCellStore::computeGuidedHexes(double minQuality,
                 completions[k][l][sk][sl][ck][cl] =
                   completion(along[k][sk][ck], along[l][sl][cl]);
 
-    // The tests computeAllHex makes on its way to a hex (a,b,c,d,e,f,g,h):
+    // The quality tests of a hex (a,b,c,d,e,f,g,h) on its corners and faces:
     // those on the faces at a depend on 2 of b, d, e only (and on their
     // completion), once per pair, for the labelling (bit 0) and its mirror
     // (bit 1), swapping b and d, f and h; those at a on the combination;
@@ -892,7 +640,7 @@ void HXTCombineCellStore::computeGuidedHexes(double minQuality,
       const VertexIndex h = completions[1][2][sy][sz][cy][cz];
       if (c == NO_ID || f == NO_ID || h == NO_ID) continue;
       // the labellings passing the tests at a (what follows only depends on
-      // the hex found, and fails as computeAllHex's tests would)
+      // the hex found)
       unsigned int labellings = faceTests[0][1][sx][sy][cx][cy] &
                                 faceTests[0][2][sx][sz][cx][cz] &
                                 faceTests[1][2][sy][sz][cy][cz];
@@ -977,32 +725,7 @@ void HXTCombineCellStore::computeGuidedHexes(double minQuality,
       store(vector<VertexIndex>(all[i].second.begin(), all[i].second.end()));
     store.flush();
   }
-  hexes().append(cells); // in the order appendCells would sort them
-}
-
-void HXTCombineCellStore::computePyramids(double minQuality) {
-  StoreCandidateCells store(mesh_, minQuality, pyramids());
-
-  computeAllPyramids(store, mesh_, 0);
-
-  store.flush();
-}
-
-
-void computePotentialHexes(
-  TetMeshForCombining& tetMesh, double hexQualityThreshold, HXTCombineCellArray& hexes)
-{
-  StoreCandidateCells store(tetMesh, hexQualityThreshold, hexes);
-  computeAllHex(store, tetMesh, hexQualityThreshold);
-  store.flush();
-}
-
-void computePotentialPrisms(
-  TetMeshForCombining& tetMesh, double prismQualityThreshold, HXTCombineCellArray& prisms)
-{
-  StoreCandidateCells store(tetMesh, prismQualityThreshold, prisms);
-  computeAllPrisms(store, tetMesh, prismQualityThreshold);
-  store.flush();
+  hexes().append(cells); // in the order of their sorted vertices
 }
 
 

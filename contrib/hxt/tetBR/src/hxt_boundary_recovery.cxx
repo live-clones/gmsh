@@ -258,8 +258,6 @@ int tetgenmesh::reconstructmesh(void *p, double tol){
         // Clean the temporary used space.
         tetloop.tet[8 + tetloop.ver] = NULL;
       }
-      // Delaunay (from HXT), as long as the recovery leaves it unchanged
-      setelemmarker(tetloop.tet, UNCHANGEDTET);
       tetloop.tet = tetrahedrontraverse();
     }
   }
@@ -405,8 +403,7 @@ int tetgenmesh::reconstructmesh(void *p, double tol){
 // TODO: is this usefull ?
 #if 1
   HXT_INFO("Recover Delaunay");
-  // only around the tets that the recovery has changed
-  recoverdelaunay(true);
+  recoverdelaunay();
 #endif
   //  printf("Optimize final mesh\n");
   //  optimizemesh();

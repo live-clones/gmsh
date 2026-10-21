@@ -1339,11 +1339,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////
 
   long lawsonflip3d(flipconstraints *fc);
-  // onlyChanged: only the faces of the tets without the UNCHANGEDTET flag in
-  // their marker are queued at first (a flip clears the flags of the tets it
-  // reuses), the other ones being Delaunay already
-  static const int UNCHANGEDTET = 8192;
-  void recoverdelaunay(bool onlyChanged = false);
+  void recoverdelaunay();
 
   int gettetrahedron(point, point, point, point, triface *);
   long improvequalitybyflips();

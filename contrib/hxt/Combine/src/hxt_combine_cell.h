@@ -120,10 +120,6 @@ public:
     counts_.push_back({(unsigned char)nbVertices, (unsigned char)nbInteriorTets,
                        (unsigned char)nbBoundaryTets});
   }
-  void push_back(const HXTCombineCell& cell) {
-    push_back(cell.vertexes, cell.numVertices, cell.interiorTetrahedra,
-              cell.numInteriorTets, cell.boundaryTetrahedra, cell.numBoundaryTets);
-  }
   // the cells of more after these
   void append(const HXTCombineCellArray& more) {
     reserve(size() + more.size(), data_.size() + more.data_.size());
@@ -139,11 +135,6 @@ public:
     if (counts_.capacity() < nbCells) counts_.reserve(nbCells);
     if (data_.capacity() < nbIndices) data_.reserve(nbIndices);
   }
-  void clear() {
-    start_.assign(1, 0);
-    counts_.clear();
-    data_.clear();
-  }
   void shrink_to_fit() {
     start_.shrink_to_fit();
     counts_.shrink_to_fit();
@@ -155,24 +146,7 @@ public:
     data_.swap(other.data_);
   }
   std::size_t nbIndices() const { return data_.size(); }
-  std::size_t memoryBytes() const {
-    return start_.capacity() * sizeof(start_[0]) +
-           counts_.capacity() * sizeof(counts_[0]) +
-           data_.capacity() * sizeof(data_[0]);
-  }
 
-  class const_iterator {
-  public:
-    const_iterator(const HXTCombineCellArray* array, std::size_t c) : array_(array), c_(c) {}
-    HXTCombineCell operator*() const { return (*array_)[c_]; }
-    const_iterator& operator++() { ++c_; return *this; }
-    bool operator!=(const const_iterator& other) const { return c_ != other.c_; }
-  private:
-    const HXTCombineCellArray* array_;
-    std::size_t c_;
-  };
-  const_iterator begin() const { return const_iterator(this, 0); }
-  const_iterator end() const { return const_iterator(this, size()); }
 
 private:
   struct Counts {

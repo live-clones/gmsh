@@ -1021,20 +1021,6 @@ namespace {
 
 namespace HXTCombine {
 
-  static void interiorVertices(
-    const TetMeshForCombining& tets, const HXTCombineCell& cell, vector<VertexIndex>& intV)
-  {
-    std::set<VertexIndex> result;
-    for (unsigned int i = 0; i < cell.nbInteriorTets(); ++i) {
-      TetIndex t = cell.tet(i);
-      for (TetVertexIndex v = 0; v <4; ++v) {
-        VertexIndex vi = tets.vertex(t, v);
-        if (!cell.hasVertex(vi)) result.insert(vi);
-      }
-    }
-    intV.assign(result.begin(), result.end());
-  }
-
   static void flagFalseIndices(
     vector<bool>& flags, std::size_t n, const unsigned int *indices) {
     for (unsigned int i = 0; i < n; ++i)
@@ -1085,20 +1071,6 @@ namespace HXTCombine {
       }
     }
   }
-
-  void HXTCombineCellStore::selectCellsGreedy(std::array<bool, nbCellTypes> flags)
-  {
-    resetSelection();
-    for (unsigned int i = 0; i+1 < nbCellTypes; ++i)
-      if (flags[i]) selectCells((CELLTYPE)i);
-    // How do we ensure conformity? How do we ensure that the whole volume is filled?
-    // TODO To get a conformal mesh there should be no visible quad facet anymore
-
-    // Without tets, none of the tets of the mesh is taken
-    if (!flags[TET]) selectedTets().assign(mesh_.nbTets(), true);
-    selector_.reset();
-  }
-
 
   void HXTCombineCellStore::selectAlongFrames(double minQuality,
                                               const std::vector<double>& frames,

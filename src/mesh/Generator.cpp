@@ -1158,15 +1158,11 @@ static void Mesh3D(GModel *m)
     // by new HXT-based code
     for(std::size_t j = 0; j < connected[i].size(); j++) {
       GRegion *gr = connected[i][j];
+      if(CTX::instance()->mesh.algo3d != ALGO_3D_RTREE) continue;
       CombineFrames frames;
-      bool treat_region_ok = false;
-      if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
-        fillRegionFlat(gr, &frames);
-        treat_region_ok = true;
-      }
-
-      if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
-                             gr->meshAttributes.recombine3D)) {
+      fillRegionFlat(gr, &frames);
+      if(CTX::instance()->mesh.recombine3DAll ||
+         gr->meshAttributes.recombine3D) {
         hexDominant = true;
         meshCombine3D(gr, &frames);
         // all the cores, as the combination, unless Mesh.MaxNumThreads3D

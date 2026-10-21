@@ -20,9 +20,7 @@ struct CombineFrame {
 };
 typedef std::unordered_map<MVertex *, CombineFrame> CombineFrames;
 
-// With frames (and Mesh.Recombine3DCandidates = 1), the candidate cells are
-// proposed along the frames; otherwise all the hexes and prisms of the tet
-// mesh are enumerated
+// The candidate cells are proposed along the frames
 int meshCombine3D(GRegion *m, const CombineFrames *frames = nullptr);
 bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm);
 

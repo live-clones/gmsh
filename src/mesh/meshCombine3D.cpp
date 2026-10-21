@@ -17,8 +17,6 @@
 #include <unordered_set>
 #include <set>
 #include <utility>
-#include "SPoint3.h"
-#include "SVector3.h"
 #include "MFace.h"
 #include "MQuadrangle.h"
 #include "MTriangle.h"
@@ -29,22 +27,6 @@
 #include "MTrihedron.h"
 #include "meshGRegion.h"
 #include "meshCombine3D.h"
-
-static void buildUniqueFaces(GRegion *gr,
-                             std::map<MFace, GRegion *, MFaceLessThan> &bnd)
-{
-  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
-    MElement *e = gr->getMeshElement(i);
-    for(int j = 0; j < e->getNumFaces(); j++) {
-      MFace f = e->getFace(j);
-      auto it = bnd.find(f);
-      if(it == bnd.end())
-        bnd[f] = gr;
-      else
-        bnd.erase(it);
-    }
-  }
-}
 
 #if defined(HAVE_HXT)
 
@@ -248,20 +230,15 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
   double minQuality = CTX::instance()->mesh.recombine3DMinimumQuality;
 
   // Mesh.Recombine3DLevel (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)
-  // controls whether prisms are also computed and let selectCellsGreedy
-  // consider them alongside hexes. Different vertex-sharing arithmetic
-  // (a hex+prism sharing a quad face: 8+6-4=10 boundary vertices) may
-  // fit shapes a pure-hex assembly structurally cannot reach.
   if(CTX::instance()->mesh.recombine3DLevel >= 2)
     Msg::Warning("Mesh.Recombine3DLevel=2 (pyramids) is not implemented "
                  "yet; falling back to hex+prisms");
   bool enablePrisms = CTX::instance()->mesh.recombine3DLevel >= 1;
 
-  std::vector<double> axes, sizes;
+  // the candidate cells are proposed along the frames of the point insertion
+  std::vector<double> axes(9 * c2v.size(), 0.), sizes(c2v.size(), 0.);
   std::size_t nbFramed = 0;
-  if(frames && CTX::instance()->mesh.recombine3DCandidates == 1) {
-    axes.assign(9 * c2v.size(), 0.);
-    sizes.assign(c2v.size(), 0.);
+  if(frames) {
     for(std::size_t i = 0; i < c2v.size(); i++) {
       auto it = frames->find(c2v[i]);
       if(it == frames->end()) continue;
@@ -272,51 +249,32 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
   }
 
   AddMeshStageTime("combination: setup", TimeOfDay() - tStart, Cpu() - cStart);
-  const double tSelect = TimeOfDay(), cSelect = Cpu();
-  if(nbFramed) {
-    HXTCombine::FrameSelectionStatistics stats;
-    ccs.selectAlongFrames(minQuality, axes, sizes, enablePrisms, &stats);
-    // the CPU time with the clock of the others, shared as std::clock shares
-    // it (it counts the system time as well)
-    const double cpu = Cpu() - cSelect;
-    const double share =
-      stats.cpuCandidates + stats.cpuSelection > 0. ?
-        stats.cpuCandidates / (stats.cpuCandidates + stats.cpuSelection) :
-        0.5;
-    AddMeshStageTime("combination: candidates", stats.wallCandidates,
-                     share * cpu);
-    AddMeshStageTime("combination: selection", stats.wallSelection,
-                     (1. - share) * cpu);
-    Msg::Debug("%zu Hexes proposed along the frames of %zu vertices, %zu "
-               "selected", stats.nbProposedHexes, nbFramed,
-               stats.nbSelectedProposedHexes);
-    Msg::Debug("%zu Hexes proposed around the %zu vertices left in tets",
-               stats.nbResidualHexes, stats.nbFreeVertices);
-    if(enablePrisms)
-      Msg::Debug("%zu Prisms proposed on the %zu tets left",
-                 stats.nbProposedPrisms, stats.nbFreeTets);
-  }
-  else {
-    ccs.computeHexes(minQuality);
-    Msg::Debug("%d Hexes found", ccs.hexes().size());
-    if(enablePrisms) {
-      ccs.computePrisms(minQuality);
-      Msg::Debug("%d Prisms found", ccs.prisms().size());
-    }
-
-    // ----------------- S E L E C T I N G   H E X E S
-    // -------------------------------------
-    std::array<bool, 4> cellTypes{true, enablePrisms, false, true};
-    ccs.selectCellsGreedy(cellTypes);
-    AddMeshStageTime("combination: candidates and selection",
-                     TimeOfDay() - tSelect, Cpu() - cSelect);
-  }
+  const double cSelect = Cpu();
+  HXTCombine::FrameSelectionStatistics stats;
+  ccs.selectAlongFrames(minQuality, axes, sizes, enablePrisms, &stats);
+  // the CPU time with the clock of the others, shared as std::clock shares
+  // it (it counts the system time as well)
+  const double cpu = Cpu() - cSelect;
+  const double share =
+    stats.cpuCandidates + stats.cpuSelection > 0. ?
+      stats.cpuCandidates / (stats.cpuCandidates + stats.cpuSelection) :
+      0.5;
+  AddMeshStageTime("combination: candidates", stats.wallCandidates,
+                   share * cpu);
+  AddMeshStageTime("combination: selection", stats.wallSelection,
+                   (1. - share) * cpu);
+  Msg::Debug("%zu Hexes proposed along the frames of %zu vertices, %zu "
+             "selected", stats.nbProposedHexes, nbFramed,
+             stats.nbSelectedProposedHexes);
+  Msg::Debug("%zu Hexes proposed around the %zu vertices left in tets",
+             stats.nbResidualHexes, stats.nbFreeVertices);
+  if(enablePrisms)
+    Msg::Debug("%zu Prisms proposed on the %zu tets left",
+               stats.nbProposedPrisms, stats.nbFreeTets);
   const double tOutput = TimeOfDay(), cOutput = Cpu();
   Msg::Debug("%d Hexes selected", ccs.nbSelectedHexes());
   if(enablePrisms)
     Msg::Debug("%d Prisms selected", ccs.nbSelectedPrisms());
-  //	ccs.saveMSH("hexdom.msh",cellTypes);
-
 
   // ----------------- C R E A T I N G  V O L U M E    E L E M E N T S
   // --------------------
@@ -529,64 +487,6 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
 
 #endif
 
-// the original version, on all the faces of the volume elements (and their
-// polyhedra)
-static bool makeConformalThroughTrihedraAllFaces(GModel *gm)
-{
-  fs_cont search;
-  // on boundary.
-  buildFaceSearchStructure(gm, search);
-  std::map<MFace, GRegion *, MFaceLessThan> bnd;
-  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
-    GRegion *gr = *rit;
-    // look at every face that only comes once
-    buildUniqueFaces(gr, bnd);
-  }
-  // bnd2 contains non conforming faces
-  std::map<MFace, GRegion *, MFaceLessThan> bnd2;
-  for(auto itf = bnd.begin(); itf != bnd.end(); ++itf) {
-    GFace *gfound = findInFaceSearchStructure(itf->first, search);
-    if(!gfound) { bnd2[itf->first] = itf->second; }
-  }
-  bnd.clear();
-
-
-  // create trihedron
-
-  for(auto itf = bnd2.begin(); itf != bnd2.end(); ++itf) {
-    const MFace &f = itf->first;
-    if(f.getNumVertices() == 4) { // quad face
-      auto it1 =
-        bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(2)));
-      auto it2 =
-        bnd2.find(MFace(f.getVertex(2), f.getVertex(3), f.getVertex(0)));
-      if(it1 != bnd2.end() && it2 != bnd2.end()) {
-        MTrihedron *th = new MTrihedron(f.getVertex(3), f.getVertex(0),
-                                        f.getVertex(1), f.getVertex(2));
-        itf->second->trihedra.push_back(th);
-      }
-      else {
-        it1 = bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(3)));
-        it2 = bnd2.find(MFace(f.getVertex(3), f.getVertex(1), f.getVertex(2)));
-        if(it1 != bnd2.end() && it2 != bnd2.end()) {
-          MTrihedron *th = new MTrihedron(f.getVertex(0), f.getVertex(1),
-                                          f.getVertex(2), f.getVertex(3));
-          itf->second->trihedra.push_back(th);
-          }
-        else {
-          Msg::Warning(
-            "MakeMeshConformal: wrong mesh topology, quad verts %zu %zu "
-            "%zu %zu",
-            f.getVertex(0)->getNum(), f.getVertex(1)->getNum(),
-            f.getVertex(2)->getNum(), f.getVertex(3)->getNum());
-          //          return false;
-        }
-      }
-    }
-  }
-  return true;
-}
-
 namespace {
   // a face by its vertices sorted by address (3 or 4, the 4th null for a
   // triangle)
@@ -624,9 +524,6 @@ namespace {
 // triangles of the unmatched ones, are counted
 bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm)
 {
-  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit)
-    if(!(*rit)->polyhedra.empty()) return makeConformalThroughTrihedraAllFaces(gm);
-
   // the vertices of the elements with triangular faces, marked 1 in
   // MVertex::_index (the other vertices of the quadrangular faces 0)
   bool anyTriangle = false;
