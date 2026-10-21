@@ -23,17 +23,7 @@ class meshGFace {
 public:
   meshGFace(bool r = true) : repairSelfIntersecting1dMesh(r) {}
   void operator()(GFace *, bool print = true);
-  // the checks on the finished mesh (meshing the face again with MeshAdapt
-  // if the Delaunay-based mesh is invalid)
-  void check(GFace *, bool print = true);
 };
-
-// The PACK surfaces may have to be packed one at a time; their recombination
-// (Blossom) and the steps after it can wait, to be done for all of them in
-// parallel by
-// finishDeferredRecombination (which returns their number)
-void startDeferredRecombination();
-std::size_t finishDeferredRecombination(int nthreads);
 
 // Destroy the mesh of the face
 class deMeshGFace {

@@ -698,7 +698,6 @@ double opt_mesh_save_debug_files(OPT_ARGS_NUM);
 double opt_mesh_pack_sizemap_method(OPT_ARGS_NUM);
 double opt_mesh_pack_intrinsic_edge_length_factor(OPT_ARGS_NUM);
 double opt_mesh_pack_3d(OPT_ARGS_NUM);
-double opt_mesh_recombine_greedy_first(OPT_ARGS_NUM);
 double opt_mesh_pack_patterns(OPT_ARGS_NUM);
 double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM);
 double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM);

@@ -561,8 +561,6 @@ static void Mesh0D(GModel *m)
 static std::vector<std::pair<std::string, std::pair<double, double> > >
   meshStageTimes;
 static int generateMeshDepth = 0;
-// the times of the last Mesh2D in the recombination of the PACK surfaces
-static double wallRecombination2D = 0., cpuRecombination2D = 0.;
 
 void AddMeshStageTime(const std::string &stage, double wall, double cpu)
 {
@@ -809,7 +807,6 @@ static void Mesh2D(GModel *m)
 
   Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu(), w1 = TimeOfDay();
-  wallRecombination2D = cpuRecombination2D = 0.;
 
   int nthreads = CTX::instance()->numThreads;
   if(CTX::instance()->mesh.maxNumThreads2D > 0)
@@ -818,14 +815,11 @@ static void Mesh2D(GModel *m)
 
   // boundary layers are not yet thread-safe
   if(m->getFields()->getNumBoundaryLayerFields()) nthreads = 1;
-  // the recombination of the PACK surfaces, after packing them (one by one
-  // if they cannot be in parallel)
-  const int nthreadsRecombination = nthreads;
 
   for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     // Frontal-Delaunay for quads and co are not yet thread-safe; PACK is
     // on CAD surfaces (the packing only reads the guiding field), not yet on
-    // discrete ones (their intrinsic Delaunay pass)
+    // discrete ones
     if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
        ((*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS &&
         (*it)->geomType() == GEntity::DiscreteSurface) ||
@@ -896,22 +890,9 @@ static void Mesh2D(GModel *m)
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
       };
-      startDeferredRecombination();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
       for(size_t K = 0; K < temp.size(); K++) meshOne(temp[K]);
       for(GFace *gf : members) meshOne(gf);
-      // (also after an exception: the surfaces it waits for are meshed)
-      const double wRecombination = TimeOfDay(), cRecombination = Cpu();
-      std::size_t nRecombined = 0;
-      try {
-        nRecombined = finishDeferredRecombination(nthreadsRecombination);
-      } catch(...) {
-        exceptions = true;
-      }
-      if(nRecombined) {
-        wallRecombination2D += TimeOfDay() - wRecombination;
-        cpuRecombination2D += Cpu() - cRecombination;
-      }
       if(exceptions) {
         CTX::instance()->lock = 0;
         throw std::runtime_error(Msg::GetLastError());
@@ -1142,12 +1123,8 @@ static void Mesh3D(GModel *m)
     }
 
 #if defined(HAVE_DOMHEX) && defined(HAVE_HXT)
-    // The flat filler meshes its regions again, its first Delaunay mesh
-    // only locates its points: needless if the sizes are not extended from
-    // the boundary and the cross field is not smoothed in the volume
-    const bool fillerAlone = CTX::instance()->mesh.algo3d == ALGO_3D_RTREE &&
-                             !Extend2dMeshIn3dVolumes() &&
-                             !CTX::instance()->mesh.smoothCrossField;
+    // the flat filler tetrahedralizes its regions itself
+    const bool fillerAlone = CTX::instance()->mesh.algo3d == ALGO_3D_RTREE;
 #else
     const bool fillerAlone = false;
 #endif
@@ -1810,6 +1787,49 @@ static bool quantize1DIfNeeded(GModel *m)
   return true;
 }
 
+// With PACK, the boundary loops of discrete surfaces must stay polygons: a
+// closed curve gets at least 3 segments, two curves sharing both their
+// endpoints at least 2 each (OCCFace imposes the same minima on its wires).
+// Restored after the generation.
+class PackDiscreteLoops {
+  std::map<GEdge *, int> _minimumSegments;
+  void require(GEdge *edge, int minimum)
+  {
+    if(edge->meshAttributes.minimumMeshSegments >= minimum) return;
+    _minimumSegments.emplace(edge, edge->meshAttributes.minimumMeshSegments);
+    edge->meshAttributes.minimumMeshSegments = minimum;
+  }
+
+public:
+  PackDiscreteLoops()
+  {
+    GModel *model = GModel::current();
+    if(!model || CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS) return;
+    for(GFace *face : model->getFaces()) {
+      if(face->geomType() != GEntity::DiscreteSurface) continue;
+      std::map<std::pair<int, int>, std::set<GEdge *>> edgesByEndpoints;
+      for(GEdge *edge : face->edges()) {
+        GVertex *first = edge->getBeginVertex();
+        GVertex *second = edge->getEndVertex();
+        if(!first || !second) continue;
+        if(first == second)
+          require(edge, 3);
+        else
+          edgesByEndpoints[std::minmax(first->tag(), second->tag())].insert(
+            edge);
+      }
+      for(const auto &entry : edgesByEndpoints)
+        if(entry.second.size() == 2)
+          for(GEdge *edge : entry.second) require(edge, 2);
+    }
+  }
+  ~PackDiscreteLoops()
+  {
+    for(const auto &entry : _minimumSegments)
+      entry.first->meshAttributes.minimumMeshSegments = entry.second;
+  }
+};
+
 void GenerateMesh(GModel *m, int ask)
 {
   // ProfilerStart("gmsh.prof");
@@ -1836,9 +1856,7 @@ void GenerateMesh(GModel *m, int ask)
   // Initialize pseudo random mesh generator with the same seed
   srand(CTX::instance()->mesh.randomSeed);
 
-#if defined(HAVE_QUADOPTIMIZER)
-  QuadOpt::PackMeshScope packMeshScope(quadOptOptions());
-#endif
+  PackDiscreteLoops packDiscreteLoops;
 
   // Change any high order elements back into first order ones (but skip
   // discrete entities)
@@ -1933,17 +1951,8 @@ void GenerateMesh(GModel *m, int ask)
     const double w = TimeOfDay(), c = Cpu();
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     Mesh2D(m);
-    if(generateMeshDepth == 1) {
-      const double wall = TimeOfDay() - w, cpu = Cpu() - c;
-      if(wallRecombination2D > 0.) {
-        AddMeshStageTime("2D mesh: packing", wall - wallRecombination2D,
-                         cpu - cpuRecombination2D);
-        AddMeshStageTime("2D mesh: Blossom", wallRecombination2D,
-                         cpuRecombination2D);
-      }
-      else
-        AddMeshStageTime("2D mesh", wall, cpu);
-    }
+    if(generateMeshDepth == 1)
+      AddMeshStageTime("2D mesh", TimeOfDay() - w, Cpu() - c);
     // if two passes --> juste fait le ...
     //    createSizeFieldFromExistingMesh (m, false);
     // Mesh2D(m);

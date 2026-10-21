@@ -38,7 +38,6 @@ struct contextMeshOptions {
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int mmg3dCombineDomains;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
-  int recombineGreedyFirst;
   int recombineNodeRepositioning;
   double recombineMinimumQuality;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;

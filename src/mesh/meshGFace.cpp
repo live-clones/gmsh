@@ -7,7 +7,6 @@
 //   Michael Ermakov (ermakov@ipmnet.ru)
 
 #include <random>
-#include <stdexcept>
 #include <limits>
 #include <sstream>
 #include <stdlib.h>
@@ -632,32 +631,17 @@ static bool repairDuplicateTriangles(GFace *gf)
   return true;
 }
 
-// PACK may have to pack its surfaces one at a time (discrete surfaces are
-// not yet thread-safe) and recombines them afterwards, all together in
-// parallel: the surfaces met while deferring whose recombination and last
-// steps wait
-static bool deferRecombination = false;
-static std::set<GFace *, GEntityPtrLessThan> deferredFaces;
-
-static bool isRecombinationDeferred(GFace *gf)
-{
-  bool deferred = false;
-#pragma omp critical(deferredRecombination)
-  deferred = deferRecombination && deferredFaces.count(gf);
-  return deferred;
-}
-
 static void recombineSurfaceMesh(GFace *gf)
 {
+#if defined(HAVE_QUADOPTIMIZER)
+  // PACK with Q-Morph: the triangles are recombined by Q-Morph instead
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
+     CTX::instance()->mesh.packRecombination == 1)
+    return;
+#endif
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      (CTX::instance()->mesh.algoRecombine <= 1 ||
       CTX::instance()->mesh.algoRecombine == 4)) {
-    if(deferRecombination && CTX::instance()->mesh.algoRecombine == 1 &&
-       gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS && gf->compound.empty()) {
-#pragma omp critical(deferredRecombination)
-      deferredFaces.insert(gf);
-      return;
-    }
     if(CTX::instance()->mesh.algoRecombine == 4) {
       meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
     }
@@ -684,7 +668,6 @@ static void recombineSurfaceMesh(GFace *gf)
 // ended up unused (generated e.g. during background mesh construction).
 static void finishSurfaceMesh(GFace *gf)
 {
-  if(isRecombinationDeferred(gf)) return;
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
                        gf->meshStatistics.best_element_shape,
@@ -2394,50 +2377,6 @@ namespace {
   };
 } // namespace
 
-static void storeDirections(GFace *gf)
-{
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
-
-  Msg::Debug("Type %d %d triangles generated, %d internal nodes",
-             gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
-}
-
-void startDeferredRecombination()
-{
-  deferRecombination = true;
-  deferredFaces.clear();
-}
-
-std::size_t finishDeferredRecombination(int nthreads)
-{
-  // the largest first, for the threads to end together
-  std::vector<GFace *> faces(deferredFaces.begin(), deferredFaces.end());
-  std::stable_sort(faces.begin(), faces.end(), [](GFace *a, GFace *b) {
-    return a->triangles.size() > b->triangles.size();
-  });
-  deferRecombination = false;
-  deferredFaces.clear();
-  bool exceptions = false;
-#pragma omp parallel for schedule(dynamic, 1) num_threads(nthreads)
-  for(int i = 0; i < (int)faces.size(); i++) {
-    if(exceptions) continue;
-    try { // OpenMP forbids leaving block via exception
-      recombineSurfaceMesh(faces[i]);
-      finishSurfaceMesh(faces[i]);
-    } catch(...) {
-      exceptions = true;
-    }
-  }
-  if(exceptions) throw std::runtime_error(Msg::GetLastError());
-  // in the order of the surfaces, as when meshed one by one
-  std::sort(faces.begin(), faces.end(), GEntityPtrLessThan());
-  for(GFace *gf : faces) {
-    storeDirections(gf);
-    meshGFace().check(gf);
-  }
-  return faces.size();
-}
-
 void meshGFace::operator()(GFace *gf, bool print)
 {
   gf->model()->setCurrentMeshEntity(gf);
@@ -2549,16 +2488,13 @@ void meshGFace::operator()(GFace *gf, bool print)
                   false, nullptr);
   }
 
-  // the rest once recombined, by finishDeferredRecombination
-  if(isRecombinationDeferred(gf)) return;
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
 
-  storeDirections(gf);
+  Msg::Debug("Type %d %d triangles generated, %d internal nodes",
+             gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
+
   halfmesh.finish();
-  check(gf, print);
-}
 
-void meshGFace::check(GFace *gf, bool print)
-{
   if(gf->getNumMeshElements() == 0 &&
      gf->meshStatistics.status == GFace::DONE) {
     Msg::Warning("Surface %d consists of no elements", gf->tag());

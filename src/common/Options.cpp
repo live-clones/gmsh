@@ -7403,13 +7403,6 @@ double opt_mesh_pack_3d(OPT_ARGS_NUM)
   return 1.;
 }
 
-double opt_mesh_recombine_greedy_first(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.recombineGreedyFirst = (int)val;
-  return CTX::instance()->mesh.recombineGreedyFirst;
-}
-
 double opt_mesh_pack_patterns(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.packPatterns = (int)val;
