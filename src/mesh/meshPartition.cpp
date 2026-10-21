@@ -1217,7 +1217,11 @@ static void findPartitionComponents(
 // component, the neighbors it was found to touch, so that the BRep can be
 // distributed among the components instead of duplicated onto all of them.
 // The components claim their boundary keys (faces for surfaces, edges for
-// curves), then the candidate neighbors are probed in a single pass.
+// curves), then the candidate neighbors are probed in a single pass. A key can
+// be claimed by several components: a partition boundary that runs along a
+// model curve (or surface) is carried both by a piece of that model entity and
+// by a partition entity, so the same mesh edge (or face) belongs to a
+// component of each, and both must be credited with the neighbors touching it.
 // The facets (faces in 3D, edges in 2D) of an element
 static int getNumFacets(MElement *e, MFace *) { return e->getNumFaces(); }
 static int getNumFacets(MElement *e, MEdge *) { return e->getNumEdges(); }
@@ -1226,7 +1230,7 @@ static MEdge getFacet(MElement *e, int i, MEdge *) { return e->getEdge(i); }
 
 template <class KEY, class HASH, class EQUAL> class BRepDistributor {
 private:
-  std::unordered_map<KEY, std::size_t, HASH, EQUAL> _owner;
+  std::unordered_map<KEY, std::vector<std::size_t>, HASH, EQUAL> _owner;
   std::vector<std::set<GEntity *, GEntityPtrFullLessThan> > _bounds;
 
 public:
@@ -1237,7 +1241,7 @@ public:
   }
   void claim(const KEY &key, std::size_t component)
   {
-    _owner.insert(std::make_pair(key, component));
+    _owner[key].push_back(component);
   }
   // Probes the facets of all the elements of the candidate neighbors, in
   // parallel: the owners are only read, the hits are merged at the end
@@ -1265,7 +1269,9 @@ public:
           MElement *e = cand[k]->getMeshElement(i - offset[k]);
           for(int j = 0; j < getNumFacets(e, (KEY *)nullptr); j++) {
             auto it = _owner.find(getFacet(e, j, (KEY *)nullptr));
-            if(it != _owner.end()) myHits.insert(std::make_pair(it->second, k));
+            if(it == _owner.end()) continue;
+            for(std::size_t owner : it->second)
+              myHits.insert(std::make_pair(owner, k));
           }
         }
       }
