@@ -871,14 +871,6 @@ namespace {
     */
     bool isCellCompatible(const HXTCombineCell& cell) const
     {
-      // EXPERIMENTAL, opt-in only (GMSH_PAPER_COMPAT): the simpler
-      // pairwise test from Pellerin, Johnen, Remacle (IMR26 2017)
-      // "Identifying combinations of tetrahedra into hexahedra: a
-      // vertex based strategy" -- see isCellCompatiblePaper2017 below.
-      static bool paperCompat = getenv("GMSH_PAPER_COMPAT") != nullptr;
-      if (paperCompat && cell.isHex())
-        return isCellCompatiblePaper2017(cell);
-
       if (oneInteriorTetSelected(cell)) return false;
 
       const unsigned int nbVertices = cell.nbVertices();
@@ -951,82 +943,6 @@ namespace {
         }
       }
       return true;
-    }
-
-    /**
-    * EXPERIMENTAL: pairwise compatibility test exactly as described in
-    * Pellerin, Johnen, Remacle, "Identifying combinations of tetrahedra
-    * into hexahedra: a vertex based strategy", IMR26 2017, section on
-    * hex-dominant mesh generation: "Two hexahedra of H are compatible
-    * if their intersection is either empty or an element of their
-    * boundary: a shared vertex, a shared edge, or a shared quadrilateral
-    * face. [...] If the two hexahedra share one, two, or four vertices,
-    * then we check that the corresponding vertex, edge, or face is
-    * indeed on the boundary of both hexahedra. If the two hexahedra
-    * share three vertices, they cannot be compatible." Unlike the
-    * E/D_Q/D_H bookkeeping above (built for the more general hex +
-    * prism + pyramid combinatorial search), this never looks at face
-    * diagonals at all -- only at whether the shared vertex set is a
-    * genuine edge/face of *both* hexes.
-    */
-    bool isCellCompatiblePaper2017(const HXTCombineCell& cell) const
-    {
-      if (oneInteriorTetSelected(cell)) return false;
-
-      std::set<CellTag> neighbors;
-      for (unsigned int i = 0; i < cell.nbVertices(); ++i)
-        for (CellTag nb : vertexToSelected_[cell.vertexes[i]])
-          if (typeOf(nb) == HEX) neighbors.insert(nb);
-
-      std::vector<VertexIndex> shared;
-      for (CellTag nbId : neighbors) {
-        const HXTCombineCell other = selectedCell(nbId);
-        shared.clear();
-        for (unsigned int i = 0; i < cell.nbVertices(); ++i)
-          if (other.hasVertex(cell.vertexes[i])) shared.push_back(cell.vertexes[i]);
-
-        if (shared.size() <= 1) continue;
-        if (shared.size() == 2) {
-          if (!isEdgeOfHex(cell, shared[0], shared[1]) ||
-              !isEdgeOfHex(other, shared[0], shared[1]))
-            return false;
-        }
-        else if (shared.size() == 4) {
-          if (!isFaceOfHex(cell, shared) || !isFaceOfHex(other, shared))
-            return false;
-        }
-        else {
-          // 3 shared vertices (explicitly ruled out by the paper), or
-          // more than 4 (not covered -- treated conservatively).
-          return false;
-        }
-      }
-      return true;
-    }
-
-    static bool isEdgeOfHex(const HXTCombineCell& h, VertexIndex a, VertexIndex b)
-    {
-      for (unsigned int e = 0; e < Hex::nbEdges; ++e) {
-        VertexIndex v0 = h.vertex(Hex::edgeVertex[e][0]);
-        VertexIndex v1 = h.vertex(Hex::edgeVertex[e][1]);
-        if ((v0 == a && v1 == b) || (v0 == b && v1 == a)) return true;
-      }
-      return false;
-    }
-
-    static bool isFaceOfHex(const HXTCombineCell& h, const std::vector<VertexIndex>& verts4)
-    {
-      std::array<VertexIndex, 4> sortedIn;
-      std::copy(verts4.begin(), verts4.end(), sortedIn.begin());
-      std::sort(sortedIn.begin(), sortedIn.end());
-      for (unsigned int f = 0; f < Hex::nbQuadFacets; ++f) {
-        std::array<VertexIndex, 4> fv = {
-          h.vertex(Hex::facetVertex[f][0]), h.vertex(Hex::facetVertex[f][1]),
-          h.vertex(Hex::facetVertex[f][2]), h.vertex(Hex::facetVertex[f][3]) };
-        std::sort(fv.begin(), fv.end());
-        if (fv == sortedIn) return true;
-      }
-      return false;
     }
 
     bool oneInteriorTetSelected(const HXTCombineCell& cell) const {
