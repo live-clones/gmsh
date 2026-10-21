@@ -32,7 +32,6 @@
 #endif
 
 #if defined(HAVE_DOMHEX)
-#include "pointInsertion.h"
 #include "surfaceFiller.h"
 #endif
 
@@ -1523,9 +1522,6 @@ void buildBackgroundMesh(GFace *gf, bool crossFieldClosestPoint,
                          std::map<MVertex *, MVertex *> *equivalence,
                          std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
-#if defined(HAVE_DOMHEX)
-  if(!old_algo_hexa()) return;
-#endif
   Msg::Debug("build background mesh (Bowyer Watson, fixed size) ...");
 
   quadsToTriangles(gf, 100000);

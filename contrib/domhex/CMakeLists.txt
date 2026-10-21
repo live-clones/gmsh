@@ -5,17 +5,8 @@
 
 set(SRC
   directions3D.cpp
-  simple3D.cpp
-  pointInsertion.cpp
   pointInsertionFlat.cpp
-  pointInsertionRTreeTools.cpp
-  yamakawa.cpp
-  ThinLayer.cpp
   surfaceFiller.cpp
-  BGMBase.cpp
-  BackgroundMesh2D.cpp
-  BackgroundMesh3D.cpp
-  BackgroundMeshManager.cpp
 )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

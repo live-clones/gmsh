@@ -53,9 +53,6 @@
 #include "meshQuantize2.h"
 
 #if defined(HAVE_DOMHEX)
-#include "simple3D.h"
-// #include "yamakawa.h"
-#include "pointInsertion.h"
 #include "pointInsertionFlat.h"
 #endif
 
