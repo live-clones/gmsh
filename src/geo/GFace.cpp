@@ -99,6 +99,16 @@ int GFace::delEdge(GEdge *edge)
   return orientation;
 }
 
+// Whether the curve is already used with this sign: a curve can be used twice,
+// with opposite signs (the seam of a periodic surface)
+static bool hasEdge(const std::vector<GEdge *> &edges,
+                    const std::vector<int> &dirs, GEdge *ge, int sign)
+{
+  for(std::size_t i = 0; i < edges.size(); i++)
+    if(edges[i] == ge && (i < dirs.size() ? dirs[i] : 1) == sign) return true;
+  return false;
+}
+
 void GFace::setBoundEdges(const std::vector<int> &tagEdges)
 {
   std::vector<GEdge *> e;
@@ -123,20 +133,21 @@ void GFace::setBoundEdges(const std::vector<int> &tagEdges,
   if(signEdges.size() != tagEdges.size()) {
     Msg::Error("Wrong number of curve signs in surface %d", tag());
     setBoundEdges(tagEdges);
+    return;
   }
-  for(std::vector<int>::size_type i = 0; i < tagEdges.size(); i++) {
+  std::vector<GEdge *> edges;
+  std::vector<int> signs;
+  for(std::size_t i = 0; i < tagEdges.size(); i++) {
     GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge) {
-      if(std::find(l_edges.begin(), l_edges.end(), ge) == l_edges.end()) {
-        l_edges.push_back(ge);
-        l_dirs.push_back(signEdges[i]);
-        ge->addFace(this);
-      }
+      edges.push_back(ge);
+      signs.push_back(signEdges[i]);
     }
     else {
       Msg::Error("Unknown curve %d in surface %d", tagEdges[i], tag());
     }
   }
+  setBoundEdges(edges, signs);
 }
 
 void GFace::setBoundEdges(const std::vector<GEdge *> &edges,
@@ -144,10 +155,10 @@ void GFace::setBoundEdges(const std::vector<GEdge *> &edges,
 {
   for(std::size_t i = 0; i < edges.size(); i++) {
     GEdge *ge = edges[i];
-    if(std::find(l_edges.begin(), l_edges.end(), ge) != l_edges.end())
-      continue;
+    const int sign = i < signEdges.size() ? signEdges[i] : 1;
+    if(hasEdge(l_edges, l_dirs, ge, sign)) continue;
     l_edges.push_back(ge);
-    l_dirs.push_back(i < signEdges.size() ? signEdges[i] : 1);
+    l_dirs.push_back(sign);
     ge->addFace(this);
   }
 }
