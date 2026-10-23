@@ -550,7 +550,11 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   // QuadQS keeps its own background triangulation scaling.
   const double edgeScaling =
     packing ? 1. : CTX::instance()->mesh.quadqsScalingOnTriangulation;
-  if(!surfaceMeshed) { generateMeshWithSpecialParameters(gm, edgeScaling); }
+  if(!surfaceMeshed) {
+    const double w = TimeOfDay(), c = Cpu();
+    generateMeshWithSpecialParameters(gm, edgeScaling);
+    AddMeshStageTime("background mesh", TimeOfDay() - w, Cpu() - c);
+  }
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
   bool overwrite = true;
@@ -606,7 +610,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     global_size_map.reserve(3 * ntris);
 
     int nthreads = crossFieldHeatSolverUsesMumps() ? 1 : getNumThreads();
-    const double tCrossFields = TimeOfDay();
+    const double tCrossFields = TimeOfDay(), cCrossFields = Cpu();
     int nbCrossFields = 0;
     std::size_t nbCrossFieldTriangles = 0;
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads) reduction(+ : failedCrossFields, nbCrossFields, nbCrossFieldTriangles)
@@ -781,6 +785,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
               nbCrossFields, nbCrossFields == 1 ? "" : "s",
               nbCrossFieldTriangles, global_singularity_list.size(),
               TimeOfDay() - tCrossFields);
+    AddMeshStageTime("cross field", TimeOfDay() - tCrossFields,
+                     Cpu() - cCrossFields);
   }
 
   if(failedCrossFields) {

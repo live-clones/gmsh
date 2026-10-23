@@ -6603,6 +6603,18 @@ double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombine3DConformity;
 }
 
+double opt_mesh_recombine3d_smoothing(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DSmoothing = (int)val;
+  return CTX::instance()->mesh.recombine3DSmoothing;
+}
+
+double opt_mesh_recombine3d_minimum_quality(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DMinimumQuality = val;
+  return CTX::instance()->mesh.recombine3DMinimumQuality;
+}
+
 double opt_mesh_flat_refine_2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

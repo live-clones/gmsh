@@ -32,6 +32,17 @@ namespace HXTCombine {
   *  Internal to Combine module.
   *  Kept to not depend a 100% on HXTMesh which is not a stable structure yet.
   */
+  /** A view of consecutive vertex indices */
+  struct VertexRange {
+    const VertexIndex *b, *e;
+    const VertexIndex* begin() const { return b; }
+    const VertexIndex* end() const { return e; }
+    std::size_t size() const { return e - b; }
+    bool empty() const { return b == e; }
+    VertexIndex operator[](std::size_t i) const { return b[i]; }
+    operator std::vector<VertexIndex>() const { return std::vector<VertexIndex>(b, e); }
+  };
+
   class MeshStore {
   public:
     /** To be compatible with HXTMesh there are 4 double per vertex */
@@ -215,13 +226,24 @@ namespace HXTCombine {
     * Returns the sorted list DECREASING VALUES
     * of vertices connected to \param v through an edge
     */
-    inline const vector<VertexIndex>& verticesAroundVertex(VertexIndex v) const {
-      return vertexToVertices_[v];
+    inline VertexRange verticesAroundVertex(VertexIndex v) const {
+      return {vertexToVertices_.data() + vertexToVerticesStart_[v],
+              vertexToVertices_.data() + vertexToVerticesStart_[v + 1]};
     }
 
     /**
     * Returns all tets incident to a vertex
     */
+    // f(t) for each tet t around v, in the order of tetsAroundVertex, until
+    // f returns true; returns whether one did
+    template <class F>
+    inline bool anyTetAroundVertex(VertexIndex v, const F& f) const {
+      for (TetCornerIndex c = vertexToTetCorner_[v]; c != NO_ID;
+           c = nextTetCornerAroundVertex_[c])
+        if (f((TetIndex)(c/4))) return true;
+      return false;
+    }
+
     inline vector<TetIndex> tetsAroundVertex(VertexIndex v) const {
       vector<TetIndex> result;
       TetCornerIndex c = vertexToTetCorner_[v];
@@ -238,20 +260,21 @@ namespace HXTCombine {
     * When identifying candidate hexahedra in the mesh, this is the critical test.
     */
     inline bool hasFacet(const trindex& triangle) const {
-      const auto &v = facets_[triangle.indices[0]];
+      const auto begin = facets_.begin() + facetStart_[triangle.indices[0]];
+      const auto end = facets_.begin() + facetStart_[triangle.indices[0] + 1];
       const auto s = std::make_pair(triangle.indices[1], triangle.indices[2]);
-      const auto it = std::lower_bound(v.begin(), v.end(), s);
-      return it != v.end() && *it==s;
+      const auto it = std::lower_bound(begin, end, s);
+      return it != end && *it==s;
     }
 
-    inline const vector<VertexIndex>& verticesAroundVertices(VertexIndex v0) const {
+    inline VertexRange verticesAroundVertices(VertexIndex v0) const {
       return verticesAroundVertex(v0);
     }
 
     inline vector<VertexIndex> verticesAroundVertices(VertexIndex v0, VertexIndex v1) const
     {
-      const vector<VertexIndex>& first = verticesAroundVertices(v0);
-      const vector<VertexIndex>& second = verticesAroundVertices(v1);
+      const VertexRange first = verticesAroundVertices(v0);
+      const VertexRange second = verticesAroundVertices(v1);
       vector<VertexIndex> result;
       result.reserve(first.size());
       std::set_intersection(first.begin(), first.end(), second.begin(), second.end(),
@@ -262,7 +285,7 @@ namespace HXTCombine {
       VertexIndex v0, VertexIndex v1, VertexIndex v2) const 
     {
       const vector<VertexIndex> first = verticesAroundVertices(v0, v1);
-      const vector<VertexIndex>& second = verticesAroundVertices(v2);
+      const VertexRange second = verticesAroundVertices(v2);
       vector<VertexIndex> result;
       result.reserve(first.size());
       std::set_intersection(first.begin(), first.end(), second.begin(), second.end(),
@@ -310,13 +333,15 @@ namespace HXTCombine {
     /**
     * Neighboring vertices for each vertex are sorted by DECREASING value
     */
-    vector<vector<VertexIndex>>vertexToVertices_;
+    vector<std::size_t> vertexToVerticesStart_;
+    vector<VertexIndex> vertexToVertices_;
 
     /**
     * All the facets of the mesh
     * Why are we not using anymore the hash table of trindex ? I cannot remember ... JP
     */
-    std::vector<std::vector<std::pair<VertexIndex, VertexIndex>>> facets_;
+    std::vector<std::size_t> facetStart_; // facets by smallest vertex
+    std::vector<std::pair<VertexIndex, VertexIndex>> facets_;
   };
 
 

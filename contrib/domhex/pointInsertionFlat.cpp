@@ -9,7 +9,6 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
-#include <cstring>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -19,7 +18,6 @@
 #include "GRegion.h"
 #include "GFace.h"
 #include "MElement.h"
-#include "MElementOctree.h"
 #include "MTetrahedron.h"
 #include "BackgroundMeshTools.h"
 #include "meshGRegionDelaunay.h"
@@ -32,14 +30,14 @@
 #include "GmshMessage.h"
 #include "Numeric.h"
 #include "OS.h"
+#include "Generator.h"
 #include "robustPredicates.h"
 #include "meshGRegionParallelDelaunay.h"
 
 namespace {
 
 // k1*h is the minimal distance between two accepted points, k2*h the
-// minimal distance to the boundary (unused here, see below -- disabled
-// upstream too).
+// minimal distance to the boundary
 const double k1 = 0.61;
 
 // One accepted (or candidate) point, everything a plain double/int: no
@@ -50,104 +48,10 @@ struct FlatPoint {
   // the local frame, row-major 3x3 (m[0..2]=row1, m[3..5]=row2, m[6..8]=row3)
   double m[9];
   int layer;
-  int limit; // -1: unbounded
-  int tet; // a tet of the region holding the point (-1: unknown)
   MVertex *v; // the boundary vertex of a seed, null for the spawns
   // the 2 nearest points of the boundary frame field (the frame comes from
   // them), the bound of the search of a spawn's
   std::size_t near[2];
-};
-
-// Point location in the region's tets by walking from a nearby tet across
-// the face opposite to its most negative barycentric coordinate. The spawns
-// land a distance h from their parent, a few tets away, whereas the octree
-// returns hundreds of overlapping boxes in the long tets of the boundary-only
-// Delaunay mesh of a thin region (most of the fill time in a spherical
-// shell). A tet is accepted with the octree's own test (xyz2uvw and isInside
-// with the same tolerance), so the walk finds a tet exactly when the octree
-// does, except when it leaves a non-convex region or meets a flat tet: it
-// then gives up and the caller falls back to the octree.
-class TetWalker {
-public:
-  TetWalker(const std::vector<MTetrahedron *> &tets, double tol)
-    : _tets(tets), _tol(tol), _neighbors(4 * tets.size(), -1),
-      _flat(tets.size(), false)
-  {
-    struct Facet {
-      std::array<std::size_t, 3> key;
-      int tetFace;
-    };
-    std::vector<Facet> facets(4 * tets.size());
-    for(std::size_t t = 0; t < tets.size(); t++) {
-      double mat[3][3];
-      tets[t]->getMat(mat);
-      _flat[t] = (det3x3(mat) == 0.);
-      for(int i = 0; i < 4; i++) {
-        Facet &f = facets[4 * t + i];
-        for(int j = 0, k = 0; j < 4; j++)
-          if(j != i) f.key[k++] = tets[t]->getVertex(j)->getNum();
-        std::sort(f.key.begin(), f.key.end());
-        f.tetFace = (int)(4 * t + i);
-      }
-      for(int i = 0; i < 4; i++) {
-        MVertex *v = tets[t]->getVertex(i);
-        if(!_tetOf.count(v)) _tetOf[v] = (int)t;
-      }
-    }
-    std::sort(facets.begin(), facets.end(),
-              [](const Facet &a, const Facet &b) {
-                return a.key != b.key ? a.key < b.key : a.tetFace < b.tetFace;
-              });
-    for(std::size_t i = 0; i + 1 < facets.size(); i++) {
-      if(facets[i].key != facets[i + 1].key) continue;
-      _neighbors[facets[i].tetFace] = facets[i + 1].tetFace / 4;
-      _neighbors[facets[i + 1].tetFace] = facets[i].tetFace / 4;
-      i++;
-    }
-    for(std::size_t t = 0; t < tets.size(); t++) _index[tets[t]] = (int)t;
-  }
-
-  // the first tet holding v, or -1
-  int tetOf(MVertex *v) const
-  {
-    auto it = _tetOf.find(v);
-    return it == _tetOf.end() ? -1 : it->second;
-  }
-
-  // the index of e, or -1
-  int indexOf(MElement *e) const
-  {
-    auto it = _index.find(e);
-    return it == _index.end() ? -1 : it->second;
-  }
-
-  // a tet holding (x,y,z) reached from start, or -1 if the walk gives up
-  int walk(int start, double x, double y, double z) const
-  {
-    const int maxSteps = 10000;
-    double xyz[3] = {x, y, z}, uvw[3];
-    int t = start;
-    for(int step = 0; t >= 0 && step < maxSteps; step++) {
-      if(_flat[t]) return -1;
-      _tets[t]->xyz2uvw(xyz, uvw);
-      if(_tets[t]->isInside(uvw[0], uvw[1], uvw[2], _tol)) return t;
-      double lambda[4] = {1. - uvw[0] - uvw[1] - uvw[2], uvw[0], uvw[1],
-                          uvw[2]};
-      int worst = 0;
-      for(int i = 1; i < 4; i++)
-        if(lambda[i] < lambda[worst]) worst = i;
-      t = _neighbors[4 * t + worst];
-    }
-    return -1;
-  }
-
-private:
-  const std::vector<MTetrahedron *> &_tets;
-  double _tol;
-  std::vector<int> _neighbors; // across the face opposite to each vertex
-  std::vector<bool> _flat;
-  std::unordered_map<MVertex *, int> _tetOf;
-  std::unordered_map<MElement *, int> _index;
 };
 
 // A uniform grid over the region's bounding box, cell size fixed once from
@@ -367,51 +271,19 @@ void setIdentity(double m[9])
 void metricAt(double x, double y, double z, double m[9], std::size_t near[2],
               const std::size_t *hint = nullptr)
 {
-  if(CTX::instance()->mesh.smoothCrossField) {
-    near[0] = near[1] = (std::size_t)-1;
-    STensor3 t = Frame_field::findCross(x, y, z);
-    m[0] = t.get_m11(); m[1] = t.get_m21(); m[2] = t.get_m31();
-    m[3] = t.get_m12(); m[4] = t.get_m22(); m[5] = t.get_m32();
-    m[6] = t.get_m13(); m[7] = t.get_m23(); m[8] = t.get_m33();
-  }
-  else {
-    STensor3 t = Frame_field::search(x, y, z, near, hint);
-    m[0] = t.get_m11(); m[1] = t.get_m21(); m[2] = t.get_m31();
-    m[3] = t.get_m12(); m[4] = t.get_m22(); m[5] = t.get_m32();
-    m[6] = t.get_m13(); m[7] = t.get_m23(); m[8] = t.get_m33();
-  }
-}
-
-// same magic-tag-prefix convention as Filler::code()
-int layerLimit(int tag)
-{
-  std::string s = std::to_string(tag);
-  if(s.size() >= 5) {
-    if(s[0] == '1' && s[1] == '1' && s[2] == '1' && s[3] == '1' &&
-       s[4] == '1')
-      return 0;
-    if(s[0] == '2' && s[1] == '2' && s[2] == '2' && s[3] == '2' &&
-       s[4] == '2')
-      return 1;
-  }
-  return -1;
+  STensor3 t = Frame_field::search(x, y, z, near, hint);
+  m[0] = t.get_m11(); m[1] = t.get_m21(); m[2] = t.get_m31();
+  m[3] = t.get_m12(); m[4] = t.get_m22(); m[5] = t.get_m32();
+  m[6] = t.get_m13(); m[7] = t.get_m23(); m[8] = t.get_m33();
 }
 
 // A box of half-width k2*h centered on (x,y,z) must stay fully inside the
-// volume mesh's element octree. Both Filler::treat_region
-// (simple3D.cpp:far_from_boundary) and the dead Filler3D
-// (pointInsertionRTreeTools.cpp:far_from_boundary_3D) hardcode this check
-// to always accept ("return 1;"/"return true;"); enabling it here removed
-// the last source of TetGen boundary-recovery failures once boundary
-// points were no longer re-embedded as duplicates (see the layer==0 skip
-// below): candidates landing too close to a boundary facet -- without
-// necessarily being close to any single boundary *vertex*, which the
-// point-to-point spacing check alone cannot catch -- were still producing
-// degenerate local configurations. Verified: 35/35 clean runs with this
-// enabled vs. roughly half failing (cleanly, no crash) without it.
+// volume: a candidate too close to a boundary facet (not necessarily to a
+// boundary vertex, which the spacing test alone cannot see) makes the
+// boundary recovery of the tetrahedralization fail.
 template <class Locate>
-bool farFromBoundary(const Locate &locate, int hint, double x, double y,
-                     double z, double h)
+bool farFromBoundary(const Locate &locate, double x, double y, double z,
+                     double h)
 {
   const double k2 = 0.5;
   double box = k2 * h;
@@ -420,17 +292,13 @@ bool farFromBoundary(const Locate &locate, int hint, double x, double y,
     {x, y - box, z}, {x, y, z + box}, {x, y, z - box},
   };
   for(auto &p : probes)
-    if(locate(hint, p[0], p[1], p[2]) == -1) return false;
+    if(locate(p[0], p[1], p[2]) == -1) return false;
   return true;
 }
 
-// A degenerate cross-field/size query (e.g. a zero-length edge feeding a
-// division in Frame_field's smoothing) has been seen to return a NaN
-// metric or size. Since any comparison with NaN is false, the spacing
-// rejection test below would then never consider such a point "too close"
-// to anything -- so it (and its own spawned children, equally NaN) get
-// accepted unconditionally, forever: an unbounded point-count runaway
-// rather than a clean failure. Reject non-finite points outright instead.
+// A point with a non-finite size or frame would never be found too close to
+// another one (any comparison with NaN is false): it and its children would
+// be accepted forever
 bool isFinitePoint(double h, const double m[9])
 {
   if(!std::isfinite(h)) return false;
@@ -443,70 +311,21 @@ bool isFinitePoint(double h, const double m[9])
 
 void fillRegionFlat(GRegion *gr, CombineFrames *frames)
 {
-  int numSmooth = CTX::instance()->mesh.smoothCrossField;
-  if(numSmooth && gr->dim() == 3) {
-    Frame_field::initRegion(gr, numSmooth);
-    Frame_field::smoothRegion(gr, numSmooth);
-  }
-
   Frame_field::init_region(gr);
 
-  // Sizes follow gmsh's general 3D scheme (as in insertVerticesInRegion):
-  // the background size, clamped by the sizes extended from the boundary
-  // mesh and interpolated on the current tets.
-  const bool extend = Extend2dMeshIn3dVolumes();
-  std::unordered_map<MVertex *, double> vSizes;
-  if(extend) computeMeshSizesFromBoundary(gr, vSizes);
-  auto sizeAt = [&](MElement *e, double x, double y, double z) {
-    double lc = BGM_MeshSize(gr, 0, 0, x, y, z);
-    if(!extend || !e) return lc;
-    double xyz[3] = {x, y, z}, uvw[3];
-    e->xyz2uvw(xyz, uvw);
-    double w[4] = {1. - uvw[0] - uvw[1] - uvw[2], uvw[0], uvw[1], uvw[2]};
-    double lcb = 0.;
-    for(int i = 0; i < 4; i++) {
-      auto it = vSizes.find(e->getVertex(i));
-      if(it == vSizes.end()) return lc;
-      lcb += w[i] * it->second;
-    }
-    return std::min(lc, lcb);
-  };
-  auto sizeAtVertex = [&](MVertex *v) {
-    double lc = BGM_MeshSize(gr, 0, 0, v->x(), v->y(), v->z());
-    if(!extend) return lc;
-    auto it = vSizes.find(v);
-    return it == vSizes.end() ? lc : std::min(lc, it->second);
-  };
-
-  // Only this region's own tets: a model-wide octree lets the front leak
-  // into neighbouring, already-meshed regions.
-  std::vector<MElement *> regionElements(gr->tetrahedra.begin(),
-                                         gr->tetrahedra.end());
-  MElementOctree *octree =
-    regionElements.empty() ? nullptr : new MElementOctree(regionElements);
-  TetWalker walker(gr->tetrahedra,
-                   CTX::instance()->mesh.toleranceReferenceElement);
-  // the index of a tet holding (x,y,z), or -1: by a walk from the tet hint,
-  // else by the octree (with the same tolerance)
-  auto locate = [&](int hint, double x, double y, double z) {
-    if(hint >= 0) {
-      int t = walker.walk(hint, x, y, z);
-      if(t >= 0) return t;
-    }
-    MElement *e = octree ? octree->find(x, y, z, 3, true) : nullptr;
-    return e ? walker.indexOf(e) : -1;
+  // the background size (the sizes are not extended from the boundary)
+  auto sizeAt = [&](double x, double y, double z) {
+    return BGM_MeshSize(gr, 0, 0, x, y, z);
   };
 
   // seed the front from the boundary mesh (points, then curves, then
-  // surfaces, matching Filler::treat_region's ordering)
+  // surfaces)
   std::vector<GFace *> faces = gr->faces();
   std::vector<MVertex *> boundaryVertices;
-  std::unordered_map<MVertex *, int> limitOf;
   {
     std::vector<MVertex *> temp;
     std::unordered_map<MVertex *, bool> seen;
     for(GFace *gf : faces) {
-      int limit = layerLimit(gf->tag());
       for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
         MElement *elt = gf->getMeshElement(i);
         for(std::size_t j = 0; j < elt->getNumVertices(); j++) {
@@ -515,7 +334,6 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
             seen[v] = true;
             temp.push_back(v);
           }
-          limitOf[v] = limit;
         }
       }
     }
@@ -560,12 +378,10 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
   for(MVertex *v : boundaryVertices) {
     FlatPoint p;
     p.x = v->x(); p.y = v->y(); p.z = v->z();
-    p.h = sizeAtVertex(v);
+    p.h = sizeAt(p.x, p.y, p.z);
     metricAt(p.x, p.y, p.z, p.m, p.near);
     if(!isFinitePoint(p.h, p.m)) continue;
     p.layer = 0;
-    p.limit = limitOf[v];
-    p.tet = walker.tetOf(v);
     p.v = v;
     seeds.push_back(p);
     h0 += p.h;
@@ -575,25 +391,20 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
 
   // The grid of the cells inside the region, outside, or across its
   // boundary (overlapped by a boundary triangle, widened), and the
-  // triangles overlapping each cell across it. Away from the boundary, the
-  // walks are long across the tets of the boundary points only, the more so
-  // as the mesh is finer. Near it, the tets are needed only to interpolate
-  // the sizes extended from the boundary: otherwise, a point is inside if
-  // a segment to a point of known side crosses the boundary triangles an
-  // even number of times (or an odd one from outside).
-  const bool withTets = extend;
+  // triangles overlapping each cell across it. In a cell across the
+  // boundary, a point is inside if a segment to a point of known side
+  // crosses the boundary triangles an even number of times (or an odd one
+  // from outside).
   InsideGrid grid(gr->bounds(), std::max(h0, 1e-12));
   std::vector<std::array<double, 9> > triangles;
   std::unordered_map<int64_t, uint32_t> rowOf; // the boundary cells
   std::vector<std::size_t> rowStart;
   std::vector<uint32_t> rowTriangles;
-  std::unordered_map<int64_t, int> startTet;
   {
     const double margin =
       std::max(1.e-2 * grid.cellSize(), 1.e-5 * gr->bounds().diag());
     // the triangles of the boundary (a face on both sides of the region
     // twice: it is crossed twice), quads split
-    std::vector<MVertex *> starts;
     for(GFace *gf : faces)
       for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
         MElement *e = gf->getMeshElement(i);
@@ -607,7 +418,6 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
             t[3 * j + 2] = v[j]->z();
           }
           triangles.push_back(t);
-          starts.push_back(v[0]);
         }
       }
     auto boxOf = [&](const std::array<double, 9> &t, double lo[3], double hi[3]) {
@@ -620,13 +430,11 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     for(std::size_t i = 0; i < triangles.size(); i++) {
       double lo[3], hi[3];
       boxOf(triangles[i], lo, hi);
-      const int t = withTets ? walker.tetOf(starts[i]) : -1;
       grid.forEachCell(lo, hi, [&](int64_t c) {
         grid.setBoundary(c);
         auto it = rowOf.emplace(c, (uint32_t)count.size());
         if(it.second) count.push_back(0);
         count[it.first->second]++;
-        if(t >= 0) startTet.emplace(c, t);
       });
     }
     rowStart.assign(count.size() + 1, 0);
@@ -690,11 +498,7 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     pair[1] = c2;
     return crossingsIn(q, r, pair);
   };
-  if(withTets)
-    grid.classify(
-      [&](double x, double y, double z) { return locate(-1, x, y, z) >= 0; });
-  else
-    // from a point of the margin of the grid, outside, on the same row:
+  // from a point of the margin of the grid, outside, on the same row:
     // the segment lies in the cells of the row
     grid.classify([&](double x, double y, double z) {
       const double h = grid.cellSize();
@@ -712,64 +516,62 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
   // In each cell across the boundary, a point of known side: its center (or
   // a point near it off the planes of the triangles), from a neighbouring
   // cell of known side, the segment lying in the two cells
-  std::vector<std::array<double, 3> > reference(withTets ? 0 : rowStart.size() - 1);
+  std::vector<std::array<double, 3> > reference(rowStart.size() - 1);
   std::vector<char> referenceSide(reference.size(), -1); // -1: unknown
-  if(!withTets) {
-    std::vector<int64_t> cellOfRow(reference.size());
-    for(const auto &it : rowOf) cellOfRow[it.second] = it.first;
-    auto neighbours = [&](int64_t c, int64_t next[6]) {
-      double p[3];
-      grid.centerOf(c, p);
-      const double h = grid.cellSize();
-      const double d[6][3] = {{h, 0, 0}, {-h, 0, 0}, {0, h, 0}, {0, -h, 0}, {0, 0, h}, {0, 0, -h}};
-      for(int k = 0; k < 6; k++) next[k] = grid.cellOf(p[0] + d[k][0], p[1] + d[k][1], p[2] + d[k][2]);
-    };
-    // the side of a point of a neighbour, -1 if unknown
-    auto known = [&](int64_t c, double r[3]) {
-      const unsigned char state = grid.state(c);
-      if(state == InsideGrid::INSIDE || state == InsideGrid::OUTSIDE) {
-        grid.centerOf(c, r);
-        return state == InsideGrid::INSIDE ? 1 : 0;
-      }
-      const uint32_t row = rowOf[c];
-      if(referenceSide[row] < 0) return -1;
-      for(int k = 0; k < 3; k++) r[k] = reference[row][k];
-      return (int)referenceSide[row];
-    };
-    auto resolve = [&](uint32_t row) {
-      const int64_t c = cellOfRow[row];
-      int64_t next[6];
-      neighbours(c, next);
-      double center[3];
-      grid.centerOf(c, center);
-      const double h = grid.cellSize();
-      const double nudge[4][3] = {{0, 0, 0}, {.11, .07, .03}, {-.05, .13, -.09}, {.08, -.12, .1}};
-      for(int64_t n : next) {
-        if(n < 0) continue;
-        double r[3];
-        const int side = known(n, r);
-        if(side < 0) continue;
-        for(auto &u : nudge) {
-          const double q[3] = {center[0] + u[0] * h, center[1] + u[1] * h, center[2] + u[2] * h};
-          const int parity = crossings(q, r, c, n);
-          if(parity < 0) continue;
-          reference[row] = {q[0], q[1], q[2]};
-          referenceSide[row] = side != parity;
-          return true;
-        }
-      }
-      return false;
-    };
-    // breadth first from the cells of known side
-    std::vector<uint32_t> front, nextFront;
-    for(uint32_t row = 0; row < reference.size(); row++) front.push_back(row);
-    while(!front.empty()) {
-      nextFront.clear();
-      for(uint32_t row : front)
-        if(referenceSide[row] < 0 && !resolve(row)) nextFront.push_back(row);
-      if(nextFront.size() == front.size()) break; // no progress
-      front.swap(nextFront);
+  std::vector<int64_t> cellOfRow(reference.size());
+  for(const auto &it : rowOf) cellOfRow[it.second] = it.first;
+  auto neighbours = [&](int64_t c, int64_t next[6]) {
+    double p[3];
+    grid.centerOf(c, p);
+    const double h = grid.cellSize();
+    const double d[6][3] = {{h, 0, 0}, {-h, 0, 0}, {0, h, 0}, {0, -h, 0}, {0, 0, h}, {0, 0, -h}};
+    for(int k = 0; k < 6; k++) next[k] = grid.cellOf(p[0] + d[k][0], p[1] + d[k][1], p[2] + d[k][2]);
+  };
+  // the side of a point of a neighbour, -1 if unknown
+  auto known = [&](int64_t c, double r[3]) {
+    const unsigned char state = grid.state(c);
+    if(state == InsideGrid::INSIDE || state == InsideGrid::OUTSIDE) {
+      grid.centerOf(c, r);
+      return state == InsideGrid::INSIDE ? 1 : 0;
     }
+    const uint32_t row = rowOf[c];
+    if(referenceSide[row] < 0) return -1;
+    for(int k = 0; k < 3; k++) r[k] = reference[row][k];
+    return (int)referenceSide[row];
+  };
+  auto resolve = [&](uint32_t row) {
+    const int64_t c = cellOfRow[row];
+    int64_t next[6];
+    neighbours(c, next);
+    double center[3];
+    grid.centerOf(c, center);
+    const double h = grid.cellSize();
+    const double nudge[4][3] = {{0, 0, 0}, {.11, .07, .03}, {-.05, .13, -.09}, {.08, -.12, .1}};
+    for(int64_t n : next) {
+      if(n < 0) continue;
+      double r[3];
+      const int side = known(n, r);
+      if(side < 0) continue;
+      for(auto &u : nudge) {
+        const double q[3] = {center[0] + u[0] * h, center[1] + u[1] * h, center[2] + u[2] * h};
+        const int parity = crossings(q, r, c, n);
+        if(parity < 0) continue;
+        reference[row] = {q[0], q[1], q[2]};
+        referenceSide[row] = side != parity;
+        return true;
+      }
+    }
+    return false;
+  };
+  // breadth first from the cells of known side
+  std::vector<uint32_t> front, nextFront;
+  for(uint32_t row = 0; row < reference.size(); row++) front.push_back(row);
+  while(!front.empty()) {
+    nextFront.clear();
+    for(uint32_t row : front)
+      if(referenceSide[row] < 0 && !resolve(row)) nextFront.push_back(row);
+    if(nextFront.size() == front.size()) break; // no progress
+    front.swap(nextFront);
   }
   // inside, by the parity from the reference of the cell (an endpoint in the
   // plane of a triangle crossing it is on the boundary: inside, as for the
@@ -783,23 +585,17 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     if(parity < 0) return true;
     return (referenceSide[row] == 1) != (parity == 1);
   };
-  // the index of a tet holding (x,y,z) near the boundary (-2 without tets),
-  // -2 if it is inside away from it, -1 if outside
-  auto locateInGrid = [&](int hint, double x, double y, double z) {
+  // -2 if (x,y,z) is inside, -1 if outside
+  auto locateInGrid = [&](double x, double y, double z) {
     const int64_t c = grid.cellOf(x, y, z);
     if(c < 0) return -1;
     const unsigned char state = grid.state(c);
     if(state == InsideGrid::INSIDE) return -2;
     if(state == InsideGrid::OUTSIDE) return -1;
-    if(!withTets) return insideByParity(x, y, z) ? -2 : -1;
-    if(hint < 0) {
-      auto it = startTet.find(c);
-      if(it != startTet.end()) hint = it->second;
-    }
-    return locate(hint, x, y, z);
+    return insideByParity(x, y, z) ? -2 : -1;
   };
 
-  double t0 = TimeOfDay();
+  double t0 = TimeOfDay(), c0 = Cpu();
   for(const FlatPoint &p : seeds) {
     uint32_t idx = (uint32_t)pts.size();
     pts.push_back(p);
@@ -814,15 +610,12 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     // snapshot: pts may reallocate as we push new points below
     FlatPoint parent = pts[parentIdx];
 
-    if(parent.limit != -1 && parent.layer >= parent.limit) continue;
-
     if(count % 1000 == 0)
       Msg::Debug("%d points inserted -- queue size %d", (int)pts.size(),
                  (int)(queue.size() - qhead));
     count++;
 
-    // 6 candidate spawns along +-(local frame axes), exactly as
-    // Filler::create_spawns
+    // 6 candidate spawns along +-(local frame axes)
     double dir[6][3] = {
       {parent.m[0], parent.m[1], parent.m[2]},
       {-parent.m[0], -parent.m[1], -parent.m[2]},
@@ -837,15 +630,11 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
       double y = parent.y + parent.h * dir[i][1];
       double z = parent.z + parent.h * dir[i][2];
 
-      // the sizes extended from the boundary are interpolated in a tet
-      const int t = extend ? locate(parent.tet, x, y, z) :
-                             locateInGrid(parent.tet, x, y, z);
-      if(t == -1) continue;
-      MElement *e = t >= 0 ? gr->tetrahedra[t] : nullptr;
+      if(locateInGrid(x, y, z) == -1) continue;
 
       FlatPoint cand;
       cand.x = x; cand.y = y; cand.z = z;
-      cand.h = sizeAt(e, x, y, z);
+      cand.h = sizeAt(x, y, z);
       // most spawns land on an existing point: a neighbour closer than the
       // spacing radius in the Euclidean norm is closer in the frame of the
       // spawn too (unit rows), which is then not looked up (6 queries of the
@@ -860,8 +649,6 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
       metricAt(x, y, z, cand.m, cand.near, parent.near);
       if(!isFinitePoint(cand.h, cand.m)) continue;
       cand.layer = parent.layer + 1;
-      cand.limit = parent.limit;
-      cand.tet = t >= 0 ? t : -1;
       cand.v = nullptr;
 
       // cheap spacing test first: most spawns land on an existing point,
@@ -870,7 +657,7 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
       if(hash.hasNeighborWithin(pts, x, y, z, radius, cand.m, parentIdx))
         continue;
 
-      if(!farFromBoundary(locateInGrid, cand.tet, x, y, z, cand.h)) continue;
+      if(!farFromBoundary(locateInGrid, x, y, z, cand.h)) continue;
 
       uint32_t idx = (uint32_t)pts.size();
       pts.push_back(cand);
@@ -881,6 +668,7 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
 
   Msg::Info("Region %d: %d points inserted by the flat filler (Wall %gs)",
             gr->tag(), (int)pts.size(), TimeOfDay() - t0);
+  AddMeshStageTime("flat filler", TimeOfDay() - t0, Cpu() - c0);
 
   // Defensive near-duplicate cleanup: the spacing check above rejects
   // candidates closer than k1*h to an existing point, but a handful of
@@ -919,8 +707,6 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     }
   }
 
-  delete octree;
-
   deMeshGRegion deleter;
   deleter(gr);
 
@@ -957,10 +743,11 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     // the messages of the tetrahedralizer are for its debugging here
     const int verbosity = Msg::GetVerbosity();
     if(verbosity < 99) Msg::SetVerbosity(std::min(verbosity, 3));
-    const double t1 = TimeOfDay();
+    const double t1 = TimeOfDay(), c1 = Cpu();
     const bool ok =
       !meshGRegionParallelDelaunayWithPoints(gr, xyz, vertices, true);
     Msg::SetVerbosity(verbosity);
+    AddMeshStageTime("tetrahedralization", TimeOfDay() - t1, Cpu() - c1);
     if(ok) {
       Msg::Info("Region %d: %zu tetrahedra (pdel3d, optimized, Wall %gs)",
                 gr->tag(), gr->tetrahedra.size(), TimeOfDay() - t1);

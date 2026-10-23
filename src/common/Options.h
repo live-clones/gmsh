@@ -597,6 +597,8 @@ double opt_mesh_recombine_minimum_quality(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_level(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM);
+double opt_mesh_recombine3d_smoothing(OPT_ARGS_NUM);
+double opt_mesh_recombine3d_minimum_quality(OPT_ARGS_NUM);
 double opt_mesh_flat_refine_2d(OPT_ARGS_NUM);
 double opt_mesh_flat_refine_3d(OPT_ARGS_NUM);
 double opt_mesh_flat_optimize_3d(OPT_ARGS_NUM);

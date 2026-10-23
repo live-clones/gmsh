@@ -61,11 +61,6 @@ public:
   SBoundingBox3d bounds(bool fast = false);
   GPoint closestPoint(const SPoint3 &queryPoint,
                       const double initialGuess[2]) const;
-  GPoint closestPointFromTrustedGuess(const SPoint3 &queryPoint,
-                                      const double initialGuess[2]) const
-  {
-    return closestPoint(queryPoint, initialGuess);
-  }
   // also returns the normal of the triangle on which the point lies
   GPoint closestPoint(const SPoint3 &queryPoint, const double initialGuess[2],
                       SVector3 *normal) const;

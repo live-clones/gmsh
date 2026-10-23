@@ -52,6 +52,13 @@ public:
                                _gradBasis->dShapeIdealMat_dZ, nodesXYZ, normals,
                                invCond);
   }
+  // The range of the signed inverse condition number of a 3D element with at
+  // most 8 mapping nodes, as getSignedInvCondNum but without allocating and
+  // multiplying dynamic matrices, which dominates for such small elements
+  // (the vertex relocation of hex-dominant meshes). Returns false for other
+  // elements.
+  bool getSignedInvCondNumRange3D(const double (*nodesXYZ)[3], double &iCNMin,
+                                  double &iCNMax) const;
   inline void getInvCondNumAndGradients(const fullMatrix<double> &nodesXYZ,
                                         fullMatrix<double> &IDI) const
   {
