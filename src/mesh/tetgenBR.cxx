@@ -13871,13 +13871,15 @@ int tetgenmesh::removevertexbyflips(point steinerpt)
     point2tetorg(steinerpt, searchtet);
     loc = INTETRAHEDRON;
     removeflag = 1;
-    if (vt == FREEFACETVERTEX) {
+    if ((vt == FREEFACETVERTEX) || (vt == FREESEGVERTEX)) {
       // The 4-to-1 flip (flip41) replaces the subfaces at p by a single
-      //   subface, which needs exactly three subfaces at p. On a planar facet
-      //   this is always the case, but a Steiner point added on a subedge of
-      //   a non-planar surface mesh (whose edges are all segments) may have
-      //   four subfaces (a quadrilateral link), and flip41 would then read a
-      //   missing subface. Do not remove p in that case.
+      //   subface, which needs exactly three subfaces at p (or none, for a
+      //   segment vertex off any facet). On a planar facet this is always the
+      //   case, but a Steiner point added on a subedge of a non-planar
+      //   surface mesh (whose edges are all segments) may have four subfaces
+      //   (a quadrilateral link), as has a segment vertex between two
+      //   facets (two in each), and flip41 would then read a missing
+      //   subface. Do not remove p in these cases.
       wrktets[0] = searchtet; // [p,d,a,b]
       for (i = 0; i < 2; i++) {
         fnext(wrktets[i], wrktets[i+1]); // [p,d,b,c], [p,d,c,a]
@@ -13890,7 +13892,7 @@ int tetgenmesh::removevertexbyflips(point steinerpt)
         esymself(neightet); // [p,a,b], [p,b,c], [p,c,a]
         if (issubface(neightet)) n++;
       }
-      if (n != 3) {
+      if ((n != 0) && (n != 3)) {
         removeflag = 0;
       }
     }
