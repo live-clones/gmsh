@@ -20,6 +20,7 @@
 
 #include "WinslowUntangler.h"
 #include "BasisFactory.h"
+#include "CondNumBasis.h"
 #include <set>
 #include <unordered_map>
 
@@ -54,14 +55,86 @@ inline double tet_volume(vec3 a, vec3 b, vec3 c, vec3 d)
   return dot((a - d), cross(b - d, c - d)) / 6.;
 }
 
+// the quality of an element in the objective functions below
+static double elementQuality(MElement *e, bool onlytet, bool signedQuality)
+{
+  if(e->getNumVertices() == 4) {
+    double V;
+    double Q = qmTetrahedron::gamma(
+      e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
+      e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+      e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
+      e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(), &V);
+    return V > 0 ? -Q : Q;
+  }
+  if(onlytet) return 1.0;
+  const double q = e->minSICNShapeMeasure();
+  return (signedQuality ? q : std::abs(q)) * .2;
+}
+
+// An element around a moving vertex. For a first-order hex, prism or
+// pyramid: its condition number basis, the local index of the vertex and the
+// minimum of the SICN at the condition number nodes that do not depend on
+// it, which moving the vertex does not change (4 of the 8 corners of a hex)
+struct ElementAroundVertex {
+  MElement *e;
+  const CondNumBasis *basis; // none: the whole quality is computed
+  int node;
+  double fixedMin;
+};
+
+static void elementCoordinates(MElement *e, double (*xyz)[3])
+{
+  for(std::size_t i = 0; i < e->getNumVertices(); i++) {
+    const MVertex *v = e->getShapeFunctionNode(i);
+    xyz[i][0] = v->x();
+    xyz[i][1] = v->y();
+    xyz[i][2] = v->z();
+  }
+}
+
+// e around ver, with the minimum at its fixed nodes for the current position
+static ElementAroundVertex elementAroundVertex(MElement *e, MVertex *ver)
+{
+  ElementAroundVertex a = {e, nullptr, -1, 1.e22};
+  const int type = e->getType();
+  if((type != TYPE_HEX && type != TYPE_PRI && type != TYPE_PYR) ||
+     e->getPolynomialOrder() != 1)
+    return a;
+  const CondNumBasis *basis = BasisFactory::getCondNumBasis(e->getTypeForMSH());
+  if(basis->getNumMapNodes() != (int)e->getNumVertices()) return a;
+  for(std::size_t i = 0; i < e->getNumVertices(); i++)
+    if(e->getShapeFunctionNode(i) == ver) a.node = (int)i;
+  if(a.node < 0) return a;
+  double xyz[8][3];
+  elementCoordinates(e, xyz);
+  if(basis->getSignedInvCondNumMin3D(xyz, a.node, false, a.fixedMin))
+    a.basis = basis;
+  return a;
+}
+
+// its quality, as elementQuality (the minimum over all the nodes is the same)
+static double elementQuality(const ElementAroundVertex &a, bool signedQuality)
+{
+  if(!a.basis) return elementQuality(a.e, false, signedQuality);
+  double xyz[8][3], q;
+  elementCoordinates(a.e, xyz);
+  a.basis->getSignedInvCondNumMin3D(xyz, a.node, true, q);
+  q = std::min(q, a.fixedMin);
+  return (signedQuality ? q : std::abs(q)) * .2;
+}
+
 // signedQuality: the SICN of the elements other than tets keeps its sign, so
 // that inverted ones stay penalized (the hex-dominant meshes); without it its
-// absolute value is taken, as del3d needs for its pyramid apexes
+// absolute value is taken, as del3d needs for its pyramid apexes. The
+// minimum is no longer computed once it is at most stopAt: the value
+// returned is then at most stopAt
 template <class Elements>
 static double objective_function(double xi, MVertex *ver, double xTarget,
                                  double yTarget, double zTarget,
                                  const Elements &lt, bool onlytet = false,
-                                 bool signedQuality = false)
+                                 bool signedQuality = false,
+                                 double stopAt = -1.e22)
 {
   double x = ver->x();
   double y = ver->y();
@@ -70,24 +143,32 @@ static double objective_function(double xi, MVertex *ver, double xTarget,
   ver->y() = (1. - xi) * ver->y() + xi * yTarget;
   ver->z() = (1. - xi) * ver->z() + xi * zTarget;
   double minQual = 1.0;
-  for(std::size_t i = 0; i < lt.size(); i++) {
-    if(lt[i]->getNumVertices() == 4) {
-      double V;
-      double Q = qmTetrahedron::gamma(
-        lt[i]->getVertex(0)->x(), lt[i]->getVertex(0)->y(),
-        lt[i]->getVertex(0)->z(), lt[i]->getVertex(1)->x(),
-        lt[i]->getVertex(1)->y(), lt[i]->getVertex(1)->z(),
-        lt[i]->getVertex(2)->x(), lt[i]->getVertex(2)->y(),
-        lt[i]->getVertex(2)->z(), lt[i]->getVertex(3)->x(),
-        lt[i]->getVertex(3)->y(), lt[i]->getVertex(3)->z(), &V);
-      if(V > 0) Q = -Q;
-      minQual = std::min(Q, minQual);
-    }
-    else if(!onlytet) {
-      const double q = lt[i]->minSICNShapeMeasure();
-      minQual = std::min((signedQuality ? q : std::abs(q)) * .2, minQual);
-    }
-  }
+  for(std::size_t i = 0; i < lt.size() && minQual > stopAt; i++)
+    minQual = std::min(elementQuality(lt[i], onlytet, signedQuality), minQual);
+  ver->x() = x;
+  ver->y() = y;
+  ver->z() = z;
+  return minQual;
+}
+
+// the same, ver being the moving vertex of the elements
+static double objective_function(double xi, MVertex *ver, double xTarget,
+                                 double yTarget, double zTarget,
+                                 const std::vector<ElementAroundVertex> &lt,
+                                 bool onlytet, bool signedQuality,
+                                 double stopAt = -1.e22)
+{
+  double x = ver->x();
+  double y = ver->y();
+  double z = ver->z();
+  ver->x() = (1. - xi) * ver->x() + xi * xTarget;
+  ver->y() = (1. - xi) * ver->y() + xi * yTarget;
+  ver->z() = (1. - xi) * ver->z() + xi * zTarget;
+  double minQual = 1.0;
+  for(std::size_t i = 0; i < lt.size() && minQual > stopAt; i++)
+    minQual = std::min(onlytet ? elementQuality(lt[i].e, true, signedQuality) :
+                                 elementQuality(lt[i], signedQuality),
+                       minQual);
   ver->x() = x;
   ver->y() = y;
   ver->z() = z;
@@ -168,10 +249,16 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
   double x2 = a + lambda * (b - a);
   double fx1 = objective_function(x1, ver, xTarget, yTarget, zTarget, lt, false,
                              signedQuality);
+  if(tol < 0.0) {
+    double fx2 = objective_function(x2, ver, xTarget, yTarget, zTarget, lt,
+                                    false, signedQuality);
+    return fx1 > fx2 ? x1 : x2;
+  }
+  // A new value is only compared to the other one: x2 is dropped once fx2 <=
+  // fx1, and x1 once fx1 < fx2, so their exact values are then not needed
+  // (the values of the points kept are exact)
   double fx2 = objective_function(x2, ver, xTarget, yTarget, zTarget, lt, false,
-                             signedQuality);
-
-  if(tol < 0.0) return fx1 > fx2 ? x1 : x2;
+                                  signedQuality, fx1);
 
   while(!Stopping_Rule(a, b, tol)) {
     // printf("GOLDEN : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
@@ -182,7 +269,7 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
       fx1 = fx2;
       x2 = b - mu * (b - a);
       fx2 = objective_function(x2, ver, xTarget, yTarget, zTarget, lt, false,
-                             signedQuality);
+                               signedQuality, fx1);
     }
     else {
       b = x2;
@@ -191,7 +278,7 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
       fx2 = fx1;
       x1 = a + mu * (b - a);
       fx1 = objective_function(x1, ver, xTarget, yTarget, zTarget, lt, false,
-                             signedQuality);
+                               signedQuality, std::nextafter(fx2, -1.e22));
     }
   }
   // printf("finally : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
@@ -366,20 +453,36 @@ static void relocateVertexGolden(MVertex *ver, const Elements &lt,
     N += lt[i]->getNumVertices();
   }
 
-  double NO_MOVE_OBJ = objective_function(0.0, ver, x / N, y / N, z / N, lt,
-                                          false, signedQuality);
-  double FULL_MOVE_OBJ = objective_function(1.0, ver, x / N, y / N, z / N, lt,
-                                            false, signedQuality);
+  // the elements by increasing quality: the worst ones decide the minimum
+  // first, which the golden section search does not always need exactly
+  std::vector<std::pair<double, ElementAroundVertex> > byQuality(lt.size());
+  for(std::size_t i = 0; i < lt.size(); i++) {
+    const ElementAroundVertex a = elementAroundVertex(lt[i], ver);
+    byQuality[i] = {elementQuality(a, signedQuality), a};
+  }
+  std::sort(byQuality.begin(), byQuality.end(),
+            [](const std::pair<double, ElementAroundVertex> &a,
+               const std::pair<double, ElementAroundVertex> &b) {
+              return a.first < b.first;
+            });
+  std::vector<ElementAroundVertex> sorted(lt.size());
+  for(std::size_t i = 0; i < lt.size(); i++) sorted[i] = byQuality[i].second;
+
+  double NO_MOVE_OBJ = lt.size() ? std::min(1.0, byQuality[0].first) : 1.0;
+  double FULL_MOVE_OBJ = objective_function(1.0, ver, x / N, y / N, z / N,
+                                            sorted, false, signedQuality);
   if(FULL_MOVE_OBJ > NO_MOVE_OBJ) {
+    // the search below, between the barycenter and itself, would leave it
+    // there
     ver->x() = x / N;
     ver->y() = y / N;
     ver->z() = z / N;
-    //    return;
+    return;
   }
 
   double q;
-  double xi = Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N, lt,
-                                              tol, q, signedQuality);
+  double xi = Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N,
+                                              sorted, tol, q, signedQuality);
   ver->x() = (1. - xi) * ver->x() + xi * x / N;
   ver->y() = (1. - xi) * ver->y() + xi * y / N;
   ver->z() = (1. - xi) * ver->z() + xi * z / N;
