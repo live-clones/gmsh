@@ -348,11 +348,14 @@ namespace {
     /**
     * \pre selected is allocated.
     * It is assumed that already selected cells where so by the same instance of the Selector.
+    * The cells before firstNew were there at its previous call on these
+    * cells, which tried them: the local search and the coverage try again
+    * around the new ones only, where the state has changed.
     */
     void computeCompatibleCellCombination(
       const HXTCombineCellArray& cells,
       const double* cellQualities,
-      vector<bool>& selected)
+      vector<bool>& selected, std::size_t firstNew = 0)
     {
       // A cell with an interior tet taken by a cell of a previous call (the
       // hexes, for the prisms) can never be selected: this call only ejects
@@ -380,8 +383,17 @@ namespace {
       for (CellIndex c : order)
         if (isFree(cells[c], c, flags)) freeCells.add(cells[c], c);
 
-      localSearch(cells, cellQualities, tetToCells, freeCells, reservations, flags);
-      coverage(cells, cellQualities, order, tetToCells, freeCells, reservations, flags);
+      // the vertices of the new cells (none: everywhere)
+      std::vector<char> around;
+      if (firstNew > 0) {
+        around.assign(tets_.nbVertices(), 0);
+        for (CellIndex c = firstNew; c < cells.size(); ++c)
+          if (active[c])
+            for (unsigned int i = 0; i < cells[c].nbVertices(); ++i)
+              around[cells[c].vertexes[i]] = 1;
+      }
+      localSearch(cells, cellQualities, tetToCells, freeCells, reservations, flags, around);
+      coverage(cells, cellQualities, order, tetToCells, freeCells, reservations, flags, around);
       for (CellIndex c = 0; c < cells.size(); ++c) selected[c] = flags[c];
     }
 
@@ -389,6 +401,15 @@ namespace {
     bool isFree(const HXTCombineCell& cell, CellIndex c, const Flags& selected) const
     {
       return !selected[c] && !oneInteriorTetSelected(cell);
+    }
+
+    // a vertex of the cell is marked in around, or around is empty
+    static bool touches(const HXTCombineCell& cell, const std::vector<char>& around)
+    {
+      if (around.empty()) return true;
+      for (unsigned int i = 0; i < cell.nbVertices(); ++i)
+        if (around[cell.vertexes[i]]) return true;
+      return false;
     }
 
     /**
@@ -673,13 +694,14 @@ namespace {
     */
     void localSearch(const HXTCombineCellArray& cells, const double* cellQualities,
                      const CellLists& tetToCells, FreeCellIndex& freeCells,
-                     Reservations& reservations, Flags& flags)
+                     Reservations& reservations, Flags& flags,
+                     const std::vector<char>& around)
     {
       if (cells.empty()) return;
       BetterCell better{cellQualities};
       std::vector<CellIndex> selectedList;
       for (CellIndex c = 0; c < cells.size(); ++c)
-        if (flags[c]) selectedList.push_back(c);
+        if (flags[c] && touches(cells[c], around)) selectedList.push_back(c);
       // Try ejecting the worst-quality selected cells first: they are the
       // ones most likely to be worth trading away.
       selectedList = localSearchOrder(selectedList, cellQualities);
@@ -777,7 +799,8 @@ namespace {
     */
     void coverage(const HXTCombineCellArray& cells, const double* cellQualities,
                   const std::vector<CellIndex>& order, const CellLists& tetToCells,
-                  FreeCellIndex& freeCells, Reservations& reservations, Flags& flags)
+                  FreeCellIndex& freeCells, Reservations& reservations, Flags& flags,
+                  const std::vector<char>& around)
     {
       if (cells.empty()) return;
       // Bounds how many already-selected cells a single candidate is
@@ -795,7 +818,8 @@ namespace {
       auto isCandidate = [&](CellIndex c) {
         const HXTCombineCell cellC = cells[c];
         return freeCells.contains(c) && !flags[c] && cellC.isHex() &&
-               !oneInteriorTetSelected(cellC) && !isCellCompatible(cellC);
+               touches(cellC, around) && !oneInteriorTetSelected(cellC) &&
+               !isCellCompatible(cellC);
       };
       std::vector<char> tried(cells.size(), 0);
       std::vector<CellIndex> list = order, candidates;
@@ -1125,7 +1149,8 @@ namespace HXTCombine {
 #pragma omp parallel for schedule(dynamic, 1024)
     for (int i = (int)known; i < (int)cells.size(); ++i)
       qualities[i] = cellQualityAPI(mesh_, cells[i]);
-    selector_->selection.computeCompatibleCellCombination(cells, qualities.data(), selected);
+    selector_->selection.computeCompatibleCellCombination(cells, qualities.data(), selected,
+                                                          known);
     // TODO Pyramids should swallow all quad facets
     updateSelectedTets();
   }
