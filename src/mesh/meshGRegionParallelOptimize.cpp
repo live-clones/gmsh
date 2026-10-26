@@ -108,6 +108,11 @@ namespace pdel3d {
       std::size_t swaps = 0, relocations = 0;
       std::size_t invalidSwaps = 0;
       std::size_t reconnections = 0, failedReconnections = 0;
+      // the search nodes placed by the reconnections and the quality they
+      // gained, in units of qualityMin, for their budget
+      std::uint64_t sprNodes = 0;
+      double sprGain = 0.;
+      bool sprStopped = false;
       bool noSpace = false;
       std::unique_ptr<SPRCavity> spr;
       std::vector<tIdx> sprDeleted; // the tets of the cavity being grown
@@ -130,6 +135,23 @@ namespace pdel3d {
 
       bool inVolume(tIdx t) const
       { return !m.isDeleted(t) && m.color[t] < opt.numVolumes; }
+
+      // The reconnections of a thread pay for what they gain: they stop
+      // when the search nodes they placed exceed a start allowance plus a
+      // price per unit of quality gained. Counting attempts or successes
+      // does not do: on a mesh whose slivers are inherent (surface elements
+      // larger than the gaps between the surfaces) one attempt in five
+      // "succeeds" by a few percent of the threshold, each failure costs a
+      // full search, and the passes went on for ten minutes to no effect.
+      // Measured in October 2026 (benchmarks/3d): the price of a unit is 2
+      // to 1300 nodes on the meshes worth optimizing, 30000 to 280000 on the
+      // hopeless ones (raidisseur, twin_ap, the CORC cable). In failed
+      // searches: 500 before judging, 50 per unit gained
+      bool sprBudgetLeft(const Local &L) const
+      {
+        const double n = std::max(1, opt.sprMaxSearchNodes);
+        return (double)L.sprNodes <= n * (500. + 50. * L.sprGain);
+      }
 
       double computeQuality(tIdx t) const
       {
@@ -1260,6 +1282,7 @@ namespace pdel3d {
         auto giveUp = [&](Status st) {
           sprUndelete(L);
           if(st == NOT_BETTER) L.failedReconnections++;
+          L.sprNodes += S.nodes;
           return st;
         };
         while(true) {
@@ -1281,6 +1304,8 @@ namespace pdel3d {
         }
         if(!sprRebuild(L, bad)) return giveUp(CONFLICT);
         L.reconnections++;
+        L.sprNodes += S.nodes;
+        L.sprGain += (S.solutionQuality - S.worst) / opt.qualityMin;
         return OK;
       }
     };
@@ -1471,6 +1496,10 @@ namespace pdel3d {
               b.todo = 0;
               continue;
             }
+            if(spr && !K.sprBudgetLeft(L)) {
+              L.sprStopped = true;
+              break;
+            }
             const Status st = spr ? K.sprImprove(L, b.t) : K.improve(L, b.t);
             if(st == CONFLICT) { numConflicts++; }
             else {
@@ -1494,10 +1523,24 @@ namespace pdel3d {
       std::size_t after = 0;
       for(auto &L : locals)
         after += spr ? L.reconnections : L.swaps + L.relocations;
-      if(opt.verbosity > 0)
-        Msg::Info("Optimization pass %d: %zu bad tets, %zu %s (Wall %gs)", pass,
-                  numBad, after - before, spr ? "reconnected" : "improved",
-                  TimeOfDay() - t0);
+      if(opt.verbosity > 0) {
+        if(spr) {
+          std::uint64_t nodes = 0;
+          double gain = 0.;
+          for(auto &L : locals) {
+            nodes += L.sprNodes;
+            gain += L.sprGain;
+          }
+          Msg::Info("Optimization pass %d: %zu bad tets, %zu reconnected "
+                    "(%llu nodes searched for a gain of %g so far, Wall %gs)",
+                    pass, numBad, after - before, (unsigned long long)nodes,
+                    gain, TimeOfDay() - t0);
+        }
+        else
+          Msg::Info("Optimization pass %d: %zu bad tets, %zu improved (Wall "
+                    "%gs)",
+                    pass, numBad, after - before, TimeOfDay() - t0);
+      }
       pass++;
       return after - before;
     };
@@ -1519,14 +1562,23 @@ namespace pdel3d {
       if(!runPass(true, numBad)) break;
     }
     std::size_t totalSwaps = 0, totalRelocations = 0, totalInvalid = 0,
-                totalReconnections = 0, totalFailed = 0;
+                totalReconnections = 0, totalFailed = 0, stopped = 0;
+    std::uint64_t totalNodes = 0;
+    double totalGain = 0.;
     for(auto &L : locals) {
       totalSwaps += L.swaps;
       totalInvalid += L.invalidSwaps;
       totalRelocations += L.relocations;
       totalReconnections += L.reconnections;
       totalFailed += L.failedReconnections;
+      totalNodes += L.sprNodes;
+      totalGain += L.sprGain;
+      stopped += L.sprStopped;
     }
+    if(stopped)
+      Msg::Info("Reconnections stopped on %zu of %d thread(s): %llu nodes "
+                "searched for a gain of %g",
+                stopped, maxThreads, (unsigned long long)totalNodes, totalGain);
     // report before the compaction, which renumbers the tets
     report("done");
     std::size_t ill = 0;

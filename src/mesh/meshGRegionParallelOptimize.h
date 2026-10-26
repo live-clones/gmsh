@@ -27,7 +27,9 @@ namespace pdel3d {
     // the cavity grown around them and the budget of the exhaustive search
     // (tets placed, over the life of the cavity). Larger values (HXT: every
     // tet below qualityMin, 32 points, 500 nodes) remove a few more bad tets
-    // for ten to fifty times the cost, which failed searches dominate
+    // for ten to fifty times the cost, which failed searches dominate. The
+    // reconnections stop when the nodes they searched exceed what the
+    // quality they gained is worth (Optimizer::sprBudgetLeft)
     double sprQualityFactor = 0.5;
     int sprMaxPoints = 16;
     int sprMaxSearchNodes = 200;
