@@ -5804,6 +5804,46 @@ void tetgenmesh::flip41(triface* fliptets, int hullflag, flipconstraints *fc)
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
+//                                                                           //
+// degeneratesflip()    Check a 2-to-2 flip in the surface mesh.             //
+//                                                                           //
+// The flip replaces the subfaces [p,q,a] and [q,p,b] by [a,b,p] and [b,a,q]. //
+// If p (or q) is a Steiner point on the segment [a,b], the new subface      //
+// [a,b,p] is degenerate: its vertices are collinear. Such a flip can be     //
+// valid in 3D (p is not exactly on [a,b]) but not in the surface, e.g. on a //
+// curved surface mesh whose edges are all segments; the degenerate subface  //
+// later leaves open faces when p is removed. Return 1 in that case.        //
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+int tetgenmesh::degeneratesflip(point pp, point pq, point pa, point pb)
+{
+  point sv, e1, e2;
+  face seg1, seg2;
+  int i;
+
+  for (i = 0; i < 2; i++) {
+    sv = (i == 0) ? pp : pq;
+    if (pointtype(sv) != FREESEGVERTEX) continue;
+    sdecode(point2sh(sv), seg1);
+    if (seg1.sh == NULL) continue;
+    seg1.shver = 0;
+    if (sdest(seg1) == sv) {
+      senext(seg1, seg2);
+    } else {
+      senext2(seg1, seg2);
+    }
+    spivotself(seg2);
+    if (seg2.sh == NULL) continue;
+    seg2.shver = 0;
+    e1 = (sorg(seg1) == sv) ? sdest(seg1) : sorg(seg1);
+    e2 = (sorg(seg2) == sv) ? sdest(seg2) : sorg(seg2);
+    if (((pa == e1) && (pb == e2)) || ((pa == e2) && (pb == e1))) return 1;
+  }
+  return 0;
+}
+
 int tetgenmesh::flipnm(triface* abtets, int n, int level, int abedgepivot,
                        flipconstraints* fc)
 {
@@ -6389,41 +6429,15 @@ int tetgenmesh::flipnm(triface* abtets, int n, int level, int abedgepivot,
             }
           }
           if (!rejflag) {
-            // The 2-to-2 flip replaces the subfaces [p,q,a] and [q,p,b] by
-            //   [a,b,p] and [b,a,q]. If p (or q) is a Steiner point on the
-            //   segment [a,b], the new subface [a,b,p] is degenerate: its
-            //   vertices are collinear. This flip is then valid in 3D (p is
-            //   not exactly on [a,b]) but not in the surface, e.g. on a curved
-            //   surface mesh whose edges are all segments. Reject it.
-            point sa = NULL, sb = NULL, sv, e1, e2;
-            face seg1, seg2;
-            int jj;
-            for (jj = 0; jj < 3; jj++) {
-              if (jj != edgepivot) {
-                if (sa == NULL) sa = apex(abtets[jj]);
-                else sb = apex(abtets[jj]);
+            // The surface 2-to-2 flip must not create a degenerate subface.
+            point sa = NULL, sb = NULL;
+            for (j = 0; j < 3; j++) {
+              if (j != edgepivot) {
+                if (sa == NULL) sa = apex(abtets[j]);
+                else sb = apex(abtets[j]);
               }
             }
-            for (jj = 0; (jj < 2) && !rejflag; jj++) {
-              sv = (jj == 0) ? pa : pb;
-              if (pointtype(sv) != FREESEGVERTEX) continue;
-              sdecode(point2sh(sv), seg1);
-              if (seg1.sh == NULL) continue;
-              seg1.shver = 0;
-              if (sdest(seg1) == sv) {
-                senext(seg1, seg2);
-              } else {
-                senext2(seg1, seg2);
-              }
-              spivotself(seg2);
-              if (seg2.sh == NULL) continue;
-              seg2.shver = 0;
-              e1 = (sorg(seg1) == sv) ? sdest(seg1) : sorg(seg1);
-              e2 = (sorg(seg2) == sv) ? sdest(seg2) : sorg(seg2);
-              if (((sa == e1) && (sb == e2)) || ((sa == e2) && (sb == e1))) {
-                rejflag = 1;
-              }
-            }
+            rejflag = degeneratesflip(pa, pb, sa, sb);
           }
         } else if (nn == 3) {
           // Report a bug.
@@ -16102,6 +16116,10 @@ long tetgenmesh::lawsonflip3d(flipconstraints *fc)
                         (pointtype(pd) == FREESEGVERTEX)) {
                       removevertexbyflips(pd);
                     }
+                  } else if (degeneratesflip(org(neightet), dest(neightet),
+                                             apex(neightet), oppo(neightet))) {
+                    // The surface flip [e,d] => [a,b] would be degenerate
+                    //   (see degeneratesflip()). Keep the sliver.
                   } else {
                     // Perform a 3-to-2 flip to remove the sliver.
                     fliptets[0] = neightet;          // [e,d,a,b]
