@@ -445,9 +445,13 @@ void HXTCombineCellStore::computeGuidedPrisms(double minQuality,
 {
   const TetMeshForCombining& M = mesh_;
   std::vector<trindex> facets;
+  // the vertices of the free tets: the corners of a prism made of free tets
+  std::vector<char> freeVertex(M.nbVertices(), 0);
   for (TetIndex t = 0; t < M.nbTets(); ++t)
-    if (freeTets[t])
+    if (freeTets[t]) {
       for (TetFacetIndex f = 0; f < 4; ++f) facets.push_back(M.tetFacet(t, f));
+      for (TetVertexIndex i = 0; i < 4; ++i) freeVertex[M.vertex(t, i)] = 1;
+    }
   std::sort(facets.begin(), facets.end());
   facets.erase(std::unique(facets.begin(), facets.end()), facets.end());
 
@@ -479,19 +483,19 @@ void HXTCombineCellStore::computeGuidedPrisms(double minQuality,
           const VertexIndex d = nearestVertex(
             M, M.verticesAroundVertices(a), pa + u * (s * size),
             [&](VertexIndex x) { return x != b && x != c; });
-          if (d == NO_ID) continue;
+          if (d == NO_ID || !freeVertex[d]) continue;
           const vec3 shift = M.point(d) - pa;
           const VertexIndex e = nearestVertex(
             M, M.verticesAroundVertices(b), pb + shift, [&](VertexIndex x) {
               return x != a && x != c && x != d && areNeighbors(M, d, x);
             });
-          if (e == NO_ID) continue;
+          if (e == NO_ID || !freeVertex[e]) continue;
           const VertexIndex f = nearestVertex(
             M, M.verticesAroundVertices(c), pc + shift, [&](VertexIndex x) {
               return x != a && x != b && x != d && x != e &&
                      areNeighbors(M, d, x) && areNeighbors(M, e, x);
             });
-          if (f == NO_ID) continue;
+          if (f == NO_ID || !freeVertex[f]) continue;
           std::array<VertexIndex, 6> prism = {{a, b, c, d, e, f}};
           if (!passesPrismTests(M, prism, minQuality)) {
             std::swap(prism[1], prism[2]);
@@ -559,12 +563,20 @@ void HXTCombineCellStore::computeGuidedHexes(double minQuality,
     for (int k = 0; k < 3; ++k)
       axis[k] = vec3(frames[9 * a + 3 * k], frames[9 * a + 3 * k + 1],
                      frames[9 * a + 3 * k + 2]);
+    // With startVertices, the corners of a hex are start vertices: the
+    // vertices of the free tets, as a cell made of free tets
+    auto isStart = [&](VertexIndex v) {
+      return v != NO_ID && (!startVertices || (*startVertices)[v]);
+    };
     // the neighbours nearest to a + size * s * axis[k], for s = -1, 1
     VertexIndex along[3][2][maxChoices];
     for (int k = 0; k < 3; ++k)
-      for (int s = 0; s < 2; ++s)
+      for (int s = 0; s < 2; ++s) {
         nearestVertices(M, aroundA, pa + axis[k] * (s ? size : -size), nbChoices,
                         along[k][s]);
+        for (unsigned int c = 0; c < nbChoices; ++c)
+          if (!isStart(along[k][s][c])) along[k][s][c] = NO_ID;
+      }
 
     // The completion of the parallelogram (a, u, v) depends on u and v only:
     // once for each pair of sides and choices of the two axes, not for each
@@ -574,7 +586,9 @@ void HXTCombineCellStore::computeGuidedHexes(double minQuality,
       if (u == NO_ID || v == NO_ID || u == v) return (VertexIndex)NO_ID;
       const vec3 p = M.point(u) + M.point(v) - pa;
       const VertexRange aroundV = M.verticesAroundVertices(v);
-      return nearestCommonVertex(M, M.verticesAroundVertices(u), &aroundV, 1, &a, 1, p);
+      const VertexIndex w =
+        nearestCommonVertex(M, M.verticesAroundVertices(u), &aroundV, 1, &a, 1, p);
+      return isStart(w) ? w : (VertexIndex)NO_ID;
     };
     VertexIndex completions[3][3][2][2][maxChoices][maxChoices];
     for (int k = 0; k < 3; ++k)
@@ -663,7 +677,7 @@ void HXTCombineCellStore::computeGuidedHexes(double minQuality,
       const VertexIndex bde[3] = {b, d, e};
       const VertexIndex g = nearestCommonVertex(M, M.verticesAroundVertices(c), aroundFH, 2,
                                                 bde, 3, pg);
-      if (g == NO_ID) continue;
+      if (!isStart(g)) continue;
       Hex8 hex = {{a, b, c, d, e, f, g, h}};
       Hex8 sorted = hex;
       std::sort(sorted.begin(), sorted.end());
@@ -757,17 +771,6 @@ double cellQualityAPI(const TetMeshWrapper& tets, const HXTCombineCell& cell) {
     return cellApproximateQuality<Pyramid>(points.data());
   }
   else return 0;
-}
-
-void computeCellQualityVector(
-  const TetMeshWrapper& tets,
-  const HXTCombineCellArray& cells,
-  double* qualities)
-{
-#pragma omp parallel for
-  for (int i = 0; i < (int)cells.size(); ++i) {
-    qualities[i] = cellQualityAPI(tets, cells[i]);
-  }
 }
 
 }
