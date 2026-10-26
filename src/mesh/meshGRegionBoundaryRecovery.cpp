@@ -1120,8 +1120,7 @@ namespace tetgenBR {
       }
       return false;
     };
-    for(int retry = 1; !init && retry <= CTX::instance()->mesh.maxRetries;
-        retry++) {
+    for(int retry = 1; retry <= CTX::instance()->mesh.maxRetries; retry++) {
       bool steinerOnFixedMesh = false;
       if(err == 0)
         for(auto ftag : out.changedFaces)
