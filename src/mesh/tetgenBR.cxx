@@ -6388,6 +6388,43 @@ int tetgenmesh::flipnm(triface* abtets, int n, int level, int abedgepivot,
               rejflag = 1; // Conflict to a 2-to-2 flip.
             }
           }
+          if (!rejflag) {
+            // The 2-to-2 flip replaces the subfaces [p,q,a] and [q,p,b] by
+            //   [a,b,p] and [b,a,q]. If p (or q) is a Steiner point on the
+            //   segment [a,b], the new subface [a,b,p] is degenerate: its
+            //   vertices are collinear. This flip is then valid in 3D (p is
+            //   not exactly on [a,b]) but not in the surface, e.g. on a curved
+            //   surface mesh whose edges are all segments. Reject it.
+            point sa = NULL, sb = NULL, sv, e1, e2;
+            face seg1, seg2;
+            int jj;
+            for (jj = 0; jj < 3; jj++) {
+              if (jj != edgepivot) {
+                if (sa == NULL) sa = apex(abtets[jj]);
+                else sb = apex(abtets[jj]);
+              }
+            }
+            for (jj = 0; (jj < 2) && !rejflag; jj++) {
+              sv = (jj == 0) ? pa : pb;
+              if (pointtype(sv) != FREESEGVERTEX) continue;
+              sdecode(point2sh(sv), seg1);
+              if (seg1.sh == NULL) continue;
+              seg1.shver = 0;
+              if (sdest(seg1) == sv) {
+                senext(seg1, seg2);
+              } else {
+                senext2(seg1, seg2);
+              }
+              spivotself(seg2);
+              if (seg2.sh == NULL) continue;
+              seg2.shver = 0;
+              e1 = (sorg(seg1) == sv) ? sdest(seg1) : sorg(seg1);
+              e2 = (sorg(seg2) == sv) ? sdest(seg2) : sorg(seg2);
+              if (((sa == e1) && (sb == e2)) || ((sa == e2) && (sb == e1))) {
+                rejflag = 1;
+              }
+            }
+          }
         } else if (nn == 3) {
           // Report a bug.
           terminatetetgen(this, 2);
@@ -13820,6 +13857,29 @@ int tetgenmesh::removevertexbyflips(point steinerpt)
     point2tetorg(steinerpt, searchtet);
     loc = INTETRAHEDRON;
     removeflag = 1;
+    if (vt == FREEFACETVERTEX) {
+      // The 4-to-1 flip (flip41) replaces the subfaces at p by a single
+      //   subface, which needs exactly three subfaces at p. On a planar facet
+      //   this is always the case, but a Steiner point added on a subedge of
+      //   a non-planar surface mesh (whose edges are all segments) may have
+      //   four subfaces (a quadrilateral link), and flip41 would then read a
+      //   missing subface. Do not remove p in that case.
+      wrktets[0] = searchtet; // [p,d,a,b]
+      for (i = 0; i < 2; i++) {
+        fnext(wrktets[i], wrktets[i+1]); // [p,d,b,c], [p,d,c,a]
+      }
+      n = 0; // Count the subfaces at p: the faces [p,d,a], [p,d,b], [p,d,c]
+      for (i = 0; i < 3; i++) { //   and [p,a,b], [p,b,c], [p,c,a].
+        esym(wrktets[i], neightet); // [d,p,b], [d,p,c], [d,p,a]
+        if (issubface(neightet)) n++;
+        eprev(wrktets[i], neightet);
+        esymself(neightet); // [p,a,b], [p,b,c], [p,c,a]
+        if (issubface(neightet)) n++;
+      }
+      if (n != 3) {
+        removeflag = 0;
+      }
+    }
   } else if (valence == 5) {
     // There are 5 edges.
     if (vt == FREESEGVERTEX) {
@@ -13974,6 +14034,28 @@ int tetgenmesh::removevertexbyflips(point steinerpt)
     } // if (vt == FREESEGVERTEX)
   } // if (!removeflag)
 
+  if (removeflag && (loc == ONEDGE)) {
+    // The 2n-to-n flip below replaces p by the other end e of the edge
+    //   [e,d] in each tet [p,d,p_i,p_i+1], which is valid only if p lies
+    //   exactly on [e,d]. A Steiner point is in general not exactly there,
+    //   and when a link vertex p_i is (nearly) coplanar with [e,d] (e.g. a
+    //   segment within a smooth surface mesh, whose neighbouring surface
+    //   vertices lie close to the plane of e, d and p), a new tet
+    //   [e,d,p_i,p_i+1] can be inverted. Check them first.
+    point pd = dest(searchtet), pe = (pd == lpt) ? rpt : lpt;
+    spintet = searchtet; // [p,d,p_0,p_1]
+    while (1) {
+      if ((apex(spintet) != dummypoint) && (oppo(spintet) != dummypoint)) {
+        if (orient3d(pe, pd, apex(spintet), oppo(spintet)) >= 0) {
+          removeflag = 0; // [e,d,p_i,p_i+1] would be inverted or flat.
+          break;
+        }
+      }
+      fnextself(spintet);
+      if (spintet.tet == searchtet.tet) break;
+    }
+  }
+
   if (!removeflag) {
     return 0;
   }
@@ -14047,6 +14129,27 @@ int tetgenmesh::removevertexbyflips(point steinerpt)
     eprevself(fliptets[3]); // [e,p,a,b]
     for (i = 3; i < 5; i++) {
       fnext(fliptets[i], fliptets[i+1]); // [e,p,b,c], [e,p,c,a]
+    }
+    if (vt == FREEFACETVERTEX) {
+      // The 6-to-2 flip below needs exactly three subfaces at p, either in
+      //   the upper three tets, the lower three, or at the faces between
+      //   them. It is not so for a Steiner point added on a subedge of a
+      //   non-planar surface mesh (see the case valence == 4 above). Do not
+      //   remove p then.
+      int nup = 0, nlow = 0, nmid = 0;
+      for (i = 0; i < 3; i++) {
+        if (issubface(fliptets[i])) nup++;      // [p,d,a], [p,d,b], [p,d,c]
+        if (issubface(fliptets[i+3])) nlow++;   // [e,p,a], [e,p,b], [e,p,c]
+        eprev(fliptets[i], neightet);
+        esymself(neightet);                     // [p,a,b], [p,b,c], [p,c,a]
+        if (issubface(neightet)) nmid++;
+      }
+      if (!(((nup == 3) && (nlow == 0) && (nmid == 0)) ||
+            ((nup == 0) && (nlow == 3) && (nmid == 0)) ||
+            ((nup == 0) && (nlow == 0) && (nmid == 3)))) {
+        delete [] fliptets;
+        return 0;
+      }
     }
     if (vt == FREEFACETVERTEX) {
       // We need to determine the location of three subfaces at p.

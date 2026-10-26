@@ -26,6 +26,7 @@
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
 #include "Context.h"
+#include "ExtrudeParams.h"
 #include "OS.h"
 #if !defined(HAVE_NO_STDINT_H)
 #include <stdint.h>
@@ -1098,7 +1099,66 @@ namespace tetgenBR {
     }
 
     boundaryRecoveryOutput out;
-    const int err = runCore(in, out);
+    int err = runCore(in, out);
+
+    // The vertices are perturbed at random before the initial
+    // tetrahedralization (Mesh.RandomFactor3D). Nodes coplanar to rounding
+    // (e.g. the rings of nodes of extruded layers) then give nearly flat tets,
+    // which can block the recovery for one perturbation and not for another,
+    // or leave Steiner points on a surface whose mesh cannot change (a
+    // quadrangle, periodic or structured surface mesh, shared with an already
+    // meshed volume). Retry with other perturbations in these cases.
+    auto fixedMesh = [&](int ftag) {
+      for(GFace *gf : f_list) {
+        if(gf->tag() != ftag) continue;
+        if(gf->quadrangles.size() || gf->getMeshMaster() != gf ||
+           gf->meshAttributes.method == MESH_TRANSFINITE ||
+           (gf->meshAttributes.extrude &&
+            gf->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY))
+          return true;
+        for(auto it = gr->model()->firstFace(); it != gr->model()->lastFace();
+            ++it)
+          if((*it)->getMeshMaster() == gf && *it != gf) return true;
+      }
+      return false;
+    };
+    for(int retry = 1; !init && retry <= CTX::instance()->mesh.maxRetries;
+        retry++) {
+      bool steinerOnFixedMesh = false;
+      if(err == 0)
+        for(auto ftag : out.changedFaces)
+          if(fixedMesh(ftag)) steinerOnFixedMesh = true;
+      if(err != 2 && !steinerOnFixedMesh) break;
+      Msg::Info(" - %s, retrying with another perturbation (%d/%d)",
+                err ? "Boundary recovery failed" :
+                      "Steiner points on a surface whose mesh cannot change",
+                retry, CTX::instance()->mesh.maxRetries);
+      for(auto &vc : originalCoordinates)
+        vc.first->setXYZ(vc.second.x(), vc.second.y(), vc.second.z());
+      // the 8 enclosing box vertices are created again
+      for(std::size_t i = nv - 8; i < nv; i++) delete _vertices[i];
+      _vertices.resize(nv - 8);
+      std::vector<MTetrahedron *> tets;
+      delaunayMeshIn3D(_vertices, tets, false, &in.tetNeighbors);
+      if(Msg::GetErrorCount()) break;
+      for(std::size_t i = 0; i < nv; i++) _vertices[i]->setIndex((long)i);
+      in.tetNode.resize(4 * tets.size());
+      for(std::size_t i = 0; i < tets.size(); i++) {
+        for(int j = 0; j < 4; j++)
+          in.tetNode[4 * i + j] =
+            (std::uint32_t)tets[i]->getVertex(j)->getIndex();
+        delete tets[i];
+      }
+      for(std::size_t i = 0; i < nv; i++) {
+        in.xyz[3 * i] = _vertices[i]->x();
+        in.xyz[3 * i + 1] = _vertices[i]->y();
+        in.xyz[3 * i + 2] = _vertices[i]->z();
+        _vertices[i]->setIndex(i + 1);
+      }
+      out = boundaryRecoveryOutput();
+      err = runCore(in, out);
+    }
+
     bool ret = false;
     if(err == 0) {
       // Write mesh into to GRegion.
