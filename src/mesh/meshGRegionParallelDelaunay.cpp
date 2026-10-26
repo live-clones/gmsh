@@ -4045,39 +4045,24 @@ namespace {
     if(exceptions) sd->failed = true;
   }
 
-  // boundary recovery with TetGen (meshGRegionBoundaryRecovery), starting
-  // from the current tetrahedralization; the recovered tets (covering the
-  // convex hull) come back as elements of regions[0], and the curve and
-  // surface meshes may have changed (Steiner points). The mesh is rebuilt
-  // from them: vertices, tets, adjacencies and ghosts
+  // boundary recovery with TetGen (meshGRegionBoundaryRecovery) exactly as
+  // del3d does it, from a Delaunay tetrahedralization of the surface vertices
+  // in a bounding box: with the hull of the current tetrahedralization on the
+  // surfaces, TetGen's walks and Steiner point cavities ran into it (the
+  // near-flat tets of perturbed structured surfaces have huge circumspheres).
+  // The recovered tets (those inside the outer surfaces) come back as
+  // elements of regions[0], and the curve and surface meshes may have changed
+  // (Steiner points). The mesh is rebuilt from them: vertices, tets,
+  // adjacencies and ghosts
   bool recoverBoundary(pdel3d::Mesh &m, SurfaceMesh &s,
                        std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
                        double sizeFactor)
   {
-    initialTetrahedralization init;
-    init.vertices = s.vertices;
-    std::vector<pdel3d::tIdx> realIndex(m.ntet, pdel3d::NO_TET);
-    pdel3d::tIdx n = 0;
-    for(std::size_t t = 0; t < m.ntet; t++)
-      if(!m.isDeleted((pdel3d::tIdx)t) && !m.isGhost((pdel3d::tIdx)t))
-        realIndex[t] = n++;
-    init.tetNode.reserve(4 * n);
-    init.neighbors.reserve(4 * n);
-    for(std::size_t t = 0; t < m.ntet; t++) {
-      if(realIndex[t] == pdel3d::NO_TET) continue;
-      for(int k = 0; k < 4; k++) {
-        init.tetNode.push_back(m.node[4 * t + k]);
-        const pdel3d::tRef r = m.neigh[4 * t + k];
-        init.neighbors.push_back(realIndex[r >> 2] == pdel3d::NO_TET ?
-                                   -1 :
-                                   (std::int64_t)realIndex[r >> 2]);
-      }
-    }
     GRegion *gr = regions[0];
     bool ok;
     {
       regionGroupBoundary group(regions);
-      ok = meshGRegionBoundaryRecovery(gr, &sqr, &init);
+      ok = meshGRegionBoundaryRecovery(gr, &sqr);
     }
     if(!ok) return false;
     // the surface mesh again (it may have changed), then the vertices of the
@@ -5052,69 +5037,43 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr)
     pdel3d::lineToTetMap(m, s.lineNode, lineInTriangle, line2tet);
   const bool recovered = missing || missingLines;
   if(recovered) {
-    Msg::Info("Recovering %zu missing triangle(s) and %zu missing line(s)...",
-              missing, missingLines);
+    const std::size_t ntri = s.triNode.size() / 3;
+    Msg::Info("Recovering %zu of %zu triangle(s) and %zu missing line(s)...",
+              missing, ntri, missingLines);
     // by local edge removals first, then TetGen on the cavities around what
-    // is left; the global TetGen recovery of the untouched Delaunay is the
-    // fallback
-    const std::size_t ntet0 = m.ntet, nv0 = m.numVertices();
-    pdel3d::PodVector<pdel3d::vIdx> node0;
-    pdel3d::PodVector<pdel3d::tRef> neigh0;
-    pdel3d::PodVector<std::uint16_t> flag0;
-    node0.resizeNoInit(4 * ntet0);
-    neigh0.resizeNoInit(4 * ntet0);
-    flag0.resizeNoInit(ntet0);
-#pragma omp parallel for schedule(static) num_threads(nthreads)
-    for(std::size_t t = 0; t < ntet0; t++) {
-      for(int k = 0; k < 4; k++) {
-        node0[4 * t + k] = m.node[4 * t + k];
-        neigh0[4 * t + k] = m.neigh[4 * t + k];
-      }
-      flag0[t] = m.flag[t];
-    }
-    // the maps after each stage: the edge removals and the cavities move
-    // the triangles and lines to other tets
+    // is left; TetGen's global recovery, from a Delaunay of its own, is the
+    // fallback. When most triangles are missing (structured surface meshes
+    // whose elements are larger than the gaps between the surfaces are
+    // Delaunay nowhere) the local stages are hopeless and skipped
     auto remap = [&]() {
       missing = pdel3d::triangleToTetMap(m, s.triNode, tri2tet, nthreads);
       pdel3d::linesInTriangles(s.triNode, s.lineNode, lineInTriangle);
       missingLines =
         pdel3d::lineToTetMap(m, s.lineNode, lineInTriangle, line2tet);
     };
-    bool local = true;
-    pdel3d::recoverLocally(m, s.triNode, s.lineNode, lineInTriangle, tri2tet,
-                           line2tet, nthreads, verbosity);
-    if(Msg::GetVerbosity() > 5) m.verify(false);
-    remap();
-    if(missing || missingLines) {
-      local = recoverWithLocalTetGen(m, s, regions, tri2tet, line2tet,
-                                     lineInTriangle, nthreads);
-      if(local) {
-        remap();
-        local = !missing && !missingLines;
-        if(!local)
-          Msg::Info("Local boundary recovery incomplete (%zu triangle(s) and "
-                    "%zu line(s) missing): falling back to the global one",
-                    missing, missingLines);
+    bool local = 2 * missing < ntri;
+    if(local) {
+      pdel3d::recoverLocally(m, s.triNode, s.lineNode, lineInTriangle,
+                             tri2tet, line2tet, nthreads, verbosity);
+      if(Msg::GetVerbosity() > 5) m.verify(false);
+      remap();
+      if(missing || missingLines) {
+        local = recoverWithLocalTetGen(m, s, regions, tri2tet, line2tet,
+                                       lineInTriangle, nthreads);
+        if(local) {
+          remap();
+          local = !missing && !missingLines;
+          if(!local)
+            Msg::Info("Local boundary recovery incomplete (%zu triangle(s) "
+                      "and %zu line(s) missing): falling back to the global "
+                      "one",
+                      missing, missingLines);
+        }
       }
     }
+    else
+      Msg::Info("Most triangles are missing: global boundary recovery");
     if(!local) {
-      // from the Delaunay before the local recovery, unless the cavities
-      // added Steiner points to the surface mesh, which that tetrahedralization
-      // does not have: then from the current one
-      if(m.numVertices() == nv0) {
-#pragma omp parallel for schedule(static) num_threads(nthreads)
-        for(std::size_t t = 0; t < ntet0; t++) {
-          for(int k = 0; k < 4; k++) {
-            m.node[4 * t + k] = node0[4 * t + k];
-            m.neigh[4 * t + k] = neigh0[4 * t + k];
-          }
-          m.flag[t] = flag0[t];
-        }
-        m.ntet = ntet0;
-      }
-      else
-        Msg::Warning("Falling back to the global boundary recovery after a "
-                     "partial local one");
       if(!recoverBoundary(m, s, regions, sqr, sizeFactor)) {
         Msg::Error("Boundary recovery failed");
         return 1;

@@ -952,14 +952,12 @@ namespace tetgenBR {
     return err;
   }
 
-  bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr,
-                                   const initialTetrahedralization *init)
+  bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
   {
     double t_start = Cpu(), w_start = TimeOfDay();
     std::vector<MVertex *> _vertices;
     // Get the set of vertices from GRegion.
-    if(init) { _vertices = init->vertices; }
-    else {
+    {
       std::set<MVertex *, MVertexPtrLessThan> all;
       std::vector<GFace *> const &f = gr->faces();
       for(auto it = f.begin(); it != f.end(); ++it) {
@@ -979,7 +977,12 @@ namespace tetgenBR {
             MVertex *v2 = gf->quadrangles[i]->getVertex(2);
             MVertex *v3 = gf->quadrangles[i]->getVertex(3);
             MFace mf = gf->quadrangles[i]->getFace(0);
-            if(sqr->doWeCreatePyramids()) {
+            auto it = sqr->getQuad().find(mf);
+            if(it != sqr->getQuad().end()) {
+              // already split by the caller: keep its apex
+              if(it->second) all.insert(it->second);
+            }
+            else if(sqr->doWeCreatePyramids()) {
               SPoint3 p((v0->x() + v1->x() + v2->x() + v3->x()) * 0.25,
                         (v0->y() + v1->y() + v2->y() + v3->y()) * 0.25,
                         (v0->z() + v1->z() + v2->z() + v3->z()) * 0.25);
@@ -1030,12 +1033,7 @@ namespace tetgenBR {
     // function delaunayTriangulation
     std::map<MVertex *, SPoint3> originalCoordinates;
     boundaryRecoveryInput in;
-    if(init) {
-      in.tetNode = init->tetNode;
-      in.tetNeighbors = init->neighbors;
-      in.carve = false; // the caller sorts out the exterior
-    }
-    else {
+    {
       for(std::size_t i = 0; i < _vertices.size(); i++) {
         MVertex *v = _vertices[i];
         originalCoordinates[v] = v->point();
@@ -1296,7 +1294,7 @@ namespace tetgenBR {
       vIter->first->setXYZ(coordinates.x(), coordinates.y(), coordinates.z());
     }
     // delete 8 new enclosing box vertices added in delaunayMeshIn3d
-    if(!init && ret) {
+    if(ret) {
       for(std::size_t i = _vertices.size() - 8; i < _vertices.size(); i++)
         delete _vertices[i];
     }
@@ -1349,8 +1347,7 @@ namespace tetgenBR {
 
 #else
 
-bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr,
-                                 const initialTetrahedralization *init)
+bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
 {
   return false;
 }
