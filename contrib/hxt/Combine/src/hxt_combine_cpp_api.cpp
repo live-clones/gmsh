@@ -512,8 +512,9 @@ namespace {
     * sharing a vertex are, i.e. once it is the first undecided one on each
     * of its vertices. Those share no vertex and are decided at the same
     * time, level after level. A cell with a taken interior tet is rejected
-    * as soon as it is met (tets are never released here). Same selection
-    * as one cell after the other.
+    * as soon as it is met (tets are never released here). The cells
+    * selected already (by a previous call) are decided: only the others are
+    * waited for. Same selection as one cell after the other.
     */
     void greedySelection(const HXTCombineCellArray& cells,
                          const std::vector<CellIndex>& order, Flags& flags)
@@ -521,10 +522,11 @@ namespace {
       const std::size_t n = order.size();
       if (!n) return;
       const std::size_t nbVertices = tets_.nbVertices();
-      // the ranks of the cells of each vertex, in increasing order
+      // the ranks of the undecided cells of each vertex, in increasing order
       std::vector<std::size_t> start(nbVertices + 1, 0);
 #pragma omp parallel for schedule(static)
       for (int r = 0; r < (int)n; ++r) {
+        if (flags[order[r]]) continue;
         const HXTCombineCell cell = cells[order[r]];
         for (unsigned int i = 0; i < cell.nbVertices(); ++i)
           atomicFetchAdd(&start[cell.vertexes[i] + 1], 1);
@@ -535,6 +537,7 @@ namespace {
         std::vector<std::size_t> next(start.begin(), start.end() - 1);
 #pragma omp parallel for schedule(static)
         for (int r = 0; r < (int)n; ++r) {
+          if (flags[order[r]]) continue;
           const HXTCombineCell cell = cells[order[r]];
           for (unsigned int i = 0; i < cell.nbVertices(); ++i)
             ranks[atomicFetchAdd(&next[cell.vertexes[i]], 1)] = r;
@@ -585,7 +588,7 @@ namespace {
       std::vector<CellIndex> level;
 #pragma omp parallel for schedule(dynamic, 1024)
       for (int r = 0; r < (int)n; ++r)
-        if (isFirst(r)) found[omp_get_thread_num()].push_back(r);
+        if (!flags[order[r]] && isFirst(r)) found[omp_get_thread_num()].push_back(r);
       for (auto& f : found) {
         level.insert(level.end(), f.begin(), f.end());
         f.clear();
