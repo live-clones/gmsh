@@ -6596,18 +6596,30 @@ double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombine3DAll;
 }
 
+// deprecated: 0 hexahedra, 1 also prisms (Mesh.Recombine3DPrisms)
 double opt_mesh_recombine3d_level(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.recombine3DLevel = (int)val; }
-  return CTX::instance()->mesh.recombine3DLevel;
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DPrisms = (int)val >= 1;
+  return CTX::instance()->mesh.recombine3DPrisms;
 }
 
+// deprecated: 2 also pyramids (Mesh.Recombine3DPyramids), trihedra always
 double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    CTX::instance()->mesh.recombine3DConformity = (int)val;
-  }
-  return CTX::instance()->mesh.recombine3DConformity;
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DPyramids = (int)val == 2;
+  return CTX::instance()->mesh.recombine3DPyramids ? 2 : 1;
+}
+
+double opt_mesh_recombine3d_prisms(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DPrisms = (int)val;
+  return CTX::instance()->mesh.recombine3DPrisms;
+}
+
+double opt_mesh_recombine3d_pyramids(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DPyramids = (int)val;
+  return CTX::instance()->mesh.recombine3DPyramids;
 }
 
 double opt_mesh_recombine3d_smoothing(OPT_ARGS_NUM)

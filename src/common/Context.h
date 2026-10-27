@@ -40,7 +40,7 @@ struct contextMeshOptions {
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombineNodeRepositioning;
   double recombineMinimumQuality;
-  int recombine3DAll, recombine3DLevel, recombine3DConformity;
+  int recombine3DAll, recombine3DPrisms, recombine3DPyramids;
   int recombine3DSmoothing;
   double recombine3DMinimumQuality;
   int flexibleTransfinite, quasiTransfinite, transfiniteTri, maxRetries;
