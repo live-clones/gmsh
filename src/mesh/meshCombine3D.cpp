@@ -252,6 +252,12 @@ namespace {
     {
       Statistics stats;
       stats.quads = _quads.size();
+      buildAdjacency();
+      // rounds of remedies: a face blocked by a neighbor may pass once the
+      // neighbor is done, until a round makes less than 5% of the negative
+      // ones positive (10 rounds at most)
+      std::size_t previous = 0;
+      for(int round = 0; round < 10; round++) {
       std::vector<char> isNegative(_quads.size());
 #pragma omp parallel for schedule(static)
       for(int i = 0; i < (int)_quads.size(); i++)
@@ -259,7 +265,11 @@ namespace {
       std::vector<std::size_t> negative;
       for(std::size_t i = 0; i < _quads.size(); i++)
         if(isNegative[i]) negative.push_back(i);
-      stats.negative = negative.size();
+      if(!round) stats.negative = negative.size();
+      if(negative.empty() || (round && negative.size() > .95 * previous))
+        break;
+      previous = negative.size();
+      stats.left = 0;
       // the swaps, then the faces left flattened
       std::vector<std::size_t> left;
       for(std::size_t i : negative) {
@@ -281,6 +291,7 @@ namespace {
         }
       }
       if(!left.empty()) flatten(left, stats);
+      }
       // the tetrahedra replaced
       std::vector<MTetrahedron *> kept;
       kept.reserve(_gr->tetrahedra.size() + _added.size());
@@ -294,6 +305,9 @@ namespace {
         if(!_removed.count(t)) kept.push_back(t);
         else delete t;
       _gr->tetrahedra.swap(kept);
+      for(const HangingQuad &h : _quads)
+        for(MVertex *v : {h.p, h.q, h.r, h.s})
+          if(v->getIndex() >= 0) v->setIndex(-1);
       return stats;
     }
 
@@ -315,6 +329,35 @@ namespace {
     std::vector<HangingQuad> _quads;
     std::unordered_set<MTetrahedron *> _removed;
     std::vector<MTetrahedron *> _added;
+    // the vertices of the faces inside the region, numbered in
+    // MVertex::_index (the others are marked < 0), with their elements and
+    // their unmatched faces
+    std::vector<std::vector<MElement *> > _elements;
+    std::vector<std::vector<std::size_t> > _quadsOf;
+
+    void buildAdjacency()
+    {
+      std::size_t nbMovable = 0;
+      for(const HangingQuad &h : _quads)
+        for(MVertex *v : {h.p, h.q, h.r, h.s})
+          if(v->getIndex() < 0 && v->onWhat() && v->onWhat()->dim() == 3)
+            v->setIndex(nbMovable++);
+      _elements.assign(nbMovable, std::vector<MElement *>());
+      _quadsOf.assign(nbMovable, std::vector<std::size_t>());
+      auto add = [&](MElement *e) {
+        for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+          const long m = e->getVertex(k)->getIndex();
+          if(m >= 0) _elements[m].push_back(e);
+        }
+      };
+      for(MTetrahedron *t : _gr->tetrahedra) add(t);
+      for(MHexahedron *e : _gr->hexahedra) add(e);
+      for(MPrism *e : _gr->prisms) add(e);
+      for(MPyramid *e : _gr->pyramids) add(e);
+      for(std::size_t i = 0; i < _quads.size(); i++)
+        for(MVertex *v : {_quads[i].p, _quads[i].q, _quads[i].r, _quads[i].s})
+          if(v->getIndex() >= 0) _quadsOf[v->getIndex()].push_back(i);
+    }
 
     static int tetFace(const int f, const int j)
     {
@@ -549,11 +592,21 @@ namespace {
       for(MTetrahedron *t : shell) {
         removeTriangles(t);
         _removed.insert(t);
+        for(int k = 0; k < 4; k++) {
+          const long m = t->getVertex(k)->getIndex();
+          if(m < 0) continue;
+          std::vector<MElement *> &around = _elements[m];
+          around.erase(std::find(around.begin(), around.end(), t));
+        }
       }
       for(const auto &v : tets) {
         MTetrahedron *t = new MTetrahedron(v[0], v[1], v[2], v[3]);
         addTriangles(t, 4, tetFace);
         _added.push_back(t);
+        for(int k = 0; k < 4; k++) {
+          const long m = t->getVertex(k)->getIndex();
+          if(m >= 0) _elements[m].push_back(t);
+        }
       }
     }
 
@@ -585,9 +638,9 @@ namespace {
     // The warping of the face of h reversed: p and q moved out of its cell
     // and r and s into it, along the edges of the cell leaving the face, by
     // the smallest part t <= 1/4 of the mean edge of the face making the
-    // trihedron positive (with a margin), if the elements around them stay
-    // above their floors and the other trihedra of their vertices do not
-    // become negative
+    // trihedron positive (with a margin), if the elements around them keep 80%
+    // of the quality of their worst one, and do not go under 0.05 if it is
+    // above, and the other trihedra of their vertices do not become negative
     bool shift(std::size_t i,
                const std::vector<std::vector<MElement *> > &elements,
                const std::vector<std::vector<std::size_t> > &quadsOf)
@@ -620,7 +673,7 @@ namespace {
         const long m = vs[k]->getIndex();
         double worst = 1.;
         for(MElement *e : elements[m]) worst = std::min(worst, quality(e));
-        floor[k] = std::max(.5 * worst, std::min(worst, _minQuality));
+        floor[k] = std::max(.8 * worst, std::min(worst, _minQuality));
         for(std::size_t j : quadsOf[m])
           if(j != i && trihedronVolume(_quads[j]) >= -_flat) fine.push_back(j);
       }
@@ -666,41 +719,13 @@ namespace {
 
     // The faces moved toward their mean plane: each of their vertices inside
     // the region, as far as (a step of 1, 1/2, 1/4, 1/8 of the way) the
-    // elements around it stay valid, their worst one keeping half its
-    // quality, and not going under 0.05 if it is above, and the other
+    // elements around it stay valid, keeping 80% of the quality of their
+    // worst one, and not going under 0.05 if it is above, and the other
     // trihedra of the vertex do not become negative
     void flatten(const std::vector<std::size_t> &list, Statistics &stats)
     {
-      // the vertices of the faces inside the region, numbered in
-      // MVertex::_index (the others are marked < 0), with their elements and
-      // their unmatched faces
-      std::vector<MElement *> all;
-      all.reserve(_gr->tetrahedra.size() + _added.size() +
-                  _gr->hexahedra.size() + _gr->prisms.size() +
-                  _gr->pyramids.size());
-      for(MTetrahedron *t : _gr->tetrahedra)
-        if(!_removed.count(t)) all.push_back(t);
-      for(MTetrahedron *t : _added)
-        if(!_removed.count(t)) all.push_back(t);
-      all.insert(all.end(), _gr->hexahedra.begin(), _gr->hexahedra.end());
-      all.insert(all.end(), _gr->prisms.begin(), _gr->prisms.end());
-      all.insert(all.end(), _gr->pyramids.begin(), _gr->pyramids.end());
-      std::size_t nbMovable = 0;
-      for(std::size_t i : list)
-        for(MVertex *v : {_quads[i].p, _quads[i].q, _quads[i].r, _quads[i].s})
-          if(v->getIndex() < 0 && v->onWhat() && v->onWhat()->dim() == 3)
-            v->setIndex(nbMovable++);
-      std::vector<std::vector<MElement *> > elements(nbMovable);
-      std::vector<std::vector<std::size_t> > quadsOf(nbMovable);
-      for(MElement *e : all)
-        for(std::size_t k = 0; k < e->getNumVertices(); k++) {
-          const long m = e->getVertex(k)->getIndex();
-          if(m >= 0) elements[m].push_back(e);
-        }
-      for(std::size_t i = 0; i < _quads.size(); i++)
-        for(MVertex *v : {_quads[i].p, _quads[i].q, _quads[i].r, _quads[i].s})
-          if(v->getIndex() >= 0) quadsOf[v->getIndex()].push_back(i);
-
+      const std::vector<std::vector<MElement *> > &elements = _elements;
+      const std::vector<std::vector<std::size_t> > &quadsOf = _quadsOf;
       for(std::size_t i : list) {
         const HangingQuad h = _quads[i];
         if(shift(i, elements, quadsOf)) {
@@ -740,7 +765,7 @@ namespace {
                               (x0.z() - c[2]) * nrm.z();
           const double worst = around.empty() ? 1. : around[0].first;
           const double floor =
-            std::max(.5 * worst, std::min(worst, _minQuality));
+            std::max(.8 * worst, std::min(worst, _minQuality));
           std::vector<bool> fine;
           for(std::size_t j : quadsOfV)
             fine.push_back(trihedronVolume(_quads[j]) >= -_flat);
@@ -1135,8 +1160,9 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
   // the trihedra made positive while the faces where the pyramids go are
   // still on tetrahedra, which a swap can replace: the pyramids are made
   // after the smoothing and the second correction (see Generator.cpp)
-  if(CTX::instance()->mesh.recombine3DPositiveTrihedra)
+  if(CTX::instance()->mesh.recombine3DPositiveTrihedra) {
     MakeTrihedraPositive(gr);
+  }
   else if(CTX::instance()->mesh.recombine3DPyramids)
     MakeFreePyramids(gr);
 
@@ -1162,6 +1188,7 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
 void MakeTrihedraPositive(GRegion *gr, bool skipPyramids) {}
 
 void MakeFreePyramids(GRegion *gr) {}
+
 
 #endif
 
