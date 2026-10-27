@@ -6615,6 +6615,13 @@ double opt_mesh_recombine3d_pyramids(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombine3DPyramids;
 }
 
+double opt_mesh_recombine3d_positive_trihedra(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.recombine3DPositiveTrihedra = (int)val;
+  return CTX::instance()->mesh.recombine3DPositiveTrihedra;
+}
+
 double opt_mesh_recombine3d_smoothing(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.recombine3DSmoothing = (int)val;
