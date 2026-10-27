@@ -289,6 +289,7 @@ static void gmsh_measure(Fl_Color c)
   bl; vv(0.38, -0.28); vv(0.46, -0.15); el;
 }
 
+// a window with its side pane filled: the tree, shown or hidden
 static void gmsh_sidebar(Fl_Color c)
 {
   fl_color(c);
@@ -298,10 +299,12 @@ static void gmsh_sidebar(Fl_Color c)
   vv(0.8, 0.8);
   vv(-0.8, 0.8);
   el;
-  bl;
+  fl_begin_polygon();
+  vv(-0.8, -0.8);
   vv(-0.3, -0.8);
   vv(-0.3, 0.8);
-  el;
+  vv(-0.8, 0.8);
+  fl_end_polygon();
 }
 
 static void gmsh_models(Fl_Color c)

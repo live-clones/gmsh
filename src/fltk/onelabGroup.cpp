@@ -34,6 +34,7 @@ typedef unsigned long intptr_t;
 #include "onelabGroup.h"
 #include "GmshGlobal.h"
 #include "FlGui.h"
+#include "gmshScheme.h"
 #include "Context.h"
 #include "GModel.h"
 #include "GmshDefines.h"
@@ -479,11 +480,20 @@ static unsigned char gear_bits[] = {
   0xf8, 0x1f, 0xfc, 0x3f, 0x8c, 0x31, 0x80, 0x01, 0x80, 0x01};
 #endif
 
+// the background of the tree: under the gmsh theme between the one of the
+// window, as the tools, and the one of the lists, which it is otherwise,
+// closer to the latter
+static Fl_Color treeColor()
+{
+  if(!gmshScheme()) return FL_BACKGROUND2_COLOR;
+  return fl_color_average(FL_BACKGROUND2_COLOR, FL_BACKGROUND_COLOR, 0.65f);
+}
+
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   : Fl_Group(x, y, w, h, l), _stop(false), _enableTreeWidgetResize(false),
     _firstBuild(true), _hasContext(false)
 {
-  int col = FL_BACKGROUND2_COLOR;
+  Fl_Color col = treeColor();
   color(col);
 
   box(GMSH_SIMPLE_RIGHT_BOX);
@@ -1438,6 +1448,9 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
 
   _tree->clear();
 
+  // the colours follow the colour scheme, which may have changed
+  color(treeColor());
+  _tree->color(treeColor());
   if(CTX::instance()->guiColorScheme) {
     _tree->openicon(&open_pixmap_dark);
     _tree->closeicon(&close_pixmap_dark);

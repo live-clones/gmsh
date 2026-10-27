@@ -12,6 +12,8 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Menu_.H>
 #include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Menu_Window.H>
+#include <FL/Fl_Scrollbar.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Valuator.H>
 #include <FL/Fl_Window.H>
@@ -34,14 +36,17 @@ void applyGmshColors(bool dark)
       Fl::set_color(fl_gray_ramp(i), d, d, d);
     }
     // the selection muted, as in the editors: a steel blue
-    Fl::set_color(FL_SELECTION_COLOR, 38, 79, 120);
+    // the selection in the hue of the background gradient of the graphics,
+    // the periwinkle of General.Color.BackgroundGradient (208, 215, 255),
+    // deep for the dark interface
+    Fl::set_color(FL_SELECTION_COLOR, 58, 64, 110);
   }
   else {
     Fl::background(242, 242, 242);
     Fl::background2(255, 255, 255);
     Fl::foreground(30, 30, 30);
-    // a sky blue, the text staying dark on it
-    Fl::set_color(FL_SELECTION_COLOR, 173, 214, 255);
+    // the periwinkle of the gradient, a little deeper, the text staying dark
+    Fl::set_color(FL_SELECTION_COLOR, 196, 204, 250);
   }
 }
 
@@ -53,9 +58,10 @@ void applyGmshColors(bool dark)
 static bool hoverable(Fl_Widget *w)
 {
   if(!w || !w->active_r()) return false;
-  // not the menu bar: it would highlight as a whole, and it draws no box per
-  // title to highlight on its own
-  if(dynamic_cast<Fl_Menu_Bar *>(w)) return false;
+  // not the menu bar, which draws no box per title and highlights its own
+  // (see hoverMenuBar), nor a scrollbar, which is not a control one presses
+  if(dynamic_cast<Fl_Menu_Bar *>(w) || dynamic_cast<Fl_Scrollbar *>(w))
+    return false;
   return dynamic_cast<Fl_Button *>(w) || dynamic_cast<Fl_Menu_ *>(w) ||
          dynamic_cast<Fl_Input_ *>(w) || dynamic_cast<Fl_Valuator *>(w) ||
          dynamic_cast<Fl_Tabs *>(w);
@@ -125,6 +131,14 @@ static Fl_Box_Draw_F *stock[FL_FREE_BOXTYPE + 8];
 template <Fl_Boxtype T>
 static void hover_box(int x, int y, int w, int h, Fl_Color c)
 {
+  // the item chosen in the menu of a choice, without the frame FLTK puts
+  // around it (the bordered down box of the choice): flat, as in the menus
+  // of the bar
+  if(T == FL_BORDER_BOX &&
+     dynamic_cast<Fl_Menu_Window *>(Fl_Window::current())) {
+    stock[FL_FLAT_BOX](x, y, w, h, c);
+    return;
+  }
   if(hovered(x, y, w, h)) {
     c = highlight(c);
     if(getenv("GMSH_HOVER_DEBUG"))
