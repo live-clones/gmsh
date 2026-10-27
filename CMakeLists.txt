@@ -1333,7 +1333,7 @@ if(ENABLE_OCC)
     if(OCC_VERSION AND OCC_VERSION VERSION_GREATER_EQUAL "7.8.0")
       set(OCC_LIBS_REQUIRED
           # subset of DataExchange
-          TKDESTEP TKDEIGES TKXSBase
+          TKDESTEP TKDEIGES TKDE TKXSBase
           # ModelingAlgorithms
           TKOffset TKFeat TKFillet TKBool TKMesh TKHLR TKBO TKPrim TKShHealing
           TKTopAlgo TKGeomAlgo
