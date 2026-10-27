@@ -487,7 +487,15 @@ static unsigned char gear_bits[] = {
 static Fl_Color treeColor()
 {
   if(!gmshScheme()) return FL_BACKGROUND2_COLOR;
-  return fl_color_average(FL_BACKGROUND2_COLOR, FL_BACKGROUND_COLOR, 0.65f);
+  return fl_color_average(FL_BACKGROUND2_COLOR, FL_BACKGROUND_COLOR, 0.55f);
+}
+
+// the lines joining the items: under the gmsh theme fainter than the
+// triangles, which carry the structure
+static Fl_Color connectorColor()
+{
+  if(!gmshScheme()) return FL_INACTIVE_COLOR;
+  return fl_color_average(treeColor(), FL_FOREGROUND_COLOR, 0.68f);
 }
 
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
@@ -507,13 +515,15 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _tree->color(col);
   _tree->callback(onelab_tree_cb);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
+  _tree->connectorcolor(connectorColor());
   // _tree->marginleft(0);
   // _tree->usericonmarginleft(0);
   // _tree->labelmarginleft(0);
   // _tree->connectorwidth(15);
   _tree->showroot(0);
   _tree->box(FL_FLAT_BOX);
-  _tree->linespacing(gmshAir()); // the air of the gmsh theme between the items
+  // under the gmsh theme the items are spaced out more than its widgets
+  _tree->linespacing(2 * gmshAir());
   // _tree->resizable(0);
   _tree->end();
 
@@ -1457,6 +1467,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   // the colours follow the colour scheme, which may have changed
   color(treeColor());
   _tree->color(treeColor());
+  _tree->connectorcolor(connectorColor());
   if(CTX::instance()->guiColorScheme) {
     _tree->openicon(&open_pixmap_dark);
     _tree->closeicon(&close_pixmap_dark);

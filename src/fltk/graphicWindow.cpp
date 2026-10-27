@@ -4092,7 +4092,13 @@ public:
       _hot = -1;
       redraw();
     }
+    // the pulldowns of the bar get more room between their entries than the
+    // choices and popups, as the desktops give their menus: they run their
+    // own loop inside handle(), so the spacing is set around it
+    int spacing = Fl::menu_linespacing();
+    if(gmshScheme()) Fl::menu_linespacing(spacing + 4);
     int ret = Fl_Menu_Bar::handle(event);
+    Fl::menu_linespacing(spacing);
     if(event == FL_PUSH && _hot >= 0) {
       _hot = -1;
       redraw();

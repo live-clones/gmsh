@@ -196,6 +196,11 @@ toolDock::toolDock(int x, int y, int w, int h, int rowHeight)
   end();
 }
 
+// the label of a tab: FLTK draws the close cross right before it, so it
+// starts with some space
+static std::string tabLabel(paletteWindow *pw)
+{ return std::string("  ") + (pw->label() ? pw->label() : ""); }
+
 dockTab *toolDock::_tabOf(paletteWindow *pw)
 {
   for(int i = 0; i < _tabs->children(); i++) {
@@ -369,7 +374,7 @@ void toolDock::dock(paletteWindow *pw)
     t->folded = false; // shown again: open, where it is in the stack
   }
   else if(dockTab *t = _tabOf(pw)) {
-    t->copy_label(pw->label()); // some windows change their label
+    t->copy_label(tabLabel(pw).c_str()); // some windows change their label
     _tabs->value(t);
   }
   else {
@@ -388,7 +393,7 @@ void toolDock::dock(paletteWindow *pw)
       // a close button on the tab
       t->when(FL_WHEN_CLOSED);
       t->callback(_close_cb);
-      t->copy_label(pw->label());
+      t->copy_label(tabLabel(pw).c_str());
       t->labelfont(FL_BOLD); // as the titles of the stacked windows
       _tabs->add(t);
       _tabs->value(t);
