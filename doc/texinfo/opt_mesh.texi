@@ -871,19 +871,19 @@ Apply recombination3D algorithm to all volumes, ignoring per-volume spec (experi
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Recombine3DLevel
-3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids) (experimental)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Recombine3DConformity
-3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)(experimental)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.Recombine3DMinimumQuality
 Minimum quality of the candidate hexahedra of the 3d recombination: fewer candidates take less time and memory, but the worse hexahedra the selection could still use are left as tetrahedra (experimental)@*
 Default value: @code{0.2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Recombine3DPrisms
+Also combine tetrahedra into prisms in the 3d recombination, besides hexahedra (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Recombine3DPyramids
+Replace by a pyramid each pair of tetrahedra forming one on an unmatched quadrangular face of the 3d recombination (the two tetrahedra stand on the two triangles of the face and share their fourth vertex); the other unmatched faces get trihedra (experimental)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DSmoothing

@@ -229,11 +229,7 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
   HXTCombine::HXTCombineCellStore ccs(tm4c);
   double minQuality = CTX::instance()->mesh.recombine3DMinimumQuality;
 
-  // Mesh.Recombine3DLevel (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)
-  if(CTX::instance()->mesh.recombine3DLevel >= 2)
-    Msg::Warning("Mesh.Recombine3DLevel=2 (pyramids) is not implemented "
-                 "yet; falling back to hex+prisms");
-  bool enablePrisms = CTX::instance()->mesh.recombine3DLevel >= 1;
+  bool enablePrisms = CTX::instance()->mesh.recombine3DPrisms;
 
   // the candidate cells are proposed along the frames of the point insertion
   std::vector<double> axes(9 * c2v.size(), 0.), sizes(c2v.size(), 0.);
@@ -456,7 +452,7 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
 
   AddMeshStageTime("combination: output", TimeOfDay() - tOutput,
                    Cpu() - cOutput);
-  if(CTX::instance()->mesh.recombine3DConformity == 2) {
+  if(CTX::instance()->mesh.recombine3DPyramids) {
     const double tPyramids = TimeOfDay(), cPyramids = Cpu();
     const std::size_t nPyr = makeFreePyramids(gr);
     AddMeshStageTime("combination: pyramids", TimeOfDay() - tPyramids,

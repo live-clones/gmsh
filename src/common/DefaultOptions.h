@@ -1764,17 +1764,22 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Recombine3DAll" , opt_mesh_recombine3d_all , 0 ,
     "Apply recombination3D algorithm to all volumes, ignoring per-volume spec "
     "(experimental)" },
-  { F|O, "Recombine3DLevel" , opt_mesh_recombine3d_level , 0 ,
-    "3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids) "
-    "(experimental)" },
-  { F|O, "Recombine3DConformity" , opt_mesh_recombine3d_conformity , 0 ,
-    "3d recombination conformity type (0: nonconforming, 1: trihedra, "
-    "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)"
-    "(experimental)" },
+  { F|O|D, "Recombine3DLevel" , opt_mesh_recombine3d_level , 0 ,
+    "[Deprecated]" },
+  { F|O|D, "Recombine3DConformity" , opt_mesh_recombine3d_conformity , 1 ,
+    "[Deprecated]" },
   { F|O, "Recombine3DMinimumQuality" , opt_mesh_recombine3d_minimum_quality , 0.2 ,
     "Minimum quality of the candidate hexahedra of the 3d recombination: "
     "fewer candidates take less time and memory, but the worse hexahedra the "
     "selection could still use are left as tetrahedra (experimental)" },
+  { F|O, "Recombine3DPrisms" , opt_mesh_recombine3d_prisms , 0 ,
+    "Also combine tetrahedra into prisms in the 3d recombination, besides "
+    "hexahedra (experimental)" },
+  { F|O, "Recombine3DPyramids" , opt_mesh_recombine3d_pyramids , 0 ,
+    "Replace by a pyramid each pair of tetrahedra forming one on an unmatched "
+    "quadrangular face of the 3d recombination (the two tetrahedra stand on "
+    "the two triangles of the face and share their fourth vertex); the other "
+    "unmatched faces get trihedra (experimental)" },
   { F|O, "Recombine3DSmoothing" , opt_mesh_recombine3d_smoothing , 1 ,
     "Number of vertex relocation steps after the 3d recombination (2 more "
     "passes are made) (experimental)" },
