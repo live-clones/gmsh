@@ -498,6 +498,26 @@ static Fl_Color connectorColor()
   return fl_color_average(treeColor(), FL_FOREGROUND_COLOR, 0.68f);
 }
 
+// a click on the row of a branch, not only on its triangle, opens or closes
+// it; the names of the view groups and of the physical groups are buttons
+// with an action of their own
+class onelabTree : public Fl_Tree {
+public:
+  onelabTree(int x, int y, int w, int h) : Fl_Tree(x, y, w, h) {}
+  int handle(int event) override
+  {
+    int ret = Fl_Tree::handle(event);
+    if(event == FL_PUSH && Fl::event_button() == FL_LEFT_MOUSE) {
+      Fl_Tree_Item *item = find_clicked(0);
+      if(item && item->has_children() &&
+         !item->event_on_collapse_icon(prefs()) &&
+         !dynamic_cast<Fl_Button *>(item->widget()))
+        open_toggle(item);
+    }
+    return ret;
+  }
+};
+
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   : Fl_Group(x, y, w, h, l), _stop(false), _enableTreeWidgetResize(false),
     _firstBuild(true), _hasContext(false)
@@ -511,7 +531,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   int dw = Fl::box_dw(box());
   int dh = Fl::box_dh(box());
 
-  _tree = new Fl_Tree(x + dx, y + dy, w - dw, h - dh - BH - 2 * WB);
+  _tree = new onelabTree(x + dx, y + dy, w - dw, h - dh - BH - 2 * WB);
   _tree->color(col);
   _tree->callback(onelab_tree_cb);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
