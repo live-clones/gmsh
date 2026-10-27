@@ -18,6 +18,10 @@ bool gmshScheme();
 int gmshAir();
 // the colours, light or dark
 void applyGmshColors(bool dark);
+// the colour of the accents the theme draws itself (the bar of the chosen tab,
+// the markers of the dock): brighter than the selection of the lists, which
+// stays muted (the selection colour of FLTK when the theme is off)
+Fl_Color gmshAccent();
 // the font, the boxes and the hover
 void applyGmshScheme();
 // the colour of a widget drawing itself: highlighted while the pointer is over

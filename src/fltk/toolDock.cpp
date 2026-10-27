@@ -175,8 +175,8 @@ void dockTabs::draw()
   // the marker of the place, a bar between the tabs
   tab_positions();
   int xx = x() + tab_offset + tab_pos[_dropAt];
-  fl_color(FL_SELECTION_COLOR);
-  fl_rectf(xx - 1, y(), 3, tab_height());
+  fl_color(gmshAccent());
+  fl_rectf(xx - 1, y() + 2, 3, tab_height() - 2);
 }
 
 toolDock::toolDock(int x, int y, int w, int h, int rowHeight)
@@ -546,7 +546,7 @@ void toolDock::draw()
   // which the docked windows never cover, and by a highlight of the column
   // while it is empty
   if(_dropHint && empty()) {
-    fl_color(fl_color_average(FL_SELECTION_COLOR, FL_BACKGROUND_COLOR, 0.2));
+    fl_color(fl_color_average(gmshAccent(), FL_BACKGROUND_COLOR, 0.2));
     fl_rectf(x(), y(), w(), h());
     return;
   }
@@ -561,7 +561,7 @@ void toolDock::draw()
     dockTitle *t = _stack.back();
     yy = t->y() + t->h() + (t->shut ? 0 : t->win->h());
   }
-  fl_color(FL_SELECTION_COLOR);
+  fl_color(gmshAccent());
   fl_rectf(x(), yy - 1, w(), 3);
 }
 
@@ -586,7 +586,7 @@ void dockDivider::draw()
   // the target of a window dragged over the dock: its edge lights up, as
   // wide as the marker between the tabs
   if(highlight) {
-    fl_color(FL_SELECTION_COLOR);
+    fl_color(gmshAccent());
     fl_rectf(x() + w() - 3, y(), 3, h());
   }
 }

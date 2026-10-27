@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <typeinfo>
@@ -31,30 +32,42 @@ int gmshAir()
   return air;
 }
 
+static Fl_Color _accent = FL_SELECTION_COLOR;
+
+Fl_Color gmshAccent() { return _accent; }
+
 void applyGmshColors(bool dark)
 {
   if(dark) {
-    Fl::set_color(FL_BACKGROUND_COLOR, 34, 34, 34);
-    Fl::set_color(FL_BACKGROUND2_COLOR, 50, 50, 50);
-    Fl::set_color(FL_FOREGROUND_COLOR, 225, 225, 225);
+    // the greys and the blue of the Dark Modern theme of VS Code
+    Fl::set_color(FL_BACKGROUND_COLOR, 31, 31, 31);
+    Fl::set_color(FL_BACKGROUND2_COLOR, 49, 49, 49);
+    Fl::set_color(FL_FOREGROUND_COLOR, 204, 204, 204);
     // the greys of the bevels and frames, from black to a dark grey: the
     // ramp FLTK derives from a background runs up to white, far too bright
     for(int i = 0; i < FL_NUM_GRAY; i++) {
       int d = (int)(i * 80. / (FL_NUM_GRAY - 1.));
       Fl::set_color(fl_gray_ramp(i), d, d, d);
     }
-    // the selection muted, as in the editors: a steel blue
-    // the selection in the hue of the background gradient of the graphics,
-    // the periwinkle of General.Color.BackgroundGradient (208, 215, 255),
-    // deep for the dark interface
-    Fl::set_color(FL_SELECTION_COLOR, 92, 102, 168);
+    // the selected rows and text muted, the blue of the editor selection,
+    // the bright blue kept for the accents the theme draws itself
+    Fl::set_color(FL_SELECTION_COLOR, 38, 79, 120);
+    _accent = fl_rgb_color(0, 120, 212);
   }
   else {
-    Fl::background(242, 242, 242);
+    // the greys and the blue of the Light Modern theme of VS Code
+    Fl::background(248, 248, 248);
     Fl::background2(255, 255, 255);
-    Fl::foreground(30, 30, 30);
-    // the periwinkle of the gradient, a little deeper, the text staying dark
-    Fl::set_color(FL_SELECTION_COLOR, 196, 204, 250);
+    Fl::foreground(59, 59, 59);
+    // the ramp FLTK fits to such a light background fades the frames out
+    // (FL_DARK3 at 228): a ramp from black to the frame grey of VS Code (206)
+    // at FL_DARK3, then up to the background and white
+    for(int i = 0; i < FL_NUM_GRAY; i++) {
+      int d = (i <= 7) ? 206 * i / 7 : std::min(255, 206 + (i - 7) * 42 / 10);
+      Fl::set_color(fl_gray_ramp(i), d, d, d);
+    }
+    Fl::set_color(FL_SELECTION_COLOR, 173, 214, 255);
+    _accent = fl_rgb_color(0, 95, 184);
   }
 }
 

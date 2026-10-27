@@ -21,7 +21,7 @@ protected:
     // the last argument says which side of the chosen tab this one is on,
     // not whether it is chosen: that is the child shown
     if(o != value() || !gmshScheme()) return;
-    fl_color(FL_SELECTION_COLOR);
+    fl_color(gmshAccent());
     fl_rectf(x1 + 2, y() + 1, W - 4, 3);
   }
 
