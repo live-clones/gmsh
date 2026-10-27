@@ -906,6 +906,11 @@ Minimum quality of the candidate hexahedra of the 3d recombination: fewer candid
 Default value: @code{0.2}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Recombine3DPositiveTrihedra
+Make the volumes of the trihedra positive (a trihedron has half the volume of the tetrahedron of its 4 vertices, signed by the side of the elements on its triangles): the diagonal of an unmatched quadrangular face whose trihedron would be negative is swapped by retriangulating the 1 to 5 tetrahedra around it, or else the face is flattened by moving its vertices (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Recombine3DPrisms
 Also combine tetrahedra into prisms in the 3d recombination, besides hexahedra (experimental)@*
 Default value: @code{0}@*

@@ -1148,6 +1148,9 @@ static void Mesh3D(GModel *m)
                          true);
         AddMeshStageTime("smoothing", TimeOfDay() - tSmoothing,
                          Cpu() - cSmoothing);
+        // again: the smoothing moves the vertices of the faces
+        if(CTX::instance()->mesh.recombine3DPositiveTrihedra)
+          MakeTrihedraPositive(gr);
         if(CTX::instance()->mesh.recombine3DSmoothing > 0)
           Msg::Info("Region %d: vertices relocated (%d passes, Wall %gs)",
                     gr->tag(), CTX::instance()->mesh.recombine3DSmoothing + 2,

@@ -1786,6 +1786,13 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum quality of the candidate hexahedra of the 3d recombination: "
     "fewer candidates take less time and memory, but the worse hexahedra the "
     "selection could still use are left as tetrahedra (experimental)" },
+  { F|O, "Recombine3DPositiveTrihedra" , opt_mesh_recombine3d_positive_trihedra , 0 ,
+    "Make the volumes of the trihedra positive (a trihedron has half the "
+    "volume of the tetrahedron of its 4 vertices, signed by the side of the "
+    "elements on its triangles): the diagonal of an unmatched quadrangular "
+    "face whose trihedron would be negative is swapped by retriangulating the "
+    "1 to 5 tetrahedra around it, or else the face is flattened by moving its "
+    "vertices (experimental)" },
   { F|O, "Recombine3DPrisms" , opt_mesh_recombine3d_prisms , 0 ,
     "Also combine tetrahedra into prisms in the 3d recombination, besides "
     "hexahedra (experimental)" },

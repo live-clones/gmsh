@@ -23,5 +23,9 @@ typedef std::unordered_map<MVertex *, CombineFrame> CombineFrames;
 // The candidate cells are proposed along the frames
 int meshCombine3D(GRegion *m, const CombineFrames *frames = nullptr);
 bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm);
+// The trihedra of the unmatched quadrangular faces of a region made
+// positive (Mesh.Recombine3DPositiveTrihedra), the faces where the two
+// tetrahedra on them form a pyramid left as they are if skipPyramids
+void MakeTrihedraPositive(GRegion *gr, bool skipPyramids = false);
 
 #endif
