@@ -478,6 +478,7 @@ void FlGui::applyColorScheme(bool redraw)
 
   if(redraw && available()) {
     gmshIconsRecolor();
+    help->resetText();
     updateViews(true, true);
     for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
       win->redraw();
