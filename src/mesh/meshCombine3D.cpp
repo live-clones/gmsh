@@ -755,6 +755,17 @@ static void createMeshStore(GRegion *gr, HXTCombine::MeshStore &ms,
   computeTetAdjacencies(ms);
 }
 
+void MakeFreePyramids(GRegion *gr)
+{
+  const double tPyramids = TimeOfDay(), cPyramids = Cpu();
+  const std::size_t nPyr = makeFreePyramids(gr);
+  AddMeshStageTime("combination: pyramids", TimeOfDay() - tPyramids,
+                   Cpu() - cPyramids);
+  Msg::Debug("%zu pyramids on hex/prism quad faces (%zu tets merged), "
+             "%zu tets left",
+             nPyr, 2 * nPyr, gr->tetrahedra.size());
+}
+
 void MakeTrihedraPositive(GRegion *gr, bool skipPyramids)
 {
   const double t0 = TimeOfDay(), c0 = Cpu();
@@ -1021,17 +1032,12 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
                    Cpu() - cOutput);
 
   // the trihedra made positive while the faces where the pyramids go are
-  // still on tetrahedra, which a swap can replace
-  if(CTX::instance()->mesh.recombine3DPositiveTrihedra) MakeTrihedraPositive(gr);
-  if(CTX::instance()->mesh.recombine3DPyramids) {
-    const double tPyramids = TimeOfDay(), cPyramids = Cpu();
-    const std::size_t nPyr = makeFreePyramids(gr);
-    AddMeshStageTime("combination: pyramids", TimeOfDay() - tPyramids,
-                     Cpu() - cPyramids);
-    Msg::Debug("%zu pyramids on hex/prism quad faces (%zu tets merged), "
-               "%zu tets left",
-               nPyr, 2 * nPyr, gr->tetrahedra.size());
-  }
+  // still on tetrahedra, which a swap can replace: the pyramids are made
+  // after the smoothing and the second correction (see Generator.cpp)
+  if(CTX::instance()->mesh.recombine3DPositiveTrihedra)
+    MakeTrihedraPositive(gr);
+  else if(CTX::instance()->mesh.recombine3DPyramids)
+    MakeFreePyramids(gr);
 
   double volPrism = 0.;
   for(MPrism *p : gr->prisms) volPrism += std::abs(p->getVolume());
@@ -1053,6 +1059,8 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
 }
 
 void MakeTrihedraPositive(GRegion *gr, bool skipPyramids) {}
+
+void MakeFreePyramids(GRegion *gr) {}
 
 #endif
 

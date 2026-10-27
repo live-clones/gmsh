@@ -27,5 +27,8 @@ bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm);
 // positive (Mesh.Recombine3DPositiveTrihedra), the faces where the two
 // tetrahedra on them form a pyramid left as they are if skipPyramids
 void MakeTrihedraPositive(GRegion *gr, bool skipPyramids = false);
+// The pairs of tetrahedra forming a pyramid on an unmatched quadrangular face
+// replaced by it (Mesh.Recombine3DPyramids)
+void MakeFreePyramids(GRegion *gr);
 
 #endif
