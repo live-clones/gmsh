@@ -20,6 +20,8 @@
 #include <FL/Fl_Valuator.H>
 #include <FL/Fl_Window.H>
 #include "gmshScheme.h"
+#include "desktop.h"
+#include <string>
 #include "FlGui.h" // the box types of Gmsh
 #include "Context.h"
 
@@ -284,6 +286,25 @@ void applyGmshScheme()
   Fl::set_font(FL_HELVETICA_BOLD, "BSegoe UI");
   Fl::set_font(FL_HELVETICA_ITALIC, "ISegoe UI");
   Fl::set_font(FL_HELVETICA_BOLD_ITALIC, "PSegoe UI");
+#else
+  // the font the desktop names (GNOME, KDE), the sans of fontconfig
+  // otherwise; FLTK keeps the pointers, so the names stay. Under X11 a style
+  // is a first character of the name, under Wayland a last word
+  static std::string names[4];
+  if(names[0].empty()) {
+    std::string family = desktopFont();
+    if(family.empty()) family = "sans-serif";
+    const char *stock = Fl::get_font(FL_HELVETICA);
+    bool x11 = (stock && stock[0] == ' ');
+    names[0] = x11 ? " " + family : family;
+    names[1] = x11 ? "B" + family : family + " Bold";
+    names[2] = x11 ? "I" + family : family + " Italic";
+    names[3] = x11 ? "P" + family : family + " Bold Italic";
+  }
+  Fl::set_font(FL_HELVETICA, names[0].c_str());
+  Fl::set_font(FL_HELVETICA_BOLD, names[1].c_str());
+  Fl::set_font(FL_HELVETICA_ITALIC, names[2].c_str());
+  Fl::set_font(FL_HELVETICA_BOLD_ITALIC, names[3].c_str());
 #endif
 
   installBoxes();
