@@ -10,6 +10,7 @@
 #include <vector>
 #include <atomic>
 #include "SPoint2.h"
+#include "gmshScheme.h"
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
@@ -17,8 +18,10 @@
 
 #define IW (10 * FL_NORMAL_SIZE) // input field width
 #define BB (7 * FL_NORMAL_SIZE) // width of a button with internal label
-#define BH (2 * FL_NORMAL_SIZE + 1) // button height
-#define WB (5) // window border
+// the button height and the window border, a little larger under the gmsh
+// theme (see gmshScheme.h): the air between the widgets
+#define BH (2 * FL_NORMAL_SIZE + 1 + gmshAir())
+#define WB (5 + gmshAir())
 // least width of the tool windows: that of the option window, i.e. 28 em of
 // fields with a scrollbar beside them
 #define TW (28 * FL_NORMAL_SIZE + 2 * WB + Fl::scrollbar_size())

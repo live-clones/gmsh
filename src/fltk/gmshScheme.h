@@ -6,10 +6,16 @@
 #ifndef GMSH_SCHEME_H
 #define GMSH_SCHEME_H
 
+#include <FL/Enumerations.H>
+
+class Fl_Widget;
+
 // The look of General.FltkTheme = "gmsh": the widgets of FLTK with the font
 // of the desktop, a neutral palette, the buttons highlighted under the pointer,
 // and no dashed rectangle on the focus
 bool gmshScheme();
+// the pixels the theme adds to the window border and to the button height
+int gmshAir();
 // the colours, light or dark
 void applyGmshColors(bool dark);
 // the font, the boxes and the hover

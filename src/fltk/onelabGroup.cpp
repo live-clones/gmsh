@@ -513,6 +513,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   // _tree->connectorwidth(15);
   _tree->showroot(0);
   _tree->box(FL_FLAT_BOX);
+  _tree->linespacing(gmshAir()); // the air of the gmsh theme between the items
   // _tree->resizable(0);
   _tree->end();
 
@@ -628,7 +629,7 @@ template <class T> void onelabGroup::_addParameter(T &p)
   n->labelsize(FL_NORMAL_SIZE + 4);
   _tree->begin();
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = n->labelsize() + 4;
+  int hh = n->labelsize() + 4 + gmshAir();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   Fl_Widget *widget =
     addParameterWidget(p, 1, 1, ww * _widgetLabelRatio, hh, _widgetLabelRatio,
@@ -656,7 +657,7 @@ void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback,
   }
   _tree->begin();
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = n->labelsize() + 4;
+  int hh = n->labelsize() + 4 + gmshAir();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   Fl_Button *but = new Fl_Button(1, 1, ww, hh);
   but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -685,7 +686,7 @@ void onelabGroup::_addSolverMenu(int num)
     return;
   }
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = n->labelsize() + 4;
+  int hh = n->labelsize() + 4 + gmshAir();
   _tree->begin();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   new solverButton(1, 1, ww, hh, num, _tree->color());
@@ -706,7 +707,7 @@ void onelabGroup::_addViewMenu(int num)
     return;
   }
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = n->labelsize() + 4;
+  int hh = n->labelsize() + 4 + gmshAir();
   _tree->begin();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   new viewButton(1, 1, ww, hh, num, _tree->color());
@@ -1520,7 +1521,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()) {
     if(n->has_children()) {
       int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-      int hh = n->labelsize() + 4;
+      int hh = n->labelsize() + 4 + gmshAir();
       _tree->begin();
       Fl_Widget *but;
 #if 0 // FIXME this can crash FLTK when submenus are intially closed (somehow

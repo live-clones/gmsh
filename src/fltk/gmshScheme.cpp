@@ -23,6 +23,14 @@
 
 bool gmshScheme() { return CTX::instance()->guiTheme == "gmsh"; }
 
+int gmshAir()
+{
+  // read once: the layouts are built from it, and the theme is set for the
+  // session
+  static int air = gmshScheme() ? 1 : 0;
+  return air;
+}
+
 void applyGmshColors(bool dark)
 {
   if(dark) {
@@ -253,4 +261,7 @@ void applyGmshScheme()
 
   // no dashed rectangle on the widget with the focus
   Fl::visible_focus(0);
+
+  // the items of the menus with some air too (4 pixels without)
+  Fl::menu_linespacing(4 + 2 * gmshAir());
 }

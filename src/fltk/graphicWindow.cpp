@@ -4186,7 +4186,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   // the status bar and its buttons: as tall as the menu bar and wider under
   // the gmsh theme, for its icons
   int sh = gmshScheme() ? BH : 2 * FL_NORMAL_SIZE - 3;
-  int sw = gmshScheme() ? 2 * FL_NORMAL_SIZE : FL_NORMAL_SIZE + 2;
+  int sw = gmshScheme() ? 1.8 * FL_NORMAL_SIZE : FL_NORMAL_SIZE + 2;
   _iconSize = FL_NORMAL_SIZE + 1; // the icons on the scale of the letters
 
   // the usable area of the screen that will show the window
