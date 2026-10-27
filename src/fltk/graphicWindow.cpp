@@ -3729,28 +3729,24 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Iso-values", fltkShortcut("view_intervals"), quick_access_cb, (void*)"view_iso"},
          { "Continuous map", 0, quick_access_cb, (void*)"view_continous"},
          { "Filled iso-values", 0, quick_access_cb, (void*)"view_filled"},
-         { "Numeric values", 0, quick_access_cb, (void*)"view_numeric"},
+         { "Numeric values", 0, quick_access_cb, (void*)"view_numeric", FL_MENU_DIVIDER},
+         { "Default range", 0, quick_access_cb, (void*)"view_range_default"},
+         { "Range per time step", 0, quick_access_cb, (void*)"view_range_per_step"},
          { nullptr },
-      { "View range", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Default", 0, quick_access_cb, (void*)"view_range_default"},
-         { "Per time step", 0, quick_access_cb, (void*)"view_range_per_step"},
-         { nullptr },
-      { "View vector display", 0, nullptr, nullptr, FL_SUBMENU },
+      { "View vectors", 0, nullptr, nullptr, FL_SUBMENU },
          { "Line", 0, quick_access_cb, (void*)"view_line"},
          { "3D arrow", 0, quick_access_cb, (void*)"view_3d_arrow"},
-         { "Displacement", 0, quick_access_cb, (void*)"view_displacement"},
-         { nullptr },
-      { "View glyph location", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
-         { "Node", 0, quick_access_cb, (void*)"view_glyph_node"},
+         { "Displacement", 0, quick_access_cb, (void*)"view_displacement", FL_MENU_DIVIDER},
+         { "At barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
+         { "At node", 0, quick_access_cb, (void*)"view_glyph_node"},
          { nullptr },
       { "View opacity", 0, quick_access_cb, (void*)"view_opacity" },
       { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
       { nullptr }
     };
     // clang-format on
-    // one item was added to each of the geometry, mesh and view sections
-    const int gen = 9, geo = 16, msh = 24, pos = 36, end = 59;
+    // the first item of each section, and the last one of the menu
+    const int gen = 9, geo = 16, msh = 24, pos = 36, end = 54;
     if(opt_general_axes(0, GMSH_GET, 0))
       menu[gen + 0].set();
     else
@@ -3825,12 +3821,12 @@ void status_options_cb(Fl_Widget *w, void *data)
     if(opt_general_shaders(0, GMSH_GET, 0)) {
       menu[geo + 6].show();
       menu[msh + 9].show();
-      if(!PView::list.empty()) menu[pos + 21].show();
+      if(!PView::list.empty()) menu[pos + 17].show();
     }
     else {
       menu[geo + 6].hide();
       menu[msh + 9].hide();
-      menu[pos + 21].hide();
+      menu[pos + 17].hide();
     }
 
     // popup the menu

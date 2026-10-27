@@ -313,7 +313,7 @@ void applyGmshScheme()
   // no dashed rectangle on the widget with the focus
   Fl::visible_focus(0);
 
-  // the entries of every menu, pulldown, popup or choice, spaced as the
-  // desktops space theirs (4 pixels without the theme)
-  Fl::menu_linespacing(7 + 2 * gmshAir());
+  // the entries of every menu, pulldown, popup or choice, on the row pitch
+  // of the menus of the desktop (4 pixels without the theme)
+  Fl::menu_linespacing(5 + 2 * gmshAir());
 }
