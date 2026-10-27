@@ -23,7 +23,7 @@ linux_ci:
     - mkdir build
     - cd build
     - export CXXFLAGS=-Werror
-    - cmake -DENABLE_FLTK=0 ..
+    - cmake ..
     - make -j 8
     - make doc
     - ctest -j 8 --output-on-failure
