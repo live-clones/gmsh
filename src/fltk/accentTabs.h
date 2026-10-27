@@ -21,8 +21,10 @@ protected:
     // the last argument says which side of the chosen tab this one is on,
     // not whether it is chosen: that is the child shown
     if(o != value() || !gmshScheme()) return;
+    // from the light left line of the frame of the tab to its dark right
+    // one, the tabs drawn shifted by the offset of a scrolled row
     fl_color(gmshAccent());
-    fl_rectf(x1 + 2, y() + 1, W - 4, 3);
+    fl_rectf(x1 + tab_offset + 1, y() + 1, W - 2, 2);
   }
 
 public:

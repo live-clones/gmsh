@@ -197,9 +197,9 @@ toolDock::toolDock(int x, int y, int w, int h, int rowHeight)
 }
 
 // the label of a tab: FLTK draws the close cross right before it, so it
-// starts with some space
+// starts with a space
 static std::string tabLabel(paletteWindow *pw)
-{ return std::string("  ") + (pw->label() ? pw->label() : ""); }
+{ return std::string(" ") + (pw->label() ? pw->label() : ""); }
 
 dockTab *toolDock::_tabOf(paletteWindow *pw)
 {
