@@ -12047,17 +12047,17 @@ class logger:
 
         Return last error message, if any.
 
-        Return `error'.
+        Return `message'.
 
         Types:
-        - `error': string
+        - `message': string
         """
-        api_error_ = c_char_p()
+        api_message_ = c_char_p()
         ierr = c_int()
         lib.gmshLoggerGetLastError(
-            byref(api_error_),
+            byref(api_message_),
             byref(ierr))
         if ierr.value != 0:
             raise Exception('Could not get last error')
-        return _ostring(api_error_)
+        return _ostring(api_message_)
     get_last_error = getLastError
