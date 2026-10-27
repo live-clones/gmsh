@@ -53,13 +53,15 @@ public:
     mesh_(mesh)
   {
     cells_.resize(nbCellTypes-1);
+    qualities_.resize(nbCellTypes-1);
     selectedCells_.resize(nbCellTypes);
   }
 
   /**
   * Appends the hexes proposed by a frame field: frames holds the 3 axes of
   * each vertex (9 values), sizes the edge length there (0: no proposal).
-  * With startVertices, only from the vertices a with startVertices[a] set;
+  * With startVertices, only the hexes with all their corners v such that
+  * startVertices[v] is set, from those corners;
   * nbChoices (at most 3) neighbours of a are tried along each axis, but not
   * the combinations of the nbChoicesProposed nearest ones only, proposed
   * already by a previous call.
@@ -119,19 +121,13 @@ private:
   struct Selector;
   const TetMeshForCombining& mesh_;
   std::vector<HXTCombineCellArray> cells_;
+  // the qualities of the cells of each type the selection has seen (the
+  // cells are only appended)
+  std::vector<std::vector<double>> qualities_;
   std::vector<std::vector<bool>> selectedCells_;
   std::shared_ptr<Selector> selector_;
 };
 
-
-/** 
-* Compute the quality for all provided cells 
-* \pre The array holding qualities is allocated and owned by the client
-*/
-void computeCellQualityVector(
-  const TetMeshWrapper& tets, 
-  const HXTCombineCellArray& cells,
-  double* qualities);
 
 double cellQualityAPI(const TetMeshWrapper& tets, const HXTCombineCell& cell);
 

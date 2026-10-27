@@ -36,6 +36,33 @@ namespace {
   }
 
   /**
+  * std::sort on all the threads: blocks sorted at the same time, then
+  * merged pairwise. The order being total, the same result as std::sort.
+  */
+  template <class T, class Less>
+  void parallelSort(std::vector<T>& v, const Less& less)
+  {
+    const std::size_t n = v.size();
+    const int nbBlocks = (int)std::min<std::size_t>(omp_get_max_threads(), n / 16384);
+    if (nbBlocks < 2) {
+      std::sort(v.begin(), v.end(), less);
+      return;
+    }
+    std::vector<std::size_t> bound(nbBlocks + 1);
+    for (int k = 0; k <= nbBlocks; ++k) bound[k] = n * k / nbBlocks;
+#pragma omp parallel for schedule(dynamic, 1)
+    for (int k = 0; k < nbBlocks; ++k)
+      std::sort(v.begin() + bound[k], v.begin() + bound[k + 1], less);
+    for (int width = 1; width < nbBlocks; width *= 2) {
+#pragma omp parallel for schedule(dynamic, 1)
+      for (int k = 0; k < nbBlocks; k += 2 * width)
+        if (k + width < nbBlocks)
+          std::inplace_merge(v.begin() + bound[k], v.begin() + bound[k + width],
+                             v.begin() + bound[std::min(k + 2 * width, nbBlocks)], less);
+    }
+  }
+
+  /**
   * The order of the local search: the worst cells first, by tenths of
   * quality, in a pseudo-random order within a tenth. The worst cells are
   * close to one another: in the exact order of their quality, the trials
@@ -57,10 +84,12 @@ namespace {
       }
     };
     std::vector<Key> keys(cells.size());
-    for (std::size_t i = 0; i < cells.size(); ++i)
+#pragma omp parallel for schedule(static)
+    for (int i = 0; i < (int)cells.size(); ++i)
       keys[i] = {(int)std::floor(10. * cellQualities[cells[i]]), mixIndex(cells[i]), cells[i]};
-    std::sort(keys.begin(), keys.end());
-    for (std::size_t i = 0; i < cells.size(); ++i) cells[i] = keys[i].cell;
+    parallelSort(keys, std::less<Key>());
+#pragma omp parallel for schedule(static)
+    for (int i = 0; i < (int)cells.size(); ++i) cells[i] = keys[i].cell;
     return cells;
   }
 
@@ -72,7 +101,7 @@ namespace {
   */
   std::vector<CellIndex> orderCellDecreasingQuality(
     const HXTCombineCellArray& cells, const double* cellQualities,
-    const std::vector<bool>& active)
+    const std::vector<char>& active)
   {
     // the sort keys side by side, not scattered in the cells
     struct Key {
@@ -84,13 +113,14 @@ namespace {
     keys.reserve(cells.size());
     for (CellIndex c = 0; c < cells.size(); ++c)
       if (active[c]) keys.push_back({cellQualities[c], c, cells[c].nbVertices()});
-    std::sort(keys.begin(), keys.end(), [](const Key& a, const Key& b) {
+    parallelSort(keys, [](const Key& a, const Key& b) {
       if (a.nbVertices != b.nbVertices) return a.nbVertices > b.nbVertices;
       if (a.quality != b.quality) return a.quality > b.quality;
       return a.cell < b.cell;
     });
     std::vector<CellIndex> order(keys.size());
-    for (std::size_t i = 0; i < keys.size(); ++i) order[i] = keys[i].cell;
+#pragma omp parallel for schedule(static)
+    for (int i = 0; i < (int)keys.size(); ++i) order[i] = keys[i].cell;
     return order;
   }
 
@@ -117,18 +147,25 @@ namespace {
       const CellIndex *begin() const { return b; }
       const CellIndex *end() const { return e; }
     };
-    // rowsOf(c, add) calls add(row) for each row of cell c
+    // rowsOf(c, add) calls add(row) for each row of cell c, from several
+    // threads
     template <class RowsOf>
     CellLists(std::size_t nbRows, std::size_t nbCells, const RowsOf &rowsOf)
       : start_(nbRows + 1, 0)
     {
-      for (CellIndex c = 0; c < nbCells; ++c)
-        rowsOf(c, [&](std::size_t r) { start_[r + 1]++; });
+#pragma omp parallel for schedule(static)
+      for (int c = 0; c < (int)nbCells; ++c)
+        rowsOf(c, [&](std::size_t r) { atomicFetchAdd(&start_[r + 1], 1); });
       for (std::size_t r = 0; r < nbRows; ++r) start_[r + 1] += start_[r];
       cells_.resize(start_[nbRows]);
       std::vector<std::size_t> next(start_.begin(), start_.end() - 1);
-      for (CellIndex c = 0; c < nbCells; ++c)
-        rowsOf(c, [&](std::size_t r) { cells_[next[r]++] = c; });
+#pragma omp parallel for schedule(static)
+      for (int c = 0; c < (int)nbCells; ++c)
+        rowsOf(c, [&](std::size_t r) { cells_[atomicFetchAdd(&next[r], 1)] = c; });
+      // each row in increasing cell order
+#pragma omp parallel for schedule(dynamic, 4096)
+      for (int r = 0; r < (int)nbRows; ++r)
+        std::sort(cells_.begin() + start_[r], cells_.begin() + start_[r + 1]);
     }
     Row operator[](std::size_t r) const
     {
@@ -215,7 +252,8 @@ namespace {
   */
   class FreeCellIndex {
   public:
-    explicit FreeCellIndex(std::size_t nbCells) : in_(nbCells, false) {}
+    FreeCellIndex(std::size_t nbCells, std::size_t nbVertices) :
+      in_(nbCells, false), byVertex_(nbVertices) {}
     bool contains(CellIndex c) const { return in_[c]; }
     void add(const HXTCombineCell& cell, CellIndex c)
     {
@@ -223,18 +261,25 @@ namespace {
       in_[c] = true;
       for (unsigned int i = 0; i < cell.nbVertices(); ++i)
         byVertex_[cell.vertexes[i]].push_back(c);
+      added_.push_back(c);
+    }
+    // the cells added since the previous call
+    std::vector<CellIndex> takeAdded()
+    {
+      std::vector<CellIndex> added;
+      added.swap(added_);
+      return added;
     }
     // f(c) for each indexed cell c of vertex v
     template <class F>
     void forEachCell(VertexIndex v, const F &f) const
     {
-      auto it = byVertex_.find(v);
-      if (it == byVertex_.end()) return;
-      for (CellIndex c : it->second) f(c);
+      for (CellIndex c : byVertex_[v]) f(c);
     }
   private:
     std::vector<bool> in_;
-    std::unordered_map<VertexIndex, std::vector<CellIndex> > byVertex_;
+    std::vector<std::vector<CellIndex> > byVertex_;
+    std::vector<CellIndex> added_;
   };
 
   /**
@@ -303,17 +348,21 @@ namespace {
     /**
     * \pre selected is allocated.
     * It is assumed that already selected cells where so by the same instance of the Selector.
+    * The cells before firstNew were there at its previous call on these
+    * cells, which tried them: the local search and the coverage try again
+    * around the new ones only, where the state has changed.
     */
     void computeCompatibleCellCombination(
       const HXTCombineCellArray& cells,
       const double* cellQualities,
-      vector<bool>& selected)
+      vector<bool>& selected, std::size_t firstNew = 0)
     {
       // A cell with an interior tet taken by a cell of a previous call (the
       // hexes, for the prisms) can never be selected: this call only ejects
       // its own cells. Most prisms are such cells.
-      vector<bool> active(cells.size());
-      for (CellIndex c = 0; c < cells.size(); ++c)
+      std::vector<char> active(cells.size());
+#pragma omp parallel for schedule(static)
+      for (int c = 0; c < (int)cells.size(); ++c)
         active[c] = selected[c] || !oneInteriorTetSelected(cells[c]);
 
       CellLists tetToCells(tetOwner_.size(), cells.size(),
@@ -330,12 +379,21 @@ namespace {
       Reservations reservations(tets_.nbVertices());
       greedySelection(cells, order, flags);
 
-      FreeCellIndex freeCells(cells.size());
+      FreeCellIndex freeCells(cells.size(), tets_.nbVertices());
       for (CellIndex c : order)
         if (isFree(cells[c], c, flags)) freeCells.add(cells[c], c);
 
-      localSearch(cells, cellQualities, tetToCells, freeCells, reservations, flags);
-      coverage(cells, cellQualities, order, tetToCells, freeCells, reservations, flags);
+      // the vertices of the new cells (none: everywhere)
+      std::vector<char> around;
+      if (firstNew > 0) {
+        around.assign(tets_.nbVertices(), 0);
+        for (CellIndex c = firstNew; c < cells.size(); ++c)
+          if (active[c])
+            for (unsigned int i = 0; i < cells[c].nbVertices(); ++i)
+              around[cells[c].vertexes[i]] = 1;
+      }
+      localSearch(cells, cellQualities, tetToCells, freeCells, reservations, flags, around);
+      coverage(cells, cellQualities, order, tetToCells, freeCells, reservations, flags, around);
       for (CellIndex c = 0; c < cells.size(); ++c) selected[c] = flags[c];
     }
 
@@ -343,6 +401,15 @@ namespace {
     bool isFree(const HXTCombineCell& cell, CellIndex c, const Flags& selected) const
     {
       return !selected[c] && !oneInteriorTetSelected(cell);
+    }
+
+    // a vertex of the cell is marked in around, or around is empty
+    static bool touches(const HXTCombineCell& cell, const std::vector<char>& around)
+    {
+      if (around.empty()) return true;
+      for (unsigned int i = 0; i < cell.nbVertices(); ++i)
+        if (around[cell.vertexes[i]]) return true;
+      return false;
     }
 
     /**
@@ -466,8 +533,9 @@ namespace {
     * sharing a vertex are, i.e. once it is the first undecided one on each
     * of its vertices. Those share no vertex and are decided at the same
     * time, level after level. A cell with a taken interior tet is rejected
-    * as soon as it is met (tets are never released here). Same selection
-    * as one cell after the other.
+    * as soon as it is met (tets are never released here). The cells
+    * selected already (by a previous call) are decided: only the others are
+    * waited for. Same selection as one cell after the other.
     */
     void greedySelection(const HXTCombineCellArray& cells,
                          const std::vector<CellIndex>& order, Flags& flags)
@@ -475,10 +543,11 @@ namespace {
       const std::size_t n = order.size();
       if (!n) return;
       const std::size_t nbVertices = tets_.nbVertices();
-      // the ranks of the cells of each vertex, in increasing order
+      // the ranks of the undecided cells of each vertex, in increasing order
       std::vector<std::size_t> start(nbVertices + 1, 0);
 #pragma omp parallel for schedule(static)
       for (int r = 0; r < (int)n; ++r) {
+        if (flags[order[r]]) continue;
         const HXTCombineCell cell = cells[order[r]];
         for (unsigned int i = 0; i < cell.nbVertices(); ++i)
           atomicFetchAdd(&start[cell.vertexes[i] + 1], 1);
@@ -489,6 +558,7 @@ namespace {
         std::vector<std::size_t> next(start.begin(), start.end() - 1);
 #pragma omp parallel for schedule(static)
         for (int r = 0; r < (int)n; ++r) {
+          if (flags[order[r]]) continue;
           const HXTCombineCell cell = cells[order[r]];
           for (unsigned int i = 0; i < cell.nbVertices(); ++i)
             ranks[atomicFetchAdd(&next[cell.vertexes[i]], 1)] = r;
@@ -539,7 +609,7 @@ namespace {
       std::vector<CellIndex> level;
 #pragma omp parallel for schedule(dynamic, 1024)
       for (int r = 0; r < (int)n; ++r)
-        if (isFirst(r)) found[omp_get_thread_num()].push_back(r);
+        if (!flags[order[r]] && isFirst(r)) found[omp_get_thread_num()].push_back(r);
       for (auto& f : found) {
         level.insert(level.end(), f.begin(), f.end());
         f.clear();
@@ -624,13 +694,14 @@ namespace {
     */
     void localSearch(const HXTCombineCellArray& cells, const double* cellQualities,
                      const CellLists& tetToCells, FreeCellIndex& freeCells,
-                     Reservations& reservations, Flags& flags)
+                     Reservations& reservations, Flags& flags,
+                     const std::vector<char>& around)
     {
       if (cells.empty()) return;
       BetterCell better{cellQualities};
       std::vector<CellIndex> selectedList;
       for (CellIndex c = 0; c < cells.size(); ++c)
-        if (flags[c]) selectedList.push_back(c);
+        if (flags[c] && touches(cells[c], around)) selectedList.push_back(c);
       // Try ejecting the worst-quality selected cells first: they are the
       // ones most likely to be worth trading away.
       selectedList = localSearchOrder(selectedList, cellQualities);
@@ -728,7 +799,8 @@ namespace {
     */
     void coverage(const HXTCombineCellArray& cells, const double* cellQualities,
                   const std::vector<CellIndex>& order, const CellLists& tetToCells,
-                  FreeCellIndex& freeCells, Reservations& reservations, Flags& flags)
+                  FreeCellIndex& freeCells, Reservations& reservations, Flags& flags,
+                  const std::vector<char>& around)
     {
       if (cells.empty()) return;
       // Bounds how many already-selected cells a single candidate is
@@ -740,121 +812,148 @@ namespace {
       const std::size_t kMaxEject = 18;
       BetterCell better{cellQualities};
 
-      runInRounds(order.size(), 1 << 14, true, reservations,
-        [&](Operation& op) {
-          const CellIndex c = order[op.rank];
-          const HXTCombineCell cellC = cells[c];
-          // whatever the outcome, it depends on the state around c
-          op.kind = Operation::READ;
-          op.vertices.assign(cellC.vertexes, cellC.vertexes + cellC.nbVertices());
-          // the candidates are the free cells, all indexed
-          if (!freeCells.contains(c)) return;
-          if (flags[c] || !cellC.isHex()) return;
-          if (oneInteriorTetSelected(cellC)) return;
-          if (isCellCompatible(cellC)) return; // would have been picked already
+      // The candidates, in the order: the free hexes blocked by the selected
+      // cells around them only. Those a swap frees are tried after, in
+      // passes over the cells it frees, until none is.
+      auto isCandidate = [&](CellIndex c) {
+        const HXTCombineCell cellC = cells[c];
+        return freeCells.contains(c) && !flags[c] && cellC.isHex() &&
+               touches(cellC, around) && !oneInteriorTetSelected(cellC) &&
+               !isCellCompatible(cellC);
+      };
+      std::vector<char> tried(cells.size(), 0);
+      std::vector<CellIndex> list = order, candidates;
+      freeCells.takeAdded();
+      while (!list.empty()) {
+        std::vector<char> passes(list.size());
+#pragma omp parallel for schedule(dynamic, 1024)
+        for (int r = 0; r < (int)list.size(); ++r)
+          passes[r] = !tried[list[r]] && isCandidate(list[r]);
+        candidates.clear();
+        for (std::size_t r = 0; r < list.size(); ++r)
+          if (passes[r]) {
+            candidates.push_back(list[r]);
+            tried[list[r]] = 1;
+          }
 
-          // the selected cells sharing a vertex with c (this is the only
-          // call selecting hexes, so they are cells of this call)
-          std::vector<CellIndex>& blockers = op.blockers;
-          for (unsigned int i = 0; i < cellC.nbVertices(); ++i)
-            for (CellTag tag : vertexToSelected_[cellC.vertexes[i]])
-              if (typeOf(tag) == HEX && flags[indexOf(tag)]) blockers.push_back(indexOf(tag));
-          std::sort(blockers.begin(), blockers.end());
-          blockers.erase(std::unique(blockers.begin(), blockers.end()), blockers.end());
-          if (blockers.empty() || blockers.size() > kMaxEject) return;
+        runInRounds(candidates.size(), 1 << 14, true, reservations,
+          [&](Operation& op) {
+            const CellIndex c = candidates[op.rank];
+            const HXTCombineCell cellC = cells[c];
+            // whatever the outcome, it depends on the state around c
+            op.kind = Operation::READ;
+            op.vertices.assign(cellC.vertexes, cellC.vertexes + cellC.nbVertices());
+            // the candidates are the free cells, all indexed
+            if (!freeCells.contains(c)) return;
+            if (flags[c] || !cellC.isHex()) return;
+            if (oneInteriorTetSelected(cellC)) return;
+            if (isCellCompatible(cellC)) return; // would have been picked already
 
-          auto isBlocker = [&](CellIndex x) {
-            return x != NO_CELL && std::binary_search(blockers.begin(), blockers.end(), x);
-          };
-          std::vector<CellIndex> visited;
-          for (CellIndex b : blockers) {
-            const HXTCombineCell cb = cells[b];
-            for (unsigned int i = 0; i < cb.nbInteriorTets(); ++i)
-              for (CellIndex p : tetToCells[cb.interiorTetrahedra[i]]) visited.push_back(p);
-            // a pool cell of a vertex of b, without an interior tet of a
-            // blocker, is free
-            for (unsigned int i = 0; i < cb.nbVertices(); ++i)
-              freeCells.forEachCell(cb.vertexes[i], [&](CellIndex p) { visited.push_back(p); });
-          }
-          std::sort(visited.begin(), visited.end());
-          visited.erase(std::unique(visited.begin(), visited.end()), visited.end());
-          // Same exact pruning as in localSearch: once the blockers are
-          // ejected, a candidate with an interior tet owned by any other
-          // selected cell stays incompatible for the whole refill.
-          // as in localSearch, a cell left out stays so while the tet that
-          // keeps it out keeps its owner
-          for (CellIndex p : visited) {
-            if (p == c) continue;
-            const HXTCombineCell cp = cells[p];
-            TetIndex blocking = NO_ID;
-            for (unsigned int i = 0; i < cp.nbInteriorTets() && blocking == NO_ID; ++i) {
-              const CellIndex o = tetOwner_[cp.interiorTetrahedra[i]];
-              if (o != NO_CELL && !isBlocker(o)) blocking = cp.interiorTetrahedra[i];
-            }
-            if (blocking == NO_ID && flags[p] && !isBlocker(p)) blocking = cp.interiorTetrahedra[0];
-            if (blocking == NO_ID) op.pool.push_back(p);
-            else
-              for (TetVertexIndex j = 0; j < 4; ++j)
-                op.vertices.push_back(tetVertex(blocking, j));
-          }
-          visited = op.pool;
-          visited.insert(visited.end(), blockers.begin(), blockers.end());
-          visited.push_back(c);
-          cellVertices(cells, visited, op.vertices);
-          // c plus the whole pool must beat the number of ejected blockers
-          if (1 + op.pool.size() > blockers.size()) op.kind = Operation::WRITE;
-        },
-        [](const Operation& op) { return 1 + op.pool.size() + op.blockers.size(); },
-        [&](Operation& op) {
-          const CellIndex c = order[op.rank];
-          const std::vector<CellIndex>& blockers = op.blockers;
-          for (CellIndex b : blockers) {
-            removeCellCompatibilityConstraints(cells[b], b);
-            flags[b] = 0;
-          }
-          // the swap is only ever kept if c itself goes in first
-          if (!isCellCompatible(cells[c])) {
+            // the selected cells sharing a vertex with c (this is the only
+            // call selecting hexes, so they are cells of this call)
+            std::vector<CellIndex>& blockers = op.blockers;
+            for (unsigned int i = 0; i < cellC.nbVertices(); ++i)
+              for (CellTag tag : vertexToSelected_[cellC.vertexes[i]])
+                if (typeOf(tag) == HEX && flags[indexOf(tag)]) blockers.push_back(indexOf(tag));
+            std::sort(blockers.begin(), blockers.end());
+            blockers.erase(std::unique(blockers.begin(), blockers.end()), blockers.end());
+            if (blockers.empty() || blockers.size() > kMaxEject) return;
+
+            auto isBlocker = [&](CellIndex x) {
+              return x != NO_CELL && std::binary_search(blockers.begin(), blockers.end(), x);
+            };
+            std::vector<CellIndex> visited;
             for (CellIndex b : blockers) {
-              flags[b] = 1;
-              addCellCompatibilityConstraints(cells[b], b);
+              const HXTCombineCell cb = cells[b];
+              for (unsigned int i = 0; i < cb.nbInteriorTets(); ++i)
+                for (CellIndex p : tetToCells[cb.interiorTetrahedra[i]]) visited.push_back(p);
+              // a pool cell of a vertex of b, without an interior tet of a
+              // blocker, is free
+              for (unsigned int i = 0; i < cb.nbVertices(); ++i)
+                freeCells.forEachCell(cb.vertexes[i], [&](CellIndex p) { visited.push_back(p); });
             }
-            return;
-          }
-          std::vector<CellIndex> added;
-          flags[c] = 1;
-          addCellCompatibilityConstraints(cells[c], c);
-          added.push_back(c);
-
-          std::sort(op.pool.begin(), op.pool.end(), better);
-          for (CellIndex p : op.pool) {
-            if (flags[p]) continue;
-            if (isCellCompatible(cells[p])) {
-              flags[p] = 1;
-              addCellCompatibilityConstraints(cells[p], p);
-              added.push_back(p);
+            std::sort(visited.begin(), visited.end());
+            visited.erase(std::unique(visited.begin(), visited.end()), visited.end());
+            // Same exact pruning as in localSearch: once the blockers are
+            // ejected, a candidate with an interior tet owned by any other
+            // selected cell stays incompatible for the whole refill.
+            // as in localSearch, a cell left out stays so while the tet that
+            // keeps it out keeps its owner
+            for (CellIndex p : visited) {
+              if (p == c) continue;
+              const HXTCombineCell cp = cells[p];
+              TetIndex blocking = NO_ID;
+              for (unsigned int i = 0; i < cp.nbInteriorTets() && blocking == NO_ID; ++i) {
+                const CellIndex o = tetOwner_[cp.interiorTetrahedra[i]];
+                if (o != NO_CELL && !isBlocker(o)) blocking = cp.interiorTetrahedra[i];
+              }
+              if (blocking == NO_ID && flags[p] && !isBlocker(p)) blocking = cp.interiorTetrahedra[0];
+              if (blocking == NO_ID) op.pool.push_back(p);
+              else
+                for (TetVertexIndex j = 0; j < 4; ++j)
+                  op.vertices.push_back(tetVertex(blocking, j));
             }
-          }
-
-          if (added.size() > blockers.size()) {
-            // net gain, and it includes the candidate we were trying to
-            // unlock: keep this swap.
-            for (CellIndex b : blockers)
-              if (!flags[b]) op.released.push_back(b);
-          }
-          else {
-            for (CellIndex a : added) {
-              removeCellCompatibilityConstraints(cells[a], a);
-              flags[a] = 0;
-            }
+            visited = op.pool;
+            visited.insert(visited.end(), blockers.begin(), blockers.end());
+            visited.push_back(c);
+            cellVertices(cells, visited, op.vertices);
+            // c plus the whole pool must beat the number of ejected blockers
+            if (1 + op.pool.size() > blockers.size()) op.kind = Operation::WRITE;
+          },
+          [](const Operation& op) { return 1 + op.pool.size() + op.blockers.size(); },
+          [&](Operation& op) {
+            const CellIndex c = candidates[op.rank];
+            const std::vector<CellIndex>& blockers = op.blockers;
             for (CellIndex b : blockers) {
-              flags[b] = 1;
-              addCellCompatibilityConstraints(cells[b], b);
+              removeCellCompatibilityConstraints(cells[b], b);
+              flags[b] = 0;
             }
-          }
-        },
-        [&](Operation& op) {
-          for (CellIndex b : op.released) release(cells, b, tetToCells, freeCells, flags);
-        });
+            // the swap is only ever kept if c itself goes in first
+            if (!isCellCompatible(cells[c])) {
+              for (CellIndex b : blockers) {
+                flags[b] = 1;
+                addCellCompatibilityConstraints(cells[b], b);
+              }
+              return;
+            }
+            std::vector<CellIndex> added;
+            flags[c] = 1;
+            addCellCompatibilityConstraints(cells[c], c);
+            added.push_back(c);
+
+            std::sort(op.pool.begin(), op.pool.end(), better);
+            for (CellIndex p : op.pool) {
+              if (flags[p]) continue;
+              if (isCellCompatible(cells[p])) {
+                flags[p] = 1;
+                addCellCompatibilityConstraints(cells[p], p);
+                added.push_back(p);
+              }
+            }
+
+            if (added.size() > blockers.size()) {
+              // net gain, and it includes the candidate we were trying to
+              // unlock: keep this swap.
+              for (CellIndex b : blockers)
+                if (!flags[b]) op.released.push_back(b);
+            }
+            else {
+              for (CellIndex a : added) {
+                removeCellCompatibilityConstraints(cells[a], a);
+                flags[a] = 0;
+              }
+              for (CellIndex b : blockers) {
+                flags[b] = 1;
+                addCellCompatibilityConstraints(cells[b], b);
+              }
+            }
+          },
+          [&](Operation& op) {
+            for (CellIndex b : op.released) release(cells, b, tetToCells, freeCells, flags);
+          });
+        list = freeCells.takeAdded();
+        std::sort(list.begin(), list.end(), better);
+      }
     }
 
     /** Check that the input cell is compatible with
@@ -1021,12 +1120,6 @@ namespace {
 
 namespace HXTCombine {
 
-  static void flagFalseIndices(
-    vector<bool>& flags, std::size_t n, const unsigned int *indices) {
-    for (unsigned int i = 0; i < n; ++i)
-      flags[indices[i]] = false;
-  }
-
   struct HXTCombineCellStore::Selector {
     Selector(const TetMeshWrapper& mesh, const std::vector<HXTCombineCellArray>& cells) :
       selection(mesh, cells) {}
@@ -1049,9 +1142,15 @@ namespace HXTCombine {
     std::vector<bool>& selected = selectedCells_[type];
     selected.resize(cells.size(), false);
 
-    std::vector<double> qualities(cells.size());
-    computeCellQualityVector(mesh_, cells, qualities.data());
-    selector_->selection.computeCompatibleCellCombination(cells, qualities.data(), selected);
+    // the qualities of the cells appended since the previous call
+    std::vector<double>& qualities = qualities_[type];
+    const std::size_t known = qualities.size();
+    qualities.resize(cells.size());
+#pragma omp parallel for schedule(dynamic, 1024)
+    for (int i = (int)known; i < (int)cells.size(); ++i)
+      qualities[i] = cellQualityAPI(mesh_, cells[i]);
+    selector_->selection.computeCompatibleCellCombination(cells, qualities.data(), selected,
+                                                          known);
     // TODO Pyramids should swallow all quad facets
     updateSelectedTets();
   }
@@ -1059,17 +1158,22 @@ namespace HXTCombine {
   // the tets of the input mesh not taken by a selected cell
   void HXTCombineCellStore::updateSelectedTets()
   {
-    std::vector<bool>& selected = selectedTets();
-    selected.assign(mesh_.nbTets(), true);
+    std::vector<char> taken(mesh_.nbTets(), 0);
     for (unsigned int cellType = 0; cellType < 3; ++cellType) {
       const HXTCombineCellArray& curCells = cells_[cellType];
-      for (unsigned int i = 0; i < curCells.size(); ++i) {
-        if (i >= selectedCells_[cellType].size() || !selectedCells_[cellType][i]) continue;
-        const HXTCombineCell& cell = curCells[i];
-        flagFalseIndices(selected, cell.nbBoundaryTets(), cell.boundaryTets());
-        flagFalseIndices(selected, cell.nbInteriorTets(), cell.interiorTets());
+      const std::vector<bool>& cellSelected = selectedCells_[cellType];
+      const int n = (int)std::min<std::size_t>(curCells.size(), cellSelected.size());
+#pragma omp parallel for schedule(dynamic, 4096)
+      for (int i = 0; i < n; ++i) {
+        if (!cellSelected[i]) continue;
+        const HXTCombineCell cell = curCells[i];
+        for (unsigned int k = 0; k < cell.nbBoundaryTets(); ++k) taken[cell.boundaryTets()[k]] = 1;
+        for (unsigned int k = 0; k < cell.nbInteriorTets(); ++k) taken[cell.interiorTets()[k]] = 1;
       }
     }
+    std::vector<bool>& selected = selectedTets();
+    selected.resize(mesh_.nbTets());
+    for (std::size_t t = 0; t < taken.size(); ++t) selected[t] = !taken[t];
   }
 
   void HXTCombineCellStore::selectAlongFrames(double minQuality,
@@ -1108,18 +1212,22 @@ namespace HXTCombine {
     };
 
     selection([&] { resetSelection(); });
-    // 2 neighbours along each axis: one misses the hexes of curved lattices
-    candidates([&] { computeGuidedHexes(minQuality, frames, sizes, nullptr, 2); });
+    // the nearest neighbour along each axis: on a lattice laid along the
+    // frames, nearly all the hexes selected (the second nearest ones too,
+    // which mostly propose worse variants of the same hexes, gave 4 times as
+    // many candidates for no more hexes)
+    candidates([&] { computeGuidedHexes(minQuality, frames, sizes, nullptr, 1); });
     stats.nbProposedHexes = hexes().size();
     selection([&] { selectCells(HEX); });
     stats.nbSelectedProposedHexes = nbSelectedHexes();
 
-    // more neighbours where the frames leave tets
+    // the 2 nearest neighbours where the frames leave tets: the hexes of
+    // curved lattices
     std::vector<bool> fv;
     candidates([&] {
       fv = freeVertices();
       stats.nbFreeVertices = count(fv);
-      computeGuidedHexes(minQuality, frames, sizes, &fv, 3, 2);
+      computeGuidedHexes(minQuality, frames, sizes, &fv, 2, 1);
     });
     stats.nbResidualHexes = hexes().size() - stats.nbProposedHexes;
     selection([&] { selectCells(HEX); });
