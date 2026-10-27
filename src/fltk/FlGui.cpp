@@ -15,6 +15,11 @@
 #include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "gmshScheme.h"
+#include "desktop.h"
+#if defined(WIN32)
+#include <windows.h>
+#endif
+#include "mainWindow.h"
 #include "icons.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
@@ -448,8 +453,13 @@ void FlGui::applyColorScheme(bool redraw)
     fl_color_cube(FL_NUM_RED - 1, FL_NUM_GREEN - 1, FL_NUM_BLUE - 2));
   Fl_Tooltip::textcolor(FL_BLACK);
 
-  if(gmshScheme()) { applyGmshColors(CTX::instance()->guiColorScheme == 1); }
-  else if(CTX::instance()->guiColorScheme == 1) { // dark mode
+  // the interface drawn dark: asked for, or the desktop's when following it
+  int scheme = CTX::instance()->guiColorScheme;
+  CTX::instance()->guiDark =
+    (scheme == 1) || (scheme == 2 && desktopDark() == 1);
+
+  if(gmshScheme()) { applyGmshColors(CTX::instance()->guiDark); }
+  else if(CTX::instance()->guiDark) { // dark mode
     Fl::set_color(FL_BACKGROUND_COLOR, 20, 20, 20);
     Fl::set_color(FL_BACKGROUND2_COLOR, 70, 70, 70);
     Fl::set_color(FL_FOREGROUND_COLOR, 220, 220, 220);
@@ -490,6 +500,41 @@ void FlGui::applyColorScheme(bool redraw)
       win->redraw();
     }
   }
+}
+
+// The desktop switched between light and dark, or may have: the interface
+// follows when asked to (General.FltkColorScheme = 2)
+void FlGui::desktopChanged()
+{
+  if(CTX::instance()->guiColorScheme != 2 || !available()) return;
+  bool dark = (desktopDark() == 1);
+  if(dark == (bool)CTX::instance()->guiDark) return;
+  applyColorScheme(true);
+}
+
+static void desktop_changed_cb() { FlGui::instance()->desktopChanged(); }
+
+#if defined(WIN32)
+// the message Windows sends to every window on a switch of the colours
+static int desktop_message_handler(void *event, void *)
+{
+  MSG *msg = (MSG *)event;
+  if(msg->message == WM_SETTINGCHANGE && msg->lParam &&
+     !wcscmp((const wchar_t *)msg->lParam, L"ImmersiveColorSet"))
+    desktop_changed_cb();
+  return 0;
+}
+#endif
+
+static void watchDesktop()
+{
+  watchDesktopAppearance(desktop_changed_cb);
+#if defined(WIN32)
+  Fl::add_system_handler(desktop_message_handler, nullptr);
+#endif
+  // and whenever a window of Gmsh gets the focus back, where the system does
+  // not tell (Linux)
+  mainWindow::focusHook = desktop_changed_cb;
 }
 
 static void default_error_handler(const char *fmt, ...)
@@ -632,6 +677,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // re-apply color scheme (necessary after open_display to get the selection
   // color and boxtypes right)
   applyColorScheme();
+  // the interface follows the desktop between light and dark when asked to
+  watchDesktop();
 
   // graphic window should have the initial focus (so we can e.g. directly loop
   // through time steps with the keyboard)
@@ -1396,7 +1443,7 @@ void FlGui::setLastStatus(int col)
   if(Msg::GetThreadNum() > 0) return;
   for(std::size_t i = 0; i < graph.size(); i++) {
     if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
-      if(CTX::instance()->guiColorScheme) // dark
+      if(CTX::instance()->guiDark) // dark
         graph[i]->getProgress()->color(col);
       else
         graph[i]->getProgress()->labelcolor(col);

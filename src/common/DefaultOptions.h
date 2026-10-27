@@ -658,8 +658,9 @@ StringXNumber GeneralOptions_Number[] = {
     "windows, relative to the upper left corner of the graphic window" },
   { F|S|D, "FileChooserPositionY" , opt_general_window_position_deprecated , 200. ,
     "[Deprecated]" },
-  { F|S, "FltkColorScheme" , opt_general_gui_color_scheme , 0. ,
-    "FLTK user interface color theme (0: standard, 1:dark)" },
+  { F|S, "FltkColorScheme" , opt_general_gui_color_scheme , 2. ,
+    "FLTK user interface color theme (0: light, 1: dark, 2: light or dark as "
+    "the desktop)" },
   { F|O, "FltkRefreshRate" , opt_general_gui_refresh_rate , 5. ,
     "FLTK user interface maximum refresh rate, per second (0: no limit)" },
   { F|O, "FontSize" , opt_general_fontsize , -1. ,

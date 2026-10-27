@@ -1118,7 +1118,7 @@ static void physical_add_cb(Fl_Widget *w, void *data)
 
   if(existingName.size() || existingTag) {
     // change color to warn that the group exists
-    Fl_Color c = (!CTX::instance()->guiColorScheme ? FL_DARK_BLUE : FL_BLUE);
+    Fl_Color c = (!CTX::instance()->guiDark ? FL_DARK_BLUE : FL_BLUE);
     pc->input[0]->textcolor(c);
     pc->value[0]->textcolor(c);
     if(what != "Name" && !strlen(pc->input[0]->value()))

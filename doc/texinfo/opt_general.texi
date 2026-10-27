@@ -652,8 +652,8 @@ Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.FltkColorScheme
-FLTK user interface color theme (0: standard, 1:dark)@*
-Default value: @code{0}@*
+FLTK user interface color theme (0: light, 1: dark, 2: light or dark as the desktop)@*
+Default value: @code{2}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.FltkRefreshRate

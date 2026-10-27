@@ -2336,7 +2336,7 @@ double opt_general_gui_color_scheme(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->guiColorScheme = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.butt[21]->value(
+    FlGui::instance()->options->general.choice[9]->value(
       CTX::instance()->guiColorScheme);
   }
   if(action & GMSH_SET && FlGui::available()) {

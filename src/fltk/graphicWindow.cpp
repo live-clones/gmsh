@@ -4497,7 +4497,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     new mainWindowProgress(x, mh + glheight + mheight + 2, width - x - 2, sht);
   _label->box(FL_FLAT_BOX);
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  if(CTX::instance()->guiColorScheme)
+  if(CTX::instance()->guiDark)
     _label->color(FL_BACKGROUND_COLOR, FL_LIGHT3);
   else
     _label->color(FL_BACKGROUND_COLOR, FL_DARK2);

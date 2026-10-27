@@ -392,10 +392,11 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
 #endif
 
   if(opt_general_gui_color_scheme(0, GMSH_GET, 0) !=
-     o->general.butt[21]->value()) {
-    opt_general_gui_color_scheme(0, GMSH_SET, o->general.butt[21]->value());
+     o->general.choice[9]->value()) {
+    opt_general_gui_color_scheme(0, GMSH_SET, o->general.choice[9]->value());
+    // the colours of the graphics along with the interface
     opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
-                             o->general.butt[21]->value() ? 3. : 1.);
+                             CTX::instance()->guiDark ? 3. : 1.);
   }
 
   opt_general_tooltips(0, GMSH_SET, o->general.butt[13]->value());
@@ -1534,11 +1535,16 @@ optionWindow::optionWindow(int deltaFontSize)
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
                                  height - 2 * WB - BH, "General");
 
-      general.butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW,
-                                             BH, "Use dark interface");
-      general.butt[21]->tooltip("General.FltkColorScheme");
-      general.butt[21]->type(FL_TOGGLE_BUTTON);
-      general.butt[21]->callback(general_options_ok_cb);
+      static Fl_Menu_Item menu_interface[] = {{"Light", 0, nullptr, nullptr},
+                                              {"Dark", 0, nullptr, nullptr},
+                                              {"System", 0, nullptr, nullptr},
+                                              {nullptr}};
+      general.choice[9] =
+        new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Interface");
+      general.choice[9]->menu(menu_interface);
+      general.choice[9]->align(FL_ALIGN_RIGHT);
+      general.choice[9]->tooltip("General.FltkColorScheme");
+      general.choice[9]->callback(general_options_ok_cb);
 
       general.butt[13] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW,
                                              BH,
@@ -1724,7 +1730,7 @@ optionWindow::optionWindow(int deltaFontSize)
       Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH,
                                     "Restore all options to default settings");
       b2->callback(options_restore_defaults_cb);
-      if(CTX::instance()->guiColorScheme)
+      if(CTX::instance()->guiDark)
         b2->color(FL_DARK_RED);
       else
         b2->labelcolor(FL_DARK_RED);

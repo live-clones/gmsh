@@ -250,6 +250,9 @@ public:
   std::string guiTheme;
   // FLTK color scheme and max refresh rate
   int guiColorScheme, guiRefreshRate;
+  // the interface drawn dark: the colour scheme resolved, 2 following the
+  // desktop
+  int guiDark;
   // print messages on to the terminal?
   int terminal;
   // number of threads (0 == use system default)

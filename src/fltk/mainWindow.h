@@ -21,6 +21,9 @@ public:
   // set while tool windows are docked: closes the one shown in window w, or
   // returns false
   inline static bool (*closeToolHook)(Fl_Window *w) = nullptr;
+  // called when a window gets the focus (the desktop may have switched
+  // between light and dark meanwhile, see FlGui)
+  inline static void (*focusHook)() = nullptr;
   mainWindow(int w, int h, bool nonModal, const char *l = nullptr,
              int *offset = nullptr)
     : Fl_Window(w, h, l), _offset(offset)
@@ -31,6 +34,9 @@ public:
   virtual int handle(int event)
   {
     switch(event) {
+    case FL_FOCUS:
+      if(focusHook) focusHook();
+      break;
     case FL_SHORTCUT:
     case FL_KEYBOARD:
 #if defined(__APPLE__)

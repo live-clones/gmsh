@@ -203,6 +203,8 @@ public:
   void closeTreeItem(const std::string &name);
   // apply color scheme to widgets
   void applyColorScheme(bool redraw = false);
+  // the interface follows the desktop between light and dark when asked to
+  void desktopChanged();
   // should the quit callback exit the app, or just close all windows?
   bool quitShouldExit() { return _quitShouldExit; }
   // show onelab context window for the given entity

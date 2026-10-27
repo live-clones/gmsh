@@ -303,7 +303,7 @@ static std::string hexColor(Fl_Color c)
 }
 
 static std::string linkColor()
-{ return CTX::instance()->guiColorScheme ? "#4daafc" : "#005fb8"; }
+{ return CTX::instance()->guiDark ? "#4daafc" : "#005fb8"; }
 
 static std::string mutedColor()
 {

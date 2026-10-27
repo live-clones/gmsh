@@ -1488,7 +1488,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   color(treeColor());
   _tree->color(treeColor());
   _tree->connectorcolor(connectorColor());
-  if(CTX::instance()->guiColorScheme) {
+  if(CTX::instance()->guiDark) {
     _tree->openicon(&open_pixmap_dark);
     _tree->closeicon(&close_pixmap_dark);
   }
