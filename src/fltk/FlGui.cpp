@@ -434,6 +434,22 @@ static void gamepad_handler(void *data)
   }
 }
 
+// the windows inside a window (the docked tools, the graphics), which a
+// redraw of the window does not reach
+static void redrawWindowsIn(Fl_Group *g)
+{
+  for(int i = 0; i < g->children(); i++) {
+    Fl_Widget *c = g->child(i);
+    if(Fl_Window *w = c->as_window()) {
+      w->redraw();
+      redrawWindowsIn(w);
+    }
+    else if(Fl_Group *gg = c->as_group()) {
+      redrawWindowsIn(gg);
+    }
+  }
+}
+
 void FlGui::applyColorScheme(bool redraw)
 {
   static int first = true;
@@ -498,6 +514,7 @@ void FlGui::applyColorScheme(bool redraw)
     updateViews(true, true);
     for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
       win->redraw();
+      redrawWindowsIn(win);
     }
   }
 }
@@ -510,6 +527,9 @@ void FlGui::desktopChanged()
   bool dark = (desktopDark() == 1);
   if(dark == (bool)CTX::instance()->guiDark) return;
   applyColorScheme(true);
+  // drawn now: the notification came while the loop waited for events, and
+  // the windows inside the main one are only painted by a flush
+  Fl::flush();
 }
 
 static void desktop_changed_cb() { FlGui::instance()->desktopChanged(); }
