@@ -19,6 +19,7 @@
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Valuator.H>
 #include <FL/Fl_Window.H>
+#include <FL/fl_draw.H>
 #include "gmshScheme.h"
 #include "desktop.h"
 #include <string>
@@ -155,18 +156,22 @@ static void redrawHover(Fl_Widget *w)
   win->damage(FL_DAMAGE_ALL, w->x(), w->y(), w->w(), h);
 }
 
-// the box types the widgets use, each drawn as before after the highlight
-static Fl_Box_Draw_F *stock[FL_FREE_BOXTYPE + 8];
+// the box types the widgets use, each drawn as before after the highlight:
+// a box type is not always a constant (FL_ROUND_UP_BOX is a function call in
+// FLTK 1.4), so a drawer is made per slot, and the slot knows its type
+static const int maxBoxes = 8;
+static Fl_Boxtype wrapped[maxBoxes];
+static Fl_Box_Draw_F *stock[maxBoxes], *flat = nullptr;
+static int numWrapped = 0;
 
-template <Fl_Boxtype T>
-static void hover_box(int x, int y, int w, int h, Fl_Color c)
+template <int I> static void hover_box(int x, int y, int w, int h, Fl_Color c)
 {
-  if(T == FL_BORDER_BOX) {
+  if(wrapped[I] == FL_BORDER_BOX) {
     if(Fl_Window *win = dynamic_cast<Fl_Menu_Window *>(Fl_Window::current())) {
       // a tooltip, which fills its window: on its colour, with the thin frame
       // of the hover boxes of VS Code instead of the black one of FLTK
       if(x == 0 && y == 0 && w == win->w() && h == win->h()) {
-        stock[FL_FLAT_BOX](x, y, w, h, c);
+        flat(x, y, w, h, c);
         fl_color(
           fl_color_average(FL_FOREGROUND_COLOR, FL_BACKGROUND_COLOR, 0.22f));
         fl_rect(x, y, w, h);
@@ -175,7 +180,7 @@ static void hover_box(int x, int y, int w, int h, Fl_Color c)
       // the item chosen in the menu of a choice, without the frame FLTK puts
       // around it (the bordered down box of the choice): flat, as in the
       // menus of the bar
-      stock[FL_FLAT_BOX](x, y, w, h, c);
+      flat(x, y, w, h, c);
       return;
     }
   }
@@ -184,34 +189,51 @@ static void hover_box(int x, int y, int w, int h, Fl_Color c)
     if(getenv("GMSH_HOVER_DEBUG"))
       fprintf(stderr, "hover: highlighted box at (%d,%d) %dx%d\n", x, y, w, h);
   }
-  stock[T](x, y, w, h, c);
+  stock[I](x, y, w, h, c);
+}
+
+static Fl_Box_Draw_F *const hoverBoxes[maxBoxes] = {
+  hover_box<0>, hover_box<1>, hover_box<2>, hover_box<3>,
+  hover_box<4>, hover_box<5>, hover_box<6>, hover_box<7>};
+
+static bool ours(Fl_Box_Draw_F *f)
+{
+  for(int i = 0; i < maxBoxes; i++)
+    if(f == hoverBoxes[i]) return true;
+  return false;
 }
 
 // FLTK puts its own boxes back whenever it reloads its scheme (opening the
 // display does), so they are put in place again whenever they are found
-// gone; the up and down boxes are the thin ones (see
-// FlGui::applyColorScheme())
-template <Fl_Boxtype T> static void wrap()
+// gone, each type keeping its slot; the up and down boxes are the thin ones
+// (see FlGui::applyColorScheme())
+static void wrap(Fl_Boxtype t)
 {
-  Fl_Box_Draw_F *f = Fl::get_boxtype(T);
-  if(f == hover_box<T>) return;
-  stock[T] = f;
-  Fl::set_boxtype(T, hover_box<T>, Fl::box_dx(T), Fl::box_dy(T), Fl::box_dw(T),
-                  Fl::box_dh(T));
+  Fl_Box_Draw_F *f = Fl::get_boxtype(t);
+  if(ours(f)) return;
+  int i = -1;
+  for(int k = 0; k < numWrapped; k++)
+    if(wrapped[k] == t) i = k;
+  if(i < 0) i = numWrapped++;
+  wrapped[i] = t;
+  stock[i] = f;
+  if(t == FL_FLAT_BOX) flat = f;
+  Fl::set_boxtype(t, hoverBoxes[i], Fl::box_dx(t), Fl::box_dy(t), Fl::box_dw(t),
+                  Fl::box_dh(t));
 }
 
 static void installBoxes()
 {
-  if(Fl::get_boxtype(FL_THIN_UP_BOX) == hover_box<FL_THIN_UP_BOX>) return;
-  wrap<FL_FLAT_BOX>();
-  wrap<FL_BORDER_BOX>();
-  wrap<FL_THIN_UP_BOX>();
-  wrap<FL_THIN_DOWN_BOX>();
-  wrap<FL_ROUND_UP_BOX>();
-  wrap<FL_ROUND_DOWN_BOX>();
+  if(ours(Fl::get_boxtype(FL_THIN_UP_BOX))) return;
+  wrap(FL_FLAT_BOX);
+  wrap(FL_BORDER_BOX);
+  wrap(FL_THIN_UP_BOX);
+  wrap(FL_THIN_DOWN_BOX);
+  wrap(FL_ROUND_UP_BOX);
+  wrap(FL_ROUND_DOWN_BOX);
   // the boxes of Gmsh (the folded section headers of the options)
-  wrap<GMSH_SIMPLE_TOP_BOX>();
-  wrap<GMSH_SIMPLE_RIGHT_BOX>();
+  wrap(GMSH_SIMPLE_TOP_BOX);
+  wrap(GMSH_SIMPLE_RIGHT_BOX);
   Fl::set_boxtype(FL_UP_BOX, FL_THIN_UP_BOX);
   Fl::set_boxtype(FL_DOWN_BOX, FL_THIN_DOWN_BOX);
   if(getenv("GMSH_HOVER_DEBUG")) fprintf(stderr, "hover: boxes installed\n");

@@ -64,7 +64,8 @@ public:
   bool floating() const { return _floating; }
   // on the desktop, or in the dock (where a folded or covered window is not
   // shown)
-  bool isOpen() const { return parent() || shown(); }
+  bool isOpen()
+  { return parent() || shown(); } // shown() is not const in FLTK 1.4
   void name(const std::string &n) { _name = n; }
   const std::string &name() const { return _name; }
   // docked, shown where placed: Cocoa centers a non-modal window otherwise
