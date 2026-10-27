@@ -68,5 +68,11 @@ void storeWindowOffset(Fl_Window *win, int offset[2]);
 void centerWindow(Fl_Window *win);
 // forget about a window that is being deleted
 void forgetWindow(Fl_Window *win);
+// whether the primary mouse button is held, asked of the system: 1, 0, or -1
+// where it cannot say (while the window manager drags a window by its title
+// bar, FLTK gets no mouse events)
+int mouseButtonDown();
+// whether the Shift key is held, asked of the system likewise
+bool shiftKeyDown();
 
 #endif

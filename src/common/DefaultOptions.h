@@ -63,8 +63,18 @@ StringXString GeneralOptions_String[] = {
 
   { F,   "FileName" , opt_general_filename , "" ,
     "Current project file name (read-only)" },
-  { F|S, "FltkTheme" , opt_general_gui_theme , "" ,
-    "FLTK user interface theme (try e.g. plastic or gtk+)" },
+  { F|S, "FloatingTools" , opt_general_floating_tools , "" ,
+    "Tool windows kept on the desktop instead of in the dock on the right of "
+    "the main window, by name: options, plugins, fields, visibility, clipping, "
+    "manipulator, statistics, highorder, elementary, physical, transform, "
+    "mesh, onelab, reclassify, partition (a tool is also dragged in and out of "
+    "the dock, Shift held when it is dropped keeping it out, and Dock/Undock "
+    "Tool Windows moves them all)" },
+  { F|S, "FltkTheme" , opt_general_gui_theme , "gmsh" ,
+    "FLTK user interface theme: gmsh (the font of the desktop, a neutral "
+    "palette, buttons highlighted under the pointer, no dashed focus rectangle), "
+    "one of FLTK (plastic, gtk+, gleam, oxy), or empty for the stock look of "
+    "FLTK" },
 
   { F|O, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
     "Font used in the graphic window" },
@@ -594,6 +604,9 @@ StringXNumber GeneralOptions_Number[] = {
     "On Windows, should processes created by Gmsh be detached?" },
   { F|O, "DisplayBorderFactor" , opt_general_display_border_factor , 0.2 ,
     "Border factor for model display (0: model fits window size exactly)" },
+  { F|S, "DockWidth" , opt_general_dock_width , 0. ,
+    "Width (in pixels) of the dock of the tool windows (0: the least width of "
+    "the tool windows)" },
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
     "Use a double buffered graphic window (on Unix, should be set to 0 when "
     "working on a remote host without GLX)" },
@@ -632,8 +645,9 @@ StringXNumber GeneralOptions_Number[] = {
     "[Deprecated]" },
   { F|S, "FieldHeight" , opt_general_field_size1 , 320. ,
     "Height (in pixels) of the field window" },
-  { F|S, "FieldWidth" , opt_general_field_size0 , 420. ,
-    "Width (in pixels) of the field window" },
+  { F|S, "FieldWidth" , opt_general_field_size0 , 0. ,
+    "Width (in pixels) of the field window (0: the least width of the tool "
+    "windows)" },
   { F|S, "FileChooserOffsetX" , opt_general_file_chooser_offset0 , 150. ,
     "Horizontal offset (in pixels) of the upper left corner of the file "
     "chooser windows, relative to the upper left corner of the graphic window" },
@@ -644,8 +658,9 @@ StringXNumber GeneralOptions_Number[] = {
     "windows, relative to the upper left corner of the graphic window" },
   { F|S|D, "FileChooserPositionY" , opt_general_window_position_deprecated , 200. ,
     "[Deprecated]" },
-  { F|S, "FltkColorScheme" , opt_general_gui_color_scheme , 0. ,
-    "FLTK user interface color theme (0: standard, 1:dark)" },
+  { F|S, "FltkColorScheme" , opt_general_gui_color_scheme , 2. ,
+    "FLTK user interface color theme (0: light, 1: dark, 2: light or dark as "
+    "the desktop)" },
   { F|O, "FltkRefreshRate" , opt_general_gui_refresh_rate , 5. ,
     "FLTK user interface maximum refresh rate, per second (0: no limit)" },
   { F|O, "FontSize" , opt_general_fontsize , -1. ,
@@ -776,7 +791,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F,   "MaxZ" , opt_general_zmax , 0. ,
     "Maximum model coordinate along the Z-axis (read-only)" },
   { F|S, "MenuWidth" , opt_general_menu_size0 , 200. ,
-    "Width (in pixels) of the menu tree" },
+    "Width (in pixels) of the menu tree (0: hidden)" },
   { F|S, "MenuHeight" , opt_general_menu_size1 , 200. ,
     "Height (in pixels) of the (detached) menu tree" },
   { F|S, "MenuOffsetX" , opt_general_menu_offset0 , 350. ,
@@ -825,6 +840,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Maximum number of threads used by Gmsh when compiled with OpenMP support "
     "(0: use system default, i.e. OMP_NUM_THREADS)"},
 
+  { F|S, "OptionsHeight" , opt_general_option_height , 650. ,
+    "Height (in pixels) of the option window" },
   { F|S, "OptionsOffsetX" , opt_general_option_offset0 , 600. ,
     "Horizontal offset (in pixels) of the upper left corner of the option "
     "window, relative to the upper left corner of the graphic window" },
@@ -842,6 +859,14 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Orthographic" , opt_general_orthographic , 1. ,
     "Orthographic projection mode (0: perspective projection)" },
 
+  { F|S, "PartitionOffsetX" , opt_general_partition_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the mesh "
+    "partitioning window, relative to the upper left corner of the graphic "
+    "window" },
+  { F|S, "PartitionOffsetY" , opt_general_partition_offset1 , 150. ,
+    "Vertical offset (in pixels) of the upper left corner of the mesh "
+    "partitioning window, relative to the upper left corner of the graphic "
+    "window" },
   { F|O, "Phlogiston" , opt_general_phlogiston , 1. ,
     "Phlogiston (0: none)" },
   { F|S, "PluginOffsetX" , opt_general_plugin_offset0 , 600. ,
@@ -856,8 +881,9 @@ StringXNumber GeneralOptions_Number[] = {
     "[Deprecated]" },
   { F|S, "PluginHeight" , opt_general_plugin_size1 , 320. ,
     "Height (in pixels) of the plugin window" },
-  { F|S, "PluginWidth" , opt_general_plugin_size0 , 420. ,
-    "Width (in pixels) of the plugin window" },
+  { F|S, "PluginWidth" , opt_general_plugin_size0 , 0. ,
+    "Width (in pixels) of the plugin window (0: the least width of the tool "
+    "windows)" },
   { F|O, "PointSize" , opt_general_point_size , 6. ,
     "Display size of points (in pixels)" },
   { F|O, "PolygonOffsetAlwaysOn" , opt_general_polygon_offset_always , 0. ,
@@ -881,6 +907,14 @@ StringXNumber GeneralOptions_Number[] = {
     "glyphs (spheres, arrows, ...; fixed function pipeline only) and strings "
     "(0: automatic)" },
 
+  { F|S, "ReclassifyOffsetX" , opt_general_reclassify_offset0 , 600. ,
+    "Horizontal offset (in pixels) of the upper left corner of the window to "
+    "reclassify 2D meshes, relative to the upper left corner of the graphic "
+    "window" },
+  { F|S, "ReclassifyOffsetY" , opt_general_reclassify_offset1 , 150. ,
+    "Vertical offset (in pixels) of the upper left corner of the window to "
+    "reclassify 2D meshes, relative to the upper left corner of the graphic "
+    "window" },
   { F,   "RotationX" , opt_general_rotation0 , 0.0 ,
     "First Euler angle (used if Trackball=0)" },
   { F,   "RotationY" , opt_general_rotation1 , 0.0 ,
@@ -1214,9 +1248,9 @@ StringXNumber GeometryOptions_Number[] = {
     "Display surface labels?" },
   { F|O|D, "SurfaceNumbers" , opt_geometry_surface_labels , 0. ,
     "[Deprecated]" },
-  { F|O, "SurfaceType" , opt_geometry_surface_type , 0. ,
-    "Surface display type (0: cross, 1: wireframe, 2: solid). Wireframe and solid "
-    "are not available with the built-in geometry kernel." },
+  { F|O, "SurfaceType" , opt_geometry_surface_type , 2. ,
+    "Surface display type (0: cross, 1: wireframe, 2: solid). A surface of the "
+    "built-in geometry kernel is drawn as a cross until it is meshed." },
 
   { F|O, "Tangents" , opt_geometry_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },

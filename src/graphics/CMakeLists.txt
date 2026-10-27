@@ -28,6 +28,7 @@ set(SRC
   stbStrings.cpp
   offscreenContext.cpp
   drawContextOffscreen.cpp
+  sceneView.cpp
   webView.cpp
   gl2ps.cpp
   gl2gif.cpp

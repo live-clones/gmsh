@@ -99,7 +99,6 @@ opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF
 opt(TESTS "Enable tests" ${DEFAULT})
 opt(TINYOBJLOADER "Enable TibyObjLoader for reading Wavefront files)" ON)
 opt(TINYXML2 "Enable TinyXML2 parser (used by XAO reader)" ${DEFAULT})
-opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
 opt(WRAP_JAVA "Generate SWIG Java wrappers for private API" OFF)
@@ -233,6 +232,7 @@ include(CheckTypeSize)
 include(CheckSymbolExists)
 include(CheckIncludeFile)
 include(CheckCXXCompilerFlag)
+include(CheckCXXSourceCompiles)
 include(CheckCCompilerFlag)
 
 macro(set_config_option VARNAME STRING)
@@ -640,20 +640,31 @@ if(ENABLE_VISUDEV)
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
-  # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,
-  # where e.g. xft and xinerama options are not dealt with)
+  # first, try to use fltk-config (FindFLTK is buggy on Unix, where e.g. xft
+  # and xinerama options are not dealt with)
   find_program(FLTK_CONFIG_SCRIPT fltk-config)
   if(FLTK_CONFIG_SCRIPT)
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --api-version
                     OUTPUT_VARIABLE FLTK_VERSION)
     string(STRIP "${FLTK_VERSION}" FLTK_VERSION)
-    if(FLTK_VERSION VERSION_GREATER_EQUAL "1.3.0")
+    if(FLTK_VERSION VERSION_LESS "1.4.0")
+      message(FATAL_ERROR "Gmsh requires FLTK 1.4.0 or higher (found FLTK "
+        "${FLTK_VERSION}); set ENABLE_FLTK=0 to build without the GUI")
+    else()
       add_subdirectory(src/fltk)
       set_config_option(HAVE_FLTK "Fltk")
       message(STATUS "Using fltk-config script for Fltk " ${FLTK_VERSION})
-      execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
-                      OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
-      string(STRIP "${FLTK_INCLUDE_DIR}" FLTK_INCLUDE_DIR)
+      # the include directories come from the compiler flags, as the headers
+      # of an FLTK built with Cairo (e.g. on Debian) include cairo.h
+      execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --cxxflags
+                      OUTPUT_VARIABLE FLTK_CXXFLAGS)
+      string(REGEX MATCHALL "-I[^ \t\n]+" FLTK_INCLUDE_DIR "${FLTK_CXXFLAGS}")
+      string(REPLACE "-I" "" FLTK_INCLUDE_DIR "${FLTK_INCLUDE_DIR}")
+      if(NOT FLTK_INCLUDE_DIR)
+        execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
+                        OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
+        string(STRIP "${FLTK_INCLUDE_DIR}" FLTK_INCLUDE_DIR)
+      endif()
       list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --ldflags
                       OUTPUT_VARIABLE FLTK_LIBRARIES)
@@ -666,6 +677,17 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
     set(FLTK_SKIP_FLUID TRUE)
     find_package(FLTK)
     if(FLTK_FOUND)
+      set(CMAKE_REQUIRED_INCLUDES ${FLTK_INCLUDE_DIR})
+      check_cxx_source_compiles("#include <FL/Enumerations.H>
+        #if FL_API_VERSION < 10400
+        #error
+        #endif
+        int main() { return 0; }" FLTK_14)
+      unset(CMAKE_REQUIRED_INCLUDES)
+      if(NOT FLTK_14)
+        message(FATAL_ERROR "Gmsh requires FLTK 1.4.0 or higher; set "
+          "ENABLE_FLTK=0 to build without the GUI")
+      endif()
       add_subdirectory(src/fltk)
       set_config_option(HAVE_FLTK "Fltk")
       list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
@@ -680,16 +702,6 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
         list(APPEND EXTERNAL_INCLUDES ${X11_INCLUDE_DIR})
         list(APPEND EXTERNAL_LIBRARIES ${X11_LIBRARIES})
       endif()
-    endif()
-  endif()
-endif()
-
-if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
-  STRING(REGEX MATCH "([0-9]+.[0-9]+)" OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
-  if(OSX_SDK_VERSION)
-    if(${OSX_SDK_VERSION} VERSION_GREATER 10.11)
-      set(GMSH_SRC ${GMSH_SRC};src/fltk/touchBar.mm)
-      set_config_option(HAVE_TOUCHBAR "TouchBar")
     endif()
   endif()
 endif()

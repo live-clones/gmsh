@@ -7,6 +7,59 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include "windowPlacement.h"
+#if defined(__APPLE__)
+#include <ApplicationServices/ApplicationServices.h>
+#elif defined(WIN32)
+#include <windows.h>
+#elif defined(FLTK_USE_X11)
+#include <FL/platform.H>
+#endif
+
+int mouseButtonDown()
+{
+#if defined(__APPLE__)
+  return CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState,
+                                  kCGMouseButtonLeft) ?
+           1 :
+           0;
+#elif defined(WIN32)
+  return (GetAsyncKeyState(VK_LBUTTON) & 0x8000) ? 1 : 0;
+#elif defined(FLTK_USE_X11)
+  Display *d = fl_x11_display();
+  if(!d) return -1; // Wayland
+  Window root, child;
+  int rx, ry, x, y;
+  unsigned int mask;
+  if(!XQueryPointer(d, DefaultRootWindow(d), &root, &child, &rx, &ry, &x, &y,
+                    &mask))
+    return -1;
+  return (mask & Button1Mask) ? 1 : 0;
+#else
+  return -1;
+#endif
+}
+
+bool shiftKeyDown()
+{
+#if defined(__APPLE__)
+  return CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) &
+         kCGEventFlagMaskShift;
+#elif defined(WIN32)
+  return (GetAsyncKeyState(VK_SHIFT) & 0x8000) ? true : false;
+#elif defined(FLTK_USE_X11)
+  Display *d = fl_x11_display();
+  if(!d) return false;
+  Window root, child;
+  int rx, ry, x, y;
+  unsigned int mask;
+  if(!XQueryPointer(d, DefaultRootWindow(d), &root, &child, &rx, &ry, &x, &y,
+                    &mask))
+    return false;
+  return (mask & ShiftMask) ? true : false;
+#else
+  return false;
+#endif
+}
 
 static Fl_Window *reference = nullptr;
 static std::set<Fl_Window *> placed;
@@ -76,7 +129,8 @@ void placeWindow(Fl_Window *win, int offset[2])
 
 void storeWindowOffset(Fl_Window *win, int offset[2])
 {
-  if(!reference || !placed.count(win)) return;
+  // a docked window keeps the offset it had on the desktop
+  if(!reference || !placed.count(win) || win->parent()) return;
   offset[0] = win->x() - reference->x();
   offset[1] = win->y() - reference->y();
 }

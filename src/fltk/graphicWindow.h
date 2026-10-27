@@ -24,6 +24,10 @@ class openglWindow;
 class onelabGroup;
 class messageBrowser;
 
+class toolDock;
+class dockDivider;
+class paletteWindow;
+
 class graphicWindow {
 private:
   bool _autoScrollMessages;
@@ -36,10 +40,29 @@ private:
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  Fl_Button *_butt[14];
+  Fl_Button *_butt[15];
   Fl_Progress *_label;
   int _minWidth, _minHeight;
+  // the size of the icons of the status bar
+  int _iconSize;
+  // the width of the menu while it is hidden, to show it again
+  int _menuWidth;
   std::vector<std::string> _messages;
+  // the column of docked tool windows on the right of the tiles, the edge
+  // dragged to change its width, and the box that says what resizes
+  toolDock *_dock;
+  dockDivider *_divider;
+  Fl_Box *_resbox;
+  // the floating tool being dragged over the dock, docked when the button is
+  // released there, and when it last moved
+  paletteWindow *_dropping;
+  double _dropMoved;
+  bool _overDock(paletteWindow *w);
+  void _dropHint(bool on);
+  static void _drop_cb(void *data);
+  void _layoutDock(int width);
+  int _leastTileWidth();
+  int _fitDockWidth(int w);
 
 public:
   std::vector<openglWindow *> gl;
@@ -76,6 +99,24 @@ public:
   void attachMenu();
   void attachDetachMenu();
   bool isMenuDetached() { return _menuwin ? true : false; }
+  // tool windows shown are docked, in a column visible while one is docked
+  // (see paletteWindow::floating() for the ones kept out)
+  void setDocking(bool docking);
+  bool isDockShown();
+  void dockTool(paletteWindow *w);
+  void toolHidden(paletteWindow *w);
+  void toolResized(paletteWindow *w);
+  // a tool torn out of the dock, shown on the desktop under the pointer, and
+  // a floating tool moved on the desktop, docked when dragged over the dock
+  void toolTornOut(paletteWindow *w, int x, int y);
+  void toolMoved(paletteWindow *w);
+  // the tool shown in the dock, used last, if any, and closing it
+  paletteWindow *currentDockedTool();
+  bool closeDockedTool();
+  // runs the entry of the menu bar whose shortcut is the current event
+  bool runMenuShortcut();
+  int getDockWidth();
+  void setDockWidth(int w);
   bool split(openglWindow *g, char how, double ratio);
   void setAnimButtons(int mode);
   void checkAnimButtons();
@@ -120,5 +161,7 @@ void quick_access_cb(Fl_Widget *w, void *data);
 void show_hide_message_cb(Fl_Widget *w, void *data);
 void show_hide_menu_cb(Fl_Widget *w, void *data);
 void attach_detach_menu_cb(Fl_Widget *w, void *data);
+void dock_tool_cb(Fl_Widget *w, void *data);
+void dock_tools_cb(Fl_Widget *w, void *data);
 
 #endif

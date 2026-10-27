@@ -99,22 +99,23 @@ void onelabContextWindow::_addOnelabWidget(
     Fl_Color c;
     if(getParameterColor(n.getAttribute("Highlight"), c)) highlight = true;
 
-    int xx = 0, yy = 0, ww = _width / 2;
+    // a row of three buttons fits in the width, with its gaps
+    int xx = 0, yy = 0, ww = _width / 2, w3 = (_width - 4 * WB) / 3;
     std::string aspect = n.getAttribute("Aspect");
     if(aspect.find("Left") != std::string::npos) {
       xx = 1;
       yy = 1;
-      ww = _width / 3;
+      ww = w3;
     }
     if(aspect.find("Middle") != std::string::npos) {
       xx = 2;
       yy = 1;
-      ww = _width / 3;
+      ww = w3;
     }
     if(aspect.find("Right") != std::string::npos) {
       xx = 3;
       yy = 1;
-      ww = _width / 3;
+      ww = w3;
     }
     Fl_Widget *w = addParameterWidget(n, xx, yy, ww, BH, 1., n.getName(),
                                       highlight, c, win->color(), _toFree);
@@ -126,6 +127,12 @@ void onelabContextWindow::_addOnelabWidget(
     widgets.insert(std::make_pair(n.getName(), w));
     _onelabWidgets.push_back(w);
   }
+}
+
+static void onelab_context_resized_cb(void *data)
+{
+  onelabContextWindow *o = (onelabContextWindow *)data;
+  o->place(o->win->w());
 }
 
 static void choice_cb(Fl_Widget *w, void *data)
@@ -145,7 +152,8 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
   _dim = _tag = -1;
   _entity = nullptr;
 
-  _width = 26 * FL_NORMAL_SIZE;
+  // as narrow as the option window, wider as the window is widened
+  _width = TW;
   _height = 2 * WB + 1 * BH;
 
   win = new contextWindow(_width, _height,
@@ -158,6 +166,8 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
   _choice->callback(choice_cb);
 
   win->end();
+  ((paletteWindow *)win)->sizeRange(_width, _height, 0, _height);
+  win->whenResized(onelab_context_resized_cb, this);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -258,46 +268,26 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
   for(auto &p : ps) _addOnelabWidget(p, pat, wset);
   std::vector<std::pair<std::string, Fl_Widget *> > wvec(wset.begin(),
                                                          wset.end());
-  int h = _height;
-  int w = win->w();
+  // the x and y of a new widget say where it goes (see _addOnelabWidget), -1
+  // for the box that says there is nothing
+  _placed.clear();
   if(wvec.empty()) {
-    Fl_Box *b = new Fl_Box(WB, h, w - 2 * WB, BH, "No parameters");
+    Fl_Box *b = new Fl_Box(0, 0, BH, BH, "No parameters");
     _onelabWidgets.push_back(b);
     win->add(b);
-    h += BH;
+    _placed.push_back({b, -1, 0});
   }
   else {
-    for(std::size_t i = 0; i < wvec.size(); i++) {
-      // x, y of widgets used to decide how to position them
-      int ww = wvec[i].second->w();
-      int xx =
-        (wvec[i].second->x() == 3) ? _width - ww - WB : // right
-        (wvec[i].second->x() == 2) ? _width - 2 * ww - 2 * WB : // middle
-        (wvec[i].second->x() == 1) ? _width - 3 * ww - 3 * WB : // left
-        WB; // left
-      int yy =
-        (wvec[i].second->y() == 1) ? h + 2 * WB : // vertical padding
-        h; // none
-      if((i < wvec.size() - 1) && (wvec[i].second->x() > 0) &&
-         (wvec[i + 1].second->x() == (wvec[i].second->x() + 1))) {
-        // next button to the right, don't increment horizontal position
-      }
-      else if(wvec[i].second->y() == 1) {
-        // padding
-        h += wvec[i].second->h() + 2 * WB;
-      }
-      else { // default
-        h += wvec[i].second->h();
-      }
-      wvec[i].second->position(xx, yy);
-      win->add(wvec[i].second);
+    for(auto &p : wvec) {
+      _placed.push_back({p.second, p.second->x(), p.second->y()});
+      win->add(p.second);
     }
   }
-  h += WB;
+  int h = place(win->w());
 
   // resize the window and restore the focus
+  ((paletteWindow *)win)->sizeRange(_width, h, 0, h);
   win->resize(win->x(), win->y(), win->w(), h);
-  win->size_range(_width, win->h(), 0, win->h());
 
   for(auto w : _onelabWidgets) {
     if(w->label() && focus == std::string(w->label())) { w->take_focus(); }
@@ -305,6 +295,42 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
 
   // TODO: we should add a "Check" button if Solver.AutoCheck is not set (as in
   // the main ONELAB tree)
+}
+
+int onelabContextWindow::place(int w)
+{
+  _choice->resize(WB, WB, w - 2 * WB, BH);
+  int h = _height;
+  for(std::size_t i = 0; i < _placed.size(); i++) {
+    Fl_Widget *o = _placed[i].widget;
+    int code = _placed[i].x;
+    if(code < 0) { // the box that says there is nothing
+      o->resize(WB, h, w - 2 * WB, BH);
+      h += BH;
+      continue;
+    }
+    // the fields on the left, the buttons of an Aspect on the right
+    int ww = o->w();
+    int xx = (code == 3) ? w - ww - WB : // right
+             (code == 2) ? w - 2 * ww - 2 * WB : // middle
+             (code == 1) ? w - 3 * ww - 3 * WB : // left
+             WB;
+    int yy = (_placed[i].y == 1) ? h + 2 * WB : // vertical padding
+                                   h; // none
+    if((i < _placed.size() - 1) && (code > 0) &&
+       (_placed[i + 1].x == code + 1)) {
+      // next button to the right, don't increment horizontal position
+    }
+    else if(_placed[i].y == 1) {
+      // padding
+      h += o->h() + 2 * WB;
+    }
+    else { // default
+      h += o->h();
+    }
+    o->position(xx, yy);
+  }
+  return h + WB;
 }
 
 void onelabContextWindow::highlightSelection()

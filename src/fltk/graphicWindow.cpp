@@ -24,9 +24,13 @@ typedef unsigned long intptr_t;
 #include <FL/filename.H>
 #include <FL/Fl_Tree.H>
 #include "FlGui.h"
+#include "Shortcuts.h"
 #include "mainWindow.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
+#include "toolDock.h"
+#include "gmshScheme.h"
+#include "icons.h"
 #include "optionWindow.h"
 #include "gamepadWindow.h"
 #include "statisticsWindow.h"
@@ -69,10 +73,6 @@ typedef unsigned long intptr_t;
 
 #if defined(HAVE_3M)
 #include "3M.h"
-#endif
-
-#if defined(HAVE_TOUCHBAR)
-#include "touchBar.h"
 #endif
 
 static void file_new_cb(Fl_Widget *w, void *data)
@@ -2845,13 +2845,16 @@ static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
 
 // The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics since they
 // are already defined as global shortcuts)
+// no label carries a mnemonic (an "&" letter): the titles of the menus would
+// take Alt+f, t, w and h from the shortcuts of the table (see Shortcuts.h)
+// before they are seen, and the macOS system menu bar wants none
 static Fl_Menu_Item bar_table[] = {
-  {"&File", 0, nullptr, nullptr, FL_SUBMENU},
-    {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, nullptr},
-    {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_merge_cb, (void*)"open"},
+  {"File", 0, nullptr, nullptr, FL_SUBMENU},
+    {"New...",     fltkShortcut("file_new"), (Fl_Callback *)file_new_cb, nullptr},
+    {"Open...",    fltkShortcut("file_open"), (Fl_Callback *)file_open_merge_cb, (void*)"open"},
     {"Open Recent", 0, nullptr, nullptr, FL_SUBMENU},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", FL_CTRL+FL_SHIFT+'r', (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", fltkShortcut("file_recent"), (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
@@ -2861,10 +2864,10 @@ static Fl_Menu_Item bar_table[] = {
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
       {nullptr},
-    {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
+    {"Merge...",   fltkShortcut("file_merge"), (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
     {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, nullptr, FL_MENU_DIVIDER},
-    {"&Clear",      0, (Fl_Callback *)file_clear_cb, nullptr},
-    {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, nullptr},
+    {"Clear",      0, (Fl_Callback *)file_clear_cb, nullptr},
+    {"Rename...",  fltkShortcut("file_rename"), (Fl_Callback *)file_rename_cb, nullptr},
     {"Delete",      0, (Fl_Callback *)file_delete_cb, nullptr, FL_MENU_DIVIDER},
     {"Remote", 0, nullptr, nullptr, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
@@ -2872,116 +2875,77 @@ static Fl_Menu_Item bar_table[] = {
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
       {nullptr},
-    {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, nullptr},
-    {"Save Model Options", FL_CTRL+'j', (Fl_Callback *)file_options_save_cb, (void*)"file"},
-    {"Save Options As Default", FL_CTRL+FL_SHIFT+'j', (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
-    {"&Export...",  FL_CTRL+'e', (Fl_Callback *)file_export_cb, nullptr, FL_MENU_DIVIDER},
-    {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, nullptr},
+    {"Save Mesh",  fltkShortcut("mesh_save"), (Fl_Callback *)mesh_save_cb, nullptr},
+    {"Save Model Options", fltkShortcut("options_save"), (Fl_Callback *)file_options_save_cb, (void*)"file"},
+    {"Save Options As Default", fltkShortcut("options_save_default"), (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
+    {"Export...",  fltkShortcut("file_export"), (Fl_Callback *)file_export_cb, nullptr, FL_MENU_DIVIDER},
+    {"Quit",       fltkShortcut("quit"), (Fl_Callback *)file_quit_cb, nullptr},
     {nullptr},
-  {"&Tools", 0, nullptr, nullptr, FL_SUBMENU},
-    {"&Options",         FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, nullptr},
-    {"Pl&ugins",         FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
-    {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, nullptr},
-    {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, nullptr},
-    {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
+  {"Tools", 0, nullptr, nullptr, FL_SUBMENU},
+    {"Options",         fltkShortcut("options"), (Fl_Callback *)options_cb, nullptr},
+    {"Plugins",         fltkShortcut("plugins"), (Fl_Callback *)plugin_cb, (void*)(-1)},
+    {"Visibility",      fltkShortcut("visibility"), (Fl_Callback *)visibility_cb, nullptr},
+    {"Clipping",        fltkShortcut("clipping"), (Fl_Callback *)clip_cb, nullptr},
+    {"Manipulator",     fltkShortcut("manipulator"), (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
 #if defined(HAVE_3M)
-    {"&3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
+    {"3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
 #endif
-    {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, nullptr},
-    {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)show_hide_message_cb, nullptr},
+    {"Statistics",      fltkShortcut("statistics"), (Fl_Callback *)statistics_cb, nullptr},
+    {"Message Console", fltkShortcut("console"), (Fl_Callback *)show_hide_message_cb, nullptr},
     {nullptr},
-  {"&Window", 0, nullptr, nullptr, FL_SUBMENU},
+  {"Window", 0, nullptr, nullptr, FL_SUBMENU},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
 #if defined(WIN32)
-    {"Copy to Clipboard",  FL_CTRL+'c', (Fl_Callback *)file_window_cb, (void*)"copy", FL_MENU_DIVIDER},
+    {"Copy to Clipboard",  fltkShortcut("window_copy"), (Fl_Callback *)file_window_cb, (void*)"copy", FL_MENU_DIVIDER},
 #endif
     {"Split Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
     {"Split Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
     {"Unsplit",            0, (Fl_Callback *)file_window_cb, (void*)"split_u", FL_MENU_DIVIDER},
-    {"Minimize",           FL_CTRL+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
+    {"Minimize",           fltkShortcut("minimize"), (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
-    {"Enter Full Screen",  FL_CTRL+'f', (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
-    {"Attach/Detach Menu", FL_CTRL+'d', (Fl_Callback *)attach_detach_menu_cb, nullptr, FL_MENU_DIVIDER},
+    {"Enter Full Screen",  fltkShortcut("fullscreen"), (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
+    {"Show/Hide Menu",     fltkShortcut("menu_show_hide"), (Fl_Callback *)show_hide_menu_cb, nullptr},
+    {"Attach/Detach Menu", 0, (Fl_Callback *)attach_detach_menu_cb, nullptr},
+    {"Dock/Undock Tool Window", fltkShortcut("dock"), (Fl_Callback *)dock_tool_cb, nullptr},
+    {"Dock/Undock All Tool Windows", fltkShortcut("dock_all"), (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
     {nullptr},
-  {"&Help", 0, nullptr, nullptr, FL_SUBMENU},
-    {"On&line Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
-    {"&Keyboard and Mouse Usage",  FL_CTRL+'h', (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
-    {"&Current Options and Workspace", FL_CTRL+FL_SHIFT+'h', (Fl_Callback *)status_options_cb, (void*)"?", 0},
-    {"&Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr, FL_MENU_DIVIDER},
-    {"&About Gmsh",           0, (Fl_Callback *)help_about_cb, nullptr},
+  {"Help", 0, nullptr, nullptr, FL_SUBMENU},
+    {"Online Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
+    {"Keyboard and Mouse Usage",  fltkShortcut("help_keys"), (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
+    {"Current Options and Workspace", fltkShortcut("help_options"), (Fl_Callback *)status_options_cb, (void*)"?", 0},
+    {"Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr, FL_MENU_DIVIDER},
+    {"About Gmsh",           0, (Fl_Callback *)help_about_cb, nullptr},
     {nullptr},
   {nullptr}
 };
 
 #if defined(__APPLE__)
 
-// Alternative items for the macOS system menu bar (removed '&' shortcuts: they
-// would cause spurious menu items to appear on the menu window; removed
-// File->Quit)
-static Fl_Menu_Item sysbar_table[] = {
-  {"File", 0, nullptr, nullptr, FL_SUBMENU},
-    {"New...",     FL_META+'n', (Fl_Callback *)file_new_cb, nullptr},
-    {"Open...",    FL_META+'o', (Fl_Callback *)file_open_merge_cb, (void*)"open"},
-    {"Open Recent", 0, nullptr, nullptr, FL_SUBMENU},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", FL_META+FL_SHIFT+'r', (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {nullptr},
-    {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
-    {"Watch Pattern...",   0, (Fl_Callback *)file_watch_cb, nullptr, FL_MENU_DIVIDER},
-    {"Clear",      0, (Fl_Callback *)file_clear_cb, nullptr},
-    {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, nullptr},
-    {"Delete",     0, (Fl_Callback *)file_delete_cb, nullptr, FL_MENU_DIVIDER},
-    {"Remote", 0, nullptr, nullptr, FL_MENU_DIVIDER | FL_SUBMENU},
-      {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
-      {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
-      {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
-      {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
-      {nullptr},
-    {"Save Mesh",  FL_META+'s', (Fl_Callback *)mesh_save_cb, nullptr},
-    {"Save Model Options", FL_META+'j', (Fl_Callback *)file_options_save_cb, (void*)"file"},
-    {"Save Options As Default", FL_META+FL_SHIFT+'j', (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
-    {"Export...",  FL_META+'e', (Fl_Callback *)file_export_cb, nullptr},
-    {nullptr},
-  {"Tools", 0, nullptr, nullptr, FL_SUBMENU},
-    {"Options",         FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, nullptr},
-    {"Plugins",         FL_META+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
-    {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, nullptr},
-    {"Clipping",        FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, nullptr},
-    {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
-#if defined(HAVE_3M)
-    {"3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
-#endif
-    {"Statistics",      FL_META+'i', (Fl_Callback *)statistics_cb, nullptr},
-    {"Message Console", FL_META+'l', (Fl_Callback *)show_hide_message_cb, nullptr},
-    {nullptr},
-  {"Window", 0, nullptr, nullptr, FL_SUBMENU},
-    {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
-    {"Split Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
-    {"Split Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
-    {"Unsplit",            0, (Fl_Callback *)file_window_cb, (void*)"split_u", FL_MENU_DIVIDER},
-    {"Minimize",           FL_META+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
-    {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
-    {"Enter Full Screen",  FL_META+'f', (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
-    {"Attach/Detach Menu", FL_META+'d', (Fl_Callback *)attach_detach_menu_cb, nullptr, FL_MENU_DIVIDER},
-    {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
-    {nullptr},
-  {"Help", 0, nullptr, nullptr, FL_SUBMENU},
-    {"Online Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
-    {"Keyboard and Mouse Usage", 0, (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
-    {"Current Options and Workspace", FL_META+FL_SHIFT+'h', (Fl_Callback *)status_options_cb, (void*)"?"},
-    {"Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr},
-    {nullptr},
-  {nullptr}
-};
+// the items of the macOS system menu bar: those of the window bar without
+// Quit and About, which the application menu has, nor the shortcut of the
+// keyboard help, as Cmd+H hides the application
+static Fl_Menu_Item *systemBarTable()
+{
+  static std::vector<Fl_Menu_Item> table;
+  if(table.empty()) {
+    int n = sizeof(bar_table) / sizeof(bar_table[0]);
+    for(int i = 0; i < n; i++) {
+      Fl_Menu_Item it = bar_table[i];
+      if(it.callback_ == (Fl_Callback *)file_quit_cb ||
+         it.callback_ == (Fl_Callback *)help_about_cb) {
+        // the last of its menu: the divider above it goes too
+        if(it.text && !bar_table[i + 1].text && table.size())
+          table.back().flags &= ~FL_MENU_DIVIDER;
+        continue;
+      }
+      if(it.callback_ == (Fl_Callback *)help_basic_cb)
+        it.shortcut_ = fltkShortcut("help_keys", true);
+      table.push_back(it);
+    }
+  }
+  return &table[0];
+}
 
 #endif
 
@@ -3382,10 +3346,6 @@ void quick_access_cb(Fl_Widget *w, void *data)
       opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI, 0);
     }
   }
-
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
 }
 
 static void model_switch_cb(Fl_Widget *w, void *data)
@@ -3694,6 +3654,9 @@ void status_options_cb(Fl_Widget *w, void *data)
     for(std::size_t i = 0; i < tofree.size(); i++) free(tofree[i]);
     drawContext::global()->draw();
   }
+  else if(what == "menu") { // show or hide the menu
+    show_hide_menu_cb(nullptr, nullptr);
+  }
   else if(what == "?") { // display options
     help_options_cb(nullptr, nullptr);
     centerWindow(FlGui::instance()->help->options);
@@ -3716,24 +3679,24 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Vertically", 0, quick_access_cb, (void*)"split_ver"},
          { "Unsplit", 0, quick_access_cb, (void*)"unsplit"},
          { nullptr },
-      { "Axes", FL_ALT + 'a', quick_access_cb, (void*)"axes",
+      { "Axes", fltkShortcut("axes_loop"), quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
       { "Hover mesh and views", 0, quick_access_cb, (void*)"hover_meshes",
         FL_MENU_TOGGLE },
       { "Projection mode", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Orthographic", FL_ALT + 'o', quick_access_cb, (void*)"orthographic"},
+         { "Orthographic", fltkShortcut("projection"), quick_access_cb, (void*)"orthographic"},
          { "Perspective", 0, quick_access_cb, (void*)"perspective"},
          { nullptr },
       { "All general options...", 0, quick_access_cb, (void*)"general",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "Geometry visibility", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Points", FL_ALT + 'p', quick_access_cb, (void*)"geometry_points",
+         { "Points", fltkShortcut("geometry_points"), quick_access_cb, (void*)"geometry_points",
            FL_MENU_TOGGLE },
-         { "Curves", FL_ALT + 'l', quick_access_cb, (void*)"geometry_curves",
+         { "Curves", fltkShortcut("geometry_curves"), quick_access_cb, (void*)"geometry_curves",
            FL_MENU_TOGGLE },
-         { "Surfaces ", FL_ALT + 's', quick_access_cb, (void*)"geometry_surfaces",
+         { "Surfaces ", fltkShortcut("geometry_surfaces"), quick_access_cb, (void*)"geometry_surfaces",
            FL_MENU_TOGGLE },
-         { "Volumes", FL_ALT + 'v', quick_access_cb, (void*)"geometry_volumes",
+         { "Volumes", fltkShortcut("geometry_volumes"), quick_access_cb, (void*)"geometry_volumes",
            FL_MENU_TOGGLE },
          { nullptr },
       { "Geometry opacity", 0, quick_access_cb,
@@ -3741,53 +3704,49 @@ void status_options_cb(Fl_Widget *w, void *data)
       { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "Mesh visibility", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Nodes", FL_ALT + FL_SHIFT + 'p', quick_access_cb, (void*)"mesh_nodes",
+         { "Nodes", fltkShortcut("mesh_nodes"), quick_access_cb, (void*)"mesh_nodes",
            FL_MENU_TOGGLE },
-         { "1D elements", FL_ALT + FL_SHIFT + 'l', quick_access_cb, (void*)"mesh_lines",
+         { "1D elements", fltkShortcut("mesh_lines"), quick_access_cb, (void*)"mesh_lines",
            FL_MENU_TOGGLE },
-         { "2D element edges ", FL_ALT + FL_SHIFT + 's', quick_access_cb,
+         { "2D element edges ", fltkShortcut("mesh_surface_edges"), quick_access_cb,
            (void*)"mesh_surface_edges", FL_MENU_TOGGLE },
-         { "2D element faces", FL_ALT + FL_SHIFT + 'd', quick_access_cb,
+         { "2D element faces", fltkShortcut("mesh_surface_faces"), quick_access_cb,
            (void*)"mesh_surface_faces", FL_MENU_TOGGLE },
-         { "3D element edges", FL_ALT + FL_SHIFT + 'v', quick_access_cb,
+         { "3D element edges", fltkShortcut("mesh_volume_edges"), quick_access_cb,
            (void*)"mesh_volume_edges", FL_MENU_TOGGLE },
-         { "3D element faces", FL_ALT + FL_SHIFT + 'b', quick_access_cb,
+         { "3D element faces", fltkShortcut("mesh_volume_faces"), quick_access_cb,
            (void*)"mesh_volume_faces", FL_MENU_TOGGLE },
          { nullptr },
-      { "Toggle mesh display", FL_ALT + 'm', quick_access_cb, (void*)"mesh_toggle" },
+      { "Toggle mesh display", fltkShortcut("mesh_toggle"), quick_access_cb, (void*)"mesh_toggle" },
       { "Mesh opacity", 0, quick_access_cb, (void*)"mesh_opacity" },
       { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
       { "All mesh options...", 0, quick_access_cb, (void*)"mesh",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
-      { "View element outlines ", FL_ALT + 'e', quick_access_cb,
+      { "View element outlines ", fltkShortcut("view_elements"), quick_access_cb,
         (void*)"view_element_outlines", FL_MENU_TOGGLE },
       { "View normal raise", 0, quick_access_cb, (void*)"view_normal_raise" },
       { "View intervals", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Iso-values", FL_ALT + 't', quick_access_cb, (void*)"view_iso"},
+         { "Iso-values", fltkShortcut("view_intervals"), quick_access_cb, (void*)"view_iso"},
          { "Continuous map", 0, quick_access_cb, (void*)"view_continous"},
          { "Filled iso-values", 0, quick_access_cb, (void*)"view_filled"},
-         { "Numeric values", 0, quick_access_cb, (void*)"view_numeric"},
+         { "Numeric values", 0, quick_access_cb, (void*)"view_numeric", FL_MENU_DIVIDER},
+         { "Default range", 0, quick_access_cb, (void*)"view_range_default"},
+         { "Range per time step", 0, quick_access_cb, (void*)"view_range_per_step"},
          { nullptr },
-      { "View range", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Default", 0, quick_access_cb, (void*)"view_range_default"},
-         { "Per time step", 0, quick_access_cb, (void*)"view_range_per_step"},
-         { nullptr },
-      { "View vector display", 0, nullptr, nullptr, FL_SUBMENU },
+      { "View vectors", 0, nullptr, nullptr, FL_SUBMENU },
          { "Line", 0, quick_access_cb, (void*)"view_line"},
          { "3D arrow", 0, quick_access_cb, (void*)"view_3d_arrow"},
-         { "Displacement", 0, quick_access_cb, (void*)"view_displacement"},
-         { nullptr },
-      { "View glyph location", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
-         { "Node", 0, quick_access_cb, (void*)"view_glyph_node"},
+         { "Displacement", 0, quick_access_cb, (void*)"view_displacement", FL_MENU_DIVIDER},
+         { "At barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
+         { "At node", 0, quick_access_cb, (void*)"view_glyph_node"},
          { nullptr },
       { "View opacity", 0, quick_access_cb, (void*)"view_opacity" },
       { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
       { nullptr }
     };
     // clang-format on
-    // one item was added to each of the geometry, mesh and view sections
-    const int gen = 9, geo = 16, msh = 24, pos = 36, end = 59;
+    // the first item of each section, and the last one of the menu
+    const int gen = 9, geo = 16, msh = 24, pos = 36, end = 54;
     if(opt_general_axes(0, GMSH_GET, 0))
       menu[gen + 0].set();
     else
@@ -3862,12 +3821,12 @@ void status_options_cb(Fl_Widget *w, void *data)
     if(opt_general_shaders(0, GMSH_GET, 0)) {
       menu[geo + 6].show();
       menu[msh + 9].show();
-      if(!PView::list.empty()) menu[pos + 21].show();
+      if(!PView::list.empty()) menu[pos + 17].show();
     }
     else {
       menu[geo + 6].hide();
       menu[msh + 9].hide();
-      menu[pos + 21].hide();
+      menu[pos + 17].hide();
     }
 
     // popup the menu
@@ -3996,6 +3955,49 @@ void show_hide_menu_cb(Fl_Widget *w, void *data)
   FlGui::check();
 }
 
+void dock_tool_cb(Fl_Widget *w, void *data)
+{
+  FlGui::instance()->toggleCurrentTool();
+  FlGui::check();
+}
+
+void dock_tools_cb(Fl_Widget *w, void *data)
+{
+  // docks every tool when any is open on the desktop, undocks every one
+  // when all the open ones are docked; with none open, the list is flipped
+  bool open = false, floating = false;
+  for(auto t : FlGui::instance()->toolWindows()) {
+    paletteWindow *p = (paletteWindow *)t;
+    if(!p->isOpen()) continue;
+    open = true;
+    if(p->floating()) floating = true;
+  }
+  bool dock = open ? floating : !CTX::instance()->floatingTools.empty();
+  FlGui::instance()->dockTools(dock);
+  FlGui::check();
+}
+
+static void dock_divider_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = (graphicWindow *)data;
+  g->setDockWidth(g->getWindow()->w() - Fl::event_x() - WB / 2);
+}
+
+// the main window docking the tool windows, which reach it through the hooks of
+// paletteWindow
+static graphicWindow *theDocking = nullptr;
+static void dock_hook(paletteWindow *w) { theDocking->dockTool(w); }
+static bool close_tool_hook(Fl_Window *w)
+{
+  // Cmd-W in the main window closes the tool shown in the dock, if any
+  return theDocking->getWindow() == w && theDocking->closeDockedTool();
+}
+static void resized_hook(paletteWindow *w) { theDocking->toolResized(w); }
+static void hidden_hook(paletteWindow *w) { theDocking->toolHidden(w); }
+static void moved_hook(paletteWindow *w) { theDocking->toolMoved(w); }
+static void torn_out_hook(paletteWindow *w, int x, int y)
+{ theDocking->toolTornOut(w, x, y); }
+
 void attach_detach_menu_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g =
@@ -4032,9 +4034,13 @@ static void message_browser_cb(Fl_Widget *w, void *data)
 static void message_menu_search_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = (graphicWindow *)data;
-  g->getMessageBrowser()->clear();
-  for(int i = 0; i < (int)g->getMessages().size(); i++)
-    g->getMessageBrowser()->add(g->getMessages()[i].c_str());
+  g->getMessageBrowser()->rebuild(g->getMessages());
+}
+
+static void message_menu_copy_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = (graphicWindow *)data;
+  g->copySelectedMessagesToClipboard();
 }
 
 static void tile_cb(Fl_Widget *w, void *data)
@@ -4044,6 +4050,74 @@ static void tile_cb(Fl_Widget *w, void *data)
     FlGui::instance()->rebuildTree(true);
   }
 }
+
+// The menu bar of the window, when it is not the system's: the title under
+// the pointer is highlighted, as the bars of the desktops do (FLTK draws the
+// titles without a box of their own, so the bar draws them itself, laid out
+// as Fl_Menu_Bar lays them out)
+class hoverMenuBar : public Fl_Menu_Bar {
+  int _hot; // the title under the pointer, or -1
+  int _titleAt(int px)
+  {
+    int X = x() + 6, i = 0;
+    for(const Fl_Menu_Item *m = menu()->first(); m->text; m = m->next(), i++) {
+      int W = m->measure(0, this) + 16;
+      if(px >= X && px < X + W) return i;
+      X += W;
+    }
+    return -1;
+  }
+
+public:
+  hoverMenuBar(int x, int y, int w, int h) : Fl_Menu_Bar(x, y, w, h), _hot(-1)
+  {
+  }
+  int handle(int event)
+  {
+    if(menu() && (event == FL_ENTER || event == FL_MOVE || event == FL_LEAVE)) {
+      int hot = (event == FL_LEAVE) ? -1 : _titleAt(Fl::event_x());
+      if(hot != _hot) {
+        _hot = hot;
+        redraw();
+      }
+    }
+    // a click opens a menu, which runs in a loop of its own where the bar
+    // sees no move: no highlight while it is open, nor after, until the
+    // pointer moves over the bar again
+    if(event == FL_PUSH && _hot >= 0) {
+      _hot = -1;
+      redraw();
+    }
+    int ret = Fl_Menu_Bar::handle(event);
+    if(event == FL_PUSH && _hot >= 0) {
+      _hot = -1;
+      redraw();
+    }
+    return ret;
+  }
+  void draw()
+  {
+    // the open title and the items of its menu in a neutral grey, as the
+    // bars of Windows and GTK, the selection colour staying for the lists
+    if(gmshScheme())
+      selection_color(
+        fl_color_average(FL_BACKGROUND_COLOR, FL_FOREGROUND_COLOR, 0.82f));
+    draw_box();
+    if(!menu() || !menu()->text) return;
+    int X = x() + 6, i = 0;
+    for(const Fl_Menu_Item *m = menu()->first(); m->text; m = m->next(), i++) {
+      int tw = m->measure(0, this), W = tw + 16;
+      if(i == _hot) {
+        // the text, drawn 3 pixels into its slot, with the same margin on
+        // both sides
+        fl_color(hoverHighlight(color()));
+        fl_rectf(X - 2, y() + 1, tw + 10, h() - 2);
+      }
+      m->draw(X, y(), W, h(), this);
+      X += W;
+    }
+  }
+};
 
 // This dummy box class permits to define a box widget that will not eat the
 // FL_ENTER/FL_LEAVE events (the box widget in fltk > 1.1 does that, so that
@@ -4105,8 +4179,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #if defined(__APPLE__)
   if(CTX::instance()->systemMenuBar) mh = 0;
 #endif
-  int sh = 2 * FL_NORMAL_SIZE - 3; // status bar height
-  int sw = FL_NORMAL_SIZE + 2; // status button width
+  // the status bar and its buttons: as tall as the menu bar and wider under
+  // the gmsh theme, for its icons
+  int sh = gmshScheme() ? BH : 2 * FL_NORMAL_SIZE - 3;
+  int sw = gmshScheme() ? 1.8 * FL_NORMAL_SIZE : FL_NORMAL_SIZE + 2;
+  _iconSize = FL_NORMAL_SIZE + 1; // the icons on the scale of the letters
 
   // the usable area of the screen that will show the window
   int screenX, screenY, screenW, screenH;
@@ -4129,7 +4206,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     CTX::instance()->glSize[1] = glheight + mheight;
   }
 
-  int twidth = (main && !detachedMenu) ? 14 * sw : 0;
+  int twidth = (main && !detachedMenu) ? 14 * (FL_NORMAL_SIZE + 2) : 0;
   int glwidth = CTX::instance()->glSize[0] - twidth;
   // make sure glwidth is positive
   if(glwidth <= 0) {
@@ -4163,13 +4240,13 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #if defined(__APPLE__)
     if(CTX::instance()->systemMenuBar) {
       _sysbar = new Fl_Sys_Menu_Bar(1, 1, 1, 1);
-      _sysbar->menu(sysbar_table);
+      _sysbar->menu(systemBarTable());
       _sysbar->global();
       fillRecentHistoryMenu();
     }
     else {
 #endif
-      _bar = new Fl_Menu_Bar(0, 0, width, BH);
+      _bar = new hoverMenuBar(0, 0, width, BH);
       _bar->menu(bar_table);
       _bar->global();
       fillRecentHistoryMenu();
@@ -4178,15 +4255,14 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #endif
   }
 
-  // minimum width should be exactly the width of the status bar buttons (see
-  // below)
-  _minWidth = 10 + 11 * sw + 1.75 * FL_NORMAL_SIZE;
-  _minHeight = 100;
-  _win->size_range(_minWidth, _minHeight);
-
-  // a dummy resizable box that won't eat events
-  dummyBox *resbox = new dummyBox(_minWidth, mh, width - _minWidth, glheight);
+  // a dummy resizable box that won't eat events, created before the tile so
+  // that FLTK does not find it first when it looks for the widget under the
+  // mouse (which would turn every move over the graphic windows into a leave
+  // and an enter, and no move at all); its place is set below, once the
+  // status bar says where the resizing part of the window starts
+  dummyBox *resbox = new dummyBox(0, mh, width, glheight);
   _win->resizable(resbox);
+  _resbox = resbox;
 
   // tiled windows (tree menu, opengl, messages)
   _tile = new Fl_Tile(0, mh, glwidth + twidth, glheight + mheight);
@@ -4233,6 +4309,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _browser->callback(message_browser_cb, this);
     _browser->search_callback(message_menu_search_cb, this);
     _browser->autoscroll_callback(message_menu_autoscroll_cb, this);
+    _browser->copy_callback(message_menu_copy_cb, this);
     _browser->save_callback(message_menu_save_cb, this);
     _browser->clear_callback(message_menu_clear_cb, this);
   }
@@ -4248,17 +4325,49 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _onelab = nullptr;
   }
 
+  // the edges are dragged within the resizable box: the tree and the messages
+  // keep a least size, as at the border of the tile their edge could not be
+  // grabbed again (next to it the graphics, subwindows, take the events)
+  {
+    int minw = _onelab ? 3 * BB / 2 + 4 * WB : 0;
+    int minh = _browser ? 2 * BH : 0;
+    dummyBox *drag =
+      new dummyBox(minw, mh, _tile->w() - minw, _tile->h() - minh);
+    _tile->insert(*drag, 0);
+    _tile->resizable(drag);
+  }
   _tile->callback(tile_cb);
   _tile->end();
+
+  // the dock of the tool windows, shown while one is docked
+  _dropping = nullptr;
+  _dropMoved = 0.;
+  if(main) {
+    _divider = new dockDivider(0, mh, 0, glheight + mheight);
+    _divider->callback(dock_divider_cb, this);
+    _divider->hide();
+    _dock = new toolDock(0, mh, 0, glheight + mheight, BH);
+    _dock->hide();
+  }
+  else {
+    _divider = nullptr;
+    _dock = nullptr;
+  }
 
   // resize the tiles to match the prescribed sizes
   _tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
 
   // if the tree widget is too small it will not be rebuilt correctly (probably
-  // a bug)... so impose minimum width
+  // a bug)... so impose minimum width, the least it can be dragged to; a width
+  // of 0 means that the menu is hidden: built at its least width, hidden at
+  // the end
   int minw = 3 * BB / 2 + 4 * WB;
-  if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
-  _tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
+  int mw = CTX::instance()->menuSize[0];
+  bool hiddenMenu = (mw <= 0);
+  if(mw < minw) mw = minw;
+  if(!hiddenMenu) CTX::instance()->menuSize[0] = mw;
+  _menuWidth = mw;
+  _tile->position(twidth, 0, mw, 0);
 
   // bottom button bar
   _bottom = new Fl_Box(0, mh + glheight + mheight, width, sh);
@@ -4267,6 +4376,14 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
 
+  _butt[14] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_sidebar");
+  _butt[14]->callback(status_options_cb, (void *)"menu");
+  static std::string menuTip = "Show or hide the menu (" +
+                               GetShortcutsOf("menu_show_hide")[0].label() +
+                               ")";
+  _butt[14]->tooltip(menuTip.c_str());
+  x += sw;
   _butt[5] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_models");
   _butt[5]->callback(status_options_cb, (void *)"model");
@@ -4343,21 +4460,45 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[11]->deactivate();
   x += sw;
 
-  for(int i = 0; i < 14; i++) {
+  for(int i = 0; i < 15; i++) {
     _butt[i]->box(FL_FLAT_BOX);
     _butt[i]->selection_color(FL_WHITE);
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
+  if(gmshScheme()) {
+    // the icons in place of the symbols
+    gmshIcon(_butt[14], "sidebar", _iconSize);
+    gmshIcon(_butt[5], "models", _iconSize);
+    gmshIcon(_butt[8], "quick", _iconSize);
+    gmshIcon(_butt[4], "rotate", _iconSize);
+    gmshIcon(_butt[12], "query", _iconSize);
+    gmshIcon(_butt[13], "measure", _iconSize);
+    gmshIcon(_butt[6], "rewind", _iconSize);
+    gmshIcon(_butt[10], "back", _iconSize);
+    gmshIcon(_butt[7], "play", _iconSize);
+    gmshIcon(_butt[11], "forward", _iconSize);
+  }
 
   x += 4;
+
+  // the least width of the window is what the status bar buttons take, and
+  // the part of the window that resizes starts after them, so that they stay
+  // in place
+  _minWidth = x;
+  _minHeight = 100;
+  _win->size_range(_minWidth, _minHeight);
+  resbox->resize(_minWidth, mh, std::max(1, width - _minWidth), glheight);
+
   _label =
     new mainWindowProgress(x, mh + glheight + mheight + 2, width - x - 2, sht);
   _label->box(FL_FLAT_BOX);
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  if(CTX::instance()->guiColorScheme)
+  if(CTX::instance()->guiDark)
     _label->color(FL_BACKGROUND_COLOR, FL_LIGHT3);
   else
     _label->color(FL_BACKGROUND_COLOR, FL_DARK2);
+  // a saved width below the least one
+  if(_win->w() < _minWidth) _win->size(_minWidth, _win->h());
 
   if(main) {
     // the other windows are placed relative to the main graphic window
@@ -4372,10 +4513,10 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _win->end();
 
   if(main && detachedMenu) {
-    _menuwin =
-      new mainWindow(CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
-                     CTX::instance()->nonModalWindows ? true : false, "Gmsh",
-                     CTX::instance()->menuOffset);
+    _menuwin = new mainWindow(std::max(CTX::instance()->menuSize[0], minw),
+                              CTX::instance()->menuSize[1],
+                              CTX::instance()->nonModalWindows ? true : false,
+                              "Gmsh", CTX::instance()->menuOffset);
     _menuwin->callback(file_quit_cb);
     _menuwin->box(GMSH_WINDOW_BOX);
     _onelab = new onelabGroup(0, 0, _menuwin->w(), _menuwin->h());
@@ -4388,10 +4529,19 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   else {
     _menuwin = nullptr;
   }
+
+  if(main) setDocking(true);
+  if(main && hiddenMenu) hideMenu();
 }
 
 graphicWindow::~graphicWindow()
 {
+  // the docked tool windows are not ours to delete
+  if(_dock) {
+    Fl::remove_timeout(_drop_cb, this);
+    _dock->undockAll(false);
+    setDocking(false);
+  }
   openglWindow::setLastHandled(nullptr);
   _tile->clear();
   _win->clear();
@@ -4422,7 +4572,8 @@ void graphicWindow::detachMenu()
   _tile->redraw();
 
   _menuwin =
-    new mainWindow(_onelab->w(), CTX::instance()->menuSize[1],
+    new mainWindow(std::max(_onelab->w(), _onelab->getMinWindowWidth()),
+                   CTX::instance()->menuSize[1],
                    CTX::instance()->nonModalWindows ? true : false, "Gmsh",
                    CTX::instance()->menuOffset);
   _menuwin->callback(file_quit_cb);
@@ -4479,11 +4630,14 @@ void graphicWindow::showMenu()
 {
   if(_menuwin || !_onelab || !_win->shown()) return;
   if(_onelab->w() < FL_NORMAL_SIZE) {
+    // the width set, or the one the menu had when it was hidden
     int width = CTX::instance()->menuSize[0];
+    if(width < FL_NORMAL_SIZE) width = _menuWidth;
     if(width < FL_NORMAL_SIZE) width = _onelab->getMinWindowWidth();
-    int maxw = _win->w();
+    int maxw = _tile->w(); // without the dock
     if(width > maxw) width = maxw / 2;
     setMenuWidth(width);
+    CTX::instance()->menuSize[0] = width;
     // necessary until resizing of 0-sized groups works
     _onelab->rebuildTree(true);
   }
@@ -4492,7 +4646,10 @@ void graphicWindow::showMenu()
 void graphicWindow::hideMenu()
 {
   if(_menuwin || !_onelab) return;
-  CTX::instance()->menuSize[0] = _onelab->w();
+  // hidden, the menu has no width (saved as such); the width it had is kept
+  // to show it again
+  if(_onelab->w() > 0) _menuWidth = _onelab->w();
+  CTX::instance()->menuSize[0] = 0;
   setMenuWidth(0);
 }
 
@@ -4585,11 +4742,17 @@ void graphicWindow::setAnimButtons(int mode)
 {
   if(mode) {
     _butt[7]->callback(status_play_cb);
-    _butt[7]->label("@-1gmsh_play");
+    if(gmshScheme())
+      gmshIcon(_butt[7], "play", _iconSize);
+    else
+      _butt[7]->label("@-1gmsh_play");
   }
   else {
     _butt[7]->callback(status_pause_cb);
-    _butt[7]->label("@-1gmsh_pause");
+    if(gmshScheme())
+      gmshIcon(_butt[7], "pause", _iconSize);
+    else
+      _butt[7]->label("@-1gmsh_pause");
   }
 }
 
@@ -4617,6 +4780,24 @@ void graphicWindow::checkAnimButtons()
     _butt[10]->deactivate();
     _butt[11]->deactivate();
   }
+}
+
+bool graphicWindow::runMenuShortcut()
+{
+  // the entry of the menu bar whose shortcut is the event, run as a click on
+  // it would; the system menu bar of macOS does not always take its own
+  Fl_Menu_Item *table = bar_table;
+  Fl_Widget *w = _bar;
+#if defined(__APPLE__)
+  if(_sysbar) {
+    table = systemBarTable();
+    w = _sysbar;
+  }
+#endif
+  const Fl_Menu_Item *m = table->test_shortcut();
+  if(!m || !m->callback()) return false;
+  const_cast<Fl_Menu_Item *>(m)->do_callback(w);
+  return true;
 }
 
 void graphicWindow::setMenuWidth(int w)
@@ -4648,12 +4829,211 @@ int graphicWindow::getGlHeight()
   return h;
 }
 
+// the width of the window, the dock taking its room from the graphics, as the
+// tree does, so that the size saved at exit does not depend on the tools open
 int graphicWindow::getGlWidth() { return _win->w(); }
 
 void graphicWindow::setGlWidth(int w)
 {
   if(w == _win->w()) return;
   _win->size(std::max(w, _minWidth), _win->h());
+  _win->redraw();
+}
+
+bool graphicWindow::isDockShown() { return _dock && _dock->visible(); }
+
+// the least width of the tool windows, in the frame of the dock tabs
+static int leastDockWidth() { return TW + Fl::box_dw(FL_THIN_UP_BOX); }
+
+int graphicWindow::getDockWidth()
+{ return std::max(CTX::instance()->dockWidth, leastDockWidth()); }
+
+int graphicWindow::_leastTileWidth()
+{
+  // the tree, and some room for the graphics
+  int tw = (_onelab && !_menuwin) ? _onelab->w() : 0;
+  return std::max(_minWidth, tw + BB);
+}
+
+int graphicWindow::_fitDockWidth(int w)
+{
+  w = std::min(w, _win->w() - WB - _leastTileWidth());
+  return std::max(w, leastDockWidth());
+}
+
+void graphicWindow::setDockWidth(int w)
+{
+  if(!isDockShown()) return;
+  w = _fitDockWidth(w);
+  CTX::instance()->dockWidth = w;
+  _layoutDock(w);
+}
+
+void graphicWindow::setDocking(bool docking)
+{
+  if(!_dock) return;
+  if(docking) {
+    theDocking = this;
+    paletteWindow::dockHook = dock_hook;
+    mainWindow::closeToolHook = close_tool_hook;
+    paletteWindow::resizedHook = resized_hook;
+    paletteWindow::hiddenHook = hidden_hook;
+    paletteWindow::movedHook = moved_hook;
+    toolDock::tornOutHook = torn_out_hook;
+    // the tool windows open on the desktop join the dock, in the order they
+    // were shown (the list of FLTK starts with the newest)
+    std::vector<paletteWindow *> open;
+    for(Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) {
+      paletteWindow *p = dynamic_cast<paletteWindow *>(w);
+      if(p && p->dockable() && !p->parent()) open.push_back(p);
+    }
+    std::reverse(open.begin(), open.end());
+    for(auto p : open) p->show();
+  }
+  else {
+    paletteWindow::dockHook = nullptr;
+    _dock->undockAll();
+    paletteWindow::hiddenHook = nullptr;
+    paletteWindow::movedHook = nullptr;
+    toolDock::tornOutHook = nullptr;
+    theDocking = nullptr;
+    mainWindow::closeToolHook = nullptr;
+    paletteWindow::resizedHook = nullptr;
+    _layoutDock(0);
+  }
+}
+
+void graphicWindow::toolTornOut(paletteWindow *w, int x, int y)
+{
+  if(_dock->empty()) _layoutDock(0);
+  // the title bar under the pointer, which held the tab or the title
+  placeWindowAt(w, x - w->w() / 2, y + BH / 2);
+  w->show();
+  FlGui::instance()->storeFloatingTools();
+}
+
+bool graphicWindow::_overDock(paletteWindow *w)
+{
+  // the middle of the title bar of the tool over the dock, or over where the
+  // dock would be while none is docked: the right of the tiles
+  int th = w->decorated_h() - w->h();
+  int cx = w->x() + w->w() / 2, cy = w->y() - th / 2;
+  int X = _win->x() + _win->w() - getDockWidth(), W = getDockWidth();
+  if(isDockShown()) {
+    X = _win->x() + _dock->x();
+    W = _dock->w();
+  }
+  int Y = _win->y() + _tile->y(), H = _tile->h();
+  return cx >= X && cx < X + W && cy >= Y && cy < Y + H;
+}
+
+void graphicWindow::toolMoved(paletteWindow *w)
+{
+  if(!w->shown() || !_win->shown()) return;
+  if(_overDock(w)) {
+    _dropMoved = TimeOfDay();
+    if(_dropping != w) {
+      _dropping = w;
+      if(!isDockShown()) _layoutDock(_fitDockWidth(getDockWidth()));
+      _dropHint(true);
+      // docked when the button is released: the system is asked for it
+      Fl::add_timeout(0.05, _drop_cb, this);
+    }
+  }
+  else if(_dropping == w) {
+    Fl::remove_timeout(_drop_cb, this);
+    _dropping = nullptr;
+    _dropHint(false);
+    if(_dock->empty()) _layoutDock(0);
+  }
+}
+
+void graphicWindow::_dropHint(bool on)
+{
+  _dock->dropHint(on);
+  if(on == _divider->highlight) return;
+  _divider->highlight = on;
+  _divider->redraw();
+}
+
+void graphicWindow::_drop_cb(void *data)
+{
+  graphicWindow *g = (graphicWindow *)data;
+  paletteWindow *w = g->_dropping;
+  if(!w) return;
+  // Shift held keeps the tool out of the dock, to leave it over the dock
+  // (Alt would tile the window on macOS): no hint while it is
+  bool shift = shiftKeyDown();
+  g->_dropHint(!shift);
+  // still held, or, where the system cannot say, still moving a moment ago
+  int down = mouseButtonDown();
+  if(down == 1 || (down == -1 && TimeOfDay() - g->_dropMoved < 0.4)) {
+    Fl::repeat_timeout(0.05, _drop_cb, data);
+    return;
+  }
+  g->_dropping = nullptr;
+  g->_dropHint(false);
+  if(shift) {
+    if(g->_dock->empty()) g->_layoutDock(0);
+    return;
+  }
+  w->floating(false);
+  w->show(); // docks it
+  FlGui::instance()->storeFloatingTools();
+}
+
+void graphicWindow::toolResized(paletteWindow *w) { _dock->resized(w); }
+
+paletteWindow *graphicWindow::currentDockedTool()
+{ return isDockShown() ? _dock->current() : nullptr; }
+
+bool graphicWindow::closeDockedTool()
+{ return isDockShown() && _dock->closeCurrent(); }
+
+void graphicWindow::dockTool(paletteWindow *w)
+{
+  if(!isDockShown()) {
+    // the window widened if the graphics would get narrower than their least,
+    // within the screen
+    int need = _leastTileWidth() + getDockWidth() + WB;
+    if(_win->w() < need) {
+      int sx, sy, sw, sh;
+      windowWorkArea(_win, sx, sy, sw, sh);
+      _win->size(std::min(need, sw), _win->h());
+    }
+    _layoutDock(_fitDockWidth(getDockWidth()));
+  }
+  _dock->dock(w);
+}
+
+void graphicWindow::toolHidden(paletteWindow *w)
+{
+  _dock->hidden(w);
+  if(_dock->empty()) _layoutDock(0);
+}
+
+void graphicWindow::_layoutDock(int width)
+{
+  // the tiles take what the dock leaves
+  int ww = _win->w(), y = _tile->y(), h = _tile->h();
+  int dw = width ? width + WB : 0;
+  _tile->resize(0, y, ww - dw, h);
+  if(width) {
+    _divider->resize(ww - dw, y, WB, h);
+    _divider->show();
+    _dock->resize(ww - width, y, width, h);
+    _dock->show();
+  }
+  else {
+    _divider->hide();
+    _dock->hide();
+  }
+  // the dock keeps its width when the window is resized, and the window keeps
+  // room for it
+  _win->size_range((width ? _leastTileWidth() : _minWidth) + dw, _minHeight);
+  _resbox->resize(_minWidth, _resbox->y(), std::max(1, ww - dw - _minWidth),
+                  _resbox->h());
+  _win->init_sizes();
   _win->redraw();
 }
 
@@ -4726,6 +5106,12 @@ void graphicWindow::addMessage(const char *msg)
     // this does not seem to work (17/02/2017)
 #pragma omp critical(addMessage)
   {
+    // the console keeps the last 50000 messages: beyond, the oldest tenth goes
+    const std::size_t maxMessages = 50000;
+    if(_messages.size() >= maxMessages) {
+      _messages.erase(_messages.begin(), _messages.begin() + maxMessages / 10);
+      _browser->rebuild(_messages);
+    }
     _messages.push_back(msg);
     _browser->add(msg);
     if(_autoScrollMessages && _win->shown() && _browser->h() >= FL_NORMAL_SIZE)
@@ -4767,9 +5153,13 @@ void graphicWindow::copySelectedMessagesToClipboard()
 {
   if(!_browser) return;
 
+  // the lines selected, or all of them
+  bool any = false;
+  for(int i = 1; i <= _browser->size(); i++)
+    if(_browser->selected(i)) any = true;
   std::string buff;
   for(int i = 1; i <= _browser->size(); i++) {
-    if(_browser->selected(i)) {
+    if(!any || _browser->selected(i)) {
       const char *c = _browser->text(i);
       if(strlen(c) > 5 && c[0] == '@')
         buff += std::string(&c[5]);
@@ -4833,7 +5223,7 @@ void graphicWindow::fillRecentHistoryMenu()
 
   Fl_Menu_Item *table = bar_table;
 #if defined(__APPLE__)
-  if(CTX::instance()->systemMenuBar) table = sysbar_table;
+  if(CTX::instance()->systemMenuBar) table = systemBarTable();
 #endif
 
   static char recent[10][256];

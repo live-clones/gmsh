@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <cctype>
 #include <regex>
 #if defined(__CYGWIN__)
 #include <sys/cygwin.h>
@@ -178,6 +179,13 @@ bool SplitOptionName(const std::string &fullName, std::string &category,
   Msg::Debug("Decoded option name '%s' . '%s' (index %d)", category.c_str(),
              name.c_str(), index);
   return true;
+}
+
+std::string LowerCase(const std::string &s)
+{
+  std::string t(s);
+  for(auto &c : t) c = (char)std::tolower((unsigned char)c);
+  return t;
 }
 
 std::string RemoveWhiteSpace(const std::string &s)

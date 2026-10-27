@@ -10,6 +10,7 @@ set(SRC
   Context.cpp
   Options.cpp
   CommandLine.cpp
+  Shortcuts.cpp
   OS.cpp
   OpenFile.cpp
   CreateFile.cpp
