@@ -29,6 +29,7 @@ typedef unsigned long intptr_t;
 #include "paletteWindow.h"
 #include "graphicWindow.h"
 #include "toolDock.h"
+#include "gmshScheme.h"
 #include "optionWindow.h"
 #include "gamepadWindow.h"
 #include "statisticsWindow.h"
@@ -4053,6 +4054,74 @@ static void tile_cb(Fl_Widget *w, void *data)
   }
 }
 
+// The menu bar of the window, when it is not the system's: the title under
+// the pointer is highlighted, as the bars of the desktops do (FLTK draws the
+// titles without a box of their own, so the bar draws them itself, laid out
+// as Fl_Menu_Bar lays them out)
+class hoverMenuBar : public Fl_Menu_Bar {
+  int _hot; // the title under the pointer, or -1
+  int _titleAt(int px)
+  {
+    int X = x() + 6, i = 0;
+    for(const Fl_Menu_Item *m = menu()->first(); m->text; m = m->next(), i++) {
+      int W = m->measure(0, this) + 16;
+      if(px >= X && px < X + W) return i;
+      X += W;
+    }
+    return -1;
+  }
+
+public:
+  hoverMenuBar(int x, int y, int w, int h) : Fl_Menu_Bar(x, y, w, h), _hot(-1)
+  {
+  }
+  int handle(int event)
+  {
+    if(menu() && (event == FL_ENTER || event == FL_MOVE || event == FL_LEAVE)) {
+      int hot = (event == FL_LEAVE) ? -1 : _titleAt(Fl::event_x());
+      if(hot != _hot) {
+        _hot = hot;
+        redraw();
+      }
+    }
+    // a click opens a menu, which runs in a loop of its own where the bar
+    // sees no move: no highlight while it is open, nor after, until the
+    // pointer moves over the bar again
+    if(event == FL_PUSH && _hot >= 0) {
+      _hot = -1;
+      redraw();
+    }
+    int ret = Fl_Menu_Bar::handle(event);
+    if(event == FL_PUSH && _hot >= 0) {
+      _hot = -1;
+      redraw();
+    }
+    return ret;
+  }
+  void draw()
+  {
+    // the open title and the items of its menu in a neutral grey, as the
+    // bars of Windows and GTK, the selection colour staying for the lists
+    if(gmshScheme())
+      selection_color(
+        fl_color_average(FL_BACKGROUND_COLOR, FL_FOREGROUND_COLOR, 0.82f));
+    draw_box();
+    if(!menu() || !menu()->text) return;
+    int X = x() + 6, i = 0;
+    for(const Fl_Menu_Item *m = menu()->first(); m->text; m = m->next(), i++) {
+      int tw = m->measure(0, this), W = tw + 16;
+      if(i == _hot) {
+        // the text, drawn 3 pixels into its slot, with the same margin on
+        // both sides
+        fl_color(hoverHighlight(color()));
+        fl_rectf(X - 2, y() + 1, tw + 10, h() - 2);
+      }
+      m->draw(X, y(), W, h(), this);
+      X += W;
+    }
+  }
+};
+
 // This dummy box class permits to define a box widget that will not eat the
 // FL_ENTER/FL_LEAVE events (the box widget in fltk > 1.1 does that, so that
 // gl->handle() was not called when the mouse moved)
@@ -4177,7 +4246,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     }
     else {
 #endif
-      _bar = new Fl_Menu_Bar(0, 0, width, BH);
+      _bar = new hoverMenuBar(0, 0, width, BH);
       _bar->menu(bar_table);
       _bar->global();
       fillRecentHistoryMenu();

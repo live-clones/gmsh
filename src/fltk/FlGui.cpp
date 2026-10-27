@@ -14,6 +14,7 @@
 #include <FL/fl_draw.H>
 #include <FL/fl_ask.H>
 #include "FlGui.h"
+#include "gmshScheme.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
@@ -437,7 +438,8 @@ void FlGui::applyColorScheme(bool redraw)
     Fl::get_color(FL_SELECTION_COLOR, r[2], g[2], b[2]);
   }
 
-  if(CTX::instance()->guiColorScheme == 1) { // dark mode
+  if(gmshScheme()) { applyGmshColors(CTX::instance()->guiColorScheme == 1); }
+  else if(CTX::instance()->guiColorScheme == 1) { // dark mode
     Fl::set_color(FL_BACKGROUND_COLOR, 20, 20, 20);
     Fl::set_color(FL_BACKGROUND2_COLOR, 70, 70, 70);
     Fl::set_color(FL_FOREGROUND_COLOR, 220, 220, 220);
@@ -458,6 +460,8 @@ void FlGui::applyColorScheme(bool redraw)
   }
 
   first = false;
+
+  if(gmshScheme()) applyGmshScheme();
 
   // also change default box type here (to thin versions)
   Fl::set_boxtype(FL_UP_BOX, FL_THIN_UP_BOX);
@@ -555,7 +559,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   FL_NORMAL_SIZE = drawContext::global()->getFontSize();
 
   // handle themes and tooltip options
-  if(CTX::instance()->guiTheme.size())
+  // the gmsh scheme is ours, not one of FLTK (see gmshScheme.h)
+  if(CTX::instance()->guiTheme.size() && !gmshScheme())
     Fl::scheme(CTX::instance()->guiTheme.c_str());
   Fl_Tooltip::size(FL_NORMAL_SIZE);
 

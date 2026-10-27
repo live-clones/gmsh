@@ -71,7 +71,9 @@ StringXString GeneralOptions_String[] = {
     "the dock, Shift held when it is dropped keeping it out, and Dock/Undock "
     "Tool Windows moves them all)" },
   { F|S, "FltkTheme" , opt_general_gui_theme , "" ,
-    "FLTK user interface theme (try e.g. plastic or gtk+)" },
+    "FLTK user interface theme: gmsh (the font of the desktop, a neutral "
+    "palette, buttons highlighted under the pointer, no dashed focus rectangle), or "
+    "one of FLTK (plastic, gtk+, gleam, oxy)" },
 
   { F|O, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
     "Font used in the graphic window" },

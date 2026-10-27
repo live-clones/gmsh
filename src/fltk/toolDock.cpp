@@ -12,6 +12,7 @@
 #include "paletteWindow.h"
 #include "toolDock.h"
 #include "FlGui.h" // for WB
+#include "gmshScheme.h"
 
 void dragGhost::follow(const char *label, int rowHeight, int xroot, int yroot)
 {
@@ -39,7 +40,7 @@ void dockTitle::draw()
 {
   // as the folding sections of the option window, with the close cross of
   // the tabs
-  draw_box(FL_THIN_UP_BOX, FL_BACKGROUND_COLOR);
+  draw_box(FL_THIN_UP_BOX, hoverHighlight(this, FL_BACKGROUND_COLOR));
   std::string l =
     std::string(shut ? "@-2> " : "@-22> ") + (win->label() ? win->label() : "");
   fl_font(FL_HELVETICA_BOLD, FL_NORMAL_SIZE);
@@ -55,6 +56,8 @@ int dockTitle::handle(int event)
 {
   toolDock *dock = (toolDock *)parent();
   switch(event) {
+  case FL_ENTER:
+  case FL_LEAVE: redraw(); return 1; // highlighted under the pointer
   case FL_PUSH:
     _pushX = Fl::event_x();
     _pushY = Fl::event_y();
@@ -535,8 +538,8 @@ void toolDock::dropHint(bool on)
 void toolDock::draw()
 {
   // the target of a window dragged over the dock is said by the divider,
-  // which the docked windows never cover, and by a tint of the column while
-  // it is empty
+  // which the docked windows never cover, and by a highlight of the column
+  // while it is empty
   if(_dropHint && empty()) {
     fl_color(fl_color_average(FL_SELECTION_COLOR, FL_BACKGROUND_COLOR, 0.2));
     fl_rectf(x(), y(), w(), h());

@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 5.0.0-git-a0814404d; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20261020; Build host: cg.local; Build options: 64Bit Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] HierarchicalBasis Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg MtMetis[contrib] Netgen Nii2mesh ONELAB ONELABMetamodel OctreeSizeField OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Voro++[contrib] Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 6.0.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 5.0.0-git-9066cc874; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20261020; Build host: cg.local; Build options: 64Bit Bamg Blossom BoundaryLayers Cgns Dlopen DomHex Eigen[contrib] FFmpeg Fltk Gmm[contrib] HierarchicalBasis Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg MtMetis[contrib] Netgen Nii2mesh ONELAB ONELABMetamodel OctreeSizeField OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Voro++[contrib] Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 6.0.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -77,7 +77,7 @@ Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.FltkTheme
-FLTK user interface theme (try e.g. plastic or gtk+)@*
+FLTK user interface theme: gmsh (the font of the desktop, a neutral palette, buttons highlighted under the pointer, no dashed focus rectangle), or one of FLTK (plastic, gtk+, gleam, oxy)@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
@@ -188,7 +188,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"5.0.0-git-a0814404d"}@*
+Default value: @code{"5.0.0-git-9066cc874"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
