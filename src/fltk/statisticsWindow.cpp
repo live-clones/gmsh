@@ -8,6 +8,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
+#include "accentTabs.h"
 #include "drawContext.h"
 #include "statisticsWindow.h"
 #include "paletteWindow.h"
@@ -119,7 +120,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
   Fl_Tabs *tabs;
   {
     Fl_Tabs *o = tabs =
-      new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+      new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     {
       group[0] = new Fl_Scroll(WB, WB + BH, width - 2 * WB,
                                height - 3 * WB - 2 * BH, "Geometry");

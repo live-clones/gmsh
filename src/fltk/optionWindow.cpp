@@ -19,6 +19,7 @@ typedef unsigned long intptr_t;
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "FlGui.h"
+#include "accentTabs.h"
 #include "inputValue.h"
 #include "optionWindow.h"
 #include "hintInput.h"
@@ -1499,7 +1500,7 @@ optionWindow::optionWindow(int deltaFontSize)
     static const char *names[6] = {"General", "Geometry", "Mesh",
                                    "Solver",  "Post-pro", "Views"};
     _tabs =
-      new Fl_Tabs(WB, 2 * WB + BH, winWidth - 2 * WB, winHeight - 3 * WB - BH);
+      new accentTabs(WB, 2 * WB + BH, winWidth - 2 * WB, winHeight - 3 * WB - BH);
     for(int i = 0; i < 6; i++) {
       _categoryTab[i] = new Fl_Group(WB, 2 * WB + 2 * BH, winWidth - 2 * WB,
                                      winHeight - 3 * WB - 2 * BH, names[i]);
@@ -1669,8 +1670,9 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[14]->type(FL_TOGGLE_BUTTON);
       general.butt[14]->callback(general_options_ok_cb);
 
-      general.butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                                            "Save session information on exit");
+      general.butt[8] =
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW - BW / 3 - WB, BH,
+                            "Save session information on exit");
       general.butt[8]->tooltip("General.SaveSession");
       general.butt[8]->type(FL_TOGGLE_BUTTON);
       general.butt[8]->callback(general_options_ok_cb);

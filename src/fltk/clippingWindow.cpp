@@ -8,6 +8,7 @@
 #include <FL/Fl_Return_Button.H>
 #include <algorithm>
 #include "FlGui.h"
+#include "accentTabs.h"
 #include "drawContext.h"
 #include "clippingWindow.h"
 #include "paletteWindow.h"
@@ -251,7 +252,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
   browser = targets->browser;
   browser->callback(clip_update_cb);
 
-  Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - 3 * BH);
+  Fl_Tabs *o = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - 3 * BH);
   {
     group[0] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                             height - 3 * WB - 4 * BH, "Planes");

@@ -7,6 +7,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
+#include "accentTabs.h"
 #include "drawContext.h"
 #include "contextWindow.h"
 #include "paletteWindow.h"
@@ -659,7 +660,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
                           CTX::instance()->ctxOffset);
   win->box(GMSH_WINDOW_BOX);
   {
-    tab1 = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    tab1 = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 0: Parameter
     {
       group[0] = new Fl_Group(WB, WB + BH, width - 2 * WB,
@@ -816,7 +817,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     tab1->end();
   }
   {
-    tab2 = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    tab2 = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 6: Sphere
     {
       group[6] = new Fl_Group(WB, WB + BH, width - 2 * WB,
@@ -1176,7 +1177,7 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
   win->box(GMSH_WINDOW_BOX);
 
   {
-    tab = new Fl_Tabs(WB, WB, width - 2 * WB, 4 * BH + 3 * WB);
+    tab = new accentTabs(WB, WB, width - 2 * WB, 4 * BH + 3 * WB);
     // 0: Add
     {
       group[0] =
@@ -1371,7 +1372,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
                           CTX::instance()->ctxOffset);
   win->box(GMSH_WINDOW_BOX);
   {
-    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    Fl_Tabs *o = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 0: Translate
     {
       group[0] = new Fl_Group(WB, WB + BH, width - 2 * WB,
@@ -1578,7 +1579,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
                           CTX::instance()->ctxOffset);
   win->box(GMSH_WINDOW_BOX);
   {
-    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
+    Fl_Tabs *o = new accentTabs(WB, WB, width - 2 * WB, height - 2 * WB);
     // 0: Element size at points
     {
       group[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH,

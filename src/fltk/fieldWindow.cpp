@@ -19,6 +19,7 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "FlGui.h"
+#include "accentTabs.h"
 #include "drawContext.h"
 #include "fieldWindow.h"
 #include "paletteWindow.h"
@@ -157,7 +158,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 
   y += BH + WB;
   h -= BH + WB;
-  Fl_Tabs *tabs = new Fl_Tabs(x, y, w, h);
+  Fl_Tabs *tabs = new accentTabs(x, y, w, h);
   y += BH;
   h -= BH;
   x += WB;

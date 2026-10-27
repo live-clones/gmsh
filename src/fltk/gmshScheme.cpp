@@ -47,7 +47,7 @@ void applyGmshColors(bool dark)
     // the selection in the hue of the background gradient of the graphics,
     // the periwinkle of General.Color.BackgroundGradient (208, 215, 255),
     // deep for the dark interface
-    Fl::set_color(FL_SELECTION_COLOR, 58, 64, 110);
+    Fl::set_color(FL_SELECTION_COLOR, 92, 102, 168);
   }
   else {
     Fl::background(242, 242, 242);

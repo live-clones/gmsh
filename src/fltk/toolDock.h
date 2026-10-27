@@ -9,7 +9,7 @@
 #include <map>
 #include <vector>
 #include <FL/Fl_Group.H>
-#include <FL/Fl_Tabs.H>
+#include "accentTabs.h"
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Menu_Window.H>
 
@@ -61,7 +61,7 @@ public:
 // The tabs of the docked windows of free height: a tab dragged along the row
 // is put down where it is released, a tab dragged out of the dock tears its
 // window out of it
-class dockTabs : public Fl_Tabs {
+class dockTabs : public accentTabs {
   // the tab the button went down on, where, whether it has been dragged, and
   // where in the row a release would put it (-1: not over the row)
   Fl_Widget *_pressed;
@@ -72,7 +72,7 @@ class dockTabs : public Fl_Tabs {
 
 public:
   dockTabs(int x, int y, int w, int h)
-    : Fl_Tabs(x, y, w, h), _pressed(nullptr), _pushX(0), _pushY(0),
+    : accentTabs(x, y, w, h), _pressed(nullptr), _pushX(0), _pushY(0),
       _dragging(false), _dropAt(-1)
   {
   }
