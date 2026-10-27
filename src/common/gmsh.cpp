@@ -9373,8 +9373,8 @@ GMSH_API double gmsh::logger::getTotalMemory()
   return TotalRam();
 }
 
-GMSH_API void gmsh::logger::getLastError(std::string &error)
+GMSH_API void gmsh::logger::getLastError(std::string &message)
 {
   if(!_checkInit()) return;
-  error = Msg::GetLastError();
+  message = Msg::GetLastError();
 }

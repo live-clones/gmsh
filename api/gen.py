@@ -1320,7 +1320,7 @@ doc = '''Return total available memory (in MB).'''
 logger.add('getTotalMemory', doc, odouble)
 
 doc = '''Return last error message, if any.'''
-logger.add('getLastError', doc, None, ostring('error'))
+logger.add('getLastError', doc, None, ostring('message'))
 
 ################################################################################
 
