@@ -30,6 +30,7 @@ typedef unsigned long intptr_t;
 #include "graphicWindow.h"
 #include "toolDock.h"
 #include "gmshScheme.h"
+#include "icons.h"
 #include "optionWindow.h"
 #include "gamepadWindow.h"
 #include "statisticsWindow.h"
@@ -4182,8 +4183,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #if defined(__APPLE__)
   if(CTX::instance()->systemMenuBar) mh = 0;
 #endif
-  int sh = 2 * FL_NORMAL_SIZE - 3; // status bar height
-  int sw = FL_NORMAL_SIZE + 2; // status button width
+  // the status bar and its buttons: as tall as the menu bar and wider under
+  // the gmsh theme, for its icons
+  int sh = gmshScheme() ? BH : 2 * FL_NORMAL_SIZE - 3;
+  int sw = gmshScheme() ? 2 * FL_NORMAL_SIZE : FL_NORMAL_SIZE + 2;
+  _iconSize = FL_NORMAL_SIZE + 1; // the icons on the scale of the letters
 
   // the usable area of the screen that will show the window
   int screenX, screenY, screenW, screenH;
@@ -4206,7 +4210,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     CTX::instance()->glSize[1] = glheight + mheight;
   }
 
-  int twidth = (main && !detachedMenu) ? 14 * sw : 0;
+  int twidth = (main && !detachedMenu) ? 14 * (FL_NORMAL_SIZE + 2) : 0;
   int glwidth = CTX::instance()->glSize[0] - twidth;
   // make sure glwidth is positive
   if(glwidth <= 0) {
@@ -4460,10 +4464,23 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[11]->deactivate();
   x += sw;
 
-  for(int i = 0; i < 14; i++) {
+  for(int i = 0; i < 15; i++) {
     _butt[i]->box(FL_FLAT_BOX);
     _butt[i]->selection_color(FL_WHITE);
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+  }
+  if(gmshScheme()) {
+    // the icons in place of the symbols
+    gmshIcon(_butt[14], "sidebar", _iconSize);
+    gmshIcon(_butt[5], "models", _iconSize);
+    gmshIcon(_butt[8], "quick", _iconSize);
+    gmshIcon(_butt[4], "rotate", _iconSize);
+    gmshIcon(_butt[12], "query", _iconSize);
+    gmshIcon(_butt[13], "measure", _iconSize);
+    gmshIcon(_butt[6], "rewind", _iconSize);
+    gmshIcon(_butt[10], "back", _iconSize);
+    gmshIcon(_butt[7], "play", _iconSize);
+    gmshIcon(_butt[11], "forward", _iconSize);
   }
 
   x += 4;
@@ -4729,11 +4746,17 @@ void graphicWindow::setAnimButtons(int mode)
 {
   if(mode) {
     _butt[7]->callback(status_play_cb);
-    _butt[7]->label("@-1gmsh_play");
+    if(gmshScheme())
+      gmshIcon(_butt[7], "play", _iconSize);
+    else
+      _butt[7]->label("@-1gmsh_play");
   }
   else {
     _butt[7]->callback(status_pause_cb);
-    _butt[7]->label("@-1gmsh_pause");
+    if(gmshScheme())
+      gmshIcon(_butt[7], "pause", _iconSize);
+    else
+      _butt[7]->label("@-1gmsh_pause");
   }
 }
 

@@ -15,6 +15,7 @@
 #include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "gmshScheme.h"
+#include "icons.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
@@ -476,6 +477,7 @@ void FlGui::applyColorScheme(bool redraw)
   Fl::scrollbar_size(std::max(10, FL_NORMAL_SIZE));
 
   if(redraw && available()) {
+    gmshIconsRecolor();
     updateViews(true, true);
     for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
       win->redraw();

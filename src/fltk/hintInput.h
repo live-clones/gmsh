@@ -11,6 +11,8 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Input.H>
 #include <FL/fl_draw.H>
+#include "gmshScheme.h"
+#include "icons.h"
 
 // an input that says what it is for while it is empty
 class hintInput : public Fl_Input {
@@ -76,6 +78,7 @@ inline hintInput *searchBox(int x, int y, int w, int h, const char *hint,
   o->color(FL_BACKGROUND2_COLOR);
   hintInput *s =
     new hintInput(x + h, y + 2, w - h - 2, h - 4, "@gmsh_search", hint);
+  if(gmshScheme()) gmshIcon(s, "search", FL_NORMAL_SIZE);
   s->box(FL_FLAT_BOX);
   s->callback(cb);
   s->when(FL_WHEN_CHANGED | FL_WHEN_ENTER_KEY_ALWAYS);

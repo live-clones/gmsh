@@ -43,6 +43,8 @@ private:
   Fl_Button *_butt[15];
   Fl_Progress *_label;
   int _minWidth, _minHeight;
+  // the size of the icons of the status bar
+  int _iconSize;
   // the width of the menu while it is hidden, to show it again
   int _menuWidth;
   std::vector<std::string> _messages;

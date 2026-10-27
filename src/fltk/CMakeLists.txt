@@ -6,6 +6,7 @@
 set(SRC
   FlGui.cpp
     gmshScheme.cpp
+    icons.cpp
     graphicWindow.cpp
       openglWindow.cpp
     optionWindow.cpp

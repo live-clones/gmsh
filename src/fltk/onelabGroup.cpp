@@ -35,6 +35,7 @@ typedef unsigned long intptr_t;
 #include "GmshGlobal.h"
 #include "FlGui.h"
 #include "gmshScheme.h"
+#include "icons.h"
 #include "Context.h"
 #include "GModel.h"
 #include "GmshDefines.h"
@@ -532,11 +533,15 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _butt[1]->callback(onelab_cb, (void *)"compute");
 
   _gear = new Fl_Menu_Button(x + w - WB - BB2, y + h - WB - BH, BB2, BH);
+  if(gmshScheme())
+    gmshIcon(_gear, "gear", FL_NORMAL_SIZE + 2);
+  else {
 #if defined(__APPLE__)
-  _gear->label("@-1gmsh_gear");
+    _gear->label("@-1gmsh_gear");
 #else
-  _gear->image(new Fl_Bitmap(gear_bits, gear_width, gear_height));
+    _gear->image(new Fl_Bitmap(gear_bits, gear_width, gear_height));
 #endif
+  }
   _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _gear->add("Reset database", 0, onelab_cb, (void *)"reset");
   _gear->add("Save database...", 0, onelab_cb, (void *)"save");
