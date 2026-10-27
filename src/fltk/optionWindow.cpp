@@ -1499,8 +1499,8 @@ optionWindow::optionWindow(int deltaFontSize)
   {
     static const char *names[6] = {"General", "Geometry", "Mesh",
                                    "Solver",  "Post-pro", "Views"};
-    _tabs =
-      new accentTabs(WB, 2 * WB + BH, winWidth - 2 * WB, winHeight - 3 * WB - BH);
+    _tabs = new accentTabs(WB, 2 * WB + BH, winWidth - 2 * WB,
+                           winHeight - 3 * WB - BH);
     for(int i = 0; i < 6; i++) {
       _categoryTab[i] = new Fl_Group(WB, 2 * WB + 2 * BH, winWidth - 2 * WB,
                                      winHeight - 3 * WB - 2 * BH, names[i]);
