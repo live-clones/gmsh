@@ -394,9 +394,6 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   if(opt_general_gui_color_scheme(0, GMSH_GET, 0) !=
      o->general.choice[9]->value()) {
     opt_general_gui_color_scheme(0, GMSH_SET, o->general.choice[9]->value());
-    // the colours of the graphics along with the interface
-    opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
-                             CTX::instance()->guiDark ? 3. : 1.);
   }
 
   opt_general_tooltips(0, GMSH_SET, o->general.butt[13]->value());
@@ -1546,61 +1543,76 @@ optionWindow::optionWindow(int deltaFontSize)
       general.choice[9]->tooltip("General.FltkColorScheme");
       general.choice[9]->callback(general_options_ok_cb);
 
-      general.butt[13] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW,
-                                             BH,
-                                             "Show tooltips and hover information box");
+      static Fl_Menu_Item menu_color_scheme[] = {
+        {"Light", 0, nullptr, nullptr},
+        {"Default", 0, nullptr, nullptr},
+        {"Grayscale", 0, nullptr, nullptr},
+        {"Dark", 0, nullptr, nullptr},
+        {nullptr}};
+
+      general.choice[3] =
+        new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Graphics");
+      general.choice[3]->tooltip(
+        "Predefined color scheme of the graphics (General.ColorScheme, Alt+c)");
+      general.choice[3]->menu(menu_color_scheme);
+      general.choice[3]->align(FL_ALIGN_RIGHT);
+      general.choice[3]->callback(general_options_color_scheme_cb);
+
+      general.butt[13] =
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
+                            "Show tooltips and hover information box");
       general.butt[13]->tooltip("General.Tooltips");
       general.butt[13]->type(FL_TOGGLE_BUTTON);
       general.butt[13]->callback(general_options_ok_cb);
 
       general.butt[23] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH,
                             "Highlight hovered entity");
       general.butt[23]->tooltip("General.MouseHoverHighlight");
       general.butt[23]->type(FL_TOGGLE_BUTTON);
       general.butt[23]->callback(general_options_ok_cb);
 
       general.butt[11] =
-        new Fl_Check_Button(L + 2 * WB + BW / 2, 2 * WB + 3 * BH, BW - BW / 2,
+        new Fl_Check_Button(L + 2 * WB + BW / 2, 2 * WB + 4 * BH, BW - BW / 2,
                             BH, "Hover mesh and views");
       general.butt[11]->tooltip("General.MouseHoverMeshes");
       general.butt[11]->type(FL_TOGGLE_BUTTON);
       general.butt[11]->callback(general_options_ok_cb);
 
-      general.butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
+      general.butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
                                             "Show bounding boxes");
       general.butt[6]->tooltip("General.DrawBoundingBoxes (Alt+b)");
       general.butt[6]->type(FL_TOGGLE_BUTTON);
       general.butt[6]->callback(general_options_ok_cb);
 
       general.butt[2] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
                             "Draw simplified model during user interaction");
       general.butt[2]->tooltip("General.FastRedraw (Alt+f)");
       general.butt[2]->type(FL_TOGGLE_BUTTON);
       general.butt[2]->callback(general_options_ok_cb, (void *)"fast_redraw");
 
-      general.butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
+      general.butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
                                             "Draw with the shader pipeline");
       general.butt[3]->tooltip("General.Shaders");
       general.butt[3]->type(FL_TOGGLE_BUTTON);
       general.butt[3]->callback(general_options_ok_cb);
 
-      general.butt[12] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW,
+      general.butt[12] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW,
                                              BH, "Enable antialiasing");
       general.butt[12]->tooltip("General.Antialiasing");
       general.butt[12]->type(FL_TOGGLE_BUTTON);
       general.butt[12]->callback(general_options_ok_cb);
 
       general.butt[5] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH,
                             "Use trackball rotation instead of Euler angles");
       general.butt[5]->tooltip("General.Trackball");
       general.butt[5]->type(FL_TOGGLE_BUTTON);
       general.butt[5]->callback(general_options_ok_cb);
 
       general.butt[15] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH,
                             "Rotate around pseudo center of mass");
       general.butt[15]->tooltip("General.RotationCenterGravity");
       general.butt[15]->type(FL_TOGGLE_BUTTON);
@@ -1608,21 +1620,21 @@ optionWindow::optionWindow(int deltaFontSize)
                                  (void *)"rotation_center");
 
       general.push[0] =
-        new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 10 * BH, BB, BH, "Select");
+        new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 11 * BH, BB, BH, "Select");
       general.push[0]->callback(general_options_rotation_center_select_cb);
 
       general.value[8] =
-        new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 3, BH);
+        new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW / 3, BH);
       general.value[8]->tooltip("General.RotationCenterX");
       general.value[8]->callback(general_options_ok_cb,
                                  (void *)"rotation_center_coord");
       general.value[9] =
-        new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 10 * BH, IW / 3, BH);
+        new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 11 * BH, IW / 3, BH);
       general.value[9]->tooltip("General.RotationCenterY");
       general.value[9]->callback(general_options_ok_cb,
                                  (void *)"rotation_center_coord");
       general.value[10] =
-        new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 10 * BH, IW / 3,
+        new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 11 * BH, IW / 3,
                            BH, "Rotation center");
       general.value[10]->tooltip("General.RotationCenterZ");
       general.value[10]->align(FL_ALIGN_RIGHT);
@@ -1630,7 +1642,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                   (void *)"rotation_center_coord");
 
       general.butt[22] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 12 * BH, BW, BH,
                             "Invert mouse wheel zoom direction");
       general.butt[22]->tooltip("General.MouseInvertZoom");
       general.butt[22]->type(FL_TOGGLE_BUTTON);
@@ -2109,27 +2121,13 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[34]->align(FL_ALIGN_RIGHT);
       general.value[34]->callback(general_options_ok_cb);
 
-      static Fl_Menu_Item menu_color_scheme[] = {
-        {"Light", 0, nullptr, nullptr},
-        {"Default", 0, nullptr, nullptr},
-        {"Grayscale", 0, nullptr, nullptr},
-        {"Dark", 0, nullptr, nullptr},
-        {nullptr}};
-
-      general.choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
-                                        "Predefined color scheme");
-      general.choice[3]->tooltip("General.ColorScheme (Alt+c)");
-      general.choice[3]->menu(menu_color_scheme);
-      general.choice[3]->align(FL_ALIGN_RIGHT);
-      general.choice[3]->callback(general_options_color_scheme_cb);
-
       static Fl_Menu_Item menu_bg_grad[] = {{"None", 0, nullptr, nullptr},
                                             {"Vertical", 0, nullptr, nullptr},
                                             {"Horizontal", 0, nullptr, nullptr},
                                             {"Radial", 0, nullptr, nullptr},
                                             {nullptr}};
 
-      general.choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
+      general.choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
                                         "Background gradient");
       general.choice[5]->tooltip("General.BackgroundGradient");
       general.choice[5]->menu(menu_bg_grad);
@@ -2142,7 +2140,7 @@ optionWindow::optionWindow(int deltaFontSize)
           j++;
           continue;
         }
-        general.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (8 + i) * BH, IW,
+        general.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW,
                                          BH, GeneralOptions_Color[j].str);
         general.color[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE |
                                 FL_ALIGN_CLIP);
