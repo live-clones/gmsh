@@ -1106,6 +1106,9 @@ namespace tetgenBR {
     // or leave Steiner points on a surface whose mesh cannot change (a
     // quadrangle, periodic or structured surface mesh, shared with an already
     // meshed volume). Retry with other perturbations in these cases.
+    //
+    // FIXME: this is quite ad-hoc and should eventually be replaced by a more
+    // robust solution.
     auto fixedMesh = [&](int ftag) {
       for(GFace *gf : f_list) {
         if(gf->tag() != ftag) continue;
