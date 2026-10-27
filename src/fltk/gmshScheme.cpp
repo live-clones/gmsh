@@ -14,6 +14,7 @@
 #include <FL/Fl_Menu_.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Menu_Window.H>
+#include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Scrollbar.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Valuator.H>
@@ -53,6 +54,10 @@ void applyGmshColors(bool dark)
     // the bright blue kept for the accents the theme draws itself
     Fl::set_color(FL_SELECTION_COLOR, 38, 79, 120);
     _accent = fl_rgb_color(0, 120, 212);
+    // the tooltips on the hover widget colour of the theme, not the pale
+    // yellow of FLTK
+    Fl_Tooltip::color(fl_rgb_color(37, 37, 38));
+    Fl_Tooltip::textcolor(FL_FOREGROUND_COLOR);
   }
   else {
     // the greys and the blue of the Light Modern theme of VS Code
@@ -68,6 +73,8 @@ void applyGmshColors(bool dark)
     }
     Fl::set_color(FL_SELECTION_COLOR, 173, 214, 255);
     _accent = fl_rgb_color(0, 95, 184);
+    Fl_Tooltip::color(fl_rgb_color(243, 243, 243));
+    Fl_Tooltip::textcolor(FL_FOREGROUND_COLOR);
   }
 }
 
@@ -152,13 +159,23 @@ static Fl_Box_Draw_F *stock[FL_FREE_BOXTYPE + 8];
 template <Fl_Boxtype T>
 static void hover_box(int x, int y, int w, int h, Fl_Color c)
 {
-  // the item chosen in the menu of a choice, without the frame FLTK puts
-  // around it (the bordered down box of the choice): flat, as in the menus
-  // of the bar
-  if(T == FL_BORDER_BOX &&
-     dynamic_cast<Fl_Menu_Window *>(Fl_Window::current())) {
-    stock[FL_FLAT_BOX](x, y, w, h, c);
-    return;
+  if(T == FL_BORDER_BOX) {
+    if(Fl_Window *win = dynamic_cast<Fl_Menu_Window *>(Fl_Window::current())) {
+      // a tooltip, which fills its window: on its colour, with the thin frame
+      // of the hover boxes of VS Code instead of the black one of FLTK
+      if(x == 0 && y == 0 && w == win->w() && h == win->h()) {
+        stock[FL_FLAT_BOX](x, y, w, h, c);
+        fl_color(
+          fl_color_average(FL_FOREGROUND_COLOR, FL_BACKGROUND_COLOR, 0.22f));
+        fl_rect(x, y, w, h);
+        return;
+      }
+      // the item chosen in the menu of a choice, without the frame FLTK puts
+      // around it (the bordered down box of the choice): flat, as in the
+      // menus of the bar
+      stock[FL_FLAT_BOX](x, y, w, h, c);
+      return;
+    }
   }
   if(hovered(x, y, w, h)) {
     c = highlight(c);

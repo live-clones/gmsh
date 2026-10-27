@@ -442,6 +442,12 @@ void FlGui::applyColorScheme(bool redraw)
     Fl::get_color(FL_SELECTION_COLOR, r[2], g[2], b[2]);
   }
 
+  // the tooltips of FLTK, pale yellow with black text; the gmsh theme sets
+  // its own
+  Fl_Tooltip::color(
+    fl_color_cube(FL_NUM_RED - 1, FL_NUM_GREEN - 1, FL_NUM_BLUE - 2));
+  Fl_Tooltip::textcolor(FL_BLACK);
+
   if(gmshScheme()) { applyGmshColors(CTX::instance()->guiColorScheme == 1); }
   else if(CTX::instance()->guiColorScheme == 1) { // dark mode
     Fl::set_color(FL_BACKGROUND_COLOR, 20, 20, 20);
