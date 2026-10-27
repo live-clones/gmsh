@@ -190,9 +190,10 @@ namespace {
   }
 
   // an unmatched quadrangular face: its diagonal (p, q) and its other
-  // vertices r and s
+  // vertices r and s, and the cell it bounds
   struct HangingQuad {
     MVertex *p, *q, *r, *s;
+    MElement *owner;
   };
 
   class PositiveTrihedra {
@@ -200,8 +201,8 @@ namespace {
     // the counts of the faces of negative trihedra
     struct Statistics {
       std::size_t quads = 0, negative = 0, pyramids = 0, swapped[6] = {0},
-                  blocked = 0, tooMany = 0, invalid = 0, flattened = 0,
-                  left = 0;
+                  blocked = 0, tooMany = 0, invalid = 0, shifted = 0,
+                  flattened = 0, left = 0;
     };
 
     PositiveTrihedra(GRegion *gr, bool skipPyramids) :
@@ -270,7 +271,7 @@ namespace {
         const int n = swapDiagonal(h);
         if(n > 0) {
           stats.swapped[n]++;
-          _quads[i] = {h.r, h.s, h.p, h.q}; // the new diagonal
+          _quads[i] = {h.r, h.s, h.p, h.q, h.owner}; // the new diagonal
         }
         else {
           if(n == BLOCKED) stats.blocked++;
@@ -365,7 +366,7 @@ namespace {
         }
         if(!candidate) continue;
         for(int d = 0; d < 2; d++) {
-          HangingQuad h = {v[d], v[d + 2], v[d + 1], v[(d + 3) % 4]};
+          HangingQuad h = {v[d], v[d + 2], v[d + 1], v[(d + 3) % 4], e};
           if(onlyElementOn(h.p, h.q, h.r) && onlyElementOn(h.p, h.q, h.s)) {
             quads.push_back(h);
             break;
@@ -567,6 +568,102 @@ namespace {
       return e->gammaShapeMeasure();
     }
 
+    // the vertex at the other end of the edge of the cell of h leaving its
+    // face from v
+    MVertex *inwardVertex(const HangingQuad &h, MVertex *v) const
+    {
+      for(int k = 0; k < h.owner->getNumEdges(); k++) {
+        const MEdge edge = h.owner->getEdge(k);
+        MVertex *w = edge.getVertex(0) == v ? edge.getVertex(1) :
+                     edge.getVertex(1) == v ? edge.getVertex(0) :
+                                              nullptr;
+        if(w && w != h.p && w != h.q && w != h.r && w != h.s) return w;
+      }
+      return nullptr;
+    }
+
+    // The warping of the face of h reversed: p and q moved out of its cell
+    // and r and s into it, along the edges of the cell leaving the face, by
+    // the smallest part t <= 1/4 of the mean edge of the face making the
+    // trihedron positive (with a margin), if the elements around them stay
+    // above their floors and the other trihedra of their vertices do not
+    // become negative
+    bool shift(std::size_t i,
+               const std::vector<std::vector<MElement *> > &elements,
+               const std::vector<std::vector<std::size_t> > &quadsOf)
+    {
+      const HangingQuad h = _quads[i];
+      MVertex *vs[4] = {h.p, h.q, h.r, h.s};
+      const double side[4] = {-1., -1., 1., 1.};
+      SPoint3 x0[4];
+      SVector3 dir[4];
+      bool movable[4], any = false;
+      for(int k = 0; k < 4; k++) {
+        x0[k] = vs[k]->point();
+        MVertex *w = vs[k]->getIndex() >= 0 ? inwardVertex(h, vs[k]) : nullptr;
+        movable[k] = w != nullptr;
+        if(!w) continue;
+        dir[k] = SVector3(w->x() - x0[k].x(), w->y() - x0[k].y(),
+                          w->z() - x0[k].z());
+        dir[k].normalize();
+        any = true;
+      }
+      if(!any) return false;
+      const double L = (h.p->distance(h.r) + h.r->distance(h.q) +
+                        h.q->distance(h.s) + h.s->distance(h.p)) / 4.;
+      // the floors of the elements around the vertices, and their trihedra
+      // not negative
+      double floor[4] = {0., 0., 0., 0.};
+      std::vector<std::size_t> fine;
+      for(int k = 0; k < 4; k++) {
+        if(!movable[k]) continue;
+        const long m = vs[k]->getIndex();
+        double worst = 1.;
+        for(MElement *e : elements[m]) worst = std::min(worst, quality(e));
+        floor[k] = std::max(.5 * worst, std::min(worst, _minQuality));
+        for(std::size_t j : quadsOf[m])
+          if(j != i && trihedronVolume(_quads[j]) >= -_flat) fine.push_back(j);
+      }
+      auto place = [&](double t) {
+        for(int k = 0; k < 4; k++) {
+          if(!movable[k]) continue;
+          const double d = side[k] * t * L;
+          vs[k]->x() = x0[k].x() + d * dir[k].x();
+          vs[k]->y() = x0[k].y() + d * dir[k].y();
+          vs[k]->z() = x0[k].z() + d * dir[k].z();
+        }
+      };
+      auto valid = [&]() {
+        for(int k = 0; k < 4; k++) {
+          if(!movable[k]) continue;
+          for(MElement *e : elements[vs[k]->getIndex()]) {
+            const double w = quality(e);
+            if(!(w > 0. && w >= floor[k])) return false;
+          }
+        }
+        for(std::size_t j : fine)
+          if(trihedronVolume(_quads[j]) < -_flat) return false;
+        return true;
+      };
+      const double tMax = .25;
+      place(tMax);
+      if(trihedronVolume(h) >= 0.) {
+        double lo = 0., hi = tMax;
+        for(int it = 0; it < 12; it++) {
+          const double mid = .5 * (lo + hi);
+          place(mid);
+          if(trihedronVolume(h) >= 0.) hi = mid;
+          else lo = mid;
+        }
+        for(double t : {std::min(tMax, 1.25 * hi), hi}) {
+          place(t);
+          if(trihedronVolume(h) >= 0. && valid()) return true;
+        }
+      }
+      place(0.);
+      return false;
+    }
+
     // The faces moved toward their mean plane: each of their vertices inside
     // the region, as far as (a step of 1, 1/2, 1/4, 1/8 of the way) the
     // elements around it stay valid, their worst one keeping half its
@@ -606,6 +703,10 @@ namespace {
 
       for(std::size_t i : list) {
         const HangingQuad h = _quads[i];
+        if(shift(i, elements, quadsOf)) {
+          stats.shifted++;
+          continue;
+        }
         double c[3] = {0., 0., 0.};
         for(MVertex *v : {h.p, h.q, h.r, h.s}) {
           c[0] += v->x() / 4.;
@@ -773,14 +874,14 @@ void MakeTrihedraPositive(GRegion *gr, bool skipPyramids)
   AddMeshStageTime("positive trihedra", TimeOfDay() - t0, Cpu() - c0);
   Msg::Info("Region %d: %zu of %zu unmatched faces with negative trihedra: "
             "%zu swapped (1-5 tets: %zu %zu %zu %zu %zu), %zu left to "
-            "pyramids, %zu flattened, %zu left (swap blocked %zu, more than "
-            "5 tets %zu, no valid split %zu)",
+            "pyramids, %zu shifted, %zu flattened, %zu left (swap blocked "
+            "%zu, more than 5 tets %zu, no valid split %zu)",
             gr->tag(), st.negative, st.quads,
             st.swapped[1] + st.swapped[2] + st.swapped[3] + st.swapped[4] +
               st.swapped[5],
             st.swapped[1], st.swapped[2], st.swapped[3], st.swapped[4],
-            st.swapped[5], st.pyramids, st.flattened, st.left, st.blocked,
-            st.tooMany, st.invalid);
+            st.swapped[5], st.pyramids, st.shifted, st.flattened, st.left,
+            st.blocked, st.tooMany, st.invalid);
 }
 
 int meshCombine3D(GRegion *gr, const CombineFrames *frames)
