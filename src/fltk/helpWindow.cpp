@@ -356,7 +356,7 @@ static std::string aboutText()
        "&nbsp;&middot;&nbsp; "
     << "<a href=\"https://gitlab.onelab.info/gmsh/gmsh/issues\">Issues</a>"
     << "</center><p>"
-    << "<table>";
+    << "<table width=96%>";
   std::vector<std::pair<std::string, std::string>> rows;
   rows.push_back(std::make_pair("Build OS", GetGmshBuildOS()));
   rows.push_back(std::make_pair("Build date", GetGmshBuildDate()));
@@ -456,7 +456,7 @@ helpWindow::helpWindow()
   {
     int width = 30 * FL_NORMAL_SIZE;
     int logo = 7 * FL_NORMAL_SIZE;
-    int height = 21 * BH + logo + WB;
+    int height = 23 * BH + logo + 2 * WB;
 
     about = new paletteWindow(width, height,
                               CTX::instance()->nonModalWindows ? true : false,
@@ -466,13 +466,13 @@ helpWindow::helpWindow()
     // window showing on both sides of the text as a margin
     about->color(FL_BACKGROUND2_COLOR);
 
-    Fl_Box *logoBox = new Fl_Box(0, 2 * WB, width, logo);
+    Fl_Box *logoBox = new Fl_Box(0, 3 * WB, width, logo);
     Fl_SVG_Image *logoImage = new Fl_SVG_Image(nullptr, logoSvg);
     logoImage->resize(logo, logo);
     logoBox->image(logoImage);
 
-    aboutView = new Fl_Help_View(WB, logo + 2 * WB, width - 2 * WB,
-                                 height - logo - 2 * WB);
+    aboutView = new Fl_Help_View(2 * WB, logo + 3 * WB, width - 4 * WB,
+                                 height - logo - 3 * WB);
     aboutView->textfont(FL_HELVETICA);
     aboutView->textsize(FL_NORMAL_SIZE);
     aboutView->box(FL_FLAT_BOX);
