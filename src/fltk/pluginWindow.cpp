@@ -242,16 +242,6 @@ static void plugin_views_cb(Fl_Widget *w, void *data)
 static void plugin_resized_cb(void *data)
 { FlGui::instance()->plugins->layout(); }
 
-// the height of the label of a box wrapped on lines w wide, as FLTK draws a
-// label inside its box, plus a border below
-static int wrappedHeight(Fl_Box *b, int w)
-{
-  fl_font(b->labelfont(), b->labelsize());
-  int tw = w - 6, th = 0;
-  fl_measure(b->label(), tw, th, 0);
-  return th + WB;
-}
-
 void pluginWindow::_createDialogBox(GMSH_Plugin *p)
 {
   // placed by _placeDialogBox()
@@ -446,11 +436,6 @@ void pluginWindow::toggleHelp()
 {
   _helpOpen = !_helpOpen;
   layout();
-  // the help opened is shown, from its header down
-  if(_helpOpen) {
-    int most = std::max(0, help->y() + help->h() - scroll->y() - scroll->h());
-    scroll->scroll_to(0, std::min(helpHeader->y() - scroll->y(), most));
-  }
 }
 
 void pluginWindow::updateCount()

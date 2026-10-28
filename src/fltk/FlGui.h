@@ -53,7 +53,12 @@ class onelabContextWindow;
 class onelabGroup;
 class helpWindow;
 class Fl_Widget;
+class Fl_Box;
 class drawContext;
+
+// the height of the label of a box wrapped on lines w wide, as FLTK draws a
+// label inside its box, plus a border below
+int wrappedHeight(Fl_Box *b, int w);
 
 class GVertex;
 class GEdge;

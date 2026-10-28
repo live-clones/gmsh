@@ -12,6 +12,7 @@
 #include <FL/Fl_Shared_Image.H>
 #include <FL/Fl_File_Icon.H>
 #include <FL/fl_draw.H>
+#include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "gmshScheme.h"
@@ -899,6 +900,14 @@ static int fltkCode(const Shortcut &s)
   if(s.mods & ModShift) k += FL_SHIFT;
   if(s.mods & ModAlt) k += FL_ALT;
   return k;
+}
+
+int wrappedHeight(Fl_Box *b, int w)
+{
+  fl_font(b->labelfont(), b->labelsize());
+  int tw = w - 6, th = 0;
+  fl_measure(b->label(), tw, th, 0);
+  return th + WB;
 }
 
 int fltkShortcut(const char *action, bool systemBar)
