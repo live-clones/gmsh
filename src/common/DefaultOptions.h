@@ -824,12 +824,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "MouseInvertZoom" , opt_general_mouse_invert_zoom , 0. ,
     "Invert mouse wheel zoom direction" },
 
-  { F|S, "NativeFileChooser" , opt_general_native_file_chooser ,
-#if defined(__APPLE__) || defined(WIN32)
-    1. ,
-#else
-    0. ,
-#endif
+  { F|S, "NativeFileChooser" , opt_general_native_file_chooser , 1. ,
     "Use the native file chooser?" },
   { F|S, "NonModalWindows" , opt_general_non_modal_windows , 1. ,
     "Force all control windows to be on top of the graphic window "
