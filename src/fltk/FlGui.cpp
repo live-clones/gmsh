@@ -16,9 +16,6 @@
 #include "FlGui.h"
 #include "gmshScheme.h"
 #include "desktop.h"
-#if defined(WIN32)
-#include <windows.h>
-#endif
 #include "mainWindow.h"
 #include "icons.h"
 #include "drawContextFltk.h"
@@ -515,6 +512,7 @@ void FlGui::applyColorScheme(bool redraw)
     for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
       win->redraw();
       redrawWindowsIn(win);
+      titleBarColor(win);
     }
   }
 }
@@ -534,24 +532,9 @@ void FlGui::desktopChanged()
 
 static void desktop_changed_cb() { FlGui::instance()->desktopChanged(); }
 
-#if defined(WIN32)
-// the message Windows sends to every window on a switch of the colours
-static int desktop_message_handler(void *event, void *)
-{
-  MSG *msg = (MSG *)event;
-  if(msg->message == WM_SETTINGCHANGE && msg->lParam &&
-     !wcscmp((const wchar_t *)msg->lParam, L"ImmersiveColorSet"))
-    desktop_changed_cb();
-  return 0;
-}
-#endif
-
 static void watchDesktop()
 {
   watchDesktopAppearance(desktop_changed_cb);
-#if defined(WIN32)
-  Fl::add_system_handler(desktop_message_handler, nullptr);
-#endif
   // and whenever a window of Gmsh gets the focus back, where the system does
   // not tell (Linux)
   mainWindow::focusHook = desktop_changed_cb;

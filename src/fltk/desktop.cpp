@@ -38,6 +38,8 @@ static void themeChanged(CFNotificationCenterRef, void *, CFNotificationName,
   if(_changed) _changed();
 }
 
+void desktopTitleBar(void *, bool) {} // the title bars follow by themselves
+
 void watchDesktopAppearance(void (*changed)())
 {
   // the notification the system sends to every application on a switch
@@ -50,6 +52,7 @@ void watchDesktopAppearance(void (*changed)())
 
 #elif defined(WIN32)
 
+#include <cwchar>
 #include <windows.h>
 
 std::string desktopFont() { return ""; }
@@ -67,8 +70,49 @@ int desktopDark()
   return light ? 0 : 1;
 }
 
-// the switch comes as a window message, which FlGui watches
-void watchDesktopAppearance(void (*)()) {}
+static void (*_changed)() = nullptr;
+
+// the window procedure of a hidden window of our own: the message of a switch
+// is broadcast to every top-level window, hidden ones included, and goes
+// straight to their procedures (the system handlers of FLTK never see it)
+static LRESULT CALLBACK settingsProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l)
+{
+  if(msg == WM_SETTINGCHANGE && l &&
+     !wcscmp((const wchar_t *)l, L"ImmersiveColorSet") && _changed)
+    _changed();
+  return DefWindowProcW(hwnd, msg, w, l);
+}
+
+void watchDesktopAppearance(void (*changed)())
+{
+  _changed = changed;
+  WNDCLASSW wc = {};
+  wc.lpfnWndProc = settingsProc;
+  wc.hInstance = GetModuleHandleW(nullptr);
+  wc.lpszClassName = L"GmshDesktopWatch";
+  RegisterClassW(&wc);
+  CreateWindowW(wc.lpszClassName, L"", 0, 0, 0, 0, 0, nullptr, nullptr,
+                wc.hInstance, nullptr);
+}
+
+void desktopTitleBar(void *window, bool dark)
+{
+  // asked from the window manager, which draws the title bars light unless
+  // told (DWMWA_USE_IMMERSIVE_DARK_MODE, 20 since Windows 10 20H1); the
+  // function looked up at run time, so that nothing new is linked
+  typedef HRESULT(WINAPI * setAttribute)(HWND, DWORD, LPCVOID, DWORD);
+  static setAttribute set = nullptr;
+  static bool looked = false;
+  if(!looked) {
+    looked = true;
+    if(HMODULE dwm = LoadLibraryW(L"dwmapi.dll"))
+      set = reinterpret_cast<setAttribute>(
+        reinterpret_cast<void *>(GetProcAddress(dwm, "DwmSetWindowAttribute")));
+  }
+  if(!set || !window) return;
+  BOOL on = dark ? TRUE : FALSE;
+  set((HWND)window, 20, &on, sizeof(on));
+}
 
 #else
 
@@ -132,5 +176,7 @@ int desktopDark()
 // no notification without a D-Bus listener: the switch is seen when a window
 // gets the focus
 void watchDesktopAppearance(void (*)()) {}
+
+void desktopTitleBar(void *, bool) {} // the title bars are the desktop's
 
 #endif

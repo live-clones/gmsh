@@ -66,6 +66,7 @@ public:
     if(_offset) placeWindow(this, _offset);
     if(non_modal() && !shown()) Fl_Window::show(); // fix ordering
     Fl_Window::show();
+    titleBarColor(this);
   }
 };
 

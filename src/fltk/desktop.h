@@ -18,8 +18,12 @@ std::string desktopFont();
 int desktopDark();
 
 // calls back when the desktop switches between light and dark, where the
-// system tells (macOS); elsewhere the switch is seen when a window gets the
-// focus (see FlGui)
+// system tells (macOS, Windows); elsewhere the switch is seen when a window
+// gets the focus (see FlGui)
 void watchDesktopAppearance(void (*changed)());
+
+// the title bar of a window drawn dark or light, where the desktop does not
+// follow the application by itself (Windows); window the native handle
+void desktopTitleBar(void *window, bool dark);
 
 #endif

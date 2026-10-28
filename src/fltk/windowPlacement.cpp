@@ -7,6 +7,9 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include "windowPlacement.h"
+#include "desktop.h"
+#include "Context.h"
+#include <FL/platform.H>
 #if defined(__APPLE__)
 #include <ApplicationServices/ApplicationServices.h>
 #elif defined(WIN32)
@@ -154,4 +157,12 @@ void forgetWindow(Fl_Window *win)
 {
   placed.erase(win);
   if(reference == win) reference = nullptr;
+}
+
+void titleBarColor(Fl_Window *w)
+{
+#if defined(WIN32)
+  if(!w->parent() && w->shown())
+    desktopTitleBar((void *)fl_xid(w), CTX::instance()->guiDark);
+#endif
 }
