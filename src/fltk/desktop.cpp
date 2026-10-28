@@ -40,6 +40,8 @@ static void themeChanged(CFNotificationCenterRef, void *, CFNotificationName,
 
 void desktopTitleBar(void *, bool) {} // the title bars follow by themselves
 
+void watchWindowMoves(void *, void (*)(void *)) {} // a move is a resize
+
 void watchDesktopAppearance(void (*changed)())
 {
   // the notification the system sends to every application on a switch
@@ -53,6 +55,7 @@ void watchDesktopAppearance(void (*changed)())
 #elif defined(WIN32)
 
 #include <cwchar>
+#include <map>
 #include <windows.h>
 
 std::string desktopFont() { return ""; }
@@ -112,6 +115,30 @@ void desktopTitleBar(void *window, bool dark)
   if(!set || !window) return;
   BOOL on = dark ? TRUE : FALSE;
   set((HWND)window, 20, &on, sizeof(on));
+}
+
+// the window procedures of FLTK that are watched, by window, and ours in
+// front of them: a move, during the drag and at its end, is reported once
+// FLTK has taken it
+static std::map<HWND, WNDPROC> _watched;
+static void (*_moved)(void *) = nullptr;
+
+static LRESULT CALLBACK moveProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l)
+{
+  WNDPROC proc = _watched[hwnd];
+  LRESULT r = CallWindowProcW(proc, hwnd, msg, w, l);
+  if((msg == WM_MOVE || msg == WM_EXITSIZEMOVE) && _moved) _moved(hwnd);
+  if(msg == WM_NCDESTROY) _watched.erase(hwnd);
+  return r;
+}
+
+void watchWindowMoves(void *window, void (*moved)(void *))
+{
+  HWND hwnd = (HWND)window;
+  _moved = moved;
+  if(!hwnd || _watched.count(hwnd)) return;
+  _watched[hwnd] =
+    (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)moveProc);
 }
 
 #else
@@ -178,5 +205,7 @@ int desktopDark()
 void watchDesktopAppearance(void (*)()) {}
 
 void desktopTitleBar(void *, bool) {} // the title bars are the desktop's
+
+void watchWindowMoves(void *, void (*)(void *)) {} // a move is a resize
 
 #endif

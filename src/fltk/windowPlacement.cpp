@@ -7,6 +7,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include "windowPlacement.h"
+#include "paletteWindow.h"
 #include "desktop.h"
 #include "Context.h"
 #include <FL/platform.H>
@@ -164,5 +165,23 @@ void titleBarColor(Fl_Window *w)
 #if defined(WIN32)
   if(!w->parent() && w->shown())
     desktopTitleBar((void *)fl_xid(w), CTX::instance()->guiDark);
+#endif
+}
+
+#if defined(WIN32)
+static void window_moved(void *hwnd)
+{
+  paletteWindow *w = dynamic_cast<paletteWindow *>(fl_find((HWND)hwnd));
+  if(w && !w->parent() && w->dockable() && w->floating() &&
+     paletteWindow::movedHook)
+    paletteWindow::movedHook(w);
+}
+#endif
+
+void watchMoves(paletteWindow *w)
+{
+#if defined(WIN32)
+  if(!w->parent() && w->shown())
+    watchWindowMoves((void *)fl_xid(w), window_moved);
 #endif
 }

@@ -26,4 +26,9 @@ void watchDesktopAppearance(void (*changed)());
 // follow the application by itself (Windows); window the native handle
 void desktopTitleBar(void *window, bool dark);
 
+// calls back, with the native handle, whenever the user moves the window,
+// where the toolkit does not say (Windows: FLTK sets the position of a
+// dragged window without a resize)
+void watchWindowMoves(void *window, void (*moved)(void *window));
+
 #endif

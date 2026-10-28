@@ -80,4 +80,9 @@ bool shiftKeyDown();
 // and when the interface switches
 void titleBarColor(Fl_Window *w);
 
+// the moves of a floating tool window reported to paletteWindow::movedHook
+// where a move is not a resize (Windows); called when the window is shown
+class paletteWindow;
+void watchMoves(paletteWindow *w);
+
 #endif

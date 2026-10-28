@@ -195,6 +195,7 @@ public:
     if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
     Fl_Double_Window::show();
     titleBarColor(this);
+    watchMoves(this);
   }
   virtual void hide()
   {
