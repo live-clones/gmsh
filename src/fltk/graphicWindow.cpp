@@ -3995,6 +3995,8 @@ static bool close_tool_hook(Fl_Window *w)
 static void resized_hook(paletteWindow *w) { theDocking->toolResized(w); }
 static void hidden_hook(paletteWindow *w) { theDocking->toolHidden(w); }
 static void moved_hook(paletteWindow *w) { theDocking->toolMoved(w); }
+static void drag_hook(paletteWindow *w) { theDocking->dragToDock(w); }
+static int drop_hook(int event) { return theDocking->toolDrop(event); }
 static void torn_out_hook(paletteWindow *w, int x, int y)
 { theDocking->toolTornOut(w, x, y); }
 
@@ -4341,7 +4343,6 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   // the dock of the tool windows, shown while one is docked
   _dropping = nullptr;
-  _dropMoved = 0.;
   if(main) {
     _divider = new dockDivider(0, mh, 0, glheight + mheight);
     _divider->callback(dock_divider_cb, this);
@@ -4879,6 +4880,8 @@ void graphicWindow::setDocking(bool docking)
     paletteWindow::resizedHook = resized_hook;
     paletteWindow::hiddenHook = hidden_hook;
     paletteWindow::movedHook = moved_hook;
+    paletteWindow::dragHook = drag_hook;
+    mainWindow::dropHook = drop_hook;
     toolDock::tornOutHook = torn_out_hook;
     // the tool windows open on the desktop join the dock, in the order they
     // were shown (the list of FLTK starts with the newest)
@@ -4895,6 +4898,8 @@ void graphicWindow::setDocking(bool docking)
     _dock->undockAll();
     paletteWindow::hiddenHook = nullptr;
     paletteWindow::movedHook = nullptr;
+    paletteWindow::dragHook = nullptr;
+    mainWindow::dropHook = nullptr;
     toolDock::tornOutHook = nullptr;
     theDocking = nullptr;
     mainWindow::closeToolHook = nullptr;
@@ -4914,6 +4919,9 @@ void graphicWindow::toolTornOut(paletteWindow *w, int x, int y)
 
 bool graphicWindow::_overDock(paletteWindow *w)
 {
+  // Wayland hides where the windows are on the screen: there a tool is docked
+  // by dragging a tab or its background, not its title bar (see toolDrop())
+  if(!screenPositionsKnown()) return false;
   // the middle of the title bar of the tool over the dock, or over where the
   // dock would be while none is docked: the right of the tiles
   int th = w->decorated_h() - w->h();
@@ -4931,11 +4939,9 @@ void graphicWindow::toolMoved(paletteWindow *w)
 {
   if(!w->shown() || !_win->shown()) return;
   if(_overDock(w)) {
-    _dropMoved = TimeOfDay();
     if(_dropping != w) {
       _dropping = w;
-      if(!isDockShown()) _layoutDock(_fitDockWidth(getDockWidth()));
-      _dropHint(true);
+      _dropTarget(true);
       // docked when the button is released: the system is asked for it
       Fl::add_timeout(0.05, _drop_cb, this);
     }
@@ -4943,9 +4949,16 @@ void graphicWindow::toolMoved(paletteWindow *w)
   else if(_dropping == w) {
     Fl::remove_timeout(_drop_cb, this);
     _dropping = nullptr;
-    _dropHint(false);
-    if(_dock->empty()) _layoutDock(0);
+    _dropTarget(false);
   }
+}
+
+void graphicWindow::_dropTarget(bool on)
+{
+  // the dock as the target of a drop, shown empty while none is docked
+  if(on && !isDockShown()) _layoutDock(_fitDockWidth(getDockWidth()));
+  _dropHint(on);
+  if(!on && _dock->empty()) _layoutDock(0);
 }
 
 void graphicWindow::_dropHint(bool on)
@@ -4965,21 +4978,65 @@ void graphicWindow::_drop_cb(void *data)
   // (Alt would tile the window on macOS): no hint while it is
   bool shift = shiftKeyDown();
   g->_dropHint(!shift);
-  // still held, or, where the system cannot say, still moving a moment ago
   int down = mouseButtonDown();
-  if(down == 1 || (down == -1 && TimeOfDay() - g->_dropMoved < 0.4)) {
+  if(down == 1) {
     Fl::repeat_timeout(0.05, _drop_cb, data);
     return;
   }
   g->_dropping = nullptr;
-  g->_dropHint(false);
-  if(shift) {
-    if(g->_dock->empty()) g->_layoutDock(0);
-    return;
-  }
+  g->_dropTarget(false);
+  // kept out when Shift is held, or where the system cannot say
+  if(shift || down == -1) return;
   w->floating(false);
   w->show(); // docks it
   FlGui::instance()->storeFloatingTools();
+}
+
+void graphicWindow::dragToDock(paletteWindow *w)
+{
+  // an FLTK drag and drop of the label of the tool, which the system shows
+  // along the pointer; the drop lands in toolDrop()
+  const char *label = w->label() ? w->label() : "";
+  paletteWindow::dragged = w;
+  Fl::copy(label, strlen(label), 0);
+  Fl::dnd();
+}
+
+static void dropped_cb(void *data)
+{
+  paletteWindow *w = (paletteWindow *)data;
+  w->floating(false);
+  w->show(); // docks it
+  FlGui::instance()->storeFloatingTools();
+}
+
+int graphicWindow::toolDrop(int event)
+{
+  paletteWindow *w = paletteWindow::dragged;
+  switch(event) {
+  case FL_DND_ENTER:
+  case FL_DND_DRAG: {
+    // over the dock, or where it would be while none is docked: the right of
+    // the tiles
+    int X = isDockShown() ? _dock->x() : _win->w() - getDockWidth();
+    bool over = Fl::event_x() >= X && Fl::event_y() >= _tile->y() &&
+                Fl::event_y() < _tile->y() + _tile->h();
+    _dropTarget(over);
+    // the release and the text dropped go to the widget below the mouse
+    if(over) Fl::belowmouse(_win);
+    return over;
+  }
+  case FL_DND_LEAVE: _dropTarget(false); return 1;
+  case FL_DND_RELEASE: return _dock->dropHint();
+  case FL_PASTE:
+    paletteWindow::dragged = nullptr;
+    _dropTarget(false);
+    // ours, by its text; docked once the drag is over
+    if(w->label() && Fl::event_text() && !strcmp(Fl::event_text(), w->label()))
+      Fl::add_timeout(0., dropped_cb, w);
+    return 1;
+  }
+  return 0;
 }
 
 void graphicWindow::toolResized(paletteWindow *w) { _dock->resized(w); }

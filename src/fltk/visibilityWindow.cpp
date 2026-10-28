@@ -15,7 +15,7 @@ typedef unsigned long intptr_t;
 #include <map>
 #include <vector>
 #include <string.h>
-#include <FL/Fl_Tabs.H>
+#include "accentTabs.h"
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include "GmshConfig.h"
@@ -1334,7 +1334,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
                           CTX::instance()->visOffset);
   win->box(GMSH_WINDOW_BOX);
 
-  Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+  Fl_Tabs *o = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
   // the least height: three rows of the list, tree or windows, all of the
   // numeric and interactive tabs
   static int least[5];

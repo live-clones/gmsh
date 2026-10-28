@@ -31,6 +31,10 @@ private:
   // back (see General.FloatingTools, which names it)
   bool _dockable, _floating;
   std::string _name;
+  // the button down on the background of a floating tool, where a drag takes
+  // it to the dock
+  bool _pushed;
+  int _pushX, _pushY;
   // the border (FLTK removes those of subwindows), size and non-modal state
   // (floating above other windows on macOS) the window had on the desktop
   // before it was docked
@@ -48,11 +52,38 @@ public:
   inline static void (*resizedHook)(paletteWindow *w) = nullptr;
   // called when a floating tool window is moved on the desktop
   inline static void (*movedHook)(paletteWindow *w) = nullptr;
+  // called when a floating tool window is dragged to the dock by a tab or
+  // its background: an FLTK drag and drop, the one drag the application can
+  // follow under Wayland, which hides where the windows are
+  inline static void (*dragHook)(paletteWindow *w) = nullptr;
+  // the tool window being so dragged, until it is dropped: the main window
+  // takes the drop over the dock (see graphicWindow::toolDrop())
+  inline static paletteWindow *dragged = nullptr;
+  // the events of that drag reaching a subwindow of the main window are handed
+  // to it, in its coordinates; -1 when the event is not one of them
+  static int dragEventUp(Fl_Window *sub, int event)
+  {
+    if(!dragged || !sub->parent()) return -1;
+    switch(event) {
+    case FL_DND_ENTER:
+    case FL_DND_DRAG:
+    case FL_DND_LEAVE:
+    case FL_DND_RELEASE: break;
+    default: return -1;
+    }
+    int x = Fl::e_x, y = Fl::e_y;
+    Fl::e_x += sub->x();
+    Fl::e_y += sub->y();
+    int r = sub->window()->handle(event);
+    Fl::e_x = x;
+    Fl::e_y = y;
+    return r;
+  }
   paletteWindow(int w, int h, bool nonModal, const char *l = nullptr,
                 int *offset = nullptr)
     : Fl_Double_Window(w, h, l), _offset(offset), _width(w), _resized(nullptr),
       _resizedData(nullptr), _minW(0), _minH(0), _maxW(0), _maxH(0),
-      _dockable(false), _floating(false), _desktopBorder(true),
+      _dockable(false), _floating(false), _pushed(false), _desktopBorder(true),
       _desktopNonModal(false), _desktopW(w), _desktopH(h), _revealed(nullptr),
       _revealedData(nullptr)
   {
@@ -62,6 +93,10 @@ public:
   bool dockable() const { return _dockable; }
   void floating(bool f) { _floating = f; }
   bool floating() const { return _floating; }
+  void dragToDock()
+  {
+    if(!parent() && _dockable && dragHook) dragHook(this);
+  }
   // on the desktop, or in the dock (where a folded or covered window is not
   // shown)
   bool isOpen()
@@ -162,7 +197,29 @@ public:
   }
   virtual int handle(int event)
   {
+    int up = dragEventUp(this, event);
+    if(up >= 0) return up;
     switch(event) {
+    case FL_PUSH:
+      dragged = nullptr; // a drag that ended elsewhere, which Wayland hides
+      if(Fl_Double_Window::handle(event)) return 1;
+      if(Fl::event_button() != FL_LEFT_MOUSE || parent() || !_dockable)
+        return 0;
+      _pushed = true;
+      _pushX = Fl::event_x();
+      _pushY = Fl::event_y();
+      return 1;
+    case FL_DRAG:
+      if(!_pushed) break;
+      if(abs(Fl::event_x() - _pushX) > 4 || abs(Fl::event_y() - _pushY) > 4) {
+        _pushed = false;
+        dragToDock();
+      }
+      return 1;
+    case FL_RELEASE:
+      if(!_pushed) break;
+      _pushed = false;
+      return 1;
     case FL_SHORTCUT:
     case FL_KEYBOARD:
       // docked, only when the focus is inside: the main window has its own

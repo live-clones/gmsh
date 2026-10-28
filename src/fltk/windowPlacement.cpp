@@ -19,6 +19,14 @@
 #include <FL/platform.H>
 #endif
 
+bool screenPositionsKnown()
+{
+#if defined(FLTK_USE_WAYLAND)
+  if(fl_wl_display()) return false;
+#endif
+  return true;
+}
+
 int mouseButtonDown()
 {
 #if defined(__APPLE__)

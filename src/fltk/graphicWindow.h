@@ -54,11 +54,11 @@ private:
   dockDivider *_divider;
   Fl_Box *_resbox;
   // the floating tool being dragged over the dock, docked when the button is
-  // released there, and when it last moved
+  // released there
   paletteWindow *_dropping;
-  double _dropMoved;
   bool _overDock(paletteWindow *w);
   void _dropHint(bool on);
+  void _dropTarget(bool on);
   static void _drop_cb(void *data);
   void _layoutDock(int width);
   int _leastTileWidth();
@@ -110,6 +110,8 @@ public:
   // a floating tool moved on the desktop, docked when dragged over the dock
   void toolTornOut(paletteWindow *w, int x, int y);
   void toolMoved(paletteWindow *w);
+  void dragToDock(paletteWindow *w);
+  int toolDrop(int event);
   // the tool shown in the dock, used last, if any, and closing it
   paletteWindow *currentDockedTool();
   bool closeDockedTool();

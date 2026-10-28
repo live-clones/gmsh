@@ -68,9 +68,12 @@ void storeWindowOffset(Fl_Window *win, int offset[2]);
 void centerWindow(Fl_Window *win);
 // forget about a window that is being deleted
 void forgetWindow(Fl_Window *win);
-// whether the primary mouse button is held, asked of the system: 1, 0, or -1
-// where it cannot say (while the window manager drags a window by its title
-// bar, FLTK gets no mouse events)
+// whether the positions of the top-level windows on the screen are known:
+// Wayland hides them from the application
+bool screenPositionsKnown();
+// whether the primary mouse button is held, asked of the system since FLTK
+// gets no mouse events while the window manager drags a window by its title
+// bar: 1, 0, or -1 where it cannot say
 int mouseButtonDown();
 // whether the Shift key is held, asked of the system likewise
 bool shiftKeyDown();

@@ -8,6 +8,7 @@
 #include "openglWindow.h"
 #include "drawContextFltkEmbedded.h"
 #include "graphicWindow.h"
+#include "paletteWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
 #include "visibilityWindow.h"
@@ -669,6 +670,8 @@ void openglWindow::_setLastHandled(openglWindow *w)
 // the events of FLTK, turned into what sceneView::handleMouse() reads
 int openglWindow::handle(int event)
 {
+  int up = paletteWindow::dragEventUp(this, event);
+  if(up >= 0) return up;
   switch(event) {
   case FL_FOCUS: // accept the focus when I'm asked if I want it
   case FL_UNFOCUS: return 1;
